@@ -1,520 +1,521 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * 32bit Socket syscall emulation. Based on arch/sparc64/kernel/sys_sparc32.c.
  *
  * Copyright (C) 2000		VA Linux Co
  * Copyright (C) 2000		Don Dugger <n0ano@valinux.com>
- * Copyright (C) 1999 		Arun Sharma <arun.sharma@intel.com>
+ * Copyright (C) 1999 		Arun Sharma <arun.sharma@पूर्णांकel.com>
  * Copyright (C) 1997,1998 	Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  * Copyright (C) 1997 		David S. Miller (davem@caip.rutgers.edu)
  * Copyright (C) 2000		Hewlett-Packard Co.
  * Copyright (C) 2000		David Mosberger-Tang <davidm@hpl.hp.com>
- * Copyright (C) 2000,2001	Andi Kleen, SuSE Labs
+ * Copyright (C) 2000,2001	Andi Kleen, SuSE Lअसल
  */
 
-#include <linux/kernel.h>
-#include <linux/gfp.h>
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/file.h>
-#include <linux/icmpv6.h>
-#include <linux/socket.h>
-#include <linux/syscalls.h>
-#include <linux/filter.h>
-#include <linux/compat.h>
-#include <linux/security.h>
-#include <linux/audit.h>
-#include <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/file.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/security.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/export.h>
 
-#include <net/scm.h>
-#include <net/sock.h>
-#include <net/ip.h>
-#include <net/ipv6.h>
-#include <linux/uaccess.h>
-#include <net/compat.h>
+#समावेश <net/scm.h>
+#समावेश <net/sock.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/uaccess.h>
+#समावेश <net/compat.h>
 
-int __get_compat_msghdr(struct msghdr *kmsg,
-			struct compat_msghdr __user *umsg,
-			struct sockaddr __user **save_addr,
-			compat_uptr_t *ptr, compat_size_t *len)
-{
-	struct compat_msghdr msg;
-	ssize_t err;
+पूर्णांक __get_compat_msghdr(काष्ठा msghdr *kmsg,
+			काष्ठा compat_msghdr __user *umsg,
+			काष्ठा sockaddr __user **save_addr,
+			compat_uptr_t *ptr, compat_माप_प्रकार *len)
+अणु
+	काष्ठा compat_msghdr msg;
+	sमाप_प्रकार err;
 
-	if (copy_from_user(&msg, umsg, sizeof(*umsg)))
-		return -EFAULT;
+	अगर (copy_from_user(&msg, umsg, माप(*umsg)))
+		वापस -EFAULT;
 
 	kmsg->msg_flags = msg.msg_flags;
 	kmsg->msg_namelen = msg.msg_namelen;
 
-	if (!msg.msg_name)
+	अगर (!msg.msg_name)
 		kmsg->msg_namelen = 0;
 
-	if (kmsg->msg_namelen < 0)
-		return -EINVAL;
+	अगर (kmsg->msg_namelen < 0)
+		वापस -EINVAL;
 
-	if (kmsg->msg_namelen > sizeof(struct sockaddr_storage))
-		kmsg->msg_namelen = sizeof(struct sockaddr_storage);
+	अगर (kmsg->msg_namelen > माप(काष्ठा sockaddr_storage))
+		kmsg->msg_namelen = माप(काष्ठा sockaddr_storage);
 
 	kmsg->msg_control_is_user = true;
 	kmsg->msg_control_user = compat_ptr(msg.msg_control);
 	kmsg->msg_controllen = msg.msg_controllen;
 
-	if (save_addr)
+	अगर (save_addr)
 		*save_addr = compat_ptr(msg.msg_name);
 
-	if (msg.msg_name && kmsg->msg_namelen) {
-		if (!save_addr) {
+	अगर (msg.msg_name && kmsg->msg_namelen) अणु
+		अगर (!save_addr) अणु
 			err = move_addr_to_kernel(compat_ptr(msg.msg_name),
 						  kmsg->msg_namelen,
 						  kmsg->msg_name);
-			if (err < 0)
-				return err;
-		}
-	} else {
-		kmsg->msg_name = NULL;
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		kmsg->msg_name = शून्य;
 		kmsg->msg_namelen = 0;
-	}
+	पूर्ण
 
-	if (msg.msg_iovlen > UIO_MAXIOV)
-		return -EMSGSIZE;
+	अगर (msg.msg_iovlen > UIO_MAXIOV)
+		वापस -EMSGSIZE;
 
-	kmsg->msg_iocb = NULL;
+	kmsg->msg_iocb = शून्य;
 	*ptr = msg.msg_iov;
 	*len = msg.msg_iovlen;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int get_compat_msghdr(struct msghdr *kmsg,
-		      struct compat_msghdr __user *umsg,
-		      struct sockaddr __user **save_addr,
-		      struct iovec **iov)
-{
+पूर्णांक get_compat_msghdr(काष्ठा msghdr *kmsg,
+		      काष्ठा compat_msghdr __user *umsg,
+		      काष्ठा sockaddr __user **save_addr,
+		      काष्ठा iovec **iov)
+अणु
 	compat_uptr_t ptr;
-	compat_size_t len;
-	ssize_t err;
+	compat_माप_प्रकार len;
+	sमाप_प्रकार err;
 
 	err = __get_compat_msghdr(kmsg, umsg, save_addr, &ptr, &len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = import_iovec(save_addr ? READ : WRITE, compat_ptr(ptr), len,
 			   UIO_FASTIOV, iov, &kmsg->msg_iter);
-	return err < 0 ? err : 0;
-}
+	वापस err < 0 ? err : 0;
+पूर्ण
 
 /* Bleech... */
-#define CMSG_COMPAT_ALIGN(len)	ALIGN((len), sizeof(s32))
+#घोषणा CMSG_COMPAT_ALIGN(len)	ALIGN((len), माप(s32))
 
-#define CMSG_COMPAT_DATA(cmsg)				\
-	((void __user *)((char __user *)(cmsg) + sizeof(struct compat_cmsghdr)))
-#define CMSG_COMPAT_SPACE(len)				\
-	(sizeof(struct compat_cmsghdr) + CMSG_COMPAT_ALIGN(len))
-#define CMSG_COMPAT_LEN(len)				\
-	(sizeof(struct compat_cmsghdr) + (len))
+#घोषणा CMSG_COMPAT_DATA(cmsg)				\
+	((व्योम __user *)((अक्षर __user *)(cmsg) + माप(काष्ठा compat_cmsghdr)))
+#घोषणा CMSG_COMPAT_SPACE(len)				\
+	(माप(काष्ठा compat_cmsghdr) + CMSG_COMPAT_ALIGN(len))
+#घोषणा CMSG_COMPAT_LEN(len)				\
+	(माप(काष्ठा compat_cmsghdr) + (len))
 
-#define CMSG_COMPAT_FIRSTHDR(msg)			\
-	(((msg)->msg_controllen) >= sizeof(struct compat_cmsghdr) ?	\
-	 (struct compat_cmsghdr __user *)((msg)->msg_control) :		\
-	 (struct compat_cmsghdr __user *)NULL)
+#घोषणा CMSG_COMPAT_FIRSTHDR(msg)			\
+	(((msg)->msg_controllen) >= माप(काष्ठा compat_cmsghdr) ?	\
+	 (काष्ठा compat_cmsghdr __user *)((msg)->msg_control) :		\
+	 (काष्ठा compat_cmsghdr __user *)शून्य)
 
-#define CMSG_COMPAT_OK(ucmlen, ucmsg, mhdr) \
-	((ucmlen) >= sizeof(struct compat_cmsghdr) && \
-	 (ucmlen) <= (unsigned long) \
+#घोषणा CMSG_COMPAT_OK(ucmlen, ucmsg, mhdr) \
+	((ucmlen) >= माप(काष्ठा compat_cmsghdr) && \
+	 (ucmlen) <= (अचिन्हित दीर्घ) \
 	 ((mhdr)->msg_controllen - \
-	  ((char __user *)(ucmsg) - (char __user *)(mhdr)->msg_control_user)))
+	  ((अक्षर __user *)(ucmsg) - (अक्षर __user *)(mhdr)->msg_control_user)))
 
-static inline struct compat_cmsghdr __user *cmsg_compat_nxthdr(struct msghdr *msg,
-		struct compat_cmsghdr __user *cmsg, int cmsg_len)
-{
-	char __user *ptr = (char __user *)cmsg + CMSG_COMPAT_ALIGN(cmsg_len);
-	if ((unsigned long)(ptr + 1 - (char __user *)msg->msg_control) >
+अटल अंतरभूत काष्ठा compat_cmsghdr __user *cmsg_compat_nxthdr(काष्ठा msghdr *msg,
+		काष्ठा compat_cmsghdr __user *cmsg, पूर्णांक cmsg_len)
+अणु
+	अक्षर __user *ptr = (अक्षर __user *)cmsg + CMSG_COMPAT_ALIGN(cmsg_len);
+	अगर ((अचिन्हित दीर्घ)(ptr + 1 - (अक्षर __user *)msg->msg_control) >
 			msg->msg_controllen)
-		return NULL;
-	return (struct compat_cmsghdr __user *)ptr;
-}
+		वापस शून्य;
+	वापस (काष्ठा compat_cmsghdr __user *)ptr;
+पूर्ण
 
 /* There is a lot of hair here because the alignment rules (and
- * thus placement) of cmsg headers and length are different for
+ * thus placement) of cmsg headers and length are dअगरferent क्रम
  * 32-bit apps.  -DaveM
  */
-int cmsghdr_from_user_compat_to_kern(struct msghdr *kmsg, struct sock *sk,
-			       unsigned char *stackbuf, int stackbuf_size)
-{
-	struct compat_cmsghdr __user *ucmsg;
-	struct cmsghdr *kcmsg, *kcmsg_base;
-	compat_size_t ucmlen;
-	__kernel_size_t kcmlen, tmp;
-	int err = -EFAULT;
+पूर्णांक cmsghdr_from_user_compat_to_kern(काष्ठा msghdr *kmsg, काष्ठा sock *sk,
+			       अचिन्हित अक्षर *stackbuf, पूर्णांक stackbuf_size)
+अणु
+	काष्ठा compat_cmsghdr __user *ucmsg;
+	काष्ठा cmsghdr *kcmsg, *kcmsg_base;
+	compat_माप_प्रकार ucmlen;
+	__kernel_माप_प्रकार kcmlen, पंचांगp;
+	पूर्णांक err = -EFAULT;
 
-	BUILD_BUG_ON(sizeof(struct compat_cmsghdr) !=
-		     CMSG_COMPAT_ALIGN(sizeof(struct compat_cmsghdr)));
+	BUILD_BUG_ON(माप(काष्ठा compat_cmsghdr) !=
+		     CMSG_COMPAT_ALIGN(माप(काष्ठा compat_cmsghdr)));
 
 	kcmlen = 0;
-	kcmsg_base = kcmsg = (struct cmsghdr *)stackbuf;
+	kcmsg_base = kcmsg = (काष्ठा cmsghdr *)stackbuf;
 	ucmsg = CMSG_COMPAT_FIRSTHDR(kmsg);
-	while (ucmsg != NULL) {
-		if (get_user(ucmlen, &ucmsg->cmsg_len))
-			return -EFAULT;
+	जबतक (ucmsg != शून्य) अणु
+		अगर (get_user(ucmlen, &ucmsg->cmsg_len))
+			वापस -EFAULT;
 
 		/* Catch bogons. */
-		if (!CMSG_COMPAT_OK(ucmlen, ucmsg, kmsg))
-			return -EINVAL;
+		अगर (!CMSG_COMPAT_OK(ucmlen, ucmsg, kmsg))
+			वापस -EINVAL;
 
-		tmp = ((ucmlen - sizeof(*ucmsg)) + sizeof(struct cmsghdr));
-		tmp = CMSG_ALIGN(tmp);
-		kcmlen += tmp;
+		पंचांगp = ((ucmlen - माप(*ucmsg)) + माप(काष्ठा cmsghdr));
+		पंचांगp = CMSG_ALIGN(पंचांगp);
+		kcmlen += पंचांगp;
 		ucmsg = cmsg_compat_nxthdr(kmsg, ucmsg, ucmlen);
-	}
-	if (kcmlen == 0)
-		return -EINVAL;
+	पूर्ण
+	अगर (kcmlen == 0)
+		वापस -EINVAL;
 
 	/* The kcmlen holds the 64-bit version of the control length.
-	 * It may not be modified as we do not stick it into the kmsg
+	 * It may not be modअगरied as we करो not stick it पूर्णांकo the kmsg
 	 * until we have successfully copied over all of the data
 	 * from the user.
 	 */
-	if (kcmlen > stackbuf_size)
-		kcmsg_base = kcmsg = sock_kmalloc(sk, kcmlen, GFP_KERNEL);
-	if (kcmsg == NULL)
-		return -ENOMEM;
+	अगर (kcmlen > stackbuf_size)
+		kcmsg_base = kcmsg = sock_kदो_स्मृति(sk, kcmlen, GFP_KERNEL);
+	अगर (kcmsg == शून्य)
+		वापस -ENOMEM;
 
 	/* Now copy them over neatly. */
-	memset(kcmsg, 0, kcmlen);
+	स_रखो(kcmsg, 0, kcmlen);
 	ucmsg = CMSG_COMPAT_FIRSTHDR(kmsg);
-	while (ucmsg != NULL) {
-		struct compat_cmsghdr cmsg;
-		if (copy_from_user(&cmsg, ucmsg, sizeof(cmsg)))
-			goto Efault;
-		if (!CMSG_COMPAT_OK(cmsg.cmsg_len, ucmsg, kmsg))
-			goto Einval;
-		tmp = ((cmsg.cmsg_len - sizeof(*ucmsg)) + sizeof(struct cmsghdr));
-		if ((char *)kcmsg_base + kcmlen - (char *)kcmsg < CMSG_ALIGN(tmp))
-			goto Einval;
-		kcmsg->cmsg_len = tmp;
+	जबतक (ucmsg != शून्य) अणु
+		काष्ठा compat_cmsghdr cmsg;
+		अगर (copy_from_user(&cmsg, ucmsg, माप(cmsg)))
+			जाओ Efault;
+		अगर (!CMSG_COMPAT_OK(cmsg.cmsg_len, ucmsg, kmsg))
+			जाओ Einval;
+		पंचांगp = ((cmsg.cmsg_len - माप(*ucmsg)) + माप(काष्ठा cmsghdr));
+		अगर ((अक्षर *)kcmsg_base + kcmlen - (अक्षर *)kcmsg < CMSG_ALIGN(पंचांगp))
+			जाओ Einval;
+		kcmsg->cmsg_len = पंचांगp;
 		kcmsg->cmsg_level = cmsg.cmsg_level;
 		kcmsg->cmsg_type = cmsg.cmsg_type;
-		tmp = CMSG_ALIGN(tmp);
-		if (copy_from_user(CMSG_DATA(kcmsg),
+		पंचांगp = CMSG_ALIGN(पंचांगp);
+		अगर (copy_from_user(CMSG_DATA(kcmsg),
 				   CMSG_COMPAT_DATA(ucmsg),
-				   (cmsg.cmsg_len - sizeof(*ucmsg))))
-			goto Efault;
+				   (cmsg.cmsg_len - माप(*ucmsg))))
+			जाओ Efault;
 
 		/* Advance. */
-		kcmsg = (struct cmsghdr *)((char *)kcmsg + tmp);
+		kcmsg = (काष्ठा cmsghdr *)((अक्षर *)kcmsg + पंचांगp);
 		ucmsg = cmsg_compat_nxthdr(kmsg, ucmsg, cmsg.cmsg_len);
-	}
+	पूर्ण
 
 	/*
 	 * check the length of messages copied in is the same as the
 	 * what we get from the first loop
 	 */
-	if ((char *)kcmsg - (char *)kcmsg_base != kcmlen)
-		goto Einval;
+	अगर ((अक्षर *)kcmsg - (अक्षर *)kcmsg_base != kcmlen)
+		जाओ Einval;
 
-	/* Ok, looks like we made it.  Hook it up and return success. */
+	/* Ok, looks like we made it.  Hook it up and वापस success. */
 	kmsg->msg_control = kcmsg_base;
 	kmsg->msg_controllen = kcmlen;
-	return 0;
+	वापस 0;
 
 Einval:
 	err = -EINVAL;
 Efault:
-	if (kcmsg_base != (struct cmsghdr *)stackbuf)
-		sock_kfree_s(sk, kcmsg_base, kcmlen);
-	return err;
-}
+	अगर (kcmsg_base != (काष्ठा cmsghdr *)stackbuf)
+		sock_kमुक्त_s(sk, kcmsg_base, kcmlen);
+	वापस err;
+पूर्ण
 
-int put_cmsg_compat(struct msghdr *kmsg, int level, int type, int len, void *data)
-{
-	struct compat_cmsghdr __user *cm = (struct compat_cmsghdr __user *) kmsg->msg_control;
-	struct compat_cmsghdr cmhdr;
-	struct old_timeval32 ctv;
-	struct old_timespec32 cts[3];
-	int cmlen;
+पूर्णांक put_cmsg_compat(काष्ठा msghdr *kmsg, पूर्णांक level, पूर्णांक type, पूर्णांक len, व्योम *data)
+अणु
+	काष्ठा compat_cmsghdr __user *cm = (काष्ठा compat_cmsghdr __user *) kmsg->msg_control;
+	काष्ठा compat_cmsghdr cmhdr;
+	काष्ठा old_समयval32 ctv;
+	काष्ठा old_बारpec32 cts[3];
+	पूर्णांक cmlen;
 
-	if (cm == NULL || kmsg->msg_controllen < sizeof(*cm)) {
+	अगर (cm == शून्य || kmsg->msg_controllen < माप(*cm)) अणु
 		kmsg->msg_flags |= MSG_CTRUNC;
-		return 0; /* XXX: return error? check spec. */
-	}
+		वापस 0; /* XXX: वापस error? check spec. */
+	पूर्ण
 
-	if (!COMPAT_USE_64BIT_TIME) {
-		if (level == SOL_SOCKET && type == SO_TIMESTAMP_OLD) {
-			struct __kernel_old_timeval *tv = (struct __kernel_old_timeval *)data;
+	अगर (!COMPAT_USE_64BIT_TIME) अणु
+		अगर (level == SOL_SOCKET && type == SO_TIMESTAMP_OLD) अणु
+			काष्ठा __kernel_old_समयval *tv = (काष्ठा __kernel_old_समयval *)data;
 			ctv.tv_sec = tv->tv_sec;
 			ctv.tv_usec = tv->tv_usec;
 			data = &ctv;
-			len = sizeof(ctv);
-		}
-		if (level == SOL_SOCKET &&
-		    (type == SO_TIMESTAMPNS_OLD || type == SO_TIMESTAMPING_OLD)) {
-			int count = type == SO_TIMESTAMPNS_OLD ? 1 : 3;
-			int i;
-			struct __kernel_old_timespec *ts = data;
-			for (i = 0; i < count; i++) {
+			len = माप(ctv);
+		पूर्ण
+		अगर (level == SOL_SOCKET &&
+		    (type == SO_TIMESTAMPNS_OLD || type == SO_TIMESTAMPING_OLD)) अणु
+			पूर्णांक count = type == SO_TIMESTAMPNS_OLD ? 1 : 3;
+			पूर्णांक i;
+			काष्ठा __kernel_old_बारpec *ts = data;
+			क्रम (i = 0; i < count; i++) अणु
 				cts[i].tv_sec = ts[i].tv_sec;
 				cts[i].tv_nsec = ts[i].tv_nsec;
-			}
+			पूर्ण
 			data = &cts;
-			len = sizeof(cts[0]) * count;
-		}
-	}
+			len = माप(cts[0]) * count;
+		पूर्ण
+	पूर्ण
 
 	cmlen = CMSG_COMPAT_LEN(len);
-	if (kmsg->msg_controllen < cmlen) {
+	अगर (kmsg->msg_controllen < cmlen) अणु
 		kmsg->msg_flags |= MSG_CTRUNC;
 		cmlen = kmsg->msg_controllen;
-	}
+	पूर्ण
 	cmhdr.cmsg_level = level;
 	cmhdr.cmsg_type = type;
 	cmhdr.cmsg_len = cmlen;
 
-	if (copy_to_user(cm, &cmhdr, sizeof cmhdr))
-		return -EFAULT;
-	if (copy_to_user(CMSG_COMPAT_DATA(cm), data, cmlen - sizeof(struct compat_cmsghdr)))
-		return -EFAULT;
+	अगर (copy_to_user(cm, &cmhdr, माप cmhdr))
+		वापस -EFAULT;
+	अगर (copy_to_user(CMSG_COMPAT_DATA(cm), data, cmlen - माप(काष्ठा compat_cmsghdr)))
+		वापस -EFAULT;
 	cmlen = CMSG_COMPAT_SPACE(len);
-	if (kmsg->msg_controllen < cmlen)
+	अगर (kmsg->msg_controllen < cmlen)
 		cmlen = kmsg->msg_controllen;
 	kmsg->msg_control += cmlen;
 	kmsg->msg_controllen -= cmlen;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scm_max_fds_compat(struct msghdr *msg)
-{
-	if (msg->msg_controllen <= sizeof(struct compat_cmsghdr))
-		return 0;
-	return (msg->msg_controllen - sizeof(struct compat_cmsghdr)) / sizeof(int);
-}
+अटल पूर्णांक scm_max_fds_compat(काष्ठा msghdr *msg)
+अणु
+	अगर (msg->msg_controllen <= माप(काष्ठा compat_cmsghdr))
+		वापस 0;
+	वापस (msg->msg_controllen - माप(काष्ठा compat_cmsghdr)) / माप(पूर्णांक);
+पूर्ण
 
-void scm_detach_fds_compat(struct msghdr *msg, struct scm_cookie *scm)
-{
-	struct compat_cmsghdr __user *cm =
-		(struct compat_cmsghdr __user *)msg->msg_control;
-	unsigned int o_flags = (msg->msg_flags & MSG_CMSG_CLOEXEC) ? O_CLOEXEC : 0;
-	int fdmax = min_t(int, scm_max_fds_compat(msg), scm->fp->count);
-	int __user *cmsg_data = CMSG_COMPAT_DATA(cm);
-	int err = 0, i;
+व्योम scm_detach_fds_compat(काष्ठा msghdr *msg, काष्ठा scm_cookie *scm)
+अणु
+	काष्ठा compat_cmsghdr __user *cm =
+		(काष्ठा compat_cmsghdr __user *)msg->msg_control;
+	अचिन्हित पूर्णांक o_flags = (msg->msg_flags & MSG_CMSG_CLOEXEC) ? O_CLOEXEC : 0;
+	पूर्णांक fdmax = min_t(पूर्णांक, scm_max_fds_compat(msg), scm->fp->count);
+	पूर्णांक __user *cmsg_data = CMSG_COMPAT_DATA(cm);
+	पूर्णांक err = 0, i;
 
-	for (i = 0; i < fdmax; i++) {
+	क्रम (i = 0; i < fdmax; i++) अणु
 		err = receive_fd_user(scm->fp->fp[i], cmsg_data + i, o_flags);
-		if (err < 0)
-			break;
-	}
+		अगर (err < 0)
+			अवरोध;
+	पूर्ण
 
-	if (i > 0) {
-		int cmlen = CMSG_COMPAT_LEN(i * sizeof(int));
+	अगर (i > 0) अणु
+		पूर्णांक cmlen = CMSG_COMPAT_LEN(i * माप(पूर्णांक));
 
 		err = put_user(SOL_SOCKET, &cm->cmsg_level);
-		if (!err)
+		अगर (!err)
 			err = put_user(SCM_RIGHTS, &cm->cmsg_type);
-		if (!err)
+		अगर (!err)
 			err = put_user(cmlen, &cm->cmsg_len);
-		if (!err) {
-			cmlen = CMSG_COMPAT_SPACE(i * sizeof(int));
-			if (msg->msg_controllen < cmlen)
+		अगर (!err) अणु
+			cmlen = CMSG_COMPAT_SPACE(i * माप(पूर्णांक));
+			अगर (msg->msg_controllen < cmlen)
 				cmlen = msg->msg_controllen;
 			msg->msg_control += cmlen;
 			msg->msg_controllen -= cmlen;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (i < scm->fp->count || (scm->fp->count && fdmax <= 0))
+	अगर (i < scm->fp->count || (scm->fp->count && fdmax <= 0))
 		msg->msg_flags |= MSG_CTRUNC;
 
 	/*
 	 * All of the files that fit in the message have had their usage counts
-	 * incremented, so we just free the list.
+	 * incremented, so we just मुक्त the list.
 	 */
 	__scm_destroy(scm);
-}
+पूर्ण
 
-/* Argument list sizes for compat_sys_socketcall */
-#define AL(x) ((x) * sizeof(u32))
-static unsigned char nas[21] = {
+/* Argument list sizes क्रम compat_sys_socketcall */
+#घोषणा AL(x) ((x) * माप(u32))
+अटल अचिन्हित अक्षर nas[21] = अणु
 	AL(0), AL(3), AL(3), AL(3), AL(2), AL(3),
 	AL(3), AL(3), AL(4), AL(4), AL(4), AL(6),
 	AL(6), AL(2), AL(5), AL(5), AL(3), AL(3),
 	AL(4), AL(5), AL(4)
-};
-#undef AL
+पूर्ण;
+#अघोषित AL
 
-static inline long __compat_sys_sendmsg(int fd,
-					struct compat_msghdr __user *msg,
-					unsigned int flags)
-{
-	return __sys_sendmsg(fd, (struct user_msghdr __user *)msg,
+अटल अंतरभूत दीर्घ __compat_sys_sendmsg(पूर्णांक fd,
+					काष्ठा compat_msghdr __user *msg,
+					अचिन्हित पूर्णांक flags)
+अणु
+	वापस __sys_sendmsg(fd, (काष्ठा user_msghdr __user *)msg,
 			     flags | MSG_CMSG_COMPAT, false);
-}
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE3(sendmsg, int, fd, struct compat_msghdr __user *, msg,
-		       unsigned int, flags)
-{
-	return __compat_sys_sendmsg(fd, msg, flags);
-}
+COMPAT_SYSCALL_DEFINE3(sendmsg, पूर्णांक, fd, काष्ठा compat_msghdr __user *, msg,
+		       अचिन्हित पूर्णांक, flags)
+अणु
+	वापस __compat_sys_sendmsg(fd, msg, flags);
+पूर्ण
 
-static inline long __compat_sys_sendmmsg(int fd,
-					 struct compat_mmsghdr __user *mmsg,
-					 unsigned int vlen, unsigned int flags)
-{
-	return __sys_sendmmsg(fd, (struct mmsghdr __user *)mmsg, vlen,
+अटल अंतरभूत दीर्घ __compat_sys_sendmmsg(पूर्णांक fd,
+					 काष्ठा compat_mmsghdr __user *mmsg,
+					 अचिन्हित पूर्णांक vlen, अचिन्हित पूर्णांक flags)
+अणु
+	वापस __sys_sendmmsg(fd, (काष्ठा mmsghdr __user *)mmsg, vlen,
 			      flags | MSG_CMSG_COMPAT, false);
-}
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE4(sendmmsg, int, fd, struct compat_mmsghdr __user *, mmsg,
-		       unsigned int, vlen, unsigned int, flags)
-{
-	return __compat_sys_sendmmsg(fd, mmsg, vlen, flags);
-}
+COMPAT_SYSCALL_DEFINE4(sendmmsg, पूर्णांक, fd, काष्ठा compat_mmsghdr __user *, mmsg,
+		       अचिन्हित पूर्णांक, vlen, अचिन्हित पूर्णांक, flags)
+अणु
+	वापस __compat_sys_sendmmsg(fd, mmsg, vlen, flags);
+पूर्ण
 
-static inline long __compat_sys_recvmsg(int fd,
-					struct compat_msghdr __user *msg,
-					unsigned int flags)
-{
-	return __sys_recvmsg(fd, (struct user_msghdr __user *)msg,
+अटल अंतरभूत दीर्घ __compat_sys_recvmsg(पूर्णांक fd,
+					काष्ठा compat_msghdr __user *msg,
+					अचिन्हित पूर्णांक flags)
+अणु
+	वापस __sys_recvmsg(fd, (काष्ठा user_msghdr __user *)msg,
 			     flags | MSG_CMSG_COMPAT, false);
-}
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE3(recvmsg, int, fd, struct compat_msghdr __user *, msg,
-		       unsigned int, flags)
-{
-	return __compat_sys_recvmsg(fd, msg, flags);
-}
+COMPAT_SYSCALL_DEFINE3(recvmsg, पूर्णांक, fd, काष्ठा compat_msghdr __user *, msg,
+		       अचिन्हित पूर्णांक, flags)
+अणु
+	वापस __compat_sys_recvmsg(fd, msg, flags);
+पूर्ण
 
-static inline long __compat_sys_recvfrom(int fd, void __user *buf,
-					 compat_size_t len, unsigned int flags,
-					 struct sockaddr __user *addr,
-					 int __user *addrlen)
-{
-	return __sys_recvfrom(fd, buf, len, flags | MSG_CMSG_COMPAT, addr,
+अटल अंतरभूत दीर्घ __compat_sys_recvfrom(पूर्णांक fd, व्योम __user *buf,
+					 compat_माप_प्रकार len, अचिन्हित पूर्णांक flags,
+					 काष्ठा sockaddr __user *addr,
+					 पूर्णांक __user *addrlen)
+अणु
+	वापस __sys_recvfrom(fd, buf, len, flags | MSG_CMSG_COMPAT, addr,
 			      addrlen);
-}
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE4(recv, int, fd, void __user *, buf, compat_size_t, len, unsigned int, flags)
-{
-	return __compat_sys_recvfrom(fd, buf, len, flags, NULL, NULL);
-}
+COMPAT_SYSCALL_DEFINE4(recv, पूर्णांक, fd, व्योम __user *, buf, compat_माप_प्रकार, len, अचिन्हित पूर्णांक, flags)
+अणु
+	वापस __compat_sys_recvfrom(fd, buf, len, flags, शून्य, शून्य);
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, buf, compat_size_t, len,
-		       unsigned int, flags, struct sockaddr __user *, addr,
-		       int __user *, addrlen)
-{
-	return __compat_sys_recvfrom(fd, buf, len, flags, addr, addrlen);
-}
+COMPAT_SYSCALL_DEFINE6(recvfrom, पूर्णांक, fd, व्योम __user *, buf, compat_माप_प्रकार, len,
+		       अचिन्हित पूर्णांक, flags, काष्ठा sockaddr __user *, addr,
+		       पूर्णांक __user *, addrlen)
+अणु
+	वापस __compat_sys_recvfrom(fd, buf, len, flags, addr, addrlen);
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE5(recvmmsg_time64, int, fd, struct compat_mmsghdr __user *, mmsg,
-		       unsigned int, vlen, unsigned int, flags,
-		       struct __kernel_timespec __user *, timeout)
-{
-	return __sys_recvmmsg(fd, (struct mmsghdr __user *)mmsg, vlen,
-			      flags | MSG_CMSG_COMPAT, timeout, NULL);
-}
+COMPAT_SYSCALL_DEFINE5(recvmmsg_समय64, पूर्णांक, fd, काष्ठा compat_mmsghdr __user *, mmsg,
+		       अचिन्हित पूर्णांक, vlen, अचिन्हित पूर्णांक, flags,
+		       काष्ठा __kernel_बारpec __user *, समयout)
+अणु
+	वापस __sys_recvmmsg(fd, (काष्ठा mmsghdr __user *)mmsg, vlen,
+			      flags | MSG_CMSG_COMPAT, समयout, शून्य);
+पूर्ण
 
-#ifdef CONFIG_COMPAT_32BIT_TIME
-COMPAT_SYSCALL_DEFINE5(recvmmsg_time32, int, fd, struct compat_mmsghdr __user *, mmsg,
-		       unsigned int, vlen, unsigned int, flags,
-		       struct old_timespec32 __user *, timeout)
-{
-	return __sys_recvmmsg(fd, (struct mmsghdr __user *)mmsg, vlen,
-			      flags | MSG_CMSG_COMPAT, NULL, timeout);
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
+COMPAT_SYSCALL_DEFINE5(recvmmsg_समय32, पूर्णांक, fd, काष्ठा compat_mmsghdr __user *, mmsg,
+		       अचिन्हित पूर्णांक, vlen, अचिन्हित पूर्णांक, flags,
+		       काष्ठा old_बारpec32 __user *, समयout)
+अणु
+	वापस __sys_recvmmsg(fd, (काष्ठा mmsghdr __user *)mmsg, vlen,
+			      flags | MSG_CMSG_COMPAT, शून्य, समयout);
+पूर्ण
+#पूर्ण_अगर
 
-COMPAT_SYSCALL_DEFINE2(socketcall, int, call, u32 __user *, args)
-{
+COMPAT_SYSCALL_DEFINE2(socketcall, पूर्णांक, call, u32 __user *, args)
+अणु
 	u32 a[AUDITSC_ARGS];
-	unsigned int len;
+	अचिन्हित पूर्णांक len;
 	u32 a0, a1;
-	int ret;
+	पूर्णांक ret;
 
-	if (call < SYS_SOCKET || call > SYS_SENDMMSG)
-		return -EINVAL;
+	अगर (call < SYS_SOCKET || call > SYS_SENDMMSG)
+		वापस -EINVAL;
 	len = nas[call];
-	if (len > sizeof(a))
-		return -EINVAL;
+	अगर (len > माप(a))
+		वापस -EINVAL;
 
-	if (copy_from_user(a, args, len))
-		return -EFAULT;
+	अगर (copy_from_user(a, args, len))
+		वापस -EFAULT;
 
-	ret = audit_socketcall_compat(len / sizeof(a[0]), a);
-	if (ret)
-		return ret;
+	ret = audit_socketcall_compat(len / माप(a[0]), a);
+	अगर (ret)
+		वापस ret;
 
 	a0 = a[0];
 	a1 = a[1];
 
-	switch (call) {
-	case SYS_SOCKET:
+	चयन (call) अणु
+	हाल SYS_SOCKET:
 		ret = __sys_socket(a0, a1, a[2]);
-		break;
-	case SYS_BIND:
+		अवरोध;
+	हाल SYS_BIND:
 		ret = __sys_bind(a0, compat_ptr(a1), a[2]);
-		break;
-	case SYS_CONNECT:
+		अवरोध;
+	हाल SYS_CONNECT:
 		ret = __sys_connect(a0, compat_ptr(a1), a[2]);
-		break;
-	case SYS_LISTEN:
+		अवरोध;
+	हाल SYS_LISTEN:
 		ret = __sys_listen(a0, a1);
-		break;
-	case SYS_ACCEPT:
+		अवरोध;
+	हाल SYS_ACCEPT:
 		ret = __sys_accept4(a0, compat_ptr(a1), compat_ptr(a[2]), 0);
-		break;
-	case SYS_GETSOCKNAME:
-		ret = __sys_getsockname(a0, compat_ptr(a1), compat_ptr(a[2]));
-		break;
-	case SYS_GETPEERNAME:
+		अवरोध;
+	हाल SYS_GETSOCKNAME:
+		ret = __sys_माला_लोockname(a0, compat_ptr(a1), compat_ptr(a[2]));
+		अवरोध;
+	हाल SYS_GETPEERNAME:
 		ret = __sys_getpeername(a0, compat_ptr(a1), compat_ptr(a[2]));
-		break;
-	case SYS_SOCKETPAIR:
+		अवरोध;
+	हाल SYS_SOCKETPAIR:
 		ret = __sys_socketpair(a0, a1, a[2], compat_ptr(a[3]));
-		break;
-	case SYS_SEND:
-		ret = __sys_sendto(a0, compat_ptr(a1), a[2], a[3], NULL, 0);
-		break;
-	case SYS_SENDTO:
+		अवरोध;
+	हाल SYS_SEND:
+		ret = __sys_sendto(a0, compat_ptr(a1), a[2], a[3], शून्य, 0);
+		अवरोध;
+	हाल SYS_SENDTO:
 		ret = __sys_sendto(a0, compat_ptr(a1), a[2], a[3],
 				   compat_ptr(a[4]), a[5]);
-		break;
-	case SYS_RECV:
+		अवरोध;
+	हाल SYS_RECV:
 		ret = __compat_sys_recvfrom(a0, compat_ptr(a1), a[2], a[3],
-					    NULL, NULL);
-		break;
-	case SYS_RECVFROM:
+					    शून्य, शून्य);
+		अवरोध;
+	हाल SYS_RECVFROM:
 		ret = __compat_sys_recvfrom(a0, compat_ptr(a1), a[2], a[3],
 					    compat_ptr(a[4]),
 					    compat_ptr(a[5]));
-		break;
-	case SYS_SHUTDOWN:
-		ret = __sys_shutdown(a0, a1);
-		break;
-	case SYS_SETSOCKOPT:
+		अवरोध;
+	हाल SYS_SHUTDOWN:
+		ret = __sys_shutकरोwn(a0, a1);
+		अवरोध;
+	हाल SYS_SETSOCKOPT:
 		ret = __sys_setsockopt(a0, a1, a[2], compat_ptr(a[3]), a[4]);
-		break;
-	case SYS_GETSOCKOPT:
-		ret = __sys_getsockopt(a0, a1, a[2], compat_ptr(a[3]),
+		अवरोध;
+	हाल SYS_GETSOCKOPT:
+		ret = __sys_माला_लोockopt(a0, a1, a[2], compat_ptr(a[3]),
 				       compat_ptr(a[4]));
-		break;
-	case SYS_SENDMSG:
+		अवरोध;
+	हाल SYS_SENDMSG:
 		ret = __compat_sys_sendmsg(a0, compat_ptr(a1), a[2]);
-		break;
-	case SYS_SENDMMSG:
+		अवरोध;
+	हाल SYS_SENDMMSG:
 		ret = __compat_sys_sendmmsg(a0, compat_ptr(a1), a[2], a[3]);
-		break;
-	case SYS_RECVMSG:
+		अवरोध;
+	हाल SYS_RECVMSG:
 		ret = __compat_sys_recvmsg(a0, compat_ptr(a1), a[2]);
-		break;
-	case SYS_RECVMMSG:
+		अवरोध;
+	हाल SYS_RECVMMSG:
 		ret = __sys_recvmmsg(a0, compat_ptr(a1), a[2],
-				     a[3] | MSG_CMSG_COMPAT, NULL,
+				     a[3] | MSG_CMSG_COMPAT, शून्य,
 				     compat_ptr(a[4]));
-		break;
-	case SYS_ACCEPT4:
+		अवरोध;
+	हाल SYS_ACCEPT4:
 		ret = __sys_accept4(a0, compat_ptr(a1), compat_ptr(a[2]), a[3]);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण

@@ -1,202 +1,203 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2012 Broadcom Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/jiffies.h>
-#include <linux/clockchips.h>
-#include <linux/types.h>
-#include <linux/clk.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/types.h>
+#समावेश <linux/clk.h>
 
-#include <linux/io.h>
+#समावेश <linux/पन.स>
 
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
 
-#define KONA_GPTIMER_STCS_OFFSET			0x00000000
-#define KONA_GPTIMER_STCLO_OFFSET			0x00000004
-#define KONA_GPTIMER_STCHI_OFFSET			0x00000008
-#define KONA_GPTIMER_STCM0_OFFSET			0x0000000C
+#घोषणा KONA_GPTIMER_STCS_OFFSET			0x00000000
+#घोषणा KONA_GPTIMER_STCLO_OFFSET			0x00000004
+#घोषणा KONA_GPTIMER_STCHI_OFFSET			0x00000008
+#घोषणा KONA_GPTIMER_STCM0_OFFSET			0x0000000C
 
-#define KONA_GPTIMER_STCS_TIMER_MATCH_SHIFT		0
-#define KONA_GPTIMER_STCS_COMPARE_ENABLE_SHIFT		4
+#घोषणा KONA_GPTIMER_STCS_TIMER_MATCH_SHIFT		0
+#घोषणा KONA_GPTIMER_STCS_COMPARE_ENABLE_SHIFT		4
 
-struct kona_bcm_timers {
-	int tmr_irq;
-	void __iomem *tmr_regs;
-};
+काष्ठा kona_bcm_समयrs अणु
+	पूर्णांक पंचांगr_irq;
+	व्योम __iomem *पंचांगr_regs;
+पूर्ण;
 
-static struct kona_bcm_timers timers;
+अटल काष्ठा kona_bcm_समयrs समयrs;
 
-static u32 arch_timer_rate;
+अटल u32 arch_समयr_rate;
 
 /*
- * We use the peripheral timers for system tick, the cpu global timer for
+ * We use the peripheral समयrs क्रम प्रणाली tick, the cpu global समयr क्रम
  * profile tick
  */
-static void kona_timer_disable_and_clear(void __iomem *base)
-{
-	uint32_t reg;
+अटल व्योम kona_समयr_disable_and_clear(व्योम __iomem *base)
+अणु
+	uपूर्णांक32_t reg;
 
 	/*
-	 * clear and disable interrupts
-	 * We are using compare/match register 0 for our system interrupts
+	 * clear and disable पूर्णांकerrupts
+	 * We are using compare/match रेजिस्टर 0 क्रम our प्रणाली पूर्णांकerrupts
 	 */
-	reg = readl(base + KONA_GPTIMER_STCS_OFFSET);
+	reg = पढ़ोl(base + KONA_GPTIMER_STCS_OFFSET);
 
-	/* Clear compare (0) interrupt */
+	/* Clear compare (0) पूर्णांकerrupt */
 	reg |= 1 << KONA_GPTIMER_STCS_TIMER_MATCH_SHIFT;
 	/* disable compare */
 	reg &= ~(1 << KONA_GPTIMER_STCS_COMPARE_ENABLE_SHIFT);
 
-	writel(reg, base + KONA_GPTIMER_STCS_OFFSET);
+	ग_लिखोl(reg, base + KONA_GPTIMER_STCS_OFFSET);
 
-}
+पूर्ण
 
-static int
-kona_timer_get_counter(void __iomem *timer_base, uint32_t *msw, uint32_t *lsw)
-{
-	int loop_limit = 3;
+अटल पूर्णांक
+kona_समयr_get_counter(व्योम __iomem *समयr_base, uपूर्णांक32_t *msw, uपूर्णांक32_t *lsw)
+अणु
+	पूर्णांक loop_limit = 3;
 
 	/*
-	 * Read 64-bit free running counter
+	 * Read 64-bit मुक्त running counter
 	 * 1. Read hi-word
 	 * 2. Read low-word
 	 * 3. Read hi-word again
 	 * 4.1
-	 *      if new hi-word is not equal to previously read hi-word, then
+	 *      अगर new hi-word is not equal to previously पढ़ो hi-word, then
 	 *      start from #1
 	 * 4.2
-	 *      if new hi-word is equal to previously read hi-word then stop.
+	 *      अगर new hi-word is equal to previously पढ़ो hi-word then stop.
 	 */
 
-	do {
-		*msw = readl(timer_base + KONA_GPTIMER_STCHI_OFFSET);
-		*lsw = readl(timer_base + KONA_GPTIMER_STCLO_OFFSET);
-		if (*msw == readl(timer_base + KONA_GPTIMER_STCHI_OFFSET))
-			break;
-	} while (--loop_limit);
-	if (!loop_limit) {
+	करो अणु
+		*msw = पढ़ोl(समयr_base + KONA_GPTIMER_STCHI_OFFSET);
+		*lsw = पढ़ोl(समयr_base + KONA_GPTIMER_STCLO_OFFSET);
+		अगर (*msw == पढ़ोl(समयr_base + KONA_GPTIMER_STCHI_OFFSET))
+			अवरोध;
+	पूर्ण जबतक (--loop_limit);
+	अगर (!loop_limit) अणु
 		pr_err("bcm_kona_timer: getting counter failed.\n");
 		pr_err(" Timer will be impacted\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kona_timer_set_next_event(unsigned long clc,
-				  struct clock_event_device *unused)
-{
+अटल पूर्णांक kona_समयr_set_next_event(अचिन्हित दीर्घ clc,
+				  काष्ठा घड़ी_event_device *unused)
+अणु
 	/*
-	 * timer (0) is disabled by the timer interrupt already
+	 * समयr (0) is disabled by the समयr पूर्णांकerrupt alपढ़ोy
 	 * so, here we reload the next event value and re-enable
-	 * the timer.
+	 * the समयr.
 	 *
-	 * This way, we are potentially losing the time between
-	 * timer-interrupt->set_next_event. CPU local timers, when
+	 * This way, we are potentially losing the समय between
+	 * समयr-पूर्णांकerrupt->set_next_event. CPU local समयrs, when
 	 * they come in should get rid of skew.
 	 */
 
-	uint32_t lsw, msw;
-	uint32_t reg;
-	int ret;
+	uपूर्णांक32_t lsw, msw;
+	uपूर्णांक32_t reg;
+	पूर्णांक ret;
 
-	ret = kona_timer_get_counter(timers.tmr_regs, &msw, &lsw);
-	if (ret)
-		return ret;
+	ret = kona_समयr_get_counter(समयrs.पंचांगr_regs, &msw, &lsw);
+	अगर (ret)
+		वापस ret;
 
 	/* Load the "next" event tick value */
-	writel(lsw + clc, timers.tmr_regs + KONA_GPTIMER_STCM0_OFFSET);
+	ग_लिखोl(lsw + clc, समयrs.पंचांगr_regs + KONA_GPTIMER_STCM0_OFFSET);
 
 	/* Enable compare */
-	reg = readl(timers.tmr_regs + KONA_GPTIMER_STCS_OFFSET);
+	reg = पढ़ोl(समयrs.पंचांगr_regs + KONA_GPTIMER_STCS_OFFSET);
 	reg |= (1 << KONA_GPTIMER_STCS_COMPARE_ENABLE_SHIFT);
-	writel(reg, timers.tmr_regs + KONA_GPTIMER_STCS_OFFSET);
+	ग_लिखोl(reg, समयrs.पंचांगr_regs + KONA_GPTIMER_STCS_OFFSET);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kona_timer_shutdown(struct clock_event_device *evt)
-{
-	kona_timer_disable_and_clear(timers.tmr_regs);
-	return 0;
-}
+अटल पूर्णांक kona_समयr_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	kona_समयr_disable_and_clear(समयrs.पंचांगr_regs);
+	वापस 0;
+पूर्ण
 
-static struct clock_event_device kona_clockevent_timer = {
+अटल काष्ठा घड़ी_event_device kona_घड़ीevent_समयr = अणु
 	.name = "timer 1",
 	.features = CLOCK_EVT_FEAT_ONESHOT,
-	.set_next_event = kona_timer_set_next_event,
-	.set_state_shutdown = kona_timer_shutdown,
-	.tick_resume = kona_timer_shutdown,
-};
+	.set_next_event = kona_समयr_set_next_event,
+	.set_state_shutकरोwn = kona_समयr_shutकरोwn,
+	.tick_resume = kona_समयr_shutकरोwn,
+पूर्ण;
 
-static void __init kona_timer_clockevents_init(void)
-{
-	kona_clockevent_timer.cpumask = cpumask_of(0);
-	clockevents_config_and_register(&kona_clockevent_timer,
-		arch_timer_rate, 6, 0xffffffff);
-}
+अटल व्योम __init kona_समयr_घड़ीevents_init(व्योम)
+अणु
+	kona_घड़ीevent_समयr.cpumask = cpumask_of(0);
+	घड़ीevents_config_and_रेजिस्टर(&kona_घड़ीevent_समयr,
+		arch_समयr_rate, 6, 0xffffffff);
+पूर्ण
 
-static irqreturn_t kona_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = &kona_clockevent_timer;
+अटल irqवापस_t kona_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = &kona_घड़ीevent_समयr;
 
-	kona_timer_disable_and_clear(timers.tmr_regs);
+	kona_समयr_disable_and_clear(समयrs.पंचांगr_regs);
 	evt->event_handler(evt);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init kona_timer_init(struct device_node *node)
-{
+अटल पूर्णांक __init kona_समयr_init(काष्ठा device_node *node)
+अणु
 	u32 freq;
-	struct clk *external_clk;
+	काष्ठा clk *बाह्यal_clk;
 
-	external_clk = of_clk_get_by_name(node, NULL);
+	बाह्यal_clk = of_clk_get_by_name(node, शून्य);
 
-	if (!IS_ERR(external_clk)) {
-		arch_timer_rate = clk_get_rate(external_clk);
-		clk_prepare_enable(external_clk);
-	} else if (!of_property_read_u32(node, "clock-frequency", &freq)) {
-		arch_timer_rate = freq;
-	} else {
+	अगर (!IS_ERR(बाह्यal_clk)) अणु
+		arch_समयr_rate = clk_get_rate(बाह्यal_clk);
+		clk_prepare_enable(बाह्यal_clk);
+	पूर्ण अन्यथा अगर (!of_property_पढ़ो_u32(node, "clock-frequency", &freq)) अणु
+		arch_समयr_rate = freq;
+	पूर्ण अन्यथा अणु
 		pr_err("Kona Timer v1 unable to determine clock-frequency\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Setup IRQ numbers */
-	timers.tmr_irq = irq_of_parse_and_map(node, 0);
+	समयrs.पंचांगr_irq = irq_of_parse_and_map(node, 0);
 
 	/* Setup IO addresses */
-	timers.tmr_regs = of_iomap(node, 0);
+	समयrs.पंचांगr_regs = of_iomap(node, 0);
 
-	kona_timer_disable_and_clear(timers.tmr_regs);
+	kona_समयr_disable_and_clear(समयrs.पंचांगr_regs);
 
-	kona_timer_clockevents_init();
-	if (request_irq(timers.tmr_irq, kona_timer_interrupt, IRQF_TIMER,
-			"Kona Timer Tick", NULL))
+	kona_समयr_घड़ीevents_init();
+	अगर (request_irq(समयrs.पंचांगr_irq, kona_समयr_पूर्णांकerrupt, IRQF_TIMER,
+			"Kona Timer Tick", शून्य))
 		pr_err("%s: request_irq() failed\n", "Kona Timer Tick");
-	kona_timer_set_next_event((arch_timer_rate / HZ), NULL);
+	kona_समयr_set_next_event((arch_समयr_rate / HZ), शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-TIMER_OF_DECLARE(brcm_kona, "brcm,kona-timer", kona_timer_init);
+TIMER_OF_DECLARE(brcm_kona, "brcm,kona-timer", kona_समयr_init);
 /*
- * bcm,kona-timer is deprecated by brcm,kona-timer
- * being kept here for driver compatibility
+ * bcm,kona-समयr is deprecated by brcm,kona-समयr
+ * being kept here क्रम driver compatibility
  */
-TIMER_OF_DECLARE(bcm_kona, "bcm,kona-timer", kona_timer_init);
+TIMER_OF_DECLARE(bcm_kona, "bcm,kona-timer", kona_समयr_init);

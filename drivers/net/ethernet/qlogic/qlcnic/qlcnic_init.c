@@ -1,399 +1,400 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * QLogic qlcnic NIC Driver
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
-#include "qlcnic.h"
-#include "qlcnic_hw.h"
+#समावेश "qlcnic.h"
+#समावेश "qlcnic_hw.h"
 
-struct crb_addr_pair {
+काष्ठा crb_addr_pair अणु
 	u32 addr;
 	u32 data;
-};
+पूर्ण;
 
-#define QLCNIC_MAX_CRB_XFORM 60
-static unsigned int crb_addr_xform[QLCNIC_MAX_CRB_XFORM];
+#घोषणा QLCNIC_MAX_CRB_XFORM 60
+अटल अचिन्हित पूर्णांक crb_addr_xक्रमm[QLCNIC_MAX_CRB_XFORM];
 
-#define crb_addr_transform(name) \
-	(crb_addr_xform[QLCNIC_HW_PX_MAP_CRB_##name] = \
+#घोषणा crb_addr_transक्रमm(name) \
+	(crb_addr_xक्रमm[QLCNIC_HW_PX_MAP_CRB_##name] = \
 	QLCNIC_HW_CRB_HUB_AGT_ADR_##name << 20)
 
-#define QLCNIC_ADDR_ERROR (0xffffffff)
+#घोषणा QLCNIC_ADDR_ERROR (0xffffffff)
 
-static int
-qlcnic_check_fw_hearbeat(struct qlcnic_adapter *adapter);
+अटल पूर्णांक
+qlcnic_check_fw_hearbeat(काष्ठा qlcnic_adapter *adapter);
 
-static void crb_addr_transform_setup(void)
-{
-	crb_addr_transform(XDMA);
-	crb_addr_transform(TIMR);
-	crb_addr_transform(SRE);
-	crb_addr_transform(SQN3);
-	crb_addr_transform(SQN2);
-	crb_addr_transform(SQN1);
-	crb_addr_transform(SQN0);
-	crb_addr_transform(SQS3);
-	crb_addr_transform(SQS2);
-	crb_addr_transform(SQS1);
-	crb_addr_transform(SQS0);
-	crb_addr_transform(RPMX7);
-	crb_addr_transform(RPMX6);
-	crb_addr_transform(RPMX5);
-	crb_addr_transform(RPMX4);
-	crb_addr_transform(RPMX3);
-	crb_addr_transform(RPMX2);
-	crb_addr_transform(RPMX1);
-	crb_addr_transform(RPMX0);
-	crb_addr_transform(ROMUSB);
-	crb_addr_transform(SN);
-	crb_addr_transform(QMN);
-	crb_addr_transform(QMS);
-	crb_addr_transform(PGNI);
-	crb_addr_transform(PGND);
-	crb_addr_transform(PGN3);
-	crb_addr_transform(PGN2);
-	crb_addr_transform(PGN1);
-	crb_addr_transform(PGN0);
-	crb_addr_transform(PGSI);
-	crb_addr_transform(PGSD);
-	crb_addr_transform(PGS3);
-	crb_addr_transform(PGS2);
-	crb_addr_transform(PGS1);
-	crb_addr_transform(PGS0);
-	crb_addr_transform(PS);
-	crb_addr_transform(PH);
-	crb_addr_transform(NIU);
-	crb_addr_transform(I2Q);
-	crb_addr_transform(EG);
-	crb_addr_transform(MN);
-	crb_addr_transform(MS);
-	crb_addr_transform(CAS2);
-	crb_addr_transform(CAS1);
-	crb_addr_transform(CAS0);
-	crb_addr_transform(CAM);
-	crb_addr_transform(C2C1);
-	crb_addr_transform(C2C0);
-	crb_addr_transform(SMB);
-	crb_addr_transform(OCM0);
-	crb_addr_transform(I2C0);
-}
+अटल व्योम crb_addr_transक्रमm_setup(व्योम)
+अणु
+	crb_addr_transक्रमm(XDMA);
+	crb_addr_transक्रमm(TIMR);
+	crb_addr_transक्रमm(SRE);
+	crb_addr_transक्रमm(SQN3);
+	crb_addr_transक्रमm(SQN2);
+	crb_addr_transक्रमm(SQN1);
+	crb_addr_transक्रमm(SQN0);
+	crb_addr_transक्रमm(SQS3);
+	crb_addr_transक्रमm(SQS2);
+	crb_addr_transक्रमm(SQS1);
+	crb_addr_transक्रमm(SQS0);
+	crb_addr_transक्रमm(RPMX7);
+	crb_addr_transक्रमm(RPMX6);
+	crb_addr_transक्रमm(RPMX5);
+	crb_addr_transक्रमm(RPMX4);
+	crb_addr_transक्रमm(RPMX3);
+	crb_addr_transक्रमm(RPMX2);
+	crb_addr_transक्रमm(RPMX1);
+	crb_addr_transक्रमm(RPMX0);
+	crb_addr_transक्रमm(ROMUSB);
+	crb_addr_transक्रमm(SN);
+	crb_addr_transक्रमm(QMN);
+	crb_addr_transक्रमm(QMS);
+	crb_addr_transक्रमm(PGNI);
+	crb_addr_transक्रमm(PGND);
+	crb_addr_transक्रमm(PGN3);
+	crb_addr_transक्रमm(PGN2);
+	crb_addr_transक्रमm(PGN1);
+	crb_addr_transक्रमm(PGN0);
+	crb_addr_transक्रमm(PGSI);
+	crb_addr_transक्रमm(PGSD);
+	crb_addr_transक्रमm(PGS3);
+	crb_addr_transक्रमm(PGS2);
+	crb_addr_transक्रमm(PGS1);
+	crb_addr_transक्रमm(PGS0);
+	crb_addr_transक्रमm(PS);
+	crb_addr_transक्रमm(PH);
+	crb_addr_transक्रमm(NIU);
+	crb_addr_transक्रमm(I2Q);
+	crb_addr_transक्रमm(EG);
+	crb_addr_transक्रमm(MN);
+	crb_addr_transक्रमm(MS);
+	crb_addr_transक्रमm(CAS2);
+	crb_addr_transक्रमm(CAS1);
+	crb_addr_transक्रमm(CAS0);
+	crb_addr_transक्रमm(CAM);
+	crb_addr_transक्रमm(C2C1);
+	crb_addr_transक्रमm(C2C0);
+	crb_addr_transक्रमm(SMB);
+	crb_addr_transक्रमm(OCM0);
+	crb_addr_transक्रमm(I2C0);
+पूर्ण
 
-void qlcnic_release_rx_buffers(struct qlcnic_adapter *adapter)
-{
-	struct qlcnic_recv_context *recv_ctx;
-	struct qlcnic_host_rds_ring *rds_ring;
-	struct qlcnic_rx_buffer *rx_buf;
-	int i, ring;
+व्योम qlcnic_release_rx_buffers(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा qlcnic_recv_context *recv_ctx;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	काष्ठा qlcnic_rx_buffer *rx_buf;
+	पूर्णांक i, ring;
 
 	recv_ctx = adapter->recv_ctx;
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
 		rds_ring = &recv_ctx->rds_rings[ring];
-		for (i = 0; i < rds_ring->num_desc; ++i) {
+		क्रम (i = 0; i < rds_ring->num_desc; ++i) अणु
 			rx_buf = &(rds_ring->rx_buf_arr[i]);
-			if (rx_buf->skb == NULL)
-				continue;
+			अगर (rx_buf->skb == शून्य)
+				जारी;
 
 			pci_unmap_single(adapter->pdev,
 					rx_buf->dma,
 					rds_ring->dma_size,
 					PCI_DMA_FROMDEVICE);
 
-			dev_kfree_skb_any(rx_buf->skb);
-		}
-	}
-}
+			dev_kमुक्त_skb_any(rx_buf->skb);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void qlcnic_reset_rx_buffers_list(struct qlcnic_adapter *adapter)
-{
-	struct qlcnic_recv_context *recv_ctx;
-	struct qlcnic_host_rds_ring *rds_ring;
-	struct qlcnic_rx_buffer *rx_buf;
-	int i, ring;
+व्योम qlcnic_reset_rx_buffers_list(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा qlcnic_recv_context *recv_ctx;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	काष्ठा qlcnic_rx_buffer *rx_buf;
+	पूर्णांक i, ring;
 
 	recv_ctx = adapter->recv_ctx;
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
 		rds_ring = &recv_ctx->rds_rings[ring];
 
-		INIT_LIST_HEAD(&rds_ring->free_list);
+		INIT_LIST_HEAD(&rds_ring->मुक्त_list);
 
 		rx_buf = rds_ring->rx_buf_arr;
-		for (i = 0; i < rds_ring->num_desc; i++) {
+		क्रम (i = 0; i < rds_ring->num_desc; i++) अणु
 			list_add_tail(&rx_buf->list,
-					&rds_ring->free_list);
+					&rds_ring->मुक्त_list);
 			rx_buf++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void qlcnic_release_tx_buffers(struct qlcnic_adapter *adapter,
-			       struct qlcnic_host_tx_ring *tx_ring)
-{
-	struct qlcnic_cmd_buffer *cmd_buf;
-	struct qlcnic_skb_frag *buffrag;
-	int i, j;
+व्योम qlcnic_release_tx_buffers(काष्ठा qlcnic_adapter *adapter,
+			       काष्ठा qlcnic_host_tx_ring *tx_ring)
+अणु
+	काष्ठा qlcnic_cmd_buffer *cmd_buf;
+	काष्ठा qlcnic_skb_frag *buffrag;
+	पूर्णांक i, j;
 
 	spin_lock(&tx_ring->tx_clean_lock);
 
 	cmd_buf = tx_ring->cmd_buf_arr;
-	for (i = 0; i < tx_ring->num_desc; i++) {
+	क्रम (i = 0; i < tx_ring->num_desc; i++) अणु
 		buffrag = cmd_buf->frag_array;
-		if (buffrag->dma) {
+		अगर (buffrag->dma) अणु
 			pci_unmap_single(adapter->pdev, buffrag->dma,
 					 buffrag->length, PCI_DMA_TODEVICE);
 			buffrag->dma = 0ULL;
-		}
-		for (j = 1; j < cmd_buf->frag_count; j++) {
+		पूर्ण
+		क्रम (j = 1; j < cmd_buf->frag_count; j++) अणु
 			buffrag++;
-			if (buffrag->dma) {
+			अगर (buffrag->dma) अणु
 				pci_unmap_page(adapter->pdev, buffrag->dma,
 					       buffrag->length,
 					       PCI_DMA_TODEVICE);
 				buffrag->dma = 0ULL;
-			}
-		}
-		if (cmd_buf->skb) {
-			dev_kfree_skb_any(cmd_buf->skb);
-			cmd_buf->skb = NULL;
-		}
+			पूर्ण
+		पूर्ण
+		अगर (cmd_buf->skb) अणु
+			dev_kमुक्त_skb_any(cmd_buf->skb);
+			cmd_buf->skb = शून्य;
+		पूर्ण
 		cmd_buf++;
-	}
+	पूर्ण
 
 	spin_unlock(&tx_ring->tx_clean_lock);
-}
+पूर्ण
 
-void qlcnic_free_sw_resources(struct qlcnic_adapter *adapter)
-{
-	struct qlcnic_recv_context *recv_ctx;
-	struct qlcnic_host_rds_ring *rds_ring;
-	int ring;
+व्योम qlcnic_मुक्त_sw_resources(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा qlcnic_recv_context *recv_ctx;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	पूर्णांक ring;
 
 	recv_ctx = adapter->recv_ctx;
 
-	if (recv_ctx->rds_rings == NULL)
-		return;
+	अगर (recv_ctx->rds_rings == शून्य)
+		वापस;
 
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
 		rds_ring = &recv_ctx->rds_rings[ring];
-		vfree(rds_ring->rx_buf_arr);
-		rds_ring->rx_buf_arr = NULL;
-	}
-	kfree(recv_ctx->rds_rings);
-}
+		vमुक्त(rds_ring->rx_buf_arr);
+		rds_ring->rx_buf_arr = शून्य;
+	पूर्ण
+	kमुक्त(recv_ctx->rds_rings);
+पूर्ण
 
-int qlcnic_alloc_sw_resources(struct qlcnic_adapter *adapter)
-{
-	struct qlcnic_recv_context *recv_ctx;
-	struct qlcnic_host_rds_ring *rds_ring;
-	struct qlcnic_host_sds_ring *sds_ring;
-	struct qlcnic_rx_buffer *rx_buf;
-	int ring, i;
+पूर्णांक qlcnic_alloc_sw_resources(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा qlcnic_recv_context *recv_ctx;
+	काष्ठा qlcnic_host_rds_ring *rds_ring;
+	काष्ठा qlcnic_host_sds_ring *sds_ring;
+	काष्ठा qlcnic_rx_buffer *rx_buf;
+	पूर्णांक ring, i;
 
 	recv_ctx = adapter->recv_ctx;
 
-	rds_ring = kcalloc(adapter->max_rds_rings,
-			   sizeof(struct qlcnic_host_rds_ring), GFP_KERNEL);
-	if (rds_ring == NULL)
-		goto err_out;
+	rds_ring = kसुस्मृति(adapter->max_rds_rings,
+			   माप(काष्ठा qlcnic_host_rds_ring), GFP_KERNEL);
+	अगर (rds_ring == शून्य)
+		जाओ err_out;
 
 	recv_ctx->rds_rings = rds_ring;
 
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
 		rds_ring = &recv_ctx->rds_rings[ring];
-		switch (ring) {
-		case RCV_RING_NORMAL:
+		चयन (ring) अणु
+		हाल RCV_RING_NORMAL:
 			rds_ring->num_desc = adapter->num_rxd;
 			rds_ring->dma_size = QLCNIC_P3P_RX_BUF_MAX_LEN;
 			rds_ring->skb_size = rds_ring->dma_size + NET_IP_ALIGN;
-			break;
+			अवरोध;
 
-		case RCV_RING_JUMBO:
+		हाल RCV_RING_JUMBO:
 			rds_ring->num_desc = adapter->num_jumbo_rxd;
 			rds_ring->dma_size =
 				QLCNIC_P3P_RX_JUMBO_BUF_MAX_LEN;
 
-			if (adapter->ahw->capabilities &
+			अगर (adapter->ahw->capabilities &
 			    QLCNIC_FW_CAPABILITY_HW_LRO)
 				rds_ring->dma_size += QLCNIC_LRO_BUFFER_EXTRA;
 
 			rds_ring->skb_size =
 				rds_ring->dma_size + NET_IP_ALIGN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		rds_ring->rx_buf_arr = vzalloc(RCV_BUFF_RINGSIZE(rds_ring));
-		if (rds_ring->rx_buf_arr == NULL)
-			goto err_out;
+		अगर (rds_ring->rx_buf_arr == शून्य)
+			जाओ err_out;
 
-		INIT_LIST_HEAD(&rds_ring->free_list);
+		INIT_LIST_HEAD(&rds_ring->मुक्त_list);
 		/*
 		 * Now go through all of them, set reference handles
 		 * and put them in the queues.
 		 */
 		rx_buf = rds_ring->rx_buf_arr;
-		for (i = 0; i < rds_ring->num_desc; i++) {
+		क्रम (i = 0; i < rds_ring->num_desc; i++) अणु
 			list_add_tail(&rx_buf->list,
-					&rds_ring->free_list);
+					&rds_ring->मुक्त_list);
 			rx_buf->ref_handle = i;
 			rx_buf++;
-		}
+		पूर्ण
 		spin_lock_init(&rds_ring->lock);
-	}
+	पूर्ण
 
-	for (ring = 0; ring < adapter->drv_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->drv_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
 		sds_ring->irq = adapter->msix_entries[ring].vector;
 		sds_ring->adapter = adapter;
 		sds_ring->num_desc = adapter->num_rxd;
-		if (qlcnic_82xx_check(adapter)) {
-			if (qlcnic_check_multi_tx(adapter) &&
+		अगर (qlcnic_82xx_check(adapter)) अणु
+			अगर (qlcnic_check_multi_tx(adapter) &&
 			    !adapter->ahw->diag_test)
 				sds_ring->tx_ring = &adapter->tx_ring[ring];
-			else
+			अन्यथा
 				sds_ring->tx_ring = &adapter->tx_ring[0];
-		}
-		for (i = 0; i < NUM_RCV_DESC_RINGS; i++)
-			INIT_LIST_HEAD(&sds_ring->free_list[i]);
-	}
+		पूर्ण
+		क्रम (i = 0; i < NUM_RCV_DESC_RINGS; i++)
+			INIT_LIST_HEAD(&sds_ring->मुक्त_list[i]);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out:
-	qlcnic_free_sw_resources(adapter);
-	return -ENOMEM;
-}
+	qlcnic_मुक्त_sw_resources(adapter);
+	वापस -ENOMEM;
+पूर्ण
 
 /*
- * Utility to translate from internal Phantom CRB address
- * to external PCI CRB address.
+ * Utility to translate from पूर्णांकernal Phantom CRB address
+ * to बाह्यal PCI CRB address.
  */
-static u32 qlcnic_decode_crb_addr(u32 addr)
-{
-	int i;
+अटल u32 qlcnic_decode_crb_addr(u32 addr)
+अणु
+	पूर्णांक i;
 	u32 base_addr, offset, pci_base;
 
-	crb_addr_transform_setup();
+	crb_addr_transक्रमm_setup();
 
 	pci_base = QLCNIC_ADDR_ERROR;
 	base_addr = addr & 0xfff00000;
 	offset = addr & 0x000fffff;
 
-	for (i = 0; i < QLCNIC_MAX_CRB_XFORM; i++) {
-		if (crb_addr_xform[i] == base_addr) {
+	क्रम (i = 0; i < QLCNIC_MAX_CRB_XFORM; i++) अणु
+		अगर (crb_addr_xक्रमm[i] == base_addr) अणु
 			pci_base = i << 20;
-			break;
-		}
-	}
-	if (pci_base == QLCNIC_ADDR_ERROR)
-		return pci_base;
-	else
-		return pci_base + offset;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (pci_base == QLCNIC_ADDR_ERROR)
+		वापस pci_base;
+	अन्यथा
+		वापस pci_base + offset;
+पूर्ण
 
-#define QLCNIC_MAX_ROM_WAIT_USEC	100
+#घोषणा QLCNIC_MAX_ROM_WAIT_USEC	100
 
-static int qlcnic_wait_rom_done(struct qlcnic_adapter *adapter)
-{
-	long timeout = 0;
-	long done = 0;
-	int err = 0;
+अटल पूर्णांक qlcnic_रुको_rom_करोne(काष्ठा qlcnic_adapter *adapter)
+अणु
+	दीर्घ समयout = 0;
+	दीर्घ करोne = 0;
+	पूर्णांक err = 0;
 
 	cond_resched();
-	while (done == 0) {
-		done = QLCRD32(adapter, QLCNIC_ROMUSB_GLB_STATUS, &err);
-		done &= 2;
-		if (++timeout >= QLCNIC_MAX_ROM_WAIT_USEC) {
+	जबतक (करोne == 0) अणु
+		करोne = QLCRD32(adapter, QLCNIC_ROMUSB_GLB_STATUS, &err);
+		करोne &= 2;
+		अगर (++समयout >= QLCNIC_MAX_ROM_WAIT_USEC) अणु
 			dev_err(&adapter->pdev->dev,
 				"Timeout reached  waiting for rom done");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		udelay(1);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int do_rom_fast_read(struct qlcnic_adapter *adapter,
+अटल पूर्णांक करो_rom_fast_पढ़ो(काष्ठा qlcnic_adapter *adapter,
 			    u32 addr, u32 *valp)
-{
-	int err = 0;
+अणु
+	पूर्णांक err = 0;
 
 	QLCWR32(adapter, QLCNIC_ROMUSB_ROM_ADDRESS, addr);
 	QLCWR32(adapter, QLCNIC_ROMUSB_ROM_DUMMY_BYTE_CNT, 0);
 	QLCWR32(adapter, QLCNIC_ROMUSB_ROM_ABYTE_CNT, 3);
 	QLCWR32(adapter, QLCNIC_ROMUSB_ROM_INSTR_OPCODE, 0xb);
-	if (qlcnic_wait_rom_done(adapter)) {
+	अगर (qlcnic_रुको_rom_करोne(adapter)) अणु
 		dev_err(&adapter->pdev->dev, "Error waiting for rom done\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	/* reset abyte_cnt and dummy_byte_cnt */
 	QLCWR32(adapter, QLCNIC_ROMUSB_ROM_ABYTE_CNT, 0);
 	udelay(10);
 	QLCWR32(adapter, QLCNIC_ROMUSB_ROM_DUMMY_BYTE_CNT, 0);
 
 	*valp = QLCRD32(adapter, QLCNIC_ROMUSB_ROM_RDATA, &err);
-	if (err == -EIO)
-		return err;
-	return 0;
-}
+	अगर (err == -EIO)
+		वापस err;
+	वापस 0;
+पूर्ण
 
-static int do_rom_fast_read_words(struct qlcnic_adapter *adapter, int addr,
-				  u8 *bytes, size_t size)
-{
-	int addridx;
-	int ret = 0;
+अटल पूर्णांक करो_rom_fast_पढ़ो_words(काष्ठा qlcnic_adapter *adapter, पूर्णांक addr,
+				  u8 *bytes, माप_प्रकार size)
+अणु
+	पूर्णांक addridx;
+	पूर्णांक ret = 0;
 
-	for (addridx = addr; addridx < (addr + size); addridx += 4) {
-		int v;
-		ret = do_rom_fast_read(adapter, addridx, &v);
-		if (ret != 0)
-			break;
+	क्रम (addridx = addr; addridx < (addr + size); addridx += 4) अणु
+		पूर्णांक v;
+		ret = करो_rom_fast_पढ़ो(adapter, addridx, &v);
+		अगर (ret != 0)
+			अवरोध;
 		*(__le32 *)bytes = cpu_to_le32(v);
 		bytes += 4;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-qlcnic_rom_fast_read_words(struct qlcnic_adapter *adapter, int addr,
-				u8 *bytes, size_t size)
-{
-	int ret;
+पूर्णांक
+qlcnic_rom_fast_पढ़ो_words(काष्ठा qlcnic_adapter *adapter, पूर्णांक addr,
+				u8 *bytes, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
 
 	ret = qlcnic_rom_lock(adapter);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = do_rom_fast_read_words(adapter, addr, bytes, size);
+	ret = करो_rom_fast_पढ़ो_words(adapter, addr, bytes, size);
 
 	qlcnic_rom_unlock(adapter);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int qlcnic_rom_fast_read(struct qlcnic_adapter *adapter, u32 addr, u32 *valp)
-{
-	int ret;
+पूर्णांक qlcnic_rom_fast_पढ़ो(काष्ठा qlcnic_adapter *adapter, u32 addr, u32 *valp)
+अणु
+	पूर्णांक ret;
 
-	if (qlcnic_rom_lock(adapter) != 0)
-		return -EIO;
+	अगर (qlcnic_rom_lock(adapter) != 0)
+		वापस -EIO;
 
-	ret = do_rom_fast_read(adapter, addr, valp);
+	ret = करो_rom_fast_पढ़ो(adapter, addr, valp);
 	qlcnic_rom_unlock(adapter);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int qlcnic_pinit_from_rom(struct qlcnic_adapter *adapter)
-{
-	int addr, err = 0;
-	int i, n, init_delay;
-	struct crb_addr_pair *buf;
-	unsigned offset;
+पूर्णांक qlcnic_pinit_from_rom(काष्ठा qlcnic_adapter *adapter)
+अणु
+	पूर्णांक addr, err = 0;
+	पूर्णांक i, n, init_delay;
+	काष्ठा crb_addr_pair *buf;
+	अचिन्हित offset;
 	u32 off, val;
-	struct pci_dev *pdev = adapter->pdev;
+	काष्ठा pci_dev *pdev = adapter->pdev;
 
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CMDPEG_STATE, 0);
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_RCVPEG_STATE, 0);
 
-	/* Halt all the indiviual PEGs and other blocks */
+	/* Halt all the inभागiual PEGs and other blocks */
 	/* disable all I2Q */
 	QLCWR32(adapter, QLCNIC_CRB_I2Q + 0x10, 0x0);
 	QLCWR32(adapter, QLCNIC_CRB_I2Q + 0x14, 0x0);
@@ -402,7 +403,7 @@ int qlcnic_pinit_from_rom(struct qlcnic_adapter *adapter)
 	QLCWR32(adapter, QLCNIC_CRB_I2Q + 0x20, 0x0);
 	QLCWR32(adapter, QLCNIC_CRB_I2Q + 0x24, 0x0);
 
-	/* disable all niu interrupts */
+	/* disable all niu पूर्णांकerrupts */
 	QLCWR32(adapter, QLCNIC_CRB_NIU + 0x40, 0xff);
 	/* disable xge rx/tx */
 	QLCWR32(adapter, QLCNIC_CRB_NIU + 0x70000, 0x00);
@@ -417,14 +418,14 @@ int qlcnic_pinit_from_rom(struct qlcnic_adapter *adapter)
 
 	/* halt sre */
 	val = QLCRD32(adapter, QLCNIC_CRB_SRE + 0x1000, &err);
-	if (err == -EIO)
-		return err;
+	अगर (err == -EIO)
+		वापस err;
 	QLCWR32(adapter, QLCNIC_CRB_SRE + 0x1000, val & (~(0x1)));
 
 	/* halt epg */
 	QLCWR32(adapter, QLCNIC_CRB_EPG + 0x1300, 0x1);
 
-	/* halt timers */
+	/* halt समयrs */
 	QLCWR32(adapter, QLCNIC_CRB_TIMER + 0x0, 0x0);
 	QLCWR32(adapter, QLCNIC_CRB_TIMER + 0x8, 0x0);
 	QLCWR32(adapter, QLCNIC_CRB_TIMER + 0x10, 0x0);
@@ -440,87 +441,87 @@ int qlcnic_pinit_from_rom(struct qlcnic_adapter *adapter)
 	msleep(20);
 
 	qlcnic_rom_unlock(adapter);
-	/* big hammer don't reset CAM block on reset */
+	/* big hammer करोn't reset CAM block on reset */
 	QLCWR32(adapter, QLCNIC_ROMUSB_GLB_SW_RESET, 0xfeffffff);
 
 	/* Init HW CRB block */
-	if (qlcnic_rom_fast_read(adapter, 0, &n) != 0 || (n != 0xcafecafe) ||
-			qlcnic_rom_fast_read(adapter, 4, &n) != 0) {
+	अगर (qlcnic_rom_fast_पढ़ो(adapter, 0, &n) != 0 || (n != 0xcafecafe) ||
+			qlcnic_rom_fast_पढ़ो(adapter, 4, &n) != 0) अणु
 		dev_err(&pdev->dev, "ERROR Reading crb_init area: val:%x\n", n);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	offset = n & 0xffffU;
 	n = (n >> 16) & 0xffffU;
 
-	if (n >= 1024) {
+	अगर (n >= 1024) अणु
 		dev_err(&pdev->dev, "QLOGIC card flash not initialized.\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	buf = kcalloc(n, sizeof(struct crb_addr_pair), GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	buf = kसुस्मृति(n, माप(काष्ठा crb_addr_pair), GFP_KERNEL);
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
-	for (i = 0; i < n; i++) {
-		if (qlcnic_rom_fast_read(adapter, 8*i + 4*offset, &val) != 0 ||
-		qlcnic_rom_fast_read(adapter, 8*i + 4*offset + 4, &addr) != 0) {
-			kfree(buf);
-			return -EIO;
-		}
+	क्रम (i = 0; i < n; i++) अणु
+		अगर (qlcnic_rom_fast_पढ़ो(adapter, 8*i + 4*offset, &val) != 0 ||
+		qlcnic_rom_fast_पढ़ो(adapter, 8*i + 4*offset + 4, &addr) != 0) अणु
+			kमुक्त(buf);
+			वापस -EIO;
+		पूर्ण
 
 		buf[i].addr = addr;
 		buf[i].data = val;
-	}
+	पूर्ण
 
-	for (i = 0; i < n; i++) {
+	क्रम (i = 0; i < n; i++) अणु
 
 		off = qlcnic_decode_crb_addr(buf[i].addr);
-		if (off == QLCNIC_ADDR_ERROR) {
+		अगर (off == QLCNIC_ADDR_ERROR) अणु
 			dev_err(&pdev->dev, "CRB init value out of range %x\n",
 					buf[i].addr);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		off += QLCNIC_PCI_CRBSPACE;
 
-		if (off & 1)
-			continue;
+		अगर (off & 1)
+			जारी;
 
 		/* skipping cold reboot MAGIC */
-		if (off == QLCNIC_CAM_RAM(0x1fc))
-			continue;
-		if (off == (QLCNIC_CRB_I2C0 + 0x1c))
-			continue;
-		if (off == (ROMUSB_GLB + 0xbc)) /* do not reset PCI */
-			continue;
-		if (off == (ROMUSB_GLB + 0xa8))
-			continue;
-		if (off == (ROMUSB_GLB + 0xc8)) /* core clock */
-			continue;
-		if (off == (ROMUSB_GLB + 0x24)) /* MN clock */
-			continue;
-		if (off == (ROMUSB_GLB + 0x1c)) /* MS clock */
-			continue;
-		if ((off & 0x0ff00000) == QLCNIC_CRB_DDR_NET)
-			continue;
-		/* skip the function enable register */
-		if (off == QLCNIC_PCIE_REG(PCIE_SETUP_FUNCTION))
-			continue;
-		if (off == QLCNIC_PCIE_REG(PCIE_SETUP_FUNCTION2))
-			continue;
-		if ((off & 0x0ff00000) == QLCNIC_CRB_SMB)
-			continue;
+		अगर (off == QLCNIC_CAM_RAM(0x1fc))
+			जारी;
+		अगर (off == (QLCNIC_CRB_I2C0 + 0x1c))
+			जारी;
+		अगर (off == (ROMUSB_GLB + 0xbc)) /* करो not reset PCI */
+			जारी;
+		अगर (off == (ROMUSB_GLB + 0xa8))
+			जारी;
+		अगर (off == (ROMUSB_GLB + 0xc8)) /* core घड़ी */
+			जारी;
+		अगर (off == (ROMUSB_GLB + 0x24)) /* MN घड़ी */
+			जारी;
+		अगर (off == (ROMUSB_GLB + 0x1c)) /* MS घड़ी */
+			जारी;
+		अगर ((off & 0x0ff00000) == QLCNIC_CRB_DDR_NET)
+			जारी;
+		/* skip the function enable रेजिस्टर */
+		अगर (off == QLCNIC_PCIE_REG(PCIE_SETUP_FUNCTION))
+			जारी;
+		अगर (off == QLCNIC_PCIE_REG(PCIE_SETUP_FUNCTION2))
+			जारी;
+		अगर ((off & 0x0ff00000) == QLCNIC_CRB_SMB)
+			जारी;
 
 		init_delay = 1;
-		/* After writing this register, HW needs time for CRB */
-		/* to quiet down (else crb_window returns 0xffffffff) */
-		if (off == QLCNIC_ROMUSB_GLB_SW_RESET)
+		/* After writing this रेजिस्टर, HW needs समय क्रम CRB */
+		/* to quiet करोwn (अन्यथा crb_winकरोw वापसs 0xffffffff) */
+		अगर (off == QLCNIC_ROMUSB_GLB_SW_RESET)
 			init_delay = 1000;
 
 		QLCWR32(adapter, off, buf[i].data);
 
 		msleep(init_delay);
-	}
-	kfree(buf);
+	पूर्ण
+	kमुक्त(buf);
 
 	/* Initialize protocol process engine */
 	QLCWR32(adapter, QLCNIC_CRB_PEG_NET_D + 0xec, 0x1e);
@@ -541,30 +542,30 @@ int qlcnic_pinit_from_rom(struct qlcnic_adapter *adapter)
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_PEG_HALT_STATUS1, 0);
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_PEG_HALT_STATUS2, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qlcnic_cmd_peg_ready(struct qlcnic_adapter *adapter)
-{
+अटल पूर्णांक qlcnic_cmd_peg_पढ़ोy(काष्ठा qlcnic_adapter *adapter)
+अणु
 	u32 val;
-	int retries = QLCNIC_CMDPEG_CHECK_RETRY_COUNT;
+	पूर्णांक retries = QLCNIC_CMDPEG_CHECK_RETRY_COUNT;
 
-	do {
+	करो अणु
 		val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CMDPEG_STATE);
 
-		switch (val) {
-		case PHAN_INITIALIZE_COMPLETE:
-		case PHAN_INITIALIZE_ACK:
-			return 0;
-		case PHAN_INITIALIZE_FAILED:
-			goto out_err;
-		default:
-			break;
-		}
+		चयन (val) अणु
+		हाल PHAN_INITIALIZE_COMPLETE:
+		हाल PHAN_INITIALIZE_ACK:
+			वापस 0;
+		हाल PHAN_INITIALIZE_FAILED:
+			जाओ out_err;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		msleep(QLCNIC_CMDPEG_CHECK_DELAY);
 
-	} while (--retries);
+	पूर्ण जबतक (--retries);
 
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CMDPEG_STATE,
 			    PHAN_INITIALIZE_FAILED);
@@ -572,313 +573,313 @@ static int qlcnic_cmd_peg_ready(struct qlcnic_adapter *adapter)
 out_err:
 	dev_err(&adapter->pdev->dev, "Command Peg initialization not "
 		      "complete, state: 0x%x.\n", val);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int
-qlcnic_receive_peg_ready(struct qlcnic_adapter *adapter)
-{
+अटल पूर्णांक
+qlcnic_receive_peg_पढ़ोy(काष्ठा qlcnic_adapter *adapter)
+अणु
 	u32 val;
-	int retries = QLCNIC_RCVPEG_CHECK_RETRY_COUNT;
+	पूर्णांक retries = QLCNIC_RCVPEG_CHECK_RETRY_COUNT;
 
-	do {
+	करो अणु
 		val = QLC_SHARED_REG_RD32(adapter, QLCNIC_RCVPEG_STATE);
 
-		if (val == PHAN_PEG_RCV_INITIALIZED)
-			return 0;
+		अगर (val == PHAN_PEG_RCV_INITIALIZED)
+			वापस 0;
 
 		msleep(QLCNIC_RCVPEG_CHECK_DELAY);
 
-	} while (--retries);
+	पूर्ण जबतक (--retries);
 
 	dev_err(&adapter->pdev->dev, "Receive Peg initialization not complete, state: 0x%x.\n",
 		val);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-int
-qlcnic_check_fw_status(struct qlcnic_adapter *adapter)
-{
-	int err;
+पूर्णांक
+qlcnic_check_fw_status(काष्ठा qlcnic_adapter *adapter)
+अणु
+	पूर्णांक err;
 
-	err = qlcnic_cmd_peg_ready(adapter);
-	if (err)
-		return err;
+	err = qlcnic_cmd_peg_पढ़ोy(adapter);
+	अगर (err)
+		वापस err;
 
-	err = qlcnic_receive_peg_ready(adapter);
-	if (err)
-		return err;
+	err = qlcnic_receive_peg_पढ़ोy(adapter);
+	अगर (err)
+		वापस err;
 
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_CMDPEG_STATE, PHAN_INITIALIZE_ACK);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int
-qlcnic_setup_idc_param(struct qlcnic_adapter *adapter) {
+पूर्णांक
+qlcnic_setup_idc_param(काष्ठा qlcnic_adapter *adapter) अणु
 
-	int timeo;
+	पूर्णांक समयo;
 	u32 val;
 
 	val = QLC_SHARED_REG_RD32(adapter, QLCNIC_CRB_DEV_PARTITION_INFO);
 	val = QLC_DEV_GET_DRV(val, adapter->portnum);
-	if ((val & 0x3) != QLCNIC_TYPE_NIC) {
+	अगर ((val & 0x3) != QLCNIC_TYPE_NIC) अणु
 		dev_err(&adapter->pdev->dev,
 			"Not an Ethernet NIC func=%u\n", val);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	adapter->ahw->physical_port = (val >> 2);
-	if (qlcnic_rom_fast_read(adapter, QLCNIC_ROM_DEV_INIT_TIMEOUT, &timeo))
-		timeo = QLCNIC_INIT_TIMEOUT_SECS;
+	अगर (qlcnic_rom_fast_पढ़ो(adapter, QLCNIC_ROM_DEV_INIT_TIMEOUT, &समयo))
+		समयo = QLCNIC_INIT_TIMEOUT_SECS;
 
-	adapter->dev_init_timeo = timeo;
+	adapter->dev_init_समयo = समयo;
 
-	if (qlcnic_rom_fast_read(adapter, QLCNIC_ROM_DRV_RESET_TIMEOUT, &timeo))
-		timeo = QLCNIC_RESET_TIMEOUT_SECS;
+	अगर (qlcnic_rom_fast_पढ़ो(adapter, QLCNIC_ROM_DRV_RESET_TIMEOUT, &समयo))
+		समयo = QLCNIC_RESET_TIMEOUT_SECS;
 
-	adapter->reset_ack_timeo = timeo;
+	adapter->reset_ack_समयo = समयo;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qlcnic_get_flt_entry(struct qlcnic_adapter *adapter, u8 region,
-				struct qlcnic_flt_entry *region_entry)
-{
-	struct qlcnic_flt_header flt_hdr;
-	struct qlcnic_flt_entry *flt_entry;
-	int i = 0, ret;
+अटल पूर्णांक qlcnic_get_flt_entry(काष्ठा qlcnic_adapter *adapter, u8 region,
+				काष्ठा qlcnic_flt_entry *region_entry)
+अणु
+	काष्ठा qlcnic_flt_header flt_hdr;
+	काष्ठा qlcnic_flt_entry *flt_entry;
+	पूर्णांक i = 0, ret;
 	u32 entry_size;
 
-	memset(region_entry, 0, sizeof(struct qlcnic_flt_entry));
-	ret = qlcnic_rom_fast_read_words(adapter, QLCNIC_FLT_LOCATION,
+	स_रखो(region_entry, 0, माप(काष्ठा qlcnic_flt_entry));
+	ret = qlcnic_rom_fast_पढ़ो_words(adapter, QLCNIC_FLT_LOCATION,
 					 (u8 *)&flt_hdr,
-					 sizeof(struct qlcnic_flt_header));
-	if (ret) {
+					 माप(काष्ठा qlcnic_flt_header));
+	अगर (ret) अणु
 		dev_warn(&adapter->pdev->dev,
 			 "error reading flash layout header\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	entry_size = flt_hdr.len - sizeof(struct qlcnic_flt_header);
+	entry_size = flt_hdr.len - माप(काष्ठा qlcnic_flt_header);
 	flt_entry = vzalloc(entry_size);
-	if (flt_entry == NULL)
-		return -EIO;
+	अगर (flt_entry == शून्य)
+		वापस -EIO;
 
-	ret = qlcnic_rom_fast_read_words(adapter, QLCNIC_FLT_LOCATION +
-					 sizeof(struct qlcnic_flt_header),
+	ret = qlcnic_rom_fast_पढ़ो_words(adapter, QLCNIC_FLT_LOCATION +
+					 माप(काष्ठा qlcnic_flt_header),
 					 (u8 *)flt_entry, entry_size);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(&adapter->pdev->dev,
 			 "error reading flash layout entries\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	while (i < (entry_size/sizeof(struct qlcnic_flt_entry))) {
-		if (flt_entry[i].region == region)
-			break;
+	जबतक (i < (entry_size/माप(काष्ठा qlcnic_flt_entry))) अणु
+		अगर (flt_entry[i].region == region)
+			अवरोध;
 		i++;
-	}
-	if (i >= (entry_size/sizeof(struct qlcnic_flt_entry))) {
+	पूर्ण
+	अगर (i >= (entry_size/माप(काष्ठा qlcnic_flt_entry))) अणु
 		dev_warn(&adapter->pdev->dev,
 			 "region=%x not found in %d regions\n", region, i);
 		ret = -EIO;
-		goto err_out;
-	}
-	memcpy(region_entry, &flt_entry[i], sizeof(struct qlcnic_flt_entry));
+		जाओ err_out;
+	पूर्ण
+	स_नकल(region_entry, &flt_entry[i], माप(काष्ठा qlcnic_flt_entry));
 
 err_out:
-	vfree(flt_entry);
-	return ret;
-}
+	vमुक्त(flt_entry);
+	वापस ret;
+पूर्ण
 
-int
-qlcnic_check_flash_fw_ver(struct qlcnic_adapter *adapter)
-{
-	struct qlcnic_flt_entry fw_entry;
+पूर्णांक
+qlcnic_check_flash_fw_ver(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा qlcnic_flt_entry fw_entry;
 	u32 ver = -1, min_ver;
-	int ret;
+	पूर्णांक ret;
 
-	if (adapter->ahw->revision_id == QLCNIC_P3P_C0)
+	अगर (adapter->ahw->revision_id == QLCNIC_P3P_C0)
 		ret = qlcnic_get_flt_entry(adapter, QLCNIC_C0_FW_IMAGE_REGION,
 						 &fw_entry);
-	else
+	अन्यथा
 		ret = qlcnic_get_flt_entry(adapter, QLCNIC_B0_FW_IMAGE_REGION,
 						 &fw_entry);
 
-	if (!ret)
+	अगर (!ret)
 		/* 0-4:-signature,  4-8:-fw version */
-		qlcnic_rom_fast_read(adapter, fw_entry.start_addr + 4,
-				     (int *)&ver);
-	else
-		qlcnic_rom_fast_read(adapter, QLCNIC_FW_VERSION_OFFSET,
-				     (int *)&ver);
+		qlcnic_rom_fast_पढ़ो(adapter, fw_entry.start_addr + 4,
+				     (पूर्णांक *)&ver);
+	अन्यथा
+		qlcnic_rom_fast_पढ़ो(adapter, QLCNIC_FW_VERSION_OFFSET,
+				     (पूर्णांक *)&ver);
 
 	ver = QLCNIC_DECODE_VERSION(ver);
 	min_ver = QLCNIC_MIN_FW_VERSION;
 
-	if (ver < min_ver) {
+	अगर (ver < min_ver) अणु
 		dev_err(&adapter->pdev->dev,
 			"firmware version %d.%d.%d unsupported."
 			"Min supported version %d.%d.%d\n",
 			_major(ver), _minor(ver), _build(ver),
 			_major(min_ver), _minor(min_ver), _build(min_ver));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-qlcnic_has_mn(struct qlcnic_adapter *adapter)
-{
+अटल पूर्णांक
+qlcnic_has_mn(काष्ठा qlcnic_adapter *adapter)
+अणु
 	u32 capability = 0;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	capability = QLCRD32(adapter, QLCNIC_PEG_TUNE_CAPABILITY, &err);
-	if (err == -EIO)
-		return err;
-	if (capability & QLCNIC_PEG_TUNE_MN_PRESENT)
-		return 1;
+	अगर (err == -EIO)
+		वापस err;
+	अगर (capability & QLCNIC_PEG_TUNE_MN_PRESENT)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static
-struct uni_table_desc *qlcnic_get_table_desc(const u8 *unirom, int section)
-{
+अटल
+काष्ठा uni_table_desc *qlcnic_get_table_desc(स्थिर u8 *unirom, पूर्णांक section)
+अणु
 	u32 i, entries;
-	struct uni_table_desc *directory = (struct uni_table_desc *) &unirom[0];
+	काष्ठा uni_table_desc *directory = (काष्ठा uni_table_desc *) &unirom[0];
 	entries = le32_to_cpu(directory->num_entries);
 
-	for (i = 0; i < entries; i++) {
+	क्रम (i = 0; i < entries; i++) अणु
 
 		u32 offs = le32_to_cpu(directory->findex) +
 			   i * le32_to_cpu(directory->entry_size);
 		u32 tab_type = le32_to_cpu(*((__le32 *)&unirom[offs] + 8));
 
-		if (tab_type == section)
-			return (struct uni_table_desc *) &unirom[offs];
-	}
+		अगर (tab_type == section)
+			वापस (काष्ठा uni_table_desc *) &unirom[offs];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#define FILEHEADER_SIZE (14 * 4)
+#घोषणा खाताHEADER_SIZE (14 * 4)
 
-static int
-qlcnic_validate_header(struct qlcnic_adapter *adapter)
-{
-	const u8 *unirom = adapter->fw->data;
-	struct uni_table_desc *directory = (struct uni_table_desc *) &unirom[0];
+अटल पूर्णांक
+qlcnic_validate_header(काष्ठा qlcnic_adapter *adapter)
+अणु
+	स्थिर u8 *unirom = adapter->fw->data;
+	काष्ठा uni_table_desc *directory = (काष्ठा uni_table_desc *) &unirom[0];
 	u32 entries, entry_size, tab_size, fw_file_size;
 
 	fw_file_size = adapter->fw->size;
 
-	if (fw_file_size < FILEHEADER_SIZE)
-		return -EINVAL;
+	अगर (fw_file_size < खाताHEADER_SIZE)
+		वापस -EINVAL;
 
 	entries = le32_to_cpu(directory->num_entries);
 	entry_size = le32_to_cpu(directory->entry_size);
 	tab_size = le32_to_cpu(directory->findex) + (entries * entry_size);
 
-	if (fw_file_size < tab_size)
-		return -EINVAL;
+	अगर (fw_file_size < tab_size)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-qlcnic_validate_bootld(struct qlcnic_adapter *adapter)
-{
-	struct uni_table_desc *tab_desc;
-	struct uni_data_desc *descr;
+अटल पूर्णांक
+qlcnic_validate_bootld(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा uni_table_desc *tab_desc;
+	काष्ठा uni_data_desc *descr;
 	u32 offs, tab_size, data_size, idx;
-	const u8 *unirom = adapter->fw->data;
+	स्थिर u8 *unirom = adapter->fw->data;
 	__le32 temp;
 
 	temp = *((__le32 *)&unirom[adapter->file_prd_off] +
 		 QLCNIC_UNI_BOOTLD_IDX_OFF);
 	idx = le32_to_cpu(temp);
-	tab_desc = qlcnic_get_table_desc(unirom, QLCNIC_UNI_DIR_SECT_BOOTLD);
+	tab_desc = qlcnic_get_table_desc(unirom, QLCNIC_UNI_सूची_SECT_BOOTLD);
 
-	if (!tab_desc)
-		return -EINVAL;
+	अगर (!tab_desc)
+		वापस -EINVAL;
 
 	tab_size = le32_to_cpu(tab_desc->findex) +
 		   le32_to_cpu(tab_desc->entry_size) * (idx + 1);
 
-	if (adapter->fw->size < tab_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < tab_size)
+		वापस -EINVAL;
 
 	offs = le32_to_cpu(tab_desc->findex) +
 	       le32_to_cpu(tab_desc->entry_size) * idx;
-	descr = (struct uni_data_desc *)&unirom[offs];
+	descr = (काष्ठा uni_data_desc *)&unirom[offs];
 
 	data_size = le32_to_cpu(descr->findex) + le32_to_cpu(descr->size);
 
-	if (adapter->fw->size < data_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < data_size)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-qlcnic_validate_fw(struct qlcnic_adapter *adapter)
-{
-	struct uni_table_desc *tab_desc;
-	struct uni_data_desc *descr;
-	const u8 *unirom = adapter->fw->data;
+अटल पूर्णांक
+qlcnic_validate_fw(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा uni_table_desc *tab_desc;
+	काष्ठा uni_data_desc *descr;
+	स्थिर u8 *unirom = adapter->fw->data;
 	u32 offs, tab_size, data_size, idx;
 	__le32 temp;
 
 	temp = *((__le32 *)&unirom[adapter->file_prd_off] +
 		 QLCNIC_UNI_FIRMWARE_IDX_OFF);
 	idx = le32_to_cpu(temp);
-	tab_desc = qlcnic_get_table_desc(unirom, QLCNIC_UNI_DIR_SECT_FW);
+	tab_desc = qlcnic_get_table_desc(unirom, QLCNIC_UNI_सूची_SECT_FW);
 
-	if (!tab_desc)
-		return -EINVAL;
+	अगर (!tab_desc)
+		वापस -EINVAL;
 
 	tab_size = le32_to_cpu(tab_desc->findex) +
 		   le32_to_cpu(tab_desc->entry_size) * (idx + 1);
 
-	if (adapter->fw->size < tab_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < tab_size)
+		वापस -EINVAL;
 
 	offs = le32_to_cpu(tab_desc->findex) +
 	       le32_to_cpu(tab_desc->entry_size) * idx;
-	descr = (struct uni_data_desc *)&unirom[offs];
+	descr = (काष्ठा uni_data_desc *)&unirom[offs];
 	data_size = le32_to_cpu(descr->findex) + le32_to_cpu(descr->size);
 
-	if (adapter->fw->size < data_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < data_size)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-qlcnic_validate_product_offs(struct qlcnic_adapter *adapter)
-{
-	struct uni_table_desc *ptab_descr;
-	const u8 *unirom = adapter->fw->data;
-	int mn_present = qlcnic_has_mn(adapter);
+अटल पूर्णांक
+qlcnic_validate_product_offs(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा uni_table_desc *ptab_descr;
+	स्थिर u8 *unirom = adapter->fw->data;
+	पूर्णांक mn_present = qlcnic_has_mn(adapter);
 	u32 entries, entry_size, tab_size, i;
 	__le32 temp;
 
 	ptab_descr = qlcnic_get_table_desc(unirom,
-				QLCNIC_UNI_DIR_SECT_PRODUCT_TBL);
-	if (!ptab_descr)
-		return -EINVAL;
+				QLCNIC_UNI_सूची_SECT_PRODUCT_TBL);
+	अगर (!ptab_descr)
+		वापस -EINVAL;
 
 	entries = le32_to_cpu(ptab_descr->num_entries);
 	entry_size = le32_to_cpu(ptab_descr->entry_size);
 	tab_size = le32_to_cpu(ptab_descr->findex) + (entries * entry_size);
 
-	if (adapter->fw->size < tab_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < tab_size)
+		वापस -EINVAL;
 
 nomn:
-	for (i = 0; i < entries; i++) {
+	क्रम (i = 0; i < entries; i++) अणु
 
 		u32 flags, file_chiprev, offs;
 		u8 chiprev = adapter->ahw->revision_id;
@@ -893,55 +894,55 @@ nomn:
 
 		flagbit = mn_present ? 1 : 2;
 
-		if ((chiprev == file_chiprev) &&
-					((1ULL << flagbit) & flags)) {
+		अगर ((chiprev == file_chiprev) &&
+					((1ULL << flagbit) & flags)) अणु
 			adapter->file_prd_off = offs;
-			return 0;
-		}
-	}
-	if (mn_present) {
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	अगर (mn_present) अणु
 		mn_present = 0;
-		goto nomn;
-	}
-	return -EINVAL;
-}
+		जाओ nomn;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int
-qlcnic_validate_unified_romimage(struct qlcnic_adapter *adapter)
-{
-	if (qlcnic_validate_header(adapter)) {
+अटल पूर्णांक
+qlcnic_validate_unअगरied_romimage(काष्ठा qlcnic_adapter *adapter)
+अणु
+	अगर (qlcnic_validate_header(adapter)) अणु
 		dev_err(&adapter->pdev->dev,
 				"unified image: header validation failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (qlcnic_validate_product_offs(adapter)) {
+	अगर (qlcnic_validate_product_offs(adapter)) अणु
 		dev_err(&adapter->pdev->dev,
 				"unified image: product validation failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (qlcnic_validate_bootld(adapter)) {
+	अगर (qlcnic_validate_bootld(adapter)) अणु
 		dev_err(&adapter->pdev->dev,
 				"unified image: bootld validation failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (qlcnic_validate_fw(adapter)) {
+	अगर (qlcnic_validate_fw(adapter)) अणु
 		dev_err(&adapter->pdev->dev,
 				"unified image: firmware validation failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static
-struct uni_data_desc *qlcnic_get_data_desc(struct qlcnic_adapter *adapter,
+अटल
+काष्ठा uni_data_desc *qlcnic_get_data_desc(काष्ठा qlcnic_adapter *adapter,
 			u32 section, u32 idx_offset)
-{
-	const u8 *unirom = adapter->fw->data;
-	struct uni_table_desc *tab_desc;
+अणु
+	स्थिर u8 *unirom = adapter->fw->data;
+	काष्ठा uni_table_desc *tab_desc;
 	u32 offs, idx;
 	__le32 temp;
 
@@ -950,174 +951,174 @@ struct uni_data_desc *qlcnic_get_data_desc(struct qlcnic_adapter *adapter,
 
 	tab_desc = qlcnic_get_table_desc(unirom, section);
 
-	if (tab_desc == NULL)
-		return NULL;
+	अगर (tab_desc == शून्य)
+		वापस शून्य;
 
 	offs = le32_to_cpu(tab_desc->findex) +
 	       le32_to_cpu(tab_desc->entry_size) * idx;
 
-	return (struct uni_data_desc *)&unirom[offs];
-}
+	वापस (काष्ठा uni_data_desc *)&unirom[offs];
+पूर्ण
 
-static u8 *
-qlcnic_get_bootld_offs(struct qlcnic_adapter *adapter)
-{
+अटल u8 *
+qlcnic_get_bootld_offs(काष्ठा qlcnic_adapter *adapter)
+अणु
 	u32 offs = QLCNIC_BOOTLD_START;
-	struct uni_data_desc *data_desc;
+	काष्ठा uni_data_desc *data_desc;
 
-	data_desc = qlcnic_get_data_desc(adapter, QLCNIC_UNI_DIR_SECT_BOOTLD,
+	data_desc = qlcnic_get_data_desc(adapter, QLCNIC_UNI_सूची_SECT_BOOTLD,
 					 QLCNIC_UNI_BOOTLD_IDX_OFF);
 
-	if (adapter->ahw->fw_type == QLCNIC_UNIFIED_ROMIMAGE)
+	अगर (adapter->ahw->fw_type == QLCNIC_UNIFIED_ROMIMAGE)
 		offs = le32_to_cpu(data_desc->findex);
 
-	return (u8 *)&adapter->fw->data[offs];
-}
+	वापस (u8 *)&adapter->fw->data[offs];
+पूर्ण
 
-static u8 *
-qlcnic_get_fw_offs(struct qlcnic_adapter *adapter)
-{
+अटल u8 *
+qlcnic_get_fw_offs(काष्ठा qlcnic_adapter *adapter)
+अणु
 	u32 offs = QLCNIC_IMAGE_START;
-	struct uni_data_desc *data_desc;
+	काष्ठा uni_data_desc *data_desc;
 
-	data_desc = qlcnic_get_data_desc(adapter, QLCNIC_UNI_DIR_SECT_FW,
+	data_desc = qlcnic_get_data_desc(adapter, QLCNIC_UNI_सूची_SECT_FW,
 					 QLCNIC_UNI_FIRMWARE_IDX_OFF);
-	if (adapter->ahw->fw_type == QLCNIC_UNIFIED_ROMIMAGE)
+	अगर (adapter->ahw->fw_type == QLCNIC_UNIFIED_ROMIMAGE)
 		offs = le32_to_cpu(data_desc->findex);
 
-	return (u8 *)&adapter->fw->data[offs];
-}
+	वापस (u8 *)&adapter->fw->data[offs];
+पूर्ण
 
-static u32 qlcnic_get_fw_size(struct qlcnic_adapter *adapter)
-{
-	struct uni_data_desc *data_desc;
-	const u8 *unirom = adapter->fw->data;
+अटल u32 qlcnic_get_fw_size(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा uni_data_desc *data_desc;
+	स्थिर u8 *unirom = adapter->fw->data;
 
-	data_desc = qlcnic_get_data_desc(adapter, QLCNIC_UNI_DIR_SECT_FW,
+	data_desc = qlcnic_get_data_desc(adapter, QLCNIC_UNI_सूची_SECT_FW,
 					 QLCNIC_UNI_FIRMWARE_IDX_OFF);
 
-	if (adapter->ahw->fw_type == QLCNIC_UNIFIED_ROMIMAGE)
-		return le32_to_cpu(data_desc->size);
-	else
-		return le32_to_cpu(*(__le32 *)&unirom[QLCNIC_FW_SIZE_OFFSET]);
-}
+	अगर (adapter->ahw->fw_type == QLCNIC_UNIFIED_ROMIMAGE)
+		वापस le32_to_cpu(data_desc->size);
+	अन्यथा
+		वापस le32_to_cpu(*(__le32 *)&unirom[QLCNIC_FW_SIZE_OFFSET]);
+पूर्ण
 
-static u32 qlcnic_get_fw_version(struct qlcnic_adapter *adapter)
-{
-	struct uni_data_desc *fw_data_desc;
-	const struct firmware *fw = adapter->fw;
+अटल u32 qlcnic_get_fw_version(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा uni_data_desc *fw_data_desc;
+	स्थिर काष्ठा firmware *fw = adapter->fw;
 	u32 major, minor, sub;
 	__le32 version_offset;
-	const u8 *ver_str;
-	int i, ret;
+	स्थिर u8 *ver_str;
+	पूर्णांक i, ret;
 
-	if (adapter->ahw->fw_type != QLCNIC_UNIFIED_ROMIMAGE) {
+	अगर (adapter->ahw->fw_type != QLCNIC_UNIFIED_ROMIMAGE) अणु
 		version_offset = *(__le32 *)&fw->data[QLCNIC_FW_VERSION_OFFSET];
-		return le32_to_cpu(version_offset);
-	}
+		वापस le32_to_cpu(version_offset);
+	पूर्ण
 
-	fw_data_desc = qlcnic_get_data_desc(adapter, QLCNIC_UNI_DIR_SECT_FW,
+	fw_data_desc = qlcnic_get_data_desc(adapter, QLCNIC_UNI_सूची_SECT_FW,
 			QLCNIC_UNI_FIRMWARE_IDX_OFF);
 	ver_str = fw->data + le32_to_cpu(fw_data_desc->findex) +
 		  le32_to_cpu(fw_data_desc->size) - 17;
 
-	for (i = 0; i < 12; i++) {
-		if (!strncmp(&ver_str[i], "REV=", 4)) {
-			ret = sscanf(&ver_str[i+4], "%u.%u.%u ",
+	क्रम (i = 0; i < 12; i++) अणु
+		अगर (!म_भेदन(&ver_str[i], "REV=", 4)) अणु
+			ret = माला_पूछो(&ver_str[i+4], "%u.%u.%u ",
 					&major, &minor, &sub);
-			if (ret != 3)
-				return 0;
-			else
-				return major + (minor << 8) + (sub << 16);
-		}
-	}
+			अगर (ret != 3)
+				वापस 0;
+			अन्यथा
+				वापस major + (minor << 8) + (sub << 16);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 qlcnic_get_bios_version(struct qlcnic_adapter *adapter)
-{
-	const struct firmware *fw = adapter->fw;
+अटल u32 qlcnic_get_bios_version(काष्ठा qlcnic_adapter *adapter)
+अणु
+	स्थिर काष्ठा firmware *fw = adapter->fw;
 	u32 bios_ver, prd_off = adapter->file_prd_off;
 	u8 *version_offset;
 	__le32 temp;
 
-	if (adapter->ahw->fw_type != QLCNIC_UNIFIED_ROMIMAGE) {
+	अगर (adapter->ahw->fw_type != QLCNIC_UNIFIED_ROMIMAGE) अणु
 		version_offset = (u8 *)&fw->data[QLCNIC_BIOS_VERSION_OFFSET];
-		return le32_to_cpu(*(__le32 *)version_offset);
-	}
+		वापस le32_to_cpu(*(__le32 *)version_offset);
+	पूर्ण
 
 	temp = *((__le32 *)(&fw->data[prd_off]) + QLCNIC_UNI_BIOS_VERSION_OFF);
 	bios_ver = le32_to_cpu(temp);
 
-	return (bios_ver << 16) + ((bios_ver >> 8) & 0xff00) + (bios_ver >> 24);
-}
+	वापस (bios_ver << 16) + ((bios_ver >> 8) & 0xff00) + (bios_ver >> 24);
+पूर्ण
 
-static void qlcnic_rom_lock_recovery(struct qlcnic_adapter *adapter)
-{
-	if (qlcnic_pcie_sem_lock(adapter, 2, QLCNIC_ROM_LOCK_ID))
+अटल व्योम qlcnic_rom_lock_recovery(काष्ठा qlcnic_adapter *adapter)
+अणु
+	अगर (qlcnic_pcie_sem_lock(adapter, 2, QLCNIC_ROM_LOCK_ID))
 		dev_info(&adapter->pdev->dev, "Resetting rom_lock\n");
 
 	qlcnic_pcie_sem_unlock(adapter, 2);
-}
+पूर्ण
 
-static int
-qlcnic_check_fw_hearbeat(struct qlcnic_adapter *adapter)
-{
+अटल पूर्णांक
+qlcnic_check_fw_hearbeat(काष्ठा qlcnic_adapter *adapter)
+अणु
 	u32 heartbeat, ret = -EIO;
-	int retries = QLCNIC_HEARTBEAT_CHECK_RETRY_COUNT;
+	पूर्णांक retries = QLCNIC_HEARTBEAT_CHECK_RETRY_COUNT;
 
 	adapter->heartbeat = QLC_SHARED_REG_RD32(adapter,
 						 QLCNIC_PEG_ALIVE_COUNTER);
 
-	do {
+	करो अणु
 		msleep(QLCNIC_HEARTBEAT_PERIOD_MSECS);
 		heartbeat = QLC_SHARED_REG_RD32(adapter,
 						QLCNIC_PEG_ALIVE_COUNTER);
-		if (heartbeat != adapter->heartbeat) {
+		अगर (heartbeat != adapter->heartbeat) अणु
 			ret = QLCNIC_RCODE_SUCCESS;
-			break;
-		}
-	} while (--retries);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (--retries);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-qlcnic_need_fw_reset(struct qlcnic_adapter *adapter)
-{
-	if ((adapter->flags & QLCNIC_FW_HANG) ||
-			qlcnic_check_fw_hearbeat(adapter)) {
+पूर्णांक
+qlcnic_need_fw_reset(काष्ठा qlcnic_adapter *adapter)
+अणु
+	अगर ((adapter->flags & QLCNIC_FW_HANG) ||
+			qlcnic_check_fw_hearbeat(adapter)) अणु
 		qlcnic_rom_lock_recovery(adapter);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (adapter->need_fw_reset)
-		return 1;
+	अगर (adapter->need_fw_reset)
+		वापस 1;
 
-	if (adapter->fw)
-		return 1;
+	अगर (adapter->fw)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *fw_name[] = {
+अटल स्थिर अक्षर *fw_name[] = अणु
 	QLCNIC_UNIFIED_ROMIMAGE_NAME,
 	QLCNIC_FLASH_ROMIMAGE_NAME,
-};
+पूर्ण;
 
-int
-qlcnic_load_firmware(struct qlcnic_adapter *adapter)
-{
+पूर्णांक
+qlcnic_load_firmware(काष्ठा qlcnic_adapter *adapter)
+अणु
 	__le64 *ptr64;
 	u32 i, flashaddr, size;
-	const struct firmware *fw = adapter->fw;
-	struct pci_dev *pdev = adapter->pdev;
+	स्थिर काष्ठा firmware *fw = adapter->fw;
+	काष्ठा pci_dev *pdev = adapter->pdev;
 
 	dev_info(&pdev->dev, "loading firmware from %s\n",
 		 fw_name[adapter->ahw->fw_type]);
 
-	if (fw) {
+	अगर (fw) अणु
 		u64 data;
 
 		size = (QLCNIC_IMAGE_START - QLCNIC_BOOTLD_START) / 8;
@@ -1125,181 +1126,181 @@ qlcnic_load_firmware(struct qlcnic_adapter *adapter)
 		ptr64 = (__le64 *)qlcnic_get_bootld_offs(adapter);
 		flashaddr = QLCNIC_BOOTLD_START;
 
-		for (i = 0; i < size; i++) {
+		क्रम (i = 0; i < size; i++) अणु
 			data = le64_to_cpu(ptr64[i]);
 
-			if (qlcnic_pci_mem_write_2M(adapter, flashaddr, data))
-				return -EIO;
+			अगर (qlcnic_pci_mem_ग_लिखो_2M(adapter, flashaddr, data))
+				वापस -EIO;
 
 			flashaddr += 8;
-		}
+		पूर्ण
 
 		size = qlcnic_get_fw_size(adapter) / 8;
 
 		ptr64 = (__le64 *)qlcnic_get_fw_offs(adapter);
 		flashaddr = QLCNIC_IMAGE_START;
 
-		for (i = 0; i < size; i++) {
+		क्रम (i = 0; i < size; i++) अणु
 			data = le64_to_cpu(ptr64[i]);
 
-			if (qlcnic_pci_mem_write_2M(adapter,
+			अगर (qlcnic_pci_mem_ग_लिखो_2M(adapter,
 						flashaddr, data))
-				return -EIO;
+				वापस -EIO;
 
 			flashaddr += 8;
-		}
+		पूर्ण
 
 		size = qlcnic_get_fw_size(adapter) % 8;
-		if (size) {
+		अगर (size) अणु
 			data = le64_to_cpu(ptr64[i]);
 
-			if (qlcnic_pci_mem_write_2M(adapter,
+			अगर (qlcnic_pci_mem_ग_लिखो_2M(adapter,
 						flashaddr, data))
-				return -EIO;
-		}
+				वापस -EIO;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		u64 data;
 		u32 hi, lo;
-		int ret;
-		struct qlcnic_flt_entry bootld_entry;
+		पूर्णांक ret;
+		काष्ठा qlcnic_flt_entry bootld_entry;
 
 		ret = qlcnic_get_flt_entry(adapter, QLCNIC_BOOTLD_REGION,
 					&bootld_entry);
-		if (!ret) {
+		अगर (!ret) अणु
 			size = bootld_entry.size / 8;
 			flashaddr = bootld_entry.start_addr;
-		} else {
+		पूर्ण अन्यथा अणु
 			size = (QLCNIC_IMAGE_START - QLCNIC_BOOTLD_START) / 8;
 			flashaddr = QLCNIC_BOOTLD_START;
 			dev_info(&pdev->dev,
 				"using legacy method to get flash fw region");
-		}
+		पूर्ण
 
-		for (i = 0; i < size; i++) {
-			if (qlcnic_rom_fast_read(adapter,
-					flashaddr, (int *)&lo) != 0)
-				return -EIO;
-			if (qlcnic_rom_fast_read(adapter,
-					flashaddr + 4, (int *)&hi) != 0)
-				return -EIO;
+		क्रम (i = 0; i < size; i++) अणु
+			अगर (qlcnic_rom_fast_पढ़ो(adapter,
+					flashaddr, (पूर्णांक *)&lo) != 0)
+				वापस -EIO;
+			अगर (qlcnic_rom_fast_पढ़ो(adapter,
+					flashaddr + 4, (पूर्णांक *)&hi) != 0)
+				वापस -EIO;
 
 			data = (((u64)hi << 32) | lo);
 
-			if (qlcnic_pci_mem_write_2M(adapter,
+			अगर (qlcnic_pci_mem_ग_लिखो_2M(adapter,
 						flashaddr, data))
-				return -EIO;
+				वापस -EIO;
 
 			flashaddr += 8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	usleep_range(1000, 1500);
 
 	QLCWR32(adapter, QLCNIC_CRB_PEG_NET_0 + 0x18, 0x1020);
 	QLCWR32(adapter, QLCNIC_ROMUSB_GLB_SW_RESET, 0x80001e);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-qlcnic_validate_firmware(struct qlcnic_adapter *adapter)
-{
+अटल पूर्णांक
+qlcnic_validate_firmware(काष्ठा qlcnic_adapter *adapter)
+अणु
 	u32 val;
 	u32 ver, bios, min_size;
-	struct pci_dev *pdev = adapter->pdev;
-	const struct firmware *fw = adapter->fw;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	स्थिर काष्ठा firmware *fw = adapter->fw;
 	u8 fw_type = adapter->ahw->fw_type;
 
-	if (fw_type == QLCNIC_UNIFIED_ROMIMAGE) {
-		if (qlcnic_validate_unified_romimage(adapter))
-			return -EINVAL;
+	अगर (fw_type == QLCNIC_UNIFIED_ROMIMAGE) अणु
+		अगर (qlcnic_validate_unअगरied_romimage(adapter))
+			वापस -EINVAL;
 
 		min_size = QLCNIC_UNI_FW_MIN_SIZE;
-	} else {
+	पूर्ण अन्यथा अणु
 		val = le32_to_cpu(*(__le32 *)&fw->data[QLCNIC_FW_MAGIC_OFFSET]);
-		if (val != QLCNIC_BDINFO_MAGIC)
-			return -EINVAL;
+		अगर (val != QLCNIC_BDINFO_MAGIC)
+			वापस -EINVAL;
 
 		min_size = QLCNIC_FW_MIN_SIZE;
-	}
+	पूर्ण
 
-	if (fw->size < min_size)
-		return -EINVAL;
+	अगर (fw->size < min_size)
+		वापस -EINVAL;
 
 	val = qlcnic_get_fw_version(adapter);
 	ver = QLCNIC_DECODE_VERSION(val);
 
-	if (ver < QLCNIC_MIN_FW_VERSION) {
+	अगर (ver < QLCNIC_MIN_FW_VERSION) अणु
 		dev_err(&pdev->dev,
 				"%s: firmware version %d.%d.%d unsupported\n",
 		fw_name[fw_type], _major(ver), _minor(ver), _build(ver));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	val = qlcnic_get_bios_version(adapter);
-	qlcnic_rom_fast_read(adapter, QLCNIC_BIOS_VERSION_OFFSET, (int *)&bios);
-	if (val != bios) {
+	qlcnic_rom_fast_पढ़ो(adapter, QLCNIC_BIOS_VERSION_OFFSET, (पूर्णांक *)&bios);
+	अगर (val != bios) अणु
 		dev_err(&pdev->dev, "%s: firmware bios is incompatible\n",
 				fw_name[fw_type]);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	QLC_SHARED_REG_WR32(adapter, QLCNIC_FW_IMG_VALID, QLCNIC_BDINFO_MAGIC);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-qlcnic_get_next_fwtype(struct qlcnic_adapter *adapter)
-{
+अटल व्योम
+qlcnic_get_next_fwtype(काष्ठा qlcnic_adapter *adapter)
+अणु
 	u8 fw_type;
 
-	switch (adapter->ahw->fw_type) {
-	case QLCNIC_UNKNOWN_ROMIMAGE:
+	चयन (adapter->ahw->fw_type) अणु
+	हाल QLCNIC_UNKNOWN_ROMIMAGE:
 		fw_type = QLCNIC_UNIFIED_ROMIMAGE;
-		break;
+		अवरोध;
 
-	case QLCNIC_UNIFIED_ROMIMAGE:
-	default:
+	हाल QLCNIC_UNIFIED_ROMIMAGE:
+	शेष:
 		fw_type = QLCNIC_FLASH_ROMIMAGE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	adapter->ahw->fw_type = fw_type;
-}
+पूर्ण
 
 
 
-void qlcnic_request_firmware(struct qlcnic_adapter *adapter)
-{
-	struct pci_dev *pdev = adapter->pdev;
-	int rc;
+व्योम qlcnic_request_firmware(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	पूर्णांक rc;
 
 	adapter->ahw->fw_type = QLCNIC_UNKNOWN_ROMIMAGE;
 
 next:
 	qlcnic_get_next_fwtype(adapter);
 
-	if (adapter->ahw->fw_type == QLCNIC_FLASH_ROMIMAGE) {
-		adapter->fw = NULL;
-	} else {
+	अगर (adapter->ahw->fw_type == QLCNIC_FLASH_ROMIMAGE) अणु
+		adapter->fw = शून्य;
+	पूर्ण अन्यथा अणु
 		rc = request_firmware(&adapter->fw,
 				      fw_name[adapter->ahw->fw_type],
 				      &pdev->dev);
-		if (rc != 0)
-			goto next;
+		अगर (rc != 0)
+			जाओ next;
 
 		rc = qlcnic_validate_firmware(adapter);
-		if (rc != 0) {
+		अगर (rc != 0) अणु
 			release_firmware(adapter->fw);
 			usleep_range(1000, 1500);
-			goto next;
-		}
-	}
-}
+			जाओ next;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-void
-qlcnic_release_firmware(struct qlcnic_adapter *adapter)
-{
+व्योम
+qlcnic_release_firmware(काष्ठा qlcnic_adapter *adapter)
+अणु
 	release_firmware(adapter->fw);
-	adapter->fw = NULL;
-}
+	adapter->fw = शून्य;
+पूर्ण

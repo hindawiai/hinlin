@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *
  */
 
-#ifndef _ASM_MIPS_BOARDS_LAUNCH_H
-#define _ASM_MIPS_BOARDS_LAUNCH_H
+#अगर_अघोषित _ASM_MIPS_BOARDS_LAUNCH_H
+#घोषणा _ASM_MIPS_BOARDS_LAUNCH_H
 
-#ifndef _ASSEMBLER_
+#अगर_अघोषित _ASSEMBLER_
 
-struct cpulaunch {
-    unsigned long	pc;
-    unsigned long	gp;
-    unsigned long	sp;
-    unsigned long	a0;
-    unsigned long	_pad[3]; /* pad to cache line size to avoid thrashing */
-    unsigned long	flags;
-};
+काष्ठा cpulaunch अणु
+    अचिन्हित दीर्घ	pc;
+    अचिन्हित दीर्घ	gp;
+    अचिन्हित दीर्घ	sp;
+    अचिन्हित दीर्घ	a0;
+    अचिन्हित दीर्घ	_pad[3]; /* pad to cache line size to aव्योम thrashing */
+    अचिन्हित दीर्घ	flags;
+पूर्ण;
 
-#else
+#अन्यथा
 
-#define LOG2CPULAUNCH	5
-#define LAUNCH_PC	0
-#define LAUNCH_GP	4
-#define LAUNCH_SP	8
-#define LAUNCH_A0	12
-#define LAUNCH_FLAGS	28
+#घोषणा LOG2CPULAUNCH	5
+#घोषणा LAUNCH_PC	0
+#घोषणा LAUNCH_GP	4
+#घोषणा LAUNCH_SP	8
+#घोषणा LAUNCH_A0	12
+#घोषणा LAUNCH_FLAGS	28
 
-#endif
+#पूर्ण_अगर
 
-#define LAUNCH_FREADY	1
-#define LAUNCH_FGO	2
-#define LAUNCH_FGONE	4
+#घोषणा LAUNCH_FREADY	1
+#घोषणा LAUNCH_FGO	2
+#घोषणा LAUNCH_FGONE	4
 
-#define CPULAUNCH	0x00000f00
-#define NCPULAUNCH	8
+#घोषणा CPULAUNCH	0x00000f00
+#घोषणा NCPULAUNCH	8
 
-/* Polling period in count cycles for secondary CPU's */
-#define LAUNCHPERIOD	10000
+/* Polling period in count cycles क्रम secondary CPU's */
+#घोषणा LAUNCHPERIOD	10000
 
-#endif /* _ASM_MIPS_BOARDS_LAUNCH_H */
+#पूर्ण_अगर /* _ASM_MIPS_BOARDS_LAUNCH_H */

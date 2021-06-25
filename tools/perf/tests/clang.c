@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "tests.h"
-#include "c++/clang-c.h"
-#include <linux/kernel.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "tests.h"
+#समावेश "c++/clang-c.h"
+#समावेश <linux/kernel.h>
 
-static struct {
-	int (*func)(void);
-	const char *desc;
-} clang_testcase_table[] = {
-#ifdef HAVE_LIBCLANGLLVM_SUPPORT
-	{
+अटल काष्ठा अणु
+	पूर्णांक (*func)(व्योम);
+	स्थिर अक्षर *desc;
+पूर्ण clang_testहाल_table[] = अणु
+#अगर_घोषित HAVE_LIBCLANGLLVM_SUPPORT
+	अणु
 		.func = test__clang_to_IR,
 		.desc = "builtin clang compile C source to IR",
-	},
-	{
+	पूर्ण,
+	अणु
 		.func = test__clang_to_obj,
 		.desc = "builtin clang compile C source to ELF object",
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-int test__clang_subtest_get_nr(void)
-{
-	return (int)ARRAY_SIZE(clang_testcase_table);
-}
+पूर्णांक test__clang_subtest_get_nr(व्योम)
+अणु
+	वापस (पूर्णांक)ARRAY_SIZE(clang_testहाल_table);
+पूर्ण
 
-const char *test__clang_subtest_get_desc(int i)
-{
-	if (i < 0 || i >= (int)ARRAY_SIZE(clang_testcase_table))
-		return NULL;
-	return clang_testcase_table[i].desc;
-}
+स्थिर अक्षर *test__clang_subtest_get_desc(पूर्णांक i)
+अणु
+	अगर (i < 0 || i >= (पूर्णांक)ARRAY_SIZE(clang_testहाल_table))
+		वापस शून्य;
+	वापस clang_testहाल_table[i].desc;
+पूर्ण
 
-#ifndef HAVE_LIBCLANGLLVM_SUPPORT
-int test__clang(struct test *test __maybe_unused, int i __maybe_unused)
-{
-	return TEST_SKIP;
-}
-#else
-int test__clang(struct test *test __maybe_unused, int i)
-{
-	if (i < 0 || i >= (int)ARRAY_SIZE(clang_testcase_table))
-		return TEST_FAIL;
-	return clang_testcase_table[i].func();
-}
-#endif
+#अगर_अघोषित HAVE_LIBCLANGLLVM_SUPPORT
+पूर्णांक test__clang(काष्ठा test *test __maybe_unused, पूर्णांक i __maybe_unused)
+अणु
+	वापस TEST_SKIP;
+पूर्ण
+#अन्यथा
+पूर्णांक test__clang(काष्ठा test *test __maybe_unused, पूर्णांक i)
+अणु
+	अगर (i < 0 || i >= (पूर्णांक)ARRAY_SIZE(clang_testहाल_table))
+		वापस TEST_FAIL;
+	वापस clang_testहाल_table[i].func();
+पूर्ण
+#पूर्ण_अगर

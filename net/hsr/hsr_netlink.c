@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright 2011-2014 Autronica Fire and Security AS
  *
  * Author(s):
  *	2011-2014 Arvid Brodin, arvid.brodin@alten.se
  *
- * Routines for handling Netlink messages for HSR and PRP.
+ * Routines क्रम handling Netlink messages क्रम HSR and PRP.
  */
 
-#include "hsr_netlink.h"
-#include <linux/kernel.h>
-#include <net/rtnetlink.h>
-#include <net/genetlink.h>
-#include "hsr_main.h"
-#include "hsr_device.h"
-#include "hsr_framereg.h"
+#समावेश "hsr_netlink.h"
+#समावेश <linux/kernel.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/genetlink.h>
+#समावेश "hsr_main.h"
+#समावेश "hsr_device.h"
+#समावेश "hsr_framereg.h"
 
-static const struct nla_policy hsr_policy[IFLA_HSR_MAX + 1] = {
-	[IFLA_HSR_SLAVE1]		= { .type = NLA_U32 },
-	[IFLA_HSR_SLAVE2]		= { .type = NLA_U32 },
-	[IFLA_HSR_MULTICAST_SPEC]	= { .type = NLA_U8 },
-	[IFLA_HSR_VERSION]	= { .type = NLA_U8 },
-	[IFLA_HSR_SUPERVISION_ADDR]	= { .len = ETH_ALEN },
-	[IFLA_HSR_SEQ_NR]		= { .type = NLA_U16 },
-	[IFLA_HSR_PROTOCOL]		= { .type = NLA_U8 },
-};
+अटल स्थिर काष्ठा nla_policy hsr_policy[IFLA_HSR_MAX + 1] = अणु
+	[IFLA_HSR_SLAVE1]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_HSR_SLAVE2]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_HSR_MULTICAST_SPEC]	= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_HSR_VERSION]	= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_HSR_SUPERVISION_ADDR]	= अणु .len = ETH_ALEN पूर्ण,
+	[IFLA_HSR_SEQ_NR]		= अणु .type = NLA_U16 पूर्ण,
+	[IFLA_HSR_PROTOCOL]		= अणु .type = NLA_U8 पूर्ण,
+पूर्ण;
 
-/* Here, it seems a netdevice has already been allocated for us, and the
+/* Here, it seems a netdevice has alपढ़ोy been allocated क्रम us, and the
  * hsr_dev_setup routine has been executed. Nice!
  */
-static int hsr_newlink(struct net *src_net, struct net_device *dev,
-		       struct nlattr *tb[], struct nlattr *data[],
-		       struct netlink_ext_ack *extack)
-{
-	enum hsr_version proto_version;
-	unsigned char multicast_spec;
+अटल पूर्णांक hsr_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
+		       काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	क्रमागत hsr_version proto_version;
+	अचिन्हित अक्षर multicast_spec;
 	u8 proto = HSR_PROTOCOL_HSR;
-	struct net_device *link[2];
+	काष्ठा net_device *link[2];
 
-	if (!data) {
+	अगर (!data) अणु
 		NL_SET_ERR_MSG_MOD(extack, "No slave devices specified");
-		return -EINVAL;
-	}
-	if (!data[IFLA_HSR_SLAVE1]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!data[IFLA_HSR_SLAVE1]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Slave1 device not specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	link[0] = __dev_get_by_index(src_net,
 				     nla_get_u32(data[IFLA_HSR_SLAVE1]));
-	if (!link[0]) {
+	अगर (!link[0]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Slave1 does not exist");
-		return -EINVAL;
-	}
-	if (!data[IFLA_HSR_SLAVE2]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!data[IFLA_HSR_SLAVE2]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Slave2 device not specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	link[1] = __dev_get_by_index(src_net,
 				     nla_get_u32(data[IFLA_HSR_SLAVE2]));
-	if (!link[1]) {
+	अगर (!link[1]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Slave2 does not exist");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (link[0] == link[1]) {
+	अगर (link[0] == link[1]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Slave1 and Slave2 are same");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!data[IFLA_HSR_MULTICAST_SPEC])
+	अगर (!data[IFLA_HSR_MULTICAST_SPEC])
 		multicast_spec = 0;
-	else
+	अन्यथा
 		multicast_spec = nla_get_u8(data[IFLA_HSR_MULTICAST_SPEC]);
 
-	if (data[IFLA_HSR_PROTOCOL])
+	अगर (data[IFLA_HSR_PROTOCOL])
 		proto = nla_get_u8(data[IFLA_HSR_PROTOCOL]);
 
-	if (proto >= HSR_PROTOCOL_MAX) {
+	अगर (proto >= HSR_PROTOCOL_MAX) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Unsupported protocol");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!data[IFLA_HSR_VERSION]) {
+	अगर (!data[IFLA_HSR_VERSION]) अणु
 		proto_version = HSR_V0;
-	} else {
-		if (proto == HSR_PROTOCOL_PRP) {
+	पूर्ण अन्यथा अणु
+		अगर (proto == HSR_PROTOCOL_PRP) अणु
 			NL_SET_ERR_MSG_MOD(extack, "PRP version unsupported");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		proto_version = nla_get_u8(data[IFLA_HSR_VERSION]);
-		if (proto_version > HSR_V1) {
+		अगर (proto_version > HSR_V1) अणु
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Only HSR version 0/1 supported");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (proto == HSR_PROTOCOL_PRP)
+	अगर (proto == HSR_PROTOCOL_PRP)
 		proto_version = PRP_V1;
 
-	return hsr_dev_finalize(dev, link, multicast_spec, proto_version, extack);
-}
+	वापस hsr_dev_finalize(dev, link, multicast_spec, proto_version, extack);
+पूर्ण
 
-static void hsr_dellink(struct net_device *dev, struct list_head *head)
-{
-	struct hsr_priv *hsr = netdev_priv(dev);
+अटल व्योम hsr_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
+अणु
+	काष्ठा hsr_priv *hsr = netdev_priv(dev);
 
-	del_timer_sync(&hsr->prune_timer);
-	del_timer_sync(&hsr->announce_timer);
+	del_समयr_sync(&hsr->prune_समयr);
+	del_समयr_sync(&hsr->announce_समयr);
 
 	hsr_debugfs_term(hsr);
 	hsr_del_ports(hsr);
@@ -115,402 +116,402 @@ static void hsr_dellink(struct net_device *dev, struct list_head *head)
 	hsr_del_self_node(hsr);
 	hsr_del_nodes(&hsr->node_db);
 
-	unregister_netdevice_queue(dev, head);
-}
+	unरेजिस्टर_netdevice_queue(dev, head);
+पूर्ण
 
-static int hsr_fill_info(struct sk_buff *skb, const struct net_device *dev)
-{
-	struct hsr_priv *hsr = netdev_priv(dev);
+अटल पूर्णांक hsr_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा hsr_priv *hsr = netdev_priv(dev);
 	u8 proto = HSR_PROTOCOL_HSR;
-	struct hsr_port *port;
+	काष्ठा hsr_port *port;
 
 	port = hsr_port_get_hsr(hsr, HSR_PT_SLAVE_A);
-	if (port) {
-		if (nla_put_u32(skb, IFLA_HSR_SLAVE1, port->dev->ifindex))
-			goto nla_put_failure;
-	}
+	अगर (port) अणु
+		अगर (nla_put_u32(skb, IFLA_HSR_SLAVE1, port->dev->अगरindex))
+			जाओ nla_put_failure;
+	पूर्ण
 
 	port = hsr_port_get_hsr(hsr, HSR_PT_SLAVE_B);
-	if (port) {
-		if (nla_put_u32(skb, IFLA_HSR_SLAVE2, port->dev->ifindex))
-			goto nla_put_failure;
-	}
+	अगर (port) अणु
+		अगर (nla_put_u32(skb, IFLA_HSR_SLAVE2, port->dev->अगरindex))
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (nla_put(skb, IFLA_HSR_SUPERVISION_ADDR, ETH_ALEN,
+	अगर (nla_put(skb, IFLA_HSR_SUPERVISION_ADDR, ETH_ALEN,
 		    hsr->sup_multicast_addr) ||
 	    nla_put_u16(skb, IFLA_HSR_SEQ_NR, hsr->sequence_nr))
-		goto nla_put_failure;
-	if (hsr->prot_version == PRP_V1)
+		जाओ nla_put_failure;
+	अगर (hsr->prot_version == PRP_V1)
 		proto = HSR_PROTOCOL_PRP;
-	if (nla_put_u8(skb, IFLA_HSR_PROTOCOL, proto))
-		goto nla_put_failure;
+	अगर (nla_put_u8(skb, IFLA_HSR_PROTOCOL, proto))
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static struct rtnl_link_ops hsr_link_ops __read_mostly = {
+अटल काष्ठा rtnl_link_ops hsr_link_ops __पढ़ो_mostly = अणु
 	.kind		= "hsr",
 	.maxtype	= IFLA_HSR_MAX,
 	.policy		= hsr_policy,
-	.priv_size	= sizeof(struct hsr_priv),
+	.priv_size	= माप(काष्ठा hsr_priv),
 	.setup		= hsr_dev_setup,
 	.newlink	= hsr_newlink,
 	.dellink	= hsr_dellink,
 	.fill_info	= hsr_fill_info,
-};
+पूर्ण;
 
 /* attribute policy */
-static const struct nla_policy hsr_genl_policy[HSR_A_MAX + 1] = {
-	[HSR_A_NODE_ADDR] = { .len = ETH_ALEN },
-	[HSR_A_NODE_ADDR_B] = { .len = ETH_ALEN },
-	[HSR_A_IFINDEX] = { .type = NLA_U32 },
-	[HSR_A_IF1_AGE] = { .type = NLA_U32 },
-	[HSR_A_IF2_AGE] = { .type = NLA_U32 },
-	[HSR_A_IF1_SEQ] = { .type = NLA_U16 },
-	[HSR_A_IF2_SEQ] = { .type = NLA_U16 },
-};
+अटल स्थिर काष्ठा nla_policy hsr_genl_policy[HSR_A_MAX + 1] = अणु
+	[HSR_A_NODE_ADDR] = अणु .len = ETH_ALEN पूर्ण,
+	[HSR_A_NODE_ADDR_B] = अणु .len = ETH_ALEN पूर्ण,
+	[HSR_A_IFINDEX] = अणु .type = NLA_U32 पूर्ण,
+	[HSR_A_IF1_AGE] = अणु .type = NLA_U32 पूर्ण,
+	[HSR_A_IF2_AGE] = अणु .type = NLA_U32 पूर्ण,
+	[HSR_A_IF1_SEQ] = अणु .type = NLA_U16 पूर्ण,
+	[HSR_A_IF2_SEQ] = अणु .type = NLA_U16 पूर्ण,
+पूर्ण;
 
-static struct genl_family hsr_genl_family;
+अटल काष्ठा genl_family hsr_genl_family;
 
-static const struct genl_multicast_group hsr_mcgrps[] = {
-	{ .name = "hsr-network", },
-};
+अटल स्थिर काष्ठा genl_multicast_group hsr_mcgrps[] = अणु
+	अणु .name = "hsr-network", पूर्ण,
+पूर्ण;
 
-/* This is called if for some node with MAC address addr, we only get frames
- * over one of the slave interfaces. This would indicate an open network ring
+/* This is called अगर क्रम some node with MAC address addr, we only get frames
+ * over one of the slave पूर्णांकerfaces. This would indicate an खोलो network ring
  * (i.e. a link has failed somewhere).
  */
-void hsr_nl_ringerror(struct hsr_priv *hsr, unsigned char addr[ETH_ALEN],
-		      struct hsr_port *port)
-{
-	struct sk_buff *skb;
-	void *msg_head;
-	struct hsr_port *master;
-	int res;
+व्योम hsr_nl_ringerror(काष्ठा hsr_priv *hsr, अचिन्हित अक्षर addr[ETH_ALEN],
+		      काष्ठा hsr_port *port)
+अणु
+	काष्ठा sk_buff *skb;
+	व्योम *msg_head;
+	काष्ठा hsr_port *master;
+	पूर्णांक res;
 
 	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_ATOMIC);
-	if (!skb)
-		goto fail;
+	अगर (!skb)
+		जाओ fail;
 
 	msg_head = genlmsg_put(skb, 0, 0, &hsr_genl_family, 0,
 			       HSR_C_RING_ERROR);
-	if (!msg_head)
-		goto nla_put_failure;
+	अगर (!msg_head)
+		जाओ nla_put_failure;
 
 	res = nla_put(skb, HSR_A_NODE_ADDR, ETH_ALEN, addr);
-	if (res < 0)
-		goto nla_put_failure;
+	अगर (res < 0)
+		जाओ nla_put_failure;
 
-	res = nla_put_u32(skb, HSR_A_IFINDEX, port->dev->ifindex);
-	if (res < 0)
-		goto nla_put_failure;
+	res = nla_put_u32(skb, HSR_A_IFINDEX, port->dev->अगरindex);
+	अगर (res < 0)
+		जाओ nla_put_failure;
 
 	genlmsg_end(skb, msg_head);
 	genlmsg_multicast(&hsr_genl_family, skb, 0, 0, GFP_ATOMIC);
 
-	return;
+	वापस;
 
 nla_put_failure:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
 fail:
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	master = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
 	netdev_warn(master->dev, "Could not send HSR ring error message\n");
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-/* This is called when we haven't heard from the node with MAC address addr for
- * some time (just before the node is removed from the node table/list).
+/* This is called when we haven't heard from the node with MAC address addr क्रम
+ * some समय (just beक्रमe the node is हटाओd from the node table/list).
  */
-void hsr_nl_nodedown(struct hsr_priv *hsr, unsigned char addr[ETH_ALEN])
-{
-	struct sk_buff *skb;
-	void *msg_head;
-	struct hsr_port *master;
-	int res;
+व्योम hsr_nl_nodeकरोwn(काष्ठा hsr_priv *hsr, अचिन्हित अक्षर addr[ETH_ALEN])
+अणु
+	काष्ठा sk_buff *skb;
+	व्योम *msg_head;
+	काष्ठा hsr_port *master;
+	पूर्णांक res;
 
 	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_ATOMIC);
-	if (!skb)
-		goto fail;
+	अगर (!skb)
+		जाओ fail;
 
 	msg_head = genlmsg_put(skb, 0, 0, &hsr_genl_family, 0, HSR_C_NODE_DOWN);
-	if (!msg_head)
-		goto nla_put_failure;
+	अगर (!msg_head)
+		जाओ nla_put_failure;
 
 	res = nla_put(skb, HSR_A_NODE_ADDR, ETH_ALEN, addr);
-	if (res < 0)
-		goto nla_put_failure;
+	अगर (res < 0)
+		जाओ nla_put_failure;
 
 	genlmsg_end(skb, msg_head);
 	genlmsg_multicast(&hsr_genl_family, skb, 0, 0, GFP_ATOMIC);
 
-	return;
+	वापस;
 
 nla_put_failure:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
 fail:
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	master = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
 	netdev_warn(master->dev, "Could not send HSR node down\n");
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-/* HSR_C_GET_NODE_STATUS lets userspace query the internal HSR node table
- * about the status of a specific node in the network, defined by its MAC
+/* HSR_C_GET_NODE_STATUS lets userspace query the पूर्णांकernal HSR node table
+ * about the status of a specअगरic node in the network, defined by its MAC
  * address.
  *
- * Input: hsr ifindex, node mac address
- * Output: hsr ifindex, node mac address (copied from request),
+ * Input: hsr अगरindex, node mac address
+ * Output: hsr अगरindex, node mac address (copied from request),
  *	   age of latest frame from node over slave 1, slave 2 [ms]
  */
-static int hsr_get_node_status(struct sk_buff *skb_in, struct genl_info *info)
-{
+अटल पूर्णांक hsr_get_node_status(काष्ठा sk_buff *skb_in, काष्ठा genl_info *info)
+अणु
 	/* For receiving */
-	struct nlattr *na;
-	struct net_device *hsr_dev;
+	काष्ठा nlattr *na;
+	काष्ठा net_device *hsr_dev;
 
 	/* For sending */
-	struct sk_buff *skb_out;
-	void *msg_head;
-	struct hsr_priv *hsr;
-	struct hsr_port *port;
-	unsigned char hsr_node_addr_b[ETH_ALEN];
-	int hsr_node_if1_age;
-	u16 hsr_node_if1_seq;
-	int hsr_node_if2_age;
-	u16 hsr_node_if2_seq;
-	int addr_b_ifindex;
-	int res;
+	काष्ठा sk_buff *skb_out;
+	व्योम *msg_head;
+	काष्ठा hsr_priv *hsr;
+	काष्ठा hsr_port *port;
+	अचिन्हित अक्षर hsr_node_addr_b[ETH_ALEN];
+	पूर्णांक hsr_node_अगर1_age;
+	u16 hsr_node_अगर1_seq;
+	पूर्णांक hsr_node_अगर2_age;
+	u16 hsr_node_अगर2_seq;
+	पूर्णांक addr_b_अगरindex;
+	पूर्णांक res;
 
-	if (!info)
-		goto invalid;
+	अगर (!info)
+		जाओ invalid;
 
 	na = info->attrs[HSR_A_IFINDEX];
-	if (!na)
-		goto invalid;
+	अगर (!na)
+		जाओ invalid;
 	na = info->attrs[HSR_A_NODE_ADDR];
-	if (!na)
-		goto invalid;
+	अगर (!na)
+		जाओ invalid;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	hsr_dev = dev_get_by_index_rcu(genl_info_net(info),
 				       nla_get_u32(info->attrs[HSR_A_IFINDEX]));
-	if (!hsr_dev)
-		goto rcu_unlock;
-	if (!is_hsr_master(hsr_dev))
-		goto rcu_unlock;
+	अगर (!hsr_dev)
+		जाओ rcu_unlock;
+	अगर (!is_hsr_master(hsr_dev))
+		जाओ rcu_unlock;
 
 	/* Send reply */
 	skb_out = genlmsg_new(NLMSG_GOODSIZE, GFP_ATOMIC);
-	if (!skb_out) {
+	अगर (!skb_out) अणु
 		res = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	msg_head = genlmsg_put(skb_out, NETLINK_CB(skb_in).portid,
 			       info->snd_seq, &hsr_genl_family, 0,
 			       HSR_C_SET_NODE_STATUS);
-	if (!msg_head) {
+	अगर (!msg_head) अणु
 		res = -ENOMEM;
-		goto nla_put_failure;
-	}
+		जाओ nla_put_failure;
+	पूर्ण
 
-	res = nla_put_u32(skb_out, HSR_A_IFINDEX, hsr_dev->ifindex);
-	if (res < 0)
-		goto nla_put_failure;
+	res = nla_put_u32(skb_out, HSR_A_IFINDEX, hsr_dev->अगरindex);
+	अगर (res < 0)
+		जाओ nla_put_failure;
 
 	hsr = netdev_priv(hsr_dev);
 	res = hsr_get_node_data(hsr,
-				(unsigned char *)
+				(अचिन्हित अक्षर *)
 				nla_data(info->attrs[HSR_A_NODE_ADDR]),
 					 hsr_node_addr_b,
-					 &addr_b_ifindex,
-					 &hsr_node_if1_age,
-					 &hsr_node_if1_seq,
-					 &hsr_node_if2_age,
-					 &hsr_node_if2_seq);
-	if (res < 0)
-		goto nla_put_failure;
+					 &addr_b_अगरindex,
+					 &hsr_node_अगर1_age,
+					 &hsr_node_अगर1_seq,
+					 &hsr_node_अगर2_age,
+					 &hsr_node_अगर2_seq);
+	अगर (res < 0)
+		जाओ nla_put_failure;
 
 	res = nla_put(skb_out, HSR_A_NODE_ADDR, ETH_ALEN,
 		      nla_data(info->attrs[HSR_A_NODE_ADDR]));
-	if (res < 0)
-		goto nla_put_failure;
+	अगर (res < 0)
+		जाओ nla_put_failure;
 
-	if (addr_b_ifindex > -1) {
+	अगर (addr_b_अगरindex > -1) अणु
 		res = nla_put(skb_out, HSR_A_NODE_ADDR_B, ETH_ALEN,
 			      hsr_node_addr_b);
-		if (res < 0)
-			goto nla_put_failure;
+		अगर (res < 0)
+			जाओ nla_put_failure;
 
 		res = nla_put_u32(skb_out, HSR_A_ADDR_B_IFINDEX,
-				  addr_b_ifindex);
-		if (res < 0)
-			goto nla_put_failure;
-	}
+				  addr_b_अगरindex);
+		अगर (res < 0)
+			जाओ nla_put_failure;
+	पूर्ण
 
-	res = nla_put_u32(skb_out, HSR_A_IF1_AGE, hsr_node_if1_age);
-	if (res < 0)
-		goto nla_put_failure;
-	res = nla_put_u16(skb_out, HSR_A_IF1_SEQ, hsr_node_if1_seq);
-	if (res < 0)
-		goto nla_put_failure;
+	res = nla_put_u32(skb_out, HSR_A_IF1_AGE, hsr_node_अगर1_age);
+	अगर (res < 0)
+		जाओ nla_put_failure;
+	res = nla_put_u16(skb_out, HSR_A_IF1_SEQ, hsr_node_अगर1_seq);
+	अगर (res < 0)
+		जाओ nla_put_failure;
 	port = hsr_port_get_hsr(hsr, HSR_PT_SLAVE_A);
-	if (port)
+	अगर (port)
 		res = nla_put_u32(skb_out, HSR_A_IF1_IFINDEX,
-				  port->dev->ifindex);
-	if (res < 0)
-		goto nla_put_failure;
+				  port->dev->अगरindex);
+	अगर (res < 0)
+		जाओ nla_put_failure;
 
-	res = nla_put_u32(skb_out, HSR_A_IF2_AGE, hsr_node_if2_age);
-	if (res < 0)
-		goto nla_put_failure;
-	res = nla_put_u16(skb_out, HSR_A_IF2_SEQ, hsr_node_if2_seq);
-	if (res < 0)
-		goto nla_put_failure;
+	res = nla_put_u32(skb_out, HSR_A_IF2_AGE, hsr_node_अगर2_age);
+	अगर (res < 0)
+		जाओ nla_put_failure;
+	res = nla_put_u16(skb_out, HSR_A_IF2_SEQ, hsr_node_अगर2_seq);
+	अगर (res < 0)
+		जाओ nla_put_failure;
 	port = hsr_port_get_hsr(hsr, HSR_PT_SLAVE_B);
-	if (port)
+	अगर (port)
 		res = nla_put_u32(skb_out, HSR_A_IF2_IFINDEX,
-				  port->dev->ifindex);
-	if (res < 0)
-		goto nla_put_failure;
+				  port->dev->अगरindex);
+	अगर (res < 0)
+		जाओ nla_put_failure;
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	genlmsg_end(skb_out, msg_head);
 	genlmsg_unicast(genl_info_net(info), skb_out, info->snd_portid);
 
-	return 0;
+	वापस 0;
 
 rcu_unlock:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 invalid:
-	netlink_ack(skb_in, nlmsg_hdr(skb_in), -EINVAL, NULL);
-	return 0;
+	netlink_ack(skb_in, nlmsg_hdr(skb_in), -EINVAL, शून्य);
+	वापस 0;
 
 nla_put_failure:
-	kfree_skb(skb_out);
+	kमुक्त_skb(skb_out);
 	/* Fall through */
 
 fail:
-	rcu_read_unlock();
-	return res;
-}
+	rcu_पढ़ो_unlock();
+	वापस res;
+पूर्ण
 
 /* Get a list of MacAddressA of all nodes known to this node (including self).
  */
-static int hsr_get_node_list(struct sk_buff *skb_in, struct genl_info *info)
-{
-	unsigned char addr[ETH_ALEN];
-	struct net_device *hsr_dev;
-	struct sk_buff *skb_out;
-	struct hsr_priv *hsr;
+अटल पूर्णांक hsr_get_node_list(काष्ठा sk_buff *skb_in, काष्ठा genl_info *info)
+अणु
+	अचिन्हित अक्षर addr[ETH_ALEN];
+	काष्ठा net_device *hsr_dev;
+	काष्ठा sk_buff *skb_out;
+	काष्ठा hsr_priv *hsr;
 	bool restart = false;
-	struct nlattr *na;
-	void *pos = NULL;
-	void *msg_head;
-	int res;
+	काष्ठा nlattr *na;
+	व्योम *pos = शून्य;
+	व्योम *msg_head;
+	पूर्णांक res;
 
-	if (!info)
-		goto invalid;
+	अगर (!info)
+		जाओ invalid;
 
 	na = info->attrs[HSR_A_IFINDEX];
-	if (!na)
-		goto invalid;
+	अगर (!na)
+		जाओ invalid;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	hsr_dev = dev_get_by_index_rcu(genl_info_net(info),
 				       nla_get_u32(info->attrs[HSR_A_IFINDEX]));
-	if (!hsr_dev)
-		goto rcu_unlock;
-	if (!is_hsr_master(hsr_dev))
-		goto rcu_unlock;
+	अगर (!hsr_dev)
+		जाओ rcu_unlock;
+	अगर (!is_hsr_master(hsr_dev))
+		जाओ rcu_unlock;
 
 restart:
 	/* Send reply */
 	skb_out = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-	if (!skb_out) {
+	अगर (!skb_out) अणु
 		res = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	msg_head = genlmsg_put(skb_out, NETLINK_CB(skb_in).portid,
 			       info->snd_seq, &hsr_genl_family, 0,
 			       HSR_C_SET_NODE_LIST);
-	if (!msg_head) {
+	अगर (!msg_head) अणु
 		res = -ENOMEM;
-		goto nla_put_failure;
-	}
+		जाओ nla_put_failure;
+	पूर्ण
 
-	if (!restart) {
-		res = nla_put_u32(skb_out, HSR_A_IFINDEX, hsr_dev->ifindex);
-		if (res < 0)
-			goto nla_put_failure;
-	}
+	अगर (!restart) अणु
+		res = nla_put_u32(skb_out, HSR_A_IFINDEX, hsr_dev->अगरindex);
+		अगर (res < 0)
+			जाओ nla_put_failure;
+	पूर्ण
 
 	hsr = netdev_priv(hsr_dev);
 
-	if (!pos)
-		pos = hsr_get_next_node(hsr, NULL, addr);
-	while (pos) {
+	अगर (!pos)
+		pos = hsr_get_next_node(hsr, शून्य, addr);
+	जबतक (pos) अणु
 		res = nla_put(skb_out, HSR_A_NODE_ADDR, ETH_ALEN, addr);
-		if (res < 0) {
-			if (res == -EMSGSIZE) {
+		अगर (res < 0) अणु
+			अगर (res == -EMSGSIZE) अणु
 				genlmsg_end(skb_out, msg_head);
 				genlmsg_unicast(genl_info_net(info), skb_out,
 						info->snd_portid);
 				restart = true;
-				goto restart;
-			}
-			goto nla_put_failure;
-		}
+				जाओ restart;
+			पूर्ण
+			जाओ nla_put_failure;
+		पूर्ण
 		pos = hsr_get_next_node(hsr, pos, addr);
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	genlmsg_end(skb_out, msg_head);
 	genlmsg_unicast(genl_info_net(info), skb_out, info->snd_portid);
 
-	return 0;
+	वापस 0;
 
 rcu_unlock:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 invalid:
-	netlink_ack(skb_in, nlmsg_hdr(skb_in), -EINVAL, NULL);
-	return 0;
+	netlink_ack(skb_in, nlmsg_hdr(skb_in), -EINVAL, शून्य);
+	वापस 0;
 
 nla_put_failure:
-	nlmsg_free(skb_out);
+	nlmsg_मुक्त(skb_out);
 	/* Fall through */
 
 fail:
-	rcu_read_unlock();
-	return res;
-}
+	rcu_पढ़ो_unlock();
+	वापस res;
+पूर्ण
 
-static const struct genl_small_ops hsr_ops[] = {
-	{
+अटल स्थिर काष्ठा genl_small_ops hsr_ops[] = अणु
+	अणु
 		.cmd = HSR_C_GET_NODE_STATUS,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.flags = 0,
-		.doit = hsr_get_node_status,
-		.dumpit = NULL,
-	},
-	{
+		.करोit = hsr_get_node_status,
+		.dumpit = शून्य,
+	पूर्ण,
+	अणु
 		.cmd = HSR_C_GET_NODE_LIST,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.flags = 0,
-		.doit = hsr_get_node_list,
-		.dumpit = NULL,
-	},
-};
+		.करोit = hsr_get_node_list,
+		.dumpit = शून्य,
+	पूर्ण,
+पूर्ण;
 
-static struct genl_family hsr_genl_family __ro_after_init = {
+अटल काष्ठा genl_family hsr_genl_family __ro_after_init = अणु
 	.hdrsize = 0,
 	.name = "HSR",
 	.version = 1,
@@ -522,34 +523,34 @@ static struct genl_family hsr_genl_family __ro_after_init = {
 	.n_small_ops = ARRAY_SIZE(hsr_ops),
 	.mcgrps = hsr_mcgrps,
 	.n_mcgrps = ARRAY_SIZE(hsr_mcgrps),
-};
+पूर्ण;
 
-int __init hsr_netlink_init(void)
-{
-	int rc;
+पूर्णांक __init hsr_netlink_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = rtnl_link_register(&hsr_link_ops);
-	if (rc)
-		goto fail_rtnl_link_register;
+	rc = rtnl_link_रेजिस्टर(&hsr_link_ops);
+	अगर (rc)
+		जाओ fail_rtnl_link_रेजिस्टर;
 
-	rc = genl_register_family(&hsr_genl_family);
-	if (rc)
-		goto fail_genl_register_family;
+	rc = genl_रेजिस्टर_family(&hsr_genl_family);
+	अगर (rc)
+		जाओ fail_genl_रेजिस्टर_family;
 
 	hsr_debugfs_create_root();
-	return 0;
+	वापस 0;
 
-fail_genl_register_family:
-	rtnl_link_unregister(&hsr_link_ops);
-fail_rtnl_link_register:
+fail_genl_रेजिस्टर_family:
+	rtnl_link_unरेजिस्टर(&hsr_link_ops);
+fail_rtnl_link_रेजिस्टर:
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void __exit hsr_netlink_exit(void)
-{
-	genl_unregister_family(&hsr_genl_family);
-	rtnl_link_unregister(&hsr_link_ops);
-}
+व्योम __निकास hsr_netlink_निकास(व्योम)
+अणु
+	genl_unरेजिस्टर_family(&hsr_genl_family);
+	rtnl_link_unरेजिस्टर(&hsr_link_ops);
+पूर्ण
 
 MODULE_ALIAS_RTNL_LINK("hsr");

@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013 Patrick McHardy <kaber@trash.net>
  */
 
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter/xt_SYNPROXY.h>
+#समावेश <linux/netfilter_ipv4/ip_tables.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter/xt_SYNPROXY.h>
 
-#include <net/netfilter/nf_synproxy.h>
+#समावेश <net/netfilter/nf_synproxy.h>
 
-static unsigned int
-synproxy_tg4(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct xt_synproxy_info *info = par->targinfo;
-	struct net *net = xt_net(par);
-	struct synproxy_net *snet = synproxy_pernet(net);
-	struct synproxy_options opts = {};
-	struct tcphdr *th, _th;
+अटल अचिन्हित पूर्णांक
+synproxy_tg4(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_synproxy_info *info = par->targinfo;
+	काष्ठा net *net = xt_net(par);
+	काष्ठा synproxy_net *snet = synproxy_pernet(net);
+	काष्ठा synproxy_options opts = अणुपूर्ण;
+	काष्ठा tcphdr *th, _th;
 
-	if (nf_ip_checksum(skb, xt_hooknum(par), par->thoff, IPPROTO_TCP))
-		return NF_DROP;
+	अगर (nf_ip_checksum(skb, xt_hooknum(par), par->thoff, IPPROTO_TCP))
+		वापस NF_DROP;
 
-	th = skb_header_pointer(skb, par->thoff, sizeof(_th), &_th);
-	if (th == NULL)
-		return NF_DROP;
+	th = skb_header_poपूर्णांकer(skb, par->thoff, माप(_th), &_th);
+	अगर (th == शून्य)
+		वापस NF_DROP;
 
-	if (!synproxy_parse_options(skb, par->thoff, th, &opts))
-		return NF_DROP;
+	अगर (!synproxy_parse_options(skb, par->thoff, th, &opts))
+		वापस NF_DROP;
 
-	if (th->syn && !(th->ack || th->fin || th->rst)) {
+	अगर (th->syn && !(th->ack || th->fin || th->rst)) अणु
 		/* Initial SYN from client */
 		this_cpu_inc(snet->stats->syn_received);
 
-		if (th->ece && th->cwr)
+		अगर (th->ece && th->cwr)
 			opts.options |= XT_SYNPROXY_OPT_ECN;
 
 		opts.options &= info->options;
 		opts.mss_encode = opts.mss_option;
 		opts.mss_option = info->mss;
-		if (opts.options & XT_SYNPROXY_OPT_TIMESTAMP)
-			synproxy_init_timestamp_cookie(info, &opts);
-		else
+		अगर (opts.options & XT_SYNPROXY_OPT_TIMESTAMP)
+			synproxy_init_बारtamp_cookie(info, &opts);
+		अन्यथा
 			opts.options &= ~(XT_SYNPROXY_OPT_WSCALE |
 					  XT_SYNPROXY_OPT_SACK_PERM |
 					  XT_SYNPROXY_OPT_ECN);
 
 		synproxy_send_client_synack(net, skb, th, &opts);
 		consume_skb(skb);
-		return NF_STOLEN;
-	} else if (th->ack && !(th->fin || th->rst || th->syn)) {
+		वापस NF_STOLEN;
+	पूर्ण अन्यथा अगर (th->ack && !(th->fin || th->rst || th->syn)) अणु
 		/* ACK from client */
-		if (synproxy_recv_client_ack(net, skb, th, &opts, ntohl(th->seq))) {
+		अगर (synproxy_recv_client_ack(net, skb, th, &opts, ntohl(th->seq))) अणु
 			consume_skb(skb);
-			return NF_STOLEN;
-		} else {
-			return NF_DROP;
-		}
-	}
+			वापस NF_STOLEN;
+		पूर्ण अन्यथा अणु
+			वापस NF_DROP;
+		पूर्ण
+	पूर्ण
 
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static int synproxy_tg4_check(const struct xt_tgchk_param *par)
-{
-	struct synproxy_net *snet = synproxy_pernet(par->net);
-	const struct ipt_entry *e = par->entryinfo;
-	int err;
+अटल पूर्णांक synproxy_tg4_check(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(par->net);
+	स्थिर काष्ठा ipt_entry *e = par->entryinfo;
+	पूर्णांक err;
 
-	if (e->ip.proto != IPPROTO_TCP ||
+	अगर (e->ip.proto != IPPROTO_TCP ||
 	    e->ip.invflags & XT_INV_PROTO)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	err = nf_ct_netns_get(par->net, par->family);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = nf_synproxy_ipv4_init(snet, par->net);
-	if (err) {
+	अगर (err) अणु
 		nf_ct_netns_put(par->net, par->family);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void synproxy_tg4_destroy(const struct xt_tgdtor_param *par)
-{
-	struct synproxy_net *snet = synproxy_pernet(par->net);
+अटल व्योम synproxy_tg4_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(par->net);
 
 	nf_synproxy_ipv4_fini(snet, par->net);
 	nf_ct_netns_put(par->net, par->family);
-}
+पूर्ण
 
-static struct xt_target synproxy_tg4_reg __read_mostly = {
+अटल काष्ठा xt_target synproxy_tg4_reg __पढ़ो_mostly = अणु
 	.name		= "SYNPROXY",
 	.family		= NFPROTO_IPV4,
 	.hooks		= (1 << NF_INET_LOCAL_IN) | (1 << NF_INET_FORWARD),
 	.target		= synproxy_tg4,
-	.targetsize	= sizeof(struct xt_synproxy_info),
+	.tarमाला_लोize	= माप(काष्ठा xt_synproxy_info),
 	.checkentry	= synproxy_tg4_check,
 	.destroy	= synproxy_tg4_destroy,
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init synproxy_tg4_init(void)
-{
-	return xt_register_target(&synproxy_tg4_reg);
-}
+अटल पूर्णांक __init synproxy_tg4_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_target(&synproxy_tg4_reg);
+पूर्ण
 
-static void __exit synproxy_tg4_exit(void)
-{
-	xt_unregister_target(&synproxy_tg4_reg);
-}
+अटल व्योम __निकास synproxy_tg4_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_target(&synproxy_tg4_reg);
+पूर्ण
 
 module_init(synproxy_tg4_init);
-module_exit(synproxy_tg4_exit);
+module_निकास(synproxy_tg4_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");

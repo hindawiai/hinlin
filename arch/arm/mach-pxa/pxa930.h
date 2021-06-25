@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MACH_PXA930_H
-#define __MACH_PXA930_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MACH_PXA930_H
+#घोषणा __MACH_PXA930_H
 
-#include "pxa3xx.h"
-#include "mfp-pxa930.h"
+#समावेश "pxa3xx.h"
+#समावेश "mfp-pxa930.h"
 
-#endif /* __MACH_PXA930_H */
+#पूर्ण_अगर /* __MACH_PXA930_H */

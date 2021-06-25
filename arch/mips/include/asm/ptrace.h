@@ -1,189 +1,190 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1994, 95, 96, 97, 98, 99, 2000 by Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  */
-#ifndef _ASM_PTRACE_H
-#define _ASM_PTRACE_H
+#अगर_अघोषित _ASM_PTRACE_H
+#घोषणा _ASM_PTRACE_H
 
 
-#include <linux/compiler.h>
-#include <linux/linkage.h>
-#include <linux/types.h>
-#include <asm/isadep.h>
-#include <asm/page.h>
-#include <asm/thread_info.h>
-#include <uapi/asm/ptrace.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/isadep.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
+#समावेश <uapi/यंत्र/ptrace.h>
 
 /*
- * This struct defines the way the registers are stored on the stack during a
- * system call/exception. As usual the registers k0/k1 aren't being saved.
+ * This काष्ठा defines the way the रेजिस्टरs are stored on the stack during a
+ * प्रणाली call/exception. As usual the रेजिस्टरs k0/k1 aren't being saved.
  *
- * If you add a register here, also add it to regoffset_table[] in
+ * If you add a रेजिस्टर here, also add it to regoffset_table[] in
  * arch/mips/kernel/ptrace.c.
  */
-struct pt_regs {
-#ifdef CONFIG_32BIT
-	/* Pad bytes for argument save space on the stack. */
-	unsigned long pad0[8];
-#endif
+काष्ठा pt_regs अणु
+#अगर_घोषित CONFIG_32BIT
+	/* Pad bytes क्रम argument save space on the stack. */
+	अचिन्हित दीर्घ pad0[8];
+#पूर्ण_अगर
 
-	/* Saved main processor registers. */
-	unsigned long regs[32];
+	/* Saved मुख्य processor रेजिस्टरs. */
+	अचिन्हित दीर्घ regs[32];
 
-	/* Saved special registers. */
-	unsigned long cp0_status;
-	unsigned long hi;
-	unsigned long lo;
-#ifdef CONFIG_CPU_HAS_SMARTMIPS
-	unsigned long acx;
-#endif
-	unsigned long cp0_badvaddr;
-	unsigned long cp0_cause;
-	unsigned long cp0_epc;
-#ifdef CONFIG_CPU_CAVIUM_OCTEON
-	unsigned long long mpl[6];        /* MTM{0-5} */
-	unsigned long long mtp[6];        /* MTP{0-5} */
-#endif
-	unsigned long __last[0];
-} __aligned(8);
+	/* Saved special रेजिस्टरs. */
+	अचिन्हित दीर्घ cp0_status;
+	अचिन्हित दीर्घ hi;
+	अचिन्हित दीर्घ lo;
+#अगर_घोषित CONFIG_CPU_HAS_SMARTMIPS
+	अचिन्हित दीर्घ acx;
+#पूर्ण_अगर
+	अचिन्हित दीर्घ cp0_badvaddr;
+	अचिन्हित दीर्घ cp0_cause;
+	अचिन्हित दीर्घ cp0_epc;
+#अगर_घोषित CONFIG_CPU_CAVIUM_OCTEON
+	अचिन्हित दीर्घ दीर्घ mpl[6];        /* MTMअणु0-5पूर्ण */
+	अचिन्हित दीर्घ दीर्घ mtp[6];        /* MTPअणु0-5पूर्ण */
+#पूर्ण_अगर
+	अचिन्हित दीर्घ __last[0];
+पूर्ण __aligned(8);
 
-static inline unsigned long kernel_stack_pointer(struct pt_regs *regs)
-{
-	return regs->regs[29];
-}
+अटल अंतरभूत अचिन्हित दीर्घ kernel_stack_poपूर्णांकer(काष्ठा pt_regs *regs)
+अणु
+	वापस regs->regs[29];
+पूर्ण
 
-static inline void instruction_pointer_set(struct pt_regs *regs,
-                                           unsigned long val)
-{
+अटल अंतरभूत व्योम inकाष्ठाion_poपूर्णांकer_set(काष्ठा pt_regs *regs,
+                                           अचिन्हित दीर्घ val)
+अणु
 	regs->cp0_epc = val;
-}
+पूर्ण
 
-/* Query offset/name of register from its name/offset */
-extern int regs_query_register_offset(const char *name);
-#define MAX_REG_OFFSET (offsetof(struct pt_regs, __last))
+/* Query offset/name of रेजिस्टर from its name/offset */
+बाह्य पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name);
+#घोषणा MAX_REG_OFFSET (दुरत्व(काष्ठा pt_regs, __last))
 
 /**
- * regs_get_register() - get register value from its offset
- * @regs:       pt_regs from which register value is gotten.
- * @offset:     offset number of the register.
+ * regs_get_रेजिस्टर() - get रेजिस्टर value from its offset
+ * @regs:       pt_regs from which रेजिस्टर value is gotten.
+ * @offset:     offset number of the रेजिस्टर.
  *
- * regs_get_register returns the value of a register. The @offset is the
- * offset of the register in struct pt_regs address which specified by @regs.
- * If @offset is bigger than MAX_REG_OFFSET, this returns 0.
+ * regs_get_रेजिस्टर वापसs the value of a रेजिस्टर. The @offset is the
+ * offset of the रेजिस्टर in काष्ठा pt_regs address which specअगरied by @regs.
+ * If @offset is bigger than MAX_REG_OFFSET, this वापसs 0.
  */
-static inline unsigned long regs_get_register(struct pt_regs *regs,
-                                              unsigned int offset)
-{
-	if (unlikely(offset > MAX_REG_OFFSET))
-		return 0;
+अटल अंतरभूत अचिन्हित दीर्घ regs_get_रेजिस्टर(काष्ठा pt_regs *regs,
+                                              अचिन्हित पूर्णांक offset)
+अणु
+	अगर (unlikely(offset > MAX_REG_OFFSET))
+		वापस 0;
 
-	return *(unsigned long *)((unsigned long)regs + offset);
-}
+	वापस *(अचिन्हित दीर्घ *)((अचिन्हित दीर्घ)regs + offset);
+पूर्ण
 
 /**
  * regs_within_kernel_stack() - check the address in the stack
- * @regs:       pt_regs which contains kernel stack pointer.
+ * @regs:       pt_regs which contains kernel stack poपूर्णांकer.
  * @addr:       address which is checked.
  *
  * regs_within_kernel_stack() checks @addr is within the kernel stack page(s).
- * If @addr is within the kernel stack, it returns true. If not, returns false.
+ * If @addr is within the kernel stack, it वापसs true. If not, वापसs false.
  */
-static inline int regs_within_kernel_stack(struct pt_regs *regs,
-                                           unsigned long addr)
-{
-	return ((addr & ~(THREAD_SIZE - 1))  ==
-		(kernel_stack_pointer(regs) & ~(THREAD_SIZE - 1)));
-}
+अटल अंतरभूत पूर्णांक regs_within_kernel_stack(काष्ठा pt_regs *regs,
+                                           अचिन्हित दीर्घ addr)
+अणु
+	वापस ((addr & ~(THREAD_SIZE - 1))  ==
+		(kernel_stack_poपूर्णांकer(regs) & ~(THREAD_SIZE - 1)));
+पूर्ण
 
 /**
  * regs_get_kernel_stack_nth() - get Nth entry of the stack
- * @regs:       pt_regs which contains kernel stack pointer.
+ * @regs:       pt_regs which contains kernel stack poपूर्णांकer.
  * @n:          stack entry number.
  *
- * regs_get_kernel_stack_nth() returns @n th entry of the kernel stack which
- * is specified by @regs. If the @n th entry is NOT in the kernel stack,
- * this returns 0.
+ * regs_get_kernel_stack_nth() वापसs @n th entry of the kernel stack which
+ * is specअगरied by @regs. If the @n th entry is NOT in the kernel stack,
+ * this वापसs 0.
  */
-static inline unsigned long regs_get_kernel_stack_nth(struct pt_regs *regs,
-                                                      unsigned int n)
-{
-	unsigned long *addr = (unsigned long *)kernel_stack_pointer(regs);
+अटल अंतरभूत अचिन्हित दीर्घ regs_get_kernel_stack_nth(काष्ठा pt_regs *regs,
+                                                      अचिन्हित पूर्णांक n)
+अणु
+	अचिन्हित दीर्घ *addr = (अचिन्हित दीर्घ *)kernel_stack_poपूर्णांकer(regs);
 
 	addr += n;
-	if (regs_within_kernel_stack(regs, (unsigned long)addr))
-		return *addr;
-	else
-		return 0;
-}
+	अगर (regs_within_kernel_stack(regs, (अचिन्हित दीर्घ)addr))
+		वापस *addr;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-extern int ptrace_getregs(struct task_struct *child,
-	struct user_pt_regs __user *data);
-extern int ptrace_setregs(struct task_struct *child,
-	struct user_pt_regs __user *data);
+बाह्य पूर्णांक ptrace_getregs(काष्ठा task_काष्ठा *child,
+	काष्ठा user_pt_regs __user *data);
+बाह्य पूर्णांक ptrace_setregs(काष्ठा task_काष्ठा *child,
+	काष्ठा user_pt_regs __user *data);
 
-extern int ptrace_getfpregs(struct task_struct *child, __u32 __user *data);
-extern int ptrace_setfpregs(struct task_struct *child, __u32 __user *data);
+बाह्य पूर्णांक ptrace_getfpregs(काष्ठा task_काष्ठा *child, __u32 __user *data);
+बाह्य पूर्णांक ptrace_setfpregs(काष्ठा task_काष्ठा *child, __u32 __user *data);
 
-extern int ptrace_get_watch_regs(struct task_struct *child,
-	struct pt_watch_regs __user *addr);
-extern int ptrace_set_watch_regs(struct task_struct *child,
-	struct pt_watch_regs __user *addr);
+बाह्य पूर्णांक ptrace_get_watch_regs(काष्ठा task_काष्ठा *child,
+	काष्ठा pt_watch_regs __user *addr);
+बाह्य पूर्णांक ptrace_set_watch_regs(काष्ठा task_काष्ठा *child,
+	काष्ठा pt_watch_regs __user *addr);
 
 /*
- * Does the process account for user or for system time?
+ * Does the process account क्रम user or क्रम प्रणाली समय?
  */
-#define user_mode(regs) (((regs)->cp0_status & KU_MASK) == KU_USER)
+#घोषणा user_mode(regs) (((regs)->cp0_status & KU_MASK) == KU_USER)
 
-static inline int is_syscall_success(struct pt_regs *regs)
-{
-	return !regs->regs[7];
-}
+अटल अंतरभूत पूर्णांक is_syscall_success(काष्ठा pt_regs *regs)
+अणु
+	वापस !regs->regs[7];
+पूर्ण
 
-static inline long regs_return_value(struct pt_regs *regs)
-{
-	if (is_syscall_success(regs) || !user_mode(regs))
-		return regs->regs[2];
-	else
-		return -regs->regs[2];
-}
+अटल अंतरभूत दीर्घ regs_वापस_value(काष्ठा pt_regs *regs)
+अणु
+	अगर (is_syscall_success(regs) || !user_mode(regs))
+		वापस regs->regs[2];
+	अन्यथा
+		वापस -regs->regs[2];
+पूर्ण
 
-#define instruction_pointer(regs) ((regs)->cp0_epc)
-#define profile_pc(regs) instruction_pointer(regs)
+#घोषणा inकाष्ठाion_poपूर्णांकer(regs) ((regs)->cp0_epc)
+#घोषणा profile_pc(regs) inकाष्ठाion_poपूर्णांकer(regs)
 
-extern asmlinkage long syscall_trace_enter(struct pt_regs *regs, long syscall);
-extern asmlinkage void syscall_trace_leave(struct pt_regs *regs);
+बाह्य यंत्रlinkage दीर्घ syscall_trace_enter(काष्ठा pt_regs *regs, दीर्घ syscall);
+बाह्य यंत्रlinkage व्योम syscall_trace_leave(काष्ठा pt_regs *regs);
 
-extern void die(const char *, struct pt_regs *) __noreturn;
+बाह्य व्योम die(स्थिर अक्षर *, काष्ठा pt_regs *) __noवापस;
 
-static inline void die_if_kernel(const char *str, struct pt_regs *regs)
-{
-	if (unlikely(!user_mode(regs)))
+अटल अंतरभूत व्योम die_अगर_kernel(स्थिर अक्षर *str, काष्ठा pt_regs *regs)
+अणु
+	अगर (unlikely(!user_mode(regs)))
 		die(str, regs);
-}
+पूर्ण
 
-#define current_pt_regs()						\
-({									\
-	unsigned long sp = (unsigned long)__builtin_frame_address(0);	\
-	(struct pt_regs *)((sp | (THREAD_SIZE - 1)) + 1 - 32) - 1;	\
-})
+#घोषणा current_pt_regs()						\
+(अणु									\
+	अचिन्हित दीर्घ sp = (अचिन्हित दीर्घ)__builtin_frame_address(0);	\
+	(काष्ठा pt_regs *)((sp | (THREAD_SIZE - 1)) + 1 - 32) - 1;	\
+पूर्ण)
 
-/* Helpers for working with the user stack pointer */
+/* Helpers क्रम working with the user stack poपूर्णांकer */
 
-static inline unsigned long user_stack_pointer(struct pt_regs *regs)
-{
-	return regs->regs[29];
-}
+अटल अंतरभूत अचिन्हित दीर्घ user_stack_poपूर्णांकer(काष्ठा pt_regs *regs)
+अणु
+	वापस regs->regs[29];
+पूर्ण
 
-static inline void user_stack_pointer_set(struct pt_regs *regs,
-	unsigned long val)
-{
+अटल अंतरभूत व्योम user_stack_poपूर्णांकer_set(काष्ठा pt_regs *regs,
+	अचिन्हित दीर्घ val)
+अणु
 	regs->regs[29] = val;
-}
+पूर्ण
 
-#endif /* _ASM_PTRACE_H */
+#पूर्ण_अगर /* _ASM_PTRACE_H */

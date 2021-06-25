@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2009-2010 IBM Corporation
  *
@@ -6,280 +7,280 @@
  * Mimi Zohar <zohar@us.ibm.com>
  */
 
-#ifdef pr_fmt
-#undef pr_fmt
-#endif
+#अगर_घोषित pr_fmt
+#अघोषित pr_fmt
+#पूर्ण_अगर
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/integrity.h>
-#include <crypto/sha1.h>
-#include <linux/key.h>
-#include <linux/audit.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकegrity.h>
+#समावेश <crypto/sha1.h>
+#समावेश <linux/key.h>
+#समावेश <linux/audit.h>
 
-/* iint action cache flags */
-#define IMA_MEASURE		0x00000001
-#define IMA_MEASURED		0x00000002
-#define IMA_APPRAISE		0x00000004
-#define IMA_APPRAISED		0x00000008
-/*#define IMA_COLLECT		0x00000010  do not use this flag */
-#define IMA_COLLECTED		0x00000020
-#define IMA_AUDIT		0x00000040
-#define IMA_AUDITED		0x00000080
-#define IMA_HASH		0x00000100
-#define IMA_HASHED		0x00000200
+/* iपूर्णांक action cache flags */
+#घोषणा IMA_MEASURE		0x00000001
+#घोषणा IMA_MEASURED		0x00000002
+#घोषणा IMA_APPRAISE		0x00000004
+#घोषणा IMA_APPRAISED		0x00000008
+/*#घोषणा IMA_COLLECT		0x00000010  करो not use this flag */
+#घोषणा IMA_COLLECTED		0x00000020
+#घोषणा IMA_AUDIT		0x00000040
+#घोषणा IMA_AUDITED		0x00000080
+#घोषणा IMA_HASH		0x00000100
+#घोषणा IMA_HASHED		0x00000200
 
-/* iint cache flags */
-#define IMA_ACTION_FLAGS	0xff000000
-#define IMA_DIGSIG_REQUIRED	0x01000000
-#define IMA_PERMIT_DIRECTIO	0x02000000
-#define IMA_NEW_FILE		0x04000000
-#define EVM_IMMUTABLE_DIGSIG	0x08000000
-#define IMA_FAIL_UNVERIFIABLE_SIGS	0x10000000
-#define IMA_MODSIG_ALLOWED	0x20000000
-#define IMA_CHECK_BLACKLIST	0x40000000
+/* iपूर्णांक cache flags */
+#घोषणा IMA_ACTION_FLAGS	0xff000000
+#घोषणा IMA_DIGSIG_REQUIRED	0x01000000
+#घोषणा IMA_PERMIT_सूचीECTIO	0x02000000
+#घोषणा IMA_NEW_खाता		0x04000000
+#घोषणा EVM_IMMUTABLE_DIGSIG	0x08000000
+#घोषणा IMA_FAIL_UNVERIFIABLE_SIGS	0x10000000
+#घोषणा IMA_MODSIG_ALLOWED	0x20000000
+#घोषणा IMA_CHECK_BLACKLIST	0x40000000
 
-#define IMA_DO_MASK		(IMA_MEASURE | IMA_APPRAISE | IMA_AUDIT | \
+#घोषणा IMA_DO_MASK		(IMA_MEASURE | IMA_APPRAISE | IMA_AUDIT | \
 				 IMA_HASH | IMA_APPRAISE_SUBMASK)
-#define IMA_DONE_MASK		(IMA_MEASURED | IMA_APPRAISED | IMA_AUDITED | \
+#घोषणा IMA_DONE_MASK		(IMA_MEASURED | IMA_APPRAISED | IMA_AUDITED | \
 				 IMA_HASHED | IMA_COLLECTED | \
 				 IMA_APPRAISED_SUBMASK)
 
-/* iint subaction appraise cache flags */
-#define IMA_FILE_APPRAISE	0x00001000
-#define IMA_FILE_APPRAISED	0x00002000
-#define IMA_MMAP_APPRAISE	0x00004000
-#define IMA_MMAP_APPRAISED	0x00008000
-#define IMA_BPRM_APPRAISE	0x00010000
-#define IMA_BPRM_APPRAISED	0x00020000
-#define IMA_READ_APPRAISE	0x00040000
-#define IMA_READ_APPRAISED	0x00080000
-#define IMA_CREDS_APPRAISE	0x00100000
-#define IMA_CREDS_APPRAISED	0x00200000
-#define IMA_APPRAISE_SUBMASK	(IMA_FILE_APPRAISE | IMA_MMAP_APPRAISE | \
+/* iपूर्णांक subaction appउठाओ cache flags */
+#घोषणा IMA_खाता_APPRAISE	0x00001000
+#घोषणा IMA_खाता_APPRAISED	0x00002000
+#घोषणा IMA_MMAP_APPRAISE	0x00004000
+#घोषणा IMA_MMAP_APPRAISED	0x00008000
+#घोषणा IMA_BPRM_APPRAISE	0x00010000
+#घोषणा IMA_BPRM_APPRAISED	0x00020000
+#घोषणा IMA_READ_APPRAISE	0x00040000
+#घोषणा IMA_READ_APPRAISED	0x00080000
+#घोषणा IMA_CREDS_APPRAISE	0x00100000
+#घोषणा IMA_CREDS_APPRAISED	0x00200000
+#घोषणा IMA_APPRAISE_SUBMASK	(IMA_खाता_APPRAISE | IMA_MMAP_APPRAISE | \
 				 IMA_BPRM_APPRAISE | IMA_READ_APPRAISE | \
 				 IMA_CREDS_APPRAISE)
-#define IMA_APPRAISED_SUBMASK	(IMA_FILE_APPRAISED | IMA_MMAP_APPRAISED | \
+#घोषणा IMA_APPRAISED_SUBMASK	(IMA_खाता_APPRAISED | IMA_MMAP_APPRAISED | \
 				 IMA_BPRM_APPRAISED | IMA_READ_APPRAISED | \
 				 IMA_CREDS_APPRAISED)
 
-/* iint cache atomic_flags */
-#define IMA_CHANGE_XATTR	0
-#define IMA_UPDATE_XATTR	1
-#define IMA_CHANGE_ATTR		2
-#define IMA_DIGSIG		3
-#define IMA_MUST_MEASURE	4
+/* iपूर्णांक cache atomic_flags */
+#घोषणा IMA_CHANGE_XATTR	0
+#घोषणा IMA_UPDATE_XATTR	1
+#घोषणा IMA_CHANGE_ATTR		2
+#घोषणा IMA_DIGSIG		3
+#घोषणा IMA_MUST_MEASURE	4
 
-enum evm_ima_xattr_type {
+क्रमागत evm_ima_xattr_type अणु
 	IMA_XATTR_DIGEST = 0x01,
 	EVM_XATTR_HMAC,
 	EVM_IMA_XATTR_DIGSIG,
 	IMA_XATTR_DIGEST_NG,
 	EVM_XATTR_PORTABLE_DIGSIG,
 	IMA_XATTR_LAST
-};
+पूर्ण;
 
-struct evm_ima_xattr_data {
+काष्ठा evm_ima_xattr_data अणु
 	u8 type;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
 /* Only used in the EVM HMAC code. */
-struct evm_xattr {
-	struct evm_ima_xattr_data data;
+काष्ठा evm_xattr अणु
+	काष्ठा evm_ima_xattr_data data;
 	u8 digest[SHA1_DIGEST_SIZE];
-} __packed;
+पूर्ण __packed;
 
-#define IMA_MAX_DIGEST_SIZE	64
+#घोषणा IMA_MAX_DIGEST_SIZE	64
 
-struct ima_digest_data {
+काष्ठा ima_digest_data अणु
 	u8 algo;
 	u8 length;
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u8 unused;
 			u8 type;
-		} sha1;
-		struct {
+		पूर्ण sha1;
+		काष्ठा अणु
 			u8 type;
 			u8 algo;
-		} ng;
+		पूर्ण ng;
 		u8 data[2];
-	} xattr;
+	पूर्ण xattr;
 	u8 digest[];
-} __packed;
+पूर्ण __packed;
 
 /*
- * signature format v2 - for using with asymmetric keys
+ * signature क्रमmat v2 - क्रम using with asymmetric keys
  */
-struct signature_v2_hdr {
-	uint8_t type;		/* xattr type */
-	uint8_t version;	/* signature format version */
-	uint8_t	hash_algo;	/* Digest algorithm [enum hash_algo] */
-	__be32 keyid;		/* IMA key identifier - not X509/PGP specific */
+काष्ठा signature_v2_hdr अणु
+	uपूर्णांक8_t type;		/* xattr type */
+	uपूर्णांक8_t version;	/* signature क्रमmat version */
+	uपूर्णांक8_t	hash_algo;	/* Digest algorithm [क्रमागत hash_algo] */
+	__be32 keyid;		/* IMA key identअगरier - not X509/PGP specअगरic */
 	__be16 sig_size;	/* signature size */
-	uint8_t sig[];		/* signature payload */
-} __packed;
+	uपूर्णांक8_t sig[];		/* signature payload */
+पूर्ण __packed;
 
-/* integrity data associated with an inode */
-struct integrity_iint_cache {
-	struct rb_node rb_node;	/* rooted in integrity_iint_tree */
-	struct mutex mutex;	/* protects: version, flags, digest */
-	struct inode *inode;	/* back pointer to inode in question */
+/* पूर्णांकegrity data associated with an inode */
+काष्ठा पूर्णांकegrity_iपूर्णांक_cache अणु
+	काष्ठा rb_node rb_node;	/* rooted in पूर्णांकegrity_iपूर्णांक_tree */
+	काष्ठा mutex mutex;	/* protects: version, flags, digest */
+	काष्ठा inode *inode;	/* back poपूर्णांकer to inode in question */
 	u64 version;		/* track inode changes */
-	unsigned long flags;
-	unsigned long measured_pcrs;
-	unsigned long atomic_flags;
-	enum integrity_status ima_file_status:4;
-	enum integrity_status ima_mmap_status:4;
-	enum integrity_status ima_bprm_status:4;
-	enum integrity_status ima_read_status:4;
-	enum integrity_status ima_creds_status:4;
-	enum integrity_status evm_status:4;
-	struct ima_digest_data *ima_hash;
-};
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ measured_pcrs;
+	अचिन्हित दीर्घ atomic_flags;
+	क्रमागत पूर्णांकegrity_status ima_file_status:4;
+	क्रमागत पूर्णांकegrity_status ima_mmap_status:4;
+	क्रमागत पूर्णांकegrity_status ima_bprm_status:4;
+	क्रमागत पूर्णांकegrity_status ima_पढ़ो_status:4;
+	क्रमागत पूर्णांकegrity_status ima_creds_status:4;
+	क्रमागत पूर्णांकegrity_status evm_status:4;
+	काष्ठा ima_digest_data *ima_hash;
+पूर्ण;
 
 /* rbtree tree calls to lookup, insert, delete
- * integrity data associated with an inode.
+ * पूर्णांकegrity data associated with an inode.
  */
-struct integrity_iint_cache *integrity_iint_find(struct inode *inode);
+काष्ठा पूर्णांकegrity_iपूर्णांक_cache *पूर्णांकegrity_iपूर्णांक_find(काष्ठा inode *inode);
 
-int integrity_kernel_read(struct file *file, loff_t offset,
-			  void *addr, unsigned long count);
+पूर्णांक पूर्णांकegrity_kernel_पढ़ो(काष्ठा file *file, loff_t offset,
+			  व्योम *addr, अचिन्हित दीर्घ count);
 
-#define INTEGRITY_KEYRING_EVM		0
-#define INTEGRITY_KEYRING_IMA		1
-#define INTEGRITY_KEYRING_PLATFORM	2
-#define INTEGRITY_KEYRING_MAX		3
+#घोषणा INTEGRITY_KEYRING_EVM		0
+#घोषणा INTEGRITY_KEYRING_IMA		1
+#घोषणा INTEGRITY_KEYRING_PLATFORM	2
+#घोषणा INTEGRITY_KEYRING_MAX		3
 
-extern struct dentry *integrity_dir;
+बाह्य काष्ठा dentry *पूर्णांकegrity_dir;
 
-struct modsig;
+काष्ठा modsig;
 
-#ifdef CONFIG_INTEGRITY_SIGNATURE
+#अगर_घोषित CONFIG_INTEGRITY_SIGNATURE
 
-int integrity_digsig_verify(const unsigned int id, const char *sig, int siglen,
-			    const char *digest, int digestlen);
-int integrity_modsig_verify(unsigned int id, const struct modsig *modsig);
+पूर्णांक पूर्णांकegrity_digsig_verअगरy(स्थिर अचिन्हित पूर्णांक id, स्थिर अक्षर *sig, पूर्णांक siglen,
+			    स्थिर अक्षर *digest, पूर्णांक digestlen);
+पूर्णांक पूर्णांकegrity_modsig_verअगरy(अचिन्हित पूर्णांक id, स्थिर काष्ठा modsig *modsig);
 
-int __init integrity_init_keyring(const unsigned int id);
-int __init integrity_load_x509(const unsigned int id, const char *path);
-int __init integrity_load_cert(const unsigned int id, const char *source,
-			       const void *data, size_t len, key_perm_t perm);
-#else
+पूर्णांक __init पूर्णांकegrity_init_keyring(स्थिर अचिन्हित पूर्णांक id);
+पूर्णांक __init पूर्णांकegrity_load_x509(स्थिर अचिन्हित पूर्णांक id, स्थिर अक्षर *path);
+पूर्णांक __init पूर्णांकegrity_load_cert(स्थिर अचिन्हित पूर्णांक id, स्थिर अक्षर *source,
+			       स्थिर व्योम *data, माप_प्रकार len, key_perm_t perm);
+#अन्यथा
 
-static inline int integrity_digsig_verify(const unsigned int id,
-					  const char *sig, int siglen,
-					  const char *digest, int digestlen)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक पूर्णांकegrity_digsig_verअगरy(स्थिर अचिन्हित पूर्णांक id,
+					  स्थिर अक्षर *sig, पूर्णांक siglen,
+					  स्थिर अक्षर *digest, पूर्णांक digestlen)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int integrity_modsig_verify(unsigned int id,
-					  const struct modsig *modsig)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक पूर्णांकegrity_modsig_verअगरy(अचिन्हित पूर्णांक id,
+					  स्थिर काष्ठा modsig *modsig)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int integrity_init_keyring(const unsigned int id)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक पूर्णांकegrity_init_keyring(स्थिर अचिन्हित पूर्णांक id)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int __init integrity_load_cert(const unsigned int id,
-					     const char *source,
-					     const void *data, size_t len,
+अटल अंतरभूत पूर्णांक __init पूर्णांकegrity_load_cert(स्थिर अचिन्हित पूर्णांक id,
+					     स्थिर अक्षर *source,
+					     स्थिर व्योम *data, माप_प्रकार len,
 					     key_perm_t perm)
-{
-	return 0;
-}
-#endif /* CONFIG_INTEGRITY_SIGNATURE */
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_INTEGRITY_SIGNATURE */
 
-#ifdef CONFIG_INTEGRITY_ASYMMETRIC_KEYS
-int asymmetric_verify(struct key *keyring, const char *sig,
-		      int siglen, const char *data, int datalen);
-#else
-static inline int asymmetric_verify(struct key *keyring, const char *sig,
-				    int siglen, const char *data, int datalen)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+#अगर_घोषित CONFIG_INTEGRITY_ASYMMETRIC_KEYS
+पूर्णांक asymmetric_verअगरy(काष्ठा key *keyring, स्थिर अक्षर *sig,
+		      पूर्णांक siglen, स्थिर अक्षर *data, पूर्णांक datalen);
+#अन्यथा
+अटल अंतरभूत पूर्णांक asymmetric_verअगरy(काष्ठा key *keyring, स्थिर अक्षर *sig,
+				    पूर्णांक siglen, स्थिर अक्षर *data, पूर्णांक datalen)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_IMA_APPRAISE_MODSIG
-int ima_modsig_verify(struct key *keyring, const struct modsig *modsig);
-#else
-static inline int ima_modsig_verify(struct key *keyring,
-				    const struct modsig *modsig)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+#अगर_घोषित CONFIG_IMA_APPRAISE_MODSIG
+पूर्णांक ima_modsig_verअगरy(काष्ठा key *keyring, स्थिर काष्ठा modsig *modsig);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ima_modsig_verअगरy(काष्ठा key *keyring,
+				    स्थिर काष्ठा modsig *modsig)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_IMA_LOAD_X509
-void __init ima_load_x509(void);
-#else
-static inline void ima_load_x509(void)
-{
-}
-#endif
+#अगर_घोषित CONFIG_IMA_LOAD_X509
+व्योम __init ima_load_x509(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम ima_load_x509(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_EVM_LOAD_X509
-void __init evm_load_x509(void);
-#else
-static inline void evm_load_x509(void)
-{
-}
-#endif
+#अगर_घोषित CONFIG_EVM_LOAD_X509
+व्योम __init evm_load_x509(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम evm_load_x509(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_INTEGRITY_AUDIT
+#अगर_घोषित CONFIG_INTEGRITY_AUDIT
 /* declarations */
-void integrity_audit_msg(int audit_msgno, struct inode *inode,
-			 const unsigned char *fname, const char *op,
-			 const char *cause, int result, int info);
+व्योम पूर्णांकegrity_audit_msg(पूर्णांक audit_msgno, काष्ठा inode *inode,
+			 स्थिर अचिन्हित अक्षर *fname, स्थिर अक्षर *op,
+			 स्थिर अक्षर *cause, पूर्णांक result, पूर्णांक info);
 
-void integrity_audit_message(int audit_msgno, struct inode *inode,
-			     const unsigned char *fname, const char *op,
-			     const char *cause, int result, int info,
-			     int errno);
+व्योम पूर्णांकegrity_audit_message(पूर्णांक audit_msgno, काष्ठा inode *inode,
+			     स्थिर अचिन्हित अक्षर *fname, स्थिर अक्षर *op,
+			     स्थिर अक्षर *cause, पूर्णांक result, पूर्णांक info,
+			     पूर्णांक त्रुटि_सं);
 
-static inline struct audit_buffer *
-integrity_audit_log_start(struct audit_context *ctx, gfp_t gfp_mask, int type)
-{
-	return audit_log_start(ctx, gfp_mask, type);
-}
+अटल अंतरभूत काष्ठा audit_buffer *
+पूर्णांकegrity_audit_log_start(काष्ठा audit_context *ctx, gfp_t gfp_mask, पूर्णांक type)
+अणु
+	वापस audit_log_start(ctx, gfp_mask, type);
+पूर्ण
 
-#else
-static inline void integrity_audit_msg(int audit_msgno, struct inode *inode,
-				       const unsigned char *fname,
-				       const char *op, const char *cause,
-				       int result, int info)
-{
-}
+#अन्यथा
+अटल अंतरभूत व्योम पूर्णांकegrity_audit_msg(पूर्णांक audit_msgno, काष्ठा inode *inode,
+				       स्थिर अचिन्हित अक्षर *fname,
+				       स्थिर अक्षर *op, स्थिर अक्षर *cause,
+				       पूर्णांक result, पूर्णांक info)
+अणु
+पूर्ण
 
-static inline void integrity_audit_message(int audit_msgno,
-					   struct inode *inode,
-					   const unsigned char *fname,
-					   const char *op, const char *cause,
-					   int result, int info, int errno)
-{
-}
+अटल अंतरभूत व्योम पूर्णांकegrity_audit_message(पूर्णांक audit_msgno,
+					   काष्ठा inode *inode,
+					   स्थिर अचिन्हित अक्षर *fname,
+					   स्थिर अक्षर *op, स्थिर अक्षर *cause,
+					   पूर्णांक result, पूर्णांक info, पूर्णांक त्रुटि_सं)
+अणु
+पूर्ण
 
-static inline struct audit_buffer *
-integrity_audit_log_start(struct audit_context *ctx, gfp_t gfp_mask, int type)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा audit_buffer *
+पूर्णांकegrity_audit_log_start(काष्ठा audit_context *ctx, gfp_t gfp_mask, पूर्णांक type)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_INTEGRITY_PLATFORM_KEYRING
-void __init add_to_platform_keyring(const char *source, const void *data,
-				    size_t len);
-#else
-static inline void __init add_to_platform_keyring(const char *source,
-						  const void *data, size_t len)
-{
-}
-#endif
+#अगर_घोषित CONFIG_INTEGRITY_PLATFORM_KEYRING
+व्योम __init add_to_platक्रमm_keyring(स्थिर अक्षर *source, स्थिर व्योम *data,
+				    माप_प्रकार len);
+#अन्यथा
+अटल अंतरभूत व्योम __init add_to_platक्रमm_keyring(स्थिर अक्षर *source,
+						  स्थिर व्योम *data, माप_प्रकार len)
+अणु
+पूर्ण
+#पूर्ण_अगर

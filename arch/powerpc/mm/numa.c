@@ -1,392 +1,393 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * pSeries NUMA support
  *
- * Copyright (C) 2002 Anton Blanchard <anton@au.ibm.com>, IBM
+ * Copyright (C) 2002 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
  */
-#define pr_fmt(fmt) "numa: " fmt
+#घोषणा pr_fmt(fmt) "numa: " fmt
 
-#include <linux/threads.h>
-#include <linux/memblock.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/mmzone.h>
-#include <linux/export.h>
-#include <linux/nodemask.h>
-#include <linux/cpu.h>
-#include <linux/notifier.h>
-#include <linux/of.h>
-#include <linux/pfn.h>
-#include <linux/cpuset.h>
-#include <linux/node.h>
-#include <linux/stop_machine.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-#include <asm/cputhreads.h>
-#include <asm/sparsemem.h>
-#include <asm/prom.h>
-#include <asm/smp.h>
-#include <asm/topology.h>
-#include <asm/firmware.h>
-#include <asm/paca.h>
-#include <asm/hvcall.h>
-#include <asm/setup.h>
-#include <asm/vdso.h>
-#include <asm/drmem.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/export.h>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/cpuset.h>
+#समावेश <linux/node.h>
+#समावेश <linux/stop_machine.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/cputhपढ़ोs.h>
+#समावेश <यंत्र/sparseस्मृति.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/topology.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/paca.h>
+#समावेश <यंत्र/hvcall.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/vdso.h>
+#समावेश <यंत्र/drस्मृति.स>
 
-static int numa_enabled = 1;
+अटल पूर्णांक numa_enabled = 1;
 
-static char *cmdline __initdata;
+अटल अक्षर *cmdline __initdata;
 
-static int numa_debug;
-#define dbg(args...) if (numa_debug) { printk(KERN_INFO args); }
+अटल पूर्णांक numa_debug;
+#घोषणा dbg(args...) अगर (numa_debug) अणु prपूर्णांकk(KERN_INFO args); पूर्ण
 
-int numa_cpu_lookup_table[NR_CPUS];
+पूर्णांक numa_cpu_lookup_table[NR_CPUS];
 cpumask_var_t node_to_cpumask_map[MAX_NUMNODES];
-struct pglist_data *node_data[MAX_NUMNODES];
+काष्ठा pglist_data *node_data[MAX_NUMNODES];
 
 EXPORT_SYMBOL(numa_cpu_lookup_table);
 EXPORT_SYMBOL(node_to_cpumask_map);
 EXPORT_SYMBOL(node_data);
 
-static int min_common_depth;
-static int n_mem_addr_cells, n_mem_size_cells;
-static int form1_affinity;
+अटल पूर्णांक min_common_depth;
+अटल पूर्णांक n_mem_addr_cells, n_mem_size_cells;
+अटल पूर्णांक क्रमm1_affinity;
 
-#define MAX_DISTANCE_REF_POINTS 4
-static int distance_ref_points_depth;
-static const __be32 *distance_ref_points;
-static int distance_lookup_table[MAX_NUMNODES][MAX_DISTANCE_REF_POINTS];
+#घोषणा MAX_DISTANCE_REF_POINTS 4
+अटल पूर्णांक distance_ref_poपूर्णांकs_depth;
+अटल स्थिर __be32 *distance_ref_poपूर्णांकs;
+अटल पूर्णांक distance_lookup_table[MAX_NUMNODES][MAX_DISTANCE_REF_POINTS];
 
 /*
  * Allocate node_to_cpumask_map based on number of available nodes
  * Requires node_possible_map to be valid.
  *
- * Note: cpumask_of_node() is not valid until after this is done.
+ * Note: cpumask_of_node() is not valid until after this is करोne.
  */
-static void __init setup_node_to_cpumask_map(void)
-{
-	unsigned int node;
+अटल व्योम __init setup_node_to_cpumask_map(व्योम)
+अणु
+	अचिन्हित पूर्णांक node;
 
-	/* setup nr_node_ids if not done yet */
-	if (nr_node_ids == MAX_NUMNODES)
+	/* setup nr_node_ids अगर not करोne yet */
+	अगर (nr_node_ids == MAX_NUMNODES)
 		setup_nr_node_ids();
 
 	/* allocate the map */
-	for_each_node(node)
-		alloc_bootmem_cpumask_var(&node_to_cpumask_map[node]);
+	क्रम_each_node(node)
+		alloc_booपंचांगem_cpumask_var(&node_to_cpumask_map[node]);
 
 	/* cpumask_of_node() will now work */
 	dbg("Node to cpumask map for %u nodes\n", nr_node_ids);
-}
+पूर्ण
 
-static int __init fake_numa_create_new_node(unsigned long end_pfn,
-						unsigned int *nid)
-{
-	unsigned long long mem;
-	char *p = cmdline;
-	static unsigned int fake_nid;
-	static unsigned long long curr_boundary;
+अटल पूर्णांक __init fake_numa_create_new_node(अचिन्हित दीर्घ end_pfn,
+						अचिन्हित पूर्णांक *nid)
+अणु
+	अचिन्हित दीर्घ दीर्घ mem;
+	अक्षर *p = cmdline;
+	अटल अचिन्हित पूर्णांक fake_nid;
+	अटल अचिन्हित दीर्घ दीर्घ curr_boundary;
 
 	/*
-	 * Modify node id, iff we started creating NUMA nodes
-	 * We want to continue from where we left of the last time
+	 * Modअगरy node id, अगरf we started creating NUMA nodes
+	 * We want to जारी from where we left of the last समय
 	 */
-	if (fake_nid)
+	अगर (fake_nid)
 		*nid = fake_nid;
 	/*
-	 * In case there are no more arguments to parse, the
+	 * In हाल there are no more arguments to parse, the
 	 * node_id should be the same as the last fake node id
 	 * (we've handled this above).
 	 */
-	if (!p)
-		return 0;
+	अगर (!p)
+		वापस 0;
 
 	mem = memparse(p, &p);
-	if (!mem)
-		return 0;
+	अगर (!mem)
+		वापस 0;
 
-	if (mem < curr_boundary)
-		return 0;
+	अगर (mem < curr_boundary)
+		वापस 0;
 
 	curr_boundary = mem;
 
-	if ((end_pfn << PAGE_SHIFT) > mem) {
+	अगर ((end_pfn << PAGE_SHIFT) > mem) अणु
 		/*
 		 * Skip commas and spaces
 		 */
-		while (*p == ',' || *p == ' ' || *p == '\t')
+		जबतक (*p == ',' || *p == ' ' || *p == '\t')
 			p++;
 
 		cmdline = p;
 		fake_nid++;
 		*nid = fake_nid;
 		dbg("created new fake_node with id %d\n", fake_nid);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void reset_numa_cpu_lookup_table(void)
-{
-	unsigned int cpu;
+अटल व्योम reset_numa_cpu_lookup_table(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		numa_cpu_lookup_table[cpu] = -1;
-}
+पूर्ण
 
-static void map_cpu_to_node(int cpu, int node)
-{
+अटल व्योम map_cpu_to_node(पूर्णांक cpu, पूर्णांक node)
+अणु
 	update_numa_cpu_lookup_table(cpu, node);
 
 	dbg("adding cpu %d to node %d\n", cpu, node);
 
-	if (!(cpumask_test_cpu(cpu, node_to_cpumask_map[node])))
+	अगर (!(cpumask_test_cpu(cpu, node_to_cpumask_map[node])))
 		cpumask_set_cpu(cpu, node_to_cpumask_map[node]);
-}
+पूर्ण
 
-#if defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_PPC_SPLPAR)
-static void unmap_cpu_from_node(unsigned long cpu)
-{
-	int node = numa_cpu_lookup_table[cpu];
+#अगर defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_PPC_SPLPAR)
+अटल व्योम unmap_cpu_from_node(अचिन्हित दीर्घ cpu)
+अणु
+	पूर्णांक node = numa_cpu_lookup_table[cpu];
 
 	dbg("removing cpu %lu from node %d\n", cpu, node);
 
-	if (cpumask_test_cpu(cpu, node_to_cpumask_map[node])) {
+	अगर (cpumask_test_cpu(cpu, node_to_cpumask_map[node])) अणु
 		cpumask_clear_cpu(cpu, node_to_cpumask_map[node]);
-	} else {
-		printk(KERN_ERR "WARNING: cpu %lu not found in node %d\n",
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "WARNING: cpu %lu not found in node %d\n",
 		       cpu, node);
-	}
-}
-#endif /* CONFIG_HOTPLUG_CPU || CONFIG_PPC_SPLPAR */
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU || CONFIG_PPC_SPLPAR */
 
-int cpu_distance(__be32 *cpu1_assoc, __be32 *cpu2_assoc)
-{
-	int dist = 0;
+पूर्णांक cpu_distance(__be32 *cpu1_assoc, __be32 *cpu2_assoc)
+अणु
+	पूर्णांक dist = 0;
 
-	int i, index;
+	पूर्णांक i, index;
 
-	for (i = 0; i < distance_ref_points_depth; i++) {
-		index = be32_to_cpu(distance_ref_points[i]);
-		if (cpu1_assoc[index] == cpu2_assoc[index])
-			break;
+	क्रम (i = 0; i < distance_ref_poपूर्णांकs_depth; i++) अणु
+		index = be32_to_cpu(distance_ref_poपूर्णांकs[i]);
+		अगर (cpu1_assoc[index] == cpu2_assoc[index])
+			अवरोध;
 		dist++;
-	}
+	पूर्ण
 
-	return dist;
-}
+	वापस dist;
+पूर्ण
 
 /* must hold reference to node during call */
-static const __be32 *of_get_associativity(struct device_node *dev)
-{
-	return of_get_property(dev, "ibm,associativity", NULL);
-}
+अटल स्थिर __be32 *of_get_associativity(काष्ठा device_node *dev)
+अणु
+	वापस of_get_property(dev, "ibm,associativity", शून्य);
+पूर्ण
 
-int __node_distance(int a, int b)
-{
-	int i;
-	int distance = LOCAL_DISTANCE;
+पूर्णांक __node_distance(पूर्णांक a, पूर्णांक b)
+अणु
+	पूर्णांक i;
+	पूर्णांक distance = LOCAL_DISTANCE;
 
-	if (!form1_affinity)
-		return ((a == b) ? LOCAL_DISTANCE : REMOTE_DISTANCE);
+	अगर (!क्रमm1_affinity)
+		वापस ((a == b) ? LOCAL_DISTANCE : REMOTE_DISTANCE);
 
-	for (i = 0; i < distance_ref_points_depth; i++) {
-		if (distance_lookup_table[a][i] == distance_lookup_table[b][i])
-			break;
+	क्रम (i = 0; i < distance_ref_poपूर्णांकs_depth; i++) अणु
+		अगर (distance_lookup_table[a][i] == distance_lookup_table[b][i])
+			अवरोध;
 
-		/* Double the distance for each NUMA level */
+		/* Double the distance क्रम each NUMA level */
 		distance *= 2;
-	}
+	पूर्ण
 
-	return distance;
-}
+	वापस distance;
+पूर्ण
 EXPORT_SYMBOL(__node_distance);
 
-static void initialize_distance_lookup_table(int nid,
-		const __be32 *associativity)
-{
-	int i;
+अटल व्योम initialize_distance_lookup_table(पूर्णांक nid,
+		स्थिर __be32 *associativity)
+अणु
+	पूर्णांक i;
 
-	if (!form1_affinity)
-		return;
+	अगर (!क्रमm1_affinity)
+		वापस;
 
-	for (i = 0; i < distance_ref_points_depth; i++) {
-		const __be32 *entry;
+	क्रम (i = 0; i < distance_ref_poपूर्णांकs_depth; i++) अणु
+		स्थिर __be32 *entry;
 
-		entry = &associativity[be32_to_cpu(distance_ref_points[i]) - 1];
-		distance_lookup_table[nid][i] = of_read_number(entry, 1);
-	}
-}
+		entry = &associativity[be32_to_cpu(distance_ref_poपूर्णांकs[i]) - 1];
+		distance_lookup_table[nid][i] = of_पढ़ो_number(entry, 1);
+	पूर्ण
+पूर्ण
 
 /*
- * Returns nid in the range [0..nr_node_ids], or -1 if no useful NUMA
+ * Returns nid in the range [0..nr_node_ids], or -1 अगर no useful NUMA
  * info is found.
  */
-static int associativity_to_nid(const __be32 *associativity)
-{
-	int nid = NUMA_NO_NODE;
+अटल पूर्णांक associativity_to_nid(स्थिर __be32 *associativity)
+अणु
+	पूर्णांक nid = NUMA_NO_NODE;
 
-	if (!numa_enabled)
-		goto out;
+	अगर (!numa_enabled)
+		जाओ out;
 
-	if (of_read_number(associativity, 1) >= min_common_depth)
-		nid = of_read_number(&associativity[min_common_depth], 1);
+	अगर (of_पढ़ो_number(associativity, 1) >= min_common_depth)
+		nid = of_पढ़ो_number(&associativity[min_common_depth], 1);
 
 	/* POWER4 LPAR uses 0xffff as invalid node */
-	if (nid == 0xffff || nid >= nr_node_ids)
+	अगर (nid == 0xffff || nid >= nr_node_ids)
 		nid = NUMA_NO_NODE;
 
-	if (nid > 0 &&
-		of_read_number(associativity, 1) >= distance_ref_points_depth) {
+	अगर (nid > 0 &&
+		of_पढ़ो_number(associativity, 1) >= distance_ref_poपूर्णांकs_depth) अणु
 		/*
 		 * Skip the length field and send start of associativity array
 		 */
 		initialize_distance_lookup_table(nid, associativity + 1);
-	}
+	पूर्ण
 
 out:
-	return nid;
-}
+	वापस nid;
+पूर्ण
 
 /* Returns the nid associated with the given device tree node,
- * or -1 if not found.
+ * or -1 अगर not found.
  */
-static int of_node_to_nid_single(struct device_node *device)
-{
-	int nid = NUMA_NO_NODE;
-	const __be32 *tmp;
+अटल पूर्णांक of_node_to_nid_single(काष्ठा device_node *device)
+अणु
+	पूर्णांक nid = NUMA_NO_NODE;
+	स्थिर __be32 *पंचांगp;
 
-	tmp = of_get_associativity(device);
-	if (tmp)
-		nid = associativity_to_nid(tmp);
-	return nid;
-}
+	पंचांगp = of_get_associativity(device);
+	अगर (पंचांगp)
+		nid = associativity_to_nid(पंचांगp);
+	वापस nid;
+पूर्ण
 
-/* Walk the device tree upwards, looking for an associativity id */
-int of_node_to_nid(struct device_node *device)
-{
-	int nid = NUMA_NO_NODE;
+/* Walk the device tree upwards, looking क्रम an associativity id */
+पूर्णांक of_node_to_nid(काष्ठा device_node *device)
+अणु
+	पूर्णांक nid = NUMA_NO_NODE;
 
 	of_node_get(device);
-	while (device) {
+	जबतक (device) अणु
 		nid = of_node_to_nid_single(device);
-		if (nid != -1)
-			break;
+		अगर (nid != -1)
+			अवरोध;
 
 		device = of_get_next_parent(device);
-	}
+	पूर्ण
 	of_node_put(device);
 
-	return nid;
-}
+	वापस nid;
+पूर्ण
 EXPORT_SYMBOL(of_node_to_nid);
 
-static int __init find_min_common_depth(void)
-{
-	int depth;
-	struct device_node *root;
+अटल पूर्णांक __init find_min_common_depth(व्योम)
+अणु
+	पूर्णांक depth;
+	काष्ठा device_node *root;
 
-	if (firmware_has_feature(FW_FEATURE_OPAL))
+	अगर (firmware_has_feature(FW_FEATURE_OPAL))
 		root = of_find_node_by_path("/ibm,opal");
-	else
+	अन्यथा
 		root = of_find_node_by_path("/rtas");
-	if (!root)
+	अगर (!root)
 		root = of_find_node_by_path("/");
 
 	/*
-	 * This property is a set of 32-bit integers, each representing
-	 * an index into the ibm,associativity nodes.
+	 * This property is a set of 32-bit पूर्णांकegers, each representing
+	 * an index पूर्णांकo the ibm,associativity nodes.
 	 *
-	 * With form 0 affinity the first integer is for an SMP configuration
-	 * (should be all 0's) and the second is for a normal NUMA
+	 * With क्रमm 0 affinity the first पूर्णांकeger is क्रम an SMP configuration
+	 * (should be all 0's) and the second is क्रम a normal NUMA
 	 * configuration. We have only one level of NUMA.
 	 *
-	 * With form 1 affinity the first integer is the most significant
-	 * NUMA boundary and the following are progressively less significant
+	 * With क्रमm 1 affinity the first पूर्णांकeger is the most signअगरicant
+	 * NUMA boundary and the following are progressively less signअगरicant
 	 * boundaries. There can be more than one level of NUMA.
 	 */
-	distance_ref_points = of_get_property(root,
+	distance_ref_poपूर्णांकs = of_get_property(root,
 					"ibm,associativity-reference-points",
-					&distance_ref_points_depth);
+					&distance_ref_poपूर्णांकs_depth);
 
-	if (!distance_ref_points) {
+	अगर (!distance_ref_poपूर्णांकs) अणु
 		dbg("NUMA: ibm,associativity-reference-points not found.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	distance_ref_points_depth /= sizeof(int);
+	distance_ref_poपूर्णांकs_depth /= माप(पूर्णांक);
 
-	if (firmware_has_feature(FW_FEATURE_OPAL) ||
-	    firmware_has_feature(FW_FEATURE_TYPE1_AFFINITY)) {
+	अगर (firmware_has_feature(FW_FEATURE_OPAL) ||
+	    firmware_has_feature(FW_FEATURE_TYPE1_AFFINITY)) अणु
 		dbg("Using form 1 affinity\n");
-		form1_affinity = 1;
-	}
+		क्रमm1_affinity = 1;
+	पूर्ण
 
-	if (form1_affinity) {
-		depth = of_read_number(distance_ref_points, 1);
-	} else {
-		if (distance_ref_points_depth < 2) {
-			printk(KERN_WARNING "NUMA: "
+	अगर (क्रमm1_affinity) अणु
+		depth = of_पढ़ो_number(distance_ref_poपूर्णांकs, 1);
+	पूर्ण अन्यथा अणु
+		अगर (distance_ref_poपूर्णांकs_depth < 2) अणु
+			prपूर्णांकk(KERN_WARNING "NUMA: "
 				"short ibm,associativity-reference-points\n");
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		depth = of_read_number(&distance_ref_points[1], 1);
-	}
+		depth = of_पढ़ो_number(&distance_ref_poपूर्णांकs[1], 1);
+	पूर्ण
 
 	/*
-	 * Warn and cap if the hardware supports more than
-	 * MAX_DISTANCE_REF_POINTS domains.
+	 * Warn and cap अगर the hardware supports more than
+	 * MAX_DISTANCE_REF_POINTS करोमुख्यs.
 	 */
-	if (distance_ref_points_depth > MAX_DISTANCE_REF_POINTS) {
-		printk(KERN_WARNING "NUMA: distance array capped at "
+	अगर (distance_ref_poपूर्णांकs_depth > MAX_DISTANCE_REF_POINTS) अणु
+		prपूर्णांकk(KERN_WARNING "NUMA: distance array capped at "
 			"%d entries\n", MAX_DISTANCE_REF_POINTS);
-		distance_ref_points_depth = MAX_DISTANCE_REF_POINTS;
-	}
+		distance_ref_poपूर्णांकs_depth = MAX_DISTANCE_REF_POINTS;
+	पूर्ण
 
 	of_node_put(root);
-	return depth;
+	वापस depth;
 
 err:
 	of_node_put(root);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void __init get_n_mem_cells(int *n_addr_cells, int *n_size_cells)
-{
-	struct device_node *memory = NULL;
+अटल व्योम __init get_n_mem_cells(पूर्णांक *n_addr_cells, पूर्णांक *n_size_cells)
+अणु
+	काष्ठा device_node *memory = शून्य;
 
 	memory = of_find_node_by_type(memory, "memory");
-	if (!memory)
+	अगर (!memory)
 		panic("numa.c: No memory nodes found!");
 
 	*n_addr_cells = of_n_addr_cells(memory);
 	*n_size_cells = of_n_size_cells(memory);
 	of_node_put(memory);
-}
+पूर्ण
 
-static unsigned long read_n_cells(int n, const __be32 **buf)
-{
-	unsigned long result = 0;
+अटल अचिन्हित दीर्घ पढ़ो_n_cells(पूर्णांक n, स्थिर __be32 **buf)
+अणु
+	अचिन्हित दीर्घ result = 0;
 
-	while (n--) {
-		result = (result << 32) | of_read_number(*buf, 1);
+	जबतक (n--) अणु
+		result = (result << 32) | of_पढ़ो_number(*buf, 1);
 		(*buf)++;
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
-struct assoc_arrays {
+काष्ठा assoc_arrays अणु
 	u32	n_arrays;
 	u32	array_sz;
-	const __be32 *arrays;
-};
+	स्थिर __be32 *arrays;
+पूर्ण;
 
 /*
- * Retrieve and validate the list of associativity arrays for drconf
+ * Retrieve and validate the list of associativity arrays क्रम drconf
  * memory from the ibm,associativity-lookup-arrays property of the
  * device tree..
  *
@@ -395,482 +396,482 @@ struct assoc_arrays {
  * indicating the size of each associativity array, followed by a list
  * of N associativity arrays.
  */
-static int of_get_assoc_arrays(struct assoc_arrays *aa)
-{
-	struct device_node *memory;
-	const __be32 *prop;
+अटल पूर्णांक of_get_assoc_arrays(काष्ठा assoc_arrays *aa)
+अणु
+	काष्ठा device_node *memory;
+	स्थिर __be32 *prop;
 	u32 len;
 
 	memory = of_find_node_by_path("/ibm,dynamic-reconfiguration-memory");
-	if (!memory)
-		return -1;
+	अगर (!memory)
+		वापस -1;
 
 	prop = of_get_property(memory, "ibm,associativity-lookup-arrays", &len);
-	if (!prop || len < 2 * sizeof(unsigned int)) {
+	अगर (!prop || len < 2 * माप(अचिन्हित पूर्णांक)) अणु
 		of_node_put(memory);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	aa->n_arrays = of_read_number(prop++, 1);
-	aa->array_sz = of_read_number(prop++, 1);
+	aa->n_arrays = of_पढ़ो_number(prop++, 1);
+	aa->array_sz = of_पढ़ो_number(prop++, 1);
 
 	of_node_put(memory);
 
 	/* Now that we know the number of arrays and size of each array,
-	 * revalidate the size of the property read in.
+	 * revalidate the size of the property पढ़ो in.
 	 */
-	if (len < (aa->n_arrays * aa->array_sz + 2) * sizeof(unsigned int))
-		return -1;
+	अगर (len < (aa->n_arrays * aa->array_sz + 2) * माप(अचिन्हित पूर्णांक))
+		वापस -1;
 
 	aa->arrays = prop;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This is like of_node_to_nid_single() for memory represented in the
+ * This is like of_node_to_nid_single() क्रम memory represented in the
  * ibm,dynamic-reconfiguration-memory node.
  */
-int of_drconf_to_nid_single(struct drmem_lmb *lmb)
-{
-	struct assoc_arrays aa = { .arrays = NULL };
-	int default_nid = NUMA_NO_NODE;
-	int nid = default_nid;
-	int rc, index;
+पूर्णांक of_drconf_to_nid_single(काष्ठा drmem_lmb *lmb)
+अणु
+	काष्ठा assoc_arrays aa = अणु .arrays = शून्य पूर्ण;
+	पूर्णांक शेष_nid = NUMA_NO_NODE;
+	पूर्णांक nid = शेष_nid;
+	पूर्णांक rc, index;
 
-	if ((min_common_depth < 0) || !numa_enabled)
-		return default_nid;
+	अगर ((min_common_depth < 0) || !numa_enabled)
+		वापस शेष_nid;
 
 	rc = of_get_assoc_arrays(&aa);
-	if (rc)
-		return default_nid;
+	अगर (rc)
+		वापस शेष_nid;
 
-	if (min_common_depth <= aa.array_sz &&
-	    !(lmb->flags & DRCONF_MEM_AI_INVALID) && lmb->aa_index < aa.n_arrays) {
+	अगर (min_common_depth <= aa.array_sz &&
+	    !(lmb->flags & DRCONF_MEM_AI_INVALID) && lmb->aa_index < aa.n_arrays) अणु
 		index = lmb->aa_index * aa.array_sz + min_common_depth - 1;
-		nid = of_read_number(&aa.arrays[index], 1);
+		nid = of_पढ़ो_number(&aa.arrays[index], 1);
 
-		if (nid == 0xffff || nid >= nr_node_ids)
-			nid = default_nid;
+		अगर (nid == 0xffff || nid >= nr_node_ids)
+			nid = शेष_nid;
 
-		if (nid > 0) {
+		अगर (nid > 0) अणु
 			index = lmb->aa_index * aa.array_sz;
 			initialize_distance_lookup_table(nid,
 							&aa.arrays[index]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return nid;
-}
+	वापस nid;
+पूर्ण
 
-#ifdef CONFIG_PPC_SPLPAR
-static int vphn_get_nid(long lcpu)
-{
-	__be32 associativity[VPHN_ASSOC_BUFSIZE] = {0};
-	long rc, hwid;
+#अगर_घोषित CONFIG_PPC_SPLPAR
+अटल पूर्णांक vphn_get_nid(दीर्घ lcpu)
+अणु
+	__be32 associativity[VPHN_ASSOC_बफ_मानE] = अणु0पूर्ण;
+	दीर्घ rc, hwid;
 
 	/*
 	 * On a shared lpar, device tree will not have node associativity.
-	 * At this time lppaca, or its __old_status field may not be
-	 * updated. Hence kernel cannot detect if its on a shared lpar. So
+	 * At this समय lppaca, or its __old_status field may not be
+	 * updated. Hence kernel cannot detect अगर its on a shared lpar. So
 	 * request an explicit associativity irrespective of whether the
 	 * lpar is shared or dedicated. Use the device tree property as a
 	 * fallback. cpu_to_phys_id is only valid between
 	 * smp_setup_cpu_maps() and smp_setup_pacas().
 	 */
-	if (firmware_has_feature(FW_FEATURE_VPHN)) {
-		if (cpu_to_phys_id)
+	अगर (firmware_has_feature(FW_FEATURE_VPHN)) अणु
+		अगर (cpu_to_phys_id)
 			hwid = cpu_to_phys_id[lcpu];
-		else
+		अन्यथा
 			hwid = get_hard_smp_processor_id(lcpu);
 
 		rc = hcall_vphn(hwid, VPHN_FLAG_VCPU, associativity);
-		if (rc == H_SUCCESS)
-			return associativity_to_nid(associativity);
-	}
+		अगर (rc == H_SUCCESS)
+			वापस associativity_to_nid(associativity);
+	पूर्ण
 
-	return NUMA_NO_NODE;
-}
-#else
-static int vphn_get_nid(long unused)
-{
-	return NUMA_NO_NODE;
-}
-#endif  /* CONFIG_PPC_SPLPAR */
+	वापस NUMA_NO_NODE;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक vphn_get_nid(दीर्घ unused)
+अणु
+	वापस NUMA_NO_NODE;
+पूर्ण
+#पूर्ण_अगर  /* CONFIG_PPC_SPLPAR */
 
 /*
- * Figure out to which domain a cpu belongs and stick it there.
- * Return the id of the domain used.
+ * Figure out to which करोमुख्य a cpu beदीर्घs and stick it there.
+ * Return the id of the करोमुख्य used.
  */
-static int numa_setup_cpu(unsigned long lcpu)
-{
-	struct device_node *cpu;
-	int fcpu = cpu_first_thread_sibling(lcpu);
-	int nid = NUMA_NO_NODE;
+अटल पूर्णांक numa_setup_cpu(अचिन्हित दीर्घ lcpu)
+अणु
+	काष्ठा device_node *cpu;
+	पूर्णांक fcpu = cpu_first_thपढ़ो_sibling(lcpu);
+	पूर्णांक nid = NUMA_NO_NODE;
 
-	if (!cpu_present(lcpu)) {
+	अगर (!cpu_present(lcpu)) अणु
 		set_cpu_numa_node(lcpu, first_online_node);
-		return first_online_node;
-	}
+		वापस first_online_node;
+	पूर्ण
 
 	/*
-	 * If a valid cpu-to-node mapping is already available, use it
+	 * If a valid cpu-to-node mapping is alपढ़ोy available, use it
 	 * directly instead of querying the firmware, since it represents
-	 * the most recent mapping notified to us by the platform (eg: VPHN).
-	 * Since cpu_to_node binding remains the same for all threads in the
-	 * core. If a valid cpu-to-node mapping is already available, for
-	 * the first thread in the core, use it.
+	 * the most recent mapping notअगरied to us by the platक्रमm (eg: VPHN).
+	 * Since cpu_to_node binding reमुख्यs the same क्रम all thपढ़ोs in the
+	 * core. If a valid cpu-to-node mapping is alपढ़ोy available, क्रम
+	 * the first thपढ़ो in the core, use it.
 	 */
 	nid = numa_cpu_lookup_table[fcpu];
-	if (nid >= 0) {
+	अगर (nid >= 0) अणु
 		map_cpu_to_node(lcpu, nid);
-		return nid;
-	}
+		वापस nid;
+	पूर्ण
 
 	nid = vphn_get_nid(lcpu);
-	if (nid != NUMA_NO_NODE)
-		goto out_present;
+	अगर (nid != NUMA_NO_NODE)
+		जाओ out_present;
 
-	cpu = of_get_cpu_node(lcpu, NULL);
+	cpu = of_get_cpu_node(lcpu, शून्य);
 
-	if (!cpu) {
+	अगर (!cpu) अणु
 		WARN_ON(1);
-		if (cpu_present(lcpu))
-			goto out_present;
-		else
-			goto out;
-	}
+		अगर (cpu_present(lcpu))
+			जाओ out_present;
+		अन्यथा
+			जाओ out;
+	पूर्ण
 
 	nid = of_node_to_nid_single(cpu);
 	of_node_put(cpu);
 
 out_present:
-	if (nid < 0 || !node_possible(nid))
+	अगर (nid < 0 || !node_possible(nid))
 		nid = first_online_node;
 
 	/*
-	 * Update for the first thread of the core. All threads of a core
-	 * have to be part of the same node. This not only avoids querying
-	 * for every other thread in the core, but always avoids a case
-	 * where virtual node associativity change causes subsequent threads
-	 * of a core to be associated with different nid. However if first
-	 * thread is already online, expect it to have a valid mapping.
+	 * Update क्रम the first thपढ़ो of the core. All thपढ़ोs of a core
+	 * have to be part of the same node. This not only aव्योमs querying
+	 * क्रम every other thपढ़ो in the core, but always aव्योमs a हाल
+	 * where भव node associativity change causes subsequent thपढ़ोs
+	 * of a core to be associated with dअगरferent nid. However अगर first
+	 * thपढ़ो is alपढ़ोy online, expect it to have a valid mapping.
 	 */
-	if (fcpu != lcpu) {
+	अगर (fcpu != lcpu) अणु
 		WARN_ON(cpu_online(fcpu));
 		map_cpu_to_node(fcpu, nid);
-	}
+	पूर्ण
 
 	map_cpu_to_node(lcpu, nid);
 out:
-	return nid;
-}
+	वापस nid;
+पूर्ण
 
-static void verify_cpu_node_mapping(int cpu, int node)
-{
-	int base, sibling, i;
+अटल व्योम verअगरy_cpu_node_mapping(पूर्णांक cpu, पूर्णांक node)
+अणु
+	पूर्णांक base, sibling, i;
 
-	/* Verify that all the threads in the core belong to the same node */
-	base = cpu_first_thread_sibling(cpu);
+	/* Verअगरy that all the thपढ़ोs in the core beदीर्घ to the same node */
+	base = cpu_first_thपढ़ो_sibling(cpu);
 
-	for (i = 0; i < threads_per_core; i++) {
+	क्रम (i = 0; i < thपढ़ोs_per_core; i++) अणु
 		sibling = base + i;
 
-		if (sibling == cpu || cpu_is_offline(sibling))
-			continue;
+		अगर (sibling == cpu || cpu_is_offline(sibling))
+			जारी;
 
-		if (cpu_to_node(sibling) != node) {
+		अगर (cpu_to_node(sibling) != node) अणु
 			WARN(1, "CPU thread siblings %d and %d don't belong"
 				" to the same node!\n", cpu, sibling);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Must run before sched domains notifier. */
-static int ppc_numa_cpu_prepare(unsigned int cpu)
-{
-	int nid;
+/* Must run beक्रमe sched करोमुख्यs notअगरier. */
+अटल पूर्णांक ppc_numa_cpu_prepare(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक nid;
 
 	nid = numa_setup_cpu(cpu);
-	verify_cpu_node_mapping(cpu, nid);
-	return 0;
-}
+	verअगरy_cpu_node_mapping(cpu, nid);
+	वापस 0;
+पूर्ण
 
-static int ppc_numa_cpu_dead(unsigned int cpu)
-{
-#ifdef CONFIG_HOTPLUG_CPU
+अटल पूर्णांक ppc_numa_cpu_dead(अचिन्हित पूर्णांक cpu)
+अणु
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	unmap_cpu_from_node(cpu);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
- * Check and possibly modify a memory region to enforce the memory limit.
+ * Check and possibly modअगरy a memory region to enक्रमce the memory limit.
  *
- * Returns the size the region should have to enforce the memory limit.
+ * Returns the size the region should have to enक्रमce the memory limit.
  * This will either be the original value of size, a truncated value,
- * or zero. If the returned value of size is 0 the region should be
+ * or zero. If the वापसed value of size is 0 the region should be
  * discarded as it lies wholly above the memory limit.
  */
-static unsigned long __init numa_enforce_memory_limit(unsigned long start,
-						      unsigned long size)
-{
+अटल अचिन्हित दीर्घ __init numa_enक्रमce_memory_limit(अचिन्हित दीर्घ start,
+						      अचिन्हित दीर्घ size)
+अणु
 	/*
 	 * We use memblock_end_of_DRAM() in here instead of memory_limit because
-	 * we've already adjusted it for the limit and it takes care of
-	 * having memory holes below the limit.  Also, in the case of
-	 * iommu_is_off, memory_limit is not set but is implicitly enforced.
+	 * we've alपढ़ोy adjusted it क्रम the limit and it takes care of
+	 * having memory holes below the limit.  Also, in the हाल of
+	 * iommu_is_off, memory_limit is not set but is implicitly enक्रमced.
 	 */
 
-	if (start + size <= memblock_end_of_DRAM())
-		return size;
+	अगर (start + size <= memblock_end_of_DRAM())
+		वापस size;
 
-	if (start >= memblock_end_of_DRAM())
-		return 0;
+	अगर (start >= memblock_end_of_DRAM())
+		वापस 0;
 
-	return memblock_end_of_DRAM() - start;
-}
+	वापस memblock_end_of_DRAM() - start;
+पूर्ण
 
 /*
- * Reads the counter for a given entry in
+ * Reads the counter क्रम a given entry in
  * linux,drconf-usable-memory property
  */
-static inline int __init read_usm_ranges(const __be32 **usm)
-{
+अटल अंतरभूत पूर्णांक __init पढ़ो_usm_ranges(स्थिर __be32 **usm)
+अणु
 	/*
 	 * For each lmb in ibm,dynamic-memory a corresponding
 	 * entry in linux,drconf-usable-memory property contains
 	 * a counter followed by that many (base, size) duple.
-	 * read the counter from linux,drconf-usable-memory
+	 * पढ़ो the counter from linux,drconf-usable-memory
 	 */
-	return read_n_cells(n_mem_size_cells, usm);
-}
+	वापस पढ़ो_n_cells(n_mem_size_cells, usm);
+पूर्ण
 
 /*
- * Extract NUMA information from the ibm,dynamic-reconfiguration-memory
- * node.  This assumes n_mem_{addr,size}_cells have been set.
+ * Extract NUMA inक्रमmation from the ibm,dynamic-reconfiguration-memory
+ * node.  This assumes n_mem_अणुaddr,sizeपूर्ण_cells have been set.
  */
-static int __init numa_setup_drmem_lmb(struct drmem_lmb *lmb,
-					const __be32 **usm,
-					void *data)
-{
-	unsigned int ranges, is_kexec_kdump = 0;
-	unsigned long base, size, sz;
-	int nid;
+अटल पूर्णांक __init numa_setup_drmem_lmb(काष्ठा drmem_lmb *lmb,
+					स्थिर __be32 **usm,
+					व्योम *data)
+अणु
+	अचिन्हित पूर्णांक ranges, is_kexec_kdump = 0;
+	अचिन्हित दीर्घ base, size, sz;
+	पूर्णांक nid;
 
 	/*
-	 * Skip this block if the reserved bit is set in flags (0x80)
-	 * or if the block is not assigned to this partition (0x8)
+	 * Skip this block अगर the reserved bit is set in flags (0x80)
+	 * or अगर the block is not asचिन्हित to this partition (0x8)
 	 */
-	if ((lmb->flags & DRCONF_MEM_RESERVED)
+	अगर ((lmb->flags & DRCONF_MEM_RESERVED)
 	    || !(lmb->flags & DRCONF_MEM_ASSIGNED))
-		return 0;
+		वापस 0;
 
-	if (*usm)
+	अगर (*usm)
 		is_kexec_kdump = 1;
 
 	base = lmb->base_addr;
 	size = drmem_lmb_size();
 	ranges = 1;
 
-	if (is_kexec_kdump) {
-		ranges = read_usm_ranges(usm);
-		if (!ranges) /* there are no (base, size) duple */
-			return 0;
-	}
+	अगर (is_kexec_kdump) अणु
+		ranges = पढ़ो_usm_ranges(usm);
+		अगर (!ranges) /* there are no (base, size) duple */
+			वापस 0;
+	पूर्ण
 
-	do {
-		if (is_kexec_kdump) {
-			base = read_n_cells(n_mem_addr_cells, usm);
-			size = read_n_cells(n_mem_size_cells, usm);
-		}
+	करो अणु
+		अगर (is_kexec_kdump) अणु
+			base = पढ़ो_n_cells(n_mem_addr_cells, usm);
+			size = पढ़ो_n_cells(n_mem_size_cells, usm);
+		पूर्ण
 
 		nid = of_drconf_to_nid_single(lmb);
 		fake_numa_create_new_node(((base + size) >> PAGE_SHIFT),
 					  &nid);
 		node_set_online(nid);
-		sz = numa_enforce_memory_limit(base, size);
-		if (sz)
+		sz = numa_enक्रमce_memory_limit(base, size);
+		अगर (sz)
 			memblock_set_node(base, sz, &memblock.memory, nid);
-	} while (--ranges);
+	पूर्ण जबतक (--ranges);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init parse_numa_properties(void)
-{
-	struct device_node *memory;
-	int default_nid = 0;
-	unsigned long i;
+अटल पूर्णांक __init parse_numa_properties(व्योम)
+अणु
+	काष्ठा device_node *memory;
+	पूर्णांक शेष_nid = 0;
+	अचिन्हित दीर्घ i;
 
-	if (numa_enabled == 0) {
-		printk(KERN_WARNING "NUMA disabled by user\n");
-		return -1;
-	}
+	अगर (numa_enabled == 0) अणु
+		prपूर्णांकk(KERN_WARNING "NUMA disabled by user\n");
+		वापस -1;
+	पूर्ण
 
 	min_common_depth = find_min_common_depth();
 
-	if (min_common_depth < 0) {
+	अगर (min_common_depth < 0) अणु
 		/*
-		 * if we fail to parse min_common_depth from device tree
+		 * अगर we fail to parse min_common_depth from device tree
 		 * mark the numa disabled, boot with numa disabled.
 		 */
 		numa_enabled = false;
-		return min_common_depth;
-	}
+		वापस min_common_depth;
+	पूर्ण
 
 	dbg("NUMA associativity depth for CPU/Memory: %d\n", min_common_depth);
 
 	/*
-	 * Even though we connect cpus to numa domains later in SMP
+	 * Even though we connect cpus to numa करोमुख्यs later in SMP
 	 * init, we need to know the node ids now. This is because
 	 * each node to be onlined must have NODE_DATA etc backing it.
 	 */
-	for_each_present_cpu(i) {
-		struct device_node *cpu;
-		int nid = vphn_get_nid(i);
+	क्रम_each_present_cpu(i) अणु
+		काष्ठा device_node *cpu;
+		पूर्णांक nid = vphn_get_nid(i);
 
 		/*
-		 * Don't fall back to default_nid yet -- we will plug
-		 * cpus into nodes once the memory scan has discovered
+		 * Don't fall back to शेष_nid yet -- we will plug
+		 * cpus पूर्णांकo nodes once the memory scan has discovered
 		 * the topology.
 		 */
-		if (nid == NUMA_NO_NODE) {
-			cpu = of_get_cpu_node(i, NULL);
+		अगर (nid == NUMA_NO_NODE) अणु
+			cpu = of_get_cpu_node(i, शून्य);
 			BUG_ON(!cpu);
 			nid = of_node_to_nid_single(cpu);
 			of_node_put(cpu);
-		}
+		पूर्ण
 
 		node_set_online(nid);
-	}
+	पूर्ण
 
 	get_n_mem_cells(&n_mem_addr_cells, &n_mem_size_cells);
 
-	for_each_node_by_type(memory, "memory") {
-		unsigned long start;
-		unsigned long size;
-		int nid;
-		int ranges;
-		const __be32 *memcell_buf;
-		unsigned int len;
+	क्रम_each_node_by_type(memory, "memory") अणु
+		अचिन्हित दीर्घ start;
+		अचिन्हित दीर्घ size;
+		पूर्णांक nid;
+		पूर्णांक ranges;
+		स्थिर __be32 *memcell_buf;
+		अचिन्हित पूर्णांक len;
 
 		memcell_buf = of_get_property(memory,
 			"linux,usable-memory", &len);
-		if (!memcell_buf || len <= 0)
+		अगर (!memcell_buf || len <= 0)
 			memcell_buf = of_get_property(memory, "reg", &len);
-		if (!memcell_buf || len <= 0)
-			continue;
+		अगर (!memcell_buf || len <= 0)
+			जारी;
 
 		/* ranges in cell */
 		ranges = (len >> 2) / (n_mem_addr_cells + n_mem_size_cells);
 new_range:
-		/* these are order-sensitive, and modify the buffer pointer */
-		start = read_n_cells(n_mem_addr_cells, &memcell_buf);
-		size = read_n_cells(n_mem_size_cells, &memcell_buf);
+		/* these are order-sensitive, and modअगरy the buffer poपूर्णांकer */
+		start = पढ़ो_n_cells(n_mem_addr_cells, &memcell_buf);
+		size = पढ़ो_n_cells(n_mem_size_cells, &memcell_buf);
 
 		/*
 		 * Assumption: either all memory nodes or none will
 		 * have associativity properties.  If none, then
-		 * everything goes to default_nid.
+		 * everything goes to शेष_nid.
 		 */
 		nid = of_node_to_nid_single(memory);
-		if (nid < 0)
-			nid = default_nid;
+		अगर (nid < 0)
+			nid = शेष_nid;
 
 		fake_numa_create_new_node(((start + size) >> PAGE_SHIFT), &nid);
 		node_set_online(nid);
 
-		size = numa_enforce_memory_limit(start, size);
-		if (size)
+		size = numa_enक्रमce_memory_limit(start, size);
+		अगर (size)
 			memblock_set_node(start, size, &memblock.memory, nid);
 
-		if (--ranges)
-			goto new_range;
-	}
+		अगर (--ranges)
+			जाओ new_range;
+	पूर्ण
 
 	/*
-	 * Now do the same thing for each MEMBLOCK listed in the
+	 * Now करो the same thing क्रम each MEMBLOCK listed in the
 	 * ibm,dynamic-memory property in the
 	 * ibm,dynamic-reconfiguration-memory node.
 	 */
 	memory = of_find_node_by_path("/ibm,dynamic-reconfiguration-memory");
-	if (memory) {
-		walk_drmem_lmbs(memory, NULL, numa_setup_drmem_lmb);
+	अगर (memory) अणु
+		walk_drmem_lmbs(memory, शून्य, numa_setup_drmem_lmb);
 		of_node_put(memory);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init setup_nonnuma(void)
-{
-	unsigned long top_of_ram = memblock_end_of_DRAM();
-	unsigned long total_ram = memblock_phys_mem_size();
-	unsigned long start_pfn, end_pfn;
-	unsigned int nid = 0;
-	int i;
+अटल व्योम __init setup_nonnuma(व्योम)
+अणु
+	अचिन्हित दीर्घ top_of_ram = memblock_end_of_DRAM();
+	अचिन्हित दीर्घ total_ram = memblock_phys_mem_size();
+	अचिन्हित दीर्घ start_pfn, end_pfn;
+	अचिन्हित पूर्णांक nid = 0;
+	पूर्णांक i;
 
-	printk(KERN_DEBUG "Top of RAM: 0x%lx, Total RAM: 0x%lx\n",
+	prपूर्णांकk(KERN_DEBUG "Top of RAM: 0x%lx, Total RAM: 0x%lx\n",
 	       top_of_ram, total_ram);
-	printk(KERN_DEBUG "Memory hole size: %ldMB\n",
+	prपूर्णांकk(KERN_DEBUG "Memory hole size: %ldMB\n",
 	       (top_of_ram - total_ram) >> 20);
 
-	for_each_mem_pfn_range(i, MAX_NUMNODES, &start_pfn, &end_pfn, NULL) {
+	क्रम_each_mem_pfn_range(i, MAX_NUMNODES, &start_pfn, &end_pfn, शून्य) अणु
 		fake_numa_create_new_node(end_pfn, &nid);
 		memblock_set_node(PFN_PHYS(start_pfn),
 				  PFN_PHYS(end_pfn - start_pfn),
 				  &memblock.memory, nid);
 		node_set_online(nid);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init dump_numa_cpu_topology(void)
-{
-	unsigned int node;
-	unsigned int cpu, count;
+व्योम __init dump_numa_cpu_topology(व्योम)
+अणु
+	अचिन्हित पूर्णांक node;
+	अचिन्हित पूर्णांक cpu, count;
 
-	if (!numa_enabled)
-		return;
+	अगर (!numa_enabled)
+		वापस;
 
-	for_each_online_node(node) {
+	क्रम_each_online_node(node) अणु
 		pr_info("Node %d CPUs:", node);
 
 		count = 0;
 		/*
-		 * If we used a CPU iterator here we would miss printing
+		 * If we used a CPU iterator here we would miss prपूर्णांकing
 		 * the holes in the cpumap.
 		 */
-		for (cpu = 0; cpu < nr_cpu_ids; cpu++) {
-			if (cpumask_test_cpu(cpu,
-					node_to_cpumask_map[node])) {
-				if (count == 0)
+		क्रम (cpu = 0; cpu < nr_cpu_ids; cpu++) अणु
+			अगर (cpumask_test_cpu(cpu,
+					node_to_cpumask_map[node])) अणु
+				अगर (count == 0)
 					pr_cont(" %u", cpu);
 				++count;
-			} else {
-				if (count > 1)
+			पूर्ण अन्यथा अणु
+				अगर (count > 1)
 					pr_cont("-%u", cpu - 1);
 				count = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (count > 1)
+		अगर (count > 1)
 			pr_cont("-%u", nr_cpu_ids - 1);
 		pr_cont("\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Initialize NODE_DATA for a node on the local memory */
-static void __init setup_node_data(int nid, u64 start_pfn, u64 end_pfn)
-{
+/* Initialize NODE_DATA क्रम a node on the local memory */
+अटल व्योम __init setup_node_data(पूर्णांक nid, u64 start_pfn, u64 end_pfn)
+अणु
 	u64 spanned_pages = end_pfn - start_pfn;
-	const size_t nd_size = roundup(sizeof(pg_data_t), SMP_CACHE_BYTES);
+	स्थिर माप_प्रकार nd_size = roundup(माप(pg_data_t), SMP_CACHE_BYTES);
 	u64 nd_pa;
-	void *nd;
-	int tnid;
+	व्योम *nd;
+	पूर्णांक tnid;
 
 	nd_pa = memblock_phys_alloc_try_nid(nd_size, SMP_CACHE_BYTES, nid);
-	if (!nd_pa)
+	अगर (!nd_pa)
 		panic("Cannot allocate %zu bytes for node %d data\n",
 		      nd_size, nid);
 
@@ -880,80 +881,80 @@ static void __init setup_node_data(int nid, u64 start_pfn, u64 end_pfn)
 	pr_info("  NODE_DATA [mem %#010Lx-%#010Lx]\n",
 		nd_pa, nd_pa + nd_size - 1);
 	tnid = early_pfn_to_nid(nd_pa >> PAGE_SHIFT);
-	if (tnid != nid)
+	अगर (tnid != nid)
 		pr_info("    NODE_DATA(%d) on node %d\n", nid, tnid);
 
 	node_data[nid] = nd;
-	memset(NODE_DATA(nid), 0, sizeof(pg_data_t));
+	स_रखो(NODE_DATA(nid), 0, माप(pg_data_t));
 	NODE_DATA(nid)->node_id = nid;
 	NODE_DATA(nid)->node_start_pfn = start_pfn;
 	NODE_DATA(nid)->node_spanned_pages = spanned_pages;
-}
+पूर्ण
 
-static void __init find_possible_nodes(void)
-{
-	struct device_node *rtas;
-	const __be32 *domains;
-	int prop_length, max_nodes;
+अटल व्योम __init find_possible_nodes(व्योम)
+अणु
+	काष्ठा device_node *rtas;
+	स्थिर __be32 *करोमुख्यs;
+	पूर्णांक prop_length, max_nodes;
 	u32 i;
 
-	if (!numa_enabled)
-		return;
+	अगर (!numa_enabled)
+		वापस;
 
 	rtas = of_find_node_by_path("/rtas");
-	if (!rtas)
-		return;
+	अगर (!rtas)
+		वापस;
 
 	/*
-	 * ibm,current-associativity-domains is a fairly recent property. If
-	 * it doesn't exist, then fallback on ibm,max-associativity-domains.
-	 * Current denotes what the platform can support compared to max
+	 * ibm,current-associativity-करोमुख्यs is a fairly recent property. If
+	 * it करोesn't exist, then fallback on ibm,max-associativity-करोमुख्यs.
+	 * Current denotes what the platक्रमm can support compared to max
 	 * which denotes what the Hypervisor can support.
 	 */
-	domains = of_get_property(rtas, "ibm,current-associativity-domains",
+	करोमुख्यs = of_get_property(rtas, "ibm,current-associativity-domains",
 					&prop_length);
-	if (!domains) {
-		domains = of_get_property(rtas, "ibm,max-associativity-domains",
+	अगर (!करोमुख्यs) अणु
+		करोमुख्यs = of_get_property(rtas, "ibm,max-associativity-domains",
 					&prop_length);
-		if (!domains)
-			goto out;
-	}
+		अगर (!करोमुख्यs)
+			जाओ out;
+	पूर्ण
 
-	max_nodes = of_read_number(&domains[min_common_depth], 1);
-	for (i = 0; i < max_nodes; i++) {
-		if (!node_possible(i))
+	max_nodes = of_पढ़ो_number(&करोमुख्यs[min_common_depth], 1);
+	क्रम (i = 0; i < max_nodes; i++) अणु
+		अगर (!node_possible(i))
 			node_set(i, node_possible_map);
-	}
+	पूर्ण
 
-	prop_length /= sizeof(int);
-	if (prop_length > min_common_depth + 2)
+	prop_length /= माप(पूर्णांक);
+	अगर (prop_length > min_common_depth + 2)
 		coregroup_enabled = 1;
 
 out:
 	of_node_put(rtas);
-}
+पूर्ण
 
-void __init mem_topology_setup(void)
-{
-	int cpu;
+व्योम __init mem_topology_setup(व्योम)
+अणु
+	पूर्णांक cpu;
 
 	/*
 	 * Linux/mm assumes node 0 to be online at boot. However this is not
 	 * true on PowerPC, where node 0 is similar to any other node, it
-	 * could be cpuless, memoryless node. So force node 0 to be offline
-	 * for now. This will prevent cpuless, memoryless node 0 showing up
+	 * could be cpuless, memoryless node. So क्रमce node 0 to be offline
+	 * क्रम now. This will prevent cpuless, memoryless node 0 showing up
 	 * unnecessarily as online. If a node has cpus or memory that need
 	 * to be online, then node will anyway be marked online.
 	 */
 	node_set_offline(0);
 
-	if (parse_numa_properties())
+	अगर (parse_numa_properties())
 		setup_nonnuma();
 
 	/*
-	 * Modify the set of possible NUMA nodes to reflect information
+	 * Modअगरy the set of possible NUMA nodes to reflect inक्रमmation
 	 * available about the set of online nodes, and the set of nodes
-	 * that we expect to make use of for this platform's affinity
+	 * that we expect to make use of क्रम this platक्रमm's affinity
 	 * calculations.
 	 */
 	nodes_and(node_possible_map, node_possible_map, node_online_map);
@@ -964,312 +965,312 @@ void __init mem_topology_setup(void)
 
 	reset_numa_cpu_lookup_table();
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		/*
 		 * Powerpc with CONFIG_NUMA always used to have a node 0,
-		 * even if it was memoryless or cpuless. For all cpus that
-		 * are possible but not present, cpu_to_node() would point
-		 * to node 0. To remove a cpuless, memoryless dummy node,
-		 * powerpc need to make sure all possible but not present
+		 * even अगर it was memoryless or cpuless. For all cpus that
+		 * are possible but not present, cpu_to_node() would poपूर्णांक
+		 * to node 0. To हटाओ a cpuless, memoryless dummy node,
+		 * घातerpc need to make sure all possible but not present
 		 * cpu_to_node are set to a proper node.
 		 */
 		numa_setup_cpu(cpu);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init initmem_init(void)
-{
-	int nid;
+व्योम __init iniपंचांगem_init(व्योम)
+अणु
+	पूर्णांक nid;
 
 	max_low_pfn = memblock_end_of_DRAM() >> PAGE_SHIFT;
 	max_pfn = max_low_pfn;
 
 	memblock_dump_all();
 
-	for_each_online_node(nid) {
-		unsigned long start_pfn, end_pfn;
+	क्रम_each_online_node(nid) अणु
+		अचिन्हित दीर्घ start_pfn, end_pfn;
 
-		get_pfn_range_for_nid(nid, &start_pfn, &end_pfn);
+		get_pfn_range_क्रम_nid(nid, &start_pfn, &end_pfn);
 		setup_node_data(nid, start_pfn, end_pfn);
-	}
+	पूर्ण
 
 	sparse_init();
 
 	/*
-	 * We need the numa_cpu_lookup_table to be accurate for all CPUs,
-	 * even before we online them, so that we can use cpu_to_{node,mem}
+	 * We need the numa_cpu_lookup_table to be accurate क्रम all CPUs,
+	 * even beक्रमe we online them, so that we can use cpu_to_अणुnode,memपूर्ण
 	 * early in boot, cf. smp_prepare_cpus().
 	 * _nocalls() + manual invocation is used because cpuhp is not yet
-	 * initialized for the boot CPU.
+	 * initialized क्रम the boot CPU.
 	 */
 	cpuhp_setup_state_nocalls(CPUHP_POWER_NUMA_PREPARE, "powerpc/numa:prepare",
 				  ppc_numa_cpu_prepare, ppc_numa_cpu_dead);
-}
+पूर्ण
 
-static int __init early_numa(char *p)
-{
-	if (!p)
-		return 0;
+अटल पूर्णांक __init early_numa(अक्षर *p)
+अणु
+	अगर (!p)
+		वापस 0;
 
-	if (strstr(p, "off"))
+	अगर (म_माला(p, "off"))
 		numa_enabled = 0;
 
-	if (strstr(p, "debug"))
+	अगर (म_माला(p, "debug"))
 		numa_debug = 1;
 
-	p = strstr(p, "fake=");
-	if (p)
-		cmdline = p + strlen("fake=");
+	p = म_माला(p, "fake=");
+	अगर (p)
+		cmdline = p + म_माप("fake=");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("numa", early_numa);
 
-#ifdef CONFIG_MEMORY_HOTPLUG
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
 /*
- * Find the node associated with a hot added memory section for
+ * Find the node associated with a hot added memory section क्रम
  * memory represented in the device tree by the property
  * ibm,dynamic-reconfiguration-memory/ibm,dynamic-memory.
  */
-static int hot_add_drconf_scn_to_nid(unsigned long scn_addr)
-{
-	struct drmem_lmb *lmb;
-	unsigned long lmb_size;
-	int nid = NUMA_NO_NODE;
+अटल पूर्णांक hot_add_drconf_scn_to_nid(अचिन्हित दीर्घ scn_addr)
+अणु
+	काष्ठा drmem_lmb *lmb;
+	अचिन्हित दीर्घ lmb_size;
+	पूर्णांक nid = NUMA_NO_NODE;
 
 	lmb_size = drmem_lmb_size();
 
-	for_each_drmem_lmb(lmb) {
-		/* skip this block if it is reserved or not assigned to
+	क्रम_each_drmem_lmb(lmb) अणु
+		/* skip this block अगर it is reserved or not asचिन्हित to
 		 * this partition */
-		if ((lmb->flags & DRCONF_MEM_RESERVED)
+		अगर ((lmb->flags & DRCONF_MEM_RESERVED)
 		    || !(lmb->flags & DRCONF_MEM_ASSIGNED))
-			continue;
+			जारी;
 
-		if ((scn_addr < lmb->base_addr)
+		अगर ((scn_addr < lmb->base_addr)
 		    || (scn_addr >= (lmb->base_addr + lmb_size)))
-			continue;
+			जारी;
 
 		nid = of_drconf_to_nid_single(lmb);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return nid;
-}
+	वापस nid;
+पूर्ण
 
 /*
- * Find the node associated with a hot added memory section for memory
- * represented in the device tree as a node (i.e. memory@XXXX) for
+ * Find the node associated with a hot added memory section क्रम memory
+ * represented in the device tree as a node (i.e. memory@XXXX) क्रम
  * each memblock.
  */
-static int hot_add_node_scn_to_nid(unsigned long scn_addr)
-{
-	struct device_node *memory;
-	int nid = NUMA_NO_NODE;
+अटल पूर्णांक hot_add_node_scn_to_nid(अचिन्हित दीर्घ scn_addr)
+अणु
+	काष्ठा device_node *memory;
+	पूर्णांक nid = NUMA_NO_NODE;
 
-	for_each_node_by_type(memory, "memory") {
-		unsigned long start, size;
-		int ranges;
-		const __be32 *memcell_buf;
-		unsigned int len;
+	क्रम_each_node_by_type(memory, "memory") अणु
+		अचिन्हित दीर्घ start, size;
+		पूर्णांक ranges;
+		स्थिर __be32 *memcell_buf;
+		अचिन्हित पूर्णांक len;
 
 		memcell_buf = of_get_property(memory, "reg", &len);
-		if (!memcell_buf || len <= 0)
-			continue;
+		अगर (!memcell_buf || len <= 0)
+			जारी;
 
 		/* ranges in cell */
 		ranges = (len >> 2) / (n_mem_addr_cells + n_mem_size_cells);
 
-		while (ranges--) {
-			start = read_n_cells(n_mem_addr_cells, &memcell_buf);
-			size = read_n_cells(n_mem_size_cells, &memcell_buf);
+		जबतक (ranges--) अणु
+			start = पढ़ो_n_cells(n_mem_addr_cells, &memcell_buf);
+			size = पढ़ो_n_cells(n_mem_size_cells, &memcell_buf);
 
-			if ((scn_addr < start) || (scn_addr >= (start + size)))
-				continue;
+			अगर ((scn_addr < start) || (scn_addr >= (start + size)))
+				जारी;
 
 			nid = of_node_to_nid_single(memory);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (nid >= 0)
-			break;
-	}
+		अगर (nid >= 0)
+			अवरोध;
+	पूर्ण
 
 	of_node_put(memory);
 
-	return nid;
-}
+	वापस nid;
+पूर्ण
 
 /*
  * Find the node associated with a hot added memory section.  Section
  * corresponds to a SPARSEMEM section, not an MEMBLOCK.  It is assumed that
  * sections are fully contained within a single MEMBLOCK.
  */
-int hot_add_scn_to_nid(unsigned long scn_addr)
-{
-	struct device_node *memory = NULL;
-	int nid;
+पूर्णांक hot_add_scn_to_nid(अचिन्हित दीर्घ scn_addr)
+अणु
+	काष्ठा device_node *memory = शून्य;
+	पूर्णांक nid;
 
-	if (!numa_enabled)
-		return first_online_node;
+	अगर (!numa_enabled)
+		वापस first_online_node;
 
 	memory = of_find_node_by_path("/ibm,dynamic-reconfiguration-memory");
-	if (memory) {
+	अगर (memory) अणु
 		nid = hot_add_drconf_scn_to_nid(scn_addr);
 		of_node_put(memory);
-	} else {
+	पूर्ण अन्यथा अणु
 		nid = hot_add_node_scn_to_nid(scn_addr);
-	}
+	पूर्ण
 
-	if (nid < 0 || !node_possible(nid))
+	अगर (nid < 0 || !node_possible(nid))
 		nid = first_online_node;
 
-	return nid;
-}
+	वापस nid;
+पूर्ण
 
-static u64 hot_add_drconf_memory_max(void)
-{
-	struct device_node *memory = NULL;
-	struct device_node *dn = NULL;
-	const __be64 *lrdr = NULL;
+अटल u64 hot_add_drconf_memory_max(व्योम)
+अणु
+	काष्ठा device_node *memory = शून्य;
+	काष्ठा device_node *dn = शून्य;
+	स्थिर __be64 *lrdr = शून्य;
 
 	dn = of_find_node_by_path("/rtas");
-	if (dn) {
-		lrdr = of_get_property(dn, "ibm,lrdr-capacity", NULL);
+	अगर (dn) अणु
+		lrdr = of_get_property(dn, "ibm,lrdr-capacity", शून्य);
 		of_node_put(dn);
-		if (lrdr)
-			return be64_to_cpup(lrdr);
-	}
+		अगर (lrdr)
+			वापस be64_to_cpup(lrdr);
+	पूर्ण
 
 	memory = of_find_node_by_path("/ibm,dynamic-reconfiguration-memory");
-	if (memory) {
+	अगर (memory) अणु
 		of_node_put(memory);
-		return drmem_lmb_memory_max();
-	}
-	return 0;
-}
+		वापस drmem_lmb_memory_max();
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * memory_hotplug_max - return max address of memory that may be added
+ * memory_hotplug_max - वापस max address of memory that may be added
  *
- * This is currently only used on systems that support drconfig memory
+ * This is currently only used on प्रणालीs that support drconfig memory
  * hotplug.
  */
-u64 memory_hotplug_max(void)
-{
-        return max(hot_add_drconf_memory_max(), memblock_end_of_DRAM());
-}
-#endif /* CONFIG_MEMORY_HOTPLUG */
+u64 memory_hotplug_max(व्योम)
+अणु
+        वापस max(hot_add_drconf_memory_max(), memblock_end_of_DRAM());
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEMORY_HOTPLUG */
 
 /* Virtual Processor Home Node (VPHN) support */
-#ifdef CONFIG_PPC_SPLPAR
-static int topology_inited;
+#अगर_घोषित CONFIG_PPC_SPLPAR
+अटल पूर्णांक topology_inited;
 
 /*
- * Retrieve the new associativity information for a virtual processor's
+ * Retrieve the new associativity inक्रमmation क्रम a भव processor's
  * home node.
  */
-static long vphn_get_associativity(unsigned long cpu,
+अटल दीर्घ vphn_get_associativity(अचिन्हित दीर्घ cpu,
 					__be32 *associativity)
-{
-	long rc;
+अणु
+	दीर्घ rc;
 
 	rc = hcall_vphn(get_hard_smp_processor_id(cpu),
 				VPHN_FLAG_VCPU, associativity);
 
-	switch (rc) {
-	case H_SUCCESS:
+	चयन (rc) अणु
+	हाल H_SUCCESS:
 		dbg("VPHN hcall succeeded. Reset polling...\n");
-		goto out;
+		जाओ out;
 
-	case H_FUNCTION:
+	हाल H_FUNCTION:
 		pr_err_ratelimited("VPHN unsupported. Disabling polling...\n");
-		break;
-	case H_HARDWARE:
+		अवरोध;
+	हाल H_HARDWARE:
 		pr_err_ratelimited("hcall_vphn() experienced a hardware fault "
 			"preventing VPHN. Disabling polling...\n");
-		break;
-	case H_PARAMETER:
+		अवरोध;
+	हाल H_PARAMETER:
 		pr_err_ratelimited("hcall_vphn() was passed an invalid parameter. "
 			"Disabling polling...\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err_ratelimited("hcall_vphn() returned %ld. Disabling polling...\n"
 			, rc);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int find_and_online_cpu_nid(int cpu)
-{
-	__be32 associativity[VPHN_ASSOC_BUFSIZE] = {0};
-	int new_nid;
+पूर्णांक find_and_online_cpu_nid(पूर्णांक cpu)
+अणु
+	__be32 associativity[VPHN_ASSOC_बफ_मानE] = अणु0पूर्ण;
+	पूर्णांक new_nid;
 
-	/* Use associativity from first thread for all siblings */
-	if (vphn_get_associativity(cpu, associativity))
-		return cpu_to_node(cpu);
+	/* Use associativity from first thपढ़ो क्रम all siblings */
+	अगर (vphn_get_associativity(cpu, associativity))
+		वापस cpu_to_node(cpu);
 
 	new_nid = associativity_to_nid(associativity);
-	if (new_nid < 0 || !node_possible(new_nid))
+	अगर (new_nid < 0 || !node_possible(new_nid))
 		new_nid = first_online_node;
 
-	if (NODE_DATA(new_nid) == NULL) {
-#ifdef CONFIG_MEMORY_HOTPLUG
+	अगर (NODE_DATA(new_nid) == शून्य) अणु
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
 		/*
-		 * Need to ensure that NODE_DATA is initialized for a node from
+		 * Need to ensure that NODE_DATA is initialized क्रम a node from
 		 * available memory (see memblock_alloc_try_nid). If unable to
-		 * init the node, then default to nearest node that has memory
-		 * installed. Skip onlining a node if the subsystems are not
+		 * init the node, then शेष to nearest node that has memory
+		 * installed. Skip onlining a node अगर the subप्रणालीs are not
 		 * yet initialized.
 		 */
-		if (!topology_inited || try_online_node(new_nid))
+		अगर (!topology_inited || try_online_node(new_nid))
 			new_nid = first_online_node;
-#else
+#अन्यथा
 		/*
 		 * Default to using the nearest node that has memory installed.
 		 * Otherwise, it would be necessary to patch the kernel MM code
 		 * to deal with more memoryless-node error conditions.
 		 */
 		new_nid = first_online_node;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	pr_debug("%s:%d cpu %d nid %d\n", __FUNCTION__, __LINE__,
 		cpu, new_nid);
-	return new_nid;
-}
+	वापस new_nid;
+पूर्ण
 
-int cpu_to_coregroup_id(int cpu)
-{
-	__be32 associativity[VPHN_ASSOC_BUFSIZE] = {0};
-	int index;
+पूर्णांक cpu_to_coregroup_id(पूर्णांक cpu)
+अणु
+	__be32 associativity[VPHN_ASSOC_बफ_मानE] = अणु0पूर्ण;
+	पूर्णांक index;
 
-	if (cpu < 0 || cpu > nr_cpu_ids)
-		return -1;
+	अगर (cpu < 0 || cpu > nr_cpu_ids)
+		वापस -1;
 
-	if (!coregroup_enabled)
-		goto out;
+	अगर (!coregroup_enabled)
+		जाओ out;
 
-	if (!firmware_has_feature(FW_FEATURE_VPHN))
-		goto out;
+	अगर (!firmware_has_feature(FW_FEATURE_VPHN))
+		जाओ out;
 
-	if (vphn_get_associativity(cpu, associativity))
-		goto out;
+	अगर (vphn_get_associativity(cpu, associativity))
+		जाओ out;
 
-	index = of_read_number(associativity, 1);
-	if (index > min_common_depth + 1)
-		return of_read_number(&associativity[index - 1], 1);
+	index = of_पढ़ो_number(associativity, 1);
+	अगर (index > min_common_depth + 1)
+		वापस of_पढ़ो_number(&associativity[index - 1], 1);
 
 out:
-	return cpu_to_core_id(cpu);
-}
+	वापस cpu_to_core_id(cpu);
+पूर्ण
 
-static int topology_update_init(void)
-{
+अटल पूर्णांक topology_update_init(व्योम)
+अणु
 	topology_inited = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(topology_update_init);
-#endif /* CONFIG_PPC_SPLPAR */
+#पूर्ण_अगर /* CONFIG_PPC_SPLPAR */

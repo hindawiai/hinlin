@@ -1,2 +1,3 @@
+<शैली गुरु>
 
-#define PAGE_OFFSET_RAW		0x00000000
+#घोषणा PAGE_OFFSET_RAW		0x00000000

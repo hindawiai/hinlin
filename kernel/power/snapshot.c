@@ -1,429 +1,430 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * linux/kernel/power/snapshot.c
+ * linux/kernel/घातer/snapshot.c
  *
- * This file provides system snapshot/restore functionality for swsusp.
+ * This file provides प्रणाली snapshot/restore functionality क्रम swsusp.
  *
  * Copyright (C) 1998-2005 Pavel Machek <pavel@ucw.cz>
  * Copyright (C) 2006 Rafael J. Wysocki <rjw@sisk.pl>
  */
 
-#define pr_fmt(fmt) "PM: hibernation: " fmt
+#घोषणा pr_fmt(fmt) "PM: hibernation: " fmt
 
-#include <linux/version.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/suspend.h>
-#include <linux/delay.h>
-#include <linux/bitops.h>
-#include <linux/spinlock.h>
-#include <linux/kernel.h>
-#include <linux/pm.h>
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <linux/nmi.h>
-#include <linux/syscalls.h>
-#include <linux/console.h>
-#include <linux/highmem.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/compiler.h>
-#include <linux/ktime.h>
-#include <linux/set_memory.h>
+#समावेश <linux/version.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/console.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/set_memory.h>
 
-#include <linux/uaccess.h>
-#include <asm/mmu_context.h>
-#include <asm/tlbflush.h>
-#include <asm/io.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/पन.स>
 
-#include "power.h"
+#समावेश "power.h"
 
-#if defined(CONFIG_STRICT_KERNEL_RWX) && defined(CONFIG_ARCH_HAS_SET_MEMORY)
-static bool hibernate_restore_protection;
-static bool hibernate_restore_protection_active;
+#अगर defined(CONFIG_STRICT_KERNEL_RWX) && defined(CONFIG_ARCH_HAS_SET_MEMORY)
+अटल bool hibernate_restore_protection;
+अटल bool hibernate_restore_protection_active;
 
-void enable_restore_image_protection(void)
-{
+व्योम enable_restore_image_protection(व्योम)
+अणु
 	hibernate_restore_protection = true;
-}
+पूर्ण
 
-static inline void hibernate_restore_protection_begin(void)
-{
+अटल अंतरभूत व्योम hibernate_restore_protection_begin(व्योम)
+अणु
 	hibernate_restore_protection_active = hibernate_restore_protection;
-}
+पूर्ण
 
-static inline void hibernate_restore_protection_end(void)
-{
+अटल अंतरभूत व्योम hibernate_restore_protection_end(व्योम)
+अणु
 	hibernate_restore_protection_active = false;
-}
+पूर्ण
 
-static inline void hibernate_restore_protect_page(void *page_address)
-{
-	if (hibernate_restore_protection_active)
-		set_memory_ro((unsigned long)page_address, 1);
-}
+अटल अंतरभूत व्योम hibernate_restore_protect_page(व्योम *page_address)
+अणु
+	अगर (hibernate_restore_protection_active)
+		set_memory_ro((अचिन्हित दीर्घ)page_address, 1);
+पूर्ण
 
-static inline void hibernate_restore_unprotect_page(void *page_address)
-{
-	if (hibernate_restore_protection_active)
-		set_memory_rw((unsigned long)page_address, 1);
-}
-#else
-static inline void hibernate_restore_protection_begin(void) {}
-static inline void hibernate_restore_protection_end(void) {}
-static inline void hibernate_restore_protect_page(void *page_address) {}
-static inline void hibernate_restore_unprotect_page(void *page_address) {}
-#endif /* CONFIG_STRICT_KERNEL_RWX  && CONFIG_ARCH_HAS_SET_MEMORY */
+अटल अंतरभूत व्योम hibernate_restore_unprotect_page(व्योम *page_address)
+अणु
+	अगर (hibernate_restore_protection_active)
+		set_memory_rw((अचिन्हित दीर्घ)page_address, 1);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम hibernate_restore_protection_begin(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम hibernate_restore_protection_end(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम hibernate_restore_protect_page(व्योम *page_address) अणुपूर्ण
+अटल अंतरभूत व्योम hibernate_restore_unprotect_page(व्योम *page_address) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_STRICT_KERNEL_RWX  && CONFIG_ARCH_HAS_SET_MEMORY */
 
 
 /*
  * The calls to set_direct_map_*() should not fail because remapping a page
  * here means that we only update protection bits in an existing PTE.
- * It is still worth to have a warning here if something changes and this
- * will no longer be the case.
+ * It is still worth to have a warning here अगर something changes and this
+ * will no दीर्घer be the हाल.
  */
-static inline void hibernate_map_page(struct page *page)
-{
-	if (IS_ENABLED(CONFIG_ARCH_HAS_SET_DIRECT_MAP)) {
-		int ret = set_direct_map_default_noflush(page);
+अटल अंतरभूत व्योम hibernate_map_page(काष्ठा page *page)
+अणु
+	अगर (IS_ENABLED(CONFIG_ARCH_HAS_SET_सूचीECT_MAP)) अणु
+		पूर्णांक ret = set_direct_map_शेष_noflush(page);
 
-		if (ret)
+		अगर (ret)
 			pr_warn_once("Failed to remap page\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		debug_pagealloc_map_pages(page, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void hibernate_unmap_page(struct page *page)
-{
-	if (IS_ENABLED(CONFIG_ARCH_HAS_SET_DIRECT_MAP)) {
-		unsigned long addr = (unsigned long)page_address(page);
-		int ret  = set_direct_map_invalid_noflush(page);
+अटल अंतरभूत व्योम hibernate_unmap_page(काष्ठा page *page)
+अणु
+	अगर (IS_ENABLED(CONFIG_ARCH_HAS_SET_सूचीECT_MAP)) अणु
+		अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)page_address(page);
+		पूर्णांक ret  = set_direct_map_invalid_noflush(page);
 
-		if (ret)
+		अगर (ret)
 			pr_warn_once("Failed to remap page\n");
 
 		flush_tlb_kernel_range(addr, addr + PAGE_SIZE);
-	} else {
+	पूर्ण अन्यथा अणु
 		debug_pagealloc_unmap_pages(page, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int swsusp_page_is_free(struct page *);
-static void swsusp_set_page_forbidden(struct page *);
-static void swsusp_unset_page_forbidden(struct page *);
+अटल पूर्णांक swsusp_page_is_मुक्त(काष्ठा page *);
+अटल व्योम swsusp_set_page_क्रमbidden(काष्ठा page *);
+अटल व्योम swsusp_unset_page_क्रमbidden(काष्ठा page *);
 
 /*
- * Number of bytes to reserve for memory allocations made by device drivers
- * from their ->freeze() and ->freeze_noirq() callbacks so that they don't
- * cause image creation to fail (tunable via /sys/power/reserved_size).
+ * Number of bytes to reserve क्रम memory allocations made by device drivers
+ * from their ->मुक्तze() and ->मुक्तze_noirq() callbacks so that they करोn't
+ * cause image creation to fail (tunable via /sys/घातer/reserved_size).
  */
-unsigned long reserved_size;
+अचिन्हित दीर्घ reserved_size;
 
-void __init hibernate_reserved_size_init(void)
-{
+व्योम __init hibernate_reserved_size_init(व्योम)
+अणु
 	reserved_size = SPARE_PAGES * PAGE_SIZE;
-}
+पूर्ण
 
 /*
- * Preferred image size in bytes (tunable via /sys/power/image_size).
- * When it is set to N, swsusp will do its best to ensure the image
- * size will not exceed N bytes, but if that is impossible, it will
+ * Preferred image size in bytes (tunable via /sys/घातer/image_size).
+ * When it is set to N, swsusp will करो its best to ensure the image
+ * size will not exceed N bytes, but अगर that is impossible, it will
  * try to create the smallest image possible.
  */
-unsigned long image_size;
+अचिन्हित दीर्घ image_size;
 
-void __init hibernate_image_size_init(void)
-{
+व्योम __init hibernate_image_size_init(व्योम)
+अणु
 	image_size = ((totalram_pages() * 2) / 5) * PAGE_SIZE;
-}
+पूर्ण
 
 /*
- * List of PBEs needed for restoring the pages that were allocated before
+ * List of PBEs needed क्रम restoring the pages that were allocated beक्रमe
  * the suspend and included in the suspend image, but have also been
  * allocated by the "resume" kernel, so their contents cannot be written
  * directly to their "original" page frames.
  */
-struct pbe *restore_pblist;
+काष्ठा pbe *restore_pblist;
 
-/* struct linked_page is used to build chains of pages */
+/* काष्ठा linked_page is used to build chains of pages */
 
-#define LINKED_PAGE_DATA_SIZE	(PAGE_SIZE - sizeof(void *))
+#घोषणा LINKED_PAGE_DATA_SIZE	(PAGE_SIZE - माप(व्योम *))
 
-struct linked_page {
-	struct linked_page *next;
-	char data[LINKED_PAGE_DATA_SIZE];
-} __packed;
+काष्ठा linked_page अणु
+	काष्ठा linked_page *next;
+	अक्षर data[LINKED_PAGE_DATA_SIZE];
+पूर्ण __packed;
 
 /*
  * List of "safe" pages (ie. pages that were not used by the image kernel
- * before hibernation) that may be used as temporary storage for image kernel
+ * beक्रमe hibernation) that may be used as temporary storage क्रम image kernel
  * memory contents.
  */
-static struct linked_page *safe_pages_list;
+अटल काष्ठा linked_page *safe_pages_list;
 
-/* Pointer to an auxiliary buffer (1 page) */
-static void *buffer;
+/* Poपूर्णांकer to an auxiliary buffer (1 page) */
+अटल व्योम *buffer;
 
-#define PG_ANY		0
-#define PG_SAFE		1
-#define PG_UNSAFE_CLEAR	1
-#define PG_UNSAFE_KEEP	0
+#घोषणा PG_ANY		0
+#घोषणा PG_SAFE		1
+#घोषणा PG_UNSAFE_CLEAR	1
+#घोषणा PG_UNSAFE_KEEP	0
 
-static unsigned int allocated_unsafe_pages;
+अटल अचिन्हित पूर्णांक allocated_unsafe_pages;
 
 /**
- * get_image_page - Allocate a page for a hibernation image.
- * @gfp_mask: GFP mask for the allocation.
- * @safe_needed: Get pages that were not used before hibernation (restore only)
+ * get_image_page - Allocate a page क्रम a hibernation image.
+ * @gfp_mask: GFP mask क्रम the allocation.
+ * @safe_needed: Get pages that were not used beक्रमe hibernation (restore only)
  *
- * During image restoration, for storing the PBE list and the image data, we can
- * only use memory pages that do not conflict with the pages used before
+ * During image restoration, क्रम storing the PBE list and the image data, we can
+ * only use memory pages that करो not conflict with the pages used beक्रमe
  * hibernation.  The "unsafe" pages have PageNosaveFree set and we count them
  * using allocated_unsafe_pages.
  *
  * Each allocated image page is marked as PageNosave and PageNosaveFree so that
- * swsusp_free() can release it.
+ * swsusp_मुक्त() can release it.
  */
-static void *get_image_page(gfp_t gfp_mask, int safe_needed)
-{
-	void *res;
+अटल व्योम *get_image_page(gfp_t gfp_mask, पूर्णांक safe_needed)
+अणु
+	व्योम *res;
 
-	res = (void *)get_zeroed_page(gfp_mask);
-	if (safe_needed)
-		while (res && swsusp_page_is_free(virt_to_page(res))) {
-			/* The page is unsafe, mark it for swsusp_free() */
-			swsusp_set_page_forbidden(virt_to_page(res));
+	res = (व्योम *)get_zeroed_page(gfp_mask);
+	अगर (safe_needed)
+		जबतक (res && swsusp_page_is_मुक्त(virt_to_page(res))) अणु
+			/* The page is unsafe, mark it क्रम swsusp_मुक्त() */
+			swsusp_set_page_क्रमbidden(virt_to_page(res));
 			allocated_unsafe_pages++;
-			res = (void *)get_zeroed_page(gfp_mask);
-		}
-	if (res) {
-		swsusp_set_page_forbidden(virt_to_page(res));
-		swsusp_set_page_free(virt_to_page(res));
-	}
-	return res;
-}
+			res = (व्योम *)get_zeroed_page(gfp_mask);
+		पूर्ण
+	अगर (res) अणु
+		swsusp_set_page_क्रमbidden(virt_to_page(res));
+		swsusp_set_page_मुक्त(virt_to_page(res));
+	पूर्ण
+	वापस res;
+पूर्ण
 
-static void *__get_safe_page(gfp_t gfp_mask)
-{
-	if (safe_pages_list) {
-		void *ret = safe_pages_list;
+अटल व्योम *__get_safe_page(gfp_t gfp_mask)
+अणु
+	अगर (safe_pages_list) अणु
+		व्योम *ret = safe_pages_list;
 
 		safe_pages_list = safe_pages_list->next;
-		memset(ret, 0, PAGE_SIZE);
-		return ret;
-	}
-	return get_image_page(gfp_mask, PG_SAFE);
-}
+		स_रखो(ret, 0, PAGE_SIZE);
+		वापस ret;
+	पूर्ण
+	वापस get_image_page(gfp_mask, PG_SAFE);
+पूर्ण
 
-unsigned long get_safe_page(gfp_t gfp_mask)
-{
-	return (unsigned long)__get_safe_page(gfp_mask);
-}
+अचिन्हित दीर्घ get_safe_page(gfp_t gfp_mask)
+अणु
+	वापस (अचिन्हित दीर्घ)__get_safe_page(gfp_mask);
+पूर्ण
 
-static struct page *alloc_image_page(gfp_t gfp_mask)
-{
-	struct page *page;
+अटल काष्ठा page *alloc_image_page(gfp_t gfp_mask)
+अणु
+	काष्ठा page *page;
 
 	page = alloc_page(gfp_mask);
-	if (page) {
-		swsusp_set_page_forbidden(page);
-		swsusp_set_page_free(page);
-	}
-	return page;
-}
+	अगर (page) अणु
+		swsusp_set_page_क्रमbidden(page);
+		swsusp_set_page_मुक्त(page);
+	पूर्ण
+	वापस page;
+पूर्ण
 
-static void recycle_safe_page(void *page_address)
-{
-	struct linked_page *lp = page_address;
+अटल व्योम recycle_safe_page(व्योम *page_address)
+अणु
+	काष्ठा linked_page *lp = page_address;
 
 	lp->next = safe_pages_list;
 	safe_pages_list = lp;
-}
+पूर्ण
 
 /**
- * free_image_page - Free a page allocated for hibernation image.
- * @addr: Address of the page to free.
- * @clear_nosave_free: If set, clear the PageNosaveFree bit for the page.
+ * मुक्त_image_page - Free a page allocated क्रम hibernation image.
+ * @addr: Address of the page to मुक्त.
+ * @clear_nosave_मुक्त: If set, clear the PageNosaveFree bit क्रम the page.
  *
- * The page to free should have been allocated by get_image_page() (page flags
+ * The page to मुक्त should have been allocated by get_image_page() (page flags
  * set by it are affected).
  */
-static inline void free_image_page(void *addr, int clear_nosave_free)
-{
-	struct page *page;
+अटल अंतरभूत व्योम मुक्त_image_page(व्योम *addr, पूर्णांक clear_nosave_मुक्त)
+अणु
+	काष्ठा page *page;
 
 	BUG_ON(!virt_addr_valid(addr));
 
 	page = virt_to_page(addr);
 
-	swsusp_unset_page_forbidden(page);
-	if (clear_nosave_free)
-		swsusp_unset_page_free(page);
+	swsusp_unset_page_क्रमbidden(page);
+	अगर (clear_nosave_मुक्त)
+		swsusp_unset_page_मुक्त(page);
 
-	__free_page(page);
-}
+	__मुक्त_page(page);
+पूर्ण
 
-static inline void free_list_of_pages(struct linked_page *list,
-				      int clear_page_nosave)
-{
-	while (list) {
-		struct linked_page *lp = list->next;
+अटल अंतरभूत व्योम मुक्त_list_of_pages(काष्ठा linked_page *list,
+				      पूर्णांक clear_page_nosave)
+अणु
+	जबतक (list) अणु
+		काष्ठा linked_page *lp = list->next;
 
-		free_image_page(list, clear_page_nosave);
+		मुक्त_image_page(list, clear_page_nosave);
 		list = lp;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * struct chain_allocator is used for allocating small objects out of
+ * काष्ठा chain_allocator is used क्रम allocating small objects out of
  * a linked list of pages called 'the chain'.
  *
- * The chain grows each time when there is no room for a new object in
- * the current page.  The allocated objects cannot be freed individually.
- * It is only possible to free them all at once, by freeing the entire
+ * The chain grows each समय when there is no room क्रम a new object in
+ * the current page.  The allocated objects cannot be मुक्तd inभागidually.
+ * It is only possible to मुक्त them all at once, by मुक्तing the entire
  * chain.
  *
- * NOTE: The chain allocator may be inefficient if the allocated objects
+ * NOTE: The chain allocator may be inefficient अगर the allocated objects
  * are not much smaller than PAGE_SIZE.
  */
-struct chain_allocator {
-	struct linked_page *chain;	/* the chain */
-	unsigned int used_space;	/* total size of objects allocated out
+काष्ठा chain_allocator अणु
+	काष्ठा linked_page *chain;	/* the chain */
+	अचिन्हित पूर्णांक used_space;	/* total size of objects allocated out
 					   of the current page */
-	gfp_t gfp_mask;		/* mask for allocating pages */
-	int safe_needed;	/* if set, only "safe" pages are allocated */
-};
+	gfp_t gfp_mask;		/* mask क्रम allocating pages */
+	पूर्णांक safe_needed;	/* अगर set, only "safe" pages are allocated */
+पूर्ण;
 
-static void chain_init(struct chain_allocator *ca, gfp_t gfp_mask,
-		       int safe_needed)
-{
-	ca->chain = NULL;
+अटल व्योम chain_init(काष्ठा chain_allocator *ca, gfp_t gfp_mask,
+		       पूर्णांक safe_needed)
+अणु
+	ca->chain = शून्य;
 	ca->used_space = LINKED_PAGE_DATA_SIZE;
 	ca->gfp_mask = gfp_mask;
 	ca->safe_needed = safe_needed;
-}
+पूर्ण
 
-static void *chain_alloc(struct chain_allocator *ca, unsigned int size)
-{
-	void *ret;
+अटल व्योम *chain_alloc(काष्ठा chain_allocator *ca, अचिन्हित पूर्णांक size)
+अणु
+	व्योम *ret;
 
-	if (LINKED_PAGE_DATA_SIZE - ca->used_space < size) {
-		struct linked_page *lp;
+	अगर (LINKED_PAGE_DATA_SIZE - ca->used_space < size) अणु
+		काष्ठा linked_page *lp;
 
 		lp = ca->safe_needed ? __get_safe_page(ca->gfp_mask) :
 					get_image_page(ca->gfp_mask, PG_ANY);
-		if (!lp)
-			return NULL;
+		अगर (!lp)
+			वापस शून्य;
 
 		lp->next = ca->chain;
 		ca->chain = lp;
 		ca->used_space = 0;
-	}
+	पूर्ण
 	ret = ca->chain->data + ca->used_space;
 	ca->used_space += size;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * Data types related to memory bitmaps.
+ * Data types related to memory biपंचांगaps.
  *
- * Memory bitmap is a structure consisting of many linked lists of
- * objects.  The main list's elements are of type struct zone_bitmap
- * and each of them corresonds to one zone.  For each zone bitmap
- * object there is a list of objects of type struct bm_block that
- * represent each blocks of bitmap in which information is stored.
+ * Memory biपंचांगap is a काष्ठाure consisting of many linked lists of
+ * objects.  The मुख्य list's elements are of type काष्ठा zone_biपंचांगap
+ * and each of them corresonds to one zone.  For each zone biपंचांगap
+ * object there is a list of objects of type काष्ठा bm_block that
+ * represent each blocks of biपंचांगap in which inक्रमmation is stored.
  *
- * struct memory_bitmap contains a pointer to the main list of zone
- * bitmap objects, a struct bm_position used for browsing the bitmap,
- * and a pointer to the list of pages used for allocating all of the
- * zone bitmap objects and bitmap block objects.
+ * काष्ठा memory_biपंचांगap contains a poपूर्णांकer to the मुख्य list of zone
+ * biपंचांगap objects, a काष्ठा bm_position used क्रम browsing the biपंचांगap,
+ * and a poपूर्णांकer to the list of pages used क्रम allocating all of the
+ * zone biपंचांगap objects and biपंचांगap block objects.
  *
- * NOTE: It has to be possible to lay out the bitmap in memory
- * using only allocations of order 0.  Additionally, the bitmap is
- * designed to work with arbitrary number of zones (this is over the
- * top for now, but let's avoid making unnecessary assumptions ;-).
+ * NOTE: It has to be possible to lay out the biपंचांगap in memory
+ * using only allocations of order 0.  Additionally, the biपंचांगap is
+ * deचिन्हित to work with arbitrary number of zones (this is over the
+ * top क्रम now, but let's aव्योम making unnecessary assumptions ;-).
  *
- * struct zone_bitmap contains a pointer to a list of bitmap block
- * objects and a pointer to the bitmap block object that has been
- * most recently used for setting bits.  Additionally, it contains the
+ * काष्ठा zone_biपंचांगap contains a poपूर्णांकer to a list of biपंचांगap block
+ * objects and a poपूर्णांकer to the biपंचांगap block object that has been
+ * most recently used क्रम setting bits.  Additionally, it contains the
  * PFNs that correspond to the start and end of the represented zone.
  *
- * struct bm_block contains a pointer to the memory page in which
- * information is stored (in the form of a block of bitmap)
+ * काष्ठा bm_block contains a poपूर्णांकer to the memory page in which
+ * inक्रमmation is stored (in the क्रमm of a block of biपंचांगap)
  * It also contains the pfns that correspond to the start and end of
  * the represented memory area.
  *
- * The memory bitmap is organized as a radix tree to guarantee fast random
- * access to the bits. There is one radix tree for each zone (as returned
+ * The memory biपंचांगap is organized as a radix tree to guarantee fast अक्रमom
+ * access to the bits. There is one radix tree क्रम each zone (as वापसed
  * from create_mem_extents).
  *
- * One radix tree is represented by one struct mem_zone_bm_rtree. There are
- * two linked lists for the nodes of the tree, one for the inner nodes and
- * one for the leave nodes. The linked leave nodes are used for fast linear
- * access of the memory bitmap.
+ * One radix tree is represented by one काष्ठा mem_zone_bm_rtree. There are
+ * two linked lists क्रम the nodes of the tree, one क्रम the inner nodes and
+ * one क्रम the leave nodes. The linked leave nodes are used क्रम fast linear
+ * access of the memory biपंचांगap.
  *
- * The struct rtree_node represents one node of the radix tree.
+ * The काष्ठा rtree_node represents one node of the radix tree.
  */
 
-#define BM_END_OF_MAP	(~0UL)
+#घोषणा BM_END_OF_MAP	(~0UL)
 
-#define BM_BITS_PER_BLOCK	(PAGE_SIZE * BITS_PER_BYTE)
-#define BM_BLOCK_SHIFT		(PAGE_SHIFT + 3)
-#define BM_BLOCK_MASK		((1UL << BM_BLOCK_SHIFT) - 1)
+#घोषणा BM_BITS_PER_BLOCK	(PAGE_SIZE * BITS_PER_BYTE)
+#घोषणा BM_BLOCK_SHIFT		(PAGE_SHIFT + 3)
+#घोषणा BM_BLOCK_MASK		((1UL << BM_BLOCK_SHIFT) - 1)
 
 /*
- * struct rtree_node is a wrapper struct to link the nodes
- * of the rtree together for easy linear iteration over
- * bits and easy freeing
+ * काष्ठा rtree_node is a wrapper काष्ठा to link the nodes
+ * of the rtree together क्रम easy linear iteration over
+ * bits and easy मुक्तing
  */
-struct rtree_node {
-	struct list_head list;
-	unsigned long *data;
-};
+काष्ठा rtree_node अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ *data;
+पूर्ण;
 
 /*
- * struct mem_zone_bm_rtree represents a bitmap used for one
+ * काष्ठा mem_zone_bm_rtree represents a biपंचांगap used क्रम one
  * populated memory zone.
  */
-struct mem_zone_bm_rtree {
-	struct list_head list;		/* Link Zones together         */
-	struct list_head nodes;		/* Radix Tree inner nodes      */
-	struct list_head leaves;	/* Radix Tree leaves           */
-	unsigned long start_pfn;	/* Zone start page frame       */
-	unsigned long end_pfn;		/* Zone end page frame + 1     */
-	struct rtree_node *rtree;	/* Radix Tree Root             */
-	int levels;			/* Number of Radix Tree Levels */
-	unsigned int blocks;		/* Number of Bitmap Blocks     */
-};
+काष्ठा mem_zone_bm_rtree अणु
+	काष्ठा list_head list;		/* Link Zones together         */
+	काष्ठा list_head nodes;		/* Radix Tree inner nodes      */
+	काष्ठा list_head leaves;	/* Radix Tree leaves           */
+	अचिन्हित दीर्घ start_pfn;	/* Zone start page frame       */
+	अचिन्हित दीर्घ end_pfn;		/* Zone end page frame + 1     */
+	काष्ठा rtree_node *rtree;	/* Radix Tree Root             */
+	पूर्णांक levels;			/* Number of Radix Tree Levels */
+	अचिन्हित पूर्णांक blocks;		/* Number of Biपंचांगap Blocks     */
+पूर्ण;
 
-/* strcut bm_position is used for browsing memory bitmaps */
+/* strcut bm_position is used क्रम browsing memory biपंचांगaps */
 
-struct bm_position {
-	struct mem_zone_bm_rtree *zone;
-	struct rtree_node *node;
-	unsigned long node_pfn;
-	int node_bit;
-};
+काष्ठा bm_position अणु
+	काष्ठा mem_zone_bm_rtree *zone;
+	काष्ठा rtree_node *node;
+	अचिन्हित दीर्घ node_pfn;
+	पूर्णांक node_bit;
+पूर्ण;
 
-struct memory_bitmap {
-	struct list_head zones;
-	struct linked_page *p_list;	/* list of pages used to store zone
-					   bitmap objects and bitmap block
+काष्ठा memory_biपंचांगap अणु
+	काष्ठा list_head zones;
+	काष्ठा linked_page *p_list;	/* list of pages used to store zone
+					   biपंचांगap objects and biपंचांगap block
 					   objects */
-	struct bm_position cur;	/* most recently used bit position */
-};
+	काष्ठा bm_position cur;	/* most recently used bit position */
+पूर्ण;
 
-/* Functions that operate on memory bitmaps */
+/* Functions that operate on memory biपंचांगaps */
 
-#define BM_ENTRIES_PER_LEVEL	(PAGE_SIZE / sizeof(unsigned long))
-#if BITS_PER_LONG == 32
-#define BM_RTREE_LEVEL_SHIFT	(PAGE_SHIFT - 2)
-#else
-#define BM_RTREE_LEVEL_SHIFT	(PAGE_SHIFT - 3)
-#endif
-#define BM_RTREE_LEVEL_MASK	((1UL << BM_RTREE_LEVEL_SHIFT) - 1)
+#घोषणा BM_ENTRIES_PER_LEVEL	(PAGE_SIZE / माप(अचिन्हित दीर्घ))
+#अगर BITS_PER_LONG == 32
+#घोषणा BM_RTREE_LEVEL_SHIFT	(PAGE_SHIFT - 2)
+#अन्यथा
+#घोषणा BM_RTREE_LEVEL_SHIFT	(PAGE_SHIFT - 3)
+#पूर्ण_अगर
+#घोषणा BM_RTREE_LEVEL_MASK	((1UL << BM_RTREE_LEVEL_SHIFT) - 1)
 
 /**
  * alloc_rtree_node - Allocate a new node and add it to the radix tree.
@@ -432,24 +433,24 @@ struct memory_bitmap {
  * leave nodes of the radix tree. It also adds the node to the
  * corresponding linked list passed in by the *list parameter.
  */
-static struct rtree_node *alloc_rtree_node(gfp_t gfp_mask, int safe_needed,
-					   struct chain_allocator *ca,
-					   struct list_head *list)
-{
-	struct rtree_node *node;
+अटल काष्ठा rtree_node *alloc_rtree_node(gfp_t gfp_mask, पूर्णांक safe_needed,
+					   काष्ठा chain_allocator *ca,
+					   काष्ठा list_head *list)
+अणु
+	काष्ठा rtree_node *node;
 
-	node = chain_alloc(ca, sizeof(struct rtree_node));
-	if (!node)
-		return NULL;
+	node = chain_alloc(ca, माप(काष्ठा rtree_node));
+	अगर (!node)
+		वापस शून्य;
 
 	node->data = get_image_page(gfp_mask, safe_needed);
-	if (!node->data)
-		return NULL;
+	अगर (!node->data)
+		वापस शून्य;
 
 	list_add_tail(&node->list, list);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
 /**
  * add_rtree_block - Add a new leave node to the radix tree.
@@ -458,90 +459,90 @@ static struct rtree_node *alloc_rtree_node(gfp_t gfp_mask, int safe_needed,
  * linked list in order. This is guaranteed by the zone->blocks
  * counter.
  */
-static int add_rtree_block(struct mem_zone_bm_rtree *zone, gfp_t gfp_mask,
-			   int safe_needed, struct chain_allocator *ca)
-{
-	struct rtree_node *node, *block, **dst;
-	unsigned int levels_needed, block_nr;
-	int i;
+अटल पूर्णांक add_rtree_block(काष्ठा mem_zone_bm_rtree *zone, gfp_t gfp_mask,
+			   पूर्णांक safe_needed, काष्ठा chain_allocator *ca)
+अणु
+	काष्ठा rtree_node *node, *block, **dst;
+	अचिन्हित पूर्णांक levels_needed, block_nr;
+	पूर्णांक i;
 
 	block_nr = zone->blocks;
 	levels_needed = 0;
 
-	/* How many levels do we need for this block nr? */
-	while (block_nr) {
+	/* How many levels करो we need क्रम this block nr? */
+	जबतक (block_nr) अणु
 		levels_needed += 1;
 		block_nr >>= BM_RTREE_LEVEL_SHIFT;
-	}
+	पूर्ण
 
 	/* Make sure the rtree has enough levels */
-	for (i = zone->levels; i < levels_needed; i++) {
+	क्रम (i = zone->levels; i < levels_needed; i++) अणु
 		node = alloc_rtree_node(gfp_mask, safe_needed, ca,
 					&zone->nodes);
-		if (!node)
-			return -ENOMEM;
+		अगर (!node)
+			वापस -ENOMEM;
 
-		node->data[0] = (unsigned long)zone->rtree;
+		node->data[0] = (अचिन्हित दीर्घ)zone->rtree;
 		zone->rtree = node;
 		zone->levels += 1;
-	}
+	पूर्ण
 
 	/* Allocate new block */
 	block = alloc_rtree_node(gfp_mask, safe_needed, ca, &zone->leaves);
-	if (!block)
-		return -ENOMEM;
+	अगर (!block)
+		वापस -ENOMEM;
 
 	/* Now walk the rtree to insert the block */
 	node = zone->rtree;
 	dst = &zone->rtree;
 	block_nr = zone->blocks;
-	for (i = zone->levels; i > 0; i--) {
-		int index;
+	क्रम (i = zone->levels; i > 0; i--) अणु
+		पूर्णांक index;
 
-		if (!node) {
+		अगर (!node) अणु
 			node = alloc_rtree_node(gfp_mask, safe_needed, ca,
 						&zone->nodes);
-			if (!node)
-				return -ENOMEM;
+			अगर (!node)
+				वापस -ENOMEM;
 			*dst = node;
-		}
+		पूर्ण
 
 		index = block_nr >> ((i - 1) * BM_RTREE_LEVEL_SHIFT);
 		index &= BM_RTREE_LEVEL_MASK;
-		dst = (struct rtree_node **)&((*dst)->data[index]);
+		dst = (काष्ठा rtree_node **)&((*dst)->data[index]);
 		node = *dst;
-	}
+	पूर्ण
 
 	zone->blocks += 1;
 	*dst = block;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_zone_bm_rtree(struct mem_zone_bm_rtree *zone,
-			       int clear_nosave_free);
+अटल व्योम मुक्त_zone_bm_rtree(काष्ठा mem_zone_bm_rtree *zone,
+			       पूर्णांक clear_nosave_मुक्त);
 
 /**
- * create_zone_bm_rtree - Create a radix tree for one zone.
+ * create_zone_bm_rtree - Create a radix tree क्रम one zone.
  *
- * Allocated the mem_zone_bm_rtree structure and initializes it.
- * This function also allocated and builds the radix tree for the
+ * Allocated the mem_zone_bm_rtree काष्ठाure and initializes it.
+ * This function also allocated and builds the radix tree क्रम the
  * zone.
  */
-static struct mem_zone_bm_rtree *create_zone_bm_rtree(gfp_t gfp_mask,
-						      int safe_needed,
-						      struct chain_allocator *ca,
-						      unsigned long start,
-						      unsigned long end)
-{
-	struct mem_zone_bm_rtree *zone;
-	unsigned int i, nr_blocks;
-	unsigned long pages;
+अटल काष्ठा mem_zone_bm_rtree *create_zone_bm_rtree(gfp_t gfp_mask,
+						      पूर्णांक safe_needed,
+						      काष्ठा chain_allocator *ca,
+						      अचिन्हित दीर्घ start,
+						      अचिन्हित दीर्घ end)
+अणु
+	काष्ठा mem_zone_bm_rtree *zone;
+	अचिन्हित पूर्णांक i, nr_blocks;
+	अचिन्हित दीर्घ pages;
 
 	pages = end - start;
-	zone  = chain_alloc(ca, sizeof(struct mem_zone_bm_rtree));
-	if (!zone)
-		return NULL;
+	zone  = chain_alloc(ca, माप(काष्ठा mem_zone_bm_rtree));
+	अगर (!zone)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&zone->nodes);
 	INIT_LIST_HEAD(&zone->leaves);
@@ -549,246 +550,246 @@ static struct mem_zone_bm_rtree *create_zone_bm_rtree(gfp_t gfp_mask,
 	zone->end_pfn = end;
 	nr_blocks = DIV_ROUND_UP(pages, BM_BITS_PER_BLOCK);
 
-	for (i = 0; i < nr_blocks; i++) {
-		if (add_rtree_block(zone, gfp_mask, safe_needed, ca)) {
-			free_zone_bm_rtree(zone, PG_UNSAFE_CLEAR);
-			return NULL;
-		}
-	}
+	क्रम (i = 0; i < nr_blocks; i++) अणु
+		अगर (add_rtree_block(zone, gfp_mask, safe_needed, ca)) अणु
+			मुक्त_zone_bm_rtree(zone, PG_UNSAFE_CLEAR);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return zone;
-}
+	वापस zone;
+पूर्ण
 
 /**
- * free_zone_bm_rtree - Free the memory of the radix tree.
+ * मुक्त_zone_bm_rtree - Free the memory of the radix tree.
  *
  * Free all node pages of the radix tree. The mem_zone_bm_rtree
- * structure itself is not freed here nor are the rtree_node
- * structs.
+ * काष्ठाure itself is not मुक्तd here nor are the rtree_node
+ * काष्ठाs.
  */
-static void free_zone_bm_rtree(struct mem_zone_bm_rtree *zone,
-			       int clear_nosave_free)
-{
-	struct rtree_node *node;
+अटल व्योम मुक्त_zone_bm_rtree(काष्ठा mem_zone_bm_rtree *zone,
+			       पूर्णांक clear_nosave_मुक्त)
+अणु
+	काष्ठा rtree_node *node;
 
-	list_for_each_entry(node, &zone->nodes, list)
-		free_image_page(node->data, clear_nosave_free);
+	list_क्रम_each_entry(node, &zone->nodes, list)
+		मुक्त_image_page(node->data, clear_nosave_मुक्त);
 
-	list_for_each_entry(node, &zone->leaves, list)
-		free_image_page(node->data, clear_nosave_free);
-}
+	list_क्रम_each_entry(node, &zone->leaves, list)
+		मुक्त_image_page(node->data, clear_nosave_मुक्त);
+पूर्ण
 
-static void memory_bm_position_reset(struct memory_bitmap *bm)
-{
-	bm->cur.zone = list_entry(bm->zones.next, struct mem_zone_bm_rtree,
+अटल व्योम memory_bm_position_reset(काष्ठा memory_biपंचांगap *bm)
+अणु
+	bm->cur.zone = list_entry(bm->zones.next, काष्ठा mem_zone_bm_rtree,
 				  list);
 	bm->cur.node = list_entry(bm->cur.zone->leaves.next,
-				  struct rtree_node, list);
+				  काष्ठा rtree_node, list);
 	bm->cur.node_pfn = 0;
 	bm->cur.node_bit = 0;
-}
+पूर्ण
 
-static void memory_bm_free(struct memory_bitmap *bm, int clear_nosave_free);
+अटल व्योम memory_bm_मुक्त(काष्ठा memory_biपंचांगap *bm, पूर्णांक clear_nosave_मुक्त);
 
-struct mem_extent {
-	struct list_head hook;
-	unsigned long start;
-	unsigned long end;
-};
+काष्ठा mem_extent अणु
+	काष्ठा list_head hook;
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ end;
+पूर्ण;
 
 /**
- * free_mem_extents - Free a list of memory extents.
- * @list: List of extents to free.
+ * मुक्त_mem_extents - Free a list of memory extents.
+ * @list: List of extents to मुक्त.
  */
-static void free_mem_extents(struct list_head *list)
-{
-	struct mem_extent *ext, *aux;
+अटल व्योम मुक्त_mem_extents(काष्ठा list_head *list)
+अणु
+	काष्ठा mem_extent *ext, *aux;
 
-	list_for_each_entry_safe(ext, aux, list, hook) {
+	list_क्रम_each_entry_safe(ext, aux, list, hook) अणु
 		list_del(&ext->hook);
-		kfree(ext);
-	}
-}
+		kमुक्त(ext);
+	पूर्ण
+पूर्ण
 
 /**
  * create_mem_extents - Create a list of memory extents.
- * @list: List to put the extents into.
- * @gfp_mask: Mask to use for memory allocations.
+ * @list: List to put the extents पूर्णांकo.
+ * @gfp_mask: Mask to use क्रम memory allocations.
  *
  * The extents represent contiguous ranges of PFNs.
  */
-static int create_mem_extents(struct list_head *list, gfp_t gfp_mask)
-{
-	struct zone *zone;
+अटल पूर्णांक create_mem_extents(काष्ठा list_head *list, gfp_t gfp_mask)
+अणु
+	काष्ठा zone *zone;
 
 	INIT_LIST_HEAD(list);
 
-	for_each_populated_zone(zone) {
-		unsigned long zone_start, zone_end;
-		struct mem_extent *ext, *cur, *aux;
+	क्रम_each_populated_zone(zone) अणु
+		अचिन्हित दीर्घ zone_start, zone_end;
+		काष्ठा mem_extent *ext, *cur, *aux;
 
 		zone_start = zone->zone_start_pfn;
 		zone_end = zone_end_pfn(zone);
 
-		list_for_each_entry(ext, list, hook)
-			if (zone_start <= ext->end)
-				break;
+		list_क्रम_each_entry(ext, list, hook)
+			अगर (zone_start <= ext->end)
+				अवरोध;
 
-		if (&ext->hook == list || zone_end < ext->start) {
+		अगर (&ext->hook == list || zone_end < ext->start) अणु
 			/* New extent is necessary */
-			struct mem_extent *new_ext;
+			काष्ठा mem_extent *new_ext;
 
-			new_ext = kzalloc(sizeof(struct mem_extent), gfp_mask);
-			if (!new_ext) {
-				free_mem_extents(list);
-				return -ENOMEM;
-			}
+			new_ext = kzalloc(माप(काष्ठा mem_extent), gfp_mask);
+			अगर (!new_ext) अणु
+				मुक्त_mem_extents(list);
+				वापस -ENOMEM;
+			पूर्ण
 			new_ext->start = zone_start;
 			new_ext->end = zone_end;
 			list_add_tail(&new_ext->hook, &ext->hook);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Merge this zone's range of PFNs with the existing one */
-		if (zone_start < ext->start)
+		अगर (zone_start < ext->start)
 			ext->start = zone_start;
-		if (zone_end > ext->end)
+		अगर (zone_end > ext->end)
 			ext->end = zone_end;
 
 		/* More merging may be possible */
 		cur = ext;
-		list_for_each_entry_safe_continue(cur, aux, list, hook) {
-			if (zone_end < cur->start)
-				break;
-			if (zone_end < cur->end)
+		list_क्रम_each_entry_safe_जारी(cur, aux, list, hook) अणु
+			अगर (zone_end < cur->start)
+				अवरोध;
+			अगर (zone_end < cur->end)
 				ext->end = cur->end;
 			list_del(&cur->hook);
-			kfree(cur);
-		}
-	}
+			kमुक्त(cur);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * memory_bm_create - Allocate memory for a memory bitmap.
+ * memory_bm_create - Allocate memory क्रम a memory biपंचांगap.
  */
-static int memory_bm_create(struct memory_bitmap *bm, gfp_t gfp_mask,
-			    int safe_needed)
-{
-	struct chain_allocator ca;
-	struct list_head mem_extents;
-	struct mem_extent *ext;
-	int error;
+अटल पूर्णांक memory_bm_create(काष्ठा memory_biपंचांगap *bm, gfp_t gfp_mask,
+			    पूर्णांक safe_needed)
+अणु
+	काष्ठा chain_allocator ca;
+	काष्ठा list_head mem_extents;
+	काष्ठा mem_extent *ext;
+	पूर्णांक error;
 
 	chain_init(&ca, gfp_mask, safe_needed);
 	INIT_LIST_HEAD(&bm->zones);
 
 	error = create_mem_extents(&mem_extents, gfp_mask);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	list_for_each_entry(ext, &mem_extents, hook) {
-		struct mem_zone_bm_rtree *zone;
+	list_क्रम_each_entry(ext, &mem_extents, hook) अणु
+		काष्ठा mem_zone_bm_rtree *zone;
 
 		zone = create_zone_bm_rtree(gfp_mask, safe_needed, &ca,
 					    ext->start, ext->end);
-		if (!zone) {
+		अगर (!zone) अणु
 			error = -ENOMEM;
-			goto Error;
-		}
+			जाओ Error;
+		पूर्ण
 		list_add_tail(&zone->list, &bm->zones);
-	}
+	पूर्ण
 
 	bm->p_list = ca.chain;
 	memory_bm_position_reset(bm);
  Exit:
-	free_mem_extents(&mem_extents);
-	return error;
+	मुक्त_mem_extents(&mem_extents);
+	वापस error;
 
  Error:
 	bm->p_list = ca.chain;
-	memory_bm_free(bm, PG_UNSAFE_CLEAR);
-	goto Exit;
-}
+	memory_bm_मुक्त(bm, PG_UNSAFE_CLEAR);
+	जाओ Exit;
+पूर्ण
 
 /**
- * memory_bm_free - Free memory occupied by the memory bitmap.
- * @bm: Memory bitmap.
+ * memory_bm_मुक्त - Free memory occupied by the memory biपंचांगap.
+ * @bm: Memory biपंचांगap.
  */
-static void memory_bm_free(struct memory_bitmap *bm, int clear_nosave_free)
-{
-	struct mem_zone_bm_rtree *zone;
+अटल व्योम memory_bm_मुक्त(काष्ठा memory_biपंचांगap *bm, पूर्णांक clear_nosave_मुक्त)
+अणु
+	काष्ठा mem_zone_bm_rtree *zone;
 
-	list_for_each_entry(zone, &bm->zones, list)
-		free_zone_bm_rtree(zone, clear_nosave_free);
+	list_क्रम_each_entry(zone, &bm->zones, list)
+		मुक्त_zone_bm_rtree(zone, clear_nosave_मुक्त);
 
-	free_list_of_pages(bm->p_list, clear_nosave_free);
+	मुक्त_list_of_pages(bm->p_list, clear_nosave_मुक्त);
 
 	INIT_LIST_HEAD(&bm->zones);
-}
+पूर्ण
 
 /**
- * memory_bm_find_bit - Find the bit for a given PFN in a memory bitmap.
+ * memory_bm_find_bit - Find the bit क्रम a given PFN in a memory biपंचांगap.
  *
- * Find the bit in memory bitmap @bm that corresponds to the given PFN.
+ * Find the bit in memory biपंचांगap @bm that corresponds to the given PFN.
  * The cur.zone, cur.block and cur.node_pfn members of @bm are updated.
  *
  * Walk the radix tree to find the page containing the bit that represents @pfn
- * and return the position of the bit in @addr and @bit_nr.
+ * and वापस the position of the bit in @addr and @bit_nr.
  */
-static int memory_bm_find_bit(struct memory_bitmap *bm, unsigned long pfn,
-			      void **addr, unsigned int *bit_nr)
-{
-	struct mem_zone_bm_rtree *curr, *zone;
-	struct rtree_node *node;
-	int i, block_nr;
+अटल पूर्णांक memory_bm_find_bit(काष्ठा memory_biपंचांगap *bm, अचिन्हित दीर्घ pfn,
+			      व्योम **addr, अचिन्हित पूर्णांक *bit_nr)
+अणु
+	काष्ठा mem_zone_bm_rtree *curr, *zone;
+	काष्ठा rtree_node *node;
+	पूर्णांक i, block_nr;
 
 	zone = bm->cur.zone;
 
-	if (pfn >= zone->start_pfn && pfn < zone->end_pfn)
-		goto zone_found;
+	अगर (pfn >= zone->start_pfn && pfn < zone->end_pfn)
+		जाओ zone_found;
 
-	zone = NULL;
+	zone = शून्य;
 
 	/* Find the right zone */
-	list_for_each_entry(curr, &bm->zones, list) {
-		if (pfn >= curr->start_pfn && pfn < curr->end_pfn) {
+	list_क्रम_each_entry(curr, &bm->zones, list) अणु
+		अगर (pfn >= curr->start_pfn && pfn < curr->end_pfn) अणु
 			zone = curr;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!zone)
-		return -EFAULT;
+	अगर (!zone)
+		वापस -EFAULT;
 
 zone_found:
 	/*
 	 * We have found the zone. Now walk the radix tree to find the leaf node
-	 * for our PFN.
+	 * क्रम our PFN.
 	 */
 
 	/*
 	 * If the zone we wish to scan is the current zone and the
-	 * pfn falls into the current node then we do not need to walk
+	 * pfn falls पूर्णांकo the current node then we करो not need to walk
 	 * the tree.
 	 */
 	node = bm->cur.node;
-	if (zone == bm->cur.zone &&
+	अगर (zone == bm->cur.zone &&
 	    ((pfn - zone->start_pfn) & ~BM_BLOCK_MASK) == bm->cur.node_pfn)
-		goto node_found;
+		जाओ node_found;
 
 	node      = zone->rtree;
 	block_nr  = (pfn - zone->start_pfn) >> BM_BLOCK_SHIFT;
 
-	for (i = zone->levels; i > 0; i--) {
-		int index;
+	क्रम (i = zone->levels; i > 0; i--) अणु
+		पूर्णांक index;
 
 		index = block_nr >> ((i - 1) * BM_RTREE_LEVEL_SHIFT);
 		index &= BM_RTREE_LEVEL_MASK;
 		BUG_ON(node->data[index] == 0);
-		node = (struct rtree_node *)node->data[index];
-	}
+		node = (काष्ठा rtree_node *)node->data[index];
+	पूर्ण
 
 node_found:
 	/* Update last position */
@@ -796,934 +797,934 @@ node_found:
 	bm->cur.node = node;
 	bm->cur.node_pfn = (pfn - zone->start_pfn) & ~BM_BLOCK_MASK;
 
-	/* Set return values */
+	/* Set वापस values */
 	*addr = node->data;
 	*bit_nr = (pfn - zone->start_pfn) & BM_BLOCK_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void memory_bm_set_bit(struct memory_bitmap *bm, unsigned long pfn)
-{
-	void *addr;
-	unsigned int bit;
-	int error;
+अटल व्योम memory_bm_set_bit(काष्ठा memory_biपंचांगap *bm, अचिन्हित दीर्घ pfn)
+अणु
+	व्योम *addr;
+	अचिन्हित पूर्णांक bit;
+	पूर्णांक error;
 
 	error = memory_bm_find_bit(bm, pfn, &addr, &bit);
 	BUG_ON(error);
 	set_bit(bit, addr);
-}
+पूर्ण
 
-static int mem_bm_set_bit_check(struct memory_bitmap *bm, unsigned long pfn)
-{
-	void *addr;
-	unsigned int bit;
-	int error;
+अटल पूर्णांक mem_bm_set_bit_check(काष्ठा memory_biपंचांगap *bm, अचिन्हित दीर्घ pfn)
+अणु
+	व्योम *addr;
+	अचिन्हित पूर्णांक bit;
+	पूर्णांक error;
 
 	error = memory_bm_find_bit(bm, pfn, &addr, &bit);
-	if (!error)
+	अगर (!error)
 		set_bit(bit, addr);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void memory_bm_clear_bit(struct memory_bitmap *bm, unsigned long pfn)
-{
-	void *addr;
-	unsigned int bit;
-	int error;
+अटल व्योम memory_bm_clear_bit(काष्ठा memory_biपंचांगap *bm, अचिन्हित दीर्घ pfn)
+अणु
+	व्योम *addr;
+	अचिन्हित पूर्णांक bit;
+	पूर्णांक error;
 
 	error = memory_bm_find_bit(bm, pfn, &addr, &bit);
 	BUG_ON(error);
 	clear_bit(bit, addr);
-}
+पूर्ण
 
-static void memory_bm_clear_current(struct memory_bitmap *bm)
-{
-	int bit;
+अटल व्योम memory_bm_clear_current(काष्ठा memory_biपंचांगap *bm)
+अणु
+	पूर्णांक bit;
 
 	bit = max(bm->cur.node_bit - 1, 0);
 	clear_bit(bit, bm->cur.node->data);
-}
+पूर्ण
 
-static int memory_bm_test_bit(struct memory_bitmap *bm, unsigned long pfn)
-{
-	void *addr;
-	unsigned int bit;
-	int error;
+अटल पूर्णांक memory_bm_test_bit(काष्ठा memory_biपंचांगap *bm, अचिन्हित दीर्घ pfn)
+अणु
+	व्योम *addr;
+	अचिन्हित पूर्णांक bit;
+	पूर्णांक error;
 
 	error = memory_bm_find_bit(bm, pfn, &addr, &bit);
 	BUG_ON(error);
-	return test_bit(bit, addr);
-}
+	वापस test_bit(bit, addr);
+पूर्ण
 
-static bool memory_bm_pfn_present(struct memory_bitmap *bm, unsigned long pfn)
-{
-	void *addr;
-	unsigned int bit;
+अटल bool memory_bm_pfn_present(काष्ठा memory_biपंचांगap *bm, अचिन्हित दीर्घ pfn)
+अणु
+	व्योम *addr;
+	अचिन्हित पूर्णांक bit;
 
-	return !memory_bm_find_bit(bm, pfn, &addr, &bit);
-}
+	वापस !memory_bm_find_bit(bm, pfn, &addr, &bit);
+पूर्ण
 
 /*
  * rtree_next_node - Jump to the next leaf node.
  *
  * Set the position to the beginning of the next node in the
- * memory bitmap. This is either the next node in the current
+ * memory biपंचांगap. This is either the next node in the current
  * zone's radix tree or the first node in the radix tree of the
  * next zone.
  *
- * Return true if there is a next node, false otherwise.
+ * Return true अगर there is a next node, false otherwise.
  */
-static bool rtree_next_node(struct memory_bitmap *bm)
-{
-	if (!list_is_last(&bm->cur.node->list, &bm->cur.zone->leaves)) {
+अटल bool rtree_next_node(काष्ठा memory_biपंचांगap *bm)
+अणु
+	अगर (!list_is_last(&bm->cur.node->list, &bm->cur.zone->leaves)) अणु
 		bm->cur.node = list_entry(bm->cur.node->list.next,
-					  struct rtree_node, list);
+					  काष्ठा rtree_node, list);
 		bm->cur.node_pfn += BM_BITS_PER_BLOCK;
 		bm->cur.node_bit  = 0;
-		touch_softlockup_watchdog();
-		return true;
-	}
+		touch_softlockup_watchकरोg();
+		वापस true;
+	पूर्ण
 
-	/* No more nodes, goto next zone */
-	if (!list_is_last(&bm->cur.zone->list, &bm->zones)) {
+	/* No more nodes, जाओ next zone */
+	अगर (!list_is_last(&bm->cur.zone->list, &bm->zones)) अणु
 		bm->cur.zone = list_entry(bm->cur.zone->list.next,
-				  struct mem_zone_bm_rtree, list);
+				  काष्ठा mem_zone_bm_rtree, list);
 		bm->cur.node = list_entry(bm->cur.zone->leaves.next,
-					  struct rtree_node, list);
+					  काष्ठा rtree_node, list);
 		bm->cur.node_pfn = 0;
 		bm->cur.node_bit = 0;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* No more zones */
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * memory_bm_rtree_next_pfn - Find the next set bit in a memory bitmap.
- * @bm: Memory bitmap.
+ * memory_bm_rtree_next_pfn - Find the next set bit in a memory biपंचांगap.
+ * @bm: Memory biपंचांगap.
  *
- * Starting from the last returned position this function searches for the next
- * set bit in @bm and returns the PFN represented by it.  If no more bits are
- * set, BM_END_OF_MAP is returned.
+ * Starting from the last वापसed position this function searches क्रम the next
+ * set bit in @bm and वापसs the PFN represented by it.  If no more bits are
+ * set, BM_END_OF_MAP is वापसed.
  *
- * It is required to run memory_bm_position_reset() before the first call to
- * this function for the given memory bitmap.
+ * It is required to run memory_bm_position_reset() beक्रमe the first call to
+ * this function क्रम the given memory biपंचांगap.
  */
-static unsigned long memory_bm_next_pfn(struct memory_bitmap *bm)
-{
-	unsigned long bits, pfn, pages;
-	int bit;
+अटल अचिन्हित दीर्घ memory_bm_next_pfn(काष्ठा memory_biपंचांगap *bm)
+अणु
+	अचिन्हित दीर्घ bits, pfn, pages;
+	पूर्णांक bit;
 
-	do {
+	करो अणु
 		pages	  = bm->cur.zone->end_pfn - bm->cur.zone->start_pfn;
 		bits      = min(pages - bm->cur.node_pfn, BM_BITS_PER_BLOCK);
 		bit	  = find_next_bit(bm->cur.node->data, bits,
 					  bm->cur.node_bit);
-		if (bit < bits) {
+		अगर (bit < bits) अणु
 			pfn = bm->cur.zone->start_pfn + bm->cur.node_pfn + bit;
 			bm->cur.node_bit = bit + 1;
-			return pfn;
-		}
-	} while (rtree_next_node(bm));
+			वापस pfn;
+		पूर्ण
+	पूर्ण जबतक (rtree_next_node(bm));
 
-	return BM_END_OF_MAP;
-}
+	वापस BM_END_OF_MAP;
+पूर्ण
 
 /*
- * This structure represents a range of page frames the contents of which
+ * This काष्ठाure represents a range of page frames the contents of which
  * should not be saved during hibernation.
  */
-struct nosave_region {
-	struct list_head list;
-	unsigned long start_pfn;
-	unsigned long end_pfn;
-};
+काष्ठा nosave_region अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ start_pfn;
+	अचिन्हित दीर्घ end_pfn;
+पूर्ण;
 
-static LIST_HEAD(nosave_regions);
+अटल LIST_HEAD(nosave_regions);
 
-static void recycle_zone_bm_rtree(struct mem_zone_bm_rtree *zone)
-{
-	struct rtree_node *node;
+अटल व्योम recycle_zone_bm_rtree(काष्ठा mem_zone_bm_rtree *zone)
+अणु
+	काष्ठा rtree_node *node;
 
-	list_for_each_entry(node, &zone->nodes, list)
+	list_क्रम_each_entry(node, &zone->nodes, list)
 		recycle_safe_page(node->data);
 
-	list_for_each_entry(node, &zone->leaves, list)
+	list_क्रम_each_entry(node, &zone->leaves, list)
 		recycle_safe_page(node->data);
-}
+पूर्ण
 
-static void memory_bm_recycle(struct memory_bitmap *bm)
-{
-	struct mem_zone_bm_rtree *zone;
-	struct linked_page *p_list;
+अटल व्योम memory_bm_recycle(काष्ठा memory_biपंचांगap *bm)
+अणु
+	काष्ठा mem_zone_bm_rtree *zone;
+	काष्ठा linked_page *p_list;
 
-	list_for_each_entry(zone, &bm->zones, list)
+	list_क्रम_each_entry(zone, &bm->zones, list)
 		recycle_zone_bm_rtree(zone);
 
 	p_list = bm->p_list;
-	while (p_list) {
-		struct linked_page *lp = p_list;
+	जबतक (p_list) अणु
+		काष्ठा linked_page *lp = p_list;
 
 		p_list = lp->next;
 		recycle_safe_page(lp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * register_nosave_region - Register a region of unsaveable memory.
+ * रेजिस्टर_nosave_region - Register a region of unsaveable memory.
  *
  * Register a range of page frames the contents of which should not be saved
  * during hibernation (to be used in the early initialization code).
  */
-void __init __register_nosave_region(unsigned long start_pfn,
-				     unsigned long end_pfn, int use_kmalloc)
-{
-	struct nosave_region *region;
+व्योम __init __रेजिस्टर_nosave_region(अचिन्हित दीर्घ start_pfn,
+				     अचिन्हित दीर्घ end_pfn, पूर्णांक use_kदो_स्मृति)
+अणु
+	काष्ठा nosave_region *region;
 
-	if (start_pfn >= end_pfn)
-		return;
+	अगर (start_pfn >= end_pfn)
+		वापस;
 
-	if (!list_empty(&nosave_regions)) {
+	अगर (!list_empty(&nosave_regions)) अणु
 		/* Try to extend the previous region (they should be sorted) */
 		region = list_entry(nosave_regions.prev,
-					struct nosave_region, list);
-		if (region->end_pfn == start_pfn) {
+					काष्ठा nosave_region, list);
+		अगर (region->end_pfn == start_pfn) अणु
 			region->end_pfn = end_pfn;
-			goto Report;
-		}
-	}
-	if (use_kmalloc) {
+			जाओ Report;
+		पूर्ण
+	पूर्ण
+	अगर (use_kदो_स्मृति) अणु
 		/* During init, this shouldn't fail */
-		region = kmalloc(sizeof(struct nosave_region), GFP_KERNEL);
+		region = kदो_स्मृति(माप(काष्ठा nosave_region), GFP_KERNEL);
 		BUG_ON(!region);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* This allocation cannot fail */
-		region = memblock_alloc(sizeof(struct nosave_region),
+		region = memblock_alloc(माप(काष्ठा nosave_region),
 					SMP_CACHE_BYTES);
-		if (!region)
+		अगर (!region)
 			panic("%s: Failed to allocate %zu bytes\n", __func__,
-			      sizeof(struct nosave_region));
-	}
+			      माप(काष्ठा nosave_region));
+	पूर्ण
 	region->start_pfn = start_pfn;
 	region->end_pfn = end_pfn;
 	list_add_tail(&region->list, &nosave_regions);
  Report:
 	pr_info("Registered nosave memory: [mem %#010llx-%#010llx]\n",
-		(unsigned long long) start_pfn << PAGE_SHIFT,
-		((unsigned long long) end_pfn << PAGE_SHIFT) - 1);
-}
+		(अचिन्हित दीर्घ दीर्घ) start_pfn << PAGE_SHIFT,
+		((अचिन्हित दीर्घ दीर्घ) end_pfn << PAGE_SHIFT) - 1);
+पूर्ण
 
 /*
  * Set bits in this map correspond to the page frames the contents of which
  * should not be saved during the suspend.
  */
-static struct memory_bitmap *forbidden_pages_map;
+अटल काष्ठा memory_biपंचांगap *क्रमbidden_pages_map;
 
-/* Set bits in this map correspond to free page frames. */
-static struct memory_bitmap *free_pages_map;
+/* Set bits in this map correspond to मुक्त page frames. */
+अटल काष्ठा memory_biपंचांगap *मुक्त_pages_map;
 
 /*
- * Each page frame allocated for creating the image is marked by setting the
- * corresponding bits in forbidden_pages_map and free_pages_map simultaneously
+ * Each page frame allocated क्रम creating the image is marked by setting the
+ * corresponding bits in क्रमbidden_pages_map and मुक्त_pages_map simultaneously
  */
 
-void swsusp_set_page_free(struct page *page)
-{
-	if (free_pages_map)
-		memory_bm_set_bit(free_pages_map, page_to_pfn(page));
-}
+व्योम swsusp_set_page_मुक्त(काष्ठा page *page)
+अणु
+	अगर (मुक्त_pages_map)
+		memory_bm_set_bit(मुक्त_pages_map, page_to_pfn(page));
+पूर्ण
 
-static int swsusp_page_is_free(struct page *page)
-{
-	return free_pages_map ?
-		memory_bm_test_bit(free_pages_map, page_to_pfn(page)) : 0;
-}
+अटल पूर्णांक swsusp_page_is_मुक्त(काष्ठा page *page)
+अणु
+	वापस मुक्त_pages_map ?
+		memory_bm_test_bit(मुक्त_pages_map, page_to_pfn(page)) : 0;
+पूर्ण
 
-void swsusp_unset_page_free(struct page *page)
-{
-	if (free_pages_map)
-		memory_bm_clear_bit(free_pages_map, page_to_pfn(page));
-}
+व्योम swsusp_unset_page_मुक्त(काष्ठा page *page)
+अणु
+	अगर (मुक्त_pages_map)
+		memory_bm_clear_bit(मुक्त_pages_map, page_to_pfn(page));
+पूर्ण
 
-static void swsusp_set_page_forbidden(struct page *page)
-{
-	if (forbidden_pages_map)
-		memory_bm_set_bit(forbidden_pages_map, page_to_pfn(page));
-}
+अटल व्योम swsusp_set_page_क्रमbidden(काष्ठा page *page)
+अणु
+	अगर (क्रमbidden_pages_map)
+		memory_bm_set_bit(क्रमbidden_pages_map, page_to_pfn(page));
+पूर्ण
 
-int swsusp_page_is_forbidden(struct page *page)
-{
-	return forbidden_pages_map ?
-		memory_bm_test_bit(forbidden_pages_map, page_to_pfn(page)) : 0;
-}
+पूर्णांक swsusp_page_is_क्रमbidden(काष्ठा page *page)
+अणु
+	वापस क्रमbidden_pages_map ?
+		memory_bm_test_bit(क्रमbidden_pages_map, page_to_pfn(page)) : 0;
+पूर्ण
 
-static void swsusp_unset_page_forbidden(struct page *page)
-{
-	if (forbidden_pages_map)
-		memory_bm_clear_bit(forbidden_pages_map, page_to_pfn(page));
-}
+अटल व्योम swsusp_unset_page_क्रमbidden(काष्ठा page *page)
+अणु
+	अगर (क्रमbidden_pages_map)
+		memory_bm_clear_bit(क्रमbidden_pages_map, page_to_pfn(page));
+पूर्ण
 
 /**
  * mark_nosave_pages - Mark pages that should not be saved.
- * @bm: Memory bitmap.
+ * @bm: Memory biपंचांगap.
  *
  * Set the bits in @bm that correspond to the page frames the contents of which
  * should not be saved.
  */
-static void mark_nosave_pages(struct memory_bitmap *bm)
-{
-	struct nosave_region *region;
+अटल व्योम mark_nosave_pages(काष्ठा memory_biपंचांगap *bm)
+अणु
+	काष्ठा nosave_region *region;
 
-	if (list_empty(&nosave_regions))
-		return;
+	अगर (list_empty(&nosave_regions))
+		वापस;
 
-	list_for_each_entry(region, &nosave_regions, list) {
-		unsigned long pfn;
+	list_क्रम_each_entry(region, &nosave_regions, list) अणु
+		अचिन्हित दीर्घ pfn;
 
 		pr_debug("Marking nosave pages: [mem %#010llx-%#010llx]\n",
-			 (unsigned long long) region->start_pfn << PAGE_SHIFT,
-			 ((unsigned long long) region->end_pfn << PAGE_SHIFT)
+			 (अचिन्हित दीर्घ दीर्घ) region->start_pfn << PAGE_SHIFT,
+			 ((अचिन्हित दीर्घ दीर्घ) region->end_pfn << PAGE_SHIFT)
 				- 1);
 
-		for (pfn = region->start_pfn; pfn < region->end_pfn; pfn++)
-			if (pfn_valid(pfn)) {
+		क्रम (pfn = region->start_pfn; pfn < region->end_pfn; pfn++)
+			अगर (pfn_valid(pfn)) अणु
 				/*
 				 * It is safe to ignore the result of
 				 * mem_bm_set_bit_check() here, since we won't
-				 * touch the PFNs for which the error is
-				 * returned anyway.
+				 * touch the PFNs क्रम which the error is
+				 * वापसed anyway.
 				 */
 				mem_bm_set_bit_check(bm, pfn);
-			}
-	}
-}
+			पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * create_basic_memory_bitmaps - Create bitmaps to hold basic page information.
+ * create_basic_memory_biपंचांगaps - Create biपंचांगaps to hold basic page inक्रमmation.
  *
- * Create bitmaps needed for marking page frames that should not be saved and
- * free page frames.  The forbidden_pages_map and free_pages_map pointers are
- * only modified if everything goes well, because we don't want the bits to be
- * touched before both bitmaps are set up.
+ * Create biपंचांगaps needed क्रम marking page frames that should not be saved and
+ * मुक्त page frames.  The क्रमbidden_pages_map and मुक्त_pages_map poपूर्णांकers are
+ * only modअगरied अगर everything goes well, because we करोn't want the bits to be
+ * touched beक्रमe both biपंचांगaps are set up.
  */
-int create_basic_memory_bitmaps(void)
-{
-	struct memory_bitmap *bm1, *bm2;
-	int error = 0;
+पूर्णांक create_basic_memory_biपंचांगaps(व्योम)
+अणु
+	काष्ठा memory_biपंचांगap *bm1, *bm2;
+	पूर्णांक error = 0;
 
-	if (forbidden_pages_map && free_pages_map)
-		return 0;
-	else
-		BUG_ON(forbidden_pages_map || free_pages_map);
+	अगर (क्रमbidden_pages_map && मुक्त_pages_map)
+		वापस 0;
+	अन्यथा
+		BUG_ON(क्रमbidden_pages_map || मुक्त_pages_map);
 
-	bm1 = kzalloc(sizeof(struct memory_bitmap), GFP_KERNEL);
-	if (!bm1)
-		return -ENOMEM;
+	bm1 = kzalloc(माप(काष्ठा memory_biपंचांगap), GFP_KERNEL);
+	अगर (!bm1)
+		वापस -ENOMEM;
 
 	error = memory_bm_create(bm1, GFP_KERNEL, PG_ANY);
-	if (error)
-		goto Free_first_object;
+	अगर (error)
+		जाओ Free_first_object;
 
-	bm2 = kzalloc(sizeof(struct memory_bitmap), GFP_KERNEL);
-	if (!bm2)
-		goto Free_first_bitmap;
+	bm2 = kzalloc(माप(काष्ठा memory_biपंचांगap), GFP_KERNEL);
+	अगर (!bm2)
+		जाओ Free_first_biपंचांगap;
 
 	error = memory_bm_create(bm2, GFP_KERNEL, PG_ANY);
-	if (error)
-		goto Free_second_object;
+	अगर (error)
+		जाओ Free_second_object;
 
-	forbidden_pages_map = bm1;
-	free_pages_map = bm2;
-	mark_nosave_pages(forbidden_pages_map);
+	क्रमbidden_pages_map = bm1;
+	मुक्त_pages_map = bm2;
+	mark_nosave_pages(क्रमbidden_pages_map);
 
 	pr_debug("Basic memory bitmaps created\n");
 
-	return 0;
+	वापस 0;
 
  Free_second_object:
-	kfree(bm2);
- Free_first_bitmap:
- 	memory_bm_free(bm1, PG_UNSAFE_CLEAR);
+	kमुक्त(bm2);
+ Free_first_biपंचांगap:
+ 	memory_bm_मुक्त(bm1, PG_UNSAFE_CLEAR);
  Free_first_object:
-	kfree(bm1);
-	return -ENOMEM;
-}
+	kमुक्त(bm1);
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * free_basic_memory_bitmaps - Free memory bitmaps holding basic information.
+ * मुक्त_basic_memory_biपंचांगaps - Free memory biपंचांगaps holding basic inक्रमmation.
  *
- * Free memory bitmaps allocated by create_basic_memory_bitmaps().  The
- * auxiliary pointers are necessary so that the bitmaps themselves are not
- * referred to while they are being freed.
+ * Free memory biपंचांगaps allocated by create_basic_memory_biपंचांगaps().  The
+ * auxiliary poपूर्णांकers are necessary so that the biपंचांगaps themselves are not
+ * referred to जबतक they are being मुक्तd.
  */
-void free_basic_memory_bitmaps(void)
-{
-	struct memory_bitmap *bm1, *bm2;
+व्योम मुक्त_basic_memory_biपंचांगaps(व्योम)
+अणु
+	काष्ठा memory_biपंचांगap *bm1, *bm2;
 
-	if (WARN_ON(!(forbidden_pages_map && free_pages_map)))
-		return;
+	अगर (WARN_ON(!(क्रमbidden_pages_map && मुक्त_pages_map)))
+		वापस;
 
-	bm1 = forbidden_pages_map;
-	bm2 = free_pages_map;
-	forbidden_pages_map = NULL;
-	free_pages_map = NULL;
-	memory_bm_free(bm1, PG_UNSAFE_CLEAR);
-	kfree(bm1);
-	memory_bm_free(bm2, PG_UNSAFE_CLEAR);
-	kfree(bm2);
+	bm1 = क्रमbidden_pages_map;
+	bm2 = मुक्त_pages_map;
+	क्रमbidden_pages_map = शून्य;
+	मुक्त_pages_map = शून्य;
+	memory_bm_मुक्त(bm1, PG_UNSAFE_CLEAR);
+	kमुक्त(bm1);
+	memory_bm_मुक्त(bm2, PG_UNSAFE_CLEAR);
+	kमुक्त(bm2);
 
 	pr_debug("Basic memory bitmaps freed\n");
-}
+पूर्ण
 
-static void clear_or_poison_free_page(struct page *page)
-{
-	if (page_poisoning_enabled_static())
+अटल व्योम clear_or_poison_मुक्त_page(काष्ठा page *page)
+अणु
+	अगर (page_poisoning_enabled_अटल())
 		__kernel_poison_pages(page, 1);
-	else if (want_init_on_free())
+	अन्यथा अगर (want_init_on_मुक्त())
 		clear_highpage(page);
-}
+पूर्ण
 
-void clear_or_poison_free_pages(void)
-{
-	struct memory_bitmap *bm = free_pages_map;
-	unsigned long pfn;
+व्योम clear_or_poison_मुक्त_pages(व्योम)
+अणु
+	काष्ठा memory_biपंचांगap *bm = मुक्त_pages_map;
+	अचिन्हित दीर्घ pfn;
 
-	if (WARN_ON(!(free_pages_map)))
-		return;
+	अगर (WARN_ON(!(मुक्त_pages_map)))
+		वापस;
 
-	if (page_poisoning_enabled() || want_init_on_free()) {
+	अगर (page_poisoning_enabled() || want_init_on_मुक्त()) अणु
 		memory_bm_position_reset(bm);
 		pfn = memory_bm_next_pfn(bm);
-		while (pfn != BM_END_OF_MAP) {
-			if (pfn_valid(pfn))
-				clear_or_poison_free_page(pfn_to_page(pfn));
+		जबतक (pfn != BM_END_OF_MAP) अणु
+			अगर (pfn_valid(pfn))
+				clear_or_poison_मुक्त_page(pfn_to_page(pfn));
 
 			pfn = memory_bm_next_pfn(bm);
-		}
+		पूर्ण
 		memory_bm_position_reset(bm);
 		pr_info("free pages cleared after restore\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * snapshot_additional_pages - Estimate the number of extra pages needed.
- * @zone: Memory zone to carry out the computation for.
+ * @zone: Memory zone to carry out the computation क्रम.
  *
- * Estimate the number of additional pages needed for setting up a hibernation
- * image data structures for @zone (usually, the returned value is greater than
+ * Estimate the number of additional pages needed क्रम setting up a hibernation
+ * image data काष्ठाures क्रम @zone (usually, the वापसed value is greater than
  * the exact number).
  */
-unsigned int snapshot_additional_pages(struct zone *zone)
-{
-	unsigned int rtree, nodes;
+अचिन्हित पूर्णांक snapshot_additional_pages(काष्ठा zone *zone)
+अणु
+	अचिन्हित पूर्णांक rtree, nodes;
 
 	rtree = nodes = DIV_ROUND_UP(zone->spanned_pages, BM_BITS_PER_BLOCK);
-	rtree += DIV_ROUND_UP(rtree * sizeof(struct rtree_node),
+	rtree += DIV_ROUND_UP(rtree * माप(काष्ठा rtree_node),
 			      LINKED_PAGE_DATA_SIZE);
-	while (nodes > 1) {
+	जबतक (nodes > 1) अणु
 		nodes = DIV_ROUND_UP(nodes, BM_ENTRIES_PER_LEVEL);
 		rtree += nodes;
-	}
+	पूर्ण
 
-	return 2 * rtree;
-}
+	वापस 2 * rtree;
+पूर्ण
 
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 /**
- * count_free_highmem_pages - Compute the total number of free highmem pages.
+ * count_मुक्त_highmem_pages - Compute the total number of मुक्त highmem pages.
  *
- * The returned number is system-wide.
+ * The वापसed number is प्रणाली-wide.
  */
-static unsigned int count_free_highmem_pages(void)
-{
-	struct zone *zone;
-	unsigned int cnt = 0;
+अटल अचिन्हित पूर्णांक count_मुक्त_highmem_pages(व्योम)
+अणु
+	काष्ठा zone *zone;
+	अचिन्हित पूर्णांक cnt = 0;
 
-	for_each_populated_zone(zone)
-		if (is_highmem(zone))
+	क्रम_each_populated_zone(zone)
+		अगर (is_highmem(zone))
 			cnt += zone_page_state(zone, NR_FREE_PAGES);
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
 /**
- * saveable_highmem_page - Check if a highmem page is saveable.
+ * saveable_highmem_page - Check अगर a highmem page is saveable.
  *
  * Determine whether a highmem page should be included in a hibernation image.
  *
- * We should save the page if it isn't Nosave or NosaveFree, or Reserved,
- * and it isn't part of a free chunk of pages.
+ * We should save the page अगर it isn't Nosave or NosaveFree, or Reserved,
+ * and it isn't part of a मुक्त chunk of pages.
  */
-static struct page *saveable_highmem_page(struct zone *zone, unsigned long pfn)
-{
-	struct page *page;
+अटल काष्ठा page *saveable_highmem_page(काष्ठा zone *zone, अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा page *page;
 
-	if (!pfn_valid(pfn))
-		return NULL;
+	अगर (!pfn_valid(pfn))
+		वापस शून्य;
 
 	page = pfn_to_online_page(pfn);
-	if (!page || page_zone(page) != zone)
-		return NULL;
+	अगर (!page || page_zone(page) != zone)
+		वापस शून्य;
 
 	BUG_ON(!PageHighMem(page));
 
-	if (swsusp_page_is_forbidden(page) ||  swsusp_page_is_free(page))
-		return NULL;
+	अगर (swsusp_page_is_क्रमbidden(page) ||  swsusp_page_is_मुक्त(page))
+		वापस शून्य;
 
-	if (PageReserved(page) || PageOffline(page))
-		return NULL;
+	अगर (PageReserved(page) || PageOffline(page))
+		वापस शून्य;
 
-	if (page_is_guard(page))
-		return NULL;
+	अगर (page_is_guard(page))
+		वापस शून्य;
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
 /**
  * count_highmem_pages - Compute the total number of saveable highmem pages.
  */
-static unsigned int count_highmem_pages(void)
-{
-	struct zone *zone;
-	unsigned int n = 0;
+अटल अचिन्हित पूर्णांक count_highmem_pages(व्योम)
+अणु
+	काष्ठा zone *zone;
+	अचिन्हित पूर्णांक n = 0;
 
-	for_each_populated_zone(zone) {
-		unsigned long pfn, max_zone_pfn;
+	क्रम_each_populated_zone(zone) अणु
+		अचिन्हित दीर्घ pfn, max_zone_pfn;
 
-		if (!is_highmem(zone))
-			continue;
+		अगर (!is_highmem(zone))
+			जारी;
 
-		mark_free_pages(zone);
+		mark_मुक्त_pages(zone);
 		max_zone_pfn = zone_end_pfn(zone);
-		for (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
-			if (saveable_highmem_page(zone, pfn))
+		क्रम (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
+			अगर (saveable_highmem_page(zone, pfn))
 				n++;
-	}
-	return n;
-}
-#else
-static inline void *saveable_highmem_page(struct zone *z, unsigned long p)
-{
-	return NULL;
-}
-#endif /* CONFIG_HIGHMEM */
+	पूर्ण
+	वापस n;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम *saveable_highmem_page(काष्ठा zone *z, अचिन्हित दीर्घ p)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
 /**
- * saveable_page - Check if the given page is saveable.
+ * saveable_page - Check अगर the given page is saveable.
  *
  * Determine whether a non-highmem page should be included in a hibernation
  * image.
  *
- * We should save the page if it isn't Nosave, and is not in the range
- * of pages statically defined as 'unsaveable', and it isn't part of
- * a free chunk of pages.
+ * We should save the page अगर it isn't Nosave, and is not in the range
+ * of pages अटलally defined as 'unsaveable', and it isn't part of
+ * a मुक्त chunk of pages.
  */
-static struct page *saveable_page(struct zone *zone, unsigned long pfn)
-{
-	struct page *page;
+अटल काष्ठा page *saveable_page(काष्ठा zone *zone, अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा page *page;
 
-	if (!pfn_valid(pfn))
-		return NULL;
+	अगर (!pfn_valid(pfn))
+		वापस शून्य;
 
 	page = pfn_to_online_page(pfn);
-	if (!page || page_zone(page) != zone)
-		return NULL;
+	अगर (!page || page_zone(page) != zone)
+		वापस शून्य;
 
 	BUG_ON(PageHighMem(page));
 
-	if (swsusp_page_is_forbidden(page) || swsusp_page_is_free(page))
-		return NULL;
+	अगर (swsusp_page_is_क्रमbidden(page) || swsusp_page_is_मुक्त(page))
+		वापस शून्य;
 
-	if (PageOffline(page))
-		return NULL;
+	अगर (PageOffline(page))
+		वापस शून्य;
 
-	if (PageReserved(page)
+	अगर (PageReserved(page)
 	    && (!kernel_page_present(page) || pfn_is_nosave(pfn)))
-		return NULL;
+		वापस शून्य;
 
-	if (page_is_guard(page))
-		return NULL;
+	अगर (page_is_guard(page))
+		वापस शून्य;
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
 /**
  * count_data_pages - Compute the total number of saveable non-highmem pages.
  */
-static unsigned int count_data_pages(void)
-{
-	struct zone *zone;
-	unsigned long pfn, max_zone_pfn;
-	unsigned int n = 0;
+अटल अचिन्हित पूर्णांक count_data_pages(व्योम)
+अणु
+	काष्ठा zone *zone;
+	अचिन्हित दीर्घ pfn, max_zone_pfn;
+	अचिन्हित पूर्णांक n = 0;
 
-	for_each_populated_zone(zone) {
-		if (is_highmem(zone))
-			continue;
+	क्रम_each_populated_zone(zone) अणु
+		अगर (is_highmem(zone))
+			जारी;
 
-		mark_free_pages(zone);
+		mark_मुक्त_pages(zone);
 		max_zone_pfn = zone_end_pfn(zone);
-		for (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
-			if (saveable_page(zone, pfn))
+		क्रम (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
+			अगर (saveable_page(zone, pfn))
 				n++;
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
 /*
- * This is needed, because copy_page and memcpy are not usable for copying
- * task structs.
+ * This is needed, because copy_page and स_नकल are not usable क्रम copying
+ * task काष्ठाs.
  */
-static inline void do_copy_page(long *dst, long *src)
-{
-	int n;
+अटल अंतरभूत व्योम करो_copy_page(दीर्घ *dst, दीर्घ *src)
+अणु
+	पूर्णांक n;
 
-	for (n = PAGE_SIZE / sizeof(long); n; n--)
+	क्रम (n = PAGE_SIZE / माप(दीर्घ); n; n--)
 		*dst++ = *src++;
-}
+पूर्ण
 
 /**
  * safe_copy_page - Copy a page in a safe way.
  *
- * Check if the page we are going to copy is marked as present in the kernel
- * page tables. This always is the case if CONFIG_DEBUG_PAGEALLOC or
- * CONFIG_ARCH_HAS_SET_DIRECT_MAP is not set. In that case kernel_page_present()
- * always returns 'true'.
+ * Check अगर the page we are going to copy is marked as present in the kernel
+ * page tables. This always is the हाल अगर CONFIG_DEBUG_PAGEALLOC or
+ * CONFIG_ARCH_HAS_SET_सूचीECT_MAP is not set. In that हाल kernel_page_present()
+ * always वापसs 'true'.
  */
-static void safe_copy_page(void *dst, struct page *s_page)
-{
-	if (kernel_page_present(s_page)) {
-		do_copy_page(dst, page_address(s_page));
-	} else {
+अटल व्योम safe_copy_page(व्योम *dst, काष्ठा page *s_page)
+अणु
+	अगर (kernel_page_present(s_page)) अणु
+		करो_copy_page(dst, page_address(s_page));
+	पूर्ण अन्यथा अणु
 		hibernate_map_page(s_page);
-		do_copy_page(dst, page_address(s_page));
+		करो_copy_page(dst, page_address(s_page));
 		hibernate_unmap_page(s_page);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_HIGHMEM
-static inline struct page *page_is_saveable(struct zone *zone, unsigned long pfn)
-{
-	return is_highmem(zone) ?
+#अगर_घोषित CONFIG_HIGHMEM
+अटल अंतरभूत काष्ठा page *page_is_saveable(काष्ठा zone *zone, अचिन्हित दीर्घ pfn)
+अणु
+	वापस is_highmem(zone) ?
 		saveable_highmem_page(zone, pfn) : saveable_page(zone, pfn);
-}
+पूर्ण
 
-static void copy_data_page(unsigned long dst_pfn, unsigned long src_pfn)
-{
-	struct page *s_page, *d_page;
-	void *src, *dst;
+अटल व्योम copy_data_page(अचिन्हित दीर्घ dst_pfn, अचिन्हित दीर्घ src_pfn)
+अणु
+	काष्ठा page *s_page, *d_page;
+	व्योम *src, *dst;
 
 	s_page = pfn_to_page(src_pfn);
 	d_page = pfn_to_page(dst_pfn);
-	if (PageHighMem(s_page)) {
+	अगर (PageHighMem(s_page)) अणु
 		src = kmap_atomic(s_page);
 		dst = kmap_atomic(d_page);
-		do_copy_page(dst, src);
+		करो_copy_page(dst, src);
 		kunmap_atomic(dst);
 		kunmap_atomic(src);
-	} else {
-		if (PageHighMem(d_page)) {
+	पूर्ण अन्यथा अणु
+		अगर (PageHighMem(d_page)) अणु
 			/*
-			 * The page pointed to by src may contain some kernel
-			 * data modified by kmap_atomic()
+			 * The page poपूर्णांकed to by src may contain some kernel
+			 * data modअगरied by kmap_atomic()
 			 */
 			safe_copy_page(buffer, s_page);
 			dst = kmap_atomic(d_page);
 			copy_page(dst, buffer);
 			kunmap_atomic(dst);
-		} else {
+		पूर्ण अन्यथा अणु
 			safe_copy_page(page_address(d_page), s_page);
-		}
-	}
-}
-#else
-#define page_is_saveable(zone, pfn)	saveable_page(zone, pfn)
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा page_is_saveable(zone, pfn)	saveable_page(zone, pfn)
 
-static inline void copy_data_page(unsigned long dst_pfn, unsigned long src_pfn)
-{
+अटल अंतरभूत व्योम copy_data_page(अचिन्हित दीर्घ dst_pfn, अचिन्हित दीर्घ src_pfn)
+अणु
 	safe_copy_page(page_address(pfn_to_page(dst_pfn)),
 				pfn_to_page(src_pfn));
-}
-#endif /* CONFIG_HIGHMEM */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
-static void copy_data_pages(struct memory_bitmap *copy_bm,
-			    struct memory_bitmap *orig_bm)
-{
-	struct zone *zone;
-	unsigned long pfn;
+अटल व्योम copy_data_pages(काष्ठा memory_biपंचांगap *copy_bm,
+			    काष्ठा memory_biपंचांगap *orig_bm)
+अणु
+	काष्ठा zone *zone;
+	अचिन्हित दीर्घ pfn;
 
-	for_each_populated_zone(zone) {
-		unsigned long max_zone_pfn;
+	क्रम_each_populated_zone(zone) अणु
+		अचिन्हित दीर्घ max_zone_pfn;
 
-		mark_free_pages(zone);
+		mark_मुक्त_pages(zone);
 		max_zone_pfn = zone_end_pfn(zone);
-		for (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
-			if (page_is_saveable(zone, pfn))
+		क्रम (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++)
+			अगर (page_is_saveable(zone, pfn))
 				memory_bm_set_bit(orig_bm, pfn);
-	}
+	पूर्ण
 	memory_bm_position_reset(orig_bm);
 	memory_bm_position_reset(copy_bm);
-	for(;;) {
+	क्रम(;;) अणु
 		pfn = memory_bm_next_pfn(orig_bm);
-		if (unlikely(pfn == BM_END_OF_MAP))
-			break;
+		अगर (unlikely(pfn == BM_END_OF_MAP))
+			अवरोध;
 		copy_data_page(memory_bm_next_pfn(copy_bm), pfn);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Total number of image pages */
-static unsigned int nr_copy_pages;
-/* Number of pages needed for saving the original pfns of the image pages */
-static unsigned int nr_meta_pages;
+अटल अचिन्हित पूर्णांक nr_copy_pages;
+/* Number of pages needed क्रम saving the original pfns of the image pages */
+अटल अचिन्हित पूर्णांक nr_meta_pages;
 /*
- * Numbers of normal and highmem page frames allocated for hibernation image
- * before suspending devices.
+ * Numbers of normal and highmem page frames allocated क्रम hibernation image
+ * beक्रमe suspending devices.
  */
-static unsigned int alloc_normal, alloc_highmem;
+अटल अचिन्हित पूर्णांक alloc_normal, alloc_highmem;
 /*
- * Memory bitmap used for marking saveable pages (during hibernation) or
+ * Memory biपंचांगap used क्रम marking saveable pages (during hibernation) or
  * hibernation image pages (during restore)
  */
-static struct memory_bitmap orig_bm;
+अटल काष्ठा memory_biपंचांगap orig_bm;
 /*
- * Memory bitmap used during hibernation for marking allocated page frames that
+ * Memory biपंचांगap used during hibernation क्रम marking allocated page frames that
  * will contain copies of saveable pages.  During restore it is initially used
- * for marking hibernation image pages, but then the set bits from it are
- * duplicated in @orig_bm and it is released.  On highmem systems it is next
- * used for marking "safe" highmem pages, but it has to be reinitialized for
+ * क्रम marking hibernation image pages, but then the set bits from it are
+ * duplicated in @orig_bm and it is released.  On highmem प्रणालीs it is next
+ * used क्रम marking "safe" highmem pages, but it has to be reinitialized क्रम
  * this purpose.
  */
-static struct memory_bitmap copy_bm;
+अटल काष्ठा memory_biपंचांगap copy_bm;
 
 /**
- * swsusp_free - Free pages allocated for hibernation image.
+ * swsusp_मुक्त - Free pages allocated क्रम hibernation image.
  *
- * Image pages are alocated before snapshot creation, so they need to be
+ * Image pages are alocated beक्रमe snapshot creation, so they need to be
  * released after resume.
  */
-void swsusp_free(void)
-{
-	unsigned long fb_pfn, fr_pfn;
+व्योम swsusp_मुक्त(व्योम)
+अणु
+	अचिन्हित दीर्घ fb_pfn, fr_pfn;
 
-	if (!forbidden_pages_map || !free_pages_map)
-		goto out;
+	अगर (!क्रमbidden_pages_map || !मुक्त_pages_map)
+		जाओ out;
 
-	memory_bm_position_reset(forbidden_pages_map);
-	memory_bm_position_reset(free_pages_map);
+	memory_bm_position_reset(क्रमbidden_pages_map);
+	memory_bm_position_reset(मुक्त_pages_map);
 
 loop:
-	fr_pfn = memory_bm_next_pfn(free_pages_map);
-	fb_pfn = memory_bm_next_pfn(forbidden_pages_map);
+	fr_pfn = memory_bm_next_pfn(मुक्त_pages_map);
+	fb_pfn = memory_bm_next_pfn(क्रमbidden_pages_map);
 
 	/*
-	 * Find the next bit set in both bitmaps. This is guaranteed to
+	 * Find the next bit set in both biपंचांगaps. This is guaranteed to
 	 * terminate when fb_pfn == fr_pfn == BM_END_OF_MAP.
 	 */
-	do {
-		if (fb_pfn < fr_pfn)
-			fb_pfn = memory_bm_next_pfn(forbidden_pages_map);
-		if (fr_pfn < fb_pfn)
-			fr_pfn = memory_bm_next_pfn(free_pages_map);
-	} while (fb_pfn != fr_pfn);
+	करो अणु
+		अगर (fb_pfn < fr_pfn)
+			fb_pfn = memory_bm_next_pfn(क्रमbidden_pages_map);
+		अगर (fr_pfn < fb_pfn)
+			fr_pfn = memory_bm_next_pfn(मुक्त_pages_map);
+	पूर्ण जबतक (fb_pfn != fr_pfn);
 
-	if (fr_pfn != BM_END_OF_MAP && pfn_valid(fr_pfn)) {
-		struct page *page = pfn_to_page(fr_pfn);
+	अगर (fr_pfn != BM_END_OF_MAP && pfn_valid(fr_pfn)) अणु
+		काष्ठा page *page = pfn_to_page(fr_pfn);
 
-		memory_bm_clear_current(forbidden_pages_map);
-		memory_bm_clear_current(free_pages_map);
+		memory_bm_clear_current(क्रमbidden_pages_map);
+		memory_bm_clear_current(मुक्त_pages_map);
 		hibernate_restore_unprotect_page(page_address(page));
-		__free_page(page);
-		goto loop;
-	}
+		__मुक्त_page(page);
+		जाओ loop;
+	पूर्ण
 
 out:
 	nr_copy_pages = 0;
 	nr_meta_pages = 0;
-	restore_pblist = NULL;
-	buffer = NULL;
+	restore_pblist = शून्य;
+	buffer = शून्य;
 	alloc_normal = 0;
 	alloc_highmem = 0;
 	hibernate_restore_protection_end();
-}
+पूर्ण
 
-/* Helper functions used for the shrinking of memory. */
+/* Helper functions used क्रम the shrinking of memory. */
 
-#define GFP_IMAGE	(GFP_KERNEL | __GFP_NOWARN)
+#घोषणा GFP_IMAGE	(GFP_KERNEL | __GFP_NOWARN)
 
 /**
- * preallocate_image_pages - Allocate a number of pages for hibernation image.
+ * pपुनः_स्मृतिate_image_pages - Allocate a number of pages क्रम hibernation image.
  * @nr_pages: Number of page frames to allocate.
- * @mask: GFP flags to use for the allocation.
+ * @mask: GFP flags to use क्रम the allocation.
  *
  * Return value: Number of page frames actually allocated
  */
-static unsigned long preallocate_image_pages(unsigned long nr_pages, gfp_t mask)
-{
-	unsigned long nr_alloc = 0;
+अटल अचिन्हित दीर्घ pपुनः_स्मृतिate_image_pages(अचिन्हित दीर्घ nr_pages, gfp_t mask)
+अणु
+	अचिन्हित दीर्घ nr_alloc = 0;
 
-	while (nr_pages > 0) {
-		struct page *page;
+	जबतक (nr_pages > 0) अणु
+		काष्ठा page *page;
 
 		page = alloc_image_page(mask);
-		if (!page)
-			break;
+		अगर (!page)
+			अवरोध;
 		memory_bm_set_bit(&copy_bm, page_to_pfn(page));
-		if (PageHighMem(page))
+		अगर (PageHighMem(page))
 			alloc_highmem++;
-		else
+		अन्यथा
 			alloc_normal++;
 		nr_pages--;
 		nr_alloc++;
-	}
+	पूर्ण
 
-	return nr_alloc;
-}
+	वापस nr_alloc;
+पूर्ण
 
-static unsigned long preallocate_image_memory(unsigned long nr_pages,
-					      unsigned long avail_normal)
-{
-	unsigned long alloc;
+अटल अचिन्हित दीर्घ pपुनः_स्मृतिate_image_memory(अचिन्हित दीर्घ nr_pages,
+					      अचिन्हित दीर्घ avail_normal)
+अणु
+	अचिन्हित दीर्घ alloc;
 
-	if (avail_normal <= alloc_normal)
-		return 0;
+	अगर (avail_normal <= alloc_normal)
+		वापस 0;
 
 	alloc = avail_normal - alloc_normal;
-	if (nr_pages < alloc)
+	अगर (nr_pages < alloc)
 		alloc = nr_pages;
 
-	return preallocate_image_pages(alloc, GFP_IMAGE);
-}
+	वापस pपुनः_स्मृतिate_image_pages(alloc, GFP_IMAGE);
+पूर्ण
 
-#ifdef CONFIG_HIGHMEM
-static unsigned long preallocate_image_highmem(unsigned long nr_pages)
-{
-	return preallocate_image_pages(nr_pages, GFP_IMAGE | __GFP_HIGHMEM);
-}
+#अगर_घोषित CONFIG_HIGHMEM
+अटल अचिन्हित दीर्घ pपुनः_स्मृतिate_image_highmem(अचिन्हित दीर्घ nr_pages)
+अणु
+	वापस pपुनः_स्मृतिate_image_pages(nr_pages, GFP_IMAGE | __GFP_HIGHMEM);
+पूर्ण
 
 /**
  *  __fraction - Compute (an approximation of) x * (multiplier / base).
  */
-static unsigned long __fraction(u64 x, u64 multiplier, u64 base)
-{
-	return div64_u64(x * multiplier, base);
-}
+अटल अचिन्हित दीर्घ __fraction(u64 x, u64 multiplier, u64 base)
+अणु
+	वापस भाग64_u64(x * multiplier, base);
+पूर्ण
 
-static unsigned long preallocate_highmem_fraction(unsigned long nr_pages,
-						  unsigned long highmem,
-						  unsigned long total)
-{
-	unsigned long alloc = __fraction(nr_pages, highmem, total);
+अटल अचिन्हित दीर्घ pपुनः_स्मृतिate_highmem_fraction(अचिन्हित दीर्घ nr_pages,
+						  अचिन्हित दीर्घ highmem,
+						  अचिन्हित दीर्घ total)
+अणु
+	अचिन्हित दीर्घ alloc = __fraction(nr_pages, highmem, total);
 
-	return preallocate_image_pages(alloc, GFP_IMAGE | __GFP_HIGHMEM);
-}
-#else /* CONFIG_HIGHMEM */
-static inline unsigned long preallocate_image_highmem(unsigned long nr_pages)
-{
-	return 0;
-}
+	वापस pपुनः_स्मृतिate_image_pages(alloc, GFP_IMAGE | __GFP_HIGHMEM);
+पूर्ण
+#अन्यथा /* CONFIG_HIGHMEM */
+अटल अंतरभूत अचिन्हित दीर्घ pपुनः_स्मृतिate_image_highmem(अचिन्हित दीर्घ nr_pages)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline unsigned long preallocate_highmem_fraction(unsigned long nr_pages,
-							 unsigned long highmem,
-							 unsigned long total)
-{
-	return 0;
-}
-#endif /* CONFIG_HIGHMEM */
+अटल अंतरभूत अचिन्हित दीर्घ pपुनः_स्मृतिate_highmem_fraction(अचिन्हित दीर्घ nr_pages,
+							 अचिन्हित दीर्घ highmem,
+							 अचिन्हित दीर्घ total)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
 /**
- * free_unnecessary_pages - Release preallocated pages not needed for the image.
+ * मुक्त_unnecessary_pages - Release pपुनः_स्मृतिated pages not needed क्रम the image.
  */
-static unsigned long free_unnecessary_pages(void)
-{
-	unsigned long save, to_free_normal, to_free_highmem, free;
+अटल अचिन्हित दीर्घ मुक्त_unnecessary_pages(व्योम)
+अणु
+	अचिन्हित दीर्घ save, to_मुक्त_normal, to_मुक्त_highmem, मुक्त;
 
 	save = count_data_pages();
-	if (alloc_normal >= save) {
-		to_free_normal = alloc_normal - save;
+	अगर (alloc_normal >= save) अणु
+		to_मुक्त_normal = alloc_normal - save;
 		save = 0;
-	} else {
-		to_free_normal = 0;
+	पूर्ण अन्यथा अणु
+		to_मुक्त_normal = 0;
 		save -= alloc_normal;
-	}
+	पूर्ण
 	save += count_highmem_pages();
-	if (alloc_highmem >= save) {
-		to_free_highmem = alloc_highmem - save;
-	} else {
-		to_free_highmem = 0;
+	अगर (alloc_highmem >= save) अणु
+		to_मुक्त_highmem = alloc_highmem - save;
+	पूर्ण अन्यथा अणु
+		to_मुक्त_highmem = 0;
 		save -= alloc_highmem;
-		if (to_free_normal > save)
-			to_free_normal -= save;
-		else
-			to_free_normal = 0;
-	}
-	free = to_free_normal + to_free_highmem;
+		अगर (to_मुक्त_normal > save)
+			to_मुक्त_normal -= save;
+		अन्यथा
+			to_मुक्त_normal = 0;
+	पूर्ण
+	मुक्त = to_मुक्त_normal + to_मुक्त_highmem;
 
 	memory_bm_position_reset(&copy_bm);
 
-	while (to_free_normal > 0 || to_free_highmem > 0) {
-		unsigned long pfn = memory_bm_next_pfn(&copy_bm);
-		struct page *page = pfn_to_page(pfn);
+	जबतक (to_मुक्त_normal > 0 || to_मुक्त_highmem > 0) अणु
+		अचिन्हित दीर्घ pfn = memory_bm_next_pfn(&copy_bm);
+		काष्ठा page *page = pfn_to_page(pfn);
 
-		if (PageHighMem(page)) {
-			if (!to_free_highmem)
-				continue;
-			to_free_highmem--;
+		अगर (PageHighMem(page)) अणु
+			अगर (!to_मुक्त_highmem)
+				जारी;
+			to_मुक्त_highmem--;
 			alloc_highmem--;
-		} else {
-			if (!to_free_normal)
-				continue;
-			to_free_normal--;
+		पूर्ण अन्यथा अणु
+			अगर (!to_मुक्त_normal)
+				जारी;
+			to_मुक्त_normal--;
 			alloc_normal--;
-		}
+		पूर्ण
 		memory_bm_clear_bit(&copy_bm, pfn);
-		swsusp_unset_page_forbidden(page);
-		swsusp_unset_page_free(page);
-		__free_page(page);
-	}
+		swsusp_unset_page_क्रमbidden(page);
+		swsusp_unset_page_मुक्त(page);
+		__मुक्त_page(page);
+	पूर्ण
 
-	return free;
-}
+	वापस मुक्त;
+पूर्ण
 
 /**
  * minimum_image_size - Estimate the minimum acceptable size of an image.
- * @saveable: Number of saveable pages in the system.
+ * @saveable: Number of saveable pages in the प्रणाली.
  *
- * We want to avoid attempting to free too much memory too hard, so estimate the
- * minimum acceptable size of a hibernation image to use as the lower limit for
- * preallocating memory.
+ * We want to aव्योम attempting to मुक्त too much memory too hard, so estimate the
+ * minimum acceptable size of a hibernation image to use as the lower limit क्रम
+ * pपुनः_स्मृतिating memory.
  *
  * We assume that the minimum image size should be proportional to
  *
- * [number of saveable pages] - [number of pages that can be freed in theory]
+ * [number of saveable pages] - [number of pages that can be मुक्तd in theory]
  *
  * where the second term is the sum of (1) reclaimable slab pages, (2) active
  * and (3) inactive anonymous pages, (4) active and (5) inactive file pages.
  */
-static unsigned long minimum_image_size(unsigned long saveable)
-{
-	unsigned long size;
+अटल अचिन्हित दीर्घ minimum_image_size(अचिन्हित दीर्घ saveable)
+अणु
+	अचिन्हित दीर्घ size;
 
 	size = global_node_page_state_pages(NR_SLAB_RECLAIMABLE_B)
 		+ global_node_page_state(NR_ACTIVE_ANON)
 		+ global_node_page_state(NR_INACTIVE_ANON)
-		+ global_node_page_state(NR_ACTIVE_FILE)
-		+ global_node_page_state(NR_INACTIVE_FILE);
+		+ global_node_page_state(NR_ACTIVE_खाता)
+		+ global_node_page_state(NR_INACTIVE_खाता);
 
-	return saveable <= size ? 0 : saveable - size;
-}
+	वापस saveable <= size ? 0 : saveable - size;
+पूर्ण
 
 /**
- * hibernate_preallocate_memory - Preallocate memory for hibernation image.
+ * hibernate_pपुनः_स्मृतिate_memory - Pपुनः_स्मृतिate memory क्रम hibernation image.
  *
  * To create a hibernation image it is necessary to make a copy of every page
- * frame in use.  We also need a number of page frames to be free during
- * hibernation for allocations made while saving the image and for device
- * drivers, in case they need to allocate memory from their hibernation
+ * frame in use.  We also need a number of page frames to be मुक्त during
+ * hibernation क्रम allocations made जबतक saving the image and क्रम device
+ * drivers, in हाल they need to allocate memory from their hibernation
  * callbacks (these two numbers are given by PAGES_FOR_IO (which is a rough
- * estimate) and reserved_size divided by PAGE_SIZE (which is tunable through
- * /sys/power/reserved_size, respectively).  To make this happen, we compute the
+ * estimate) and reserved_size भागided by PAGE_SIZE (which is tunable through
+ * /sys/घातer/reserved_size, respectively).  To make this happen, we compute the
  * total number of available page frames and allocate at least
  *
  * ([page frames total] + PAGES_FOR_IO + [metadata pages]) / 2
@@ -1731,33 +1732,33 @@ static unsigned long minimum_image_size(unsigned long saveable)
  *
  * of them, which corresponds to the maximum size of a hibernation image.
  *
- * If image_size is set below the number following from the above formula,
- * the preallocation of memory is continued until the total number of saveable
- * pages in the system is below the requested image size or the minimum
- * acceptable image size returned by minimum_image_size(), whichever is greater.
+ * If image_size is set below the number following from the above क्रमmula,
+ * the pपुनः_स्मृतिation of memory is जारीd until the total number of saveable
+ * pages in the प्रणाली is below the requested image size or the minimum
+ * acceptable image size वापसed by minimum_image_size(), whichever is greater.
  */
-int hibernate_preallocate_memory(void)
-{
-	struct zone *zone;
-	unsigned long saveable, size, max_size, count, highmem, pages = 0;
-	unsigned long alloc, save_highmem, pages_highmem, avail_normal;
-	ktime_t start, stop;
-	int error;
+पूर्णांक hibernate_pपुनः_स्मृतिate_memory(व्योम)
+अणु
+	काष्ठा zone *zone;
+	अचिन्हित दीर्घ saveable, size, max_size, count, highmem, pages = 0;
+	अचिन्हित दीर्घ alloc, save_highmem, pages_highmem, avail_normal;
+	kसमय_प्रकार start, stop;
+	पूर्णांक error;
 
 	pr_info("Preallocating image memory\n");
-	start = ktime_get();
+	start = kसमय_get();
 
 	error = memory_bm_create(&orig_bm, GFP_IMAGE, PG_ANY);
-	if (error) {
+	अगर (error) अणु
 		pr_err("Cannot allocate original bitmap\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	error = memory_bm_create(&copy_bm, GFP_IMAGE, PG_ANY);
-	if (error) {
+	अगर (error) अणु
 		pr_err("Cannot allocate copy bitmap\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	alloc_normal = 0;
 	alloc_highmem = 0;
@@ -1768,19 +1769,19 @@ int hibernate_preallocate_memory(void)
 
 	/*
 	 * Compute the total number of page frames we can use (count) and the
-	 * number of pages needed for image metadata (size).
+	 * number of pages needed क्रम image metadata (size).
 	 */
 	count = saveable;
 	saveable += save_highmem;
 	highmem = save_highmem;
 	size = 0;
-	for_each_populated_zone(zone) {
+	क्रम_each_populated_zone(zone) अणु
 		size += snapshot_additional_pages(zone);
-		if (is_highmem(zone))
+		अगर (is_highmem(zone))
 			highmem += zone_page_state(zone, NR_FREE_PAGES);
-		else
+		अन्यथा
 			count += zone_page_state(zone, NR_FREE_PAGES);
-	}
+	पूर्ण
 	avail_normal = count;
 	count += highmem;
 	count -= totalreserve_pages;
@@ -1788,742 +1789,742 @@ int hibernate_preallocate_memory(void)
 	/* Compute the maximum number of saveable pages to leave in memory. */
 	max_size = (count - (size + PAGES_FOR_IO)) / 2
 			- 2 * DIV_ROUND_UP(reserved_size, PAGE_SIZE);
-	/* Compute the desired number of image pages specified by image_size. */
+	/* Compute the desired number of image pages specअगरied by image_size. */
 	size = DIV_ROUND_UP(image_size, PAGE_SIZE);
-	if (size > max_size)
+	अगर (size > max_size)
 		size = max_size;
 	/*
 	 * If the desired number of image pages is at least as large as the
-	 * current number of saveable pages in memory, allocate page frames for
-	 * the image and we're done.
+	 * current number of saveable pages in memory, allocate page frames क्रम
+	 * the image and we're करोne.
 	 */
-	if (size >= saveable) {
-		pages = preallocate_image_highmem(save_highmem);
-		pages += preallocate_image_memory(saveable - pages, avail_normal);
-		goto out;
-	}
+	अगर (size >= saveable) अणु
+		pages = pपुनः_स्मृतिate_image_highmem(save_highmem);
+		pages += pपुनः_स्मृतिate_image_memory(saveable - pages, avail_normal);
+		जाओ out;
+	पूर्ण
 
 	/* Estimate the minimum size of the image. */
 	pages = minimum_image_size(saveable);
 	/*
-	 * To avoid excessive pressure on the normal zone, leave room in it to
-	 * accommodate an image of the minimum size (unless it's already too
-	 * small, in which case don't preallocate pages from it at all).
+	 * To aव्योम excessive pressure on the normal zone, leave room in it to
+	 * accommodate an image of the minimum size (unless it's alपढ़ोy too
+	 * small, in which हाल करोn't pपुनः_स्मृतिate pages from it at all).
 	 */
-	if (avail_normal > pages)
+	अगर (avail_normal > pages)
 		avail_normal -= pages;
-	else
+	अन्यथा
 		avail_normal = 0;
-	if (size < pages)
-		size = min_t(unsigned long, pages, max_size);
+	अगर (size < pages)
+		size = min_t(अचिन्हित दीर्घ, pages, max_size);
 
 	/*
-	 * Let the memory management subsystem know that we're going to need a
-	 * large number of page frames to allocate and make it free some memory.
-	 * NOTE: If this is not done, performance will be hurt badly in some
-	 * test cases.
+	 * Let the memory management subप्रणाली know that we're going to need a
+	 * large number of page frames to allocate and make it मुक्त some memory.
+	 * NOTE: If this is not करोne, perक्रमmance will be hurt badly in some
+	 * test हालs.
 	 */
 	shrink_all_memory(saveable - size);
 
 	/*
 	 * The number of saveable pages in memory was too high, so apply some
-	 * pressure to decrease it.  First, make room for the largest possible
-	 * image and fail if that doesn't work.  Next, try to decrease the size
+	 * pressure to decrease it.  First, make room क्रम the largest possible
+	 * image and fail अगर that करोesn't work.  Next, try to decrease the size
 	 * of the image as much as indicated by 'size' using allocations from
 	 * highmem and non-highmem zones separately.
 	 */
-	pages_highmem = preallocate_image_highmem(highmem / 2);
+	pages_highmem = pपुनः_स्मृतिate_image_highmem(highmem / 2);
 	alloc = count - max_size;
-	if (alloc > pages_highmem)
+	अगर (alloc > pages_highmem)
 		alloc -= pages_highmem;
-	else
+	अन्यथा
 		alloc = 0;
-	pages = preallocate_image_memory(alloc, avail_normal);
-	if (pages < alloc) {
+	pages = pपुनः_स्मृतिate_image_memory(alloc, avail_normal);
+	अगर (pages < alloc) अणु
 		/* We have exhausted non-highmem pages, try highmem. */
 		alloc -= pages;
 		pages += pages_highmem;
-		pages_highmem = preallocate_image_highmem(alloc);
-		if (pages_highmem < alloc) {
+		pages_highmem = pपुनः_स्मृतिate_image_highmem(alloc);
+		अगर (pages_highmem < alloc) अणु
 			pr_err("Image allocation is %lu pages short\n",
 				alloc - pages_highmem);
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 		pages += pages_highmem;
 		/*
 		 * size is the desired number of saveable pages to leave in
-		 * memory, so try to preallocate (all memory - size) pages.
+		 * memory, so try to pपुनः_स्मृतिate (all memory - size) pages.
 		 */
 		alloc = (count - pages) - size;
-		pages += preallocate_image_highmem(alloc);
-	} else {
+		pages += pपुनः_स्मृतिate_image_highmem(alloc);
+	पूर्ण अन्यथा अणु
 		/*
-		 * There are approximately max_size saveable pages at this point
-		 * and we want to reduce this number down to size.
+		 * There are approximately max_size saveable pages at this poपूर्णांक
+		 * and we want to reduce this number करोwn to size.
 		 */
 		alloc = max_size - size;
-		size = preallocate_highmem_fraction(alloc, highmem, count);
+		size = pपुनः_स्मृतिate_highmem_fraction(alloc, highmem, count);
 		pages_highmem += size;
 		alloc -= size;
-		size = preallocate_image_memory(alloc, avail_normal);
-		pages_highmem += preallocate_image_highmem(alloc - size);
+		size = pपुनः_स्मृतिate_image_memory(alloc, avail_normal);
+		pages_highmem += pपुनः_स्मृतिate_image_highmem(alloc - size);
 		pages += pages_highmem + size;
-	}
+	पूर्ण
 
 	/*
-	 * We only need as many page frames for the image as there are saveable
+	 * We only need as many page frames क्रम the image as there are saveable
 	 * pages in memory, but we have allocated more.  Release the excessive
 	 * ones now.
 	 */
-	pages -= free_unnecessary_pages();
+	pages -= मुक्त_unnecessary_pages();
 
  out:
-	stop = ktime_get();
+	stop = kसमय_get();
 	pr_info("Allocated %lu pages for snapshot\n", pages);
 	swsusp_show_speed(start, stop, pages, "Allocated");
 
-	return 0;
+	वापस 0;
 
  err_out:
-	swsusp_free();
-	return -ENOMEM;
-}
+	swsusp_मुक्त();
+	वापस -ENOMEM;
+पूर्ण
 
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 /**
- * count_pages_for_highmem - Count non-highmem pages needed for copying highmem.
+ * count_pages_क्रम_highmem - Count non-highmem pages needed क्रम copying highmem.
  *
- * Compute the number of non-highmem pages that will be necessary for creating
+ * Compute the number of non-highmem pages that will be necessary क्रम creating
  * copies of highmem pages.
  */
-static unsigned int count_pages_for_highmem(unsigned int nr_highmem)
-{
-	unsigned int free_highmem = count_free_highmem_pages() + alloc_highmem;
+अटल अचिन्हित पूर्णांक count_pages_क्रम_highmem(अचिन्हित पूर्णांक nr_highmem)
+अणु
+	अचिन्हित पूर्णांक मुक्त_highmem = count_मुक्त_highmem_pages() + alloc_highmem;
 
-	if (free_highmem >= nr_highmem)
+	अगर (मुक्त_highmem >= nr_highmem)
 		nr_highmem = 0;
-	else
-		nr_highmem -= free_highmem;
+	अन्यथा
+		nr_highmem -= मुक्त_highmem;
 
-	return nr_highmem;
-}
-#else
-static unsigned int count_pages_for_highmem(unsigned int nr_highmem) { return 0; }
-#endif /* CONFIG_HIGHMEM */
+	वापस nr_highmem;
+पूर्ण
+#अन्यथा
+अटल अचिन्हित पूर्णांक count_pages_क्रम_highmem(अचिन्हित पूर्णांक nr_highmem) अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
 /**
- * enough_free_mem - Check if there is enough free memory for the image.
+ * enough_मुक्त_mem - Check अगर there is enough मुक्त memory क्रम the image.
  */
-static int enough_free_mem(unsigned int nr_pages, unsigned int nr_highmem)
-{
-	struct zone *zone;
-	unsigned int free = alloc_normal;
+अटल पूर्णांक enough_मुक्त_mem(अचिन्हित पूर्णांक nr_pages, अचिन्हित पूर्णांक nr_highmem)
+अणु
+	काष्ठा zone *zone;
+	अचिन्हित पूर्णांक मुक्त = alloc_normal;
 
-	for_each_populated_zone(zone)
-		if (!is_highmem(zone))
-			free += zone_page_state(zone, NR_FREE_PAGES);
+	क्रम_each_populated_zone(zone)
+		अगर (!is_highmem(zone))
+			मुक्त += zone_page_state(zone, NR_FREE_PAGES);
 
-	nr_pages += count_pages_for_highmem(nr_highmem);
+	nr_pages += count_pages_क्रम_highmem(nr_highmem);
 	pr_debug("Normal pages needed: %u + %u, available pages: %u\n",
-		 nr_pages, PAGES_FOR_IO, free);
+		 nr_pages, PAGES_FOR_IO, मुक्त);
 
-	return free > nr_pages + PAGES_FOR_IO;
-}
+	वापस मुक्त > nr_pages + PAGES_FOR_IO;
+पूर्ण
 
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 /**
- * get_highmem_buffer - Allocate a buffer for highmem pages.
+ * get_highmem_buffer - Allocate a buffer क्रम highmem pages.
  *
  * If there are some highmem pages in the hibernation image, we may need a
  * buffer to copy them and/or load their data.
  */
-static inline int get_highmem_buffer(int safe_needed)
-{
+अटल अंतरभूत पूर्णांक get_highmem_buffer(पूर्णांक safe_needed)
+अणु
 	buffer = get_image_page(GFP_ATOMIC, safe_needed);
-	return buffer ? 0 : -ENOMEM;
-}
+	वापस buffer ? 0 : -ENOMEM;
+पूर्ण
 
 /**
- * alloc_highmem_image_pages - Allocate some highmem pages for the image.
+ * alloc_highmem_image_pages - Allocate some highmem pages क्रम the image.
  *
- * Try to allocate as many pages as needed, but if the number of free highmem
+ * Try to allocate as many pages as needed, but अगर the number of मुक्त highmem
  * pages is less than that, allocate them all.
  */
-static inline unsigned int alloc_highmem_pages(struct memory_bitmap *bm,
-					       unsigned int nr_highmem)
-{
-	unsigned int to_alloc = count_free_highmem_pages();
+अटल अंतरभूत अचिन्हित पूर्णांक alloc_highmem_pages(काष्ठा memory_biपंचांगap *bm,
+					       अचिन्हित पूर्णांक nr_highmem)
+अणु
+	अचिन्हित पूर्णांक to_alloc = count_मुक्त_highmem_pages();
 
-	if (to_alloc > nr_highmem)
+	अगर (to_alloc > nr_highmem)
 		to_alloc = nr_highmem;
 
 	nr_highmem -= to_alloc;
-	while (to_alloc-- > 0) {
-		struct page *page;
+	जबतक (to_alloc-- > 0) अणु
+		काष्ठा page *page;
 
 		page = alloc_image_page(__GFP_HIGHMEM|__GFP_KSWAPD_RECLAIM);
 		memory_bm_set_bit(bm, page_to_pfn(page));
-	}
-	return nr_highmem;
-}
-#else
-static inline int get_highmem_buffer(int safe_needed) { return 0; }
+	पूर्ण
+	वापस nr_highmem;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक get_highmem_buffer(पूर्णांक safe_needed) अणु वापस 0; पूर्ण
 
-static inline unsigned int alloc_highmem_pages(struct memory_bitmap *bm,
-					       unsigned int n) { return 0; }
-#endif /* CONFIG_HIGHMEM */
+अटल अंतरभूत अचिन्हित पूर्णांक alloc_highmem_pages(काष्ठा memory_biपंचांगap *bm,
+					       अचिन्हित पूर्णांक n) अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
 /**
- * swsusp_alloc - Allocate memory for hibernation image.
+ * swsusp_alloc - Allocate memory क्रम hibernation image.
  *
  * We first try to allocate as many highmem pages as there are
- * saveable highmem pages in the system.  If that fails, we allocate
- * non-highmem pages for the copies of the remaining highmem ones.
+ * saveable highmem pages in the प्रणाली.  If that fails, we allocate
+ * non-highmem pages क्रम the copies of the reमुख्यing highmem ones.
  *
  * In this approach it is likely that the copies of highmem pages will
  * also be located in the high memory, because of the way in which
  * copy_data_pages() works.
  */
-static int swsusp_alloc(struct memory_bitmap *copy_bm,
-			unsigned int nr_pages, unsigned int nr_highmem)
-{
-	if (nr_highmem > 0) {
-		if (get_highmem_buffer(PG_ANY))
-			goto err_out;
-		if (nr_highmem > alloc_highmem) {
+अटल पूर्णांक swsusp_alloc(काष्ठा memory_biपंचांगap *copy_bm,
+			अचिन्हित पूर्णांक nr_pages, अचिन्हित पूर्णांक nr_highmem)
+अणु
+	अगर (nr_highmem > 0) अणु
+		अगर (get_highmem_buffer(PG_ANY))
+			जाओ err_out;
+		अगर (nr_highmem > alloc_highmem) अणु
 			nr_highmem -= alloc_highmem;
 			nr_pages += alloc_highmem_pages(copy_bm, nr_highmem);
-		}
-	}
-	if (nr_pages > alloc_normal) {
+		पूर्ण
+	पूर्ण
+	अगर (nr_pages > alloc_normal) अणु
 		nr_pages -= alloc_normal;
-		while (nr_pages-- > 0) {
-			struct page *page;
+		जबतक (nr_pages-- > 0) अणु
+			काष्ठा page *page;
 
 			page = alloc_image_page(GFP_ATOMIC);
-			if (!page)
-				goto err_out;
+			अगर (!page)
+				जाओ err_out;
 			memory_bm_set_bit(copy_bm, page_to_pfn(page));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  err_out:
-	swsusp_free();
-	return -ENOMEM;
-}
+	swsusp_मुक्त();
+	वापस -ENOMEM;
+पूर्ण
 
-asmlinkage __visible int swsusp_save(void)
-{
-	unsigned int nr_pages, nr_highmem;
+यंत्रlinkage __visible पूर्णांक swsusp_save(व्योम)
+अणु
+	अचिन्हित पूर्णांक nr_pages, nr_highmem;
 
 	pr_info("Creating image:\n");
 
-	drain_local_pages(NULL);
+	drain_local_pages(शून्य);
 	nr_pages = count_data_pages();
 	nr_highmem = count_highmem_pages();
 	pr_info("Need to copy %u pages\n", nr_pages + nr_highmem);
 
-	if (!enough_free_mem(nr_pages, nr_highmem)) {
+	अगर (!enough_मुक्त_mem(nr_pages, nr_highmem)) अणु
 		pr_err("Not enough free memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (swsusp_alloc(&copy_bm, nr_pages, nr_highmem)) {
+	अगर (swsusp_alloc(&copy_bm, nr_pages, nr_highmem)) अणु
 		pr_err("Memory allocation failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
 	 * During allocating of suspend pagedir, new cold pages may appear.
 	 * Kill them.
 	 */
-	drain_local_pages(NULL);
+	drain_local_pages(शून्य);
 	copy_data_pages(&copy_bm, &orig_bm);
 
 	/*
-	 * End of critical section. From now on, we can write to memory,
+	 * End of critical section. From now on, we can ग_लिखो to memory,
 	 * but we should not touch disk. This specially means we must _not_
-	 * touch swap space! Except we must write out our image of course.
+	 * touch swap space! Except we must ग_लिखो out our image of course.
 	 */
 
 	nr_pages += nr_highmem;
 	nr_copy_pages = nr_pages;
-	nr_meta_pages = DIV_ROUND_UP(nr_pages * sizeof(long), PAGE_SIZE);
+	nr_meta_pages = DIV_ROUND_UP(nr_pages * माप(दीर्घ), PAGE_SIZE);
 
 	pr_info("Image created (%d pages copied)\n", nr_pages);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifndef CONFIG_ARCH_HIBERNATION_HEADER
-static int init_header_complete(struct swsusp_info *info)
-{
-	memcpy(&info->uts, init_utsname(), sizeof(struct new_utsname));
+#अगर_अघोषित CONFIG_ARCH_HIBERNATION_HEADER
+अटल पूर्णांक init_header_complete(काष्ठा swsusp_info *info)
+अणु
+	स_नकल(&info->uts, init_utsname(), माप(काष्ठा new_utsname));
 	info->version_code = LINUX_VERSION_CODE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *check_image_kernel(struct swsusp_info *info)
-{
-	if (info->version_code != LINUX_VERSION_CODE)
-		return "kernel version";
-	if (strcmp(info->uts.sysname,init_utsname()->sysname))
-		return "system type";
-	if (strcmp(info->uts.release,init_utsname()->release))
-		return "kernel release";
-	if (strcmp(info->uts.version,init_utsname()->version))
-		return "version";
-	if (strcmp(info->uts.machine,init_utsname()->machine))
-		return "machine";
-	return NULL;
-}
-#endif /* CONFIG_ARCH_HIBERNATION_HEADER */
+अटल स्थिर अक्षर *check_image_kernel(काष्ठा swsusp_info *info)
+अणु
+	अगर (info->version_code != LINUX_VERSION_CODE)
+		वापस "kernel version";
+	अगर (म_भेद(info->uts.sysname,init_utsname()->sysname))
+		वापस "system type";
+	अगर (म_भेद(info->uts.release,init_utsname()->release))
+		वापस "kernel release";
+	अगर (म_भेद(info->uts.version,init_utsname()->version))
+		वापस "version";
+	अगर (म_भेद(info->uts.machine,init_utsname()->machine))
+		वापस "machine";
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ARCH_HIBERNATION_HEADER */
 
-unsigned long snapshot_get_image_size(void)
-{
-	return nr_copy_pages + nr_meta_pages + 1;
-}
+अचिन्हित दीर्घ snapshot_get_image_size(व्योम)
+अणु
+	वापस nr_copy_pages + nr_meta_pages + 1;
+पूर्ण
 
-static int init_header(struct swsusp_info *info)
-{
-	memset(info, 0, sizeof(struct swsusp_info));
+अटल पूर्णांक init_header(काष्ठा swsusp_info *info)
+अणु
+	स_रखो(info, 0, माप(काष्ठा swsusp_info));
 	info->num_physpages = get_num_physpages();
 	info->image_pages = nr_copy_pages;
 	info->pages = snapshot_get_image_size();
 	info->size = info->pages;
 	info->size <<= PAGE_SHIFT;
-	return init_header_complete(info);
-}
+	वापस init_header_complete(info);
+पूर्ण
 
 /**
- * pack_pfns - Prepare PFNs for saving.
- * @bm: Memory bitmap.
+ * pack_pfns - Prepare PFNs क्रम saving.
+ * @bm: Memory biपंचांगap.
  * @buf: Memory buffer to store the PFNs in.
  *
  * PFNs corresponding to set bits in @bm are stored in the area of memory
- * pointed to by @buf (1 page at a time).
+ * poपूर्णांकed to by @buf (1 page at a समय).
  */
-static inline void pack_pfns(unsigned long *buf, struct memory_bitmap *bm)
-{
-	int j;
+अटल अंतरभूत व्योम pack_pfns(अचिन्हित दीर्घ *buf, काष्ठा memory_biपंचांगap *bm)
+अणु
+	पूर्णांक j;
 
-	for (j = 0; j < PAGE_SIZE / sizeof(long); j++) {
+	क्रम (j = 0; j < PAGE_SIZE / माप(दीर्घ); j++) अणु
 		buf[j] = memory_bm_next_pfn(bm);
-		if (unlikely(buf[j] == BM_END_OF_MAP))
-			break;
-	}
-}
+		अगर (unlikely(buf[j] == BM_END_OF_MAP))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * snapshot_read_next - Get the address to read the next image page from.
- * @handle: Snapshot handle to be used for the reading.
+ * snapshot_पढ़ो_next - Get the address to पढ़ो the next image page from.
+ * @handle: Snapshot handle to be used क्रम the पढ़ोing.
  *
- * On the first call, @handle should point to a zeroed snapshot_handle
- * structure.  The structure gets populated then and a pointer to it should be
- * passed to this function every next time.
+ * On the first call, @handle should poपूर्णांक to a zeroed snapshot_handle
+ * काष्ठाure.  The काष्ठाure माला_लो populated then and a poपूर्णांकer to it should be
+ * passed to this function every next समय.
  *
- * On success, the function returns a positive number.  Then, the caller
- * is allowed to read up to the returned number of bytes from the memory
+ * On success, the function वापसs a positive number.  Then, the caller
+ * is allowed to पढ़ो up to the वापसed number of bytes from the memory
  * location computed by the data_of() macro.
  *
- * The function returns 0 to indicate the end of the data stream condition,
- * and negative numbers are returned on errors.  If that happens, the structure
- * pointed to by @handle is not updated and should not be used any more.
+ * The function वापसs 0 to indicate the end of the data stream condition,
+ * and negative numbers are वापसed on errors.  If that happens, the काष्ठाure
+ * poपूर्णांकed to by @handle is not updated and should not be used any more.
  */
-int snapshot_read_next(struct snapshot_handle *handle)
-{
-	if (handle->cur > nr_meta_pages + nr_copy_pages)
-		return 0;
+पूर्णांक snapshot_पढ़ो_next(काष्ठा snapshot_handle *handle)
+अणु
+	अगर (handle->cur > nr_meta_pages + nr_copy_pages)
+		वापस 0;
 
-	if (!buffer) {
-		/* This makes the buffer be freed by swsusp_free() */
+	अगर (!buffer) अणु
+		/* This makes the buffer be मुक्तd by swsusp_मुक्त() */
 		buffer = get_image_page(GFP_ATOMIC, PG_ANY);
-		if (!buffer)
-			return -ENOMEM;
-	}
-	if (!handle->cur) {
-		int error;
+		अगर (!buffer)
+			वापस -ENOMEM;
+	पूर्ण
+	अगर (!handle->cur) अणु
+		पूर्णांक error;
 
-		error = init_header((struct swsusp_info *)buffer);
-		if (error)
-			return error;
+		error = init_header((काष्ठा swsusp_info *)buffer);
+		अगर (error)
+			वापस error;
 		handle->buffer = buffer;
 		memory_bm_position_reset(&orig_bm);
 		memory_bm_position_reset(&copy_bm);
-	} else if (handle->cur <= nr_meta_pages) {
+	पूर्ण अन्यथा अगर (handle->cur <= nr_meta_pages) अणु
 		clear_page(buffer);
 		pack_pfns(buffer, &orig_bm);
-	} else {
-		struct page *page;
+	पूर्ण अन्यथा अणु
+		काष्ठा page *page;
 
 		page = pfn_to_page(memory_bm_next_pfn(&copy_bm));
-		if (PageHighMem(page)) {
+		अगर (PageHighMem(page)) अणु
 			/*
 			 * Highmem pages are copied to the buffer,
-			 * because we can't return with a kmapped
+			 * because we can't वापस with a kmapped
 			 * highmem page (we may not be called again).
 			 */
-			void *kaddr;
+			व्योम *kaddr;
 
 			kaddr = kmap_atomic(page);
 			copy_page(buffer, kaddr);
 			kunmap_atomic(kaddr);
 			handle->buffer = buffer;
-		} else {
+		पूर्ण अन्यथा अणु
 			handle->buffer = page_address(page);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	handle->cur++;
-	return PAGE_SIZE;
-}
+	वापस PAGE_SIZE;
+पूर्ण
 
-static void duplicate_memory_bitmap(struct memory_bitmap *dst,
-				    struct memory_bitmap *src)
-{
-	unsigned long pfn;
+अटल व्योम duplicate_memory_biपंचांगap(काष्ठा memory_biपंचांगap *dst,
+				    काष्ठा memory_biपंचांगap *src)
+अणु
+	अचिन्हित दीर्घ pfn;
 
 	memory_bm_position_reset(src);
 	pfn = memory_bm_next_pfn(src);
-	while (pfn != BM_END_OF_MAP) {
+	जबतक (pfn != BM_END_OF_MAP) अणु
 		memory_bm_set_bit(dst, pfn);
 		pfn = memory_bm_next_pfn(src);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * mark_unsafe_pages - Mark pages that were used before hibernation.
+ * mark_unsafe_pages - Mark pages that were used beक्रमe hibernation.
  *
- * Mark the pages that cannot be used for storing the image during restoration,
- * because they conflict with the pages that had been used before hibernation.
+ * Mark the pages that cannot be used क्रम storing the image during restoration,
+ * because they conflict with the pages that had been used beक्रमe hibernation.
  */
-static void mark_unsafe_pages(struct memory_bitmap *bm)
-{
-	unsigned long pfn;
+अटल व्योम mark_unsafe_pages(काष्ठा memory_biपंचांगap *bm)
+अणु
+	अचिन्हित दीर्घ pfn;
 
-	/* Clear the "free"/"unsafe" bit for all PFNs */
-	memory_bm_position_reset(free_pages_map);
-	pfn = memory_bm_next_pfn(free_pages_map);
-	while (pfn != BM_END_OF_MAP) {
-		memory_bm_clear_current(free_pages_map);
-		pfn = memory_bm_next_pfn(free_pages_map);
-	}
+	/* Clear the "free"/"unsafe" bit क्रम all PFNs */
+	memory_bm_position_reset(मुक्त_pages_map);
+	pfn = memory_bm_next_pfn(मुक्त_pages_map);
+	जबतक (pfn != BM_END_OF_MAP) अणु
+		memory_bm_clear_current(मुक्त_pages_map);
+		pfn = memory_bm_next_pfn(मुक्त_pages_map);
+	पूर्ण
 
 	/* Mark pages that correspond to the "original" PFNs as "unsafe" */
-	duplicate_memory_bitmap(free_pages_map, bm);
+	duplicate_memory_biपंचांगap(मुक्त_pages_map, bm);
 
 	allocated_unsafe_pages = 0;
-}
+पूर्ण
 
-static int check_header(struct swsusp_info *info)
-{
-	const char *reason;
+अटल पूर्णांक check_header(काष्ठा swsusp_info *info)
+अणु
+	स्थिर अक्षर *reason;
 
 	reason = check_image_kernel(info);
-	if (!reason && info->num_physpages != get_num_physpages())
+	अगर (!reason && info->num_physpages != get_num_physpages())
 		reason = "memory size";
-	if (reason) {
+	अगर (reason) अणु
 		pr_err("Image mismatch: %s\n", reason);
-		return -EPERM;
-	}
-	return 0;
-}
+		वापस -EPERM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * load header - Check the image header and copy the data from it.
  */
-static int load_header(struct swsusp_info *info)
-{
-	int error;
+अटल पूर्णांक load_header(काष्ठा swsusp_info *info)
+अणु
+	पूर्णांक error;
 
-	restore_pblist = NULL;
+	restore_pblist = शून्य;
 	error = check_header(info);
-	if (!error) {
+	अगर (!error) अणु
 		nr_copy_pages = info->image_pages;
 		nr_meta_pages = info->pages - info->image_pages - 1;
-	}
-	return error;
-}
+	पूर्ण
+	वापस error;
+पूर्ण
 
 /**
- * unpack_orig_pfns - Set bits corresponding to given PFNs in a memory bitmap.
- * @bm: Memory bitmap.
+ * unpack_orig_pfns - Set bits corresponding to given PFNs in a memory biपंचांगap.
+ * @bm: Memory biपंचांगap.
  * @buf: Area of memory containing the PFNs.
  *
- * For each element of the array pointed to by @buf (1 page at a time), set the
+ * For each element of the array poपूर्णांकed to by @buf (1 page at a समय), set the
  * corresponding bit in @bm.
  */
-static int unpack_orig_pfns(unsigned long *buf, struct memory_bitmap *bm)
-{
-	int j;
+अटल पूर्णांक unpack_orig_pfns(अचिन्हित दीर्घ *buf, काष्ठा memory_biपंचांगap *bm)
+अणु
+	पूर्णांक j;
 
-	for (j = 0; j < PAGE_SIZE / sizeof(long); j++) {
-		if (unlikely(buf[j] == BM_END_OF_MAP))
-			break;
+	क्रम (j = 0; j < PAGE_SIZE / माप(दीर्घ); j++) अणु
+		अगर (unlikely(buf[j] == BM_END_OF_MAP))
+			अवरोध;
 
-		if (pfn_valid(buf[j]) && memory_bm_pfn_present(bm, buf[j]))
+		अगर (pfn_valid(buf[j]) && memory_bm_pfn_present(bm, buf[j]))
 			memory_bm_set_bit(bm, buf[j]);
-		else
-			return -EFAULT;
-	}
+		अन्यथा
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 /*
- * struct highmem_pbe is used for creating the list of highmem pages that
+ * काष्ठा highmem_pbe is used क्रम creating the list of highmem pages that
  * should be restored atomically during the resume from disk, because the page
- * frames they have occupied before the suspend are in use.
+ * frames they have occupied beक्रमe the suspend are in use.
  */
-struct highmem_pbe {
-	struct page *copy_page;	/* data is here now */
-	struct page *orig_page;	/* data was here before the suspend */
-	struct highmem_pbe *next;
-};
+काष्ठा highmem_pbe अणु
+	काष्ठा page *copy_page;	/* data is here now */
+	काष्ठा page *orig_page;	/* data was here beक्रमe the suspend */
+	काष्ठा highmem_pbe *next;
+पूर्ण;
 
 /*
- * List of highmem PBEs needed for restoring the highmem pages that were
- * allocated before the suspend and included in the suspend image, but have
+ * List of highmem PBEs needed क्रम restoring the highmem pages that were
+ * allocated beक्रमe the suspend and included in the suspend image, but have
  * also been allocated by the "resume" kernel, so their contents cannot be
  * written directly to their "original" page frames.
  */
-static struct highmem_pbe *highmem_pblist;
+अटल काष्ठा highmem_pbe *highmem_pblist;
 
 /**
  * count_highmem_image_pages - Compute the number of highmem pages in the image.
- * @bm: Memory bitmap.
+ * @bm: Memory biपंचांगap.
  *
  * The bits in @bm that correspond to image pages are assumed to be set.
  */
-static unsigned int count_highmem_image_pages(struct memory_bitmap *bm)
-{
-	unsigned long pfn;
-	unsigned int cnt = 0;
+अटल अचिन्हित पूर्णांक count_highmem_image_pages(काष्ठा memory_biपंचांगap *bm)
+अणु
+	अचिन्हित दीर्घ pfn;
+	अचिन्हित पूर्णांक cnt = 0;
 
 	memory_bm_position_reset(bm);
 	pfn = memory_bm_next_pfn(bm);
-	while (pfn != BM_END_OF_MAP) {
-		if (PageHighMem(pfn_to_page(pfn)))
+	जबतक (pfn != BM_END_OF_MAP) अणु
+		अगर (PageHighMem(pfn_to_page(pfn)))
 			cnt++;
 
 		pfn = memory_bm_next_pfn(bm);
-	}
-	return cnt;
-}
+	पूर्ण
+	वापस cnt;
+पूर्ण
 
-static unsigned int safe_highmem_pages;
+अटल अचिन्हित पूर्णांक safe_highmem_pages;
 
-static struct memory_bitmap *safe_highmem_bm;
+अटल काष्ठा memory_biपंचांगap *safe_highmem_bm;
 
 /**
- * prepare_highmem_image - Allocate memory for loading highmem data from image.
- * @bm: Pointer to an uninitialized memory bitmap structure.
- * @nr_highmem_p: Pointer to the number of highmem image pages.
+ * prepare_highmem_image - Allocate memory क्रम loading highmem data from image.
+ * @bm: Poपूर्णांकer to an uninitialized memory biपंचांगap काष्ठाure.
+ * @nr_highmem_p: Poपूर्णांकer to the number of highmem image pages.
  *
  * Try to allocate as many highmem pages as there are highmem image pages
- * (@nr_highmem_p points to the variable containing the number of highmem image
+ * (@nr_highmem_p poपूर्णांकs to the variable containing the number of highmem image
  * pages).  The pages that are "safe" (ie. will not be overwritten when the
  * hibernation image is restored entirely) have the corresponding bits set in
  * @bm (it must be unitialized).
  *
- * NOTE: This function should not be called if there are no highmem image pages.
+ * NOTE: This function should not be called अगर there are no highmem image pages.
  */
-static int prepare_highmem_image(struct memory_bitmap *bm,
-				 unsigned int *nr_highmem_p)
-{
-	unsigned int to_alloc;
+अटल पूर्णांक prepare_highmem_image(काष्ठा memory_biपंचांगap *bm,
+				 अचिन्हित पूर्णांक *nr_highmem_p)
+अणु
+	अचिन्हित पूर्णांक to_alloc;
 
-	if (memory_bm_create(bm, GFP_ATOMIC, PG_SAFE))
-		return -ENOMEM;
+	अगर (memory_bm_create(bm, GFP_ATOMIC, PG_SAFE))
+		वापस -ENOMEM;
 
-	if (get_highmem_buffer(PG_SAFE))
-		return -ENOMEM;
+	अगर (get_highmem_buffer(PG_SAFE))
+		वापस -ENOMEM;
 
-	to_alloc = count_free_highmem_pages();
-	if (to_alloc > *nr_highmem_p)
+	to_alloc = count_मुक्त_highmem_pages();
+	अगर (to_alloc > *nr_highmem_p)
 		to_alloc = *nr_highmem_p;
-	else
+	अन्यथा
 		*nr_highmem_p = to_alloc;
 
 	safe_highmem_pages = 0;
-	while (to_alloc-- > 0) {
-		struct page *page;
+	जबतक (to_alloc-- > 0) अणु
+		काष्ठा page *page;
 
 		page = alloc_page(__GFP_HIGHMEM);
-		if (!swsusp_page_is_free(page)) {
-			/* The page is "safe", set its bit the bitmap */
+		अगर (!swsusp_page_is_मुक्त(page)) अणु
+			/* The page is "safe", set its bit the biपंचांगap */
 			memory_bm_set_bit(bm, page_to_pfn(page));
 			safe_highmem_pages++;
-		}
+		पूर्ण
 		/* Mark the page as allocated */
-		swsusp_set_page_forbidden(page);
-		swsusp_set_page_free(page);
-	}
+		swsusp_set_page_क्रमbidden(page);
+		swsusp_set_page_मुक्त(page);
+	पूर्ण
 	memory_bm_position_reset(bm);
 	safe_highmem_bm = bm;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct page *last_highmem_page;
+अटल काष्ठा page *last_highmem_page;
 
 /**
  * get_highmem_page_buffer - Prepare a buffer to store a highmem image page.
  *
- * For a given highmem image page get a buffer that suspend_write_next() should
- * return to its caller to write to.
+ * For a given highmem image page get a buffer that suspend_ग_लिखो_next() should
+ * वापस to its caller to ग_लिखो to.
  *
  * If the page is to be saved to its "original" page frame or a copy of
- * the page is to be made in the highmem, @buffer is returned.  Otherwise,
+ * the page is to be made in the highmem, @buffer is वापसed.  Otherwise,
  * the copy of the page is to be made in normal memory, so the address of
- * the copy is returned.
+ * the copy is वापसed.
  *
- * If @buffer is returned, the caller of suspend_write_next() will write
+ * If @buffer is वापसed, the caller of suspend_ग_लिखो_next() will ग_लिखो
  * the page's contents to @buffer, so they will have to be copied to the
- * right location on the next call to suspend_write_next() and it is done
- * with the help of copy_last_highmem_page().  For this purpose, if
- * @buffer is returned, @last_highmem_page is set to the page to which
+ * right location on the next call to suspend_ग_लिखो_next() and it is करोne
+ * with the help of copy_last_highmem_page().  For this purpose, अगर
+ * @buffer is वापसed, @last_highmem_page is set to the page to which
  * the data will have to be copied from @buffer.
  */
-static void *get_highmem_page_buffer(struct page *page,
-				     struct chain_allocator *ca)
-{
-	struct highmem_pbe *pbe;
-	void *kaddr;
+अटल व्योम *get_highmem_page_buffer(काष्ठा page *page,
+				     काष्ठा chain_allocator *ca)
+अणु
+	काष्ठा highmem_pbe *pbe;
+	व्योम *kaddr;
 
-	if (swsusp_page_is_forbidden(page) && swsusp_page_is_free(page)) {
+	अगर (swsusp_page_is_क्रमbidden(page) && swsusp_page_is_मुक्त(page)) अणु
 		/*
 		 * We have allocated the "original" page frame and we can
 		 * use it directly to store the loaded page.
 		 */
 		last_highmem_page = page;
-		return buffer;
-	}
+		वापस buffer;
+	पूर्ण
 	/*
 	 * The "original" page frame has not been allocated and we have to
 	 * use a "safe" page frame to store the loaded page.
 	 */
-	pbe = chain_alloc(ca, sizeof(struct highmem_pbe));
-	if (!pbe) {
-		swsusp_free();
-		return ERR_PTR(-ENOMEM);
-	}
+	pbe = chain_alloc(ca, माप(काष्ठा highmem_pbe));
+	अगर (!pbe) अणु
+		swsusp_मुक्त();
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	pbe->orig_page = page;
-	if (safe_highmem_pages > 0) {
-		struct page *tmp;
+	अगर (safe_highmem_pages > 0) अणु
+		काष्ठा page *पंचांगp;
 
 		/* Copy of the page will be stored in high memory */
 		kaddr = buffer;
-		tmp = pfn_to_page(memory_bm_next_pfn(safe_highmem_bm));
+		पंचांगp = pfn_to_page(memory_bm_next_pfn(safe_highmem_bm));
 		safe_highmem_pages--;
-		last_highmem_page = tmp;
-		pbe->copy_page = tmp;
-	} else {
+		last_highmem_page = पंचांगp;
+		pbe->copy_page = पंचांगp;
+	पूर्ण अन्यथा अणु
 		/* Copy of the page will be stored in normal memory */
 		kaddr = safe_pages_list;
 		safe_pages_list = safe_pages_list->next;
 		pbe->copy_page = virt_to_page(kaddr);
-	}
+	पूर्ण
 	pbe->next = highmem_pblist;
 	highmem_pblist = pbe;
-	return kaddr;
-}
+	वापस kaddr;
+पूर्ण
 
 /**
  * copy_last_highmem_page - Copy most the most recent highmem image page.
  *
  * Copy the contents of a highmem image from @buffer, where the caller of
- * snapshot_write_next() has stored them, to the right location represented by
+ * snapshot_ग_लिखो_next() has stored them, to the right location represented by
  * @last_highmem_page .
  */
-static void copy_last_highmem_page(void)
-{
-	if (last_highmem_page) {
-		void *dst;
+अटल व्योम copy_last_highmem_page(व्योम)
+अणु
+	अगर (last_highmem_page) अणु
+		व्योम *dst;
 
 		dst = kmap_atomic(last_highmem_page);
 		copy_page(dst, buffer);
 		kunmap_atomic(dst);
-		last_highmem_page = NULL;
-	}
-}
+		last_highmem_page = शून्य;
+	पूर्ण
+पूर्ण
 
-static inline int last_highmem_page_copied(void)
-{
-	return !last_highmem_page;
-}
+अटल अंतरभूत पूर्णांक last_highmem_page_copied(व्योम)
+अणु
+	वापस !last_highmem_page;
+पूर्ण
 
-static inline void free_highmem_data(void)
-{
-	if (safe_highmem_bm)
-		memory_bm_free(safe_highmem_bm, PG_UNSAFE_CLEAR);
+अटल अंतरभूत व्योम मुक्त_highmem_data(व्योम)
+अणु
+	अगर (safe_highmem_bm)
+		memory_bm_मुक्त(safe_highmem_bm, PG_UNSAFE_CLEAR);
 
-	if (buffer)
-		free_image_page(buffer, PG_UNSAFE_CLEAR);
-}
-#else
-static unsigned int count_highmem_image_pages(struct memory_bitmap *bm) { return 0; }
+	अगर (buffer)
+		मुक्त_image_page(buffer, PG_UNSAFE_CLEAR);
+पूर्ण
+#अन्यथा
+अटल अचिन्हित पूर्णांक count_highmem_image_pages(काष्ठा memory_biपंचांगap *bm) अणु वापस 0; पूर्ण
 
-static inline int prepare_highmem_image(struct memory_bitmap *bm,
-					unsigned int *nr_highmem_p) { return 0; }
+अटल अंतरभूत पूर्णांक prepare_highmem_image(काष्ठा memory_biपंचांगap *bm,
+					अचिन्हित पूर्णांक *nr_highmem_p) अणु वापस 0; पूर्ण
 
-static inline void *get_highmem_page_buffer(struct page *page,
-					    struct chain_allocator *ca)
-{
-	return ERR_PTR(-EINVAL);
-}
+अटल अंतरभूत व्योम *get_highmem_page_buffer(काष्ठा page *page,
+					    काष्ठा chain_allocator *ca)
+अणु
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static inline void copy_last_highmem_page(void) {}
-static inline int last_highmem_page_copied(void) { return 1; }
-static inline void free_highmem_data(void) {}
-#endif /* CONFIG_HIGHMEM */
+अटल अंतरभूत व्योम copy_last_highmem_page(व्योम) अणुपूर्ण
+अटल अंतरभूत पूर्णांक last_highmem_page_copied(व्योम) अणु वापस 1; पूर्ण
+अटल अंतरभूत व्योम मुक्त_highmem_data(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
-#define PBES_PER_LINKED_PAGE	(LINKED_PAGE_DATA_SIZE / sizeof(struct pbe))
+#घोषणा PBES_PER_LINKED_PAGE	(LINKED_PAGE_DATA_SIZE / माप(काष्ठा pbe))
 
 /**
- * prepare_image - Make room for loading hibernation image.
- * @new_bm: Unitialized memory bitmap structure.
- * @bm: Memory bitmap with unsafe pages marked.
+ * prepare_image - Make room क्रम loading hibernation image.
+ * @new_bm: Unitialized memory biपंचांगap काष्ठाure.
+ * @bm: Memory biपंचांगap with unsafe pages marked.
  *
  * Use @bm to mark the pages that will be overwritten in the process of
- * restoring the system memory state from the suspend image ("unsafe" pages)
- * and allocate memory for the image.
+ * restoring the प्रणाली memory state from the suspend image ("unsafe" pages)
+ * and allocate memory क्रम the image.
  *
- * The idea is to allocate a new memory bitmap first and then allocate
- * as many pages as needed for image data, but without specifying what those
- * pages will be used for just yet.  Instead, we mark them all as allocated and
- * create a lists of "safe" pages to be used later.  On systems with high
+ * The idea is to allocate a new memory biपंचांगap first and then allocate
+ * as many pages as needed क्रम image data, but without specअगरying what those
+ * pages will be used क्रम just yet.  Instead, we mark them all as allocated and
+ * create a lists of "safe" pages to be used later.  On प्रणालीs with high
  * memory a list of "safe" highmem pages is created too.
  */
-static int prepare_image(struct memory_bitmap *new_bm, struct memory_bitmap *bm)
-{
-	unsigned int nr_pages, nr_highmem;
-	struct linked_page *lp;
-	int error;
+अटल पूर्णांक prepare_image(काष्ठा memory_biपंचांगap *new_bm, काष्ठा memory_biपंचांगap *bm)
+अणु
+	अचिन्हित पूर्णांक nr_pages, nr_highmem;
+	काष्ठा linked_page *lp;
+	पूर्णांक error;
 
 	/* If there is no highmem, the buffer will not be necessary */
-	free_image_page(buffer, PG_UNSAFE_CLEAR);
-	buffer = NULL;
+	मुक्त_image_page(buffer, PG_UNSAFE_CLEAR);
+	buffer = शून्य;
 
 	nr_highmem = count_highmem_image_pages(bm);
 	mark_unsafe_pages(bm);
 
 	error = memory_bm_create(new_bm, GFP_ATOMIC, PG_SAFE);
-	if (error)
-		goto Free;
+	अगर (error)
+		जाओ Free;
 
-	duplicate_memory_bitmap(new_bm, bm);
-	memory_bm_free(bm, PG_UNSAFE_KEEP);
-	if (nr_highmem > 0) {
+	duplicate_memory_biपंचांगap(new_bm, bm);
+	memory_bm_मुक्त(bm, PG_UNSAFE_KEEP);
+	अगर (nr_highmem > 0) अणु
 		error = prepare_highmem_image(bm, &nr_highmem);
-		if (error)
-			goto Free;
-	}
+		अगर (error)
+			जाओ Free;
+	पूर्ण
 	/*
-	 * Reserve some safe pages for potential later use.
+	 * Reserve some safe pages क्रम potential later use.
 	 *
-	 * NOTE: This way we make sure there will be enough safe pages for the
+	 * NOTE: This way we make sure there will be enough safe pages क्रम the
 	 * chain_alloc() in get_buffer().  It is a bit wasteful, but
 	 * nr_copy_pages cannot be greater than 50% of the memory anyway.
 	 *
@@ -2531,194 +2532,194 @@ static int prepare_image(struct memory_bitmap *new_bm, struct memory_bitmap *bm)
 	 */
 	nr_pages = nr_copy_pages - nr_highmem - allocated_unsafe_pages;
 	nr_pages = DIV_ROUND_UP(nr_pages, PBES_PER_LINKED_PAGE);
-	while (nr_pages > 0) {
+	जबतक (nr_pages > 0) अणु
 		lp = get_image_page(GFP_ATOMIC, PG_SAFE);
-		if (!lp) {
+		अगर (!lp) अणु
 			error = -ENOMEM;
-			goto Free;
-		}
+			जाओ Free;
+		पूर्ण
 		lp->next = safe_pages_list;
 		safe_pages_list = lp;
 		nr_pages--;
-	}
-	/* Preallocate memory for the image */
+	पूर्ण
+	/* Pपुनः_स्मृतिate memory क्रम the image */
 	nr_pages = nr_copy_pages - nr_highmem - allocated_unsafe_pages;
-	while (nr_pages > 0) {
-		lp = (struct linked_page *)get_zeroed_page(GFP_ATOMIC);
-		if (!lp) {
+	जबतक (nr_pages > 0) अणु
+		lp = (काष्ठा linked_page *)get_zeroed_page(GFP_ATOMIC);
+		अगर (!lp) अणु
 			error = -ENOMEM;
-			goto Free;
-		}
-		if (!swsusp_page_is_free(virt_to_page(lp))) {
+			जाओ Free;
+		पूर्ण
+		अगर (!swsusp_page_is_मुक्त(virt_to_page(lp))) अणु
 			/* The page is "safe", add it to the list */
 			lp->next = safe_pages_list;
 			safe_pages_list = lp;
-		}
+		पूर्ण
 		/* Mark the page as allocated */
-		swsusp_set_page_forbidden(virt_to_page(lp));
-		swsusp_set_page_free(virt_to_page(lp));
+		swsusp_set_page_क्रमbidden(virt_to_page(lp));
+		swsusp_set_page_मुक्त(virt_to_page(lp));
 		nr_pages--;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
  Free:
-	swsusp_free();
-	return error;
-}
+	swsusp_मुक्त();
+	वापस error;
+पूर्ण
 
 /**
  * get_buffer - Get the address to store the next image data page.
  *
- * Get the address that snapshot_write_next() should return to its caller to
- * write to.
+ * Get the address that snapshot_ग_लिखो_next() should वापस to its caller to
+ * ग_लिखो to.
  */
-static void *get_buffer(struct memory_bitmap *bm, struct chain_allocator *ca)
-{
-	struct pbe *pbe;
-	struct page *page;
-	unsigned long pfn = memory_bm_next_pfn(bm);
+अटल व्योम *get_buffer(काष्ठा memory_biपंचांगap *bm, काष्ठा chain_allocator *ca)
+अणु
+	काष्ठा pbe *pbe;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ pfn = memory_bm_next_pfn(bm);
 
-	if (pfn == BM_END_OF_MAP)
-		return ERR_PTR(-EFAULT);
+	अगर (pfn == BM_END_OF_MAP)
+		वापस ERR_PTR(-EFAULT);
 
 	page = pfn_to_page(pfn);
-	if (PageHighMem(page))
-		return get_highmem_page_buffer(page, ca);
+	अगर (PageHighMem(page))
+		वापस get_highmem_page_buffer(page, ca);
 
-	if (swsusp_page_is_forbidden(page) && swsusp_page_is_free(page))
+	अगर (swsusp_page_is_क्रमbidden(page) && swsusp_page_is_मुक्त(page))
 		/*
 		 * We have allocated the "original" page frame and we can
 		 * use it directly to store the loaded page.
 		 */
-		return page_address(page);
+		वापस page_address(page);
 
 	/*
 	 * The "original" page frame has not been allocated and we have to
 	 * use a "safe" page frame to store the loaded page.
 	 */
-	pbe = chain_alloc(ca, sizeof(struct pbe));
-	if (!pbe) {
-		swsusp_free();
-		return ERR_PTR(-ENOMEM);
-	}
+	pbe = chain_alloc(ca, माप(काष्ठा pbe));
+	अगर (!pbe) अणु
+		swsusp_मुक्त();
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	pbe->orig_address = page_address(page);
 	pbe->address = safe_pages_list;
 	safe_pages_list = safe_pages_list->next;
 	pbe->next = restore_pblist;
 	restore_pblist = pbe;
-	return pbe->address;
-}
+	वापस pbe->address;
+पूर्ण
 
 /**
- * snapshot_write_next - Get the address to store the next image page.
- * @handle: Snapshot handle structure to guide the writing.
+ * snapshot_ग_लिखो_next - Get the address to store the next image page.
+ * @handle: Snapshot handle काष्ठाure to guide the writing.
  *
- * On the first call, @handle should point to a zeroed snapshot_handle
- * structure.  The structure gets populated then and a pointer to it should be
- * passed to this function every next time.
+ * On the first call, @handle should poपूर्णांक to a zeroed snapshot_handle
+ * काष्ठाure.  The काष्ठाure माला_लो populated then and a poपूर्णांकer to it should be
+ * passed to this function every next समय.
  *
- * On success, the function returns a positive number.  Then, the caller
- * is allowed to write up to the returned number of bytes to the memory
+ * On success, the function वापसs a positive number.  Then, the caller
+ * is allowed to ग_लिखो up to the वापसed number of bytes to the memory
  * location computed by the data_of() macro.
  *
- * The function returns 0 to indicate the "end of file" condition.  Negative
- * numbers are returned on errors, in which cases the structure pointed to by
+ * The function वापसs 0 to indicate the "end of file" condition.  Negative
+ * numbers are वापसed on errors, in which हालs the काष्ठाure poपूर्णांकed to by
  * @handle is not updated and should not be used any more.
  */
-int snapshot_write_next(struct snapshot_handle *handle)
-{
-	static struct chain_allocator ca;
-	int error = 0;
+पूर्णांक snapshot_ग_लिखो_next(काष्ठा snapshot_handle *handle)
+अणु
+	अटल काष्ठा chain_allocator ca;
+	पूर्णांक error = 0;
 
-	/* Check if we have already loaded the entire image */
-	if (handle->cur > 1 && handle->cur > nr_meta_pages + nr_copy_pages)
-		return 0;
+	/* Check अगर we have alपढ़ोy loaded the entire image */
+	अगर (handle->cur > 1 && handle->cur > nr_meta_pages + nr_copy_pages)
+		वापस 0;
 
-	handle->sync_read = 1;
+	handle->sync_पढ़ो = 1;
 
-	if (!handle->cur) {
-		if (!buffer)
-			/* This makes the buffer be freed by swsusp_free() */
+	अगर (!handle->cur) अणु
+		अगर (!buffer)
+			/* This makes the buffer be मुक्तd by swsusp_मुक्त() */
 			buffer = get_image_page(GFP_ATOMIC, PG_ANY);
 
-		if (!buffer)
-			return -ENOMEM;
+		अगर (!buffer)
+			वापस -ENOMEM;
 
 		handle->buffer = buffer;
-	} else if (handle->cur == 1) {
+	पूर्ण अन्यथा अगर (handle->cur == 1) अणु
 		error = load_header(buffer);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
-		safe_pages_list = NULL;
+		safe_pages_list = शून्य;
 
 		error = memory_bm_create(&copy_bm, GFP_ATOMIC, PG_ANY);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
 		hibernate_restore_protection_begin();
-	} else if (handle->cur <= nr_meta_pages + 1) {
+	पूर्ण अन्यथा अगर (handle->cur <= nr_meta_pages + 1) अणु
 		error = unpack_orig_pfns(buffer, &copy_bm);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
-		if (handle->cur == nr_meta_pages + 1) {
+		अगर (handle->cur == nr_meta_pages + 1) अणु
 			error = prepare_image(&orig_bm, &copy_bm);
-			if (error)
-				return error;
+			अगर (error)
+				वापस error;
 
 			chain_init(&ca, GFP_ATOMIC, PG_SAFE);
 			memory_bm_position_reset(&orig_bm);
-			restore_pblist = NULL;
+			restore_pblist = शून्य;
 			handle->buffer = get_buffer(&orig_bm, &ca);
-			handle->sync_read = 0;
-			if (IS_ERR(handle->buffer))
-				return PTR_ERR(handle->buffer);
-		}
-	} else {
+			handle->sync_पढ़ो = 0;
+			अगर (IS_ERR(handle->buffer))
+				वापस PTR_ERR(handle->buffer);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		copy_last_highmem_page();
 		hibernate_restore_protect_page(handle->buffer);
 		handle->buffer = get_buffer(&orig_bm, &ca);
-		if (IS_ERR(handle->buffer))
-			return PTR_ERR(handle->buffer);
-		if (handle->buffer != buffer)
-			handle->sync_read = 0;
-	}
+		अगर (IS_ERR(handle->buffer))
+			वापस PTR_ERR(handle->buffer);
+		अगर (handle->buffer != buffer)
+			handle->sync_पढ़ो = 0;
+	पूर्ण
 	handle->cur++;
-	return PAGE_SIZE;
-}
+	वापस PAGE_SIZE;
+पूर्ण
 
 /**
- * snapshot_write_finalize - Complete the loading of a hibernation image.
+ * snapshot_ग_लिखो_finalize - Complete the loading of a hibernation image.
  *
- * Must be called after the last call to snapshot_write_next() in case the last
+ * Must be called after the last call to snapshot_ग_लिखो_next() in हाल the last
  * page in the image happens to be a highmem page and its contents should be
- * stored in highmem.  Additionally, it recycles bitmap memory that's not
+ * stored in highmem.  Additionally, it recycles biपंचांगap memory that's not
  * necessary any more.
  */
-void snapshot_write_finalize(struct snapshot_handle *handle)
-{
+व्योम snapshot_ग_लिखो_finalize(काष्ठा snapshot_handle *handle)
+अणु
 	copy_last_highmem_page();
 	hibernate_restore_protect_page(handle->buffer);
-	/* Do that only if we have loaded the image entirely */
-	if (handle->cur > 1 && handle->cur > nr_meta_pages + nr_copy_pages) {
+	/* Do that only अगर we have loaded the image entirely */
+	अगर (handle->cur > 1 && handle->cur > nr_meta_pages + nr_copy_pages) अणु
 		memory_bm_recycle(&orig_bm);
-		free_highmem_data();
-	}
-}
+		मुक्त_highmem_data();
+	पूर्ण
+पूर्ण
 
-int snapshot_image_loaded(struct snapshot_handle *handle)
-{
-	return !(!nr_copy_pages || !last_highmem_page_copied() ||
+पूर्णांक snapshot_image_loaded(काष्ठा snapshot_handle *handle)
+अणु
+	वापस !(!nr_copy_pages || !last_highmem_page_copied() ||
 			handle->cur <= nr_meta_pages + nr_copy_pages);
-}
+पूर्ण
 
-#ifdef CONFIG_HIGHMEM
-/* Assumes that @buf is ready and points to a "safe" page */
-static inline void swap_two_pages_data(struct page *p1, struct page *p2,
-				       void *buf)
-{
-	void *kaddr1, *kaddr2;
+#अगर_घोषित CONFIG_HIGHMEM
+/* Assumes that @buf is पढ़ोy and poपूर्णांकs to a "safe" page */
+अटल अंतरभूत व्योम swap_two_pages_data(काष्ठा page *p1, काष्ठा page *p2,
+				       व्योम *buf)
+अणु
+	व्योम *kaddr1, *kaddr2;
 
 	kaddr1 = kmap_atomic(p1);
 	kaddr2 = kmap_atomic(p2);
@@ -2727,35 +2728,35 @@ static inline void swap_two_pages_data(struct page *p1, struct page *p2,
 	copy_page(kaddr2, buf);
 	kunmap_atomic(kaddr2);
 	kunmap_atomic(kaddr1);
-}
+पूर्ण
 
 /**
- * restore_highmem - Put highmem image pages into their original locations.
+ * restore_highmem - Put highmem image pages पूर्णांकo their original locations.
  *
- * For each highmem page that was in use before hibernation and is included in
+ * For each highmem page that was in use beक्रमe hibernation and is included in
  * the image, and also has been allocated by the "restore" kernel, swap its
  * current contents with the previous (ie. "before hibernation") ones.
  *
  * If the restore eventually fails, we can call this function once again and
  * restore the highmem state as seen by the restore kernel.
  */
-int restore_highmem(void)
-{
-	struct highmem_pbe *pbe = highmem_pblist;
-	void *buf;
+पूर्णांक restore_highmem(व्योम)
+अणु
+	काष्ठा highmem_pbe *pbe = highmem_pblist;
+	व्योम *buf;
 
-	if (!pbe)
-		return 0;
+	अगर (!pbe)
+		वापस 0;
 
 	buf = get_image_page(GFP_ATOMIC, PG_SAFE);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	while (pbe) {
+	जबतक (pbe) अणु
 		swap_two_pages_data(pbe->copy_page, pbe->orig_page, buf);
 		pbe = pbe->next;
-	}
-	free_image_page(buf, PG_UNSAFE_CLEAR);
-	return 0;
-}
-#endif /* CONFIG_HIGHMEM */
+	पूर्ण
+	मुक्त_image_page(buf, PG_UNSAFE_CLEAR);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HIGHMEM */

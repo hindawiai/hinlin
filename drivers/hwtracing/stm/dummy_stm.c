@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * A dummy STM device for stm/stm_source class testing.
+ * A dummy STM device क्रम sपंचांग/sपंचांग_source class testing.
  * Copyright (c) 2014, Intel Corporation.
  *
- * STM class implements generic infrastructure for  System Trace Module devices
- * as defined in MIPI STPv2 specification.
+ * STM class implements generic infraकाष्ठाure क्रम  System Trace Module devices
+ * as defined in MIPI STPv2 specअगरication.
  */
 
-#undef DEBUG
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/stm.h>
-#include <uapi/linux/stm.h>
+#अघोषित DEBUG
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sपंचांग.h>
+#समावेश <uapi/linux/sपंचांग.h>
 
-static ssize_t notrace
-dummy_stm_packet(struct stm_data *stm_data, unsigned int master,
-		 unsigned int channel, unsigned int packet, unsigned int flags,
-		 unsigned int size, const unsigned char *payload)
-{
-#ifdef DEBUG
+अटल sमाप_प्रकार notrace
+dummy_sपंचांग_packet(काष्ठा sपंचांग_data *sपंचांग_data, अचिन्हित पूर्णांक master,
+		 अचिन्हित पूर्णांक channel, अचिन्हित पूर्णांक packet, अचिन्हित पूर्णांक flags,
+		 अचिन्हित पूर्णांक size, स्थिर अचिन्हित अक्षर *payload)
+अणु
+#अगर_घोषित DEBUG
 	u64 pl = 0;
 
-	if (payload)
+	अगर (payload)
 		pl = *(u64 *)payload;
 
-	if (size < 8)
+	अगर (size < 8)
 		pl &= (1ull << (size * 8)) - 1;
-	trace_printk("[%u:%u] [pkt: %x/%x] (%llx)\n", master, channel,
+	trace_prपूर्णांकk("[%u:%u] [pkt: %x/%x] (%llx)\n", master, channel,
 		     packet, size, pl);
-#endif
-	return size;
-}
+#पूर्ण_अगर
+	वापस size;
+पूर्ण
 
-#define DUMMY_STM_MAX 32
+#घोषणा DUMMY_STM_MAX 32
 
-static struct stm_data dummy_stm[DUMMY_STM_MAX];
+अटल काष्ठा sपंचांग_data dummy_sपंचांग[DUMMY_STM_MAX];
 
-static int nr_dummies = 4;
+अटल पूर्णांक nr_dummies = 4;
 
-module_param(nr_dummies, int, 0400);
+module_param(nr_dummies, पूर्णांक, 0400);
 
-static unsigned int fail_mode;
+अटल अचिन्हित पूर्णांक fail_mode;
 
-module_param(fail_mode, int, 0600);
+module_param(fail_mode, पूर्णांक, 0600);
 
-static unsigned int master_min;
+अटल अचिन्हित पूर्णांक master_min;
 
-module_param(master_min, int, 0400);
+module_param(master_min, पूर्णांक, 0400);
 
-static unsigned int master_max = STP_MASTER_MAX;
+अटल अचिन्हित पूर्णांक master_max = STP_MASTER_MAX;
 
-module_param(master_max, int, 0400);
+module_param(master_max, पूर्णांक, 0400);
 
-static unsigned int nr_channels = STP_CHANNEL_MAX;
+अटल अचिन्हित पूर्णांक nr_channels = STP_CHANNEL_MAX;
 
-module_param(nr_channels, int, 0400);
+module_param(nr_channels, पूर्णांक, 0400);
 
-static int dummy_stm_link(struct stm_data *data, unsigned int master,
-			  unsigned int channel)
-{
-	if (fail_mode && (channel & fail_mode))
-		return -EINVAL;
+अटल पूर्णांक dummy_sपंचांग_link(काष्ठा sपंचांग_data *data, अचिन्हित पूर्णांक master,
+			  अचिन्हित पूर्णांक channel)
+अणु
+	अगर (fail_mode && (channel & fail_mode))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dummy_stm_init(void)
-{
-	int i, ret = -ENOMEM;
+अटल पूर्णांक dummy_sपंचांग_init(व्योम)
+अणु
+	पूर्णांक i, ret = -ENOMEM;
 
-	if (nr_dummies < 0 || nr_dummies > DUMMY_STM_MAX)
-		return -EINVAL;
+	अगर (nr_dummies < 0 || nr_dummies > DUMMY_STM_MAX)
+		वापस -EINVAL;
 
-	if (master_min > master_max ||
+	अगर (master_min > master_max ||
 	    master_max > STP_MASTER_MAX ||
 	    nr_channels > STP_CHANNEL_MAX)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	for (i = 0; i < nr_dummies; i++) {
-		dummy_stm[i].name = kasprintf(GFP_KERNEL, "dummy_stm.%d", i);
-		if (!dummy_stm[i].name)
-			goto fail_unregister;
+	क्रम (i = 0; i < nr_dummies; i++) अणु
+		dummy_sपंचांग[i].name = kaप्र_लिखो(GFP_KERNEL, "dummy_stm.%d", i);
+		अगर (!dummy_sपंचांग[i].name)
+			जाओ fail_unरेजिस्टर;
 
-		dummy_stm[i].sw_start		= master_min;
-		dummy_stm[i].sw_end		= master_max;
-		dummy_stm[i].sw_nchannels	= nr_channels;
-		dummy_stm[i].packet		= dummy_stm_packet;
-		dummy_stm[i].link		= dummy_stm_link;
+		dummy_sपंचांग[i].sw_start		= master_min;
+		dummy_sपंचांग[i].sw_end		= master_max;
+		dummy_sपंचांग[i].sw_nchannels	= nr_channels;
+		dummy_sपंचांग[i].packet		= dummy_sपंचांग_packet;
+		dummy_sपंचांग[i].link		= dummy_sपंचांग_link;
 
-		ret = stm_register_device(NULL, &dummy_stm[i], THIS_MODULE);
-		if (ret)
-			goto fail_free;
-	}
+		ret = sपंचांग_रेजिस्टर_device(शून्य, &dummy_sपंचांग[i], THIS_MODULE);
+		अगर (ret)
+			जाओ fail_मुक्त;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-fail_unregister:
-	for (i--; i >= 0; i--) {
-		stm_unregister_device(&dummy_stm[i]);
-fail_free:
-		kfree(dummy_stm[i].name);
-	}
+fail_unरेजिस्टर:
+	क्रम (i--; i >= 0; i--) अणु
+		sपंचांग_unरेजिस्टर_device(&dummy_sपंचांग[i]);
+fail_मुक्त:
+		kमुक्त(dummy_sपंचांग[i].name);
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static void dummy_stm_exit(void)
-{
-	int i;
+अटल व्योम dummy_sपंचांग_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < nr_dummies; i++) {
-		stm_unregister_device(&dummy_stm[i]);
-		kfree(dummy_stm[i].name);
-	}
-}
+	क्रम (i = 0; i < nr_dummies; i++) अणु
+		sपंचांग_unरेजिस्टर_device(&dummy_sपंचांग[i]);
+		kमुक्त(dummy_sपंचांग[i].name);
+	पूर्ण
+पूर्ण
 
-module_init(dummy_stm_init);
-module_exit(dummy_stm_exit);
+module_init(dummy_sपंचांग_init);
+module_निकास(dummy_sपंचांग_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("dummy_stm device");

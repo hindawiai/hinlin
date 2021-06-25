@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * nfsd-specific authentication stuff.
+ * nfsd-specअगरic authentication stuff.
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#ifndef LINUX_NFSD_AUTH_H
-#define LINUX_NFSD_AUTH_H
+#अगर_अघोषित LINUX_NFSD_AUTH_H
+#घोषणा LINUX_NFSD_AUTH_H
 
 /*
  * Set the current process's fsuid/fsgid etc to those of the NFS
  * client user
  */
-int nfsd_setuser(struct svc_rqst *, struct svc_export *);
+पूर्णांक nfsd_setuser(काष्ठा svc_rqst *, काष्ठा svc_export *);
 
-#endif /* LINUX_NFSD_AUTH_H */
+#पूर्ण_अगर /* LINUX_NFSD_AUTH_H */

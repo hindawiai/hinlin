@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __ASM_SPINLOCK_H
-#define __ASM_SPINLOCK_H
-#ifdef __KERNEL__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __ASM_SPINLOCK_H
+#घोषणा __ASM_SPINLOCK_H
+#अगर_घोषित __KERNEL__
 
-#ifdef CONFIG_PPC_QUEUED_SPINLOCKS
-#include <asm/qspinlock.h>
-#include <asm/qrwlock.h>
-#else
-#include <asm/simple_spinlock.h>
-#endif
+#अगर_घोषित CONFIG_PPC_QUEUED_SPINLOCKS
+#समावेश <यंत्र/qspinlock.h>
+#समावेश <यंत्र/qrwlock.h>
+#अन्यथा
+#समावेश <यंत्र/simple_spinlock.h>
+#पूर्ण_अगर
 
 /* See include/linux/spinlock.h */
-#define smp_mb__after_spinlock()	smp_mb()
+#घोषणा smp_mb__after_spinlock()	smp_mb()
 
-#ifndef CONFIG_PARAVIRT_SPINLOCKS
-static inline void pv_spinlocks_init(void) { }
-#endif
+#अगर_अघोषित CONFIG_PARAVIRT_SPINLOCKS
+अटल अंतरभूत व्योम pv_spinlocks_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* __KERNEL__ */
-#endif /* __ASM_SPINLOCK_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* __ASM_SPINLOCK_H */

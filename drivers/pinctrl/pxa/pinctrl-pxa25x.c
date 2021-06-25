@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Marvell PXA25x family pin control
  *
  * Copyright (C) 2016 Robert Jarzmik
  */
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-pxa2xx.h"
+#समावेश "pinctrl-pxa2xx.h"
 
-static const struct pxa_desc_pin pxa25x_pins[] = {
+अटल स्थिर काष्ठा pxa_desc_pin pxa25x_pins[] = अणु
 	PXA_GPIO_ONLY_PIN(PXA_PINCTRL_PIN(0)),
 	PXA_GPIO_PIN(PXA_PINCTRL_PIN(1),
 		     PXA_FUNCTION(0, 1, "GP_RST")),
@@ -208,57 +209,57 @@ static const struct pxa_desc_pin pxa25x_pins[] = {
 	PXA_GPIO_PIN(PXA_PINCTRL_PIN(84),
 		     PXA_FUNCTION(0, 2, "NSSPRXD"),
 		     PXA_FUNCTION(1, 1, "NSSPTXD")),
-};
+पूर्ण;
 
-static int pxa25x_pinctrl_probe(struct platform_device *pdev)
-{
-	int ret, i;
-	void __iomem *base_af[8];
-	void __iomem *base_dir[4];
-	void __iomem *base_sleep[4];
+अटल पूर्णांक pxa25x_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret, i;
+	व्योम __iomem *base_af[8];
+	व्योम __iomem *base_dir[4];
+	व्योम __iomem *base_sleep[4];
 
-	base_af[0] = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base_af[0]))
-		return PTR_ERR(base_af[0]);
+	base_af[0] = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base_af[0]))
+		वापस PTR_ERR(base_af[0]);
 
-	base_dir[0] = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(base_dir[0]))
-		return PTR_ERR(base_dir[0]);
+	base_dir[0] = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(base_dir[0]))
+		वापस PTR_ERR(base_dir[0]);
 
-	base_dir[3] = devm_platform_ioremap_resource(pdev, 2);
-	if (IS_ERR(base_dir[3]))
-		return PTR_ERR(base_dir[3]);
+	base_dir[3] = devm_platक्रमm_ioremap_resource(pdev, 2);
+	अगर (IS_ERR(base_dir[3]))
+		वापस PTR_ERR(base_dir[3]);
 
-	base_sleep[0] = devm_platform_ioremap_resource(pdev, 3);
-	if (IS_ERR(base_sleep[0]))
-		return PTR_ERR(base_sleep[0]);
+	base_sleep[0] = devm_platक्रमm_ioremap_resource(pdev, 3);
+	अगर (IS_ERR(base_sleep[0]))
+		वापस PTR_ERR(base_sleep[0]);
 
-	for (i = 0; i < ARRAY_SIZE(base_af); i++)
-		base_af[i] = base_af[0] + sizeof(base_af[0]) * i;
-	for (i = 0; i < 3; i++)
-		base_dir[i] = base_dir[0] + sizeof(base_dir[0]) * i;
-	for (i = 0; i < ARRAY_SIZE(base_sleep); i++)
-		base_sleep[i] = base_sleep[0] + sizeof(base_af[0]) * i;
+	क्रम (i = 0; i < ARRAY_SIZE(base_af); i++)
+		base_af[i] = base_af[0] + माप(base_af[0]) * i;
+	क्रम (i = 0; i < 3; i++)
+		base_dir[i] = base_dir[0] + माप(base_dir[0]) * i;
+	क्रम (i = 0; i < ARRAY_SIZE(base_sleep); i++)
+		base_sleep[i] = base_sleep[0] + माप(base_af[0]) * i;
 
 	ret = pxa2xx_pinctrl_init(pdev, pxa25x_pins, ARRAY_SIZE(pxa25x_pins),
 				  base_af, base_dir, base_sleep);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id pxa25x_pinctrl_match[] = {
-	{ .compatible = "marvell,pxa25x-pinctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id pxa25x_pinctrl_match[] = अणु
+	अणु .compatible = "marvell,pxa25x-pinctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pxa25x_pinctrl_match);
 
-static struct platform_driver pxa25x_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver pxa25x_pinctrl_driver = अणु
 	.probe	= pxa25x_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "pxa25x-pinctrl",
 		.of_match_table	= pxa25x_pinctrl_match,
-	},
-};
-module_platform_driver(pxa25x_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(pxa25x_pinctrl_driver);
 
 MODULE_AUTHOR("Robert Jarzmik <robert.jarzmik@free.fr>");
 MODULE_DESCRIPTION("Marvell PXA25x pinctrl driver");

@@ -1,142 +1,143 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCI Backend - Handle special overlays for broken devices.
+ * PCI Backend - Handle special overlays क्रम broken devices.
  *
  * Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  * Author: Chris Bookholt <hap10@epoch.ncsc.mil>
  */
 
-#define dev_fmt(fmt) DRV_NAME ": " fmt
+#घोषणा dev_fmt(fmt) DRV_NAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include "pciback.h"
-#include "conf_space.h"
-#include "conf_space_quirks.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश "pciback.h"
+#समावेश "conf_space.h"
+#समावेश "conf_space_quirks.h"
 
 LIST_HEAD(xen_pcibk_quirks);
-static inline const struct pci_device_id *
-match_one_device(const struct pci_device_id *id, const struct pci_dev *dev)
-{
-	if ((id->vendor == PCI_ANY_ID || id->vendor == dev->vendor) &&
+अटल अंतरभूत स्थिर काष्ठा pci_device_id *
+match_one_device(स्थिर काष्ठा pci_device_id *id, स्थिर काष्ठा pci_dev *dev)
+अणु
+	अगर ((id->venकरोr == PCI_ANY_ID || id->venकरोr == dev->venकरोr) &&
 	    (id->device == PCI_ANY_ID || id->device == dev->device) &&
-	    (id->subvendor == PCI_ANY_ID ||
-				id->subvendor == dev->subsystem_vendor) &&
+	    (id->subvenकरोr == PCI_ANY_ID ||
+				id->subvenकरोr == dev->subप्रणाली_venकरोr) &&
 	    (id->subdevice == PCI_ANY_ID ||
-				id->subdevice == dev->subsystem_device) &&
+				id->subdevice == dev->subप्रणाली_device) &&
 	    !((id->class ^ dev->class) & id->class_mask))
-		return id;
-	return NULL;
-}
+		वापस id;
+	वापस शून्य;
+पूर्ण
 
-static struct xen_pcibk_config_quirk *xen_pcibk_find_quirk(struct pci_dev *dev)
-{
-	struct xen_pcibk_config_quirk *tmp_quirk;
+अटल काष्ठा xen_pcibk_config_quirk *xen_pcibk_find_quirk(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा xen_pcibk_config_quirk *पंचांगp_quirk;
 
-	list_for_each_entry(tmp_quirk, &xen_pcibk_quirks, quirks_list)
-		if (match_one_device(&tmp_quirk->devid, dev) != NULL)
-			goto out;
-	tmp_quirk = NULL;
-	dev_printk(KERN_DEBUG, &dev->dev,
+	list_क्रम_each_entry(पंचांगp_quirk, &xen_pcibk_quirks, quirks_list)
+		अगर (match_one_device(&पंचांगp_quirk->devid, dev) != शून्य)
+			जाओ out;
+	पंचांगp_quirk = शून्य;
+	dev_prपूर्णांकk(KERN_DEBUG, &dev->dev,
 		   "quirk didn't match any device known\n");
 out:
-	return tmp_quirk;
-}
+	वापस पंचांगp_quirk;
+पूर्ण
 
-static inline void register_quirk(struct xen_pcibk_config_quirk *quirk)
-{
+अटल अंतरभूत व्योम रेजिस्टर_quirk(काष्ठा xen_pcibk_config_quirk *quirk)
+अणु
 	list_add_tail(&quirk->quirks_list, &xen_pcibk_quirks);
-}
+पूर्ण
 
-int xen_pcibk_field_is_dup(struct pci_dev *dev, unsigned int reg)
-{
-	int ret = 0;
-	struct xen_pcibk_dev_data *dev_data = pci_get_drvdata(dev);
-	struct config_field_entry *cfg_entry;
+पूर्णांक xen_pcibk_field_is_dup(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक reg)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा xen_pcibk_dev_data *dev_data = pci_get_drvdata(dev);
+	काष्ठा config_field_entry *cfg_entry;
 
-	list_for_each_entry(cfg_entry, &dev_data->config_fields, list) {
-		if (OFFSET(cfg_entry) == reg) {
+	list_क्रम_each_entry(cfg_entry, &dev_data->config_fields, list) अणु
+		अगर (OFFSET(cfg_entry) == reg) अणु
 			ret = 1;
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int xen_pcibk_config_quirks_add_field(struct pci_dev *dev, struct config_field
+पूर्णांक xen_pcibk_config_quirks_add_field(काष्ठा pci_dev *dev, काष्ठा config_field
 				    *field)
-{
-	int err = 0;
+अणु
+	पूर्णांक err = 0;
 
-	switch (field->size) {
-	case 1:
-		field->u.b.read = xen_pcibk_read_config_byte;
-		field->u.b.write = xen_pcibk_write_config_byte;
-		break;
-	case 2:
-		field->u.w.read = xen_pcibk_read_config_word;
-		field->u.w.write = xen_pcibk_write_config_word;
-		break;
-	case 4:
-		field->u.dw.read = xen_pcibk_read_config_dword;
-		field->u.dw.write = xen_pcibk_write_config_dword;
-		break;
-	default:
+	चयन (field->size) अणु
+	हाल 1:
+		field->u.b.पढ़ो = xen_pcibk_पढ़ो_config_byte;
+		field->u.b.ग_लिखो = xen_pcibk_ग_लिखो_config_byte;
+		अवरोध;
+	हाल 2:
+		field->u.w.पढ़ो = xen_pcibk_पढ़ो_config_word;
+		field->u.w.ग_लिखो = xen_pcibk_ग_लिखो_config_word;
+		अवरोध;
+	हाल 4:
+		field->u.dw.पढ़ो = xen_pcibk_पढ़ो_config_dword;
+		field->u.dw.ग_लिखो = xen_pcibk_ग_लिखो_config_dword;
+		अवरोध;
+	शेष:
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	xen_pcibk_config_add_field(dev, field);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int xen_pcibk_config_quirks_init(struct pci_dev *dev)
-{
-	struct xen_pcibk_config_quirk *quirk;
-	int ret = 0;
+पूर्णांक xen_pcibk_config_quirks_init(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा xen_pcibk_config_quirk *quirk;
+	पूर्णांक ret = 0;
 
-	quirk = kzalloc(sizeof(*quirk), GFP_KERNEL);
-	if (!quirk) {
+	quirk = kzalloc(माप(*quirk), GFP_KERNEL);
+	अगर (!quirk) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	quirk->devid.vendor = dev->vendor;
+	quirk->devid.venकरोr = dev->venकरोr;
 	quirk->devid.device = dev->device;
-	quirk->devid.subvendor = dev->subsystem_vendor;
-	quirk->devid.subdevice = dev->subsystem_device;
+	quirk->devid.subvenकरोr = dev->subप्रणाली_venकरोr;
+	quirk->devid.subdevice = dev->subप्रणाली_device;
 	quirk->devid.class = 0;
 	quirk->devid.class_mask = 0;
 	quirk->devid.driver_data = 0UL;
 
 	quirk->pdev = dev;
 
-	register_quirk(quirk);
+	रेजिस्टर_quirk(quirk);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void xen_pcibk_config_field_free(struct config_field *field)
-{
-	kfree(field);
-}
+व्योम xen_pcibk_config_field_मुक्त(काष्ठा config_field *field)
+अणु
+	kमुक्त(field);
+पूर्ण
 
-int xen_pcibk_config_quirk_release(struct pci_dev *dev)
-{
-	struct xen_pcibk_config_quirk *quirk;
-	int ret = 0;
+पूर्णांक xen_pcibk_config_quirk_release(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा xen_pcibk_config_quirk *quirk;
+	पूर्णांक ret = 0;
 
 	quirk = xen_pcibk_find_quirk(dev);
-	if (!quirk) {
+	अगर (!quirk) अणु
 		ret = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	list_del(&quirk->quirks_list);
-	kfree(quirk);
+	kमुक्त(quirk);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण

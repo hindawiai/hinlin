@@ -1,166 +1,167 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2016, Linaro Limited
  */
-#include <linux/device.h>
-#include <linux/dma-buf.h>
-#include <linux/fdtable.h>
-#include <linux/idr.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/tee_drv.h>
-#include <linux/uio.h>
-#include "tee_private.h"
+#समावेश <linux/device.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/fdtable.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tee_drv.h>
+#समावेश <linux/uपन.स>
+#समावेश "tee_private.h"
 
-static void release_registered_pages(struct tee_shm *shm)
-{
-	if (shm->pages) {
-		if (shm->flags & TEE_SHM_USER_MAPPED) {
+अटल व्योम release_रेजिस्टरed_pages(काष्ठा tee_shm *shm)
+अणु
+	अगर (shm->pages) अणु
+		अगर (shm->flags & TEE_SHM_USER_MAPPED) अणु
 			unpin_user_pages(shm->pages, shm->num_pages);
-		} else {
-			size_t n;
+		पूर्ण अन्यथा अणु
+			माप_प्रकार n;
 
-			for (n = 0; n < shm->num_pages; n++)
+			क्रम (n = 0; n < shm->num_pages; n++)
 				put_page(shm->pages[n]);
-		}
+		पूर्ण
 
-		kfree(shm->pages);
-	}
-}
+		kमुक्त(shm->pages);
+	पूर्ण
+पूर्ण
 
-static void tee_shm_release(struct tee_shm *shm)
-{
-	struct tee_device *teedev = shm->ctx->teedev;
+अटल व्योम tee_shm_release(काष्ठा tee_shm *shm)
+अणु
+	काष्ठा tee_device *teedev = shm->ctx->teedev;
 
-	if (shm->flags & TEE_SHM_DMA_BUF) {
+	अगर (shm->flags & TEE_SHM_DMA_BUF) अणु
 		mutex_lock(&teedev->mutex);
-		idr_remove(&teedev->idr, shm->id);
+		idr_हटाओ(&teedev->idr, shm->id);
 		mutex_unlock(&teedev->mutex);
-	}
+	पूर्ण
 
-	if (shm->flags & TEE_SHM_POOL) {
-		struct tee_shm_pool_mgr *poolm;
+	अगर (shm->flags & TEE_SHM_POOL) अणु
+		काष्ठा tee_shm_pool_mgr *poolm;
 
-		if (shm->flags & TEE_SHM_DMA_BUF)
+		अगर (shm->flags & TEE_SHM_DMA_BUF)
 			poolm = teedev->pool->dma_buf_mgr;
-		else
-			poolm = teedev->pool->private_mgr;
+		अन्यथा
+			poolm = teedev->pool->निजी_mgr;
 
-		poolm->ops->free(poolm, shm);
-	} else if (shm->flags & TEE_SHM_REGISTER) {
-		int rc = teedev->desc->ops->shm_unregister(shm->ctx, shm);
+		poolm->ops->मुक्त(poolm, shm);
+	पूर्ण अन्यथा अगर (shm->flags & TEE_SHM_REGISTER) अणु
+		पूर्णांक rc = teedev->desc->ops->shm_unरेजिस्टर(shm->ctx, shm);
 
-		if (rc)
+		अगर (rc)
 			dev_err(teedev->dev.parent,
 				"unregister shm %p failed: %d", shm, rc);
 
-		release_registered_pages(shm);
-	}
+		release_रेजिस्टरed_pages(shm);
+	पूर्ण
 
 	teedev_ctx_put(shm->ctx);
 
-	kfree(shm);
+	kमुक्त(shm);
 
 	tee_device_put(teedev);
-}
+पूर्ण
 
-static struct sg_table *tee_shm_op_map_dma_buf(struct dma_buf_attachment
-			*attach, enum dma_data_direction dir)
-{
-	return NULL;
-}
+अटल काष्ठा sg_table *tee_shm_op_map_dma_buf(काष्ठा dma_buf_attachment
+			*attach, क्रमागत dma_data_direction dir)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static void tee_shm_op_unmap_dma_buf(struct dma_buf_attachment *attach,
-				     struct sg_table *table,
-				     enum dma_data_direction dir)
-{
-}
+अटल व्योम tee_shm_op_unmap_dma_buf(काष्ठा dma_buf_attachment *attach,
+				     काष्ठा sg_table *table,
+				     क्रमागत dma_data_direction dir)
+अणु
+पूर्ण
 
-static void tee_shm_op_release(struct dma_buf *dmabuf)
-{
-	struct tee_shm *shm = dmabuf->priv;
+अटल व्योम tee_shm_op_release(काष्ठा dma_buf *dmabuf)
+अणु
+	काष्ठा tee_shm *shm = dmabuf->priv;
 
 	tee_shm_release(shm);
-}
+पूर्ण
 
-static int tee_shm_op_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma)
-{
-	struct tee_shm *shm = dmabuf->priv;
-	size_t size = vma->vm_end - vma->vm_start;
+अटल पूर्णांक tee_shm_op_mmap(काष्ठा dma_buf *dmabuf, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा tee_shm *shm = dmabuf->priv;
+	माप_प्रकार size = vma->vm_end - vma->vm_start;
 
 	/* Refuse sharing shared memory provided by application */
-	if (shm->flags & TEE_SHM_USER_MAPPED)
-		return -EINVAL;
+	अगर (shm->flags & TEE_SHM_USER_MAPPED)
+		वापस -EINVAL;
 
-	return remap_pfn_range(vma, vma->vm_start, shm->paddr >> PAGE_SHIFT,
+	वापस remap_pfn_range(vma, vma->vm_start, shm->paddr >> PAGE_SHIFT,
 			       size, vma->vm_page_prot);
-}
+पूर्ण
 
-static const struct dma_buf_ops tee_shm_dma_buf_ops = {
+अटल स्थिर काष्ठा dma_buf_ops tee_shm_dma_buf_ops = अणु
 	.map_dma_buf = tee_shm_op_map_dma_buf,
 	.unmap_dma_buf = tee_shm_op_unmap_dma_buf,
 	.release = tee_shm_op_release,
 	.mmap = tee_shm_op_mmap,
-};
+पूर्ण;
 
-struct tee_shm *tee_shm_alloc(struct tee_context *ctx, size_t size, u32 flags)
-{
-	struct tee_device *teedev = ctx->teedev;
-	struct tee_shm_pool_mgr *poolm = NULL;
-	struct tee_shm *shm;
-	void *ret;
-	int rc;
+काष्ठा tee_shm *tee_shm_alloc(काष्ठा tee_context *ctx, माप_प्रकार size, u32 flags)
+अणु
+	काष्ठा tee_device *teedev = ctx->teedev;
+	काष्ठा tee_shm_pool_mgr *poolm = शून्य;
+	काष्ठा tee_shm *shm;
+	व्योम *ret;
+	पूर्णांक rc;
 
-	if (!(flags & TEE_SHM_MAPPED)) {
+	अगर (!(flags & TEE_SHM_MAPPED)) अणु
 		dev_err(teedev->dev.parent,
 			"only mapped allocations supported\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if ((flags & ~(TEE_SHM_MAPPED | TEE_SHM_DMA_BUF))) {
+	अगर ((flags & ~(TEE_SHM_MAPPED | TEE_SHM_DMA_BUF))) अणु
 		dev_err(teedev->dev.parent, "invalid shm flags 0x%x", flags);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (!tee_device_get(teedev))
-		return ERR_PTR(-EINVAL);
+	अगर (!tee_device_get(teedev))
+		वापस ERR_PTR(-EINVAL);
 
-	if (!teedev->pool) {
+	अगर (!teedev->pool) अणु
 		/* teedev has been detached from driver */
 		ret = ERR_PTR(-EINVAL);
-		goto err_dev_put;
-	}
+		जाओ err_dev_put;
+	पूर्ण
 
-	shm = kzalloc(sizeof(*shm), GFP_KERNEL);
-	if (!shm) {
+	shm = kzalloc(माप(*shm), GFP_KERNEL);
+	अगर (!shm) अणु
 		ret = ERR_PTR(-ENOMEM);
-		goto err_dev_put;
-	}
+		जाओ err_dev_put;
+	पूर्ण
 
 	shm->flags = flags | TEE_SHM_POOL;
 	shm->ctx = ctx;
-	if (flags & TEE_SHM_DMA_BUF)
+	अगर (flags & TEE_SHM_DMA_BUF)
 		poolm = teedev->pool->dma_buf_mgr;
-	else
-		poolm = teedev->pool->private_mgr;
+	अन्यथा
+		poolm = teedev->pool->निजी_mgr;
 
 	rc = poolm->ops->alloc(poolm, shm, size);
-	if (rc) {
+	अगर (rc) अणु
 		ret = ERR_PTR(rc);
-		goto err_kfree;
-	}
+		जाओ err_kमुक्त;
+	पूर्ण
 
 
-	if (flags & TEE_SHM_DMA_BUF) {
+	अगर (flags & TEE_SHM_DMA_BUF) अणु
 		DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
 
 		mutex_lock(&teedev->mutex);
 		shm->id = idr_alloc(&teedev->idr, shm, 1, 0, GFP_KERNEL);
 		mutex_unlock(&teedev->mutex);
-		if (shm->id < 0) {
+		अगर (shm->id < 0) अणु
 			ret = ERR_PTR(shm->id);
-			goto err_pool_free;
-		}
+			जाओ err_pool_मुक्त;
+		पूर्ण
 
 		exp_info.ops = &tee_shm_dma_buf_ops;
 		exp_info.size = shm->size;
@@ -168,124 +169,124 @@ struct tee_shm *tee_shm_alloc(struct tee_context *ctx, size_t size, u32 flags)
 		exp_info.priv = shm;
 
 		shm->dmabuf = dma_buf_export(&exp_info);
-		if (IS_ERR(shm->dmabuf)) {
+		अगर (IS_ERR(shm->dmabuf)) अणु
 			ret = ERR_CAST(shm->dmabuf);
-			goto err_rem;
-		}
-	}
+			जाओ err_rem;
+		पूर्ण
+	पूर्ण
 
 	teedev_ctx_get(ctx);
 
-	return shm;
+	वापस shm;
 err_rem:
-	if (flags & TEE_SHM_DMA_BUF) {
+	अगर (flags & TEE_SHM_DMA_BUF) अणु
 		mutex_lock(&teedev->mutex);
-		idr_remove(&teedev->idr, shm->id);
+		idr_हटाओ(&teedev->idr, shm->id);
 		mutex_unlock(&teedev->mutex);
-	}
-err_pool_free:
-	poolm->ops->free(poolm, shm);
-err_kfree:
-	kfree(shm);
+	पूर्ण
+err_pool_मुक्त:
+	poolm->ops->मुक्त(poolm, shm);
+err_kमुक्त:
+	kमुक्त(shm);
 err_dev_put:
 	tee_device_put(teedev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_shm_alloc);
 
-struct tee_shm *tee_shm_register(struct tee_context *ctx, unsigned long addr,
-				 size_t length, u32 flags)
-{
-	struct tee_device *teedev = ctx->teedev;
-	const u32 req_user_flags = TEE_SHM_DMA_BUF | TEE_SHM_USER_MAPPED;
-	const u32 req_kernel_flags = TEE_SHM_DMA_BUF | TEE_SHM_KERNEL_MAPPED;
-	struct tee_shm *shm;
-	void *ret;
-	int rc;
-	int num_pages;
-	unsigned long start;
+काष्ठा tee_shm *tee_shm_रेजिस्टर(काष्ठा tee_context *ctx, अचिन्हित दीर्घ addr,
+				 माप_प्रकार length, u32 flags)
+अणु
+	काष्ठा tee_device *teedev = ctx->teedev;
+	स्थिर u32 req_user_flags = TEE_SHM_DMA_BUF | TEE_SHM_USER_MAPPED;
+	स्थिर u32 req_kernel_flags = TEE_SHM_DMA_BUF | TEE_SHM_KERNEL_MAPPED;
+	काष्ठा tee_shm *shm;
+	व्योम *ret;
+	पूर्णांक rc;
+	पूर्णांक num_pages;
+	अचिन्हित दीर्घ start;
 
-	if (flags != req_user_flags && flags != req_kernel_flags)
-		return ERR_PTR(-ENOTSUPP);
+	अगर (flags != req_user_flags && flags != req_kernel_flags)
+		वापस ERR_PTR(-ENOTSUPP);
 
-	if (!tee_device_get(teedev))
-		return ERR_PTR(-EINVAL);
+	अगर (!tee_device_get(teedev))
+		वापस ERR_PTR(-EINVAL);
 
-	if (!teedev->desc->ops->shm_register ||
-	    !teedev->desc->ops->shm_unregister) {
+	अगर (!teedev->desc->ops->shm_रेजिस्टर ||
+	    !teedev->desc->ops->shm_unरेजिस्टर) अणु
 		tee_device_put(teedev);
-		return ERR_PTR(-ENOTSUPP);
-	}
+		वापस ERR_PTR(-ENOTSUPP);
+	पूर्ण
 
 	teedev_ctx_get(ctx);
 
-	shm = kzalloc(sizeof(*shm), GFP_KERNEL);
-	if (!shm) {
+	shm = kzalloc(माप(*shm), GFP_KERNEL);
+	अगर (!shm) अणु
 		ret = ERR_PTR(-ENOMEM);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	shm->flags = flags | TEE_SHM_REGISTER;
 	shm->ctx = ctx;
 	shm->id = -1;
 	addr = untagged_addr(addr);
-	start = rounddown(addr, PAGE_SIZE);
+	start = roundकरोwn(addr, PAGE_SIZE);
 	shm->offset = addr - start;
 	shm->size = length;
 	num_pages = (roundup(addr + length, PAGE_SIZE) - start) / PAGE_SIZE;
-	shm->pages = kcalloc(num_pages, sizeof(*shm->pages), GFP_KERNEL);
-	if (!shm->pages) {
+	shm->pages = kसुस्मृति(num_pages, माप(*shm->pages), GFP_KERNEL);
+	अगर (!shm->pages) अणु
 		ret = ERR_PTR(-ENOMEM);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (flags & TEE_SHM_USER_MAPPED) {
+	अगर (flags & TEE_SHM_USER_MAPPED) अणु
 		rc = pin_user_pages_fast(start, num_pages, FOLL_WRITE,
 					 shm->pages);
-	} else {
-		struct kvec *kiov;
-		int i;
+	पूर्ण अन्यथा अणु
+		काष्ठा kvec *kiov;
+		पूर्णांक i;
 
-		kiov = kcalloc(num_pages, sizeof(*kiov), GFP_KERNEL);
-		if (!kiov) {
+		kiov = kसुस्मृति(num_pages, माप(*kiov), GFP_KERNEL);
+		अगर (!kiov) अणु
 			ret = ERR_PTR(-ENOMEM);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		for (i = 0; i < num_pages; i++) {
-			kiov[i].iov_base = (void *)(start + i * PAGE_SIZE);
+		क्रम (i = 0; i < num_pages; i++) अणु
+			kiov[i].iov_base = (व्योम *)(start + i * PAGE_SIZE);
 			kiov[i].iov_len = PAGE_SIZE;
-		}
+		पूर्ण
 
 		rc = get_kernel_pages(kiov, num_pages, 0, shm->pages);
-		kfree(kiov);
-	}
-	if (rc > 0)
+		kमुक्त(kiov);
+	पूर्ण
+	अगर (rc > 0)
 		shm->num_pages = rc;
-	if (rc != num_pages) {
-		if (rc >= 0)
+	अगर (rc != num_pages) अणु
+		अगर (rc >= 0)
 			rc = -ENOMEM;
 		ret = ERR_PTR(rc);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	mutex_lock(&teedev->mutex);
 	shm->id = idr_alloc(&teedev->idr, shm, 1, 0, GFP_KERNEL);
 	mutex_unlock(&teedev->mutex);
 
-	if (shm->id < 0) {
+	अगर (shm->id < 0) अणु
 		ret = ERR_PTR(shm->id);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	rc = teedev->desc->ops->shm_register(ctx, shm, shm->pages,
+	rc = teedev->desc->ops->shm_रेजिस्टर(ctx, shm, shm->pages,
 					     shm->num_pages, start);
-	if (rc) {
+	अगर (rc) अणु
 		ret = ERR_PTR(rc);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (flags & TEE_SHM_DMA_BUF) {
+	अगर (flags & TEE_SHM_DMA_BUF) अणु
 		DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
 
 		exp_info.ops = &tee_shm_dma_buf_ops;
@@ -294,152 +295,152 @@ struct tee_shm *tee_shm_register(struct tee_context *ctx, unsigned long addr,
 		exp_info.priv = shm;
 
 		shm->dmabuf = dma_buf_export(&exp_info);
-		if (IS_ERR(shm->dmabuf)) {
+		अगर (IS_ERR(shm->dmabuf)) अणु
 			ret = ERR_CAST(shm->dmabuf);
-			teedev->desc->ops->shm_unregister(ctx, shm);
-			goto err;
-		}
-	}
+			teedev->desc->ops->shm_unरेजिस्टर(ctx, shm);
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	return shm;
+	वापस shm;
 err:
-	if (shm) {
-		if (shm->id >= 0) {
+	अगर (shm) अणु
+		अगर (shm->id >= 0) अणु
 			mutex_lock(&teedev->mutex);
-			idr_remove(&teedev->idr, shm->id);
+			idr_हटाओ(&teedev->idr, shm->id);
 			mutex_unlock(&teedev->mutex);
-		}
-		release_registered_pages(shm);
-	}
-	kfree(shm);
+		पूर्ण
+		release_रेजिस्टरed_pages(shm);
+	पूर्ण
+	kमुक्त(shm);
 	teedev_ctx_put(ctx);
 	tee_device_put(teedev);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(tee_shm_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(tee_shm_रेजिस्टर);
 
 /**
- * tee_shm_get_fd() - Increase reference count and return file descriptor
+ * tee_shm_get_fd() - Increase reference count and वापस file descriptor
  * @shm:	Shared memory handle
- * @returns user space file descriptor to shared memory
+ * @वापसs user space file descriptor to shared memory
  */
-int tee_shm_get_fd(struct tee_shm *shm)
-{
-	int fd;
+पूर्णांक tee_shm_get_fd(काष्ठा tee_shm *shm)
+अणु
+	पूर्णांक fd;
 
-	if (!(shm->flags & TEE_SHM_DMA_BUF))
-		return -EINVAL;
+	अगर (!(shm->flags & TEE_SHM_DMA_BUF))
+		वापस -EINVAL;
 
 	get_dma_buf(shm->dmabuf);
 	fd = dma_buf_fd(shm->dmabuf, O_CLOEXEC);
-	if (fd < 0)
+	अगर (fd < 0)
 		dma_buf_put(shm->dmabuf);
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
 /**
- * tee_shm_free() - Free shared memory
- * @shm:	Handle to shared memory to free
+ * tee_shm_मुक्त() - Free shared memory
+ * @shm:	Handle to shared memory to मुक्त
  */
-void tee_shm_free(struct tee_shm *shm)
-{
+व्योम tee_shm_मुक्त(काष्ठा tee_shm *shm)
+अणु
 	/*
 	 * dma_buf_put() decreases the dmabuf reference counter and will
 	 * call tee_shm_release() when the last reference is gone.
 	 *
-	 * In the case of driver private memory we call tee_shm_release
-	 * directly instead as it doesn't have a reference counter.
+	 * In the हाल of driver निजी memory we call tee_shm_release
+	 * directly instead as it करोesn't have a reference counter.
 	 */
-	if (shm->flags & TEE_SHM_DMA_BUF)
+	अगर (shm->flags & TEE_SHM_DMA_BUF)
 		dma_buf_put(shm->dmabuf);
-	else
+	अन्यथा
 		tee_shm_release(shm);
-}
-EXPORT_SYMBOL_GPL(tee_shm_free);
+पूर्ण
+EXPORT_SYMBOL_GPL(tee_shm_मुक्त);
 
 /**
- * tee_shm_va2pa() - Get physical address of a virtual address
+ * tee_shm_va2pa() - Get physical address of a भव address
  * @shm:	Shared memory handle
  * @va:		Virtual address to tranlsate
  * @pa:		Returned physical address
- * @returns 0 on success and < 0 on failure
+ * @वापसs 0 on success and < 0 on failure
  */
-int tee_shm_va2pa(struct tee_shm *shm, void *va, phys_addr_t *pa)
-{
-	if (!(shm->flags & TEE_SHM_MAPPED))
-		return -EINVAL;
+पूर्णांक tee_shm_va2pa(काष्ठा tee_shm *shm, व्योम *va, phys_addr_t *pa)
+अणु
+	अगर (!(shm->flags & TEE_SHM_MAPPED))
+		वापस -EINVAL;
 	/* Check that we're in the range of the shm */
-	if ((char *)va < (char *)shm->kaddr)
-		return -EINVAL;
-	if ((char *)va >= ((char *)shm->kaddr + shm->size))
-		return -EINVAL;
+	अगर ((अक्षर *)va < (अक्षर *)shm->kaddr)
+		वापस -EINVAL;
+	अगर ((अक्षर *)va >= ((अक्षर *)shm->kaddr + shm->size))
+		वापस -EINVAL;
 
-	return tee_shm_get_pa(
-			shm, (unsigned long)va - (unsigned long)shm->kaddr, pa);
-}
+	वापस tee_shm_get_pa(
+			shm, (अचिन्हित दीर्घ)va - (अचिन्हित दीर्घ)shm->kaddr, pa);
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_shm_va2pa);
 
 /**
- * tee_shm_pa2va() - Get virtual address of a physical address
+ * tee_shm_pa2va() - Get भव address of a physical address
  * @shm:	Shared memory handle
  * @pa:		Physical address to tranlsate
- * @va:		Returned virtual address
- * @returns 0 on success and < 0 on failure
+ * @va:		Returned भव address
+ * @वापसs 0 on success and < 0 on failure
  */
-int tee_shm_pa2va(struct tee_shm *shm, phys_addr_t pa, void **va)
-{
-	if (!(shm->flags & TEE_SHM_MAPPED))
-		return -EINVAL;
+पूर्णांक tee_shm_pa2va(काष्ठा tee_shm *shm, phys_addr_t pa, व्योम **va)
+अणु
+	अगर (!(shm->flags & TEE_SHM_MAPPED))
+		वापस -EINVAL;
 	/* Check that we're in the range of the shm */
-	if (pa < shm->paddr)
-		return -EINVAL;
-	if (pa >= (shm->paddr + shm->size))
-		return -EINVAL;
+	अगर (pa < shm->paddr)
+		वापस -EINVAL;
+	अगर (pa >= (shm->paddr + shm->size))
+		वापस -EINVAL;
 
-	if (va) {
-		void *v = tee_shm_get_va(shm, pa - shm->paddr);
+	अगर (va) अणु
+		व्योम *v = tee_shm_get_va(shm, pa - shm->paddr);
 
-		if (IS_ERR(v))
-			return PTR_ERR(v);
+		अगर (IS_ERR(v))
+			वापस PTR_ERR(v);
 		*va = v;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_shm_pa2va);
 
 /**
- * tee_shm_get_va() - Get virtual address of a shared memory plus an offset
+ * tee_shm_get_va() - Get भव address of a shared memory plus an offset
  * @shm:	Shared memory handle
  * @offs:	Offset from start of this shared memory
- * @returns virtual address of the shared memory + offs if offs is within
- *	the bounds of this shared memory, else an ERR_PTR
+ * @वापसs भव address of the shared memory + offs अगर offs is within
+ *	the bounds of this shared memory, अन्यथा an ERR_PTR
  */
-void *tee_shm_get_va(struct tee_shm *shm, size_t offs)
-{
-	if (!(shm->flags & TEE_SHM_MAPPED))
-		return ERR_PTR(-EINVAL);
-	if (offs >= shm->size)
-		return ERR_PTR(-EINVAL);
-	return (char *)shm->kaddr + offs;
-}
+व्योम *tee_shm_get_va(काष्ठा tee_shm *shm, माप_प्रकार offs)
+अणु
+	अगर (!(shm->flags & TEE_SHM_MAPPED))
+		वापस ERR_PTR(-EINVAL);
+	अगर (offs >= shm->size)
+		वापस ERR_PTR(-EINVAL);
+	वापस (अक्षर *)shm->kaddr + offs;
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_shm_get_va);
 
 /**
  * tee_shm_get_pa() - Get physical address of a shared memory plus an offset
  * @shm:	Shared memory handle
  * @offs:	Offset from start of this shared memory
- * @pa:		Physical address to return
- * @returns 0 if offs is within the bounds of this shared memory, else an
+ * @pa:		Physical address to वापस
+ * @वापसs 0 अगर offs is within the bounds of this shared memory, अन्यथा an
  *	error code.
  */
-int tee_shm_get_pa(struct tee_shm *shm, size_t offs, phys_addr_t *pa)
-{
-	if (offs >= shm->size)
-		return -EINVAL;
-	if (pa)
+पूर्णांक tee_shm_get_pa(काष्ठा tee_shm *shm, माप_प्रकार offs, phys_addr_t *pa)
+अणु
+	अगर (offs >= shm->size)
+		वापस -EINVAL;
+	अगर (pa)
 		*pa = shm->paddr + offs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_shm_get_pa);
 
 /**
@@ -447,35 +448,35 @@ EXPORT_SYMBOL_GPL(tee_shm_get_pa);
  * count
  * @ctx:	Context owning the shared memory
  * @id:		Id of shared memory object
- * @returns a pointer to 'struct tee_shm' on success or an ERR_PTR on failure
+ * @वापसs a poपूर्णांकer to 'struct tee_shm' on success or an ERR_PTR on failure
  */
-struct tee_shm *tee_shm_get_from_id(struct tee_context *ctx, int id)
-{
-	struct tee_device *teedev;
-	struct tee_shm *shm;
+काष्ठा tee_shm *tee_shm_get_from_id(काष्ठा tee_context *ctx, पूर्णांक id)
+अणु
+	काष्ठा tee_device *teedev;
+	काष्ठा tee_shm *shm;
 
-	if (!ctx)
-		return ERR_PTR(-EINVAL);
+	अगर (!ctx)
+		वापस ERR_PTR(-EINVAL);
 
 	teedev = ctx->teedev;
 	mutex_lock(&teedev->mutex);
 	shm = idr_find(&teedev->idr, id);
-	if (!shm || shm->ctx != ctx)
+	अगर (!shm || shm->ctx != ctx)
 		shm = ERR_PTR(-EINVAL);
-	else if (shm->flags & TEE_SHM_DMA_BUF)
+	अन्यथा अगर (shm->flags & TEE_SHM_DMA_BUF)
 		get_dma_buf(shm->dmabuf);
 	mutex_unlock(&teedev->mutex);
-	return shm;
-}
+	वापस shm;
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_shm_get_from_id);
 
 /**
  * tee_shm_put() - Decrease reference count on a shared memory handle
  * @shm:	Shared memory handle
  */
-void tee_shm_put(struct tee_shm *shm)
-{
-	if (shm->flags & TEE_SHM_DMA_BUF)
+व्योम tee_shm_put(काष्ठा tee_shm *shm)
+अणु
+	अगर (shm->flags & TEE_SHM_DMA_BUF)
 		dma_buf_put(shm->dmabuf);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_shm_put);

@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2007 Dave Airlied
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -24,36 +25,36 @@
 /*
  * Authors: Dave Airlied <airlied@linux.ie>
  *	    Ben Skeggs   <darktama@iinet.net.au>
- *	    Jeremy Kolb  <jkolb@brandeis.edu>
+ *	    Jeremy Kolb  <jkolb@bअक्रमeis.edu>
  */
-#include "nouveau_bo.h"
-#include "nouveau_dma.h"
-#include "nouveau_mem.h"
+#समावेश "nouveau_bo.h"
+#समावेश "nouveau_dma.h"
+#समावेश "nouveau_mem.h"
 
-#include <nvif/push206e.h>
+#समावेश <nvअगर/push206e.h>
 
 /*XXX: Fixup class to be compatible with NVIDIA's, which will allow sharing
  *     code with KeplerDmaCopyA.
  */
 
-int
-nva3_bo_move_copy(struct nouveau_channel *chan, struct ttm_buffer_object *bo,
-		  struct ttm_resource *old_reg, struct ttm_resource *new_reg)
-{
-	struct nouveau_mem *mem = nouveau_mem(old_reg);
-	struct nvif_push *push = chan->chan.push;
+पूर्णांक
+nva3_bo_move_copy(काष्ठा nouveau_channel *chan, काष्ठा tपंचांग_buffer_object *bo,
+		  काष्ठा tपंचांग_resource *old_reg, काष्ठा tपंचांग_resource *new_reg)
+अणु
+	काष्ठा nouveau_mem *mem = nouveau_mem(old_reg);
+	काष्ठा nvअगर_push *push = chan->chan.push;
 	u64 src_offset = mem->vma[0].addr;
 	u64 dst_offset = mem->vma[1].addr;
 	u32 page_count = new_reg->num_pages;
-	int ret;
+	पूर्णांक ret;
 
 	page_count = new_reg->num_pages;
-	while (page_count) {
-		int line_count = (page_count > 8191) ? 8191 : page_count;
+	जबतक (page_count) अणु
+		पूर्णांक line_count = (page_count > 8191) ? 8191 : page_count;
 
 		ret = PUSH_WAIT(push, 11);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		PUSH_NVSQ(push, NV85B5, 0x030c, upper_32_bits(src_offset),
 					0x0310, lower_32_bits(src_offset),
@@ -68,7 +69,7 @@ nva3_bo_move_copy(struct nouveau_channel *chan, struct ttm_buffer_object *bo,
 		page_count -= line_count;
 		src_offset += (PAGE_SIZE * line_count);
 		dst_offset += (PAGE_SIZE * line_count);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

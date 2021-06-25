@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * test_ida.c: Test the IDA API
  * Copyright (c) 2016-2018 Microsoft Corporation
@@ -6,66 +7,66 @@
  * Author: Matthew Wilcox <willy@infradead.org>
  */
 
-#include <linux/idr.h>
-#include <linux/module.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/module.h>
 
-static unsigned int tests_run;
-static unsigned int tests_passed;
+अटल अचिन्हित पूर्णांक tests_run;
+अटल अचिन्हित पूर्णांक tests_passed;
 
-#ifdef __KERNEL__
-void ida_dump(struct ida *ida) { }
-#endif
-#define IDA_BUG_ON(ida, x) do {						\
+#अगर_घोषित __KERNEL__
+व्योम ida_dump(काष्ठा ida *ida) अणु पूर्ण
+#पूर्ण_अगर
+#घोषणा IDA_BUG_ON(ida, x) करो अणु						\
 	tests_run++;							\
-	if (x) {							\
+	अगर (x) अणु							\
 		ida_dump(ida);						\
 		dump_stack();						\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		tests_passed++;						\
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
 /*
- * Straightforward checks that allocating and freeing IDs work.
+ * Straightक्रमward checks that allocating and मुक्तing IDs work.
  */
-static void ida_check_alloc(struct ida *ida)
-{
-	int i, id;
+अटल व्योम ida_check_alloc(काष्ठा ida *ida)
+अणु
+	पूर्णांक i, id;
 
-	for (i = 0; i < 10000; i++)
+	क्रम (i = 0; i < 10000; i++)
 		IDA_BUG_ON(ida, ida_alloc(ida, GFP_KERNEL) != i);
 
-	ida_free(ida, 20);
-	ida_free(ida, 21);
-	for (i = 0; i < 3; i++) {
+	ida_मुक्त(ida, 20);
+	ida_मुक्त(ida, 21);
+	क्रम (i = 0; i < 3; i++) अणु
 		id = ida_alloc(ida, GFP_KERNEL);
 		IDA_BUG_ON(ida, id < 0);
-		if (i == 2)
+		अगर (i == 2)
 			IDA_BUG_ON(ida, id != 10000);
-	}
+	पूर्ण
 
-	for (i = 0; i < 5000; i++)
-		ida_free(ida, i);
+	क्रम (i = 0; i < 5000; i++)
+		ida_मुक्त(ida, i);
 
 	IDA_BUG_ON(ida, ida_alloc_min(ida, 5000, GFP_KERNEL) != 10001);
 	ida_destroy(ida);
 
 	IDA_BUG_ON(ida, !ida_is_empty(ida));
-}
+पूर्ण
 
 /* Destroy an IDA with a single entry at @base */
-static void ida_check_destroy_1(struct ida *ida, unsigned int base)
-{
+अटल व्योम ida_check_destroy_1(काष्ठा ida *ida, अचिन्हित पूर्णांक base)
+अणु
 	IDA_BUG_ON(ida, ida_alloc_min(ida, base, GFP_KERNEL) != base);
 	IDA_BUG_ON(ida, ida_is_empty(ida));
 	ida_destroy(ida);
 	IDA_BUG_ON(ida, !ida_is_empty(ida));
-}
+पूर्ण
 
 /* Check that ida_destroy and ida_is_empty work */
-static void ida_check_destroy(struct ida *ida)
-{
-	/* Destroy an already-empty IDA */
+अटल व्योम ida_check_destroy(काष्ठा ida *ida)
+अणु
+	/* Destroy an alपढ़ोy-empty IDA */
 	IDA_BUG_ON(ida, !ida_is_empty(ida));
 	ida_destroy(ida);
 	IDA_BUG_ON(ida, !ida_is_empty(ida));
@@ -75,85 +76,85 @@ static void ida_check_destroy(struct ida *ida)
 	ida_check_destroy_1(ida, 1023);
 	ida_check_destroy_1(ida, 1024);
 	ida_check_destroy_1(ida, 12345678);
-}
+पूर्ण
 
 /*
  * Check what happens when we fill a leaf and then delete it.  This may
  * discover mishandling of IDR_FREE.
  */
-static void ida_check_leaf(struct ida *ida, unsigned int base)
-{
-	unsigned long i;
+अटल व्योम ida_check_leaf(काष्ठा ida *ida, अचिन्हित पूर्णांक base)
+अणु
+	अचिन्हित दीर्घ i;
 
-	for (i = 0; i < IDA_BITMAP_BITS; i++) {
+	क्रम (i = 0; i < IDA_BITMAP_BITS; i++) अणु
 		IDA_BUG_ON(ida, ida_alloc_min(ida, base, GFP_KERNEL) !=
 				base + i);
-	}
+	पूर्ण
 
 	ida_destroy(ida);
 	IDA_BUG_ON(ida, !ida_is_empty(ida));
 
 	IDA_BUG_ON(ida, ida_alloc(ida, GFP_KERNEL) != 0);
 	IDA_BUG_ON(ida, ida_is_empty(ida));
-	ida_free(ida, 0);
+	ida_मुक्त(ida, 0);
 	IDA_BUG_ON(ida, !ida_is_empty(ida));
-}
+पूर्ण
 
 /*
  * Check allocations up to and slightly above the maximum allowed (2^31-1) ID.
  * Allocating up to 2^31-1 should succeed, and then allocating the next one
  * should fail.
  */
-static void ida_check_max(struct ida *ida)
-{
-	unsigned long i, j;
+अटल व्योम ida_check_max(काष्ठा ida *ida)
+अणु
+	अचिन्हित दीर्घ i, j;
 
-	for (j = 1; j < 65537; j *= 2) {
-		unsigned long base = (1UL << 31) - j;
-		for (i = 0; i < j; i++) {
+	क्रम (j = 1; j < 65537; j *= 2) अणु
+		अचिन्हित दीर्घ base = (1UL << 31) - j;
+		क्रम (i = 0; i < j; i++) अणु
 			IDA_BUG_ON(ida, ida_alloc_min(ida, base, GFP_KERNEL) !=
 					base + i);
-		}
+		पूर्ण
 		IDA_BUG_ON(ida, ida_alloc_min(ida, base, GFP_KERNEL) !=
 				-ENOSPC);
 		ida_destroy(ida);
 		IDA_BUG_ON(ida, !ida_is_empty(ida));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Check handling of conversions between exceptional entries and full bitmaps.
+ * Check handling of conversions between exceptional entries and full biपंचांगaps.
  */
-static void ida_check_conv(struct ida *ida)
-{
-	unsigned long i;
+अटल व्योम ida_check_conv(काष्ठा ida *ida)
+अणु
+	अचिन्हित दीर्घ i;
 
-	for (i = 0; i < IDA_BITMAP_BITS * 2; i += IDA_BITMAP_BITS) {
+	क्रम (i = 0; i < IDA_BITMAP_BITS * 2; i += IDA_BITMAP_BITS) अणु
 		IDA_BUG_ON(ida, ida_alloc_min(ida, i + 1, GFP_KERNEL) != i + 1);
 		IDA_BUG_ON(ida, ida_alloc_min(ida, i + BITS_PER_LONG,
 					GFP_KERNEL) != i + BITS_PER_LONG);
-		ida_free(ida, i + 1);
-		ida_free(ida, i + BITS_PER_LONG);
+		ida_मुक्त(ida, i + 1);
+		ida_मुक्त(ida, i + BITS_PER_LONG);
 		IDA_BUG_ON(ida, !ida_is_empty(ida));
-	}
+	पूर्ण
 
-	for (i = 0; i < IDA_BITMAP_BITS * 2; i++)
+	क्रम (i = 0; i < IDA_BITMAP_BITS * 2; i++)
 		IDA_BUG_ON(ida, ida_alloc(ida, GFP_KERNEL) != i);
-	for (i = IDA_BITMAP_BITS * 2; i > 0; i--)
-		ida_free(ida, i - 1);
+	क्रम (i = IDA_BITMAP_BITS * 2; i > 0; i--)
+		ida_मुक्त(ida, i - 1);
 	IDA_BUG_ON(ida, !ida_is_empty(ida));
 
-	for (i = 0; i < IDA_BITMAP_BITS + BITS_PER_LONG - 4; i++)
+	क्रम (i = 0; i < IDA_BITMAP_BITS + BITS_PER_LONG - 4; i++)
 		IDA_BUG_ON(ida, ida_alloc(ida, GFP_KERNEL) != i);
-	for (i = IDA_BITMAP_BITS + BITS_PER_LONG - 4; i > 0; i--)
-		ida_free(ida, i - 1);
+	क्रम (i = IDA_BITMAP_BITS + BITS_PER_LONG - 4; i > 0; i--)
+		ida_मुक्त(ida, i - 1);
 	IDA_BUG_ON(ida, !ida_is_empty(ida));
-}
+पूर्ण
 
-static DEFINE_IDA(ida);
+अटल DEFINE_IDA(ida);
 
-static int ida_checks(void)
-{
+अटल पूर्णांक ida_checks(व्योम)
+अणु
 	IDA_BUG_ON(&ida, !ida_is_empty(&ida));
 	ida_check_alloc(&ida);
 	ida_check_destroy(&ida);
@@ -163,15 +164,15 @@ static int ida_checks(void)
 	ida_check_max(&ida);
 	ida_check_conv(&ida);
 
-	printk("IDA: %u of %u tests passed\n", tests_passed, tests_run);
-	return (tests_run != tests_passed) ? 0 : -EINVAL;
-}
+	prपूर्णांकk("IDA: %u of %u tests passed\n", tests_passed, tests_run);
+	वापस (tests_run != tests_passed) ? 0 : -EINVAL;
+पूर्ण
 
-static void ida_exit(void)
-{
-}
+अटल व्योम ida_निकास(व्योम)
+अणु
+पूर्ण
 
 module_init(ida_checks);
-module_exit(ida_exit);
+module_निकास(ida_निकास);
 MODULE_AUTHOR("Matthew Wilcox <willy@infradead.org>");
 MODULE_LICENSE("GPL");

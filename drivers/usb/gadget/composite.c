@@ -1,671 +1,672 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * composite.c - infrastructure for Composite USB Gadgets
+ * composite.c - infraकाष्ठाure क्रम Composite USB Gadमाला_लो
  *
  * Copyright (C) 2006-2008 David Brownell
  */
 
-/* #define VERBOSE_DEBUG */
+/* #घोषणा VERBOSE_DEBUG */
 
-#include <linux/kallsyms.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/utsname.h>
-#include <linux/bitfield.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/bitfield.h>
 
-#include <linux/usb/composite.h>
-#include <linux/usb/otg.h>
-#include <asm/unaligned.h>
+#समावेश <linux/usb/composite.h>
+#समावेश <linux/usb/otg.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "u_os_desc.h"
+#समावेश "u_os_desc.h"
 
 /**
- * struct usb_os_string - represents OS String to be reported by a gadget
+ * काष्ठा usb_os_string - represents OS String to be reported by a gadget
  * @bLength: total length of the entire descritor, always 0x12
  * @bDescriptorType: USB_DT_STRING
  * @qwSignature: the OS String proper
- * @bMS_VendorCode: code used by the host for subsequent requests
+ * @bMS_VenकरोrCode: code used by the host क्रम subsequent requests
  * @bPad: not used, must be zero
  */
-struct usb_os_string {
+काष्ठा usb_os_string अणु
 	__u8	bLength;
 	__u8	bDescriptorType;
 	__u8	qwSignature[OS_STRING_QW_SIGN_LEN];
-	__u8	bMS_VendorCode;
+	__u8	bMS_VenकरोrCode;
 	__u8	bPad;
-} __packed;
+पूर्ण __packed;
 
 /*
  * The code in this file is utility code, used to build a gadget driver
  * from one or more "function" drivers, one or more "configuration"
- * objects, and a "usb_composite_driver" by gluing them together along
+ * objects, and a "usb_composite_driver" by gluing them together aदीर्घ
  * with the relevant device-wide data.
  */
 
-static struct usb_gadget_strings **get_containers_gs(
-		struct usb_gadget_string_container *uc)
-{
-	return (struct usb_gadget_strings **)uc->stash;
-}
+अटल काष्ठा usb_gadget_strings **get_containers_gs(
+		काष्ठा usb_gadget_string_container *uc)
+अणु
+	वापस (काष्ठा usb_gadget_strings **)uc->stash;
+पूर्ण
 
 /**
- * function_descriptors() - get function descriptors for speed
+ * function_descriptors() - get function descriptors क्रम speed
  * @f: the function
  * @speed: the speed
  *
- * Returns the descriptors or NULL if not set.
+ * Returns the descriptors or शून्य अगर not set.
  */
-static struct usb_descriptor_header **
-function_descriptors(struct usb_function *f,
-		     enum usb_device_speed speed)
-{
-	struct usb_descriptor_header **descriptors;
+अटल काष्ठा usb_descriptor_header **
+function_descriptors(काष्ठा usb_function *f,
+		     क्रमागत usb_device_speed speed)
+अणु
+	काष्ठा usb_descriptor_header **descriptors;
 
 	/*
 	 * NOTE: we try to help gadget drivers which might not be setting
 	 * max_speed appropriately.
 	 */
 
-	switch (speed) {
-	case USB_SPEED_SUPER_PLUS:
+	चयन (speed) अणु
+	हाल USB_SPEED_SUPER_PLUS:
 		descriptors = f->ssp_descriptors;
-		if (descriptors)
-			break;
+		अगर (descriptors)
+			अवरोध;
 		fallthrough;
-	case USB_SPEED_SUPER:
+	हाल USB_SPEED_SUPER:
 		descriptors = f->ss_descriptors;
-		if (descriptors)
-			break;
+		अगर (descriptors)
+			अवरोध;
 		fallthrough;
-	case USB_SPEED_HIGH:
+	हाल USB_SPEED_HIGH:
 		descriptors = f->hs_descriptors;
-		if (descriptors)
-			break;
+		अगर (descriptors)
+			अवरोध;
 		fallthrough;
-	default:
+	शेष:
 		descriptors = f->fs_descriptors;
-	}
+	पूर्ण
 
 	/*
-	 * if we can't find any descriptors at all, then this gadget deserves to
-	 * Oops with a NULL pointer dereference
+	 * अगर we can't find any descriptors at all, then this gadget deserves to
+	 * Oops with a शून्य poपूर्णांकer dereference
 	 */
 
-	return descriptors;
-}
+	वापस descriptors;
+पूर्ण
 
 /**
  * next_desc() - advance to the next desc_type descriptor
- * @t: currect pointer within descriptor array
+ * @t: currect poपूर्णांकer within descriptor array
  * @desc_type: descriptor type
  *
- * Return: next desc_type descriptor or NULL
+ * Return: next desc_type descriptor or शून्य
  *
  * Iterate over @t until either desc_type descriptor found or
- * NULL (that indicates end of list) encountered
+ * शून्य (that indicates end of list) encountered
  */
-static struct usb_descriptor_header**
-next_desc(struct usb_descriptor_header **t, u8 desc_type)
-{
-	for (; *t; t++) {
-		if ((*t)->bDescriptorType == desc_type)
-			return t;
-	}
-	return NULL;
-}
+अटल काष्ठा usb_descriptor_header**
+next_desc(काष्ठा usb_descriptor_header **t, u8 desc_type)
+अणु
+	क्रम (; *t; t++) अणु
+		अगर ((*t)->bDescriptorType == desc_type)
+			वापस t;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * for_each_desc() - iterate over desc_type descriptors in the
+ * क्रम_each_desc() - iterate over desc_type descriptors in the
  * descriptors list
- * @start: pointer within descriptor array.
+ * @start: poपूर्णांकer within descriptor array.
  * @iter_desc: desc_type descriptor to use as the loop cursor
  * @desc_type: wanted descriptr type
  */
-#define for_each_desc(start, iter_desc, desc_type) \
-	for (iter_desc = next_desc(start, desc_type); \
+#घोषणा क्रम_each_desc(start, iter_desc, desc_type) \
+	क्रम (iter_desc = next_desc(start, desc_type); \
 	     iter_desc; iter_desc = next_desc(iter_desc + 1, desc_type))
 
 /**
- * config_ep_by_speed_and_alt() - configures the given endpoint
+ * config_ep_by_speed_and_alt() - configures the given endpoपूर्णांक
  * according to gadget speed.
- * @g: pointer to the gadget
+ * @g: poपूर्णांकer to the gadget
  * @f: usb function
- * @_ep: the endpoint to configure
+ * @_ep: the endpoपूर्णांक to configure
  * @alt: alternate setting number
  *
  * Return: error code, 0 on success
  *
- * This function chooses the right descriptors for a given
- * endpoint according to gadget speed and saves it in the
- * endpoint desc field. If the endpoint already has a descriptor
- * assigned to it - overwrites it with currently corresponding
- * descriptor. The endpoint maxpacket field is updated according
+ * This function chooses the right descriptors क्रम a given
+ * endpoपूर्णांक according to gadget speed and saves it in the
+ * endpoपूर्णांक desc field. If the endpoपूर्णांक alपढ़ोy has a descriptor
+ * asचिन्हित to it - overग_लिखोs it with currently corresponding
+ * descriptor. The endpoपूर्णांक maxpacket field is updated according
  * to the chosen descriptor.
  * Note: the supplied function should hold all the descriptors
- * for supported speeds
+ * क्रम supported speeds
  */
-int config_ep_by_speed_and_alt(struct usb_gadget *g,
-				struct usb_function *f,
-				struct usb_ep *_ep,
+पूर्णांक config_ep_by_speed_and_alt(काष्ठा usb_gadget *g,
+				काष्ठा usb_function *f,
+				काष्ठा usb_ep *_ep,
 				u8 alt)
-{
-	struct usb_endpoint_descriptor *chosen_desc = NULL;
-	struct usb_interface_descriptor *int_desc = NULL;
-	struct usb_descriptor_header **speed_desc = NULL;
+अणु
+	काष्ठा usb_endpoपूर्णांक_descriptor *chosen_desc = शून्य;
+	काष्ठा usb_पूर्णांकerface_descriptor *पूर्णांक_desc = शून्य;
+	काष्ठा usb_descriptor_header **speed_desc = शून्य;
 
-	struct usb_ss_ep_comp_descriptor *comp_desc = NULL;
-	int want_comp_desc = 0;
+	काष्ठा usb_ss_ep_comp_descriptor *comp_desc = शून्य;
+	पूर्णांक want_comp_desc = 0;
 
-	struct usb_descriptor_header **d_spd; /* cursor for speed desc */
+	काष्ठा usb_descriptor_header **d_spd; /* cursor क्रम speed desc */
 
-	if (!g || !f || !_ep)
-		return -EIO;
+	अगर (!g || !f || !_ep)
+		वापस -EIO;
 
 	/* select desired speed */
-	switch (g->speed) {
-	case USB_SPEED_SUPER_PLUS:
-		if (gadget_is_superspeed_plus(g)) {
+	चयन (g->speed) अणु
+	हाल USB_SPEED_SUPER_PLUS:
+		अगर (gadget_is_superspeed_plus(g)) अणु
 			speed_desc = f->ssp_descriptors;
 			want_comp_desc = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case USB_SPEED_SUPER:
-		if (gadget_is_superspeed(g)) {
+	हाल USB_SPEED_SUPER:
+		अगर (gadget_is_superspeed(g)) अणु
 			speed_desc = f->ss_descriptors;
 			want_comp_desc = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case USB_SPEED_HIGH:
-		if (gadget_is_dualspeed(g)) {
+	हाल USB_SPEED_HIGH:
+		अगर (gadget_is_dualspeed(g)) अणु
 			speed_desc = f->hs_descriptors;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		speed_desc = f->fs_descriptors;
-	}
+	पूर्ण
 
 	/* find correct alternate setting descriptor */
-	for_each_desc(speed_desc, d_spd, USB_DT_INTERFACE) {
-		int_desc = (struct usb_interface_descriptor *)*d_spd;
+	क्रम_each_desc(speed_desc, d_spd, USB_DT_INTERFACE) अणु
+		पूर्णांक_desc = (काष्ठा usb_पूर्णांकerface_descriptor *)*d_spd;
 
-		if (int_desc->bAlternateSetting == alt) {
+		अगर (पूर्णांक_desc->bAlternateSetting == alt) अणु
 			speed_desc = d_spd;
-			goto intf_found;
-		}
-	}
-	return -EIO;
+			जाओ पूर्णांकf_found;
+		पूर्ण
+	पूर्ण
+	वापस -EIO;
 
-intf_found:
+पूर्णांकf_found:
 	/* find descriptors */
-	for_each_desc(speed_desc, d_spd, USB_DT_ENDPOINT) {
-		chosen_desc = (struct usb_endpoint_descriptor *)*d_spd;
-		if (chosen_desc->bEndpointAddress == _ep->address)
-			goto ep_found;
-	}
-	return -EIO;
+	क्रम_each_desc(speed_desc, d_spd, USB_DT_ENDPOINT) अणु
+		chosen_desc = (काष्ठा usb_endpoपूर्णांक_descriptor *)*d_spd;
+		अगर (chosen_desc->bEndpoपूर्णांकAddress == _ep->address)
+			जाओ ep_found;
+	पूर्ण
+	वापस -EIO;
 
 ep_found:
 	/* commit results */
-	_ep->maxpacket = usb_endpoint_maxp(chosen_desc);
+	_ep->maxpacket = usb_endpoपूर्णांक_maxp(chosen_desc);
 	_ep->desc = chosen_desc;
-	_ep->comp_desc = NULL;
+	_ep->comp_desc = शून्य;
 	_ep->maxburst = 0;
 	_ep->mult = 1;
 
-	if (g->speed == USB_SPEED_HIGH && (usb_endpoint_xfer_isoc(_ep->desc) ||
-				usb_endpoint_xfer_int(_ep->desc)))
-		_ep->mult = usb_endpoint_maxp_mult(_ep->desc);
+	अगर (g->speed == USB_SPEED_HIGH && (usb_endpoपूर्णांक_xfer_isoc(_ep->desc) ||
+				usb_endpoपूर्णांक_xfer_पूर्णांक(_ep->desc)))
+		_ep->mult = usb_endpoपूर्णांक_maxp_mult(_ep->desc);
 
-	if (!want_comp_desc)
-		return 0;
+	अगर (!want_comp_desc)
+		वापस 0;
 
 	/*
 	 * Companion descriptor should follow EP descriptor
 	 * USB 3.0 spec, #9.6.7
 	 */
-	comp_desc = (struct usb_ss_ep_comp_descriptor *)*(++d_spd);
-	if (!comp_desc ||
+	comp_desc = (काष्ठा usb_ss_ep_comp_descriptor *)*(++d_spd);
+	अगर (!comp_desc ||
 	    (comp_desc->bDescriptorType != USB_DT_SS_ENDPOINT_COMP))
-		return -EIO;
+		वापस -EIO;
 	_ep->comp_desc = comp_desc;
-	if (g->speed >= USB_SPEED_SUPER) {
-		switch (usb_endpoint_type(_ep->desc)) {
-		case USB_ENDPOINT_XFER_ISOC:
+	अगर (g->speed >= USB_SPEED_SUPER) अणु
+		चयन (usb_endpoपूर्णांक_type(_ep->desc)) अणु
+		हाल USB_ENDPOINT_XFER_ISOC:
 			/* mult: bits 1:0 of bmAttributes */
 			_ep->mult = (comp_desc->bmAttributes & 0x3) + 1;
 			fallthrough;
-		case USB_ENDPOINT_XFER_BULK:
-		case USB_ENDPOINT_XFER_INT:
+		हाल USB_ENDPOINT_XFER_BULK:
+		हाल USB_ENDPOINT_XFER_INT:
 			_ep->maxburst = comp_desc->bMaxBurst + 1;
-			break;
-		default:
-			if (comp_desc->bMaxBurst != 0) {
-				struct usb_composite_dev *cdev;
+			अवरोध;
+		शेष:
+			अगर (comp_desc->bMaxBurst != 0) अणु
+				काष्ठा usb_composite_dev *cdev;
 
 				cdev = get_gadget_data(g);
 				ERROR(cdev, "ep0 bMaxBurst must be 0\n");
-			}
+			पूर्ण
 			_ep->maxburst = 1;
-			break;
-		}
-	}
-	return 0;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(config_ep_by_speed_and_alt);
 
 /**
- * config_ep_by_speed() - configures the given endpoint
+ * config_ep_by_speed() - configures the given endpoपूर्णांक
  * according to gadget speed.
- * @g: pointer to the gadget
+ * @g: poपूर्णांकer to the gadget
  * @f: usb function
- * @_ep: the endpoint to configure
+ * @_ep: the endpoपूर्णांक to configure
  *
  * Return: error code, 0 on success
  *
- * This function chooses the right descriptors for a given
- * endpoint according to gadget speed and saves it in the
- * endpoint desc field. If the endpoint already has a descriptor
- * assigned to it - overwrites it with currently corresponding
- * descriptor. The endpoint maxpacket field is updated according
+ * This function chooses the right descriptors क्रम a given
+ * endpoपूर्णांक according to gadget speed and saves it in the
+ * endpoपूर्णांक desc field. If the endpoपूर्णांक alपढ़ोy has a descriptor
+ * asचिन्हित to it - overग_लिखोs it with currently corresponding
+ * descriptor. The endpoपूर्णांक maxpacket field is updated according
  * to the chosen descriptor.
  * Note: the supplied function should hold all the descriptors
- * for supported speeds
+ * क्रम supported speeds
  */
-int config_ep_by_speed(struct usb_gadget *g,
-			struct usb_function *f,
-			struct usb_ep *_ep)
-{
-	return config_ep_by_speed_and_alt(g, f, _ep, 0);
-}
+पूर्णांक config_ep_by_speed(काष्ठा usb_gadget *g,
+			काष्ठा usb_function *f,
+			काष्ठा usb_ep *_ep)
+अणु
+	वापस config_ep_by_speed_and_alt(g, f, _ep, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(config_ep_by_speed);
 
 /**
  * usb_add_function() - add a function to a configuration
  * @config: the configuration
  * @function: the function being added
- * Context: single threaded during gadget setup
+ * Context: single thपढ़ोed during gadget setup
  *
  * After initialization, each configuration must have one or more
  * functions added to it.  Adding a function involves calling its @bind()
- * method to allocate resources such as interface and string identifiers
- * and endpoints.
+ * method to allocate resources such as पूर्णांकerface and string identअगरiers
+ * and endpoपूर्णांकs.
  *
- * This function returns the value of the function's bind(), which is
- * zero for success else a negative errno value.
+ * This function वापसs the value of the function's bind(), which is
+ * zero क्रम success अन्यथा a negative त्रुटि_सं value.
  */
-int usb_add_function(struct usb_configuration *config,
-		struct usb_function *function)
-{
-	int	value = -EINVAL;
+पूर्णांक usb_add_function(काष्ठा usb_configuration *config,
+		काष्ठा usb_function *function)
+अणु
+	पूर्णांक	value = -EINVAL;
 
 	DBG(config->cdev, "adding '%s'/%p to config '%s'/%p\n",
 			function->name, function,
 			config->label, config);
 
-	if (!function->set_alt || !function->disable)
-		goto done;
+	अगर (!function->set_alt || !function->disable)
+		जाओ करोne;
 
 	function->config = config;
 	list_add_tail(&function->list, &config->functions);
 
-	if (function->bind_deactivated) {
+	अगर (function->bind_deactivated) अणु
 		value = usb_function_deactivate(function);
-		if (value)
-			goto done;
-	}
+		अगर (value)
+			जाओ करोne;
+	पूर्ण
 
 	/* REVISIT *require* function->bind? */
-	if (function->bind) {
+	अगर (function->bind) अणु
 		value = function->bind(config, function);
-		if (value < 0) {
+		अगर (value < 0) अणु
 			list_del(&function->list);
-			function->config = NULL;
-		}
-	} else
+			function->config = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा
 		value = 0;
 
-	/* We allow configurations that don't work at both speeds.
-	 * If we run into a lowspeed Linux system, treat it the same
+	/* We allow configurations that करोn't work at both speeds.
+	 * If we run पूर्णांकo a lowspeed Linux प्रणाली, treat it the same
 	 * as full speed ... it's the function drivers that will need
-	 * to avoid bulk and ISO transfers.
+	 * to aव्योम bulk and ISO transfers.
 	 */
-	if (!config->fullspeed && function->fs_descriptors)
+	अगर (!config->fullspeed && function->fs_descriptors)
 		config->fullspeed = true;
-	if (!config->highspeed && function->hs_descriptors)
+	अगर (!config->highspeed && function->hs_descriptors)
 		config->highspeed = true;
-	if (!config->superspeed && function->ss_descriptors)
+	अगर (!config->superspeed && function->ss_descriptors)
 		config->superspeed = true;
-	if (!config->superspeed_plus && function->ssp_descriptors)
+	अगर (!config->superspeed_plus && function->ssp_descriptors)
 		config->superspeed_plus = true;
 
-done:
-	if (value)
+करोne:
+	अगर (value)
 		DBG(config->cdev, "adding '%s'/%p --> %d\n",
 				function->name, function, value);
-	return value;
-}
+	वापस value;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_add_function);
 
-void usb_remove_function(struct usb_configuration *c, struct usb_function *f)
-{
-	if (f->disable)
+व्योम usb_हटाओ_function(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	अगर (f->disable)
 		f->disable(f);
 
-	bitmap_zero(f->endpoints, 32);
+	biपंचांगap_zero(f->endpoपूर्णांकs, 32);
 	list_del(&f->list);
-	if (f->unbind)
+	अगर (f->unbind)
 		f->unbind(c, f);
 
-	if (f->bind_deactivated)
+	अगर (f->bind_deactivated)
 		usb_function_activate(f);
-}
-EXPORT_SYMBOL_GPL(usb_remove_function);
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_हटाओ_function);
 
 /**
- * usb_function_deactivate - prevent function and gadget enumeration
- * @function: the function that isn't yet ready to respond
+ * usb_function_deactivate - prevent function and gadget क्रमागतeration
+ * @function: the function that isn't yet पढ़ोy to respond
  *
- * Blocks response of the gadget driver to host enumeration by
+ * Blocks response of the gadget driver to host क्रमागतeration by
  * preventing the data line pullup from being activated.  This is
  * normally called during @bind() processing to change from the
  * initial "ready to respond" state, or when a required resource
  * becomes available.
  *
  * For example, drivers that serve as a passthrough to a userspace
- * daemon can block enumeration unless that daemon (such as an OBEX,
- * MTP, or print server) is ready to handle host requests.
+ * daemon can block क्रमागतeration unless that daemon (such as an OBEX,
+ * MTP, or prपूर्णांक server) is पढ़ोy to handle host requests.
  *
- * Not all systems support software control of their USB peripheral
+ * Not all प्रणालीs support software control of their USB peripheral
  * data pullups.
  *
- * Returns zero on success, else negative errno.
+ * Returns zero on success, अन्यथा negative त्रुटि_सं.
  */
-int usb_function_deactivate(struct usb_function *function)
-{
-	struct usb_composite_dev	*cdev = function->config->cdev;
-	unsigned long			flags;
-	int				status = 0;
+पूर्णांक usb_function_deactivate(काष्ठा usb_function *function)
+अणु
+	काष्ठा usb_composite_dev	*cdev = function->config->cdev;
+	अचिन्हित दीर्घ			flags;
+	पूर्णांक				status = 0;
 
 	spin_lock_irqsave(&cdev->lock, flags);
 
-	if (cdev->deactivations == 0) {
+	अगर (cdev->deactivations == 0) अणु
 		spin_unlock_irqrestore(&cdev->lock, flags);
 		status = usb_gadget_deactivate(cdev->gadget);
 		spin_lock_irqsave(&cdev->lock, flags);
-	}
-	if (status == 0)
+	पूर्ण
+	अगर (status == 0)
 		cdev->deactivations++;
 
 	spin_unlock_irqrestore(&cdev->lock, flags);
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_function_deactivate);
 
 /**
- * usb_function_activate - allow function and gadget enumeration
+ * usb_function_activate - allow function and gadget क्रमागतeration
  * @function: function on which usb_function_activate() was called
  *
  * Reverses effect of usb_function_deactivate().  If no more functions
  * are delaying their activation, the gadget driver will respond to
- * host enumeration procedures.
+ * host क्रमागतeration procedures.
  *
- * Returns zero on success, else negative errno.
+ * Returns zero on success, अन्यथा negative त्रुटि_सं.
  */
-int usb_function_activate(struct usb_function *function)
-{
-	struct usb_composite_dev	*cdev = function->config->cdev;
-	unsigned long			flags;
-	int				status = 0;
+पूर्णांक usb_function_activate(काष्ठा usb_function *function)
+अणु
+	काष्ठा usb_composite_dev	*cdev = function->config->cdev;
+	अचिन्हित दीर्घ			flags;
+	पूर्णांक				status = 0;
 
 	spin_lock_irqsave(&cdev->lock, flags);
 
-	if (WARN_ON(cdev->deactivations == 0))
+	अगर (WARN_ON(cdev->deactivations == 0))
 		status = -EINVAL;
-	else {
+	अन्यथा अणु
 		cdev->deactivations--;
-		if (cdev->deactivations == 0) {
+		अगर (cdev->deactivations == 0) अणु
 			spin_unlock_irqrestore(&cdev->lock, flags);
 			status = usb_gadget_activate(cdev->gadget);
 			spin_lock_irqsave(&cdev->lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&cdev->lock, flags);
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_function_activate);
 
 /**
- * usb_interface_id() - allocate an unused interface ID
- * @config: configuration associated with the interface
- * @function: function handling the interface
- * Context: single threaded during gadget setup
+ * usb_पूर्णांकerface_id() - allocate an unused पूर्णांकerface ID
+ * @config: configuration associated with the पूर्णांकerface
+ * @function: function handling the पूर्णांकerface
+ * Context: single thपढ़ोed during gadget setup
  *
- * usb_interface_id() is called from usb_function.bind() callbacks to
- * allocate new interface IDs.  The function driver will then store that
- * ID in interface, association, CDC union, and other descriptors.  It
- * will also handle any control requests targeted at that interface,
+ * usb_पूर्णांकerface_id() is called from usb_function.bind() callbacks to
+ * allocate new पूर्णांकerface IDs.  The function driver will then store that
+ * ID in पूर्णांकerface, association, CDC जोड़, and other descriptors.  It
+ * will also handle any control requests targeted at that पूर्णांकerface,
  * particularly changing its altsetting via set_alt().  There may
- * also be class-specific or vendor-specific requests to handle.
+ * also be class-specअगरic or venकरोr-specअगरic requests to handle.
  *
- * All interface identifier should be allocated using this routine, to
- * ensure that for example different functions don't wrongly assign
- * different meanings to the same identifier.  Note that since interface
- * identifiers are configuration-specific, functions used in more than
+ * All पूर्णांकerface identअगरier should be allocated using this routine, to
+ * ensure that क्रम example dअगरferent functions करोn't wrongly assign
+ * dअगरferent meanings to the same identअगरier.  Note that since पूर्णांकerface
+ * identअगरiers are configuration-specअगरic, functions used in more than
  * one configuration (or more than once in a given configuration) need
  * multiple versions of the relevant descriptors.
  *
- * Returns the interface ID which was allocated; or -ENODEV if no
- * more interface IDs can be allocated.
+ * Returns the पूर्णांकerface ID which was allocated; or -ENODEV अगर no
+ * more पूर्णांकerface IDs can be allocated.
  */
-int usb_interface_id(struct usb_configuration *config,
-		struct usb_function *function)
-{
-	unsigned id = config->next_interface_id;
+पूर्णांक usb_पूर्णांकerface_id(काष्ठा usb_configuration *config,
+		काष्ठा usb_function *function)
+अणु
+	अचिन्हित id = config->next_पूर्णांकerface_id;
 
-	if (id < MAX_CONFIG_INTERFACES) {
-		config->interface[id] = function;
-		config->next_interface_id = id + 1;
-		return id;
-	}
-	return -ENODEV;
-}
-EXPORT_SYMBOL_GPL(usb_interface_id);
+	अगर (id < MAX_CONFIG_INTERFACES) अणु
+		config->पूर्णांकerface[id] = function;
+		config->next_पूर्णांकerface_id = id + 1;
+		वापस id;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_पूर्णांकerface_id);
 
-static u8 encode_bMaxPower(enum usb_device_speed speed,
-		struct usb_configuration *c)
-{
-	unsigned val;
+अटल u8 encode_bMaxPower(क्रमागत usb_device_speed speed,
+		काष्ठा usb_configuration *c)
+अणु
+	अचिन्हित val;
 
-	if (c->MaxPower)
+	अगर (c->MaxPower)
 		val = c->MaxPower;
-	else
+	अन्यथा
 		val = CONFIG_USB_GADGET_VBUS_DRAW;
-	if (!val)
-		return 0;
-	if (speed < USB_SPEED_SUPER)
-		return min(val, 500U) / 2;
-	else
+	अगर (!val)
+		वापस 0;
+	अगर (speed < USB_SPEED_SUPER)
+		वापस min(val, 500U) / 2;
+	अन्यथा
 		/*
-		 * USB 3.x supports up to 900mA, but since 900 isn't divisible
-		 * by 8 the integral division will effectively cap to 896mA.
+		 * USB 3.x supports up to 900mA, but since 900 isn't भागisible
+		 * by 8 the पूर्णांकegral भागision will effectively cap to 896mA.
 		 */
-		return min(val, 900U) / 8;
-}
+		वापस min(val, 900U) / 8;
+पूर्ण
 
-static int config_buf(struct usb_configuration *config,
-		enum usb_device_speed speed, void *buf, u8 type)
-{
-	struct usb_config_descriptor	*c = buf;
-	void				*next = buf + USB_DT_CONFIG_SIZE;
-	int				len;
-	struct usb_function		*f;
-	int				status;
+अटल पूर्णांक config_buf(काष्ठा usb_configuration *config,
+		क्रमागत usb_device_speed speed, व्योम *buf, u8 type)
+अणु
+	काष्ठा usb_config_descriptor	*c = buf;
+	व्योम				*next = buf + USB_DT_CONFIG_SIZE;
+	पूर्णांक				len;
+	काष्ठा usb_function		*f;
+	पूर्णांक				status;
 
-	len = USB_COMP_EP0_BUFSIZ - USB_DT_CONFIG_SIZE;
-	/* write the config descriptor */
+	len = USB_COMP_EP0_बफ_मान - USB_DT_CONFIG_SIZE;
+	/* ग_लिखो the config descriptor */
 	c = buf;
 	c->bLength = USB_DT_CONFIG_SIZE;
 	c->bDescriptorType = type;
 	/* wTotalLength is written later */
-	c->bNumInterfaces = config->next_interface_id;
+	c->bNumInterfaces = config->next_पूर्णांकerface_id;
 	c->bConfigurationValue = config->bConfigurationValue;
 	c->iConfiguration = config->iConfiguration;
 	c->bmAttributes = USB_CONFIG_ATT_ONE | config->bmAttributes;
 	c->bMaxPower = encode_bMaxPower(speed, config);
 
 	/* There may be e.g. OTG descriptors */
-	if (config->descriptors) {
+	अगर (config->descriptors) अणु
 		status = usb_descriptor_fillbuf(next, len,
 				config->descriptors);
-		if (status < 0)
-			return status;
+		अगर (status < 0)
+			वापस status;
 		len -= status;
 		next += status;
-	}
+	पूर्ण
 
 	/* add each function's descriptors */
-	list_for_each_entry(f, &config->functions, list) {
-		struct usb_descriptor_header **descriptors;
+	list_क्रम_each_entry(f, &config->functions, list) अणु
+		काष्ठा usb_descriptor_header **descriptors;
 
 		descriptors = function_descriptors(f, speed);
-		if (!descriptors)
-			continue;
+		अगर (!descriptors)
+			जारी;
 		status = usb_descriptor_fillbuf(next, len,
-			(const struct usb_descriptor_header **) descriptors);
-		if (status < 0)
-			return status;
+			(स्थिर काष्ठा usb_descriptor_header **) descriptors);
+		अगर (status < 0)
+			वापस status;
 		len -= status;
 		next += status;
-	}
+	पूर्ण
 
 	len = next - buf;
 	c->wTotalLength = cpu_to_le16(len);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int config_desc(struct usb_composite_dev *cdev, unsigned w_value)
-{
-	struct usb_gadget		*gadget = cdev->gadget;
-	struct usb_configuration	*c;
-	struct list_head		*pos;
+अटल पूर्णांक config_desc(काष्ठा usb_composite_dev *cdev, अचिन्हित w_value)
+अणु
+	काष्ठा usb_gadget		*gadget = cdev->gadget;
+	काष्ठा usb_configuration	*c;
+	काष्ठा list_head		*pos;
 	u8				type = w_value >> 8;
-	enum usb_device_speed		speed = USB_SPEED_UNKNOWN;
+	क्रमागत usb_device_speed		speed = USB_SPEED_UNKNOWN;
 
-	if (gadget->speed >= USB_SPEED_SUPER)
+	अगर (gadget->speed >= USB_SPEED_SUPER)
 		speed = gadget->speed;
-	else if (gadget_is_dualspeed(gadget)) {
-		int	hs = 0;
-		if (gadget->speed == USB_SPEED_HIGH)
+	अन्यथा अगर (gadget_is_dualspeed(gadget)) अणु
+		पूर्णांक	hs = 0;
+		अगर (gadget->speed == USB_SPEED_HIGH)
 			hs = 1;
-		if (type == USB_DT_OTHER_SPEED_CONFIG)
+		अगर (type == USB_DT_OTHER_SPEED_CONFIG)
 			hs = !hs;
-		if (hs)
+		अगर (hs)
 			speed = USB_SPEED_HIGH;
 
-	}
+	पूर्ण
 
 	/* This is a lookup by config *INDEX* */
 	w_value &= 0xff;
 
 	pos = &cdev->configs;
 	c = cdev->os_desc_config;
-	if (c)
-		goto check_config;
+	अगर (c)
+		जाओ check_config;
 
-	while ((pos = pos->next) !=  &cdev->configs) {
+	जबतक ((pos = pos->next) !=  &cdev->configs) अणु
 		c = list_entry(pos, typeof(*c), list);
 
 		/* skip OS Descriptors config which is handled separately */
-		if (c == cdev->os_desc_config)
-			continue;
+		अगर (c == cdev->os_desc_config)
+			जारी;
 
 check_config:
 		/* ignore configs that won't work at this speed */
-		switch (speed) {
-		case USB_SPEED_SUPER_PLUS:
-			if (!c->superspeed_plus)
-				continue;
-			break;
-		case USB_SPEED_SUPER:
-			if (!c->superspeed)
-				continue;
-			break;
-		case USB_SPEED_HIGH:
-			if (!c->highspeed)
-				continue;
-			break;
-		default:
-			if (!c->fullspeed)
-				continue;
-		}
+		चयन (speed) अणु
+		हाल USB_SPEED_SUPER_PLUS:
+			अगर (!c->superspeed_plus)
+				जारी;
+			अवरोध;
+		हाल USB_SPEED_SUPER:
+			अगर (!c->superspeed)
+				जारी;
+			अवरोध;
+		हाल USB_SPEED_HIGH:
+			अगर (!c->highspeed)
+				जारी;
+			अवरोध;
+		शेष:
+			अगर (!c->fullspeed)
+				जारी;
+		पूर्ण
 
-		if (w_value == 0)
-			return config_buf(c, speed, cdev->req->buf, type);
+		अगर (w_value == 0)
+			वापस config_buf(c, speed, cdev->req->buf, type);
 		w_value--;
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int count_configs(struct usb_composite_dev *cdev, unsigned type)
-{
-	struct usb_gadget		*gadget = cdev->gadget;
-	struct usb_configuration	*c;
-	unsigned			count = 0;
-	int				hs = 0;
-	int				ss = 0;
-	int				ssp = 0;
+अटल पूर्णांक count_configs(काष्ठा usb_composite_dev *cdev, अचिन्हित type)
+अणु
+	काष्ठा usb_gadget		*gadget = cdev->gadget;
+	काष्ठा usb_configuration	*c;
+	अचिन्हित			count = 0;
+	पूर्णांक				hs = 0;
+	पूर्णांक				ss = 0;
+	पूर्णांक				ssp = 0;
 
-	if (gadget_is_dualspeed(gadget)) {
-		if (gadget->speed == USB_SPEED_HIGH)
+	अगर (gadget_is_dualspeed(gadget)) अणु
+		अगर (gadget->speed == USB_SPEED_HIGH)
 			hs = 1;
-		if (gadget->speed == USB_SPEED_SUPER)
+		अगर (gadget->speed == USB_SPEED_SUPER)
 			ss = 1;
-		if (gadget->speed == USB_SPEED_SUPER_PLUS)
+		अगर (gadget->speed == USB_SPEED_SUPER_PLUS)
 			ssp = 1;
-		if (type == USB_DT_DEVICE_QUALIFIER)
+		अगर (type == USB_DT_DEVICE_QUALIFIER)
 			hs = !hs;
-	}
-	list_for_each_entry(c, &cdev->configs, list) {
+	पूर्ण
+	list_क्रम_each_entry(c, &cdev->configs, list) अणु
 		/* ignore configs that won't work at this speed */
-		if (ssp) {
-			if (!c->superspeed_plus)
-				continue;
-		} else if (ss) {
-			if (!c->superspeed)
-				continue;
-		} else if (hs) {
-			if (!c->highspeed)
-				continue;
-		} else {
-			if (!c->fullspeed)
-				continue;
-		}
+		अगर (ssp) अणु
+			अगर (!c->superspeed_plus)
+				जारी;
+		पूर्ण अन्यथा अगर (ss) अणु
+			अगर (!c->superspeed)
+				जारी;
+		पूर्ण अन्यथा अगर (hs) अणु
+			अगर (!c->highspeed)
+				जारी;
+		पूर्ण अन्यथा अणु
+			अगर (!c->fullspeed)
+				जारी;
+		पूर्ण
 		count++;
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
 /**
  * bos_desc() - prepares the BOS descriptor.
- * @cdev: pointer to usb_composite device to generate the bos
- *	descriptor for
+ * @cdev: poपूर्णांकer to usb_composite device to generate the bos
+ *	descriptor क्रम
  *
  * This function generates the BOS (Binary Device Object)
  * descriptor and its device capabilities descriptors. The BOS
  * descriptor should be supported by a SuperSpeed device.
  */
-static int bos_desc(struct usb_composite_dev *cdev)
-{
-	struct usb_ext_cap_descriptor	*usb_ext;
-	struct usb_dcd_config_params	dcd_config_params;
-	struct usb_bos_descriptor	*bos = cdev->req->buf;
-	unsigned int			besl = 0;
+अटल पूर्णांक bos_desc(काष्ठा usb_composite_dev *cdev)
+अणु
+	काष्ठा usb_ext_cap_descriptor	*usb_ext;
+	काष्ठा usb_dcd_config_params	dcd_config_params;
+	काष्ठा usb_bos_descriptor	*bos = cdev->req->buf;
+	अचिन्हित पूर्णांक			besl = 0;
 
 	bos->bLength = USB_DT_BOS_SIZE;
 	bos->bDescriptorType = USB_DT_BOS;
@@ -674,10 +675,10 @@ static int bos_desc(struct usb_composite_dev *cdev)
 	bos->bNumDeviceCaps = 0;
 
 	/* Get Controller configuration */
-	if (cdev->gadget->ops->get_config_params) {
+	अगर (cdev->gadget->ops->get_config_params) अणु
 		cdev->gadget->ops->get_config_params(cdev->gadget,
 						     &dcd_config_params);
-	} else {
+	पूर्ण अन्यथा अणु
 		dcd_config_params.besl_baseline =
 			USB_DEFAULT_BESL_UNSPECIFIED;
 		dcd_config_params.besl_deep =
@@ -686,13 +687,13 @@ static int bos_desc(struct usb_composite_dev *cdev)
 			USB_DEFAULT_U1_DEV_EXIT_LAT;
 		dcd_config_params.bU2DevExitLat =
 			cpu_to_le16(USB_DEFAULT_U2_DEV_EXIT_LAT);
-	}
+	पूर्ण
 
-	if (dcd_config_params.besl_baseline != USB_DEFAULT_BESL_UNSPECIFIED)
+	अगर (dcd_config_params.besl_baseline != USB_DEFAULT_BESL_UNSPECIFIED)
 		besl = USB_BESL_BASELINE_VALID |
 			USB_SET_BESL_BASELINE(dcd_config_params.besl_baseline);
 
-	if (dcd_config_params.besl_deep != USB_DEFAULT_BESL_UNSPECIFIED)
+	अगर (dcd_config_params.besl_deep != USB_DEFAULT_BESL_UNSPECIFIED)
 		besl |= USB_BESL_DEEP_VALID |
 			USB_SET_BESL_DEEP(dcd_config_params.besl_deep);
 
@@ -713,8 +714,8 @@ static int bos_desc(struct usb_composite_dev *cdev)
 	 * The Superspeed USB Capability descriptor shall be implemented by all
 	 * SuperSpeed devices.
 	 */
-	if (gadget_is_superspeed(cdev->gadget)) {
-		struct usb_ss_cap_descriptor *ss_cap;
+	अगर (gadget_is_superspeed(cdev->gadget)) अणु
+		काष्ठा usb_ss_cap_descriptor *ss_cap;
 
 		ss_cap = cdev->req->buf + le16_to_cpu(bos->wTotalLength);
 		bos->bNumDeviceCaps++;
@@ -730,16 +731,16 @@ static int bos_desc(struct usb_composite_dev *cdev)
 		ss_cap->bFunctionalitySupport = USB_LOW_SPEED_OPERATION;
 		ss_cap->bU1devExitLat = dcd_config_params.bU1devExitLat;
 		ss_cap->bU2DevExitLat = dcd_config_params.bU2DevExitLat;
-	}
+	पूर्ण
 
 	/* The SuperSpeedPlus USB Device Capability descriptor */
-	if (gadget_is_superspeed_plus(cdev->gadget)) {
-		struct usb_ssp_cap_descriptor *ssp_cap;
+	अगर (gadget_is_superspeed_plus(cdev->gadget)) अणु
+		काष्ठा usb_ssp_cap_descriptor *ssp_cap;
 		u8 ssac = 1;
 		u8 ssic;
-		int i;
+		पूर्णांक i;
 
-		if (cdev->gadget->max_ssp_rate == USB_SSP_GEN_2x2)
+		अगर (cdev->gadget->max_ssp_rate == USB_SSP_GEN_2x2)
 			ssac = 3;
 
 		/*
@@ -768,33 +769,33 @@ static int bos_desc(struct usb_composite_dev *cdev)
 				    FIELD_PREP(USB_SSP_MIN_TX_LANE_COUNT, 1));
 
 		/*
-		 * Use 1 SSID if the gadget supports up to gen2x1 or not
-		 * specified:
-		 * - SSID 0 for symmetric RX/TX sublink speed of 10 Gbps.
+		 * Use 1 SSID अगर the gadget supports up to gen2x1 or not
+		 * specअगरied:
+		 * - SSID 0 क्रम symmetric RX/TX sublink speed of 10 Gbps.
 		 *
-		 * Use 1 SSID if the gadget supports up to gen1x2:
-		 * - SSID 0 for symmetric RX/TX sublink speed of 5 Gbps.
+		 * Use 1 SSID अगर the gadget supports up to gen1x2:
+		 * - SSID 0 क्रम symmetric RX/TX sublink speed of 5 Gbps.
 		 *
-		 * Use 2 SSIDs if the gadget supports up to gen2x2:
-		 * - SSID 0 for symmetric RX/TX sublink speed of 5 Gbps.
-		 * - SSID 1 for symmetric RX/TX sublink speed of 10 Gbps.
+		 * Use 2 SSIDs अगर the gadget supports up to gen2x2:
+		 * - SSID 0 क्रम symmetric RX/TX sublink speed of 5 Gbps.
+		 * - SSID 1 क्रम symmetric RX/TX sublink speed of 10 Gbps.
 		 */
-		for (i = 0; i < ssac + 1; i++) {
+		क्रम (i = 0; i < ssac + 1; i++) अणु
 			u8 ssid;
 			u8 mantissa;
 			u8 type;
 
 			ssid = i >> 1;
 
-			if (cdev->gadget->max_ssp_rate == USB_SSP_GEN_2x1 ||
+			अगर (cdev->gadget->max_ssp_rate == USB_SSP_GEN_2x1 ||
 			    cdev->gadget->max_ssp_rate == USB_SSP_GEN_UNKNOWN)
 				mantissa = 10;
-			else
+			अन्यथा
 				mantissa = 5 << ssid;
 
-			if (i % 2)
+			अगर (i % 2)
 				type = USB_SSP_SUBLINK_SPEED_ST_SYM_TX;
-			else
+			अन्यथा
 				type = USB_SSP_SUBLINK_SPEED_ST_SYM_RX;
 
 			ssp_cap->bmSublinkSpeedAttr[i] =
@@ -805,230 +806,230 @@ static int bos_desc(struct usb_composite_dev *cdev)
 					    FIELD_PREP(USB_SSP_SUBLINK_SPEED_LP,
 						       USB_SSP_SUBLINK_SPEED_LP_SSP) |
 					    FIELD_PREP(USB_SSP_SUBLINK_SPEED_LSM, mantissa));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return le16_to_cpu(bos->wTotalLength);
-}
+	वापस le16_to_cpu(bos->wTotalLength);
+पूर्ण
 
-static void device_qual(struct usb_composite_dev *cdev)
-{
-	struct usb_qualifier_descriptor	*qual = cdev->req->buf;
+अटल व्योम device_qual(काष्ठा usb_composite_dev *cdev)
+अणु
+	काष्ठा usb_qualअगरier_descriptor	*qual = cdev->req->buf;
 
-	qual->bLength = sizeof(*qual);
+	qual->bLength = माप(*qual);
 	qual->bDescriptorType = USB_DT_DEVICE_QUALIFIER;
 	/* POLICY: same bcdUSB and device type info at both speeds */
 	qual->bcdUSB = cdev->desc.bcdUSB;
 	qual->bDeviceClass = cdev->desc.bDeviceClass;
 	qual->bDeviceSubClass = cdev->desc.bDeviceSubClass;
 	qual->bDeviceProtocol = cdev->desc.bDeviceProtocol;
-	/* ASSUME same EP0 fifo size at both speeds */
+	/* ASSUME same EP0 fअगरo size at both speeds */
 	qual->bMaxPacketSize0 = cdev->gadget->ep0->maxpacket;
 	qual->bNumConfigurations = count_configs(cdev, USB_DT_DEVICE_QUALIFIER);
 	qual->bRESERVED = 0;
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static void reset_config(struct usb_composite_dev *cdev)
-{
-	struct usb_function		*f;
+अटल व्योम reset_config(काष्ठा usb_composite_dev *cdev)
+अणु
+	काष्ठा usb_function		*f;
 
 	DBG(cdev, "reset config\n");
 
-	list_for_each_entry(f, &cdev->config->functions, list) {
-		if (f->disable)
+	list_क्रम_each_entry(f, &cdev->config->functions, list) अणु
+		अगर (f->disable)
 			f->disable(f);
 
-		bitmap_zero(f->endpoints, 32);
-	}
-	cdev->config = NULL;
+		biपंचांगap_zero(f->endpoपूर्णांकs, 32);
+	पूर्ण
+	cdev->config = शून्य;
 	cdev->delayed_status = 0;
-}
+पूर्ण
 
-static int set_config(struct usb_composite_dev *cdev,
-		const struct usb_ctrlrequest *ctrl, unsigned number)
-{
-	struct usb_gadget	*gadget = cdev->gadget;
-	struct usb_configuration *c = NULL;
-	int			result = -EINVAL;
-	unsigned		power = gadget_is_otg(gadget) ? 8 : 100;
-	int			tmp;
+अटल पूर्णांक set_config(काष्ठा usb_composite_dev *cdev,
+		स्थिर काष्ठा usb_ctrlrequest *ctrl, अचिन्हित number)
+अणु
+	काष्ठा usb_gadget	*gadget = cdev->gadget;
+	काष्ठा usb_configuration *c = शून्य;
+	पूर्णांक			result = -EINVAL;
+	अचिन्हित		घातer = gadget_is_otg(gadget) ? 8 : 100;
+	पूर्णांक			पंचांगp;
 
-	if (number) {
-		list_for_each_entry(c, &cdev->configs, list) {
-			if (c->bConfigurationValue == number) {
+	अगर (number) अणु
+		list_क्रम_each_entry(c, &cdev->configs, list) अणु
+			अगर (c->bConfigurationValue == number) अणु
 				/*
 				 * We disable the FDs of the previous
-				 * configuration only if the new configuration
+				 * configuration only अगर the new configuration
 				 * is a valid one
 				 */
-				if (cdev->config)
+				अगर (cdev->config)
 					reset_config(cdev);
 				result = 0;
-				break;
-			}
-		}
-		if (result < 0)
-			goto done;
-	} else { /* Zero configuration value - need to reset the config */
-		if (cdev->config)
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (result < 0)
+			जाओ करोne;
+	पूर्ण अन्यथा अणु /* Zero configuration value - need to reset the config */
+		अगर (cdev->config)
 			reset_config(cdev);
 		result = 0;
-	}
+	पूर्ण
 
 	DBG(cdev, "%s config #%d: %s\n",
 	    usb_speed_string(gadget->speed),
 	    number, c ? c->label : "unconfigured");
 
-	if (!c)
-		goto done;
+	अगर (!c)
+		जाओ करोne;
 
 	usb_gadget_set_state(gadget, USB_STATE_CONFIGURED);
 	cdev->config = c;
 
-	/* Initialize all interfaces by setting them to altsetting zero. */
-	for (tmp = 0; tmp < MAX_CONFIG_INTERFACES; tmp++) {
-		struct usb_function	*f = c->interface[tmp];
-		struct usb_descriptor_header **descriptors;
+	/* Initialize all पूर्णांकerfaces by setting them to altsetting zero. */
+	क्रम (पंचांगp = 0; पंचांगp < MAX_CONFIG_INTERFACES; पंचांगp++) अणु
+		काष्ठा usb_function	*f = c->पूर्णांकerface[पंचांगp];
+		काष्ठा usb_descriptor_header **descriptors;
 
-		if (!f)
-			break;
+		अगर (!f)
+			अवरोध;
 
 		/*
-		 * Record which endpoints are used by the function. This is used
-		 * to dispatch control requests targeted at that endpoint to the
+		 * Record which endpoपूर्णांकs are used by the function. This is used
+		 * to dispatch control requests targeted at that endpoपूर्णांक to the
 		 * function's setup callback instead of the current
 		 * configuration's setup callback.
 		 */
 		descriptors = function_descriptors(f, gadget->speed);
 
-		for (; *descriptors; ++descriptors) {
-			struct usb_endpoint_descriptor *ep;
-			int addr;
+		क्रम (; *descriptors; ++descriptors) अणु
+			काष्ठा usb_endpoपूर्णांक_descriptor *ep;
+			पूर्णांक addr;
 
-			if ((*descriptors)->bDescriptorType != USB_DT_ENDPOINT)
-				continue;
+			अगर ((*descriptors)->bDescriptorType != USB_DT_ENDPOINT)
+				जारी;
 
-			ep = (struct usb_endpoint_descriptor *)*descriptors;
-			addr = ((ep->bEndpointAddress & 0x80) >> 3)
-			     |  (ep->bEndpointAddress & 0x0f);
-			set_bit(addr, f->endpoints);
-		}
+			ep = (काष्ठा usb_endpoपूर्णांक_descriptor *)*descriptors;
+			addr = ((ep->bEndpoपूर्णांकAddress & 0x80) >> 3)
+			     |  (ep->bEndpoपूर्णांकAddress & 0x0f);
+			set_bit(addr, f->endpoपूर्णांकs);
+		पूर्ण
 
-		result = f->set_alt(f, tmp, 0);
-		if (result < 0) {
+		result = f->set_alt(f, पंचांगp, 0);
+		अगर (result < 0) अणु
 			DBG(cdev, "interface %d (%s/%p) alt 0 --> %d\n",
-					tmp, f->name, f, result);
+					पंचांगp, f->name, f, result);
 
 			reset_config(cdev);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (result == USB_GADGET_DELAYED_STATUS) {
+		अगर (result == USB_GADGET_DELAYED_STATUS) अणु
 			DBG(cdev,
 			 "%s: interface %d (%s) requested delayed status\n",
-					__func__, tmp, f->name);
+					__func__, पंचांगp, f->name);
 			cdev->delayed_status++;
 			DBG(cdev, "delayed_status count %d\n",
 					cdev->delayed_status);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* when we return, be sure our power usage is valid */
-	power = c->MaxPower ? c->MaxPower : CONFIG_USB_GADGET_VBUS_DRAW;
-	if (gadget->speed < USB_SPEED_SUPER)
-		power = min(power, 500U);
-	else
-		power = min(power, 900U);
-done:
-	if (power <= USB_SELF_POWER_VBUS_MAX_DRAW)
-		usb_gadget_set_selfpowered(gadget);
-	else
-		usb_gadget_clear_selfpowered(gadget);
+	/* when we वापस, be sure our घातer usage is valid */
+	घातer = c->MaxPower ? c->MaxPower : CONFIG_USB_GADGET_VBUS_DRAW;
+	अगर (gadget->speed < USB_SPEED_SUPER)
+		घातer = min(घातer, 500U);
+	अन्यथा
+		घातer = min(घातer, 900U);
+करोne:
+	अगर (घातer <= USB_SELF_POWER_VBUS_MAX_DRAW)
+		usb_gadget_set_selfघातered(gadget);
+	अन्यथा
+		usb_gadget_clear_selfघातered(gadget);
 
-	usb_gadget_vbus_draw(gadget, power);
-	if (result >= 0 && cdev->delayed_status)
+	usb_gadget_vbus_draw(gadget, घातer);
+	अगर (result >= 0 && cdev->delayed_status)
 		result = USB_GADGET_DELAYED_STATUS;
-	return result;
-}
+	वापस result;
+पूर्ण
 
-int usb_add_config_only(struct usb_composite_dev *cdev,
-		struct usb_configuration *config)
-{
-	struct usb_configuration *c;
+पूर्णांक usb_add_config_only(काष्ठा usb_composite_dev *cdev,
+		काष्ठा usb_configuration *config)
+अणु
+	काष्ठा usb_configuration *c;
 
-	if (!config->bConfigurationValue)
-		return -EINVAL;
+	अगर (!config->bConfigurationValue)
+		वापस -EINVAL;
 
-	/* Prevent duplicate configuration identifiers */
-	list_for_each_entry(c, &cdev->configs, list) {
-		if (c->bConfigurationValue == config->bConfigurationValue)
-			return -EBUSY;
-	}
+	/* Prevent duplicate configuration identअगरiers */
+	list_क्रम_each_entry(c, &cdev->configs, list) अणु
+		अगर (c->bConfigurationValue == config->bConfigurationValue)
+			वापस -EBUSY;
+	पूर्ण
 
 	config->cdev = cdev;
 	list_add_tail(&config->list, &cdev->configs);
 
 	INIT_LIST_HEAD(&config->functions);
-	config->next_interface_id = 0;
-	memset(config->interface, 0, sizeof(config->interface));
+	config->next_पूर्णांकerface_id = 0;
+	स_रखो(config->पूर्णांकerface, 0, माप(config->पूर्णांकerface));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_add_config_only);
 
 /**
  * usb_add_config() - add a configuration to a device.
  * @cdev: wraps the USB gadget
- * @config: the configuration, with bConfigurationValue assigned
+ * @config: the configuration, with bConfigurationValue asचिन्हित
  * @bind: the configuration's bind function
- * Context: single threaded during gadget setup
+ * Context: single thपढ़ोed during gadget setup
  *
- * One of the main tasks of a composite @bind() routine is to
+ * One of the मुख्य tasks of a composite @bind() routine is to
  * add each of the configurations it supports, using this routine.
  *
- * This function returns the value of the configuration's @bind(), which
- * is zero for success else a negative errno value.  Binding configurations
+ * This function वापसs the value of the configuration's @bind(), which
+ * is zero क्रम success अन्यथा a negative त्रुटि_सं value.  Binding configurations
  * assigns global resources including string IDs, and per-configuration
- * resources such as interface IDs and endpoints.
+ * resources such as पूर्णांकerface IDs and endpoपूर्णांकs.
  */
-int usb_add_config(struct usb_composite_dev *cdev,
-		struct usb_configuration *config,
-		int (*bind)(struct usb_configuration *))
-{
-	int				status = -EINVAL;
+पूर्णांक usb_add_config(काष्ठा usb_composite_dev *cdev,
+		काष्ठा usb_configuration *config,
+		पूर्णांक (*bind)(काष्ठा usb_configuration *))
+अणु
+	पूर्णांक				status = -EINVAL;
 
-	if (!bind)
-		goto done;
+	अगर (!bind)
+		जाओ करोne;
 
 	DBG(cdev, "adding config #%u '%s'/%p\n",
 			config->bConfigurationValue,
 			config->label, config);
 
 	status = usb_add_config_only(cdev, config);
-	if (status)
-		goto done;
+	अगर (status)
+		जाओ करोne;
 
 	status = bind(config);
-	if (status < 0) {
-		while (!list_empty(&config->functions)) {
-			struct usb_function		*f;
+	अगर (status < 0) अणु
+		जबतक (!list_empty(&config->functions)) अणु
+			काष्ठा usb_function		*f;
 
 			f = list_first_entry(&config->functions,
-					struct usb_function, list);
+					काष्ठा usb_function, list);
 			list_del(&f->list);
-			if (f->unbind) {
+			अगर (f->unbind) अणु
 				DBG(cdev, "unbind function '%s'/%p\n",
 					f->name, f);
 				f->unbind(config, f);
-				/* may free memory for "f" */
-			}
-		}
+				/* may मुक्त memory क्रम "f" */
+			पूर्ण
+		पूर्ण
 		list_del(&config->list);
-		config->cdev = NULL;
-	} else {
-		unsigned	i;
+		config->cdev = शून्य;
+	पूर्ण अन्यथा अणु
+		अचिन्हित	i;
 
 		DBG(cdev, "cfg %d/%p speeds:%s%s%s%s\n",
 			config->bConfigurationValue, config,
@@ -1041,328 +1042,328 @@ int usb_add_config(struct usb_composite_dev *cdev,
 					: " full/low")
 				: "");
 
-		for (i = 0; i < MAX_CONFIG_INTERFACES; i++) {
-			struct usb_function	*f = config->interface[i];
+		क्रम (i = 0; i < MAX_CONFIG_INTERFACES; i++) अणु
+			काष्ठा usb_function	*f = config->पूर्णांकerface[i];
 
-			if (!f)
-				continue;
+			अगर (!f)
+				जारी;
 			DBG(cdev, "  interface %d = %s/%p\n",
 				i, f->name, f);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* set_alt(), or next bind(), sets up ep->claimed as needed */
-	usb_ep_autoconfig_reset(cdev->gadget);
+	usb_ep_स्वतःconfig_reset(cdev->gadget);
 
-done:
-	if (status)
+करोne:
+	अगर (status)
 		DBG(cdev, "added config '%s'/%u --> %d\n", config->label,
 				config->bConfigurationValue, status);
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_add_config);
 
-static void remove_config(struct usb_composite_dev *cdev,
-			      struct usb_configuration *config)
-{
-	while (!list_empty(&config->functions)) {
-		struct usb_function		*f;
+अटल व्योम हटाओ_config(काष्ठा usb_composite_dev *cdev,
+			      काष्ठा usb_configuration *config)
+अणु
+	जबतक (!list_empty(&config->functions)) अणु
+		काष्ठा usb_function		*f;
 
 		f = list_first_entry(&config->functions,
-				struct usb_function, list);
+				काष्ठा usb_function, list);
 
-		usb_remove_function(config, f);
-	}
+		usb_हटाओ_function(config, f);
+	पूर्ण
 	list_del(&config->list);
-	if (config->unbind) {
+	अगर (config->unbind) अणु
 		DBG(cdev, "unbind config '%s'/%p\n", config->label, config);
 		config->unbind(config);
-			/* may free memory for "c" */
-	}
-}
+			/* may मुक्त memory क्रम "c" */
+	पूर्ण
+पूर्ण
 
 /**
- * usb_remove_config() - remove a configuration from a device.
+ * usb_हटाओ_config() - हटाओ a configuration from a device.
  * @cdev: wraps the USB gadget
  * @config: the configuration
  *
- * Drivers must call usb_gadget_disconnect before calling this function
+ * Drivers must call usb_gadget_disconnect beक्रमe calling this function
  * to disconnect the device from the host and make sure the host will not
- * try to enumerate the device while we are changing the config list.
+ * try to क्रमागतerate the device जबतक we are changing the config list.
  */
-void usb_remove_config(struct usb_composite_dev *cdev,
-		      struct usb_configuration *config)
-{
-	unsigned long flags;
+व्योम usb_हटाओ_config(काष्ठा usb_composite_dev *cdev,
+		      काष्ठा usb_configuration *config)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cdev->lock, flags);
 
-	if (cdev->config == config)
+	अगर (cdev->config == config)
 		reset_config(cdev);
 
 	spin_unlock_irqrestore(&cdev->lock, flags);
 
-	remove_config(cdev, config);
-}
+	हटाओ_config(cdev, config);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /* We support strings in multiple languages ... string descriptor zero
- * says which languages are supported.  The typical case will be that
+ * says which languages are supported.  The typical हाल will be that
  * only one language (probably English) is used, with i18n handled on
  * the host side.
  */
 
-static void collect_langs(struct usb_gadget_strings **sp, __le16 *buf)
-{
-	const struct usb_gadget_strings	*s;
+अटल व्योम collect_langs(काष्ठा usb_gadget_strings **sp, __le16 *buf)
+अणु
+	स्थिर काष्ठा usb_gadget_strings	*s;
 	__le16				language;
-	__le16				*tmp;
+	__le16				*पंचांगp;
 
-	while (*sp) {
+	जबतक (*sp) अणु
 		s = *sp;
 		language = cpu_to_le16(s->language);
-		for (tmp = buf; *tmp && tmp < &buf[USB_MAX_STRING_LEN]; tmp++) {
-			if (*tmp == language)
-				goto repeat;
-		}
-		*tmp++ = language;
+		क्रम (पंचांगp = buf; *पंचांगp && पंचांगp < &buf[USB_MAX_STRING_LEN]; पंचांगp++) अणु
+			अगर (*पंचांगp == language)
+				जाओ repeat;
+		पूर्ण
+		*पंचांगp++ = language;
 repeat:
 		sp++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int lookup_string(
-	struct usb_gadget_strings	**sp,
-	void				*buf,
+अटल पूर्णांक lookup_string(
+	काष्ठा usb_gadget_strings	**sp,
+	व्योम				*buf,
 	u16				language,
-	int				id
+	पूर्णांक				id
 )
-{
-	struct usb_gadget_strings	*s;
-	int				value;
+अणु
+	काष्ठा usb_gadget_strings	*s;
+	पूर्णांक				value;
 
-	while (*sp) {
+	जबतक (*sp) अणु
 		s = *sp++;
-		if (s->language != language)
-			continue;
+		अगर (s->language != language)
+			जारी;
 		value = usb_gadget_get_string(s, id, buf);
-		if (value > 0)
-			return value;
-	}
-	return -EINVAL;
-}
+		अगर (value > 0)
+			वापस value;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int get_string(struct usb_composite_dev *cdev,
-		void *buf, u16 language, int id)
-{
-	struct usb_composite_driver	*composite = cdev->driver;
-	struct usb_gadget_string_container *uc;
-	struct usb_configuration	*c;
-	struct usb_function		*f;
-	int				len;
+अटल पूर्णांक get_string(काष्ठा usb_composite_dev *cdev,
+		व्योम *buf, u16 language, पूर्णांक id)
+अणु
+	काष्ठा usb_composite_driver	*composite = cdev->driver;
+	काष्ठा usb_gadget_string_container *uc;
+	काष्ठा usb_configuration	*c;
+	काष्ठा usb_function		*f;
+	पूर्णांक				len;
 
 	/* Yes, not only is USB's i18n support probably more than most
 	 * folk will ever care about ... also, it's all supported here.
-	 * (Except for UTF8 support for Unicode's "Astral Planes".)
+	 * (Except क्रम UTF8 support क्रम Unicode's "Astral Planes".)
 	 */
 
 	/* 0 == report all available language codes */
-	if (id == 0) {
-		struct usb_string_descriptor	*s = buf;
-		struct usb_gadget_strings	**sp;
+	अगर (id == 0) अणु
+		काष्ठा usb_string_descriptor	*s = buf;
+		काष्ठा usb_gadget_strings	**sp;
 
-		memset(s, 0, 256);
+		स_रखो(s, 0, 256);
 		s->bDescriptorType = USB_DT_STRING;
 
 		sp = composite->strings;
-		if (sp)
+		अगर (sp)
 			collect_langs(sp, s->wData);
 
-		list_for_each_entry(c, &cdev->configs, list) {
+		list_क्रम_each_entry(c, &cdev->configs, list) अणु
 			sp = c->strings;
-			if (sp)
+			अगर (sp)
 				collect_langs(sp, s->wData);
 
-			list_for_each_entry(f, &c->functions, list) {
+			list_क्रम_each_entry(f, &c->functions, list) अणु
 				sp = f->strings;
-				if (sp)
+				अगर (sp)
 					collect_langs(sp, s->wData);
-			}
-		}
-		list_for_each_entry(uc, &cdev->gstrings, list) {
-			struct usb_gadget_strings **sp;
+			पूर्ण
+		पूर्ण
+		list_क्रम_each_entry(uc, &cdev->gstrings, list) अणु
+			काष्ठा usb_gadget_strings **sp;
 
 			sp = get_containers_gs(uc);
 			collect_langs(sp, s->wData);
-		}
+		पूर्ण
 
-		for (len = 0; len <= USB_MAX_STRING_LEN && s->wData[len]; len++)
-			continue;
-		if (!len)
-			return -EINVAL;
+		क्रम (len = 0; len <= USB_MAX_STRING_LEN && s->wData[len]; len++)
+			जारी;
+		अगर (!len)
+			वापस -EINVAL;
 
 		s->bLength = 2 * (len + 1);
-		return s->bLength;
-	}
+		वापस s->bLength;
+	पूर्ण
 
-	if (cdev->use_os_string && language == 0 && id == OS_STRING_IDX) {
-		struct usb_os_string *b = buf;
-		b->bLength = sizeof(*b);
+	अगर (cdev->use_os_string && language == 0 && id == OS_STRING_IDX) अणु
+		काष्ठा usb_os_string *b = buf;
+		b->bLength = माप(*b);
 		b->bDescriptorType = USB_DT_STRING;
-		compiletime_assert(
-			sizeof(b->qwSignature) == sizeof(cdev->qw_sign),
+		compileसमय_निश्चित(
+			माप(b->qwSignature) == माप(cdev->qw_sign),
 			"qwSignature size must be equal to qw_sign");
-		memcpy(&b->qwSignature, cdev->qw_sign, sizeof(b->qwSignature));
-		b->bMS_VendorCode = cdev->b_vendor_code;
+		स_नकल(&b->qwSignature, cdev->qw_sign, माप(b->qwSignature));
+		b->bMS_VenकरोrCode = cdev->b_venकरोr_code;
 		b->bPad = 0;
-		return sizeof(*b);
-	}
+		वापस माप(*b);
+	पूर्ण
 
-	list_for_each_entry(uc, &cdev->gstrings, list) {
-		struct usb_gadget_strings **sp;
+	list_क्रम_each_entry(uc, &cdev->gstrings, list) अणु
+		काष्ठा usb_gadget_strings **sp;
 
 		sp = get_containers_gs(uc);
 		len = lookup_string(sp, buf, language, id);
-		if (len > 0)
-			return len;
-	}
+		अगर (len > 0)
+			वापस len;
+	पूर्ण
 
 	/* String IDs are device-scoped, so we look up each string
 	 * table we're told about.  These lookups are infrequent;
 	 * simpler-is-better here.
 	 */
-	if (composite->strings) {
+	अगर (composite->strings) अणु
 		len = lookup_string(composite->strings, buf, language, id);
-		if (len > 0)
-			return len;
-	}
-	list_for_each_entry(c, &cdev->configs, list) {
-		if (c->strings) {
+		अगर (len > 0)
+			वापस len;
+	पूर्ण
+	list_क्रम_each_entry(c, &cdev->configs, list) अणु
+		अगर (c->strings) अणु
 			len = lookup_string(c->strings, buf, language, id);
-			if (len > 0)
-				return len;
-		}
-		list_for_each_entry(f, &c->functions, list) {
-			if (!f->strings)
-				continue;
+			अगर (len > 0)
+				वापस len;
+		पूर्ण
+		list_क्रम_each_entry(f, &c->functions, list) अणु
+			अगर (!f->strings)
+				जारी;
 			len = lookup_string(f->strings, buf, language, id);
-			if (len > 0)
-				return len;
-		}
-	}
-	return -EINVAL;
-}
+			अगर (len > 0)
+				वापस len;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * usb_string_id() - allocate an unused string ID
  * @cdev: the device whose string descriptor IDs are being allocated
- * Context: single threaded during gadget setup
+ * Context: single thपढ़ोed during gadget setup
  *
  * @usb_string_id() is called from bind() callbacks to allocate
- * string IDs.  Drivers for functions, configurations, or gadgets will
+ * string IDs.  Drivers क्रम functions, configurations, or gadमाला_लो will
  * then store that ID in the appropriate descriptors and string table.
  *
- * All string identifier should be allocated using this,
+ * All string identअगरier should be allocated using this,
  * @usb_string_ids_tab() or @usb_string_ids_n() routine, to ensure
- * that for example different functions don't wrongly assign different
- * meanings to the same identifier.
+ * that क्रम example dअगरferent functions करोn't wrongly assign dअगरferent
+ * meanings to the same identअगरier.
  */
-int usb_string_id(struct usb_composite_dev *cdev)
-{
-	if (cdev->next_string_id < 254) {
-		/* string id 0 is reserved by USB spec for list of
+पूर्णांक usb_string_id(काष्ठा usb_composite_dev *cdev)
+अणु
+	अगर (cdev->next_string_id < 254) अणु
+		/* string id 0 is reserved by USB spec क्रम list of
 		 * supported languages */
 		/* 255 reserved as well? -- mina86 */
 		cdev->next_string_id++;
-		return cdev->next_string_id;
-	}
-	return -ENODEV;
-}
+		वापस cdev->next_string_id;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_string_id);
 
 /**
  * usb_string_ids_tab() - allocate unused string IDs in batch
  * @cdev: the device whose string descriptor IDs are being allocated
  * @str: an array of usb_string objects to assign numbers to
- * Context: single threaded during gadget setup
+ * Context: single thपढ़ोed during gadget setup
  *
  * @usb_string_ids() is called from bind() callbacks to allocate
- * string IDs.  Drivers for functions, configurations, or gadgets will
+ * string IDs.  Drivers क्रम functions, configurations, or gadमाला_लो will
  * then copy IDs from the string table to the appropriate descriptors
- * and string table for other languages.
+ * and string table क्रम other languages.
  *
- * All string identifier should be allocated using this,
- * @usb_string_id() or @usb_string_ids_n() routine, to ensure that for
- * example different functions don't wrongly assign different meanings
- * to the same identifier.
+ * All string identअगरier should be allocated using this,
+ * @usb_string_id() or @usb_string_ids_n() routine, to ensure that क्रम
+ * example dअगरferent functions करोn't wrongly assign dअगरferent meanings
+ * to the same identअगरier.
  */
-int usb_string_ids_tab(struct usb_composite_dev *cdev, struct usb_string *str)
-{
-	int next = cdev->next_string_id;
+पूर्णांक usb_string_ids_tab(काष्ठा usb_composite_dev *cdev, काष्ठा usb_string *str)
+अणु
+	पूर्णांक next = cdev->next_string_id;
 
-	for (; str->s; ++str) {
-		if (unlikely(next >= 254))
-			return -ENODEV;
+	क्रम (; str->s; ++str) अणु
+		अगर (unlikely(next >= 254))
+			वापस -ENODEV;
 		str->id = ++next;
-	}
+	पूर्ण
 
 	cdev->next_string_id = next;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_string_ids_tab);
 
-static struct usb_gadget_string_container *copy_gadget_strings(
-		struct usb_gadget_strings **sp, unsigned n_gstrings,
-		unsigned n_strings)
-{
-	struct usb_gadget_string_container *uc;
-	struct usb_gadget_strings **gs_array;
-	struct usb_gadget_strings *gs;
-	struct usb_string *s;
-	unsigned mem;
-	unsigned n_gs;
-	unsigned n_s;
-	void *stash;
+अटल काष्ठा usb_gadget_string_container *copy_gadget_strings(
+		काष्ठा usb_gadget_strings **sp, अचिन्हित n_gstrings,
+		अचिन्हित n_strings)
+अणु
+	काष्ठा usb_gadget_string_container *uc;
+	काष्ठा usb_gadget_strings **gs_array;
+	काष्ठा usb_gadget_strings *gs;
+	काष्ठा usb_string *s;
+	अचिन्हित mem;
+	अचिन्हित n_gs;
+	अचिन्हित n_s;
+	व्योम *stash;
 
-	mem = sizeof(*uc);
-	mem += sizeof(void *) * (n_gstrings + 1);
-	mem += sizeof(struct usb_gadget_strings) * n_gstrings;
-	mem += sizeof(struct usb_string) * (n_strings + 1) * (n_gstrings);
-	uc = kmalloc(mem, GFP_KERNEL);
-	if (!uc)
-		return ERR_PTR(-ENOMEM);
+	mem = माप(*uc);
+	mem += माप(व्योम *) * (n_gstrings + 1);
+	mem += माप(काष्ठा usb_gadget_strings) * n_gstrings;
+	mem += माप(काष्ठा usb_string) * (n_strings + 1) * (n_gstrings);
+	uc = kदो_स्मृति(mem, GFP_KERNEL);
+	अगर (!uc)
+		वापस ERR_PTR(-ENOMEM);
 	gs_array = get_containers_gs(uc);
 	stash = uc->stash;
-	stash += sizeof(void *) * (n_gstrings + 1);
-	for (n_gs = 0; n_gs < n_gstrings; n_gs++) {
-		struct usb_string *org_s;
+	stash += माप(व्योम *) * (n_gstrings + 1);
+	क्रम (n_gs = 0; n_gs < n_gstrings; n_gs++) अणु
+		काष्ठा usb_string *org_s;
 
 		gs_array[n_gs] = stash;
 		gs = gs_array[n_gs];
-		stash += sizeof(struct usb_gadget_strings);
+		stash += माप(काष्ठा usb_gadget_strings);
 		gs->language = sp[n_gs]->language;
 		gs->strings = stash;
 		org_s = sp[n_gs]->strings;
 
-		for (n_s = 0; n_s < n_strings; n_s++) {
+		क्रम (n_s = 0; n_s < n_strings; n_s++) अणु
 			s = stash;
-			stash += sizeof(struct usb_string);
-			if (org_s->s)
+			stash += माप(काष्ठा usb_string);
+			अगर (org_s->s)
 				s->s = org_s->s;
-			else
+			अन्यथा
 				s->s = "";
 			org_s++;
-		}
+		पूर्ण
 		s = stash;
-		s->s = NULL;
-		stash += sizeof(struct usb_string);
+		s->s = शून्य;
+		stash += माप(काष्ठा usb_string);
 
-	}
-	gs_array[n_gs] = NULL;
-	return uc;
-}
+	पूर्ण
+	gs_array[n_gs] = शून्य;
+	वापस uc;
+पूर्ण
 
 /**
  * usb_gstrings_attach() - attach gadget strings to a cdev and assign ids
@@ -1373,310 +1374,310 @@ static struct usb_gadget_string_container *copy_gadget_strings(
  *
  * This function will create a deep copy of usb_gadget_strings and usb_string
  * and attach it to the cdev. The actual string (usb_string.s) will not be
- * copied but only a referenced will be made. The struct usb_gadget_strings
- * array may contain multiple languages and should be NULL terminated.
- * The ->language pointer of each struct usb_gadget_strings has to contain the
+ * copied but only a referenced will be made. The काष्ठा usb_gadget_strings
+ * array may contain multiple languages and should be शून्य terminated.
+ * The ->language poपूर्णांकer of each काष्ठा usb_gadget_strings has to contain the
  * same amount of entries.
  * For instance: sp[0] is en-US, sp[1] is es-ES. It is expected that the first
  * usb_string entry of es-ES contains the translation of the first usb_string
- * entry of en-US. Therefore both entries become the same id assign.
+ * entry of en-US. Thereक्रमe both entries become the same id assign.
  */
-struct usb_string *usb_gstrings_attach(struct usb_composite_dev *cdev,
-		struct usb_gadget_strings **sp, unsigned n_strings)
-{
-	struct usb_gadget_string_container *uc;
-	struct usb_gadget_strings **n_gs;
-	unsigned n_gstrings = 0;
-	unsigned i;
-	int ret;
+काष्ठा usb_string *usb_gstrings_attach(काष्ठा usb_composite_dev *cdev,
+		काष्ठा usb_gadget_strings **sp, अचिन्हित n_strings)
+अणु
+	काष्ठा usb_gadget_string_container *uc;
+	काष्ठा usb_gadget_strings **n_gs;
+	अचिन्हित n_gstrings = 0;
+	अचिन्हित i;
+	पूर्णांक ret;
 
-	for (i = 0; sp[i]; i++)
+	क्रम (i = 0; sp[i]; i++)
 		n_gstrings++;
 
-	if (!n_gstrings)
-		return ERR_PTR(-EINVAL);
+	अगर (!n_gstrings)
+		वापस ERR_PTR(-EINVAL);
 
 	uc = copy_gadget_strings(sp, n_gstrings, n_strings);
-	if (IS_ERR(uc))
-		return ERR_CAST(uc);
+	अगर (IS_ERR(uc))
+		वापस ERR_CAST(uc);
 
 	n_gs = get_containers_gs(uc);
 	ret = usb_string_ids_tab(cdev, n_gs[0]->strings);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	for (i = 1; i < n_gstrings; i++) {
-		struct usb_string *m_s;
-		struct usb_string *s;
-		unsigned n;
+	क्रम (i = 1; i < n_gstrings; i++) अणु
+		काष्ठा usb_string *m_s;
+		काष्ठा usb_string *s;
+		अचिन्हित n;
 
 		m_s = n_gs[0]->strings;
 		s = n_gs[i]->strings;
-		for (n = 0; n < n_strings; n++) {
+		क्रम (n = 0; n < n_strings; n++) अणु
 			s->id = m_s->id;
 			s++;
 			m_s++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	list_add_tail(&uc->list, &cdev->gstrings);
-	return n_gs[0]->strings;
+	वापस n_gs[0]->strings;
 err:
-	kfree(uc);
-	return ERR_PTR(ret);
-}
+	kमुक्त(uc);
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_gstrings_attach);
 
 /**
  * usb_string_ids_n() - allocate unused string IDs in batch
  * @c: the device whose string descriptor IDs are being allocated
  * @n: number of string IDs to allocate
- * Context: single threaded during gadget setup
+ * Context: single thपढ़ोed during gadget setup
  *
  * Returns the first requested ID.  This ID and next @n-1 IDs are now
- * valid IDs.  At least provided that @n is non-zero because if it
- * is, returns last requested ID which is now very useful information.
+ * valid IDs.  At least provided that @n is non-zero because अगर it
+ * is, वापसs last requested ID which is now very useful inक्रमmation.
  *
  * @usb_string_ids_n() is called from bind() callbacks to allocate
- * string IDs.  Drivers for functions, configurations, or gadgets will
+ * string IDs.  Drivers क्रम functions, configurations, or gadमाला_लो will
  * then store that ID in the appropriate descriptors and string table.
  *
- * All string identifier should be allocated using this,
- * @usb_string_id() or @usb_string_ids_n() routine, to ensure that for
- * example different functions don't wrongly assign different meanings
- * to the same identifier.
+ * All string identअगरier should be allocated using this,
+ * @usb_string_id() or @usb_string_ids_n() routine, to ensure that क्रम
+ * example dअगरferent functions करोn't wrongly assign dअगरferent meanings
+ * to the same identअगरier.
  */
-int usb_string_ids_n(struct usb_composite_dev *c, unsigned n)
-{
-	unsigned next = c->next_string_id;
-	if (unlikely(n > 254 || (unsigned)next + n > 254))
-		return -ENODEV;
+पूर्णांक usb_string_ids_n(काष्ठा usb_composite_dev *c, अचिन्हित n)
+अणु
+	अचिन्हित next = c->next_string_id;
+	अगर (unlikely(n > 254 || (अचिन्हित)next + n > 254))
+		वापस -ENODEV;
 	c->next_string_id += n;
-	return next + 1;
-}
+	वापस next + 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_string_ids_n);
 
 /*-------------------------------------------------------------------------*/
 
-static void composite_setup_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct usb_composite_dev *cdev;
+अटल व्योम composite_setup_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा usb_composite_dev *cdev;
 
-	if (req->status || req->actual != req->length)
-		DBG((struct usb_composite_dev *) ep->driver_data,
+	अगर (req->status || req->actual != req->length)
+		DBG((काष्ठा usb_composite_dev *) ep->driver_data,
 				"setup complete --> %d, %d/%d\n",
 				req->status, req->actual, req->length);
 
 	/*
 	 * REVIST The same ep0 requests are shared with function drivers
-	 * so they don't have to maintain the same ->complete() stubs.
+	 * so they करोn't have to मुख्यtain the same ->complete() stubs.
 	 *
-	 * Because of that, we need to check for the validity of ->context
+	 * Because of that, we need to check क्रम the validity of ->context
 	 * here, even though we know we've set it to something useful.
 	 */
-	if (!req->context)
-		return;
+	अगर (!req->context)
+		वापस;
 
 	cdev = req->context;
 
-	if (cdev->req == req)
+	अगर (cdev->req == req)
 		cdev->setup_pending = false;
-	else if (cdev->os_desc_req == req)
+	अन्यथा अगर (cdev->os_desc_req == req)
 		cdev->os_desc_pending = false;
-	else
+	अन्यथा
 		WARN(1, "unknown request %p\n", req);
-}
+पूर्ण
 
-static int composite_ep0_queue(struct usb_composite_dev *cdev,
-		struct usb_request *req, gfp_t gfp_flags)
-{
-	int ret;
+अटल पूर्णांक composite_ep0_queue(काष्ठा usb_composite_dev *cdev,
+		काष्ठा usb_request *req, gfp_t gfp_flags)
+अणु
+	पूर्णांक ret;
 
 	ret = usb_ep_queue(cdev->gadget->ep0, req, gfp_flags);
-	if (ret == 0) {
-		if (cdev->req == req)
+	अगर (ret == 0) अणु
+		अगर (cdev->req == req)
 			cdev->setup_pending = true;
-		else if (cdev->os_desc_req == req)
+		अन्यथा अगर (cdev->os_desc_req == req)
 			cdev->os_desc_pending = true;
-		else
+		अन्यथा
 			WARN(1, "unknown request %p\n", req);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int count_ext_compat(struct usb_configuration *c)
-{
-	int i, res;
+अटल पूर्णांक count_ext_compat(काष्ठा usb_configuration *c)
+अणु
+	पूर्णांक i, res;
 
 	res = 0;
-	for (i = 0; i < c->next_interface_id; ++i) {
-		struct usb_function *f;
-		int j;
+	क्रम (i = 0; i < c->next_पूर्णांकerface_id; ++i) अणु
+		काष्ठा usb_function *f;
+		पूर्णांक j;
 
-		f = c->interface[i];
-		for (j = 0; j < f->os_desc_n; ++j) {
-			struct usb_os_desc *d;
+		f = c->पूर्णांकerface[i];
+		क्रम (j = 0; j < f->os_desc_n; ++j) अणु
+			काष्ठा usb_os_desc *d;
 
-			if (i != f->os_desc_table[j].if_id)
-				continue;
+			अगर (i != f->os_desc_table[j].अगर_id)
+				जारी;
 			d = f->os_desc_table[j].os_desc;
-			if (d && d->ext_compat_id)
+			अगर (d && d->ext_compat_id)
 				++res;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	BUG_ON(res > 255);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int fill_ext_compat(struct usb_configuration *c, u8 *buf)
-{
-	int i, count;
+अटल पूर्णांक fill_ext_compat(काष्ठा usb_configuration *c, u8 *buf)
+अणु
+	पूर्णांक i, count;
 
 	count = 16;
 	buf += 16;
-	for (i = 0; i < c->next_interface_id; ++i) {
-		struct usb_function *f;
-		int j;
+	क्रम (i = 0; i < c->next_पूर्णांकerface_id; ++i) अणु
+		काष्ठा usb_function *f;
+		पूर्णांक j;
 
-		f = c->interface[i];
-		for (j = 0; j < f->os_desc_n; ++j) {
-			struct usb_os_desc *d;
+		f = c->पूर्णांकerface[i];
+		क्रम (j = 0; j < f->os_desc_n; ++j) अणु
+			काष्ठा usb_os_desc *d;
 
-			if (i != f->os_desc_table[j].if_id)
-				continue;
+			अगर (i != f->os_desc_table[j].अगर_id)
+				जारी;
 			d = f->os_desc_table[j].os_desc;
-			if (d && d->ext_compat_id) {
+			अगर (d && d->ext_compat_id) अणु
 				*buf++ = i;
 				*buf++ = 0x01;
-				memcpy(buf, d->ext_compat_id, 16);
+				स_नकल(buf, d->ext_compat_id, 16);
 				buf += 22;
-			} else {
+			पूर्ण अन्यथा अणु
 				++buf;
 				*buf = 0x01;
 				buf += 23;
-			}
+			पूर्ण
 			count += 24;
-			if (count + 24 >= USB_COMP_EP0_OS_DESC_BUFSIZ)
-				return count;
-		}
-	}
+			अगर (count + 24 >= USB_COMP_EP0_OS_DESC_बफ_मान)
+				वापस count;
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int count_ext_prop(struct usb_configuration *c, int interface)
-{
-	struct usb_function *f;
-	int j;
+अटल पूर्णांक count_ext_prop(काष्ठा usb_configuration *c, पूर्णांक पूर्णांकerface)
+अणु
+	काष्ठा usb_function *f;
+	पूर्णांक j;
 
-	f = c->interface[interface];
-	for (j = 0; j < f->os_desc_n; ++j) {
-		struct usb_os_desc *d;
+	f = c->पूर्णांकerface[पूर्णांकerface];
+	क्रम (j = 0; j < f->os_desc_n; ++j) अणु
+		काष्ठा usb_os_desc *d;
 
-		if (interface != f->os_desc_table[j].if_id)
-			continue;
+		अगर (पूर्णांकerface != f->os_desc_table[j].अगर_id)
+			जारी;
 		d = f->os_desc_table[j].os_desc;
-		if (d && d->ext_compat_id)
-			return d->ext_prop_count;
-	}
-	return 0;
-}
+		अगर (d && d->ext_compat_id)
+			वापस d->ext_prop_count;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int len_ext_prop(struct usb_configuration *c, int interface)
-{
-	struct usb_function *f;
-	struct usb_os_desc *d;
-	int j, res;
+अटल पूर्णांक len_ext_prop(काष्ठा usb_configuration *c, पूर्णांक पूर्णांकerface)
+अणु
+	काष्ठा usb_function *f;
+	काष्ठा usb_os_desc *d;
+	पूर्णांक j, res;
 
 	res = 10; /* header length */
-	f = c->interface[interface];
-	for (j = 0; j < f->os_desc_n; ++j) {
-		if (interface != f->os_desc_table[j].if_id)
-			continue;
+	f = c->पूर्णांकerface[पूर्णांकerface];
+	क्रम (j = 0; j < f->os_desc_n; ++j) अणु
+		अगर (पूर्णांकerface != f->os_desc_table[j].अगर_id)
+			जारी;
 		d = f->os_desc_table[j].os_desc;
-		if (d)
-			return min(res + d->ext_prop_len, 4096);
-	}
-	return res;
-}
+		अगर (d)
+			वापस min(res + d->ext_prop_len, 4096);
+	पूर्ण
+	वापस res;
+पूर्ण
 
-static int fill_ext_prop(struct usb_configuration *c, int interface, u8 *buf)
-{
-	struct usb_function *f;
-	struct usb_os_desc *d;
-	struct usb_os_desc_ext_prop *ext_prop;
-	int j, count, n, ret;
+अटल पूर्णांक fill_ext_prop(काष्ठा usb_configuration *c, पूर्णांक पूर्णांकerface, u8 *buf)
+अणु
+	काष्ठा usb_function *f;
+	काष्ठा usb_os_desc *d;
+	काष्ठा usb_os_desc_ext_prop *ext_prop;
+	पूर्णांक j, count, n, ret;
 
-	f = c->interface[interface];
+	f = c->पूर्णांकerface[पूर्णांकerface];
 	count = 10; /* header length */
 	buf += 10;
-	for (j = 0; j < f->os_desc_n; ++j) {
-		if (interface != f->os_desc_table[j].if_id)
-			continue;
+	क्रम (j = 0; j < f->os_desc_n; ++j) अणु
+		अगर (पूर्णांकerface != f->os_desc_table[j].अगर_id)
+			जारी;
 		d = f->os_desc_table[j].os_desc;
-		if (d)
-			list_for_each_entry(ext_prop, &d->ext_prop, entry) {
+		अगर (d)
+			list_क्रम_each_entry(ext_prop, &d->ext_prop, entry) अणु
 				n = ext_prop->data_len +
 					ext_prop->name_len + 14;
-				if (count + n >= USB_COMP_EP0_OS_DESC_BUFSIZ)
-					return count;
+				अगर (count + n >= USB_COMP_EP0_OS_DESC_बफ_मान)
+					वापस count;
 				usb_ext_prop_put_size(buf, n);
 				usb_ext_prop_put_type(buf, ext_prop->type);
 				ret = usb_ext_prop_put_name(buf, ext_prop->name,
 							    ext_prop->name_len);
-				if (ret < 0)
-					return ret;
-				switch (ext_prop->type) {
-				case USB_EXT_PROP_UNICODE:
-				case USB_EXT_PROP_UNICODE_ENV:
-				case USB_EXT_PROP_UNICODE_LINK:
+				अगर (ret < 0)
+					वापस ret;
+				चयन (ext_prop->type) अणु
+				हाल USB_EXT_PROP_UNICODE:
+				हाल USB_EXT_PROP_UNICODE_ENV:
+				हाल USB_EXT_PROP_UNICODE_LINK:
 					usb_ext_prop_put_unicode(buf, ret,
 							 ext_prop->data,
 							 ext_prop->data_len);
-					break;
-				case USB_EXT_PROP_BINARY:
+					अवरोध;
+				हाल USB_EXT_PROP_BINARY:
 					usb_ext_prop_put_binary(buf, ret,
 							ext_prop->data,
 							ext_prop->data_len);
-					break;
-				case USB_EXT_PROP_LE32:
+					अवरोध;
+				हाल USB_EXT_PROP_LE32:
 					/* not implemented */
-				case USB_EXT_PROP_BE32:
+				हाल USB_EXT_PROP_BE32:
 					/* not implemented */
-				default:
-					return -EINVAL;
-				}
+				शेष:
+					वापस -EINVAL;
+				पूर्ण
 				buf += n;
 				count += n;
-			}
-	}
+			पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
  * The setup() callback implements all the ep0 functionality that's
- * not handled lower down, in hardware or the hardware driver(like
- * device and endpoint feature flags, and their status).  It's all
- * housekeeping for the gadget function we're implementing.  Most of
- * the work is in config and function specific setup.
+ * not handled lower करोwn, in hardware or the hardware driver(like
+ * device and endpoपूर्णांक feature flags, and their status).  It's all
+ * housekeeping क्रम the gadget function we're implementing.  Most of
+ * the work is in config and function specअगरic setup.
  */
-int
-composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
-{
-	struct usb_composite_dev	*cdev = get_gadget_data(gadget);
-	struct usb_request		*req = cdev->req;
-	int				value = -EOPNOTSUPP;
-	int				status = 0;
+पूर्णांक
+composite_setup(काष्ठा usb_gadget *gadget, स्थिर काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usb_composite_dev	*cdev = get_gadget_data(gadget);
+	काष्ठा usb_request		*req = cdev->req;
+	पूर्णांक				value = -EOPNOTSUPP;
+	पूर्णांक				status = 0;
 	u16				w_index = le16_to_cpu(ctrl->wIndex);
-	u8				intf = w_index & 0xFF;
+	u8				पूर्णांकf = w_index & 0xFF;
 	u16				w_value = le16_to_cpu(ctrl->wValue);
 	u16				w_length = le16_to_cpu(ctrl->wLength);
-	struct usb_function		*f = NULL;
+	काष्ठा usb_function		*f = शून्य;
 	u8				endp;
 
 	/* partial re-init of the response message; the function or the
-	 * gadget might need to intercept e.g. a control-OUT completion
+	 * gadget might need to पूर्णांकercept e.g. a control-OUT completion
 	 * when we delegate to it.
 	 */
 	req->zero = 0;
@@ -1686,480 +1687,480 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 	gadget->ep0->driver_data = cdev;
 
 	/*
-	 * Don't let non-standard requests match any of the cases below
+	 * Don't let non-standard requests match any of the हालs below
 	 * by accident.
 	 */
-	if ((ctrl->bRequestType & USB_TYPE_MASK) != USB_TYPE_STANDARD)
-		goto unknown;
+	अगर ((ctrl->bRequestType & USB_TYPE_MASK) != USB_TYPE_STANDARD)
+		जाओ unknown;
 
-	switch (ctrl->bRequest) {
+	चयन (ctrl->bRequest) अणु
 
 	/* we handle all standard USB descriptors */
-	case USB_REQ_GET_DESCRIPTOR:
-		if (ctrl->bRequestType != USB_DIR_IN)
-			goto unknown;
-		switch (w_value >> 8) {
+	हाल USB_REQ_GET_DESCRIPTOR:
+		अगर (ctrl->bRequestType != USB_सूची_IN)
+			जाओ unknown;
+		चयन (w_value >> 8) अणु
 
-		case USB_DT_DEVICE:
+		हाल USB_DT_DEVICE:
 			cdev->desc.bNumConfigurations =
 				count_configs(cdev, USB_DT_DEVICE);
 			cdev->desc.bMaxPacketSize0 =
 				cdev->gadget->ep0->maxpacket;
-			if (gadget_is_superspeed(gadget)) {
-				if (gadget->speed >= USB_SPEED_SUPER) {
+			अगर (gadget_is_superspeed(gadget)) अणु
+				अगर (gadget->speed >= USB_SPEED_SUPER) अणु
 					cdev->desc.bcdUSB = cpu_to_le16(0x0320);
 					cdev->desc.bMaxPacketSize0 = 9;
-				} else {
+				पूर्ण अन्यथा अणु
 					cdev->desc.bcdUSB = cpu_to_le16(0x0210);
-				}
-			} else {
-				if (gadget->lpm_capable)
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (gadget->lpm_capable)
 					cdev->desc.bcdUSB = cpu_to_le16(0x0201);
-				else
+				अन्यथा
 					cdev->desc.bcdUSB = cpu_to_le16(0x0200);
-			}
+			पूर्ण
 
-			value = min(w_length, (u16) sizeof cdev->desc);
-			memcpy(req->buf, &cdev->desc, value);
-			break;
-		case USB_DT_DEVICE_QUALIFIER:
-			if (!gadget_is_dualspeed(gadget) ||
+			value = min(w_length, (u16) माप cdev->desc);
+			स_नकल(req->buf, &cdev->desc, value);
+			अवरोध;
+		हाल USB_DT_DEVICE_QUALIFIER:
+			अगर (!gadget_is_dualspeed(gadget) ||
 			    gadget->speed >= USB_SPEED_SUPER)
-				break;
+				अवरोध;
 			device_qual(cdev);
-			value = min_t(int, w_length,
-				sizeof(struct usb_qualifier_descriptor));
-			break;
-		case USB_DT_OTHER_SPEED_CONFIG:
-			if (!gadget_is_dualspeed(gadget) ||
+			value = min_t(पूर्णांक, w_length,
+				माप(काष्ठा usb_qualअगरier_descriptor));
+			अवरोध;
+		हाल USB_DT_OTHER_SPEED_CONFIG:
+			अगर (!gadget_is_dualspeed(gadget) ||
 			    gadget->speed >= USB_SPEED_SUPER)
-				break;
+				अवरोध;
 			fallthrough;
-		case USB_DT_CONFIG:
+		हाल USB_DT_CONFIG:
 			value = config_desc(cdev, w_value);
-			if (value >= 0)
+			अगर (value >= 0)
 				value = min(w_length, (u16) value);
-			break;
-		case USB_DT_STRING:
+			अवरोध;
+		हाल USB_DT_STRING:
 			value = get_string(cdev, req->buf,
 					w_index, w_value & 0xff);
-			if (value >= 0)
+			अगर (value >= 0)
 				value = min(w_length, (u16) value);
-			break;
-		case USB_DT_BOS:
-			if (gadget_is_superspeed(gadget) ||
-			    gadget->lpm_capable) {
+			अवरोध;
+		हाल USB_DT_BOS:
+			अगर (gadget_is_superspeed(gadget) ||
+			    gadget->lpm_capable) अणु
 				value = bos_desc(cdev);
 				value = min(w_length, (u16) value);
-			}
-			break;
-		case USB_DT_OTG:
-			if (gadget_is_otg(gadget)) {
-				struct usb_configuration *config;
-				int otg_desc_len = 0;
+			पूर्ण
+			अवरोध;
+		हाल USB_DT_OTG:
+			अगर (gadget_is_otg(gadget)) अणु
+				काष्ठा usb_configuration *config;
+				पूर्णांक otg_desc_len = 0;
 
-				if (cdev->config)
+				अगर (cdev->config)
 					config = cdev->config;
-				else
+				अन्यथा
 					config = list_first_entry(
 							&cdev->configs,
-						struct usb_configuration, list);
-				if (!config)
-					goto done;
+						काष्ठा usb_configuration, list);
+				अगर (!config)
+					जाओ करोne;
 
-				if (gadget->otg_caps &&
+				अगर (gadget->otg_caps &&
 					(gadget->otg_caps->otg_rev >= 0x0200))
-					otg_desc_len += sizeof(
-						struct usb_otg20_descriptor);
-				else
-					otg_desc_len += sizeof(
-						struct usb_otg_descriptor);
+					otg_desc_len += माप(
+						काष्ठा usb_otg20_descriptor);
+				अन्यथा
+					otg_desc_len += माप(
+						काष्ठा usb_otg_descriptor);
 
-				value = min_t(int, w_length, otg_desc_len);
-				memcpy(req->buf, config->descriptors[0], value);
-			}
-			break;
-		}
-		break;
+				value = min_t(पूर्णांक, w_length, otg_desc_len);
+				स_नकल(req->buf, config->descriptors[0], value);
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
 	/* any number of configs can work */
-	case USB_REQ_SET_CONFIGURATION:
-		if (ctrl->bRequestType != 0)
-			goto unknown;
-		if (gadget_is_otg(gadget)) {
-			if (gadget->a_hnp_support)
+	हाल USB_REQ_SET_CONFIGURATION:
+		अगर (ctrl->bRequestType != 0)
+			जाओ unknown;
+		अगर (gadget_is_otg(gadget)) अणु
+			अगर (gadget->a_hnp_support)
 				DBG(cdev, "HNP available\n");
-			else if (gadget->a_alt_hnp_support)
+			अन्यथा अगर (gadget->a_alt_hnp_support)
 				DBG(cdev, "HNP on another port\n");
-			else
+			अन्यथा
 				VDBG(cdev, "HNP inactive\n");
-		}
+		पूर्ण
 		spin_lock(&cdev->lock);
 		value = set_config(cdev, ctrl, w_value);
 		spin_unlock(&cdev->lock);
-		break;
-	case USB_REQ_GET_CONFIGURATION:
-		if (ctrl->bRequestType != USB_DIR_IN)
-			goto unknown;
-		if (cdev->config)
+		अवरोध;
+	हाल USB_REQ_GET_CONFIGURATION:
+		अगर (ctrl->bRequestType != USB_सूची_IN)
+			जाओ unknown;
+		अगर (cdev->config)
 			*(u8 *)req->buf = cdev->config->bConfigurationValue;
-		else
+		अन्यथा
 			*(u8 *)req->buf = 0;
 		value = min(w_length, (u16) 1);
-		break;
+		अवरोध;
 
 	/* function drivers must handle get/set altsetting */
-	case USB_REQ_SET_INTERFACE:
-		if (ctrl->bRequestType != USB_RECIP_INTERFACE)
-			goto unknown;
-		if (!cdev->config || intf >= MAX_CONFIG_INTERFACES)
-			break;
-		f = cdev->config->interface[intf];
-		if (!f)
-			break;
+	हाल USB_REQ_SET_INTERFACE:
+		अगर (ctrl->bRequestType != USB_RECIP_INTERFACE)
+			जाओ unknown;
+		अगर (!cdev->config || पूर्णांकf >= MAX_CONFIG_INTERFACES)
+			अवरोध;
+		f = cdev->config->पूर्णांकerface[पूर्णांकf];
+		अगर (!f)
+			अवरोध;
 
 		/*
 		 * If there's no get_alt() method, we know only altsetting zero
-		 * works. There is no need to check if set_alt() is not NULL
+		 * works. There is no need to check अगर set_alt() is not शून्य
 		 * as we check this in usb_add_function().
 		 */
-		if (w_value && !f->get_alt)
-			break;
+		अगर (w_value && !f->get_alt)
+			अवरोध;
 
 		spin_lock(&cdev->lock);
 		value = f->set_alt(f, w_index, w_value);
-		if (value == USB_GADGET_DELAYED_STATUS) {
+		अगर (value == USB_GADGET_DELAYED_STATUS) अणु
 			DBG(cdev,
 			 "%s: interface %d (%s) requested delayed status\n",
-					__func__, intf, f->name);
+					__func__, पूर्णांकf, f->name);
 			cdev->delayed_status++;
 			DBG(cdev, "delayed_status count %d\n",
 					cdev->delayed_status);
-		}
+		पूर्ण
 		spin_unlock(&cdev->lock);
-		break;
-	case USB_REQ_GET_INTERFACE:
-		if (ctrl->bRequestType != (USB_DIR_IN|USB_RECIP_INTERFACE))
-			goto unknown;
-		if (!cdev->config || intf >= MAX_CONFIG_INTERFACES)
-			break;
-		f = cdev->config->interface[intf];
-		if (!f)
-			break;
-		/* lots of interfaces only need altsetting zero... */
+		अवरोध;
+	हाल USB_REQ_GET_INTERFACE:
+		अगर (ctrl->bRequestType != (USB_सूची_IN|USB_RECIP_INTERFACE))
+			जाओ unknown;
+		अगर (!cdev->config || पूर्णांकf >= MAX_CONFIG_INTERFACES)
+			अवरोध;
+		f = cdev->config->पूर्णांकerface[पूर्णांकf];
+		अगर (!f)
+			अवरोध;
+		/* lots of पूर्णांकerfaces only need altsetting zero... */
 		value = f->get_alt ? f->get_alt(f, w_index) : 0;
-		if (value < 0)
-			break;
+		अगर (value < 0)
+			अवरोध;
 		*((u8 *)req->buf) = value;
 		value = min(w_length, (u16) 1);
-		break;
-	case USB_REQ_GET_STATUS:
-		if (gadget_is_otg(gadget) && gadget->hnp_polling_support &&
-						(w_index == OTG_STS_SELECTOR)) {
-			if (ctrl->bRequestType != (USB_DIR_IN |
+		अवरोध;
+	हाल USB_REQ_GET_STATUS:
+		अगर (gadget_is_otg(gadget) && gadget->hnp_polling_support &&
+						(w_index == OTG_STS_SELECTOR)) अणु
+			अगर (ctrl->bRequestType != (USB_सूची_IN |
 							USB_RECIP_DEVICE))
-				goto unknown;
+				जाओ unknown;
 			*((u8 *)req->buf) = gadget->host_request_flag;
 			value = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * USB 3.0 additions:
 		 * Function driver should handle get_status request. If such cb
-		 * wasn't supplied we respond with default value = 0
-		 * Note: function driver should supply such cb only for the
-		 * first interface of the function
+		 * wasn't supplied we respond with शेष value = 0
+		 * Note: function driver should supply such cb only क्रम the
+		 * first पूर्णांकerface of the function
 		 */
-		if (!gadget_is_superspeed(gadget))
-			goto unknown;
-		if (ctrl->bRequestType != (USB_DIR_IN | USB_RECIP_INTERFACE))
-			goto unknown;
+		अगर (!gadget_is_superspeed(gadget))
+			जाओ unknown;
+		अगर (ctrl->bRequestType != (USB_सूची_IN | USB_RECIP_INTERFACE))
+			जाओ unknown;
 		value = 2;	/* This is the length of the get_status reply */
 		put_unaligned_le16(0, req->buf);
-		if (!cdev->config || intf >= MAX_CONFIG_INTERFACES)
-			break;
-		f = cdev->config->interface[intf];
-		if (!f)
-			break;
+		अगर (!cdev->config || पूर्णांकf >= MAX_CONFIG_INTERFACES)
+			अवरोध;
+		f = cdev->config->पूर्णांकerface[पूर्णांकf];
+		अगर (!f)
+			अवरोध;
 		status = f->get_status ? f->get_status(f) : 0;
-		if (status < 0)
-			break;
+		अगर (status < 0)
+			अवरोध;
 		put_unaligned_le16(status & 0x0000ffff, req->buf);
-		break;
+		अवरोध;
 	/*
 	 * Function drivers should handle SetFeature/ClearFeature
 	 * (FUNCTION_SUSPEND) request. function_suspend cb should be supplied
-	 * only for the first interface of the function
+	 * only क्रम the first पूर्णांकerface of the function
 	 */
-	case USB_REQ_CLEAR_FEATURE:
-	case USB_REQ_SET_FEATURE:
-		if (!gadget_is_superspeed(gadget))
-			goto unknown;
-		if (ctrl->bRequestType != (USB_DIR_OUT | USB_RECIP_INTERFACE))
-			goto unknown;
-		switch (w_value) {
-		case USB_INTRF_FUNC_SUSPEND:
-			if (!cdev->config || intf >= MAX_CONFIG_INTERFACES)
-				break;
-			f = cdev->config->interface[intf];
-			if (!f)
-				break;
+	हाल USB_REQ_CLEAR_FEATURE:
+	हाल USB_REQ_SET_FEATURE:
+		अगर (!gadget_is_superspeed(gadget))
+			जाओ unknown;
+		अगर (ctrl->bRequestType != (USB_सूची_OUT | USB_RECIP_INTERFACE))
+			जाओ unknown;
+		चयन (w_value) अणु
+		हाल USB_INTRF_FUNC_SUSPEND:
+			अगर (!cdev->config || पूर्णांकf >= MAX_CONFIG_INTERFACES)
+				अवरोध;
+			f = cdev->config->पूर्णांकerface[पूर्णांकf];
+			अगर (!f)
+				अवरोध;
 			value = 0;
-			if (f->func_suspend)
+			अगर (f->func_suspend)
 				value = f->func_suspend(f, w_index >> 8);
-			if (value < 0) {
+			अगर (value < 0) अणु
 				ERROR(cdev,
 				      "func_suspend() returned error %d\n",
 				      value);
 				value = 0;
-			}
-			break;
-		}
-		break;
-	default:
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
 unknown:
 		/*
 		 * OS descriptors handling
 		 */
-		if (cdev->use_os_string && cdev->os_desc_config &&
+		अगर (cdev->use_os_string && cdev->os_desc_config &&
 		    (ctrl->bRequestType & USB_TYPE_VENDOR) &&
-		    ctrl->bRequest == cdev->b_vendor_code) {
-			struct usb_configuration	*os_desc_cfg;
+		    ctrl->bRequest == cdev->b_venकरोr_code) अणु
+			काष्ठा usb_configuration	*os_desc_cfg;
 			u8				*buf;
-			int				interface;
-			int				count = 0;
+			पूर्णांक				पूर्णांकerface;
+			पूर्णांक				count = 0;
 
 			req = cdev->os_desc_req;
 			req->context = cdev;
 			req->complete = composite_setup_complete;
 			buf = req->buf;
 			os_desc_cfg = cdev->os_desc_config;
-			w_length = min_t(u16, w_length, USB_COMP_EP0_OS_DESC_BUFSIZ);
-			memset(buf, 0, w_length);
+			w_length = min_t(u16, w_length, USB_COMP_EP0_OS_DESC_बफ_मान);
+			स_रखो(buf, 0, w_length);
 			buf[5] = 0x01;
-			switch (ctrl->bRequestType & USB_RECIP_MASK) {
-			case USB_RECIP_DEVICE:
-				if (w_index != 0x4 || (w_value >> 8))
-					break;
+			चयन (ctrl->bRequestType & USB_RECIP_MASK) अणु
+			हाल USB_RECIP_DEVICE:
+				अगर (w_index != 0x4 || (w_value >> 8))
+					अवरोध;
 				buf[6] = w_index;
-				/* Number of ext compat interfaces */
+				/* Number of ext compat पूर्णांकerfaces */
 				count = count_ext_compat(os_desc_cfg);
 				buf[8] = count;
 				count *= 24; /* 24 B/ext compat desc */
 				count += 16; /* header */
 				put_unaligned_le32(count, buf);
 				value = w_length;
-				if (w_length > 0x10) {
+				अगर (w_length > 0x10) अणु
 					value = fill_ext_compat(os_desc_cfg, buf);
 					value = min_t(u16, w_length, value);
-				}
-				break;
-			case USB_RECIP_INTERFACE:
-				if (w_index != 0x5 || (w_value >> 8))
-					break;
-				interface = w_value & 0xFF;
+				पूर्ण
+				अवरोध;
+			हाल USB_RECIP_INTERFACE:
+				अगर (w_index != 0x5 || (w_value >> 8))
+					अवरोध;
+				पूर्णांकerface = w_value & 0xFF;
 				buf[6] = w_index;
 				count = count_ext_prop(os_desc_cfg,
-					interface);
+					पूर्णांकerface);
 				put_unaligned_le16(count, buf + 8);
 				count = len_ext_prop(os_desc_cfg,
-					interface);
+					पूर्णांकerface);
 				put_unaligned_le32(count, buf);
 				value = w_length;
-				if (w_length > 0x0A) {
+				अगर (w_length > 0x0A) अणु
 					value = fill_ext_prop(os_desc_cfg,
-							      interface, buf);
-					if (value >= 0)
+							      पूर्णांकerface, buf);
+					अगर (value >= 0)
 						value = min_t(u16, w_length, value);
-				}
-				break;
-			}
+				पूर्ण
+				अवरोध;
+			पूर्ण
 
-			goto check_value;
-		}
+			जाओ check_value;
+		पूर्ण
 
 		VDBG(cdev,
 			"non-core control req%02x.%02x v%04x i%04x l%d\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
 
-		/* functions always handle their interfaces and endpoints...
+		/* functions always handle their पूर्णांकerfaces and endpoपूर्णांकs...
 		 * punt other recipients (other, WUSB, ...) to the current
 		 * configuration code.
 		 */
-		if (cdev->config) {
-			list_for_each_entry(f, &cdev->config->functions, list)
-				if (f->req_match &&
+		अगर (cdev->config) अणु
+			list_क्रम_each_entry(f, &cdev->config->functions, list)
+				अगर (f->req_match &&
 				    f->req_match(f, ctrl, false))
-					goto try_fun_setup;
-		} else {
-			struct usb_configuration *c;
-			list_for_each_entry(c, &cdev->configs, list)
-				list_for_each_entry(f, &c->functions, list)
-					if (f->req_match &&
+					जाओ try_fun_setup;
+		पूर्ण अन्यथा अणु
+			काष्ठा usb_configuration *c;
+			list_क्रम_each_entry(c, &cdev->configs, list)
+				list_क्रम_each_entry(f, &c->functions, list)
+					अगर (f->req_match &&
 					    f->req_match(f, ctrl, true))
-						goto try_fun_setup;
-		}
-		f = NULL;
+						जाओ try_fun_setup;
+		पूर्ण
+		f = शून्य;
 
-		switch (ctrl->bRequestType & USB_RECIP_MASK) {
-		case USB_RECIP_INTERFACE:
-			if (!cdev->config || intf >= MAX_CONFIG_INTERFACES)
-				break;
-			f = cdev->config->interface[intf];
-			break;
+		चयन (ctrl->bRequestType & USB_RECIP_MASK) अणु
+		हाल USB_RECIP_INTERFACE:
+			अगर (!cdev->config || पूर्णांकf >= MAX_CONFIG_INTERFACES)
+				अवरोध;
+			f = cdev->config->पूर्णांकerface[पूर्णांकf];
+			अवरोध;
 
-		case USB_RECIP_ENDPOINT:
-			if (!cdev->config)
-				break;
+		हाल USB_RECIP_ENDPOINT:
+			अगर (!cdev->config)
+				अवरोध;
 			endp = ((w_index & 0x80) >> 3) | (w_index & 0x0f);
-			list_for_each_entry(f, &cdev->config->functions, list) {
-				if (test_bit(endp, f->endpoints))
-					break;
-			}
-			if (&f->list == &cdev->config->functions)
-				f = NULL;
-			break;
-		}
+			list_क्रम_each_entry(f, &cdev->config->functions, list) अणु
+				अगर (test_bit(endp, f->endpoपूर्णांकs))
+					अवरोध;
+			पूर्ण
+			अगर (&f->list == &cdev->config->functions)
+				f = शून्य;
+			अवरोध;
+		पूर्ण
 try_fun_setup:
-		if (f && f->setup)
+		अगर (f && f->setup)
 			value = f->setup(f, ctrl);
-		else {
-			struct usb_configuration	*c;
+		अन्यथा अणु
+			काष्ठा usb_configuration	*c;
 
 			c = cdev->config;
-			if (!c)
-				goto done;
+			अगर (!c)
+				जाओ करोne;
 
 			/* try current config's setup */
-			if (c->setup) {
+			अगर (c->setup) अणु
 				value = c->setup(c, ctrl);
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 
 			/* try the only function in the current config */
-			if (!list_is_singular(&c->functions))
-				goto done;
-			f = list_first_entry(&c->functions, struct usb_function,
+			अगर (!list_is_singular(&c->functions))
+				जाओ करोne;
+			f = list_first_entry(&c->functions, काष्ठा usb_function,
 					     list);
-			if (f->setup)
+			अगर (f->setup)
 				value = f->setup(f, ctrl);
-		}
+		पूर्ण
 
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 check_value:
-	/* respond with data transfer before status phase? */
-	if (value >= 0 && value != USB_GADGET_DELAYED_STATUS) {
+	/* respond with data transfer beक्रमe status phase? */
+	अगर (value >= 0 && value != USB_GADGET_DELAYED_STATUS) अणु
 		req->length = value;
 		req->context = cdev;
 		req->zero = value < w_length;
 		value = composite_ep0_queue(cdev, req, GFP_ATOMIC);
-		if (value < 0) {
+		अगर (value < 0) अणु
 			DBG(cdev, "ep_queue --> %d\n", value);
 			req->status = 0;
 			composite_setup_complete(gadget->ep0, req);
-		}
-	} else if (value == USB_GADGET_DELAYED_STATUS && w_length != 0) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (value == USB_GADGET_DELAYED_STATUS && w_length != 0) अणु
 		WARN(cdev,
 			"%s: Delayed status not supported for w_length != 0",
 			__func__);
-	}
+	पूर्ण
 
-done:
+करोne:
 	/* device either stalls (value < 0) or reports success */
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static void __composite_disconnect(struct usb_gadget *gadget)
-{
-	struct usb_composite_dev	*cdev = get_gadget_data(gadget);
-	unsigned long			flags;
+अटल व्योम __composite_disconnect(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा usb_composite_dev	*cdev = get_gadget_data(gadget);
+	अचिन्हित दीर्घ			flags;
 
 	/* REVISIT:  should we have config and device level
 	 * disconnect callbacks?
 	 */
 	spin_lock_irqsave(&cdev->lock, flags);
 	cdev->suspended = 0;
-	if (cdev->config)
+	अगर (cdev->config)
 		reset_config(cdev);
-	if (cdev->driver->disconnect)
+	अगर (cdev->driver->disconnect)
 		cdev->driver->disconnect(cdev);
 	spin_unlock_irqrestore(&cdev->lock, flags);
-}
+पूर्ण
 
-void composite_disconnect(struct usb_gadget *gadget)
-{
+व्योम composite_disconnect(काष्ठा usb_gadget *gadget)
+अणु
 	usb_gadget_vbus_draw(gadget, 0);
 	__composite_disconnect(gadget);
-}
+पूर्ण
 
-void composite_reset(struct usb_gadget *gadget)
-{
+व्योम composite_reset(काष्ठा usb_gadget *gadget)
+अणु
 	/*
-	 * Section 1.4.13 Standard Downstream Port of the USB battery charging
-	 * specification v1.2 states that a device connected on a SDP shall only
-	 * draw at max 100mA while in a connected, but unconfigured state.
+	 * Section 1.4.13 Standard Downstream Port of the USB battery अक्षरging
+	 * specअगरication v1.2 states that a device connected on a SDP shall only
+	 * draw at max 100mA जबतक in a connected, but unconfigured state.
 	 */
 	usb_gadget_vbus_draw(gadget, 100);
 	__composite_disconnect(gadget);
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static ssize_t suspended_show(struct device *dev, struct device_attribute *attr,
-			      char *buf)
-{
-	struct usb_gadget *gadget = dev_to_usb_gadget(dev);
-	struct usb_composite_dev *cdev = get_gadget_data(gadget);
+अटल sमाप_प्रकार suspended_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा usb_gadget *gadget = dev_to_usb_gadget(dev);
+	काष्ठा usb_composite_dev *cdev = get_gadget_data(gadget);
 
-	return sprintf(buf, "%d\n", cdev->suspended);
-}
-static DEVICE_ATTR_RO(suspended);
+	वापस प्र_लिखो(buf, "%d\n", cdev->suspended);
+पूर्ण
+अटल DEVICE_ATTR_RO(suspended);
 
-static void __composite_unbind(struct usb_gadget *gadget, bool unbind_driver)
-{
-	struct usb_composite_dev	*cdev = get_gadget_data(gadget);
-	struct usb_gadget_strings	*gstr = cdev->driver->strings[0];
-	struct usb_string		*dev_str = gstr->strings;
+अटल व्योम __composite_unbind(काष्ठा usb_gadget *gadget, bool unbind_driver)
+अणु
+	काष्ठा usb_composite_dev	*cdev = get_gadget_data(gadget);
+	काष्ठा usb_gadget_strings	*gstr = cdev->driver->strings[0];
+	काष्ठा usb_string		*dev_str = gstr->strings;
 
-	/* composite_disconnect() must already have been called
+	/* composite_disconnect() must alपढ़ोy have been called
 	 * by the underlying peripheral controller driver!
 	 * so there's no i/o concurrency that could affect the
-	 * state protected by cdev->lock.
+	 * state रक्षित by cdev->lock.
 	 */
 	WARN_ON(cdev->config);
 
-	while (!list_empty(&cdev->configs)) {
-		struct usb_configuration	*c;
+	जबतक (!list_empty(&cdev->configs)) अणु
+		काष्ठा usb_configuration	*c;
 		c = list_first_entry(&cdev->configs,
-				struct usb_configuration, list);
-		remove_config(cdev, c);
-	}
-	if (cdev->driver->unbind && unbind_driver)
+				काष्ठा usb_configuration, list);
+		हटाओ_config(cdev, c);
+	पूर्ण
+	अगर (cdev->driver->unbind && unbind_driver)
 		cdev->driver->unbind(cdev);
 
 	composite_dev_cleanup(cdev);
 
-	if (dev_str[USB_GADGET_MANUFACTURER_IDX].s == cdev->def_manufacturer)
+	अगर (dev_str[USB_GADGET_MANUFACTURER_IDX].s == cdev->def_manufacturer)
 		dev_str[USB_GADGET_MANUFACTURER_IDX].s = "";
 
-	kfree(cdev->def_manufacturer);
-	kfree(cdev);
-	set_gadget_data(gadget, NULL);
-}
+	kमुक्त(cdev->def_manufacturer);
+	kमुक्त(cdev);
+	set_gadget_data(gadget, शून्य);
+पूर्ण
 
-static void composite_unbind(struct usb_gadget *gadget)
-{
+अटल व्योम composite_unbind(काष्ठा usb_gadget *gadget)
+अणु
 	__composite_unbind(gadget, true);
-}
+पूर्ण
 
-static void update_unchanged_dev_desc(struct usb_device_descriptor *new,
-		const struct usb_device_descriptor *old)
-{
-	__le16 idVendor;
+अटल व्योम update_unchanged_dev_desc(काष्ठा usb_device_descriptor *new,
+		स्थिर काष्ठा usb_device_descriptor *old)
+अणु
+	__le16 idVenकरोr;
 	__le16 idProduct;
 	__le16 bcdDevice;
 	u8 iSerialNumber;
@@ -2168,9 +2169,9 @@ static void update_unchanged_dev_desc(struct usb_device_descriptor *new,
 
 	/*
 	 * these variables may have been set in
-	 * usb_composite_overwrite_options()
+	 * usb_composite_overग_लिखो_options()
 	 */
-	idVendor = new->idVendor;
+	idVenकरोr = new->idVenकरोr;
 	idProduct = new->idProduct;
 	bcdDevice = new->bcdDevice;
 	iSerialNumber = new->iSerialNumber;
@@ -2178,40 +2179,40 @@ static void update_unchanged_dev_desc(struct usb_device_descriptor *new,
 	iProduct = new->iProduct;
 
 	*new = *old;
-	if (idVendor)
-		new->idVendor = idVendor;
-	if (idProduct)
+	अगर (idVenकरोr)
+		new->idVenकरोr = idVenकरोr;
+	अगर (idProduct)
 		new->idProduct = idProduct;
-	if (bcdDevice)
+	अगर (bcdDevice)
 		new->bcdDevice = bcdDevice;
-	else
-		new->bcdDevice = cpu_to_le16(get_default_bcdDevice());
-	if (iSerialNumber)
+	अन्यथा
+		new->bcdDevice = cpu_to_le16(get_शेष_bcdDevice());
+	अगर (iSerialNumber)
 		new->iSerialNumber = iSerialNumber;
-	if (iManufacturer)
+	अगर (iManufacturer)
 		new->iManufacturer = iManufacturer;
-	if (iProduct)
+	अगर (iProduct)
 		new->iProduct = iProduct;
-}
+पूर्ण
 
-int composite_dev_prepare(struct usb_composite_driver *composite,
-		struct usb_composite_dev *cdev)
-{
-	struct usb_gadget *gadget = cdev->gadget;
-	int ret = -ENOMEM;
+पूर्णांक composite_dev_prepare(काष्ठा usb_composite_driver *composite,
+		काष्ठा usb_composite_dev *cdev)
+अणु
+	काष्ठा usb_gadget *gadget = cdev->gadget;
+	पूर्णांक ret = -ENOMEM;
 
-	/* preallocate control response and buffer */
+	/* pपुनः_स्मृतिate control response and buffer */
 	cdev->req = usb_ep_alloc_request(gadget->ep0, GFP_KERNEL);
-	if (!cdev->req)
-		return -ENOMEM;
+	अगर (!cdev->req)
+		वापस -ENOMEM;
 
-	cdev->req->buf = kmalloc(USB_COMP_EP0_BUFSIZ, GFP_KERNEL);
-	if (!cdev->req->buf)
-		goto fail;
+	cdev->req->buf = kदो_स्मृति(USB_COMP_EP0_बफ_मान, GFP_KERNEL);
+	अगर (!cdev->req->buf)
+		जाओ fail;
 
 	ret = device_create_file(&gadget->dev, &dev_attr_suspended);
-	if (ret)
-		goto fail_dev;
+	अगर (ret)
+		जाओ fail_dev;
 
 	cdev->req->complete = composite_setup_complete;
 	cdev->req->context = cdev;
@@ -2221,106 +2222,106 @@ int composite_dev_prepare(struct usb_composite_driver *composite,
 
 	/*
 	 * As per USB compliance update, a device that is actively drawing
-	 * more than 100mA from USB must report itself as bus-powered in
+	 * more than 100mA from USB must report itself as bus-घातered in
 	 * the GetStatus(DEVICE) call.
 	 */
-	if (CONFIG_USB_GADGET_VBUS_DRAW <= USB_SELF_POWER_VBUS_MAX_DRAW)
-		usb_gadget_set_selfpowered(gadget);
+	अगर (CONFIG_USB_GADGET_VBUS_DRAW <= USB_SELF_POWER_VBUS_MAX_DRAW)
+		usb_gadget_set_selfघातered(gadget);
 
-	/* interface and string IDs start at zero via kzalloc.
-	 * we force endpoints to start unassigned; few controller
+	/* पूर्णांकerface and string IDs start at zero via kzalloc.
+	 * we क्रमce endpoपूर्णांकs to start unasचिन्हित; few controller
 	 * drivers will zero ep->driver_data.
 	 */
-	usb_ep_autoconfig_reset(gadget);
-	return 0;
+	usb_ep_स्वतःconfig_reset(gadget);
+	वापस 0;
 fail_dev:
-	kfree(cdev->req->buf);
+	kमुक्त(cdev->req->buf);
 fail:
-	usb_ep_free_request(gadget->ep0, cdev->req);
-	cdev->req = NULL;
-	return ret;
-}
+	usb_ep_मुक्त_request(gadget->ep0, cdev->req);
+	cdev->req = शून्य;
+	वापस ret;
+पूर्ण
 
-int composite_os_desc_req_prepare(struct usb_composite_dev *cdev,
-				  struct usb_ep *ep0)
-{
-	int ret = 0;
+पूर्णांक composite_os_desc_req_prepare(काष्ठा usb_composite_dev *cdev,
+				  काष्ठा usb_ep *ep0)
+अणु
+	पूर्णांक ret = 0;
 
 	cdev->os_desc_req = usb_ep_alloc_request(ep0, GFP_KERNEL);
-	if (!cdev->os_desc_req) {
+	अगर (!cdev->os_desc_req) अणु
 		ret = -ENOMEM;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	cdev->os_desc_req->buf = kmalloc(USB_COMP_EP0_OS_DESC_BUFSIZ,
+	cdev->os_desc_req->buf = kदो_स्मृति(USB_COMP_EP0_OS_DESC_बफ_मान,
 					 GFP_KERNEL);
-	if (!cdev->os_desc_req->buf) {
+	अगर (!cdev->os_desc_req->buf) अणु
 		ret = -ENOMEM;
-		usb_ep_free_request(ep0, cdev->os_desc_req);
-		goto end;
-	}
+		usb_ep_मुक्त_request(ep0, cdev->os_desc_req);
+		जाओ end;
+	पूर्ण
 	cdev->os_desc_req->context = cdev;
 	cdev->os_desc_req->complete = composite_setup_complete;
 end:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void composite_dev_cleanup(struct usb_composite_dev *cdev)
-{
-	struct usb_gadget_string_container *uc, *tmp;
-	struct usb_ep			   *ep, *tmp_ep;
+व्योम composite_dev_cleanup(काष्ठा usb_composite_dev *cdev)
+अणु
+	काष्ठा usb_gadget_string_container *uc, *पंचांगp;
+	काष्ठा usb_ep			   *ep, *पंचांगp_ep;
 
-	list_for_each_entry_safe(uc, tmp, &cdev->gstrings, list) {
+	list_क्रम_each_entry_safe(uc, पंचांगp, &cdev->gstrings, list) अणु
 		list_del(&uc->list);
-		kfree(uc);
-	}
-	if (cdev->os_desc_req) {
-		if (cdev->os_desc_pending)
+		kमुक्त(uc);
+	पूर्ण
+	अगर (cdev->os_desc_req) अणु
+		अगर (cdev->os_desc_pending)
 			usb_ep_dequeue(cdev->gadget->ep0, cdev->os_desc_req);
 
-		kfree(cdev->os_desc_req->buf);
-		cdev->os_desc_req->buf = NULL;
-		usb_ep_free_request(cdev->gadget->ep0, cdev->os_desc_req);
-		cdev->os_desc_req = NULL;
-	}
-	if (cdev->req) {
-		if (cdev->setup_pending)
+		kमुक्त(cdev->os_desc_req->buf);
+		cdev->os_desc_req->buf = शून्य;
+		usb_ep_मुक्त_request(cdev->gadget->ep0, cdev->os_desc_req);
+		cdev->os_desc_req = शून्य;
+	पूर्ण
+	अगर (cdev->req) अणु
+		अगर (cdev->setup_pending)
 			usb_ep_dequeue(cdev->gadget->ep0, cdev->req);
 
-		kfree(cdev->req->buf);
-		cdev->req->buf = NULL;
-		usb_ep_free_request(cdev->gadget->ep0, cdev->req);
-		cdev->req = NULL;
-	}
+		kमुक्त(cdev->req->buf);
+		cdev->req->buf = शून्य;
+		usb_ep_मुक्त_request(cdev->gadget->ep0, cdev->req);
+		cdev->req = शून्य;
+	पूर्ण
 	cdev->next_string_id = 0;
-	device_remove_file(&cdev->gadget->dev, &dev_attr_suspended);
+	device_हटाओ_file(&cdev->gadget->dev, &dev_attr_suspended);
 
 	/*
 	 * Some UDC backends have a dynamic EP allocation scheme.
 	 *
-	 * In that case, the dispose() callback is used to notify the
-	 * backend that the EPs are no longer in use.
+	 * In that हाल, the dispose() callback is used to notअगरy the
+	 * backend that the EPs are no दीर्घer in use.
 	 *
-	 * Note: The UDC backend can remove the EP from the ep_list as
+	 * Note: The UDC backend can हटाओ the EP from the ep_list as
 	 *	 a result, so we need to use the _safe list iterator.
 	 */
-	list_for_each_entry_safe(ep, tmp_ep,
-				 &cdev->gadget->ep_list, ep_list) {
-		if (ep->ops->dispose)
+	list_क्रम_each_entry_safe(ep, पंचांगp_ep,
+				 &cdev->gadget->ep_list, ep_list) अणु
+		अगर (ep->ops->dispose)
 			ep->ops->dispose(ep);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int composite_bind(struct usb_gadget *gadget,
-		struct usb_gadget_driver *gdriver)
-{
-	struct usb_composite_dev	*cdev;
-	struct usb_composite_driver	*composite = to_cdriver(gdriver);
-	int				status = -ENOMEM;
+अटल पूर्णांक composite_bind(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_gadget_driver *gdriver)
+अणु
+	काष्ठा usb_composite_dev	*cdev;
+	काष्ठा usb_composite_driver	*composite = to_cdriver(gdriver);
+	पूर्णांक				status = -ENOMEM;
 
-	cdev = kzalloc(sizeof *cdev, GFP_KERNEL);
-	if (!cdev)
-		return status;
+	cdev = kzalloc(माप *cdev, GFP_KERNEL);
+	अगर (!cdev)
+		वापस status;
 
 	spin_lock_init(&cdev->lock);
 	cdev->gadget = gadget;
@@ -2329,100 +2330,100 @@ static int composite_bind(struct usb_gadget *gadget,
 	INIT_LIST_HEAD(&cdev->gstrings);
 
 	status = composite_dev_prepare(composite, cdev);
-	if (status)
-		goto fail;
+	अगर (status)
+		जाओ fail;
 
-	/* composite gadget needs to assign strings for whole device (like
-	 * serial number), register function drivers, potentially update
-	 * power state and consumption, etc
+	/* composite gadget needs to assign strings क्रम whole device (like
+	 * serial number), रेजिस्टर function drivers, potentially update
+	 * घातer state and consumption, etc
 	 */
 	status = composite->bind(cdev);
-	if (status < 0)
-		goto fail;
+	अगर (status < 0)
+		जाओ fail;
 
-	if (cdev->use_os_string) {
+	अगर (cdev->use_os_string) अणु
 		status = composite_os_desc_req_prepare(cdev, gadget->ep0);
-		if (status)
-			goto fail;
-	}
+		अगर (status)
+			जाओ fail;
+	पूर्ण
 
 	update_unchanged_dev_desc(&cdev->desc, composite->dev);
 
 	/* has userspace failed to provide a serial number? */
-	if (composite->needs_serial && !cdev->desc.iSerialNumber)
+	अगर (composite->needs_serial && !cdev->desc.iSerialNumber)
 		WARNING(cdev, "userspace failed to provide iSerialNumber\n");
 
 	INFO(cdev, "%s ready\n", composite->name);
-	return 0;
+	वापस 0;
 
 fail:
 	__composite_unbind(gadget, false);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-void composite_suspend(struct usb_gadget *gadget)
-{
-	struct usb_composite_dev	*cdev = get_gadget_data(gadget);
-	struct usb_function		*f;
+व्योम composite_suspend(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा usb_composite_dev	*cdev = get_gadget_data(gadget);
+	काष्ठा usb_function		*f;
 
 	/* REVISIT:  should we have config level
 	 * suspend/resume callbacks?
 	 */
 	DBG(cdev, "suspend\n");
-	if (cdev->config) {
-		list_for_each_entry(f, &cdev->config->functions, list) {
-			if (f->suspend)
+	अगर (cdev->config) अणु
+		list_क्रम_each_entry(f, &cdev->config->functions, list) अणु
+			अगर (f->suspend)
 				f->suspend(f);
-		}
-	}
-	if (cdev->driver->suspend)
+		पूर्ण
+	पूर्ण
+	अगर (cdev->driver->suspend)
 		cdev->driver->suspend(cdev);
 
 	cdev->suspended = 1;
 
-	usb_gadget_set_selfpowered(gadget);
+	usb_gadget_set_selfघातered(gadget);
 	usb_gadget_vbus_draw(gadget, 2);
-}
+पूर्ण
 
-void composite_resume(struct usb_gadget *gadget)
-{
-	struct usb_composite_dev	*cdev = get_gadget_data(gadget);
-	struct usb_function		*f;
-	unsigned			maxpower;
+व्योम composite_resume(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा usb_composite_dev	*cdev = get_gadget_data(gadget);
+	काष्ठा usb_function		*f;
+	अचिन्हित			maxघातer;
 
 	/* REVISIT:  should we have config level
 	 * suspend/resume callbacks?
 	 */
 	DBG(cdev, "resume\n");
-	if (cdev->driver->resume)
+	अगर (cdev->driver->resume)
 		cdev->driver->resume(cdev);
-	if (cdev->config) {
-		list_for_each_entry(f, &cdev->config->functions, list) {
-			if (f->resume)
+	अगर (cdev->config) अणु
+		list_क्रम_each_entry(f, &cdev->config->functions, list) अणु
+			अगर (f->resume)
 				f->resume(f);
-		}
+		पूर्ण
 
-		maxpower = cdev->config->MaxPower ?
+		maxघातer = cdev->config->MaxPower ?
 			cdev->config->MaxPower : CONFIG_USB_GADGET_VBUS_DRAW;
-		if (gadget->speed < USB_SPEED_SUPER)
-			maxpower = min(maxpower, 500U);
-		else
-			maxpower = min(maxpower, 900U);
+		अगर (gadget->speed < USB_SPEED_SUPER)
+			maxघातer = min(maxघातer, 500U);
+		अन्यथा
+			maxघातer = min(maxघातer, 900U);
 
-		if (maxpower > USB_SELF_POWER_VBUS_MAX_DRAW)
-			usb_gadget_clear_selfpowered(gadget);
+		अगर (maxघातer > USB_SELF_POWER_VBUS_MAX_DRAW)
+			usb_gadget_clear_selfघातered(gadget);
 
-		usb_gadget_vbus_draw(gadget, maxpower);
-	}
+		usb_gadget_vbus_draw(gadget, maxघातer);
+	पूर्ण
 
 	cdev->suspended = 0;
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static const struct usb_gadget_driver composite_driver_template = {
+अटल स्थिर काष्ठा usb_gadget_driver composite_driver_ढाँचा = अणु
 	.bind		= composite_bind,
 	.unbind		= composite_unbind,
 
@@ -2433,141 +2434,141 @@ static const struct usb_gadget_driver composite_driver_template = {
 	.suspend	= composite_suspend,
 	.resume		= composite_resume,
 
-	.driver	= {
+	.driver	= अणु
 		.owner		= THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /**
- * usb_composite_probe() - register a composite driver
- * @driver: the driver to register
+ * usb_composite_probe() - रेजिस्टर a composite driver
+ * @driver: the driver to रेजिस्टर
  *
- * Context: single threaded during gadget setup
+ * Context: single thपढ़ोed during gadget setup
  *
- * This function is used to register drivers using the composite driver
- * framework.  The return value is zero, or a negative errno value.
- * Those values normally come from the driver's @bind method, which does
+ * This function is used to रेजिस्टर drivers using the composite driver
+ * framework.  The वापस value is zero, or a negative त्रुटि_सं value.
+ * Those values normally come from the driver's @bind method, which करोes
  * all the work of setting up the driver to match the hardware.
  *
- * On successful return, the gadget is ready to respond to requests from
+ * On successful वापस, the gadget is पढ़ोy to respond to requests from
  * the host, unless one of its components invokes usb_gadget_disconnect()
- * while it was binding.  That would usually be done in order to wait for
+ * जबतक it was binding.  That would usually be करोne in order to रुको क्रम
  * some userspace participation.
  */
-int usb_composite_probe(struct usb_composite_driver *driver)
-{
-	struct usb_gadget_driver *gadget_driver;
+पूर्णांक usb_composite_probe(काष्ठा usb_composite_driver *driver)
+अणु
+	काष्ठा usb_gadget_driver *gadget_driver;
 
-	if (!driver || !driver->dev || !driver->bind)
-		return -EINVAL;
+	अगर (!driver || !driver->dev || !driver->bind)
+		वापस -EINVAL;
 
-	if (!driver->name)
+	अगर (!driver->name)
 		driver->name = "composite";
 
-	driver->gadget_driver = composite_driver_template;
+	driver->gadget_driver = composite_driver_ढाँचा;
 	gadget_driver = &driver->gadget_driver;
 
-	gadget_driver->function =  (char *) driver->name;
+	gadget_driver->function =  (अक्षर *) driver->name;
 	gadget_driver->driver.name = driver->name;
 	gadget_driver->max_speed = driver->max_speed;
 
-	return usb_gadget_probe_driver(gadget_driver);
-}
+	वापस usb_gadget_probe_driver(gadget_driver);
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_composite_probe);
 
 /**
- * usb_composite_unregister() - unregister a composite driver
- * @driver: the driver to unregister
+ * usb_composite_unरेजिस्टर() - unरेजिस्टर a composite driver
+ * @driver: the driver to unरेजिस्टर
  *
- * This function is used to unregister drivers using the composite
+ * This function is used to unरेजिस्टर drivers using the composite
  * driver framework.
  */
-void usb_composite_unregister(struct usb_composite_driver *driver)
-{
-	usb_gadget_unregister_driver(&driver->gadget_driver);
-}
-EXPORT_SYMBOL_GPL(usb_composite_unregister);
+व्योम usb_composite_unरेजिस्टर(काष्ठा usb_composite_driver *driver)
+अणु
+	usb_gadget_unरेजिस्टर_driver(&driver->gadget_driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_composite_unरेजिस्टर);
 
 /**
- * usb_composite_setup_continue() - Continue with the control transfer
- * @cdev: the composite device who's control transfer was kept waiting
+ * usb_composite_setup_जारी() - Continue with the control transfer
+ * @cdev: the composite device who's control transfer was kept रुकोing
  *
- * This function must be called by the USB function driver to continue
- * with the control transfer's data/status stage in case it had requested to
+ * This function must be called by the USB function driver to जारी
+ * with the control transfer's data/status stage in हाल it had requested to
  * delay the data/status stages. A USB function's setup handler (e.g. set_alt())
  * can request the composite framework to delay the setup request's data/status
- * stages by returning USB_GADGET_DELAYED_STATUS.
+ * stages by वापसing USB_GADGET_DELAYED_STATUS.
  */
-void usb_composite_setup_continue(struct usb_composite_dev *cdev)
-{
-	int			value;
-	struct usb_request	*req = cdev->req;
-	unsigned long		flags;
+व्योम usb_composite_setup_जारी(काष्ठा usb_composite_dev *cdev)
+अणु
+	पूर्णांक			value;
+	काष्ठा usb_request	*req = cdev->req;
+	अचिन्हित दीर्घ		flags;
 
 	DBG(cdev, "%s\n", __func__);
 	spin_lock_irqsave(&cdev->lock, flags);
 
-	if (cdev->delayed_status == 0) {
+	अगर (cdev->delayed_status == 0) अणु
 		WARN(cdev, "%s: Unexpected call\n", __func__);
 
-	} else if (--cdev->delayed_status == 0) {
+	पूर्ण अन्यथा अगर (--cdev->delayed_status == 0) अणु
 		DBG(cdev, "%s: Completing delayed status\n", __func__);
 		req->length = 0;
 		req->context = cdev;
 		value = composite_ep0_queue(cdev, req, GFP_ATOMIC);
-		if (value < 0) {
+		अगर (value < 0) अणु
 			DBG(cdev, "ep_queue --> %d\n", value);
 			req->status = 0;
 			composite_setup_complete(cdev->gadget->ep0, req);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&cdev->lock, flags);
-}
-EXPORT_SYMBOL_GPL(usb_composite_setup_continue);
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_composite_setup_जारी);
 
-static char *composite_default_mfr(struct usb_gadget *gadget)
-{
-	return kasprintf(GFP_KERNEL, "%s %s with %s", init_utsname()->sysname,
+अटल अक्षर *composite_शेष_mfr(काष्ठा usb_gadget *gadget)
+अणु
+	वापस kaप्र_लिखो(GFP_KERNEL, "%s %s with %s", init_utsname()->sysname,
 			 init_utsname()->release, gadget->name);
-}
+पूर्ण
 
-void usb_composite_overwrite_options(struct usb_composite_dev *cdev,
-		struct usb_composite_overwrite *covr)
-{
-	struct usb_device_descriptor	*desc = &cdev->desc;
-	struct usb_gadget_strings	*gstr = cdev->driver->strings[0];
-	struct usb_string		*dev_str = gstr->strings;
+व्योम usb_composite_overग_लिखो_options(काष्ठा usb_composite_dev *cdev,
+		काष्ठा usb_composite_overग_लिखो *covr)
+अणु
+	काष्ठा usb_device_descriptor	*desc = &cdev->desc;
+	काष्ठा usb_gadget_strings	*gstr = cdev->driver->strings[0];
+	काष्ठा usb_string		*dev_str = gstr->strings;
 
-	if (covr->idVendor)
-		desc->idVendor = cpu_to_le16(covr->idVendor);
+	अगर (covr->idVenकरोr)
+		desc->idVenकरोr = cpu_to_le16(covr->idVenकरोr);
 
-	if (covr->idProduct)
+	अगर (covr->idProduct)
 		desc->idProduct = cpu_to_le16(covr->idProduct);
 
-	if (covr->bcdDevice)
+	अगर (covr->bcdDevice)
 		desc->bcdDevice = cpu_to_le16(covr->bcdDevice);
 
-	if (covr->serial_number) {
+	अगर (covr->serial_number) अणु
 		desc->iSerialNumber = dev_str[USB_GADGET_SERIAL_IDX].id;
 		dev_str[USB_GADGET_SERIAL_IDX].s = covr->serial_number;
-	}
-	if (covr->manufacturer) {
+	पूर्ण
+	अगर (covr->manufacturer) अणु
 		desc->iManufacturer = dev_str[USB_GADGET_MANUFACTURER_IDX].id;
 		dev_str[USB_GADGET_MANUFACTURER_IDX].s = covr->manufacturer;
 
-	} else if (!strlen(dev_str[USB_GADGET_MANUFACTURER_IDX].s)) {
+	पूर्ण अन्यथा अगर (!म_माप(dev_str[USB_GADGET_MANUFACTURER_IDX].s)) अणु
 		desc->iManufacturer = dev_str[USB_GADGET_MANUFACTURER_IDX].id;
-		cdev->def_manufacturer = composite_default_mfr(cdev->gadget);
+		cdev->def_manufacturer = composite_शेष_mfr(cdev->gadget);
 		dev_str[USB_GADGET_MANUFACTURER_IDX].s = cdev->def_manufacturer;
-	}
+	पूर्ण
 
-	if (covr->product) {
+	अगर (covr->product) अणु
 		desc->iProduct = dev_str[USB_GADGET_PRODUCT_IDX].id;
 		dev_str[USB_GADGET_PRODUCT_IDX].s = covr->product;
-	}
-}
-EXPORT_SYMBOL_GPL(usb_composite_overwrite_options);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_composite_overग_लिखो_options);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("David Brownell");

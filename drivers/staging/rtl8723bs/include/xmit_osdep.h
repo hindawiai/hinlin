@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __XMIT_OSDEP_H_
-#define __XMIT_OSDEP_H_
+#अगर_अघोषित __XMIT_OSDEP_H_
+#घोषणा __XMIT_OSDEP_H_
 
 
-struct pkt_file {
-	struct sk_buff *pkt;
-	__kernel_size_t pkt_len;	 /* the remainder length of the open_file */
-	unsigned char *cur_buffer;
+काष्ठा pkt_file अणु
+	काष्ठा sk_buff *pkt;
+	__kernel_माप_प्रकार pkt_len;	 /* the reमुख्यder length of the खोलो_file */
+	अचिन्हित अक्षर *cur_buffer;
 	u8 *buf_start;
 	u8 *cur_addr;
-	__kernel_size_t buf_len;
-};
+	__kernel_माप_प्रकार buf_len;
+पूर्ण;
 
-#define NR_XMITFRAME	256
+#घोषणा NR_XMITFRAME	256
 
-struct xmit_priv;
-struct pkt_attrib;
-struct sta_xmit_priv;
-struct xmit_frame;
-struct xmit_buf;
+काष्ठा xmit_priv;
+काष्ठा pkt_attrib;
+काष्ठा sta_xmit_priv;
+काष्ठा xmit_frame;
+काष्ठा xmit_buf;
 
-extern int _rtw_xmit_entry(struct sk_buff *pkt, struct net_device *pnetdev);
-extern int rtw_xmit_entry(struct sk_buff *pkt, struct net_device *pnetdev);
+बाह्य पूर्णांक _rtw_xmit_entry(काष्ठा sk_buff *pkt, काष्ठा net_device *pnetdev);
+बाह्य पूर्णांक rtw_xmit_entry(काष्ठा sk_buff *pkt, काष्ठा net_device *pnetdev);
 
-void rtw_os_xmit_schedule(struct adapter *padapter);
+व्योम rtw_os_xmit_schedule(काष्ठा adapter *padapter);
 
-int rtw_os_xmit_resource_alloc(struct adapter *padapter, struct xmit_buf *pxmitbuf, u32 alloc_sz, u8 flag);
-void rtw_os_xmit_resource_free(struct adapter *padapter, struct xmit_buf *pxmitbuf, u32 free_sz, u8 flag);
+पूर्णांक rtw_os_xmit_resource_alloc(काष्ठा adapter *padapter, काष्ठा xmit_buf *pxmitbuf, u32 alloc_sz, u8 flag);
+व्योम rtw_os_xmit_resource_मुक्त(काष्ठा adapter *padapter, काष्ठा xmit_buf *pxmitbuf, u32 मुक्त_sz, u8 flag);
 
-extern uint rtw_remainder_len(struct pkt_file *pfile);
-extern void _rtw_open_pktfile(struct sk_buff *pkt, struct pkt_file *pfile);
-extern uint _rtw_pktfile_read(struct pkt_file *pfile, u8 *rmem, uint rlen);
-extern signed int rtw_endofpktfile(struct pkt_file *pfile);
+बाह्य uपूर्णांक rtw_reमुख्यder_len(काष्ठा pkt_file *pfile);
+बाह्य व्योम _rtw_खोलो_pktfile(काष्ठा sk_buff *pkt, काष्ठा pkt_file *pfile);
+बाह्य uपूर्णांक _rtw_pktfile_पढ़ो(काष्ठा pkt_file *pfile, u8 *rmem, uपूर्णांक rlen);
+बाह्य चिन्हित पूर्णांक rtw_enकरोfpktfile(काष्ठा pkt_file *pfile);
 
-extern void rtw_os_pkt_complete(struct adapter *padapter, struct sk_buff *pkt);
-extern void rtw_os_xmit_complete(struct adapter *padapter, struct xmit_frame *pxframe);
+बाह्य व्योम rtw_os_pkt_complete(काष्ठा adapter *padapter, काष्ठा sk_buff *pkt);
+बाह्य व्योम rtw_os_xmit_complete(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxframe);
 
-#endif /* __XMIT_OSDEP_H_ */
+#पूर्ण_अगर /* __XMIT_OSDEP_H_ */

@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * irq_domain - IRQ translation domains
+ * irq_करोमुख्य - IRQ translation करोमुख्यs
  *
- * Translation infrastructure between hw and linux irq numbers.  This is
- * helpful for interrupt controllers to implement mapping between hardware
+ * Translation infraकाष्ठाure between hw and linux irq numbers.  This is
+ * helpful क्रम पूर्णांकerrupt controllers to implement mapping between hardware
  * irq numbers and the Linux irq number space.
  *
- * irq_domains also have hooks for translating device tree or other
- * firmware interrupt representations into a hardware irq number that
- * can be mapped back to a Linux irq number without any extra platform
+ * irq_करोमुख्यs also have hooks क्रम translating device tree or other
+ * firmware पूर्णांकerrupt representations पूर्णांकo a hardware irq number that
+ * can be mapped back to a Linux irq number without any extra platक्रमm
  * support code.
  *
- * Interrupt controller "domain" data structure. This could be defined as a
- * irq domain controller. That is, it handles the mapping between hardware
- * and virtual interrupt numbers for a given interrupt domain. The domain
- * structure is generally created by the PIC code for a given PIC instance
- * (though a domain can cover more than one PIC if they have a flat number
- * model). It's the domain callbacks that are responsible for setting the
+ * Interrupt controller "domain" data काष्ठाure. This could be defined as a
+ * irq करोमुख्य controller. That is, it handles the mapping between hardware
+ * and भव पूर्णांकerrupt numbers क्रम a given पूर्णांकerrupt करोमुख्य. The करोमुख्य
+ * काष्ठाure is generally created by the PIC code क्रम a given PIC instance
+ * (though a करोमुख्य can cover more than one PIC अगर they have a flat number
+ * model). It's the करोमुख्य callbacks that are responsible क्रम setting the
  * irq_chip on a given irq_desc after it's been mapped.
  *
- * The host code and data structures use a fwnode_handle pointer to
- * identify the domain. In some cases, and in order to preserve source
- * code compatibility, this fwnode pointer is "upgraded" to a DT
- * device_node. For those firmware infrastructures that do not provide
- * a unique identifier for an interrupt controller, the irq_domain
+ * The host code and data काष्ठाures use a fwnode_handle poपूर्णांकer to
+ * identअगरy the करोमुख्य. In some हालs, and in order to preserve source
+ * code compatibility, this fwnode poपूर्णांकer is "upgraded" to a DT
+ * device_node. For those firmware infraकाष्ठाures that करो not provide
+ * a unique identअगरier क्रम an पूर्णांकerrupt controller, the irq_करोमुख्य
  * code offers a fwnode allocator.
  */
 
-#ifndef _LINUX_IRQDOMAIN_H
-#define _LINUX_IRQDOMAIN_H
+#अगर_अघोषित _LINUX_IRQDOMAIN_H
+#घोषणा _LINUX_IRQDOMAIN_H
 
-#include <linux/types.h>
-#include <linux/irqhandler.h>
-#include <linux/of.h>
-#include <linux/mutex.h>
-#include <linux/radix-tree.h>
+#समावेश <linux/types.h>
+#समावेश <linux/irqhandler.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/radix-tree.h>
 
-struct device_node;
-struct fwnode_handle;
-struct irq_domain;
-struct irq_chip;
-struct irq_data;
-struct cpumask;
-struct seq_file;
-struct irq_affinity_desc;
+काष्ठा device_node;
+काष्ठा fwnode_handle;
+काष्ठा irq_करोमुख्य;
+काष्ठा irq_chip;
+काष्ठा irq_data;
+काष्ठा cpumask;
+काष्ठा seq_file;
+काष्ठा irq_affinity_desc;
 
-/* Number of irqs reserved for a legacy isa controller */
-#define NUM_ISA_INTERRUPTS	16
+/* Number of irqs reserved क्रम a legacy isa controller */
+#घोषणा NUM_ISA_INTERRUPTS	16
 
-#define IRQ_DOMAIN_IRQ_SPEC_PARAMS 16
+#घोषणा IRQ_DOMAIN_IRQ_SPEC_PARAMS 16
 
 /**
- * struct irq_fwspec - generic IRQ specifier structure
+ * काष्ठा irq_fwspec - generic IRQ specअगरier काष्ठाure
  *
- * @fwnode:		Pointer to a firmware-specific descriptor
- * @param_count:	Number of device-specific parameters
- * @param:		Device-specific parameters
+ * @fwnode:		Poपूर्णांकer to a firmware-specअगरic descriptor
+ * @param_count:	Number of device-specअगरic parameters
+ * @param:		Device-specअगरic parameters
  *
- * This structure, directly modeled after of_phandle_args, is used to
- * pass a device-specific description of an interrupt.
+ * This काष्ठाure, directly modeled after of_phandle_args, is used to
+ * pass a device-specअगरic description of an पूर्णांकerrupt.
  */
-struct irq_fwspec {
-	struct fwnode_handle *fwnode;
-	int param_count;
+काष्ठा irq_fwspec अणु
+	काष्ठा fwnode_handle *fwnode;
+	पूर्णांक param_count;
 	u32 param[IRQ_DOMAIN_IRQ_SPEC_PARAMS];
-};
+पूर्ण;
 
 /*
- * Should several domains have the same device node, but serve
- * different purposes (for example one domain is for PCI/MSI, and the
- * other for wired IRQs), they can be distinguished using a
- * bus-specific token. Most domains are expected to only carry
+ * Should several करोमुख्यs have the same device node, but serve
+ * dअगरferent purposes (क्रम example one करोमुख्य is क्रम PCI/MSI, and the
+ * other क्रम wired IRQs), they can be distinguished using a
+ * bus-specअगरic token. Most करोमुख्यs are expected to only carry
  * DOMAIN_BUS_ANY.
  */
-enum irq_domain_bus_token {
+क्रमागत irq_करोमुख्य_bus_token अणु
 	DOMAIN_BUS_ANY		= 0,
 	DOMAIN_BUS_WIRED,
 	DOMAIN_BUS_GENERIC_MSI,
@@ -85,126 +86,126 @@ enum irq_domain_bus_token {
 	DOMAIN_BUS_TI_SCI_INTA_MSI,
 	DOMAIN_BUS_WAKEUP,
 	DOMAIN_BUS_VMD_MSI,
-};
+पूर्ण;
 
 /**
- * struct irq_domain_ops - Methods for irq_domain objects
- * @match: Match an interrupt controller device node to a host, returns
+ * काष्ठा irq_करोमुख्य_ops - Methods क्रम irq_करोमुख्य objects
+ * @match: Match an पूर्णांकerrupt controller device node to a host, वापसs
  *         1 on a match
- * @map: Create or update a mapping between a virtual irq number and a hw
- *       irq number. This is called only once for a given mapping.
+ * @map: Create or update a mapping between a भव irq number and a hw
+ *       irq number. This is called only once क्रम a given mapping.
  * @unmap: Dispose of such a mapping
- * @xlate: Given a device tree node and interrupt specifier, decode
+ * @xlate: Given a device tree node and पूर्णांकerrupt specअगरier, decode
  *         the hardware irq number and linux irq type value.
  *
  * Functions below are provided by the driver and called whenever a new mapping
  * is created or an old mapping is disposed. The driver can then proceed to
- * whatever internal data structures management is required. It also needs
- * to setup the irq_desc when returning from map().
+ * whatever पूर्णांकernal data काष्ठाures management is required. It also needs
+ * to setup the irq_desc when वापसing from map().
  */
-struct irq_domain_ops {
-	int (*match)(struct irq_domain *d, struct device_node *node,
-		     enum irq_domain_bus_token bus_token);
-	int (*select)(struct irq_domain *d, struct irq_fwspec *fwspec,
-		      enum irq_domain_bus_token bus_token);
-	int (*map)(struct irq_domain *d, unsigned int virq, irq_hw_number_t hw);
-	void (*unmap)(struct irq_domain *d, unsigned int virq);
-	int (*xlate)(struct irq_domain *d, struct device_node *node,
-		     const u32 *intspec, unsigned int intsize,
-		     unsigned long *out_hwirq, unsigned int *out_type);
-#ifdef	CONFIG_IRQ_DOMAIN_HIERARCHY
-	/* extended V2 interfaces to support hierarchy irq_domains */
-	int (*alloc)(struct irq_domain *d, unsigned int virq,
-		     unsigned int nr_irqs, void *arg);
-	void (*free)(struct irq_domain *d, unsigned int virq,
-		     unsigned int nr_irqs);
-	int (*activate)(struct irq_domain *d, struct irq_data *irqd, bool reserve);
-	void (*deactivate)(struct irq_domain *d, struct irq_data *irq_data);
-	int (*translate)(struct irq_domain *d, struct irq_fwspec *fwspec,
-			 unsigned long *out_hwirq, unsigned int *out_type);
-#endif
-#ifdef CONFIG_GENERIC_IRQ_DEBUGFS
-	void (*debug_show)(struct seq_file *m, struct irq_domain *d,
-			   struct irq_data *irqd, int ind);
-#endif
-};
+काष्ठा irq_करोमुख्य_ops अणु
+	पूर्णांक (*match)(काष्ठा irq_करोमुख्य *d, काष्ठा device_node *node,
+		     क्रमागत irq_करोमुख्य_bus_token bus_token);
+	पूर्णांक (*select)(काष्ठा irq_करोमुख्य *d, काष्ठा irq_fwspec *fwspec,
+		      क्रमागत irq_करोमुख्य_bus_token bus_token);
+	पूर्णांक (*map)(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq, irq_hw_number_t hw);
+	व्योम (*unmap)(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq);
+	पूर्णांक (*xlate)(काष्ठा irq_करोमुख्य *d, काष्ठा device_node *node,
+		     स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+		     अचिन्हित दीर्घ *out_hwirq, अचिन्हित पूर्णांक *out_type);
+#अगर_घोषित	CONFIG_IRQ_DOMAIN_HIERARCHY
+	/* extended V2 पूर्णांकerfaces to support hierarchy irq_करोमुख्यs */
+	पूर्णांक (*alloc)(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq,
+		     अचिन्हित पूर्णांक nr_irqs, व्योम *arg);
+	व्योम (*मुक्त)(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq,
+		     अचिन्हित पूर्णांक nr_irqs);
+	पूर्णांक (*activate)(काष्ठा irq_करोमुख्य *d, काष्ठा irq_data *irqd, bool reserve);
+	व्योम (*deactivate)(काष्ठा irq_करोमुख्य *d, काष्ठा irq_data *irq_data);
+	पूर्णांक (*translate)(काष्ठा irq_करोमुख्य *d, काष्ठा irq_fwspec *fwspec,
+			 अचिन्हित दीर्घ *out_hwirq, अचिन्हित पूर्णांक *out_type);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_GENERIC_IRQ_DEBUGFS
+	व्योम (*debug_show)(काष्ठा seq_file *m, काष्ठा irq_करोमुख्य *d,
+			   काष्ठा irq_data *irqd, पूर्णांक ind);
+#पूर्ण_अगर
+पूर्ण;
 
-extern struct irq_domain_ops irq_generic_chip_ops;
+बाह्य काष्ठा irq_करोमुख्य_ops irq_generic_chip_ops;
 
-struct irq_domain_chip_generic;
+काष्ठा irq_करोमुख्य_chip_generic;
 
 /**
- * struct irq_domain - Hardware interrupt number translation object
- * @link: Element in global irq_domain list.
- * @name: Name of interrupt domain
- * @ops: pointer to irq_domain methods
- * @host_data: private data pointer for use by owner.  Not touched by irq_domain
+ * काष्ठा irq_करोमुख्य - Hardware पूर्णांकerrupt number translation object
+ * @link: Element in global irq_करोमुख्य list.
+ * @name: Name of पूर्णांकerrupt करोमुख्य
+ * @ops: poपूर्णांकer to irq_करोमुख्य methods
+ * @host_data: निजी data poपूर्णांकer क्रम use by owner.  Not touched by irq_करोमुख्य
  *             core code.
- * @flags: host per irq_domain flags
- * @mapcount: The number of mapped interrupts
+ * @flags: host per irq_करोमुख्य flags
+ * @mapcount: The number of mapped पूर्णांकerrupts
  *
  * Optional elements
- * @fwnode: Pointer to firmware node associated with the irq_domain. Pretty easy
- *          to swap it for the of_node via the irq_domain_get_of_node accessor
- * @gc: Pointer to a list of generic chips. There is a helper function for
- *      setting up one or more generic chips for interrupt controllers
- *      drivers using the generic chip library which uses this pointer.
- * @parent: Pointer to parent irq_domain to support hierarchy irq_domains
+ * @fwnode: Poपूर्णांकer to firmware node associated with the irq_करोमुख्य. Pretty easy
+ *          to swap it क्रम the of_node via the irq_करोमुख्य_get_of_node accessor
+ * @gc: Poपूर्णांकer to a list of generic chips. There is a helper function क्रम
+ *      setting up one or more generic chips क्रम पूर्णांकerrupt controllers
+ *      drivers using the generic chip library which uses this poपूर्णांकer.
+ * @parent: Poपूर्णांकer to parent irq_करोमुख्य to support hierarchy irq_करोमुख्यs
  *
- * Revmap data, used internally by irq_domain
- * @revmap_direct_max_irq: The largest hwirq that can be set for controllers that
+ * Revmap data, used पूर्णांकernally by irq_करोमुख्य
+ * @revmap_direct_max_irq: The largest hwirq that can be set क्रम controllers that
  *                         support direct mapping
  * @revmap_size: Size of the linear map table @linear_revmap[]
- * @revmap_tree: Radix map tree for hwirqs that don't fit in the linear map
+ * @revmap_tree: Radix map tree क्रम hwirqs that करोn't fit in the linear map
  * @linear_revmap: Linear table of hwirq->virq reverse mappings
  */
-struct irq_domain {
-	struct list_head link;
-	const char *name;
-	const struct irq_domain_ops *ops;
-	void *host_data;
-	unsigned int flags;
-	unsigned int mapcount;
+काष्ठा irq_करोमुख्य अणु
+	काष्ठा list_head link;
+	स्थिर अक्षर *name;
+	स्थिर काष्ठा irq_करोमुख्य_ops *ops;
+	व्योम *host_data;
+	अचिन्हित पूर्णांक flags;
+	अचिन्हित पूर्णांक mapcount;
 
 	/* Optional data */
-	struct fwnode_handle *fwnode;
-	enum irq_domain_bus_token bus_token;
-	struct irq_domain_chip_generic *gc;
-#ifdef	CONFIG_IRQ_DOMAIN_HIERARCHY
-	struct irq_domain *parent;
-#endif
+	काष्ठा fwnode_handle *fwnode;
+	क्रमागत irq_करोमुख्य_bus_token bus_token;
+	काष्ठा irq_करोमुख्य_chip_generic *gc;
+#अगर_घोषित	CONFIG_IRQ_DOMAIN_HIERARCHY
+	काष्ठा irq_करोमुख्य *parent;
+#पूर्ण_अगर
 
-	/* reverse map data. The linear map gets appended to the irq_domain */
+	/* reverse map data. The linear map माला_लो appended to the irq_करोमुख्य */
 	irq_hw_number_t hwirq_max;
-	unsigned int revmap_direct_max_irq;
-	unsigned int revmap_size;
-	struct radix_tree_root revmap_tree;
-	struct mutex revmap_tree_mutex;
-	unsigned int linear_revmap[];
-};
+	अचिन्हित पूर्णांक revmap_direct_max_irq;
+	अचिन्हित पूर्णांक revmap_size;
+	काष्ठा radix_tree_root revmap_tree;
+	काष्ठा mutex revmap_tree_mutex;
+	अचिन्हित पूर्णांक linear_revmap[];
+पूर्ण;
 
-/* Irq domain flags */
-enum {
-	/* Irq domain is hierarchical */
+/* Irq करोमुख्य flags */
+क्रमागत अणु
+	/* Irq करोमुख्य is hierarchical */
 	IRQ_DOMAIN_FLAG_HIERARCHY	= (1 << 0),
 
-	/* Irq domain name was allocated in __irq_domain_add() */
+	/* Irq करोमुख्य name was allocated in __irq_करोमुख्य_add() */
 	IRQ_DOMAIN_NAME_ALLOCATED	= (1 << 1),
 
-	/* Irq domain is an IPI domain with virq per cpu */
+	/* Irq करोमुख्य is an IPI करोमुख्य with virq per cpu */
 	IRQ_DOMAIN_FLAG_IPI_PER_CPU	= (1 << 2),
 
-	/* Irq domain is an IPI domain with single virq */
+	/* Irq करोमुख्य is an IPI करोमुख्य with single virq */
 	IRQ_DOMAIN_FLAG_IPI_SINGLE	= (1 << 3),
 
-	/* Irq domain implements MSIs */
+	/* Irq करोमुख्य implements MSIs */
 	IRQ_DOMAIN_FLAG_MSI		= (1 << 4),
 
-	/* Irq domain implements MSI remapping */
+	/* Irq करोमुख्य implements MSI remapping */
 	IRQ_DOMAIN_FLAG_MSI_REMAP	= (1 << 5),
 
 	/*
-	 * Quirk to handle MSI implementations which do not provide
+	 * Quirk to handle MSI implementations which करो not provide
 	 * masking. Currently known to affect x86, but partially
 	 * handled in core code.
 	 */
@@ -212,406 +213,406 @@ enum {
 
 	/*
 	 * Flags starting from IRQ_DOMAIN_FLAG_NONCORE are reserved
-	 * for implementation specific purposes and ignored by the
+	 * क्रम implementation specअगरic purposes and ignored by the
 	 * core code.
 	 */
 	IRQ_DOMAIN_FLAG_NONCORE		= (1 << 16),
-};
+पूर्ण;
 
-static inline struct device_node *irq_domain_get_of_node(struct irq_domain *d)
-{
-	return to_of_node(d->fwnode);
-}
+अटल अंतरभूत काष्ठा device_node *irq_करोमुख्य_get_of_node(काष्ठा irq_करोमुख्य *d)
+अणु
+	वापस to_of_node(d->fwnode);
+पूर्ण
 
-#ifdef CONFIG_IRQ_DOMAIN
-struct fwnode_handle *__irq_domain_alloc_fwnode(unsigned int type, int id,
-						const char *name, phys_addr_t *pa);
+#अगर_घोषित CONFIG_IRQ_DOMAIN
+काष्ठा fwnode_handle *__irq_करोमुख्य_alloc_fwnode(अचिन्हित पूर्णांक type, पूर्णांक id,
+						स्थिर अक्षर *name, phys_addr_t *pa);
 
-enum {
+क्रमागत अणु
 	IRQCHIP_FWNODE_REAL,
 	IRQCHIP_FWNODE_NAMED,
 	IRQCHIP_FWNODE_NAMED_ID,
-};
+पूर्ण;
 
-static inline
-struct fwnode_handle *irq_domain_alloc_named_fwnode(const char *name)
-{
-	return __irq_domain_alloc_fwnode(IRQCHIP_FWNODE_NAMED, 0, name, NULL);
-}
+अटल अंतरभूत
+काष्ठा fwnode_handle *irq_करोमुख्य_alloc_named_fwnode(स्थिर अक्षर *name)
+अणु
+	वापस __irq_करोमुख्य_alloc_fwnode(IRQCHIP_FWNODE_NAMED, 0, name, शून्य);
+पूर्ण
 
-static inline
-struct fwnode_handle *irq_domain_alloc_named_id_fwnode(const char *name, int id)
-{
-	return __irq_domain_alloc_fwnode(IRQCHIP_FWNODE_NAMED_ID, id, name,
-					 NULL);
-}
+अटल अंतरभूत
+काष्ठा fwnode_handle *irq_करोमुख्य_alloc_named_id_fwnode(स्थिर अक्षर *name, पूर्णांक id)
+अणु
+	वापस __irq_करोमुख्य_alloc_fwnode(IRQCHIP_FWNODE_NAMED_ID, id, name,
+					 शून्य);
+पूर्ण
 
-static inline struct fwnode_handle *irq_domain_alloc_fwnode(phys_addr_t *pa)
-{
-	return __irq_domain_alloc_fwnode(IRQCHIP_FWNODE_REAL, 0, NULL, pa);
-}
+अटल अंतरभूत काष्ठा fwnode_handle *irq_करोमुख्य_alloc_fwnode(phys_addr_t *pa)
+अणु
+	वापस __irq_करोमुख्य_alloc_fwnode(IRQCHIP_FWNODE_REAL, 0, शून्य, pa);
+पूर्ण
 
-void irq_domain_free_fwnode(struct fwnode_handle *fwnode);
-struct irq_domain *__irq_domain_add(struct fwnode_handle *fwnode, int size,
-				    irq_hw_number_t hwirq_max, int direct_max,
-				    const struct irq_domain_ops *ops,
-				    void *host_data);
-struct irq_domain *irq_domain_create_simple(struct fwnode_handle *fwnode,
-					    unsigned int size,
-					    unsigned int first_irq,
-					    const struct irq_domain_ops *ops,
-					    void *host_data);
-struct irq_domain *irq_domain_add_legacy(struct device_node *of_node,
-					 unsigned int size,
-					 unsigned int first_irq,
+व्योम irq_करोमुख्य_मुक्त_fwnode(काष्ठा fwnode_handle *fwnode);
+काष्ठा irq_करोमुख्य *__irq_करोमुख्य_add(काष्ठा fwnode_handle *fwnode, पूर्णांक size,
+				    irq_hw_number_t hwirq_max, पूर्णांक direct_max,
+				    स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+				    व्योम *host_data);
+काष्ठा irq_करोमुख्य *irq_करोमुख्य_create_simple(काष्ठा fwnode_handle *fwnode,
+					    अचिन्हित पूर्णांक size,
+					    अचिन्हित पूर्णांक first_irq,
+					    स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					    व्योम *host_data);
+काष्ठा irq_करोमुख्य *irq_करोमुख्य_add_legacy(काष्ठा device_node *of_node,
+					 अचिन्हित पूर्णांक size,
+					 अचिन्हित पूर्णांक first_irq,
 					 irq_hw_number_t first_hwirq,
-					 const struct irq_domain_ops *ops,
-					 void *host_data);
-struct irq_domain *irq_domain_create_legacy(struct fwnode_handle *fwnode,
-					    unsigned int size,
-					    unsigned int first_irq,
+					 स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					 व्योम *host_data);
+काष्ठा irq_करोमुख्य *irq_करोमुख्य_create_legacy(काष्ठा fwnode_handle *fwnode,
+					    अचिन्हित पूर्णांक size,
+					    अचिन्हित पूर्णांक first_irq,
 					    irq_hw_number_t first_hwirq,
-					    const struct irq_domain_ops *ops,
-					    void *host_data);
-extern struct irq_domain *irq_find_matching_fwspec(struct irq_fwspec *fwspec,
-						   enum irq_domain_bus_token bus_token);
-extern bool irq_domain_check_msi_remap(void);
-extern void irq_set_default_host(struct irq_domain *host);
-extern struct irq_domain *irq_get_default_host(void);
-extern int irq_domain_alloc_descs(int virq, unsigned int nr_irqs,
-				  irq_hw_number_t hwirq, int node,
-				  const struct irq_affinity_desc *affinity);
+					    स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					    व्योम *host_data);
+बाह्य काष्ठा irq_करोमुख्य *irq_find_matching_fwspec(काष्ठा irq_fwspec *fwspec,
+						   क्रमागत irq_करोमुख्य_bus_token bus_token);
+बाह्य bool irq_करोमुख्य_check_msi_remap(व्योम);
+बाह्य व्योम irq_set_शेष_host(काष्ठा irq_करोमुख्य *host);
+बाह्य काष्ठा irq_करोमुख्य *irq_get_शेष_host(व्योम);
+बाह्य पूर्णांक irq_करोमुख्य_alloc_descs(पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs,
+				  irq_hw_number_t hwirq, पूर्णांक node,
+				  स्थिर काष्ठा irq_affinity_desc *affinity);
 
-static inline struct fwnode_handle *of_node_to_fwnode(struct device_node *node)
-{
-	return node ? &node->fwnode : NULL;
-}
+अटल अंतरभूत काष्ठा fwnode_handle *of_node_to_fwnode(काष्ठा device_node *node)
+अणु
+	वापस node ? &node->fwnode : शून्य;
+पूर्ण
 
-extern const struct fwnode_operations irqchip_fwnode_ops;
+बाह्य स्थिर काष्ठा fwnode_operations irqchip_fwnode_ops;
 
-static inline bool is_fwnode_irqchip(struct fwnode_handle *fwnode)
-{
-	return fwnode && fwnode->ops == &irqchip_fwnode_ops;
-}
+अटल अंतरभूत bool is_fwnode_irqchip(काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस fwnode && fwnode->ops == &irqchip_fwnode_ops;
+पूर्ण
 
-extern void irq_domain_update_bus_token(struct irq_domain *domain,
-					enum irq_domain_bus_token bus_token);
+बाह्य व्योम irq_करोमुख्य_update_bus_token(काष्ठा irq_करोमुख्य *करोमुख्य,
+					क्रमागत irq_करोमुख्य_bus_token bus_token);
 
-static inline
-struct irq_domain *irq_find_matching_fwnode(struct fwnode_handle *fwnode,
-					    enum irq_domain_bus_token bus_token)
-{
-	struct irq_fwspec fwspec = {
+अटल अंतरभूत
+काष्ठा irq_करोमुख्य *irq_find_matching_fwnode(काष्ठा fwnode_handle *fwnode,
+					    क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
+	काष्ठा irq_fwspec fwspec = अणु
 		.fwnode = fwnode,
-	};
+	पूर्ण;
 
-	return irq_find_matching_fwspec(&fwspec, bus_token);
-}
+	वापस irq_find_matching_fwspec(&fwspec, bus_token);
+पूर्ण
 
-static inline struct irq_domain *irq_find_matching_host(struct device_node *node,
-							enum irq_domain_bus_token bus_token)
-{
-	return irq_find_matching_fwnode(of_node_to_fwnode(node), bus_token);
-}
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_find_matching_host(काष्ठा device_node *node,
+							क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
+	वापस irq_find_matching_fwnode(of_node_to_fwnode(node), bus_token);
+पूर्ण
 
-static inline struct irq_domain *irq_find_host(struct device_node *node)
-{
-	struct irq_domain *d;
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_find_host(काष्ठा device_node *node)
+अणु
+	काष्ठा irq_करोमुख्य *d;
 
 	d = irq_find_matching_host(node, DOMAIN_BUS_WIRED);
-	if (!d)
+	अगर (!d)
 		d = irq_find_matching_host(node, DOMAIN_BUS_ANY);
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static inline struct irq_domain *irq_domain_add_simple(struct device_node *of_node,
-						       unsigned int size,
-						       unsigned int first_irq,
-						       const struct irq_domain_ops *ops,
-						       void *host_data)
-{
-	return irq_domain_create_simple(of_node_to_fwnode(of_node), size, first_irq, ops, host_data);
-}
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_करोमुख्य_add_simple(काष्ठा device_node *of_node,
+						       अचिन्हित पूर्णांक size,
+						       अचिन्हित पूर्णांक first_irq,
+						       स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+						       व्योम *host_data)
+अणु
+	वापस irq_करोमुख्य_create_simple(of_node_to_fwnode(of_node), size, first_irq, ops, host_data);
+पूर्ण
 
 /**
- * irq_domain_add_linear() - Allocate and register a linear revmap irq_domain.
- * @of_node: pointer to interrupt controller's device tree node.
- * @size: Number of interrupts in the domain.
- * @ops: map/unmap domain callbacks
- * @host_data: Controller private data pointer
+ * irq_करोमुख्य_add_linear() - Allocate and रेजिस्टर a linear revmap irq_करोमुख्य.
+ * @of_node: poपूर्णांकer to पूर्णांकerrupt controller's device tree node.
+ * @size: Number of पूर्णांकerrupts in the करोमुख्य.
+ * @ops: map/unmap करोमुख्य callbacks
+ * @host_data: Controller निजी data poपूर्णांकer
  */
-static inline struct irq_domain *irq_domain_add_linear(struct device_node *of_node,
-					 unsigned int size,
-					 const struct irq_domain_ops *ops,
-					 void *host_data)
-{
-	return __irq_domain_add(of_node_to_fwnode(of_node), size, size, 0, ops, host_data);
-}
-static inline struct irq_domain *irq_domain_add_nomap(struct device_node *of_node,
-					 unsigned int max_irq,
-					 const struct irq_domain_ops *ops,
-					 void *host_data)
-{
-	return __irq_domain_add(of_node_to_fwnode(of_node), 0, max_irq, max_irq, ops, host_data);
-}
-static inline struct irq_domain *irq_domain_add_legacy_isa(
-				struct device_node *of_node,
-				const struct irq_domain_ops *ops,
-				void *host_data)
-{
-	return irq_domain_add_legacy(of_node, NUM_ISA_INTERRUPTS, 0, 0, ops,
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_करोमुख्य_add_linear(काष्ठा device_node *of_node,
+					 अचिन्हित पूर्णांक size,
+					 स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					 व्योम *host_data)
+अणु
+	वापस __irq_करोमुख्य_add(of_node_to_fwnode(of_node), size, size, 0, ops, host_data);
+पूर्ण
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_करोमुख्य_add_nomap(काष्ठा device_node *of_node,
+					 अचिन्हित पूर्णांक max_irq,
+					 स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					 व्योम *host_data)
+अणु
+	वापस __irq_करोमुख्य_add(of_node_to_fwnode(of_node), 0, max_irq, max_irq, ops, host_data);
+पूर्ण
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_करोमुख्य_add_legacy_isa(
+				काष्ठा device_node *of_node,
+				स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+				व्योम *host_data)
+अणु
+	वापस irq_करोमुख्य_add_legacy(of_node, NUM_ISA_INTERRUPTS, 0, 0, ops,
 				     host_data);
-}
-static inline struct irq_domain *irq_domain_add_tree(struct device_node *of_node,
-					 const struct irq_domain_ops *ops,
-					 void *host_data)
-{
-	return __irq_domain_add(of_node_to_fwnode(of_node), 0, ~0, 0, ops, host_data);
-}
+पूर्ण
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_करोमुख्य_add_tree(काष्ठा device_node *of_node,
+					 स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					 व्योम *host_data)
+अणु
+	वापस __irq_करोमुख्य_add(of_node_to_fwnode(of_node), 0, ~0, 0, ops, host_data);
+पूर्ण
 
-static inline struct irq_domain *irq_domain_create_linear(struct fwnode_handle *fwnode,
-					 unsigned int size,
-					 const struct irq_domain_ops *ops,
-					 void *host_data)
-{
-	return __irq_domain_add(fwnode, size, size, 0, ops, host_data);
-}
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_करोमुख्य_create_linear(काष्ठा fwnode_handle *fwnode,
+					 अचिन्हित पूर्णांक size,
+					 स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					 व्योम *host_data)
+अणु
+	वापस __irq_करोमुख्य_add(fwnode, size, size, 0, ops, host_data);
+पूर्ण
 
-static inline struct irq_domain *irq_domain_create_tree(struct fwnode_handle *fwnode,
-					 const struct irq_domain_ops *ops,
-					 void *host_data)
-{
-	return __irq_domain_add(fwnode, 0, ~0, 0, ops, host_data);
-}
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_करोमुख्य_create_tree(काष्ठा fwnode_handle *fwnode,
+					 स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					 व्योम *host_data)
+अणु
+	वापस __irq_करोमुख्य_add(fwnode, 0, ~0, 0, ops, host_data);
+पूर्ण
 
-extern void irq_domain_remove(struct irq_domain *host);
+बाह्य व्योम irq_करोमुख्य_हटाओ(काष्ठा irq_करोमुख्य *host);
 
-extern int irq_domain_associate(struct irq_domain *domain, unsigned int irq,
+बाह्य पूर्णांक irq_करोमुख्य_associate(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक irq,
 					irq_hw_number_t hwirq);
-extern void irq_domain_associate_many(struct irq_domain *domain,
-				      unsigned int irq_base,
-				      irq_hw_number_t hwirq_base, int count);
+बाह्य व्योम irq_करोमुख्य_associate_many(काष्ठा irq_करोमुख्य *करोमुख्य,
+				      अचिन्हित पूर्णांक irq_base,
+				      irq_hw_number_t hwirq_base, पूर्णांक count);
 
-extern unsigned int irq_create_mapping_affinity(struct irq_domain *host,
+बाह्य अचिन्हित पूर्णांक irq_create_mapping_affinity(काष्ठा irq_करोमुख्य *host,
 				      irq_hw_number_t hwirq,
-				      const struct irq_affinity_desc *affinity);
-extern unsigned int irq_create_fwspec_mapping(struct irq_fwspec *fwspec);
-extern void irq_dispose_mapping(unsigned int virq);
+				      स्थिर काष्ठा irq_affinity_desc *affinity);
+बाह्य अचिन्हित पूर्णांक irq_create_fwspec_mapping(काष्ठा irq_fwspec *fwspec);
+बाह्य व्योम irq_dispose_mapping(अचिन्हित पूर्णांक virq);
 
-static inline unsigned int irq_create_mapping(struct irq_domain *host,
+अटल अंतरभूत अचिन्हित पूर्णांक irq_create_mapping(काष्ठा irq_करोमुख्य *host,
 					      irq_hw_number_t hwirq)
-{
-	return irq_create_mapping_affinity(host, hwirq, NULL);
-}
+अणु
+	वापस irq_create_mapping_affinity(host, hwirq, शून्य);
+पूर्ण
 
 
 /**
  * irq_linear_revmap() - Find a linux irq from a hw irq number.
- * @domain: domain owning this hardware interrupt
- * @hwirq: hardware irq number in that domain space
+ * @करोमुख्य: करोमुख्य owning this hardware पूर्णांकerrupt
+ * @hwirq: hardware irq number in that करोमुख्य space
  *
  * This is a fast path alternative to irq_find_mapping() that can be
  * called directly by irq controller code to save a handful of
- * instructions. It is always safe to call, but won't find irqs mapped
+ * inकाष्ठाions. It is always safe to call, but won't find irqs mapped
  * using the radix tree.
  */
-static inline unsigned int irq_linear_revmap(struct irq_domain *domain,
+अटल अंतरभूत अचिन्हित पूर्णांक irq_linear_revmap(काष्ठा irq_करोमुख्य *करोमुख्य,
 					     irq_hw_number_t hwirq)
-{
-	return hwirq < domain->revmap_size ? domain->linear_revmap[hwirq] : 0;
-}
-extern unsigned int irq_find_mapping(struct irq_domain *host,
+अणु
+	वापस hwirq < करोमुख्य->revmap_size ? करोमुख्य->linear_revmap[hwirq] : 0;
+पूर्ण
+बाह्य अचिन्हित पूर्णांक irq_find_mapping(काष्ठा irq_करोमुख्य *host,
 				     irq_hw_number_t hwirq);
-extern unsigned int irq_create_direct_mapping(struct irq_domain *host);
+बाह्य अचिन्हित पूर्णांक irq_create_direct_mapping(काष्ठा irq_करोमुख्य *host);
 
-extern const struct irq_domain_ops irq_domain_simple_ops;
+बाह्य स्थिर काष्ठा irq_करोमुख्य_ops irq_करोमुख्य_simple_ops;
 
 /* stock xlate functions */
-int irq_domain_xlate_onecell(struct irq_domain *d, struct device_node *ctrlr,
-			const u32 *intspec, unsigned int intsize,
-			irq_hw_number_t *out_hwirq, unsigned int *out_type);
-int irq_domain_xlate_twocell(struct irq_domain *d, struct device_node *ctrlr,
-			const u32 *intspec, unsigned int intsize,
-			irq_hw_number_t *out_hwirq, unsigned int *out_type);
-int irq_domain_xlate_onetwocell(struct irq_domain *d, struct device_node *ctrlr,
-			const u32 *intspec, unsigned int intsize,
-			irq_hw_number_t *out_hwirq, unsigned int *out_type);
+पूर्णांक irq_करोमुख्य_xlate_onecell(काष्ठा irq_करोमुख्य *d, काष्ठा device_node *ctrlr,
+			स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+			irq_hw_number_t *out_hwirq, अचिन्हित पूर्णांक *out_type);
+पूर्णांक irq_करोमुख्य_xlate_twocell(काष्ठा irq_करोमुख्य *d, काष्ठा device_node *ctrlr,
+			स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+			irq_hw_number_t *out_hwirq, अचिन्हित पूर्णांक *out_type);
+पूर्णांक irq_करोमुख्य_xlate_onetwocell(काष्ठा irq_करोमुख्य *d, काष्ठा device_node *ctrlr,
+			स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+			irq_hw_number_t *out_hwirq, अचिन्हित पूर्णांक *out_type);
 
-int irq_domain_translate_twocell(struct irq_domain *d,
-				 struct irq_fwspec *fwspec,
-				 unsigned long *out_hwirq,
-				 unsigned int *out_type);
+पूर्णांक irq_करोमुख्य_translate_twocell(काष्ठा irq_करोमुख्य *d,
+				 काष्ठा irq_fwspec *fwspec,
+				 अचिन्हित दीर्घ *out_hwirq,
+				 अचिन्हित पूर्णांक *out_type);
 
-int irq_domain_translate_onecell(struct irq_domain *d,
-				 struct irq_fwspec *fwspec,
-				 unsigned long *out_hwirq,
-				 unsigned int *out_type);
+पूर्णांक irq_करोमुख्य_translate_onecell(काष्ठा irq_करोमुख्य *d,
+				 काष्ठा irq_fwspec *fwspec,
+				 अचिन्हित दीर्घ *out_hwirq,
+				 अचिन्हित पूर्णांक *out_type);
 
 /* IPI functions */
-int irq_reserve_ipi(struct irq_domain *domain, const struct cpumask *dest);
-int irq_destroy_ipi(unsigned int irq, const struct cpumask *dest);
+पूर्णांक irq_reserve_ipi(काष्ठा irq_करोमुख्य *करोमुख्य, स्थिर काष्ठा cpumask *dest);
+पूर्णांक irq_destroy_ipi(अचिन्हित पूर्णांक irq, स्थिर काष्ठा cpumask *dest);
 
-/* V2 interfaces to support hierarchy IRQ domains. */
-extern struct irq_data *irq_domain_get_irq_data(struct irq_domain *domain,
-						unsigned int virq);
-extern void irq_domain_set_info(struct irq_domain *domain, unsigned int virq,
-				irq_hw_number_t hwirq, struct irq_chip *chip,
-				void *chip_data, irq_flow_handler_t handler,
-				void *handler_data, const char *handler_name);
-extern void irq_domain_reset_irq_data(struct irq_data *irq_data);
-#ifdef	CONFIG_IRQ_DOMAIN_HIERARCHY
-extern struct irq_domain *irq_domain_create_hierarchy(struct irq_domain *parent,
-			unsigned int flags, unsigned int size,
-			struct fwnode_handle *fwnode,
-			const struct irq_domain_ops *ops, void *host_data);
+/* V2 पूर्णांकerfaces to support hierarchy IRQ करोमुख्यs. */
+बाह्य काष्ठा irq_data *irq_करोमुख्य_get_irq_data(काष्ठा irq_करोमुख्य *करोमुख्य,
+						अचिन्हित पूर्णांक virq);
+बाह्य व्योम irq_करोमुख्य_set_info(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+				irq_hw_number_t hwirq, काष्ठा irq_chip *chip,
+				व्योम *chip_data, irq_flow_handler_t handler,
+				व्योम *handler_data, स्थिर अक्षर *handler_name);
+बाह्य व्योम irq_करोमुख्य_reset_irq_data(काष्ठा irq_data *irq_data);
+#अगर_घोषित	CONFIG_IRQ_DOMAIN_HIERARCHY
+बाह्य काष्ठा irq_करोमुख्य *irq_करोमुख्य_create_hierarchy(काष्ठा irq_करोमुख्य *parent,
+			अचिन्हित पूर्णांक flags, अचिन्हित पूर्णांक size,
+			काष्ठा fwnode_handle *fwnode,
+			स्थिर काष्ठा irq_करोमुख्य_ops *ops, व्योम *host_data);
 
-static inline struct irq_domain *irq_domain_add_hierarchy(struct irq_domain *parent,
-					    unsigned int flags,
-					    unsigned int size,
-					    struct device_node *node,
-					    const struct irq_domain_ops *ops,
-					    void *host_data)
-{
-	return irq_domain_create_hierarchy(parent, flags, size,
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_करोमुख्य_add_hierarchy(काष्ठा irq_करोमुख्य *parent,
+					    अचिन्हित पूर्णांक flags,
+					    अचिन्हित पूर्णांक size,
+					    काष्ठा device_node *node,
+					    स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					    व्योम *host_data)
+अणु
+	वापस irq_करोमुख्य_create_hierarchy(parent, flags, size,
 					   of_node_to_fwnode(node),
 					   ops, host_data);
-}
+पूर्ण
 
-extern int __irq_domain_alloc_irqs(struct irq_domain *domain, int irq_base,
-				   unsigned int nr_irqs, int node, void *arg,
-				   bool realloc,
-				   const struct irq_affinity_desc *affinity);
-extern void irq_domain_free_irqs(unsigned int virq, unsigned int nr_irqs);
-extern int irq_domain_activate_irq(struct irq_data *irq_data, bool early);
-extern void irq_domain_deactivate_irq(struct irq_data *irq_data);
+बाह्य पूर्णांक __irq_करोमुख्य_alloc_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, पूर्णांक irq_base,
+				   अचिन्हित पूर्णांक nr_irqs, पूर्णांक node, व्योम *arg,
+				   bool पुनः_स्मृति,
+				   स्थिर काष्ठा irq_affinity_desc *affinity);
+बाह्य व्योम irq_करोमुख्य_मुक्त_irqs(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs);
+बाह्य पूर्णांक irq_करोमुख्य_activate_irq(काष्ठा irq_data *irq_data, bool early);
+बाह्य व्योम irq_करोमुख्य_deactivate_irq(काष्ठा irq_data *irq_data);
 
-static inline int irq_domain_alloc_irqs(struct irq_domain *domain,
-			unsigned int nr_irqs, int node, void *arg)
-{
-	return __irq_domain_alloc_irqs(domain, -1, nr_irqs, node, arg, false,
-				       NULL);
-}
+अटल अंतरभूत पूर्णांक irq_करोमुख्य_alloc_irqs(काष्ठा irq_करोमुख्य *करोमुख्य,
+			अचिन्हित पूर्णांक nr_irqs, पूर्णांक node, व्योम *arg)
+अणु
+	वापस __irq_करोमुख्य_alloc_irqs(करोमुख्य, -1, nr_irqs, node, arg, false,
+				       शून्य);
+पूर्ण
 
-extern int irq_domain_alloc_irqs_hierarchy(struct irq_domain *domain,
-					   unsigned int irq_base,
-					   unsigned int nr_irqs, void *arg);
-extern int irq_domain_set_hwirq_and_chip(struct irq_domain *domain,
-					 unsigned int virq,
+बाह्य पूर्णांक irq_करोमुख्य_alloc_irqs_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य,
+					   अचिन्हित पूर्णांक irq_base,
+					   अचिन्हित पूर्णांक nr_irqs, व्योम *arg);
+बाह्य पूर्णांक irq_करोमुख्य_set_hwirq_and_chip(काष्ठा irq_करोमुख्य *करोमुख्य,
+					 अचिन्हित पूर्णांक virq,
 					 irq_hw_number_t hwirq,
-					 struct irq_chip *chip,
-					 void *chip_data);
-extern void irq_domain_free_irqs_common(struct irq_domain *domain,
-					unsigned int virq,
-					unsigned int nr_irqs);
-extern void irq_domain_free_irqs_top(struct irq_domain *domain,
-				     unsigned int virq, unsigned int nr_irqs);
+					 काष्ठा irq_chip *chip,
+					 व्योम *chip_data);
+बाह्य व्योम irq_करोमुख्य_मुक्त_irqs_common(काष्ठा irq_करोमुख्य *करोमुख्य,
+					अचिन्हित पूर्णांक virq,
+					अचिन्हित पूर्णांक nr_irqs);
+बाह्य व्योम irq_करोमुख्य_मुक्त_irqs_top(काष्ठा irq_करोमुख्य *करोमुख्य,
+				     अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs);
 
-extern int irq_domain_push_irq(struct irq_domain *domain, int virq, void *arg);
-extern int irq_domain_pop_irq(struct irq_domain *domain, int virq);
+बाह्य पूर्णांक irq_करोमुख्य_push_irq(काष्ठा irq_करोमुख्य *करोमुख्य, पूर्णांक virq, व्योम *arg);
+बाह्य पूर्णांक irq_करोमुख्य_pop_irq(काष्ठा irq_करोमुख्य *करोमुख्य, पूर्णांक virq);
 
-extern int irq_domain_alloc_irqs_parent(struct irq_domain *domain,
-					unsigned int irq_base,
-					unsigned int nr_irqs, void *arg);
+बाह्य पूर्णांक irq_करोमुख्य_alloc_irqs_parent(काष्ठा irq_करोमुख्य *करोमुख्य,
+					अचिन्हित पूर्णांक irq_base,
+					अचिन्हित पूर्णांक nr_irqs, व्योम *arg);
 
-extern void irq_domain_free_irqs_parent(struct irq_domain *domain,
-					unsigned int irq_base,
-					unsigned int nr_irqs);
+बाह्य व्योम irq_करोमुख्य_मुक्त_irqs_parent(काष्ठा irq_करोमुख्य *करोमुख्य,
+					अचिन्हित पूर्णांक irq_base,
+					अचिन्हित पूर्णांक nr_irqs);
 
-extern int irq_domain_disconnect_hierarchy(struct irq_domain *domain,
-					   unsigned int virq);
+बाह्य पूर्णांक irq_करोमुख्य_disconnect_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य,
+					   अचिन्हित पूर्णांक virq);
 
-static inline bool irq_domain_is_hierarchy(struct irq_domain *domain)
-{
-	return domain->flags & IRQ_DOMAIN_FLAG_HIERARCHY;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस करोमुख्य->flags & IRQ_DOMAIN_FLAG_HIERARCHY;
+पूर्ण
 
-static inline bool irq_domain_is_ipi(struct irq_domain *domain)
-{
-	return domain->flags &
+अटल अंतरभूत bool irq_करोमुख्य_is_ipi(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस करोमुख्य->flags &
 		(IRQ_DOMAIN_FLAG_IPI_PER_CPU | IRQ_DOMAIN_FLAG_IPI_SINGLE);
-}
+पूर्ण
 
-static inline bool irq_domain_is_ipi_per_cpu(struct irq_domain *domain)
-{
-	return domain->flags & IRQ_DOMAIN_FLAG_IPI_PER_CPU;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_ipi_per_cpu(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस करोमुख्य->flags & IRQ_DOMAIN_FLAG_IPI_PER_CPU;
+पूर्ण
 
-static inline bool irq_domain_is_ipi_single(struct irq_domain *domain)
-{
-	return domain->flags & IRQ_DOMAIN_FLAG_IPI_SINGLE;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_ipi_single(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस करोमुख्य->flags & IRQ_DOMAIN_FLAG_IPI_SINGLE;
+पूर्ण
 
-static inline bool irq_domain_is_msi(struct irq_domain *domain)
-{
-	return domain->flags & IRQ_DOMAIN_FLAG_MSI;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_msi(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस करोमुख्य->flags & IRQ_DOMAIN_FLAG_MSI;
+पूर्ण
 
-static inline bool irq_domain_is_msi_remap(struct irq_domain *domain)
-{
-	return domain->flags & IRQ_DOMAIN_FLAG_MSI_REMAP;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_msi_remap(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस करोमुख्य->flags & IRQ_DOMAIN_FLAG_MSI_REMAP;
+पूर्ण
 
-extern bool irq_domain_hierarchical_is_msi_remap(struct irq_domain *domain);
+बाह्य bool irq_करोमुख्य_hierarchical_is_msi_remap(काष्ठा irq_करोमुख्य *करोमुख्य);
 
-#else	/* CONFIG_IRQ_DOMAIN_HIERARCHY */
-static inline int irq_domain_alloc_irqs(struct irq_domain *domain,
-			unsigned int nr_irqs, int node, void *arg)
-{
-	return -1;
-}
+#अन्यथा	/* CONFIG_IRQ_DOMAIN_HIERARCHY */
+अटल अंतरभूत पूर्णांक irq_करोमुख्य_alloc_irqs(काष्ठा irq_करोमुख्य *करोमुख्य,
+			अचिन्हित पूर्णांक nr_irqs, पूर्णांक node, व्योम *arg)
+अणु
+	वापस -1;
+पूर्ण
 
-static inline void irq_domain_free_irqs(unsigned int virq,
-					unsigned int nr_irqs) { }
+अटल अंतरभूत व्योम irq_करोमुख्य_मुक्त_irqs(अचिन्हित पूर्णांक virq,
+					अचिन्हित पूर्णांक nr_irqs) अणु पूर्ण
 
-static inline bool irq_domain_is_hierarchy(struct irq_domain *domain)
-{
-	return false;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_hierarchy(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool irq_domain_is_ipi(struct irq_domain *domain)
-{
-	return false;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_ipi(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool irq_domain_is_ipi_per_cpu(struct irq_domain *domain)
-{
-	return false;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_ipi_per_cpu(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool irq_domain_is_ipi_single(struct irq_domain *domain)
-{
-	return false;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_ipi_single(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool irq_domain_is_msi(struct irq_domain *domain)
-{
-	return false;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_msi(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool irq_domain_is_msi_remap(struct irq_domain *domain)
-{
-	return false;
-}
+अटल अंतरभूत bool irq_करोमुख्य_is_msi_remap(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool
-irq_domain_hierarchical_is_msi_remap(struct irq_domain *domain)
-{
-	return false;
-}
-#endif	/* CONFIG_IRQ_DOMAIN_HIERARCHY */
+अटल अंतरभूत bool
+irq_करोमुख्य_hierarchical_is_msi_remap(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_IRQ_DOMAIN_HIERARCHY */
 
-#else /* CONFIG_IRQ_DOMAIN */
-static inline void irq_dispose_mapping(unsigned int virq) { }
-static inline struct irq_domain *irq_find_matching_fwnode(
-	struct fwnode_handle *fwnode, enum irq_domain_bus_token bus_token)
-{
-	return NULL;
-}
-static inline bool irq_domain_check_msi_remap(void)
-{
-	return false;
-}
-#endif /* !CONFIG_IRQ_DOMAIN */
+#अन्यथा /* CONFIG_IRQ_DOMAIN */
+अटल अंतरभूत व्योम irq_dispose_mapping(अचिन्हित पूर्णांक virq) अणु पूर्ण
+अटल अंतरभूत काष्ठा irq_करोमुख्य *irq_find_matching_fwnode(
+	काष्ठा fwnode_handle *fwnode, क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत bool irq_करोमुख्य_check_msi_remap(व्योम)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_IRQ_DOMAIN */
 
-#endif /* _LINUX_IRQDOMAIN_H */
+#पूर्ण_अगर /* _LINUX_IRQDOMAIN_H */

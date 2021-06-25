@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/arm/probes/decode-thumb.c
  *
  * Copyright (C) 2011 Jon Medhurst <tixy@yxit.co.uk>.
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "decode.h"
-#include "decode-thumb.h"
+#समावेश "decode.h"
+#समावेश "decode-thumb.h"
 
 
-static const union decode_item t32_table_1110_100x_x0xx[] = {
-	/* Load/store multiple instructions */
+अटल स्थिर जोड़ decode_item t32_table_1110_100x_x0xx[] = अणु
+	/* Load/store multiple inकाष्ठाions */
 
 	/* Rn is PC		1110 100x x0xx 1111 xxxx xxxx xxxx xxxx */
 	DECODE_REJECT	(0xfe4f0000, 0xe80f0000),
@@ -26,11 +27,11 @@ static const union decode_item t32_table_1110_100x_x0xx[] = {
 	/* RFE			1110 1001 10x1 xxxx xxxx xxxx xxxx xxxx */
 	DECODE_REJECT	(0xffc00000, 0xe9800000),
 
-	/* STM Rn, {...pc}	1110 100x x0x0 xxxx 1xxx xxxx xxxx xxxx */
+	/* STM Rn, अणु...pcपूर्ण	1110 100x x0x0 xxxx 1xxx xxxx xxxx xxxx */
 	DECODE_REJECT	(0xfe508000, 0xe8008000),
-	/* LDM Rn, {...lr,pc}	1110 100x x0x1 xxxx 11xx xxxx xxxx xxxx */
+	/* LDM Rn, अणु...lr,pcपूर्ण	1110 100x x0x1 xxxx 11xx xxxx xxxx xxxx */
 	DECODE_REJECT	(0xfe50c000, 0xe810c000),
-	/* LDM/STM Rn, {...sp}	1110 100x x0xx xxxx xx1x xxxx xxxx xxxx */
+	/* LDM/STM Rn, अणु...spपूर्ण	1110 100x x0xx xxxx xx1x xxxx xxxx xxxx */
 	DECODE_REJECT	(0xfe402000, 0xe8002000),
 
 	/* STMIA		1110 1000 10x0 xxxx xxxx xxxx xxxx xxxx */
@@ -40,9 +41,9 @@ static const union decode_item t32_table_1110_100x_x0xx[] = {
 	DECODE_CUSTOM	(0xfe400000, 0xe8000000, PROBES_T32_LDMSTM),
 
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1110_100x_x1xx[] = {
+अटल स्थिर जोड़ decode_item t32_table_1110_100x_x1xx[] = अणु
 	/* Load/store dual, load/store exclusive, table branch */
 
 	/* STRD (immediate)	1110 1000 x110 xxxx xxxx xxxx xxxx xxxx */
@@ -66,12 +67,12 @@ static const union decode_item t32_table_1110_100x_x1xx[] = {
 	/* LDREXB		1110 1000 1101 xxxx xxxx xxxx 0100 xxxx */
 	/* LDREXH		1110 1000 1101 xxxx xxxx xxxx 0101 xxxx */
 	/* LDREXD		1110 1000 1101 xxxx xxxx xxxx 0111 xxxx */
-	/* And unallocated instructions...				*/
+	/* And unallocated inकाष्ठाions...				*/
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1110_101x[] = {
-	/* Data-processing (shifted register)				*/
+अटल स्थिर जोड़ decode_item t32_table_1110_101x[] = अणु
+	/* Data-processing (shअगरted रेजिस्टर)				*/
 
 	/* TST			1110 1010 0001 xxxx xxxx 1111 xxxx xxxx */
 	/* TEQ			1110 1010 1001 xxxx xxxx 1111 xxxx xxxx */
@@ -104,11 +105,11 @@ static const union decode_item t32_table_1110_101x[] = {
 	DECODE_EMULATEX	(0xff4f7f30, 0xeb0d0d00, PROBES_T32_ADDSUB,
 						 REGS(SP, 0, SP, 0, NOSPPC)),
 
-	/* ADD/SUB SP, SP, Rm, shift					*/
+	/* ADD/SUB SP, SP, Rm, shअगरt					*/
 	/*			1110 1011 x0xx 1101 xxxx 1101 xxxx xxxx */
 	DECODE_REJECT	(0xff4f0f00, 0xeb0d0d00),
 
-	/* ADD/SUB Rd, SP, Rm, shift					*/
+	/* ADD/SUB Rd, SP, Rm, shअगरt					*/
 	/*			1110 1011 x0xx 1101 xxxx xxxx xxxx xxxx */
 	DECODE_EMULATEX	(0xff4f0000, 0xeb0d0000, PROBES_T32_ADDSUB,
 						 REGS(SP, 0, NOPC, 0, NOSPPC)),
@@ -128,10 +129,10 @@ static const union decode_item t32_table_1110_101x[] = {
 						 REGS(NOSPPC, 0, NOSPPC, 0, NOSPPC)),
 
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1111_0x0x___0[] = {
-	/* Data-processing (modified immediate)				*/
+अटल स्थिर जोड़ decode_item t32_table_1111_0x0x___0[] = अणु
+	/* Data-processing (modअगरied immediate)				*/
 
 	/* TST			1111 0x00 0001 xxxx 0xxx 1111 xxxx xxxx */
 	/* TEQ			1111 0x00 1001 xxxx 0xxx 1111 xxxx xxxx */
@@ -180,9 +181,9 @@ static const union decode_item t32_table_1111_0x0x___0[] = {
 						 REGS(NOSPPC, 0, NOSPPC, 0, 0)),
 
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1111_0x1x___0[] = {
+अटल स्थिर जोड़ decode_item t32_table_1111_0x1x___0[] = अणु
 	/* Data-processing (plain binary immediate)			*/
 
 	/* ADDW Rd, PC, #imm	1111 0x10 0000 1111 0xxx xxxx xxxx xxxx */
@@ -229,9 +230,9 @@ static const union decode_item t32_table_1111_0x1x___0[] = {
 						 REGS(NOSPPCX, 0, NOSPPC, 0, 0)),
 
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1111_0xxx___1[] = {
+अटल स्थिर जोड़ decode_item t32_table_1111_0xxx___1[] = अणु
 	/* Branches and miscellaneous control				*/
 
 	/* YIELD		1111 0011 1010 xxxx 10x0 x000 0000 0001 */
@@ -248,12 +249,12 @@ static const union decode_item t32_table_1111_0xxx___1[] = {
 						 REGS(0, 0, NOSPPC, 0, 0)),
 
 	/*
-	 * Unsupported instructions
+	 * Unsupported inकाष्ठाions
 	 *			1111 0x11 1xxx xxxx 10x0 xxxx xxxx xxxx
 	 *
 	 * MSR			1111 0011 100x xxxx 10x0 xxxx xxxx xxxx
-	 * DBG hint		1111 0011 1010 xxxx 10x0 x000 1111 xxxx
-	 * Unallocated hints	1111 0011 1010 xxxx 10x0 x000 xxxx xxxx
+	 * DBG hपूर्णांक		1111 0011 1010 xxxx 10x0 x000 1111 xxxx
+	 * Unallocated hपूर्णांकs	1111 0011 1010 xxxx 10x0 x000 xxxx xxxx
 	 * CPS			1111 0011 1010 xxxx 10x0 xxxx xxxx xxxx
 	 * CLREX/DSB/DMB/ISB	1111 0011 1011 xxxx 10x0 xxxx xxxx xxxx
 	 * BXJ			1111 0011 1100 xxxx 10x0 xxxx xxxx xxxx
@@ -275,18 +276,18 @@ static const union decode_item t32_table_1111_0xxx___1[] = {
 	DECODE_SIMULATE	(0xf8009000, 0xf0009000, PROBES_T32_BRANCH),
 
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1111_100x_x0x1__1111[] = {
-	/* Memory hints							*/
+अटल स्थिर जोड़ decode_item t32_table_1111_100x_x0x1__1111[] = अणु
+	/* Memory hपूर्णांकs							*/
 
 	/* PLD (literal)	1111 1000 x001 1111 1111 xxxx xxxx xxxx */
 	/* PLI (literal)	1111 1001 x001 1111 1111 xxxx xxxx xxxx */
 	DECODE_SIMULATE	(0xfe7ff000, 0xf81ff000, PROBES_T32_PLDI),
 
-	/* PLD{W} (immediate)	1111 1000 10x1 xxxx 1111 xxxx xxxx xxxx */
+	/* PLDअणुWपूर्ण (immediate)	1111 1000 10x1 xxxx 1111 xxxx xxxx xxxx */
 	DECODE_OR	(0xffd0f000, 0xf890f000),
-	/* PLD{W} (immediate)	1111 1000 00x1 xxxx 1111 1100 xxxx xxxx */
+	/* PLDअणुWपूर्ण (immediate)	1111 1000 00x1 xxxx 1111 1100 xxxx xxxx */
 	DECODE_OR	(0xffd0ff00, 0xf810fc00),
 	/* PLI (immediate)	1111 1001 1001 xxxx 1111 xxxx xxxx xxxx */
 	DECODE_OR	(0xfff0f000, 0xf990f000),
@@ -294,17 +295,17 @@ static const union decode_item t32_table_1111_100x_x0x1__1111[] = {
 	DECODE_SIMULATEX(0xfff0ff00, 0xf910fc00, PROBES_T32_PLDI,
 						 REGS(NOPCX, 0, 0, 0, 0)),
 
-	/* PLD{W} (register)	1111 1000 00x1 xxxx 1111 0000 00xx xxxx */
+	/* PLDअणुWपूर्ण (रेजिस्टर)	1111 1000 00x1 xxxx 1111 0000 00xx xxxx */
 	DECODE_OR	(0xffd0ffc0, 0xf810f000),
-	/* PLI (register)	1111 1001 0001 xxxx 1111 0000 00xx xxxx */
+	/* PLI (रेजिस्टर)	1111 1001 0001 xxxx 1111 0000 00xx xxxx */
 	DECODE_SIMULATEX(0xfff0ffc0, 0xf910f000, PROBES_T32_PLDI,
 						 REGS(NOPCX, 0, 0, 0, NOSPPC)),
 
-	/* Other unallocated instructions...				*/
+	/* Other unallocated inकाष्ठाions...				*/
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1111_100x[] = {
+अटल स्थिर जोड़ decode_item t32_table_1111_100x[] = अणु
 	/* Store/Load single data item					*/
 
 	/* ???			1111 100x x11x xxxx xxxx xxxx xxxx xxxx */
@@ -326,10 +327,10 @@ static const union decode_item t32_table_1111_100x[] = {
 	/* LDRT			1111 1000 0101 xxxx xxxx 1110 xxxx xxxx */
 	DECODE_REJECT	(0xfe800f00, 0xf8000e00),
 
-	/* STR{,B,H} Rn,[PC...]	1111 1000 xxx0 1111 xxxx xxxx xxxx xxxx */
+	/* STRअणु,B,Hपूर्ण Rn,[PC...]	1111 1000 xxx0 1111 xxxx xxxx xxxx xxxx */
 	DECODE_REJECT	(0xff1f0000, 0xf80f0000),
 
-	/* STR{,B,H} PC,[Rn...]	1111 1000 xxx0 xxxx 1111 xxxx xxxx xxxx */
+	/* STRअणु,B,Hपूर्ण PC,[Rn...]	1111 1000 xxx0 xxxx 1111 xxxx xxxx xxxx */
 	DECODE_REJECT	(0xff10f000, 0xf800f000),
 
 	/* LDR (literal)	1111 1000 x101 1111 xxxx xxxx xxxx xxxx */
@@ -344,8 +345,8 @@ static const union decode_item t32_table_1111_100x[] = {
 	DECODE_EMULATEX	(0xffe00000, 0xf8c00000, PROBES_T32_LDRSTR,
 						 REGS(NOPCX, ANY, 0, 0, 0)),
 
-	/* STR (register)	1111 1000 0100 xxxx xxxx 0000 00xx xxxx */
-	/* LDR (register)	1111 1000 0101 xxxx xxxx 0000 00xx xxxx */
+	/* STR (रेजिस्टर)	1111 1000 0100 xxxx xxxx 0000 00xx xxxx */
+	/* LDR (रेजिस्टर)	1111 1000 0101 xxxx xxxx 0000 00xx xxxx */
 	DECODE_EMULATEX	(0xffe00fc0, 0xf8400000, PROBES_T32_LDRSTR,
 						 REGS(NOPCX, ANY, 0, 0, NOSPPC)),
 
@@ -372,21 +373,21 @@ static const union decode_item t32_table_1111_100x[] = {
 	DECODE_EMULATEX	(0xfec00000, 0xf8800000, PROBES_T32_LDRSTR,
 						 REGS(NOPCX, NOSPPCX, 0, 0, 0)),
 
-	/* STRB (register)	1111 1000 0000 xxxx xxxx 0000 00xx xxxx */
-	/* STRH (register)	1111 1000 0010 xxxx xxxx 0000 00xx xxxx */
-	/* LDRB (register)	1111 1000 0001 xxxx xxxx 0000 00xx xxxx */
-	/* LDRSB (register)	1111 1001 0001 xxxx xxxx 0000 00xx xxxx */
-	/* LDRH (register)	1111 1000 0011 xxxx xxxx 0000 00xx xxxx */
-	/* LDRSH (register)	1111 1001 0011 xxxx xxxx 0000 00xx xxxx */
+	/* STRB (रेजिस्टर)	1111 1000 0000 xxxx xxxx 0000 00xx xxxx */
+	/* STRH (रेजिस्टर)	1111 1000 0010 xxxx xxxx 0000 00xx xxxx */
+	/* LDRB (रेजिस्टर)	1111 1000 0001 xxxx xxxx 0000 00xx xxxx */
+	/* LDRSB (रेजिस्टर)	1111 1001 0001 xxxx xxxx 0000 00xx xxxx */
+	/* LDRH (रेजिस्टर)	1111 1000 0011 xxxx xxxx 0000 00xx xxxx */
+	/* LDRSH (रेजिस्टर)	1111 1001 0011 xxxx xxxx 0000 00xx xxxx */
 	DECODE_EMULATEX	(0xfe800fc0, 0xf8000000, PROBES_T32_LDRSTR,
 						 REGS(NOPCX, NOSPPCX, 0, 0, NOSPPC)),
 
-	/* Other unallocated instructions...				*/
+	/* Other unallocated inकाष्ठाions...				*/
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1111_1010___1111[] = {
-	/* Data-processing (register)					*/
+अटल स्थिर जोड़ decode_item t32_table_1111_1010___1111[] = अणु
+	/* Data-processing (रेजिस्टर)					*/
 
 	/* ???			1111 1010 011x xxxx 1111 xxxx 1xxx xxxx */
 	DECODE_REJECT	(0xffe0f080, 0xfa60f080),
@@ -483,12 +484,12 @@ static const union decode_item t32_table_1111_1010___1111[] = {
 	DECODE_EMULATEX	(0xfff0f0c0, 0xfa90f080, PROBES_T32_REVERSE,
 						 REGS(NOSPPC, 0, NOSPPC, 0, SAMEAS16)),
 
-	/* Other unallocated instructions...				*/
+	/* Other unallocated inकाष्ठाions...				*/
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1111_1011_0[] = {
-	/* Multiply, multiply accumulate, and absolute difference	*/
+अटल स्थिर जोड़ decode_item t32_table_1111_1011_0[] = अणु
+	/* Multiply, multiply accumulate, and असलolute dअगरference	*/
 
 	/* ???			1111 1011 0000 xxxx 1111 xxxx 0001 xxxx */
 	DECODE_REJECT	(0xfff0f0f0, 0xfb00f010),
@@ -498,10 +499,10 @@ static const union decode_item t32_table_1111_1011_0[] = {
 	/* SMULxy		1111 1011 0001 xxxx 1111 xxxx 00xx xxxx */
 	DECODE_OR	(0xfff0f0c0, 0xfb10f000),
 	/* MUL			1111 1011 0000 xxxx 1111 xxxx 0000 xxxx */
-	/* SMUAD{X}		1111 1011 0010 xxxx 1111 xxxx 000x xxxx */
+	/* SMUADअणुXपूर्ण		1111 1011 0010 xxxx 1111 xxxx 000x xxxx */
 	/* SMULWy		1111 1011 0011 xxxx 1111 xxxx 000x xxxx */
-	/* SMUSD{X}		1111 1011 0100 xxxx 1111 xxxx 000x xxxx */
-	/* SMMUL{R}		1111 1011 0101 xxxx 1111 xxxx 000x xxxx */
+	/* SMUSDअणुXपूर्ण		1111 1011 0100 xxxx 1111 xxxx 000x xxxx */
+	/* SMMULअणुRपूर्ण		1111 1011 0101 xxxx 1111 xxxx 000x xxxx */
 	/* USAD8		1111 1011 0111 xxxx 1111 xxxx 0000 xxxx */
 	DECODE_EMULATEX	(0xff80f0e0, 0xfb00f000, PROBES_T32_MUL_ADD,
 						 REGS(NOSPPC, 0, NOSPPC, 0, NOSPPC)),
@@ -513,28 +514,28 @@ static const union decode_item t32_table_1111_1011_0[] = {
 	DECODE_OR	(0xfff000c0, 0xfb100000),
 	/* MLA			1111 1011 0000 xxxx xxxx xxxx 0000 xxxx */
 	/* MLS			1111 1011 0000 xxxx xxxx xxxx 0001 xxxx */
-	/* SMLAD{X}		1111 1011 0010 xxxx xxxx xxxx 000x xxxx */
+	/* SMLADअणुXपूर्ण		1111 1011 0010 xxxx xxxx xxxx 000x xxxx */
 	/* SMLAWy		1111 1011 0011 xxxx xxxx xxxx 000x xxxx */
-	/* SMLSD{X}		1111 1011 0100 xxxx xxxx xxxx 000x xxxx */
-	/* SMMLA{R}		1111 1011 0101 xxxx xxxx xxxx 000x xxxx */
-	/* SMMLS{R}		1111 1011 0110 xxxx xxxx xxxx 000x xxxx */
+	/* SMLSDअणुXपूर्ण		1111 1011 0100 xxxx xxxx xxxx 000x xxxx */
+	/* SMMLAअणुRपूर्ण		1111 1011 0101 xxxx xxxx xxxx 000x xxxx */
+	/* SMMLSअणुRपूर्ण		1111 1011 0110 xxxx xxxx xxxx 000x xxxx */
 	/* USADA8		1111 1011 0111 xxxx xxxx xxxx 0000 xxxx */
 	DECODE_EMULATEX	(0xff8000c0, 0xfb000000,  PROBES_T32_MUL_ADD2,
 						 REGS(NOSPPC, NOSPPCX, NOSPPC, 0, NOSPPC)),
 
-	/* Other unallocated instructions...				*/
+	/* Other unallocated inकाष्ठाions...				*/
 	DECODE_END
-};
+पूर्ण;
 
-static const union decode_item t32_table_1111_1011_1[] = {
-	/* Long multiply, long multiply accumulate, and divide		*/
+अटल स्थिर जोड़ decode_item t32_table_1111_1011_1[] = अणु
+	/* Long multiply, दीर्घ multiply accumulate, and भागide		*/
 
 	/* UMAAL		1111 1011 1110 xxxx xxxx xxxx 0110 xxxx */
 	DECODE_OR	(0xfff000f0, 0xfbe00060),
 	/* SMLALxy		1111 1011 1100 xxxx xxxx xxxx 10xx xxxx */
 	DECODE_OR	(0xfff000c0, 0xfbc00080),
-	/* SMLALD{X}		1111 1011 1100 xxxx xxxx xxxx 110x xxxx */
-	/* SMLSLD{X}		1111 1011 1101 xxxx xxxx xxxx 110x xxxx */
+	/* SMLALDअणुXपूर्ण		1111 1011 1100 xxxx xxxx xxxx 110x xxxx */
+	/* SMLSLDअणुXपूर्ण		1111 1011 1101 xxxx xxxx xxxx 110x xxxx */
 	DECODE_OR	(0xffe000e0, 0xfbc000c0),
 	/* SMULL		1111 1011 1000 xxxx xxxx xxxx 0000 xxxx */
 	/* UMULL		1111 1011 1010 xxxx xxxx xxxx 0000 xxxx */
@@ -545,14 +546,14 @@ static const union decode_item t32_table_1111_1011_1[] = {
 
 	/* SDIV			1111 1011 1001 xxxx xxxx xxxx 1111 xxxx */
 	/* UDIV			1111 1011 1011 xxxx xxxx xxxx 1111 xxxx */
-	/* Other unallocated instructions...				*/
+	/* Other unallocated inकाष्ठाions...				*/
 	DECODE_END
-};
+पूर्ण;
 
-const union decode_item probes_decode_thumb32_table[] = {
+स्थिर जोड़ decode_item probes_decode_thumb32_table[] = अणु
 
 	/*
-	 * Load/store multiple instructions
+	 * Load/store multiple inकाष्ठाions
 	 *			1110 100x x0xx xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0xfe400000, 0xe8000000, t32_table_1110_100x_x0xx),
@@ -564,19 +565,19 @@ const union decode_item probes_decode_thumb32_table[] = {
 	DECODE_TABLE	(0xfe400000, 0xe8400000, t32_table_1110_100x_x1xx),
 
 	/*
-	 * Data-processing (shifted register)
+	 * Data-processing (shअगरted रेजिस्टर)
 	 *			1110 101x xxxx xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0xfe000000, 0xea000000, t32_table_1110_101x),
 
 	/*
-	 * Coprocessor instructions
+	 * Coprocessor inकाष्ठाions
 	 *			1110 11xx xxxx xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_REJECT	(0xfc000000, 0xec000000),
 
 	/*
-	 * Data-processing (modified immediate)
+	 * Data-processing (modअगरied immediate)
 	 *			1111 0x0x xxxx xxxx 0xxx xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0xfa008000, 0xf0000000, t32_table_1111_0x0x___0),
@@ -594,13 +595,13 @@ const union decode_item probes_decode_thumb32_table[] = {
 	DECODE_TABLE	(0xf8008000, 0xf0008000, t32_table_1111_0xxx___1),
 
 	/*
-	 * Advanced SIMD element or structure load/store instructions
+	 * Advanced SIMD element or काष्ठाure load/store inकाष्ठाions
 	 *			1111 1001 xxx0 xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_REJECT	(0xff100000, 0xf9000000),
 
 	/*
-	 * Memory hints
+	 * Memory hपूर्णांकs
 	 *			1111 100x x0x1 xxxx 1111 xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0xfe50f000, 0xf810f000, t32_table_1111_100x_x0x1__1111),
@@ -614,35 +615,35 @@ const union decode_item probes_decode_thumb32_table[] = {
 	DECODE_TABLE	(0xfe000000, 0xf8000000, t32_table_1111_100x),
 
 	/*
-	 * Data-processing (register)
+	 * Data-processing (रेजिस्टर)
 	 *			1111 1010 xxxx xxxx 1111 xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0xff00f000, 0xfa00f000, t32_table_1111_1010___1111),
 
 	/*
-	 * Multiply, multiply accumulate, and absolute difference
+	 * Multiply, multiply accumulate, and असलolute dअगरference
 	 *			1111 1011 0xxx xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0xff800000, 0xfb000000, t32_table_1111_1011_0),
 
 	/*
-	 * Long multiply, long multiply accumulate, and divide
+	 * Long multiply, दीर्घ multiply accumulate, and भागide
 	 *			1111 1011 1xxx xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0xff800000, 0xfb800000, t32_table_1111_1011_1),
 
 	/*
-	 * Coprocessor instructions
+	 * Coprocessor inकाष्ठाions
 	 *			1111 11xx xxxx xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_END
-};
-#ifdef CONFIG_ARM_KPROBES_TEST_MODULE
+पूर्ण;
+#अगर_घोषित CONFIG_ARM_KPROBES_TEST_MODULE
 EXPORT_SYMBOL_GPL(probes_decode_thumb32_table);
-#endif
+#पूर्ण_अगर
 
-static const union decode_item t16_table_1011[] = {
-	/* Miscellaneous 16-bit instructions		    */
+अटल स्थिर जोड़ decode_item t16_table_1011[] = अणु
+	/* Miscellaneous 16-bit inकाष्ठाions		    */
 
 	/* ADD (SP plus immediate)	1011 0000 0xxx xxxx */
 	/* SUB (SP minus immediate)	1011 0000 1xxx xxxx */
@@ -669,7 +670,7 @@ static const union decode_item t16_table_1011[] = {
 	DECODE_CUSTOM	(0xfe00, 0xbc00, PROBES_T16_POP),
 
 	/*
-	 * If-Then, and hints
+	 * If-Then, and hपूर्णांकs
 	 *				1011 1111 xxxx xxxx
 	 */
 
@@ -681,7 +682,7 @@ static const union decode_item t16_table_1011[] = {
 	/* WFE				1011 1111 0010 0000 */
 	/* WFI				1011 1111 0011 0000 */
 	DECODE_SIMULATE	(0xffcf, 0xbf00, PROBES_T16_WFE),
-	/* Unassigned hints		1011 1111 xxxx 0000 */
+	/* Unasचिन्हित hपूर्णांकs		1011 1111 xxxx 0000 */
 	DECODE_REJECT	(0xff0f, 0xbf00),
 	/* IT				1011 1111 xxxx xxxx */
 	DECODE_CUSTOM	(0xff00, 0xbf00, PROBES_T16_IT),
@@ -689,22 +690,22 @@ static const union decode_item t16_table_1011[] = {
 	/* SETEND			1011 0110 010x xxxx */
 	/* CPS				1011 0110 011x xxxx */
 	/* BKPT				1011 1110 xxxx xxxx */
-	/* And unallocated instructions...		    */
+	/* And unallocated inकाष्ठाions...		    */
 	DECODE_END
-};
+पूर्ण;
 
-const union decode_item probes_decode_thumb16_table[] = {
+स्थिर जोड़ decode_item probes_decode_thumb16_table[] = अणु
 
 	/*
-	 * Shift (immediate), add, subtract, move, and compare
+	 * Shअगरt (immediate), add, subtract, move, and compare
 	 *				00xx xxxx xxxx xxxx
 	 */
 
 	/* CMP (immediate)		0010 1xxx xxxx xxxx */
 	DECODE_EMULATE	(0xf800, 0x2800, PROBES_T16_CMP),
 
-	/* ADD (register)		0001 100x xxxx xxxx */
-	/* SUB (register)		0001 101x xxxx xxxx */
+	/* ADD (रेजिस्टर)		0001 100x xxxx xxxx */
+	/* SUB (रेजिस्टर)		0001 101x xxxx xxxx */
 	/* LSL (immediate)		0000 0xxx xxxx xxxx */
 	/* LSR (immediate)		0000 1xxx xxxx xxxx */
 	/* ASR (immediate)		0001 0xxx xxxx xxxx */
@@ -716,48 +717,48 @@ const union decode_item probes_decode_thumb16_table[] = {
 	DECODE_EMULATE	(0xc000, 0x0000, PROBES_T16_ADDSUB),
 
 	/*
-	 * 16-bit Thumb data-processing instructions
+	 * 16-bit Thumb data-processing inकाष्ठाions
 	 *				0100 00xx xxxx xxxx
 	 */
 
-	/* TST (register)		0100 0010 00xx xxxx */
+	/* TST (रेजिस्टर)		0100 0010 00xx xxxx */
 	DECODE_EMULATE	(0xffc0, 0x4200, PROBES_T16_CMP),
-	/* CMP (register)		0100 0010 10xx xxxx */
-	/* CMN (register)		0100 0010 11xx xxxx */
+	/* CMP (रेजिस्टर)		0100 0010 10xx xxxx */
+	/* CMN (रेजिस्टर)		0100 0010 11xx xxxx */
 	DECODE_EMULATE	(0xff80, 0x4280, PROBES_T16_CMP),
-	/* AND (register)		0100 0000 00xx xxxx */
-	/* EOR (register)		0100 0000 01xx xxxx */
-	/* LSL (register)		0100 0000 10xx xxxx */
-	/* LSR (register)		0100 0000 11xx xxxx */
-	/* ASR (register)		0100 0001 00xx xxxx */
-	/* ADC (register)		0100 0001 01xx xxxx */
-	/* SBC (register)		0100 0001 10xx xxxx */
-	/* ROR (register)		0100 0001 11xx xxxx */
+	/* AND (रेजिस्टर)		0100 0000 00xx xxxx */
+	/* EOR (रेजिस्टर)		0100 0000 01xx xxxx */
+	/* LSL (रेजिस्टर)		0100 0000 10xx xxxx */
+	/* LSR (रेजिस्टर)		0100 0000 11xx xxxx */
+	/* ASR (रेजिस्टर)		0100 0001 00xx xxxx */
+	/* ADC (रेजिस्टर)		0100 0001 01xx xxxx */
+	/* SBC (रेजिस्टर)		0100 0001 10xx xxxx */
+	/* ROR (रेजिस्टर)		0100 0001 11xx xxxx */
 	/* RSB (immediate)		0100 0010 01xx xxxx */
-	/* ORR (register)		0100 0011 00xx xxxx */
+	/* ORR (रेजिस्टर)		0100 0011 00xx xxxx */
 	/* MUL				0100 0011 00xx xxxx */
-	/* BIC (register)		0100 0011 10xx xxxx */
-	/* MVN (register)		0100 0011 10xx xxxx */
+	/* BIC (रेजिस्टर)		0100 0011 10xx xxxx */
+	/* MVN (रेजिस्टर)		0100 0011 10xx xxxx */
 	DECODE_EMULATE	(0xfc00, 0x4000, PROBES_T16_LOGICAL),
 
 	/*
-	 * Special data instructions and branch and exchange
+	 * Special data inकाष्ठाions and branch and exchange
 	 *				0100 01xx xxxx xxxx
 	 */
 
 	/* BLX pc			0100 0111 1111 1xxx */
 	DECODE_REJECT	(0xfff8, 0x47f8),
 
-	/* BX (register)		0100 0111 0xxx xxxx */
-	/* BLX (register)		0100 0111 1xxx xxxx */
+	/* BX (रेजिस्टर)		0100 0111 0xxx xxxx */
+	/* BLX (रेजिस्टर)		0100 0111 1xxx xxxx */
 	DECODE_SIMULATE (0xff00, 0x4700, PROBES_T16_BLX),
 
 	/* ADD pc, pc			0100 0100 1111 1111 */
 	DECODE_REJECT	(0xffff, 0x44ff),
 
-	/* ADD (register)		0100 0100 xxxx xxxx */
-	/* CMP (register)		0100 0101 xxxx xxxx */
-	/* MOV (register)		0100 0110 xxxx xxxx */
+	/* ADD (रेजिस्टर)		0100 0100 xxxx xxxx */
+	/* CMP (रेजिस्टर)		0100 0101 xxxx xxxx */
+	/* MOV (रेजिस्टर)		0100 0110 xxxx xxxx */
 	DECODE_CUSTOM	(0xfc00, 0x4400, PROBES_T16_HIREGOPS),
 
 	/*
@@ -767,20 +768,20 @@ const union decode_item probes_decode_thumb16_table[] = {
 	DECODE_SIMULATE	(0xf800, 0x4800, PROBES_T16_LDR_LIT),
 
 	/*
-	 * 16-bit Thumb Load/store instructions
+	 * 16-bit Thumb Load/store inकाष्ठाions
 	 *				0101 xxxx xxxx xxxx
 	 *				011x xxxx xxxx xxxx
 	 *				100x xxxx xxxx xxxx
 	 */
 
-	/* STR (register)		0101 000x xxxx xxxx */
-	/* STRH (register)		0101 001x xxxx xxxx */
-	/* STRB (register)		0101 010x xxxx xxxx */
-	/* LDRSB (register)		0101 011x xxxx xxxx */
-	/* LDR (register)		0101 100x xxxx xxxx */
-	/* LDRH (register)		0101 101x xxxx xxxx */
-	/* LDRB (register)		0101 110x xxxx xxxx */
-	/* LDRSH (register)		0101 111x xxxx xxxx */
+	/* STR (रेजिस्टर)		0101 000x xxxx xxxx */
+	/* STRH (रेजिस्टर)		0101 001x xxxx xxxx */
+	/* STRB (रेजिस्टर)		0101 010x xxxx xxxx */
+	/* LDRSB (रेजिस्टर)		0101 011x xxxx xxxx */
+	/* LDR (रेजिस्टर)		0101 100x xxxx xxxx */
+	/* LDRH (रेजिस्टर)		0101 101x xxxx xxxx */
+	/* LDRB (रेजिस्टर)		0101 110x xxxx xxxx */
+	/* LDRSH (रेजिस्टर)		0101 111x xxxx xxxx */
 	/* STR (immediate, Thumb)	0110 0xxx xxxx xxxx */
 	/* LDR (immediate, Thumb)	0110 1xxx xxxx xxxx */
 	/* STRB (immediate, Thumb)	0111 0xxx xxxx xxxx */
@@ -801,7 +802,7 @@ const union decode_item probes_decode_thumb16_table[] = {
 	DECODE_SIMULATE	(0xf000, 0xa000, PROBES_T16_ADR),
 
 	/*
-	 * Miscellaneous 16-bit instructions
+	 * Miscellaneous 16-bit inकाष्ठाions
 	 *				1011 xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0xf000, 0xb000, t16_table_1011),
@@ -828,54 +829,54 @@ const union decode_item probes_decode_thumb16_table[] = {
 	DECODE_SIMULATE	(0xf800, 0xe000, PROBES_T16_BRANCH),
 
 	DECODE_END
-};
-#ifdef CONFIG_ARM_KPROBES_TEST_MODULE
+पूर्ण;
+#अगर_घोषित CONFIG_ARM_KPROBES_TEST_MODULE
 EXPORT_SYMBOL_GPL(probes_decode_thumb16_table);
-#endif
+#पूर्ण_अगर
 
-static unsigned long __kprobes thumb_check_cc(unsigned long cpsr)
-{
-	if (unlikely(in_it_block(cpsr)))
-		return probes_condition_checks[current_cond(cpsr)](cpsr);
-	return true;
-}
+अटल अचिन्हित दीर्घ __kprobes thumb_check_cc(अचिन्हित दीर्घ cpsr)
+अणु
+	अगर (unlikely(in_it_block(cpsr)))
+		वापस probes_condition_checks[current_cond(cpsr)](cpsr);
+	वापस true;
+पूर्ण
 
-static void __kprobes thumb16_singlestep(probes_opcode_t opcode,
-		struct arch_probes_insn *asi,
-		struct pt_regs *regs)
-{
+अटल व्योम __kprobes thumb16_singlestep(probes_opcode_t opcode,
+		काष्ठा arch_probes_insn *asi,
+		काष्ठा pt_regs *regs)
+अणु
 	regs->ARM_pc += 2;
 	asi->insn_handler(opcode, asi, regs);
 	regs->ARM_cpsr = it_advance(regs->ARM_cpsr);
-}
+पूर्ण
 
-static void __kprobes thumb32_singlestep(probes_opcode_t opcode,
-		struct arch_probes_insn *asi,
-		struct pt_regs *regs)
-{
+अटल व्योम __kprobes thumb32_singlestep(probes_opcode_t opcode,
+		काष्ठा arch_probes_insn *asi,
+		काष्ठा pt_regs *regs)
+अणु
 	regs->ARM_pc += 4;
 	asi->insn_handler(opcode, asi, regs);
 	regs->ARM_cpsr = it_advance(regs->ARM_cpsr);
-}
+पूर्ण
 
-enum probes_insn __kprobes
-thumb16_probes_decode_insn(probes_opcode_t insn, struct arch_probes_insn *asi,
-			   bool emulate, const union decode_action *actions,
-			   const struct decode_checker *checkers[])
-{
+क्रमागत probes_insn __kprobes
+thumb16_probes_decode_insn(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+			   bool emulate, स्थिर जोड़ decode_action *actions,
+			   स्थिर काष्ठा decode_checker *checkers[])
+अणु
 	asi->insn_singlestep = thumb16_singlestep;
 	asi->insn_check_cc = thumb_check_cc;
-	return probes_decode_insn(insn, asi, probes_decode_thumb16_table, true,
+	वापस probes_decode_insn(insn, asi, probes_decode_thumb16_table, true,
 				  emulate, actions, checkers);
-}
+पूर्ण
 
-enum probes_insn __kprobes
-thumb32_probes_decode_insn(probes_opcode_t insn, struct arch_probes_insn *asi,
-			   bool emulate, const union decode_action *actions,
-			   const struct decode_checker *checkers[])
-{
+क्रमागत probes_insn __kprobes
+thumb32_probes_decode_insn(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+			   bool emulate, स्थिर जोड़ decode_action *actions,
+			   स्थिर काष्ठा decode_checker *checkers[])
+अणु
 	asi->insn_singlestep = thumb32_singlestep;
 	asi->insn_check_cc = thumb_check_cc;
-	return probes_decode_insn(insn, asi, probes_decode_thumb32_table, true,
+	वापस probes_decode_insn(insn, asi, probes_decode_thumb32_table, true,
 				  emulate, actions, checkers);
-}
+पूर्ण

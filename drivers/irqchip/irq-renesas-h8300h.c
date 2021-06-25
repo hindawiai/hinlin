@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * H8/300H interrupt controller driver
+ * H8/300H पूर्णांकerrupt controller driver
  *
- * Copyright 2015 Yoshinori Sato <ysato@users.sourceforge.jp>
+ * Copyright 2015 Yoshinori Sato <ysato@users.sourceक्रमge.jp>
  */
 
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <asm/io.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <यंत्र/पन.स>
 
-static const char ipr_bit[] = {
+अटल स्थिर अक्षर ipr_bit[] = अणु
 	 7,  6,  5,  5,
 	 4,  4,  4,  4,  3,  3,  3,  3,
 	 2,  2,  2,  2,  1,  1,  1,  1,
@@ -20,75 +21,75 @@ static const char ipr_bit[] = {
 	14, 14, 14, 14, 13, 13, 13, 13,
 	-1, -1, -1, -1, 11, 11, 11, 11,
 	10, 10, 10, 10,  9,  9,  9,  9,
-};
+पूर्ण;
 
-static void __iomem *intc_baseaddr;
+अटल व्योम __iomem *पूर्णांकc_baseaddr;
 
-#define IPR (intc_baseaddr + 6)
+#घोषणा IPR (पूर्णांकc_baseaddr + 6)
 
-static void h8300h_disable_irq(struct irq_data *data)
-{
-	int bit;
-	int irq = data->irq - 12;
+अटल व्योम h8300h_disable_irq(काष्ठा irq_data *data)
+अणु
+	पूर्णांक bit;
+	पूर्णांक irq = data->irq - 12;
 
 	bit = ipr_bit[irq];
-	if (bit >= 0) {
-		if (bit < 8)
+	अगर (bit >= 0) अणु
+		अगर (bit < 8)
 			ctrl_bclr(bit & 7, IPR);
-		else
+		अन्यथा
 			ctrl_bclr(bit & 7, (IPR+1));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void h8300h_enable_irq(struct irq_data *data)
-{
-	int bit;
-	int irq = data->irq - 12;
+अटल व्योम h8300h_enable_irq(काष्ठा irq_data *data)
+अणु
+	पूर्णांक bit;
+	पूर्णांक irq = data->irq - 12;
 
 	bit = ipr_bit[irq];
-	if (bit >= 0) {
-		if (bit < 8)
+	अगर (bit >= 0) अणु
+		अगर (bit < 8)
 			ctrl_bset(bit & 7, IPR);
-		else
+		अन्यथा
 			ctrl_bset(bit & 7, (IPR+1));
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct irq_chip h8300h_irq_chip = {
+काष्ठा irq_chip h8300h_irq_chip = अणु
 	.name		= "H8/300H-INTC",
 	.irq_enable	= h8300h_enable_irq,
 	.irq_disable	= h8300h_disable_irq,
-};
+पूर्ण;
 
-static int irq_map(struct irq_domain *h, unsigned int virq,
+अटल पूर्णांक irq_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
 		   irq_hw_number_t hw_irq_num)
-{
+अणु
        irq_set_chip_and_handler(virq, &h8300h_irq_chip, handle_simple_irq);
 
-       return 0;
-}
+       वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops irq_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops irq_ops = अणु
        .map    = irq_map,
-       .xlate  = irq_domain_xlate_onecell,
-};
+       .xlate  = irq_करोमुख्य_xlate_onecell,
+पूर्ण;
 
-static int __init h8300h_intc_of_init(struct device_node *intc,
-				      struct device_node *parent)
-{
-	struct irq_domain *domain;
+अटल पूर्णांक __init h8300h_पूर्णांकc_of_init(काष्ठा device_node *पूर्णांकc,
+				      काष्ठा device_node *parent)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य;
 
-	intc_baseaddr = of_iomap(intc, 0);
-	BUG_ON(!intc_baseaddr);
+	पूर्णांकc_baseaddr = of_iomap(पूर्णांकc, 0);
+	BUG_ON(!पूर्णांकc_baseaddr);
 
-	/* All interrupt priority low */
-	writeb(0x00, IPR + 0);
-	writeb(0x00, IPR + 1);
+	/* All पूर्णांकerrupt priority low */
+	ग_लिखोb(0x00, IPR + 0);
+	ग_लिखोb(0x00, IPR + 1);
 
-	domain = irq_domain_add_linear(intc, NR_IRQS, &irq_ops, NULL);
-	BUG_ON(!domain);
-	irq_set_default_host(domain);
-	return 0;
-}
+	करोमुख्य = irq_करोमुख्य_add_linear(पूर्णांकc, NR_IRQS, &irq_ops, शून्य);
+	BUG_ON(!करोमुख्य);
+	irq_set_शेष_host(करोमुख्य);
+	वापस 0;
+पूर्ण
 
-IRQCHIP_DECLARE(h8300h_intc, "renesas,h8300h-intc", h8300h_intc_of_init);
+IRQCHIP_DECLARE(h8300h_पूर्णांकc, "renesas,h8300h-intc", h8300h_पूर्णांकc_of_init);

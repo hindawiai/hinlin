@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2016 Facebook
  */
-#include <linux/unistd.h>
-#include <linux/bpf.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/bpf.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
 
-#include <bpf/bpf.h>
+#समावेश <bpf/bpf.h>
 
-static void usage(void)
-{
-	printf("Usage: tc_l2_ipip_redirect [...]\n");
-	printf("       -U <file>   Update an already pinned BPF array\n");
-	printf("       -i <ifindex> Interface index\n");
-	printf("       -h          Display this help\n");
-}
+अटल व्योम usage(व्योम)
+अणु
+	म_लिखो("Usage: tc_l2_ipip_redirect [...]\n");
+	म_लिखो("       -U <file>   Update an already pinned BPF array\n");
+	म_लिखो("       -i <ifindex> Interface index\n");
+	म_लिखो("       -h          Display this help\n");
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	const char *pinned_file = NULL;
-	int ifindex = -1;
-	int array_key = 0;
-	int array_fd = -1;
-	int ret = -1;
-	int opt;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	स्थिर अक्षर *pinned_file = शून्य;
+	पूर्णांक अगरindex = -1;
+	पूर्णांक array_key = 0;
+	पूर्णांक array_fd = -1;
+	पूर्णांक ret = -1;
+	पूर्णांक opt;
 
-	while ((opt = getopt(argc, argv, "F:U:i:")) != -1) {
-		switch (opt) {
+	जबतक ((opt = getopt(argc, argv, "F:U:i:")) != -1) अणु
+		चयन (opt) अणु
 		/* General args */
-		case 'U':
+		हाल 'U':
 			pinned_file = optarg;
-			break;
-		case 'i':
-			ifindex = atoi(optarg);
-			break;
-		default:
+			अवरोध;
+		हाल 'i':
+			अगरindex = म_से_प(optarg);
+			अवरोध;
+		शेष:
 			usage();
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (ifindex < 0 || !pinned_file) {
+	अगर (अगरindex < 0 || !pinned_file) अणु
 		usage();
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	array_fd = bpf_obj_get(pinned_file);
-	if (array_fd < 0) {
-		fprintf(stderr, "bpf_obj_get(%s): %s(%d)\n",
-			pinned_file, strerror(errno), errno);
-		goto out;
-	}
+	अगर (array_fd < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "bpf_obj_get(%s): %s(%d)\n",
+			pinned_file, म_त्रुटि(त्रुटि_सं), त्रुटि_सं);
+		जाओ out;
+	पूर्ण
 
 	/* bpf_tunnel_key.remote_ipv4 expects host byte orders */
-	ret = bpf_map_update_elem(array_fd, &array_key, &ifindex, 0);
-	if (ret) {
-		perror("bpf_map_update_elem");
-		goto out;
-	}
+	ret = bpf_map_update_elem(array_fd, &array_key, &अगरindex, 0);
+	अगर (ret) अणु
+		लिखो_त्रुटि("bpf_map_update_elem");
+		जाओ out;
+	पूर्ण
 
 out:
-	if (array_fd != -1)
-		close(array_fd);
-	return ret;
-}
+	अगर (array_fd != -1)
+		बंद(array_fd);
+	वापस ret;
+पूर्ण

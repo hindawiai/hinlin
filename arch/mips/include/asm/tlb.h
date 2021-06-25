@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_TLB_H
-#define __ASM_TLB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_TLB_H
+#घोषणा __ASM_TLB_H
 
-#include <asm/cpu-features.h>
-#include <asm/mipsregs.h>
+#समावेश <यंत्र/cpu-features.h>
+#समावेश <यंत्र/mipsregs.h>
 
-#define _UNIQUE_ENTRYHI(base, idx)					\
+#घोषणा _UNIQUE_ENTRYHI(base, idx)					\
 		(((base) + ((idx) << (PAGE_SHIFT + 1))) |		\
 		 (cpu_has_tlbinv ? MIPS_ENTRYHI_EHINV : 0))
-#define UNIQUE_ENTRYHI(idx)		_UNIQUE_ENTRYHI(CKSEG0, idx)
-#define UNIQUE_GUEST_ENTRYHI(idx)	_UNIQUE_ENTRYHI(CKSEG1, idx)
+#घोषणा UNIQUE_ENTRYHI(idx)		_UNIQUE_ENTRYHI(CKSEG0, idx)
+#घोषणा UNIQUE_GUEST_ENTRYHI(idx)	_UNIQUE_ENTRYHI(CKSEG1, idx)
 
-static inline unsigned int num_wired_entries(void)
-{
-	unsigned int wired = read_c0_wired();
+अटल अंतरभूत अचिन्हित पूर्णांक num_wired_entries(व्योम)
+अणु
+	अचिन्हित पूर्णांक wired = पढ़ो_c0_wired();
 
-	if (cpu_has_mips_r6)
+	अगर (cpu_has_mips_r6)
 		wired &= MIPSR6_WIRED_WIRED;
 
-	return wired;
-}
+	वापस wired;
+पूर्ण
 
-#include <asm-generic/tlb.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#endif /* __ASM_TLB_H */
+#पूर्ण_अगर /* __ASM_TLB_H */

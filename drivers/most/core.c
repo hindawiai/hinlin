@@ -1,367 +1,368 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * core.c - Implementation of core module of MOST Linux driver stack
  *
  * Copyright (C) 2013-2020 Microchip Technology Germany II GmbH & Co. KG
  */
 
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/list.h>
-#include <linux/poll.h>
-#include <linux/wait.h>
-#include <linux/kobject.h>
-#include <linux/mutex.h>
-#include <linux/completion.h>
-#include <linux/sysfs.h>
-#include <linux/kthread.h>
-#include <linux/dma-mapping.h>
-#include <linux/idr.h>
-#include <linux/most.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/most.h>
 
-#define MAX_CHANNELS	64
-#define STRING_SIZE	80
+#घोषणा MAX_CHANNELS	64
+#घोषणा STRING_SIZE	80
 
-static struct ida mdev_id;
-static int dummy_num_buffers;
-static struct list_head comp_list;
+अटल काष्ठा ida mdev_id;
+अटल पूर्णांक dummy_num_buffers;
+अटल काष्ठा list_head comp_list;
 
-struct pipe {
-	struct most_component *comp;
-	int refs;
-	int num_buffers;
-};
+काष्ठा pipe अणु
+	काष्ठा most_component *comp;
+	पूर्णांक refs;
+	पूर्णांक num_buffers;
+पूर्ण;
 
-struct most_channel {
-	struct device dev;
-	struct completion cleanup;
+काष्ठा most_channel अणु
+	काष्ठा device dev;
+	काष्ठा completion cleanup;
 	atomic_t mbo_ref;
 	atomic_t mbo_nq_level;
 	u16 channel_id;
-	char name[STRING_SIZE];
+	अक्षर name[STRING_SIZE];
 	bool is_poisoned;
-	struct mutex start_mutex; /* channel activation synchronization */
-	struct mutex nq_mutex; /* nq thread synchronization */
-	int is_starving;
-	struct most_interface *iface;
-	struct most_channel_config cfg;
+	काष्ठा mutex start_mutex; /* channel activation synchronization */
+	काष्ठा mutex nq_mutex; /* nq thपढ़ो synchronization */
+	पूर्णांक is_starving;
+	काष्ठा most_पूर्णांकerface *अगरace;
+	काष्ठा most_channel_config cfg;
 	bool keep_mbo;
 	bool enqueue_halt;
-	struct list_head fifo;
-	spinlock_t fifo_lock; /* fifo access synchronization */
-	struct list_head halt_fifo;
-	struct list_head list;
-	struct pipe pipe0;
-	struct pipe pipe1;
-	struct list_head trash_fifo;
-	struct task_struct *hdm_enqueue_task;
-	wait_queue_head_t hdm_fifo_wq;
+	काष्ठा list_head fअगरo;
+	spinlock_t fअगरo_lock; /* fअगरo access synchronization */
+	काष्ठा list_head halt_fअगरo;
+	काष्ठा list_head list;
+	काष्ठा pipe pipe0;
+	काष्ठा pipe pipe1;
+	काष्ठा list_head trash_fअगरo;
+	काष्ठा task_काष्ठा *hdm_enqueue_task;
+	रुको_queue_head_t hdm_fअगरo_wq;
 
-};
+पूर्ण;
 
-#define to_channel(d) container_of(d, struct most_channel, dev)
+#घोषणा to_channel(d) container_of(d, काष्ठा most_channel, dev)
 
-struct interface_private {
-	int dev_id;
-	char name[STRING_SIZE];
-	struct most_channel *channel[MAX_CHANNELS];
-	struct list_head channel_list;
-};
+काष्ठा पूर्णांकerface_निजी अणु
+	पूर्णांक dev_id;
+	अक्षर name[STRING_SIZE];
+	काष्ठा most_channel *channel[MAX_CHANNELS];
+	काष्ठा list_head channel_list;
+पूर्ण;
 
-static const struct {
-	int most_ch_data_type;
-	const char *name;
-} ch_data_type[] = {
-	{ MOST_CH_CONTROL, "control" },
-	{ MOST_CH_ASYNC, "async" },
-	{ MOST_CH_SYNC, "sync" },
-	{ MOST_CH_ISOC, "isoc"},
-	{ MOST_CH_ISOC, "isoc_avp"},
-};
+अटल स्थिर काष्ठा अणु
+	पूर्णांक most_ch_data_type;
+	स्थिर अक्षर *name;
+पूर्ण ch_data_type[] = अणु
+	अणु MOST_CH_CONTROL, "control" पूर्ण,
+	अणु MOST_CH_ASYNC, "async" पूर्ण,
+	अणु MOST_CH_SYNC, "sync" पूर्ण,
+	अणु MOST_CH_ISOC, "isoc"पूर्ण,
+	अणु MOST_CH_ISOC, "isoc_avp"पूर्ण,
+पूर्ण;
 
 /**
- * list_pop_mbo - retrieves the first MBO of the list and removes it
+ * list_pop_mbo - retrieves the first MBO of the list and हटाओs it
  * @ptr: the list head to grab the MBO from.
  */
-#define list_pop_mbo(ptr)						\
-({									\
-	struct mbo *_mbo = list_first_entry(ptr, struct mbo, list);	\
+#घोषणा list_pop_mbo(ptr)						\
+(अणु									\
+	काष्ठा mbo *_mbo = list_first_entry(ptr, काष्ठा mbo, list);	\
 	list_del(&_mbo->list);						\
 	_mbo;								\
-})
+पूर्ण)
 
 /**
- * most_free_mbo_coherent - free an MBO and its coherent buffer
+ * most_मुक्त_mbo_coherent - मुक्त an MBO and its coherent buffer
  * @mbo: most buffer
  */
-static void most_free_mbo_coherent(struct mbo *mbo)
-{
-	struct most_channel *c = mbo->context;
-	u16 const coherent_buf_size = c->cfg.buffer_size + c->cfg.extra_len;
+अटल व्योम most_मुक्त_mbo_coherent(काष्ठा mbo *mbo)
+अणु
+	काष्ठा most_channel *c = mbo->context;
+	u16 स्थिर coherent_buf_size = c->cfg.buffer_size + c->cfg.extra_len;
 
-	if (c->iface->dma_free)
-		c->iface->dma_free(mbo, coherent_buf_size);
-	else
-		kfree(mbo->virt_address);
-	kfree(mbo);
-	if (atomic_sub_and_test(1, &c->mbo_ref))
+	अगर (c->अगरace->dma_मुक्त)
+		c->अगरace->dma_मुक्त(mbo, coherent_buf_size);
+	अन्यथा
+		kमुक्त(mbo->virt_address);
+	kमुक्त(mbo);
+	अगर (atomic_sub_and_test(1, &c->mbo_ref))
 		complete(&c->cleanup);
-}
+पूर्ण
 
 /**
- * flush_channel_fifos - clear the channel fifos
- * @c: pointer to channel object
+ * flush_channel_fअगरos - clear the channel fअगरos
+ * @c: poपूर्णांकer to channel object
  */
-static void flush_channel_fifos(struct most_channel *c)
-{
-	unsigned long flags, hf_flags;
-	struct mbo *mbo, *tmp;
+अटल व्योम flush_channel_fअगरos(काष्ठा most_channel *c)
+अणु
+	अचिन्हित दीर्घ flags, hf_flags;
+	काष्ठा mbo *mbo, *पंचांगp;
 
-	if (list_empty(&c->fifo) && list_empty(&c->halt_fifo))
-		return;
+	अगर (list_empty(&c->fअगरo) && list_empty(&c->halt_fअगरo))
+		वापस;
 
-	spin_lock_irqsave(&c->fifo_lock, flags);
-	list_for_each_entry_safe(mbo, tmp, &c->fifo, list) {
+	spin_lock_irqsave(&c->fअगरo_lock, flags);
+	list_क्रम_each_entry_safe(mbo, पंचांगp, &c->fअगरo, list) अणु
 		list_del(&mbo->list);
-		spin_unlock_irqrestore(&c->fifo_lock, flags);
-		most_free_mbo_coherent(mbo);
-		spin_lock_irqsave(&c->fifo_lock, flags);
-	}
-	spin_unlock_irqrestore(&c->fifo_lock, flags);
+		spin_unlock_irqrestore(&c->fअगरo_lock, flags);
+		most_मुक्त_mbo_coherent(mbo);
+		spin_lock_irqsave(&c->fअगरo_lock, flags);
+	पूर्ण
+	spin_unlock_irqrestore(&c->fअगरo_lock, flags);
 
-	spin_lock_irqsave(&c->fifo_lock, hf_flags);
-	list_for_each_entry_safe(mbo, tmp, &c->halt_fifo, list) {
+	spin_lock_irqsave(&c->fअगरo_lock, hf_flags);
+	list_क्रम_each_entry_safe(mbo, पंचांगp, &c->halt_fअगरo, list) अणु
 		list_del(&mbo->list);
-		spin_unlock_irqrestore(&c->fifo_lock, hf_flags);
-		most_free_mbo_coherent(mbo);
-		spin_lock_irqsave(&c->fifo_lock, hf_flags);
-	}
-	spin_unlock_irqrestore(&c->fifo_lock, hf_flags);
+		spin_unlock_irqrestore(&c->fअगरo_lock, hf_flags);
+		most_मुक्त_mbo_coherent(mbo);
+		spin_lock_irqsave(&c->fअगरo_lock, hf_flags);
+	पूर्ण
+	spin_unlock_irqrestore(&c->fअगरo_lock, hf_flags);
 
-	if (unlikely((!list_empty(&c->fifo) || !list_empty(&c->halt_fifo))))
+	अगर (unlikely((!list_empty(&c->fअगरo) || !list_empty(&c->halt_fअगरo))))
 		dev_warn(&c->dev, "Channel or trash fifo not empty\n");
-}
+पूर्ण
 
 /**
- * flush_trash_fifo - clear the trash fifo
- * @c: pointer to channel object
+ * flush_trash_fअगरo - clear the trash fअगरo
+ * @c: poपूर्णांकer to channel object
  */
-static int flush_trash_fifo(struct most_channel *c)
-{
-	struct mbo *mbo, *tmp;
-	unsigned long flags;
+अटल पूर्णांक flush_trash_fअगरo(काष्ठा most_channel *c)
+अणु
+	काष्ठा mbo *mbo, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&c->fifo_lock, flags);
-	list_for_each_entry_safe(mbo, tmp, &c->trash_fifo, list) {
+	spin_lock_irqsave(&c->fअगरo_lock, flags);
+	list_क्रम_each_entry_safe(mbo, पंचांगp, &c->trash_fअगरo, list) अणु
 		list_del(&mbo->list);
-		spin_unlock_irqrestore(&c->fifo_lock, flags);
-		most_free_mbo_coherent(mbo);
-		spin_lock_irqsave(&c->fifo_lock, flags);
-	}
-	spin_unlock_irqrestore(&c->fifo_lock, flags);
-	return 0;
-}
+		spin_unlock_irqrestore(&c->fअगरo_lock, flags);
+		most_मुक्त_mbo_coherent(mbo);
+		spin_lock_irqsave(&c->fअगरo_lock, flags);
+	पूर्ण
+	spin_unlock_irqrestore(&c->fअगरo_lock, flags);
+	वापस 0;
+पूर्ण
 
-static ssize_t available_directions_show(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct most_channel *c = to_channel(dev);
-	unsigned int i = c->channel_id;
+अटल sमाप_प्रकार available_directions_show(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
+	अचिन्हित पूर्णांक i = c->channel_id;
 
-	strcpy(buf, "");
-	if (c->iface->channel_vector[i].direction & MOST_CH_RX)
-		strcat(buf, "rx ");
-	if (c->iface->channel_vector[i].direction & MOST_CH_TX)
-		strcat(buf, "tx ");
-	strcat(buf, "\n");
-	return strlen(buf);
-}
+	म_नकल(buf, "");
+	अगर (c->अगरace->channel_vector[i].direction & MOST_CH_RX)
+		म_जोड़ो(buf, "rx ");
+	अगर (c->अगरace->channel_vector[i].direction & MOST_CH_TX)
+		म_जोड़ो(buf, "tx ");
+	म_जोड़ो(buf, "\n");
+	वापस म_माप(buf);
+पूर्ण
 
-static ssize_t available_datatypes_show(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct most_channel *c = to_channel(dev);
-	unsigned int i = c->channel_id;
+अटल sमाप_प्रकार available_datatypes_show(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
+	अचिन्हित पूर्णांक i = c->channel_id;
 
-	strcpy(buf, "");
-	if (c->iface->channel_vector[i].data_type & MOST_CH_CONTROL)
-		strcat(buf, "control ");
-	if (c->iface->channel_vector[i].data_type & MOST_CH_ASYNC)
-		strcat(buf, "async ");
-	if (c->iface->channel_vector[i].data_type & MOST_CH_SYNC)
-		strcat(buf, "sync ");
-	if (c->iface->channel_vector[i].data_type & MOST_CH_ISOC)
-		strcat(buf, "isoc ");
-	strcat(buf, "\n");
-	return strlen(buf);
-}
+	म_नकल(buf, "");
+	अगर (c->अगरace->channel_vector[i].data_type & MOST_CH_CONTROL)
+		म_जोड़ो(buf, "control ");
+	अगर (c->अगरace->channel_vector[i].data_type & MOST_CH_ASYNC)
+		म_जोड़ो(buf, "async ");
+	अगर (c->अगरace->channel_vector[i].data_type & MOST_CH_SYNC)
+		म_जोड़ो(buf, "sync ");
+	अगर (c->अगरace->channel_vector[i].data_type & MOST_CH_ISOC)
+		म_जोड़ो(buf, "isoc ");
+	म_जोड़ो(buf, "\n");
+	वापस म_माप(buf);
+पूर्ण
 
-static ssize_t number_of_packet_buffers_show(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	struct most_channel *c = to_channel(dev);
-	unsigned int i = c->channel_id;
+अटल sमाप_प्रकार number_of_packet_buffers_show(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
+	अचिन्हित पूर्णांक i = c->channel_id;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n",
-			c->iface->channel_vector[i].num_buffers_packet);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
+			c->अगरace->channel_vector[i].num_buffers_packet);
+पूर्ण
 
-static ssize_t number_of_stream_buffers_show(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	struct most_channel *c = to_channel(dev);
-	unsigned int i = c->channel_id;
+अटल sमाप_प्रकार number_of_stream_buffers_show(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
+	अचिन्हित पूर्णांक i = c->channel_id;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n",
-			c->iface->channel_vector[i].num_buffers_streaming);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
+			c->अगरace->channel_vector[i].num_buffers_streaming);
+पूर्ण
 
-static ssize_t size_of_packet_buffer_show(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct most_channel *c = to_channel(dev);
-	unsigned int i = c->channel_id;
+अटल sमाप_प्रकार size_of_packet_buffer_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
+	अचिन्हित पूर्णांक i = c->channel_id;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n",
-			c->iface->channel_vector[i].buffer_size_packet);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
+			c->अगरace->channel_vector[i].buffer_size_packet);
+पूर्ण
 
-static ssize_t size_of_stream_buffer_show(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct most_channel *c = to_channel(dev);
-	unsigned int i = c->channel_id;
+अटल sमाप_प्रकार size_of_stream_buffer_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
+	अचिन्हित पूर्णांक i = c->channel_id;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n",
-			c->iface->channel_vector[i].buffer_size_streaming);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
+			c->अगरace->channel_vector[i].buffer_size_streaming);
+पूर्ण
 
-static ssize_t channel_starving_show(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct most_channel *c = to_channel(dev);
+अटल sमाप_प्रकार channel_starving_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->is_starving);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", c->is_starving);
+पूर्ण
 
-static ssize_t set_number_of_buffers_show(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct most_channel *c = to_channel(dev);
+अटल sमाप_प्रकार set_number_of_buffers_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->cfg.num_buffers);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", c->cfg.num_buffers);
+पूर्ण
 
-static ssize_t set_buffer_size_show(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct most_channel *c = to_channel(dev);
+अटल sमाप_प्रकार set_buffer_size_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->cfg.buffer_size);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", c->cfg.buffer_size);
+पूर्ण
 
-static ssize_t set_direction_show(struct device *dev,
-				  struct device_attribute *attr,
-				  char *buf)
-{
-	struct most_channel *c = to_channel(dev);
+अटल sमाप_प्रकार set_direction_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
 
-	if (c->cfg.direction & MOST_CH_TX)
-		return snprintf(buf, PAGE_SIZE, "tx\n");
-	else if (c->cfg.direction & MOST_CH_RX)
-		return snprintf(buf, PAGE_SIZE, "rx\n");
-	return snprintf(buf, PAGE_SIZE, "unconfigured\n");
-}
+	अगर (c->cfg.direction & MOST_CH_TX)
+		वापस snम_लिखो(buf, PAGE_SIZE, "tx\n");
+	अन्यथा अगर (c->cfg.direction & MOST_CH_RX)
+		वापस snम_लिखो(buf, PAGE_SIZE, "rx\n");
+	वापस snम_लिखो(buf, PAGE_SIZE, "unconfigured\n");
+पूर्ण
 
-static ssize_t set_datatype_show(struct device *dev,
-				 struct device_attribute *attr,
-				 char *buf)
-{
-	int i;
-	struct most_channel *c = to_channel(dev);
+अटल sमाप_प्रकार set_datatype_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 अक्षर *buf)
+अणु
+	पूर्णांक i;
+	काष्ठा most_channel *c = to_channel(dev);
 
-	for (i = 0; i < ARRAY_SIZE(ch_data_type); i++) {
-		if (c->cfg.data_type & ch_data_type[i].most_ch_data_type)
-			return snprintf(buf, PAGE_SIZE, "%s",
+	क्रम (i = 0; i < ARRAY_SIZE(ch_data_type); i++) अणु
+		अगर (c->cfg.data_type & ch_data_type[i].most_ch_data_type)
+			वापस snम_लिखो(buf, PAGE_SIZE, "%s",
 					ch_data_type[i].name);
-	}
-	return snprintf(buf, PAGE_SIZE, "unconfigured\n");
-}
+	पूर्ण
+	वापस snम_लिखो(buf, PAGE_SIZE, "unconfigured\n");
+पूर्ण
 
-static ssize_t set_subbuffer_size_show(struct device *dev,
-				       struct device_attribute *attr,
-				       char *buf)
-{
-	struct most_channel *c = to_channel(dev);
+अटल sमाप_प्रकार set_subbuffer_size_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->cfg.subbuffer_size);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", c->cfg.subbuffer_size);
+पूर्ण
 
-static ssize_t set_packets_per_xact_show(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct most_channel *c = to_channel(dev);
+अटल sमाप_प्रकार set_packets_per_xact_show(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->cfg.packets_per_xact);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", c->cfg.packets_per_xact);
+पूर्ण
 
-static ssize_t set_dbr_size_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct most_channel *c = to_channel(dev);
+अटल sमाप_प्रकार set_dbr_size_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->cfg.dbr_size);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", c->cfg.dbr_size);
+पूर्ण
 
-#define to_dev_attr(a) container_of(a, struct device_attribute, attr)
-static umode_t channel_attr_is_visible(struct kobject *kobj,
-				       struct attribute *attr, int index)
-{
-	struct device_attribute *dev_attr = to_dev_attr(attr);
-	struct device *dev = kobj_to_dev(kobj);
-	struct most_channel *c = to_channel(dev);
+#घोषणा to_dev_attr(a) container_of(a, काष्ठा device_attribute, attr)
+अटल umode_t channel_attr_is_visible(काष्ठा kobject *kobj,
+				       काष्ठा attribute *attr, पूर्णांक index)
+अणु
+	काष्ठा device_attribute *dev_attr = to_dev_attr(attr);
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा most_channel *c = to_channel(dev);
 
-	if (!strcmp(dev_attr->attr.name, "set_dbr_size") &&
-	    (c->iface->interface != ITYPE_MEDIALB_DIM2))
-		return 0;
-	if (!strcmp(dev_attr->attr.name, "set_packets_per_xact") &&
-	    (c->iface->interface != ITYPE_USB))
-		return 0;
+	अगर (!म_भेद(dev_attr->attr.name, "set_dbr_size") &&
+	    (c->अगरace->पूर्णांकerface != ITYPE_MEDIALB_DIM2))
+		वापस 0;
+	अगर (!म_भेद(dev_attr->attr.name, "set_packets_per_xact") &&
+	    (c->अगरace->पूर्णांकerface != ITYPE_USB))
+		वापस 0;
 
-	return attr->mode;
-}
+	वापस attr->mode;
+पूर्ण
 
-#define DEV_ATTR(_name)  (&dev_attr_##_name.attr)
+#घोषणा DEV_ATTR(_name)  (&dev_attr_##_name.attr)
 
-static DEVICE_ATTR_RO(available_directions);
-static DEVICE_ATTR_RO(available_datatypes);
-static DEVICE_ATTR_RO(number_of_packet_buffers);
-static DEVICE_ATTR_RO(number_of_stream_buffers);
-static DEVICE_ATTR_RO(size_of_stream_buffer);
-static DEVICE_ATTR_RO(size_of_packet_buffer);
-static DEVICE_ATTR_RO(channel_starving);
-static DEVICE_ATTR_RO(set_buffer_size);
-static DEVICE_ATTR_RO(set_number_of_buffers);
-static DEVICE_ATTR_RO(set_direction);
-static DEVICE_ATTR_RO(set_datatype);
-static DEVICE_ATTR_RO(set_subbuffer_size);
-static DEVICE_ATTR_RO(set_packets_per_xact);
-static DEVICE_ATTR_RO(set_dbr_size);
+अटल DEVICE_ATTR_RO(available_directions);
+अटल DEVICE_ATTR_RO(available_datatypes);
+अटल DEVICE_ATTR_RO(number_of_packet_buffers);
+अटल DEVICE_ATTR_RO(number_of_stream_buffers);
+अटल DEVICE_ATTR_RO(size_of_stream_buffer);
+अटल DEVICE_ATTR_RO(size_of_packet_buffer);
+अटल DEVICE_ATTR_RO(channel_starving);
+अटल DEVICE_ATTR_RO(set_buffer_size);
+अटल DEVICE_ATTR_RO(set_number_of_buffers);
+अटल DEVICE_ATTR_RO(set_direction);
+अटल DEVICE_ATTR_RO(set_datatype);
+अटल DEVICE_ATTR_RO(set_subbuffer_size);
+अटल DEVICE_ATTR_RO(set_packets_per_xact);
+अटल DEVICE_ATTR_RO(set_dbr_size);
 
-static struct attribute *channel_attrs[] = {
+अटल काष्ठा attribute *channel_attrs[] = अणु
 	DEV_ATTR(available_directions),
 	DEV_ATTR(available_datatypes),
 	DEV_ATTR(number_of_packet_buffers),
@@ -376,760 +377,760 @@ static struct attribute *channel_attrs[] = {
 	DEV_ATTR(set_subbuffer_size),
 	DEV_ATTR(set_packets_per_xact),
 	DEV_ATTR(set_dbr_size),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group channel_attr_group = {
+अटल स्थिर काष्ठा attribute_group channel_attr_group = अणु
 	.attrs = channel_attrs,
 	.is_visible = channel_attr_is_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *channel_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *channel_attr_groups[] = अणु
 	&channel_attr_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static ssize_t description_show(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct most_interface *iface = dev_get_drvdata(dev);
+अटल sमाप_प्रकार description_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा most_पूर्णांकerface *अगरace = dev_get_drvdata(dev);
 
-	return snprintf(buf, PAGE_SIZE, "%s\n", iface->description);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", अगरace->description);
+पूर्ण
 
-static ssize_t interface_show(struct device *dev,
-			      struct device_attribute *attr,
-			      char *buf)
-{
-	struct most_interface *iface = dev_get_drvdata(dev);
+अटल sमाप_प्रकार पूर्णांकerface_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा most_पूर्णांकerface *अगरace = dev_get_drvdata(dev);
 
-	switch (iface->interface) {
-	case ITYPE_LOOPBACK:
-		return snprintf(buf, PAGE_SIZE, "loopback\n");
-	case ITYPE_I2C:
-		return snprintf(buf, PAGE_SIZE, "i2c\n");
-	case ITYPE_I2S:
-		return snprintf(buf, PAGE_SIZE, "i2s\n");
-	case ITYPE_TSI:
-		return snprintf(buf, PAGE_SIZE, "tsi\n");
-	case ITYPE_HBI:
-		return snprintf(buf, PAGE_SIZE, "hbi\n");
-	case ITYPE_MEDIALB_DIM:
-		return snprintf(buf, PAGE_SIZE, "mlb_dim\n");
-	case ITYPE_MEDIALB_DIM2:
-		return snprintf(buf, PAGE_SIZE, "mlb_dim2\n");
-	case ITYPE_USB:
-		return snprintf(buf, PAGE_SIZE, "usb\n");
-	case ITYPE_PCIE:
-		return snprintf(buf, PAGE_SIZE, "pcie\n");
-	}
-	return snprintf(buf, PAGE_SIZE, "unknown\n");
-}
+	चयन (अगरace->पूर्णांकerface) अणु
+	हाल ITYPE_LOOPBACK:
+		वापस snम_लिखो(buf, PAGE_SIZE, "loopback\n");
+	हाल ITYPE_I2C:
+		वापस snम_लिखो(buf, PAGE_SIZE, "i2c\n");
+	हाल ITYPE_I2S:
+		वापस snम_लिखो(buf, PAGE_SIZE, "i2s\n");
+	हाल ITYPE_TSI:
+		वापस snम_लिखो(buf, PAGE_SIZE, "tsi\n");
+	हाल ITYPE_HBI:
+		वापस snम_लिखो(buf, PAGE_SIZE, "hbi\n");
+	हाल ITYPE_MEDIALB_DIM:
+		वापस snम_लिखो(buf, PAGE_SIZE, "mlb_dim\n");
+	हाल ITYPE_MEDIALB_DIM2:
+		वापस snम_लिखो(buf, PAGE_SIZE, "mlb_dim2\n");
+	हाल ITYPE_USB:
+		वापस snम_लिखो(buf, PAGE_SIZE, "usb\n");
+	हाल ITYPE_PCIE:
+		वापस snम_लिखो(buf, PAGE_SIZE, "pcie\n");
+	पूर्ण
+	वापस snम_लिखो(buf, PAGE_SIZE, "unknown\n");
+पूर्ण
 
-static DEVICE_ATTR_RO(description);
-static DEVICE_ATTR_RO(interface);
+अटल DEVICE_ATTR_RO(description);
+अटल DEVICE_ATTR_RO(पूर्णांकerface);
 
-static struct attribute *interface_attrs[] = {
+अटल काष्ठा attribute *पूर्णांकerface_attrs[] = अणु
 	DEV_ATTR(description),
-	DEV_ATTR(interface),
-	NULL,
-};
+	DEV_ATTR(पूर्णांकerface),
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group interface_attr_group = {
-	.attrs = interface_attrs,
-};
+अटल स्थिर काष्ठा attribute_group पूर्णांकerface_attr_group = अणु
+	.attrs = पूर्णांकerface_attrs,
+पूर्ण;
 
-static const struct attribute_group *interface_attr_groups[] = {
-	&interface_attr_group,
-	NULL,
-};
+अटल स्थिर काष्ठा attribute_group *पूर्णांकerface_attr_groups[] = अणु
+	&पूर्णांकerface_attr_group,
+	शून्य,
+पूर्ण;
 
-static struct most_component *match_component(char *name)
-{
-	struct most_component *comp;
+अटल काष्ठा most_component *match_component(अक्षर *name)
+अणु
+	काष्ठा most_component *comp;
 
-	list_for_each_entry(comp, &comp_list, list) {
-		if (!strcmp(comp->name, name))
-			return comp;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(comp, &comp_list, list) अणु
+		अगर (!म_भेद(comp->name, name))
+			वापस comp;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct show_links_data {
-	int offs;
-	char *buf;
-};
+काष्ठा show_links_data अणु
+	पूर्णांक offs;
+	अक्षर *buf;
+पूर्ण;
 
-static int print_links(struct device *dev, void *data)
-{
-	struct show_links_data *d = data;
-	int offs = d->offs;
-	char *buf = d->buf;
-	struct most_channel *c;
-	struct most_interface *iface = dev_get_drvdata(dev);
+अटल पूर्णांक prपूर्णांक_links(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा show_links_data *d = data;
+	पूर्णांक offs = d->offs;
+	अक्षर *buf = d->buf;
+	काष्ठा most_channel *c;
+	काष्ठा most_पूर्णांकerface *अगरace = dev_get_drvdata(dev);
 
-	list_for_each_entry(c, &iface->p->channel_list, list) {
-		if (c->pipe0.comp) {
-			offs += scnprintf(buf + offs,
+	list_क्रम_each_entry(c, &अगरace->p->channel_list, list) अणु
+		अगर (c->pipe0.comp) अणु
+			offs += scnम_लिखो(buf + offs,
 					 PAGE_SIZE - offs,
 					 "%s:%s:%s\n",
 					 c->pipe0.comp->name,
-					 dev_name(iface->dev),
+					 dev_name(अगरace->dev),
 					 dev_name(&c->dev));
-		}
-		if (c->pipe1.comp) {
-			offs += scnprintf(buf + offs,
+		पूर्ण
+		अगर (c->pipe1.comp) अणु
+			offs += scnम_लिखो(buf + offs,
 					 PAGE_SIZE - offs,
 					 "%s:%s:%s\n",
 					 c->pipe1.comp->name,
-					 dev_name(iface->dev),
+					 dev_name(अगरace->dev),
 					 dev_name(&c->dev));
-		}
-	}
+		पूर्ण
+	पूर्ण
 	d->offs = offs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int most_match(struct device *dev, struct device_driver *drv)
-{
-	if (!strcmp(dev_name(dev), "most"))
-		return 0;
-	else
-		return 1;
-}
+अटल पूर्णांक most_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	अगर (!म_भेद(dev_name(dev), "most"))
+		वापस 0;
+	अन्यथा
+		वापस 1;
+पूर्ण
 
-static struct bus_type mostbus = {
+अटल काष्ठा bus_type mostbus = अणु
 	.name = "most",
 	.match = most_match,
-};
+पूर्ण;
 
-static ssize_t links_show(struct device_driver *drv, char *buf)
-{
-	struct show_links_data d = { .buf = buf };
+अटल sमाप_प्रकार links_show(काष्ठा device_driver *drv, अक्षर *buf)
+अणु
+	काष्ठा show_links_data d = अणु .buf = buf पूर्ण;
 
-	bus_for_each_dev(&mostbus, NULL, &d, print_links);
-	return d.offs;
-}
+	bus_क्रम_each_dev(&mostbus, शून्य, &d, prपूर्णांक_links);
+	वापस d.offs;
+पूर्ण
 
-static ssize_t components_show(struct device_driver *drv, char *buf)
-{
-	struct most_component *comp;
-	int offs = 0;
+अटल sमाप_प्रकार components_show(काष्ठा device_driver *drv, अक्षर *buf)
+अणु
+	काष्ठा most_component *comp;
+	पूर्णांक offs = 0;
 
-	list_for_each_entry(comp, &comp_list, list) {
-		offs += scnprintf(buf + offs, PAGE_SIZE - offs, "%s\n",
+	list_क्रम_each_entry(comp, &comp_list, list) अणु
+		offs += scnम_लिखो(buf + offs, PAGE_SIZE - offs, "%s\n",
 				 comp->name);
-	}
-	return offs;
-}
+	पूर्ण
+	वापस offs;
+पूर्ण
 
 /**
- * get_channel - get pointer to channel
- * @mdev: name of the device interface
+ * get_channel - get poपूर्णांकer to channel
+ * @mdev: name of the device पूर्णांकerface
  * @mdev_ch: name of channel
  */
-static struct most_channel *get_channel(char *mdev, char *mdev_ch)
-{
-	struct device *dev = NULL;
-	struct most_interface *iface;
-	struct most_channel *c, *tmp;
+अटल काष्ठा most_channel *get_channel(अक्षर *mdev, अक्षर *mdev_ch)
+अणु
+	काष्ठा device *dev = शून्य;
+	काष्ठा most_पूर्णांकerface *अगरace;
+	काष्ठा most_channel *c, *पंचांगp;
 
-	dev = bus_find_device_by_name(&mostbus, NULL, mdev);
-	if (!dev)
-		return NULL;
+	dev = bus_find_device_by_name(&mostbus, शून्य, mdev);
+	अगर (!dev)
+		वापस शून्य;
 	put_device(dev);
-	iface = dev_get_drvdata(dev);
-	list_for_each_entry_safe(c, tmp, &iface->p->channel_list, list) {
-		if (!strcmp(dev_name(&c->dev), mdev_ch))
-			return c;
-	}
-	return NULL;
-}
+	अगरace = dev_get_drvdata(dev);
+	list_क्रम_each_entry_safe(c, पंचांगp, &अगरace->p->channel_list, list) अणु
+		अगर (!म_भेद(dev_name(&c->dev), mdev_ch))
+			वापस c;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static
-inline int link_channel_to_component(struct most_channel *c,
-				     struct most_component *comp,
-				     char *name,
-				     char *comp_param)
-{
-	int ret;
-	struct most_component **comp_ptr;
+अटल
+अंतरभूत पूर्णांक link_channel_to_component(काष्ठा most_channel *c,
+				     काष्ठा most_component *comp,
+				     अक्षर *name,
+				     अक्षर *comp_param)
+अणु
+	पूर्णांक ret;
+	काष्ठा most_component **comp_ptr;
 
-	if (!c->pipe0.comp)
+	अगर (!c->pipe0.comp)
 		comp_ptr = &c->pipe0.comp;
-	else if (!c->pipe1.comp)
+	अन्यथा अगर (!c->pipe1.comp)
 		comp_ptr = &c->pipe1.comp;
-	else
-		return -ENOSPC;
+	अन्यथा
+		वापस -ENOSPC;
 
 	*comp_ptr = comp;
-	ret = comp->probe_channel(c->iface, c->channel_id, &c->cfg, name,
+	ret = comp->probe_channel(c->अगरace, c->channel_id, &c->cfg, name,
 				  comp_param);
-	if (ret) {
-		*comp_ptr = NULL;
-		return ret;
-	}
-	return 0;
-}
+	अगर (ret) अणु
+		*comp_ptr = शून्य;
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int most_set_cfg_buffer_size(char *mdev, char *mdev_ch, u16 val)
-{
-	struct most_channel *c = get_channel(mdev, mdev_ch);
+पूर्णांक most_set_cfg_buffer_size(अक्षर *mdev, अक्षर *mdev_ch, u16 val)
+अणु
+	काष्ठा most_channel *c = get_channel(mdev, mdev_ch);
 
-	if (!c)
-		return -ENODEV;
+	अगर (!c)
+		वापस -ENODEV;
 	c->cfg.buffer_size = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int most_set_cfg_subbuffer_size(char *mdev, char *mdev_ch, u16 val)
-{
-	struct most_channel *c = get_channel(mdev, mdev_ch);
+पूर्णांक most_set_cfg_subbuffer_size(अक्षर *mdev, अक्षर *mdev_ch, u16 val)
+अणु
+	काष्ठा most_channel *c = get_channel(mdev, mdev_ch);
 
-	if (!c)
-		return -ENODEV;
+	अगर (!c)
+		वापस -ENODEV;
 	c->cfg.subbuffer_size = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int most_set_cfg_dbr_size(char *mdev, char *mdev_ch, u16 val)
-{
-	struct most_channel *c = get_channel(mdev, mdev_ch);
+पूर्णांक most_set_cfg_dbr_size(अक्षर *mdev, अक्षर *mdev_ch, u16 val)
+अणु
+	काष्ठा most_channel *c = get_channel(mdev, mdev_ch);
 
-	if (!c)
-		return -ENODEV;
+	अगर (!c)
+		वापस -ENODEV;
 	c->cfg.dbr_size = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int most_set_cfg_num_buffers(char *mdev, char *mdev_ch, u16 val)
-{
-	struct most_channel *c = get_channel(mdev, mdev_ch);
+पूर्णांक most_set_cfg_num_buffers(अक्षर *mdev, अक्षर *mdev_ch, u16 val)
+अणु
+	काष्ठा most_channel *c = get_channel(mdev, mdev_ch);
 
-	if (!c)
-		return -ENODEV;
+	अगर (!c)
+		वापस -ENODEV;
 	c->cfg.num_buffers = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int most_set_cfg_datatype(char *mdev, char *mdev_ch, char *buf)
-{
-	int i;
-	struct most_channel *c = get_channel(mdev, mdev_ch);
+पूर्णांक most_set_cfg_datatype(अक्षर *mdev, अक्षर *mdev_ch, अक्षर *buf)
+अणु
+	पूर्णांक i;
+	काष्ठा most_channel *c = get_channel(mdev, mdev_ch);
 
-	if (!c)
-		return -ENODEV;
-	for (i = 0; i < ARRAY_SIZE(ch_data_type); i++) {
-		if (!strcmp(buf, ch_data_type[i].name)) {
+	अगर (!c)
+		वापस -ENODEV;
+	क्रम (i = 0; i < ARRAY_SIZE(ch_data_type); i++) अणु
+		अगर (!म_भेद(buf, ch_data_type[i].name)) अणु
 			c->cfg.data_type = ch_data_type[i].most_ch_data_type;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == ARRAY_SIZE(ch_data_type))
+	अगर (i == ARRAY_SIZE(ch_data_type))
 		dev_warn(&c->dev, "Invalid attribute settings\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int most_set_cfg_direction(char *mdev, char *mdev_ch, char *buf)
-{
-	struct most_channel *c = get_channel(mdev, mdev_ch);
+पूर्णांक most_set_cfg_direction(अक्षर *mdev, अक्षर *mdev_ch, अक्षर *buf)
+अणु
+	काष्ठा most_channel *c = get_channel(mdev, mdev_ch);
 
-	if (!c)
-		return -ENODEV;
-	if (!strcmp(buf, "dir_rx")) {
+	अगर (!c)
+		वापस -ENODEV;
+	अगर (!म_भेद(buf, "dir_rx")) अणु
 		c->cfg.direction = MOST_CH_RX;
-	} else if (!strcmp(buf, "rx")) {
+	पूर्ण अन्यथा अगर (!म_भेद(buf, "rx")) अणु
 		c->cfg.direction = MOST_CH_RX;
-	} else if (!strcmp(buf, "dir_tx")) {
+	पूर्ण अन्यथा अगर (!म_भेद(buf, "dir_tx")) अणु
 		c->cfg.direction = MOST_CH_TX;
-	} else if (!strcmp(buf, "tx")) {
+	पूर्ण अन्यथा अगर (!म_भेद(buf, "tx")) अणु
 		c->cfg.direction = MOST_CH_TX;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&c->dev, "Invalid direction\n");
-		return -ENODATA;
-	}
-	return 0;
-}
+		वापस -ENODATA;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int most_set_cfg_packets_xact(char *mdev, char *mdev_ch, u16 val)
-{
-	struct most_channel *c = get_channel(mdev, mdev_ch);
+पूर्णांक most_set_cfg_packets_xact(अक्षर *mdev, अक्षर *mdev_ch, u16 val)
+अणु
+	काष्ठा most_channel *c = get_channel(mdev, mdev_ch);
 
-	if (!c)
-		return -ENODEV;
+	अगर (!c)
+		वापस -ENODEV;
 	c->cfg.packets_per_xact = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int most_cfg_complete(char *comp_name)
-{
-	struct most_component *comp;
-
-	comp = match_component(comp_name);
-	if (!comp)
-		return -ENODEV;
-
-	return comp->cfg_complete();
-}
-
-int most_add_link(char *mdev, char *mdev_ch, char *comp_name, char *link_name,
-		  char *comp_param)
-{
-	struct most_channel *c = get_channel(mdev, mdev_ch);
-	struct most_component *comp = match_component(comp_name);
-
-	if (!c || !comp)
-		return -ENODEV;
-
-	return link_channel_to_component(c, comp, link_name, comp_param);
-}
-
-int most_remove_link(char *mdev, char *mdev_ch, char *comp_name)
-{
-	struct most_channel *c;
-	struct most_component *comp;
+पूर्णांक most_cfg_complete(अक्षर *comp_name)
+अणु
+	काष्ठा most_component *comp;
 
 	comp = match_component(comp_name);
-	if (!comp)
-		return -ENODEV;
+	अगर (!comp)
+		वापस -ENODEV;
+
+	वापस comp->cfg_complete();
+पूर्ण
+
+पूर्णांक most_add_link(अक्षर *mdev, अक्षर *mdev_ch, अक्षर *comp_name, अक्षर *link_name,
+		  अक्षर *comp_param)
+अणु
+	काष्ठा most_channel *c = get_channel(mdev, mdev_ch);
+	काष्ठा most_component *comp = match_component(comp_name);
+
+	अगर (!c || !comp)
+		वापस -ENODEV;
+
+	वापस link_channel_to_component(c, comp, link_name, comp_param);
+पूर्ण
+
+पूर्णांक most_हटाओ_link(अक्षर *mdev, अक्षर *mdev_ch, अक्षर *comp_name)
+अणु
+	काष्ठा most_channel *c;
+	काष्ठा most_component *comp;
+
+	comp = match_component(comp_name);
+	अगर (!comp)
+		वापस -ENODEV;
 	c = get_channel(mdev, mdev_ch);
-	if (!c)
-		return -ENODEV;
+	अगर (!c)
+		वापस -ENODEV;
 
-	if (comp->disconnect_channel(c->iface, c->channel_id))
-		return -EIO;
-	if (c->pipe0.comp == comp)
-		c->pipe0.comp = NULL;
-	if (c->pipe1.comp == comp)
-		c->pipe1.comp = NULL;
-	return 0;
-}
+	अगर (comp->disconnect_channel(c->अगरace, c->channel_id))
+		वापस -EIO;
+	अगर (c->pipe0.comp == comp)
+		c->pipe0.comp = शून्य;
+	अगर (c->pipe1.comp == comp)
+		c->pipe1.comp = शून्य;
+	वापस 0;
+पूर्ण
 
-#define DRV_ATTR(_name)  (&driver_attr_##_name.attr)
+#घोषणा DRV_ATTR(_name)  (&driver_attr_##_name.attr)
 
-static DRIVER_ATTR_RO(links);
-static DRIVER_ATTR_RO(components);
+अटल DRIVER_ATTR_RO(links);
+अटल DRIVER_ATTR_RO(components);
 
-static struct attribute *mc_attrs[] = {
+अटल काष्ठा attribute *mc_attrs[] = अणु
 	DRV_ATTR(links),
 	DRV_ATTR(components),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group mc_attr_group = {
+अटल स्थिर काष्ठा attribute_group mc_attr_group = अणु
 	.attrs = mc_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *mc_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *mc_attr_groups[] = अणु
 	&mc_attr_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct device_driver mostbus_driver = {
+अटल काष्ठा device_driver mostbus_driver = अणु
 	.name = "most_core",
 	.bus = &mostbus,
 	.groups = mc_attr_groups,
-};
+पूर्ण;
 
-static inline void trash_mbo(struct mbo *mbo)
-{
-	unsigned long flags;
-	struct most_channel *c = mbo->context;
+अटल अंतरभूत व्योम trash_mbo(काष्ठा mbo *mbo)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा most_channel *c = mbo->context;
 
-	spin_lock_irqsave(&c->fifo_lock, flags);
-	list_add(&mbo->list, &c->trash_fifo);
-	spin_unlock_irqrestore(&c->fifo_lock, flags);
-}
+	spin_lock_irqsave(&c->fअगरo_lock, flags);
+	list_add(&mbo->list, &c->trash_fअगरo);
+	spin_unlock_irqrestore(&c->fअगरo_lock, flags);
+पूर्ण
 
-static bool hdm_mbo_ready(struct most_channel *c)
-{
+अटल bool hdm_mbo_पढ़ोy(काष्ठा most_channel *c)
+अणु
 	bool empty;
 
-	if (c->enqueue_halt)
-		return false;
+	अगर (c->enqueue_halt)
+		वापस false;
 
-	spin_lock_irq(&c->fifo_lock);
-	empty = list_empty(&c->halt_fifo);
-	spin_unlock_irq(&c->fifo_lock);
+	spin_lock_irq(&c->fअगरo_lock);
+	empty = list_empty(&c->halt_fअगरo);
+	spin_unlock_irq(&c->fअगरo_lock);
 
-	return !empty;
-}
+	वापस !empty;
+पूर्ण
 
-static void nq_hdm_mbo(struct mbo *mbo)
-{
-	unsigned long flags;
-	struct most_channel *c = mbo->context;
+अटल व्योम nq_hdm_mbo(काष्ठा mbo *mbo)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा most_channel *c = mbo->context;
 
-	spin_lock_irqsave(&c->fifo_lock, flags);
-	list_add_tail(&mbo->list, &c->halt_fifo);
-	spin_unlock_irqrestore(&c->fifo_lock, flags);
-	wake_up_interruptible(&c->hdm_fifo_wq);
-}
+	spin_lock_irqsave(&c->fअगरo_lock, flags);
+	list_add_tail(&mbo->list, &c->halt_fअगरo);
+	spin_unlock_irqrestore(&c->fअगरo_lock, flags);
+	wake_up_पूर्णांकerruptible(&c->hdm_fअगरo_wq);
+पूर्ण
 
-static int hdm_enqueue_thread(void *data)
-{
-	struct most_channel *c = data;
-	struct mbo *mbo;
-	int ret;
-	typeof(c->iface->enqueue) enqueue = c->iface->enqueue;
+अटल पूर्णांक hdm_enqueue_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा most_channel *c = data;
+	काष्ठा mbo *mbo;
+	पूर्णांक ret;
+	typeof(c->अगरace->enqueue) enqueue = c->अगरace->enqueue;
 
-	while (likely(!kthread_should_stop())) {
-		wait_event_interruptible(c->hdm_fifo_wq,
-					 hdm_mbo_ready(c) ||
-					 kthread_should_stop());
+	जबतक (likely(!kthपढ़ो_should_stop())) अणु
+		रुको_event_पूर्णांकerruptible(c->hdm_fअगरo_wq,
+					 hdm_mbo_पढ़ोy(c) ||
+					 kthपढ़ो_should_stop());
 
 		mutex_lock(&c->nq_mutex);
-		spin_lock_irq(&c->fifo_lock);
-		if (unlikely(c->enqueue_halt || list_empty(&c->halt_fifo))) {
-			spin_unlock_irq(&c->fifo_lock);
+		spin_lock_irq(&c->fअगरo_lock);
+		अगर (unlikely(c->enqueue_halt || list_empty(&c->halt_fअगरo))) अणु
+			spin_unlock_irq(&c->fअगरo_lock);
 			mutex_unlock(&c->nq_mutex);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		mbo = list_pop_mbo(&c->halt_fifo);
-		spin_unlock_irq(&c->fifo_lock);
+		mbo = list_pop_mbo(&c->halt_fअगरo);
+		spin_unlock_irq(&c->fअगरo_lock);
 
-		if (c->cfg.direction == MOST_CH_RX)
+		अगर (c->cfg.direction == MOST_CH_RX)
 			mbo->buffer_length = c->cfg.buffer_size;
 
-		ret = enqueue(mbo->ifp, mbo->hdm_channel_id, mbo);
+		ret = enqueue(mbo->अगरp, mbo->hdm_channel_id, mbo);
 		mutex_unlock(&c->nq_mutex);
 
-		if (unlikely(ret)) {
+		अगर (unlikely(ret)) अणु
 			dev_err(&c->dev, "Buffer enqueue failed\n");
 			nq_hdm_mbo(mbo);
-			c->hdm_enqueue_task = NULL;
-			return 0;
-		}
-	}
+			c->hdm_enqueue_task = शून्य;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int run_enqueue_thread(struct most_channel *c, int channel_id)
-{
-	struct task_struct *task =
-		kthread_run(hdm_enqueue_thread, c, "hdm_fifo_%d",
+अटल पूर्णांक run_enqueue_thपढ़ो(काष्ठा most_channel *c, पूर्णांक channel_id)
+अणु
+	काष्ठा task_काष्ठा *task =
+		kthपढ़ो_run(hdm_enqueue_thपढ़ो, c, "hdm_fifo_%d",
 			    channel_id);
 
-	if (IS_ERR(task))
-		return PTR_ERR(task);
+	अगर (IS_ERR(task))
+		वापस PTR_ERR(task);
 
 	c->hdm_enqueue_task = task;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * arm_mbo - recycle MBO for further usage
+ * arm_mbo - recycle MBO क्रम further usage
  * @mbo: most buffer
  *
- * This puts an MBO back to the list to have it ready for up coming
+ * This माला_दो an MBO back to the list to have it पढ़ोy क्रम up coming
  * tx transactions.
  *
- * In case the MBO belongs to a channel that recently has been
+ * In हाल the MBO beदीर्घs to a channel that recently has been
  * poisoned, the MBO is scheduled to be trashed.
  * Calls the completion handler of an attached component.
  */
-static void arm_mbo(struct mbo *mbo)
-{
-	unsigned long flags;
-	struct most_channel *c;
+अटल व्योम arm_mbo(काष्ठा mbo *mbo)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा most_channel *c;
 
 	c = mbo->context;
 
-	if (c->is_poisoned) {
+	अगर (c->is_poisoned) अणु
 		trash_mbo(mbo);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	spin_lock_irqsave(&c->fifo_lock, flags);
+	spin_lock_irqsave(&c->fअगरo_lock, flags);
 	++*mbo->num_buffers_ptr;
-	list_add_tail(&mbo->list, &c->fifo);
-	spin_unlock_irqrestore(&c->fifo_lock, flags);
+	list_add_tail(&mbo->list, &c->fअगरo);
+	spin_unlock_irqrestore(&c->fअगरo_lock, flags);
 
-	if (c->pipe0.refs && c->pipe0.comp->tx_completion)
-		c->pipe0.comp->tx_completion(c->iface, c->channel_id);
+	अगर (c->pipe0.refs && c->pipe0.comp->tx_completion)
+		c->pipe0.comp->tx_completion(c->अगरace, c->channel_id);
 
-	if (c->pipe1.refs && c->pipe1.comp->tx_completion)
-		c->pipe1.comp->tx_completion(c->iface, c->channel_id);
-}
+	अगर (c->pipe1.refs && c->pipe1.comp->tx_completion)
+		c->pipe1.comp->tx_completion(c->अगरace, c->channel_id);
+पूर्ण
 
 /**
- * arm_mbo_chain - helper function that arms an MBO chain for the HDM
- * @c: pointer to interface channel
+ * arm_mbo_chain - helper function that arms an MBO chain क्रम the HDM
+ * @c: poपूर्णांकer to पूर्णांकerface channel
  * @dir: direction of the channel
- * @compl: pointer to completion function
+ * @compl: poपूर्णांकer to completion function
  *
  * This allocates buffer objects including the containing DMA coherent
- * buffer and puts them in the fifo.
- * Buffers of Rx channels are put in the kthread fifo, hence immediately
+ * buffer and माला_दो them in the fअगरo.
+ * Buffers of Rx channels are put in the kthपढ़ो fअगरo, hence immediately
  * submitted to the HDM.
  *
  * Returns the number of allocated and enqueued MBOs.
  */
-static int arm_mbo_chain(struct most_channel *c, int dir,
-			 void (*compl)(struct mbo *))
-{
-	unsigned int i;
-	struct mbo *mbo;
-	unsigned long flags;
+अटल पूर्णांक arm_mbo_chain(काष्ठा most_channel *c, पूर्णांक dir,
+			 व्योम (*compl)(काष्ठा mbo *))
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा mbo *mbo;
+	अचिन्हित दीर्घ flags;
 	u32 coherent_buf_size = c->cfg.buffer_size + c->cfg.extra_len;
 
 	atomic_set(&c->mbo_nq_level, 0);
 
-	for (i = 0; i < c->cfg.num_buffers; i++) {
-		mbo = kzalloc(sizeof(*mbo), GFP_KERNEL);
-		if (!mbo)
-			goto flush_fifos;
+	क्रम (i = 0; i < c->cfg.num_buffers; i++) अणु
+		mbo = kzalloc(माप(*mbo), GFP_KERNEL);
+		अगर (!mbo)
+			जाओ flush_fअगरos;
 
 		mbo->context = c;
-		mbo->ifp = c->iface;
+		mbo->अगरp = c->अगरace;
 		mbo->hdm_channel_id = c->channel_id;
-		if (c->iface->dma_alloc) {
+		अगर (c->अगरace->dma_alloc) अणु
 			mbo->virt_address =
-				c->iface->dma_alloc(mbo, coherent_buf_size);
-		} else {
+				c->अगरace->dma_alloc(mbo, coherent_buf_size);
+		पूर्ण अन्यथा अणु
 			mbo->virt_address =
 				kzalloc(coherent_buf_size, GFP_KERNEL);
-		}
-		if (!mbo->virt_address)
-			goto release_mbo;
+		पूर्ण
+		अगर (!mbo->virt_address)
+			जाओ release_mbo;
 
 		mbo->complete = compl;
 		mbo->num_buffers_ptr = &dummy_num_buffers;
-		if (dir == MOST_CH_RX) {
+		अगर (dir == MOST_CH_RX) अणु
 			nq_hdm_mbo(mbo);
 			atomic_inc(&c->mbo_nq_level);
-		} else {
-			spin_lock_irqsave(&c->fifo_lock, flags);
-			list_add_tail(&mbo->list, &c->fifo);
-			spin_unlock_irqrestore(&c->fifo_lock, flags);
-		}
-	}
-	return c->cfg.num_buffers;
+		पूर्ण अन्यथा अणु
+			spin_lock_irqsave(&c->fअगरo_lock, flags);
+			list_add_tail(&mbo->list, &c->fअगरo);
+			spin_unlock_irqrestore(&c->fअगरo_lock, flags);
+		पूर्ण
+	पूर्ण
+	वापस c->cfg.num_buffers;
 
 release_mbo:
-	kfree(mbo);
+	kमुक्त(mbo);
 
-flush_fifos:
-	flush_channel_fifos(c);
-	return 0;
-}
+flush_fअगरos:
+	flush_channel_fअगरos(c);
+	वापस 0;
+पूर्ण
 
 /**
- * most_submit_mbo - submits an MBO to fifo
+ * most_submit_mbo - submits an MBO to fअगरo
  * @mbo: most buffer
  */
-void most_submit_mbo(struct mbo *mbo)
-{
-	if (WARN_ONCE(!mbo || !mbo->context,
+व्योम most_submit_mbo(काष्ठा mbo *mbo)
+अणु
+	अगर (WARN_ONCE(!mbo || !mbo->context,
 		      "Bad buffer or missing channel reference\n"))
-		return;
+		वापस;
 
 	nq_hdm_mbo(mbo);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(most_submit_mbo);
 
 /**
- * most_write_completion - write completion handler
+ * most_ग_लिखो_completion - ग_लिखो completion handler
  * @mbo: most buffer
  *
- * This recycles the MBO for further usage. In case the channel has been
+ * This recycles the MBO क्रम further usage. In हाल the channel has been
  * poisoned, the MBO is scheduled to be trashed.
  */
-static void most_write_completion(struct mbo *mbo)
-{
-	struct most_channel *c;
+अटल व्योम most_ग_लिखो_completion(काष्ठा mbo *mbo)
+अणु
+	काष्ठा most_channel *c;
 
 	c = mbo->context;
-	if (unlikely(c->is_poisoned || (mbo->status == MBO_E_CLOSE)))
+	अगर (unlikely(c->is_poisoned || (mbo->status == MBO_E_CLOSE)))
 		trash_mbo(mbo);
-	else
+	अन्यथा
 		arm_mbo(mbo);
-}
+पूर्ण
 
-int channel_has_mbo(struct most_interface *iface, int id,
-		    struct most_component *comp)
-{
-	struct most_channel *c = iface->p->channel[id];
-	unsigned long flags;
-	int empty;
+पूर्णांक channel_has_mbo(काष्ठा most_पूर्णांकerface *अगरace, पूर्णांक id,
+		    काष्ठा most_component *comp)
+अणु
+	काष्ठा most_channel *c = अगरace->p->channel[id];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक empty;
 
-	if (unlikely(!c))
-		return -EINVAL;
+	अगर (unlikely(!c))
+		वापस -EINVAL;
 
-	if (c->pipe0.refs && c->pipe1.refs &&
+	अगर (c->pipe0.refs && c->pipe1.refs &&
 	    ((comp == c->pipe0.comp && c->pipe0.num_buffers <= 0) ||
 	     (comp == c->pipe1.comp && c->pipe1.num_buffers <= 0)))
-		return 0;
+		वापस 0;
 
-	spin_lock_irqsave(&c->fifo_lock, flags);
-	empty = list_empty(&c->fifo);
-	spin_unlock_irqrestore(&c->fifo_lock, flags);
-	return !empty;
-}
+	spin_lock_irqsave(&c->fअगरo_lock, flags);
+	empty = list_empty(&c->fअगरo);
+	spin_unlock_irqrestore(&c->fअगरo_lock, flags);
+	वापस !empty;
+पूर्ण
 EXPORT_SYMBOL_GPL(channel_has_mbo);
 
 /**
- * most_get_mbo - get pointer to an MBO of pool
- * @iface: pointer to interface instance
+ * most_get_mbo - get poपूर्णांकer to an MBO of pool
+ * @अगरace: poपूर्णांकer to पूर्णांकerface instance
  * @id: channel ID
  * @comp: driver component
  *
- * This attempts to get a free buffer out of the channel fifo.
- * Returns a pointer to MBO on success or NULL otherwise.
+ * This attempts to get a मुक्त buffer out of the channel fअगरo.
+ * Returns a poपूर्णांकer to MBO on success or शून्य otherwise.
  */
-struct mbo *most_get_mbo(struct most_interface *iface, int id,
-			 struct most_component *comp)
-{
-	struct mbo *mbo;
-	struct most_channel *c;
-	unsigned long flags;
-	int *num_buffers_ptr;
+काष्ठा mbo *most_get_mbo(काष्ठा most_पूर्णांकerface *अगरace, पूर्णांक id,
+			 काष्ठा most_component *comp)
+अणु
+	काष्ठा mbo *mbo;
+	काष्ठा most_channel *c;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक *num_buffers_ptr;
 
-	c = iface->p->channel[id];
-	if (unlikely(!c))
-		return NULL;
+	c = अगरace->p->channel[id];
+	अगर (unlikely(!c))
+		वापस शून्य;
 
-	if (c->pipe0.refs && c->pipe1.refs &&
+	अगर (c->pipe0.refs && c->pipe1.refs &&
 	    ((comp == c->pipe0.comp && c->pipe0.num_buffers <= 0) ||
 	     (comp == c->pipe1.comp && c->pipe1.num_buffers <= 0)))
-		return NULL;
+		वापस शून्य;
 
-	if (comp == c->pipe0.comp)
+	अगर (comp == c->pipe0.comp)
 		num_buffers_ptr = &c->pipe0.num_buffers;
-	else if (comp == c->pipe1.comp)
+	अन्यथा अगर (comp == c->pipe1.comp)
 		num_buffers_ptr = &c->pipe1.num_buffers;
-	else
+	अन्यथा
 		num_buffers_ptr = &dummy_num_buffers;
 
-	spin_lock_irqsave(&c->fifo_lock, flags);
-	if (list_empty(&c->fifo)) {
-		spin_unlock_irqrestore(&c->fifo_lock, flags);
-		return NULL;
-	}
-	mbo = list_pop_mbo(&c->fifo);
+	spin_lock_irqsave(&c->fअगरo_lock, flags);
+	अगर (list_empty(&c->fअगरo)) अणु
+		spin_unlock_irqrestore(&c->fअगरo_lock, flags);
+		वापस शून्य;
+	पूर्ण
+	mbo = list_pop_mbo(&c->fअगरo);
 	--*num_buffers_ptr;
-	spin_unlock_irqrestore(&c->fifo_lock, flags);
+	spin_unlock_irqrestore(&c->fअगरo_lock, flags);
 
 	mbo->num_buffers_ptr = num_buffers_ptr;
 	mbo->buffer_length = c->cfg.buffer_size;
-	return mbo;
-}
+	वापस mbo;
+पूर्ण
 EXPORT_SYMBOL_GPL(most_get_mbo);
 
 /**
- * most_put_mbo - return buffer to pool
+ * most_put_mbo - वापस buffer to pool
  * @mbo: most buffer
  */
-void most_put_mbo(struct mbo *mbo)
-{
-	struct most_channel *c = mbo->context;
+व्योम most_put_mbo(काष्ठा mbo *mbo)
+अणु
+	काष्ठा most_channel *c = mbo->context;
 
-	if (c->cfg.direction == MOST_CH_TX) {
+	अगर (c->cfg.direction == MOST_CH_TX) अणु
 		arm_mbo(mbo);
-		return;
-	}
+		वापस;
+	पूर्ण
 	nq_hdm_mbo(mbo);
 	atomic_inc(&c->mbo_nq_level);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(most_put_mbo);
 
 /**
- * most_read_completion - read completion handler
+ * most_पढ़ो_completion - पढ़ो completion handler
  * @mbo: most buffer
  *
  * This function is called by the HDM when data has been received from the
  * hardware and copied to the buffer of the MBO.
  *
- * In case the channel has been poisoned it puts the buffer in the trash queue.
- * Otherwise, it passes the buffer to an component for further processing.
+ * In हाल the channel has been poisoned it माला_दो the buffer in the trash queue.
+ * Otherwise, it passes the buffer to an component क्रम further processing.
  */
-static void most_read_completion(struct mbo *mbo)
-{
-	struct most_channel *c = mbo->context;
+अटल व्योम most_पढ़ो_completion(काष्ठा mbo *mbo)
+अणु
+	काष्ठा most_channel *c = mbo->context;
 
-	if (unlikely(c->is_poisoned || (mbo->status == MBO_E_CLOSE))) {
+	अगर (unlikely(c->is_poisoned || (mbo->status == MBO_E_CLOSE))) अणु
 		trash_mbo(mbo);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (mbo->status == MBO_E_INVAL) {
+	अगर (mbo->status == MBO_E_INVAL) अणु
 		nq_hdm_mbo(mbo);
 		atomic_inc(&c->mbo_nq_level);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (atomic_sub_and_test(1, &c->mbo_nq_level))
+	अगर (atomic_sub_and_test(1, &c->mbo_nq_level))
 		c->is_starving = 1;
 
-	if (c->pipe0.refs && c->pipe0.comp->rx_completion &&
+	अगर (c->pipe0.refs && c->pipe0.comp->rx_completion &&
 	    c->pipe0.comp->rx_completion(mbo) == 0)
-		return;
+		वापस;
 
-	if (c->pipe1.refs && c->pipe1.comp->rx_completion &&
+	अगर (c->pipe1.refs && c->pipe1.comp->rx_completion &&
 	    c->pipe1.comp->rx_completion(mbo) == 0)
-		return;
+		वापस;
 
 	most_put_mbo(mbo);
-}
+पूर्ण
 
 /**
- * most_start_channel - prepares a channel for communication
- * @iface: pointer to interface instance
+ * most_start_channel - prepares a channel क्रम communication
+ * @अगरace: poपूर्णांकer to पूर्णांकerface instance
  * @id: channel ID
  * @comp: driver component
  *
- * This prepares the channel for usage. Cross-checks whether the
+ * This prepares the channel क्रम usage. Cross-checks whether the
  * channel's been properly configured.
  *
  * Returns 0 on success or error code otherwise.
  */
-int most_start_channel(struct most_interface *iface, int id,
-		       struct most_component *comp)
-{
-	int num_buffer;
-	int ret;
-	struct most_channel *c = iface->p->channel[id];
+पूर्णांक most_start_channel(काष्ठा most_पूर्णांकerface *अगरace, पूर्णांक id,
+		       काष्ठा most_component *comp)
+अणु
+	पूर्णांक num_buffer;
+	पूर्णांक ret;
+	काष्ठा most_channel *c = अगरace->p->channel[id];
 
-	if (unlikely(!c))
-		return -EINVAL;
+	अगर (unlikely(!c))
+		वापस -EINVAL;
 
 	mutex_lock(&c->start_mutex);
-	if (c->pipe0.refs + c->pipe1.refs > 0)
-		goto out; /* already started by another component */
+	अगर (c->pipe0.refs + c->pipe1.refs > 0)
+		जाओ out; /* alपढ़ोy started by another component */
 
-	if (!try_module_get(iface->mod)) {
+	अगर (!try_module_get(अगरace->mod)) अणु
 		dev_err(&c->dev, "Failed to acquire HDM lock\n");
 		mutex_unlock(&c->start_mutex);
-		return -ENOLCK;
-	}
+		वापस -ENOLCK;
+	पूर्ण
 
 	c->cfg.extra_len = 0;
-	if (c->iface->configure(c->iface, c->channel_id, &c->cfg)) {
+	अगर (c->अगरace->configure(c->अगरace, c->channel_id, &c->cfg)) अणु
 		dev_err(&c->dev, "Channel configuration failed. Go check settings...\n");
 		ret = -EINVAL;
-		goto err_put_module;
-	}
+		जाओ err_put_module;
+	पूर्ण
 
-	init_waitqueue_head(&c->hdm_fifo_wq);
+	init_रुकोqueue_head(&c->hdm_fअगरo_wq);
 
-	if (c->cfg.direction == MOST_CH_RX)
+	अगर (c->cfg.direction == MOST_CH_RX)
 		num_buffer = arm_mbo_chain(c, c->cfg.direction,
-					   most_read_completion);
-	else
+					   most_पढ़ो_completion);
+	अन्यथा
 		num_buffer = arm_mbo_chain(c, c->cfg.direction,
-					   most_write_completion);
-	if (unlikely(!num_buffer)) {
+					   most_ग_लिखो_completion);
+	अगर (unlikely(!num_buffer)) अणु
 		ret = -ENOMEM;
-		goto err_put_module;
-	}
+		जाओ err_put_module;
+	पूर्ण
 
-	ret = run_enqueue_thread(c, id);
-	if (ret)
-		goto err_put_module;
+	ret = run_enqueue_thपढ़ो(c, id);
+	अगर (ret)
+		जाओ err_put_module;
 
 	c->is_starving = 0;
 	c->pipe0.num_buffers = c->cfg.num_buffers / 2;
@@ -1137,198 +1138,198 @@ int most_start_channel(struct most_interface *iface, int id,
 	atomic_set(&c->mbo_ref, num_buffer);
 
 out:
-	if (comp == c->pipe0.comp)
+	अगर (comp == c->pipe0.comp)
 		c->pipe0.refs++;
-	if (comp == c->pipe1.comp)
+	अगर (comp == c->pipe1.comp)
 		c->pipe1.refs++;
 	mutex_unlock(&c->start_mutex);
-	return 0;
+	वापस 0;
 
 err_put_module:
-	module_put(iface->mod);
+	module_put(अगरace->mod);
 	mutex_unlock(&c->start_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(most_start_channel);
 
 /**
  * most_stop_channel - stops a running channel
- * @iface: pointer to interface instance
+ * @अगरace: poपूर्णांकer to पूर्णांकerface instance
  * @id: channel ID
  * @comp: driver component
  */
-int most_stop_channel(struct most_interface *iface, int id,
-		      struct most_component *comp)
-{
-	struct most_channel *c;
+पूर्णांक most_stop_channel(काष्ठा most_पूर्णांकerface *अगरace, पूर्णांक id,
+		      काष्ठा most_component *comp)
+अणु
+	काष्ठा most_channel *c;
 
-	if (unlikely((!iface) || (id >= iface->num_channels) || (id < 0))) {
+	अगर (unlikely((!अगरace) || (id >= अगरace->num_channels) || (id < 0))) अणु
 		pr_err("Bad interface or index out of range\n");
-		return -EINVAL;
-	}
-	c = iface->p->channel[id];
-	if (unlikely(!c))
-		return -EINVAL;
+		वापस -EINVAL;
+	पूर्ण
+	c = अगरace->p->channel[id];
+	अगर (unlikely(!c))
+		वापस -EINVAL;
 
 	mutex_lock(&c->start_mutex);
-	if (c->pipe0.refs + c->pipe1.refs >= 2)
-		goto out;
+	अगर (c->pipe0.refs + c->pipe1.refs >= 2)
+		जाओ out;
 
-	if (c->hdm_enqueue_task)
-		kthread_stop(c->hdm_enqueue_task);
-	c->hdm_enqueue_task = NULL;
+	अगर (c->hdm_enqueue_task)
+		kthपढ़ो_stop(c->hdm_enqueue_task);
+	c->hdm_enqueue_task = शून्य;
 
-	if (iface->mod)
-		module_put(iface->mod);
+	अगर (अगरace->mod)
+		module_put(अगरace->mod);
 
 	c->is_poisoned = true;
-	if (c->iface->poison_channel(c->iface, c->channel_id)) {
+	अगर (c->अगरace->poison_channel(c->अगरace, c->channel_id)) अणु
 		dev_err(&c->dev, "Failed to stop channel %d of interface %s\n", c->channel_id,
-			c->iface->description);
+			c->अगरace->description);
 		mutex_unlock(&c->start_mutex);
-		return -EAGAIN;
-	}
-	flush_trash_fifo(c);
-	flush_channel_fifos(c);
+		वापस -EAGAIN;
+	पूर्ण
+	flush_trash_fअगरo(c);
+	flush_channel_fअगरos(c);
 
-#ifdef CMPL_INTERRUPTIBLE
-	if (wait_for_completion_interruptible(&c->cleanup)) {
+#अगर_घोषित CMPL_INTERRUPTIBLE
+	अगर (रुको_क्रम_completion_पूर्णांकerruptible(&c->cleanup)) अणु
 		dev_err(&c->dev, "Interrupted while cleaning up channel %d\n", c->channel_id);
 		mutex_unlock(&c->start_mutex);
-		return -EINTR;
-	}
-#else
-	wait_for_completion(&c->cleanup);
-#endif
+		वापस -EINTR;
+	पूर्ण
+#अन्यथा
+	रुको_क्रम_completion(&c->cleanup);
+#पूर्ण_अगर
 	c->is_poisoned = false;
 
 out:
-	if (comp == c->pipe0.comp)
+	अगर (comp == c->pipe0.comp)
 		c->pipe0.refs--;
-	if (comp == c->pipe1.comp)
+	अगर (comp == c->pipe1.comp)
 		c->pipe1.refs--;
 	mutex_unlock(&c->start_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(most_stop_channel);
 
 /**
- * most_register_component - registers a driver component with the core
+ * most_रेजिस्टर_component - रेजिस्टरs a driver component with the core
  * @comp: driver component
  */
-int most_register_component(struct most_component *comp)
-{
-	if (!comp) {
+पूर्णांक most_रेजिस्टर_component(काष्ठा most_component *comp)
+अणु
+	अगर (!comp) अणु
 		pr_err("Bad component\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	list_add_tail(&comp->list, &comp_list);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(most_register_component);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(most_रेजिस्टर_component);
 
-static int disconnect_channels(struct device *dev, void *data)
-{
-	struct most_interface *iface;
-	struct most_channel *c, *tmp;
-	struct most_component *comp = data;
+अटल पूर्णांक disconnect_channels(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा most_पूर्णांकerface *अगरace;
+	काष्ठा most_channel *c, *पंचांगp;
+	काष्ठा most_component *comp = data;
 
-	iface = dev_get_drvdata(dev);
-	list_for_each_entry_safe(c, tmp, &iface->p->channel_list, list) {
-		if (c->pipe0.comp == comp || c->pipe1.comp == comp)
-			comp->disconnect_channel(c->iface, c->channel_id);
-		if (c->pipe0.comp == comp)
-			c->pipe0.comp = NULL;
-		if (c->pipe1.comp == comp)
-			c->pipe1.comp = NULL;
-	}
-	return 0;
-}
+	अगरace = dev_get_drvdata(dev);
+	list_क्रम_each_entry_safe(c, पंचांगp, &अगरace->p->channel_list, list) अणु
+		अगर (c->pipe0.comp == comp || c->pipe1.comp == comp)
+			comp->disconnect_channel(c->अगरace, c->channel_id);
+		अगर (c->pipe0.comp == comp)
+			c->pipe0.comp = शून्य;
+		अगर (c->pipe1.comp == comp)
+			c->pipe1.comp = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * most_deregister_component - deregisters a driver component with the core
+ * most_deरेजिस्टर_component - deरेजिस्टरs a driver component with the core
  * @comp: driver component
  */
-int most_deregister_component(struct most_component *comp)
-{
-	if (!comp) {
+पूर्णांक most_deरेजिस्टर_component(काष्ठा most_component *comp)
+अणु
+	अगर (!comp) अणु
 		pr_err("Bad component\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	bus_for_each_dev(&mostbus, NULL, comp, disconnect_channels);
+	bus_क्रम_each_dev(&mostbus, शून्य, comp, disconnect_channels);
 	list_del(&comp->list);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(most_deregister_component);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(most_deरेजिस्टर_component);
 
-static void release_channel(struct device *dev)
-{
-	struct most_channel *c = to_channel(dev);
+अटल व्योम release_channel(काष्ठा device *dev)
+अणु
+	काष्ठा most_channel *c = to_channel(dev);
 
-	kfree(c);
-}
+	kमुक्त(c);
+पूर्ण
 
 /**
- * most_register_interface - registers an interface with core
- * @iface: device interface
+ * most_रेजिस्टर_पूर्णांकerface - रेजिस्टरs an पूर्णांकerface with core
+ * @अगरace: device पूर्णांकerface
  *
- * Allocates and initializes a new interface instance and all of its channels.
- * Returns a pointer to kobject or an error pointer.
+ * Allocates and initializes a new पूर्णांकerface instance and all of its channels.
+ * Returns a poपूर्णांकer to kobject or an error poपूर्णांकer.
  */
-int most_register_interface(struct most_interface *iface)
-{
-	unsigned int i;
-	int id;
-	struct most_channel *c;
+पूर्णांक most_रेजिस्टर_पूर्णांकerface(काष्ठा most_पूर्णांकerface *अगरace)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक id;
+	काष्ठा most_channel *c;
 
-	if (!iface || !iface->enqueue || !iface->configure ||
-	    !iface->poison_channel || (iface->num_channels > MAX_CHANNELS))
-		return -EINVAL;
+	अगर (!अगरace || !अगरace->enqueue || !अगरace->configure ||
+	    !अगरace->poison_channel || (अगरace->num_channels > MAX_CHANNELS))
+		वापस -EINVAL;
 
 	id = ida_simple_get(&mdev_id, 0, 0, GFP_KERNEL);
-	if (id < 0) {
-		dev_err(iface->dev, "Failed to allocate device ID\n");
-		return id;
-	}
+	अगर (id < 0) अणु
+		dev_err(अगरace->dev, "Failed to allocate device ID\n");
+		वापस id;
+	पूर्ण
 
-	iface->p = kzalloc(sizeof(*iface->p), GFP_KERNEL);
-	if (!iface->p) {
-		ida_simple_remove(&mdev_id, id);
-		return -ENOMEM;
-	}
+	अगरace->p = kzalloc(माप(*अगरace->p), GFP_KERNEL);
+	अगर (!अगरace->p) अणु
+		ida_simple_हटाओ(&mdev_id, id);
+		वापस -ENOMEM;
+	पूर्ण
 
-	INIT_LIST_HEAD(&iface->p->channel_list);
-	iface->p->dev_id = id;
-	strscpy(iface->p->name, iface->description, sizeof(iface->p->name));
-	iface->dev->bus = &mostbus;
-	iface->dev->groups = interface_attr_groups;
-	dev_set_drvdata(iface->dev, iface);
-	if (device_register(iface->dev)) {
-		dev_err(iface->dev, "Failed to register interface device\n");
-		kfree(iface->p);
-		put_device(iface->dev);
-		ida_simple_remove(&mdev_id, id);
-		return -ENOMEM;
-	}
+	INIT_LIST_HEAD(&अगरace->p->channel_list);
+	अगरace->p->dev_id = id;
+	strscpy(अगरace->p->name, अगरace->description, माप(अगरace->p->name));
+	अगरace->dev->bus = &mostbus;
+	अगरace->dev->groups = पूर्णांकerface_attr_groups;
+	dev_set_drvdata(अगरace->dev, अगरace);
+	अगर (device_रेजिस्टर(अगरace->dev)) अणु
+		dev_err(अगरace->dev, "Failed to register interface device\n");
+		kमुक्त(अगरace->p);
+		put_device(अगरace->dev);
+		ida_simple_हटाओ(&mdev_id, id);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < iface->num_channels; i++) {
-		const char *name_suffix = iface->channel_vector[i].name_suffix;
+	क्रम (i = 0; i < अगरace->num_channels; i++) अणु
+		स्थिर अक्षर *name_suffix = अगरace->channel_vector[i].name_suffix;
 
-		c = kzalloc(sizeof(*c), GFP_KERNEL);
-		if (!c)
-			goto err_free_resources;
-		if (!name_suffix)
-			snprintf(c->name, STRING_SIZE, "ch%d", i);
-		else
-			snprintf(c->name, STRING_SIZE, "%s", name_suffix);
+		c = kzalloc(माप(*c), GFP_KERNEL);
+		अगर (!c)
+			जाओ err_मुक्त_resources;
+		अगर (!name_suffix)
+			snम_लिखो(c->name, STRING_SIZE, "ch%d", i);
+		अन्यथा
+			snम_लिखो(c->name, STRING_SIZE, "%s", name_suffix);
 		c->dev.init_name = c->name;
-		c->dev.parent = iface->dev;
+		c->dev.parent = अगरace->dev;
 		c->dev.groups = channel_attr_groups;
 		c->dev.release = release_channel;
-		iface->p->channel[i] = c;
+		अगरace->p->channel[i] = c;
 		c->is_starving = 0;
-		c->iface = iface;
+		c->अगरace = अगरace;
 		c->channel_id = i;
 		c->keep_mbo = false;
 		c->enqueue_halt = false;
@@ -1339,73 +1340,73 @@ int most_register_interface(struct most_interface *iface)
 		c->cfg.buffer_size = 0;
 		c->cfg.subbuffer_size = 0;
 		c->cfg.packets_per_xact = 0;
-		spin_lock_init(&c->fifo_lock);
-		INIT_LIST_HEAD(&c->fifo);
-		INIT_LIST_HEAD(&c->trash_fifo);
-		INIT_LIST_HEAD(&c->halt_fifo);
+		spin_lock_init(&c->fअगरo_lock);
+		INIT_LIST_HEAD(&c->fअगरo);
+		INIT_LIST_HEAD(&c->trash_fअगरo);
+		INIT_LIST_HEAD(&c->halt_fअगरo);
 		init_completion(&c->cleanup);
 		atomic_set(&c->mbo_ref, 0);
 		mutex_init(&c->start_mutex);
 		mutex_init(&c->nq_mutex);
-		list_add_tail(&c->list, &iface->p->channel_list);
-		if (device_register(&c->dev)) {
+		list_add_tail(&c->list, &अगरace->p->channel_list);
+		अगर (device_रेजिस्टर(&c->dev)) अणु
 			dev_err(&c->dev, "Failed to register channel device\n");
-			goto err_free_most_channel;
-		}
-	}
-	most_interface_register_notify(iface->description);
-	return 0;
+			जाओ err_मुक्त_most_channel;
+		पूर्ण
+	पूर्ण
+	most_पूर्णांकerface_रेजिस्टर_notअगरy(अगरace->description);
+	वापस 0;
 
-err_free_most_channel:
+err_मुक्त_most_channel:
 	put_device(&c->dev);
 
-err_free_resources:
-	while (i > 0) {
-		c = iface->p->channel[--i];
-		device_unregister(&c->dev);
-	}
-	kfree(iface->p);
-	device_unregister(iface->dev);
-	ida_simple_remove(&mdev_id, id);
-	return -ENOMEM;
-}
-EXPORT_SYMBOL_GPL(most_register_interface);
+err_मुक्त_resources:
+	जबतक (i > 0) अणु
+		c = अगरace->p->channel[--i];
+		device_unरेजिस्टर(&c->dev);
+	पूर्ण
+	kमुक्त(अगरace->p);
+	device_unरेजिस्टर(अगरace->dev);
+	ida_simple_हटाओ(&mdev_id, id);
+	वापस -ENOMEM;
+पूर्ण
+EXPORT_SYMBOL_GPL(most_रेजिस्टर_पूर्णांकerface);
 
 /**
- * most_deregister_interface - deregisters an interface with core
- * @iface: device interface
+ * most_deरेजिस्टर_पूर्णांकerface - deरेजिस्टरs an पूर्णांकerface with core
+ * @अगरace: device पूर्णांकerface
  *
- * Before removing an interface instance from the list, all running
+ * Beक्रमe removing an पूर्णांकerface instance from the list, all running
  * channels are stopped and poisoned.
  */
-void most_deregister_interface(struct most_interface *iface)
-{
-	int i;
-	struct most_channel *c;
+व्योम most_deरेजिस्टर_पूर्णांकerface(काष्ठा most_पूर्णांकerface *अगरace)
+अणु
+	पूर्णांक i;
+	काष्ठा most_channel *c;
 
-	for (i = 0; i < iface->num_channels; i++) {
-		c = iface->p->channel[i];
-		if (c->pipe0.comp)
-			c->pipe0.comp->disconnect_channel(c->iface,
+	क्रम (i = 0; i < अगरace->num_channels; i++) अणु
+		c = अगरace->p->channel[i];
+		अगर (c->pipe0.comp)
+			c->pipe0.comp->disconnect_channel(c->अगरace,
 							c->channel_id);
-		if (c->pipe1.comp)
-			c->pipe1.comp->disconnect_channel(c->iface,
+		अगर (c->pipe1.comp)
+			c->pipe1.comp->disconnect_channel(c->अगरace,
 							c->channel_id);
-		c->pipe0.comp = NULL;
-		c->pipe1.comp = NULL;
+		c->pipe0.comp = शून्य;
+		c->pipe1.comp = शून्य;
 		list_del(&c->list);
-		device_unregister(&c->dev);
-	}
+		device_unरेजिस्टर(&c->dev);
+	पूर्ण
 
-	ida_simple_remove(&mdev_id, iface->p->dev_id);
-	kfree(iface->p);
-	device_unregister(iface->dev);
-}
-EXPORT_SYMBOL_GPL(most_deregister_interface);
+	ida_simple_हटाओ(&mdev_id, अगरace->p->dev_id);
+	kमुक्त(अगरace->p);
+	device_unरेजिस्टर(अगरace->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(most_deरेजिस्टर_पूर्णांकerface);
 
 /**
  * most_stop_enqueue - prevents core from enqueueing MBOs
- * @iface: pointer to interface
+ * @अगरace: poपूर्णांकer to पूर्णांकerface
  * @id: channel id
  *
  * This is called by an HDM that _cannot_ attend to its duties and
@@ -1413,76 +1414,76 @@ EXPORT_SYMBOL_GPL(most_deregister_interface);
  * enqueue any further packets unless the flagging HDM calls
  * most_resume enqueue().
  */
-void most_stop_enqueue(struct most_interface *iface, int id)
-{
-	struct most_channel *c = iface->p->channel[id];
+व्योम most_stop_enqueue(काष्ठा most_पूर्णांकerface *अगरace, पूर्णांक id)
+अणु
+	काष्ठा most_channel *c = अगरace->p->channel[id];
 
-	if (!c)
-		return;
+	अगर (!c)
+		वापस;
 
 	mutex_lock(&c->nq_mutex);
 	c->enqueue_halt = true;
 	mutex_unlock(&c->nq_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(most_stop_enqueue);
 
 /**
  * most_resume_enqueue - allow core to enqueue MBOs again
- * @iface: pointer to interface
+ * @अगरace: poपूर्णांकer to पूर्णांकerface
  * @id: channel id
  *
  * This clears the enqueue halt flag and enqueues all MBOs currently
- * sitting in the wait fifo.
+ * sitting in the रुको fअगरo.
  */
-void most_resume_enqueue(struct most_interface *iface, int id)
-{
-	struct most_channel *c = iface->p->channel[id];
+व्योम most_resume_enqueue(काष्ठा most_पूर्णांकerface *अगरace, पूर्णांक id)
+अणु
+	काष्ठा most_channel *c = अगरace->p->channel[id];
 
-	if (!c)
-		return;
+	अगर (!c)
+		वापस;
 
 	mutex_lock(&c->nq_mutex);
 	c->enqueue_halt = false;
 	mutex_unlock(&c->nq_mutex);
 
-	wake_up_interruptible(&c->hdm_fifo_wq);
-}
+	wake_up_पूर्णांकerruptible(&c->hdm_fअगरo_wq);
+पूर्ण
 EXPORT_SYMBOL_GPL(most_resume_enqueue);
 
-static int __init most_init(void)
-{
-	int err;
+अटल पूर्णांक __init most_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	INIT_LIST_HEAD(&comp_list);
 	ida_init(&mdev_id);
 
-	err = bus_register(&mostbus);
-	if (err) {
+	err = bus_रेजिस्टर(&mostbus);
+	अगर (err) अणु
 		pr_err("Failed to register most bus\n");
-		return err;
-	}
-	err = driver_register(&mostbus_driver);
-	if (err) {
+		वापस err;
+	पूर्ण
+	err = driver_रेजिस्टर(&mostbus_driver);
+	अगर (err) अणु
 		pr_err("Failed to register core driver\n");
-		goto err_unregister_bus;
-	}
+		जाओ err_unरेजिस्टर_bus;
+	पूर्ण
 	configfs_init();
-	return 0;
+	वापस 0;
 
-err_unregister_bus:
-	bus_unregister(&mostbus);
-	return err;
-}
+err_unरेजिस्टर_bus:
+	bus_unरेजिस्टर(&mostbus);
+	वापस err;
+पूर्ण
 
-static void __exit most_exit(void)
-{
-	driver_unregister(&mostbus_driver);
-	bus_unregister(&mostbus);
+अटल व्योम __निकास most_निकास(व्योम)
+अणु
+	driver_unरेजिस्टर(&mostbus_driver);
+	bus_unरेजिस्टर(&mostbus);
 	ida_destroy(&mdev_id);
-}
+पूर्ण
 
 subsys_initcall(most_init);
-module_exit(most_exit);
+module_निकास(most_निकास);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Christian Gromm <christian.gromm@microchip.com>");
 MODULE_DESCRIPTION("Core module of stacked MOST Linux driver");

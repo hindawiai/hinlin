@@ -1,458 +1,459 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TC Applied Technologies Digital Interface Communications Engine driver
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
-#include "dice.h"
+#समावेश "dice.h"
 
 MODULE_DESCRIPTION("DICE driver");
 MODULE_AUTHOR("Clemens Ladisch <clemens@ladisch.de>");
 MODULE_LICENSE("GPL v2");
 
-#define OUI_WEISS		0x001c6a
-#define OUI_LOUD		0x000ff2
-#define OUI_FOCUSRITE		0x00130e
-#define OUI_TCELECTRONIC	0x000166
-#define OUI_ALESIS		0x000595
-#define OUI_MAUDIO		0x000d6c
-#define OUI_MYTEK		0x001ee8
-#define OUI_SSL			0x0050c2	// Actually ID reserved by IEEE.
-#define OUI_PRESONUS		0x000a92
-#define OUI_HARMAN		0x000fd7
-#define OUI_AVID		0x00a07e
+#घोषणा OUI_WEISS		0x001c6a
+#घोषणा OUI_LOUD		0x000ff2
+#घोषणा OUI_FOCUSRITE		0x00130e
+#घोषणा OUI_TCELECTRONIC	0x000166
+#घोषणा OUI_ALESIS		0x000595
+#घोषणा OUI_MAUDIO		0x000d6c
+#घोषणा OUI_MYTEK		0x001ee8
+#घोषणा OUI_SSL			0x0050c2	// Actually ID reserved by IEEE.
+#घोषणा OUI_PRESONUS		0x000a92
+#घोषणा OUI_HARMAN		0x000fd7
+#घोषणा OUI_AVID		0x00a07e
 
-#define DICE_CATEGORY_ID	0x04
-#define WEISS_CATEGORY_ID	0x00
-#define LOUD_CATEGORY_ID	0x10
-#define HARMAN_CATEGORY_ID	0x20
+#घोषणा DICE_CATEGORY_ID	0x04
+#घोषणा WEISS_CATEGORY_ID	0x00
+#घोषणा LOUD_CATEGORY_ID	0x10
+#घोषणा HARMAN_CATEGORY_ID	0x20
 
-#define MODEL_ALESIS_IO_BOTH	0x000001
+#घोषणा MODEL_ALESIS_IO_BOTH	0x000001
 
-static int check_dice_category(struct fw_unit *unit)
-{
-	struct fw_device *device = fw_parent_device(unit);
-	struct fw_csr_iterator it;
-	int key, val, vendor = -1, model = -1;
-	unsigned int category;
+अटल पूर्णांक check_dice_category(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा fw_device *device = fw_parent_device(unit);
+	काष्ठा fw_csr_iterator it;
+	पूर्णांक key, val, venकरोr = -1, model = -1;
+	अचिन्हित पूर्णांक category;
 
 	/*
-	 * Check that GUID and unit directory are constructed according to DICE
-	 * rules, i.e., that the specifier ID is the GUID's OUI, and that the
+	 * Check that GUID and unit directory are स्थिरructed according to DICE
+	 * rules, i.e., that the specअगरier ID is the GUID's OUI, and that the
 	 * GUID chip ID consists of the 8-bit category ID, the 10-bit product
 	 * ID, and a 22-bit serial number.
 	 */
 	fw_csr_iterator_init(&it, unit->directory);
-	while (fw_csr_iterator_next(&it, &key, &val)) {
-		switch (key) {
-		case CSR_SPECIFIER_ID:
-			vendor = val;
-			break;
-		case CSR_MODEL:
+	जबतक (fw_csr_iterator_next(&it, &key, &val)) अणु
+		चयन (key) अणु
+		हाल CSR_SPECIFIER_ID:
+			venकरोr = val;
+			अवरोध;
+		हाल CSR_MODEL:
 			model = val;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (vendor == OUI_WEISS)
+	अगर (venकरोr == OUI_WEISS)
 		category = WEISS_CATEGORY_ID;
-	else if (vendor == OUI_LOUD)
+	अन्यथा अगर (venकरोr == OUI_LOUD)
 		category = LOUD_CATEGORY_ID;
-	else if (vendor == OUI_HARMAN)
+	अन्यथा अगर (venकरोr == OUI_HARMAN)
 		category = HARMAN_CATEGORY_ID;
-	else
+	अन्यथा
 		category = DICE_CATEGORY_ID;
-	if (device->config_rom[3] != ((vendor << 8) | category) ||
+	अगर (device->config_rom[3] != ((venकरोr << 8) | category) ||
 	    device->config_rom[4] >> 22 != model)
-		return -ENODEV;
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_clock_caps(struct snd_dice *dice)
-{
+अटल पूर्णांक check_घड़ी_caps(काष्ठा snd_dice *dice)
+अणु
 	__be32 value;
-	int err;
+	पूर्णांक err;
 
-	/* some very old firmwares don't tell about their clock support */
-	if (dice->clock_caps > 0) {
-		err = snd_dice_transaction_read_global(dice,
+	/* some very old firmwares करोn't tell about their घड़ी support */
+	अगर (dice->घड़ी_caps > 0) अणु
+		err = snd_dice_transaction_पढ़ो_global(dice,
 						GLOBAL_CLOCK_CAPABILITIES,
 						&value, 4);
-		if (err < 0)
-			return err;
-		dice->clock_caps = be32_to_cpu(value);
-	} else {
+		अगर (err < 0)
+			वापस err;
+		dice->घड़ी_caps = be32_to_cpu(value);
+	पूर्ण अन्यथा अणु
 		/* this should be supported by any device */
-		dice->clock_caps = CLOCK_CAP_RATE_44100 |
+		dice->घड़ी_caps = CLOCK_CAP_RATE_44100 |
 				   CLOCK_CAP_RATE_48000 |
 				   CLOCK_CAP_SOURCE_ARX1 |
 				   CLOCK_CAP_SOURCE_INTERNAL;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dice_card_strings(struct snd_dice *dice)
-{
-	struct snd_card *card = dice->card;
-	struct fw_device *dev = fw_parent_device(dice->unit);
-	char vendor[32], model[32];
-	unsigned int i;
-	int err;
+अटल व्योम dice_card_strings(काष्ठा snd_dice *dice)
+अणु
+	काष्ठा snd_card *card = dice->card;
+	काष्ठा fw_device *dev = fw_parent_device(dice->unit);
+	अक्षर venकरोr[32], model[32];
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	strcpy(card->driver, "DICE");
+	म_नकल(card->driver, "DICE");
 
-	strcpy(card->shortname, "DICE");
-	BUILD_BUG_ON(NICK_NAME_SIZE < sizeof(card->shortname));
-	err = snd_dice_transaction_read_global(dice, GLOBAL_NICK_NAME,
-					       card->shortname,
-					       sizeof(card->shortname));
-	if (err >= 0) {
-		/* DICE strings are returned in "always-wrong" endianness */
-		BUILD_BUG_ON(sizeof(card->shortname) % 4 != 0);
-		for (i = 0; i < sizeof(card->shortname); i += 4)
-			swab32s((u32 *)&card->shortname[i]);
-		card->shortname[sizeof(card->shortname) - 1] = '\0';
-	}
+	म_नकल(card->लघुname, "DICE");
+	BUILD_BUG_ON(NICK_NAME_SIZE < माप(card->लघुname));
+	err = snd_dice_transaction_पढ़ो_global(dice, GLOBAL_NICK_NAME,
+					       card->लघुname,
+					       माप(card->लघुname));
+	अगर (err >= 0) अणु
+		/* DICE strings are वापसed in "always-wrong" endianness */
+		BUILD_BUG_ON(माप(card->लघुname) % 4 != 0);
+		क्रम (i = 0; i < माप(card->लघुname); i += 4)
+			swab32s((u32 *)&card->लघुname[i]);
+		card->लघुname[माप(card->लघुname) - 1] = '\0';
+	पूर्ण
 
-	strcpy(vendor, "?");
-	fw_csr_string(dev->config_rom + 5, CSR_VENDOR, vendor, sizeof(vendor));
-	strcpy(model, "?");
-	fw_csr_string(dice->unit->directory, CSR_MODEL, model, sizeof(model));
-	snprintf(card->longname, sizeof(card->longname),
+	म_नकल(venकरोr, "?");
+	fw_csr_string(dev->config_rom + 5, CSR_VENDOR, venकरोr, माप(venकरोr));
+	म_नकल(model, "?");
+	fw_csr_string(dice->unit->directory, CSR_MODEL, model, माप(model));
+	snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
 		 "%s %s (serial %u) at %s, S%d",
-		 vendor, model, dev->config_rom[4] & 0x3fffff,
+		 venकरोr, model, dev->config_rom[4] & 0x3fffff,
 		 dev_name(&dice->unit->device), 100 << dev->max_speed);
 
-	strcpy(card->mixername, "DICE");
-}
+	म_नकल(card->mixername, "DICE");
+पूर्ण
 
-static void dice_card_free(struct snd_card *card)
-{
-	struct snd_dice *dice = card->private_data;
+अटल व्योम dice_card_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_dice *dice = card->निजी_data;
 
 	snd_dice_stream_destroy_duplex(dice);
 	snd_dice_transaction_destroy(dice);
-}
+पूर्ण
 
-static void do_registration(struct work_struct *work)
-{
-	struct snd_dice *dice = container_of(work, struct snd_dice, dwork.work);
-	int err;
+अटल व्योम करो_registration(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा snd_dice *dice = container_of(work, काष्ठा snd_dice, dwork.work);
+	पूर्णांक err;
 
-	if (dice->registered)
-		return;
+	अगर (dice->रेजिस्टरed)
+		वापस;
 
-	err = snd_card_new(&dice->unit->device, -1, NULL, THIS_MODULE, 0,
+	err = snd_card_new(&dice->unit->device, -1, शून्य, THIS_MODULE, 0,
 			   &dice->card);
-	if (err < 0)
-		return;
-	dice->card->private_free = dice_card_free;
-	dice->card->private_data = dice;
+	अगर (err < 0)
+		वापस;
+	dice->card->निजी_मुक्त = dice_card_मुक्त;
+	dice->card->निजी_data = dice;
 
 	err = snd_dice_transaction_init(dice);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	err = check_clock_caps(dice);
-	if (err < 0)
-		goto error;
+	err = check_घड़ी_caps(dice);
+	अगर (err < 0)
+		जाओ error;
 
 	dice_card_strings(dice);
 
-	err = dice->detect_formats(dice);
-	if (err < 0)
-		goto error;
+	err = dice->detect_क्रमmats(dice);
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_dice_stream_init_duplex(dice);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	snd_dice_create_proc(dice);
 
 	err = snd_dice_create_pcm(dice);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_dice_create_midi(dice);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_dice_create_hwdep(dice);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	err = snd_card_register(dice->card);
-	if (err < 0)
-		goto error;
+	err = snd_card_रेजिस्टर(dice->card);
+	अगर (err < 0)
+		जाओ error;
 
-	dice->registered = true;
+	dice->रेजिस्टरed = true;
 
-	return;
+	वापस;
 error:
-	snd_card_free(dice->card);
+	snd_card_मुक्त(dice->card);
 	dev_info(&dice->unit->device,
 		 "Sound card registration failed: %d\n", err);
-}
+पूर्ण
 
-static int dice_probe(struct fw_unit *unit,
-		      const struct ieee1394_device_id *entry)
-{
-	struct snd_dice *dice;
-	int err;
+अटल पूर्णांक dice_probe(काष्ठा fw_unit *unit,
+		      स्थिर काष्ठा ieee1394_device_id *entry)
+अणु
+	काष्ठा snd_dice *dice;
+	पूर्णांक err;
 
-	if (!entry->driver_data && entry->vendor_id != OUI_SSL) {
+	अगर (!entry->driver_data && entry->venकरोr_id != OUI_SSL) अणु
 		err = check_dice_category(unit);
-		if (err < 0)
-			return -ENODEV;
-	}
+		अगर (err < 0)
+			वापस -ENODEV;
+	पूर्ण
 
 	/* Allocate this independent of sound card instance. */
-	dice = devm_kzalloc(&unit->device, sizeof(struct snd_dice), GFP_KERNEL);
-	if (!dice)
-		return -ENOMEM;
+	dice = devm_kzalloc(&unit->device, माप(काष्ठा snd_dice), GFP_KERNEL);
+	अगर (!dice)
+		वापस -ENOMEM;
 	dice->unit = fw_unit_get(unit);
 	dev_set_drvdata(&unit->device, dice);
 
-	if (!entry->driver_data) {
-		dice->detect_formats = snd_dice_stream_detect_current_formats;
-	} else {
-		dice->detect_formats =
-				(snd_dice_detect_formats_t)entry->driver_data;
-	}
+	अगर (!entry->driver_data) अणु
+		dice->detect_क्रमmats = snd_dice_stream_detect_current_क्रमmats;
+	पूर्ण अन्यथा अणु
+		dice->detect_क्रमmats =
+				(snd_dice_detect_क्रमmats_t)entry->driver_data;
+	पूर्ण
 
 	// Below models are compliant to IEC 61883-1/6 and have no quirk at high sampling transfer
 	// frequency.
 	// * Avid M-Box 3 Pro
 	// * M-Audio Profire 610
 	// * M-Audio Profire 2626
-	if (entry->vendor_id == OUI_MAUDIO || entry->vendor_id == OUI_AVID)
-		dice->disable_double_pcm_frames = true;
+	अगर (entry->venकरोr_id == OUI_MAUDIO || entry->venकरोr_id == OUI_AVID)
+		dice->disable_द्विगुन_pcm_frames = true;
 
 	spin_lock_init(&dice->lock);
 	mutex_init(&dice->mutex);
-	init_completion(&dice->clock_accepted);
-	init_waitqueue_head(&dice->hwdep_wait);
+	init_completion(&dice->घड़ी_accepted);
+	init_रुकोqueue_head(&dice->hwdep_रुको);
 
-	/* Allocate and register this sound card later. */
-	INIT_DEFERRABLE_WORK(&dice->dwork, do_registration);
+	/* Allocate and रेजिस्टर this sound card later. */
+	INIT_DEFERRABLE_WORK(&dice->dwork, करो_registration);
 	snd_fw_schedule_registration(unit, &dice->dwork);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dice_remove(struct fw_unit *unit)
-{
-	struct snd_dice *dice = dev_get_drvdata(&unit->device);
+अटल व्योम dice_हटाओ(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा snd_dice *dice = dev_get_drvdata(&unit->device);
 
 	/*
-	 * Confirm to stop the work for registration before the sound card is
+	 * Confirm to stop the work क्रम registration beक्रमe the sound card is
 	 * going to be released. The work is not scheduled again because bus
 	 * reset handler is not called anymore.
 	 */
 	cancel_delayed_work_sync(&dice->dwork);
 
-	if (dice->registered) {
-		// Block till all of ALSA character devices are released.
-		snd_card_free(dice->card);
-	}
+	अगर (dice->रेजिस्टरed) अणु
+		// Block till all of ALSA अक्षरacter devices are released.
+		snd_card_मुक्त(dice->card);
+	पूर्ण
 
 	mutex_destroy(&dice->mutex);
 	fw_unit_put(dice->unit);
-}
+पूर्ण
 
-static void dice_bus_reset(struct fw_unit *unit)
-{
-	struct snd_dice *dice = dev_get_drvdata(&unit->device);
+अटल व्योम dice_bus_reset(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा snd_dice *dice = dev_get_drvdata(&unit->device);
 
-	/* Postpone a workqueue for deferred registration. */
-	if (!dice->registered)
+	/* Postpone a workqueue क्रम deferred registration. */
+	अगर (!dice->रेजिस्टरed)
 		snd_fw_schedule_registration(unit, &dice->dwork);
 
-	/* The handler address register becomes initialized. */
+	/* The handler address रेजिस्टर becomes initialized. */
 	snd_dice_transaction_reinit(dice);
 
 	/*
 	 * After registration, userspace can start packet streaming, then this
 	 * code block works fine.
 	 */
-	if (dice->registered) {
+	अगर (dice->रेजिस्टरed) अणु
 		mutex_lock(&dice->mutex);
 		snd_dice_stream_update_duplex(dice);
 		mutex_unlock(&dice->mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define DICE_INTERFACE	0x000001
+#घोषणा DICE_INTERFACE	0x000001
 
-#define DICE_DEV_ENTRY_TYPICAL(vendor, model, data) \
-	{ \
+#घोषणा DICE_DEV_ENTRY_TYPICAL(venकरोr, model, data) \
+	अणु \
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID | \
 				  IEEE1394_MATCH_MODEL_ID | \
 				  IEEE1394_MATCH_SPECIFIER_ID | \
 				  IEEE1394_MATCH_VERSION, \
-		.vendor_id	= (vendor), \
+		.venकरोr_id	= (venकरोr), \
 		.model_id	= (model), \
-		.specifier_id	= (vendor), \
+		.specअगरier_id	= (venकरोr), \
 		.version	= DICE_INTERFACE, \
-		.driver_data = (kernel_ulong_t)(data), \
-	}
+		.driver_data = (kernel_uदीर्घ_t)(data), \
+	पूर्ण
 
-static const struct ieee1394_device_id dice_id_table[] = {
+अटल स्थिर काष्ठा ieee1394_device_id dice_id_table[] = अणु
 	// Avid M-Box 3 Pro. To match in probe function.
-	DICE_DEV_ENTRY_TYPICAL(OUI_AVID, 0x000004, snd_dice_detect_extension_formats),
-	/* M-Audio Profire 2626 has a different value in version field. */
-	{
+	DICE_DEV_ENTRY_TYPICAL(OUI_AVID, 0x000004, snd_dice_detect_extension_क्रमmats),
+	/* M-Audio Profire 2626 has a dअगरferent value in version field. */
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_MAUDIO,
+		.venकरोr_id	= OUI_MAUDIO,
 		.model_id	= 0x000010,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_extension_formats,
-	},
-	/* M-Audio Profire 610 has a different value in version field. */
-	{
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_extension_क्रमmats,
+	पूर्ण,
+	/* M-Audio Profire 610 has a dअगरferent value in version field. */
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_MAUDIO,
+		.venकरोr_id	= OUI_MAUDIO,
 		.model_id	= 0x000011,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_extension_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_extension_क्रमmats,
+	पूर्ण,
 	/* TC Electronic Konnekt 24D. */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_TCELECTRONIC,
+		.venकरोr_id	= OUI_TCELECTRONIC,
 		.model_id	= 0x000020,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_tcelectronic_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_tcelectronic_क्रमmats,
+	पूर्ण,
 	/* TC Electronic Konnekt 8. */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_TCELECTRONIC,
+		.venकरोr_id	= OUI_TCELECTRONIC,
 		.model_id	= 0x000021,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_tcelectronic_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_tcelectronic_क्रमmats,
+	पूर्ण,
 	/* TC Electronic Studio Konnekt 48. */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_TCELECTRONIC,
+		.venकरोr_id	= OUI_TCELECTRONIC,
 		.model_id	= 0x000022,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_tcelectronic_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_tcelectronic_क्रमmats,
+	पूर्ण,
 	/* TC Electronic Konnekt Live. */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_TCELECTRONIC,
+		.venकरोr_id	= OUI_TCELECTRONIC,
 		.model_id	= 0x000023,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_tcelectronic_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_tcelectronic_क्रमmats,
+	पूर्ण,
 	/* TC Electronic Desktop Konnekt 6. */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_TCELECTRONIC,
+		.venकरोr_id	= OUI_TCELECTRONIC,
 		.model_id	= 0x000024,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_tcelectronic_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_tcelectronic_क्रमmats,
+	पूर्ण,
 	/* TC Electronic Impact Twin. */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_TCELECTRONIC,
+		.venकरोr_id	= OUI_TCELECTRONIC,
 		.model_id	= 0x000027,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_tcelectronic_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_tcelectronic_क्रमmats,
+	पूर्ण,
 	/* TC Electronic Digital Konnekt x32. */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_TCELECTRONIC,
+		.venकरोr_id	= OUI_TCELECTRONIC,
 		.model_id	= 0x000030,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_tcelectronic_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_tcelectronic_क्रमmats,
+	पूर्ण,
 	/* Alesis iO14/iO26. */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_ALESIS,
+		.venकरोr_id	= OUI_ALESIS,
 		.model_id	= MODEL_ALESIS_IO_BOTH,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_alesis_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_alesis_क्रमmats,
+	पूर्ण,
 	// Alesis MasterControl.
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_ALESIS,
+		.venकरोr_id	= OUI_ALESIS,
 		.model_id	= 0x000002,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_alesis_mastercontrol_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_alesis_mastercontrol_क्रमmats,
+	पूर्ण,
 	/* Mytek Stereo 192 DSD-DAC. */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_MYTEK,
+		.venकरोr_id	= OUI_MYTEK,
 		.model_id	= 0x000002,
-		.driver_data = (kernel_ulong_t)snd_dice_detect_mytek_formats,
-	},
+		.driver_data = (kernel_uदीर्घ_t)snd_dice_detect_mytek_क्रमmats,
+	पूर्ण,
 	// Solid State Logic, Duende Classic and Mini.
 	// NOTE: each field of GUID in config ROM is not compliant to standard
 	// DICE scheme.
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_SSL,
+		.venकरोr_id	= OUI_SSL,
 		.model_id	= 0x000070,
-	},
+	पूर्ण,
 	// Presonus FireStudio.
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_PRESONUS,
+		.venकरोr_id	= OUI_PRESONUS,
 		.model_id	= 0x000008,
-		.driver_data	= (kernel_ulong_t)snd_dice_detect_presonus_formats,
-	},
+		.driver_data	= (kernel_uदीर्घ_t)snd_dice_detect_presonus_क्रमmats,
+	पूर्ण,
 	// Lexicon I-ONYX FW810S.
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_HARMAN,
+		.venकरोr_id	= OUI_HARMAN,
 		.model_id	= 0x000001,
-		.driver_data	= (kernel_ulong_t)snd_dice_detect_harman_formats,
-	},
-	{
+		.driver_data	= (kernel_uदीर्घ_t)snd_dice_detect_harman_क्रमmats,
+	पूर्ण,
+	अणु
 		.match_flags = IEEE1394_MATCH_VERSION,
 		.version     = DICE_INTERFACE,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(ieee1394, dice_id_table);
 
-static struct fw_driver dice_driver = {
-	.driver   = {
+अटल काष्ठा fw_driver dice_driver = अणु
+	.driver   = अणु
 		.owner	= THIS_MODULE,
 		.name	= KBUILD_MODNAME,
 		.bus	= &fw_bus_type,
-	},
+	पूर्ण,
 	.probe    = dice_probe,
 	.update   = dice_bus_reset,
-	.remove   = dice_remove,
+	.हटाओ   = dice_हटाओ,
 	.id_table = dice_id_table,
-};
+पूर्ण;
 
-static int __init alsa_dice_init(void)
-{
-	return driver_register(&dice_driver.driver);
-}
+अटल पूर्णांक __init alsa_dice_init(व्योम)
+अणु
+	वापस driver_रेजिस्टर(&dice_driver.driver);
+पूर्ण
 
-static void __exit alsa_dice_exit(void)
-{
-	driver_unregister(&dice_driver.driver);
-}
+अटल व्योम __निकास alsa_dice_निकास(व्योम)
+अणु
+	driver_unरेजिस्टर(&dice_driver.driver);
+पूर्ण
 
 module_init(alsa_dice_init);
-module_exit(alsa_dice_exit);
+module_निकास(alsa_dice_निकास);

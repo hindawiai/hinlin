@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
 /*
  * acpi_lpit.c - LPIT table processing functions
@@ -6,156 +7,156 @@
  * Copyright (C) 2017 Intel Corporation. All rights reserved.
  */
 
-#include <linux/cpu.h>
-#include <linux/acpi.h>
-#include <asm/msr.h>
-#include <asm/tsc.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/acpi.h>
+#समावेश <यंत्र/msr.h>
+#समावेश <यंत्र/tsc.h>
 
-struct lpit_residency_info {
-	struct acpi_generic_address gaddr;
+काष्ठा lpit_residency_info अणु
+	काष्ठा acpi_generic_address gaddr;
 	u64 frequency;
-	void __iomem *iomem_addr;
-};
+	व्योम __iomem *iomem_addr;
+पूर्ण;
 
-/* Storage for an memory mapped and FFH based entries */
-static struct lpit_residency_info residency_info_mem;
-static struct lpit_residency_info residency_info_ffh;
+/* Storage क्रम an memory mapped and FFH based entries */
+अटल काष्ठा lpit_residency_info residency_info_mem;
+अटल काष्ठा lpit_residency_info residency_info_ffh;
 
-static int lpit_read_residency_counter_us(u64 *counter, bool io_mem)
-{
-	int err;
+अटल पूर्णांक lpit_पढ़ो_residency_counter_us(u64 *counter, bool io_mem)
+अणु
+	पूर्णांक err;
 
-	if (io_mem) {
+	अगर (io_mem) अणु
 		u64 count = 0;
-		int error;
+		पूर्णांक error;
 
-		error = acpi_os_read_iomem(residency_info_mem.iomem_addr, &count,
+		error = acpi_os_पढ़ो_iomem(residency_info_mem.iomem_addr, &count,
 					   residency_info_mem.gaddr.bit_width);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
-		*counter = div64_u64(count * 1000000ULL, residency_info_mem.frequency);
-		return 0;
-	}
+		*counter = भाग64_u64(count * 1000000ULL, residency_info_mem.frequency);
+		वापस 0;
+	पूर्ण
 
 	err = rdmsrl_safe(residency_info_ffh.gaddr.address, counter);
-	if (!err) {
+	अगर (!err) अणु
 		u64 mask = GENMASK_ULL(residency_info_ffh.gaddr.bit_offset +
 				       residency_info_ffh.gaddr. bit_width - 1,
 				       residency_info_ffh.gaddr.bit_offset);
 
 		*counter &= mask;
 		*counter >>= residency_info_ffh.gaddr.bit_offset;
-		*counter = div64_u64(*counter * 1000000ULL, residency_info_ffh.frequency);
-		return 0;
-	}
+		*counter = भाग64_u64(*counter * 1000000ULL, residency_info_ffh.frequency);
+		वापस 0;
+	पूर्ण
 
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
-static ssize_t low_power_idle_system_residency_us_show(struct device *dev,
-						       struct device_attribute *attr,
-						       char *buf)
-{
+अटल sमाप_प्रकार low_घातer_idle_प्रणाली_residency_us_show(काष्ठा device *dev,
+						       काष्ठा device_attribute *attr,
+						       अक्षर *buf)
+अणु
 	u64 counter;
-	int ret;
+	पूर्णांक ret;
 
-	ret = lpit_read_residency_counter_us(&counter, true);
-	if (ret)
-		return ret;
+	ret = lpit_पढ़ो_residency_counter_us(&counter, true);
+	अगर (ret)
+		वापस ret;
 
-	return sprintf(buf, "%llu\n", counter);
-}
-static DEVICE_ATTR_RO(low_power_idle_system_residency_us);
+	वापस प्र_लिखो(buf, "%llu\n", counter);
+पूर्ण
+अटल DEVICE_ATTR_RO(low_घातer_idle_प्रणाली_residency_us);
 
-static ssize_t low_power_idle_cpu_residency_us_show(struct device *dev,
-						    struct device_attribute *attr,
-						    char *buf)
-{
+अटल sमाप_प्रकार low_घातer_idle_cpu_residency_us_show(काष्ठा device *dev,
+						    काष्ठा device_attribute *attr,
+						    अक्षर *buf)
+अणु
 	u64 counter;
-	int ret;
+	पूर्णांक ret;
 
-	ret = lpit_read_residency_counter_us(&counter, false);
-	if (ret)
-		return ret;
+	ret = lpit_पढ़ो_residency_counter_us(&counter, false);
+	अगर (ret)
+		वापस ret;
 
-	return sprintf(buf, "%llu\n", counter);
-}
-static DEVICE_ATTR_RO(low_power_idle_cpu_residency_us);
+	वापस प्र_लिखो(buf, "%llu\n", counter);
+पूर्ण
+अटल DEVICE_ATTR_RO(low_घातer_idle_cpu_residency_us);
 
-int lpit_read_residency_count_address(u64 *address)
-{
-	if (!residency_info_mem.gaddr.address)
-		return -EINVAL;
+पूर्णांक lpit_पढ़ो_residency_count_address(u64 *address)
+अणु
+	अगर (!residency_info_mem.gaddr.address)
+		वापस -EINVAL;
 
 	*address = residency_info_mem.gaddr.address;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(lpit_read_residency_count_address);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(lpit_पढ़ो_residency_count_address);
 
-static void lpit_update_residency(struct lpit_residency_info *info,
-				 struct acpi_lpit_native *lpit_native)
-{
+अटल व्योम lpit_update_residency(काष्ठा lpit_residency_info *info,
+				 काष्ठा acpi_lpit_native *lpit_native)
+अणु
 	info->frequency = lpit_native->counter_frequency ?
 				lpit_native->counter_frequency : tsc_khz * 1000;
-	if (!info->frequency)
+	अगर (!info->frequency)
 		info->frequency = 1;
 
 	info->gaddr = lpit_native->residency_counter;
-	if (info->gaddr.space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) {
+	अगर (info->gaddr.space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) अणु
 		info->iomem_addr = ioremap(info->gaddr.address,
 						   info->gaddr.bit_width / 8);
-		if (!info->iomem_addr)
-			return;
+		अगर (!info->iomem_addr)
+			वापस;
 
-		if (!(acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0))
-			return;
+		अगर (!(acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0))
+			वापस;
 
-		/* Silently fail, if cpuidle attribute group is not present */
+		/* Silently fail, अगर cpuidle attribute group is not present */
 		sysfs_add_file_to_group(&cpu_subsys.dev_root->kobj,
-					&dev_attr_low_power_idle_system_residency_us.attr,
+					&dev_attr_low_घातer_idle_प्रणाली_residency_us.attr,
 					"cpuidle");
-	} else if (info->gaddr.space_id == ACPI_ADR_SPACE_FIXED_HARDWARE) {
-		if (!(acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0))
-			return;
+	पूर्ण अन्यथा अगर (info->gaddr.space_id == ACPI_ADR_SPACE_FIXED_HARDWARE) अणु
+		अगर (!(acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0))
+			वापस;
 
-		/* Silently fail, if cpuidle attribute group is not present */
+		/* Silently fail, अगर cpuidle attribute group is not present */
 		sysfs_add_file_to_group(&cpu_subsys.dev_root->kobj,
-					&dev_attr_low_power_idle_cpu_residency_us.attr,
+					&dev_attr_low_घातer_idle_cpu_residency_us.attr,
 					"cpuidle");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void lpit_process(u64 begin, u64 end)
-{
-	while (begin + sizeof(struct acpi_lpit_native) <= end) {
-		struct acpi_lpit_native *lpit_native = (struct acpi_lpit_native *)begin;
+अटल व्योम lpit_process(u64 begin, u64 end)
+अणु
+	जबतक (begin + माप(काष्ठा acpi_lpit_native) <= end) अणु
+		काष्ठा acpi_lpit_native *lpit_native = (काष्ठा acpi_lpit_native *)begin;
 
-		if (!lpit_native->header.type && !lpit_native->header.flags) {
-			if (lpit_native->residency_counter.space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY &&
-			    !residency_info_mem.gaddr.address) {
+		अगर (!lpit_native->header.type && !lpit_native->header.flags) अणु
+			अगर (lpit_native->residency_counter.space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY &&
+			    !residency_info_mem.gaddr.address) अणु
 				lpit_update_residency(&residency_info_mem, lpit_native);
-			} else if (lpit_native->residency_counter.space_id == ACPI_ADR_SPACE_FIXED_HARDWARE &&
-				   !residency_info_ffh.gaddr.address) {
+			पूर्ण अन्यथा अगर (lpit_native->residency_counter.space_id == ACPI_ADR_SPACE_FIXED_HARDWARE &&
+				   !residency_info_ffh.gaddr.address) अणु
 				lpit_update_residency(&residency_info_ffh, lpit_native);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		begin += lpit_native->header.length;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void acpi_init_lpit(void)
-{
+व्योम acpi_init_lpit(व्योम)
+अणु
 	acpi_status status;
-	struct acpi_table_lpit *lpit;
+	काष्ठा acpi_table_lpit *lpit;
 
-	status = acpi_get_table(ACPI_SIG_LPIT, 0, (struct acpi_table_header **)&lpit);
-	if (ACPI_FAILURE(status))
-		return;
+	status = acpi_get_table(ACPI_SIG_LPIT, 0, (काष्ठा acpi_table_header **)&lpit);
+	अगर (ACPI_FAILURE(status))
+		वापस;
 
-	lpit_process((u64)lpit + sizeof(*lpit),
+	lpit_process((u64)lpit + माप(*lpit),
 		     (u64)lpit + lpit->header.length);
 
-	acpi_put_table((struct acpi_table_header *)lpit);
-}
+	acpi_put_table((काष्ठा acpi_table_header *)lpit);
+पूर्ण

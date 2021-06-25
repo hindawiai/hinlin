@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * MaxLinear MxL301RF OFDM tuner driver
  *
@@ -8,71 +9,71 @@
 /*
  * NOTICE:
  * This driver is incomplete and lacks init/config of the chips,
- * as the necessary info is not disclosed.
- * Other features like get_if_frequency() are missing as well.
+ * as the necessary info is not disबंदd.
+ * Other features like get_अगर_frequency() are missing as well.
  * It assumes that users of this driver (such as a PCI bridge of
  * DTV receiver cards) properly init and configure the chip
- * via I2C *before* calling this driver's init() function.
+ * via I2C *beक्रमe* calling this driver's init() function.
  *
  * Currently, PT3 driver is the only one that uses this driver,
  * and contains init/config code in its firmware.
- * Thus some part of the code might be dependent on PT3 specific config.
+ * Thus some part of the code might be dependent on PT3 specअगरic config.
  */
 
-#include <linux/kernel.h>
-#include "mxl301rf.h"
+#समावेश <linux/kernel.h>
+#समावेश "mxl301rf.h"
 
-struct mxl301rf_state {
-	struct mxl301rf_config cfg;
-	struct i2c_client *i2c;
-};
+काष्ठा mxl301rf_state अणु
+	काष्ठा mxl301rf_config cfg;
+	काष्ठा i2c_client *i2c;
+पूर्ण;
 
-static struct mxl301rf_state *cfg_to_state(struct mxl301rf_config *c)
-{
-	return container_of(c, struct mxl301rf_state, cfg);
-}
+अटल काष्ठा mxl301rf_state *cfg_to_state(काष्ठा mxl301rf_config *c)
+अणु
+	वापस container_of(c, काष्ठा mxl301rf_state, cfg);
+पूर्ण
 
-static int raw_write(struct mxl301rf_state *state, const u8 *buf, int len)
-{
-	int ret;
+अटल पूर्णांक raw_ग_लिखो(काष्ठा mxl301rf_state *state, स्थिर u8 *buf, पूर्णांक len)
+अणु
+	पूर्णांक ret;
 
 	ret = i2c_master_send(state->i2c, buf, len);
-	if (ret >= 0 && ret < len)
+	अगर (ret >= 0 && ret < len)
 		ret = -EIO;
-	return (ret == len) ? 0 : ret;
-}
+	वापस (ret == len) ? 0 : ret;
+पूर्ण
 
-static int reg_write(struct mxl301rf_state *state, u8 reg, u8 val)
-{
-	u8 buf[2] = { reg, val };
+अटल पूर्णांक reg_ग_लिखो(काष्ठा mxl301rf_state *state, u8 reg, u8 val)
+अणु
+	u8 buf[2] = अणु reg, val पूर्ण;
 
-	return raw_write(state, buf, 2);
-}
+	वापस raw_ग_लिखो(state, buf, 2);
+पूर्ण
 
-static int reg_read(struct mxl301rf_state *state, u8 reg, u8 *val)
-{
-	u8 wbuf[2] = { 0xfb, reg };
-	int ret;
+अटल पूर्णांक reg_पढ़ो(काष्ठा mxl301rf_state *state, u8 reg, u8 *val)
+अणु
+	u8 wbuf[2] = अणु 0xfb, reg पूर्ण;
+	पूर्णांक ret;
 
-	ret = raw_write(state, wbuf, sizeof(wbuf));
-	if (ret == 0)
+	ret = raw_ग_लिखो(state, wbuf, माप(wbuf));
+	अगर (ret == 0)
 		ret = i2c_master_recv(state->i2c, val, 1);
-	if (ret >= 0 && ret < 1)
+	अगर (ret >= 0 && ret < 1)
 		ret = -EIO;
-	return (ret == 1) ? 0 : ret;
-}
+	वापस (ret == 1) ? 0 : ret;
+पूर्ण
 
 /* tuner_ops */
 
 /* get RSSI and update propery cache, set to *out in % */
-static int mxl301rf_get_rf_strength(struct dvb_frontend *fe, u16 *out)
-{
-	struct mxl301rf_state *state;
-	int ret;
+अटल पूर्णांक mxl301rf_get_rf_strength(काष्ठा dvb_frontend *fe, u16 *out)
+अणु
+	काष्ठा mxl301rf_state *state;
+	पूर्णांक ret;
 	u8  rf_in1, rf_in2, rf_off1, rf_off2;
 	u16 rf_in, rf_off;
 	s64 level;
-	struct dtv_fe_stats *rssi;
+	काष्ठा dtv_fe_stats *rssi;
 
 	rssi = &fe->dtv_property_cache.strength;
 	rssi->len = 1;
@@ -80,20 +81,20 @@ static int mxl301rf_get_rf_strength(struct dvb_frontend *fe, u16 *out)
 	*out = 0;
 
 	state = fe->tuner_priv;
-	ret = reg_write(state, 0x14, 0x01);
-	if (ret < 0)
-		return ret;
+	ret = reg_ग_लिखो(state, 0x14, 0x01);
+	अगर (ret < 0)
+		वापस ret;
 	usleep_range(1000, 2000);
 
-	ret = reg_read(state, 0x18, &rf_in1);
-	if (ret == 0)
-		ret = reg_read(state, 0x19, &rf_in2);
-	if (ret == 0)
-		ret = reg_read(state, 0xd6, &rf_off1);
-	if (ret == 0)
-		ret = reg_read(state, 0xd7, &rf_off2);
-	if (ret != 0)
-		return ret;
+	ret = reg_पढ़ो(state, 0x18, &rf_in1);
+	अगर (ret == 0)
+		ret = reg_पढ़ो(state, 0x19, &rf_in2);
+	अगर (ret == 0)
+		ret = reg_पढ़ो(state, 0xd6, &rf_off1);
+	अगर (ret == 0)
+		ret = reg_पढ़ो(state, 0xd7, &rf_off2);
+	अगर (ret != 0)
+		वापस ret;
 
 	rf_in = (rf_in2 & 0x07) << 8 | rf_in1;
 	rf_off = (rf_off2 & 0x0f) << 5 | (rf_off1 >> 3);
@@ -103,235 +104,235 @@ static int mxl301rf_get_rf_strength(struct dvb_frontend *fe, u16 *out)
 	rssi->stat[0].scale = FE_SCALE_DECIBEL;
 	/* *out = (level - min) * 100 / (max - min) */
 	*out = (rf_in - rf_off + (1 << 9) - 1) * 100 / ((5 << 9) - 2);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* spur shift parameters */
-struct shf {
+/* spur shअगरt parameters */
+काष्ठा shf अणु
 	u32	freq;		/* Channel center frequency */
 	u32	ofst_th;	/* Offset frequency threshold */
-	u8	shf_val;	/* Spur shift value */
-	u8	shf_dir;	/* Spur shift direction */
-};
+	u8	shf_val;	/* Spur shअगरt value */
+	u8	shf_dir;	/* Spur shअगरt direction */
+पूर्ण;
 
-static const struct shf shf_tab[] = {
-	{  64500, 500, 0x92, 0x07 },
-	{ 191500, 300, 0xe2, 0x07 },
-	{ 205500, 500, 0x2c, 0x04 },
-	{ 212500, 500, 0x1e, 0x04 },
-	{ 226500, 500, 0xd4, 0x07 },
-	{  99143, 500, 0x9c, 0x07 },
-	{ 173143, 500, 0xd4, 0x07 },
-	{ 191143, 300, 0xd4, 0x07 },
-	{ 207143, 500, 0xce, 0x07 },
-	{ 225143, 500, 0xce, 0x07 },
-	{ 243143, 500, 0xd4, 0x07 },
-	{ 261143, 500, 0xd4, 0x07 },
-	{ 291143, 500, 0xd4, 0x07 },
-	{ 339143, 500, 0x2c, 0x04 },
-	{ 117143, 500, 0x7a, 0x07 },
-	{ 135143, 300, 0x7a, 0x07 },
-	{ 153143, 500, 0x01, 0x07 }
-};
+अटल स्थिर काष्ठा shf shf_tab[] = अणु
+	अणु  64500, 500, 0x92, 0x07 पूर्ण,
+	अणु 191500, 300, 0xe2, 0x07 पूर्ण,
+	अणु 205500, 500, 0x2c, 0x04 पूर्ण,
+	अणु 212500, 500, 0x1e, 0x04 पूर्ण,
+	अणु 226500, 500, 0xd4, 0x07 पूर्ण,
+	अणु  99143, 500, 0x9c, 0x07 पूर्ण,
+	अणु 173143, 500, 0xd4, 0x07 पूर्ण,
+	अणु 191143, 300, 0xd4, 0x07 पूर्ण,
+	अणु 207143, 500, 0xce, 0x07 पूर्ण,
+	अणु 225143, 500, 0xce, 0x07 पूर्ण,
+	अणु 243143, 500, 0xd4, 0x07 पूर्ण,
+	अणु 261143, 500, 0xd4, 0x07 पूर्ण,
+	अणु 291143, 500, 0xd4, 0x07 पूर्ण,
+	अणु 339143, 500, 0x2c, 0x04 पूर्ण,
+	अणु 117143, 500, 0x7a, 0x07 पूर्ण,
+	अणु 135143, 300, 0x7a, 0x07 पूर्ण,
+	अणु 153143, 500, 0x01, 0x07 पूर्ण
+पूर्ण;
 
-struct reg_val {
+काष्ठा reg_val अणु
 	u8 reg;
 	u8 val;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-static const struct reg_val set_idac[] = {
-	{ 0x0d, 0x00 },
-	{ 0x0c, 0x67 },
-	{ 0x6f, 0x89 },
-	{ 0x70, 0x0c },
-	{ 0x6f, 0x8a },
-	{ 0x70, 0x0e },
-	{ 0x6f, 0x8b },
-	{ 0x70, 0x1c },
-};
+अटल स्थिर काष्ठा reg_val set_idac[] = अणु
+	अणु 0x0d, 0x00 पूर्ण,
+	अणु 0x0c, 0x67 पूर्ण,
+	अणु 0x6f, 0x89 पूर्ण,
+	अणु 0x70, 0x0c पूर्ण,
+	अणु 0x6f, 0x8a पूर्ण,
+	अणु 0x70, 0x0e पूर्ण,
+	अणु 0x6f, 0x8b पूर्ण,
+	अणु 0x70, 0x1c पूर्ण,
+पूर्ण;
 
-static int mxl301rf_set_params(struct dvb_frontend *fe)
-{
-	struct reg_val tune0[] = {
-		{ 0x13, 0x00 },		/* abort tuning */
-		{ 0x3b, 0xc0 },
-		{ 0x3b, 0x80 },
-		{ 0x10, 0x95 },		/* BW */
-		{ 0x1a, 0x05 },
-		{ 0x61, 0x00 },		/* spur shift value (placeholder) */
-		{ 0x62, 0xa0 }		/* spur shift direction (placeholder) */
-	};
+अटल पूर्णांक mxl301rf_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा reg_val tune0[] = अणु
+		अणु 0x13, 0x00 पूर्ण,		/* पात tuning */
+		अणु 0x3b, 0xc0 पूर्ण,
+		अणु 0x3b, 0x80 पूर्ण,
+		अणु 0x10, 0x95 पूर्ण,		/* BW */
+		अणु 0x1a, 0x05 पूर्ण,
+		अणु 0x61, 0x00 पूर्ण,		/* spur shअगरt value (placeholder) */
+		अणु 0x62, 0xa0 पूर्ण		/* spur shअगरt direction (placeholder) */
+	पूर्ण;
 
-	struct reg_val tune1[] = {
-		{ 0x11, 0x40 },		/* RF frequency L (placeholder) */
-		{ 0x12, 0x0e },		/* RF frequency H (placeholder) */
-		{ 0x13, 0x01 }		/* start tune */
-	};
+	काष्ठा reg_val tune1[] = अणु
+		अणु 0x11, 0x40 पूर्ण,		/* RF frequency L (placeholder) */
+		अणु 0x12, 0x0e पूर्ण,		/* RF frequency H (placeholder) */
+		अणु 0x13, 0x01 पूर्ण		/* start tune */
+	पूर्ण;
 
-	struct mxl301rf_state *state;
+	काष्ठा mxl301rf_state *state;
 	u32 freq;
 	u16 f;
-	u32 tmp, div;
-	int i, ret;
+	u32 पंचांगp, भाग;
+	पूर्णांक i, ret;
 
 	state = fe->tuner_priv;
 	freq = fe->dtv_property_cache.frequency;
 
-	/* spur shift function (for analog) */
-	for (i = 0; i < ARRAY_SIZE(shf_tab); i++) {
-		if (freq >= (shf_tab[i].freq - shf_tab[i].ofst_th) * 1000 &&
-		    freq <= (shf_tab[i].freq + shf_tab[i].ofst_th) * 1000) {
+	/* spur shअगरt function (क्रम analog) */
+	क्रम (i = 0; i < ARRAY_SIZE(shf_tab); i++) अणु
+		अगर (freq >= (shf_tab[i].freq - shf_tab[i].ofst_th) * 1000 &&
+		    freq <= (shf_tab[i].freq + shf_tab[i].ofst_th) * 1000) अणु
 			tune0[5].val = shf_tab[i].shf_val;
 			tune0[6].val = 0xa0 | shf_tab[i].shf_dir;
-			break;
-		}
-	}
-	ret = raw_write(state, (u8 *) tune0, sizeof(tune0));
-	if (ret < 0)
-		goto failed;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	ret = raw_ग_लिखो(state, (u8 *) tune0, माप(tune0));
+	अगर (ret < 0)
+		जाओ failed;
 	usleep_range(3000, 4000);
 
-	/* convert freq to 10.6 fixed point float [MHz] */
+	/* convert freq to 10.6 fixed poपूर्णांक भग्न [MHz] */
 	f = freq / 1000000;
-	tmp = freq % 1000000;
-	div = 1000000;
-	for (i = 0; i < 6; i++) {
+	पंचांगp = freq % 1000000;
+	भाग = 1000000;
+	क्रम (i = 0; i < 6; i++) अणु
 		f <<= 1;
-		div >>= 1;
-		if (tmp > div) {
-			tmp -= div;
+		भाग >>= 1;
+		अगर (पंचांगp > भाग) अणु
+			पंचांगp -= भाग;
 			f |= 1;
-		}
-	}
-	if (tmp > 7812)
+		पूर्ण
+	पूर्ण
+	अगर (पंचांगp > 7812)
 		f++;
 	tune1[0].val = f & 0xff;
 	tune1[1].val = f >> 8;
-	ret = raw_write(state, (u8 *) tune1, sizeof(tune1));
-	if (ret < 0)
-		goto failed;
+	ret = raw_ग_लिखो(state, (u8 *) tune1, माप(tune1));
+	अगर (ret < 0)
+		जाओ failed;
 	msleep(31);
 
-	ret = reg_write(state, 0x1a, 0x0d);
-	if (ret < 0)
-		goto failed;
-	ret = raw_write(state, (u8 *) set_idac, sizeof(set_idac));
-	if (ret < 0)
-		goto failed;
-	return 0;
+	ret = reg_ग_लिखो(state, 0x1a, 0x0d);
+	अगर (ret < 0)
+		जाओ failed;
+	ret = raw_ग_लिखो(state, (u8 *) set_idac, माप(set_idac));
+	अगर (ret < 0)
+		जाओ failed;
+	वापस 0;
 
 failed:
 	dev_warn(&state->i2c->dev, "(%s) failed. [adap%d-fe%d]\n",
 		__func__, fe->dvb->num, fe->id);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct reg_val standby_data[] = {
-	{ 0x01, 0x00 },
-	{ 0x13, 0x00 }
-};
+अटल स्थिर काष्ठा reg_val standby_data[] = अणु
+	अणु 0x01, 0x00 पूर्ण,
+	अणु 0x13, 0x00 पूर्ण
+पूर्ण;
 
-static int mxl301rf_sleep(struct dvb_frontend *fe)
-{
-	struct mxl301rf_state *state;
-	int ret;
+अटल पूर्णांक mxl301rf_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl301rf_state *state;
+	पूर्णांक ret;
 
 	state = fe->tuner_priv;
-	ret = raw_write(state, (u8 *)standby_data, sizeof(standby_data));
-	if (ret < 0)
+	ret = raw_ग_लिखो(state, (u8 *)standby_data, माप(standby_data));
+	अगर (ret < 0)
 		dev_warn(&state->i2c->dev, "(%s) failed. [adap%d-fe%d]\n",
 			__func__, fe->dvb->num, fe->id);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-/* init sequence is not public.
+/* init sequence is not खुला.
  * the parent must have init'ed the device.
  * just wake up here.
  */
-static int mxl301rf_init(struct dvb_frontend *fe)
-{
-	struct mxl301rf_state *state;
-	int ret;
+अटल पूर्णांक mxl301rf_init(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl301rf_state *state;
+	पूर्णांक ret;
 
 	state = fe->tuner_priv;
 
-	ret = reg_write(state, 0x01, 0x01);
-	if (ret < 0) {
+	ret = reg_ग_लिखो(state, 0x01, 0x01);
+	अगर (ret < 0) अणु
 		dev_warn(&state->i2c->dev, "(%s) failed. [adap%d-fe%d]\n",
 			 __func__, fe->dvb->num, fe->id);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* I2C driver functions */
 
-static const struct dvb_tuner_ops mxl301rf_ops = {
-	.info = {
+अटल स्थिर काष्ठा dvb_tuner_ops mxl301rf_ops = अणु
+	.info = अणु
 		.name = "MaxLinear MxL301RF",
 
 		.frequency_min_hz =  93 * MHz,
 		.frequency_max_hz = 803 * MHz + 142857,
-	},
+	पूर्ण,
 
 	.init = mxl301rf_init,
 	.sleep = mxl301rf_sleep,
 
 	.set_params = mxl301rf_set_params,
 	.get_rf_strength = mxl301rf_get_rf_strength,
-};
+पूर्ण;
 
 
-static int mxl301rf_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct mxl301rf_state *state;
-	struct mxl301rf_config *cfg;
-	struct dvb_frontend *fe;
+अटल पूर्णांक mxl301rf_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा mxl301rf_state *state;
+	काष्ठा mxl301rf_config *cfg;
+	काष्ठा dvb_frontend *fe;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return -ENOMEM;
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस -ENOMEM;
 
 	state->i2c = client;
-	cfg = client->dev.platform_data;
+	cfg = client->dev.platक्रमm_data;
 
-	memcpy(&state->cfg, cfg, sizeof(state->cfg));
+	स_नकल(&state->cfg, cfg, माप(state->cfg));
 	fe = cfg->fe;
 	fe->tuner_priv = state;
-	memcpy(&fe->ops.tuner_ops, &mxl301rf_ops, sizeof(mxl301rf_ops));
+	स_नकल(&fe->ops.tuner_ops, &mxl301rf_ops, माप(mxl301rf_ops));
 
 	i2c_set_clientdata(client, &state->cfg);
 	dev_info(&client->dev, "MaxLinear MxL301RF attached.\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxl301rf_remove(struct i2c_client *client)
-{
-	struct mxl301rf_state *state;
+अटल पूर्णांक mxl301rf_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा mxl301rf_state *state;
 
 	state = cfg_to_state(i2c_get_clientdata(client));
-	state->cfg.fe->tuner_priv = NULL;
-	kfree(state);
-	return 0;
-}
+	state->cfg.fe->tuner_priv = शून्य;
+	kमुक्त(state);
+	वापस 0;
+पूर्ण
 
 
-static const struct i2c_device_id mxl301rf_id[] = {
-	{"mxl301rf", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id mxl301rf_id[] = अणु
+	अणु"mxl301rf", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, mxl301rf_id);
 
-static struct i2c_driver mxl301rf_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver mxl301rf_driver = अणु
+	.driver = अणु
 		.name	= "mxl301rf",
-	},
+	पूर्ण,
 	.probe		= mxl301rf_probe,
-	.remove		= mxl301rf_remove,
+	.हटाओ		= mxl301rf_हटाओ,
 	.id_table	= mxl301rf_id,
-};
+पूर्ण;
 
 module_i2c_driver(mxl301rf_driver);
 

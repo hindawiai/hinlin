@@ -1,186 +1,187 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) Microsoft Corporation
  *
  * Implements a firmware TPM as described here:
- * https://www.microsoft.com/en-us/research/publication/ftpm-software-implementation-tpm-chip/
+ * https://www.microsoft.com/en-us/research/खुलाation/ftpm-software-implementation-tpm-chip/
  *
  * A reference implementation is available here:
  * https://github.com/microsoft/ms-tpm-20-ref/tree/master/Samples/ARM32-FirmwareTPM/optee_ta/fTPM
  */
 
-#include <linux/acpi.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/tee_drv.h>
-#include <linux/tpm.h>
-#include <linux/uuid.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/tee_drv.h>
+#समावेश <linux/tpm.h>
+#समावेश <linux/uuid.h>
 
-#include "tpm.h"
-#include "tpm_ftpm_tee.h"
+#समावेश "tpm.h"
+#समावेश "tpm_ftpm_tee.h"
 
 /*
  * TA_FTPM_UUID: BC50D971-D4C9-42C4-82CB-343FB7F37896
  *
- * Randomly generated, and must correspond to the GUID on the TA side.
+ * Ranकरोmly generated, and must correspond to the GUID on the TA side.
  * Defined here in the reference implementation:
  * https://github.com/microsoft/ms-tpm-20-ref/blob/master/Samples/ARM32-FirmwareTPM/optee_ta/fTPM/include/fTPM.h#L42
  */
-static const uuid_t ftpm_ta_uuid =
+अटल स्थिर uuid_t ftpm_ta_uuid =
 	UUID_INIT(0xBC50D971, 0xD4C9, 0x42C4,
 		  0x82, 0xCB, 0x34, 0x3F, 0xB7, 0xF3, 0x78, 0x96);
 
 /**
  * ftpm_tee_tpm_op_recv() - retrieve fTPM response.
- * @chip:	the tpm_chip description as specified in driver/char/tpm/tpm.h.
+ * @chip:	the tpm_chip description as specअगरied in driver/अक्षर/tpm/tpm.h.
  * @buf:	the buffer to store data.
- * @count:	the number of bytes to read.
+ * @count:	the number of bytes to पढ़ो.
  *
  * Return:
- *	In case of success the number of bytes received.
- *	On failure, -errno.
+ *	In हाल of success the number of bytes received.
+ *	On failure, -त्रुटि_सं.
  */
-static int ftpm_tee_tpm_op_recv(struct tpm_chip *chip, u8 *buf, size_t count)
-{
-	struct ftpm_tee_private *pvt_data = dev_get_drvdata(chip->dev.parent);
-	size_t len;
+अटल पूर्णांक ftpm_tee_tpm_op_recv(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
+अणु
+	काष्ठा ftpm_tee_निजी *pvt_data = dev_get_drvdata(chip->dev.parent);
+	माप_प्रकार len;
 
 	len = pvt_data->resp_len;
-	if (count < len) {
+	अगर (count < len) अणु
 		dev_err(&chip->dev,
 			"%s: Invalid size in recv: count=%zd, resp_len=%zd\n",
 			__func__, count, len);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	memcpy(buf, pvt_data->resp_buf, len);
+	स_नकल(buf, pvt_data->resp_buf, len);
 	pvt_data->resp_len = 0;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /**
  * ftpm_tee_tpm_op_send() - send TPM commands through the TEE shared memory.
- * @chip:	the tpm_chip description as specified in driver/char/tpm/tpm.h
+ * @chip:	the tpm_chip description as specअगरied in driver/अक्षर/tpm/tpm.h
  * @buf:	the buffer to send.
  * @len:	the number of bytes to send.
  *
  * Return:
- *	In case of success, returns 0.
- *	On failure, -errno
+ *	In हाल of success, वापसs 0.
+ *	On failure, -त्रुटि_सं
  */
-static int ftpm_tee_tpm_op_send(struct tpm_chip *chip, u8 *buf, size_t len)
-{
-	struct ftpm_tee_private *pvt_data = dev_get_drvdata(chip->dev.parent);
-	size_t resp_len;
-	int rc;
+अटल पूर्णांक ftpm_tee_tpm_op_send(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार len)
+अणु
+	काष्ठा ftpm_tee_निजी *pvt_data = dev_get_drvdata(chip->dev.parent);
+	माप_प्रकार resp_len;
+	पूर्णांक rc;
 	u8 *temp_buf;
-	struct tpm_header *resp_header;
-	struct tee_ioctl_invoke_arg transceive_args;
-	struct tee_param command_params[4];
-	struct tee_shm *shm = pvt_data->shm;
+	काष्ठा tpm_header *resp_header;
+	काष्ठा tee_ioctl_invoke_arg transceive_args;
+	काष्ठा tee_param command_params[4];
+	काष्ठा tee_shm *shm = pvt_data->shm;
 
-	if (len > MAX_COMMAND_SIZE) {
+	अगर (len > MAX_COMMAND_SIZE) अणु
 		dev_err(&chip->dev,
 			"%s: len=%zd exceeds MAX_COMMAND_SIZE supported by fTPM TA\n",
 			__func__, len);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	memset(&transceive_args, 0, sizeof(transceive_args));
-	memset(command_params, 0, sizeof(command_params));
+	स_रखो(&transceive_args, 0, माप(transceive_args));
+	स_रखो(command_params, 0, माप(command_params));
 	pvt_data->resp_len = 0;
 
 	/* Invoke FTPM_OPTEE_TA_SUBMIT_COMMAND function of fTPM TA */
-	transceive_args = (struct tee_ioctl_invoke_arg) {
+	transceive_args = (काष्ठा tee_ioctl_invoke_arg) अणु
 		.func = FTPM_OPTEE_TA_SUBMIT_COMMAND,
 		.session = pvt_data->session,
 		.num_params = 4,
-	};
+	पूर्ण;
 
 	/* Fill FTPM_OPTEE_TA_SUBMIT_COMMAND parameters */
-	command_params[0] = (struct tee_param) {
+	command_params[0] = (काष्ठा tee_param) अणु
 		.attr = TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT,
-		.u.memref = {
+		.u.memref = अणु
 			.shm = shm,
 			.size = len,
 			.shm_offs = 0,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
 	temp_buf = tee_shm_get_va(shm, 0);
-	if (IS_ERR(temp_buf)) {
+	अगर (IS_ERR(temp_buf)) अणु
 		dev_err(&chip->dev, "%s: tee_shm_get_va failed for transmit\n",
 			__func__);
-		return PTR_ERR(temp_buf);
-	}
-	memset(temp_buf, 0, (MAX_COMMAND_SIZE + MAX_RESPONSE_SIZE));
-	memcpy(temp_buf, buf, len);
+		वापस PTR_ERR(temp_buf);
+	पूर्ण
+	स_रखो(temp_buf, 0, (MAX_COMMAND_SIZE + MAX_RESPONSE_SIZE));
+	स_नकल(temp_buf, buf, len);
 
-	command_params[1] = (struct tee_param) {
+	command_params[1] = (काष्ठा tee_param) अणु
 		.attr = TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT,
-		.u.memref = {
+		.u.memref = अणु
 			.shm = shm,
 			.size = MAX_RESPONSE_SIZE,
 			.shm_offs = MAX_COMMAND_SIZE,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
 	rc = tee_client_invoke_func(pvt_data->ctx, &transceive_args,
 				    command_params);
-	if ((rc < 0) || (transceive_args.ret != 0)) {
+	अगर ((rc < 0) || (transceive_args.ret != 0)) अणु
 		dev_err(&chip->dev, "%s: SUBMIT_COMMAND invoke error: 0x%x\n",
 			__func__, transceive_args.ret);
-		return (rc < 0) ? rc : transceive_args.ret;
-	}
+		वापस (rc < 0) ? rc : transceive_args.ret;
+	पूर्ण
 
 	temp_buf = tee_shm_get_va(shm, command_params[1].u.memref.shm_offs);
-	if (IS_ERR(temp_buf)) {
+	अगर (IS_ERR(temp_buf)) अणु
 		dev_err(&chip->dev, "%s: tee_shm_get_va failed for receive\n",
 			__func__);
-		return PTR_ERR(temp_buf);
-	}
+		वापस PTR_ERR(temp_buf);
+	पूर्ण
 
-	resp_header = (struct tpm_header *)temp_buf;
+	resp_header = (काष्ठा tpm_header *)temp_buf;
 	resp_len = be32_to_cpu(resp_header->length);
 
 	/* sanity check resp_len */
-	if (resp_len < TPM_HEADER_SIZE) {
+	अगर (resp_len < TPM_HEADER_SIZE) अणु
 		dev_err(&chip->dev, "%s: tpm response header too small\n",
 			__func__);
-		return -EIO;
-	}
-	if (resp_len > MAX_RESPONSE_SIZE) {
+		वापस -EIO;
+	पूर्ण
+	अगर (resp_len > MAX_RESPONSE_SIZE) अणु
 		dev_err(&chip->dev,
 			"%s: resp_len=%zd exceeds MAX_RESPONSE_SIZE\n",
 			__func__, resp_len);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* sanity checks look good, cache the response */
-	memcpy(pvt_data->resp_buf, temp_buf, resp_len);
+	स_नकल(pvt_data->resp_buf, temp_buf, resp_len);
 	pvt_data->resp_len = resp_len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ftpm_tee_tpm_op_cancel(struct tpm_chip *chip)
-{
+अटल व्योम ftpm_tee_tpm_op_cancel(काष्ठा tpm_chip *chip)
+अणु
 	/* not supported */
-}
+पूर्ण
 
-static u8 ftpm_tee_tpm_op_status(struct tpm_chip *chip)
-{
-	return 0;
-}
+अटल u8 ftpm_tee_tpm_op_status(काष्ठा tpm_chip *chip)
+अणु
+	वापस 0;
+पूर्ण
 
-static bool ftpm_tee_tpm_req_canceled(struct tpm_chip *chip, u8 status)
-{
-	return 0;
-}
+अटल bool ftpm_tee_tpm_req_canceled(काष्ठा tpm_chip *chip, u8 status)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct tpm_class_ops ftpm_tee_tpm_ops = {
+अटल स्थिर काष्ठा tpm_class_ops ftpm_tee_tpm_ops = अणु
 	.flags = TPM_OPS_AUTO_STARTUP,
 	.recv = ftpm_tee_tpm_op_recv,
 	.send = ftpm_tee_tpm_op_send,
@@ -189,225 +190,225 @@ static const struct tpm_class_ops ftpm_tee_tpm_ops = {
 	.req_complete_mask = 0,
 	.req_complete_val = 0,
 	.req_canceled = ftpm_tee_tpm_req_canceled,
-};
+पूर्ण;
 
 /*
  * Check whether this driver supports the fTPM TA in the TEE instance
  * represented by the params (ver/data) to this function.
  */
-static int ftpm_tee_match(struct tee_ioctl_version_data *ver, const void *data)
-{
+अटल पूर्णांक ftpm_tee_match(काष्ठा tee_ioctl_version_data *ver, स्थिर व्योम *data)
+अणु
 	/*
-	 * Currently this driver only support GP Complaint OPTEE based fTPM TA
+	 * Currently this driver only support GP Complaपूर्णांक OPTEE based fTPM TA
 	 */
-	if ((ver->impl_id == TEE_IMPL_ID_OPTEE) &&
+	अगर ((ver->impl_id == TEE_IMPL_ID_OPTEE) &&
 		(ver->gen_caps & TEE_GEN_CAP_GP))
-		return 1;
-	else
-		return 0;
-}
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 /**
  * ftpm_tee_probe() - initialize the fTPM
- * @pdev: the platform_device description.
+ * @pdev: the platक्रमm_device description.
  *
  * Return:
- *	On success, 0. On failure, -errno.
+ *	On success, 0. On failure, -त्रुटि_सं.
  */
-static int ftpm_tee_probe(struct device *dev)
-{
-	int rc;
-	struct tpm_chip *chip;
-	struct ftpm_tee_private *pvt_data = NULL;
-	struct tee_ioctl_open_session_arg sess_arg;
+अटल पूर्णांक ftpm_tee_probe(काष्ठा device *dev)
+अणु
+	पूर्णांक rc;
+	काष्ठा tpm_chip *chip;
+	काष्ठा ftpm_tee_निजी *pvt_data = शून्य;
+	काष्ठा tee_ioctl_खोलो_session_arg sess_arg;
 
-	pvt_data = devm_kzalloc(dev, sizeof(struct ftpm_tee_private),
+	pvt_data = devm_kzalloc(dev, माप(काष्ठा ftpm_tee_निजी),
 				GFP_KERNEL);
-	if (!pvt_data)
-		return -ENOMEM;
+	अगर (!pvt_data)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(dev, pvt_data);
 
 	/* Open context with TEE driver */
-	pvt_data->ctx = tee_client_open_context(NULL, ftpm_tee_match, NULL,
-						NULL);
-	if (IS_ERR(pvt_data->ctx)) {
-		if (PTR_ERR(pvt_data->ctx) == -ENOENT)
-			return -EPROBE_DEFER;
+	pvt_data->ctx = tee_client_खोलो_context(शून्य, ftpm_tee_match, शून्य,
+						शून्य);
+	अगर (IS_ERR(pvt_data->ctx)) अणु
+		अगर (PTR_ERR(pvt_data->ctx) == -ENOENT)
+			वापस -EPROBE_DEFER;
 		dev_err(dev, "%s: tee_client_open_context failed\n", __func__);
-		return PTR_ERR(pvt_data->ctx);
-	}
+		वापस PTR_ERR(pvt_data->ctx);
+	पूर्ण
 
 	/* Open a session with fTPM TA */
-	memset(&sess_arg, 0, sizeof(sess_arg));
+	स_रखो(&sess_arg, 0, माप(sess_arg));
 	export_uuid(sess_arg.uuid, &ftpm_ta_uuid);
 	sess_arg.clnt_login = TEE_IOCTL_LOGIN_PUBLIC;
 	sess_arg.num_params = 0;
 
-	rc = tee_client_open_session(pvt_data->ctx, &sess_arg, NULL);
-	if ((rc < 0) || (sess_arg.ret != 0)) {
+	rc = tee_client_खोलो_session(pvt_data->ctx, &sess_arg, शून्य);
+	अगर ((rc < 0) || (sess_arg.ret != 0)) अणु
 		dev_err(dev, "%s: tee_client_open_session failed, err=%x\n",
 			__func__, sess_arg.ret);
 		rc = -EINVAL;
-		goto out_tee_session;
-	}
+		जाओ out_tee_session;
+	पूर्ण
 	pvt_data->session = sess_arg.session;
 
 	/* Allocate dynamic shared memory with fTPM TA */
 	pvt_data->shm = tee_shm_alloc(pvt_data->ctx,
 				      MAX_COMMAND_SIZE + MAX_RESPONSE_SIZE,
 				      TEE_SHM_MAPPED | TEE_SHM_DMA_BUF);
-	if (IS_ERR(pvt_data->shm)) {
+	अगर (IS_ERR(pvt_data->shm)) अणु
 		dev_err(dev, "%s: tee_shm_alloc failed\n", __func__);
 		rc = -ENOMEM;
-		goto out_shm_alloc;
-	}
+		जाओ out_shm_alloc;
+	पूर्ण
 
-	/* Allocate new struct tpm_chip instance */
+	/* Allocate new काष्ठा tpm_chip instance */
 	chip = tpm_chip_alloc(dev, &ftpm_tee_tpm_ops);
-	if (IS_ERR(chip)) {
+	अगर (IS_ERR(chip)) अणु
 		dev_err(dev, "%s: tpm_chip_alloc failed\n", __func__);
 		rc = PTR_ERR(chip);
-		goto out_chip_alloc;
-	}
+		जाओ out_chip_alloc;
+	पूर्ण
 
 	pvt_data->chip = chip;
 	pvt_data->chip->flags |= TPM_CHIP_FLAG_TPM2;
 
-	/* Create a character device for the fTPM */
-	rc = tpm_chip_register(pvt_data->chip);
-	if (rc) {
+	/* Create a अक्षरacter device क्रम the fTPM */
+	rc = tpm_chip_रेजिस्टर(pvt_data->chip);
+	अगर (rc) अणु
 		dev_err(dev, "%s: tpm_chip_register failed with rc=%d\n",
 			__func__, rc);
-		goto out_chip;
-	}
+		जाओ out_chip;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_chip:
 	put_device(&pvt_data->chip->dev);
 out_chip_alloc:
-	tee_shm_free(pvt_data->shm);
+	tee_shm_मुक्त(pvt_data->shm);
 out_shm_alloc:
-	tee_client_close_session(pvt_data->ctx, pvt_data->session);
+	tee_client_बंद_session(pvt_data->ctx, pvt_data->session);
 out_tee_session:
-	tee_client_close_context(pvt_data->ctx);
+	tee_client_बंद_context(pvt_data->ctx);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ftpm_plat_tee_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक ftpm_plat_tee_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
 
-	return ftpm_tee_probe(dev);
-}
+	वापस ftpm_tee_probe(dev);
+पूर्ण
 
 /**
- * ftpm_tee_remove() - remove the TPM device
- * @pdev: the platform_device description.
+ * ftpm_tee_हटाओ() - हटाओ the TPM device
+ * @pdev: the platक्रमm_device description.
  *
  * Return:
  *	0 always.
  */
-static int ftpm_tee_remove(struct device *dev)
-{
-	struct ftpm_tee_private *pvt_data = dev_get_drvdata(dev);
+अटल पूर्णांक ftpm_tee_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा ftpm_tee_निजी *pvt_data = dev_get_drvdata(dev);
 
 	/* Release the chip */
-	tpm_chip_unregister(pvt_data->chip);
+	tpm_chip_unरेजिस्टर(pvt_data->chip);
 
-	/* frees chip */
+	/* मुक्तs chip */
 	put_device(&pvt_data->chip->dev);
 
 	/* Free the shared memory pool */
-	tee_shm_free(pvt_data->shm);
+	tee_shm_मुक्त(pvt_data->shm);
 
-	/* close the existing session with fTPM TA*/
-	tee_client_close_session(pvt_data->ctx, pvt_data->session);
+	/* बंद the existing session with fTPM TA*/
+	tee_client_बंद_session(pvt_data->ctx, pvt_data->session);
 
-	/* close the context with TEE driver */
-	tee_client_close_context(pvt_data->ctx);
+	/* बंद the context with TEE driver */
+	tee_client_बंद_context(pvt_data->ctx);
 
-	/* memory allocated with devm_kzalloc() is freed automatically */
+	/* memory allocated with devm_kzalloc() is मुक्तd स्वतःmatically */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ftpm_plat_tee_remove(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक ftpm_plat_tee_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
 
-	return ftpm_tee_remove(dev);
-}
+	वापस ftpm_tee_हटाओ(dev);
+पूर्ण
 
 /**
- * ftpm_tee_shutdown() - shutdown the TPM device
- * @pdev: the platform_device description.
+ * ftpm_tee_shutकरोwn() - shutकरोwn the TPM device
+ * @pdev: the platक्रमm_device description.
  */
-static void ftpm_plat_tee_shutdown(struct platform_device *pdev)
-{
-	struct ftpm_tee_private *pvt_data = dev_get_drvdata(&pdev->dev);
+अटल व्योम ftpm_plat_tee_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ftpm_tee_निजी *pvt_data = dev_get_drvdata(&pdev->dev);
 
-	tee_shm_free(pvt_data->shm);
-	tee_client_close_session(pvt_data->ctx, pvt_data->session);
-	tee_client_close_context(pvt_data->ctx);
-}
+	tee_shm_मुक्त(pvt_data->shm);
+	tee_client_बंद_session(pvt_data->ctx, pvt_data->session);
+	tee_client_बंद_context(pvt_data->ctx);
+पूर्ण
 
-static const struct of_device_id of_ftpm_tee_ids[] = {
-	{ .compatible = "microsoft,ftpm" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id of_ftpm_tee_ids[] = अणु
+	अणु .compatible = "microsoft,ftpm" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_ftpm_tee_ids);
 
-static struct platform_driver ftpm_tee_plat_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ftpm_tee_plat_driver = अणु
+	.driver = अणु
 		.name = "ftpm-tee",
 		.of_match_table = of_match_ptr(of_ftpm_tee_ids),
-	},
-	.shutdown = ftpm_plat_tee_shutdown,
+	पूर्ण,
+	.shutकरोwn = ftpm_plat_tee_shutकरोwn,
 	.probe = ftpm_plat_tee_probe,
-	.remove = ftpm_plat_tee_remove,
-};
+	.हटाओ = ftpm_plat_tee_हटाओ,
+पूर्ण;
 
 /* UUID of the fTPM TA */
-static const struct tee_client_device_id optee_ftpm_id_table[] = {
-	{UUID_INIT(0xbc50d971, 0xd4c9, 0x42c4,
-		   0x82, 0xcb, 0x34, 0x3f, 0xb7, 0xf3, 0x78, 0x96)},
-	{}
-};
+अटल स्थिर काष्ठा tee_client_device_id optee_ftpm_id_table[] = अणु
+	अणुUUID_INIT(0xbc50d971, 0xd4c9, 0x42c4,
+		   0x82, 0xcb, 0x34, 0x3f, 0xb7, 0xf3, 0x78, 0x96)पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(tee, optee_ftpm_id_table);
 
-static struct tee_client_driver ftpm_tee_driver = {
+अटल काष्ठा tee_client_driver ftpm_tee_driver = अणु
 	.id_table	= optee_ftpm_id_table,
-	.driver		= {
+	.driver		= अणु
 		.name		= "optee-ftpm",
 		.bus		= &tee_bus_type,
 		.probe		= ftpm_tee_probe,
-		.remove		= ftpm_tee_remove,
-	},
-};
+		.हटाओ		= ftpm_tee_हटाओ,
+	पूर्ण,
+पूर्ण;
 
-static int __init ftpm_mod_init(void)
-{
-	int rc;
+अटल पूर्णांक __init ftpm_mod_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = platform_driver_register(&ftpm_tee_plat_driver);
-	if (rc)
-		return rc;
+	rc = platक्रमm_driver_रेजिस्टर(&ftpm_tee_plat_driver);
+	अगर (rc)
+		वापस rc;
 
-	return driver_register(&ftpm_tee_driver.driver);
-}
+	वापस driver_रेजिस्टर(&ftpm_tee_driver.driver);
+पूर्ण
 
-static void __exit ftpm_mod_exit(void)
-{
-	platform_driver_unregister(&ftpm_tee_plat_driver);
-	driver_unregister(&ftpm_tee_driver.driver);
-}
+अटल व्योम __निकास ftpm_mod_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&ftpm_tee_plat_driver);
+	driver_unरेजिस्टर(&ftpm_tee_driver.driver);
+पूर्ण
 
 module_init(ftpm_mod_init);
-module_exit(ftpm_mod_exit);
+module_निकास(ftpm_mod_निकास);
 
 MODULE_AUTHOR("Thirupathaiah Annapureddy <thiruan@microsoft.com>");
 MODULE_DESCRIPTION("TPM Driver for fTPM TA in TEE");

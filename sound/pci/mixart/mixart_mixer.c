@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for Digigram miXart soundcards
+ * Driver क्रम Digigram miXart soundcards
  *
  * mixer callbacks
  *
  * Copyright (c) 2003 by Digigram <alsa@digigram.com>
  */
 
-#include <linux/time.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
 
-#include <sound/core.h>
-#include "mixart.h"
-#include "mixart_core.h"
-#include "mixart_hwdep.h"
-#include <sound/control.h>
-#include <sound/tlv.h>
-#include "mixart_mixer.h"
+#समावेश <sound/core.h>
+#समावेश "mixart.h"
+#समावेश "mixart_core.h"
+#समावेश "mixart_hwdep.h"
+#समावेश <sound/control.h>
+#समावेश <sound/tlv.h>
+#समावेश "mixart_mixer.h"
 
-static const u32 mixart_analog_level[256] = {
+अटल स्थिर u32 mixart_analog_level[256] = अणु
 	0xc2c00000,		/* [000] -96.0 dB */
 	0xc2bf0000,		/* [001] -95.5 dB */
 	0xc2be0000,		/* [002] -95.0 dB */
@@ -277,616 +278,616 @@ static const u32 mixart_analog_level[256] = {
 	0x41f40000,		/* [253] 30.5 dB */
 	0x41f80000,		/* [254] 31.0 dB */
 	0x41fc0000,		/* [255] 31.5 dB */
-};
+पूर्ण;
 
-#define MIXART_ANALOG_CAPTURE_LEVEL_MIN   0      /* -96.0 dB + 8.0 dB = -88.0 dB */
-#define MIXART_ANALOG_CAPTURE_LEVEL_MAX   255    /*  31.5 dB + 8.0 dB =  39.5 dB */
-#define MIXART_ANALOG_CAPTURE_ZERO_LEVEL  176    /*  -8.0 dB + 8.0 dB =  0.0 dB */
+#घोषणा MIXART_ANALOG_CAPTURE_LEVEL_MIN   0      /* -96.0 dB + 8.0 dB = -88.0 dB */
+#घोषणा MIXART_ANALOG_CAPTURE_LEVEL_MAX   255    /*  31.5 dB + 8.0 dB =  39.5 dB */
+#घोषणा MIXART_ANALOG_CAPTURE_ZERO_LEVEL  176    /*  -8.0 dB + 8.0 dB =  0.0 dB */
 
-#define MIXART_ANALOG_PLAYBACK_LEVEL_MIN  0      /* -96.0 dB + 1.5 dB = -94.5 dB (possible is down to (-114.0+1.5)dB) */
-#define MIXART_ANALOG_PLAYBACK_LEVEL_MAX  192    /*   0.0 dB + 1.5 dB =  1.5 dB */
-#define MIXART_ANALOG_PLAYBACK_ZERO_LEVEL 189    /*  -1.5 dB + 1.5 dB =  0.0 dB */
+#घोषणा MIXART_ANALOG_PLAYBACK_LEVEL_MIN  0      /* -96.0 dB + 1.5 dB = -94.5 dB (possible is करोwn to (-114.0+1.5)dB) */
+#घोषणा MIXART_ANALOG_PLAYBACK_LEVEL_MAX  192    /*   0.0 dB + 1.5 dB =  1.5 dB */
+#घोषणा MIXART_ANALOG_PLAYBACK_ZERO_LEVEL 189    /*  -1.5 dB + 1.5 dB =  0.0 dB */
 
-static int mixart_update_analog_audio_level(struct snd_mixart* chip, int is_capture)
-{
-	int i, err;
-	struct mixart_msg request;
-	struct mixart_io_level io_level;
-	struct mixart_return_uid resp;
+अटल पूर्णांक mixart_update_analog_audio_level(काष्ठा snd_mixart* chip, पूर्णांक is_capture)
+अणु
+	पूर्णांक i, err;
+	काष्ठा mixart_msg request;
+	काष्ठा mixart_io_level io_level;
+	काष्ठा mixart_वापस_uid resp;
 
-	memset(&io_level, 0, sizeof(io_level));
+	स_रखो(&io_level, 0, माप(io_level));
 	io_level.channel = -1; /* left and right */
 
-	for(i=0; i<2; i++) {
-		if(is_capture) {
+	क्रम(i=0; i<2; i++) अणु
+		अगर(is_capture) अणु
 			io_level.level[i].analog_level = mixart_analog_level[chip->analog_capture_volume[i]];
-		} else {
-			if(chip->analog_playback_active[i])
+		पूर्ण अन्यथा अणु
+			अगर(chip->analog_playback_active[i])
 				io_level.level[i].analog_level = mixart_analog_level[chip->analog_playback_volume[i]];
-			else
+			अन्यथा
 				io_level.level[i].analog_level = mixart_analog_level[MIXART_ANALOG_PLAYBACK_LEVEL_MIN];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if(is_capture)	request.uid = chip->uid_in_analog_physio;
-	else		request.uid = chip->uid_out_analog_physio;
+	अगर(is_capture)	request.uid = chip->uid_in_analog_physio;
+	अन्यथा		request.uid = chip->uid_out_analog_physio;
 	request.message_id = MSG_PHYSICALIO_SET_LEVEL;
 	request.data = &io_level;
-	request.size = sizeof(io_level);
+	request.size = माप(io_level);
 
-	err = snd_mixart_send_msg(chip->mgr, &request, sizeof(resp), &resp);
-	if((err<0) || (resp.error_code)) {
+	err = snd_mixart_send_msg(chip->mgr, &request, माप(resp), &resp);
+	अगर((err<0) || (resp.error_code)) अणु
 		dev_dbg(chip->card->dev,
 			"error MSG_PHYSICALIO_SET_LEVEL card(%d) is_capture(%d) error_code(%x)\n",
 			chip->chip_idx, is_capture, resp.error_code);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * analog level control
  */
-static int mixart_analog_vol_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक mixart_analog_vol_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	if(kcontrol->private_value == 0) {	/* playback */
-		uinfo->value.integer.min = MIXART_ANALOG_PLAYBACK_LEVEL_MIN;  /* -96 dB */
-		uinfo->value.integer.max = MIXART_ANALOG_PLAYBACK_LEVEL_MAX;  /* 0 dB */
-	} else {				/* capture */
-		uinfo->value.integer.min = MIXART_ANALOG_CAPTURE_LEVEL_MIN;   /* -96 dB */
-		uinfo->value.integer.max = MIXART_ANALOG_CAPTURE_LEVEL_MAX;   /* 31.5 dB */
-	}
-	return 0;
-}
+	अगर(kcontrol->निजी_value == 0) अणु	/* playback */
+		uinfo->value.पूर्णांकeger.min = MIXART_ANALOG_PLAYBACK_LEVEL_MIN;  /* -96 dB */
+		uinfo->value.पूर्णांकeger.max = MIXART_ANALOG_PLAYBACK_LEVEL_MAX;  /* 0 dB */
+	पूर्ण अन्यथा अणु				/* capture */
+		uinfo->value.पूर्णांकeger.min = MIXART_ANALOG_CAPTURE_LEVEL_MIN;   /* -96 dB */
+		uinfo->value.पूर्णांकeger.max = MIXART_ANALOG_CAPTURE_LEVEL_MAX;   /* 31.5 dB */
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mixart_analog_vol_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक mixart_analog_vol_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
 	mutex_lock(&chip->mgr->mixer_mutex);
-	if(kcontrol->private_value == 0) {	/* playback */
-		ucontrol->value.integer.value[0] = chip->analog_playback_volume[0];
-		ucontrol->value.integer.value[1] = chip->analog_playback_volume[1];
-	} else {				/* capture */
-		ucontrol->value.integer.value[0] = chip->analog_capture_volume[0];
-		ucontrol->value.integer.value[1] = chip->analog_capture_volume[1];
-	}
+	अगर(kcontrol->निजी_value == 0) अणु	/* playback */
+		ucontrol->value.पूर्णांकeger.value[0] = chip->analog_playback_volume[0];
+		ucontrol->value.पूर्णांकeger.value[1] = chip->analog_playback_volume[1];
+	पूर्ण अन्यथा अणु				/* capture */
+		ucontrol->value.पूर्णांकeger.value[0] = chip->analog_capture_volume[0];
+		ucontrol->value.पूर्णांकeger.value[1] = chip->analog_capture_volume[1];
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mixart_analog_vol_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
-	int changed = 0;
-	int is_capture, i;
+अटल पूर्णांक mixart_analog_vol_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक changed = 0;
+	पूर्णांक is_capture, i;
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	is_capture = (kcontrol->private_value != 0);
-	for (i = 0; i < 2; i++) {
-		int new_volume = ucontrol->value.integer.value[i];
-		int *stored_volume = is_capture ?
+	is_capture = (kcontrol->निजी_value != 0);
+	क्रम (i = 0; i < 2; i++) अणु
+		पूर्णांक new_volume = ucontrol->value.पूर्णांकeger.value[i];
+		पूर्णांक *stored_volume = is_capture ?
 			&chip->analog_capture_volume[i] :
 			&chip->analog_playback_volume[i];
-		if (is_capture) {
-			if (new_volume < MIXART_ANALOG_CAPTURE_LEVEL_MIN ||
+		अगर (is_capture) अणु
+			अगर (new_volume < MIXART_ANALOG_CAPTURE_LEVEL_MIN ||
 			    new_volume > MIXART_ANALOG_CAPTURE_LEVEL_MAX)
-				continue;
-		} else {
-			if (new_volume < MIXART_ANALOG_PLAYBACK_LEVEL_MIN ||
+				जारी;
+		पूर्ण अन्यथा अणु
+			अगर (new_volume < MIXART_ANALOG_PLAYBACK_LEVEL_MIN ||
 			    new_volume > MIXART_ANALOG_PLAYBACK_LEVEL_MAX)
-				continue;
-		}
-		if (*stored_volume != new_volume) {
+				जारी;
+		पूर्ण
+		अगर (*stored_volume != new_volume) अणु
 			*stored_volume = new_volume;
 			changed = 1;
-		}
-	}
-	if (changed)
+		पूर्ण
+	पूर्ण
+	अगर (changed)
 		mixart_update_analog_audio_level(chip, is_capture);
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const DECLARE_TLV_DB_SCALE(db_scale_analog, -9600, 50, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_analog, -9600, 50, 0);
 
-static const struct snd_kcontrol_new mixart_control_analog_level = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new mixart_control_analog_level = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
 		   SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	/* name will be filled later */
 	.info =		mixart_analog_vol_info,
 	.get =		mixart_analog_vol_get,
 	.put =		mixart_analog_vol_put,
-	.tlv = { .p = db_scale_analog },
-};
+	.tlv = अणु .p = db_scale_analog पूर्ण,
+पूर्ण;
 
 /* shared */
-#define mixart_sw_info		snd_ctl_boolean_stereo_info
+#घोषणा mixart_sw_info		snd_ctl_boolean_stereo_info
 
-static int mixart_audio_sw_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक mixart_audio_sw_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	ucontrol->value.integer.value[0] = chip->analog_playback_active[0];
-	ucontrol->value.integer.value[1] = chip->analog_playback_active[1];
+	ucontrol->value.पूर्णांकeger.value[0] = chip->analog_playback_active[0];
+	ucontrol->value.पूर्णांकeger.value[1] = chip->analog_playback_active[1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mixart_audio_sw_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
-	int i, changed = 0;
+अटल पूर्णांक mixart_audio_sw_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक i, changed = 0;
 	mutex_lock(&chip->mgr->mixer_mutex);
-	for (i = 0; i < 2; i++) {
-		if (chip->analog_playback_active[i] !=
-		    ucontrol->value.integer.value[i]) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (chip->analog_playback_active[i] !=
+		    ucontrol->value.पूर्णांकeger.value[i]) अणु
 			chip->analog_playback_active[i] =
-				!!ucontrol->value.integer.value[i];
+				!!ucontrol->value.पूर्णांकeger.value[i];
 			changed = 1;
-		}
-	}
-	if (changed) /* update playback levels */
+		पूर्ण
+	पूर्ण
+	अगर (changed) /* update playback levels */
 		mixart_update_analog_audio_level(chip, 0);
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new mixart_control_output_switch = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new mixart_control_output_चयन = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Master Playback Switch",
 	.info =         mixart_sw_info,		/* shared */
 	.get =          mixart_audio_sw_get,
 	.put =          mixart_audio_sw_put
-};
+पूर्ण;
 
-static const u32 mixart_digital_level[256] = {
-	0x00000000,		/* [000] = 0.00e+000 = mute if <= -109.5dB */
-	0x366e1c7a,		/* [001] = 3.55e-006 = pow(10.0, 0.05 * -109.0dB) */
-	0x367c3860,		/* [002] = 3.76e-006 = pow(10.0, 0.05 * -108.5dB) */
-	0x36859525,		/* [003] = 3.98e-006 = pow(10.0, 0.05 * -108.0dB) */
-	0x368d7f74,		/* [004] = 4.22e-006 = pow(10.0, 0.05 * -107.5dB) */
-	0x3695e1d4,		/* [005] = 4.47e-006 = pow(10.0, 0.05 * -107.0dB) */
-	0x369ec362,		/* [006] = 4.73e-006 = pow(10.0, 0.05 * -106.5dB) */
-	0x36a82ba8,		/* [007] = 5.01e-006 = pow(10.0, 0.05 * -106.0dB) */
-	0x36b222a0,		/* [008] = 5.31e-006 = pow(10.0, 0.05 * -105.5dB) */
-	0x36bcb0c1,		/* [009] = 5.62e-006 = pow(10.0, 0.05 * -105.0dB) */
-	0x36c7defd,		/* [010] = 5.96e-006 = pow(10.0, 0.05 * -104.5dB) */
-	0x36d3b6d3,		/* [011] = 6.31e-006 = pow(10.0, 0.05 * -104.0dB) */
-	0x36e0424e,		/* [012] = 6.68e-006 = pow(10.0, 0.05 * -103.5dB) */
-	0x36ed8c14,		/* [013] = 7.08e-006 = pow(10.0, 0.05 * -103.0dB) */
-	0x36fb9f6c,		/* [014] = 7.50e-006 = pow(10.0, 0.05 * -102.5dB) */
-	0x37054423,		/* [015] = 7.94e-006 = pow(10.0, 0.05 * -102.0dB) */
-	0x370d29a5,		/* [016] = 8.41e-006 = pow(10.0, 0.05 * -101.5dB) */
-	0x371586f0,		/* [017] = 8.91e-006 = pow(10.0, 0.05 * -101.0dB) */
-	0x371e631b,		/* [018] = 9.44e-006 = pow(10.0, 0.05 * -100.5dB) */
-	0x3727c5ac,		/* [019] = 1.00e-005 = pow(10.0, 0.05 * -100.0dB) */
-	0x3731b69a,		/* [020] = 1.06e-005 = pow(10.0, 0.05 * -99.5dB) */
-	0x373c3e53,		/* [021] = 1.12e-005 = pow(10.0, 0.05 * -99.0dB) */
-	0x374765c8,		/* [022] = 1.19e-005 = pow(10.0, 0.05 * -98.5dB) */
-	0x3753366f,		/* [023] = 1.26e-005 = pow(10.0, 0.05 * -98.0dB) */
-	0x375fba4f,		/* [024] = 1.33e-005 = pow(10.0, 0.05 * -97.5dB) */
-	0x376cfc07,		/* [025] = 1.41e-005 = pow(10.0, 0.05 * -97.0dB) */
-	0x377b06d5,		/* [026] = 1.50e-005 = pow(10.0, 0.05 * -96.5dB) */
-	0x3784f352,		/* [027] = 1.58e-005 = pow(10.0, 0.05 * -96.0dB) */
-	0x378cd40b,		/* [028] = 1.68e-005 = pow(10.0, 0.05 * -95.5dB) */
-	0x37952c42,		/* [029] = 1.78e-005 = pow(10.0, 0.05 * -95.0dB) */
-	0x379e030e,		/* [030] = 1.88e-005 = pow(10.0, 0.05 * -94.5dB) */
-	0x37a75fef,		/* [031] = 2.00e-005 = pow(10.0, 0.05 * -94.0dB) */
-	0x37b14ad5,		/* [032] = 2.11e-005 = pow(10.0, 0.05 * -93.5dB) */
-	0x37bbcc2c,		/* [033] = 2.24e-005 = pow(10.0, 0.05 * -93.0dB) */
-	0x37c6ecdd,		/* [034] = 2.37e-005 = pow(10.0, 0.05 * -92.5dB) */
-	0x37d2b65a,		/* [035] = 2.51e-005 = pow(10.0, 0.05 * -92.0dB) */
-	0x37df32a3,		/* [036] = 2.66e-005 = pow(10.0, 0.05 * -91.5dB) */
-	0x37ec6c50,		/* [037] = 2.82e-005 = pow(10.0, 0.05 * -91.0dB) */
-	0x37fa6e9b,		/* [038] = 2.99e-005 = pow(10.0, 0.05 * -90.5dB) */
-	0x3804a2b3,		/* [039] = 3.16e-005 = pow(10.0, 0.05 * -90.0dB) */
-	0x380c7ea4,		/* [040] = 3.35e-005 = pow(10.0, 0.05 * -89.5dB) */
-	0x3814d1cc,		/* [041] = 3.55e-005 = pow(10.0, 0.05 * -89.0dB) */
-	0x381da33c,		/* [042] = 3.76e-005 = pow(10.0, 0.05 * -88.5dB) */
-	0x3826fa6f,		/* [043] = 3.98e-005 = pow(10.0, 0.05 * -88.0dB) */
-	0x3830df51,		/* [044] = 4.22e-005 = pow(10.0, 0.05 * -87.5dB) */
-	0x383b5a49,		/* [045] = 4.47e-005 = pow(10.0, 0.05 * -87.0dB) */
-	0x3846743b,		/* [046] = 4.73e-005 = pow(10.0, 0.05 * -86.5dB) */
-	0x38523692,		/* [047] = 5.01e-005 = pow(10.0, 0.05 * -86.0dB) */
-	0x385eab48,		/* [048] = 5.31e-005 = pow(10.0, 0.05 * -85.5dB) */
-	0x386bdcf1,		/* [049] = 5.62e-005 = pow(10.0, 0.05 * -85.0dB) */
-	0x3879d6bc,		/* [050] = 5.96e-005 = pow(10.0, 0.05 * -84.5dB) */
-	0x38845244,		/* [051] = 6.31e-005 = pow(10.0, 0.05 * -84.0dB) */
-	0x388c2971,		/* [052] = 6.68e-005 = pow(10.0, 0.05 * -83.5dB) */
-	0x3894778d,		/* [053] = 7.08e-005 = pow(10.0, 0.05 * -83.0dB) */
-	0x389d43a4,		/* [054] = 7.50e-005 = pow(10.0, 0.05 * -82.5dB) */
-	0x38a6952c,		/* [055] = 7.94e-005 = pow(10.0, 0.05 * -82.0dB) */
-	0x38b0740f,		/* [056] = 8.41e-005 = pow(10.0, 0.05 * -81.5dB) */
-	0x38bae8ac,		/* [057] = 8.91e-005 = pow(10.0, 0.05 * -81.0dB) */
-	0x38c5fbe2,		/* [058] = 9.44e-005 = pow(10.0, 0.05 * -80.5dB) */
-	0x38d1b717,		/* [059] = 1.00e-004 = pow(10.0, 0.05 * -80.0dB) */
-	0x38de2440,		/* [060] = 1.06e-004 = pow(10.0, 0.05 * -79.5dB) */
-	0x38eb4de8,		/* [061] = 1.12e-004 = pow(10.0, 0.05 * -79.0dB) */
-	0x38f93f3a,		/* [062] = 1.19e-004 = pow(10.0, 0.05 * -78.5dB) */
-	0x39040206,		/* [063] = 1.26e-004 = pow(10.0, 0.05 * -78.0dB) */
-	0x390bd472,		/* [064] = 1.33e-004 = pow(10.0, 0.05 * -77.5dB) */
-	0x39141d84,		/* [065] = 1.41e-004 = pow(10.0, 0.05 * -77.0dB) */
-	0x391ce445,		/* [066] = 1.50e-004 = pow(10.0, 0.05 * -76.5dB) */
-	0x39263027,		/* [067] = 1.58e-004 = pow(10.0, 0.05 * -76.0dB) */
-	0x3930090d,		/* [068] = 1.68e-004 = pow(10.0, 0.05 * -75.5dB) */
-	0x393a7753,		/* [069] = 1.78e-004 = pow(10.0, 0.05 * -75.0dB) */
-	0x394583d2,		/* [070] = 1.88e-004 = pow(10.0, 0.05 * -74.5dB) */
-	0x395137ea,		/* [071] = 2.00e-004 = pow(10.0, 0.05 * -74.0dB) */
-	0x395d9d8a,		/* [072] = 2.11e-004 = pow(10.0, 0.05 * -73.5dB) */
-	0x396abf37,		/* [073] = 2.24e-004 = pow(10.0, 0.05 * -73.0dB) */
-	0x3978a814,		/* [074] = 2.37e-004 = pow(10.0, 0.05 * -72.5dB) */
-	0x3983b1f8,		/* [075] = 2.51e-004 = pow(10.0, 0.05 * -72.0dB) */
-	0x398b7fa6,		/* [076] = 2.66e-004 = pow(10.0, 0.05 * -71.5dB) */
-	0x3993c3b2,		/* [077] = 2.82e-004 = pow(10.0, 0.05 * -71.0dB) */
-	0x399c8521,		/* [078] = 2.99e-004 = pow(10.0, 0.05 * -70.5dB) */
-	0x39a5cb5f,		/* [079] = 3.16e-004 = pow(10.0, 0.05 * -70.0dB) */
-	0x39af9e4d,		/* [080] = 3.35e-004 = pow(10.0, 0.05 * -69.5dB) */
-	0x39ba063f,		/* [081] = 3.55e-004 = pow(10.0, 0.05 * -69.0dB) */
-	0x39c50c0b,		/* [082] = 3.76e-004 = pow(10.0, 0.05 * -68.5dB) */
-	0x39d0b90a,		/* [083] = 3.98e-004 = pow(10.0, 0.05 * -68.0dB) */
-	0x39dd1726,		/* [084] = 4.22e-004 = pow(10.0, 0.05 * -67.5dB) */
-	0x39ea30db,		/* [085] = 4.47e-004 = pow(10.0, 0.05 * -67.0dB) */
-	0x39f81149,		/* [086] = 4.73e-004 = pow(10.0, 0.05 * -66.5dB) */
-	0x3a03621b,		/* [087] = 5.01e-004 = pow(10.0, 0.05 * -66.0dB) */
-	0x3a0b2b0d,		/* [088] = 5.31e-004 = pow(10.0, 0.05 * -65.5dB) */
-	0x3a136a16,		/* [089] = 5.62e-004 = pow(10.0, 0.05 * -65.0dB) */
-	0x3a1c2636,		/* [090] = 5.96e-004 = pow(10.0, 0.05 * -64.5dB) */
-	0x3a2566d5,		/* [091] = 6.31e-004 = pow(10.0, 0.05 * -64.0dB) */
-	0x3a2f33cd,		/* [092] = 6.68e-004 = pow(10.0, 0.05 * -63.5dB) */
-	0x3a399570,		/* [093] = 7.08e-004 = pow(10.0, 0.05 * -63.0dB) */
-	0x3a44948c,		/* [094] = 7.50e-004 = pow(10.0, 0.05 * -62.5dB) */
-	0x3a503a77,		/* [095] = 7.94e-004 = pow(10.0, 0.05 * -62.0dB) */
-	0x3a5c9112,		/* [096] = 8.41e-004 = pow(10.0, 0.05 * -61.5dB) */
-	0x3a69a2d7,		/* [097] = 8.91e-004 = pow(10.0, 0.05 * -61.0dB) */
-	0x3a777ada,		/* [098] = 9.44e-004 = pow(10.0, 0.05 * -60.5dB) */
-	0x3a83126f,		/* [099] = 1.00e-003 = pow(10.0, 0.05 * -60.0dB) */
-	0x3a8ad6a8,		/* [100] = 1.06e-003 = pow(10.0, 0.05 * -59.5dB) */
-	0x3a9310b1,		/* [101] = 1.12e-003 = pow(10.0, 0.05 * -59.0dB) */
-	0x3a9bc784,		/* [102] = 1.19e-003 = pow(10.0, 0.05 * -58.5dB) */
-	0x3aa50287,		/* [103] = 1.26e-003 = pow(10.0, 0.05 * -58.0dB) */
-	0x3aaec98e,		/* [104] = 1.33e-003 = pow(10.0, 0.05 * -57.5dB) */
-	0x3ab924e5,		/* [105] = 1.41e-003 = pow(10.0, 0.05 * -57.0dB) */
-	0x3ac41d56,		/* [106] = 1.50e-003 = pow(10.0, 0.05 * -56.5dB) */
-	0x3acfbc31,		/* [107] = 1.58e-003 = pow(10.0, 0.05 * -56.0dB) */
-	0x3adc0b51,		/* [108] = 1.68e-003 = pow(10.0, 0.05 * -55.5dB) */
-	0x3ae91528,		/* [109] = 1.78e-003 = pow(10.0, 0.05 * -55.0dB) */
-	0x3af6e4c6,		/* [110] = 1.88e-003 = pow(10.0, 0.05 * -54.5dB) */
-	0x3b02c2f2,		/* [111] = 2.00e-003 = pow(10.0, 0.05 * -54.0dB) */
-	0x3b0a8276,		/* [112] = 2.11e-003 = pow(10.0, 0.05 * -53.5dB) */
-	0x3b12b782,		/* [113] = 2.24e-003 = pow(10.0, 0.05 * -53.0dB) */
-	0x3b1b690d,		/* [114] = 2.37e-003 = pow(10.0, 0.05 * -52.5dB) */
-	0x3b249e76,		/* [115] = 2.51e-003 = pow(10.0, 0.05 * -52.0dB) */
-	0x3b2e5f8f,		/* [116] = 2.66e-003 = pow(10.0, 0.05 * -51.5dB) */
-	0x3b38b49f,		/* [117] = 2.82e-003 = pow(10.0, 0.05 * -51.0dB) */
-	0x3b43a669,		/* [118] = 2.99e-003 = pow(10.0, 0.05 * -50.5dB) */
-	0x3b4f3e37,		/* [119] = 3.16e-003 = pow(10.0, 0.05 * -50.0dB) */
-	0x3b5b85e0,		/* [120] = 3.35e-003 = pow(10.0, 0.05 * -49.5dB) */
-	0x3b6887cf,		/* [121] = 3.55e-003 = pow(10.0, 0.05 * -49.0dB) */
-	0x3b764f0e,		/* [122] = 3.76e-003 = pow(10.0, 0.05 * -48.5dB) */
-	0x3b8273a6,		/* [123] = 3.98e-003 = pow(10.0, 0.05 * -48.0dB) */
-	0x3b8a2e77,		/* [124] = 4.22e-003 = pow(10.0, 0.05 * -47.5dB) */
-	0x3b925e89,		/* [125] = 4.47e-003 = pow(10.0, 0.05 * -47.0dB) */
-	0x3b9b0ace,		/* [126] = 4.73e-003 = pow(10.0, 0.05 * -46.5dB) */
-	0x3ba43aa2,		/* [127] = 5.01e-003 = pow(10.0, 0.05 * -46.0dB) */
-	0x3badf5d1,		/* [128] = 5.31e-003 = pow(10.0, 0.05 * -45.5dB) */
-	0x3bb8449c,		/* [129] = 5.62e-003 = pow(10.0, 0.05 * -45.0dB) */
-	0x3bc32fc3,		/* [130] = 5.96e-003 = pow(10.0, 0.05 * -44.5dB) */
-	0x3bcec08a,		/* [131] = 6.31e-003 = pow(10.0, 0.05 * -44.0dB) */
-	0x3bdb00c0,		/* [132] = 6.68e-003 = pow(10.0, 0.05 * -43.5dB) */
-	0x3be7facc,		/* [133] = 7.08e-003 = pow(10.0, 0.05 * -43.0dB) */
-	0x3bf5b9b0,		/* [134] = 7.50e-003 = pow(10.0, 0.05 * -42.5dB) */
-	0x3c02248a,		/* [135] = 7.94e-003 = pow(10.0, 0.05 * -42.0dB) */
-	0x3c09daac,		/* [136] = 8.41e-003 = pow(10.0, 0.05 * -41.5dB) */
-	0x3c1205c6,		/* [137] = 8.91e-003 = pow(10.0, 0.05 * -41.0dB) */
-	0x3c1aacc8,		/* [138] = 9.44e-003 = pow(10.0, 0.05 * -40.5dB) */
-	0x3c23d70a,		/* [139] = 1.00e-002 = pow(10.0, 0.05 * -40.0dB) */
-	0x3c2d8c52,		/* [140] = 1.06e-002 = pow(10.0, 0.05 * -39.5dB) */
-	0x3c37d4dd,		/* [141] = 1.12e-002 = pow(10.0, 0.05 * -39.0dB) */
-	0x3c42b965,		/* [142] = 1.19e-002 = pow(10.0, 0.05 * -38.5dB) */
-	0x3c4e4329,		/* [143] = 1.26e-002 = pow(10.0, 0.05 * -38.0dB) */
-	0x3c5a7bf1,		/* [144] = 1.33e-002 = pow(10.0, 0.05 * -37.5dB) */
-	0x3c676e1e,		/* [145] = 1.41e-002 = pow(10.0, 0.05 * -37.0dB) */
-	0x3c7524ac,		/* [146] = 1.50e-002 = pow(10.0, 0.05 * -36.5dB) */
-	0x3c81d59f,		/* [147] = 1.58e-002 = pow(10.0, 0.05 * -36.0dB) */
-	0x3c898712,		/* [148] = 1.68e-002 = pow(10.0, 0.05 * -35.5dB) */
-	0x3c91ad39,		/* [149] = 1.78e-002 = pow(10.0, 0.05 * -35.0dB) */
-	0x3c9a4efc,		/* [150] = 1.88e-002 = pow(10.0, 0.05 * -34.5dB) */
-	0x3ca373af,		/* [151] = 2.00e-002 = pow(10.0, 0.05 * -34.0dB) */
-	0x3cad2314,		/* [152] = 2.11e-002 = pow(10.0, 0.05 * -33.5dB) */
-	0x3cb76563,		/* [153] = 2.24e-002 = pow(10.0, 0.05 * -33.0dB) */
-	0x3cc24350,		/* [154] = 2.37e-002 = pow(10.0, 0.05 * -32.5dB) */
-	0x3ccdc614,		/* [155] = 2.51e-002 = pow(10.0, 0.05 * -32.0dB) */
-	0x3cd9f773,		/* [156] = 2.66e-002 = pow(10.0, 0.05 * -31.5dB) */
-	0x3ce6e1c6,		/* [157] = 2.82e-002 = pow(10.0, 0.05 * -31.0dB) */
-	0x3cf49003,		/* [158] = 2.99e-002 = pow(10.0, 0.05 * -30.5dB) */
-	0x3d0186e2,		/* [159] = 3.16e-002 = pow(10.0, 0.05 * -30.0dB) */
-	0x3d0933ac,		/* [160] = 3.35e-002 = pow(10.0, 0.05 * -29.5dB) */
-	0x3d1154e1,		/* [161] = 3.55e-002 = pow(10.0, 0.05 * -29.0dB) */
-	0x3d19f169,		/* [162] = 3.76e-002 = pow(10.0, 0.05 * -28.5dB) */
-	0x3d231090,		/* [163] = 3.98e-002 = pow(10.0, 0.05 * -28.0dB) */
-	0x3d2cba15,		/* [164] = 4.22e-002 = pow(10.0, 0.05 * -27.5dB) */
-	0x3d36f62b,		/* [165] = 4.47e-002 = pow(10.0, 0.05 * -27.0dB) */
-	0x3d41cd81,		/* [166] = 4.73e-002 = pow(10.0, 0.05 * -26.5dB) */
-	0x3d4d494a,		/* [167] = 5.01e-002 = pow(10.0, 0.05 * -26.0dB) */
-	0x3d597345,		/* [168] = 5.31e-002 = pow(10.0, 0.05 * -25.5dB) */
-	0x3d6655c3,		/* [169] = 5.62e-002 = pow(10.0, 0.05 * -25.0dB) */
-	0x3d73fbb4,		/* [170] = 5.96e-002 = pow(10.0, 0.05 * -24.5dB) */
-	0x3d813856,		/* [171] = 6.31e-002 = pow(10.0, 0.05 * -24.0dB) */
-	0x3d88e078,		/* [172] = 6.68e-002 = pow(10.0, 0.05 * -23.5dB) */
-	0x3d90fcbf,		/* [173] = 7.08e-002 = pow(10.0, 0.05 * -23.0dB) */
-	0x3d99940e,		/* [174] = 7.50e-002 = pow(10.0, 0.05 * -22.5dB) */
-	0x3da2adad,		/* [175] = 7.94e-002 = pow(10.0, 0.05 * -22.0dB) */
-	0x3dac5156,		/* [176] = 8.41e-002 = pow(10.0, 0.05 * -21.5dB) */
-	0x3db68738,		/* [177] = 8.91e-002 = pow(10.0, 0.05 * -21.0dB) */
-	0x3dc157fb,		/* [178] = 9.44e-002 = pow(10.0, 0.05 * -20.5dB) */
-	0x3dcccccd,		/* [179] = 1.00e-001 = pow(10.0, 0.05 * -20.0dB) */
-	0x3dd8ef67,		/* [180] = 1.06e-001 = pow(10.0, 0.05 * -19.5dB) */
-	0x3de5ca15,		/* [181] = 1.12e-001 = pow(10.0, 0.05 * -19.0dB) */
-	0x3df367bf,		/* [182] = 1.19e-001 = pow(10.0, 0.05 * -18.5dB) */
-	0x3e00e9f9,		/* [183] = 1.26e-001 = pow(10.0, 0.05 * -18.0dB) */
-	0x3e088d77,		/* [184] = 1.33e-001 = pow(10.0, 0.05 * -17.5dB) */
-	0x3e10a4d3,		/* [185] = 1.41e-001 = pow(10.0, 0.05 * -17.0dB) */
-	0x3e1936ec,		/* [186] = 1.50e-001 = pow(10.0, 0.05 * -16.5dB) */
-	0x3e224b06,		/* [187] = 1.58e-001 = pow(10.0, 0.05 * -16.0dB) */
-	0x3e2be8d7,		/* [188] = 1.68e-001 = pow(10.0, 0.05 * -15.5dB) */
-	0x3e361887,		/* [189] = 1.78e-001 = pow(10.0, 0.05 * -15.0dB) */
-	0x3e40e2bb,		/* [190] = 1.88e-001 = pow(10.0, 0.05 * -14.5dB) */
-	0x3e4c509b,		/* [191] = 2.00e-001 = pow(10.0, 0.05 * -14.0dB) */
-	0x3e586bd9,		/* [192] = 2.11e-001 = pow(10.0, 0.05 * -13.5dB) */
-	0x3e653ebb,		/* [193] = 2.24e-001 = pow(10.0, 0.05 * -13.0dB) */
-	0x3e72d424,		/* [194] = 2.37e-001 = pow(10.0, 0.05 * -12.5dB) */
-	0x3e809bcc,		/* [195] = 2.51e-001 = pow(10.0, 0.05 * -12.0dB) */
-	0x3e883aa8,		/* [196] = 2.66e-001 = pow(10.0, 0.05 * -11.5dB) */
-	0x3e904d1c,		/* [197] = 2.82e-001 = pow(10.0, 0.05 * -11.0dB) */
-	0x3e98da02,		/* [198] = 2.99e-001 = pow(10.0, 0.05 * -10.5dB) */
-	0x3ea1e89b,		/* [199] = 3.16e-001 = pow(10.0, 0.05 * -10.0dB) */
-	0x3eab8097,		/* [200] = 3.35e-001 = pow(10.0, 0.05 * -9.5dB) */
-	0x3eb5aa1a,		/* [201] = 3.55e-001 = pow(10.0, 0.05 * -9.0dB) */
-	0x3ec06dc3,		/* [202] = 3.76e-001 = pow(10.0, 0.05 * -8.5dB) */
-	0x3ecbd4b4,		/* [203] = 3.98e-001 = pow(10.0, 0.05 * -8.0dB) */
-	0x3ed7e89b,		/* [204] = 4.22e-001 = pow(10.0, 0.05 * -7.5dB) */
-	0x3ee4b3b6,		/* [205] = 4.47e-001 = pow(10.0, 0.05 * -7.0dB) */
-	0x3ef240e2,		/* [206] = 4.73e-001 = pow(10.0, 0.05 * -6.5dB) */
-	0x3f004dce,		/* [207] = 5.01e-001 = pow(10.0, 0.05 * -6.0dB) */
-	0x3f07e80b,		/* [208] = 5.31e-001 = pow(10.0, 0.05 * -5.5dB) */
-	0x3f0ff59a,		/* [209] = 5.62e-001 = pow(10.0, 0.05 * -5.0dB) */
-	0x3f187d50,		/* [210] = 5.96e-001 = pow(10.0, 0.05 * -4.5dB) */
-	0x3f21866c,		/* [211] = 6.31e-001 = pow(10.0, 0.05 * -4.0dB) */
-	0x3f2b1896,		/* [212] = 6.68e-001 = pow(10.0, 0.05 * -3.5dB) */
-	0x3f353bef,		/* [213] = 7.08e-001 = pow(10.0, 0.05 * -3.0dB) */
-	0x3f3ff911,		/* [214] = 7.50e-001 = pow(10.0, 0.05 * -2.5dB) */
-	0x3f4b5918,		/* [215] = 7.94e-001 = pow(10.0, 0.05 * -2.0dB) */
-	0x3f5765ac,		/* [216] = 8.41e-001 = pow(10.0, 0.05 * -1.5dB) */
-	0x3f642905,		/* [217] = 8.91e-001 = pow(10.0, 0.05 * -1.0dB) */
-	0x3f71adf9,		/* [218] = 9.44e-001 = pow(10.0, 0.05 * -0.5dB) */
-	0x3f800000,		/* [219] = 1.00e+000 = pow(10.0, 0.05 * 0.0dB) */
-	0x3f8795a0,		/* [220] = 1.06e+000 = pow(10.0, 0.05 * 0.5dB) */
-	0x3f8f9e4d,		/* [221] = 1.12e+000 = pow(10.0, 0.05 * 1.0dB) */
-	0x3f9820d7,		/* [222] = 1.19e+000 = pow(10.0, 0.05 * 1.5dB) */
-	0x3fa12478,		/* [223] = 1.26e+000 = pow(10.0, 0.05 * 2.0dB) */
-	0x3faab0d5,		/* [224] = 1.33e+000 = pow(10.0, 0.05 * 2.5dB) */
-	0x3fb4ce08,		/* [225] = 1.41e+000 = pow(10.0, 0.05 * 3.0dB) */
-	0x3fbf84a6,		/* [226] = 1.50e+000 = pow(10.0, 0.05 * 3.5dB) */
-	0x3fcaddc8,		/* [227] = 1.58e+000 = pow(10.0, 0.05 * 4.0dB) */
-	0x3fd6e30d,		/* [228] = 1.68e+000 = pow(10.0, 0.05 * 4.5dB) */
-	0x3fe39ea9,		/* [229] = 1.78e+000 = pow(10.0, 0.05 * 5.0dB) */
-	0x3ff11b6a,		/* [230] = 1.88e+000 = pow(10.0, 0.05 * 5.5dB) */
-	0x3fff64c1,		/* [231] = 2.00e+000 = pow(10.0, 0.05 * 6.0dB) */
-	0x40074368,		/* [232] = 2.11e+000 = pow(10.0, 0.05 * 6.5dB) */
-	0x400f4735,		/* [233] = 2.24e+000 = pow(10.0, 0.05 * 7.0dB) */
-	0x4017c496,		/* [234] = 2.37e+000 = pow(10.0, 0.05 * 7.5dB) */
-	0x4020c2bf,		/* [235] = 2.51e+000 = pow(10.0, 0.05 * 8.0dB) */
-	0x402a4952,		/* [236] = 2.66e+000 = pow(10.0, 0.05 * 8.5dB) */
-	0x40346063,		/* [237] = 2.82e+000 = pow(10.0, 0.05 * 9.0dB) */
-	0x403f1082,		/* [238] = 2.99e+000 = pow(10.0, 0.05 * 9.5dB) */
-	0x404a62c2,		/* [239] = 3.16e+000 = pow(10.0, 0.05 * 10.0dB) */
-	0x405660bd,		/* [240] = 3.35e+000 = pow(10.0, 0.05 * 10.5dB) */
-	0x406314a0,		/* [241] = 3.55e+000 = pow(10.0, 0.05 * 11.0dB) */
-	0x40708933,		/* [242] = 3.76e+000 = pow(10.0, 0.05 * 11.5dB) */
-	0x407ec9e1,		/* [243] = 3.98e+000 = pow(10.0, 0.05 * 12.0dB) */
-	0x4086f161,		/* [244] = 4.22e+000 = pow(10.0, 0.05 * 12.5dB) */
-	0x408ef052,		/* [245] = 4.47e+000 = pow(10.0, 0.05 * 13.0dB) */
-	0x4097688d,		/* [246] = 4.73e+000 = pow(10.0, 0.05 * 13.5dB) */
-	0x40a06142,		/* [247] = 5.01e+000 = pow(10.0, 0.05 * 14.0dB) */
-	0x40a9e20e,		/* [248] = 5.31e+000 = pow(10.0, 0.05 * 14.5dB) */
-	0x40b3f300,		/* [249] = 5.62e+000 = pow(10.0, 0.05 * 15.0dB) */
-	0x40be9ca5,		/* [250] = 5.96e+000 = pow(10.0, 0.05 * 15.5dB) */
-	0x40c9e807,		/* [251] = 6.31e+000 = pow(10.0, 0.05 * 16.0dB) */
-	0x40d5debc,		/* [252] = 6.68e+000 = pow(10.0, 0.05 * 16.5dB) */
-	0x40e28aeb,		/* [253] = 7.08e+000 = pow(10.0, 0.05 * 17.0dB) */
-	0x40eff755,		/* [254] = 7.50e+000 = pow(10.0, 0.05 * 17.5dB) */
-	0x40fe2f5e,		/* [255] = 7.94e+000 = pow(10.0, 0.05 * 18.0dB) */
-};
+अटल स्थिर u32 mixart_digital_level[256] = अणु
+	0x00000000,		/* [000] = 0.00e+000 = mute अगर <= -109.5dB */
+	0x366e1c7a,		/* [001] = 3.55e-006 = घात(10.0, 0.05 * -109.0dB) */
+	0x367c3860,		/* [002] = 3.76e-006 = घात(10.0, 0.05 * -108.5dB) */
+	0x36859525,		/* [003] = 3.98e-006 = घात(10.0, 0.05 * -108.0dB) */
+	0x368d7f74,		/* [004] = 4.22e-006 = घात(10.0, 0.05 * -107.5dB) */
+	0x3695e1d4,		/* [005] = 4.47e-006 = घात(10.0, 0.05 * -107.0dB) */
+	0x369ec362,		/* [006] = 4.73e-006 = घात(10.0, 0.05 * -106.5dB) */
+	0x36a82ba8,		/* [007] = 5.01e-006 = घात(10.0, 0.05 * -106.0dB) */
+	0x36b222a0,		/* [008] = 5.31e-006 = घात(10.0, 0.05 * -105.5dB) */
+	0x36bcb0c1,		/* [009] = 5.62e-006 = घात(10.0, 0.05 * -105.0dB) */
+	0x36c7defd,		/* [010] = 5.96e-006 = घात(10.0, 0.05 * -104.5dB) */
+	0x36d3b6d3,		/* [011] = 6.31e-006 = घात(10.0, 0.05 * -104.0dB) */
+	0x36e0424e,		/* [012] = 6.68e-006 = घात(10.0, 0.05 * -103.5dB) */
+	0x36ed8c14,		/* [013] = 7.08e-006 = घात(10.0, 0.05 * -103.0dB) */
+	0x36fb9f6c,		/* [014] = 7.50e-006 = घात(10.0, 0.05 * -102.5dB) */
+	0x37054423,		/* [015] = 7.94e-006 = घात(10.0, 0.05 * -102.0dB) */
+	0x370d29a5,		/* [016] = 8.41e-006 = घात(10.0, 0.05 * -101.5dB) */
+	0x371586f0,		/* [017] = 8.91e-006 = घात(10.0, 0.05 * -101.0dB) */
+	0x371e631b,		/* [018] = 9.44e-006 = घात(10.0, 0.05 * -100.5dB) */
+	0x3727c5ac,		/* [019] = 1.00e-005 = घात(10.0, 0.05 * -100.0dB) */
+	0x3731b69a,		/* [020] = 1.06e-005 = घात(10.0, 0.05 * -99.5dB) */
+	0x373c3e53,		/* [021] = 1.12e-005 = घात(10.0, 0.05 * -99.0dB) */
+	0x374765c8,		/* [022] = 1.19e-005 = घात(10.0, 0.05 * -98.5dB) */
+	0x3753366f,		/* [023] = 1.26e-005 = घात(10.0, 0.05 * -98.0dB) */
+	0x375fba4f,		/* [024] = 1.33e-005 = घात(10.0, 0.05 * -97.5dB) */
+	0x376cfc07,		/* [025] = 1.41e-005 = घात(10.0, 0.05 * -97.0dB) */
+	0x377b06d5,		/* [026] = 1.50e-005 = घात(10.0, 0.05 * -96.5dB) */
+	0x3784f352,		/* [027] = 1.58e-005 = घात(10.0, 0.05 * -96.0dB) */
+	0x378cd40b,		/* [028] = 1.68e-005 = घात(10.0, 0.05 * -95.5dB) */
+	0x37952c42,		/* [029] = 1.78e-005 = घात(10.0, 0.05 * -95.0dB) */
+	0x379e030e,		/* [030] = 1.88e-005 = घात(10.0, 0.05 * -94.5dB) */
+	0x37a75fef,		/* [031] = 2.00e-005 = घात(10.0, 0.05 * -94.0dB) */
+	0x37b14ad5,		/* [032] = 2.11e-005 = घात(10.0, 0.05 * -93.5dB) */
+	0x37bbcc2c,		/* [033] = 2.24e-005 = घात(10.0, 0.05 * -93.0dB) */
+	0x37c6ecdd,		/* [034] = 2.37e-005 = घात(10.0, 0.05 * -92.5dB) */
+	0x37d2b65a,		/* [035] = 2.51e-005 = घात(10.0, 0.05 * -92.0dB) */
+	0x37df32a3,		/* [036] = 2.66e-005 = घात(10.0, 0.05 * -91.5dB) */
+	0x37ec6c50,		/* [037] = 2.82e-005 = घात(10.0, 0.05 * -91.0dB) */
+	0x37fa6e9b,		/* [038] = 2.99e-005 = घात(10.0, 0.05 * -90.5dB) */
+	0x3804a2b3,		/* [039] = 3.16e-005 = घात(10.0, 0.05 * -90.0dB) */
+	0x380c7ea4,		/* [040] = 3.35e-005 = घात(10.0, 0.05 * -89.5dB) */
+	0x3814d1cc,		/* [041] = 3.55e-005 = घात(10.0, 0.05 * -89.0dB) */
+	0x381da33c,		/* [042] = 3.76e-005 = घात(10.0, 0.05 * -88.5dB) */
+	0x3826fa6f,		/* [043] = 3.98e-005 = घात(10.0, 0.05 * -88.0dB) */
+	0x3830df51,		/* [044] = 4.22e-005 = घात(10.0, 0.05 * -87.5dB) */
+	0x383b5a49,		/* [045] = 4.47e-005 = घात(10.0, 0.05 * -87.0dB) */
+	0x3846743b,		/* [046] = 4.73e-005 = घात(10.0, 0.05 * -86.5dB) */
+	0x38523692,		/* [047] = 5.01e-005 = घात(10.0, 0.05 * -86.0dB) */
+	0x385eab48,		/* [048] = 5.31e-005 = घात(10.0, 0.05 * -85.5dB) */
+	0x386bdcf1,		/* [049] = 5.62e-005 = घात(10.0, 0.05 * -85.0dB) */
+	0x3879d6bc,		/* [050] = 5.96e-005 = घात(10.0, 0.05 * -84.5dB) */
+	0x38845244,		/* [051] = 6.31e-005 = घात(10.0, 0.05 * -84.0dB) */
+	0x388c2971,		/* [052] = 6.68e-005 = घात(10.0, 0.05 * -83.5dB) */
+	0x3894778d,		/* [053] = 7.08e-005 = घात(10.0, 0.05 * -83.0dB) */
+	0x389d43a4,		/* [054] = 7.50e-005 = घात(10.0, 0.05 * -82.5dB) */
+	0x38a6952c,		/* [055] = 7.94e-005 = घात(10.0, 0.05 * -82.0dB) */
+	0x38b0740f,		/* [056] = 8.41e-005 = घात(10.0, 0.05 * -81.5dB) */
+	0x38bae8ac,		/* [057] = 8.91e-005 = घात(10.0, 0.05 * -81.0dB) */
+	0x38c5fbe2,		/* [058] = 9.44e-005 = घात(10.0, 0.05 * -80.5dB) */
+	0x38d1b717,		/* [059] = 1.00e-004 = घात(10.0, 0.05 * -80.0dB) */
+	0x38de2440,		/* [060] = 1.06e-004 = घात(10.0, 0.05 * -79.5dB) */
+	0x38eb4de8,		/* [061] = 1.12e-004 = घात(10.0, 0.05 * -79.0dB) */
+	0x38f93f3a,		/* [062] = 1.19e-004 = घात(10.0, 0.05 * -78.5dB) */
+	0x39040206,		/* [063] = 1.26e-004 = घात(10.0, 0.05 * -78.0dB) */
+	0x390bd472,		/* [064] = 1.33e-004 = घात(10.0, 0.05 * -77.5dB) */
+	0x39141d84,		/* [065] = 1.41e-004 = घात(10.0, 0.05 * -77.0dB) */
+	0x391ce445,		/* [066] = 1.50e-004 = घात(10.0, 0.05 * -76.5dB) */
+	0x39263027,		/* [067] = 1.58e-004 = घात(10.0, 0.05 * -76.0dB) */
+	0x3930090d,		/* [068] = 1.68e-004 = घात(10.0, 0.05 * -75.5dB) */
+	0x393a7753,		/* [069] = 1.78e-004 = घात(10.0, 0.05 * -75.0dB) */
+	0x394583d2,		/* [070] = 1.88e-004 = घात(10.0, 0.05 * -74.5dB) */
+	0x395137ea,		/* [071] = 2.00e-004 = घात(10.0, 0.05 * -74.0dB) */
+	0x395d9d8a,		/* [072] = 2.11e-004 = घात(10.0, 0.05 * -73.5dB) */
+	0x396abf37,		/* [073] = 2.24e-004 = घात(10.0, 0.05 * -73.0dB) */
+	0x3978a814,		/* [074] = 2.37e-004 = घात(10.0, 0.05 * -72.5dB) */
+	0x3983b1f8,		/* [075] = 2.51e-004 = घात(10.0, 0.05 * -72.0dB) */
+	0x398b7fa6,		/* [076] = 2.66e-004 = घात(10.0, 0.05 * -71.5dB) */
+	0x3993c3b2,		/* [077] = 2.82e-004 = घात(10.0, 0.05 * -71.0dB) */
+	0x399c8521,		/* [078] = 2.99e-004 = घात(10.0, 0.05 * -70.5dB) */
+	0x39a5cb5f,		/* [079] = 3.16e-004 = घात(10.0, 0.05 * -70.0dB) */
+	0x39af9e4d,		/* [080] = 3.35e-004 = घात(10.0, 0.05 * -69.5dB) */
+	0x39ba063f,		/* [081] = 3.55e-004 = घात(10.0, 0.05 * -69.0dB) */
+	0x39c50c0b,		/* [082] = 3.76e-004 = घात(10.0, 0.05 * -68.5dB) */
+	0x39d0b90a,		/* [083] = 3.98e-004 = घात(10.0, 0.05 * -68.0dB) */
+	0x39dd1726,		/* [084] = 4.22e-004 = घात(10.0, 0.05 * -67.5dB) */
+	0x39ea30db,		/* [085] = 4.47e-004 = घात(10.0, 0.05 * -67.0dB) */
+	0x39f81149,		/* [086] = 4.73e-004 = घात(10.0, 0.05 * -66.5dB) */
+	0x3a03621b,		/* [087] = 5.01e-004 = घात(10.0, 0.05 * -66.0dB) */
+	0x3a0b2b0d,		/* [088] = 5.31e-004 = घात(10.0, 0.05 * -65.5dB) */
+	0x3a136a16,		/* [089] = 5.62e-004 = घात(10.0, 0.05 * -65.0dB) */
+	0x3a1c2636,		/* [090] = 5.96e-004 = घात(10.0, 0.05 * -64.5dB) */
+	0x3a2566d5,		/* [091] = 6.31e-004 = घात(10.0, 0.05 * -64.0dB) */
+	0x3a2f33cd,		/* [092] = 6.68e-004 = घात(10.0, 0.05 * -63.5dB) */
+	0x3a399570,		/* [093] = 7.08e-004 = घात(10.0, 0.05 * -63.0dB) */
+	0x3a44948c,		/* [094] = 7.50e-004 = घात(10.0, 0.05 * -62.5dB) */
+	0x3a503a77,		/* [095] = 7.94e-004 = घात(10.0, 0.05 * -62.0dB) */
+	0x3a5c9112,		/* [096] = 8.41e-004 = घात(10.0, 0.05 * -61.5dB) */
+	0x3a69a2d7,		/* [097] = 8.91e-004 = घात(10.0, 0.05 * -61.0dB) */
+	0x3a777ada,		/* [098] = 9.44e-004 = घात(10.0, 0.05 * -60.5dB) */
+	0x3a83126f,		/* [099] = 1.00e-003 = घात(10.0, 0.05 * -60.0dB) */
+	0x3a8ad6a8,		/* [100] = 1.06e-003 = घात(10.0, 0.05 * -59.5dB) */
+	0x3a9310b1,		/* [101] = 1.12e-003 = घात(10.0, 0.05 * -59.0dB) */
+	0x3a9bc784,		/* [102] = 1.19e-003 = घात(10.0, 0.05 * -58.5dB) */
+	0x3aa50287,		/* [103] = 1.26e-003 = घात(10.0, 0.05 * -58.0dB) */
+	0x3aaec98e,		/* [104] = 1.33e-003 = घात(10.0, 0.05 * -57.5dB) */
+	0x3ab924e5,		/* [105] = 1.41e-003 = घात(10.0, 0.05 * -57.0dB) */
+	0x3ac41d56,		/* [106] = 1.50e-003 = घात(10.0, 0.05 * -56.5dB) */
+	0x3acfbc31,		/* [107] = 1.58e-003 = घात(10.0, 0.05 * -56.0dB) */
+	0x3adc0b51,		/* [108] = 1.68e-003 = घात(10.0, 0.05 * -55.5dB) */
+	0x3ae91528,		/* [109] = 1.78e-003 = घात(10.0, 0.05 * -55.0dB) */
+	0x3af6e4c6,		/* [110] = 1.88e-003 = घात(10.0, 0.05 * -54.5dB) */
+	0x3b02c2f2,		/* [111] = 2.00e-003 = घात(10.0, 0.05 * -54.0dB) */
+	0x3b0a8276,		/* [112] = 2.11e-003 = घात(10.0, 0.05 * -53.5dB) */
+	0x3b12b782,		/* [113] = 2.24e-003 = घात(10.0, 0.05 * -53.0dB) */
+	0x3b1b690d,		/* [114] = 2.37e-003 = घात(10.0, 0.05 * -52.5dB) */
+	0x3b249e76,		/* [115] = 2.51e-003 = घात(10.0, 0.05 * -52.0dB) */
+	0x3b2e5f8f,		/* [116] = 2.66e-003 = घात(10.0, 0.05 * -51.5dB) */
+	0x3b38b49f,		/* [117] = 2.82e-003 = घात(10.0, 0.05 * -51.0dB) */
+	0x3b43a669,		/* [118] = 2.99e-003 = घात(10.0, 0.05 * -50.5dB) */
+	0x3b4f3e37,		/* [119] = 3.16e-003 = घात(10.0, 0.05 * -50.0dB) */
+	0x3b5b85e0,		/* [120] = 3.35e-003 = घात(10.0, 0.05 * -49.5dB) */
+	0x3b6887cf,		/* [121] = 3.55e-003 = घात(10.0, 0.05 * -49.0dB) */
+	0x3b764f0e,		/* [122] = 3.76e-003 = घात(10.0, 0.05 * -48.5dB) */
+	0x3b8273a6,		/* [123] = 3.98e-003 = घात(10.0, 0.05 * -48.0dB) */
+	0x3b8a2e77,		/* [124] = 4.22e-003 = घात(10.0, 0.05 * -47.5dB) */
+	0x3b925e89,		/* [125] = 4.47e-003 = घात(10.0, 0.05 * -47.0dB) */
+	0x3b9b0ace,		/* [126] = 4.73e-003 = घात(10.0, 0.05 * -46.5dB) */
+	0x3ba43aa2,		/* [127] = 5.01e-003 = घात(10.0, 0.05 * -46.0dB) */
+	0x3badf5d1,		/* [128] = 5.31e-003 = घात(10.0, 0.05 * -45.5dB) */
+	0x3bb8449c,		/* [129] = 5.62e-003 = घात(10.0, 0.05 * -45.0dB) */
+	0x3bc32fc3,		/* [130] = 5.96e-003 = घात(10.0, 0.05 * -44.5dB) */
+	0x3bcec08a,		/* [131] = 6.31e-003 = घात(10.0, 0.05 * -44.0dB) */
+	0x3bdb00c0,		/* [132] = 6.68e-003 = घात(10.0, 0.05 * -43.5dB) */
+	0x3be7facc,		/* [133] = 7.08e-003 = घात(10.0, 0.05 * -43.0dB) */
+	0x3bf5b9b0,		/* [134] = 7.50e-003 = घात(10.0, 0.05 * -42.5dB) */
+	0x3c02248a,		/* [135] = 7.94e-003 = घात(10.0, 0.05 * -42.0dB) */
+	0x3c09daac,		/* [136] = 8.41e-003 = घात(10.0, 0.05 * -41.5dB) */
+	0x3c1205c6,		/* [137] = 8.91e-003 = घात(10.0, 0.05 * -41.0dB) */
+	0x3c1aacc8,		/* [138] = 9.44e-003 = घात(10.0, 0.05 * -40.5dB) */
+	0x3c23d70a,		/* [139] = 1.00e-002 = घात(10.0, 0.05 * -40.0dB) */
+	0x3c2d8c52,		/* [140] = 1.06e-002 = घात(10.0, 0.05 * -39.5dB) */
+	0x3c37d4dd,		/* [141] = 1.12e-002 = घात(10.0, 0.05 * -39.0dB) */
+	0x3c42b965,		/* [142] = 1.19e-002 = घात(10.0, 0.05 * -38.5dB) */
+	0x3c4e4329,		/* [143] = 1.26e-002 = घात(10.0, 0.05 * -38.0dB) */
+	0x3c5a7bf1,		/* [144] = 1.33e-002 = घात(10.0, 0.05 * -37.5dB) */
+	0x3c676e1e,		/* [145] = 1.41e-002 = घात(10.0, 0.05 * -37.0dB) */
+	0x3c7524ac,		/* [146] = 1.50e-002 = घात(10.0, 0.05 * -36.5dB) */
+	0x3c81d59f,		/* [147] = 1.58e-002 = घात(10.0, 0.05 * -36.0dB) */
+	0x3c898712,		/* [148] = 1.68e-002 = घात(10.0, 0.05 * -35.5dB) */
+	0x3c91ad39,		/* [149] = 1.78e-002 = घात(10.0, 0.05 * -35.0dB) */
+	0x3c9a4efc,		/* [150] = 1.88e-002 = घात(10.0, 0.05 * -34.5dB) */
+	0x3ca373af,		/* [151] = 2.00e-002 = घात(10.0, 0.05 * -34.0dB) */
+	0x3cad2314,		/* [152] = 2.11e-002 = घात(10.0, 0.05 * -33.5dB) */
+	0x3cb76563,		/* [153] = 2.24e-002 = घात(10.0, 0.05 * -33.0dB) */
+	0x3cc24350,		/* [154] = 2.37e-002 = घात(10.0, 0.05 * -32.5dB) */
+	0x3ccdc614,		/* [155] = 2.51e-002 = घात(10.0, 0.05 * -32.0dB) */
+	0x3cd9f773,		/* [156] = 2.66e-002 = घात(10.0, 0.05 * -31.5dB) */
+	0x3ce6e1c6,		/* [157] = 2.82e-002 = घात(10.0, 0.05 * -31.0dB) */
+	0x3cf49003,		/* [158] = 2.99e-002 = घात(10.0, 0.05 * -30.5dB) */
+	0x3d0186e2,		/* [159] = 3.16e-002 = घात(10.0, 0.05 * -30.0dB) */
+	0x3d0933ac,		/* [160] = 3.35e-002 = घात(10.0, 0.05 * -29.5dB) */
+	0x3d1154e1,		/* [161] = 3.55e-002 = घात(10.0, 0.05 * -29.0dB) */
+	0x3d19f169,		/* [162] = 3.76e-002 = घात(10.0, 0.05 * -28.5dB) */
+	0x3d231090,		/* [163] = 3.98e-002 = घात(10.0, 0.05 * -28.0dB) */
+	0x3d2cba15,		/* [164] = 4.22e-002 = घात(10.0, 0.05 * -27.5dB) */
+	0x3d36f62b,		/* [165] = 4.47e-002 = घात(10.0, 0.05 * -27.0dB) */
+	0x3d41cd81,		/* [166] = 4.73e-002 = घात(10.0, 0.05 * -26.5dB) */
+	0x3d4d494a,		/* [167] = 5.01e-002 = घात(10.0, 0.05 * -26.0dB) */
+	0x3d597345,		/* [168] = 5.31e-002 = घात(10.0, 0.05 * -25.5dB) */
+	0x3d6655c3,		/* [169] = 5.62e-002 = घात(10.0, 0.05 * -25.0dB) */
+	0x3d73fbb4,		/* [170] = 5.96e-002 = घात(10.0, 0.05 * -24.5dB) */
+	0x3d813856,		/* [171] = 6.31e-002 = घात(10.0, 0.05 * -24.0dB) */
+	0x3d88e078,		/* [172] = 6.68e-002 = घात(10.0, 0.05 * -23.5dB) */
+	0x3d90fcbf,		/* [173] = 7.08e-002 = घात(10.0, 0.05 * -23.0dB) */
+	0x3d99940e,		/* [174] = 7.50e-002 = घात(10.0, 0.05 * -22.5dB) */
+	0x3da2adad,		/* [175] = 7.94e-002 = घात(10.0, 0.05 * -22.0dB) */
+	0x3dac5156,		/* [176] = 8.41e-002 = घात(10.0, 0.05 * -21.5dB) */
+	0x3db68738,		/* [177] = 8.91e-002 = घात(10.0, 0.05 * -21.0dB) */
+	0x3dc157fb,		/* [178] = 9.44e-002 = घात(10.0, 0.05 * -20.5dB) */
+	0x3dcccccd,		/* [179] = 1.00e-001 = घात(10.0, 0.05 * -20.0dB) */
+	0x3dd8ef67,		/* [180] = 1.06e-001 = घात(10.0, 0.05 * -19.5dB) */
+	0x3de5ca15,		/* [181] = 1.12e-001 = घात(10.0, 0.05 * -19.0dB) */
+	0x3df367bf,		/* [182] = 1.19e-001 = घात(10.0, 0.05 * -18.5dB) */
+	0x3e00e9f9,		/* [183] = 1.26e-001 = घात(10.0, 0.05 * -18.0dB) */
+	0x3e088d77,		/* [184] = 1.33e-001 = घात(10.0, 0.05 * -17.5dB) */
+	0x3e10a4d3,		/* [185] = 1.41e-001 = घात(10.0, 0.05 * -17.0dB) */
+	0x3e1936ec,		/* [186] = 1.50e-001 = घात(10.0, 0.05 * -16.5dB) */
+	0x3e224b06,		/* [187] = 1.58e-001 = घात(10.0, 0.05 * -16.0dB) */
+	0x3e2be8d7,		/* [188] = 1.68e-001 = घात(10.0, 0.05 * -15.5dB) */
+	0x3e361887,		/* [189] = 1.78e-001 = घात(10.0, 0.05 * -15.0dB) */
+	0x3e40e2bb,		/* [190] = 1.88e-001 = घात(10.0, 0.05 * -14.5dB) */
+	0x3e4c509b,		/* [191] = 2.00e-001 = घात(10.0, 0.05 * -14.0dB) */
+	0x3e586bd9,		/* [192] = 2.11e-001 = घात(10.0, 0.05 * -13.5dB) */
+	0x3e653ebb,		/* [193] = 2.24e-001 = घात(10.0, 0.05 * -13.0dB) */
+	0x3e72d424,		/* [194] = 2.37e-001 = घात(10.0, 0.05 * -12.5dB) */
+	0x3e809bcc,		/* [195] = 2.51e-001 = घात(10.0, 0.05 * -12.0dB) */
+	0x3e883aa8,		/* [196] = 2.66e-001 = घात(10.0, 0.05 * -11.5dB) */
+	0x3e904d1c,		/* [197] = 2.82e-001 = घात(10.0, 0.05 * -11.0dB) */
+	0x3e98da02,		/* [198] = 2.99e-001 = घात(10.0, 0.05 * -10.5dB) */
+	0x3ea1e89b,		/* [199] = 3.16e-001 = घात(10.0, 0.05 * -10.0dB) */
+	0x3eab8097,		/* [200] = 3.35e-001 = घात(10.0, 0.05 * -9.5dB) */
+	0x3eb5aa1a,		/* [201] = 3.55e-001 = घात(10.0, 0.05 * -9.0dB) */
+	0x3ec06dc3,		/* [202] = 3.76e-001 = घात(10.0, 0.05 * -8.5dB) */
+	0x3ecbd4b4,		/* [203] = 3.98e-001 = घात(10.0, 0.05 * -8.0dB) */
+	0x3ed7e89b,		/* [204] = 4.22e-001 = घात(10.0, 0.05 * -7.5dB) */
+	0x3ee4b3b6,		/* [205] = 4.47e-001 = घात(10.0, 0.05 * -7.0dB) */
+	0x3ef240e2,		/* [206] = 4.73e-001 = घात(10.0, 0.05 * -6.5dB) */
+	0x3f004dce,		/* [207] = 5.01e-001 = घात(10.0, 0.05 * -6.0dB) */
+	0x3f07e80b,		/* [208] = 5.31e-001 = घात(10.0, 0.05 * -5.5dB) */
+	0x3f0ff59a,		/* [209] = 5.62e-001 = घात(10.0, 0.05 * -5.0dB) */
+	0x3f187d50,		/* [210] = 5.96e-001 = घात(10.0, 0.05 * -4.5dB) */
+	0x3f21866c,		/* [211] = 6.31e-001 = घात(10.0, 0.05 * -4.0dB) */
+	0x3f2b1896,		/* [212] = 6.68e-001 = घात(10.0, 0.05 * -3.5dB) */
+	0x3f353bef,		/* [213] = 7.08e-001 = घात(10.0, 0.05 * -3.0dB) */
+	0x3f3ff911,		/* [214] = 7.50e-001 = घात(10.0, 0.05 * -2.5dB) */
+	0x3f4b5918,		/* [215] = 7.94e-001 = घात(10.0, 0.05 * -2.0dB) */
+	0x3f5765ac,		/* [216] = 8.41e-001 = घात(10.0, 0.05 * -1.5dB) */
+	0x3f642905,		/* [217] = 8.91e-001 = घात(10.0, 0.05 * -1.0dB) */
+	0x3f71adf9,		/* [218] = 9.44e-001 = घात(10.0, 0.05 * -0.5dB) */
+	0x3f800000,		/* [219] = 1.00e+000 = घात(10.0, 0.05 * 0.0dB) */
+	0x3f8795a0,		/* [220] = 1.06e+000 = घात(10.0, 0.05 * 0.5dB) */
+	0x3f8f9e4d,		/* [221] = 1.12e+000 = घात(10.0, 0.05 * 1.0dB) */
+	0x3f9820d7,		/* [222] = 1.19e+000 = घात(10.0, 0.05 * 1.5dB) */
+	0x3fa12478,		/* [223] = 1.26e+000 = घात(10.0, 0.05 * 2.0dB) */
+	0x3faab0d5,		/* [224] = 1.33e+000 = घात(10.0, 0.05 * 2.5dB) */
+	0x3fb4ce08,		/* [225] = 1.41e+000 = घात(10.0, 0.05 * 3.0dB) */
+	0x3fbf84a6,		/* [226] = 1.50e+000 = घात(10.0, 0.05 * 3.5dB) */
+	0x3fcaddc8,		/* [227] = 1.58e+000 = घात(10.0, 0.05 * 4.0dB) */
+	0x3fd6e30d,		/* [228] = 1.68e+000 = घात(10.0, 0.05 * 4.5dB) */
+	0x3fe39ea9,		/* [229] = 1.78e+000 = घात(10.0, 0.05 * 5.0dB) */
+	0x3ff11b6a,		/* [230] = 1.88e+000 = घात(10.0, 0.05 * 5.5dB) */
+	0x3fff64c1,		/* [231] = 2.00e+000 = घात(10.0, 0.05 * 6.0dB) */
+	0x40074368,		/* [232] = 2.11e+000 = घात(10.0, 0.05 * 6.5dB) */
+	0x400f4735,		/* [233] = 2.24e+000 = घात(10.0, 0.05 * 7.0dB) */
+	0x4017c496,		/* [234] = 2.37e+000 = घात(10.0, 0.05 * 7.5dB) */
+	0x4020c2bf,		/* [235] = 2.51e+000 = घात(10.0, 0.05 * 8.0dB) */
+	0x402a4952,		/* [236] = 2.66e+000 = घात(10.0, 0.05 * 8.5dB) */
+	0x40346063,		/* [237] = 2.82e+000 = घात(10.0, 0.05 * 9.0dB) */
+	0x403f1082,		/* [238] = 2.99e+000 = घात(10.0, 0.05 * 9.5dB) */
+	0x404a62c2,		/* [239] = 3.16e+000 = घात(10.0, 0.05 * 10.0dB) */
+	0x405660bd,		/* [240] = 3.35e+000 = घात(10.0, 0.05 * 10.5dB) */
+	0x406314a0,		/* [241] = 3.55e+000 = घात(10.0, 0.05 * 11.0dB) */
+	0x40708933,		/* [242] = 3.76e+000 = घात(10.0, 0.05 * 11.5dB) */
+	0x407ec9e1,		/* [243] = 3.98e+000 = घात(10.0, 0.05 * 12.0dB) */
+	0x4086f161,		/* [244] = 4.22e+000 = घात(10.0, 0.05 * 12.5dB) */
+	0x408ef052,		/* [245] = 4.47e+000 = घात(10.0, 0.05 * 13.0dB) */
+	0x4097688d,		/* [246] = 4.73e+000 = घात(10.0, 0.05 * 13.5dB) */
+	0x40a06142,		/* [247] = 5.01e+000 = घात(10.0, 0.05 * 14.0dB) */
+	0x40a9e20e,		/* [248] = 5.31e+000 = घात(10.0, 0.05 * 14.5dB) */
+	0x40b3f300,		/* [249] = 5.62e+000 = घात(10.0, 0.05 * 15.0dB) */
+	0x40be9ca5,		/* [250] = 5.96e+000 = घात(10.0, 0.05 * 15.5dB) */
+	0x40c9e807,		/* [251] = 6.31e+000 = घात(10.0, 0.05 * 16.0dB) */
+	0x40d5debc,		/* [252] = 6.68e+000 = घात(10.0, 0.05 * 16.5dB) */
+	0x40e28aeb,		/* [253] = 7.08e+000 = घात(10.0, 0.05 * 17.0dB) */
+	0x40eff755,		/* [254] = 7.50e+000 = घात(10.0, 0.05 * 17.5dB) */
+	0x40fe2f5e,		/* [255] = 7.94e+000 = घात(10.0, 0.05 * 18.0dB) */
+पूर्ण;
 
-#define MIXART_DIGITAL_LEVEL_MIN   0      /* -109.5 dB */
-#define MIXART_DIGITAL_LEVEL_MAX   255    /*  18.0 dB */
-#define MIXART_DIGITAL_ZERO_LEVEL  219    /*  0.0 dB */
+#घोषणा MIXART_DIGITAL_LEVEL_MIN   0      /* -109.5 dB */
+#घोषणा MIXART_DIGITAL_LEVEL_MAX   255    /*  18.0 dB */
+#घोषणा MIXART_DIGITAL_ZERO_LEVEL  219    /*  0.0 dB */
 
 
-int mixart_update_playback_stream_level(struct snd_mixart* chip, int is_aes, int idx)
-{
-	int err, i;
-	int volume[2];
-	struct mixart_msg request;
-	struct mixart_set_out_stream_level_req set_level;
+पूर्णांक mixart_update_playback_stream_level(काष्ठा snd_mixart* chip, पूर्णांक is_aes, पूर्णांक idx)
+अणु
+	पूर्णांक err, i;
+	पूर्णांक volume[2];
+	काष्ठा mixart_msg request;
+	काष्ठा mixart_set_out_stream_level_req set_level;
 	u32 status = 0;
-	struct mixart_pipe *pipe;
+	काष्ठा mixart_pipe *pipe;
 
-	memset(&set_level, 0, sizeof(set_level));
+	स_रखो(&set_level, 0, माप(set_level));
 	set_level.nb_of_stream = 1;
 	set_level.stream_level.desc.stream_idx = idx;
 
-	if(is_aes) {
+	अगर(is_aes) अणु
 		pipe = &chip->pipe_out_dig;	/* AES playback */
 		idx += MIXART_PLAYBACK_STREAMS;
-	} else {
+	पूर्ण अन्यथा अणु
 		pipe = &chip->pipe_out_ana;	/* analog playback */
-	}
+	पूर्ण
 
 	/* only when pipe exists ! */
-	if(pipe->status == PIPE_UNDEFINED)
-		return 0;
+	अगर(pipe->status == PIPE_UNDEFINED)
+		वापस 0;
 
 	set_level.stream_level.desc.uid_pipe = pipe->group_uid;
 
-	for(i=0; i<2; i++) {
-		if(chip->digital_playback_active[idx][i])
+	क्रम(i=0; i<2; i++) अणु
+		अगर(chip->digital_playback_active[idx][i])
 			volume[i] = chip->digital_playback_volume[idx][i];
-		else
+		अन्यथा
 			volume[i] = MIXART_DIGITAL_LEVEL_MIN;
-	}
+	पूर्ण
 
 	set_level.stream_level.out_level.valid_mask1 = MIXART_OUT_STREAM_SET_LEVEL_LEFT_AUDIO1 | MIXART_OUT_STREAM_SET_LEVEL_RIGHT_AUDIO2;
 	set_level.stream_level.out_level.left_to_out1_level = mixart_digital_level[volume[0]];
 	set_level.stream_level.out_level.right_to_out2_level = mixart_digital_level[volume[1]];
 
 	request.message_id = MSG_STREAM_SET_OUT_STREAM_LEVEL;
-	request.uid = (struct mixart_uid){0,0};
+	request.uid = (काष्ठा mixart_uid)अणु0,0पूर्ण;
 	request.data = &set_level;
-	request.size = sizeof(set_level);
+	request.size = माप(set_level);
 
-	err = snd_mixart_send_msg(chip->mgr, &request, sizeof(status), &status);
-	if((err<0) || status) {
+	err = snd_mixart_send_msg(chip->mgr, &request, माप(status), &status);
+	अगर((err<0) || status) अणु
 		dev_dbg(chip->card->dev,
 			"error MSG_STREAM_SET_OUT_STREAM_LEVEL card(%d) status(%x)\n",
 			chip->chip_idx, status);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int mixart_update_capture_stream_level(struct snd_mixart* chip, int is_aes)
-{
-	int err, i, idx;
-	struct mixart_pipe *pipe;
-	struct mixart_msg request;
-	struct mixart_set_in_audio_level_req set_level;
+पूर्णांक mixart_update_capture_stream_level(काष्ठा snd_mixart* chip, पूर्णांक is_aes)
+अणु
+	पूर्णांक err, i, idx;
+	काष्ठा mixart_pipe *pipe;
+	काष्ठा mixart_msg request;
+	काष्ठा mixart_set_in_audio_level_req set_level;
 	u32 status = 0;
 
-	if(is_aes) {
+	अगर(is_aes) अणु
 		idx = 1;
 		pipe = &chip->pipe_in_dig;
-	} else {
+	पूर्ण अन्यथा अणु
 		idx = 0;
 		pipe = &chip->pipe_in_ana;
-	}
+	पूर्ण
 
 	/* only when pipe exists ! */
-	if(pipe->status == PIPE_UNDEFINED)
-		return 0;
+	अगर(pipe->status == PIPE_UNDEFINED)
+		वापस 0;
 
-	memset(&set_level, 0, sizeof(set_level));
+	स_रखो(&set_level, 0, माप(set_level));
 	set_level.audio_count = 2;
 	set_level.level[0].connector = pipe->uid_left_connector;
 	set_level.level[1].connector = pipe->uid_right_connector;
 
-	for(i=0; i<2; i++) {
+	क्रम(i=0; i<2; i++) अणु
 		set_level.level[i].valid_mask1 = MIXART_AUDIO_LEVEL_DIGITAL_MASK;
 		set_level.level[i].digital_level = mixart_digital_level[chip->digital_capture_volume[idx][i]];
-	}
+	पूर्ण
 
 	request.message_id = MSG_STREAM_SET_IN_AUDIO_LEVEL;
-	request.uid = (struct mixart_uid){0,0};
+	request.uid = (काष्ठा mixart_uid)अणु0,0पूर्ण;
 	request.data = &set_level;
-	request.size = sizeof(set_level);
+	request.size = माप(set_level);
 
-	err = snd_mixart_send_msg(chip->mgr, &request, sizeof(status), &status);
-	if((err<0) || status) {
+	err = snd_mixart_send_msg(chip->mgr, &request, माप(status), &status);
+	अगर((err<0) || status) अणु
 		dev_dbg(chip->card->dev,
 			"error MSG_STREAM_SET_IN_AUDIO_LEVEL card(%d) status(%x)\n",
 			chip->chip_idx, status);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /* shared */
-static int mixart_digital_vol_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक mixart_digital_vol_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.integer.min = MIXART_DIGITAL_LEVEL_MIN;   /* -109.5 dB */
-	uinfo->value.integer.max = MIXART_DIGITAL_LEVEL_MAX;   /*   18.0 dB */
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = MIXART_DIGITAL_LEVEL_MIN;   /* -109.5 dB */
+	uinfo->value.पूर्णांकeger.max = MIXART_DIGITAL_LEVEL_MAX;   /*   18.0 dB */
+	वापस 0;
+पूर्ण
 
-#define MIXART_VOL_REC_MASK	1
-#define MIXART_VOL_AES_MASK	2
+#घोषणा MIXART_VOL_REC_MASK	1
+#घोषणा MIXART_VOL_AES_MASK	2
 
-static int mixart_pcm_vol_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
-	int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
-	int *stored_volume;
-	int is_capture = kcontrol->private_value & MIXART_VOL_REC_MASK;
-	int is_aes = kcontrol->private_value & MIXART_VOL_AES_MASK;
+अटल पूर्णांक mixart_pcm_vol_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
+	पूर्णांक *stored_volume;
+	पूर्णांक is_capture = kcontrol->निजी_value & MIXART_VOL_REC_MASK;
+	पूर्णांक is_aes = kcontrol->निजी_value & MIXART_VOL_AES_MASK;
 	mutex_lock(&chip->mgr->mixer_mutex);
-	if(is_capture) {
-		if(is_aes)	stored_volume = chip->digital_capture_volume[1];	/* AES capture */
-		else		stored_volume = chip->digital_capture_volume[0];	/* analog capture */
-	} else {
+	अगर(is_capture) अणु
+		अगर(is_aes)	stored_volume = chip->digital_capture_volume[1];	/* AES capture */
+		अन्यथा		stored_volume = chip->digital_capture_volume[0];	/* analog capture */
+	पूर्ण अन्यथा अणु
 		snd_BUG_ON(idx >= MIXART_PLAYBACK_STREAMS);
-		if(is_aes)	stored_volume = chip->digital_playback_volume[MIXART_PLAYBACK_STREAMS + idx]; /* AES playback */
-		else		stored_volume = chip->digital_playback_volume[idx];	/* analog playback */
-	}
-	ucontrol->value.integer.value[0] = stored_volume[0];
-	ucontrol->value.integer.value[1] = stored_volume[1];
+		अगर(is_aes)	stored_volume = chip->digital_playback_volume[MIXART_PLAYBACK_STREAMS + idx]; /* AES playback */
+		अन्यथा		stored_volume = chip->digital_playback_volume[idx];	/* analog playback */
+	पूर्ण
+	ucontrol->value.पूर्णांकeger.value[0] = stored_volume[0];
+	ucontrol->value.पूर्णांकeger.value[1] = stored_volume[1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mixart_pcm_vol_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
-	int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
-	int changed = 0;
-	int is_capture = kcontrol->private_value & MIXART_VOL_REC_MASK;
-	int is_aes = kcontrol->private_value & MIXART_VOL_AES_MASK;
-	int* stored_volume;
-	int i;
+अटल पूर्णांक mixart_pcm_vol_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
+	पूर्णांक changed = 0;
+	पूर्णांक is_capture = kcontrol->निजी_value & MIXART_VOL_REC_MASK;
+	पूर्णांक is_aes = kcontrol->निजी_value & MIXART_VOL_AES_MASK;
+	पूर्णांक* stored_volume;
+	पूर्णांक i;
 	mutex_lock(&chip->mgr->mixer_mutex);
-	if (is_capture) {
-		if (is_aes)	/* AES capture */
+	अगर (is_capture) अणु
+		अगर (is_aes)	/* AES capture */
 			stored_volume = chip->digital_capture_volume[1];
-		else		/* analog capture */
+		अन्यथा		/* analog capture */
 			stored_volume = chip->digital_capture_volume[0];
-	} else {
+	पूर्ण अन्यथा अणु
 		snd_BUG_ON(idx >= MIXART_PLAYBACK_STREAMS);
-		if (is_aes)	/* AES playback */
+		अगर (is_aes)	/* AES playback */
 			stored_volume = chip->digital_playback_volume[MIXART_PLAYBACK_STREAMS + idx];
-		else		/* analog playback */
+		अन्यथा		/* analog playback */
 			stored_volume = chip->digital_playback_volume[idx];
-	}
-	for (i = 0; i < 2; i++) {
-		int vol = ucontrol->value.integer.value[i];
-		if (vol < MIXART_DIGITAL_LEVEL_MIN ||
+	पूर्ण
+	क्रम (i = 0; i < 2; i++) अणु
+		पूर्णांक vol = ucontrol->value.पूर्णांकeger.value[i];
+		अगर (vol < MIXART_DIGITAL_LEVEL_MIN ||
 		    vol > MIXART_DIGITAL_LEVEL_MAX)
-			continue;
-		if (stored_volume[i] != vol) {
+			जारी;
+		अगर (stored_volume[i] != vol) अणु
 			stored_volume[i] = vol;
 			changed = 1;
-		}
-	}
-	if (changed) {
-		if (is_capture)
+		पूर्ण
+	पूर्ण
+	अगर (changed) अणु
+		अगर (is_capture)
 			mixart_update_capture_stream_level(chip, is_aes);
-		else
+		अन्यथा
 			mixart_update_playback_stream_level(chip, is_aes, idx);
-	}
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const DECLARE_TLV_DB_SCALE(db_scale_digital, -10950, 50, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_digital, -10950, 50, 0);
 
-static const struct snd_kcontrol_new snd_mixart_pcm_vol =
-{
-	.iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new snd_mixart_pcm_vol =
+अणु
+	.अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
 		   SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	/* name will be filled later */
@@ -894,288 +895,288 @@ static const struct snd_kcontrol_new snd_mixart_pcm_vol =
 	.info =         mixart_digital_vol_info,		/* shared */
 	.get =          mixart_pcm_vol_get,
 	.put =          mixart_pcm_vol_put,
-	.tlv = { .p = db_scale_digital },
-};
+	.tlv = अणु .p = db_scale_digital पूर्ण,
+पूर्ण;
 
 
-static int mixart_pcm_sw_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
-	int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
+अटल पूर्णांक mixart_pcm_sw_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
 	snd_BUG_ON(idx >= MIXART_PLAYBACK_STREAMS);
 	mutex_lock(&chip->mgr->mixer_mutex);
-	if(kcontrol->private_value & MIXART_VOL_AES_MASK)	/* AES playback */
+	अगर(kcontrol->निजी_value & MIXART_VOL_AES_MASK)	/* AES playback */
 		idx += MIXART_PLAYBACK_STREAMS;
-	ucontrol->value.integer.value[0] = chip->digital_playback_active[idx][0];
-	ucontrol->value.integer.value[1] = chip->digital_playback_active[idx][1];
+	ucontrol->value.पूर्णांकeger.value[0] = chip->digital_playback_active[idx][0];
+	ucontrol->value.पूर्णांकeger.value[1] = chip->digital_playback_active[idx][1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mixart_pcm_sw_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
-	int changed = 0;
-	int is_aes = kcontrol->private_value & MIXART_VOL_AES_MASK;
-	int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
-	int i, j;
+अटल पूर्णांक mixart_pcm_sw_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक changed = 0;
+	पूर्णांक is_aes = kcontrol->निजी_value & MIXART_VOL_AES_MASK;
+	पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
+	पूर्णांक i, j;
 	snd_BUG_ON(idx >= MIXART_PLAYBACK_STREAMS);
 	mutex_lock(&chip->mgr->mixer_mutex);
 	j = idx;
-	if (is_aes)
+	अगर (is_aes)
 		j += MIXART_PLAYBACK_STREAMS;
-	for (i = 0; i < 2; i++) {
-		if (chip->digital_playback_active[j][i] !=
-		    ucontrol->value.integer.value[i]) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (chip->digital_playback_active[j][i] !=
+		    ucontrol->value.पूर्णांकeger.value[i]) अणु
 			chip->digital_playback_active[j][i] =
-				!!ucontrol->value.integer.value[i];
+				!!ucontrol->value.पूर्णांकeger.value[i];
 			changed = 1;
-		}
-	}
-	if (changed)
+		पूर्ण
+	पूर्ण
+	अगर (changed)
 		mixart_update_playback_stream_level(chip, is_aes, idx);
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new mixart_control_pcm_switch = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new mixart_control_pcm_चयन = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	/* name will be filled later */
 	.count =        MIXART_PLAYBACK_STREAMS,
 	.info =         mixart_sw_info,		/* shared */
 	.get =          mixart_pcm_sw_get,
 	.put =          mixart_pcm_sw_put
-};
+पूर्ण;
 
-static int mixart_update_monitoring(struct snd_mixart* chip, int channel)
-{
-	int err;
-	struct mixart_msg request;
-	struct mixart_set_out_audio_level audio_level;
+अटल पूर्णांक mixart_update_monitoring(काष्ठा snd_mixart* chip, पूर्णांक channel)
+अणु
+	पूर्णांक err;
+	काष्ठा mixart_msg request;
+	काष्ठा mixart_set_out_audio_level audio_level;
 	u32 resp = 0;
 
-	if(chip->pipe_out_ana.status == PIPE_UNDEFINED)
-		return -EINVAL; /* no pipe defined */
+	अगर(chip->pipe_out_ana.status == PIPE_UNDEFINED)
+		वापस -EINVAL; /* no pipe defined */
 
-	if(!channel)	request.uid = chip->pipe_out_ana.uid_left_connector;
-	else		request.uid = chip->pipe_out_ana.uid_right_connector;
+	अगर(!channel)	request.uid = chip->pipe_out_ana.uid_left_connector;
+	अन्यथा		request.uid = chip->pipe_out_ana.uid_right_connector;
 	request.message_id = MSG_CONNECTOR_SET_OUT_AUDIO_LEVEL;
 	request.data = &audio_level;
-	request.size = sizeof(audio_level);
+	request.size = माप(audio_level);
 
-	memset(&audio_level, 0, sizeof(audio_level));
+	स_रखो(&audio_level, 0, माप(audio_level));
 	audio_level.valid_mask1 = MIXART_AUDIO_LEVEL_MONITOR_MASK | MIXART_AUDIO_LEVEL_MUTE_M1_MASK;
 	audio_level.monitor_level = mixart_digital_level[chip->monitoring_volume[channel!=0]];
 	audio_level.monitor_mute1 = !chip->monitoring_active[channel!=0];
 
-	err = snd_mixart_send_msg(chip->mgr, &request, sizeof(resp), &resp);
-	if((err<0) || resp) {
+	err = snd_mixart_send_msg(chip->mgr, &request, माप(resp), &resp);
+	अगर((err<0) || resp) अणु
 		dev_dbg(chip->card->dev,
 			"error MSG_CONNECTOR_SET_OUT_AUDIO_LEVEL card(%d) resp(%x)\n",
 			chip->chip_idx, resp);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * monitoring level control
  */
 
-static int mixart_monitor_vol_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक mixart_monitor_vol_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
 	mutex_lock(&chip->mgr->mixer_mutex);
-	ucontrol->value.integer.value[0] = chip->monitoring_volume[0];
-	ucontrol->value.integer.value[1] = chip->monitoring_volume[1];
+	ucontrol->value.पूर्णांकeger.value[0] = chip->monitoring_volume[0];
+	ucontrol->value.पूर्णांकeger.value[1] = chip->monitoring_volume[1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mixart_monitor_vol_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
-	int changed = 0;
-	int i;
+अटल पूर्णांक mixart_monitor_vol_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक changed = 0;
+	पूर्णांक i;
 	mutex_lock(&chip->mgr->mixer_mutex);
-	for (i = 0; i < 2; i++) {
-		if (chip->monitoring_volume[i] !=
-		    ucontrol->value.integer.value[i]) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (chip->monitoring_volume[i] !=
+		    ucontrol->value.पूर्णांकeger.value[i]) अणु
 			chip->monitoring_volume[i] =
-				!!ucontrol->value.integer.value[i];
+				!!ucontrol->value.पूर्णांकeger.value[i];
 			mixart_update_monitoring(chip, i);
 			changed = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new mixart_control_monitor_vol = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new mixart_control_monitor_vol = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
 		   SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	.name =         "Monitoring Volume",
 	.info =		mixart_digital_vol_info,		/* shared */
 	.get =		mixart_monitor_vol_get,
 	.put =		mixart_monitor_vol_put,
-	.tlv = { .p = db_scale_digital },
-};
+	.tlv = अणु .p = db_scale_digital पूर्ण,
+पूर्ण;
 
 /*
- * monitoring switch control
+ * monitoring चयन control
  */
 
-static int mixart_monitor_sw_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक mixart_monitor_sw_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
 	mutex_lock(&chip->mgr->mixer_mutex);
-	ucontrol->value.integer.value[0] = chip->monitoring_active[0];
-	ucontrol->value.integer.value[1] = chip->monitoring_active[1];
+	ucontrol->value.पूर्णांकeger.value[0] = chip->monitoring_active[0];
+	ucontrol->value.पूर्णांकeger.value[1] = chip->monitoring_active[1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mixart_monitor_sw_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_mixart *chip = snd_kcontrol_chip(kcontrol);
-	int changed = 0;
-	int i;
+अटल पूर्णांक mixart_monitor_sw_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_mixart *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक changed = 0;
+	पूर्णांक i;
 	mutex_lock(&chip->mgr->mixer_mutex);
-	for (i = 0; i < 2; i++) {
-		if (chip->monitoring_active[i] !=
-		    ucontrol->value.integer.value[i]) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (chip->monitoring_active[i] !=
+		    ucontrol->value.पूर्णांकeger.value[i]) अणु
 			chip->monitoring_active[i] =
-				!!ucontrol->value.integer.value[i];
+				!!ucontrol->value.पूर्णांकeger.value[i];
 			changed |= (1<<i); /* mask 0x01 ans 0x02 */
-		}
-	}
-	if (changed) {
-		/* allocate or release resources for monitoring */
-		int allocate = chip->monitoring_active[0] ||
+		पूर्ण
+	पूर्ण
+	अगर (changed) अणु
+		/* allocate or release resources क्रम monitoring */
+		पूर्णांक allocate = chip->monitoring_active[0] ||
 			chip->monitoring_active[1];
-		if (allocate) {
-			/* allocate the playback pipe for monitoring */
+		अगर (allocate) अणु
+			/* allocate the playback pipe क्रम monitoring */
 			snd_mixart_add_ref_pipe(chip, MIXART_PCM_ANALOG, 0, 1);
-			/* allocate the capture pipe for monitoring */
+			/* allocate the capture pipe क्रम monitoring */
 			snd_mixart_add_ref_pipe(chip, MIXART_PCM_ANALOG, 1, 1);
-		}
-		if (changed & 0x01)
+		पूर्ण
+		अगर (changed & 0x01)
 			mixart_update_monitoring(chip, 0);
-		if (changed & 0x02)
+		अगर (changed & 0x02)
 			mixart_update_monitoring(chip, 1);
-		if (!allocate) {
-			/* release the capture pipe for monitoring */
-			snd_mixart_kill_ref_pipe(chip->mgr,
+		अगर (!allocate) अणु
+			/* release the capture pipe क्रम monitoring */
+			snd_mixart_समाप्त_ref_pipe(chip->mgr,
 						 &chip->pipe_in_ana, 1);
-			/* release the playback pipe for monitoring */
-			snd_mixart_kill_ref_pipe(chip->mgr,
+			/* release the playback pipe क्रम monitoring */
+			snd_mixart_समाप्त_ref_pipe(chip->mgr,
 						 &chip->pipe_out_ana, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return (changed != 0);
-}
+	वापस (changed != 0);
+पूर्ण
 
-static const struct snd_kcontrol_new mixart_control_monitor_sw = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new mixart_control_monitor_sw = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Monitoring Switch",
 	.info =         mixart_sw_info,		/* shared */
 	.get =          mixart_monitor_sw_get,
 	.put =          mixart_monitor_sw_put
-};
+पूर्ण;
 
 
-static void mixart_reset_audio_levels(struct snd_mixart *chip)
-{
-	/* analog volumes can be set even if there is no pipe */
+अटल व्योम mixart_reset_audio_levels(काष्ठा snd_mixart *chip)
+अणु
+	/* analog volumes can be set even अगर there is no pipe */
 	mixart_update_analog_audio_level(chip, 0);
-	/* analog levels for capture only on the first two chips */
-	if(chip->chip_idx < 2) {
+	/* analog levels क्रम capture only on the first two chips */
+	अगर(chip->chip_idx < 2) अणु
 		mixart_update_analog_audio_level(chip, 1);
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
 
-int snd_mixart_create_mixer(struct mixart_mgr *mgr)
-{
-	struct snd_mixart *chip;
-	int err, i;
+पूर्णांक snd_mixart_create_mixer(काष्ठा mixart_mgr *mgr)
+अणु
+	काष्ठा snd_mixart *chip;
+	पूर्णांक err, i;
 
 	mutex_init(&mgr->mixer_mutex); /* can be in another place */
 
-	for(i=0; i<mgr->num_cards; i++) {
-		struct snd_kcontrol_new temp;
+	क्रम(i=0; i<mgr->num_cards; i++) अणु
+		काष्ठा snd_kcontrol_new temp;
 		chip = mgr->chip[i];
 
 		/* analog output level control */
 		temp = mixart_control_analog_level;
 		temp.name = "Master Playback Volume";
-		temp.private_value = 0; /* playback */
-		if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
-			return err;
+		temp.निजी_value = 0; /* playback */
+		अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
+			वापस err;
 		/* output mute controls */
-		if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&mixart_control_output_switch, chip))) < 0)
-			return err;
+		अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&mixart_control_output_चयन, chip))) < 0)
+			वापस err;
 
 		/* analog input level control only on first two chips !*/
-		if(i<2) {
+		अगर(i<2) अणु
 			temp = mixart_control_analog_level;
 			temp.name = "Master Capture Volume";
-			temp.private_value = 1; /* capture */
-			if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
-				return err;
-		}
+			temp.निजी_value = 1; /* capture */
+			अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
+				वापस err;
+		पूर्ण
 
 		temp = snd_mixart_pcm_vol;
 		temp.name = "PCM Playback Volume";
 		temp.count = MIXART_PLAYBACK_STREAMS;
-		temp.private_value = 0; /* playback analog */
-		if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
-			return err;
+		temp.निजी_value = 0; /* playback analog */
+		अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
+			वापस err;
 
 		temp.name = "PCM Capture Volume";
 		temp.count = 1;
-		temp.private_value = MIXART_VOL_REC_MASK; /* capture analog */
-		if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
-			return err;
+		temp.निजी_value = MIXART_VOL_REC_MASK; /* capture analog */
+		अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
+			वापस err;
 
-		if(mgr->board_type == MIXART_DAUGHTER_TYPE_AES) {
+		अगर(mgr->board_type == MIXART_DAUGHTER_TYPE_AES) अणु
 			temp.name = "AES Playback Volume";
 			temp.count = MIXART_PLAYBACK_STREAMS;
-			temp.private_value = MIXART_VOL_AES_MASK; /* playback AES/EBU */
-			if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
-				return err;
+			temp.निजी_value = MIXART_VOL_AES_MASK; /* playback AES/EBU */
+			अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
+				वापस err;
 
 			temp.name = "AES Capture Volume";
 			temp.count = 0;
-			temp.private_value = MIXART_VOL_REC_MASK | MIXART_VOL_AES_MASK; /* capture AES/EBU */
-			if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
-				return err;
-		}
-		temp = mixart_control_pcm_switch;
+			temp.निजी_value = MIXART_VOL_REC_MASK | MIXART_VOL_AES_MASK; /* capture AES/EBU */
+			अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
+				वापस err;
+		पूर्ण
+		temp = mixart_control_pcm_चयन;
 		temp.name = "PCM Playback Switch";
-		temp.private_value = 0; /* playback analog */
-		if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
-			return err;
+		temp.निजी_value = 0; /* playback analog */
+		अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
+			वापस err;
 
-		if(mgr->board_type == MIXART_DAUGHTER_TYPE_AES) {
+		अगर(mgr->board_type == MIXART_DAUGHTER_TYPE_AES) अणु
 			temp.name = "AES Playback Switch";
-			temp.private_value = MIXART_VOL_AES_MASK; /* playback AES/EBU */
-			if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
-				return err;
-		}
+			temp.निजी_value = MIXART_VOL_AES_MASK; /* playback AES/EBU */
+			अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&temp, chip))) < 0)
+				वापस err;
+		पूर्ण
 
 		/* monitoring */
-		if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&mixart_control_monitor_vol, chip))) < 0)
-			return err;
-		if ((err = snd_ctl_add(chip->card, snd_ctl_new1(&mixart_control_monitor_sw, chip))) < 0)
-			return err;
+		अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&mixart_control_monitor_vol, chip))) < 0)
+			वापस err;
+		अगर ((err = snd_ctl_add(chip->card, snd_ctl_new1(&mixart_control_monitor_sw, chip))) < 0)
+			वापस err;
 
-		/* init all mixer data and program the master volumes/switches */
+		/* init all mixer data and program the master volumes/चयनes */
 		mixart_reset_audio_levels(chip);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण

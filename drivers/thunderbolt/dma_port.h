@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Thunderbolt DMA configuration based mailbox support
  *
  * Copyright (C) 2017, Intel Corporation
- * Authors: Michael Jamet <michael.jamet@intel.com>
- *          Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Authors: Michael Jamet <michael.jamet@पूर्णांकel.com>
+ *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#ifndef DMA_PORT_H_
-#define DMA_PORT_H_
+#अगर_अघोषित DMA_PORT_H_
+#घोषणा DMA_PORT_H_
 
-#include "tb.h"
+#समावेश "tb.h"
 
-struct tb_switch;
-struct tb_dma_port;
+काष्ठा tb_चयन;
+काष्ठा tb_dma_port;
 
-#define DMA_PORT_CSS_ADDRESS		0x3fffff
-#define DMA_PORT_CSS_MAX_SIZE		SZ_128
+#घोषणा DMA_PORT_CSS_ADDRESS		0x3fffff
+#घोषणा DMA_PORT_CSS_MAX_SIZE		SZ_128
 
-struct tb_dma_port *dma_port_alloc(struct tb_switch *sw);
-void dma_port_free(struct tb_dma_port *dma);
-int dma_port_flash_read(struct tb_dma_port *dma, unsigned int address,
-			void *buf, size_t size);
-int dma_port_flash_update_auth(struct tb_dma_port *dma);
-int dma_port_flash_update_auth_status(struct tb_dma_port *dma, u32 *status);
-int dma_port_flash_write(struct tb_dma_port *dma, unsigned int address,
-			 const void *buf, size_t size);
-int dma_port_power_cycle(struct tb_dma_port *dma);
+काष्ठा tb_dma_port *dma_port_alloc(काष्ठा tb_चयन *sw);
+व्योम dma_port_मुक्त(काष्ठा tb_dma_port *dma);
+पूर्णांक dma_port_flash_पढ़ो(काष्ठा tb_dma_port *dma, अचिन्हित पूर्णांक address,
+			व्योम *buf, माप_प्रकार size);
+पूर्णांक dma_port_flash_update_auth(काष्ठा tb_dma_port *dma);
+पूर्णांक dma_port_flash_update_auth_status(काष्ठा tb_dma_port *dma, u32 *status);
+पूर्णांक dma_port_flash_ग_लिखो(काष्ठा tb_dma_port *dma, अचिन्हित पूर्णांक address,
+			 स्थिर व्योम *buf, माप_प्रकार size);
+पूर्णांक dma_port_घातer_cycle(काष्ठा tb_dma_port *dma);
 
-#endif
+#पूर्ण_अगर

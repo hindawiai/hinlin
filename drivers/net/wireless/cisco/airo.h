@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _AIRO_H_
-#define _AIRO_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _AIRO_H_
+#घोषणा _AIRO_H_
 
-struct net_device *init_airo_card(unsigned short irq, int port, int is_pcmcia,
-				  struct device *dmdev);
-int reset_airo_card(struct net_device *dev);
-void stop_airo_card(struct net_device *dev, int freeres);
+काष्ठा net_device *init_airo_card(अचिन्हित लघु irq, पूर्णांक port, पूर्णांक is_pcmcia,
+				  काष्ठा device *dmdev);
+पूर्णांक reset_airo_card(काष्ठा net_device *dev);
+व्योम stop_airo_card(काष्ठा net_device *dev, पूर्णांक मुक्तres);
 
-#endif  /*  _AIRO_H_  */
+#पूर्ण_अगर  /*  _AIRO_H_  */

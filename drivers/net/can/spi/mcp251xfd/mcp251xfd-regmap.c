@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // mcp251xfd - Microchip MCP251xFD Family CAN controller driver
 //
@@ -6,595 +7,595 @@
 //                          Marc Kleine-Budde <kernel@pengutronix.de>
 //
 
-#include "mcp251xfd.h"
+#समावेश "mcp251xfd.h"
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-static const struct regmap_config mcp251xfd_regmap_crc;
+अटल स्थिर काष्ठा regmap_config mcp251xfd_regmap_crc;
 
-static int
-mcp251xfd_regmap_nocrc_write(void *context, const void *data, size_t count)
-{
-	struct spi_device *spi = context;
+अटल पूर्णांक
+mcp251xfd_regmap_nocrc_ग_लिखो(व्योम *context, स्थिर व्योम *data, माप_प्रकार count)
+अणु
+	काष्ठा spi_device *spi = context;
 
-	return spi_write(spi, data, count);
-}
+	वापस spi_ग_लिखो(spi, data, count);
+पूर्ण
 
-static int
-mcp251xfd_regmap_nocrc_gather_write(void *context,
-				    const void *reg, size_t reg_len,
-				    const void *val, size_t val_len)
-{
-	struct spi_device *spi = context;
-	struct mcp251xfd_priv *priv = spi_get_drvdata(spi);
-	struct mcp251xfd_map_buf_nocrc *buf_tx = priv->map_buf_nocrc_tx;
-	struct spi_transfer xfer[] = {
-		{
+अटल पूर्णांक
+mcp251xfd_regmap_nocrc_gather_ग_लिखो(व्योम *context,
+				    स्थिर व्योम *reg, माप_प्रकार reg_len,
+				    स्थिर व्योम *val, माप_प्रकार val_len)
+अणु
+	काष्ठा spi_device *spi = context;
+	काष्ठा mcp251xfd_priv *priv = spi_get_drvdata(spi);
+	काष्ठा mcp251xfd_map_buf_nocrc *buf_tx = priv->map_buf_nocrc_tx;
+	काष्ठा spi_transfer xfer[] = अणु
+		अणु
 			.tx_buf = buf_tx,
-			.len = sizeof(buf_tx->cmd) + val_len,
-		},
-	};
+			.len = माप(buf_tx->cmd) + val_len,
+		पूर्ण,
+	पूर्ण;
 
-	BUILD_BUG_ON(sizeof(buf_tx->cmd) != sizeof(__be16));
+	BUILD_BUG_ON(माप(buf_tx->cmd) != माप(__be16));
 
-	if (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
-	    reg_len != sizeof(buf_tx->cmd.cmd))
-		return -EINVAL;
+	अगर (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
+	    reg_len != माप(buf_tx->cmd.cmd))
+		वापस -EINVAL;
 
-	memcpy(&buf_tx->cmd, reg, sizeof(buf_tx->cmd));
-	memcpy(buf_tx->data, val, val_len);
+	स_नकल(&buf_tx->cmd, reg, माप(buf_tx->cmd));
+	स_नकल(buf_tx->data, val, val_len);
 
-	return spi_sync_transfer(spi, xfer, ARRAY_SIZE(xfer));
-}
+	वापस spi_sync_transfer(spi, xfer, ARRAY_SIZE(xfer));
+पूर्ण
 
-static inline bool mcp251xfd_update_bits_read_reg(unsigned int reg)
-{
-	switch (reg) {
-	case MCP251XFD_REG_INT:
-	case MCP251XFD_REG_TEFCON:
-	case MCP251XFD_REG_FIFOCON(MCP251XFD_RX_FIFO(0)):
-	case MCP251XFD_REG_FLTCON(0):
-	case MCP251XFD_REG_ECCSTAT:
-	case MCP251XFD_REG_CRC:
-		return false;
-	case MCP251XFD_REG_CON:
-	case MCP251XFD_REG_FIFOSTA(MCP251XFD_RX_FIFO(0)):
-	case MCP251XFD_REG_OSC:
-	case MCP251XFD_REG_ECCCON:
-		return true;
-	default:
+अटल अंतरभूत bool mcp251xfd_update_bits_पढ़ो_reg(अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल MCP251XFD_REG_INT:
+	हाल MCP251XFD_REG_TEFCON:
+	हाल MCP251XFD_REG_FIFOCON(MCP251XFD_RX_FIFO(0)):
+	हाल MCP251XFD_REG_FLTCON(0):
+	हाल MCP251XFD_REG_ECCSTAT:
+	हाल MCP251XFD_REG_CRC:
+		वापस false;
+	हाल MCP251XFD_REG_CON:
+	हाल MCP251XFD_REG_FIFOSTA(MCP251XFD_RX_FIFO(0)):
+	हाल MCP251XFD_REG_OSC:
+	हाल MCP251XFD_REG_ECCCON:
+		वापस true;
+	शेष:
 		WARN(1, "Status of reg 0x%04x unknown.\n", reg);
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int
-mcp251xfd_regmap_nocrc_update_bits(void *context, unsigned int reg,
-				   unsigned int mask, unsigned int val)
-{
-	struct spi_device *spi = context;
-	struct mcp251xfd_priv *priv = spi_get_drvdata(spi);
-	struct mcp251xfd_map_buf_nocrc *buf_rx = priv->map_buf_nocrc_rx;
-	struct mcp251xfd_map_buf_nocrc *buf_tx = priv->map_buf_nocrc_tx;
-	__le32 orig_le32 = 0, mask_le32, val_le32, tmp_le32;
+अटल पूर्णांक
+mcp251xfd_regmap_nocrc_update_bits(व्योम *context, अचिन्हित पूर्णांक reg,
+				   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा spi_device *spi = context;
+	काष्ठा mcp251xfd_priv *priv = spi_get_drvdata(spi);
+	काष्ठा mcp251xfd_map_buf_nocrc *buf_rx = priv->map_buf_nocrc_rx;
+	काष्ठा mcp251xfd_map_buf_nocrc *buf_tx = priv->map_buf_nocrc_tx;
+	__le32 orig_le32 = 0, mask_le32, val_le32, पंचांगp_le32;
 	u8 first_byte, last_byte, len;
-	int err;
+	पूर्णांक err;
 
-	BUILD_BUG_ON(sizeof(buf_rx->cmd) != sizeof(__be16));
-	BUILD_BUG_ON(sizeof(buf_tx->cmd) != sizeof(__be16));
+	BUILD_BUG_ON(माप(buf_rx->cmd) != माप(__be16));
+	BUILD_BUG_ON(माप(buf_tx->cmd) != माप(__be16));
 
-	if (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
+	अगर (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
 	    mask == 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	first_byte = mcp251xfd_first_byte_set(mask);
 	last_byte = mcp251xfd_last_byte_set(mask);
 	len = last_byte - first_byte + 1;
 
-	if (mcp251xfd_update_bits_read_reg(reg)) {
-		struct spi_transfer xfer[2] = { };
-		struct spi_message msg;
+	अगर (mcp251xfd_update_bits_पढ़ो_reg(reg)) अणु
+		काष्ठा spi_transfer xfer[2] = अणु पूर्ण;
+		काष्ठा spi_message msg;
 
 		spi_message_init(&msg);
 		spi_message_add_tail(&xfer[0], &msg);
 
-		if (priv->devtype_data.quirks & MCP251XFD_QUIRK_HALF_DUPLEX) {
+		अगर (priv->devtype_data.quirks & MCP251XFD_QUIRK_HALF_DUPLEX) अणु
 			xfer[0].tx_buf = buf_tx;
-			xfer[0].len = sizeof(buf_tx->cmd);
+			xfer[0].len = माप(buf_tx->cmd);
 
 			xfer[1].rx_buf = buf_rx->data;
 			xfer[1].len = len;
 			spi_message_add_tail(&xfer[1], &msg);
-		} else {
+		पूर्ण अन्यथा अणु
 			xfer[0].tx_buf = buf_tx;
 			xfer[0].rx_buf = buf_rx;
-			xfer[0].len = sizeof(buf_tx->cmd) + len;
+			xfer[0].len = माप(buf_tx->cmd) + len;
 
-			if (MCP251XFD_SANITIZE_SPI)
-				memset(buf_tx->data, 0x0, len);
-		}
+			अगर (MCP251XFD_SANITIZE_SPI)
+				स_रखो(buf_tx->data, 0x0, len);
+		पूर्ण
 
-		mcp251xfd_spi_cmd_read_nocrc(&buf_tx->cmd, reg + first_byte);
+		mcp251xfd_spi_cmd_पढ़ो_nocrc(&buf_tx->cmd, reg + first_byte);
 		err = spi_sync(spi, &msg);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		memcpy(&orig_le32, buf_rx->data, len);
-	}
+		स_नकल(&orig_le32, buf_rx->data, len);
+	पूर्ण
 
 	mask_le32 = cpu_to_le32(mask >> BITS_PER_BYTE * first_byte);
 	val_le32 = cpu_to_le32(val >> BITS_PER_BYTE * first_byte);
 
-	tmp_le32 = orig_le32 & ~mask_le32;
-	tmp_le32 |= val_le32 & mask_le32;
+	पंचांगp_le32 = orig_le32 & ~mask_le32;
+	पंचांगp_le32 |= val_le32 & mask_le32;
 
-	mcp251xfd_spi_cmd_write_nocrc(&buf_tx->cmd, reg + first_byte);
-	memcpy(buf_tx->data, &tmp_le32, len);
+	mcp251xfd_spi_cmd_ग_लिखो_nocrc(&buf_tx->cmd, reg + first_byte);
+	स_नकल(buf_tx->data, &पंचांगp_le32, len);
 
-	return spi_write(spi, buf_tx, sizeof(buf_tx->cmd) + len);
-}
+	वापस spi_ग_लिखो(spi, buf_tx, माप(buf_tx->cmd) + len);
+पूर्ण
 
-static int
-mcp251xfd_regmap_nocrc_read(void *context,
-			    const void *reg, size_t reg_len,
-			    void *val_buf, size_t val_len)
-{
-	struct spi_device *spi = context;
-	struct mcp251xfd_priv *priv = spi_get_drvdata(spi);
-	struct mcp251xfd_map_buf_nocrc *buf_rx = priv->map_buf_nocrc_rx;
-	struct mcp251xfd_map_buf_nocrc *buf_tx = priv->map_buf_nocrc_tx;
-	struct spi_transfer xfer[2] = { };
-	struct spi_message msg;
-	int err;
+अटल पूर्णांक
+mcp251xfd_regmap_nocrc_पढ़ो(व्योम *context,
+			    स्थिर व्योम *reg, माप_प्रकार reg_len,
+			    व्योम *val_buf, माप_प्रकार val_len)
+अणु
+	काष्ठा spi_device *spi = context;
+	काष्ठा mcp251xfd_priv *priv = spi_get_drvdata(spi);
+	काष्ठा mcp251xfd_map_buf_nocrc *buf_rx = priv->map_buf_nocrc_rx;
+	काष्ठा mcp251xfd_map_buf_nocrc *buf_tx = priv->map_buf_nocrc_tx;
+	काष्ठा spi_transfer xfer[2] = अणु पूर्ण;
+	काष्ठा spi_message msg;
+	पूर्णांक err;
 
-	BUILD_BUG_ON(sizeof(buf_rx->cmd) != sizeof(__be16));
-	BUILD_BUG_ON(sizeof(buf_tx->cmd) != sizeof(__be16));
+	BUILD_BUG_ON(माप(buf_rx->cmd) != माप(__be16));
+	BUILD_BUG_ON(माप(buf_tx->cmd) != माप(__be16));
 
-	if (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
-	    reg_len != sizeof(buf_tx->cmd.cmd))
-		return -EINVAL;
+	अगर (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
+	    reg_len != माप(buf_tx->cmd.cmd))
+		वापस -EINVAL;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer[0], &msg);
 
-	if (priv->devtype_data.quirks & MCP251XFD_QUIRK_HALF_DUPLEX) {
+	अगर (priv->devtype_data.quirks & MCP251XFD_QUIRK_HALF_DUPLEX) अणु
 		xfer[0].tx_buf = reg;
-		xfer[0].len = sizeof(buf_tx->cmd);
+		xfer[0].len = माप(buf_tx->cmd);
 
 		xfer[1].rx_buf = val_buf;
 		xfer[1].len = val_len;
 		spi_message_add_tail(&xfer[1], &msg);
-	} else {
+	पूर्ण अन्यथा अणु
 		xfer[0].tx_buf = buf_tx;
 		xfer[0].rx_buf = buf_rx;
-		xfer[0].len = sizeof(buf_tx->cmd) + val_len;
+		xfer[0].len = माप(buf_tx->cmd) + val_len;
 
-		memcpy(&buf_tx->cmd, reg, sizeof(buf_tx->cmd));
-		if (MCP251XFD_SANITIZE_SPI)
-			memset(buf_tx->data, 0x0, val_len);
-	}
+		स_नकल(&buf_tx->cmd, reg, माप(buf_tx->cmd));
+		अगर (MCP251XFD_SANITIZE_SPI)
+			स_रखो(buf_tx->data, 0x0, val_len);
+	पूर्ण
 
 	err = spi_sync(spi, &msg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!(priv->devtype_data.quirks & MCP251XFD_QUIRK_HALF_DUPLEX))
-		memcpy(val_buf, buf_rx->data, val_len);
+	अगर (!(priv->devtype_data.quirks & MCP251XFD_QUIRK_HALF_DUPLEX))
+		स_नकल(val_buf, buf_rx->data, val_len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mcp251xfd_regmap_crc_gather_write(void *context,
-				  const void *reg_p, size_t reg_len,
-				  const void *val, size_t val_len)
-{
-	struct spi_device *spi = context;
-	struct mcp251xfd_priv *priv = spi_get_drvdata(spi);
-	struct mcp251xfd_map_buf_crc *buf_tx = priv->map_buf_crc_tx;
-	struct spi_transfer xfer[] = {
-		{
+अटल पूर्णांक
+mcp251xfd_regmap_crc_gather_ग_लिखो(व्योम *context,
+				  स्थिर व्योम *reg_p, माप_प्रकार reg_len,
+				  स्थिर व्योम *val, माप_प्रकार val_len)
+अणु
+	काष्ठा spi_device *spi = context;
+	काष्ठा mcp251xfd_priv *priv = spi_get_drvdata(spi);
+	काष्ठा mcp251xfd_map_buf_crc *buf_tx = priv->map_buf_crc_tx;
+	काष्ठा spi_transfer xfer[] = अणु
+		अणु
 			.tx_buf = buf_tx,
-			.len = sizeof(buf_tx->cmd) + val_len +
-				sizeof(buf_tx->crc),
-		},
-	};
+			.len = माप(buf_tx->cmd) + val_len +
+				माप(buf_tx->crc),
+		पूर्ण,
+	पूर्ण;
 	u16 reg = *(u16 *)reg_p;
 	u16 crc;
 
-	BUILD_BUG_ON(sizeof(buf_tx->cmd) != sizeof(__be16) + sizeof(u8));
+	BUILD_BUG_ON(माप(buf_tx->cmd) != माप(__be16) + माप(u8));
 
-	if (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
-	    reg_len != sizeof(buf_tx->cmd.cmd) +
+	अगर (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
+	    reg_len != माप(buf_tx->cmd.cmd) +
 	    mcp251xfd_regmap_crc.pad_bits / BITS_PER_BYTE)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	mcp251xfd_spi_cmd_write_crc(&buf_tx->cmd, reg, val_len);
-	memcpy(buf_tx->data, val, val_len);
+	mcp251xfd_spi_cmd_ग_लिखो_crc(&buf_tx->cmd, reg, val_len);
+	स_नकल(buf_tx->data, val, val_len);
 
-	crc = mcp251xfd_crc16_compute(buf_tx, sizeof(buf_tx->cmd) + val_len);
+	crc = mcp251xfd_crc16_compute(buf_tx, माप(buf_tx->cmd) + val_len);
 	put_unaligned_be16(crc, buf_tx->data + val_len);
 
-	return spi_sync_transfer(spi, xfer, ARRAY_SIZE(xfer));
-}
+	वापस spi_sync_transfer(spi, xfer, ARRAY_SIZE(xfer));
+पूर्ण
 
-static int
-mcp251xfd_regmap_crc_write(void *context,
-			   const void *data, size_t count)
-{
-	const size_t data_offset = sizeof(__be16) +
+अटल पूर्णांक
+mcp251xfd_regmap_crc_ग_लिखो(व्योम *context,
+			   स्थिर व्योम *data, माप_प्रकार count)
+अणु
+	स्थिर माप_प्रकार data_offset = माप(__be16) +
 		mcp251xfd_regmap_crc.pad_bits / BITS_PER_BYTE;
 
-	return mcp251xfd_regmap_crc_gather_write(context,
+	वापस mcp251xfd_regmap_crc_gather_ग_लिखो(context,
 						 data, data_offset,
 						 data + data_offset,
 						 count - data_offset);
-}
+पूर्ण
 
-static int
-mcp251xfd_regmap_crc_read_check_crc(const struct mcp251xfd_map_buf_crc * const buf_rx,
-				    const struct mcp251xfd_map_buf_crc * const buf_tx,
-				    unsigned int data_len)
-{
+अटल पूर्णांक
+mcp251xfd_regmap_crc_पढ़ो_check_crc(स्थिर काष्ठा mcp251xfd_map_buf_crc * स्थिर buf_rx,
+				    स्थिर काष्ठा mcp251xfd_map_buf_crc * स्थिर buf_tx,
+				    अचिन्हित पूर्णांक data_len)
+अणु
 	u16 crc_received, crc_calculated;
 
 	crc_received = get_unaligned_be16(buf_rx->data + data_len);
 	crc_calculated = mcp251xfd_crc16_compute2(&buf_tx->cmd,
-						  sizeof(buf_tx->cmd),
+						  माप(buf_tx->cmd),
 						  buf_rx->data,
 						  data_len);
-	if (crc_received != crc_calculated)
-		return -EBADMSG;
+	अगर (crc_received != crc_calculated)
+		वापस -EBADMSG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-mcp251xfd_regmap_crc_read_one(struct mcp251xfd_priv *priv,
-			      struct spi_message *msg, unsigned int data_len)
-{
-	const struct mcp251xfd_map_buf_crc *buf_rx = priv->map_buf_crc_rx;
-	const struct mcp251xfd_map_buf_crc *buf_tx = priv->map_buf_crc_tx;
-	int err;
+अटल पूर्णांक
+mcp251xfd_regmap_crc_पढ़ो_one(काष्ठा mcp251xfd_priv *priv,
+			      काष्ठा spi_message *msg, अचिन्हित पूर्णांक data_len)
+अणु
+	स्थिर काष्ठा mcp251xfd_map_buf_crc *buf_rx = priv->map_buf_crc_rx;
+	स्थिर काष्ठा mcp251xfd_map_buf_crc *buf_tx = priv->map_buf_crc_tx;
+	पूर्णांक err;
 
-	BUILD_BUG_ON(sizeof(buf_rx->cmd) != sizeof(__be16) + sizeof(u8));
-	BUILD_BUG_ON(sizeof(buf_tx->cmd) != sizeof(__be16) + sizeof(u8));
+	BUILD_BUG_ON(माप(buf_rx->cmd) != माप(__be16) + माप(u8));
+	BUILD_BUG_ON(माप(buf_tx->cmd) != माप(__be16) + माप(u8));
 
 	err = spi_sync(priv->spi, msg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mcp251xfd_regmap_crc_read_check_crc(buf_rx, buf_tx, data_len);
-}
+	वापस mcp251xfd_regmap_crc_पढ़ो_check_crc(buf_rx, buf_tx, data_len);
+पूर्ण
 
-static int
-mcp251xfd_regmap_crc_read(void *context,
-			  const void *reg_p, size_t reg_len,
-			  void *val_buf, size_t val_len)
-{
-	struct spi_device *spi = context;
-	struct mcp251xfd_priv *priv = spi_get_drvdata(spi);
-	struct mcp251xfd_map_buf_crc *buf_rx = priv->map_buf_crc_rx;
-	struct mcp251xfd_map_buf_crc *buf_tx = priv->map_buf_crc_tx;
-	struct spi_transfer xfer[2] = { };
-	struct spi_message msg;
+अटल पूर्णांक
+mcp251xfd_regmap_crc_पढ़ो(व्योम *context,
+			  स्थिर व्योम *reg_p, माप_प्रकार reg_len,
+			  व्योम *val_buf, माप_प्रकार val_len)
+अणु
+	काष्ठा spi_device *spi = context;
+	काष्ठा mcp251xfd_priv *priv = spi_get_drvdata(spi);
+	काष्ठा mcp251xfd_map_buf_crc *buf_rx = priv->map_buf_crc_rx;
+	काष्ठा mcp251xfd_map_buf_crc *buf_tx = priv->map_buf_crc_tx;
+	काष्ठा spi_transfer xfer[2] = अणु पूर्ण;
+	काष्ठा spi_message msg;
 	u16 reg = *(u16 *)reg_p;
-	int i, err;
+	पूर्णांक i, err;
 
-	BUILD_BUG_ON(sizeof(buf_rx->cmd) != sizeof(__be16) + sizeof(u8));
-	BUILD_BUG_ON(sizeof(buf_tx->cmd) != sizeof(__be16) + sizeof(u8));
+	BUILD_BUG_ON(माप(buf_rx->cmd) != माप(__be16) + माप(u8));
+	BUILD_BUG_ON(माप(buf_tx->cmd) != माप(__be16) + माप(u8));
 
-	if (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
-	    reg_len != sizeof(buf_tx->cmd.cmd) +
+	अगर (IS_ENABLED(CONFIG_CAN_MCP251XFD_SANITY) &&
+	    reg_len != माप(buf_tx->cmd.cmd) +
 	    mcp251xfd_regmap_crc.pad_bits / BITS_PER_BYTE)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer[0], &msg);
 
-	if (priv->devtype_data.quirks & MCP251XFD_QUIRK_HALF_DUPLEX) {
+	अगर (priv->devtype_data.quirks & MCP251XFD_QUIRK_HALF_DUPLEX) अणु
 		xfer[0].tx_buf = buf_tx;
-		xfer[0].len = sizeof(buf_tx->cmd);
+		xfer[0].len = माप(buf_tx->cmd);
 
 		xfer[1].rx_buf = buf_rx->data;
-		xfer[1].len = val_len + sizeof(buf_tx->crc);
+		xfer[1].len = val_len + माप(buf_tx->crc);
 		spi_message_add_tail(&xfer[1], &msg);
-	} else {
+	पूर्ण अन्यथा अणु
 		xfer[0].tx_buf = buf_tx;
 		xfer[0].rx_buf = buf_rx;
-		xfer[0].len = sizeof(buf_tx->cmd) + val_len +
-			sizeof(buf_tx->crc);
+		xfer[0].len = माप(buf_tx->cmd) + val_len +
+			माप(buf_tx->crc);
 
-		if (MCP251XFD_SANITIZE_SPI)
-			memset(buf_tx->data, 0x0, val_len +
-			       sizeof(buf_tx->crc));
-	}
+		अगर (MCP251XFD_SANITIZE_SPI)
+			स_रखो(buf_tx->data, 0x0, val_len +
+			       माप(buf_tx->crc));
+	पूर्ण
 
-	mcp251xfd_spi_cmd_read_crc(&buf_tx->cmd, reg, val_len);
+	mcp251xfd_spi_cmd_पढ़ो_crc(&buf_tx->cmd, reg, val_len);
 
-	for (i = 0; i < MCP251XFD_READ_CRC_RETRIES_MAX; i++) {
-		err = mcp251xfd_regmap_crc_read_one(priv, &msg, val_len);
-		if (!err)
-			goto out;
-		if (err != -EBADMSG)
-			return err;
+	क्रम (i = 0; i < MCP251XFD_READ_CRC_RETRIES_MAX; i++) अणु
+		err = mcp251xfd_regmap_crc_पढ़ो_one(priv, &msg, val_len);
+		अगर (!err)
+			जाओ out;
+		अगर (err != -EBADMSG)
+			वापस err;
 
-		/* MCP251XFD_REG_TBC is the time base counter
-		 * register. It increments once per SYS clock tick,
+		/* MCP251XFD_REG_TBC is the समय base counter
+		 * रेजिस्टर. It increments once per SYS घड़ी tick,
 		 * which is 20 or 40 MHz.
 		 *
-		 * Observation shows that if the lowest byte (which is
-		 * transferred first on the SPI bus) of that register
-		 * is 0x00 or 0x80 the calculated CRC doesn't always
+		 * Observation shows that अगर the lowest byte (which is
+		 * transferred first on the SPI bus) of that रेजिस्टर
+		 * is 0x00 or 0x80 the calculated CRC करोesn't always
 		 * match the transferred one.
 		 *
 		 * If the highest bit in the lowest byte is flipped
 		 * the transferred CRC matches the calculated one. We
-		 * assume for now the CRC calculation in the chip
+		 * assume क्रम now the CRC calculation in the chip
 		 * works on wrong data and the transferred data is
 		 * correct.
 		 */
-		if (reg == MCP251XFD_REG_TBC &&
-		    (buf_rx->data[0] == 0x0 || buf_rx->data[0] == 0x80)) {
+		अगर (reg == MCP251XFD_REG_TBC &&
+		    (buf_rx->data[0] == 0x0 || buf_rx->data[0] == 0x80)) अणु
 			/* Flip highest bit in lowest byte of le32 */
 			buf_rx->data[0] ^= 0x80;
 
 			/* re-check CRC */
-			err = mcp251xfd_regmap_crc_read_check_crc(buf_rx,
+			err = mcp251xfd_regmap_crc_पढ़ो_check_crc(buf_rx,
 								  buf_tx,
 								  val_len);
-			if (!err) {
+			अगर (!err) अणु
 				/* If CRC is now correct, assume
 				 * transferred data was OK, flip bit
 				 * back to original value.
 				 */
 				buf_rx->data[0] ^= 0x80;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		/* MCP251XFD_REG_OSC is the first ever reg we read from.
+		/* MCP251XFD_REG_OSC is the first ever reg we पढ़ो from.
 		 *
 		 * The chip may be in deep sleep and this SPI transfer
-		 * (i.e. the assertion of the CS) will wake the chip
+		 * (i.e. the निश्चितion of the CS) will wake the chip
 		 * up. This takes about 3ms. The CRC of this transfer
 		 * is wrong.
 		 *
-		 * Or there isn't a chip at all, in this case the CRC
+		 * Or there isn't a chip at all, in this हाल the CRC
 		 * will be wrong, too.
 		 *
-		 * In both cases ignore the CRC and copy the read data
-		 * to the caller. It will take care of both cases.
+		 * In both हालs ignore the CRC and copy the पढ़ो data
+		 * to the caller. It will take care of both हालs.
 		 *
 		 */
-		if (reg == MCP251XFD_REG_OSC) {
+		अगर (reg == MCP251XFD_REG_OSC) अणु
 			err = 0;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		netdev_info(priv->ndev,
 			    "CRC read error at address 0x%04x (length=%zd, data=%*ph, CRC=0x%04x) retrying.\n",
-			    reg, val_len, (int)val_len, buf_rx->data,
+			    reg, val_len, (पूर्णांक)val_len, buf_rx->data,
 			    get_unaligned_be16(buf_rx->data + val_len));
-	}
+	पूर्ण
 
-	if (err) {
+	अगर (err) अणु
 		netdev_err(priv->ndev,
 			   "CRC read error at address 0x%04x (length=%zd, data=%*ph, CRC=0x%04x).\n",
-			   reg, val_len, (int)val_len, buf_rx->data,
+			   reg, val_len, (पूर्णांक)val_len, buf_rx->data,
 			   get_unaligned_be16(buf_rx->data + val_len));
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
  out:
-	memcpy(val_buf, buf_rx->data, val_len);
+	स_नकल(val_buf, buf_rx->data, val_len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_range mcp251xfd_reg_table_yes_range[] = {
+अटल स्थिर काष्ठा regmap_range mcp251xfd_reg_table_yes_range[] = अणु
 	regmap_reg_range(0x000, 0x2ec),	/* CAN FD Controller Module SFR */
 	regmap_reg_range(0x400, 0xbfc),	/* RAM */
 	regmap_reg_range(0xe00, 0xe14),	/* MCP2517/18FD SFR */
-};
+पूर्ण;
 
-static const struct regmap_access_table mcp251xfd_reg_table = {
+अटल स्थिर काष्ठा regmap_access_table mcp251xfd_reg_table = अणु
 	.yes_ranges = mcp251xfd_reg_table_yes_range,
 	.n_yes_ranges = ARRAY_SIZE(mcp251xfd_reg_table_yes_range),
-};
+पूर्ण;
 
-static const struct regmap_config mcp251xfd_regmap_nocrc = {
+अटल स्थिर काष्ठा regmap_config mcp251xfd_regmap_nocrc = अणु
 	.name = "nocrc",
 	.reg_bits = 16,
 	.reg_stride = 4,
 	.pad_bits = 0,
 	.val_bits = 32,
-	.max_register = 0xffc,
+	.max_रेजिस्टर = 0xffc,
 	.wr_table = &mcp251xfd_reg_table,
 	.rd_table = &mcp251xfd_reg_table,
 	.cache_type = REGCACHE_NONE,
-	.read_flag_mask = (__force unsigned long)
+	.पढ़ो_flag_mask = (__क्रमce अचिन्हित दीर्घ)
 		cpu_to_be16(MCP251XFD_SPI_INSTRUCTION_READ),
-	.write_flag_mask = (__force unsigned long)
+	.ग_लिखो_flag_mask = (__क्रमce अचिन्हित दीर्घ)
 		cpu_to_be16(MCP251XFD_SPI_INSTRUCTION_WRITE),
-};
+पूर्ण;
 
-static const struct regmap_bus mcp251xfd_bus_nocrc = {
-	.write = mcp251xfd_regmap_nocrc_write,
-	.gather_write = mcp251xfd_regmap_nocrc_gather_write,
+अटल स्थिर काष्ठा regmap_bus mcp251xfd_bus_nocrc = अणु
+	.ग_लिखो = mcp251xfd_regmap_nocrc_ग_लिखो,
+	.gather_ग_लिखो = mcp251xfd_regmap_nocrc_gather_ग_लिखो,
 	.reg_update_bits = mcp251xfd_regmap_nocrc_update_bits,
-	.read = mcp251xfd_regmap_nocrc_read,
-	.reg_format_endian_default = REGMAP_ENDIAN_BIG,
-	.val_format_endian_default = REGMAP_ENDIAN_LITTLE,
-	.max_raw_read = sizeof_field(struct mcp251xfd_map_buf_nocrc, data),
-	.max_raw_write = sizeof_field(struct mcp251xfd_map_buf_nocrc, data),
-};
+	.पढ़ो = mcp251xfd_regmap_nocrc_पढ़ो,
+	.reg_क्रमmat_endian_शेष = REGMAP_ENDIAN_BIG,
+	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
+	.max_raw_पढ़ो = माप_field(काष्ठा mcp251xfd_map_buf_nocrc, data),
+	.max_raw_ग_लिखो = माप_field(काष्ठा mcp251xfd_map_buf_nocrc, data),
+पूर्ण;
 
-static const struct regmap_config mcp251xfd_regmap_crc = {
+अटल स्थिर काष्ठा regmap_config mcp251xfd_regmap_crc = अणु
 	.name = "crc",
 	.reg_bits = 16,
 	.reg_stride = 4,
 	.pad_bits = 16,		/* keep data bits aligned */
 	.val_bits = 32,
-	.max_register = 0xffc,
+	.max_रेजिस्टर = 0xffc,
 	.wr_table = &mcp251xfd_reg_table,
 	.rd_table = &mcp251xfd_reg_table,
 	.cache_type = REGCACHE_NONE,
-};
+पूर्ण;
 
-static const struct regmap_bus mcp251xfd_bus_crc = {
-	.write = mcp251xfd_regmap_crc_write,
-	.gather_write = mcp251xfd_regmap_crc_gather_write,
-	.read = mcp251xfd_regmap_crc_read,
-	.reg_format_endian_default = REGMAP_ENDIAN_NATIVE,
-	.val_format_endian_default = REGMAP_ENDIAN_LITTLE,
-	.max_raw_read = sizeof_field(struct mcp251xfd_map_buf_crc, data),
-	.max_raw_write = sizeof_field(struct mcp251xfd_map_buf_crc, data),
-};
+अटल स्थिर काष्ठा regmap_bus mcp251xfd_bus_crc = अणु
+	.ग_लिखो = mcp251xfd_regmap_crc_ग_लिखो,
+	.gather_ग_लिखो = mcp251xfd_regmap_crc_gather_ग_लिखो,
+	.पढ़ो = mcp251xfd_regmap_crc_पढ़ो,
+	.reg_क्रमmat_endian_शेष = REGMAP_ENDIAN_NATIVE,
+	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
+	.max_raw_पढ़ो = माप_field(काष्ठा mcp251xfd_map_buf_crc, data),
+	.max_raw_ग_लिखो = माप_field(काष्ठा mcp251xfd_map_buf_crc, data),
+पूर्ण;
 
-static inline bool
-mcp251xfd_regmap_use_nocrc(struct mcp251xfd_priv *priv)
-{
-	return (!(priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_REG)) ||
+अटल अंतरभूत bool
+mcp251xfd_regmap_use_nocrc(काष्ठा mcp251xfd_priv *priv)
+अणु
+	वापस (!(priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_REG)) ||
 		(!(priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_RX));
-}
+पूर्ण
 
-static inline bool
-mcp251xfd_regmap_use_crc(struct mcp251xfd_priv *priv)
-{
-	return (priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_REG) ||
+अटल अंतरभूत bool
+mcp251xfd_regmap_use_crc(काष्ठा mcp251xfd_priv *priv)
+अणु
+	वापस (priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_REG) ||
 		(priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_RX);
-}
+पूर्ण
 
-static int
-mcp251xfd_regmap_init_nocrc(struct mcp251xfd_priv *priv)
-{
-	if (!priv->map_nocrc) {
-		struct regmap *map;
+अटल पूर्णांक
+mcp251xfd_regmap_init_nocrc(काष्ठा mcp251xfd_priv *priv)
+अणु
+	अगर (!priv->map_nocrc) अणु
+		काष्ठा regmap *map;
 
 		map = devm_regmap_init(&priv->spi->dev, &mcp251xfd_bus_nocrc,
 				       priv->spi, &mcp251xfd_regmap_nocrc);
-		if (IS_ERR(map))
-			return PTR_ERR(map);
+		अगर (IS_ERR(map))
+			वापस PTR_ERR(map);
 
 		priv->map_nocrc = map;
-	}
+	पूर्ण
 
-	if (!priv->map_buf_nocrc_rx) {
+	अगर (!priv->map_buf_nocrc_rx) अणु
 		priv->map_buf_nocrc_rx =
 			devm_kzalloc(&priv->spi->dev,
-				     sizeof(*priv->map_buf_nocrc_rx),
+				     माप(*priv->map_buf_nocrc_rx),
 				     GFP_KERNEL);
-		if (!priv->map_buf_nocrc_rx)
-			return -ENOMEM;
-	}
+		अगर (!priv->map_buf_nocrc_rx)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (!priv->map_buf_nocrc_tx) {
+	अगर (!priv->map_buf_nocrc_tx) अणु
 		priv->map_buf_nocrc_tx =
 			devm_kzalloc(&priv->spi->dev,
-				     sizeof(*priv->map_buf_nocrc_tx),
+				     माप(*priv->map_buf_nocrc_tx),
 				     GFP_KERNEL);
-		if (!priv->map_buf_nocrc_tx)
-			return -ENOMEM;
-	}
+		अगर (!priv->map_buf_nocrc_tx)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (!(priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_REG))
+	अगर (!(priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_REG))
 		priv->map_reg = priv->map_nocrc;
 
-	if (!(priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_RX))
+	अगर (!(priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_RX))
 		priv->map_rx = priv->map_nocrc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mcp251xfd_regmap_destroy_nocrc(struct mcp251xfd_priv *priv)
-{
-	if (priv->map_buf_nocrc_rx) {
-		devm_kfree(&priv->spi->dev, priv->map_buf_nocrc_rx);
-		priv->map_buf_nocrc_rx = NULL;
-	}
-	if (priv->map_buf_nocrc_tx) {
-		devm_kfree(&priv->spi->dev, priv->map_buf_nocrc_tx);
-		priv->map_buf_nocrc_tx = NULL;
-	}
-}
+अटल व्योम mcp251xfd_regmap_destroy_nocrc(काष्ठा mcp251xfd_priv *priv)
+अणु
+	अगर (priv->map_buf_nocrc_rx) अणु
+		devm_kमुक्त(&priv->spi->dev, priv->map_buf_nocrc_rx);
+		priv->map_buf_nocrc_rx = शून्य;
+	पूर्ण
+	अगर (priv->map_buf_nocrc_tx) अणु
+		devm_kमुक्त(&priv->spi->dev, priv->map_buf_nocrc_tx);
+		priv->map_buf_nocrc_tx = शून्य;
+	पूर्ण
+पूर्ण
 
-static int
-mcp251xfd_regmap_init_crc(struct mcp251xfd_priv *priv)
-{
-	if (!priv->map_crc) {
-		struct regmap *map;
+अटल पूर्णांक
+mcp251xfd_regmap_init_crc(काष्ठा mcp251xfd_priv *priv)
+अणु
+	अगर (!priv->map_crc) अणु
+		काष्ठा regmap *map;
 
 		map = devm_regmap_init(&priv->spi->dev, &mcp251xfd_bus_crc,
 				       priv->spi, &mcp251xfd_regmap_crc);
-		if (IS_ERR(map))
-			return PTR_ERR(map);
+		अगर (IS_ERR(map))
+			वापस PTR_ERR(map);
 
 		priv->map_crc = map;
-	}
+	पूर्ण
 
-	if (!priv->map_buf_crc_rx) {
+	अगर (!priv->map_buf_crc_rx) अणु
 		priv->map_buf_crc_rx =
 			devm_kzalloc(&priv->spi->dev,
-				     sizeof(*priv->map_buf_crc_rx),
+				     माप(*priv->map_buf_crc_rx),
 				     GFP_KERNEL);
-		if (!priv->map_buf_crc_rx)
-			return -ENOMEM;
-	}
+		अगर (!priv->map_buf_crc_rx)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (!priv->map_buf_crc_tx) {
+	अगर (!priv->map_buf_crc_tx) अणु
 		priv->map_buf_crc_tx =
 			devm_kzalloc(&priv->spi->dev,
-				     sizeof(*priv->map_buf_crc_tx),
+				     माप(*priv->map_buf_crc_tx),
 				     GFP_KERNEL);
-		if (!priv->map_buf_crc_tx)
-			return -ENOMEM;
-	}
+		अगर (!priv->map_buf_crc_tx)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_REG)
+	अगर (priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_REG)
 		priv->map_reg = priv->map_crc;
 
-	if (priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_RX)
+	अगर (priv->devtype_data.quirks & MCP251XFD_QUIRK_CRC_RX)
 		priv->map_rx = priv->map_crc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mcp251xfd_regmap_destroy_crc(struct mcp251xfd_priv *priv)
-{
-	if (priv->map_buf_crc_rx) {
-		devm_kfree(&priv->spi->dev, priv->map_buf_crc_rx);
-		priv->map_buf_crc_rx = NULL;
-	}
-	if (priv->map_buf_crc_tx) {
-		devm_kfree(&priv->spi->dev, priv->map_buf_crc_tx);
-		priv->map_buf_crc_tx = NULL;
-	}
-}
+अटल व्योम mcp251xfd_regmap_destroy_crc(काष्ठा mcp251xfd_priv *priv)
+अणु
+	अगर (priv->map_buf_crc_rx) अणु
+		devm_kमुक्त(&priv->spi->dev, priv->map_buf_crc_rx);
+		priv->map_buf_crc_rx = शून्य;
+	पूर्ण
+	अगर (priv->map_buf_crc_tx) अणु
+		devm_kमुक्त(&priv->spi->dev, priv->map_buf_crc_tx);
+		priv->map_buf_crc_tx = शून्य;
+	पूर्ण
+पूर्ण
 
-int mcp251xfd_regmap_init(struct mcp251xfd_priv *priv)
-{
-	int err;
+पूर्णांक mcp251xfd_regmap_init(काष्ठा mcp251xfd_priv *priv)
+अणु
+	पूर्णांक err;
 
-	if (mcp251xfd_regmap_use_nocrc(priv)) {
+	अगर (mcp251xfd_regmap_use_nocrc(priv)) अणु
 		err = mcp251xfd_regmap_init_nocrc(priv);
 
-		if (err)
-			return err;
-	} else {
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा अणु
 		mcp251xfd_regmap_destroy_nocrc(priv);
-	}
+	पूर्ण
 
-	if (mcp251xfd_regmap_use_crc(priv)) {
+	अगर (mcp251xfd_regmap_use_crc(priv)) अणु
 		err = mcp251xfd_regmap_init_crc(priv);
 
-		if (err)
-			return err;
-	} else {
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा अणु
 		mcp251xfd_regmap_destroy_crc(priv);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

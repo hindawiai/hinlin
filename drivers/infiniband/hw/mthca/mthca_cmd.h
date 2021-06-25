@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005 Mellanox Technologies. All rights reserved.
@@ -6,20 +7,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,23 +33,23 @@
  * SOFTWARE.
  */
 
-#ifndef MTHCA_CMD_H
-#define MTHCA_CMD_H
+#अगर_अघोषित MTHCA_CMD_H
+#घोषणा MTHCA_CMD_H
 
-#include <rdma/ib_verbs.h>
+#समावेश <rdma/ib_verbs.h>
 
-#define MTHCA_MAILBOX_SIZE 4096
+#घोषणा MTHCA_MAILBOX_SIZE 4096
 
-enum {
+क्रमागत अणु
 	/* command completed successfully: */
 	MTHCA_CMD_STAT_OK 	      = 0x00,
-	/* Internal error (such as a bus error) occurred while processing command: */
+	/* Internal error (such as a bus error) occurred जबतक processing command: */
 	MTHCA_CMD_STAT_INTERNAL_ERR   = 0x01,
-	/* Operation/command not supported or opcode modifier not supported: */
+	/* Operation/command not supported or opcode modअगरier not supported: */
 	MTHCA_CMD_STAT_BAD_OP 	      = 0x02,
 	/* Parameter not supported or parameter out of range: */
 	MTHCA_CMD_STAT_BAD_PARAM      = 0x03,
-	/* System not enabled or bad system state: */
+	/* System not enabled or bad प्रणाली state: */
 	MTHCA_CMD_STAT_BAD_SYS_STATE  = 0x04,
 	/* Attempt to access reserved or unallocaterd resource: */
 	MTHCA_CMD_STAT_BAD_RESOURCE   = 0x05,
@@ -64,11 +65,11 @@ enum {
 	MTHCA_CMD_STAT_BAD_INDEX      = 0x0a,
 	/* FW image corrupted: */
 	MTHCA_CMD_STAT_BAD_NVMEM      = 0x0b,
-	/* Attempt to modify a QP/EE which is not in the presumed state: */
+	/* Attempt to modअगरy a QP/EE which is not in the presumed state: */
 	MTHCA_CMD_STAT_BAD_QPEE_STATE = 0x10,
 	/* Bad segment parameters (Address/Size): */
 	MTHCA_CMD_STAT_BAD_SEG_PARAM  = 0x20,
-	/* Memory Region has Memory Windows bound to: */
+	/* Memory Region has Memory Winकरोws bound to: */
 	MTHCA_CMD_STAT_REG_BOUND      = 0x21,
 	/* HCA local attached memory not present: */
 	MTHCA_CMD_STAT_LAM_NOT_PRE    = 0x22,
@@ -76,9 +77,9 @@ enum {
 	MTHCA_CMD_STAT_BAD_PKT 	      = 0x30,
 	/* More outstanding CQEs in CQ than new CQ size: */
 	MTHCA_CMD_STAT_BAD_SIZE       = 0x40
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTHCA_TRANS_INVALID = 0,
 	MTHCA_TRANS_RST2INIT,
 	MTHCA_TRANS_INIT2INIT,
@@ -91,9 +92,9 @@ enum {
 	MTHCA_TRANS_SQD2SQD,
 	MTHCA_TRANS_SQD2RTS,
 	MTHCA_TRANS_ANY2RST,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	DEV_LIM_FLAG_RC                 = 1 << 0,
 	DEV_LIM_FLAG_UC                 = 1 << 1,
 	DEV_LIM_FLAG_UD                 = 1 << 2,
@@ -110,89 +111,89 @@ enum {
 	DEV_LIM_FLAG_RAW_MULTI          = 1 << 19,
 	DEV_LIM_FLAG_UD_AV_PORT_ENFORCE = 1 << 20,
 	DEV_LIM_FLAG_UD_MULTI           = 1 << 21,
-};
+पूर्ण;
 
-struct mthca_mailbox {
+काष्ठा mthca_mailbox अणु
 	dma_addr_t dma;
-	void      *buf;
-};
+	व्योम      *buf;
+पूर्ण;
 
-struct mthca_dev_lim {
-	int max_srq_sz;
-	int max_qp_sz;
-	int reserved_qps;
-	int max_qps;
-	int reserved_srqs;
-	int max_srqs;
-	int reserved_eecs;
-	int max_eecs;
-	int max_cq_sz;
-	int reserved_cqs;
-	int max_cqs;
-	int max_mpts;
-	int reserved_eqs;
-	int max_eqs;
-	int reserved_mtts;
-	int max_mrw_sz;
-	int reserved_mrws;
-	int max_mtt_seg;
-	int max_requester_per_qp;
-	int max_responder_per_qp;
-	int max_rdma_global;
-	int local_ca_ack_delay;
-	int max_mtu;
-	int max_port_width;
-	int max_vl;
-	int num_ports;
-	int max_gids;
+काष्ठा mthca_dev_lim अणु
+	पूर्णांक max_srq_sz;
+	पूर्णांक max_qp_sz;
+	पूर्णांक reserved_qps;
+	पूर्णांक max_qps;
+	पूर्णांक reserved_srqs;
+	पूर्णांक max_srqs;
+	पूर्णांक reserved_eecs;
+	पूर्णांक max_eecs;
+	पूर्णांक max_cq_sz;
+	पूर्णांक reserved_cqs;
+	पूर्णांक max_cqs;
+	पूर्णांक max_mpts;
+	पूर्णांक reserved_eqs;
+	पूर्णांक max_eqs;
+	पूर्णांक reserved_mtts;
+	पूर्णांक max_mrw_sz;
+	पूर्णांक reserved_mrws;
+	पूर्णांक max_mtt_seg;
+	पूर्णांक max_requester_per_qp;
+	पूर्णांक max_responder_per_qp;
+	पूर्णांक max_rdma_global;
+	पूर्णांक local_ca_ack_delay;
+	पूर्णांक max_mtu;
+	पूर्णांक max_port_width;
+	पूर्णांक max_vl;
+	पूर्णांक num_ports;
+	पूर्णांक max_gids;
 	u16 stat_rate_support;
-	int max_pkeys;
+	पूर्णांक max_pkeys;
 	u32 flags;
-	int reserved_uars;
-	int uar_size;
-	int min_page_sz;
-	int max_sg;
-	int max_desc_sz;
-	int max_qp_per_mcg;
-	int reserved_mgms;
-	int max_mcgs;
-	int reserved_pds;
-	int max_pds;
-	int reserved_rdds;
-	int max_rdds;
-	int eec_entry_sz;
-	int qpc_entry_sz;
-	int eeec_entry_sz;
-	int eqpc_entry_sz;
-	int eqc_entry_sz;
-	int cqc_entry_sz;
-	int srq_entry_sz;
-	int uar_scratch_entry_sz;
-	int mpt_entry_sz;
-	union {
-		struct {
-			int max_avs;
-		} tavor;
-		struct {
-			int resize_srq;
-			int max_pbl_sz;
+	पूर्णांक reserved_uars;
+	पूर्णांक uar_size;
+	पूर्णांक min_page_sz;
+	पूर्णांक max_sg;
+	पूर्णांक max_desc_sz;
+	पूर्णांक max_qp_per_mcg;
+	पूर्णांक reserved_mgms;
+	पूर्णांक max_mcgs;
+	पूर्णांक reserved_pds;
+	पूर्णांक max_pds;
+	पूर्णांक reserved_rdds;
+	पूर्णांक max_rdds;
+	पूर्णांक eec_entry_sz;
+	पूर्णांक qpc_entry_sz;
+	पूर्णांक eeec_entry_sz;
+	पूर्णांक eqpc_entry_sz;
+	पूर्णांक eqc_entry_sz;
+	पूर्णांक cqc_entry_sz;
+	पूर्णांक srq_entry_sz;
+	पूर्णांक uar_scratch_entry_sz;
+	पूर्णांक mpt_entry_sz;
+	जोड़ अणु
+		काष्ठा अणु
+			पूर्णांक max_avs;
+		पूर्ण tavor;
+		काष्ठा अणु
+			पूर्णांक resize_srq;
+			पूर्णांक max_pbl_sz;
 			u8  bmme_flags;
 			u32 reserved_lkey;
-			int lam_required;
+			पूर्णांक lam_required;
 			u64 max_icm_sz;
-		} arbel;
-	} hca;
-};
+		पूर्ण arbel;
+	पूर्ण hca;
+पूर्ण;
 
-struct mthca_adapter {
-	u32  vendor_id;
+काष्ठा mthca_adapter अणु
+	u32  venकरोr_id;
 	u32  device_id;
 	u32  revision_id;
-	char board_id[MTHCA_BOARD_ID_LEN];
-	u8   inta_pin;
-};
+	अक्षर board_id[MTHCA_BOARD_ID_LEN];
+	u8   पूर्णांकa_pin;
+पूर्ण;
 
-struct mthca_init_hca_param {
+काष्ठा mthca_init_hca_param अणु
 	u64 qpc_base;
 	u64 eec_base;
 	u64 srqc_base;
@@ -218,108 +219,108 @@ struct mthca_init_hca_param {
 	u8  log_mpt_sz;
 	u8  log_uar_sz;
 	u8  log_uarc_sz;
-};
+पूर्ण;
 
-struct mthca_init_ib_param {
-	int port_width;
-	int vl_cap;
-	int mtu_cap;
+काष्ठा mthca_init_ib_param अणु
+	पूर्णांक port_width;
+	पूर्णांक vl_cap;
+	पूर्णांक mtu_cap;
 	u16 gid_cap;
 	u16 pkey_cap;
-	int set_guid0;
+	पूर्णांक set_guid0;
 	u64 guid0;
-	int set_node_guid;
+	पूर्णांक set_node_guid;
 	u64 node_guid;
-	int set_si_guid;
+	पूर्णांक set_si_guid;
 	u64 si_guid;
-};
+पूर्ण;
 
-struct mthca_set_ib_param {
-	int set_si_guid;
-	int reset_qkey_viol;
+काष्ठा mthca_set_ib_param अणु
+	पूर्णांक set_si_guid;
+	पूर्णांक reset_qkey_viol;
 	u64 si_guid;
 	u32 cap_mask;
-};
+पूर्ण;
 
-int mthca_cmd_init(struct mthca_dev *dev);
-void mthca_cmd_cleanup(struct mthca_dev *dev);
-int mthca_cmd_use_events(struct mthca_dev *dev);
-void mthca_cmd_use_polling(struct mthca_dev *dev);
-void mthca_cmd_event(struct mthca_dev *dev, u16 token,
+पूर्णांक mthca_cmd_init(काष्ठा mthca_dev *dev);
+व्योम mthca_cmd_cleanup(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_cmd_use_events(काष्ठा mthca_dev *dev);
+व्योम mthca_cmd_use_polling(काष्ठा mthca_dev *dev);
+व्योम mthca_cmd_event(काष्ठा mthca_dev *dev, u16 token,
 		     u8  status, u64 out_param);
 
-struct mthca_mailbox *mthca_alloc_mailbox(struct mthca_dev *dev,
+काष्ठा mthca_mailbox *mthca_alloc_mailbox(काष्ठा mthca_dev *dev,
 					  gfp_t gfp_mask);
-void mthca_free_mailbox(struct mthca_dev *dev, struct mthca_mailbox *mailbox);
+व्योम mthca_मुक्त_mailbox(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox);
 
-int mthca_SYS_EN(struct mthca_dev *dev);
-int mthca_SYS_DIS(struct mthca_dev *dev);
-int mthca_MAP_FA(struct mthca_dev *dev, struct mthca_icm *icm);
-int mthca_UNMAP_FA(struct mthca_dev *dev);
-int mthca_RUN_FW(struct mthca_dev *dev);
-int mthca_QUERY_FW(struct mthca_dev *dev);
-int mthca_ENABLE_LAM(struct mthca_dev *dev);
-int mthca_DISABLE_LAM(struct mthca_dev *dev);
-int mthca_QUERY_DDR(struct mthca_dev *dev);
-int mthca_QUERY_DEV_LIM(struct mthca_dev *dev,
-			struct mthca_dev_lim *dev_lim);
-int mthca_QUERY_ADAPTER(struct mthca_dev *dev,
-			struct mthca_adapter *adapter);
-int mthca_INIT_HCA(struct mthca_dev *dev,
-		   struct mthca_init_hca_param *param);
-int mthca_INIT_IB(struct mthca_dev *dev,
-		  struct mthca_init_ib_param *param,
-		  int port);
-int mthca_CLOSE_IB(struct mthca_dev *dev, int port);
-int mthca_CLOSE_HCA(struct mthca_dev *dev, int panic);
-int mthca_SET_IB(struct mthca_dev *dev, struct mthca_set_ib_param *param,
-		 int port);
-int mthca_MAP_ICM(struct mthca_dev *dev, struct mthca_icm *icm, u64 virt);
-int mthca_MAP_ICM_page(struct mthca_dev *dev, u64 dma_addr, u64 virt);
-int mthca_UNMAP_ICM(struct mthca_dev *dev, u64 virt, u32 page_count);
-int mthca_MAP_ICM_AUX(struct mthca_dev *dev, struct mthca_icm *icm);
-int mthca_UNMAP_ICM_AUX(struct mthca_dev *dev);
-int mthca_SET_ICM_SIZE(struct mthca_dev *dev, u64 icm_size, u64 *aux_pages);
-int mthca_SW2HW_MPT(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
-		    int mpt_index);
-int mthca_HW2SW_MPT(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
-		    int mpt_index);
-int mthca_WRITE_MTT(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
-		    int num_mtt);
-int mthca_SYNC_TPT(struct mthca_dev *dev);
-int mthca_MAP_EQ(struct mthca_dev *dev, u64 event_mask, int unmap,
-		 int eq_num);
-int mthca_SW2HW_EQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
-		   int eq_num);
-int mthca_HW2SW_EQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
-		   int eq_num);
-int mthca_SW2HW_CQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
-		   int cq_num);
-int mthca_HW2SW_CQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
-		   int cq_num);
-int mthca_RESIZE_CQ(struct mthca_dev *dev, int cq_num, u32 lkey, u8 log_size);
-int mthca_SW2HW_SRQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
-		    int srq_num);
-int mthca_HW2SW_SRQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
-		    int srq_num);
-int mthca_QUERY_SRQ(struct mthca_dev *dev, u32 num,
-		    struct mthca_mailbox *mailbox);
-int mthca_ARM_SRQ(struct mthca_dev *dev, int srq_num, int limit);
-int mthca_MODIFY_QP(struct mthca_dev *dev, enum ib_qp_state cur,
-		    enum ib_qp_state next, u32 num, int is_ee,
-		    struct mthca_mailbox *mailbox, u32 optmask);
-int mthca_QUERY_QP(struct mthca_dev *dev, u32 num, int is_ee,
-		   struct mthca_mailbox *mailbox);
-int mthca_CONF_SPECIAL_QP(struct mthca_dev *dev, int type, u32 qpn);
-int mthca_MAD_IFC(struct mthca_dev *dev, int ignore_mkey, int ignore_bkey,
-		  int port, const struct ib_wc *in_wc, const struct ib_grh *in_grh,
-		  const void *in_mad, void *response_mad);
-int mthca_READ_MGM(struct mthca_dev *dev, int index,
-		   struct mthca_mailbox *mailbox);
-int mthca_WRITE_MGM(struct mthca_dev *dev, int index,
-		    struct mthca_mailbox *mailbox);
-int mthca_MGID_HASH(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+पूर्णांक mthca_SYS_EN(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_SYS_DIS(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_MAP_FA(काष्ठा mthca_dev *dev, काष्ठा mthca_icm *icm);
+पूर्णांक mthca_UNMAP_FA(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_RUN_FW(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_QUERY_FW(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_ENABLE_LAM(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_DISABLE_LAM(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_QUERY_DDR(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_QUERY_DEV_LIM(काष्ठा mthca_dev *dev,
+			काष्ठा mthca_dev_lim *dev_lim);
+पूर्णांक mthca_QUERY_ADAPTER(काष्ठा mthca_dev *dev,
+			काष्ठा mthca_adapter *adapter);
+पूर्णांक mthca_INIT_HCA(काष्ठा mthca_dev *dev,
+		   काष्ठा mthca_init_hca_param *param);
+पूर्णांक mthca_INIT_IB(काष्ठा mthca_dev *dev,
+		  काष्ठा mthca_init_ib_param *param,
+		  पूर्णांक port);
+पूर्णांक mthca_CLOSE_IB(काष्ठा mthca_dev *dev, पूर्णांक port);
+पूर्णांक mthca_CLOSE_HCA(काष्ठा mthca_dev *dev, पूर्णांक panic);
+पूर्णांक mthca_SET_IB(काष्ठा mthca_dev *dev, काष्ठा mthca_set_ib_param *param,
+		 पूर्णांक port);
+पूर्णांक mthca_MAP_ICM(काष्ठा mthca_dev *dev, काष्ठा mthca_icm *icm, u64 virt);
+पूर्णांक mthca_MAP_ICM_page(काष्ठा mthca_dev *dev, u64 dma_addr, u64 virt);
+पूर्णांक mthca_UNMAP_ICM(काष्ठा mthca_dev *dev, u64 virt, u32 page_count);
+पूर्णांक mthca_MAP_ICM_AUX(काष्ठा mthca_dev *dev, काष्ठा mthca_icm *icm);
+पूर्णांक mthca_UNMAP_ICM_AUX(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_SET_ICM_SIZE(काष्ठा mthca_dev *dev, u64 icm_size, u64 *aux_pages);
+पूर्णांक mthca_SW2HW_MPT(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+		    पूर्णांक mpt_index);
+पूर्णांक mthca_HW2SW_MPT(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+		    पूर्णांक mpt_index);
+पूर्णांक mthca_WRITE_MTT(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+		    पूर्णांक num_mtt);
+पूर्णांक mthca_SYNC_TPT(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_MAP_EQ(काष्ठा mthca_dev *dev, u64 event_mask, पूर्णांक unmap,
+		 पूर्णांक eq_num);
+पूर्णांक mthca_SW2HW_EQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+		   पूर्णांक eq_num);
+पूर्णांक mthca_HW2SW_EQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+		   पूर्णांक eq_num);
+पूर्णांक mthca_SW2HW_CQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+		   पूर्णांक cq_num);
+पूर्णांक mthca_HW2SW_CQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+		   पूर्णांक cq_num);
+पूर्णांक mthca_RESIZE_CQ(काष्ठा mthca_dev *dev, पूर्णांक cq_num, u32 lkey, u8 log_size);
+पूर्णांक mthca_SW2HW_SRQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+		    पूर्णांक srq_num);
+पूर्णांक mthca_HW2SW_SRQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+		    पूर्णांक srq_num);
+पूर्णांक mthca_QUERY_SRQ(काष्ठा mthca_dev *dev, u32 num,
+		    काष्ठा mthca_mailbox *mailbox);
+पूर्णांक mthca_ARM_SRQ(काष्ठा mthca_dev *dev, पूर्णांक srq_num, पूर्णांक limit);
+पूर्णांक mthca_MODIFY_QP(काष्ठा mthca_dev *dev, क्रमागत ib_qp_state cur,
+		    क्रमागत ib_qp_state next, u32 num, पूर्णांक is_ee,
+		    काष्ठा mthca_mailbox *mailbox, u32 opपंचांगask);
+पूर्णांक mthca_QUERY_QP(काष्ठा mthca_dev *dev, u32 num, पूर्णांक is_ee,
+		   काष्ठा mthca_mailbox *mailbox);
+पूर्णांक mthca_CONF_SPECIAL_QP(काष्ठा mthca_dev *dev, पूर्णांक type, u32 qpn);
+पूर्णांक mthca_MAD_IFC(काष्ठा mthca_dev *dev, पूर्णांक ignore_mkey, पूर्णांक ignore_bkey,
+		  पूर्णांक port, स्थिर काष्ठा ib_wc *in_wc, स्थिर काष्ठा ib_grh *in_grh,
+		  स्थिर व्योम *in_mad, व्योम *response_mad);
+पूर्णांक mthca_READ_MGM(काष्ठा mthca_dev *dev, पूर्णांक index,
+		   काष्ठा mthca_mailbox *mailbox);
+पूर्णांक mthca_WRITE_MGM(काष्ठा mthca_dev *dev, पूर्णांक index,
+		    काष्ठा mthca_mailbox *mailbox);
+पूर्णांक mthca_MGID_HASH(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
 		    u16 *hash);
-int mthca_NOP(struct mthca_dev *dev);
+पूर्णांक mthca_NOP(काष्ठा mthca_dev *dev);
 
-#endif /* MTHCA_CMD_H */
+#पूर्ण_अगर /* MTHCA_CMD_H */

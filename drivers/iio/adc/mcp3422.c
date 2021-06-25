@@ -1,214 +1,215 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * mcp3422.c - driver for the Microchip mcp3421/2/3/4/5/6/7/8 chip family
+ * mcp3422.c - driver क्रम the Microchip mcp3421/2/3/4/5/6/7/8 chip family
  *
  * Copyright (C) 2013, Angelo Compagnucci
  * Author: Angelo Compagnucci <angelo.compagnucci@gmail.com>
  *
- * Datasheet: http://ww1.microchip.com/downloads/en/devicedoc/22088b.pdf
- *            https://ww1.microchip.com/downloads/en/DeviceDoc/22226a.pdf
- *            https://ww1.microchip.com/downloads/en/DeviceDoc/22072b.pdf
+ * Datasheet: http://ww1.microchip.com/करोwnloads/en/deviceकरोc/22088b.pdf
+ *            https://ww1.microchip.com/करोwnloads/en/DeviceDoc/22226a.pdf
+ *            https://ww1.microchip.com/करोwnloads/en/DeviceDoc/22072b.pdf
  *
  * This driver exports the value of analog input voltage to sysfs, the
  * voltage unit is nV.
  */
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/delay.h>
-#include <linux/sysfs.h>
-#include <asm/unaligned.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sysfs.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
 
 /* Masks */
-#define MCP3422_CHANNEL_MASK	0x60
-#define MCP3422_PGA_MASK	0x03
-#define MCP3422_SRATE_MASK	0x0C
-#define MCP3422_SRATE_240	0x0
-#define MCP3422_SRATE_60	0x1
-#define MCP3422_SRATE_15	0x2
-#define MCP3422_SRATE_3	0x3
-#define MCP3422_PGA_1	0
-#define MCP3422_PGA_2	1
-#define MCP3422_PGA_4	2
-#define MCP3422_PGA_8	3
-#define MCP3422_CONT_SAMPLING	0x10
+#घोषणा MCP3422_CHANNEL_MASK	0x60
+#घोषणा MCP3422_PGA_MASK	0x03
+#घोषणा MCP3422_SRATE_MASK	0x0C
+#घोषणा MCP3422_SRATE_240	0x0
+#घोषणा MCP3422_SRATE_60	0x1
+#घोषणा MCP3422_SRATE_15	0x2
+#घोषणा MCP3422_SRATE_3	0x3
+#घोषणा MCP3422_PGA_1	0
+#घोषणा MCP3422_PGA_2	1
+#घोषणा MCP3422_PGA_4	2
+#घोषणा MCP3422_PGA_8	3
+#घोषणा MCP3422_CONT_SAMPLING	0x10
 
-#define MCP3422_CHANNEL(config)	(((config) & MCP3422_CHANNEL_MASK) >> 5)
-#define MCP3422_PGA(config)	((config) & MCP3422_PGA_MASK)
-#define MCP3422_SAMPLE_RATE(config)	(((config) & MCP3422_SRATE_MASK) >> 2)
+#घोषणा MCP3422_CHANNEL(config)	(((config) & MCP3422_CHANNEL_MASK) >> 5)
+#घोषणा MCP3422_PGA(config)	((config) & MCP3422_PGA_MASK)
+#घोषणा MCP3422_SAMPLE_RATE(config)	(((config) & MCP3422_SRATE_MASK) >> 2)
 
-#define MCP3422_CHANNEL_VALUE(value) (((value) << 5) & MCP3422_CHANNEL_MASK)
-#define MCP3422_PGA_VALUE(value) ((value) & MCP3422_PGA_MASK)
-#define MCP3422_SAMPLE_RATE_VALUE(value) ((value << 2) & MCP3422_SRATE_MASK)
+#घोषणा MCP3422_CHANNEL_VALUE(value) (((value) << 5) & MCP3422_CHANNEL_MASK)
+#घोषणा MCP3422_PGA_VALUE(value) ((value) & MCP3422_PGA_MASK)
+#घोषणा MCP3422_SAMPLE_RATE_VALUE(value) ((value << 2) & MCP3422_SRATE_MASK)
 
-#define MCP3422_CHAN(_index) \
-	{ \
+#घोषणा MCP3422_CHAN(_index) \
+	अणु \
 		.type = IIO_VOLTAGE, \
 		.indexed = 1, \
 		.channel = _index, \
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) \
 				| BIT(IIO_CHAN_INFO_SCALE), \
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SAMP_FREQ), \
-	}
+	पूर्ण
 
-static const int mcp3422_scales[4][4] = {
-	{ 1000000, 500000, 250000, 125000 },
-	{ 250000,  125000, 62500,  31250  },
-	{ 62500,   31250,  15625,  7812   },
-	{ 15625,   7812,   3906,   1953   } };
+अटल स्थिर पूर्णांक mcp3422_scales[4][4] = अणु
+	अणु 1000000, 500000, 250000, 125000 पूर्ण,
+	अणु 250000,  125000, 62500,  31250  पूर्ण,
+	अणु 62500,   31250,  15625,  7812   पूर्ण,
+	अणु 15625,   7812,   3906,   1953   पूर्ण पूर्ण;
 
-/* Constant msleep times for data acquisitions */
-static const int mcp3422_read_times[4] = {
+/* Constant msleep बार क्रम data acquisitions */
+अटल स्थिर पूर्णांक mcp3422_पढ़ो_बार[4] = अणु
 	[MCP3422_SRATE_240] = 1000 / 240,
 	[MCP3422_SRATE_60] = 1000 / 60,
 	[MCP3422_SRATE_15] = 1000 / 15,
-	[MCP3422_SRATE_3] = 1000 / 3 };
+	[MCP3422_SRATE_3] = 1000 / 3 पूर्ण;
 
-/* sample rates to integer conversion table */
-static const int mcp3422_sample_rates[4] = {
+/* sample rates to पूर्णांकeger conversion table */
+अटल स्थिर पूर्णांक mcp3422_sample_rates[4] = अणु
 	[MCP3422_SRATE_240] = 240,
 	[MCP3422_SRATE_60] = 60,
 	[MCP3422_SRATE_15] = 15,
-	[MCP3422_SRATE_3] = 3 };
+	[MCP3422_SRATE_3] = 3 पूर्ण;
 
 /* sample rates to sign extension table */
-static const int mcp3422_sign_extend[4] = {
+अटल स्थिर पूर्णांक mcp3422_sign_extend[4] = अणु
 	[MCP3422_SRATE_240] = 11,
 	[MCP3422_SRATE_60] = 13,
 	[MCP3422_SRATE_15] = 15,
-	[MCP3422_SRATE_3] = 17 };
+	[MCP3422_SRATE_3] = 17 पूर्ण;
 
-/* Client data (each client gets its own) */
-struct mcp3422 {
-	struct i2c_client *i2c;
+/* Client data (each client माला_लो its own) */
+काष्ठा mcp3422 अणु
+	काष्ठा i2c_client *i2c;
 	u8 id;
 	u8 config;
 	u8 pga[4];
-	struct mutex lock;
-};
+	काष्ठा mutex lock;
+पूर्ण;
 
-static int mcp3422_update_config(struct mcp3422 *adc, u8 newconfig)
-{
-	int ret;
+अटल पूर्णांक mcp3422_update_config(काष्ठा mcp3422 *adc, u8 newconfig)
+अणु
+	पूर्णांक ret;
 
 	ret = i2c_master_send(adc->i2c, &newconfig, 1);
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		adc->config = newconfig;
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp3422_read(struct mcp3422 *adc, int *value, u8 *config)
-{
-	int ret = 0;
+अटल पूर्णांक mcp3422_पढ़ो(काष्ठा mcp3422 *adc, पूर्णांक *value, u8 *config)
+अणु
+	पूर्णांक ret = 0;
 	u8 sample_rate = MCP3422_SAMPLE_RATE(adc->config);
-	u8 buf[4] = {0, 0, 0, 0};
+	u8 buf[4] = अणु0, 0, 0, 0पूर्ण;
 	u32 temp;
 
-	if (sample_rate == MCP3422_SRATE_3) {
+	अगर (sample_rate == MCP3422_SRATE_3) अणु
 		ret = i2c_master_recv(adc->i2c, buf, 4);
 		temp = get_unaligned_be24(&buf[0]);
 		*config = buf[3];
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = i2c_master_recv(adc->i2c, buf, 3);
 		temp = get_unaligned_be16(&buf[0]);
 		*config = buf[2];
-	}
+	पूर्ण
 
 	*value = sign_extend32(temp, mcp3422_sign_extend[sample_rate]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp3422_read_channel(struct mcp3422 *adc,
-				struct iio_chan_spec const *channel, int *value)
-{
-	int ret;
+अटल पूर्णांक mcp3422_पढ़ो_channel(काष्ठा mcp3422 *adc,
+				काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक *value)
+अणु
+	पूर्णांक ret;
 	u8 config;
 	u8 req_channel = channel->channel;
 
 	mutex_lock(&adc->lock);
 
-	if (req_channel != MCP3422_CHANNEL(adc->config)) {
+	अगर (req_channel != MCP3422_CHANNEL(adc->config)) अणु
 		config = adc->config;
 		config &= ~MCP3422_CHANNEL_MASK;
 		config |= MCP3422_CHANNEL_VALUE(req_channel);
 		config &= ~MCP3422_PGA_MASK;
 		config |= MCP3422_PGA_VALUE(adc->pga[req_channel]);
 		ret = mcp3422_update_config(adc, config);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			mutex_unlock(&adc->lock);
-			return ret;
-		}
-		msleep(mcp3422_read_times[MCP3422_SAMPLE_RATE(adc->config)]);
-	}
+			वापस ret;
+		पूर्ण
+		msleep(mcp3422_पढ़ो_बार[MCP3422_SAMPLE_RATE(adc->config)]);
+	पूर्ण
 
-	ret = mcp3422_read(adc, value, &config);
+	ret = mcp3422_पढ़ो(adc, value, &config);
 
 	mutex_unlock(&adc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp3422_read_raw(struct iio_dev *iio,
-			struct iio_chan_spec const *channel, int *val1,
-			int *val2, long mask)
-{
-	struct mcp3422 *adc = iio_priv(iio);
-	int err;
+अटल पूर्णांक mcp3422_पढ़ो_raw(काष्ठा iio_dev *iio,
+			काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक *val1,
+			पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा mcp3422 *adc = iio_priv(iio);
+	पूर्णांक err;
 
 	u8 sample_rate = MCP3422_SAMPLE_RATE(adc->config);
 	u8 pga		 = MCP3422_PGA(adc->config);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		err = mcp3422_read_channel(adc, channel, val1);
-		if (err < 0)
-			return -EINVAL;
-		return IIO_VAL_INT;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		err = mcp3422_पढ़ो_channel(adc, channel, val1);
+		अगर (err < 0)
+			वापस -EINVAL;
+		वापस IIO_VAL_INT;
 
-	case IIO_CHAN_INFO_SCALE:
+	हाल IIO_CHAN_INFO_SCALE:
 
 		*val1 = 0;
 		*val2 = mcp3422_scales[sample_rate][pga];
-		return IIO_VAL_INT_PLUS_NANO;
+		वापस IIO_VAL_INT_PLUS_न_अंकO;
 
-	case IIO_CHAN_INFO_SAMP_FREQ:
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		*val1 = mcp3422_sample_rates[MCP3422_SAMPLE_RATE(adc->config)];
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int mcp3422_write_raw(struct iio_dev *iio,
-			struct iio_chan_spec const *channel, int val1,
-			int val2, long mask)
-{
-	struct mcp3422 *adc = iio_priv(iio);
+अटल पूर्णांक mcp3422_ग_लिखो_raw(काष्ठा iio_dev *iio,
+			काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक val1,
+			पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा mcp3422 *adc = iio_priv(iio);
 	u8 temp;
 	u8 config = adc->config;
 	u8 req_channel = channel->channel;
 	u8 sample_rate = MCP3422_SAMPLE_RATE(config);
 	u8 i;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
-		if (val1 != 0)
-			return -EINVAL;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
+		अगर (val1 != 0)
+			वापस -EINVAL;
 
-		for (i = 0; i < ARRAY_SIZE(mcp3422_scales[0]); i++) {
-			if (val2 == mcp3422_scales[sample_rate][i]) {
+		क्रम (i = 0; i < ARRAY_SIZE(mcp3422_scales[0]); i++) अणु
+			अगर (val2 == mcp3422_scales[sample_rate][i]) अणु
 				adc->pga[req_channel] = i;
 
 				config &= ~MCP3422_CHANNEL_MASK;
@@ -216,134 +217,134 @@ static int mcp3422_write_raw(struct iio_dev *iio,
 				config &= ~MCP3422_PGA_MASK;
 				config |= MCP3422_PGA_VALUE(adc->pga[req_channel]);
 
-				return mcp3422_update_config(adc, config);
-			}
-		}
-		return -EINVAL;
+				वापस mcp3422_update_config(adc, config);
+			पूर्ण
+		पूर्ण
+		वापस -EINVAL;
 
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		switch (val1) {
-		case 240:
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		चयन (val1) अणु
+		हाल 240:
 			temp = MCP3422_SRATE_240;
-			break;
-		case 60:
+			अवरोध;
+		हाल 60:
 			temp = MCP3422_SRATE_60;
-			break;
-		case 15:
+			अवरोध;
+		हाल 15:
 			temp = MCP3422_SRATE_15;
-			break;
-		case 3:
-			if (adc->id > 4)
-				return -EINVAL;
+			अवरोध;
+		हाल 3:
+			अगर (adc->id > 4)
+				वापस -EINVAL;
 			temp = MCP3422_SRATE_3;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
 		config &= ~MCP3422_CHANNEL_MASK;
 		config |= MCP3422_CHANNEL_VALUE(req_channel);
 		config &= ~MCP3422_SRATE_MASK;
 		config |= MCP3422_SAMPLE_RATE_VALUE(temp);
 
-		return mcp3422_update_config(adc, config);
+		वापस mcp3422_update_config(adc, config);
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int mcp3422_write_raw_get_fmt(struct iio_dev *indio_dev,
-		struct iio_chan_spec const *chan, long mask)
-{
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
-		return IIO_VAL_INT_PLUS_NANO;
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		return IIO_VAL_INT_PLUS_MICRO;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक mcp3422_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev,
+		काष्ठा iio_chan_spec स्थिर *chan, दीर्घ mask)
+अणु
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
+		वापस IIO_VAL_INT_PLUS_न_अंकO;
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static ssize_t mcp3422_show_samp_freqs(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct mcp3422 *adc = iio_priv(dev_to_iio_dev(dev));
+अटल sमाप_प्रकार mcp3422_show_samp_freqs(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा mcp3422 *adc = iio_priv(dev_to_iio_dev(dev));
 
-	if (adc->id > 4)
-		return sprintf(buf, "240 60 15\n");
+	अगर (adc->id > 4)
+		वापस प्र_लिखो(buf, "240 60 15\n");
 
-	return sprintf(buf, "240 60 15 3\n");
-}
+	वापस प्र_लिखो(buf, "240 60 15 3\n");
+पूर्ण
 
-static ssize_t mcp3422_show_scales(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct mcp3422 *adc = iio_priv(dev_to_iio_dev(dev));
+अटल sमाप_प्रकार mcp3422_show_scales(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा mcp3422 *adc = iio_priv(dev_to_iio_dev(dev));
 	u8 sample_rate = MCP3422_SAMPLE_RATE(adc->config);
 
-	return sprintf(buf, "0.%09u 0.%09u 0.%09u 0.%09u\n",
+	वापस प्र_लिखो(buf, "0.%09u 0.%09u 0.%09u 0.%09u\n",
 		mcp3422_scales[sample_rate][0],
 		mcp3422_scales[sample_rate][1],
 		mcp3422_scales[sample_rate][2],
 		mcp3422_scales[sample_rate][3]);
-}
+पूर्ण
 
-static IIO_DEVICE_ATTR(sampling_frequency_available, S_IRUGO,
-		mcp3422_show_samp_freqs, NULL, 0);
-static IIO_DEVICE_ATTR(in_voltage_scale_available, S_IRUGO,
-		mcp3422_show_scales, NULL, 0);
+अटल IIO_DEVICE_ATTR(sampling_frequency_available, S_IRUGO,
+		mcp3422_show_samp_freqs, शून्य, 0);
+अटल IIO_DEVICE_ATTR(in_voltage_scale_available, S_IRUGO,
+		mcp3422_show_scales, शून्य, 0);
 
-static struct attribute *mcp3422_attributes[] = {
+अटल काष्ठा attribute *mcp3422_attributes[] = अणु
 	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
 	&iio_dev_attr_in_voltage_scale_available.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group mcp3422_attribute_group = {
+अटल स्थिर काष्ठा attribute_group mcp3422_attribute_group = अणु
 	.attrs = mcp3422_attributes,
-};
+पूर्ण;
 
-static const struct iio_chan_spec mcp3421_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec mcp3421_channels[] = अणु
 	MCP3422_CHAN(0),
-};
+पूर्ण;
 
-static const struct iio_chan_spec mcp3422_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec mcp3422_channels[] = अणु
 	MCP3422_CHAN(0),
 	MCP3422_CHAN(1),
-};
+पूर्ण;
 
-static const struct iio_chan_spec mcp3424_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec mcp3424_channels[] = अणु
 	MCP3422_CHAN(0),
 	MCP3422_CHAN(1),
 	MCP3422_CHAN(2),
 	MCP3422_CHAN(3),
-};
+पूर्ण;
 
-static const struct iio_info mcp3422_info = {
-	.read_raw = mcp3422_read_raw,
-	.write_raw = mcp3422_write_raw,
-	.write_raw_get_fmt = mcp3422_write_raw_get_fmt,
+अटल स्थिर काष्ठा iio_info mcp3422_info = अणु
+	.पढ़ो_raw = mcp3422_पढ़ो_raw,
+	.ग_लिखो_raw = mcp3422_ग_लिखो_raw,
+	.ग_लिखो_raw_get_fmt = mcp3422_ग_लिखो_raw_get_fmt,
 	.attrs = &mcp3422_attribute_group,
-};
+पूर्ण;
 
-static int mcp3422_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct iio_dev *indio_dev;
-	struct mcp3422 *adc;
-	int err;
+अटल पूर्णांक mcp3422_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा mcp3422 *adc;
+	पूर्णांक err;
 	u8 config;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
-		return -EOPNOTSUPP;
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
+		वापस -EOPNOTSUPP;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*adc));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*adc));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	adc = iio_priv(indio_dev);
 	adc->i2c = client;
@@ -352,74 +353,74 @@ static int mcp3422_probe(struct i2c_client *client,
 	mutex_init(&adc->lock);
 
 	indio_dev->name = dev_name(&client->dev);
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->info = &mcp3422_info;
 
-	switch (adc->id) {
-	case 1:
-	case 5:
+	चयन (adc->id) अणु
+	हाल 1:
+	हाल 5:
 		indio_dev->channels = mcp3421_channels;
 		indio_dev->num_channels = ARRAY_SIZE(mcp3421_channels);
-		break;
-	case 2:
-	case 3:
-	case 6:
-	case 7:
+		अवरोध;
+	हाल 2:
+	हाल 3:
+	हाल 6:
+	हाल 7:
 		indio_dev->channels = mcp3422_channels;
 		indio_dev->num_channels = ARRAY_SIZE(mcp3422_channels);
-		break;
-	case 4:
-	case 8:
+		अवरोध;
+	हाल 4:
+	हाल 8:
 		indio_dev->channels = mcp3424_channels;
 		indio_dev->num_channels = ARRAY_SIZE(mcp3424_channels);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* meaningful default configuration */
+	/* meaningful शेष configuration */
 	config = (MCP3422_CONT_SAMPLING
 		| MCP3422_CHANNEL_VALUE(0)
 		| MCP3422_PGA_VALUE(MCP3422_PGA_1)
 		| MCP3422_SAMPLE_RATE_VALUE(MCP3422_SRATE_240));
 	err = mcp3422_update_config(adc, config);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = devm_iio_device_register(&client->dev, indio_dev);
-	if (err < 0)
-		return err;
+	err = devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
+	अगर (err < 0)
+		वापस err;
 
 	i2c_set_clientdata(client, indio_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id mcp3422_id[] = {
-	{ "mcp3421", 1 },
-	{ "mcp3422", 2 },
-	{ "mcp3423", 3 },
-	{ "mcp3424", 4 },
-	{ "mcp3425", 5 },
-	{ "mcp3426", 6 },
-	{ "mcp3427", 7 },
-	{ "mcp3428", 8 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id mcp3422_id[] = अणु
+	अणु "mcp3421", 1 पूर्ण,
+	अणु "mcp3422", 2 पूर्ण,
+	अणु "mcp3423", 3 पूर्ण,
+	अणु "mcp3424", 4 पूर्ण,
+	अणु "mcp3425", 5 पूर्ण,
+	अणु "mcp3426", 6 पूर्ण,
+	अणु "mcp3427", 7 पूर्ण,
+	अणु "mcp3428", 8 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, mcp3422_id);
 
-static const struct of_device_id mcp3422_of_match[] = {
-	{ .compatible = "mcp3422" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id mcp3422_of_match[] = अणु
+	अणु .compatible = "mcp3422" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mcp3422_of_match);
 
-static struct i2c_driver mcp3422_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver mcp3422_driver = अणु
+	.driver = अणु
 		.name = "mcp3422",
 		.of_match_table = mcp3422_of_match,
-	},
+	पूर्ण,
 	.probe = mcp3422_probe,
 	.id_table = mcp3422_id,
-};
+पूर्ण;
 module_i2c_driver(mcp3422_driver);
 
 MODULE_AUTHOR("Angelo Compagnucci <angelo.compagnucci@gmail.com>");

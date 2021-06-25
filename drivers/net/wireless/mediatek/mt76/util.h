@@ -1,124 +1,125 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  * Copyright (C) 2004 - 2009 Ivo van Doorn <IvDoorn@gmail.com>
  */
 
-#ifndef __MT76_UTIL_H
-#define __MT76_UTIL_H
+#अगर_अघोषित __MT76_UTIL_H
+#घोषणा __MT76_UTIL_H
 
-#include <linux/skbuff.h>
-#include <linux/bitops.h>
-#include <linux/bitfield.h>
-#include <net/mac80211.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/bitfield.h>
+#समावेश <net/mac80211.h>
 
-struct mt76_worker
-{
-	struct task_struct *task;
-	void (*fn)(struct mt76_worker *);
-	unsigned long state;
-};
+काष्ठा mt76_worker
+अणु
+	काष्ठा task_काष्ठा *task;
+	व्योम (*fn)(काष्ठा mt76_worker *);
+	अचिन्हित दीर्घ state;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MT76_WORKER_SCHEDULED,
 	MT76_WORKER_RUNNING,
-};
+पूर्ण;
 
-#define MT76_INCR(_var, _size) \
+#घोषणा MT76_INCR(_var, _size) \
 	(_var = (((_var) + 1) % (_size)))
 
-int mt76_wcid_alloc(u32 *mask, int size);
+पूर्णांक mt76_wcid_alloc(u32 *mask, पूर्णांक size);
 
-static inline bool
-mt76_wcid_mask_test(u32 *mask, int idx)
-{
-	return mask[idx / 32] & BIT(idx % 32);
-}
+अटल अंतरभूत bool
+mt76_wcid_mask_test(u32 *mask, पूर्णांक idx)
+अणु
+	वापस mask[idx / 32] & BIT(idx % 32);
+पूर्ण
 
-static inline void
-mt76_wcid_mask_set(u32 *mask, int idx)
-{
+अटल अंतरभूत व्योम
+mt76_wcid_mask_set(u32 *mask, पूर्णांक idx)
+अणु
 	mask[idx / 32] |= BIT(idx % 32);
-}
+पूर्ण
 
-static inline void
-mt76_wcid_mask_clear(u32 *mask, int idx)
-{
+अटल अंतरभूत व्योम
+mt76_wcid_mask_clear(u32 *mask, पूर्णांक idx)
+अणु
 	mask[idx / 32] &= ~BIT(idx % 32);
-}
+पूर्ण
 
-static inline void
-mt76_skb_set_moredata(struct sk_buff *skb, bool enable)
-{
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+अटल अंतरभूत व्योम
+mt76_skb_set_moredata(काष्ठा sk_buff *skb, bool enable)
+अणु
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
 
-	if (enable)
+	अगर (enable)
 		hdr->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
-	else
+	अन्यथा
 		hdr->frame_control &= ~cpu_to_le16(IEEE80211_FCTL_MOREDATA);
-}
+पूर्ण
 
-int __mt76_worker_fn(void *ptr);
+पूर्णांक __mt76_worker_fn(व्योम *ptr);
 
-static inline int
-mt76_worker_setup(struct ieee80211_hw *hw, struct mt76_worker *w,
-		  void (*fn)(struct mt76_worker *),
-		  const char *name)
-{
-	const char *dev_name = wiphy_name(hw->wiphy);
-	int ret;
+अटल अंतरभूत पूर्णांक
+mt76_worker_setup(काष्ठा ieee80211_hw *hw, काष्ठा mt76_worker *w,
+		  व्योम (*fn)(काष्ठा mt76_worker *),
+		  स्थिर अक्षर *name)
+अणु
+	स्थिर अक्षर *dev_name = wiphy_name(hw->wiphy);
+	पूर्णांक ret;
 
-	if (fn)
+	अगर (fn)
 		w->fn = fn;
-	w->task = kthread_create(__mt76_worker_fn, w, "mt76-%s %s",
+	w->task = kthपढ़ो_create(__mt76_worker_fn, w, "mt76-%s %s",
 				 name, dev_name);
 
 	ret = PTR_ERR_OR_ZERO(w->task);
-	if (ret) {
-		w->task = NULL;
-		return ret;
-	}
+	अगर (ret) अणु
+		w->task = शून्य;
+		वापस ret;
+	पूर्ण
 
 	wake_up_process(w->task);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void mt76_worker_schedule(struct mt76_worker *w)
-{
-	if (!w->task)
-		return;
+अटल अंतरभूत व्योम mt76_worker_schedule(काष्ठा mt76_worker *w)
+अणु
+	अगर (!w->task)
+		वापस;
 
-	if (!test_and_set_bit(MT76_WORKER_SCHEDULED, &w->state) &&
+	अगर (!test_and_set_bit(MT76_WORKER_SCHEDULED, &w->state) &&
 	    !test_bit(MT76_WORKER_RUNNING, &w->state))
 		wake_up_process(w->task);
-}
+पूर्ण
 
-static inline void mt76_worker_disable(struct mt76_worker *w)
-{
-	if (!w->task)
-		return;
+अटल अंतरभूत व्योम mt76_worker_disable(काष्ठा mt76_worker *w)
+अणु
+	अगर (!w->task)
+		वापस;
 
-	kthread_park(w->task);
+	kthपढ़ो_park(w->task);
 	WRITE_ONCE(w->state, 0);
-}
+पूर्ण
 
-static inline void mt76_worker_enable(struct mt76_worker *w)
-{
-	if (!w->task)
-		return;
+अटल अंतरभूत व्योम mt76_worker_enable(काष्ठा mt76_worker *w)
+अणु
+	अगर (!w->task)
+		वापस;
 
-	kthread_unpark(w->task);
+	kthपढ़ो_unpark(w->task);
 	mt76_worker_schedule(w);
-}
+पूर्ण
 
-static inline void mt76_worker_teardown(struct mt76_worker *w)
-{
-	if (!w->task)
-		return;
+अटल अंतरभूत व्योम mt76_worker_tearकरोwn(काष्ठा mt76_worker *w)
+अणु
+	अगर (!w->task)
+		वापस;
 
-	kthread_stop(w->task);
-	w->task = NULL;
-}
+	kthपढ़ो_stop(w->task);
+	w->task = शून्य;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * tascam-proc.h - a part of driver for TASCAM FireWire series
+ * tascam-proc.h - a part of driver क्रम TASCAM FireWire series
  *
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
-#include "./tascam.h"
+#समावेश "./tascam.h"
 
-static void proc_read_firmware(struct snd_info_entry *entry,
-			       struct snd_info_buffer *buffer)
-{
-	struct snd_tscm *tscm = entry->private_data;
+अटल व्योम proc_पढ़ो_firmware(काष्ठा snd_info_entry *entry,
+			       काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_tscm *tscm = entry->निजी_data;
 	__be32 data;
-	unsigned int reg, fpga, arm, hw;
-	int err;
+	अचिन्हित पूर्णांक reg, fpga, arm, hw;
+	पूर्णांक err;
 
 	err = snd_fw_transaction(tscm->unit, TCODE_READ_QUADLET_REQUEST,
 			TSCM_ADDR_BASE + TSCM_OFFSET_FIRMWARE_REGISTER,
-			&data, sizeof(data), 0);
-	if (err < 0)
-		return;
+			&data, माप(data), 0);
+	अगर (err < 0)
+		वापस;
 	reg = be32_to_cpu(data);
 
 	err = snd_fw_transaction(tscm->unit, TCODE_READ_QUADLET_REQUEST,
 			TSCM_ADDR_BASE + TSCM_OFFSET_FIRMWARE_FPGA,
-			&data, sizeof(data), 0);
-	if (err < 0)
-		return;
+			&data, माप(data), 0);
+	अगर (err < 0)
+		वापस;
 	fpga = be32_to_cpu(data);
 
 	err = snd_fw_transaction(tscm->unit, TCODE_READ_QUADLET_REQUEST,
 			TSCM_ADDR_BASE + TSCM_OFFSET_FIRMWARE_ARM,
-			&data, sizeof(data), 0);
-	if (err < 0)
-		return;
+			&data, माप(data), 0);
+	अगर (err < 0)
+		वापस;
 	arm = be32_to_cpu(data);
 
 	err = snd_fw_transaction(tscm->unit, TCODE_READ_QUADLET_REQUEST,
 			TSCM_ADDR_BASE + TSCM_OFFSET_FIRMWARE_HW,
-			&data, sizeof(data), 0);
-	if (err < 0)
-		return;
+			&data, माप(data), 0);
+	अगर (err < 0)
+		वापस;
 	hw = be32_to_cpu(data);
 
-	snd_iprintf(buffer, "Register: %d (0x%08x)\n", reg & 0xffff, reg);
-	snd_iprintf(buffer, "FPGA:     %d (0x%08x)\n", fpga & 0xffff, fpga);
-	snd_iprintf(buffer, "ARM:      %d (0x%08x)\n", arm & 0xffff, arm);
-	snd_iprintf(buffer, "Hardware: %d (0x%08x)\n", hw >> 16, hw);
-}
+	snd_iम_लिखो(buffer, "Register: %d (0x%08x)\n", reg & 0xffff, reg);
+	snd_iम_लिखो(buffer, "FPGA:     %d (0x%08x)\n", fpga & 0xffff, fpga);
+	snd_iम_लिखो(buffer, "ARM:      %d (0x%08x)\n", arm & 0xffff, arm);
+	snd_iम_लिखो(buffer, "Hardware: %d (0x%08x)\n", hw >> 16, hw);
+पूर्ण
 
-static void add_node(struct snd_tscm *tscm, struct snd_info_entry *root,
-		     const char *name,
-		     void (*op)(struct snd_info_entry *e,
-				struct snd_info_buffer *b))
-{
-	struct snd_info_entry *entry;
+अटल व्योम add_node(काष्ठा snd_tscm *tscm, काष्ठा snd_info_entry *root,
+		     स्थिर अक्षर *name,
+		     व्योम (*op)(काष्ठा snd_info_entry *e,
+				काष्ठा snd_info_buffer *b))
+अणु
+	काष्ठा snd_info_entry *entry;
 
 	entry = snd_info_create_card_entry(tscm->card, name, root);
-	if (entry)
+	अगर (entry)
 		snd_info_set_text_ops(entry, tscm, op);
-}
+पूर्ण
 
-void snd_tscm_proc_init(struct snd_tscm *tscm)
-{
-	struct snd_info_entry *root;
+व्योम snd_tscm_proc_init(काष्ठा snd_tscm *tscm)
+अणु
+	काष्ठा snd_info_entry *root;
 
 	/*
-	 * All nodes are automatically removed at snd_card_disconnect(),
+	 * All nodes are स्वतःmatically हटाओd at snd_card_disconnect(),
 	 * by following to link list.
 	 */
 	root = snd_info_create_card_entry(tscm->card, "firewire",
 					  tscm->card->proc_root);
-	if (root == NULL)
-		return;
-	root->mode = S_IFDIR | 0555;
+	अगर (root == शून्य)
+		वापस;
+	root->mode = S_IFसूची | 0555;
 
-	add_node(tscm, root, "firmware", proc_read_firmware);
-}
+	add_node(tscm, root, "firmware", proc_पढ़ो_firmware);
+पूर्ण

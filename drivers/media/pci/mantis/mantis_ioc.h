@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Mantis PCI bridge driver
 
@@ -6,34 +7,34 @@
 
 */
 
-#ifndef __MANTIS_IOC_H
-#define __MANTIS_IOC_H
+#अगर_अघोषित __MANTIS_IOC_H
+#घोषणा __MANTIS_IOC_H
 
-#define GPIF_A00		0x00
-#define GPIF_A01		0x01
-#define GPIF_A02		0x02
-#define GPIF_A03		0x03
-#define GPIF_A04		0x04
-#define GPIF_A05		0x05
-#define GPIF_A06		0x06
-#define GPIF_A07		0x07
-#define GPIF_A08		0x08
-#define GPIF_A09		0x09
-#define GPIF_A10		0x0a
-#define GPIF_A11		0x0b
+#घोषणा GPIF_A00		0x00
+#घोषणा GPIF_A01		0x01
+#घोषणा GPIF_A02		0x02
+#घोषणा GPIF_A03		0x03
+#घोषणा GPIF_A04		0x04
+#घोषणा GPIF_A05		0x05
+#घोषणा GPIF_A06		0x06
+#घोषणा GPIF_A07		0x07
+#घोषणा GPIF_A08		0x08
+#घोषणा GPIF_A09		0x09
+#घोषणा GPIF_A10		0x0a
+#घोषणा GPIF_A11		0x0b
 
-#define GPIF_A12		0x0c
-#define GPIF_A13		0x0d
-#define GPIF_A14		0x0e
+#घोषणा GPIF_A12		0x0c
+#घोषणा GPIF_A13		0x0d
+#घोषणा GPIF_A14		0x0e
 
-enum mantis_stream_control {
+क्रमागत mantis_stream_control अणु
 	STREAM_TO_HIF = 0,
 	STREAM_TO_CAM
-};
+पूर्ण;
 
-extern int mantis_get_mac(struct mantis_pci *mantis);
-extern void mantis_gpio_set_bits(struct mantis_pci *mantis, u32 bitpos, u8 value);
+बाह्य पूर्णांक mantis_get_mac(काष्ठा mantis_pci *mantis);
+बाह्य व्योम mantis_gpio_set_bits(काष्ठा mantis_pci *mantis, u32 bitpos, u8 value);
 
-extern int mantis_stream_control(struct mantis_pci *mantis, enum mantis_stream_control stream_ctl);
+बाह्य पूर्णांक mantis_stream_control(काष्ठा mantis_pci *mantis, क्रमागत mantis_stream_control stream_ctl);
 
-#endif /* __MANTIS_IOC_H */
+#पूर्ण_अगर /* __MANTIS_IOC_H */

@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Ptrace test for GPR/FPR registers
+ * Ptrace test क्रम GPR/FPR रेजिस्टरs
  *
  * Copyright (C) 2015 Anshuman Khandual, IBM Corporation.
  */
-#include "ptrace.h"
-#include "ptrace-gpr.h"
-#include "reg.h"
+#समावेश "ptrace.h"
+#समावेश "ptrace-gpr.h"
+#समावेश "reg.h"
 
 /* Tracer and Tracee Shared Data */
-int shm_id;
-int *cptr, *pptr;
+पूर्णांक shm_id;
+पूर्णांक *cptr, *pptr;
 
-float a = FPR_1;
-float b = FPR_2;
-float c = FPR_3;
+भग्न a = FPR_1;
+भग्न b = FPR_2;
+भग्न c = FPR_3;
 
-void gpr(void)
-{
-	unsigned long gpr_buf[18];
-	float fpr_buf[32];
+व्योम gpr(व्योम)
+अणु
+	अचिन्हित दीर्घ gpr_buf[18];
+	भग्न fpr_buf[32];
 
-	cptr = (int *)shmat(shm_id, NULL, 0);
+	cptr = (पूर्णांक *)shmat(shm_id, शून्य, 0);
 
-	asm __volatile__(
+	यंत्र __अस्थिर__(
 		ASM_LOAD_GPR_IMMED(gpr_1)
 		ASM_LOAD_FPR_SINGLE_PRECISION(flt_1)
 		:
@@ -36,84 +37,84 @@ void gpr(void)
 
 	cptr[1] = 1;
 
-	while (!cptr[0])
-		asm volatile("" : : : "memory");
+	जबतक (!cptr[0])
+		यंत्र अस्थिर("" : : : "memory");
 
-	shmdt((void *)cptr);
+	shmdt((व्योम *)cptr);
 	store_gpr(gpr_buf);
 	store_fpr_single_precision(fpr_buf);
 
-	if (validate_gpr(gpr_buf, GPR_3))
-		exit(1);
+	अगर (validate_gpr(gpr_buf, GPR_3))
+		निकास(1);
 
-	if (validate_fpr_float(fpr_buf, c))
-		exit(1);
+	अगर (validate_fpr_भग्न(fpr_buf, c))
+		निकास(1);
 
-	exit(0);
-}
+	निकास(0);
+पूर्ण
 
-int trace_gpr(pid_t child)
-{
-	unsigned long gpr[18];
-	unsigned long fpr[32];
+पूर्णांक trace_gpr(pid_t child)
+अणु
+	अचिन्हित दीर्घ gpr[18];
+	अचिन्हित दीर्घ fpr[32];
 
 	FAIL_IF(start_trace(child));
 	FAIL_IF(show_gpr(child, gpr));
 	FAIL_IF(validate_gpr(gpr, GPR_1));
 	FAIL_IF(show_fpr(child, fpr));
 	FAIL_IF(validate_fpr(fpr, FPR_1_REP));
-	FAIL_IF(write_gpr(child, GPR_3));
-	FAIL_IF(write_fpr(child, FPR_3_REP));
+	FAIL_IF(ग_लिखो_gpr(child, GPR_3));
+	FAIL_IF(ग_लिखो_fpr(child, FPR_3_REP));
 	FAIL_IF(stop_trace(child));
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
-int ptrace_gpr(void)
-{
+पूर्णांक ptrace_gpr(व्योम)
+अणु
 	pid_t pid;
-	int ret, status;
+	पूर्णांक ret, status;
 
-	shm_id = shmget(IPC_PRIVATE, sizeof(int) * 2, 0777|IPC_CREAT);
-	pid = fork();
-	if (pid < 0) {
-		perror("fork() failed");
-		return TEST_FAIL;
-	}
-	if (pid == 0)
+	shm_id = shmget(IPC_PRIVATE, माप(पूर्णांक) * 2, 0777|IPC_CREAT);
+	pid = विभाजन();
+	अगर (pid < 0) अणु
+		लिखो_त्रुटि("fork() failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	अगर (pid == 0)
 		gpr();
 
-	if (pid) {
-		pptr = (int *)shmat(shm_id, NULL, 0);
-		while (!pptr[1])
-			asm volatile("" : : : "memory");
+	अगर (pid) अणु
+		pptr = (पूर्णांक *)shmat(shm_id, शून्य, 0);
+		जबतक (!pptr[1])
+			यंत्र अस्थिर("" : : : "memory");
 
 		ret = trace_gpr(pid);
-		if (ret) {
-			kill(pid, SIGTERM);
-			shmdt((void *)pptr);
-			shmctl(shm_id, IPC_RMID, NULL);
-			return TEST_FAIL;
-		}
+		अगर (ret) अणु
+			समाप्त(pid, संक_इति);
+			shmdt((व्योम *)pptr);
+			shmctl(shm_id, IPC_RMID, शून्य);
+			वापस TEST_FAIL;
+		पूर्ण
 
 		pptr[0] = 1;
-		shmdt((void *)pptr);
+		shmdt((व्योम *)pptr);
 
-		ret = wait(&status);
-		shmctl(shm_id, IPC_RMID, NULL);
-		if (ret != pid) {
-			printf("Child's exit status not captured\n");
-			return TEST_FAIL;
-		}
+		ret = रुको(&status);
+		shmctl(shm_id, IPC_RMID, शून्य);
+		अगर (ret != pid) अणु
+			म_लिखो("Child's exit status not captured\n");
+			वापस TEST_FAIL;
+		पूर्ण
 
-		return (WIFEXITED(status) && WEXITSTATUS(status)) ? TEST_FAIL :
+		वापस (WIFEXITED(status) && WEXITSTATUS(status)) ? TEST_FAIL :
 			TEST_PASS;
-	}
+	पूर्ण
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	return test_harness(ptrace_gpr, "ptrace_gpr");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	वापस test_harness(ptrace_gpr, "ptrace_gpr");
+पूर्ण

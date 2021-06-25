@@ -1,139 +1,140 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * apei-internal.h - ACPI Platform Error Interface internal
+ * apei-पूर्णांकernal.h - ACPI Platक्रमm Error Interface पूर्णांकernal
  * definitions.
  */
 
-#ifndef APEI_INTERNAL_H
-#define APEI_INTERNAL_H
+#अगर_अघोषित APEI_INTERNAL_H
+#घोषणा APEI_INTERNAL_H
 
-#include <linux/cper.h>
-#include <linux/acpi.h>
+#समावेश <linux/cper.h>
+#समावेश <linux/acpi.h>
 
-struct apei_exec_context;
+काष्ठा apei_exec_context;
 
-typedef int (*apei_exec_ins_func_t)(struct apei_exec_context *ctx,
-				    struct acpi_whea_header *entry);
+प्रकार पूर्णांक (*apei_exec_ins_func_t)(काष्ठा apei_exec_context *ctx,
+				    काष्ठा acpi_whea_header *entry);
 
-#define APEI_EXEC_INS_ACCESS_REGISTER	0x0001
+#घोषणा APEI_EXEC_INS_ACCESS_REGISTER	0x0001
 
-struct apei_exec_ins_type {
+काष्ठा apei_exec_ins_type अणु
 	u32 flags;
 	apei_exec_ins_func_t run;
-};
+पूर्ण;
 
-struct apei_exec_context {
+काष्ठा apei_exec_context अणु
 	u32 ip;
 	u64 value;
 	u64 var1;
 	u64 var2;
 	u64 src_base;
 	u64 dst_base;
-	struct apei_exec_ins_type *ins_table;
-	u32 instructions;
-	struct acpi_whea_header *action_table;
+	काष्ठा apei_exec_ins_type *ins_table;
+	u32 inकाष्ठाions;
+	काष्ठा acpi_whea_header *action_table;
 	u32 entries;
-};
+पूर्ण;
 
-void apei_exec_ctx_init(struct apei_exec_context *ctx,
-			struct apei_exec_ins_type *ins_table,
-			u32 instructions,
-			struct acpi_whea_header *action_table,
+व्योम apei_exec_ctx_init(काष्ठा apei_exec_context *ctx,
+			काष्ठा apei_exec_ins_type *ins_table,
+			u32 inकाष्ठाions,
+			काष्ठा acpi_whea_header *action_table,
 			u32 entries);
 
-static inline void apei_exec_ctx_set_input(struct apei_exec_context *ctx,
+अटल अंतरभूत व्योम apei_exec_ctx_set_input(काष्ठा apei_exec_context *ctx,
 					   u64 input)
-{
+अणु
 	ctx->value = input;
-}
+पूर्ण
 
-static inline u64 apei_exec_ctx_get_output(struct apei_exec_context *ctx)
-{
-	return ctx->value;
-}
+अटल अंतरभूत u64 apei_exec_ctx_get_output(काष्ठा apei_exec_context *ctx)
+अणु
+	वापस ctx->value;
+पूर्ण
 
-int __apei_exec_run(struct apei_exec_context *ctx, u8 action, bool optional);
+पूर्णांक __apei_exec_run(काष्ठा apei_exec_context *ctx, u8 action, bool optional);
 
-static inline int apei_exec_run(struct apei_exec_context *ctx, u8 action)
-{
-	return __apei_exec_run(ctx, action, 0);
-}
+अटल अंतरभूत पूर्णांक apei_exec_run(काष्ठा apei_exec_context *ctx, u8 action)
+अणु
+	वापस __apei_exec_run(ctx, action, 0);
+पूर्ण
 
 /* It is optional whether the firmware provides the action */
-static inline int apei_exec_run_optional(struct apei_exec_context *ctx, u8 action)
-{
-	return __apei_exec_run(ctx, action, 1);
-}
+अटल अंतरभूत पूर्णांक apei_exec_run_optional(काष्ठा apei_exec_context *ctx, u8 action)
+अणु
+	वापस __apei_exec_run(ctx, action, 1);
+पूर्ण
 
-/* Common instruction implementation */
+/* Common inकाष्ठाion implementation */
 
-/* IP has been set in instruction function */
-#define APEI_EXEC_SET_IP	1
+/* IP has been set in inकाष्ठाion function */
+#घोषणा APEI_EXEC_SET_IP	1
 
-int apei_map_generic_address(struct acpi_generic_address *reg);
+पूर्णांक apei_map_generic_address(काष्ठा acpi_generic_address *reg);
 
-static inline void apei_unmap_generic_address(struct acpi_generic_address *reg)
-{
+अटल अंतरभूत व्योम apei_unmap_generic_address(काष्ठा acpi_generic_address *reg)
+अणु
 	acpi_os_unmap_generic_address(reg);
-}
+पूर्ण
 
-int apei_read(u64 *val, struct acpi_generic_address *reg);
-int apei_write(u64 val, struct acpi_generic_address *reg);
+पूर्णांक apei_पढ़ो(u64 *val, काष्ठा acpi_generic_address *reg);
+पूर्णांक apei_ग_लिखो(u64 val, काष्ठा acpi_generic_address *reg);
 
-int __apei_exec_read_register(struct acpi_whea_header *entry, u64 *val);
-int __apei_exec_write_register(struct acpi_whea_header *entry, u64 val);
-int apei_exec_read_register(struct apei_exec_context *ctx,
-			    struct acpi_whea_header *entry);
-int apei_exec_read_register_value(struct apei_exec_context *ctx,
-				  struct acpi_whea_header *entry);
-int apei_exec_write_register(struct apei_exec_context *ctx,
-			     struct acpi_whea_header *entry);
-int apei_exec_write_register_value(struct apei_exec_context *ctx,
-				   struct acpi_whea_header *entry);
-int apei_exec_noop(struct apei_exec_context *ctx,
-		   struct acpi_whea_header *entry);
-int apei_exec_pre_map_gars(struct apei_exec_context *ctx);
-int apei_exec_post_unmap_gars(struct apei_exec_context *ctx);
+पूर्णांक __apei_exec_पढ़ो_रेजिस्टर(काष्ठा acpi_whea_header *entry, u64 *val);
+पूर्णांक __apei_exec_ग_लिखो_रेजिस्टर(काष्ठा acpi_whea_header *entry, u64 val);
+पूर्णांक apei_exec_पढ़ो_रेजिस्टर(काष्ठा apei_exec_context *ctx,
+			    काष्ठा acpi_whea_header *entry);
+पूर्णांक apei_exec_पढ़ो_रेजिस्टर_value(काष्ठा apei_exec_context *ctx,
+				  काष्ठा acpi_whea_header *entry);
+पूर्णांक apei_exec_ग_लिखो_रेजिस्टर(काष्ठा apei_exec_context *ctx,
+			     काष्ठा acpi_whea_header *entry);
+पूर्णांक apei_exec_ग_लिखो_रेजिस्टर_value(काष्ठा apei_exec_context *ctx,
+				   काष्ठा acpi_whea_header *entry);
+पूर्णांक apei_exec_noop(काष्ठा apei_exec_context *ctx,
+		   काष्ठा acpi_whea_header *entry);
+पूर्णांक apei_exec_pre_map_gars(काष्ठा apei_exec_context *ctx);
+पूर्णांक apei_exec_post_unmap_gars(काष्ठा apei_exec_context *ctx);
 
-struct apei_resources {
-	struct list_head iomem;
-	struct list_head ioport;
-};
+काष्ठा apei_resources अणु
+	काष्ठा list_head iomem;
+	काष्ठा list_head ioport;
+पूर्ण;
 
-static inline void apei_resources_init(struct apei_resources *resources)
-{
+अटल अंतरभूत व्योम apei_resources_init(काष्ठा apei_resources *resources)
+अणु
 	INIT_LIST_HEAD(&resources->iomem);
 	INIT_LIST_HEAD(&resources->ioport);
-}
+पूर्ण
 
-void apei_resources_fini(struct apei_resources *resources);
-int apei_resources_add(struct apei_resources *resources,
-		       unsigned long start, unsigned long size,
+व्योम apei_resources_fini(काष्ठा apei_resources *resources);
+पूर्णांक apei_resources_add(काष्ठा apei_resources *resources,
+		       अचिन्हित दीर्घ start, अचिन्हित दीर्घ size,
 		       bool iomem);
-int apei_resources_sub(struct apei_resources *resources1,
-		       struct apei_resources *resources2);
-int apei_resources_request(struct apei_resources *resources,
-			   const char *desc);
-void apei_resources_release(struct apei_resources *resources);
-int apei_exec_collect_resources(struct apei_exec_context *ctx,
-				struct apei_resources *resources);
+पूर्णांक apei_resources_sub(काष्ठा apei_resources *resources1,
+		       काष्ठा apei_resources *resources2);
+पूर्णांक apei_resources_request(काष्ठा apei_resources *resources,
+			   स्थिर अक्षर *desc);
+व्योम apei_resources_release(काष्ठा apei_resources *resources);
+पूर्णांक apei_exec_collect_resources(काष्ठा apei_exec_context *ctx,
+				काष्ठा apei_resources *resources);
 
-struct dentry;
-struct dentry *apei_get_debugfs_dir(void);
+काष्ठा dentry;
+काष्ठा dentry *apei_get_debugfs_dir(व्योम);
 
-static inline u32 cper_estatus_len(struct acpi_hest_generic_status *estatus)
-{
-	if (estatus->raw_data_length)
-		return estatus->raw_data_offset + \
+अटल अंतरभूत u32 cper_estatus_len(काष्ठा acpi_hest_generic_status *estatus)
+अणु
+	अगर (estatus->raw_data_length)
+		वापस estatus->raw_data_offset + \
 			estatus->raw_data_length;
-	else
-		return sizeof(*estatus) + estatus->data_length;
-}
+	अन्यथा
+		वापस माप(*estatus) + estatus->data_length;
+पूर्ण
 
-void cper_estatus_print(const char *pfx,
-			const struct acpi_hest_generic_status *estatus);
-int cper_estatus_check_header(const struct acpi_hest_generic_status *estatus);
-int cper_estatus_check(const struct acpi_hest_generic_status *estatus);
+व्योम cper_estatus_prपूर्णांक(स्थिर अक्षर *pfx,
+			स्थिर काष्ठा acpi_hest_generic_status *estatus);
+पूर्णांक cper_estatus_check_header(स्थिर काष्ठा acpi_hest_generic_status *estatus);
+पूर्णांक cper_estatus_check(स्थिर काष्ठा acpi_hest_generic_status *estatus);
 
-int apei_osc_setup(void);
-#endif
+पूर्णांक apei_osc_setup(व्योम);
+#पूर्ण_अगर

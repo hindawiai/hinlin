@@ -1,250 +1,251 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  linux/include/linux/sunrpc/clnt.h
  *
- *  Declarations for the high-level RPC client interface
+ *  Declarations क्रम the high-level RPC client पूर्णांकerface
  *
  *  Copyright (C) 1995, 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#ifndef _LINUX_SUNRPC_CLNT_H
-#define _LINUX_SUNRPC_CLNT_H
+#अगर_अघोषित _LINUX_SUNRPC_CLNT_H
+#घोषणा _LINUX_SUNRPC_CLNT_H
 
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/in6.h>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
 
-#include <linux/sunrpc/msg_prot.h>
-#include <linux/sunrpc/sched.h>
-#include <linux/sunrpc/xprt.h>
-#include <linux/sunrpc/auth.h>
-#include <linux/sunrpc/stats.h>
-#include <linux/sunrpc/xdr.h>
-#include <linux/sunrpc/timer.h>
-#include <linux/sunrpc/rpc_pipe_fs.h>
-#include <asm/signal.h>
-#include <linux/path.h>
-#include <net/ipv6.h>
-#include <linux/sunrpc/xprtmultipath.h>
+#समावेश <linux/sunrpc/msg_prot.h>
+#समावेश <linux/sunrpc/sched.h>
+#समावेश <linux/sunrpc/xprt.h>
+#समावेश <linux/sunrpc/auth.h>
+#समावेश <linux/sunrpc/stats.h>
+#समावेश <linux/sunrpc/xdr.h>
+#समावेश <linux/sunrpc/समयr.h>
+#समावेश <linux/sunrpc/rpc_pipe_fs.h>
+#समावेश <यंत्र/संकेत.स>
+#समावेश <linux/path.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/sunrpc/xprपंचांगultipath.h>
 
-struct rpc_inode;
+काष्ठा rpc_inode;
 
 /*
  * The high-level client handle
  */
-struct rpc_clnt {
+काष्ठा rpc_clnt अणु
 	atomic_t		cl_count;	/* Number of references */
-	unsigned int		cl_clid;	/* client id */
-	struct list_head	cl_clients;	/* Global list of clients */
-	struct list_head	cl_tasks;	/* List of tasks */
+	अचिन्हित पूर्णांक		cl_clid;	/* client id */
+	काष्ठा list_head	cl_clients;	/* Global list of clients */
+	काष्ठा list_head	cl_tasks;	/* List of tasks */
 	spinlock_t		cl_lock;	/* spinlock */
-	struct rpc_xprt __rcu *	cl_xprt;	/* transport */
-	const struct rpc_procinfo *cl_procinfo;	/* procedure info */
+	काष्ठा rpc_xprt __rcu *	cl_xprt;	/* transport */
+	स्थिर काष्ठा rpc_procinfo *cl_procinfo;	/* procedure info */
 	u32			cl_prog,	/* RPC program number */
 				cl_vers,	/* RPC version number */
 				cl_maxproc;	/* max procedure number */
 
-	struct rpc_auth *	cl_auth;	/* authenticator */
-	struct rpc_stat *	cl_stats;	/* per-program statistics */
-	struct rpc_iostats *	cl_metrics;	/* per-client statistics */
+	काष्ठा rpc_auth *	cl_auth;	/* authenticator */
+	काष्ठा rpc_stat *	cl_stats;	/* per-program statistics */
+	काष्ठा rpc_iostats *	cl_metrics;	/* per-client statistics */
 
-	unsigned int		cl_softrtry : 1,/* soft timeouts */
-				cl_softerr  : 1,/* Timeouts return errors */
-				cl_discrtry : 1,/* disconnect before retry */
-				cl_noretranstimeo: 1,/* No retransmit timeouts */
-				cl_autobind : 1,/* use getport() */
+	अचिन्हित पूर्णांक		cl_softrtry : 1,/* soft समयouts */
+				cl_softerr  : 1,/* Timeouts वापस errors */
+				cl_discrtry : 1,/* disconnect beक्रमe retry */
+				cl_noretransसमयo: 1,/* No retransmit समयouts */
+				cl_स्वतःbind : 1,/* use getport() */
 				cl_chatty   : 1;/* be verbose */
 
-	struct rpc_rtt *	cl_rtt;		/* RTO estimator data */
-	const struct rpc_timeout *cl_timeout;	/* Timeout strategy */
+	काष्ठा rpc_rtt *	cl_rtt;		/* RTO estimator data */
+	स्थिर काष्ठा rpc_समयout *cl_समयout;	/* Timeout strategy */
 
 	atomic_t		cl_swapper;	/* swapfile count */
-	int			cl_nodelen;	/* nodename length */
-	char 			cl_nodename[UNX_MAXNODENAME+1];
-	struct rpc_pipe_dir_head cl_pipedir_objects;
-	struct rpc_clnt *	cl_parent;	/* Points to parent of clones */
-	struct rpc_rtt		cl_rtt_default;
-	struct rpc_timeout	cl_timeout_default;
-	const struct rpc_program *cl_program;
-	const char *		cl_principal;	/* use for machine cred */
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-	struct dentry		*cl_debugfs;	/* debugfs directory */
-#endif
-	/* cl_work is only needed after cl_xpi is no longer used,
+	पूर्णांक			cl_nodelen;	/* nodename length */
+	अक्षर 			cl_nodename[UNX_MAXNODENAME+1];
+	काष्ठा rpc_pipe_dir_head cl_pipedir_objects;
+	काष्ठा rpc_clnt *	cl_parent;	/* Poपूर्णांकs to parent of clones */
+	काष्ठा rpc_rtt		cl_rtt_शेष;
+	काष्ठा rpc_समयout	cl_समयout_शेष;
+	स्थिर काष्ठा rpc_program *cl_program;
+	स्थिर अक्षर *		cl_principal;	/* use क्रम machine cred */
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+	काष्ठा dentry		*cl_debugfs;	/* debugfs directory */
+#पूर्ण_अगर
+	/* cl_work is only needed after cl_xpi is no दीर्घer used,
 	 * and that are of similar size
 	 */
-	union {
-		struct rpc_xprt_iter	cl_xpi;
-		struct work_struct	cl_work;
-	};
-	const struct cred	*cl_cred;
-};
+	जोड़ अणु
+		काष्ठा rpc_xprt_iter	cl_xpi;
+		काष्ठा work_काष्ठा	cl_work;
+	पूर्ण;
+	स्थिर काष्ठा cred	*cl_cred;
+पूर्ण;
 
 /*
  * General RPC program info
  */
-#define RPC_MAXVERSION		4
-struct rpc_program {
-	const char *		name;		/* protocol name */
+#घोषणा RPC_MAXVERSION		4
+काष्ठा rpc_program अणु
+	स्थिर अक्षर *		name;		/* protocol name */
 	u32			number;		/* program number */
-	unsigned int		nrvers;		/* number of versions */
-	const struct rpc_version **	version;	/* version array */
-	struct rpc_stat *	stats;		/* statistics */
-	const char *		pipe_dir_name;	/* path to rpc_pipefs dir */
-};
+	अचिन्हित पूर्णांक		nrvers;		/* number of versions */
+	स्थिर काष्ठा rpc_version **	version;	/* version array */
+	काष्ठा rpc_stat *	stats;		/* statistics */
+	स्थिर अक्षर *		pipe_dir_name;	/* path to rpc_pipefs dir */
+पूर्ण;
 
-struct rpc_version {
+काष्ठा rpc_version अणु
 	u32			number;		/* version number */
-	unsigned int		nrprocs;	/* number of procs */
-	const struct rpc_procinfo *procs;	/* procedure array */
-	unsigned int		*counts;	/* call counts */
-};
+	अचिन्हित पूर्णांक		nrprocs;	/* number of procs */
+	स्थिर काष्ठा rpc_procinfo *procs;	/* procedure array */
+	अचिन्हित पूर्णांक		*counts;	/* call counts */
+पूर्ण;
 
 /*
- * Procedure information
+ * Procedure inक्रमmation
  */
-struct rpc_procinfo {
+काष्ठा rpc_procinfo अणु
 	u32			p_proc;		/* RPC procedure number */
 	kxdreproc_t		p_encode;	/* XDR encode function */
 	kxdrdproc_t		p_decode;	/* XDR decode function */
-	unsigned int		p_arglen;	/* argument hdr length (u32) */
-	unsigned int		p_replen;	/* reply hdr length (u32) */
-	unsigned int		p_timer;	/* Which RTT timer to use */
+	अचिन्हित पूर्णांक		p_arglen;	/* argument hdr length (u32) */
+	अचिन्हित पूर्णांक		p_replen;	/* reply hdr length (u32) */
+	अचिन्हित पूर्णांक		p_समयr;	/* Which RTT समयr to use */
 	u32			p_statidx;	/* Which procedure to account */
-	const char *		p_name;		/* name of procedure */
-};
+	स्थिर अक्षर *		p_name;		/* name of procedure */
+पूर्ण;
 
-struct rpc_create_args {
-	struct net		*net;
-	int			protocol;
-	struct sockaddr		*address;
-	size_t			addrsize;
-	struct sockaddr		*saddress;
-	const struct rpc_timeout *timeout;
-	const char		*servername;
-	const char		*nodename;
-	const struct rpc_program *program;
+काष्ठा rpc_create_args अणु
+	काष्ठा net		*net;
+	पूर्णांक			protocol;
+	काष्ठा sockaddr		*address;
+	माप_प्रकार			addrsize;
+	काष्ठा sockaddr		*saddress;
+	स्थिर काष्ठा rpc_समयout *समयout;
+	स्थिर अक्षर		*servername;
+	स्थिर अक्षर		*nodename;
+	स्थिर काष्ठा rpc_program *program;
 	u32			prognumber;	/* overrides program->number */
 	u32			version;
 	rpc_authflavor_t	authflavor;
 	u32			nconnect;
-	unsigned long		flags;
-	char			*client_name;
-	struct svc_xprt		*bc_xprt;	/* NFSv4.1 backchannel */
-	const struct cred	*cred;
-};
+	अचिन्हित दीर्घ		flags;
+	अक्षर			*client_name;
+	काष्ठा svc_xprt		*bc_xprt;	/* NFSv4.1 backchannel */
+	स्थिर काष्ठा cred	*cred;
+पूर्ण;
 
-struct rpc_add_xprt_test {
-	void (*add_xprt_test)(struct rpc_clnt *clnt,
-		struct rpc_xprt *xprt,
-		void *calldata);
-	void *data;
-};
+काष्ठा rpc_add_xprt_test अणु
+	व्योम (*add_xprt_test)(काष्ठा rpc_clnt *clnt,
+		काष्ठा rpc_xprt *xprt,
+		व्योम *calldata);
+	व्योम *data;
+पूर्ण;
 
-/* Values for "flags" field */
-#define RPC_CLNT_CREATE_HARDRTRY	(1UL << 0)
-#define RPC_CLNT_CREATE_AUTOBIND	(1UL << 2)
-#define RPC_CLNT_CREATE_NONPRIVPORT	(1UL << 3)
-#define RPC_CLNT_CREATE_NOPING		(1UL << 4)
-#define RPC_CLNT_CREATE_DISCRTRY	(1UL << 5)
-#define RPC_CLNT_CREATE_QUIET		(1UL << 6)
-#define RPC_CLNT_CREATE_INFINITE_SLOTS	(1UL << 7)
-#define RPC_CLNT_CREATE_NO_IDLE_TIMEOUT	(1UL << 8)
-#define RPC_CLNT_CREATE_NO_RETRANS_TIMEOUT	(1UL << 9)
-#define RPC_CLNT_CREATE_SOFTERR		(1UL << 10)
-#define RPC_CLNT_CREATE_REUSEPORT	(1UL << 11)
+/* Values क्रम "flags" field */
+#घोषणा RPC_CLNT_CREATE_HARDRTRY	(1UL << 0)
+#घोषणा RPC_CLNT_CREATE_AUTOBIND	(1UL << 2)
+#घोषणा RPC_CLNT_CREATE_NONPRIVPORT	(1UL << 3)
+#घोषणा RPC_CLNT_CREATE_NOPING		(1UL << 4)
+#घोषणा RPC_CLNT_CREATE_DISCRTRY	(1UL << 5)
+#घोषणा RPC_CLNT_CREATE_QUIET		(1UL << 6)
+#घोषणा RPC_CLNT_CREATE_INFINITE_SLOTS	(1UL << 7)
+#घोषणा RPC_CLNT_CREATE_NO_IDLE_TIMEOUT	(1UL << 8)
+#घोषणा RPC_CLNT_CREATE_NO_RETRANS_TIMEOUT	(1UL << 9)
+#घोषणा RPC_CLNT_CREATE_SOFTERR		(1UL << 10)
+#घोषणा RPC_CLNT_CREATE_REUSEPORT	(1UL << 11)
 
-struct rpc_clnt *rpc_create(struct rpc_create_args *args);
-struct rpc_clnt	*rpc_bind_new_program(struct rpc_clnt *,
-				const struct rpc_program *, u32);
-struct rpc_clnt *rpc_clone_client(struct rpc_clnt *);
-struct rpc_clnt *rpc_clone_client_set_auth(struct rpc_clnt *,
+काष्ठा rpc_clnt *rpc_create(काष्ठा rpc_create_args *args);
+काष्ठा rpc_clnt	*rpc_bind_new_program(काष्ठा rpc_clnt *,
+				स्थिर काष्ठा rpc_program *, u32);
+काष्ठा rpc_clnt *rpc_clone_client(काष्ठा rpc_clnt *);
+काष्ठा rpc_clnt *rpc_clone_client_set_auth(काष्ठा rpc_clnt *,
 				rpc_authflavor_t);
-int		rpc_switch_client_transport(struct rpc_clnt *,
-				struct xprt_create *,
-				const struct rpc_timeout *);
+पूर्णांक		rpc_चयन_client_transport(काष्ठा rpc_clnt *,
+				काष्ठा xprt_create *,
+				स्थिर काष्ठा rpc_समयout *);
 
-void		rpc_shutdown_client(struct rpc_clnt *);
-void		rpc_release_client(struct rpc_clnt *);
-void		rpc_task_release_transport(struct rpc_task *);
-void		rpc_task_release_client(struct rpc_task *);
-struct rpc_xprt	*rpc_task_get_xprt(struct rpc_clnt *clnt,
-		struct rpc_xprt *xprt);
+व्योम		rpc_shutकरोwn_client(काष्ठा rpc_clnt *);
+व्योम		rpc_release_client(काष्ठा rpc_clnt *);
+व्योम		rpc_task_release_transport(काष्ठा rpc_task *);
+व्योम		rpc_task_release_client(काष्ठा rpc_task *);
+काष्ठा rpc_xprt	*rpc_task_get_xprt(काष्ठा rpc_clnt *clnt,
+		काष्ठा rpc_xprt *xprt);
 
-int		rpcb_create_local(struct net *);
-void		rpcb_put_local(struct net *);
-int		rpcb_register(struct net *, u32, u32, int, unsigned short);
-int		rpcb_v4_register(struct net *net, const u32 program,
-				 const u32 version,
-				 const struct sockaddr *address,
-				 const char *netid);
-void		rpcb_getport_async(struct rpc_task *);
+पूर्णांक		rpcb_create_local(काष्ठा net *);
+व्योम		rpcb_put_local(काष्ठा net *);
+पूर्णांक		rpcb_रेजिस्टर(काष्ठा net *, u32, u32, पूर्णांक, अचिन्हित लघु);
+पूर्णांक		rpcb_v4_रेजिस्टर(काष्ठा net *net, स्थिर u32 program,
+				 स्थिर u32 version,
+				 स्थिर काष्ठा sockaddr *address,
+				 स्थिर अक्षर *netid);
+व्योम		rpcb_getport_async(काष्ठा rpc_task *);
 
-void rpc_prepare_reply_pages(struct rpc_rqst *req, struct page **pages,
-			     unsigned int base, unsigned int len,
-			     unsigned int hdrsize);
-void		rpc_call_start(struct rpc_task *);
-int		rpc_call_async(struct rpc_clnt *clnt,
-			       const struct rpc_message *msg, int flags,
-			       const struct rpc_call_ops *tk_ops,
-			       void *calldata);
-int		rpc_call_sync(struct rpc_clnt *clnt,
-			      const struct rpc_message *msg, int flags);
-struct rpc_task *rpc_call_null(struct rpc_clnt *clnt, struct rpc_cred *cred,
-			       int flags);
-int		rpc_restart_call_prepare(struct rpc_task *);
-int		rpc_restart_call(struct rpc_task *);
-void		rpc_setbufsize(struct rpc_clnt *, unsigned int, unsigned int);
-struct net *	rpc_net_ns(struct rpc_clnt *);
-size_t		rpc_max_payload(struct rpc_clnt *);
-size_t		rpc_max_bc_payload(struct rpc_clnt *);
-unsigned int	rpc_num_bc_slots(struct rpc_clnt *);
-void		rpc_force_rebind(struct rpc_clnt *);
-size_t		rpc_peeraddr(struct rpc_clnt *, struct sockaddr *, size_t);
-const char	*rpc_peeraddr2str(struct rpc_clnt *, enum rpc_display_format_t);
-int		rpc_localaddr(struct rpc_clnt *, struct sockaddr *, size_t);
+व्योम rpc_prepare_reply_pages(काष्ठा rpc_rqst *req, काष्ठा page **pages,
+			     अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
+			     अचिन्हित पूर्णांक hdrsize);
+व्योम		rpc_call_start(काष्ठा rpc_task *);
+पूर्णांक		rpc_call_async(काष्ठा rpc_clnt *clnt,
+			       स्थिर काष्ठा rpc_message *msg, पूर्णांक flags,
+			       स्थिर काष्ठा rpc_call_ops *tk_ops,
+			       व्योम *calldata);
+पूर्णांक		rpc_call_sync(काष्ठा rpc_clnt *clnt,
+			      स्थिर काष्ठा rpc_message *msg, पूर्णांक flags);
+काष्ठा rpc_task *rpc_call_null(काष्ठा rpc_clnt *clnt, काष्ठा rpc_cred *cred,
+			       पूर्णांक flags);
+पूर्णांक		rpc_restart_call_prepare(काष्ठा rpc_task *);
+पूर्णांक		rpc_restart_call(काष्ठा rpc_task *);
+व्योम		rpc_रखो_बफsize(काष्ठा rpc_clnt *, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+काष्ठा net *	rpc_net_ns(काष्ठा rpc_clnt *);
+माप_प्रकार		rpc_max_payload(काष्ठा rpc_clnt *);
+माप_प्रकार		rpc_max_bc_payload(काष्ठा rpc_clnt *);
+अचिन्हित पूर्णांक	rpc_num_bc_slots(काष्ठा rpc_clnt *);
+व्योम		rpc_क्रमce_rebind(काष्ठा rpc_clnt *);
+माप_प्रकार		rpc_peeraddr(काष्ठा rpc_clnt *, काष्ठा sockaddr *, माप_प्रकार);
+स्थिर अक्षर	*rpc_peeraddr2str(काष्ठा rpc_clnt *, क्रमागत rpc_display_क्रमmat_t);
+पूर्णांक		rpc_localaddr(काष्ठा rpc_clnt *, काष्ठा sockaddr *, माप_प्रकार);
 
-int 		rpc_clnt_iterate_for_each_xprt(struct rpc_clnt *clnt,
-			int (*fn)(struct rpc_clnt *, struct rpc_xprt *, void *),
-			void *data);
+पूर्णांक 		rpc_clnt_iterate_क्रम_each_xprt(काष्ठा rpc_clnt *clnt,
+			पूर्णांक (*fn)(काष्ठा rpc_clnt *, काष्ठा rpc_xprt *, व्योम *),
+			व्योम *data);
 
-int 		rpc_clnt_test_and_add_xprt(struct rpc_clnt *clnt,
-			struct rpc_xprt_switch *xps,
-			struct rpc_xprt *xprt,
-			void *dummy);
-int		rpc_clnt_add_xprt(struct rpc_clnt *, struct xprt_create *,
-			int (*setup)(struct rpc_clnt *,
-				struct rpc_xprt_switch *,
-				struct rpc_xprt *,
-				void *),
-			void *data);
-void		rpc_set_connect_timeout(struct rpc_clnt *clnt,
-			unsigned long connect_timeout,
-			unsigned long reconnect_timeout);
+पूर्णांक 		rpc_clnt_test_and_add_xprt(काष्ठा rpc_clnt *clnt,
+			काष्ठा rpc_xprt_चयन *xps,
+			काष्ठा rpc_xprt *xprt,
+			व्योम *dummy);
+पूर्णांक		rpc_clnt_add_xprt(काष्ठा rpc_clnt *, काष्ठा xprt_create *,
+			पूर्णांक (*setup)(काष्ठा rpc_clnt *,
+				काष्ठा rpc_xprt_चयन *,
+				काष्ठा rpc_xprt *,
+				व्योम *),
+			व्योम *data);
+व्योम		rpc_set_connect_समयout(काष्ठा rpc_clnt *clnt,
+			अचिन्हित दीर्घ connect_समयout,
+			अचिन्हित दीर्घ reconnect_समयout);
 
-int		rpc_clnt_setup_test_and_add_xprt(struct rpc_clnt *,
-			struct rpc_xprt_switch *,
-			struct rpc_xprt *,
-			void *);
+पूर्णांक		rpc_clnt_setup_test_and_add_xprt(काष्ठा rpc_clnt *,
+			काष्ठा rpc_xprt_चयन *,
+			काष्ठा rpc_xprt *,
+			व्योम *);
 
-const char *rpc_proc_name(const struct rpc_task *task);
+स्थिर अक्षर *rpc_proc_name(स्थिर काष्ठा rpc_task *task);
 
-void rpc_clnt_xprt_switch_put(struct rpc_clnt *);
-void rpc_clnt_xprt_switch_add_xprt(struct rpc_clnt *, struct rpc_xprt *);
-bool rpc_clnt_xprt_switch_has_addr(struct rpc_clnt *clnt,
-			const struct sockaddr *sap);
-void rpc_cleanup_clids(void);
+व्योम rpc_clnt_xprt_चयन_put(काष्ठा rpc_clnt *);
+व्योम rpc_clnt_xprt_चयन_add_xprt(काष्ठा rpc_clnt *, काष्ठा rpc_xprt *);
+bool rpc_clnt_xprt_चयन_has_addr(काष्ठा rpc_clnt *clnt,
+			स्थिर काष्ठा sockaddr *sap);
+व्योम rpc_cleanup_clids(व्योम);
 
-static inline int rpc_reply_expected(struct rpc_task *task)
-{
-	return (task->tk_msg.rpc_proc != NULL) &&
-		(task->tk_msg.rpc_proc->p_decode != NULL);
-}
+अटल अंतरभूत पूर्णांक rpc_reply_expected(काष्ठा rpc_task *task)
+अणु
+	वापस (task->tk_msg.rpc_proc != शून्य) &&
+		(task->tk_msg.rpc_proc->p_decode != शून्य);
+पूर्ण
 
-static inline void rpc_task_close_connection(struct rpc_task *task)
-{
-	if (task->tk_xprt)
-		xprt_force_disconnect(task->tk_xprt);
-}
-#endif /* _LINUX_SUNRPC_CLNT_H */
+अटल अंतरभूत व्योम rpc_task_बंद_connection(काष्ठा rpc_task *task)
+अणु
+	अगर (task->tk_xprt)
+		xprt_क्रमce_disconnect(task->tk_xprt);
+पूर्ण
+#पूर्ण_अगर /* _LINUX_SUNRPC_CLNT_H */

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /******************************************************************************
-**  Device driver for the PCI-SCSI NCR538XX controller family.
+**  Device driver क्रम the PCI-SCSI NCR538XX controller family.
 **
 **  Copyright (C) 1994  Wolfgang Stanglmeier
 **
@@ -8,16 +9,16 @@
 **-----------------------------------------------------------------------------
 **
 **  This driver has been ported to Linux from the FreeBSD NCR53C8XX driver
-**  and is currently maintained by
+**  and is currently मुख्यtained by
 **
-**          Gerard Roudier              <groudier@free.fr>
+**          Gerard Roudier              <groudier@मुक्त.fr>
 **
 **  Being given that this driver originates from the FreeBSD version, and
 **  in order to keep synergy on both, any suggested enhancements and corrections
-**  received on Linux are automatically a potential candidate for the FreeBSD 
+**  received on Linux are स्वतःmatically a potential candidate क्रम the FreeBSD 
 **  version.
 **
-**  The original driver has been written for 386bsd and FreeBSD by
+**  The original driver has been written क्रम 386bsd and FreeBSD by
 **          Wolfgang Stanglmeier        <wolf@cologne.de>
 **          Stefan Esser                <se@mi.Uni-Koeln.de>
 **
@@ -32,34 +33,34 @@
 **     Initial port to Linux.
 **
 **  June 23 1996 by Gerard Roudier:
-**     Support for 64 bits architectures (Alpha).
+**     Support क्रम 64 bits architectures (Alpha).
 **
 **  November 30 1996 by Gerard Roudier:
-**     Support for Fast-20 scsi.
-**     Support for large DMA fifo and 128 dwords bursting.
+**     Support क्रम Fast-20 scsi.
+**     Support क्रम large DMA fअगरo and 128 dwords bursting.
 **
 **  February 27 1997 by Gerard Roudier:
-**     Support for Fast-40 scsi.
-**     Support for on-Board RAM.
+**     Support क्रम Fast-40 scsi.
+**     Support क्रम on-Board RAM.
 **
 **  May 3 1997 by Gerard Roudier:
-**     Full support for scsi scripts instructions pre-fetching.
+**     Full support क्रम scsi scripts inकाष्ठाions pre-fetching.
 **
-**  May 19 1997 by Richard Waltham <dormouse@farsrobt.demon.co.uk>:
-**     Support for NvRAM detection and reading.
+**  May 19 1997 by Riअक्षरd Waltham <करोrmouse@farsrobt.demon.co.uk>:
+**     Support क्रम NvRAM detection and पढ़ोing.
 **
 **  August 18 1997 by Cort <cort@cs.nmt.edu>:
-**     Support for Power/PC (Big Endian).
+**     Support क्रम Power/PC (Big Endian).
 **
 **  June 20 1998 by Gerard Roudier
-**     Support for up to 64 tags per lun.
-**     O(1) everywhere (C and SCRIPTS) for normal cases.
-**     Low PCI traffic for command handling when on-chip RAM is present.
+**     Support क्रम up to 64 tags per lun.
+**     O(1) everywhere (C and SCRIPTS) क्रम normal हालs.
+**     Low PCI traffic क्रम command handling when on-chip RAM is present.
 **     Aggressive SCSI SCRIPTS optimizations.
 **
 **  2005 by Matthew Wilcox and James Bottomley
 **     PCI-ectomy.  This driver now supports only the 720 chip (see the
-**     NCR_Q720 and zalon drivers for the bus probe logic).
+**     NCR_Q720 and zalon drivers क्रम the bus probe logic).
 **
 *******************************************************************************
 */
@@ -74,47 +75,47 @@
 **	    Etc...
 **
 **	Supported NCR/SYMBIOS chips:
-**		53C720		(Wide,   Fast SCSI-2, intfly problems)
+**		53C720		(Wide,   Fast SCSI-2, पूर्णांकfly problems)
 */
 
 /* Name and version of the driver */
-#define SCSI_NCR_DRIVER_NAME	"ncr53c8xx-3.4.3g"
+#घोषणा SCSI_NCR_DRIVER_NAME	"ncr53c8xx-3.4.3g"
 
-#define SCSI_NCR_DEBUG_FLAGS	(0)
+#घोषणा SCSI_NCR_DEBUG_FLAGS	(0)
 
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/errno.h>
-#include <linux/gfp.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/signal.h>
-#include <linux/spinlock.h>
-#include <linux/stat.h>
-#include <linux/string.h>
-#include <linux/time.h>
-#include <linux/timer.h>
-#include <linux/types.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gfp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/types.h>
 
-#include <asm/dma.h>
-#include <asm/io.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/पन.स>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_dbg.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_tcq.h>
-#include <scsi/scsi_transport.h>
-#include <scsi/scsi_transport_spi.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_dbg.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/scsi_transport.h>
+#समावेश <scsi/scsi_transport_spi.h>
 
-#include "ncr53c8xx.h"
+#समावेश "ncr53c8xx.h"
 
-#define NAME53C8XX		"ncr53c8xx"
+#घोषणा NAME53C8XX		"ncr53c8xx"
 
 /*==========================================================
 **
@@ -123,450 +124,450 @@
 **==========================================================
 */
 
-#define DEBUG_ALLOC    (0x0001)
-#define DEBUG_PHASE    (0x0002)
-#define DEBUG_QUEUE    (0x0008)
-#define DEBUG_RESULT   (0x0010)
-#define DEBUG_POINTER  (0x0020)
-#define DEBUG_SCRIPT   (0x0040)
-#define DEBUG_TINY     (0x0080)
-#define DEBUG_TIMING   (0x0100)
-#define DEBUG_NEGO     (0x0200)
-#define DEBUG_TAGS     (0x0400)
-#define DEBUG_SCATTER  (0x0800)
-#define DEBUG_IC        (0x1000)
+#घोषणा DEBUG_ALLOC    (0x0001)
+#घोषणा DEBUG_PHASE    (0x0002)
+#घोषणा DEBUG_QUEUE    (0x0008)
+#घोषणा DEBUG_RESULT   (0x0010)
+#घोषणा DEBUG_POINTER  (0x0020)
+#घोषणा DEBUG_SCRIPT   (0x0040)
+#घोषणा DEBUG_TINY     (0x0080)
+#घोषणा DEBUG_TIMING   (0x0100)
+#घोषणा DEBUG_NEGO     (0x0200)
+#घोषणा DEBUG_TAGS     (0x0400)
+#घोषणा DEBUG_SCATTER  (0x0800)
+#घोषणा DEBUG_IC        (0x1000)
 
 /*
 **    Enable/Disable debug messages.
-**    Can be changed at runtime too.
+**    Can be changed at runसमय too.
 */
 
-#ifdef SCSI_NCR_DEBUG_INFO_SUPPORT
-static int ncr_debug = SCSI_NCR_DEBUG_FLAGS;
-	#define DEBUG_FLAGS ncr_debug
-#else
-	#define DEBUG_FLAGS	SCSI_NCR_DEBUG_FLAGS
-#endif
+#अगर_घोषित SCSI_NCR_DEBUG_INFO_SUPPORT
+अटल पूर्णांक ncr_debug = SCSI_NCR_DEBUG_FLAGS;
+	#घोषणा DEBUG_FLAGS ncr_debug
+#अन्यथा
+	#घोषणा DEBUG_FLAGS	SCSI_NCR_DEBUG_FLAGS
+#पूर्ण_अगर
 
 /*
  * Locally used status flag
  */
-#define SAM_STAT_ILLEGAL	0xff
+#घोषणा SAM_STAT_ILLEGAL	0xff
 
-static inline struct list_head *ncr_list_pop(struct list_head *head)
-{
-	if (!list_empty(head)) {
-		struct list_head *elem = head->next;
+अटल अंतरभूत काष्ठा list_head *ncr_list_pop(काष्ठा list_head *head)
+अणु
+	अगर (!list_empty(head)) अणु
+		काष्ठा list_head *elem = head->next;
 
 		list_del(elem);
-		return elem;
-	}
+		वापस elem;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*==========================================================
 **
-**	Simple power of two buddy-like allocator.
+**	Simple घातer of two buddy-like allocator.
 **
-**	This simple code is not intended to be fast, but to 
-**	provide power of 2 aligned memory allocations.
+**	This simple code is not पूर्णांकended to be fast, but to 
+**	provide घातer of 2 aligned memory allocations.
 **	Since the SCRIPTS processor only supplies 8 bit 
 **	arithmetic, this allocator allows simple and fast 
 **	address calculations  from the SCRIPTS code.
-**	In addition, cache line alignment is guaranteed for 
-**	power of 2 cache line size.
+**	In addition, cache line alignment is guaranteed क्रम 
+**	घातer of 2 cache line size.
 **	Enhanced in linux-2.3.44 to provide a memory pool 
 **	per pcidev to support dynamic dma mapping. (I would 
-**	have preferred a real bus abstraction, btw).
+**	have preferred a real bus असलtraction, btw).
 **
 **==========================================================
 */
 
-#define MEMO_SHIFT	4	/* 16 bytes minimum memory chunk */
-#if PAGE_SIZE >= 8192
-#define MEMO_PAGE_ORDER	0	/* 1 PAGE  maximum */
-#else
-#define MEMO_PAGE_ORDER	1	/* 2 PAGES maximum */
-#endif
-#define MEMO_FREE_UNUSED	/* Free unused pages immediately */
-#define MEMO_WARN	1
-#define MEMO_GFP_FLAGS	GFP_ATOMIC
-#define MEMO_CLUSTER_SHIFT	(PAGE_SHIFT+MEMO_PAGE_ORDER)
-#define MEMO_CLUSTER_SIZE	(1UL << MEMO_CLUSTER_SHIFT)
-#define MEMO_CLUSTER_MASK	(MEMO_CLUSTER_SIZE-1)
+#घोषणा MEMO_SHIFT	4	/* 16 bytes minimum memory chunk */
+#अगर PAGE_SIZE >= 8192
+#घोषणा MEMO_PAGE_ORDER	0	/* 1 PAGE  maximum */
+#अन्यथा
+#घोषणा MEMO_PAGE_ORDER	1	/* 2 PAGES maximum */
+#पूर्ण_अगर
+#घोषणा MEMO_FREE_UNUSED	/* Free unused pages immediately */
+#घोषणा MEMO_WARN	1
+#घोषणा MEMO_GFP_FLAGS	GFP_ATOMIC
+#घोषणा MEMO_CLUSTER_SHIFT	(PAGE_SHIFT+MEMO_PAGE_ORDER)
+#घोषणा MEMO_CLUSTER_SIZE	(1UL << MEMO_CLUSTER_SHIFT)
+#घोषणा MEMO_CLUSTER_MASK	(MEMO_CLUSTER_SIZE-1)
 
-typedef u_long m_addr_t;	/* Enough bits to bit-hack addresses */
-typedef struct device *m_bush_t;	/* Something that addresses DMAable */
+प्रकार u_दीर्घ m_addr_t;	/* Enough bits to bit-hack addresses */
+प्रकार काष्ठा device *m_bush_t;	/* Something that addresses DMAable */
 
-typedef struct m_link {		/* Link between free memory chunks */
-	struct m_link *next;
-} m_link_s;
+प्रकार काष्ठा m_link अणु		/* Link between मुक्त memory chunks */
+	काष्ठा m_link *next;
+पूर्ण m_link_s;
 
-typedef struct m_vtob {		/* Virtual to Bus address translation */
-	struct m_vtob *next;
+प्रकार काष्ठा m_vtob अणु		/* Virtual to Bus address translation */
+	काष्ठा m_vtob *next;
 	m_addr_t vaddr;
 	m_addr_t baddr;
-} m_vtob_s;
-#define VTOB_HASH_SHIFT		5
-#define VTOB_HASH_SIZE		(1UL << VTOB_HASH_SHIFT)
-#define VTOB_HASH_MASK		(VTOB_HASH_SIZE-1)
-#define VTOB_HASH_CODE(m)	\
+पूर्ण m_vtob_s;
+#घोषणा VTOB_HASH_SHIFT		5
+#घोषणा VTOB_HASH_SIZE		(1UL << VTOB_HASH_SHIFT)
+#घोषणा VTOB_HASH_MASK		(VTOB_HASH_SIZE-1)
+#घोषणा VTOB_HASH_CODE(m)	\
 	((((m_addr_t) (m)) >> MEMO_CLUSTER_SHIFT) & VTOB_HASH_MASK)
 
-typedef struct m_pool {		/* Memory pool of a given kind */
+प्रकार काष्ठा m_pool अणु		/* Memory pool of a given kind */
 	m_bush_t bush;
-	m_addr_t (*getp)(struct m_pool *);
-	void (*freep)(struct m_pool *, m_addr_t);
-	int nump;
+	m_addr_t (*getp)(काष्ठा m_pool *);
+	व्योम (*मुक्तp)(काष्ठा m_pool *, m_addr_t);
+	पूर्णांक nump;
 	m_vtob_s *(vtob[VTOB_HASH_SIZE]);
-	struct m_pool *next;
-	struct m_link h[PAGE_SHIFT-MEMO_SHIFT+MEMO_PAGE_ORDER+1];
-} m_pool_s;
+	काष्ठा m_pool *next;
+	काष्ठा m_link h[PAGE_SHIFT-MEMO_SHIFT+MEMO_PAGE_ORDER+1];
+पूर्ण m_pool_s;
 
-static void *___m_alloc(m_pool_s *mp, int size)
-{
-	int i = 0;
-	int s = (1 << MEMO_SHIFT);
-	int j;
+अटल व्योम *___m_alloc(m_pool_s *mp, पूर्णांक size)
+अणु
+	पूर्णांक i = 0;
+	पूर्णांक s = (1 << MEMO_SHIFT);
+	पूर्णांक j;
 	m_addr_t a;
 	m_link_s *h = mp->h;
 
-	if (size > (PAGE_SIZE << MEMO_PAGE_ORDER))
-		return NULL;
+	अगर (size > (PAGE_SIZE << MEMO_PAGE_ORDER))
+		वापस शून्य;
 
-	while (size > s) {
+	जबतक (size > s) अणु
 		s <<= 1;
 		++i;
-	}
+	पूर्ण
 
 	j = i;
-	while (!h[j].next) {
-		if (s == (PAGE_SIZE << MEMO_PAGE_ORDER)) {
+	जबतक (!h[j].next) अणु
+		अगर (s == (PAGE_SIZE << MEMO_PAGE_ORDER)) अणु
 			h[j].next = (m_link_s *)mp->getp(mp);
-			if (h[j].next)
-				h[j].next->next = NULL;
-			break;
-		}
+			अगर (h[j].next)
+				h[j].next->next = शून्य;
+			अवरोध;
+		पूर्ण
 		++j;
 		s <<= 1;
-	}
+	पूर्ण
 	a = (m_addr_t) h[j].next;
-	if (a) {
+	अगर (a) अणु
 		h[j].next = h[j].next->next;
-		while (j > i) {
+		जबतक (j > i) अणु
 			j -= 1;
 			s >>= 1;
 			h[j].next = (m_link_s *) (a+s);
-			h[j].next->next = NULL;
-		}
-	}
-#ifdef DEBUG
-	printk("___m_alloc(%d) = %p\n", size, (void *) a);
-#endif
-	return (void *) a;
-}
+			h[j].next->next = शून्य;
+		पूर्ण
+	पूर्ण
+#अगर_घोषित DEBUG
+	prपूर्णांकk("___m_alloc(%d) = %p\n", size, (व्योम *) a);
+#पूर्ण_अगर
+	वापस (व्योम *) a;
+पूर्ण
 
-static void ___m_free(m_pool_s *mp, void *ptr, int size)
-{
-	int i = 0;
-	int s = (1 << MEMO_SHIFT);
+अटल व्योम ___m_मुक्त(m_pool_s *mp, व्योम *ptr, पूर्णांक size)
+अणु
+	पूर्णांक i = 0;
+	पूर्णांक s = (1 << MEMO_SHIFT);
 	m_link_s *q;
 	m_addr_t a, b;
 	m_link_s *h = mp->h;
 
-#ifdef DEBUG
-	printk("___m_free(%p, %d)\n", ptr, size);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("___m_free(%p, %d)\n", ptr, size);
+#पूर्ण_अगर
 
-	if (size > (PAGE_SIZE << MEMO_PAGE_ORDER))
-		return;
+	अगर (size > (PAGE_SIZE << MEMO_PAGE_ORDER))
+		वापस;
 
-	while (size > s) {
+	जबतक (size > s) अणु
 		s <<= 1;
 		++i;
-	}
+	पूर्ण
 
 	a = (m_addr_t) ptr;
 
-	while (1) {
-#ifdef MEMO_FREE_UNUSED
-		if (s == (PAGE_SIZE << MEMO_PAGE_ORDER)) {
-			mp->freep(mp, a);
-			break;
-		}
-#endif
+	जबतक (1) अणु
+#अगर_घोषित MEMO_FREE_UNUSED
+		अगर (s == (PAGE_SIZE << MEMO_PAGE_ORDER)) अणु
+			mp->मुक्तp(mp, a);
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
 		b = a ^ s;
 		q = &h[i];
-		while (q->next && q->next != (m_link_s *) b) {
+		जबतक (q->next && q->next != (m_link_s *) b) अणु
 			q = q->next;
-		}
-		if (!q->next) {
+		पूर्ण
+		अगर (!q->next) अणु
 			((m_link_s *) a)->next = h[i].next;
 			h[i].next = (m_link_s *) a;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		q->next = q->next->next;
 		a = a & b;
 		s <<= 1;
 		++i;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static DEFINE_SPINLOCK(ncr53c8xx_lock);
+अटल DEFINE_SPINLOCK(ncr53c8xx_lock);
 
-static void *__m_calloc2(m_pool_s *mp, int size, char *name, int uflags)
-{
-	void *p;
+अटल व्योम *__m_सुस्मृति2(m_pool_s *mp, पूर्णांक size, अक्षर *name, पूर्णांक uflags)
+अणु
+	व्योम *p;
 
 	p = ___m_alloc(mp, size);
 
-	if (DEBUG_FLAGS & DEBUG_ALLOC)
-		printk ("new %-10s[%4d] @%p.\n", name, size, p);
+	अगर (DEBUG_FLAGS & DEBUG_ALLOC)
+		prपूर्णांकk ("new %-10s[%4d] @%p.\n", name, size, p);
 
-	if (p)
-		memset(p, 0, size);
-	else if (uflags & MEMO_WARN)
-		printk (NAME53C8XX ": failed to allocate %s[%d]\n", name, size);
+	अगर (p)
+		स_रखो(p, 0, size);
+	अन्यथा अगर (uflags & MEMO_WARN)
+		prपूर्णांकk (NAME53C8XX ": failed to allocate %s[%d]\n", name, size);
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-#define __m_calloc(mp, s, n)	__m_calloc2(mp, s, n, MEMO_WARN)
+#घोषणा __m_सुस्मृति(mp, s, n)	__m_सुस्मृति2(mp, s, n, MEMO_WARN)
 
-static void __m_free(m_pool_s *mp, void *ptr, int size, char *name)
-{
-	if (DEBUG_FLAGS & DEBUG_ALLOC)
-		printk ("freeing %-10s[%4d] @%p.\n", name, size, ptr);
+अटल व्योम __m_मुक्त(m_pool_s *mp, व्योम *ptr, पूर्णांक size, अक्षर *name)
+अणु
+	अगर (DEBUG_FLAGS & DEBUG_ALLOC)
+		prपूर्णांकk ("freeing %-10s[%4d] @%p.\n", name, size, ptr);
 
-	___m_free(mp, ptr, size);
+	___m_मुक्त(mp, ptr, size);
 
-}
+पूर्ण
 
 /*
- * With pci bus iommu support, we use a default pool of unmapped memory 
- * for memory we donnot need to DMA from/to and one pool per pcidev for 
- * memory accessed by the PCI chip. `mp0' is the default not DMAable pool.
+ * With pci bus iommu support, we use a शेष pool of unmapped memory 
+ * क्रम memory we करोnnot need to DMA from/to and one pool per pcidev क्रम 
+ * memory accessed by the PCI chip. `mp0' is the शेष not DMAable pool.
  */
 
-static m_addr_t ___mp0_getp(m_pool_s *mp)
-{
-	m_addr_t m = __get_free_pages(MEMO_GFP_FLAGS, MEMO_PAGE_ORDER);
-	if (m)
+अटल m_addr_t ___mp0_getp(m_pool_s *mp)
+अणु
+	m_addr_t m = __get_मुक्त_pages(MEMO_GFP_FLAGS, MEMO_PAGE_ORDER);
+	अगर (m)
 		++mp->nump;
-	return m;
-}
+	वापस m;
+पूर्ण
 
-static void ___mp0_freep(m_pool_s *mp, m_addr_t m)
-{
-	free_pages(m, MEMO_PAGE_ORDER);
+अटल व्योम ___mp0_मुक्तp(m_pool_s *mp, m_addr_t m)
+अणु
+	मुक्त_pages(m, MEMO_PAGE_ORDER);
 	--mp->nump;
-}
+पूर्ण
 
-static m_pool_s mp0 = {NULL, ___mp0_getp, ___mp0_freep};
+अटल m_pool_s mp0 = अणुशून्य, ___mp0_getp, ___mp0_मुक्तpपूर्ण;
 
 /*
  * DMAable pools.
  */
 
 /*
- * With pci bus iommu support, we maintain one pool per pcidev and a 
- * hashed reverse table for virtual to bus physical address translations.
+ * With pci bus iommu support, we मुख्यtain one pool per pcidev and a 
+ * hashed reverse table क्रम भव to bus physical address translations.
  */
-static m_addr_t ___dma_getp(m_pool_s *mp)
-{
+अटल m_addr_t ___dma_getp(m_pool_s *mp)
+अणु
 	m_addr_t vp;
 	m_vtob_s *vbp;
 
-	vbp = __m_calloc(&mp0, sizeof(*vbp), "VTOB");
-	if (vbp) {
+	vbp = __m_सुस्मृति(&mp0, माप(*vbp), "VTOB");
+	अगर (vbp) अणु
 		dma_addr_t daddr;
 		vp = (m_addr_t) dma_alloc_coherent(mp->bush,
 						PAGE_SIZE<<MEMO_PAGE_ORDER,
 						&daddr, GFP_ATOMIC);
-		if (vp) {
-			int hc = VTOB_HASH_CODE(vp);
+		अगर (vp) अणु
+			पूर्णांक hc = VTOB_HASH_CODE(vp);
 			vbp->vaddr = vp;
 			vbp->baddr = daddr;
 			vbp->next = mp->vtob[hc];
 			mp->vtob[hc] = vbp;
 			++mp->nump;
-			return vp;
-		}
-	}
-	if (vbp)
-		__m_free(&mp0, vbp, sizeof(*vbp), "VTOB");
-	return 0;
-}
+			वापस vp;
+		पूर्ण
+	पूर्ण
+	अगर (vbp)
+		__m_मुक्त(&mp0, vbp, माप(*vbp), "VTOB");
+	वापस 0;
+पूर्ण
 
-static void ___dma_freep(m_pool_s *mp, m_addr_t m)
-{
+अटल व्योम ___dma_मुक्तp(m_pool_s *mp, m_addr_t m)
+अणु
 	m_vtob_s **vbpp, *vbp;
-	int hc = VTOB_HASH_CODE(m);
+	पूर्णांक hc = VTOB_HASH_CODE(m);
 
 	vbpp = &mp->vtob[hc];
-	while (*vbpp && (*vbpp)->vaddr != m)
+	जबतक (*vbpp && (*vbpp)->vaddr != m)
 		vbpp = &(*vbpp)->next;
-	if (*vbpp) {
+	अगर (*vbpp) अणु
 		vbp = *vbpp;
 		*vbpp = (*vbpp)->next;
-		dma_free_coherent(mp->bush, PAGE_SIZE<<MEMO_PAGE_ORDER,
-				  (void *)vbp->vaddr, (dma_addr_t)vbp->baddr);
-		__m_free(&mp0, vbp, sizeof(*vbp), "VTOB");
+		dma_मुक्त_coherent(mp->bush, PAGE_SIZE<<MEMO_PAGE_ORDER,
+				  (व्योम *)vbp->vaddr, (dma_addr_t)vbp->baddr);
+		__m_मुक्त(&mp0, vbp, माप(*vbp), "VTOB");
 		--mp->nump;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline m_pool_s *___get_dma_pool(m_bush_t bush)
-{
+अटल अंतरभूत m_pool_s *___get_dma_pool(m_bush_t bush)
+अणु
 	m_pool_s *mp;
-	for (mp = mp0.next; mp && mp->bush != bush; mp = mp->next);
-	return mp;
-}
+	क्रम (mp = mp0.next; mp && mp->bush != bush; mp = mp->next);
+	वापस mp;
+पूर्ण
 
-static m_pool_s *___cre_dma_pool(m_bush_t bush)
-{
+अटल m_pool_s *___cre_dma_pool(m_bush_t bush)
+अणु
 	m_pool_s *mp;
-	mp = __m_calloc(&mp0, sizeof(*mp), "MPOOL");
-	if (mp) {
-		memset(mp, 0, sizeof(*mp));
+	mp = __m_सुस्मृति(&mp0, माप(*mp), "MPOOL");
+	अगर (mp) अणु
+		स_रखो(mp, 0, माप(*mp));
 		mp->bush = bush;
 		mp->getp = ___dma_getp;
-		mp->freep = ___dma_freep;
+		mp->मुक्तp = ___dma_मुक्तp;
 		mp->next = mp0.next;
 		mp0.next = mp;
-	}
-	return mp;
-}
+	पूर्ण
+	वापस mp;
+पूर्ण
 
-static void ___del_dma_pool(m_pool_s *p)
-{
-	struct m_pool **pp = &mp0.next;
+अटल व्योम ___del_dma_pool(m_pool_s *p)
+अणु
+	काष्ठा m_pool **pp = &mp0.next;
 
-	while (*pp && *pp != p)
+	जबतक (*pp && *pp != p)
 		pp = &(*pp)->next;
-	if (*pp) {
+	अगर (*pp) अणु
 		*pp = (*pp)->next;
-		__m_free(&mp0, p, sizeof(*p), "MPOOL");
-	}
-}
+		__m_मुक्त(&mp0, p, माप(*p), "MPOOL");
+	पूर्ण
+पूर्ण
 
-static void *__m_calloc_dma(m_bush_t bush, int size, char *name)
-{
-	u_long flags;
-	struct m_pool *mp;
-	void *m = NULL;
+अटल व्योम *__m_सुस्मृति_dma(m_bush_t bush, पूर्णांक size, अक्षर *name)
+अणु
+	u_दीर्घ flags;
+	काष्ठा m_pool *mp;
+	व्योम *m = शून्य;
 
 	spin_lock_irqsave(&ncr53c8xx_lock, flags);
 	mp = ___get_dma_pool(bush);
-	if (!mp)
+	अगर (!mp)
 		mp = ___cre_dma_pool(bush);
-	if (mp)
-		m = __m_calloc(mp, size, name);
-	if (mp && !mp->nump)
+	अगर (mp)
+		m = __m_सुस्मृति(mp, size, name);
+	अगर (mp && !mp->nump)
 		___del_dma_pool(mp);
 	spin_unlock_irqrestore(&ncr53c8xx_lock, flags);
 
-	return m;
-}
+	वापस m;
+पूर्ण
 
-static void __m_free_dma(m_bush_t bush, void *m, int size, char *name)
-{
-	u_long flags;
-	struct m_pool *mp;
+अटल व्योम __m_मुक्त_dma(m_bush_t bush, व्योम *m, पूर्णांक size, अक्षर *name)
+अणु
+	u_दीर्घ flags;
+	काष्ठा m_pool *mp;
 
 	spin_lock_irqsave(&ncr53c8xx_lock, flags);
 	mp = ___get_dma_pool(bush);
-	if (mp)
-		__m_free(mp, m, size, name);
-	if (mp && !mp->nump)
+	अगर (mp)
+		__m_मुक्त(mp, m, size, name);
+	अगर (mp && !mp->nump)
 		___del_dma_pool(mp);
 	spin_unlock_irqrestore(&ncr53c8xx_lock, flags);
-}
+पूर्ण
 
-static m_addr_t __vtobus(m_bush_t bush, void *m)
-{
-	u_long flags;
+अटल m_addr_t __vtobus(m_bush_t bush, व्योम *m)
+अणु
+	u_दीर्घ flags;
 	m_pool_s *mp;
-	int hc = VTOB_HASH_CODE(m);
-	m_vtob_s *vp = NULL;
+	पूर्णांक hc = VTOB_HASH_CODE(m);
+	m_vtob_s *vp = शून्य;
 	m_addr_t a = ((m_addr_t) m) & ~MEMO_CLUSTER_MASK;
 
 	spin_lock_irqsave(&ncr53c8xx_lock, flags);
 	mp = ___get_dma_pool(bush);
-	if (mp) {
+	अगर (mp) अणु
 		vp = mp->vtob[hc];
-		while (vp && (m_addr_t) vp->vaddr != a)
+		जबतक (vp && (m_addr_t) vp->vaddr != a)
 			vp = vp->next;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&ncr53c8xx_lock, flags);
-	return vp ? vp->baddr + (((m_addr_t) m) - a) : 0;
-}
+	वापस vp ? vp->baddr + (((m_addr_t) m) - a) : 0;
+पूर्ण
 
-#define _m_calloc_dma(np, s, n)		__m_calloc_dma(np->dev, s, n)
-#define _m_free_dma(np, p, s, n)	__m_free_dma(np->dev, p, s, n)
-#define m_calloc_dma(s, n)		_m_calloc_dma(np, s, n)
-#define m_free_dma(p, s, n)		_m_free_dma(np, p, s, n)
-#define _vtobus(np, p)			__vtobus(np->dev, p)
-#define vtobus(p)			_vtobus(np, p)
+#घोषणा _m_सुस्मृति_dma(np, s, n)		__m_सुस्मृति_dma(np->dev, s, n)
+#घोषणा _m_मुक्त_dma(np, p, s, n)	__m_मुक्त_dma(np->dev, p, s, n)
+#घोषणा m_सुस्मृति_dma(s, n)		_m_सुस्मृति_dma(np, s, n)
+#घोषणा m_मुक्त_dma(p, s, n)		_m_मुक्त_dma(np, p, s, n)
+#घोषणा _vtobus(np, p)			__vtobus(np->dev, p)
+#घोषणा vtobus(p)			_vtobus(np, p)
 
 /*
  *  Deal with DMA mapping/unmapping.
  */
 
 /* To keep track of the dma mapping (sg/single) that has been set */
-#define __data_mapped	SCp.phase
-#define __data_mapping	SCp.have_data_in
+#घोषणा __data_mapped	SCp.phase
+#घोषणा __data_mapping	SCp.have_data_in
 
-static void __unmap_scsi_data(struct device *dev, struct scsi_cmnd *cmd)
-{
-	switch(cmd->__data_mapped) {
-	case 2:
+अटल व्योम __unmap_scsi_data(काष्ठा device *dev, काष्ठा scsi_cmnd *cmd)
+अणु
+	चयन(cmd->__data_mapped) अणु
+	हाल 2:
 		scsi_dma_unmap(cmd);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	cmd->__data_mapped = 0;
-}
+पूर्ण
 
-static int __map_scsi_sg_data(struct device *dev, struct scsi_cmnd *cmd)
-{
-	int use_sg;
+अटल पूर्णांक __map_scsi_sg_data(काष्ठा device *dev, काष्ठा scsi_cmnd *cmd)
+अणु
+	पूर्णांक use_sg;
 
 	use_sg = scsi_dma_map(cmd);
-	if (!use_sg)
-		return 0;
+	अगर (!use_sg)
+		वापस 0;
 
 	cmd->__data_mapped = 2;
 	cmd->__data_mapping = use_sg;
 
-	return use_sg;
-}
+	वापस use_sg;
+पूर्ण
 
-#define unmap_scsi_data(np, cmd)	__unmap_scsi_data(np->dev, cmd)
-#define map_scsi_sg_data(np, cmd)	__map_scsi_sg_data(np->dev, cmd)
+#घोषणा unmap_scsi_data(np, cmd)	__unmap_scsi_data(np->dev, cmd)
+#घोषणा map_scsi_sg_data(np, cmd)	__map_scsi_sg_data(np->dev, cmd)
 
 /*==========================================================
 **
 **	Driver setup.
 **
-**	This structure is initialized from linux config 
+**	This काष्ठाure is initialized from linux config 
 **	options. It can be overridden at boot-up by the boot 
 **	command line.
 **
 **==========================================================
 */
-static struct ncr_driver_setup
+अटल काष्ठा ncr_driver_setup
 	driver_setup			= SCSI_NCR_DRIVER_SETUP;
 
-#ifndef MODULE
-#ifdef	SCSI_NCR_BOOT_COMMAND_LINE_SUPPORT
-static struct ncr_driver_setup
+#अगर_अघोषित MODULE
+#अगर_घोषित	SCSI_NCR_BOOT_COMMAND_LINE_SUPPORT
+अटल काष्ठा ncr_driver_setup
 	driver_safe_setup __initdata	= SCSI_NCR_DRIVER_SAFE_SETUP;
-#endif
-#endif /* !MODULE */
+#पूर्ण_अगर
+#पूर्ण_अगर /* !MODULE */
 
-#define initverbose (driver_setup.verbose)
-#define bootverbose (np->verbose)
+#घोषणा initverbose (driver_setup.verbose)
+#घोषणा bootverbose (np->verbose)
 
 
 /*===================================================================
@@ -576,50 +577,50 @@ static struct ncr_driver_setup
 **===================================================================
 */
 
-#ifdef MODULE
-#define	ARG_SEP	' '
-#else
-#define	ARG_SEP	','
-#endif
+#अगर_घोषित MODULE
+#घोषणा	ARG_SEP	' '
+#अन्यथा
+#घोषणा	ARG_SEP	','
+#पूर्ण_अगर
 
-#define OPT_TAGS		1
-#define OPT_MASTER_PARITY	2
-#define OPT_SCSI_PARITY		3
-#define OPT_DISCONNECTION	4
-#define OPT_SPECIAL_FEATURES	5
-#define OPT_UNUSED_1		6
-#define OPT_FORCE_SYNC_NEGO	7
-#define OPT_REVERSE_PROBE	8
-#define OPT_DEFAULT_SYNC	9
-#define OPT_VERBOSE		10
-#define OPT_DEBUG		11
-#define OPT_BURST_MAX		12
-#define OPT_LED_PIN		13
-#define OPT_MAX_WIDE		14
-#define OPT_SETTLE_DELAY	15
-#define OPT_DIFF_SUPPORT	16
-#define OPT_IRQM		17
-#define OPT_PCI_FIX_UP		18
-#define OPT_BUS_CHECK		19
-#define OPT_OPTIMIZE		20
-#define OPT_RECOVERY		21
-#define OPT_SAFE_SETUP		22
-#define OPT_USE_NVRAM		23
-#define OPT_EXCLUDE		24
-#define OPT_HOST_ID		25
+#घोषणा OPT_TAGS		1
+#घोषणा OPT_MASTER_PARITY	2
+#घोषणा OPT_SCSI_PARITY		3
+#घोषणा OPT_DISCONNECTION	4
+#घोषणा OPT_SPECIAL_FEATURES	5
+#घोषणा OPT_UNUSED_1		6
+#घोषणा OPT_FORCE_SYNC_NEGO	7
+#घोषणा OPT_REVERSE_PROBE	8
+#घोषणा OPT_DEFAULT_SYNC	9
+#घोषणा OPT_VERBOSE		10
+#घोषणा OPT_DEBUG		11
+#घोषणा OPT_BURST_MAX		12
+#घोषणा OPT_LED_PIN		13
+#घोषणा OPT_MAX_WIDE		14
+#घोषणा OPT_SETTLE_DELAY	15
+#घोषणा OPT_DIFF_SUPPORT	16
+#घोषणा OPT_IRQM		17
+#घोषणा OPT_PCI_FIX_UP		18
+#घोषणा OPT_BUS_CHECK		19
+#घोषणा OPT_OPTIMIZE		20
+#घोषणा OPT_RECOVERY		21
+#घोषणा OPT_SAFE_SETUP		22
+#घोषणा OPT_USE_NVRAM		23
+#घोषणा OPT_EXCLUDE		24
+#घोषणा OPT_HOST_ID		25
 
-#ifdef SCSI_NCR_IARB_SUPPORT
-#define OPT_IARB		26
-#endif
+#अगर_घोषित SCSI_NCR_IARB_SUPPORT
+#घोषणा OPT_IARB		26
+#पूर्ण_अगर
 
-#ifdef MODULE
-#define	ARG_SEP	' '
-#else
-#define	ARG_SEP	','
-#endif
+#अगर_घोषित MODULE
+#घोषणा	ARG_SEP	' '
+#अन्यथा
+#घोषणा	ARG_SEP	','
+#पूर्ण_अगर
 
-#ifndef MODULE
-static char setup_token[] __initdata = 
+#अगर_अघोषित MODULE
+अटल अक्षर setup_token[] __initdata = 
 	"tags:"   "mpar:"
 	"spar:"   "disc:"
 	"specf:"  "ultra:"
@@ -633,149 +634,149 @@ static char setup_token[] __initdata =
 	"recovery:"
 	"safe:"   "nvram:"
 	"excl:"   "hostid:"
-#ifdef SCSI_NCR_IARB_SUPPORT
+#अगर_घोषित SCSI_NCR_IARB_SUPPORT
 	"iarb:"
-#endif
+#पूर्ण_अगर
 	;	/* DONNOT REMOVE THIS ';' */
 
-static int __init get_setup_token(char *p)
-{
-	char *cur = setup_token;
-	char *pc;
-	int i = 0;
+अटल पूर्णांक __init get_setup_token(अक्षर *p)
+अणु
+	अक्षर *cur = setup_token;
+	अक्षर *pc;
+	पूर्णांक i = 0;
 
-	while (cur != NULL && (pc = strchr(cur, ':')) != NULL) {
+	जबतक (cur != शून्य && (pc = म_अक्षर(cur, ':')) != शून्य) अणु
 		++pc;
 		++i;
-		if (!strncmp(p, cur, pc - cur))
-			return i;
+		अगर (!म_भेदन(p, cur, pc - cur))
+			वापस i;
 		cur = pc;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __init sym53c8xx__setup(char *str)
-{
-#ifdef SCSI_NCR_BOOT_COMMAND_LINE_SUPPORT
-	char *cur = str;
-	char *pc, *pv;
-	int i, val, c;
-	int xi = 0;
+अटल पूर्णांक __init sym53c8xx__setup(अक्षर *str)
+अणु
+#अगर_घोषित SCSI_NCR_BOOT_COMMAND_LINE_SUPPORT
+	अक्षर *cur = str;
+	अक्षर *pc, *pv;
+	पूर्णांक i, val, c;
+	पूर्णांक xi = 0;
 
-	while (cur != NULL && (pc = strchr(cur, ':')) != NULL) {
-		char *pe;
+	जबतक (cur != शून्य && (pc = म_अक्षर(cur, ':')) != शून्य) अणु
+		अक्षर *pe;
 
 		val = 0;
 		pv = pc;
 		c = *++pv;
 
-		if	(c == 'n')
+		अगर	(c == 'n')
 			val = 0;
-		else if	(c == 'y')
+		अन्यथा अगर	(c == 'y')
 			val = 1;
-		else
-			val = (int) simple_strtoul(pv, &pe, 0);
+		अन्यथा
+			val = (पूर्णांक) simple_म_से_अदीर्घ(pv, &pe, 0);
 
-		switch (get_setup_token(cur)) {
-		case OPT_TAGS:
-			driver_setup.default_tags = val;
-			if (pe && *pe == '/') {
+		चयन (get_setup_token(cur)) अणु
+		हाल OPT_TAGS:
+			driver_setup.शेष_tags = val;
+			अगर (pe && *pe == '/') अणु
 				i = 0;
-				while (*pe && *pe != ARG_SEP && 
-					i < sizeof(driver_setup.tag_ctrl)-1) {
+				जबतक (*pe && *pe != ARG_SEP && 
+					i < माप(driver_setup.tag_ctrl)-1) अणु
 					driver_setup.tag_ctrl[i++] = *pe++;
-				}
+				पूर्ण
 				driver_setup.tag_ctrl[i] = '\0';
-			}
-			break;
-		case OPT_MASTER_PARITY:
+			पूर्ण
+			अवरोध;
+		हाल OPT_MASTER_PARITY:
 			driver_setup.master_parity = val;
-			break;
-		case OPT_SCSI_PARITY:
+			अवरोध;
+		हाल OPT_SCSI_PARITY:
 			driver_setup.scsi_parity = val;
-			break;
-		case OPT_DISCONNECTION:
+			अवरोध;
+		हाल OPT_DISCONNECTION:
 			driver_setup.disconnection = val;
-			break;
-		case OPT_SPECIAL_FEATURES:
+			अवरोध;
+		हाल OPT_SPECIAL_FEATURES:
 			driver_setup.special_features = val;
-			break;
-		case OPT_FORCE_SYNC_NEGO:
-			driver_setup.force_sync_nego = val;
-			break;
-		case OPT_REVERSE_PROBE:
+			अवरोध;
+		हाल OPT_FORCE_SYNC_NEGO:
+			driver_setup.क्रमce_sync_nego = val;
+			अवरोध;
+		हाल OPT_REVERSE_PROBE:
 			driver_setup.reverse_probe = val;
-			break;
-		case OPT_DEFAULT_SYNC:
-			driver_setup.default_sync = val;
-			break;
-		case OPT_VERBOSE:
+			अवरोध;
+		हाल OPT_DEFAULT_SYNC:
+			driver_setup.शेष_sync = val;
+			अवरोध;
+		हाल OPT_VERBOSE:
 			driver_setup.verbose = val;
-			break;
-		case OPT_DEBUG:
+			अवरोध;
+		हाल OPT_DEBUG:
 			driver_setup.debug = val;
-			break;
-		case OPT_BURST_MAX:
+			अवरोध;
+		हाल OPT_BURST_MAX:
 			driver_setup.burst_max = val;
-			break;
-		case OPT_LED_PIN:
+			अवरोध;
+		हाल OPT_LED_PIN:
 			driver_setup.led_pin = val;
-			break;
-		case OPT_MAX_WIDE:
+			अवरोध;
+		हाल OPT_MAX_WIDE:
 			driver_setup.max_wide = val? 1:0;
-			break;
-		case OPT_SETTLE_DELAY:
+			अवरोध;
+		हाल OPT_SETTLE_DELAY:
 			driver_setup.settle_delay = val;
-			break;
-		case OPT_DIFF_SUPPORT:
-			driver_setup.diff_support = val;
-			break;
-		case OPT_IRQM:
+			अवरोध;
+		हाल OPT_DIFF_SUPPORT:
+			driver_setup.dअगरf_support = val;
+			अवरोध;
+		हाल OPT_IRQM:
 			driver_setup.irqm = val;
-			break;
-		case OPT_PCI_FIX_UP:
+			अवरोध;
+		हाल OPT_PCI_FIX_UP:
 			driver_setup.pci_fix_up	= val;
-			break;
-		case OPT_BUS_CHECK:
+			अवरोध;
+		हाल OPT_BUS_CHECK:
 			driver_setup.bus_check = val;
-			break;
-		case OPT_OPTIMIZE:
+			अवरोध;
+		हाल OPT_OPTIMIZE:
 			driver_setup.optimize = val;
-			break;
-		case OPT_RECOVERY:
+			अवरोध;
+		हाल OPT_RECOVERY:
 			driver_setup.recovery = val;
-			break;
-		case OPT_USE_NVRAM:
+			अवरोध;
+		हाल OPT_USE_NVRAM:
 			driver_setup.use_nvram = val;
-			break;
-		case OPT_SAFE_SETUP:
-			memcpy(&driver_setup, &driver_safe_setup,
-				sizeof(driver_setup));
-			break;
-		case OPT_EXCLUDE:
-			if (xi < SCSI_NCR_MAX_EXCLUDES)
+			अवरोध;
+		हाल OPT_SAFE_SETUP:
+			स_नकल(&driver_setup, &driver_safe_setup,
+				माप(driver_setup));
+			अवरोध;
+		हाल OPT_EXCLUDE:
+			अगर (xi < SCSI_NCR_MAX_EXCLUDES)
 				driver_setup.excludes[xi++] = val;
-			break;
-		case OPT_HOST_ID:
+			अवरोध;
+		हाल OPT_HOST_ID:
 			driver_setup.host_id = val;
-			break;
-#ifdef SCSI_NCR_IARB_SUPPORT
-		case OPT_IARB:
+			अवरोध;
+#अगर_घोषित SCSI_NCR_IARB_SUPPORT
+		हाल OPT_IARB:
 			driver_setup.iarb = val;
-			break;
-#endif
-		default:
-			printk("sym53c8xx_setup: unexpected boot option '%.*s' ignored\n", (int)(pc-cur+1), cur);
-			break;
-		}
+			अवरोध;
+#पूर्ण_अगर
+		शेष:
+			prपूर्णांकk("sym53c8xx_setup: unexpected boot option '%.*s' ignored\n", (पूर्णांक)(pc-cur+1), cur);
+			अवरोध;
+		पूर्ण
 
-		if ((cur = strchr(cur, ARG_SEP)) != NULL)
+		अगर ((cur = म_अक्षर(cur, ARG_SEP)) != शून्य)
 			++cur;
-	}
-#endif /* SCSI_NCR_BOOT_COMMAND_LINE_SUPPORT */
-	return 1;
-}
-#endif /* !MODULE */
+	पूर्ण
+#पूर्ण_अगर /* SCSI_NCR_BOOT_COMMAND_LINE_SUPPORT */
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर /* !MODULE */
 
 /*===================================================================
 **
@@ -783,92 +784,92 @@ static int __init sym53c8xx__setup(char *str)
 **
 **===================================================================
 */
-#define DEF_DEPTH	(driver_setup.default_tags)
-#define ALL_TARGETS	-2
-#define NO_TARGET	-1
-#define ALL_LUNS	-2
-#define NO_LUN		-1
+#घोषणा DEF_DEPTH	(driver_setup.शेष_tags)
+#घोषणा ALL_TARGETS	-2
+#घोषणा NO_TARGET	-1
+#घोषणा ALL_LUNS	-2
+#घोषणा NO_LUN		-1
 
-static int device_queue_depth(int unit, int target, int lun)
-{
-	int c, h, t, u, v;
-	char *p = driver_setup.tag_ctrl;
-	char *ep;
+अटल पूर्णांक device_queue_depth(पूर्णांक unit, पूर्णांक target, पूर्णांक lun)
+अणु
+	पूर्णांक c, h, t, u, v;
+	अक्षर *p = driver_setup.tag_ctrl;
+	अक्षर *ep;
 
 	h = -1;
 	t = NO_TARGET;
 	u = NO_LUN;
-	while ((c = *p++) != 0) {
-		v = simple_strtoul(p, &ep, 0);
-		switch(c) {
-		case '/':
+	जबतक ((c = *p++) != 0) अणु
+		v = simple_म_से_अदीर्घ(p, &ep, 0);
+		चयन(c) अणु
+		हाल '/':
 			++h;
 			t = ALL_TARGETS;
 			u = ALL_LUNS;
-			break;
-		case 't':
-			if (t != target)
+			अवरोध;
+		हाल 't':
+			अगर (t != target)
 				t = (target == v) ? v : NO_TARGET;
 			u = ALL_LUNS;
-			break;
-		case 'u':
-			if (u != lun)
+			अवरोध;
+		हाल 'u':
+			अगर (u != lun)
 				u = (lun == v) ? v : NO_LUN;
-			break;
-		case 'q':
-			if (h == unit &&
+			अवरोध;
+		हाल 'q':
+			अगर (h == unit &&
 				(t == ALL_TARGETS || t == target) &&
 				(u == ALL_LUNS    || u == lun))
-				return v;
-			break;
-		case '-':
+				वापस v;
+			अवरोध;
+		हाल '-':
 			t = ALL_TARGETS;
 			u = ALL_LUNS;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		p = ep;
-	}
-	return DEF_DEPTH;
-}
+	पूर्ण
+	वापस DEF_DEPTH;
+पूर्ण
 
 
 /*==========================================================
 **
-**	The CCB done queue uses an array of CCB virtual 
+**	The CCB करोne queue uses an array of CCB भव 
 **	addresses. Empty entries are flagged using the bogus 
-**	virtual address 0xffffffff.
+**	भव address 0xffffffff.
 **
 **	Since PCI ensures that only aligned DWORDs are accessed 
 **	atomically, 64 bit little-endian architecture requires 
 **	to test the high order DWORD of the entry to determine 
-**	if it is empty or valid.
+**	अगर it is empty or valid.
 **
-**	BTW, I will make things differently as soon as I will 
+**	BTW, I will make things dअगरferently as soon as I will 
 **	have a better idea, but this is simple and should work.
 **
 **==========================================================
 */
  
-#define SCSI_NCR_CCB_DONE_SUPPORT
-#ifdef  SCSI_NCR_CCB_DONE_SUPPORT
+#घोषणा SCSI_NCR_CCB_DONE_SUPPORT
+#अगर_घोषित  SCSI_NCR_CCB_DONE_SUPPORT
 
-#define MAX_DONE 24
-#define CCB_DONE_EMPTY 0xffffffffUL
+#घोषणा MAX_DONE 24
+#घोषणा CCB_DONE_EMPTY 0xffffffffUL
 
 /* All 32 bit architectures */
-#if BITS_PER_LONG == 32
-#define CCB_DONE_VALID(cp)  (((u_long) cp) != CCB_DONE_EMPTY)
+#अगर BITS_PER_LONG == 32
+#घोषणा CCB_DONE_VALID(cp)  (((u_दीर्घ) cp) != CCB_DONE_EMPTY)
 
 /* All > 32 bit (64 bit) architectures regardless endian-ness */
-#else
-#define CCB_DONE_VALID(cp)  \
-	((((u_long) cp) & 0xffffffff00000000ul) && 	\
-	 (((u_long) cp) & 0xfffffffful) != CCB_DONE_EMPTY)
-#endif
+#अन्यथा
+#घोषणा CCB_DONE_VALID(cp)  \
+	((((u_दीर्घ) cp) & 0xffffffff00000000ul) && 	\
+	 (((u_दीर्घ) cp) & 0xfffffffful) != CCB_DONE_EMPTY)
+#पूर्ण_अगर
 
-#endif /* SCSI_NCR_CCB_DONE_SUPPORT */
+#पूर्ण_अगर /* SCSI_NCR_CCB_DONE_SUPPORT */
 
 /*==========================================================
 **
@@ -883,128 +884,128 @@ static int device_queue_depth(int unit, int target, int lun)
 **    If not, use this.
 */
 
-#ifndef SCSI_NCR_MYADDR
-#define SCSI_NCR_MYADDR      (7)
-#endif
+#अगर_अघोषित SCSI_NCR_MYADDR
+#घोषणा SCSI_NCR_MYADDR      (7)
+#पूर्ण_अगर
 
 /*
 **    The maximum number of tags per logic unit.
-**    Used only for disk devices that support tags.
+**    Used only क्रम disk devices that support tags.
 */
 
-#ifndef SCSI_NCR_MAX_TAGS
-#define SCSI_NCR_MAX_TAGS    (8)
-#endif
+#अगर_अघोषित SCSI_NCR_MAX_TAGS
+#घोषणा SCSI_NCR_MAX_TAGS    (8)
+#पूर्ण_अगर
 
 /*
 **    TAGS are actually limited to 64 tags/lun.
-**    We need to deal with power of 2, for alignment constraints.
+**    We need to deal with घातer of 2, क्रम alignment स्थिरraपूर्णांकs.
 */
-#if	SCSI_NCR_MAX_TAGS > 64
-#define	MAX_TAGS (64)
-#else
-#define	MAX_TAGS SCSI_NCR_MAX_TAGS
-#endif
+#अगर	SCSI_NCR_MAX_TAGS > 64
+#घोषणा	MAX_TAGS (64)
+#अन्यथा
+#घोषणा	MAX_TAGS SCSI_NCR_MAX_TAGS
+#पूर्ण_अगर
 
-#define NO_TAG	(255)
+#घोषणा NO_TAG	(255)
 
 /*
-**	Choose appropriate type for tag bitmap.
+**	Choose appropriate type क्रम tag biपंचांगap.
 */
-#if	MAX_TAGS > 32
-typedef u64 tagmap_t;
-#else
-typedef u32 tagmap_t;
-#endif
+#अगर	MAX_TAGS > 32
+प्रकार u64 tagmap_t;
+#अन्यथा
+प्रकार u32 tagmap_t;
+#पूर्ण_अगर
 
 /*
-**    Number of targets supported by the driver.
+**    Number of tarमाला_लो supported by the driver.
 **    n permits target numbers 0..n-1.
-**    Default is 16, meaning targets #0..#15.
+**    Default is 16, meaning tarमाला_लो #0..#15.
 **    #7 .. is myself.
 */
 
-#ifdef SCSI_NCR_MAX_TARGET
-#define MAX_TARGET  (SCSI_NCR_MAX_TARGET)
-#else
-#define MAX_TARGET  (16)
-#endif
+#अगर_घोषित SCSI_NCR_MAX_TARGET
+#घोषणा MAX_TARGET  (SCSI_NCR_MAX_TARGET)
+#अन्यथा
+#घोषणा MAX_TARGET  (16)
+#पूर्ण_अगर
 
 /*
 **    Number of logic units supported by the driver.
 **    n enables logic unit numbers 0..n-1.
 **    The common SCSI devices require only
-**    one lun, so take 1 as the default.
+**    one lun, so take 1 as the शेष.
 */
 
-#ifdef SCSI_NCR_MAX_LUN
-#define MAX_LUN    SCSI_NCR_MAX_LUN
-#else
-#define MAX_LUN    (1)
-#endif
+#अगर_घोषित SCSI_NCR_MAX_LUN
+#घोषणा MAX_LUN    SCSI_NCR_MAX_LUN
+#अन्यथा
+#घोषणा MAX_LUN    (1)
+#पूर्ण_अगर
 
 /*
 **    Asynchronous pre-scaler (ns). Shall be 40
 */
  
-#ifndef SCSI_NCR_MIN_ASYNC
-#define SCSI_NCR_MIN_ASYNC (40)
-#endif
+#अगर_अघोषित SCSI_NCR_MIN_ASYNC
+#घोषणा SCSI_NCR_MIN_ASYNC (40)
+#पूर्ण_अगर
 
 /*
-**    The maximum number of jobs scheduled for starting.
+**    The maximum number of jobs scheduled क्रम starting.
 **    There should be one slot per target, and one slot
-**    for each tag of each target in use.
+**    क्रम each tag of each target in use.
 **    The calculation below is actually quite silly ...
 */
 
-#ifdef SCSI_NCR_CAN_QUEUE
-#define MAX_START   (SCSI_NCR_CAN_QUEUE + 4)
-#else
-#define MAX_START   (MAX_TARGET + 7 * MAX_TAGS)
-#endif
+#अगर_घोषित SCSI_NCR_CAN_QUEUE
+#घोषणा MAX_START   (SCSI_NCR_CAN_QUEUE + 4)
+#अन्यथा
+#घोषणा MAX_START   (MAX_TARGET + 7 * MAX_TAGS)
+#पूर्ण_अगर
 
 /*
 **   We limit the max number of pending IO to 250.
-**   since we donnot want to allocate more than 1 
-**   PAGE for 'scripth'.
+**   since we करोnnot want to allocate more than 1 
+**   PAGE क्रम 'scripth'.
 */
-#if	MAX_START > 250
-#undef	MAX_START
-#define	MAX_START 250
-#endif
+#अगर	MAX_START > 250
+#अघोषित	MAX_START
+#घोषणा	MAX_START 250
+#पूर्ण_अगर
 
 /*
-**    The maximum number of segments a transfer is split into.
-**    We support up to 127 segments for both read and write.
-**    The data scripts are broken into 2 sub-scripts.
+**    The maximum number of segments a transfer is split पूर्णांकo.
+**    We support up to 127 segments क्रम both पढ़ो and ग_लिखो.
+**    The data scripts are broken पूर्णांकo 2 sub-scripts.
 **    80 (MAX_SCATTERL) segments are moved from a sub-script
-**    in on-chip RAM. This makes data transfers shorter than 
+**    in on-chip RAM. This makes data transfers लघुer than 
 **    80k (assuming 1k fs) as fast as possible.
 */
 
-#define MAX_SCATTER (SCSI_NCR_MAX_SCATTER)
+#घोषणा MAX_SCATTER (SCSI_NCR_MAX_SCATTER)
 
-#if (MAX_SCATTER > 80)
-#define MAX_SCATTERL	80
-#define	MAX_SCATTERH	(MAX_SCATTER - MAX_SCATTERL)
-#else
-#define MAX_SCATTERL	(MAX_SCATTER-1)
-#define	MAX_SCATTERH	1
-#endif
+#अगर (MAX_SCATTER > 80)
+#घोषणा MAX_SCATTERL	80
+#घोषणा	MAX_SCATTERH	(MAX_SCATTER - MAX_SCATTERL)
+#अन्यथा
+#घोषणा MAX_SCATTERL	(MAX_SCATTER-1)
+#घोषणा	MAX_SCATTERH	1
+#पूर्ण_अगर
 
 /*
 **	other
 */
 
-#define NCR_SNOOP_TIMEOUT (1000000)
+#घोषणा NCR_SNOOP_TIMEOUT (1000000)
 
 /*
 **	Other definitions
 */
 
-#define initverbose (driver_setup.verbose)
-#define bootverbose (np->verbose)
+#घोषणा initverbose (driver_setup.verbose)
+#घोषणा bootverbose (np->verbose)
 
 /*==========================================================
 **
@@ -1013,36 +1014,36 @@ typedef u32 tagmap_t;
 **==========================================================
 */
 
-#define HS_IDLE		(0)
-#define HS_BUSY		(1)
-#define HS_NEGOTIATE	(2)	/* sync/wide data transfer*/
-#define HS_DISCONNECT	(3)	/* Disconnected by target */
+#घोषणा HS_IDLE		(0)
+#घोषणा HS_BUSY		(1)
+#घोषणा HS_NEGOTIATE	(2)	/* sync/wide data transfer*/
+#घोषणा HS_DISCONNECT	(3)	/* Disconnected by target */
 
-#define HS_DONEMASK	(0x80)
-#define HS_COMPLETE	(4|HS_DONEMASK)
-#define HS_SEL_TIMEOUT	(5|HS_DONEMASK)	/* Selection timeout      */
-#define HS_RESET	(6|HS_DONEMASK)	/* SCSI reset	          */
-#define HS_ABORTED	(7|HS_DONEMASK)	/* Transfer aborted       */
-#define HS_TIMEOUT	(8|HS_DONEMASK)	/* Software timeout       */
-#define HS_FAIL		(9|HS_DONEMASK)	/* SCSI or PCI bus errors */
-#define HS_UNEXPECTED	(10|HS_DONEMASK)/* Unexpected disconnect  */
+#घोषणा HS_DONEMASK	(0x80)
+#घोषणा HS_COMPLETE	(4|HS_DONEMASK)
+#घोषणा HS_SEL_TIMEOUT	(5|HS_DONEMASK)	/* Selection समयout      */
+#घोषणा HS_RESET	(6|HS_DONEMASK)	/* SCSI reset	          */
+#घोषणा HS_ABORTED	(7|HS_DONEMASK)	/* Transfer पातed       */
+#घोषणा HS_TIMEOUT	(8|HS_DONEMASK)	/* Software समयout       */
+#घोषणा HS_FAIL		(9|HS_DONEMASK)	/* SCSI or PCI bus errors */
+#घोषणा HS_UNEXPECTED	(10|HS_DONEMASK)/* Unexpected disconnect  */
 
 /*
 **	Invalid host status values used by the SCRIPTS processor 
-**	when the nexus is not fully identified.
+**	when the nexus is not fully identअगरied.
 **	Shall never appear in a CCB.
 */
 
-#define HS_INVALMASK	(0x40)
-#define	HS_SELECTING	(0|HS_INVALMASK)
-#define	HS_IN_RESELECT	(1|HS_INVALMASK)
-#define	HS_STARTING	(2|HS_INVALMASK)
+#घोषणा HS_INVALMASK	(0x40)
+#घोषणा	HS_SELECTING	(0|HS_INVALMASK)
+#घोषणा	HS_IN_RESELECT	(1|HS_INVALMASK)
+#घोषणा	HS_STARTING	(2|HS_INVALMASK)
 
 /*
-**	Flags set by the SCRIPT processor for commands 
+**	Flags set by the SCRIPT processor क्रम commands 
 **	that have been skipped.
 */
-#define HS_SKIPMASK	(0x20)
+#घोषणा HS_SKIPMASK	(0x20)
 
 /*==========================================================
 **
@@ -1051,50 +1052,50 @@ typedef u32 tagmap_t;
 **==========================================================
 */
 
-#define	SIR_BAD_STATUS		(1)
-#define	SIR_XXXXXXXXXX		(2)
-#define	SIR_NEGO_SYNC		(3)
-#define	SIR_NEGO_WIDE		(4)
-#define	SIR_NEGO_FAILED		(5)
-#define	SIR_NEGO_PROTO		(6)
-#define	SIR_REJECT_RECEIVED	(7)
-#define	SIR_REJECT_SENT		(8)
-#define	SIR_IGN_RESIDUE		(9)
-#define	SIR_MISSING_SAVE	(10)
-#define	SIR_RESEL_NO_MSG_IN	(11)
-#define	SIR_RESEL_NO_IDENTIFY	(12)
-#define	SIR_RESEL_BAD_LUN	(13)
-#define	SIR_RESEL_BAD_TARGET	(14)
-#define	SIR_RESEL_BAD_I_T_L	(15)
-#define	SIR_RESEL_BAD_I_T_L_Q	(16)
-#define	SIR_DONE_OVERFLOW	(17)
-#define	SIR_INTFLY		(18)
-#define	SIR_MAX			(18)
+#घोषणा	SIR_BAD_STATUS		(1)
+#घोषणा	SIR_XXXXXXXXXX		(2)
+#घोषणा	SIR_NEGO_SYNC		(3)
+#घोषणा	SIR_NEGO_WIDE		(4)
+#घोषणा	SIR_NEGO_FAILED		(5)
+#घोषणा	SIR_NEGO_PROTO		(6)
+#घोषणा	SIR_REJECT_RECEIVED	(7)
+#घोषणा	SIR_REJECT_SENT		(8)
+#घोषणा	SIR_IGN_RESIDUE		(9)
+#घोषणा	SIR_MISSING_SAVE	(10)
+#घोषणा	SIR_RESEL_NO_MSG_IN	(11)
+#घोषणा	SIR_RESEL_NO_IDENTIFY	(12)
+#घोषणा	SIR_RESEL_BAD_LUN	(13)
+#घोषणा	SIR_RESEL_BAD_TARGET	(14)
+#घोषणा	SIR_RESEL_BAD_I_T_L	(15)
+#घोषणा	SIR_RESEL_BAD_I_T_L_Q	(16)
+#घोषणा	SIR_DONE_OVERFLOW	(17)
+#घोषणा	SIR_INTFLY		(18)
+#घोषणा	SIR_MAX			(18)
 
 /*==========================================================
 **
 **	Extended error codes.
-**	xerr_status field of struct ccb.
+**	xerr_status field of काष्ठा ccb.
 **
 **==========================================================
 */
 
-#define	XE_OK		(0)
-#define	XE_EXTRA_DATA	(1)	/* unexpected data phase */
-#define	XE_BAD_PHASE	(2)	/* illegal phase (4/5)   */
+#घोषणा	XE_OK		(0)
+#घोषणा	XE_EXTRA_DATA	(1)	/* unexpected data phase */
+#घोषणा	XE_BAD_PHASE	(2)	/* illegal phase (4/5)   */
 
 /*==========================================================
 **
 **	Negotiation status.
-**	nego_status field	of struct ccb.
+**	nego_status field	of काष्ठा ccb.
 **
 **==========================================================
 */
 
-#define NS_NOCHANGE	(0)
-#define NS_SYNC		(1)
-#define NS_WIDE		(2)
-#define NS_PPR		(4)
+#घोषणा NS_NOCHANGE	(0)
+#घोषणा NS_SYNC		(1)
+#घोषणा NS_WIDE		(2)
+#घोषणा NS_PPR		(4)
 
 /*==========================================================
 **
@@ -1103,73 +1104,73 @@ typedef u32 tagmap_t;
 **==========================================================
 */
 
-#define CCB_MAGIC	(0xf2691ad2)
+#घोषणा CCB_MAGIC	(0xf2691ad2)
 
 /*==========================================================
 **
-**	Declaration of structs.
+**	Declaration of काष्ठाs.
 **
 **==========================================================
 */
 
-static struct scsi_transport_template *ncr53c8xx_transport_template = NULL;
+अटल काष्ठा scsi_transport_ढाँचा *ncr53c8xx_transport_ढाँचा = शून्य;
 
-struct tcb;
-struct lcb;
-struct ccb;
-struct ncb;
-struct script;
+काष्ठा tcb;
+काष्ठा lcb;
+काष्ठा ccb;
+काष्ठा ncb;
+काष्ठा script;
 
-struct link {
+काष्ठा link अणु
 	ncrcmd	l_cmd;
 	ncrcmd	l_paddr;
-};
+पूर्ण;
 
-struct	usrcmd {
-	u_long	target;
-	u_long	lun;
-	u_long	data;
-	u_long	cmd;
-};
+काष्ठा	usrcmd अणु
+	u_दीर्घ	target;
+	u_दीर्घ	lun;
+	u_दीर्घ	data;
+	u_दीर्घ	cmd;
+पूर्ण;
 
-#define UC_SETSYNC      10
-#define UC_SETTAGS	11
-#define UC_SETDEBUG	12
-#define UC_SETORDER	13
-#define UC_SETWIDE	14
-#define UC_SETFLAG	15
-#define UC_SETVERBOSE	17
+#घोषणा UC_SETSYNC      10
+#घोषणा UC_SETTAGS	11
+#घोषणा UC_SETDEBUG	12
+#घोषणा UC_SETORDER	13
+#घोषणा UC_SETWIDE	14
+#घोषणा UC_SETFLAG	15
+#घोषणा UC_SETVERBOSE	17
 
-#define	UF_TRACE	(0x01)
-#define	UF_NODISC	(0x02)
-#define	UF_NOSCAN	(0x04)
+#घोषणा	UF_TRACE	(0x01)
+#घोषणा	UF_NODISC	(0x02)
+#घोषणा	UF_NOSCAN	(0x04)
 
 /*========================================================================
 **
-**	Declaration of structs:		target control block
+**	Declaration of काष्ठाs:		target control block
 **
 **========================================================================
 */
-struct tcb {
+काष्ठा tcb अणु
 	/*----------------------------------------------------------------
-	**	During reselection the ncr jumps to this point with SFBR 
+	**	During reselection the ncr jumps to this poपूर्णांक with SFBR 
 	**	set to the encoded target number with bit 7 set.
-	**	if it's not this target, jump to the next.
+	**	अगर it's not this target, jump to the next.
 	**
 	**	JUMP  IF (SFBR != #target#), @(next tcb)
 	**----------------------------------------------------------------
 	*/
-	struct link   jump_tcb;
+	काष्ठा link   jump_tcb;
 
 	/*----------------------------------------------------------------
-	**	Load the actual values for the sxfer and the scntl3
-	**	register (sync/wide mode).
+	**	Load the actual values क्रम the sxfer and the scntl3
+	**	रेजिस्टर (sync/wide mode).
 	**
-	**	SCR_COPY (1), @(sval field of this tcb), @(sxfer  register)
-	**	SCR_COPY (1), @(wval field of this tcb), @(scntl3 register)
+	**	SCR_COPY (1), @(sval field of this tcb), @(sxfer  रेजिस्टर)
+	**	SCR_COPY (1), @(wval field of this tcb), @(scntl3 रेजिस्टर)
 	**----------------------------------------------------------------
 	*/
-	ncrcmd	getscr[6];
+	ncrcmd	माला_लोcr[6];
 
 	/*----------------------------------------------------------------
 	**	Get the IDENTIFY message and load the LUN to SFBR.
@@ -1177,10 +1178,10 @@ struct tcb {
 	**	CALL, <RESEL_LUN>
 	**----------------------------------------------------------------
 	*/
-	struct link   call_lun;
+	काष्ठा link   call_lun;
 
 	/*----------------------------------------------------------------
-	**	Now look for the right lun.
+	**	Now look क्रम the right lun.
 	**
 	**	For i = 0 to 3
 	**		SCR_JUMP ^ IFTRUE(MASK(i, 3)), @(first lcb mod. i)
@@ -1189,65 +1190,65 @@ struct tcb {
 	**	It is kind of hashcoding.
 	**----------------------------------------------------------------
 	*/
-	struct link     jump_lcb[4];	/* JUMPs for reselection	*/
-	struct lcb *	lp[MAX_LUN];	/* The lcb's of this tcb	*/
+	काष्ठा link     jump_lcb[4];	/* JUMPs क्रम reselection	*/
+	काष्ठा lcb *	lp[MAX_LUN];	/* The lcb's of this tcb	*/
 
 	/*----------------------------------------------------------------
-	**	Pointer to the ccb used for negotiation.
-	**	Prevent from starting a negotiation for all queued commands 
+	**	Poपूर्णांकer to the ccb used क्रम negotiation.
+	**	Prevent from starting a negotiation क्रम all queued commands 
 	**	when tagged command queuing is enabled.
 	**----------------------------------------------------------------
 	*/
-	struct ccb *   nego_cp;
+	काष्ठा ccb *   nego_cp;
 
 	/*----------------------------------------------------------------
 	**	statistical data
 	**----------------------------------------------------------------
 	*/
-	u_long	transfers;
-	u_long	bytes;
+	u_दीर्घ	transfers;
+	u_दीर्घ	bytes;
 
 	/*----------------------------------------------------------------
 	**	negotiation of wide and synch transfer and device quirks.
 	**----------------------------------------------------------------
 	*/
-#ifdef SCSI_NCR_BIG_ENDIAN
+#अगर_घोषित SCSI_NCR_BIG_ENDIAN
 /*0*/	u16	period;
-/*2*/	u_char	sval;
-/*3*/	u_char	minsync;
-/*0*/	u_char	wval;
-/*1*/	u_char	widedone;
-/*2*/	u_char	quirks;
-/*3*/	u_char	maxoffs;
-#else
-/*0*/	u_char	minsync;
-/*1*/	u_char	sval;
+/*2*/	u_अक्षर	sval;
+/*3*/	u_अक्षर	minsync;
+/*0*/	u_अक्षर	wval;
+/*1*/	u_अक्षर	wideकरोne;
+/*2*/	u_अक्षर	quirks;
+/*3*/	u_अक्षर	maxoffs;
+#अन्यथा
+/*0*/	u_अक्षर	minsync;
+/*1*/	u_अक्षर	sval;
 /*2*/	u16	period;
-/*0*/	u_char	maxoffs;
-/*1*/	u_char	quirks;
-/*2*/	u_char	widedone;
-/*3*/	u_char	wval;
-#endif
+/*0*/	u_अक्षर	maxoffs;
+/*1*/	u_अक्षर	quirks;
+/*2*/	u_अक्षर	wideकरोne;
+/*3*/	u_अक्षर	wval;
+#पूर्ण_अगर
 
 	/* User settable limits and options.  */
-	u_char	usrsync;
-	u_char	usrwide;
-	u_char	usrtags;
-	u_char	usrflag;
-	struct scsi_target *starget;
-};
+	u_अक्षर	usrsync;
+	u_अक्षर	usrwide;
+	u_अक्षर	usrtags;
+	u_अक्षर	usrflag;
+	काष्ठा scsi_target *starget;
+पूर्ण;
 
 /*========================================================================
 **
-**	Declaration of structs:		lun control block
+**	Declaration of काष्ठाs:		lun control block
 **
 **========================================================================
 */
-struct lcb {
+काष्ठा lcb अणु
 	/*----------------------------------------------------------------
-	**	During reselection the ncr jumps to this point
+	**	During reselection the ncr jumps to this poपूर्णांक
 	**	with SFBR set to the "Identify" message.
-	**	if it's not this lun, jump to the next.
+	**	अगर it's not this lun, jump to the next.
 	**
 	**	JUMP  IF (SFBR != #lun#), @(next lcb of this target)
 	**
@@ -1258,49 +1259,49 @@ struct lcb {
 	**		SCR_JUMP, <RESEL_TAG>
 	**----------------------------------------------------------------
 	*/
-	struct link	jump_lcb;
+	काष्ठा link	jump_lcb;
 	ncrcmd		load_jump_ccb[3];
-	struct link	jump_tag;
+	काष्ठा link	jump_tag;
 	ncrcmd		p_jump_ccb;	/* Jump table bus address	*/
 
 	/*----------------------------------------------------------------
 	**	Jump table used by the script processor to directly jump 
 	**	to the CCB corresponding to the reselected nexus.
 	**	Address is allocated on 256 bytes boundary in order to 
-	**	allow 8 bit calculation of the tag jump entry for up to 
+	**	allow 8 bit calculation of the tag jump entry क्रम up to 
 	**	64 possible tags.
 	**----------------------------------------------------------------
 	*/
-	u32		jump_ccb_0;	/* Default table if no tags	*/
+	u32		jump_ccb_0;	/* Default table अगर no tags	*/
 	u32		*jump_ccb;	/* Virtual address		*/
 
 	/*----------------------------------------------------------------
 	**	CCB queue management.
 	**----------------------------------------------------------------
 	*/
-	struct list_head free_ccbq;	/* Queue of available CCBs	*/
-	struct list_head busy_ccbq;	/* Queue of busy CCBs		*/
-	struct list_head wait_ccbq;	/* Queue of waiting for IO CCBs	*/
-	struct list_head skip_ccbq;	/* Queue of skipped CCBs	*/
-	u_char		actccbs;	/* Number of allocated CCBs	*/
-	u_char		busyccbs;	/* CCBs busy for this lun	*/
-	u_char		queuedccbs;	/* CCBs queued to the controller*/
-	u_char		queuedepth;	/* Queue depth for this lun	*/
-	u_char		scdev_depth;	/* SCSI device queue depth	*/
-	u_char		maxnxs;		/* Max possible nexuses		*/
+	काष्ठा list_head मुक्त_ccbq;	/* Queue of available CCBs	*/
+	काष्ठा list_head busy_ccbq;	/* Queue of busy CCBs		*/
+	काष्ठा list_head रुको_ccbq;	/* Queue of रुकोing क्रम IO CCBs	*/
+	काष्ठा list_head skip_ccbq;	/* Queue of skipped CCBs	*/
+	u_अक्षर		actccbs;	/* Number of allocated CCBs	*/
+	u_अक्षर		busyccbs;	/* CCBs busy क्रम this lun	*/
+	u_अक्षर		queuedccbs;	/* CCBs queued to the controller*/
+	u_अक्षर		queuedepth;	/* Queue depth क्रम this lun	*/
+	u_अक्षर		scdev_depth;	/* SCSI device queue depth	*/
+	u_अक्षर		maxnxs;		/* Max possible nexuses		*/
 
 	/*----------------------------------------------------------------
 	**	Control of tagged command queuing.
-	**	Tags allocation is performed using a circular buffer.
-	**	This avoids using a loop for tag allocation.
+	**	Tags allocation is perक्रमmed using a circular buffer.
+	**	This aव्योमs using a loop क्रम tag allocation.
 	**----------------------------------------------------------------
 	*/
-	u_char		ia_tag;		/* Allocation index		*/
-	u_char		if_tag;		/* Freeing index		*/
-	u_char cb_tags[MAX_TAGS];	/* Circular tags buffer	*/
-	u_char		usetags;	/* Command queuing is active	*/
-	u_char		maxtags;	/* Max nr of tags asked by user	*/
-	u_char		numtags;	/* Current number of tags	*/
+	u_अक्षर		ia_tag;		/* Allocation index		*/
+	u_अक्षर		अगर_tag;		/* Freeing index		*/
+	u_अक्षर cb_tags[MAX_TAGS];	/* Circular tags buffer	*/
+	u_अक्षर		usetags;	/* Command queuing is active	*/
+	u_अक्षर		maxtags;	/* Max nr of tags asked by user	*/
+	u_अक्षर		numtags;	/* Current number of tags	*/
 
 	/*----------------------------------------------------------------
 	**	QUEUE FULL control and ORDERED tag control.
@@ -1311,56 +1312,56 @@ struct lcb {
 	**----------------------------------------------------------------
 	*/
 	u16		num_good;	/* Nr of GOOD since QUEUE FULL	*/
-	tagmap_t	tags_umap;	/* Used tags bitmap		*/
+	tagmap_t	tags_umap;	/* Used tags biपंचांगap		*/
 	tagmap_t	tags_smap;	/* Tags in use at 'tag_stime'	*/
-	u_long		tags_stime;	/* Last time we set smap=umap	*/
-	struct ccb *	held_ccb;	/* CCB held for QUEUE FULL	*/
-};
+	u_दीर्घ		tags_sसमय;	/* Last समय we set smap=umap	*/
+	काष्ठा ccb *	held_ccb;	/* CCB held क्रम QUEUE FULL	*/
+पूर्ण;
 
 /*========================================================================
 **
-**      Declaration of structs:     the launch script.
+**      Declaration of काष्ठाs:     the launch script.
 **
 **========================================================================
 **
 **	It is part of the CCB and is called by the scripts processor to 
-**	start or restart the data structure (nexus).
+**	start or restart the data काष्ठाure (nexus).
 **	This 6 DWORDs mini script makes use of prefetching.
 **
 **------------------------------------------------------------------------
 */
-struct launch {
+काष्ठा launch अणु
 	/*----------------------------------------------------------------
-	**	SCR_COPY(4),	@(p_phys), @(dsa register)
-	**	SCR_JUMP,	@(scheduler_point)
+	**	SCR_COPY(4),	@(p_phys), @(dsa रेजिस्टर)
+	**	SCR_JUMP,	@(scheduler_poपूर्णांक)
 	**----------------------------------------------------------------
 	*/
 	ncrcmd		setup_dsa[3];	/* Copy 'phys' address to dsa	*/
-	struct link	schedule;	/* Jump to scheduler point	*/
+	काष्ठा link	schedule;	/* Jump to scheduler poपूर्णांक	*/
 	ncrcmd		p_phys;		/* 'phys' header bus address	*/
-};
+पूर्ण;
 
 /*========================================================================
 **
-**      Declaration of structs:     global HEADER.
+**      Declaration of काष्ठाs:     global HEADER.
 **
 **========================================================================
 **
-**	This substructure is copied from the ccb to a global address after 
-**	selection (or reselection) and copied back before disconnect.
+**	This subकाष्ठाure is copied from the ccb to a global address after 
+**	selection (or reselection) and copied back beक्रमe disconnect.
 **
 **	These fields are accessible to the script processor.
 **
 **------------------------------------------------------------------------
 */
 
-struct head {
+काष्ठा head अणु
 	/*----------------------------------------------------------------
-	**	Saved data pointer.
-	**	Points to the position in the script responsible for the
+	**	Saved data poपूर्णांकer.
+	**	Poपूर्णांकs to the position in the script responsible क्रम the
 	**	actual transfer transfer of data.
 	**	It's written after reception of a SAVE_DATA_POINTER message.
-	**	The goalpointer points after the last transfer command.
+	**	The goalpoपूर्णांकer poपूर्णांकs after the last transfer command.
 	**----------------------------------------------------------------
 	*/
 	u32		savep;
@@ -1368,7 +1369,7 @@ struct head {
 	u32		goalp;
 
 	/*----------------------------------------------------------------
-	**	Alternate data pointer.
+	**	Alternate data poपूर्णांकer.
 	**	They are copied back to savep/lastp/goalp by the SCRIPTS 
 	**	when the direction is unknown and the device claims data out.
 	**----------------------------------------------------------------
@@ -1377,30 +1378,30 @@ struct head {
 	u32		wgoalp;
 
 	/*----------------------------------------------------------------
-	**	The virtual address of the ccb containing this header.
+	**	The भव address of the ccb containing this header.
 	**----------------------------------------------------------------
 	*/
-	struct ccb *	cp;
+	काष्ठा ccb *	cp;
 
 	/*----------------------------------------------------------------
 	**	Status fields.
 	**----------------------------------------------------------------
 	*/
-	u_char		scr_st[4];	/* script status		*/
-	u_char		status[4];	/* host status. must be the 	*/
+	u_अक्षर		scr_st[4];	/* script status		*/
+	u_अक्षर		status[4];	/* host status. must be the 	*/
 					/*  last DWORD of the header.	*/
-};
+पूर्ण;
 
 /*
 **	The status bytes are used by the host and the script processor.
 **
 **	The byte corresponding to the host_status must be stored in the 
-**	last DWORD of the CCB header since it is used for command 
+**	last DWORD of the CCB header since it is used क्रम command 
 **	completion (ncr_wakeup()). Doing so, we are sure that the header 
 **	has been entirely copied back to the CCB when the host_status is 
 **	seen complete by the CPU.
 **
-**	The last four bytes (status[4]) are copied to the scratchb register
+**	The last four bytes (status[4]) are copied to the scratchb रेजिस्टर
 **	(declared as scr0..scr3 in ncr_reg.h) just after the select/reselect,
 **	and copied back just after disconnecting.
 **	Inside the script the XX_REG are used.
@@ -1417,114 +1418,114 @@ struct head {
 /*
 **	Last four bytes (script)
 */
-#define  QU_REG	scr0
-#define  HS_REG	scr1
-#define  HS_PRT	nc_scr1
-#define  SS_REG	scr2
-#define  SS_PRT	nc_scr2
-#define  PS_REG	scr3
+#घोषणा  QU_REG	scr0
+#घोषणा  HS_REG	scr1
+#घोषणा  HS_PRT	nc_scr1
+#घोषणा  SS_REG	scr2
+#घोषणा  SS_PRT	nc_scr2
+#घोषणा  PS_REG	scr3
 
 /*
 **	Last four bytes (host)
 */
-#ifdef SCSI_NCR_BIG_ENDIAN
-#define  actualquirks  phys.header.status[3]
-#define  host_status   phys.header.status[2]
-#define  scsi_status   phys.header.status[1]
-#define  parity_status phys.header.status[0]
-#else
-#define  actualquirks  phys.header.status[0]
-#define  host_status   phys.header.status[1]
-#define  scsi_status   phys.header.status[2]
-#define  parity_status phys.header.status[3]
-#endif
+#अगर_घोषित SCSI_NCR_BIG_ENDIAN
+#घोषणा  actualquirks  phys.header.status[3]
+#घोषणा  host_status   phys.header.status[2]
+#घोषणा  scsi_status   phys.header.status[1]
+#घोषणा  parity_status phys.header.status[0]
+#अन्यथा
+#घोषणा  actualquirks  phys.header.status[0]
+#घोषणा  host_status   phys.header.status[1]
+#घोषणा  scsi_status   phys.header.status[2]
+#घोषणा  parity_status phys.header.status[3]
+#पूर्ण_अगर
 
 /*
 **	First four bytes (script)
 */
-#define  xerr_st       header.scr_st[0]
-#define  sync_st       header.scr_st[1]
-#define  nego_st       header.scr_st[2]
-#define  wide_st       header.scr_st[3]
+#घोषणा  xerr_st       header.scr_st[0]
+#घोषणा  sync_st       header.scr_st[1]
+#घोषणा  nego_st       header.scr_st[2]
+#घोषणा  wide_st       header.scr_st[3]
 
 /*
 **	First four bytes (host)
 */
-#define  xerr_status   phys.xerr_st
-#define  nego_status   phys.nego_st
+#घोषणा  xerr_status   phys.xerr_st
+#घोषणा  nego_status   phys.nego_st
 
-#if 0
-#define  sync_status   phys.sync_st
-#define  wide_status   phys.wide_st
-#endif
+#अगर 0
+#घोषणा  sync_status   phys.sync_st
+#घोषणा  wide_status   phys.wide_st
+#पूर्ण_अगर
 
 /*==========================================================
 **
-**      Declaration of structs:     Data structure block
+**      Declaration of काष्ठाs:     Data काष्ठाure block
 **
 **==========================================================
 **
 **	During execution of a ccb by the script processor,
-**	the DSA (data structure address) register points
-**	to this substructure of the ccb.
-**	This substructure contains the header with
+**	the DSA (data काष्ठाure address) रेजिस्टर poपूर्णांकs
+**	to this subकाष्ठाure of the ccb.
+**	This subकाष्ठाure contains the header with
 **	the script-processor-changeable data and
-**	data blocks for the indirect move commands.
+**	data blocks क्रम the indirect move commands.
 **
 **----------------------------------------------------------
 */
 
-struct dsb {
+काष्ठा dsb अणु
 
 	/*
 	**	Header.
 	*/
 
-	struct head	header;
+	काष्ठा head	header;
 
 	/*
-	**	Table data for Script
+	**	Table data क्रम Script
 	*/
 
-	struct scr_tblsel  select;
-	struct scr_tblmove smsg  ;
-	struct scr_tblmove cmd   ;
-	struct scr_tblmove sense ;
-	struct scr_tblmove data[MAX_SCATTER];
-};
+	काष्ठा scr_tblsel  select;
+	काष्ठा scr_tblmove smsg  ;
+	काष्ठा scr_tblmove cmd   ;
+	काष्ठा scr_tblmove sense ;
+	काष्ठा scr_tblmove data[MAX_SCATTER];
+पूर्ण;
 
 
 /*========================================================================
 **
-**      Declaration of structs:     Command control block.
+**      Declaration of काष्ठाs:     Command control block.
 **
 **========================================================================
 */
-struct ccb {
+काष्ठा ccb अणु
 	/*----------------------------------------------------------------
-	**	This is the data structure which is pointed by the DSA 
-	**	register when it is executed by the script processor.
+	**	This is the data काष्ठाure which is poपूर्णांकed by the DSA 
+	**	रेजिस्टर when it is executed by the script processor.
 	**	It must be the first entry because it contains the header 
 	**	as first entry that must be cache line aligned.
 	**----------------------------------------------------------------
 	*/
-	struct dsb	phys;
+	काष्ठा dsb	phys;
 
 	/*----------------------------------------------------------------
 	**	Mini-script used at CCB execution start-up.
-	**	Load the DSA with the data structure address (phys) and 
-	**	jump to SELECT. Jump to CANCEL if CCB is to be canceled.
+	**	Load the DSA with the data काष्ठाure address (phys) and 
+	**	jump to SELECT. Jump to CANCEL अगर CCB is to be canceled.
 	**----------------------------------------------------------------
 	*/
-	struct launch	start;
+	काष्ठा launch	start;
 
 	/*----------------------------------------------------------------
 	**	Mini-script used at CCB relection to restart the nexus.
-	**	Load the DSA with the data structure address (phys) and 
-	**	jump to RESEL_DSA. Jump to ABORT if CCB is to be aborted.
+	**	Load the DSA with the data काष्ठाure address (phys) and 
+	**	jump to RESEL_DSA. Jump to ABORT अगर CCB is to be पातed.
 	**----------------------------------------------------------------
 	*/
-	struct launch	restart;
+	काष्ठा launch	restart;
 
 	/*----------------------------------------------------------------
 	**	If a data transfer phase is terminated too early
@@ -1537,103 +1538,103 @@ struct ccb {
 
 	/*----------------------------------------------------------------
 	**	The general SCSI driver provides a
-	**	pointer to a control block.
+	**	poपूर्णांकer to a control block.
 	**----------------------------------------------------------------
 	*/
-	struct scsi_cmnd	*cmd;		/* SCSI command 		*/
-	u_char		cdb_buf[16];	/* Copy of CDB			*/
-	u_char		sense_buf[64];
-	int		data_len;	/* Total data length		*/
+	काष्ठा scsi_cmnd	*cmd;		/* SCSI command 		*/
+	u_अक्षर		cdb_buf[16];	/* Copy of CDB			*/
+	u_अक्षर		sense_buf[64];
+	पूर्णांक		data_len;	/* Total data length		*/
 
 	/*----------------------------------------------------------------
 	**	Message areas.
 	**	We prepare a message to be sent after selection.
-	**	We may use a second one if the command is rescheduled 
+	**	We may use a second one अगर the command is rescheduled 
 	**	due to GETCC or QFULL.
 	**      Contents are IDENTIFY and SIMPLE_TAG.
 	**	While negotiating sync or wide transfer,
 	**	a SDTR or WDTR message is appended.
 	**----------------------------------------------------------------
 	*/
-	u_char		scsi_smsg [8];
-	u_char		scsi_smsg2[8];
+	u_अक्षर		scsi_smsg [8];
+	u_अक्षर		scsi_smsg2[8];
 
 	/*----------------------------------------------------------------
 	**	Other fields.
 	**----------------------------------------------------------------
 	*/
-	u_long		p_ccb;		/* BUS address of this CCB	*/
-	u_char		sensecmd[6];	/* Sense command		*/
-	u_char		tag;		/* Tag for this transfer	*/
+	u_दीर्घ		p_ccb;		/* BUS address of this CCB	*/
+	u_अक्षर		sensecmd[6];	/* Sense command		*/
+	u_अक्षर		tag;		/* Tag क्रम this transfer	*/
 					/*  255 means no tag		*/
-	u_char		target;
-	u_char		lun;
-	u_char		queued;
-	u_char		auto_sense;
-	struct ccb *	link_ccb;	/* Host adapter CCB chain	*/
-	struct list_head link_ccbq;	/* Link to unit CCB queue	*/
-	u32		startp;		/* Initial data pointer		*/
-	u_long		magic;		/* Free / busy  CCB flag	*/
-};
+	u_अक्षर		target;
+	u_अक्षर		lun;
+	u_अक्षर		queued;
+	u_अक्षर		स्वतः_sense;
+	काष्ठा ccb *	link_ccb;	/* Host adapter CCB chain	*/
+	काष्ठा list_head link_ccbq;	/* Link to unit CCB queue	*/
+	u32		startp;		/* Initial data poपूर्णांकer		*/
+	u_दीर्घ		magic;		/* Free / busy  CCB flag	*/
+पूर्ण;
 
-#define CCB_PHYS(cp,lbl)	(cp->p_ccb + offsetof(struct ccb, lbl))
+#घोषणा CCB_PHYS(cp,lbl)	(cp->p_ccb + दुरत्व(काष्ठा ccb, lbl))
 
 
 /*========================================================================
 **
-**      Declaration of structs:     NCR device descriptor
+**      Declaration of काष्ठाs:     NCR device descriptor
 **
 **========================================================================
 */
-struct ncb {
+काष्ठा ncb अणु
 	/*----------------------------------------------------------------
 	**	The global header.
 	**	It is accessible to both the host and the script processor.
-	**	Must be cache line size aligned (32 for x86) in order to 
+	**	Must be cache line size aligned (32 क्रम x86) in order to 
 	**	allow cache line bursting when it is copied to/from CCB.
 	**----------------------------------------------------------------
 	*/
-	struct head     header;
+	काष्ठा head     header;
 
 	/*----------------------------------------------------------------
 	**	CCBs management queues.
 	**----------------------------------------------------------------
 	*/
-	struct scsi_cmnd	*waiting_list;	/* Commands waiting for a CCB	*/
+	काष्ठा scsi_cmnd	*रुकोing_list;	/* Commands रुकोing क्रम a CCB	*/
 					/*  when lcb is not allocated.	*/
-	struct scsi_cmnd	*done_list;	/* Commands waiting for done()  */
+	काष्ठा scsi_cmnd	*करोne_list;	/* Commands रुकोing क्रम करोne()  */
 					/* callback to be invoked.      */ 
-	spinlock_t	smp_lock;	/* Lock for SMP threading       */
+	spinlock_t	smp_lock;	/* Lock क्रम SMP thपढ़ोing       */
 
 	/*----------------------------------------------------------------
-	**	Chip and controller identification.
+	**	Chip and controller identअगरication.
 	**----------------------------------------------------------------
 	*/
-	int		unit;		/* Unit number			*/
-	char		inst_name[16];	/* ncb instance name		*/
+	पूर्णांक		unit;		/* Unit number			*/
+	अक्षर		inst_name[16];	/* ncb instance name		*/
 
 	/*----------------------------------------------------------------
-	**	Initial value of some IO register bits.
+	**	Initial value of some IO रेजिस्टर bits.
 	**	These values are assumed to have been set by BIOS, and may 
-	**	be used for probing adapter implementation differences.
+	**	be used क्रम probing adapter implementation dअगरferences.
 	**----------------------------------------------------------------
 	*/
-	u_char	sv_scntl0, sv_scntl3, sv_dmode, sv_dcntl, sv_ctest0, sv_ctest3,
+	u_अक्षर	sv_scntl0, sv_scntl3, sv_dmode, sv_dcntl, sv_ctest0, sv_ctest3,
 		sv_ctest4, sv_ctest5, sv_gpcntl, sv_stest2, sv_stest4;
 
 	/*----------------------------------------------------------------
-	**	Actual initial value of IO register bits used by the 
+	**	Actual initial value of IO रेजिस्टर bits used by the 
 	**	driver. They are loaded at initialisation according to  
 	**	features that are to be enabled.
 	**----------------------------------------------------------------
 	*/
-	u_char	rv_scntl0, rv_scntl3, rv_dmode, rv_dcntl, rv_ctest0, rv_ctest3,
+	u_अक्षर	rv_scntl0, rv_scntl3, rv_dmode, rv_dcntl, rv_ctest0, rv_ctest3,
 		rv_ctest4, rv_ctest5, rv_stest2;
 
 	/*----------------------------------------------------------------
-	**	Targets management.
+	**	Tarमाला_लो management.
 	**	During reselection the ncr jumps to jump_tcb.
-	**	The SFBR register is loaded with the encoded target id.
+	**	The SFBR रेजिस्टर is loaded with the encoded target id.
 	**	For i = 0 to 3
 	**		SCR_JUMP ^ IFTRUE(MASK(i, 3)), @(next tcb mod. i)
 	**
@@ -1641,48 +1642,48 @@ struct ncb {
 	**	It is kind of hashcoding.
 	**----------------------------------------------------------------
 	*/
-	struct link     jump_tcb[4];	/* JUMPs for reselection	*/
-	struct tcb  target[MAX_TARGET];	/* Target data			*/
+	काष्ठा link     jump_tcb[4];	/* JUMPs क्रम reselection	*/
+	काष्ठा tcb  target[MAX_TARGET];	/* Target data			*/
 
 	/*----------------------------------------------------------------
 	**	Virtual and physical bus addresses of the chip.
 	**----------------------------------------------------------------
 	*/
-	void __iomem *vaddr;		/* Virtual and bus address of	*/
-	unsigned long	paddr;		/*  chip's IO registers.	*/
-	unsigned long	paddr2;		/* On-chip RAM bus address.	*/
-	volatile			/* Pointer to volatile for 	*/
-	struct ncr_reg	__iomem *reg;	/*  memory mapped IO.		*/
+	व्योम __iomem *vaddr;		/* Virtual and bus address of	*/
+	अचिन्हित दीर्घ	paddr;		/*  chip's IO रेजिस्टरs.	*/
+	अचिन्हित दीर्घ	paddr2;		/* On-chip RAM bus address.	*/
+	अस्थिर			/* Poपूर्णांकer to अस्थिर क्रम 	*/
+	काष्ठा ncr_reg	__iomem *reg;	/*  memory mapped IO.		*/
 
 	/*----------------------------------------------------------------
-	**	SCRIPTS virtual and physical bus addresses.
-	**	'script'  is loaded in the on-chip RAM if present.
-	**	'scripth' stays in main memory.
+	**	SCRIPTS भव and physical bus addresses.
+	**	'script'  is loaded in the on-chip RAM अगर present.
+	**	'scripth' stays in मुख्य memory.
 	**----------------------------------------------------------------
 	*/
-	struct script	*script0;	/* Copies of script and scripth	*/
-	struct scripth	*scripth0;	/*  relocated for this ncb.	*/
-	struct scripth	*scripth;	/* Actual scripth virt. address	*/
-	u_long		p_script;	/* Actual script and scripth	*/
-	u_long		p_scripth;	/*  bus addresses.		*/
+	काष्ठा script	*script0;	/* Copies of script and scripth	*/
+	काष्ठा scripth	*scripth0;	/*  relocated क्रम this ncb.	*/
+	काष्ठा scripth	*scripth;	/* Actual scripth virt. address	*/
+	u_दीर्घ		p_script;	/* Actual script and scripth	*/
+	u_दीर्घ		p_scripth;	/*  bus addresses.		*/
 
 	/*----------------------------------------------------------------
 	**	General controller parameters and configuration.
 	**----------------------------------------------------------------
 	*/
-	struct device	*dev;
-	u_char		revision_id;	/* PCI device revision id	*/
+	काष्ठा device	*dev;
+	u_अक्षर		revision_id;	/* PCI device revision id	*/
 	u32		irq;		/* IRQ level			*/
 	u32		features;	/* Chip features map		*/
-	u_char		myaddr;		/* SCSI id of the adapter	*/
-	u_char		maxburst;	/* log base 2 of dwords burst	*/
-	u_char		maxwide;	/* Maximum transfer width	*/
-	u_char		minsync;	/* Minimum sync period factor	*/
-	u_char		maxsync;	/* Maximum sync period factor	*/
-	u_char		maxoffs;	/* Max scsi offset		*/
-	u_char		multiplier;	/* Clock multiplier (1,2,4)	*/
-	u_char		clock_divn;	/* Number of clock divisors	*/
-	u_long		clock_khz;	/* SCSI clock frequency in KHz	*/
+	u_अक्षर		myaddr;		/* SCSI id of the adapter	*/
+	u_अक्षर		maxburst;	/* log base 2 of dwords burst	*/
+	u_अक्षर		maxwide;	/* Maximum transfer width	*/
+	u_अक्षर		minsync;	/* Minimum sync period factor	*/
+	u_अक्षर		maxsync;	/* Maximum sync period factor	*/
+	u_अक्षर		maxoffs;	/* Max scsi offset		*/
+	u_अक्षर		multiplier;	/* Clock multiplier (1,2,4)	*/
+	u_अक्षर		घड़ी_भागn;	/* Number of घड़ी भागisors	*/
+	u_दीर्घ		घड़ी_khz;	/* SCSI घड़ी frequency in KHz	*/
 
 	/*----------------------------------------------------------------
 	**	Start queue management.
@@ -1690,7 +1691,7 @@ struct ncb {
 	**	SCRIPTS processor in order to start SCSI commands.
 	**----------------------------------------------------------------
 	*/
-	u16		squeueput;	/* Next free slot of the queue	*/
+	u16		squeueput;	/* Next मुक्त slot of the queue	*/
 	u16		actccbs;	/* Number of allocated CCBs	*/
 	u16		queuedccbs;	/* Number of CCBs in start queue*/
 	u16		queuedepth;	/* Start queue depth		*/
@@ -1699,63 +1700,63 @@ struct ncb {
 	**	Timeout handler.
 	**----------------------------------------------------------------
 	*/
-	struct timer_list timer;	/* Timer handler link header	*/
-	u_long		lasttime;
-	u_long		settle_time;	/* Resetting the SCSI BUS	*/
+	काष्ठा समयr_list समयr;	/* Timer handler link header	*/
+	u_दीर्घ		lastसमय;
+	u_दीर्घ		settle_समय;	/* Resetting the SCSI BUS	*/
 
 	/*----------------------------------------------------------------
 	**	Debugging and profiling.
 	**----------------------------------------------------------------
 	*/
-	struct ncr_reg	regdump;	/* Register dump		*/
-	u_long		regtime;	/* Time it has been done	*/
+	काष्ठा ncr_reg	regdump;	/* Register dump		*/
+	u_दीर्घ		regसमय;	/* Time it has been करोne	*/
 
 	/*----------------------------------------------------------------
 	**	Miscellaneous buffers accessed by the scripts-processor.
-	**	They shall be DWORD aligned, because they may be read or 
+	**	They shall be DWORD aligned, because they may be पढ़ो or 
 	**	written with a SCR_COPY script command.
 	**----------------------------------------------------------------
 	*/
-	u_char		msgout[8];	/* Buffer for MESSAGE OUT 	*/
-	u_char		msgin [8];	/* Buffer for MESSAGE IN	*/
-	u32		lastmsg;	/* Last SCSI message sent	*/
-	u_char		scratch;	/* Scratch for SCSI receive	*/
+	u_अक्षर		msgout[8];	/* Buffer क्रम MESSAGE OUT 	*/
+	u_अक्षर		msgin [8];	/* Buffer क्रम MESSAGE IN	*/
+	u32		lasपंचांगsg;	/* Last SCSI message sent	*/
+	u_अक्षर		scratch;	/* Scratch क्रम SCSI receive	*/
 
 	/*----------------------------------------------------------------
 	**	Miscellaneous configuration and status parameters.
 	**----------------------------------------------------------------
 	*/
-	u_char		disc;		/* Disconnection allowed	*/
-	u_char		scsi_mode;	/* Current SCSI BUS mode	*/
-	u_char		order;		/* Tag order to use		*/
-	u_char		verbose;	/* Verbosity for this controller*/
-	int		ncr_cache;	/* Used for cache test at init.	*/
-	u_long		p_ncb;		/* BUS address of this NCB	*/
+	u_अक्षर		disc;		/* Disconnection allowed	*/
+	u_अक्षर		scsi_mode;	/* Current SCSI BUS mode	*/
+	u_अक्षर		order;		/* Tag order to use		*/
+	u_अक्षर		verbose;	/* Verbosity क्रम this controller*/
+	पूर्णांक		ncr_cache;	/* Used क्रम cache test at init.	*/
+	u_दीर्घ		p_ncb;		/* BUS address of this NCB	*/
 
 	/*----------------------------------------------------------------
 	**	Command completion handling.
 	**----------------------------------------------------------------
 	*/
-#ifdef SCSI_NCR_CCB_DONE_SUPPORT
-	struct ccb	*(ccb_done[MAX_DONE]);
-	int		ccb_done_ic;
-#endif
+#अगर_घोषित SCSI_NCR_CCB_DONE_SUPPORT
+	काष्ठा ccb	*(ccb_करोne[MAX_DONE]);
+	पूर्णांक		ccb_करोne_ic;
+#पूर्ण_अगर
 	/*----------------------------------------------------------------
-	**	Fields that should be removed or changed.
+	**	Fields that should be हटाओd or changed.
 	**----------------------------------------------------------------
 	*/
-	struct ccb	*ccb;		/* Global CCB			*/
-	struct usrcmd	user;		/* Command from user		*/
-	volatile u_char	release_stage;	/* Synchronisation stage on release  */
-};
+	काष्ठा ccb	*ccb;		/* Global CCB			*/
+	काष्ठा usrcmd	user;		/* Command from user		*/
+	अस्थिर u_अक्षर	release_stage;	/* Synchronisation stage on release  */
+पूर्ण;
 
-#define NCB_SCRIPT_PHYS(np,lbl)	 (np->p_script  + offsetof (struct script, lbl))
-#define NCB_SCRIPTH_PHYS(np,lbl) (np->p_scripth + offsetof (struct scripth,lbl))
+#घोषणा NCB_SCRIPT_PHYS(np,lbl)	 (np->p_script  + दुरत्व (काष्ठा script, lbl))
+#घोषणा NCB_SCRIPTH_PHYS(np,lbl) (np->p_scripth + दुरत्व (काष्ठा scripth,lbl))
 
 /*==========================================================
 **
 **
-**      Script for NCR-Processor.
+**      Script क्रम NCR-Processor.
 **
 **	Use ncr_script_fill() to create the variable parts.
 **	Use ncr_script_copy_and_bind() to make a copy and
@@ -1764,9 +1765,9 @@ struct ncb {
 **
 **==========================================================
 **
-**	We have to know the offsets of all labels before
-**	we reach them (for forward jumps).
-**	Therefore we declare a struct here.
+**	We have to know the offsets of all labels beक्रमe
+**	we reach them (क्रम क्रमward jumps).
+**	Thereक्रमe we declare a काष्ठा here.
 **	If you make changes inside the script,
 **	DONT FORGET TO CHANGE THE LENGTHS HERE!
 **
@@ -1774,27 +1775,27 @@ struct ncb {
 */
 
 /*
-**	For HP Zalon/53c720 systems, the Zalon interface
-**	between CPU and 53c720 does prefetches, which causes
-**	problems with self modifying scripts.  The problem
+**	For HP Zalon/53c720 प्रणालीs, the Zalon पूर्णांकerface
+**	between CPU and 53c720 करोes prefetches, which causes
+**	problems with self modअगरying scripts.  The problem
 **	is overcome by calling a dummy subroutine after each
-**	modification, to force a refetch of the script on
-**	return from the subroutine.
+**	modअगरication, to क्रमce a refetch of the script on
+**	वापस from the subroutine.
 */
 
-#ifdef CONFIG_NCR53C8XX_PREFETCH
-#define PREFETCH_FLUSH_CNT	2
-#define PREFETCH_FLUSH		SCR_CALL, PADDRH (wait_dma),
-#else
-#define PREFETCH_FLUSH_CNT	0
-#define PREFETCH_FLUSH
-#endif
+#अगर_घोषित CONFIG_NCR53C8XX_PREFETCH
+#घोषणा PREFETCH_FLUSH_CNT	2
+#घोषणा PREFETCH_FLUSH		SCR_CALL, PADDRH (रुको_dma),
+#अन्यथा
+#घोषणा PREFETCH_FLUSH_CNT	0
+#घोषणा PREFETCH_FLUSH
+#पूर्ण_अगर
 
 /*
-**	Script fragments which are loaded into the on-chip RAM 
+**	Script fragments which are loaded पूर्णांकo the on-chip RAM 
 **	of 825A, 875 and 895 chips.
 */
-struct script {
+काष्ठा script अणु
 	ncrcmd	start		[  5];
 	ncrcmd  startpos	[  1];
 	ncrcmd	select		[  6];
@@ -1811,24 +1812,24 @@ struct script {
 	ncrcmd  msg_in		[  2];
 	ncrcmd  msg_in2		[ 16];
 	ncrcmd  msg_bad		[  4];
-	ncrcmd	setmsg		[  7];
+	ncrcmd	seपंचांगsg		[  7];
 	ncrcmd	cleanup		[  6];
 	ncrcmd  complete	[  9];
 	ncrcmd	cleanup_ok	[  8 + PREFETCH_FLUSH_CNT];
 	ncrcmd	cleanup0	[  1];
-#ifndef SCSI_NCR_CCB_DONE_SUPPORT
-	ncrcmd	signal		[ 12];
-#else
-	ncrcmd	signal		[  9];
-	ncrcmd	done_pos	[  1];
-	ncrcmd	done_plug	[  2];
-	ncrcmd	done_end	[  7];
-#endif
+#अगर_अघोषित SCSI_NCR_CCB_DONE_SUPPORT
+	ncrcmd	संकेत		[ 12];
+#अन्यथा
+	ncrcmd	संकेत		[  9];
+	ncrcmd	करोne_pos	[  1];
+	ncrcmd	करोne_plug	[  2];
+	ncrcmd	करोne_end	[  7];
+#पूर्ण_अगर
 	ncrcmd  save_dp		[  7];
 	ncrcmd  restore_dp	[  5];
 	ncrcmd  disconnect	[ 10];
 	ncrcmd	msg_out		[  9];
-	ncrcmd	msg_out_done	[  7];
+	ncrcmd	msg_out_करोne	[  7];
 	ncrcmd  idle		[  2];
 	ncrcmd	reselect	[  8];
 	ncrcmd	reselected	[  8];
@@ -1843,18 +1844,18 @@ struct script {
 	ncrcmd  data_in2	[  4];
 	ncrcmd  data_out	[MAX_SCATTERL * 4];
 	ncrcmd  data_out2	[  4];
-};
+पूर्ण;
 
 /*
-**	Script fragments which stay in main memory for all chips.
+**	Script fragments which stay in मुख्य memory क्रम all chips.
 */
-struct scripth {
+काष्ठा scripth अणु
 	ncrcmd  tryloop		[MAX_START*2];
 	ncrcmd  tryloop2	[  2];
-#ifdef SCSI_NCR_CCB_DONE_SUPPORT
-	ncrcmd  done_queue	[MAX_DONE*5];
-	ncrcmd  done_queue2	[  2];
-#endif
+#अगर_घोषित SCSI_NCR_CCB_DONE_SUPPORT
+	ncrcmd  करोne_queue	[MAX_DONE*5];
+	ncrcmd  करोne_queue2	[  2];
+#पूर्ण_अगर
 	ncrcmd	select_no_atn	[  8];
 	ncrcmd	cancel		[  4];
 	ncrcmd	skip		[  9 + PREFETCH_FLUSH_CNT];
@@ -1871,21 +1872,21 @@ struct scripth {
 	ncrcmd	msg_sdtr	[ 14];
 	ncrcmd	send_sdtr	[  7];
 	ncrcmd	nego_bad_phase	[  4];
-	ncrcmd	msg_out_abort	[ 10];
+	ncrcmd	msg_out_पात	[ 10];
 	ncrcmd  hdata_in	[MAX_SCATTERH * 4];
 	ncrcmd  hdata_in2	[  2];
 	ncrcmd  hdata_out	[MAX_SCATTERH * 4];
 	ncrcmd  hdata_out2	[  2];
 	ncrcmd	reset		[  4];
-	ncrcmd	aborttag	[  4];
-	ncrcmd	abort		[  2];
-	ncrcmd	abort_resel	[ 20];
+	ncrcmd	पातtag	[  4];
+	ncrcmd	पात		[  2];
+	ncrcmd	पात_resel	[ 20];
 	ncrcmd	resend_ident	[  4];
 	ncrcmd	clratn_go_on	[  3];
 	ncrcmd	nxtdsp_go_on	[  1];
 	ncrcmd	sdata_in	[  8];
 	ncrcmd  data_io		[ 18];
-	ncrcmd	bad_identify	[ 12];
+	ncrcmd	bad_identअगरy	[ 12];
 	ncrcmd	bad_i_t_l	[  4];
 	ncrcmd	bad_i_t_l_q	[  4];
 	ncrcmd	bad_target	[  8];
@@ -1893,10 +1894,10 @@ struct scripth {
 	ncrcmd	start_ram	[  4 + PREFETCH_FLUSH_CNT];
 	ncrcmd	start_ram0	[  4];
 	ncrcmd	sto_restart	[  5];
-	ncrcmd	wait_dma	[  2];
+	ncrcmd	रुको_dma	[  2];
 	ncrcmd	snooptest	[  9];
-	ncrcmd	snoopend	[  2];
-};
+	ncrcmd	snoखोलोd	[  2];
+पूर्ण;
 
 /*==========================================================
 **
@@ -1907,108 +1908,108 @@ struct scripth {
 **==========================================================
 */
 
-static	void	ncr_alloc_ccb	(struct ncb *np, u_char tn, u_char ln);
-static	void	ncr_complete	(struct ncb *np, struct ccb *cp);
-static	void	ncr_exception	(struct ncb *np);
-static	void	ncr_free_ccb	(struct ncb *np, struct ccb *cp);
-static	void	ncr_init_ccb	(struct ncb *np, struct ccb *cp);
-static	void	ncr_init_tcb	(struct ncb *np, u_char tn);
-static	struct lcb *	ncr_alloc_lcb	(struct ncb *np, u_char tn, u_char ln);
-static	struct lcb *	ncr_setup_lcb	(struct ncb *np, struct scsi_device *sdev);
-static	void	ncr_getclock	(struct ncb *np, int mult);
-static	void	ncr_selectclock	(struct ncb *np, u_char scntl3);
-static	struct ccb *ncr_get_ccb	(struct ncb *np, struct scsi_cmnd *cmd);
-static	void	ncr_chip_reset	(struct ncb *np, int delay);
-static	void	ncr_init	(struct ncb *np, int reset, char * msg, u_long code);
-static	int	ncr_int_sbmc	(struct ncb *np);
-static	int	ncr_int_par	(struct ncb *np);
-static	void	ncr_int_ma	(struct ncb *np);
-static	void	ncr_int_sir	(struct ncb *np);
-static  void    ncr_int_sto     (struct ncb *np);
-static	void	ncr_negotiate	(struct ncb* np, struct tcb* tp);
-static	int	ncr_prepare_nego(struct ncb *np, struct ccb *cp, u_char *msgptr);
+अटल	व्योम	ncr_alloc_ccb	(काष्ठा ncb *np, u_अक्षर tn, u_अक्षर ln);
+अटल	व्योम	ncr_complete	(काष्ठा ncb *np, काष्ठा ccb *cp);
+अटल	व्योम	ncr_exception	(काष्ठा ncb *np);
+अटल	व्योम	ncr_मुक्त_ccb	(काष्ठा ncb *np, काष्ठा ccb *cp);
+अटल	व्योम	ncr_init_ccb	(काष्ठा ncb *np, काष्ठा ccb *cp);
+अटल	व्योम	ncr_init_tcb	(काष्ठा ncb *np, u_अक्षर tn);
+अटल	काष्ठा lcb *	ncr_alloc_lcb	(काष्ठा ncb *np, u_अक्षर tn, u_अक्षर ln);
+अटल	काष्ठा lcb *	ncr_setup_lcb	(काष्ठा ncb *np, काष्ठा scsi_device *sdev);
+अटल	व्योम	ncr_अ_लोlock	(काष्ठा ncb *np, पूर्णांक mult);
+अटल	व्योम	ncr_selectघड़ी	(काष्ठा ncb *np, u_अक्षर scntl3);
+अटल	काष्ठा ccb *ncr_get_ccb	(काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd);
+अटल	व्योम	ncr_chip_reset	(काष्ठा ncb *np, पूर्णांक delay);
+अटल	व्योम	ncr_init	(काष्ठा ncb *np, पूर्णांक reset, अक्षर * msg, u_दीर्घ code);
+अटल	पूर्णांक	ncr_पूर्णांक_sbmc	(काष्ठा ncb *np);
+अटल	पूर्णांक	ncr_पूर्णांक_par	(काष्ठा ncb *np);
+अटल	व्योम	ncr_पूर्णांक_ma	(काष्ठा ncb *np);
+अटल	व्योम	ncr_पूर्णांक_sir	(काष्ठा ncb *np);
+अटल  व्योम    ncr_पूर्णांक_sto     (काष्ठा ncb *np);
+अटल	व्योम	ncr_negotiate	(काष्ठा ncb* np, काष्ठा tcb* tp);
+अटल	पूर्णांक	ncr_prepare_nego(काष्ठा ncb *np, काष्ठा ccb *cp, u_अक्षर *msgptr);
 
-static	void	ncr_script_copy_and_bind
-				(struct ncb *np, ncrcmd *src, ncrcmd *dst, int len);
-static  void    ncr_script_fill (struct script * scr, struct scripth * scripth);
-static	int	ncr_scatter	(struct ncb *np, struct ccb *cp, struct scsi_cmnd *cmd);
-static	void	ncr_getsync	(struct ncb *np, u_char sfac, u_char *fakp, u_char *scntl3p);
-static	void	ncr_setsync	(struct ncb *np, struct ccb *cp, u_char scntl3, u_char sxfer);
-static	void	ncr_setup_tags	(struct ncb *np, struct scsi_device *sdev);
-static	void	ncr_setwide	(struct ncb *np, struct ccb *cp, u_char wide, u_char ack);
-static	int	ncr_snooptest	(struct ncb *np);
-static	void	ncr_timeout	(struct ncb *np);
-static  void    ncr_wakeup      (struct ncb *np, u_long code);
-static  void    ncr_wakeup_done (struct ncb *np);
-static	void	ncr_start_next_ccb (struct ncb *np, struct lcb * lp, int maxn);
-static	void	ncr_put_start_queue(struct ncb *np, struct ccb *cp);
+अटल	व्योम	ncr_script_copy_and_bind
+				(काष्ठा ncb *np, ncrcmd *src, ncrcmd *dst, पूर्णांक len);
+अटल  व्योम    ncr_script_fill (काष्ठा script * scr, काष्ठा scripth * scripth);
+अटल	पूर्णांक	ncr_scatter	(काष्ठा ncb *np, काष्ठा ccb *cp, काष्ठा scsi_cmnd *cmd);
+अटल	व्योम	ncr_माला_लोync	(काष्ठा ncb *np, u_अक्षर sfac, u_अक्षर *fakp, u_अक्षर *scntl3p);
+अटल	व्योम	ncr_setsync	(काष्ठा ncb *np, काष्ठा ccb *cp, u_अक्षर scntl3, u_अक्षर sxfer);
+अटल	व्योम	ncr_setup_tags	(काष्ठा ncb *np, काष्ठा scsi_device *sdev);
+अटल	व्योम	ncr_setwide	(काष्ठा ncb *np, काष्ठा ccb *cp, u_अक्षर wide, u_अक्षर ack);
+अटल	पूर्णांक	ncr_snooptest	(काष्ठा ncb *np);
+अटल	व्योम	ncr_समयout	(काष्ठा ncb *np);
+अटल  व्योम    ncr_wakeup      (काष्ठा ncb *np, u_दीर्घ code);
+अटल  व्योम    ncr_wakeup_करोne (काष्ठा ncb *np);
+अटल	व्योम	ncr_start_next_ccb (काष्ठा ncb *np, काष्ठा lcb * lp, पूर्णांक maxn);
+अटल	व्योम	ncr_put_start_queue(काष्ठा ncb *np, काष्ठा ccb *cp);
 
-static void insert_into_waiting_list(struct ncb *np, struct scsi_cmnd *cmd);
-static struct scsi_cmnd *retrieve_from_waiting_list(int to_remove, struct ncb *np, struct scsi_cmnd *cmd);
-static void process_waiting_list(struct ncb *np, int sts);
+अटल व्योम insert_पूर्णांकo_रुकोing_list(काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd);
+अटल काष्ठा scsi_cmnd *retrieve_from_रुकोing_list(पूर्णांक to_हटाओ, काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd);
+अटल व्योम process_रुकोing_list(काष्ठा ncb *np, पूर्णांक sts);
 
-#define remove_from_waiting_list(np, cmd) \
-		retrieve_from_waiting_list(1, (np), (cmd))
-#define requeue_waiting_list(np) process_waiting_list((np), DID_OK)
-#define reset_waiting_list(np) process_waiting_list((np), DID_RESET)
+#घोषणा हटाओ_from_रुकोing_list(np, cmd) \
+		retrieve_from_रुकोing_list(1, (np), (cmd))
+#घोषणा requeue_रुकोing_list(np) process_रुकोing_list((np), DID_OK)
+#घोषणा reset_रुकोing_list(np) process_रुकोing_list((np), DID_RESET)
 
-static inline char *ncr_name (struct ncb *np)
-{
-	return np->inst_name;
-}
+अटल अंतरभूत अक्षर *ncr_name (काष्ठा ncb *np)
+अणु
+	वापस np->inst_name;
+पूर्ण
 
 
 /*==========================================================
 **
 **
-**      Scripts for NCR-Processor.
+**      Scripts क्रम NCR-Processor.
 **
-**      Use ncr_script_bind for binding to physical addresses.
+**      Use ncr_script_bind क्रम binding to physical addresses.
 **
 **
 **==========================================================
 **
 **	NADDR generates a reference to a field of the controller data.
 **	PADDR generates a reference to another part of the script.
-**	RADDR generates a reference to a script processor register.
-**	FADDR generates a reference to a script processor register
+**	RADDR generates a reference to a script processor रेजिस्टर.
+**	FADDR generates a reference to a script processor रेजिस्टर
 **		with offset.
 **
 **----------------------------------------------------------
 */
 
-#define	RELOC_SOFTC	0x40000000
-#define	RELOC_LABEL	0x50000000
-#define	RELOC_REGISTER	0x60000000
-#if 0
-#define	RELOC_KVAR	0x70000000
-#endif
-#define	RELOC_LABELH	0x80000000
-#define	RELOC_MASK	0xf0000000
+#घोषणा	RELOC_SOFTC	0x40000000
+#घोषणा	RELOC_LABEL	0x50000000
+#घोषणा	RELOC_REGISTER	0x60000000
+#अगर 0
+#घोषणा	RELOC_KVAR	0x70000000
+#पूर्ण_अगर
+#घोषणा	RELOC_LABELH	0x80000000
+#घोषणा	RELOC_MASK	0xf0000000
 
-#define	NADDR(label)	(RELOC_SOFTC | offsetof(struct ncb, label))
-#define PADDR(label)    (RELOC_LABEL | offsetof(struct script, label))
-#define PADDRH(label)   (RELOC_LABELH | offsetof(struct scripth, label))
-#define	RADDR(label)	(RELOC_REGISTER | REG(label))
-#define	FADDR(label,ofs)(RELOC_REGISTER | ((REG(label))+(ofs)))
-#if 0
-#define	KVAR(which)	(RELOC_KVAR | (which))
-#endif
+#घोषणा	NADDR(label)	(RELOC_SOFTC | दुरत्व(काष्ठा ncb, label))
+#घोषणा PADDR(label)    (RELOC_LABEL | दुरत्व(काष्ठा script, label))
+#घोषणा PADDRH(label)   (RELOC_LABELH | दुरत्व(काष्ठा scripth, label))
+#घोषणा	RADDR(label)	(RELOC_REGISTER | REG(label))
+#घोषणा	FADDR(label,ofs)(RELOC_REGISTER | ((REG(label))+(ofs)))
+#अगर 0
+#घोषणा	KVAR(which)	(RELOC_KVAR | (which))
+#पूर्ण_अगर
 
-#if 0
-#define	SCRIPT_KVAR_JIFFIES	(0)
-#define	SCRIPT_KVAR_FIRST		SCRIPT_KVAR_JIFFIES
-#define	SCRIPT_KVAR_LAST		SCRIPT_KVAR_JIFFIES
+#अगर 0
+#घोषणा	SCRIPT_KVAR_JIFFIES	(0)
+#घोषणा	SCRIPT_KVAR_FIRST		SCRIPT_KVAR_JIFFIES
+#घोषणा	SCRIPT_KVAR_LAST		SCRIPT_KVAR_JIFFIES
 /*
  * Kernel variables referenced in the scripts.
  * THESE MUST ALL BE ALIGNED TO A 4-BYTE BOUNDARY.
  */
-static void *script_kvars[] __initdata =
-	{ (void *)&jiffies };
-#endif
+अटल व्योम *script_kvars[] __initdata =
+	अणु (व्योम *)&jअगरfies पूर्ण;
+#पूर्ण_अगर
 
-static	struct script script0 __initdata = {
-/*--------------------------< START >-----------------------*/ {
+अटल	काष्ठा script script0 __initdata = अणु
+/*--------------------------< START >-----------------------*/ अणु
 	/*
 	**	This NOP will be patched with LED ON
 	**	SCR_REG_REG (gpreg, SCR_AND, 0xfe)
@@ -2021,25 +2022,25 @@ static	struct script script0 __initdata = {
 	SCR_FROM_REG (ctest2),
 		0,
 	/*
-	**	Then jump to a certain point in tryloop.
+	**	Then jump to a certain poपूर्णांक in tryloop.
 	**	Due to the lack of indirect addressing the code
-	**	is self modifying here.
+	**	is self modअगरying here.
 	*/
 	SCR_JUMP,
-}/*-------------------------< STARTPOS >--------------------*/,{
+पूर्ण/*-------------------------< STARTPOS >--------------------*/,अणु
 		PADDRH(tryloop),
 
-}/*-------------------------< SELECT >----------------------*/,{
+पूर्ण/*-------------------------< SELECT >----------------------*/,अणु
 	/*
 	**	DSA	contains the address of a scheduled
-	**		data structure.
+	**		data काष्ठाure.
 	**
 	**	SCRATCHA contains the address of the script,
 	**		which starts the next entry.
 	**
 	**	Set Initiator mode.
 	**
-	**	(Target mode is left as an exercise for the reader)
+	**	(Target mode is left as an exercise क्रम the पढ़ोer)
 	*/
 
 	SCR_CLR (SCR_TRG),
@@ -2050,110 +2051,110 @@ static	struct script script0 __initdata = {
 	/*
 	**      And try to select this target.
 	*/
-	SCR_SEL_TBL_ATN ^ offsetof (struct dsb, select),
+	SCR_SEL_TBL_ATN ^ दुरत्व (काष्ठा dsb, select),
 		PADDR (reselect),
 
-}/*-------------------------< SELECT2 >----------------------*/,{
+पूर्ण/*-------------------------< SELECT2 >----------------------*/,अणु
 	/*
 	**	Now there are 4 possibilities:
 	**
 	**	(1) The ncr loses arbitration.
 	**	This is ok, because it will try again,
 	**	when the bus becomes idle.
-	**	(But beware of the timeout function!)
+	**	(But beware of the समयout function!)
 	**
 	**	(2) The ncr is reselected.
 	**	Then the script processor takes the jump
 	**	to the RESELECT label.
 	**
 	**	(3) The ncr wins arbitration.
-	**	Then it will execute SCRIPTS instruction until 
-	**	the next instruction that checks SCSI phase.
-	**	Then will stop and wait for selection to be 
-	**	complete or selection time-out to occur.
-	**	As a result the SCRIPTS instructions until 
+	**	Then it will execute SCRIPTS inकाष्ठाion until 
+	**	the next inकाष्ठाion that checks SCSI phase.
+	**	Then will stop and रुको क्रम selection to be 
+	**	complete or selection समय-out to occur.
+	**	As a result the SCRIPTS inकाष्ठाions until 
 	**	LOADPOS + 2 should be executed in parallel with 
-	**	the SCSI core performing selection.
+	**	the SCSI core perक्रमming selection.
 	*/
 
 	/*
 	**	The MESSAGE_REJECT problem seems to be due to a selection 
 	**	timing problem.
-	**	Wait immediately for the selection to complete. 
+	**	Wait immediately क्रम the selection to complete. 
 	**	(2.5x behaves so)
 	*/
 	SCR_JUMPR ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		0,
 
 	/*
-	**	Next time use the next slot.
+	**	Next समय use the next slot.
 	*/
 	SCR_COPY (4),
 		RADDR (temp),
 		PADDR (startpos),
 	/*
-	**      The ncr doesn't have an indirect load
+	**      The ncr करोesn't have an indirect load
 	**	or store command. So we have to
 	**	copy part of the control block to a
 	**	fixed place, where we can access it.
 	**
 	**	We patch the address part of a
-	**	COPY command with the DSA-register.
+	**	COPY command with the DSA-रेजिस्टर.
 	*/
 	SCR_COPY_F (4),
 		RADDR (dsa),
 		PADDR (loadpos),
 	/*
-	**	Flush script prefetch if required
+	**	Flush script prefetch अगर required
 	*/
 	PREFETCH_FLUSH
 	/*
-	**	then we do the actual copy.
+	**	then we करो the actual copy.
 	*/
-	SCR_COPY (sizeof (struct head)),
+	SCR_COPY (माप (काष्ठा head)),
 	/*
-	**	continued after the next label ...
+	**	जारीd after the next label ...
 	*/
-}/*-------------------------< LOADPOS >---------------------*/,{
+पूर्ण/*-------------------------< LOADPOS >---------------------*/,अणु
 		0,
 		NADDR (header),
 	/*
-	**	Wait for the next phase or the selection
-	**	to complete or time-out.
+	**	Wait क्रम the next phase or the selection
+	**	to complete or समय-out.
 	*/
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		PADDR (prepare),
 
-}/*-------------------------< SEND_IDENT >----------------------*/,{
+पूर्ण/*-------------------------< SEND_IDENT >----------------------*/,अणु
 	/*
 	**	Selection complete.
 	**	Send the IDENTIFY and SIMPLE_TAG messages
 	**	(and the EXTENDED_SDTR message)
 	*/
 	SCR_MOVE_TBL ^ SCR_MSG_OUT,
-		offsetof (struct dsb, smsg),
+		दुरत्व (काष्ठा dsb, smsg),
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_MSG_OUT)),
 		PADDRH (resend_ident),
 	SCR_LOAD_REG (scratcha, 0x80),
 		0,
 	SCR_COPY (1),
 		RADDR (scratcha),
-		NADDR (lastmsg),
-}/*-------------------------< PREPARE >----------------------*/,{
+		NADDR (lasपंचांगsg),
+पूर्ण/*-------------------------< PREPARE >----------------------*/,अणु
 	/*
-	**      load the savep (saved pointer) into
-	**      the TEMP register (actual pointer)
+	**      load the savep (saved poपूर्णांकer) पूर्णांकo
+	**      the TEMP रेजिस्टर (actual poपूर्णांकer)
 	*/
 	SCR_COPY (4),
 		NADDR (header.savep),
 		RADDR (temp),
 	/*
-	**      Initialize the status registers
+	**      Initialize the status रेजिस्टरs
 	*/
 	SCR_COPY (4),
 		NADDR (header.status),
 		RADDR (scr0),
-}/*-------------------------< PREPARE2 >---------------------*/,{
+पूर्ण/*-------------------------< PREPARE2 >---------------------*/,अणु
 	/*
 	**	Initialize the msgout buffer with a NOOP message.
 	*/
@@ -2162,27 +2163,27 @@ static	struct script script0 __initdata = {
 	SCR_COPY (1),
 		RADDR (scratcha),
 		NADDR (msgout),
-#if 0
+#अगर 0
 	SCR_COPY (1),
 		RADDR (scratcha),
 		NADDR (msgin),
-#endif
+#पूर्ण_अगर
 	/*
 	**	Anticipate the COMMAND phase.
-	**	This is the normal case for initial selection.
+	**	This is the normal हाल क्रम initial selection.
 	*/
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_COMMAND)),
 		PADDR (dispatch),
 
-}/*-------------------------< COMMAND >--------------------*/,{
+पूर्ण/*-------------------------< COMMAND >--------------------*/,अणु
 	/*
 	**	... and send the command
 	*/
 	SCR_MOVE_TBL ^ SCR_COMMAND,
-		offsetof (struct dsb, cmd),
+		दुरत्व (काष्ठा dsb, cmd),
 	/*
 	**	If status is still HS_NEGOTIATE, negotiation failed.
-	**	We check this here, since we want to do that 
+	**	We check this here, since we want to करो that 
 	**	only once.
 	*/
 	SCR_FROM_REG (HS_REG),
@@ -2190,10 +2191,10 @@ static	struct script script0 __initdata = {
 	SCR_INT ^ IFTRUE (DATA (HS_NEGOTIATE)),
 		SIR_NEGO_FAILED,
 
-}/*-----------------------< DISPATCH >----------------------*/,{
+पूर्ण/*-----------------------< DISPATCH >----------------------*/,अणु
 	/*
 	**	MSG_IN is the only phase that shall be 
-	**	entered at least once for each (re)selection.
+	**	entered at least once क्रम each (re)selection.
 	**	So we test it first.
 	*/
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_MSG_IN)),
@@ -2206,7 +2207,7 @@ static	struct script script0 __initdata = {
 	**	Possible data corruption during Memory Write and Invalidate.
 	**	This work-around resets the addressing logic prior to the 
 	**	start of the first MOVE of a DATA IN phase.
-	**	(See Documentation/scsi/ncr53c8xx.rst for more information)
+	**	(See Documentation/scsi/ncr53c8xx.rst क्रम more inक्रमmation)
 	*/
 	SCR_JUMPR ^ IFFALSE (IF (SCR_DATA_IN)),
 		20,
@@ -2222,7 +2223,7 @@ static	struct script script0 __initdata = {
 	SCR_JUMP ^ IFTRUE (IF (SCR_MSG_OUT)),
 		PADDR (msg_out),
 	/*
-	**      Discard one illegal phase byte, if required.
+	**      Discard one illegal phase byte, अगर required.
 	*/
 	SCR_LOAD_REG (scratcha, XE_BAD_PHASE),
 		0,
@@ -2240,7 +2241,7 @@ static	struct script script0 __initdata = {
 	SCR_JUMP,
 		PADDR (dispatch),
 
-}/*-------------------------< CLRACK >----------------------*/,{
+पूर्ण/*-------------------------< CLRACK >----------------------*/,अणु
 	/*
 	**	Terminate possible pending message phase.
 	*/
@@ -2249,7 +2250,7 @@ static	struct script script0 __initdata = {
 	SCR_JUMP,
 		PADDR (dispatch),
 
-}/*-------------------------< NO_DATA >--------------------*/,{
+पूर्ण/*-------------------------< NO_DATA >--------------------*/,अणु
 	/*
 	**	The target wants to tranfer too much data
 	**	or in the wrong direction.
@@ -2261,7 +2262,7 @@ static	struct script script0 __initdata = {
 		RADDR (scratcha),
 		NADDR (xerr_st),
 	/*
-	**      Discard one data byte, if required.
+	**      Discard one data byte, अगर required.
 	*/
 	SCR_JUMPR ^ IFFALSE (WHEN (SCR_DATA_OUT)),
 		8,
@@ -2279,7 +2280,7 @@ static	struct script script0 __initdata = {
 	SCR_JUMP,
 		PADDR (no_data),
 
-}/*-------------------------< STATUS >--------------------*/,{
+पूर्ण/*-------------------------< STATUS >--------------------*/,अणु
 	/*
 	**	get the status
 	*/
@@ -2295,17 +2296,17 @@ static	struct script script0 __initdata = {
 		0,
 	SCR_JUMP,
 		PADDR (dispatch),
-}/*-------------------------< MSG_IN >--------------------*/,{
+पूर्ण/*-------------------------< MSG_IN >--------------------*/,अणु
 	/*
 	**	Get the first byte of the message
 	**	and save it to SCRATCHA.
 	**
-	**	The script processor doesn't negate the
-	**	ACK signal after this transfer.
+	**	The script processor करोesn't negate the
+	**	ACK संकेत after this transfer.
 	*/
 	SCR_MOVE_ABS (1) ^ SCR_MSG_IN,
 		NADDR (msgin[0]),
-}/*-------------------------< MSG_IN2 >--------------------*/,{
+पूर्ण/*-------------------------< MSG_IN2 >--------------------*/,अणु
 	/*
 	**	Handle this message.
 	*/
@@ -2332,7 +2333,7 @@ static	struct script script0 __initdata = {
 	**	Unimplemented messages:
 	**	fall through to MSG_BAD.
 	*/
-}/*-------------------------< MSG_BAD >------------------*/,{
+पूर्ण/*-------------------------< MSG_BAD >------------------*/,अणु
 	/*
 	**	unimplemented message - reject it.
 	*/
@@ -2340,7 +2341,7 @@ static	struct script script0 __initdata = {
 		SIR_REJECT_SENT,
 	SCR_LOAD_REG (scratcha, MESSAGE_REJECT),
 		0,
-}/*-------------------------< SETMSG >----------------------*/,{
+पूर्ण/*-------------------------< SETMSG >----------------------*/,अणु
 	SCR_COPY (1),
 		RADDR (scratcha),
 		NADDR (msgout),
@@ -2348,9 +2349,9 @@ static	struct script script0 __initdata = {
 		0,
 	SCR_JUMP,
 		PADDR (clrack),
-}/*-------------------------< CLEANUP >-------------------*/,{
+पूर्ण/*-------------------------< CLEANUP >-------------------*/,अणु
 	/*
-	**      dsa:    Pointer to ccb
+	**      dsa:    Poपूर्णांकer to ccb
 	**	      or xxxxxxFF (no ccb)
 	**
 	**      HS_REG:   Host-Status (<>0!)
@@ -2366,11 +2367,11 @@ static	struct script script0 __initdata = {
 	SCR_JUMP,
 		PADDR (cleanup_ok),
 
-}/*-------------------------< COMPLETE >-----------------*/,{
+पूर्ण/*-------------------------< COMPLETE >-----------------*/,अणु
 	/*
 	**	Complete message.
 	**
-	**	Copy TEMP register to LASTP in header.
+	**	Copy TEMP रेजिस्टर to LASTP in header.
 	*/
 	SCR_COPY (4),
 		RADDR (temp),
@@ -2379,7 +2380,7 @@ static	struct script script0 __initdata = {
 	**	When we terminate the cycle by clearing ACK,
 	**	the target may disconnect immediately.
 	**
-	**	We don't want to be told of an
+	**	We करोn't want to be told of an
 	**	"unexpected disconnect",
 	**	so we disable this feature.
 	*/
@@ -2391,11 +2392,11 @@ static	struct script script0 __initdata = {
 	SCR_CLR (SCR_ACK|SCR_ATN),
 		0,
 	/*
-	**	... and wait for the disconnect.
+	**	... and रुको क्रम the disconnect.
 	*/
 	SCR_WAIT_DISC,
 		0,
-}/*-------------------------< CLEANUP_OK >----------------*/,{
+पूर्ण/*-------------------------< CLEANUP_OK >----------------*/,अणु
 	/*
 	**	Save host status to header.
 	*/
@@ -2409,16 +2410,16 @@ static	struct script script0 __initdata = {
 		RADDR (dsa),
 		PADDR (cleanup0),
 	/*
-	**	Flush script prefetch if required
+	**	Flush script prefetch अगर required
 	*/
 	PREFETCH_FLUSH
-	SCR_COPY (sizeof (struct head)),
+	SCR_COPY (माप (काष्ठा head)),
 		NADDR (header),
-}/*-------------------------< CLEANUP0 >--------------------*/,{
+पूर्ण/*-------------------------< CLEANUP0 >--------------------*/,अणु
 		0,
-}/*-------------------------< SIGNAL >----------------------*/,{
+पूर्ण/*-------------------------< SIGNAL >----------------------*/,अणु
 	/*
-	**	if job not completed ...
+	**	अगर job not completed ...
 	*/
 	SCR_FROM_REG (HS_REG),
 		0,
@@ -2429,17 +2430,17 @@ static	struct script script0 __initdata = {
 		PADDR(start),
 	/*
 	**	If command resulted in not GOOD status,
-	**	call the C code if needed.
+	**	call the C code अगर needed.
 	*/
 	SCR_FROM_REG (SS_REG),
 		0,
 	SCR_CALL ^ IFFALSE (DATA (SAM_STAT_GOOD)),
 		PADDRH (bad_status),
 
-#ifndef	SCSI_NCR_CCB_DONE_SUPPORT
+#अगर_अघोषित	SCSI_NCR_CCB_DONE_SUPPORT
 
 	/*
-	**	... signal completion to the host
+	**	... संकेत completion to the host
 	*/
 	SCR_INT,
 		SIR_INTFLY,
@@ -2449,32 +2450,32 @@ static	struct script script0 __initdata = {
 	SCR_JUMP,
 		PADDR(start),
 
-#else	/* defined SCSI_NCR_CCB_DONE_SUPPORT */
+#अन्यथा	/* defined SCSI_NCR_CCB_DONE_SUPPORT */
 
 	/*
-	**	... signal completion to the host
+	**	... संकेत completion to the host
 	*/
 	SCR_JUMP,
-}/*------------------------< DONE_POS >---------------------*/,{
-		PADDRH (done_queue),
-}/*------------------------< DONE_PLUG >--------------------*/,{
+पूर्ण/*------------------------< DONE_POS >---------------------*/,अणु
+		PADDRH (करोne_queue),
+पूर्ण/*------------------------< DONE_PLUG >--------------------*/,अणु
 	SCR_INT,
 		SIR_DONE_OVERFLOW,
-}/*------------------------< DONE_END >---------------------*/,{
+पूर्ण/*------------------------< DONE_END >---------------------*/,अणु
 	SCR_INT,
 		SIR_INTFLY,
 	SCR_COPY (4),
 		RADDR (temp),
-		PADDR (done_pos),
+		PADDR (करोne_pos),
 	SCR_JUMP,
 		PADDR (start),
 
-#endif	/* SCSI_NCR_CCB_DONE_SUPPORT */
+#पूर्ण_अगर	/* SCSI_NCR_CCB_DONE_SUPPORT */
 
-}/*-------------------------< SAVE_DP >------------------*/,{
+पूर्ण/*-------------------------< SAVE_DP >------------------*/,अणु
 	/*
 	**	SAVE_DP message:
-	**	Copy TEMP register to SAVEP in header.
+	**	Copy TEMP रेजिस्टर to SAVEP in header.
 	*/
 	SCR_COPY (4),
 		RADDR (temp),
@@ -2483,10 +2484,10 @@ static	struct script script0 __initdata = {
 		0,
 	SCR_JUMP,
 		PADDR (dispatch),
-}/*-------------------------< RESTORE_DP >---------------*/,{
+पूर्ण/*-------------------------< RESTORE_DP >---------------*/,अणु
 	/*
 	**	RESTORE_DP message:
-	**	Copy SAVEP in header to TEMP register.
+	**	Copy SAVEP in header to TEMP रेजिस्टर.
 	*/
 	SCR_COPY (4),
 		NADDR (header.savep),
@@ -2494,19 +2495,19 @@ static	struct script script0 __initdata = {
 	SCR_JUMP,
 		PADDR (clrack),
 
-}/*-------------------------< DISCONNECT >---------------*/,{
+पूर्ण/*-------------------------< DISCONNECT >---------------*/,अणु
 	/*
 	**	DISCONNECTing  ...
 	**
 	**	disable the "unexpected disconnect" feature,
-	**	and remove the ACK signal.
+	**	and हटाओ the ACK संकेत.
 	*/
 	SCR_REG_REG (scntl2, SCR_AND, 0x7f),
 		0,
 	SCR_CLR (SCR_ACK|SCR_ATN),
 		0,
 	/*
-	**	Wait for the disconnect.
+	**	Wait क्रम the disconnect.
 	*/
 	SCR_WAIT_DISC,
 		0,
@@ -2518,7 +2519,7 @@ static	struct script script0 __initdata = {
 	SCR_JUMP,
 		PADDR (cleanup_ok),
 
-}/*-------------------------< MSG_OUT >-------------------*/,{
+पूर्ण/*-------------------------< MSG_OUT >-------------------*/,अणु
 	/*
 	**	The target requests a message.
 	*/
@@ -2526,21 +2527,21 @@ static	struct script script0 __initdata = {
 		NADDR (msgout),
 	SCR_COPY (1),
 		NADDR (msgout),
-		NADDR (lastmsg),
+		NADDR (lasपंचांगsg),
 	/*
 	**	If it was no ABORT message ...
 	*/
 	SCR_JUMP ^ IFTRUE (DATA (ABORT_TASK_SET)),
-		PADDRH (msg_out_abort),
+		PADDRH (msg_out_पात),
 	/*
-	**	... wait for the next phase
-	**	if it's a message out, send it again, ...
+	**	... रुको क्रम the next phase
+	**	अगर it's a message out, send it again, ...
 	*/
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_MSG_OUT)),
 		PADDR (msg_out),
-}/*-------------------------< MSG_OUT_DONE >--------------*/,{
+पूर्ण/*-------------------------< MSG_OUT_DONE >--------------*/,अणु
 	/*
-	**	... else clear the message ...
+	**	... अन्यथा clear the message ...
 	*/
 	SCR_LOAD_REG (scratcha, NOP),
 		0,
@@ -2552,16 +2553,16 @@ static	struct script script0 __initdata = {
 	*/
 	SCR_JUMP,
 		PADDR (dispatch),
-}/*-------------------------< IDLE >------------------------*/,{
+पूर्ण/*-------------------------< IDLE >------------------------*/,अणु
 	/*
-	**	Nothing to do?
-	**	Wait for reselect.
+	**	Nothing to करो?
+	**	Wait क्रम reselect.
 	**	This NOP will be patched with LED OFF
 	**	SCR_REG_REG (gpreg, SCR_OR, 0x01)
 	*/
 	SCR_NO_OP,
 		0,
-}/*-------------------------< RESELECT >--------------------*/,{
+पूर्ण/*-------------------------< RESELECT >--------------------*/,अणु
 	/*
 	**	make the DSA invalid.
 	*/
@@ -2572,14 +2573,14 @@ static	struct script script0 __initdata = {
 	SCR_LOAD_REG (HS_REG, HS_IN_RESELECT),
 		0,
 	/*
-	**	Sleep waiting for a reselection.
-	**	If SIGP is set, special treatment.
+	**	Sleep रुकोing क्रम a reselection.
+	**	If SIGP is set, special treaपंचांगent.
 	**
 	**	Zu allem bereit ..
 	*/
 	SCR_WAIT_RESEL,
 		PADDR(start),
-}/*-------------------------< RESELECTED >------------------*/,{
+पूर्ण/*-------------------------< RESELECTED >------------------*/,अणु
 	/*
 	**	This NOP will be patched with LED ON
 	**	SCR_REG_REG (gpreg, SCR_AND, 0xfe)
@@ -2589,14 +2590,14 @@ static	struct script script0 __initdata = {
 	/*
 	**	... zu nichts zu gebrauchen ?
 	**
-	**      load the target id into the SFBR
+	**      load the target id पूर्णांकo the SFBR
 	**	and jump to the control block.
 	**
 	**	Look at the declarations of
-	**	- struct ncb
-	**	- struct tcb
-	**	- struct lcb
-	**	- struct ccb
+	**	- काष्ठा ncb
+	**	- काष्ठा tcb
+	**	- काष्ठा lcb
+	**	- काष्ठा ccb
 	**	to understand what's going on.
 	*/
 	SCR_REG_SFBR (ssid, SCR_AND, 0x8F),
@@ -2606,50 +2607,50 @@ static	struct script script0 __initdata = {
 	SCR_JUMP,
 		NADDR (jump_tcb),
 
-}/*-------------------------< RESEL_DSA >-------------------*/,{
+पूर्ण/*-------------------------< RESEL_DSA >-------------------*/,अणु
 	/*
 	**	Ack the IDENTIFY or TAG previously received.
 	*/
 	SCR_CLR (SCR_ACK),
 		0,
 	/*
-	**      The ncr doesn't have an indirect load
+	**      The ncr करोesn't have an indirect load
 	**	or store command. So we have to
 	**	copy part of the control block to a
 	**	fixed place, where we can access it.
 	**
 	**	We patch the address part of a
-	**	COPY command with the DSA-register.
+	**	COPY command with the DSA-रेजिस्टर.
 	*/
 	SCR_COPY_F (4),
 		RADDR (dsa),
 		PADDR (loadpos1),
 	/*
-	**	Flush script prefetch if required
+	**	Flush script prefetch अगर required
 	*/
 	PREFETCH_FLUSH
 	/*
-	**	then we do the actual copy.
+	**	then we करो the actual copy.
 	*/
-	SCR_COPY (sizeof (struct head)),
+	SCR_COPY (माप (काष्ठा head)),
 	/*
-	**	continued after the next label ...
+	**	जारीd after the next label ...
 	*/
 
-}/*-------------------------< LOADPOS1 >-------------------*/,{
+पूर्ण/*-------------------------< LOADPOS1 >-------------------*/,अणु
 		0,
 		NADDR (header),
 	/*
-	**	The DSA contains the data structure address.
+	**	The DSA contains the data काष्ठाure address.
 	*/
 	SCR_JUMP,
 		PADDR (prepare),
 
-}/*-------------------------< RESEL_LUN >-------------------*/,{
+पूर्ण/*-------------------------< RESEL_LUN >-------------------*/,अणु
 	/*
-	**	come back to this point
+	**	come back to this poपूर्णांक
 	**	to get an IDENTIFY message
-	**	Wait for a msg_in phase.
+	**	Wait क्रम a msg_in phase.
 	*/
 	SCR_INT ^ IFFALSE (WHEN (SCR_MSG_IN)),
 		SIR_RESEL_NO_MSG_IN,
@@ -2662,16 +2663,16 @@ static	struct script script0 __initdata = {
 	SCR_FROM_REG (sbdl),
 		0,
 	/*
-	**	It should be an Identify message.
+	**	It should be an Identअगरy message.
 	*/
 	SCR_RETURN,
 		0,
-}/*-------------------------< RESEL_TAG >-------------------*/,{
+पूर्ण/*-------------------------< RESEL_TAG >-------------------*/,अणु
 	/*
 	**	Read IDENTIFY + SIMPLE + TAG using a single MOVE.
 	**	Aggressive optimization, is'nt it?
 	**	No need to test the SIMPLE TAG message, since the 
-	**	driver only supports conformant devices for tags. ;-)
+	**	driver only supports conक्रमmant devices क्रम tags. ;-)
 	*/
 	SCR_MOVE_ABS (3) ^ SCR_MSG_IN,
 		NADDR (msgin),
@@ -2686,21 +2687,21 @@ static	struct script script0 __initdata = {
 		0,
 	SCR_SFBR_REG (temp, SCR_AND, 0xfc),
 		0,
-}/*-------------------------< JUMP_TO_NEXUS >-------------------*/,{
+पूर्ण/*-------------------------< JUMP_TO_NEXUS >-------------------*/,अणु
 	SCR_COPY_F (4),
 		RADDR (temp),
 		PADDR (nexus_indirect),
 	/*
-	**	Flush script prefetch if required
+	**	Flush script prefetch अगर required
 	*/
 	PREFETCH_FLUSH
 	SCR_COPY (4),
-}/*-------------------------< NEXUS_INDIRECT >-------------------*/,{
+पूर्ण/*-------------------------< NEXUS_INसूचीECT >-------------------*/,अणु
 		0,
 		RADDR (temp),
 	SCR_RETURN,
 		0,
-}/*-------------------------< RESEL_NOTAG >-------------------*/,{
+पूर्ण/*-------------------------< RESEL_NOTAG >-------------------*/,अणु
 	/*
 	**	No tag expected.
 	**	Read an throw away the IDENTIFY.
@@ -2709,61 +2710,61 @@ static	struct script script0 __initdata = {
 		NADDR (msgin),
 	SCR_JUMP,
 		PADDR (jump_to_nexus),
-}/*-------------------------< DATA_IN >--------------------*/,{
+पूर्ण/*-------------------------< DATA_IN >--------------------*/,अणु
 /*
 **	Because the size depends on the
-**	#define MAX_SCATTERL parameter,
-**	it is filled in at runtime.
+**	#घोषणा MAX_SCATTERL parameter,
+**	it is filled in at runसमय.
 **
 **  ##===========< i=0; i<MAX_SCATTERL >=========
 **  ||	SCR_CALL ^ IFFALSE (WHEN (SCR_DATA_IN)),
 **  ||		PADDR (dispatch),
 **  ||	SCR_MOVE_TBL ^ SCR_DATA_IN,
-**  ||		offsetof (struct dsb, data[ i]),
+**  ||		दुरत्व (काष्ठा dsb, data[ i]),
 **  ##==========================================
 **
 **---------------------------------------------------------
 */
 0
-}/*-------------------------< DATA_IN2 >-------------------*/,{
+पूर्ण/*-------------------------< DATA_IN2 >-------------------*/,अणु
 	SCR_CALL,
 		PADDR (dispatch),
 	SCR_JUMP,
 		PADDR (no_data),
-}/*-------------------------< DATA_OUT >--------------------*/,{
+पूर्ण/*-------------------------< DATA_OUT >--------------------*/,अणु
 /*
 **	Because the size depends on the
-**	#define MAX_SCATTERL parameter,
-**	it is filled in at runtime.
+**	#घोषणा MAX_SCATTERL parameter,
+**	it is filled in at runसमय.
 **
 **  ##===========< i=0; i<MAX_SCATTERL >=========
 **  ||	SCR_CALL ^ IFFALSE (WHEN (SCR_DATA_OUT)),
 **  ||		PADDR (dispatch),
 **  ||	SCR_MOVE_TBL ^ SCR_DATA_OUT,
-**  ||		offsetof (struct dsb, data[ i]),
+**  ||		दुरत्व (काष्ठा dsb, data[ i]),
 **  ##==========================================
 **
 **---------------------------------------------------------
 */
 0
-}/*-------------------------< DATA_OUT2 >-------------------*/,{
+पूर्ण/*-------------------------< DATA_OUT2 >-------------------*/,अणु
 	SCR_CALL,
 		PADDR (dispatch),
 	SCR_JUMP,
 		PADDR (no_data),
-}/*--------------------------------------------------------*/
-};
+पूर्ण/*--------------------------------------------------------*/
+पूर्ण;
 
-static	struct scripth scripth0 __initdata = {
-/*-------------------------< TRYLOOP >---------------------*/{
+अटल	काष्ठा scripth scripth0 __initdata = अणु
+/*-------------------------< TRYLOOP >---------------------*/अणु
 /*
 **	Start the next entry.
-**	Called addresses point to the launch script in the CCB.
-**	They are patched by the main processor.
+**	Called addresses poपूर्णांक to the launch script in the CCB.
+**	They are patched by the मुख्य processor.
 **
 **	Because the size depends on the
-**	#define MAX_START parameter, it is filled
-**	in at runtime.
+**	#घोषणा MAX_START parameter, it is filled
+**	in at runसमय.
 **
 **-----------------------------------------------------------
 **
@@ -2775,38 +2776,38 @@ static	struct scripth scripth0 __initdata = {
 **-----------------------------------------------------------
 */
 0
-}/*------------------------< TRYLOOP2 >---------------------*/,{
+पूर्ण/*------------------------< TRYLOOP2 >---------------------*/,अणु
 	SCR_JUMP,
 		PADDRH(tryloop),
 
-#ifdef SCSI_NCR_CCB_DONE_SUPPORT
+#अगर_घोषित SCSI_NCR_CCB_DONE_SUPPORT
 
-}/*------------------------< DONE_QUEUE >-------------------*/,{
+पूर्ण/*------------------------< DONE_QUEUE >-------------------*/,अणु
 /*
-**	Copy the CCB address to the next done entry.
+**	Copy the CCB address to the next करोne entry.
 **	Because the size depends on the
-**	#define MAX_DONE parameter, it is filled
-**	in at runtime.
+**	#घोषणा MAX_DONE parameter, it is filled
+**	in at runसमय.
 **
 **-----------------------------------------------------------
 **
 **  ##===========< I=0; i<MAX_DONE >===========
-**  ||	SCR_COPY (sizeof(struct ccb *),
+**  ||	SCR_COPY (माप(काष्ठा ccb *),
 **  ||		NADDR (header.cp),
-**  ||		NADDR (ccb_done[i]),
+**  ||		NADDR (ccb_करोne[i]),
 **  ||	SCR_CALL,
-**  ||		PADDR (done_end),
+**  ||		PADDR (करोne_end),
 **  ##==========================================
 **
 **-----------------------------------------------------------
 */
 0
-}/*------------------------< DONE_QUEUE2 >------------------*/,{
+पूर्ण/*------------------------< DONE_QUEUE2 >------------------*/,अणु
 	SCR_JUMP,
-		PADDRH (done_queue),
+		PADDRH (करोne_queue),
 
-#endif /* SCSI_NCR_CCB_DONE_SUPPORT */
-}/*------------------------< SELECT_NO_ATN >-----------------*/,{
+#पूर्ण_अगर /* SCSI_NCR_CCB_DONE_SUPPORT */
+पूर्ण/*------------------------< SELECT_NO_ATN >-----------------*/,अणु
 	/*
 	**	Set Initiator mode.
 	**      And try to select this target without ATN.
@@ -2816,55 +2817,55 @@ static	struct scripth scripth0 __initdata = {
 		0,
 	SCR_LOAD_REG (HS_REG, HS_SELECTING),
 		0,
-	SCR_SEL_TBL ^ offsetof (struct dsb, select),
+	SCR_SEL_TBL ^ दुरत्व (काष्ठा dsb, select),
 		PADDR (reselect),
 	SCR_JUMP,
 		PADDR (select2),
 
-}/*-------------------------< CANCEL >------------------------*/,{
+पूर्ण/*-------------------------< CANCEL >------------------------*/,अणु
 
 	SCR_LOAD_REG (scratcha, HS_ABORTED),
 		0,
 	SCR_JUMPR,
 		8,
-}/*-------------------------< SKIP >------------------------*/,{
+पूर्ण/*-------------------------< SKIP >------------------------*/,अणु
 	SCR_LOAD_REG (scratcha, 0),
 		0,
 	/*
 	**	This entry has been canceled.
-	**	Next time use the next slot.
+	**	Next समय use the next slot.
 	*/
 	SCR_COPY (4),
 		RADDR (temp),
 		PADDR (startpos),
 	/*
-	**      The ncr doesn't have an indirect load
+	**      The ncr करोesn't have an indirect load
 	**	or store command. So we have to
 	**	copy part of the control block to a
 	**	fixed place, where we can access it.
 	**
 	**	We patch the address part of a
-	**	COPY command with the DSA-register.
+	**	COPY command with the DSA-रेजिस्टर.
 	*/
 	SCR_COPY_F (4),
 		RADDR (dsa),
 		PADDRH (skip2),
 	/*
-	**	Flush script prefetch if required
+	**	Flush script prefetch अगर required
 	*/
 	PREFETCH_FLUSH
 	/*
-	**	then we do the actual copy.
+	**	then we करो the actual copy.
 	*/
-	SCR_COPY (sizeof (struct head)),
+	SCR_COPY (माप (काष्ठा head)),
 	/*
-	**	continued after the next label ...
+	**	जारीd after the next label ...
 	*/
-}/*-------------------------< SKIP2 >---------------------*/,{
+पूर्ण/*-------------------------< SKIP2 >---------------------*/,अणु
 		0,
 		NADDR (header),
 	/*
-	**      Initialize the status registers
+	**      Initialize the status रेजिस्टरs
 	*/
 	SCR_COPY (4),
 		NADDR (header.status),
@@ -2887,7 +2888,7 @@ static	struct scripth scripth0 __initdata = {
 	SCR_JUMP,
 		PADDR (cleanup_ok),
 
-},/*-------------------------< PAR_ERR_DATA_IN >---------------*/{
+पूर्ण,/*-------------------------< PAR_ERR_DATA_IN >---------------*/अणु
 	/*
 	**	Ignore all data in byte, until next phase
 	*/
@@ -2897,7 +2898,7 @@ static	struct scripth scripth0 __initdata = {
 		NADDR (scratch),
 	SCR_JUMPR,
 		-24,
-},/*-------------------------< PAR_ERR_OTHER >------------------*/{
+पूर्ण,/*-------------------------< PAR_ERR_OTHER >------------------*/अणु
 	/*
 	**	count it.
 	*/
@@ -2908,11 +2909,11 @@ static	struct scripth scripth0 __initdata = {
 	*/
 	SCR_JUMP,
 		PADDR (dispatch),
-}/*-------------------------< MSG_REJECT >---------------*/,{
+पूर्ण/*-------------------------< MSG_REJECT >---------------*/,अणु
 	/*
 	**	If a negotiation was in progress,
 	**	negotiation failed.
-	**	Otherwise, let the C code print 
+	**	Otherwise, let the C code prपूर्णांक 
 	**	some message.
 	*/
 	SCR_FROM_REG (HS_REG),
@@ -2924,7 +2925,7 @@ static	struct scripth scripth0 __initdata = {
 	SCR_JUMP,
 		PADDR (clrack),
 
-}/*-------------------------< MSG_IGN_RESIDUE >----------*/,{
+पूर्ण/*-------------------------< MSG_IGN_RESIDUE >----------*/,अणु
 	/*
 	**	Terminate cycle
 	*/
@@ -2943,19 +2944,19 @@ static	struct scripth scripth0 __initdata = {
 	SCR_JUMP ^ IFTRUE (DATA (0)),
 		PADDR (clrack),
 	/*
-	**	Size is not 1 .. have to interrupt.
+	**	Size is not 1 .. have to पूर्णांकerrupt.
 	*/
 	SCR_JUMPR ^ IFFALSE (DATA (1)),
 		40,
 	/*
-	**	Check for residue byte in swide register
+	**	Check क्रम residue byte in swide रेजिस्टर
 	*/
 	SCR_FROM_REG (scntl2),
 		0,
 	SCR_JUMPR ^ IFFALSE (MASK (WSR, WSR)),
 		16,
 	/*
-	**	There IS data in the swide register.
+	**	There IS data in the swide रेजिस्टर.
 	**	Discard it.
 	*/
 	SCR_REG_REG (scntl2, SCR_OR, WSR),
@@ -2963,7 +2964,7 @@ static	struct scripth scripth0 __initdata = {
 	SCR_JUMP,
 		PADDR (clrack),
 	/*
-	**	Load again the size to the sfbr register.
+	**	Load again the size to the sfbr रेजिस्टर.
 	*/
 	SCR_FROM_REG (scratcha),
 		0,
@@ -2972,7 +2973,7 @@ static	struct scripth scripth0 __initdata = {
 	SCR_JUMP,
 		PADDR (clrack),
 
-}/*-------------------------< MSG_EXTENDED >-------------*/,{
+पूर्ण/*-------------------------< MSG_EXTENDED >-------------*/,अणु
 	/*
 	**	Terminate cycle
 	*/
@@ -2991,7 +2992,7 @@ static	struct scripth scripth0 __initdata = {
 		PADDRH (msg_ext_3),
 	SCR_JUMP ^ IFFALSE (DATA (2)),
 		PADDR (msg_bad),
-}/*-------------------------< MSG_EXT_2 >----------------*/,{
+पूर्ण/*-------------------------< MSG_EXT_2 >----------------*/,अणु
 	SCR_CLR (SCR_ACK),
 		0,
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_IN)),
@@ -3008,7 +3009,7 @@ static	struct scripth scripth0 __initdata = {
 	*/
 	SCR_JUMP,
 		PADDR (msg_bad)
-}/*-------------------------< MSG_WDTR >-----------------*/,{
+पूर्ण/*-------------------------< MSG_WDTR >-----------------*/,अणु
 	SCR_CLR (SCR_ACK),
 		0,
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_IN)),
@@ -3019,7 +3020,7 @@ static	struct scripth scripth0 __initdata = {
 	SCR_MOVE_ABS (1) ^ SCR_MSG_IN,
 		NADDR (msgin[3]),
 	/*
-	**	let the host do the real work.
+	**	let the host करो the real work.
 	*/
 	SCR_INT,
 		SIR_NEGO_WIDE,
@@ -3033,7 +3034,7 @@ static	struct scripth scripth0 __initdata = {
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		PADDRH (nego_bad_phase),
 
-}/*-------------------------< SEND_WDTR >----------------*/,{
+पूर्ण/*-------------------------< SEND_WDTR >----------------*/,अणु
 	/*
 	**	Send the EXTENDED_WDTR
 	*/
@@ -3041,11 +3042,11 @@ static	struct scripth scripth0 __initdata = {
 		NADDR (msgout),
 	SCR_COPY (1),
 		NADDR (msgout),
-		NADDR (lastmsg),
+		NADDR (lasपंचांगsg),
 	SCR_JUMP,
-		PADDR (msg_out_done),
+		PADDR (msg_out_करोne),
 
-}/*-------------------------< MSG_EXT_3 >----------------*/,{
+पूर्ण/*-------------------------< MSG_EXT_3 >----------------*/,अणु
 	SCR_CLR (SCR_ACK),
 		0,
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_IN)),
@@ -3063,7 +3064,7 @@ static	struct scripth scripth0 __initdata = {
 	SCR_JUMP,
 		PADDR (msg_bad)
 
-}/*-------------------------< MSG_SDTR >-----------------*/,{
+पूर्ण/*-------------------------< MSG_SDTR >-----------------*/,अणु
 	SCR_CLR (SCR_ACK),
 		0,
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_IN)),
@@ -3074,7 +3075,7 @@ static	struct scripth scripth0 __initdata = {
 	SCR_MOVE_ABS (2) ^ SCR_MSG_IN,
 		NADDR (msgin[3]),
 	/*
-	**	let the host do the real work.
+	**	let the host करो the real work.
 	*/
 	SCR_INT,
 		SIR_NEGO_SYNC,
@@ -3088,7 +3089,7 @@ static	struct scripth scripth0 __initdata = {
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		PADDRH (nego_bad_phase),
 
-}/*-------------------------< SEND_SDTR >-------------*/,{
+पूर्ण/*-------------------------< SEND_SDTR >-------------*/,अणु
 	/*
 	**	Send the EXTENDED_SDTR
 	*/
@@ -3096,17 +3097,17 @@ static	struct scripth scripth0 __initdata = {
 		NADDR (msgout),
 	SCR_COPY (1),
 		NADDR (msgout),
-		NADDR (lastmsg),
+		NADDR (lasपंचांगsg),
 	SCR_JUMP,
-		PADDR (msg_out_done),
+		PADDR (msg_out_करोne),
 
-}/*-------------------------< NEGO_BAD_PHASE >------------*/,{
+पूर्ण/*-------------------------< NEGO_BAD_PHASE >------------*/,अणु
 	SCR_INT,
 		SIR_NEGO_PROTO,
 	SCR_JUMP,
 		PADDR (dispatch),
 
-}/*-------------------------< MSG_OUT_ABORT >-------------*/,{
+पूर्ण/*-------------------------< MSG_OUT_ABORT >-------------*/,अणु
 	/*
 	**	After ABORT message,
 	**
@@ -3126,70 +3127,70 @@ static	struct scripth scripth0 __initdata = {
 	SCR_JUMP,
 		PADDR (cleanup),
 
-}/*-------------------------< HDATA_IN >-------------------*/,{
+पूर्ण/*-------------------------< HDATA_IN >-------------------*/,अणु
 /*
 **	Because the size depends on the
-**	#define MAX_SCATTERH parameter,
-**	it is filled in at runtime.
+**	#घोषणा MAX_SCATTERH parameter,
+**	it is filled in at runसमय.
 **
 **  ##==< i=MAX_SCATTERL; i<MAX_SCATTERL+MAX_SCATTERH >==
 **  ||	SCR_CALL ^ IFFALSE (WHEN (SCR_DATA_IN)),
 **  ||		PADDR (dispatch),
 **  ||	SCR_MOVE_TBL ^ SCR_DATA_IN,
-**  ||		offsetof (struct dsb, data[ i]),
+**  ||		दुरत्व (काष्ठा dsb, data[ i]),
 **  ##===================================================
 **
 **---------------------------------------------------------
 */
 0
-}/*-------------------------< HDATA_IN2 >------------------*/,{
+पूर्ण/*-------------------------< HDATA_IN2 >------------------*/,अणु
 	SCR_JUMP,
 		PADDR (data_in),
 
-}/*-------------------------< HDATA_OUT >-------------------*/,{
+पूर्ण/*-------------------------< HDATA_OUT >-------------------*/,अणु
 /*
 **	Because the size depends on the
-**	#define MAX_SCATTERH parameter,
-**	it is filled in at runtime.
+**	#घोषणा MAX_SCATTERH parameter,
+**	it is filled in at runसमय.
 **
 **  ##==< i=MAX_SCATTERL; i<MAX_SCATTERL+MAX_SCATTERH >==
 **  ||	SCR_CALL ^ IFFALSE (WHEN (SCR_DATA_OUT)),
 **  ||		PADDR (dispatch),
 **  ||	SCR_MOVE_TBL ^ SCR_DATA_OUT,
-**  ||		offsetof (struct dsb, data[ i]),
+**  ||		दुरत्व (काष्ठा dsb, data[ i]),
 **  ##===================================================
 **
 **---------------------------------------------------------
 */
 0
-}/*-------------------------< HDATA_OUT2 >------------------*/,{
+पूर्ण/*-------------------------< HDATA_OUT2 >------------------*/,अणु
 	SCR_JUMP,
 		PADDR (data_out),
 
-}/*-------------------------< RESET >----------------------*/,{
+पूर्ण/*-------------------------< RESET >----------------------*/,अणु
 	/*
-	**      Send a TARGET_RESET message if bad IDENTIFY 
+	**      Send a TARGET_RESET message अगर bad IDENTIFY 
 	**	received on reselection.
 	*/
 	SCR_LOAD_REG (scratcha, ABORT_TASK),
 		0,
 	SCR_JUMP,
-		PADDRH (abort_resel),
-}/*-------------------------< ABORTTAG >-------------------*/,{
+		PADDRH (पात_resel),
+पूर्ण/*-------------------------< ABORTTAG >-------------------*/,अणु
 	/*
 	**      Abort a wrong tag received on reselection.
 	*/
 	SCR_LOAD_REG (scratcha, ABORT_TASK),
 		0,
 	SCR_JUMP,
-		PADDRH (abort_resel),
-}/*-------------------------< ABORT >----------------------*/,{
+		PADDRH (पात_resel),
+पूर्ण/*-------------------------< ABORT >----------------------*/,अणु
 	/*
 	**      Abort a reselection when no active CCB.
 	*/
 	SCR_LOAD_REG (scratcha, ABORT_TASK_SET),
 		0,
-}/*-------------------------< ABORT_RESEL >----------------*/,{
+पूर्ण/*-------------------------< ABORT_RESEL >----------------*/,अणु
 	SCR_COPY (1),
 		RADDR (scratcha),
 		NADDR (msgout),
@@ -3207,49 +3208,49 @@ static	struct scripth scripth0 __initdata = {
 		NADDR (msgout),
 	SCR_COPY (1),
 		NADDR (msgout),
-		NADDR (lastmsg),
+		NADDR (lasपंचांगsg),
 	SCR_CLR (SCR_ACK|SCR_ATN),
 		0,
 	SCR_WAIT_DISC,
 		0,
 	SCR_JUMP,
 		PADDR (start),
-}/*-------------------------< RESEND_IDENT >-------------------*/,{
+पूर्ण/*-------------------------< RESEND_IDENT >-------------------*/,अणु
 	/*
 	**	The target stays in MSG OUT phase after having acked 
-	**	Identify [+ Tag [+ Extended message ]]. Targets shall
+	**	Identअगरy [+ Tag [+ Extended message ]]. Tarमाला_लो shall
 	**	behave this way on parity error.
 	**	We must send it again all the messages.
 	*/
-	SCR_SET (SCR_ATN), /* Shall be asserted 2 deskew delays before the  */
+	SCR_SET (SCR_ATN), /* Shall be निश्चितed 2 deskew delays beक्रमe the  */
 		0,         /* 1rst ACK = 90 ns. Hope the NCR is'nt too fast */
 	SCR_JUMP,
 		PADDR (send_ident),
-}/*-------------------------< CLRATN_GO_ON >-------------------*/,{
+पूर्ण/*-------------------------< CLRATN_GO_ON >-------------------*/,अणु
 	SCR_CLR (SCR_ATN),
 		0,
 	SCR_JUMP,
-}/*-------------------------< NXTDSP_GO_ON >-------------------*/,{
+पूर्ण/*-------------------------< NXTDSP_GO_ON >-------------------*/,अणु
 		0,
-}/*-------------------------< SDATA_IN >-------------------*/,{
+पूर्ण/*-------------------------< SDATA_IN >-------------------*/,अणु
 	SCR_CALL ^ IFFALSE (WHEN (SCR_DATA_IN)),
 		PADDR (dispatch),
 	SCR_MOVE_TBL ^ SCR_DATA_IN,
-		offsetof (struct dsb, sense),
+		दुरत्व (काष्ठा dsb, sense),
 	SCR_CALL,
 		PADDR (dispatch),
 	SCR_JUMP,
 		PADDR (no_data),
-}/*-------------------------< DATA_IO >--------------------*/,{
+पूर्ण/*-------------------------< DATA_IO >--------------------*/,अणु
 	/*
-	**	We jump here if the data direction was unknown at the 
-	**	time we had to queue the command to the scripts processor.
-	**	Pointers had been set as follow in this situation:
+	**	We jump here अगर the data direction was unknown at the 
+	**	समय we had to queue the command to the scripts processor.
+	**	Poपूर्णांकers had been set as follow in this situation:
 	**	  savep   -->   DATA_IO
-	**	  lastp   -->   start pointer when DATA_IN
-	**	  goalp   -->   goal  pointer when DATA_IN
-	**	  wlastp  -->   start pointer when DATA_OUT
-	**	  wgoalp  -->   goal  pointer when DATA_OUT
+	**	  lastp   -->   start poपूर्णांकer when DATA_IN
+	**	  goalp   -->   goal  poपूर्णांकer when DATA_IN
+	**	  wlastp  -->   start poपूर्णांकer when DATA_OUT
+	**	  wgoalp  -->   goal  poपूर्णांकer when DATA_OUT
 	**	This script sets savep/lastp/goalp according to the 
 	**	direction chosen by the target.
 	*/
@@ -3282,7 +3283,7 @@ static	struct scripth scripth0 __initdata = {
 		NADDR (header.goalp),
 	SCR_JUMPR,
 		-64,
-}/*-------------------------< BAD_IDENTIFY >---------------*/,{
+पूर्ण/*-------------------------< BAD_IDENTIFY >---------------*/,अणु
 	/*
 	**	If message phase but not an IDENTIFY,
 	**	get some help from the C code.
@@ -3298,7 +3299,7 @@ static	struct scripth scripth0 __initdata = {
 	**	Message is an IDENTIFY, but lun is unknown.
 	**	Read the message, since we got it directly 
 	**	from the SCSI BUS data lines.
-	**	Signal problem to C code for logging the event.
+	**	Signal problem to C code क्रम logging the event.
 	**	Send an ABORT_TASK_SET to clear all pending tasks.
 	*/
 	SCR_INT,
@@ -3306,32 +3307,32 @@ static	struct scripth scripth0 __initdata = {
 	SCR_MOVE_ABS (1) ^ SCR_MSG_IN,
 		NADDR (msgin),
 	SCR_JUMP,
-		PADDRH (abort),
-}/*-------------------------< BAD_I_T_L >------------------*/,{
+		PADDRH (पात),
+पूर्ण/*-------------------------< BAD_I_T_L >------------------*/,अणु
 	/*
-	**	We donnot have a task for that I_T_L.
-	**	Signal problem to C code for logging the event.
+	**	We करोnnot have a task क्रम that I_T_L.
+	**	Signal problem to C code क्रम logging the event.
 	**	Send an ABORT_TASK_SET message.
 	*/
 	SCR_INT,
 		SIR_RESEL_BAD_I_T_L,
 	SCR_JUMP,
-		PADDRH (abort),
-}/*-------------------------< BAD_I_T_L_Q >----------------*/,{
+		PADDRH (पात),
+पूर्ण/*-------------------------< BAD_I_T_L_Q >----------------*/,अणु
 	/*
-	**	We donnot have a task that matches the tag.
-	**	Signal problem to C code for logging the event.
+	**	We करोnnot have a task that matches the tag.
+	**	Signal problem to C code क्रम logging the event.
 	**	Send an ABORT_TASK message.
 	*/
 	SCR_INT,
 		SIR_RESEL_BAD_I_T_L_Q,
 	SCR_JUMP,
-		PADDRH (aborttag),
-}/*-------------------------< BAD_TARGET >-----------------*/,{
+		PADDRH (पातtag),
+पूर्ण/*-------------------------< BAD_TARGET >-----------------*/,अणु
 	/*
-	**	We donnot know the target that reselected us.
-	**	Grab the first message if any (IDENTIFY).
-	**	Signal problem to C code for logging the event.
+	**	We करोnnot know the target that reselected us.
+	**	Grab the first message अगर any (IDENTIFY).
+	**	Signal problem to C code क्रम logging the event.
 	**	TARGET_RESET message.
 	*/
 	SCR_INT,
@@ -3342,7 +3343,7 @@ static	struct scripth scripth0 __initdata = {
 		NADDR (msgin),
 	SCR_JUMP,
 		PADDRH (reset),
-}/*-------------------------< BAD_STATUS >-----------------*/,{
+पूर्ण/*-------------------------< BAD_STATUS >-----------------*/,अणु
 	/*
 	**	If command resulted in either TASK_SET FULL,
 	**	CHECK CONDITION or COMMAND TERMINATED,
@@ -3356,47 +3357,47 @@ static	struct scripth scripth0 __initdata = {
 		SIR_BAD_STATUS,
 	SCR_RETURN,
 		0,
-}/*-------------------------< START_RAM >-------------------*/,{
+पूर्ण/*-------------------------< START_RAM >-------------------*/,अणु
 	/*
-	**	Load the script into on-chip RAM, 
-	**	and jump to start point.
+	**	Load the script पूर्णांकo on-chip RAM, 
+	**	and jump to start poपूर्णांक.
 	*/
 	SCR_COPY_F (4),
 		RADDR (scratcha),
 		PADDRH (start_ram0),
 	/*
-	**	Flush script prefetch if required
+	**	Flush script prefetch अगर required
 	*/
 	PREFETCH_FLUSH
-	SCR_COPY (sizeof (struct script)),
-}/*-------------------------< START_RAM0 >--------------------*/,{
+	SCR_COPY (माप (काष्ठा script)),
+पूर्ण/*-------------------------< START_RAM0 >--------------------*/,अणु
 		0,
 		PADDR (start),
 	SCR_JUMP,
 		PADDR (start),
-}/*-------------------------< STO_RESTART >-------------------*/,{
+पूर्ण/*-------------------------< STO_RESTART >-------------------*/,अणु
 	/*
 	**
-	**	Repair start queue (e.g. next time use the next slot) 
-	**	and jump to start point.
+	**	Repair start queue (e.g. next समय use the next slot) 
+	**	and jump to start poपूर्णांक.
 	*/
 	SCR_COPY (4),
 		RADDR (temp),
 		PADDR (startpos),
 	SCR_JUMP,
 		PADDR (start),
-}/*-------------------------< WAIT_DMA >-------------------*/,{
+पूर्ण/*-------------------------< WAIT_DMA >-------------------*/,अणु
 	/*
-	**	For HP Zalon/53c720 systems, the Zalon interface
-	**	between CPU and 53c720 does prefetches, which causes
-	**	problems with self modifying scripts.  The problem
+	**	For HP Zalon/53c720 प्रणालीs, the Zalon पूर्णांकerface
+	**	between CPU and 53c720 करोes prefetches, which causes
+	**	problems with self modअगरying scripts.  The problem
 	**	is overcome by calling a dummy subroutine after each
-	**	modification, to force a refetch of the script on
-	**	return from the subroutine.
+	**	modअगरication, to क्रमce a refetch of the script on
+	**	वापस from the subroutine.
 	*/
 	SCR_RETURN,
 		0,
-}/*-------------------------< SNOOPTEST >-------------------*/,{
+पूर्ण/*-------------------------< SNOOPTEST >-------------------*/,अणु
 	/*
 	**	Read the variable.
 	*/
@@ -3415,92 +3416,92 @@ static	struct scripth scripth0 __initdata = {
 	SCR_COPY (4),
 		NADDR(ncr_cache),
 		RADDR (temp),
-}/*-------------------------< SNOOPEND >-------------------*/,{
+पूर्ण/*-------------------------< SNOOPEND >-------------------*/,अणु
 	/*
 	**	And stop.
 	*/
 	SCR_INT,
 		99,
-}/*--------------------------------------------------------*/
-};
+पूर्ण/*--------------------------------------------------------*/
+पूर्ण;
 
 /*==========================================================
 **
 **
-**	Fill in #define dependent parts of the script
+**	Fill in #घोषणा dependent parts of the script
 **
 **
 **==========================================================
 */
 
-void __init ncr_script_fill (struct script * scr, struct scripth * scrh)
-{
-	int	i;
+व्योम __init ncr_script_fill (काष्ठा script * scr, काष्ठा scripth * scrh)
+अणु
+	पूर्णांक	i;
 	ncrcmd	*p;
 
 	p = scrh->tryloop;
-	for (i=0; i<MAX_START; i++) {
+	क्रम (i=0; i<MAX_START; i++) अणु
 		*p++ =SCR_CALL;
 		*p++ =PADDR (idle);
-	}
+	पूर्ण
 
-	BUG_ON((u_long)p != (u_long)&scrh->tryloop + sizeof (scrh->tryloop));
+	BUG_ON((u_दीर्घ)p != (u_दीर्घ)&scrh->tryloop + माप (scrh->tryloop));
 
-#ifdef SCSI_NCR_CCB_DONE_SUPPORT
+#अगर_घोषित SCSI_NCR_CCB_DONE_SUPPORT
 
-	p = scrh->done_queue;
-	for (i = 0; i<MAX_DONE; i++) {
-		*p++ =SCR_COPY (sizeof(struct ccb *));
+	p = scrh->करोne_queue;
+	क्रम (i = 0; i<MAX_DONE; i++) अणु
+		*p++ =SCR_COPY (माप(काष्ठा ccb *));
 		*p++ =NADDR (header.cp);
-		*p++ =NADDR (ccb_done[i]);
+		*p++ =NADDR (ccb_करोne[i]);
 		*p++ =SCR_CALL;
-		*p++ =PADDR (done_end);
-	}
+		*p++ =PADDR (करोne_end);
+	पूर्ण
 
-	BUG_ON((u_long)p != (u_long)&scrh->done_queue+sizeof(scrh->done_queue));
+	BUG_ON((u_दीर्घ)p != (u_दीर्घ)&scrh->करोne_queue+माप(scrh->करोne_queue));
 
-#endif /* SCSI_NCR_CCB_DONE_SUPPORT */
+#पूर्ण_अगर /* SCSI_NCR_CCB_DONE_SUPPORT */
 
 	p = scrh->hdata_in;
-	for (i=0; i<MAX_SCATTERH; i++) {
+	क्रम (i=0; i<MAX_SCATTERH; i++) अणु
 		*p++ =SCR_CALL ^ IFFALSE (WHEN (SCR_DATA_IN));
 		*p++ =PADDR (dispatch);
 		*p++ =SCR_MOVE_TBL ^ SCR_DATA_IN;
-		*p++ =offsetof (struct dsb, data[i]);
-	}
+		*p++ =दुरत्व (काष्ठा dsb, data[i]);
+	पूर्ण
 
-	BUG_ON((u_long)p != (u_long)&scrh->hdata_in + sizeof (scrh->hdata_in));
+	BUG_ON((u_दीर्घ)p != (u_दीर्घ)&scrh->hdata_in + माप (scrh->hdata_in));
 
 	p = scr->data_in;
-	for (i=MAX_SCATTERH; i<MAX_SCATTERH+MAX_SCATTERL; i++) {
+	क्रम (i=MAX_SCATTERH; i<MAX_SCATTERH+MAX_SCATTERL; i++) अणु
 		*p++ =SCR_CALL ^ IFFALSE (WHEN (SCR_DATA_IN));
 		*p++ =PADDR (dispatch);
 		*p++ =SCR_MOVE_TBL ^ SCR_DATA_IN;
-		*p++ =offsetof (struct dsb, data[i]);
-	}
+		*p++ =दुरत्व (काष्ठा dsb, data[i]);
+	पूर्ण
 
-	BUG_ON((u_long)p != (u_long)&scr->data_in + sizeof (scr->data_in));
+	BUG_ON((u_दीर्घ)p != (u_दीर्घ)&scr->data_in + माप (scr->data_in));
 
 	p = scrh->hdata_out;
-	for (i=0; i<MAX_SCATTERH; i++) {
+	क्रम (i=0; i<MAX_SCATTERH; i++) अणु
 		*p++ =SCR_CALL ^ IFFALSE (WHEN (SCR_DATA_OUT));
 		*p++ =PADDR (dispatch);
 		*p++ =SCR_MOVE_TBL ^ SCR_DATA_OUT;
-		*p++ =offsetof (struct dsb, data[i]);
-	}
+		*p++ =दुरत्व (काष्ठा dsb, data[i]);
+	पूर्ण
 
-	BUG_ON((u_long)p != (u_long)&scrh->hdata_out + sizeof (scrh->hdata_out));
+	BUG_ON((u_दीर्घ)p != (u_दीर्घ)&scrh->hdata_out + माप (scrh->hdata_out));
 
 	p = scr->data_out;
-	for (i=MAX_SCATTERH; i<MAX_SCATTERH+MAX_SCATTERL; i++) {
+	क्रम (i=MAX_SCATTERH; i<MAX_SCATTERH+MAX_SCATTERL; i++) अणु
 		*p++ =SCR_CALL ^ IFFALSE (WHEN (SCR_DATA_OUT));
 		*p++ =PADDR (dispatch);
 		*p++ =SCR_MOVE_TBL ^ SCR_DATA_OUT;
-		*p++ =offsetof (struct dsb, data[i]);
-	}
+		*p++ =दुरत्व (काष्ठा dsb, data[i]);
+	पूर्ण
 
-	BUG_ON((u_long) p != (u_long)&scr->data_out + sizeof (scr->data_out));
-}
+	BUG_ON((u_दीर्घ) p != (u_दीर्घ)&scr->data_out + माप (scr->data_out));
+पूर्ण
 
 /*==========================================================
 **
@@ -3511,192 +3512,192 @@ void __init ncr_script_fill (struct script * scr, struct scripth * scrh)
 **==========================================================
 */
 
-static void __init 
-ncr_script_copy_and_bind (struct ncb *np, ncrcmd *src, ncrcmd *dst, int len)
-{
-	ncrcmd  opcode, new, old, tmp1, tmp2;
+अटल व्योम __init 
+ncr_script_copy_and_bind (काष्ठा ncb *np, ncrcmd *src, ncrcmd *dst, पूर्णांक len)
+अणु
+	ncrcmd  opcode, new, old, पंचांगp1, पंचांगp2;
 	ncrcmd	*start, *end;
-	int relocs;
-	int opchanged = 0;
+	पूर्णांक relocs;
+	पूर्णांक opchanged = 0;
 
 	start = src;
 	end = src + len/4;
 
-	while (src < end) {
+	जबतक (src < end) अणु
 
 		opcode = *src++;
 		*dst++ = cpu_to_scr(opcode);
 
 		/*
-		**	If we forget to change the length
-		**	in struct script, a field will be
+		**	If we क्रमget to change the length
+		**	in काष्ठा script, a field will be
 		**	padded with 0. This is an illegal
 		**	command.
 		*/
 
-		if (opcode == 0) {
-			printk (KERN_ERR "%s: ERROR0 IN SCRIPT at %d.\n",
-				ncr_name(np), (int) (src-start-1));
+		अगर (opcode == 0) अणु
+			prपूर्णांकk (KERN_ERR "%s: ERROR0 IN SCRIPT at %d.\n",
+				ncr_name(np), (पूर्णांक) (src-start-1));
 			mdelay(1000);
-		}
+		पूर्ण
 
-		if (DEBUG_FLAGS & DEBUG_SCRIPT)
-			printk (KERN_DEBUG "%p:  <%x>\n",
-				(src-1), (unsigned)opcode);
+		अगर (DEBUG_FLAGS & DEBUG_SCRIPT)
+			prपूर्णांकk (KERN_DEBUG "%p:  <%x>\n",
+				(src-1), (अचिन्हित)opcode);
 
 		/*
-		**	We don't have to decode ALL commands
+		**	We करोn't have to decode ALL commands
 		*/
-		switch (opcode >> 28) {
+		चयन (opcode >> 28) अणु
 
-		case 0xc:
+		हाल 0xc:
 			/*
 			**	COPY has TWO arguments.
 			*/
 			relocs = 2;
-			tmp1 = src[0];
-#ifdef	RELOC_KVAR
-			if ((tmp1 & RELOC_MASK) == RELOC_KVAR)
-				tmp1 = 0;
-#endif
-			tmp2 = src[1];
-#ifdef	RELOC_KVAR
-			if ((tmp2 & RELOC_MASK) == RELOC_KVAR)
-				tmp2 = 0;
-#endif
-			if ((tmp1 ^ tmp2) & 3) {
-				printk (KERN_ERR"%s: ERROR1 IN SCRIPT at %d.\n",
-					ncr_name(np), (int) (src-start-1));
+			पंचांगp1 = src[0];
+#अगर_घोषित	RELOC_KVAR
+			अगर ((पंचांगp1 & RELOC_MASK) == RELOC_KVAR)
+				पंचांगp1 = 0;
+#पूर्ण_अगर
+			पंचांगp2 = src[1];
+#अगर_घोषित	RELOC_KVAR
+			अगर ((पंचांगp2 & RELOC_MASK) == RELOC_KVAR)
+				पंचांगp2 = 0;
+#पूर्ण_अगर
+			अगर ((पंचांगp1 ^ पंचांगp2) & 3) अणु
+				prपूर्णांकk (KERN_ERR"%s: ERROR1 IN SCRIPT at %d.\n",
+					ncr_name(np), (पूर्णांक) (src-start-1));
 				mdelay(1000);
-			}
+			पूर्ण
 			/*
-			**	If PREFETCH feature not enabled, remove 
-			**	the NO FLUSH bit if present.
+			**	If PREFETCH feature not enabled, हटाओ 
+			**	the NO FLUSH bit अगर present.
 			*/
-			if ((opcode & SCR_NO_FLUSH) && !(np->features & FE_PFEN)) {
+			अगर ((opcode & SCR_NO_FLUSH) && !(np->features & FE_PFEN)) अणु
 				dst[-1] = cpu_to_scr(opcode & ~SCR_NO_FLUSH);
 				++opchanged;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case 0x0:
+		हाल 0x0:
 			/*
-			**	MOVE (absolute address)
+			**	MOVE (असलolute address)
 			*/
 			relocs = 1;
-			break;
+			अवरोध;
 
-		case 0x8:
+		हाल 0x8:
 			/*
 			**	JUMP / CALL
-			**	don't relocate if relative :-)
+			**	करोn't relocate अगर relative :-)
 			*/
-			if (opcode & 0x00800000)
+			अगर (opcode & 0x00800000)
 				relocs = 0;
-			else
+			अन्यथा
 				relocs = 1;
-			break;
+			अवरोध;
 
-		case 0x4:
-		case 0x5:
-		case 0x6:
-		case 0x7:
+		हाल 0x4:
+		हाल 0x5:
+		हाल 0x6:
+		हाल 0x7:
 			relocs = 1;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			relocs = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (relocs) {
-			while (relocs--) {
+		अगर (relocs) अणु
+			जबतक (relocs--) अणु
 				old = *src++;
 
-				switch (old & RELOC_MASK) {
-				case RELOC_REGISTER:
+				चयन (old & RELOC_MASK) अणु
+				हाल RELOC_REGISTER:
 					new = (old & ~RELOC_MASK) + np->paddr;
-					break;
-				case RELOC_LABEL:
+					अवरोध;
+				हाल RELOC_LABEL:
 					new = (old & ~RELOC_MASK) + np->p_script;
-					break;
-				case RELOC_LABELH:
+					अवरोध;
+				हाल RELOC_LABELH:
 					new = (old & ~RELOC_MASK) + np->p_scripth;
-					break;
-				case RELOC_SOFTC:
+					अवरोध;
+				हाल RELOC_SOFTC:
 					new = (old & ~RELOC_MASK) + np->p_ncb;
-					break;
-#ifdef	RELOC_KVAR
-				case RELOC_KVAR:
-					if (((old & ~RELOC_MASK) <
+					अवरोध;
+#अगर_घोषित	RELOC_KVAR
+				हाल RELOC_KVAR:
+					अगर (((old & ~RELOC_MASK) <
 					     SCRIPT_KVAR_FIRST) ||
 					    ((old & ~RELOC_MASK) >
 					     SCRIPT_KVAR_LAST))
 						panic("ncr KVAR out of range");
 					new = vtophys(script_kvars[old &
 					    ~RELOC_MASK]);
-					break;
-#endif
-				case 0:
+					अवरोध;
+#पूर्ण_अगर
+				हाल 0:
 					/* Don't relocate a 0 address. */
-					if (old == 0) {
+					अगर (old == 0) अणु
 						new = old;
-						break;
-					}
+						अवरोध;
+					पूर्ण
 					fallthrough;
-				default:
+				शेष:
 					panic("ncr_script_copy_and_bind: weird relocation %x\n", old);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				*dst++ = cpu_to_scr(new);
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			*dst++ = cpu_to_scr(*src++);
 
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
-**	Linux host data structure
+**	Linux host data काष्ठाure
 */
 
-struct host_data {
-     struct ncb *ncb;
-};
+काष्ठा host_data अणु
+     काष्ठा ncb *ncb;
+पूर्ण;
 
-#define PRINT_ADDR(cmd, arg...) dev_info(&cmd->device->sdev_gendev , ## arg)
+#घोषणा PRINT_ADDR(cmd, arg...) dev_info(&cmd->device->sdev_gendev , ## arg)
 
-static void ncr_print_msg(struct ccb *cp, char *label, u_char *msg)
-{
+अटल व्योम ncr_prपूर्णांक_msg(काष्ठा ccb *cp, अक्षर *label, u_अक्षर *msg)
+अणु
 	PRINT_ADDR(cp->cmd, "%s: ", label);
 
-	spi_print_msg(msg);
-	printk("\n");
-}
+	spi_prपूर्णांक_msg(msg);
+	prपूर्णांकk("\n");
+पूर्ण
 
 /*==========================================================
 **
-**	NCR chip clock divisor table.
+**	NCR chip घड़ी भागisor table.
 **	Divisors are multiplied by 10,000,000 in order to make 
 **	calculations more simple.
 **
 **==========================================================
 */
 
-#define _5M 5000000
-static u_long div_10M[] =
-	{2*_5M, 3*_5M, 4*_5M, 6*_5M, 8*_5M, 12*_5M, 16*_5M};
+#घोषणा _5M 5000000
+अटल u_दीर्घ भाग_10M[] =
+	अणु2*_5M, 3*_5M, 4*_5M, 6*_5M, 8*_5M, 12*_5M, 16*_5Mपूर्ण;
 
 
 /*===============================================================
 **
-**	Prepare io register values used by ncr_init() according 
+**	Prepare io रेजिस्टर values used by ncr_init() according 
 **	to selected and supported features.
 **
 **	NCR chips allow burst lengths of 2, 4, 8, 16, 32, 64, 128 
 **	transfers. 32,64,128 are only supported by 875 and 895 chips.
-**	We use log base 2 (burst length) as internal code, with 
+**	We use log base 2 (burst length) as पूर्णांकernal code, with 
 **	value 0 meaning "burst disabled".
 **
 **===============================================================
@@ -3705,38 +3706,38 @@ static u_long div_10M[] =
 /*
  *	Burst length from burst code.
  */
-#define burst_length(bc) (!(bc))? 0 : 1 << (bc)
+#घोषणा burst_length(bc) (!(bc))? 0 : 1 << (bc)
 
 /*
- *	Burst code from io register bits.  Burst enable is ctest0 for c720
+ *	Burst code from io रेजिस्टर bits.  Burst enable is ctest0 क्रम c720
  */
-#define burst_code(dmode, ctest0) \
+#घोषणा burst_code(dmode, ctest0) \
 	(ctest0) & 0x80 ? 0 : (((dmode) & 0xc0) >> 6) + 1
 
 /*
- *	Set initial io register bits from burst code.
+ *	Set initial io रेजिस्टर bits from burst code.
  */
-static inline void ncr_init_burst(struct ncb *np, u_char bc)
-{
-	u_char *be = &np->rv_ctest0;
+अटल अंतरभूत व्योम ncr_init_burst(काष्ठा ncb *np, u_अक्षर bc)
+अणु
+	u_अक्षर *be = &np->rv_ctest0;
 	*be		&= ~0x80;
 	np->rv_dmode	&= ~(0x3 << 6);
 	np->rv_ctest5	&= ~0x4;
 
-	if (!bc) {
+	अगर (!bc) अणु
 		*be		|= 0x80;
-	} else {
+	पूर्ण अन्यथा अणु
 		--bc;
 		np->rv_dmode	|= ((bc & 0x3) << 6);
 		np->rv_ctest5	|= (bc & 0x4);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init ncr_prepare_setting(struct ncb *np)
-{
-	u_char	burst_max;
-	u_long	period;
-	int i;
+अटल व्योम __init ncr_prepare_setting(काष्ठा ncb *np)
+अणु
+	u_अक्षर	burst_max;
+	u_दीर्घ	period;
+	पूर्णांक i;
 
 	/*
 	**	Save assumed BIOS setting
@@ -3761,40 +3762,40 @@ static void __init ncr_prepare_setting(struct ncb *np)
 	np->maxwide	= (np->features & FE_WIDE)? 1 : 0;
 
  	/*
-	 *  Guess the frequency of the chip's clock.
+	 *  Guess the frequency of the chip's घड़ी.
 	 */
-	if (np->features & FE_ULTRA)
-		np->clock_khz = 80000;
-	else
-		np->clock_khz = 40000;
+	अगर (np->features & FE_ULTRA)
+		np->घड़ी_khz = 80000;
+	अन्यथा
+		np->घड़ी_khz = 40000;
 
 	/*
-	 *  Get the clock multiplier factor.
+	 *  Get the घड़ी multiplier factor.
  	 */
-	if	(np->features & FE_QUAD)
+	अगर	(np->features & FE_QUAD)
 		np->multiplier	= 4;
-	else if	(np->features & FE_DBLR)
+	अन्यथा अगर	(np->features & FE_DBLR)
 		np->multiplier	= 2;
-	else
+	अन्यथा
 		np->multiplier	= 1;
 
 	/*
-	 *  Measure SCSI clock frequency for chips 
+	 *  Measure SCSI घड़ी frequency क्रम chips 
 	 *  it may vary from assumed one.
 	 */
-	if (np->features & FE_VARCLK)
-		ncr_getclock(np, np->multiplier);
+	अगर (np->features & FE_VARCLK)
+		ncr_अ_लोlock(np, np->multiplier);
 
 	/*
-	 * Divisor to be used for async (timer pre-scaler).
+	 * Divisor to be used क्रम async (समयr pre-scaler).
 	 */
-	i = np->clock_divn - 1;
-	while (--i >= 0) {
-		if (10ul * SCSI_NCR_MIN_ASYNC * np->clock_khz > div_10M[i]) {
+	i = np->घड़ी_भागn - 1;
+	जबतक (--i >= 0) अणु
+		अगर (10ul * SCSI_NCR_MIN_ASYNC * np->घड़ी_khz > भाग_10M[i]) अणु
 			++i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	np->rv_scntl3 = i+1;
 
 	/*
@@ -3802,30 +3803,30 @@ static void __init ncr_prepare_setting(struct ncb *np)
 	 * Btw, 'period' is in tenths of nanoseconds.
 	 */
 
-	period = (4 * div_10M[0] + np->clock_khz - 1) / np->clock_khz;
-	if	(period <= 250)		np->minsync = 10;
-	else if	(period <= 303)		np->minsync = 11;
-	else if	(period <= 500)		np->minsync = 12;
-	else				np->minsync = (period + 40 - 1) / 40;
+	period = (4 * भाग_10M[0] + np->घड़ी_khz - 1) / np->घड़ी_khz;
+	अगर	(period <= 250)		np->minsync = 10;
+	अन्यथा अगर	(period <= 303)		np->minsync = 11;
+	अन्यथा अगर	(period <= 500)		np->minsync = 12;
+	अन्यथा				np->minsync = (period + 40 - 1) / 40;
 
 	/*
 	 * Check against chip SCSI standard support (SCSI-2,ULTRA,ULTRA2).
 	 */
 
-	if	(np->minsync < 25 && !(np->features & FE_ULTRA))
+	अगर	(np->minsync < 25 && !(np->features & FE_ULTRA))
 		np->minsync = 25;
 
 	/*
 	 * Maximum synchronous period factor supported by the chip.
 	 */
 
-	period = (11 * div_10M[np->clock_divn - 1]) / (4 * np->clock_khz);
+	period = (11 * भाग_10M[np->घड़ी_भागn - 1]) / (4 * np->घड़ी_khz);
 	np->maxsync = period > 2540 ? 254 : period / 10;
 
 	/*
-	**	Prepare initial value of other IO registers
+	**	Prepare initial value of other IO रेजिस्टरs
 	*/
-#if defined SCSI_NCR_TRUST_BIOS_SETTING
+#अगर defined SCSI_NCR_TRUST_BIOS_SETTING
 	np->rv_scntl0	= np->sv_scntl0;
 	np->rv_dmode	= np->sv_dmode;
 	np->rv_dcntl	= np->sv_dcntl;
@@ -3834,64 +3835,64 @@ static void __init ncr_prepare_setting(struct ncb *np)
 	np->rv_ctest4	= np->sv_ctest4;
 	np->rv_ctest5	= np->sv_ctest5;
 	burst_max	= burst_code(np->sv_dmode, np->sv_ctest0);
-#else
+#अन्यथा
 
 	/*
 	**	Select burst length (dwords)
 	*/
 	burst_max	= driver_setup.burst_max;
-	if (burst_max == 255)
+	अगर (burst_max == 255)
 		burst_max = burst_code(np->sv_dmode, np->sv_ctest0);
-	if (burst_max > 7)
+	अगर (burst_max > 7)
 		burst_max = 7;
-	if (burst_max > np->maxburst)
+	अगर (burst_max > np->maxburst)
 		burst_max = np->maxburst;
 
 	/*
 	**	Select all supported special features
 	*/
-	if (np->features & FE_ERL)
+	अगर (np->features & FE_ERL)
 		np->rv_dmode	|= ERL;		/* Enable Read Line */
-	if (np->features & FE_BOF)
+	अगर (np->features & FE_BOF)
 		np->rv_dmode	|= BOF;		/* Burst Opcode Fetch */
-	if (np->features & FE_ERMP)
+	अगर (np->features & FE_ERMP)
 		np->rv_dmode	|= ERMP;	/* Enable Read Multiple */
-	if (np->features & FE_PFEN)
+	अगर (np->features & FE_PFEN)
 		np->rv_dcntl	|= PFEN;	/* Prefetch Enable */
-	if (np->features & FE_CLSE)
+	अगर (np->features & FE_CLSE)
 		np->rv_dcntl	|= CLSE;	/* Cache Line Size Enable */
-	if (np->features & FE_WRIE)
+	अगर (np->features & FE_WRIE)
 		np->rv_ctest3	|= WRIE;	/* Write and Invalidate */
-	if (np->features & FE_DFS)
-		np->rv_ctest5	|= DFS;		/* Dma Fifo Size */
-	if (np->features & FE_MUX)
+	अगर (np->features & FE_DFS)
+		np->rv_ctest5	|= DFS;		/* Dma Fअगरo Size */
+	अगर (np->features & FE_MUX)
 		np->rv_ctest4	|= MUX;		/* Host bus multiplex mode */
-	if (np->features & FE_EA)
+	अगर (np->features & FE_EA)
 		np->rv_dcntl	|= EA;		/* Enable ACK */
-	if (np->features & FE_EHP)
+	अगर (np->features & FE_EHP)
 		np->rv_ctest0	|= EHP;		/* Even host parity */
 
 	/*
 	**	Select some other
 	*/
-	if (driver_setup.master_parity)
+	अगर (driver_setup.master_parity)
 		np->rv_ctest4	|= MPEE;	/* Master parity checking */
-	if (driver_setup.scsi_parity)
+	अगर (driver_setup.scsi_parity)
 		np->rv_scntl0	|= 0x0a;	/*  full arb., ena parity, par->ATN  */
 
 	/*
 	**  Get SCSI addr of host adapter (set by bios?).
 	*/
-	if (np->myaddr == 255) {
+	अगर (np->myaddr == 255) अणु
 		np->myaddr = INB(nc_scid) & 0x07;
-		if (!np->myaddr)
+		अगर (!np->myaddr)
 			np->myaddr = SCSI_NCR_MYADDR;
-	}
+	पूर्ण
 
-#endif /* SCSI_NCR_TRUST_BIOS_SETTING */
+#पूर्ण_अगर /* SCSI_NCR_TRUST_BIOS_SETTING */
 
 	/*
-	 *	Prepare initial io register bits for burst length
+	 *	Prepare initial io रेजिस्टर bits क्रम burst length
 	 */
 	ncr_init_burst(np, burst_max);
 
@@ -3899,148 +3900,148 @@ static void __init ncr_prepare_setting(struct ncb *np)
 	**	Set SCSI BUS mode.
 	**
 	**	- ULTRA2 chips (895/895A/896) report the current 
-	**	  BUS mode through the STEST4 IO register.
+	**	  BUS mode through the STEST4 IO रेजिस्टर.
 	**	- For previous generation chips (825/825A/875), 
 	**	  user has to tell us how to check against HVD, 
 	**	  since a 100% safe algorithm is not possible.
 	*/
 	np->scsi_mode = SMODE_SE;
-	if (np->features & FE_DIFF) {
-		switch(driver_setup.diff_support) {
-		case 4:	/* Trust previous settings if present, then GPIO3 */
-			if (np->sv_scntl3) {
-				if (np->sv_stest2 & 0x20)
+	अगर (np->features & FE_DIFF) अणु
+		चयन(driver_setup.dअगरf_support) अणु
+		हाल 4:	/* Trust previous settings अगर present, then GPIO3 */
+			अगर (np->sv_scntl3) अणु
+				अगर (np->sv_stest2 & 0x20)
 					np->scsi_mode = SMODE_HVD;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			fallthrough;
-		case 3:	/* SYMBIOS controllers report HVD through GPIO3 */
-			if (INB(nc_gpreg) & 0x08)
-				break;
+		हाल 3:	/* SYMBIOS controllers report HVD through GPIO3 */
+			अगर (INB(nc_gpreg) & 0x08)
+				अवरोध;
 			fallthrough;
-		case 2:	/* Set HVD unconditionally */
+		हाल 2:	/* Set HVD unconditionally */
 			np->scsi_mode = SMODE_HVD;
 			fallthrough;
-		case 1:	/* Trust previous settings for HVD */
-			if (np->sv_stest2 & 0x20)
+		हाल 1:	/* Trust previous settings क्रम HVD */
+			अगर (np->sv_stest2 & 0x20)
 				np->scsi_mode = SMODE_HVD;
-			break;
-		default:/* Don't care about HVD */	
-			break;
-		}
-	}
-	if (np->scsi_mode == SMODE_HVD)
+			अवरोध;
+		शेष:/* Don't care about HVD */	
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (np->scsi_mode == SMODE_HVD)
 		np->rv_stest2 |= 0x20;
 
 	/*
 	**	Set LED support from SCRIPTS.
-	**	Ignore this feature for boards known to use a 
-	**	specific GPIO wiring and for the 895A or 896 
+	**	Ignore this feature क्रम boards known to use a 
+	**	specअगरic GPIO wiring and क्रम the 895A or 896 
 	**	that drive the LED directly.
 	**	Also probe initial setting of GPIO0 as output.
 	*/
-	if ((driver_setup.led_pin) &&
+	अगर ((driver_setup.led_pin) &&
 	    !(np->features & FE_LEDC) && !(np->sv_gpcntl & 0x01))
 		np->features |= FE_LED0;
 
 	/*
 	**	Set irq mode.
 	*/
-	switch(driver_setup.irqm & 3) {
-	case 2:
+	चयन(driver_setup.irqm & 3) अणु
+	हाल 2:
 		np->rv_dcntl	|= IRQM;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		np->rv_dcntl	|= (np->sv_dcntl & IRQM);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/*
-	**	Configure targets according to driver setup.
+	**	Configure tarमाला_लो according to driver setup.
 	**	Allow to override sync, wide and NOSCAN from 
 	**	boot command line.
 	*/
-	for (i = 0 ; i < MAX_TARGET ; i++) {
-		struct tcb *tp = &np->target[i];
+	क्रम (i = 0 ; i < MAX_TARGET ; i++) अणु
+		काष्ठा tcb *tp = &np->target[i];
 
-		tp->usrsync = driver_setup.default_sync;
+		tp->usrsync = driver_setup.शेष_sync;
 		tp->usrwide = driver_setup.max_wide;
 		tp->usrtags = MAX_TAGS;
 		tp->period = 0xffff;
-		if (!driver_setup.disconnection)
+		अगर (!driver_setup.disconnection)
 			np->target[i].usrflag = UF_NODISC;
-	}
+	पूर्ण
 
 	/*
 	**	Announce all that stuff to user.
 	*/
 
-	printk(KERN_INFO "%s: ID %d, Fast-%d%s%s\n", ncr_name(np),
+	prपूर्णांकk(KERN_INFO "%s: ID %d, Fast-%d%s%s\n", ncr_name(np),
 		np->myaddr,
 		np->minsync < 12 ? 40 : (np->minsync < 25 ? 20 : 10),
 		(np->rv_scntl0 & 0xa)	? ", Parity Checking"	: ", NO Parity",
 		(np->rv_stest2 & 0x20)	? ", Differential"	: "");
 
-	if (bootverbose > 1) {
-		printk (KERN_INFO "%s: initial SCNTL3/DMODE/DCNTL/CTEST3/4/5 = "
+	अगर (bootverbose > 1) अणु
+		prपूर्णांकk (KERN_INFO "%s: initial SCNTL3/DMODE/DCNTL/CTEST3/4/5 = "
 			"(hex) %02x/%02x/%02x/%02x/%02x/%02x\n",
 			ncr_name(np), np->sv_scntl3, np->sv_dmode, np->sv_dcntl,
 			np->sv_ctest3, np->sv_ctest4, np->sv_ctest5);
 
-		printk (KERN_INFO "%s: final   SCNTL3/DMODE/DCNTL/CTEST3/4/5 = "
+		prपूर्णांकk (KERN_INFO "%s: final   SCNTL3/DMODE/DCNTL/CTEST3/4/5 = "
 			"(hex) %02x/%02x/%02x/%02x/%02x/%02x\n",
 			ncr_name(np), np->rv_scntl3, np->rv_dmode, np->rv_dcntl,
 			np->rv_ctest3, np->rv_ctest4, np->rv_ctest5);
-	}
+	पूर्ण
 
-	if (bootverbose && np->paddr2)
-		printk (KERN_INFO "%s: on-chip RAM at 0x%lx\n",
+	अगर (bootverbose && np->paddr2)
+		prपूर्णांकk (KERN_INFO "%s: on-chip RAM at 0x%lx\n",
 			ncr_name(np), np->paddr2);
-}
+पूर्ण
 
 /*==========================================================
 **
 **
 **	Done SCSI commands list management.
 **
-**	We donnot enter the scsi_done() callback immediately 
+**	We करोnnot enter the scsi_करोne() callback immediately 
 **	after a command has been seen as completed but we 
-**	insert it into a list which is flushed outside any kind 
+**	insert it पूर्णांकo a list which is flushed outside any kind 
 **	of driver critical section.
-**	This allows to do minimal stuff under interrupt and 
-**	inside critical sections and to also avoid locking up 
-**	on recursive calls to driver entry points under SMP.
-**	In fact, the only kernel point which is entered by the 
-**	driver with a driver lock set is kmalloc(GFP_ATOMIC) 
+**	This allows to करो minimal stuff under पूर्णांकerrupt and 
+**	inside critical sections and to also aव्योम locking up 
+**	on recursive calls to driver entry poपूर्णांकs under SMP.
+**	In fact, the only kernel poपूर्णांक which is entered by the 
+**	driver with a driver lock set is kदो_स्मृति(GFP_ATOMIC) 
 **	that shall not reenter the driver under any circumstances,
 **	AFAIK.
 **
 **==========================================================
 */
-static inline void ncr_queue_done_cmd(struct ncb *np, struct scsi_cmnd *cmd)
-{
+अटल अंतरभूत व्योम ncr_queue_करोne_cmd(काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd)
+अणु
 	unmap_scsi_data(np, cmd);
-	cmd->host_scribble = (char *) np->done_list;
-	np->done_list = cmd;
-}
+	cmd->host_scribble = (अक्षर *) np->करोne_list;
+	np->करोne_list = cmd;
+पूर्ण
 
-static inline void ncr_flush_done_cmds(struct scsi_cmnd *lcmd)
-{
-	struct scsi_cmnd *cmd;
+अटल अंतरभूत व्योम ncr_flush_करोne_cmds(काष्ठा scsi_cmnd *lcmd)
+अणु
+	काष्ठा scsi_cmnd *cmd;
 
-	while (lcmd) {
+	जबतक (lcmd) अणु
 		cmd = lcmd;
-		lcmd = (struct scsi_cmnd *) cmd->host_scribble;
-		cmd->scsi_done(cmd);
-	}
-}
+		lcmd = (काष्ठा scsi_cmnd *) cmd->host_scribble;
+		cmd->scsi_करोne(cmd);
+	पूर्ण
+पूर्ण
 
 /*==========================================================
 **
 **
-**	Prepare the next negotiation message if needed.
+**	Prepare the next negotiation message अगर needed.
 **
 **	Fill in the part of message buffer that contains the 
 **	negotiation and the nego_status field of the CCB.
@@ -4051,53 +4052,53 @@ static inline void ncr_flush_done_cmds(struct scsi_cmnd *lcmd)
 */
 
 
-static int ncr_prepare_nego(struct ncb *np, struct ccb *cp, u_char *msgptr)
-{
-	struct tcb *tp = &np->target[cp->target];
-	int msglen = 0;
-	int nego = 0;
-	struct scsi_target *starget = tp->starget;
+अटल पूर्णांक ncr_prepare_nego(काष्ठा ncb *np, काष्ठा ccb *cp, u_अक्षर *msgptr)
+अणु
+	काष्ठा tcb *tp = &np->target[cp->target];
+	पूर्णांक msglen = 0;
+	पूर्णांक nego = 0;
+	काष्ठा scsi_target *starget = tp->starget;
 
 	/* negotiate wide transfers ?  */
-	if (!tp->widedone) {
-		if (spi_support_wide(starget)) {
+	अगर (!tp->wideकरोne) अणु
+		अगर (spi_support_wide(starget)) अणु
 			nego = NS_WIDE;
-		} else
-			tp->widedone=1;
-	}
+		पूर्ण अन्यथा
+			tp->wideकरोne=1;
+	पूर्ण
 
 	/* negotiate synchronous transfers?  */
-	if (!nego && !tp->period) {
-		if (spi_support_sync(starget)) {
+	अगर (!nego && !tp->period) अणु
+		अगर (spi_support_sync(starget)) अणु
 			nego = NS_SYNC;
-		} else {
+		पूर्ण अन्यथा अणु
 			tp->period  =0xffff;
 			dev_info(&starget->dev, "target did not report SYNC.\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	switch (nego) {
-	case NS_SYNC:
+	चयन (nego) अणु
+	हाल NS_SYNC:
 		msglen += spi_populate_sync_msg(msgptr + msglen,
 				tp->maxoffs ? tp->minsync : 0, tp->maxoffs);
-		break;
-	case NS_WIDE:
+		अवरोध;
+	हाल NS_WIDE:
 		msglen += spi_populate_width_msg(msgptr + msglen, tp->usrwide);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cp->nego_status = nego;
 
-	if (nego) {
+	अगर (nego) अणु
 		tp->nego_cp = cp;
-		if (DEBUG_FLAGS & DEBUG_NEGO) {
-			ncr_print_msg(cp, nego == NS_WIDE ?
+		अगर (DEBUG_FLAGS & DEBUG_NEGO) अणु
+			ncr_prपूर्णांक_msg(cp, nego == NS_WIDE ?
 					  "wide msgout":"sync_msgout", msgptr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return msglen;
-}
+	वापस msglen;
+पूर्ण
 
 
 
@@ -4110,82 +4111,82 @@ static int ncr_prepare_nego(struct ncb *np, struct ccb *cp, u_char *msgptr)
 **
 **==========================================================
 */
-static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
-{
-	struct scsi_device *sdev = cmd->device;
-	struct tcb *tp = &np->target[sdev->id];
-	struct lcb *lp = tp->lp[sdev->lun];
-	struct ccb *cp;
+अटल पूर्णांक ncr_queue_command (काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_device *sdev = cmd->device;
+	काष्ठा tcb *tp = &np->target[sdev->id];
+	काष्ठा lcb *lp = tp->lp[sdev->lun];
+	काष्ठा ccb *cp;
 
-	int	segments;
-	u_char	idmsg, *msgptr;
+	पूर्णांक	segments;
+	u_अक्षर	idmsg, *msgptr;
 	u32	msglen;
-	int	direction;
+	पूर्णांक	direction;
 	u32	lastp, goalp;
 
 	/*---------------------------------------------
 	**
-	**      Some shortcuts ...
+	**      Some लघुcuts ...
 	**
 	**---------------------------------------------
 	*/
-	if ((sdev->id == np->myaddr	  ) ||
+	अगर ((sdev->id == np->myaddr	  ) ||
 		(sdev->id >= MAX_TARGET) ||
-		(sdev->lun    >= MAX_LUN   )) {
-		return(DID_BAD_TARGET);
-	}
+		(sdev->lun    >= MAX_LUN   )) अणु
+		वापस(DID_BAD_TARGET);
+	पूर्ण
 
 	/*---------------------------------------------
 	**
 	**	Complete the 1st TEST UNIT READY command
-	**	with error condition if the device is 
+	**	with error condition अगर the device is 
 	**	flagged NOSCAN, in order to speed up 
 	**	the boot.
 	**
 	**---------------------------------------------
 	*/
-	if ((cmd->cmnd[0] == 0 || cmd->cmnd[0] == 0x12) && 
-	    (tp->usrflag & UF_NOSCAN)) {
+	अगर ((cmd->cmnd[0] == 0 || cmd->cmnd[0] == 0x12) && 
+	    (tp->usrflag & UF_NOSCAN)) अणु
 		tp->usrflag &= ~UF_NOSCAN;
-		return DID_BAD_TARGET;
-	}
+		वापस DID_BAD_TARGET;
+	पूर्ण
 
-	if (DEBUG_FLAGS & DEBUG_TINY) {
+	अगर (DEBUG_FLAGS & DEBUG_TINY) अणु
 		PRINT_ADDR(cmd, "CMD=%x ", cmd->cmnd[0]);
-	}
+	पूर्ण
 
 	/*---------------------------------------------------
 	**
 	**	Assign a ccb / bind cmd.
-	**	If resetting, shorten settle_time if necessary
-	**	in order to avoid spurious timeouts.
-	**	If resetting or no free ccb,
-	**	insert cmd into the waiting list.
+	**	If resetting, लघुen settle_समय अगर necessary
+	**	in order to aव्योम spurious समयouts.
+	**	If resetting or no मुक्त ccb,
+	**	insert cmd पूर्णांकo the रुकोing list.
 	**
 	**----------------------------------------------------
 	*/
-	if (np->settle_time && cmd->request->timeout >= HZ) {
-		u_long tlimit = jiffies + cmd->request->timeout - HZ;
-		if (time_after(np->settle_time, tlimit))
-			np->settle_time = tlimit;
-	}
+	अगर (np->settle_समय && cmd->request->समयout >= HZ) अणु
+		u_दीर्घ tlimit = jअगरfies + cmd->request->समयout - HZ;
+		अगर (समय_after(np->settle_समय, tlimit))
+			np->settle_समय = tlimit;
+	पूर्ण
 
-	if (np->settle_time || !(cp=ncr_get_ccb (np, cmd))) {
-		insert_into_waiting_list(np, cmd);
-		return(DID_OK);
-	}
+	अगर (np->settle_समय || !(cp=ncr_get_ccb (np, cmd))) अणु
+		insert_पूर्णांकo_रुकोing_list(np, cmd);
+		वापस(DID_OK);
+	पूर्ण
 	cp->cmd = cmd;
 
 	/*----------------------------------------------------
 	**
-	**	Build the identify / tag / sdtr message
+	**	Build the identअगरy / tag / sdtr message
 	**
 	**----------------------------------------------------
 	*/
 
 	idmsg = IDENTIFY(0, sdev->lun);
 
-	if (cp ->tag != NO_TAG ||
+	अगर (cp ->tag != NO_TAG ||
 		(cp != np->ccb && np->disc && !(tp->usrflag & UF_NODISC)))
 		idmsg |= 0x40;
 
@@ -4193,39 +4194,39 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 	msglen = 0;
 	msgptr[msglen++] = idmsg;
 
-	if (cp->tag != NO_TAG) {
-		char order = np->order;
+	अगर (cp->tag != NO_TAG) अणु
+		अक्षर order = np->order;
 
 		/*
-		**	Force ordered tag if necessary to avoid timeouts 
-		**	and to preserve interactivity.
+		**	Force ordered tag अगर necessary to aव्योम समयouts 
+		**	and to preserve पूर्णांकeractivity.
 		*/
-		if (lp && time_after(jiffies, lp->tags_stime)) {
-			if (lp->tags_smap) {
+		अगर (lp && समय_after(jअगरfies, lp->tags_sसमय)) अणु
+			अगर (lp->tags_smap) अणु
 				order = ORDERED_QUEUE_TAG;
-				if ((DEBUG_FLAGS & DEBUG_TAGS)||bootverbose>2){ 
+				अगर ((DEBUG_FLAGS & DEBUG_TAGS)||bootverbose>2)अणु 
 					PRINT_ADDR(cmd,
 						"ordered tag forced.\n");
-				}
-			}
-			lp->tags_stime = jiffies + 3*HZ;
+				पूर्ण
+			पूर्ण
+			lp->tags_sसमय = jअगरfies + 3*HZ;
 			lp->tags_smap = lp->tags_umap;
-		}
+		पूर्ण
 
-		if (order == 0) {
+		अगर (order == 0) अणु
 			/*
-			**	Ordered write ops, unordered read ops.
+			**	Ordered ग_लिखो ops, unordered पढ़ो ops.
 			*/
-			switch (cmd->cmnd[0]) {
-			case 0x08:  /* READ_SMALL (6) */
-			case 0x28:  /* READ_BIG  (10) */
-			case 0xa8:  /* READ_HUGE (12) */
+			चयन (cmd->cmnd[0]) अणु
+			हाल 0x08:  /* READ_SMALL (6) */
+			हाल 0x28:  /* READ_BIG  (10) */
+			हाल 0xa8:  /* READ_HUGE (12) */
 				order = SIMPLE_QUEUE_TAG;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				order = ORDERED_QUEUE_TAG;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		msgptr[msglen++] = order;
 		/*
 		**	Actual tags are numbered 1,3,5,..2*MAXTAGS+1,
@@ -4233,7 +4234,7 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 		**	problems with #TAG 0 or too great #TAG numbers.
 		*/
 		msgptr[msglen++] = (cp->tag << 1) + 1;
-	}
+	पूर्ण
 
 	/*----------------------------------------------------
 	**
@@ -4243,17 +4244,17 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 	*/
 
 	direction = cmd->sc_data_direction;
-	if (direction != DMA_NONE) {
+	अगर (direction != DMA_NONE) अणु
 		segments = ncr_scatter(np, cp, cp->cmd);
-		if (segments < 0) {
-			ncr_free_ccb(np, cp);
-			return(DID_ERROR);
-		}
-	}
-	else {
+		अगर (segments < 0) अणु
+			ncr_मुक्त_ccb(np, cp);
+			वापस(DID_ERROR);
+		पूर्ण
+	पूर्ण
+	अन्यथा अणु
 		cp->data_len = 0;
 		segments = 0;
-	}
+	पूर्ण
 
 	/*---------------------------------------------------
 	**
@@ -4266,9 +4267,9 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 
 	cp->nego_status = 0;
 
-	if ((!tp->widedone || !tp->period) && !tp->nego_cp && lp) {
+	अगर ((!tp->wideकरोne || !tp->period) && !tp->nego_cp && lp) अणु
 		msglen += ncr_prepare_nego (np, cp, msgptr + msglen);
-	}
+	पूर्ण
 
 	/*----------------------------------------------------
 	**
@@ -4276,61 +4277,61 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 	**
 	**----------------------------------------------------
 	*/
-	if (!cp->data_len)
+	अगर (!cp->data_len)
 		direction = DMA_NONE;
 
 	/*
-	**	If data direction is BIDIRECTIONAL, speculate FROM_DEVICE
-	**	but prepare alternate pointers for TO_DEVICE in case 
+	**	If data direction is BIसूचीECTIONAL, speculate FROM_DEVICE
+	**	but prepare alternate poपूर्णांकers क्रम TO_DEVICE in हाल 
 	**	of our speculation will be just wrong.
-	**	SCRIPTS will swap values if needed.
+	**	SCRIPTS will swap values अगर needed.
 	*/
-	switch(direction) {
-	case DMA_BIDIRECTIONAL:
-	case DMA_TO_DEVICE:
+	चयन(direction) अणु
+	हाल DMA_BIसूचीECTIONAL:
+	हाल DMA_TO_DEVICE:
 		goalp = NCB_SCRIPT_PHYS (np, data_out2) + 8;
-		if (segments <= MAX_SCATTERL)
+		अगर (segments <= MAX_SCATTERL)
 			lastp = goalp - 8 - (segments * 16);
-		else {
+		अन्यथा अणु
 			lastp = NCB_SCRIPTH_PHYS (np, hdata_out2);
 			lastp -= (segments - MAX_SCATTERL) * 16;
-		}
-		if (direction != DMA_BIDIRECTIONAL)
-			break;
+		पूर्ण
+		अगर (direction != DMA_BIसूचीECTIONAL)
+			अवरोध;
 		cp->phys.header.wgoalp	= cpu_to_scr(goalp);
 		cp->phys.header.wlastp	= cpu_to_scr(lastp);
 		fallthrough;
-	case DMA_FROM_DEVICE:
+	हाल DMA_FROM_DEVICE:
 		goalp = NCB_SCRIPT_PHYS (np, data_in2) + 8;
-		if (segments <= MAX_SCATTERL)
+		अगर (segments <= MAX_SCATTERL)
 			lastp = goalp - 8 - (segments * 16);
-		else {
+		अन्यथा अणु
 			lastp = NCB_SCRIPTH_PHYS (np, hdata_in2);
 			lastp -= (segments - MAX_SCATTERL) * 16;
-		}
-		break;
-	default:
-	case DMA_NONE:
+		पूर्ण
+		अवरोध;
+	शेष:
+	हाल DMA_NONE:
 		lastp = goalp = NCB_SCRIPT_PHYS (np, no_data);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
-	**	Set all pointers values needed by SCRIPTS.
+	**	Set all poपूर्णांकers values needed by SCRIPTS.
 	**	If direction is unknown, start at data_io.
 	*/
 	cp->phys.header.lastp = cpu_to_scr(lastp);
 	cp->phys.header.goalp = cpu_to_scr(goalp);
 
-	if (direction == DMA_BIDIRECTIONAL)
+	अगर (direction == DMA_BIसूचीECTIONAL)
 		cp->phys.header.savep = 
 			cpu_to_scr(NCB_SCRIPTH_PHYS (np, data_io));
-	else
+	अन्यथा
 		cp->phys.header.savep= cpu_to_scr(lastp);
 
 	/*
-	**	Save the initial data pointer in order to be able 
-	**	to redo the command.
+	**	Save the initial data poपूर्णांकer in order to be able 
+	**	to reकरो the command.
 	*/
 	cp->startp = cp->phys.header.savep;
 
@@ -4341,7 +4342,7 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 	**----------------------------------------------------
 	**
 	**
-	**	physical -> virtual backlink
+	**	physical -> भव backlink
 	**	Generic SCSI command
 	*/
 
@@ -4365,7 +4366,7 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 	/*
 	**	command
 	*/
-	memcpy(cp->cdb_buf, cmd->cmnd, min_t(int, cmd->cmd_len, sizeof(cp->cdb_buf)));
+	स_नकल(cp->cdb_buf, cmd->cmnd, min_t(पूर्णांक, cmd->cmd_len, माप(cp->cdb_buf)));
 	cp->phys.cmd.addr		= cpu_to_scr(CCB_PHYS (cp, cdb_buf[0]));
 	cp->phys.cmd.size		= cpu_to_scr(cmd->cmd_len);
 
@@ -4378,10 +4379,10 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 	cp->parity_status		= 0;
 
 	cp->xerr_status			= XE_OK;
-#if 0
+#अगर 0
 	cp->sync_status			= tp->sval;
 	cp->wide_status			= tp->wval;
-#endif
+#पूर्ण_अगर
 
 	/*----------------------------------------------------
 	**
@@ -4394,62 +4395,62 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 	cp->magic		= CCB_MAGIC;
 
 	/*
-	**	insert next CCBs into start queue.
-	**	2 max at a time is enough to flush the CCB wait queue.
+	**	insert next CCBs पूर्णांकo start queue.
+	**	2 max at a समय is enough to flush the CCB रुको queue.
 	*/
-	cp->auto_sense = 0;
-	if (lp)
+	cp->स्वतः_sense = 0;
+	अगर (lp)
 		ncr_start_next_ccb(np, lp, 2);
-	else
+	अन्यथा
 		ncr_put_start_queue(np, cp);
 
 	/* Command is successfully queued.  */
 
-	return DID_OK;
-}
+	वापस DID_OK;
+पूर्ण
 
 
 /*==========================================================
 **
 **
-**	Insert a CCB into the start queue and wake up the 
+**	Insert a CCB पूर्णांकo the start queue and wake up the 
 **	SCRIPTS processor.
 **
 **
 **==========================================================
 */
 
-static void ncr_start_next_ccb(struct ncb *np, struct lcb *lp, int maxn)
-{
-	struct list_head *qp;
-	struct ccb *cp;
+अटल व्योम ncr_start_next_ccb(काष्ठा ncb *np, काष्ठा lcb *lp, पूर्णांक maxn)
+अणु
+	काष्ठा list_head *qp;
+	काष्ठा ccb *cp;
 
-	if (lp->held_ccb)
-		return;
+	अगर (lp->held_ccb)
+		वापस;
 
-	while (maxn-- && lp->queuedccbs < lp->queuedepth) {
-		qp = ncr_list_pop(&lp->wait_ccbq);
-		if (!qp)
-			break;
+	जबतक (maxn-- && lp->queuedccbs < lp->queuedepth) अणु
+		qp = ncr_list_pop(&lp->रुको_ccbq);
+		अगर (!qp)
+			अवरोध;
 		++lp->queuedccbs;
-		cp = list_entry(qp, struct ccb, link_ccbq);
+		cp = list_entry(qp, काष्ठा ccb, link_ccbq);
 		list_add_tail(qp, &lp->busy_ccbq);
 		lp->jump_ccb[cp->tag == NO_TAG ? 0 : cp->tag] =
 			cpu_to_scr(CCB_PHYS (cp, restart));
 		ncr_put_start_queue(np, cp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ncr_put_start_queue(struct ncb *np, struct ccb *cp)
-{
+अटल व्योम ncr_put_start_queue(काष्ठा ncb *np, काष्ठा ccb *cp)
+अणु
 	u16	qidx;
 
 	/*
-	**	insert into start queue.
+	**	insert पूर्णांकo start queue.
 	*/
-	if (!np->squeueput) np->squeueput = 1;
+	अगर (!np->squeueput) np->squeueput = 1;
 	qidx = np->squeueput + 2;
-	if (qidx >= MAX_START + MAX_START) qidx = 1;
+	अगर (qidx >= MAX_START + MAX_START) qidx = 1;
 
 	np->scripth->tryloop [qidx] = cpu_to_scr(NCB_SCRIPT_PHYS (np, idle));
 	MEMORY_BARRIER();
@@ -4459,48 +4460,48 @@ static void ncr_put_start_queue(struct ncb *np, struct ccb *cp)
 	++np->queuedccbs;
 	cp->queued = 1;
 
-	if (DEBUG_FLAGS & DEBUG_QUEUE)
-		printk ("%s: queuepos=%d.\n", ncr_name (np), np->squeueput);
+	अगर (DEBUG_FLAGS & DEBUG_QUEUE)
+		prपूर्णांकk ("%s: queuepos=%d.\n", ncr_name (np), np->squeueput);
 
 	/*
-	**	Script processor may be waiting for reselect.
+	**	Script processor may be रुकोing क्रम reselect.
 	**	Wake it up.
 	*/
 	MEMORY_BARRIER();
 	OUTB (nc_istat, SIGP);
-}
+पूर्ण
 
 
-static int ncr_reset_scsi_bus(struct ncb *np, int enab_int, int settle_delay)
-{
+अटल पूर्णांक ncr_reset_scsi_bus(काष्ठा ncb *np, पूर्णांक enab_पूर्णांक, पूर्णांक settle_delay)
+अणु
 	u32 term;
-	int retv = 0;
+	पूर्णांक retv = 0;
 
-	np->settle_time	= jiffies + settle_delay * HZ;
+	np->settle_समय	= jअगरfies + settle_delay * HZ;
 
-	if (bootverbose > 1)
-		printk("%s: resetting, "
+	अगर (bootverbose > 1)
+		prपूर्णांकk("%s: resetting, "
 			"command processing suspended for %d seconds\n",
 			ncr_name(np), settle_delay);
 
 	ncr_chip_reset(np, 100);
-	udelay(2000);	/* The 895 needs time for the bus mode to settle */
-	if (enab_int)
+	udelay(2000);	/* The 895 needs समय क्रम the bus mode to settle */
+	अगर (enab_पूर्णांक)
 		OUTW (nc_sien, RST);
 	/*
-	**	Enable Tolerant, reset IRQD if present and 
+	**	Enable Tolerant, reset IRQD अगर present and 
 	**	properly set IRQ mode, prior to resetting the bus.
 	*/
 	OUTB (nc_stest3, TE);
 	OUTB (nc_scntl1, CRST);
 	udelay(200);
 
-	if (!driver_setup.bus_check)
-		goto out;
+	अगर (!driver_setup.bus_check)
+		जाओ out;
 	/*
-	**	Check for no terminators or SCSI bus shorts to ground.
-	**	Read SCSI data bus, data parity bits and control signals.
-	**	We are expecting RESET to be TRUE and other signals to be 
+	**	Check क्रम no terminators or SCSI bus लघुs to ground.
+	**	Read SCSI data bus, data parity bits and control संकेतs.
+	**	We are expecting RESET to be TRUE and other संकेतs to be 
 	**	FALSE.
 	*/
 
@@ -4511,38 +4512,38 @@ static int ncr_reset_scsi_bus(struct ncb *np, int enab_int, int settle_delay)
 		((INW(nc_sbdl) & 0xff00) << 10) |	/* d15-8    */
 		INB(nc_sbcl);	/* req ack bsy sel atn msg cd io    */
 
-	if (!(np->features & FE_WIDE))
+	अगर (!(np->features & FE_WIDE))
 		term &= 0x3ffff;
 
-	if (term != (2<<7)) {
-		printk("%s: suspicious SCSI data while resetting the BUS.\n",
+	अगर (term != (2<<7)) अणु
+		prपूर्णांकk("%s: suspicious SCSI data while resetting the BUS.\n",
 			ncr_name(np));
-		printk("%s: %sdp0,d7-0,rst,req,ack,bsy,sel,atn,msg,c/d,i/o = "
+		prपूर्णांकk("%s: %sdp0,d7-0,rst,req,ack,bsy,sel,atn,msg,c/d,i/o = "
 			"0x%lx, expecting 0x%lx\n",
 			ncr_name(np),
 			(np->features & FE_WIDE) ? "dp1,d15-8," : "",
-			(u_long)term, (u_long)(2<<7));
-		if (driver_setup.bus_check == 1)
+			(u_दीर्घ)term, (u_दीर्घ)(2<<7));
+		अगर (driver_setup.bus_check == 1)
 			retv = 1;
-	}
+	पूर्ण
 out:
 	OUTB (nc_scntl1, 0);
-	return retv;
-}
+	वापस retv;
+पूर्ण
 
 /*
  * Start reset process.
- * If reset in progress do nothing.
- * The interrupt handler will reinitialize the chip.
- * The timeout handler will wait for settle_time before 
+ * If reset in progress करो nothing.
+ * The पूर्णांकerrupt handler will reinitialize the chip.
+ * The समयout handler will रुको क्रम settle_समय beक्रमe 
  * clearing it and so resuming command processing.
  */
-static void ncr_start_reset(struct ncb *np)
-{
-	if (!np->settle_time) {
+अटल व्योम ncr_start_reset(काष्ठा ncb *np)
+अणु
+	अगर (!np->settle_समय) अणु
 		ncr_reset_scsi_bus(np, 1, driver_setup.settle_delay);
- 	}
-}
+ 	पूर्ण
+पूर्ण
  
 /*==========================================================
 **
@@ -4553,47 +4554,47 @@ static void ncr_start_reset(struct ncb *np)
 **
 **==========================================================
 */
-static int ncr_reset_bus (struct ncb *np, struct scsi_cmnd *cmd, int sync_reset)
-{
-/*	struct scsi_device        *device    = cmd->device; */
-	struct ccb *cp;
-	int found;
+अटल पूर्णांक ncr_reset_bus (काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd, पूर्णांक sync_reset)
+अणु
+/*	काष्ठा scsi_device        *device    = cmd->device; */
+	काष्ठा ccb *cp;
+	पूर्णांक found;
 
 /*
- * Return immediately if reset is in progress.
+ * Return immediately अगर reset is in progress.
  */
-	if (np->settle_time) {
-		return FAILED;
-	}
+	अगर (np->settle_समय) अणु
+		वापस FAILED;
+	पूर्ण
 /*
  * Start the reset process.
  * The script processor is then assumed to be stopped.
- * Commands will now be queued in the waiting list until a settle 
+ * Commands will now be queued in the रुकोing list until a settle 
  * delay of 2 seconds will be completed.
  */
 	ncr_start_reset(np);
 /*
  * First, look in the wakeup list
  */
-	for (found=0, cp=np->ccb; cp; cp=cp->link_ccb) {
+	क्रम (found=0, cp=np->ccb; cp; cp=cp->link_ccb) अणु
 		/*
-		**	look for the ccb of this command.
+		**	look क्रम the ccb of this command.
 		*/
-		if (cp->host_status == HS_IDLE) continue;
-		if (cp->cmd == cmd) {
+		अगर (cp->host_status == HS_IDLE) जारी;
+		अगर (cp->cmd == cmd) अणु
 			found = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 /*
- * Then, look in the waiting list
+ * Then, look in the रुकोing list
  */
-	if (!found && retrieve_from_waiting_list(0, np, cmd))
+	अगर (!found && retrieve_from_रुकोing_list(0, np, cmd))
 		found = 1;
 /*
- * Wake-up all awaiting commands with DID_RESET.
+ * Wake-up all aरुकोing commands with DID_RESET.
  */
-	reset_waiting_list(np);
+	reset_रुकोing_list(np);
 /*
  * Wake-up all pending commands with HS_RESET -> DID_RESET.
  */
@@ -4601,18 +4602,18 @@ static int ncr_reset_bus (struct ncb *np, struct scsi_cmnd *cmd, int sync_reset)
 /*
  * If the involved command was not in a driver queue, and the 
  * scsi driver told us reset is synchronous, and the command is not 
- * currently in the waiting list, complete it with DID_RESET status,
+ * currently in the रुकोing list, complete it with DID_RESET status,
  * in order to keep it alive.
  */
-	if (!found && sync_reset && !retrieve_from_waiting_list(0, np, cmd)) {
+	अगर (!found && sync_reset && !retrieve_from_रुकोing_list(0, np, cmd)) अणु
 		set_host_byte(cmd, DID_RESET);
-		ncr_queue_done_cmd(np, cmd);
-	}
+		ncr_queue_करोne_cmd(np, cmd);
+	पूर्ण
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
-#if 0 /* unused and broken.. */
+#अगर 0 /* unused and broken.. */
 /*==========================================================
 **
 **
@@ -4622,67 +4623,67 @@ static int ncr_reset_bus (struct ncb *np, struct scsi_cmnd *cmd, int sync_reset)
 **
 **==========================================================
 */
-static int ncr_abort_command (struct ncb *np, struct scsi_cmnd *cmd)
-{
-/*	struct scsi_device        *device    = cmd->device; */
-	struct ccb *cp;
-	int found;
-	int retv;
+अटल पूर्णांक ncr_पात_command (काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd)
+अणु
+/*	काष्ठा scsi_device        *device    = cmd->device; */
+	काष्ठा ccb *cp;
+	पूर्णांक found;
+	पूर्णांक retv;
 
 /*
- * First, look for the scsi command in the waiting list
+ * First, look क्रम the scsi command in the रुकोing list
  */
-	if (remove_from_waiting_list(np, cmd)) {
+	अगर (हटाओ_from_रुकोing_list(np, cmd)) अणु
 		set_host_byte(cmd, DID_ABORT);
-		ncr_queue_done_cmd(np, cmd);
-		return SCSI_ABORT_SUCCESS;
-	}
+		ncr_queue_करोne_cmd(np, cmd);
+		वापस SCSI_ABORT_SUCCESS;
+	पूर्ण
 
 /*
  * Then, look in the wakeup list
  */
-	for (found=0, cp=np->ccb; cp; cp=cp->link_ccb) {
+	क्रम (found=0, cp=np->ccb; cp; cp=cp->link_ccb) अणु
 		/*
-		**	look for the ccb of this command.
+		**	look क्रम the ccb of this command.
 		*/
-		if (cp->host_status == HS_IDLE) continue;
-		if (cp->cmd == cmd) {
+		अगर (cp->host_status == HS_IDLE) जारी;
+		अगर (cp->cmd == cmd) अणु
 			found = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
-		return SCSI_ABORT_NOT_RUNNING;
-	}
+	अगर (!found) अणु
+		वापस SCSI_ABORT_NOT_RUNNING;
+	पूर्ण
 
-	if (np->settle_time) {
-		return SCSI_ABORT_SNOOZE;
-	}
+	अगर (np->settle_समय) अणु
+		वापस SCSI_ABORT_SNOOZE;
+	पूर्ण
 
 	/*
-	**	If the CCB is active, patch schedule jumps for the 
-	**	script to abort the command.
+	**	If the CCB is active, patch schedule jumps क्रम the 
+	**	script to पात the command.
 	*/
 
-	switch(cp->host_status) {
-	case HS_BUSY:
-	case HS_NEGOTIATE:
-		printk ("%s: abort ccb=%p (cancel)\n", ncr_name (np), cp);
+	चयन(cp->host_status) अणु
+	हाल HS_BUSY:
+	हाल HS_NEGOTIATE:
+		prपूर्णांकk ("%s: abort ccb=%p (cancel)\n", ncr_name (np), cp);
 			cp->start.schedule.l_paddr =
 				cpu_to_scr(NCB_SCRIPTH_PHYS (np, cancel));
 		retv = SCSI_ABORT_PENDING;
-		break;
-	case HS_DISCONNECT:
+		अवरोध;
+	हाल HS_DISCONNECT:
 		cp->restart.schedule.l_paddr =
-				cpu_to_scr(NCB_SCRIPTH_PHYS (np, abort));
+				cpu_to_scr(NCB_SCRIPTH_PHYS (np, पात));
 		retv = SCSI_ABORT_PENDING;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		retv = SCSI_ABORT_NOT_RUNNING;
-		break;
+		अवरोध;
 
-	}
+	पूर्ण
 
 	/*
 	**      If there are no requests, the script
@@ -4691,55 +4692,55 @@ static int ncr_abort_command (struct ncb *np, struct scsi_cmnd *cmd)
 	*/
 	OUTB (nc_istat, SIGP);
 
-	return retv;
-}
-#endif
+	वापस retv;
+पूर्ण
+#पूर्ण_अगर
 
-static void ncr_detach(struct ncb *np)
-{
-	struct ccb *cp;
-	struct tcb *tp;
-	struct lcb *lp;
-	int target, lun;
-	int i;
-	char inst_name[16];
+अटल व्योम ncr_detach(काष्ठा ncb *np)
+अणु
+	काष्ठा ccb *cp;
+	काष्ठा tcb *tp;
+	काष्ठा lcb *lp;
+	पूर्णांक target, lun;
+	पूर्णांक i;
+	अक्षर inst_name[16];
 
-	/* Local copy so we don't access np after freeing it! */
-	strlcpy(inst_name, ncr_name(np), sizeof(inst_name));
+	/* Local copy so we करोn't access np after मुक्तing it! */
+	strlcpy(inst_name, ncr_name(np), माप(inst_name));
 
-	printk("%s: releasing host resources\n", ncr_name(np));
+	prपूर्णांकk("%s: releasing host resources\n", ncr_name(np));
 
 /*
-**	Stop the ncr_timeout process
-**	Set release_stage to 1 and wait that ncr_timeout() set it to 2.
+**	Stop the ncr_समयout process
+**	Set release_stage to 1 and रुको that ncr_समयout() set it to 2.
 */
 
-#ifdef DEBUG_NCR53C8XX
-	printk("%s: stopping the timer\n", ncr_name(np));
-#endif
+#अगर_घोषित DEBUG_NCR53C8XX
+	prपूर्णांकk("%s: stopping the timer\n", ncr_name(np));
+#पूर्ण_अगर
 	np->release_stage = 1;
-	for (i = 50 ; i && np->release_stage != 2 ; i--)
+	क्रम (i = 50 ; i && np->release_stage != 2 ; i--)
 		mdelay(100);
-	if (np->release_stage != 2)
-		printk("%s: the timer seems to be already stopped\n", ncr_name(np));
-	else np->release_stage = 2;
+	अगर (np->release_stage != 2)
+		prपूर्णांकk("%s: the timer seems to be already stopped\n", ncr_name(np));
+	अन्यथा np->release_stage = 2;
 
 /*
-**	Disable chip interrupts
+**	Disable chip पूर्णांकerrupts
 */
 
-#ifdef DEBUG_NCR53C8XX
-	printk("%s: disabling chip interrupts\n", ncr_name(np));
-#endif
+#अगर_घोषित DEBUG_NCR53C8XX
+	prपूर्णांकk("%s: disabling chip interrupts\n", ncr_name(np));
+#पूर्ण_अगर
 	OUTW (nc_sien , 0);
 	OUTB (nc_dien , 0);
 
 	/*
 	**	Reset NCR chip
-	**	Restore bios setting for automatic clock detection.
+	**	Restore bios setting क्रम स्वतःmatic घड़ी detection.
 	*/
 
-	printk("%s: resetting chip\n", ncr_name(np));
+	prपूर्णांकk("%s: resetting chip\n", ncr_name(np));
 	ncr_chip_reset(np, 100);
 
 	OUTB(nc_dmode,	np->sv_dmode);
@@ -4751,51 +4752,51 @@ static void ncr_detach(struct ncb *np)
 	OUTB(nc_gpcntl,	np->sv_gpcntl);
 	OUTB(nc_stest2,	np->sv_stest2);
 
-	ncr_selectclock(np, np->sv_scntl3);
+	ncr_selectघड़ी(np, np->sv_scntl3);
 
 	/*
 	**	Free allocated ccb(s)
 	*/
 
-	while ((cp=np->ccb->link_ccb) != NULL) {
+	जबतक ((cp=np->ccb->link_ccb) != शून्य) अणु
 		np->ccb->link_ccb = cp->link_ccb;
-		if (cp->host_status) {
-		printk("%s: shall free an active ccb (host_status=%d)\n",
+		अगर (cp->host_status) अणु
+		prपूर्णांकk("%s: shall free an active ccb (host_status=%d)\n",
 			ncr_name(np), cp->host_status);
-		}
-#ifdef DEBUG_NCR53C8XX
-	printk("%s: freeing ccb (%lx)\n", ncr_name(np), (u_long) cp);
-#endif
-		m_free_dma(cp, sizeof(*cp), "CCB");
-	}
+		पूर्ण
+#अगर_घोषित DEBUG_NCR53C8XX
+	prपूर्णांकk("%s: freeing ccb (%lx)\n", ncr_name(np), (u_दीर्घ) cp);
+#पूर्ण_अगर
+		m_मुक्त_dma(cp, माप(*cp), "CCB");
+	पूर्ण
 
 	/* Free allocated tp(s) */
 
-	for (target = 0; target < MAX_TARGET ; target++) {
+	क्रम (target = 0; target < MAX_TARGET ; target++) अणु
 		tp=&np->target[target];
-		for (lun = 0 ; lun < MAX_LUN ; lun++) {
+		क्रम (lun = 0 ; lun < MAX_LUN ; lun++) अणु
 			lp = tp->lp[lun];
-			if (lp) {
-#ifdef DEBUG_NCR53C8XX
-	printk("%s: freeing lp (%lx)\n", ncr_name(np), (u_long) lp);
-#endif
-				if (lp->jump_ccb != &lp->jump_ccb_0)
-					m_free_dma(lp->jump_ccb,256,"JUMP_CCB");
-				m_free_dma(lp, sizeof(*lp), "LCB");
-			}
-		}
-	}
+			अगर (lp) अणु
+#अगर_घोषित DEBUG_NCR53C8XX
+	prपूर्णांकk("%s: freeing lp (%lx)\n", ncr_name(np), (u_दीर्घ) lp);
+#पूर्ण_अगर
+				अगर (lp->jump_ccb != &lp->jump_ccb_0)
+					m_मुक्त_dma(lp->jump_ccb,256,"JUMP_CCB");
+				m_मुक्त_dma(lp, माप(*lp), "LCB");
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (np->scripth0)
-		m_free_dma(np->scripth0, sizeof(struct scripth), "SCRIPTH");
-	if (np->script0)
-		m_free_dma(np->script0, sizeof(struct script), "SCRIPT");
-	if (np->ccb)
-		m_free_dma(np->ccb, sizeof(struct ccb), "CCB");
-	m_free_dma(np, sizeof(struct ncb), "NCB");
+	अगर (np->scripth0)
+		m_मुक्त_dma(np->scripth0, माप(काष्ठा scripth), "SCRIPTH");
+	अगर (np->script0)
+		m_मुक्त_dma(np->script0, माप(काष्ठा script), "SCRIPT");
+	अगर (np->ccb)
+		m_मुक्त_dma(np->ccb, माप(काष्ठा ccb), "CCB");
+	m_मुक्त_dma(np, माप(काष्ठा ncb), "NCB");
 
-	printk("%s: host resources successfully released\n", inst_name);
-}
+	prपूर्णांकk("%s: host resources successfully released\n", inst_name);
+पूर्ण
 
 /*==========================================================
 **
@@ -4807,130 +4808,130 @@ static void ncr_detach(struct ncb *np)
 **==========================================================
 */
 
-void ncr_complete (struct ncb *np, struct ccb *cp)
-{
-	struct scsi_cmnd *cmd;
-	struct tcb *tp;
-	struct lcb *lp;
+व्योम ncr_complete (काष्ठा ncb *np, काष्ठा ccb *cp)
+अणु
+	काष्ठा scsi_cmnd *cmd;
+	काष्ठा tcb *tp;
+	काष्ठा lcb *lp;
 
 	/*
 	**	Sanity check
 	*/
 
-	if (!cp || cp->magic != CCB_MAGIC || !cp->cmd)
-		return;
+	अगर (!cp || cp->magic != CCB_MAGIC || !cp->cmd)
+		वापस;
 
 	/*
-	**	Print minimal debug information.
+	**	Prपूर्णांक minimal debug inक्रमmation.
 	*/
 
-	if (DEBUG_FLAGS & DEBUG_TINY)
-		printk ("CCB=%lx STAT=%x/%x\n", (unsigned long)cp,
+	अगर (DEBUG_FLAGS & DEBUG_TINY)
+		prपूर्णांकk ("CCB=%lx STAT=%x/%x\n", (अचिन्हित दीर्घ)cp,
 			cp->host_status,cp->scsi_status);
 
 	/*
-	**	Get command, target and lun pointers.
+	**	Get command, target and lun poपूर्णांकers.
 	*/
 
 	cmd = cp->cmd;
-	cp->cmd = NULL;
+	cp->cmd = शून्य;
 	tp = &np->target[cmd->device->id];
 	lp = tp->lp[cmd->device->lun];
 
 	/*
-	**	We donnot queue more than 1 ccb per target 
-	**	with negotiation at any time. If this ccb was 
-	**	used for negotiation, clear this info in the tcb.
+	**	We करोnnot queue more than 1 ccb per target 
+	**	with negotiation at any समय. If this ccb was 
+	**	used क्रम negotiation, clear this info in the tcb.
 	*/
 
-	if (cp == tp->nego_cp)
-		tp->nego_cp = NULL;
+	अगर (cp == tp->nego_cp)
+		tp->nego_cp = शून्य;
 
 	/*
-	**	If auto-sense performed, change scsi status.
+	**	If स्वतः-sense perक्रमmed, change scsi status.
 	*/
-	if (cp->auto_sense) {
-		cp->scsi_status = cp->auto_sense;
-	}
+	अगर (cp->स्वतः_sense) अणु
+		cp->scsi_status = cp->स्वतः_sense;
+	पूर्ण
 
 	/*
-	**	If we were recovering from queue full or performing 
-	**	auto-sense, requeue skipped CCBs to the wait queue.
+	**	If we were recovering from queue full or perक्रमming 
+	**	स्वतः-sense, requeue skipped CCBs to the रुको queue.
 	*/
 
-	if (lp && lp->held_ccb) {
-		if (cp == lp->held_ccb) {
-			list_splice_init(&lp->skip_ccbq, &lp->wait_ccbq);
-			lp->held_ccb = NULL;
-		}
-	}
+	अगर (lp && lp->held_ccb) अणु
+		अगर (cp == lp->held_ccb) अणु
+			list_splice_init(&lp->skip_ccbq, &lp->रुको_ccbq);
+			lp->held_ccb = शून्य;
+		पूर्ण
+	पूर्ण
 
 	/*
-	**	Check for parity errors.
+	**	Check क्रम parity errors.
 	*/
 
-	if (cp->parity_status > 1) {
+	अगर (cp->parity_status > 1) अणु
 		PRINT_ADDR(cmd, "%d parity error(s).\n",cp->parity_status);
-	}
+	पूर्ण
 
 	/*
-	**	Check for extended errors.
+	**	Check क्रम extended errors.
 	*/
 
-	if (cp->xerr_status != XE_OK) {
-		switch (cp->xerr_status) {
-		case XE_EXTRA_DATA:
+	अगर (cp->xerr_status != XE_OK) अणु
+		चयन (cp->xerr_status) अणु
+		हाल XE_EXTRA_DATA:
 			PRINT_ADDR(cmd, "extraneous data discarded.\n");
-			break;
-		case XE_BAD_PHASE:
+			अवरोध;
+		हाल XE_BAD_PHASE:
 			PRINT_ADDR(cmd, "invalid scsi phase (4/5).\n");
-			break;
-		default:
+			अवरोध;
+		शेष:
 			PRINT_ADDR(cmd, "extended error %d.\n",
 					cp->xerr_status);
-			break;
-		}
-		if (cp->host_status==HS_COMPLETE)
+			अवरोध;
+		पूर्ण
+		अगर (cp->host_status==HS_COMPLETE)
 			cp->host_status = HS_FAIL;
-	}
+	पूर्ण
 
 	/*
-	**	Print out any error for debugging purpose.
+	**	Prपूर्णांक out any error क्रम debugging purpose.
 	*/
-	if (DEBUG_FLAGS & (DEBUG_RESULT|DEBUG_TINY)) {
-		if (cp->host_status != HS_COMPLETE ||
-		    cp->scsi_status != SAM_STAT_GOOD) {
+	अगर (DEBUG_FLAGS & (DEBUG_RESULT|DEBUG_TINY)) अणु
+		अगर (cp->host_status != HS_COMPLETE ||
+		    cp->scsi_status != SAM_STAT_GOOD) अणु
 			PRINT_ADDR(cmd, "ERROR: cmd=%x host_status=%x "
 					"scsi_status=%x\n", cmd->cmnd[0],
 					cp->host_status, cp->scsi_status);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	**	Check the status.
 	*/
 	cmd->result = 0;
-	if (   (cp->host_status == HS_COMPLETE)
+	अगर (   (cp->host_status == HS_COMPLETE)
 		&& (cp->scsi_status == SAM_STAT_GOOD ||
-		    cp->scsi_status == SAM_STAT_CONDITION_MET)) {
+		    cp->scsi_status == SAM_STAT_CONDITION_MET)) अणु
 		/*
 		 *	All went well (GOOD status).
-		 *	CONDITION MET status is returned on
+		 *	CONDITION MET status is वापसed on
 		 *	`Pre-Fetch' or `Search data' success.
 		 */
 		set_status_byte(cmd, cp->scsi_status);
 
 		/*
 		**	@RESID@
-		**	Could dig out the correct value for resid,
+		**	Could dig out the correct value क्रम resid,
 		**	but it would be quite complicated.
 		*/
-		/* if (cp->phys.header.lastp != cp->phys.header.goalp) */
+		/* अगर (cp->phys.header.lastp != cp->phys.header.goalp) */
 
 		/*
-		**	Allocate the lcb if not yet.
+		**	Allocate the lcb अगर not yet.
 		*/
-		if (!lp)
+		अगर (!lp)
 			ncr_alloc_lcb (np, cmd->device->id, cmd->device->lun);
 
 		tp->bytes     += cp->data_len;
@@ -4938,18 +4939,18 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 
 		/*
 		**	If tags was reduced due to queue full,
-		**	increase tags if 1000 good status received.
+		**	increase tags अगर 1000 good status received.
 		*/
-		if (lp && lp->usetags && lp->numtags < lp->maxtags) {
+		अगर (lp && lp->usetags && lp->numtags < lp->maxtags) अणु
 			++lp->num_good;
-			if (lp->num_good >= 1000) {
+			अगर (lp->num_good >= 1000) अणु
 				lp->num_good = 0;
 				++lp->numtags;
 				ncr_setup_tags (np, cmd->device);
-			}
-		}
-	} else if ((cp->host_status == HS_COMPLETE)
-		&& (cp->scsi_status == SAM_STAT_CHECK_CONDITION)) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर ((cp->host_status == HS_COMPLETE)
+		&& (cp->scsi_status == SAM_STAT_CHECK_CONDITION)) अणु
 		/*
 		**   Check condition code
 		*/
@@ -4958,35 +4959,35 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		/*
 		**	Copy back sense data to caller's buffer.
 		*/
-		memcpy(cmd->sense_buffer, cp->sense_buf,
-		       min_t(size_t, SCSI_SENSE_BUFFERSIZE,
-			     sizeof(cp->sense_buf)));
+		स_नकल(cmd->sense_buffer, cp->sense_buf,
+		       min_t(माप_प्रकार, SCSI_SENSE_BUFFERSIZE,
+			     माप(cp->sense_buf)));
 
-		if (DEBUG_FLAGS & (DEBUG_RESULT|DEBUG_TINY)) {
-			u_char *p = cmd->sense_buffer;
-			int i;
+		अगर (DEBUG_FLAGS & (DEBUG_RESULT|DEBUG_TINY)) अणु
+			u_अक्षर *p = cmd->sense_buffer;
+			पूर्णांक i;
 			PRINT_ADDR(cmd, "sense data:");
-			for (i=0; i<14; i++) printk (" %x", *p++);
-			printk (".\n");
-		}
-	} else if ((cp->host_status == HS_COMPLETE)
-		&& (cp->scsi_status == SAM_STAT_RESERVATION_CONFLICT)) {
+			क्रम (i=0; i<14; i++) prपूर्णांकk (" %x", *p++);
+			prपूर्णांकk (".\n");
+		पूर्ण
+	पूर्ण अन्यथा अगर ((cp->host_status == HS_COMPLETE)
+		&& (cp->scsi_status == SAM_STAT_RESERVATION_CONFLICT)) अणु
 		/*
 		**   Reservation Conflict condition code
 		*/
 		set_status_byte(cmd, SAM_STAT_RESERVATION_CONFLICT);
 
-	} else if ((cp->host_status == HS_COMPLETE)
+	पूर्ण अन्यथा अगर ((cp->host_status == HS_COMPLETE)
 		&& (cp->scsi_status == SAM_STAT_BUSY ||
-		    cp->scsi_status == SAM_STAT_TASK_SET_FULL)) {
+		    cp->scsi_status == SAM_STAT_TASK_SET_FULL)) अणु
 
 		/*
 		**   Target is busy.
 		*/
 		set_status_byte(cmd, cp->scsi_status);
 
-	} else if ((cp->host_status == HS_SEL_TIMEOUT)
-		|| (cp->host_status == HS_TIMEOUT)) {
+	पूर्ण अन्यथा अगर ((cp->host_status == HS_SEL_TIMEOUT)
+		|| (cp->host_status == HS_TIMEOUT)) अणु
 
 		/*
 		**   No response
@@ -4994,7 +4995,7 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		set_status_byte(cmd, cp->scsi_status);
 		set_host_byte(cmd, DID_TIME_OUT);
 
-	} else if (cp->host_status == HS_RESET) {
+	पूर्ण अन्यथा अगर (cp->host_status == HS_RESET) अणु
 
 		/*
 		**   SCSI bus reset
@@ -5002,15 +5003,15 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		set_status_byte(cmd, cp->scsi_status);
 		set_host_byte(cmd, DID_RESET);
 
-	} else if (cp->host_status == HS_ABORTED) {
+	पूर्ण अन्यथा अगर (cp->host_status == HS_ABORTED) अणु
 
 		/*
-		**   Transfer aborted
+		**   Transfer पातed
 		*/
 		set_status_byte(cmd, cp->scsi_status);
 		set_host_byte(cmd, DID_ABORT);
 
-	} else {
+	पूर्ण अन्यथा अणु
 
 		/*
 		**  Other protocol messes
@@ -5020,66 +5021,66 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 
 		set_status_byte(cmd, cp->scsi_status);
 		set_host_byte(cmd, DID_ERROR);
-	}
+	पूर्ण
 
 	/*
 	**	trace output
 	*/
 
-	if (tp->usrflag & UF_TRACE) {
-		u_char * p;
-		int i;
+	अगर (tp->usrflag & UF_TRACE) अणु
+		u_अक्षर * p;
+		पूर्णांक i;
 		PRINT_ADDR(cmd, " CMD:");
-		p = (u_char*) &cmd->cmnd[0];
-		for (i=0; i<cmd->cmd_len; i++) printk (" %x", *p++);
+		p = (u_अक्षर*) &cmd->cmnd[0];
+		क्रम (i=0; i<cmd->cmd_len; i++) prपूर्णांकk (" %x", *p++);
 
-		if (cp->host_status==HS_COMPLETE) {
-			switch (cp->scsi_status) {
-			case SAM_STAT_GOOD:
-				printk ("  GOOD");
-				break;
-			case SAM_STAT_CHECK_CONDITION:
-				printk ("  SENSE:");
-				p = (u_char*) &cmd->sense_buffer;
-				for (i=0; i<14; i++)
-					printk (" %x", *p++);
-				break;
-			default:
-				printk ("  STAT: %x\n", cp->scsi_status);
-				break;
-			}
-		} else printk ("  HOSTERROR: %x", cp->host_status);
-		printk ("\n");
-	}
+		अगर (cp->host_status==HS_COMPLETE) अणु
+			चयन (cp->scsi_status) अणु
+			हाल SAM_STAT_GOOD:
+				prपूर्णांकk ("  GOOD");
+				अवरोध;
+			हाल SAM_STAT_CHECK_CONDITION:
+				prपूर्णांकk ("  SENSE:");
+				p = (u_अक्षर*) &cmd->sense_buffer;
+				क्रम (i=0; i<14; i++)
+					prपूर्णांकk (" %x", *p++);
+				अवरोध;
+			शेष:
+				prपूर्णांकk ("  STAT: %x\n", cp->scsi_status);
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा prपूर्णांकk ("  HOSTERROR: %x", cp->host_status);
+		prपूर्णांकk ("\n");
+	पूर्ण
 
 	/*
 	**	Free this ccb
 	*/
-	ncr_free_ccb (np, cp);
+	ncr_मुक्त_ccb (np, cp);
 
 	/*
-	**	requeue awaiting scsi commands for this lun.
+	**	requeue aरुकोing scsi commands क्रम this lun.
 	*/
-	if (lp && lp->queuedccbs < lp->queuedepth &&
-	    !list_empty(&lp->wait_ccbq))
+	अगर (lp && lp->queuedccbs < lp->queuedepth &&
+	    !list_empty(&lp->रुको_ccbq))
 		ncr_start_next_ccb(np, lp, 2);
 
 	/*
-	**	requeue awaiting scsi commands for this controller.
+	**	requeue aरुकोing scsi commands क्रम this controller.
 	*/
-	if (np->waiting_list)
-		requeue_waiting_list(np);
+	अगर (np->रुकोing_list)
+		requeue_रुकोing_list(np);
 
 	/*
-	**	signal completion to generic driver.
+	**	संकेत completion to generic driver.
 	*/
-	ncr_queue_done_cmd(np, cmd);
-}
+	ncr_queue_करोne_cmd(np, cmd);
+पूर्ण
 
 /*==========================================================
 **
 **
-**	Signal all (or one) control block done.
+**	Signal all (or one) control block करोne.
 **
 **
 **==========================================================
@@ -5089,108 +5090,108 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 **	This CCB has been skipped by the NCR.
 **	Queue it in the corresponding unit queue.
 */
-static void ncr_ccb_skipped(struct ncb *np, struct ccb *cp)
-{
-	struct tcb *tp = &np->target[cp->target];
-	struct lcb *lp = tp->lp[cp->lun];
+अटल व्योम ncr_ccb_skipped(काष्ठा ncb *np, काष्ठा ccb *cp)
+अणु
+	काष्ठा tcb *tp = &np->target[cp->target];
+	काष्ठा lcb *lp = tp->lp[cp->lun];
 
-	if (lp && cp != np->ccb) {
+	अगर (lp && cp != np->ccb) अणु
 		cp->host_status &= ~HS_SKIPMASK;
 		cp->start.schedule.l_paddr = 
 			cpu_to_scr(NCB_SCRIPT_PHYS (np, select));
 		list_move_tail(&cp->link_ccbq, &lp->skip_ccbq);
-		if (cp->queued) {
+		अगर (cp->queued) अणु
 			--lp->queuedccbs;
-		}
-	}
-	if (cp->queued) {
+		पूर्ण
+	पूर्ण
+	अगर (cp->queued) अणु
 		--np->queuedccbs;
 		cp->queued = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
 **	The NCR has completed CCBs.
-**	Look at the DONE QUEUE if enabled, otherwise scan all CCBs
+**	Look at the DONE QUEUE अगर enabled, otherwise scan all CCBs
 */
-void ncr_wakeup_done (struct ncb *np)
-{
-	struct ccb *cp;
-#ifdef SCSI_NCR_CCB_DONE_SUPPORT
-	int i, j;
+व्योम ncr_wakeup_करोne (काष्ठा ncb *np)
+अणु
+	काष्ठा ccb *cp;
+#अगर_घोषित SCSI_NCR_CCB_DONE_SUPPORT
+	पूर्णांक i, j;
 
-	i = np->ccb_done_ic;
-	while (1) {
+	i = np->ccb_करोne_ic;
+	जबतक (1) अणु
 		j = i+1;
-		if (j >= MAX_DONE)
+		अगर (j >= MAX_DONE)
 			j = 0;
 
-		cp = np->ccb_done[j];
-		if (!CCB_DONE_VALID(cp))
-			break;
+		cp = np->ccb_करोne[j];
+		अगर (!CCB_DONE_VALID(cp))
+			अवरोध;
 
-		np->ccb_done[j] = (struct ccb *)CCB_DONE_EMPTY;
-		np->scripth->done_queue[5*j + 4] =
-				cpu_to_scr(NCB_SCRIPT_PHYS (np, done_plug));
+		np->ccb_करोne[j] = (काष्ठा ccb *)CCB_DONE_EMPTY;
+		np->scripth->करोne_queue[5*j + 4] =
+				cpu_to_scr(NCB_SCRIPT_PHYS (np, करोne_plug));
 		MEMORY_BARRIER();
-		np->scripth->done_queue[5*i + 4] =
-				cpu_to_scr(NCB_SCRIPT_PHYS (np, done_end));
+		np->scripth->करोne_queue[5*i + 4] =
+				cpu_to_scr(NCB_SCRIPT_PHYS (np, करोne_end));
 
-		if (cp->host_status & HS_DONEMASK)
+		अगर (cp->host_status & HS_DONEMASK)
 			ncr_complete (np, cp);
-		else if (cp->host_status & HS_SKIPMASK)
+		अन्यथा अगर (cp->host_status & HS_SKIPMASK)
 			ncr_ccb_skipped (np, cp);
 
 		i = j;
-	}
-	np->ccb_done_ic = i;
-#else
+	पूर्ण
+	np->ccb_करोne_ic = i;
+#अन्यथा
 	cp = np->ccb;
-	while (cp) {
-		if (cp->host_status & HS_DONEMASK)
+	जबतक (cp) अणु
+		अगर (cp->host_status & HS_DONEMASK)
 			ncr_complete (np, cp);
-		else if (cp->host_status & HS_SKIPMASK)
+		अन्यथा अगर (cp->host_status & HS_SKIPMASK)
 			ncr_ccb_skipped (np, cp);
 		cp = cp->link_ccb;
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*
 **	Complete all active CCBs.
 */
-void ncr_wakeup (struct ncb *np, u_long code)
-{
-	struct ccb *cp = np->ccb;
+व्योम ncr_wakeup (काष्ठा ncb *np, u_दीर्घ code)
+अणु
+	काष्ठा ccb *cp = np->ccb;
 
-	while (cp) {
-		if (cp->host_status != HS_IDLE) {
+	जबतक (cp) अणु
+		अगर (cp->host_status != HS_IDLE) अणु
 			cp->host_status = code;
 			ncr_complete (np, cp);
-		}
+		पूर्ण
 		cp = cp->link_ccb;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
 ** Reset ncr chip.
 */
 
-/* Some initialisation must be done immediately following reset, for 53c720,
+/* Some initialisation must be करोne immediately following reset, क्रम 53c720,
  * at least.  EA (dcntl bit 5) isn't set here as it is set once only in
  * the _detect function.
  */
-static void ncr_chip_reset(struct ncb *np, int delay)
-{
+अटल व्योम ncr_chip_reset(काष्ठा ncb *np, पूर्णांक delay)
+अणु
 	OUTB (nc_istat,  SRST);
 	udelay(delay);
 	OUTB (nc_istat,  0   );
 
-	if (np->features & FE_EHP)
+	अगर (np->features & FE_EHP)
 		OUTB (nc_ctest0, EHP);
-	if (np->features & FE_MUX)
+	अगर (np->features & FE_MUX)
 		OUTB (nc_ctest4, MUX);
-}
+पूर्ण
 
 
 /*==========================================================
@@ -5202,34 +5203,34 @@ static void ncr_chip_reset(struct ncb *np, int delay)
 **==========================================================
 */
 
-void ncr_init (struct ncb *np, int reset, char * msg, u_long code)
-{
- 	int	i;
+व्योम ncr_init (काष्ठा ncb *np, पूर्णांक reset, अक्षर * msg, u_दीर्घ code)
+अणु
+ 	पूर्णांक	i;
 
  	/*
-	**	Reset chip if asked, otherwise just clear fifos.
+	**	Reset chip अगर asked, otherwise just clear fअगरos.
  	*/
 
-	if (reset) {
+	अगर (reset) अणु
 		OUTB (nc_istat,  SRST);
 		udelay(100);
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		OUTB (nc_stest3, TE|CSF);
 		OUTONB (nc_ctest3, CLF);
-	}
+	पूर्ण
  
 	/*
 	**	Message.
 	*/
 
-	if (msg) printk (KERN_INFO "%s: restart (%s).\n", ncr_name (np), msg);
+	अगर (msg) prपूर्णांकk (KERN_INFO "%s: restart (%s).\n", ncr_name (np), msg);
 
 	/*
 	**	Clear Start Queue
 	*/
 	np->queuedepth = MAX_START - 1;	/* 1 entry needed as end marker */
-	for (i = 1; i < MAX_START + MAX_START; i += 2)
+	क्रम (i = 1; i < MAX_START + MAX_START; i += 2)
 		np->scripth0->tryloop[i] =
 				cpu_to_scr(NCB_SCRIPT_PHYS (np, idle));
 
@@ -5239,24 +5240,24 @@ void ncr_init (struct ncb *np, int reset, char * msg, u_long code)
 	np->squeueput = 0;
 	np->script0->startpos[0] = cpu_to_scr(NCB_SCRIPTH_PHYS (np, tryloop));
 
-#ifdef SCSI_NCR_CCB_DONE_SUPPORT
+#अगर_घोषित SCSI_NCR_CCB_DONE_SUPPORT
 	/*
 	**	Clear Done Queue
 	*/
-	for (i = 0; i < MAX_DONE; i++) {
-		np->ccb_done[i] = (struct ccb *)CCB_DONE_EMPTY;
-		np->scripth0->done_queue[5*i + 4] =
-			cpu_to_scr(NCB_SCRIPT_PHYS (np, done_end));
-	}
-#endif
+	क्रम (i = 0; i < MAX_DONE; i++) अणु
+		np->ccb_करोne[i] = (काष्ठा ccb *)CCB_DONE_EMPTY;
+		np->scripth0->करोne_queue[5*i + 4] =
+			cpu_to_scr(NCB_SCRIPT_PHYS (np, करोne_end));
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
 	**	Start at first entry.
 	*/
-	np->script0->done_pos[0] = cpu_to_scr(NCB_SCRIPTH_PHYS (np,done_queue));
-	np->ccb_done_ic = MAX_DONE-1;
-	np->scripth0->done_queue[5*(MAX_DONE-1) + 4] =
-			cpu_to_scr(NCB_SCRIPT_PHYS (np, done_plug));
+	np->script0->करोne_pos[0] = cpu_to_scr(NCB_SCRIPTH_PHYS (np,करोne_queue));
+	np->ccb_करोne_ic = MAX_DONE-1;
+	np->scripth0->करोne_queue[5*(MAX_DONE-1) + 4] =
+			cpu_to_scr(NCB_SCRIPT_PHYS (np, करोne_plug));
 
 	/*
 	**	Wakeup all pending jobs.
@@ -5268,22 +5269,22 @@ void ncr_init (struct ncb *np, int reset, char * msg, u_long code)
 	*/
 
 	/*
-	** Remove reset; big delay because the 895 needs time for the
+	** Remove reset; big delay because the 895 needs समय क्रम the
 	** bus mode to settle
 	*/
 	ncr_chip_reset(np, 2000);
 
 	OUTB (nc_scntl0, np->rv_scntl0 | 0xc0);
 					/*  full arb., ena parity, par->ATN  */
-	OUTB (nc_scntl1, 0x00);		/*  odd parity, and remove CRST!! */
+	OUTB (nc_scntl1, 0x00);		/*  odd parity, and हटाओ CRST!! */
 
-	ncr_selectclock(np, np->rv_scntl3);	/* Select SCSI clock */
+	ncr_selectघड़ी(np, np->rv_scntl3);	/* Select SCSI घड़ी */
 
 	OUTB (nc_scid  , RRE|np->myaddr);	/* Adapter SCSI address */
 	OUTW (nc_respid, 1ul<<np->myaddr);	/* Id to respond to */
 	OUTB (nc_istat , SIGP	);		/*  Signal Process */
 	OUTB (nc_dmode , np->rv_dmode);		/* Burst length, dma mode */
-	OUTB (nc_ctest5, np->rv_ctest5);	/* Large fifo + large burst */
+	OUTB (nc_ctest5, np->rv_ctest5);	/* Large fअगरo + large burst */
 
 	OUTB (nc_dcntl , NOCOM|np->rv_dcntl);	/* Protect SFBR */
 	OUTB (nc_ctest0, np->rv_ctest0);	/* 720: CDIS and EHP */
@@ -5292,7 +5293,7 @@ void ncr_init (struct ncb *np, int reset, char * msg, u_long code)
 
 	OUTB (nc_stest2, EXT|np->rv_stest2);	/* Extended Sreq/Sack filtering */
 	OUTB (nc_stest3, TE);			/* TolerANT enable */
-	OUTB (nc_stime0, 0x0c	);		/* HTH disabled  STO 0.25 sec */
+	OUTB (nc_sसमय0, 0x0c	);		/* HTH disabled  STO 0.25 sec */
 
 	/*
 	**	Disable disconnects.
@@ -5301,101 +5302,101 @@ void ncr_init (struct ncb *np, int reset, char * msg, u_long code)
 	np->disc = 0;
 
 	/*
-	**    Enable GPIO0 pin for writing if LED support.
+	**    Enable GPIO0 pin क्रम writing अगर LED support.
 	*/
 
-	if (np->features & FE_LED0) {
+	अगर (np->features & FE_LED0) अणु
 		OUTOFFB (nc_gpcntl, 0x01);
-	}
+	पूर्ण
 
 	/*
-	**      enable ints
+	**      enable पूर्णांकs
 	*/
 
 	OUTW (nc_sien , STO|HTH|MA|SGE|UDC|RST|PAR);
 	OUTB (nc_dien , MDPE|BF|ABRT|SSI|SIR|IID);
 
 	/*
-	**	Fill in target structure.
+	**	Fill in target काष्ठाure.
 	**	Reinitialize usrsync.
 	**	Reinitialize usrwide.
 	**	Prepare sync negotiation according to actual SCSI bus mode.
 	*/
 
-	for (i=0;i<MAX_TARGET;i++) {
-		struct tcb *tp = &np->target[i];
+	क्रम (i=0;i<MAX_TARGET;i++) अणु
+		काष्ठा tcb *tp = &np->target[i];
 
 		tp->sval    = 0;
 		tp->wval    = np->rv_scntl3;
 
-		if (tp->usrsync != 255) {
-			if (tp->usrsync <= np->maxsync) {
-				if (tp->usrsync < np->minsync) {
+		अगर (tp->usrsync != 255) अणु
+			अगर (tp->usrsync <= np->maxsync) अणु
+				अगर (tp->usrsync < np->minsync) अणु
 					tp->usrsync = np->minsync;
-				}
-			}
-			else
+				पूर्ण
+			पूर्ण
+			अन्यथा
 				tp->usrsync = 255;
-		}
+		पूर्ण
 
-		if (tp->usrwide > np->maxwide)
+		अगर (tp->usrwide > np->maxwide)
 			tp->usrwide = np->maxwide;
 
-	}
+	पूर्ण
 
 	/*
 	**    Start script processor.
 	*/
-	if (np->paddr2) {
-		if (bootverbose)
-			printk ("%s: Downloading SCSI SCRIPTS.\n",
+	अगर (np->paddr2) अणु
+		अगर (bootverbose)
+			prपूर्णांकk ("%s: Downloading SCSI SCRIPTS.\n",
 				ncr_name(np));
 		OUTL (nc_scratcha, vtobus(np->script0));
 		OUTL_DSP (NCB_SCRIPTH_PHYS (np, start_ram));
-	}
-	else
+	पूर्ण
+	अन्यथा
 		OUTL_DSP (NCB_SCRIPT_PHYS (np, start));
-}
+पूर्ण
 
 /*==========================================================
 **
-**	Prepare the negotiation values for wide and
+**	Prepare the negotiation values क्रम wide and
 **	synchronous transfers.
 **
 **==========================================================
 */
 
-static void ncr_negotiate (struct ncb* np, struct tcb* tp)
-{
+अटल व्योम ncr_negotiate (काष्ठा ncb* np, काष्ठा tcb* tp)
+अणु
 	/*
 	**	minsync unit is 4ns !
 	*/
 
-	u_long minsync = tp->usrsync;
+	u_दीर्घ minsync = tp->usrsync;
 
 	/*
 	**	SCSI bus mode limit
 	*/
 
-	if (np->scsi_mode && np->scsi_mode == SMODE_SE) {
-		if (minsync < 12) minsync = 12;
-	}
+	अगर (np->scsi_mode && np->scsi_mode == SMODE_SE) अणु
+		अगर (minsync < 12) minsync = 12;
+	पूर्ण
 
 	/*
 	**	our limit ..
 	*/
 
-	if (minsync < np->minsync)
+	अगर (minsync < np->minsync)
 		minsync = np->minsync;
 
 	/*
-	**	divider limit
+	**	भागider limit
 	*/
 
-	if (minsync > np->maxsync)
+	अगर (minsync > np->maxsync)
 		minsync = 255;
 
-	if (tp->maxoffs > np->maxoffs)
+	अगर (tp->maxoffs > np->maxoffs)
 		tp->maxoffs = np->maxoffs;
 
 	tp->minsync = minsync;
@@ -5408,80 +5409,80 @@ static void ncr_negotiate (struct ncb* np, struct tcb* tp)
 	tp->period=0;
 
 	/*
-	**	widedone=0: has to negotiate wide transfer
+	**	wideकरोne=0: has to negotiate wide transfer
 	*/
-	tp->widedone=0;
-}
+	tp->wideकरोne=0;
+पूर्ण
 
 /*==========================================================
 **
-**	Get clock factor and sync divisor for a given 
+**	Get घड़ी factor and sync भागisor क्रम a given 
 **	synchronous factor period.
-**	Returns the clock factor (in sxfer) and scntl3 
-**	synchronous divisor field.
+**	Returns the घड़ी factor (in sxfer) and scntl3 
+**	synchronous भागisor field.
 **
 **==========================================================
 */
 
-static void ncr_getsync(struct ncb *np, u_char sfac, u_char *fakp, u_char *scntl3p)
-{
-	u_long	clk = np->clock_khz;	/* SCSI clock frequency in kHz	*/
-	int	div = np->clock_divn;	/* Number of divisors supported	*/
-	u_long	fak;			/* Sync factor in sxfer		*/
-	u_long	per;			/* Period in tenths of ns	*/
-	u_long	kpc;			/* (per * clk)			*/
+अटल व्योम ncr_माला_लोync(काष्ठा ncb *np, u_अक्षर sfac, u_अक्षर *fakp, u_अक्षर *scntl3p)
+अणु
+	u_दीर्घ	clk = np->घड़ी_khz;	/* SCSI घड़ी frequency in kHz	*/
+	पूर्णांक	भाग = np->घड़ी_भागn;	/* Number of भागisors supported	*/
+	u_दीर्घ	fak;			/* Sync factor in sxfer		*/
+	u_दीर्घ	per;			/* Period in tenths of ns	*/
+	u_दीर्घ	kpc;			/* (per * clk)			*/
 
 	/*
 	**	Compute the synchronous period in tenths of nano-seconds
 	*/
-	if	(sfac <= 10)	per = 250;
-	else if	(sfac == 11)	per = 303;
-	else if	(sfac == 12)	per = 500;
-	else			per = 40 * sfac;
+	अगर	(sfac <= 10)	per = 250;
+	अन्यथा अगर	(sfac == 11)	per = 303;
+	अन्यथा अगर	(sfac == 12)	per = 500;
+	अन्यथा			per = 40 * sfac;
 
 	/*
-	**	Look for the greatest clock divisor that allows an 
+	**	Look क्रम the greatest घड़ी भागisor that allows an 
 	**	input speed faster than the period.
 	*/
 	kpc = per * clk;
-	while (--div > 0)
-		if (kpc >= (div_10M[div] << 2)) break;
+	जबतक (--भाग > 0)
+		अगर (kpc >= (भाग_10M[भाग] << 2)) अवरोध;
 
 	/*
-	**	Calculate the lowest clock factor that allows an output 
+	**	Calculate the lowest घड़ी factor that allows an output 
 	**	speed not faster than the period.
 	*/
-	fak = (kpc - 1) / div_10M[div] + 1;
+	fak = (kpc - 1) / भाग_10M[भाग] + 1;
 
-#if 0	/* This optimization does not seem very useful */
+#अगर 0	/* This optimization करोes not seem very useful */
 
-	per = (fak * div_10M[div]) / clk;
+	per = (fak * भाग_10M[भाग]) / clk;
 
 	/*
-	**	Why not to try the immediate lower divisor and to choose 
+	**	Why not to try the immediate lower भागisor and to choose 
 	**	the one that allows the fastest output speed ?
-	**	We don't want input speed too much greater than output speed.
+	**	We करोn't want input speed too much greater than output speed.
 	*/
-	if (div >= 1 && fak < 8) {
-		u_long fak2, per2;
-		fak2 = (kpc - 1) / div_10M[div-1] + 1;
-		per2 = (fak2 * div_10M[div-1]) / clk;
-		if (per2 < per && fak2 <= 8) {
+	अगर (भाग >= 1 && fak < 8) अणु
+		u_दीर्घ fak2, per2;
+		fak2 = (kpc - 1) / भाग_10M[भाग-1] + 1;
+		per2 = (fak2 * भाग_10M[भाग-1]) / clk;
+		अगर (per2 < per && fak2 <= 8) अणु
 			fak = fak2;
 			per = per2;
-			--div;
-		}
-	}
-#endif
+			--भाग;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	if (fak < 4) fak = 4;	/* Should never happen, too bad ... */
+	अगर (fak < 4) fak = 4;	/* Should never happen, too bad ... */
 
 	/*
-	**	Compute and return sync parameters for the ncr
+	**	Compute and वापस sync parameters क्रम the ncr
 	*/
 	*fakp		= fak - 4;
-	*scntl3p	= ((div+1) << 4) + (sfac < 25 ? 0x80 : 0);
-}
+	*scntl3p	= ((भाग+1) << 4) + (sfac < 25 ? 0x80 : 0);
+पूर्ण
 
 
 /*==========================================================
@@ -5492,10 +5493,10 @@ static void ncr_getsync(struct ncb *np, u_char sfac, u_char *fakp, u_char *scntl
 **==========================================================
 */
 
-static void ncr_set_sync_wide_status (struct ncb *np, u_char target)
-{
-	struct ccb *cp;
-	struct tcb *tp = &np->target[target];
+अटल व्योम ncr_set_sync_wide_status (काष्ठा ncb *np, u_अक्षर target)
+अणु
+	काष्ठा ccb *cp;
+	काष्ठा tcb *tp = &np->target[target];
 
 	/*
 	**	set actual value and sync_status
@@ -5508,37 +5509,37 @@ static void ncr_set_sync_wide_status (struct ncb *np, u_char target)
 	/*
 	**	patch ALL ccbs of this target.
 	*/
-	for (cp = np->ccb; cp; cp = cp->link_ccb) {
-		if (!cp->cmd) continue;
-		if (scmd_id(cp->cmd) != target) continue;
-#if 0
+	क्रम (cp = np->ccb; cp; cp = cp->link_ccb) अणु
+		अगर (!cp->cmd) जारी;
+		अगर (scmd_id(cp->cmd) != target) जारी;
+#अगर 0
 		cp->sync_status = tp->sval;
 		cp->wide_status = tp->wval;
-#endif
+#पूर्ण_अगर
 		cp->phys.select.sel_scntl3 = tp->wval;
 		cp->phys.select.sel_sxfer  = tp->sval;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*==========================================================
 **
-**	Switch sync mode for current job and it's target
+**	Switch sync mode क्रम current job and it's target
 **
 **==========================================================
 */
 
-static void ncr_setsync (struct ncb *np, struct ccb *cp, u_char scntl3, u_char sxfer)
-{
-	struct scsi_cmnd *cmd = cp->cmd;
-	struct tcb *tp;
-	u_char target = INB (nc_sdid) & 0x0f;
-	u_char idiv;
+अटल व्योम ncr_setsync (काष्ठा ncb *np, काष्ठा ccb *cp, u_अक्षर scntl3, u_अक्षर sxfer)
+अणु
+	काष्ठा scsi_cmnd *cmd = cp->cmd;
+	काष्ठा tcb *tp;
+	u_अक्षर target = INB (nc_sdid) & 0x0f;
+	u_अक्षर iभाग;
 
 	BUG_ON(target != (scmd_id(cmd) & 0xf));
 
 	tp = &np->target[target];
 
-	if (!scntl3 || !(sxfer & 0x1f))
+	अगर (!scntl3 || !(sxfer & 0x1f))
 		scntl3 = np->rv_scntl3;
 	scntl3 = (scntl3 & 0xf0) | (tp->wval & EWS) | (np->rv_scntl3 & 0x07);
 
@@ -5547,23 +5548,23 @@ static void ncr_setsync (struct ncb *np, struct ccb *cp, u_char scntl3, u_char s
 	**	period is in tenths of nano-seconds.
 	*/
 
-	idiv = ((scntl3 >> 4) & 0x7);
-	if ((sxfer & 0x1f) && idiv)
-		tp->period = (((sxfer>>5)+4)*div_10M[idiv-1])/np->clock_khz;
-	else
+	iभाग = ((scntl3 >> 4) & 0x7);
+	अगर ((sxfer & 0x1f) && iभाग)
+		tp->period = (((sxfer>>5)+4)*भाग_10M[iभाग-1])/np->घड़ी_khz;
+	अन्यथा
 		tp->period = 0xffff;
 
-	/* Stop there if sync parameters are unchanged */
-	if (tp->sval == sxfer && tp->wval == scntl3)
-		return;
+	/* Stop there अगर sync parameters are unchanged */
+	अगर (tp->sval == sxfer && tp->wval == scntl3)
+		वापस;
 	tp->sval = sxfer;
 	tp->wval = scntl3;
 
-	if (sxfer & 0x01f) {
+	अगर (sxfer & 0x01f) अणु
 		/* Disable extended Sreq/Sack filtering */
-		if (tp->period <= 2000)
+		अगर (tp->period <= 2000)
 			OUTOFFB(nc_stest2, EXT);
-	}
+	पूर्ण
  
 	spi_display_xfer_agreement(tp->starget);
 
@@ -5572,11 +5573,11 @@ static void ncr_setsync (struct ncb *np, struct ccb *cp, u_char scntl3, u_char s
 	**	patch ALL ccbs of this target.
 	*/
 	ncr_set_sync_wide_status(np, target);
-}
+पूर्ण
 
 /*==========================================================
 **
-**	Switch wide mode for current job and it's target
+**	Switch wide mode क्रम current job and it's target
 **	SCSI specs say: a SCSI device that accepts a WDTR 
 **	message shall reset the synchronous agreement to 
 **	asynchronous mode.
@@ -5584,117 +5585,117 @@ static void ncr_setsync (struct ncb *np, struct ccb *cp, u_char scntl3, u_char s
 **==========================================================
 */
 
-static void ncr_setwide (struct ncb *np, struct ccb *cp, u_char wide, u_char ack)
-{
-	struct scsi_cmnd *cmd = cp->cmd;
+अटल व्योम ncr_setwide (काष्ठा ncb *np, काष्ठा ccb *cp, u_अक्षर wide, u_अक्षर ack)
+अणु
+	काष्ठा scsi_cmnd *cmd = cp->cmd;
 	u16 target = INB (nc_sdid) & 0x0f;
-	struct tcb *tp;
-	u_char	scntl3;
-	u_char	sxfer;
+	काष्ठा tcb *tp;
+	u_अक्षर	scntl3;
+	u_अक्षर	sxfer;
 
 	BUG_ON(target != (scmd_id(cmd) & 0xf));
 
 	tp = &np->target[target];
-	tp->widedone  =  wide+1;
+	tp->wideकरोne  =  wide+1;
 	scntl3 = (tp->wval & (~EWS)) | (wide ? EWS : 0);
 
 	sxfer = ack ? 0 : tp->sval;
 
 	/*
-	**	 Stop there if sync/wide parameters are unchanged
+	**	 Stop there अगर sync/wide parameters are unchanged
 	*/
-	if (tp->sval == sxfer && tp->wval == scntl3) return;
+	अगर (tp->sval == sxfer && tp->wval == scntl3) वापस;
 	tp->sval = sxfer;
 	tp->wval = scntl3;
 
 	/*
 	**	Bells and whistles   ;-)
 	*/
-	if (bootverbose >= 2) {
+	अगर (bootverbose >= 2) अणु
 		dev_info(&cmd->device->sdev_target->dev, "WIDE SCSI %sabled.\n",
 				(scntl3 & EWS) ? "en" : "dis");
-	}
+	पूर्ण
 
 	/*
 	**	set actual value and sync_status
 	**	patch ALL ccbs of this target.
 	*/
 	ncr_set_sync_wide_status(np, target);
-}
+पूर्ण
 
 /*==========================================================
 **
-**	Switch tagged mode for a target.
+**	Switch tagged mode क्रम a target.
 **
 **==========================================================
 */
 
-static void ncr_setup_tags (struct ncb *np, struct scsi_device *sdev)
-{
-	unsigned char tn = sdev->id, ln = sdev->lun;
-	struct tcb *tp = &np->target[tn];
-	struct lcb *lp = tp->lp[ln];
-	u_char   reqtags, maxdepth;
+अटल व्योम ncr_setup_tags (काष्ठा ncb *np, काष्ठा scsi_device *sdev)
+अणु
+	अचिन्हित अक्षर tn = sdev->id, ln = sdev->lun;
+	काष्ठा tcb *tp = &np->target[tn];
+	काष्ठा lcb *lp = tp->lp[ln];
+	u_अक्षर   reqtags, maxdepth;
 
 	/*
-	**	Just in case ...
+	**	Just in हाल ...
 	*/
-	if ((!tp) || (!lp) || !sdev)
-		return;
+	अगर ((!tp) || (!lp) || !sdev)
+		वापस;
 
 	/*
 	**	If SCSI device queue depth is not yet set, leave here.
 	*/
-	if (!lp->scdev_depth)
-		return;
+	अगर (!lp->scdev_depth)
+		वापस;
 
 	/*
 	**	Donnot allow more tags than the SCSI driver can queue 
-	**	for this device.
+	**	क्रम this device.
 	**	Donnot allow more tags than we can handle.
 	*/
 	maxdepth = lp->scdev_depth;
-	if (maxdepth > lp->maxnxs)	maxdepth    = lp->maxnxs;
-	if (lp->maxtags > maxdepth)	lp->maxtags = maxdepth;
-	if (lp->numtags > maxdepth)	lp->numtags = maxdepth;
+	अगर (maxdepth > lp->maxnxs)	maxdepth    = lp->maxnxs;
+	अगर (lp->maxtags > maxdepth)	lp->maxtags = maxdepth;
+	अगर (lp->numtags > maxdepth)	lp->numtags = maxdepth;
 
 	/*
-	**	only devices conformant to ANSI Version >= 2
+	**	only devices conक्रमmant to ANSI Version >= 2
 	**	only devices capable of tagged commands
-	**	only if enabled by user ..
+	**	only अगर enabled by user ..
 	*/
-	if (sdev->tagged_supported && lp->numtags > 1) {
+	अगर (sdev->tagged_supported && lp->numtags > 1) अणु
 		reqtags = lp->numtags;
-	} else {
+	पूर्ण अन्यथा अणु
 		reqtags = 1;
-	}
+	पूर्ण
 
 	/*
 	**	Update max number of tags
 	*/
 	lp->numtags = reqtags;
-	if (lp->numtags > lp->maxtags)
+	अगर (lp->numtags > lp->maxtags)
 		lp->maxtags = lp->numtags;
 
 	/*
-	**	If we want to switch tag mode, we must wait 
-	**	for no CCB to be active.
+	**	If we want to चयन tag mode, we must रुको 
+	**	क्रम no CCB to be active.
 	*/
-	if	(reqtags > 1 && lp->usetags) {	 /* Stay in tagged mode    */
-		if (lp->queuedepth == reqtags)	 /* Already announced	   */
-			return;
+	अगर	(reqtags > 1 && lp->usetags) अणु	 /* Stay in tagged mode    */
+		अगर (lp->queuedepth == reqtags)	 /* Alपढ़ोy announced	   */
+			वापस;
 		lp->queuedepth	= reqtags;
-	}
-	else if	(reqtags <= 1 && !lp->usetags) { /* Stay in untagged mode  */
+	पूर्ण
+	अन्यथा अगर	(reqtags <= 1 && !lp->usetags) अणु /* Stay in untagged mode  */
 		lp->queuedepth	= reqtags;
-		return;
-	}
-	else {					 /* Want to switch tag mode */
-		if (lp->busyccbs)		 /* If not yet safe, return */
-			return;
+		वापस;
+	पूर्ण
+	अन्यथा अणु					 /* Want to चयन tag mode */
+		अगर (lp->busyccbs)		 /* If not yet safe, वापस */
+			वापस;
 		lp->queuedepth	= reqtags;
 		lp->usetags	= reqtags > 1 ? 1 : 0;
-	}
+	पूर्ण
 
 	/*
 	**	Patch the lun mini-script, according to tag mode.
@@ -5706,35 +5707,35 @@ static void ncr_setup_tags (struct ncb *np, struct scsi_device *sdev)
 	/*
 	**	Announce change to user.
 	*/
-	if (bootverbose) {
-		if (lp->usetags) {
+	अगर (bootverbose) अणु
+		अगर (lp->usetags) अणु
 			dev_info(&sdev->sdev_gendev,
 				"tagged command queue depth set to %d\n",
 				reqtags);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_info(&sdev->sdev_gendev,
 					"tagged command queueing disabled\n");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*==========================================================
 **
 **
-**	ncr timeout handler.
+**	ncr समयout handler.
 **
 **
 **==========================================================
 **
 **	Misused to keep the driver running when
-**	interrupts are not configured correctly.
+**	पूर्णांकerrupts are not configured correctly.
 **
 **----------------------------------------------------------
 */
 
-static void ncr_timeout (struct ncb *np)
-{
-	u_long	thistime = jiffies;
+अटल व्योम ncr_समयout (काष्ठा ncb *np)
+अणु
+	u_दीर्घ	thisसमय = jअगरfies;
 
 	/*
 	**	If release process in progress, let's go
@@ -5742,62 +5743,62 @@ static void ncr_timeout (struct ncb *np)
 	**	with the release process.
 	*/
 
-	if (np->release_stage) {
-		if (np->release_stage == 1) np->release_stage = 2;
-		return;
-	}
+	अगर (np->release_stage) अणु
+		अगर (np->release_stage == 1) np->release_stage = 2;
+		वापस;
+	पूर्ण
 
-	np->timer.expires = jiffies + SCSI_NCR_TIMER_INTERVAL;
-	add_timer(&np->timer);
+	np->समयr.expires = jअगरfies + SCSI_NCR_TIMER_INTERVAL;
+	add_समयr(&np->समयr);
 
 	/*
-	**	If we are resetting the ncr, wait for settle_time before 
+	**	If we are resetting the ncr, रुको क्रम settle_समय beक्रमe 
 	**	clearing it. Then command processing will be resumed.
 	*/
-	if (np->settle_time) {
-		if (np->settle_time <= thistime) {
-			if (bootverbose > 1)
-				printk("%s: command processing resumed\n", ncr_name(np));
-			np->settle_time	= 0;
+	अगर (np->settle_समय) अणु
+		अगर (np->settle_समय <= thisसमय) अणु
+			अगर (bootverbose > 1)
+				prपूर्णांकk("%s: command processing resumed\n", ncr_name(np));
+			np->settle_समय	= 0;
 			np->disc	= 1;
-			requeue_waiting_list(np);
-		}
-		return;
-	}
+			requeue_रुकोing_list(np);
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	/*
 	**	Since the generic scsi driver only allows us 0.5 second 
-	**	to perform abort of a command, we must look at ccbs about 
+	**	to perक्रमm पात of a command, we must look at ccbs about 
 	**	every 0.25 second.
 	*/
-	if (np->lasttime + 4*HZ < thistime) {
+	अगर (np->lastसमय + 4*HZ < thisसमय) अणु
 		/*
-		**	block ncr interrupts
+		**	block ncr पूर्णांकerrupts
 		*/
-		np->lasttime = thistime;
-	}
+		np->lastसमय = thisसमय;
+	पूर्ण
 
-#ifdef SCSI_NCR_BROKEN_INTR
-	if (INB(nc_istat) & (INTF|SIP|DIP)) {
+#अगर_घोषित SCSI_NCR_BROKEN_INTR
+	अगर (INB(nc_istat) & (INTF|SIP|DIP)) अणु
 
 		/*
-		**	Process pending interrupts.
+		**	Process pending पूर्णांकerrupts.
 		*/
-		if (DEBUG_FLAGS & DEBUG_TINY) printk ("{");
+		अगर (DEBUG_FLAGS & DEBUG_TINY) prपूर्णांकk ("{");
 		ncr_exception (np);
-		if (DEBUG_FLAGS & DEBUG_TINY) printk ("}");
-	}
-#endif /* SCSI_NCR_BROKEN_INTR */
-}
+		अगर (DEBUG_FLAGS & DEBUG_TINY) prपूर्णांकk ("}");
+	पूर्ण
+#पूर्ण_अगर /* SCSI_NCR_BROKEN_INTR */
+पूर्ण
 
 /*==========================================================
 **
-**	log message for real hard errors
+**	log message क्रम real hard errors
 **
 **	"ncr0 targ 0?: ERROR (ds:si) (so-si-sd) (sxfer/scntl3) @ name (dsp:dbc)."
 **	"	      reg: r0 r1 r2 r3 r4 r5 r6 ..... rf."
 **
-**	exception register:
+**	exception रेजिस्टर:
 **		ds:	dstat
 **		si:	sist
 **
@@ -5806,7 +5807,7 @@ static void ncr_timeout (struct ncb *np)
 **		si:	control lines as seen by NCR.
 **		sd:	scsi data lines as seen by NCR.
 **
-**	wide/fastmode:
+**	wide/fasपंचांगode:
 **		sxfer:	(see the manual)
 **		scntl3:	(see the manual)
 **
@@ -5814,59 +5815,59 @@ static void ncr_timeout (struct ncb *np)
 **		dsp:	script address (relative to start of script).
 **		dbc:	first word of script command.
 **
-**	First 16 register of the chip:
+**	First 16 रेजिस्टर of the chip:
 **		r0..rf
 **
 **==========================================================
 */
 
-static void ncr_log_hard_error(struct ncb *np, u16 sist, u_char dstat)
-{
+अटल व्योम ncr_log_hard_error(काष्ठा ncb *np, u16 sist, u_अक्षर dstat)
+अणु
 	u32	dsp;
-	int	script_ofs;
-	int	script_size;
-	char	*script_name;
-	u_char	*script_base;
-	int	i;
+	पूर्णांक	script_ofs;
+	पूर्णांक	script_size;
+	अक्षर	*script_name;
+	u_अक्षर	*script_base;
+	पूर्णांक	i;
 
 	dsp	= INL (nc_dsp);
 
-	if (dsp > np->p_script && dsp <= np->p_script + sizeof(struct script)) {
+	अगर (dsp > np->p_script && dsp <= np->p_script + माप(काष्ठा script)) अणु
 		script_ofs	= dsp - np->p_script;
-		script_size	= sizeof(struct script);
-		script_base	= (u_char *) np->script0;
+		script_size	= माप(काष्ठा script);
+		script_base	= (u_अक्षर *) np->script0;
 		script_name	= "script";
-	}
-	else if (np->p_scripth < dsp && 
-		 dsp <= np->p_scripth + sizeof(struct scripth)) {
+	पूर्ण
+	अन्यथा अगर (np->p_scripth < dsp && 
+		 dsp <= np->p_scripth + माप(काष्ठा scripth)) अणु
 		script_ofs	= dsp - np->p_scripth;
-		script_size	= sizeof(struct scripth);
-		script_base	= (u_char *) np->scripth0;
+		script_size	= माप(काष्ठा scripth);
+		script_base	= (u_अक्षर *) np->scripth0;
 		script_name	= "scripth";
-	} else {
+	पूर्ण अन्यथा अणु
 		script_ofs	= dsp;
 		script_size	= 0;
-		script_base	= NULL;
+		script_base	= शून्य;
 		script_name	= "mem";
-	}
+	पूर्ण
 
-	printk ("%s:%d: ERROR (%x:%x) (%x-%x-%x) (%x/%x) @ (%s %x:%08x).\n",
-		ncr_name (np), (unsigned)INB (nc_sdid)&0x0f, dstat, sist,
-		(unsigned)INB (nc_socl), (unsigned)INB (nc_sbcl), (unsigned)INB (nc_sbdl),
-		(unsigned)INB (nc_sxfer),(unsigned)INB (nc_scntl3), script_name, script_ofs,
-		(unsigned)INL (nc_dbc));
+	prपूर्णांकk ("%s:%d: ERROR (%x:%x) (%x-%x-%x) (%x/%x) @ (%s %x:%08x).\n",
+		ncr_name (np), (अचिन्हित)INB (nc_sdid)&0x0f, dstat, sist,
+		(अचिन्हित)INB (nc_socl), (अचिन्हित)INB (nc_sbcl), (अचिन्हित)INB (nc_sbdl),
+		(अचिन्हित)INB (nc_sxfer),(अचिन्हित)INB (nc_scntl3), script_name, script_ofs,
+		(अचिन्हित)INL (nc_dbc));
 
-	if (((script_ofs & 3) == 0) &&
-	    (unsigned)script_ofs < script_size) {
-		printk ("%s: script cmd = %08x\n", ncr_name(np),
-			scr_to_cpu((int) *(ncrcmd *)(script_base + script_ofs)));
-	}
+	अगर (((script_ofs & 3) == 0) &&
+	    (अचिन्हित)script_ofs < script_size) अणु
+		prपूर्णांकk ("%s: script cmd = %08x\n", ncr_name(np),
+			scr_to_cpu((पूर्णांक) *(ncrcmd *)(script_base + script_ofs)));
+	पूर्ण
 
-	printk ("%s: regdump:", ncr_name(np));
-	for (i=0; i<16;i++)
-            printk (" %02x", (unsigned)INB_OFF(i));
-	printk (".\n");
-}
+	prपूर्णांकk ("%s: regdump:", ncr_name(np));
+	क्रम (i=0; i<16;i++)
+            prपूर्णांकk (" %02x", (अचिन्हित)INB_OFF(i));
+	prपूर्णांकk (".\n");
+पूर्ण
 
 /*============================================================
 **
@@ -5874,25 +5875,25 @@ static void ncr_log_hard_error(struct ncb *np, u16 sist, u_char dstat)
 **
 **============================================================
 **
-**	In normal cases, interrupt conditions occur one at a 
-**	time. The ncr is able to stack in some extra registers 
-**	other interrupts that will occur after the first one.
-**	But, several interrupts may occur at the same time.
+**	In normal हालs, पूर्णांकerrupt conditions occur one at a 
+**	समय. The ncr is able to stack in some extra रेजिस्टरs 
+**	other पूर्णांकerrupts that will occur after the first one.
+**	But, several पूर्णांकerrupts may occur at the same समय.
 **
 **	We probably should only try to deal with the normal 
-**	case, but it seems that multiple interrupts occur in 
-**	some cases that are not abnormal at all.
+**	हाल, but it seems that multiple पूर्णांकerrupts occur in 
+**	some हालs that are not abnormal at all.
 **
-**	The most frequent interrupt condition is Phase Mismatch.
-**	We should want to service this interrupt quickly.
-**	A SCSI parity error may be delivered at the same time.
-**	The SIR interrupt is not very frequent in this driver, 
-**	since the INTFLY is likely used for command completion 
-**	signaling.
-**	The Selection Timeout interrupt may be triggered with 
+**	The most frequent पूर्णांकerrupt condition is Phase Mismatch.
+**	We should want to service this पूर्णांकerrupt quickly.
+**	A SCSI parity error may be delivered at the same समय.
+**	The SIR पूर्णांकerrupt is not very frequent in this driver, 
+**	since the INTFLY is likely used क्रम command completion 
+**	संकेतing.
+**	The Selection Timeout पूर्णांकerrupt may be triggered with 
 **	IID and/or UDC.
-**	The SBMC interrupt (SCSI Bus Mode Change) may probably 
-**	occur at any time.
+**	The SBMC पूर्णांकerrupt (SCSI Bus Mode Change) may probably 
+**	occur at any समय.
 **
 **	This handler try to deal as cleverly as possible with all
 **	the above.
@@ -5900,220 +5901,220 @@ static void ncr_log_hard_error(struct ncb *np, u16 sist, u_char dstat)
 **============================================================
 */
 
-void ncr_exception (struct ncb *np)
-{
-	u_char	istat, dstat;
+व्योम ncr_exception (काष्ठा ncb *np)
+अणु
+	u_अक्षर	istat, dstat;
 	u16	sist;
-	int	i;
+	पूर्णांक	i;
 
 	/*
-	**	interrupt on the fly ?
+	**	पूर्णांकerrupt on the fly ?
 	**	Since the global header may be copied back to a CCB 
-	**	using a posted PCI memory write, the last operation on 
-	**	the istat register is a READ in order to flush posted 
-	**	PCI write commands.
+	**	using a posted PCI memory ग_लिखो, the last operation on 
+	**	the istat रेजिस्टर is a READ in order to flush posted 
+	**	PCI ग_लिखो commands.
 	*/
 	istat = INB (nc_istat);
-	if (istat & INTF) {
+	अगर (istat & INTF) अणु
 		OUTB (nc_istat, (istat & SIGP) | INTF);
 		istat = INB (nc_istat);
-		if (DEBUG_FLAGS & DEBUG_TINY) printk ("F ");
-		ncr_wakeup_done (np);
-	}
+		अगर (DEBUG_FLAGS & DEBUG_TINY) prपूर्णांकk ("F ");
+		ncr_wakeup_करोne (np);
+	पूर्ण
 
-	if (!(istat & (SIP|DIP)))
-		return;
+	अगर (!(istat & (SIP|DIP)))
+		वापस;
 
-	if (istat & CABRT)
+	अगर (istat & CABRT)
 		OUTB (nc_istat, CABRT);
 
 	/*
-	**	Steinbach's Guideline for Systems Programming:
-	**	Never test for an error condition you don't know how to handle.
+	**	Steinbach's Guideline क्रम Systems Programming:
+	**	Never test क्रम an error condition you करोn't know how to handle.
 	*/
 
 	sist  = (istat & SIP) ? INW (nc_sist)  : 0;
 	dstat = (istat & DIP) ? INB (nc_dstat) : 0;
 
-	if (DEBUG_FLAGS & DEBUG_TINY)
-		printk ("<%d|%x:%x|%x:%x>",
-			(int)INB(nc_scr0),
+	अगर (DEBUG_FLAGS & DEBUG_TINY)
+		prपूर्णांकk ("<%d|%x:%x|%x:%x>",
+			(पूर्णांक)INB(nc_scr0),
 			dstat,sist,
-			(unsigned)INL(nc_dsp),
-			(unsigned)INL(nc_dbc));
+			(अचिन्हित)INL(nc_dsp),
+			(अचिन्हित)INL(nc_dbc));
 
 	/*========================================================
-	**	First, interrupts we want to service cleanly.
+	**	First, पूर्णांकerrupts we want to service cleanly.
 	**
-	**	Phase mismatch is the most frequent interrupt, and 
+	**	Phase mismatch is the most frequent पूर्णांकerrupt, and 
 	**	so we have to service it as quickly and as cleanly 
 	**	as possible.
-	**	Programmed interrupts are rarely used in this driver,
+	**	Programmed पूर्णांकerrupts are rarely used in this driver,
 	**	but we must handle them cleanly anyway.
 	**	We try to deal with PAR and SBMC combined with 
-	**	some other interrupt(s).
+	**	some other पूर्णांकerrupt(s).
 	**=========================================================
 	*/
 
-	if (!(sist  & (STO|GEN|HTH|SGE|UDC|RST)) &&
-	    !(dstat & (MDPE|BF|ABRT|IID))) {
-		if ((sist & SBMC) && ncr_int_sbmc (np))
-			return;
-		if ((sist & PAR)  && ncr_int_par  (np))
-			return;
-		if (sist & MA) {
-			ncr_int_ma (np);
-			return;
-		}
-		if (dstat & SIR) {
-			ncr_int_sir (np);
-			return;
-		}
+	अगर (!(sist  & (STO|GEN|HTH|SGE|UDC|RST)) &&
+	    !(dstat & (MDPE|BF|ABRT|IID))) अणु
+		अगर ((sist & SBMC) && ncr_पूर्णांक_sbmc (np))
+			वापस;
+		अगर ((sist & PAR)  && ncr_पूर्णांक_par  (np))
+			वापस;
+		अगर (sist & MA) अणु
+			ncr_पूर्णांक_ma (np);
+			वापस;
+		पूर्ण
+		अगर (dstat & SIR) अणु
+			ncr_पूर्णांक_sir (np);
+			वापस;
+		पूर्ण
 		/*
 		**  DEL 397 - 53C875 Rev 3 - Part Number 609-0392410 - ITEM 2.
 		*/
-		if (!(sist & (SBMC|PAR)) && !(dstat & SSI)) {
-			printk(	"%s: unknown interrupt(s) ignored, "
+		अगर (!(sist & (SBMC|PAR)) && !(dstat & SSI)) अणु
+			prपूर्णांकk(	"%s: unknown interrupt(s) ignored, "
 				"ISTAT=%x DSTAT=%x SIST=%x\n",
 				ncr_name(np), istat, dstat, sist);
-			return;
-		}
+			वापस;
+		पूर्ण
 		OUTONB_STD ();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*========================================================
-	**	Now, interrupts that need some fixing up.
-	**	Order and multiple interrupts is so less important.
+	**	Now, पूर्णांकerrupts that need some fixing up.
+	**	Order and multiple पूर्णांकerrupts is so less important.
 	**
-	**	If SRST has been asserted, we just reset the chip.
+	**	If SRST has been निश्चितed, we just reset the chip.
 	**
-	**	Selection is intirely handled by the chip. If the 
+	**	Selection is पूर्णांकirely handled by the chip. If the 
 	**	chip says STO, we trust it. Seems some other 
-	**	interrupts may occur at the same time (UDC, IID), so 
-	**	we ignore them. In any case we do enough fix-up 
+	**	पूर्णांकerrupts may occur at the same समय (UDC, IID), so 
+	**	we ignore them. In any हाल we करो enough fix-up 
 	**	in the service routine.
 	**	We just exclude some fatal dma errors.
 	**=========================================================
 	*/
 
-	if (sist & RST) {
-		ncr_init (np, 1, bootverbose ? "scsi reset" : NULL, HS_RESET);
-		return;
-	}
+	अगर (sist & RST) अणु
+		ncr_init (np, 1, bootverbose ? "scsi reset" : शून्य, HS_RESET);
+		वापस;
+	पूर्ण
 
-	if ((sist & STO) &&
-		!(dstat & (MDPE|BF|ABRT))) {
+	अगर ((sist & STO) &&
+		!(dstat & (MDPE|BF|ABRT))) अणु
 	/*
 	**	DEL 397 - 53C875 Rev 3 - Part Number 609-0392410 - ITEM 1.
 	*/
 		OUTONB (nc_ctest3, CLF);
 
-		ncr_int_sto (np);
-		return;
-	}
+		ncr_पूर्णांक_sto (np);
+		वापस;
+	पूर्ण
 
 	/*=========================================================
-	**	Now, interrupts we are not able to recover cleanly.
-	**	(At least for the moment).
+	**	Now, पूर्णांकerrupts we are not able to recover cleanly.
+	**	(At least क्रम the moment).
 	**
-	**	Do the register dump.
-	**	Log message for real hard errors.
-	**	Clear all fifos.
+	**	Do the रेजिस्टर dump.
+	**	Log message क्रम real hard errors.
+	**	Clear all fअगरos.
 	**	For MDPE, BF, ABORT, IID, SGE and HTH we reset the 
 	**	BUS and the chip.
-	**	We are more soft for UDC.
+	**	We are more soft क्रम UDC.
 	**=========================================================
 	*/
 
-	if (time_after(jiffies, np->regtime)) {
-		np->regtime = jiffies + 10*HZ;
-		for (i = 0; i<sizeof(np->regdump); i++)
-			((char*)&np->regdump)[i] = INB_OFF(i);
+	अगर (समय_after(jअगरfies, np->regसमय)) अणु
+		np->regसमय = jअगरfies + 10*HZ;
+		क्रम (i = 0; i<माप(np->regdump); i++)
+			((अक्षर*)&np->regdump)[i] = INB_OFF(i);
 		np->regdump.nc_dstat = dstat;
 		np->regdump.nc_sist  = sist;
-	}
+	पूर्ण
 
 	ncr_log_hard_error(np, sist, dstat);
 
-	printk ("%s: have to clear fifos.\n", ncr_name (np));
+	prपूर्णांकk ("%s: have to clear fifos.\n", ncr_name (np));
 	OUTB (nc_stest3, TE|CSF);
 	OUTONB (nc_ctest3, CLF);
 
-	if ((sist & (SGE)) ||
-		(dstat & (MDPE|BF|ABRT|IID))) {
+	अगर ((sist & (SGE)) ||
+		(dstat & (MDPE|BF|ABRT|IID))) अणु
 		ncr_start_reset(np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sist & HTH) {
-		printk ("%s: handshake timeout\n", ncr_name(np));
+	अगर (sist & HTH) अणु
+		prपूर्णांकk ("%s: handshake timeout\n", ncr_name(np));
 		ncr_start_reset(np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sist & UDC) {
-		printk ("%s: unexpected disconnect\n", ncr_name(np));
+	अगर (sist & UDC) अणु
+		prपूर्णांकk ("%s: unexpected disconnect\n", ncr_name(np));
 		OUTB (HS_PRT, HS_UNEXPECTED);
 		OUTL_DSP (NCB_SCRIPT_PHYS (np, cleanup));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*=========================================================
-	**	We just miss the cause of the interrupt. :(
-	**	Print a message. The timeout will do the real work.
+	**	We just miss the cause of the पूर्णांकerrupt. :(
+	**	Prपूर्णांक a message. The समयout will करो the real work.
 	**=========================================================
 	*/
-	printk ("%s: unknown interrupt\n", ncr_name(np));
-}
+	prपूर्णांकk ("%s: unknown interrupt\n", ncr_name(np));
+पूर्ण
 
 /*==========================================================
 **
-**	ncr chip exception handler for selection timeout
+**	ncr chip exception handler क्रम selection समयout
 **
 **==========================================================
 **
 **	There seems to be a bug in the 53c810.
 **	Although a STO-Interrupt is pending,
-**	it continues executing script commands.
-**	But it will fail and interrupt (IID) on
-**	the next instruction where it's looking
-**	for a valid phase.
+**	it जारीs executing script commands.
+**	But it will fail and पूर्णांकerrupt (IID) on
+**	the next inकाष्ठाion where it's looking
+**	क्रम a valid phase.
 **
 **----------------------------------------------------------
 */
 
-void ncr_int_sto (struct ncb *np)
-{
-	u_long dsa;
-	struct ccb *cp;
-	if (DEBUG_FLAGS & DEBUG_TINY) printk ("T");
+व्योम ncr_पूर्णांक_sto (काष्ठा ncb *np)
+अणु
+	u_दीर्घ dsa;
+	काष्ठा ccb *cp;
+	अगर (DEBUG_FLAGS & DEBUG_TINY) prपूर्णांकk ("T");
 
 	/*
-	**	look for ccb and set the status.
+	**	look क्रम ccb and set the status.
 	*/
 
 	dsa = INL (nc_dsa);
 	cp = np->ccb;
-	while (cp && (CCB_PHYS (cp, phys) != dsa))
+	जबतक (cp && (CCB_PHYS (cp, phys) != dsa))
 		cp = cp->link_ccb;
 
-	if (cp) {
+	अगर (cp) अणु
 		cp-> host_status = HS_SEL_TIMEOUT;
 		ncr_complete (np, cp);
-	}
+	पूर्ण
 
 	/*
-	**	repair start queue and jump to start point.
+	**	repair start queue and jump to start poपूर्णांक.
 	*/
 
 	OUTL_DSP (NCB_SCRIPTH_PHYS (np, sto_restart));
-	return;
-}
+	वापस;
+पूर्ण
 
 /*==========================================================
 **
-**	ncr chip exception handler for SCSI bus mode change
+**	ncr chip exception handler क्रम SCSI bus mode change
 **
 **==========================================================
 **
@@ -6128,31 +6129,31 @@ void ncr_int_sto (struct ncb *np)
 **----------------------------------------------------------
 */
 
-static int ncr_int_sbmc (struct ncb *np)
-{
-	u_char scsi_mode = INB (nc_stest4) & SMODE;
+अटल पूर्णांक ncr_पूर्णांक_sbmc (काष्ठा ncb *np)
+अणु
+	u_अक्षर scsi_mode = INB (nc_stest4) & SMODE;
 
-	if (scsi_mode != np->scsi_mode) {
-		printk("%s: SCSI bus mode change from %x to %x.\n",
+	अगर (scsi_mode != np->scsi_mode) अणु
+		prपूर्णांकk("%s: SCSI bus mode change from %x to %x.\n",
 			ncr_name(np), np->scsi_mode, scsi_mode);
 
 		np->scsi_mode = scsi_mode;
 
 
 		/*
-		**	Suspend command processing for 1 second and 
+		**	Suspend command processing क्रम 1 second and 
 		**	reinitialize all except the chip.
 		*/
-		np->settle_time	= jiffies + HZ;
-		ncr_init (np, 0, bootverbose ? "scsi mode change" : NULL, HS_RESET);
-		return 1;
-	}
-	return 0;
-}
+		np->settle_समय	= jअगरfies + HZ;
+		ncr_init (np, 0, bootverbose ? "scsi mode change" : शून्य, HS_RESET);
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*==========================================================
 **
-**	ncr chip exception handler for SCSI parity error.
+**	ncr chip exception handler क्रम SCSI parity error.
 **
 **==========================================================
 **
@@ -6160,100 +6161,100 @@ static int ncr_int_sbmc (struct ncb *np)
 **----------------------------------------------------------
 */
 
-static int ncr_int_par (struct ncb *np)
-{
-	u_char	hsts	= INB (HS_PRT);
+अटल पूर्णांक ncr_पूर्णांक_par (काष्ठा ncb *np)
+अणु
+	u_अक्षर	hsts	= INB (HS_PRT);
 	u32	dbc	= INL (nc_dbc);
-	u_char	sstat1	= INB (nc_sstat1);
-	int phase	= -1;
-	int msg		= -1;
+	u_अक्षर	sstat1	= INB (nc_sstat1);
+	पूर्णांक phase	= -1;
+	पूर्णांक msg		= -1;
 	u32 jmp;
 
-	printk("%s: SCSI parity error detected: SCR1=%d DBC=%x SSTAT1=%x\n",
+	prपूर्णांकk("%s: SCSI parity error detected: SCR1=%d DBC=%x SSTAT1=%x\n",
 		ncr_name(np), hsts, dbc, sstat1);
 
 	/*
-	 *	Ignore the interrupt if the NCR is not connected 
+	 *	Ignore the पूर्णांकerrupt अगर the NCR is not connected 
 	 *	to the SCSI bus, since the right work should have  
-	 *	been done on unexpected disconnection handling.
+	 *	been करोne on unexpected disconnection handling.
 	 */
-	if (!(INB (nc_scntl1) & ISCON))
-		return 0;
+	अगर (!(INB (nc_scntl1) & ISCON))
+		वापस 0;
 
 	/*
-	 *	If the nexus is not clearly identified, reset the bus.
-	 *	We will try to do better later.
+	 *	If the nexus is not clearly identअगरied, reset the bus.
+	 *	We will try to करो better later.
 	 */
-	if (hsts & HS_INVALMASK)
-		goto reset_all;
+	अगर (hsts & HS_INVALMASK)
+		जाओ reset_all;
 
 	/*
 	 *	If the SCSI parity error occurs in MSG IN phase, prepare a 
 	 *	MSG PARITY message. Otherwise, prepare a INITIATOR DETECTED 
 	 *	ERROR message and let the device decide to retry the command 
 	 *	or to terminate with check condition. If we were in MSG IN 
-	 *	phase waiting for the response of a negotiation, we will 
+	 *	phase रुकोing क्रम the response of a negotiation, we will 
 	 *	get SIR_NEGO_FAILED at dispatch.
 	 */
-	if (!(dbc & 0xc0000000))
+	अगर (!(dbc & 0xc0000000))
 		phase = (dbc >> 24) & 7;
-	if (phase == 7)
+	अगर (phase == 7)
 		msg = MSG_PARITY_ERROR;
-	else
+	अन्यथा
 		msg = INITIATOR_ERROR;
 
 
 	/*
 	 *	If the NCR stopped on a MOVE ^ DATA_IN, we jump to a 
 	 *	script that will ignore all data in bytes until phase 
-	 *	change, since we are not sure the chip will wait the phase 
-	 *	change prior to delivering the interrupt.
+	 *	change, since we are not sure the chip will रुको the phase 
+	 *	change prior to delivering the पूर्णांकerrupt.
 	 */
-	if (phase == 1)
+	अगर (phase == 1)
 		jmp = NCB_SCRIPTH_PHYS (np, par_err_data_in);
-	else
+	अन्यथा
 		jmp = NCB_SCRIPTH_PHYS (np, par_err_other);
 
-	OUTONB (nc_ctest3, CLF );	/* clear dma fifo  */
-	OUTB (nc_stest3, TE|CSF);	/* clear scsi fifo */
+	OUTONB (nc_ctest3, CLF );	/* clear dma fअगरo  */
+	OUTB (nc_stest3, TE|CSF);	/* clear scsi fअगरo */
 
 	np->msgout[0] = msg;
 	OUTL_DSP (jmp);
-	return 1;
+	वापस 1;
 
 reset_all:
 	ncr_start_reset(np);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*==========================================================
 **
 **
-**	ncr chip exception handler for phase errors.
+**	ncr chip exception handler क्रम phase errors.
 **
 **
 **==========================================================
 **
-**	We have to construct a new transfer descriptor,
+**	We have to स्थिरruct a new transfer descriptor,
 **	to transfer the rest of the current block.
 **
 **----------------------------------------------------------
 */
 
-static void ncr_int_ma (struct ncb *np)
-{
+अटल व्योम ncr_पूर्णांक_ma (काष्ठा ncb *np)
+अणु
 	u32	dbc;
 	u32	rest;
 	u32	dsp;
 	u32	dsa;
 	u32	nxtdsp;
-	u32	newtmp;
+	u32	newपंचांगp;
 	u32	*vdsp;
 	u32	oadr, olen;
 	u32	*tblp;
 	ncrcmd *newcmd;
-	u_char	cmd, sbcl;
-	struct ccb *cp;
+	u_अक्षर	cmd, sbcl;
+	काष्ठा ccb *cp;
 
 	dsp	= INL (nc_dsp);
 	dbc	= INL (nc_dbc);
@@ -6263,118 +6264,118 @@ static void ncr_int_ma (struct ncb *np)
 	rest	= dbc & 0xffffff;
 
 	/*
-	**	Take into account dma fifo and various buffers and latches,
-	**	only if the interrupted phase is an OUTPUT phase.
+	**	Take पूर्णांकo account dma fअगरo and various buffers and latches,
+	**	only अगर the पूर्णांकerrupted phase is an OUTPUT phase.
 	*/
 
-	if ((cmd & 1) == 0) {
-		u_char	ctest5, ss0, ss2;
+	अगर ((cmd & 1) == 0) अणु
+		u_अक्षर	ctest5, ss0, ss2;
 		u16	delta;
 
 		ctest5 = (np->rv_ctest5 & DFS) ? INB (nc_ctest5) : 0;
-		if (ctest5 & DFS)
-			delta=(((ctest5 << 8) | (INB (nc_dfifo) & 0xff)) - rest) & 0x3ff;
-		else
-			delta=(INB (nc_dfifo) - rest) & 0x7f;
+		अगर (ctest5 & DFS)
+			delta=(((ctest5 << 8) | (INB (nc_dfअगरo) & 0xff)) - rest) & 0x3ff;
+		अन्यथा
+			delta=(INB (nc_dfअगरo) - rest) & 0x7f;
 
 		/*
-		**	The data in the dma fifo has not been transferred to
+		**	The data in the dma fअगरo has not been transferred to
 		**	the target -> add the amount to the rest
 		**	and clear the data.
-		**	Check the sstat2 register in case of wide transfer.
+		**	Check the sstat2 रेजिस्टर in हाल of wide transfer.
 		*/
 
 		rest += delta;
 		ss0  = INB (nc_sstat0);
-		if (ss0 & OLF) rest++;
-		if (ss0 & ORF) rest++;
-		if (INB(nc_scntl3) & EWS) {
+		अगर (ss0 & OLF) rest++;
+		अगर (ss0 & ORF) rest++;
+		अगर (INB(nc_scntl3) & EWS) अणु
 			ss2 = INB (nc_sstat2);
-			if (ss2 & OLF1) rest++;
-			if (ss2 & ORF1) rest++;
-		}
+			अगर (ss2 & OLF1) rest++;
+			अगर (ss2 & ORF1) rest++;
+		पूर्ण
 
-		if (DEBUG_FLAGS & (DEBUG_TINY|DEBUG_PHASE))
-			printk ("P%x%x RL=%d D=%d SS0=%x ", cmd&7, sbcl&7,
-				(unsigned) rest, (unsigned) delta, ss0);
+		अगर (DEBUG_FLAGS & (DEBUG_TINY|DEBUG_PHASE))
+			prपूर्णांकk ("P%x%x RL=%d D=%d SS0=%x ", cmd&7, sbcl&7,
+				(अचिन्हित) rest, (अचिन्हित) delta, ss0);
 
-	} else	{
-		if (DEBUG_FLAGS & (DEBUG_TINY|DEBUG_PHASE))
-			printk ("P%x%x RL=%d ", cmd&7, sbcl&7, rest);
-	}
+	पूर्ण अन्यथा	अणु
+		अगर (DEBUG_FLAGS & (DEBUG_TINY|DEBUG_PHASE))
+			prपूर्णांकk ("P%x%x RL=%d ", cmd&7, sbcl&7, rest);
+	पूर्ण
 
 	/*
-	**	Clear fifos.
+	**	Clear fअगरos.
 	*/
-	OUTONB (nc_ctest3, CLF );	/* clear dma fifo  */
-	OUTB (nc_stest3, TE|CSF);	/* clear scsi fifo */
+	OUTONB (nc_ctest3, CLF );	/* clear dma fअगरo  */
+	OUTB (nc_stest3, TE|CSF);	/* clear scsi fअगरo */
 
 	/*
 	**	locate matching cp.
-	**	if the interrupted phase is DATA IN or DATA OUT,
+	**	अगर the पूर्णांकerrupted phase is DATA IN or DATA OUT,
 	**	trust the global header.
 	*/
 	dsa = INL (nc_dsa);
-	if (!(cmd & 6)) {
+	अगर (!(cmd & 6)) अणु
 		cp = np->header.cp;
-		if (CCB_PHYS(cp, phys) != dsa)
-			cp = NULL;
-	} else {
+		अगर (CCB_PHYS(cp, phys) != dsa)
+			cp = शून्य;
+	पूर्ण अन्यथा अणु
 		cp  = np->ccb;
-		while (cp && (CCB_PHYS (cp, phys) != dsa))
+		जबतक (cp && (CCB_PHYS (cp, phys) != dsa))
 			cp = cp->link_ccb;
-	}
+	पूर्ण
 
 	/*
-	**	try to find the interrupted script command,
-	**	and the address at which to continue.
+	**	try to find the पूर्णांकerrupted script command,
+	**	and the address at which to जारी.
 	*/
-	vdsp	= NULL;
+	vdsp	= शून्य;
 	nxtdsp	= 0;
-	if	(dsp >  np->p_script &&
-		 dsp <= np->p_script + sizeof(struct script)) {
-		vdsp = (u32 *)((char*)np->script0 + (dsp-np->p_script-8));
+	अगर	(dsp >  np->p_script &&
+		 dsp <= np->p_script + माप(काष्ठा script)) अणु
+		vdsp = (u32 *)((अक्षर*)np->script0 + (dsp-np->p_script-8));
 		nxtdsp = dsp;
-	}
-	else if	(dsp >  np->p_scripth &&
-		 dsp <= np->p_scripth + sizeof(struct scripth)) {
-		vdsp = (u32 *)((char*)np->scripth0 + (dsp-np->p_scripth-8));
+	पूर्ण
+	अन्यथा अगर	(dsp >  np->p_scripth &&
+		 dsp <= np->p_scripth + माप(काष्ठा scripth)) अणु
+		vdsp = (u32 *)((अक्षर*)np->scripth0 + (dsp-np->p_scripth-8));
 		nxtdsp = dsp;
-	}
-	else if (cp) {
-		if	(dsp == CCB_PHYS (cp, patch[2])) {
+	पूर्ण
+	अन्यथा अगर (cp) अणु
+		अगर	(dsp == CCB_PHYS (cp, patch[2])) अणु
 			vdsp = &cp->patch[0];
 			nxtdsp = scr_to_cpu(vdsp[3]);
-		}
-		else if (dsp == CCB_PHYS (cp, patch[6])) {
+		पूर्ण
+		अन्यथा अगर (dsp == CCB_PHYS (cp, patch[6])) अणु
 			vdsp = &cp->patch[4];
 			nxtdsp = scr_to_cpu(vdsp[3]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	**	log the information
+	**	log the inक्रमmation
 	*/
 
-	if (DEBUG_FLAGS & DEBUG_PHASE) {
-		printk ("\nCP=%p CP2=%p DSP=%x NXT=%x VDSP=%p CMD=%x ",
+	अगर (DEBUG_FLAGS & DEBUG_PHASE) अणु
+		prपूर्णांकk ("\nCP=%p CP2=%p DSP=%x NXT=%x VDSP=%p CMD=%x ",
 			cp, np->header.cp,
-			(unsigned)dsp,
-			(unsigned)nxtdsp, vdsp, cmd);
-	}
+			(अचिन्हित)dsp,
+			(अचिन्हित)nxtdsp, vdsp, cmd);
+	पूर्ण
 
 	/*
-	**	cp=0 means that the DSA does not point to a valid control 
-	**	block. This should not happen since we donnot use multi-byte 
-	**	move while we are being reselected ot after command complete.
+	**	cp=0 means that the DSA करोes not poपूर्णांक to a valid control 
+	**	block. This should not happen since we करोnnot use multi-byte 
+	**	move जबतक we are being reselected ot after command complete.
 	**	We are not able to recover from such a phase error.
 	*/
-	if (!cp) {
-		printk ("%s: SCSI phase error fixup: "
+	अगर (!cp) अणु
+		prपूर्णांकk ("%s: SCSI phase error fixup: "
 			"CCB already dequeued (0x%08lx)\n", 
-			ncr_name (np), (u_long) np->header.cp);
-		goto reset_all;
-	}
+			ncr_name (np), (u_दीर्घ) np->header.cp);
+		जाओ reset_all;
+	पूर्ण
 
 	/*
 	**	get old startaddress and old length.
@@ -6382,68 +6383,68 @@ static void ncr_int_ma (struct ncb *np)
 
 	oadr = scr_to_cpu(vdsp[1]);
 
-	if (cmd & 0x10) {	/* Table indirect */
-		tblp = (u32 *) ((char*) &cp->phys + oadr);
+	अगर (cmd & 0x10) अणु	/* Table indirect */
+		tblp = (u32 *) ((अक्षर*) &cp->phys + oadr);
 		olen = scr_to_cpu(tblp[0]);
 		oadr = scr_to_cpu(tblp[1]);
-	} else {
+	पूर्ण अन्यथा अणु
 		tblp = (u32 *) 0;
 		olen = scr_to_cpu(vdsp[0]) & 0xffffff;
-	}
+	पूर्ण
 
-	if (DEBUG_FLAGS & DEBUG_PHASE) {
-		printk ("OCMD=%x\nTBLP=%p OLEN=%x OADR=%x\n",
-			(unsigned) (scr_to_cpu(vdsp[0]) >> 24),
+	अगर (DEBUG_FLAGS & DEBUG_PHASE) अणु
+		prपूर्णांकk ("OCMD=%x\nTBLP=%p OLEN=%x OADR=%x\n",
+			(अचिन्हित) (scr_to_cpu(vdsp[0]) >> 24),
 			tblp,
-			(unsigned) olen,
-			(unsigned) oadr);
-	}
+			(अचिन्हित) olen,
+			(अचिन्हित) oadr);
+	पूर्ण
 
 	/*
-	**	check cmd against assumed interrupted script command.
+	**	check cmd against assumed पूर्णांकerrupted script command.
 	*/
 
-	if (cmd != (scr_to_cpu(vdsp[0]) >> 24)) {
+	अगर (cmd != (scr_to_cpu(vdsp[0]) >> 24)) अणु
 		PRINT_ADDR(cp->cmd, "internal error: cmd=%02x != %02x=(vdsp[0] "
 				">> 24)\n", cmd, scr_to_cpu(vdsp[0]) >> 24);
 
-		goto reset_all;
-	}
+		जाओ reset_all;
+	पूर्ण
 
 	/*
 	**	cp != np->header.cp means that the header of the CCB 
 	**	currently being processed has not yet been copied to 
-	**	the global header area. That may happen if the device did 
+	**	the global header area. That may happen अगर the device did 
 	**	not accept all our messages after having been selected.
 	*/
-	if (cp != np->header.cp) {
-		printk ("%s: SCSI phase error fixup: "
+	अगर (cp != np->header.cp) अणु
+		prपूर्णांकk ("%s: SCSI phase error fixup: "
 			"CCB address mismatch (0x%08lx != 0x%08lx)\n", 
-			ncr_name (np), (u_long) cp, (u_long) np->header.cp);
-	}
+			ncr_name (np), (u_दीर्घ) cp, (u_दीर्घ) np->header.cp);
+	पूर्ण
 
 	/*
-	**	if old phase not dataphase, leave here.
+	**	अगर old phase not dataphase, leave here.
 	*/
 
-	if (cmd & 0x06) {
+	अगर (cmd & 0x06) अणु
 		PRINT_ADDR(cp->cmd, "phase change %x-%x %d@%08x resid=%d.\n",
-			cmd&7, sbcl&7, (unsigned)olen,
-			(unsigned)oadr, (unsigned)rest);
-		goto unexpected_phase;
-	}
+			cmd&7, sbcl&7, (अचिन्हित)olen,
+			(अचिन्हित)oadr, (अचिन्हित)rest);
+		जाओ unexpected_phase;
+	पूर्ण
 
 	/*
 	**	choose the correct patch area.
-	**	if savep points to one, choose the other.
+	**	अगर savep poपूर्णांकs to one, choose the other.
 	*/
 
 	newcmd = cp->patch;
-	newtmp = CCB_PHYS (cp, patch);
-	if (newtmp == scr_to_cpu(cp->phys.header.savep)) {
+	newपंचांगp = CCB_PHYS (cp, patch);
+	अगर (newपंचांगp == scr_to_cpu(cp->phys.header.savep)) अणु
 		newcmd = &cp->patch[4];
-		newtmp = CCB_PHYS (cp, patch[4]);
-	}
+		newपंचांगp = CCB_PHYS (cp, patch[4]);
+	पूर्ण
 
 	/*
 	**	fillin the commands
@@ -6454,21 +6455,21 @@ static void ncr_int_ma (struct ncb *np)
 	newcmd[2] = cpu_to_scr(SCR_JUMP);
 	newcmd[3] = cpu_to_scr(nxtdsp);
 
-	if (DEBUG_FLAGS & DEBUG_PHASE) {
+	अगर (DEBUG_FLAGS & DEBUG_PHASE) अणु
 		PRINT_ADDR(cp->cmd, "newcmd[%d] %x %x %x %x.\n",
-			(int) (newcmd - cp->patch),
-			(unsigned)scr_to_cpu(newcmd[0]),
-			(unsigned)scr_to_cpu(newcmd[1]),
-			(unsigned)scr_to_cpu(newcmd[2]),
-			(unsigned)scr_to_cpu(newcmd[3]));
-	}
+			(पूर्णांक) (newcmd - cp->patch),
+			(अचिन्हित)scr_to_cpu(newcmd[0]),
+			(अचिन्हित)scr_to_cpu(newcmd[1]),
+			(अचिन्हित)scr_to_cpu(newcmd[2]),
+			(अचिन्हित)scr_to_cpu(newcmd[3]));
+	पूर्ण
 	/*
-	**	fake the return address (to the patch).
+	**	fake the वापस address (to the patch).
 	**	and restart script processor at dispatcher.
 	*/
-	OUTL (nc_temp, newtmp);
+	OUTL (nc_temp, newपंचांगp);
 	OUTL_DSP (NCB_SCRIPT_PHYS (np, dispatch));
-	return;
+	वापस;
 
 	/*
 	**	Unexpected phase changes that occurs when the current phase 
@@ -6484,16 +6485,16 @@ static void ncr_int_ma (struct ncb *np)
 	**	MSG OUT  --> COMMAND    Bogus target that discards extended
 	**				negotiation messages.
 	**
-	**	The code below does not care of the new phase and so 
+	**	The code below करोes not care of the new phase and so 
 	**	trusts the target. Why to annoy it ?
-	**	If the interrupted phase is COMMAND phase, we restart at
+	**	If the पूर्णांकerrupted phase is COMMAND phase, we restart at
 	**	dispatcher.
-	**	If a target does not get all the messages after selection, 
+	**	If a target करोes not get all the messages after selection, 
 	**	the code assumes blindly that the target discards extended 
 	**	messages and clears the negotiation status.
-	**	If the target does not want all our response to negotiation,
-	**	we force a SIR_NEGO_PROTO interrupt (it is a hack that avoids 
-	**	bloat for such a should_not_happen situation).
+	**	If the target करोes not want all our response to negotiation,
+	**	we क्रमce a SIR_NEGO_PROTO पूर्णांकerrupt (it is a hack that aव्योमs 
+	**	bloat क्रम such a should_not_happen situation).
 	**	In all other situation, we reset the BUS.
 	**	Are these assumptions reasonable ? (Wait and see ...)
 	*/
@@ -6501,94 +6502,94 @@ unexpected_phase:
 	dsp -= 8;
 	nxtdsp = 0;
 
-	switch (cmd & 7) {
-	case 2:	/* COMMAND phase */
+	चयन (cmd & 7) अणु
+	हाल 2:	/* COMMAND phase */
 		nxtdsp = NCB_SCRIPT_PHYS (np, dispatch);
-		break;
-#if 0
-	case 3:	/* STATUS  phase */
+		अवरोध;
+#अगर 0
+	हाल 3:	/* STATUS  phase */
 		nxtdsp = NCB_SCRIPT_PHYS (np, dispatch);
-		break;
-#endif
-	case 6:	/* MSG OUT phase */
+		अवरोध;
+#पूर्ण_अगर
+	हाल 6:	/* MSG OUT phase */
 		np->scripth->nxtdsp_go_on[0] = cpu_to_scr(dsp + 8);
-		if	(dsp == NCB_SCRIPT_PHYS (np, send_ident)) {
+		अगर	(dsp == NCB_SCRIPT_PHYS (np, send_ident)) अणु
 			cp->host_status = HS_BUSY;
 			nxtdsp = NCB_SCRIPTH_PHYS (np, clratn_go_on);
-		}
-		else if	(dsp == NCB_SCRIPTH_PHYS (np, send_wdtr) ||
-			 dsp == NCB_SCRIPTH_PHYS (np, send_sdtr)) {
+		पूर्ण
+		अन्यथा अगर	(dsp == NCB_SCRIPTH_PHYS (np, send_wdtr) ||
+			 dsp == NCB_SCRIPTH_PHYS (np, send_sdtr)) अणु
 			nxtdsp = NCB_SCRIPTH_PHYS (np, nego_bad_phase);
-		}
-		break;
-#if 0
-	case 7:	/* MSG IN  phase */
+		पूर्ण
+		अवरोध;
+#अगर 0
+	हाल 7:	/* MSG IN  phase */
 		nxtdsp = NCB_SCRIPT_PHYS (np, clrack);
-		break;
-#endif
-	}
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
 
-	if (nxtdsp) {
+	अगर (nxtdsp) अणु
 		OUTL_DSP (nxtdsp);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 reset_all:
 	ncr_start_reset(np);
-}
+पूर्ण
 
 
-static void ncr_sir_to_redo(struct ncb *np, int num, struct ccb *cp)
-{
-	struct scsi_cmnd *cmd	= cp->cmd;
-	struct tcb *tp	= &np->target[cmd->device->id];
-	struct lcb *lp	= tp->lp[cmd->device->lun];
-	struct list_head *qp;
-	struct ccb *	cp2;
-	int		disc_cnt = 0;
-	int		busy_cnt = 0;
+अटल व्योम ncr_sir_to_reकरो(काष्ठा ncb *np, पूर्णांक num, काष्ठा ccb *cp)
+अणु
+	काष्ठा scsi_cmnd *cmd	= cp->cmd;
+	काष्ठा tcb *tp	= &np->target[cmd->device->id];
+	काष्ठा lcb *lp	= tp->lp[cmd->device->lun];
+	काष्ठा list_head *qp;
+	काष्ठा ccb *	cp2;
+	पूर्णांक		disc_cnt = 0;
+	पूर्णांक		busy_cnt = 0;
 	u32		startp;
-	u_char		s_status = INB (SS_PRT);
+	u_अक्षर		s_status = INB (SS_PRT);
 
 	/*
 	**	Let the SCRIPTS processor skip all not yet started CCBs,
 	**	and count disconnected CCBs. Since the busy queue is in 
 	**	the same order as the chip start queue, disconnected CCBs 
-	**	are before cp and busy ones after.
+	**	are beक्रमe cp and busy ones after.
 	*/
-	if (lp) {
+	अगर (lp) अणु
 		qp = lp->busy_ccbq.prev;
-		while (qp != &lp->busy_ccbq) {
-			cp2 = list_entry(qp, struct ccb, link_ccbq);
+		जबतक (qp != &lp->busy_ccbq) अणु
+			cp2 = list_entry(qp, काष्ठा ccb, link_ccbq);
 			qp  = qp->prev;
 			++busy_cnt;
-			if (cp2 == cp)
-				break;
+			अगर (cp2 == cp)
+				अवरोध;
 			cp2->start.schedule.l_paddr =
 			cpu_to_scr(NCB_SCRIPTH_PHYS (np, skip));
-		}
+		पूर्ण
 		lp->held_ccb = cp;	/* Requeue when this one completes */
 		disc_cnt = lp->queuedccbs - busy_cnt;
-	}
+	पूर्ण
 
-	switch(s_status) {
-	default:	/* Just for safety, should never happen */
-	case SAM_STAT_TASK_SET_FULL:
+	चयन(s_status) अणु
+	शेष:	/* Just क्रम safety, should never happen */
+	हाल SAM_STAT_TASK_SET_FULL:
 		/*
 		**	Decrease number of tags to the number of 
 		**	disconnected commands.
 		*/
-		if (!lp)
-			goto out;
-		if (bootverbose >= 1) {
+		अगर (!lp)
+			जाओ out;
+		अगर (bootverbose >= 1) अणु
 			PRINT_ADDR(cmd, "QUEUE FULL! %d busy, %d disconnected "
 					"CCBs\n", busy_cnt, disc_cnt);
-		}
-		if (disc_cnt < lp->numtags) {
+		पूर्ण
+		अगर (disc_cnt < lp->numtags) अणु
 			lp->numtags	= disc_cnt > 2 ? disc_cnt : 2;
 			lp->num_good	= 0;
 			ncr_setup_tags (np, cmd->device);
-		}
+		पूर्ण
 		/*
 		**	Requeue the command to the start queue.
 		**	If any disconnected commands,
@@ -6600,24 +6601,24 @@ static void ncr_sir_to_redo(struct ncb *np, int num, struct ccb *cp)
 		cp->scsi_status = SAM_STAT_ILLEGAL;
 
 		ncr_put_start_queue(np, cp);
-		if (disc_cnt)
+		अगर (disc_cnt)
 			INB (nc_ctest2);		/* Clear SIGP */
 		OUTL_DSP (NCB_SCRIPT_PHYS (np, reselect));
-		return;
-	case SAM_STAT_COMMAND_TERMINATED:
-	case SAM_STAT_CHECK_CONDITION:
+		वापस;
+	हाल SAM_STAT_COMMAND_TERMINATED:
+	हाल SAM_STAT_CHECK_CONDITION:
 		/*
 		**	If we were requesting sense, give up.
 		*/
-		if (cp->auto_sense)
-			goto out;
+		अगर (cp->स्वतः_sense)
+			जाओ out;
 
 		/*
-		**	Device returned CHECK CONDITION status.
-		**	Prepare all needed data strutures for getting 
+		**	Device वापसed CHECK CONDITION status.
+		**	Prepare all needed data strutures क्रम getting 
 		**	sense data.
 		**
-		**	identify message
+		**	identअगरy message
 		*/
 		cp->scsi_smsg2[0]	= IDENTIFY(0, cmd->device->lun);
 		cp->phys.smsg.addr	= cpu_to_scr(CCB_PHYS (cp, scsi_smsg2));
@@ -6630,18 +6631,18 @@ static void ncr_sir_to_redo(struct ncb *np, int num, struct ccb *cp)
 		cp->phys.cmd.size	= cpu_to_scr(6);
 
 		/*
-		**	patch requested size into sense command
+		**	patch requested size पूर्णांकo sense command
 		*/
 		cp->sensecmd[0]		= 0x03;
 		cp->sensecmd[1]		= (cmd->device->lun & 0x7) << 5;
-		cp->sensecmd[4]		= sizeof(cp->sense_buf);
+		cp->sensecmd[4]		= माप(cp->sense_buf);
 
 		/*
 		**	sense data
 		*/
-		memset(cp->sense_buf, 0, sizeof(cp->sense_buf));
+		स_रखो(cp->sense_buf, 0, माप(cp->sense_buf));
 		cp->phys.sense.addr	= cpu_to_scr(CCB_PHYS(cp,sense_buf[0]));
-		cp->phys.sense.size	= cpu_to_scr(sizeof(cp->sense_buf));
+		cp->phys.sense.size	= cpu_to_scr(माप(cp->sense_buf));
 
 		/*
 		**	requeue the command.
@@ -6656,112 +6657,112 @@ static void ncr_sir_to_redo(struct ncb *np, int num, struct ccb *cp)
 
 		cp->host_status = HS_BUSY;
 		cp->scsi_status = SAM_STAT_ILLEGAL;
-		cp->auto_sense	= s_status;
+		cp->स्वतः_sense	= s_status;
 
 		cp->start.schedule.l_paddr =
 			cpu_to_scr(NCB_SCRIPT_PHYS (np, select));
 
 		/*
-		**	Select without ATN for quirky devices.
+		**	Select without ATN क्रम quirky devices.
 		*/
-		if (cmd->device->select_no_atn)
+		अगर (cmd->device->select_no_atn)
 			cp->start.schedule.l_paddr =
 			cpu_to_scr(NCB_SCRIPTH_PHYS (np, select_no_atn));
 
 		ncr_put_start_queue(np, cp);
 
 		OUTL_DSP (NCB_SCRIPT_PHYS (np, start));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 out:
 	OUTONB_STD ();
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /*==========================================================
 **
 **
-**      ncr chip exception handler for programmed interrupts.
+**      ncr chip exception handler क्रम programmed पूर्णांकerrupts.
 **
 **
 **==========================================================
 */
 
-void ncr_int_sir (struct ncb *np)
-{
-	u_char scntl3;
-	u_char chg, ofs, per, fak, wide;
-	u_char num = INB (nc_dsps);
-	struct ccb *cp=NULL;
-	u_long	dsa    = INL (nc_dsa);
-	u_char	target = INB (nc_sdid) & 0x0f;
-	struct tcb *tp     = &np->target[target];
-	struct scsi_target *starget = tp->starget;
+व्योम ncr_पूर्णांक_sir (काष्ठा ncb *np)
+अणु
+	u_अक्षर scntl3;
+	u_अक्षर chg, ofs, per, fak, wide;
+	u_अक्षर num = INB (nc_dsps);
+	काष्ठा ccb *cp=शून्य;
+	u_दीर्घ	dsa    = INL (nc_dsa);
+	u_अक्षर	target = INB (nc_sdid) & 0x0f;
+	काष्ठा tcb *tp     = &np->target[target];
+	काष्ठा scsi_target *starget = tp->starget;
 
-	if (DEBUG_FLAGS & DEBUG_TINY) printk ("I#%d", num);
+	अगर (DEBUG_FLAGS & DEBUG_TINY) prपूर्णांकk ("I#%d", num);
 
-	switch (num) {
-	case SIR_INTFLY:
+	चयन (num) अणु
+	हाल SIR_INTFLY:
 		/*
-		**	This is used for HP Zalon/53c720 where INTFLY
+		**	This is used क्रम HP Zalon/53c720 where INTFLY
 		**	operation is currently broken.
 		*/
-		ncr_wakeup_done(np);
-#ifdef SCSI_NCR_CCB_DONE_SUPPORT
-		OUTL(nc_dsp, NCB_SCRIPT_PHYS (np, done_end) + 8);
-#else
+		ncr_wakeup_करोne(np);
+#अगर_घोषित SCSI_NCR_CCB_DONE_SUPPORT
+		OUTL(nc_dsp, NCB_SCRIPT_PHYS (np, करोne_end) + 8);
+#अन्यथा
 		OUTL(nc_dsp, NCB_SCRIPT_PHYS (np, start));
-#endif
-		return;
-	case SIR_RESEL_NO_MSG_IN:
-	case SIR_RESEL_NO_IDENTIFY:
+#पूर्ण_अगर
+		वापस;
+	हाल SIR_RESEL_NO_MSG_IN:
+	हाल SIR_RESEL_NO_IDENTIFY:
 		/*
 		**	If devices reselecting without sending an IDENTIFY 
 		**	message still exist, this should help.
 		**	We just assume lun=0, 1 CCB, no tag.
 		*/
-		if (tp->lp[0]) { 
+		अगर (tp->lp[0]) अणु 
 			OUTL_DSP (scr_to_cpu(tp->lp[0]->jump_ccb[0]));
-			return;
-		}
+			वापस;
+		पूर्ण
 		fallthrough;
-	case SIR_RESEL_BAD_TARGET:	/* Will send a TARGET RESET message */
-	case SIR_RESEL_BAD_LUN:		/* Will send a TARGET RESET message */
-	case SIR_RESEL_BAD_I_T_L_Q:	/* Will send an ABORT TAG message   */
-	case SIR_RESEL_BAD_I_T_L:	/* Will send an ABORT message	    */
-		printk ("%s:%d: SIR %d, "
+	हाल SIR_RESEL_BAD_TARGET:	/* Will send a TARGET RESET message */
+	हाल SIR_RESEL_BAD_LUN:		/* Will send a TARGET RESET message */
+	हाल SIR_RESEL_BAD_I_T_L_Q:	/* Will send an ABORT TAG message   */
+	हाल SIR_RESEL_BAD_I_T_L:	/* Will send an ABORT message	    */
+		prपूर्णांकk ("%s:%d: SIR %d, "
 			"incorrect nexus identification on reselection\n",
 			ncr_name (np), target, num);
-		goto out;
-	case SIR_DONE_OVERFLOW:
-		printk ("%s:%d: SIR %d, "
+		जाओ out;
+	हाल SIR_DONE_OVERFLOW:
+		prपूर्णांकk ("%s:%d: SIR %d, "
 			"CCB done queue overflow\n",
 			ncr_name (np), target, num);
-		goto out;
-	case SIR_BAD_STATUS:
+		जाओ out;
+	हाल SIR_BAD_STATUS:
 		cp = np->header.cp;
-		if (!cp || CCB_PHYS (cp, phys) != dsa)
-			goto out;
-		ncr_sir_to_redo(np, num, cp);
-		return;
-	default:
+		अगर (!cp || CCB_PHYS (cp, phys) != dsa)
+			जाओ out;
+		ncr_sir_to_reकरो(np, num, cp);
+		वापस;
+	शेष:
 		/*
 		**	lookup the ccb
 		*/
 		cp = np->ccb;
-		while (cp && (CCB_PHYS (cp, phys) != dsa))
+		जबतक (cp && (CCB_PHYS (cp, phys) != dsa))
 			cp = cp->link_ccb;
 
 		BUG_ON(!cp);
 		BUG_ON(cp != np->header.cp);
 
-		if (!cp || cp != np->header.cp)
-			goto out;
-	}
+		अगर (!cp || cp != np->header.cp)
+			जाओ out;
+	पूर्ण
 
-	switch (num) {
+	चयन (num) अणु
 /*-----------------------------------------------------------------------------
 **
 **	Was Sie schon immer ueber transfermode negotiation wissen wollten ...
@@ -6773,38 +6774,38 @@ void ncr_int_sir (struct ncb *np)
 **	inquire data to determine the capabilities of the target.
 **
 **	When we try to negotiate, we append the negotiation message
-**	to the identify and (maybe) simple tag message.
+**	to the identअगरy and (maybe) simple tag message.
 **	The host status field is set to HS_NEGOTIATE to mark this
 **	situation.
 **
-**	If the target doesn't answer this message immediately
-**	(as required by the standard), the SIR_NEGO_FAIL interrupt
-**	will be raised eventually.
-**	The handler removes the HS_NEGOTIATE status, and sets the
-**	negotiated value to the default (async / nowide).
+**	If the target करोesn't answer this message immediately
+**	(as required by the standard), the SIR_NEGO_FAIL पूर्णांकerrupt
+**	will be उठाओd eventually.
+**	The handler हटाओs the HS_NEGOTIATE status, and sets the
+**	negotiated value to the शेष (async / nowide).
 **
 **	If we receive a matching answer immediately, we check it
-**	for validity, and set the values.
+**	क्रम validity, and set the values.
 **
 **	If we receive a Reject message immediately, we assume the
 **	negotiation has failed, and fall back to standard values.
 **
-**	If we receive a negotiation message while not in HS_NEGOTIATE
+**	If we receive a negotiation message जबतक not in HS_NEGOTIATE
 **	state, it's a target initiated negotiation. We prepare a
 **	(hopefully) valid answer, set our parameters, and send back 
 **	this answer to the target.
 **
-**	If the target doesn't fetch the answer (no message out phase),
-**	we assume the negotiation has failed, and fall back to default
+**	If the target करोesn't fetch the answer (no message out phase),
+**	we assume the negotiation has failed, and fall back to शेष
 **	settings.
 **
-**	When we set the values, we adjust them in all ccbs belonging 
-**	to this target, in the controller's register, and in the "phys"
-**	field of the controller's struct ncb.
+**	When we set the values, we adjust them in all ccbs beदीर्घing 
+**	to this target, in the controller's रेजिस्टर, and in the "phys"
+**	field of the controller's काष्ठा ncb.
 **
-**	Possible cases:		   hs  sir   msg_in value  send   goto
+**	Possible हालs:		   hs  sir   msg_in value  send   जाओ
 **	We try to negotiate:
-**	-> target doesn't msgin    NEG FAIL  noop   defa.  -      dispatch
+**	-> target करोesn't msgin    NEG FAIL  noop   defa.  -      dispatch
 **	-> target rejected our msg NEG FAIL  reject defa.  -      dispatch
 **	-> target answered  (ok)   NEG SYNC  sdtr   set    -      clrack
 **	-> target answered (!ok)   NEG SYNC  sdtr   defa.  REJ--->msg_bad
@@ -6816,16 +6817,16 @@ void ncr_int_sir (struct ncb *np)
 **	-> incoming message	   --- SYNC  sdtr   set    SDTR   -
 **	-> incoming message	   --- WIDE  wdtr   set    WDTR   -
 **      We sent our answer:
-**	-> target doesn't msgout   --- PROTO ?      defa.  -      dispatch
+**	-> target करोesn't msgout   --- PROTO ?      defa.  -      dispatch
 **
 **-----------------------------------------------------------------------------
 */
 
-	case SIR_NEGO_FAILED:
+	हाल SIR_NEGO_FAILED:
 		/*-------------------------------------------------------
 		**
 		**	Negotiation failed.
-		**	Target doesn't send an answer message,
+		**	Target करोesn't send an answer message,
 		**	or target rejected our message.
 		**
 		**      Remove negotiation request.
@@ -6836,123 +6837,123 @@ void ncr_int_sir (struct ncb *np)
 
 		fallthrough;
 
-	case SIR_NEGO_PROTO:
+	हाल SIR_NEGO_PROTO:
 		/*-------------------------------------------------------
 		**
 		**	Negotiation failed.
-		**	Target doesn't fetch the answer message.
+		**	Target करोesn't fetch the answer message.
 		**
 		**-------------------------------------------------------
 		*/
 
-		if (DEBUG_FLAGS & DEBUG_NEGO) {
+		अगर (DEBUG_FLAGS & DEBUG_NEGO) अणु
 			PRINT_ADDR(cp->cmd, "negotiation failed sir=%x "
 					"status=%x.\n", num, cp->nego_status);
-		}
+		पूर्ण
 
 		/*
 		**	any error in negotiation:
-		**	fall back to default mode.
+		**	fall back to शेष mode.
 		*/
-		switch (cp->nego_status) {
+		चयन (cp->nego_status) अणु
 
-		case NS_SYNC:
+		हाल NS_SYNC:
 			spi_period(starget) = 0;
 			spi_offset(starget) = 0;
 			ncr_setsync (np, cp, 0, 0xe0);
-			break;
+			अवरोध;
 
-		case NS_WIDE:
+		हाल NS_WIDE:
 			spi_width(starget) = 0;
 			ncr_setwide (np, cp, 0, 0);
-			break;
+			अवरोध;
 
-		}
+		पूर्ण
 		np->msgin [0] = NOP;
 		np->msgout[0] = NOP;
 		cp->nego_status = 0;
-		break;
+		अवरोध;
 
-	case SIR_NEGO_SYNC:
-		if (DEBUG_FLAGS & DEBUG_NEGO) {
-			ncr_print_msg(cp, "sync msgin", np->msgin);
-		}
+	हाल SIR_NEGO_SYNC:
+		अगर (DEBUG_FLAGS & DEBUG_NEGO) अणु
+			ncr_prपूर्णांक_msg(cp, "sync msgin", np->msgin);
+		पूर्ण
 
 		chg = 0;
 		per = np->msgin[3];
 		ofs = np->msgin[4];
-		if (ofs==0) per=255;
+		अगर (ofs==0) per=255;
 
 		/*
-		**      if target sends SDTR message,
+		**      अगर target sends SDTR message,
 		**	      it CAN transfer synch.
 		*/
 
-		if (ofs && starget)
+		अगर (ofs && starget)
 			spi_support_sync(starget) = 1;
 
 		/*
 		**	check values against driver limits.
 		*/
 
-		if (per < np->minsync)
-			{chg = 1; per = np->minsync;}
-		if (per < tp->minsync)
-			{chg = 1; per = tp->minsync;}
-		if (ofs > tp->maxoffs)
-			{chg = 1; ofs = tp->maxoffs;}
+		अगर (per < np->minsync)
+			अणुchg = 1; per = np->minsync;पूर्ण
+		अगर (per < tp->minsync)
+			अणुchg = 1; per = tp->minsync;पूर्ण
+		अगर (ofs > tp->maxoffs)
+			अणुchg = 1; ofs = tp->maxoffs;पूर्ण
 
 		/*
 		**	Check against controller limits.
 		*/
 		fak	= 7;
 		scntl3	= 0;
-		if (ofs != 0) {
-			ncr_getsync(np, per, &fak, &scntl3);
-			if (fak > 7) {
+		अगर (ofs != 0) अणु
+			ncr_माला_लोync(np, per, &fak, &scntl3);
+			अगर (fak > 7) अणु
 				chg = 1;
 				ofs = 0;
-			}
-		}
-		if (ofs == 0) {
+			पूर्ण
+		पूर्ण
+		अगर (ofs == 0) अणु
 			fak	= 7;
 			per	= 0;
 			scntl3	= 0;
 			tp->minsync = 0;
-		}
+		पूर्ण
 
-		if (DEBUG_FLAGS & DEBUG_NEGO) {
+		अगर (DEBUG_FLAGS & DEBUG_NEGO) अणु
 			PRINT_ADDR(cp->cmd, "sync: per=%d scntl3=0x%x ofs=%d "
 				"fak=%d chg=%d.\n", per, scntl3, ofs, fak, chg);
-		}
+		पूर्ण
 
-		if (INB (HS_PRT) == HS_NEGOTIATE) {
+		अगर (INB (HS_PRT) == HS_NEGOTIATE) अणु
 			OUTB (HS_PRT, HS_BUSY);
-			switch (cp->nego_status) {
+			चयन (cp->nego_status) अणु
 
-			case NS_SYNC:
+			हाल NS_SYNC:
 				/* This was an answer message */
-				if (chg) {
+				अगर (chg) अणु
 					/* Answer wasn't acceptable.  */
 					spi_period(starget) = 0;
 					spi_offset(starget) = 0;
 					ncr_setsync(np, cp, 0, 0xe0);
 					OUTL_DSP(NCB_SCRIPT_PHYS (np, msg_bad));
-				} else {
+				पूर्ण अन्यथा अणु
 					/* Answer is ok.  */
 					spi_period(starget) = per;
 					spi_offset(starget) = ofs;
 					ncr_setsync(np, cp, scntl3, (fak<<5)|ofs);
 					OUTL_DSP(NCB_SCRIPT_PHYS (np, clrack));
-				}
-				return;
+				पूर्ण
+				वापस;
 
-			case NS_WIDE:
+			हाल NS_WIDE:
 				spi_width(starget) = 0;
 				ncr_setwide(np, cp, 0, 0);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/*
 		**	It was a request. Set value and
@@ -6966,25 +6967,25 @@ void ncr_int_sir (struct ncb *np)
 		spi_populate_sync_msg(np->msgout, per, ofs);
 		cp->nego_status = NS_SYNC;
 
-		if (DEBUG_FLAGS & DEBUG_NEGO) {
-			ncr_print_msg(cp, "sync msgout", np->msgout);
-		}
+		अगर (DEBUG_FLAGS & DEBUG_NEGO) अणु
+			ncr_prपूर्णांक_msg(cp, "sync msgout", np->msgout);
+		पूर्ण
 
-		if (!ofs) {
+		अगर (!ofs) अणु
 			OUTL_DSP (NCB_SCRIPT_PHYS (np, msg_bad));
-			return;
-		}
+			वापस;
+		पूर्ण
 		np->msgin [0] = NOP;
 
-		break;
+		अवरोध;
 
-	case SIR_NEGO_WIDE:
+	हाल SIR_NEGO_WIDE:
 		/*
 		**	Wide request message received.
 		*/
-		if (DEBUG_FLAGS & DEBUG_NEGO) {
-			ncr_print_msg(cp, "wide msgin", np->msgin);
-		}
+		अगर (DEBUG_FLAGS & DEBUG_NEGO) अणु
+			ncr_prपूर्णांक_msg(cp, "wide msgin", np->msgin);
+		पूर्ण
 
 		/*
 		**	get requested values.
@@ -6994,53 +6995,53 @@ void ncr_int_sir (struct ncb *np)
 		wide = np->msgin[3];
 
 		/*
-		**      if target sends WDTR message,
+		**      अगर target sends WDTR message,
 		**	      it CAN transfer wide.
 		*/
 
-		if (wide && starget)
+		अगर (wide && starget)
 			spi_support_wide(starget) = 1;
 
 		/*
 		**	check values against driver limits.
 		*/
 
-		if (wide > tp->usrwide)
-			{chg = 1; wide = tp->usrwide;}
+		अगर (wide > tp->usrwide)
+			अणुchg = 1; wide = tp->usrwide;पूर्ण
 
-		if (DEBUG_FLAGS & DEBUG_NEGO) {
+		अगर (DEBUG_FLAGS & DEBUG_NEGO) अणु
 			PRINT_ADDR(cp->cmd, "wide: wide=%d chg=%d.\n", wide,
 					chg);
-		}
+		पूर्ण
 
-		if (INB (HS_PRT) == HS_NEGOTIATE) {
+		अगर (INB (HS_PRT) == HS_NEGOTIATE) अणु
 			OUTB (HS_PRT, HS_BUSY);
-			switch (cp->nego_status) {
+			चयन (cp->nego_status) अणु
 
-			case NS_WIDE:
+			हाल NS_WIDE:
 				/*
 				**      This was an answer message
 				*/
-				if (chg) {
+				अगर (chg) अणु
 					/* Answer wasn't acceptable.  */
 					spi_width(starget) = 0;
 					ncr_setwide(np, cp, 0, 1);
 					OUTL_DSP (NCB_SCRIPT_PHYS (np, msg_bad));
-				} else {
+				पूर्ण अन्यथा अणु
 					/* Answer is ok.  */
 					spi_width(starget) = wide;
 					ncr_setwide(np, cp, wide, 1);
 					OUTL_DSP (NCB_SCRIPT_PHYS (np, clrack));
-				}
-				return;
+				पूर्ण
+				वापस;
 
-			case NS_SYNC:
+			हाल NS_SYNC:
 				spi_period(starget) = 0;
 				spi_offset(starget) = 0;
 				ncr_setsync(np, cp, 0, 0xe0);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/*
 		**	It was a request, set value and
@@ -7055,10 +7056,10 @@ void ncr_int_sir (struct ncb *np)
 
 		cp->nego_status = NS_WIDE;
 
-		if (DEBUG_FLAGS & DEBUG_NEGO) {
-			ncr_print_msg(cp, "wide msgout", np->msgin);
-		}
-		break;
+		अगर (DEBUG_FLAGS & DEBUG_NEGO) अणु
+			ncr_prपूर्णांक_msg(cp, "wide msgout", np->msgin);
+		पूर्ण
+		अवरोध;
 
 /*--------------------------------------------------------------------
 **
@@ -7067,7 +7068,7 @@ void ncr_int_sir (struct ncb *np)
 **--------------------------------------------------------------------
 */
 
-	case SIR_REJECT_RECEIVED:
+	हाल SIR_REJECT_RECEIVED:
 		/*-----------------------------------------------
 		**
 		**	We received a MESSAGE_REJECT.
@@ -7076,10 +7077,10 @@ void ncr_int_sir (struct ncb *np)
 		*/
 
 		PRINT_ADDR(cp->cmd, "MESSAGE_REJECT received (%x:%x).\n",
-			(unsigned)scr_to_cpu(np->lastmsg), np->msgout[0]);
-		break;
+			(अचिन्हित)scr_to_cpu(np->lasपंचांगsg), np->msgout[0]);
+		अवरोध;
 
-	case SIR_REJECT_SENT:
+	हाल SIR_REJECT_SENT:
 		/*-----------------------------------------------
 		**
 		**	We received an unknown message
@@ -7087,8 +7088,8 @@ void ncr_int_sir (struct ncb *np)
 		**-----------------------------------------------
 		*/
 
-		ncr_print_msg(cp, "MESSAGE_REJECT sent for", np->msgin);
-		break;
+		ncr_prपूर्णांक_msg(cp, "MESSAGE_REJECT sent for", np->msgin);
+		अवरोध;
 
 /*--------------------------------------------------------------------
 **
@@ -7097,7 +7098,7 @@ void ncr_int_sir (struct ncb *np)
 **--------------------------------------------------------------------
 */
 
-	case SIR_IGN_RESIDUE:
+	हाल SIR_IGN_RESIDUE:
 		/*-----------------------------------------------
 		**
 		**	We received an IGNORE RESIDUE message,
@@ -7108,29 +7109,29 @@ void ncr_int_sir (struct ncb *np)
 
 		PRINT_ADDR(cp->cmd, "IGNORE_WIDE_RESIDUE received, but not yet "
 				"implemented.\n");
-		break;
-#if 0
-	case SIR_MISSING_SAVE:
+		अवरोध;
+#अगर 0
+	हाल SIR_MISSING_SAVE:
 		/*-----------------------------------------------
 		**
 		**	We received an DISCONNECT message,
-		**	but the datapointer wasn't saved before.
+		**	but the datapoपूर्णांकer wasn't saved beक्रमe.
 		**
 		**-----------------------------------------------
 		*/
 
 		PRINT_ADDR(cp->cmd, "DISCONNECT received, but datapointer "
 				"not saved: data=%x save=%x goal=%x.\n",
-			(unsigned) INL (nc_temp),
-			(unsigned) scr_to_cpu(np->header.savep),
-			(unsigned) scr_to_cpu(np->header.goalp));
-		break;
-#endif
-	}
+			(अचिन्हित) INL (nc_temp),
+			(अचिन्हित) scr_to_cpu(np->header.savep),
+			(अचिन्हित) scr_to_cpu(np->header.goalp));
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
 
 out:
 	OUTONB_STD ();
-}
+पूर्ण
 
 /*==========================================================
 **
@@ -7141,107 +7142,107 @@ out:
 **==========================================================
 */
 
-static struct ccb *ncr_get_ccb(struct ncb *np, struct scsi_cmnd *cmd)
-{
-	u_char tn = cmd->device->id;
-	u_char ln = cmd->device->lun;
-	struct tcb *tp = &np->target[tn];
-	struct lcb *lp = tp->lp[ln];
-	u_char tag = NO_TAG;
-	struct ccb *cp = NULL;
+अटल काष्ठा ccb *ncr_get_ccb(काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd)
+अणु
+	u_अक्षर tn = cmd->device->id;
+	u_अक्षर ln = cmd->device->lun;
+	काष्ठा tcb *tp = &np->target[tn];
+	काष्ठा lcb *lp = tp->lp[ln];
+	u_अक्षर tag = NO_TAG;
+	काष्ठा ccb *cp = शून्य;
 
 	/*
-	**	Lun structure available ?
+	**	Lun काष्ठाure available ?
 	*/
-	if (lp) {
-		struct list_head *qp;
+	अगर (lp) अणु
+		काष्ठा list_head *qp;
 		/*
 		**	Keep from using more tags than we can handle.
 		*/
-		if (lp->usetags && lp->busyccbs >= lp->maxnxs)
-			return NULL;
+		अगर (lp->usetags && lp->busyccbs >= lp->maxnxs)
+			वापस शून्य;
 
 		/*
-		**	Allocate a new CCB if needed.
+		**	Allocate a new CCB अगर needed.
 		*/
-		if (list_empty(&lp->free_ccbq))
+		अगर (list_empty(&lp->मुक्त_ccbq))
 			ncr_alloc_ccb(np, tn, ln);
 
 		/*
-		**	Look for free CCB
+		**	Look क्रम मुक्त CCB
 		*/
-		qp = ncr_list_pop(&lp->free_ccbq);
-		if (qp) {
-			cp = list_entry(qp, struct ccb, link_ccbq);
-			if (cp->magic) {
+		qp = ncr_list_pop(&lp->मुक्त_ccbq);
+		अगर (qp) अणु
+			cp = list_entry(qp, काष्ठा ccb, link_ccbq);
+			अगर (cp->magic) अणु
 				PRINT_ADDR(cmd, "ccb free list corrupted "
 						"(@%p)\n", cp);
-				cp = NULL;
-			} else {
-				list_add_tail(qp, &lp->wait_ccbq);
+				cp = शून्य;
+			पूर्ण अन्यथा अणु
+				list_add_tail(qp, &lp->रुको_ccbq);
 				++lp->busyccbs;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
 		**	If a CCB is available,
-		**	Get a tag for this nexus if required.
+		**	Get a tag क्रम this nexus अगर required.
 		*/
-		if (cp) {
-			if (lp->usetags)
+		अगर (cp) अणु
+			अगर (lp->usetags)
 				tag = lp->cb_tags[lp->ia_tag];
-		}
-		else if (lp->actccbs > 0)
-			return NULL;
-	}
+		पूर्ण
+		अन्यथा अगर (lp->actccbs > 0)
+			वापस शून्य;
+	पूर्ण
 
 	/*
-	**	if nothing available, take the default.
+	**	अगर nothing available, take the शेष.
 	*/
-	if (!cp)
+	अगर (!cp)
 		cp = np->ccb;
 
 	/*
 	**	Wait until available.
 	*/
-#if 0
-	while (cp->magic) {
-		if (flags & SCSI_NOSLEEP) break;
-		if (tsleep ((caddr_t)cp, PRIBIO|PCATCH, "ncr", 0))
-			break;
-	}
-#endif
+#अगर 0
+	जबतक (cp->magic) अणु
+		अगर (flags & SCSI_NOSLEEP) अवरोध;
+		अगर (tsleep ((caddr_t)cp, PRIBIO|PCATCH, "ncr", 0))
+			अवरोध;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (cp->magic)
-		return NULL;
+	अगर (cp->magic)
+		वापस शून्य;
 
 	cp->magic = 1;
 
 	/*
-	**	Move to next available tag if tag used.
+	**	Move to next available tag अगर tag used.
 	*/
-	if (lp) {
-		if (tag != NO_TAG) {
+	अगर (lp) अणु
+		अगर (tag != NO_TAG) अणु
 			++lp->ia_tag;
-			if (lp->ia_tag == MAX_TAGS)
+			अगर (lp->ia_tag == MAX_TAGS)
 				lp->ia_tag = 0;
 			lp->tags_umap |= (((tagmap_t) 1) << tag);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	**	Remember all informations needed to free this CCB.
+	**	Remember all inक्रमmations needed to मुक्त this CCB.
 	*/
 	cp->tag	   = tag;
 	cp->target = tn;
 	cp->lun    = ln;
 
-	if (DEBUG_FLAGS & DEBUG_TAGS) {
+	अगर (DEBUG_FLAGS & DEBUG_TAGS) अणु
 		PRINT_ADDR(cmd, "ccb @%p using tag %d.\n", cp, tag);
-	}
+	पूर्ण
 
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
 /*==========================================================
 **
@@ -7252,80 +7253,80 @@ static struct ccb *ncr_get_ccb(struct ncb *np, struct scsi_cmnd *cmd)
 **==========================================================
 */
 
-static void ncr_free_ccb (struct ncb *np, struct ccb *cp)
-{
-	struct tcb *tp = &np->target[cp->target];
-	struct lcb *lp = tp->lp[cp->lun];
+अटल व्योम ncr_मुक्त_ccb (काष्ठा ncb *np, काष्ठा ccb *cp)
+अणु
+	काष्ठा tcb *tp = &np->target[cp->target];
+	काष्ठा lcb *lp = tp->lp[cp->lun];
 
-	if (DEBUG_FLAGS & DEBUG_TAGS) {
+	अगर (DEBUG_FLAGS & DEBUG_TAGS) अणु
 		PRINT_ADDR(cp->cmd, "ccb @%p freeing tag %d.\n", cp, cp->tag);
-	}
+	पूर्ण
 
 	/*
 	**	If lun control block available,
 	**	decrement active commands and increment credit, 
-	**	free the tag if any and remove the JUMP for reselect.
+	**	मुक्त the tag अगर any and हटाओ the JUMP क्रम reselect.
 	*/
-	if (lp) {
-		if (cp->tag != NO_TAG) {
-			lp->cb_tags[lp->if_tag++] = cp->tag;
-			if (lp->if_tag == MAX_TAGS)
-				lp->if_tag = 0;
+	अगर (lp) अणु
+		अगर (cp->tag != NO_TAG) अणु
+			lp->cb_tags[lp->अगर_tag++] = cp->tag;
+			अगर (lp->अगर_tag == MAX_TAGS)
+				lp->अगर_tag = 0;
 			lp->tags_umap &= ~(((tagmap_t) 1) << cp->tag);
 			lp->tags_smap &= lp->tags_umap;
 			lp->jump_ccb[cp->tag] =
 				cpu_to_scr(NCB_SCRIPTH_PHYS(np, bad_i_t_l_q));
-		} else {
+		पूर्ण अन्यथा अणु
 			lp->jump_ccb[0] =
 				cpu_to_scr(NCB_SCRIPTH_PHYS(np, bad_i_t_l));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	**	Make this CCB available.
 	*/
 
-	if (lp) {
-		if (cp != np->ccb)
-			list_move(&cp->link_ccbq, &lp->free_ccbq);
+	अगर (lp) अणु
+		अगर (cp != np->ccb)
+			list_move(&cp->link_ccbq, &lp->मुक्त_ccbq);
 		--lp->busyccbs;
-		if (cp->queued) {
+		अगर (cp->queued) अणु
 			--lp->queuedccbs;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	cp -> host_status = HS_IDLE;
 	cp -> magic = 0;
-	if (cp->queued) {
+	अगर (cp->queued) अणु
 		--np->queuedccbs;
 		cp->queued = 0;
-	}
+	पूर्ण
 
-#if 0
-	if (cp == np->ccb)
+#अगर 0
+	अगर (cp == np->ccb)
 		wakeup ((caddr_t) cp);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 
-#define ncr_reg_bus_addr(r) (np->paddr + offsetof (struct ncr_reg, r))
+#घोषणा ncr_reg_bus_addr(r) (np->paddr + दुरत्व (काष्ठा ncr_reg, r))
 
 /*------------------------------------------------------------------------
-**	Initialize the fixed part of a CCB structure.
+**	Initialize the fixed part of a CCB काष्ठाure.
 **------------------------------------------------------------------------
 **------------------------------------------------------------------------
 */
-static void ncr_init_ccb(struct ncb *np, struct ccb *cp)
-{
+अटल व्योम ncr_init_ccb(काष्ठा ncb *np, काष्ठा ccb *cp)
+अणु
 	ncrcmd copy_4 = np->features & FE_PFEN ? SCR_COPY(4) : SCR_COPY_F(4);
 
 	/*
-	**	Remember virtual and bus address of this ccb.
+	**	Remember भव and bus address of this ccb.
 	*/
 	cp->p_ccb 	   = vtobus(cp);
 	cp->phys.header.cp = cp;
 
 	/*
-	**	This allows list_del to work for the default ccb.
+	**	This allows list_del to work क्रम the शेष ccb.
 	*/
 	INIT_LIST_HEAD(&cp->link_ccbq);
 
@@ -7333,7 +7334,7 @@ static void ncr_init_ccb(struct ncb *np, struct ccb *cp)
 	**	Initialyze the start and restart launch script.
 	**
 	**	COPY(4) @(...p_phys), @(dsa)
-	**	JUMP @(sched_point)
+	**	JUMP @(sched_poपूर्णांक)
 	*/
 	cp->start.setup_dsa[0]	 = cpu_to_scr(copy_4);
 	cp->start.setup_dsa[1]	 = cpu_to_scr(CCB_PHYS(cp, start.p_phys));
@@ -7341,11 +7342,11 @@ static void ncr_init_ccb(struct ncb *np, struct ccb *cp)
 	cp->start.schedule.l_cmd = cpu_to_scr(SCR_JUMP);
 	cp->start.p_phys	 = cpu_to_scr(CCB_PHYS(cp, phys));
 
-	memcpy(&cp->restart, &cp->start, sizeof(cp->restart));
+	स_नकल(&cp->restart, &cp->start, माप(cp->restart));
 
 	cp->start.schedule.l_paddr   = cpu_to_scr(NCB_SCRIPT_PHYS (np, idle));
-	cp->restart.schedule.l_paddr = cpu_to_scr(NCB_SCRIPTH_PHYS (np, abort));
-}
+	cp->restart.schedule.l_paddr = cpu_to_scr(NCB_SCRIPTH_PHYS (np, पात));
+पूर्ण
 
 
 /*------------------------------------------------------------------------
@@ -7353,41 +7354,41 @@ static void ncr_init_ccb(struct ncb *np, struct ccb *cp)
 **------------------------------------------------------------------------
 **------------------------------------------------------------------------
 */
-static void ncr_alloc_ccb(struct ncb *np, u_char tn, u_char ln)
-{
-	struct tcb *tp = &np->target[tn];
-	struct lcb *lp = tp->lp[ln];
-	struct ccb *cp = NULL;
+अटल व्योम ncr_alloc_ccb(काष्ठा ncb *np, u_अक्षर tn, u_अक्षर ln)
+अणु
+	काष्ठा tcb *tp = &np->target[tn];
+	काष्ठा lcb *lp = tp->lp[ln];
+	काष्ठा ccb *cp = शून्य;
 
 	/*
-	**	Allocate memory for this CCB.
+	**	Allocate memory क्रम this CCB.
 	*/
-	cp = m_calloc_dma(sizeof(struct ccb), "CCB");
-	if (!cp)
-		return;
+	cp = m_सुस्मृति_dma(माप(काष्ठा ccb), "CCB");
+	अगर (!cp)
+		वापस;
 
 	/*
 	**	Count it and initialyze it.
 	*/
 	lp->actccbs++;
 	np->actccbs++;
-	memset(cp, 0, sizeof (*cp));
+	स_रखो(cp, 0, माप (*cp));
 	ncr_init_ccb(np, cp);
 
 	/*
-	**	Chain into wakeup list and free ccb queue and take it 
-	**	into account for tagged commands.
+	**	Chain पूर्णांकo wakeup list and मुक्त ccb queue and take it 
+	**	पूर्णांकo account क्रम tagged commands.
 	*/
 	cp->link_ccb      = np->ccb->link_ccb;
 	np->ccb->link_ccb = cp;
 
-	list_add(&cp->link_ccbq, &lp->free_ccbq);
-}
+	list_add(&cp->link_ccbq, &lp->मुक्त_ccbq);
+पूर्ण
 
 /*==========================================================
 **
 **
-**      Allocation of resources for Targets/Luns/Tags.
+**      Allocation of resources क्रम Tarमाला_लो/Luns/Tags.
 **
 **
 **==========================================================
@@ -7397,20 +7398,20 @@ static void ncr_alloc_ccb(struct ncb *np, u_char tn, u_char ln)
 /*------------------------------------------------------------------------
 **	Target control block initialisation.
 **------------------------------------------------------------------------
-**	This data structure is fully initialized after a SCSI command 
-**	has been successfully completed for this target.
+**	This data काष्ठाure is fully initialized after a SCSI command 
+**	has been successfully completed क्रम this target.
 **	It contains a SCRIPT that is called on target reselection.
 **------------------------------------------------------------------------
 */
-static void ncr_init_tcb (struct ncb *np, u_char tn)
-{
-	struct tcb *tp = &np->target[tn];
+अटल व्योम ncr_init_tcb (काष्ठा ncb *np, u_अक्षर tn)
+अणु
+	काष्ठा tcb *tp = &np->target[tn];
 	ncrcmd copy_1 = np->features & FE_PFEN ? SCR_COPY(1) : SCR_COPY_F(1);
-	int th = tn & 3;
-	int i;
+	पूर्णांक th = tn & 3;
+	पूर्णांक i;
 
 	/*
-	**	Jump to next tcb if SFBR does not match this target.
+	**	Jump to next tcb अगर SFBR करोes not match this target.
 	**	JUMP  IF (SFBR != #target#), @(next tcb)
 	*/
 	tp->jump_tcb.l_cmd   =
@@ -7418,28 +7419,28 @@ static void ncr_init_tcb (struct ncb *np, u_char tn)
 	tp->jump_tcb.l_paddr = np->jump_tcb[th].l_paddr;
 
 	/*
-	**	Load the synchronous transfer register.
+	**	Load the synchronous transfer रेजिस्टर.
 	**	COPY @(tp->sval), @(sxfer)
 	*/
-	tp->getscr[0] =	cpu_to_scr(copy_1);
-	tp->getscr[1] = cpu_to_scr(vtobus (&tp->sval));
-#ifdef SCSI_NCR_BIG_ENDIAN
-	tp->getscr[2] = cpu_to_scr(ncr_reg_bus_addr(nc_sxfer) ^ 3);
-#else
-	tp->getscr[2] = cpu_to_scr(ncr_reg_bus_addr(nc_sxfer));
-#endif
+	tp->माला_लोcr[0] =	cpu_to_scr(copy_1);
+	tp->माला_लोcr[1] = cpu_to_scr(vtobus (&tp->sval));
+#अगर_घोषित SCSI_NCR_BIG_ENDIAN
+	tp->माला_लोcr[2] = cpu_to_scr(ncr_reg_bus_addr(nc_sxfer) ^ 3);
+#अन्यथा
+	tp->माला_लोcr[2] = cpu_to_scr(ncr_reg_bus_addr(nc_sxfer));
+#पूर्ण_अगर
 
 	/*
-	**	Load the timing register.
+	**	Load the timing रेजिस्टर.
 	**	COPY @(tp->wval), @(scntl3)
 	*/
-	tp->getscr[3] =	cpu_to_scr(copy_1);
-	tp->getscr[4] = cpu_to_scr(vtobus (&tp->wval));
-#ifdef SCSI_NCR_BIG_ENDIAN
-	tp->getscr[5] = cpu_to_scr(ncr_reg_bus_addr(nc_scntl3) ^ 3);
-#else
-	tp->getscr[5] = cpu_to_scr(ncr_reg_bus_addr(nc_scntl3));
-#endif
+	tp->माला_लोcr[3] =	cpu_to_scr(copy_1);
+	tp->माला_लोcr[4] = cpu_to_scr(vtobus (&tp->wval));
+#अगर_घोषित SCSI_NCR_BIG_ENDIAN
+	tp->माला_लोcr[5] = cpu_to_scr(ncr_reg_bus_addr(nc_scntl3) ^ 3);
+#अन्यथा
+	tp->माला_लोcr[5] = cpu_to_scr(ncr_reg_bus_addr(nc_scntl3));
+#पूर्ण_अगर
 
 	/*
 	**	Get the IDENTIFY message and the lun.
@@ -7449,16 +7450,16 @@ static void ncr_init_tcb (struct ncb *np, u_char tn)
 	tp->call_lun.l_paddr = cpu_to_scr(NCB_SCRIPT_PHYS (np, resel_lun));
 
 	/*
-	**	Look for the lun control block of this nexus.
+	**	Look क्रम the lun control block of this nexus.
 	**	For i = 0 to 3
 	**		JUMP ^ IFTRUE (MASK (i, 3)), @(next_lcb)
 	*/
-	for (i = 0 ; i < 4 ; i++) {
+	क्रम (i = 0 ; i < 4 ; i++) अणु
 		tp->jump_lcb[i].l_cmd   =
 				cpu_to_scr((SCR_JUMP ^ IFTRUE (MASK (i, 3))));
 		tp->jump_lcb[i].l_paddr =
-				cpu_to_scr(NCB_SCRIPTH_PHYS (np, bad_identify));
-	}
+				cpu_to_scr(NCB_SCRIPTH_PHYS (np, bad_identअगरy));
+	पूर्ण
 
 	/*
 	**	Link this target control block to the JUMP chain.
@@ -7466,68 +7467,68 @@ static void ncr_init_tcb (struct ncb *np, u_char tn)
 	np->jump_tcb[th].l_paddr = cpu_to_scr(vtobus (&tp->jump_tcb));
 
 	/*
-	**	These assert's should be moved at driver initialisations.
+	**	These निश्चित's should be moved at driver initialisations.
 	*/
-#ifdef SCSI_NCR_BIG_ENDIAN
-	BUG_ON(((offsetof(struct ncr_reg, nc_sxfer) ^
-		 offsetof(struct tcb    , sval    )) &3) != 3);
-	BUG_ON(((offsetof(struct ncr_reg, nc_scntl3) ^
-		 offsetof(struct tcb    , wval    )) &3) != 3);
-#else
-	BUG_ON(((offsetof(struct ncr_reg, nc_sxfer) ^
-		 offsetof(struct tcb    , sval    )) &3) != 0);
-	BUG_ON(((offsetof(struct ncr_reg, nc_scntl3) ^
-		 offsetof(struct tcb    , wval    )) &3) != 0);
-#endif
-}
+#अगर_घोषित SCSI_NCR_BIG_ENDIAN
+	BUG_ON(((दुरत्व(काष्ठा ncr_reg, nc_sxfer) ^
+		 दुरत्व(काष्ठा tcb    , sval    )) &3) != 3);
+	BUG_ON(((दुरत्व(काष्ठा ncr_reg, nc_scntl3) ^
+		 दुरत्व(काष्ठा tcb    , wval    )) &3) != 3);
+#अन्यथा
+	BUG_ON(((दुरत्व(काष्ठा ncr_reg, nc_sxfer) ^
+		 दुरत्व(काष्ठा tcb    , sval    )) &3) != 0);
+	BUG_ON(((दुरत्व(काष्ठा ncr_reg, nc_scntl3) ^
+		 दुरत्व(काष्ठा tcb    , wval    )) &3) != 0);
+#पूर्ण_अगर
+पूर्ण
 
 
 /*------------------------------------------------------------------------
 **	Lun control block allocation and initialization.
 **------------------------------------------------------------------------
-**	This data structure is allocated and initialized after a SCSI 
-**	command has been successfully completed for this target/lun.
+**	This data काष्ठाure is allocated and initialized after a SCSI 
+**	command has been successfully completed क्रम this target/lun.
 **------------------------------------------------------------------------
 */
-static struct lcb *ncr_alloc_lcb (struct ncb *np, u_char tn, u_char ln)
-{
-	struct tcb *tp = &np->target[tn];
-	struct lcb *lp = tp->lp[ln];
+अटल काष्ठा lcb *ncr_alloc_lcb (काष्ठा ncb *np, u_अक्षर tn, u_अक्षर ln)
+अणु
+	काष्ठा tcb *tp = &np->target[tn];
+	काष्ठा lcb *lp = tp->lp[ln];
 	ncrcmd copy_4 = np->features & FE_PFEN ? SCR_COPY(4) : SCR_COPY_F(4);
-	int lh = ln & 3;
+	पूर्णांक lh = ln & 3;
 
 	/*
-	**	Already done, return.
+	**	Alपढ़ोy करोne, वापस.
 	*/
-	if (lp)
-		return lp;
+	अगर (lp)
+		वापस lp;
 
 	/*
 	**	Allocate the lcb.
 	*/
-	lp = m_calloc_dma(sizeof(struct lcb), "LCB");
-	if (!lp)
-		goto fail;
-	memset(lp, 0, sizeof(*lp));
+	lp = m_सुस्मृति_dma(माप(काष्ठा lcb), "LCB");
+	अगर (!lp)
+		जाओ fail;
+	स_रखो(lp, 0, माप(*lp));
 	tp->lp[ln] = lp;
 
 	/*
-	**	Initialize the target control block if not yet.
+	**	Initialize the target control block अगर not yet.
 	*/
-	if (!tp->jump_tcb.l_cmd)
+	अगर (!tp->jump_tcb.l_cmd)
 		ncr_init_tcb(np, tn);
 
 	/*
 	**	Initialize the CCB queue headers.
 	*/
-	INIT_LIST_HEAD(&lp->free_ccbq);
+	INIT_LIST_HEAD(&lp->मुक्त_ccbq);
 	INIT_LIST_HEAD(&lp->busy_ccbq);
-	INIT_LIST_HEAD(&lp->wait_ccbq);
+	INIT_LIST_HEAD(&lp->रुको_ccbq);
 	INIT_LIST_HEAD(&lp->skip_ccbq);
 
 	/*
-	**	Set max CCBs to 1 and use the default 1 entry 
-	**	jump table by default.
+	**	Set max CCBs to 1 and use the शेष 1 entry 
+	**	jump table by शेष.
 	*/
 	lp->maxnxs	= 1;
 	lp->jump_ccb	= &lp->jump_ccb_0;
@@ -7536,7 +7537,7 @@ static struct lcb *ncr_alloc_lcb (struct ncb *np, u_char tn, u_char ln)
 	/*
 	**	Initilialyze the reselect script:
 	**
-	**	Jump to next lcb if SFBR does not match this lun.
+	**	Jump to next lcb अगर SFBR करोes not match this lun.
 	**	Load TEMP with the CCB direct jump table bus address.
 	**	Get the SIMPLE TAG message and the tag.
 	**
@@ -7567,54 +7568,54 @@ static struct lcb *ncr_alloc_lcb (struct ncb *np, u_char tn, u_char ln)
 	lp->queuedccbs	= 1;
 	lp->queuedepth	= 1;
 fail:
-	return lp;
-}
+	वापस lp;
+पूर्ण
 
 
 /*------------------------------------------------------------------------
 **	Lun control block setup on INQUIRY data received.
 **------------------------------------------------------------------------
-**	We only support WIDE, SYNC for targets and CMDQ for logical units.
-**	This setup is done on each INQUIRY since we are expecting user 
+**	We only support WIDE, SYNC क्रम tarमाला_लो and CMDQ क्रम logical units.
+**	This setup is करोne on each INQUIRY since we are expecting user 
 **	will play with CHANGE DEFINITION commands. :-)
 **------------------------------------------------------------------------
 */
-static struct lcb *ncr_setup_lcb (struct ncb *np, struct scsi_device *sdev)
-{
-	unsigned char tn = sdev->id, ln = sdev->lun;
-	struct tcb *tp = &np->target[tn];
-	struct lcb *lp = tp->lp[ln];
+अटल काष्ठा lcb *ncr_setup_lcb (काष्ठा ncb *np, काष्ठा scsi_device *sdev)
+अणु
+	अचिन्हित अक्षर tn = sdev->id, ln = sdev->lun;
+	काष्ठा tcb *tp = &np->target[tn];
+	काष्ठा lcb *lp = tp->lp[ln];
 
 	/* If no lcb, try to allocate it.  */
-	if (!lp && !(lp = ncr_alloc_lcb(np, tn, ln)))
-		goto fail;
+	अगर (!lp && !(lp = ncr_alloc_lcb(np, tn, ln)))
+		जाओ fail;
 
 	/*
 	**	If unit supports tagged commands, allocate the 
-	**	CCB JUMP table if not yet.
+	**	CCB JUMP table अगर not yet.
 	*/
-	if (sdev->tagged_supported && lp->jump_ccb == &lp->jump_ccb_0) {
-		int i;
-		lp->jump_ccb = m_calloc_dma(256, "JUMP_CCB");
-		if (!lp->jump_ccb) {
+	अगर (sdev->tagged_supported && lp->jump_ccb == &lp->jump_ccb_0) अणु
+		पूर्णांक i;
+		lp->jump_ccb = m_सुस्मृति_dma(256, "JUMP_CCB");
+		अगर (!lp->jump_ccb) अणु
 			lp->jump_ccb = &lp->jump_ccb_0;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		lp->p_jump_ccb = cpu_to_scr(vtobus(lp->jump_ccb));
-		for (i = 0 ; i < 64 ; i++)
+		क्रम (i = 0 ; i < 64 ; i++)
 			lp->jump_ccb[i] =
 				cpu_to_scr(NCB_SCRIPTH_PHYS (np, bad_i_t_l_q));
-		for (i = 0 ; i < MAX_TAGS ; i++)
+		क्रम (i = 0 ; i < MAX_TAGS ; i++)
 			lp->cb_tags[i] = i;
 		lp->maxnxs = MAX_TAGS;
-		lp->tags_stime = jiffies + 3*HZ;
+		lp->tags_sसमय = jअगरfies + 3*HZ;
 		ncr_setup_tags (np, sdev);
-	}
+	पूर्ण
 
 
 fail:
-	return lp;
-}
+	वापस lp;
+पूर्ण
 
 /*==========================================================
 **
@@ -7633,11 +7634,11 @@ fail:
 */
 
 /*
-**	We try to reduce the number of interrupts caused
+**	We try to reduce the number of पूर्णांकerrupts caused
 **	by unexpected phase changes due to disconnects.
-**	A typical harddisk may disconnect before ANY block.
-**	If we wanted to avoid unexpected phase changes at all
-**	we had to use a break point every 512 bytes.
+**	A typical harddisk may disconnect beक्रमe ANY block.
+**	If we wanted to aव्योम unexpected phase changes at all
+**	we had to use a अवरोध poपूर्णांक every 512 bytes.
 **	Of course the number of scatter/gather blocks is
 **	limited.
 **	Under Linux, the scatter/gatter blocks are provided by 
@@ -7645,88 +7646,88 @@ fail:
 **	sizes to the data segment array.
 */
 
-static int ncr_scatter(struct ncb *np, struct ccb *cp, struct scsi_cmnd *cmd)
-{
-	int segment	= 0;
-	int use_sg	= scsi_sg_count(cmd);
+अटल पूर्णांक ncr_scatter(काष्ठा ncb *np, काष्ठा ccb *cp, काष्ठा scsi_cmnd *cmd)
+अणु
+	पूर्णांक segment	= 0;
+	पूर्णांक use_sg	= scsi_sg_count(cmd);
 
 	cp->data_len	= 0;
 
 	use_sg = map_scsi_sg_data(np, cmd);
-	if (use_sg > 0) {
-		struct scatterlist *sg;
-		struct scr_tblmove *data;
+	अगर (use_sg > 0) अणु
+		काष्ठा scatterlist *sg;
+		काष्ठा scr_tblmove *data;
 
-		if (use_sg > MAX_SCATTER) {
+		अगर (use_sg > MAX_SCATTER) अणु
 			unmap_scsi_data(np, cmd);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		data = &cp->phys.data[MAX_SCATTER - use_sg];
 
-		scsi_for_each_sg(cmd, sg, use_sg, segment) {
+		scsi_क्रम_each_sg(cmd, sg, use_sg, segment) अणु
 			dma_addr_t baddr = sg_dma_address(sg);
-			unsigned int len = sg_dma_len(sg);
+			अचिन्हित पूर्णांक len = sg_dma_len(sg);
 
 			ncr_build_sge(np, &data[segment], baddr, len);
 			cp->data_len += len;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		segment = -2;
 
-	return segment;
-}
+	वापस segment;
+पूर्ण
 
 /*==========================================================
 **
 **
 **	Test the bus snoop logic :-(
 **
-**	Has to be called with interrupts disabled.
+**	Has to be called with पूर्णांकerrupts disabled.
 **
 **
 **==========================================================
 */
 
-static int __init ncr_regtest (struct ncb* np)
-{
-	register volatile u32 data;
+अटल पूर्णांक __init ncr_regtest (काष्ठा ncb* np)
+अणु
+	रेजिस्टर अस्थिर u32 data;
 	/*
-	**	ncr registers may NOT be cached.
-	**	write 0xffffffff to a read only register area,
-	**	and try to read it back.
+	**	ncr रेजिस्टरs may NOT be cached.
+	**	ग_लिखो 0xffffffff to a पढ़ो only रेजिस्टर area,
+	**	and try to पढ़ो it back.
 	*/
 	data = 0xffffffff;
-	OUTL_OFF(offsetof(struct ncr_reg, nc_dstat), data);
-	data = INL_OFF(offsetof(struct ncr_reg, nc_dstat));
-#if 1
-	if (data == 0xffffffff) {
-#else
-	if ((data & 0xe2f0fffd) != 0x02000080) {
-#endif
-		printk ("CACHE TEST FAILED: reg dstat-sstat2 readback %x.\n",
-			(unsigned) data);
-		return (0x10);
-	}
-	return (0);
-}
+	OUTL_OFF(दुरत्व(काष्ठा ncr_reg, nc_dstat), data);
+	data = INL_OFF(दुरत्व(काष्ठा ncr_reg, nc_dstat));
+#अगर 1
+	अगर (data == 0xffffffff) अणु
+#अन्यथा
+	अगर ((data & 0xe2f0fffd) != 0x02000080) अणु
+#पूर्ण_अगर
+		prपूर्णांकk ("CACHE TEST FAILED: reg dstat-sstat2 readback %x.\n",
+			(अचिन्हित) data);
+		वापस (0x10);
+	पूर्ण
+	वापस (0);
+पूर्ण
 
-static int __init ncr_snooptest (struct ncb* np)
-{
+अटल पूर्णांक __init ncr_snooptest (काष्ठा ncb* np)
+अणु
 	u32	ncr_rd, ncr_wr, ncr_bk, host_rd, host_wr, pc;
-	int	i, err=0;
-	if (np->reg) {
+	पूर्णांक	i, err=0;
+	अगर (np->reg) अणु
 		err |= ncr_regtest (np);
-		if (err)
-			return (err);
-	}
+		अगर (err)
+			वापस (err);
+	पूर्ण
 
 	/* init */
 	pc  = NCB_SCRIPTH_PHYS (np, snooptest);
 	host_wr = 1;
 	ncr_wr  = 2;
 	/*
-	**	Set memory and register.
+	**	Set memory and रेजिस्टर.
 	*/
 	np->ncr_cache = cpu_to_scr(host_wr);
 	OUTL (nc_temp, ncr_wr);
@@ -7735,17 +7736,17 @@ static int __init ncr_snooptest (struct ncb* np)
 	*/
 	OUTL_DSP (pc);
 	/*
-	**	Wait 'til done (with timeout)
+	**	Wait 'til करोne (with समयout)
 	*/
-	for (i=0; i<NCR_SNOOP_TIMEOUT; i++)
-		if (INB(nc_istat) & (INTF|SIP|DIP))
-			break;
+	क्रम (i=0; i<NCR_SNOOP_TIMEOUT; i++)
+		अगर (INB(nc_istat) & (INTF|SIP|DIP))
+			अवरोध;
 	/*
 	**	Save termination position.
 	*/
 	pc = INL (nc_dsp);
 	/*
-	**	Read memory and register.
+	**	Read memory and रेजिस्टर.
 	*/
 	host_rd = scr_to_cpu(np->ncr_cache);
 	ncr_rd  = INL (nc_scratcha);
@@ -7755,229 +7756,229 @@ static int __init ncr_snooptest (struct ncb* np)
 	*/
 	ncr_chip_reset(np, 100);
 	/*
-	**	check for timeout
+	**	check क्रम समयout
 	*/
-	if (i>=NCR_SNOOP_TIMEOUT) {
-		printk ("CACHE TEST FAILED: timeout.\n");
-		return (0x20);
-	}
+	अगर (i>=NCR_SNOOP_TIMEOUT) अणु
+		prपूर्णांकk ("CACHE TEST FAILED: timeout.\n");
+		वापस (0x20);
+	पूर्ण
 	/*
 	**	Check termination position.
 	*/
-	if (pc != NCB_SCRIPTH_PHYS (np, snoopend)+8) {
-		printk ("CACHE TEST FAILED: script execution failed.\n");
-		printk ("start=%08lx, pc=%08lx, end=%08lx\n", 
-			(u_long) NCB_SCRIPTH_PHYS (np, snooptest), (u_long) pc,
-			(u_long) NCB_SCRIPTH_PHYS (np, snoopend) +8);
-		return (0x40);
-	}
+	अगर (pc != NCB_SCRIPTH_PHYS (np, snoखोलोd)+8) अणु
+		prपूर्णांकk ("CACHE TEST FAILED: script execution failed.\n");
+		prपूर्णांकk ("start=%08lx, pc=%08lx, end=%08lx\n", 
+			(u_दीर्घ) NCB_SCRIPTH_PHYS (np, snooptest), (u_दीर्घ) pc,
+			(u_दीर्घ) NCB_SCRIPTH_PHYS (np, snoखोलोd) +8);
+		वापस (0x40);
+	पूर्ण
 	/*
 	**	Show results.
 	*/
-	if (host_wr != ncr_rd) {
-		printk ("CACHE TEST FAILED: host wrote %d, ncr read %d.\n",
-			(int) host_wr, (int) ncr_rd);
+	अगर (host_wr != ncr_rd) अणु
+		prपूर्णांकk ("CACHE TEST FAILED: host wrote %d, ncr read %d.\n",
+			(पूर्णांक) host_wr, (पूर्णांक) ncr_rd);
 		err |= 1;
-	}
-	if (host_rd != ncr_wr) {
-		printk ("CACHE TEST FAILED: ncr wrote %d, host read %d.\n",
-			(int) ncr_wr, (int) host_rd);
+	पूर्ण
+	अगर (host_rd != ncr_wr) अणु
+		prपूर्णांकk ("CACHE TEST FAILED: ncr wrote %d, host read %d.\n",
+			(पूर्णांक) ncr_wr, (पूर्णांक) host_rd);
 		err |= 2;
-	}
-	if (ncr_bk != ncr_wr) {
-		printk ("CACHE TEST FAILED: ncr wrote %d, read back %d.\n",
-			(int) ncr_wr, (int) ncr_bk);
+	पूर्ण
+	अगर (ncr_bk != ncr_wr) अणु
+		prपूर्णांकk ("CACHE TEST FAILED: ncr wrote %d, read back %d.\n",
+			(पूर्णांक) ncr_wr, (पूर्णांक) ncr_bk);
 		err |= 4;
-	}
-	return (err);
-}
+	पूर्ण
+	वापस (err);
+पूर्ण
 
 /*==========================================================
 **
-**	Determine the ncr's clock frequency.
-**	This is essential for the negotiation
+**	Determine the ncr's घड़ी frequency.
+**	This is essential क्रम the negotiation
 **	of the synchronous transfer rate.
 **
 **==========================================================
 **
-**	Note: we have to return the correct value.
+**	Note: we have to वापस the correct value.
 **	THERE IS NO SAFE DEFAULT VALUE.
 **
-**	Most NCR/SYMBIOS boards are delivered with a 40 Mhz clock.
+**	Most NCR/SYMBIOS boards are delivered with a 40 Mhz घड़ी.
 **	53C860 and 53C875 rev. 1 support fast20 transfers but 
-**	do not have a clock doubler and so are provided with a 
-**	80 MHz clock. All other fast20 boards incorporate a doubler 
-**	and so should be delivered with a 40 MHz clock.
-**	The future fast40 chips (895/895) use a 40 Mhz base clock 
-**	and provide a clock quadrupler (160 Mhz). The code below 
+**	करो not have a घड़ी द्विगुनr and so are provided with a 
+**	80 MHz घड़ी. All other fast20 boards incorporate a द्विगुनr 
+**	and so should be delivered with a 40 MHz घड़ी.
+**	The future fast40 chips (895/895) use a 40 Mhz base घड़ी 
+**	and provide a घड़ी quadrupler (160 Mhz). The code below 
 **	tries to deal as cleverly as possible with all this stuff.
 **
 **----------------------------------------------------------
 */
 
 /*
- *	Select NCR SCSI clock frequency
+ *	Select NCR SCSI घड़ी frequency
  */
-static void ncr_selectclock(struct ncb *np, u_char scntl3)
-{
-	if (np->multiplier < 2) {
+अटल व्योम ncr_selectघड़ी(काष्ठा ncb *np, u_अक्षर scntl3)
+अणु
+	अगर (np->multiplier < 2) अणु
 		OUTB(nc_scntl3,	scntl3);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (bootverbose >= 2)
-		printk ("%s: enabling clock multiplier\n", ncr_name(np));
+	अगर (bootverbose >= 2)
+		prपूर्णांकk ("%s: enabling clock multiplier\n", ncr_name(np));
 
-	OUTB(nc_stest1, DBLEN);	   /* Enable clock multiplier		  */
-	if (np->multiplier > 2) {  /* Poll bit 5 of stest4 for quadrupler */
-		int i = 20;
-		while (!(INB(nc_stest4) & LCKFRQ) && --i > 0)
+	OUTB(nc_stest1, DBLEN);	   /* Enable घड़ी multiplier		  */
+	अगर (np->multiplier > 2) अणु  /* Poll bit 5 of stest4 क्रम quadrupler */
+		पूर्णांक i = 20;
+		जबतक (!(INB(nc_stest4) & LCKFRQ) && --i > 0)
 			udelay(20);
-		if (!i)
-			printk("%s: the chip cannot lock the frequency\n", ncr_name(np));
-	} else			/* Wait 20 micro-seconds for doubler	*/
+		अगर (!i)
+			prपूर्णांकk("%s: the chip cannot lock the frequency\n", ncr_name(np));
+	पूर्ण अन्यथा			/* Wait 20 micro-seconds क्रम द्विगुनr	*/
 		udelay(20);
-	OUTB(nc_stest3, HSC);		/* Halt the scsi clock		*/
+	OUTB(nc_stest3, HSC);		/* Halt the scsi घड़ी		*/
 	OUTB(nc_scntl3,	scntl3);
-	OUTB(nc_stest1, (DBLEN|DBLSEL));/* Select clock multiplier	*/
-	OUTB(nc_stest3, 0x00);		/* Restart scsi clock 		*/
-}
+	OUTB(nc_stest1, (DBLEN|DBLSEL));/* Select घड़ी multiplier	*/
+	OUTB(nc_stest3, 0x00);		/* Restart scsi घड़ी 		*/
+पूर्ण
 
 
 /*
- *	calculate NCR SCSI clock frequency (in KHz)
+ *	calculate NCR SCSI घड़ी frequency (in KHz)
  */
-static unsigned __init ncrgetfreq (struct ncb *np, int gen)
-{
-	unsigned ms = 0;
-	char count = 0;
+अटल अचिन्हित __init ncrgetfreq (काष्ठा ncb *np, पूर्णांक gen)
+अणु
+	अचिन्हित ms = 0;
+	अक्षर count = 0;
 
 	/*
-	 * Measure GEN timer delay in order 
-	 * to calculate SCSI clock frequency
+	 * Measure GEN समयr delay in order 
+	 * to calculate SCSI घड़ी frequency
 	 *
 	 * This code will never execute too
-	 * many loop iterations (if DELAY is 
+	 * many loop iterations (अगर DELAY is 
 	 * reasonably correct). It could get
 	 * too low a delay (too high a freq.)
-	 * if the CPU is slow executing the 
-	 * loop for some reason (an NMI, for
+	 * अगर the CPU is slow executing the 
+	 * loop क्रम some reason (an NMI, क्रम
 	 * example). For this reason we will
-	 * if multiple measurements are to be 
-	 * performed trust the higher delay 
-	 * (lower frequency returned).
+	 * अगर multiple measurements are to be 
+	 * perक्रमmed trust the higher delay 
+	 * (lower frequency वापसed).
 	 */
-	OUTB (nc_stest1, 0);	/* make sure clock doubler is OFF */
-	OUTW (nc_sien , 0);	/* mask all scsi interrupts */
-	(void) INW (nc_sist);	/* clear pending scsi interrupt */
-	OUTB (nc_dien , 0);	/* mask all dma interrupts */
-	(void) INW (nc_sist);	/* another one, just to be sure :) */
-	OUTB (nc_scntl3, 4);	/* set pre-scaler to divide by 3 */
-	OUTB (nc_stime1, 0);	/* disable general purpose timer */
-	OUTB (nc_stime1, gen);	/* set to nominal delay of 1<<gen * 125us */
-	while (!(INW(nc_sist) & GEN) && ms++ < 100000) {
-		for (count = 0; count < 10; count ++)
+	OUTB (nc_stest1, 0);	/* make sure घड़ी द्विगुनr is OFF */
+	OUTW (nc_sien , 0);	/* mask all scsi पूर्णांकerrupts */
+	(व्योम) INW (nc_sist);	/* clear pending scsi पूर्णांकerrupt */
+	OUTB (nc_dien , 0);	/* mask all dma पूर्णांकerrupts */
+	(व्योम) INW (nc_sist);	/* another one, just to be sure :) */
+	OUTB (nc_scntl3, 4);	/* set pre-scaler to भागide by 3 */
+	OUTB (nc_sसमय1, 0);	/* disable general purpose समयr */
+	OUTB (nc_sसमय1, gen);	/* set to nominal delay of 1<<gen * 125us */
+	जबतक (!(INW(nc_sist) & GEN) && ms++ < 100000) अणु
+		क्रम (count = 0; count < 10; count ++)
 			udelay(100);	/* count ms */
-	}
-	OUTB (nc_stime1, 0);	/* disable general purpose timer */
+	पूर्ण
+	OUTB (nc_sसमय1, 0);	/* disable general purpose समयr */
  	/*
- 	 * set prescaler to divide by whatever 0 means
- 	 * 0 ought to choose divide by 2, but appears
- 	 * to set divide by 3.5 mode in my 53c810 ...
+ 	 * set prescaler to भागide by whatever 0 means
+ 	 * 0 ought to choose भागide by 2, but appears
+ 	 * to set भागide by 3.5 mode in my 53c810 ...
  	 */
  	OUTB (nc_scntl3, 0);
 
-	if (bootverbose >= 2)
-		printk ("%s: Delay (GEN=%d): %u msec\n", ncr_name(np), gen, ms);
+	अगर (bootverbose >= 2)
+		prपूर्णांकk ("%s: Delay (GEN=%d): %u msec\n", ncr_name(np), gen, ms);
   	/*
- 	 * adjust for prescaler, and convert into KHz 
+ 	 * adjust क्रम prescaler, and convert पूर्णांकo KHz 
   	 */
-	return ms ? ((1 << gen) * 4340) / ms : 0;
-}
+	वापस ms ? ((1 << gen) * 4340) / ms : 0;
+पूर्ण
 
 /*
- *	Get/probe NCR SCSI clock frequency
+ *	Get/probe NCR SCSI घड़ी frequency
  */
-static void __init ncr_getclock (struct ncb *np, int mult)
-{
-	unsigned char scntl3 = INB(nc_scntl3);
-	unsigned char stest1 = INB(nc_stest1);
-	unsigned f1;
+अटल व्योम __init ncr_अ_लोlock (काष्ठा ncb *np, पूर्णांक mult)
+अणु
+	अचिन्हित अक्षर scntl3 = INB(nc_scntl3);
+	अचिन्हित अक्षर stest1 = INB(nc_stest1);
+	अचिन्हित f1;
 
 	np->multiplier = 1;
 	f1 = 40000;
 
 	/*
-	**	True with 875 or 895 with clock multiplier selected
+	**	True with 875 or 895 with घड़ी multiplier selected
 	*/
-	if (mult > 1 && (stest1 & (DBLEN+DBLSEL)) == DBLEN+DBLSEL) {
-		if (bootverbose >= 2)
-			printk ("%s: clock multiplier found\n", ncr_name(np));
+	अगर (mult > 1 && (stest1 & (DBLEN+DBLSEL)) == DBLEN+DBLSEL) अणु
+		अगर (bootverbose >= 2)
+			prपूर्णांकk ("%s: clock multiplier found\n", ncr_name(np));
 		np->multiplier = mult;
-	}
+	पूर्ण
 
 	/*
 	**	If multiplier not found or scntl3 not 7,5,3,
-	**	reset chip and get frequency from general purpose timer.
+	**	reset chip and get frequency from general purpose समयr.
 	**	Otherwise trust scntl3 BIOS setting.
 	*/
-	if (np->multiplier != mult || (scntl3 & 7) < 3 || !(scntl3 & 1)) {
-		unsigned f2;
+	अगर (np->multiplier != mult || (scntl3 & 7) < 3 || !(scntl3 & 1)) अणु
+		अचिन्हित f2;
 
 		ncr_chip_reset(np, 5);
 
-		(void) ncrgetfreq (np, 11);	/* throw away first result */
+		(व्योम) ncrgetfreq (np, 11);	/* throw away first result */
 		f1 = ncrgetfreq (np, 11);
 		f2 = ncrgetfreq (np, 11);
 
-		if(bootverbose)
-			printk ("%s: NCR clock is %uKHz, %uKHz\n", ncr_name(np), f1, f2);
+		अगर(bootverbose)
+			prपूर्णांकk ("%s: NCR clock is %uKHz, %uKHz\n", ncr_name(np), f1, f2);
 
-		if (f1 > f2) f1 = f2;		/* trust lower result	*/
+		अगर (f1 > f2) f1 = f2;		/* trust lower result	*/
 
-		if	(f1 <	45000)		f1 =  40000;
-		else if (f1 <	55000)		f1 =  50000;
-		else				f1 =  80000;
+		अगर	(f1 <	45000)		f1 =  40000;
+		अन्यथा अगर (f1 <	55000)		f1 =  50000;
+		अन्यथा				f1 =  80000;
 
-		if (f1 < 80000 && mult > 1) {
-			if (bootverbose >= 2)
-				printk ("%s: clock multiplier assumed\n", ncr_name(np));
+		अगर (f1 < 80000 && mult > 1) अणु
+			अगर (bootverbose >= 2)
+				prपूर्णांकk ("%s: clock multiplier assumed\n", ncr_name(np));
 			np->multiplier	= mult;
-		}
-	} else {
-		if	((scntl3 & 7) == 3)	f1 =  40000;
-		else if	((scntl3 & 7) == 5)	f1 =  80000;
-		else 				f1 = 160000;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर	((scntl3 & 7) == 3)	f1 =  40000;
+		अन्यथा अगर	((scntl3 & 7) == 5)	f1 =  80000;
+		अन्यथा 				f1 = 160000;
 
 		f1 /= np->multiplier;
-	}
+	पूर्ण
 
 	/*
 	**	Compute controller synchronous parameters.
 	*/
 	f1		*= np->multiplier;
-	np->clock_khz	= f1;
-}
+	np->घड़ी_khz	= f1;
+पूर्ण
 
 /*===================== LINUX ENTRY POINTS SECTION ==========================*/
 
-static int ncr53c8xx_slave_alloc(struct scsi_device *device)
-{
-	struct Scsi_Host *host = device->host;
-	struct ncb *np = ((struct host_data *) host->hostdata)->ncb;
-	struct tcb *tp = &np->target[device->id];
+अटल पूर्णांक ncr53c8xx_slave_alloc(काष्ठा scsi_device *device)
+अणु
+	काष्ठा Scsi_Host *host = device->host;
+	काष्ठा ncb *np = ((काष्ठा host_data *) host->hostdata)->ncb;
+	काष्ठा tcb *tp = &np->target[device->id];
 	tp->starget = device->sdev_target;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ncr53c8xx_slave_configure(struct scsi_device *device)
-{
-	struct Scsi_Host *host = device->host;
-	struct ncb *np = ((struct host_data *) host->hostdata)->ncb;
-	struct tcb *tp = &np->target[device->id];
-	struct lcb *lp = tp->lp[device->lun];
-	int numtags, depth_to_use;
+अटल पूर्णांक ncr53c8xx_slave_configure(काष्ठा scsi_device *device)
+अणु
+	काष्ठा Scsi_Host *host = device->host;
+	काष्ठा ncb *np = ((काष्ठा host_data *) host->hostdata)->ncb;
+	काष्ठा tcb *tp = &np->target[device->id];
+	काष्ठा lcb *lp = tp->lp[device->lun];
+	पूर्णांक numtags, depth_to_use;
 
 	ncr_setup_lcb(np, device);
 
@@ -7988,14 +7989,14 @@ static int ncr53c8xx_slave_configure(struct scsi_device *device)
 	**	Donnot use more than our maximum.
 	*/
 	numtags = device_queue_depth(np->unit, device->id, device->lun);
-	if (numtags > tp->usrtags)
+	अगर (numtags > tp->usrtags)
 		numtags = tp->usrtags;
-	if (!device->tagged_supported)
+	अगर (!device->tagged_supported)
 		numtags = 1;
 	depth_to_use = numtags;
-	if (depth_to_use < 2)
+	अगर (depth_to_use < 2)
 		depth_to_use = 2;
-	if (depth_to_use > MAX_TAGS)
+	अगर (depth_to_use > MAX_TAGS)
 		depth_to_use = MAX_TAGS;
 
 	scsi_change_queue_depth(device, depth_to_use);
@@ -8009,258 +8010,258 @@ static int ncr53c8xx_slave_configure(struct scsi_device *device)
 	**		  In fact we just tuned it, or did I miss
 	**		  something important? :)
 	*/
-	if (lp) {
+	अगर (lp) अणु
 		lp->numtags = lp->maxtags = numtags;
 		lp->scdev_depth = depth_to_use;
-	}
+	पूर्ण
 	ncr_setup_tags (np, device);
 
-#ifdef DEBUG_NCR53C8XX
-	printk("ncr53c8xx_select_queue_depth: host=%d, id=%d, lun=%d, depth=%d\n",
+#अगर_घोषित DEBUG_NCR53C8XX
+	prपूर्णांकk("ncr53c8xx_select_queue_depth: host=%d, id=%d, lun=%d, depth=%d\n",
 	       np->unit, device->id, device->lun, depth_to_use);
-#endif
+#पूर्ण_अगर
 
-	if (spi_support_sync(device->sdev_target) &&
+	अगर (spi_support_sync(device->sdev_target) &&
 	    !spi_initial_dv(device->sdev_target))
 		spi_dv_device(device);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ncr53c8xx_queue_command_lck (struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
-{
-     struct ncb *np = ((struct host_data *) cmd->device->host->hostdata)->ncb;
-     unsigned long flags;
-     int sts;
+अटल पूर्णांक ncr53c8xx_queue_command_lck (काष्ठा scsi_cmnd *cmd, व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
+     काष्ठा ncb *np = ((काष्ठा host_data *) cmd->device->host->hostdata)->ncb;
+     अचिन्हित दीर्घ flags;
+     पूर्णांक sts;
 
-#ifdef DEBUG_NCR53C8XX
-printk("ncr53c8xx_queue_command\n");
-#endif
+#अगर_घोषित DEBUG_NCR53C8XX
+prपूर्णांकk("ncr53c8xx_queue_command\n");
+#पूर्ण_अगर
 
-     cmd->scsi_done     = done;
-     cmd->host_scribble = NULL;
+     cmd->scsi_करोne     = करोne;
+     cmd->host_scribble = शून्य;
      cmd->__data_mapped = 0;
      cmd->__data_mapping = 0;
 
      spin_lock_irqsave(&np->smp_lock, flags);
 
-     if ((sts = ncr_queue_command(np, cmd)) != DID_OK) {
+     अगर ((sts = ncr_queue_command(np, cmd)) != DID_OK) अणु
 	     set_host_byte(cmd, sts);
-#ifdef DEBUG_NCR53C8XX
-printk("ncr53c8xx : command not queued - result=%d\n", sts);
-#endif
-     }
-#ifdef DEBUG_NCR53C8XX
-     else
-printk("ncr53c8xx : command successfully queued\n");
-#endif
+#अगर_घोषित DEBUG_NCR53C8XX
+prपूर्णांकk("ncr53c8xx : command not queued - result=%d\n", sts);
+#पूर्ण_अगर
+     पूर्ण
+#अगर_घोषित DEBUG_NCR53C8XX
+     अन्यथा
+prपूर्णांकk("ncr53c8xx : command successfully queued\n");
+#पूर्ण_अगर
 
      spin_unlock_irqrestore(&np->smp_lock, flags);
 
-     if (sts != DID_OK) {
+     अगर (sts != DID_OK) अणु
           unmap_scsi_data(np, cmd);
-          done(cmd);
+          करोne(cmd);
 	  sts = 0;
-     }
+     पूर्ण
 
-     return sts;
-}
+     वापस sts;
+पूर्ण
 
-static DEF_SCSI_QCMD(ncr53c8xx_queue_command)
+अटल DEF_SCSI_QCMD(ncr53c8xx_queue_command)
 
-irqreturn_t ncr53c8xx_intr(int irq, void *dev_id)
-{
-     unsigned long flags;
-     struct Scsi_Host *shost = (struct Scsi_Host *)dev_id;
-     struct host_data *host_data = (struct host_data *)shost->hostdata;
-     struct ncb *np = host_data->ncb;
-     struct scsi_cmnd *done_list;
+irqवापस_t ncr53c8xx_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
+अणु
+     अचिन्हित दीर्घ flags;
+     काष्ठा Scsi_Host *shost = (काष्ठा Scsi_Host *)dev_id;
+     काष्ठा host_data *host_data = (काष्ठा host_data *)shost->hostdata;
+     काष्ठा ncb *np = host_data->ncb;
+     काष्ठा scsi_cmnd *करोne_list;
 
-#ifdef DEBUG_NCR53C8XX
-     printk("ncr53c8xx : interrupt received\n");
-#endif
+#अगर_घोषित DEBUG_NCR53C8XX
+     prपूर्णांकk("ncr53c8xx : interrupt received\n");
+#पूर्ण_अगर
 
-     if (DEBUG_FLAGS & DEBUG_TINY) printk ("[");
+     अगर (DEBUG_FLAGS & DEBUG_TINY) prपूर्णांकk ("[");
 
      spin_lock_irqsave(&np->smp_lock, flags);
      ncr_exception(np);
-     done_list     = np->done_list;
-     np->done_list = NULL;
+     करोne_list     = np->करोne_list;
+     np->करोne_list = शून्य;
      spin_unlock_irqrestore(&np->smp_lock, flags);
 
-     if (DEBUG_FLAGS & DEBUG_TINY) printk ("]\n");
+     अगर (DEBUG_FLAGS & DEBUG_TINY) prपूर्णांकk ("]\n");
 
-     if (done_list)
-	     ncr_flush_done_cmds(done_list);
-     return IRQ_HANDLED;
-}
+     अगर (करोne_list)
+	     ncr_flush_करोne_cmds(करोne_list);
+     वापस IRQ_HANDLED;
+पूर्ण
 
-static void ncr53c8xx_timeout(struct timer_list *t)
-{
-	struct ncb *np = from_timer(np, t, timer);
-	unsigned long flags;
-	struct scsi_cmnd *done_list;
+अटल व्योम ncr53c8xx_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ncb *np = from_समयr(np, t, समयr);
+	अचिन्हित दीर्घ flags;
+	काष्ठा scsi_cmnd *करोne_list;
 
 	spin_lock_irqsave(&np->smp_lock, flags);
-	ncr_timeout(np);
-	done_list     = np->done_list;
-	np->done_list = NULL;
+	ncr_समयout(np);
+	करोne_list     = np->करोne_list;
+	np->करोne_list = शून्य;
 	spin_unlock_irqrestore(&np->smp_lock, flags);
 
-	if (done_list)
-		ncr_flush_done_cmds(done_list);
-}
+	अगर (करोne_list)
+		ncr_flush_करोne_cmds(करोne_list);
+पूर्ण
 
-static int ncr53c8xx_bus_reset(struct scsi_cmnd *cmd)
-{
-	struct ncb *np = ((struct host_data *) cmd->device->host->hostdata)->ncb;
-	int sts;
-	unsigned long flags;
-	struct scsi_cmnd *done_list;
+अटल पूर्णांक ncr53c8xx_bus_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा ncb *np = ((काष्ठा host_data *) cmd->device->host->hostdata)->ncb;
+	पूर्णांक sts;
+	अचिन्हित दीर्घ flags;
+	काष्ठा scsi_cmnd *करोne_list;
 
 	/*
 	 * If the mid-level driver told us reset is synchronous, it seems 
-	 * that we must call the done() callback for the involved command, 
-	 * even if this command was not queued to the low-level driver, 
-	 * before returning SUCCESS.
+	 * that we must call the करोne() callback क्रम the involved command, 
+	 * even अगर this command was not queued to the low-level driver, 
+	 * beक्रमe वापसing SUCCESS.
 	 */
 
 	spin_lock_irqsave(&np->smp_lock, flags);
 	sts = ncr_reset_bus(np, cmd, 1);
 
-	done_list     = np->done_list;
-	np->done_list = NULL;
+	करोne_list     = np->करोne_list;
+	np->करोne_list = शून्य;
 	spin_unlock_irqrestore(&np->smp_lock, flags);
 
-	ncr_flush_done_cmds(done_list);
+	ncr_flush_करोne_cmds(करोne_list);
 
-	return sts;
-}
+	वापस sts;
+पूर्ण
 
-#if 0 /* unused and broken */
-static int ncr53c8xx_abort(struct scsi_cmnd *cmd)
-{
-	struct ncb *np = ((struct host_data *) cmd->device->host->hostdata)->ncb;
-	int sts;
-	unsigned long flags;
-	struct scsi_cmnd *done_list;
+#अगर 0 /* unused and broken */
+अटल पूर्णांक ncr53c8xx_पात(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा ncb *np = ((काष्ठा host_data *) cmd->device->host->hostdata)->ncb;
+	पूर्णांक sts;
+	अचिन्हित दीर्घ flags;
+	काष्ठा scsi_cmnd *करोne_list;
 
-	printk("ncr53c8xx_abort\n");
+	prपूर्णांकk("ncr53c8xx_abort\n");
 
 	NCR_LOCK_NCB(np, flags);
 
-	sts = ncr_abort_command(np, cmd);
+	sts = ncr_पात_command(np, cmd);
 out:
-	done_list     = np->done_list;
-	np->done_list = NULL;
+	करोne_list     = np->करोne_list;
+	np->करोne_list = शून्य;
 	NCR_UNLOCK_NCB(np, flags);
 
-	ncr_flush_done_cmds(done_list);
+	ncr_flush_करोne_cmds(करोne_list);
 
-	return sts;
-}
-#endif
+	वापस sts;
+पूर्ण
+#पूर्ण_अगर
 
 
 /*
-**	Scsi command waiting list management.
+**	Scsi command रुकोing list management.
 **
-**	It may happen that we cannot insert a scsi command into the start queue,
+**	It may happen that we cannot insert a scsi command पूर्णांकo the start queue,
 **	in the following circumstances.
-** 		Too few preallocated ccb(s), 
+** 		Too few pपुनः_स्मृतिated ccb(s), 
 **		maxtags < cmd_per_lun of the Linux host control block,
 **		etc...
-**	Such scsi commands are inserted into a waiting list.
+**	Such scsi commands are inserted पूर्णांकo a रुकोing list.
 **	When a scsi command complete, we try to requeue the commands of the
-**	waiting list.
+**	रुकोing list.
 */
 
-#define next_wcmd host_scribble
+#घोषणा next_wcmd host_scribble
 
-static void insert_into_waiting_list(struct ncb *np, struct scsi_cmnd *cmd)
-{
-	struct scsi_cmnd *wcmd;
+अटल व्योम insert_पूर्णांकo_रुकोing_list(काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_cmnd *wcmd;
 
-#ifdef DEBUG_WAITING_LIST
-	printk("%s: cmd %lx inserted into waiting list\n", ncr_name(np), (u_long) cmd);
-#endif
-	cmd->next_wcmd = NULL;
-	if (!(wcmd = np->waiting_list)) np->waiting_list = cmd;
-	else {
-		while (wcmd->next_wcmd)
-			wcmd = (struct scsi_cmnd *) wcmd->next_wcmd;
-		wcmd->next_wcmd = (char *) cmd;
-	}
-}
+#अगर_घोषित DEBUG_WAITING_LIST
+	prपूर्णांकk("%s: cmd %lx inserted into waiting list\n", ncr_name(np), (u_दीर्घ) cmd);
+#पूर्ण_अगर
+	cmd->next_wcmd = शून्य;
+	अगर (!(wcmd = np->रुकोing_list)) np->रुकोing_list = cmd;
+	अन्यथा अणु
+		जबतक (wcmd->next_wcmd)
+			wcmd = (काष्ठा scsi_cmnd *) wcmd->next_wcmd;
+		wcmd->next_wcmd = (अक्षर *) cmd;
+	पूर्ण
+पूर्ण
 
-static struct scsi_cmnd *retrieve_from_waiting_list(int to_remove, struct ncb *np, struct scsi_cmnd *cmd)
-{
-	struct scsi_cmnd **pcmd = &np->waiting_list;
+अटल काष्ठा scsi_cmnd *retrieve_from_रुकोing_list(पूर्णांक to_हटाओ, काष्ठा ncb *np, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_cmnd **pcmd = &np->रुकोing_list;
 
-	while (*pcmd) {
-		if (cmd == *pcmd) {
-			if (to_remove) {
-				*pcmd = (struct scsi_cmnd *) cmd->next_wcmd;
-				cmd->next_wcmd = NULL;
-			}
-#ifdef DEBUG_WAITING_LIST
-	printk("%s: cmd %lx retrieved from waiting list\n", ncr_name(np), (u_long) cmd);
-#endif
-			return cmd;
-		}
-		pcmd = (struct scsi_cmnd **) &(*pcmd)->next_wcmd;
-	}
-	return NULL;
-}
+	जबतक (*pcmd) अणु
+		अगर (cmd == *pcmd) अणु
+			अगर (to_हटाओ) अणु
+				*pcmd = (काष्ठा scsi_cmnd *) cmd->next_wcmd;
+				cmd->next_wcmd = शून्य;
+			पूर्ण
+#अगर_घोषित DEBUG_WAITING_LIST
+	prपूर्णांकk("%s: cmd %lx retrieved from waiting list\n", ncr_name(np), (u_दीर्घ) cmd);
+#पूर्ण_अगर
+			वापस cmd;
+		पूर्ण
+		pcmd = (काष्ठा scsi_cmnd **) &(*pcmd)->next_wcmd;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void process_waiting_list(struct ncb *np, int sts)
-{
-	struct scsi_cmnd *waiting_list, *wcmd;
+अटल व्योम process_रुकोing_list(काष्ठा ncb *np, पूर्णांक sts)
+अणु
+	काष्ठा scsi_cmnd *रुकोing_list, *wcmd;
 
-	waiting_list = np->waiting_list;
-	np->waiting_list = NULL;
+	रुकोing_list = np->रुकोing_list;
+	np->रुकोing_list = शून्य;
 
-#ifdef DEBUG_WAITING_LIST
-	if (waiting_list) printk("%s: waiting_list=%lx processing sts=%d\n", ncr_name(np), (u_long) waiting_list, sts);
-#endif
-	while ((wcmd = waiting_list) != NULL) {
-		waiting_list = (struct scsi_cmnd *) wcmd->next_wcmd;
-		wcmd->next_wcmd = NULL;
-		if (sts == DID_OK) {
-#ifdef DEBUG_WAITING_LIST
-	printk("%s: cmd %lx trying to requeue\n", ncr_name(np), (u_long) wcmd);
-#endif
+#अगर_घोषित DEBUG_WAITING_LIST
+	अगर (रुकोing_list) prपूर्णांकk("%s: waiting_list=%lx processing sts=%d\n", ncr_name(np), (u_दीर्घ) रुकोing_list, sts);
+#पूर्ण_अगर
+	जबतक ((wcmd = रुकोing_list) != शून्य) अणु
+		रुकोing_list = (काष्ठा scsi_cmnd *) wcmd->next_wcmd;
+		wcmd->next_wcmd = शून्य;
+		अगर (sts == DID_OK) अणु
+#अगर_घोषित DEBUG_WAITING_LIST
+	prपूर्णांकk("%s: cmd %lx trying to requeue\n", ncr_name(np), (u_दीर्घ) wcmd);
+#पूर्ण_अगर
 			sts = ncr_queue_command(np, wcmd);
-		}
-		if (sts != DID_OK) {
-#ifdef DEBUG_WAITING_LIST
-	printk("%s: cmd %lx done forced sts=%d\n", ncr_name(np), (u_long) wcmd, sts);
-#endif
+		पूर्ण
+		अगर (sts != DID_OK) अणु
+#अगर_घोषित DEBUG_WAITING_LIST
+	prपूर्णांकk("%s: cmd %lx done forced sts=%d\n", ncr_name(np), (u_दीर्घ) wcmd, sts);
+#पूर्ण_अगर
 			set_host_byte(wcmd, sts);
-			ncr_queue_done_cmd(np, wcmd);
-		}
-	}
-}
+			ncr_queue_करोne_cmd(np, wcmd);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#undef next_wcmd
+#अघोषित next_wcmd
 
-static ssize_t show_ncr53c8xx_revision(struct device *dev,
-				       struct device_attribute *attr, char *buf)
-{
-	struct Scsi_Host *host = class_to_shost(dev);
-	struct host_data *host_data = (struct host_data *)host->hostdata;
+अटल sमाप_प्रकार show_ncr53c8xx_revision(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *host = class_to_shost(dev);
+	काष्ठा host_data *host_data = (काष्ठा host_data *)host->hostdata;
   
-	return snprintf(buf, 20, "0x%x\n", host_data->ncb->revision_id);
-}
+	वापस snम_लिखो(buf, 20, "0x%x\n", host_data->ncb->revision_id);
+पूर्ण
   
-static struct device_attribute ncr53c8xx_revision_attr = {
-	.attr	= { .name = "revision", .mode = S_IRUGO, },
+अटल काष्ठा device_attribute ncr53c8xx_revision_attr = अणु
+	.attr	= अणु .name = "revision", .mode = S_IRUGO, पूर्ण,
 	.show	= show_ncr53c8xx_revision,
-};
+पूर्ण;
   
-static struct device_attribute *ncr53c8xx_host_attrs[] = {
+अटल काष्ठा device_attribute *ncr53c8xx_host_attrs[] = अणु
 	&ncr53c8xx_revision_attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*==========================================================
 **
@@ -8268,42 +8269,42 @@ static struct device_attribute *ncr53c8xx_host_attrs[] = {
 **
 **==========================================================
 */
-#ifdef	MODULE
-char *ncr53c8xx;	/* command line passed by insmod */
-module_param(ncr53c8xx, charp, 0);
-#endif
+#अगर_घोषित	MODULE
+अक्षर *ncr53c8xx;	/* command line passed by insmod */
+module_param(ncr53c8xx, अक्षरp, 0);
+#पूर्ण_अगर
 
-#ifndef MODULE
-static int __init ncr53c8xx_setup(char *str)
-{
-	return sym53c8xx__setup(str);
-}
+#अगर_अघोषित MODULE
+अटल पूर्णांक __init ncr53c8xx_setup(अक्षर *str)
+अणु
+	वापस sym53c8xx__setup(str);
+पूर्ण
 
 __setup("ncr53c8xx=", ncr53c8xx_setup);
-#endif
+#पूर्ण_अगर
 
 
 /*
  *	Host attach and initialisations.
  *
- *	Allocate host data and ncb structure.
+ *	Allocate host data and ncb काष्ठाure.
  *	Request IO region and remap MMIO region.
  *	Do chip initialization.
- *	If all is OK, install interrupt handling and
- *	start the timer daemon.
+ *	If all is OK, install पूर्णांकerrupt handling and
+ *	start the समयr daemon.
  */
-struct Scsi_Host * __init ncr_attach(struct scsi_host_template *tpnt,
-					int unit, struct ncr_device *device)
-{
-	struct host_data *host_data;
-	struct ncb *np = NULL;
-	struct Scsi_Host *instance = NULL;
-	u_long flags = 0;
-	int i;
+काष्ठा Scsi_Host * __init ncr_attach(काष्ठा scsi_host_ढाँचा *tpnt,
+					पूर्णांक unit, काष्ठा ncr_device *device)
+अणु
+	काष्ठा host_data *host_data;
+	काष्ठा ncb *np = शून्य;
+	काष्ठा Scsi_Host *instance = शून्य;
+	u_दीर्घ flags = 0;
+	पूर्णांक i;
 
-	if (!tpnt->name)
+	अगर (!tpnt->name)
 		tpnt->name	= SCSI_NCR_DRIVER_NAME;
-	if (!tpnt->shost_attrs)
+	अगर (!tpnt->shost_attrs)
 		tpnt->shost_attrs = ncr53c8xx_host_attrs;
 
 	tpnt->queuecommand	= ncr53c8xx_queue_command;
@@ -8315,99 +8316,99 @@ struct Scsi_Host * __init ncr_attach(struct scsi_host_template *tpnt,
 	tpnt->sg_tablesize	= SCSI_NCR_SG_TABLESIZE;
 	tpnt->cmd_per_lun	= SCSI_NCR_CMD_PER_LUN;
 
-	if (device->differential)
-		driver_setup.diff_support = device->differential;
+	अगर (device->dअगरferential)
+		driver_setup.dअगरf_support = device->dअगरferential;
 
-	printk(KERN_INFO "ncr53c720-%d: rev 0x%x irq %d\n",
+	prपूर्णांकk(KERN_INFO "ncr53c720-%d: rev 0x%x irq %d\n",
 		unit, device->chip.revision_id, device->slot.irq);
 
-	instance = scsi_host_alloc(tpnt, sizeof(*host_data));
-	if (!instance)
-	        goto attach_error;
-	host_data = (struct host_data *) instance->hostdata;
+	instance = scsi_host_alloc(tpnt, माप(*host_data));
+	अगर (!instance)
+	        जाओ attach_error;
+	host_data = (काष्ठा host_data *) instance->hostdata;
 
-	np = __m_calloc_dma(device->dev, sizeof(struct ncb), "NCB");
-	if (!np)
-		goto attach_error;
+	np = __m_सुस्मृति_dma(device->dev, माप(काष्ठा ncb), "NCB");
+	अगर (!np)
+		जाओ attach_error;
 	spin_lock_init(&np->smp_lock);
 	np->dev = device->dev;
 	np->p_ncb = vtobus(np);
 	host_data->ncb = np;
 
-	np->ccb = m_calloc_dma(sizeof(struct ccb), "CCB");
-	if (!np->ccb)
-		goto attach_error;
+	np->ccb = m_सुस्मृति_dma(माप(काष्ठा ccb), "CCB");
+	अगर (!np->ccb)
+		जाओ attach_error;
 
-	/* Store input information in the host data structure.  */
+	/* Store input inक्रमmation in the host data काष्ठाure.  */
 	np->unit	= unit;
 	np->verbose	= driver_setup.verbose;
-	sprintf(np->inst_name, "ncr53c720-%d", np->unit);
+	प्र_लिखो(np->inst_name, "ncr53c720-%d", np->unit);
 	np->revision_id	= device->chip.revision_id;
 	np->features	= device->chip.features;
-	np->clock_divn	= device->chip.nr_divisor;
+	np->घड़ी_भागn	= device->chip.nr_भागisor;
 	np->maxoffs	= device->chip.offset_max;
 	np->maxburst	= device->chip.burst_max;
 	np->myaddr	= device->host_id;
 
 	/* Allocate SCRIPTS areas.  */
-	np->script0 = m_calloc_dma(sizeof(struct script), "SCRIPT");
-	if (!np->script0)
-		goto attach_error;
-	np->scripth0 = m_calloc_dma(sizeof(struct scripth), "SCRIPTH");
-	if (!np->scripth0)
-		goto attach_error;
+	np->script0 = m_सुस्मृति_dma(माप(काष्ठा script), "SCRIPT");
+	अगर (!np->script0)
+		जाओ attach_error;
+	np->scripth0 = m_सुस्मृति_dma(माप(काष्ठा scripth), "SCRIPTH");
+	अगर (!np->scripth0)
+		जाओ attach_error;
 
-	timer_setup(&np->timer, ncr53c8xx_timeout, 0);
+	समयr_setup(&np->समयr, ncr53c8xx_समयout, 0);
 
-	/* Try to map the controller chip to virtual and physical memory. */
+	/* Try to map the controller chip to भव and physical memory. */
 
 	np->paddr	= device->slot.base;
 	np->paddr2	= (np->features & FE_RAM) ? device->slot.base_2 : 0;
 
-	if (device->slot.base_v)
+	अगर (device->slot.base_v)
 		np->vaddr = device->slot.base_v;
-	else
+	अन्यथा
 		np->vaddr = ioremap(device->slot.base_c, 128);
 
-	if (!np->vaddr) {
-		printk(KERN_ERR
+	अगर (!np->vaddr) अणु
+		prपूर्णांकk(KERN_ERR
 			"%s: can't map memory mapped IO region\n",ncr_name(np));
-		goto attach_error;
-	} else {
-		if (bootverbose > 1)
-			printk(KERN_INFO
-				"%s: using memory mapped IO at virtual address 0x%lx\n", ncr_name(np), (u_long) np->vaddr);
-	}
+		जाओ attach_error;
+	पूर्ण अन्यथा अणु
+		अगर (bootverbose > 1)
+			prपूर्णांकk(KERN_INFO
+				"%s: using memory mapped IO at virtual address 0x%lx\n", ncr_name(np), (u_दीर्घ) np->vaddr);
+	पूर्ण
 
-	/* Make the controller's registers available.  Now the INB INW INL
+	/* Make the controller's रेजिस्टरs available.  Now the INB INW INL
 	 * OUTB OUTW OUTL macros can be used safely.
 	 */
 
-	np->reg = (struct ncr_reg __iomem *)np->vaddr;
+	np->reg = (काष्ठा ncr_reg __iomem *)np->vaddr;
 
 	/* Do chip dependent initialization.  */
 	ncr_prepare_setting(np);
 
-	if (np->paddr2 && sizeof(struct script) > 4096) {
+	अगर (np->paddr2 && माप(काष्ठा script) > 4096) अणु
 		np->paddr2 = 0;
-		printk(KERN_WARNING "%s: script too large, NOT using on chip RAM.\n",
+		prपूर्णांकk(KERN_WARNING "%s: script too large, NOT using on chip RAM.\n",
 			ncr_name(np));
-	}
+	पूर्ण
 
 	instance->max_channel	= 0;
 	instance->this_id       = np->myaddr;
 	instance->max_id	= np->maxwide ? 16 : 8;
 	instance->max_lun	= SCSI_NCR_MAX_LUN;
-	instance->base		= (unsigned long) np->reg;
+	instance->base		= (अचिन्हित दीर्घ) np->reg;
 	instance->irq		= device->slot.irq;
 	instance->unique_id	= device->slot.base;
 	instance->dma_channel	= 0;
 	instance->cmd_per_lun	= MAX_TAGS;
 	instance->can_queue	= (MAX_START-4);
-	/* This can happen if you forget to call ncr53c8xx_init from
+	/* This can happen अगर you क्रमget to call ncr53c8xx_init from
 	 * your module_init */
-	BUG_ON(!ncr53c8xx_transport_template);
-	instance->transportt	= ncr53c8xx_transport_template;
+	BUG_ON(!ncr53c8xx_transport_ढाँचा);
+	instance->transportt	= ncr53c8xx_transport_ढाँचा;
 
 	/* Patch script to physical addresses */
 	ncr_script_fill(&script0, &scripth0);
@@ -8417,208 +8418,208 @@ struct Scsi_Host * __init ncr_attach(struct scsi_host_template *tpnt,
 	np->p_script	= (np->paddr2) ?  np->paddr2 : vtobus(np->script0);
 
 	ncr_script_copy_and_bind(np, (ncrcmd *) &script0,
-			(ncrcmd *) np->script0, sizeof(struct script));
+			(ncrcmd *) np->script0, माप(काष्ठा script));
 	ncr_script_copy_and_bind(np, (ncrcmd *) &scripth0,
-			(ncrcmd *) np->scripth0, sizeof(struct scripth));
+			(ncrcmd *) np->scripth0, माप(काष्ठा scripth));
 	np->ccb->p_ccb	= vtobus (np->ccb);
 
-	/* Patch the script for LED support.  */
+	/* Patch the script क्रम LED support.  */
 
-	if (np->features & FE_LED0) {
+	अगर (np->features & FE_LED0) अणु
 		np->script0->idle[0]  =
 				cpu_to_scr(SCR_REG_REG(gpreg, SCR_OR,  0x01));
 		np->script0->reselected[0] =
 				cpu_to_scr(SCR_REG_REG(gpreg, SCR_AND, 0xfe));
 		np->script0->start[0] =
 				cpu_to_scr(SCR_REG_REG(gpreg, SCR_AND, 0xfe));
-	}
+	पूर्ण
 
 	/*
-	 * Look for the target control block of this nexus.
+	 * Look क्रम the target control block of this nexus.
 	 * For i = 0 to 3
 	 *   JUMP ^ IFTRUE (MASK (i, 3)), @(next_lcb)
 	 */
-	for (i = 0 ; i < 4 ; i++) {
+	क्रम (i = 0 ; i < 4 ; i++) अणु
 		np->jump_tcb[i].l_cmd   =
 				cpu_to_scr((SCR_JUMP ^ IFTRUE (MASK (i, 3))));
 		np->jump_tcb[i].l_paddr =
 				cpu_to_scr(NCB_SCRIPTH_PHYS (np, bad_target));
-	}
+	पूर्ण
 
 	ncr_chip_reset(np, 100);
 
 	/* Now check the cache handling of the chipset.  */
 
-	if (ncr_snooptest(np)) {
-		printk(KERN_ERR "CACHE INCORRECTLY CONFIGURED.\n");
-		goto attach_error;
-	}
+	अगर (ncr_snooptest(np)) अणु
+		prपूर्णांकk(KERN_ERR "CACHE INCORRECTLY CONFIGURED.\n");
+		जाओ attach_error;
+	पूर्ण
 
-	/* Install the interrupt handler.  */
+	/* Install the पूर्णांकerrupt handler.  */
 	np->irq = device->slot.irq;
 
-	/* Initialize the fixed part of the default ccb.  */
+	/* Initialize the fixed part of the शेष ccb.  */
 	ncr_init_ccb(np, np->ccb);
 
 	/*
-	 * After SCSI devices have been opened, we cannot reset the bus
-	 * safely, so we do it here.  Interrupt handler does the real work.
-	 * Process the reset exception if interrupts are not enabled yet.
+	 * After SCSI devices have been खोलोed, we cannot reset the bus
+	 * safely, so we करो it here.  Interrupt handler करोes the real work.
+	 * Process the reset exception अगर पूर्णांकerrupts are not enabled yet.
 	 * Then enable disconnects.
 	 */
 	spin_lock_irqsave(&np->smp_lock, flags);
-	if (ncr_reset_scsi_bus(np, 0, driver_setup.settle_delay) != 0) {
-		printk(KERN_ERR "%s: FATAL ERROR: CHECK SCSI BUS - CABLES, TERMINATION, DEVICE POWER etc.!\n", ncr_name(np));
+	अगर (ncr_reset_scsi_bus(np, 0, driver_setup.settle_delay) != 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: FATAL ERROR: CHECK SCSI BUS - CABLES, TERMINATION, DEVICE POWER etc.!\n", ncr_name(np));
 
 		spin_unlock_irqrestore(&np->smp_lock, flags);
-		goto attach_error;
-	}
+		जाओ attach_error;
+	पूर्ण
 	ncr_exception(np);
 
 	np->disc = 1;
 
 	/*
-	 * The middle-level SCSI driver does not wait for devices to settle.
-	 * Wait synchronously if more than 2 seconds.
+	 * The middle-level SCSI driver करोes not रुको क्रम devices to settle.
+	 * Wait synchronously अगर more than 2 seconds.
 	 */
-	if (driver_setup.settle_delay > 2) {
-		printk(KERN_INFO "%s: waiting %d seconds for scsi devices to settle...\n",
+	अगर (driver_setup.settle_delay > 2) अणु
+		prपूर्णांकk(KERN_INFO "%s: waiting %d seconds for scsi devices to settle...\n",
 			ncr_name(np), driver_setup.settle_delay);
 		mdelay(1000 * driver_setup.settle_delay);
-	}
+	पूर्ण
 
-	/* start the timeout daemon */
-	np->lasttime=0;
-	ncr_timeout (np);
+	/* start the समयout daemon */
+	np->lastसमय=0;
+	ncr_समयout (np);
 
-	/* use SIMPLE TAG messages by default */
-#ifdef SCSI_NCR_ALWAYS_SIMPLE_TAG
+	/* use SIMPLE TAG messages by शेष */
+#अगर_घोषित SCSI_NCR_ALWAYS_SIMPLE_TAG
 	np->order = SIMPLE_QUEUE_TAG;
-#endif
+#पूर्ण_अगर
 
 	spin_unlock_irqrestore(&np->smp_lock, flags);
 
-	return instance;
+	वापस instance;
 
  attach_error:
-	if (!instance)
-		return NULL;
-	printk(KERN_INFO "%s: detaching...\n", ncr_name(np));
-	if (!np)
-		goto unregister;
-	if (np->scripth0)
-		m_free_dma(np->scripth0, sizeof(struct scripth), "SCRIPTH");
-	if (np->script0)
-		m_free_dma(np->script0, sizeof(struct script), "SCRIPT");
-	if (np->ccb)
-		m_free_dma(np->ccb, sizeof(struct ccb), "CCB");
-	m_free_dma(np, sizeof(struct ncb), "NCB");
-	host_data->ncb = NULL;
+	अगर (!instance)
+		वापस शून्य;
+	prपूर्णांकk(KERN_INFO "%s: detaching...\n", ncr_name(np));
+	अगर (!np)
+		जाओ unरेजिस्टर;
+	अगर (np->scripth0)
+		m_मुक्त_dma(np->scripth0, माप(काष्ठा scripth), "SCRIPTH");
+	अगर (np->script0)
+		m_मुक्त_dma(np->script0, माप(काष्ठा script), "SCRIPT");
+	अगर (np->ccb)
+		m_मुक्त_dma(np->ccb, माप(काष्ठा ccb), "CCB");
+	m_मुक्त_dma(np, माप(काष्ठा ncb), "NCB");
+	host_data->ncb = शून्य;
 
- unregister:
+ unरेजिस्टर:
 	scsi_host_put(instance);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
-void ncr53c8xx_release(struct Scsi_Host *host)
-{
-	struct host_data *host_data = shost_priv(host);
-#ifdef DEBUG_NCR53C8XX
-	printk("ncr53c8xx: release\n");
-#endif
-	if (host_data->ncb)
+व्योम ncr53c8xx_release(काष्ठा Scsi_Host *host)
+अणु
+	काष्ठा host_data *host_data = shost_priv(host);
+#अगर_घोषित DEBUG_NCR53C8XX
+	prपूर्णांकk("ncr53c8xx: release\n");
+#पूर्ण_अगर
+	अगर (host_data->ncb)
 		ncr_detach(host_data->ncb);
 	scsi_host_put(host);
-}
+पूर्ण
 
-static void ncr53c8xx_set_period(struct scsi_target *starget, int period)
-{
-	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	struct ncb *np = ((struct host_data *)shost->hostdata)->ncb;
-	struct tcb *tp = &np->target[starget->id];
+अटल व्योम ncr53c8xx_set_period(काष्ठा scsi_target *starget, पूर्णांक period)
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	काष्ठा ncb *np = ((काष्ठा host_data *)shost->hostdata)->ncb;
+	काष्ठा tcb *tp = &np->target[starget->id];
 
-	if (period > np->maxsync)
+	अगर (period > np->maxsync)
 		period = np->maxsync;
-	else if (period < np->minsync)
+	अन्यथा अगर (period < np->minsync)
 		period = np->minsync;
 
 	tp->usrsync = period;
 
 	ncr_negotiate(np, tp);
-}
+पूर्ण
 
-static void ncr53c8xx_set_offset(struct scsi_target *starget, int offset)
-{
-	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	struct ncb *np = ((struct host_data *)shost->hostdata)->ncb;
-	struct tcb *tp = &np->target[starget->id];
+अटल व्योम ncr53c8xx_set_offset(काष्ठा scsi_target *starget, पूर्णांक offset)
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	काष्ठा ncb *np = ((काष्ठा host_data *)shost->hostdata)->ncb;
+	काष्ठा tcb *tp = &np->target[starget->id];
 
-	if (offset > np->maxoffs)
+	अगर (offset > np->maxoffs)
 		offset = np->maxoffs;
-	else if (offset < 0)
+	अन्यथा अगर (offset < 0)
 		offset = 0;
 
 	tp->maxoffs = offset;
 
 	ncr_negotiate(np, tp);
-}
+पूर्ण
 
-static void ncr53c8xx_set_width(struct scsi_target *starget, int width)
-{
-	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	struct ncb *np = ((struct host_data *)shost->hostdata)->ncb;
-	struct tcb *tp = &np->target[starget->id];
+अटल व्योम ncr53c8xx_set_width(काष्ठा scsi_target *starget, पूर्णांक width)
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	काष्ठा ncb *np = ((काष्ठा host_data *)shost->hostdata)->ncb;
+	काष्ठा tcb *tp = &np->target[starget->id];
 
-	if (width > np->maxwide)
+	अगर (width > np->maxwide)
 		width = np->maxwide;
-	else if (width < 0)
+	अन्यथा अगर (width < 0)
 		width = 0;
 
 	tp->usrwide = width;
 
 	ncr_negotiate(np, tp);
-}
+पूर्ण
 
-static void ncr53c8xx_get_signalling(struct Scsi_Host *shost)
-{
-	struct ncb *np = ((struct host_data *)shost->hostdata)->ncb;
-	enum spi_signal_type type;
+अटल व्योम ncr53c8xx_get_संकेतling(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा ncb *np = ((काष्ठा host_data *)shost->hostdata)->ncb;
+	क्रमागत spi_संकेत_type type;
 
-	switch (np->scsi_mode) {
-	case SMODE_SE:
+	चयन (np->scsi_mode) अणु
+	हाल SMODE_SE:
 		type = SPI_SIGNAL_SE;
-		break;
-	case SMODE_HVD:
+		अवरोध;
+	हाल SMODE_HVD:
 		type = SPI_SIGNAL_HVD;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		type = SPI_SIGNAL_UNKNOWN;
-		break;
-	}
-	spi_signalling(shost) = type;
-}
+		अवरोध;
+	पूर्ण
+	spi_संकेतling(shost) = type;
+पूर्ण
 
-static struct spi_function_template ncr53c8xx_transport_functions =  {
+अटल काष्ठा spi_function_ढाँचा ncr53c8xx_transport_functions =  अणु
 	.set_period	= ncr53c8xx_set_period,
 	.show_period	= 1,
 	.set_offset	= ncr53c8xx_set_offset,
 	.show_offset	= 1,
 	.set_width	= ncr53c8xx_set_width,
 	.show_width	= 1,
-	.get_signalling	= ncr53c8xx_get_signalling,
-};
+	.get_संकेतling	= ncr53c8xx_get_संकेतling,
+पूर्ण;
 
-int __init ncr53c8xx_init(void)
-{
-	ncr53c8xx_transport_template = spi_attach_transport(&ncr53c8xx_transport_functions);
-	if (!ncr53c8xx_transport_template)
-		return -ENODEV;
-	return 0;
-}
+पूर्णांक __init ncr53c8xx_init(व्योम)
+अणु
+	ncr53c8xx_transport_ढाँचा = spi_attach_transport(&ncr53c8xx_transport_functions);
+	अगर (!ncr53c8xx_transport_ढाँचा)
+		वापस -ENODEV;
+	वापस 0;
+पूर्ण
 
-void ncr53c8xx_exit(void)
-{
-	spi_release_transport(ncr53c8xx_transport_template);
-}
+व्योम ncr53c8xx_निकास(व्योम)
+अणु
+	spi_release_transport(ncr53c8xx_transport_ढाँचा);
+पूर्ण

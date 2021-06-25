@@ -1,173 +1,174 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OMFS (as used by RIO Karma) file operations.
  * Copyright (C) 2005 Bob Copeland <me@bobcopeland.com>
  */
 
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/buffer_head.h>
-#include <linux/mpage.h>
-#include "omfs.h"
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/mpage.h>
+#समावेश "omfs.h"
 
-static u32 omfs_max_extents(struct omfs_sb_info *sbi, int offset)
-{
-	return (sbi->s_sys_blocksize - offset -
-		sizeof(struct omfs_extent)) /
-		sizeof(struct omfs_extent_entry) + 1;
-}
+अटल u32 omfs_max_extents(काष्ठा omfs_sb_info *sbi, पूर्णांक offset)
+अणु
+	वापस (sbi->s_sys_blocksize - offset -
+		माप(काष्ठा omfs_extent)) /
+		माप(काष्ठा omfs_extent_entry) + 1;
+पूर्ण
 
-void omfs_make_empty_table(struct buffer_head *bh, int offset)
-{
-	struct omfs_extent *oe = (struct omfs_extent *) &bh->b_data[offset];
+व्योम omfs_make_empty_table(काष्ठा buffer_head *bh, पूर्णांक offset)
+अणु
+	काष्ठा omfs_extent *oe = (काष्ठा omfs_extent *) &bh->b_data[offset];
 
 	oe->e_next = ~cpu_to_be64(0ULL);
 	oe->e_extent_count = cpu_to_be32(1),
 	oe->e_fill = cpu_to_be32(0x22),
 	oe->e_entry.e_cluster = ~cpu_to_be64(0ULL);
 	oe->e_entry.e_blocks = ~cpu_to_be64(0ULL);
-}
+पूर्ण
 
-int omfs_shrink_inode(struct inode *inode)
-{
-	struct omfs_sb_info *sbi = OMFS_SB(inode->i_sb);
-	struct omfs_extent *oe;
-	struct omfs_extent_entry *entry;
-	struct buffer_head *bh;
+पूर्णांक omfs_shrink_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा omfs_sb_info *sbi = OMFS_SB(inode->i_sb);
+	काष्ठा omfs_extent *oe;
+	काष्ठा omfs_extent_entry *entry;
+	काष्ठा buffer_head *bh;
 	u64 next, last;
 	u32 extent_count;
 	u32 max_extents;
-	int ret;
+	पूर्णांक ret;
 
-	/* traverse extent table, freeing each entry that is greater
+	/* traverse extent table, मुक्तing each entry that is greater
 	 * than inode->i_size;
 	 */
 	next = inode->i_ino;
 
-	/* only support truncate -> 0 for now */
+	/* only support truncate -> 0 क्रम now */
 	ret = -EIO;
-	if (inode->i_size != 0)
-		goto out;
+	अगर (inode->i_size != 0)
+		जाओ out;
 
-	bh = omfs_bread(inode->i_sb, next);
-	if (!bh)
-		goto out;
+	bh = omfs_bपढ़ो(inode->i_sb, next);
+	अगर (!bh)
+		जाओ out;
 
-	oe = (struct omfs_extent *)(&bh->b_data[OMFS_EXTENT_START]);
+	oe = (काष्ठा omfs_extent *)(&bh->b_data[OMFS_EXTENT_START]);
 	max_extents = omfs_max_extents(sbi, OMFS_EXTENT_START);
 
-	for (;;) {
+	क्रम (;;) अणु
 
-		if (omfs_is_bad(sbi, (struct omfs_header *) bh->b_data, next))
-			goto out_brelse;
+		अगर (omfs_is_bad(sbi, (काष्ठा omfs_header *) bh->b_data, next))
+			जाओ out_brअन्यथा;
 
 		extent_count = be32_to_cpu(oe->e_extent_count);
 
-		if (extent_count > max_extents)
-			goto out_brelse;
+		अगर (extent_count > max_extents)
+			जाओ out_brअन्यथा;
 
 		last = next;
 		next = be64_to_cpu(oe->e_next);
 		entry = &oe->e_entry;
 
 		/* ignore last entry as it is the terminator */
-		for (; extent_count > 1; extent_count--) {
+		क्रम (; extent_count > 1; extent_count--) अणु
 			u64 start, count;
 			start = be64_to_cpu(entry->e_cluster);
 			count = be64_to_cpu(entry->e_blocks);
 
-			omfs_clear_range(inode->i_sb, start, (int) count);
+			omfs_clear_range(inode->i_sb, start, (पूर्णांक) count);
 			entry++;
-		}
-		omfs_make_empty_table(bh, (char *) oe - bh->b_data);
+		पूर्ण
+		omfs_make_empty_table(bh, (अक्षर *) oe - bh->b_data);
 		mark_buffer_dirty(bh);
-		brelse(bh);
+		brअन्यथा(bh);
 
-		if (last != inode->i_ino)
+		अगर (last != inode->i_ino)
 			omfs_clear_range(inode->i_sb, last, sbi->s_mirrors);
 
-		if (next == ~0)
-			break;
+		अगर (next == ~0)
+			अवरोध;
 
-		bh = omfs_bread(inode->i_sb, next);
-		if (!bh)
-			goto out;
-		oe = (struct omfs_extent *) (&bh->b_data[OMFS_EXTENT_CONT]);
+		bh = omfs_bपढ़ो(inode->i_sb, next);
+		अगर (!bh)
+			जाओ out;
+		oe = (काष्ठा omfs_extent *) (&bh->b_data[OMFS_EXTENT_CONT]);
 		max_extents = omfs_max_extents(sbi, OMFS_EXTENT_CONT);
-	}
+	पूर्ण
 	ret = 0;
 out:
-	return ret;
-out_brelse:
-	brelse(bh);
-	return ret;
-}
+	वापस ret;
+out_brअन्यथा:
+	brअन्यथा(bh);
+	वापस ret;
+पूर्ण
 
-static void omfs_truncate(struct inode *inode)
-{
+अटल व्योम omfs_truncate(काष्ठा inode *inode)
+अणु
 	omfs_shrink_inode(inode);
 	mark_inode_dirty(inode);
-}
+पूर्ण
 
 /*
  * Add new blocks to the current extent, or create new entries/continuations
  * as necessary.
  */
-static int omfs_grow_extent(struct inode *inode, struct omfs_extent *oe,
+अटल पूर्णांक omfs_grow_extent(काष्ठा inode *inode, काष्ठा omfs_extent *oe,
 			u64 *ret_block)
-{
-	struct omfs_extent_entry *terminator;
-	struct omfs_extent_entry *entry = &oe->e_entry;
-	struct omfs_sb_info *sbi = OMFS_SB(inode->i_sb);
+अणु
+	काष्ठा omfs_extent_entry *terminator;
+	काष्ठा omfs_extent_entry *entry = &oe->e_entry;
+	काष्ठा omfs_sb_info *sbi = OMFS_SB(inode->i_sb);
 	u32 extent_count = be32_to_cpu(oe->e_extent_count);
 	u64 new_block = 0;
 	u32 max_count;
-	int new_count;
-	int ret = 0;
+	पूर्णांक new_count;
+	पूर्णांक ret = 0;
 
 	/* reached the end of the extent table with no blocks mapped.
-	 * there are three possibilities for adding: grow last extent,
+	 * there are three possibilities क्रम adding: grow last extent,
 	 * add a new extent to the current extent table, and add a
-	 * continuation inode.  in last two cases need an allocator for
+	 * continuation inode.  in last two हालs need an allocator क्रम
 	 * sbi->s_cluster_size
 	 */
 
 	/* TODO: handle holes */
 
 	/* should always have a terminator */
-	if (extent_count < 1)
-		return -EIO;
+	अगर (extent_count < 1)
+		वापस -EIO;
 
-	/* trivially grow current extent, if next block is not taken */
+	/* trivially grow current extent, अगर next block is not taken */
 	terminator = entry + extent_count - 1;
-	if (extent_count > 1) {
+	अगर (extent_count > 1) अणु
 		entry = terminator-1;
 		new_block = be64_to_cpu(entry->e_cluster) +
 			be64_to_cpu(entry->e_blocks);
 
-		if (omfs_allocate_block(inode->i_sb, new_block)) {
+		अगर (omfs_allocate_block(inode->i_sb, new_block)) अणु
 			be64_add_cpu(&entry->e_blocks, 1);
 			terminator->e_blocks = ~(cpu_to_be64(
 				be64_to_cpu(~terminator->e_blocks) + 1));
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	max_count = omfs_max_extents(sbi, OMFS_EXTENT_START);
 
 	/* TODO: add a continuation block here */
-	if (be32_to_cpu(oe->e_extent_count) > max_count-1)
-		return -EIO;
+	अगर (be32_to_cpu(oe->e_extent_count) > max_count-1)
+		वापस -EIO;
 
 	/* try to allocate a new cluster */
 	ret = omfs_allocate_range(inode->i_sb, 1, sbi->s_clustersize,
 		&new_block, &new_count);
-	if (ret)
-		goto out_fail;
+	अगर (ret)
+		जाओ out_fail;
 
-	/* copy terminator down an entry */
+	/* copy terminator करोwn an entry */
 	entry = terminator;
 	terminator++;
-	memcpy(terminator, entry, sizeof(struct omfs_extent_entry));
+	स_नकल(terminator, entry, माप(काष्ठा omfs_extent_entry));
 
 	entry->e_cluster = cpu_to_be64(new_block);
 	entry->e_blocks = cpu_to_be64((u64) new_count);
@@ -175,209 +176,209 @@ static int omfs_grow_extent(struct inode *inode, struct omfs_extent *oe,
 	terminator->e_blocks = ~(cpu_to_be64(
 		be64_to_cpu(~terminator->e_blocks) + (u64) new_count));
 
-	/* write in new entry */
+	/* ग_लिखो in new entry */
 	be32_add_cpu(&oe->e_extent_count, 1);
 
 out:
 	*ret_block = new_block;
 out_fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Scans across the directory table for a given file block number.
- * If block not found, return 0.
+ * Scans across the directory table क्रम a given file block number.
+ * If block not found, वापस 0.
  */
-static sector_t find_block(struct inode *inode, struct omfs_extent_entry *ent,
-			sector_t block, int count, int *left)
-{
+अटल sector_t find_block(काष्ठा inode *inode, काष्ठा omfs_extent_entry *ent,
+			sector_t block, पूर्णांक count, पूर्णांक *left)
+अणु
 	/* count > 1 because of terminator */
 	sector_t searched = 0;
-	for (; count > 1; count--) {
-		int numblocks = clus_to_blk(OMFS_SB(inode->i_sb),
+	क्रम (; count > 1; count--) अणु
+		पूर्णांक numblocks = clus_to_blk(OMFS_SB(inode->i_sb),
 			be64_to_cpu(ent->e_blocks));
 
-		if (block >= searched  &&
-		    block < searched + numblocks) {
+		अगर (block >= searched  &&
+		    block < searched + numblocks) अणु
 			/*
 			 * found it at cluster + (block - searched)
-			 * numblocks - (block - searched) is remainder
+			 * numblocks - (block - searched) is reमुख्यder
 			 */
 			*left = numblocks - (block - searched);
-			return clus_to_blk(OMFS_SB(inode->i_sb),
+			वापस clus_to_blk(OMFS_SB(inode->i_sb),
 				be64_to_cpu(ent->e_cluster)) +
 				block - searched;
-		}
+		पूर्ण
 		searched += numblocks;
 		ent++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int omfs_get_block(struct inode *inode, sector_t block,
-			  struct buffer_head *bh_result, int create)
-{
-	struct buffer_head *bh;
+अटल पूर्णांक omfs_get_block(काष्ठा inode *inode, sector_t block,
+			  काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	काष्ठा buffer_head *bh;
 	sector_t next, offset;
-	int ret;
+	पूर्णांक ret;
 	u64 new_block;
 	u32 max_extents;
-	int extent_count;
-	struct omfs_extent *oe;
-	struct omfs_extent_entry *entry;
-	struct omfs_sb_info *sbi = OMFS_SB(inode->i_sb);
-	int max_blocks = bh_result->b_size >> inode->i_blkbits;
-	int remain;
+	पूर्णांक extent_count;
+	काष्ठा omfs_extent *oe;
+	काष्ठा omfs_extent_entry *entry;
+	काष्ठा omfs_sb_info *sbi = OMFS_SB(inode->i_sb);
+	पूर्णांक max_blocks = bh_result->b_size >> inode->i_blkbits;
+	पूर्णांक reमुख्य;
 
 	ret = -EIO;
-	bh = omfs_bread(inode->i_sb, inode->i_ino);
-	if (!bh)
-		goto out;
+	bh = omfs_bपढ़ो(inode->i_sb, inode->i_ino);
+	अगर (!bh)
+		जाओ out;
 
-	oe = (struct omfs_extent *)(&bh->b_data[OMFS_EXTENT_START]);
+	oe = (काष्ठा omfs_extent *)(&bh->b_data[OMFS_EXTENT_START]);
 	max_extents = omfs_max_extents(sbi, OMFS_EXTENT_START);
 	next = inode->i_ino;
 
-	for (;;) {
+	क्रम (;;) अणु
 
-		if (omfs_is_bad(sbi, (struct omfs_header *) bh->b_data, next))
-			goto out_brelse;
+		अगर (omfs_is_bad(sbi, (काष्ठा omfs_header *) bh->b_data, next))
+			जाओ out_brअन्यथा;
 
 		extent_count = be32_to_cpu(oe->e_extent_count);
 		next = be64_to_cpu(oe->e_next);
 		entry = &oe->e_entry;
 
-		if (extent_count > max_extents)
-			goto out_brelse;
+		अगर (extent_count > max_extents)
+			जाओ out_brअन्यथा;
 
-		offset = find_block(inode, entry, block, extent_count, &remain);
-		if (offset > 0) {
+		offset = find_block(inode, entry, block, extent_count, &reमुख्य);
+		अगर (offset > 0) अणु
 			ret = 0;
 			map_bh(bh_result, inode->i_sb, offset);
-			if (remain > max_blocks)
-				remain = max_blocks;
-			bh_result->b_size = (remain << inode->i_blkbits);
-			goto out_brelse;
-		}
-		if (next == ~0)
-			break;
+			अगर (reमुख्य > max_blocks)
+				reमुख्य = max_blocks;
+			bh_result->b_size = (reमुख्य << inode->i_blkbits);
+			जाओ out_brअन्यथा;
+		पूर्ण
+		अगर (next == ~0)
+			अवरोध;
 
-		brelse(bh);
-		bh = omfs_bread(inode->i_sb, next);
-		if (!bh)
-			goto out;
-		oe = (struct omfs_extent *) (&bh->b_data[OMFS_EXTENT_CONT]);
+		brअन्यथा(bh);
+		bh = omfs_bपढ़ो(inode->i_sb, next);
+		अगर (!bh)
+			जाओ out;
+		oe = (काष्ठा omfs_extent *) (&bh->b_data[OMFS_EXTENT_CONT]);
 		max_extents = omfs_max_extents(sbi, OMFS_EXTENT_CONT);
-	}
-	if (create) {
+	पूर्ण
+	अगर (create) अणु
 		ret = omfs_grow_extent(inode, oe, &new_block);
-		if (ret == 0) {
+		अगर (ret == 0) अणु
 			mark_buffer_dirty(bh);
 			mark_inode_dirty(inode);
 			map_bh(bh_result, inode->i_sb,
 					clus_to_blk(sbi, new_block));
-		}
-	}
-out_brelse:
-	brelse(bh);
+		पूर्ण
+	पूर्ण
+out_brअन्यथा:
+	brअन्यथा(bh);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int omfs_readpage(struct file *file, struct page *page)
-{
-	return block_read_full_page(page, omfs_get_block);
-}
+अटल पूर्णांक omfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	वापस block_पढ़ो_full_page(page, omfs_get_block);
+पूर्ण
 
-static void omfs_readahead(struct readahead_control *rac)
-{
-	mpage_readahead(rac, omfs_get_block);
-}
+अटल व्योम omfs_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
+अणु
+	mpage_पढ़ोahead(rac, omfs_get_block);
+पूर्ण
 
-static int omfs_writepage(struct page *page, struct writeback_control *wbc)
-{
-	return block_write_full_page(page, omfs_get_block, wbc);
-}
+अटल पूर्णांक omfs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस block_ग_लिखो_full_page(page, omfs_get_block, wbc);
+पूर्ण
 
-static int
-omfs_writepages(struct address_space *mapping, struct writeback_control *wbc)
-{
-	return mpage_writepages(mapping, wbc, omfs_get_block);
-}
+अटल पूर्णांक
+omfs_ग_लिखोpages(काष्ठा address_space *mapping, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस mpage_ग_लिखोpages(mapping, wbc, omfs_get_block);
+पूर्ण
 
-static void omfs_write_failed(struct address_space *mapping, loff_t to)
-{
-	struct inode *inode = mapping->host;
+अटल व्योम omfs_ग_लिखो_failed(काष्ठा address_space *mapping, loff_t to)
+अणु
+	काष्ठा inode *inode = mapping->host;
 
-	if (to > inode->i_size) {
+	अगर (to > inode->i_size) अणु
 		truncate_pagecache(inode, inode->i_size);
 		omfs_truncate(inode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int omfs_write_begin(struct file *file, struct address_space *mapping,
-			loff_t pos, unsigned len, unsigned flags,
-			struct page **pagep, void **fsdata)
-{
-	int ret;
+अटल पूर्णांक omfs_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
+			loff_t pos, अचिन्हित len, अचिन्हित flags,
+			काष्ठा page **pagep, व्योम **fsdata)
+अणु
+	पूर्णांक ret;
 
-	ret = block_write_begin(mapping, pos, len, flags, pagep,
+	ret = block_ग_लिखो_begin(mapping, pos, len, flags, pagep,
 				omfs_get_block);
-	if (unlikely(ret))
-		omfs_write_failed(mapping, pos + len);
+	अगर (unlikely(ret))
+		omfs_ग_लिखो_failed(mapping, pos + len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static sector_t omfs_bmap(struct address_space *mapping, sector_t block)
-{
-	return generic_block_bmap(mapping, block, omfs_get_block);
-}
+अटल sector_t omfs_bmap(काष्ठा address_space *mapping, sector_t block)
+अणु
+	वापस generic_block_bmap(mapping, block, omfs_get_block);
+पूर्ण
 
-const struct file_operations omfs_file_operations = {
+स्थिर काष्ठा file_operations omfs_file_operations = अणु
 	.llseek = generic_file_llseek,
-	.read_iter = generic_file_read_iter,
-	.write_iter = generic_file_write_iter,
+	.पढ़ो_iter = generic_file_पढ़ो_iter,
+	.ग_लिखो_iter = generic_file_ग_लिखो_iter,
 	.mmap = generic_file_mmap,
 	.fsync = generic_file_fsync,
-	.splice_read = generic_file_splice_read,
-};
+	.splice_पढ़ो = generic_file_splice_पढ़ो,
+पूर्ण;
 
-static int omfs_setattr(struct user_namespace *mnt_userns,
-			struct dentry *dentry, struct iattr *attr)
-{
-	struct inode *inode = d_inode(dentry);
-	int error;
+अटल पूर्णांक omfs_setattr(काष्ठा user_namespace *mnt_userns,
+			काष्ठा dentry *dentry, काष्ठा iattr *attr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक error;
 
 	error = setattr_prepare(&init_user_ns, dentry, attr);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if ((attr->ia_valid & ATTR_SIZE) &&
-	    attr->ia_size != i_size_read(inode)) {
+	अगर ((attr->ia_valid & ATTR_SIZE) &&
+	    attr->ia_size != i_size_पढ़ो(inode)) अणु
 		error = inode_newsize_ok(inode, attr->ia_size);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 		truncate_setsize(inode, attr->ia_size);
 		omfs_truncate(inode);
-	}
+	पूर्ण
 
 	setattr_copy(&init_user_ns, inode, attr);
 	mark_inode_dirty(inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct inode_operations omfs_file_inops = {
+स्थिर काष्ठा inode_operations omfs_file_inops = अणु
 	.setattr = omfs_setattr,
-};
+पूर्ण;
 
-const struct address_space_operations omfs_aops = {
-	.readpage = omfs_readpage,
-	.readahead = omfs_readahead,
-	.writepage = omfs_writepage,
-	.writepages = omfs_writepages,
-	.write_begin = omfs_write_begin,
-	.write_end = generic_write_end,
+स्थिर काष्ठा address_space_operations omfs_aops = अणु
+	.पढ़ोpage = omfs_पढ़ोpage,
+	.पढ़ोahead = omfs_पढ़ोahead,
+	.ग_लिखोpage = omfs_ग_लिखोpage,
+	.ग_लिखोpages = omfs_ग_लिखोpages,
+	.ग_लिखो_begin = omfs_ग_लिखो_begin,
+	.ग_लिखो_end = generic_ग_लिखो_end,
 	.bmap = omfs_bmap,
-};
+पूर्ण;
 

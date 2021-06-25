@@ -1,155 +1,156 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __OF_ADDRESS_H
-#define __OF_ADDRESS_H
-#include <linux/ioport.h>
-#include <linux/errno.h>
-#include <linux/of.h>
-#include <linux/io.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __OF_ADDRESS_H
+#घोषणा __OF_ADDRESS_H
+#समावेश <linux/ioport.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/of.h>
+#समावेश <linux/पन.स>
 
-struct of_bus;
+काष्ठा of_bus;
 
-struct of_pci_range_parser {
-	struct device_node *node;
-	struct of_bus *bus;
-	const __be32 *range;
-	const __be32 *end;
-	int na;
-	int ns;
-	int pna;
+काष्ठा of_pci_range_parser अणु
+	काष्ठा device_node *node;
+	काष्ठा of_bus *bus;
+	स्थिर __be32 *range;
+	स्थिर __be32 *end;
+	पूर्णांक na;
+	पूर्णांक ns;
+	पूर्णांक pna;
 	bool dma;
-};
-#define of_range_parser of_pci_range_parser
+पूर्ण;
+#घोषणा of_range_parser of_pci_range_parser
 
-struct of_pci_range {
-	union {
+काष्ठा of_pci_range अणु
+	जोड़ अणु
 		u64 pci_addr;
 		u64 bus_addr;
-	};
+	पूर्ण;
 	u64 cpu_addr;
 	u64 size;
 	u32 flags;
-};
-#define of_range of_pci_range
+पूर्ण;
+#घोषणा of_range of_pci_range
 
-#define for_each_of_pci_range(parser, range) \
-	for (; of_pci_range_parser_one(parser, range);)
-#define for_each_of_range for_each_of_pci_range
+#घोषणा क्रम_each_of_pci_range(parser, range) \
+	क्रम (; of_pci_range_parser_one(parser, range);)
+#घोषणा क्रम_each_of_range क्रम_each_of_pci_range
 
 /* Translate a DMA address from device space to CPU space */
-extern u64 of_translate_dma_address(struct device_node *dev,
-				    const __be32 *in_addr);
+बाह्य u64 of_translate_dma_address(काष्ठा device_node *dev,
+				    स्थिर __be32 *in_addr);
 
-#ifdef CONFIG_OF_ADDRESS
-extern u64 of_translate_address(struct device_node *np, const __be32 *addr);
-extern int of_address_to_resource(struct device_node *dev, int index,
-				  struct resource *r);
-extern void __iomem *of_iomap(struct device_node *device, int index);
-void __iomem *of_io_request_and_map(struct device_node *device,
-				    int index, const char *name);
+#अगर_घोषित CONFIG_OF_ADDRESS
+बाह्य u64 of_translate_address(काष्ठा device_node *np, स्थिर __be32 *addr);
+बाह्य पूर्णांक of_address_to_resource(काष्ठा device_node *dev, पूर्णांक index,
+				  काष्ठा resource *r);
+बाह्य व्योम __iomem *of_iomap(काष्ठा device_node *device, पूर्णांक index);
+व्योम __iomem *of_io_request_and_map(काष्ठा device_node *device,
+				    पूर्णांक index, स्थिर अक्षर *name);
 
-/* Extract an address from a device, returns the region size and
+/* Extract an address from a device, वापसs the region size and
  * the address space flags too. The PCI version uses a BAR number
- * instead of an absolute index
+ * instead of an असलolute index
  */
-extern const __be32 *of_get_address(struct device_node *dev, int index,
-			   u64 *size, unsigned int *flags);
+बाह्य स्थिर __be32 *of_get_address(काष्ठा device_node *dev, पूर्णांक index,
+			   u64 *size, अचिन्हित पूर्णांक *flags);
 
-extern int of_pci_range_parser_init(struct of_pci_range_parser *parser,
-			struct device_node *node);
-extern int of_pci_dma_range_parser_init(struct of_pci_range_parser *parser,
-			struct device_node *node);
-extern struct of_pci_range *of_pci_range_parser_one(
-					struct of_pci_range_parser *parser,
-					struct of_pci_range *range);
-extern bool of_dma_is_coherent(struct device_node *np);
-#else /* CONFIG_OF_ADDRESS */
-static inline void __iomem *of_io_request_and_map(struct device_node *device,
-						  int index, const char *name)
-{
-	return IOMEM_ERR_PTR(-EINVAL);
-}
+बाह्य पूर्णांक of_pci_range_parser_init(काष्ठा of_pci_range_parser *parser,
+			काष्ठा device_node *node);
+बाह्य पूर्णांक of_pci_dma_range_parser_init(काष्ठा of_pci_range_parser *parser,
+			काष्ठा device_node *node);
+बाह्य काष्ठा of_pci_range *of_pci_range_parser_one(
+					काष्ठा of_pci_range_parser *parser,
+					काष्ठा of_pci_range *range);
+बाह्य bool of_dma_is_coherent(काष्ठा device_node *np);
+#अन्यथा /* CONFIG_OF_ADDRESS */
+अटल अंतरभूत व्योम __iomem *of_io_request_and_map(काष्ठा device_node *device,
+						  पूर्णांक index, स्थिर अक्षर *name)
+अणु
+	वापस IOMEM_ERR_PTR(-EINVAL);
+पूर्ण
 
-static inline u64 of_translate_address(struct device_node *np,
-				       const __be32 *addr)
-{
-	return OF_BAD_ADDR;
-}
+अटल अंतरभूत u64 of_translate_address(काष्ठा device_node *np,
+				       स्थिर __be32 *addr)
+अणु
+	वापस OF_BAD_ADDR;
+पूर्ण
 
-static inline const __be32 *of_get_address(struct device_node *dev, int index,
-					u64 *size, unsigned int *flags)
-{
-	return NULL;
-}
+अटल अंतरभूत स्थिर __be32 *of_get_address(काष्ठा device_node *dev, पूर्णांक index,
+					u64 *size, अचिन्हित पूर्णांक *flags)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int of_pci_range_parser_init(struct of_pci_range_parser *parser,
-			struct device_node *node)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक of_pci_range_parser_init(काष्ठा of_pci_range_parser *parser,
+			काष्ठा device_node *node)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int of_pci_dma_range_parser_init(struct of_pci_range_parser *parser,
-			struct device_node *node)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक of_pci_dma_range_parser_init(काष्ठा of_pci_range_parser *parser,
+			काष्ठा device_node *node)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline struct of_pci_range *of_pci_range_parser_one(
-					struct of_pci_range_parser *parser,
-					struct of_pci_range *range)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा of_pci_range *of_pci_range_parser_one(
+					काष्ठा of_pci_range_parser *parser,
+					काष्ठा of_pci_range *range)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool of_dma_is_coherent(struct device_node *np)
-{
-	return false;
-}
-#endif /* CONFIG_OF_ADDRESS */
+अटल अंतरभूत bool of_dma_is_coherent(काष्ठा device_node *np)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF_ADDRESS */
 
-#ifdef CONFIG_OF
-extern int of_address_to_resource(struct device_node *dev, int index,
-				  struct resource *r);
-void __iomem *of_iomap(struct device_node *node, int index);
-#else
-static inline int of_address_to_resource(struct device_node *dev, int index,
-					 struct resource *r)
-{
-	return -EINVAL;
-}
+#अगर_घोषित CONFIG_OF
+बाह्य पूर्णांक of_address_to_resource(काष्ठा device_node *dev, पूर्णांक index,
+				  काष्ठा resource *r);
+व्योम __iomem *of_iomap(काष्ठा device_node *node, पूर्णांक index);
+#अन्यथा
+अटल अंतरभूत पूर्णांक of_address_to_resource(काष्ठा device_node *dev, पूर्णांक index,
+					 काष्ठा resource *r)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void __iomem *of_iomap(struct device_node *device, int index)
-{
-	return NULL;
-}
-#endif
-#define of_range_parser_init of_pci_range_parser_init
+अटल अंतरभूत व्योम __iomem *of_iomap(काष्ठा device_node *device, पूर्णांक index)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
+#घोषणा of_range_parser_init of_pci_range_parser_init
 
-#if defined(CONFIG_OF_ADDRESS) && defined(CONFIG_PCI)
-extern const __be32 *of_get_pci_address(struct device_node *dev, int bar_no,
-			       u64 *size, unsigned int *flags);
-extern int of_pci_address_to_resource(struct device_node *dev, int bar,
-				      struct resource *r);
-extern int of_pci_range_to_resource(struct of_pci_range *range,
-				    struct device_node *np,
-				    struct resource *res);
-#else /* CONFIG_OF_ADDRESS && CONFIG_PCI */
-static inline int of_pci_address_to_resource(struct device_node *dev, int bar,
-				             struct resource *r)
-{
-	return -ENOSYS;
-}
+#अगर defined(CONFIG_OF_ADDRESS) && defined(CONFIG_PCI)
+बाह्य स्थिर __be32 *of_get_pci_address(काष्ठा device_node *dev, पूर्णांक bar_no,
+			       u64 *size, अचिन्हित पूर्णांक *flags);
+बाह्य पूर्णांक of_pci_address_to_resource(काष्ठा device_node *dev, पूर्णांक bar,
+				      काष्ठा resource *r);
+बाह्य पूर्णांक of_pci_range_to_resource(काष्ठा of_pci_range *range,
+				    काष्ठा device_node *np,
+				    काष्ठा resource *res);
+#अन्यथा /* CONFIG_OF_ADDRESS && CONFIG_PCI */
+अटल अंतरभूत पूर्णांक of_pci_address_to_resource(काष्ठा device_node *dev, पूर्णांक bar,
+				             काष्ठा resource *r)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline const __be32 *of_get_pci_address(struct device_node *dev,
-		int bar_no, u64 *size, unsigned int *flags)
-{
-	return NULL;
-}
-static inline int of_pci_range_to_resource(struct of_pci_range *range,
-					   struct device_node *np,
-					   struct resource *res)
-{
-	return -ENOSYS;
-}
-#endif /* CONFIG_OF_ADDRESS && CONFIG_PCI */
+अटल अंतरभूत स्थिर __be32 *of_get_pci_address(काष्ठा device_node *dev,
+		पूर्णांक bar_no, u64 *size, अचिन्हित पूर्णांक *flags)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत पूर्णांक of_pci_range_to_resource(काष्ठा of_pci_range *range,
+					   काष्ठा device_node *np,
+					   काष्ठा resource *res)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF_ADDRESS && CONFIG_PCI */
 
-#endif /* __OF_ADDRESS_H */
+#पूर्ण_अगर /* __OF_ADDRESS_H */

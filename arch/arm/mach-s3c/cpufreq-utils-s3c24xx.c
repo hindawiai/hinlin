@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2009 Simtec Electronics
 //	http://armlinux.simtec.co.uk/
 //	Ben Dooks <ben@simtec.co.uk>
 //
-// S3C24XX CPU Frequency scaling - utils for S3C2410/S3C2440/S3C2442
+// S3C24XX CPU Frequency scaling - utils क्रम S3C2410/S3C2440/S3C2442
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/cpufreq.h>
-#include <linux/io.h>
-#include <linux/clk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
 
-#include "map.h"
-#include "regs-clock.h"
+#समावेश "map.h"
+#समावेश "regs-clock.h"
 
-#include <linux/soc/samsung/s3c-cpufreq-core.h>
+#समावेश <linux/soc/samsung/s3c-cpufreq-core.h>
 
-#include "regs-mem-s3c24xx.h"
+#समावेश "regs-mem-s3c24xx.h"
 
 /**
  * s3c2410_cpufreq_setrefresh - set SDRAM refresh value
  * @cfg: The frequency configuration
  *
- * Set the SDRAM refresh value appropriately for the configured
+ * Set the SDRAM refresh value appropriately क्रम the configured
  * frequency.
  */
-void s3c2410_cpufreq_setrefresh(struct s3c_cpufreq_config *cfg)
-{
-	struct s3c_cpufreq_board *board = cfg->board;
-	unsigned long refresh;
-	unsigned long refval;
+व्योम s3c2410_cpufreq_setrefresh(काष्ठा s3c_cpufreq_config *cfg)
+अणु
+	काष्ठा s3c_cpufreq_board *board = cfg->board;
+	अचिन्हित दीर्घ refresh;
+	अचिन्हित दीर्घ refval;
 
-	/* Reduce both the refresh time (in ns) and the frequency (in MHz)
-	 * down to ensure that we do not overflow 32 bit numbers.
+	/* Reduce both the refresh समय (in ns) and the frequency (in MHz)
+	 * करोwn to ensure that we करो not overflow 32 bit numbers.
 	 *
-	 * This should work for HCLK up to 133MHz and refresh period up
+	 * This should work क्रम HCLK up to 133MHz and refresh period up
 	 * to 30usec.
 	 */
 
@@ -45,50 +46,50 @@ void s3c2410_cpufreq_setrefresh(struct s3c_cpufreq_config *cfg)
 
 	s3c_freq_dbg("%s: refresh value %lu\n", __func__, refresh);
 
-	refval = __raw_readl(S3C2410_REFRESH);
+	refval = __raw_पढ़ोl(S3C2410_REFRESH);
 	refval &= ~((1 << 12) - 1);
 	refval |= refresh;
-	__raw_writel(refval, S3C2410_REFRESH);
-}
+	__raw_ग_लिखोl(refval, S3C2410_REFRESH);
+पूर्ण
 
 /**
  * s3c2410_set_fvco - set the PLL value
  * @cfg: The frequency configuration
  */
-void s3c2410_set_fvco(struct s3c_cpufreq_config *cfg)
-{
-	if (!IS_ERR(cfg->mpll))
+व्योम s3c2410_set_fvco(काष्ठा s3c_cpufreq_config *cfg)
+अणु
+	अगर (!IS_ERR(cfg->mpll))
 		clk_set_rate(cfg->mpll, cfg->pll.frequency);
-}
+पूर्ण
 
-#if defined(CONFIG_CPU_S3C2440) || defined(CONFIG_CPU_S3C2442)
-u32 s3c2440_read_camdivn(void)
-{
-	return __raw_readl(S3C2440_CAMDIVN);
-}
+#अगर defined(CONFIG_CPU_S3C2440) || defined(CONFIG_CPU_S3C2442)
+u32 s3c2440_पढ़ो_camभागn(व्योम)
+अणु
+	वापस __raw_पढ़ोl(S3C2440_CAMDIVN);
+पूर्ण
 
-void s3c2440_write_camdivn(u32 camdiv)
-{
-	__raw_writel(camdiv, S3C2440_CAMDIVN);
-}
-#endif
+व्योम s3c2440_ग_लिखो_camभागn(u32 camभाग)
+अणु
+	__raw_ग_लिखोl(camभाग, S3C2440_CAMDIVN);
+पूर्ण
+#पूर्ण_अगर
 
-u32 s3c24xx_read_clkdivn(void)
-{
-	return __raw_readl(S3C2410_CLKDIVN);
-}
+u32 s3c24xx_पढ़ो_clkभागn(व्योम)
+अणु
+	वापस __raw_पढ़ोl(S3C2410_CLKDIVN);
+पूर्ण
 
-void s3c24xx_write_clkdivn(u32 clkdiv)
-{
-	__raw_writel(clkdiv, S3C2410_CLKDIVN);
-}
+व्योम s3c24xx_ग_लिखो_clkभागn(u32 clkभाग)
+अणु
+	__raw_ग_लिखोl(clkभाग, S3C2410_CLKDIVN);
+पूर्ण
 
-u32 s3c24xx_read_mpllcon(void)
-{
-	return __raw_readl(S3C2410_MPLLCON);
-}
+u32 s3c24xx_पढ़ो_mpllcon(व्योम)
+अणु
+	वापस __raw_पढ़ोl(S3C2410_MPLLCON);
+पूर्ण
 
-void s3c24xx_write_locktime(u32 locktime)
-{
-	return __raw_writel(locktime, S3C2410_LOCKTIME);
-}
+व्योम s3c24xx_ग_लिखो_lockसमय(u32 lockसमय)
+अणु
+	वापस __raw_ग_लिखोl(lockसमय, S3C2410_LOCKTIME);
+पूर्ण

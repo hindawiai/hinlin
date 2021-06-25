@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/spinlock.h>
-#include <linux/idr.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/of_device.h>
-#include <linux/soc/qcom/apr.h>
-#include <linux/soc/qcom/pdr.h>
-#include <linux/rpmsg.h>
-#include <linux/of.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/soc/qcom/apr.h>
+#समावेश <linux/soc/qcom/pdr.h>
+#समावेश <linux/rpmsg.h>
+#समावेश <linux/of.h>
 
-struct apr {
-	struct rpmsg_endpoint *ch;
-	struct device *dev;
+काष्ठा apr अणु
+	काष्ठा rpmsg_endpoपूर्णांक *ch;
+	काष्ठा device *dev;
 	spinlock_t svcs_lock;
 	spinlock_t rx_lock;
-	struct idr svcs_idr;
-	int dest_domain_id;
-	struct pdr_handle *pdr;
-	struct workqueue_struct *rxwq;
-	struct work_struct rx_work;
-	struct list_head rx_list;
-};
+	काष्ठा idr svcs_idr;
+	पूर्णांक dest_करोमुख्य_id;
+	काष्ठा pdr_handle *pdr;
+	काष्ठा workqueue_काष्ठा *rxwq;
+	काष्ठा work_काष्ठा rx_work;
+	काष्ठा list_head rx_list;
+पूर्ण;
 
-struct apr_rx_buf {
-	struct list_head node;
-	int len;
-	uint8_t buf[];
-};
+काष्ठा apr_rx_buf अणु
+	काष्ठा list_head node;
+	पूर्णांक len;
+	uपूर्णांक8_t buf[];
+पूर्ण;
 
 /**
  * apr_send_pkt() - Send a apr message from apr device
  *
- * @adev: Pointer to previously registered apr device.
- * @pkt: Pointer to apr packet to send
+ * @adev: Poपूर्णांकer to previously रेजिस्टरed apr device.
+ * @pkt: Poपूर्णांकer to apr packet to send
  *
  * Return: Will be an negative on packet size on success.
  */
-int apr_send_pkt(struct apr_device *adev, struct apr_pkt *pkt)
-{
-	struct apr *apr = dev_get_drvdata(adev->dev.parent);
-	struct apr_hdr *hdr;
-	unsigned long flags;
-	int ret;
+पूर्णांक apr_send_pkt(काष्ठा apr_device *adev, काष्ठा apr_pkt *pkt)
+अणु
+	काष्ठा apr *apr = dev_get_drvdata(adev->dev.parent);
+	काष्ठा apr_hdr *hdr;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&adev->lock, flags);
 
 	hdr = &pkt->hdr;
-	hdr->src_domain = APR_DOMAIN_APPS;
+	hdr->src_करोमुख्य = APR_DOMAIN_APPS;
 	hdr->src_svc = adev->svc_id;
-	hdr->dest_domain = adev->domain_id;
+	hdr->dest_करोमुख्य = adev->करोमुख्य_id;
 	hdr->dest_svc = adev->svc_id;
 
 	ret = rpmsg_trysend(apr->ch, pkt, hdr->pkt_size);
 	spin_unlock_irqrestore(&adev->lock, flags);
 
-	return ret ? ret : hdr->pkt_size;
-}
+	वापस ret ? ret : hdr->pkt_size;
+पूर्ण
 EXPORT_SYMBOL_GPL(apr_send_pkt);
 
-static void apr_dev_release(struct device *dev)
-{
-	struct apr_device *adev = to_apr_device(dev);
+अटल व्योम apr_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा apr_device *adev = to_apr_device(dev);
 
-	kfree(adev);
-}
+	kमुक्त(adev);
+पूर्ण
 
-static int apr_callback(struct rpmsg_device *rpdev, void *buf,
-				  int len, void *priv, u32 addr)
-{
-	struct apr *apr = dev_get_drvdata(&rpdev->dev);
-	struct apr_rx_buf *abuf;
-	unsigned long flags;
+अटल पूर्णांक apr_callback(काष्ठा rpmsg_device *rpdev, व्योम *buf,
+				  पूर्णांक len, व्योम *priv, u32 addr)
+अणु
+	काष्ठा apr *apr = dev_get_drvdata(&rpdev->dev);
+	काष्ठा apr_rx_buf *abuf;
+	अचिन्हित दीर्घ flags;
 
-	if (len <= APR_HDR_SIZE) {
+	अगर (len <= APR_HDR_SIZE) अणु
 		dev_err(apr->dev, "APR: Improper apr pkt received:%p %d\n",
 			buf, len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	abuf = kzalloc(sizeof(*abuf) + len, GFP_ATOMIC);
-	if (!abuf)
-		return -ENOMEM;
+	abuf = kzalloc(माप(*abuf) + len, GFP_ATOMIC);
+	अगर (!abuf)
+		वापस -ENOMEM;
 
 	abuf->len = len;
-	memcpy(abuf->buf, buf, len);
+	स_नकल(abuf->buf, buf, len);
 
 	spin_lock_irqsave(&apr->rx_lock, flags);
 	list_add_tail(&abuf->node, &apr->rx_list);
@@ -97,62 +98,62 @@ static int apr_callback(struct rpmsg_device *rpdev, void *buf,
 
 	queue_work(apr->rxwq, &apr->rx_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int apr_do_rx_callback(struct apr *apr, struct apr_rx_buf *abuf)
-{
-	uint16_t hdr_size, msg_type, ver, svc_id;
-	struct apr_device *svc = NULL;
-	struct apr_driver *adrv = NULL;
-	struct apr_resp_pkt resp;
-	struct apr_hdr *hdr;
-	unsigned long flags;
-	void *buf = abuf->buf;
-	int len = abuf->len;
+अटल पूर्णांक apr_करो_rx_callback(काष्ठा apr *apr, काष्ठा apr_rx_buf *abuf)
+अणु
+	uपूर्णांक16_t hdr_size, msg_type, ver, svc_id;
+	काष्ठा apr_device *svc = शून्य;
+	काष्ठा apr_driver *adrv = शून्य;
+	काष्ठा apr_resp_pkt resp;
+	काष्ठा apr_hdr *hdr;
+	अचिन्हित दीर्घ flags;
+	व्योम *buf = abuf->buf;
+	पूर्णांक len = abuf->len;
 
 	hdr = buf;
 	ver = APR_HDR_FIELD_VER(hdr->hdr_field);
-	if (ver > APR_PKT_VER + 1)
-		return -EINVAL;
+	अगर (ver > APR_PKT_VER + 1)
+		वापस -EINVAL;
 
 	hdr_size = APR_HDR_FIELD_SIZE_BYTES(hdr->hdr_field);
-	if (hdr_size < APR_HDR_SIZE) {
+	अगर (hdr_size < APR_HDR_SIZE) अणु
 		dev_err(apr->dev, "APR: Wrong hdr size:%d\n", hdr_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hdr->pkt_size < APR_HDR_SIZE || hdr->pkt_size != len) {
+	अगर (hdr->pkt_size < APR_HDR_SIZE || hdr->pkt_size != len) अणु
 		dev_err(apr->dev, "APR: Wrong packet size\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	msg_type = APR_HDR_FIELD_MT(hdr->hdr_field);
-	if (msg_type >= APR_MSG_TYPE_MAX) {
+	अगर (msg_type >= APR_MSG_TYPE_MAX) अणु
 		dev_err(apr->dev, "APR: Wrong message type: %d\n", msg_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hdr->src_domain >= APR_DOMAIN_MAX ||
-			hdr->dest_domain >= APR_DOMAIN_MAX ||
+	अगर (hdr->src_करोमुख्य >= APR_DOMAIN_MAX ||
+			hdr->dest_करोमुख्य >= APR_DOMAIN_MAX ||
 			hdr->src_svc >= APR_SVC_MAX ||
-			hdr->dest_svc >= APR_SVC_MAX) {
+			hdr->dest_svc >= APR_SVC_MAX) अणु
 		dev_err(apr->dev, "APR: Wrong APR header\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	svc_id = hdr->dest_svc;
 	spin_lock_irqsave(&apr->svcs_lock, flags);
 	svc = idr_find(&apr->svcs_idr, svc_id);
-	if (svc && svc->dev.driver)
+	अगर (svc && svc->dev.driver)
 		adrv = to_apr_driver(svc->dev.driver);
 	spin_unlock_irqrestore(&apr->svcs_lock, flags);
 
-	if (!adrv) {
+	अगर (!adrv) अणु
 		dev_err(apr->dev, "APR: service is not registered\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	resp.hdr = *hdr;
 	resp.payload_size = hdr->pkt_size - hdr_size;
@@ -161,289 +162,289 @@ static int apr_do_rx_callback(struct apr *apr, struct apr_rx_buf *abuf)
 	 * NOTE: hdr_size is not same as APR_HDR_SIZE as remote can include
 	 * optional headers in to apr_hdr which should be ignored
 	 */
-	if (resp.payload_size > 0)
+	अगर (resp.payload_size > 0)
 		resp.payload = buf + hdr_size;
 
 	adrv->callback(svc, &resp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void apr_rxwq(struct work_struct *work)
-{
-	struct apr *apr = container_of(work, struct apr, rx_work);
-	struct apr_rx_buf *abuf, *b;
-	unsigned long flags;
+अटल व्योम apr_rxwq(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा apr *apr = container_of(work, काष्ठा apr, rx_work);
+	काष्ठा apr_rx_buf *abuf, *b;
+	अचिन्हित दीर्घ flags;
 
-	if (!list_empty(&apr->rx_list)) {
-		list_for_each_entry_safe(abuf, b, &apr->rx_list, node) {
-			apr_do_rx_callback(apr, abuf);
+	अगर (!list_empty(&apr->rx_list)) अणु
+		list_क्रम_each_entry_safe(abuf, b, &apr->rx_list, node) अणु
+			apr_करो_rx_callback(apr, abuf);
 			spin_lock_irqsave(&apr->rx_lock, flags);
 			list_del(&abuf->node);
 			spin_unlock_irqrestore(&apr->rx_lock, flags);
-			kfree(abuf);
-		}
-	}
-}
+			kमुक्त(abuf);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int apr_device_match(struct device *dev, struct device_driver *drv)
-{
-	struct apr_device *adev = to_apr_device(dev);
-	struct apr_driver *adrv = to_apr_driver(drv);
-	const struct apr_device_id *id = adrv->id_table;
+अटल पूर्णांक apr_device_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा apr_device *adev = to_apr_device(dev);
+	काष्ठा apr_driver *adrv = to_apr_driver(drv);
+	स्थिर काष्ठा apr_device_id *id = adrv->id_table;
 
 	/* Attempt an OF style match first */
-	if (of_driver_match_device(dev, drv))
-		return 1;
+	अगर (of_driver_match_device(dev, drv))
+		वापस 1;
 
-	if (!id)
-		return 0;
+	अगर (!id)
+		वापस 0;
 
-	while (id->domain_id != 0 || id->svc_id != 0) {
-		if (id->domain_id == adev->domain_id &&
+	जबतक (id->करोमुख्य_id != 0 || id->svc_id != 0) अणु
+		अगर (id->करोमुख्य_id == adev->करोमुख्य_id &&
 		    id->svc_id == adev->svc_id)
-			return 1;
+			वापस 1;
 		id++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apr_device_probe(struct device *dev)
-{
-	struct apr_device *adev = to_apr_device(dev);
-	struct apr_driver *adrv = to_apr_driver(dev->driver);
+अटल पूर्णांक apr_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा apr_device *adev = to_apr_device(dev);
+	काष्ठा apr_driver *adrv = to_apr_driver(dev->driver);
 
-	return adrv->probe(adev);
-}
+	वापस adrv->probe(adev);
+पूर्ण
 
-static int apr_device_remove(struct device *dev)
-{
-	struct apr_device *adev = to_apr_device(dev);
-	struct apr_driver *adrv;
-	struct apr *apr = dev_get_drvdata(adev->dev.parent);
+अटल पूर्णांक apr_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा apr_device *adev = to_apr_device(dev);
+	काष्ठा apr_driver *adrv;
+	काष्ठा apr *apr = dev_get_drvdata(adev->dev.parent);
 
-	if (dev->driver) {
+	अगर (dev->driver) अणु
 		adrv = to_apr_driver(dev->driver);
-		if (adrv->remove)
-			adrv->remove(adev);
+		अगर (adrv->हटाओ)
+			adrv->हटाओ(adev);
 		spin_lock(&apr->svcs_lock);
-		idr_remove(&apr->svcs_idr, adev->svc_id);
+		idr_हटाओ(&apr->svcs_idr, adev->svc_id);
 		spin_unlock(&apr->svcs_lock);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apr_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct apr_device *adev = to_apr_device(dev);
-	int ret;
+अटल पूर्णांक apr_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा apr_device *adev = to_apr_device(dev);
+	पूर्णांक ret;
 
 	ret = of_device_uevent_modalias(dev, env);
-	if (ret != -ENODEV)
-		return ret;
+	अगर (ret != -ENODEV)
+		वापस ret;
 
-	return add_uevent_var(env, "MODALIAS=apr:%s", adev->name);
-}
+	वापस add_uevent_var(env, "MODALIAS=apr:%s", adev->name);
+पूर्ण
 
-struct bus_type aprbus = {
+काष्ठा bus_type aprbus = अणु
 	.name		= "aprbus",
 	.match		= apr_device_match,
 	.probe		= apr_device_probe,
 	.uevent		= apr_uevent,
-	.remove		= apr_device_remove,
-};
+	.हटाओ		= apr_device_हटाओ,
+पूर्ण;
 EXPORT_SYMBOL_GPL(aprbus);
 
-static int apr_add_device(struct device *dev, struct device_node *np,
-			  const struct apr_device_id *id)
-{
-	struct apr *apr = dev_get_drvdata(dev);
-	struct apr_device *adev = NULL;
-	int ret;
+अटल पूर्णांक apr_add_device(काष्ठा device *dev, काष्ठा device_node *np,
+			  स्थिर काष्ठा apr_device_id *id)
+अणु
+	काष्ठा apr *apr = dev_get_drvdata(dev);
+	काष्ठा apr_device *adev = शून्य;
+	पूर्णांक ret;
 
-	adev = kzalloc(sizeof(*adev), GFP_KERNEL);
-	if (!adev)
-		return -ENOMEM;
+	adev = kzalloc(माप(*adev), GFP_KERNEL);
+	अगर (!adev)
+		वापस -ENOMEM;
 
 	spin_lock_init(&adev->lock);
 
 	adev->svc_id = id->svc_id;
-	adev->domain_id = id->domain_id;
+	adev->करोमुख्य_id = id->करोमुख्य_id;
 	adev->version = id->svc_version;
-	if (np)
-		snprintf(adev->name, APR_NAME_SIZE, "%pOFn", np);
-	else
+	अगर (np)
+		snम_लिखो(adev->name, APR_NAME_SIZE, "%pOFn", np);
+	अन्यथा
 		strscpy(adev->name, id->name, APR_NAME_SIZE);
 
 	dev_set_name(&adev->dev, "aprsvc:%s:%x:%x", adev->name,
-		     id->domain_id, id->svc_id);
+		     id->करोमुख्य_id, id->svc_id);
 
 	adev->dev.bus = &aprbus;
 	adev->dev.parent = dev;
 	adev->dev.of_node = np;
 	adev->dev.release = apr_dev_release;
-	adev->dev.driver = NULL;
+	adev->dev.driver = शून्य;
 
 	spin_lock(&apr->svcs_lock);
 	idr_alloc(&apr->svcs_idr, adev, id->svc_id,
 		  id->svc_id + 1, GFP_ATOMIC);
 	spin_unlock(&apr->svcs_lock);
 
-	of_property_read_string_index(np, "qcom,protection-domain",
+	of_property_पढ़ो_string_index(np, "qcom,protection-domain",
 				      1, &adev->service_path);
 
 	dev_info(dev, "Adding APR dev: %s\n", dev_name(&adev->dev));
 
-	ret = device_register(&adev->dev);
-	if (ret) {
+	ret = device_रेजिस्टर(&adev->dev);
+	अगर (ret) अणु
 		dev_err(dev, "device_register failed: %d\n", ret);
 		put_device(&adev->dev);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int of_apr_add_pd_lookups(struct device *dev)
-{
-	const char *service_name, *service_path;
-	struct apr *apr = dev_get_drvdata(dev);
-	struct device_node *node;
-	struct pdr_service *pds;
-	int ret;
+अटल पूर्णांक of_apr_add_pd_lookups(काष्ठा device *dev)
+अणु
+	स्थिर अक्षर *service_name, *service_path;
+	काष्ठा apr *apr = dev_get_drvdata(dev);
+	काष्ठा device_node *node;
+	काष्ठा pdr_service *pds;
+	पूर्णांक ret;
 
-	for_each_child_of_node(dev->of_node, node) {
-		ret = of_property_read_string_index(node, "qcom,protection-domain",
+	क्रम_each_child_of_node(dev->of_node, node) अणु
+		ret = of_property_पढ़ो_string_index(node, "qcom,protection-domain",
 						    0, &service_name);
-		if (ret < 0)
-			continue;
+		अगर (ret < 0)
+			जारी;
 
-		ret = of_property_read_string_index(node, "qcom,protection-domain",
+		ret = of_property_पढ़ो_string_index(node, "qcom,protection-domain",
 						    1, &service_path);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "pdr service path missing: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		pds = pdr_add_lookup(apr->pdr, service_name, service_path);
-		if (IS_ERR(pds) && PTR_ERR(pds) != -EALREADY) {
+		अगर (IS_ERR(pds) && PTR_ERR(pds) != -EALREADY) अणु
 			dev_err(dev, "pdr add lookup failed: %ld\n", PTR_ERR(pds));
-			return PTR_ERR(pds);
-		}
-	}
+			वापस PTR_ERR(pds);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void of_register_apr_devices(struct device *dev, const char *svc_path)
-{
-	struct apr *apr = dev_get_drvdata(dev);
-	struct device_node *node;
-	const char *service_path;
-	int ret;
+अटल व्योम of_रेजिस्टर_apr_devices(काष्ठा device *dev, स्थिर अक्षर *svc_path)
+अणु
+	काष्ठा apr *apr = dev_get_drvdata(dev);
+	काष्ठा device_node *node;
+	स्थिर अक्षर *service_path;
+	पूर्णांक ret;
 
-	for_each_child_of_node(dev->of_node, node) {
-		struct apr_device_id id = { {0} };
+	क्रम_each_child_of_node(dev->of_node, node) अणु
+		काष्ठा apr_device_id id = अणु अणु0पूर्ण पूर्ण;
 
 		/*
-		 * This function is called with svc_path NULL during
-		 * apr_probe(), in which case we register any apr devices
-		 * without a qcom,protection-domain specified.
+		 * This function is called with svc_path शून्य during
+		 * apr_probe(), in which हाल we रेजिस्टर any apr devices
+		 * without a qcom,protection-करोमुख्य specअगरied.
 		 *
-		 * Then as the protection domains becomes available
-		 * (if applicable) this function is again called, but with
+		 * Then as the protection करोमुख्यs becomes available
+		 * (अगर applicable) this function is again called, but with
 		 * svc_path representing the service becoming available. In
-		 * this case we register any apr devices with a matching
-		 * qcom,protection-domain.
+		 * this हाल we रेजिस्टर any apr devices with a matching
+		 * qcom,protection-करोमुख्य.
 		 */
 
-		ret = of_property_read_string_index(node, "qcom,protection-domain",
+		ret = of_property_पढ़ो_string_index(node, "qcom,protection-domain",
 						    1, &service_path);
-		if (svc_path) {
+		अगर (svc_path) अणु
 			/* skip APR services that are PD independent */
-			if (ret)
-				continue;
+			अगर (ret)
+				जारी;
 
-			/* skip APR services whose PD paths don't match */
-			if (strcmp(service_path, svc_path))
-				continue;
-		} else {
-			/* skip APR services whose PD lookups are registered */
-			if (ret == 0)
-				continue;
-		}
+			/* skip APR services whose PD paths करोn't match */
+			अगर (म_भेद(service_path, svc_path))
+				जारी;
+		पूर्ण अन्यथा अणु
+			/* skip APR services whose PD lookups are रेजिस्टरed */
+			अगर (ret == 0)
+				जारी;
+		पूर्ण
 
-		if (of_property_read_u32(node, "reg", &id.svc_id))
-			continue;
+		अगर (of_property_पढ़ो_u32(node, "reg", &id.svc_id))
+			जारी;
 
-		id.domain_id = apr->dest_domain_id;
+		id.करोमुख्य_id = apr->dest_करोमुख्य_id;
 
-		if (apr_add_device(dev, node, &id))
+		अगर (apr_add_device(dev, node, &id))
 			dev_err(dev, "Failed to add apr %d svc\n", id.svc_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int apr_remove_device(struct device *dev, void *svc_path)
-{
-	struct apr_device *adev = to_apr_device(dev);
+अटल पूर्णांक apr_हटाओ_device(काष्ठा device *dev, व्योम *svc_path)
+अणु
+	काष्ठा apr_device *adev = to_apr_device(dev);
 
-	if (svc_path && adev->service_path) {
-		if (!strcmp(adev->service_path, (char *)svc_path))
-			device_unregister(&adev->dev);
-	} else {
-		device_unregister(&adev->dev);
-	}
+	अगर (svc_path && adev->service_path) अणु
+		अगर (!म_भेद(adev->service_path, (अक्षर *)svc_path))
+			device_unरेजिस्टर(&adev->dev);
+	पूर्ण अन्यथा अणु
+		device_unरेजिस्टर(&adev->dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void apr_pd_status(int state, char *svc_path, void *priv)
-{
-	struct apr *apr = (struct apr *)priv;
+अटल व्योम apr_pd_status(पूर्णांक state, अक्षर *svc_path, व्योम *priv)
+अणु
+	काष्ठा apr *apr = (काष्ठा apr *)priv;
 
-	switch (state) {
-	case SERVREG_SERVICE_STATE_UP:
-		of_register_apr_devices(apr->dev, svc_path);
-		break;
-	case SERVREG_SERVICE_STATE_DOWN:
-		device_for_each_child(apr->dev, svc_path, apr_remove_device);
-		break;
-	}
-}
+	चयन (state) अणु
+	हाल SERVREG_SERVICE_STATE_UP:
+		of_रेजिस्टर_apr_devices(apr->dev, svc_path);
+		अवरोध;
+	हाल SERVREG_SERVICE_STATE_DOWN:
+		device_क्रम_each_child(apr->dev, svc_path, apr_हटाओ_device);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int apr_probe(struct rpmsg_device *rpdev)
-{
-	struct device *dev = &rpdev->dev;
-	struct apr *apr;
-	int ret;
+अटल पूर्णांक apr_probe(काष्ठा rpmsg_device *rpdev)
+अणु
+	काष्ठा device *dev = &rpdev->dev;
+	काष्ठा apr *apr;
+	पूर्णांक ret;
 
-	apr = devm_kzalloc(dev, sizeof(*apr), GFP_KERNEL);
-	if (!apr)
-		return -ENOMEM;
+	apr = devm_kzalloc(dev, माप(*apr), GFP_KERNEL);
+	अगर (!apr)
+		वापस -ENOMEM;
 
-	ret = of_property_read_u32(dev->of_node, "qcom,apr-domain", &apr->dest_domain_id);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(dev->of_node, "qcom,apr-domain", &apr->dest_करोमुख्य_id);
+	अगर (ret) अणु
 		dev_err(dev, "APR Domain ID not specified in DT\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_set_drvdata(dev, apr);
 	apr->ch = rpdev->ept;
 	apr->dev = dev;
-	apr->rxwq = create_singlethread_workqueue("qcom_apr_rx");
-	if (!apr->rxwq) {
+	apr->rxwq = create_singlethपढ़ो_workqueue("qcom_apr_rx");
+	अगर (!apr->rxwq) अणु
 		dev_err(apr->dev, "Failed to start Rx WQ\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	INIT_WORK(&apr->rx_work, apr_rxwq);
 
 	apr->pdr = pdr_handle_alloc(apr_pd_status, apr);
-	if (IS_ERR(apr->pdr)) {
+	अगर (IS_ERR(apr->pdr)) अणु
 		dev_err(dev, "Failed to init PDR handle\n");
 		ret = PTR_ERR(apr->pdr);
-		goto destroy_wq;
-	}
+		जाओ destroy_wq;
+	पूर्ण
 
 	INIT_LIST_HEAD(&apr->rx_list);
 	spin_lock_init(&apr->rx_lock);
@@ -451,97 +452,97 @@ static int apr_probe(struct rpmsg_device *rpdev)
 	idr_init(&apr->svcs_idr);
 
 	ret = of_apr_add_pd_lookups(dev);
-	if (ret)
-		goto handle_release;
+	अगर (ret)
+		जाओ handle_release;
 
-	of_register_apr_devices(dev, NULL);
+	of_रेजिस्टर_apr_devices(dev, शून्य);
 
-	return 0;
+	वापस 0;
 
 handle_release:
 	pdr_handle_release(apr->pdr);
 destroy_wq:
 	destroy_workqueue(apr->rxwq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void apr_remove(struct rpmsg_device *rpdev)
-{
-	struct apr *apr = dev_get_drvdata(&rpdev->dev);
+अटल व्योम apr_हटाओ(काष्ठा rpmsg_device *rpdev)
+अणु
+	काष्ठा apr *apr = dev_get_drvdata(&rpdev->dev);
 
 	pdr_handle_release(apr->pdr);
-	device_for_each_child(&rpdev->dev, NULL, apr_remove_device);
+	device_क्रम_each_child(&rpdev->dev, शून्य, apr_हटाओ_device);
 	flush_workqueue(apr->rxwq);
 	destroy_workqueue(apr->rxwq);
-}
+पूर्ण
 
 /*
- * __apr_driver_register() - Client driver registration with aprbus
+ * __apr_driver_रेजिस्टर() - Client driver registration with aprbus
  *
  * @drv:Client driver to be associated with client-device.
  * @owner: owning module/driver
  *
- * This API will register the client driver with the aprbus
+ * This API will रेजिस्टर the client driver with the aprbus
  * It is called from the driver's module-init function.
  */
-int __apr_driver_register(struct apr_driver *drv, struct module *owner)
-{
+पूर्णांक __apr_driver_रेजिस्टर(काष्ठा apr_driver *drv, काष्ठा module *owner)
+अणु
 	drv->driver.bus = &aprbus;
 	drv->driver.owner = owner;
 
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(__apr_driver_register);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(__apr_driver_रेजिस्टर);
 
 /*
- * apr_driver_unregister() - Undo effect of apr_driver_register
+ * apr_driver_unरेजिस्टर() - Unकरो effect of apr_driver_रेजिस्टर
  *
- * @drv: Client driver to be unregistered
+ * @drv: Client driver to be unरेजिस्टरed
  */
-void apr_driver_unregister(struct apr_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(apr_driver_unregister);
+व्योम apr_driver_unरेजिस्टर(काष्ठा apr_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(apr_driver_unरेजिस्टर);
 
-static const struct of_device_id apr_of_match[] = {
-	{ .compatible = "qcom,apr"},
-	{ .compatible = "qcom,apr-v2"},
-	{}
-};
+अटल स्थिर काष्ठा of_device_id apr_of_match[] = अणु
+	अणु .compatible = "qcom,apr"पूर्ण,
+	अणु .compatible = "qcom,apr-v2"पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, apr_of_match);
 
-static struct rpmsg_driver apr_driver = {
+अटल काष्ठा rpmsg_driver apr_driver = अणु
 	.probe = apr_probe,
-	.remove = apr_remove,
+	.हटाओ = apr_हटाओ,
 	.callback = apr_callback,
-	.drv = {
+	.drv = अणु
 		.name = "qcom,apr",
 		.of_match_table = apr_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init apr_init(void)
-{
-	int ret;
+अटल पूर्णांक __init apr_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = bus_register(&aprbus);
-	if (!ret)
-		ret = register_rpmsg_driver(&apr_driver);
-	else
-		bus_unregister(&aprbus);
+	ret = bus_रेजिस्टर(&aprbus);
+	अगर (!ret)
+		ret = रेजिस्टर_rpmsg_driver(&apr_driver);
+	अन्यथा
+		bus_unरेजिस्टर(&aprbus);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit apr_exit(void)
-{
-	bus_unregister(&aprbus);
-	unregister_rpmsg_driver(&apr_driver);
-}
+अटल व्योम __निकास apr_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&aprbus);
+	unरेजिस्टर_rpmsg_driver(&apr_driver);
+पूर्ण
 
 subsys_initcall(apr_init);
-module_exit(apr_exit);
+module_निकास(apr_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Qualcomm APR Bus");

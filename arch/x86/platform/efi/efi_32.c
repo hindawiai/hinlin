@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Extensible Firmware Interface
  *
- * Based on Extensible Firmware Interface Specification version 1.0
+ * Based on Extensible Firmware Interface Specअगरication version 1.0
  *
  * Copyright (C) 1999 VA Linux Systems
  * Copyright (C) 1999 Walt Drummond <drummond@valinux.com>
@@ -10,96 +11,96 @@
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  *	Stephane Eranian <eranian@hpl.hp.com>
  *
- * All EFI Runtime Services are not implemented yet as EFI only
+ * All EFI Runसमय Services are not implemented yet as EFI only
  * supports physical mode addressing on SoftSDV. This is to be fixed
  * in a future version.  --drummond 1999-07-20
  *
- * Implemented EFI runtime services and virtual mode calls.  --davidm
+ * Implemented EFI runसमय services and भव mode calls.  --davidm
  *
- * Goutham Rao: <goutham.rao@intel.com>
+ * Goutham Rao: <goutham.rao@पूर्णांकel.com>
  *	Skip non-WB memory and ignore empty memory ranges.
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/ioport.h>
-#include <linux/efi.h>
-#include <linux/pgtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/io.h>
-#include <asm/desc.h>
-#include <asm/page.h>
-#include <asm/set_memory.h>
-#include <asm/tlbflush.h>
-#include <asm/efi.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/set_memory.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/efi.h>
 
-void __init efi_map_region(efi_memory_desc_t *md)
-{
+व्योम __init efi_map_region(efi_memory_desc_t *md)
+अणु
 	u64 start_pfn, end_pfn, end;
-	unsigned long size;
-	void *va;
+	अचिन्हित दीर्घ size;
+	व्योम *va;
 
 	start_pfn	= PFN_DOWN(md->phys_addr);
 	size		= md->num_pages << PAGE_SHIFT;
 	end		= md->phys_addr + size;
 	end_pfn 	= PFN_UP(end);
 
-	if (pfn_range_is_mapped(start_pfn, end_pfn)) {
+	अगर (pfn_range_is_mapped(start_pfn, end_pfn)) अणु
 		va = __va(md->phys_addr);
 
-		if (!(md->attribute & EFI_MEMORY_WB))
-			set_memory_uc((unsigned long)va, md->num_pages);
-	} else {
+		अगर (!(md->attribute & EFI_MEMORY_WB))
+			set_memory_uc((अचिन्हित दीर्घ)va, md->num_pages);
+	पूर्ण अन्यथा अणु
 		va = ioremap_cache(md->phys_addr, size);
-	}
+	पूर्ण
 
-	md->virt_addr = (unsigned long)va;
-	if (!va)
+	md->virt_addr = (अचिन्हित दीर्घ)va;
+	अगर (!va)
 		pr_err("ioremap of 0x%llX failed!\n", md->phys_addr);
-}
+पूर्ण
 
 /*
- * To make EFI call EFI runtime service in physical addressing mode we need
- * prolog/epilog before/after the invocation to claim the EFI runtime service
+ * To make EFI call EFI runसमय service in physical addressing mode we need
+ * prolog/epilog beक्रमe/after the invocation to claim the EFI runसमय service
  * handler exclusively and to duplicate a memory mapping in low memory space,
  * say 0 - 3G.
  */
 
-int __init efi_alloc_page_tables(void)
-{
-	return 0;
-}
+पूर्णांक __init efi_alloc_page_tables(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-void efi_sync_low_kernel_mappings(void) {}
+व्योम efi_sync_low_kernel_mappings(व्योम) अणुपूर्ण
 
-void __init efi_dump_pagetable(void)
-{
-#ifdef CONFIG_EFI_PGT_DUMP
-	ptdump_walk_pgd_level(NULL, &init_mm);
-#endif
-}
+व्योम __init efi_dump_pagetable(व्योम)
+अणु
+#अगर_घोषित CONFIG_EFI_PGT_DUMP
+	ptdump_walk_pgd_level(शून्य, &init_mm);
+#पूर्ण_अगर
+पूर्ण
 
-int __init efi_setup_page_tables(unsigned long pa_memmap, unsigned num_pages)
-{
-	return 0;
-}
+पूर्णांक __init efi_setup_page_tables(अचिन्हित दीर्घ pa_memmap, अचिन्हित num_pages)
+अणु
+	वापस 0;
+पूर्ण
 
-void __init efi_map_region_fixed(efi_memory_desc_t *md) {}
-void __init parse_efi_setup(u64 phys_addr, u32 data_len) {}
+व्योम __init efi_map_region_fixed(efi_memory_desc_t *md) अणुपूर्ण
+व्योम __init parse_efi_setup(u64 phys_addr, u32 data_len) अणुपूर्ण
 
-efi_status_t efi_call_svam(efi_runtime_services_t * const *,
-			   u32, u32, u32, void *, u32);
+efi_status_t efi_call_svam(efi_runसमय_services_t * स्थिर *,
+			   u32, u32, u32, व्योम *, u32);
 
-efi_status_t __init efi_set_virtual_address_map(unsigned long memory_map_size,
-						unsigned long descriptor_size,
+efi_status_t __init efi_set_भव_address_map(अचिन्हित दीर्घ memory_map_size,
+						अचिन्हित दीर्घ descriptor_size,
 						u32 descriptor_version,
-						efi_memory_desc_t *virtual_map,
-						unsigned long systab_phys)
-{
-	const efi_system_table_t *systab = (efi_system_table_t *)systab_phys;
-	struct desc_ptr gdt_descr;
+						efi_memory_desc_t *भव_map,
+						अचिन्हित दीर्घ systab_phys)
+अणु
+	स्थिर efi_प्रणाली_table_t *systab = (efi_प्रणाली_table_t *)systab_phys;
+	काष्ठा desc_ptr gdt_descr;
 	efi_status_t status;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	pgd_t *save_pgd;
 
 	/* Current pgd is swapper_pg_dir, we'll restore it later: */
@@ -111,32 +112,32 @@ efi_status_t __init efi_set_virtual_address_map(unsigned long memory_map_size,
 	gdt_descr.size = GDT_SIZE - 1;
 	load_gdt(&gdt_descr);
 
-	/* Disable interrupts around EFI calls: */
+	/* Disable पूर्णांकerrupts around EFI calls: */
 	local_irq_save(flags);
-	status = efi_call_svam(&systab->runtime,
+	status = efi_call_svam(&systab->runसमय,
 			       memory_map_size, descriptor_size,
-			       descriptor_version, virtual_map,
-			       __pa(&efi.runtime));
+			       descriptor_version, भव_map,
+			       __pa(&efi.runसमय));
 	local_irq_restore(flags);
 
 	load_fixmap_gdt(0);
 	load_cr3(save_pgd);
 	__flush_tlb_all();
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void __init efi_runtime_update_mappings(void)
-{
-	if (__supported_pte_mask & _PAGE_NX) {
+व्योम __init efi_runसमय_update_mappings(व्योम)
+अणु
+	अगर (__supported_pte_mask & _PAGE_NX) अणु
 		efi_memory_desc_t *md;
 
-		/* Make EFI runtime service code area executable */
-		for_each_efi_memory_desc(md) {
-			if (md->type != EFI_RUNTIME_SERVICES_CODE)
-				continue;
+		/* Make EFI runसमय service code area executable */
+		क्रम_each_efi_memory_desc(md) अणु
+			अगर (md->type != EFI_RUNTIME_SERVICES_CODE)
+				जारी;
 
 			set_memory_x(md->virt_addr, md->num_pages);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण

@@ -1,281 +1,282 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Surface Book (2 and later) hot-plug driver.
  *
  * Surface Book devices (can) have a hot-pluggable discrete GPU (dGPU). This
- * driver is responsible for out-of-band hot-plug event signaling on these
- * devices. It is specifically required when the hot-plug device is in D3cold
+ * driver is responsible क्रम out-of-band hot-plug event संकेतing on these
+ * devices. It is specअगरically required when the hot-plug device is in D3cold
  * and can thus not generate PCIe hot-plug events itself.
  *
- * Event signaling is handled via ACPI, which will generate the appropriate
- * device-check notifications to be picked up by the PCIe hot-plug driver.
+ * Event संकेतing is handled via ACPI, which will generate the appropriate
+ * device-check notअगरications to be picked up by the PCIe hot-plug driver.
  *
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/gpio.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/platform_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
 
-static const struct acpi_gpio_params shps_base_presence_int   = { 0, 0, false };
-static const struct acpi_gpio_params shps_base_presence       = { 1, 0, false };
-static const struct acpi_gpio_params shps_device_power_int    = { 2, 0, false };
-static const struct acpi_gpio_params shps_device_power        = { 3, 0, false };
-static const struct acpi_gpio_params shps_device_presence_int = { 4, 0, false };
-static const struct acpi_gpio_params shps_device_presence     = { 5, 0, false };
+अटल स्थिर काष्ठा acpi_gpio_params shps_base_presence_पूर्णांक   = अणु 0, 0, false पूर्ण;
+अटल स्थिर काष्ठा acpi_gpio_params shps_base_presence       = अणु 1, 0, false पूर्ण;
+अटल स्थिर काष्ठा acpi_gpio_params shps_device_घातer_पूर्णांक    = अणु 2, 0, false पूर्ण;
+अटल स्थिर काष्ठा acpi_gpio_params shps_device_घातer        = अणु 3, 0, false पूर्ण;
+अटल स्थिर काष्ठा acpi_gpio_params shps_device_presence_पूर्णांक = अणु 4, 0, false पूर्ण;
+अटल स्थिर काष्ठा acpi_gpio_params shps_device_presence     = अणु 5, 0, false पूर्ण;
 
-static const struct acpi_gpio_mapping shps_acpi_gpios[] = {
-	{ "base_presence-int-gpio",   &shps_base_presence_int,   1 },
-	{ "base_presence-gpio",       &shps_base_presence,       1 },
-	{ "device_power-int-gpio",    &shps_device_power_int,    1 },
-	{ "device_power-gpio",        &shps_device_power,        1 },
-	{ "device_presence-int-gpio", &shps_device_presence_int, 1 },
-	{ "device_presence-gpio",     &shps_device_presence,     1 },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_gpio_mapping shps_acpi_gpios[] = अणु
+	अणु "base_presence-int-gpio",   &shps_base_presence_पूर्णांक,   1 पूर्ण,
+	अणु "base_presence-gpio",       &shps_base_presence,       1 पूर्ण,
+	अणु "device_power-int-gpio",    &shps_device_घातer_पूर्णांक,    1 पूर्ण,
+	अणु "device_power-gpio",        &shps_device_घातer,        1 पूर्ण,
+	अणु "device_presence-int-gpio", &shps_device_presence_पूर्णांक, 1 पूर्ण,
+	अणु "device_presence-gpio",     &shps_device_presence,     1 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 /* 5515a847-ed55-4b27-8352-cd320e10360a */
-static const guid_t shps_dsm_guid =
+अटल स्थिर guid_t shps_dsm_guid =
 	GUID_INIT(0x5515a847, 0xed55, 0x4b27, 0x83, 0x52, 0xcd, 0x32, 0x0e, 0x10, 0x36, 0x0a);
 
-#define SHPS_DSM_REVISION		1
+#घोषणा SHPS_DSM_REVISION		1
 
-enum shps_dsm_fn {
+क्रमागत shps_dsm_fn अणु
 	SHPS_DSM_FN_PCI_NUM_ENTRIES	= 0x01,
 	SHPS_DSM_FN_PCI_GET_ENTRIES	= 0x02,
 	SHPS_DSM_FN_IRQ_BASE_PRESENCE	= 0x03,
 	SHPS_DSM_FN_IRQ_DEVICE_POWER	= 0x04,
 	SHPS_DSM_FN_IRQ_DEVICE_PRESENCE	= 0x05,
-};
+पूर्ण;
 
-enum shps_irq_type {
-	/* NOTE: Must be in order of enum shps_dsm_fn above. */
+क्रमागत shps_irq_type अणु
+	/* NOTE: Must be in order of क्रमागत shps_dsm_fn above. */
 	SHPS_IRQ_TYPE_BASE_PRESENCE	= 0,
 	SHPS_IRQ_TYPE_DEVICE_POWER	= 1,
 	SHPS_IRQ_TYPE_DEVICE_PRESENCE	= 2,
 	SHPS_NUM_IRQS,
-};
+पूर्ण;
 
-static const char *const shps_gpio_names[] = {
+अटल स्थिर अक्षर *स्थिर shps_gpio_names[] = अणु
 	[SHPS_IRQ_TYPE_BASE_PRESENCE]	= "base_presence",
 	[SHPS_IRQ_TYPE_DEVICE_POWER]	= "device_power",
 	[SHPS_IRQ_TYPE_DEVICE_PRESENCE]	= "device_presence",
-};
+पूर्ण;
 
-struct shps_device {
-	struct mutex lock[SHPS_NUM_IRQS];  /* Protects update in shps_dsm_notify_irq() */
-	struct gpio_desc *gpio[SHPS_NUM_IRQS];
-	unsigned int irq[SHPS_NUM_IRQS];
-};
+काष्ठा shps_device अणु
+	काष्ठा mutex lock[SHPS_NUM_IRQS];  /* Protects update in shps_dsm_notअगरy_irq() */
+	काष्ठा gpio_desc *gpio[SHPS_NUM_IRQS];
+	अचिन्हित पूर्णांक irq[SHPS_NUM_IRQS];
+पूर्ण;
 
-#define SHPS_IRQ_NOT_PRESENT		((unsigned int)-1)
+#घोषणा SHPS_IRQ_NOT_PRESENT		((अचिन्हित पूर्णांक)-1)
 
-static enum shps_dsm_fn shps_dsm_fn_for_irq(enum shps_irq_type type)
-{
-	return SHPS_DSM_FN_IRQ_BASE_PRESENCE + type;
-}
+अटल क्रमागत shps_dsm_fn shps_dsm_fn_क्रम_irq(क्रमागत shps_irq_type type)
+अणु
+	वापस SHPS_DSM_FN_IRQ_BASE_PRESENCE + type;
+पूर्ण
 
-static void shps_dsm_notify_irq(struct platform_device *pdev, enum shps_irq_type type)
-{
-	struct shps_device *sdev = platform_get_drvdata(pdev);
+अटल व्योम shps_dsm_notअगरy_irq(काष्ठा platक्रमm_device *pdev, क्रमागत shps_irq_type type)
+अणु
+	काष्ठा shps_device *sdev = platक्रमm_get_drvdata(pdev);
 	acpi_handle handle = ACPI_HANDLE(&pdev->dev);
-	union acpi_object *result;
-	union acpi_object param;
-	int value;
+	जोड़ acpi_object *result;
+	जोड़ acpi_object param;
+	पूर्णांक value;
 
 	mutex_lock(&sdev->lock[type]);
 
 	value = gpiod_get_value_cansleep(sdev->gpio[type]);
-	if (value < 0) {
+	अगर (value < 0) अणु
 		mutex_unlock(&sdev->lock[type]);
 		dev_err(&pdev->dev, "failed to get gpio: %d (irq=%d)\n", type, value);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_dbg(&pdev->dev, "IRQ notification via DSM (irq=%d, value=%d)\n", type, value);
 
 	param.type = ACPI_TYPE_INTEGER;
-	param.integer.value = value;
+	param.पूर्णांकeger.value = value;
 
 	result = acpi_evaluate_dsm(handle, &shps_dsm_guid, SHPS_DSM_REVISION,
-				   shps_dsm_fn_for_irq(type), &param);
+				   shps_dsm_fn_क्रम_irq(type), &param);
 
-	if (!result) {
+	अगर (!result) अणु
 		dev_err(&pdev->dev, "IRQ notification via DSM failed (irq=%d, gpio=%d)\n",
 			type, value);
 
-	} else if (result->type != ACPI_TYPE_BUFFER) {
+	पूर्ण अन्यथा अगर (result->type != ACPI_TYPE_BUFFER) अणु
 		dev_err(&pdev->dev,
 			"IRQ notification via DSM failed: unexpected result type (irq=%d, gpio=%d)\n",
 			type, value);
 
-	} else if (result->buffer.length != 1 || result->buffer.pointer[0] != 0) {
+	पूर्ण अन्यथा अगर (result->buffer.length != 1 || result->buffer.poपूर्णांकer[0] != 0) अणु
 		dev_err(&pdev->dev,
 			"IRQ notification via DSM failed: unexpected result value (irq=%d, gpio=%d)\n",
 			type, value);
-	}
+	पूर्ण
 
 	mutex_unlock(&sdev->lock[type]);
 
-	if (result)
+	अगर (result)
 		ACPI_FREE(result);
-}
+पूर्ण
 
-static irqreturn_t shps_handle_irq(int irq, void *data)
-{
-	struct platform_device *pdev = data;
-	struct shps_device *sdev = platform_get_drvdata(pdev);
-	int type;
+अटल irqवापस_t shps_handle_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = data;
+	काष्ठा shps_device *sdev = platक्रमm_get_drvdata(pdev);
+	पूर्णांक type;
 
 	/* Figure out which IRQ we're handling. */
-	for (type = 0; type < SHPS_NUM_IRQS; type++)
-		if (irq == sdev->irq[type])
-			break;
+	क्रम (type = 0; type < SHPS_NUM_IRQS; type++)
+		अगर (irq == sdev->irq[type])
+			अवरोध;
 
-	/* We should have found our interrupt, if not: this is a bug. */
-	if (WARN(type >= SHPS_NUM_IRQS, "invalid IRQ number: %d\n", irq))
-		return IRQ_HANDLED;
+	/* We should have found our पूर्णांकerrupt, अगर not: this is a bug. */
+	अगर (WARN(type >= SHPS_NUM_IRQS, "invalid IRQ number: %d\n", irq))
+		वापस IRQ_HANDLED;
 
-	/* Forward interrupt to ACPI via DSM. */
-	shps_dsm_notify_irq(pdev, type);
-	return IRQ_HANDLED;
-}
+	/* Forward पूर्णांकerrupt to ACPI via DSM. */
+	shps_dsm_notअगरy_irq(pdev, type);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int shps_setup_irq(struct platform_device *pdev, enum shps_irq_type type)
-{
-	unsigned long flags = IRQF_ONESHOT | IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING;
-	struct shps_device *sdev = platform_get_drvdata(pdev);
-	struct gpio_desc *gpiod;
+अटल पूर्णांक shps_setup_irq(काष्ठा platक्रमm_device *pdev, क्रमागत shps_irq_type type)
+अणु
+	अचिन्हित दीर्घ flags = IRQF_ONESHOT | IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING;
+	काष्ठा shps_device *sdev = platक्रमm_get_drvdata(pdev);
+	काष्ठा gpio_desc *gpiod;
 	acpi_handle handle = ACPI_HANDLE(&pdev->dev);
-	const char *irq_name;
-	const int dsm = shps_dsm_fn_for_irq(type);
-	int status, irq;
+	स्थिर अक्षर *irq_name;
+	स्थिर पूर्णांक dsm = shps_dsm_fn_क्रम_irq(type);
+	पूर्णांक status, irq;
 
 	/*
-	 * Only set up interrupts that we actually need: The Surface Book 3
-	 * does not have a DSM for base presence, so don't set up an interrupt
-	 * for that.
+	 * Only set up पूर्णांकerrupts that we actually need: The Surface Book 3
+	 * करोes not have a DSM क्रम base presence, so करोn't set up an पूर्णांकerrupt
+	 * क्रम that.
 	 */
-	if (!acpi_check_dsm(handle, &shps_dsm_guid, SHPS_DSM_REVISION, BIT(dsm))) {
+	अगर (!acpi_check_dsm(handle, &shps_dsm_guid, SHPS_DSM_REVISION, BIT(dsm))) अणु
 		dev_dbg(&pdev->dev, "IRQ notification via DSM not present (irq=%d)\n", type);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	gpiod = devm_gpiod_get(&pdev->dev, shps_gpio_names[type], GPIOD_ASIS);
-	if (IS_ERR(gpiod))
-		return PTR_ERR(gpiod);
+	अगर (IS_ERR(gpiod))
+		वापस PTR_ERR(gpiod);
 
 	irq = gpiod_to_irq(gpiod);
-	if (irq < 0)
-		return irq;
+	अगर (irq < 0)
+		वापस irq;
 
-	irq_name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "shps-irq-%d", type);
-	if (!irq_name)
-		return -ENOMEM;
+	irq_name = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "shps-irq-%d", type);
+	अगर (!irq_name)
+		वापस -ENOMEM;
 
-	status = devm_request_threaded_irq(&pdev->dev, irq, NULL, shps_handle_irq,
+	status = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य, shps_handle_irq,
 					   flags, irq_name, pdev);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	dev_dbg(&pdev->dev, "set up irq %d as type %d\n", irq, type);
 
 	sdev->gpio[type] = gpiod;
 	sdev->irq[type] = irq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int surface_hotplug_remove(struct platform_device *pdev)
-{
-	struct shps_device *sdev = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक surface_hotplug_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा shps_device *sdev = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
 	/* Ensure that IRQs have been fully handled and won't trigger any more. */
-	for (i = 0; i < SHPS_NUM_IRQS; i++) {
-		if (sdev->irq[i] != SHPS_IRQ_NOT_PRESENT)
+	क्रम (i = 0; i < SHPS_NUM_IRQS; i++) अणु
+		अगर (sdev->irq[i] != SHPS_IRQ_NOT_PRESENT)
 			disable_irq(sdev->irq[i]);
 
 		mutex_destroy(&sdev->lock[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int surface_hotplug_probe(struct platform_device *pdev)
-{
-	struct shps_device *sdev;
-	int status, i;
+अटल पूर्णांक surface_hotplug_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा shps_device *sdev;
+	पूर्णांक status, i;
 
 	/*
 	 * The MSHW0153 device is also present on the Surface Laptop 3,
-	 * however that doesn't have a hot-pluggable PCIe device. It also
-	 * doesn't have any GPIO interrupts/pins under the MSHW0153, so filter
+	 * however that करोesn't have a hot-pluggable PCIe device. It also
+	 * करोesn't have any GPIO पूर्णांकerrupts/pins under the MSHW0153, so filter
 	 * it out here.
 	 */
-	if (gpiod_count(&pdev->dev, NULL) < 0)
-		return -ENODEV;
+	अगर (gpiod_count(&pdev->dev, शून्य) < 0)
+		वापस -ENODEV;
 
 	status = devm_acpi_dev_add_driver_gpios(&pdev->dev, shps_acpi_gpios);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	sdev = devm_kzalloc(&pdev->dev, sizeof(*sdev), GFP_KERNEL);
-	if (!sdev)
-		return -ENOMEM;
+	sdev = devm_kzalloc(&pdev->dev, माप(*sdev), GFP_KERNEL);
+	अगर (!sdev)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, sdev);
+	platक्रमm_set_drvdata(pdev, sdev);
 
 	/*
-	 * Initialize IRQs so that we can safely call surface_hotplug_remove()
+	 * Initialize IRQs so that we can safely call surface_hotplug_हटाओ()
 	 * on errors.
 	 */
-	for (i = 0; i < SHPS_NUM_IRQS; i++)
+	क्रम (i = 0; i < SHPS_NUM_IRQS; i++)
 		sdev->irq[i] = SHPS_IRQ_NOT_PRESENT;
 
 	/* Set up IRQs. */
-	for (i = 0; i < SHPS_NUM_IRQS; i++) {
+	क्रम (i = 0; i < SHPS_NUM_IRQS; i++) अणु
 		mutex_init(&sdev->lock[i]);
 
 		status = shps_setup_irq(pdev, i);
-		if (status) {
+		अगर (status) अणु
 			dev_err(&pdev->dev, "failed to set up IRQ %d: %d\n", i, status);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	/* Ensure everything is up-to-date. */
-	for (i = 0; i < SHPS_NUM_IRQS; i++)
-		if (sdev->irq[i] != SHPS_IRQ_NOT_PRESENT)
-			shps_dsm_notify_irq(pdev, i);
+	क्रम (i = 0; i < SHPS_NUM_IRQS; i++)
+		अगर (sdev->irq[i] != SHPS_IRQ_NOT_PRESENT)
+			shps_dsm_notअगरy_irq(pdev, i);
 
-	return 0;
+	वापस 0;
 
 err:
-	surface_hotplug_remove(pdev);
-	return status;
-}
+	surface_hotplug_हटाओ(pdev);
+	वापस status;
+पूर्ण
 
-static const struct acpi_device_id surface_hotplug_acpi_match[] = {
-	{ "MSHW0153", 0 },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id surface_hotplug_acpi_match[] = अणु
+	अणु "MSHW0153", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, surface_hotplug_acpi_match);
 
-static struct platform_driver surface_hotplug_driver = {
+अटल काष्ठा platक्रमm_driver surface_hotplug_driver = अणु
 	.probe = surface_hotplug_probe,
-	.remove = surface_hotplug_remove,
-	.driver = {
+	.हटाओ = surface_hotplug_हटाओ,
+	.driver = अणु
 		.name = "surface_hotplug",
 		.acpi_match_table = surface_hotplug_acpi_match,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
-};
-module_platform_driver(surface_hotplug_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(surface_hotplug_driver);
 
 MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");
 MODULE_DESCRIPTION("Surface Hot-Plug Signaling Driver for Surface Book Devices");

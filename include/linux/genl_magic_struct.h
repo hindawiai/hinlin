@@ -1,285 +1,286 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef GENL_MAGIC_STRUCT_H
-#define GENL_MAGIC_STRUCT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित GENL_MAGIC_STRUCT_H
+#घोषणा GENL_MAGIC_STRUCT_H
 
-#ifndef GENL_MAGIC_FAMILY
+#अगर_अघोषित GENL_MAGIC_FAMILY
 # error "you need to define GENL_MAGIC_FAMILY before inclusion"
-#endif
+#पूर्ण_अगर
 
-#ifndef GENL_MAGIC_VERSION
+#अगर_अघोषित GENL_MAGIC_VERSION
 # error "you need to define GENL_MAGIC_VERSION before inclusion"
-#endif
+#पूर्ण_अगर
 
-#ifndef GENL_MAGIC_INCLUDE_FILE
+#अगर_अघोषित GENL_MAGIC_INCLUDE_खाता
 # error "you need to define GENL_MAGIC_INCLUDE_FILE before inclusion"
-#endif
+#पूर्ण_अगर
 
-#include <linux/genetlink.h>
-#include <linux/types.h>
+#समावेश <linux/genetlink.h>
+#समावेश <linux/types.h>
 
-#define CONCAT__(a,b)	a ## b
-#define CONCAT_(a,b)	CONCAT__(a,b)
+#घोषणा CONCAT__(a,b)	a ## b
+#घोषणा CONCAT_(a,b)	CONCAT__(a,b)
 
-extern int CONCAT_(GENL_MAGIC_FAMILY, _genl_register)(void);
-extern void CONCAT_(GENL_MAGIC_FAMILY, _genl_unregister)(void);
+बाह्य पूर्णांक CONCAT_(GENL_MAGIC_FAMILY, _genl_रेजिस्टर)(व्योम);
+बाह्य व्योम CONCAT_(GENL_MAGIC_FAMILY, _genl_unरेजिस्टर)(व्योम);
 
 /*
- * Extension of genl attribute validation policies			{{{2
+ * Extension of genl attribute validation policies			अणुअणुअणु2
  */
 
 /*
- * @DRBD_GENLA_F_MANDATORY: By default, netlink ignores attributes it does not
+ * @DRBD_GENLA_F_MANDATORY: By शेष, netlink ignores attributes it करोes not
  * know about.  This flag can be set in nlattr->nla_type to indicate that this
  * attribute must not be ignored.
  *
- * We check and remove this flag in drbd_nla_check_mandatory() before
+ * We check and हटाओ this flag in drbd_nla_check_mandatory() beक्रमe
  * validating the attribute types and lengths via nla_parse_nested().
  */
-#define DRBD_GENLA_F_MANDATORY (1 << 14)
+#घोषणा DRBD_GENLA_F_MANDATORY (1 << 14)
 
 /*
- * Flags specific to drbd and not visible at the netlink layer, used in
- * <struct>_from_attrs and <struct>_to_skb:
+ * Flags specअगरic to drbd and not visible at the netlink layer, used in
+ * <काष्ठा>_from_attrs and <काष्ठा>_to_skb:
  *
  * @DRBD_F_REQUIRED: Attribute is required; a request without this attribute is
  * invalid.
  *
- * @DRBD_F_SENSITIVE: Attribute includes sensitive information and must not be
+ * @DRBD_F_SENSITIVE: Attribute includes sensitive inक्रमmation and must not be
  * included in unpriviledged get requests or broadcasts.
  *
  * @DRBD_F_INVARIANT: Attribute is set when an object is initially created, but
  * cannot subsequently be changed.
  */
-#define DRBD_F_REQUIRED (1 << 0)
-#define DRBD_F_SENSITIVE (1 << 1)
-#define DRBD_F_INVARIANT (1 << 2)
+#घोषणा DRBD_F_REQUIRED (1 << 0)
+#घोषणा DRBD_F_SENSITIVE (1 << 1)
+#घोषणा DRBD_F_INVARIANT (1 << 2)
 
-#define __nla_type(x)	((__u16)((x) & NLA_TYPE_MASK & ~DRBD_GENLA_F_MANDATORY))
+#घोषणा __nla_type(x)	((__u16)((x) & NLA_TYPE_MASK & ~DRBD_GENLA_F_MANDATORY))
 
-/*									}}}1
+/*									पूर्णपूर्णपूर्ण1
  * MAGIC
  * multi-include macro expansion magic starts here
  */
 
-/* MAGIC helpers							{{{2 */
+/* MAGIC helpers							अणुअणुअणु2 */
 
-static inline int nla_put_u64_0pad(struct sk_buff *skb, int attrtype, u64 value)
-{
-	return nla_put_64bit(skb, attrtype, sizeof(u64), &value, 0);
-}
+अटल अंतरभूत पूर्णांक nla_put_u64_0pad(काष्ठा sk_buff *skb, पूर्णांक attrtype, u64 value)
+अणु
+	वापस nla_put_64bit(skb, attrtype, माप(u64), &value, 0);
+पूर्ण
 
 /* possible field types */
-#define __flg_field(attr_nr, attr_flag, name) \
-	__field(attr_nr, attr_flag, name, NLA_U8, char, \
+#घोषणा __flg_field(attr_nr, attr_flag, name) \
+	__field(attr_nr, attr_flag, name, NLA_U8, अक्षर, \
 			nla_get_u8, nla_put_u8, false)
-#define __u8_field(attr_nr, attr_flag, name)	\
-	__field(attr_nr, attr_flag, name, NLA_U8, unsigned char, \
+#घोषणा __u8_field(attr_nr, attr_flag, name)	\
+	__field(attr_nr, attr_flag, name, NLA_U8, अचिन्हित अक्षर, \
 			nla_get_u8, nla_put_u8, false)
-#define __u16_field(attr_nr, attr_flag, name)	\
+#घोषणा __u16_field(attr_nr, attr_flag, name)	\
 	__field(attr_nr, attr_flag, name, NLA_U16, __u16, \
 			nla_get_u16, nla_put_u16, false)
-#define __u32_field(attr_nr, attr_flag, name)	\
+#घोषणा __u32_field(attr_nr, attr_flag, name)	\
 	__field(attr_nr, attr_flag, name, NLA_U32, __u32, \
 			nla_get_u32, nla_put_u32, false)
-#define __s32_field(attr_nr, attr_flag, name)	\
+#घोषणा __s32_field(attr_nr, attr_flag, name)	\
 	__field(attr_nr, attr_flag, name, NLA_U32, __s32, \
 			nla_get_u32, nla_put_u32, true)
-#define __u64_field(attr_nr, attr_flag, name)	\
+#घोषणा __u64_field(attr_nr, attr_flag, name)	\
 	__field(attr_nr, attr_flag, name, NLA_U64, __u64, \
 			nla_get_u64, nla_put_u64_0pad, false)
-#define __str_field(attr_nr, attr_flag, name, maxlen) \
-	__array(attr_nr, attr_flag, name, NLA_NUL_STRING, char, maxlen, \
+#घोषणा __str_field(attr_nr, attr_flag, name, maxlen) \
+	__array(attr_nr, attr_flag, name, NLA_NUL_STRING, अक्षर, maxlen, \
 			nla_strscpy, nla_put, false)
-#define __bin_field(attr_nr, attr_flag, name, maxlen) \
-	__array(attr_nr, attr_flag, name, NLA_BINARY, char, maxlen, \
-			nla_memcpy, nla_put, false)
+#घोषणा __bin_field(attr_nr, attr_flag, name, maxlen) \
+	__array(attr_nr, attr_flag, name, NLA_BINARY, अक्षर, maxlen, \
+			nla_स_नकल, nla_put, false)
 
-/* fields with default values */
-#define __flg_field_def(attr_nr, attr_flag, name, default) \
+/* fields with शेष values */
+#घोषणा __flg_field_def(attr_nr, attr_flag, name, शेष) \
 	__flg_field(attr_nr, attr_flag, name)
-#define __u32_field_def(attr_nr, attr_flag, name, default) \
+#घोषणा __u32_field_def(attr_nr, attr_flag, name, शेष) \
 	__u32_field(attr_nr, attr_flag, name)
-#define __s32_field_def(attr_nr, attr_flag, name, default) \
+#घोषणा __s32_field_def(attr_nr, attr_flag, name, शेष) \
 	__s32_field(attr_nr, attr_flag, name)
-#define __str_field_def(attr_nr, attr_flag, name, maxlen) \
+#घोषणा __str_field_def(attr_nr, attr_flag, name, maxlen) \
 	__str_field(attr_nr, attr_flag, name, maxlen)
 
-#define GENL_op_init(args...)	args
-#define GENL_doit(handler)		\
-	.doit = handler,		\
+#घोषणा GENL_op_init(args...)	args
+#घोषणा GENL_करोit(handler)		\
+	.करोit = handler,		\
 	.flags = GENL_ADMIN_PERM,
-#define GENL_dumpit(handler)		\
+#घोषणा GENL_dumpit(handler)		\
 	.dumpit = handler,		\
 	.flags = GENL_ADMIN_PERM,
 
-/*									}}}1
- * Magic: define the enum symbols for genl_ops
- * Magic: define the enum symbols for top level attributes
- * Magic: define the enum symbols for nested attributes
- *									{{{2
+/*									पूर्णपूर्णपूर्ण1
+ * Magic: define the क्रमागत symbols क्रम genl_ops
+ * Magic: define the क्रमागत symbols क्रम top level attributes
+ * Magic: define the क्रमागत symbols क्रम nested attributes
+ *									अणुअणुअणु2
  */
 
-#undef GENL_struct
-#define GENL_struct(tag_name, tag_number, s_name, s_fields)
+#अघोषित GENL_काष्ठा
+#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)
 
-#undef GENL_mc_group
-#define GENL_mc_group(group)
+#अघोषित GENL_mc_group
+#घोषणा GENL_mc_group(group)
 
-#undef GENL_notification
-#define GENL_notification(op_name, op_num, mcast_group, tla_list)	\
+#अघोषित GENL_notअगरication
+#घोषणा GENL_notअगरication(op_name, op_num, mcast_group, tla_list)	\
 	op_name = op_num,
 
-#undef GENL_op
-#define GENL_op(op_name, op_num, handler, tla_list)			\
+#अघोषित GENL_op
+#घोषणा GENL_op(op_name, op_num, handler, tla_list)			\
 	op_name = op_num,
 
-enum {
-#include GENL_MAGIC_INCLUDE_FILE
-};
+क्रमागत अणु
+#समावेश GENL_MAGIC_INCLUDE_खाता
+पूर्ण;
 
-#undef GENL_notification
-#define GENL_notification(op_name, op_num, mcast_group, tla_list)
+#अघोषित GENL_notअगरication
+#घोषणा GENL_notअगरication(op_name, op_num, mcast_group, tla_list)
 
-#undef GENL_op
-#define GENL_op(op_name, op_num, handler, attr_list)
+#अघोषित GENL_op
+#घोषणा GENL_op(op_name, op_num, handler, attr_list)
 
-#undef GENL_struct
-#define GENL_struct(tag_name, tag_number, s_name, s_fields) \
+#अघोषित GENL_काष्ठा
+#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields) \
 		tag_name = tag_number,
 
-enum {
-#include GENL_MAGIC_INCLUDE_FILE
-};
+क्रमागत अणु
+#समावेश GENL_MAGIC_INCLUDE_खाता
+पूर्ण;
 
-#undef GENL_struct
-#define GENL_struct(tag_name, tag_number, s_name, s_fields)	\
-enum {								\
+#अघोषित GENL_काष्ठा
+#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)	\
+क्रमागत अणु								\
 	s_fields						\
-};
+पूर्ण;
 
-#undef __field
-#define __field(attr_nr, attr_flag, name, nla_type, type,	\
-		__get, __put, __is_signed)			\
+#अघोषित __field
+#घोषणा __field(attr_nr, attr_flag, name, nla_type, type,	\
+		__get, __put, __is_चिन्हित)			\
 	T_ ## name = (__u16)(attr_nr | ((attr_flag) & DRBD_GENLA_F_MANDATORY)),
 
-#undef __array
-#define __array(attr_nr, attr_flag, name, nla_type, type,	\
-		maxlen, __get, __put, __is_signed)		\
+#अघोषित __array
+#घोषणा __array(attr_nr, attr_flag, name, nla_type, type,	\
+		maxlen, __get, __put, __is_चिन्हित)		\
 	T_ ## name = (__u16)(attr_nr | ((attr_flag) & DRBD_GENLA_F_MANDATORY)),
 
-#include GENL_MAGIC_INCLUDE_FILE
+#समावेश GENL_MAGIC_INCLUDE_खाता
 
-/*									}}}1
- * Magic: compile time assert unique numbers for operations
- * Magic: -"- unique numbers for top level attributes
- * Magic: -"- unique numbers for nested attributes
- *									{{{2
+/*									पूर्णपूर्णपूर्ण1
+ * Magic: compile समय निश्चित unique numbers क्रम operations
+ * Magic: -"- unique numbers क्रम top level attributes
+ * Magic: -"- unique numbers क्रम nested attributes
+ *									अणुअणुअणु2
  */
 
-#undef GENL_struct
-#define GENL_struct(tag_name, tag_number, s_name, s_fields)
+#अघोषित GENL_काष्ठा
+#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)
 
-#undef GENL_op
-#define GENL_op(op_name, op_num, handler, attr_list)	\
-	case op_name:
+#अघोषित GENL_op
+#घोषणा GENL_op(op_name, op_num, handler, attr_list)	\
+	हाल op_name:
 
-#undef GENL_notification
-#define GENL_notification(op_name, op_num, mcast_group, tla_list)	\
-	case op_name:
+#अघोषित GENL_notअगरication
+#घोषणा GENL_notअगरication(op_name, op_num, mcast_group, tla_list)	\
+	हाल op_name:
 
-static inline void ct_assert_unique_operations(void)
-{
-	switch (0) {
-#include GENL_MAGIC_INCLUDE_FILE
-	case 0:
+अटल अंतरभूत व्योम ct_निश्चित_unique_operations(व्योम)
+अणु
+	चयन (0) अणु
+#समावेश GENL_MAGIC_INCLUDE_खाता
+	हाल 0:
 		;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#undef GENL_op
-#define GENL_op(op_name, op_num, handler, attr_list)
+#अघोषित GENL_op
+#घोषणा GENL_op(op_name, op_num, handler, attr_list)
 
-#undef GENL_notification
-#define GENL_notification(op_name, op_num, mcast_group, tla_list)
+#अघोषित GENL_notअगरication
+#घोषणा GENL_notअगरication(op_name, op_num, mcast_group, tla_list)
 
-#undef GENL_struct
-#define GENL_struct(tag_name, tag_number, s_name, s_fields)		\
-		case tag_number:
+#अघोषित GENL_काष्ठा
+#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)		\
+		हाल tag_number:
 
-static inline void ct_assert_unique_top_level_attributes(void)
-{
-	switch (0) {
-#include GENL_MAGIC_INCLUDE_FILE
-	case 0:
+अटल अंतरभूत व्योम ct_निश्चित_unique_top_level_attributes(व्योम)
+अणु
+	चयन (0) अणु
+#समावेश GENL_MAGIC_INCLUDE_खाता
+	हाल 0:
 		;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#undef GENL_struct
-#define GENL_struct(tag_name, tag_number, s_name, s_fields)		\
-static inline void ct_assert_unique_ ## s_name ## _attributes(void)	\
-{									\
-	switch (0) {							\
+#अघोषित GENL_काष्ठा
+#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)		\
+अटल अंतरभूत व्योम ct_निश्चित_unique_ ## s_name ## _attributes(व्योम)	\
+अणु									\
+	चयन (0) अणु							\
 	s_fields							\
-	case 0:								\
+	हाल 0:								\
 			;						\
-	}								\
-}
+	पूर्ण								\
+पूर्ण
 
-#undef __field
-#define __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
-		__is_signed)						\
-	case attr_nr:
+#अघोषित __field
+#घोषणा __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
+		__is_चिन्हित)						\
+	हाल attr_nr:
 
-#undef __array
-#define __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
-		__get, __put, __is_signed)				\
-	case attr_nr:
+#अघोषित __array
+#घोषणा __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
+		__get, __put, __is_चिन्हित)				\
+	हाल attr_nr:
 
-#include GENL_MAGIC_INCLUDE_FILE
+#समावेश GENL_MAGIC_INCLUDE_खाता
 
-/*									}}}1
- * Magic: declare structs
- * struct <name> {
+/*									पूर्णपूर्णपूर्ण1
+ * Magic: declare काष्ठाs
+ * काष्ठा <name> अणु
  *	fields
- * };
- *									{{{2
+ * पूर्ण;
+ *									अणुअणुअणु2
  */
 
-#undef GENL_struct
-#define GENL_struct(tag_name, tag_number, s_name, s_fields)		\
-struct s_name { s_fields };
+#अघोषित GENL_काष्ठा
+#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)		\
+काष्ठा s_name अणु s_fields पूर्ण;
 
-#undef __field
-#define __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
-		__is_signed)						\
+#अघोषित __field
+#घोषणा __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
+		__is_चिन्हित)						\
 	type name;
 
-#undef __array
-#define __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
-		__get, __put, __is_signed)				\
+#अघोषित __array
+#घोषणा __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
+		__get, __put, __is_चिन्हित)				\
 	type name[maxlen];	\
 	__u32 name ## _len;
 
-#include GENL_MAGIC_INCLUDE_FILE
+#समावेश GENL_MAGIC_INCLUDE_खाता
 
-#undef GENL_struct
-#define GENL_struct(tag_name, tag_number, s_name, s_fields)		\
-enum {									\
+#अघोषित GENL_काष्ठा
+#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)		\
+क्रमागत अणु									\
 	s_fields							\
-};
+पूर्ण;
 
-#undef __field
-#define __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
-		is_signed)						\
-	F_ ## name ## _IS_SIGNED = is_signed,
+#अघोषित __field
+#घोषणा __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
+		is_चिन्हित)						\
+	F_ ## name ## _IS_SIGNED = is_चिन्हित,
 
-#undef __array
-#define __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
-		__get, __put, is_signed)				\
-	F_ ## name ## _IS_SIGNED = is_signed,
+#अघोषित __array
+#घोषणा __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
+		__get, __put, is_चिन्हित)				\
+	F_ ## name ## _IS_SIGNED = is_चिन्हित,
 
-#include GENL_MAGIC_INCLUDE_FILE
+#समावेश GENL_MAGIC_INCLUDE_खाता
 
-/* }}}1 */
-#endif /* GENL_MAGIC_STRUCT_H */
+/* पूर्णपूर्णपूर्ण1 */
+#पूर्ण_अगर /* GENL_MAGIC_STRUCT_H */

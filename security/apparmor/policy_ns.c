@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AppArmor security module
  *
@@ -7,103 +8,103 @@
  * Copyright (C) 1998-2008 Novell/SUSE
  * Copyright 2009-2017 Canonical Ltd.
  *
- * AppArmor policy namespaces, allow for different sets of policies
- * to be loaded for tasks within the namespace.
+ * AppArmor policy namespaces, allow क्रम dअगरferent sets of policies
+ * to be loaded क्रम tasks within the namespace.
  */
 
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/string.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
 
-#include "include/apparmor.h"
-#include "include/cred.h"
-#include "include/policy_ns.h"
-#include "include/label.h"
-#include "include/policy.h"
+#समावेश "include/apparmor.h"
+#समावेश "include/cred.h"
+#समावेश "include/policy_ns.h"
+#समावेश "include/label.h"
+#समावेश "include/policy.h"
 
 /* root profile namespace */
-struct aa_ns *root_ns;
-const char *aa_hidden_ns_name = "---";
+काष्ठा aa_ns *root_ns;
+स्थिर अक्षर *aa_hidden_ns_name = "---";
 
 /**
- * aa_ns_visible - test if @view is visible from @curr
- * @curr: namespace to treat as the parent (NOT NULL)
- * @view: namespace to test if visible from @curr (NOT NULL)
+ * aa_ns_visible - test अगर @view is visible from @curr
+ * @curr: namespace to treat as the parent (NOT शून्य)
+ * @view: namespace to test अगर visible from @curr (NOT शून्य)
  * @subns: whether view of a subns is allowed
  *
- * Returns: true if @view is visible from @curr else false
+ * Returns: true अगर @view is visible from @curr अन्यथा false
  */
-bool aa_ns_visible(struct aa_ns *curr, struct aa_ns *view, bool subns)
-{
-	if (curr == view)
-		return true;
+bool aa_ns_visible(काष्ठा aa_ns *curr, काष्ठा aa_ns *view, bool subns)
+अणु
+	अगर (curr == view)
+		वापस true;
 
-	if (!subns)
-		return false;
+	अगर (!subns)
+		वापस false;
 
-	for ( ; view; view = view->parent) {
-		if (view->parent == curr)
-			return true;
-	}
+	क्रम ( ; view; view = view->parent) अणु
+		अगर (view->parent == curr)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * aa_na_name - Find the ns name to display for @view from @curr
- * @curr - current namespace (NOT NULL)
- * @view - namespace attempting to view (NOT NULL)
+ * aa_na_name - Find the ns name to display क्रम @view from @curr
+ * @curr - current namespace (NOT शून्य)
+ * @view - namespace attempting to view (NOT शून्य)
  * @subns - are subns visible
  *
  * Returns: name of @view visible from @curr
  */
-const char *aa_ns_name(struct aa_ns *curr, struct aa_ns *view, bool subns)
-{
-	/* if view == curr then the namespace name isn't displayed */
-	if (curr == view)
-		return "";
+स्थिर अक्षर *aa_ns_name(काष्ठा aa_ns *curr, काष्ठा aa_ns *view, bool subns)
+अणु
+	/* अगर view == curr then the namespace name isn't displayed */
+	अगर (curr == view)
+		वापस "";
 
-	if (aa_ns_visible(curr, view, subns)) {
-		/* at this point if a ns is visible it is in a view ns
+	अगर (aa_ns_visible(curr, view, subns)) अणु
+		/* at this poपूर्णांक अगर a ns is visible it is in a view ns
 		 * thus the curr ns.hname is a prefix of its name.
-		 * Only output the virtualized portion of the name
+		 * Only output the भवized portion of the name
 		 * Add + 2 to skip over // separating curr hname prefix
 		 * from the visible tail of the views hname
 		 */
-		return view->base.hname + strlen(curr->base.hname) + 2;
-	}
+		वापस view->base.hname + म_माप(curr->base.hname) + 2;
+	पूर्ण
 
-	return aa_hidden_ns_name;
-}
+	वापस aa_hidden_ns_name;
+पूर्ण
 
 /**
- * alloc_ns - allocate, initialize and return a new namespace
- * @prefix: parent namespace name (MAYBE NULL)
- * @name: a preallocated name  (NOT NULL)
+ * alloc_ns - allocate, initialize and वापस a new namespace
+ * @prefix: parent namespace name (MAYBE शून्य)
+ * @name: a pपुनः_स्मृतिated name  (NOT शून्य)
  *
- * Returns: refcounted namespace or NULL on failure.
+ * Returns: refcounted namespace or शून्य on failure.
  */
-static struct aa_ns *alloc_ns(const char *prefix, const char *name)
-{
-	struct aa_ns *ns;
+अटल काष्ठा aa_ns *alloc_ns(स्थिर अक्षर *prefix, स्थिर अक्षर *name)
+अणु
+	काष्ठा aa_ns *ns;
 
-	ns = kzalloc(sizeof(*ns), GFP_KERNEL);
+	ns = kzalloc(माप(*ns), GFP_KERNEL);
 	AA_DEBUG("%s(%p)\n", __func__, ns);
-	if (!ns)
-		return NULL;
-	if (!aa_policy_init(&ns->base, prefix, name, GFP_KERNEL))
-		goto fail_ns;
+	अगर (!ns)
+		वापस शून्य;
+	अगर (!aa_policy_init(&ns->base, prefix, name, GFP_KERNEL))
+		जाओ fail_ns;
 
 	INIT_LIST_HEAD(&ns->sub_ns);
 	INIT_LIST_HEAD(&ns->rawdata_list);
 	mutex_init(&ns->lock);
-	init_waitqueue_head(&ns->wait);
+	init_रुकोqueue_head(&ns->रुको);
 
-	/* released by aa_free_ns() */
-	ns->unconfined = aa_alloc_profile("unconfined", NULL, GFP_KERNEL);
-	if (!ns->unconfined)
-		goto fail_unconfined;
+	/* released by aa_मुक्त_ns() */
+	ns->unconfined = aa_alloc_profile("unconfined", शून्य, GFP_KERNEL);
+	अगर (!ns->unconfined)
+		जाओ fail_unconfined;
 
 	ns->unconfined->label.flags |= FLAG_IX_ON_NAME_ERROR |
 		FLAG_IMMUTIBLE | FLAG_NS_COUNT | FLAG_UNCONFINED;
@@ -116,221 +117,221 @@ static struct aa_ns *alloc_ns(const char *prefix, const char *name)
 
 	atomic_set(&ns->uniq_null, 0);
 
-	aa_labelset_init(&ns->labels);
+	aa_labअन्यथाt_init(&ns->labels);
 
-	return ns;
+	वापस ns;
 
 fail_unconfined:
-	kfree_sensitive(ns->base.hname);
+	kमुक्त_sensitive(ns->base.hname);
 fail_ns:
-	kfree_sensitive(ns);
-	return NULL;
-}
+	kमुक्त_sensitive(ns);
+	वापस शून्य;
+पूर्ण
 
 /**
- * aa_free_ns - free a profile namespace
- * @ns: the namespace to free  (MAYBE NULL)
+ * aa_मुक्त_ns - मुक्त a profile namespace
+ * @ns: the namespace to मुक्त  (MAYBE शून्य)
  *
- * Requires: All references to the namespace must have been put, if the
+ * Requires: All references to the namespace must have been put, अगर the
  *           namespace was referenced by a profile confining a task,
  */
-void aa_free_ns(struct aa_ns *ns)
-{
-	if (!ns)
-		return;
+व्योम aa_मुक्त_ns(काष्ठा aa_ns *ns)
+अणु
+	अगर (!ns)
+		वापस;
 
 	aa_policy_destroy(&ns->base);
-	aa_labelset_destroy(&ns->labels);
+	aa_labअन्यथाt_destroy(&ns->labels);
 	aa_put_ns(ns->parent);
 
-	ns->unconfined->ns = NULL;
-	aa_free_profile(ns->unconfined);
-	kfree_sensitive(ns);
-}
+	ns->unconfined->ns = शून्य;
+	aa_मुक्त_profile(ns->unconfined);
+	kमुक्त_sensitive(ns);
+पूर्ण
 
 /**
  * aa_findn_ns  -  look up a profile namespace on the namespace list
- * @root: namespace to search in  (NOT NULL)
- * @name: name of namespace to find  (NOT NULL)
+ * @root: namespace to search in  (NOT शून्य)
+ * @name: name of namespace to find  (NOT शून्य)
  * @n: length of @name
  *
- * Returns: a refcounted namespace on the list, or NULL if no namespace
+ * Returns: a refcounted namespace on the list, or शून्य अगर no namespace
  *          called @name exists.
  *
  * refcount released by caller
  */
-struct aa_ns *aa_findn_ns(struct aa_ns *root, const char *name, size_t n)
-{
-	struct aa_ns *ns = NULL;
+काष्ठा aa_ns *aa_findn_ns(काष्ठा aa_ns *root, स्थिर अक्षर *name, माप_प्रकार n)
+अणु
+	काष्ठा aa_ns *ns = शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ns = aa_get_ns(__aa_findn_ns(&root->sub_ns, name, n));
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
 /**
  * aa_find_ns  -  look up a profile namespace on the namespace list
- * @root: namespace to search in  (NOT NULL)
- * @name: name of namespace to find  (NOT NULL)
+ * @root: namespace to search in  (NOT शून्य)
+ * @name: name of namespace to find  (NOT शून्य)
  *
- * Returns: a refcounted namespace on the list, or NULL if no namespace
+ * Returns: a refcounted namespace on the list, or शून्य अगर no namespace
  *          called @name exists.
  *
  * refcount released by caller
  */
-struct aa_ns *aa_find_ns(struct aa_ns *root, const char *name)
-{
-	return aa_findn_ns(root, name, strlen(name));
-}
+काष्ठा aa_ns *aa_find_ns(काष्ठा aa_ns *root, स्थिर अक्षर *name)
+अणु
+	वापस aa_findn_ns(root, name, म_माप(name));
+पूर्ण
 
 /**
  * __aa_lookupn_ns - lookup the namespace matching @hname
- * @base: base list to start looking up profile name from  (NOT NULL)
- * @hname: hierarchical ns name  (NOT NULL)
+ * @base: base list to start looking up profile name from  (NOT शून्य)
+ * @hname: hierarchical ns name  (NOT शून्य)
  * @n: length of @hname
  *
- * Requires: rcu_read_lock be held
+ * Requires: rcu_पढ़ो_lock be held
  *
- * Returns: unrefcounted ns pointer or NULL if not found
+ * Returns: unrefcounted ns poपूर्णांकer or शून्य अगर not found
  *
  * Do a relative name lookup, recursing through profile tree.
  */
-struct aa_ns *__aa_lookupn_ns(struct aa_ns *view, const char *hname, size_t n)
-{
-	struct aa_ns *ns = view;
-	const char *split;
+काष्ठा aa_ns *__aa_lookupn_ns(काष्ठा aa_ns *view, स्थिर अक्षर *hname, माप_प्रकार n)
+अणु
+	काष्ठा aa_ns *ns = view;
+	स्थिर अक्षर *split;
 
-	for (split = strnstr(hname, "//", n); split;
-	     split = strnstr(hname, "//", n)) {
+	क्रम (split = strnstr(hname, "//", n); split;
+	     split = strnstr(hname, "//", n)) अणु
 		ns = __aa_findn_ns(&ns->sub_ns, hname, split - hname);
-		if (!ns)
-			return NULL;
+		अगर (!ns)
+			वापस शून्य;
 
 		n -= split + 2 - hname;
 		hname = split + 2;
-	}
+	पूर्ण
 
-	if (n)
-		return __aa_findn_ns(&ns->sub_ns, hname, n);
-	return NULL;
-}
+	अगर (n)
+		वापस __aa_findn_ns(&ns->sub_ns, hname, n);
+	वापस शून्य;
+पूर्ण
 
 /**
  * aa_lookupn_ns  -  look up a policy namespace relative to @view
- * @view: namespace to search in  (NOT NULL)
- * @name: name of namespace to find  (NOT NULL)
+ * @view: namespace to search in  (NOT शून्य)
+ * @name: name of namespace to find  (NOT शून्य)
  * @n: length of @name
  *
- * Returns: a refcounted namespace on the list, or NULL if no namespace
+ * Returns: a refcounted namespace on the list, or शून्य अगर no namespace
  *          called @name exists.
  *
  * refcount released by caller
  */
-struct aa_ns *aa_lookupn_ns(struct aa_ns *view, const char *name, size_t n)
-{
-	struct aa_ns *ns = NULL;
+काष्ठा aa_ns *aa_lookupn_ns(काष्ठा aa_ns *view, स्थिर अक्षर *name, माप_प्रकार n)
+अणु
+	काष्ठा aa_ns *ns = शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ns = aa_get_ns(__aa_lookupn_ns(view, name, n));
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
-static struct aa_ns *__aa_create_ns(struct aa_ns *parent, const char *name,
-				    struct dentry *dir)
-{
-	struct aa_ns *ns;
-	int error;
+अटल काष्ठा aa_ns *__aa_create_ns(काष्ठा aa_ns *parent, स्थिर अक्षर *name,
+				    काष्ठा dentry *dir)
+अणु
+	काष्ठा aa_ns *ns;
+	पूर्णांक error;
 
 	AA_BUG(!parent);
 	AA_BUG(!name);
 	AA_BUG(!mutex_is_locked(&parent->lock));
 
 	ns = alloc_ns(parent->base.hname, name);
-	if (!ns)
-		return ERR_PTR(-ENOMEM);
+	अगर (!ns)
+		वापस ERR_PTR(-ENOMEM);
 	ns->level = parent->level + 1;
 	mutex_lock_nested(&ns->lock, ns->level);
-	error = __aafs_ns_mkdir(ns, ns_subns_dir(parent), name, dir);
-	if (error) {
+	error = __aafs_ns_सूची_गढ़ो(ns, ns_subns_dir(parent), name, dir);
+	अगर (error) अणु
 		AA_ERROR("Failed to create interface for ns %s\n",
 			 ns->base.name);
 		mutex_unlock(&ns->lock);
-		aa_free_ns(ns);
-		return ERR_PTR(error);
-	}
+		aa_मुक्त_ns(ns);
+		वापस ERR_PTR(error);
+	पूर्ण
 	ns->parent = aa_get_ns(parent);
 	list_add_rcu(&ns->base.list, &parent->sub_ns);
 	/* add list ref */
 	aa_get_ns(ns);
 	mutex_unlock(&ns->lock);
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
 /**
- * aa_create_ns - create an ns, fail if it already exists
+ * aa_create_ns - create an ns, fail अगर it alपढ़ोy exists
  * @parent: the parent of the namespace being created
  * @name: the name of the namespace
- * @dir: if not null the dir to put the ns entries in
+ * @dir: अगर not null the dir to put the ns entries in
  *
  * Returns: the a refcounted ns that has been add or an ERR_PTR
  */
-struct aa_ns *__aa_find_or_create_ns(struct aa_ns *parent, const char *name,
-				     struct dentry *dir)
-{
-	struct aa_ns *ns;
+काष्ठा aa_ns *__aa_find_or_create_ns(काष्ठा aa_ns *parent, स्थिर अक्षर *name,
+				     काष्ठा dentry *dir)
+अणु
+	काष्ठा aa_ns *ns;
 
 	AA_BUG(!mutex_is_locked(&parent->lock));
 
-	/* try and find the specified ns */
+	/* try and find the specअगरied ns */
 	/* released by caller */
 	ns = aa_get_ns(__aa_find_ns(&parent->sub_ns, name));
-	if (!ns)
+	अगर (!ns)
 		ns = __aa_create_ns(parent, name, dir);
-	else
+	अन्यथा
 		ns = ERR_PTR(-EEXIST);
 
-	/* return ref */
-	return ns;
-}
+	/* वापस ref */
+	वापस ns;
+पूर्ण
 
 /**
  * aa_prepare_ns - find an existing or create a new namespace of @name
  * @parent: ns to treat as parent
- * @name: the namespace to find or add  (NOT NULL)
+ * @name: the namespace to find or add  (NOT शून्य)
  *
- * Returns: refcounted namespace or PTR_ERR if failed to create one
+ * Returns: refcounted namespace or PTR_ERR अगर failed to create one
  */
-struct aa_ns *aa_prepare_ns(struct aa_ns *parent, const char *name)
-{
-	struct aa_ns *ns;
+काष्ठा aa_ns *aa_prepare_ns(काष्ठा aa_ns *parent, स्थिर अक्षर *name)
+अणु
+	काष्ठा aa_ns *ns;
 
 	mutex_lock_nested(&parent->lock, parent->level);
-	/* try and find the specified ns and if it doesn't exist create it */
+	/* try and find the specअगरied ns and अगर it करोesn't exist create it */
 	/* released by caller */
 	ns = aa_get_ns(__aa_find_ns(&parent->sub_ns, name));
-	if (!ns)
-		ns = __aa_create_ns(parent, name, NULL);
+	अगर (!ns)
+		ns = __aa_create_ns(parent, name, शून्य);
 	mutex_unlock(&parent->lock);
 
-	/* return ref */
-	return ns;
-}
+	/* वापस ref */
+	वापस ns;
+पूर्ण
 
-static void __ns_list_release(struct list_head *head);
+अटल व्योम __ns_list_release(काष्ठा list_head *head);
 
 /**
- * destroy_ns - remove everything contained by @ns
- * @ns: namespace to have it contents removed  (NOT NULL)
+ * destroy_ns - हटाओ everything contained by @ns
+ * @ns: namespace to have it contents हटाओd  (NOT शून्य)
  */
-static void destroy_ns(struct aa_ns *ns)
-{
-	if (!ns)
-		return;
+अटल व्योम destroy_ns(काष्ठा aa_ns *ns)
+अणु
+	अगर (!ns)
+		वापस;
 
 	mutex_lock_nested(&ns->lock, ns->level);
 	/* release all profiles in this namespace */
@@ -339,72 +340,72 @@ static void destroy_ns(struct aa_ns *ns)
 	/* release all sub namespaces */
 	__ns_list_release(&ns->sub_ns);
 
-	if (ns->parent) {
-		unsigned long flags;
+	अगर (ns->parent) अणु
+		अचिन्हित दीर्घ flags;
 
-		write_lock_irqsave(&ns->labels.lock, flags);
+		ग_लिखो_lock_irqsave(&ns->labels.lock, flags);
 		__aa_proxy_redirect(ns_unconfined(ns),
 				    ns_unconfined(ns->parent));
-		write_unlock_irqrestore(&ns->labels.lock, flags);
-	}
-	__aafs_ns_rmdir(ns);
+		ग_लिखो_unlock_irqrestore(&ns->labels.lock, flags);
+	पूर्ण
+	__aafs_ns_सूची_हटाओ(ns);
 	mutex_unlock(&ns->lock);
-}
+पूर्ण
 
 /**
- * __aa_remove_ns - remove a namespace and all its children
- * @ns: namespace to be removed  (NOT NULL)
+ * __aa_हटाओ_ns - हटाओ a namespace and all its children
+ * @ns: namespace to be हटाओd  (NOT शून्य)
  *
- * Requires: ns->parent->lock be held and ns removed from parent.
+ * Requires: ns->parent->lock be held and ns हटाओd from parent.
  */
-void __aa_remove_ns(struct aa_ns *ns)
-{
-	/* remove ns from namespace list */
+व्योम __aa_हटाओ_ns(काष्ठा aa_ns *ns)
+अणु
+	/* हटाओ ns from namespace list */
 	list_del_rcu(&ns->base.list);
 	destroy_ns(ns);
 	aa_put_ns(ns);
-}
+पूर्ण
 
 /**
- * __ns_list_release - remove all profile namespaces on the list put refs
- * @head: list of profile namespaces  (NOT NULL)
+ * __ns_list_release - हटाओ all profile namespaces on the list put refs
+ * @head: list of profile namespaces  (NOT शून्य)
  *
  * Requires: namespace lock be held
  */
-static void __ns_list_release(struct list_head *head)
-{
-	struct aa_ns *ns, *tmp;
+अटल व्योम __ns_list_release(काष्ठा list_head *head)
+अणु
+	काष्ठा aa_ns *ns, *पंचांगp;
 
-	list_for_each_entry_safe(ns, tmp, head, base.list)
-		__aa_remove_ns(ns);
+	list_क्रम_each_entry_safe(ns, पंचांगp, head, base.list)
+		__aa_हटाओ_ns(ns);
 
-}
+पूर्ण
 
 /**
  * aa_alloc_root_ns - allocate the root profile namespace
  *
- * Returns: %0 on success else error
+ * Returns: %0 on success अन्यथा error
  *
  */
-int __init aa_alloc_root_ns(void)
-{
-	/* released by aa_free_root_ns - used as list ref*/
-	root_ns = alloc_ns(NULL, "root");
-	if (!root_ns)
-		return -ENOMEM;
+पूर्णांक __init aa_alloc_root_ns(व्योम)
+अणु
+	/* released by aa_मुक्त_root_ns - used as list ref*/
+	root_ns = alloc_ns(शून्य, "root");
+	अगर (!root_ns)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
  /**
-  * aa_free_root_ns - free the root profile namespace
+  * aa_मुक्त_root_ns - मुक्त the root profile namespace
   */
-void __init aa_free_root_ns(void)
-{
-	 struct aa_ns *ns = root_ns;
+व्योम __init aa_मुक्त_root_ns(व्योम)
+अणु
+	 काष्ठा aa_ns *ns = root_ns;
 
-	 root_ns = NULL;
+	 root_ns = शून्य;
 
 	 destroy_ns(ns);
 	 aa_put_ns(ns);
-}
+पूर्ण

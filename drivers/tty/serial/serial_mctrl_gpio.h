@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Helpers for controlling modem lines via GPIO
+ * Helpers क्रम controlling modem lines via GPIO
  *
  * Copyright (C) 2014 Paratronic S.A.
  */
 
-#ifndef __SERIAL_MCTRL_GPIO__
-#define __SERIAL_MCTRL_GPIO__
+#अगर_अघोषित __SERIAL_MCTRL_GPIO__
+#घोषणा __SERIAL_MCTRL_GPIO__
 
-#include <linux/err.h>
-#include <linux/device.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/err.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/consumer.h>
 
-struct uart_port;
+काष्ठा uart_port;
 
-enum mctrl_gpio_idx {
+क्रमागत mctrl_gpio_idx अणु
 	UART_GPIO_CTS,
 	UART_GPIO_DSR,
 	UART_GPIO_DCD,
@@ -23,125 +24,125 @@ enum mctrl_gpio_idx {
 	UART_GPIO_RTS,
 	UART_GPIO_DTR,
 	UART_GPIO_MAX,
-};
+पूर्ण;
 
 /*
- * Opaque descriptor for modem lines controlled by GPIOs
+ * Opaque descriptor क्रम modem lines controlled by GPIOs
  */
-struct mctrl_gpios;
+काष्ठा mctrl_gpios;
 
-#ifdef CONFIG_GPIOLIB
+#अगर_घोषित CONFIG_GPIOLIB
 
 /*
  * Set state of the modem control output lines via GPIOs.
  */
-void mctrl_gpio_set(struct mctrl_gpios *gpios, unsigned int mctrl);
+व्योम mctrl_gpio_set(काष्ठा mctrl_gpios *gpios, अचिन्हित पूर्णांक mctrl);
 
 /*
  * Get state of the modem control input lines from GPIOs.
- * The mctrl flags are updated and returned.
+ * The mctrl flags are updated and वापसed.
  */
-unsigned int mctrl_gpio_get(struct mctrl_gpios *gpios, unsigned int *mctrl);
+अचिन्हित पूर्णांक mctrl_gpio_get(काष्ठा mctrl_gpios *gpios, अचिन्हित पूर्णांक *mctrl);
 
 /*
  * Get state of the modem control output lines from GPIOs.
- * The mctrl flags are updated and returned.
+ * The mctrl flags are updated and वापसed.
  */
-unsigned int
-mctrl_gpio_get_outputs(struct mctrl_gpios *gpios, unsigned int *mctrl);
+अचिन्हित पूर्णांक
+mctrl_gpio_get_outमाला_दो(काष्ठा mctrl_gpios *gpios, अचिन्हित पूर्णांक *mctrl);
 
 /*
- * Returns the associated struct gpio_desc to the modem line gidx
+ * Returns the associated काष्ठा gpio_desc to the modem line gidx
  */
-struct gpio_desc *mctrl_gpio_to_gpiod(struct mctrl_gpios *gpios,
-				      enum mctrl_gpio_idx gidx);
+काष्ठा gpio_desc *mctrl_gpio_to_gpiod(काष्ठा mctrl_gpios *gpios,
+				      क्रमागत mctrl_gpio_idx gidx);
 
 /*
  * Request and set direction of modem control line GPIOs and set up irq
  * handling.
- * devm_* functions are used, so there's no need to call mctrl_gpio_free().
- * Returns a pointer to the allocated mctrl structure if ok, -ENOMEM on
+ * devm_* functions are used, so there's no need to call mctrl_gpio_मुक्त().
+ * Returns a poपूर्णांकer to the allocated mctrl काष्ठाure अगर ok, -ENOMEM on
  * allocation error.
  */
-struct mctrl_gpios *mctrl_gpio_init(struct uart_port *port, unsigned int idx);
+काष्ठा mctrl_gpios *mctrl_gpio_init(काष्ठा uart_port *port, अचिन्हित पूर्णांक idx);
 
 /*
  * Request and set direction of modem control line GPIOs.
- * devm_* functions are used, so there's no need to call mctrl_gpio_free().
- * Returns a pointer to the allocated mctrl structure if ok, -ENOMEM on
+ * devm_* functions are used, so there's no need to call mctrl_gpio_मुक्त().
+ * Returns a poपूर्णांकer to the allocated mctrl काष्ठाure अगर ok, -ENOMEM on
  * allocation error.
  */
-struct mctrl_gpios *mctrl_gpio_init_noauto(struct device *dev,
-					   unsigned int idx);
+काष्ठा mctrl_gpios *mctrl_gpio_init_noस्वतः(काष्ठा device *dev,
+					   अचिन्हित पूर्णांक idx);
 
 /*
- * Free the mctrl_gpios structure.
+ * Free the mctrl_gpios काष्ठाure.
  * Normally, this function will not be called, as the GPIOs will
  * be disposed of by the resource management code.
  */
-void mctrl_gpio_free(struct device *dev, struct mctrl_gpios *gpios);
+व्योम mctrl_gpio_मुक्त(काष्ठा device *dev, काष्ठा mctrl_gpios *gpios);
 
 /*
- * Enable gpio interrupts to report status line changes.
+ * Enable gpio पूर्णांकerrupts to report status line changes.
  */
-void mctrl_gpio_enable_ms(struct mctrl_gpios *gpios);
+व्योम mctrl_gpio_enable_ms(काष्ठा mctrl_gpios *gpios);
 
 /*
- * Disable gpio interrupts to report status line changes.
+ * Disable gpio पूर्णांकerrupts to report status line changes.
  */
-void mctrl_gpio_disable_ms(struct mctrl_gpios *gpios);
+व्योम mctrl_gpio_disable_ms(काष्ठा mctrl_gpios *gpios);
 
-#else /* GPIOLIB */
+#अन्यथा /* GPIOLIB */
 
-static inline
-void mctrl_gpio_set(struct mctrl_gpios *gpios, unsigned int mctrl)
-{
-}
+अटल अंतरभूत
+व्योम mctrl_gpio_set(काष्ठा mctrl_gpios *gpios, अचिन्हित पूर्णांक mctrl)
+अणु
+पूर्ण
 
-static inline
-unsigned int mctrl_gpio_get(struct mctrl_gpios *gpios, unsigned int *mctrl)
-{
-	return *mctrl;
-}
+अटल अंतरभूत
+अचिन्हित पूर्णांक mctrl_gpio_get(काष्ठा mctrl_gpios *gpios, अचिन्हित पूर्णांक *mctrl)
+अणु
+	वापस *mctrl;
+पूर्ण
 
-static inline unsigned int
-mctrl_gpio_get_outputs(struct mctrl_gpios *gpios, unsigned int *mctrl)
-{
-	return *mctrl;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+mctrl_gpio_get_outमाला_दो(काष्ठा mctrl_gpios *gpios, अचिन्हित पूर्णांक *mctrl)
+अणु
+	वापस *mctrl;
+पूर्ण
 
-static inline
-struct gpio_desc *mctrl_gpio_to_gpiod(struct mctrl_gpios *gpios,
-				      enum mctrl_gpio_idx gidx)
-{
-	return NULL;
-}
+अटल अंतरभूत
+काष्ठा gpio_desc *mctrl_gpio_to_gpiod(काष्ठा mctrl_gpios *gpios,
+				      क्रमागत mctrl_gpio_idx gidx)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline
-struct mctrl_gpios *mctrl_gpio_init(struct uart_port *port, unsigned int idx)
-{
-	return NULL;
-}
+अटल अंतरभूत
+काष्ठा mctrl_gpios *mctrl_gpio_init(काष्ठा uart_port *port, अचिन्हित पूर्णांक idx)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline
-struct mctrl_gpios *mctrl_gpio_init_noauto(struct device *dev, unsigned int idx)
-{
-	return NULL;
-}
+अटल अंतरभूत
+काष्ठा mctrl_gpios *mctrl_gpio_init_noस्वतः(काष्ठा device *dev, अचिन्हित पूर्णांक idx)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline
-void mctrl_gpio_free(struct device *dev, struct mctrl_gpios *gpios)
-{
-}
+अटल अंतरभूत
+व्योम mctrl_gpio_मुक्त(काष्ठा device *dev, काष्ठा mctrl_gpios *gpios)
+अणु
+पूर्ण
 
-static inline void mctrl_gpio_enable_ms(struct mctrl_gpios *gpios)
-{
-}
+अटल अंतरभूत व्योम mctrl_gpio_enable_ms(काष्ठा mctrl_gpios *gpios)
+अणु
+पूर्ण
 
-static inline void mctrl_gpio_disable_ms(struct mctrl_gpios *gpios)
-{
-}
+अटल अंतरभूत व्योम mctrl_gpio_disable_ms(काष्ठा mctrl_gpios *gpios)
+अणु
+पूर्ण
 
-#endif /* GPIOLIB */
+#पूर्ण_अगर /* GPIOLIB */
 
-#endif
+#पूर्ण_अगर

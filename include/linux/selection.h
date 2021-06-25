@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * selection.h
  *
  * Interface between console.c, tty_io.c, vt.c, vc_screen.c and selection.c
  */
 
-#ifndef _LINUX_SELECTION_H_
-#define _LINUX_SELECTION_H_
+#अगर_अघोषित _LINUX_SELECTION_H_
+#घोषणा _LINUX_SELECTION_H_
 
-#include <linux/tiocl.h>
-#include <linux/vt_buffer.h>
+#समावेश <linux/tiocl.h>
+#समावेश <linux/vt_buffer.h>
 
-struct tty_struct;
-struct vc_data;
+काष्ठा tty_काष्ठा;
+काष्ठा vc_data;
 
-extern void clear_selection(void);
-extern int set_selection_user(const struct tiocl_selection __user *sel,
-			      struct tty_struct *tty);
-extern int set_selection_kernel(struct tiocl_selection *v,
-				struct tty_struct *tty);
-extern int paste_selection(struct tty_struct *tty);
-extern int sel_loadlut(char __user *p);
-extern int mouse_reporting(void);
-extern void mouse_report(struct tty_struct * tty, int butt, int mrx, int mry);
+बाह्य व्योम clear_selection(व्योम);
+बाह्य पूर्णांक set_selection_user(स्थिर काष्ठा tiocl_selection __user *sel,
+			      काष्ठा tty_काष्ठा *tty);
+बाह्य पूर्णांक set_selection_kernel(काष्ठा tiocl_selection *v,
+				काष्ठा tty_काष्ठा *tty);
+बाह्य पूर्णांक paste_selection(काष्ठा tty_काष्ठा *tty);
+बाह्य पूर्णांक sel_loadlut(अक्षर __user *p);
+बाह्य पूर्णांक mouse_reporting(व्योम);
+बाह्य व्योम mouse_report(काष्ठा tty_काष्ठा * tty, पूर्णांक butt, पूर्णांक mrx, पूर्णांक mry);
 
-bool vc_is_sel(struct vc_data *vc);
+bool vc_is_sel(काष्ठा vc_data *vc);
 
-extern int console_blanked;
+बाह्य पूर्णांक console_blanked;
 
-extern const unsigned char color_table[];
-extern unsigned char default_red[];
-extern unsigned char default_grn[];
-extern unsigned char default_blu[];
+बाह्य स्थिर अचिन्हित अक्षर color_table[];
+बाह्य अचिन्हित अक्षर शेष_red[];
+बाह्य अचिन्हित अक्षर शेष_grn[];
+बाह्य अचिन्हित अक्षर शेष_blu[];
 
-extern unsigned short *screen_pos(const struct vc_data *vc, int w_offset,
+बाह्य अचिन्हित लघु *screen_pos(स्थिर काष्ठा vc_data *vc, पूर्णांक w_offset,
 		bool viewed);
-extern u16 screen_glyph(const struct vc_data *vc, int offset);
-extern u32 screen_glyph_unicode(const struct vc_data *vc, int offset);
-extern void complement_pos(struct vc_data *vc, int offset);
-extern void invert_screen(struct vc_data *vc, int offset, int count, bool viewed);
+बाह्य u16 screen_glyph(स्थिर काष्ठा vc_data *vc, पूर्णांक offset);
+बाह्य u32 screen_glyph_unicode(स्थिर काष्ठा vc_data *vc, पूर्णांक offset);
+बाह्य व्योम complement_pos(काष्ठा vc_data *vc, पूर्णांक offset);
+बाह्य व्योम invert_screen(काष्ठा vc_data *vc, पूर्णांक offset, पूर्णांक count, bool viewed);
 
-extern void getconsxy(const struct vc_data *vc, unsigned char xy[static 2]);
-extern void putconsxy(struct vc_data *vc, unsigned char xy[static const 2]);
+बाह्य व्योम अ_लोonsxy(स्थिर काष्ठा vc_data *vc, अचिन्हित अक्षर xy[अटल 2]);
+बाह्य व्योम अ_दोonsxy(काष्ठा vc_data *vc, अचिन्हित अक्षर xy[अटल स्थिर 2]);
 
-extern u16 vcs_scr_readw(const struct vc_data *vc, const u16 *org);
-extern void vcs_scr_writew(struct vc_data *vc, u16 val, u16 *org);
-extern void vcs_scr_updated(struct vc_data *vc);
+बाह्य u16 vcs_scr_पढ़ोw(स्थिर काष्ठा vc_data *vc, स्थिर u16 *org);
+बाह्य व्योम vcs_scr_ग_लिखोw(काष्ठा vc_data *vc, u16 val, u16 *org);
+बाह्य व्योम vcs_scr_updated(काष्ठा vc_data *vc);
 
-extern int vc_uniscr_check(struct vc_data *vc);
-extern void vc_uniscr_copy_line(const struct vc_data *vc, void *dest,
+बाह्य पूर्णांक vc_uniscr_check(काष्ठा vc_data *vc);
+बाह्य व्योम vc_uniscr_copy_line(स्थिर काष्ठा vc_data *vc, व्योम *dest,
 				bool viewed,
-				unsigned int row, unsigned int col,
-				unsigned int nr);
+				अचिन्हित पूर्णांक row, अचिन्हित पूर्णांक col,
+				अचिन्हित पूर्णांक nr);
 
-#endif
+#पूर्ण_अगर

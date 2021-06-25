@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver for Linux.
+ * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
  *
  * Copyright (c) 2003-2014 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,429 +33,429 @@
  * SOFTWARE.
  */
 
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/if.h>
-#include <linux/if_vlan.h>
-#include <linux/jhash.h>
-#include <linux/module.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <net/neighbour.h>
-#include "cxgb4.h"
-#include "l2t.h"
-#include "t4_msg.h"
-#include "t4fw_api.h"
-#include "t4_regs.h"
-#include "t4_values.h"
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/module.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <net/neighbour.h>
+#समावेश "cxgb4.h"
+#समावेश "l2t.h"
+#समावेश "t4_msg.h"
+#समावेश "t4fw_api.h"
+#समावेश "t4_regs.h"
+#समावेश "t4_values.h"
 
-/* identifies sync vs async L2T_WRITE_REQs */
-#define SYNC_WR_S    12
-#define SYNC_WR_V(x) ((x) << SYNC_WR_S)
-#define SYNC_WR_F    SYNC_WR_V(1)
+/* identअगरies sync vs async L2T_WRITE_REQs */
+#घोषणा SYNC_WR_S    12
+#घोषणा SYNC_WR_V(x) ((x) << SYNC_WR_S)
+#घोषणा SYNC_WR_F    SYNC_WR_V(1)
 
-struct l2t_data {
-	unsigned int l2t_start;     /* start index of our piece of the L2T */
-	unsigned int l2t_size;      /* number of entries in l2tab */
+काष्ठा l2t_data अणु
+	अचिन्हित पूर्णांक l2t_start;     /* start index of our piece of the L2T */
+	अचिन्हित पूर्णांक l2t_size;      /* number of entries in l2tab */
 	rwlock_t lock;
-	atomic_t nfree;             /* number of free entries */
-	struct l2t_entry *rover;    /* starting point for next allocation */
-	struct l2t_entry l2tab[];  /* MUST BE LAST */
-};
+	atomic_t nमुक्त;             /* number of मुक्त entries */
+	काष्ठा l2t_entry *rover;    /* starting poपूर्णांक क्रम next allocation */
+	काष्ठा l2t_entry l2tab[];  /* MUST BE LAST */
+पूर्ण;
 
-static inline unsigned int vlan_prio(const struct l2t_entry *e)
-{
-	return e->vlan >> VLAN_PRIO_SHIFT;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक vlan_prio(स्थिर काष्ठा l2t_entry *e)
+अणु
+	वापस e->vlan >> VLAN_PRIO_SHIFT;
+पूर्ण
 
-static inline void l2t_hold(struct l2t_data *d, struct l2t_entry *e)
-{
-	if (atomic_add_return(1, &e->refcnt) == 1)  /* 0 -> 1 transition */
-		atomic_dec(&d->nfree);
-}
+अटल अंतरभूत व्योम l2t_hold(काष्ठा l2t_data *d, काष्ठा l2t_entry *e)
+अणु
+	अगर (atomic_add_वापस(1, &e->refcnt) == 1)  /* 0 -> 1 transition */
+		atomic_dec(&d->nमुक्त);
+पूर्ण
 
 /*
- * To avoid having to check address families we do not allow v4 and v6
+ * To aव्योम having to check address families we करो not allow v4 and v6
  * neighbors to be on the same hash chain.  We keep v4 entries in the first
  * half of available hash buckets and v6 in the second.  We need at least two
- * entries in our L2T for this scheme to work.
+ * entries in our L2T क्रम this scheme to work.
  */
-enum {
+क्रमागत अणु
 	L2T_MIN_HASH_BUCKETS = 2,
-};
+पूर्ण;
 
-static inline unsigned int arp_hash(struct l2t_data *d, const u32 *key,
-				    int ifindex)
-{
-	unsigned int l2t_size_half = d->l2t_size / 2;
+अटल अंतरभूत अचिन्हित पूर्णांक arp_hash(काष्ठा l2t_data *d, स्थिर u32 *key,
+				    पूर्णांक अगरindex)
+अणु
+	अचिन्हित पूर्णांक l2t_size_half = d->l2t_size / 2;
 
-	return jhash_2words(*key, ifindex, 0) % l2t_size_half;
-}
+	वापस jhash_2words(*key, अगरindex, 0) % l2t_size_half;
+पूर्ण
 
-static inline unsigned int ipv6_hash(struct l2t_data *d, const u32 *key,
-				     int ifindex)
-{
-	unsigned int l2t_size_half = d->l2t_size / 2;
+अटल अंतरभूत अचिन्हित पूर्णांक ipv6_hash(काष्ठा l2t_data *d, स्थिर u32 *key,
+				     पूर्णांक अगरindex)
+अणु
+	अचिन्हित पूर्णांक l2t_size_half = d->l2t_size / 2;
 	u32 xor = key[0] ^ key[1] ^ key[2] ^ key[3];
 
-	return (l2t_size_half +
-		(jhash_2words(xor, ifindex, 0) % l2t_size_half));
-}
+	वापस (l2t_size_half +
+		(jhash_2words(xor, अगरindex, 0) % l2t_size_half));
+पूर्ण
 
-static unsigned int addr_hash(struct l2t_data *d, const u32 *addr,
-			      int addr_len, int ifindex)
-{
-	return addr_len == 4 ? arp_hash(d, addr, ifindex) :
-			       ipv6_hash(d, addr, ifindex);
-}
+अटल अचिन्हित पूर्णांक addr_hash(काष्ठा l2t_data *d, स्थिर u32 *addr,
+			      पूर्णांक addr_len, पूर्णांक अगरindex)
+अणु
+	वापस addr_len == 4 ? arp_hash(d, addr, अगरindex) :
+			       ipv6_hash(d, addr, अगरindex);
+पूर्ण
 
 /*
- * Checks if an L2T entry is for the given IP/IPv6 address.  It does not check
+ * Checks अगर an L2T entry is क्रम the given IP/IPv6 address.  It करोes not check
  * whether the L2T entry and the address are of the same address family.
  * Callers ensure an address is only checked against L2T entries of the same
  * family, something made trivial by the separation of IP and IPv6 hash chains
- * mentioned above.  Returns 0 if there's a match,
+ * mentioned above.  Returns 0 अगर there's a match,
  */
-static int addreq(const struct l2t_entry *e, const u32 *addr)
-{
-	if (e->v6)
-		return (e->addr[0] ^ addr[0]) | (e->addr[1] ^ addr[1]) |
+अटल पूर्णांक addreq(स्थिर काष्ठा l2t_entry *e, स्थिर u32 *addr)
+अणु
+	अगर (e->v6)
+		वापस (e->addr[0] ^ addr[0]) | (e->addr[1] ^ addr[1]) |
 		       (e->addr[2] ^ addr[2]) | (e->addr[3] ^ addr[3]);
-	return e->addr[0] ^ addr[0];
-}
+	वापस e->addr[0] ^ addr[0];
+पूर्ण
 
-static void neigh_replace(struct l2t_entry *e, struct neighbour *n)
-{
+अटल व्योम neigh_replace(काष्ठा l2t_entry *e, काष्ठा neighbour *n)
+अणु
 	neigh_hold(n);
-	if (e->neigh)
+	अगर (e->neigh)
 		neigh_release(e->neigh);
 	e->neigh = n;
-}
+पूर्ण
 
 /*
  * Write an L2T entry.  Must be called with the entry locked.
- * The write may be synchronous or asynchronous.
+ * The ग_लिखो may be synchronous or asynchronous.
  */
-static int write_l2e(struct adapter *adap, struct l2t_entry *e, int sync)
-{
-	struct l2t_data *d = adap->l2t;
-	unsigned int l2t_idx = e->idx + d->l2t_start;
-	struct sk_buff *skb;
-	struct cpl_l2t_write_req *req;
+अटल पूर्णांक ग_लिखो_l2e(काष्ठा adapter *adap, काष्ठा l2t_entry *e, पूर्णांक sync)
+अणु
+	काष्ठा l2t_data *d = adap->l2t;
+	अचिन्हित पूर्णांक l2t_idx = e->idx + d->l2t_start;
+	काष्ठा sk_buff *skb;
+	काष्ठा cpl_l2t_ग_लिखो_req *req;
 
-	skb = alloc_skb(sizeof(*req), GFP_ATOMIC);
-	if (!skb)
-		return -ENOMEM;
+	skb = alloc_skb(माप(*req), GFP_ATOMIC);
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	req = __skb_put(skb, sizeof(*req));
+	req = __skb_put(skb, माप(*req));
 	INIT_TP_WR(req, 0);
 
 	OPCODE_TID(req) = htonl(MK_OPCODE_TID(CPL_L2T_WRITE_REQ,
 					l2t_idx | (sync ? SYNC_WR_F : 0) |
-					TID_QID_V(adap->sge.fw_evtq.abs_id)));
+					TID_QID_V(adap->sge.fw_evtq.असल_id)));
 	req->params = htons(L2T_W_PORT_V(e->lport) | L2T_W_NOREPLY_V(!sync));
 	req->l2t_idx = htons(l2t_idx);
 	req->vlan = htons(e->vlan);
-	if (e->neigh && !(e->neigh->dev->flags & IFF_LOOPBACK))
-		memcpy(e->dmac, e->neigh->ha, sizeof(e->dmac));
-	memcpy(req->dst_mac, e->dmac, sizeof(req->dst_mac));
+	अगर (e->neigh && !(e->neigh->dev->flags & IFF_LOOPBACK))
+		स_नकल(e->dmac, e->neigh->ha, माप(e->dmac));
+	स_नकल(req->dst_mac, e->dmac, माप(req->dst_mac));
 
 	t4_mgmt_tx(adap, skb);
 
-	if (sync && e->state != L2T_STATE_SWITCHING)
+	अगर (sync && e->state != L2T_STATE_SWITCHING)
 		e->state = L2T_STATE_SYNC_WRITE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Send packets waiting in an L2T entry's ARP queue.  Must be called with the
+ * Send packets रुकोing in an L2T entry's ARP queue.  Must be called with the
  * entry locked.
  */
-static void send_pending(struct adapter *adap, struct l2t_entry *e)
-{
-	struct sk_buff *skb;
+अटल व्योम send_pending(काष्ठा adapter *adap, काष्ठा l2t_entry *e)
+अणु
+	काष्ठा sk_buff *skb;
 
-	while ((skb = __skb_dequeue(&e->arpq)) != NULL)
+	जबतक ((skb = __skb_dequeue(&e->arpq)) != शून्य)
 		t4_ofld_send(adap, skb);
-}
+पूर्ण
 
 /*
- * Process a CPL_L2T_WRITE_RPL.  Wake up the ARP queue if it completes a
+ * Process a CPL_L2T_WRITE_RPL.  Wake up the ARP queue अगर it completes a
  * synchronous L2T_WRITE.  Note that the TID in the reply is really the L2T
  * index it refers to.
  */
-void do_l2t_write_rpl(struct adapter *adap, const struct cpl_l2t_write_rpl *rpl)
-{
-	struct l2t_data *d = adap->l2t;
-	unsigned int tid = GET_TID(rpl);
-	unsigned int l2t_idx = tid % L2T_SIZE;
+व्योम करो_l2t_ग_लिखो_rpl(काष्ठा adapter *adap, स्थिर काष्ठा cpl_l2t_ग_लिखो_rpl *rpl)
+अणु
+	काष्ठा l2t_data *d = adap->l2t;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	अचिन्हित पूर्णांक l2t_idx = tid % L2T_SIZE;
 
-	if (unlikely(rpl->status != CPL_ERR_NONE)) {
+	अगर (unlikely(rpl->status != CPL_ERR_NONE)) अणु
 		dev_err(adap->pdev_dev,
 			"Unexpected L2T_WRITE_RPL status %u for entry %u\n",
 			rpl->status, l2t_idx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (tid & SYNC_WR_F) {
-		struct l2t_entry *e = &d->l2tab[l2t_idx - d->l2t_start];
+	अगर (tid & SYNC_WR_F) अणु
+		काष्ठा l2t_entry *e = &d->l2tab[l2t_idx - d->l2t_start];
 
 		spin_lock(&e->lock);
-		if (e->state != L2T_STATE_SWITCHING) {
+		अगर (e->state != L2T_STATE_SWITCHING) अणु
 			send_pending(adap, e);
 			e->state = (e->neigh->nud_state & NUD_STALE) ?
 					L2T_STATE_STALE : L2T_STATE_VALID;
-		}
+		पूर्ण
 		spin_unlock(&e->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Add a packet to an L2T entry's queue of packets awaiting resolution.
+ * Add a packet to an L2T entry's queue of packets aरुकोing resolution.
  * Must be called with the entry's lock held.
  */
-static inline void arpq_enqueue(struct l2t_entry *e, struct sk_buff *skb)
-{
+अटल अंतरभूत व्योम arpq_enqueue(काष्ठा l2t_entry *e, काष्ठा sk_buff *skb)
+अणु
 	__skb_queue_tail(&e->arpq, skb);
-}
+पूर्ण
 
-int cxgb4_l2t_send(struct net_device *dev, struct sk_buff *skb,
-		   struct l2t_entry *e)
-{
-	struct adapter *adap = netdev2adap(dev);
+पूर्णांक cxgb4_l2t_send(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+		   काष्ठा l2t_entry *e)
+अणु
+	काष्ठा adapter *adap = netdev2adap(dev);
 
 again:
-	switch (e->state) {
-	case L2T_STATE_STALE:     /* entry is stale, kick off revalidation */
-		neigh_event_send(e->neigh, NULL);
+	चयन (e->state) अणु
+	हाल L2T_STATE_STALE:     /* entry is stale, kick off revalidation */
+		neigh_event_send(e->neigh, शून्य);
 		spin_lock_bh(&e->lock);
-		if (e->state == L2T_STATE_STALE)
+		अगर (e->state == L2T_STATE_STALE)
 			e->state = L2T_STATE_VALID;
 		spin_unlock_bh(&e->lock);
 		fallthrough;
-	case L2T_STATE_VALID:     /* fast-path, send the packet on */
-		return t4_ofld_send(adap, skb);
-	case L2T_STATE_RESOLVING:
-	case L2T_STATE_SYNC_WRITE:
+	हाल L2T_STATE_VALID:     /* fast-path, send the packet on */
+		वापस t4_ofld_send(adap, skb);
+	हाल L2T_STATE_RESOLVING:
+	हाल L2T_STATE_SYNC_WRITE:
 		spin_lock_bh(&e->lock);
-		if (e->state != L2T_STATE_SYNC_WRITE &&
-		    e->state != L2T_STATE_RESOLVING) {
+		अगर (e->state != L2T_STATE_SYNC_WRITE &&
+		    e->state != L2T_STATE_RESOLVING) अणु
 			spin_unlock_bh(&e->lock);
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 		arpq_enqueue(e, skb);
 		spin_unlock_bh(&e->lock);
 
-		if (e->state == L2T_STATE_RESOLVING &&
-		    !neigh_event_send(e->neigh, NULL)) {
+		अगर (e->state == L2T_STATE_RESOLVING &&
+		    !neigh_event_send(e->neigh, शून्य)) अणु
 			spin_lock_bh(&e->lock);
-			if (e->state == L2T_STATE_RESOLVING &&
+			अगर (e->state == L2T_STATE_RESOLVING &&
 			    !skb_queue_empty(&e->arpq))
-				write_l2e(adap, e, 1);
+				ग_लिखो_l2e(adap, e, 1);
 			spin_unlock_bh(&e->lock);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cxgb4_l2t_send);
 
 /*
- * Allocate a free L2T entry.  Must be called with l2t_data.lock held.
+ * Allocate a मुक्त L2T entry.  Must be called with l2t_data.lock held.
  */
-static struct l2t_entry *alloc_l2e(struct l2t_data *d)
-{
-	struct l2t_entry *end, *e, **p;
+अटल काष्ठा l2t_entry *alloc_l2e(काष्ठा l2t_data *d)
+अणु
+	काष्ठा l2t_entry *end, *e, **p;
 
-	if (!atomic_read(&d->nfree))
-		return NULL;
+	अगर (!atomic_पढ़ो(&d->nमुक्त))
+		वापस शून्य;
 
-	/* there's definitely a free entry */
-	for (e = d->rover, end = &d->l2tab[d->l2t_size]; e != end; ++e)
-		if (atomic_read(&e->refcnt) == 0)
-			goto found;
+	/* there's definitely a मुक्त entry */
+	क्रम (e = d->rover, end = &d->l2tab[d->l2t_size]; e != end; ++e)
+		अगर (atomic_पढ़ो(&e->refcnt) == 0)
+			जाओ found;
 
-	for (e = d->l2tab; atomic_read(&e->refcnt); ++e)
+	क्रम (e = d->l2tab; atomic_पढ़ो(&e->refcnt); ++e)
 		;
 found:
 	d->rover = e + 1;
-	atomic_dec(&d->nfree);
+	atomic_dec(&d->nमुक्त);
 
 	/*
 	 * The entry we found may be an inactive entry that is
-	 * presently in the hash table.  We need to remove it.
+	 * presently in the hash table.  We need to हटाओ it.
 	 */
-	if (e->state < L2T_STATE_SWITCHING)
-		for (p = &d->l2tab[e->hash].first; *p; p = &(*p)->next)
-			if (*p == e) {
+	अगर (e->state < L2T_STATE_SWITCHING)
+		क्रम (p = &d->l2tab[e->hash].first; *p; p = &(*p)->next)
+			अगर (*p == e) अणु
 				*p = e->next;
-				e->next = NULL;
-				break;
-			}
+				e->next = शून्य;
+				अवरोध;
+			पूर्ण
 
 	e->state = L2T_STATE_UNUSED;
-	return e;
-}
+	वापस e;
+पूर्ण
 
-static struct l2t_entry *find_or_alloc_l2e(struct l2t_data *d, u16 vlan,
+अटल काष्ठा l2t_entry *find_or_alloc_l2e(काष्ठा l2t_data *d, u16 vlan,
 					   u8 port, u8 *dmac)
-{
-	struct l2t_entry *end, *e, **p;
-	struct l2t_entry *first_free = NULL;
+अणु
+	काष्ठा l2t_entry *end, *e, **p;
+	काष्ठा l2t_entry *first_मुक्त = शून्य;
 
-	for (e = &d->l2tab[0], end = &d->l2tab[d->l2t_size]; e != end; ++e) {
-		if (atomic_read(&e->refcnt) == 0) {
-			if (!first_free)
-				first_free = e;
-		} else {
-			if (e->state == L2T_STATE_SWITCHING) {
-				if (ether_addr_equal(e->dmac, dmac) &&
+	क्रम (e = &d->l2tab[0], end = &d->l2tab[d->l2t_size]; e != end; ++e) अणु
+		अगर (atomic_पढ़ो(&e->refcnt) == 0) अणु
+			अगर (!first_मुक्त)
+				first_मुक्त = e;
+		पूर्ण अन्यथा अणु
+			अगर (e->state == L2T_STATE_SWITCHING) अणु
+				अगर (ether_addr_equal(e->dmac, dmac) &&
 				    (e->vlan == vlan) && (e->lport == port))
-					goto exists;
-			}
-		}
-	}
+					जाओ exists;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (first_free) {
-		e = first_free;
-		goto found;
-	}
+	अगर (first_मुक्त) अणु
+		e = first_मुक्त;
+		जाओ found;
+	पूर्ण
 
-	return NULL;
+	वापस शून्य;
 
 found:
 	/* The entry we found may be an inactive entry that is
-	 * presently in the hash table.  We need to remove it.
+	 * presently in the hash table.  We need to हटाओ it.
 	 */
-	if (e->state < L2T_STATE_SWITCHING)
-		for (p = &d->l2tab[e->hash].first; *p; p = &(*p)->next)
-			if (*p == e) {
+	अगर (e->state < L2T_STATE_SWITCHING)
+		क्रम (p = &d->l2tab[e->hash].first; *p; p = &(*p)->next)
+			अगर (*p == e) अणु
 				*p = e->next;
-				e->next = NULL;
-				break;
-			}
+				e->next = शून्य;
+				अवरोध;
+			पूर्ण
 	e->state = L2T_STATE_UNUSED;
 
 exists:
-	return e;
-}
+	वापस e;
+पूर्ण
 
 /* Called when an L2T entry has no more users.  The entry is left in the hash
- * table since it is likely to be reused but we also bump nfree to indicate
- * that the entry can be reallocated for a different neighbor.  We also drop
- * the existing neighbor reference in case the neighbor is going away and is
- * waiting on our reference.
+ * table since it is likely to be reused but we also bump nमुक्त to indicate
+ * that the entry can be पुनः_स्मृतिated क्रम a dअगरferent neighbor.  We also drop
+ * the existing neighbor reference in हाल the neighbor is going away and is
+ * रुकोing on our reference.
  *
- * Because entries can be reallocated to other neighbors once their ref count
- * drops to 0 we need to take the entry's lock to avoid races with a new
+ * Because entries can be पुनः_स्मृतिated to other neighbors once their ref count
+ * drops to 0 we need to take the entry's lock to aव्योम races with a new
  * incarnation.
  */
-static void _t4_l2e_free(struct l2t_entry *e)
-{
-	struct l2t_data *d;
+अटल व्योम _t4_l2e_मुक्त(काष्ठा l2t_entry *e)
+अणु
+	काष्ठा l2t_data *d;
 
-	if (atomic_read(&e->refcnt) == 0) {  /* hasn't been recycled */
-		if (e->neigh) {
+	अगर (atomic_पढ़ो(&e->refcnt) == 0) अणु  /* hasn't been recycled */
+		अगर (e->neigh) अणु
 			neigh_release(e->neigh);
-			e->neigh = NULL;
-		}
+			e->neigh = शून्य;
+		पूर्ण
 		__skb_queue_purge(&e->arpq);
-	}
+	पूर्ण
 
-	d = container_of(e, struct l2t_data, l2tab[e->idx]);
-	atomic_inc(&d->nfree);
-}
+	d = container_of(e, काष्ठा l2t_data, l2tab[e->idx]);
+	atomic_inc(&d->nमुक्त);
+पूर्ण
 
-/* Locked version of _t4_l2e_free */
-static void t4_l2e_free(struct l2t_entry *e)
-{
-	struct l2t_data *d;
+/* Locked version of _t4_l2e_मुक्त */
+अटल व्योम t4_l2e_मुक्त(काष्ठा l2t_entry *e)
+अणु
+	काष्ठा l2t_data *d;
 
 	spin_lock_bh(&e->lock);
-	if (atomic_read(&e->refcnt) == 0) {  /* hasn't been recycled */
-		if (e->neigh) {
+	अगर (atomic_पढ़ो(&e->refcnt) == 0) अणु  /* hasn't been recycled */
+		अगर (e->neigh) अणु
 			neigh_release(e->neigh);
-			e->neigh = NULL;
-		}
+			e->neigh = शून्य;
+		पूर्ण
 		__skb_queue_purge(&e->arpq);
-	}
+	पूर्ण
 	spin_unlock_bh(&e->lock);
 
-	d = container_of(e, struct l2t_data, l2tab[e->idx]);
-	atomic_inc(&d->nfree);
-}
+	d = container_of(e, काष्ठा l2t_data, l2tab[e->idx]);
+	atomic_inc(&d->nमुक्त);
+पूर्ण
 
-void cxgb4_l2t_release(struct l2t_entry *e)
-{
-	if (atomic_dec_and_test(&e->refcnt))
-		t4_l2e_free(e);
-}
+व्योम cxgb4_l2t_release(काष्ठा l2t_entry *e)
+अणु
+	अगर (atomic_dec_and_test(&e->refcnt))
+		t4_l2e_मुक्त(e);
+पूर्ण
 EXPORT_SYMBOL(cxgb4_l2t_release);
 
 /*
- * Update an L2T entry that was previously used for the same next hop as neigh.
+ * Update an L2T entry that was previously used क्रम the same next hop as neigh.
  * Must be called with softirqs disabled.
  */
-static void reuse_entry(struct l2t_entry *e, struct neighbour *neigh)
-{
-	unsigned int nud_state;
+अटल व्योम reuse_entry(काष्ठा l2t_entry *e, काष्ठा neighbour *neigh)
+अणु
+	अचिन्हित पूर्णांक nud_state;
 
-	spin_lock(&e->lock);                /* avoid race with t4_l2t_free */
-	if (neigh != e->neigh)
+	spin_lock(&e->lock);                /* aव्योम race with t4_l2t_मुक्त */
+	अगर (neigh != e->neigh)
 		neigh_replace(e, neigh);
 	nud_state = neigh->nud_state;
-	if (memcmp(e->dmac, neigh->ha, sizeof(e->dmac)) ||
+	अगर (स_भेद(e->dmac, neigh->ha, माप(e->dmac)) ||
 	    !(nud_state & NUD_VALID))
 		e->state = L2T_STATE_RESOLVING;
-	else if (nud_state & NUD_CONNECTED)
+	अन्यथा अगर (nud_state & NUD_CONNECTED)
 		e->state = L2T_STATE_VALID;
-	else
+	अन्यथा
 		e->state = L2T_STATE_STALE;
 	spin_unlock(&e->lock);
-}
+पूर्ण
 
-struct l2t_entry *cxgb4_l2t_get(struct l2t_data *d, struct neighbour *neigh,
-				const struct net_device *physdev,
-				unsigned int priority)
-{
+काष्ठा l2t_entry *cxgb4_l2t_get(काष्ठा l2t_data *d, काष्ठा neighbour *neigh,
+				स्थिर काष्ठा net_device *physdev,
+				अचिन्हित पूर्णांक priority)
+अणु
 	u8 lport;
 	u16 vlan;
-	struct l2t_entry *e;
-	unsigned int addr_len = neigh->tbl->key_len;
+	काष्ठा l2t_entry *e;
+	अचिन्हित पूर्णांक addr_len = neigh->tbl->key_len;
 	u32 *addr = (u32 *)neigh->primary_key;
-	int ifidx = neigh->dev->ifindex;
-	int hash = addr_hash(d, addr, addr_len, ifidx);
+	पूर्णांक अगरidx = neigh->dev->अगरindex;
+	पूर्णांक hash = addr_hash(d, addr, addr_len, अगरidx);
 
-	if (neigh->dev->flags & IFF_LOOPBACK)
+	अगर (neigh->dev->flags & IFF_LOOPBACK)
 		lport = netdev2pinfo(physdev)->tx_chan + 4;
-	else
+	अन्यथा
 		lport = netdev2pinfo(physdev)->lport;
 
-	if (is_vlan_dev(neigh->dev)) {
+	अगर (is_vlan_dev(neigh->dev)) अणु
 		vlan = vlan_dev_vlan_id(neigh->dev);
 		vlan |= vlan_dev_get_egress_qos_mask(neigh->dev, priority);
-	} else {
+	पूर्ण अन्यथा अणु
 		vlan = VLAN_NONE;
-	}
+	पूर्ण
 
-	write_lock_bh(&d->lock);
-	for (e = d->l2tab[hash].first; e; e = e->next)
-		if (!addreq(e, addr) && e->ifindex == ifidx &&
-		    e->vlan == vlan && e->lport == lport) {
+	ग_लिखो_lock_bh(&d->lock);
+	क्रम (e = d->l2tab[hash].first; e; e = e->next)
+		अगर (!addreq(e, addr) && e->अगरindex == अगरidx &&
+		    e->vlan == vlan && e->lport == lport) अणु
 			l2t_hold(d, e);
-			if (atomic_read(&e->refcnt) == 1)
+			अगर (atomic_पढ़ो(&e->refcnt) == 1)
 				reuse_entry(e, neigh);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 	/* Need to allocate a new entry */
 	e = alloc_l2e(d);
-	if (e) {
-		spin_lock(&e->lock);          /* avoid race with t4_l2t_free */
+	अगर (e) अणु
+		spin_lock(&e->lock);          /* aव्योम race with t4_l2t_मुक्त */
 		e->state = L2T_STATE_RESOLVING;
-		if (neigh->dev->flags & IFF_LOOPBACK)
-			memcpy(e->dmac, physdev->dev_addr, sizeof(e->dmac));
-		memcpy(e->addr, addr, addr_len);
-		e->ifindex = ifidx;
+		अगर (neigh->dev->flags & IFF_LOOPBACK)
+			स_नकल(e->dmac, physdev->dev_addr, माप(e->dmac));
+		स_नकल(e->addr, addr, addr_len);
+		e->अगरindex = अगरidx;
 		e->hash = hash;
 		e->lport = lport;
 		e->v6 = addr_len == 16;
@@ -464,299 +465,299 @@ struct l2t_entry *cxgb4_l2t_get(struct l2t_data *d, struct neighbour *neigh,
 		e->next = d->l2tab[hash].first;
 		d->l2tab[hash].first = e;
 		spin_unlock(&e->lock);
-	}
-done:
-	write_unlock_bh(&d->lock);
-	return e;
-}
+	पूर्ण
+करोne:
+	ग_लिखो_unlock_bh(&d->lock);
+	वापस e;
+पूर्ण
 EXPORT_SYMBOL(cxgb4_l2t_get);
 
-u64 cxgb4_select_ntuple(struct net_device *dev,
-			const struct l2t_entry *l2t)
-{
-	struct adapter *adap = netdev2adap(dev);
-	struct tp_params *tp = &adap->params.tp;
+u64 cxgb4_select_ntuple(काष्ठा net_device *dev,
+			स्थिर काष्ठा l2t_entry *l2t)
+अणु
+	काष्ठा adapter *adap = netdev2adap(dev);
+	काष्ठा tp_params *tp = &adap->params.tp;
 	u64 ntuple = 0;
 
 	/* Initialize each of the fields which we care about which are present
 	 * in the Compressed Filter Tuple.
 	 */
-	if (tp->vlan_shift >= 0 && l2t->vlan != VLAN_NONE)
-		ntuple |= (u64)(FT_VLAN_VLD_F | l2t->vlan) << tp->vlan_shift;
+	अगर (tp->vlan_shअगरt >= 0 && l2t->vlan != VLAN_NONE)
+		ntuple |= (u64)(FT_VLAN_VLD_F | l2t->vlan) << tp->vlan_shअगरt;
 
-	if (tp->port_shift >= 0)
-		ntuple |= (u64)l2t->lport << tp->port_shift;
+	अगर (tp->port_shअगरt >= 0)
+		ntuple |= (u64)l2t->lport << tp->port_shअगरt;
 
-	if (tp->protocol_shift >= 0)
-		ntuple |= (u64)IPPROTO_TCP << tp->protocol_shift;
+	अगर (tp->protocol_shअगरt >= 0)
+		ntuple |= (u64)IPPROTO_TCP << tp->protocol_shअगरt;
 
-	if (tp->vnic_shift >= 0 && (tp->ingress_config & VNIC_F)) {
-		struct port_info *pi = (struct port_info *)netdev_priv(dev);
+	अगर (tp->vnic_shअगरt >= 0 && (tp->ingress_config & VNIC_F)) अणु
+		काष्ठा port_info *pi = (काष्ठा port_info *)netdev_priv(dev);
 
 		ntuple |= (u64)(FT_VNID_ID_VF_V(pi->vin) |
 				FT_VNID_ID_PF_V(adap->pf) |
-				FT_VNID_ID_VLD_V(pi->vivld)) << tp->vnic_shift;
-	}
+				FT_VNID_ID_VLD_V(pi->vivld)) << tp->vnic_shअगरt;
+	पूर्ण
 
-	return ntuple;
-}
+	वापस ntuple;
+पूर्ण
 EXPORT_SYMBOL(cxgb4_select_ntuple);
 
 /*
  * Called when the host's neighbor layer makes a change to some entry that is
- * loaded into the HW L2 table.
+ * loaded पूर्णांकo the HW L2 table.
  */
-void t4_l2t_update(struct adapter *adap, struct neighbour *neigh)
-{
-	unsigned int addr_len = neigh->tbl->key_len;
+व्योम t4_l2t_update(काष्ठा adapter *adap, काष्ठा neighbour *neigh)
+अणु
+	अचिन्हित पूर्णांक addr_len = neigh->tbl->key_len;
 	u32 *addr = (u32 *) neigh->primary_key;
-	int hash, ifidx = neigh->dev->ifindex;
-	struct sk_buff_head *arpq = NULL;
-	struct l2t_data *d = adap->l2t;
-	struct l2t_entry *e;
+	पूर्णांक hash, अगरidx = neigh->dev->अगरindex;
+	काष्ठा sk_buff_head *arpq = शून्य;
+	काष्ठा l2t_data *d = adap->l2t;
+	काष्ठा l2t_entry *e;
 
-	hash = addr_hash(d, addr, addr_len, ifidx);
-	read_lock_bh(&d->lock);
-	for (e = d->l2tab[hash].first; e; e = e->next)
-		if (!addreq(e, addr) && e->ifindex == ifidx) {
+	hash = addr_hash(d, addr, addr_len, अगरidx);
+	पढ़ो_lock_bh(&d->lock);
+	क्रम (e = d->l2tab[hash].first; e; e = e->next)
+		अगर (!addreq(e, addr) && e->अगरindex == अगरidx) अणु
 			spin_lock(&e->lock);
-			if (atomic_read(&e->refcnt))
-				goto found;
+			अगर (atomic_पढ़ो(&e->refcnt))
+				जाओ found;
 			spin_unlock(&e->lock);
-			break;
-		}
-	read_unlock_bh(&d->lock);
-	return;
+			अवरोध;
+		पूर्ण
+	पढ़ो_unlock_bh(&d->lock);
+	वापस;
 
  found:
-	read_unlock(&d->lock);
+	पढ़ो_unlock(&d->lock);
 
-	if (neigh != e->neigh)
+	अगर (neigh != e->neigh)
 		neigh_replace(e, neigh);
 
-	if (e->state == L2T_STATE_RESOLVING) {
-		if (neigh->nud_state & NUD_FAILED) {
+	अगर (e->state == L2T_STATE_RESOLVING) अणु
+		अगर (neigh->nud_state & NUD_FAILED) अणु
 			arpq = &e->arpq;
-		} else if ((neigh->nud_state & (NUD_CONNECTED | NUD_STALE)) &&
-			   !skb_queue_empty(&e->arpq)) {
-			write_l2e(adap, e, 1);
-		}
-	} else {
+		पूर्ण अन्यथा अगर ((neigh->nud_state & (NUD_CONNECTED | NUD_STALE)) &&
+			   !skb_queue_empty(&e->arpq)) अणु
+			ग_लिखो_l2e(adap, e, 1);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		e->state = neigh->nud_state & NUD_CONNECTED ?
 			L2T_STATE_VALID : L2T_STATE_STALE;
-		if (memcmp(e->dmac, neigh->ha, sizeof(e->dmac)))
-			write_l2e(adap, e, 0);
-	}
+		अगर (स_भेद(e->dmac, neigh->ha, माप(e->dmac)))
+			ग_लिखो_l2e(adap, e, 0);
+	पूर्ण
 
-	if (arpq) {
-		struct sk_buff *skb;
+	अगर (arpq) अणु
+		काष्ठा sk_buff *skb;
 
-		/* Called when address resolution fails for an L2T
+		/* Called when address resolution fails क्रम an L2T
 		 * entry to handle packets on the arpq head. If a
-		 * packet specifies a failure handler it is invoked,
+		 * packet specअगरies a failure handler it is invoked,
 		 * otherwise the packet is sent to the device.
 		 */
-		while ((skb = __skb_dequeue(&e->arpq)) != NULL) {
-			const struct l2t_skb_cb *cb = L2T_SKB_CB(skb);
+		जबतक ((skb = __skb_dequeue(&e->arpq)) != शून्य) अणु
+			स्थिर काष्ठा l2t_skb_cb *cb = L2T_SKB_CB(skb);
 
 			spin_unlock(&e->lock);
-			if (cb->arp_err_handler)
+			अगर (cb->arp_err_handler)
 				cb->arp_err_handler(cb->handle, skb);
-			else
+			अन्यथा
 				t4_ofld_send(adap, skb);
 			spin_lock(&e->lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&e->lock);
-}
+पूर्ण
 
-/* Allocate an L2T entry for use by a switching rule.  Such need to be
- * explicitly freed and while busy they are not on any hash chain, so normal
- * address resolution updates do not see them.
+/* Allocate an L2T entry क्रम use by a चयनing rule.  Such need to be
+ * explicitly मुक्तd and जबतक busy they are not on any hash chain, so normal
+ * address resolution updates करो not see them.
  */
-struct l2t_entry *t4_l2t_alloc_switching(struct adapter *adap, u16 vlan,
+काष्ठा l2t_entry *t4_l2t_alloc_चयनing(काष्ठा adapter *adap, u16 vlan,
 					 u8 port, u8 *eth_addr)
-{
-	struct l2t_data *d = adap->l2t;
-	struct l2t_entry *e;
-	int ret;
+अणु
+	काष्ठा l2t_data *d = adap->l2t;
+	काष्ठा l2t_entry *e;
+	पूर्णांक ret;
 
-	write_lock_bh(&d->lock);
+	ग_लिखो_lock_bh(&d->lock);
 	e = find_or_alloc_l2e(d, vlan, port, eth_addr);
-	if (e) {
-		spin_lock(&e->lock);          /* avoid race with t4_l2t_free */
-		if (!atomic_read(&e->refcnt)) {
+	अगर (e) अणु
+		spin_lock(&e->lock);          /* aव्योम race with t4_l2t_मुक्त */
+		अगर (!atomic_पढ़ो(&e->refcnt)) अणु
 			e->state = L2T_STATE_SWITCHING;
 			e->vlan = vlan;
 			e->lport = port;
 			ether_addr_copy(e->dmac, eth_addr);
 			atomic_set(&e->refcnt, 1);
-			ret = write_l2e(adap, e, 0);
-			if (ret < 0) {
-				_t4_l2e_free(e);
+			ret = ग_लिखो_l2e(adap, e, 0);
+			अगर (ret < 0) अणु
+				_t4_l2e_मुक्त(e);
 				spin_unlock(&e->lock);
-				write_unlock_bh(&d->lock);
-				return NULL;
-			}
-		} else {
+				ग_लिखो_unlock_bh(&d->lock);
+				वापस शून्य;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			atomic_inc(&e->refcnt);
-		}
+		पूर्ण
 
 		spin_unlock(&e->lock);
-	}
-	write_unlock_bh(&d->lock);
-	return e;
-}
+	पूर्ण
+	ग_लिखो_unlock_bh(&d->lock);
+	वापस e;
+पूर्ण
 
 /**
- * cxgb4_l2t_alloc_switching - Allocates an L2T entry for switch filters
- * @dev: net_device pointer
+ * cxgb4_l2t_alloc_चयनing - Allocates an L2T entry क्रम चयन filters
+ * @dev: net_device poपूर्णांकer
  * @vlan: VLAN Id
  * @port: Associated port
  * @dmac: Destination MAC address to add to L2T
- * Returns pointer to the allocated l2t entry
+ * Returns poपूर्णांकer to the allocated l2t entry
  *
- * Allocates an L2T entry for use by switching rule of a filter
+ * Allocates an L2T entry क्रम use by चयनing rule of a filter
  */
-struct l2t_entry *cxgb4_l2t_alloc_switching(struct net_device *dev, u16 vlan,
+काष्ठा l2t_entry *cxgb4_l2t_alloc_चयनing(काष्ठा net_device *dev, u16 vlan,
 					    u8 port, u8 *dmac)
-{
-	struct adapter *adap = netdev2adap(dev);
+अणु
+	काष्ठा adapter *adap = netdev2adap(dev);
 
-	return t4_l2t_alloc_switching(adap, vlan, port, dmac);
-}
-EXPORT_SYMBOL(cxgb4_l2t_alloc_switching);
+	वापस t4_l2t_alloc_चयनing(adap, vlan, port, dmac);
+पूर्ण
+EXPORT_SYMBOL(cxgb4_l2t_alloc_चयनing);
 
-struct l2t_data *t4_init_l2t(unsigned int l2t_start, unsigned int l2t_end)
-{
-	unsigned int l2t_size;
-	int i;
-	struct l2t_data *d;
+काष्ठा l2t_data *t4_init_l2t(अचिन्हित पूर्णांक l2t_start, अचिन्हित पूर्णांक l2t_end)
+अणु
+	अचिन्हित पूर्णांक l2t_size;
+	पूर्णांक i;
+	काष्ठा l2t_data *d;
 
-	if (l2t_start >= l2t_end || l2t_end >= L2T_SIZE)
-		return NULL;
+	अगर (l2t_start >= l2t_end || l2t_end >= L2T_SIZE)
+		वापस शून्य;
 	l2t_size = l2t_end - l2t_start + 1;
-	if (l2t_size < L2T_MIN_HASH_BUCKETS)
-		return NULL;
+	अगर (l2t_size < L2T_MIN_HASH_BUCKETS)
+		वापस शून्य;
 
-	d = kvzalloc(struct_size(d, l2tab, l2t_size), GFP_KERNEL);
-	if (!d)
-		return NULL;
+	d = kvzalloc(काष्ठा_size(d, l2tab, l2t_size), GFP_KERNEL);
+	अगर (!d)
+		वापस शून्य;
 
 	d->l2t_start = l2t_start;
 	d->l2t_size = l2t_size;
 
 	d->rover = d->l2tab;
-	atomic_set(&d->nfree, l2t_size);
+	atomic_set(&d->nमुक्त, l2t_size);
 	rwlock_init(&d->lock);
 
-	for (i = 0; i < d->l2t_size; ++i) {
+	क्रम (i = 0; i < d->l2t_size; ++i) अणु
 		d->l2tab[i].idx = i;
 		d->l2tab[i].state = L2T_STATE_UNUSED;
 		spin_lock_init(&d->l2tab[i].lock);
 		atomic_set(&d->l2tab[i].refcnt, 0);
 		skb_queue_head_init(&d->l2tab[i].arpq);
-	}
-	return d;
-}
+	पूर्ण
+	वापस d;
+पूर्ण
 
-static inline void *l2t_get_idx(struct seq_file *seq, loff_t pos)
-{
-	struct l2t_data *d = seq->private;
+अटल अंतरभूत व्योम *l2t_get_idx(काष्ठा seq_file *seq, loff_t pos)
+अणु
+	काष्ठा l2t_data *d = seq->निजी;
 
-	return pos >= d->l2t_size ? NULL : &d->l2tab[pos];
-}
+	वापस pos >= d->l2t_size ? शून्य : &d->l2tab[pos];
+पूर्ण
 
-static void *l2t_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	return *pos ? l2t_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
-}
+अटल व्योम *l2t_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	वापस *pos ? l2t_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
+पूर्ण
 
-static void *l2t_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
+अटल व्योम *l2t_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
 	v = l2t_get_idx(seq, *pos);
 	++(*pos);
-	return v;
-}
+	वापस v;
+पूर्ण
 
-static void l2t_seq_stop(struct seq_file *seq, void *v)
-{
-}
+अटल व्योम l2t_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+पूर्ण
 
-static char l2e_state(const struct l2t_entry *e)
-{
-	switch (e->state) {
-	case L2T_STATE_VALID: return 'V';
-	case L2T_STATE_STALE: return 'S';
-	case L2T_STATE_SYNC_WRITE: return 'W';
-	case L2T_STATE_RESOLVING:
-		return skb_queue_empty(&e->arpq) ? 'R' : 'A';
-	case L2T_STATE_SWITCHING: return 'X';
-	default:
-		return 'U';
-	}
-}
+अटल अक्षर l2e_state(स्थिर काष्ठा l2t_entry *e)
+अणु
+	चयन (e->state) अणु
+	हाल L2T_STATE_VALID: वापस 'V';
+	हाल L2T_STATE_STALE: वापस 'S';
+	हाल L2T_STATE_SYNC_WRITE: वापस 'W';
+	हाल L2T_STATE_RESOLVING:
+		वापस skb_queue_empty(&e->arpq) ? 'R' : 'A';
+	हाल L2T_STATE_SWITCHING: वापस 'X';
+	शेष:
+		वापस 'U';
+	पूर्ण
+पूर्ण
 
-bool cxgb4_check_l2t_valid(struct l2t_entry *e)
-{
+bool cxgb4_check_l2t_valid(काष्ठा l2t_entry *e)
+अणु
 	bool valid;
 
 	spin_lock(&e->lock);
 	valid = (e->state == L2T_STATE_VALID);
 	spin_unlock(&e->lock);
-	return valid;
-}
+	वापस valid;
+पूर्ण
 EXPORT_SYMBOL(cxgb4_check_l2t_valid);
 
-static int l2t_seq_show(struct seq_file *seq, void *v)
-{
-	if (v == SEQ_START_TOKEN)
-		seq_puts(seq, " Idx IP address                "
+अटल पूर्णांक l2t_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	अगर (v == SEQ_START_TOKEN)
+		seq_माला_दो(seq, " Idx IP address                "
 			 "Ethernet address  VLAN/P LP State Users Port\n");
-	else {
-		char ip[60];
-		struct l2t_data *d = seq->private;
-		struct l2t_entry *e = v;
+	अन्यथा अणु
+		अक्षर ip[60];
+		काष्ठा l2t_data *d = seq->निजी;
+		काष्ठा l2t_entry *e = v;
 
 		spin_lock_bh(&e->lock);
-		if (e->state == L2T_STATE_SWITCHING)
+		अगर (e->state == L2T_STATE_SWITCHING)
 			ip[0] = '\0';
-		else
-			sprintf(ip, e->v6 ? "%pI6c" : "%pI4", e->addr);
-		seq_printf(seq, "%4u %-25s %17pM %4d %u %2u   %c   %5u %s\n",
+		अन्यथा
+			प्र_लिखो(ip, e->v6 ? "%pI6c" : "%pI4", e->addr);
+		seq_म_लिखो(seq, "%4u %-25s %17pM %4d %u %2u   %c   %5u %s\n",
 			   e->idx + d->l2t_start, ip, e->dmac,
 			   e->vlan & VLAN_VID_MASK, vlan_prio(e), e->lport,
-			   l2e_state(e), atomic_read(&e->refcnt),
+			   l2e_state(e), atomic_पढ़ो(&e->refcnt),
 			   e->neigh ? e->neigh->dev->name : "");
 		spin_unlock_bh(&e->lock);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations l2t_seq_ops = {
+अटल स्थिर काष्ठा seq_operations l2t_seq_ops = अणु
 	.start = l2t_seq_start,
 	.next = l2t_seq_next,
 	.stop = l2t_seq_stop,
 	.show = l2t_seq_show
-};
+पूर्ण;
 
-static int l2t_seq_open(struct inode *inode, struct file *file)
-{
-	int rc = seq_open(file, &l2t_seq_ops);
+अटल पूर्णांक l2t_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक rc = seq_खोलो(file, &l2t_seq_ops);
 
-	if (!rc) {
-		struct adapter *adap = inode->i_private;
-		struct seq_file *seq = file->private_data;
+	अगर (!rc) अणु
+		काष्ठा adapter *adap = inode->i_निजी;
+		काष्ठा seq_file *seq = file->निजी_data;
 
-		seq->private = adap->l2t;
-	}
-	return rc;
-}
+		seq->निजी = adap->l2t;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-const struct file_operations t4_l2t_fops = {
+स्थिर काष्ठा file_operations t4_l2t_fops = अणु
 	.owner = THIS_MODULE,
-	.open = l2t_seq_open,
-	.read = seq_read,
+	.खोलो = l2t_seq_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = seq_release,
-};
+पूर्ण;

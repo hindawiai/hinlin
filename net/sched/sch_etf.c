@@ -1,244 +1,245 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /* net/sched/sch_etf.c  Earliest TxTime First queueing discipline.
  *
- * Authors:	Jesus Sanchez-Palencia <jesus.sanchez-palencia@intel.com>
- *		Vinicius Costa Gomes <vinicius.gomes@intel.com>
+ * Authors:	Jesus Sanchez-Palencia <jesus.sanchez-palencia@पूर्णांकel.com>
+ *		Vinicius Costa Gomes <vinicius.gomes@पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/errqueue.h>
-#include <linux/rbtree.h>
-#include <linux/skbuff.h>
-#include <linux/posix-timers.h>
-#include <net/netlink.h>
-#include <net/sch_generic.h>
-#include <net/pkt_sched.h>
-#include <net/sock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/errqueue.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/posix-समयrs.h>
+#समावेश <net/netlink.h>
+#समावेश <net/sch_generic.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/sock.h>
 
-#define DEADLINE_MODE_IS_ON(x) ((x)->flags & TC_ETF_DEADLINE_MODE_ON)
-#define OFFLOAD_IS_ON(x) ((x)->flags & TC_ETF_OFFLOAD_ON)
-#define SKIP_SOCK_CHECK_IS_SET(x) ((x)->flags & TC_ETF_SKIP_SOCK_CHECK)
+#घोषणा DEADLINE_MODE_IS_ON(x) ((x)->flags & TC_ETF_DEADLINE_MODE_ON)
+#घोषणा OFFLOAD_IS_ON(x) ((x)->flags & TC_ETF_OFFLOAD_ON)
+#घोषणा SKIP_SOCK_CHECK_IS_SET(x) ((x)->flags & TC_ETF_SKIP_SOCK_CHECK)
 
-struct etf_sched_data {
+काष्ठा etf_sched_data अणु
 	bool offload;
 	bool deadline_mode;
 	bool skip_sock_check;
-	int clockid;
-	int queue;
+	पूर्णांक घड़ीid;
+	पूर्णांक queue;
 	s32 delta; /* in ns */
-	ktime_t last; /* The txtime of the last skb sent to the netdevice. */
-	struct rb_root_cached head;
-	struct qdisc_watchdog watchdog;
-	ktime_t (*get_time)(void);
-};
+	kसमय_प्रकार last; /* The txसमय of the last skb sent to the netdevice. */
+	काष्ठा rb_root_cached head;
+	काष्ठा qdisc_watchकरोg watchकरोg;
+	kसमय_प्रकार (*get_समय)(व्योम);
+पूर्ण;
 
-static const struct nla_policy etf_policy[TCA_ETF_MAX + 1] = {
-	[TCA_ETF_PARMS]	= { .len = sizeof(struct tc_etf_qopt) },
-};
+अटल स्थिर काष्ठा nla_policy etf_policy[TCA_ETF_MAX + 1] = अणु
+	[TCA_ETF_PARMS]	= अणु .len = माप(काष्ठा tc_etf_qopt) पूर्ण,
+पूर्ण;
 
-static inline int validate_input_params(struct tc_etf_qopt *qopt,
-					struct netlink_ext_ack *extack)
-{
-	/* Check if params comply to the following rules:
+अटल अंतरभूत पूर्णांक validate_input_params(काष्ठा tc_etf_qopt *qopt,
+					काष्ठा netlink_ext_ack *extack)
+अणु
+	/* Check अगर params comply to the following rules:
 	 *	* Clockid and delta must be valid.
 	 *
-	 *	* Dynamic clockids are not supported.
+	 *	* Dynamic घड़ीids are not supported.
 	 *
-	 *	* Delta must be a positive integer.
+	 *	* Delta must be a positive पूर्णांकeger.
 	 *
-	 * Also note that for the HW offload case, we must
-	 * expect that system clocks have been synchronized to PHC.
+	 * Also note that क्रम the HW offload हाल, we must
+	 * expect that प्रणाली घड़ीs have been synchronized to PHC.
 	 */
-	if (qopt->clockid < 0) {
+	अगर (qopt->घड़ीid < 0) अणु
 		NL_SET_ERR_MSG(extack, "Dynamic clockids are not supported");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (qopt->clockid != CLOCK_TAI) {
+	अगर (qopt->घड़ीid != CLOCK_TAI) अणु
 		NL_SET_ERR_MSG(extack, "Invalid clockid. CLOCK_TAI must be used");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (qopt->delta < 0) {
+	अगर (qopt->delta < 0) अणु
 		NL_SET_ERR_MSG(extack, "Delta must be positive");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool is_packet_valid(struct Qdisc *sch, struct sk_buff *nskb)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	ktime_t txtime = nskb->tstamp;
-	struct sock *sk = nskb->sk;
-	ktime_t now;
+अटल bool is_packet_valid(काष्ठा Qdisc *sch, काष्ठा sk_buff *nskb)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	kसमय_प्रकार txसमय = nskb->tstamp;
+	काष्ठा sock *sk = nskb->sk;
+	kसमय_प्रकार now;
 
-	if (q->skip_sock_check)
-		goto skip;
+	अगर (q->skip_sock_check)
+		जाओ skip;
 
-	if (!sk || !sk_fullsock(sk))
-		return false;
+	अगर (!sk || !sk_fullsock(sk))
+		वापस false;
 
-	if (!sock_flag(sk, SOCK_TXTIME))
-		return false;
+	अगर (!sock_flag(sk, SOCK_TXTIME))
+		वापस false;
 
-	/* We don't perform crosstimestamping.
-	 * Drop if packet's clockid differs from qdisc's.
+	/* We करोn't perक्रमm crossबारtamping.
+	 * Drop अगर packet's clockid differs from qdisc's.
 	 */
-	if (sk->sk_clockid != q->clockid)
-		return false;
+	अगर (sk->sk_घड़ीid != q->घड़ीid)
+		वापस false;
 
-	if (sk->sk_txtime_deadline_mode != q->deadline_mode)
-		return false;
+	अगर (sk->sk_txसमय_deadline_mode != q->deadline_mode)
+		वापस false;
 
 skip:
-	now = q->get_time();
-	if (ktime_before(txtime, now) || ktime_before(txtime, q->last))
-		return false;
+	now = q->get_समय();
+	अगर (kसमय_beक्रमe(txसमय, now) || kसमय_beक्रमe(txसमय, q->last))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct sk_buff *etf_peek_timesortedlist(struct Qdisc *sch)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	struct rb_node *p;
+अटल काष्ठा sk_buff *etf_peek_बारortedlist(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	काष्ठा rb_node *p;
 
 	p = rb_first_cached(&q->head);
-	if (!p)
-		return NULL;
+	अगर (!p)
+		वापस शून्य;
 
-	return rb_to_skb(p);
-}
+	वापस rb_to_skb(p);
+पूर्ण
 
-static void reset_watchdog(struct Qdisc *sch)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	struct sk_buff *skb = etf_peek_timesortedlist(sch);
-	ktime_t next;
+अटल व्योम reset_watchकरोg(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	काष्ठा sk_buff *skb = etf_peek_बारortedlist(sch);
+	kसमय_प्रकार next;
 
-	if (!skb) {
-		qdisc_watchdog_cancel(&q->watchdog);
-		return;
-	}
+	अगर (!skb) अणु
+		qdisc_watchकरोg_cancel(&q->watchकरोg);
+		वापस;
+	पूर्ण
 
-	next = ktime_sub_ns(skb->tstamp, q->delta);
-	qdisc_watchdog_schedule_ns(&q->watchdog, ktime_to_ns(next));
-}
+	next = kसमय_sub_ns(skb->tstamp, q->delta);
+	qdisc_watchकरोg_schedule_ns(&q->watchकरोg, kसमय_प्रकारo_ns(next));
+पूर्ण
 
-static void report_sock_error(struct sk_buff *skb, u32 err, u8 code)
-{
-	struct sock_exterr_skb *serr;
-	struct sk_buff *clone;
-	ktime_t txtime = skb->tstamp;
-	struct sock *sk = skb->sk;
+अटल व्योम report_sock_error(काष्ठा sk_buff *skb, u32 err, u8 code)
+अणु
+	काष्ठा sock_exterr_skb *serr;
+	काष्ठा sk_buff *clone;
+	kसमय_प्रकार txसमय = skb->tstamp;
+	काष्ठा sock *sk = skb->sk;
 
-	if (!sk || !sk_fullsock(sk) || !(sk->sk_txtime_report_errors))
-		return;
+	अगर (!sk || !sk_fullsock(sk) || !(sk->sk_txसमय_report_errors))
+		वापस;
 
 	clone = skb_clone(skb, GFP_ATOMIC);
-	if (!clone)
-		return;
+	अगर (!clone)
+		वापस;
 
 	serr = SKB_EXT_ERR(clone);
-	serr->ee.ee_errno = err;
+	serr->ee.ee_त्रुटि_सं = err;
 	serr->ee.ee_origin = SO_EE_ORIGIN_TXTIME;
 	serr->ee.ee_type = 0;
 	serr->ee.ee_code = code;
 	serr->ee.ee_pad = 0;
-	serr->ee.ee_data = (txtime >> 32); /* high part of tstamp */
-	serr->ee.ee_info = txtime; /* low part of tstamp */
+	serr->ee.ee_data = (txसमय >> 32); /* high part of tstamp */
+	serr->ee.ee_info = txसमय; /* low part of tstamp */
 
-	if (sock_queue_err_skb(sk, clone))
-		kfree_skb(clone);
-}
+	अगर (sock_queue_err_skb(sk, clone))
+		kमुक्त_skb(clone);
+पूर्ण
 
-static int etf_enqueue_timesortedlist(struct sk_buff *nskb, struct Qdisc *sch,
-				      struct sk_buff **to_free)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	struct rb_node **p = &q->head.rb_root.rb_node, *parent = NULL;
-	ktime_t txtime = nskb->tstamp;
-	bool leftmost = true;
+अटल पूर्णांक etf_enqueue_बारortedlist(काष्ठा sk_buff *nskb, काष्ठा Qdisc *sch,
+				      काष्ठा sk_buff **to_मुक्त)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	काष्ठा rb_node **p = &q->head.rb_root.rb_node, *parent = शून्य;
+	kसमय_प्रकार txसमय = nskb->tstamp;
+	bool lefपंचांगost = true;
 
-	if (!is_packet_valid(sch, nskb)) {
+	अगर (!is_packet_valid(sch, nskb)) अणु
 		report_sock_error(nskb, EINVAL,
 				  SO_EE_CODE_TXTIME_INVALID_PARAM);
-		return qdisc_drop(nskb, sch, to_free);
-	}
+		वापस qdisc_drop(nskb, sch, to_मुक्त);
+	पूर्ण
 
-	while (*p) {
-		struct sk_buff *skb;
+	जबतक (*p) अणु
+		काष्ठा sk_buff *skb;
 
 		parent = *p;
 		skb = rb_to_skb(parent);
-		if (ktime_compare(txtime, skb->tstamp) >= 0) {
+		अगर (kसमय_compare(txसमय, skb->tstamp) >= 0) अणु
 			p = &parent->rb_right;
-			leftmost = false;
-		} else {
+			lefपंचांगost = false;
+		पूर्ण अन्यथा अणु
 			p = &parent->rb_left;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	rb_link_node(&nskb->rbnode, parent, p);
-	rb_insert_color_cached(&nskb->rbnode, &q->head, leftmost);
+	rb_insert_color_cached(&nskb->rbnode, &q->head, lefपंचांगost);
 
 	qdisc_qstats_backlog_inc(sch, nskb);
 	sch->q.qlen++;
 
-	/* Now we may need to re-arm the qdisc watchdog for the next packet. */
-	reset_watchdog(sch);
+	/* Now we may need to re-arm the qdisc watchकरोg क्रम the next packet. */
+	reset_watchकरोg(sch);
 
-	return NET_XMIT_SUCCESS;
-}
+	वापस NET_XMIT_SUCCESS;
+पूर्ण
 
-static void timesortedlist_drop(struct Qdisc *sch, struct sk_buff *skb,
-				ktime_t now)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	struct sk_buff *to_free = NULL;
-	struct sk_buff *tmp = NULL;
+अटल व्योम बारortedlist_drop(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb,
+				kसमय_प्रकार now)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	काष्ठा sk_buff *to_मुक्त = शून्य;
+	काष्ठा sk_buff *पंचांगp = शून्य;
 
-	skb_rbtree_walk_from_safe(skb, tmp) {
-		if (ktime_after(skb->tstamp, now))
-			break;
+	skb_rbtree_walk_from_safe(skb, पंचांगp) अणु
+		अगर (kसमय_after(skb->tstamp, now))
+			अवरोध;
 
 		rb_erase_cached(&skb->rbnode, &q->head);
 
 		/* The rbnode field in the skb re-uses these fields, now that
-		 * we are done with the rbnode, reset them.
+		 * we are करोne with the rbnode, reset them.
 		 */
-		skb->next = NULL;
-		skb->prev = NULL;
+		skb->next = शून्य;
+		skb->prev = शून्य;
 		skb->dev = qdisc_dev(sch);
 
 		report_sock_error(skb, ECANCELED, SO_EE_CODE_TXTIME_MISSED);
 
 		qdisc_qstats_backlog_dec(sch, skb);
-		qdisc_drop(skb, sch, &to_free);
+		qdisc_drop(skb, sch, &to_मुक्त);
 		qdisc_qstats_overlimit(sch);
 		sch->q.qlen--;
-	}
+	पूर्ण
 
-	kfree_skb_list(to_free);
-}
+	kमुक्त_skb_list(to_मुक्त);
+पूर्ण
 
-static void timesortedlist_remove(struct Qdisc *sch, struct sk_buff *skb)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
+अटल व्योम बारortedlist_हटाओ(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
 
 	rb_erase_cached(&skb->rbnode, &q->head);
 
 	/* The rbnode field in the skb re-uses these fields, now that
-	 * we are done with the rbnode, reset them.
+	 * we are करोne with the rbnode, reset them.
 	 */
-	skb->next = NULL;
-	skb->prev = NULL;
+	skb->next = शून्य;
+	skb->prev = शून्य;
 	skb->dev = qdisc_dev(sch);
 
 	qdisc_qstats_backlog_dec(sch, skb);
@@ -248,274 +249,274 @@ static void timesortedlist_remove(struct Qdisc *sch, struct sk_buff *skb)
 	q->last = skb->tstamp;
 
 	sch->q.qlen--;
-}
+पूर्ण
 
-static struct sk_buff *etf_dequeue_timesortedlist(struct Qdisc *sch)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	struct sk_buff *skb;
-	ktime_t now, next;
+अटल काष्ठा sk_buff *etf_dequeue_बारortedlist(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	काष्ठा sk_buff *skb;
+	kसमय_प्रकार now, next;
 
-	skb = etf_peek_timesortedlist(sch);
-	if (!skb)
-		return NULL;
+	skb = etf_peek_बारortedlist(sch);
+	अगर (!skb)
+		वापस शून्य;
 
-	now = q->get_time();
+	now = q->get_समय();
 
-	/* Drop if packet has expired while in queue. */
-	if (ktime_before(skb->tstamp, now)) {
-		timesortedlist_drop(sch, skb, now);
-		skb = NULL;
-		goto out;
-	}
+	/* Drop अगर packet has expired जबतक in queue. */
+	अगर (kसमय_beक्रमe(skb->tstamp, now)) अणु
+		बारortedlist_drop(sch, skb, now);
+		skb = शून्य;
+		जाओ out;
+	पूर्ण
 
 	/* When in deadline mode, dequeue as soon as possible and change the
-	 * txtime from deadline to (now + delta).
+	 * txसमय from deadline to (now + delta).
 	 */
-	if (q->deadline_mode) {
-		timesortedlist_remove(sch, skb);
+	अगर (q->deadline_mode) अणु
+		बारortedlist_हटाओ(sch, skb);
 		skb->tstamp = now;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	next = ktime_sub_ns(skb->tstamp, q->delta);
+	next = kसमय_sub_ns(skb->tstamp, q->delta);
 
-	/* Dequeue only if now is within the [txtime - delta, txtime] range. */
-	if (ktime_after(now, next))
-		timesortedlist_remove(sch, skb);
-	else
-		skb = NULL;
+	/* Dequeue only अगर now is within the [txसमय - delta, txसमय] range. */
+	अगर (kसमय_after(now, next))
+		बारortedlist_हटाओ(sch, skb);
+	अन्यथा
+		skb = शून्य;
 
 out:
-	/* Now we may need to re-arm the qdisc watchdog for the next packet. */
-	reset_watchdog(sch);
+	/* Now we may need to re-arm the qdisc watchकरोg क्रम the next packet. */
+	reset_watchकरोg(sch);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static void etf_disable_offload(struct net_device *dev,
-				struct etf_sched_data *q)
-{
-	struct tc_etf_qopt_offload etf = { };
-	const struct net_device_ops *ops;
-	int err;
+अटल व्योम etf_disable_offload(काष्ठा net_device *dev,
+				काष्ठा etf_sched_data *q)
+अणु
+	काष्ठा tc_etf_qopt_offload etf = अणु पूर्ण;
+	स्थिर काष्ठा net_device_ops *ops;
+	पूर्णांक err;
 
-	if (!q->offload)
-		return;
+	अगर (!q->offload)
+		वापस;
 
 	ops = dev->netdev_ops;
-	if (!ops->ndo_setup_tc)
-		return;
+	अगर (!ops->nकरो_setup_tc)
+		वापस;
 
 	etf.queue = q->queue;
 	etf.enable = 0;
 
-	err = ops->ndo_setup_tc(dev, TC_SETUP_QDISC_ETF, &etf);
-	if (err < 0)
+	err = ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_ETF, &etf);
+	अगर (err < 0)
 		pr_warn("Couldn't disable ETF offload for queue %d\n",
 			etf.queue);
-}
+पूर्ण
 
-static int etf_enable_offload(struct net_device *dev, struct etf_sched_data *q,
-			      struct netlink_ext_ack *extack)
-{
-	const struct net_device_ops *ops = dev->netdev_ops;
-	struct tc_etf_qopt_offload etf = { };
-	int err;
+अटल पूर्णांक etf_enable_offload(काष्ठा net_device *dev, काष्ठा etf_sched_data *q,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
+	काष्ठा tc_etf_qopt_offload etf = अणु पूर्ण;
+	पूर्णांक err;
 
-	if (q->offload)
-		return 0;
+	अगर (q->offload)
+		वापस 0;
 
-	if (!ops->ndo_setup_tc) {
+	अगर (!ops->nकरो_setup_tc) अणु
 		NL_SET_ERR_MSG(extack, "Specified device does not support ETF offload");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	etf.queue = q->queue;
 	etf.enable = 1;
 
-	err = ops->ndo_setup_tc(dev, TC_SETUP_QDISC_ETF, &etf);
-	if (err < 0) {
+	err = ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_ETF, &etf);
+	अगर (err < 0) अणु
 		NL_SET_ERR_MSG(extack, "Specified device failed to setup ETF hardware offload");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int etf_init(struct Qdisc *sch, struct nlattr *opt,
-		    struct netlink_ext_ack *extack)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	struct net_device *dev = qdisc_dev(sch);
-	struct nlattr *tb[TCA_ETF_MAX + 1];
-	struct tc_etf_qopt *qopt;
-	int err;
+अटल पूर्णांक etf_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा nlattr *tb[TCA_ETF_MAX + 1];
+	काष्ठा tc_etf_qopt *qopt;
+	पूर्णांक err;
 
-	if (!opt) {
+	अगर (!opt) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Missing ETF qdisc options which are mandatory");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = nla_parse_nested_deprecated(tb, TCA_ETF_MAX, opt, etf_policy,
 					  extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!tb[TCA_ETF_PARMS]) {
+	अगर (!tb[TCA_ETF_PARMS]) अणु
 		NL_SET_ERR_MSG(extack, "Missing mandatory ETF parameters");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	qopt = nla_data(tb[TCA_ETF_PARMS]);
 
 	pr_debug("delta %d clockid %d offload %s deadline %s\n",
-		 qopt->delta, qopt->clockid,
+		 qopt->delta, qopt->घड़ीid,
 		 OFFLOAD_IS_ON(qopt) ? "on" : "off",
 		 DEADLINE_MODE_IS_ON(qopt) ? "on" : "off");
 
 	err = validate_input_params(qopt, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	q->queue = sch->dev_queue - netdev_get_tx_queue(dev, 0);
 
-	if (OFFLOAD_IS_ON(qopt)) {
+	अगर (OFFLOAD_IS_ON(qopt)) अणु
 		err = etf_enable_offload(dev, q, extack);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	/* Everything went OK, save the parameters used. */
 	q->delta = qopt->delta;
-	q->clockid = qopt->clockid;
+	q->घड़ीid = qopt->घड़ीid;
 	q->offload = OFFLOAD_IS_ON(qopt);
 	q->deadline_mode = DEADLINE_MODE_IS_ON(qopt);
 	q->skip_sock_check = SKIP_SOCK_CHECK_IS_SET(qopt);
 
-	switch (q->clockid) {
-	case CLOCK_REALTIME:
-		q->get_time = ktime_get_real;
-		break;
-	case CLOCK_MONOTONIC:
-		q->get_time = ktime_get;
-		break;
-	case CLOCK_BOOTTIME:
-		q->get_time = ktime_get_boottime;
-		break;
-	case CLOCK_TAI:
-		q->get_time = ktime_get_clocktai;
-		break;
-	default:
+	चयन (q->घड़ीid) अणु
+	हाल CLOCK_REALTIME:
+		q->get_समय = kसमय_get_real;
+		अवरोध;
+	हाल CLOCK_MONOTONIC:
+		q->get_समय = kसमय_get;
+		अवरोध;
+	हाल CLOCK_BOOTTIME:
+		q->get_समय = kसमय_get_bootसमय;
+		अवरोध;
+	हाल CLOCK_TAI:
+		q->get_समय = kसमय_get_घड़ीtai;
+		अवरोध;
+	शेष:
 		NL_SET_ERR_MSG(extack, "Clockid is not supported");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	qdisc_watchdog_init_clockid(&q->watchdog, sch, q->clockid);
+	qdisc_watchकरोg_init_घड़ीid(&q->watchकरोg, sch, q->घड़ीid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void timesortedlist_clear(struct Qdisc *sch)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	struct rb_node *p = rb_first_cached(&q->head);
+अटल व्योम बारortedlist_clear(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	काष्ठा rb_node *p = rb_first_cached(&q->head);
 
-	while (p) {
-		struct sk_buff *skb = rb_to_skb(p);
+	जबतक (p) अणु
+		काष्ठा sk_buff *skb = rb_to_skb(p);
 
 		p = rb_next(p);
 
 		rb_erase_cached(&skb->rbnode, &q->head);
-		rtnl_kfree_skbs(skb, skb);
+		rtnl_kमुक्त_skbs(skb, skb);
 		sch->q.qlen--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void etf_reset(struct Qdisc *sch)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
+अटल व्योम etf_reset(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
 
-	/* Only cancel watchdog if it's been initialized. */
-	if (q->watchdog.qdisc == sch)
-		qdisc_watchdog_cancel(&q->watchdog);
+	/* Only cancel watchकरोg अगर it's been initialized. */
+	अगर (q->watchकरोg.qdisc == sch)
+		qdisc_watchकरोg_cancel(&q->watchकरोg);
 
 	/* No matter which mode we are on, it's safe to clear both lists. */
-	timesortedlist_clear(sch);
+	बारortedlist_clear(sch);
 	__qdisc_reset_queue(&sch->q);
 
 	sch->qstats.backlog = 0;
 	sch->q.qlen = 0;
 
 	q->last = 0;
-}
+पूर्ण
 
-static void etf_destroy(struct Qdisc *sch)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	struct net_device *dev = qdisc_dev(sch);
+अटल व्योम etf_destroy(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	काष्ठा net_device *dev = qdisc_dev(sch);
 
-	/* Only cancel watchdog if it's been initialized. */
-	if (q->watchdog.qdisc == sch)
-		qdisc_watchdog_cancel(&q->watchdog);
+	/* Only cancel watchकरोg अगर it's been initialized. */
+	अगर (q->watchकरोg.qdisc == sch)
+		qdisc_watchकरोg_cancel(&q->watchकरोg);
 
 	etf_disable_offload(dev, q);
-}
+पूर्ण
 
-static int etf_dump(struct Qdisc *sch, struct sk_buff *skb)
-{
-	struct etf_sched_data *q = qdisc_priv(sch);
-	struct tc_etf_qopt opt = { };
-	struct nlattr *nest;
+अटल पूर्णांक etf_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा etf_sched_data *q = qdisc_priv(sch);
+	काष्ठा tc_etf_qopt opt = अणु पूर्ण;
+	काष्ठा nlattr *nest;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (!nest)
-		goto nla_put_failure;
+	अगर (!nest)
+		जाओ nla_put_failure;
 
 	opt.delta = q->delta;
-	opt.clockid = q->clockid;
-	if (q->offload)
+	opt.घड़ीid = q->घड़ीid;
+	अगर (q->offload)
 		opt.flags |= TC_ETF_OFFLOAD_ON;
 
-	if (q->deadline_mode)
+	अगर (q->deadline_mode)
 		opt.flags |= TC_ETF_DEADLINE_MODE_ON;
 
-	if (q->skip_sock_check)
+	अगर (q->skip_sock_check)
 		opt.flags |= TC_ETF_SKIP_SOCK_CHECK;
 
-	if (nla_put(skb, TCA_ETF_PARMS, sizeof(opt), &opt))
-		goto nla_put_failure;
+	अगर (nla_put(skb, TCA_ETF_PARMS, माप(opt), &opt))
+		जाओ nla_put_failure;
 
-	return nla_nest_end(skb, nest);
+	वापस nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static struct Qdisc_ops etf_qdisc_ops __read_mostly = {
+अटल काष्ठा Qdisc_ops etf_qdisc_ops __पढ़ो_mostly = अणु
 	.id		=	"etf",
-	.priv_size	=	sizeof(struct etf_sched_data),
-	.enqueue	=	etf_enqueue_timesortedlist,
-	.dequeue	=	etf_dequeue_timesortedlist,
-	.peek		=	etf_peek_timesortedlist,
+	.priv_size	=	माप(काष्ठा etf_sched_data),
+	.enqueue	=	etf_enqueue_बारortedlist,
+	.dequeue	=	etf_dequeue_बारortedlist,
+	.peek		=	etf_peek_बारortedlist,
 	.init		=	etf_init,
 	.reset		=	etf_reset,
 	.destroy	=	etf_destroy,
 	.dump		=	etf_dump,
 	.owner		=	THIS_MODULE,
-};
+पूर्ण;
 
-static int __init etf_module_init(void)
-{
-	return register_qdisc(&etf_qdisc_ops);
-}
+अटल पूर्णांक __init etf_module_init(व्योम)
+अणु
+	वापस रेजिस्टर_qdisc(&etf_qdisc_ops);
+पूर्ण
 
-static void __exit etf_module_exit(void)
-{
-	unregister_qdisc(&etf_qdisc_ops);
-}
+अटल व्योम __निकास etf_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_qdisc(&etf_qdisc_ops);
+पूर्ण
 module_init(etf_module_init)
-module_exit(etf_module_exit)
+module_निकास(etf_module_निकास)
 MODULE_LICENSE("GPL");

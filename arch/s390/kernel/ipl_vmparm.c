@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <asm/ebcdic.h>
-#include <asm/ipl.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <यंत्र/ebcdic.h>
+#समावेश <यंत्र/ipl.h>
 
 /* VM IPL PARM routines */
-size_t ipl_block_get_ascii_vmparm(char *dest, size_t size,
-				  const struct ipl_parameter_block *ipb)
-{
-	int i;
-	size_t len;
-	char has_lowercase = 0;
+माप_प्रकार ipl_block_get_ascii_vmparm(अक्षर *dest, माप_प्रकार size,
+				  स्थिर काष्ठा ipl_parameter_block *ipb)
+अणु
+	पूर्णांक i;
+	माप_प्रकार len;
+	अक्षर has_lowerहाल = 0;
 
 	len = 0;
-	if ((ipb->ccw.vm_flags & IPL_PB0_CCW_VM_FLAG_VP) &&
-	    (ipb->ccw.vm_parm_len > 0)) {
+	अगर ((ipb->ccw.vm_flags & IPL_PB0_CCW_VM_FLAG_VP) &&
+	    (ipb->ccw.vm_parm_len > 0)) अणु
 
-		len = min_t(size_t, size - 1, ipb->ccw.vm_parm_len);
-		memcpy(dest, ipb->ccw.vm_parm, len);
-		/* If at least one character is lowercase, we assume mixed
-		 * case; otherwise we convert everything to lowercase.
+		len = min_t(माप_प्रकार, size - 1, ipb->ccw.vm_parm_len);
+		स_नकल(dest, ipb->ccw.vm_parm, len);
+		/* If at least one अक्षरacter is lowerहाल, we assume mixed
+		 * हाल; otherwise we convert everything to lowerहाल.
 		 */
-		for (i = 0; i < len; i++)
-			if ((dest[i] > 0x80 && dest[i] < 0x8a) || /* a-i */
+		क्रम (i = 0; i < len; i++)
+			अगर ((dest[i] > 0x80 && dest[i] < 0x8a) || /* a-i */
 			    (dest[i] > 0x90 && dest[i] < 0x9a) || /* j-r */
-			    (dest[i] > 0xa1 && dest[i] < 0xaa)) { /* s-z */
-				has_lowercase = 1;
-				break;
-			}
-		if (!has_lowercase)
+			    (dest[i] > 0xa1 && dest[i] < 0xaa)) अणु /* s-z */
+				has_lowerहाल = 1;
+				अवरोध;
+			पूर्ण
+		अगर (!has_lowerहाल)
 			EBC_TOLOWER(dest, len);
 		EBCASC(dest, len);
-	}
+	पूर्ण
 	dest[len] = 0;
 
-	return len;
-}
+	वापस len;
+पूर्ण

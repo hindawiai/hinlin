@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
 /*
- * Part of fork context switch microbenchmark.
+ * Part of विभाजन context चयन microbenchmark.
  *
- * Copyright 2018, Anton Blanchard, IBM Corp.
+ * Copyright 2018, Anton Blanअक्षरd, IBM Corp.
  */
 
-#define _GNU_SOURCE
-#include <unistd.h>
-#include <sys/syscall.h>
+#घोषणा _GNU_SOURCE
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
 
-void _start(void)
-{
-	syscall(SYS_exit, 0);
-}
+व्योम _start(व्योम)
+अणु
+	syscall(SYS_निकास, 0);
+पूर्ण

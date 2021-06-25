@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	IPv6 virtual tunneling interface
+ *	IPv6 भव tunneling पूर्णांकerface
  *
  *	Copyright (C) 2013 secunet Security Networks AG
  *
  *	Author:
- *	Steffen Klassert <steffen.klassert@secunet.com>
+ *	Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
  *
  *	Based on:
  *	net/ipv6/ip6_tunnel.c
  */
 
-#include <linux/module.h>
-#include <linux/capability.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/sockios.h>
-#include <linux/icmp.h>
-#include <linux/if.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/net.h>
-#include <linux/in6.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/icmpv6.h>
-#include <linux/init.h>
-#include <linux/route.h>
-#include <linux/rtnetlink.h>
-#include <linux/netfilter_ipv6.h>
-#include <linux/slab.h>
-#include <linux/hash.h>
+#समावेश <linux/module.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/net.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/init.h>
+#समावेश <linux/route.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hash.h>
 
-#include <linux/uaccess.h>
-#include <linux/atomic.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/atomic.h>
 
-#include <net/icmp.h>
-#include <net/ip.h>
-#include <net/ip_tunnels.h>
-#include <net/ipv6.h>
-#include <net/ip6_route.h>
-#include <net/addrconf.h>
-#include <net/ip6_tunnel.h>
-#include <net/xfrm.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <linux/etherdevice.h>
+#समावेश <net/icmp.h>
+#समावेश <net/ip.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/ip6_tunnel.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <linux/etherdevice.h>
 
-#define IP6_VTI_HASH_SIZE_SHIFT  5
-#define IP6_VTI_HASH_SIZE (1 << IP6_VTI_HASH_SIZE_SHIFT)
+#घोषणा IP6_VTI_HASH_SIZE_SHIFT  5
+#घोषणा IP6_VTI_HASH_SIZE (1 << IP6_VTI_HASH_SIZE_SHIFT)
 
-static u32 HASH(const struct in6_addr *addr1, const struct in6_addr *addr2)
-{
+अटल u32 HASH(स्थिर काष्ठा in6_addr *addr1, स्थिर काष्ठा in6_addr *addr2)
+अणु
 	u32 hash = ipv6_addr_hash(addr1) ^ ipv6_addr_hash(addr2);
 
-	return hash_32(hash, IP6_VTI_HASH_SIZE_SHIFT);
-}
+	वापस hash_32(hash, IP6_VTI_HASH_SIZE_SHIFT);
+पूर्ण
 
-static int vti6_dev_init(struct net_device *dev);
-static void vti6_dev_setup(struct net_device *dev);
-static struct rtnl_link_ops vti6_link_ops __read_mostly;
+अटल पूर्णांक vti6_dev_init(काष्ठा net_device *dev);
+अटल व्योम vti6_dev_setup(काष्ठा net_device *dev);
+अटल काष्ठा rtnl_link_ops vti6_link_ops __पढ़ो_mostly;
 
-static unsigned int vti6_net_id __read_mostly;
-struct vti6_net {
+अटल अचिन्हित पूर्णांक vti6_net_id __पढ़ो_mostly;
+काष्ठा vti6_net अणु
 	/* the vti6 tunnel fallback device */
-	struct net_device *fb_tnl_dev;
-	/* lists for storing tunnels in use */
-	struct ip6_tnl __rcu *tnls_r_l[IP6_VTI_HASH_SIZE];
-	struct ip6_tnl __rcu *tnls_wc[1];
-	struct ip6_tnl __rcu **tnls[2];
-};
+	काष्ठा net_device *fb_tnl_dev;
+	/* lists क्रम storing tunnels in use */
+	काष्ठा ip6_tnl __rcu *tnls_r_l[IP6_VTI_HASH_SIZE];
+	काष्ठा ip6_tnl __rcu *tnls_wc[1];
+	काष्ठा ip6_tnl __rcu **tnls[2];
+पूर्ण;
 
-#define for_each_vti6_tunnel_rcu(start) \
-	for (t = rcu_dereference(start); t; t = rcu_dereference(t->next))
+#घोषणा क्रम_each_vti6_tunnel_rcu(start) \
+	क्रम (t = rcu_dereference(start); t; t = rcu_dereference(t->next))
 
 /**
- * vti6_tnl_lookup - fetch tunnel matching the end-point addresses
+ * vti6_tnl_lookup - fetch tunnel matching the end-poपूर्णांक addresses
  *   @net: network namespace
- *   @remote: the address of the tunnel exit-point
- *   @local: the address of the tunnel entry-point
+ *   @remote: the address of the tunnel निकास-poपूर्णांक
+ *   @local: the address of the tunnel entry-poपूर्णांक
  *
  * Return:
- *   tunnel matching given end-points if found,
- *   else fallback tunnel if its device is up,
- *   else %NULL
+ *   tunnel matching given end-poपूर्णांकs अगर found,
+ *   अन्यथा fallback tunnel अगर its device is up,
+ *   अन्यथा %शून्य
  **/
-static struct ip6_tnl *
-vti6_tnl_lookup(struct net *net, const struct in6_addr *remote,
-		const struct in6_addr *local)
-{
-	unsigned int hash = HASH(remote, local);
-	struct ip6_tnl *t;
-	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
-	struct in6_addr any;
+अटल काष्ठा ip6_tnl *
+vti6_tnl_lookup(काष्ठा net *net, स्थिर काष्ठा in6_addr *remote,
+		स्थिर काष्ठा in6_addr *local)
+अणु
+	अचिन्हित पूर्णांक hash = HASH(remote, local);
+	काष्ठा ip6_tnl *t;
+	काष्ठा vti6_net *ip6n = net_generic(net, vti6_net_id);
+	काष्ठा in6_addr any;
 
-	for_each_vti6_tunnel_rcu(ip6n->tnls_r_l[hash]) {
-		if (ipv6_addr_equal(local, &t->parms.laddr) &&
+	क्रम_each_vti6_tunnel_rcu(ip6n->tnls_r_l[hash]) अणु
+		अगर (ipv6_addr_equal(local, &t->parms.laddr) &&
 		    ipv6_addr_equal(remote, &t->parms.raddr) &&
 		    (t->dev->flags & IFF_UP))
-			return t;
-	}
+			वापस t;
+	पूर्ण
 
-	memset(&any, 0, sizeof(any));
+	स_रखो(&any, 0, माप(any));
 	hash = HASH(&any, local);
-	for_each_vti6_tunnel_rcu(ip6n->tnls_r_l[hash]) {
-		if (ipv6_addr_equal(local, &t->parms.laddr) &&
+	क्रम_each_vti6_tunnel_rcu(ip6n->tnls_r_l[hash]) अणु
+		अगर (ipv6_addr_equal(local, &t->parms.laddr) &&
 		    (t->dev->flags & IFF_UP))
-			return t;
-	}
+			वापस t;
+	पूर्ण
 
 	hash = HASH(remote, &any);
-	for_each_vti6_tunnel_rcu(ip6n->tnls_r_l[hash]) {
-		if (ipv6_addr_equal(remote, &t->parms.raddr) &&
+	क्रम_each_vti6_tunnel_rcu(ip6n->tnls_r_l[hash]) अणु
+		अगर (ipv6_addr_equal(remote, &t->parms.raddr) &&
 		    (t->dev->flags & IFF_UP))
-			return t;
-	}
+			वापस t;
+	पूर्ण
 
 	t = rcu_dereference(ip6n->tnls_wc[0]);
-	if (t && (t->dev->flags & IFF_UP))
-		return t;
+	अगर (t && (t->dev->flags & IFF_UP))
+		वापस t;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * vti6_tnl_bucket - get head of list matching given tunnel parameters
- *   @ip6n: the private data for ip6_vti in the netns
- *   @p: parameters containing tunnel end-points
+ *   @ip6n: the निजी data क्रम ip6_vti in the netns
+ *   @p: parameters containing tunnel end-poपूर्णांकs
  *
  * Description:
- *   vti6_tnl_bucket() returns the head of the list matching the
- *   &struct in6_addr entries laddr and raddr in @p.
+ *   vti6_tnl_bucket() वापसs the head of the list matching the
+ *   &काष्ठा in6_addr entries laddr and raddr in @p.
  *
  * Return: head of IPv6 tunnel list
  **/
-static struct ip6_tnl __rcu **
-vti6_tnl_bucket(struct vti6_net *ip6n, const struct __ip6_tnl_parm *p)
-{
-	const struct in6_addr *remote = &p->raddr;
-	const struct in6_addr *local = &p->laddr;
-	unsigned int h = 0;
-	int prio = 0;
+अटल काष्ठा ip6_tnl __rcu **
+vti6_tnl_bucket(काष्ठा vti6_net *ip6n, स्थिर काष्ठा __ip6_tnl_parm *p)
+अणु
+	स्थिर काष्ठा in6_addr *remote = &p->raddr;
+	स्थिर काष्ठा in6_addr *local = &p->laddr;
+	अचिन्हित पूर्णांक h = 0;
+	पूर्णांक prio = 0;
 
-	if (!ipv6_addr_any(remote) || !ipv6_addr_any(local)) {
+	अगर (!ipv6_addr_any(remote) || !ipv6_addr_any(local)) अणु
 		prio = 1;
 		h = HASH(remote, local);
-	}
-	return &ip6n->tnls[prio][h];
-}
+	पूर्ण
+	वापस &ip6n->tnls[prio][h];
+पूर्ण
 
-static void
-vti6_tnl_link(struct vti6_net *ip6n, struct ip6_tnl *t)
-{
-	struct ip6_tnl __rcu **tp = vti6_tnl_bucket(ip6n, &t->parms);
+अटल व्योम
+vti6_tnl_link(काष्ठा vti6_net *ip6n, काष्ठा ip6_tnl *t)
+अणु
+	काष्ठा ip6_tnl __rcu **tp = vti6_tnl_bucket(ip6n, &t->parms);
 
-	rcu_assign_pointer(t->next , rtnl_dereference(*tp));
-	rcu_assign_pointer(*tp, t);
-}
+	rcu_assign_poपूर्णांकer(t->next , rtnl_dereference(*tp));
+	rcu_assign_poपूर्णांकer(*tp, t);
+पूर्ण
 
-static void
-vti6_tnl_unlink(struct vti6_net *ip6n, struct ip6_tnl *t)
-{
-	struct ip6_tnl __rcu **tp;
-	struct ip6_tnl *iter;
+अटल व्योम
+vti6_tnl_unlink(काष्ठा vti6_net *ip6n, काष्ठा ip6_tnl *t)
+अणु
+	काष्ठा ip6_tnl __rcu **tp;
+	काष्ठा ip6_tnl *iter;
 
-	for (tp = vti6_tnl_bucket(ip6n, &t->parms);
-	     (iter = rtnl_dereference(*tp)) != NULL;
-	     tp = &iter->next) {
-		if (t == iter) {
-			rcu_assign_pointer(*tp, t->next);
-			break;
-		}
-	}
-}
+	क्रम (tp = vti6_tnl_bucket(ip6n, &t->parms);
+	     (iter = rtnl_dereference(*tp)) != शून्य;
+	     tp = &iter->next) अणु
+		अगर (t == iter) अणु
+			rcu_assign_poपूर्णांकer(*tp, t->next);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void vti6_dev_free(struct net_device *dev)
-{
-	free_percpu(dev->tstats);
-}
+अटल व्योम vti6_dev_मुक्त(काष्ठा net_device *dev)
+अणु
+	मुक्त_percpu(dev->tstats);
+पूर्ण
 
-static int vti6_tnl_create2(struct net_device *dev)
-{
-	struct ip6_tnl *t = netdev_priv(dev);
-	struct net *net = dev_net(dev);
-	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
-	int err;
+अटल पूर्णांक vti6_tnl_create2(काष्ठा net_device *dev)
+अणु
+	काष्ठा ip6_tnl *t = netdev_priv(dev);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा vti6_net *ip6n = net_generic(net, vti6_net_id);
+	पूर्णांक err;
 
 	dev->rtnl_link_ops = &vti6_link_ops;
-	err = register_netdevice(dev);
-	if (err < 0)
-		goto out;
+	err = रेजिस्टर_netdevice(dev);
+	अगर (err < 0)
+		जाओ out;
 
-	strcpy(t->parms.name, dev->name);
+	म_नकल(t->parms.name, dev->name);
 
 	vti6_tnl_link(ip6n, t);
 
-	return 0;
+	वापस 0;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct ip6_tnl *vti6_tnl_create(struct net *net, struct __ip6_tnl_parm *p)
-{
-	struct net_device *dev;
-	struct ip6_tnl *t;
-	char name[IFNAMSIZ];
-	int err;
+अटल काष्ठा ip6_tnl *vti6_tnl_create(काष्ठा net *net, काष्ठा __ip6_tnl_parm *p)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा ip6_tnl *t;
+	अक्षर name[IFNAMSIZ];
+	पूर्णांक err;
 
-	if (p->name[0]) {
-		if (!dev_valid_name(p->name))
-			goto failed;
+	अगर (p->name[0]) अणु
+		अगर (!dev_valid_name(p->name))
+			जाओ failed;
 		strlcpy(name, p->name, IFNAMSIZ);
-	} else {
-		sprintf(name, "ip6_vti%%d");
-	}
+	पूर्ण अन्यथा अणु
+		प्र_लिखो(name, "ip6_vti%%d");
+	पूर्ण
 
-	dev = alloc_netdev(sizeof(*t), name, NET_NAME_UNKNOWN, vti6_dev_setup);
-	if (!dev)
-		goto failed;
+	dev = alloc_netdev(माप(*t), name, NET_NAME_UNKNOWN, vti6_dev_setup);
+	अगर (!dev)
+		जाओ failed;
 
 	dev_net_set(dev, net);
 
@@ -227,172 +228,172 @@ static struct ip6_tnl *vti6_tnl_create(struct net *net, struct __ip6_tnl_parm *p
 	t->net = dev_net(dev);
 
 	err = vti6_tnl_create2(dev);
-	if (err < 0)
-		goto failed_free;
+	अगर (err < 0)
+		जाओ failed_मुक्त;
 
-	return t;
+	वापस t;
 
-failed_free:
-	free_netdev(dev);
+failed_मुक्त:
+	मुक्त_netdev(dev);
 failed:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * vti6_locate - find or create tunnel matching given parameters
  *   @net: network namespace
  *   @p: tunnel parameters
- *   @create: != 0 if allowed to create new tunnel if no match found
+ *   @create: != 0 अगर allowed to create new tunnel अगर no match found
  *
  * Description:
  *   vti6_locate() first tries to locate an existing tunnel
  *   based on @parms. If this is unsuccessful, but @create is set a new
- *   tunnel device is created and registered for use.
+ *   tunnel device is created and रेजिस्टरed क्रम use.
  *
  * Return:
- *   matching tunnel or NULL
+ *   matching tunnel or शून्य
  **/
-static struct ip6_tnl *vti6_locate(struct net *net, struct __ip6_tnl_parm *p,
-				   int create)
-{
-	const struct in6_addr *remote = &p->raddr;
-	const struct in6_addr *local = &p->laddr;
-	struct ip6_tnl __rcu **tp;
-	struct ip6_tnl *t;
-	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
+अटल काष्ठा ip6_tnl *vti6_locate(काष्ठा net *net, काष्ठा __ip6_tnl_parm *p,
+				   पूर्णांक create)
+अणु
+	स्थिर काष्ठा in6_addr *remote = &p->raddr;
+	स्थिर काष्ठा in6_addr *local = &p->laddr;
+	काष्ठा ip6_tnl __rcu **tp;
+	काष्ठा ip6_tnl *t;
+	काष्ठा vti6_net *ip6n = net_generic(net, vti6_net_id);
 
-	for (tp = vti6_tnl_bucket(ip6n, p);
-	     (t = rtnl_dereference(*tp)) != NULL;
-	     tp = &t->next) {
-		if (ipv6_addr_equal(local, &t->parms.laddr) &&
-		    ipv6_addr_equal(remote, &t->parms.raddr)) {
-			if (create)
-				return NULL;
+	क्रम (tp = vti6_tnl_bucket(ip6n, p);
+	     (t = rtnl_dereference(*tp)) != शून्य;
+	     tp = &t->next) अणु
+		अगर (ipv6_addr_equal(local, &t->parms.laddr) &&
+		    ipv6_addr_equal(remote, &t->parms.raddr)) अणु
+			अगर (create)
+				वापस शून्य;
 
-			return t;
-		}
-	}
-	if (!create)
-		return NULL;
-	return vti6_tnl_create(net, p);
-}
+			वापस t;
+		पूर्ण
+	पूर्ण
+	अगर (!create)
+		वापस शून्य;
+	वापस vti6_tnl_create(net, p);
+पूर्ण
 
 /**
  * vti6_dev_uninit - tunnel device uninitializer
  *   @dev: the device to be destroyed
  *
  * Description:
- *   vti6_dev_uninit() removes tunnel from its list
+ *   vti6_dev_uninit() हटाओs tunnel from its list
  **/
-static void vti6_dev_uninit(struct net_device *dev)
-{
-	struct ip6_tnl *t = netdev_priv(dev);
-	struct vti6_net *ip6n = net_generic(t->net, vti6_net_id);
+अटल व्योम vti6_dev_uninit(काष्ठा net_device *dev)
+अणु
+	काष्ठा ip6_tnl *t = netdev_priv(dev);
+	काष्ठा vti6_net *ip6n = net_generic(t->net, vti6_net_id);
 
-	if (dev == ip6n->fb_tnl_dev)
-		RCU_INIT_POINTER(ip6n->tnls_wc[0], NULL);
-	else
+	अगर (dev == ip6n->fb_tnl_dev)
+		RCU_INIT_POINTER(ip6n->tnls_wc[0], शून्य);
+	अन्यथा
 		vti6_tnl_unlink(ip6n, t);
 	dev_put(dev);
-}
+पूर्ण
 
-static int vti6_input_proto(struct sk_buff *skb, int nexthdr, __be32 spi,
-			    int encap_type)
-{
-	struct ip6_tnl *t;
-	const struct ipv6hdr *ipv6h = ipv6_hdr(skb);
+अटल पूर्णांक vti6_input_proto(काष्ठा sk_buff *skb, पूर्णांक nexthdr, __be32 spi,
+			    पूर्णांक encap_type)
+अणु
+	काष्ठा ip6_tnl *t;
+	स्थिर काष्ठा ipv6hdr *ipv6h = ipv6_hdr(skb);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	t = vti6_tnl_lookup(dev_net(skb->dev), &ipv6h->saddr, &ipv6h->daddr);
-	if (t) {
-		if (t->parms.proto != IPPROTO_IPV6 && t->parms.proto != 0) {
-			rcu_read_unlock();
-			goto discard;
-		}
+	अगर (t) अणु
+		अगर (t->parms.proto != IPPROTO_IPV6 && t->parms.proto != 0) अणु
+			rcu_पढ़ो_unlock();
+			जाओ discard;
+		पूर्ण
 
-		if (!xfrm6_policy_check(NULL, XFRM_POLICY_IN, skb)) {
-			rcu_read_unlock();
-			goto discard;
-		}
+		अगर (!xfrm6_policy_check(शून्य, XFRM_POLICY_IN, skb)) अणु
+			rcu_पढ़ो_unlock();
+			जाओ discard;
+		पूर्ण
 
 		ipv6h = ipv6_hdr(skb);
-		if (!ip6_tnl_rcv_ctl(t, &ipv6h->daddr, &ipv6h->saddr)) {
+		अगर (!ip6_tnl_rcv_ctl(t, &ipv6h->daddr, &ipv6h->saddr)) अणु
 			t->dev->stats.rx_dropped++;
-			rcu_read_unlock();
-			goto discard;
-		}
+			rcu_पढ़ो_unlock();
+			जाओ discard;
+		पूर्ण
 
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
 		XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = t;
 		XFRM_SPI_SKB_CB(skb)->family = AF_INET6;
-		XFRM_SPI_SKB_CB(skb)->daddroff = offsetof(struct ipv6hdr, daddr);
-		return xfrm_input(skb, nexthdr, spi, encap_type);
-	}
-	rcu_read_unlock();
-	return -EINVAL;
+		XFRM_SPI_SKB_CB(skb)->daddroff = दुरत्व(काष्ठा ipv6hdr, daddr);
+		वापस xfrm_input(skb, nexthdr, spi, encap_type);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस -EINVAL;
 discard:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int vti6_rcv(struct sk_buff *skb)
-{
-	int nexthdr = skb_network_header(skb)[IP6CB(skb)->nhoff];
+अटल पूर्णांक vti6_rcv(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक nexthdr = skb_network_header(skb)[IP6CB(skb)->nhoff];
 
-	return vti6_input_proto(skb, nexthdr, 0, 0);
-}
+	वापस vti6_input_proto(skb, nexthdr, 0, 0);
+पूर्ण
 
-static int vti6_rcv_cb(struct sk_buff *skb, int err)
-{
-	unsigned short family;
-	struct net_device *dev;
-	struct xfrm_state *x;
-	const struct xfrm_mode *inner_mode;
-	struct ip6_tnl *t = XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6;
+अटल पूर्णांक vti6_rcv_cb(काष्ठा sk_buff *skb, पूर्णांक err)
+अणु
+	अचिन्हित लघु family;
+	काष्ठा net_device *dev;
+	काष्ठा xfrm_state *x;
+	स्थिर काष्ठा xfrm_mode *inner_mode;
+	काष्ठा ip6_tnl *t = XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6;
 	u32 orig_mark = skb->mark;
-	int ret;
+	पूर्णांक ret;
 
-	if (!t)
-		return 1;
+	अगर (!t)
+		वापस 1;
 
 	dev = t->dev;
 
-	if (err) {
+	अगर (err) अणु
 		dev->stats.rx_errors++;
 		dev->stats.rx_dropped++;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	x = xfrm_input_state(skb);
 
 	inner_mode = &x->inner_mode;
 
-	if (x->sel.family == AF_UNSPEC) {
+	अगर (x->sel.family == AF_UNSPEC) अणु
 		inner_mode = xfrm_ip2inner_mode(x, XFRM_MODE_SKB_CB(skb)->protocol);
-		if (inner_mode == NULL) {
+		अगर (inner_mode == शून्य) अणु
 			XFRM_INC_STATS(dev_net(skb->dev),
 				       LINUX_MIB_XFRMINSTATEMODEERROR);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	family = inner_mode->family;
 
 	skb->mark = be32_to_cpu(t->parms.i_key);
-	ret = xfrm_policy_check(NULL, XFRM_POLICY_IN, skb, family);
+	ret = xfrm_policy_check(शून्य, XFRM_POLICY_IN, skb, family);
 	skb->mark = orig_mark;
 
-	if (!ret)
-		return -EPERM;
+	अगर (!ret)
+		वापस -EPERM;
 
 	skb_scrub_packet(skb, !net_eq(t->net, dev_net(skb->dev)));
 	skb->dev = dev;
 	dev_sw_netstats_rx_add(dev, skb->len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vti6_addr_conflict - compare packet addresses to tunnel's own
@@ -400,137 +401,137 @@ static int vti6_rcv_cb(struct sk_buff *skb, int err)
  *   @hdr: IPv6 header from the incoming packet
  *
  * Description:
- *   Avoid trivial tunneling loop by checking that tunnel exit-point
- *   doesn't match source of incoming packet.
+ *   Aव्योम trivial tunneling loop by checking that tunnel निकास-poपूर्णांक
+ *   करोesn't match source of incoming packet.
  *
  * Return:
- *   1 if conflict,
- *   0 else
+ *   1 अगर conflict,
+ *   0 अन्यथा
  **/
-static inline bool
-vti6_addr_conflict(const struct ip6_tnl *t, const struct ipv6hdr *hdr)
-{
-	return ipv6_addr_equal(&t->parms.raddr, &hdr->saddr);
-}
+अटल अंतरभूत bool
+vti6_addr_conflict(स्थिर काष्ठा ip6_tnl *t, स्थिर काष्ठा ipv6hdr *hdr)
+अणु
+	वापस ipv6_addr_equal(&t->parms.raddr, &hdr->saddr);
+पूर्ण
 
-static bool vti6_state_check(const struct xfrm_state *x,
-			     const struct in6_addr *dst,
-			     const struct in6_addr *src)
-{
+अटल bool vti6_state_check(स्थिर काष्ठा xfrm_state *x,
+			     स्थिर काष्ठा in6_addr *dst,
+			     स्थिर काष्ठा in6_addr *src)
+अणु
 	xfrm_address_t *daddr = (xfrm_address_t *)dst;
 	xfrm_address_t *saddr = (xfrm_address_t *)src;
 
-	/* if there is no transform then this tunnel is not functional.
-	 * Or if the xfrm is not mode tunnel.
+	/* अगर there is no transक्रमm then this tunnel is not functional.
+	 * Or अगर the xfrm is not mode tunnel.
 	 */
-	if (!x || x->props.mode != XFRM_MODE_TUNNEL ||
+	अगर (!x || x->props.mode != XFRM_MODE_TUNNEL ||
 	    x->props.family != AF_INET6)
-		return false;
+		वापस false;
 
-	if (ipv6_addr_any(dst))
-		return xfrm_addr_equal(saddr, &x->props.saddr, AF_INET6);
+	अगर (ipv6_addr_any(dst))
+		वापस xfrm_addr_equal(saddr, &x->props.saddr, AF_INET6);
 
-	if (!xfrm_state_addr_check(x, daddr, saddr, AF_INET6))
-		return false;
+	अगर (!xfrm_state_addr_check(x, daddr, saddr, AF_INET6))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * vti6_xmit - send a packet
  *   @skb: the outgoing socket buffer
  *   @dev: the outgoing tunnel device
- *   @fl: the flow informations for the xfrm_lookup
+ *   @fl: the flow inक्रमmations क्रम the xfrm_lookup
  **/
-static int
-vti6_xmit(struct sk_buff *skb, struct net_device *dev, struct flowi *fl)
-{
-	struct ip6_tnl *t = netdev_priv(dev);
-	struct net_device_stats *stats = &t->dev->stats;
-	struct dst_entry *dst = skb_dst(skb);
-	struct net_device *tdev;
-	struct xfrm_state *x;
-	int pkt_len = skb->len;
-	int err = -1;
-	int mtu;
+अटल पूर्णांक
+vti6_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev, काष्ठा flowi *fl)
+अणु
+	काष्ठा ip6_tnl *t = netdev_priv(dev);
+	काष्ठा net_device_stats *stats = &t->dev->stats;
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	काष्ठा net_device *tdev;
+	काष्ठा xfrm_state *x;
+	पूर्णांक pkt_len = skb->len;
+	पूर्णांक err = -1;
+	पूर्णांक mtu;
 
-	if (!dst) {
-		switch (skb->protocol) {
-		case htons(ETH_P_IP): {
-			struct rtable *rt;
+	अगर (!dst) अणु
+		चयन (skb->protocol) अणु
+		हाल htons(ETH_P_IP): अणु
+			काष्ठा rtable *rt;
 
-			fl->u.ip4.flowi4_oif = dev->ifindex;
+			fl->u.ip4.flowi4_oअगर = dev->अगरindex;
 			fl->u.ip4.flowi4_flags |= FLOWI_FLAG_ANYSRC;
 			rt = __ip_route_output_key(dev_net(dev), &fl->u.ip4);
-			if (IS_ERR(rt))
-				goto tx_err_link_failure;
+			अगर (IS_ERR(rt))
+				जाओ tx_err_link_failure;
 			dst = &rt->dst;
 			skb_dst_set(skb, dst);
-			break;
-		}
-		case htons(ETH_P_IPV6):
-			fl->u.ip6.flowi6_oif = dev->ifindex;
+			अवरोध;
+		पूर्ण
+		हाल htons(ETH_P_IPV6):
+			fl->u.ip6.flowi6_oअगर = dev->अगरindex;
 			fl->u.ip6.flowi6_flags |= FLOWI_FLAG_ANYSRC;
-			dst = ip6_route_output(dev_net(dev), NULL, &fl->u.ip6);
-			if (dst->error) {
+			dst = ip6_route_output(dev_net(dev), शून्य, &fl->u.ip6);
+			अगर (dst->error) अणु
 				dst_release(dst);
-				dst = NULL;
-				goto tx_err_link_failure;
-			}
+				dst = शून्य;
+				जाओ tx_err_link_failure;
+			पूर्ण
 			skb_dst_set(skb, dst);
-			break;
-		default:
-			goto tx_err_link_failure;
-		}
-	}
+			अवरोध;
+		शेष:
+			जाओ tx_err_link_failure;
+		पूर्ण
+	पूर्ण
 
 	dst_hold(dst);
-	dst = xfrm_lookup_route(t->net, dst, fl, NULL, 0);
-	if (IS_ERR(dst)) {
+	dst = xfrm_lookup_route(t->net, dst, fl, शून्य, 0);
+	अगर (IS_ERR(dst)) अणु
 		err = PTR_ERR(dst);
-		dst = NULL;
-		goto tx_err_link_failure;
-	}
+		dst = शून्य;
+		जाओ tx_err_link_failure;
+	पूर्ण
 
-	if (dst->flags & DST_XFRM_QUEUE)
-		goto xmit;
+	अगर (dst->flags & DST_XFRM_QUEUE)
+		जाओ xmit;
 
 	x = dst->xfrm;
-	if (!vti6_state_check(x, &t->parms.raddr, &t->parms.laddr))
-		goto tx_err_link_failure;
+	अगर (!vti6_state_check(x, &t->parms.raddr, &t->parms.laddr))
+		जाओ tx_err_link_failure;
 
-	if (!ip6_tnl_xmit_ctl(t, (const struct in6_addr *)&x->props.saddr,
-			      (const struct in6_addr *)&x->id.daddr))
-		goto tx_err_link_failure;
+	अगर (!ip6_tnl_xmit_ctl(t, (स्थिर काष्ठा in6_addr *)&x->props.saddr,
+			      (स्थिर काष्ठा in6_addr *)&x->id.daddr))
+		जाओ tx_err_link_failure;
 
 	tdev = dst->dev;
 
-	if (tdev == dev) {
+	अगर (tdev == dev) अणु
 		stats->collisions++;
 		net_warn_ratelimited("%s: Local routing loop detected!\n",
 				     t->parms.name);
-		goto tx_err_dst_release;
-	}
+		जाओ tx_err_dst_release;
+	पूर्ण
 
 	mtu = dst_mtu(dst);
-	if (skb->len > mtu) {
+	अगर (skb->len > mtu) अणु
 		skb_dst_update_pmtu_no_confirm(skb, mtu);
 
-		if (skb->protocol == htons(ETH_P_IPV6)) {
-			if (mtu < IPV6_MIN_MTU)
+		अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
+			अगर (mtu < IPV6_MIN_MTU)
 				mtu = IPV6_MIN_MTU;
 
-			icmpv6_ndo_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
-		} else {
-			if (!(ip_hdr(skb)->frag_off & htons(IP_DF)))
-				goto xmit;
-			icmp_ndo_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED,
+			icmpv6_nकरो_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
+		पूर्ण अन्यथा अणु
+			अगर (!(ip_hdr(skb)->frag_off & htons(IP_DF)))
+				जाओ xmit;
+			icmp_nकरो_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED,
 				      htonl(mtu));
-		}
+		पूर्ण
 
 		err = -EMSGSIZE;
-		goto tx_err_dst_release;
-	}
+		जाओ tx_err_dst_release;
+	पूर्ण
 
 xmit:
 	skb_scrub_packet(skb, !net_eq(t->net, dev_net(dev)));
@@ -538,181 +539,181 @@ xmit:
 	skb->dev = skb_dst(skb)->dev;
 
 	err = dst_output(t->net, skb->sk, skb);
-	if (net_xmit_eval(err) == 0)
+	अगर (net_xmit_eval(err) == 0)
 		err = pkt_len;
 	iptunnel_xmit_stats(dev, err);
 
-	return 0;
+	वापस 0;
 tx_err_link_failure:
 	stats->tx_carrier_errors++;
 	dst_link_failure(skb);
 tx_err_dst_release:
 	dst_release(dst);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static netdev_tx_t
-vti6_tnl_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct ip6_tnl *t = netdev_priv(dev);
-	struct net_device_stats *stats = &t->dev->stats;
-	struct flowi fl;
-	int ret;
+अटल netdev_tx_t
+vti6_tnl_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा ip6_tnl *t = netdev_priv(dev);
+	काष्ठा net_device_stats *stats = &t->dev->stats;
+	काष्ठा flowi fl;
+	पूर्णांक ret;
 
-	if (!pskb_inet_may_pull(skb))
-		goto tx_err;
+	अगर (!pskb_inet_may_pull(skb))
+		जाओ tx_err;
 
-	memset(&fl, 0, sizeof(fl));
+	स_रखो(&fl, 0, माप(fl));
 
-	switch (skb->protocol) {
-	case htons(ETH_P_IPV6):
-		if ((t->parms.proto != IPPROTO_IPV6 && t->parms.proto != 0) ||
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IPV6):
+		अगर ((t->parms.proto != IPPROTO_IPV6 && t->parms.proto != 0) ||
 		    vti6_addr_conflict(t, ipv6_hdr(skb)))
-			goto tx_err;
+			जाओ tx_err;
 
 		xfrm_decode_session(skb, &fl, AF_INET6);
-		memset(IP6CB(skb), 0, sizeof(*IP6CB(skb)));
-		break;
-	case htons(ETH_P_IP):
+		स_रखो(IP6CB(skb), 0, माप(*IP6CB(skb)));
+		अवरोध;
+	हाल htons(ETH_P_IP):
 		xfrm_decode_session(skb, &fl, AF_INET);
-		memset(IPCB(skb), 0, sizeof(*IPCB(skb)));
-		break;
-	default:
-		goto tx_err;
-	}
+		स_रखो(IPCB(skb), 0, माप(*IPCB(skb)));
+		अवरोध;
+	शेष:
+		जाओ tx_err;
+	पूर्ण
 
 	/* override mark with tunnel output key */
 	fl.flowi_mark = be32_to_cpu(t->parms.o_key);
 
 	ret = vti6_xmit(skb, dev, &fl);
-	if (ret < 0)
-		goto tx_err;
+	अगर (ret < 0)
+		जाओ tx_err;
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 tx_err:
 	stats->tx_errors++;
 	stats->tx_dropped++;
-	kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int vti6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
-		    u8 type, u8 code, int offset, __be32 info)
-{
+अटल पूर्णांक vti6_err(काष्ठा sk_buff *skb, काष्ठा inet6_skb_parm *opt,
+		    u8 type, u8 code, पूर्णांक offset, __be32 info)
+अणु
 	__be32 spi;
 	__u32 mark;
-	struct xfrm_state *x;
-	struct ip6_tnl *t;
-	struct ip_esp_hdr *esph;
-	struct ip_auth_hdr *ah;
-	struct ip_comp_hdr *ipch;
-	struct net *net = dev_net(skb->dev);
-	const struct ipv6hdr *iph = (const struct ipv6hdr *)skb->data;
-	int protocol = iph->nexthdr;
+	काष्ठा xfrm_state *x;
+	काष्ठा ip6_tnl *t;
+	काष्ठा ip_esp_hdr *esph;
+	काष्ठा ip_auth_hdr *ah;
+	काष्ठा ip_comp_hdr *ipch;
+	काष्ठा net *net = dev_net(skb->dev);
+	स्थिर काष्ठा ipv6hdr *iph = (स्थिर काष्ठा ipv6hdr *)skb->data;
+	पूर्णांक protocol = iph->nexthdr;
 
 	t = vti6_tnl_lookup(dev_net(skb->dev), &iph->daddr, &iph->saddr);
-	if (!t)
-		return -1;
+	अगर (!t)
+		वापस -1;
 
 	mark = be32_to_cpu(t->parms.o_key);
 
-	switch (protocol) {
-	case IPPROTO_ESP:
-		esph = (struct ip_esp_hdr *)(skb->data + offset);
+	चयन (protocol) अणु
+	हाल IPPROTO_ESP:
+		esph = (काष्ठा ip_esp_hdr *)(skb->data + offset);
 		spi = esph->spi;
-		break;
-	case IPPROTO_AH:
-		ah = (struct ip_auth_hdr *)(skb->data + offset);
+		अवरोध;
+	हाल IPPROTO_AH:
+		ah = (काष्ठा ip_auth_hdr *)(skb->data + offset);
 		spi = ah->spi;
-		break;
-	case IPPROTO_COMP:
-		ipch = (struct ip_comp_hdr *)(skb->data + offset);
+		अवरोध;
+	हाल IPPROTO_COMP:
+		ipch = (काष्ठा ip_comp_hdr *)(skb->data + offset);
 		spi = htonl(ntohs(ipch->cpi));
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	if (type != ICMPV6_PKT_TOOBIG &&
-	    type != NDISC_REDIRECT)
-		return 0;
+	अगर (type != ICMPV6_PKT_TOOBIG &&
+	    type != NDISC_REसूचीECT)
+		वापस 0;
 
-	x = xfrm_state_lookup(net, mark, (const xfrm_address_t *)&iph->daddr,
+	x = xfrm_state_lookup(net, mark, (स्थिर xfrm_address_t *)&iph->daddr,
 			      spi, protocol, AF_INET6);
-	if (!x)
-		return 0;
+	अगर (!x)
+		वापस 0;
 
-	if (type == NDISC_REDIRECT)
-		ip6_redirect(skb, net, skb->dev->ifindex, 0,
-			     sock_net_uid(net, NULL));
-	else
-		ip6_update_pmtu(skb, net, info, 0, 0, sock_net_uid(net, NULL));
+	अगर (type == NDISC_REसूचीECT)
+		ip6_redirect(skb, net, skb->dev->अगरindex, 0,
+			     sock_net_uid(net, शून्य));
+	अन्यथा
+		ip6_update_pmtu(skb, net, info, 0, 0, sock_net_uid(net, शून्य));
 	xfrm_state_put(x);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vti6_link_config(struct ip6_tnl *t, bool keep_mtu)
-{
-	struct net_device *dev = t->dev;
-	struct __ip6_tnl_parm *p = &t->parms;
-	struct net_device *tdev = NULL;
-	int mtu;
+अटल व्योम vti6_link_config(काष्ठा ip6_tnl *t, bool keep_mtu)
+अणु
+	काष्ठा net_device *dev = t->dev;
+	काष्ठा __ip6_tnl_parm *p = &t->parms;
+	काष्ठा net_device *tdev = शून्य;
+	पूर्णांक mtu;
 
-	memcpy(dev->dev_addr, &p->laddr, sizeof(struct in6_addr));
-	memcpy(dev->broadcast, &p->raddr, sizeof(struct in6_addr));
+	स_नकल(dev->dev_addr, &p->laddr, माप(काष्ठा in6_addr));
+	स_नकल(dev->broadcast, &p->raddr, माप(काष्ठा in6_addr));
 
 	p->flags &= ~(IP6_TNL_F_CAP_XMIT | IP6_TNL_F_CAP_RCV |
 		      IP6_TNL_F_CAP_PER_PACKET);
 	p->flags |= ip6_tnl_get_cap(t, &p->laddr, &p->raddr);
 
-	if (p->flags & IP6_TNL_F_CAP_XMIT && p->flags & IP6_TNL_F_CAP_RCV)
+	अगर (p->flags & IP6_TNL_F_CAP_XMIT && p->flags & IP6_TNL_F_CAP_RCV)
 		dev->flags |= IFF_POINTOPOINT;
-	else
+	अन्यथा
 		dev->flags &= ~IFF_POINTOPOINT;
 
-	if (keep_mtu && dev->mtu) {
+	अगर (keep_mtu && dev->mtu) अणु
 		dev->mtu = clamp(dev->mtu, dev->min_mtu, dev->max_mtu);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (p->flags & IP6_TNL_F_CAP_XMIT) {
-		int strict = (ipv6_addr_type(&p->raddr) &
+	अगर (p->flags & IP6_TNL_F_CAP_XMIT) अणु
+		पूर्णांक strict = (ipv6_addr_type(&p->raddr) &
 			      (IPV6_ADDR_MULTICAST | IPV6_ADDR_LINKLOCAL));
-		struct rt6_info *rt = rt6_lookup(t->net,
+		काष्ठा rt6_info *rt = rt6_lookup(t->net,
 						 &p->raddr, &p->laddr,
-						 p->link, NULL, strict);
+						 p->link, शून्य, strict);
 
-		if (rt)
+		अगर (rt)
 			tdev = rt->dst.dev;
 		ip6_rt_put(rt);
-	}
+	पूर्ण
 
-	if (!tdev && p->link)
+	अगर (!tdev && p->link)
 		tdev = __dev_get_by_index(t->net, p->link);
 
-	if (tdev)
-		mtu = tdev->mtu - sizeof(struct ipv6hdr);
-	else
-		mtu = ETH_DATA_LEN - LL_MAX_HEADER - sizeof(struct ipv6hdr);
+	अगर (tdev)
+		mtu = tdev->mtu - माप(काष्ठा ipv6hdr);
+	अन्यथा
+		mtu = ETH_DATA_LEN - LL_MAX_HEADER - माप(काष्ठा ipv6hdr);
 
-	dev->mtu = max_t(int, mtu, IPV4_MIN_MTU);
-}
+	dev->mtu = max_t(पूर्णांक, mtu, IPV4_MIN_MTU);
+पूर्ण
 
 /**
  * vti6_tnl_change - update the tunnel parameters
  *   @t: tunnel to be changed
  *   @p: tunnel configuration parameters
- *   @keep_mtu: MTU was set from userspace, don't re-compute it
+ *   @keep_mtu: MTU was set from userspace, करोn't re-compute it
  *
  * Description:
  *   vti6_tnl_change() updates the tunnel parameters
  **/
-static int
-vti6_tnl_change(struct ip6_tnl *t, const struct __ip6_tnl_parm *p,
+अटल पूर्णांक
+vti6_tnl_change(काष्ठा ip6_tnl *t, स्थिर काष्ठा __ip6_tnl_parm *p,
 		bool keep_mtu)
-{
+अणु
 	t->parms.laddr = p->laddr;
 	t->parms.raddr = p->raddr;
 	t->parms.link = p->link;
@@ -722,27 +723,27 @@ vti6_tnl_change(struct ip6_tnl *t, const struct __ip6_tnl_parm *p,
 	t->parms.fwmark = p->fwmark;
 	dst_cache_reset(&t->dst_cache);
 	vti6_link_config(t, keep_mtu);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vti6_update(struct ip6_tnl *t, struct __ip6_tnl_parm *p,
+अटल पूर्णांक vti6_update(काष्ठा ip6_tnl *t, काष्ठा __ip6_tnl_parm *p,
 		       bool keep_mtu)
-{
-	struct net *net = dev_net(t->dev);
-	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
-	int err;
+अणु
+	काष्ठा net *net = dev_net(t->dev);
+	काष्ठा vti6_net *ip6n = net_generic(net, vti6_net_id);
+	पूर्णांक err;
 
 	vti6_tnl_unlink(ip6n, t);
 	synchronize_net();
 	err = vti6_tnl_change(t, p, keep_mtu);
 	vti6_tnl_link(ip6n, t);
 	netdev_state_change(t->dev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-vti6_parm_from_user(struct __ip6_tnl_parm *p, const struct ip6_tnl_parm2 *u)
-{
+अटल व्योम
+vti6_parm_from_user(काष्ठा __ip6_tnl_parm *p, स्थिर काष्ठा ip6_tnl_parm2 *u)
+अणु
 	p->laddr = u->laddr;
 	p->raddr = u->raddr;
 	p->link = u->link;
@@ -750,320 +751,320 @@ vti6_parm_from_user(struct __ip6_tnl_parm *p, const struct ip6_tnl_parm2 *u)
 	p->o_key = u->o_key;
 	p->proto = u->proto;
 
-	memcpy(p->name, u->name, sizeof(u->name));
-}
+	स_नकल(p->name, u->name, माप(u->name));
+पूर्ण
 
-static void
-vti6_parm_to_user(struct ip6_tnl_parm2 *u, const struct __ip6_tnl_parm *p)
-{
+अटल व्योम
+vti6_parm_to_user(काष्ठा ip6_tnl_parm2 *u, स्थिर काष्ठा __ip6_tnl_parm *p)
+अणु
 	u->laddr = p->laddr;
 	u->raddr = p->raddr;
 	u->link = p->link;
 	u->i_key = p->i_key;
 	u->o_key = p->o_key;
-	if (u->i_key)
+	अगर (u->i_key)
 		u->i_flags |= GRE_KEY;
-	if (u->o_key)
+	अगर (u->o_key)
 		u->o_flags |= GRE_KEY;
 	u->proto = p->proto;
 
-	memcpy(u->name, p->name, sizeof(u->name));
-}
+	स_नकल(u->name, p->name, माप(u->name));
+पूर्ण
 
 /**
  * vti6_ioctl - configure vti6 tunnels from userspace
- *   @dev: virtual device associated with tunnel
- *   @ifr: parameters passed from userspace
- *   @cmd: command to be performed
+ *   @dev: भव device associated with tunnel
+ *   @अगरr: parameters passed from userspace
+ *   @cmd: command to be perक्रमmed
  *
  * Description:
- *   vti6_ioctl() is used for managing vti6 tunnels
+ *   vti6_ioctl() is used क्रम managing vti6 tunnels
  *   from userspace.
  *
  *   The possible commands are the following:
- *     %SIOCGETTUNNEL: get tunnel parameters for device
+ *     %SIOCGETTUNNEL: get tunnel parameters क्रम device
  *     %SIOCADDTUNNEL: add tunnel matching given tunnel parameters
  *     %SIOCCHGTUNNEL: change tunnel parameters to those given
  *     %SIOCDELTUNNEL: delete tunnel
  *
  *   The fallback device "ip6_vti0", created during module
- *   initialization, can be used for creating other tunnel devices.
+ *   initialization, can be used क्रम creating other tunnel devices.
  *
  * Return:
  *   0 on success,
- *   %-EFAULT if unable to copy data to or from userspace,
- *   %-EPERM if current process hasn't %CAP_NET_ADMIN set
- *   %-EINVAL if passed tunnel parameters are invalid,
- *   %-EEXIST if changing a tunnel's parameters would cause a conflict
- *   %-ENODEV if attempting to change or delete a nonexisting device
+ *   %-EFAULT अगर unable to copy data to or from userspace,
+ *   %-EPERM अगर current process hasn't %CAP_NET_ADMIN set
+ *   %-EINVAL अगर passed tunnel parameters are invalid,
+ *   %-EEXIST अगर changing a tunnel's parameters would cause a conflict
+ *   %-ENODEV अगर attempting to change or delete a nonexisting device
  **/
-static int
-vti6_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	int err = 0;
-	struct ip6_tnl_parm2 p;
-	struct __ip6_tnl_parm p1;
-	struct ip6_tnl *t = NULL;
-	struct net *net = dev_net(dev);
-	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
+अटल पूर्णांक
+vti6_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ip6_tnl_parm2 p;
+	काष्ठा __ip6_tnl_parm p1;
+	काष्ठा ip6_tnl *t = शून्य;
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा vti6_net *ip6n = net_generic(net, vti6_net_id);
 
-	switch (cmd) {
-	case SIOCGETTUNNEL:
-		if (dev == ip6n->fb_tnl_dev) {
-			if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p))) {
+	चयन (cmd) अणु
+	हाल SIOCGETTUNNEL:
+		अगर (dev == ip6n->fb_tnl_dev) अणु
+			अगर (copy_from_user(&p, अगरr->अगरr_अगरru.अगरru_data, माप(p))) अणु
 				err = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			vti6_parm_from_user(&p1, &p);
 			t = vti6_locate(net, &p1, 0);
-		} else {
-			memset(&p, 0, sizeof(p));
-		}
-		if (!t)
+		पूर्ण अन्यथा अणु
+			स_रखो(&p, 0, माप(p));
+		पूर्ण
+		अगर (!t)
 			t = netdev_priv(dev);
 		vti6_parm_to_user(&p, &t->parms);
-		if (copy_to_user(ifr->ifr_ifru.ifru_data, &p, sizeof(p)))
+		अगर (copy_to_user(अगरr->अगरr_अगरru.अगरru_data, &p, माप(p)))
 			err = -EFAULT;
-		break;
-	case SIOCADDTUNNEL:
-	case SIOCCHGTUNNEL:
+		अवरोध;
+	हाल SIOCADDTUNNEL:
+	हाल SIOCCHGTUNNEL:
 		err = -EPERM;
-		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			break;
+		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			अवरोध;
 		err = -EFAULT;
-		if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p)))
-			break;
+		अगर (copy_from_user(&p, अगरr->अगरr_अगरru.अगरru_data, माप(p)))
+			अवरोध;
 		err = -EINVAL;
-		if (p.proto != IPPROTO_IPV6  && p.proto != 0)
-			break;
+		अगर (p.proto != IPPROTO_IPV6  && p.proto != 0)
+			अवरोध;
 		vti6_parm_from_user(&p1, &p);
 		t = vti6_locate(net, &p1, cmd == SIOCADDTUNNEL);
-		if (dev != ip6n->fb_tnl_dev && cmd == SIOCCHGTUNNEL) {
-			if (t) {
-				if (t->dev != dev) {
+		अगर (dev != ip6n->fb_tnl_dev && cmd == SIOCCHGTUNNEL) अणु
+			अगर (t) अणु
+				अगर (t->dev != dev) अणु
 					err = -EEXIST;
-					break;
-				}
-			} else
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा
 				t = netdev_priv(dev);
 
 			err = vti6_update(t, &p1, false);
-		}
-		if (t) {
+		पूर्ण
+		अगर (t) अणु
 			err = 0;
 			vti6_parm_to_user(&p, &t->parms);
-			if (copy_to_user(ifr->ifr_ifru.ifru_data, &p, sizeof(p)))
+			अगर (copy_to_user(अगरr->अगरr_अगरru.अगरru_data, &p, माप(p)))
 				err = -EFAULT;
 
-		} else
+		पूर्ण अन्यथा
 			err = (cmd == SIOCADDTUNNEL ? -ENOBUFS : -ENOENT);
-		break;
-	case SIOCDELTUNNEL:
+		अवरोध;
+	हाल SIOCDELTUNNEL:
 		err = -EPERM;
-		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			break;
+		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			अवरोध;
 
-		if (dev == ip6n->fb_tnl_dev) {
+		अगर (dev == ip6n->fb_tnl_dev) अणु
 			err = -EFAULT;
-			if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p)))
-				break;
+			अगर (copy_from_user(&p, अगरr->अगरr_अगरru.अगरru_data, माप(p)))
+				अवरोध;
 			err = -ENOENT;
 			vti6_parm_from_user(&p1, &p);
 			t = vti6_locate(net, &p1, 0);
-			if (!t)
-				break;
+			अगर (!t)
+				अवरोध;
 			err = -EPERM;
-			if (t->dev == ip6n->fb_tnl_dev)
-				break;
+			अगर (t->dev == ip6n->fb_tnl_dev)
+				अवरोध;
 			dev = t->dev;
-		}
+		पूर्ण
 		err = 0;
-		unregister_netdevice(dev);
-		break;
-	default:
+		unरेजिस्टर_netdevice(dev);
+		अवरोध;
+	शेष:
 		err = -EINVAL;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static const struct net_device_ops vti6_netdev_ops = {
-	.ndo_init	= vti6_dev_init,
-	.ndo_uninit	= vti6_dev_uninit,
-	.ndo_start_xmit = vti6_tnl_xmit,
-	.ndo_do_ioctl	= vti6_ioctl,
-	.ndo_get_stats64 = dev_get_tstats64,
-	.ndo_get_iflink = ip6_tnl_get_iflink,
-};
+अटल स्थिर काष्ठा net_device_ops vti6_netdev_ops = अणु
+	.nकरो_init	= vti6_dev_init,
+	.nकरो_uninit	= vti6_dev_uninit,
+	.nकरो_start_xmit = vti6_tnl_xmit,
+	.nकरो_करो_ioctl	= vti6_ioctl,
+	.nकरो_get_stats64 = dev_get_tstats64,
+	.nकरो_get_अगरlink = ip6_tnl_get_अगरlink,
+पूर्ण;
 
 /**
- * vti6_dev_setup - setup virtual tunnel device
- *   @dev: virtual device associated with tunnel
+ * vti6_dev_setup - setup भव tunnel device
+ *   @dev: भव device associated with tunnel
  *
  * Description:
- *   Initialize function pointers and device parameters
+ *   Initialize function poपूर्णांकers and device parameters
  **/
-static void vti6_dev_setup(struct net_device *dev)
-{
+अटल व्योम vti6_dev_setup(काष्ठा net_device *dev)
+अणु
 	dev->netdev_ops = &vti6_netdev_ops;
 	dev->header_ops = &ip_tunnel_header_ops;
-	dev->needs_free_netdev = true;
-	dev->priv_destructor = vti6_dev_free;
+	dev->needs_मुक्त_netdev = true;
+	dev->priv_deकाष्ठाor = vti6_dev_मुक्त;
 
 	dev->type = ARPHRD_TUNNEL6;
 	dev->min_mtu = IPV4_MIN_MTU;
-	dev->max_mtu = IP_MAX_MTU - sizeof(struct ipv6hdr);
+	dev->max_mtu = IP_MAX_MTU - माप(काष्ठा ipv6hdr);
 	dev->flags |= IFF_NOARP;
-	dev->addr_len = sizeof(struct in6_addr);
-	netif_keep_dst(dev);
-	/* This perm addr will be used as interface identifier by IPv6 */
+	dev->addr_len = माप(काष्ठा in6_addr);
+	netअगर_keep_dst(dev);
+	/* This perm addr will be used as पूर्णांकerface identअगरier by IPv6 */
 	dev->addr_assign_type = NET_ADDR_RANDOM;
-	eth_random_addr(dev->perm_addr);
-}
+	eth_अक्रमom_addr(dev->perm_addr);
+पूर्ण
 
 /**
- * vti6_dev_init_gen - general initializer for all tunnel devices
- *   @dev: virtual device associated with tunnel
+ * vti6_dev_init_gen - general initializer क्रम all tunnel devices
+ *   @dev: भव device associated with tunnel
  **/
-static inline int vti6_dev_init_gen(struct net_device *dev)
-{
-	struct ip6_tnl *t = netdev_priv(dev);
+अटल अंतरभूत पूर्णांक vti6_dev_init_gen(काष्ठा net_device *dev)
+अणु
+	काष्ठा ip6_tnl *t = netdev_priv(dev);
 
 	t->dev = dev;
 	t->net = dev_net(dev);
-	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
-	if (!dev->tstats)
-		return -ENOMEM;
+	dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
+	अगर (!dev->tstats)
+		वापस -ENOMEM;
 	dev_hold(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vti6_dev_init - initializer for all non fallback tunnel devices
- *   @dev: virtual device associated with tunnel
+ * vti6_dev_init - initializer क्रम all non fallback tunnel devices
+ *   @dev: भव device associated with tunnel
  **/
-static int vti6_dev_init(struct net_device *dev)
-{
-	struct ip6_tnl *t = netdev_priv(dev);
-	int err = vti6_dev_init_gen(dev);
+अटल पूर्णांक vti6_dev_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा ip6_tnl *t = netdev_priv(dev);
+	पूर्णांक err = vti6_dev_init_gen(dev);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	vti6_link_config(t, true);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vti6_fb_tnl_dev_init - initializer for fallback tunnel device
+ * vti6_fb_tnl_dev_init - initializer क्रम fallback tunnel device
  *   @dev: fallback device
  *
  * Return: 0
  **/
-static int __net_init vti6_fb_tnl_dev_init(struct net_device *dev)
-{
-	struct ip6_tnl *t = netdev_priv(dev);
-	struct net *net = dev_net(dev);
-	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
+अटल पूर्णांक __net_init vti6_fb_tnl_dev_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा ip6_tnl *t = netdev_priv(dev);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा vti6_net *ip6n = net_generic(net, vti6_net_id);
 
 	t->parms.proto = IPPROTO_IPV6;
 
-	rcu_assign_pointer(ip6n->tnls_wc[0], t);
-	return 0;
-}
+	rcu_assign_poपूर्णांकer(ip6n->tnls_wc[0], t);
+	वापस 0;
+पूर्ण
 
-static int vti6_validate(struct nlattr *tb[], struct nlattr *data[],
-			 struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल पूर्णांक vti6_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static void vti6_netlink_parms(struct nlattr *data[],
-			       struct __ip6_tnl_parm *parms)
-{
-	memset(parms, 0, sizeof(*parms));
+अटल व्योम vti6_netlink_parms(काष्ठा nlattr *data[],
+			       काष्ठा __ip6_tnl_parm *parms)
+अणु
+	स_रखो(parms, 0, माप(*parms));
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
-	if (data[IFLA_VTI_LINK])
+	अगर (data[IFLA_VTI_LINK])
 		parms->link = nla_get_u32(data[IFLA_VTI_LINK]);
 
-	if (data[IFLA_VTI_LOCAL])
+	अगर (data[IFLA_VTI_LOCAL])
 		parms->laddr = nla_get_in6_addr(data[IFLA_VTI_LOCAL]);
 
-	if (data[IFLA_VTI_REMOTE])
+	अगर (data[IFLA_VTI_REMOTE])
 		parms->raddr = nla_get_in6_addr(data[IFLA_VTI_REMOTE]);
 
-	if (data[IFLA_VTI_IKEY])
+	अगर (data[IFLA_VTI_IKEY])
 		parms->i_key = nla_get_be32(data[IFLA_VTI_IKEY]);
 
-	if (data[IFLA_VTI_OKEY])
+	अगर (data[IFLA_VTI_OKEY])
 		parms->o_key = nla_get_be32(data[IFLA_VTI_OKEY]);
 
-	if (data[IFLA_VTI_FWMARK])
+	अगर (data[IFLA_VTI_FWMARK])
 		parms->fwmark = nla_get_u32(data[IFLA_VTI_FWMARK]);
-}
+पूर्ण
 
-static int vti6_newlink(struct net *src_net, struct net_device *dev,
-			struct nlattr *tb[], struct nlattr *data[],
-			struct netlink_ext_ack *extack)
-{
-	struct net *net = dev_net(dev);
-	struct ip6_tnl *nt;
+अटल पूर्णांक vti6_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
+			काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा ip6_tnl *nt;
 
 	nt = netdev_priv(dev);
 	vti6_netlink_parms(data, &nt->parms);
 
 	nt->parms.proto = IPPROTO_IPV6;
 
-	if (vti6_locate(net, &nt->parms, 0))
-		return -EEXIST;
+	अगर (vti6_locate(net, &nt->parms, 0))
+		वापस -EEXIST;
 
-	return vti6_tnl_create2(dev);
-}
+	वापस vti6_tnl_create2(dev);
+पूर्ण
 
-static void vti6_dellink(struct net_device *dev, struct list_head *head)
-{
-	struct net *net = dev_net(dev);
-	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
+अटल व्योम vti6_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
+अणु
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा vti6_net *ip6n = net_generic(net, vti6_net_id);
 
-	if (dev != ip6n->fb_tnl_dev)
-		unregister_netdevice_queue(dev, head);
-}
+	अगर (dev != ip6n->fb_tnl_dev)
+		unरेजिस्टर_netdevice_queue(dev, head);
+पूर्ण
 
-static int vti6_changelink(struct net_device *dev, struct nlattr *tb[],
-			   struct nlattr *data[],
-			   struct netlink_ext_ack *extack)
-{
-	struct ip6_tnl *t;
-	struct __ip6_tnl_parm p;
-	struct net *net = dev_net(dev);
-	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
+अटल पूर्णांक vti6_changelink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
+			   काष्ठा nlattr *data[],
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ip6_tnl *t;
+	काष्ठा __ip6_tnl_parm p;
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा vti6_net *ip6n = net_generic(net, vti6_net_id);
 
-	if (dev == ip6n->fb_tnl_dev)
-		return -EINVAL;
+	अगर (dev == ip6n->fb_tnl_dev)
+		वापस -EINVAL;
 
 	vti6_netlink_parms(data, &p);
 
 	t = vti6_locate(net, &p, 0);
 
-	if (t) {
-		if (t->dev != dev)
-			return -EEXIST;
-	} else
+	अगर (t) अणु
+		अगर (t->dev != dev)
+			वापस -EEXIST;
+	पूर्ण अन्यथा
 		t = netdev_priv(dev);
 
-	return vti6_update(t, &p, tb && tb[IFLA_MTU]);
-}
+	वापस vti6_update(t, &p, tb && tb[IFLA_MTU]);
+पूर्ण
 
-static size_t vti6_get_size(const struct net_device *dev)
-{
-	return
+अटल माप_प्रकार vti6_get_size(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस
 		/* IFLA_VTI_LINK */
 		nla_total_size(4) +
 		/* IFLA_VTI_LOCAL */
-		nla_total_size(sizeof(struct in6_addr)) +
+		nla_total_size(माप(काष्ठा in6_addr)) +
 		/* IFLA_VTI_REMOTE */
-		nla_total_size(sizeof(struct in6_addr)) +
+		nla_total_size(माप(काष्ठा in6_addr)) +
 		/* IFLA_VTI_IKEY */
 		nla_total_size(4) +
 		/* IFLA_VTI_OKEY */
@@ -1071,40 +1072,40 @@ static size_t vti6_get_size(const struct net_device *dev)
 		/* IFLA_VTI_FWMARK */
 		nla_total_size(4) +
 		0;
-}
+पूर्ण
 
-static int vti6_fill_info(struct sk_buff *skb, const struct net_device *dev)
-{
-	struct ip6_tnl *tunnel = netdev_priv(dev);
-	struct __ip6_tnl_parm *parm = &tunnel->parms;
+अटल पूर्णांक vti6_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा ip6_tnl *tunnel = netdev_priv(dev);
+	काष्ठा __ip6_tnl_parm *parm = &tunnel->parms;
 
-	if (nla_put_u32(skb, IFLA_VTI_LINK, parm->link) ||
+	अगर (nla_put_u32(skb, IFLA_VTI_LINK, parm->link) ||
 	    nla_put_in6_addr(skb, IFLA_VTI_LOCAL, &parm->laddr) ||
 	    nla_put_in6_addr(skb, IFLA_VTI_REMOTE, &parm->raddr) ||
 	    nla_put_be32(skb, IFLA_VTI_IKEY, parm->i_key) ||
 	    nla_put_be32(skb, IFLA_VTI_OKEY, parm->o_key) ||
 	    nla_put_u32(skb, IFLA_VTI_FWMARK, parm->fwmark))
-		goto nla_put_failure;
-	return 0;
+		जाओ nla_put_failure;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static const struct nla_policy vti6_policy[IFLA_VTI_MAX + 1] = {
-	[IFLA_VTI_LINK]		= { .type = NLA_U32 },
-	[IFLA_VTI_LOCAL]	= { .len = sizeof(struct in6_addr) },
-	[IFLA_VTI_REMOTE]	= { .len = sizeof(struct in6_addr) },
-	[IFLA_VTI_IKEY]		= { .type = NLA_U32 },
-	[IFLA_VTI_OKEY]		= { .type = NLA_U32 },
-	[IFLA_VTI_FWMARK]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy vti6_policy[IFLA_VTI_MAX + 1] = अणु
+	[IFLA_VTI_LINK]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_VTI_LOCAL]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[IFLA_VTI_REMOTE]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[IFLA_VTI_IKEY]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_VTI_OKEY]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_VTI_FWMARK]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static struct rtnl_link_ops vti6_link_ops __read_mostly = {
+अटल काष्ठा rtnl_link_ops vti6_link_ops __पढ़ो_mostly = अणु
 	.kind		= "vti6",
 	.maxtype	= IFLA_VTI_MAX,
 	.policy		= vti6_policy,
-	.priv_size	= sizeof(struct ip6_tnl),
+	.priv_size	= माप(काष्ठा ip6_tnl),
 	.setup		= vti6_dev_setup,
 	.validate	= vti6_validate,
 	.newlink	= vti6_newlink,
@@ -1113,218 +1114,218 @@ static struct rtnl_link_ops vti6_link_ops __read_mostly = {
 	.get_size	= vti6_get_size,
 	.fill_info	= vti6_fill_info,
 	.get_link_net	= ip6_tnl_get_link_net,
-};
+पूर्ण;
 
-static void __net_exit vti6_destroy_tunnels(struct vti6_net *ip6n,
-					    struct list_head *list)
-{
-	int h;
-	struct ip6_tnl *t;
+अटल व्योम __net_निकास vti6_destroy_tunnels(काष्ठा vti6_net *ip6n,
+					    काष्ठा list_head *list)
+अणु
+	पूर्णांक h;
+	काष्ठा ip6_tnl *t;
 
-	for (h = 0; h < IP6_VTI_HASH_SIZE; h++) {
+	क्रम (h = 0; h < IP6_VTI_HASH_SIZE; h++) अणु
 		t = rtnl_dereference(ip6n->tnls_r_l[h]);
-		while (t) {
-			unregister_netdevice_queue(t->dev, list);
+		जबतक (t) अणु
+			unरेजिस्टर_netdevice_queue(t->dev, list);
 			t = rtnl_dereference(t->next);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	t = rtnl_dereference(ip6n->tnls_wc[0]);
-	if (t)
-		unregister_netdevice_queue(t->dev, list);
-}
+	अगर (t)
+		unरेजिस्टर_netdevice_queue(t->dev, list);
+पूर्ण
 
-static int __net_init vti6_init_net(struct net *net)
-{
-	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
-	struct ip6_tnl *t = NULL;
-	int err;
+अटल पूर्णांक __net_init vti6_init_net(काष्ठा net *net)
+अणु
+	काष्ठा vti6_net *ip6n = net_generic(net, vti6_net_id);
+	काष्ठा ip6_tnl *t = शून्य;
+	पूर्णांक err;
 
 	ip6n->tnls[0] = ip6n->tnls_wc;
 	ip6n->tnls[1] = ip6n->tnls_r_l;
 
-	if (!net_has_fallback_tunnels(net))
-		return 0;
+	अगर (!net_has_fallback_tunnels(net))
+		वापस 0;
 	err = -ENOMEM;
-	ip6n->fb_tnl_dev = alloc_netdev(sizeof(struct ip6_tnl), "ip6_vti0",
+	ip6n->fb_tnl_dev = alloc_netdev(माप(काष्ठा ip6_tnl), "ip6_vti0",
 					NET_NAME_UNKNOWN, vti6_dev_setup);
 
-	if (!ip6n->fb_tnl_dev)
-		goto err_alloc_dev;
+	अगर (!ip6n->fb_tnl_dev)
+		जाओ err_alloc_dev;
 	dev_net_set(ip6n->fb_tnl_dev, net);
 	ip6n->fb_tnl_dev->rtnl_link_ops = &vti6_link_ops;
 
 	err = vti6_fb_tnl_dev_init(ip6n->fb_tnl_dev);
-	if (err < 0)
-		goto err_register;
+	अगर (err < 0)
+		जाओ err_रेजिस्टर;
 
-	err = register_netdev(ip6n->fb_tnl_dev);
-	if (err < 0)
-		goto err_register;
+	err = रेजिस्टर_netdev(ip6n->fb_tnl_dev);
+	अगर (err < 0)
+		जाओ err_रेजिस्टर;
 
 	t = netdev_priv(ip6n->fb_tnl_dev);
 
-	strcpy(t->parms.name, ip6n->fb_tnl_dev->name);
-	return 0;
+	म_नकल(t->parms.name, ip6n->fb_tnl_dev->name);
+	वापस 0;
 
-err_register:
-	free_netdev(ip6n->fb_tnl_dev);
+err_रेजिस्टर:
+	मुक्त_netdev(ip6n->fb_tnl_dev);
 err_alloc_dev:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __net_exit vti6_exit_batch_net(struct list_head *net_list)
-{
-	struct vti6_net *ip6n;
-	struct net *net;
+अटल व्योम __net_निकास vti6_निकास_batch_net(काष्ठा list_head *net_list)
+अणु
+	काष्ठा vti6_net *ip6n;
+	काष्ठा net *net;
 	LIST_HEAD(list);
 
 	rtnl_lock();
-	list_for_each_entry(net, net_list, exit_list) {
+	list_क्रम_each_entry(net, net_list, निकास_list) अणु
 		ip6n = net_generic(net, vti6_net_id);
 		vti6_destroy_tunnels(ip6n, &list);
-	}
-	unregister_netdevice_many(&list);
+	पूर्ण
+	unरेजिस्टर_netdevice_many(&list);
 	rtnl_unlock();
-}
+पूर्ण
 
-static struct pernet_operations vti6_net_ops = {
+अटल काष्ठा pernet_operations vti6_net_ops = अणु
 	.init = vti6_init_net,
-	.exit_batch = vti6_exit_batch_net,
+	.निकास_batch = vti6_निकास_batch_net,
 	.id   = &vti6_net_id,
-	.size = sizeof(struct vti6_net),
-};
+	.size = माप(काष्ठा vti6_net),
+पूर्ण;
 
-static struct xfrm6_protocol vti_esp6_protocol __read_mostly = {
+अटल काष्ठा xfrm6_protocol vti_esp6_protocol __पढ़ो_mostly = अणु
 	.handler	=	vti6_rcv,
 	.input_handler	=	vti6_input_proto,
 	.cb_handler	=	vti6_rcv_cb,
 	.err_handler	=	vti6_err,
 	.priority	=	100,
-};
+पूर्ण;
 
-static struct xfrm6_protocol vti_ah6_protocol __read_mostly = {
+अटल काष्ठा xfrm6_protocol vti_ah6_protocol __पढ़ो_mostly = अणु
 	.handler	=	vti6_rcv,
 	.input_handler	=	vti6_input_proto,
 	.cb_handler	=	vti6_rcv_cb,
 	.err_handler	=	vti6_err,
 	.priority	=	100,
-};
+पूर्ण;
 
-static struct xfrm6_protocol vti_ipcomp6_protocol __read_mostly = {
+अटल काष्ठा xfrm6_protocol vti_ipcomp6_protocol __पढ़ो_mostly = अणु
 	.handler	=	vti6_rcv,
 	.input_handler	=	vti6_input_proto,
 	.cb_handler	=	vti6_rcv_cb,
 	.err_handler	=	vti6_err,
 	.priority	=	100,
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
-static int vti6_rcv_tunnel(struct sk_buff *skb)
-{
-	const xfrm_address_t *saddr;
+#अगर IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
+अटल पूर्णांक vti6_rcv_tunnel(काष्ठा sk_buff *skb)
+अणु
+	स्थिर xfrm_address_t *saddr;
 	__be32 spi;
 
-	saddr = (const xfrm_address_t *)&ipv6_hdr(skb)->saddr;
+	saddr = (स्थिर xfrm_address_t *)&ipv6_hdr(skb)->saddr;
 	spi = xfrm6_tunnel_spi_lookup(dev_net(skb->dev), saddr);
 
-	return vti6_input_proto(skb, IPPROTO_IPV6, spi, 0);
-}
+	वापस vti6_input_proto(skb, IPPROTO_IPV6, spi, 0);
+पूर्ण
 
-static struct xfrm6_tunnel vti_ipv6_handler __read_mostly = {
+अटल काष्ठा xfrm6_tunnel vti_ipv6_handler __पढ़ो_mostly = अणु
 	.handler	=	vti6_rcv_tunnel,
 	.cb_handler	=	vti6_rcv_cb,
 	.err_handler	=	vti6_err,
 	.priority	=	0,
-};
+पूर्ण;
 
-static struct xfrm6_tunnel vti_ip6ip_handler __read_mostly = {
+अटल काष्ठा xfrm6_tunnel vti_ip6ip_handler __पढ़ो_mostly = अणु
 	.handler	=	vti6_rcv_tunnel,
 	.cb_handler	=	vti6_rcv_cb,
 	.err_handler	=	vti6_err,
 	.priority	=	0,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 /**
- * vti6_tunnel_init - register protocol and reserve needed resources
+ * vti6_tunnel_init - रेजिस्टर protocol and reserve needed resources
  *
  * Return: 0 on success
  **/
-static int __init vti6_tunnel_init(void)
-{
-	const char *msg;
-	int err;
+अटल पूर्णांक __init vti6_tunnel_init(व्योम)
+अणु
+	स्थिर अक्षर *msg;
+	पूर्णांक err;
 
 	msg = "tunnel device";
-	err = register_pernet_device(&vti6_net_ops);
-	if (err < 0)
-		goto pernet_dev_failed;
+	err = रेजिस्टर_pernet_device(&vti6_net_ops);
+	अगर (err < 0)
+		जाओ pernet_dev_failed;
 
 	msg = "tunnel protocols";
-	err = xfrm6_protocol_register(&vti_esp6_protocol, IPPROTO_ESP);
-	if (err < 0)
-		goto xfrm_proto_esp_failed;
-	err = xfrm6_protocol_register(&vti_ah6_protocol, IPPROTO_AH);
-	if (err < 0)
-		goto xfrm_proto_ah_failed;
-	err = xfrm6_protocol_register(&vti_ipcomp6_protocol, IPPROTO_COMP);
-	if (err < 0)
-		goto xfrm_proto_comp_failed;
-#if IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
+	err = xfrm6_protocol_रेजिस्टर(&vti_esp6_protocol, IPPROTO_ESP);
+	अगर (err < 0)
+		जाओ xfrm_proto_esp_failed;
+	err = xfrm6_protocol_रेजिस्टर(&vti_ah6_protocol, IPPROTO_AH);
+	अगर (err < 0)
+		जाओ xfrm_proto_ah_failed;
+	err = xfrm6_protocol_रेजिस्टर(&vti_ipcomp6_protocol, IPPROTO_COMP);
+	अगर (err < 0)
+		जाओ xfrm_proto_comp_failed;
+#अगर IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
 	msg = "ipv6 tunnel";
-	err = xfrm6_tunnel_register(&vti_ipv6_handler, AF_INET6);
-	if (err < 0)
-		goto vti_tunnel_ipv6_failed;
-	err = xfrm6_tunnel_register(&vti_ip6ip_handler, AF_INET);
-	if (err < 0)
-		goto vti_tunnel_ip6ip_failed;
-#endif
+	err = xfrm6_tunnel_रेजिस्टर(&vti_ipv6_handler, AF_INET6);
+	अगर (err < 0)
+		जाओ vti_tunnel_ipv6_failed;
+	err = xfrm6_tunnel_रेजिस्टर(&vti_ip6ip_handler, AF_INET);
+	अगर (err < 0)
+		जाओ vti_tunnel_ip6ip_failed;
+#पूर्ण_अगर
 
 	msg = "netlink interface";
-	err = rtnl_link_register(&vti6_link_ops);
-	if (err < 0)
-		goto rtnl_link_failed;
+	err = rtnl_link_रेजिस्टर(&vti6_link_ops);
+	अगर (err < 0)
+		जाओ rtnl_link_failed;
 
-	return 0;
+	वापस 0;
 
 rtnl_link_failed:
-#if IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
-	err = xfrm6_tunnel_deregister(&vti_ip6ip_handler, AF_INET);
+#अगर IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
+	err = xfrm6_tunnel_deरेजिस्टर(&vti_ip6ip_handler, AF_INET);
 vti_tunnel_ip6ip_failed:
-	err = xfrm6_tunnel_deregister(&vti_ipv6_handler, AF_INET6);
+	err = xfrm6_tunnel_deरेजिस्टर(&vti_ipv6_handler, AF_INET6);
 vti_tunnel_ipv6_failed:
-#endif
-	xfrm6_protocol_deregister(&vti_ipcomp6_protocol, IPPROTO_COMP);
+#पूर्ण_अगर
+	xfrm6_protocol_deरेजिस्टर(&vti_ipcomp6_protocol, IPPROTO_COMP);
 xfrm_proto_comp_failed:
-	xfrm6_protocol_deregister(&vti_ah6_protocol, IPPROTO_AH);
+	xfrm6_protocol_deरेजिस्टर(&vti_ah6_protocol, IPPROTO_AH);
 xfrm_proto_ah_failed:
-	xfrm6_protocol_deregister(&vti_esp6_protocol, IPPROTO_ESP);
+	xfrm6_protocol_deरेजिस्टर(&vti_esp6_protocol, IPPROTO_ESP);
 xfrm_proto_esp_failed:
-	unregister_pernet_device(&vti6_net_ops);
+	unरेजिस्टर_pernet_device(&vti6_net_ops);
 pernet_dev_failed:
 	pr_err("vti6 init: failed to register %s\n", msg);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * vti6_tunnel_cleanup - free resources and unregister protocol
+ * vti6_tunnel_cleanup - मुक्त resources and unरेजिस्टर protocol
  **/
-static void __exit vti6_tunnel_cleanup(void)
-{
-	rtnl_link_unregister(&vti6_link_ops);
-#if IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
-	xfrm6_tunnel_deregister(&vti_ip6ip_handler, AF_INET);
-	xfrm6_tunnel_deregister(&vti_ipv6_handler, AF_INET6);
-#endif
-	xfrm6_protocol_deregister(&vti_ipcomp6_protocol, IPPROTO_COMP);
-	xfrm6_protocol_deregister(&vti_ah6_protocol, IPPROTO_AH);
-	xfrm6_protocol_deregister(&vti_esp6_protocol, IPPROTO_ESP);
-	unregister_pernet_device(&vti6_net_ops);
-}
+अटल व्योम __निकास vti6_tunnel_cleanup(व्योम)
+अणु
+	rtnl_link_unरेजिस्टर(&vti6_link_ops);
+#अगर IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
+	xfrm6_tunnel_deरेजिस्टर(&vti_ip6ip_handler, AF_INET);
+	xfrm6_tunnel_deरेजिस्टर(&vti_ipv6_handler, AF_INET6);
+#पूर्ण_अगर
+	xfrm6_protocol_deरेजिस्टर(&vti_ipcomp6_protocol, IPPROTO_COMP);
+	xfrm6_protocol_deरेजिस्टर(&vti_ah6_protocol, IPPROTO_AH);
+	xfrm6_protocol_deरेजिस्टर(&vti_esp6_protocol, IPPROTO_ESP);
+	unरेजिस्टर_pernet_device(&vti6_net_ops);
+पूर्ण
 
 module_init(vti6_tunnel_init);
-module_exit(vti6_tunnel_cleanup);
+module_निकास(vti6_tunnel_cleanup);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_RTNL_LINK("vti6");
 MODULE_ALIAS_NETDEV("ip6_vti0");

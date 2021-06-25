@@ -1,120 +1,121 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Clock driver for TI Davinci PSC controllers
+ * Clock driver क्रम TI Davinci PSC controllers
  *
  * Copyright (C) 2018 David Lechner <david@lechnology.com>
  */
 
-#ifndef __CLK_DAVINCI_PSC_H__
-#define __CLK_DAVINCI_PSC_H__
+#अगर_अघोषित __CLK_DAVINCI_PSC_H__
+#घोषणा __CLK_DAVINCI_PSC_H__
 
-#include <linux/clk-provider.h>
-#include <linux/types.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/types.h>
 
 /* PSC quirk flags */
-#define LPSC_ALWAYS_ENABLED	BIT(0) /* never disable this clock */
-#define LPSC_SET_RATE_PARENT	BIT(1) /* propagate set_rate to parent clock */
-#define LPSC_FORCE		BIT(2) /* requires MDCTL FORCE bit */
-#define LPSC_LOCAL_RESET	BIT(3) /* acts as reset provider */
+#घोषणा LPSC_ALWAYS_ENABLED	BIT(0) /* never disable this घड़ी */
+#घोषणा LPSC_SET_RATE_PARENT	BIT(1) /* propagate set_rate to parent घड़ी */
+#घोषणा LPSC_FORCE		BIT(2) /* requires MDCTL FORCE bit */
+#घोषणा LPSC_LOCAL_RESET	BIT(3) /* acts as reset provider */
 
-struct davinci_lpsc_clkdev_info {
-	const char *con_id;
-	const char *dev_id;
-};
+काष्ठा davinci_lpsc_clkdev_info अणु
+	स्थिर अक्षर *con_id;
+	स्थिर अक्षर *dev_id;
+पूर्ण;
 
-#define LPSC_CLKDEV(c, d) {	\
+#घोषणा LPSC_CLKDEV(c, d) अणु	\
 	.con_id = (c),		\
 	.dev_id = (d)		\
-}
+पूर्ण
 
-#define LPSC_CLKDEV1(n, c, d) \
-static const struct davinci_lpsc_clkdev_info n[] __initconst = {	\
+#घोषणा LPSC_CLKDEV1(n, c, d) \
+अटल स्थिर काष्ठा davinci_lpsc_clkdev_info n[] __initस्थिर = अणु	\
 	LPSC_CLKDEV((c), (d)),						\
-	{ }								\
-}
+	अणु पूर्ण								\
+पूर्ण
 
-#define LPSC_CLKDEV2(n, c1, d1, c2, d2) \
-static const struct davinci_lpsc_clkdev_info n[] __initconst = {	\
+#घोषणा LPSC_CLKDEV2(n, c1, d1, c2, d2) \
+अटल स्थिर काष्ठा davinci_lpsc_clkdev_info n[] __initस्थिर = अणु	\
 	LPSC_CLKDEV((c1), (d1)),					\
 	LPSC_CLKDEV((c2), (d2)),					\
-	{ }								\
-}
+	अणु पूर्ण								\
+पूर्ण
 
-#define LPSC_CLKDEV3(n, c1, d1, c2, d2, c3, d3) \
-static const struct davinci_lpsc_clkdev_info n[] __initconst = {	\
+#घोषणा LPSC_CLKDEV3(n, c1, d1, c2, d2, c3, d3) \
+अटल स्थिर काष्ठा davinci_lpsc_clkdev_info n[] __initस्थिर = अणु	\
 	LPSC_CLKDEV((c1), (d1)),					\
 	LPSC_CLKDEV((c2), (d2)),					\
 	LPSC_CLKDEV((c3), (d3)),					\
-	{ }								\
-}
+	अणु पूर्ण								\
+पूर्ण
 
 /**
- * davinci_lpsc_clk_info - LPSC module-specific clock information
- * @name: the clock name
- * @parent: the parent clock name
+ * davinci_lpsc_clk_info - LPSC module-specअगरic घड़ी inक्रमmation
+ * @name: the घड़ी name
+ * @parent: the parent घड़ी name
  * @cdevs: optional array of clkdev lookup table info
- * @md: the local module domain (LPSC id)
- * @pd: the power domain id
- * @flags: bitmask of LPSC_* flags
+ * @md: the local module करोमुख्य (LPSC id)
+ * @pd: the घातer करोमुख्य id
+ * @flags: biपंचांगask of LPSC_* flags
  */
-struct davinci_lpsc_clk_info {
-	const char *name;
-	const char *parent;
-	const struct davinci_lpsc_clkdev_info *cdevs;
+काष्ठा davinci_lpsc_clk_info अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *parent;
+	स्थिर काष्ठा davinci_lpsc_clkdev_info *cdevs;
 	u32 md;
 	u32 pd;
-	unsigned long flags;
-};
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-#define LPSC(m, d, n, p, c, f)	\
-{				\
+#घोषणा LPSC(m, d, n, p, c, f)	\
+अणु				\
 	.name	= #n,		\
 	.parent	= #p,		\
 	.cdevs	= (c),		\
 	.md	= (m),		\
 	.pd	= (d),		\
 	.flags	= (f),		\
-}
+पूर्ण
 
-int davinci_psc_register_clocks(struct device *dev,
-				const struct davinci_lpsc_clk_info *info,
+पूर्णांक davinci_psc_रेजिस्टर_घड़ीs(काष्ठा device *dev,
+				स्थिर काष्ठा davinci_lpsc_clk_info *info,
 				u8 num_clks,
-				void __iomem *base);
+				व्योम __iomem *base);
 
-int of_davinci_psc_clk_init(struct device *dev,
-			    const struct davinci_lpsc_clk_info *info,
+पूर्णांक of_davinci_psc_clk_init(काष्ठा device *dev,
+			    स्थिर काष्ठा davinci_lpsc_clk_info *info,
 			    u8 num_clks,
-			    void __iomem *base);
+			    व्योम __iomem *base);
 
-/* Device-specific data */
+/* Device-specअगरic data */
 
-struct davinci_psc_init_data {
-	struct clk_bulk_data *parent_clks;
-	int num_parent_clks;
-	int (*psc_init)(struct device *dev, void __iomem *base);
-};
+काष्ठा davinci_psc_init_data अणु
+	काष्ठा clk_bulk_data *parent_clks;
+	पूर्णांक num_parent_clks;
+	पूर्णांक (*psc_init)(काष्ठा device *dev, व्योम __iomem *base);
+पूर्ण;
 
-#ifdef CONFIG_ARCH_DAVINCI_DA830
-extern const struct davinci_psc_init_data da830_psc0_init_data;
-extern const struct davinci_psc_init_data da830_psc1_init_data;
-#endif
-#ifdef CONFIG_ARCH_DAVINCI_DA850
-extern const struct davinci_psc_init_data da850_psc0_init_data;
-extern const struct davinci_psc_init_data da850_psc1_init_data;
-extern const struct davinci_psc_init_data of_da850_psc0_init_data;
-extern const struct davinci_psc_init_data of_da850_psc1_init_data;
-#endif
-#ifdef CONFIG_ARCH_DAVINCI_DM355
-extern const struct davinci_psc_init_data dm355_psc_init_data;
-#endif
-#ifdef CONFIG_ARCH_DAVINCI_DM365
-extern const struct davinci_psc_init_data dm365_psc_init_data;
-#endif
-#ifdef CONFIG_ARCH_DAVINCI_DM644x
-extern const struct davinci_psc_init_data dm644x_psc_init_data;
-#endif
-#ifdef CONFIG_ARCH_DAVINCI_DM646x
-extern const struct davinci_psc_init_data dm646x_psc_init_data;
-#endif
+#अगर_घोषित CONFIG_ARCH_DAVINCI_DA830
+बाह्य स्थिर काष्ठा davinci_psc_init_data da830_psc0_init_data;
+बाह्य स्थिर काष्ठा davinci_psc_init_data da830_psc1_init_data;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_DAVINCI_DA850
+बाह्य स्थिर काष्ठा davinci_psc_init_data da850_psc0_init_data;
+बाह्य स्थिर काष्ठा davinci_psc_init_data da850_psc1_init_data;
+बाह्य स्थिर काष्ठा davinci_psc_init_data of_da850_psc0_init_data;
+बाह्य स्थिर काष्ठा davinci_psc_init_data of_da850_psc1_init_data;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_DAVINCI_DM355
+बाह्य स्थिर काष्ठा davinci_psc_init_data dm355_psc_init_data;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_DAVINCI_DM365
+बाह्य स्थिर काष्ठा davinci_psc_init_data dm365_psc_init_data;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_DAVINCI_DM644x
+बाह्य स्थिर काष्ठा davinci_psc_init_data dm644x_psc_init_data;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_DAVINCI_DM646x
+बाह्य स्थिर काष्ठा davinci_psc_init_data dm646x_psc_init_data;
+#पूर्ण_अगर
 
-#endif /* __CLK_DAVINCI_PSC_H__ */
+#पूर्ण_अगर /* __CLK_DAVINCI_PSC_H__ */

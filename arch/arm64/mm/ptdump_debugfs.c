@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/debugfs.h>
-#include <linux/memory_hotplug.h>
-#include <linux/seq_file.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/debugfs.h>
+#समावेश <linux/memory_hotplug.h>
+#समावेश <linux/seq_file.h>
 
-#include <asm/ptdump.h>
+#समावेश <यंत्र/ptdump.h>
 
-static int ptdump_show(struct seq_file *m, void *v)
-{
-	struct ptdump_info *info = m->private;
+अटल पूर्णांक ptdump_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा ptdump_info *info = m->निजी;
 
 	get_online_mems();
 	ptdump_walk(m, info);
 	put_online_mems();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(ptdump);
 
-void __init ptdump_debugfs_register(struct ptdump_info *info, const char *name)
-{
-	debugfs_create_file(name, 0400, NULL, info, &ptdump_fops);
-}
+व्योम __init ptdump_debugfs_रेजिस्टर(काष्ठा ptdump_info *info, स्थिर अक्षर *name)
+अणु
+	debugfs_create_file(name, 0400, शून्य, info, &ptdump_fops);
+पूर्ण

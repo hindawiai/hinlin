@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 
 /*
- * Xen para-virtual sound device
+ * Xen para-भव sound device
  *
  * Copyright (C) 2016-2018 EPAM Systems Inc.
  *
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
-#include <xen/events.h>
-#include <xen/grant_table.h>
-#include <xen/xen.h>
-#include <xen/xenbus.h>
+#समावेश <xen/events.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/xenbus.h>
 
-#include "xen_snd_front.h"
-#include "xen_snd_front_alsa.h"
-#include "xen_snd_front_cfg.h"
-#include "xen_snd_front_evtchnl.h"
+#समावेश "xen_snd_front.h"
+#समावेश "xen_snd_front_alsa.h"
+#समावेश "xen_snd_front_cfg.h"
+#समावेश "xen_snd_front_evtchnl.h"
 
-static irqreturn_t evtchnl_interrupt_req(int irq, void *dev_id)
-{
-	struct xen_snd_front_evtchnl *channel = dev_id;
-	struct xen_snd_front_info *front_info = channel->front_info;
-	struct xensnd_resp *resp;
+अटल irqवापस_t evtchnl_पूर्णांकerrupt_req(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा xen_snd_front_evtchnl *channel = dev_id;
+	काष्ठा xen_snd_front_info *front_info = channel->front_info;
+	काष्ठा xensnd_resp *resp;
 	RING_IDX i, rp;
 
-	if (unlikely(channel->state != EVTCHNL_STATE_CONNECTED))
-		return IRQ_HANDLED;
+	अगर (unlikely(channel->state != EVTCHNL_STATE_CONNECTED))
+		वापस IRQ_HANDLED;
 
 	mutex_lock(&channel->ring_io_lock);
 
@@ -36,90 +37,90 @@ again:
 	rmb();
 
 	/*
-	 * Assume that the backend is trusted to always write sane values
+	 * Assume that the backend is trusted to always ग_लिखो sane values
 	 * to the ring counters, so no overflow checks on frontend side
 	 * are required.
 	 */
-	for (i = channel->u.req.ring.rsp_cons; i != rp; i++) {
+	क्रम (i = channel->u.req.ring.rsp_cons; i != rp; i++) अणु
 		resp = RING_GET_RESPONSE(&channel->u.req.ring, i);
-		if (resp->id != channel->evt_id)
-			continue;
-		switch (resp->operation) {
-		case XENSND_OP_OPEN:
-		case XENSND_OP_CLOSE:
-		case XENSND_OP_READ:
-		case XENSND_OP_WRITE:
-		case XENSND_OP_TRIGGER:
+		अगर (resp->id != channel->evt_id)
+			जारी;
+		चयन (resp->operation) अणु
+		हाल XENSND_OP_OPEN:
+		हाल XENSND_OP_CLOSE:
+		हाल XENSND_OP_READ:
+		हाल XENSND_OP_WRITE:
+		हाल XENSND_OP_TRIGGER:
 			channel->u.req.resp_status = resp->status;
 			complete(&channel->u.req.completion);
-			break;
-		case XENSND_OP_HW_PARAM_QUERY:
+			अवरोध;
+		हाल XENSND_OP_HW_PARAM_QUERY:
 			channel->u.req.resp_status = resp->status;
 			channel->u.req.resp.hw_param =
 					resp->resp.hw_param;
 			complete(&channel->u.req.completion);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(&front_info->xb_dev->dev,
 				"Operation %d is not supported\n",
 				resp->operation);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	channel->u.req.ring.rsp_cons = i;
-	if (i != channel->u.req.ring.req_prod_pvt) {
-		int more_to_do;
+	अगर (i != channel->u.req.ring.req_prod_pvt) अणु
+		पूर्णांक more_to_करो;
 
 		RING_FINAL_CHECK_FOR_RESPONSES(&channel->u.req.ring,
-					       more_to_do);
-		if (more_to_do)
-			goto again;
-	} else {
+					       more_to_करो);
+		अगर (more_to_करो)
+			जाओ again;
+	पूर्ण अन्यथा अणु
 		channel->u.req.ring.sring->rsp_event = i + 1;
-	}
+	पूर्ण
 
 	mutex_unlock(&channel->ring_io_lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t evtchnl_interrupt_evt(int irq, void *dev_id)
-{
-	struct xen_snd_front_evtchnl *channel = dev_id;
-	struct xensnd_event_page *page = channel->u.evt.page;
+अटल irqवापस_t evtchnl_पूर्णांकerrupt_evt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा xen_snd_front_evtchnl *channel = dev_id;
+	काष्ठा xensnd_event_page *page = channel->u.evt.page;
 	u32 cons, prod;
 
-	if (unlikely(channel->state != EVTCHNL_STATE_CONNECTED))
-		return IRQ_HANDLED;
+	अगर (unlikely(channel->state != EVTCHNL_STATE_CONNECTED))
+		वापस IRQ_HANDLED;
 
 	mutex_lock(&channel->ring_io_lock);
 
 	prod = page->in_prod;
 	/* Ensure we see ring contents up to prod. */
 	virt_rmb();
-	if (prod == page->in_cons)
-		goto out;
+	अगर (prod == page->in_cons)
+		जाओ out;
 
 	/*
-	 * Assume that the backend is trusted to always write sane values
+	 * Assume that the backend is trusted to always ग_लिखो sane values
 	 * to the ring counters, so no overflow checks on frontend side
 	 * are required.
 	 */
-	for (cons = page->in_cons; cons != prod; cons++) {
-		struct xensnd_evt *event;
+	क्रम (cons = page->in_cons; cons != prod; cons++) अणु
+		काष्ठा xensnd_evt *event;
 
 		event = &XENSND_IN_RING_REF(page, cons);
-		if (unlikely(event->id != channel->evt_id++))
-			continue;
+		अगर (unlikely(event->id != channel->evt_id++))
+			जारी;
 
-		switch (event->type) {
-		case XENSND_EVT_CUR_POS:
+		चयन (event->type) अणु
+		हाल XENSND_EVT_CUR_POS:
 			xen_snd_front_alsa_handle_cur_pos(channel,
 							  event->op.cur_pos.position);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	page->in_cons = cons;
 	/* Ensure ring contents. */
@@ -127,106 +128,106 @@ static irqreturn_t evtchnl_interrupt_evt(int irq, void *dev_id)
 
 out:
 	mutex_unlock(&channel->ring_io_lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void xen_snd_front_evtchnl_flush(struct xen_snd_front_evtchnl *channel)
-{
-	int notify;
+व्योम xen_snd_front_evtchnl_flush(काष्ठा xen_snd_front_evtchnl *channel)
+अणु
+	पूर्णांक notअगरy;
 
 	channel->u.req.ring.req_prod_pvt++;
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&channel->u.req.ring, notify);
-	if (notify)
-		notify_remote_via_irq(channel->irq);
-}
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&channel->u.req.ring, notअगरy);
+	अगर (notअगरy)
+		notअगरy_remote_via_irq(channel->irq);
+पूर्ण
 
-static void evtchnl_free(struct xen_snd_front_info *front_info,
-			 struct xen_snd_front_evtchnl *channel)
-{
-	unsigned long page = 0;
+अटल व्योम evtchnl_मुक्त(काष्ठा xen_snd_front_info *front_info,
+			 काष्ठा xen_snd_front_evtchnl *channel)
+अणु
+	अचिन्हित दीर्घ page = 0;
 
-	if (channel->type == EVTCHNL_TYPE_REQ)
-		page = (unsigned long)channel->u.req.ring.sring;
-	else if (channel->type == EVTCHNL_TYPE_EVT)
-		page = (unsigned long)channel->u.evt.page;
+	अगर (channel->type == EVTCHNL_TYPE_REQ)
+		page = (अचिन्हित दीर्घ)channel->u.req.ring.sring;
+	अन्यथा अगर (channel->type == EVTCHNL_TYPE_EVT)
+		page = (अचिन्हित दीर्घ)channel->u.evt.page;
 
-	if (!page)
-		return;
+	अगर (!page)
+		वापस;
 
 	channel->state = EVTCHNL_STATE_DISCONNECTED;
-	if (channel->type == EVTCHNL_TYPE_REQ) {
-		/* Release all who still waits for response if any. */
+	अगर (channel->type == EVTCHNL_TYPE_REQ) अणु
+		/* Release all who still रुकोs क्रम response अगर any. */
 		channel->u.req.resp_status = -EIO;
 		complete_all(&channel->u.req.completion);
-	}
+	पूर्ण
 
-	if (channel->irq)
+	अगर (channel->irq)
 		unbind_from_irqhandler(channel->irq, channel);
 
-	if (channel->port)
-		xenbus_free_evtchn(front_info->xb_dev, channel->port);
+	अगर (channel->port)
+		xenbus_मुक्त_evtchn(front_info->xb_dev, channel->port);
 
-	/* End access and free the page. */
-	if (channel->gref != GRANT_INVALID_REF)
-		gnttab_end_foreign_access(channel->gref, 0, page);
-	else
-		free_page(page);
+	/* End access and मुक्त the page. */
+	अगर (channel->gref != GRANT_INVALID_REF)
+		gnttab_end_क्रमeign_access(channel->gref, 0, page);
+	अन्यथा
+		मुक्त_page(page);
 
-	memset(channel, 0, sizeof(*channel));
-}
+	स_रखो(channel, 0, माप(*channel));
+पूर्ण
 
-void xen_snd_front_evtchnl_free_all(struct xen_snd_front_info *front_info)
-{
-	int i;
+व्योम xen_snd_front_evtchnl_मुक्त_all(काष्ठा xen_snd_front_info *front_info)
+अणु
+	पूर्णांक i;
 
-	if (!front_info->evt_pairs)
-		return;
+	अगर (!front_info->evt_pairs)
+		वापस;
 
-	for (i = 0; i < front_info->num_evt_pairs; i++) {
-		evtchnl_free(front_info, &front_info->evt_pairs[i].req);
-		evtchnl_free(front_info, &front_info->evt_pairs[i].evt);
-	}
+	क्रम (i = 0; i < front_info->num_evt_pairs; i++) अणु
+		evtchnl_मुक्त(front_info, &front_info->evt_pairs[i].req);
+		evtchnl_मुक्त(front_info, &front_info->evt_pairs[i].evt);
+	पूर्ण
 
-	kfree(front_info->evt_pairs);
-	front_info->evt_pairs = NULL;
-}
+	kमुक्त(front_info->evt_pairs);
+	front_info->evt_pairs = शून्य;
+पूर्ण
 
-static int evtchnl_alloc(struct xen_snd_front_info *front_info, int index,
-			 struct xen_snd_front_evtchnl *channel,
-			 enum xen_snd_front_evtchnl_type type)
-{
-	struct xenbus_device *xb_dev = front_info->xb_dev;
-	unsigned long page;
+अटल पूर्णांक evtchnl_alloc(काष्ठा xen_snd_front_info *front_info, पूर्णांक index,
+			 काष्ठा xen_snd_front_evtchnl *channel,
+			 क्रमागत xen_snd_front_evtchnl_type type)
+अणु
+	काष्ठा xenbus_device *xb_dev = front_info->xb_dev;
+	अचिन्हित दीर्घ page;
 	grant_ref_t gref;
 	irq_handler_t handler;
-	char *handler_name = NULL;
-	int ret;
+	अक्षर *handler_name = शून्य;
+	पूर्णांक ret;
 
-	memset(channel, 0, sizeof(*channel));
+	स_रखो(channel, 0, माप(*channel));
 	channel->type = type;
 	channel->index = index;
 	channel->front_info = front_info;
 	channel->state = EVTCHNL_STATE_DISCONNECTED;
 	channel->gref = GRANT_INVALID_REF;
 	page = get_zeroed_page(GFP_KERNEL);
-	if (!page) {
+	अगर (!page) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	handler_name = kasprintf(GFP_KERNEL, "%s-%s", XENSND_DRIVER_NAME,
+	handler_name = kaप्र_लिखो(GFP_KERNEL, "%s-%s", XENSND_DRIVER_NAME,
 				 type == EVTCHNL_TYPE_REQ ?
 				 XENSND_FIELD_RING_REF :
 				 XENSND_FIELD_EVT_RING_REF);
-	if (!handler_name) {
+	अगर (!handler_name) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	mutex_init(&channel->ring_io_lock);
 
-	if (type == EVTCHNL_TYPE_REQ) {
-		struct xen_sndif_sring *sring = (struct xen_sndif_sring *)page;
+	अगर (type == EVTCHNL_TYPE_REQ) अणु
+		काष्ठा xen_sndअगर_sring *sring = (काष्ठा xen_sndअगर_sring *)page;
 
 		init_completion(&channel->u.req.completion);
 		mutex_init(&channel->u.req.req_io_lock);
@@ -234,174 +235,174 @@ static int evtchnl_alloc(struct xen_snd_front_info *front_info, int index,
 		FRONT_RING_INIT(&channel->u.req.ring, sring, XEN_PAGE_SIZE);
 
 		ret = xenbus_grant_ring(xb_dev, sring, 1, &gref);
-		if (ret < 0) {
-			channel->u.req.ring.sring = NULL;
-			goto fail;
-		}
+		अगर (ret < 0) अणु
+			channel->u.req.ring.sring = शून्य;
+			जाओ fail;
+		पूर्ण
 
-		handler = evtchnl_interrupt_req;
-	} else {
-		ret = gnttab_grant_foreign_access(xb_dev->otherend_id,
-						  virt_to_gfn((void *)page), 0);
-		if (ret < 0)
-			goto fail;
+		handler = evtchnl_पूर्णांकerrupt_req;
+	पूर्ण अन्यथा अणु
+		ret = gnttab_grant_क्रमeign_access(xb_dev->otherend_id,
+						  virt_to_gfn((व्योम *)page), 0);
+		अगर (ret < 0)
+			जाओ fail;
 
-		channel->u.evt.page = (struct xensnd_event_page *)page;
+		channel->u.evt.page = (काष्ठा xensnd_event_page *)page;
 		gref = ret;
-		handler = evtchnl_interrupt_evt;
-	}
+		handler = evtchnl_पूर्णांकerrupt_evt;
+	पूर्ण
 
 	channel->gref = gref;
 
 	ret = xenbus_alloc_evtchn(xb_dev, &channel->port);
-	if (ret < 0)
-		goto fail;
+	अगर (ret < 0)
+		जाओ fail;
 
 	ret = bind_evtchn_to_irq(channel->port);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&xb_dev->dev,
 			"Failed to bind IRQ for domid %d port %d: %d\n",
 			front_info->xb_dev->otherend_id, channel->port, ret);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	channel->irq = ret;
 
-	ret = request_threaded_irq(channel->irq, NULL, handler,
+	ret = request_thपढ़ोed_irq(channel->irq, शून्य, handler,
 				   IRQF_ONESHOT, handler_name, channel);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&xb_dev->dev, "Failed to request IRQ %d: %d\n",
 			channel->irq, ret);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	kfree(handler_name);
-	return 0;
+	kमुक्त(handler_name);
+	वापस 0;
 
 fail:
-	if (page)
-		free_page(page);
-	kfree(handler_name);
+	अगर (page)
+		मुक्त_page(page);
+	kमुक्त(handler_name);
 	dev_err(&xb_dev->dev, "Failed to allocate ring: %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int xen_snd_front_evtchnl_create_all(struct xen_snd_front_info *front_info,
-				     int num_streams)
-{
-	struct xen_front_cfg_card *cfg = &front_info->cfg;
-	struct device *dev = &front_info->xb_dev->dev;
-	int d, ret = 0;
+पूर्णांक xen_snd_front_evtchnl_create_all(काष्ठा xen_snd_front_info *front_info,
+				     पूर्णांक num_streams)
+अणु
+	काष्ठा xen_front_cfg_card *cfg = &front_info->cfg;
+	काष्ठा device *dev = &front_info->xb_dev->dev;
+	पूर्णांक d, ret = 0;
 
 	front_info->evt_pairs =
-			kcalloc(num_streams,
-				sizeof(struct xen_snd_front_evtchnl_pair),
+			kसुस्मृति(num_streams,
+				माप(काष्ठा xen_snd_front_evtchnl_pair),
 				GFP_KERNEL);
-	if (!front_info->evt_pairs)
-		return -ENOMEM;
+	अगर (!front_info->evt_pairs)
+		वापस -ENOMEM;
 
 	/* Iterate over devices and their streams and create event channels. */
-	for (d = 0; d < cfg->num_pcm_instances; d++) {
-		struct xen_front_cfg_pcm_instance *pcm_instance;
-		int s, index;
+	क्रम (d = 0; d < cfg->num_pcm_instances; d++) अणु
+		काष्ठा xen_front_cfg_pcm_instance *pcm_instance;
+		पूर्णांक s, index;
 
 		pcm_instance = &cfg->pcm_instances[d];
 
-		for (s = 0; s < pcm_instance->num_streams_pb; s++) {
+		क्रम (s = 0; s < pcm_instance->num_streams_pb; s++) अणु
 			index = pcm_instance->streams_pb[s].index;
 
 			ret = evtchnl_alloc(front_info, index,
 					    &front_info->evt_pairs[index].req,
 					    EVTCHNL_TYPE_REQ);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(dev, "Error allocating control channel\n");
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 
 			ret = evtchnl_alloc(front_info, index,
 					    &front_info->evt_pairs[index].evt,
 					    EVTCHNL_TYPE_EVT);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(dev, "Error allocating in-event channel\n");
-				goto fail;
-			}
-		}
+				जाओ fail;
+			पूर्ण
+		पूर्ण
 
-		for (s = 0; s < pcm_instance->num_streams_cap; s++) {
+		क्रम (s = 0; s < pcm_instance->num_streams_cap; s++) अणु
 			index = pcm_instance->streams_cap[s].index;
 
 			ret = evtchnl_alloc(front_info, index,
 					    &front_info->evt_pairs[index].req,
 					    EVTCHNL_TYPE_REQ);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(dev, "Error allocating control channel\n");
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 
 			ret = evtchnl_alloc(front_info, index,
 					    &front_info->evt_pairs[index].evt,
 					    EVTCHNL_TYPE_EVT);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(dev, "Error allocating in-event channel\n");
-				goto fail;
-			}
-		}
-	}
+				जाओ fail;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	front_info->num_evt_pairs = num_streams;
-	return 0;
+	वापस 0;
 
 fail:
-	xen_snd_front_evtchnl_free_all(front_info);
-	return ret;
-}
+	xen_snd_front_evtchnl_मुक्त_all(front_info);
+	वापस ret;
+पूर्ण
 
-static int evtchnl_publish(struct xenbus_transaction xbt,
-			   struct xen_snd_front_evtchnl *channel,
-			   const char *path, const char *node_ring,
-			   const char *node_chnl)
-{
-	struct xenbus_device *xb_dev = channel->front_info->xb_dev;
-	int ret;
+अटल पूर्णांक evtchnl_publish(काष्ठा xenbus_transaction xbt,
+			   काष्ठा xen_snd_front_evtchnl *channel,
+			   स्थिर अक्षर *path, स्थिर अक्षर *node_ring,
+			   स्थिर अक्षर *node_chnl)
+अणु
+	काष्ठा xenbus_device *xb_dev = channel->front_info->xb_dev;
+	पूर्णांक ret;
 
 	/* Write control channel ring reference. */
-	ret = xenbus_printf(xbt, path, node_ring, "%u", channel->gref);
-	if (ret < 0) {
+	ret = xenbus_म_लिखो(xbt, path, node_ring, "%u", channel->gref);
+	अगर (ret < 0) अणु
 		dev_err(&xb_dev->dev, "Error writing ring-ref: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Write event channel ring reference. */
-	ret = xenbus_printf(xbt, path, node_chnl, "%u", channel->port);
-	if (ret < 0) {
+	ret = xenbus_म_लिखो(xbt, path, node_chnl, "%u", channel->port);
+	अगर (ret < 0) अणु
 		dev_err(&xb_dev->dev, "Error writing event channel: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int xen_snd_front_evtchnl_publish_all(struct xen_snd_front_info *front_info)
-{
-	struct xen_front_cfg_card *cfg = &front_info->cfg;
-	struct xenbus_transaction xbt;
-	int ret, d;
+पूर्णांक xen_snd_front_evtchnl_publish_all(काष्ठा xen_snd_front_info *front_info)
+अणु
+	काष्ठा xen_front_cfg_card *cfg = &front_info->cfg;
+	काष्ठा xenbus_transaction xbt;
+	पूर्णांक ret, d;
 
 again:
 	ret = xenbus_transaction_start(&xbt);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		xenbus_dev_fatal(front_info->xb_dev, ret,
 				 "starting transaction");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (d = 0; d < cfg->num_pcm_instances; d++) {
-		struct xen_front_cfg_pcm_instance *pcm_instance;
-		int s, index;
+	क्रम (d = 0; d < cfg->num_pcm_instances; d++) अणु
+		काष्ठा xen_front_cfg_pcm_instance *pcm_instance;
+		पूर्णांक s, index;
 
 		pcm_instance = &cfg->pcm_instances[d];
 
-		for (s = 0; s < pcm_instance->num_streams_pb; s++) {
+		क्रम (s = 0; s < pcm_instance->num_streams_pb; s++) अणु
 			index = pcm_instance->streams_pb[s].index;
 
 			ret = evtchnl_publish(xbt,
@@ -409,19 +410,19 @@ again:
 					      pcm_instance->streams_pb[s].xenstore_path,
 					      XENSND_FIELD_RING_REF,
 					      XENSND_FIELD_EVT_CHNL);
-			if (ret < 0)
-				goto fail;
+			अगर (ret < 0)
+				जाओ fail;
 
 			ret = evtchnl_publish(xbt,
 					      &front_info->evt_pairs[index].evt,
 					      pcm_instance->streams_pb[s].xenstore_path,
 					      XENSND_FIELD_EVT_RING_REF,
 					      XENSND_FIELD_EVT_EVT_CHNL);
-			if (ret < 0)
-				goto fail;
-		}
+			अगर (ret < 0)
+				जाओ fail;
+		पूर्ण
 
-		for (s = 0; s < pcm_instance->num_streams_cap; s++) {
+		क्रम (s = 0; s < pcm_instance->num_streams_cap; s++) अणु
 			index = pcm_instance->streams_cap[s].index;
 
 			ret = evtchnl_publish(xbt,
@@ -429,43 +430,43 @@ again:
 					      pcm_instance->streams_cap[s].xenstore_path,
 					      XENSND_FIELD_RING_REF,
 					      XENSND_FIELD_EVT_CHNL);
-			if (ret < 0)
-				goto fail;
+			अगर (ret < 0)
+				जाओ fail;
 
 			ret = evtchnl_publish(xbt,
 					      &front_info->evt_pairs[index].evt,
 					      pcm_instance->streams_cap[s].xenstore_path,
 					      XENSND_FIELD_EVT_RING_REF,
 					      XENSND_FIELD_EVT_EVT_CHNL);
-			if (ret < 0)
-				goto fail;
-		}
-	}
+			अगर (ret < 0)
+				जाओ fail;
+		पूर्ण
+	पूर्ण
 	ret = xenbus_transaction_end(xbt, 0);
-	if (ret < 0) {
-		if (ret == -EAGAIN)
-			goto again;
+	अगर (ret < 0) अणु
+		अगर (ret == -EAGAIN)
+			जाओ again;
 
 		xenbus_dev_fatal(front_info->xb_dev, ret,
 				 "completing transaction");
-		goto fail_to_end;
-	}
-	return 0;
+		जाओ fail_to_end;
+	पूर्ण
+	वापस 0;
 fail:
 	xenbus_transaction_end(xbt, 1);
 fail_to_end:
 	xenbus_dev_fatal(front_info->xb_dev, ret, "writing XenStore");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void xen_snd_front_evtchnl_pair_set_connected(struct xen_snd_front_evtchnl_pair *evt_pair,
+व्योम xen_snd_front_evtchnl_pair_set_connected(काष्ठा xen_snd_front_evtchnl_pair *evt_pair,
 					      bool is_connected)
-{
-	enum xen_snd_front_evtchnl_state state;
+अणु
+	क्रमागत xen_snd_front_evtchnl_state state;
 
-	if (is_connected)
+	अगर (is_connected)
 		state = EVTCHNL_STATE_CONNECTED;
-	else
+	अन्यथा
 		state = EVTCHNL_STATE_DISCONNECTED;
 
 	mutex_lock(&evt_pair->req.ring_io_lock);
@@ -475,10 +476,10 @@ void xen_snd_front_evtchnl_pair_set_connected(struct xen_snd_front_evtchnl_pair 
 	mutex_lock(&evt_pair->evt.ring_io_lock);
 	evt_pair->evt.state = state;
 	mutex_unlock(&evt_pair->evt.ring_io_lock);
-}
+पूर्ण
 
-void xen_snd_front_evtchnl_pair_clear(struct xen_snd_front_evtchnl_pair *evt_pair)
-{
+व्योम xen_snd_front_evtchnl_pair_clear(काष्ठा xen_snd_front_evtchnl_pair *evt_pair)
+अणु
 	mutex_lock(&evt_pair->req.ring_io_lock);
 	evt_pair->req.evt_next_id = 0;
 	mutex_unlock(&evt_pair->req.ring_io_lock);
@@ -486,5 +487,5 @@ void xen_snd_front_evtchnl_pair_clear(struct xen_snd_front_evtchnl_pair *evt_pai
 	mutex_lock(&evt_pair->evt.ring_io_lock);
 	evt_pair->evt.evt_next_id = 0;
 	mutex_unlock(&evt_pair->evt.ring_io_lock);
-}
+पूर्ण
 

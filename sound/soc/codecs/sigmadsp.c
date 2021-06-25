@@ -1,249 +1,250 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Load Analog Devices SigmaStudio firmware files
  *
  * Copyright 2009-2014 Analog Devices Inc.
  */
 
-#include <linux/crc32.h>
-#include <linux/firmware.h>
-#include <linux/kernel.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <sound/control.h>
-#include <sound/soc.h>
+#समावेश <sound/control.h>
+#समावेश <sound/soc.h>
 
-#include "sigmadsp.h"
+#समावेश "sigmadsp.h"
 
-#define SIGMA_MAGIC "ADISIGM"
+#घोषणा SIGMA_MAGIC "ADISIGM"
 
-#define SIGMA_FW_CHUNK_TYPE_DATA 0
-#define SIGMA_FW_CHUNK_TYPE_CONTROL 1
-#define SIGMA_FW_CHUNK_TYPE_SAMPLERATES 2
+#घोषणा SIGMA_FW_CHUNK_TYPE_DATA 0
+#घोषणा SIGMA_FW_CHUNK_TYPE_CONTROL 1
+#घोषणा SIGMA_FW_CHUNK_TYPE_SAMPLERATES 2
 
-#define READBACK_CTRL_NAME "ReadBack"
+#घोषणा READBACK_CTRL_NAME "ReadBack"
 
-struct sigmadsp_control {
-	struct list_head head;
-	uint32_t samplerates;
-	unsigned int addr;
-	unsigned int num_bytes;
-	const char *name;
-	struct snd_kcontrol *kcontrol;
-	bool is_readback;
+काष्ठा sigmadsp_control अणु
+	काष्ठा list_head head;
+	uपूर्णांक32_t samplerates;
+	अचिन्हित पूर्णांक addr;
+	अचिन्हित पूर्णांक num_bytes;
+	स्थिर अक्षर *name;
+	काष्ठा snd_kcontrol *kcontrol;
+	bool is_पढ़ोback;
 	bool cached;
-	uint8_t cache[];
-};
+	uपूर्णांक8_t cache[];
+पूर्ण;
 
-struct sigmadsp_data {
-	struct list_head head;
-	uint32_t samplerates;
-	unsigned int addr;
-	unsigned int length;
-	uint8_t data[];
-};
+काष्ठा sigmadsp_data अणु
+	काष्ठा list_head head;
+	uपूर्णांक32_t samplerates;
+	अचिन्हित पूर्णांक addr;
+	अचिन्हित पूर्णांक length;
+	uपूर्णांक8_t data[];
+पूर्ण;
 
-struct sigma_fw_chunk {
+काष्ठा sigma_fw_chunk अणु
 	__le32 length;
 	__le32 tag;
 	__le32 samplerates;
-} __packed;
+पूर्ण __packed;
 
-struct sigma_fw_chunk_data {
-	struct sigma_fw_chunk chunk;
+काष्ठा sigma_fw_chunk_data अणु
+	काष्ठा sigma_fw_chunk chunk;
 	__le16 addr;
-	uint8_t data[];
-} __packed;
+	uपूर्णांक8_t data[];
+पूर्ण __packed;
 
-struct sigma_fw_chunk_control {
-	struct sigma_fw_chunk chunk;
+काष्ठा sigma_fw_chunk_control अणु
+	काष्ठा sigma_fw_chunk chunk;
 	__le16 type;
 	__le16 addr;
 	__le16 num_bytes;
-	const char name[];
-} __packed;
+	स्थिर अक्षर name[];
+पूर्ण __packed;
 
-struct sigma_fw_chunk_samplerate {
-	struct sigma_fw_chunk chunk;
+काष्ठा sigma_fw_chunk_samplerate अणु
+	काष्ठा sigma_fw_chunk chunk;
 	__le32 samplerates[];
-} __packed;
+पूर्ण __packed;
 
-struct sigma_firmware_header {
-	unsigned char magic[7];
+काष्ठा sigma_firmware_header अणु
+	अचिन्हित अक्षर magic[7];
 	u8 version;
 	__le32 crc;
-} __packed;
+पूर्ण __packed;
 
-enum {
+क्रमागत अणु
 	SIGMA_ACTION_WRITEXBYTES = 0,
 	SIGMA_ACTION_WRITESINGLE,
 	SIGMA_ACTION_WRITESAFELOAD,
 	SIGMA_ACTION_END,
-};
+पूर्ण;
 
-struct sigma_action {
+काष्ठा sigma_action अणु
 	u8 instr;
 	u8 len_hi;
 	__le16 len;
 	__be16 addr;
-	unsigned char payload[];
-} __packed;
+	अचिन्हित अक्षर payload[];
+पूर्ण __packed;
 
-static int sigmadsp_write(struct sigmadsp *sigmadsp, unsigned int addr,
-	const uint8_t data[], size_t len)
-{
-	return sigmadsp->write(sigmadsp->control_data, addr, data, len);
-}
+अटल पूर्णांक sigmadsp_ग_लिखो(काष्ठा sigmadsp *sigmadsp, अचिन्हित पूर्णांक addr,
+	स्थिर uपूर्णांक8_t data[], माप_प्रकार len)
+अणु
+	वापस sigmadsp->ग_लिखो(sigmadsp->control_data, addr, data, len);
+पूर्ण
 
-static int sigmadsp_read(struct sigmadsp *sigmadsp, unsigned int addr,
-	uint8_t data[], size_t len)
-{
-	return sigmadsp->read(sigmadsp->control_data, addr, data, len);
-}
+अटल पूर्णांक sigmadsp_पढ़ो(काष्ठा sigmadsp *sigmadsp, अचिन्हित पूर्णांक addr,
+	uपूर्णांक8_t data[], माप_प्रकार len)
+अणु
+	वापस sigmadsp->पढ़ो(sigmadsp->control_data, addr, data, len);
+पूर्ण
 
-static int sigmadsp_ctrl_info(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_info *info)
-{
-	struct sigmadsp_control *ctrl = (void *)kcontrol->private_value;
+अटल पूर्णांक sigmadsp_ctrl_info(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_info *info)
+अणु
+	काष्ठा sigmadsp_control *ctrl = (व्योम *)kcontrol->निजी_value;
 
 	info->type = SNDRV_CTL_ELEM_TYPE_BYTES;
 	info->count = ctrl->num_bytes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sigmadsp_ctrl_write(struct sigmadsp *sigmadsp,
-	struct sigmadsp_control *ctrl, void *data)
-{
+अटल पूर्णांक sigmadsp_ctrl_ग_लिखो(काष्ठा sigmadsp *sigmadsp,
+	काष्ठा sigmadsp_control *ctrl, व्योम *data)
+अणु
 	/* safeload loads up to 20 bytes in a atomic operation */
-	if (ctrl->num_bytes <= 20 && sigmadsp->ops && sigmadsp->ops->safeload)
-		return sigmadsp->ops->safeload(sigmadsp, ctrl->addr, data,
+	अगर (ctrl->num_bytes <= 20 && sigmadsp->ops && sigmadsp->ops->safeload)
+		वापस sigmadsp->ops->safeload(sigmadsp, ctrl->addr, data,
 			ctrl->num_bytes);
-	else
-		return sigmadsp_write(sigmadsp, ctrl->addr, data,
+	अन्यथा
+		वापस sigmadsp_ग_लिखो(sigmadsp, ctrl->addr, data,
 			ctrl->num_bytes);
-}
+पूर्ण
 
-static int sigmadsp_ctrl_put(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct sigmadsp_control *ctrl = (void *)kcontrol->private_value;
-	struct sigmadsp *sigmadsp = snd_kcontrol_chip(kcontrol);
-	uint8_t *data;
-	int ret = 0;
+अटल पूर्णांक sigmadsp_ctrl_put(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा sigmadsp_control *ctrl = (व्योम *)kcontrol->निजी_value;
+	काष्ठा sigmadsp *sigmadsp = snd_kcontrol_chip(kcontrol);
+	uपूर्णांक8_t *data;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&sigmadsp->lock);
 
 	data = ucontrol->value.bytes.data;
 
-	if (!(kcontrol->vd[0].access & SNDRV_CTL_ELEM_ACCESS_INACTIVE))
-		ret = sigmadsp_ctrl_write(sigmadsp, ctrl, data);
+	अगर (!(kcontrol->vd[0].access & SNDRV_CTL_ELEM_ACCESS_INACTIVE))
+		ret = sigmadsp_ctrl_ग_लिखो(sigmadsp, ctrl, data);
 
-	if (ret == 0) {
-		memcpy(ctrl->cache, data, ctrl->num_bytes);
-		if (!ctrl->is_readback)
+	अगर (ret == 0) अणु
+		स_नकल(ctrl->cache, data, ctrl->num_bytes);
+		अगर (!ctrl->is_पढ़ोback)
 			ctrl->cached = true;
-	}
+	पूर्ण
 
 	mutex_unlock(&sigmadsp->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sigmadsp_ctrl_get(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct sigmadsp_control *ctrl = (void *)kcontrol->private_value;
-	struct sigmadsp *sigmadsp = snd_kcontrol_chip(kcontrol);
-	int ret = 0;
+अटल पूर्णांक sigmadsp_ctrl_get(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा sigmadsp_control *ctrl = (व्योम *)kcontrol->निजी_value;
+	काष्ठा sigmadsp *sigmadsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&sigmadsp->lock);
 
-	if (!ctrl->cached) {
-		ret = sigmadsp_read(sigmadsp, ctrl->addr, ctrl->cache,
+	अगर (!ctrl->cached) अणु
+		ret = sigmadsp_पढ़ो(sigmadsp, ctrl->addr, ctrl->cache,
 			ctrl->num_bytes);
-	}
+	पूर्ण
 
-	if (ret == 0) {
-		if (!ctrl->is_readback)
+	अगर (ret == 0) अणु
+		अगर (!ctrl->is_पढ़ोback)
 			ctrl->cached = true;
-		memcpy(ucontrol->value.bytes.data, ctrl->cache,
+		स_नकल(ucontrol->value.bytes.data, ctrl->cache,
 			ctrl->num_bytes);
-	}
+	पूर्ण
 
 	mutex_unlock(&sigmadsp->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sigmadsp_control_free(struct snd_kcontrol *kcontrol)
-{
-	struct sigmadsp_control *ctrl = (void *)kcontrol->private_value;
+अटल व्योम sigmadsp_control_मुक्त(काष्ठा snd_kcontrol *kcontrol)
+अणु
+	काष्ठा sigmadsp_control *ctrl = (व्योम *)kcontrol->निजी_value;
 
-	ctrl->kcontrol = NULL;
-}
+	ctrl->kcontrol = शून्य;
+पूर्ण
 
-static bool sigma_fw_validate_control_name(const char *name, unsigned int len)
-{
-	unsigned int i;
+अटल bool sigma_fw_validate_control_name(स्थिर अक्षर *name, अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < len; i++) {
-		/* Normal ASCII characters are valid */
-		if (name[i] < ' ' || name[i] > '~')
-			return false;
-	}
+	क्रम (i = 0; i < len; i++) अणु
+		/* Normal ASCII अक्षरacters are valid */
+		अगर (name[i] < ' ' || name[i] > '~')
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int sigma_fw_load_control(struct sigmadsp *sigmadsp,
-	const struct sigma_fw_chunk *chunk, unsigned int length)
-{
-	const struct sigma_fw_chunk_control *ctrl_chunk;
-	struct sigmadsp_control *ctrl;
-	unsigned int num_bytes;
-	size_t name_len;
-	char *name;
-	int ret;
+अटल पूर्णांक sigma_fw_load_control(काष्ठा sigmadsp *sigmadsp,
+	स्थिर काष्ठा sigma_fw_chunk *chunk, अचिन्हित पूर्णांक length)
+अणु
+	स्थिर काष्ठा sigma_fw_chunk_control *ctrl_chunk;
+	काष्ठा sigmadsp_control *ctrl;
+	अचिन्हित पूर्णांक num_bytes;
+	माप_प्रकार name_len;
+	अक्षर *name;
+	पूर्णांक ret;
 
-	if (length <= sizeof(*ctrl_chunk))
-		return -EINVAL;
+	अगर (length <= माप(*ctrl_chunk))
+		वापस -EINVAL;
 
-	ctrl_chunk = (const struct sigma_fw_chunk_control *)chunk;
+	ctrl_chunk = (स्थिर काष्ठा sigma_fw_chunk_control *)chunk;
 
-	name_len = length - sizeof(*ctrl_chunk);
-	if (name_len >= SNDRV_CTL_ELEM_ID_NAME_MAXLEN)
+	name_len = length - माप(*ctrl_chunk);
+	अगर (name_len >= SNDRV_CTL_ELEM_ID_NAME_MAXLEN)
 		name_len = SNDRV_CTL_ELEM_ID_NAME_MAXLEN - 1;
 
-	/* Make sure there are no non-displayable characaters in the string */
-	if (!sigma_fw_validate_control_name(ctrl_chunk->name, name_len))
-		return -EINVAL;
+	/* Make sure there are no non-displayable अक्षरacaters in the string */
+	अगर (!sigma_fw_validate_control_name(ctrl_chunk->name, name_len))
+		वापस -EINVAL;
 
 	num_bytes = le16_to_cpu(ctrl_chunk->num_bytes);
-	ctrl = kzalloc(sizeof(*ctrl) + num_bytes, GFP_KERNEL);
-	if (!ctrl)
-		return -ENOMEM;
+	ctrl = kzalloc(माप(*ctrl) + num_bytes, GFP_KERNEL);
+	अगर (!ctrl)
+		वापस -ENOMEM;
 
 	name = kzalloc(name_len + 1, GFP_KERNEL);
-	if (!name) {
+	अगर (!name) अणु
 		ret = -ENOMEM;
-		goto err_free_ctrl;
-	}
-	memcpy(name, ctrl_chunk->name, name_len);
+		जाओ err_मुक्त_ctrl;
+	पूर्ण
+	स_नकल(name, ctrl_chunk->name, name_len);
 	name[name_len] = '\0';
 	ctrl->name = name;
 
 	/*
-	 * Readbacks doesn't work with non-volatile controls, since the
-	 * firmware updates the control value without driver interaction. Mark
-	 * the readbacks to ensure that the values are not cached.
+	 * Readbacks करोesn't work with non-अस्थिर controls, since the
+	 * firmware updates the control value without driver पूर्णांकeraction. Mark
+	 * the पढ़ोbacks to ensure that the values are not cached.
 	 */
-	if (ctrl->name && strncmp(ctrl->name, READBACK_CTRL_NAME,
-				  (sizeof(READBACK_CTRL_NAME) - 1)) == 0)
-		ctrl->is_readback = true;
+	अगर (ctrl->name && म_भेदन(ctrl->name, READBACK_CTRL_NAME,
+				  (माप(READBACK_CTRL_NAME) - 1)) == 0)
+		ctrl->is_पढ़ोback = true;
 
 	ctrl->addr = le16_to_cpu(ctrl_chunk->addr);
 	ctrl->num_bytes = num_bytes;
@@ -251,311 +252,311 @@ static int sigma_fw_load_control(struct sigmadsp *sigmadsp,
 
 	list_add_tail(&ctrl->head, &sigmadsp->ctrl_list);
 
-	return 0;
+	वापस 0;
 
-err_free_ctrl:
-	kfree(ctrl);
+err_मुक्त_ctrl:
+	kमुक्त(ctrl);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sigma_fw_load_data(struct sigmadsp *sigmadsp,
-	const struct sigma_fw_chunk *chunk, unsigned int length)
-{
-	const struct sigma_fw_chunk_data *data_chunk;
-	struct sigmadsp_data *data;
+अटल पूर्णांक sigma_fw_load_data(काष्ठा sigmadsp *sigmadsp,
+	स्थिर काष्ठा sigma_fw_chunk *chunk, अचिन्हित पूर्णांक length)
+अणु
+	स्थिर काष्ठा sigma_fw_chunk_data *data_chunk;
+	काष्ठा sigmadsp_data *data;
 
-	if (length <= sizeof(*data_chunk))
-		return -EINVAL;
+	अगर (length <= माप(*data_chunk))
+		वापस -EINVAL;
 
-	data_chunk = (struct sigma_fw_chunk_data *)chunk;
+	data_chunk = (काष्ठा sigma_fw_chunk_data *)chunk;
 
-	length -= sizeof(*data_chunk);
+	length -= माप(*data_chunk);
 
-	data = kzalloc(sizeof(*data) + length, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kzalloc(माप(*data) + length, GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->addr = le16_to_cpu(data_chunk->addr);
 	data->length = length;
 	data->samplerates = le32_to_cpu(chunk->samplerates);
-	memcpy(data->data, data_chunk->data, length);
+	स_नकल(data->data, data_chunk->data, length);
 	list_add_tail(&data->head, &sigmadsp->data_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sigma_fw_load_samplerates(struct sigmadsp *sigmadsp,
-	const struct sigma_fw_chunk *chunk, unsigned int length)
-{
-	const struct sigma_fw_chunk_samplerate *rate_chunk;
-	unsigned int num_rates;
-	unsigned int *rates;
-	unsigned int i;
+अटल पूर्णांक sigma_fw_load_samplerates(काष्ठा sigmadsp *sigmadsp,
+	स्थिर काष्ठा sigma_fw_chunk *chunk, अचिन्हित पूर्णांक length)
+अणु
+	स्थिर काष्ठा sigma_fw_chunk_samplerate *rate_chunk;
+	अचिन्हित पूर्णांक num_rates;
+	अचिन्हित पूर्णांक *rates;
+	अचिन्हित पूर्णांक i;
 
-	rate_chunk = (const struct sigma_fw_chunk_samplerate *)chunk;
+	rate_chunk = (स्थिर काष्ठा sigma_fw_chunk_samplerate *)chunk;
 
-	num_rates = (length - sizeof(*rate_chunk)) / sizeof(__le32);
+	num_rates = (length - माप(*rate_chunk)) / माप(__le32);
 
-	if (num_rates > 32 || num_rates == 0)
-		return -EINVAL;
+	अगर (num_rates > 32 || num_rates == 0)
+		वापस -EINVAL;
 
 	/* We only allow one samplerates block per file */
-	if (sigmadsp->rate_constraints.count)
-		return -EINVAL;
+	अगर (sigmadsp->rate_स्थिरraपूर्णांकs.count)
+		वापस -EINVAL;
 
-	rates = kcalloc(num_rates, sizeof(*rates), GFP_KERNEL);
-	if (!rates)
-		return -ENOMEM;
+	rates = kसुस्मृति(num_rates, माप(*rates), GFP_KERNEL);
+	अगर (!rates)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_rates; i++)
+	क्रम (i = 0; i < num_rates; i++)
 		rates[i] = le32_to_cpu(rate_chunk->samplerates[i]);
 
-	sigmadsp->rate_constraints.count = num_rates;
-	sigmadsp->rate_constraints.list = rates;
+	sigmadsp->rate_स्थिरraपूर्णांकs.count = num_rates;
+	sigmadsp->rate_स्थिरraपूर्णांकs.list = rates;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sigmadsp_fw_load_v2(struct sigmadsp *sigmadsp,
-	const struct firmware *fw)
-{
-	struct sigma_fw_chunk *chunk;
-	unsigned int length, pos;
-	int ret;
+अटल पूर्णांक sigmadsp_fw_load_v2(काष्ठा sigmadsp *sigmadsp,
+	स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा sigma_fw_chunk *chunk;
+	अचिन्हित पूर्णांक length, pos;
+	पूर्णांक ret;
 
 	/*
-	 * Make sure that there is at least one chunk to avoid integer
+	 * Make sure that there is at least one chunk to aव्योम पूर्णांकeger
 	 * underflows later on. Empty firmware is still valid though.
 	 */
-	if (fw->size < sizeof(*chunk) + sizeof(struct sigma_firmware_header))
-		return 0;
+	अगर (fw->size < माप(*chunk) + माप(काष्ठा sigma_firmware_header))
+		वापस 0;
 
-	pos = sizeof(struct sigma_firmware_header);
+	pos = माप(काष्ठा sigma_firmware_header);
 
-	while (pos < fw->size - sizeof(*chunk)) {
-		chunk = (struct sigma_fw_chunk *)(fw->data + pos);
+	जबतक (pos < fw->size - माप(*chunk)) अणु
+		chunk = (काष्ठा sigma_fw_chunk *)(fw->data + pos);
 
 		length = le32_to_cpu(chunk->length);
 
-		if (length > fw->size - pos || length < sizeof(*chunk))
-			return -EINVAL;
+		अगर (length > fw->size - pos || length < माप(*chunk))
+			वापस -EINVAL;
 
-		switch (le32_to_cpu(chunk->tag)) {
-		case SIGMA_FW_CHUNK_TYPE_DATA:
+		चयन (le32_to_cpu(chunk->tag)) अणु
+		हाल SIGMA_FW_CHUNK_TYPE_DATA:
 			ret = sigma_fw_load_data(sigmadsp, chunk, length);
-			break;
-		case SIGMA_FW_CHUNK_TYPE_CONTROL:
+			अवरोध;
+		हाल SIGMA_FW_CHUNK_TYPE_CONTROL:
 			ret = sigma_fw_load_control(sigmadsp, chunk, length);
-			break;
-		case SIGMA_FW_CHUNK_TYPE_SAMPLERATES:
+			अवरोध;
+		हाल SIGMA_FW_CHUNK_TYPE_SAMPLERATES:
 			ret = sigma_fw_load_samplerates(sigmadsp, chunk, length);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_warn(sigmadsp->dev, "Unknown chunk type: %d\n",
 				chunk->tag);
 			ret = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/*
-		 * This can not overflow since if length is larger than the
+		 * This can not overflow since अगर length is larger than the
 		 * maximum firmware size (0x4000000) we'll error out earilier.
 		 */
-		pos += ALIGN(length, sizeof(__le32));
-	}
+		pos += ALIGN(length, माप(__le32));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline u32 sigma_action_len(struct sigma_action *sa)
-{
-	return (sa->len_hi << 16) | le16_to_cpu(sa->len);
-}
+अटल अंतरभूत u32 sigma_action_len(काष्ठा sigma_action *sa)
+अणु
+	वापस (sa->len_hi << 16) | le16_to_cpu(sa->len);
+पूर्ण
 
-static size_t sigma_action_size(struct sigma_action *sa)
-{
-	size_t payload = 0;
+अटल माप_प्रकार sigma_action_size(काष्ठा sigma_action *sa)
+अणु
+	माप_प्रकार payload = 0;
 
-	switch (sa->instr) {
-	case SIGMA_ACTION_WRITEXBYTES:
-	case SIGMA_ACTION_WRITESINGLE:
-	case SIGMA_ACTION_WRITESAFELOAD:
+	चयन (sa->instr) अणु
+	हाल SIGMA_ACTION_WRITEXBYTES:
+	हाल SIGMA_ACTION_WRITESINGLE:
+	हाल SIGMA_ACTION_WRITESAFELOAD:
 		payload = sigma_action_len(sa);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	payload = ALIGN(payload, 2);
 
-	return payload + sizeof(struct sigma_action);
-}
+	वापस payload + माप(काष्ठा sigma_action);
+पूर्ण
 
 /*
- * Returns a negative error value in case of an error, 0 if processing of
+ * Returns a negative error value in हाल of an error, 0 अगर processing of
  * the firmware should be stopped after this action, 1 otherwise.
  */
-static int process_sigma_action(struct sigmadsp *sigmadsp,
-	struct sigma_action *sa)
-{
-	size_t len = sigma_action_len(sa);
-	struct sigmadsp_data *data;
+अटल पूर्णांक process_sigma_action(काष्ठा sigmadsp *sigmadsp,
+	काष्ठा sigma_action *sa)
+अणु
+	माप_प्रकार len = sigma_action_len(sa);
+	काष्ठा sigmadsp_data *data;
 
 	pr_debug("%s: instr:%i addr:%#x len:%zu\n", __func__,
 		sa->instr, sa->addr, len);
 
-	switch (sa->instr) {
-	case SIGMA_ACTION_WRITEXBYTES:
-	case SIGMA_ACTION_WRITESINGLE:
-	case SIGMA_ACTION_WRITESAFELOAD:
-		if (len < 3)
-			return -EINVAL;
+	चयन (sa->instr) अणु
+	हाल SIGMA_ACTION_WRITEXBYTES:
+	हाल SIGMA_ACTION_WRITESINGLE:
+	हाल SIGMA_ACTION_WRITESAFELOAD:
+		अगर (len < 3)
+			वापस -EINVAL;
 
-		data = kzalloc(sizeof(*data) + len - 2, GFP_KERNEL);
-		if (!data)
-			return -ENOMEM;
+		data = kzalloc(माप(*data) + len - 2, GFP_KERNEL);
+		अगर (!data)
+			वापस -ENOMEM;
 
 		data->addr = be16_to_cpu(sa->addr);
 		data->length = len - 2;
-		memcpy(data->data, sa->payload, data->length);
+		स_नकल(data->data, sa->payload, data->length);
 		list_add_tail(&data->head, &sigmadsp->data_list);
-		break;
-	case SIGMA_ACTION_END:
-		return 0;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SIGMA_ACTION_END:
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int sigmadsp_fw_load_v1(struct sigmadsp *sigmadsp,
-	const struct firmware *fw)
-{
-	struct sigma_action *sa;
-	size_t size, pos;
-	int ret;
+अटल पूर्णांक sigmadsp_fw_load_v1(काष्ठा sigmadsp *sigmadsp,
+	स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा sigma_action *sa;
+	माप_प्रकार size, pos;
+	पूर्णांक ret;
 
-	pos = sizeof(struct sigma_firmware_header);
+	pos = माप(काष्ठा sigma_firmware_header);
 
-	while (pos + sizeof(*sa) <= fw->size) {
-		sa = (struct sigma_action *)(fw->data + pos);
+	जबतक (pos + माप(*sa) <= fw->size) अणु
+		sa = (काष्ठा sigma_action *)(fw->data + pos);
 
 		size = sigma_action_size(sa);
 		pos += size;
-		if (pos > fw->size || size == 0)
-			break;
+		अगर (pos > fw->size || size == 0)
+			अवरोध;
 
 		ret = process_sigma_action(sigmadsp, sa);
 
 		pr_debug("%s: action returned %i\n", __func__, ret);
 
-		if (ret <= 0)
-			return ret;
-	}
+		अगर (ret <= 0)
+			वापस ret;
+	पूर्ण
 
-	if (pos != fw->size)
-		return -EINVAL;
+	अगर (pos != fw->size)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sigmadsp_firmware_release(struct sigmadsp *sigmadsp)
-{
-	struct sigmadsp_control *ctrl, *_ctrl;
-	struct sigmadsp_data *data, *_data;
+अटल व्योम sigmadsp_firmware_release(काष्ठा sigmadsp *sigmadsp)
+अणु
+	काष्ठा sigmadsp_control *ctrl, *_ctrl;
+	काष्ठा sigmadsp_data *data, *_data;
 
-	list_for_each_entry_safe(ctrl, _ctrl, &sigmadsp->ctrl_list, head) {
-		kfree(ctrl->name);
-		kfree(ctrl);
-	}
+	list_क्रम_each_entry_safe(ctrl, _ctrl, &sigmadsp->ctrl_list, head) अणु
+		kमुक्त(ctrl->name);
+		kमुक्त(ctrl);
+	पूर्ण
 
-	list_for_each_entry_safe(data, _data, &sigmadsp->data_list, head)
-		kfree(data);
+	list_क्रम_each_entry_safe(data, _data, &sigmadsp->data_list, head)
+		kमुक्त(data);
 
 	INIT_LIST_HEAD(&sigmadsp->ctrl_list);
 	INIT_LIST_HEAD(&sigmadsp->data_list);
-}
+पूर्ण
 
-static void devm_sigmadsp_release(struct device *dev, void *res)
-{
-	sigmadsp_firmware_release((struct sigmadsp *)res);
-}
+अटल व्योम devm_sigmadsp_release(काष्ठा device *dev, व्योम *res)
+अणु
+	sigmadsp_firmware_release((काष्ठा sigmadsp *)res);
+पूर्ण
 
-static int sigmadsp_firmware_load(struct sigmadsp *sigmadsp, const char *name)
-{
-	const struct sigma_firmware_header *ssfw_head;
-	const struct firmware *fw;
-	int ret;
+अटल पूर्णांक sigmadsp_firmware_load(काष्ठा sigmadsp *sigmadsp, स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा sigma_firmware_header *ssfw_head;
+	स्थिर काष्ठा firmware *fw;
+	पूर्णांक ret;
 	u32 crc;
 
 	/* first load the blob */
 	ret = request_firmware(&fw, name, sigmadsp->dev);
-	if (ret) {
+	अगर (ret) अणु
 		pr_debug("%s: request_firmware() failed with %i\n", __func__, ret);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* then verify the header */
+	/* then verअगरy the header */
 	ret = -EINVAL;
 
 	/*
 	 * Reject too small or unreasonable large files. The upper limit has been
-	 * chosen a bit arbitrarily, but it should be enough for all practical
-	 * purposes and having the limit makes it easier to avoid integer
+	 * chosen a bit arbitrarily, but it should be enough क्रम all practical
+	 * purposes and having the limit makes it easier to aव्योम पूर्णांकeger
 	 * overflows later in the loading process.
 	 */
-	if (fw->size < sizeof(*ssfw_head) || fw->size >= 0x4000000) {
+	अगर (fw->size < माप(*ssfw_head) || fw->size >= 0x4000000) अणु
 		dev_err(sigmadsp->dev, "Failed to load firmware: Invalid size\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	ssfw_head = (void *)fw->data;
-	if (memcmp(ssfw_head->magic, SIGMA_MAGIC, ARRAY_SIZE(ssfw_head->magic))) {
+	ssfw_head = (व्योम *)fw->data;
+	अगर (स_भेद(ssfw_head->magic, SIGMA_MAGIC, ARRAY_SIZE(ssfw_head->magic))) अणु
 		dev_err(sigmadsp->dev, "Failed to load firmware: Invalid magic\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	crc = crc32(0, fw->data + sizeof(*ssfw_head),
-			fw->size - sizeof(*ssfw_head));
+	crc = crc32(0, fw->data + माप(*ssfw_head),
+			fw->size - माप(*ssfw_head));
 	pr_debug("%s: crc=%x\n", __func__, crc);
-	if (crc != le32_to_cpu(ssfw_head->crc)) {
+	अगर (crc != le32_to_cpu(ssfw_head->crc)) अणु
 		dev_err(sigmadsp->dev, "Failed to load firmware: Wrong crc checksum: expected %x got %x\n",
 			le32_to_cpu(ssfw_head->crc), crc);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	switch (ssfw_head->version) {
-	case 1:
+	चयन (ssfw_head->version) अणु
+	हाल 1:
 		ret = sigmadsp_fw_load_v1(sigmadsp, fw);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		ret = sigmadsp_fw_load_v2(sigmadsp, fw);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(sigmadsp->dev,
 			"Failed to load firmware: Invalid version %d. Supported firmware versions: 1, 2\n",
 			ssfw_head->version);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		sigmadsp_firmware_release(sigmadsp);
 
-done:
+करोne:
 	release_firmware(fw);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sigmadsp_init(struct sigmadsp *sigmadsp, struct device *dev,
-	const struct sigmadsp_ops *ops, const char *firmware_name)
-{
+अटल पूर्णांक sigmadsp_init(काष्ठा sigmadsp *sigmadsp, काष्ठा device *dev,
+	स्थिर काष्ठा sigmadsp_ops *ops, स्थिर अक्षर *firmware_name)
+अणु
 	sigmadsp->ops = ops;
 	sigmadsp->dev = dev;
 
@@ -563,145 +564,145 @@ static int sigmadsp_init(struct sigmadsp *sigmadsp, struct device *dev,
 	INIT_LIST_HEAD(&sigmadsp->data_list);
 	mutex_init(&sigmadsp->lock);
 
-	return sigmadsp_firmware_load(sigmadsp, firmware_name);
-}
+	वापस sigmadsp_firmware_load(sigmadsp, firmware_name);
+पूर्ण
 
 /**
  * devm_sigmadsp_init() - Initialize SigmaDSP instance
  * @dev: The parent device
- * @ops: The sigmadsp_ops to use for this instance
+ * @ops: The sigmadsp_ops to use क्रम this instance
  * @firmware_name: Name of the firmware file to load
  *
- * Allocates a SigmaDSP instance and loads the specified firmware file.
+ * Allocates a SigmaDSP instance and loads the specअगरied firmware file.
  *
- * Returns a pointer to a struct sigmadsp on success, or a PTR_ERR() on error.
+ * Returns a poपूर्णांकer to a काष्ठा sigmadsp on success, or a PTR_ERR() on error.
  */
-struct sigmadsp *devm_sigmadsp_init(struct device *dev,
-	const struct sigmadsp_ops *ops, const char *firmware_name)
-{
-	struct sigmadsp *sigmadsp;
-	int ret;
+काष्ठा sigmadsp *devm_sigmadsp_init(काष्ठा device *dev,
+	स्थिर काष्ठा sigmadsp_ops *ops, स्थिर अक्षर *firmware_name)
+अणु
+	काष्ठा sigmadsp *sigmadsp;
+	पूर्णांक ret;
 
-	sigmadsp = devres_alloc(devm_sigmadsp_release, sizeof(*sigmadsp),
+	sigmadsp = devres_alloc(devm_sigmadsp_release, माप(*sigmadsp),
 		GFP_KERNEL);
-	if (!sigmadsp)
-		return ERR_PTR(-ENOMEM);
+	अगर (!sigmadsp)
+		वापस ERR_PTR(-ENOMEM);
 
 	ret = sigmadsp_init(sigmadsp, dev, ops, firmware_name);
-	if (ret) {
-		devres_free(sigmadsp);
-		return ERR_PTR(ret);
-	}
+	अगर (ret) अणु
+		devres_मुक्त(sigmadsp);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	devres_add(dev, sigmadsp);
 
-	return sigmadsp;
-}
+	वापस sigmadsp;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_sigmadsp_init);
 
-static int sigmadsp_rate_to_index(struct sigmadsp *sigmadsp, unsigned int rate)
-{
-	unsigned int i;
+अटल पूर्णांक sigmadsp_rate_to_index(काष्ठा sigmadsp *sigmadsp, अचिन्हित पूर्णांक rate)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < sigmadsp->rate_constraints.count; i++) {
-		if (sigmadsp->rate_constraints.list[i] == rate)
-			return i;
-	}
+	क्रम (i = 0; i < sigmadsp->rate_स्थिरraपूर्णांकs.count; i++) अणु
+		अगर (sigmadsp->rate_स्थिरraपूर्णांकs.list[i] == rate)
+			वापस i;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static unsigned int sigmadsp_get_samplerate_mask(struct sigmadsp *sigmadsp,
-	unsigned int samplerate)
-{
-	int samplerate_index;
+अटल अचिन्हित पूर्णांक sigmadsp_get_samplerate_mask(काष्ठा sigmadsp *sigmadsp,
+	अचिन्हित पूर्णांक samplerate)
+अणु
+	पूर्णांक samplerate_index;
 
-	if (samplerate == 0)
-		return 0;
+	अगर (samplerate == 0)
+		वापस 0;
 
-	if (sigmadsp->rate_constraints.count) {
+	अगर (sigmadsp->rate_स्थिरraपूर्णांकs.count) अणु
 		samplerate_index = sigmadsp_rate_to_index(sigmadsp, samplerate);
-		if (samplerate_index < 0)
-			return 0;
+		अगर (samplerate_index < 0)
+			वापस 0;
 
-		return BIT(samplerate_index);
-	} else {
-		return ~0;
-	}
-}
+		वापस BIT(samplerate_index);
+	पूर्ण अन्यथा अणु
+		वापस ~0;
+	पूर्ण
+पूर्ण
 
-static bool sigmadsp_samplerate_valid(unsigned int supported,
-	unsigned int requested)
-{
+अटल bool sigmadsp_samplerate_valid(अचिन्हित पूर्णांक supported,
+	अचिन्हित पूर्णांक requested)
+अणु
 	/* All samplerates are supported */
-	if (!supported)
-		return true;
+	अगर (!supported)
+		वापस true;
 
-	return supported & requested;
-}
+	वापस supported & requested;
+पूर्ण
 
-static int sigmadsp_alloc_control(struct sigmadsp *sigmadsp,
-	struct sigmadsp_control *ctrl, unsigned int samplerate_mask)
-{
-	struct snd_kcontrol_new template;
-	struct snd_kcontrol *kcontrol;
+अटल पूर्णांक sigmadsp_alloc_control(काष्ठा sigmadsp *sigmadsp,
+	काष्ठा sigmadsp_control *ctrl, अचिन्हित पूर्णांक samplerate_mask)
+अणु
+	काष्ठा snd_kcontrol_new ढाँचा;
+	काष्ठा snd_kcontrol *kcontrol;
 
-	memset(&template, 0, sizeof(template));
-	template.iface = SNDRV_CTL_ELEM_IFACE_MIXER;
-	template.name = ctrl->name;
-	template.info = sigmadsp_ctrl_info;
-	template.get = sigmadsp_ctrl_get;
-	template.put = sigmadsp_ctrl_put;
-	template.private_value = (unsigned long)ctrl;
-	template.access = SNDRV_CTL_ELEM_ACCESS_READWRITE;
-	if (!sigmadsp_samplerate_valid(ctrl->samplerates, samplerate_mask))
-		template.access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
+	स_रखो(&ढाँचा, 0, माप(ढाँचा));
+	ढाँचा.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
+	ढाँचा.name = ctrl->name;
+	ढाँचा.info = sigmadsp_ctrl_info;
+	ढाँचा.get = sigmadsp_ctrl_get;
+	ढाँचा.put = sigmadsp_ctrl_put;
+	ढाँचा.निजी_value = (अचिन्हित दीर्घ)ctrl;
+	ढाँचा.access = SNDRV_CTL_ELEM_ACCESS_READWRITE;
+	अगर (!sigmadsp_samplerate_valid(ctrl->samplerates, samplerate_mask))
+		ढाँचा.access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
 
-	kcontrol = snd_ctl_new1(&template, sigmadsp);
-	if (!kcontrol)
-		return -ENOMEM;
+	kcontrol = snd_ctl_new1(&ढाँचा, sigmadsp);
+	अगर (!kcontrol)
+		वापस -ENOMEM;
 
-	kcontrol->private_free = sigmadsp_control_free;
+	kcontrol->निजी_मुक्त = sigmadsp_control_मुक्त;
 	ctrl->kcontrol = kcontrol;
 
-	return snd_ctl_add(sigmadsp->component->card->snd_card, kcontrol);
-}
+	वापस snd_ctl_add(sigmadsp->component->card->snd_card, kcontrol);
+पूर्ण
 
-static void sigmadsp_activate_ctrl(struct sigmadsp *sigmadsp,
-	struct sigmadsp_control *ctrl, unsigned int samplerate_mask)
-{
-	struct snd_card *card = sigmadsp->component->card->snd_card;
-	struct snd_kcontrol_volatile *vd;
-	struct snd_ctl_elem_id id;
+अटल व्योम sigmadsp_activate_ctrl(काष्ठा sigmadsp *sigmadsp,
+	काष्ठा sigmadsp_control *ctrl, अचिन्हित पूर्णांक samplerate_mask)
+अणु
+	काष्ठा snd_card *card = sigmadsp->component->card->snd_card;
+	काष्ठा snd_kcontrol_अस्थिर *vd;
+	काष्ठा snd_ctl_elem_id id;
 	bool active;
 	bool changed = false;
 
 	active = sigmadsp_samplerate_valid(ctrl->samplerates, samplerate_mask);
 
-	down_write(&card->controls_rwsem);
-	if (!ctrl->kcontrol) {
-		up_write(&card->controls_rwsem);
-		return;
-	}
+	करोwn_ग_लिखो(&card->controls_rwsem);
+	अगर (!ctrl->kcontrol) अणु
+		up_ग_लिखो(&card->controls_rwsem);
+		वापस;
+	पूर्ण
 
 	id = ctrl->kcontrol->id;
 	vd = &ctrl->kcontrol->vd[0];
-	if (active == (bool)(vd->access & SNDRV_CTL_ELEM_ACCESS_INACTIVE)) {
+	अगर (active == (bool)(vd->access & SNDRV_CTL_ELEM_ACCESS_INACTIVE)) अणु
 		vd->access ^= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
 		changed = true;
-	}
-	up_write(&card->controls_rwsem);
+	पूर्ण
+	up_ग_लिखो(&card->controls_rwsem);
 
-	if (active && changed) {
+	अगर (active && changed) अणु
 		mutex_lock(&sigmadsp->lock);
-		if (ctrl->cached)
-			sigmadsp_ctrl_write(sigmadsp, ctrl, ctrl->cache);
+		अगर (ctrl->cached)
+			sigmadsp_ctrl_ग_लिखो(sigmadsp, ctrl, ctrl->cache);
 		mutex_unlock(&sigmadsp->lock);
-	}
+	पूर्ण
 
-	if (changed)
-		snd_ctl_notify(card, SNDRV_CTL_EVENT_MASK_INFO, &id);
-}
+	अगर (changed)
+		snd_ctl_notअगरy(card, SNDRV_CTL_EVENT_MASK_INFO, &id);
+पूर्ण
 
 /**
  * sigmadsp_attach() - Attach a sigmadsp instance to a ASoC component
@@ -711,116 +712,116 @@ static void sigmadsp_activate_ctrl(struct sigmadsp *sigmadsp,
  * Typically called in the components probe callback.
  *
  * Note, once this function has been called the firmware must not be released
- * until after the ALSA snd_card that the component belongs to has been
- * disconnected, even if sigmadsp_attach() returns an error.
+ * until after the ALSA snd_card that the component beदीर्घs to has been
+ * disconnected, even अगर sigmadsp_attach() वापसs an error.
  */
-int sigmadsp_attach(struct sigmadsp *sigmadsp,
-	struct snd_soc_component *component)
-{
-	struct sigmadsp_control *ctrl;
-	unsigned int samplerate_mask;
-	int ret;
+पूर्णांक sigmadsp_attach(काष्ठा sigmadsp *sigmadsp,
+	काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा sigmadsp_control *ctrl;
+	अचिन्हित पूर्णांक samplerate_mask;
+	पूर्णांक ret;
 
 	sigmadsp->component = component;
 
 	samplerate_mask = sigmadsp_get_samplerate_mask(sigmadsp,
 		sigmadsp->current_samplerate);
 
-	list_for_each_entry(ctrl, &sigmadsp->ctrl_list, head) {
+	list_क्रम_each_entry(ctrl, &sigmadsp->ctrl_list, head) अणु
 		ret = sigmadsp_alloc_control(sigmadsp, ctrl, samplerate_mask);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sigmadsp_attach);
 
 /**
- * sigmadsp_setup() - Setup the DSP for the specified samplerate
+ * sigmadsp_setup() - Setup the DSP क्रम the specअगरied samplerate
  * @sigmadsp: The sigmadsp instance to configure
- * @samplerate: The samplerate the DSP should be configured for
+ * @samplerate: The samplerate the DSP should be configured क्रम
  *
- * Loads the appropriate firmware program and parameter memory (if not already
- * loaded) and enables the controls for the specified samplerate. Any control
+ * Loads the appropriate firmware program and parameter memory (अगर not alपढ़ोy
+ * loaded) and enables the controls क्रम the specअगरied samplerate. Any control
  * parameter changes that have been made previously will be restored.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int sigmadsp_setup(struct sigmadsp *sigmadsp, unsigned int samplerate)
-{
-	struct sigmadsp_control *ctrl;
-	unsigned int samplerate_mask;
-	struct sigmadsp_data *data;
-	int ret;
+पूर्णांक sigmadsp_setup(काष्ठा sigmadsp *sigmadsp, अचिन्हित पूर्णांक samplerate)
+अणु
+	काष्ठा sigmadsp_control *ctrl;
+	अचिन्हित पूर्णांक samplerate_mask;
+	काष्ठा sigmadsp_data *data;
+	पूर्णांक ret;
 
-	if (sigmadsp->current_samplerate == samplerate)
-		return 0;
+	अगर (sigmadsp->current_samplerate == samplerate)
+		वापस 0;
 
 	samplerate_mask = sigmadsp_get_samplerate_mask(sigmadsp, samplerate);
-	if (samplerate_mask == 0)
-		return -EINVAL;
+	अगर (samplerate_mask == 0)
+		वापस -EINVAL;
 
-	list_for_each_entry(data, &sigmadsp->data_list, head) {
-		if (!sigmadsp_samplerate_valid(data->samplerates,
+	list_क्रम_each_entry(data, &sigmadsp->data_list, head) अणु
+		अगर (!sigmadsp_samplerate_valid(data->samplerates,
 		    samplerate_mask))
-			continue;
-		ret = sigmadsp_write(sigmadsp, data->addr, data->data,
+			जारी;
+		ret = sigmadsp_ग_लिखो(sigmadsp, data->addr, data->data,
 			data->length);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	list_for_each_entry(ctrl, &sigmadsp->ctrl_list, head)
+	list_क्रम_each_entry(ctrl, &sigmadsp->ctrl_list, head)
 		sigmadsp_activate_ctrl(sigmadsp, ctrl, samplerate_mask);
 
 	sigmadsp->current_samplerate = samplerate;
 
-	return 0;
+	वापस 0;
 err:
 	sigmadsp_reset(sigmadsp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(sigmadsp_setup);
 
 /**
- * sigmadsp_reset() - Notify the sigmadsp instance that the DSP has been reset
+ * sigmadsp_reset() - Notअगरy the sigmadsp instance that the DSP has been reset
  * @sigmadsp: The sigmadsp instance to reset
  *
  * Should be called whenever the DSP has been reset and parameter and program
  * memory need to be re-loaded.
  */
-void sigmadsp_reset(struct sigmadsp *sigmadsp)
-{
-	struct sigmadsp_control *ctrl;
+व्योम sigmadsp_reset(काष्ठा sigmadsp *sigmadsp)
+अणु
+	काष्ठा sigmadsp_control *ctrl;
 
-	list_for_each_entry(ctrl, &sigmadsp->ctrl_list, head)
+	list_क्रम_each_entry(ctrl, &sigmadsp->ctrl_list, head)
 		sigmadsp_activate_ctrl(sigmadsp, ctrl, false);
 
 	sigmadsp->current_samplerate = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sigmadsp_reset);
 
 /**
- * sigmadsp_restrict_params() - Applies DSP firmware specific constraints
+ * sigmadsp_restrict_params() - Applies DSP firmware specअगरic स्थिरraपूर्णांकs
  * @sigmadsp: The sigmadsp instance
  * @substream: The substream to restrict
  *
- * Applies samplerate constraints that may be required by the firmware Should
+ * Applies samplerate स्थिरraपूर्णांकs that may be required by the firmware Should
  * typically be called from the CODEC/component drivers startup callback.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int sigmadsp_restrict_params(struct sigmadsp *sigmadsp,
-	struct snd_pcm_substream *substream)
-{
-	if (sigmadsp->rate_constraints.count == 0)
-		return 0;
+पूर्णांक sigmadsp_restrict_params(काष्ठा sigmadsp *sigmadsp,
+	काष्ठा snd_pcm_substream *substream)
+अणु
+	अगर (sigmadsp->rate_स्थिरraपूर्णांकs.count == 0)
+		वापस 0;
 
-	return snd_pcm_hw_constraint_list(substream->runtime, 0,
-		SNDRV_PCM_HW_PARAM_RATE, &sigmadsp->rate_constraints);
-}
+	वापस snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
+		SNDRV_PCM_HW_PARAM_RATE, &sigmadsp->rate_स्थिरraपूर्णांकs);
+पूर्ण
 EXPORT_SYMBOL_GPL(sigmadsp_restrict_params);
 
 MODULE_LICENSE("GPL");

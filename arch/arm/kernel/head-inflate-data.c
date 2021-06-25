@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * XIP kernel .data segment decompressor
  *
@@ -6,42 +7,42 @@
  * Copyright:	(C) 2017  Linaro Limited
  */
 
-#include <linux/init.h>
-#include <linux/zutil.h>
+#समावेश <linux/init.h>
+#समावेश <linux/zutil.h>
 
-/* for struct inflate_state */
-#include "../../../lib/zlib_inflate/inftrees.h"
-#include "../../../lib/zlib_inflate/inflate.h"
-#include "../../../lib/zlib_inflate/infutil.h"
+/* क्रम काष्ठा inflate_state */
+#समावेश "../../../lib/zlib_inflate/inftrees.h"
+#समावेश "../../../lib/zlib_inflate/inflate.h"
+#समावेश "../../../lib/zlib_inflate/infutil.h"
 
-extern char __data_loc[];
-extern char _edata_loc[];
-extern char _sdata[];
+बाह्य अक्षर __data_loc[];
+बाह्य अक्षर _edata_loc[];
+बाह्य अक्षर _sdata[];
 
 /*
  * This code is called very early during the boot process to decompress
- * the .data segment stored compressed in ROM. Therefore none of the global
+ * the .data segment stored compressed in ROM. Thereक्रमe none of the global
  * variables are valid yet, hence no kernel services such as memory
  * allocation is available. Everything must be allocated on the stack and
- * we must avoid any global data access. We use a temporary stack located
+ * we must aव्योम any global data access. We use a temporary stack located
  * in the .bss area. The linker script makes sure the .bss is big enough
- * to hold our stack frame plus some room for called functions.
+ * to hold our stack frame plus some room क्रम called functions.
  *
  * We mimic the code in lib/decompress_inflate.c to use the smallest work
- * area possible. And because everything is statically allocated on the
- * stack then there is no need to clean up before returning.
+ * area possible. And because everything is अटलally allocated on the
+ * stack then there is no need to clean up beक्रमe वापसing.
  */
 
-int __init __inflate_kernel_data(void)
-{
-	struct z_stream_s stream, *strm = &stream;
-	struct inflate_state state;
-	char *in = __data_loc;
-	int rc;
+पूर्णांक __init __inflate_kernel_data(व्योम)
+अणु
+	काष्ठा z_stream_s stream, *strm = &stream;
+	काष्ठा inflate_state state;
+	अक्षर *in = __data_loc;
+	पूर्णांक rc;
 
 	/* Check and skip gzip header (assume no filename) */
-	if (in[0] != 0x1f || in[1] != 0x8b || in[2] != 0x08 || in[3] & ~3)
-		return -1;
+	अगर (in[0] != 0x1f || in[1] != 0x8b || in[2] != 0x08 || in[3] & ~3)
+		वापस -1;
 	in += 10;
 
 	strm->workspace = &state;
@@ -51,9 +52,9 @@ int __init __inflate_kernel_data(void)
 	strm->avail_out = _edata_loc - __data_loc;
 	zlib_inflateInit2(strm, -MAX_WBITS);
 	WS(strm)->inflate_state.wsize = 0;
-	WS(strm)->inflate_state.window = NULL;
+	WS(strm)->inflate_state.winकरोw = शून्य;
 	rc = zlib_inflate(strm, Z_FINISH);
-	if (rc == Z_OK || rc == Z_STREAM_END)
+	अगर (rc == Z_OK || rc == Z_STREAM_END)
 		rc = strm->avail_out;  /* should be 0 */
-	return rc;
-}
+	वापस rc;
+पूर्ण

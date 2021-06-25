@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCIe host controller driver for Samsung Exynos SoCs
+ * PCIe host controller driver क्रम Samsung Exynos SoCs
  *
  * Copyright (C) 2013-2020 Samsung Electronics Co., Ltd.
  *		https://www.samsung.com
@@ -9,437 +10,437 @@
  *	   Jaehoon Chung <jh80.chung@samsung.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/of_device.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include <linux/phy/phy.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include "pcie-designware.h"
+#समावेश "pcie-designware.h"
 
-#define to_exynos_pcie(x)	dev_get_drvdata((x)->dev)
+#घोषणा to_exynos_pcie(x)	dev_get_drvdata((x)->dev)
 
-/* PCIe ELBI registers */
-#define PCIE_IRQ_PULSE			0x000
-#define IRQ_INTA_ASSERT			BIT(0)
-#define IRQ_INTB_ASSERT			BIT(2)
-#define IRQ_INTC_ASSERT			BIT(4)
-#define IRQ_INTD_ASSERT			BIT(6)
-#define PCIE_IRQ_LEVEL			0x004
-#define PCIE_IRQ_SPECIAL		0x008
-#define PCIE_IRQ_EN_PULSE		0x00c
-#define PCIE_IRQ_EN_LEVEL		0x010
-#define PCIE_IRQ_EN_SPECIAL		0x014
-#define PCIE_SW_WAKE			0x018
-#define PCIE_BUS_EN			BIT(1)
-#define PCIE_CORE_RESET			0x01c
-#define PCIE_CORE_RESET_ENABLE		BIT(0)
-#define PCIE_STICKY_RESET		0x020
-#define PCIE_NONSTICKY_RESET		0x024
-#define PCIE_APP_INIT_RESET		0x028
-#define PCIE_APP_LTSSM_ENABLE		0x02c
-#define PCIE_ELBI_RDLH_LINKUP		0x074
-#define PCIE_ELBI_XMLH_LINKUP		BIT(4)
-#define PCIE_ELBI_LTSSM_ENABLE		0x1
-#define PCIE_ELBI_SLV_AWMISC		0x11c
-#define PCIE_ELBI_SLV_ARMISC		0x120
-#define PCIE_ELBI_SLV_DBI_ENABLE	BIT(21)
+/* PCIe ELBI रेजिस्टरs */
+#घोषणा PCIE_IRQ_PULSE			0x000
+#घोषणा IRQ_INTA_ASSERT			BIT(0)
+#घोषणा IRQ_INTB_ASSERT			BIT(2)
+#घोषणा IRQ_INTC_ASSERT			BIT(4)
+#घोषणा IRQ_INTD_ASSERT			BIT(6)
+#घोषणा PCIE_IRQ_LEVEL			0x004
+#घोषणा PCIE_IRQ_SPECIAL		0x008
+#घोषणा PCIE_IRQ_EN_PULSE		0x00c
+#घोषणा PCIE_IRQ_EN_LEVEL		0x010
+#घोषणा PCIE_IRQ_EN_SPECIAL		0x014
+#घोषणा PCIE_SW_WAKE			0x018
+#घोषणा PCIE_BUS_EN			BIT(1)
+#घोषणा PCIE_CORE_RESET			0x01c
+#घोषणा PCIE_CORE_RESET_ENABLE		BIT(0)
+#घोषणा PCIE_STICKY_RESET		0x020
+#घोषणा PCIE_NONSTICKY_RESET		0x024
+#घोषणा PCIE_APP_INIT_RESET		0x028
+#घोषणा PCIE_APP_LTSSM_ENABLE		0x02c
+#घोषणा PCIE_ELBI_RDLH_LINKUP		0x074
+#घोषणा PCIE_ELBI_XMLH_LINKUP		BIT(4)
+#घोषणा PCIE_ELBI_LTSSM_ENABLE		0x1
+#घोषणा PCIE_ELBI_SLV_AWMISC		0x11c
+#घोषणा PCIE_ELBI_SLV_ARMISC		0x120
+#घोषणा PCIE_ELBI_SLV_DBI_ENABLE	BIT(21)
 
-struct exynos_pcie {
-	struct dw_pcie			pci;
-	void __iomem			*elbi_base;
-	struct clk			*clk;
-	struct clk			*bus_clk;
-	struct phy			*phy;
-	struct regulator_bulk_data	supplies[2];
-};
+काष्ठा exynos_pcie अणु
+	काष्ठा dw_pcie			pci;
+	व्योम __iomem			*elbi_base;
+	काष्ठा clk			*clk;
+	काष्ठा clk			*bus_clk;
+	काष्ठा phy			*phy;
+	काष्ठा regulator_bulk_data	supplies[2];
+पूर्ण;
 
-static int exynos_pcie_init_clk_resources(struct exynos_pcie *ep)
-{
-	struct device *dev = ep->pci.dev;
-	int ret;
+अटल पूर्णांक exynos_pcie_init_clk_resources(काष्ठा exynos_pcie *ep)
+अणु
+	काष्ठा device *dev = ep->pci.dev;
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(ep->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "cannot enable pcie rc clock");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(ep->bus_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "cannot enable pcie bus clock");
-		goto err_bus_clk;
-	}
+		जाओ err_bus_clk;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_bus_clk:
 	clk_disable_unprepare(ep->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void exynos_pcie_deinit_clk_resources(struct exynos_pcie *ep)
-{
+अटल व्योम exynos_pcie_deinit_clk_resources(काष्ठा exynos_pcie *ep)
+अणु
 	clk_disable_unprepare(ep->bus_clk);
 	clk_disable_unprepare(ep->clk);
-}
+पूर्ण
 
-static void exynos_pcie_writel(void __iomem *base, u32 val, u32 reg)
-{
-	writel(val, base + reg);
-}
+अटल व्योम exynos_pcie_ग_लिखोl(व्योम __iomem *base, u32 val, u32 reg)
+अणु
+	ग_लिखोl(val, base + reg);
+पूर्ण
 
-static u32 exynos_pcie_readl(void __iomem *base, u32 reg)
-{
-	return readl(base + reg);
-}
+अटल u32 exynos_pcie_पढ़ोl(व्योम __iomem *base, u32 reg)
+अणु
+	वापस पढ़ोl(base + reg);
+पूर्ण
 
-static void exynos_pcie_sideband_dbi_w_mode(struct exynos_pcie *ep, bool on)
-{
+अटल व्योम exynos_pcie_sideband_dbi_w_mode(काष्ठा exynos_pcie *ep, bool on)
+अणु
 	u32 val;
 
-	val = exynos_pcie_readl(ep->elbi_base, PCIE_ELBI_SLV_AWMISC);
-	if (on)
+	val = exynos_pcie_पढ़ोl(ep->elbi_base, PCIE_ELBI_SLV_AWMISC);
+	अगर (on)
 		val |= PCIE_ELBI_SLV_DBI_ENABLE;
-	else
+	अन्यथा
 		val &= ~PCIE_ELBI_SLV_DBI_ENABLE;
-	exynos_pcie_writel(ep->elbi_base, val, PCIE_ELBI_SLV_AWMISC);
-}
+	exynos_pcie_ग_लिखोl(ep->elbi_base, val, PCIE_ELBI_SLV_AWMISC);
+पूर्ण
 
-static void exynos_pcie_sideband_dbi_r_mode(struct exynos_pcie *ep, bool on)
-{
+अटल व्योम exynos_pcie_sideband_dbi_r_mode(काष्ठा exynos_pcie *ep, bool on)
+अणु
 	u32 val;
 
-	val = exynos_pcie_readl(ep->elbi_base, PCIE_ELBI_SLV_ARMISC);
-	if (on)
+	val = exynos_pcie_पढ़ोl(ep->elbi_base, PCIE_ELBI_SLV_ARMISC);
+	अगर (on)
 		val |= PCIE_ELBI_SLV_DBI_ENABLE;
-	else
+	अन्यथा
 		val &= ~PCIE_ELBI_SLV_DBI_ENABLE;
-	exynos_pcie_writel(ep->elbi_base, val, PCIE_ELBI_SLV_ARMISC);
-}
+	exynos_pcie_ग_लिखोl(ep->elbi_base, val, PCIE_ELBI_SLV_ARMISC);
+पूर्ण
 
-static void exynos_pcie_assert_core_reset(struct exynos_pcie *ep)
-{
+अटल व्योम exynos_pcie_निश्चित_core_reset(काष्ठा exynos_pcie *ep)
+अणु
 	u32 val;
 
-	val = exynos_pcie_readl(ep->elbi_base, PCIE_CORE_RESET);
+	val = exynos_pcie_पढ़ोl(ep->elbi_base, PCIE_CORE_RESET);
 	val &= ~PCIE_CORE_RESET_ENABLE;
-	exynos_pcie_writel(ep->elbi_base, val, PCIE_CORE_RESET);
-	exynos_pcie_writel(ep->elbi_base, 0, PCIE_STICKY_RESET);
-	exynos_pcie_writel(ep->elbi_base, 0, PCIE_NONSTICKY_RESET);
-}
+	exynos_pcie_ग_लिखोl(ep->elbi_base, val, PCIE_CORE_RESET);
+	exynos_pcie_ग_लिखोl(ep->elbi_base, 0, PCIE_STICKY_RESET);
+	exynos_pcie_ग_लिखोl(ep->elbi_base, 0, PCIE_NONSTICKY_RESET);
+पूर्ण
 
-static void exynos_pcie_deassert_core_reset(struct exynos_pcie *ep)
-{
+अटल व्योम exynos_pcie_deनिश्चित_core_reset(काष्ठा exynos_pcie *ep)
+अणु
 	u32 val;
 
-	val = exynos_pcie_readl(ep->elbi_base, PCIE_CORE_RESET);
+	val = exynos_pcie_पढ़ोl(ep->elbi_base, PCIE_CORE_RESET);
 	val |= PCIE_CORE_RESET_ENABLE;
 
-	exynos_pcie_writel(ep->elbi_base, val, PCIE_CORE_RESET);
-	exynos_pcie_writel(ep->elbi_base, 1, PCIE_STICKY_RESET);
-	exynos_pcie_writel(ep->elbi_base, 1, PCIE_NONSTICKY_RESET);
-	exynos_pcie_writel(ep->elbi_base, 1, PCIE_APP_INIT_RESET);
-	exynos_pcie_writel(ep->elbi_base, 0, PCIE_APP_INIT_RESET);
-}
+	exynos_pcie_ग_लिखोl(ep->elbi_base, val, PCIE_CORE_RESET);
+	exynos_pcie_ग_लिखोl(ep->elbi_base, 1, PCIE_STICKY_RESET);
+	exynos_pcie_ग_लिखोl(ep->elbi_base, 1, PCIE_NONSTICKY_RESET);
+	exynos_pcie_ग_लिखोl(ep->elbi_base, 1, PCIE_APP_INIT_RESET);
+	exynos_pcie_ग_लिखोl(ep->elbi_base, 0, PCIE_APP_INIT_RESET);
+पूर्ण
 
-static int exynos_pcie_start_link(struct dw_pcie *pci)
-{
-	struct exynos_pcie *ep = to_exynos_pcie(pci);
+अटल पूर्णांक exynos_pcie_start_link(काष्ठा dw_pcie *pci)
+अणु
+	काष्ठा exynos_pcie *ep = to_exynos_pcie(pci);
 	u32 val;
 
-	val = exynos_pcie_readl(ep->elbi_base, PCIE_SW_WAKE);
+	val = exynos_pcie_पढ़ोl(ep->elbi_base, PCIE_SW_WAKE);
 	val &= ~PCIE_BUS_EN;
-	exynos_pcie_writel(ep->elbi_base, val, PCIE_SW_WAKE);
+	exynos_pcie_ग_लिखोl(ep->elbi_base, val, PCIE_SW_WAKE);
 
-	/* assert LTSSM enable */
-	exynos_pcie_writel(ep->elbi_base, PCIE_ELBI_LTSSM_ENABLE,
+	/* निश्चित LTSSM enable */
+	exynos_pcie_ग_लिखोl(ep->elbi_base, PCIE_ELBI_LTSSM_ENABLE,
 			  PCIE_APP_LTSSM_ENABLE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exynos_pcie_clear_irq_pulse(struct exynos_pcie *ep)
-{
-	u32 val = exynos_pcie_readl(ep->elbi_base, PCIE_IRQ_PULSE);
+अटल व्योम exynos_pcie_clear_irq_pulse(काष्ठा exynos_pcie *ep)
+अणु
+	u32 val = exynos_pcie_पढ़ोl(ep->elbi_base, PCIE_IRQ_PULSE);
 
-	exynos_pcie_writel(ep->elbi_base, val, PCIE_IRQ_PULSE);
-}
+	exynos_pcie_ग_लिखोl(ep->elbi_base, val, PCIE_IRQ_PULSE);
+पूर्ण
 
-static irqreturn_t exynos_pcie_irq_handler(int irq, void *arg)
-{
-	struct exynos_pcie *ep = arg;
+अटल irqवापस_t exynos_pcie_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा exynos_pcie *ep = arg;
 
 	exynos_pcie_clear_irq_pulse(ep);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void exynos_pcie_enable_irq_pulse(struct exynos_pcie *ep)
-{
+अटल व्योम exynos_pcie_enable_irq_pulse(काष्ठा exynos_pcie *ep)
+अणु
 	u32 val = IRQ_INTA_ASSERT | IRQ_INTB_ASSERT |
 		  IRQ_INTC_ASSERT | IRQ_INTD_ASSERT;
 
-	exynos_pcie_writel(ep->elbi_base, val, PCIE_IRQ_EN_PULSE);
-	exynos_pcie_writel(ep->elbi_base, 0, PCIE_IRQ_EN_LEVEL);
-	exynos_pcie_writel(ep->elbi_base, 0, PCIE_IRQ_EN_SPECIAL);
-}
+	exynos_pcie_ग_लिखोl(ep->elbi_base, val, PCIE_IRQ_EN_PULSE);
+	exynos_pcie_ग_लिखोl(ep->elbi_base, 0, PCIE_IRQ_EN_LEVEL);
+	exynos_pcie_ग_लिखोl(ep->elbi_base, 0, PCIE_IRQ_EN_SPECIAL);
+पूर्ण
 
-static u32 exynos_pcie_read_dbi(struct dw_pcie *pci, void __iomem *base,
-				u32 reg, size_t size)
-{
-	struct exynos_pcie *ep = to_exynos_pcie(pci);
+अटल u32 exynos_pcie_पढ़ो_dbi(काष्ठा dw_pcie *pci, व्योम __iomem *base,
+				u32 reg, माप_प्रकार size)
+अणु
+	काष्ठा exynos_pcie *ep = to_exynos_pcie(pci);
 	u32 val;
 
 	exynos_pcie_sideband_dbi_r_mode(ep, true);
-	dw_pcie_read(base + reg, size, &val);
+	dw_pcie_पढ़ो(base + reg, size, &val);
 	exynos_pcie_sideband_dbi_r_mode(ep, false);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void exynos_pcie_write_dbi(struct dw_pcie *pci, void __iomem *base,
-				  u32 reg, size_t size, u32 val)
-{
-	struct exynos_pcie *ep = to_exynos_pcie(pci);
+अटल व्योम exynos_pcie_ग_लिखो_dbi(काष्ठा dw_pcie *pci, व्योम __iomem *base,
+				  u32 reg, माप_प्रकार size, u32 val)
+अणु
+	काष्ठा exynos_pcie *ep = to_exynos_pcie(pci);
 
 	exynos_pcie_sideband_dbi_w_mode(ep, true);
-	dw_pcie_write(base + reg, size, val);
+	dw_pcie_ग_लिखो(base + reg, size, val);
 	exynos_pcie_sideband_dbi_w_mode(ep, false);
-}
+पूर्ण
 
-static int exynos_pcie_rd_own_conf(struct pci_bus *bus, unsigned int devfn,
-				   int where, int size, u32 *val)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
+अटल पूर्णांक exynos_pcie_rd_own_conf(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				   पूर्णांक where, पूर्णांक size, u32 *val)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
 
-	if (PCI_SLOT(devfn)) {
+	अगर (PCI_SLOT(devfn)) अणु
 		*val = ~0;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	पूर्ण
 
-	*val = dw_pcie_read_dbi(pci, where, size);
-	return PCIBIOS_SUCCESSFUL;
-}
+	*val = dw_pcie_पढ़ो_dbi(pci, where, size);
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int exynos_pcie_wr_own_conf(struct pci_bus *bus, unsigned int devfn,
-				   int where, int size, u32 val)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
+अटल पूर्णांक exynos_pcie_wr_own_conf(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				   पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
 
-	if (PCI_SLOT(devfn))
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (PCI_SLOT(devfn))
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	dw_pcie_write_dbi(pci, where, size, val);
-	return PCIBIOS_SUCCESSFUL;
-}
+	dw_pcie_ग_लिखो_dbi(pci, where, size, val);
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static struct pci_ops exynos_pci_ops = {
-	.read = exynos_pcie_rd_own_conf,
-	.write = exynos_pcie_wr_own_conf,
-};
+अटल काष्ठा pci_ops exynos_pci_ops = अणु
+	.पढ़ो = exynos_pcie_rd_own_conf,
+	.ग_लिखो = exynos_pcie_wr_own_conf,
+पूर्ण;
 
-static int exynos_pcie_link_up(struct dw_pcie *pci)
-{
-	struct exynos_pcie *ep = to_exynos_pcie(pci);
-	u32 val = exynos_pcie_readl(ep->elbi_base, PCIE_ELBI_RDLH_LINKUP);
+अटल पूर्णांक exynos_pcie_link_up(काष्ठा dw_pcie *pci)
+अणु
+	काष्ठा exynos_pcie *ep = to_exynos_pcie(pci);
+	u32 val = exynos_pcie_पढ़ोl(ep->elbi_base, PCIE_ELBI_RDLH_LINKUP);
 
-	return (val & PCIE_ELBI_XMLH_LINKUP);
-}
+	वापस (val & PCIE_ELBI_XMLH_LINKUP);
+पूर्ण
 
-static int exynos_pcie_host_init(struct pcie_port *pp)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
-	struct exynos_pcie *ep = to_exynos_pcie(pci);
+अटल पूर्णांक exynos_pcie_host_init(काष्ठा pcie_port *pp)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(pp);
+	काष्ठा exynos_pcie *ep = to_exynos_pcie(pci);
 
 	pp->bridge->ops = &exynos_pci_ops;
 
-	exynos_pcie_assert_core_reset(ep);
+	exynos_pcie_निश्चित_core_reset(ep);
 
 	phy_reset(ep->phy);
-	phy_power_on(ep->phy);
+	phy_घातer_on(ep->phy);
 	phy_init(ep->phy);
 
-	exynos_pcie_deassert_core_reset(ep);
+	exynos_pcie_deनिश्चित_core_reset(ep);
 	exynos_pcie_enable_irq_pulse(ep);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dw_pcie_host_ops exynos_pcie_host_ops = {
+अटल स्थिर काष्ठा dw_pcie_host_ops exynos_pcie_host_ops = अणु
 	.host_init = exynos_pcie_host_init,
-};
+पूर्ण;
 
-static int exynos_add_pcie_port(struct exynos_pcie *ep,
-				       struct platform_device *pdev)
-{
-	struct dw_pcie *pci = &ep->pci;
-	struct pcie_port *pp = &pci->pp;
-	struct device *dev = &pdev->dev;
-	int ret;
+अटल पूर्णांक exynos_add_pcie_port(काष्ठा exynos_pcie *ep,
+				       काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dw_pcie *pci = &ep->pci;
+	काष्ठा pcie_port *pp = &pci->pp;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret;
 
-	pp->irq = platform_get_irq(pdev, 0);
-	if (pp->irq < 0)
-		return pp->irq;
+	pp->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (pp->irq < 0)
+		वापस pp->irq;
 
 	ret = devm_request_irq(dev, pp->irq, exynos_pcie_irq_handler,
 			       IRQF_SHARED, "exynos-pcie", ep);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to request irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pp->ops = &exynos_pcie_host_ops;
 	pp->msi_irq = -ENODEV;
 
 	ret = dw_pcie_host_init(pp);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to initialize host\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dw_pcie_ops dw_pcie_ops = {
-	.read_dbi = exynos_pcie_read_dbi,
-	.write_dbi = exynos_pcie_write_dbi,
+अटल स्थिर काष्ठा dw_pcie_ops dw_pcie_ops = अणु
+	.पढ़ो_dbi = exynos_pcie_पढ़ो_dbi,
+	.ग_लिखो_dbi = exynos_pcie_ग_लिखो_dbi,
 	.link_up = exynos_pcie_link_up,
 	.start_link = exynos_pcie_start_link,
-};
+पूर्ण;
 
-static int exynos_pcie_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct exynos_pcie *ep;
-	struct device_node *np = dev->of_node;
-	int ret;
+अटल पूर्णांक exynos_pcie_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा exynos_pcie *ep;
+	काष्ठा device_node *np = dev->of_node;
+	पूर्णांक ret;
 
-	ep = devm_kzalloc(dev, sizeof(*ep), GFP_KERNEL);
-	if (!ep)
-		return -ENOMEM;
+	ep = devm_kzalloc(dev, माप(*ep), GFP_KERNEL);
+	अगर (!ep)
+		वापस -ENOMEM;
 
 	ep->pci.dev = dev;
 	ep->pci.ops = &dw_pcie_ops;
 
-	ep->phy = devm_of_phy_get(dev, np, NULL);
-	if (IS_ERR(ep->phy))
-		return PTR_ERR(ep->phy);
+	ep->phy = devm_of_phy_get(dev, np, शून्य);
+	अगर (IS_ERR(ep->phy))
+		वापस PTR_ERR(ep->phy);
 
-	/* External Local Bus interface (ELBI) registers */
-	ep->elbi_base = devm_platform_ioremap_resource_byname(pdev, "elbi");
-	if (IS_ERR(ep->elbi_base))
-		return PTR_ERR(ep->elbi_base);
+	/* External Local Bus पूर्णांकerface (ELBI) रेजिस्टरs */
+	ep->elbi_base = devm_platक्रमm_ioremap_resource_byname(pdev, "elbi");
+	अगर (IS_ERR(ep->elbi_base))
+		वापस PTR_ERR(ep->elbi_base);
 
 	ep->clk = devm_clk_get(dev, "pcie");
-	if (IS_ERR(ep->clk)) {
+	अगर (IS_ERR(ep->clk)) अणु
 		dev_err(dev, "Failed to get pcie rc clock\n");
-		return PTR_ERR(ep->clk);
-	}
+		वापस PTR_ERR(ep->clk);
+	पूर्ण
 
 	ep->bus_clk = devm_clk_get(dev, "pcie_bus");
-	if (IS_ERR(ep->bus_clk)) {
+	अगर (IS_ERR(ep->bus_clk)) अणु
 		dev_err(dev, "Failed to get pcie bus clock\n");
-		return PTR_ERR(ep->bus_clk);
-	}
+		वापस PTR_ERR(ep->bus_clk);
+	पूर्ण
 
 	ep->supplies[0].supply = "vdd18";
 	ep->supplies[1].supply = "vdd10";
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(ep->supplies),
 				      ep->supplies);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = exynos_pcie_init_clk_resources(ep);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(ep->supplies), ep->supplies);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, ep);
+	platक्रमm_set_drvdata(pdev, ep);
 
 	ret = exynos_add_pcie_port(ep, pdev);
-	if (ret < 0)
-		goto fail_probe;
+	अगर (ret < 0)
+		जाओ fail_probe;
 
-	return 0;
+	वापस 0;
 
 fail_probe:
-	phy_exit(ep->phy);
+	phy_निकास(ep->phy);
 	exynos_pcie_deinit_clk_resources(ep);
 	regulator_bulk_disable(ARRAY_SIZE(ep->supplies), ep->supplies);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __exit exynos_pcie_remove(struct platform_device *pdev)
-{
-	struct exynos_pcie *ep = platform_get_drvdata(pdev);
+अटल पूर्णांक __निकास exynos_pcie_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा exynos_pcie *ep = platक्रमm_get_drvdata(pdev);
 
 	dw_pcie_host_deinit(&ep->pci.pp);
-	exynos_pcie_assert_core_reset(ep);
-	phy_power_off(ep->phy);
-	phy_exit(ep->phy);
+	exynos_pcie_निश्चित_core_reset(ep);
+	phy_घातer_off(ep->phy);
+	phy_निकास(ep->phy);
 	exynos_pcie_deinit_clk_resources(ep);
 	regulator_bulk_disable(ARRAY_SIZE(ep->supplies), ep->supplies);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused exynos_pcie_suspend_noirq(struct device *dev)
-{
-	struct exynos_pcie *ep = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused exynos_pcie_suspend_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा exynos_pcie *ep = dev_get_drvdata(dev);
 
-	exynos_pcie_assert_core_reset(ep);
-	phy_power_off(ep->phy);
-	phy_exit(ep->phy);
+	exynos_pcie_निश्चित_core_reset(ep);
+	phy_घातer_off(ep->phy);
+	phy_निकास(ep->phy);
 	regulator_bulk_disable(ARRAY_SIZE(ep->supplies), ep->supplies);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused exynos_pcie_resume_noirq(struct device *dev)
-{
-	struct exynos_pcie *ep = dev_get_drvdata(dev);
-	struct dw_pcie *pci = &ep->pci;
-	struct pcie_port *pp = &pci->pp;
-	int ret;
+अटल पूर्णांक __maybe_unused exynos_pcie_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा exynos_pcie *ep = dev_get_drvdata(dev);
+	काष्ठा dw_pcie *pci = &ep->pci;
+	काष्ठा pcie_port *pp = &pci->pp;
+	पूर्णांक ret;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(ep->supplies), ep->supplies);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* exynos_pcie_host_init controls ep->phy */
 	exynos_pcie_host_init(pp);
 	dw_pcie_setup_rc(pp);
 	exynos_pcie_start_link(pci);
-	return dw_pcie_wait_for_link(pci);
-}
+	वापस dw_pcie_रुको_क्रम_link(pci);
+पूर्ण
 
-static const struct dev_pm_ops exynos_pcie_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops exynos_pcie_pm_ops = अणु
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(exynos_pcie_suspend_noirq,
 				      exynos_pcie_resume_noirq)
-};
+पूर्ण;
 
-static const struct of_device_id exynos_pcie_of_match[] = {
-	{ .compatible = "samsung,exynos5433-pcie", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id exynos_pcie_of_match[] = अणु
+	अणु .compatible = "samsung,exynos5433-pcie", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver exynos_pcie_driver = {
+अटल काष्ठा platक्रमm_driver exynos_pcie_driver = अणु
 	.probe		= exynos_pcie_probe,
-	.remove		= __exit_p(exynos_pcie_remove),
-	.driver = {
+	.हटाओ		= __निकास_p(exynos_pcie_हटाओ),
+	.driver = अणु
 		.name	= "exynos-pcie",
 		.of_match_table = exynos_pcie_of_match,
 		.pm		= &exynos_pcie_pm_ops,
-	},
-};
-module_platform_driver(exynos_pcie_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(exynos_pcie_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_DEVICE_TABLE(of, exynos_pcie_of_match);

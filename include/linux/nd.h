@@ -1,184 +1,185 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
-#ifndef __LINUX_ND_H__
-#define __LINUX_ND_H__
-#include <linux/fs.h>
-#include <linux/ndctl.h>
-#include <linux/device.h>
-#include <linux/badblocks.h>
+#अगर_अघोषित __LINUX_ND_H__
+#घोषणा __LINUX_ND_H__
+#समावेश <linux/fs.h>
+#समावेश <linux/ndctl.h>
+#समावेश <linux/device.h>
+#समावेश <linux/badblocks.h>
 
-enum nvdimm_event {
+क्रमागत nvdimm_event अणु
 	NVDIMM_REVALIDATE_POISON,
 	NVDIMM_REVALIDATE_REGION,
-};
+पूर्ण;
 
-enum nvdimm_claim_class {
+क्रमागत nvdimm_claim_class अणु
 	NVDIMM_CCLASS_NONE,
 	NVDIMM_CCLASS_BTT,
 	NVDIMM_CCLASS_BTT2,
 	NVDIMM_CCLASS_PFN,
 	NVDIMM_CCLASS_DAX,
 	NVDIMM_CCLASS_UNKNOWN,
-};
+पूर्ण;
 
-struct nd_device_driver {
-	struct device_driver drv;
-	unsigned long type;
-	int (*probe)(struct device *dev);
-	void (*remove)(struct device *dev);
-	void (*shutdown)(struct device *dev);
-	void (*notify)(struct device *dev, enum nvdimm_event event);
-};
+काष्ठा nd_device_driver अणु
+	काष्ठा device_driver drv;
+	अचिन्हित दीर्घ type;
+	पूर्णांक (*probe)(काष्ठा device *dev);
+	व्योम (*हटाओ)(काष्ठा device *dev);
+	व्योम (*shutकरोwn)(काष्ठा device *dev);
+	व्योम (*notअगरy)(काष्ठा device *dev, क्रमागत nvdimm_event event);
+पूर्ण;
 
-static inline struct nd_device_driver *to_nd_device_driver(
-		struct device_driver *drv)
-{
-	return container_of(drv, struct nd_device_driver, drv);
-};
+अटल अंतरभूत काष्ठा nd_device_driver *to_nd_device_driver(
+		काष्ठा device_driver *drv)
+अणु
+	वापस container_of(drv, काष्ठा nd_device_driver, drv);
+पूर्ण;
 
 /**
- * struct nd_namespace_common - core infrastructure of a namespace
- * @force_raw: ignore other personalities for the namespace (e.g. btt)
+ * काष्ठा nd_namespace_common - core infraकाष्ठाure of a namespace
+ * @क्रमce_raw: ignore other personalities क्रम the namespace (e.g. btt)
  * @dev: device model node
  * @claim: when set a another personality has taken ownership of the namespace
  * @claim_class: restrict claim type to a given class
  * @rw_bytes: access the raw namespace capacity with byte-aligned transfers
  */
-struct nd_namespace_common {
-	int force_raw;
-	struct device dev;
-	struct device *claim;
-	enum nvdimm_claim_class claim_class;
-	int (*rw_bytes)(struct nd_namespace_common *, resource_size_t offset,
-			void *buf, size_t size, int rw, unsigned long flags);
-};
+काष्ठा nd_namespace_common अणु
+	पूर्णांक क्रमce_raw;
+	काष्ठा device dev;
+	काष्ठा device *claim;
+	क्रमागत nvdimm_claim_class claim_class;
+	पूर्णांक (*rw_bytes)(काष्ठा nd_namespace_common *, resource_माप_प्रकार offset,
+			व्योम *buf, माप_प्रकार size, पूर्णांक rw, अचिन्हित दीर्घ flags);
+पूर्ण;
 
-static inline struct nd_namespace_common *to_ndns(struct device *dev)
-{
-	return container_of(dev, struct nd_namespace_common, dev);
-}
+अटल अंतरभूत काष्ठा nd_namespace_common *to_ndns(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा nd_namespace_common, dev);
+पूर्ण
 
 /**
- * struct nd_namespace_io - device representation of a persistent memory range
+ * काष्ठा nd_namespace_io - device representation of a persistent memory range
  * @dev: namespace device created by the nd region driver
- * @res: struct resource conversion of a NFIT SPA table
- * @size: cached resource_size(@res) for fast path size checks
- * @addr: virtual address to access the namespace range
- * @bb: badblocks list for the namespace range
+ * @res: काष्ठा resource conversion of a NFIT SPA table
+ * @size: cached resource_size(@res) क्रम fast path size checks
+ * @addr: भव address to access the namespace range
+ * @bb: badblocks list क्रम the namespace range
  */
-struct nd_namespace_io {
-	struct nd_namespace_common common;
-	struct resource res;
-	resource_size_t size;
-	void *addr;
-	struct badblocks bb;
-};
+काष्ठा nd_namespace_io अणु
+	काष्ठा nd_namespace_common common;
+	काष्ठा resource res;
+	resource_माप_प्रकार size;
+	व्योम *addr;
+	काष्ठा badblocks bb;
+पूर्ण;
 
 /**
- * struct nd_namespace_pmem - namespace device for dimm-backed interleaved memory
- * @nsio: device and system physical address range to drive
- * @lbasize: logical sector size for the namespace in block-device-mode
+ * काष्ठा nd_namespace_pmem - namespace device क्रम dimm-backed पूर्णांकerleaved memory
+ * @nsio: device and प्रणाली physical address range to drive
+ * @lbasize: logical sector size क्रम the namespace in block-device-mode
  * @alt_name: namespace name supplied in the dimm label
  * @uuid: namespace name supplied in the dimm label
  * @id: ida allocated id
  */
-struct nd_namespace_pmem {
-	struct nd_namespace_io nsio;
-	unsigned long lbasize;
-	char *alt_name;
+काष्ठा nd_namespace_pmem अणु
+	काष्ठा nd_namespace_io nsio;
+	अचिन्हित दीर्घ lbasize;
+	अक्षर *alt_name;
 	u8 *uuid;
-	int id;
-};
+	पूर्णांक id;
+पूर्ण;
 
 /**
- * struct nd_namespace_blk - namespace for dimm-bounded persistent memory
+ * काष्ठा nd_namespace_blk - namespace क्रम dimm-bounded persistent memory
  * @alt_name: namespace name supplied in the dimm label
  * @uuid: namespace name supplied in the dimm label
  * @id: ida allocated id
  * @lbasize: blk namespaces have a native sector size when btt not present
  * @size: sum of all the resource ranges allocated to this namespace
  * @num_resources: number of dpa extents to claim
- * @res: discontiguous dpa extents for given dimm
+ * @res: discontiguous dpa extents क्रम given dimm
  */
-struct nd_namespace_blk {
-	struct nd_namespace_common common;
-	char *alt_name;
+काष्ठा nd_namespace_blk अणु
+	काष्ठा nd_namespace_common common;
+	अक्षर *alt_name;
 	u8 *uuid;
-	int id;
-	unsigned long lbasize;
-	resource_size_t size;
-	int num_resources;
-	struct resource **res;
-};
+	पूर्णांक id;
+	अचिन्हित दीर्घ lbasize;
+	resource_माप_प्रकार size;
+	पूर्णांक num_resources;
+	काष्ठा resource **res;
+पूर्ण;
 
-static inline struct nd_namespace_io *to_nd_namespace_io(const struct device *dev)
-{
-	return container_of(dev, struct nd_namespace_io, common.dev);
-}
+अटल अंतरभूत काष्ठा nd_namespace_io *to_nd_namespace_io(स्थिर काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा nd_namespace_io, common.dev);
+पूर्ण
 
-static inline struct nd_namespace_pmem *to_nd_namespace_pmem(const struct device *dev)
-{
-	struct nd_namespace_io *nsio = to_nd_namespace_io(dev);
+अटल अंतरभूत काष्ठा nd_namespace_pmem *to_nd_namespace_pmem(स्थिर काष्ठा device *dev)
+अणु
+	काष्ठा nd_namespace_io *nsio = to_nd_namespace_io(dev);
 
-	return container_of(nsio, struct nd_namespace_pmem, nsio);
-}
+	वापस container_of(nsio, काष्ठा nd_namespace_pmem, nsio);
+पूर्ण
 
-static inline struct nd_namespace_blk *to_nd_namespace_blk(const struct device *dev)
-{
-	return container_of(dev, struct nd_namespace_blk, common.dev);
-}
+अटल अंतरभूत काष्ठा nd_namespace_blk *to_nd_namespace_blk(स्थिर काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा nd_namespace_blk, common.dev);
+पूर्ण
 
 /**
- * nvdimm_read_bytes() - synchronously read bytes from an nvdimm namespace
- * @ndns: device to read
+ * nvdimm_पढ़ो_bytes() - synchronously पढ़ो bytes from an nvdimm namespace
+ * @ndns: device to पढ़ो
  * @offset: namespace-relative starting offset
  * @buf: buffer to fill
  * @size: transfer length
  *
- * @buf is up-to-date upon return from this routine.
+ * @buf is up-to-date upon वापस from this routine.
  */
-static inline int nvdimm_read_bytes(struct nd_namespace_common *ndns,
-		resource_size_t offset, void *buf, size_t size,
-		unsigned long flags)
-{
-	return ndns->rw_bytes(ndns, offset, buf, size, READ, flags);
-}
+अटल अंतरभूत पूर्णांक nvdimm_पढ़ो_bytes(काष्ठा nd_namespace_common *ndns,
+		resource_माप_प्रकार offset, व्योम *buf, माप_प्रकार size,
+		अचिन्हित दीर्घ flags)
+अणु
+	वापस ndns->rw_bytes(ndns, offset, buf, size, READ, flags);
+पूर्ण
 
 /**
- * nvdimm_write_bytes() - synchronously write bytes to an nvdimm namespace
- * @ndns: device to write
+ * nvdimm_ग_लिखो_bytes() - synchronously ग_लिखो bytes to an nvdimm namespace
+ * @ndns: device to ग_लिखो
  * @offset: namespace-relative starting offset
  * @buf: buffer to drain
  * @size: transfer length
  *
- * NVDIMM Namepaces disks do not implement sectors internally.  Depending on
- * the @ndns, the contents of @buf may be in cpu cache, platform buffers,
- * or on backing memory media upon return from this routine.  Flushing
- * to media is handled internal to the @ndns driver, if at all.
+ * NVDIMM Namepaces disks करो not implement sectors पूर्णांकernally.  Depending on
+ * the @ndns, the contents of @buf may be in cpu cache, platक्रमm buffers,
+ * or on backing memory media upon वापस from this routine.  Flushing
+ * to media is handled पूर्णांकernal to the @ndns driver, अगर at all.
  */
-static inline int nvdimm_write_bytes(struct nd_namespace_common *ndns,
-		resource_size_t offset, void *buf, size_t size,
-		unsigned long flags)
-{
-	return ndns->rw_bytes(ndns, offset, buf, size, WRITE, flags);
-}
+अटल अंतरभूत पूर्णांक nvdimm_ग_लिखो_bytes(काष्ठा nd_namespace_common *ndns,
+		resource_माप_प्रकार offset, व्योम *buf, माप_प्रकार size,
+		अचिन्हित दीर्घ flags)
+अणु
+	वापस ndns->rw_bytes(ndns, offset, buf, size, WRITE, flags);
+पूर्ण
 
-#define MODULE_ALIAS_ND_DEVICE(type) \
-	MODULE_ALIAS("nd:t" __stringify(type) "*")
-#define ND_DEVICE_MODALIAS_FMT "nd:t%d"
+#घोषणा MODULE_ALIAS_ND_DEVICE(type) \
+	MODULE_ALIAS("nd:t" __stringअगरy(type) "*")
+#घोषणा ND_DEVICE_MODALIAS_FMT "nd:t%d"
 
-struct nd_region;
-void nvdimm_region_notify(struct nd_region *nd_region, enum nvdimm_event event);
-int __must_check __nd_driver_register(struct nd_device_driver *nd_drv,
-		struct module *module, const char *mod_name);
-static inline void nd_driver_unregister(struct nd_device_driver *drv)
-{
-	driver_unregister(&drv->drv);
-}
-#define nd_driver_register(driver) \
-	__nd_driver_register(driver, THIS_MODULE, KBUILD_MODNAME)
-#define module_nd_driver(driver) \
-	module_driver(driver, nd_driver_register, nd_driver_unregister)
-#endif /* __LINUX_ND_H__ */
+काष्ठा nd_region;
+व्योम nvdimm_region_notअगरy(काष्ठा nd_region *nd_region, क्रमागत nvdimm_event event);
+पूर्णांक __must_check __nd_driver_रेजिस्टर(काष्ठा nd_device_driver *nd_drv,
+		काष्ठा module *module, स्थिर अक्षर *mod_name);
+अटल अंतरभूत व्योम nd_driver_unरेजिस्टर(काष्ठा nd_device_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->drv);
+पूर्ण
+#घोषणा nd_driver_रेजिस्टर(driver) \
+	__nd_driver_रेजिस्टर(driver, THIS_MODULE, KBUILD_MODNAME)
+#घोषणा module_nd_driver(driver) \
+	module_driver(driver, nd_driver_रेजिस्टर, nd_driver_unरेजिस्टर)
+#पूर्ण_अगर /* __LINUX_ND_H__ */

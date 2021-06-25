@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* MTD-based superblock handling
  *
- * Copyright © 2006 Red Hat, Inc. All Rights Reserved.
+ * Copyright तऊ 2006 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef __MTD_SUPER_H__
-#define __MTD_SUPER_H__
+#अगर_अघोषित __MTD_SUPER_H__
+#घोषणा __MTD_SUPER_H__
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <linux/mtd/mtd.h>
-#include <linux/fs.h>
-#include <linux/mount.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
 
-extern int get_tree_mtd(struct fs_context *fc,
-		     int (*fill_super)(struct super_block *sb,
-				       struct fs_context *fc));
-extern void kill_mtd_super(struct super_block *sb);
+बाह्य पूर्णांक get_tree_mtd(काष्ठा fs_context *fc,
+		     पूर्णांक (*fill_super)(काष्ठा super_block *sb,
+				       काष्ठा fs_context *fc));
+बाह्य व्योम समाप्त_mtd_super(काष्ठा super_block *sb);
 
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* __MTD_SUPER_H__ */
+#पूर्ण_अगर /* __MTD_SUPER_H__ */

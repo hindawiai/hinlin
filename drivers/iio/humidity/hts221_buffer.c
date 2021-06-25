@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics hts221 sensor driver
  *
@@ -6,195 +7,195 @@
  *
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/irqreturn.h>
-#include <linux/regmap.h>
-#include <linux/bitfield.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/bitfield.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/events.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/buffer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/buffer.h>
 
-#include <linux/platform_data/st_sensors_pdata.h>
+#समावेश <linux/platक्रमm_data/st_sensors_pdata.h>
 
-#include "hts221.h"
+#समावेश "hts221.h"
 
-#define HTS221_REG_DRDY_HL_ADDR		0x22
-#define HTS221_REG_DRDY_HL_MASK		BIT(7)
-#define HTS221_REG_DRDY_PP_OD_ADDR	0x22
-#define HTS221_REG_DRDY_PP_OD_MASK	BIT(6)
-#define HTS221_REG_DRDY_EN_ADDR		0x22
-#define HTS221_REG_DRDY_EN_MASK		BIT(2)
-#define HTS221_REG_STATUS_ADDR		0x27
-#define HTS221_RH_DRDY_MASK		BIT(1)
-#define HTS221_TEMP_DRDY_MASK		BIT(0)
+#घोषणा HTS221_REG_DRDY_HL_ADDR		0x22
+#घोषणा HTS221_REG_DRDY_HL_MASK		BIT(7)
+#घोषणा HTS221_REG_DRDY_PP_OD_ADDR	0x22
+#घोषणा HTS221_REG_DRDY_PP_OD_MASK	BIT(6)
+#घोषणा HTS221_REG_DRDY_EN_ADDR		0x22
+#घोषणा HTS221_REG_DRDY_EN_MASK		BIT(2)
+#घोषणा HTS221_REG_STATUS_ADDR		0x27
+#घोषणा HTS221_RH_DRDY_MASK		BIT(1)
+#घोषणा HTS221_TEMP_DRDY_MASK		BIT(0)
 
-static int hts221_trig_set_state(struct iio_trigger *trig, bool state)
-{
-	struct iio_dev *iio_dev = iio_trigger_get_drvdata(trig);
-	struct hts221_hw *hw = iio_priv(iio_dev);
+अटल पूर्णांक hts221_trig_set_state(काष्ठा iio_trigger *trig, bool state)
+अणु
+	काष्ठा iio_dev *iio_dev = iio_trigger_get_drvdata(trig);
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
 
-	return regmap_update_bits(hw->regmap, HTS221_REG_DRDY_EN_ADDR,
+	वापस regmap_update_bits(hw->regmap, HTS221_REG_DRDY_EN_ADDR,
 				  HTS221_REG_DRDY_EN_MASK,
 				  FIELD_PREP(HTS221_REG_DRDY_EN_MASK, state));
-}
+पूर्ण
 
-static const struct iio_trigger_ops hts221_trigger_ops = {
+अटल स्थिर काष्ठा iio_trigger_ops hts221_trigger_ops = अणु
 	.set_trigger_state = hts221_trig_set_state,
-};
+पूर्ण;
 
-static irqreturn_t hts221_trigger_handler_thread(int irq, void *private)
-{
-	struct hts221_hw *hw = private;
-	int err, status;
+अटल irqवापस_t hts221_trigger_handler_thपढ़ो(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा hts221_hw *hw = निजी;
+	पूर्णांक err, status;
 
-	err = regmap_read(hw->regmap, HTS221_REG_STATUS_ADDR, &status);
-	if (err < 0)
-		return IRQ_HANDLED;
+	err = regmap_पढ़ो(hw->regmap, HTS221_REG_STATUS_ADDR, &status);
+	अगर (err < 0)
+		वापस IRQ_HANDLED;
 
 	/*
 	 * H_DA bit (humidity data available) is routed to DRDY line.
 	 * Humidity sample is computed after temperature one.
-	 * Here we can assume data channels are both available if H_DA bit
-	 * is set in status register
+	 * Here we can assume data channels are both available अगर H_DA bit
+	 * is set in status रेजिस्टर
 	 */
-	if (!(status & HTS221_RH_DRDY_MASK))
-		return IRQ_NONE;
+	अगर (!(status & HTS221_RH_DRDY_MASK))
+		वापस IRQ_NONE;
 
 	iio_trigger_poll_chained(hw->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int hts221_allocate_trigger(struct iio_dev *iio_dev)
-{
-	struct hts221_hw *hw = iio_priv(iio_dev);
-	struct st_sensors_platform_data *pdata = dev_get_platdata(hw->dev);
-	bool irq_active_low = false, open_drain = false;
-	unsigned long irq_type;
-	int err;
+पूर्णांक hts221_allocate_trigger(काष्ठा iio_dev *iio_dev)
+अणु
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
+	काष्ठा st_sensors_platक्रमm_data *pdata = dev_get_platdata(hw->dev);
+	bool irq_active_low = false, खोलो_drain = false;
+	अचिन्हित दीर्घ irq_type;
+	पूर्णांक err;
 
 	irq_type = irqd_get_trigger_type(irq_get_irq_data(hw->irq));
 
-	switch (irq_type) {
-	case IRQF_TRIGGER_HIGH:
-	case IRQF_TRIGGER_RISING:
-		break;
-	case IRQF_TRIGGER_LOW:
-	case IRQF_TRIGGER_FALLING:
+	चयन (irq_type) अणु
+	हाल IRQF_TRIGGER_HIGH:
+	हाल IRQF_TRIGGER_RISING:
+		अवरोध;
+	हाल IRQF_TRIGGER_LOW:
+	हाल IRQF_TRIGGER_FALLING:
 		irq_active_low = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_info(hw->dev,
 			 "mode %lx unsupported, using IRQF_TRIGGER_RISING\n",
 			 irq_type);
 		irq_type = IRQF_TRIGGER_RISING;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	err = regmap_update_bits(hw->regmap, HTS221_REG_DRDY_HL_ADDR,
 				 HTS221_REG_DRDY_HL_MASK,
 				 FIELD_PREP(HTS221_REG_DRDY_HL_MASK,
 					    irq_active_low));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (device_property_read_bool(hw->dev, "drive-open-drain") ||
-	    (pdata && pdata->open_drain)) {
+	अगर (device_property_पढ़ो_bool(hw->dev, "drive-open-drain") ||
+	    (pdata && pdata->खोलो_drain)) अणु
 		irq_type |= IRQF_SHARED;
-		open_drain = true;
-	}
+		खोलो_drain = true;
+	पूर्ण
 
 	err = regmap_update_bits(hw->regmap, HTS221_REG_DRDY_PP_OD_ADDR,
 				 HTS221_REG_DRDY_PP_OD_MASK,
 				 FIELD_PREP(HTS221_REG_DRDY_PP_OD_MASK,
-					    open_drain));
-	if (err < 0)
-		return err;
+					    खोलो_drain));
+	अगर (err < 0)
+		वापस err;
 
-	err = devm_request_threaded_irq(hw->dev, hw->irq, NULL,
-					hts221_trigger_handler_thread,
+	err = devm_request_thपढ़ोed_irq(hw->dev, hw->irq, शून्य,
+					hts221_trigger_handler_thपढ़ो,
 					irq_type | IRQF_ONESHOT,
 					hw->name, hw);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hw->dev, "failed to request trigger irq %d\n",
 			hw->irq);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	hw->trig = devm_iio_trigger_alloc(hw->dev, "%s-trigger",
 					  iio_dev->name);
-	if (!hw->trig)
-		return -ENOMEM;
+	अगर (!hw->trig)
+		वापस -ENOMEM;
 
 	iio_trigger_set_drvdata(hw->trig, iio_dev);
 	hw->trig->ops = &hts221_trigger_ops;
 	iio_dev->trig = iio_trigger_get(hw->trig);
 
-	return devm_iio_trigger_register(hw->dev, hw->trig);
-}
+	वापस devm_iio_trigger_रेजिस्टर(hw->dev, hw->trig);
+पूर्ण
 
-static int hts221_buffer_preenable(struct iio_dev *iio_dev)
-{
-	return hts221_set_enable(iio_priv(iio_dev), true);
-}
+अटल पूर्णांक hts221_buffer_preenable(काष्ठा iio_dev *iio_dev)
+अणु
+	वापस hts221_set_enable(iio_priv(iio_dev), true);
+पूर्ण
 
-static int hts221_buffer_postdisable(struct iio_dev *iio_dev)
-{
-	return hts221_set_enable(iio_priv(iio_dev), false);
-}
+अटल पूर्णांक hts221_buffer_postdisable(काष्ठा iio_dev *iio_dev)
+अणु
+	वापस hts221_set_enable(iio_priv(iio_dev), false);
+पूर्ण
 
-static const struct iio_buffer_setup_ops hts221_buffer_ops = {
+अटल स्थिर काष्ठा iio_buffer_setup_ops hts221_buffer_ops = अणु
 	.preenable = hts221_buffer_preenable,
 	.postdisable = hts221_buffer_postdisable,
-};
+पूर्ण;
 
-static irqreturn_t hts221_buffer_handler_thread(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *iio_dev = pf->indio_dev;
-	struct hts221_hw *hw = iio_priv(iio_dev);
-	struct iio_chan_spec const *ch;
-	int err;
+अटल irqवापस_t hts221_buffer_handler_thपढ़ो(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *iio_dev = pf->indio_dev;
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
+	काष्ठा iio_chan_spec स्थिर *ch;
+	पूर्णांक err;
 
 	/* humidity data */
 	ch = &iio_dev->channels[HTS221_SENSOR_H];
-	err = regmap_bulk_read(hw->regmap, ch->address,
+	err = regmap_bulk_पढ़ो(hw->regmap, ch->address,
 			       &hw->scan.channels[0],
-			       sizeof(hw->scan.channels[0]));
-	if (err < 0)
-		goto out;
+			       माप(hw->scan.channels[0]));
+	अगर (err < 0)
+		जाओ out;
 
 	/* temperature data */
 	ch = &iio_dev->channels[HTS221_SENSOR_T];
-	err = regmap_bulk_read(hw->regmap, ch->address,
+	err = regmap_bulk_पढ़ो(hw->regmap, ch->address,
 			       &hw->scan.channels[1],
-			       sizeof(hw->scan.channels[1]));
-	if (err < 0)
-		goto out;
+			       माप(hw->scan.channels[1]));
+	अगर (err < 0)
+		जाओ out;
 
-	iio_push_to_buffers_with_timestamp(iio_dev, &hw->scan,
-					   iio_get_time_ns(iio_dev));
+	iio_push_to_buffers_with_बारtamp(iio_dev, &hw->scan,
+					   iio_get_समय_ns(iio_dev));
 
 out:
-	iio_trigger_notify_done(hw->trig);
+	iio_trigger_notअगरy_करोne(hw->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int hts221_allocate_buffers(struct iio_dev *iio_dev)
-{
-	struct hts221_hw *hw = iio_priv(iio_dev);
-	return devm_iio_triggered_buffer_setup(hw->dev, iio_dev,
-					NULL, hts221_buffer_handler_thread,
+पूर्णांक hts221_allocate_buffers(काष्ठा iio_dev *iio_dev)
+अणु
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
+	वापस devm_iio_triggered_buffer_setup(hw->dev, iio_dev,
+					शून्य, hts221_buffer_handler_thपढ़ो,
 					&hts221_buffer_ops);
-}
+पूर्ण
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo.bianconi@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics hts221 buffer driver");

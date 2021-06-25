@@ -1,30 +1,31 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2012 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#ifndef DM_CACHE_METADATA_H
-#define DM_CACHE_METADATA_H
+#अगर_अघोषित DM_CACHE_METADATA_H
+#घोषणा DM_CACHE_METADATA_H
 
-#include "dm-cache-block-types.h"
-#include "dm-cache-policy-internal.h"
-#include "persistent-data/dm-space-map-metadata.h"
+#समावेश "dm-cache-block-types.h"
+#समावेश "dm-cache-policy-internal.h"
+#समावेश "persistent-data/dm-space-map-metadata.h"
 
 /*----------------------------------------------------------------*/
 
-#define DM_CACHE_METADATA_BLOCK_SIZE DM_SM_METADATA_BLOCK_SIZE
+#घोषणा DM_CACHE_METADATA_BLOCK_SIZE DM_SM_METADATA_BLOCK_SIZE
 
-/* FIXME: remove this restriction */
+/* FIXME: हटाओ this restriction */
 /*
  * The metadata device is currently limited in size.
  */
-#define DM_CACHE_METADATA_MAX_SECTORS DM_SM_METADATA_MAX_SECTORS
+#घोषणा DM_CACHE_METADATA_MAX_SECTORS DM_SM_METADATA_MAX_SECTORS
 
 /*
  * A metadata device larger than 16GB triggers a warning.
  */
-#define DM_CACHE_METADATA_MAX_SECTORS_WARNING (16 * (1024 * 1024 * 1024 >> SECTOR_SHIFT))
+#घोषणा DM_CACHE_METADATA_MAX_SECTORS_WARNING (16 * (1024 * 1024 * 1024 >> SECTOR_SHIFT))
 
 /*----------------------------------------------------------------*/
 
@@ -46,108 +47,108 @@
  * following masks.
  */
 
-#define DM_CACHE_FEATURE_COMPAT_SUPP	  0UL
-#define DM_CACHE_FEATURE_COMPAT_RO_SUPP	  0UL
-#define DM_CACHE_FEATURE_INCOMPAT_SUPP	  0UL
+#घोषणा DM_CACHE_FEATURE_COMPAT_SUPP	  0UL
+#घोषणा DM_CACHE_FEATURE_COMPAT_RO_SUPP	  0UL
+#घोषणा DM_CACHE_FEATURE_INCOMPAT_SUPP	  0UL
 
-struct dm_cache_metadata;
+काष्ठा dm_cache_metadata;
 
 /*
- * Reopens or creates a new, empty metadata volume.  Returns an ERR_PTR on
- * failure.  If reopening then features must match.
+ * Reखोलोs or creates a new, empty metadata volume.  Returns an ERR_PTR on
+ * failure.  If reखोलोing then features must match.
  */
-struct dm_cache_metadata *dm_cache_metadata_open(struct block_device *bdev,
+काष्ठा dm_cache_metadata *dm_cache_metadata_खोलो(काष्ठा block_device *bdev,
 						 sector_t data_block_size,
-						 bool may_format_device,
-						 size_t policy_hint_size,
-						 unsigned metadata_version);
+						 bool may_क्रमmat_device,
+						 माप_प्रकार policy_hपूर्णांक_size,
+						 अचिन्हित metadata_version);
 
-void dm_cache_metadata_close(struct dm_cache_metadata *cmd);
+व्योम dm_cache_metadata_बंद(काष्ठा dm_cache_metadata *cmd);
 
 /*
- * The metadata needs to know how many cache blocks there are.  We don't
+ * The metadata needs to know how many cache blocks there are.  We करोn't
  * care about the origin, assuming the core target is giving us valid
  * origin blocks to map to.
  */
-int dm_cache_resize(struct dm_cache_metadata *cmd, dm_cblock_t new_cache_size);
-int dm_cache_size(struct dm_cache_metadata *cmd, dm_cblock_t *result);
+पूर्णांक dm_cache_resize(काष्ठा dm_cache_metadata *cmd, dm_cblock_t new_cache_size);
+पूर्णांक dm_cache_size(काष्ठा dm_cache_metadata *cmd, dm_cblock_t *result);
 
-int dm_cache_discard_bitset_resize(struct dm_cache_metadata *cmd,
+पूर्णांक dm_cache_discard_bitset_resize(काष्ठा dm_cache_metadata *cmd,
 				   sector_t discard_block_size,
 				   dm_dblock_t new_nr_entries);
 
-typedef int (*load_discard_fn)(void *context, sector_t discard_block_size,
+प्रकार पूर्णांक (*load_discard_fn)(व्योम *context, sector_t discard_block_size,
 			       dm_dblock_t dblock, bool discarded);
-int dm_cache_load_discards(struct dm_cache_metadata *cmd,
-			   load_discard_fn fn, void *context);
+पूर्णांक dm_cache_load_discards(काष्ठा dm_cache_metadata *cmd,
+			   load_discard_fn fn, व्योम *context);
 
-int dm_cache_set_discard(struct dm_cache_metadata *cmd, dm_dblock_t dblock, bool discard);
+पूर्णांक dm_cache_set_discard(काष्ठा dm_cache_metadata *cmd, dm_dblock_t dblock, bool discard);
 
-int dm_cache_remove_mapping(struct dm_cache_metadata *cmd, dm_cblock_t cblock);
-int dm_cache_insert_mapping(struct dm_cache_metadata *cmd, dm_cblock_t cblock, dm_oblock_t oblock);
-int dm_cache_changed_this_transaction(struct dm_cache_metadata *cmd);
+पूर्णांक dm_cache_हटाओ_mapping(काष्ठा dm_cache_metadata *cmd, dm_cblock_t cblock);
+पूर्णांक dm_cache_insert_mapping(काष्ठा dm_cache_metadata *cmd, dm_cblock_t cblock, dm_oblock_t oblock);
+पूर्णांक dm_cache_changed_this_transaction(काष्ठा dm_cache_metadata *cmd);
 
-typedef int (*load_mapping_fn)(void *context, dm_oblock_t oblock,
+प्रकार पूर्णांक (*load_mapping_fn)(व्योम *context, dm_oblock_t oblock,
 			       dm_cblock_t cblock, bool dirty,
-			       uint32_t hint, bool hint_valid);
-int dm_cache_load_mappings(struct dm_cache_metadata *cmd,
-			   struct dm_cache_policy *policy,
+			       uपूर्णांक32_t hपूर्णांक, bool hपूर्णांक_valid);
+पूर्णांक dm_cache_load_mappings(काष्ठा dm_cache_metadata *cmd,
+			   काष्ठा dm_cache_policy *policy,
 			   load_mapping_fn fn,
-			   void *context);
+			   व्योम *context);
 
-int dm_cache_set_dirty_bits(struct dm_cache_metadata *cmd,
-			    unsigned nr_bits, unsigned long *bits);
+पूर्णांक dm_cache_set_dirty_bits(काष्ठा dm_cache_metadata *cmd,
+			    अचिन्हित nr_bits, अचिन्हित दीर्घ *bits);
 
-struct dm_cache_statistics {
-	uint32_t read_hits;
-	uint32_t read_misses;
-	uint32_t write_hits;
-	uint32_t write_misses;
-};
+काष्ठा dm_cache_statistics अणु
+	uपूर्णांक32_t पढ़ो_hits;
+	uपूर्णांक32_t पढ़ो_misses;
+	uपूर्णांक32_t ग_लिखो_hits;
+	uपूर्णांक32_t ग_लिखो_misses;
+पूर्ण;
 
-void dm_cache_metadata_get_stats(struct dm_cache_metadata *cmd,
-				 struct dm_cache_statistics *stats);
+व्योम dm_cache_metadata_get_stats(काष्ठा dm_cache_metadata *cmd,
+				 काष्ठा dm_cache_statistics *stats);
 
 /*
- * 'void' because it's no big deal if it fails.
+ * 'void' because it's no big deal अगर it fails.
  */
-void dm_cache_metadata_set_stats(struct dm_cache_metadata *cmd,
-				 struct dm_cache_statistics *stats);
+व्योम dm_cache_metadata_set_stats(काष्ठा dm_cache_metadata *cmd,
+				 काष्ठा dm_cache_statistics *stats);
 
-int dm_cache_commit(struct dm_cache_metadata *cmd, bool clean_shutdown);
+पूर्णांक dm_cache_commit(काष्ठा dm_cache_metadata *cmd, bool clean_shutकरोwn);
 
-int dm_cache_get_free_metadata_block_count(struct dm_cache_metadata *cmd,
+पूर्णांक dm_cache_get_मुक्त_metadata_block_count(काष्ठा dm_cache_metadata *cmd,
 					   dm_block_t *result);
 
-int dm_cache_get_metadata_dev_size(struct dm_cache_metadata *cmd,
+पूर्णांक dm_cache_get_metadata_dev_size(काष्ठा dm_cache_metadata *cmd,
 				   dm_block_t *result);
 
-void dm_cache_dump(struct dm_cache_metadata *cmd);
+व्योम dm_cache_dump(काष्ठा dm_cache_metadata *cmd);
 
 /*
- * The policy is invited to save a 32bit hint value for every cblock (eg,
- * for a hit count).  These are stored against the policy name.  If
- * policies are changed, then hints will be lost.  If the machine crashes,
- * hints will be lost.
+ * The policy is invited to save a 32bit hपूर्णांक value क्रम every cblock (eg,
+ * क्रम a hit count).  These are stored against the policy name.  If
+ * policies are changed, then hपूर्णांकs will be lost.  If the machine crashes,
+ * hपूर्णांकs will be lost.
  *
- * The hints are indexed by the cblock, but many policies will not
+ * The hपूर्णांकs are indexed by the cblock, but many policies will not
  * neccessarily have a fast way of accessing efficiently via cblock.  So
- * rather than querying the policy for each cblock, we let it walk its data
- * structures and fill in the hints in whatever order it wishes.
+ * rather than querying the policy क्रम each cblock, we let it walk its data
+ * काष्ठाures and fill in the hपूर्णांकs in whatever order it wishes.
  */
-int dm_cache_write_hints(struct dm_cache_metadata *cmd, struct dm_cache_policy *p);
+पूर्णांक dm_cache_ग_लिखो_hपूर्णांकs(काष्ठा dm_cache_metadata *cmd, काष्ठा dm_cache_policy *p);
 
 /*
  * Query method.  Are all the blocks in the cache clean?
  */
-int dm_cache_metadata_all_clean(struct dm_cache_metadata *cmd, bool *result);
+पूर्णांक dm_cache_metadata_all_clean(काष्ठा dm_cache_metadata *cmd, bool *result);
 
-int dm_cache_metadata_needs_check(struct dm_cache_metadata *cmd, bool *result);
-int dm_cache_metadata_set_needs_check(struct dm_cache_metadata *cmd);
-void dm_cache_metadata_set_read_only(struct dm_cache_metadata *cmd);
-void dm_cache_metadata_set_read_write(struct dm_cache_metadata *cmd);
-int dm_cache_metadata_abort(struct dm_cache_metadata *cmd);
+पूर्णांक dm_cache_metadata_needs_check(काष्ठा dm_cache_metadata *cmd, bool *result);
+पूर्णांक dm_cache_metadata_set_needs_check(काष्ठा dm_cache_metadata *cmd);
+व्योम dm_cache_metadata_set_पढ़ो_only(काष्ठा dm_cache_metadata *cmd);
+व्योम dm_cache_metadata_set_पढ़ो_ग_लिखो(काष्ठा dm_cache_metadata *cmd);
+पूर्णांक dm_cache_metadata_पात(काष्ठा dm_cache_metadata *cmd);
 
 /*----------------------------------------------------------------*/
 
-#endif /* DM_CACHE_METADATA_H */
+#पूर्ण_अगर /* DM_CACHE_METADATA_H */

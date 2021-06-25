@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2007 Lemote Inc. & Institute of Computing Technology
  * Author: Fuxin Zhang, zhangfx@lemote.com
  */
-#include <linux/export.h>
-#include <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
 
-#include <asm/wbflush.h>
-#include <asm/bootinfo.h>
-#include <linux/libfdt.h>
-#include <linux/of_fdt.h>
+#समावेश <यंत्र/wbflush.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <linux/libfdt.h>
+#समावेश <linux/of_fdt.h>
 
-#include <asm/prom.h>
+#समावेश <यंत्र/prom.h>
 
-#include <loongson.h>
+#समावेश <loongson.h>
 
-void *loongson_fdt_blob;
+व्योम *loongson_fdt_blob;
 
-static void wbflush_loongson(void)
-{
-	asm(".set\tpush\n\t"
+अटल व्योम wbflush_loongson(व्योम)
+अणु
+	यंत्र(".set\tpush\n\t"
 	    ".set\tnoreorder\n\t"
 	    ".set mips3\n\t"
 	    "sync\n\t"
 	    "nop\n\t"
 	    ".set\tpop\n\t"
 	    ".set mips0\n\t");
-}
+पूर्ण
 
-void (*__wbflush)(void) = wbflush_loongson;
+व्योम (*__wbflush)(व्योम) = wbflush_loongson;
 EXPORT_SYMBOL(__wbflush);
 
-void __init plat_mem_setup(void)
-{
-	if (loongson_fdt_blob)
+व्योम __init plat_mem_setup(व्योम)
+अणु
+	अगर (loongson_fdt_blob)
 		__dt_setup_arch(loongson_fdt_blob);
-}
+पूर्ण
 
-void __init device_tree_init(void)
-{
-	if (!initial_boot_params)
-		return;
+व्योम __init device_tree_init(व्योम)
+अणु
+	अगर (!initial_boot_params)
+		वापस;
 
 	unflatten_and_copy_device_tree();
-}
+पूर्ण

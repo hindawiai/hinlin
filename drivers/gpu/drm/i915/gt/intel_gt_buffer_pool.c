@@ -1,253 +1,254 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2014-2018 Intel Corporation
+ * Copyright तऊ 2014-2018 Intel Corporation
  */
 
-#include "gem/i915_gem_object.h"
+#समावेश "gem/i915_gem_object.h"
 
-#include "i915_drv.h"
-#include "intel_engine_pm.h"
-#include "intel_gt_buffer_pool.h"
+#समावेश "i915_drv.h"
+#समावेश "intel_engine_pm.h"
+#समावेश "intel_gt_buffer_pool.h"
 
-static struct intel_gt *to_gt(struct intel_gt_buffer_pool *pool)
-{
-	return container_of(pool, struct intel_gt, buffer_pool);
-}
+अटल काष्ठा पूर्णांकel_gt *to_gt(काष्ठा पूर्णांकel_gt_buffer_pool *pool)
+अणु
+	वापस container_of(pool, काष्ठा पूर्णांकel_gt, buffer_pool);
+पूर्ण
 
-static struct list_head *
-bucket_for_size(struct intel_gt_buffer_pool *pool, size_t sz)
-{
-	int n;
+अटल काष्ठा list_head *
+bucket_क्रम_size(काष्ठा पूर्णांकel_gt_buffer_pool *pool, माप_प्रकार sz)
+अणु
+	पूर्णांक n;
 
 	/*
-	 * Compute a power-of-two bucket, but throw everything greater than
-	 * 16KiB into the same bucket: i.e. the buckets hold objects of
+	 * Compute a घातer-of-two bucket, but throw everything greater than
+	 * 16KiB पूर्णांकo the same bucket: i.e. the buckets hold objects of
 	 * (1 page, 2 pages, 4 pages, 8+ pages).
 	 */
 	n = fls(sz >> PAGE_SHIFT) - 1;
-	if (n >= ARRAY_SIZE(pool->cache_list))
+	अगर (n >= ARRAY_SIZE(pool->cache_list))
 		n = ARRAY_SIZE(pool->cache_list) - 1;
 
-	return &pool->cache_list[n];
-}
+	वापस &pool->cache_list[n];
+पूर्ण
 
-static void node_free(struct intel_gt_buffer_pool_node *node)
-{
+अटल व्योम node_मुक्त(काष्ठा पूर्णांकel_gt_buffer_pool_node *node)
+अणु
 	i915_gem_object_put(node->obj);
 	i915_active_fini(&node->active);
-	kfree_rcu(node, rcu);
-}
+	kमुक्त_rcu(node, rcu);
+पूर्ण
 
-static bool pool_free_older_than(struct intel_gt_buffer_pool *pool, long keep)
-{
-	struct intel_gt_buffer_pool_node *node, *stale = NULL;
+अटल bool pool_मुक्त_older_than(काष्ठा पूर्णांकel_gt_buffer_pool *pool, दीर्घ keep)
+अणु
+	काष्ठा पूर्णांकel_gt_buffer_pool_node *node, *stale = शून्य;
 	bool active = false;
-	int n;
+	पूर्णांक n;
 
 	/* Free buffers that have not been used in the past second */
-	for (n = 0; n < ARRAY_SIZE(pool->cache_list); n++) {
-		struct list_head *list = &pool->cache_list[n];
+	क्रम (n = 0; n < ARRAY_SIZE(pool->cache_list); n++) अणु
+		काष्ठा list_head *list = &pool->cache_list[n];
 
-		if (list_empty(list))
-			continue;
+		अगर (list_empty(list))
+			जारी;
 
-		if (spin_trylock_irq(&pool->lock)) {
-			struct list_head *pos;
+		अगर (spin_trylock_irq(&pool->lock)) अणु
+			काष्ठा list_head *pos;
 
 			/* Most recent at head; oldest at tail */
-			list_for_each_prev(pos, list) {
-				unsigned long age;
+			list_क्रम_each_prev(pos, list) अणु
+				अचिन्हित दीर्घ age;
 
 				node = list_entry(pos, typeof(*node), link);
 
 				age = READ_ONCE(node->age);
-				if (!age || jiffies - age < keep)
-					break;
+				अगर (!age || jअगरfies - age < keep)
+					अवरोध;
 
 				/* Check we are the first to claim this node */
-				if (!xchg(&node->age, 0))
-					break;
+				अगर (!xchg(&node->age, 0))
+					अवरोध;
 
-				node->free = stale;
+				node->मुक्त = stale;
 				stale = node;
-			}
-			if (!list_is_last(pos, list))
+			पूर्ण
+			अगर (!list_is_last(pos, list))
 				__list_del_many(pos, list);
 
 			spin_unlock_irq(&pool->lock);
-		}
+		पूर्ण
 
 		active |= !list_empty(list);
-	}
+	पूर्ण
 
-	while ((node = stale)) {
-		stale = stale->free;
-		node_free(node);
-	}
+	जबतक ((node = stale)) अणु
+		stale = stale->मुक्त;
+		node_मुक्त(node);
+	पूर्ण
 
-	return active;
-}
+	वापस active;
+पूर्ण
 
-static void pool_free_work(struct work_struct *wrk)
-{
-	struct intel_gt_buffer_pool *pool =
+अटल व्योम pool_मुक्त_work(काष्ठा work_काष्ठा *wrk)
+अणु
+	काष्ठा पूर्णांकel_gt_buffer_pool *pool =
 		container_of(wrk, typeof(*pool), work.work);
 
-	if (pool_free_older_than(pool, HZ))
+	अगर (pool_मुक्त_older_than(pool, HZ))
 		schedule_delayed_work(&pool->work,
-				      round_jiffies_up_relative(HZ));
-}
+				      round_jअगरfies_up_relative(HZ));
+पूर्ण
 
 __i915_active_call
-static void pool_retire(struct i915_active *ref)
-{
-	struct intel_gt_buffer_pool_node *node =
+अटल व्योम pool_retire(काष्ठा i915_active *ref)
+अणु
+	काष्ठा पूर्णांकel_gt_buffer_pool_node *node =
 		container_of(ref, typeof(*node), active);
-	struct intel_gt_buffer_pool *pool = node->pool;
-	struct list_head *list = bucket_for_size(pool, node->obj->base.size);
-	unsigned long flags;
+	काष्ठा पूर्णांकel_gt_buffer_pool *pool = node->pool;
+	काष्ठा list_head *list = bucket_क्रम_size(pool, node->obj->base.size);
+	अचिन्हित दीर्घ flags;
 
-	if (node->pinned) {
+	अगर (node->pinned) अणु
 		i915_gem_object_unpin_pages(node->obj);
 
 		/* Return this object to the shrinker pool */
 		i915_gem_object_make_purgeable(node->obj);
 		node->pinned = false;
-	}
+	पूर्ण
 
 	GEM_BUG_ON(node->age);
 	spin_lock_irqsave(&pool->lock, flags);
 	list_add_rcu(&node->link, list);
-	WRITE_ONCE(node->age, jiffies ?: 1); /* 0 reserved for active nodes */
+	WRITE_ONCE(node->age, jअगरfies ?: 1); /* 0 reserved क्रम active nodes */
 	spin_unlock_irqrestore(&pool->lock, flags);
 
 	schedule_delayed_work(&pool->work,
-			      round_jiffies_up_relative(HZ));
-}
+			      round_jअगरfies_up_relative(HZ));
+पूर्ण
 
-void intel_gt_buffer_pool_mark_used(struct intel_gt_buffer_pool_node *node)
-{
-	assert_object_held(node->obj);
+व्योम पूर्णांकel_gt_buffer_pool_mark_used(काष्ठा पूर्णांकel_gt_buffer_pool_node *node)
+अणु
+	निश्चित_object_held(node->obj);
 
-	if (node->pinned)
-		return;
+	अगर (node->pinned)
+		वापस;
 
 	__i915_gem_object_pin_pages(node->obj);
 	/* Hide this pinned object from the shrinker until retired */
 	i915_gem_object_make_unshrinkable(node->obj);
 	node->pinned = true;
-}
+पूर्ण
 
-static struct intel_gt_buffer_pool_node *
-node_create(struct intel_gt_buffer_pool *pool, size_t sz,
-	    enum i915_map_type type)
-{
-	struct intel_gt *gt = to_gt(pool);
-	struct intel_gt_buffer_pool_node *node;
-	struct drm_i915_gem_object *obj;
+अटल काष्ठा पूर्णांकel_gt_buffer_pool_node *
+node_create(काष्ठा पूर्णांकel_gt_buffer_pool *pool, माप_प्रकार sz,
+	    क्रमागत i915_map_type type)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = to_gt(pool);
+	काष्ठा पूर्णांकel_gt_buffer_pool_node *node;
+	काष्ठा drm_i915_gem_object *obj;
 
-	node = kmalloc(sizeof(*node),
+	node = kदो_स्मृति(माप(*node),
 		       GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN);
-	if (!node)
-		return ERR_PTR(-ENOMEM);
+	अगर (!node)
+		वापस ERR_PTR(-ENOMEM);
 
 	node->age = 0;
 	node->pool = pool;
 	node->pinned = false;
-	i915_active_init(&node->active, NULL, pool_retire);
+	i915_active_init(&node->active, शून्य, pool_retire);
 
-	obj = i915_gem_object_create_internal(gt->i915, sz);
-	if (IS_ERR(obj)) {
+	obj = i915_gem_object_create_पूर्णांकernal(gt->i915, sz);
+	अगर (IS_ERR(obj)) अणु
 		i915_active_fini(&node->active);
-		kfree(node);
-		return ERR_CAST(obj);
-	}
+		kमुक्त(node);
+		वापस ERR_CAST(obj);
+	पूर्ण
 
-	i915_gem_object_set_readonly(obj);
+	i915_gem_object_set_पढ़ोonly(obj);
 
 	node->type = type;
 	node->obj = obj;
-	return node;
-}
+	वापस node;
+पूर्ण
 
-struct intel_gt_buffer_pool_node *
-intel_gt_get_buffer_pool(struct intel_gt *gt, size_t size,
-			 enum i915_map_type type)
-{
-	struct intel_gt_buffer_pool *pool = &gt->buffer_pool;
-	struct intel_gt_buffer_pool_node *node;
-	struct list_head *list;
-	int ret;
+काष्ठा पूर्णांकel_gt_buffer_pool_node *
+पूर्णांकel_gt_get_buffer_pool(काष्ठा पूर्णांकel_gt *gt, माप_प्रकार size,
+			 क्रमागत i915_map_type type)
+अणु
+	काष्ठा पूर्णांकel_gt_buffer_pool *pool = &gt->buffer_pool;
+	काष्ठा पूर्णांकel_gt_buffer_pool_node *node;
+	काष्ठा list_head *list;
+	पूर्णांक ret;
 
 	size = PAGE_ALIGN(size);
-	list = bucket_for_size(pool, size);
+	list = bucket_क्रम_size(pool, size);
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(node, list, link) {
-		unsigned long age;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(node, list, link) अणु
+		अचिन्हित दीर्घ age;
 
-		if (node->obj->base.size < size)
-			continue;
+		अगर (node->obj->base.size < size)
+			जारी;
 
-		if (node->type != type)
-			continue;
+		अगर (node->type != type)
+			जारी;
 
 		age = READ_ONCE(node->age);
-		if (!age)
-			continue;
+		अगर (!age)
+			जारी;
 
-		if (cmpxchg(&node->age, age, 0) == age) {
+		अगर (cmpxchg(&node->age, age, 0) == age) अणु
 			spin_lock_irq(&pool->lock);
 			list_del_rcu(&node->link);
 			spin_unlock_irq(&pool->lock);
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (&node->link == list) {
+	अगर (&node->link == list) अणु
 		node = node_create(pool, size, type);
-		if (IS_ERR(node))
-			return node;
-	}
+		अगर (IS_ERR(node))
+			वापस node;
+	पूर्ण
 
 	ret = i915_active_acquire(&node->active);
-	if (ret) {
-		node_free(node);
-		return ERR_PTR(ret);
-	}
+	अगर (ret) अणु
+		node_मुक्त(node);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-void intel_gt_init_buffer_pool(struct intel_gt *gt)
-{
-	struct intel_gt_buffer_pool *pool = &gt->buffer_pool;
-	int n;
+व्योम पूर्णांकel_gt_init_buffer_pool(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_gt_buffer_pool *pool = &gt->buffer_pool;
+	पूर्णांक n;
 
 	spin_lock_init(&pool->lock);
-	for (n = 0; n < ARRAY_SIZE(pool->cache_list); n++)
+	क्रम (n = 0; n < ARRAY_SIZE(pool->cache_list); n++)
 		INIT_LIST_HEAD(&pool->cache_list[n]);
-	INIT_DELAYED_WORK(&pool->work, pool_free_work);
-}
+	INIT_DELAYED_WORK(&pool->work, pool_मुक्त_work);
+पूर्ण
 
-void intel_gt_flush_buffer_pool(struct intel_gt *gt)
-{
-	struct intel_gt_buffer_pool *pool = &gt->buffer_pool;
+व्योम पूर्णांकel_gt_flush_buffer_pool(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_gt_buffer_pool *pool = &gt->buffer_pool;
 
-	do {
-		while (pool_free_older_than(pool, 0))
+	करो अणु
+		जबतक (pool_मुक्त_older_than(pool, 0))
 			;
-	} while (cancel_delayed_work_sync(&pool->work));
-}
+	पूर्ण जबतक (cancel_delayed_work_sync(&pool->work));
+पूर्ण
 
-void intel_gt_fini_buffer_pool(struct intel_gt *gt)
-{
-	struct intel_gt_buffer_pool *pool = &gt->buffer_pool;
-	int n;
+व्योम पूर्णांकel_gt_fini_buffer_pool(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_gt_buffer_pool *pool = &gt->buffer_pool;
+	पूर्णांक n;
 
-	intel_gt_flush_buffer_pool(gt);
+	पूर्णांकel_gt_flush_buffer_pool(gt);
 
-	for (n = 0; n < ARRAY_SIZE(pool->cache_list); n++)
+	क्रम (n = 0; n < ARRAY_SIZE(pool->cache_list); n++)
 		GEM_BUG_ON(!list_empty(&pool->cache_list[n]));
-}
+पूर्ण

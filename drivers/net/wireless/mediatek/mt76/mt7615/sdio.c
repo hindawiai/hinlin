@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /* Copyright (C) 2020 MediaTek Inc.
  *
  * Author: Felix Fietkau <nbd@nbd.name>
@@ -6,295 +7,295 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
 
-#include <linux/mmc/host.h>
-#include <linux/mmc/sdio_ids.h>
-#include <linux/mmc/sdio_func.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/sdio_ids.h>
+#समावेश <linux/mmc/sdio_func.h>
 
-#include "mt7615.h"
-#include "sdio.h"
-#include "mac.h"
-#include "mcu.h"
+#समावेश "mt7615.h"
+#समावेश "sdio.h"
+#समावेश "mac.h"
+#समावेश "mcu.h"
 
-static const struct sdio_device_id mt7663s_table[] = {
-	{ SDIO_DEVICE(SDIO_VENDOR_ID_MEDIATEK, 0x7603) },
-	{ }	/* Terminating entry */
-};
+अटल स्थिर काष्ठा sdio_device_id mt7663s_table[] = अणु
+	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MEDIATEK, 0x7603) पूर्ण,
+	अणु पूर्ण	/* Terminating entry */
+पूर्ण;
 
-static u32 mt7663s_read_whisr(struct mt76_dev *dev)
-{
-	return sdio_readl(dev->sdio.func, MCR_WHISR, NULL);
-}
+अटल u32 mt7663s_पढ़ो_whisr(काष्ठा mt76_dev *dev)
+अणु
+	वापस sdio_पढ़ोl(dev->sdio.func, MCR_WHISR, शून्य);
+पूर्ण
 
-u32 mt7663s_read_pcr(struct mt7615_dev *dev)
-{
-	struct mt76_sdio *sdio = &dev->mt76.sdio;
+u32 mt7663s_पढ़ो_pcr(काष्ठा mt7615_dev *dev)
+अणु
+	काष्ठा mt76_sdio *sdio = &dev->mt76.sdio;
 
-	return sdio_readl(sdio->func, MCR_WHLPCR, NULL);
-}
+	वापस sdio_पढ़ोl(sdio->func, MCR_WHLPCR, शून्य);
+पूर्ण
 
-static u32 mt7663s_read_mailbox(struct mt76_dev *dev, u32 offset)
-{
-	struct sdio_func *func = dev->sdio.func;
+अटल u32 mt7663s_पढ़ो_mailbox(काष्ठा mt76_dev *dev, u32 offset)
+अणु
+	काष्ठा sdio_func *func = dev->sdio.func;
 	u32 val = ~0, status;
-	int err;
+	पूर्णांक err;
 
 	sdio_claim_host(func);
 
-	sdio_writel(func, offset, MCR_H2DSM0R, &err);
-	if (err < 0) {
+	sdio_ग_लिखोl(func, offset, MCR_H2DSM0R, &err);
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "failed setting address [err=%d]\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sdio_writel(func, H2D_SW_INT_READ, MCR_WSICR, &err);
-	if (err < 0) {
+	sdio_ग_लिखोl(func, H2D_SW_INT_READ, MCR_WSICR, &err);
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "failed setting read mode [err=%d]\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = readx_poll_timeout(mt7663s_read_whisr, dev, status,
+	err = पढ़ोx_poll_समयout(mt7663s_पढ़ो_whisr, dev, status,
 				 status & H2D_SW_INT_READ, 0, 1000000);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "query whisr timeout\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sdio_writel(func, H2D_SW_INT_READ, MCR_WHISR, &err);
-	if (err < 0) {
+	sdio_ग_लिखोl(func, H2D_SW_INT_READ, MCR_WHISR, &err);
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "failed setting read mode [err=%d]\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	val = sdio_readl(func, MCR_H2DSM0R, &err);
-	if (err < 0) {
+	val = sdio_पढ़ोl(func, MCR_H2DSM0R, &err);
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "failed reading h2dsm0r [err=%d]\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (val != offset) {
+	अगर (val != offset) अणु
 		dev_err(dev->dev, "register mismatch\n");
 		val = ~0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	val = sdio_readl(func, MCR_D2HRM1R, &err);
-	if (err < 0)
+	val = sdio_पढ़ोl(func, MCR_D2HRM1R, &err);
+	अगर (err < 0)
 		dev_err(dev->dev, "failed reading d2hrm1r [err=%d]\n", err);
 
 out:
 	sdio_release_host(func);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void mt7663s_write_mailbox(struct mt76_dev *dev, u32 offset, u32 val)
-{
-	struct sdio_func *func = dev->sdio.func;
+अटल व्योम mt7663s_ग_लिखो_mailbox(काष्ठा mt76_dev *dev, u32 offset, u32 val)
+अणु
+	काष्ठा sdio_func *func = dev->sdio.func;
 	u32 status;
-	int err;
+	पूर्णांक err;
 
 	sdio_claim_host(func);
 
-	sdio_writel(func, offset, MCR_H2DSM0R, &err);
-	if (err < 0) {
+	sdio_ग_लिखोl(func, offset, MCR_H2DSM0R, &err);
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "failed setting address [err=%d]\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sdio_writel(func, val, MCR_H2DSM1R, &err);
-	if (err < 0) {
+	sdio_ग_लिखोl(func, val, MCR_H2DSM1R, &err);
+	अगर (err < 0) अणु
 		dev_err(dev->dev,
 			"failed setting write value [err=%d]\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sdio_writel(func, H2D_SW_INT_WRITE, MCR_WSICR, &err);
-	if (err < 0) {
+	sdio_ग_लिखोl(func, H2D_SW_INT_WRITE, MCR_WSICR, &err);
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "failed setting write mode [err=%d]\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = readx_poll_timeout(mt7663s_read_whisr, dev, status,
+	err = पढ़ोx_poll_समयout(mt7663s_पढ़ो_whisr, dev, status,
 				 status & H2D_SW_INT_WRITE, 0, 1000000);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "query whisr timeout\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sdio_writel(func, H2D_SW_INT_WRITE, MCR_WHISR, &err);
-	if (err < 0) {
+	sdio_ग_लिखोl(func, H2D_SW_INT_WRITE, MCR_WHISR, &err);
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "failed setting write mode [err=%d]\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	val = sdio_readl(func, MCR_H2DSM0R, &err);
-	if (err < 0) {
+	val = sdio_पढ़ोl(func, MCR_H2DSM0R, &err);
+	अगर (err < 0) अणु
 		dev_err(dev->dev, "failed reading h2dsm0r [err=%d]\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (val != offset)
+	अगर (val != offset)
 		dev_err(dev->dev, "register mismatch\n");
 
 out:
 	sdio_release_host(func);
-}
+पूर्ण
 
-static u32 mt7663s_rr(struct mt76_dev *dev, u32 offset)
-{
-	if (test_bit(MT76_STATE_MCU_RUNNING, &dev->phy.state))
-		return dev->mcu_ops->mcu_rr(dev, offset);
-	else
-		return mt7663s_read_mailbox(dev, offset);
-}
+अटल u32 mt7663s_rr(काष्ठा mt76_dev *dev, u32 offset)
+अणु
+	अगर (test_bit(MT76_STATE_MCU_RUNNING, &dev->phy.state))
+		वापस dev->mcu_ops->mcu_rr(dev, offset);
+	अन्यथा
+		वापस mt7663s_पढ़ो_mailbox(dev, offset);
+पूर्ण
 
-static void mt7663s_wr(struct mt76_dev *dev, u32 offset, u32 val)
-{
-	if (test_bit(MT76_STATE_MCU_RUNNING, &dev->phy.state))
+अटल व्योम mt7663s_wr(काष्ठा mt76_dev *dev, u32 offset, u32 val)
+अणु
+	अगर (test_bit(MT76_STATE_MCU_RUNNING, &dev->phy.state))
 		dev->mcu_ops->mcu_wr(dev, offset, val);
-	else
-		mt7663s_write_mailbox(dev, offset, val);
-}
+	अन्यथा
+		mt7663s_ग_लिखो_mailbox(dev, offset, val);
+पूर्ण
 
-static u32 mt7663s_rmw(struct mt76_dev *dev, u32 offset, u32 mask, u32 val)
-{
+अटल u32 mt7663s_rmw(काष्ठा mt76_dev *dev, u32 offset, u32 mask, u32 val)
+अणु
 	val |= mt7663s_rr(dev, offset) & ~mask;
 	mt7663s_wr(dev, offset, val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void mt7663s_write_copy(struct mt76_dev *dev, u32 offset,
-			       const void *data, int len)
-{
-	const u32 *val = data;
-	int i;
+अटल व्योम mt7663s_ग_लिखो_copy(काष्ठा mt76_dev *dev, u32 offset,
+			       स्थिर व्योम *data, पूर्णांक len)
+अणु
+	स्थिर u32 *val = data;
+	पूर्णांक i;
 
-	for (i = 0; i < len / sizeof(u32); i++) {
+	क्रम (i = 0; i < len / माप(u32); i++) अणु
 		mt7663s_wr(dev, offset, val[i]);
-		offset += sizeof(u32);
-	}
-}
+		offset += माप(u32);
+	पूर्ण
+पूर्ण
 
-static void mt7663s_read_copy(struct mt76_dev *dev, u32 offset,
-			      void *data, int len)
-{
+अटल व्योम mt7663s_पढ़ो_copy(काष्ठा mt76_dev *dev, u32 offset,
+			      व्योम *data, पूर्णांक len)
+अणु
 	u32 *val = data;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < len / sizeof(u32); i++) {
+	क्रम (i = 0; i < len / माप(u32); i++) अणु
 		val[i] = mt7663s_rr(dev, offset);
-		offset += sizeof(u32);
-	}
-}
+		offset += माप(u32);
+	पूर्ण
+पूर्ण
 
-static int mt7663s_wr_rp(struct mt76_dev *dev, u32 base,
-			 const struct mt76_reg_pair *data,
-			 int len)
-{
-	int i;
+अटल पूर्णांक mt7663s_wr_rp(काष्ठा mt76_dev *dev, u32 base,
+			 स्थिर काष्ठा mt76_reg_pair *data,
+			 पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++) {
+	क्रम (i = 0; i < len; i++) अणु
 		mt7663s_wr(dev, data->reg, data->value);
 		data++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt7663s_rd_rp(struct mt76_dev *dev, u32 base,
-			 struct mt76_reg_pair *data,
-			 int len)
-{
-	int i;
+अटल पूर्णांक mt7663s_rd_rp(काष्ठा mt76_dev *dev, u32 base,
+			 काष्ठा mt76_reg_pair *data,
+			 पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++) {
+	क्रम (i = 0; i < len; i++) अणु
 		data->value = mt7663s_rr(dev, data->reg);
 		data++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mt7663s_init_work(struct work_struct *work)
-{
-	struct mt7615_dev *dev;
+अटल व्योम mt7663s_init_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mt7615_dev *dev;
 
-	dev = container_of(work, struct mt7615_dev, mcu_work);
-	if (mt7663s_mcu_init(dev))
-		return;
+	dev = container_of(work, काष्ठा mt7615_dev, mcu_work);
+	अगर (mt7663s_mcu_init(dev))
+		वापस;
 
 	mt7615_init_work(dev);
-}
+पूर्ण
 
-static int mt7663s_hw_init(struct mt7615_dev *dev, struct sdio_func *func)
-{
+अटल पूर्णांक mt7663s_hw_init(काष्ठा mt7615_dev *dev, काष्ठा sdio_func *func)
+अणु
 	u32 status, ctrl;
-	int ret;
+	पूर्णांक ret;
 
 	sdio_claim_host(func);
 
 	ret = sdio_enable_func(func);
-	if (ret < 0)
-		goto release;
+	अगर (ret < 0)
+		जाओ release;
 
 	/* Get ownership from the device */
-	sdio_writel(func, WHLPCR_INT_EN_CLR | WHLPCR_FW_OWN_REQ_CLR,
+	sdio_ग_लिखोl(func, WHLPCR_INT_EN_CLR | WHLPCR_FW_OWN_REQ_CLR,
 		    MCR_WHLPCR, &ret);
-	if (ret < 0)
-		goto disable_func;
+	अगर (ret < 0)
+		जाओ disable_func;
 
-	ret = readx_poll_timeout(mt7663s_read_pcr, dev, status,
+	ret = पढ़ोx_poll_समयout(mt7663s_पढ़ो_pcr, dev, status,
 				 status & WHLPCR_IS_DRIVER_OWN, 2000, 1000000);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev->mt76.dev, "Cannot get ownership from device");
-		goto disable_func;
-	}
+		जाओ disable_func;
+	पूर्ण
 
 	ret = sdio_set_block_size(func, 512);
-	if (ret < 0)
-		goto disable_func;
+	अगर (ret < 0)
+		जाओ disable_func;
 
-	/* Enable interrupt */
-	sdio_writel(func, WHLPCR_INT_EN_SET, MCR_WHLPCR, &ret);
-	if (ret < 0)
-		goto disable_func;
+	/* Enable पूर्णांकerrupt */
+	sdio_ग_लिखोl(func, WHLPCR_INT_EN_SET, MCR_WHLPCR, &ret);
+	अगर (ret < 0)
+		जाओ disable_func;
 
 	ctrl = WHIER_RX0_DONE_INT_EN | WHIER_TX_DONE_INT_EN;
-	sdio_writel(func, ctrl, MCR_WHIER, &ret);
-	if (ret < 0)
-		goto disable_func;
+	sdio_ग_लिखोl(func, ctrl, MCR_WHIER, &ret);
+	अगर (ret < 0)
+		जाओ disable_func;
 
-	/* set WHISR as read clear and Rx aggregation number as 16 */
+	/* set WHISR as पढ़ो clear and Rx aggregation number as 16 */
 	ctrl = FIELD_PREP(MAX_HIF_RX_LEN_NUM, 16);
-	sdio_writel(func, ctrl, MCR_WHCR, &ret);
-	if (ret < 0)
-		goto disable_func;
+	sdio_ग_लिखोl(func, ctrl, MCR_WHCR, &ret);
+	अगर (ret < 0)
+		जाओ disable_func;
 
 	ret = sdio_claim_irq(func, mt7663s_sdio_irq);
-	if (ret < 0)
-		goto disable_func;
+	अगर (ret < 0)
+		जाओ disable_func;
 
 	sdio_release_host(func);
 
-	return 0;
+	वापस 0;
 
 disable_func:
 	sdio_disable_func(func);
 release:
 	sdio_release_host(func);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mt7663s_probe(struct sdio_func *func,
-			 const struct sdio_device_id *id)
-{
-	static const struct mt76_driver_ops drv_ops = {
+अटल पूर्णांक mt7663s_probe(काष्ठा sdio_func *func,
+			 स्थिर काष्ठा sdio_device_id *id)
+अणु
+	अटल स्थिर काष्ठा mt76_driver_ops drv_ops = अणु
 		.txwi_size = MT_USB_TXD_SIZE,
 		.drv_flags = MT_DRV_RX_DMA_HDR,
 		.tx_prepare_skb = mt7663_usb_sdio_tx_prepare_skb,
@@ -303,34 +304,34 @@ static int mt7663s_probe(struct sdio_func *func,
 		.rx_skb = mt7615_queue_rx_skb,
 		.sta_ps = mt7615_sta_ps,
 		.sta_add = mt7615_mac_sta_add,
-		.sta_remove = mt7615_mac_sta_remove,
+		.sta_हटाओ = mt7615_mac_sta_हटाओ,
 		.update_survey = mt7615_update_channel,
-	};
-	static const struct mt76_bus_ops mt7663s_ops = {
+	पूर्ण;
+	अटल स्थिर काष्ठा mt76_bus_ops mt7663s_ops = अणु
 		.rr = mt7663s_rr,
 		.rmw = mt7663s_rmw,
 		.wr = mt7663s_wr,
-		.write_copy = mt7663s_write_copy,
-		.read_copy = mt7663s_read_copy,
+		.ग_लिखो_copy = mt7663s_ग_लिखो_copy,
+		.पढ़ो_copy = mt7663s_पढ़ो_copy,
 		.wr_rp = mt7663s_wr_rp,
 		.rd_rp = mt7663s_rd_rp,
 		.type = MT76_BUS_SDIO,
-	};
-	struct ieee80211_ops *ops;
-	struct mt7615_dev *dev;
-	struct mt76_dev *mdev;
-	int i, ret;
+	पूर्ण;
+	काष्ठा ieee80211_ops *ops;
+	काष्ठा mt7615_dev *dev;
+	काष्ठा mt76_dev *mdev;
+	पूर्णांक i, ret;
 
-	ops = devm_kmemdup(&func->dev, &mt7615_ops, sizeof(mt7615_ops),
+	ops = devm_kmemdup(&func->dev, &mt7615_ops, माप(mt7615_ops),
 			   GFP_KERNEL);
-	if (!ops)
-		return -ENOMEM;
+	अगर (!ops)
+		वापस -ENOMEM;
 
-	mdev = mt76_alloc_device(&func->dev, sizeof(*dev), ops, &drv_ops);
-	if (!mdev)
-		return -ENOMEM;
+	mdev = mt76_alloc_device(&func->dev, माप(*dev), ops, &drv_ops);
+	अगर (!mdev)
+		वापस -ENOMEM;
 
-	dev = container_of(mdev, struct mt7615_dev, mt76);
+	dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
 
 	INIT_WORK(&dev->mcu_work, mt7663s_init_work);
 	dev->reg_map = mt7663_usb_sdio_reg_map;
@@ -338,92 +339,92 @@ static int mt7663s_probe(struct sdio_func *func,
 	sdio_set_drvdata(func, dev);
 
 	ret = mt76s_init(mdev, func, &mt7663s_ops);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
 	ret = mt7663s_hw_init(dev, func);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	mdev->rev = (mt76_rr(dev, MT_HW_CHIPID) << 16) |
 		    (mt76_rr(dev, MT_HW_REV) & 0xff);
 	dev_dbg(mdev->dev, "ASIC revision: %04x\n", mdev->rev);
 
-	mdev->sdio.intr_data = devm_kmalloc(mdev->dev,
-					    sizeof(struct mt76s_intr),
+	mdev->sdio.पूर्णांकr_data = devm_kदो_स्मृति(mdev->dev,
+					    माप(काष्ठा mt76s_पूर्णांकr),
 					    GFP_KERNEL);
-	if (!mdev->sdio.intr_data) {
+	अगर (!mdev->sdio.पूर्णांकr_data) अणु
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(mdev->sdio.xmit_buf); i++) {
-		mdev->sdio.xmit_buf[i] = devm_kmalloc(mdev->dev,
+	क्रम (i = 0; i < ARRAY_SIZE(mdev->sdio.xmit_buf); i++) अणु
+		mdev->sdio.xmit_buf[i] = devm_kदो_स्मृति(mdev->dev,
 						      MT76S_XMIT_BUF_SZ,
 						      GFP_KERNEL);
-		if (!mdev->sdio.xmit_buf[i]) {
+		अगर (!mdev->sdio.xmit_buf[i]) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	ret = mt76s_alloc_queues(&dev->mt76);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	ret = mt76_worker_setup(mt76_hw(dev), &mdev->sdio.txrx_worker,
 				mt7663s_txrx_worker, "sdio-txrx");
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	sched_set_fifo_low(mdev->sdio.txrx_worker.task);
+	sched_set_fअगरo_low(mdev->sdio.txrx_worker.task);
 
-	ret = mt7663_usb_sdio_register_device(dev);
-	if (ret)
-		goto error;
+	ret = mt7663_usb_sdio_रेजिस्टर_device(dev);
+	अगर (ret)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
 	mt76s_deinit(&dev->mt76);
-	mt76_free_device(&dev->mt76);
+	mt76_मुक्त_device(&dev->mt76);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mt7663s_remove(struct sdio_func *func)
-{
-	struct mt7615_dev *dev = sdio_get_drvdata(func);
+अटल व्योम mt7663s_हटाओ(काष्ठा sdio_func *func)
+अणु
+	काष्ठा mt7615_dev *dev = sdio_get_drvdata(func);
 
-	if (!test_and_clear_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
-		return;
+	अगर (!test_and_clear_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
+		वापस;
 
-	ieee80211_unregister_hw(dev->mt76.hw);
+	ieee80211_unरेजिस्टर_hw(dev->mt76.hw);
 	mt76s_deinit(&dev->mt76);
-	mt76_free_device(&dev->mt76);
-}
+	mt76_मुक्त_device(&dev->mt76);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int mt7663s_suspend(struct device *dev)
-{
-	struct sdio_func *func = dev_to_sdio_func(dev);
-	struct mt7615_dev *mdev = sdio_get_drvdata(func);
-	int err;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक mt7663s_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
+	काष्ठा mt7615_dev *mdev = sdio_get_drvdata(func);
+	पूर्णांक err;
 
-	if (!test_bit(MT76_STATE_SUSPEND, &mdev->mphy.state) &&
-	    mt7615_firmware_offload(mdev)) {
-		int err;
+	अगर (!test_bit(MT76_STATE_SUSPEND, &mdev->mphy.state) &&
+	    mt7615_firmware_offload(mdev)) अणु
+		पूर्णांक err;
 
-		err = mt76_connac_mcu_set_hif_suspend(&mdev->mt76, true);
-		if (err < 0)
-			return err;
-	}
+		err = mt76_connac_mcu_set_hअगर_suspend(&mdev->mt76, true);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
 
 	err = mt7615_mcu_set_fw_ctrl(mdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mt76_worker_disable(&mdev->mt76.sdio.txrx_worker);
 	mt76_worker_disable(&mdev->mt76.sdio.status_worker);
@@ -432,37 +433,37 @@ static int mt7663s_suspend(struct device *dev)
 	cancel_work_sync(&mdev->mt76.sdio.stat_work);
 	clear_bit(MT76_READING_STATS, &mdev->mphy.state);
 
-	mt76_tx_status_check(&mdev->mt76, NULL, true);
+	mt76_tx_status_check(&mdev->mt76, शून्य, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt7663s_resume(struct device *dev)
-{
-	struct sdio_func *func = dev_to_sdio_func(dev);
-	struct mt7615_dev *mdev = sdio_get_drvdata(func);
-	int err;
+अटल पूर्णांक mt7663s_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
+	काष्ठा mt7615_dev *mdev = sdio_get_drvdata(func);
+	पूर्णांक err;
 
 	mt76_worker_enable(&mdev->mt76.sdio.txrx_worker);
 	mt76_worker_enable(&mdev->mt76.sdio.status_worker);
 	mt76_worker_enable(&mdev->mt76.sdio.net_worker);
 
 	err = mt7615_mcu_set_drv_ctrl(mdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!test_bit(MT76_STATE_SUSPEND, &mdev->mphy.state) &&
+	अगर (!test_bit(MT76_STATE_SUSPEND, &mdev->mphy.state) &&
 	    mt7615_firmware_offload(mdev))
-		err = mt76_connac_mcu_set_hif_suspend(&mdev->mt76, false);
+		err = mt76_connac_mcu_set_hअगर_suspend(&mdev->mt76, false);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct dev_pm_ops mt7663s_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops mt7663s_pm_ops = अणु
 	.suspend = mt7663s_suspend,
 	.resume = mt7663s_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 MODULE_DEVICE_TABLE(sdio, mt7663s_table);
 MODULE_FIRMWARE(MT7663_OFFLOAD_FIRMWARE_N9);
@@ -470,17 +471,17 @@ MODULE_FIRMWARE(MT7663_OFFLOAD_ROM_PATCH);
 MODULE_FIRMWARE(MT7663_FIRMWARE_N9);
 MODULE_FIRMWARE(MT7663_ROM_PATCH);
 
-static struct sdio_driver mt7663s_driver = {
+अटल काष्ठा sdio_driver mt7663s_driver = अणु
 	.name		= KBUILD_MODNAME,
 	.probe		= mt7663s_probe,
-	.remove		= mt7663s_remove,
+	.हटाओ		= mt7663s_हटाओ,
 	.id_table	= mt7663s_table,
-#ifdef CONFIG_PM
-	.drv = {
+#अगर_घोषित CONFIG_PM
+	.drv = अणु
 		.pm = &mt7663s_pm_ops,
-	}
-#endif
-};
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण;
 module_sdio_driver(mt7663s_driver);
 
 MODULE_AUTHOR("Sean Wang <sean.wang@mediatek.com>");

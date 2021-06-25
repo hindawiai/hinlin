@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics st_lsm6dsx FIFO buffer library driver
  *
  * LSM6DS3/LSM6DS3H/LSM6DSL/LSM6DSM/ISM330DLC/LSM6DS3TR-C:
  * The FIFO buffer can be configured to store data from gyroscope and
  * accelerometer. Samples are queued without any tag according to a
- * specific pattern based on 'FIFO data sets' (6 bytes each):
- *  - 1st data set is reserved for gyroscope data
- *  - 2nd data set is reserved for accelerometer data
+ * specअगरic pattern based on 'FIFO data sets' (6 bytes each):
+ *  - 1st data set is reserved क्रम gyroscope data
+ *  - 2nd data set is reserved क्रम accelerometer data
  * The FIFO pattern changes depending on the ODRs and decimation factors
- * assigned to the FIFO data sets. The first sequence of data stored in FIFO
+ * asचिन्हित to the FIFO data sets. The first sequence of data stored in FIFO
  * buffer contains the data of all the enabled FIFO data sets
  * (e.g. Gx, Gy, Gz, Ax, Ay, Az), then data are repeated depending on the
- * value of the decimation factor and ODR set for each FIFO data set.
+ * value of the decimation factor and ODR set क्रम each FIFO data set.
  *
  * LSM6DSO/LSM6DSOX/ASM330LHH/LSM6DSR/LSM6DSRX/ISM330DHCX/LSM6DST/LSM6DSOP:
  * The FIFO buffer can be configured to store data from gyroscope and
  * accelerometer. Each sample is queued with a tag (1B) indicating data
- * source (gyroscope, accelerometer, hw timer).
+ * source (gyroscope, accelerometer, hw समयr).
  *
  * FIFO supported modes:
  *  - BYPASS: FIFO disabled
@@ -29,376 +30,376 @@
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  * Denis Ciocca <denis.ciocca@st.com>
  */
-#include <linux/module.h>
-#include <linux/iio/kfifo_buf.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/buffer.h>
-#include <linux/regmap.h>
-#include <linux/bitfield.h>
+#समावेश <linux/module.h>
+#समावेश <linux/iio/kfअगरo_buf.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/bitfield.h>
 
-#include <linux/platform_data/st_sensors_pdata.h>
+#समावेश <linux/platक्रमm_data/st_sensors_pdata.h>
 
-#include "st_lsm6dsx.h"
+#समावेश "st_lsm6dsx.h"
 
-#define ST_LSM6DSX_REG_FIFO_MODE_ADDR		0x0a
-#define ST_LSM6DSX_FIFO_MODE_MASK		GENMASK(2, 0)
-#define ST_LSM6DSX_FIFO_ODR_MASK		GENMASK(6, 3)
-#define ST_LSM6DSX_FIFO_EMPTY_MASK		BIT(12)
-#define ST_LSM6DSX_REG_FIFO_OUTL_ADDR		0x3e
-#define ST_LSM6DSX_REG_FIFO_OUT_TAG_ADDR	0x78
-#define ST_LSM6DSX_REG_TS_RESET_ADDR		0x42
+#घोषणा ST_LSM6DSX_REG_FIFO_MODE_ADDR		0x0a
+#घोषणा ST_LSM6DSX_FIFO_MODE_MASK		GENMASK(2, 0)
+#घोषणा ST_LSM6DSX_FIFO_ODR_MASK		GENMASK(6, 3)
+#घोषणा ST_LSM6DSX_FIFO_EMPTY_MASK		BIT(12)
+#घोषणा ST_LSM6DSX_REG_FIFO_OUTL_ADDR		0x3e
+#घोषणा ST_LSM6DSX_REG_FIFO_OUT_TAG_ADDR	0x78
+#घोषणा ST_LSM6DSX_REG_TS_RESET_ADDR		0x42
 
-#define ST_LSM6DSX_MAX_FIFO_ODR_VAL		0x08
+#घोषणा ST_LSM6DSX_MAX_FIFO_ODR_VAL		0x08
 
-#define ST_LSM6DSX_TS_RESET_VAL			0xaa
+#घोषणा ST_LSM6DSX_TS_RESET_VAL			0xaa
 
-struct st_lsm6dsx_decimator_entry {
+काष्ठा st_lsm6dsx_decimator_entry अणु
 	u8 decimator;
 	u8 val;
-};
+पूर्ण;
 
-enum st_lsm6dsx_fifo_tag {
+क्रमागत st_lsm6dsx_fअगरo_tag अणु
 	ST_LSM6DSX_GYRO_TAG = 0x01,
 	ST_LSM6DSX_ACC_TAG = 0x02,
 	ST_LSM6DSX_TS_TAG = 0x04,
 	ST_LSM6DSX_EXT0_TAG = 0x0f,
 	ST_LSM6DSX_EXT1_TAG = 0x10,
 	ST_LSM6DSX_EXT2_TAG = 0x11,
-};
+पूर्ण;
 
-static const
-struct st_lsm6dsx_decimator_entry st_lsm6dsx_decimator_table[] = {
-	{  0, 0x0 },
-	{  1, 0x1 },
-	{  2, 0x2 },
-	{  3, 0x3 },
-	{  4, 0x4 },
-	{  8, 0x5 },
-	{ 16, 0x6 },
-	{ 32, 0x7 },
-};
+अटल स्थिर
+काष्ठा st_lsm6dsx_decimator_entry st_lsm6dsx_decimator_table[] = अणु
+	अणु  0, 0x0 पूर्ण,
+	अणु  1, 0x1 पूर्ण,
+	अणु  2, 0x2 पूर्ण,
+	अणु  3, 0x3 पूर्ण,
+	अणु  4, 0x4 पूर्ण,
+	अणु  8, 0x5 पूर्ण,
+	अणु 16, 0x6 पूर्ण,
+	अणु 32, 0x7 पूर्ण,
+पूर्ण;
 
-static int
-st_lsm6dsx_get_decimator_val(struct st_lsm6dsx_sensor *sensor, u32 max_odr)
-{
-	const int max_size = ARRAY_SIZE(st_lsm6dsx_decimator_table);
+अटल पूर्णांक
+st_lsm6dsx_get_decimator_val(काष्ठा st_lsm6dsx_sensor *sensor, u32 max_odr)
+अणु
+	स्थिर पूर्णांक max_size = ARRAY_SIZE(st_lsm6dsx_decimator_table);
 	u32 decimator =  max_odr / sensor->odr;
-	int i;
+	पूर्णांक i;
 
-	if (decimator > 1)
-		decimator = round_down(decimator, 2);
+	अगर (decimator > 1)
+		decimator = round_करोwn(decimator, 2);
 
-	for (i = 0; i < max_size; i++) {
-		if (st_lsm6dsx_decimator_table[i].decimator == decimator)
-			break;
-	}
+	क्रम (i = 0; i < max_size; i++) अणु
+		अगर (st_lsm6dsx_decimator_table[i].decimator == decimator)
+			अवरोध;
+	पूर्ण
 
 	sensor->decimator = decimator;
-	return i == max_size ? 0 : st_lsm6dsx_decimator_table[i].val;
-}
+	वापस i == max_size ? 0 : st_lsm6dsx_decimator_table[i].val;
+पूर्ण
 
-static void st_lsm6dsx_get_max_min_odr(struct st_lsm6dsx_hw *hw,
+अटल व्योम st_lsm6dsx_get_max_min_odr(काष्ठा st_lsm6dsx_hw *hw,
 				       u32 *max_odr, u32 *min_odr)
-{
-	struct st_lsm6dsx_sensor *sensor;
-	int i;
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor;
+	पूर्णांक i;
 
 	*max_odr = 0, *min_odr = ~0;
-	for (i = 0; i < ST_LSM6DSX_ID_MAX; i++) {
-		if (!hw->iio_devs[i])
-			continue;
+	क्रम (i = 0; i < ST_LSM6DSX_ID_MAX; i++) अणु
+		अगर (!hw->iio_devs[i])
+			जारी;
 
 		sensor = iio_priv(hw->iio_devs[i]);
 
-		if (!(hw->enable_mask & BIT(sensor->id)))
-			continue;
+		अगर (!(hw->enable_mask & BIT(sensor->id)))
+			जारी;
 
 		*max_odr = max_t(u32, *max_odr, sensor->odr);
 		*min_odr = min_t(u32, *min_odr, sensor->odr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u8 st_lsm6dsx_get_sip(struct st_lsm6dsx_sensor *sensor, u32 min_odr)
-{
+अटल u8 st_lsm6dsx_get_sip(काष्ठा st_lsm6dsx_sensor *sensor, u32 min_odr)
+अणु
 	u8 sip = sensor->odr / min_odr;
 
-	return sip > 1 ? round_down(sip, 2) : sip;
-}
+	वापस sip > 1 ? round_करोwn(sip, 2) : sip;
+पूर्ण
 
-static int st_lsm6dsx_update_decimators(struct st_lsm6dsx_hw *hw)
-{
-	const struct st_lsm6dsx_reg *ts_dec_reg;
-	struct st_lsm6dsx_sensor *sensor;
+अटल पूर्णांक st_lsm6dsx_update_decimators(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	स्थिर काष्ठा st_lsm6dsx_reg *ts_dec_reg;
+	काष्ठा st_lsm6dsx_sensor *sensor;
 	u16 sip = 0, ts_sip = 0;
 	u32 max_odr, min_odr;
-	int err = 0, i;
+	पूर्णांक err = 0, i;
 	u8 data;
 
 	st_lsm6dsx_get_max_min_odr(hw, &max_odr, &min_odr);
 
-	for (i = 0; i < ST_LSM6DSX_ID_MAX; i++) {
-		const struct st_lsm6dsx_reg *dec_reg;
+	क्रम (i = 0; i < ST_LSM6DSX_ID_MAX; i++) अणु
+		स्थिर काष्ठा st_lsm6dsx_reg *dec_reg;
 
-		if (!hw->iio_devs[i])
-			continue;
+		अगर (!hw->iio_devs[i])
+			जारी;
 
 		sensor = iio_priv(hw->iio_devs[i]);
-		/* update fifo decimators and sample in pattern */
-		if (hw->enable_mask & BIT(sensor->id)) {
+		/* update fअगरo decimators and sample in pattern */
+		अगर (hw->enable_mask & BIT(sensor->id)) अणु
 			sensor->sip = st_lsm6dsx_get_sip(sensor, min_odr);
 			data = st_lsm6dsx_get_decimator_val(sensor, max_odr);
-		} else {
+		पूर्ण अन्यथा अणु
 			sensor->sip = 0;
 			data = 0;
-		}
+		पूर्ण
 		ts_sip = max_t(u16, ts_sip, sensor->sip);
 
 		dec_reg = &hw->settings->decimator[sensor->id];
-		if (dec_reg->addr) {
-			int val = ST_LSM6DSX_SHIFT_VAL(data, dec_reg->mask);
+		अगर (dec_reg->addr) अणु
+			पूर्णांक val = ST_LSM6DSX_SHIFT_VAL(data, dec_reg->mask);
 
 			err = st_lsm6dsx_update_bits_locked(hw, dec_reg->addr,
 							    dec_reg->mask,
 							    val);
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 		sip += sensor->sip;
-	}
+	पूर्ण
 	hw->sip = sip + ts_sip;
 	hw->ts_sip = ts_sip;
 
 	/*
-	 * update hw ts decimator if necessary. Decimator for hw timestamp
-	 * is always 1 or 0 in order to have a ts sample for each data
+	 * update hw ts decimator अगर necessary. Decimator क्रम hw बारtamp
+	 * is always 1 or 0 in order to have a ts sample क्रम each data
 	 * sample in FIFO
 	 */
 	ts_dec_reg = &hw->settings->ts_settings.decimator;
-	if (ts_dec_reg->addr) {
-		int val, ts_dec = !!hw->ts_sip;
+	अगर (ts_dec_reg->addr) अणु
+		पूर्णांक val, ts_dec = !!hw->ts_sip;
 
 		val = ST_LSM6DSX_SHIFT_VAL(ts_dec, ts_dec_reg->mask);
 		err = st_lsm6dsx_update_bits_locked(hw, ts_dec_reg->addr,
 						    ts_dec_reg->mask, val);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int st_lsm6dsx_set_fifo_mode(struct st_lsm6dsx_hw *hw,
-				    enum st_lsm6dsx_fifo_mode fifo_mode)
-{
-	unsigned int data;
+अटल पूर्णांक st_lsm6dsx_set_fअगरo_mode(काष्ठा st_lsm6dsx_hw *hw,
+				    क्रमागत st_lsm6dsx_fअगरo_mode fअगरo_mode)
+अणु
+	अचिन्हित पूर्णांक data;
 
-	data = FIELD_PREP(ST_LSM6DSX_FIFO_MODE_MASK, fifo_mode);
-	return st_lsm6dsx_update_bits_locked(hw, ST_LSM6DSX_REG_FIFO_MODE_ADDR,
+	data = FIELD_PREP(ST_LSM6DSX_FIFO_MODE_MASK, fअगरo_mode);
+	वापस st_lsm6dsx_update_bits_locked(hw, ST_LSM6DSX_REG_FIFO_MODE_ADDR,
 					     ST_LSM6DSX_FIFO_MODE_MASK, data);
-}
+पूर्ण
 
-static int st_lsm6dsx_set_fifo_odr(struct st_lsm6dsx_sensor *sensor,
+अटल पूर्णांक st_lsm6dsx_set_fअगरo_odr(काष्ठा st_lsm6dsx_sensor *sensor,
 				   bool enable)
-{
-	struct st_lsm6dsx_hw *hw = sensor->hw;
-	const struct st_lsm6dsx_reg *batch_reg;
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
+	स्थिर काष्ठा st_lsm6dsx_reg *batch_reg;
 	u8 data;
 
 	batch_reg = &hw->settings->batch[sensor->id];
-	if (batch_reg->addr) {
-		int val;
+	अगर (batch_reg->addr) अणु
+		पूर्णांक val;
 
-		if (enable) {
-			int err;
+		अगर (enable) अणु
+			पूर्णांक err;
 
 			err = st_lsm6dsx_check_odr(sensor, sensor->odr,
 						   &data);
-			if (err < 0)
-				return err;
-		} else {
+			अगर (err < 0)
+				वापस err;
+		पूर्ण अन्यथा अणु
 			data = 0;
-		}
+		पूर्ण
 		val = ST_LSM6DSX_SHIFT_VAL(data, batch_reg->mask);
-		return st_lsm6dsx_update_bits_locked(hw, batch_reg->addr,
+		वापस st_lsm6dsx_update_bits_locked(hw, batch_reg->addr,
 						     batch_reg->mask, val);
-	} else {
+	पूर्ण अन्यथा अणु
 		data = hw->enable_mask ? ST_LSM6DSX_MAX_FIFO_ODR_VAL : 0;
-		return st_lsm6dsx_update_bits_locked(hw,
+		वापस st_lsm6dsx_update_bits_locked(hw,
 					ST_LSM6DSX_REG_FIFO_MODE_ADDR,
 					ST_LSM6DSX_FIFO_ODR_MASK,
 					FIELD_PREP(ST_LSM6DSX_FIFO_ODR_MASK,
 						   data));
-	}
-}
+	पूर्ण
+पूर्ण
 
-int st_lsm6dsx_update_watermark(struct st_lsm6dsx_sensor *sensor, u16 watermark)
-{
-	u16 fifo_watermark = ~0, cur_watermark, fifo_th_mask;
-	struct st_lsm6dsx_hw *hw = sensor->hw;
-	struct st_lsm6dsx_sensor *cur_sensor;
-	int i, err, data;
+पूर्णांक st_lsm6dsx_update_watermark(काष्ठा st_lsm6dsx_sensor *sensor, u16 watermark)
+अणु
+	u16 fअगरo_watermark = ~0, cur_watermark, fअगरo_th_mask;
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
+	काष्ठा st_lsm6dsx_sensor *cur_sensor;
+	पूर्णांक i, err, data;
 	__le16 wdata;
 
-	if (!hw->sip)
-		return 0;
+	अगर (!hw->sip)
+		वापस 0;
 
-	for (i = 0; i < ST_LSM6DSX_ID_MAX; i++) {
-		if (!hw->iio_devs[i])
-			continue;
+	क्रम (i = 0; i < ST_LSM6DSX_ID_MAX; i++) अणु
+		अगर (!hw->iio_devs[i])
+			जारी;
 
 		cur_sensor = iio_priv(hw->iio_devs[i]);
 
-		if (!(hw->enable_mask & BIT(cur_sensor->id)))
-			continue;
+		अगर (!(hw->enable_mask & BIT(cur_sensor->id)))
+			जारी;
 
 		cur_watermark = (cur_sensor == sensor) ? watermark
 						       : cur_sensor->watermark;
 
-		fifo_watermark = min_t(u16, fifo_watermark, cur_watermark);
-	}
+		fअगरo_watermark = min_t(u16, fअगरo_watermark, cur_watermark);
+	पूर्ण
 
-	fifo_watermark = max_t(u16, fifo_watermark, hw->sip);
-	fifo_watermark = (fifo_watermark / hw->sip) * hw->sip;
-	fifo_watermark = fifo_watermark * hw->settings->fifo_ops.th_wl;
+	fअगरo_watermark = max_t(u16, fअगरo_watermark, hw->sip);
+	fअगरo_watermark = (fअगरo_watermark / hw->sip) * hw->sip;
+	fअगरo_watermark = fअगरo_watermark * hw->settings->fअगरo_ops.th_wl;
 
 	mutex_lock(&hw->page_lock);
-	err = regmap_read(hw->regmap, hw->settings->fifo_ops.fifo_th.addr + 1,
+	err = regmap_पढ़ो(hw->regmap, hw->settings->fअगरo_ops.fअगरo_th.addr + 1,
 			  &data);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	fifo_th_mask = hw->settings->fifo_ops.fifo_th.mask;
-	fifo_watermark = ((data << 8) & ~fifo_th_mask) |
-			 (fifo_watermark & fifo_th_mask);
+	fअगरo_th_mask = hw->settings->fअगरo_ops.fअगरo_th.mask;
+	fअगरo_watermark = ((data << 8) & ~fअगरo_th_mask) |
+			 (fअगरo_watermark & fअगरo_th_mask);
 
-	wdata = cpu_to_le16(fifo_watermark);
-	err = regmap_bulk_write(hw->regmap,
-				hw->settings->fifo_ops.fifo_th.addr,
-				&wdata, sizeof(wdata));
+	wdata = cpu_to_le16(fअगरo_watermark);
+	err = regmap_bulk_ग_लिखो(hw->regmap,
+				hw->settings->fअगरo_ops.fअगरo_th.addr,
+				&wdata, माप(wdata));
 out:
 	mutex_unlock(&hw->page_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int st_lsm6dsx_reset_hw_ts(struct st_lsm6dsx_hw *hw)
-{
-	struct st_lsm6dsx_sensor *sensor;
-	int i, err;
+अटल पूर्णांक st_lsm6dsx_reset_hw_ts(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor;
+	पूर्णांक i, err;
 
 	/* reset hw ts counter */
-	err = st_lsm6dsx_write_locked(hw, ST_LSM6DSX_REG_TS_RESET_ADDR,
+	err = st_lsm6dsx_ग_लिखो_locked(hw, ST_LSM6DSX_REG_TS_RESET_ADDR,
 				      ST_LSM6DSX_TS_RESET_VAL);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	for (i = 0; i < ST_LSM6DSX_ID_MAX; i++) {
-		if (!hw->iio_devs[i])
-			continue;
+	क्रम (i = 0; i < ST_LSM6DSX_ID_MAX; i++) अणु
+		अगर (!hw->iio_devs[i])
+			जारी;
 
 		sensor = iio_priv(hw->iio_devs[i]);
 		/*
-		 * store enable buffer timestamp as reference for
-		 * hw timestamp
+		 * store enable buffer बारtamp as reference क्रम
+		 * hw बारtamp
 		 */
-		sensor->ts_ref = iio_get_time_ns(hw->iio_devs[i]);
-	}
-	return 0;
-}
+		sensor->ts_ref = iio_get_समय_ns(hw->iio_devs[i]);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int st_lsm6dsx_resume_fifo(struct st_lsm6dsx_hw *hw)
-{
-	int err;
+पूर्णांक st_lsm6dsx_resume_fअगरo(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	पूर्णांक err;
 
 	/* reset hw ts counter */
 	err = st_lsm6dsx_reset_hw_ts(hw);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return st_lsm6dsx_set_fifo_mode(hw, ST_LSM6DSX_FIFO_CONT);
-}
+	वापस st_lsm6dsx_set_fअगरo_mode(hw, ST_LSM6DSX_FIFO_CONT);
+पूर्ण
 
 /*
- * Set max bulk read to ST_LSM6DSX_MAX_WORD_LEN/ST_LSM6DSX_MAX_TAGGED_WORD_LEN
- * in order to avoid a kmalloc for each bus access
+ * Set max bulk पढ़ो to ST_LSM6DSX_MAX_WORD_LEN/ST_LSM6DSX_MAX_TAGGED_WORD_LEN
+ * in order to aव्योम a kदो_स्मृति क्रम each bus access
  */
-static inline int st_lsm6dsx_read_block(struct st_lsm6dsx_hw *hw, u8 addr,
-					u8 *data, unsigned int data_len,
-					unsigned int max_word_len)
-{
-	unsigned int word_len, read_len = 0;
-	int err;
+अटल अंतरभूत पूर्णांक st_lsm6dsx_पढ़ो_block(काष्ठा st_lsm6dsx_hw *hw, u8 addr,
+					u8 *data, अचिन्हित पूर्णांक data_len,
+					अचिन्हित पूर्णांक max_word_len)
+अणु
+	अचिन्हित पूर्णांक word_len, पढ़ो_len = 0;
+	पूर्णांक err;
 
-	while (read_len < data_len) {
-		word_len = min_t(unsigned int, data_len - read_len,
+	जबतक (पढ़ो_len < data_len) अणु
+		word_len = min_t(अचिन्हित पूर्णांक, data_len - पढ़ो_len,
 				 max_word_len);
-		err = st_lsm6dsx_read_locked(hw, addr, data + read_len,
+		err = st_lsm6dsx_पढ़ो_locked(hw, addr, data + पढ़ो_len,
 					     word_len);
-		if (err < 0)
-			return err;
-		read_len += word_len;
-	}
-	return 0;
-}
+		अगर (err < 0)
+			वापस err;
+		पढ़ो_len += word_len;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define ST_LSM6DSX_IIO_BUFF_SIZE	(ALIGN(ST_LSM6DSX_SAMPLE_SIZE, \
-					       sizeof(s64)) + sizeof(s64))
+#घोषणा ST_LSM6DSX_IIO_BUFF_SIZE	(ALIGN(ST_LSM6DSX_SAMPLE_SIZE, \
+					       माप(s64)) + माप(s64))
 /**
- * st_lsm6dsx_read_fifo() - hw FIFO read routine
- * @hw: Pointer to instance of struct st_lsm6dsx_hw.
+ * st_lsm6dsx_पढ़ो_fअगरo() - hw FIFO पढ़ो routine
+ * @hw: Poपूर्णांकer to instance of काष्ठा st_lsm6dsx_hw.
  *
  * Read samples from the hw FIFO and push them to IIO buffers.
  *
- * Return: Number of bytes read from the FIFO
+ * Return: Number of bytes पढ़ो from the FIFO
  */
-int st_lsm6dsx_read_fifo(struct st_lsm6dsx_hw *hw)
-{
-	struct st_lsm6dsx_sensor *acc_sensor, *gyro_sensor, *ext_sensor = NULL;
-	int err, sip, acc_sip, gyro_sip, ts_sip, ext_sip, read_len, offset;
-	u16 fifo_len, pattern_len = hw->sip * ST_LSM6DSX_SAMPLE_SIZE;
-	u16 fifo_diff_mask = hw->settings->fifo_ops.fifo_diff.mask;
+पूर्णांक st_lsm6dsx_पढ़ो_fअगरo(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	काष्ठा st_lsm6dsx_sensor *acc_sensor, *gyro_sensor, *ext_sensor = शून्य;
+	पूर्णांक err, sip, acc_sip, gyro_sip, ts_sip, ext_sip, पढ़ो_len, offset;
+	u16 fअगरo_len, pattern_len = hw->sip * ST_LSM6DSX_SAMPLE_SIZE;
+	u16 fअगरo_dअगरf_mask = hw->settings->fअगरo_ops.fअगरo_dअगरf.mask;
 	bool reset_ts = false;
-	__le16 fifo_status;
+	__le16 fअगरo_status;
 	s64 ts = 0;
 
-	err = st_lsm6dsx_read_locked(hw,
-				     hw->settings->fifo_ops.fifo_diff.addr,
-				     &fifo_status, sizeof(fifo_status));
-	if (err < 0) {
+	err = st_lsm6dsx_पढ़ो_locked(hw,
+				     hw->settings->fअगरo_ops.fअगरo_dअगरf.addr,
+				     &fअगरo_status, माप(fअगरo_status));
+	अगर (err < 0) अणु
 		dev_err(hw->dev, "failed to read fifo status (err=%d)\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (fifo_status & cpu_to_le16(ST_LSM6DSX_FIFO_EMPTY_MASK))
-		return 0;
+	अगर (fअगरo_status & cpu_to_le16(ST_LSM6DSX_FIFO_EMPTY_MASK))
+		वापस 0;
 
-	fifo_len = (le16_to_cpu(fifo_status) & fifo_diff_mask) *
+	fअगरo_len = (le16_to_cpu(fअगरo_status) & fअगरo_dअगरf_mask) *
 		   ST_LSM6DSX_CHAN_SIZE;
-	fifo_len = (fifo_len / pattern_len) * pattern_len;
+	fअगरo_len = (fअगरo_len / pattern_len) * pattern_len;
 
 	acc_sensor = iio_priv(hw->iio_devs[ST_LSM6DSX_ID_ACC]);
 	gyro_sensor = iio_priv(hw->iio_devs[ST_LSM6DSX_ID_GYRO]);
-	if (hw->iio_devs[ST_LSM6DSX_ID_EXT0])
+	अगर (hw->iio_devs[ST_LSM6DSX_ID_EXT0])
 		ext_sensor = iio_priv(hw->iio_devs[ST_LSM6DSX_ID_EXT0]);
 
-	for (read_len = 0; read_len < fifo_len; read_len += pattern_len) {
-		err = st_lsm6dsx_read_block(hw, ST_LSM6DSX_REG_FIFO_OUTL_ADDR,
+	क्रम (पढ़ो_len = 0; पढ़ो_len < fअगरo_len; पढ़ो_len += pattern_len) अणु
+		err = st_lsm6dsx_पढ़ो_block(hw, ST_LSM6DSX_REG_FIFO_OUTL_ADDR,
 					    hw->buff, pattern_len,
 					    ST_LSM6DSX_MAX_WORD_LEN);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(hw->dev,
 				"failed to read pattern from fifo (err=%d)\n",
 				err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		/*
-		 * Data are written to the FIFO with a specific pattern
+		 * Data are written to the FIFO with a specअगरic pattern
 		 * depending on the configured ODRs. The first sequence of data
 		 * stored in FIFO contains the data of all enabled sensors
 		 * (e.g. Gx, Gy, Gz, Ax, Ay, Az, Ts), then data are repeated
-		 * depending on the value of the decimation factor set for each
+		 * depending on the value of the decimation factor set क्रम each
 		 * sensor.
 		 *
 		 * Supposing the FIFO is storing data from gyroscope and
-		 * accelerometer at different ODRs:
+		 * accelerometer at dअगरferent ODRs:
 		 *   - gyroscope ODR = 208Hz, accelerometer ODR = 104Hz
 		 * Since the gyroscope ODR is twice the accelerometer one, the
 		 * following pattern is repeated every 9 samples:
@@ -411,98 +412,98 @@ int st_lsm6dsx_read_fifo(struct st_lsm6dsx_hw *hw)
 		offset = 0;
 		sip = 0;
 
-		while (acc_sip > 0 || gyro_sip > 0 || ext_sip > 0) {
-			if (gyro_sip > 0 && !(sip % gyro_sensor->decimator)) {
-				memcpy(hw->scan[ST_LSM6DSX_ID_GYRO].channels,
+		जबतक (acc_sip > 0 || gyro_sip > 0 || ext_sip > 0) अणु
+			अगर (gyro_sip > 0 && !(sip % gyro_sensor->decimator)) अणु
+				स_नकल(hw->scan[ST_LSM6DSX_ID_GYRO].channels,
 				       &hw->buff[offset],
-				       sizeof(hw->scan[ST_LSM6DSX_ID_GYRO].channels));
-				offset += sizeof(hw->scan[ST_LSM6DSX_ID_GYRO].channels);
-			}
-			if (acc_sip > 0 && !(sip % acc_sensor->decimator)) {
-				memcpy(hw->scan[ST_LSM6DSX_ID_ACC].channels,
+				       माप(hw->scan[ST_LSM6DSX_ID_GYRO].channels));
+				offset += माप(hw->scan[ST_LSM6DSX_ID_GYRO].channels);
+			पूर्ण
+			अगर (acc_sip > 0 && !(sip % acc_sensor->decimator)) अणु
+				स_नकल(hw->scan[ST_LSM6DSX_ID_ACC].channels,
 				       &hw->buff[offset],
-				       sizeof(hw->scan[ST_LSM6DSX_ID_ACC].channels));
-				offset += sizeof(hw->scan[ST_LSM6DSX_ID_ACC].channels);
-			}
-			if (ext_sip > 0 && !(sip % ext_sensor->decimator)) {
-				memcpy(hw->scan[ST_LSM6DSX_ID_EXT0].channels,
+				       माप(hw->scan[ST_LSM6DSX_ID_ACC].channels));
+				offset += माप(hw->scan[ST_LSM6DSX_ID_ACC].channels);
+			पूर्ण
+			अगर (ext_sip > 0 && !(sip % ext_sensor->decimator)) अणु
+				स_नकल(hw->scan[ST_LSM6DSX_ID_EXT0].channels,
 				       &hw->buff[offset],
-				       sizeof(hw->scan[ST_LSM6DSX_ID_EXT0].channels));
-				offset += sizeof(hw->scan[ST_LSM6DSX_ID_EXT0].channels);
-			}
+				       माप(hw->scan[ST_LSM6DSX_ID_EXT0].channels));
+				offset += माप(hw->scan[ST_LSM6DSX_ID_EXT0].channels);
+			पूर्ण
 
-			if (ts_sip-- > 0) {
+			अगर (ts_sip-- > 0) अणु
 				u8 data[ST_LSM6DSX_SAMPLE_SIZE];
 
-				memcpy(data, &hw->buff[offset], sizeof(data));
+				स_नकल(data, &hw->buff[offset], माप(data));
 				/*
-				 * hw timestamp is 3B long and it is stored
+				 * hw बारtamp is 3B दीर्घ and it is stored
 				 * in FIFO using 6B as 4th FIFO data set
 				 * according to this schema:
 				 * B0 = ts[15:8], B1 = ts[23:16], B3 = ts[7:0]
 				 */
 				ts = data[1] << 16 | data[0] << 8 | data[3];
 				/*
-				 * check if hw timestamp engine is going to
-				 * reset (the sensor generates an interrupt
-				 * to signal the hw timestamp will reset in
+				 * check अगर hw बारtamp engine is going to
+				 * reset (the sensor generates an पूर्णांकerrupt
+				 * to संकेत the hw बारtamp will reset in
 				 * 1.638s)
 				 */
-				if (!reset_ts && ts >= 0xff0000)
+				अगर (!reset_ts && ts >= 0xff0000)
 					reset_ts = true;
 				ts *= hw->ts_gain;
 
 				offset += ST_LSM6DSX_SAMPLE_SIZE;
-			}
+			पूर्ण
 
-			if (gyro_sip > 0 && !(sip % gyro_sensor->decimator)) {
-				iio_push_to_buffers_with_timestamp(
+			अगर (gyro_sip > 0 && !(sip % gyro_sensor->decimator)) अणु
+				iio_push_to_buffers_with_बारtamp(
 					hw->iio_devs[ST_LSM6DSX_ID_GYRO],
 					&hw->scan[ST_LSM6DSX_ID_GYRO],
 					gyro_sensor->ts_ref + ts);
 				gyro_sip--;
-			}
-			if (acc_sip > 0 && !(sip % acc_sensor->decimator)) {
-				iio_push_to_buffers_with_timestamp(
+			पूर्ण
+			अगर (acc_sip > 0 && !(sip % acc_sensor->decimator)) अणु
+				iio_push_to_buffers_with_बारtamp(
 					hw->iio_devs[ST_LSM6DSX_ID_ACC],
 					&hw->scan[ST_LSM6DSX_ID_ACC],
 					acc_sensor->ts_ref + ts);
 				acc_sip--;
-			}
-			if (ext_sip > 0 && !(sip % ext_sensor->decimator)) {
-				iio_push_to_buffers_with_timestamp(
+			पूर्ण
+			अगर (ext_sip > 0 && !(sip % ext_sensor->decimator)) अणु
+				iio_push_to_buffers_with_बारtamp(
 					hw->iio_devs[ST_LSM6DSX_ID_EXT0],
 					&hw->scan[ST_LSM6DSX_ID_EXT0],
 					ext_sensor->ts_ref + ts);
 				ext_sip--;
-			}
+			पूर्ण
 			sip++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(reset_ts)) {
+	अगर (unlikely(reset_ts)) अणु
 		err = st_lsm6dsx_reset_hw_ts(hw);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(hw->dev, "failed to reset hw ts (err=%d)\n",
 				err);
-			return err;
-		}
-	}
-	return read_len;
-}
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस पढ़ो_len;
+पूर्ण
 
-#define ST_LSM6DSX_INVALID_SAMPLE	0x7ffd
-static int
-st_lsm6dsx_push_tagged_data(struct st_lsm6dsx_hw *hw, u8 tag,
+#घोषणा ST_LSM6DSX_INVALID_SAMPLE	0x7ffd
+अटल पूर्णांक
+st_lsm6dsx_push_tagged_data(काष्ठा st_lsm6dsx_hw *hw, u8 tag,
 			    u8 *data, s64 ts)
-{
+अणु
 	s16 val = le16_to_cpu(*(__le16 *)data);
-	struct st_lsm6dsx_sensor *sensor;
-	struct iio_dev *iio_dev;
+	काष्ठा st_lsm6dsx_sensor *sensor;
+	काष्ठा iio_dev *iio_dev;
 
 	/* invalid sample during bootstrap phase */
-	if (val >= ST_LSM6DSX_INVALID_SAMPLE)
-		return -EINVAL;
+	अगर (val >= ST_LSM6DSX_INVALID_SAMPLE)
+		वापस -EINVAL;
 
 	/*
 	 * EXT_TAG are managed in FIFO fashion so ST_LSM6DSX_EXT0_TAG
@@ -510,247 +511,247 @@ st_lsm6dsx_push_tagged_data(struct st_lsm6dsx_hw *hw, u8 tag,
 	 * to the second one and ST_LSM6DSX_EXT2_TAG to the last enabled
 	 * channel
 	 */
-	switch (tag) {
-	case ST_LSM6DSX_GYRO_TAG:
+	चयन (tag) अणु
+	हाल ST_LSM6DSX_GYRO_TAG:
 		iio_dev = hw->iio_devs[ST_LSM6DSX_ID_GYRO];
-		break;
-	case ST_LSM6DSX_ACC_TAG:
+		अवरोध;
+	हाल ST_LSM6DSX_ACC_TAG:
 		iio_dev = hw->iio_devs[ST_LSM6DSX_ID_ACC];
-		break;
-	case ST_LSM6DSX_EXT0_TAG:
-		if (hw->enable_mask & BIT(ST_LSM6DSX_ID_EXT0))
+		अवरोध;
+	हाल ST_LSM6DSX_EXT0_TAG:
+		अगर (hw->enable_mask & BIT(ST_LSM6DSX_ID_EXT0))
 			iio_dev = hw->iio_devs[ST_LSM6DSX_ID_EXT0];
-		else if (hw->enable_mask & BIT(ST_LSM6DSX_ID_EXT1))
+		अन्यथा अगर (hw->enable_mask & BIT(ST_LSM6DSX_ID_EXT1))
 			iio_dev = hw->iio_devs[ST_LSM6DSX_ID_EXT1];
-		else
+		अन्यथा
 			iio_dev = hw->iio_devs[ST_LSM6DSX_ID_EXT2];
-		break;
-	case ST_LSM6DSX_EXT1_TAG:
-		if ((hw->enable_mask & BIT(ST_LSM6DSX_ID_EXT0)) &&
+		अवरोध;
+	हाल ST_LSM6DSX_EXT1_TAG:
+		अगर ((hw->enable_mask & BIT(ST_LSM6DSX_ID_EXT0)) &&
 		    (hw->enable_mask & BIT(ST_LSM6DSX_ID_EXT1)))
 			iio_dev = hw->iio_devs[ST_LSM6DSX_ID_EXT1];
-		else
+		अन्यथा
 			iio_dev = hw->iio_devs[ST_LSM6DSX_ID_EXT2];
-		break;
-	case ST_LSM6DSX_EXT2_TAG:
+		अवरोध;
+	हाल ST_LSM6DSX_EXT2_TAG:
 		iio_dev = hw->iio_devs[ST_LSM6DSX_ID_EXT2];
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	sensor = iio_priv(iio_dev);
-	iio_push_to_buffers_with_timestamp(iio_dev, data,
+	iio_push_to_buffers_with_बारtamp(iio_dev, data,
 					   ts + sensor->ts_ref);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * st_lsm6dsx_read_tagged_fifo() - tagged hw FIFO read routine
- * @hw: Pointer to instance of struct st_lsm6dsx_hw.
+ * st_lsm6dsx_पढ़ो_tagged_fअगरo() - tagged hw FIFO पढ़ो routine
+ * @hw: Poपूर्णांकer to instance of काष्ठा st_lsm6dsx_hw.
  *
  * Read samples from the hw FIFO and push them to IIO buffers.
  *
- * Return: Number of bytes read from the FIFO
+ * Return: Number of bytes पढ़ो from the FIFO
  */
-int st_lsm6dsx_read_tagged_fifo(struct st_lsm6dsx_hw *hw)
-{
+पूर्णांक st_lsm6dsx_पढ़ो_tagged_fअगरo(काष्ठा st_lsm6dsx_hw *hw)
+अणु
 	u16 pattern_len = hw->sip * ST_LSM6DSX_TAGGED_SAMPLE_SIZE;
-	u16 fifo_len, fifo_diff_mask;
+	u16 fअगरo_len, fअगरo_dअगरf_mask;
 	/*
 	 * Alignment needed as this can ultimately be passed to a
-	 * call to iio_push_to_buffers_with_timestamp() which
+	 * call to iio_push_to_buffers_with_बारtamp() which
 	 * must be passed a buffer that is aligned to 8 bytes so
-	 * as to allow insertion of a naturally aligned timestamp.
+	 * as to allow insertion of a naturally aligned बारtamp.
 	 */
 	u8 iio_buff[ST_LSM6DSX_IIO_BUFF_SIZE] __aligned(8);
 	u8 tag;
 	bool reset_ts = false;
-	int i, err, read_len;
-	__le16 fifo_status;
+	पूर्णांक i, err, पढ़ो_len;
+	__le16 fअगरo_status;
 	s64 ts = 0;
 
-	err = st_lsm6dsx_read_locked(hw,
-				     hw->settings->fifo_ops.fifo_diff.addr,
-				     &fifo_status, sizeof(fifo_status));
-	if (err < 0) {
+	err = st_lsm6dsx_पढ़ो_locked(hw,
+				     hw->settings->fअगरo_ops.fअगरo_dअगरf.addr,
+				     &fअगरo_status, माप(fअगरo_status));
+	अगर (err < 0) अणु
 		dev_err(hw->dev, "failed to read fifo status (err=%d)\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	fifo_diff_mask = hw->settings->fifo_ops.fifo_diff.mask;
-	fifo_len = (le16_to_cpu(fifo_status) & fifo_diff_mask) *
+	fअगरo_dअगरf_mask = hw->settings->fअगरo_ops.fअगरo_dअगरf.mask;
+	fअगरo_len = (le16_to_cpu(fअगरo_status) & fअगरo_dअगरf_mask) *
 		   ST_LSM6DSX_TAGGED_SAMPLE_SIZE;
-	if (!fifo_len)
-		return 0;
+	अगर (!fअगरo_len)
+		वापस 0;
 
-	for (read_len = 0; read_len < fifo_len; read_len += pattern_len) {
-		err = st_lsm6dsx_read_block(hw,
+	क्रम (पढ़ो_len = 0; पढ़ो_len < fअगरo_len; पढ़ो_len += pattern_len) अणु
+		err = st_lsm6dsx_पढ़ो_block(hw,
 					    ST_LSM6DSX_REG_FIFO_OUT_TAG_ADDR,
 					    hw->buff, pattern_len,
 					    ST_LSM6DSX_MAX_TAGGED_WORD_LEN);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(hw->dev,
 				"failed to read pattern from fifo (err=%d)\n",
 				err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		for (i = 0; i < pattern_len;
-		     i += ST_LSM6DSX_TAGGED_SAMPLE_SIZE) {
-			memcpy(iio_buff, &hw->buff[i + ST_LSM6DSX_TAG_SIZE],
+		क्रम (i = 0; i < pattern_len;
+		     i += ST_LSM6DSX_TAGGED_SAMPLE_SIZE) अणु
+			स_नकल(iio_buff, &hw->buff[i + ST_LSM6DSX_TAG_SIZE],
 			       ST_LSM6DSX_SAMPLE_SIZE);
 
 			tag = hw->buff[i] >> 3;
-			if (tag == ST_LSM6DSX_TS_TAG) {
+			अगर (tag == ST_LSM6DSX_TS_TAG) अणु
 				/*
-				 * hw timestamp is 4B long and it is stored
+				 * hw बारtamp is 4B दीर्घ and it is stored
 				 * in FIFO according to this schema:
 				 * B0 = ts[7:0], B1 = ts[15:8], B2 = ts[23:16],
 				 * B3 = ts[31:24]
 				 */
 				ts = le32_to_cpu(*((__le32 *)iio_buff));
 				/*
-				 * check if hw timestamp engine is going to
-				 * reset (the sensor generates an interrupt
-				 * to signal the hw timestamp will reset in
+				 * check अगर hw बारtamp engine is going to
+				 * reset (the sensor generates an पूर्णांकerrupt
+				 * to संकेत the hw बारtamp will reset in
 				 * 1.638s)
 				 */
-				if (!reset_ts && ts >= 0xffff0000)
+				अगर (!reset_ts && ts >= 0xffff0000)
 					reset_ts = true;
 				ts *= hw->ts_gain;
-			} else {
+			पूर्ण अन्यथा अणु
 				st_lsm6dsx_push_tagged_data(hw, tag, iio_buff,
 							    ts);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(reset_ts)) {
+	अगर (unlikely(reset_ts)) अणु
 		err = st_lsm6dsx_reset_hw_ts(hw);
-		if (err < 0)
-			return err;
-	}
-	return read_len;
-}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	वापस पढ़ो_len;
+पूर्ण
 
-int st_lsm6dsx_flush_fifo(struct st_lsm6dsx_hw *hw)
-{
-	int err;
+पूर्णांक st_lsm6dsx_flush_fअगरo(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	पूर्णांक err;
 
-	if (!hw->settings->fifo_ops.read_fifo)
-		return -ENOTSUPP;
+	अगर (!hw->settings->fअगरo_ops.पढ़ो_fअगरo)
+		वापस -ENOTSUPP;
 
-	mutex_lock(&hw->fifo_lock);
+	mutex_lock(&hw->fअगरo_lock);
 
-	hw->settings->fifo_ops.read_fifo(hw);
-	err = st_lsm6dsx_set_fifo_mode(hw, ST_LSM6DSX_FIFO_BYPASS);
+	hw->settings->fअगरo_ops.पढ़ो_fअगरo(hw);
+	err = st_lsm6dsx_set_fअगरo_mode(hw, ST_LSM6DSX_FIFO_BYPASS);
 
-	mutex_unlock(&hw->fifo_lock);
+	mutex_unlock(&hw->fअगरo_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int st_lsm6dsx_update_fifo(struct st_lsm6dsx_sensor *sensor, bool enable)
-{
-	struct st_lsm6dsx_hw *hw = sensor->hw;
-	u8 fifo_mask;
-	int err;
+पूर्णांक st_lsm6dsx_update_fअगरo(काष्ठा st_lsm6dsx_sensor *sensor, bool enable)
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
+	u8 fअगरo_mask;
+	पूर्णांक err;
 
 	mutex_lock(&hw->conf_lock);
 
-	if (enable)
-		fifo_mask = hw->fifo_mask | BIT(sensor->id);
-	else
-		fifo_mask = hw->fifo_mask & ~BIT(sensor->id);
+	अगर (enable)
+		fअगरo_mask = hw->fअगरo_mask | BIT(sensor->id);
+	अन्यथा
+		fअगरo_mask = hw->fअगरo_mask & ~BIT(sensor->id);
 
-	if (hw->fifo_mask) {
-		err = st_lsm6dsx_flush_fifo(hw);
-		if (err < 0)
-			goto out;
-	}
+	अगर (hw->fअगरo_mask) अणु
+		err = st_lsm6dsx_flush_fअगरo(hw);
+		अगर (err < 0)
+			जाओ out;
+	पूर्ण
 
-	if (sensor->id == ST_LSM6DSX_ID_EXT0 ||
+	अगर (sensor->id == ST_LSM6DSX_ID_EXT0 ||
 	    sensor->id == ST_LSM6DSX_ID_EXT1 ||
-	    sensor->id == ST_LSM6DSX_ID_EXT2) {
+	    sensor->id == ST_LSM6DSX_ID_EXT2) अणु
 		err = st_lsm6dsx_shub_set_enable(sensor, enable);
-		if (err < 0)
-			goto out;
-	} else {
+		अगर (err < 0)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		err = st_lsm6dsx_sensor_set_enable(sensor, enable);
-		if (err < 0)
-			goto out;
-	}
+		अगर (err < 0)
+			जाओ out;
+	पूर्ण
 
-	err = st_lsm6dsx_set_fifo_odr(sensor, enable);
-	if (err < 0)
-		goto out;
+	err = st_lsm6dsx_set_fअगरo_odr(sensor, enable);
+	अगर (err < 0)
+		जाओ out;
 
 	err = st_lsm6dsx_update_decimators(hw);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
 	err = st_lsm6dsx_update_watermark(sensor, sensor->watermark);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	if (fifo_mask) {
-		err = st_lsm6dsx_resume_fifo(hw);
-		if (err < 0)
-			goto out;
-	}
+	अगर (fअगरo_mask) अणु
+		err = st_lsm6dsx_resume_fअगरo(hw);
+		अगर (err < 0)
+			जाओ out;
+	पूर्ण
 
-	hw->fifo_mask = fifo_mask;
+	hw->fअगरo_mask = fअगरo_mask;
 
 out:
 	mutex_unlock(&hw->conf_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int st_lsm6dsx_buffer_preenable(struct iio_dev *iio_dev)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
-	struct st_lsm6dsx_hw *hw = sensor->hw;
+अटल पूर्णांक st_lsm6dsx_buffer_preenable(काष्ठा iio_dev *iio_dev)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
 
-	if (!hw->settings->fifo_ops.update_fifo)
-		return -ENOTSUPP;
+	अगर (!hw->settings->fअगरo_ops.update_fअगरo)
+		वापस -ENOTSUPP;
 
-	return hw->settings->fifo_ops.update_fifo(sensor, true);
-}
+	वापस hw->settings->fअगरo_ops.update_fअगरo(sensor, true);
+पूर्ण
 
-static int st_lsm6dsx_buffer_postdisable(struct iio_dev *iio_dev)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
-	struct st_lsm6dsx_hw *hw = sensor->hw;
+अटल पूर्णांक st_lsm6dsx_buffer_postdisable(काष्ठा iio_dev *iio_dev)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
 
-	if (!hw->settings->fifo_ops.update_fifo)
-		return -ENOTSUPP;
+	अगर (!hw->settings->fअगरo_ops.update_fअगरo)
+		वापस -ENOTSUPP;
 
-	return hw->settings->fifo_ops.update_fifo(sensor, false);
-}
+	वापस hw->settings->fअगरo_ops.update_fअगरo(sensor, false);
+पूर्ण
 
-static const struct iio_buffer_setup_ops st_lsm6dsx_buffer_ops = {
+अटल स्थिर काष्ठा iio_buffer_setup_ops st_lsm6dsx_buffer_ops = अणु
 	.preenable = st_lsm6dsx_buffer_preenable,
 	.postdisable = st_lsm6dsx_buffer_postdisable,
-};
+पूर्ण;
 
-int st_lsm6dsx_fifo_setup(struct st_lsm6dsx_hw *hw)
-{
-	int i, ret;
+पूर्णांक st_lsm6dsx_fअगरo_setup(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < ST_LSM6DSX_ID_MAX; i++) {
-		if (!hw->iio_devs[i])
-			continue;
+	क्रम (i = 0; i < ST_LSM6DSX_ID_MAX; i++) अणु
+		अगर (!hw->iio_devs[i])
+			जारी;
 
-		ret = devm_iio_kfifo_buffer_setup(hw->dev, hw->iio_devs[i],
+		ret = devm_iio_kfअगरo_buffer_setup(hw->dev, hw->iio_devs[i],
 						  INDIO_BUFFER_SOFTWARE,
 						  &st_lsm6dsx_buffer_ops);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

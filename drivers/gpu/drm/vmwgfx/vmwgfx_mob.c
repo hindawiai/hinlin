@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2012-2015 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,148 +26,148 @@
  *
  **************************************************************************/
 
-#include <linux/highmem.h>
+#समावेश <linux/highस्मृति.स>
 
-#include "vmwgfx_drv.h"
+#समावेश "vmwgfx_drv.h"
 
 /*
  * If we set up the screen target otable, screen objects stop working.
  */
 
-#define VMW_OTABLE_SETUP_SUB ((VMWGFX_ENABLE_SCREEN_TARGET_OTABLE ? 0 : 1))
+#घोषणा VMW_OTABLE_SETUP_SUB ((VMWGFX_ENABLE_SCREEN_TARGET_OTABLE ? 0 : 1))
 
-#ifdef CONFIG_64BIT
-#define VMW_PPN_SIZE 8
-#define VMW_MOBFMT_PTDEPTH_0 SVGA3D_MOBFMT_PTDEPTH64_0
-#define VMW_MOBFMT_PTDEPTH_1 SVGA3D_MOBFMT_PTDEPTH64_1
-#define VMW_MOBFMT_PTDEPTH_2 SVGA3D_MOBFMT_PTDEPTH64_2
-#else
-#define VMW_PPN_SIZE 4
-#define VMW_MOBFMT_PTDEPTH_0 SVGA3D_MOBFMT_PTDEPTH_0
-#define VMW_MOBFMT_PTDEPTH_1 SVGA3D_MOBFMT_PTDEPTH_1
-#define VMW_MOBFMT_PTDEPTH_2 SVGA3D_MOBFMT_PTDEPTH_2
-#endif
+#अगर_घोषित CONFIG_64BIT
+#घोषणा VMW_PPN_SIZE 8
+#घोषणा VMW_MOBFMT_PTDEPTH_0 SVGA3D_MOBFMT_PTDEPTH64_0
+#घोषणा VMW_MOBFMT_PTDEPTH_1 SVGA3D_MOBFMT_PTDEPTH64_1
+#घोषणा VMW_MOBFMT_PTDEPTH_2 SVGA3D_MOBFMT_PTDEPTH64_2
+#अन्यथा
+#घोषणा VMW_PPN_SIZE 4
+#घोषणा VMW_MOBFMT_PTDEPTH_0 SVGA3D_MOBFMT_PTDEPTH_0
+#घोषणा VMW_MOBFMT_PTDEPTH_1 SVGA3D_MOBFMT_PTDEPTH_1
+#घोषणा VMW_MOBFMT_PTDEPTH_2 SVGA3D_MOBFMT_PTDEPTH_2
+#पूर्ण_अगर
 
 /*
- * struct vmw_mob - Structure containing page table and metadata for a
+ * काष्ठा vmw_mob - Structure containing page table and metadata क्रम a
  * Guest Memory OBject.
  *
  * @num_pages       Number of pages that make up the page table.
  * @pt_level        The indirection level of the page table. 0-2.
  * @pt_root_page    DMA address of the level 0 page of the page table.
  */
-struct vmw_mob {
-	struct ttm_buffer_object *pt_bo;
-	unsigned long num_pages;
-	unsigned pt_level;
+काष्ठा vmw_mob अणु
+	काष्ठा tपंचांग_buffer_object *pt_bo;
+	अचिन्हित दीर्घ num_pages;
+	अचिन्हित pt_level;
 	dma_addr_t pt_root_page;
-	uint32_t id;
-};
+	uपूर्णांक32_t id;
+पूर्ण;
 
 /*
- * struct vmw_otable - Guest Memory OBject table metadata
+ * काष्ठा vmw_otable - Guest Memory OBject table metadata
  *
  * @size:           Size of the table (page-aligned).
- * @page_table:     Pointer to a struct vmw_mob holding the page table.
+ * @page_table:     Poपूर्णांकer to a काष्ठा vmw_mob holding the page table.
  */
-static const struct vmw_otable pre_dx_tables[] = {
-	{VMWGFX_NUM_MOB * SVGA3D_OTABLE_MOB_ENTRY_SIZE, NULL, true},
-	{VMWGFX_NUM_GB_SURFACE * SVGA3D_OTABLE_SURFACE_ENTRY_SIZE, NULL, true},
-	{VMWGFX_NUM_GB_CONTEXT * SVGA3D_OTABLE_CONTEXT_ENTRY_SIZE, NULL, true},
-	{VMWGFX_NUM_GB_SHADER * SVGA3D_OTABLE_SHADER_ENTRY_SIZE, NULL, true},
-	{VMWGFX_NUM_GB_SCREEN_TARGET * SVGA3D_OTABLE_SCREEN_TARGET_ENTRY_SIZE,
-	 NULL, VMWGFX_ENABLE_SCREEN_TARGET_OTABLE}
-};
+अटल स्थिर काष्ठा vmw_otable pre_dx_tables[] = अणु
+	अणुVMWGFX_NUM_MOB * SVGA3D_OTABLE_MOB_ENTRY_SIZE, शून्य, trueपूर्ण,
+	अणुVMWGFX_NUM_GB_SURFACE * SVGA3D_OTABLE_SURFACE_ENTRY_SIZE, शून्य, trueपूर्ण,
+	अणुVMWGFX_NUM_GB_CONTEXT * SVGA3D_OTABLE_CONTEXT_ENTRY_SIZE, शून्य, trueपूर्ण,
+	अणुVMWGFX_NUM_GB_SHADER * SVGA3D_OTABLE_SHADER_ENTRY_SIZE, शून्य, trueपूर्ण,
+	अणुVMWGFX_NUM_GB_SCREEN_TARGET * SVGA3D_OTABLE_SCREEN_TARGET_ENTRY_SIZE,
+	 शून्य, VMWGFX_ENABLE_SCREEN_TARGET_OTABLEपूर्ण
+पूर्ण;
 
-static const struct vmw_otable dx_tables[] = {
-	{VMWGFX_NUM_MOB * SVGA3D_OTABLE_MOB_ENTRY_SIZE, NULL, true},
-	{VMWGFX_NUM_GB_SURFACE * SVGA3D_OTABLE_SURFACE_ENTRY_SIZE, NULL, true},
-	{VMWGFX_NUM_GB_CONTEXT * SVGA3D_OTABLE_CONTEXT_ENTRY_SIZE, NULL, true},
-	{VMWGFX_NUM_GB_SHADER * SVGA3D_OTABLE_SHADER_ENTRY_SIZE, NULL, true},
-	{VMWGFX_NUM_GB_SCREEN_TARGET * SVGA3D_OTABLE_SCREEN_TARGET_ENTRY_SIZE,
-	 NULL, VMWGFX_ENABLE_SCREEN_TARGET_OTABLE},
-	{VMWGFX_NUM_DXCONTEXT * sizeof(SVGAOTableDXContextEntry), NULL, true},
-};
+अटल स्थिर काष्ठा vmw_otable dx_tables[] = अणु
+	अणुVMWGFX_NUM_MOB * SVGA3D_OTABLE_MOB_ENTRY_SIZE, शून्य, trueपूर्ण,
+	अणुVMWGFX_NUM_GB_SURFACE * SVGA3D_OTABLE_SURFACE_ENTRY_SIZE, शून्य, trueपूर्ण,
+	अणुVMWGFX_NUM_GB_CONTEXT * SVGA3D_OTABLE_CONTEXT_ENTRY_SIZE, शून्य, trueपूर्ण,
+	अणुVMWGFX_NUM_GB_SHADER * SVGA3D_OTABLE_SHADER_ENTRY_SIZE, शून्य, trueपूर्ण,
+	अणुVMWGFX_NUM_GB_SCREEN_TARGET * SVGA3D_OTABLE_SCREEN_TARGET_ENTRY_SIZE,
+	 शून्य, VMWGFX_ENABLE_SCREEN_TARGET_OTABLEपूर्ण,
+	अणुVMWGFX_NUM_DXCONTEXT * माप(SVGAOTableDXContextEntry), शून्य, trueपूर्ण,
+पूर्ण;
 
-static int vmw_mob_pt_populate(struct vmw_private *dev_priv,
-			       struct vmw_mob *mob);
-static void vmw_mob_pt_setup(struct vmw_mob *mob,
-			     struct vmw_piter data_iter,
-			     unsigned long num_data_pages);
+अटल पूर्णांक vmw_mob_pt_populate(काष्ठा vmw_निजी *dev_priv,
+			       काष्ठा vmw_mob *mob);
+अटल व्योम vmw_mob_pt_setup(काष्ठा vmw_mob *mob,
+			     काष्ठा vmw_piter data_iter,
+			     अचिन्हित दीर्घ num_data_pages);
 
 
-static inline void vmw_bo_unpin_unlocked(struct ttm_buffer_object *bo)
-{
-	int ret = ttm_bo_reserve(bo, false, true, NULL);
+अटल अंतरभूत व्योम vmw_bo_unpin_unlocked(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	पूर्णांक ret = tपंचांग_bo_reserve(bo, false, true, शून्य);
 	BUG_ON(ret != 0);
-	ttm_bo_unpin(bo);
-	ttm_bo_unreserve(bo);
-}
+	tपंचांग_bo_unpin(bo);
+	tपंचांग_bo_unreserve(bo);
+पूर्ण
 
 
 /*
  * vmw_setup_otable_base - Issue an object table base setup command to
  * the device
  *
- * @dev_priv:       Pointer to a device private structure
+ * @dev_priv:       Poपूर्णांकer to a device निजी काष्ठाure
  * @type:           Type of object table base
- * @offset          Start of table offset into dev_priv::otable_bo
- * @otable          Pointer to otable metadata;
+ * @offset          Start of table offset पूर्णांकo dev_priv::otable_bo
+ * @otable          Poपूर्णांकer to otable metadata;
  *
- * This function returns -ENOMEM if it fails to reserve fifo space,
- * and may block waiting for fifo space.
+ * This function वापसs -ENOMEM अगर it fails to reserve fअगरo space,
+ * and may block रुकोing क्रम fअगरo space.
  */
-static int vmw_setup_otable_base(struct vmw_private *dev_priv,
+अटल पूर्णांक vmw_setup_otable_base(काष्ठा vmw_निजी *dev_priv,
 				 SVGAOTableType type,
-				 struct ttm_buffer_object *otable_bo,
-				 unsigned long offset,
-				 struct vmw_otable *otable)
-{
-	struct {
+				 काष्ठा tपंचांग_buffer_object *otable_bo,
+				 अचिन्हित दीर्घ offset,
+				 काष्ठा vmw_otable *otable)
+अणु
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdSetOTableBase64 body;
-	} *cmd;
-	struct vmw_mob *mob;
-	const struct vmw_sg_table *vsgt;
-	struct vmw_piter iter;
-	int ret;
+	पूर्ण *cmd;
+	काष्ठा vmw_mob *mob;
+	स्थिर काष्ठा vmw_sg_table *vsgt;
+	काष्ठा vmw_piter iter;
+	पूर्णांक ret;
 
-	BUG_ON(otable->page_table != NULL);
+	BUG_ON(otable->page_table != शून्य);
 
 	vsgt = vmw_bo_sg_table(otable_bo);
 	vmw_piter_start(&iter, vsgt, offset >> PAGE_SHIFT);
 	WARN_ON(!vmw_piter_next(&iter));
 
 	mob = vmw_mob_create(otable->size >> PAGE_SHIFT);
-	if (unlikely(mob == NULL)) {
+	अगर (unlikely(mob == शून्य)) अणु
 		DRM_ERROR("Failed creating OTable page table.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (otable->size <= PAGE_SIZE) {
+	अगर (otable->size <= PAGE_SIZE) अणु
 		mob->pt_level = VMW_MOBFMT_PTDEPTH_0;
 		mob->pt_root_page = vmw_piter_dma_addr(&iter);
-	} else if (vsgt->num_regions == 1) {
+	पूर्ण अन्यथा अगर (vsgt->num_regions == 1) अणु
 		mob->pt_level = SVGA3D_MOBFMT_RANGE;
 		mob->pt_root_page = vmw_piter_dma_addr(&iter);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = vmw_mob_pt_populate(dev_priv, mob);
-		if (unlikely(ret != 0))
-			goto out_no_populate;
+		अगर (unlikely(ret != 0))
+			जाओ out_no_populate;
 
 		vmw_mob_pt_setup(mob, iter, otable->size >> PAGE_SHIFT);
 		mob->pt_level += VMW_MOBFMT_PTDEPTH_1 - SVGA3D_MOBFMT_PTDEPTH_1;
-	}
+	पूर्ण
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL)) {
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य)) अणु
 		ret = -ENOMEM;
-		goto out_no_fifo;
-	}
+		जाओ out_no_fअगरo;
+	पूर्ण
 
-	memset(cmd, 0, sizeof(*cmd));
+	स_रखो(cmd, 0, माप(*cmd));
 	cmd->header.id = SVGA_3D_CMD_SET_OTABLE_BASE64;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.type = type;
 	cmd->body.baseAddress = mob->pt_root_page >> PAGE_SHIFT;
 	cmd->body.sizeInBytes = otable->size;
@@ -174,281 +175,281 @@ static int vmw_setup_otable_base(struct vmw_private *dev_priv,
 	cmd->body.ptDepth = mob->pt_level;
 
 	/*
-	 * The device doesn't support this, But the otable size is
-	 * determined at compile-time, so this BUG shouldn't trigger
-	 * randomly.
+	 * The device करोesn't support this, But the otable size is
+	 * determined at compile-समय, so this BUG shouldn't trigger
+	 * अक्रमomly.
 	 */
 	BUG_ON(mob->pt_level == VMW_MOBFMT_PTDEPTH_2);
 
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 	otable->page_table = mob;
 
-	return 0;
+	वापस 0;
 
-out_no_fifo:
+out_no_fअगरo:
 out_no_populate:
 	vmw_mob_destroy(mob);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * vmw_takedown_otable_base - Issue an object table base takedown command
+ * vmw_takeकरोwn_otable_base - Issue an object table base takeकरोwn command
  * to the device
  *
- * @dev_priv:       Pointer to a device private structure
+ * @dev_priv:       Poपूर्णांकer to a device निजी काष्ठाure
  * @type:           Type of object table base
  *
  */
-static void vmw_takedown_otable_base(struct vmw_private *dev_priv,
+अटल व्योम vmw_takeकरोwn_otable_base(काष्ठा vmw_निजी *dev_priv,
 				     SVGAOTableType type,
-				     struct vmw_otable *otable)
-{
-	struct {
+				     काष्ठा vmw_otable *otable)
+अणु
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdSetOTableBase body;
-	} *cmd;
-	struct ttm_buffer_object *bo;
+	पूर्ण *cmd;
+	काष्ठा tपंचांग_buffer_object *bo;
 
-	if (otable->page_table == NULL)
-		return;
+	अगर (otable->page_table == शून्य)
+		वापस;
 
 	bo = otable->page_table->pt_bo;
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		return;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		वापस;
 
-	memset(cmd, 0, sizeof(*cmd));
+	स_रखो(cmd, 0, माप(*cmd));
 	cmd->header.id = SVGA_3D_CMD_SET_OTABLE_BASE;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.type = type;
 	cmd->body.baseAddress = 0;
 	cmd->body.sizeInBytes = 0;
 	cmd->body.validSizeInBytes = 0;
 	cmd->body.ptDepth = SVGA3D_MOBFMT_INVALID;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 
-	if (bo) {
-		int ret;
+	अगर (bo) अणु
+		पूर्णांक ret;
 
-		ret = ttm_bo_reserve(bo, false, true, NULL);
+		ret = tपंचांग_bo_reserve(bo, false, true, शून्य);
 		BUG_ON(ret != 0);
 
-		vmw_bo_fence_single(bo, NULL);
-		ttm_bo_unreserve(bo);
-	}
+		vmw_bo_fence_single(bo, शून्य);
+		tपंचांग_bo_unreserve(bo);
+	पूर्ण
 
 	vmw_mob_destroy(otable->page_table);
-	otable->page_table = NULL;
-}
+	otable->page_table = शून्य;
+पूर्ण
 
 
-static int vmw_otable_batch_setup(struct vmw_private *dev_priv,
-				  struct vmw_otable_batch *batch)
-{
-	unsigned long offset;
-	unsigned long bo_size;
-	struct vmw_otable *otables = batch->otables;
+अटल पूर्णांक vmw_otable_batch_setup(काष्ठा vmw_निजी *dev_priv,
+				  काष्ठा vmw_otable_batch *batch)
+अणु
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ bo_size;
+	काष्ठा vmw_otable *otables = batch->otables;
 	SVGAOTableType i;
-	int ret;
+	पूर्णांक ret;
 
 	bo_size = 0;
-	for (i = 0; i < batch->num_otables; ++i) {
-		if (!otables[i].enabled)
-			continue;
+	क्रम (i = 0; i < batch->num_otables; ++i) अणु
+		अगर (!otables[i].enabled)
+			जारी;
 
 		otables[i].size =
 			(otables[i].size + PAGE_SIZE - 1) & PAGE_MASK;
 		bo_size += otables[i].size;
-	}
+	पूर्ण
 
 	ret = vmw_bo_create_and_populate(dev_priv, bo_size, &batch->otable_bo);
-	if (unlikely(ret != 0))
-		return ret;
+	अगर (unlikely(ret != 0))
+		वापस ret;
 
 	offset = 0;
-	for (i = 0; i < batch->num_otables; ++i) {
-		if (!batch->otables[i].enabled)
-			continue;
+	क्रम (i = 0; i < batch->num_otables; ++i) अणु
+		अगर (!batch->otables[i].enabled)
+			जारी;
 
 		ret = vmw_setup_otable_base(dev_priv, i, batch->otable_bo,
 					    offset,
 					    &otables[i]);
-		if (unlikely(ret != 0))
-			goto out_no_setup;
+		अगर (unlikely(ret != 0))
+			जाओ out_no_setup;
 		offset += otables[i].size;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_no_setup:
-	for (i = 0; i < batch->num_otables; ++i) {
-		if (batch->otables[i].enabled)
-			vmw_takedown_otable_base(dev_priv, i,
+	क्रम (i = 0; i < batch->num_otables; ++i) अणु
+		अगर (batch->otables[i].enabled)
+			vmw_takeकरोwn_otable_base(dev_priv, i,
 						 &batch->otables[i]);
-	}
+	पूर्ण
 
 	vmw_bo_unpin_unlocked(batch->otable_bo);
-	ttm_bo_put(batch->otable_bo);
-	batch->otable_bo = NULL;
-	return ret;
-}
+	tपंचांग_bo_put(batch->otable_bo);
+	batch->otable_bo = शून्य;
+	वापस ret;
+पूर्ण
 
 /*
  * vmw_otables_setup - Set up guest backed memory object tables
  *
- * @dev_priv:       Pointer to a device private structure
+ * @dev_priv:       Poपूर्णांकer to a device निजी काष्ठाure
  *
  * Takes care of the device guest backed surface
  * initialization, by setting up the guest backed memory object tables.
- * Returns 0 on success and various error codes on failure. A successful return
- * means the object tables can be taken down using the vmw_otables_takedown
+ * Returns 0 on success and various error codes on failure. A successful वापस
+ * means the object tables can be taken करोwn using the vmw_otables_takeकरोwn
  * function.
  */
-int vmw_otables_setup(struct vmw_private *dev_priv)
-{
-	struct vmw_otable **otables = &dev_priv->otable_batch.otables;
-	int ret;
+पूर्णांक vmw_otables_setup(काष्ठा vmw_निजी *dev_priv)
+अणु
+	काष्ठा vmw_otable **otables = &dev_priv->otable_batch.otables;
+	पूर्णांक ret;
 
-	if (has_sm4_context(dev_priv)) {
-		*otables = kmemdup(dx_tables, sizeof(dx_tables), GFP_KERNEL);
-		if (!(*otables))
-			return -ENOMEM;
+	अगर (has_sm4_context(dev_priv)) अणु
+		*otables = kmemdup(dx_tables, माप(dx_tables), GFP_KERNEL);
+		अगर (!(*otables))
+			वापस -ENOMEM;
 
 		dev_priv->otable_batch.num_otables = ARRAY_SIZE(dx_tables);
-	} else {
-		*otables = kmemdup(pre_dx_tables, sizeof(pre_dx_tables),
+	पूर्ण अन्यथा अणु
+		*otables = kmemdup(pre_dx_tables, माप(pre_dx_tables),
 				   GFP_KERNEL);
-		if (!(*otables))
-			return -ENOMEM;
+		अगर (!(*otables))
+			वापस -ENOMEM;
 
 		dev_priv->otable_batch.num_otables = ARRAY_SIZE(pre_dx_tables);
-	}
+	पूर्ण
 
 	ret = vmw_otable_batch_setup(dev_priv, &dev_priv->otable_batch);
-	if (unlikely(ret != 0))
-		goto out_setup;
+	अगर (unlikely(ret != 0))
+		जाओ out_setup;
 
-	return 0;
+	वापस 0;
 
 out_setup:
-	kfree(*otables);
-	return ret;
-}
+	kमुक्त(*otables);
+	वापस ret;
+पूर्ण
 
-static void vmw_otable_batch_takedown(struct vmw_private *dev_priv,
-			       struct vmw_otable_batch *batch)
-{
+अटल व्योम vmw_otable_batch_takeकरोwn(काष्ठा vmw_निजी *dev_priv,
+			       काष्ठा vmw_otable_batch *batch)
+अणु
 	SVGAOTableType i;
-	struct ttm_buffer_object *bo = batch->otable_bo;
-	int ret;
+	काष्ठा tपंचांग_buffer_object *bo = batch->otable_bo;
+	पूर्णांक ret;
 
-	for (i = 0; i < batch->num_otables; ++i)
-		if (batch->otables[i].enabled)
-			vmw_takedown_otable_base(dev_priv, i,
+	क्रम (i = 0; i < batch->num_otables; ++i)
+		अगर (batch->otables[i].enabled)
+			vmw_takeकरोwn_otable_base(dev_priv, i,
 						 &batch->otables[i]);
 
-	ret = ttm_bo_reserve(bo, false, true, NULL);
+	ret = tपंचांग_bo_reserve(bo, false, true, शून्य);
 	BUG_ON(ret != 0);
 
-	vmw_bo_fence_single(bo, NULL);
-	ttm_bo_unpin(bo);
-	ttm_bo_unreserve(bo);
+	vmw_bo_fence_single(bo, शून्य);
+	tपंचांग_bo_unpin(bo);
+	tपंचांग_bo_unreserve(bo);
 
-	ttm_bo_unpin(batch->otable_bo);
-	ttm_bo_put(batch->otable_bo);
-	batch->otable_bo = NULL;
-}
+	tपंचांग_bo_unpin(batch->otable_bo);
+	tपंचांग_bo_put(batch->otable_bo);
+	batch->otable_bo = शून्य;
+पूर्ण
 
 /*
- * vmw_otables_takedown - Take down guest backed memory object tables
+ * vmw_otables_takeकरोwn - Take करोwn guest backed memory object tables
  *
- * @dev_priv:       Pointer to a device private structure
+ * @dev_priv:       Poपूर्णांकer to a device निजी काष्ठाure
  *
- * Take down the Guest Memory Object tables.
+ * Take करोwn the Guest Memory Object tables.
  */
-void vmw_otables_takedown(struct vmw_private *dev_priv)
-{
-	vmw_otable_batch_takedown(dev_priv, &dev_priv->otable_batch);
-	kfree(dev_priv->otable_batch.otables);
-}
+व्योम vmw_otables_takeकरोwn(काष्ठा vmw_निजी *dev_priv)
+अणु
+	vmw_otable_batch_takeकरोwn(dev_priv, &dev_priv->otable_batch);
+	kमुक्त(dev_priv->otable_batch.otables);
+पूर्ण
 
 /*
  * vmw_mob_calculate_pt_pages - Calculate the number of page table pages
- * needed for a guest backed memory object.
+ * needed क्रम a guest backed memory object.
  *
  * @data_pages:  Number of data pages in the memory object buffer.
  */
-static unsigned long vmw_mob_calculate_pt_pages(unsigned long data_pages)
-{
-	unsigned long data_size = data_pages * PAGE_SIZE;
-	unsigned long tot_size = 0;
+अटल अचिन्हित दीर्घ vmw_mob_calculate_pt_pages(अचिन्हित दीर्घ data_pages)
+अणु
+	अचिन्हित दीर्घ data_size = data_pages * PAGE_SIZE;
+	अचिन्हित दीर्घ tot_size = 0;
 
-	while (likely(data_size > PAGE_SIZE)) {
+	जबतक (likely(data_size > PAGE_SIZE)) अणु
 		data_size = DIV_ROUND_UP(data_size, PAGE_SIZE);
 		data_size *= VMW_PPN_SIZE;
 		tot_size += (data_size + PAGE_SIZE - 1) & PAGE_MASK;
-	}
+	पूर्ण
 
-	return tot_size >> PAGE_SHIFT;
-}
+	वापस tot_size >> PAGE_SHIFT;
+पूर्ण
 
 /*
- * vmw_mob_create - Create a mob, but don't populate it.
+ * vmw_mob_create - Create a mob, but करोn't populate it.
  *
  * @data_pages:  Number of data pages of the underlying buffer object.
  */
-struct vmw_mob *vmw_mob_create(unsigned long data_pages)
-{
-	struct vmw_mob *mob = kzalloc(sizeof(*mob), GFP_KERNEL);
+काष्ठा vmw_mob *vmw_mob_create(अचिन्हित दीर्घ data_pages)
+अणु
+	काष्ठा vmw_mob *mob = kzalloc(माप(*mob), GFP_KERNEL);
 
-	if (unlikely(!mob))
-		return NULL;
+	अगर (unlikely(!mob))
+		वापस शून्य;
 
 	mob->num_pages = vmw_mob_calculate_pt_pages(data_pages);
 
-	return mob;
-}
+	वापस mob;
+पूर्ण
 
 /*
  * vmw_mob_pt_populate - Populate the mob pagetable
  *
- * @mob:         Pointer to the mob the pagetable of which we want to
+ * @mob:         Poपूर्णांकer to the mob the pagetable of which we want to
  *               populate.
  *
- * This function allocates memory to be used for the pagetable, and
- * adjusts TTM memory accounting accordingly. Returns ENOMEM if
+ * This function allocates memory to be used क्रम the pagetable, and
+ * adjusts TTM memory accounting accordingly. Returns ENOMEM अगर
  * memory resources aren't sufficient and may cause TTM buffer objects
  * to be swapped out by using the TTM memory accounting function.
  */
-static int vmw_mob_pt_populate(struct vmw_private *dev_priv,
-			       struct vmw_mob *mob)
-{
-	BUG_ON(mob->pt_bo != NULL);
+अटल पूर्णांक vmw_mob_pt_populate(काष्ठा vmw_निजी *dev_priv,
+			       काष्ठा vmw_mob *mob)
+अणु
+	BUG_ON(mob->pt_bo != शून्य);
 
-	return vmw_bo_create_and_populate(dev_priv, mob->num_pages * PAGE_SIZE, &mob->pt_bo);
-}
+	वापस vmw_bo_create_and_populate(dev_priv, mob->num_pages * PAGE_SIZE, &mob->pt_bo);
+पूर्ण
 
 /**
  * vmw_mob_assign_ppn - Assign a value to a page table entry
  *
- * @addr: Pointer to pointer to page table entry.
+ * @addr: Poपूर्णांकer to poपूर्णांकer to page table entry.
  * @val: The page table entry
  *
- * Assigns a value to a page table entry pointed to by *@addr and increments
+ * Assigns a value to a page table entry poपूर्णांकed to by *@addr and increments
  * *@addr according to the page table entry size.
  */
-#if (VMW_PPN_SIZE == 8)
-static void vmw_mob_assign_ppn(u32 **addr, dma_addr_t val)
-{
+#अगर (VMW_PPN_SIZE == 8)
+अटल व्योम vmw_mob_assign_ppn(u32 **addr, dma_addr_t val)
+अणु
 	*((u64 *) *addr) = val >> PAGE_SHIFT;
 	*addr += 2;
-}
-#else
-static void vmw_mob_assign_ppn(u32 **addr, dma_addr_t val)
-{
+पूर्ण
+#अन्यथा
+अटल व्योम vmw_mob_assign_ppn(u32 **addr, dma_addr_t val)
+अणु
 	*(*addr)++ = val >> PAGE_SHIFT;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * vmw_mob_build_pt - Build a pagetable
@@ -456,70 +457,70 @@ static void vmw_mob_assign_ppn(u32 **addr, dma_addr_t val)
  * @data_addr:      Array of DMA addresses to the underlying buffer
  *                  object's data pages.
  * @num_data_pages: Number of buffer object data pages.
- * @pt_pages:       Array of page pointers to the page table pages.
+ * @pt_pages:       Array of page poपूर्णांकers to the page table pages.
  *
  * Returns the number of page table pages actually used.
- * Uses atomic kmaps of highmem pages to avoid TLB thrashing.
+ * Uses atomic kmaps of highmem pages to aव्योम TLB thrashing.
  */
-static unsigned long vmw_mob_build_pt(struct vmw_piter *data_iter,
-				      unsigned long num_data_pages,
-				      struct vmw_piter *pt_iter)
-{
-	unsigned long pt_size = num_data_pages * VMW_PPN_SIZE;
-	unsigned long num_pt_pages = DIV_ROUND_UP(pt_size, PAGE_SIZE);
-	unsigned long pt_page;
+अटल अचिन्हित दीर्घ vmw_mob_build_pt(काष्ठा vmw_piter *data_iter,
+				      अचिन्हित दीर्घ num_data_pages,
+				      काष्ठा vmw_piter *pt_iter)
+अणु
+	अचिन्हित दीर्घ pt_size = num_data_pages * VMW_PPN_SIZE;
+	अचिन्हित दीर्घ num_pt_pages = DIV_ROUND_UP(pt_size, PAGE_SIZE);
+	अचिन्हित दीर्घ pt_page;
 	u32 *addr, *save_addr;
-	unsigned long i;
-	struct page *page;
+	अचिन्हित दीर्घ i;
+	काष्ठा page *page;
 
-	for (pt_page = 0; pt_page < num_pt_pages; ++pt_page) {
+	क्रम (pt_page = 0; pt_page < num_pt_pages; ++pt_page) अणु
 		page = vmw_piter_page(pt_iter);
 
 		save_addr = addr = kmap_atomic(page);
 
-		for (i = 0; i < PAGE_SIZE / VMW_PPN_SIZE; ++i) {
+		क्रम (i = 0; i < PAGE_SIZE / VMW_PPN_SIZE; ++i) अणु
 			vmw_mob_assign_ppn(&addr,
 					   vmw_piter_dma_addr(data_iter));
-			if (unlikely(--num_data_pages == 0))
-				break;
+			अगर (unlikely(--num_data_pages == 0))
+				अवरोध;
 			WARN_ON(!vmw_piter_next(data_iter));
-		}
+		पूर्ण
 		kunmap_atomic(save_addr);
 		vmw_piter_next(pt_iter);
-	}
+	पूर्ण
 
-	return num_pt_pages;
-}
+	वापस num_pt_pages;
+पूर्ण
 
 /*
  * vmw_mob_build_pt - Set up a multilevel mob pagetable
  *
- * @mob:            Pointer to a mob whose page table needs setting up.
+ * @mob:            Poपूर्णांकer to a mob whose page table needs setting up.
  * @data_addr       Array of DMA addresses to the buffer object's data
  *                  pages.
  * @num_data_pages: Number of buffer object data pages.
  *
  * Uses tail recursion to set up a multilevel mob page table.
  */
-static void vmw_mob_pt_setup(struct vmw_mob *mob,
-			     struct vmw_piter data_iter,
-			     unsigned long num_data_pages)
-{
-	unsigned long num_pt_pages = 0;
-	struct ttm_buffer_object *bo = mob->pt_bo;
-	struct vmw_piter save_pt_iter;
-	struct vmw_piter pt_iter;
-	const struct vmw_sg_table *vsgt;
-	int ret;
+अटल व्योम vmw_mob_pt_setup(काष्ठा vmw_mob *mob,
+			     काष्ठा vmw_piter data_iter,
+			     अचिन्हित दीर्घ num_data_pages)
+अणु
+	अचिन्हित दीर्घ num_pt_pages = 0;
+	काष्ठा tपंचांग_buffer_object *bo = mob->pt_bo;
+	काष्ठा vmw_piter save_pt_iter;
+	काष्ठा vmw_piter pt_iter;
+	स्थिर काष्ठा vmw_sg_table *vsgt;
+	पूर्णांक ret;
 
-	ret = ttm_bo_reserve(bo, false, true, NULL);
+	ret = tपंचांग_bo_reserve(bo, false, true, शून्य);
 	BUG_ON(ret != 0);
 
 	vsgt = vmw_bo_sg_table(bo);
 	vmw_piter_start(&pt_iter, vsgt, 0);
 	BUG_ON(!vmw_piter_next(&pt_iter));
 	mob->pt_level = 0;
-	while (likely(num_data_pages > 1)) {
+	जबतक (likely(num_data_pages > 1)) अणु
 		++mob->pt_level;
 		BUG_ON(mob->pt_level > 2);
 		save_pt_iter = pt_iter;
@@ -527,140 +528,140 @@ static void vmw_mob_pt_setup(struct vmw_mob *mob,
 						&pt_iter);
 		data_iter = save_pt_iter;
 		num_data_pages = num_pt_pages;
-	}
+	पूर्ण
 
 	mob->pt_root_page = vmw_piter_dma_addr(&save_pt_iter);
-	ttm_bo_unreserve(bo);
-}
+	tपंचांग_bo_unreserve(bo);
+पूर्ण
 
 /*
- * vmw_mob_destroy - Destroy a mob, unpopulating first if necessary.
+ * vmw_mob_destroy - Destroy a mob, unpopulating first अगर necessary.
  *
- * @mob:            Pointer to a mob to destroy.
+ * @mob:            Poपूर्णांकer to a mob to destroy.
  */
-void vmw_mob_destroy(struct vmw_mob *mob)
-{
-	if (mob->pt_bo) {
+व्योम vmw_mob_destroy(काष्ठा vmw_mob *mob)
+अणु
+	अगर (mob->pt_bo) अणु
 		vmw_bo_unpin_unlocked(mob->pt_bo);
-		ttm_bo_put(mob->pt_bo);
-		mob->pt_bo = NULL;
-	}
-	kfree(mob);
-}
+		tपंचांग_bo_put(mob->pt_bo);
+		mob->pt_bo = शून्य;
+	पूर्ण
+	kमुक्त(mob);
+पूर्ण
 
 /*
  * vmw_mob_unbind - Hide a mob from the device.
  *
- * @dev_priv:       Pointer to a device private.
+ * @dev_priv:       Poपूर्णांकer to a device निजी.
  * @mob_id:         Device id of the mob to unbind.
  */
-void vmw_mob_unbind(struct vmw_private *dev_priv,
-		    struct vmw_mob *mob)
-{
-	struct {
+व्योम vmw_mob_unbind(काष्ठा vmw_निजी *dev_priv,
+		    काष्ठा vmw_mob *mob)
+अणु
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDestroyGBMob body;
-	} *cmd;
-	int ret;
-	struct ttm_buffer_object *bo = mob->pt_bo;
+	पूर्ण *cmd;
+	पूर्णांक ret;
+	काष्ठा tपंचांग_buffer_object *bo = mob->pt_bo;
 
-	if (bo) {
-		ret = ttm_bo_reserve(bo, false, true, NULL);
+	अगर (bo) अणु
+		ret = tपंचांग_bo_reserve(bo, false, true, शून्य);
 		/*
-		 * Noone else should be using this buffer.
+		 * Noone अन्यथा should be using this buffer.
 		 */
 		BUG_ON(ret != 0);
-	}
+	पूर्ण
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (cmd) {
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (cmd) अणु
 		cmd->header.id = SVGA_3D_CMD_DESTROY_GB_MOB;
-		cmd->header.size = sizeof(cmd->body);
+		cmd->header.size = माप(cmd->body);
 		cmd->body.mobid = mob->id;
-		vmw_cmd_commit(dev_priv, sizeof(*cmd));
-	}
+		vmw_cmd_commit(dev_priv, माप(*cmd));
+	पूर्ण
 
-	if (bo) {
-		vmw_bo_fence_single(bo, NULL);
-		ttm_bo_unreserve(bo);
-	}
-	vmw_fifo_resource_dec(dev_priv);
-}
+	अगर (bo) अणु
+		vmw_bo_fence_single(bo, शून्य);
+		tपंचांग_bo_unreserve(bo);
+	पूर्ण
+	vmw_fअगरo_resource_dec(dev_priv);
+पूर्ण
 
 /*
  * vmw_mob_bind - Make a mob visible to the device after first
- *                populating it if necessary.
+ *                populating it अगर necessary.
  *
- * @dev_priv:       Pointer to a device private.
- * @mob:            Pointer to the mob we're making visible.
+ * @dev_priv:       Poपूर्णांकer to a device निजी.
+ * @mob:            Poपूर्णांकer to the mob we're making visible.
  * @data_addr:      Array of DMA addresses to the data pages of the underlying
  *                  buffer object.
  * @num_data_pages: Number of data pages of the underlying buffer
  *                  object.
  * @mob_id:         Device id of the mob to bind
  *
- * This function is intended to be interfaced with the ttm_tt backend
+ * This function is पूर्णांकended to be पूर्णांकerfaced with the tपंचांग_tt backend
  * code.
  */
-int vmw_mob_bind(struct vmw_private *dev_priv,
-		 struct vmw_mob *mob,
-		 const struct vmw_sg_table *vsgt,
-		 unsigned long num_data_pages,
-		 int32_t mob_id)
-{
-	int ret;
+पूर्णांक vmw_mob_bind(काष्ठा vmw_निजी *dev_priv,
+		 काष्ठा vmw_mob *mob,
+		 स्थिर काष्ठा vmw_sg_table *vsgt,
+		 अचिन्हित दीर्घ num_data_pages,
+		 पूर्णांक32_t mob_id)
+अणु
+	पूर्णांक ret;
 	bool pt_set_up = false;
-	struct vmw_piter data_iter;
-	struct {
+	काष्ठा vmw_piter data_iter;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDefineGBMob64 body;
-	} *cmd;
+	पूर्ण *cmd;
 
 	mob->id = mob_id;
 	vmw_piter_start(&data_iter, vsgt, 0);
-	if (unlikely(!vmw_piter_next(&data_iter)))
-		return 0;
+	अगर (unlikely(!vmw_piter_next(&data_iter)))
+		वापस 0;
 
-	if (likely(num_data_pages == 1)) {
+	अगर (likely(num_data_pages == 1)) अणु
 		mob->pt_level = VMW_MOBFMT_PTDEPTH_0;
 		mob->pt_root_page = vmw_piter_dma_addr(&data_iter);
-	} else if (vsgt->num_regions == 1) {
+	पूर्ण अन्यथा अगर (vsgt->num_regions == 1) अणु
 		mob->pt_level = SVGA3D_MOBFMT_RANGE;
 		mob->pt_root_page = vmw_piter_dma_addr(&data_iter);
-	} else if (unlikely(mob->pt_bo == NULL)) {
+	पूर्ण अन्यथा अगर (unlikely(mob->pt_bo == शून्य)) अणु
 		ret = vmw_mob_pt_populate(dev_priv, mob);
-		if (unlikely(ret != 0))
-			return ret;
+		अगर (unlikely(ret != 0))
+			वापस ret;
 
 		vmw_mob_pt_setup(mob, data_iter, num_data_pages);
 		pt_set_up = true;
 		mob->pt_level += VMW_MOBFMT_PTDEPTH_1 - SVGA3D_MOBFMT_PTDEPTH_1;
-	}
+	पूर्ण
 
-	vmw_fifo_resource_inc(dev_priv);
+	vmw_fअगरo_resource_inc(dev_priv);
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		goto out_no_cmd_space;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		जाओ out_no_cmd_space;
 
 	cmd->header.id = SVGA_3D_CMD_DEFINE_GB_MOB64;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.mobid = mob_id;
 	cmd->body.ptDepth = mob->pt_level;
 	cmd->body.base = mob->pt_root_page >> PAGE_SHIFT;
 	cmd->body.sizeInBytes = num_data_pages * PAGE_SIZE;
 
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 
-	return 0;
+	वापस 0;
 
 out_no_cmd_space:
-	vmw_fifo_resource_dec(dev_priv);
-	if (pt_set_up) {
+	vmw_fअगरo_resource_dec(dev_priv);
+	अगर (pt_set_up) अणु
 		vmw_bo_unpin_unlocked(mob->pt_bo);
-		ttm_bo_put(mob->pt_bo);
-		mob->pt_bo = NULL;
-	}
+		tपंचांग_bo_put(mob->pt_bo);
+		mob->pt_bo = शून्य;
+	पूर्ण
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण

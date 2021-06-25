@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * include/asm-parisc/cache.h
+ * include/यंत्र-parisc/cache.h
  */
 
-#ifndef __ARCH_PARISC_CACHE_H
-#define __ARCH_PARISC_CACHE_H
+#अगर_अघोषित __ARCH_PARISC_CACHE_H
+#घोषणा __ARCH_PARISC_CACHE_H
 
-#include <asm/alternative.h>
+#समावेश <यंत्र/alternative.h>
 
 /*
  * PA 2.0 processors have 64 and 128-byte L2 cachelines; PA 1.1 processors
  * have 32-byte cachelines.  The L1 length appears to be 16 bytes but this
- * is not clearly documented.
+ * is not clearly करोcumented.
  */
-#define L1_CACHE_BYTES 16
-#define L1_CACHE_SHIFT 4
+#घोषणा L1_CACHE_BYTES 16
+#घोषणा L1_CACHE_SHIFT 4
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#define SMP_CACHE_BYTES L1_CACHE_BYTES
+#घोषणा SMP_CACHE_BYTES L1_CACHE_BYTES
 
-#define ARCH_DMA_MINALIGN	L1_CACHE_BYTES
+#घोषणा ARCH_DMA_MINALIGN	L1_CACHE_BYTES
 
-#define __read_mostly __section(".data..read_mostly")
+#घोषणा __पढ़ो_mostly __section(".data..read_mostly")
 
-void parisc_cache_init(void);	/* initializes cache-flushing */
-void disable_sr_hashing_asm(int); /* low level support for above */
-void disable_sr_hashing(void);   /* turns off space register hashing */
-void free_sid(unsigned long);
-unsigned long alloc_sid(void);
+व्योम parisc_cache_init(व्योम);	/* initializes cache-flushing */
+व्योम disable_sr_hashing_यंत्र(पूर्णांक); /* low level support क्रम above */
+व्योम disable_sr_hashing(व्योम);   /* turns off space रेजिस्टर hashing */
+व्योम मुक्त_sid(अचिन्हित दीर्घ);
+अचिन्हित दीर्घ alloc_sid(व्योम);
 
-struct seq_file;
-extern void show_cache_info(struct seq_file *m);
+काष्ठा seq_file;
+बाह्य व्योम show_cache_info(काष्ठा seq_file *m);
 
-extern int split_tlb;
-extern int dcache_stride;
-extern int icache_stride;
-extern struct pdc_cache_info cache_info;
-void parisc_setup_cache_timing(void);
+बाह्य पूर्णांक split_tlb;
+बाह्य पूर्णांक dcache_stride;
+बाह्य पूर्णांक icache_stride;
+बाह्य काष्ठा pdc_cache_info cache_info;
+व्योम parisc_setup_cache_timing(व्योम);
 
-#define pdtlb(addr)	asm volatile("pdtlb 0(%%sr1,%0)" \
+#घोषणा pdtlb(addr)	यंत्र अस्थिर("pdtlb 0(%%sr1,%0)" \
 			ALTERNATIVE(ALT_COND_NO_SMP, INSN_PxTLB) \
 			: : "r" (addr) : "memory")
-#define pitlb(addr)	asm volatile("pitlb 0(%%sr1,%0)" \
+#घोषणा pitlb(addr)	यंत्र अस्थिर("pitlb 0(%%sr1,%0)" \
 			ALTERNATIVE(ALT_COND_NO_SMP, INSN_PxTLB) \
 			ALTERNATIVE(ALT_COND_NO_SPLIT_TLB, INSN_NOP) \
 			: : "r" (addr) : "memory")
-#define pdtlb_kernel(addr)  asm volatile("pdtlb 0(%0)"   \
+#घोषणा pdtlb_kernel(addr)  यंत्र अस्थिर("pdtlb 0(%0)"   \
 			ALTERNATIVE(ALT_COND_NO_SMP, INSN_PxTLB) \
 			: : "r" (addr) : "memory")
 
-#define asm_io_fdc(addr) asm volatile("fdc %%r0(%0)" \
+#घोषणा यंत्र_io_fdc(addr) यंत्र अस्थिर("fdc %%r0(%0)" \
 			ALTERNATIVE(ALT_COND_NO_DCACHE, INSN_NOP) \
 			ALTERNATIVE(ALT_COND_NO_IOC_FDC, INSN_NOP) \
 			: : "r" (addr) : "memory")
-#define asm_io_sync()	asm volatile("sync" \
+#घोषणा यंत्र_io_sync()	यंत्र अस्थिर("sync" \
 			ALTERNATIVE(ALT_COND_NO_DCACHE, INSN_NOP) \
 			ALTERNATIVE(ALT_COND_NO_IOC_FDC, INSN_NOP) :::"memory")
 
-#endif /* ! __ASSEMBLY__ */
+#पूर्ण_अगर /* ! __ASSEMBLY__ */
 
-/* Classes of processor wrt: disabling space register hashing */
+/* Classes of processor wrt: disabling space रेजिस्टर hashing */
 
-#define SRHASH_PCXST    0   /* pcxs, pcxt, pcxt_ */
-#define SRHASH_PCXL     1   /* pcxl */
-#define SRHASH_PA20     2   /* pcxu, pcxu_, pcxw, pcxw_ */
+#घोषणा SRHASH_PCXST    0   /* pcxs, pcxt, pcxt_ */
+#घोषणा SRHASH_PCXL     1   /* pcxl */
+#घोषणा SRHASH_PA20     2   /* pcxu, pcxu_, pcxw, pcxw_ */
 
-#endif
+#पूर्ण_अगर

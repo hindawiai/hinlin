@@ -1,136 +1,137 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Power key driver for SiRF PrimaII
+ * Power key driver क्रम SiRF PrimaII
  *
  * Copyright (c) 2013 - 2014 Cambridge Silicon Radio Limited, a CSR plc group
  * company.
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/input.h>
-#include <linux/rtc/sirfsoc_rtciobrg.h>
-#include <linux/of.h>
-#include <linux/workqueue.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/rtc/sirfsoc_rtciobrg.h>
+#समावेश <linux/of.h>
+#समावेश <linux/workqueue.h>
 
-struct sirfsoc_pwrc_drvdata {
+काष्ठा sirfsoc_pwrc_drvdata अणु
 	u32			pwrc_base;
-	struct input_dev	*input;
-	struct delayed_work	work;
-};
+	काष्ठा input_dev	*input;
+	काष्ठा delayed_work	work;
+पूर्ण;
 
-#define PWRC_ON_KEY_BIT			(1 << 0)
+#घोषणा PWRC_ON_KEY_BIT			(1 << 0)
 
-#define PWRC_INT_STATUS			0xc
-#define PWRC_INT_MASK			0x10
-#define PWRC_PIN_STATUS			0x14
-#define PWRC_KEY_DETECT_UP_TIME		20	/* ms*/
+#घोषणा PWRC_INT_STATUS			0xc
+#घोषणा PWRC_INT_MASK			0x10
+#घोषणा PWRC_PIN_STATUS			0x14
+#घोषणा PWRC_KEY_DETECT_UP_TIME		20	/* ms*/
 
-static int sirfsoc_pwrc_is_on_key_down(struct sirfsoc_pwrc_drvdata *pwrcdrv)
-{
-	u32 state = sirfsoc_rtc_iobrg_readl(pwrcdrv->pwrc_base +
+अटल पूर्णांक sirfsoc_pwrc_is_on_key_करोwn(काष्ठा sirfsoc_pwrc_drvdata *pwrcdrv)
+अणु
+	u32 state = sirfsoc_rtc_iobrg_पढ़ोl(pwrcdrv->pwrc_base +
 							PWRC_PIN_STATUS);
-	return !(state & PWRC_ON_KEY_BIT); /* ON_KEY is active low */
-}
+	वापस !(state & PWRC_ON_KEY_BIT); /* ON_KEY is active low */
+पूर्ण
 
-static void sirfsoc_pwrc_report_event(struct work_struct *work)
-{
-	struct sirfsoc_pwrc_drvdata *pwrcdrv =
-		container_of(work, struct sirfsoc_pwrc_drvdata, work.work);
+अटल व्योम sirfsoc_pwrc_report_event(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा sirfsoc_pwrc_drvdata *pwrcdrv =
+		container_of(work, काष्ठा sirfsoc_pwrc_drvdata, work.work);
 
-	if (sirfsoc_pwrc_is_on_key_down(pwrcdrv)) {
+	अगर (sirfsoc_pwrc_is_on_key_करोwn(pwrcdrv)) अणु
 		schedule_delayed_work(&pwrcdrv->work,
-			msecs_to_jiffies(PWRC_KEY_DETECT_UP_TIME));
-	} else {
+			msecs_to_jअगरfies(PWRC_KEY_DETECT_UP_TIME));
+	पूर्ण अन्यथा अणु
 		input_event(pwrcdrv->input, EV_KEY, KEY_POWER, 0);
 		input_sync(pwrcdrv->input);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t sirfsoc_pwrc_isr(int irq, void *dev_id)
-{
-	struct sirfsoc_pwrc_drvdata *pwrcdrv = dev_id;
-	u32 int_status;
+अटल irqवापस_t sirfsoc_pwrc_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sirfsoc_pwrc_drvdata *pwrcdrv = dev_id;
+	u32 पूर्णांक_status;
 
-	int_status = sirfsoc_rtc_iobrg_readl(pwrcdrv->pwrc_base +
+	पूर्णांक_status = sirfsoc_rtc_iobrg_पढ़ोl(pwrcdrv->pwrc_base +
 							PWRC_INT_STATUS);
-	sirfsoc_rtc_iobrg_writel(int_status & ~PWRC_ON_KEY_BIT,
+	sirfsoc_rtc_iobrg_ग_लिखोl(पूर्णांक_status & ~PWRC_ON_KEY_BIT,
 				 pwrcdrv->pwrc_base + PWRC_INT_STATUS);
 
 	input_event(pwrcdrv->input, EV_KEY, KEY_POWER, 1);
 	input_sync(pwrcdrv->input);
 	schedule_delayed_work(&pwrcdrv->work,
-			      msecs_to_jiffies(PWRC_KEY_DETECT_UP_TIME));
+			      msecs_to_jअगरfies(PWRC_KEY_DETECT_UP_TIME));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void sirfsoc_pwrc_toggle_interrupts(struct sirfsoc_pwrc_drvdata *pwrcdrv,
+अटल व्योम sirfsoc_pwrc_toggle_पूर्णांकerrupts(काष्ठा sirfsoc_pwrc_drvdata *pwrcdrv,
 					   bool enable)
-{
-	u32 int_mask;
+अणु
+	u32 पूर्णांक_mask;
 
-	int_mask = sirfsoc_rtc_iobrg_readl(pwrcdrv->pwrc_base + PWRC_INT_MASK);
-	if (enable)
-		int_mask |= PWRC_ON_KEY_BIT;
-	else
-		int_mask &= ~PWRC_ON_KEY_BIT;
-	sirfsoc_rtc_iobrg_writel(int_mask, pwrcdrv->pwrc_base + PWRC_INT_MASK);
-}
+	पूर्णांक_mask = sirfsoc_rtc_iobrg_पढ़ोl(pwrcdrv->pwrc_base + PWRC_INT_MASK);
+	अगर (enable)
+		पूर्णांक_mask |= PWRC_ON_KEY_BIT;
+	अन्यथा
+		पूर्णांक_mask &= ~PWRC_ON_KEY_BIT;
+	sirfsoc_rtc_iobrg_ग_लिखोl(पूर्णांक_mask, pwrcdrv->pwrc_base + PWRC_INT_MASK);
+पूर्ण
 
-static int sirfsoc_pwrc_open(struct input_dev *input)
-{
-	struct sirfsoc_pwrc_drvdata *pwrcdrv = input_get_drvdata(input);
+अटल पूर्णांक sirfsoc_pwrc_खोलो(काष्ठा input_dev *input)
+अणु
+	काष्ठा sirfsoc_pwrc_drvdata *pwrcdrv = input_get_drvdata(input);
 
-	sirfsoc_pwrc_toggle_interrupts(pwrcdrv, true);
+	sirfsoc_pwrc_toggle_पूर्णांकerrupts(pwrcdrv, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sirfsoc_pwrc_close(struct input_dev *input)
-{
-	struct sirfsoc_pwrc_drvdata *pwrcdrv = input_get_drvdata(input);
+अटल व्योम sirfsoc_pwrc_बंद(काष्ठा input_dev *input)
+अणु
+	काष्ठा sirfsoc_pwrc_drvdata *pwrcdrv = input_get_drvdata(input);
 
-	sirfsoc_pwrc_toggle_interrupts(pwrcdrv, false);
+	sirfsoc_pwrc_toggle_पूर्णांकerrupts(pwrcdrv, false);
 	cancel_delayed_work_sync(&pwrcdrv->work);
-}
+पूर्ण
 
-static const struct of_device_id sirfsoc_pwrc_of_match[] = {
-	{ .compatible = "sirf,prima2-pwrc" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id sirfsoc_pwrc_of_match[] = अणु
+	अणु .compatible = "sirf,prima2-pwrc" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sirfsoc_pwrc_of_match);
 
-static int sirfsoc_pwrc_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct sirfsoc_pwrc_drvdata *pwrcdrv;
-	int irq;
-	int error;
+अटल पूर्णांक sirfsoc_pwrc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा sirfsoc_pwrc_drvdata *pwrcdrv;
+	पूर्णांक irq;
+	पूर्णांक error;
 
-	pwrcdrv = devm_kzalloc(&pdev->dev, sizeof(struct sirfsoc_pwrc_drvdata),
+	pwrcdrv = devm_kzalloc(&pdev->dev, माप(काष्ठा sirfsoc_pwrc_drvdata),
 			       GFP_KERNEL);
-	if (!pwrcdrv) {
+	अगर (!pwrcdrv) अणु
 		dev_info(&pdev->dev, "Not enough memory for the device data\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
 	 * We can't use of_iomap because pwrc is not mapped in memory,
 	 * the so-called base address is only offset in rtciobrg
 	 */
-	error = of_property_read_u32(np, "reg", &pwrcdrv->pwrc_base);
-	if (error) {
+	error = of_property_पढ़ो_u32(np, "reg", &pwrcdrv->pwrc_base);
+	अगर (error) अणु
 		dev_err(&pdev->dev,
 			"unable to find base address of pwrc node in dtb\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	pwrcdrv->input = devm_input_allocate_device(&pdev->dev);
-	if (!pwrcdrv->input)
-		return -ENOMEM;
+	अगर (!pwrcdrv->input)
+		वापस -ENOMEM;
 
 	pwrcdrv->input->name = "sirfsoc pwrckey";
 	pwrcdrv->input->phys = "pwrc/input0";
@@ -139,67 +140,67 @@ static int sirfsoc_pwrc_probe(struct platform_device *pdev)
 
 	INIT_DELAYED_WORK(&pwrcdrv->work, sirfsoc_pwrc_report_event);
 
-	pwrcdrv->input->open = sirfsoc_pwrc_open;
-	pwrcdrv->input->close = sirfsoc_pwrc_close;
+	pwrcdrv->input->खोलो = sirfsoc_pwrc_खोलो;
+	pwrcdrv->input->बंद = sirfsoc_pwrc_बंद;
 
 	input_set_drvdata(pwrcdrv->input, pwrcdrv);
 
 	/* Make sure the device is quiesced */
-	sirfsoc_pwrc_toggle_interrupts(pwrcdrv, false);
+	sirfsoc_pwrc_toggle_पूर्णांकerrupts(pwrcdrv, false);
 
-	irq = platform_get_irq(pdev, 0);
+	irq = platक्रमm_get_irq(pdev, 0);
 	error = devm_request_irq(&pdev->dev, irq,
 				 sirfsoc_pwrc_isr, 0,
 				 "sirfsoc_pwrc_int", pwrcdrv);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "unable to claim irq %d, error: %d\n",
 			irq, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(pwrcdrv->input);
-	if (error) {
+	error = input_रेजिस्टर_device(pwrcdrv->input);
+	अगर (error) अणु
 		dev_err(&pdev->dev,
 			"unable to register input device, error: %d\n",
 			error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	dev_set_drvdata(&pdev->dev, pwrcdrv);
 	device_init_wakeup(&pdev->dev, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused sirfsoc_pwrc_resume(struct device *dev)
-{
-	struct sirfsoc_pwrc_drvdata *pwrcdrv = dev_get_drvdata(dev);
-	struct input_dev *input = pwrcdrv->input;
+अटल पूर्णांक __maybe_unused sirfsoc_pwrc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sirfsoc_pwrc_drvdata *pwrcdrv = dev_get_drvdata(dev);
+	काष्ठा input_dev *input = pwrcdrv->input;
 
 	/*
-	 * Do not mask pwrc interrupt as we want pwrc work as a wakeup source
-	 * if users touch X_ONKEY_B, see arch/arm/mach-prima2/pm.c
+	 * Do not mask pwrc पूर्णांकerrupt as we want pwrc work as a wakeup source
+	 * अगर users touch X_ONKEY_B, see arch/arm/mach-prima2/pm.c
 	 */
 	mutex_lock(&input->mutex);
-	if (input_device_enabled(input))
-		sirfsoc_pwrc_toggle_interrupts(pwrcdrv, true);
+	अगर (input_device_enabled(input))
+		sirfsoc_pwrc_toggle_पूर्णांकerrupts(pwrcdrv, true);
 	mutex_unlock(&input->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(sirfsoc_pwrc_pm_ops, NULL, sirfsoc_pwrc_resume);
+अटल SIMPLE_DEV_PM_OPS(sirfsoc_pwrc_pm_ops, शून्य, sirfsoc_pwrc_resume);
 
-static struct platform_driver sirfsoc_pwrc_driver = {
+अटल काष्ठा platक्रमm_driver sirfsoc_pwrc_driver = अणु
 	.probe		= sirfsoc_pwrc_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "sirfsoc-pwrc",
 		.pm	= &sirfsoc_pwrc_pm_ops,
 		.of_match_table = sirfsoc_pwrc_of_match,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-module_platform_driver(sirfsoc_pwrc_driver);
+module_platक्रमm_driver(sirfsoc_pwrc_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Binghua Duan <Binghua.Duan@csr.com>, Xianglong Du <Xianglong.Du@csr.com>");

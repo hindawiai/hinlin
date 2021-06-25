@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Spreadtrum multiplexer clock driver
+// Spपढ़ोtrum multiplexer घड़ी driver
 //
-// Copyright (C) 2017 Spreadtrum, Inc.
-// Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
+// Copyright (C) 2017 Spपढ़ोtrum, Inc.
+// Author: Chunyan Zhang <chunyan.zhang@spपढ़ोtrum.com>
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/regmap.h>
 
-#include "mux.h"
+#समावेश "mux.h"
 
-u8 sprd_mux_helper_get_parent(const struct sprd_clk_common *common,
-			      const struct sprd_mux_ssel *mux)
-{
-	unsigned int reg;
+u8 sprd_mux_helper_get_parent(स्थिर काष्ठा sprd_clk_common *common,
+			      स्थिर काष्ठा sprd_mux_ssel *mux)
+अणु
+	अचिन्हित पूर्णांक reg;
 	u8 parent;
-	int num_parents;
-	int i;
+	पूर्णांक num_parents;
+	पूर्णांक i;
 
-	regmap_read(common->regmap, common->reg, &reg);
-	parent = reg >> mux->shift;
+	regmap_पढ़ो(common->regmap, common->reg, &reg);
+	parent = reg >> mux->shअगरt;
 	parent &= (1 << mux->width) - 1;
 
-	if (!mux->table)
-		return parent;
+	अगर (!mux->table)
+		वापस parent;
 
 	num_parents = clk_hw_get_num_parents(&common->hw);
 
-	for (i = 0; i < num_parents - 1; i++)
-		if (parent >= mux->table[i] && parent < mux->table[i + 1])
-			return i;
+	क्रम (i = 0; i < num_parents - 1; i++)
+		अगर (parent >= mux->table[i] && parent < mux->table[i + 1])
+			वापस i;
 
-	return num_parents - 1;
-}
+	वापस num_parents - 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(sprd_mux_helper_get_parent);
 
-static u8 sprd_mux_get_parent(struct clk_hw *hw)
-{
-	struct sprd_mux *cm = hw_to_sprd_mux(hw);
+अटल u8 sprd_mux_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा sprd_mux *cm = hw_to_sprd_mux(hw);
 
-	return sprd_mux_helper_get_parent(&cm->common, &cm->mux);
-}
+	वापस sprd_mux_helper_get_parent(&cm->common, &cm->mux);
+पूर्ण
 
-int sprd_mux_helper_set_parent(const struct sprd_clk_common *common,
-			       const struct sprd_mux_ssel *mux,
+पूर्णांक sprd_mux_helper_set_parent(स्थिर काष्ठा sprd_clk_common *common,
+			       स्थिर काष्ठा sprd_mux_ssel *mux,
 			       u8 index)
-{
-	unsigned int reg;
+अणु
+	अचिन्हित पूर्णांक reg;
 
-	if (mux->table)
+	अगर (mux->table)
 		index = mux->table[index];
 
-	regmap_read(common->regmap, common->reg, &reg);
-	reg &= ~GENMASK(mux->width + mux->shift - 1, mux->shift);
-	regmap_write(common->regmap, common->reg,
-			  reg | (index << mux->shift));
+	regmap_पढ़ो(common->regmap, common->reg, &reg);
+	reg &= ~GENMASK(mux->width + mux->shअगरt - 1, mux->shअगरt);
+	regmap_ग_लिखो(common->regmap, common->reg,
+			  reg | (index << mux->shअगरt));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sprd_mux_helper_set_parent);
 
-static int sprd_mux_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct sprd_mux *cm = hw_to_sprd_mux(hw);
+अटल पूर्णांक sprd_mux_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा sprd_mux *cm = hw_to_sprd_mux(hw);
 
-	return sprd_mux_helper_set_parent(&cm->common, &cm->mux, index);
-}
+	वापस sprd_mux_helper_set_parent(&cm->common, &cm->mux, index);
+पूर्ण
 
-const struct clk_ops sprd_mux_ops = {
+स्थिर काष्ठा clk_ops sprd_mux_ops = अणु
 	.get_parent = sprd_mux_get_parent,
 	.set_parent = sprd_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(sprd_mux_ops);

@@ -1,228 +1,229 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright 2011-2012, Meador Inge, Mentor Graphics Corporation.
+ * Copyright 2011-2012, Meaकरोr Inge, Mentor Graphics Corporation.
  *
- * Some ideas based on un-pushed work done by Vivek Mahajan, Jason Jin, and
+ * Some ideas based on un-pushed work करोne by Vivek Mahajan, Jason Jin, and
  * Mingkai Hu from Freescale Semiconductor, Inc.
  */
 
-#include <linux/list.h>
-#include <linux/of_platform.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <asm/prom.h>
-#include <asm/hw_irq.h>
-#include <asm/ppc-pci.h>
-#include <asm/mpic_msgr.h>
+#समावेश <linux/list.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/hw_irq.h>
+#समावेश <यंत्र/ppc-pci.h>
+#समावेश <यंत्र/mpic_msgr.h>
 
-#define MPIC_MSGR_REGISTERS_PER_BLOCK	4
-#define MPIC_MSGR_STRIDE		0x10
-#define MPIC_MSGR_MER_OFFSET		0x100
-#define MSGR_INUSE			0
-#define MSGR_FREE			1
+#घोषणा MPIC_MSGR_REGISTERS_PER_BLOCK	4
+#घोषणा MPIC_MSGR_STRIDE		0x10
+#घोषणा MPIC_MSGR_MER_OFFSET		0x100
+#घोषणा MSGR_INUSE			0
+#घोषणा MSGR_FREE			1
 
-static struct mpic_msgr **mpic_msgrs;
-static unsigned int mpic_msgr_count;
-static DEFINE_RAW_SPINLOCK(msgrs_lock);
+अटल काष्ठा mpic_msgr **mpic_msgrs;
+अटल अचिन्हित पूर्णांक mpic_msgr_count;
+अटल DEFINE_RAW_SPINLOCK(msgrs_lock);
 
-static inline void _mpic_msgr_mer_write(struct mpic_msgr *msgr, u32 value)
-{
+अटल अंतरभूत व्योम _mpic_msgr_mer_ग_लिखो(काष्ठा mpic_msgr *msgr, u32 value)
+अणु
 	out_be32(msgr->mer, value);
-}
+पूर्ण
 
-static inline u32 _mpic_msgr_mer_read(struct mpic_msgr *msgr)
-{
-	return in_be32(msgr->mer);
-}
+अटल अंतरभूत u32 _mpic_msgr_mer_पढ़ो(काष्ठा mpic_msgr *msgr)
+अणु
+	वापस in_be32(msgr->mer);
+पूर्ण
 
-static inline void _mpic_msgr_disable(struct mpic_msgr *msgr)
-{
-	u32 mer = _mpic_msgr_mer_read(msgr);
+अटल अंतरभूत व्योम _mpic_msgr_disable(काष्ठा mpic_msgr *msgr)
+अणु
+	u32 mer = _mpic_msgr_mer_पढ़ो(msgr);
 
-	_mpic_msgr_mer_write(msgr, mer & ~(1 << msgr->num));
-}
+	_mpic_msgr_mer_ग_लिखो(msgr, mer & ~(1 << msgr->num));
+पूर्ण
 
-struct mpic_msgr *mpic_msgr_get(unsigned int reg_num)
-{
-	unsigned long flags;
-	struct mpic_msgr *msgr;
+काष्ठा mpic_msgr *mpic_msgr_get(अचिन्हित पूर्णांक reg_num)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा mpic_msgr *msgr;
 
 	/* Assume busy until proven otherwise.  */
 	msgr = ERR_PTR(-EBUSY);
 
-	if (reg_num >= mpic_msgr_count)
-		return ERR_PTR(-ENODEV);
+	अगर (reg_num >= mpic_msgr_count)
+		वापस ERR_PTR(-ENODEV);
 
 	raw_spin_lock_irqsave(&msgrs_lock, flags);
 	msgr = mpic_msgrs[reg_num];
-	if (msgr->in_use == MSGR_FREE)
+	अगर (msgr->in_use == MSGR_FREE)
 		msgr->in_use = MSGR_INUSE;
 	raw_spin_unlock_irqrestore(&msgrs_lock, flags);
 
-	return msgr;
-}
+	वापस msgr;
+पूर्ण
 EXPORT_SYMBOL_GPL(mpic_msgr_get);
 
-void mpic_msgr_put(struct mpic_msgr *msgr)
-{
-	unsigned long flags;
+व्योम mpic_msgr_put(काष्ठा mpic_msgr *msgr)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&msgr->lock, flags);
 	msgr->in_use = MSGR_FREE;
 	_mpic_msgr_disable(msgr);
 	raw_spin_unlock_irqrestore(&msgr->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mpic_msgr_put);
 
-void mpic_msgr_enable(struct mpic_msgr *msgr)
-{
-	unsigned long flags;
+व्योम mpic_msgr_enable(काष्ठा mpic_msgr *msgr)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 mer;
 
 	raw_spin_lock_irqsave(&msgr->lock, flags);
-	mer = _mpic_msgr_mer_read(msgr);
-	_mpic_msgr_mer_write(msgr, mer | (1 << msgr->num));
+	mer = _mpic_msgr_mer_पढ़ो(msgr);
+	_mpic_msgr_mer_ग_लिखो(msgr, mer | (1 << msgr->num));
 	raw_spin_unlock_irqrestore(&msgr->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mpic_msgr_enable);
 
-void mpic_msgr_disable(struct mpic_msgr *msgr)
-{
-	unsigned long flags;
+व्योम mpic_msgr_disable(काष्ठा mpic_msgr *msgr)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&msgr->lock, flags);
 	_mpic_msgr_disable(msgr);
 	raw_spin_unlock_irqrestore(&msgr->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mpic_msgr_disable);
 
 /* The following three functions are used to compute the order and number of
- * the message register blocks.  They are clearly very inefficent.  However,
- * they are called *only* a few times during device initialization.
+ * the message रेजिस्टर blocks.  They are clearly very inefficent.  However,
+ * they are called *only* a few बार during device initialization.
  */
-static unsigned int mpic_msgr_number_of_blocks(void)
-{
-	unsigned int count;
-	struct device_node *aliases;
+अटल अचिन्हित पूर्णांक mpic_msgr_number_of_blocks(व्योम)
+अणु
+	अचिन्हित पूर्णांक count;
+	काष्ठा device_node *aliases;
 
 	count = 0;
-	aliases = of_find_node_by_name(NULL, "aliases");
+	aliases = of_find_node_by_name(शून्य, "aliases");
 
-	if (aliases) {
-		char buf[32];
+	अगर (aliases) अणु
+		अक्षर buf[32];
 
-		for (;;) {
-			snprintf(buf, sizeof(buf), "mpic-msgr-block%d", count);
-			if (!of_find_property(aliases, buf, NULL))
-				break;
+		क्रम (;;) अणु
+			snम_लिखो(buf, माप(buf), "mpic-msgr-block%d", count);
+			अगर (!of_find_property(aliases, buf, शून्य))
+				अवरोध;
 
 			count += 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static unsigned int mpic_msgr_number_of_registers(void)
-{
-	return mpic_msgr_number_of_blocks() * MPIC_MSGR_REGISTERS_PER_BLOCK;
-}
+अटल अचिन्हित पूर्णांक mpic_msgr_number_of_रेजिस्टरs(व्योम)
+अणु
+	वापस mpic_msgr_number_of_blocks() * MPIC_MSGR_REGISTERS_PER_BLOCK;
+पूर्ण
 
-static int mpic_msgr_block_number(struct device_node *node)
-{
-	struct device_node *aliases;
-	unsigned int index, number_of_blocks;
-	char buf[64];
+अटल पूर्णांक mpic_msgr_block_number(काष्ठा device_node *node)
+अणु
+	काष्ठा device_node *aliases;
+	अचिन्हित पूर्णांक index, number_of_blocks;
+	अक्षर buf[64];
 
 	number_of_blocks = mpic_msgr_number_of_blocks();
-	aliases = of_find_node_by_name(NULL, "aliases");
-	if (!aliases)
-		return -1;
+	aliases = of_find_node_by_name(शून्य, "aliases");
+	अगर (!aliases)
+		वापस -1;
 
-	for (index = 0; index < number_of_blocks; ++index) {
-		struct property *prop;
+	क्रम (index = 0; index < number_of_blocks; ++index) अणु
+		काष्ठा property *prop;
 
-		snprintf(buf, sizeof(buf), "mpic-msgr-block%d", index);
-		prop = of_find_property(aliases, buf, NULL);
-		if (node == of_find_node_by_path(prop->value))
-			break;
-	}
+		snम_लिखो(buf, माप(buf), "mpic-msgr-block%d", index);
+		prop = of_find_property(aliases, buf, शून्य);
+		अगर (node == of_find_node_by_path(prop->value))
+			अवरोध;
+	पूर्ण
 
-	return index == number_of_blocks ? -1 : index;
-}
+	वापस index == number_of_blocks ? -1 : index;
+पूर्ण
 
-/* The probe function for a single message register block.
+/* The probe function क्रम a single message रेजिस्टर block.
  */
-static int mpic_msgr_probe(struct platform_device *dev)
-{
-	void __iomem *msgr_block_addr;
-	int block_number;
-	struct resource rsrc;
-	unsigned int i;
-	unsigned int irq_index;
-	struct device_node *np = dev->dev.of_node;
-	unsigned int receive_mask;
-	const unsigned int *prop;
+अटल पूर्णांक mpic_msgr_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	व्योम __iomem *msgr_block_addr;
+	पूर्णांक block_number;
+	काष्ठा resource rsrc;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक irq_index;
+	काष्ठा device_node *np = dev->dev.of_node;
+	अचिन्हित पूर्णांक receive_mask;
+	स्थिर अचिन्हित पूर्णांक *prop;
 
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(&dev->dev, "Device OF-Node is NULL");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	/* Allocate the message register array upon the first device
-	 * registered.
+	/* Allocate the message रेजिस्टर array upon the first device
+	 * रेजिस्टरed.
 	 */
-	if (!mpic_msgrs) {
-		mpic_msgr_count = mpic_msgr_number_of_registers();
+	अगर (!mpic_msgrs) अणु
+		mpic_msgr_count = mpic_msgr_number_of_रेजिस्टरs();
 		dev_info(&dev->dev, "Found %d message registers\n",
 				mpic_msgr_count);
 
-		mpic_msgrs = kcalloc(mpic_msgr_count, sizeof(*mpic_msgrs),
+		mpic_msgrs = kसुस्मृति(mpic_msgr_count, माप(*mpic_msgrs),
 							 GFP_KERNEL);
-		if (!mpic_msgrs) {
+		अगर (!mpic_msgrs) अणु
 			dev_err(&dev->dev,
 				"No memory for message register blocks\n");
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 	dev_info(&dev->dev, "Of-device full name %pOF\n", np);
 
-	/* IO map the message register block. */
+	/* IO map the message रेजिस्टर block. */
 	of_address_to_resource(np, 0, &rsrc);
 	msgr_block_addr = devm_ioremap(&dev->dev, rsrc.start, resource_size(&rsrc));
-	if (!msgr_block_addr) {
+	अगर (!msgr_block_addr) अणु
 		dev_err(&dev->dev, "Failed to iomap MPIC message registers");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	/* Ensure the block has a defined order. */
 	block_number = mpic_msgr_block_number(np);
-	if (block_number < 0) {
+	अगर (block_number < 0) अणु
 		dev_err(&dev->dev,
 			"Failed to find message register block alias\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	dev_info(&dev->dev, "Setting up message register block %d\n",
 			block_number);
 
-	/* Grab the receive mask which specifies what registers can receive
-	 * interrupts.
+	/* Grab the receive mask which specअगरies what रेजिस्टरs can receive
+	 * पूर्णांकerrupts.
 	 */
-	prop = of_get_property(np, "mpic-msgr-receive-mask", NULL);
+	prop = of_get_property(np, "mpic-msgr-receive-mask", शून्य);
 	receive_mask = (prop) ? *prop : 0xF;
 
-	/* Build up the appropriate message register data structures. */
-	for (i = 0, irq_index = 0; i < MPIC_MSGR_REGISTERS_PER_BLOCK; ++i) {
-		struct mpic_msgr *msgr;
-		unsigned int reg_number;
+	/* Build up the appropriate message रेजिस्टर data काष्ठाures. */
+	क्रम (i = 0, irq_index = 0; i < MPIC_MSGR_REGISTERS_PER_BLOCK; ++i) अणु
+		काष्ठा mpic_msgr *msgr;
+		अचिन्हित पूर्णांक reg_number;
 
-		msgr = kzalloc(sizeof(struct mpic_msgr), GFP_KERNEL);
-		if (!msgr) {
+		msgr = kzalloc(माप(काष्ठा mpic_msgr), GFP_KERNEL);
+		अगर (!msgr) अणु
 			dev_err(&dev->dev, "No memory for message register\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		reg_number = block_number * MPIC_MSGR_REGISTERS_PER_BLOCK + i;
 		msgr->base = msgr_block_addr + i * MPIC_MSGR_STRIDE;
@@ -231,47 +232,47 @@ static int mpic_msgr_probe(struct platform_device *dev)
 		msgr->num = i;
 		raw_spin_lock_init(&msgr->lock);
 
-		if (receive_mask & (1 << i)) {
+		अगर (receive_mask & (1 << i)) अणु
 			msgr->irq = irq_of_parse_and_map(np, irq_index);
-			if (!msgr->irq) {
+			अगर (!msgr->irq) अणु
 				dev_err(&dev->dev,
 						"Missing interrupt specifier");
-				kfree(msgr);
-				return -EFAULT;
-			}
+				kमुक्त(msgr);
+				वापस -EFAULT;
+			पूर्ण
 			irq_index += 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			msgr->irq = 0;
-		}
+		पूर्ण
 
 		mpic_msgrs[reg_number] = msgr;
 		mpic_msgr_disable(msgr);
 		dev_info(&dev->dev, "Register %d initialized: irq %d\n",
 				reg_number, msgr->irq);
 
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mpic_msgr_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mpic_msgr_ids[] = अणु
+	अणु
 		.compatible = "fsl,mpic-v3.1-msgr",
-		.data = NULL,
-	},
-	{}
-};
+		.data = शून्य,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver mpic_msgr_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mpic_msgr_driver = अणु
+	.driver = अणु
 		.name = "mpic-msgr",
 		.of_match_table = mpic_msgr_ids,
-	},
+	पूर्ण,
 	.probe = mpic_msgr_probe,
-};
+पूर्ण;
 
-static __init int mpic_msgr_init(void)
-{
-	return platform_driver_register(&mpic_msgr_driver);
-}
+अटल __init पूर्णांक mpic_msgr_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mpic_msgr_driver);
+पूर्ण
 subsys_initcall(mpic_msgr_init);

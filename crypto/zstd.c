@@ -1,257 +1,258 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Cryptographic API.
  *
  * Copyright (c) 2017-present, Facebook, Inc.
  */
-#include <linux/crypto.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/net.h>
-#include <linux/vmalloc.h>
-#include <linux/zstd.h>
-#include <crypto/internal/scompress.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/net.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/zstd.h>
+#समावेश <crypto/पूर्णांकernal/scompress.h>
 
 
-#define ZSTD_DEF_LEVEL	3
+#घोषणा ZSTD_DEF_LEVEL	3
 
-struct zstd_ctx {
+काष्ठा zstd_ctx अणु
 	ZSTD_CCtx *cctx;
 	ZSTD_DCtx *dctx;
-	void *cwksp;
-	void *dwksp;
-};
+	व्योम *cwksp;
+	व्योम *dwksp;
+पूर्ण;
 
-static ZSTD_parameters zstd_params(void)
-{
-	return ZSTD_getParams(ZSTD_DEF_LEVEL, 0, 0);
-}
+अटल ZSTD_parameters zstd_params(व्योम)
+अणु
+	वापस ZSTD_getParams(ZSTD_DEF_LEVEL, 0, 0);
+पूर्ण
 
-static int zstd_comp_init(struct zstd_ctx *ctx)
-{
-	int ret = 0;
-	const ZSTD_parameters params = zstd_params();
-	const size_t wksp_size = ZSTD_CCtxWorkspaceBound(params.cParams);
+अटल पूर्णांक zstd_comp_init(काष्ठा zstd_ctx *ctx)
+अणु
+	पूर्णांक ret = 0;
+	स्थिर ZSTD_parameters params = zstd_params();
+	स्थिर माप_प्रकार wksp_size = ZSTD_CCtxWorkspaceBound(params.cParams);
 
 	ctx->cwksp = vzalloc(wksp_size);
-	if (!ctx->cwksp) {
+	अगर (!ctx->cwksp) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ctx->cctx = ZSTD_initCCtx(ctx->cwksp, wksp_size);
-	if (!ctx->cctx) {
+	अगर (!ctx->cctx) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 out:
-	return ret;
-out_free:
-	vfree(ctx->cwksp);
-	goto out;
-}
+	वापस ret;
+out_मुक्त:
+	vमुक्त(ctx->cwksp);
+	जाओ out;
+पूर्ण
 
-static int zstd_decomp_init(struct zstd_ctx *ctx)
-{
-	int ret = 0;
-	const size_t wksp_size = ZSTD_DCtxWorkspaceBound();
+अटल पूर्णांक zstd_decomp_init(काष्ठा zstd_ctx *ctx)
+अणु
+	पूर्णांक ret = 0;
+	स्थिर माप_प्रकार wksp_size = ZSTD_DCtxWorkspaceBound();
 
 	ctx->dwksp = vzalloc(wksp_size);
-	if (!ctx->dwksp) {
+	अगर (!ctx->dwksp) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ctx->dctx = ZSTD_initDCtx(ctx->dwksp, wksp_size);
-	if (!ctx->dctx) {
+	अगर (!ctx->dctx) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 out:
-	return ret;
-out_free:
-	vfree(ctx->dwksp);
-	goto out;
-}
+	वापस ret;
+out_मुक्त:
+	vमुक्त(ctx->dwksp);
+	जाओ out;
+पूर्ण
 
-static void zstd_comp_exit(struct zstd_ctx *ctx)
-{
-	vfree(ctx->cwksp);
-	ctx->cwksp = NULL;
-	ctx->cctx = NULL;
-}
+अटल व्योम zstd_comp_निकास(काष्ठा zstd_ctx *ctx)
+अणु
+	vमुक्त(ctx->cwksp);
+	ctx->cwksp = शून्य;
+	ctx->cctx = शून्य;
+पूर्ण
 
-static void zstd_decomp_exit(struct zstd_ctx *ctx)
-{
-	vfree(ctx->dwksp);
-	ctx->dwksp = NULL;
-	ctx->dctx = NULL;
-}
+अटल व्योम zstd_decomp_निकास(काष्ठा zstd_ctx *ctx)
+अणु
+	vमुक्त(ctx->dwksp);
+	ctx->dwksp = शून्य;
+	ctx->dctx = शून्य;
+पूर्ण
 
-static int __zstd_init(void *ctx)
-{
-	int ret;
+अटल पूर्णांक __zstd_init(व्योम *ctx)
+अणु
+	पूर्णांक ret;
 
 	ret = zstd_comp_init(ctx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = zstd_decomp_init(ctx);
-	if (ret)
-		zstd_comp_exit(ctx);
-	return ret;
-}
+	अगर (ret)
+		zstd_comp_निकास(ctx);
+	वापस ret;
+पूर्ण
 
-static void *zstd_alloc_ctx(struct crypto_scomp *tfm)
-{
-	int ret;
-	struct zstd_ctx *ctx;
+अटल व्योम *zstd_alloc_ctx(काष्ठा crypto_scomp *tfm)
+अणु
+	पूर्णांक ret;
+	काष्ठा zstd_ctx *ctx;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return ERR_PTR(-ENOMEM);
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस ERR_PTR(-ENOMEM);
 
 	ret = __zstd_init(ctx);
-	if (ret) {
-		kfree(ctx);
-		return ERR_PTR(ret);
-	}
+	अगर (ret) अणु
+		kमुक्त(ctx);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-static int zstd_init(struct crypto_tfm *tfm)
-{
-	struct zstd_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक zstd_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा zstd_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	return __zstd_init(ctx);
-}
+	वापस __zstd_init(ctx);
+पूर्ण
 
-static void __zstd_exit(void *ctx)
-{
-	zstd_comp_exit(ctx);
-	zstd_decomp_exit(ctx);
-}
+अटल व्योम __zstd_निकास(व्योम *ctx)
+अणु
+	zstd_comp_निकास(ctx);
+	zstd_decomp_निकास(ctx);
+पूर्ण
 
-static void zstd_free_ctx(struct crypto_scomp *tfm, void *ctx)
-{
-	__zstd_exit(ctx);
-	kfree_sensitive(ctx);
-}
+अटल व्योम zstd_मुक्त_ctx(काष्ठा crypto_scomp *tfm, व्योम *ctx)
+अणु
+	__zstd_निकास(ctx);
+	kमुक्त_sensitive(ctx);
+पूर्ण
 
-static void zstd_exit(struct crypto_tfm *tfm)
-{
-	struct zstd_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम zstd_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा zstd_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	__zstd_exit(ctx);
-}
+	__zstd_निकास(ctx);
+पूर्ण
 
-static int __zstd_compress(const u8 *src, unsigned int slen,
-			   u8 *dst, unsigned int *dlen, void *ctx)
-{
-	size_t out_len;
-	struct zstd_ctx *zctx = ctx;
-	const ZSTD_parameters params = zstd_params();
+अटल पूर्णांक __zstd_compress(स्थिर u8 *src, अचिन्हित पूर्णांक slen,
+			   u8 *dst, अचिन्हित पूर्णांक *dlen, व्योम *ctx)
+अणु
+	माप_प्रकार out_len;
+	काष्ठा zstd_ctx *zctx = ctx;
+	स्थिर ZSTD_parameters params = zstd_params();
 
 	out_len = ZSTD_compressCCtx(zctx->cctx, dst, *dlen, src, slen, params);
-	if (ZSTD_isError(out_len))
-		return -EINVAL;
+	अगर (ZSTD_isError(out_len))
+		वापस -EINVAL;
 	*dlen = out_len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zstd_compress(struct crypto_tfm *tfm, const u8 *src,
-			 unsigned int slen, u8 *dst, unsigned int *dlen)
-{
-	struct zstd_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक zstd_compress(काष्ठा crypto_tfm *tfm, स्थिर u8 *src,
+			 अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen)
+अणु
+	काष्ठा zstd_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	return __zstd_compress(src, slen, dst, dlen, ctx);
-}
+	वापस __zstd_compress(src, slen, dst, dlen, ctx);
+पूर्ण
 
-static int zstd_scompress(struct crypto_scomp *tfm, const u8 *src,
-			  unsigned int slen, u8 *dst, unsigned int *dlen,
-			  void *ctx)
-{
-	return __zstd_compress(src, slen, dst, dlen, ctx);
-}
+अटल पूर्णांक zstd_scompress(काष्ठा crypto_scomp *tfm, स्थिर u8 *src,
+			  अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen,
+			  व्योम *ctx)
+अणु
+	वापस __zstd_compress(src, slen, dst, dlen, ctx);
+पूर्ण
 
-static int __zstd_decompress(const u8 *src, unsigned int slen,
-			     u8 *dst, unsigned int *dlen, void *ctx)
-{
-	size_t out_len;
-	struct zstd_ctx *zctx = ctx;
+अटल पूर्णांक __zstd_decompress(स्थिर u8 *src, अचिन्हित पूर्णांक slen,
+			     u8 *dst, अचिन्हित पूर्णांक *dlen, व्योम *ctx)
+अणु
+	माप_प्रकार out_len;
+	काष्ठा zstd_ctx *zctx = ctx;
 
 	out_len = ZSTD_decompressDCtx(zctx->dctx, dst, *dlen, src, slen);
-	if (ZSTD_isError(out_len))
-		return -EINVAL;
+	अगर (ZSTD_isError(out_len))
+		वापस -EINVAL;
 	*dlen = out_len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zstd_decompress(struct crypto_tfm *tfm, const u8 *src,
-			   unsigned int slen, u8 *dst, unsigned int *dlen)
-{
-	struct zstd_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक zstd_decompress(काष्ठा crypto_tfm *tfm, स्थिर u8 *src,
+			   अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen)
+अणु
+	काष्ठा zstd_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	return __zstd_decompress(src, slen, dst, dlen, ctx);
-}
+	वापस __zstd_decompress(src, slen, dst, dlen, ctx);
+पूर्ण
 
-static int zstd_sdecompress(struct crypto_scomp *tfm, const u8 *src,
-			    unsigned int slen, u8 *dst, unsigned int *dlen,
-			    void *ctx)
-{
-	return __zstd_decompress(src, slen, dst, dlen, ctx);
-}
+अटल पूर्णांक zstd_sdecompress(काष्ठा crypto_scomp *tfm, स्थिर u8 *src,
+			    अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक *dlen,
+			    व्योम *ctx)
+अणु
+	वापस __zstd_decompress(src, slen, dst, dlen, ctx);
+पूर्ण
 
-static struct crypto_alg alg = {
+अटल काष्ठा crypto_alg alg = अणु
 	.cra_name		= "zstd",
 	.cra_driver_name	= "zstd-generic",
 	.cra_flags		= CRYPTO_ALG_TYPE_COMPRESS,
-	.cra_ctxsize		= sizeof(struct zstd_ctx),
+	.cra_ctxsize		= माप(काष्ठा zstd_ctx),
 	.cra_module		= THIS_MODULE,
 	.cra_init		= zstd_init,
-	.cra_exit		= zstd_exit,
-	.cra_u			= { .compress = {
+	.cra_निकास		= zstd_निकास,
+	.cra_u			= अणु .compress = अणु
 	.coa_compress		= zstd_compress,
-	.coa_decompress		= zstd_decompress } }
-};
+	.coa_decompress		= zstd_decompress पूर्ण पूर्ण
+पूर्ण;
 
-static struct scomp_alg scomp = {
+अटल काष्ठा scomp_alg scomp = अणु
 	.alloc_ctx		= zstd_alloc_ctx,
-	.free_ctx		= zstd_free_ctx,
+	.मुक्त_ctx		= zstd_मुक्त_ctx,
 	.compress		= zstd_scompress,
 	.decompress		= zstd_sdecompress,
-	.base			= {
+	.base			= अणु
 		.cra_name	= "zstd",
 		.cra_driver_name = "zstd-scomp",
 		.cra_module	 = THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init zstd_mod_init(void)
-{
-	int ret;
+अटल पूर्णांक __init zstd_mod_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = crypto_register_alg(&alg);
-	if (ret)
-		return ret;
+	ret = crypto_रेजिस्टर_alg(&alg);
+	अगर (ret)
+		वापस ret;
 
-	ret = crypto_register_scomp(&scomp);
-	if (ret)
-		crypto_unregister_alg(&alg);
+	ret = crypto_रेजिस्टर_scomp(&scomp);
+	अगर (ret)
+		crypto_unरेजिस्टर_alg(&alg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit zstd_mod_fini(void)
-{
-	crypto_unregister_alg(&alg);
-	crypto_unregister_scomp(&scomp);
-}
+अटल व्योम __निकास zstd_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_alg(&alg);
+	crypto_unरेजिस्टर_scomp(&scomp);
+पूर्ण
 
 subsys_initcall(zstd_mod_init);
-module_exit(zstd_mod_fini);
+module_निकास(zstd_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Zstd Compression Algorithm");

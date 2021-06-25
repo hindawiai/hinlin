@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Generic push-switch framework
+ * Generic push-चयन framework
  *
  * Copyright (C) 2006  Paul Mundt
  */
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <asm/push-switch.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <यंत्र/push-चयन.h>
 
-#define DRV_NAME "push-switch"
-#define DRV_VERSION "0.1.1"
+#घोषणा DRV_NAME "push-switch"
+#घोषणा DRV_VERSION "0.1.1"
 
-static ssize_t switch_show(struct device *dev,
-			   struct device_attribute *attr,
-			   char *buf)
-{
-	struct push_switch_platform_info *psw_info = dev->platform_data;
-	return sprintf(buf, "%s\n", psw_info->name);
-}
-static DEVICE_ATTR_RO(switch);
+अटल sमाप_प्रकार चयन_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा push_चयन_platक्रमm_info *psw_info = dev->platक्रमm_data;
+	वापस प्र_लिखो(buf, "%s\n", psw_info->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(चयन);
 
-static void switch_timer(struct timer_list *t)
-{
-	struct push_switch *psw = from_timer(psw, t, debounce);
+अटल व्योम चयन_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा push_चयन *psw = from_समयr(psw, t, debounce);
 
 	schedule_work(&psw->work);
-}
+पूर्ण
 
-static void switch_work_handler(struct work_struct *work)
-{
-	struct push_switch *psw = container_of(work, struct push_switch, work);
-	struct platform_device *pdev = psw->pdev;
+अटल व्योम चयन_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा push_चयन *psw = container_of(work, काष्ठा push_चयन, work);
+	काष्ठा platक्रमm_device *pdev = psw->pdev;
 
 	psw->state = 0;
 
 	kobject_uevent(&pdev->dev.kobj, KOBJ_CHANGE);
-}
+पूर्ण
 
-static int switch_drv_probe(struct platform_device *pdev)
-{
-	struct push_switch_platform_info *psw_info;
-	struct push_switch *psw;
-	int ret, irq;
+अटल पूर्णांक चयन_drv_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा push_चयन_platक्रमm_info *psw_info;
+	काष्ठा push_चयन *psw;
+	पूर्णांक ret, irq;
 
-	psw = kzalloc(sizeof(struct push_switch), GFP_KERNEL);
-	if (unlikely(!psw))
-		return -ENOMEM;
+	psw = kzalloc(माप(काष्ठा push_चयन), GFP_KERNEL);
+	अगर (unlikely(!psw))
+		वापस -ENOMEM;
 
-	irq = platform_get_irq(pdev, 0);
-	if (unlikely(irq < 0)) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (unlikely(irq < 0)) अणु
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	psw_info = pdev->dev.platform_data;
+	psw_info = pdev->dev.platक्रमm_data;
 	BUG_ON(!psw_info);
 
 	ret = request_irq(irq, psw_info->irq_handler,
 			  psw_info->irq_flags,
 			  psw_info->name ? psw_info->name : DRV_NAME, pdev);
-	if (unlikely(ret < 0))
-		goto err;
+	अगर (unlikely(ret < 0))
+		जाओ err;
 
-	if (psw_info->name) {
-		ret = device_create_file(&pdev->dev, &dev_attr_switch);
-		if (unlikely(ret)) {
+	अगर (psw_info->name) अणु
+		ret = device_create_file(&pdev->dev, &dev_attr_चयन);
+		अगर (unlikely(ret)) अणु
 			dev_err(&pdev->dev, "Failed creating device attrs\n");
 			ret = -EINVAL;
-			goto err_irq;
-		}
-	}
+			जाओ err_irq;
+		पूर्ण
+	पूर्ण
 
-	INIT_WORK(&psw->work, switch_work_handler);
-	timer_setup(&psw->debounce, switch_timer, 0);
+	INIT_WORK(&psw->work, चयन_work_handler);
+	समयr_setup(&psw->debounce, चयन_समयr, 0);
 
 	/* Workqueue API brain-damage */
 	psw->pdev = pdev;
 
-	platform_set_drvdata(pdev, psw);
+	platक्रमm_set_drvdata(pdev, psw);
 
-	return 0;
+	वापस 0;
 
 err_irq:
-	free_irq(irq, pdev);
+	मुक्त_irq(irq, pdev);
 err:
-	kfree(psw);
-	return ret;
-}
+	kमुक्त(psw);
+	वापस ret;
+पूर्ण
 
-static int switch_drv_remove(struct platform_device *pdev)
-{
-	struct push_switch *psw = platform_get_drvdata(pdev);
-	struct push_switch_platform_info *psw_info = pdev->dev.platform_data;
-	int irq = platform_get_irq(pdev, 0);
+अटल पूर्णांक चयन_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा push_चयन *psw = platक्रमm_get_drvdata(pdev);
+	काष्ठा push_चयन_platक्रमm_info *psw_info = pdev->dev.platक्रमm_data;
+	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
 
-	if (psw_info->name)
-		device_remove_file(&pdev->dev, &dev_attr_switch);
+	अगर (psw_info->name)
+		device_हटाओ_file(&pdev->dev, &dev_attr_चयन);
 
-	platform_set_drvdata(pdev, NULL);
+	platक्रमm_set_drvdata(pdev, शून्य);
 	flush_work(&psw->work);
-	del_timer_sync(&psw->debounce);
-	free_irq(irq, pdev);
+	del_समयr_sync(&psw->debounce);
+	मुक्त_irq(irq, pdev);
 
-	kfree(psw);
+	kमुक्त(psw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver switch_driver = {
-	.probe		= switch_drv_probe,
-	.remove		= switch_drv_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver चयन_driver = अणु
+	.probe		= चयन_drv_probe,
+	.हटाओ		= चयन_drv_हटाओ,
+	.driver		= अणु
 		.name	= DRV_NAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init switch_init(void)
-{
-	printk(KERN_NOTICE DRV_NAME ": version %s loaded\n", DRV_VERSION);
-	return platform_driver_register(&switch_driver);
-}
+अटल पूर्णांक __init चयन_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_NOTICE DRV_NAME ": version %s loaded\n", DRV_VERSION);
+	वापस platक्रमm_driver_रेजिस्टर(&चयन_driver);
+पूर्ण
 
-static void __exit switch_exit(void)
-{
-	platform_driver_unregister(&switch_driver);
-}
-module_init(switch_init);
-module_exit(switch_exit);
+अटल व्योम __निकास चयन_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&चयन_driver);
+पूर्ण
+module_init(चयन_init);
+module_निकास(चयन_निकास);
 
 MODULE_VERSION(DRV_VERSION);
 MODULE_AUTHOR("Paul Mundt");

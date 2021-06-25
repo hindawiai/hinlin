@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/context_tracking.h>
-#include <linux/err.h>
-#include <linux/compat.h>
+#समावेश <linux/context_tracking.h>
+#समावेश <linux/err.h>
+#समावेश <linux/compat.h>
 
-#include <asm/asm-prototypes.h>
-#include <asm/kup.h>
-#include <asm/cputime.h>
-#include <asm/interrupt.h>
-#include <asm/hw_irq.h>
-#include <asm/interrupt.h>
-#include <asm/kprobes.h>
-#include <asm/paca.h>
-#include <asm/ptrace.h>
-#include <asm/reg.h>
-#include <asm/signal.h>
-#include <asm/switch_to.h>
-#include <asm/syscall.h>
-#include <asm/time.h>
-#include <asm/unistd.h>
+#समावेश <यंत्र/यंत्र-prototypes.h>
+#समावेश <यंत्र/kup.h>
+#समावेश <यंत्र/cpuसमय.स>
+#समावेश <यंत्र/पूर्णांकerrupt.h>
+#समावेश <यंत्र/hw_irq.h>
+#समावेश <यंत्र/पूर्णांकerrupt.h>
+#समावेश <यंत्र/kprobes.h>
+#समावेश <यंत्र/paca.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/संकेत.स>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <यंत्र/syscall.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/unistd.h>
 
-#if defined(CONFIG_PPC_ADV_DEBUG_REGS) && defined(CONFIG_PPC32)
-unsigned long global_dbcr0[NR_CPUS];
-#endif
+#अगर defined(CONFIG_PPC_ADV_DEBUG_REGS) && defined(CONFIG_PPC32)
+अचिन्हित दीर्घ global_dbcr0[NR_CPUS];
+#पूर्ण_अगर
 
-typedef long (*syscall_fn)(long, long, long, long, long, long);
+प्रकार दीर्घ (*syscall_fn)(दीर्घ, दीर्घ, दीर्घ, दीर्घ, दीर्घ, दीर्घ);
 
 /* Has to run notrace because it is entered not completely "reconciled" */
-notrace long system_call_exception(long r3, long r4, long r5,
-				   long r6, long r7, long r8,
-				   unsigned long r0, struct pt_regs *regs)
-{
+notrace दीर्घ प्रणाली_call_exception(दीर्घ r3, दीर्घ r4, दीर्घ r5,
+				   दीर्घ r6, दीर्घ r7, दीर्घ r8,
+				   अचिन्हित दीर्घ r0, काष्ठा pt_regs *regs)
+अणु
 	syscall_fn f;
 
 	kuep_lock();
 
 	regs->orig_gpr3 = r3;
 
-	if (IS_ENABLED(CONFIG_PPC_IRQ_SOFT_MASK_DEBUG))
-		BUG_ON(irq_soft_mask_return() != IRQS_ALL_DISABLED);
+	अगर (IS_ENABLED(CONFIG_PPC_IRQ_SOFT_MASK_DEBUG))
+		BUG_ON(irq_soft_mask_वापस() != IRQS_ALL_DISABLED);
 
 	trace_hardirqs_off(); /* finish reconciling */
 
 	CT_WARN_ON(ct_state() == CONTEXT_KERNEL);
-	user_exit_irqoff();
+	user_निकास_irqoff();
 
-	if (!IS_ENABLED(CONFIG_BOOKE) && !IS_ENABLED(CONFIG_40x))
+	अगर (!IS_ENABLED(CONFIG_BOOKE) && !IS_ENABLED(CONFIG_40x))
 		BUG_ON(!(regs->msr & MSR_RI));
 	BUG_ON(!(regs->msr & MSR_PR));
 	BUG_ON(arch_irq_disabled_regs(regs));
 
-#ifdef CONFIG_PPC_PKEY
-	if (mmu_has_feature(MMU_FTR_PKEY)) {
-		unsigned long amr, iamr;
+#अगर_घोषित CONFIG_PPC_PKEY
+	अगर (mmu_has_feature(MMU_FTR_PKEY)) अणु
+		अचिन्हित दीर्घ amr, iamr;
 		bool flush_needed = false;
 		/*
 		 * When entering from userspace we mostly have the AMR/IAMR
-		 * different from kernel default values. Hence don't compare.
+		 * dअगरferent from kernel शेष values. Hence करोn't compare.
 		 */
 		amr = mfspr(SPRN_AMR);
 		iamr = mfspr(SPRN_IAMR);
 		regs->amr  = amr;
 		regs->iamr = iamr;
-		if (mmu_has_feature(MMU_FTR_BOOK3S_KUAP)) {
+		अगर (mmu_has_feature(MMU_FTR_BOOK3S_KUAP)) अणु
 			mtspr(SPRN_AMR, AMR_KUAP_BLOCKED);
 			flush_needed = true;
-		}
-		if (mmu_has_feature(MMU_FTR_BOOK3S_KUEP)) {
+		पूर्ण
+		अगर (mmu_has_feature(MMU_FTR_BOOK3S_KUEP)) अणु
 			mtspr(SPRN_IAMR, AMR_KUEP_BLOCKED);
 			flush_needed = true;
-		}
-		if (flush_needed)
+		पूर्ण
+		अगर (flush_needed)
 			isync();
-	} else
-#endif
-		kuap_assert_locked();
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+		kuap_निश्चित_locked();
 
 	booke_restore_dbcr0();
 
 	account_cpu_user_entry();
 
-	account_stolen_time();
+	account_stolen_समय();
 
 	/*
-	 * This is not required for the syscall exit path, but makes the
+	 * This is not required क्रम the syscall निकास path, but makes the
 	 * stack frame look nicer. If this was initialised in the first stack
-	 * frame, or if the unwinder was taught the first stack frame always
-	 * returns to user with IRQS_ENABLED, this store could be avoided!
+	 * frame, or अगर the unwinder was taught the first stack frame always
+	 * वापसs to user with IRQS_ENABLED, this store could be aव्योमed!
 	 */
 	irq_soft_mask_regs_set_state(regs, IRQS_ENABLED);
 
 	local_irq_enable();
 
-	if (unlikely(current_thread_info()->flags & _TIF_SYSCALL_DOTRACE)) {
-		if (unlikely(trap_is_unsupported_scv(regs))) {
+	अगर (unlikely(current_thपढ़ो_info()->flags & _TIF_SYSCALL_DOTRACE)) अणु
+		अगर (unlikely(trap_is_unsupported_scv(regs))) अणु
 			/* Unsupported scv vector */
-			_exception(SIGILL, regs, ILL_ILLOPC, regs->nip);
-			return regs->gpr[3];
-		}
+			_exception(संक_अवैध, regs, ILL_ILLOPC, regs->nip);
+			वापस regs->gpr[3];
+		पूर्ण
 		/*
-		 * We use the return value of do_syscall_trace_enter() as the
-		 * syscall number. If the syscall was rejected for any reason
-		 * do_syscall_trace_enter() returns an invalid syscall number
-		 * and the test against NR_syscalls will fail and the return
+		 * We use the वापस value of करो_syscall_trace_enter() as the
+		 * syscall number. If the syscall was rejected क्रम any reason
+		 * करो_syscall_trace_enter() वापसs an invalid syscall number
+		 * and the test against NR_syscalls will fail and the वापस
 		 * value to be used is in regs->gpr[3].
 		 */
-		r0 = do_syscall_trace_enter(regs);
-		if (unlikely(r0 >= NR_syscalls))
-			return regs->gpr[3];
+		r0 = करो_syscall_trace_enter(regs);
+		अगर (unlikely(r0 >= NR_syscalls))
+			वापस regs->gpr[3];
 		r3 = regs->gpr[3];
 		r4 = regs->gpr[4];
 		r5 = regs->gpr[5];
@@ -115,20 +116,20 @@ notrace long system_call_exception(long r3, long r4, long r5,
 		r7 = regs->gpr[7];
 		r8 = regs->gpr[8];
 
-	} else if (unlikely(r0 >= NR_syscalls)) {
-		if (unlikely(trap_is_unsupported_scv(regs))) {
+	पूर्ण अन्यथा अगर (unlikely(r0 >= NR_syscalls)) अणु
+		अगर (unlikely(trap_is_unsupported_scv(regs))) अणु
 			/* Unsupported scv vector */
-			_exception(SIGILL, regs, ILL_ILLOPC, regs->nip);
-			return regs->gpr[3];
-		}
-		return -ENOSYS;
-	}
+			_exception(संक_अवैध, regs, ILL_ILLOPC, regs->nip);
+			वापस regs->gpr[3];
+		पूर्ण
+		वापस -ENOSYS;
+	पूर्ण
 
-	/* May be faster to do array_index_nospec? */
+	/* May be faster to करो array_index_nospec? */
 	barrier_nospec();
 
-	if (unlikely(is_compat_task())) {
-		f = (void *)compat_sys_call_table[r0];
+	अगर (unlikely(is_compat_task())) अणु
+		f = (व्योम *)compat_sys_call_table[r0];
 
 		r3 &= 0x00000000ffffffffULL;
 		r4 &= 0x00000000ffffffffULL;
@@ -137,360 +138,360 @@ notrace long system_call_exception(long r3, long r4, long r5,
 		r7 &= 0x00000000ffffffffULL;
 		r8 &= 0x00000000ffffffffULL;
 
-	} else {
-		f = (void *)sys_call_table[r0];
-	}
+	पूर्ण अन्यथा अणु
+		f = (व्योम *)sys_call_table[r0];
+	पूर्ण
 
-	return f(r3, r4, r5, r6, r7, r8);
-}
+	वापस f(r3, r4, r5, r6, r7, r8);
+पूर्ण
 
 /*
- * local irqs must be disabled. Returns false if the caller must re-enable
- * them, check for new work, and try again.
+ * local irqs must be disabled. Returns false अगर the caller must re-enable
+ * them, check क्रम new work, and try again.
  *
- * This should be called with local irqs disabled, but if they were previously
- * enabled when the interrupt handler returns (indicating a process-context /
- * synchronous interrupt) then irqs_enabled should be true.
+ * This should be called with local irqs disabled, but अगर they were previously
+ * enabled when the पूर्णांकerrupt handler वापसs (indicating a process-context /
+ * synchronous पूर्णांकerrupt) then irqs_enabled should be true.
  */
-static notrace __always_inline bool __prep_irq_for_enabled_exit(bool clear_ri)
-{
-	/* This must be done with RI=1 because tracing may touch vmaps */
+अटल notrace __always_अंतरभूत bool __prep_irq_क्रम_enabled_निकास(bool clear_ri)
+अणु
+	/* This must be करोne with RI=1 because tracing may touch vmaps */
 	trace_hardirqs_on();
 
-	/* This pattern matches prep_irq_for_idle */
-	if (clear_ri)
+	/* This pattern matches prep_irq_क्रम_idle */
+	अगर (clear_ri)
 		__hard_EE_RI_disable();
-	else
+	अन्यथा
 		__hard_irq_disable();
-#ifdef CONFIG_PPC64
-	if (unlikely(lazy_irq_pending_nocheck())) {
-		/* Took an interrupt, may have more exit work to do. */
-		if (clear_ri)
+#अगर_घोषित CONFIG_PPC64
+	अगर (unlikely(lazy_irq_pending_nocheck())) अणु
+		/* Took an पूर्णांकerrupt, may have more निकास work to करो. */
+		अगर (clear_ri)
 			__hard_RI_enable();
 		trace_hardirqs_off();
 		local_paca->irq_happened |= PACA_IRQ_HARD_DIS;
 
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	local_paca->irq_happened = 0;
 	irq_soft_mask_set(IRQS_ENABLED);
-#endif
-	return true;
-}
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-static notrace inline bool prep_irq_for_enabled_exit(bool clear_ri, bool irqs_enabled)
-{
-	if (__prep_irq_for_enabled_exit(clear_ri))
-		return true;
+अटल notrace अंतरभूत bool prep_irq_क्रम_enabled_निकास(bool clear_ri, bool irqs_enabled)
+अणु
+	अगर (__prep_irq_क्रम_enabled_निकास(clear_ri))
+		वापस true;
 
 	/*
-	 * Must replay pending soft-masked interrupts now. Don't just
-	 * local_irq_enabe(); local_irq_disable(); because if we are
-	 * returning from an asynchronous interrupt here, another one
-	 * might hit after irqs are enabled, and it would exit via this
+	 * Must replay pending soft-masked पूर्णांकerrupts now. Don't just
+	 * local_irq_enabe(); local_irq_disable(); because अगर we are
+	 * वापसing from an asynchronous पूर्णांकerrupt here, another one
+	 * might hit after irqs are enabled, and it would निकास via this
 	 * same path allowing another to fire, and so on unbounded.
 	 *
-	 * If interrupts were enabled when this interrupt exited,
-	 * indicating a process context (synchronous) interrupt,
+	 * If पूर्णांकerrupts were enabled when this पूर्णांकerrupt निकासed,
+	 * indicating a process context (synchronous) पूर्णांकerrupt,
 	 * local_irq_enable/disable can be used, which will enable
-	 * interrupts rather than keeping them masked (unclear how
-	 * much benefit this is over just replaying for all cases,
+	 * पूर्णांकerrupts rather than keeping them masked (unclear how
+	 * much benefit this is over just replaying क्रम all हालs,
 	 * because we immediately disable again, so all we're really
-	 * doing is allowing hard interrupts to execute directly for
-	 * a very small time, rather than being masked and replayed).
+	 * करोing is allowing hard पूर्णांकerrupts to execute directly क्रम
+	 * a very small समय, rather than being masked and replayed).
 	 */
-	if (irqs_enabled) {
+	अगर (irqs_enabled) अणु
 		local_irq_enable();
 		local_irq_disable();
-	} else {
-		replay_soft_interrupts();
-	}
+	पूर्ण अन्यथा अणु
+		replay_soft_पूर्णांकerrupts();
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static notrace void booke_load_dbcr0(void)
-{
-#ifdef CONFIG_PPC_ADV_DEBUG_REGS
-	unsigned long dbcr0 = current->thread.debug.dbcr0;
+अटल notrace व्योम booke_load_dbcr0(व्योम)
+अणु
+#अगर_घोषित CONFIG_PPC_ADV_DEBUG_REGS
+	अचिन्हित दीर्घ dbcr0 = current->thपढ़ो.debug.dbcr0;
 
-	if (likely(!(dbcr0 & DBCR0_IDM)))
-		return;
+	अगर (likely(!(dbcr0 & DBCR0_IDM)))
+		वापस;
 
 	/*
-	 * Check to see if the dbcr0 register is set up to debug.
-	 * Use the internal debug mode bit to do this.
+	 * Check to see अगर the dbcr0 रेजिस्टर is set up to debug.
+	 * Use the पूर्णांकernal debug mode bit to करो this.
 	 */
-	mtmsr(mfmsr() & ~MSR_DE);
-	if (IS_ENABLED(CONFIG_PPC32)) {
+	mपंचांगsr(mfmsr() & ~MSR_DE);
+	अगर (IS_ENABLED(CONFIG_PPC32)) अणु
 		isync();
 		global_dbcr0[smp_processor_id()] = mfspr(SPRN_DBCR0);
-	}
+	पूर्ण
 	mtspr(SPRN_DBCR0, dbcr0);
 	mtspr(SPRN_DBSR, -1);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * This should be called after a syscall returns, with r3 the return value
- * from the syscall. If this function returns non-zero, the system call
- * exit assembly should additionally load all GPR registers and CTR and XER
- * from the interrupt frame.
+ * This should be called after a syscall वापसs, with r3 the वापस value
+ * from the syscall. If this function वापसs non-zero, the प्रणाली call
+ * निकास assembly should additionally load all GPR रेजिस्टरs and CTR and XER
+ * from the पूर्णांकerrupt frame.
  *
- * The function graph tracer can not trace the return side of this function,
+ * The function graph tracer can not trace the वापस side of this function,
  * because RI=0 and soft mask state is "unreconciled", so it is marked notrace.
  */
-notrace unsigned long syscall_exit_prepare(unsigned long r3,
-					   struct pt_regs *regs,
-					   long scv)
-{
-	unsigned long ti_flags;
-	unsigned long ret = 0;
+notrace अचिन्हित दीर्घ syscall_निकास_prepare(अचिन्हित दीर्घ r3,
+					   काष्ठा pt_regs *regs,
+					   दीर्घ scv)
+अणु
+	अचिन्हित दीर्घ ti_flags;
+	अचिन्हित दीर्घ ret = 0;
 	bool is_not_scv = !IS_ENABLED(CONFIG_PPC_BOOK3S_64) || !scv;
 
 	CT_WARN_ON(ct_state() == CONTEXT_USER);
 
-	kuap_assert_locked();
+	kuap_निश्चित_locked();
 
 	regs->result = r3;
 
 	/* Check whether the syscall is issued inside a restartable sequence */
 	rseq_syscall(regs);
 
-	ti_flags = current_thread_info()->flags;
+	ti_flags = current_thपढ़ो_info()->flags;
 
-	if (unlikely(r3 >= (unsigned long)-MAX_ERRNO) && is_not_scv) {
-		if (likely(!(ti_flags & (_TIF_NOERROR | _TIF_RESTOREALL)))) {
+	अगर (unlikely(r3 >= (अचिन्हित दीर्घ)-MAX_ERRNO) && is_not_scv) अणु
+		अगर (likely(!(ti_flags & (_TIF_NOERROR | _TIF_RESTOREALL)))) अणु
 			r3 = -r3;
 			regs->ccr |= 0x10000000; /* Set SO bit in CR */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(ti_flags & _TIF_PERSYSCALL_MASK)) {
-		if (ti_flags & _TIF_RESTOREALL)
+	अगर (unlikely(ti_flags & _TIF_PERSYSCALL_MASK)) अणु
+		अगर (ti_flags & _TIF_RESTOREALL)
 			ret = _TIF_RESTOREALL;
-		else
+		अन्यथा
 			regs->gpr[3] = r3;
-		clear_bits(_TIF_PERSYSCALL_MASK, &current_thread_info()->flags);
-	} else {
+		clear_bits(_TIF_PERSYSCALL_MASK, &current_thपढ़ो_info()->flags);
+	पूर्ण अन्यथा अणु
 		regs->gpr[3] = r3;
-	}
+	पूर्ण
 
-	if (unlikely(ti_flags & _TIF_SYSCALL_DOTRACE)) {
-		do_syscall_trace_leave(regs);
+	अगर (unlikely(ti_flags & _TIF_SYSCALL_DOTRACE)) अणु
+		करो_syscall_trace_leave(regs);
 		ret |= _TIF_RESTOREALL;
-	}
+	पूर्ण
 
 	local_irq_disable();
 
 again:
-	ti_flags = READ_ONCE(current_thread_info()->flags);
-	while (unlikely(ti_flags & (_TIF_USER_WORK_MASK & ~_TIF_RESTORE_TM))) {
+	ti_flags = READ_ONCE(current_thपढ़ो_info()->flags);
+	जबतक (unlikely(ti_flags & (_TIF_USER_WORK_MASK & ~_TIF_RESTORE_TM))) अणु
 		local_irq_enable();
-		if (ti_flags & _TIF_NEED_RESCHED) {
+		अगर (ti_flags & _TIF_NEED_RESCHED) अणु
 			schedule();
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * SIGPENDING must restore signal handler function
-			 * argument GPRs, and some non-volatiles (e.g., r1).
-			 * Restore all for now. This could be made lighter.
+			 * SIGPENDING must restore संकेत handler function
+			 * argument GPRs, and some non-अस्थिरs (e.g., r1).
+			 * Restore all क्रम now. This could be made lighter.
 			 */
-			if (ti_flags & _TIF_SIGPENDING)
+			अगर (ti_flags & _TIF_SIGPENDING)
 				ret |= _TIF_RESTOREALL;
-			do_notify_resume(regs, ti_flags);
-		}
+			करो_notअगरy_resume(regs, ti_flags);
+		पूर्ण
 		local_irq_disable();
-		ti_flags = READ_ONCE(current_thread_info()->flags);
-	}
+		ti_flags = READ_ONCE(current_thपढ़ो_info()->flags);
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_PPC_BOOK3S) && IS_ENABLED(CONFIG_PPC_FPU)) {
-		if (IS_ENABLED(CONFIG_PPC_TRANSACTIONAL_MEM) &&
-				unlikely((ti_flags & _TIF_RESTORE_TM))) {
-			restore_tm_state(regs);
-		} else {
-			unsigned long mathflags = MSR_FP;
+	अगर (IS_ENABLED(CONFIG_PPC_BOOK3S) && IS_ENABLED(CONFIG_PPC_FPU)) अणु
+		अगर (IS_ENABLED(CONFIG_PPC_TRANSACTIONAL_MEM) &&
+				unlikely((ti_flags & _TIF_RESTORE_TM))) अणु
+			restore_पंचांग_state(regs);
+		पूर्ण अन्यथा अणु
+			अचिन्हित दीर्घ mathflags = MSR_FP;
 
-			if (cpu_has_feature(CPU_FTR_VSX))
+			अगर (cpu_has_feature(CPU_FTR_VSX))
 				mathflags |= MSR_VEC | MSR_VSX;
-			else if (cpu_has_feature(CPU_FTR_ALTIVEC))
+			अन्यथा अगर (cpu_has_feature(CPU_FTR_ALTIVEC))
 				mathflags |= MSR_VEC;
 
 			/*
 			 * If userspace MSR has all available FP bits set,
 			 * then they are live and no need to restore. If not,
 			 * it means the regs were given up and restore_math
-			 * may decide to restore them (to avoid taking an FP
+			 * may decide to restore them (to aव्योम taking an FP
 			 * fault).
 			 */
-			if ((regs->msr & mathflags) != mathflags)
+			अगर ((regs->msr & mathflags) != mathflags)
 				restore_math(regs);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	user_enter_irqoff();
 
 	/* scv need not set RI=0 because SRRs are not used */
-	if (unlikely(!__prep_irq_for_enabled_exit(is_not_scv))) {
-		user_exit_irqoff();
+	अगर (unlikely(!__prep_irq_क्रम_enabled_निकास(is_not_scv))) अणु
+		user_निकास_irqoff();
 		local_irq_enable();
 		local_irq_disable();
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-	local_paca->tm_scratch = regs->msr;
-#endif
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+	local_paca->पंचांग_scratch = regs->msr;
+#पूर्ण_अगर
 
 	booke_load_dbcr0();
 
-	account_cpu_user_exit();
+	account_cpu_user_निकास();
 
 	/* Restore user access locks last */
 	kuap_user_restore(regs);
 	kuep_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-notrace unsigned long interrupt_exit_user_prepare(struct pt_regs *regs, unsigned long msr)
-{
-	unsigned long ti_flags;
-	unsigned long flags;
-	unsigned long ret = 0;
+notrace अचिन्हित दीर्घ पूर्णांकerrupt_निकास_user_prepare(काष्ठा pt_regs *regs, अचिन्हित दीर्घ msr)
+अणु
+	अचिन्हित दीर्घ ti_flags;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ ret = 0;
 
-	if (!IS_ENABLED(CONFIG_BOOKE) && !IS_ENABLED(CONFIG_40x))
+	अगर (!IS_ENABLED(CONFIG_BOOKE) && !IS_ENABLED(CONFIG_40x))
 		BUG_ON(!(regs->msr & MSR_RI));
 	BUG_ON(!(regs->msr & MSR_PR));
 	BUG_ON(arch_irq_disabled_regs(regs));
 	CT_WARN_ON(ct_state() == CONTEXT_USER);
 
 	/*
-	 * We don't need to restore AMR on the way back to userspace for KUAP.
-	 * AMR can only have been unlocked if we interrupted the kernel.
+	 * We करोn't need to restore AMR on the way back to userspace क्रम KUAP.
+	 * AMR can only have been unlocked अगर we पूर्णांकerrupted the kernel.
 	 */
-	kuap_assert_locked();
+	kuap_निश्चित_locked();
 
 	local_irq_save(flags);
 
 again:
-	ti_flags = READ_ONCE(current_thread_info()->flags);
-	while (unlikely(ti_flags & (_TIF_USER_WORK_MASK & ~_TIF_RESTORE_TM))) {
-		local_irq_enable(); /* returning to user: may enable */
-		if (ti_flags & _TIF_NEED_RESCHED) {
+	ti_flags = READ_ONCE(current_thपढ़ो_info()->flags);
+	जबतक (unlikely(ti_flags & (_TIF_USER_WORK_MASK & ~_TIF_RESTORE_TM))) अणु
+		local_irq_enable(); /* वापसing to user: may enable */
+		अगर (ti_flags & _TIF_NEED_RESCHED) अणु
 			schedule();
-		} else {
-			if (ti_flags & _TIF_SIGPENDING)
+		पूर्ण अन्यथा अणु
+			अगर (ti_flags & _TIF_SIGPENDING)
 				ret |= _TIF_RESTOREALL;
-			do_notify_resume(regs, ti_flags);
-		}
+			करो_notअगरy_resume(regs, ti_flags);
+		पूर्ण
 		local_irq_disable();
-		ti_flags = READ_ONCE(current_thread_info()->flags);
-	}
+		ti_flags = READ_ONCE(current_thपढ़ो_info()->flags);
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_PPC_BOOK3S_64) && IS_ENABLED(CONFIG_PPC_FPU)) {
-		if (IS_ENABLED(CONFIG_PPC_TRANSACTIONAL_MEM) &&
-				unlikely((ti_flags & _TIF_RESTORE_TM))) {
-			restore_tm_state(regs);
-		} else {
-			unsigned long mathflags = MSR_FP;
+	अगर (IS_ENABLED(CONFIG_PPC_BOOK3S_64) && IS_ENABLED(CONFIG_PPC_FPU)) अणु
+		अगर (IS_ENABLED(CONFIG_PPC_TRANSACTIONAL_MEM) &&
+				unlikely((ti_flags & _TIF_RESTORE_TM))) अणु
+			restore_पंचांग_state(regs);
+		पूर्ण अन्यथा अणु
+			अचिन्हित दीर्घ mathflags = MSR_FP;
 
-			if (cpu_has_feature(CPU_FTR_VSX))
+			अगर (cpu_has_feature(CPU_FTR_VSX))
 				mathflags |= MSR_VEC | MSR_VSX;
-			else if (cpu_has_feature(CPU_FTR_ALTIVEC))
+			अन्यथा अगर (cpu_has_feature(CPU_FTR_ALTIVEC))
 				mathflags |= MSR_VEC;
 
 			/* See above restore_math comment */
-			if ((regs->msr & mathflags) != mathflags)
+			अगर ((regs->msr & mathflags) != mathflags)
 				restore_math(regs);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	user_enter_irqoff();
 
-	if (unlikely(!__prep_irq_for_enabled_exit(true))) {
-		user_exit_irqoff();
+	अगर (unlikely(!__prep_irq_क्रम_enabled_निकास(true))) अणु
+		user_निकास_irqoff();
 		local_irq_enable();
 		local_irq_disable();
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	booke_load_dbcr0();
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-	local_paca->tm_scratch = regs->msr;
-#endif
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+	local_paca->पंचांग_scratch = regs->msr;
+#पूर्ण_अगर
 
-	account_cpu_user_exit();
+	account_cpu_user_निकास();
 
 	/* Restore user access locks last */
 	kuap_user_restore(regs);
 	kuep_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void preempt_schedule_irq(void);
+व्योम preempt_schedule_irq(व्योम);
 
-notrace unsigned long interrupt_exit_kernel_prepare(struct pt_regs *regs, unsigned long msr)
-{
-	unsigned long flags;
-	unsigned long ret = 0;
-	unsigned long kuap;
+notrace अचिन्हित दीर्घ पूर्णांकerrupt_निकास_kernel_prepare(काष्ठा pt_regs *regs, अचिन्हित दीर्घ msr)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ ret = 0;
+	अचिन्हित दीर्घ kuap;
 
-	if (!IS_ENABLED(CONFIG_BOOKE) && !IS_ENABLED(CONFIG_40x) &&
+	अगर (!IS_ENABLED(CONFIG_BOOKE) && !IS_ENABLED(CONFIG_40x) &&
 	    unlikely(!(regs->msr & MSR_RI)))
 		unrecoverable_exception(regs);
 	BUG_ON(regs->msr & MSR_PR);
 	/*
 	 * CT_WARN_ON comes here via program_check_exception,
-	 * so avoid recursion.
+	 * so aव्योम recursion.
 	 */
-	if (TRAP(regs) != INTERRUPT_PROGRAM)
+	अगर (TRAP(regs) != INTERRUPT_PROGRAM)
 		CT_WARN_ON(ct_state() == CONTEXT_USER);
 
-	kuap = kuap_get_and_assert_locked();
+	kuap = kuap_get_and_निश्चित_locked();
 
-	if (unlikely(current_thread_info()->flags & _TIF_EMULATE_STACK_STORE)) {
-		clear_bits(_TIF_EMULATE_STACK_STORE, &current_thread_info()->flags);
+	अगर (unlikely(current_thपढ़ो_info()->flags & _TIF_EMULATE_STACK_STORE)) अणु
+		clear_bits(_TIF_EMULATE_STACK_STORE, &current_thपढ़ो_info()->flags);
 		ret = 1;
-	}
+	पूर्ण
 
 	local_irq_save(flags);
 
-	if (!arch_irq_disabled_regs(regs)) {
+	अगर (!arch_irq_disabled_regs(regs)) अणु
 		/* Returning to a kernel context with local irqs enabled. */
 		WARN_ON_ONCE(!(regs->msr & MSR_EE));
 again:
-		if (IS_ENABLED(CONFIG_PREEMPT)) {
+		अगर (IS_ENABLED(CONFIG_PREEMPT)) अणु
 			/* Return to preemptible kernel context */
-			if (unlikely(current_thread_info()->flags & _TIF_NEED_RESCHED)) {
-				if (preempt_count() == 0)
+			अगर (unlikely(current_thपढ़ो_info()->flags & _TIF_NEED_RESCHED)) अणु
+				अगर (preempt_count() == 0)
 					preempt_schedule_irq();
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (unlikely(!prep_irq_for_enabled_exit(true, !irqs_disabled_flags(flags))))
-			goto again;
-	} else {
+		अगर (unlikely(!prep_irq_क्रम_enabled_निकास(true, !irqs_disabled_flags(flags))))
+			जाओ again;
+	पूर्ण अन्यथा अणु
 		/* Returning to a kernel context with local irqs disabled. */
 		__hard_EE_RI_disable();
-#ifdef CONFIG_PPC64
-		if (regs->msr & MSR_EE)
+#अगर_घोषित CONFIG_PPC64
+		अगर (regs->msr & MSR_EE)
 			local_paca->irq_happened &= ~PACA_IRQ_HARD_DIS;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-	local_paca->tm_scratch = regs->msr;
-#endif
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+	local_paca->पंचांग_scratch = regs->msr;
+#पूर्ण_अगर
 
 	/*
-	 * 64s does not want to mfspr(SPRN_AMR) here, because this comes after
-	 * mtmsr, which would cause Read-After-Write stalls. Hence, take the
+	 * 64s करोes not want to mfspr(SPRN_AMR) here, because this comes after
+	 * mपंचांगsr, which would cause Read-After-Write stalls. Hence, take the
 	 * AMR value from the check above.
 	 */
 	kuap_kernel_restore(regs, kuap);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

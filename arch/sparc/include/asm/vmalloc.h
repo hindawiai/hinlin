@@ -1,4 +1,5 @@
-#ifndef _ASM_SPARC_VMALLOC_H
-#define _ASM_SPARC_VMALLOC_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_SPARC_VMALLOC_H
+#घोषणा _ASM_SPARC_VMALLOC_H
 
-#endif /* _ASM_SPARC_VMALLOC_H */
+#पूर्ण_अगर /* _ASM_SPARC_VMALLOC_H */

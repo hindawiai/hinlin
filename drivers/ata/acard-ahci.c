@@ -1,196 +1,197 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
 /*
  *  acard-ahci.c - ACard AHCI SATA support
  *
- *  Maintained by:  Tejun Heo <tj@kernel.org>
+ *  Maपूर्णांकained by:  Tejun Heo <tj@kernel.org>
  *		    Please ALWAYS copy linux-ide@vger.kernel.org
  *		    on emails.
  *
  *  Copyright 2010 Red Hat, Inc.
  *
- * libata documentation is available via 'make {ps|pdf}docs',
+ * libata करोcumentation is available via 'make {ps|pdf}docs',
  * as Documentation/driver-api/libata.rst
  *
- * AHCI hardware documentation:
- * http://www.intel.com/technology/serialata/pdf/rev1_0.pdf
- * http://www.intel.com/technology/serialata/pdf/rev1_1.pdf
+ * AHCI hardware करोcumentation:
+ * http://www.पूर्णांकel.com/technology/serialata/pdf/rev1_0.pdf
+ * http://www.पूर्णांकel.com/technology/serialata/pdf/rev1_1.pdf
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/device.h>
-#include <linux/dmi.h>
-#include <linux/gfp.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_cmnd.h>
-#include <linux/libata.h>
-#include "ahci.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/gfp.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <linux/libata.h>
+#समावेश "ahci.h"
 
-#define DRV_NAME	"acard-ahci"
-#define DRV_VERSION	"1.0"
+#घोषणा DRV_NAME	"acard-ahci"
+#घोषणा DRV_VERSION	"1.0"
 
 /*
-  Received FIS structure limited to 80h.
+  Received FIS काष्ठाure limited to 80h.
 */
 
-#define ACARD_AHCI_RX_FIS_SZ 128
+#घोषणा ACARD_AHCI_RX_FIS_SZ 128
 
-enum {
+क्रमागत अणु
 	AHCI_PCI_BAR		= 5,
-};
+पूर्ण;
 
-enum board_ids {
+क्रमागत board_ids अणु
 	board_acard_ahci,
-};
+पूर्ण;
 
-struct acard_sg {
+काष्ठा acard_sg अणु
 	__le32			addr;
 	__le32			addr_hi;
 	__le32			reserved;
 	__le32			size;	 /* bit 31 (EOT) max==0x10000 (64k) */
-};
+पूर्ण;
 
-static enum ata_completion_errors acard_ahci_qc_prep(struct ata_queued_cmd *qc);
-static bool acard_ahci_qc_fill_rtf(struct ata_queued_cmd *qc);
-static int acard_ahci_port_start(struct ata_port *ap);
-static int acard_ahci_init_one(struct pci_dev *pdev, const struct pci_device_id *ent);
+अटल क्रमागत ata_completion_errors acard_ahci_qc_prep(काष्ठा ata_queued_cmd *qc);
+अटल bool acard_ahci_qc_fill_rtf(काष्ठा ata_queued_cmd *qc);
+अटल पूर्णांक acard_ahci_port_start(काष्ठा ata_port *ap);
+अटल पूर्णांक acard_ahci_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent);
 
-#ifdef CONFIG_PM_SLEEP
-static int acard_ahci_pci_device_suspend(struct pci_dev *pdev, pm_message_t mesg);
-static int acard_ahci_pci_device_resume(struct pci_dev *pdev);
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक acard_ahci_pci_device_suspend(काष्ठा pci_dev *pdev, pm_message_t mesg);
+अटल पूर्णांक acard_ahci_pci_device_resume(काष्ठा pci_dev *pdev);
+#पूर्ण_अगर
 
-static struct scsi_host_template acard_ahci_sht = {
+अटल काष्ठा scsi_host_ढाँचा acard_ahci_sht = अणु
 	AHCI_SHT("acard-ahci"),
-};
+पूर्ण;
 
-static struct ata_port_operations acard_ops = {
+अटल काष्ठा ata_port_operations acard_ops = अणु
 	.inherits		= &ahci_ops,
 	.qc_prep		= acard_ahci_qc_prep,
 	.qc_fill_rtf		= acard_ahci_qc_fill_rtf,
 	.port_start             = acard_ahci_port_start,
-};
+पूर्ण;
 
-#define AHCI_HFLAGS(flags)	.private_data	= (void *)(flags)
+#घोषणा AHCI_HFLAGS(flags)	.निजी_data	= (व्योम *)(flags)
 
-static const struct ata_port_info acard_ahci_port_info[] = {
+अटल स्थिर काष्ठा ata_port_info acard_ahci_port_info[] = अणु
 	[board_acard_ahci] =
-	{
+	अणु
 		AHCI_HFLAGS	(AHCI_HFLAG_NO_NCQ),
 		.flags		= AHCI_FLAG_COMMON,
 		.pio_mask	= ATA_PIO4,
 		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &acard_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct pci_device_id acard_ahci_pci_tbl[] = {
+अटल स्थिर काष्ठा pci_device_id acard_ahci_pci_tbl[] = अणु
 	/* ACard */
-	{ PCI_VDEVICE(ARTOP, 0x000d), board_acard_ahci }, /* ATP8620 */
+	अणु PCI_VDEVICE(ARTOP, 0x000d), board_acard_ahci पूर्ण, /* ATP8620 */
 
-	{ }    /* terminate list */
-};
+	अणु पूर्ण    /* terminate list */
+पूर्ण;
 
-static struct pci_driver acard_ahci_pci_driver = {
+अटल काष्ठा pci_driver acard_ahci_pci_driver = अणु
 	.name			= DRV_NAME,
 	.id_table		= acard_ahci_pci_tbl,
 	.probe			= acard_ahci_init_one,
-	.remove			= ata_pci_remove_one,
-#ifdef CONFIG_PM_SLEEP
+	.हटाओ			= ata_pci_हटाओ_one,
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend		= acard_ahci_pci_device_suspend,
 	.resume			= acard_ahci_pci_device_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
-static int acard_ahci_pci_device_suspend(struct pci_dev *pdev, pm_message_t mesg)
-{
-	struct ata_host *host = pci_get_drvdata(pdev);
-	struct ahci_host_priv *hpriv = host->private_data;
-	void __iomem *mmio = hpriv->mmio;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक acard_ahci_pci_device_suspend(काष्ठा pci_dev *pdev, pm_message_t mesg)
+अणु
+	काष्ठा ata_host *host = pci_get_drvdata(pdev);
+	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *mmio = hpriv->mmio;
 	u32 ctl;
 
-	if (mesg.event & PM_EVENT_SUSPEND &&
-	    hpriv->flags & AHCI_HFLAG_NO_SUSPEND) {
+	अगर (mesg.event & PM_EVENT_SUSPEND &&
+	    hpriv->flags & AHCI_HFLAG_NO_SUSPEND) अणु
 		dev_err(&pdev->dev,
 			"BIOS update required for suspend/resume\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (mesg.event & PM_EVENT_SLEEP) {
+	अगर (mesg.event & PM_EVENT_SLEEP) अणु
 		/* AHCI spec rev1.1 section 8.3.3:
-		 * Software must disable interrupts prior to requesting a
+		 * Software must disable पूर्णांकerrupts prior to requesting a
 		 * transition of the HBA to D3 state.
 		 */
-		ctl = readl(mmio + HOST_CTL);
+		ctl = पढ़ोl(mmio + HOST_CTL);
 		ctl &= ~HOST_IRQ_EN;
-		writel(ctl, mmio + HOST_CTL);
-		readl(mmio + HOST_CTL); /* flush */
-	}
+		ग_लिखोl(ctl, mmio + HOST_CTL);
+		पढ़ोl(mmio + HOST_CTL); /* flush */
+	पूर्ण
 
-	return ata_pci_device_suspend(pdev, mesg);
-}
+	वापस ata_pci_device_suspend(pdev, mesg);
+पूर्ण
 
-static int acard_ahci_pci_device_resume(struct pci_dev *pdev)
-{
-	struct ata_host *host = pci_get_drvdata(pdev);
-	int rc;
+अटल पूर्णांक acard_ahci_pci_device_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ata_host *host = pci_get_drvdata(pdev);
+	पूर्णांक rc;
 
-	rc = ata_pci_device_do_resume(pdev);
-	if (rc)
-		return rc;
+	rc = ata_pci_device_करो_resume(pdev);
+	अगर (rc)
+		वापस rc;
 
-	if (pdev->dev.power.power_state.event == PM_EVENT_SUSPEND) {
+	अगर (pdev->dev.घातer.घातer_state.event == PM_EVENT_SUSPEND) अणु
 		rc = ahci_reset_controller(host);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		ahci_init_controller(host);
-	}
+	पूर्ण
 
 	ata_host_resume(host);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static void acard_ahci_pci_print_info(struct ata_host *host)
-{
-	struct pci_dev *pdev = to_pci_dev(host->dev);
+अटल व्योम acard_ahci_pci_prपूर्णांक_info(काष्ठा ata_host *host)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(host->dev);
 	u16 cc;
-	const char *scc_s;
+	स्थिर अक्षर *scc_s;
 
-	pci_read_config_word(pdev, 0x0a, &cc);
-	if (cc == PCI_CLASS_STORAGE_IDE)
+	pci_पढ़ो_config_word(pdev, 0x0a, &cc);
+	अगर (cc == PCI_CLASS_STORAGE_IDE)
 		scc_s = "IDE";
-	else if (cc == PCI_CLASS_STORAGE_SATA)
+	अन्यथा अगर (cc == PCI_CLASS_STORAGE_SATA)
 		scc_s = "SATA";
-	else if (cc == PCI_CLASS_STORAGE_RAID)
+	अन्यथा अगर (cc == PCI_CLASS_STORAGE_RAID)
 		scc_s = "RAID";
-	else
+	अन्यथा
 		scc_s = "unknown";
 
-	ahci_print_info(host, scc_s);
-}
+	ahci_prपूर्णांक_info(host, scc_s);
+पूर्ण
 
-static unsigned int acard_ahci_fill_sg(struct ata_queued_cmd *qc, void *cmd_tbl)
-{
-	struct scatterlist *sg;
-	struct acard_sg *acard_sg = cmd_tbl + AHCI_CMD_TBL_HDR_SZ;
-	unsigned int si, last_si = 0;
+अटल अचिन्हित पूर्णांक acard_ahci_fill_sg(काष्ठा ata_queued_cmd *qc, व्योम *cmd_tbl)
+अणु
+	काष्ठा scatterlist *sg;
+	काष्ठा acard_sg *acard_sg = cmd_tbl + AHCI_CMD_TBL_HDR_SZ;
+	अचिन्हित पूर्णांक si, last_si = 0;
 
 	VPRINTK("ENTER\n");
 
 	/*
 	 * Next, the S/G list.
 	 */
-	for_each_sg(qc->sg, sg, qc->n_elem, si) {
+	क्रम_each_sg(qc->sg, sg, qc->n_elem, si) अणु
 		dma_addr_t addr = sg_dma_address(sg);
 		u32 sg_len = sg_dma_len(sg);
 
@@ -203,116 +204,116 @@ static unsigned int acard_ahci_fill_sg(struct ata_queued_cmd *qc, void *cmd_tbl)
 		acard_sg[si].addr_hi = cpu_to_le32((addr >> 16) >> 16);
 		acard_sg[si].size = cpu_to_le32(sg_len);
 		last_si = si;
-	}
+	पूर्ण
 
 	acard_sg[last_si].size |= cpu_to_le32(1 << 31);	/* set EOT */
 
-	return si;
-}
+	वापस si;
+पूर्ण
 
-static enum ata_completion_errors acard_ahci_qc_prep(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
-	struct ahci_port_priv *pp = ap->private_data;
-	int is_atapi = ata_is_atapi(qc->tf.protocol);
-	void *cmd_tbl;
+अटल क्रमागत ata_completion_errors acard_ahci_qc_prep(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
+	काष्ठा ahci_port_priv *pp = ap->निजी_data;
+	पूर्णांक is_atapi = ata_is_atapi(qc->tf.protocol);
+	व्योम *cmd_tbl;
 	u32 opts;
-	const u32 cmd_fis_len = 5; /* five dwords */
+	स्थिर u32 cmd_fis_len = 5; /* five dwords */
 
 	/*
-	 * Fill in command table information.  First, the header,
+	 * Fill in command table inक्रमmation.  First, the header,
 	 * a SATA Register - Host to Device command FIS.
 	 */
 	cmd_tbl = pp->cmd_tbl + qc->hw_tag * AHCI_CMD_TBL_SZ;
 
 	ata_tf_to_fis(&qc->tf, qc->dev->link->pmp, 1, cmd_tbl);
-	if (is_atapi) {
-		memset(cmd_tbl + AHCI_CMD_TBL_CDB, 0, 32);
-		memcpy(cmd_tbl + AHCI_CMD_TBL_CDB, qc->cdb, qc->dev->cdb_len);
-	}
+	अगर (is_atapi) अणु
+		स_रखो(cmd_tbl + AHCI_CMD_TBL_CDB, 0, 32);
+		स_नकल(cmd_tbl + AHCI_CMD_TBL_CDB, qc->cdb, qc->dev->cdb_len);
+	पूर्ण
 
-	if (qc->flags & ATA_QCFLAG_DMAMAP)
+	अगर (qc->flags & ATA_QCFLAG_DMAMAP)
 		acard_ahci_fill_sg(qc, cmd_tbl);
 
 	/*
-	 * Fill in command slot information.
+	 * Fill in command slot inक्रमmation.
 	 *
 	 * ACard note: prd table length not filled in
 	 */
 	opts = cmd_fis_len | (qc->dev->link->pmp << 12);
-	if (qc->tf.flags & ATA_TFLAG_WRITE)
+	अगर (qc->tf.flags & ATA_TFLAG_WRITE)
 		opts |= AHCI_CMD_WRITE;
-	if (is_atapi)
+	अगर (is_atapi)
 		opts |= AHCI_CMD_ATAPI | AHCI_CMD_PREFETCH;
 
 	ahci_fill_cmd_slot(pp, qc->hw_tag, opts);
 
-	return AC_ERR_OK;
-}
+	वापस AC_ERR_OK;
+पूर्ण
 
-static bool acard_ahci_qc_fill_rtf(struct ata_queued_cmd *qc)
-{
-	struct ahci_port_priv *pp = qc->ap->private_data;
+अटल bool acard_ahci_qc_fill_rtf(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ahci_port_priv *pp = qc->ap->निजी_data;
 	u8 *rx_fis = pp->rx_fis;
 
-	if (pp->fbs_enabled)
+	अगर (pp->fbs_enabled)
 		rx_fis += qc->dev->link->pmp * ACARD_AHCI_RX_FIS_SZ;
 
 	/*
 	 * After a successful execution of an ATA PIO data-in command,
-	 * the device doesn't send D2H Reg FIS to update the TF and
+	 * the device करोesn't send D2H Reg FIS to update the TF and
 	 * the host should take TF and E_Status from the preceding PIO
 	 * Setup FIS.
 	 */
-	if (qc->tf.protocol == ATA_PROT_PIO && qc->dma_dir == DMA_FROM_DEVICE &&
-	    !(qc->flags & ATA_QCFLAG_FAILED)) {
+	अगर (qc->tf.protocol == ATA_PROT_PIO && qc->dma_dir == DMA_FROM_DEVICE &&
+	    !(qc->flags & ATA_QCFLAG_FAILED)) अणु
 		ata_tf_from_fis(rx_fis + RX_FIS_PIO_SETUP, &qc->result_tf);
 		qc->result_tf.command = (rx_fis + RX_FIS_PIO_SETUP)[15];
-	} else
+	पूर्ण अन्यथा
 		ata_tf_from_fis(rx_fis + RX_FIS_D2H_REG, &qc->result_tf);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int acard_ahci_port_start(struct ata_port *ap)
-{
-	struct ahci_host_priv *hpriv = ap->host->private_data;
-	struct device *dev = ap->host->dev;
-	struct ahci_port_priv *pp;
-	void *mem;
+अटल पूर्णांक acard_ahci_port_start(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
+	काष्ठा device *dev = ap->host->dev;
+	काष्ठा ahci_port_priv *pp;
+	व्योम *mem;
 	dma_addr_t mem_dma;
-	size_t dma_sz, rx_fis_sz;
+	माप_प्रकार dma_sz, rx_fis_sz;
 
-	pp = devm_kzalloc(dev, sizeof(*pp), GFP_KERNEL);
-	if (!pp)
-		return -ENOMEM;
+	pp = devm_kzalloc(dev, माप(*pp), GFP_KERNEL);
+	अगर (!pp)
+		वापस -ENOMEM;
 
 	/* check FBS capability */
-	if ((hpriv->cap & HOST_CAP_FBS) && sata_pmp_supported(ap)) {
-		void __iomem *port_mmio = ahci_port_base(ap);
-		u32 cmd = readl(port_mmio + PORT_CMD);
-		if (cmd & PORT_CMD_FBSCP)
+	अगर ((hpriv->cap & HOST_CAP_FBS) && sata_pmp_supported(ap)) अणु
+		व्योम __iomem *port_mmio = ahci_port_base(ap);
+		u32 cmd = पढ़ोl(port_mmio + PORT_CMD);
+		अगर (cmd & PORT_CMD_FBSCP)
 			pp->fbs_supported = true;
-		else if (hpriv->flags & AHCI_HFLAG_YES_FBS) {
+		अन्यथा अगर (hpriv->flags & AHCI_HFLAG_YES_FBS) अणु
 			dev_info(dev, "port %d can do FBS, forcing FBSCP\n",
 				 ap->port_no);
 			pp->fbs_supported = true;
-		} else
+		पूर्ण अन्यथा
 			dev_warn(dev, "port %d is not capable of FBS\n",
 				 ap->port_no);
-	}
+	पूर्ण
 
-	if (pp->fbs_supported) {
+	अगर (pp->fbs_supported) अणु
 		dma_sz = AHCI_PORT_PRIV_FBS_DMA_SZ;
 		rx_fis_sz = ACARD_AHCI_RX_FIS_SZ * 16;
-	} else {
+	पूर्ण अन्यथा अणु
 		dma_sz = AHCI_PORT_PRIV_DMA_SZ;
 		rx_fis_sz = ACARD_AHCI_RX_FIS_SZ;
-	}
+	पूर्ण
 
 	mem = dmam_alloc_coherent(dev, dma_sz, &mem_dma, GFP_KERNEL);
-	if (!mem)
-		return -ENOMEM;
+	अगर (!mem)
+		वापस -ENOMEM;
 
 	/*
 	 * First item in chunk of DMA memory: 32-slot command table,
@@ -334,62 +335,62 @@ static int acard_ahci_port_start(struct ata_port *ap)
 	mem_dma += rx_fis_sz;
 
 	/*
-	 * Third item: data area for storing a single command
+	 * Third item: data area क्रम storing a single command
 	 * and its scatter-gather table
 	 */
 	pp->cmd_tbl = mem;
 	pp->cmd_tbl_dma = mem_dma;
 
 	/*
-	 * Save off initial list of interrupts to be enabled.
+	 * Save off initial list of पूर्णांकerrupts to be enabled.
 	 * This could be changed later
 	 */
-	pp->intr_mask = DEF_PORT_IRQ;
+	pp->पूर्णांकr_mask = DEF_PORT_IRQ;
 
-	ap->private_data = pp;
+	ap->निजी_data = pp;
 
 	/* engage engines, captain */
-	return ahci_port_resume(ap);
-}
+	वापस ahci_port_resume(ap);
+पूर्ण
 
-static int acard_ahci_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	unsigned int board_id = ent->driver_data;
-	struct ata_port_info pi = acard_ahci_port_info[board_id];
-	const struct ata_port_info *ppi[] = { &pi, NULL };
-	struct device *dev = &pdev->dev;
-	struct ahci_host_priv *hpriv;
-	struct ata_host *host;
-	int n_ports, i, rc;
+अटल पूर्णांक acard_ahci_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अचिन्हित पूर्णांक board_id = ent->driver_data;
+	काष्ठा ata_port_info pi = acard_ahci_port_info[board_id];
+	स्थिर काष्ठा ata_port_info *ppi[] = अणु &pi, शून्य पूर्ण;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ahci_host_priv *hpriv;
+	काष्ठा ata_host *host;
+	पूर्णांक n_ports, i, rc;
 
 	VPRINTK("ENTER\n");
 
-	WARN_ON((int)ATA_MAX_QUEUE > AHCI_MAX_CMDS);
+	WARN_ON((पूर्णांक)ATA_MAX_QUEUE > AHCI_MAX_CMDS);
 
-	ata_print_version_once(&pdev->dev, DRV_VERSION);
+	ata_prपूर्णांक_version_once(&pdev->dev, DRV_VERSION);
 
 	/* acquire resources */
 	rc = pcim_enable_device(pdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* AHCI controllers often implement SFF compatible interface.
-	 * Grab all PCI BARs just in case.
+	/* AHCI controllers often implement SFF compatible पूर्णांकerface.
+	 * Grab all PCI BARs just in हाल.
 	 */
 	rc = pcim_iomap_regions_request_all(pdev, 1 << AHCI_PCI_BAR, DRV_NAME);
-	if (rc == -EBUSY)
+	अगर (rc == -EBUSY)
 		pcim_pin_device(pdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	hpriv = devm_kzalloc(dev, sizeof(*hpriv), GFP_KERNEL);
-	if (!hpriv)
-		return -ENOMEM;
+	hpriv = devm_kzalloc(dev, माप(*hpriv), GFP_KERNEL);
+	अगर (!hpriv)
+		वापस -ENOMEM;
 
 	hpriv->irq = pdev->irq;
-	hpriv->flags |= (unsigned long)pi.private_data;
+	hpriv->flags |= (अचिन्हित दीर्घ)pi.निजी_data;
 
-	if (!(hpriv->flags & AHCI_HFLAG_NO_MSI))
+	अगर (!(hpriv->flags & AHCI_HFLAG_NO_MSI))
 		pci_enable_msi(pdev);
 
 	hpriv->mmio = pcim_iomap_table(pdev)[AHCI_PCI_BAR];
@@ -398,33 +399,33 @@ static int acard_ahci_init_one(struct pci_dev *pdev, const struct pci_device_id 
 	ahci_save_initial_config(&pdev->dev, hpriv);
 
 	/* prepare host */
-	if (hpriv->cap & HOST_CAP_NCQ)
+	अगर (hpriv->cap & HOST_CAP_NCQ)
 		pi.flags |= ATA_FLAG_NCQ;
 
-	if (hpriv->cap & HOST_CAP_PMP)
+	अगर (hpriv->cap & HOST_CAP_PMP)
 		pi.flags |= ATA_FLAG_PMP;
 
 	ahci_set_em_messages(hpriv, &pi);
 
-	/* CAP.NP sometimes indicate the index of the last enabled
-	 * port, at other times, that of the last possible port, so
+	/* CAP.NP someबार indicate the index of the last enabled
+	 * port, at other बार, that of the last possible port, so
 	 * determining the maximum port number requires looking at
 	 * both CAP.NP and port_map.
 	 */
 	n_ports = max(ahci_nr_ports(hpriv->cap), fls(hpriv->port_map));
 
 	host = ata_host_alloc_pinfo(&pdev->dev, ppi, n_ports);
-	if (!host)
-		return -ENOMEM;
-	host->private_data = hpriv;
+	अगर (!host)
+		वापस -ENOMEM;
+	host->निजी_data = hpriv;
 
-	if (!(hpriv->cap & HOST_CAP_SSS) || ahci_ignore_sss)
+	अगर (!(hpriv->cap & HOST_CAP_SSS) || ahci_ignore_sss)
 		host->flags |= ATA_HOST_PARALLEL_SCAN;
-	else
-		printk(KERN_INFO "ahci: SSS flag set, parallel bus scan disabled\n");
+	अन्यथा
+		prपूर्णांकk(KERN_INFO "ahci: SSS flag set, parallel bus scan disabled\n");
 
-	for (i = 0; i < host->n_ports; i++) {
-		struct ata_port *ap = host->ports[i];
+	क्रम (i = 0; i < host->n_ports; i++) अणु
+		काष्ठा ata_port *ap = host->ports[i];
 
 		ata_port_pbar_desc(ap, AHCI_PCI_BAR, -1, "abar");
 		ata_port_pbar_desc(ap, AHCI_PCI_BAR,
@@ -435,28 +436,28 @@ static int acard_ahci_init_one(struct pci_dev *pdev, const struct pci_device_id 
 		ap->pm_policy = NOT_AVAILABLE;
 		*/
 		/* disabled/not-implemented port */
-		if (!(hpriv->port_map & (1 << i)))
+		अगर (!(hpriv->port_map & (1 << i)))
 			ap->ops = &ata_dummy_port_ops;
-	}
+	पूर्ण
 
 	/* initialize adapter */
 	rc = dma_set_mask_and_coherent(&pdev->dev,
 			DMA_BIT_MASK((hpriv->cap & HOST_CAP_64) ? 64 : 32));
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "DMA enable failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = ahci_reset_controller(host);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	ahci_init_controller(host);
-	acard_ahci_pci_print_info(host);
+	acard_ahci_pci_prपूर्णांक_info(host);
 
 	pci_set_master(pdev);
-	return ahci_host_activate(host, &acard_ahci_sht);
-}
+	वापस ahci_host_activate(host, &acard_ahci_sht);
+पूर्ण
 
 module_pci_driver(acard_ahci_pci_driver);
 

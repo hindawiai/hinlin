@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/serial_sci.h>
-#include <linux/serial_core.h>
-#include <linux/io.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/serial_sci.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/पन.स>
 
-#define PSCR 0xA405011E
+#घोषणा PSCR 0xA405011E
 
-static void sh7722_sci_init_pins(struct uart_port *port, unsigned int cflag)
-{
-	unsigned short data;
+अटल व्योम sh7722_sci_init_pins(काष्ठा uart_port *port, अचिन्हित पूर्णांक cflag)
+अणु
+	अचिन्हित लघु data;
 
-	if (port->mapbase == 0xffe00000) {
-		data = __raw_readw(PSCR);
+	अगर (port->mapbase == 0xffe00000) अणु
+		data = __raw_पढ़ोw(PSCR);
 		data &= ~0x03cf;
-		if (!(cflag & CRTSCTS))
+		अगर (!(cflag & CRTSCTS))
 			data |= 0x0340;
 
-		__raw_writew(data, PSCR);
-	}
-}
+		__raw_ग_लिखोw(data, PSCR);
+	पूर्ण
+पूर्ण
 
-struct plat_sci_port_ops sh7722_sci_port_ops = {
+काष्ठा plat_sci_port_ops sh7722_sci_port_ops = अणु
 	.init_pins	= sh7722_sci_init_pins,
-};
+पूर्ण;

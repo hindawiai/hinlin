@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Nouveau Community
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,16 +23,16 @@
  * Authors: Martin Peres <martin.peres@labri.fr>
  *          Ben Skeggs
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-static void
-gf100_bus_intr(struct nvkm_bus *bus)
-{
-	struct nvkm_subdev *subdev = &bus->subdev;
-	struct nvkm_device *device = subdev->device;
+अटल व्योम
+gf100_bus_पूर्णांकr(काष्ठा nvkm_bus *bus)
+अणु
+	काष्ठा nvkm_subdev *subdev = &bus->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 stat = nvkm_rd32(device, 0x001100) & nvkm_rd32(device, 0x001140);
 
-	if (stat & 0x0000000e) {
+	अगर (stat & 0x0000000e) अणु
 		u32 addr = nvkm_rd32(device, 0x009084);
 		u32 data = nvkm_rd32(device, 0x009088);
 
@@ -46,31 +47,31 @@ gf100_bus_intr(struct nvkm_bus *bus)
 		nvkm_wr32(device, 0x009084, 0x00000000);
 		nvkm_wr32(device, 0x001100, (stat & 0x0000000e));
 		stat &= ~0x0000000e;
-	}
+	पूर्ण
 
-	if (stat) {
+	अगर (stat) अणु
 		nvkm_error(subdev, "intr %08x\n", stat);
 		nvkm_mask(device, 0x001140, stat, 0x00000000);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-gf100_bus_init(struct nvkm_bus *bus)
-{
-	struct nvkm_device *device = bus->subdev.device;
+अटल व्योम
+gf100_bus_init(काष्ठा nvkm_bus *bus)
+अणु
+	काष्ठा nvkm_device *device = bus->subdev.device;
 	nvkm_wr32(device, 0x001100, 0xffffffff);
 	nvkm_wr32(device, 0x001140, 0x0000000e);
-}
+पूर्ण
 
-static const struct nvkm_bus_func
-gf100_bus = {
+अटल स्थिर काष्ठा nvkm_bus_func
+gf100_bus = अणु
 	.init = gf100_bus_init,
-	.intr = gf100_bus_intr,
-};
+	.पूर्णांकr = gf100_bus_पूर्णांकr,
+पूर्ण;
 
-int
-gf100_bus_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_bus **pbus)
-{
-	return nvkm_bus_new_(&gf100_bus, device, type, inst, pbus);
-}
+पूर्णांक
+gf100_bus_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_bus **pbus)
+अणु
+	वापस nvkm_bus_new_(&gf100_bus, device, type, inst, pbus);
+पूर्ण

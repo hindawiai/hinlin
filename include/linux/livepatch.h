@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * livepatch.h - Kernel Live Patching Core
  *
@@ -6,33 +7,33 @@
  * Copyright (C) 2014 SUSE
  */
 
-#ifndef _LINUX_LIVEPATCH_H_
-#define _LINUX_LIVEPATCH_H_
+#अगर_अघोषित _LINUX_LIVEPATCH_H_
+#घोषणा _LINUX_LIVEPATCH_H_
 
-#include <linux/module.h>
-#include <linux/ftrace.h>
-#include <linux/completion.h>
-#include <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/list.h>
 
-#if IS_ENABLED(CONFIG_LIVEPATCH)
+#अगर IS_ENABLED(CONFIG_LIVEPATCH)
 
-#include <asm/livepatch.h>
+#समावेश <यंत्र/livepatch.h>
 
 /* task patch states */
-#define KLP_UNDEFINED	-1
-#define KLP_UNPATCHED	 0
-#define KLP_PATCHED	 1
+#घोषणा KLP_UNDEFINED	-1
+#घोषणा KLP_UNPATCHED	 0
+#घोषणा KLP_PATCHED	 1
 
 /**
- * struct klp_func - function structure for live patching
+ * काष्ठा klp_func - function काष्ठाure क्रम live patching
  * @old_name:	name of the function to be patched
- * @new_func:	pointer to the patched function code
- * @old_sympos: a hint indicating which symbol position the old function
+ * @new_func:	poपूर्णांकer to the patched function code
+ * @old_sympos: a hपूर्णांक indicating which symbol position the old function
  *		can be found (optional)
- * @old_func:	pointer to the function being patched
- * @kobj:	kobject for sysfs resources
- * @node:	list node for klp_object func_list
- * @stack_node:	list node for klp_ops func_stack list
+ * @old_func:	poपूर्णांकer to the function being patched
+ * @kobj:	kobject क्रम sysfs resources
+ * @node:	list node क्रम klp_object func_list
+ * @stack_node:	list node क्रम klp_ops func_stack list
  * @old_size:	size of the old function
  * @new_size:	size of the new function
  * @nop:        temporary patch to use the original code again; dyn. allocated
@@ -54,205 +55,205 @@
  *   patched=0 transition=1: unpatched, temporary ending state
  *   patched=0 transition=0: unpatched
  */
-struct klp_func {
-	/* external */
-	const char *old_name;
-	void *new_func;
+काष्ठा klp_func अणु
+	/* बाह्यal */
+	स्थिर अक्षर *old_name;
+	व्योम *new_func;
 	/*
 	 * The old_sympos field is optional and can be used to resolve
 	 * duplicate symbol names in livepatch objects. If this field is zero,
 	 * it is expected the symbol is unique, otherwise patching fails. If
 	 * this value is greater than zero then that occurrence of the symbol
-	 * in kallsyms for the given object is used.
+	 * in kallsyms क्रम the given object is used.
 	 */
-	unsigned long old_sympos;
+	अचिन्हित दीर्घ old_sympos;
 
-	/* internal */
-	void *old_func;
-	struct kobject kobj;
-	struct list_head node;
-	struct list_head stack_node;
-	unsigned long old_size, new_size;
+	/* पूर्णांकernal */
+	व्योम *old_func;
+	काष्ठा kobject kobj;
+	काष्ठा list_head node;
+	काष्ठा list_head stack_node;
+	अचिन्हित दीर्घ old_size, new_size;
 	bool nop;
 	bool patched;
 	bool transition;
-};
+पूर्ण;
 
-struct klp_object;
+काष्ठा klp_object;
 
 /**
- * struct klp_callbacks - pre/post live-(un)patch callback structure
- * @pre_patch:		executed before code patching
+ * काष्ठा klp_callbacks - pre/post live-(un)patch callback काष्ठाure
+ * @pre_patch:		executed beक्रमe code patching
  * @post_patch:		executed after code patching
- * @pre_unpatch:	executed before code unpatching
+ * @pre_unpatch:	executed beक्रमe code unpatching
  * @post_unpatch:	executed after code unpatching
- * @post_unpatch_enabled:	flag indicating if post-unpatch callback
+ * @post_unpatch_enabled:	flag indicating अगर post-unpatch callback
  * 				should run
  *
- * All callbacks are optional.  Only the pre-patch callback, if provided,
+ * All callbacks are optional.  Only the pre-patch callback, अगर provided,
  * will be unconditionally executed.  If the parent klp_object fails to
- * patch for any reason, including a non-zero error status returned from
+ * patch क्रम any reason, including a non-zero error status वापसed from
  * the pre-patch callback, no further callbacks will be executed.
  */
-struct klp_callbacks {
-	int (*pre_patch)(struct klp_object *obj);
-	void (*post_patch)(struct klp_object *obj);
-	void (*pre_unpatch)(struct klp_object *obj);
-	void (*post_unpatch)(struct klp_object *obj);
+काष्ठा klp_callbacks अणु
+	पूर्णांक (*pre_patch)(काष्ठा klp_object *obj);
+	व्योम (*post_patch)(काष्ठा klp_object *obj);
+	व्योम (*pre_unpatch)(काष्ठा klp_object *obj);
+	व्योम (*post_unpatch)(काष्ठा klp_object *obj);
 	bool post_unpatch_enabled;
-};
+पूर्ण;
 
 /**
- * struct klp_object - kernel object structure for live patching
- * @name:	module name (or NULL for vmlinux)
- * @funcs:	function entries for functions to be patched in the object
+ * काष्ठा klp_object - kernel object काष्ठाure क्रम live patching
+ * @name:	module name (or शून्य क्रम vmlinux)
+ * @funcs:	function entries क्रम functions to be patched in the object
  * @callbacks:	functions to be executed pre/post (un)patching
- * @kobj:	kobject for sysfs resources
+ * @kobj:	kobject क्रम sysfs resources
  * @func_list:	dynamic list of the function entries
- * @node:	list node for klp_patch obj_list
+ * @node:	list node क्रम klp_patch obj_list
  * @mod:	kernel module associated with the patched object
- *		(NULL for vmlinux)
- * @dynamic:    temporary object for nop functions; dynamically allocated
+ *		(शून्य क्रम vmlinux)
+ * @dynamic:    temporary object क्रम nop functions; dynamically allocated
  * @patched:	the object's funcs have been added to the klp_ops list
  */
-struct klp_object {
-	/* external */
-	const char *name;
-	struct klp_func *funcs;
-	struct klp_callbacks callbacks;
+काष्ठा klp_object अणु
+	/* बाह्यal */
+	स्थिर अक्षर *name;
+	काष्ठा klp_func *funcs;
+	काष्ठा klp_callbacks callbacks;
 
-	/* internal */
-	struct kobject kobj;
-	struct list_head func_list;
-	struct list_head node;
-	struct module *mod;
+	/* पूर्णांकernal */
+	काष्ठा kobject kobj;
+	काष्ठा list_head func_list;
+	काष्ठा list_head node;
+	काष्ठा module *mod;
 	bool dynamic;
 	bool patched;
-};
+पूर्ण;
 
 /**
- * struct klp_state - state of the system modified by the livepatch
- * @id:		system state identifier (non-zero)
+ * काष्ठा klp_state - state of the प्रणाली modअगरied by the livepatch
+ * @id:		प्रणाली state identअगरier (non-zero)
  * @version:	version of the change
  * @data:	custom data
  */
-struct klp_state {
-	unsigned long id;
-	unsigned int version;
-	void *data;
-};
+काष्ठा klp_state अणु
+	अचिन्हित दीर्घ id;
+	अचिन्हित पूर्णांक version;
+	व्योम *data;
+पूर्ण;
 
 /**
- * struct klp_patch - patch structure for live patching
+ * काष्ठा klp_patch - patch काष्ठाure क्रम live patching
  * @mod:	reference to the live patch module
- * @objs:	object entries for kernel objects to be patched
- * @states:	system states that can get modified
+ * @objs:	object entries क्रम kernel objects to be patched
+ * @states:	प्रणाली states that can get modअगरied
  * @replace:	replace all actively used patches
- * @list:	list node for global list of actively used patches
- * @kobj:	kobject for sysfs resources
+ * @list:	list node क्रम global list of actively used patches
+ * @kobj:	kobject क्रम sysfs resources
  * @obj_list:	dynamic list of the object entries
  * @enabled:	the patch is enabled (but operation may be incomplete)
- * @forced:	was involved in a forced transition
- * @free_work:	patch cleanup from workqueue-context
- * @finish:	for waiting till it is safe to remove the patch module
+ * @क्रमced:	was involved in a क्रमced transition
+ * @मुक्त_work:	patch cleanup from workqueue-context
+ * @finish:	क्रम रुकोing till it is safe to हटाओ the patch module
  */
-struct klp_patch {
-	/* external */
-	struct module *mod;
-	struct klp_object *objs;
-	struct klp_state *states;
+काष्ठा klp_patch अणु
+	/* बाह्यal */
+	काष्ठा module *mod;
+	काष्ठा klp_object *objs;
+	काष्ठा klp_state *states;
 	bool replace;
 
-	/* internal */
-	struct list_head list;
-	struct kobject kobj;
-	struct list_head obj_list;
+	/* पूर्णांकernal */
+	काष्ठा list_head list;
+	काष्ठा kobject kobj;
+	काष्ठा list_head obj_list;
 	bool enabled;
-	bool forced;
-	struct work_struct free_work;
-	struct completion finish;
-};
+	bool क्रमced;
+	काष्ठा work_काष्ठा मुक्त_work;
+	काष्ठा completion finish;
+पूर्ण;
 
-#define klp_for_each_object_static(patch, obj) \
-	for (obj = patch->objs; obj->funcs || obj->name; obj++)
+#घोषणा klp_क्रम_each_object_अटल(patch, obj) \
+	क्रम (obj = patch->objs; obj->funcs || obj->name; obj++)
 
-#define klp_for_each_object_safe(patch, obj, tmp_obj)		\
-	list_for_each_entry_safe(obj, tmp_obj, &patch->obj_list, node)
+#घोषणा klp_क्रम_each_object_safe(patch, obj, पंचांगp_obj)		\
+	list_क्रम_each_entry_safe(obj, पंचांगp_obj, &patch->obj_list, node)
 
-#define klp_for_each_object(patch, obj)	\
-	list_for_each_entry(obj, &patch->obj_list, node)
+#घोषणा klp_क्रम_each_object(patch, obj)	\
+	list_क्रम_each_entry(obj, &patch->obj_list, node)
 
-#define klp_for_each_func_static(obj, func) \
-	for (func = obj->funcs; \
+#घोषणा klp_क्रम_each_func_अटल(obj, func) \
+	क्रम (func = obj->funcs; \
 	     func->old_name || func->new_func || func->old_sympos; \
 	     func++)
 
-#define klp_for_each_func_safe(obj, func, tmp_func)			\
-	list_for_each_entry_safe(func, tmp_func, &obj->func_list, node)
+#घोषणा klp_क्रम_each_func_safe(obj, func, पंचांगp_func)			\
+	list_क्रम_each_entry_safe(func, पंचांगp_func, &obj->func_list, node)
 
-#define klp_for_each_func(obj, func)	\
-	list_for_each_entry(func, &obj->func_list, node)
+#घोषणा klp_क्रम_each_func(obj, func)	\
+	list_क्रम_each_entry(func, &obj->func_list, node)
 
-int klp_enable_patch(struct klp_patch *);
+पूर्णांक klp_enable_patch(काष्ठा klp_patch *);
 
 /* Called from the module loader during module coming/going states */
-int klp_module_coming(struct module *mod);
-void klp_module_going(struct module *mod);
+पूर्णांक klp_module_coming(काष्ठा module *mod);
+व्योम klp_module_going(काष्ठा module *mod);
 
-void klp_copy_process(struct task_struct *child);
-void klp_update_patch_state(struct task_struct *task);
+व्योम klp_copy_process(काष्ठा task_काष्ठा *child);
+व्योम klp_update_patch_state(काष्ठा task_काष्ठा *task);
 
-static inline bool klp_patch_pending(struct task_struct *task)
-{
-	return test_tsk_thread_flag(task, TIF_PATCH_PENDING);
-}
+अटल अंतरभूत bool klp_patch_pending(काष्ठा task_काष्ठा *task)
+अणु
+	वापस test_tsk_thपढ़ो_flag(task, TIF_PATCH_PENDING);
+पूर्ण
 
-static inline bool klp_have_reliable_stack(void)
-{
-	return IS_ENABLED(CONFIG_STACKTRACE) &&
+अटल अंतरभूत bool klp_have_reliable_stack(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_STACKTRACE) &&
 	       IS_ENABLED(CONFIG_HAVE_RELIABLE_STACKTRACE);
-}
+पूर्ण
 
-typedef int (*klp_shadow_ctor_t)(void *obj,
-				 void *shadow_data,
-				 void *ctor_data);
-typedef void (*klp_shadow_dtor_t)(void *obj, void *shadow_data);
+प्रकार पूर्णांक (*klp_shaकरोw_ctor_t)(व्योम *obj,
+				 व्योम *shaकरोw_data,
+				 व्योम *ctor_data);
+प्रकार व्योम (*klp_shaकरोw_dtor_t)(व्योम *obj, व्योम *shaकरोw_data);
 
-void *klp_shadow_get(void *obj, unsigned long id);
-void *klp_shadow_alloc(void *obj, unsigned long id,
-		       size_t size, gfp_t gfp_flags,
-		       klp_shadow_ctor_t ctor, void *ctor_data);
-void *klp_shadow_get_or_alloc(void *obj, unsigned long id,
-			      size_t size, gfp_t gfp_flags,
-			      klp_shadow_ctor_t ctor, void *ctor_data);
-void klp_shadow_free(void *obj, unsigned long id, klp_shadow_dtor_t dtor);
-void klp_shadow_free_all(unsigned long id, klp_shadow_dtor_t dtor);
+व्योम *klp_shaकरोw_get(व्योम *obj, अचिन्हित दीर्घ id);
+व्योम *klp_shaकरोw_alloc(व्योम *obj, अचिन्हित दीर्घ id,
+		       माप_प्रकार size, gfp_t gfp_flags,
+		       klp_shaकरोw_ctor_t ctor, व्योम *ctor_data);
+व्योम *klp_shaकरोw_get_or_alloc(व्योम *obj, अचिन्हित दीर्घ id,
+			      माप_प्रकार size, gfp_t gfp_flags,
+			      klp_shaकरोw_ctor_t ctor, व्योम *ctor_data);
+व्योम klp_shaकरोw_मुक्त(व्योम *obj, अचिन्हित दीर्घ id, klp_shaकरोw_dtor_t dtor);
+व्योम klp_shaकरोw_मुक्त_all(अचिन्हित दीर्घ id, klp_shaकरोw_dtor_t dtor);
 
-struct klp_state *klp_get_state(struct klp_patch *patch, unsigned long id);
-struct klp_state *klp_get_prev_state(unsigned long id);
+काष्ठा klp_state *klp_get_state(काष्ठा klp_patch *patch, अचिन्हित दीर्घ id);
+काष्ठा klp_state *klp_get_prev_state(अचिन्हित दीर्घ id);
 
-int klp_apply_section_relocs(struct module *pmod, Elf_Shdr *sechdrs,
-			     const char *shstrtab, const char *strtab,
-			     unsigned int symindex, unsigned int secindex,
-			     const char *objname);
+पूर्णांक klp_apply_section_relocs(काष्ठा module *pmod, Elf_Shdr *sechdrs,
+			     स्थिर अक्षर *shstrtab, स्थिर अक्षर *strtab,
+			     अचिन्हित पूर्णांक symindex, अचिन्हित पूर्णांक secindex,
+			     स्थिर अक्षर *objname);
 
-#else /* !CONFIG_LIVEPATCH */
+#अन्यथा /* !CONFIG_LIVEPATCH */
 
-static inline int klp_module_coming(struct module *mod) { return 0; }
-static inline void klp_module_going(struct module *mod) {}
-static inline bool klp_patch_pending(struct task_struct *task) { return false; }
-static inline void klp_update_patch_state(struct task_struct *task) {}
-static inline void klp_copy_process(struct task_struct *child) {}
+अटल अंतरभूत पूर्णांक klp_module_coming(काष्ठा module *mod) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम klp_module_going(काष्ठा module *mod) अणुपूर्ण
+अटल अंतरभूत bool klp_patch_pending(काष्ठा task_काष्ठा *task) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम klp_update_patch_state(काष्ठा task_काष्ठा *task) अणुपूर्ण
+अटल अंतरभूत व्योम klp_copy_process(काष्ठा task_काष्ठा *child) अणुपूर्ण
 
-static inline
-int klp_apply_section_relocs(struct module *pmod, Elf_Shdr *sechdrs,
-			     const char *shstrtab, const char *strtab,
-			     unsigned int symindex, unsigned int secindex,
-			     const char *objname)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक klp_apply_section_relocs(काष्ठा module *pmod, Elf_Shdr *sechdrs,
+			     स्थिर अक्षर *shstrtab, स्थिर अक्षर *strtab,
+			     अचिन्हित पूर्णांक symindex, अचिन्हित पूर्णांक secindex,
+			     स्थिर अक्षर *objname)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_LIVEPATCH */
+#पूर्ण_अगर /* CONFIG_LIVEPATCH */
 
-#endif /* _LINUX_LIVEPATCH_H_ */
+#पूर्ण_अगर /* _LINUX_LIVEPATCH_H_ */

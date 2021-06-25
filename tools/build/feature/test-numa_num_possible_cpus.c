@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <numa.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <numa.h>
 
-int main(void)
-{
-	return numa_num_possible_cpus();
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस numa_num_possible_cpus();
+पूर्ण

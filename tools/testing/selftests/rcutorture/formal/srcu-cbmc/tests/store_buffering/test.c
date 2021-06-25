@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <src/combined_source.c>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <src/combined_source.c>
 
-int x;
-int y;
+पूर्णांक x;
+पूर्णांक y;
 
-int __unbuffered_tpr_x;
-int __unbuffered_tpr_y;
+पूर्णांक __unbuffered_tpr_x;
+पूर्णांक __unbuffered_tpr_y;
 
 DEFINE_SRCU(ss);
 
-void rcu_reader(void)
-{
-	int idx;
+व्योम rcu_पढ़ोer(व्योम)
+अणु
+	पूर्णांक idx;
 
-#ifndef FORCE_FAILURE_3
-	idx = srcu_read_lock(&ss);
-#endif
+#अगर_अघोषित FORCE_FAILURE_3
+	idx = srcu_पढ़ो_lock(&ss);
+#पूर्ण_अगर
 	might_sleep();
 
 	__unbuffered_tpr_y = READ_ONCE(y);
-#ifdef FORCE_FAILURE
-	srcu_read_unlock(&ss, idx);
-	idx = srcu_read_lock(&ss);
-#endif
+#अगर_घोषित FORCE_FAILURE
+	srcu_पढ़ो_unlock(&ss, idx);
+	idx = srcu_पढ़ो_lock(&ss);
+#पूर्ण_अगर
 	WRITE_ONCE(x, 1);
 
-#ifndef FORCE_FAILURE_3
-	srcu_read_unlock(&ss, idx);
-#endif
+#अगर_अघोषित FORCE_FAILURE_3
+	srcu_पढ़ो_unlock(&ss, idx);
+#पूर्ण_अगर
 	might_sleep();
-}
+पूर्ण
 
-void *thread_update(void *arg)
-{
+व्योम *thपढ़ो_update(व्योम *arg)
+अणु
 	WRITE_ONCE(y, 1);
-#ifndef FORCE_FAILURE_2
+#अगर_अघोषित FORCE_FAILURE_2
 	synchronize_srcu(&ss);
-#endif
+#पूर्ण_अगर
 	might_sleep();
 	__unbuffered_tpr_x = READ_ONCE(x);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void *thread_process_reader(void *arg)
-{
-	rcu_reader();
+व्योम *thपढ़ो_process_पढ़ोer(व्योम *arg)
+अणु
+	rcu_पढ़ोer();
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	pthread_t tu;
-	pthread_t tpr;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	pthपढ़ो_t tu;
+	pthपढ़ो_t tpr;
 
-	if (pthread_create(&tu, NULL, thread_update, NULL))
-		abort();
-	if (pthread_create(&tpr, NULL, thread_process_reader, NULL))
-		abort();
-	if (pthread_join(tu, NULL))
-		abort();
-	if (pthread_join(tpr, NULL))
-		abort();
-	assert(__unbuffered_tpr_y != 0 || __unbuffered_tpr_x != 0);
+	अगर (pthपढ़ो_create(&tu, शून्य, thपढ़ो_update, शून्य))
+		पात();
+	अगर (pthपढ़ो_create(&tpr, शून्य, thपढ़ो_process_पढ़ोer, शून्य))
+		पात();
+	अगर (pthपढ़ो_join(tu, शून्य))
+		पात();
+	अगर (pthपढ़ो_join(tpr, शून्य))
+		पात();
+	निश्चित(__unbuffered_tpr_y != 0 || __unbuffered_tpr_x != 0);
 
-#ifdef ASSERT_END
-	assert(0);
-#endif
+#अगर_घोषित ASSERT_END
+	निश्चित(0);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

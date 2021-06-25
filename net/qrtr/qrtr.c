@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/qrtr.h>
-#include <linux/termios.h>	/* For TIOCINQ/OUTQ */
-#include <linux/spinlock.h>
-#include <linux/wait.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/qrtr.h>
+#समावेश <linux/termios.h>	/* For TIOCINQ/OUTQ */
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
 
-#include <net/sock.h>
+#समावेश <net/sock.h>
 
-#include "qrtr.h"
+#समावेश "qrtr.h"
 
-#define QRTR_PROTO_VER_1 1
-#define QRTR_PROTO_VER_2 3
+#घोषणा QRTR_PROTO_VER_1 1
+#घोषणा QRTR_PROTO_VER_2 3
 
-/* auto-bind range */
-#define QRTR_MIN_EPH_SOCKET 0x4000
-#define QRTR_MAX_EPH_SOCKET 0x7fff
-#define QRTR_EPH_PORT_RANGE \
+/* स्वतः-bind range */
+#घोषणा QRTR_MIN_EPH_SOCKET 0x4000
+#घोषणा QRTR_MAX_EPH_SOCKET 0x7fff
+#घोषणा QRTR_EPH_PORT_RANGE \
 		XA_LIMIT(QRTR_MIN_EPH_SOCKET, QRTR_MAX_EPH_SOCKET)
 
 /**
- * struct qrtr_hdr_v1 - (I|R)PCrouter packet header version 1
+ * काष्ठा qrtr_hdr_v1 - (I|R)PCrouter packet header version 1
  * @version: protocol version
  * @type: packet type; one of QRTR_TYPE_*
  * @src_node_id: source node
@@ -34,7 +35,7 @@
  * @dst_node_id: destination node
  * @dst_port_id: destination port
  */
-struct qrtr_hdr_v1 {
+काष्ठा qrtr_hdr_v1 अणु
 	__le32 version;
 	__le32 type;
 	__le32 src_node_id;
@@ -43,13 +44,13 @@ struct qrtr_hdr_v1 {
 	__le32 size;
 	__le32 dst_node_id;
 	__le32 dst_port_id;
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct qrtr_hdr_v2 - (I|R)PCrouter packet header later versions
+ * काष्ठा qrtr_hdr_v2 - (I|R)PCrouter packet header later versions
  * @version: protocol version
  * @type: packet type; one of QRTR_TYPE_*
- * @flags: bitmask of QRTR_FLAGS_*
+ * @flags: biपंचांगask of QRTR_FLAGS_*
  * @optlen: length of optional header data
  * @size: length of packet, excluding this header and optlen
  * @src_node_id: source node
@@ -57,7 +58,7 @@ struct qrtr_hdr_v1 {
  * @dst_node_id: destination node
  * @dst_port_id: destination port
  */
-struct qrtr_hdr_v2 {
+काष्ठा qrtr_hdr_v2 अणु
 	u8 version;
 	u8 type;
 	u8 flags;
@@ -67,11 +68,11 @@ struct qrtr_hdr_v2 {
 	__le16 src_port_id;
 	__le16 dst_node_id;
 	__le16 dst_port_id;
-};
+पूर्ण;
 
-#define QRTR_FLAGS_CONFIRM_RX	BIT(0)
+#घोषणा QRTR_FLAGS_CONFIRM_RX	BIT(0)
 
-struct qrtr_cb {
+काष्ठा qrtr_cb अणु
 	u32 src_node;
 	u32 src_port;
 	u32 dst_node;
@@ -79,106 +80,106 @@ struct qrtr_cb {
 
 	u8 type;
 	u8 confirm_rx;
-};
+पूर्ण;
 
-#define QRTR_HDR_MAX_SIZE max_t(size_t, sizeof(struct qrtr_hdr_v1), \
-					sizeof(struct qrtr_hdr_v2))
+#घोषणा QRTR_HDR_MAX_SIZE max_t(माप_प्रकार, माप(काष्ठा qrtr_hdr_v1), \
+					माप(काष्ठा qrtr_hdr_v2))
 
-struct qrtr_sock {
+काष्ठा qrtr_sock अणु
 	/* WARNING: sk must be the first member */
-	struct sock sk;
-	struct sockaddr_qrtr us;
-	struct sockaddr_qrtr peer;
-};
+	काष्ठा sock sk;
+	काष्ठा sockaddr_qrtr us;
+	काष्ठा sockaddr_qrtr peer;
+पूर्ण;
 
-static inline struct qrtr_sock *qrtr_sk(struct sock *sk)
-{
-	BUILD_BUG_ON(offsetof(struct qrtr_sock, sk) != 0);
-	return container_of(sk, struct qrtr_sock, sk);
-}
+अटल अंतरभूत काष्ठा qrtr_sock *qrtr_sk(काष्ठा sock *sk)
+अणु
+	BUILD_BUG_ON(दुरत्व(काष्ठा qrtr_sock, sk) != 0);
+	वापस container_of(sk, काष्ठा qrtr_sock, sk);
+पूर्ण
 
-static unsigned int qrtr_local_nid = 1;
+अटल अचिन्हित पूर्णांक qrtr_local_nid = 1;
 
-/* for node ids */
-static RADIX_TREE(qrtr_nodes, GFP_ATOMIC);
-static DEFINE_SPINLOCK(qrtr_nodes_lock);
+/* क्रम node ids */
+अटल RADIX_TREE(qrtr_nodes, GFP_ATOMIC);
+अटल DEFINE_SPINLOCK(qrtr_nodes_lock);
 /* broadcast list */
-static LIST_HEAD(qrtr_all_nodes);
-/* lock for qrtr_all_nodes and node reference */
-static DEFINE_MUTEX(qrtr_node_lock);
+अटल LIST_HEAD(qrtr_all_nodes);
+/* lock क्रम qrtr_all_nodes and node reference */
+अटल DEFINE_MUTEX(qrtr_node_lock);
 
 /* local port allocation management */
-static DEFINE_XARRAY_ALLOC(qrtr_ports);
+अटल DEFINE_XARRAY_ALLOC(qrtr_ports);
 
 /**
- * struct qrtr_node - endpoint node
- * @ep_lock: lock for endpoint management and callbacks
- * @ep: endpoint
- * @ref: reference count for node
+ * काष्ठा qrtr_node - endpoपूर्णांक node
+ * @ep_lock: lock क्रम endpoपूर्णांक management and callbacks
+ * @ep: endpoपूर्णांक
+ * @ref: reference count क्रम node
  * @nid: node id
  * @qrtr_tx_flow: tree of qrtr_tx_flow, keyed by node << 32 | port
- * @qrtr_tx_lock: lock for qrtr_tx_flow inserts
+ * @qrtr_tx_lock: lock क्रम qrtr_tx_flow inserts
  * @rx_queue: receive queue
- * @item: list item for broadcast list
+ * @item: list item क्रम broadcast list
  */
-struct qrtr_node {
-	struct mutex ep_lock;
-	struct qrtr_endpoint *ep;
-	struct kref ref;
-	unsigned int nid;
+काष्ठा qrtr_node अणु
+	काष्ठा mutex ep_lock;
+	काष्ठा qrtr_endpoपूर्णांक *ep;
+	काष्ठा kref ref;
+	अचिन्हित पूर्णांक nid;
 
-	struct radix_tree_root qrtr_tx_flow;
-	struct mutex qrtr_tx_lock; /* for qrtr_tx_flow */
+	काष्ठा radix_tree_root qrtr_tx_flow;
+	काष्ठा mutex qrtr_tx_lock; /* क्रम qrtr_tx_flow */
 
-	struct sk_buff_head rx_queue;
-	struct list_head item;
-};
+	काष्ठा sk_buff_head rx_queue;
+	काष्ठा list_head item;
+पूर्ण;
 
 /**
- * struct qrtr_tx_flow - tx flow control
- * @resume_tx: waiters for a resume tx from the remote
- * @pending: number of waiting senders
+ * काष्ठा qrtr_tx_flow - tx flow control
+ * @resume_tx: रुकोers क्रम a resume tx from the remote
+ * @pending: number of रुकोing senders
  * @tx_failed: indicates that a message with confirm_rx flag was lost
  */
-struct qrtr_tx_flow {
-	struct wait_queue_head resume_tx;
-	int pending;
-	int tx_failed;
-};
+काष्ठा qrtr_tx_flow अणु
+	काष्ठा रुको_queue_head resume_tx;
+	पूर्णांक pending;
+	पूर्णांक tx_failed;
+पूर्ण;
 
-#define QRTR_TX_FLOW_HIGH	10
-#define QRTR_TX_FLOW_LOW	5
+#घोषणा QRTR_TX_FLOW_HIGH	10
+#घोषणा QRTR_TX_FLOW_LOW	5
 
-static int qrtr_local_enqueue(struct qrtr_node *node, struct sk_buff *skb,
-			      int type, struct sockaddr_qrtr *from,
-			      struct sockaddr_qrtr *to);
-static int qrtr_bcast_enqueue(struct qrtr_node *node, struct sk_buff *skb,
-			      int type, struct sockaddr_qrtr *from,
-			      struct sockaddr_qrtr *to);
-static struct qrtr_sock *qrtr_port_lookup(int port);
-static void qrtr_port_put(struct qrtr_sock *ipc);
+अटल पूर्णांक qrtr_local_enqueue(काष्ठा qrtr_node *node, काष्ठा sk_buff *skb,
+			      पूर्णांक type, काष्ठा sockaddr_qrtr *from,
+			      काष्ठा sockaddr_qrtr *to);
+अटल पूर्णांक qrtr_bcast_enqueue(काष्ठा qrtr_node *node, काष्ठा sk_buff *skb,
+			      पूर्णांक type, काष्ठा sockaddr_qrtr *from,
+			      काष्ठा sockaddr_qrtr *to);
+अटल काष्ठा qrtr_sock *qrtr_port_lookup(पूर्णांक port);
+अटल व्योम qrtr_port_put(काष्ठा qrtr_sock *ipc);
 
-/* Release node resources and free the node.
+/* Release node resources and मुक्त the node.
  *
  * Do not call directly, use qrtr_node_release.  To be used with
  * kref_put_mutex.  As such, the node mutex is expected to be locked on call.
  */
-static void __qrtr_node_release(struct kref *kref)
-{
-	struct qrtr_node *node = container_of(kref, struct qrtr_node, ref);
-	struct radix_tree_iter iter;
-	struct qrtr_tx_flow *flow;
-	unsigned long flags;
-	void __rcu **slot;
+अटल व्योम __qrtr_node_release(काष्ठा kref *kref)
+अणु
+	काष्ठा qrtr_node *node = container_of(kref, काष्ठा qrtr_node, ref);
+	काष्ठा radix_tree_iter iter;
+	काष्ठा qrtr_tx_flow *flow;
+	अचिन्हित दीर्घ flags;
+	व्योम __rcu **slot;
 
 	spin_lock_irqsave(&qrtr_nodes_lock, flags);
-	/* If the node is a bridge for other nodes, there are possibly
-	 * multiple entries pointing to our released node, delete them all.
+	/* If the node is a bridge क्रम other nodes, there are possibly
+	 * multiple entries poपूर्णांकing to our released node, delete them all.
 	 */
-	radix_tree_for_each_slot(slot, &qrtr_nodes, &iter, 0) {
-		if (*slot == node)
+	radix_tree_क्रम_each_slot(slot, &qrtr_nodes, &iter, 0) अणु
+		अगर (*slot == node)
 			radix_tree_iter_delete(&qrtr_nodes, &iter, slot);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&qrtr_nodes_lock, flags);
 
 	list_del(&node->item);
@@ -187,60 +188,60 @@ static void __qrtr_node_release(struct kref *kref)
 	skb_queue_purge(&node->rx_queue);
 
 	/* Free tx flow counters */
-	radix_tree_for_each_slot(slot, &node->qrtr_tx_flow, &iter, 0) {
+	radix_tree_क्रम_each_slot(slot, &node->qrtr_tx_flow, &iter, 0) अणु
 		flow = *slot;
 		radix_tree_iter_delete(&node->qrtr_tx_flow, &iter, slot);
-		kfree(flow);
-	}
-	kfree(node);
-}
+		kमुक्त(flow);
+	पूर्ण
+	kमुक्त(node);
+पूर्ण
 
 /* Increment reference to node. */
-static struct qrtr_node *qrtr_node_acquire(struct qrtr_node *node)
-{
-	if (node)
+अटल काष्ठा qrtr_node *qrtr_node_acquire(काष्ठा qrtr_node *node)
+अणु
+	अगर (node)
 		kref_get(&node->ref);
-	return node;
-}
+	वापस node;
+पूर्ण
 
 /* Decrement reference to node and release as necessary. */
-static void qrtr_node_release(struct qrtr_node *node)
-{
-	if (!node)
-		return;
+अटल व्योम qrtr_node_release(काष्ठा qrtr_node *node)
+अणु
+	अगर (!node)
+		वापस;
 	kref_put_mutex(&node->ref, __qrtr_node_release, &qrtr_node_lock);
-}
+पूर्ण
 
 /**
  * qrtr_tx_resume() - reset flow control counter
  * @node:	qrtr_node that the QRTR_TYPE_RESUME_TX packet arrived on
  * @skb:	resume_tx packet
  */
-static void qrtr_tx_resume(struct qrtr_node *node, struct sk_buff *skb)
-{
-	struct qrtr_ctrl_pkt *pkt = (struct qrtr_ctrl_pkt *)skb->data;
+अटल व्योम qrtr_tx_resume(काष्ठा qrtr_node *node, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा qrtr_ctrl_pkt *pkt = (काष्ठा qrtr_ctrl_pkt *)skb->data;
 	u64 remote_node = le32_to_cpu(pkt->client.node);
 	u32 remote_port = le32_to_cpu(pkt->client.port);
-	struct qrtr_tx_flow *flow;
-	unsigned long key;
+	काष्ठा qrtr_tx_flow *flow;
+	अचिन्हित दीर्घ key;
 
 	key = remote_node << 32 | remote_port;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	flow = radix_tree_lookup(&node->qrtr_tx_flow, key);
-	rcu_read_unlock();
-	if (flow) {
+	rcu_पढ़ो_unlock();
+	अगर (flow) अणु
 		spin_lock(&flow->resume_tx.lock);
 		flow->pending = 0;
 		spin_unlock(&flow->resume_tx.lock);
-		wake_up_interruptible_all(&flow->resume_tx);
-	}
+		wake_up_पूर्णांकerruptible_all(&flow->resume_tx);
+	पूर्ण
 
 	consume_skb(skb);
-}
+पूर्ण
 
 /**
- * qrtr_tx_wait() - flow control for outgoing packets
+ * qrtr_tx_रुको() - flow control क्रम outgoing packets
  * @node:	qrtr_node that the packet is to be send to
  * @dest_node:	node id of the destination
  * @dest_port:	port number of the destination
@@ -250,60 +251,60 @@ static void qrtr_tx_resume(struct qrtr_node *node, struct sk_buff *skb)
  * the low watermark is passed the confirm_rx flag is set on the outgoing
  * message, which will trigger the remote to send a control message of the type
  * QRTR_TYPE_RESUME_TX to reset the counter. If the high watermark is hit
- * further transmision should be paused.
+ * further transmision should be छोड़ोd.
  *
- * Return: 1 if confirm_rx should be set, 0 otherwise or errno failure
+ * Return: 1 अगर confirm_rx should be set, 0 otherwise or त्रुटि_सं failure
  */
-static int qrtr_tx_wait(struct qrtr_node *node, int dest_node, int dest_port,
-			int type)
-{
-	unsigned long key = (u64)dest_node << 32 | dest_port;
-	struct qrtr_tx_flow *flow;
-	int confirm_rx = 0;
-	int ret;
+अटल पूर्णांक qrtr_tx_रुको(काष्ठा qrtr_node *node, पूर्णांक dest_node, पूर्णांक dest_port,
+			पूर्णांक type)
+अणु
+	अचिन्हित दीर्घ key = (u64)dest_node << 32 | dest_port;
+	काष्ठा qrtr_tx_flow *flow;
+	पूर्णांक confirm_rx = 0;
+	पूर्णांक ret;
 
 	/* Never set confirm_rx on non-data packets */
-	if (type != QRTR_TYPE_DATA)
-		return 0;
+	अगर (type != QRTR_TYPE_DATA)
+		वापस 0;
 
 	mutex_lock(&node->qrtr_tx_lock);
 	flow = radix_tree_lookup(&node->qrtr_tx_flow, key);
-	if (!flow) {
-		flow = kzalloc(sizeof(*flow), GFP_KERNEL);
-		if (flow) {
-			init_waitqueue_head(&flow->resume_tx);
-			if (radix_tree_insert(&node->qrtr_tx_flow, key, flow)) {
-				kfree(flow);
-				flow = NULL;
-			}
-		}
-	}
+	अगर (!flow) अणु
+		flow = kzalloc(माप(*flow), GFP_KERNEL);
+		अगर (flow) अणु
+			init_रुकोqueue_head(&flow->resume_tx);
+			अगर (radix_tree_insert(&node->qrtr_tx_flow, key, flow)) अणु
+				kमुक्त(flow);
+				flow = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&node->qrtr_tx_lock);
 
-	/* Set confirm_rx if we where unable to find and allocate a flow */
-	if (!flow)
-		return 1;
+	/* Set confirm_rx अगर we where unable to find and allocate a flow */
+	अगर (!flow)
+		वापस 1;
 
 	spin_lock_irq(&flow->resume_tx.lock);
-	ret = wait_event_interruptible_locked_irq(flow->resume_tx,
+	ret = रुको_event_पूर्णांकerruptible_locked_irq(flow->resume_tx,
 						  flow->pending < QRTR_TX_FLOW_HIGH ||
 						  flow->tx_failed ||
 						  !node->ep);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		confirm_rx = ret;
-	} else if (!node->ep) {
+	पूर्ण अन्यथा अगर (!node->ep) अणु
 		confirm_rx = -EPIPE;
-	} else if (flow->tx_failed) {
+	पूर्ण अन्यथा अगर (flow->tx_failed) अणु
 		flow->tx_failed = 0;
 		confirm_rx = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		flow->pending++;
 		confirm_rx = flow->pending == QRTR_TX_FLOW_LOW;
-	}
+	पूर्ण
 	spin_unlock_irq(&flow->resume_tx.lock);
 
-	return confirm_rx;
-}
+	वापस confirm_rx;
+पूर्ण
 
 /**
  * qrtr_tx_flow_failed() - flag that tx of confirm_rx flagged messages failed
@@ -313,151 +314,151 @@ static int qrtr_tx_wait(struct qrtr_node *node, int dest_node, int dest_port,
  *
  * Signal that the transmission of a message with confirm_rx flag failed. The
  * flow's "pending" counter will keep incrementing towards QRTR_TX_FLOW_HIGH,
- * at which point transmission would stall forever waiting for the resume TX
+ * at which poपूर्णांक transmission would stall क्रमever रुकोing क्रम the resume TX
  * message associated with the dropped confirm_rx message.
  * Work around this by marking the flow as having a failed transmission and
  * cause the next transmission attempt to be sent with the confirm_rx.
  */
-static void qrtr_tx_flow_failed(struct qrtr_node *node, int dest_node,
-				int dest_port)
-{
-	unsigned long key = (u64)dest_node << 32 | dest_port;
-	struct qrtr_tx_flow *flow;
+अटल व्योम qrtr_tx_flow_failed(काष्ठा qrtr_node *node, पूर्णांक dest_node,
+				पूर्णांक dest_port)
+अणु
+	अचिन्हित दीर्घ key = (u64)dest_node << 32 | dest_port;
+	काष्ठा qrtr_tx_flow *flow;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	flow = radix_tree_lookup(&node->qrtr_tx_flow, key);
-	rcu_read_unlock();
-	if (flow) {
+	rcu_पढ़ो_unlock();
+	अगर (flow) अणु
 		spin_lock_irq(&flow->resume_tx.lock);
 		flow->tx_failed = 1;
 		spin_unlock_irq(&flow->resume_tx.lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Pass an outgoing packet socket buffer to the endpoint driver. */
-static int qrtr_node_enqueue(struct qrtr_node *node, struct sk_buff *skb,
-			     int type, struct sockaddr_qrtr *from,
-			     struct sockaddr_qrtr *to)
-{
-	struct qrtr_hdr_v1 *hdr;
-	size_t len = skb->len;
-	int rc, confirm_rx;
+/* Pass an outgoing packet socket buffer to the endpoपूर्णांक driver. */
+अटल पूर्णांक qrtr_node_enqueue(काष्ठा qrtr_node *node, काष्ठा sk_buff *skb,
+			     पूर्णांक type, काष्ठा sockaddr_qrtr *from,
+			     काष्ठा sockaddr_qrtr *to)
+अणु
+	काष्ठा qrtr_hdr_v1 *hdr;
+	माप_प्रकार len = skb->len;
+	पूर्णांक rc, confirm_rx;
 
-	confirm_rx = qrtr_tx_wait(node, to->sq_node, to->sq_port, type);
-	if (confirm_rx < 0) {
-		kfree_skb(skb);
-		return confirm_rx;
-	}
+	confirm_rx = qrtr_tx_रुको(node, to->sq_node, to->sq_port, type);
+	अगर (confirm_rx < 0) अणु
+		kमुक्त_skb(skb);
+		वापस confirm_rx;
+	पूर्ण
 
-	hdr = skb_push(skb, sizeof(*hdr));
+	hdr = skb_push(skb, माप(*hdr));
 	hdr->version = cpu_to_le32(QRTR_PROTO_VER_1);
 	hdr->type = cpu_to_le32(type);
 	hdr->src_node_id = cpu_to_le32(from->sq_node);
 	hdr->src_port_id = cpu_to_le32(from->sq_port);
-	if (to->sq_port == QRTR_PORT_CTRL) {
+	अगर (to->sq_port == QRTR_PORT_CTRL) अणु
 		hdr->dst_node_id = cpu_to_le32(node->nid);
 		hdr->dst_port_id = cpu_to_le32(QRTR_PORT_CTRL);
-	} else {
+	पूर्ण अन्यथा अणु
 		hdr->dst_node_id = cpu_to_le32(to->sq_node);
 		hdr->dst_port_id = cpu_to_le32(to->sq_port);
-	}
+	पूर्ण
 
 	hdr->size = cpu_to_le32(len);
 	hdr->confirm_rx = !!confirm_rx;
 
-	rc = skb_put_padto(skb, ALIGN(len, 4) + sizeof(*hdr));
+	rc = skb_put_padto(skb, ALIGN(len, 4) + माप(*hdr));
 
-	if (!rc) {
+	अगर (!rc) अणु
 		mutex_lock(&node->ep_lock);
 		rc = -ENODEV;
-		if (node->ep)
+		अगर (node->ep)
 			rc = node->ep->xmit(node->ep, skb);
-		else
-			kfree_skb(skb);
+		अन्यथा
+			kमुक्त_skb(skb);
 		mutex_unlock(&node->ep_lock);
-	}
+	पूर्ण
 	/* Need to ensure that a subsequent message carries the otherwise lost
-	 * confirm_rx flag if we dropped this one */
-	if (rc && confirm_rx)
+	 * confirm_rx flag अगर we dropped this one */
+	अगर (rc && confirm_rx)
 		qrtr_tx_flow_failed(node, to->sq_node, to->sq_port);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Lookup node by id.
  *
  * callers must release with qrtr_node_release()
  */
-static struct qrtr_node *qrtr_node_lookup(unsigned int nid)
-{
-	struct qrtr_node *node;
-	unsigned long flags;
+अटल काष्ठा qrtr_node *qrtr_node_lookup(अचिन्हित पूर्णांक nid)
+अणु
+	काष्ठा qrtr_node *node;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&qrtr_nodes_lock, flags);
 	node = radix_tree_lookup(&qrtr_nodes, nid);
 	node = qrtr_node_acquire(node);
 	spin_unlock_irqrestore(&qrtr_nodes_lock, flags);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
 /* Assign node id to node.
  *
- * This is mostly useful for automatic node id assignment, based on
+ * This is mostly useful क्रम स्वतःmatic node id assignment, based on
  * the source id in the incoming packet.
  */
-static void qrtr_node_assign(struct qrtr_node *node, unsigned int nid)
-{
-	unsigned long flags;
+अटल व्योम qrtr_node_assign(काष्ठा qrtr_node *node, अचिन्हित पूर्णांक nid)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (nid == QRTR_EP_NID_AUTO)
-		return;
+	अगर (nid == QRTR_EP_NID_AUTO)
+		वापस;
 
 	spin_lock_irqsave(&qrtr_nodes_lock, flags);
 	radix_tree_insert(&qrtr_nodes, nid, node);
-	if (node->nid == QRTR_EP_NID_AUTO)
+	अगर (node->nid == QRTR_EP_NID_AUTO)
 		node->nid = nid;
 	spin_unlock_irqrestore(&qrtr_nodes_lock, flags);
-}
+पूर्ण
 
 /**
- * qrtr_endpoint_post() - post incoming data
- * @ep: endpoint handle
- * @data: data pointer
+ * qrtr_endpoपूर्णांक_post() - post incoming data
+ * @ep: endpoपूर्णांक handle
+ * @data: data poपूर्णांकer
  * @len: size of data in bytes
  *
  * Return: 0 on success; negative error code on failure
  */
-int qrtr_endpoint_post(struct qrtr_endpoint *ep, const void *data, size_t len)
-{
-	struct qrtr_node *node = ep->node;
-	const struct qrtr_hdr_v1 *v1;
-	const struct qrtr_hdr_v2 *v2;
-	struct qrtr_sock *ipc;
-	struct sk_buff *skb;
-	struct qrtr_cb *cb;
-	size_t size;
-	unsigned int ver;
-	size_t hdrlen;
+पूर्णांक qrtr_endpoपूर्णांक_post(काष्ठा qrtr_endpoपूर्णांक *ep, स्थिर व्योम *data, माप_प्रकार len)
+अणु
+	काष्ठा qrtr_node *node = ep->node;
+	स्थिर काष्ठा qrtr_hdr_v1 *v1;
+	स्थिर काष्ठा qrtr_hdr_v2 *v2;
+	काष्ठा qrtr_sock *ipc;
+	काष्ठा sk_buff *skb;
+	काष्ठा qrtr_cb *cb;
+	माप_प्रकार size;
+	अचिन्हित पूर्णांक ver;
+	माप_प्रकार hdrlen;
 
-	if (len == 0 || len & 3)
-		return -EINVAL;
+	अगर (len == 0 || len & 3)
+		वापस -EINVAL;
 
-	skb = __netdev_alloc_skb(NULL, len, GFP_ATOMIC | __GFP_NOWARN);
-	if (!skb)
-		return -ENOMEM;
+	skb = __netdev_alloc_skb(शून्य, len, GFP_ATOMIC | __GFP_NOWARN);
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	cb = (struct qrtr_cb *)skb->cb;
+	cb = (काष्ठा qrtr_cb *)skb->cb;
 
-	/* Version field in v1 is little endian, so this works for both cases */
+	/* Version field in v1 is little endian, so this works क्रम both हालs */
 	ver = *(u8*)data;
 
-	switch (ver) {
-	case QRTR_PROTO_VER_1:
-		if (len < sizeof(*v1))
-			goto err;
+	चयन (ver) अणु
+	हाल QRTR_PROTO_VER_1:
+		अगर (len < माप(*v1))
+			जाओ err;
 		v1 = data;
-		hdrlen = sizeof(*v1);
+		hdrlen = माप(*v1);
 
 		cb->type = le32_to_cpu(v1->type);
 		cb->src_node = le32_to_cpu(v1->src_node_id);
@@ -467,12 +468,12 @@ int qrtr_endpoint_post(struct qrtr_endpoint *ep, const void *data, size_t len)
 		cb->dst_port = le32_to_cpu(v1->dst_port_id);
 
 		size = le32_to_cpu(v1->size);
-		break;
-	case QRTR_PROTO_VER_2:
-		if (len < sizeof(*v2))
-			goto err;
+		अवरोध;
+	हाल QRTR_PROTO_VER_2:
+		अगर (len < माप(*v2))
+			जाओ err;
 		v2 = data;
-		hdrlen = sizeof(*v2) + v2->optlen;
+		hdrlen = माप(*v2) + v2->optlen;
 
 		cb->type = v2->type;
 		cb->confirm_rx = !!(v2->flags & QRTR_FLAGS_CONFIRM_RX);
@@ -481,102 +482,102 @@ int qrtr_endpoint_post(struct qrtr_endpoint *ep, const void *data, size_t len)
 		cb->dst_node = le16_to_cpu(v2->dst_node_id);
 		cb->dst_port = le16_to_cpu(v2->dst_port_id);
 
-		if (cb->src_port == (u16)QRTR_PORT_CTRL)
+		अगर (cb->src_port == (u16)QRTR_PORT_CTRL)
 			cb->src_port = QRTR_PORT_CTRL;
-		if (cb->dst_port == (u16)QRTR_PORT_CTRL)
+		अगर (cb->dst_port == (u16)QRTR_PORT_CTRL)
 			cb->dst_port = QRTR_PORT_CTRL;
 
 		size = le32_to_cpu(v2->size);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("qrtr: Invalid version %d\n", ver);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (len != ALIGN(size, 4) + hdrlen)
-		goto err;
+	अगर (len != ALIGN(size, 4) + hdrlen)
+		जाओ err;
 
-	if (cb->dst_port != QRTR_PORT_CTRL && cb->type != QRTR_TYPE_DATA &&
+	अगर (cb->dst_port != QRTR_PORT_CTRL && cb->type != QRTR_TYPE_DATA &&
 	    cb->type != QRTR_TYPE_RESUME_TX)
-		goto err;
+		जाओ err;
 
 	skb_put_data(skb, data + hdrlen, size);
 
 	qrtr_node_assign(node, cb->src_node);
 
-	if (cb->type == QRTR_TYPE_NEW_SERVER) {
-		/* Remote node endpoint can bridge other distant nodes */
-		const struct qrtr_ctrl_pkt *pkt = data + hdrlen;
+	अगर (cb->type == QRTR_TYPE_NEW_SERVER) अणु
+		/* Remote node endpoपूर्णांक can bridge other distant nodes */
+		स्थिर काष्ठा qrtr_ctrl_pkt *pkt = data + hdrlen;
 
 		qrtr_node_assign(node, le32_to_cpu(pkt->server.node));
-	}
+	पूर्ण
 
-	if (cb->type == QRTR_TYPE_RESUME_TX) {
+	अगर (cb->type == QRTR_TYPE_RESUME_TX) अणु
 		qrtr_tx_resume(node, skb);
-	} else {
+	पूर्ण अन्यथा अणु
 		ipc = qrtr_port_lookup(cb->dst_port);
-		if (!ipc)
-			goto err;
+		अगर (!ipc)
+			जाओ err;
 
-		if (sock_queue_rcv_skb(&ipc->sk, skb))
-			goto err;
+		अगर (sock_queue_rcv_skb(&ipc->sk, skb))
+			जाओ err;
 
 		qrtr_port_put(ipc);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	kfree_skb(skb);
-	return -EINVAL;
+	kमुक्त_skb(skb);
+	वापस -EINVAL;
 
-}
-EXPORT_SYMBOL_GPL(qrtr_endpoint_post);
+पूर्ण
+EXPORT_SYMBOL_GPL(qrtr_endpoपूर्णांक_post);
 
 /**
  * qrtr_alloc_ctrl_packet() - allocate control packet skb
- * @pkt: reference to qrtr_ctrl_pkt pointer
+ * @pkt: reference to qrtr_ctrl_pkt poपूर्णांकer
  * @flags: the type of memory to allocate
  *
- * Returns newly allocated sk_buff, or NULL on failure
+ * Returns newly allocated sk_buff, or शून्य on failure
  *
  * This function allocates a sk_buff large enough to carry a qrtr_ctrl_pkt and
- * on success returns a reference to the control packet in @pkt.
+ * on success वापसs a reference to the control packet in @pkt.
  */
-static struct sk_buff *qrtr_alloc_ctrl_packet(struct qrtr_ctrl_pkt **pkt,
+अटल काष्ठा sk_buff *qrtr_alloc_ctrl_packet(काष्ठा qrtr_ctrl_pkt **pkt,
 					      gfp_t flags)
-{
-	const int pkt_len = sizeof(struct qrtr_ctrl_pkt);
-	struct sk_buff *skb;
+अणु
+	स्थिर पूर्णांक pkt_len = माप(काष्ठा qrtr_ctrl_pkt);
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(QRTR_HDR_MAX_SIZE + pkt_len, flags);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	skb_reserve(skb, QRTR_HDR_MAX_SIZE);
 	*pkt = skb_put_zero(skb, pkt_len);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /**
- * qrtr_endpoint_register() - register a new endpoint
- * @ep: endpoint to register
- * @nid: desired node id; may be QRTR_EP_NID_AUTO for auto-assignment
+ * qrtr_endpoपूर्णांक_रेजिस्टर() - रेजिस्टर a new endpoपूर्णांक
+ * @ep: endpoपूर्णांक to रेजिस्टर
+ * @nid: desired node id; may be QRTR_EP_NID_AUTO क्रम स्वतः-assignment
  * Return: 0 on success; negative error code on failure
  *
- * The specified endpoint must have the xmit function pointer set on call.
+ * The specअगरied endpoपूर्णांक must have the xmit function poपूर्णांकer set on call.
  */
-int qrtr_endpoint_register(struct qrtr_endpoint *ep, unsigned int nid)
-{
-	struct qrtr_node *node;
+पूर्णांक qrtr_endpoपूर्णांक_रेजिस्टर(काष्ठा qrtr_endpoपूर्णांक *ep, अचिन्हित पूर्णांक nid)
+अणु
+	काष्ठा qrtr_node *node;
 
-	if (!ep || !ep->xmit)
-		return -EINVAL;
+	अगर (!ep || !ep->xmit)
+		वापस -EINVAL;
 
-	node = kzalloc(sizeof(*node), GFP_KERNEL);
-	if (!node)
-		return -ENOMEM;
+	node = kzalloc(माप(*node), GFP_KERNEL);
+	अगर (!node)
+		वापस -ENOMEM;
 
 	kref_init(&node->ref);
 	mutex_init(&node->ep_lock);
@@ -594,411 +595,411 @@ int qrtr_endpoint_register(struct qrtr_endpoint *ep, unsigned int nid)
 	mutex_unlock(&qrtr_node_lock);
 	ep->node = node;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(qrtr_endpoint_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(qrtr_endpoपूर्णांक_रेजिस्टर);
 
 /**
- * qrtr_endpoint_unregister - unregister endpoint
- * @ep: endpoint to unregister
+ * qrtr_endpoपूर्णांक_unरेजिस्टर - unरेजिस्टर endpoपूर्णांक
+ * @ep: endpoपूर्णांक to unरेजिस्टर
  */
-void qrtr_endpoint_unregister(struct qrtr_endpoint *ep)
-{
-	struct qrtr_node *node = ep->node;
-	struct sockaddr_qrtr src = {AF_QIPCRTR, node->nid, QRTR_PORT_CTRL};
-	struct sockaddr_qrtr dst = {AF_QIPCRTR, qrtr_local_nid, QRTR_PORT_CTRL};
-	struct radix_tree_iter iter;
-	struct qrtr_ctrl_pkt *pkt;
-	struct qrtr_tx_flow *flow;
-	struct sk_buff *skb;
-	unsigned long flags;
-	void __rcu **slot;
+व्योम qrtr_endpoपूर्णांक_unरेजिस्टर(काष्ठा qrtr_endpoपूर्णांक *ep)
+अणु
+	काष्ठा qrtr_node *node = ep->node;
+	काष्ठा sockaddr_qrtr src = अणुAF_QIPCRTR, node->nid, QRTR_PORT_CTRLपूर्ण;
+	काष्ठा sockaddr_qrtr dst = अणुAF_QIPCRTR, qrtr_local_nid, QRTR_PORT_CTRLपूर्ण;
+	काष्ठा radix_tree_iter iter;
+	काष्ठा qrtr_ctrl_pkt *pkt;
+	काष्ठा qrtr_tx_flow *flow;
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
+	व्योम __rcu **slot;
 
 	mutex_lock(&node->ep_lock);
-	node->ep = NULL;
+	node->ep = शून्य;
 	mutex_unlock(&node->ep_lock);
 
-	/* Notify the local controller about the event */
+	/* Notअगरy the local controller about the event */
 	spin_lock_irqsave(&qrtr_nodes_lock, flags);
-	radix_tree_for_each_slot(slot, &qrtr_nodes, &iter, 0) {
-		if (*slot != node)
-			continue;
+	radix_tree_क्रम_each_slot(slot, &qrtr_nodes, &iter, 0) अणु
+		अगर (*slot != node)
+			जारी;
 		src.sq_node = iter.index;
 		skb = qrtr_alloc_ctrl_packet(&pkt, GFP_ATOMIC);
-		if (skb) {
+		अगर (skb) अणु
 			pkt->cmd = cpu_to_le32(QRTR_TYPE_BYE);
-			qrtr_local_enqueue(NULL, skb, QRTR_TYPE_BYE, &src, &dst);
-		}
-	}
+			qrtr_local_enqueue(शून्य, skb, QRTR_TYPE_BYE, &src, &dst);
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&qrtr_nodes_lock, flags);
 
-	/* Wake up any transmitters waiting for resume-tx from the node */
+	/* Wake up any transmitters रुकोing क्रम resume-tx from the node */
 	mutex_lock(&node->qrtr_tx_lock);
-	radix_tree_for_each_slot(slot, &node->qrtr_tx_flow, &iter, 0) {
+	radix_tree_क्रम_each_slot(slot, &node->qrtr_tx_flow, &iter, 0) अणु
 		flow = *slot;
-		wake_up_interruptible_all(&flow->resume_tx);
-	}
+		wake_up_पूर्णांकerruptible_all(&flow->resume_tx);
+	पूर्ण
 	mutex_unlock(&node->qrtr_tx_lock);
 
 	qrtr_node_release(node);
-	ep->node = NULL;
-}
-EXPORT_SYMBOL_GPL(qrtr_endpoint_unregister);
+	ep->node = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(qrtr_endpoपूर्णांक_unरेजिस्टर);
 
 /* Lookup socket by port.
  *
  * Callers must release with qrtr_port_put()
  */
-static struct qrtr_sock *qrtr_port_lookup(int port)
-{
-	struct qrtr_sock *ipc;
+अटल काष्ठा qrtr_sock *qrtr_port_lookup(पूर्णांक port)
+अणु
+	काष्ठा qrtr_sock *ipc;
 
-	if (port == QRTR_PORT_CTRL)
+	अगर (port == QRTR_PORT_CTRL)
 		port = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ipc = xa_load(&qrtr_ports, port);
-	if (ipc)
+	अगर (ipc)
 		sock_hold(&ipc->sk);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ipc;
-}
+	वापस ipc;
+पूर्ण
 
 /* Release acquired socket. */
-static void qrtr_port_put(struct qrtr_sock *ipc)
-{
+अटल व्योम qrtr_port_put(काष्ठा qrtr_sock *ipc)
+अणु
 	sock_put(&ipc->sk);
-}
+पूर्ण
 
 /* Remove port assignment. */
-static void qrtr_port_remove(struct qrtr_sock *ipc)
-{
-	struct qrtr_ctrl_pkt *pkt;
-	struct sk_buff *skb;
-	int port = ipc->us.sq_port;
-	struct sockaddr_qrtr to;
+अटल व्योम qrtr_port_हटाओ(काष्ठा qrtr_sock *ipc)
+अणु
+	काष्ठा qrtr_ctrl_pkt *pkt;
+	काष्ठा sk_buff *skb;
+	पूर्णांक port = ipc->us.sq_port;
+	काष्ठा sockaddr_qrtr to;
 
 	to.sq_family = AF_QIPCRTR;
 	to.sq_node = QRTR_NODE_BCAST;
 	to.sq_port = QRTR_PORT_CTRL;
 
 	skb = qrtr_alloc_ctrl_packet(&pkt, GFP_KERNEL);
-	if (skb) {
+	अगर (skb) अणु
 		pkt->cmd = cpu_to_le32(QRTR_TYPE_DEL_CLIENT);
 		pkt->client.node = cpu_to_le32(ipc->us.sq_node);
 		pkt->client.port = cpu_to_le32(ipc->us.sq_port);
 
 		skb_set_owner_w(skb, &ipc->sk);
-		qrtr_bcast_enqueue(NULL, skb, QRTR_TYPE_DEL_CLIENT, &ipc->us,
+		qrtr_bcast_enqueue(शून्य, skb, QRTR_TYPE_DEL_CLIENT, &ipc->us,
 				   &to);
-	}
+	पूर्ण
 
-	if (port == QRTR_PORT_CTRL)
+	अगर (port == QRTR_PORT_CTRL)
 		port = 0;
 
 	__sock_put(&ipc->sk);
 
 	xa_erase(&qrtr_ports, port);
 
-	/* Ensure that if qrtr_port_lookup() did enter the RCU read section we
-	 * wait for it to up increment the refcount */
+	/* Ensure that अगर qrtr_port_lookup() did enter the RCU पढ़ो section we
+	 * रुको क्रम it to up increment the refcount */
 	synchronize_rcu();
-}
+पूर्ण
 
 /* Assign port number to socket.
  *
- * Specify port in the integer pointed to by port, and it will be adjusted
- * on return as necesssary.
+ * Specअगरy port in the पूर्णांकeger poपूर्णांकed to by port, and it will be adjusted
+ * on वापस as necesssary.
  *
  * Port may be:
  *   0: Assign ephemeral port in [QRTR_MIN_EPH_SOCKET, QRTR_MAX_EPH_SOCKET]
- *   <QRTR_MIN_EPH_SOCKET: Specified; requires CAP_NET_ADMIN
- *   >QRTR_MIN_EPH_SOCKET: Specified; available to all
+ *   <QRTR_MIN_EPH_SOCKET: Specअगरied; requires CAP_NET_ADMIN
+ *   >QRTR_MIN_EPH_SOCKET: Specअगरied; available to all
  */
-static int qrtr_port_assign(struct qrtr_sock *ipc, int *port)
-{
-	int rc;
+अटल पूर्णांक qrtr_port_assign(काष्ठा qrtr_sock *ipc, पूर्णांक *port)
+अणु
+	पूर्णांक rc;
 
-	if (!*port) {
+	अगर (!*port) अणु
 		rc = xa_alloc(&qrtr_ports, port, ipc, QRTR_EPH_PORT_RANGE,
 				GFP_KERNEL);
-	} else if (*port < QRTR_MIN_EPH_SOCKET && !capable(CAP_NET_ADMIN)) {
+	पूर्ण अन्यथा अगर (*port < QRTR_MIN_EPH_SOCKET && !capable(CAP_NET_ADMIN)) अणु
 		rc = -EACCES;
-	} else if (*port == QRTR_PORT_CTRL) {
+	पूर्ण अन्यथा अगर (*port == QRTR_PORT_CTRL) अणु
 		rc = xa_insert(&qrtr_ports, 0, ipc, GFP_KERNEL);
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = xa_insert(&qrtr_ports, *port, ipc, GFP_KERNEL);
-	}
+	पूर्ण
 
-	if (rc == -EBUSY)
-		return -EADDRINUSE;
-	else if (rc < 0)
-		return rc;
+	अगर (rc == -EBUSY)
+		वापस -EADDRINUSE;
+	अन्यथा अगर (rc < 0)
+		वापस rc;
 
 	sock_hold(&ipc->sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Reset all non-control ports */
-static void qrtr_reset_ports(void)
-{
-	struct qrtr_sock *ipc;
-	unsigned long index;
+अटल व्योम qrtr_reset_ports(व्योम)
+अणु
+	काष्ठा qrtr_sock *ipc;
+	अचिन्हित दीर्घ index;
 
-	rcu_read_lock();
-	xa_for_each_start(&qrtr_ports, index, ipc, 1) {
+	rcu_पढ़ो_lock();
+	xa_क्रम_each_start(&qrtr_ports, index, ipc, 1) अणु
 		sock_hold(&ipc->sk);
 		ipc->sk.sk_err = ENETRESET;
 		ipc->sk.sk_error_report(&ipc->sk);
 		sock_put(&ipc->sk);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /* Bind socket to address.
  *
  * Socket should be locked upon call.
  */
-static int __qrtr_bind(struct socket *sock,
-		       const struct sockaddr_qrtr *addr, int zapped)
-{
-	struct qrtr_sock *ipc = qrtr_sk(sock->sk);
-	struct sock *sk = sock->sk;
-	int port;
-	int rc;
+अटल पूर्णांक __qrtr_bind(काष्ठा socket *sock,
+		       स्थिर काष्ठा sockaddr_qrtr *addr, पूर्णांक zapped)
+अणु
+	काष्ठा qrtr_sock *ipc = qrtr_sk(sock->sk);
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक port;
+	पूर्णांक rc;
 
 	/* rebinding ok */
-	if (!zapped && addr->sq_port == ipc->us.sq_port)
-		return 0;
+	अगर (!zapped && addr->sq_port == ipc->us.sq_port)
+		वापस 0;
 
 	port = addr->sq_port;
 	rc = qrtr_port_assign(ipc, &port);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* unbind previous, if any */
-	if (!zapped)
-		qrtr_port_remove(ipc);
+	/* unbind previous, अगर any */
+	अगर (!zapped)
+		qrtr_port_हटाओ(ipc);
 	ipc->us.sq_port = port;
 
 	sock_reset_flag(sk, SOCK_ZAPPED);
 
-	/* Notify all open ports about the new controller */
-	if (port == QRTR_PORT_CTRL)
+	/* Notअगरy all खोलो ports about the new controller */
+	अगर (port == QRTR_PORT_CTRL)
 		qrtr_reset_ports();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Auto bind to an ephemeral port. */
-static int qrtr_autobind(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	struct sockaddr_qrtr addr;
+अटल पूर्णांक qrtr_स्वतःbind(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sockaddr_qrtr addr;
 
-	if (!sock_flag(sk, SOCK_ZAPPED))
-		return 0;
+	अगर (!sock_flag(sk, SOCK_ZAPPED))
+		वापस 0;
 
 	addr.sq_family = AF_QIPCRTR;
 	addr.sq_node = qrtr_local_nid;
 	addr.sq_port = 0;
 
-	return __qrtr_bind(sock, &addr, 1);
-}
+	वापस __qrtr_bind(sock, &addr, 1);
+पूर्ण
 
-/* Bind socket to specified sockaddr. */
-static int qrtr_bind(struct socket *sock, struct sockaddr *saddr, int len)
-{
-	DECLARE_SOCKADDR(struct sockaddr_qrtr *, addr, saddr);
-	struct qrtr_sock *ipc = qrtr_sk(sock->sk);
-	struct sock *sk = sock->sk;
-	int rc;
+/* Bind socket to specअगरied sockaddr. */
+अटल पूर्णांक qrtr_bind(काष्ठा socket *sock, काष्ठा sockaddr *saddr, पूर्णांक len)
+अणु
+	DECLARE_SOCKADDR(काष्ठा sockaddr_qrtr *, addr, saddr);
+	काष्ठा qrtr_sock *ipc = qrtr_sk(sock->sk);
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक rc;
 
-	if (len < sizeof(*addr) || addr->sq_family != AF_QIPCRTR)
-		return -EINVAL;
+	अगर (len < माप(*addr) || addr->sq_family != AF_QIPCRTR)
+		वापस -EINVAL;
 
-	if (addr->sq_node != ipc->us.sq_node)
-		return -EINVAL;
+	अगर (addr->sq_node != ipc->us.sq_node)
+		वापस -EINVAL;
 
 	lock_sock(sk);
 	rc = __qrtr_bind(sock, addr, sock_flag(sk, SOCK_ZAPPED));
 	release_sock(sk);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Queue packet to local peer socket. */
-static int qrtr_local_enqueue(struct qrtr_node *node, struct sk_buff *skb,
-			      int type, struct sockaddr_qrtr *from,
-			      struct sockaddr_qrtr *to)
-{
-	struct qrtr_sock *ipc;
-	struct qrtr_cb *cb;
+अटल पूर्णांक qrtr_local_enqueue(काष्ठा qrtr_node *node, काष्ठा sk_buff *skb,
+			      पूर्णांक type, काष्ठा sockaddr_qrtr *from,
+			      काष्ठा sockaddr_qrtr *to)
+अणु
+	काष्ठा qrtr_sock *ipc;
+	काष्ठा qrtr_cb *cb;
 
 	ipc = qrtr_port_lookup(to->sq_port);
-	if (!ipc || &ipc->sk == skb->sk) { /* do not send to self */
-		kfree_skb(skb);
-		return -ENODEV;
-	}
+	अगर (!ipc || &ipc->sk == skb->sk) अणु /* करो not send to self */
+		kमुक्त_skb(skb);
+		वापस -ENODEV;
+	पूर्ण
 
-	cb = (struct qrtr_cb *)skb->cb;
+	cb = (काष्ठा qrtr_cb *)skb->cb;
 	cb->src_node = from->sq_node;
 	cb->src_port = from->sq_port;
 
-	if (sock_queue_rcv_skb(&ipc->sk, skb)) {
+	अगर (sock_queue_rcv_skb(&ipc->sk, skb)) अणु
 		qrtr_port_put(ipc);
-		kfree_skb(skb);
-		return -ENOSPC;
-	}
+		kमुक्त_skb(skb);
+		वापस -ENOSPC;
+	पूर्ण
 
 	qrtr_port_put(ipc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Queue packet for broadcast. */
-static int qrtr_bcast_enqueue(struct qrtr_node *node, struct sk_buff *skb,
-			      int type, struct sockaddr_qrtr *from,
-			      struct sockaddr_qrtr *to)
-{
-	struct sk_buff *skbn;
+/* Queue packet क्रम broadcast. */
+अटल पूर्णांक qrtr_bcast_enqueue(काष्ठा qrtr_node *node, काष्ठा sk_buff *skb,
+			      पूर्णांक type, काष्ठा sockaddr_qrtr *from,
+			      काष्ठा sockaddr_qrtr *to)
+अणु
+	काष्ठा sk_buff *skbn;
 
 	mutex_lock(&qrtr_node_lock);
-	list_for_each_entry(node, &qrtr_all_nodes, item) {
+	list_क्रम_each_entry(node, &qrtr_all_nodes, item) अणु
 		skbn = skb_clone(skb, GFP_KERNEL);
-		if (!skbn)
-			break;
+		अगर (!skbn)
+			अवरोध;
 		skb_set_owner_w(skbn, skb->sk);
 		qrtr_node_enqueue(node, skbn, type, from, to);
-	}
+	पूर्ण
 	mutex_unlock(&qrtr_node_lock);
 
-	qrtr_local_enqueue(NULL, skb, type, from, to);
+	qrtr_local_enqueue(शून्य, skb, type, from, to);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qrtr_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
-{
-	DECLARE_SOCKADDR(struct sockaddr_qrtr *, addr, msg->msg_name);
-	int (*enqueue_fn)(struct qrtr_node *, struct sk_buff *, int,
-			  struct sockaddr_qrtr *, struct sockaddr_qrtr *);
+अटल पूर्णांक qrtr_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
+अणु
+	DECLARE_SOCKADDR(काष्ठा sockaddr_qrtr *, addr, msg->msg_name);
+	पूर्णांक (*enqueue_fn)(काष्ठा qrtr_node *, काष्ठा sk_buff *, पूर्णांक,
+			  काष्ठा sockaddr_qrtr *, काष्ठा sockaddr_qrtr *);
 	__le32 qrtr_type = cpu_to_le32(QRTR_TYPE_DATA);
-	struct qrtr_sock *ipc = qrtr_sk(sock->sk);
-	struct sock *sk = sock->sk;
-	struct qrtr_node *node;
-	struct sk_buff *skb;
-	size_t plen;
+	काष्ठा qrtr_sock *ipc = qrtr_sk(sock->sk);
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा qrtr_node *node;
+	काष्ठा sk_buff *skb;
+	माप_प्रकार plen;
 	u32 type;
-	int rc;
+	पूर्णांक rc;
 
-	if (msg->msg_flags & ~(MSG_DONTWAIT))
-		return -EINVAL;
+	अगर (msg->msg_flags & ~(MSG_DONTWAIT))
+		वापस -EINVAL;
 
-	if (len > 65535)
-		return -EMSGSIZE;
+	अगर (len > 65535)
+		वापस -EMSGSIZE;
 
 	lock_sock(sk);
 
-	if (addr) {
-		if (msg->msg_namelen < sizeof(*addr)) {
+	अगर (addr) अणु
+		अगर (msg->msg_namelen < माप(*addr)) अणु
 			release_sock(sk);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (addr->sq_family != AF_QIPCRTR) {
+		अगर (addr->sq_family != AF_QIPCRTR) अणु
 			release_sock(sk);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		rc = qrtr_autobind(sock);
-		if (rc) {
+		rc = qrtr_स्वतःbind(sock);
+		अगर (rc) अणु
 			release_sock(sk);
-			return rc;
-		}
-	} else if (sk->sk_state == TCP_ESTABLISHED) {
+			वापस rc;
+		पूर्ण
+	पूर्ण अन्यथा अगर (sk->sk_state == TCP_ESTABLISHED) अणु
 		addr = &ipc->peer;
-	} else {
+	पूर्ण अन्यथा अणु
 		release_sock(sk);
-		return -ENOTCONN;
-	}
+		वापस -ENOTCONN;
+	पूर्ण
 
-	node = NULL;
-	if (addr->sq_node == QRTR_NODE_BCAST) {
-		if (addr->sq_port != QRTR_PORT_CTRL &&
-		    qrtr_local_nid != QRTR_NODE_BCAST) {
+	node = शून्य;
+	अगर (addr->sq_node == QRTR_NODE_BCAST) अणु
+		अगर (addr->sq_port != QRTR_PORT_CTRL &&
+		    qrtr_local_nid != QRTR_NODE_BCAST) अणु
 			release_sock(sk);
-			return -ENOTCONN;
-		}
+			वापस -ENOTCONN;
+		पूर्ण
 		enqueue_fn = qrtr_bcast_enqueue;
-	} else if (addr->sq_node == ipc->us.sq_node) {
+	पूर्ण अन्यथा अगर (addr->sq_node == ipc->us.sq_node) अणु
 		enqueue_fn = qrtr_local_enqueue;
-	} else {
+	पूर्ण अन्यथा अणु
 		node = qrtr_node_lookup(addr->sq_node);
-		if (!node) {
+		अगर (!node) अणु
 			release_sock(sk);
-			return -ECONNRESET;
-		}
+			वापस -ECONNRESET;
+		पूर्ण
 		enqueue_fn = qrtr_node_enqueue;
-	}
+	पूर्ण
 
 	plen = (len + 3) & ~3;
 	skb = sock_alloc_send_skb(sk, plen + QRTR_HDR_MAX_SIZE,
 				  msg->msg_flags & MSG_DONTWAIT, &rc);
-	if (!skb) {
+	अगर (!skb) अणु
 		rc = -ENOMEM;
-		goto out_node;
-	}
+		जाओ out_node;
+	पूर्ण
 
 	skb_reserve(skb, QRTR_HDR_MAX_SIZE);
 
-	rc = memcpy_from_msg(skb_put(skb, len), msg, len);
-	if (rc) {
-		kfree_skb(skb);
-		goto out_node;
-	}
+	rc = स_नकल_from_msg(skb_put(skb, len), msg, len);
+	अगर (rc) अणु
+		kमुक्त_skb(skb);
+		जाओ out_node;
+	पूर्ण
 
-	if (ipc->us.sq_port == QRTR_PORT_CTRL) {
-		if (len < 4) {
+	अगर (ipc->us.sq_port == QRTR_PORT_CTRL) अणु
+		अगर (len < 4) अणु
 			rc = -EINVAL;
-			kfree_skb(skb);
-			goto out_node;
-		}
+			kमुक्त_skb(skb);
+			जाओ out_node;
+		पूर्ण
 
-		/* control messages already require the type as 'command' */
+		/* control messages alपढ़ोy require the type as 'command' */
 		skb_copy_bits(skb, 0, &qrtr_type, 4);
-	}
+	पूर्ण
 
 	type = le32_to_cpu(qrtr_type);
 	rc = enqueue_fn(node, skb, type, &ipc->us, addr);
-	if (rc >= 0)
+	अगर (rc >= 0)
 		rc = len;
 
 out_node:
 	qrtr_node_release(node);
 	release_sock(sk);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qrtr_send_resume_tx(struct qrtr_cb *cb)
-{
-	struct sockaddr_qrtr remote = { AF_QIPCRTR, cb->src_node, cb->src_port };
-	struct sockaddr_qrtr local = { AF_QIPCRTR, cb->dst_node, cb->dst_port };
-	struct qrtr_ctrl_pkt *pkt;
-	struct qrtr_node *node;
-	struct sk_buff *skb;
-	int ret;
+अटल पूर्णांक qrtr_send_resume_tx(काष्ठा qrtr_cb *cb)
+अणु
+	काष्ठा sockaddr_qrtr remote = अणु AF_QIPCRTR, cb->src_node, cb->src_port पूर्ण;
+	काष्ठा sockaddr_qrtr local = अणु AF_QIPCRTR, cb->dst_node, cb->dst_port पूर्ण;
+	काष्ठा qrtr_ctrl_pkt *pkt;
+	काष्ठा qrtr_node *node;
+	काष्ठा sk_buff *skb;
+	पूर्णांक ret;
 
 	node = qrtr_node_lookup(remote.sq_node);
-	if (!node)
-		return -EINVAL;
+	अगर (!node)
+		वापस -EINVAL;
 
 	skb = qrtr_alloc_ctrl_packet(&pkt, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	pkt->cmd = cpu_to_le32(QRTR_TYPE_RESUME_TX);
 	pkt->client.node = cpu_to_le32(cb->dst_node);
@@ -1008,87 +1009,87 @@ static int qrtr_send_resume_tx(struct qrtr_cb *cb)
 
 	qrtr_node_release(node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qrtr_recvmsg(struct socket *sock, struct msghdr *msg,
-			size_t size, int flags)
-{
-	DECLARE_SOCKADDR(struct sockaddr_qrtr *, addr, msg->msg_name);
-	struct sock *sk = sock->sk;
-	struct sk_buff *skb;
-	struct qrtr_cb *cb;
-	int copied, rc;
+अटल पूर्णांक qrtr_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			माप_प्रकार size, पूर्णांक flags)
+अणु
+	DECLARE_SOCKADDR(काष्ठा sockaddr_qrtr *, addr, msg->msg_name);
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sk_buff *skb;
+	काष्ठा qrtr_cb *cb;
+	पूर्णांक copied, rc;
 
 	lock_sock(sk);
 
-	if (sock_flag(sk, SOCK_ZAPPED)) {
+	अगर (sock_flag(sk, SOCK_ZAPPED)) अणु
 		release_sock(sk);
-		return -EADDRNOTAVAIL;
-	}
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 
 	skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
 				flags & MSG_DONTWAIT, &rc);
-	if (!skb) {
+	अगर (!skb) अणु
 		release_sock(sk);
-		return rc;
-	}
-	cb = (struct qrtr_cb *)skb->cb;
+		वापस rc;
+	पूर्ण
+	cb = (काष्ठा qrtr_cb *)skb->cb;
 
 	copied = skb->len;
-	if (copied > size) {
+	अगर (copied > size) अणु
 		copied = size;
 		msg->msg_flags |= MSG_TRUNC;
-	}
+	पूर्ण
 
 	rc = skb_copy_datagram_msg(skb, 0, msg, copied);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 	rc = copied;
 
-	if (addr) {
+	अगर (addr) अणु
 		/* There is an anonymous 2-byte hole after sq_family,
 		 * make sure to clear it.
 		 */
-		memset(addr, 0, sizeof(*addr));
+		स_रखो(addr, 0, माप(*addr));
 
 		addr->sq_family = AF_QIPCRTR;
 		addr->sq_node = cb->src_node;
 		addr->sq_port = cb->src_port;
-		msg->msg_namelen = sizeof(*addr);
-	}
+		msg->msg_namelen = माप(*addr);
+	पूर्ण
 
 out:
-	if (cb->confirm_rx)
+	अगर (cb->confirm_rx)
 		qrtr_send_resume_tx(cb);
 
-	skb_free_datagram(sk, skb);
+	skb_मुक्त_datagram(sk, skb);
 	release_sock(sk);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qrtr_connect(struct socket *sock, struct sockaddr *saddr,
-			int len, int flags)
-{
-	DECLARE_SOCKADDR(struct sockaddr_qrtr *, addr, saddr);
-	struct qrtr_sock *ipc = qrtr_sk(sock->sk);
-	struct sock *sk = sock->sk;
-	int rc;
+अटल पूर्णांक qrtr_connect(काष्ठा socket *sock, काष्ठा sockaddr *saddr,
+			पूर्णांक len, पूर्णांक flags)
+अणु
+	DECLARE_SOCKADDR(काष्ठा sockaddr_qrtr *, addr, saddr);
+	काष्ठा qrtr_sock *ipc = qrtr_sk(sock->sk);
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक rc;
 
-	if (len < sizeof(*addr) || addr->sq_family != AF_QIPCRTR)
-		return -EINVAL;
+	अगर (len < माप(*addr) || addr->sq_family != AF_QIPCRTR)
+		वापस -EINVAL;
 
 	lock_sock(sk);
 
 	sk->sk_state = TCP_CLOSE;
 	sock->state = SS_UNCONNECTED;
 
-	rc = qrtr_autobind(sock);
-	if (rc) {
+	rc = qrtr_स्वतःbind(sock);
+	अगर (rc) अणु
 		release_sock(sk);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	ipc->peer = *addr;
 	sock->state = SS_CONNECTED;
@@ -1096,127 +1097,127 @@ static int qrtr_connect(struct socket *sock, struct sockaddr *saddr,
 
 	release_sock(sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qrtr_getname(struct socket *sock, struct sockaddr *saddr,
-			int peer)
-{
-	struct qrtr_sock *ipc = qrtr_sk(sock->sk);
-	struct sockaddr_qrtr qaddr;
-	struct sock *sk = sock->sk;
+अटल पूर्णांक qrtr_getname(काष्ठा socket *sock, काष्ठा sockaddr *saddr,
+			पूर्णांक peer)
+अणु
+	काष्ठा qrtr_sock *ipc = qrtr_sk(sock->sk);
+	काष्ठा sockaddr_qrtr qaddr;
+	काष्ठा sock *sk = sock->sk;
 
 	lock_sock(sk);
-	if (peer) {
-		if (sk->sk_state != TCP_ESTABLISHED) {
+	अगर (peer) अणु
+		अगर (sk->sk_state != TCP_ESTABLISHED) अणु
 			release_sock(sk);
-			return -ENOTCONN;
-		}
+			वापस -ENOTCONN;
+		पूर्ण
 
 		qaddr = ipc->peer;
-	} else {
+	पूर्ण अन्यथा अणु
 		qaddr = ipc->us;
-	}
+	पूर्ण
 	release_sock(sk);
 
 	qaddr.sq_family = AF_QIPCRTR;
 
-	memcpy(saddr, &qaddr, sizeof(qaddr));
+	स_नकल(saddr, &qaddr, माप(qaddr));
 
-	return sizeof(qaddr);
-}
+	वापस माप(qaddr);
+पूर्ण
 
-static int qrtr_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	struct qrtr_sock *ipc = qrtr_sk(sock->sk);
-	struct sock *sk = sock->sk;
-	struct sockaddr_qrtr *sq;
-	struct sk_buff *skb;
-	struct ifreq ifr;
-	long len = 0;
-	int rc = 0;
+अटल पूर्णांक qrtr_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	काष्ठा qrtr_sock *ipc = qrtr_sk(sock->sk);
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sockaddr_qrtr *sq;
+	काष्ठा sk_buff *skb;
+	काष्ठा अगरreq अगरr;
+	दीर्घ len = 0;
+	पूर्णांक rc = 0;
 
 	lock_sock(sk);
 
-	switch (cmd) {
-	case TIOCOUTQ:
+	चयन (cmd) अणु
+	हाल TIOCOUTQ:
 		len = sk->sk_sndbuf - sk_wmem_alloc_get(sk);
-		if (len < 0)
+		अगर (len < 0)
 			len = 0;
-		rc = put_user(len, (int __user *)argp);
-		break;
-	case TIOCINQ:
+		rc = put_user(len, (पूर्णांक __user *)argp);
+		अवरोध;
+	हाल TIOCINQ:
 		skb = skb_peek(&sk->sk_receive_queue);
-		if (skb)
+		अगर (skb)
 			len = skb->len;
-		rc = put_user(len, (int __user *)argp);
-		break;
-	case SIOCGIFADDR:
-		if (copy_from_user(&ifr, argp, sizeof(ifr))) {
+		rc = put_user(len, (पूर्णांक __user *)argp);
+		अवरोध;
+	हाल SIOCGIFADDR:
+		अगर (copy_from_user(&अगरr, argp, माप(अगरr))) अणु
 			rc = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		sq = (struct sockaddr_qrtr *)&ifr.ifr_addr;
+		sq = (काष्ठा sockaddr_qrtr *)&अगरr.अगरr_addr;
 		*sq = ipc->us;
-		if (copy_to_user(argp, &ifr, sizeof(ifr))) {
+		अगर (copy_to_user(argp, &अगरr, माप(अगरr))) अणु
 			rc = -EFAULT;
-			break;
-		}
-		break;
-	case SIOCADDRT:
-	case SIOCDELRT:
-	case SIOCSIFADDR:
-	case SIOCGIFDSTADDR:
-	case SIOCSIFDSTADDR:
-	case SIOCGIFBRDADDR:
-	case SIOCSIFBRDADDR:
-	case SIOCGIFNETMASK:
-	case SIOCSIFNETMASK:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SIOCADDRT:
+	हाल SIOCDELRT:
+	हाल SIOCSIFADDR:
+	हाल SIOCGIFDSTADDR:
+	हाल SIOCSIFDSTADDR:
+	हाल SIOCGIFBRDADDR:
+	हाल SIOCSIFBRDADDR:
+	हाल SIOCGIFNETMASK:
+	हाल SIOCSIFNETMASK:
 		rc = -EINVAL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -ENOIOCTLCMD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qrtr_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	struct qrtr_sock *ipc;
+अटल पूर्णांक qrtr_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा qrtr_sock *ipc;
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
 	lock_sock(sk);
 
 	ipc = qrtr_sk(sk);
-	sk->sk_shutdown = SHUTDOWN_MASK;
-	if (!sock_flag(sk, SOCK_DEAD))
+	sk->sk_shutकरोwn = SHUTDOWN_MASK;
+	अगर (!sock_flag(sk, SOCK_DEAD))
 		sk->sk_state_change(sk);
 
 	sock_set_flag(sk, SOCK_DEAD);
 	sock_orphan(sk);
-	sock->sk = NULL;
+	sock->sk = शून्य;
 
-	if (!sock_flag(sk, SOCK_ZAPPED))
-		qrtr_port_remove(ipc);
+	अगर (!sock_flag(sk, SOCK_ZAPPED))
+		qrtr_port_हटाओ(ipc);
 
 	skb_queue_purge(&sk->sk_receive_queue);
 
 	release_sock(sk);
 	sock_put(sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct proto_ops qrtr_proto_ops = {
+अटल स्थिर काष्ठा proto_ops qrtr_proto_ops = अणु
 	.owner		= THIS_MODULE,
 	.family		= AF_QIPCRTR,
 	.bind		= qrtr_bind,
@@ -1230,30 +1231,30 @@ static const struct proto_ops qrtr_proto_ops = {
 	.ioctl		= qrtr_ioctl,
 	.gettstamp	= sock_gettstamp,
 	.poll		= datagram_poll,
-	.shutdown	= sock_no_shutdown,
+	.shutकरोwn	= sock_no_shutकरोwn,
 	.release	= qrtr_release,
 	.mmap		= sock_no_mmap,
 	.sendpage	= sock_no_sendpage,
-};
+पूर्ण;
 
-static struct proto qrtr_proto = {
+अटल काष्ठा proto qrtr_proto = अणु
 	.name		= "QIPCRTR",
 	.owner		= THIS_MODULE,
-	.obj_size	= sizeof(struct qrtr_sock),
-};
+	.obj_size	= माप(काष्ठा qrtr_sock),
+पूर्ण;
 
-static int qrtr_create(struct net *net, struct socket *sock,
-		       int protocol, int kern)
-{
-	struct qrtr_sock *ipc;
-	struct sock *sk;
+अटल पूर्णांक qrtr_create(काष्ठा net *net, काष्ठा socket *sock,
+		       पूर्णांक protocol, पूर्णांक kern)
+अणु
+	काष्ठा qrtr_sock *ipc;
+	काष्ठा sock *sk;
 
-	if (sock->type != SOCK_DGRAM)
-		return -EPROTOTYPE;
+	अगर (sock->type != SOCK_DGRAM)
+		वापस -EPROTOTYPE;
 
 	sk = sk_alloc(net, AF_QIPCRTR, GFP_KERNEL, &qrtr_proto, kern);
-	if (!sk)
-		return -ENOMEM;
+	अगर (!sk)
+		वापस -ENOMEM;
 
 	sock_set_flag(sk, SOCK_ZAPPED);
 
@@ -1265,48 +1266,48 @@ static int qrtr_create(struct net *net, struct socket *sock,
 	ipc->us.sq_node = qrtr_local_nid;
 	ipc->us.sq_port = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_proto_family qrtr_family = {
+अटल स्थिर काष्ठा net_proto_family qrtr_family = अणु
 	.owner	= THIS_MODULE,
 	.family	= AF_QIPCRTR,
 	.create	= qrtr_create,
-};
+पूर्ण;
 
-static int __init qrtr_proto_init(void)
-{
-	int rc;
+अटल पूर्णांक __init qrtr_proto_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = proto_register(&qrtr_proto, 1);
-	if (rc)
-		return rc;
+	rc = proto_रेजिस्टर(&qrtr_proto, 1);
+	अगर (rc)
+		वापस rc;
 
-	rc = sock_register(&qrtr_family);
-	if (rc)
-		goto err_proto;
+	rc = sock_रेजिस्टर(&qrtr_family);
+	अगर (rc)
+		जाओ err_proto;
 
 	rc = qrtr_ns_init();
-	if (rc)
-		goto err_sock;
+	अगर (rc)
+		जाओ err_sock;
 
-	return 0;
+	वापस 0;
 
 err_sock:
-	sock_unregister(qrtr_family.family);
+	sock_unरेजिस्टर(qrtr_family.family);
 err_proto:
-	proto_unregister(&qrtr_proto);
-	return rc;
-}
+	proto_unरेजिस्टर(&qrtr_proto);
+	वापस rc;
+पूर्ण
 postcore_initcall(qrtr_proto_init);
 
-static void __exit qrtr_proto_fini(void)
-{
-	qrtr_ns_remove();
-	sock_unregister(qrtr_family.family);
-	proto_unregister(&qrtr_proto);
-}
-module_exit(qrtr_proto_fini);
+अटल व्योम __निकास qrtr_proto_fini(व्योम)
+अणु
+	qrtr_ns_हटाओ();
+	sock_unरेजिस्टर(qrtr_family.family);
+	proto_unरेजिस्टर(&qrtr_proto);
+पूर्ण
+module_निकास(qrtr_proto_fini);
 
 MODULE_DESCRIPTION("Qualcomm IPC-router driver");
 MODULE_LICENSE("GPL v2");

@@ -1,110 +1,111 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2011, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
+ * Copyright (C) 2011, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
  *
- * Parts came from builtin-{top,stat,record}.c, see those files for further
+ * Parts came from builtin-अणुtop,stat,recordपूर्ण.c, see those files क्रम further
  * copyright notes.
  */
-#include <api/fs/fs.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <poll.h>
-#include "cpumap.h"
-#include "util/mmap.h"
-#include "thread_map.h"
-#include "target.h"
-#include "evlist.h"
-#include "evsel.h"
-#include "debug.h"
-#include "units.h"
-#include "bpf_counter.h"
-#include <internal/lib.h> // page_size
-#include "affinity.h"
-#include "../perf.h"
-#include "asm/bug.h"
-#include "bpf-event.h"
-#include "util/string2.h"
-#include "util/perf_api_probe.h"
-#include "util/evsel_fprintf.h"
-#include "util/evlist-hybrid.h"
-#include <signal.h>
-#include <unistd.h>
-#include <sched.h>
-#include <stdlib.h>
+#समावेश <api/fs/fs.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <poll.h>
+#समावेश "cpumap.h"
+#समावेश "util/mmap.h"
+#समावेश "thread_map.h"
+#समावेश "target.h"
+#समावेश "evlist.h"
+#समावेश "evsel.h"
+#समावेश "debug.h"
+#समावेश "units.h"
+#समावेश "bpf_counter.h"
+#समावेश <पूर्णांकernal/lib.h> // page_size
+#समावेश "affinity.h"
+#समावेश "../perf.h"
+#समावेश "asm/bug.h"
+#समावेश "bpf-event.h"
+#समावेश "util/string2.h"
+#समावेश "util/perf_api_probe.h"
+#समावेश "util/evsel_fprintf.h"
+#समावेश "util/evlist-hybrid.h"
+#समावेश <संकेत.स>
+#समावेश <unistd.h>
+#समावेश <sched.h>
+#समावेश <मानककोष.स>
 
-#include "parse-events.h"
-#include <subcmd/parse-options.h>
+#समावेश "parse-events.h"
+#समावेश <subcmd/parse-options.h>
 
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/prctl.h>
+#समावेश <fcntl.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/mman.h>
+#समावेश <sys/prctl.h>
 
-#include <linux/bitops.h>
-#include <linux/hash.h>
-#include <linux/log2.h>
-#include <linux/err.h>
-#include <linux/string.h>
-#include <linux/zalloc.h>
-#include <perf/evlist.h>
-#include <perf/evsel.h>
-#include <perf/cpumap.h>
-#include <perf/mmap.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/err.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
+#समावेश <perf/evlist.h>
+#समावेश <perf/evsel.h>
+#समावेश <perf/cpumap.h>
+#समावेश <perf/mmap.h>
 
-#include <internal/xyarray.h>
+#समावेश <पूर्णांकernal/xyarray.h>
 
-#ifdef LACKS_SIGQUEUE_PROTOTYPE
-int sigqueue(pid_t pid, int sig, const union sigval value);
-#endif
+#अगर_घोषित LACKS_SIGQUEUE_PROTOTYPE
+पूर्णांक sigqueue(pid_t pid, पूर्णांक sig, स्थिर जोड़ sigval value);
+#पूर्ण_अगर
 
-#define FD(e, x, y) (*(int *)xyarray__entry(e->core.fd, x, y))
-#define SID(e, x, y) xyarray__entry(e->core.sample_id, x, y)
+#घोषणा FD(e, x, y) (*(पूर्णांक *)xyarray__entry(e->core.fd, x, y))
+#घोषणा SID(e, x, y) xyarray__entry(e->core.sample_id, x, y)
 
-void evlist__init(struct evlist *evlist, struct perf_cpu_map *cpus,
-		  struct perf_thread_map *threads)
-{
+व्योम evlist__init(काष्ठा evlist *evlist, काष्ठा perf_cpu_map *cpus,
+		  काष्ठा perf_thपढ़ो_map *thपढ़ोs)
+अणु
 	perf_evlist__init(&evlist->core);
-	perf_evlist__set_maps(&evlist->core, cpus, threads);
+	perf_evlist__set_maps(&evlist->core, cpus, thपढ़ोs);
 	evlist->workload.pid = -1;
 	evlist->bkw_mmap_state = BKW_MMAP_NOTREADY;
 	evlist->ctl_fd.fd = -1;
 	evlist->ctl_fd.ack = -1;
 	evlist->ctl_fd.pos = -1;
-}
+पूर्ण
 
-struct evlist *evlist__new(void)
-{
-	struct evlist *evlist = zalloc(sizeof(*evlist));
+काष्ठा evlist *evlist__new(व्योम)
+अणु
+	काष्ठा evlist *evlist = zalloc(माप(*evlist));
 
-	if (evlist != NULL)
-		evlist__init(evlist, NULL, NULL);
+	अगर (evlist != शून्य)
+		evlist__init(evlist, शून्य, शून्य);
 
-	return evlist;
-}
+	वापस evlist;
+पूर्ण
 
-struct evlist *evlist__new_default(void)
-{
-	struct evlist *evlist = evlist__new();
+काष्ठा evlist *evlist__new_शेष(व्योम)
+अणु
+	काष्ठा evlist *evlist = evlist__new();
 
-	if (evlist && evlist__add_default(evlist)) {
+	अगर (evlist && evlist__add_शेष(evlist)) अणु
 		evlist__delete(evlist);
-		evlist = NULL;
-	}
+		evlist = शून्य;
+	पूर्ण
 
-	return evlist;
-}
+	वापस evlist;
+पूर्ण
 
-struct evlist *evlist__new_dummy(void)
-{
-	struct evlist *evlist = evlist__new();
+काष्ठा evlist *evlist__new_dummy(व्योम)
+अणु
+	काष्ठा evlist *evlist = evlist__new();
 
-	if (evlist && evlist__add_dummy(evlist)) {
+	अगर (evlist && evlist__add_dummy(evlist)) अणु
 		evlist__delete(evlist);
-		evlist = NULL;
-	}
+		evlist = शून्य;
+	पूर्ण
 
-	return evlist;
-}
+	वापस evlist;
+पूर्ण
 
 /**
  * evlist__set_id_pos - set the positions of event ids.
@@ -113,657 +114,657 @@ struct evlist *evlist__new_dummy(void)
  * Events with compatible sample types all have the same id_pos
  * and is_pos.  For convenience, put a copy on evlist.
  */
-void evlist__set_id_pos(struct evlist *evlist)
-{
-	struct evsel *first = evlist__first(evlist);
+व्योम evlist__set_id_pos(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *first = evlist__first(evlist);
 
 	evlist->id_pos = first->id_pos;
 	evlist->is_pos = first->is_pos;
-}
+पूर्ण
 
-static void evlist__update_id_pos(struct evlist *evlist)
-{
-	struct evsel *evsel;
+अटल व्योम evlist__update_id_pos(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel)
+	evlist__क्रम_each_entry(evlist, evsel)
 		evsel__calc_id_pos(evsel);
 
 	evlist__set_id_pos(evlist);
-}
+पूर्ण
 
-static void evlist__purge(struct evlist *evlist)
-{
-	struct evsel *pos, *n;
+अटल व्योम evlist__purge(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *pos, *n;
 
-	evlist__for_each_entry_safe(evlist, n, pos) {
+	evlist__क्रम_each_entry_safe(evlist, n, pos) अणु
 		list_del_init(&pos->core.node);
-		pos->evlist = NULL;
+		pos->evlist = शून्य;
 		evsel__delete(pos);
-	}
+	पूर्ण
 
 	evlist->core.nr_entries = 0;
-}
+पूर्ण
 
-void evlist__exit(struct evlist *evlist)
-{
-	zfree(&evlist->mmap);
-	zfree(&evlist->overwrite_mmap);
-	perf_evlist__exit(&evlist->core);
-}
+व्योम evlist__निकास(काष्ठा evlist *evlist)
+अणु
+	zमुक्त(&evlist->mmap);
+	zमुक्त(&evlist->overग_लिखो_mmap);
+	perf_evlist__निकास(&evlist->core);
+पूर्ण
 
-void evlist__delete(struct evlist *evlist)
-{
-	if (evlist == NULL)
-		return;
+व्योम evlist__delete(काष्ठा evlist *evlist)
+अणु
+	अगर (evlist == शून्य)
+		वापस;
 
 	evlist__munmap(evlist);
-	evlist__close(evlist);
+	evlist__बंद(evlist);
 	evlist__purge(evlist);
-	evlist__exit(evlist);
-	free(evlist);
-}
+	evlist__निकास(evlist);
+	मुक्त(evlist);
+पूर्ण
 
-void evlist__add(struct evlist *evlist, struct evsel *entry)
-{
+व्योम evlist__add(काष्ठा evlist *evlist, काष्ठा evsel *entry)
+अणु
 	entry->evlist = evlist;
 	entry->idx = evlist->core.nr_entries;
 	entry->tracking = !entry->idx;
 
 	perf_evlist__add(&evlist->core, &entry->core);
 
-	if (evlist->core.nr_entries == 1)
+	अगर (evlist->core.nr_entries == 1)
 		evlist__set_id_pos(evlist);
-}
+पूर्ण
 
-void evlist__remove(struct evlist *evlist, struct evsel *evsel)
-{
-	evsel->evlist = NULL;
-	perf_evlist__remove(&evlist->core, &evsel->core);
-}
+व्योम evlist__हटाओ(काष्ठा evlist *evlist, काष्ठा evsel *evsel)
+अणु
+	evsel->evlist = शून्य;
+	perf_evlist__हटाओ(&evlist->core, &evsel->core);
+पूर्ण
 
-void evlist__splice_list_tail(struct evlist *evlist, struct list_head *list)
-{
-	while (!list_empty(list)) {
-		struct evsel *evsel, *temp, *leader = NULL;
+व्योम evlist__splice_list_tail(काष्ठा evlist *evlist, काष्ठा list_head *list)
+अणु
+	जबतक (!list_empty(list)) अणु
+		काष्ठा evsel *evsel, *temp, *leader = शून्य;
 
-		__evlist__for_each_entry_safe(list, temp, evsel) {
+		__evlist__क्रम_each_entry_safe(list, temp, evsel) अणु
 			list_del_init(&evsel->core.node);
 			evlist__add(evlist, evsel);
 			leader = evsel;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		__evlist__for_each_entry_safe(list, temp, evsel) {
-			if (evsel->leader == leader) {
+		__evlist__क्रम_each_entry_safe(list, temp, evsel) अणु
+			अगर (evsel->leader == leader) अणु
 				list_del_init(&evsel->core.node);
 				evlist__add(evlist, evsel);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int __evlist__set_tracepoints_handlers(struct evlist *evlist,
-				       const struct evsel_str_handler *assocs, size_t nr_assocs)
-{
-	size_t i;
-	int err;
+पूर्णांक __evlist__set_tracepoपूर्णांकs_handlers(काष्ठा evlist *evlist,
+				       स्थिर काष्ठा evsel_str_handler *assocs, माप_प्रकार nr_assocs)
+अणु
+	माप_प्रकार i;
+	पूर्णांक err;
 
-	for (i = 0; i < nr_assocs; i++) {
-		// Adding a handler for an event not in this evlist, just ignore it.
-		struct evsel *evsel = evlist__find_tracepoint_by_name(evlist, assocs[i].name);
-		if (evsel == NULL)
-			continue;
+	क्रम (i = 0; i < nr_assocs; i++) अणु
+		// Adding a handler क्रम an event not in this evlist, just ignore it.
+		काष्ठा evsel *evsel = evlist__find_tracepoपूर्णांक_by_name(evlist, assocs[i].name);
+		अगर (evsel == शून्य)
+			जारी;
 
 		err = -EEXIST;
-		if (evsel->handler != NULL)
-			goto out;
+		अगर (evsel->handler != शून्य)
+			जाओ out;
 		evsel->handler = assocs[i].handler;
-	}
+	पूर्ण
 
 	err = 0;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void __evlist__set_leader(struct list_head *list)
-{
-	struct evsel *evsel, *leader;
+व्योम __evlist__set_leader(काष्ठा list_head *list)
+अणु
+	काष्ठा evsel *evsel, *leader;
 
-	leader = list_entry(list->next, struct evsel, core.node);
-	evsel = list_entry(list->prev, struct evsel, core.node);
+	leader = list_entry(list->next, काष्ठा evsel, core.node);
+	evsel = list_entry(list->prev, काष्ठा evsel, core.node);
 
 	leader->core.nr_members = evsel->idx - leader->idx + 1;
 
-	__evlist__for_each_entry(list, evsel) {
+	__evlist__क्रम_each_entry(list, evsel) अणु
 		evsel->leader = leader;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void evlist__set_leader(struct evlist *evlist)
-{
-	if (evlist->core.nr_entries) {
+व्योम evlist__set_leader(काष्ठा evlist *evlist)
+अणु
+	अगर (evlist->core.nr_entries) अणु
 		evlist->nr_groups = evlist->core.nr_entries > 1 ? 1 : 0;
 		__evlist__set_leader(&evlist->core.entries);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __evlist__add_default(struct evlist *evlist, bool precise)
-{
-	struct evsel *evsel;
+पूर्णांक __evlist__add_शेष(काष्ठा evlist *evlist, bool precise)
+अणु
+	काष्ठा evsel *evsel;
 
 	evsel = evsel__new_cycles(precise, PERF_TYPE_HARDWARE,
 				  PERF_COUNT_HW_CPU_CYCLES);
-	if (evsel == NULL)
-		return -ENOMEM;
+	अगर (evsel == शून्य)
+		वापस -ENOMEM;
 
 	evlist__add(evlist, evsel);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int evlist__add_dummy(struct evlist *evlist)
-{
-	struct perf_event_attr attr = {
+पूर्णांक evlist__add_dummy(काष्ठा evlist *evlist)
+अणु
+	काष्ठा perf_event_attr attr = अणु
 		.type	= PERF_TYPE_SOFTWARE,
 		.config = PERF_COUNT_SW_DUMMY,
-		.size	= sizeof(attr), /* to capture ABI version */
-	};
-	struct evsel *evsel = evsel__new_idx(&attr, evlist->core.nr_entries);
+		.size	= माप(attr), /* to capture ABI version */
+	पूर्ण;
+	काष्ठा evsel *evsel = evsel__new_idx(&attr, evlist->core.nr_entries);
 
-	if (evsel == NULL)
-		return -ENOMEM;
+	अगर (evsel == शून्य)
+		वापस -ENOMEM;
 
 	evlist__add(evlist, evsel);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evlist__add_attrs(struct evlist *evlist, struct perf_event_attr *attrs, size_t nr_attrs)
-{
-	struct evsel *evsel, *n;
+अटल पूर्णांक evlist__add_attrs(काष्ठा evlist *evlist, काष्ठा perf_event_attr *attrs, माप_प्रकार nr_attrs)
+अणु
+	काष्ठा evsel *evsel, *n;
 	LIST_HEAD(head);
-	size_t i;
+	माप_प्रकार i;
 
-	for (i = 0; i < nr_attrs; i++) {
+	क्रम (i = 0; i < nr_attrs; i++) अणु
 		evsel = evsel__new_idx(attrs + i, evlist->core.nr_entries + i);
-		if (evsel == NULL)
-			goto out_delete_partial_list;
+		अगर (evsel == शून्य)
+			जाओ out_delete_partial_list;
 		list_add_tail(&evsel->core.node, &head);
-	}
+	पूर्ण
 
 	evlist__splice_list_tail(evlist, &head);
 
-	return 0;
+	वापस 0;
 
 out_delete_partial_list:
-	__evlist__for_each_entry_safe(&head, n, evsel)
+	__evlist__क्रम_each_entry_safe(&head, n, evsel)
 		evsel__delete(evsel);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int __evlist__add_default_attrs(struct evlist *evlist, struct perf_event_attr *attrs, size_t nr_attrs)
-{
-	size_t i;
+पूर्णांक __evlist__add_शेष_attrs(काष्ठा evlist *evlist, काष्ठा perf_event_attr *attrs, माप_प्रकार nr_attrs)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < nr_attrs; i++)
+	क्रम (i = 0; i < nr_attrs; i++)
 		event_attr_init(attrs + i);
 
-	return evlist__add_attrs(evlist, attrs, nr_attrs);
-}
+	वापस evlist__add_attrs(evlist, attrs, nr_attrs);
+पूर्ण
 
-__weak int arch_evlist__add_default_attrs(struct evlist *evlist __maybe_unused)
-{
-	return 0;
-}
+__weak पूर्णांक arch_evlist__add_शेष_attrs(काष्ठा evlist *evlist __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-struct evsel *evlist__find_tracepoint_by_id(struct evlist *evlist, int id)
-{
-	struct evsel *evsel;
+काष्ठा evsel *evlist__find_tracepoपूर्णांक_by_id(काष्ठा evlist *evlist, पूर्णांक id)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->core.attr.type   == PERF_TYPE_TRACEPOINT &&
-		    (int)evsel->core.attr.config == id)
-			return evsel;
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->core.attr.type   == PERF_TYPE_TRACEPOINT &&
+		    (पूर्णांक)evsel->core.attr.config == id)
+			वापस evsel;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct evsel *evlist__find_tracepoint_by_name(struct evlist *evlist, const char *name)
-{
-	struct evsel *evsel;
+काष्ठा evsel *evlist__find_tracepoपूर्णांक_by_name(काष्ठा evlist *evlist, स्थिर अक्षर *name)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if ((evsel->core.attr.type == PERF_TYPE_TRACEPOINT) &&
-		    (strcmp(evsel->name, name) == 0))
-			return evsel;
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर ((evsel->core.attr.type == PERF_TYPE_TRACEPOINT) &&
+		    (म_भेद(evsel->name, name) == 0))
+			वापस evsel;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int evlist__add_newtp(struct evlist *evlist, const char *sys, const char *name, void *handler)
-{
-	struct evsel *evsel = evsel__newtp(sys, name);
+पूर्णांक evlist__add_newtp(काष्ठा evlist *evlist, स्थिर अक्षर *sys, स्थिर अक्षर *name, व्योम *handler)
+अणु
+	काष्ठा evsel *evsel = evsel__newtp(sys, name);
 
-	if (IS_ERR(evsel))
-		return -1;
+	अगर (IS_ERR(evsel))
+		वापस -1;
 
 	evsel->handler = handler;
 	evlist__add(evlist, evsel);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evlist__nr_threads(struct evlist *evlist, struct evsel *evsel)
-{
-	if (evsel->core.system_wide)
-		return 1;
-	else
-		return perf_thread_map__nr(evlist->core.threads);
-}
+अटल पूर्णांक evlist__nr_thपढ़ोs(काष्ठा evlist *evlist, काष्ठा evsel *evsel)
+अणु
+	अगर (evsel->core.प्रणाली_wide)
+		वापस 1;
+	अन्यथा
+		वापस perf_thपढ़ो_map__nr(evlist->core.thपढ़ोs);
+पूर्ण
 
-void evlist__cpu_iter_start(struct evlist *evlist)
-{
-	struct evsel *pos;
+व्योम evlist__cpu_iter_start(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *pos;
 
 	/*
 	 * Reset the per evsel cpu_iter. This is needed because
-	 * each evsel's cpumap may have a different index space,
-	 * and some operations need the index to modify
-	 * the FD xyarray (e.g. open, close)
+	 * each evsel's cpumap may have a dअगरferent index space,
+	 * and some operations need the index to modअगरy
+	 * the FD xyarray (e.g. खोलो, बंद)
 	 */
-	evlist__for_each_entry(evlist, pos)
+	evlist__क्रम_each_entry(evlist, pos)
 		pos->cpu_iter = 0;
-}
+पूर्ण
 
-bool evsel__cpu_iter_skip_no_inc(struct evsel *ev, int cpu)
-{
-	if (ev->cpu_iter >= ev->core.cpus->nr)
-		return true;
-	if (cpu >= 0 && ev->core.cpus->map[ev->cpu_iter] != cpu)
-		return true;
-	return false;
-}
+bool evsel__cpu_iter_skip_no_inc(काष्ठा evsel *ev, पूर्णांक cpu)
+अणु
+	अगर (ev->cpu_iter >= ev->core.cpus->nr)
+		वापस true;
+	अगर (cpu >= 0 && ev->core.cpus->map[ev->cpu_iter] != cpu)
+		वापस true;
+	वापस false;
+पूर्ण
 
-bool evsel__cpu_iter_skip(struct evsel *ev, int cpu)
-{
-	if (!evsel__cpu_iter_skip_no_inc(ev, cpu)) {
+bool evsel__cpu_iter_skip(काष्ठा evsel *ev, पूर्णांक cpu)
+अणु
+	अगर (!evsel__cpu_iter_skip_no_inc(ev, cpu)) अणु
 		ev->cpu_iter++;
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static int evsel__strcmp(struct evsel *pos, char *evsel_name)
-{
-	if (!evsel_name)
-		return 0;
-	if (evsel__is_dummy_event(pos))
-		return 1;
-	return strcmp(pos->name, evsel_name);
-}
+अटल पूर्णांक evsel__म_भेद(काष्ठा evsel *pos, अक्षर *evsel_name)
+अणु
+	अगर (!evsel_name)
+		वापस 0;
+	अगर (evsel__is_dummy_event(pos))
+		वापस 1;
+	वापस म_भेद(pos->name, evsel_name);
+पूर्ण
 
-static int evlist__is_enabled(struct evlist *evlist)
-{
-	struct evsel *pos;
+अटल पूर्णांक evlist__is_enabled(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *pos;
 
-	evlist__for_each_entry(evlist, pos) {
-		if (!evsel__is_group_leader(pos) || !pos->core.fd)
-			continue;
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		अगर (!evsel__is_group_leader(pos) || !pos->core.fd)
+			जारी;
 		/* If at least one event is enabled, evlist is enabled. */
-		if (!pos->disabled)
-			return true;
-	}
-	return false;
-}
+		अगर (!pos->disabled)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void __evlist__disable(struct evlist *evlist, char *evsel_name)
-{
-	struct evsel *pos;
-	struct affinity affinity;
-	int cpu, i, imm = 0;
+अटल व्योम __evlist__disable(काष्ठा evlist *evlist, अक्षर *evsel_name)
+अणु
+	काष्ठा evsel *pos;
+	काष्ठा affinity affinity;
+	पूर्णांक cpu, i, imm = 0;
 	bool has_imm = false;
 
-	if (affinity__setup(&affinity) < 0)
-		return;
+	अगर (affinity__setup(&affinity) < 0)
+		वापस;
 
 	/* Disable 'immediate' events last */
-	for (imm = 0; imm <= 1; imm++) {
-		evlist__for_each_cpu(evlist, i, cpu) {
+	क्रम (imm = 0; imm <= 1; imm++) अणु
+		evlist__क्रम_each_cpu(evlist, i, cpu) अणु
 			affinity__set(&affinity, cpu);
 
-			evlist__for_each_entry(evlist, pos) {
-				if (evsel__strcmp(pos, evsel_name))
-					continue;
-				if (evsel__cpu_iter_skip(pos, cpu))
-					continue;
-				if (pos->disabled || !evsel__is_group_leader(pos) || !pos->core.fd)
-					continue;
-				if (pos->immediate)
+			evlist__क्रम_each_entry(evlist, pos) अणु
+				अगर (evsel__म_भेद(pos, evsel_name))
+					जारी;
+				अगर (evsel__cpu_iter_skip(pos, cpu))
+					जारी;
+				अगर (pos->disabled || !evsel__is_group_leader(pos) || !pos->core.fd)
+					जारी;
+				अगर (pos->immediate)
 					has_imm = true;
-				if (pos->immediate != imm)
-					continue;
+				अगर (pos->immediate != imm)
+					जारी;
 				evsel__disable_cpu(pos, pos->cpu_iter - 1);
-			}
-		}
-		if (!has_imm)
-			break;
-	}
+			पूर्ण
+		पूर्ण
+		अगर (!has_imm)
+			अवरोध;
+	पूर्ण
 
 	affinity__cleanup(&affinity);
-	evlist__for_each_entry(evlist, pos) {
-		if (evsel__strcmp(pos, evsel_name))
-			continue;
-		if (!evsel__is_group_leader(pos) || !pos->core.fd)
-			continue;
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		अगर (evsel__म_भेद(pos, evsel_name))
+			जारी;
+		अगर (!evsel__is_group_leader(pos) || !pos->core.fd)
+			जारी;
 		pos->disabled = true;
-	}
+	पूर्ण
 
 	/*
 	 * If we disabled only single event, we need to check
 	 * the enabled state of the evlist manually.
 	 */
-	if (evsel_name)
+	अगर (evsel_name)
 		evlist->enabled = evlist__is_enabled(evlist);
-	else
+	अन्यथा
 		evlist->enabled = false;
-}
+पूर्ण
 
-void evlist__disable(struct evlist *evlist)
-{
-	__evlist__disable(evlist, NULL);
-}
+व्योम evlist__disable(काष्ठा evlist *evlist)
+अणु
+	__evlist__disable(evlist, शून्य);
+पूर्ण
 
-void evlist__disable_evsel(struct evlist *evlist, char *evsel_name)
-{
+व्योम evlist__disable_evsel(काष्ठा evlist *evlist, अक्षर *evsel_name)
+अणु
 	__evlist__disable(evlist, evsel_name);
-}
+पूर्ण
 
-static void __evlist__enable(struct evlist *evlist, char *evsel_name)
-{
-	struct evsel *pos;
-	struct affinity affinity;
-	int cpu, i;
+अटल व्योम __evlist__enable(काष्ठा evlist *evlist, अक्षर *evsel_name)
+अणु
+	काष्ठा evsel *pos;
+	काष्ठा affinity affinity;
+	पूर्णांक cpu, i;
 
-	if (affinity__setup(&affinity) < 0)
-		return;
+	अगर (affinity__setup(&affinity) < 0)
+		वापस;
 
-	evlist__for_each_cpu(evlist, i, cpu) {
+	evlist__क्रम_each_cpu(evlist, i, cpu) अणु
 		affinity__set(&affinity, cpu);
 
-		evlist__for_each_entry(evlist, pos) {
-			if (evsel__strcmp(pos, evsel_name))
-				continue;
-			if (evsel__cpu_iter_skip(pos, cpu))
-				continue;
-			if (!evsel__is_group_leader(pos) || !pos->core.fd)
-				continue;
+		evlist__क्रम_each_entry(evlist, pos) अणु
+			अगर (evsel__म_भेद(pos, evsel_name))
+				जारी;
+			अगर (evsel__cpu_iter_skip(pos, cpu))
+				जारी;
+			अगर (!evsel__is_group_leader(pos) || !pos->core.fd)
+				जारी;
 			evsel__enable_cpu(pos, pos->cpu_iter - 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	affinity__cleanup(&affinity);
-	evlist__for_each_entry(evlist, pos) {
-		if (evsel__strcmp(pos, evsel_name))
-			continue;
-		if (!evsel__is_group_leader(pos) || !pos->core.fd)
-			continue;
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		अगर (evsel__म_भेद(pos, evsel_name))
+			जारी;
+		अगर (!evsel__is_group_leader(pos) || !pos->core.fd)
+			जारी;
 		pos->disabled = false;
-	}
+	पूर्ण
 
 	/*
-	 * Even single event sets the 'enabled' for evlist,
+	 * Even single event sets the 'enabled' क्रम evlist,
 	 * so the toggle can work properly and toggle to
 	 * 'disabled' state.
 	 */
 	evlist->enabled = true;
-}
+पूर्ण
 
-void evlist__enable(struct evlist *evlist)
-{
-	__evlist__enable(evlist, NULL);
-}
+व्योम evlist__enable(काष्ठा evlist *evlist)
+अणु
+	__evlist__enable(evlist, शून्य);
+पूर्ण
 
-void evlist__enable_evsel(struct evlist *evlist, char *evsel_name)
-{
+व्योम evlist__enable_evsel(काष्ठा evlist *evlist, अक्षर *evsel_name)
+अणु
 	__evlist__enable(evlist, evsel_name);
-}
+पूर्ण
 
-void evlist__toggle_enable(struct evlist *evlist)
-{
+व्योम evlist__toggle_enable(काष्ठा evlist *evlist)
+अणु
 	(evlist->enabled ? evlist__disable : evlist__enable)(evlist);
-}
+पूर्ण
 
-static int evlist__enable_event_cpu(struct evlist *evlist, struct evsel *evsel, int cpu)
-{
-	int thread;
-	int nr_threads = evlist__nr_threads(evlist, evsel);
+अटल पूर्णांक evlist__enable_event_cpu(काष्ठा evlist *evlist, काष्ठा evsel *evsel, पूर्णांक cpu)
+अणु
+	पूर्णांक thपढ़ो;
+	पूर्णांक nr_thपढ़ोs = evlist__nr_thपढ़ोs(evlist, evsel);
 
-	if (!evsel->core.fd)
-		return -EINVAL;
+	अगर (!evsel->core.fd)
+		वापस -EINVAL;
 
-	for (thread = 0; thread < nr_threads; thread++) {
-		int err = ioctl(FD(evsel, cpu, thread), PERF_EVENT_IOC_ENABLE, 0);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+	क्रम (thपढ़ो = 0; thपढ़ो < nr_thपढ़ोs; thपढ़ो++) अणु
+		पूर्णांक err = ioctl(FD(evsel, cpu, thपढ़ो), PERF_EVENT_IOC_ENABLE, 0);
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int evlist__enable_event_thread(struct evlist *evlist, struct evsel *evsel, int thread)
-{
-	int cpu;
-	int nr_cpus = perf_cpu_map__nr(evlist->core.cpus);
+अटल पूर्णांक evlist__enable_event_thपढ़ो(काष्ठा evlist *evlist, काष्ठा evsel *evsel, पूर्णांक thपढ़ो)
+अणु
+	पूर्णांक cpu;
+	पूर्णांक nr_cpus = perf_cpu_map__nr(evlist->core.cpus);
 
-	if (!evsel->core.fd)
-		return -EINVAL;
+	अगर (!evsel->core.fd)
+		वापस -EINVAL;
 
-	for (cpu = 0; cpu < nr_cpus; cpu++) {
-		int err = ioctl(FD(evsel, cpu, thread), PERF_EVENT_IOC_ENABLE, 0);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+	क्रम (cpu = 0; cpu < nr_cpus; cpu++) अणु
+		पूर्णांक err = ioctl(FD(evsel, cpu, thपढ़ो), PERF_EVENT_IOC_ENABLE, 0);
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int evlist__enable_event_idx(struct evlist *evlist, struct evsel *evsel, int idx)
-{
+पूर्णांक evlist__enable_event_idx(काष्ठा evlist *evlist, काष्ठा evsel *evsel, पूर्णांक idx)
+अणु
 	bool per_cpu_mmaps = !perf_cpu_map__empty(evlist->core.cpus);
 
-	if (per_cpu_mmaps)
-		return evlist__enable_event_cpu(evlist, evsel, idx);
+	अगर (per_cpu_mmaps)
+		वापस evlist__enable_event_cpu(evlist, evsel, idx);
 
-	return evlist__enable_event_thread(evlist, evsel, idx);
-}
+	वापस evlist__enable_event_thपढ़ो(evlist, evsel, idx);
+पूर्ण
 
-int evlist__add_pollfd(struct evlist *evlist, int fd)
-{
-	return perf_evlist__add_pollfd(&evlist->core, fd, NULL, POLLIN, fdarray_flag__default);
-}
+पूर्णांक evlist__add_pollfd(काष्ठा evlist *evlist, पूर्णांक fd)
+अणु
+	वापस perf_evlist__add_pollfd(&evlist->core, fd, शून्य, POLLIN, fdarray_flag__शेष);
+पूर्ण
 
-int evlist__filter_pollfd(struct evlist *evlist, short revents_and_mask)
-{
-	return perf_evlist__filter_pollfd(&evlist->core, revents_and_mask);
-}
+पूर्णांक evlist__filter_pollfd(काष्ठा evlist *evlist, लघु revents_and_mask)
+अणु
+	वापस perf_evlist__filter_pollfd(&evlist->core, revents_and_mask);
+पूर्ण
 
-#ifdef HAVE_EVENTFD_SUPPORT
-int evlist__add_wakeup_eventfd(struct evlist *evlist, int fd)
-{
-	return perf_evlist__add_pollfd(&evlist->core, fd, NULL, POLLIN,
+#अगर_घोषित HAVE_EVENTFD_SUPPORT
+पूर्णांक evlist__add_wakeup_eventfd(काष्ठा evlist *evlist, पूर्णांक fd)
+अणु
+	वापस perf_evlist__add_pollfd(&evlist->core, fd, शून्य, POLLIN,
 				       fdarray_flag__nonfilterable);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-int evlist__poll(struct evlist *evlist, int timeout)
-{
-	return perf_evlist__poll(&evlist->core, timeout);
-}
+पूर्णांक evlist__poll(काष्ठा evlist *evlist, पूर्णांक समयout)
+अणु
+	वापस perf_evlist__poll(&evlist->core, समयout);
+पूर्ण
 
-struct perf_sample_id *evlist__id2sid(struct evlist *evlist, u64 id)
-{
-	struct hlist_head *head;
-	struct perf_sample_id *sid;
-	int hash;
+काष्ठा perf_sample_id *evlist__id2sid(काष्ठा evlist *evlist, u64 id)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा perf_sample_id *sid;
+	पूर्णांक hash;
 
 	hash = hash_64(id, PERF_EVLIST__HLIST_BITS);
 	head = &evlist->core.heads[hash];
 
-	hlist_for_each_entry(sid, head, node)
-		if (sid->id == id)
-			return sid;
+	hlist_क्रम_each_entry(sid, head, node)
+		अगर (sid->id == id)
+			वापस sid;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct evsel *evlist__id2evsel(struct evlist *evlist, u64 id)
-{
-	struct perf_sample_id *sid;
+काष्ठा evsel *evlist__id2evsel(काष्ठा evlist *evlist, u64 id)
+अणु
+	काष्ठा perf_sample_id *sid;
 
-	if (evlist->core.nr_entries == 1 || !id)
-		return evlist__first(evlist);
-
-	sid = evlist__id2sid(evlist, id);
-	if (sid)
-		return container_of(sid->evsel, struct evsel, core);
-
-	if (!evlist__sample_id_all(evlist))
-		return evlist__first(evlist);
-
-	return NULL;
-}
-
-struct evsel *evlist__id2evsel_strict(struct evlist *evlist, u64 id)
-{
-	struct perf_sample_id *sid;
-
-	if (!id)
-		return NULL;
+	अगर (evlist->core.nr_entries == 1 || !id)
+		वापस evlist__first(evlist);
 
 	sid = evlist__id2sid(evlist, id);
-	if (sid)
-		return container_of(sid->evsel, struct evsel, core);
+	अगर (sid)
+		वापस container_of(sid->evsel, काष्ठा evsel, core);
 
-	return NULL;
-}
+	अगर (!evlist__sample_id_all(evlist))
+		वापस evlist__first(evlist);
 
-static int evlist__event2id(struct evlist *evlist, union perf_event *event, u64 *id)
-{
-	const __u64 *array = event->sample.array;
-	ssize_t n;
+	वापस शून्य;
+पूर्ण
 
-	n = (event->header.size - sizeof(event->header)) >> 3;
+काष्ठा evsel *evlist__id2evsel_strict(काष्ठा evlist *evlist, u64 id)
+अणु
+	काष्ठा perf_sample_id *sid;
 
-	if (event->header.type == PERF_RECORD_SAMPLE) {
-		if (evlist->id_pos >= n)
-			return -1;
+	अगर (!id)
+		वापस शून्य;
+
+	sid = evlist__id2sid(evlist, id);
+	अगर (sid)
+		वापस container_of(sid->evsel, काष्ठा evsel, core);
+
+	वापस शून्य;
+पूर्ण
+
+अटल पूर्णांक evlist__event2id(काष्ठा evlist *evlist, जोड़ perf_event *event, u64 *id)
+अणु
+	स्थिर __u64 *array = event->sample.array;
+	sमाप_प्रकार n;
+
+	n = (event->header.size - माप(event->header)) >> 3;
+
+	अगर (event->header.type == PERF_RECORD_SAMPLE) अणु
+		अगर (evlist->id_pos >= n)
+			वापस -1;
 		*id = array[evlist->id_pos];
-	} else {
-		if (evlist->is_pos > n)
-			return -1;
+	पूर्ण अन्यथा अणु
+		अगर (evlist->is_pos > n)
+			वापस -1;
 		n -= evlist->is_pos;
 		*id = array[n];
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct evsel *evlist__event2evsel(struct evlist *evlist, union perf_event *event)
-{
-	struct evsel *first = evlist__first(evlist);
-	struct hlist_head *head;
-	struct perf_sample_id *sid;
-	int hash;
+काष्ठा evsel *evlist__event2evsel(काष्ठा evlist *evlist, जोड़ perf_event *event)
+अणु
+	काष्ठा evsel *first = evlist__first(evlist);
+	काष्ठा hlist_head *head;
+	काष्ठा perf_sample_id *sid;
+	पूर्णांक hash;
 	u64 id;
 
-	if (evlist->core.nr_entries == 1)
-		return first;
+	अगर (evlist->core.nr_entries == 1)
+		वापस first;
 
-	if (!first->core.attr.sample_id_all &&
+	अगर (!first->core.attr.sample_id_all &&
 	    event->header.type != PERF_RECORD_SAMPLE)
-		return first;
+		वापस first;
 
-	if (evlist__event2id(evlist, event, &id))
-		return NULL;
+	अगर (evlist__event2id(evlist, event, &id))
+		वापस शून्य;
 
 	/* Synthesized events have an id of zero */
-	if (!id)
-		return first;
+	अगर (!id)
+		वापस first;
 
 	hash = hash_64(id, PERF_EVLIST__HLIST_BITS);
 	head = &evlist->core.heads[hash];
 
-	hlist_for_each_entry(sid, head, node) {
-		if (sid->id == id)
-			return container_of(sid->evsel, struct evsel, core);
-	}
-	return NULL;
-}
+	hlist_क्रम_each_entry(sid, head, node) अणु
+		अगर (sid->id == id)
+			वापस container_of(sid->evsel, काष्ठा evsel, core);
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int evlist__set_paused(struct evlist *evlist, bool value)
-{
-	int i;
+अटल पूर्णांक evlist__set_छोड़ोd(काष्ठा evlist *evlist, bool value)
+अणु
+	पूर्णांक i;
 
-	if (!evlist->overwrite_mmap)
-		return 0;
+	अगर (!evlist->overग_लिखो_mmap)
+		वापस 0;
 
-	for (i = 0; i < evlist->core.nr_mmaps; i++) {
-		int fd = evlist->overwrite_mmap[i].core.fd;
-		int err;
+	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
+		पूर्णांक fd = evlist->overग_लिखो_mmap[i].core.fd;
+		पूर्णांक err;
 
-		if (fd < 0)
-			continue;
+		अगर (fd < 0)
+			जारी;
 		err = ioctl(fd, PERF_EVENT_IOC_PAUSE_OUTPUT, value ? 1 : 0);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int evlist__pause(struct evlist *evlist)
-{
-	return evlist__set_paused(evlist, true);
-}
+अटल पूर्णांक evlist__छोड़ो(काष्ठा evlist *evlist)
+अणु
+	वापस evlist__set_छोड़ोd(evlist, true);
+पूर्ण
 
-static int evlist__resume(struct evlist *evlist)
-{
-	return evlist__set_paused(evlist, false);
-}
+अटल पूर्णांक evlist__resume(काष्ठा evlist *evlist)
+अणु
+	वापस evlist__set_छोड़ोd(evlist, false);
+पूर्ण
 
-static void evlist__munmap_nofree(struct evlist *evlist)
-{
-	int i;
+अटल व्योम evlist__munmap_noमुक्त(काष्ठा evlist *evlist)
+अणु
+	पूर्णांक i;
 
-	if (evlist->mmap)
-		for (i = 0; i < evlist->core.nr_mmaps; i++)
+	अगर (evlist->mmap)
+		क्रम (i = 0; i < evlist->core.nr_mmaps; i++)
 			perf_mmap__munmap(&evlist->mmap[i].core);
 
-	if (evlist->overwrite_mmap)
-		for (i = 0; i < evlist->core.nr_mmaps; i++)
-			perf_mmap__munmap(&evlist->overwrite_mmap[i].core);
-}
+	अगर (evlist->overग_लिखो_mmap)
+		क्रम (i = 0; i < evlist->core.nr_mmaps; i++)
+			perf_mmap__munmap(&evlist->overग_लिखो_mmap[i].core);
+पूर्ण
 
-void evlist__munmap(struct evlist *evlist)
-{
-	evlist__munmap_nofree(evlist);
-	zfree(&evlist->mmap);
-	zfree(&evlist->overwrite_mmap);
-}
+व्योम evlist__munmap(काष्ठा evlist *evlist)
+अणु
+	evlist__munmap_noमुक्त(evlist);
+	zमुक्त(&evlist->mmap);
+	zमुक्त(&evlist->overग_लिखो_mmap);
+पूर्ण
 
-static void perf_mmap__unmap_cb(struct perf_mmap *map)
-{
-	struct mmap *m = container_of(map, struct mmap, core);
+अटल व्योम perf_mmap__unmap_cb(काष्ठा perf_mmap *map)
+अणु
+	काष्ठा mmap *m = container_of(map, काष्ठा mmap, core);
 
 	mmap__munmap(m);
-}
+पूर्ण
 
-static struct mmap *evlist__alloc_mmap(struct evlist *evlist,
-				       bool overwrite)
-{
-	int i;
-	struct mmap *map;
+अटल काष्ठा mmap *evlist__alloc_mmap(काष्ठा evlist *evlist,
+				       bool overग_लिखो)
+अणु
+	पूर्णांक i;
+	काष्ठा mmap *map;
 
-	map = zalloc(evlist->core.nr_mmaps * sizeof(struct mmap));
-	if (!map)
-		return NULL;
+	map = zalloc(evlist->core.nr_mmaps * माप(काष्ठा mmap));
+	अगर (!map)
+		वापस शून्य;
 
-	for (i = 0; i < evlist->core.nr_mmaps; i++) {
-		struct perf_mmap *prev = i ? &map[i - 1].core : NULL;
+	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
+		काष्ठा perf_mmap *prev = i ? &map[i - 1].core : शून्य;
 
 		/*
 		 * When the perf_mmap() call is made we grab one refcount, plus
@@ -771,1141 +772,1141 @@ static struct mmap *evlist__alloc_mmap(struct evlist *evlist,
 		 * events after all real references (perf_mmap__get()) are
 		 * dropped.
 		 *
-		 * Each PERF_EVENT_IOC_SET_OUTPUT points to this mmap and
-		 * thus does perf_mmap__get() on it.
+		 * Each PERF_EVENT_IOC_SET_OUTPUT poपूर्णांकs to this mmap and
+		 * thus करोes perf_mmap__get() on it.
 		 */
-		perf_mmap__init(&map[i].core, prev, overwrite, perf_mmap__unmap_cb);
-	}
+		perf_mmap__init(&map[i].core, prev, overग_लिखो, perf_mmap__unmap_cb);
+	पूर्ण
 
-	return map;
-}
+	वापस map;
+पूर्ण
 
-static void
-perf_evlist__mmap_cb_idx(struct perf_evlist *_evlist,
-			 struct perf_mmap_param *_mp,
-			 int idx, bool per_cpu)
-{
-	struct evlist *evlist = container_of(_evlist, struct evlist, core);
-	struct mmap_params *mp = container_of(_mp, struct mmap_params, core);
+अटल व्योम
+perf_evlist__mmap_cb_idx(काष्ठा perf_evlist *_evlist,
+			 काष्ठा perf_mmap_param *_mp,
+			 पूर्णांक idx, bool per_cpu)
+अणु
+	काष्ठा evlist *evlist = container_of(_evlist, काष्ठा evlist, core);
+	काष्ठा mmap_params *mp = container_of(_mp, काष्ठा mmap_params, core);
 
 	auxtrace_mmap_params__set_idx(&mp->auxtrace_mp, evlist, idx, per_cpu);
-}
+पूर्ण
 
-static struct perf_mmap*
-perf_evlist__mmap_cb_get(struct perf_evlist *_evlist, bool overwrite, int idx)
-{
-	struct evlist *evlist = container_of(_evlist, struct evlist, core);
-	struct mmap *maps;
+अटल काष्ठा perf_mmap*
+perf_evlist__mmap_cb_get(काष्ठा perf_evlist *_evlist, bool overग_लिखो, पूर्णांक idx)
+अणु
+	काष्ठा evlist *evlist = container_of(_evlist, काष्ठा evlist, core);
+	काष्ठा mmap *maps;
 
-	maps = overwrite ? evlist->overwrite_mmap : evlist->mmap;
+	maps = overग_लिखो ? evlist->overग_लिखो_mmap : evlist->mmap;
 
-	if (!maps) {
-		maps = evlist__alloc_mmap(evlist, overwrite);
-		if (!maps)
-			return NULL;
+	अगर (!maps) अणु
+		maps = evlist__alloc_mmap(evlist, overग_लिखो);
+		अगर (!maps)
+			वापस शून्य;
 
-		if (overwrite) {
-			evlist->overwrite_mmap = maps;
-			if (evlist->bkw_mmap_state == BKW_MMAP_NOTREADY)
+		अगर (overग_लिखो) अणु
+			evlist->overग_लिखो_mmap = maps;
+			अगर (evlist->bkw_mmap_state == BKW_MMAP_NOTREADY)
 				evlist__toggle_bkw_mmap(evlist, BKW_MMAP_RUNNING);
-		} else {
+		पूर्ण अन्यथा अणु
 			evlist->mmap = maps;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return &maps[idx].core;
-}
+	वापस &maps[idx].core;
+पूर्ण
 
-static int
-perf_evlist__mmap_cb_mmap(struct perf_mmap *_map, struct perf_mmap_param *_mp,
-			  int output, int cpu)
-{
-	struct mmap *map = container_of(_map, struct mmap, core);
-	struct mmap_params *mp = container_of(_mp, struct mmap_params, core);
+अटल पूर्णांक
+perf_evlist__mmap_cb_mmap(काष्ठा perf_mmap *_map, काष्ठा perf_mmap_param *_mp,
+			  पूर्णांक output, पूर्णांक cpu)
+अणु
+	काष्ठा mmap *map = container_of(_map, काष्ठा mmap, core);
+	काष्ठा mmap_params *mp = container_of(_mp, काष्ठा mmap_params, core);
 
-	return mmap__mmap(map, mp, output, cpu);
-}
+	वापस mmap__mmap(map, mp, output, cpu);
+पूर्ण
 
-unsigned long perf_event_mlock_kb_in_pages(void)
-{
-	unsigned long pages;
-	int max;
+अचिन्हित दीर्घ perf_event_mlock_kb_in_pages(व्योम)
+अणु
+	अचिन्हित दीर्घ pages;
+	पूर्णांक max;
 
-	if (sysctl__read_int("kernel/perf_event_mlock_kb", &max) < 0) {
+	अगर (sysctl__पढ़ो_पूर्णांक("kernel/perf_event_mlock_kb", &max) < 0) अणु
 		/*
-		 * Pick a once upon a time good value, i.e. things look
-		 * strange since we can't read a sysctl value, but lets not
+		 * Pick a once upon a समय good value, i.e. things look
+		 * strange since we can't पढ़ो a sysctl value, but lets not
 		 * die yet...
 		 */
 		max = 512;
-	} else {
+	पूर्ण अन्यथा अणु
 		max -= (page_size / 1024);
-	}
+	पूर्ण
 
 	pages = (max * 1024) / page_size;
-	if (!is_power_of_2(pages))
-		pages = rounddown_pow_of_two(pages);
+	अगर (!is_घातer_of_2(pages))
+		pages = roundकरोwn_घात_of_two(pages);
 
-	return pages;
-}
+	वापस pages;
+पूर्ण
 
-size_t evlist__mmap_size(unsigned long pages)
-{
-	if (pages == UINT_MAX)
+माप_प्रकार evlist__mmap_size(अचिन्हित दीर्घ pages)
+अणु
+	अगर (pages == अच_पूर्णांक_उच्च)
 		pages = perf_event_mlock_kb_in_pages();
-	else if (!is_power_of_2(pages))
-		return 0;
+	अन्यथा अगर (!is_घातer_of_2(pages))
+		वापस 0;
 
-	return (pages + 1) * page_size;
-}
+	वापस (pages + 1) * page_size;
+पूर्ण
 
-static long parse_pages_arg(const char *str, unsigned long min,
-			    unsigned long max)
-{
-	unsigned long pages, val;
-	static struct parse_tag tags[] = {
-		{ .tag  = 'B', .mult = 1       },
-		{ .tag  = 'K', .mult = 1 << 10 },
-		{ .tag  = 'M', .mult = 1 << 20 },
-		{ .tag  = 'G', .mult = 1 << 30 },
-		{ .tag  = 0 },
-	};
+अटल दीर्घ parse_pages_arg(स्थिर अक्षर *str, अचिन्हित दीर्घ min,
+			    अचिन्हित दीर्घ max)
+अणु
+	अचिन्हित दीर्घ pages, val;
+	अटल काष्ठा parse_tag tags[] = अणु
+		अणु .tag  = 'B', .mult = 1       पूर्ण,
+		अणु .tag  = 'K', .mult = 1 << 10 पूर्ण,
+		अणु .tag  = 'M', .mult = 1 << 20 पूर्ण,
+		अणु .tag  = 'G', .mult = 1 << 30 पूर्ण,
+		अणु .tag  = 0 पूर्ण,
+	पूर्ण;
 
-	if (str == NULL)
-		return -EINVAL;
+	अगर (str == शून्य)
+		वापस -EINVAL;
 
 	val = parse_tag_value(str, tags);
-	if (val != (unsigned long) -1) {
+	अगर (val != (अचिन्हित दीर्घ) -1) अणु
 		/* we got file size value */
 		pages = PERF_ALIGN(val, page_size) / page_size;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* we got pages count value */
-		char *eptr;
-		pages = strtoul(str, &eptr, 10);
-		if (*eptr != '\0')
-			return -EINVAL;
-	}
+		अक्षर *eptr;
+		pages = म_से_अदीर्घ(str, &eptr, 10);
+		अगर (*eptr != '\0')
+			वापस -EINVAL;
+	पूर्ण
 
-	if (pages == 0 && min == 0) {
+	अगर (pages == 0 && min == 0) अणु
 		/* leave number of pages at 0 */
-	} else if (!is_power_of_2(pages)) {
-		char buf[100];
+	पूर्ण अन्यथा अगर (!is_घातer_of_2(pages)) अणु
+		अक्षर buf[100];
 
-		/* round pages up to next power of 2 */
-		pages = roundup_pow_of_two(pages);
-		if (!pages)
-			return -EINVAL;
+		/* round pages up to next घातer of 2 */
+		pages = roundup_घात_of_two(pages);
+		अगर (!pages)
+			वापस -EINVAL;
 
-		unit_number__scnprintf(buf, sizeof(buf), pages * page_size);
+		unit_number__scnम_लिखो(buf, माप(buf), pages * page_size);
 		pr_info("rounding mmap pages size to %s (%lu pages)\n",
 			buf, pages);
-	}
+	पूर्ण
 
-	if (pages > max)
-		return -EINVAL;
+	अगर (pages > max)
+		वापस -EINVAL;
 
-	return pages;
-}
+	वापस pages;
+पूर्ण
 
-int __evlist__parse_mmap_pages(unsigned int *mmap_pages, const char *str)
-{
-	unsigned long max = UINT_MAX;
-	long pages;
+पूर्णांक __evlist__parse_mmap_pages(अचिन्हित पूर्णांक *mmap_pages, स्थिर अक्षर *str)
+अणु
+	अचिन्हित दीर्घ max = अच_पूर्णांक_उच्च;
+	दीर्घ pages;
 
-	if (max > SIZE_MAX / page_size)
+	अगर (max > SIZE_MAX / page_size)
 		max = SIZE_MAX / page_size;
 
 	pages = parse_pages_arg(str, 1, max);
-	if (pages < 0) {
+	अगर (pages < 0) अणु
 		pr_err("Invalid argument for --mmap_pages/-m\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	*mmap_pages = pages;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int evlist__parse_mmap_pages(const struct option *opt, const char *str, int unset __maybe_unused)
-{
-	return __evlist__parse_mmap_pages(opt->value, str);
-}
+पूर्णांक evlist__parse_mmap_pages(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset __maybe_unused)
+अणु
+	वापस __evlist__parse_mmap_pages(opt->value, str);
+पूर्ण
 
 /**
  * evlist__mmap_ex - Create mmaps to receive events.
  * @evlist: list of events
  * @pages: map length in pages
- * @overwrite: overwrite older events?
+ * @overग_लिखो: overग_लिखो older events?
  * @auxtrace_pages - auxtrace map length in pages
- * @auxtrace_overwrite - overwrite older auxtrace data?
+ * @auxtrace_overग_लिखो - overग_लिखो older auxtrace data?
  *
- * If @overwrite is %false the user needs to signal event consumption using
- * perf_mmap__write_tail().  Using evlist__mmap_read() does this
- * automatically.
+ * If @overग_लिखो is %false the user needs to संकेत event consumption using
+ * perf_mmap__ग_लिखो_tail().  Using evlist__mmap_पढ़ो() करोes this
+ * स्वतःmatically.
  *
- * Similarly, if @auxtrace_overwrite is %false the user needs to signal data
- * consumption using auxtrace_mmap__write_tail().
+ * Similarly, अगर @auxtrace_overग_लिखो is %false the user needs to संकेत data
+ * consumption using auxtrace_mmap__ग_लिखो_tail().
  *
  * Return: %0 on success, negative error code otherwise.
  */
-int evlist__mmap_ex(struct evlist *evlist, unsigned int pages,
-			 unsigned int auxtrace_pages,
-			 bool auxtrace_overwrite, int nr_cblocks, int affinity, int flush,
-			 int comp_level)
-{
+पूर्णांक evlist__mmap_ex(काष्ठा evlist *evlist, अचिन्हित पूर्णांक pages,
+			 अचिन्हित पूर्णांक auxtrace_pages,
+			 bool auxtrace_overग_लिखो, पूर्णांक nr_cblocks, पूर्णांक affinity, पूर्णांक flush,
+			 पूर्णांक comp_level)
+अणु
 	/*
-	 * Delay setting mp.prot: set it before calling perf_mmap__mmap.
-	 * Its value is decided by evsel's write_backward.
-	 * So &mp should not be passed through const pointer.
+	 * Delay setting mp.prot: set it beक्रमe calling perf_mmap__mmap.
+	 * Its value is decided by evsel's ग_लिखो_backward.
+	 * So &mp should not be passed through स्थिर poपूर्णांकer.
 	 */
-	struct mmap_params mp = {
+	काष्ठा mmap_params mp = अणु
 		.nr_cblocks	= nr_cblocks,
 		.affinity	= affinity,
 		.flush		= flush,
 		.comp_level	= comp_level
-	};
-	struct perf_evlist_mmap_ops ops = {
+	पूर्ण;
+	काष्ठा perf_evlist_mmap_ops ops = अणु
 		.idx  = perf_evlist__mmap_cb_idx,
 		.get  = perf_evlist__mmap_cb_get,
 		.mmap = perf_evlist__mmap_cb_mmap,
-	};
+	पूर्ण;
 
 	evlist->core.mmap_len = evlist__mmap_size(pages);
 	pr_debug("mmap size %zuB\n", evlist->core.mmap_len);
 
 	auxtrace_mmap_params__init(&mp.auxtrace_mp, evlist->core.mmap_len,
-				   auxtrace_pages, auxtrace_overwrite);
+				   auxtrace_pages, auxtrace_overग_लिखो);
 
-	return perf_evlist__mmap_ops(&evlist->core, &ops, &mp.core);
-}
+	वापस perf_evlist__mmap_ops(&evlist->core, &ops, &mp.core);
+पूर्ण
 
-int evlist__mmap(struct evlist *evlist, unsigned int pages)
-{
-	return evlist__mmap_ex(evlist, pages, 0, false, 0, PERF_AFFINITY_SYS, 1, 0);
-}
+पूर्णांक evlist__mmap(काष्ठा evlist *evlist, अचिन्हित पूर्णांक pages)
+अणु
+	वापस evlist__mmap_ex(evlist, pages, 0, false, 0, PERF_AFFINITY_SYS, 1, 0);
+पूर्ण
 
-int evlist__create_maps(struct evlist *evlist, struct target *target)
-{
-	bool all_threads = (target->per_thread && target->system_wide);
-	struct perf_cpu_map *cpus;
-	struct perf_thread_map *threads;
+पूर्णांक evlist__create_maps(काष्ठा evlist *evlist, काष्ठा target *target)
+अणु
+	bool all_thपढ़ोs = (target->per_thपढ़ो && target->प्रणाली_wide);
+	काष्ठा perf_cpu_map *cpus;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
 
 	/*
-	 * If specify '-a' and '--per-thread' to perf record, perf record
-	 * will override '--per-thread'. target->per_thread = false and
-	 * target->system_wide = true.
+	 * If specअगरy '-a' and '--per-thread' to perf record, perf record
+	 * will override '--per-thread'. target->per_thपढ़ो = false and
+	 * target->प्रणाली_wide = true.
 	 *
-	 * If specify '--per-thread' only to perf record,
-	 * target->per_thread = true and target->system_wide = false.
+	 * If specअगरy '--per-thread' only to perf record,
+	 * target->per_thपढ़ो = true and target->प्रणाली_wide = false.
 	 *
-	 * So target->per_thread && target->system_wide is false.
-	 * For perf record, thread_map__new_str doesn't call
-	 * thread_map__new_all_cpus. That will keep perf record's
+	 * So target->per_thपढ़ो && target->प्रणाली_wide is false.
+	 * For perf record, thपढ़ो_map__new_str करोesn't call
+	 * thपढ़ो_map__new_all_cpus. That will keep perf record's
 	 * current behavior.
 	 *
-	 * For perf stat, it allows the case that target->per_thread and
-	 * target->system_wide are all true. It means to collect system-wide
-	 * per-thread data. thread_map__new_str will call
-	 * thread_map__new_all_cpus to enumerate all threads.
+	 * For perf stat, it allows the हाल that target->per_thपढ़ो and
+	 * target->प्रणाली_wide are all true. It means to collect प्रणाली-wide
+	 * per-thपढ़ो data. thपढ़ो_map__new_str will call
+	 * thपढ़ो_map__new_all_cpus to क्रमागतerate all thपढ़ोs.
 	 */
-	threads = thread_map__new_str(target->pid, target->tid, target->uid,
-				      all_threads);
+	thपढ़ोs = thपढ़ो_map__new_str(target->pid, target->tid, target->uid,
+				      all_thपढ़ोs);
 
-	if (!threads)
-		return -1;
+	अगर (!thपढ़ोs)
+		वापस -1;
 
-	if (target__uses_dummy_map(target))
+	अगर (target__uses_dummy_map(target))
 		cpus = perf_cpu_map__dummy_new();
-	else
+	अन्यथा
 		cpus = perf_cpu_map__new(target->cpu_list);
 
-	if (!cpus)
-		goto out_delete_threads;
+	अगर (!cpus)
+		जाओ out_delete_thपढ़ोs;
 
 	evlist->core.has_user_cpus = !!target->cpu_list;
 
-	perf_evlist__set_maps(&evlist->core, cpus, threads);
+	perf_evlist__set_maps(&evlist->core, cpus, thपढ़ोs);
 
 	/* as evlist now has references, put count here */
 	perf_cpu_map__put(cpus);
-	perf_thread_map__put(threads);
+	perf_thपढ़ो_map__put(thपढ़ोs);
 
-	return 0;
+	वापस 0;
 
-out_delete_threads:
-	perf_thread_map__put(threads);
-	return -1;
-}
+out_delete_thपढ़ोs:
+	perf_thपढ़ो_map__put(thपढ़ोs);
+	वापस -1;
+पूर्ण
 
-int evlist__apply_filters(struct evlist *evlist, struct evsel **err_evsel)
-{
-	struct evsel *evsel;
-	int err = 0;
+पूर्णांक evlist__apply_filters(काष्ठा evlist *evlist, काष्ठा evsel **err_evsel)
+अणु
+	काष्ठा evsel *evsel;
+	पूर्णांक err = 0;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->filter == NULL)
-			continue;
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->filter == शून्य)
+			जारी;
 
 		/*
-		 * filters only work for tracepoint event, which doesn't have cpu limit.
+		 * filters only work क्रम tracepoपूर्णांक event, which करोesn't have cpu limit.
 		 * So evlist and evsel should always be same.
 		 */
 		err = perf_evsel__apply_filter(&evsel->core, evsel->filter);
-		if (err) {
+		अगर (err) अणु
 			*err_evsel = evsel;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int evlist__set_tp_filter(struct evlist *evlist, const char *filter)
-{
-	struct evsel *evsel;
-	int err = 0;
+पूर्णांक evlist__set_tp_filter(काष्ठा evlist *evlist, स्थिर अक्षर *filter)
+अणु
+	काष्ठा evsel *evsel;
+	पूर्णांक err = 0;
 
-	if (filter == NULL)
-		return -1;
+	अगर (filter == शून्य)
+		वापस -1;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
-			continue;
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
+			जारी;
 
 		err = evsel__set_filter(evsel, filter);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int evlist__append_tp_filter(struct evlist *evlist, const char *filter)
-{
-	struct evsel *evsel;
-	int err = 0;
+पूर्णांक evlist__append_tp_filter(काष्ठा evlist *evlist, स्थिर अक्षर *filter)
+अणु
+	काष्ठा evsel *evsel;
+	पूर्णांक err = 0;
 
-	if (filter == NULL)
-		return -1;
+	अगर (filter == शून्य)
+		वापस -1;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
-			continue;
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
+			जारी;
 
 		err = evsel__append_tp_filter(evsel, filter);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-char *asprintf__tp_filter_pids(size_t npids, pid_t *pids)
-{
-	char *filter;
-	size_t i;
+अक्षर *aप्र_लिखो__tp_filter_pids(माप_प्रकार npids, pid_t *pids)
+अणु
+	अक्षर *filter;
+	माप_प्रकार i;
 
-	for (i = 0; i < npids; ++i) {
-		if (i == 0) {
-			if (asprintf(&filter, "common_pid != %d", pids[i]) < 0)
-				return NULL;
-		} else {
-			char *tmp;
+	क्रम (i = 0; i < npids; ++i) अणु
+		अगर (i == 0) अणु
+			अगर (aप्र_लिखो(&filter, "common_pid != %d", pids[i]) < 0)
+				वापस शून्य;
+		पूर्ण अन्यथा अणु
+			अक्षर *पंचांगp;
 
-			if (asprintf(&tmp, "%s && common_pid != %d", filter, pids[i]) < 0)
-				goto out_free;
+			अगर (aप्र_लिखो(&पंचांगp, "%s && common_pid != %d", filter, pids[i]) < 0)
+				जाओ out_मुक्त;
 
-			free(filter);
-			filter = tmp;
-		}
-	}
+			मुक्त(filter);
+			filter = पंचांगp;
+		पूर्ण
+	पूर्ण
 
-	return filter;
-out_free:
-	free(filter);
-	return NULL;
-}
+	वापस filter;
+out_मुक्त:
+	मुक्त(filter);
+	वापस शून्य;
+पूर्ण
 
-int evlist__set_tp_filter_pids(struct evlist *evlist, size_t npids, pid_t *pids)
-{
-	char *filter = asprintf__tp_filter_pids(npids, pids);
-	int ret = evlist__set_tp_filter(evlist, filter);
+पूर्णांक evlist__set_tp_filter_pids(काष्ठा evlist *evlist, माप_प्रकार npids, pid_t *pids)
+अणु
+	अक्षर *filter = aप्र_लिखो__tp_filter_pids(npids, pids);
+	पूर्णांक ret = evlist__set_tp_filter(evlist, filter);
 
-	free(filter);
-	return ret;
-}
+	मुक्त(filter);
+	वापस ret;
+पूर्ण
 
-int evlist__set_tp_filter_pid(struct evlist *evlist, pid_t pid)
-{
-	return evlist__set_tp_filter_pids(evlist, 1, &pid);
-}
+पूर्णांक evlist__set_tp_filter_pid(काष्ठा evlist *evlist, pid_t pid)
+अणु
+	वापस evlist__set_tp_filter_pids(evlist, 1, &pid);
+पूर्ण
 
-int evlist__append_tp_filter_pids(struct evlist *evlist, size_t npids, pid_t *pids)
-{
-	char *filter = asprintf__tp_filter_pids(npids, pids);
-	int ret = evlist__append_tp_filter(evlist, filter);
+पूर्णांक evlist__append_tp_filter_pids(काष्ठा evlist *evlist, माप_प्रकार npids, pid_t *pids)
+अणु
+	अक्षर *filter = aप्र_लिखो__tp_filter_pids(npids, pids);
+	पूर्णांक ret = evlist__append_tp_filter(evlist, filter);
 
-	free(filter);
-	return ret;
-}
+	मुक्त(filter);
+	वापस ret;
+पूर्ण
 
-int evlist__append_tp_filter_pid(struct evlist *evlist, pid_t pid)
-{
-	return evlist__append_tp_filter_pids(evlist, 1, &pid);
-}
+पूर्णांक evlist__append_tp_filter_pid(काष्ठा evlist *evlist, pid_t pid)
+अणु
+	वापस evlist__append_tp_filter_pids(evlist, 1, &pid);
+पूर्ण
 
-bool evlist__valid_sample_type(struct evlist *evlist)
-{
-	struct evsel *pos;
+bool evlist__valid_sample_type(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *pos;
 
-	if (evlist->core.nr_entries == 1)
-		return true;
+	अगर (evlist->core.nr_entries == 1)
+		वापस true;
 
-	if (evlist->id_pos < 0 || evlist->is_pos < 0)
-		return false;
+	अगर (evlist->id_pos < 0 || evlist->is_pos < 0)
+		वापस false;
 
-	evlist__for_each_entry(evlist, pos) {
-		if (pos->id_pos != evlist->id_pos ||
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		अगर (pos->id_pos != evlist->id_pos ||
 		    pos->is_pos != evlist->is_pos)
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-u64 __evlist__combined_sample_type(struct evlist *evlist)
-{
-	struct evsel *evsel;
+u64 __evlist__combined_sample_type(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
 
-	if (evlist->combined_sample_type)
-		return evlist->combined_sample_type;
+	अगर (evlist->combined_sample_type)
+		वापस evlist->combined_sample_type;
 
-	evlist__for_each_entry(evlist, evsel)
+	evlist__क्रम_each_entry(evlist, evsel)
 		evlist->combined_sample_type |= evsel->core.attr.sample_type;
 
-	return evlist->combined_sample_type;
-}
+	वापस evlist->combined_sample_type;
+पूर्ण
 
-u64 evlist__combined_sample_type(struct evlist *evlist)
-{
+u64 evlist__combined_sample_type(काष्ठा evlist *evlist)
+अणु
 	evlist->combined_sample_type = 0;
-	return __evlist__combined_sample_type(evlist);
-}
+	वापस __evlist__combined_sample_type(evlist);
+पूर्ण
 
-u64 evlist__combined_branch_type(struct evlist *evlist)
-{
-	struct evsel *evsel;
+u64 evlist__combined_branch_type(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
 	u64 branch_type = 0;
 
-	evlist__for_each_entry(evlist, evsel)
+	evlist__क्रम_each_entry(evlist, evsel)
 		branch_type |= evsel->core.attr.branch_sample_type;
-	return branch_type;
-}
+	वापस branch_type;
+पूर्ण
 
-bool evlist__valid_read_format(struct evlist *evlist)
-{
-	struct evsel *first = evlist__first(evlist), *pos = first;
-	u64 read_format = first->core.attr.read_format;
+bool evlist__valid_पढ़ो_क्रमmat(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *first = evlist__first(evlist), *pos = first;
+	u64 पढ़ो_क्रमmat = first->core.attr.पढ़ो_क्रमmat;
 	u64 sample_type = first->core.attr.sample_type;
 
-	evlist__for_each_entry(evlist, pos) {
-		if (read_format != pos->core.attr.read_format) {
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		अगर (पढ़ो_क्रमmat != pos->core.attr.पढ़ो_क्रमmat) अणु
 			pr_debug("Read format differs %#" PRIx64 " vs %#" PRIx64 "\n",
-				 read_format, (u64)pos->core.attr.read_format);
-		}
-	}
+				 पढ़ो_क्रमmat, (u64)pos->core.attr.पढ़ो_क्रमmat);
+		पूर्ण
+	पूर्ण
 
 	/* PERF_SAMPLE_READ implies PERF_FORMAT_ID. */
-	if ((sample_type & PERF_SAMPLE_READ) &&
-	    !(read_format & PERF_FORMAT_ID)) {
-		return false;
-	}
+	अगर ((sample_type & PERF_SAMPLE_READ) &&
+	    !(पढ़ो_क्रमmat & PERF_FORMAT_ID)) अणु
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-u16 evlist__id_hdr_size(struct evlist *evlist)
-{
-	struct evsel *first = evlist__first(evlist);
-	struct perf_sample *data;
+u16 evlist__id_hdr_size(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *first = evlist__first(evlist);
+	काष्ठा perf_sample *data;
 	u64 sample_type;
 	u16 size = 0;
 
-	if (!first->core.attr.sample_id_all)
-		goto out;
+	अगर (!first->core.attr.sample_id_all)
+		जाओ out;
 
 	sample_type = first->core.attr.sample_type;
 
-	if (sample_type & PERF_SAMPLE_TID)
-		size += sizeof(data->tid) * 2;
+	अगर (sample_type & PERF_SAMPLE_TID)
+		size += माप(data->tid) * 2;
 
-       if (sample_type & PERF_SAMPLE_TIME)
-		size += sizeof(data->time);
+       अगर (sample_type & PERF_SAMPLE_TIME)
+		size += माप(data->समय);
 
-	if (sample_type & PERF_SAMPLE_ID)
-		size += sizeof(data->id);
+	अगर (sample_type & PERF_SAMPLE_ID)
+		size += माप(data->id);
 
-	if (sample_type & PERF_SAMPLE_STREAM_ID)
-		size += sizeof(data->stream_id);
+	अगर (sample_type & PERF_SAMPLE_STREAM_ID)
+		size += माप(data->stream_id);
 
-	if (sample_type & PERF_SAMPLE_CPU)
-		size += sizeof(data->cpu) * 2;
+	अगर (sample_type & PERF_SAMPLE_CPU)
+		size += माप(data->cpu) * 2;
 
-	if (sample_type & PERF_SAMPLE_IDENTIFIER)
-		size += sizeof(data->id);
+	अगर (sample_type & PERF_SAMPLE_IDENTIFIER)
+		size += माप(data->id);
 out:
-	return size;
-}
+	वापस size;
+पूर्ण
 
-bool evlist__valid_sample_id_all(struct evlist *evlist)
-{
-	struct evsel *first = evlist__first(evlist), *pos = first;
+bool evlist__valid_sample_id_all(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *first = evlist__first(evlist), *pos = first;
 
-	evlist__for_each_entry_continue(evlist, pos) {
-		if (first->core.attr.sample_id_all != pos->core.attr.sample_id_all)
-			return false;
-	}
+	evlist__क्रम_each_entry_जारी(evlist, pos) अणु
+		अगर (first->core.attr.sample_id_all != pos->core.attr.sample_id_all)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool evlist__sample_id_all(struct evlist *evlist)
-{
-	struct evsel *first = evlist__first(evlist);
-	return first->core.attr.sample_id_all;
-}
+bool evlist__sample_id_all(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *first = evlist__first(evlist);
+	वापस first->core.attr.sample_id_all;
+पूर्ण
 
-void evlist__set_selected(struct evlist *evlist, struct evsel *evsel)
-{
+व्योम evlist__set_selected(काष्ठा evlist *evlist, काष्ठा evsel *evsel)
+अणु
 	evlist->selected = evsel;
-}
+पूर्ण
 
-void evlist__close(struct evlist *evlist)
-{
-	struct evsel *evsel;
-	struct affinity affinity;
-	int cpu, i;
+व्योम evlist__बंद(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
+	काष्ठा affinity affinity;
+	पूर्णांक cpu, i;
 
 	/*
-	 * With perf record core.cpus is usually NULL.
-	 * Use the old method to handle this for now.
+	 * With perf record core.cpus is usually शून्य.
+	 * Use the old method to handle this क्रम now.
 	 */
-	if (!evlist->core.cpus) {
-		evlist__for_each_entry_reverse(evlist, evsel)
-			evsel__close(evsel);
-		return;
-	}
+	अगर (!evlist->core.cpus) अणु
+		evlist__क्रम_each_entry_reverse(evlist, evsel)
+			evsel__बंद(evsel);
+		वापस;
+	पूर्ण
 
-	if (affinity__setup(&affinity) < 0)
-		return;
-	evlist__for_each_cpu(evlist, i, cpu) {
+	अगर (affinity__setup(&affinity) < 0)
+		वापस;
+	evlist__क्रम_each_cpu(evlist, i, cpu) अणु
 		affinity__set(&affinity, cpu);
 
-		evlist__for_each_entry_reverse(evlist, evsel) {
-			if (evsel__cpu_iter_skip(evsel, cpu))
-			    continue;
-			perf_evsel__close_cpu(&evsel->core, evsel->cpu_iter - 1);
-		}
-	}
+		evlist__क्रम_each_entry_reverse(evlist, evsel) अणु
+			अगर (evsel__cpu_iter_skip(evsel, cpu))
+			    जारी;
+			perf_evsel__बंद_cpu(&evsel->core, evsel->cpu_iter - 1);
+		पूर्ण
+	पूर्ण
 	affinity__cleanup(&affinity);
-	evlist__for_each_entry_reverse(evlist, evsel) {
-		perf_evsel__free_fd(&evsel->core);
-		perf_evsel__free_id(&evsel->core);
-	}
+	evlist__क्रम_each_entry_reverse(evlist, evsel) अणु
+		perf_evsel__मुक्त_fd(&evsel->core);
+		perf_evsel__मुक्त_id(&evsel->core);
+	पूर्ण
 	perf_evlist__reset_id_hash(&evlist->core);
-}
+पूर्ण
 
-static int evlist__create_syswide_maps(struct evlist *evlist)
-{
-	struct perf_cpu_map *cpus;
-	struct perf_thread_map *threads;
-	int err = -ENOMEM;
+अटल पूर्णांक evlist__create_syswide_maps(काष्ठा evlist *evlist)
+अणु
+	काष्ठा perf_cpu_map *cpus;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+	पूर्णांक err = -ENOMEM;
 
 	/*
-	 * Try reading /sys/devices/system/cpu/online to get
+	 * Try पढ़ोing /sys/devices/प्रणाली/cpu/online to get
 	 * an all cpus map.
 	 *
-	 * FIXME: -ENOMEM is the best we can do here, the cpu_map
-	 * code needs an overhaul to properly forward the
-	 * error, and we may not want to do that fallback to a
-	 * default cpu identity map :-\
+	 * FIXME: -ENOMEM is the best we can करो here, the cpu_map
+	 * code needs an overhaul to properly क्रमward the
+	 * error, and we may not want to करो that fallback to a
+	 * शेष cpu identity map :-\
 	 */
-	cpus = perf_cpu_map__new(NULL);
-	if (!cpus)
-		goto out;
+	cpus = perf_cpu_map__new(शून्य);
+	अगर (!cpus)
+		जाओ out;
 
-	threads = perf_thread_map__new_dummy();
-	if (!threads)
-		goto out_put;
+	thपढ़ोs = perf_thपढ़ो_map__new_dummy();
+	अगर (!thपढ़ोs)
+		जाओ out_put;
 
-	perf_evlist__set_maps(&evlist->core, cpus, threads);
+	perf_evlist__set_maps(&evlist->core, cpus, thपढ़ोs);
 
-	perf_thread_map__put(threads);
+	perf_thपढ़ो_map__put(thपढ़ोs);
 out_put:
 	perf_cpu_map__put(cpus);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int evlist__open(struct evlist *evlist)
-{
-	struct evsel *evsel;
-	int err;
+पूर्णांक evlist__खोलो(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
+	पूर्णांक err;
 
 	/*
-	 * Default: one fd per CPU, all threads, aka systemwide
-	 * as sys_perf_event_open(cpu = -1, thread = -1) is EINVAL
+	 * Default: one fd per CPU, all thपढ़ोs, aka प्रणालीwide
+	 * as sys_perf_event_खोलो(cpu = -1, thपढ़ो = -1) is EINVAL
 	 */
-	if (evlist->core.threads == NULL && evlist->core.cpus == NULL) {
+	अगर (evlist->core.thपढ़ोs == शून्य && evlist->core.cpus == शून्य) अणु
 		err = evlist__create_syswide_maps(evlist);
-		if (err < 0)
-			goto out_err;
-	}
+		अगर (err < 0)
+			जाओ out_err;
+	पूर्ण
 
 	evlist__update_id_pos(evlist);
 
-	evlist__for_each_entry(evlist, evsel) {
-		err = evsel__open(evsel, evsel->core.cpus, evsel->core.threads);
-		if (err < 0)
-			goto out_err;
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		err = evsel__खोलो(evsel, evsel->core.cpus, evsel->core.thपढ़ोs);
+		अगर (err < 0)
+			जाओ out_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out_err:
-	evlist__close(evlist);
-	errno = -err;
-	return err;
-}
+	evlist__बंद(evlist);
+	त्रुटि_सं = -err;
+	वापस err;
+पूर्ण
 
-int evlist__prepare_workload(struct evlist *evlist, struct target *target, const char *argv[],
-			     bool pipe_output, void (*exec_error)(int signo, siginfo_t *info, void *ucontext))
-{
-	int child_ready_pipe[2], go_pipe[2];
-	char bf;
+पूर्णांक evlist__prepare_workload(काष्ठा evlist *evlist, काष्ठा target *target, स्थिर अक्षर *argv[],
+			     bool pipe_output, व्योम (*exec_error)(पूर्णांक signo, siginfo_t *info, व्योम *ucontext))
+अणु
+	पूर्णांक child_पढ़ोy_pipe[2], go_pipe[2];
+	अक्षर bf;
 
-	if (pipe(child_ready_pipe) < 0) {
-		perror("failed to create 'ready' pipe");
-		return -1;
-	}
+	अगर (pipe(child_पढ़ोy_pipe) < 0) अणु
+		लिखो_त्रुटि("failed to create 'ready' pipe");
+		वापस -1;
+	पूर्ण
 
-	if (pipe(go_pipe) < 0) {
-		perror("failed to create 'go' pipe");
-		goto out_close_ready_pipe;
-	}
+	अगर (pipe(go_pipe) < 0) अणु
+		लिखो_त्रुटि("failed to create 'go' pipe");
+		जाओ out_बंद_पढ़ोy_pipe;
+	पूर्ण
 
-	evlist->workload.pid = fork();
-	if (evlist->workload.pid < 0) {
-		perror("failed to fork");
-		goto out_close_pipes;
-	}
+	evlist->workload.pid = विभाजन();
+	अगर (evlist->workload.pid < 0) अणु
+		लिखो_त्रुटि("failed to fork");
+		जाओ out_बंद_pipes;
+	पूर्ण
 
-	if (!evlist->workload.pid) {
-		int ret;
+	अगर (!evlist->workload.pid) अणु
+		पूर्णांक ret;
 
-		if (pipe_output)
+		अगर (pipe_output)
 			dup2(2, 1);
 
-		signal(SIGTERM, SIG_DFL);
+		संकेत(संक_इति, संक_पूर्व);
 
-		close(child_ready_pipe[0]);
-		close(go_pipe[1]);
+		बंद(child_पढ़ोy_pipe[0]);
+		बंद(go_pipe[1]);
 		fcntl(go_pipe[0], F_SETFD, FD_CLOEXEC);
 
 		/*
 		 * Change the name of this process not to confuse --exclude-perf users
-		 * that sees 'perf' in the window up to the execvp() and thinks that
+		 * that sees 'perf' in the winकरोw up to the execvp() and thinks that
 		 * perf samples are not being excluded.
 		 */
 		prctl(PR_SET_NAME, "perf-exec");
 
 		/*
-		 * Tell the parent we're ready to go
+		 * Tell the parent we're पढ़ोy to go
 		 */
-		close(child_ready_pipe[1]);
+		बंद(child_पढ़ोy_pipe[1]);
 
 		/*
 		 * Wait until the parent tells us to go.
 		 */
-		ret = read(go_pipe[0], &bf, 1);
+		ret = पढ़ो(go_pipe[0], &bf, 1);
 		/*
-		 * The parent will ask for the execvp() to be performed by
+		 * The parent will ask क्रम the execvp() to be perक्रमmed by
 		 * writing exactly one byte, in workload.cork_fd, usually via
 		 * evlist__start_workload().
 		 *
 		 * For cancelling the workload without actually running it,
-		 * the parent will just close workload.cork_fd, without writing
-		 * anything, i.e. read will return zero and we just exit()
+		 * the parent will just बंद workload.cork_fd, without writing
+		 * anything, i.e. पढ़ो will वापस zero and we just निकास()
 		 * here.
 		 */
-		if (ret != 1) {
-			if (ret == -1)
-				perror("unable to read pipe");
-			exit(ret);
-		}
+		अगर (ret != 1) अणु
+			अगर (ret == -1)
+				लिखो_त्रुटि("unable to read pipe");
+			निकास(ret);
+		पूर्ण
 
-		execvp(argv[0], (char **)argv);
+		execvp(argv[0], (अक्षर **)argv);
 
-		if (exec_error) {
-			union sigval val;
+		अगर (exec_error) अणु
+			जोड़ sigval val;
 
-			val.sival_int = errno;
-			if (sigqueue(getppid(), SIGUSR1, val))
-				perror(argv[0]);
-		} else
-			perror(argv[0]);
-		exit(-1);
-	}
+			val.sival_पूर्णांक = त्रुटि_सं;
+			अगर (sigqueue(getppid(), SIGUSR1, val))
+				लिखो_त्रुटि(argv[0]);
+		पूर्ण अन्यथा
+			लिखो_त्रुटि(argv[0]);
+		निकास(-1);
+	पूर्ण
 
-	if (exec_error) {
-		struct sigaction act = {
+	अगर (exec_error) अणु
+		काष्ठा sigaction act = अणु
 			.sa_flags     = SA_SIGINFO,
 			.sa_sigaction = exec_error,
-		};
-		sigaction(SIGUSR1, &act, NULL);
-	}
+		पूर्ण;
+		sigaction(SIGUSR1, &act, शून्य);
+	पूर्ण
 
-	if (target__none(target)) {
-		if (evlist->core.threads == NULL) {
-			fprintf(stderr, "FATAL: evlist->threads need to be set at this point (%s:%d).\n",
+	अगर (target__none(target)) अणु
+		अगर (evlist->core.thपढ़ोs == शून्य) अणु
+			ख_लिखो(मानक_त्रुटि, "FATAL: evlist->threads need to be set at this point (%s:%d).\n",
 				__func__, __LINE__);
-			goto out_close_pipes;
-		}
-		perf_thread_map__set_pid(evlist->core.threads, 0, evlist->workload.pid);
-	}
+			जाओ out_बंद_pipes;
+		पूर्ण
+		perf_thपढ़ो_map__set_pid(evlist->core.thपढ़ोs, 0, evlist->workload.pid);
+	पूर्ण
 
-	close(child_ready_pipe[1]);
-	close(go_pipe[0]);
+	बंद(child_पढ़ोy_pipe[1]);
+	बंद(go_pipe[0]);
 	/*
-	 * wait for child to settle
+	 * रुको क्रम child to settle
 	 */
-	if (read(child_ready_pipe[0], &bf, 1) == -1) {
-		perror("unable to read pipe");
-		goto out_close_pipes;
-	}
+	अगर (पढ़ो(child_पढ़ोy_pipe[0], &bf, 1) == -1) अणु
+		लिखो_त्रुटि("unable to read pipe");
+		जाओ out_बंद_pipes;
+	पूर्ण
 
 	fcntl(go_pipe[1], F_SETFD, FD_CLOEXEC);
 	evlist->workload.cork_fd = go_pipe[1];
-	close(child_ready_pipe[0]);
-	return 0;
+	बंद(child_पढ़ोy_pipe[0]);
+	वापस 0;
 
-out_close_pipes:
-	close(go_pipe[0]);
-	close(go_pipe[1]);
-out_close_ready_pipe:
-	close(child_ready_pipe[0]);
-	close(child_ready_pipe[1]);
-	return -1;
-}
+out_बंद_pipes:
+	बंद(go_pipe[0]);
+	बंद(go_pipe[1]);
+out_बंद_पढ़ोy_pipe:
+	बंद(child_पढ़ोy_pipe[0]);
+	बंद(child_पढ़ोy_pipe[1]);
+	वापस -1;
+पूर्ण
 
-int evlist__start_workload(struct evlist *evlist)
-{
-	if (evlist->workload.cork_fd > 0) {
-		char bf = 0;
-		int ret;
+पूर्णांक evlist__start_workload(काष्ठा evlist *evlist)
+अणु
+	अगर (evlist->workload.cork_fd > 0) अणु
+		अक्षर bf = 0;
+		पूर्णांक ret;
 		/*
 		 * Remove the cork, let it rip!
 		 */
-		ret = write(evlist->workload.cork_fd, &bf, 1);
-		if (ret < 0)
-			perror("unable to write to pipe");
+		ret = ग_लिखो(evlist->workload.cork_fd, &bf, 1);
+		अगर (ret < 0)
+			लिखो_त्रुटि("unable to write to pipe");
 
-		close(evlist->workload.cork_fd);
-		return ret;
-	}
+		बंद(evlist->workload.cork_fd);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int evlist__parse_sample(struct evlist *evlist, union perf_event *event, struct perf_sample *sample)
-{
-	struct evsel *evsel = evlist__event2evsel(evlist, event);
+पूर्णांक evlist__parse_sample(काष्ठा evlist *evlist, जोड़ perf_event *event, काष्ठा perf_sample *sample)
+अणु
+	काष्ठा evsel *evsel = evlist__event2evsel(evlist, event);
 
-	if (!evsel)
-		return -EFAULT;
-	return evsel__parse_sample(evsel, event, sample);
-}
+	अगर (!evsel)
+		वापस -EFAULT;
+	वापस evsel__parse_sample(evsel, event, sample);
+पूर्ण
 
-int evlist__parse_sample_timestamp(struct evlist *evlist, union perf_event *event, u64 *timestamp)
-{
-	struct evsel *evsel = evlist__event2evsel(evlist, event);
+पूर्णांक evlist__parse_sample_बारtamp(काष्ठा evlist *evlist, जोड़ perf_event *event, u64 *बारtamp)
+अणु
+	काष्ठा evsel *evsel = evlist__event2evsel(evlist, event);
 
-	if (!evsel)
-		return -EFAULT;
-	return evsel__parse_sample_timestamp(evsel, event, timestamp);
-}
+	अगर (!evsel)
+		वापस -EFAULT;
+	वापस evsel__parse_sample_बारtamp(evsel, event, बारtamp);
+पूर्ण
 
-int evlist__strerror_open(struct evlist *evlist, int err, char *buf, size_t size)
-{
-	int printed, value;
-	char sbuf[STRERR_BUFSIZE], *emsg = str_error_r(err, sbuf, sizeof(sbuf));
+पूर्णांक evlist__म_त्रुटि_खोलो(काष्ठा evlist *evlist, पूर्णांक err, अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक prपूर्णांकed, value;
+	अक्षर sbuf[STRERR_बफ_मानE], *emsg = str_error_r(err, sbuf, माप(sbuf));
 
-	switch (err) {
-	case EACCES:
-	case EPERM:
-		printed = scnprintf(buf, size,
+	चयन (err) अणु
+	हाल EACCES:
+	हाल EPERM:
+		prपूर्णांकed = scnम_लिखो(buf, size,
 				    "Error:\t%s.\n"
 				    "Hint:\tCheck /proc/sys/kernel/perf_event_paranoid setting.", emsg);
 
 		value = perf_event_paranoid();
 
-		printed += scnprintf(buf + printed, size - printed, "\nHint:\t");
+		prपूर्णांकed += scnम_लिखो(buf + prपूर्णांकed, size - prपूर्णांकed, "\nHint:\t");
 
-		if (value >= 2) {
-			printed += scnprintf(buf + printed, size - printed,
+		अगर (value >= 2) अणु
+			prपूर्णांकed += scnम_लिखो(buf + prपूर्णांकed, size - prपूर्णांकed,
 					     "For your workloads it needs to be <= 1\nHint:\t");
-		}
-		printed += scnprintf(buf + printed, size - printed,
+		पूर्ण
+		prपूर्णांकed += scnम_लिखो(buf + prपूर्णांकed, size - prपूर्णांकed,
 				     "For system wide tracing it needs to be set to -1.\n");
 
-		printed += scnprintf(buf + printed, size - printed,
+		prपूर्णांकed += scnम_लिखो(buf + prपूर्णांकed, size - prपूर्णांकed,
 				    "Hint:\tTry: 'sudo sh -c \"echo -1 > /proc/sys/kernel/perf_event_paranoid\"'\n"
 				    "Hint:\tThe current value is %d.", value);
-		break;
-	case EINVAL: {
-		struct evsel *first = evlist__first(evlist);
-		int max_freq;
+		अवरोध;
+	हाल EINVAL: अणु
+		काष्ठा evsel *first = evlist__first(evlist);
+		पूर्णांक max_freq;
 
-		if (sysctl__read_int("kernel/perf_event_max_sample_rate", &max_freq) < 0)
-			goto out_default;
+		अगर (sysctl__पढ़ो_पूर्णांक("kernel/perf_event_max_sample_rate", &max_freq) < 0)
+			जाओ out_शेष;
 
-		if (first->core.attr.sample_freq < (u64)max_freq)
-			goto out_default;
+		अगर (first->core.attr.sample_freq < (u64)max_freq)
+			जाओ out_शेष;
 
-		printed = scnprintf(buf, size,
+		prपूर्णांकed = scnम_लिखो(buf, size,
 				    "Error:\t%s.\n"
 				    "Hint:\tCheck /proc/sys/kernel/perf_event_max_sample_rate.\n"
 				    "Hint:\tThe current value is %d and %" PRIu64 " is being requested.",
 				    emsg, max_freq, first->core.attr.sample_freq);
-		break;
-	}
-	default:
-out_default:
-		scnprintf(buf, size, "%s", emsg);
-		break;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+out_शेष:
+		scnम_लिखो(buf, size, "%s", emsg);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int evlist__strerror_mmap(struct evlist *evlist, int err, char *buf, size_t size)
-{
-	char sbuf[STRERR_BUFSIZE], *emsg = str_error_r(err, sbuf, sizeof(sbuf));
-	int pages_attempted = evlist->core.mmap_len / 1024, pages_max_per_user, printed = 0;
+पूर्णांक evlist__म_त्रुटि_mmap(काष्ठा evlist *evlist, पूर्णांक err, अक्षर *buf, माप_प्रकार size)
+अणु
+	अक्षर sbuf[STRERR_बफ_मानE], *emsg = str_error_r(err, sbuf, माप(sbuf));
+	पूर्णांक pages_attempted = evlist->core.mmap_len / 1024, pages_max_per_user, prपूर्णांकed = 0;
 
-	switch (err) {
-	case EPERM:
-		sysctl__read_int("kernel/perf_event_mlock_kb", &pages_max_per_user);
-		printed += scnprintf(buf + printed, size - printed,
+	चयन (err) अणु
+	हाल EPERM:
+		sysctl__पढ़ो_पूर्णांक("kernel/perf_event_mlock_kb", &pages_max_per_user);
+		prपूर्णांकed += scnम_लिखो(buf + prपूर्णांकed, size - prपूर्णांकed,
 				     "Error:\t%s.\n"
 				     "Hint:\tCheck /proc/sys/kernel/perf_event_mlock_kb (%d kB) setting.\n"
 				     "Hint:\tTried using %zd kB.\n",
 				     emsg, pages_max_per_user, pages_attempted);
 
-		if (pages_attempted >= pages_max_per_user) {
-			printed += scnprintf(buf + printed, size - printed,
+		अगर (pages_attempted >= pages_max_per_user) अणु
+			prपूर्णांकed += scnम_लिखो(buf + prपूर्णांकed, size - prपूर्णांकed,
 					     "Hint:\tTry 'sudo sh -c \"echo %d > /proc/sys/kernel/perf_event_mlock_kb\"', or\n",
 					     pages_max_per_user + pages_attempted);
-		}
+		पूर्ण
 
-		printed += scnprintf(buf + printed, size - printed,
+		prपूर्णांकed += scnम_लिखो(buf + prपूर्णांकed, size - prपूर्णांकed,
 				     "Hint:\tTry using a smaller -m/--mmap-pages value.");
-		break;
-	default:
-		scnprintf(buf, size, "%s", emsg);
-		break;
-	}
+		अवरोध;
+	शेष:
+		scnम_लिखो(buf, size, "%s", emsg);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void evlist__to_front(struct evlist *evlist, struct evsel *move_evsel)
-{
-	struct evsel *evsel, *n;
+व्योम evlist__to_front(काष्ठा evlist *evlist, काष्ठा evsel *move_evsel)
+अणु
+	काष्ठा evsel *evsel, *n;
 	LIST_HEAD(move);
 
-	if (move_evsel == evlist__first(evlist))
-		return;
+	अगर (move_evsel == evlist__first(evlist))
+		वापस;
 
-	evlist__for_each_entry_safe(evlist, n, evsel) {
-		if (evsel->leader == move_evsel->leader)
+	evlist__क्रम_each_entry_safe(evlist, n, evsel) अणु
+		अगर (evsel->leader == move_evsel->leader)
 			list_move_tail(&evsel->core.node, &move);
-	}
+	पूर्ण
 
 	list_splice(&move, &evlist->core.entries);
-}
+पूर्ण
 
-struct evsel *evlist__get_tracking_event(struct evlist *evlist)
-{
-	struct evsel *evsel;
+काष्ठा evsel *evlist__get_tracking_event(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->tracking)
-			return evsel;
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->tracking)
+			वापस evsel;
+	पूर्ण
 
-	return evlist__first(evlist);
-}
+	वापस evlist__first(evlist);
+पूर्ण
 
-void evlist__set_tracking_event(struct evlist *evlist, struct evsel *tracking_evsel)
-{
-	struct evsel *evsel;
+व्योम evlist__set_tracking_event(काष्ठा evlist *evlist, काष्ठा evsel *tracking_evsel)
+अणु
+	काष्ठा evsel *evsel;
 
-	if (tracking_evsel->tracking)
-		return;
+	अगर (tracking_evsel->tracking)
+		वापस;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel != tracking_evsel)
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel != tracking_evsel)
 			evsel->tracking = false;
-	}
+	पूर्ण
 
 	tracking_evsel->tracking = true;
-}
+पूर्ण
 
-struct evsel *evlist__find_evsel_by_str(struct evlist *evlist, const char *str)
-{
-	struct evsel *evsel;
+काष्ठा evsel *evlist__find_evsel_by_str(काष्ठा evlist *evlist, स्थिर अक्षर *str)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (!evsel->name)
-			continue;
-		if (strcmp(str, evsel->name) == 0)
-			return evsel;
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (!evsel->name)
+			जारी;
+		अगर (म_भेद(str, evsel->name) == 0)
+			वापस evsel;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void evlist__toggle_bkw_mmap(struct evlist *evlist, enum bkw_mmap_state state)
-{
-	enum bkw_mmap_state old_state = evlist->bkw_mmap_state;
-	enum action {
+व्योम evlist__toggle_bkw_mmap(काष्ठा evlist *evlist, क्रमागत bkw_mmap_state state)
+अणु
+	क्रमागत bkw_mmap_state old_state = evlist->bkw_mmap_state;
+	क्रमागत action अणु
 		NONE,
 		PAUSE,
 		RESUME,
-	} action = NONE;
+	पूर्ण action = NONE;
 
-	if (!evlist->overwrite_mmap)
-		return;
+	अगर (!evlist->overग_लिखो_mmap)
+		वापस;
 
-	switch (old_state) {
-	case BKW_MMAP_NOTREADY: {
-		if (state != BKW_MMAP_RUNNING)
-			goto state_err;
-		break;
-	}
-	case BKW_MMAP_RUNNING: {
-		if (state != BKW_MMAP_DATA_PENDING)
-			goto state_err;
+	चयन (old_state) अणु
+	हाल BKW_MMAP_NOTREADY: अणु
+		अगर (state != BKW_MMAP_RUNNING)
+			जाओ state_err;
+		अवरोध;
+	पूर्ण
+	हाल BKW_MMAP_RUNNING: अणु
+		अगर (state != BKW_MMAP_DATA_PENDING)
+			जाओ state_err;
 		action = PAUSE;
-		break;
-	}
-	case BKW_MMAP_DATA_PENDING: {
-		if (state != BKW_MMAP_EMPTY)
-			goto state_err;
-		break;
-	}
-	case BKW_MMAP_EMPTY: {
-		if (state != BKW_MMAP_RUNNING)
-			goto state_err;
+		अवरोध;
+	पूर्ण
+	हाल BKW_MMAP_DATA_PENDING: अणु
+		अगर (state != BKW_MMAP_EMPTY)
+			जाओ state_err;
+		अवरोध;
+	पूर्ण
+	हाल BKW_MMAP_EMPTY: अणु
+		अगर (state != BKW_MMAP_RUNNING)
+			जाओ state_err;
 		action = RESUME;
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		WARN_ONCE(1, "Shouldn't get there\n");
-	}
+	पूर्ण
 
 	evlist->bkw_mmap_state = state;
 
-	switch (action) {
-	case PAUSE:
-		evlist__pause(evlist);
-		break;
-	case RESUME:
+	चयन (action) अणु
+	हाल PAUSE:
+		evlist__छोड़ो(evlist);
+		अवरोध;
+	हाल RESUME:
 		evlist__resume(evlist);
-		break;
-	case NONE:
-	default:
-		break;
-	}
+		अवरोध;
+	हाल NONE:
+	शेष:
+		अवरोध;
+	पूर्ण
 
 state_err:
-	return;
-}
+	वापस;
+पूर्ण
 
-bool evlist__exclude_kernel(struct evlist *evlist)
-{
-	struct evsel *evsel;
+bool evlist__exclude_kernel(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (!evsel->core.attr.exclude_kernel)
-			return false;
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (!evsel->core.attr.exclude_kernel)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Events in data file are not collect in groups, but we still want
- * the group display. Set the artificial group and set the leader's
- * forced_leader flag to notify the display code.
+ * the group display. Set the artअगरicial group and set the leader's
+ * क्रमced_leader flag to notअगरy the display code.
  */
-void evlist__force_leader(struct evlist *evlist)
-{
-	if (!evlist->nr_groups) {
-		struct evsel *leader = evlist__first(evlist);
+व्योम evlist__क्रमce_leader(काष्ठा evlist *evlist)
+अणु
+	अगर (!evlist->nr_groups) अणु
+		काष्ठा evsel *leader = evlist__first(evlist);
 
 		evlist__set_leader(evlist);
-		leader->forced_leader = true;
-	}
-}
+		leader->क्रमced_leader = true;
+	पूर्ण
+पूर्ण
 
-struct evsel *evlist__reset_weak_group(struct evlist *evsel_list, struct evsel *evsel, bool close)
-{
-	struct evsel *c2, *leader;
-	bool is_open = true;
+काष्ठा evsel *evlist__reset_weak_group(काष्ठा evlist *evsel_list, काष्ठा evsel *evsel, bool बंद)
+अणु
+	काष्ठा evsel *c2, *leader;
+	bool is_खोलो = true;
 
 	leader = evsel->leader;
 	pr_debug("Weak group for %s/%d failed\n",
 			leader->name, leader->core.nr_members);
 
 	/*
-	 * for_each_group_member doesn't work here because it doesn't
+	 * क्रम_each_group_member करोesn't work here because it doesn't
 	 * include the first entry.
 	 */
-	evlist__for_each_entry(evsel_list, c2) {
-		if (c2 == evsel)
-			is_open = false;
-		if (c2->leader == leader) {
-			if (is_open && close)
-				perf_evsel__close(&c2->core);
+	evlist__क्रम_each_entry(evsel_list, c2) अणु
+		अगर (c2 == evsel)
+			is_खोलो = false;
+		अगर (c2->leader == leader) अणु
+			अगर (is_खोलो && बंद)
+				perf_evsel__बंद(&c2->core);
 			c2->leader = c2;
 			c2->core.nr_members = 0;
 			/*
-			 * Set this for all former members of the group
-			 * to indicate they get reopened.
+			 * Set this क्रम all क्रमmer members of the group
+			 * to indicate they get reखोलोed.
 			 */
 			c2->reset_group = true;
-		}
-	}
-	return leader;
-}
+		पूर्ण
+	पूर्ण
+	वापस leader;
+पूर्ण
 
-static int evlist__parse_control_fifo(const char *str, int *ctl_fd, int *ctl_fd_ack, bool *ctl_fd_close)
-{
-	char *s, *p;
-	int ret = 0, fd;
+अटल पूर्णांक evlist__parse_control_fअगरo(स्थिर अक्षर *str, पूर्णांक *ctl_fd, पूर्णांक *ctl_fd_ack, bool *ctl_fd_बंद)
+अणु
+	अक्षर *s, *p;
+	पूर्णांक ret = 0, fd;
 
-	if (strncmp(str, "fifo:", 5))
-		return -EINVAL;
+	अगर (म_भेदन(str, "fifo:", 5))
+		वापस -EINVAL;
 
 	str += 5;
-	if (!*str || *str == ',')
-		return -EINVAL;
+	अगर (!*str || *str == ',')
+		वापस -EINVAL;
 
 	s = strdup(str);
-	if (!s)
-		return -ENOMEM;
+	अगर (!s)
+		वापस -ENOMEM;
 
-	p = strchr(s, ',');
-	if (p)
+	p = म_अक्षर(s, ',');
+	अगर (p)
 		*p = '\0';
 
 	/*
-	 * O_RDWR avoids POLLHUPs which is necessary to allow the other
-	 * end of a FIFO to be repeatedly opened and closed.
+	 * O_RDWR aव्योमs POLLHUPs which is necessary to allow the other
+	 * end of a FIFO to be repeatedly खोलोed and बंदd.
 	 */
-	fd = open(s, O_RDWR | O_NONBLOCK | O_CLOEXEC);
-	if (fd < 0) {
+	fd = खोलो(s, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+	अगर (fd < 0) अणु
 		pr_err("Failed to open '%s'\n", s);
-		ret = -errno;
-		goto out_free;
-	}
+		ret = -त्रुटि_सं;
+		जाओ out_मुक्त;
+	पूर्ण
 	*ctl_fd = fd;
-	*ctl_fd_close = true;
+	*ctl_fd_बंद = true;
 
-	if (p && *++p) {
-		/* O_RDWR | O_NONBLOCK means the other end need not be open */
-		fd = open(p, O_RDWR | O_NONBLOCK | O_CLOEXEC);
-		if (fd < 0) {
+	अगर (p && *++p) अणु
+		/* O_RDWR | O_NONBLOCK means the other end need not be खोलो */
+		fd = खोलो(p, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+		अगर (fd < 0) अणु
 			pr_err("Failed to open '%s'\n", p);
-			ret = -errno;
-			goto out_free;
-		}
+			ret = -त्रुटि_सं;
+			जाओ out_मुक्त;
+		पूर्ण
 		*ctl_fd_ack = fd;
-	}
+	पूर्ण
 
-out_free:
-	free(s);
-	return ret;
-}
+out_मुक्त:
+	मुक्त(s);
+	वापस ret;
+पूर्ण
 
-int evlist__parse_control(const char *str, int *ctl_fd, int *ctl_fd_ack, bool *ctl_fd_close)
-{
-	char *comma = NULL, *endptr = NULL;
+पूर्णांक evlist__parse_control(स्थिर अक्षर *str, पूर्णांक *ctl_fd, पूर्णांक *ctl_fd_ack, bool *ctl_fd_बंद)
+अणु
+	अक्षर *comma = शून्य, *endptr = शून्य;
 
-	*ctl_fd_close = false;
+	*ctl_fd_बंद = false;
 
-	if (strncmp(str, "fd:", 3))
-		return evlist__parse_control_fifo(str, ctl_fd, ctl_fd_ack, ctl_fd_close);
+	अगर (म_भेदन(str, "fd:", 3))
+		वापस evlist__parse_control_fअगरo(str, ctl_fd, ctl_fd_ack, ctl_fd_बंद);
 
-	*ctl_fd = strtoul(&str[3], &endptr, 0);
-	if (endptr == &str[3])
-		return -EINVAL;
+	*ctl_fd = म_से_अदीर्घ(&str[3], &endptr, 0);
+	अगर (endptr == &str[3])
+		वापस -EINVAL;
 
-	comma = strchr(str, ',');
-	if (comma) {
-		if (endptr != comma)
-			return -EINVAL;
+	comma = म_अक्षर(str, ',');
+	अगर (comma) अणु
+		अगर (endptr != comma)
+			वापस -EINVAL;
 
-		*ctl_fd_ack = strtoul(comma + 1, &endptr, 0);
-		if (endptr == comma + 1 || *endptr != '\0')
-			return -EINVAL;
-	}
+		*ctl_fd_ack = म_से_अदीर्घ(comma + 1, &endptr, 0);
+		अगर (endptr == comma + 1 || *endptr != '\0')
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void evlist__close_control(int ctl_fd, int ctl_fd_ack, bool *ctl_fd_close)
-{
-	if (*ctl_fd_close) {
-		*ctl_fd_close = false;
-		close(ctl_fd);
-		if (ctl_fd_ack >= 0)
-			close(ctl_fd_ack);
-	}
-}
+व्योम evlist__बंद_control(पूर्णांक ctl_fd, पूर्णांक ctl_fd_ack, bool *ctl_fd_बंद)
+अणु
+	अगर (*ctl_fd_बंद) अणु
+		*ctl_fd_बंद = false;
+		बंद(ctl_fd);
+		अगर (ctl_fd_ack >= 0)
+			बंद(ctl_fd_ack);
+	पूर्ण
+पूर्ण
 
-int evlist__initialize_ctlfd(struct evlist *evlist, int fd, int ack)
-{
-	if (fd == -1) {
+पूर्णांक evlist__initialize_ctlfd(काष्ठा evlist *evlist, पूर्णांक fd, पूर्णांक ack)
+अणु
+	अगर (fd == -1) अणु
 		pr_debug("Control descriptor is not initialized\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	evlist->ctl_fd.pos = perf_evlist__add_pollfd(&evlist->core, fd, NULL, POLLIN,
+	evlist->ctl_fd.pos = perf_evlist__add_pollfd(&evlist->core, fd, शून्य, POLLIN,
 						     fdarray_flag__nonfilterable);
-	if (evlist->ctl_fd.pos < 0) {
+	अगर (evlist->ctl_fd.pos < 0) अणु
 		evlist->ctl_fd.pos = -1;
 		pr_err("Failed to add ctl fd entry: %m\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	evlist->ctl_fd.fd = fd;
 	evlist->ctl_fd.ack = ack;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool evlist__ctlfd_initialized(struct evlist *evlist)
-{
-	return evlist->ctl_fd.pos >= 0;
-}
+bool evlist__ctlfd_initialized(काष्ठा evlist *evlist)
+अणु
+	वापस evlist->ctl_fd.pos >= 0;
+पूर्ण
 
-int evlist__finalize_ctlfd(struct evlist *evlist)
-{
-	struct pollfd *entries = evlist->core.pollfd.entries;
+पूर्णांक evlist__finalize_ctlfd(काष्ठा evlist *evlist)
+अणु
+	काष्ठा pollfd *entries = evlist->core.pollfd.entries;
 
-	if (!evlist__ctlfd_initialized(evlist))
-		return 0;
+	अगर (!evlist__ctlfd_initialized(evlist))
+		वापस 0;
 
 	entries[evlist->ctl_fd.pos].fd = -1;
 	entries[evlist->ctl_fd.pos].events = 0;
@@ -1915,249 +1916,249 @@ int evlist__finalize_ctlfd(struct evlist *evlist)
 	evlist->ctl_fd.ack = -1;
 	evlist->ctl_fd.fd = -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evlist__ctlfd_recv(struct evlist *evlist, enum evlist_ctl_cmd *cmd,
-			      char *cmd_data, size_t data_size)
-{
-	int err;
-	char c;
-	size_t bytes_read = 0;
+अटल पूर्णांक evlist__ctlfd_recv(काष्ठा evlist *evlist, क्रमागत evlist_ctl_cmd *cmd,
+			      अक्षर *cmd_data, माप_प्रकार data_size)
+अणु
+	पूर्णांक err;
+	अक्षर c;
+	माप_प्रकार bytes_पढ़ो = 0;
 
 	*cmd = EVLIST_CTL_CMD_UNSUPPORTED;
-	memset(cmd_data, 0, data_size);
+	स_रखो(cmd_data, 0, data_size);
 	data_size--;
 
-	do {
-		err = read(evlist->ctl_fd.fd, &c, 1);
-		if (err > 0) {
-			if (c == '\n' || c == '\0')
-				break;
-			cmd_data[bytes_read++] = c;
-			if (bytes_read == data_size)
-				break;
-			continue;
-		} else if (err == -1) {
-			if (errno == EINTR)
-				continue;
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
+	करो अणु
+		err = पढ़ो(evlist->ctl_fd.fd, &c, 1);
+		अगर (err > 0) अणु
+			अगर (c == '\n' || c == '\0')
+				अवरोध;
+			cmd_data[bytes_पढ़ो++] = c;
+			अगर (bytes_पढ़ो == data_size)
+				अवरोध;
+			जारी;
+		पूर्ण अन्यथा अगर (err == -1) अणु
+			अगर (त्रुटि_सं == EINTR)
+				जारी;
+			अगर (त्रुटि_सं == EAGAIN || त्रुटि_सं == EWOULDBLOCK)
 				err = 0;
-			else
+			अन्यथा
 				pr_err("Failed to read from ctlfd %d: %m\n", evlist->ctl_fd.fd);
-		}
-		break;
-	} while (1);
+		पूर्ण
+		अवरोध;
+	पूर्ण जबतक (1);
 
 	pr_debug("Message from ctl_fd: \"%s%s\"\n", cmd_data,
-		 bytes_read == data_size ? "" : c == '\n' ? "\\n" : "\\0");
+		 bytes_पढ़ो == data_size ? "" : c == '\n' ? "\\n" : "\\0");
 
-	if (bytes_read > 0) {
-		if (!strncmp(cmd_data, EVLIST_CTL_CMD_ENABLE_TAG,
-			     (sizeof(EVLIST_CTL_CMD_ENABLE_TAG)-1))) {
+	अगर (bytes_पढ़ो > 0) अणु
+		अगर (!म_भेदन(cmd_data, EVLIST_CTL_CMD_ENABLE_TAG,
+			     (माप(EVLIST_CTL_CMD_ENABLE_TAG)-1))) अणु
 			*cmd = EVLIST_CTL_CMD_ENABLE;
-		} else if (!strncmp(cmd_data, EVLIST_CTL_CMD_DISABLE_TAG,
-				    (sizeof(EVLIST_CTL_CMD_DISABLE_TAG)-1))) {
+		पूर्ण अन्यथा अगर (!म_भेदन(cmd_data, EVLIST_CTL_CMD_DISABLE_TAG,
+				    (माप(EVLIST_CTL_CMD_DISABLE_TAG)-1))) अणु
 			*cmd = EVLIST_CTL_CMD_DISABLE;
-		} else if (!strncmp(cmd_data, EVLIST_CTL_CMD_SNAPSHOT_TAG,
-				    (sizeof(EVLIST_CTL_CMD_SNAPSHOT_TAG)-1))) {
+		पूर्ण अन्यथा अगर (!म_भेदन(cmd_data, EVLIST_CTL_CMD_SNAPSHOT_TAG,
+				    (माप(EVLIST_CTL_CMD_SNAPSHOT_TAG)-1))) अणु
 			*cmd = EVLIST_CTL_CMD_SNAPSHOT;
 			pr_debug("is snapshot\n");
-		} else if (!strncmp(cmd_data, EVLIST_CTL_CMD_EVLIST_TAG,
-				    (sizeof(EVLIST_CTL_CMD_EVLIST_TAG)-1))) {
+		पूर्ण अन्यथा अगर (!म_भेदन(cmd_data, EVLIST_CTL_CMD_EVLIST_TAG,
+				    (माप(EVLIST_CTL_CMD_EVLIST_TAG)-1))) अणु
 			*cmd = EVLIST_CTL_CMD_EVLIST;
-		} else if (!strncmp(cmd_data, EVLIST_CTL_CMD_STOP_TAG,
-				    (sizeof(EVLIST_CTL_CMD_STOP_TAG)-1))) {
+		पूर्ण अन्यथा अगर (!म_भेदन(cmd_data, EVLIST_CTL_CMD_STOP_TAG,
+				    (माप(EVLIST_CTL_CMD_STOP_TAG)-1))) अणु
 			*cmd = EVLIST_CTL_CMD_STOP;
-		} else if (!strncmp(cmd_data, EVLIST_CTL_CMD_PING_TAG,
-				    (sizeof(EVLIST_CTL_CMD_PING_TAG)-1))) {
+		पूर्ण अन्यथा अगर (!म_भेदन(cmd_data, EVLIST_CTL_CMD_PING_TAG,
+				    (माप(EVLIST_CTL_CMD_PING_TAG)-1))) अणु
 			*cmd = EVLIST_CTL_CMD_PING;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return bytes_read ? (int)bytes_read : err;
-}
+	वापस bytes_पढ़ो ? (पूर्णांक)bytes_पढ़ो : err;
+पूर्ण
 
-int evlist__ctlfd_ack(struct evlist *evlist)
-{
-	int err;
+पूर्णांक evlist__ctlfd_ack(काष्ठा evlist *evlist)
+अणु
+	पूर्णांक err;
 
-	if (evlist->ctl_fd.ack == -1)
-		return 0;
+	अगर (evlist->ctl_fd.ack == -1)
+		वापस 0;
 
-	err = write(evlist->ctl_fd.ack, EVLIST_CTL_CMD_ACK_TAG,
-		    sizeof(EVLIST_CTL_CMD_ACK_TAG));
-	if (err == -1)
+	err = ग_लिखो(evlist->ctl_fd.ack, EVLIST_CTL_CMD_ACK_TAG,
+		    माप(EVLIST_CTL_CMD_ACK_TAG));
+	अगर (err == -1)
 		pr_err("failed to write to ctl_ack_fd %d: %m\n", evlist->ctl_fd.ack);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int get_cmd_arg(char *cmd_data, size_t cmd_size, char **arg)
-{
-	char *data = cmd_data + cmd_size;
+अटल पूर्णांक get_cmd_arg(अक्षर *cmd_data, माप_प्रकार cmd_size, अक्षर **arg)
+अणु
+	अक्षर *data = cmd_data + cmd_size;
 
 	/* no argument */
-	if (!*data)
-		return 0;
+	अगर (!*data)
+		वापस 0;
 
 	/* there's argument */
-	if (*data == ' ') {
+	अगर (*data == ' ') अणु
 		*arg = data + 1;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* malformed */
-	return -1;
-}
+	/* malक्रमmed */
+	वापस -1;
+पूर्ण
 
-static int evlist__ctlfd_enable(struct evlist *evlist, char *cmd_data, bool enable)
-{
-	struct evsel *evsel;
-	char *name;
-	int err;
+अटल पूर्णांक evlist__ctlfd_enable(काष्ठा evlist *evlist, अक्षर *cmd_data, bool enable)
+अणु
+	काष्ठा evsel *evsel;
+	अक्षर *name;
+	पूर्णांक err;
 
 	err = get_cmd_arg(cmd_data,
-			  enable ? sizeof(EVLIST_CTL_CMD_ENABLE_TAG) - 1 :
-				   sizeof(EVLIST_CTL_CMD_DISABLE_TAG) - 1,
+			  enable ? माप(EVLIST_CTL_CMD_ENABLE_TAG) - 1 :
+				   माप(EVLIST_CTL_CMD_DISABLE_TAG) - 1,
 			  &name);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_info("failed: wrong command\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (err) {
+	अगर (err) अणु
 		evsel = evlist__find_evsel_by_str(evlist, name);
-		if (evsel) {
-			if (enable)
+		अगर (evsel) अणु
+			अगर (enable)
 				evlist__enable_evsel(evlist, name);
-			else
+			अन्यथा
 				evlist__disable_evsel(evlist, name);
 			pr_info("Event %s %s\n", evsel->name,
 				enable ? "enabled" : "disabled");
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_info("failed: can't find '%s' event\n", name);
-		}
-	} else {
-		if (enable) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (enable) अणु
 			evlist__enable(evlist);
 			pr_info(EVLIST_ENABLED_MSG);
-		} else {
+		पूर्ण अन्यथा अणु
 			evlist__disable(evlist);
 			pr_info(EVLIST_DISABLED_MSG);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evlist__ctlfd_list(struct evlist *evlist, char *cmd_data)
-{
-	struct perf_attr_details details = { .verbose = false, };
-	struct evsel *evsel;
-	char *arg;
-	int err;
+अटल पूर्णांक evlist__ctlfd_list(काष्ठा evlist *evlist, अक्षर *cmd_data)
+अणु
+	काष्ठा perf_attr_details details = अणु .verbose = false, पूर्ण;
+	काष्ठा evsel *evsel;
+	अक्षर *arg;
+	पूर्णांक err;
 
 	err = get_cmd_arg(cmd_data,
-			  sizeof(EVLIST_CTL_CMD_EVLIST_TAG) - 1,
+			  माप(EVLIST_CTL_CMD_EVLIST_TAG) - 1,
 			  &arg);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_info("failed: wrong command\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (err) {
-		if (!strcmp(arg, "-v")) {
+	अगर (err) अणु
+		अगर (!म_भेद(arg, "-v")) अणु
 			details.verbose = true;
-		} else if (!strcmp(arg, "-g")) {
+		पूर्ण अन्यथा अगर (!म_भेद(arg, "-g")) अणु
 			details.event_group = true;
-		} else if (!strcmp(arg, "-F")) {
+		पूर्ण अन्यथा अगर (!म_भेद(arg, "-F")) अणु
 			details.freq = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_info("failed: wrong command\n");
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	evlist__for_each_entry(evlist, evsel)
-		evsel__fprintf(evsel, &details, stderr);
+	evlist__क्रम_each_entry(evlist, evsel)
+		evsel__ख_लिखो(evsel, &details, मानक_त्रुटि);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int evlist__ctlfd_process(struct evlist *evlist, enum evlist_ctl_cmd *cmd)
-{
-	int err = 0;
-	char cmd_data[EVLIST_CTL_CMD_MAX_LEN];
-	int ctlfd_pos = evlist->ctl_fd.pos;
-	struct pollfd *entries = evlist->core.pollfd.entries;
+पूर्णांक evlist__ctlfd_process(काष्ठा evlist *evlist, क्रमागत evlist_ctl_cmd *cmd)
+अणु
+	पूर्णांक err = 0;
+	अक्षर cmd_data[EVLIST_CTL_CMD_MAX_LEN];
+	पूर्णांक ctlfd_pos = evlist->ctl_fd.pos;
+	काष्ठा pollfd *entries = evlist->core.pollfd.entries;
 
-	if (!evlist__ctlfd_initialized(evlist) || !entries[ctlfd_pos].revents)
-		return 0;
+	अगर (!evlist__ctlfd_initialized(evlist) || !entries[ctlfd_pos].revents)
+		वापस 0;
 
-	if (entries[ctlfd_pos].revents & POLLIN) {
+	अगर (entries[ctlfd_pos].revents & POLLIN) अणु
 		err = evlist__ctlfd_recv(evlist, cmd, cmd_data,
 					 EVLIST_CTL_CMD_MAX_LEN);
-		if (err > 0) {
-			switch (*cmd) {
-			case EVLIST_CTL_CMD_ENABLE:
-			case EVLIST_CTL_CMD_DISABLE:
+		अगर (err > 0) अणु
+			चयन (*cmd) अणु
+			हाल EVLIST_CTL_CMD_ENABLE:
+			हाल EVLIST_CTL_CMD_DISABLE:
 				err = evlist__ctlfd_enable(evlist, cmd_data,
 							   *cmd == EVLIST_CTL_CMD_ENABLE);
-				break;
-			case EVLIST_CTL_CMD_EVLIST:
+				अवरोध;
+			हाल EVLIST_CTL_CMD_EVLIST:
 				err = evlist__ctlfd_list(evlist, cmd_data);
-				break;
-			case EVLIST_CTL_CMD_SNAPSHOT:
-			case EVLIST_CTL_CMD_STOP:
-			case EVLIST_CTL_CMD_PING:
-				break;
-			case EVLIST_CTL_CMD_ACK:
-			case EVLIST_CTL_CMD_UNSUPPORTED:
-			default:
+				अवरोध;
+			हाल EVLIST_CTL_CMD_SNAPSHOT:
+			हाल EVLIST_CTL_CMD_STOP:
+			हाल EVLIST_CTL_CMD_PING:
+				अवरोध;
+			हाल EVLIST_CTL_CMD_ACK:
+			हाल EVLIST_CTL_CMD_UNSUPPORTED:
+			शेष:
 				pr_debug("ctlfd: unsupported %d\n", *cmd);
-				break;
-			}
-			if (!(*cmd == EVLIST_CTL_CMD_ACK || *cmd == EVLIST_CTL_CMD_UNSUPPORTED ||
+				अवरोध;
+			पूर्ण
+			अगर (!(*cmd == EVLIST_CTL_CMD_ACK || *cmd == EVLIST_CTL_CMD_UNSUPPORTED ||
 			      *cmd == EVLIST_CTL_CMD_SNAPSHOT))
 				evlist__ctlfd_ack(evlist);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (entries[ctlfd_pos].revents & (POLLHUP | POLLERR))
+	अगर (entries[ctlfd_pos].revents & (POLLHUP | POLLERR))
 		evlist__finalize_ctlfd(evlist);
-	else
+	अन्यथा
 		entries[ctlfd_pos].revents = 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct evsel *evlist__find_evsel(struct evlist *evlist, int idx)
-{
-	struct evsel *evsel;
+काष्ठा evsel *evlist__find_evsel(काष्ठा evlist *evlist, पूर्णांक idx)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->idx == idx)
-			return evsel;
-	}
-	return NULL;
-}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->idx == idx)
+			वापस evsel;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-int evlist__scnprintf_evsels(struct evlist *evlist, size_t size, char *bf)
-{
-	struct evsel *evsel;
-	int printed = 0;
+पूर्णांक evlist__scnम_लिखो_evsels(काष्ठा evlist *evlist, माप_प्रकार size, अक्षर *bf)
+अणु
+	काष्ठा evsel *evsel;
+	पूर्णांक prपूर्णांकed = 0;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel__is_dummy_event(evsel))
-			continue;
-		if (size > (strlen(evsel__name(evsel)) + (printed ? 2 : 1))) {
-			printed += scnprintf(bf + printed, size - printed, "%s%s", printed ? "," : "", evsel__name(evsel));
-		} else {
-			printed += scnprintf(bf + printed, size - printed, "%s...", printed ? "," : "");
-			break;
-		}
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel__is_dummy_event(evsel))
+			जारी;
+		अगर (size > (म_माप(evsel__name(evsel)) + (prपूर्णांकed ? 2 : 1))) अणु
+			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s", prपूर्णांकed ? "," : "", evsel__name(evsel));
+		पूर्ण अन्यथा अणु
+			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s...", prपूर्णांकed ? "," : "");
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण

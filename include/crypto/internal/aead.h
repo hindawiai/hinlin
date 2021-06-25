@@ -1,171 +1,172 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * AEAD: Authenticated Encryption with Associated Data
  * 
- * Copyright (c) 2007-2015 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2007-2015 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#ifndef _CRYPTO_INTERNAL_AEAD_H
-#define _CRYPTO_INTERNAL_AEAD_H
+#अगर_अघोषित _CRYPTO_INTERNAL_AEAD_H
+#घोषणा _CRYPTO_INTERNAL_AEAD_H
 
-#include <crypto/aead.h>
-#include <crypto/algapi.h>
-#include <linux/stddef.h>
-#include <linux/types.h>
+#समावेश <crypto/aead.h>
+#समावेश <crypto/algapi.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/types.h>
 
-struct rtattr;
+काष्ठा rtattr;
 
-struct aead_instance {
-	void (*free)(struct aead_instance *inst);
-	union {
-		struct {
-			char head[offsetof(struct aead_alg, base)];
-			struct crypto_instance base;
-		} s;
-		struct aead_alg alg;
-	};
-};
+काष्ठा aead_instance अणु
+	व्योम (*मुक्त)(काष्ठा aead_instance *inst);
+	जोड़ अणु
+		काष्ठा अणु
+			अक्षर head[दुरत्व(काष्ठा aead_alg, base)];
+			काष्ठा crypto_instance base;
+		पूर्ण s;
+		काष्ठा aead_alg alg;
+	पूर्ण;
+पूर्ण;
 
-struct crypto_aead_spawn {
-	struct crypto_spawn base;
-};
+काष्ठा crypto_aead_spawn अणु
+	काष्ठा crypto_spawn base;
+पूर्ण;
 
-struct aead_queue {
-	struct crypto_queue base;
-};
+काष्ठा aead_queue अणु
+	काष्ठा crypto_queue base;
+पूर्ण;
 
-static inline void *crypto_aead_ctx(struct crypto_aead *tfm)
-{
-	return crypto_tfm_ctx(&tfm->base);
-}
+अटल अंतरभूत व्योम *crypto_aead_ctx(काष्ठा crypto_aead *tfm)
+अणु
+	वापस crypto_tfm_ctx(&tfm->base);
+पूर्ण
 
-static inline struct crypto_instance *aead_crypto_instance(
-	struct aead_instance *inst)
-{
-	return container_of(&inst->alg.base, struct crypto_instance, alg);
-}
+अटल अंतरभूत काष्ठा crypto_instance *aead_crypto_instance(
+	काष्ठा aead_instance *inst)
+अणु
+	वापस container_of(&inst->alg.base, काष्ठा crypto_instance, alg);
+पूर्ण
 
-static inline struct aead_instance *aead_instance(struct crypto_instance *inst)
-{
-	return container_of(&inst->alg, struct aead_instance, alg.base);
-}
+अटल अंतरभूत काष्ठा aead_instance *aead_instance(काष्ठा crypto_instance *inst)
+अणु
+	वापस container_of(&inst->alg, काष्ठा aead_instance, alg.base);
+पूर्ण
 
-static inline struct aead_instance *aead_alg_instance(struct crypto_aead *aead)
-{
-	return aead_instance(crypto_tfm_alg_instance(&aead->base));
-}
+अटल अंतरभूत काष्ठा aead_instance *aead_alg_instance(काष्ठा crypto_aead *aead)
+अणु
+	वापस aead_instance(crypto_tfm_alg_instance(&aead->base));
+पूर्ण
 
-static inline void *aead_instance_ctx(struct aead_instance *inst)
-{
-	return crypto_instance_ctx(aead_crypto_instance(inst));
-}
+अटल अंतरभूत व्योम *aead_instance_ctx(काष्ठा aead_instance *inst)
+अणु
+	वापस crypto_instance_ctx(aead_crypto_instance(inst));
+पूर्ण
 
-static inline void *aead_request_ctx(struct aead_request *req)
-{
-	return req->__ctx;
-}
+अटल अंतरभूत व्योम *aead_request_ctx(काष्ठा aead_request *req)
+अणु
+	वापस req->__ctx;
+पूर्ण
 
-static inline void aead_request_complete(struct aead_request *req, int err)
-{
+अटल अंतरभूत व्योम aead_request_complete(काष्ठा aead_request *req, पूर्णांक err)
+अणु
 	req->base.complete(&req->base, err);
-}
+पूर्ण
 
-static inline u32 aead_request_flags(struct aead_request *req)
-{
-	return req->base.flags;
-}
+अटल अंतरभूत u32 aead_request_flags(काष्ठा aead_request *req)
+अणु
+	वापस req->base.flags;
+पूर्ण
 
-static inline struct aead_request *aead_request_cast(
-	struct crypto_async_request *req)
-{
-	return container_of(req, struct aead_request, base);
-}
+अटल अंतरभूत काष्ठा aead_request *aead_request_cast(
+	काष्ठा crypto_async_request *req)
+अणु
+	वापस container_of(req, काष्ठा aead_request, base);
+पूर्ण
 
-int crypto_grab_aead(struct crypto_aead_spawn *spawn,
-		     struct crypto_instance *inst,
-		     const char *name, u32 type, u32 mask);
+पूर्णांक crypto_grab_aead(काष्ठा crypto_aead_spawn *spawn,
+		     काष्ठा crypto_instance *inst,
+		     स्थिर अक्षर *name, u32 type, u32 mask);
 
-static inline void crypto_drop_aead(struct crypto_aead_spawn *spawn)
-{
+अटल अंतरभूत व्योम crypto_drop_aead(काष्ठा crypto_aead_spawn *spawn)
+अणु
 	crypto_drop_spawn(&spawn->base);
-}
+पूर्ण
 
-static inline struct aead_alg *crypto_spawn_aead_alg(
-	struct crypto_aead_spawn *spawn)
-{
-	return container_of(spawn->base.alg, struct aead_alg, base);
-}
+अटल अंतरभूत काष्ठा aead_alg *crypto_spawn_aead_alg(
+	काष्ठा crypto_aead_spawn *spawn)
+अणु
+	वापस container_of(spawn->base.alg, काष्ठा aead_alg, base);
+पूर्ण
 
-static inline struct crypto_aead *crypto_spawn_aead(
-	struct crypto_aead_spawn *spawn)
-{
-	return crypto_spawn_tfm2(&spawn->base);
-}
+अटल अंतरभूत काष्ठा crypto_aead *crypto_spawn_aead(
+	काष्ठा crypto_aead_spawn *spawn)
+अणु
+	वापस crypto_spawn_tfm2(&spawn->base);
+पूर्ण
 
-static inline void crypto_aead_set_reqsize(struct crypto_aead *aead,
-					   unsigned int reqsize)
-{
+अटल अंतरभूत व्योम crypto_aead_set_reqsize(काष्ठा crypto_aead *aead,
+					   अचिन्हित पूर्णांक reqsize)
+अणु
 	aead->reqsize = reqsize;
-}
+पूर्ण
 
-static inline void aead_init_queue(struct aead_queue *queue,
-				   unsigned int max_qlen)
-{
+अटल अंतरभूत व्योम aead_init_queue(काष्ठा aead_queue *queue,
+				   अचिन्हित पूर्णांक max_qlen)
+अणु
 	crypto_init_queue(&queue->base, max_qlen);
-}
+पूर्ण
 
-static inline int aead_enqueue_request(struct aead_queue *queue,
-				       struct aead_request *request)
-{
-	return crypto_enqueue_request(&queue->base, &request->base);
-}
+अटल अंतरभूत पूर्णांक aead_enqueue_request(काष्ठा aead_queue *queue,
+				       काष्ठा aead_request *request)
+अणु
+	वापस crypto_enqueue_request(&queue->base, &request->base);
+पूर्ण
 
-static inline struct aead_request *aead_dequeue_request(
-	struct aead_queue *queue)
-{
-	struct crypto_async_request *req;
+अटल अंतरभूत काष्ठा aead_request *aead_dequeue_request(
+	काष्ठा aead_queue *queue)
+अणु
+	काष्ठा crypto_async_request *req;
 
 	req = crypto_dequeue_request(&queue->base);
 
-	return req ? container_of(req, struct aead_request, base) : NULL;
-}
+	वापस req ? container_of(req, काष्ठा aead_request, base) : शून्य;
+पूर्ण
 
-static inline struct aead_request *aead_get_backlog(struct aead_queue *queue)
-{
-	struct crypto_async_request *req;
+अटल अंतरभूत काष्ठा aead_request *aead_get_backlog(काष्ठा aead_queue *queue)
+अणु
+	काष्ठा crypto_async_request *req;
 
 	req = crypto_get_backlog(&queue->base);
 
-	return req ? container_of(req, struct aead_request, base) : NULL;
-}
+	वापस req ? container_of(req, काष्ठा aead_request, base) : शून्य;
+पूर्ण
 
-static inline unsigned int crypto_aead_alg_chunksize(struct aead_alg *alg)
-{
-	return alg->chunksize;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक crypto_aead_alg_chunksize(काष्ठा aead_alg *alg)
+अणु
+	वापस alg->chunksize;
+पूर्ण
 
 /**
  * crypto_aead_chunksize() - obtain chunk size
  * @tfm: cipher handle
  *
- * The block size is set to one for ciphers such as CCM.  However,
+ * The block size is set to one क्रम ciphers such as CCM.  However,
  * you still need to provide incremental updates in multiples of
- * the underlying block size as the IV does not have sub-block
+ * the underlying block size as the IV करोes not have sub-block
  * granularity.  This is known in this API as the chunk size.
  *
  * Return: chunk size in bytes
  */
-static inline unsigned int crypto_aead_chunksize(struct crypto_aead *tfm)
-{
-	return crypto_aead_alg_chunksize(crypto_aead_alg(tfm));
-}
+अटल अंतरभूत अचिन्हित पूर्णांक crypto_aead_chunksize(काष्ठा crypto_aead *tfm)
+अणु
+	वापस crypto_aead_alg_chunksize(crypto_aead_alg(tfm));
+पूर्ण
 
-int crypto_register_aead(struct aead_alg *alg);
-void crypto_unregister_aead(struct aead_alg *alg);
-int crypto_register_aeads(struct aead_alg *algs, int count);
-void crypto_unregister_aeads(struct aead_alg *algs, int count);
-int aead_register_instance(struct crypto_template *tmpl,
-			   struct aead_instance *inst);
+पूर्णांक crypto_रेजिस्टर_aead(काष्ठा aead_alg *alg);
+व्योम crypto_unरेजिस्टर_aead(काष्ठा aead_alg *alg);
+पूर्णांक crypto_रेजिस्टर_aeads(काष्ठा aead_alg *algs, पूर्णांक count);
+व्योम crypto_unरेजिस्टर_aeads(काष्ठा aead_alg *algs, पूर्णांक count);
+पूर्णांक aead_रेजिस्टर_instance(काष्ठा crypto_ढाँचा *पंचांगpl,
+			   काष्ठा aead_instance *inst);
 
-#endif	/* _CRYPTO_INTERNAL_AEAD_H */
+#पूर्ण_अगर	/* _CRYPTO_INTERNAL_AEAD_H */
 

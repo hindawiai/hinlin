@@ -1,21 +1,22 @@
-#include "vmlinux.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_core_read.h>
+<शैली गुरु>
+#समावेश "vmlinux.h"
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_core_पढ़ो.h>
 
-const char LICENSE[] SEC("license") = "GPL";
+स्थिर अक्षर LICENSE[] SEC("license") = "GPL";
 
-__attribute__((unused)) __noinline int unused1(int x)
-{
-	return x + 1;
-}
+__attribute__((unused)) __noअंतरभूत पूर्णांक unused1(पूर्णांक x)
+अणु
+	वापस x + 1;
+पूर्ण
 
-static __attribute__((unused)) __noinline int unused2(int x)
-{
-	return x + 2;
-}
+अटल __attribute__((unused)) __noअंतरभूत पूर्णांक unused2(पूर्णांक x)
+अणु
+	वापस x + 2;
+पूर्ण
 
 SEC("raw_tp/sys_enter")
-int main_prog(void *ctx)
-{
-	return 0;
-}
+पूर्णांक मुख्य_prog(व्योम *ctx)
+अणु
+	वापस 0;
+पूर्ण

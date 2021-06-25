@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 
-#include "util/bpf_map.h"
-#include <bpf/bpf.h>
-#include <bpf/libbpf.h>
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <unistd.h>
+#समावेश "util/bpf_map.h"
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/libbpf.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <stdbool.h>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
 
-static bool bpf_map_def__is_per_cpu(const struct bpf_map_def *def)
-{
-	return def->type == BPF_MAP_TYPE_PERCPU_HASH ||
+अटल bool bpf_map_def__is_per_cpu(स्थिर काष्ठा bpf_map_def *def)
+अणु
+	वापस def->type == BPF_MAP_TYPE_PERCPU_HASH ||
 	       def->type == BPF_MAP_TYPE_PERCPU_ARRAY ||
 	       def->type == BPF_MAP_TYPE_LRU_PERCPU_HASH ||
 	       def->type == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE;
-}
+पूर्ण
 
-static void *bpf_map_def__alloc_value(const struct bpf_map_def *def)
-{
-	if (bpf_map_def__is_per_cpu(def))
-		return malloc(round_up(def->value_size, 8) * sysconf(_SC_NPROCESSORS_CONF));
+अटल व्योम *bpf_map_def__alloc_value(स्थिर काष्ठा bpf_map_def *def)
+अणु
+	अगर (bpf_map_def__is_per_cpu(def))
+		वापस दो_स्मृति(round_up(def->value_size, 8) * sysconf(_SC_NPROCESSORS_CONF));
 
-	return malloc(def->value_size);
-}
+	वापस दो_स्मृति(def->value_size);
+पूर्ण
 
-int bpf_map__fprintf(struct bpf_map *map, FILE *fp)
-{
-	const struct bpf_map_def *def = bpf_map__def(map);
-	void *prev_key = NULL, *key, *value;
-	int fd = bpf_map__fd(map), err;
-	int printed = 0;
+पूर्णांक bpf_map__ख_लिखो(काष्ठा bpf_map *map, खाता *fp)
+अणु
+	स्थिर काष्ठा bpf_map_def *def = bpf_map__def(map);
+	व्योम *prev_key = शून्य, *key, *value;
+	पूर्णांक fd = bpf_map__fd(map), err;
+	पूर्णांक prपूर्णांकed = 0;
 
-	if (fd < 0)
-		return fd;
+	अगर (fd < 0)
+		वापस fd;
 
-	if (IS_ERR(def))
-		return PTR_ERR(def);
+	अगर (IS_ERR(def))
+		वापस PTR_ERR(def);
 
 	err = -ENOMEM;
-	key = malloc(def->key_size);
-	if (key == NULL)
-		goto out;
+	key = दो_स्मृति(def->key_size);
+	अगर (key == शून्य)
+		जाओ out;
 
 	value = bpf_map_def__alloc_value(def);
-	if (value == NULL)
-		goto out_free_key;
+	अगर (value == शून्य)
+		जाओ out_मुक्त_key;
 
-	while ((err = bpf_map_get_next_key(fd, prev_key, key) == 0)) {
-		int intkey = *(int *)key;
+	जबतक ((err = bpf_map_get_next_key(fd, prev_key, key) == 0)) अणु
+		पूर्णांक पूर्णांकkey = *(पूर्णांक *)key;
 
-		if (!bpf_map_lookup_elem(fd, key, value)) {
+		अगर (!bpf_map_lookup_elem(fd, key, value)) अणु
 			bool boolval = *(bool *)value;
-			if (boolval)
-				printed += fprintf(fp, "[%d] = %d,\n", intkey, boolval);
-		} else {
-			printed += fprintf(fp, "[%d] = ERROR,\n", intkey);
-		}
+			अगर (boolval)
+				prपूर्णांकed += ख_लिखो(fp, "[%d] = %d,\n", पूर्णांकkey, boolval);
+		पूर्ण अन्यथा अणु
+			prपूर्णांकed += ख_लिखो(fp, "[%d] = ERROR,\n", पूर्णांकkey);
+		पूर्ण
 
 		prev_key = key;
-	}
+	पूर्ण
 
-	if (err == ENOENT)
-		err = printed;
+	अगर (err == ENOENT)
+		err = prपूर्णांकed;
 
-	free(value);
-out_free_key:
-	free(key);
+	मुक्त(value);
+out_मुक्त_key:
+	मुक्त(key);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण

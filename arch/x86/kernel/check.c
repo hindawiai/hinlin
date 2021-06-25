@@ -1,187 +1,188 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/kthread.h>
-#include <linux/workqueue.h>
-#include <linux/memblock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/memblock.h>
 
-#include <asm/proto.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/setup.h>
 
 /*
  * Some BIOSes seem to corrupt the low 64k of memory during events
  * like suspend/resume and unplugging an HDMI cable.  Reserve all
- * remaining free memory in that area and fill it with a distinct
+ * reमुख्यing मुक्त memory in that area and fill it with a distinct
  * pattern.
  */
-#define MAX_SCAN_AREAS	8
+#घोषणा MAX_SCAN_AREAS	8
 
-static int __read_mostly memory_corruption_check = -1;
+अटल पूर्णांक __पढ़ो_mostly memory_corruption_check = -1;
 
-static unsigned __read_mostly corruption_check_size = 64*1024;
-static unsigned __read_mostly corruption_check_period = 60; /* seconds */
+अटल अचिन्हित __पढ़ो_mostly corruption_check_size = 64*1024;
+अटल अचिन्हित __पढ़ो_mostly corruption_check_period = 60; /* seconds */
 
-static struct scan_area {
+अटल काष्ठा scan_area अणु
 	u64 addr;
 	u64 size;
-} scan_areas[MAX_SCAN_AREAS];
-static int num_scan_areas;
+पूर्ण scan_areas[MAX_SCAN_AREAS];
+अटल पूर्णांक num_scan_areas;
 
-static __init int set_corruption_check(char *arg)
-{
-	ssize_t ret;
-	unsigned long val;
+अटल __init पूर्णांक set_corruption_check(अक्षर *arg)
+अणु
+	sमाप_प्रकार ret;
+	अचिन्हित दीर्घ val;
 
-	if (!arg) {
+	अगर (!arg) अणु
 		pr_err("memory_corruption_check config string not provided\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = kstrtoul(arg, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(arg, 10, &val);
+	अगर (ret)
+		वापस ret;
 
 	memory_corruption_check = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("memory_corruption_check", set_corruption_check);
 
-static __init int set_corruption_check_period(char *arg)
-{
-	ssize_t ret;
-	unsigned long val;
+अटल __init पूर्णांक set_corruption_check_period(अक्षर *arg)
+अणु
+	sमाप_प्रकार ret;
+	अचिन्हित दीर्घ val;
 
-	if (!arg) {
+	अगर (!arg) अणु
 		pr_err("memory_corruption_check_period config string not provided\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = kstrtoul(arg, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(arg, 10, &val);
+	अगर (ret)
+		वापस ret;
 
 	corruption_check_period = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("memory_corruption_check_period", set_corruption_check_period);
 
-static __init int set_corruption_check_size(char *arg)
-{
-	char *end;
-	unsigned size;
+अटल __init पूर्णांक set_corruption_check_size(अक्षर *arg)
+अणु
+	अक्षर *end;
+	अचिन्हित size;
 
-	if (!arg) {
+	अगर (!arg) अणु
 		pr_err("memory_corruption_check_size config string not provided\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	size = memparse(arg, &end);
 
-	if (*end == '\0')
+	अगर (*end == '\0')
 		corruption_check_size = size;
 
-	return (size == corruption_check_size) ? 0 : -EINVAL;
-}
+	वापस (size == corruption_check_size) ? 0 : -EINVAL;
+पूर्ण
 early_param("memory_corruption_check_size", set_corruption_check_size);
 
 
-void __init setup_bios_corruption_check(void)
-{
+व्योम __init setup_bios_corruption_check(व्योम)
+अणु
 	phys_addr_t start, end;
 	u64 i;
 
-	if (memory_corruption_check == -1) {
+	अगर (memory_corruption_check == -1) अणु
 		memory_corruption_check =
-#ifdef CONFIG_X86_BOOTPARAM_MEMORY_CORRUPTION_CHECK
+#अगर_घोषित CONFIG_X86_BOOTPARAM_MEMORY_CORRUPTION_CHECK
 			1
-#else
+#अन्यथा
 			0
-#endif
+#पूर्ण_अगर
 			;
-	}
+	पूर्ण
 
-	if (corruption_check_size == 0)
+	अगर (corruption_check_size == 0)
 		memory_corruption_check = 0;
 
-	if (!memory_corruption_check)
-		return;
+	अगर (!memory_corruption_check)
+		वापस;
 
 	corruption_check_size = round_up(corruption_check_size, PAGE_SIZE);
 
-	for_each_free_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE, &start, &end,
-				NULL) {
+	क्रम_each_मुक्त_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE, &start, &end,
+				शून्य) अणु
 		start = clamp_t(phys_addr_t, round_up(start, PAGE_SIZE),
 				PAGE_SIZE, corruption_check_size);
-		end = clamp_t(phys_addr_t, round_down(end, PAGE_SIZE),
+		end = clamp_t(phys_addr_t, round_करोwn(end, PAGE_SIZE),
 			      PAGE_SIZE, corruption_check_size);
-		if (start >= end)
-			continue;
+		अगर (start >= end)
+			जारी;
 
 		memblock_reserve(start, end - start);
 		scan_areas[num_scan_areas].addr = start;
 		scan_areas[num_scan_areas].size = end - start;
 
-		/* Assume we've already mapped this early memory */
-		memset(__va(start), 0, end - start);
+		/* Assume we've alपढ़ोy mapped this early memory */
+		स_रखो(__va(start), 0, end - start);
 
-		if (++num_scan_areas >= MAX_SCAN_AREAS)
-			break;
-	}
+		अगर (++num_scan_areas >= MAX_SCAN_AREAS)
+			अवरोध;
+	पूर्ण
 
-	if (num_scan_areas)
+	अगर (num_scan_areas)
 		pr_info("Scanning %d areas for low memory corruption\n", num_scan_areas);
-}
+पूर्ण
 
 
-static void check_for_bios_corruption(void)
-{
-	int i;
-	int corruption = 0;
+अटल व्योम check_क्रम_bios_corruption(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक corruption = 0;
 
-	if (!memory_corruption_check)
-		return;
+	अगर (!memory_corruption_check)
+		वापस;
 
-	for (i = 0; i < num_scan_areas; i++) {
-		unsigned long *addr = __va(scan_areas[i].addr);
-		unsigned long size = scan_areas[i].size;
+	क्रम (i = 0; i < num_scan_areas; i++) अणु
+		अचिन्हित दीर्घ *addr = __va(scan_areas[i].addr);
+		अचिन्हित दीर्घ size = scan_areas[i].size;
 
-		for (; size; addr++, size -= sizeof(unsigned long)) {
-			if (!*addr)
-				continue;
+		क्रम (; size; addr++, size -= माप(अचिन्हित दीर्घ)) अणु
+			अगर (!*addr)
+				जारी;
 			pr_err("Corrupted low memory at %p (%lx phys) = %08lx\n", addr, __pa(addr), *addr);
 			corruption = 1;
 			*addr = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	WARN_ONCE(corruption, KERN_ERR "Memory corruption detected in low memory\n");
-}
+पूर्ण
 
-static void check_corruption(struct work_struct *dummy);
-static DECLARE_DELAYED_WORK(bios_check_work, check_corruption);
+अटल व्योम check_corruption(काष्ठा work_काष्ठा *dummy);
+अटल DECLARE_DELAYED_WORK(bios_check_work, check_corruption);
 
-static void check_corruption(struct work_struct *dummy)
-{
-	check_for_bios_corruption();
+अटल व्योम check_corruption(काष्ठा work_काष्ठा *dummy)
+अणु
+	check_क्रम_bios_corruption();
 	schedule_delayed_work(&bios_check_work,
-		round_jiffies_relative(corruption_check_period*HZ));
-}
+		round_jअगरfies_relative(corruption_check_period*HZ));
+पूर्ण
 
-static int start_periodic_check_for_corruption(void)
-{
-	if (!num_scan_areas || !memory_corruption_check || corruption_check_period == 0)
-		return 0;
+अटल पूर्णांक start_periodic_check_क्रम_corruption(व्योम)
+अणु
+	अगर (!num_scan_areas || !memory_corruption_check || corruption_check_period == 0)
+		वापस 0;
 
 	pr_info("Scanning for low memory corruption every %d seconds\n", corruption_check_period);
 
-	/* First time we run the checks right away */
+	/* First समय we run the checks right away */
 	schedule_delayed_work(&bios_check_work, 0);
 
-	return 0;
-}
-device_initcall(start_periodic_check_for_corruption);
+	वापस 0;
+पूर्ण
+device_initcall(start_periodic_check_क्रम_corruption);
 

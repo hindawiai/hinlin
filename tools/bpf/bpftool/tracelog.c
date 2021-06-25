@@ -1,166 +1,167 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (c) 2015-2017 Daniel Borkmann */
 /* Copyright (c) 2018 Netronome Systems, Inc. */
 
-#include <errno.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <linux/magic.h>
-#include <sys/fcntl.h>
-#include <sys/vfs.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <सीमा.स>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <linux/magic.h>
+#समावेश <sys/fcntl.h>
+#समावेश <sys/vfs.h>
 
-#include "main.h"
+#समावेश "main.h"
 
-#ifndef TRACEFS_MAGIC
+#अगर_अघोषित TRACEFS_MAGIC
 # define TRACEFS_MAGIC	0x74726163
-#endif
+#पूर्ण_अगर
 
-#define _textify(x)	#x
-#define textify(x)	_textify(x)
+#घोषणा _textअगरy(x)	#x
+#घोषणा textअगरy(x)	_textअगरy(x)
 
-FILE *trace_pipe_fd;
-char *buff;
+खाता *trace_pipe_fd;
+अक्षर *buff;
 
-static int validate_tracefs_mnt(const char *mnt, unsigned long magic)
-{
-	struct statfs st_fs;
+अटल पूर्णांक validate_tracefs_mnt(स्थिर अक्षर *mnt, अचिन्हित दीर्घ magic)
+अणु
+	काष्ठा statfs st_fs;
 
-	if (statfs(mnt, &st_fs) < 0)
-		return -ENOENT;
-	if ((unsigned long)st_fs.f_type != magic)
-		return -ENOENT;
+	अगर (statfs(mnt, &st_fs) < 0)
+		वापस -ENOENT;
+	अगर ((अचिन्हित दीर्घ)st_fs.f_type != magic)
+		वापस -ENOENT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool
-find_tracefs_mnt_single(unsigned long magic, char *mnt, const char *mntpt)
-{
-	size_t src_len;
+अटल bool
+find_tracefs_mnt_single(अचिन्हित दीर्घ magic, अक्षर *mnt, स्थिर अक्षर *mntpt)
+अणु
+	माप_प्रकार src_len;
 
-	if (validate_tracefs_mnt(mntpt, magic))
-		return false;
+	अगर (validate_tracefs_mnt(mntpt, magic))
+		वापस false;
 
-	src_len = strlen(mntpt);
-	if (src_len + 1 >= PATH_MAX) {
+	src_len = म_माप(mntpt);
+	अगर (src_len + 1 >= PATH_MAX) अणु
 		p_err("tracefs mount point name too long");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	strcpy(mnt, mntpt);
-	return true;
-}
+	म_नकल(mnt, mntpt);
+	वापस true;
+पूर्ण
 
-static bool get_tracefs_pipe(char *mnt)
-{
-	static const char * const known_mnts[] = {
+अटल bool get_tracefs_pipe(अक्षर *mnt)
+अणु
+	अटल स्थिर अक्षर * स्थिर known_mnts[] = अणु
 		"/sys/kernel/debug/tracing",
 		"/sys/kernel/tracing",
 		"/tracing",
 		"/trace",
-	};
-	const char *pipe_name = "/trace_pipe";
-	const char *fstype = "tracefs";
-	char type[100], format[32];
-	const char * const *ptr;
+	पूर्ण;
+	स्थिर अक्षर *pipe_name = "/trace_pipe";
+	स्थिर अक्षर *fstype = "tracefs";
+	अक्षर type[100], क्रमmat[32];
+	स्थिर अक्षर * स्थिर *ptr;
 	bool found = false;
-	FILE *fp;
+	खाता *fp;
 
-	for (ptr = known_mnts; ptr < known_mnts + ARRAY_SIZE(known_mnts); ptr++)
-		if (find_tracefs_mnt_single(TRACEFS_MAGIC, mnt, *ptr))
-			goto exit_found;
+	क्रम (ptr = known_mnts; ptr < known_mnts + ARRAY_SIZE(known_mnts); ptr++)
+		अगर (find_tracefs_mnt_single(TRACEFS_MAGIC, mnt, *ptr))
+			जाओ निकास_found;
 
-	fp = fopen("/proc/mounts", "r");
-	if (!fp)
-		return false;
+	fp = ख_खोलो("/proc/mounts", "r");
+	अगर (!fp)
+		वापस false;
 
-	/* Allow room for NULL terminating byte and pipe file name */
-	snprintf(format, sizeof(format), "%%*s %%%zds %%99s %%*s %%*d %%*d\\n",
-		 PATH_MAX - strlen(pipe_name) - 1);
-	while (fscanf(fp, format, mnt, type) == 2)
-		if (strcmp(type, fstype) == 0) {
+	/* Allow room क्रम शून्य terminating byte and pipe file name */
+	snम_लिखो(क्रमmat, माप(क्रमmat), "%%*s %%%zds %%99s %%*s %%*d %%*d\\n",
+		 PATH_MAX - म_माप(pipe_name) - 1);
+	जबतक (ख_पूछो(fp, क्रमmat, mnt, type) == 2)
+		अगर (म_भेद(type, fstype) == 0) अणु
 			found = true;
-			break;
-		}
-	fclose(fp);
+			अवरोध;
+		पूर्ण
+	ख_बंद(fp);
 
-	/* The string from fscanf() might be truncated, check mnt is valid */
-	if (found && validate_tracefs_mnt(mnt, TRACEFS_MAGIC))
-		goto exit_found;
+	/* The string from ख_पूछो() might be truncated, check mnt is valid */
+	अगर (found && validate_tracefs_mnt(mnt, TRACEFS_MAGIC))
+		जाओ निकास_found;
 
-	if (block_mount)
-		return false;
+	अगर (block_mount)
+		वापस false;
 
 	p_info("could not find tracefs, attempting to mount it now");
-	/* Most of the time, tracefs is automatically mounted by debugfs at
+	/* Most of the समय, tracefs is स्वतःmatically mounted by debugfs at
 	 * /sys/kernel/debug/tracing when we try to access it. If we could not
 	 * find it, it is likely that debugfs is not mounted. Let's give one
 	 * attempt at mounting just tracefs at /sys/kernel/tracing.
 	 */
-	strcpy(mnt, known_mnts[1]);
-	if (mount_tracefs(mnt))
-		return false;
+	म_नकल(mnt, known_mnts[1]);
+	अगर (mount_tracefs(mnt))
+		वापस false;
 
-exit_found:
-	strcat(mnt, pipe_name);
-	return true;
-}
+निकास_found:
+	म_जोड़ो(mnt, pipe_name);
+	वापस true;
+पूर्ण
 
-static void exit_tracelog(int signum)
-{
-	fclose(trace_pipe_fd);
-	free(buff);
+अटल व्योम निकास_tracelog(पूर्णांक signum)
+अणु
+	ख_बंद(trace_pipe_fd);
+	मुक्त(buff);
 
-	if (json_output) {
+	अगर (json_output) अणु
 		jsonw_end_array(json_wtr);
 		jsonw_destroy(&json_wtr);
-	}
+	पूर्ण
 
-	exit(0);
-}
+	निकास(0);
+पूर्ण
 
-int do_tracelog(int argc, char **argv)
-{
-	const struct sigaction act = {
-		.sa_handler = exit_tracelog
-	};
-	char trace_pipe[PATH_MAX];
-	size_t buff_len = 0;
+पूर्णांक करो_tracelog(पूर्णांक argc, अक्षर **argv)
+अणु
+	स्थिर काष्ठा sigaction act = अणु
+		.sa_handler = निकास_tracelog
+	पूर्ण;
+	अक्षर trace_pipe[PATH_MAX];
+	माप_प्रकार buff_len = 0;
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_start_array(json_wtr);
 
-	if (!get_tracefs_pipe(trace_pipe))
-		return -1;
+	अगर (!get_tracefs_pipe(trace_pipe))
+		वापस -1;
 
-	trace_pipe_fd = fopen(trace_pipe, "r");
-	if (!trace_pipe_fd) {
-		p_err("could not open trace pipe: %s", strerror(errno));
-		return -1;
-	}
+	trace_pipe_fd = ख_खोलो(trace_pipe, "r");
+	अगर (!trace_pipe_fd) अणु
+		p_err("could not open trace pipe: %s", म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
-	sigaction(SIGHUP, &act, NULL);
-	sigaction(SIGINT, &act, NULL);
-	sigaction(SIGTERM, &act, NULL);
-	while (1) {
-		ssize_t ret;
+	sigaction(SIGHUP, &act, शून्य);
+	sigaction(संक_विघ्न, &act, शून्य);
+	sigaction(संक_इति, &act, शून्य);
+	जबतक (1) अणु
+		sमाप_प्रकार ret;
 
 		ret = getline(&buff, &buff_len, trace_pipe_fd);
-		if (ret <= 0) {
+		अगर (ret <= 0) अणु
 			p_err("failed to read content from trace pipe: %s",
-			      strerror(errno));
-			break;
-		}
-		if (json_output)
+			      म_त्रुटि(त्रुटि_सं));
+			अवरोध;
+		पूर्ण
+		अगर (json_output)
 			jsonw_string(json_wtr, buff);
-		else
-			printf("%s", buff);
-	}
+		अन्यथा
+			म_लिखो("%s", buff);
+	पूर्ण
 
-	fclose(trace_pipe_fd);
-	free(buff);
-	return -1;
-}
+	ख_बंद(trace_pipe_fd);
+	मुक्त(buff);
+	वापस -1;
+पूर्ण

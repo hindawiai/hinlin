@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2015, Cyril Bur, IBM Corp.
  *
- * This test attempts to see if the FPU registers are correctly reported in a
- * signal context. Each worker just spins checking its FPU registers, at some
- * point a signal will interrupt it and C code will check the signal context
+ * This test attempts to see अगर the FPU रेजिस्टरs are correctly reported in a
+ * संकेत context. Each worker just spins checking its FPU रेजिस्टरs, at some
+ * poपूर्णांक a संकेत will पूर्णांकerrupt it and C code will check the संकेत context
  * ensuring it is also the same.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <pthread.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
+#समावेश <sys/समय.स>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <मानककोष.स>
+#समावेश <pthपढ़ो.h>
 
-#include "utils.h"
+#समावेश "utils.h"
 
-/* Number of times each thread should receive the signal */
-#define ITERATIONS 10
+/* Number of बार each thपढ़ो should receive the संकेत */
+#घोषणा ITERATIONS 10
 /*
- * Factor by which to multiply number of online CPUs for total number of
- * worker threads
+ * Factor by which to multiply number of online CPUs क्रम total number of
+ * worker thपढ़ोs
  */
-#define THREAD_FACTOR 8
+#घोषणा THREAD_FACTOR 8
 
-__thread double darray[] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
+__thपढ़ो द्विगुन darray[] = अणु0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
 		     1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0,
-		     2.1};
+		     2.1पूर्ण;
 
 bool bad_context;
-int threads_starting;
-int running;
+पूर्णांक thपढ़ोs_starting;
+पूर्णांक running;
 
-extern long preempt_fpu(double *darray, int *threads_starting, int *running);
+बाह्य दीर्घ preempt_fpu(द्विगुन *darray, पूर्णांक *thपढ़ोs_starting, पूर्णांक *running);
 
-void signal_fpu_sig(int sig, siginfo_t *info, void *context)
-{
-	int i;
+व्योम संकेत_fpu_sig(पूर्णांक sig, siginfo_t *info, व्योम *context)
+अणु
+	पूर्णांक i;
 	ucontext_t *uc = context;
 	mcontext_t *mc = &uc->uc_mcontext;
 
-	/* Only the non volatiles were loaded up */
-	for (i = 14; i < 32; i++) {
-		if (mc->fp_regs[i] != darray[i - 14]) {
+	/* Only the non अस्थिरs were loaded up */
+	क्रम (i = 14; i < 32; i++) अणु
+		अगर (mc->fp_regs[i] != darray[i - 14]) अणु
 			bad_context = true;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void *signal_fpu_c(void *p)
-{
-	int i;
-	long rc;
-	struct sigaction act;
-	act.sa_sigaction = signal_fpu_sig;
+व्योम *संकेत_fpu_c(व्योम *p)
+अणु
+	पूर्णांक i;
+	दीर्घ rc;
+	काष्ठा sigaction act;
+	act.sa_sigaction = संकेत_fpu_sig;
 	act.sa_flags = SA_SIGINFO;
-	rc = sigaction(SIGUSR1, &act, NULL);
-	if (rc)
-		return p;
+	rc = sigaction(SIGUSR1, &act, शून्य);
+	अगर (rc)
+		वापस p;
 
-	srand(pthread_self());
-	for (i = 0; i < 21; i++)
-		darray[i] = rand();
+	बेक्रम(pthपढ़ो_self());
+	क्रम (i = 0; i < 21; i++)
+		darray[i] = अक्रम();
 
-	rc = preempt_fpu(darray, &threads_starting, &running);
+	rc = preempt_fpu(darray, &thपढ़ोs_starting, &running);
 
-	return (void *) rc;
-}
+	वापस (व्योम *) rc;
+पूर्ण
 
-int test_signal_fpu(void)
-{
-	int i, j, rc, threads;
-	void *rc_p;
-	pthread_t *tids;
+पूर्णांक test_संकेत_fpu(व्योम)
+अणु
+	पूर्णांक i, j, rc, thपढ़ोs;
+	व्योम *rc_p;
+	pthपढ़ो_t *tids;
 
-	threads = sysconf(_SC_NPROCESSORS_ONLN) * THREAD_FACTOR;
-	tids = malloc(threads * sizeof(pthread_t));
+	thपढ़ोs = sysconf(_SC_NPROCESSORS_ONLN) * THREAD_FACTOR;
+	tids = दो_स्मृति(thपढ़ोs * माप(pthपढ़ो_t));
 	FAIL_IF(!tids);
 
 	running = true;
-	threads_starting = threads;
-	for (i = 0; i < threads; i++) {
-		rc = pthread_create(&tids[i], NULL, signal_fpu_c, NULL);
+	thपढ़ोs_starting = thपढ़ोs;
+	क्रम (i = 0; i < thपढ़ोs; i++) अणु
+		rc = pthपढ़ो_create(&tids[i], शून्य, संकेत_fpu_c, शून्य);
 		FAIL_IF(rc);
-	}
+	पूर्ण
 
-	setbuf(stdout, NULL);
-	printf("\tWaiting for all workers to start...");
-	while (threads_starting)
-		asm volatile("": : :"memory");
-	printf("done\n");
+	रखो_बफ(मानक_निकास, शून्य);
+	म_लिखो("\tWaiting for all workers to start...");
+	जबतक (thपढ़ोs_starting)
+		यंत्र अस्थिर("": : :"memory");
+	म_लिखो("done\n");
 
-	printf("\tSending signals to all threads %d times...", ITERATIONS);
-	for (i = 0; i < ITERATIONS; i++) {
-		for (j = 0; j < threads; j++) {
-			pthread_kill(tids[j], SIGUSR1);
-		}
+	म_लिखो("\tSending signals to all threads %d times...", ITERATIONS);
+	क्रम (i = 0; i < ITERATIONS; i++) अणु
+		क्रम (j = 0; j < thपढ़ोs; j++) अणु
+			pthपढ़ो_समाप्त(tids[j], SIGUSR1);
+		पूर्ण
 		sleep(1);
-	}
-	printf("done\n");
+	पूर्ण
+	म_लिखो("done\n");
 
-	printf("\tStopping workers...");
+	म_लिखो("\tStopping workers...");
 	running = 0;
-	for (i = 0; i < threads; i++) {
-		pthread_join(tids[i], &rc_p);
+	क्रम (i = 0; i < thपढ़ोs; i++) अणु
+		pthपढ़ो_join(tids[i], &rc_p);
 
 		/*
-		 * Harness will say the fail was here, look at why signal_fpu
-		 * returned
+		 * Harness will say the fail was here, look at why संकेत_fpu
+		 * वापसed
 		 */
-		if ((long) rc_p || bad_context)
-			printf("oops\n");
-		if (bad_context)
-			fprintf(stderr, "\t!! bad_context is true\n");
-		FAIL_IF((long) rc_p || bad_context);
-	}
-	printf("done\n");
+		अगर ((दीर्घ) rc_p || bad_context)
+			म_लिखो("oops\n");
+		अगर (bad_context)
+			ख_लिखो(मानक_त्रुटि, "\t!! bad_context is true\n");
+		FAIL_IF((दीर्घ) rc_p || bad_context);
+	पूर्ण
+	म_लिखो("done\n");
 
-	free(tids);
-	return 0;
-}
+	मुक्त(tids);
+	वापस 0;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	return test_harness(test_signal_fpu, "fpu_signal");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	वापस test_harness(test_संकेत_fpu, "fpu_signal");
+पूर्ण

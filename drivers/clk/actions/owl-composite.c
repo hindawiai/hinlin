@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// OWL composite clock driver
+// OWL composite घड़ी driver
 //
 // Copyright (c) 2014 Actions Semi Inc.
 // Author: David Liu <liuwei@actions-semi.com>
@@ -8,140 +9,140 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#include <linux/clk-provider.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/regmap.h>
 
-#include "owl-composite.h"
+#समावेश "owl-composite.h"
 
-static u8 owl_comp_get_parent(struct clk_hw *hw)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
+अटल u8 owl_comp_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
 
-	return owl_mux_helper_get_parent(&comp->common, &comp->mux_hw);
-}
+	वापस owl_mux_helper_get_parent(&comp->common, &comp->mux_hw);
+पूर्ण
 
-static int owl_comp_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
+अटल पूर्णांक owl_comp_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
 
-	return owl_mux_helper_set_parent(&comp->common, &comp->mux_hw, index);
-}
+	वापस owl_mux_helper_set_parent(&comp->common, &comp->mux_hw, index);
+पूर्ण
 
-static void owl_comp_disable(struct clk_hw *hw)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
-	struct owl_clk_common *common = &comp->common;
+अटल व्योम owl_comp_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
+	काष्ठा owl_clk_common *common = &comp->common;
 
 	owl_gate_set(common, &comp->gate_hw, false);
-}
+पूर्ण
 
-static int owl_comp_enable(struct clk_hw *hw)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
-	struct owl_clk_common *common = &comp->common;
+अटल पूर्णांक owl_comp_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
+	काष्ठा owl_clk_common *common = &comp->common;
 
 	owl_gate_set(common, &comp->gate_hw, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_comp_is_enabled(struct clk_hw *hw)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
-	struct owl_clk_common *common = &comp->common;
+अटल पूर्णांक owl_comp_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
+	काष्ठा owl_clk_common *common = &comp->common;
 
-	return owl_gate_clk_is_enabled(common, &comp->gate_hw);
-}
+	वापस owl_gate_clk_is_enabled(common, &comp->gate_hw);
+पूर्ण
 
-static long owl_comp_div_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *parent_rate)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
+अटल दीर्घ owl_comp_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
 
-	return owl_divider_helper_round_rate(&comp->common, &comp->rate.div_hw,
+	वापस owl_भागider_helper_round_rate(&comp->common, &comp->rate.भाग_hw,
 					rate, parent_rate);
-}
+पूर्ण
 
-static unsigned long owl_comp_div_recalc_rate(struct clk_hw *hw,
-					  unsigned long parent_rate)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
+अटल अचिन्हित दीर्घ owl_comp_भाग_recalc_rate(काष्ठा clk_hw *hw,
+					  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
 
-	return owl_divider_helper_recalc_rate(&comp->common, &comp->rate.div_hw,
+	वापस owl_भागider_helper_recalc_rate(&comp->common, &comp->rate.भाग_hw,
 					parent_rate);
-}
+पूर्ण
 
-static int owl_comp_div_set_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long parent_rate)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
+अटल पूर्णांक owl_comp_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
 
-	return owl_divider_helper_set_rate(&comp->common, &comp->rate.div_hw,
+	वापस owl_भागider_helper_set_rate(&comp->common, &comp->rate.भाग_hw,
 					rate, parent_rate);
-}
+पूर्ण
 
-static long owl_comp_fact_round_rate(struct clk_hw *hw, unsigned long rate,
-			unsigned long *parent_rate)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
+अटल दीर्घ owl_comp_fact_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
 
-	return owl_factor_helper_round_rate(&comp->common,
+	वापस owl_factor_helper_round_rate(&comp->common,
 					&comp->rate.factor_hw,
 					rate, parent_rate);
-}
+पूर्ण
 
-static unsigned long owl_comp_fact_recalc_rate(struct clk_hw *hw,
-			unsigned long parent_rate)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
+अटल अचिन्हित दीर्घ owl_comp_fact_recalc_rate(काष्ठा clk_hw *hw,
+			अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
 
-	return owl_factor_helper_recalc_rate(&comp->common,
+	वापस owl_factor_helper_recalc_rate(&comp->common,
 					&comp->rate.factor_hw,
 					parent_rate);
-}
+पूर्ण
 
-static int owl_comp_fact_set_rate(struct clk_hw *hw, unsigned long rate,
-			unsigned long parent_rate)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
+अटल पूर्णांक owl_comp_fact_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
 
-	return owl_factor_helper_set_rate(&comp->common,
+	वापस owl_factor_helper_set_rate(&comp->common,
 					&comp->rate.factor_hw,
 					rate, parent_rate);
-}
+पूर्ण
 
-static long owl_comp_fix_fact_round_rate(struct clk_hw *hw, unsigned long rate,
-			unsigned long *parent_rate)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
-	struct clk_fixed_factor *fix_fact_hw = &comp->rate.fix_fact_hw;
+अटल दीर्घ owl_comp_fix_fact_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
+	काष्ठा clk_fixed_factor *fix_fact_hw = &comp->rate.fix_fact_hw;
 
-	return comp->fix_fact_ops->round_rate(&fix_fact_hw->hw, rate, parent_rate);
-}
+	वापस comp->fix_fact_ops->round_rate(&fix_fact_hw->hw, rate, parent_rate);
+पूर्ण
 
-static unsigned long owl_comp_fix_fact_recalc_rate(struct clk_hw *hw,
-			unsigned long parent_rate)
-{
-	struct owl_composite *comp = hw_to_owl_comp(hw);
-	struct clk_fixed_factor *fix_fact_hw = &comp->rate.fix_fact_hw;
+अटल अचिन्हित दीर्घ owl_comp_fix_fact_recalc_rate(काष्ठा clk_hw *hw,
+			अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा owl_composite *comp = hw_to_owl_comp(hw);
+	काष्ठा clk_fixed_factor *fix_fact_hw = &comp->rate.fix_fact_hw;
 
-	return comp->fix_fact_ops->recalc_rate(&fix_fact_hw->hw, parent_rate);
+	वापस comp->fix_fact_ops->recalc_rate(&fix_fact_hw->hw, parent_rate);
 
-}
+पूर्ण
 
-static int owl_comp_fix_fact_set_rate(struct clk_hw *hw, unsigned long rate,
-			unsigned long parent_rate)
-{
+अटल पूर्णांक owl_comp_fix_fact_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			अचिन्हित दीर्घ parent_rate)
+अणु
 	/*
-	 * We must report success but we can do so unconditionally because
-	 * owl_comp_fix_fact_round_rate returns values that ensure this call is
+	 * We must report success but we can करो so unconditionally because
+	 * owl_comp_fix_fact_round_rate वापसs values that ensure this call is
 	 * a nop.
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct clk_ops owl_comp_div_ops = {
+स्थिर काष्ठा clk_ops owl_comp_भाग_ops = अणु
 	/* mux_ops */
 	.get_parent	= owl_comp_get_parent,
 	.set_parent	= owl_comp_set_parent,
@@ -151,14 +152,14 @@ const struct clk_ops owl_comp_div_ops = {
 	.enable		= owl_comp_enable,
 	.is_enabled	= owl_comp_is_enabled,
 
-	/* div_ops */
-	.round_rate	= owl_comp_div_round_rate,
-	.recalc_rate	= owl_comp_div_recalc_rate,
-	.set_rate	= owl_comp_div_set_rate,
-};
+	/* भाग_ops */
+	.round_rate	= owl_comp_भाग_round_rate,
+	.recalc_rate	= owl_comp_भाग_recalc_rate,
+	.set_rate	= owl_comp_भाग_set_rate,
+पूर्ण;
 
 
-const struct clk_ops owl_comp_fact_ops = {
+स्थिर काष्ठा clk_ops owl_comp_fact_ops = अणु
 	/* mux_ops */
 	.get_parent	= owl_comp_get_parent,
 	.set_parent	= owl_comp_set_parent,
@@ -172,9 +173,9 @@ const struct clk_ops owl_comp_fact_ops = {
 	.round_rate	= owl_comp_fact_round_rate,
 	.recalc_rate	= owl_comp_fact_recalc_rate,
 	.set_rate	= owl_comp_fact_set_rate,
-};
+पूर्ण;
 
-const struct clk_ops owl_comp_fix_fact_ops = {
+स्थिर काष्ठा clk_ops owl_comp_fix_fact_ops = अणु
 	/* gate_ops */
 	.disable	= owl_comp_disable,
 	.enable		= owl_comp_enable,
@@ -184,10 +185,10 @@ const struct clk_ops owl_comp_fix_fact_ops = {
 	.round_rate	= owl_comp_fix_fact_round_rate,
 	.recalc_rate	= owl_comp_fix_fact_recalc_rate,
 	.set_rate	= owl_comp_fix_fact_set_rate,
-};
+पूर्ण;
 
 
-const struct clk_ops owl_comp_pass_ops = {
+स्थिर काष्ठा clk_ops owl_comp_pass_ops = अणु
 	/* mux_ops */
 	.get_parent	= owl_comp_get_parent,
 	.set_parent	= owl_comp_set_parent,
@@ -196,4 +197,4 @@ const struct clk_ops owl_comp_pass_ops = {
 	.disable	= owl_comp_disable,
 	.enable		= owl_comp_enable,
 	.is_enabled	= owl_comp_is_enabled,
-};
+पूर्ण;

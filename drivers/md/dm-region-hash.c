@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2003 Sistina Software Limited.
  * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
@@ -5,23 +6,23 @@
  * This file is released under the GPL.
  */
 
-#include <linux/dm-dirty-log.h>
-#include <linux/dm-region-hash.h>
+#समावेश <linux/dm-dirty-log.h>
+#समावेश <linux/dm-region-hash.h>
 
-#include <linux/ctype.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "dm.h"
+#समावेश "dm.h"
 
-#define	DM_MSG_PREFIX	"region hash"
+#घोषणा	DM_MSG_PREFIX	"region hash"
 
 /*-----------------------------------------------------------------
  * Region hash
  *
- * The mirror splits itself up into discrete regions.  Each
+ * The mirror splits itself up पूर्णांकo discrete regions.  Each
  * region can be in one of three states: clean, dirty,
  * nosync.  There is no need to put clean regions in the hash.
  *
@@ -29,188 +30,188 @@
  * be present on one of three lists.
  *
  *   clean_regions: Regions on this list have no io pending to
- *   them, they are in sync, we are no longer interested in them,
- *   they are dull.  dm_rh_update_states() will remove them from the
+ *   them, they are in sync, we are no दीर्घer पूर्णांकerested in them,
+ *   they are dull.  dm_rh_update_states() will हटाओ them from the
  *   hash table.
  *
- *   quiesced_regions: These regions have been spun down, ready
- *   for recovery.  rh_recovery_start() will remove regions from
+ *   quiesced_regions: These regions have been spun करोwn, पढ़ोy
+ *   क्रम recovery.  rh_recovery_start() will हटाओ regions from
  *   this list and hand them to kmirrord, which will schedule the
  *   recovery io with kcopyd.
  *
  *   recovered_regions: Regions that kcopyd has successfully
  *   recovered.  dm_rh_update_states() will now schedule any delayed
- *   io, up the recovery_count, and remove the region from the
+ *   io, up the recovery_count, and हटाओ the region from the
  *   hash.
  *
  * There are 2 locks:
  *   A rw spin lock 'hash_lock' protects just the hash table,
- *   this is never held in write mode from interrupt context,
+ *   this is never held in ग_लिखो mode from पूर्णांकerrupt context,
  *   which I believe means that we only have to disable irqs when
- *   doing a write lock.
+ *   करोing a ग_लिखो lock.
  *
  *   An ordinary spin lock 'region_lock' that protects the three
  *   lists in the region_hash, with the 'state', 'list' and
  *   'delayed_bios' fields of the regions.  This is used from irq
  *   context, so all other uses will have to suspend local irqs.
  *---------------------------------------------------------------*/
-struct dm_region_hash {
-	uint32_t region_size;
-	unsigned region_shift;
+काष्ठा dm_region_hash अणु
+	uपूर्णांक32_t region_size;
+	अचिन्हित region_shअगरt;
 
 	/* holds persistent region state */
-	struct dm_dirty_log *log;
+	काष्ठा dm_dirty_log *log;
 
 	/* hash table */
 	rwlock_t hash_lock;
-	unsigned mask;
-	unsigned nr_buckets;
-	unsigned prime;
-	unsigned shift;
-	struct list_head *buckets;
+	अचिन्हित mask;
+	अचिन्हित nr_buckets;
+	अचिन्हित prime;
+	अचिन्हित shअगरt;
+	काष्ठा list_head *buckets;
 
 	/*
 	 * If there was a flush failure no regions can be marked clean.
 	 */
-	int flush_failure;
+	पूर्णांक flush_failure;
 
-	unsigned max_recovery; /* Max # of regions to recover in parallel */
+	अचिन्हित max_recovery; /* Max # of regions to recover in parallel */
 
 	spinlock_t region_lock;
 	atomic_t recovery_in_flight;
-	struct list_head clean_regions;
-	struct list_head quiesced_regions;
-	struct list_head recovered_regions;
-	struct list_head failed_recovered_regions;
-	struct semaphore recovery_count;
+	काष्ठा list_head clean_regions;
+	काष्ठा list_head quiesced_regions;
+	काष्ठा list_head recovered_regions;
+	काष्ठा list_head failed_recovered_regions;
+	काष्ठा semaphore recovery_count;
 
 	mempool_t region_pool;
 
-	void *context;
+	व्योम *context;
 	sector_t target_begin;
 
-	/* Callback function to schedule bios writes */
-	void (*dispatch_bios)(void *context, struct bio_list *bios);
+	/* Callback function to schedule bios ग_लिखोs */
+	व्योम (*dispatch_bios)(व्योम *context, काष्ठा bio_list *bios);
 
-	/* Callback function to wakeup callers worker thread. */
-	void (*wakeup_workers)(void *context);
+	/* Callback function to wakeup callers worker thपढ़ो. */
+	व्योम (*wakeup_workers)(व्योम *context);
 
-	/* Callback function to wakeup callers recovery waiters. */
-	void (*wakeup_all_recovery_waiters)(void *context);
-};
+	/* Callback function to wakeup callers recovery रुकोers. */
+	व्योम (*wakeup_all_recovery_रुकोers)(व्योम *context);
+पूर्ण;
 
-struct dm_region {
-	struct dm_region_hash *rh;	/* FIXME: can we get rid of this ? */
+काष्ठा dm_region अणु
+	काष्ठा dm_region_hash *rh;	/* FIXME: can we get rid of this ? */
 	region_t key;
-	int state;
+	पूर्णांक state;
 
-	struct list_head hash_list;
-	struct list_head list;
+	काष्ठा list_head hash_list;
+	काष्ठा list_head list;
 
 	atomic_t pending;
-	struct bio_list delayed_bios;
-};
+	काष्ठा bio_list delayed_bios;
+पूर्ण;
 
 /*
  * Conversion fns
  */
-static region_t dm_rh_sector_to_region(struct dm_region_hash *rh, sector_t sector)
-{
-	return sector >> rh->region_shift;
-}
+अटल region_t dm_rh_sector_to_region(काष्ठा dm_region_hash *rh, sector_t sector)
+अणु
+	वापस sector >> rh->region_shअगरt;
+पूर्ण
 
-sector_t dm_rh_region_to_sector(struct dm_region_hash *rh, region_t region)
-{
-	return region << rh->region_shift;
-}
+sector_t dm_rh_region_to_sector(काष्ठा dm_region_hash *rh, region_t region)
+अणु
+	वापस region << rh->region_shअगरt;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_region_to_sector);
 
-region_t dm_rh_bio_to_region(struct dm_region_hash *rh, struct bio *bio)
-{
-	return dm_rh_sector_to_region(rh, bio->bi_iter.bi_sector -
+region_t dm_rh_bio_to_region(काष्ठा dm_region_hash *rh, काष्ठा bio *bio)
+अणु
+	वापस dm_rh_sector_to_region(rh, bio->bi_iter.bi_sector -
 				      rh->target_begin);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_bio_to_region);
 
-void *dm_rh_region_context(struct dm_region *reg)
-{
-	return reg->rh->context;
-}
+व्योम *dm_rh_region_context(काष्ठा dm_region *reg)
+अणु
+	वापस reg->rh->context;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_region_context);
 
-region_t dm_rh_get_region_key(struct dm_region *reg)
-{
-	return reg->key;
-}
+region_t dm_rh_get_region_key(काष्ठा dm_region *reg)
+अणु
+	वापस reg->key;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_get_region_key);
 
-sector_t dm_rh_get_region_size(struct dm_region_hash *rh)
-{
-	return rh->region_size;
-}
+sector_t dm_rh_get_region_size(काष्ठा dm_region_hash *rh)
+अणु
+	वापस rh->region_size;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_get_region_size);
 
 /*
- * FIXME: shall we pass in a structure instead of all these args to
+ * FIXME: shall we pass in a काष्ठाure instead of all these args to
  * dm_region_hash_create()????
  */
-#define RH_HASH_MULT 2654435387U
-#define RH_HASH_SHIFT 12
+#घोषणा RH_HASH_MULT 2654435387U
+#घोषणा RH_HASH_SHIFT 12
 
-#define MIN_REGIONS 64
-struct dm_region_hash *dm_region_hash_create(
-		void *context, void (*dispatch_bios)(void *context,
-						     struct bio_list *bios),
-		void (*wakeup_workers)(void *context),
-		void (*wakeup_all_recovery_waiters)(void *context),
-		sector_t target_begin, unsigned max_recovery,
-		struct dm_dirty_log *log, uint32_t region_size,
+#घोषणा MIN_REGIONS 64
+काष्ठा dm_region_hash *dm_region_hash_create(
+		व्योम *context, व्योम (*dispatch_bios)(व्योम *context,
+						     काष्ठा bio_list *bios),
+		व्योम (*wakeup_workers)(व्योम *context),
+		व्योम (*wakeup_all_recovery_रुकोers)(व्योम *context),
+		sector_t target_begin, अचिन्हित max_recovery,
+		काष्ठा dm_dirty_log *log, uपूर्णांक32_t region_size,
 		region_t nr_regions)
-{
-	struct dm_region_hash *rh;
-	unsigned nr_buckets, max_buckets;
-	size_t i;
-	int ret;
+अणु
+	काष्ठा dm_region_hash *rh;
+	अचिन्हित nr_buckets, max_buckets;
+	माप_प्रकार i;
+	पूर्णांक ret;
 
 	/*
-	 * Calculate a suitable number of buckets for our hash
+	 * Calculate a suitable number of buckets क्रम our hash
 	 * table.
 	 */
 	max_buckets = nr_regions >> 6;
-	for (nr_buckets = 128u; nr_buckets < max_buckets; nr_buckets <<= 1)
+	क्रम (nr_buckets = 128u; nr_buckets < max_buckets; nr_buckets <<= 1)
 		;
 	nr_buckets >>= 1;
 
-	rh = kzalloc(sizeof(*rh), GFP_KERNEL);
-	if (!rh) {
+	rh = kzalloc(माप(*rh), GFP_KERNEL);
+	अगर (!rh) अणु
 		DMERR("unable to allocate region hash memory");
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	rh->context = context;
 	rh->dispatch_bios = dispatch_bios;
 	rh->wakeup_workers = wakeup_workers;
-	rh->wakeup_all_recovery_waiters = wakeup_all_recovery_waiters;
+	rh->wakeup_all_recovery_रुकोers = wakeup_all_recovery_रुकोers;
 	rh->target_begin = target_begin;
 	rh->max_recovery = max_recovery;
 	rh->log = log;
 	rh->region_size = region_size;
-	rh->region_shift = __ffs(region_size);
+	rh->region_shअगरt = __ffs(region_size);
 	rwlock_init(&rh->hash_lock);
 	rh->mask = nr_buckets - 1;
 	rh->nr_buckets = nr_buckets;
 
-	rh->shift = RH_HASH_SHIFT;
+	rh->shअगरt = RH_HASH_SHIFT;
 	rh->prime = RH_HASH_MULT;
 
-	rh->buckets = vmalloc(array_size(nr_buckets, sizeof(*rh->buckets)));
-	if (!rh->buckets) {
+	rh->buckets = vदो_स्मृति(array_size(nr_buckets, माप(*rh->buckets)));
+	अगर (!rh->buckets) अणु
 		DMERR("unable to allocate region hash bucket memory");
-		kfree(rh);
-		return ERR_PTR(-ENOMEM);
-	}
+		kमुक्त(rh);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	for (i = 0; i < nr_buckets; i++)
+	क्रम (i = 0; i < nr_buckets; i++)
 		INIT_LIST_HEAD(rh->buckets + i);
 
 	spin_lock_init(&rh->region_lock);
@@ -222,76 +223,76 @@ struct dm_region_hash *dm_region_hash_create(
 	INIT_LIST_HEAD(&rh->failed_recovered_regions);
 	rh->flush_failure = 0;
 
-	ret = mempool_init_kmalloc_pool(&rh->region_pool, MIN_REGIONS,
-					sizeof(struct dm_region));
-	if (ret) {
-		vfree(rh->buckets);
-		kfree(rh);
+	ret = mempool_init_kदो_स्मृति_pool(&rh->region_pool, MIN_REGIONS,
+					माप(काष्ठा dm_region));
+	अगर (ret) अणु
+		vमुक्त(rh->buckets);
+		kमुक्त(rh);
 		rh = ERR_PTR(-ENOMEM);
-	}
+	पूर्ण
 
-	return rh;
-}
+	वापस rh;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_region_hash_create);
 
-void dm_region_hash_destroy(struct dm_region_hash *rh)
-{
-	unsigned h;
-	struct dm_region *reg, *nreg;
+व्योम dm_region_hash_destroy(काष्ठा dm_region_hash *rh)
+अणु
+	अचिन्हित h;
+	काष्ठा dm_region *reg, *nreg;
 
 	BUG_ON(!list_empty(&rh->quiesced_regions));
-	for (h = 0; h < rh->nr_buckets; h++) {
-		list_for_each_entry_safe(reg, nreg, rh->buckets + h,
-					 hash_list) {
-			BUG_ON(atomic_read(&reg->pending));
-			mempool_free(reg, &rh->region_pool);
-		}
-	}
+	क्रम (h = 0; h < rh->nr_buckets; h++) अणु
+		list_क्रम_each_entry_safe(reg, nreg, rh->buckets + h,
+					 hash_list) अणु
+			BUG_ON(atomic_पढ़ो(&reg->pending));
+			mempool_मुक्त(reg, &rh->region_pool);
+		पूर्ण
+	पूर्ण
 
-	if (rh->log)
+	अगर (rh->log)
 		dm_dirty_log_destroy(rh->log);
 
-	mempool_exit(&rh->region_pool);
-	vfree(rh->buckets);
-	kfree(rh);
-}
+	mempool_निकास(&rh->region_pool);
+	vमुक्त(rh->buckets);
+	kमुक्त(rh);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_region_hash_destroy);
 
-struct dm_dirty_log *dm_rh_dirty_log(struct dm_region_hash *rh)
-{
-	return rh->log;
-}
+काष्ठा dm_dirty_log *dm_rh_dirty_log(काष्ठा dm_region_hash *rh)
+अणु
+	वापस rh->log;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_dirty_log);
 
-static unsigned rh_hash(struct dm_region_hash *rh, region_t region)
-{
-	return (unsigned) ((region * rh->prime) >> rh->shift) & rh->mask;
-}
+अटल अचिन्हित rh_hash(काष्ठा dm_region_hash *rh, region_t region)
+अणु
+	वापस (अचिन्हित) ((region * rh->prime) >> rh->shअगरt) & rh->mask;
+पूर्ण
 
-static struct dm_region *__rh_lookup(struct dm_region_hash *rh, region_t region)
-{
-	struct dm_region *reg;
-	struct list_head *bucket = rh->buckets + rh_hash(rh, region);
+अटल काष्ठा dm_region *__rh_lookup(काष्ठा dm_region_hash *rh, region_t region)
+अणु
+	काष्ठा dm_region *reg;
+	काष्ठा list_head *bucket = rh->buckets + rh_hash(rh, region);
 
-	list_for_each_entry(reg, bucket, hash_list)
-		if (reg->key == region)
-			return reg;
+	list_क्रम_each_entry(reg, bucket, hash_list)
+		अगर (reg->key == region)
+			वापस reg;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __rh_insert(struct dm_region_hash *rh, struct dm_region *reg)
-{
+अटल व्योम __rh_insert(काष्ठा dm_region_hash *rh, काष्ठा dm_region *reg)
+अणु
 	list_add(&reg->hash_list, rh->buckets + rh_hash(rh, reg->key));
-}
+पूर्ण
 
-static struct dm_region *__rh_alloc(struct dm_region_hash *rh, region_t region)
-{
-	struct dm_region *reg, *nreg;
+अटल काष्ठा dm_region *__rh_alloc(काष्ठा dm_region_hash *rh, region_t region)
+अणु
+	काष्ठा dm_region *reg, *nreg;
 
 	nreg = mempool_alloc(&rh->region_pool, GFP_ATOMIC);
-	if (unlikely(!nreg))
-		nreg = kmalloc(sizeof(*nreg), GFP_NOIO | __GFP_NOFAIL);
+	अगर (unlikely(!nreg))
+		nreg = kदो_स्मृति(माप(*nreg), GFP_NOIO | __GFP_NOFAIL);
 
 	nreg->state = rh->log->type->in_sync(rh->log, region, 1) ?
 		      DM_RH_CLEAN : DM_RH_NOSYNC;
@@ -301,51 +302,51 @@ static struct dm_region *__rh_alloc(struct dm_region_hash *rh, region_t region)
 	atomic_set(&nreg->pending, 0);
 	bio_list_init(&nreg->delayed_bios);
 
-	write_lock_irq(&rh->hash_lock);
+	ग_लिखो_lock_irq(&rh->hash_lock);
 	reg = __rh_lookup(rh, region);
-	if (reg)
+	अगर (reg)
 		/* We lost the race. */
-		mempool_free(nreg, &rh->region_pool);
-	else {
+		mempool_मुक्त(nreg, &rh->region_pool);
+	अन्यथा अणु
 		__rh_insert(rh, nreg);
-		if (nreg->state == DM_RH_CLEAN) {
+		अगर (nreg->state == DM_RH_CLEAN) अणु
 			spin_lock(&rh->region_lock);
 			list_add(&nreg->list, &rh->clean_regions);
 			spin_unlock(&rh->region_lock);
-		}
+		पूर्ण
 
 		reg = nreg;
-	}
-	write_unlock_irq(&rh->hash_lock);
+	पूर्ण
+	ग_लिखो_unlock_irq(&rh->hash_lock);
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-static struct dm_region *__rh_find(struct dm_region_hash *rh, region_t region)
-{
-	struct dm_region *reg;
+अटल काष्ठा dm_region *__rh_find(काष्ठा dm_region_hash *rh, region_t region)
+अणु
+	काष्ठा dm_region *reg;
 
 	reg = __rh_lookup(rh, region);
-	if (!reg) {
-		read_unlock(&rh->hash_lock);
+	अगर (!reg) अणु
+		पढ़ो_unlock(&rh->hash_lock);
 		reg = __rh_alloc(rh, region);
-		read_lock(&rh->hash_lock);
-	}
+		पढ़ो_lock(&rh->hash_lock);
+	पूर्ण
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-int dm_rh_get_state(struct dm_region_hash *rh, region_t region, int may_block)
-{
-	int r;
-	struct dm_region *reg;
+पूर्णांक dm_rh_get_state(काष्ठा dm_region_hash *rh, region_t region, पूर्णांक may_block)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_region *reg;
 
-	read_lock(&rh->hash_lock);
+	पढ़ो_lock(&rh->hash_lock);
 	reg = __rh_lookup(rh, region);
-	read_unlock(&rh->hash_lock);
+	पढ़ो_unlock(&rh->hash_lock);
 
-	if (reg)
-		return reg->state;
+	अगर (reg)
+		वापस reg->state;
 
 	/*
 	 * The region wasn't in the hash, so we fall back to the
@@ -354,92 +355,92 @@ int dm_rh_get_state(struct dm_region_hash *rh, region_t region, int may_block)
 	r = rh->log->type->in_sync(rh->log, region, may_block);
 
 	/*
-	 * Any error from the dirty log (eg. -EWOULDBLOCK) gets
+	 * Any error from the dirty log (eg. -EWOULDBLOCK) माला_लो
 	 * taken as a DM_RH_NOSYNC
 	 */
-	return r == 1 ? DM_RH_CLEAN : DM_RH_NOSYNC;
-}
+	वापस r == 1 ? DM_RH_CLEAN : DM_RH_NOSYNC;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_get_state);
 
-static void complete_resync_work(struct dm_region *reg, int success)
-{
-	struct dm_region_hash *rh = reg->rh;
+अटल व्योम complete_resync_work(काष्ठा dm_region *reg, पूर्णांक success)
+अणु
+	काष्ठा dm_region_hash *rh = reg->rh;
 
 	rh->log->type->set_region_sync(rh->log, reg->key, success);
 
 	/*
-	 * Dispatch the bios before we call 'wake_up_all'.
-	 * This is important because if we are suspending,
+	 * Dispatch the bios beक्रमe we call 'wake_up_all'.
+	 * This is important because अगर we are suspending,
 	 * we want to know that recovery is complete and
 	 * the work queue is flushed.  If we wake_up_all
-	 * before we dispatch_bios (queue bios and call wake()),
-	 * then we risk suspending before the work queue
+	 * beक्रमe we dispatch_bios (queue bios and call wake()),
+	 * then we risk suspending beक्रमe the work queue
 	 * has been properly flushed.
 	 */
 	rh->dispatch_bios(rh->context, &reg->delayed_bios);
-	if (atomic_dec_and_test(&rh->recovery_in_flight))
-		rh->wakeup_all_recovery_waiters(rh->context);
+	अगर (atomic_dec_and_test(&rh->recovery_in_flight))
+		rh->wakeup_all_recovery_रुकोers(rh->context);
 	up(&rh->recovery_count);
-}
+पूर्ण
 
 /* dm_rh_mark_nosync
  * @ms
  * @bio
  *
  * The bio was written on some mirror(s) but failed on other mirror(s).
- * We can successfully endio the bio but should avoid the region being
+ * We can successfully endio the bio but should aव्योम the region being
  * marked clean by setting the state DM_RH_NOSYNC.
  *
- * This function is _not_ safe in interrupt context!
+ * This function is _not_ safe in पूर्णांकerrupt context!
  */
-void dm_rh_mark_nosync(struct dm_region_hash *rh, struct bio *bio)
-{
-	unsigned long flags;
-	struct dm_dirty_log *log = rh->log;
-	struct dm_region *reg;
+व्योम dm_rh_mark_nosync(काष्ठा dm_region_hash *rh, काष्ठा bio *bio)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा dm_dirty_log *log = rh->log;
+	काष्ठा dm_region *reg;
 	region_t region = dm_rh_bio_to_region(rh, bio);
-	int recovering = 0;
+	पूर्णांक recovering = 0;
 
-	if (bio->bi_opf & REQ_PREFLUSH) {
+	अगर (bio->bi_opf & REQ_PREFLUSH) अणु
 		rh->flush_failure = 1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (bio_op(bio) == REQ_OP_DISCARD)
-		return;
+	अगर (bio_op(bio) == REQ_OP_DISCARD)
+		वापस;
 
-	/* We must inform the log that the sync count has changed. */
+	/* We must inक्रमm the log that the sync count has changed. */
 	log->type->set_region_sync(log, region, 0);
 
-	read_lock(&rh->hash_lock);
+	पढ़ो_lock(&rh->hash_lock);
 	reg = __rh_find(rh, region);
-	read_unlock(&rh->hash_lock);
+	पढ़ो_unlock(&rh->hash_lock);
 
-	/* region hash entry should exist because write was in-flight */
+	/* region hash entry should exist because ग_लिखो was in-flight */
 	BUG_ON(!reg);
 	BUG_ON(!list_empty(&reg->list));
 
 	spin_lock_irqsave(&rh->region_lock, flags);
 	/*
-	 * Possible cases:
-	 *   1) DM_RH_DIRTY
-	 *   2) DM_RH_NOSYNC: was dirty, other preceding writes failed
-	 *   3) DM_RH_RECOVERING: flushing pending writes
-	 * Either case, the region should have not been connected to list.
+	 * Possible हालs:
+	 *   1) DM_RH_सूचीTY
+	 *   2) DM_RH_NOSYNC: was dirty, other preceding ग_लिखोs failed
+	 *   3) DM_RH_RECOVERING: flushing pending ग_लिखोs
+	 * Either हाल, the region should have not been connected to list.
 	 */
 	recovering = (reg->state == DM_RH_RECOVERING);
 	reg->state = DM_RH_NOSYNC;
 	BUG_ON(!list_empty(&reg->list));
 	spin_unlock_irqrestore(&rh->region_lock, flags);
 
-	if (recovering)
+	अगर (recovering)
 		complete_resync_work(reg, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_mark_nosync);
 
-void dm_rh_update_states(struct dm_region_hash *rh, int errors_handled)
-{
-	struct dm_region *reg, *next;
+व्योम dm_rh_update_states(काष्ठा dm_region_hash *rh, पूर्णांक errors_handled)
+अणु
+	काष्ठा dm_region *reg, *next;
 
 	LIST_HEAD(clean);
 	LIST_HEAD(recovered);
@@ -448,275 +449,275 @@ void dm_rh_update_states(struct dm_region_hash *rh, int errors_handled)
 	/*
 	 * Quickly grab the lists.
 	 */
-	write_lock_irq(&rh->hash_lock);
+	ग_लिखो_lock_irq(&rh->hash_lock);
 	spin_lock(&rh->region_lock);
-	if (!list_empty(&rh->clean_regions)) {
+	अगर (!list_empty(&rh->clean_regions)) अणु
 		list_splice_init(&rh->clean_regions, &clean);
 
-		list_for_each_entry(reg, &clean, list)
+		list_क्रम_each_entry(reg, &clean, list)
 			list_del(&reg->hash_list);
-	}
+	पूर्ण
 
-	if (!list_empty(&rh->recovered_regions)) {
+	अगर (!list_empty(&rh->recovered_regions)) अणु
 		list_splice_init(&rh->recovered_regions, &recovered);
 
-		list_for_each_entry(reg, &recovered, list)
+		list_क्रम_each_entry(reg, &recovered, list)
 			list_del(&reg->hash_list);
-	}
+	पूर्ण
 
-	if (!list_empty(&rh->failed_recovered_regions)) {
+	अगर (!list_empty(&rh->failed_recovered_regions)) अणु
 		list_splice_init(&rh->failed_recovered_regions,
 				 &failed_recovered);
 
-		list_for_each_entry(reg, &failed_recovered, list)
+		list_क्रम_each_entry(reg, &failed_recovered, list)
 			list_del(&reg->hash_list);
-	}
+	पूर्ण
 
 	spin_unlock(&rh->region_lock);
-	write_unlock_irq(&rh->hash_lock);
+	ग_लिखो_unlock_irq(&rh->hash_lock);
 
 	/*
 	 * All the regions on the recovered and clean lists have
-	 * now been pulled out of the system, so no need to do
+	 * now been pulled out of the प्रणाली, so no need to करो
 	 * any more locking.
 	 */
-	list_for_each_entry_safe(reg, next, &recovered, list) {
+	list_क्रम_each_entry_safe(reg, next, &recovered, list) अणु
 		rh->log->type->clear_region(rh->log, reg->key);
 		complete_resync_work(reg, 1);
-		mempool_free(reg, &rh->region_pool);
-	}
+		mempool_मुक्त(reg, &rh->region_pool);
+	पूर्ण
 
-	list_for_each_entry_safe(reg, next, &failed_recovered, list) {
+	list_क्रम_each_entry_safe(reg, next, &failed_recovered, list) अणु
 		complete_resync_work(reg, errors_handled ? 0 : 1);
-		mempool_free(reg, &rh->region_pool);
-	}
+		mempool_मुक्त(reg, &rh->region_pool);
+	पूर्ण
 
-	list_for_each_entry_safe(reg, next, &clean, list) {
+	list_क्रम_each_entry_safe(reg, next, &clean, list) अणु
 		rh->log->type->clear_region(rh->log, reg->key);
-		mempool_free(reg, &rh->region_pool);
-	}
+		mempool_मुक्त(reg, &rh->region_pool);
+	पूर्ण
 
 	rh->log->type->flush(rh->log);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_update_states);
 
-static void rh_inc(struct dm_region_hash *rh, region_t region)
-{
-	struct dm_region *reg;
+अटल व्योम rh_inc(काष्ठा dm_region_hash *rh, region_t region)
+अणु
+	काष्ठा dm_region *reg;
 
-	read_lock(&rh->hash_lock);
+	पढ़ो_lock(&rh->hash_lock);
 	reg = __rh_find(rh, region);
 
 	spin_lock_irq(&rh->region_lock);
 	atomic_inc(&reg->pending);
 
-	if (reg->state == DM_RH_CLEAN) {
-		reg->state = DM_RH_DIRTY;
+	अगर (reg->state == DM_RH_CLEAN) अणु
+		reg->state = DM_RH_सूचीTY;
 		list_del_init(&reg->list);	/* take off the clean list */
 		spin_unlock_irq(&rh->region_lock);
 
 		rh->log->type->mark_region(rh->log, reg->key);
-	} else
+	पूर्ण अन्यथा
 		spin_unlock_irq(&rh->region_lock);
 
 
-	read_unlock(&rh->hash_lock);
-}
+	पढ़ो_unlock(&rh->hash_lock);
+पूर्ण
 
-void dm_rh_inc_pending(struct dm_region_hash *rh, struct bio_list *bios)
-{
-	struct bio *bio;
+व्योम dm_rh_inc_pending(काष्ठा dm_region_hash *rh, काष्ठा bio_list *bios)
+अणु
+	काष्ठा bio *bio;
 
-	for (bio = bios->head; bio; bio = bio->bi_next) {
-		if (bio->bi_opf & REQ_PREFLUSH || bio_op(bio) == REQ_OP_DISCARD)
-			continue;
+	क्रम (bio = bios->head; bio; bio = bio->bi_next) अणु
+		अगर (bio->bi_opf & REQ_PREFLUSH || bio_op(bio) == REQ_OP_DISCARD)
+			जारी;
 		rh_inc(rh, dm_rh_bio_to_region(rh, bio));
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_inc_pending);
 
-void dm_rh_dec(struct dm_region_hash *rh, region_t region)
-{
-	unsigned long flags;
-	struct dm_region *reg;
-	int should_wake = 0;
+व्योम dm_rh_dec(काष्ठा dm_region_hash *rh, region_t region)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा dm_region *reg;
+	पूर्णांक should_wake = 0;
 
-	read_lock(&rh->hash_lock);
+	पढ़ो_lock(&rh->hash_lock);
 	reg = __rh_lookup(rh, region);
-	read_unlock(&rh->hash_lock);
+	पढ़ो_unlock(&rh->hash_lock);
 
 	spin_lock_irqsave(&rh->region_lock, flags);
-	if (atomic_dec_and_test(&reg->pending)) {
+	अगर (atomic_dec_and_test(&reg->pending)) अणु
 		/*
-		 * There is no pending I/O for this region.
-		 * We can move the region to corresponding list for next action.
-		 * At this point, the region is not yet connected to any list.
+		 * There is no pending I/O क्रम this region.
+		 * We can move the region to corresponding list क्रम next action.
+		 * At this poपूर्णांक, the region is not yet connected to any list.
 		 *
 		 * If the state is DM_RH_NOSYNC, the region should be kept off
 		 * from clean list.
-		 * The hash entry for DM_RH_NOSYNC will remain in memory
+		 * The hash entry क्रम DM_RH_NOSYNC will reमुख्य in memory
 		 * until the region is recovered or the map is reloaded.
 		 */
 
-		/* do nothing for DM_RH_NOSYNC */
-		if (unlikely(rh->flush_failure)) {
+		/* करो nothing क्रम DM_RH_NOSYNC */
+		अगर (unlikely(rh->flush_failure)) अणु
 			/*
-			 * If a write flush failed some time ago, we
-			 * don't know whether or not this write made it
+			 * If a ग_लिखो flush failed some समय ago, we
+			 * करोn't know whether or not this ग_लिखो made it
 			 * to the disk, so we must resync the device.
 			 */
 			reg->state = DM_RH_NOSYNC;
-		} else if (reg->state == DM_RH_RECOVERING) {
+		पूर्ण अन्यथा अगर (reg->state == DM_RH_RECOVERING) अणु
 			list_add_tail(&reg->list, &rh->quiesced_regions);
-		} else if (reg->state == DM_RH_DIRTY) {
+		पूर्ण अन्यथा अगर (reg->state == DM_RH_सूचीTY) अणु
 			reg->state = DM_RH_CLEAN;
 			list_add(&reg->list, &rh->clean_regions);
-		}
+		पूर्ण
 		should_wake = 1;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&rh->region_lock, flags);
 
-	if (should_wake)
+	अगर (should_wake)
 		rh->wakeup_workers(rh->context);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_dec);
 
 /*
- * Starts quiescing a region in preparation for recovery.
+ * Starts quiescing a region in preparation क्रम recovery.
  */
-static int __rh_recovery_prepare(struct dm_region_hash *rh)
-{
-	int r;
+अटल पूर्णांक __rh_recovery_prepare(काष्ठा dm_region_hash *rh)
+अणु
+	पूर्णांक r;
 	region_t region;
-	struct dm_region *reg;
+	काष्ठा dm_region *reg;
 
 	/*
 	 * Ask the dirty log what's next.
 	 */
 	r = rh->log->type->get_resync_work(rh->log, &region);
-	if (r <= 0)
-		return r;
+	अगर (r <= 0)
+		वापस r;
 
 	/*
 	 * Get this region, and start it quiescing by setting the
 	 * recovering flag.
 	 */
-	read_lock(&rh->hash_lock);
+	पढ़ो_lock(&rh->hash_lock);
 	reg = __rh_find(rh, region);
-	read_unlock(&rh->hash_lock);
+	पढ़ो_unlock(&rh->hash_lock);
 
 	spin_lock_irq(&rh->region_lock);
 	reg->state = DM_RH_RECOVERING;
 
-	/* Already quiesced ? */
-	if (atomic_read(&reg->pending))
+	/* Alपढ़ोy quiesced ? */
+	अगर (atomic_पढ़ो(&reg->pending))
 		list_del_init(&reg->list);
-	else
+	अन्यथा
 		list_move(&reg->list, &rh->quiesced_regions);
 
 	spin_unlock_irq(&rh->region_lock);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void dm_rh_recovery_prepare(struct dm_region_hash *rh)
-{
-	/* Extra reference to avoid race with dm_rh_stop_recovery */
+व्योम dm_rh_recovery_prepare(काष्ठा dm_region_hash *rh)
+अणु
+	/* Extra reference to aव्योम race with dm_rh_stop_recovery */
 	atomic_inc(&rh->recovery_in_flight);
 
-	while (!down_trylock(&rh->recovery_count)) {
+	जबतक (!करोwn_trylock(&rh->recovery_count)) अणु
 		atomic_inc(&rh->recovery_in_flight);
-		if (__rh_recovery_prepare(rh) <= 0) {
+		अगर (__rh_recovery_prepare(rh) <= 0) अणु
 			atomic_dec(&rh->recovery_in_flight);
 			up(&rh->recovery_count);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Drop the extra reference */
-	if (atomic_dec_and_test(&rh->recovery_in_flight))
-		rh->wakeup_all_recovery_waiters(rh->context);
-}
+	अगर (atomic_dec_and_test(&rh->recovery_in_flight))
+		rh->wakeup_all_recovery_रुकोers(rh->context);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_recovery_prepare);
 
 /*
  * Returns any quiesced regions.
  */
-struct dm_region *dm_rh_recovery_start(struct dm_region_hash *rh)
-{
-	struct dm_region *reg = NULL;
+काष्ठा dm_region *dm_rh_recovery_start(काष्ठा dm_region_hash *rh)
+अणु
+	काष्ठा dm_region *reg = शून्य;
 
 	spin_lock_irq(&rh->region_lock);
-	if (!list_empty(&rh->quiesced_regions)) {
+	अगर (!list_empty(&rh->quiesced_regions)) अणु
 		reg = list_entry(rh->quiesced_regions.next,
-				 struct dm_region, list);
-		list_del_init(&reg->list);  /* remove from the quiesced list */
-	}
+				 काष्ठा dm_region, list);
+		list_del_init(&reg->list);  /* हटाओ from the quiesced list */
+	पूर्ण
 	spin_unlock_irq(&rh->region_lock);
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_recovery_start);
 
-void dm_rh_recovery_end(struct dm_region *reg, int success)
-{
-	struct dm_region_hash *rh = reg->rh;
+व्योम dm_rh_recovery_end(काष्ठा dm_region *reg, पूर्णांक success)
+अणु
+	काष्ठा dm_region_hash *rh = reg->rh;
 
 	spin_lock_irq(&rh->region_lock);
-	if (success)
+	अगर (success)
 		list_add(&reg->list, &reg->rh->recovered_regions);
-	else
+	अन्यथा
 		list_add(&reg->list, &reg->rh->failed_recovered_regions);
 
 	spin_unlock_irq(&rh->region_lock);
 
 	rh->wakeup_workers(rh->context);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_recovery_end);
 
 /* Return recovery in flight count. */
-int dm_rh_recovery_in_flight(struct dm_region_hash *rh)
-{
-	return atomic_read(&rh->recovery_in_flight);
-}
+पूर्णांक dm_rh_recovery_in_flight(काष्ठा dm_region_hash *rh)
+अणु
+	वापस atomic_पढ़ो(&rh->recovery_in_flight);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_recovery_in_flight);
 
-int dm_rh_flush(struct dm_region_hash *rh)
-{
-	return rh->log->type->flush(rh->log);
-}
+पूर्णांक dm_rh_flush(काष्ठा dm_region_hash *rh)
+अणु
+	वापस rh->log->type->flush(rh->log);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_flush);
 
-void dm_rh_delay(struct dm_region_hash *rh, struct bio *bio)
-{
-	struct dm_region *reg;
+व्योम dm_rh_delay(काष्ठा dm_region_hash *rh, काष्ठा bio *bio)
+अणु
+	काष्ठा dm_region *reg;
 
-	read_lock(&rh->hash_lock);
+	पढ़ो_lock(&rh->hash_lock);
 	reg = __rh_find(rh, dm_rh_bio_to_region(rh, bio));
 	bio_list_add(&reg->delayed_bios, bio);
-	read_unlock(&rh->hash_lock);
-}
+	पढ़ो_unlock(&rh->hash_lock);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_delay);
 
-void dm_rh_stop_recovery(struct dm_region_hash *rh)
-{
-	int i;
+व्योम dm_rh_stop_recovery(काष्ठा dm_region_hash *rh)
+अणु
+	पूर्णांक i;
 
-	/* wait for any recovering regions */
-	for (i = 0; i < rh->max_recovery; i++)
-		down(&rh->recovery_count);
-}
+	/* रुको क्रम any recovering regions */
+	क्रम (i = 0; i < rh->max_recovery; i++)
+		करोwn(&rh->recovery_count);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_stop_recovery);
 
-void dm_rh_start_recovery(struct dm_region_hash *rh)
-{
-	int i;
+व्योम dm_rh_start_recovery(काष्ठा dm_region_hash *rh)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < rh->max_recovery; i++)
+	क्रम (i = 0; i < rh->max_recovery; i++)
 		up(&rh->recovery_count);
 
 	rh->wakeup_workers(rh->context);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_rh_start_recovery);
 
 MODULE_DESCRIPTION(DM_NAME " region hash");

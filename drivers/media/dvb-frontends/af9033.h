@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Afatech AF9033 demodulator driver
  *
@@ -6,52 +7,52 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
-#ifndef AF9033_H
-#define AF9033_H
+#अगर_अघोषित AF9033_H
+#घोषणा AF9033_H
 
 /*
  * I2C address: 0x1c, 0x1d, 0x1e, 0x1f
  */
-struct af9033_config {
+काष्ठा af9033_config अणु
 	/*
-	 * clock Hz
+	 * घड़ी Hz
 	 * 12000000, 22000000, 24000000, 34000000, 32000000, 28000000, 26000000,
 	 * 30000000, 36000000, 20480000, 16384000
 	 */
-	u32 clock;
+	u32 घड़ी;
 
 	/*
 	 * ADC multiplier
 	 */
-#define AF9033_ADC_MULTIPLIER_1X   0
-#define AF9033_ADC_MULTIPLIER_2X   1
+#घोषणा AF9033_ADC_MULTIPLIER_1X   0
+#घोषणा AF9033_ADC_MULTIPLIER_2X   1
 	u8 adc_multiplier;
 
 	/*
 	 * tuner
 	 */
-#define AF9033_TUNER_TUA9001     0x27 /* Infineon TUA 9001 */
-#define AF9033_TUNER_FC0011      0x28 /* Fitipower FC0011 */
-#define AF9033_TUNER_FC0012      0x2e /* Fitipower FC0012 */
-#define AF9033_TUNER_MXL5007T    0xa0 /* MaxLinear MxL5007T */
-#define AF9033_TUNER_TDA18218    0xa1 /* NXP TDA 18218HN */
-#define AF9033_TUNER_FC2580      0x32 /* FCI FC2580 */
+#घोषणा AF9033_TUNER_TUA9001     0x27 /* Infineon TUA 9001 */
+#घोषणा AF9033_TUNER_FC0011      0x28 /* Fitiघातer FC0011 */
+#घोषणा AF9033_TUNER_FC0012      0x2e /* Fitiघातer FC0012 */
+#घोषणा AF9033_TUNER_MXL5007T    0xa0 /* MaxLinear MxL5007T */
+#घोषणा AF9033_TUNER_TDA18218    0xa1 /* NXP TDA 18218HN */
+#घोषणा AF9033_TUNER_FC2580      0x32 /* FCI FC2580 */
 /* 50-5f Omega */
-#define AF9033_TUNER_IT9135_38   0x38 /* Omega */
-#define AF9033_TUNER_IT9135_51   0x51 /* Omega LNA config 1 */
-#define AF9033_TUNER_IT9135_52   0x52 /* Omega LNA config 2 */
+#घोषणा AF9033_TUNER_IT9135_38   0x38 /* Omega */
+#घोषणा AF9033_TUNER_IT9135_51   0x51 /* Omega LNA config 1 */
+#घोषणा AF9033_TUNER_IT9135_52   0x52 /* Omega LNA config 2 */
 /* 60-6f Omega v2 */
-#define AF9033_TUNER_IT9135_60   0x60 /* Omega v2 */
-#define AF9033_TUNER_IT9135_61   0x61 /* Omega v2 LNA config 1 */
-#define AF9033_TUNER_IT9135_62   0x62 /* Omega v2 LNA config 2 */
+#घोषणा AF9033_TUNER_IT9135_60   0x60 /* Omega v2 */
+#घोषणा AF9033_TUNER_IT9135_61   0x61 /* Omega v2 LNA config 1 */
+#घोषणा AF9033_TUNER_IT9135_62   0x62 /* Omega v2 LNA config 2 */
 	u8 tuner;
 
 	/*
 	 * TS settings
 	 */
-#define AF9033_TS_MODE_USB       0
-#define AF9033_TS_MODE_PARALLEL  1
-#define AF9033_TS_MODE_SERIAL    2
+#घोषणा AF9033_TS_MODE_USB       0
+#घोषणा AF9033_TS_MODE_PARALLEL  1
+#घोषणा AF9033_TS_MODE_SERIAL    2
 	u8 ts_mode:2;
 
 	/*
@@ -67,25 +68,25 @@ struct af9033_config {
 	/*
 	 * PID filter ops
 	 */
-	struct af9033_ops *ops;
+	काष्ठा af9033_ops *ops;
 
 	/*
 	 * frontend
-	 * returned by that driver
+	 * वापसed by that driver
 	 */
-	struct dvb_frontend **fe;
+	काष्ठा dvb_frontend **fe;
 
 	/*
-	 * regmap for IT913x integrated tuner driver
-	 * returned by that driver
+	 * regmap क्रम IT913x पूर्णांकegrated tuner driver
+	 * वापसed by that driver
 	 */
-	struct regmap *regmap;
-};
+	काष्ठा regmap *regmap;
+पूर्ण;
 
-struct af9033_ops {
-	int (*pid_filter_ctrl)(struct dvb_frontend *fe, int onoff);
-	int (*pid_filter)(struct dvb_frontend *fe, int index, u16 pid,
-			  int onoff);
-};
+काष्ठा af9033_ops अणु
+	पूर्णांक (*pid_filter_ctrl)(काष्ठा dvb_frontend *fe, पूर्णांक onoff);
+	पूर्णांक (*pid_filter)(काष्ठा dvb_frontend *fe, पूर्णांक index, u16 pid,
+			  पूर्णांक onoff);
+पूर्ण;
 
-#endif /* AF9033_H */
+#पूर्ण_अगर /* AF9033_H */

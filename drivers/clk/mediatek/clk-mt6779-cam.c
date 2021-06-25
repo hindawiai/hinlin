@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2019 MediaTek Inc.
  * Author: Wendell Lin <wendell.lin@mediatek.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/platform_device.h>
-#include <dt-bindings/clock/mt6779-clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <dt-bindings/घड़ी/mt6779-clk.h>
 
-#include "clk-mtk.h"
-#include "clk-gate.h"
+#समावेश "clk-mtk.h"
+#समावेश "clk-gate.h"
 
-static const struct mtk_gate_regs cam_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs cam_cg_regs = अणु
 	.set_ofs = 0x0004,
 	.clr_ofs = 0x0008,
 	.sta_ofs = 0x0000,
-};
+पूर्ण;
 
-#define GATE_CAM(_id, _name, _parent, _shift)			\
-	GATE_MTK(_id, _name, _parent, &cam_cg_regs, _shift,	\
+#घोषणा GATE_CAM(_id, _name, _parent, _shअगरt)			\
+	GATE_MTK(_id, _name, _parent, &cam_cg_regs, _shअगरt,	\
 		&mtk_clk_gate_ops_setclr)
 
-static const struct mtk_gate cam_clks[] = {
+अटल स्थिर काष्ठा mtk_gate cam_clks[] = अणु
 	GATE_CAM(CLK_CAM_LARB10, "camsys_larb10", "cam_sel", 0),
 	GATE_CAM(CLK_CAM_DFP_VAD, "camsys_dfp_vad", "cam_sel", 1),
 	GATE_CAM(CLK_CAM_LARB11, "camsys_larb11", "cam_sel", 2),
@@ -35,32 +36,32 @@ static const struct mtk_gate cam_clks[] = {
 	GATE_CAM(CLK_CAM_CAMSV3, "camsys_camsv3", "cam_sel", 12),
 	GATE_CAM(CLK_CAM_CCU, "camsys_ccu", "cam_sel", 13),
 	GATE_CAM(CLK_CAM_FAKE_ENG, "camsys_fake_eng", "cam_sel", 14),
-};
+पूर्ण;
 
-static const struct of_device_id of_match_clk_mt6779_cam[] = {
-	{ .compatible = "mediatek,mt6779-camsys", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id of_match_clk_mt6779_cam[] = अणु
+	अणु .compatible = "mediatek,mt6779-camsys", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int clk_mt6779_cam_probe(struct platform_device *pdev)
-{
-	struct clk_onecell_data *clk_data;
-	struct device_node *node = pdev->dev.of_node;
+अटल पूर्णांक clk_mt6779_cam_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_onecell_data *clk_data;
+	काष्ठा device_node *node = pdev->dev.of_node;
 
 	clk_data = mtk_alloc_clk_data(CLK_CAM_NR_CLK);
 
-	mtk_clk_register_gates(node, cam_clks, ARRAY_SIZE(cam_clks),
+	mtk_clk_रेजिस्टर_gates(node, cam_clks, ARRAY_SIZE(cam_clks),
 			       clk_data);
 
-	return of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-}
+	वापस of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
+पूर्ण
 
-static struct platform_driver clk_mt6779_cam_drv = {
+अटल काष्ठा platक्रमm_driver clk_mt6779_cam_drv = अणु
 	.probe = clk_mt6779_cam_probe,
-	.driver = {
+	.driver = अणु
 		.name = "clk-mt6779-cam",
 		.of_match_table = of_match_clk_mt6779_cam,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-builtin_platform_driver(clk_mt6779_cam_drv);
+builtin_platक्रमm_driver(clk_mt6779_cam_drv);

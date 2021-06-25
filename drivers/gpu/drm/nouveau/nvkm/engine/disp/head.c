@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,36 +22,36 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "head.h"
+#समावेश "head.h"
 
-#include <core/client.h>
+#समावेश <core/client.h>
 
-#include <nvif/cl0046.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/cl0046.h>
+#समावेश <nvअगर/unpack.h>
 
-struct nvkm_head *
-nvkm_head_find(struct nvkm_disp *disp, int id)
-{
-	struct nvkm_head *head;
-	list_for_each_entry(head, &disp->head, head) {
-		if (head->id == id)
-			return head;
-	}
-	return NULL;
-}
+काष्ठा nvkm_head *
+nvkm_head_find(काष्ठा nvkm_disp *disp, पूर्णांक id)
+अणु
+	काष्ठा nvkm_head *head;
+	list_क्रम_each_entry(head, &disp->head, head) अणु
+		अगर (head->id == id)
+			वापस head;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-int
-nvkm_head_mthd_scanoutpos(struct nvkm_object *object,
-			  struct nvkm_head *head, void *data, u32 size)
-{
-	union {
-		struct nv04_disp_scanoutpos_v0 v0;
-	} *args = data;
-	int ret = -ENOSYS;
+पूर्णांक
+nvkm_head_mthd_scanoutpos(काष्ठा nvkm_object *object,
+			  काष्ठा nvkm_head *head, व्योम *data, u32 size)
+अणु
+	जोड़ अणु
+		काष्ठा nv04_disp_scanoutpos_v0 v0;
+	पूर्ण *args = data;
+	पूर्णांक ret = -ENOSYS;
 
-	nvif_ioctl(object, "head scanoutpos size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		nvif_ioctl(object, "head scanoutpos vers %d\n",
+	nvअगर_ioctl(object, "head scanoutpos size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
+		nvअगर_ioctl(object, "head scanoutpos vers %d\n",
 			   args->v0.version);
 
 		head->func->state(head, &head->arm);
@@ -61,45 +62,45 @@ nvkm_head_mthd_scanoutpos(struct nvkm_object *object,
 		args->v0.hblanks = head->arm.hblanks;
 		args->v0.hblanke = head->arm.hblanke;
 
-		/* We don't support reading htotal/vtotal on pre-NV50 VGA,
-		 * so we have to give up and trigger the timestamping
+		/* We करोn't support पढ़ोing htotal/vtotal on pre-NV50 VGA,
+		 * so we have to give up and trigger the बारtamping
 		 * fallback in the drm core.
 		 */
-		if (!args->v0.vtotal || !args->v0.htotal)
-			return -ENOTSUPP;
+		अगर (!args->v0.vtotal || !args->v0.htotal)
+			वापस -ENOTSUPP;
 
-		args->v0.time[0] = ktime_to_ns(ktime_get());
+		args->v0.समय[0] = kसमय_प्रकारo_ns(kसमय_get());
 		head->func->rgpos(head, &args->v0.hline, &args->v0.vline);
-		args->v0.time[1] = ktime_to_ns(ktime_get());
-	} else
-		return ret;
+		args->v0.समय[1] = kसमय_प्रकारo_ns(kसमय_get());
+	पूर्ण अन्यथा
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-nvkm_head_del(struct nvkm_head **phead)
-{
-	struct nvkm_head *head = *phead;
-	if (head) {
+व्योम
+nvkm_head_del(काष्ठा nvkm_head **phead)
+अणु
+	काष्ठा nvkm_head *head = *phead;
+	अगर (head) अणु
 		HEAD_DBG(head, "dtor");
 		list_del(&head->head);
-		kfree(*phead);
-		*phead = NULL;
-	}
-}
+		kमुक्त(*phead);
+		*phead = शून्य;
+	पूर्ण
+पूर्ण
 
-int
-nvkm_head_new_(const struct nvkm_head_func *func,
-	       struct nvkm_disp *disp, int id)
-{
-	struct nvkm_head *head;
-	if (!(head = kzalloc(sizeof(*head), GFP_KERNEL)))
-		return -ENOMEM;
+पूर्णांक
+nvkm_head_new_(स्थिर काष्ठा nvkm_head_func *func,
+	       काष्ठा nvkm_disp *disp, पूर्णांक id)
+अणु
+	काष्ठा nvkm_head *head;
+	अगर (!(head = kzalloc(माप(*head), GFP_KERNEL)))
+		वापस -ENOMEM;
 	head->func = func;
 	head->disp = disp;
 	head->id = id;
 	list_add_tail(&head->head, &disp->head);
 	HEAD_DBG(head, "ctor");
-	return 0;
-}
+	वापस 0;
+पूर्ण

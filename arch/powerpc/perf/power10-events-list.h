@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Performance counter support for POWER10 processors.
+ * Perक्रमmance counter support क्रम POWER10 processors.
  *
  * Copyright 2020 Madhavan Srinivasan, IBM Corporation.
  * Copyright 2020 Athira Rajeev, IBM Corporation.
@@ -29,19 +30,19 @@ EVENT(PM_ST_MISS_L1,				0x300f0);
 EVENT(PM_LD_PREFETCH_CACHE_LINE_MISS,		0x1002c);
 /* Demand iCache Miss */
 EVENT(PM_L1_ICACHE_MISS,			0x200fc);
-/* Instruction fetches from L1 */
+/* Inकाष्ठाion fetches from L1 */
 EVENT(PM_INST_FROM_L1,				0x04080);
-/* Instruction Demand sectors wriittent into IL1 */
+/* Inकाष्ठाion Demand sectors wriittent पूर्णांकo IL1 */
 EVENT(PM_INST_FROM_L1MISS,			0x03f00000001c040);
-/* Instruction prefetch written into IL1 */
+/* Inकाष्ठाion prefetch written पूर्णांकo IL1 */
 EVENT(PM_IC_PREF_REQ,				0x040a0);
 /* The data cache was reloaded from local core's L3 due to a demand load */
 EVENT(PM_DATA_FROM_L3,				0x01340000001c040);
 /* Demand LD - L3 Miss (not L2 hit and not L3 hit) */
 EVENT(PM_DATA_FROM_L3MISS,			0x300fe);
-/* All successful D-side store dispatches for this thread */
+/* All successful D-side store dispatches क्रम this thपढ़ो */
 EVENT(PM_L2_ST,					0x010000046080);
-/* All successful D-side store dispatches for this thread that were L2 Miss */
+/* All successful D-side store dispatches क्रम this thपढ़ो that were L2 Miss */
 EVENT(PM_L2_ST_MISS,				0x26880);
 /* Total HW L3 prefetches(Load+store) */
 EVENT(PM_L3_PF_MISS_L3,				0x100000016080);
@@ -58,12 +59,12 @@ EVENT(PM_RUN_INST_CMPL_ALT,			0x00002);
  *
  * Primary PMU event used here is PM_MRK_INST_CMPL (0x401e0)
  * To enable capturing of memory profiling, these MMCRA bits
- * needs to be programmed and corresponding raw event format
+ * needs to be programmed and corresponding raw event क्रमmat
  * encoding.
  *
  * MMCRA bits encoding needed are
  *     SM (Sampling Mode)
- *     EM (Eligibility for Random Sampling)
+ *     EM (Eligibility क्रम Ranकरोm Sampling)
  *     TECE (Threshold Event Counter Event)
  *     TS (Threshold Start Event)
  *     TE (Threshold End Event)

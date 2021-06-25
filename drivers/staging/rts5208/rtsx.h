@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Driver for Realtek PCI-Express card reader
+ * Driver क्रम Realtek PCI-Express card पढ़ोer
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -9,142 +10,142 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
-#ifndef __REALTEK_RTSX_H
-#define __REALTEK_RTSX_H
+#अगर_अघोषित __REALTEK_RTSX_H
+#घोषणा __REALTEK_RTSX_H
 
-#include <linux/io.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <linux/mutex.h>
-#include <linux/cdrom.h>
-#include <linux/workqueue.h>
-#include <linux/timer.h>
-#include <linux/time64.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/cdrom.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/समय64.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_devinfo.h>
-#include <scsi/scsi_eh.h>
-#include <scsi/scsi_host.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_devinfo.h>
+#समावेश <scsi/scsi_eh.h>
+#समावेश <scsi/scsi_host.h>
 
-#define CR_DRIVER_NAME		"rts5208"
+#घोषणा CR_DRIVER_NAME		"rts5208"
 
 /*
- * macros for easy use
+ * macros क्रम easy use
  */
-#define rtsx_writel(chip, reg, value) \
-	iowrite32(value, (chip)->rtsx->remap_addr + reg)
-#define rtsx_readl(chip, reg) \
-	ioread32((chip)->rtsx->remap_addr + reg)
-#define rtsx_writew(chip, reg, value) \
-	iowrite16(value, (chip)->rtsx->remap_addr + reg)
-#define rtsx_readw(chip, reg) \
-	ioread16((chip)->rtsx->remap_addr + reg)
-#define rtsx_writeb(chip, reg, value) \
-	iowrite8(value, (chip)->rtsx->remap_addr + reg)
-#define rtsx_readb(chip, reg) \
-	ioread8((chip)->rtsx->remap_addr + reg)
+#घोषणा rtsx_ग_लिखोl(chip, reg, value) \
+	ioग_लिखो32(value, (chip)->rtsx->remap_addr + reg)
+#घोषणा rtsx_पढ़ोl(chip, reg) \
+	ioपढ़ो32((chip)->rtsx->remap_addr + reg)
+#घोषणा rtsx_ग_लिखोw(chip, reg, value) \
+	ioग_लिखो16(value, (chip)->rtsx->remap_addr + reg)
+#घोषणा rtsx_पढ़ोw(chip, reg) \
+	ioपढ़ो16((chip)->rtsx->remap_addr + reg)
+#घोषणा rtsx_ग_लिखोb(chip, reg, value) \
+	ioग_लिखो8(value, (chip)->rtsx->remap_addr + reg)
+#घोषणा rtsx_पढ़ोb(chip, reg) \
+	ioपढ़ो8((chip)->rtsx->remap_addr + reg)
 
-#define rtsx_read_config_byte(chip, where, val) \
-	pci_read_config_byte((chip)->rtsx->pci, where, val)
+#घोषणा rtsx_पढ़ो_config_byte(chip, where, val) \
+	pci_पढ़ो_config_byte((chip)->rtsx->pci, where, val)
 
-#define rtsx_write_config_byte(chip, where, val) \
-	pci_write_config_byte((chip)->rtsx->pci, where, val)
+#घोषणा rtsx_ग_लिखो_config_byte(chip, where, val) \
+	pci_ग_लिखो_config_byte((chip)->rtsx->pci, where, val)
 
-#define wait_timeout_x(task_state, msecs)	\
-do {						\
+#घोषणा रुको_समयout_x(task_state, msecs)	\
+करो अणु						\
 	set_current_state((task_state));	\
-	schedule_timeout((msecs) * HZ / 1000);	\
-} while (0)
-#define wait_timeout(msecs)	wait_timeout_x(TASK_INTERRUPTIBLE, (msecs))
+	schedule_समयout((msecs) * HZ / 1000);	\
+पूर्ण जबतक (0)
+#घोषणा रुको_समयout(msecs)	रुको_समयout_x(TASK_INTERRUPTIBLE, (msecs))
 
-#define STATE_TRANS_NONE	0
-#define STATE_TRANS_CMD		1
-#define STATE_TRANS_BUF		2
-#define STATE_TRANS_SG		3
+#घोषणा STATE_TRANS_NONE	0
+#घोषणा STATE_TRANS_CMD		1
+#घोषणा STATE_TRANS_BUF		2
+#घोषणा STATE_TRANS_SG		3
 
-#define TRANS_NOT_READY		0
-#define TRANS_RESULT_OK		1
-#define TRANS_RESULT_FAIL	2
+#घोषणा TRANS_NOT_READY		0
+#घोषणा TRANS_RESULT_OK		1
+#घोषणा TRANS_RESULT_FAIL	2
 
-#define SCSI_LUN(srb)		((srb)->device->lun)
+#घोषणा SCSI_LUN(srb)		((srb)->device->lun)
 
-struct rtsx_chip;
+काष्ठा rtsx_chip;
 
-struct rtsx_dev {
-	struct pci_dev *pci;
+काष्ठा rtsx_dev अणु
+	काष्ठा pci_dev *pci;
 
 	/* pci resources */
-	unsigned long		addr;
-	void __iomem		*remap_addr;
-	int irq;
+	अचिन्हित दीर्घ		addr;
+	व्योम __iomem		*remap_addr;
+	पूर्णांक irq;
 
 	/* locks */
 	spinlock_t		reg_lock;
 
-	struct task_struct	*ctl_thread;	 /* the control thread   */
-	struct task_struct	*polling_thread; /* the polling thread   */
+	काष्ठा task_काष्ठा	*ctl_thपढ़ो;	 /* the control thपढ़ो   */
+	काष्ठा task_काष्ठा	*polling_thपढ़ो; /* the polling thपढ़ो   */
 
-	/* mutual exclusion and synchronization structures */
-	struct completion	cmnd_ready;	 /* to sleep thread on	    */
-	struct completion	control_exit;	 /* control thread exit	    */
-	struct completion	polling_exit;	 /* polling thread exit	    */
-	struct completion	notify;		 /* thread begin/end	    */
-	struct completion	scanning_done;	 /* wait for scan thread    */
+	/* mutual exclusion and synchronization काष्ठाures */
+	काष्ठा completion	cmnd_पढ़ोy;	 /* to sleep thपढ़ो on	    */
+	काष्ठा completion	control_निकास;	 /* control thपढ़ो निकास	    */
+	काष्ठा completion	polling_निकास;	 /* polling thपढ़ो निकास	    */
+	काष्ठा completion	notअगरy;		 /* thपढ़ो begin/end	    */
+	काष्ठा completion	scanning_करोne;	 /* रुको क्रम scan thपढ़ो    */
 
-	wait_queue_head_t	delay_wait;	 /* wait during scan, reset */
-	struct mutex		dev_mutex;
+	रुको_queue_head_t	delay_रुको;	 /* रुको during scan, reset */
+	काष्ठा mutex		dev_mutex;
 
 	/* host reserved buffer */
-	void			*rtsx_resv_buf;
+	व्योम			*rtsx_resv_buf;
 	dma_addr_t		rtsx_resv_buf_addr;
 
-	char			trans_result;
-	char			trans_state;
+	अक्षर			trans_result;
+	अक्षर			trans_state;
 
-	struct completion	*done;
-	/* Whether interrupt handler should care card cd info */
+	काष्ठा completion	*करोne;
+	/* Whether पूर्णांकerrupt handler should care card cd info */
 	u32			check_card_cd;
 
-	struct rtsx_chip	*chip;
-};
+	काष्ठा rtsx_chip	*chip;
+पूर्ण;
 
 /* Convert between rtsx_dev and the corresponding Scsi_Host */
-static inline struct Scsi_Host *rtsx_to_host(struct rtsx_dev *dev)
-{
-	return container_of((void *)dev, struct Scsi_Host, hostdata);
-}
+अटल अंतरभूत काष्ठा Scsi_Host *rtsx_to_host(काष्ठा rtsx_dev *dev)
+अणु
+	वापस container_of((व्योम *)dev, काष्ठा Scsi_Host, hostdata);
+पूर्ण
 
-static inline struct rtsx_dev *host_to_rtsx(struct Scsi_Host *host)
-{
-	return (struct rtsx_dev *)host->hostdata;
-}
+अटल अंतरभूत काष्ठा rtsx_dev *host_to_rtsx(काष्ठा Scsi_Host *host)
+अणु
+	वापस (काष्ठा rtsx_dev *)host->hostdata;
+पूर्ण
 
 /*
  * The scsi_lock() and scsi_unlock() macros protect the sm_state and the
- * single queue element srb for write access
+ * single queue element srb क्रम ग_लिखो access
  */
-#define scsi_unlock(host)	spin_unlock_irq(host->host_lock)
-#define scsi_lock(host)		spin_lock_irq(host->host_lock)
+#घोषणा scsi_unlock(host)	spin_unlock_irq(host->host_lock)
+#घोषणा scsi_lock(host)		spin_lock_irq(host->host_lock)
 
-#define lock_state(chip)	spin_lock_irq(&((chip)->rtsx->reg_lock))
-#define unlock_state(chip)	spin_unlock_irq(&((chip)->rtsx->reg_lock))
+#घोषणा lock_state(chip)	spin_lock_irq(&((chip)->rtsx->reg_lock))
+#घोषणा unlock_state(chip)	spin_unlock_irq(&((chip)->rtsx->reg_lock))
 
-/* struct scsi_cmnd transfer buffer access utilities */
-enum xfer_buf_dir	{TO_XFER_BUF, FROM_XFER_BUF};
+/* काष्ठा scsi_cmnd transfer buffer access utilities */
+क्रमागत xfer_buf_dir	अणुTO_XFER_BUF, FROM_XFER_BUFपूर्ण;
 
-#include "rtsx_chip.h"
-#include "rtsx_transport.h"
-#include "rtsx_scsi.h"
-#include "rtsx_card.h"
-#include "rtsx_sys.h"
-#include "general.h"
+#समावेश "rtsx_chip.h"
+#समावेश "rtsx_transport.h"
+#समावेश "rtsx_scsi.h"
+#समावेश "rtsx_card.h"
+#समावेश "rtsx_sys.h"
+#समावेश "general.h"
 
-#endif  /* __REALTEK_RTSX_H */
+#पूर्ण_अगर  /* __REALTEK_RTSX_H */

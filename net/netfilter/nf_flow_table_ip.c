@@ -1,209 +1,210 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netfilter.h>
-#include <linux/rhashtable.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/netdevice.h>
-#include <linux/if_ether.h>
-#include <linux/if_pppox.h>
-#include <linux/ppp_defs.h>
-#include <net/ip.h>
-#include <net/ipv6.h>
-#include <net/ip6_route.h>
-#include <net/neighbour.h>
-#include <net/netfilter/nf_flow_table.h>
-#include <net/netfilter/nf_conntrack_acct.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_pppox.h>
+#समावेश <linux/ppp_defs.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/netfilter/nf_flow_table.h>
+#समावेश <net/netfilter/nf_conntrack_acct.h>
 /* For layer 4 checksum field offset. */
-#include <linux/tcp.h>
-#include <linux/udp.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
 
-static int nf_flow_state_check(struct flow_offload *flow, int proto,
-			       struct sk_buff *skb, unsigned int thoff)
-{
-	struct tcphdr *tcph;
+अटल पूर्णांक nf_flow_state_check(काष्ठा flow_offload *flow, पूर्णांक proto,
+			       काष्ठा sk_buff *skb, अचिन्हित पूर्णांक thoff)
+अणु
+	काष्ठा tcphdr *tcph;
 
-	if (proto != IPPROTO_TCP)
-		return 0;
+	अगर (proto != IPPROTO_TCP)
+		वापस 0;
 
-	tcph = (void *)(skb_network_header(skb) + thoff);
-	if (unlikely(tcph->fin || tcph->rst)) {
-		flow_offload_teardown(flow);
-		return -1;
-	}
+	tcph = (व्योम *)(skb_network_header(skb) + thoff);
+	अगर (unlikely(tcph->fin || tcph->rst)) अणु
+		flow_offload_tearकरोwn(flow);
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nf_flow_nat_ip_tcp(struct sk_buff *skb, unsigned int thoff,
+अटल व्योम nf_flow_nat_ip_tcp(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक thoff,
 			       __be32 addr, __be32 new_addr)
-{
-	struct tcphdr *tcph;
+अणु
+	काष्ठा tcphdr *tcph;
 
-	tcph = (void *)(skb_network_header(skb) + thoff);
+	tcph = (व्योम *)(skb_network_header(skb) + thoff);
 	inet_proto_csum_replace4(&tcph->check, skb, addr, new_addr, true);
-}
+पूर्ण
 
-static void nf_flow_nat_ip_udp(struct sk_buff *skb, unsigned int thoff,
+अटल व्योम nf_flow_nat_ip_udp(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक thoff,
 			       __be32 addr, __be32 new_addr)
-{
-	struct udphdr *udph;
+अणु
+	काष्ठा udphdr *udph;
 
-	udph = (void *)(skb_network_header(skb) + thoff);
-	if (udph->check || skb->ip_summed == CHECKSUM_PARTIAL) {
+	udph = (व्योम *)(skb_network_header(skb) + thoff);
+	अगर (udph->check || skb->ip_summed == CHECKSUM_PARTIAL) अणु
 		inet_proto_csum_replace4(&udph->check, skb, addr,
 					 new_addr, true);
-		if (!udph->check)
+		अगर (!udph->check)
 			udph->check = CSUM_MANGLED_0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nf_flow_nat_ip_l4proto(struct sk_buff *skb, struct iphdr *iph,
-				   unsigned int thoff, __be32 addr,
+अटल व्योम nf_flow_nat_ip_l4proto(काष्ठा sk_buff *skb, काष्ठा iphdr *iph,
+				   अचिन्हित पूर्णांक thoff, __be32 addr,
 				   __be32 new_addr)
-{
-	switch (iph->protocol) {
-	case IPPROTO_TCP:
+अणु
+	चयन (iph->protocol) अणु
+	हाल IPPROTO_TCP:
 		nf_flow_nat_ip_tcp(skb, thoff, addr, new_addr);
-		break;
-	case IPPROTO_UDP:
+		अवरोध;
+	हाल IPPROTO_UDP:
 		nf_flow_nat_ip_udp(skb, thoff, addr, new_addr);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void nf_flow_snat_ip(const struct flow_offload *flow,
-			    struct sk_buff *skb, struct iphdr *iph,
-			    unsigned int thoff, enum flow_offload_tuple_dir dir)
-{
+अटल व्योम nf_flow_snat_ip(स्थिर काष्ठा flow_offload *flow,
+			    काष्ठा sk_buff *skb, काष्ठा iphdr *iph,
+			    अचिन्हित पूर्णांक thoff, क्रमागत flow_offload_tuple_dir dir)
+अणु
 	__be32 addr, new_addr;
 
-	switch (dir) {
-	case FLOW_OFFLOAD_DIR_ORIGINAL:
+	चयन (dir) अणु
+	हाल FLOW_OFFLOAD_सूची_ORIGINAL:
 		addr = iph->saddr;
-		new_addr = flow->tuplehash[FLOW_OFFLOAD_DIR_REPLY].tuple.dst_v4.s_addr;
+		new_addr = flow->tuplehash[FLOW_OFFLOAD_सूची_REPLY].tuple.dst_v4.s_addr;
 		iph->saddr = new_addr;
-		break;
-	case FLOW_OFFLOAD_DIR_REPLY:
+		अवरोध;
+	हाल FLOW_OFFLOAD_सूची_REPLY:
 		addr = iph->daddr;
-		new_addr = flow->tuplehash[FLOW_OFFLOAD_DIR_ORIGINAL].tuple.src_v4.s_addr;
+		new_addr = flow->tuplehash[FLOW_OFFLOAD_सूची_ORIGINAL].tuple.src_v4.s_addr;
 		iph->daddr = new_addr;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	csum_replace4(&iph->check, addr, new_addr);
 
 	nf_flow_nat_ip_l4proto(skb, iph, thoff, addr, new_addr);
-}
+पूर्ण
 
-static void nf_flow_dnat_ip(const struct flow_offload *flow,
-			    struct sk_buff *skb, struct iphdr *iph,
-			    unsigned int thoff, enum flow_offload_tuple_dir dir)
-{
+अटल व्योम nf_flow_dnat_ip(स्थिर काष्ठा flow_offload *flow,
+			    काष्ठा sk_buff *skb, काष्ठा iphdr *iph,
+			    अचिन्हित पूर्णांक thoff, क्रमागत flow_offload_tuple_dir dir)
+अणु
 	__be32 addr, new_addr;
 
-	switch (dir) {
-	case FLOW_OFFLOAD_DIR_ORIGINAL:
+	चयन (dir) अणु
+	हाल FLOW_OFFLOAD_सूची_ORIGINAL:
 		addr = iph->daddr;
-		new_addr = flow->tuplehash[FLOW_OFFLOAD_DIR_REPLY].tuple.src_v4.s_addr;
+		new_addr = flow->tuplehash[FLOW_OFFLOAD_सूची_REPLY].tuple.src_v4.s_addr;
 		iph->daddr = new_addr;
-		break;
-	case FLOW_OFFLOAD_DIR_REPLY:
+		अवरोध;
+	हाल FLOW_OFFLOAD_सूची_REPLY:
 		addr = iph->saddr;
-		new_addr = flow->tuplehash[FLOW_OFFLOAD_DIR_ORIGINAL].tuple.dst_v4.s_addr;
+		new_addr = flow->tuplehash[FLOW_OFFLOAD_सूची_ORIGINAL].tuple.dst_v4.s_addr;
 		iph->saddr = new_addr;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	csum_replace4(&iph->check, addr, new_addr);
 
 	nf_flow_nat_ip_l4proto(skb, iph, thoff, addr, new_addr);
-}
+पूर्ण
 
-static void nf_flow_nat_ip(const struct flow_offload *flow, struct sk_buff *skb,
-			  unsigned int thoff, enum flow_offload_tuple_dir dir,
-			  struct iphdr *iph)
-{
-	if (test_bit(NF_FLOW_SNAT, &flow->flags)) {
+अटल व्योम nf_flow_nat_ip(स्थिर काष्ठा flow_offload *flow, काष्ठा sk_buff *skb,
+			  अचिन्हित पूर्णांक thoff, क्रमागत flow_offload_tuple_dir dir,
+			  काष्ठा iphdr *iph)
+अणु
+	अगर (test_bit(NF_FLOW_SNAT, &flow->flags)) अणु
 		nf_flow_snat_port(flow, skb, thoff, iph->protocol, dir);
 		nf_flow_snat_ip(flow, skb, iph, thoff, dir);
-	}
-	if (test_bit(NF_FLOW_DNAT, &flow->flags)) {
+	पूर्ण
+	अगर (test_bit(NF_FLOW_DNAT, &flow->flags)) अणु
 		nf_flow_dnat_port(flow, skb, thoff, iph->protocol, dir);
 		nf_flow_dnat_ip(flow, skb, iph, thoff, dir);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool ip_has_options(unsigned int thoff)
-{
-	return thoff != sizeof(struct iphdr);
-}
+अटल bool ip_has_options(अचिन्हित पूर्णांक thoff)
+अणु
+	वापस thoff != माप(काष्ठा iphdr);
+पूर्ण
 
-static void nf_flow_tuple_encap(struct sk_buff *skb,
-				struct flow_offload_tuple *tuple)
-{
-	struct vlan_ethhdr *veth;
-	struct pppoe_hdr *phdr;
-	int i = 0;
+अटल व्योम nf_flow_tuple_encap(काष्ठा sk_buff *skb,
+				काष्ठा flow_offload_tuple *tuple)
+अणु
+	काष्ठा vlan_ethhdr *veth;
+	काष्ठा pppoe_hdr *phdr;
+	पूर्णांक i = 0;
 
-	if (skb_vlan_tag_present(skb)) {
+	अगर (skb_vlan_tag_present(skb)) अणु
 		tuple->encap[i].id = skb_vlan_tag_get(skb);
 		tuple->encap[i].proto = skb->vlan_proto;
 		i++;
-	}
-	switch (skb->protocol) {
-	case htons(ETH_P_8021Q):
-		veth = (struct vlan_ethhdr *)skb_mac_header(skb);
+	पूर्ण
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_8021Q):
+		veth = (काष्ठा vlan_ethhdr *)skb_mac_header(skb);
 		tuple->encap[i].id = ntohs(veth->h_vlan_TCI);
 		tuple->encap[i].proto = skb->protocol;
-		break;
-	case htons(ETH_P_PPP_SES):
-		phdr = (struct pppoe_hdr *)skb_mac_header(skb);
+		अवरोध;
+	हाल htons(ETH_P_PPP_SES):
+		phdr = (काष्ठा pppoe_hdr *)skb_mac_header(skb);
 		tuple->encap[i].id = ntohs(phdr->sid);
 		tuple->encap[i].proto = skb->protocol;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int nf_flow_tuple_ip(struct sk_buff *skb, const struct net_device *dev,
-			    struct flow_offload_tuple *tuple, u32 *hdrsize,
+अटल पूर्णांक nf_flow_tuple_ip(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev,
+			    काष्ठा flow_offload_tuple *tuple, u32 *hdrsize,
 			    u32 offset)
-{
-	struct flow_ports *ports;
-	unsigned int thoff;
-	struct iphdr *iph;
+अणु
+	काष्ठा flow_ports *ports;
+	अचिन्हित पूर्णांक thoff;
+	काष्ठा iphdr *iph;
 
-	if (!pskb_may_pull(skb, sizeof(*iph) + offset))
-		return -1;
+	अगर (!pskb_may_pull(skb, माप(*iph) + offset))
+		वापस -1;
 
-	iph = (struct iphdr *)(skb_network_header(skb) + offset);
+	iph = (काष्ठा iphdr *)(skb_network_header(skb) + offset);
 	thoff = (iph->ihl * 4);
 
-	if (ip_is_fragment(iph) ||
+	अगर (ip_is_fragment(iph) ||
 	    unlikely(ip_has_options(thoff)))
-		return -1;
+		वापस -1;
 
 	thoff += offset;
 
-	switch (iph->protocol) {
-	case IPPROTO_TCP:
-		*hdrsize = sizeof(struct tcphdr);
-		break;
-	case IPPROTO_UDP:
-		*hdrsize = sizeof(struct udphdr);
-		break;
-	default:
-		return -1;
-	}
+	चयन (iph->protocol) अणु
+	हाल IPPROTO_TCP:
+		*hdrsize = माप(काष्ठा tcphdr);
+		अवरोध;
+	हाल IPPROTO_UDP:
+		*hdrsize = माप(काष्ठा udphdr);
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	if (iph->ttl <= 1)
-		return -1;
+	अगर (iph->ttl <= 1)
+		वापस -1;
 
-	if (!pskb_may_pull(skb, thoff + *hdrsize))
-		return -1;
+	अगर (!pskb_may_pull(skb, thoff + *hdrsize))
+		वापस -1;
 
-	iph = (struct iphdr *)(skb_network_header(skb) + offset);
-	ports = (struct flow_ports *)(skb_network_header(skb) + thoff);
+	iph = (काष्ठा iphdr *)(skb_network_header(skb) + offset);
+	ports = (काष्ठा flow_ports *)(skb_network_header(skb) + thoff);
 
 	tuple->src_v4.s_addr	= iph->saddr;
 	tuple->dst_v4.s_addr	= iph->daddr;
@@ -211,161 +212,161 @@ static int nf_flow_tuple_ip(struct sk_buff *skb, const struct net_device *dev,
 	tuple->dst_port		= ports->dest;
 	tuple->l3proto		= AF_INET;
 	tuple->l4proto		= iph->protocol;
-	tuple->iifidx		= dev->ifindex;
+	tuple->iअगरidx		= dev->अगरindex;
 	nf_flow_tuple_encap(skb, tuple);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Based on ip_exceeds_mtu(). */
-static bool nf_flow_exceeds_mtu(const struct sk_buff *skb, unsigned int mtu)
-{
-	if (skb->len <= mtu)
-		return false;
+अटल bool nf_flow_exceeds_mtu(स्थिर काष्ठा sk_buff *skb, अचिन्हित पूर्णांक mtu)
+अणु
+	अगर (skb->len <= mtu)
+		वापस false;
 
-	if (skb_is_gso(skb) && skb_gso_validate_network_len(skb, mtu))
-		return false;
+	अगर (skb_is_gso(skb) && skb_gso_validate_network_len(skb, mtu))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static unsigned int nf_flow_xmit_xfrm(struct sk_buff *skb,
-				      const struct nf_hook_state *state,
-				      struct dst_entry *dst)
-{
+अटल अचिन्हित पूर्णांक nf_flow_xmit_xfrm(काष्ठा sk_buff *skb,
+				      स्थिर काष्ठा nf_hook_state *state,
+				      काष्ठा dst_entry *dst)
+अणु
 	skb_orphan(skb);
 	skb_dst_set_noref(skb, dst);
 	dst_output(state->net, state->sk, skb);
-	return NF_STOLEN;
-}
+	वापस NF_STOLEN;
+पूर्ण
 
-static inline __be16 nf_flow_pppoe_proto(const struct sk_buff *skb)
-{
+अटल अंतरभूत __be16 nf_flow_pppoe_proto(स्थिर काष्ठा sk_buff *skb)
+अणु
 	__be16 proto;
 
 	proto = *((__be16 *)(skb_mac_header(skb) + ETH_HLEN +
-			     sizeof(struct pppoe_hdr)));
-	switch (proto) {
-	case htons(PPP_IP):
-		return htons(ETH_P_IP);
-	case htons(PPP_IPV6):
-		return htons(ETH_P_IPV6);
-	}
+			     माप(काष्ठा pppoe_hdr)));
+	चयन (proto) अणु
+	हाल htons(PPP_IP):
+		वापस htons(ETH_P_IP);
+	हाल htons(PPP_IPV6):
+		वापस htons(ETH_P_IPV6);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool nf_flow_skb_encap_protocol(const struct sk_buff *skb, __be16 proto,
+अटल bool nf_flow_skb_encap_protocol(स्थिर काष्ठा sk_buff *skb, __be16 proto,
 				       u32 *offset)
-{
-	struct vlan_ethhdr *veth;
+अणु
+	काष्ठा vlan_ethhdr *veth;
 
-	switch (skb->protocol) {
-	case htons(ETH_P_8021Q):
-		veth = (struct vlan_ethhdr *)skb_mac_header(skb);
-		if (veth->h_vlan_encapsulated_proto == proto) {
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_8021Q):
+		veth = (काष्ठा vlan_ethhdr *)skb_mac_header(skb);
+		अगर (veth->h_vlan_encapsulated_proto == proto) अणु
 			*offset += VLAN_HLEN;
-			return true;
-		}
-		break;
-	case htons(ETH_P_PPP_SES):
-		if (nf_flow_pppoe_proto(skb) == proto) {
+			वापस true;
+		पूर्ण
+		अवरोध;
+	हाल htons(ETH_P_PPP_SES):
+		अगर (nf_flow_pppoe_proto(skb) == proto) अणु
 			*offset += PPPOE_SES_HLEN;
-			return true;
-		}
-		break;
-	}
+			वापस true;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void nf_flow_encap_pop(struct sk_buff *skb,
-			      struct flow_offload_tuple_rhash *tuplehash)
-{
-	struct vlan_hdr *vlan_hdr;
-	int i;
+अटल व्योम nf_flow_encap_pop(काष्ठा sk_buff *skb,
+			      काष्ठा flow_offload_tuple_rhash *tuplehash)
+अणु
+	काष्ठा vlan_hdr *vlan_hdr;
+	पूर्णांक i;
 
-	for (i = 0; i < tuplehash->tuple.encap_num; i++) {
-		if (skb_vlan_tag_present(skb)) {
+	क्रम (i = 0; i < tuplehash->tuple.encap_num; i++) अणु
+		अगर (skb_vlan_tag_present(skb)) अणु
 			__vlan_hwaccel_clear_tag(skb);
-			continue;
-		}
-		switch (skb->protocol) {
-		case htons(ETH_P_8021Q):
-			vlan_hdr = (struct vlan_hdr *)skb->data;
+			जारी;
+		पूर्ण
+		चयन (skb->protocol) अणु
+		हाल htons(ETH_P_8021Q):
+			vlan_hdr = (काष्ठा vlan_hdr *)skb->data;
 			__skb_pull(skb, VLAN_HLEN);
 			vlan_set_encap_proto(skb, vlan_hdr);
 			skb_reset_network_header(skb);
-			break;
-		case htons(ETH_P_PPP_SES):
+			अवरोध;
+		हाल htons(ETH_P_PPP_SES):
 			skb->protocol = nf_flow_pppoe_proto(skb);
 			skb_pull(skb, PPPOE_SES_HLEN);
 			skb_reset_network_header(skb);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static unsigned int nf_flow_queue_xmit(struct net *net, struct sk_buff *skb,
-				       const struct flow_offload_tuple_rhash *tuplehash,
-				       unsigned short type)
-{
-	struct net_device *outdev;
+अटल अचिन्हित पूर्णांक nf_flow_queue_xmit(काष्ठा net *net, काष्ठा sk_buff *skb,
+				       स्थिर काष्ठा flow_offload_tuple_rhash *tuplehash,
+				       अचिन्हित लघु type)
+अणु
+	काष्ठा net_device *outdev;
 
-	outdev = dev_get_by_index_rcu(net, tuplehash->tuple.out.ifidx);
-	if (!outdev)
-		return NF_DROP;
+	outdev = dev_get_by_index_rcu(net, tuplehash->tuple.out.अगरidx);
+	अगर (!outdev)
+		वापस NF_DROP;
 
 	skb->dev = outdev;
 	dev_hard_header(skb, skb->dev, type, tuplehash->tuple.out.h_dest,
 			tuplehash->tuple.out.h_source, skb->len);
 	dev_queue_xmit(skb);
 
-	return NF_STOLEN;
-}
+	वापस NF_STOLEN;
+पूर्ण
 
-unsigned int
-nf_flow_offload_ip_hook(void *priv, struct sk_buff *skb,
-			const struct nf_hook_state *state)
-{
-	struct flow_offload_tuple_rhash *tuplehash;
-	struct nf_flowtable *flow_table = priv;
-	struct flow_offload_tuple tuple = {};
-	enum flow_offload_tuple_dir dir;
-	struct flow_offload *flow;
-	struct net_device *outdev;
+अचिन्हित पूर्णांक
+nf_flow_offload_ip_hook(व्योम *priv, काष्ठा sk_buff *skb,
+			स्थिर काष्ठा nf_hook_state *state)
+अणु
+	काष्ठा flow_offload_tuple_rhash *tuplehash;
+	काष्ठा nf_flowtable *flow_table = priv;
+	काष्ठा flow_offload_tuple tuple = अणुपूर्ण;
+	क्रमागत flow_offload_tuple_dir dir;
+	काष्ठा flow_offload *flow;
+	काष्ठा net_device *outdev;
 	u32 hdrsize, offset = 0;
-	unsigned int thoff, mtu;
-	struct rtable *rt;
-	struct iphdr *iph;
+	अचिन्हित पूर्णांक thoff, mtu;
+	काष्ठा rtable *rt;
+	काष्ठा iphdr *iph;
 	__be32 nexthop;
-	int ret;
+	पूर्णांक ret;
 
-	if (skb->protocol != htons(ETH_P_IP) &&
+	अगर (skb->protocol != htons(ETH_P_IP) &&
 	    !nf_flow_skb_encap_protocol(skb, htons(ETH_P_IP), &offset))
-		return NF_ACCEPT;
+		वापस NF_ACCEPT;
 
-	if (nf_flow_tuple_ip(skb, state->in, &tuple, &hdrsize, offset) < 0)
-		return NF_ACCEPT;
+	अगर (nf_flow_tuple_ip(skb, state->in, &tuple, &hdrsize, offset) < 0)
+		वापस NF_ACCEPT;
 
 	tuplehash = flow_offload_lookup(flow_table, &tuple);
-	if (tuplehash == NULL)
-		return NF_ACCEPT;
+	अगर (tuplehash == शून्य)
+		वापस NF_ACCEPT;
 
 	dir = tuplehash->tuple.dir;
-	flow = container_of(tuplehash, struct flow_offload, tuplehash[dir]);
+	flow = container_of(tuplehash, काष्ठा flow_offload, tuplehash[dir]);
 
 	mtu = flow->tuplehash[dir].tuple.mtu + offset;
-	if (unlikely(nf_flow_exceeds_mtu(skb, mtu)))
-		return NF_ACCEPT;
+	अगर (unlikely(nf_flow_exceeds_mtu(skb, mtu)))
+		वापस NF_ACCEPT;
 
-	iph = (struct iphdr *)(skb_network_header(skb) + offset);
+	iph = (काष्ठा iphdr *)(skb_network_header(skb) + offset);
 	thoff = (iph->ihl * 4) + offset;
-	if (nf_flow_state_check(flow, iph->protocol, skb, thoff))
-		return NF_ACCEPT;
+	अगर (nf_flow_state_check(flow, iph->protocol, skb, thoff))
+		वापस NF_ACCEPT;
 
-	if (skb_try_make_writable(skb, thoff + hdrsize))
-		return NF_DROP;
+	अगर (skb_try_make_writable(skb, thoff + hdrsize))
+		वापस NF_DROP;
 
 	flow_offload_refresh(flow_table, flow);
 
@@ -378,175 +379,175 @@ nf_flow_offload_ip_hook(void *priv, struct sk_buff *skb,
 	ip_decrease_ttl(iph);
 	skb->tstamp = 0;
 
-	if (flow_table->flags & NF_FLOWTABLE_COUNTER)
+	अगर (flow_table->flags & NF_FLOWTABLE_COUNTER)
 		nf_ct_acct_update(flow->ct, tuplehash->tuple.dir, skb->len);
 
-	if (unlikely(tuplehash->tuple.xmit_type == FLOW_OFFLOAD_XMIT_XFRM)) {
-		rt = (struct rtable *)tuplehash->tuple.dst_cache;
-		memset(skb->cb, 0, sizeof(struct inet_skb_parm));
-		IPCB(skb)->iif = skb->dev->ifindex;
+	अगर (unlikely(tuplehash->tuple.xmit_type == FLOW_OFFLOAD_XMIT_XFRM)) अणु
+		rt = (काष्ठा rtable *)tuplehash->tuple.dst_cache;
+		स_रखो(skb->cb, 0, माप(काष्ठा inet_skb_parm));
+		IPCB(skb)->iअगर = skb->dev->अगरindex;
 		IPCB(skb)->flags = IPSKB_FORWARDED;
-		return nf_flow_xmit_xfrm(skb, state, &rt->dst);
-	}
+		वापस nf_flow_xmit_xfrm(skb, state, &rt->dst);
+	पूर्ण
 
-	switch (tuplehash->tuple.xmit_type) {
-	case FLOW_OFFLOAD_XMIT_NEIGH:
-		rt = (struct rtable *)tuplehash->tuple.dst_cache;
+	चयन (tuplehash->tuple.xmit_type) अणु
+	हाल FLOW_OFFLOAD_XMIT_NEIGH:
+		rt = (काष्ठा rtable *)tuplehash->tuple.dst_cache;
 		outdev = rt->dst.dev;
 		skb->dev = outdev;
 		nexthop = rt_nexthop(rt, flow->tuplehash[!dir].tuple.src_v4.s_addr);
 		skb_dst_set_noref(skb, &rt->dst);
 		neigh_xmit(NEIGH_ARP_TABLE, outdev, &nexthop, skb);
 		ret = NF_STOLEN;
-		break;
-	case FLOW_OFFLOAD_XMIT_DIRECT:
+		अवरोध;
+	हाल FLOW_OFFLOAD_XMIT_सूचीECT:
 		ret = nf_flow_queue_xmit(state->net, skb, tuplehash, ETH_P_IP);
-		if (ret == NF_DROP)
-			flow_offload_teardown(flow);
-		break;
-	}
+		अगर (ret == NF_DROP)
+			flow_offload_tearकरोwn(flow);
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_flow_offload_ip_hook);
 
-static void nf_flow_nat_ipv6_tcp(struct sk_buff *skb, unsigned int thoff,
-				 struct in6_addr *addr,
-				 struct in6_addr *new_addr,
-				 struct ipv6hdr *ip6h)
-{
-	struct tcphdr *tcph;
+अटल व्योम nf_flow_nat_ipv6_tcp(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक thoff,
+				 काष्ठा in6_addr *addr,
+				 काष्ठा in6_addr *new_addr,
+				 काष्ठा ipv6hdr *ip6h)
+अणु
+	काष्ठा tcphdr *tcph;
 
-	tcph = (void *)(skb_network_header(skb) + thoff);
+	tcph = (व्योम *)(skb_network_header(skb) + thoff);
 	inet_proto_csum_replace16(&tcph->check, skb, addr->s6_addr32,
 				  new_addr->s6_addr32, true);
-}
+पूर्ण
 
-static void nf_flow_nat_ipv6_udp(struct sk_buff *skb, unsigned int thoff,
-				 struct in6_addr *addr,
-				 struct in6_addr *new_addr)
-{
-	struct udphdr *udph;
+अटल व्योम nf_flow_nat_ipv6_udp(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक thoff,
+				 काष्ठा in6_addr *addr,
+				 काष्ठा in6_addr *new_addr)
+अणु
+	काष्ठा udphdr *udph;
 
-	udph = (void *)(skb_network_header(skb) + thoff);
-	if (udph->check || skb->ip_summed == CHECKSUM_PARTIAL) {
+	udph = (व्योम *)(skb_network_header(skb) + thoff);
+	अगर (udph->check || skb->ip_summed == CHECKSUM_PARTIAL) अणु
 		inet_proto_csum_replace16(&udph->check, skb, addr->s6_addr32,
 					  new_addr->s6_addr32, true);
-		if (!udph->check)
+		अगर (!udph->check)
 			udph->check = CSUM_MANGLED_0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nf_flow_nat_ipv6_l4proto(struct sk_buff *skb, struct ipv6hdr *ip6h,
-				     unsigned int thoff, struct in6_addr *addr,
-				     struct in6_addr *new_addr)
-{
-	switch (ip6h->nexthdr) {
-	case IPPROTO_TCP:
+अटल व्योम nf_flow_nat_ipv6_l4proto(काष्ठा sk_buff *skb, काष्ठा ipv6hdr *ip6h,
+				     अचिन्हित पूर्णांक thoff, काष्ठा in6_addr *addr,
+				     काष्ठा in6_addr *new_addr)
+अणु
+	चयन (ip6h->nexthdr) अणु
+	हाल IPPROTO_TCP:
 		nf_flow_nat_ipv6_tcp(skb, thoff, addr, new_addr, ip6h);
-		break;
-	case IPPROTO_UDP:
+		अवरोध;
+	हाल IPPROTO_UDP:
 		nf_flow_nat_ipv6_udp(skb, thoff, addr, new_addr);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void nf_flow_snat_ipv6(const struct flow_offload *flow,
-			      struct sk_buff *skb, struct ipv6hdr *ip6h,
-			      unsigned int thoff,
-			      enum flow_offload_tuple_dir dir)
-{
-	struct in6_addr addr, new_addr;
+अटल व्योम nf_flow_snat_ipv6(स्थिर काष्ठा flow_offload *flow,
+			      काष्ठा sk_buff *skb, काष्ठा ipv6hdr *ip6h,
+			      अचिन्हित पूर्णांक thoff,
+			      क्रमागत flow_offload_tuple_dir dir)
+अणु
+	काष्ठा in6_addr addr, new_addr;
 
-	switch (dir) {
-	case FLOW_OFFLOAD_DIR_ORIGINAL:
+	चयन (dir) अणु
+	हाल FLOW_OFFLOAD_सूची_ORIGINAL:
 		addr = ip6h->saddr;
-		new_addr = flow->tuplehash[FLOW_OFFLOAD_DIR_REPLY].tuple.dst_v6;
+		new_addr = flow->tuplehash[FLOW_OFFLOAD_सूची_REPLY].tuple.dst_v6;
 		ip6h->saddr = new_addr;
-		break;
-	case FLOW_OFFLOAD_DIR_REPLY:
+		अवरोध;
+	हाल FLOW_OFFLOAD_सूची_REPLY:
 		addr = ip6h->daddr;
-		new_addr = flow->tuplehash[FLOW_OFFLOAD_DIR_ORIGINAL].tuple.src_v6;
+		new_addr = flow->tuplehash[FLOW_OFFLOAD_सूची_ORIGINAL].tuple.src_v6;
 		ip6h->daddr = new_addr;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	nf_flow_nat_ipv6_l4proto(skb, ip6h, thoff, &addr, &new_addr);
-}
+पूर्ण
 
-static void nf_flow_dnat_ipv6(const struct flow_offload *flow,
-			      struct sk_buff *skb, struct ipv6hdr *ip6h,
-			      unsigned int thoff,
-			      enum flow_offload_tuple_dir dir)
-{
-	struct in6_addr addr, new_addr;
+अटल व्योम nf_flow_dnat_ipv6(स्थिर काष्ठा flow_offload *flow,
+			      काष्ठा sk_buff *skb, काष्ठा ipv6hdr *ip6h,
+			      अचिन्हित पूर्णांक thoff,
+			      क्रमागत flow_offload_tuple_dir dir)
+अणु
+	काष्ठा in6_addr addr, new_addr;
 
-	switch (dir) {
-	case FLOW_OFFLOAD_DIR_ORIGINAL:
+	चयन (dir) अणु
+	हाल FLOW_OFFLOAD_सूची_ORIGINAL:
 		addr = ip6h->daddr;
-		new_addr = flow->tuplehash[FLOW_OFFLOAD_DIR_REPLY].tuple.src_v6;
+		new_addr = flow->tuplehash[FLOW_OFFLOAD_सूची_REPLY].tuple.src_v6;
 		ip6h->daddr = new_addr;
-		break;
-	case FLOW_OFFLOAD_DIR_REPLY:
+		अवरोध;
+	हाल FLOW_OFFLOAD_सूची_REPLY:
 		addr = ip6h->saddr;
-		new_addr = flow->tuplehash[FLOW_OFFLOAD_DIR_ORIGINAL].tuple.dst_v6;
+		new_addr = flow->tuplehash[FLOW_OFFLOAD_सूची_ORIGINAL].tuple.dst_v6;
 		ip6h->saddr = new_addr;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	nf_flow_nat_ipv6_l4proto(skb, ip6h, thoff, &addr, &new_addr);
-}
+पूर्ण
 
-static void nf_flow_nat_ipv6(const struct flow_offload *flow,
-			     struct sk_buff *skb,
-			     enum flow_offload_tuple_dir dir,
-			     struct ipv6hdr *ip6h)
-{
-	unsigned int thoff = sizeof(*ip6h);
+अटल व्योम nf_flow_nat_ipv6(स्थिर काष्ठा flow_offload *flow,
+			     काष्ठा sk_buff *skb,
+			     क्रमागत flow_offload_tuple_dir dir,
+			     काष्ठा ipv6hdr *ip6h)
+अणु
+	अचिन्हित पूर्णांक thoff = माप(*ip6h);
 
-	if (test_bit(NF_FLOW_SNAT, &flow->flags)) {
+	अगर (test_bit(NF_FLOW_SNAT, &flow->flags)) अणु
 		nf_flow_snat_port(flow, skb, thoff, ip6h->nexthdr, dir);
 		nf_flow_snat_ipv6(flow, skb, ip6h, thoff, dir);
-	}
-	if (test_bit(NF_FLOW_DNAT, &flow->flags)) {
+	पूर्ण
+	अगर (test_bit(NF_FLOW_DNAT, &flow->flags)) अणु
 		nf_flow_dnat_port(flow, skb, thoff, ip6h->nexthdr, dir);
 		nf_flow_dnat_ipv6(flow, skb, ip6h, thoff, dir);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int nf_flow_tuple_ipv6(struct sk_buff *skb, const struct net_device *dev,
-			      struct flow_offload_tuple *tuple, u32 *hdrsize,
+अटल पूर्णांक nf_flow_tuple_ipv6(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev,
+			      काष्ठा flow_offload_tuple *tuple, u32 *hdrsize,
 			      u32 offset)
-{
-	struct flow_ports *ports;
-	struct ipv6hdr *ip6h;
-	unsigned int thoff;
+अणु
+	काष्ठा flow_ports *ports;
+	काष्ठा ipv6hdr *ip6h;
+	अचिन्हित पूर्णांक thoff;
 
-	thoff = sizeof(*ip6h) + offset;
-	if (!pskb_may_pull(skb, thoff))
-		return -1;
+	thoff = माप(*ip6h) + offset;
+	अगर (!pskb_may_pull(skb, thoff))
+		वापस -1;
 
-	ip6h = (struct ipv6hdr *)(skb_network_header(skb) + offset);
+	ip6h = (काष्ठा ipv6hdr *)(skb_network_header(skb) + offset);
 
-	switch (ip6h->nexthdr) {
-	case IPPROTO_TCP:
-		*hdrsize = sizeof(struct tcphdr);
-		break;
-	case IPPROTO_UDP:
-		*hdrsize = sizeof(struct udphdr);
-		break;
-	default:
-		return -1;
-	}
+	चयन (ip6h->nexthdr) अणु
+	हाल IPPROTO_TCP:
+		*hdrsize = माप(काष्ठा tcphdr);
+		अवरोध;
+	हाल IPPROTO_UDP:
+		*hdrsize = माप(काष्ठा udphdr);
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	if (ip6h->hop_limit <= 1)
-		return -1;
+	अगर (ip6h->hop_limit <= 1)
+		वापस -1;
 
-	if (!pskb_may_pull(skb, thoff + *hdrsize))
-		return -1;
+	अगर (!pskb_may_pull(skb, thoff + *hdrsize))
+		वापस -1;
 
-	ip6h = (struct ipv6hdr *)(skb_network_header(skb) + offset);
-	ports = (struct flow_ports *)(skb_network_header(skb) + thoff);
+	ip6h = (काष्ठा ipv6hdr *)(skb_network_header(skb) + offset);
+	ports = (काष्ठा flow_ports *)(skb_network_header(skb) + thoff);
 
 	tuple->src_v6		= ip6h->saddr;
 	tuple->dst_v6		= ip6h->daddr;
@@ -554,54 +555,54 @@ static int nf_flow_tuple_ipv6(struct sk_buff *skb, const struct net_device *dev,
 	tuple->dst_port		= ports->dest;
 	tuple->l3proto		= AF_INET6;
 	tuple->l4proto		= ip6h->nexthdr;
-	tuple->iifidx		= dev->ifindex;
+	tuple->iअगरidx		= dev->अगरindex;
 	nf_flow_tuple_encap(skb, tuple);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned int
-nf_flow_offload_ipv6_hook(void *priv, struct sk_buff *skb,
-			  const struct nf_hook_state *state)
-{
-	struct flow_offload_tuple_rhash *tuplehash;
-	struct nf_flowtable *flow_table = priv;
-	struct flow_offload_tuple tuple = {};
-	enum flow_offload_tuple_dir dir;
-	const struct in6_addr *nexthop;
-	struct flow_offload *flow;
-	struct net_device *outdev;
-	unsigned int thoff, mtu;
+अचिन्हित पूर्णांक
+nf_flow_offload_ipv6_hook(व्योम *priv, काष्ठा sk_buff *skb,
+			  स्थिर काष्ठा nf_hook_state *state)
+अणु
+	काष्ठा flow_offload_tuple_rhash *tuplehash;
+	काष्ठा nf_flowtable *flow_table = priv;
+	काष्ठा flow_offload_tuple tuple = अणुपूर्ण;
+	क्रमागत flow_offload_tuple_dir dir;
+	स्थिर काष्ठा in6_addr *nexthop;
+	काष्ठा flow_offload *flow;
+	काष्ठा net_device *outdev;
+	अचिन्हित पूर्णांक thoff, mtu;
 	u32 hdrsize, offset = 0;
-	struct ipv6hdr *ip6h;
-	struct rt6_info *rt;
-	int ret;
+	काष्ठा ipv6hdr *ip6h;
+	काष्ठा rt6_info *rt;
+	पूर्णांक ret;
 
-	if (skb->protocol != htons(ETH_P_IPV6) &&
+	अगर (skb->protocol != htons(ETH_P_IPV6) &&
 	    !nf_flow_skb_encap_protocol(skb, htons(ETH_P_IPV6), &offset))
-		return NF_ACCEPT;
+		वापस NF_ACCEPT;
 
-	if (nf_flow_tuple_ipv6(skb, state->in, &tuple, &hdrsize, offset) < 0)
-		return NF_ACCEPT;
+	अगर (nf_flow_tuple_ipv6(skb, state->in, &tuple, &hdrsize, offset) < 0)
+		वापस NF_ACCEPT;
 
 	tuplehash = flow_offload_lookup(flow_table, &tuple);
-	if (tuplehash == NULL)
-		return NF_ACCEPT;
+	अगर (tuplehash == शून्य)
+		वापस NF_ACCEPT;
 
 	dir = tuplehash->tuple.dir;
-	flow = container_of(tuplehash, struct flow_offload, tuplehash[dir]);
+	flow = container_of(tuplehash, काष्ठा flow_offload, tuplehash[dir]);
 
 	mtu = flow->tuplehash[dir].tuple.mtu + offset;
-	if (unlikely(nf_flow_exceeds_mtu(skb, mtu)))
-		return NF_ACCEPT;
+	अगर (unlikely(nf_flow_exceeds_mtu(skb, mtu)))
+		वापस NF_ACCEPT;
 
-	ip6h = (struct ipv6hdr *)(skb_network_header(skb) + offset);
-	thoff = sizeof(*ip6h) + offset;
-	if (nf_flow_state_check(flow, ip6h->nexthdr, skb, thoff))
-		return NF_ACCEPT;
+	ip6h = (काष्ठा ipv6hdr *)(skb_network_header(skb) + offset);
+	thoff = माप(*ip6h) + offset;
+	अगर (nf_flow_state_check(flow, ip6h->nexthdr, skb, thoff))
+		वापस NF_ACCEPT;
 
-	if (skb_try_make_writable(skb, thoff + hdrsize))
-		return NF_DROP;
+	अगर (skb_try_make_writable(skb, thoff + hdrsize))
+		वापस NF_DROP;
 
 	flow_offload_refresh(flow_table, flow);
 
@@ -613,34 +614,34 @@ nf_flow_offload_ipv6_hook(void *priv, struct sk_buff *skb,
 	ip6h->hop_limit--;
 	skb->tstamp = 0;
 
-	if (flow_table->flags & NF_FLOWTABLE_COUNTER)
+	अगर (flow_table->flags & NF_FLOWTABLE_COUNTER)
 		nf_ct_acct_update(flow->ct, tuplehash->tuple.dir, skb->len);
 
-	if (unlikely(tuplehash->tuple.xmit_type == FLOW_OFFLOAD_XMIT_XFRM)) {
-		rt = (struct rt6_info *)tuplehash->tuple.dst_cache;
-		memset(skb->cb, 0, sizeof(struct inet6_skb_parm));
-		IP6CB(skb)->iif = skb->dev->ifindex;
+	अगर (unlikely(tuplehash->tuple.xmit_type == FLOW_OFFLOAD_XMIT_XFRM)) अणु
+		rt = (काष्ठा rt6_info *)tuplehash->tuple.dst_cache;
+		स_रखो(skb->cb, 0, माप(काष्ठा inet6_skb_parm));
+		IP6CB(skb)->iअगर = skb->dev->अगरindex;
 		IP6CB(skb)->flags = IP6SKB_FORWARDED;
-		return nf_flow_xmit_xfrm(skb, state, &rt->dst);
-	}
+		वापस nf_flow_xmit_xfrm(skb, state, &rt->dst);
+	पूर्ण
 
-	switch (tuplehash->tuple.xmit_type) {
-	case FLOW_OFFLOAD_XMIT_NEIGH:
-		rt = (struct rt6_info *)tuplehash->tuple.dst_cache;
+	चयन (tuplehash->tuple.xmit_type) अणु
+	हाल FLOW_OFFLOAD_XMIT_NEIGH:
+		rt = (काष्ठा rt6_info *)tuplehash->tuple.dst_cache;
 		outdev = rt->dst.dev;
 		skb->dev = outdev;
 		nexthop = rt6_nexthop(rt, &flow->tuplehash[!dir].tuple.src_v6);
 		skb_dst_set_noref(skb, &rt->dst);
 		neigh_xmit(NEIGH_ND_TABLE, outdev, nexthop, skb);
 		ret = NF_STOLEN;
-		break;
-	case FLOW_OFFLOAD_XMIT_DIRECT:
+		अवरोध;
+	हाल FLOW_OFFLOAD_XMIT_सूचीECT:
 		ret = nf_flow_queue_xmit(state->net, skb, tuplehash, ETH_P_IPV6);
-		if (ret == NF_DROP)
-			flow_offload_teardown(flow);
-		break;
-	}
+		अगर (ret == NF_DROP)
+			flow_offload_tearकरोwn(flow);
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_flow_offload_ipv6_hook);

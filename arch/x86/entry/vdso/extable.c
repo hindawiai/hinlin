@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/err.h>
-#include <linux/mm.h>
-#include <asm/current.h>
-#include <asm/traps.h>
-#include <asm/vdso.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/err.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/vdso.h>
 
-struct vdso_exception_table_entry {
-	int insn, fixup;
-};
+काष्ठा vdso_exception_table_entry अणु
+	पूर्णांक insn, fixup;
+पूर्ण;
 
-bool fixup_vdso_exception(struct pt_regs *regs, int trapnr,
-			  unsigned long error_code, unsigned long fault_addr)
-{
-	const struct vdso_image *image = current->mm->context.vdso_image;
-	const struct vdso_exception_table_entry *extable;
-	unsigned int nr_entries, i;
-	unsigned long base;
+bool fixup_vdso_exception(काष्ठा pt_regs *regs, पूर्णांक trapnr,
+			  अचिन्हित दीर्घ error_code, अचिन्हित दीर्घ fault_addr)
+अणु
+	स्थिर काष्ठा vdso_image *image = current->mm->context.vdso_image;
+	स्थिर काष्ठा vdso_exception_table_entry *extable;
+	अचिन्हित पूर्णांक nr_entries, i;
+	अचिन्हित दीर्घ base;
 
 	/*
-	 * Do not attempt to fixup #DB or #BP.  It's impossible to identify
+	 * Do not attempt to fixup #DB or #BP.  It's impossible to identअगरy
 	 * whether or not a #DB/#BP originated from within an SGX enclave and
-	 * SGX enclaves are currently the only use case for vDSO fixup.
+	 * SGX enclaves are currently the only use हाल क्रम vDSO fixup.
 	 */
-	if (trapnr == X86_TRAP_DB || trapnr == X86_TRAP_BP)
-		return false;
+	अगर (trapnr == X86_TRAP_DB || trapnr == X86_TRAP_BP)
+		वापस false;
 
-	if (!current->mm->context.vdso)
-		return false;
+	अगर (!current->mm->context.vdso)
+		वापस false;
 
-	base =  (unsigned long)current->mm->context.vdso + image->extable_base;
-	nr_entries = image->extable_len / (sizeof(*extable));
+	base =  (अचिन्हित दीर्घ)current->mm->context.vdso + image->extable_base;
+	nr_entries = image->extable_len / (माप(*extable));
 	extable = image->extable;
 
-	for (i = 0; i < nr_entries; i++) {
-		if (regs->ip == base + extable[i].insn) {
+	क्रम (i = 0; i < nr_entries; i++) अणु
+		अगर (regs->ip == base + extable[i].insn) अणु
 			regs->ip = base + extable[i].fixup;
 			regs->di = trapnr;
 			regs->si = error_code;
 			regs->dx = fault_addr;
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण

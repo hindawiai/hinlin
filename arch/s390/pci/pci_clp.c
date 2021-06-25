@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corp. 2012
  *
@@ -6,52 +7,52 @@
  *   Jan Glauber <jang@linux.vnet.ibm.com>
  */
 
-#define KMSG_COMPONENT "zpci"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "zpci"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/compat.h>
-#include <linux/kernel.h>
-#include <linux/miscdevice.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/pci.h>
-#include <linux/uaccess.h>
-#include <asm/pci_debug.h>
-#include <asm/pci_clp.h>
-#include <asm/clp.h>
-#include <uapi/asm/clp.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/pci_debug.h>
+#समावेश <यंत्र/pci_clp.h>
+#समावेश <यंत्र/clp.h>
+#समावेश <uapi/यंत्र/clp.h>
 
 bool zpci_unique_uid;
 
-void update_uid_checking(bool new)
-{
-	if (zpci_unique_uid != new)
+व्योम update_uid_checking(bool new)
+अणु
+	अगर (zpci_unique_uid != new)
 		zpci_dbg(1, "uid checking:%d\n", new);
 
 	zpci_unique_uid = new;
-}
+पूर्ण
 
-static inline void zpci_err_clp(unsigned int rsp, int rc)
-{
-	struct {
-		unsigned int rsp;
-		int rc;
-	} __packed data = {rsp, rc};
+अटल अंतरभूत व्योम zpci_err_clp(अचिन्हित पूर्णांक rsp, पूर्णांक rc)
+अणु
+	काष्ठा अणु
+		अचिन्हित पूर्णांक rsp;
+		पूर्णांक rc;
+	पूर्ण __packed data = अणुrsp, rcपूर्ण;
 
-	zpci_err_hex(&data, sizeof(data));
-}
+	zpci_err_hex(&data, माप(data));
+पूर्ण
 
 /*
  * Call Logical Processor with c=1, lps=0 and command 1
  * to get the bit mask of installed logical processors
  */
-static inline int clp_get_ilp(unsigned long *ilp)
-{
-	unsigned long mask;
-	int cc = 3;
+अटल अंतरभूत पूर्णांक clp_get_ilp(अचिन्हित दीर्घ *ilp)
+अणु
+	अचिन्हित दीर्घ mask;
+	पूर्णांक cc = 3;
 
-	asm volatile (
+	यंत्र अस्थिर (
 		"	.insn	rrf,0xb9a00000,%[mask],%[cmd],8,0\n"
 		"0:	ipm	%[cc]\n"
 		"	srl	%[cc],28\n"
@@ -60,19 +61,19 @@ static inline int clp_get_ilp(unsigned long *ilp)
 		: [cc] "+d" (cc), [mask] "=d" (mask) : [cmd] "a" (1)
 		: "cc");
 	*ilp = mask;
-	return cc;
-}
+	वापस cc;
+पूर्ण
 
 /*
- * Call Logical Processor with c=0, the give constant lps and an lpcb request.
+ * Call Logical Processor with c=0, the give स्थिरant lps and an lpcb request.
  */
-static __always_inline int clp_req(void *data, unsigned int lps)
-{
-	struct { u8 _[CLP_BLK_SIZE]; } *req = data;
+अटल __always_अंतरभूत पूर्णांक clp_req(व्योम *data, अचिन्हित पूर्णांक lps)
+अणु
+	काष्ठा अणु u8 _[CLP_BLK_SIZE]; पूर्ण *req = data;
 	u64 ignored;
-	int cc = 3;
+	पूर्णांक cc = 3;
 
-	asm volatile (
+	यंत्र अस्थिर (
 		"	.insn	rrf,0xb9a00000,%[ign],%[req],0,%[lps]\n"
 		"0:	ipm	%[cc]\n"
 		"	srl	%[cc],28\n"
@@ -81,75 +82,75 @@ static __always_inline int clp_req(void *data, unsigned int lps)
 		: [cc] "+d" (cc), [ign] "=d" (ignored), "+m" (*req)
 		: [req] "a" (req), [lps] "i" (lps)
 		: "cc");
-	return cc;
-}
+	वापस cc;
+पूर्ण
 
-static void *clp_alloc_block(gfp_t gfp_mask)
-{
-	return (void *) __get_free_pages(gfp_mask, get_order(CLP_BLK_SIZE));
-}
+अटल व्योम *clp_alloc_block(gfp_t gfp_mask)
+अणु
+	वापस (व्योम *) __get_मुक्त_pages(gfp_mask, get_order(CLP_BLK_SIZE));
+पूर्ण
 
-static void clp_free_block(void *ptr)
-{
-	free_pages((unsigned long) ptr, get_order(CLP_BLK_SIZE));
-}
+अटल व्योम clp_मुक्त_block(व्योम *ptr)
+अणु
+	मुक्त_pages((अचिन्हित दीर्घ) ptr, get_order(CLP_BLK_SIZE));
+पूर्ण
 
-static void clp_store_query_pci_fngrp(struct zpci_dev *zdev,
-				      struct clp_rsp_query_pci_grp *response)
-{
+अटल व्योम clp_store_query_pci_fngrp(काष्ठा zpci_dev *zdev,
+				      काष्ठा clp_rsp_query_pci_grp *response)
+अणु
 	zdev->tlb_refresh = response->refresh;
-	zdev->dma_mask = response->dasm;
+	zdev->dma_mask = response->dयंत्र;
 	zdev->msi_addr = response->msia;
 	zdev->max_msi = response->noi;
 	zdev->fmb_update = response->mui;
 	zdev->version = response->version;
 
-	switch (response->version) {
-	case 1:
+	चयन (response->version) अणु
+	हाल 1:
 		zdev->max_bus_speed = PCIE_SPEED_5_0GT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		zdev->max_bus_speed = PCI_SPEED_UNKNOWN;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int clp_query_pci_fngrp(struct zpci_dev *zdev, u8 pfgid)
-{
-	struct clp_req_rsp_query_pci_grp *rrb;
-	int rc;
+अटल पूर्णांक clp_query_pci_fngrp(काष्ठा zpci_dev *zdev, u8 pfgid)
+अणु
+	काष्ठा clp_req_rsp_query_pci_grp *rrb;
+	पूर्णांक rc;
 
 	rrb = clp_alloc_block(GFP_KERNEL);
-	if (!rrb)
-		return -ENOMEM;
+	अगर (!rrb)
+		वापस -ENOMEM;
 
-	memset(rrb, 0, sizeof(*rrb));
-	rrb->request.hdr.len = sizeof(rrb->request);
+	स_रखो(rrb, 0, माप(*rrb));
+	rrb->request.hdr.len = माप(rrb->request);
 	rrb->request.hdr.cmd = CLP_QUERY_PCI_FNGRP;
-	rrb->response.hdr.len = sizeof(rrb->response);
+	rrb->response.hdr.len = माप(rrb->response);
 	rrb->request.pfgid = pfgid;
 
 	rc = clp_req(rrb, CLP_LPS_PCI);
-	if (!rc && rrb->response.hdr.rsp == CLP_RC_OK)
+	अगर (!rc && rrb->response.hdr.rsp == CLP_RC_OK)
 		clp_store_query_pci_fngrp(zdev, &rrb->response);
-	else {
+	अन्यथा अणु
 		zpci_err("Q PCI FGRP:\n");
 		zpci_err_clp(rrb->response.hdr.rsp, rc);
 		rc = -EIO;
-	}
-	clp_free_block(rrb);
-	return rc;
-}
+	पूर्ण
+	clp_मुक्त_block(rrb);
+	वापस rc;
+पूर्ण
 
-static int clp_store_query_pci_fn(struct zpci_dev *zdev,
-				  struct clp_rsp_query_pci *response)
-{
-	int i;
+अटल पूर्णांक clp_store_query_pci_fn(काष्ठा zpci_dev *zdev,
+				  काष्ठा clp_rsp_query_pci *response)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
+	क्रम (i = 0; i < PCI_STD_NUM_BARS; i++) अणु
 		zdev->bars[i].val = le32_to_cpu(response->bar[i]);
 		zdev->bars[i].size = response->bar_size[i];
-	}
+	पूर्ण
 	zdev->start_dma = response->sdma;
 	zdev->end_dma = response->edma;
 	zdev->pchid = response->pchid;
@@ -158,184 +159,184 @@ static int clp_store_query_pci_fn(struct zpci_dev *zdev,
 	zdev->vfn = response->vfn;
 	zdev->port = response->port;
 	zdev->uid = response->uid;
-	zdev->fmb_length = sizeof(u32) * response->fmb_len;
+	zdev->fmb_length = माप(u32) * response->fmb_len;
 	zdev->rid_available = response->rid_avail;
 	zdev->is_physfn = response->is_physfn;
-	if (!s390_pci_no_rid && zdev->rid_available)
+	अगर (!s390_pci_no_rid && zdev->rid_available)
 		zdev->devfn = response->rid & ZPCI_RID_MASK_DEVFN;
 
-	memcpy(zdev->pfip, response->pfip, sizeof(zdev->pfip));
-	if (response->util_str_avail) {
-		memcpy(zdev->util_str, response->util_str,
-		       sizeof(zdev->util_str));
+	स_नकल(zdev->pfip, response->pfip, माप(zdev->pfip));
+	अगर (response->util_str_avail) अणु
+		स_नकल(zdev->util_str, response->util_str,
+		       माप(zdev->util_str));
 		zdev->util_str_avail = 1;
-	}
+	पूर्ण
 	zdev->mio_capable = response->mio_addr_avail;
-	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
-		if (!(response->mio.valid & (1 << (PCI_STD_NUM_BARS - i - 1))))
-			continue;
+	क्रम (i = 0; i < PCI_STD_NUM_BARS; i++) अणु
+		अगर (!(response->mio.valid & (1 << (PCI_STD_NUM_BARS - i - 1))))
+			जारी;
 
-		zdev->bars[i].mio_wb = (void __iomem *) response->mio.addr[i].wb;
-		zdev->bars[i].mio_wt = (void __iomem *) response->mio.addr[i].wt;
-	}
-	return 0;
-}
+		zdev->bars[i].mio_wb = (व्योम __iomem *) response->mio.addr[i].wb;
+		zdev->bars[i].mio_wt = (व्योम __iomem *) response->mio.addr[i].wt;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int clp_query_pci_fn(struct zpci_dev *zdev)
-{
-	struct clp_req_rsp_query_pci *rrb;
-	int rc;
+पूर्णांक clp_query_pci_fn(काष्ठा zpci_dev *zdev)
+अणु
+	काष्ठा clp_req_rsp_query_pci *rrb;
+	पूर्णांक rc;
 
 	rrb = clp_alloc_block(GFP_KERNEL);
-	if (!rrb)
-		return -ENOMEM;
+	अगर (!rrb)
+		वापस -ENOMEM;
 
-	memset(rrb, 0, sizeof(*rrb));
-	rrb->request.hdr.len = sizeof(rrb->request);
+	स_रखो(rrb, 0, माप(*rrb));
+	rrb->request.hdr.len = माप(rrb->request);
 	rrb->request.hdr.cmd = CLP_QUERY_PCI_FN;
-	rrb->response.hdr.len = sizeof(rrb->response);
+	rrb->response.hdr.len = माप(rrb->response);
 	rrb->request.fh = zdev->fh;
 
 	rc = clp_req(rrb, CLP_LPS_PCI);
-	if (!rc && rrb->response.hdr.rsp == CLP_RC_OK) {
+	अगर (!rc && rrb->response.hdr.rsp == CLP_RC_OK) अणु
 		rc = clp_store_query_pci_fn(zdev, &rrb->response);
-		if (rc)
-			goto out;
+		अगर (rc)
+			जाओ out;
 		rc = clp_query_pci_fngrp(zdev, rrb->response.pfgid);
-	} else {
+	पूर्ण अन्यथा अणु
 		zpci_err("Q PCI FN:\n");
 		zpci_err_clp(rrb->response.hdr.rsp, rc);
 		rc = -EIO;
-	}
+	पूर्ण
 out:
-	clp_free_block(rrb);
-	return rc;
-}
+	clp_मुक्त_block(rrb);
+	वापस rc;
+पूर्ण
 
-static int clp_refresh_fh(u32 fid);
+अटल पूर्णांक clp_refresh_fh(u32 fid);
 /*
- * Enable/Disable a given PCI function and update its function handle if
+ * Enable/Disable a given PCI function and update its function handle अगर
  * necessary
  */
-static int clp_set_pci_fn(struct zpci_dev *zdev, u8 nr_dma_as, u8 command)
-{
-	struct clp_req_rsp_set_pci *rrb;
-	int rc, retries = 100;
+अटल पूर्णांक clp_set_pci_fn(काष्ठा zpci_dev *zdev, u8 nr_dma_as, u8 command)
+अणु
+	काष्ठा clp_req_rsp_set_pci *rrb;
+	पूर्णांक rc, retries = 100;
 	u32 fid = zdev->fid;
 
 	rrb = clp_alloc_block(GFP_KERNEL);
-	if (!rrb)
-		return -ENOMEM;
+	अगर (!rrb)
+		वापस -ENOMEM;
 
-	do {
-		memset(rrb, 0, sizeof(*rrb));
-		rrb->request.hdr.len = sizeof(rrb->request);
+	करो अणु
+		स_रखो(rrb, 0, माप(*rrb));
+		rrb->request.hdr.len = माप(rrb->request);
 		rrb->request.hdr.cmd = CLP_SET_PCI_FN;
-		rrb->response.hdr.len = sizeof(rrb->response);
+		rrb->response.hdr.len = माप(rrb->response);
 		rrb->request.fh = zdev->fh;
 		rrb->request.oc = command;
 		rrb->request.ndas = nr_dma_as;
 
 		rc = clp_req(rrb, CLP_LPS_PCI);
-		if (rrb->response.hdr.rsp == CLP_RC_SETPCIFN_BUSY) {
+		अगर (rrb->response.hdr.rsp == CLP_RC_SETPCIFN_BUSY) अणु
 			retries--;
-			if (retries < 0)
-				break;
+			अगर (retries < 0)
+				अवरोध;
 			msleep(20);
-		}
-	} while (rrb->response.hdr.rsp == CLP_RC_SETPCIFN_BUSY);
+		पूर्ण
+	पूर्ण जबतक (rrb->response.hdr.rsp == CLP_RC_SETPCIFN_BUSY);
 
-	if (rc || rrb->response.hdr.rsp != CLP_RC_OK) {
+	अगर (rc || rrb->response.hdr.rsp != CLP_RC_OK) अणु
 		zpci_err("Set PCI FN:\n");
 		zpci_err_clp(rrb->response.hdr.rsp, rc);
-	}
+	पूर्ण
 
-	if (!rc && rrb->response.hdr.rsp == CLP_RC_OK) {
+	अगर (!rc && rrb->response.hdr.rsp == CLP_RC_OK) अणु
 		zdev->fh = rrb->response.fh;
-	} else if (!rc && rrb->response.hdr.rsp == CLP_RC_SETPCIFN_ALRDY &&
-			rrb->response.fh == 0) {
-		/* Function is already in desired state - update handle */
+	पूर्ण अन्यथा अगर (!rc && rrb->response.hdr.rsp == CLP_RC_SETPCIFN_ALRDY &&
+			rrb->response.fh == 0) अणु
+		/* Function is alपढ़ोy in desired state - update handle */
 		rc = clp_refresh_fh(fid);
-	}
-	clp_free_block(rrb);
-	return rc;
-}
+	पूर्ण
+	clp_मुक्त_block(rrb);
+	वापस rc;
+पूर्ण
 
-int clp_setup_writeback_mio(void)
-{
-	struct clp_req_rsp_slpc_pci *rrb;
+पूर्णांक clp_setup_ग_लिखोback_mio(व्योम)
+अणु
+	काष्ठा clp_req_rsp_slpc_pci *rrb;
 	u8  wb_bit_pos;
-	int rc;
+	पूर्णांक rc;
 
 	rrb = clp_alloc_block(GFP_KERNEL);
-	if (!rrb)
-		return -ENOMEM;
+	अगर (!rrb)
+		वापस -ENOMEM;
 
-	memset(rrb, 0, sizeof(*rrb));
-	rrb->request.hdr.len = sizeof(rrb->request);
+	स_रखो(rrb, 0, माप(*rrb));
+	rrb->request.hdr.len = माप(rrb->request);
 	rrb->request.hdr.cmd = CLP_SLPC;
-	rrb->response.hdr.len = sizeof(rrb->response);
+	rrb->response.hdr.len = माप(rrb->response);
 
 	rc = clp_req(rrb, CLP_LPS_PCI);
-	if (!rc && rrb->response.hdr.rsp == CLP_RC_OK) {
-		if (rrb->response.vwb) {
+	अगर (!rc && rrb->response.hdr.rsp == CLP_RC_OK) अणु
+		अगर (rrb->response.vwb) अणु
 			wb_bit_pos = rrb->response.mio_wb;
 			set_bit_inv(wb_bit_pos, &mio_wb_bit_mask);
 			zpci_dbg(3, "wb bit: %d\n", wb_bit_pos);
-		} else {
+		पूर्ण अन्यथा अणु
 			zpci_dbg(3, "wb bit: n.a.\n");
-		}
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		zpci_err("SLPC PCI:\n");
 		zpci_err_clp(rrb->response.hdr.rsp, rc);
 		rc = -EIO;
-	}
-	clp_free_block(rrb);
-	return rc;
-}
+	पूर्ण
+	clp_मुक्त_block(rrb);
+	वापस rc;
+पूर्ण
 
-int clp_enable_fh(struct zpci_dev *zdev, u8 nr_dma_as)
-{
-	int rc;
+पूर्णांक clp_enable_fh(काष्ठा zpci_dev *zdev, u8 nr_dma_as)
+अणु
+	पूर्णांक rc;
 
 	rc = clp_set_pci_fn(zdev, nr_dma_as, CLP_SET_ENABLE_PCI_FN);
 	zpci_dbg(3, "ena fid:%x, fh:%x, rc:%d\n", zdev->fid, zdev->fh, rc);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if (zpci_use_mio(zdev)) {
+	अगर (zpci_use_mio(zdev)) अणु
 		rc = clp_set_pci_fn(zdev, nr_dma_as, CLP_SET_ENABLE_MIO);
 		zpci_dbg(3, "ena mio fid:%x, fh:%x, rc:%d\n",
 				zdev->fid, zdev->fh, rc);
-		if (rc)
+		अगर (rc)
 			clp_disable_fh(zdev);
-	}
+	पूर्ण
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int clp_disable_fh(struct zpci_dev *zdev)
-{
-	int rc;
+पूर्णांक clp_disable_fh(काष्ठा zpci_dev *zdev)
+अणु
+	पूर्णांक rc;
 
-	if (!zdev_enabled(zdev))
-		return 0;
+	अगर (!zdev_enabled(zdev))
+		वापस 0;
 
 	rc = clp_set_pci_fn(zdev, 0, CLP_SET_DISABLE_PCI_FN);
 	zpci_dbg(3, "dis fid:%x, fh:%x, rc:%d\n", zdev->fid, zdev->fh, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int clp_list_pci(struct clp_req_rsp_list_pci *rrb, void *data,
-			void (*cb)(struct clp_fh_list_entry *, void *))
-{
+अटल पूर्णांक clp_list_pci(काष्ठा clp_req_rsp_list_pci *rrb, व्योम *data,
+			व्योम (*cb)(काष्ठा clp_fh_list_entry *, व्योम *))
+अणु
 	u64 resume_token = 0;
-	int entries, i, rc;
+	पूर्णांक entries, i, rc;
 
-	do {
-		memset(rrb, 0, sizeof(*rrb));
-		rrb->request.hdr.len = sizeof(rrb->request);
+	करो अणु
+		स_रखो(rrb, 0, माप(*rrb));
+		rrb->request.hdr.len = माप(rrb->request);
 		rrb->request.hdr.cmd = CLP_LIST_PCI;
 		/* store as many entries as possible */
 		rrb->response.hdr.len = CLP_BLK_SIZE - LIST_PCI_HDR_LEN;
@@ -343,312 +344,312 @@ static int clp_list_pci(struct clp_req_rsp_list_pci *rrb, void *data,
 
 		/* Get PCI function handle list */
 		rc = clp_req(rrb, CLP_LPS_PCI);
-		if (rc || rrb->response.hdr.rsp != CLP_RC_OK) {
+		अगर (rc || rrb->response.hdr.rsp != CLP_RC_OK) अणु
 			zpci_err("List PCI FN:\n");
 			zpci_err_clp(rrb->response.hdr.rsp, rc);
 			rc = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		update_uid_checking(rrb->response.uid_checking);
 		WARN_ON_ONCE(rrb->response.entry_size !=
-			sizeof(struct clp_fh_list_entry));
+			माप(काष्ठा clp_fh_list_entry));
 
 		entries = (rrb->response.hdr.len - LIST_PCI_HDR_LEN) /
 			rrb->response.entry_size;
 
 		resume_token = rrb->response.resume_token;
-		for (i = 0; i < entries; i++)
+		क्रम (i = 0; i < entries; i++)
 			cb(&rrb->response.fh_list[i], data);
-	} while (resume_token);
+	पूर्ण जबतक (resume_token);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __clp_add(struct clp_fh_list_entry *entry, void *data)
-{
-	struct zpci_dev *zdev;
+अटल व्योम __clp_add(काष्ठा clp_fh_list_entry *entry, व्योम *data)
+अणु
+	काष्ठा zpci_dev *zdev;
 
-	if (!entry->vendor_id)
-		return;
+	अगर (!entry->venकरोr_id)
+		वापस;
 
 	zdev = get_zdev_by_fid(entry->fid);
-	if (!zdev)
+	अगर (!zdev)
 		zpci_create_device(entry->fid, entry->fh, entry->config_state);
-}
+पूर्ण
 
-int clp_scan_pci_devices(void)
-{
-	struct clp_req_rsp_list_pci *rrb;
-	int rc;
+पूर्णांक clp_scan_pci_devices(व्योम)
+अणु
+	काष्ठा clp_req_rsp_list_pci *rrb;
+	पूर्णांक rc;
 
 	rrb = clp_alloc_block(GFP_KERNEL);
-	if (!rrb)
-		return -ENOMEM;
+	अगर (!rrb)
+		वापस -ENOMEM;
 
-	rc = clp_list_pci(rrb, NULL, __clp_add);
+	rc = clp_list_pci(rrb, शून्य, __clp_add);
 
-	clp_free_block(rrb);
-	return rc;
-}
+	clp_मुक्त_block(rrb);
+	वापस rc;
+पूर्ण
 
-static void __clp_refresh_fh(struct clp_fh_list_entry *entry, void *data)
-{
-	struct zpci_dev *zdev;
+अटल व्योम __clp_refresh_fh(काष्ठा clp_fh_list_entry *entry, व्योम *data)
+अणु
+	काष्ठा zpci_dev *zdev;
 	u32 fid = *((u32 *)data);
 
-	if (!entry->vendor_id || fid != entry->fid)
-		return;
+	अगर (!entry->venकरोr_id || fid != entry->fid)
+		वापस;
 
 	zdev = get_zdev_by_fid(fid);
-	if (!zdev)
-		return;
+	अगर (!zdev)
+		वापस;
 
 	zdev->fh = entry->fh;
-}
+पूर्ण
 
 /*
  * Refresh the function handle of the function matching @fid
  */
-static int clp_refresh_fh(u32 fid)
-{
-	struct clp_req_rsp_list_pci *rrb;
-	int rc;
+अटल पूर्णांक clp_refresh_fh(u32 fid)
+अणु
+	काष्ठा clp_req_rsp_list_pci *rrb;
+	पूर्णांक rc;
 
 	rrb = clp_alloc_block(GFP_NOWAIT);
-	if (!rrb)
-		return -ENOMEM;
+	अगर (!rrb)
+		वापस -ENOMEM;
 
 	rc = clp_list_pci(rrb, &fid, __clp_refresh_fh);
 
-	clp_free_block(rrb);
-	return rc;
-}
+	clp_मुक्त_block(rrb);
+	वापस rc;
+पूर्ण
 
-struct clp_state_data {
+काष्ठा clp_state_data अणु
 	u32 fid;
-	enum zpci_state state;
-};
+	क्रमागत zpci_state state;
+पूर्ण;
 
-static void __clp_get_state(struct clp_fh_list_entry *entry, void *data)
-{
-	struct clp_state_data *sd = data;
+अटल व्योम __clp_get_state(काष्ठा clp_fh_list_entry *entry, व्योम *data)
+अणु
+	काष्ठा clp_state_data *sd = data;
 
-	if (entry->fid != sd->fid)
-		return;
+	अगर (entry->fid != sd->fid)
+		वापस;
 
 	sd->state = entry->config_state;
-}
+पूर्ण
 
-int clp_get_state(u32 fid, enum zpci_state *state)
-{
-	struct clp_req_rsp_list_pci *rrb;
-	struct clp_state_data sd = {fid, ZPCI_FN_STATE_RESERVED};
-	int rc;
+पूर्णांक clp_get_state(u32 fid, क्रमागत zpci_state *state)
+अणु
+	काष्ठा clp_req_rsp_list_pci *rrb;
+	काष्ठा clp_state_data sd = अणुfid, ZPCI_FN_STATE_RESERVEDपूर्ण;
+	पूर्णांक rc;
 
 	rrb = clp_alloc_block(GFP_ATOMIC);
-	if (!rrb)
-		return -ENOMEM;
+	अगर (!rrb)
+		वापस -ENOMEM;
 
 	rc = clp_list_pci(rrb, &sd, __clp_get_state);
-	if (!rc)
+	अगर (!rc)
 		*state = sd.state;
 
-	clp_free_block(rrb);
-	return rc;
-}
+	clp_मुक्त_block(rrb);
+	वापस rc;
+पूर्ण
 
-static int clp_base_slpc(struct clp_req *req, struct clp_req_rsp_slpc *lpcb)
-{
-	unsigned long limit = PAGE_SIZE - sizeof(lpcb->request);
+अटल पूर्णांक clp_base_slpc(काष्ठा clp_req *req, काष्ठा clp_req_rsp_slpc *lpcb)
+अणु
+	अचिन्हित दीर्घ limit = PAGE_SIZE - माप(lpcb->request);
 
-	if (lpcb->request.hdr.len != sizeof(lpcb->request) ||
+	अगर (lpcb->request.hdr.len != माप(lpcb->request) ||
 	    lpcb->response.hdr.len > limit)
-		return -EINVAL;
-	return clp_req(lpcb, CLP_LPS_BASE) ? -EOPNOTSUPP : 0;
-}
+		वापस -EINVAL;
+	वापस clp_req(lpcb, CLP_LPS_BASE) ? -EOPNOTSUPP : 0;
+पूर्ण
 
-static int clp_base_command(struct clp_req *req, struct clp_req_hdr *lpcb)
-{
-	switch (lpcb->cmd) {
-	case 0x0001: /* store logical-processor characteristics */
-		return clp_base_slpc(req, (void *) lpcb);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक clp_base_command(काष्ठा clp_req *req, काष्ठा clp_req_hdr *lpcb)
+अणु
+	चयन (lpcb->cmd) अणु
+	हाल 0x0001: /* store logical-processor अक्षरacteristics */
+		वापस clp_base_slpc(req, (व्योम *) lpcb);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int clp_pci_slpc(struct clp_req *req, struct clp_req_rsp_slpc_pci *lpcb)
-{
-	unsigned long limit = PAGE_SIZE - sizeof(lpcb->request);
+अटल पूर्णांक clp_pci_slpc(काष्ठा clp_req *req, काष्ठा clp_req_rsp_slpc_pci *lpcb)
+अणु
+	अचिन्हित दीर्घ limit = PAGE_SIZE - माप(lpcb->request);
 
-	if (lpcb->request.hdr.len != sizeof(lpcb->request) ||
+	अगर (lpcb->request.hdr.len != माप(lpcb->request) ||
 	    lpcb->response.hdr.len > limit)
-		return -EINVAL;
-	return clp_req(lpcb, CLP_LPS_PCI) ? -EOPNOTSUPP : 0;
-}
+		वापस -EINVAL;
+	वापस clp_req(lpcb, CLP_LPS_PCI) ? -EOPNOTSUPP : 0;
+पूर्ण
 
-static int clp_pci_list(struct clp_req *req, struct clp_req_rsp_list_pci *lpcb)
-{
-	unsigned long limit = PAGE_SIZE - sizeof(lpcb->request);
+अटल पूर्णांक clp_pci_list(काष्ठा clp_req *req, काष्ठा clp_req_rsp_list_pci *lpcb)
+अणु
+	अचिन्हित दीर्घ limit = PAGE_SIZE - माप(lpcb->request);
 
-	if (lpcb->request.hdr.len != sizeof(lpcb->request) ||
+	अगर (lpcb->request.hdr.len != माप(lpcb->request) ||
 	    lpcb->response.hdr.len > limit)
-		return -EINVAL;
-	if (lpcb->request.reserved2 != 0)
-		return -EINVAL;
-	return clp_req(lpcb, CLP_LPS_PCI) ? -EOPNOTSUPP : 0;
-}
+		वापस -EINVAL;
+	अगर (lpcb->request.reserved2 != 0)
+		वापस -EINVAL;
+	वापस clp_req(lpcb, CLP_LPS_PCI) ? -EOPNOTSUPP : 0;
+पूर्ण
 
-static int clp_pci_query(struct clp_req *req,
-			 struct clp_req_rsp_query_pci *lpcb)
-{
-	unsigned long limit = PAGE_SIZE - sizeof(lpcb->request);
+अटल पूर्णांक clp_pci_query(काष्ठा clp_req *req,
+			 काष्ठा clp_req_rsp_query_pci *lpcb)
+अणु
+	अचिन्हित दीर्घ limit = PAGE_SIZE - माप(lpcb->request);
 
-	if (lpcb->request.hdr.len != sizeof(lpcb->request) ||
+	अगर (lpcb->request.hdr.len != माप(lpcb->request) ||
 	    lpcb->response.hdr.len > limit)
-		return -EINVAL;
-	if (lpcb->request.reserved2 != 0 || lpcb->request.reserved3 != 0)
-		return -EINVAL;
-	return clp_req(lpcb, CLP_LPS_PCI) ? -EOPNOTSUPP : 0;
-}
+		वापस -EINVAL;
+	अगर (lpcb->request.reserved2 != 0 || lpcb->request.reserved3 != 0)
+		वापस -EINVAL;
+	वापस clp_req(lpcb, CLP_LPS_PCI) ? -EOPNOTSUPP : 0;
+पूर्ण
 
-static int clp_pci_query_grp(struct clp_req *req,
-			     struct clp_req_rsp_query_pci_grp *lpcb)
-{
-	unsigned long limit = PAGE_SIZE - sizeof(lpcb->request);
+अटल पूर्णांक clp_pci_query_grp(काष्ठा clp_req *req,
+			     काष्ठा clp_req_rsp_query_pci_grp *lpcb)
+अणु
+	अचिन्हित दीर्घ limit = PAGE_SIZE - माप(lpcb->request);
 
-	if (lpcb->request.hdr.len != sizeof(lpcb->request) ||
+	अगर (lpcb->request.hdr.len != माप(lpcb->request) ||
 	    lpcb->response.hdr.len > limit)
-		return -EINVAL;
-	if (lpcb->request.reserved2 != 0 || lpcb->request.reserved3 != 0 ||
+		वापस -EINVAL;
+	अगर (lpcb->request.reserved2 != 0 || lpcb->request.reserved3 != 0 ||
 	    lpcb->request.reserved4 != 0)
-		return -EINVAL;
-	return clp_req(lpcb, CLP_LPS_PCI) ? -EOPNOTSUPP : 0;
-}
+		वापस -EINVAL;
+	वापस clp_req(lpcb, CLP_LPS_PCI) ? -EOPNOTSUPP : 0;
+पूर्ण
 
-static int clp_pci_command(struct clp_req *req, struct clp_req_hdr *lpcb)
-{
-	switch (lpcb->cmd) {
-	case 0x0001: /* store logical-processor characteristics */
-		return clp_pci_slpc(req, (void *) lpcb);
-	case 0x0002: /* list PCI functions */
-		return clp_pci_list(req, (void *) lpcb);
-	case 0x0003: /* query PCI function */
-		return clp_pci_query(req, (void *) lpcb);
-	case 0x0004: /* query PCI function group */
-		return clp_pci_query_grp(req, (void *) lpcb);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक clp_pci_command(काष्ठा clp_req *req, काष्ठा clp_req_hdr *lpcb)
+अणु
+	चयन (lpcb->cmd) अणु
+	हाल 0x0001: /* store logical-processor अक्षरacteristics */
+		वापस clp_pci_slpc(req, (व्योम *) lpcb);
+	हाल 0x0002: /* list PCI functions */
+		वापस clp_pci_list(req, (व्योम *) lpcb);
+	हाल 0x0003: /* query PCI function */
+		वापस clp_pci_query(req, (व्योम *) lpcb);
+	हाल 0x0004: /* query PCI function group */
+		वापस clp_pci_query_grp(req, (व्योम *) lpcb);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int clp_normal_command(struct clp_req *req)
-{
-	struct clp_req_hdr *lpcb;
-	void __user *uptr;
-	int rc;
+अटल पूर्णांक clp_normal_command(काष्ठा clp_req *req)
+अणु
+	काष्ठा clp_req_hdr *lpcb;
+	व्योम __user *uptr;
+	पूर्णांक rc;
 
 	rc = -EINVAL;
-	if (req->lps != 0 && req->lps != 2)
-		goto out;
+	अगर (req->lps != 0 && req->lps != 2)
+		जाओ out;
 
 	rc = -ENOMEM;
 	lpcb = clp_alloc_block(GFP_KERNEL);
-	if (!lpcb)
-		goto out;
+	अगर (!lpcb)
+		जाओ out;
 
 	rc = -EFAULT;
-	uptr = (void __force __user *)(unsigned long) req->data_p;
-	if (copy_from_user(lpcb, uptr, PAGE_SIZE) != 0)
-		goto out_free;
+	uptr = (व्योम __क्रमce __user *)(अचिन्हित दीर्घ) req->data_p;
+	अगर (copy_from_user(lpcb, uptr, PAGE_SIZE) != 0)
+		जाओ out_मुक्त;
 
 	rc = -EINVAL;
-	if (lpcb->fmt != 0 || lpcb->reserved1 != 0 || lpcb->reserved2 != 0)
-		goto out_free;
+	अगर (lpcb->fmt != 0 || lpcb->reserved1 != 0 || lpcb->reserved2 != 0)
+		जाओ out_मुक्त;
 
-	switch (req->lps) {
-	case 0:
+	चयन (req->lps) अणु
+	हाल 0:
 		rc = clp_base_command(req, lpcb);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		rc = clp_pci_command(req, lpcb);
-		break;
-	}
-	if (rc)
-		goto out_free;
+		अवरोध;
+	पूर्ण
+	अगर (rc)
+		जाओ out_मुक्त;
 
 	rc = -EFAULT;
-	if (copy_to_user(uptr, lpcb, PAGE_SIZE) != 0)
-		goto out_free;
+	अगर (copy_to_user(uptr, lpcb, PAGE_SIZE) != 0)
+		जाओ out_मुक्त;
 
 	rc = 0;
 
-out_free:
-	clp_free_block(lpcb);
+out_मुक्त:
+	clp_मुक्त_block(lpcb);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int clp_immediate_command(struct clp_req *req)
-{
-	void __user *uptr;
-	unsigned long ilp;
-	int exists;
+अटल पूर्णांक clp_immediate_command(काष्ठा clp_req *req)
+अणु
+	व्योम __user *uptr;
+	अचिन्हित दीर्घ ilp;
+	पूर्णांक exists;
 
-	if (req->cmd > 1 || clp_get_ilp(&ilp) != 0)
-		return -EINVAL;
+	अगर (req->cmd > 1 || clp_get_ilp(&ilp) != 0)
+		वापस -EINVAL;
 
-	uptr = (void __force __user *)(unsigned long) req->data_p;
-	if (req->cmd == 0) {
-		/* Command code 0: test for a specific processor */
+	uptr = (व्योम __क्रमce __user *)(अचिन्हित दीर्घ) req->data_p;
+	अगर (req->cmd == 0) अणु
+		/* Command code 0: test क्रम a specअगरic processor */
 		exists = test_bit_inv(req->lps, &ilp);
-		return put_user(exists, (int __user *) uptr);
-	}
-	/* Command code 1: return bit mask of installed processors */
-	return put_user(ilp, (unsigned long __user *) uptr);
-}
+		वापस put_user(exists, (पूर्णांक __user *) uptr);
+	पूर्ण
+	/* Command code 1: वापस bit mask of installed processors */
+	वापस put_user(ilp, (अचिन्हित दीर्घ __user *) uptr);
+पूर्ण
 
-static long clp_misc_ioctl(struct file *filp, unsigned int cmd,
-			   unsigned long arg)
-{
-	struct clp_req req;
-	void __user *argp;
+अटल दीर्घ clp_misc_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+			   अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा clp_req req;
+	व्योम __user *argp;
 
-	if (cmd != CLP_SYNC)
-		return -EINVAL;
+	अगर (cmd != CLP_SYNC)
+		वापस -EINVAL;
 
-	argp = is_compat_task() ? compat_ptr(arg) : (void __user *) arg;
-	if (copy_from_user(&req, argp, sizeof(req)))
-		return -EFAULT;
-	if (req.r != 0)
-		return -EINVAL;
-	return req.c ? clp_immediate_command(&req) : clp_normal_command(&req);
-}
+	argp = is_compat_task() ? compat_ptr(arg) : (व्योम __user *) arg;
+	अगर (copy_from_user(&req, argp, माप(req)))
+		वापस -EFAULT;
+	अगर (req.r != 0)
+		वापस -EINVAL;
+	वापस req.c ? clp_immediate_command(&req) : clp_normal_command(&req);
+पूर्ण
 
-static int clp_misc_release(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
+अटल पूर्णांक clp_misc_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct file_operations clp_misc_fops = {
+अटल स्थिर काष्ठा file_operations clp_misc_fops = अणु
 	.owner = THIS_MODULE,
-	.open = nonseekable_open,
+	.खोलो = nonseekable_खोलो,
 	.release = clp_misc_release,
 	.unlocked_ioctl = clp_misc_ioctl,
 	.compat_ioctl = clp_misc_ioctl,
 	.llseek = no_llseek,
-};
+पूर्ण;
 
-static struct miscdevice clp_misc_device = {
+अटल काष्ठा miscdevice clp_misc_device = अणु
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "clp",
 	.fops = &clp_misc_fops,
-};
+पूर्ण;
 
-static int __init clp_misc_init(void)
-{
-	return misc_register(&clp_misc_device);
-}
+अटल पूर्णांक __init clp_misc_init(व्योम)
+अणु
+	वापस misc_रेजिस्टर(&clp_misc_device);
+पूर्ण
 
 device_initcall(clp_misc_init);

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2010 IBM Corporation
  * Copyright (c) 2019-2021, Linaro Limited
@@ -6,355 +7,355 @@
  * See Documentation/security/keys/trusted-encrypted.rst
  */
 
-#include <keys/user-type.h>
-#include <keys/trusted-type.h>
-#include <keys/trusted_tee.h>
-#include <keys/trusted_tpm.h>
-#include <linux/capability.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/key-type.h>
-#include <linux/module.h>
-#include <linux/parser.h>
-#include <linux/rcupdate.h>
-#include <linux/slab.h>
-#include <linux/static_call.h>
-#include <linux/string.h>
-#include <linux/uaccess.h>
+#समावेश <keys/user-type.h>
+#समावेश <keys/trusted-type.h>
+#समावेश <keys/trusted_tee.h>
+#समावेश <keys/trusted_tpm.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/key-type.h>
+#समावेश <linux/module.h>
+#समावेश <linux/parser.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अटल_call.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/uaccess.h>
 
-static char *trusted_key_source;
-module_param_named(source, trusted_key_source, charp, 0);
+अटल अक्षर *trusted_key_source;
+module_param_named(source, trusted_key_source, अक्षरp, 0);
 MODULE_PARM_DESC(source, "Select trusted keys source (tpm or tee)");
 
-static const struct trusted_key_source trusted_key_sources[] = {
-#if defined(CONFIG_TCG_TPM)
-	{ "tpm", &trusted_key_tpm_ops },
-#endif
-#if defined(CONFIG_TEE)
-	{ "tee", &trusted_key_tee_ops },
-#endif
-};
+अटल स्थिर काष्ठा trusted_key_source trusted_key_sources[] = अणु
+#अगर defined(CONFIG_TCG_TPM)
+	अणु "tpm", &trusted_key_tpm_ops पूर्ण,
+#पूर्ण_अगर
+#अगर defined(CONFIG_TEE)
+	अणु "tee", &trusted_key_tee_ops पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-DEFINE_STATIC_CALL_NULL(trusted_key_init, *trusted_key_sources[0].ops->init);
-DEFINE_STATIC_CALL_NULL(trusted_key_seal, *trusted_key_sources[0].ops->seal);
-DEFINE_STATIC_CALL_NULL(trusted_key_unseal,
+DEFINE_STATIC_CALL_शून्य(trusted_key_init, *trusted_key_sources[0].ops->init);
+DEFINE_STATIC_CALL_शून्य(trusted_key_seal, *trusted_key_sources[0].ops->seal);
+DEFINE_STATIC_CALL_शून्य(trusted_key_unseal,
 			*trusted_key_sources[0].ops->unseal);
-DEFINE_STATIC_CALL_NULL(trusted_key_get_random,
-			*trusted_key_sources[0].ops->get_random);
-DEFINE_STATIC_CALL_NULL(trusted_key_exit, *trusted_key_sources[0].ops->exit);
-static unsigned char migratable;
+DEFINE_STATIC_CALL_शून्य(trusted_key_get_अक्रमom,
+			*trusted_key_sources[0].ops->get_अक्रमom);
+DEFINE_STATIC_CALL_शून्य(trusted_key_निकास, *trusted_key_sources[0].ops->निकास);
+अटल अचिन्हित अक्षर migratable;
 
-enum {
+क्रमागत अणु
 	Opt_err,
 	Opt_new, Opt_load, Opt_update,
-};
+पूर्ण;
 
-static const match_table_t key_tokens = {
-	{Opt_new, "new"},
-	{Opt_load, "load"},
-	{Opt_update, "update"},
-	{Opt_err, NULL}
-};
+अटल स्थिर match_table_t key_tokens = अणु
+	अणुOpt_new, "new"पूर्ण,
+	अणुOpt_load, "load"पूर्ण,
+	अणुOpt_update, "update"पूर्ण,
+	अणुOpt_err, शून्यपूर्ण
+पूर्ण;
 
 /*
  * datablob_parse - parse the keyctl data and fill in the
- *                  payload structure
+ *                  payload काष्ठाure
  *
- * On success returns 0, otherwise -EINVAL.
+ * On success वापसs 0, otherwise -EINVAL.
  */
-static int datablob_parse(char **datablob, struct trusted_key_payload *p)
-{
+अटल पूर्णांक datablob_parse(अक्षर **datablob, काष्ठा trusted_key_payload *p)
+अणु
 	substring_t args[MAX_OPT_ARGS];
-	long keylen;
-	int ret = -EINVAL;
-	int key_cmd;
-	char *c;
+	दीर्घ keylen;
+	पूर्णांक ret = -EINVAL;
+	पूर्णांक key_cmd;
+	अक्षर *c;
 
-	/* main command */
+	/* मुख्य command */
 	c = strsep(datablob, " \t");
-	if (!c)
-		return -EINVAL;
+	अगर (!c)
+		वापस -EINVAL;
 	key_cmd = match_token(c, key_tokens, args);
-	switch (key_cmd) {
-	case Opt_new:
+	चयन (key_cmd) अणु
+	हाल Opt_new:
 		/* first argument is key size */
 		c = strsep(datablob, " \t");
-		if (!c)
-			return -EINVAL;
-		ret = kstrtol(c, 10, &keylen);
-		if (ret < 0 || keylen < MIN_KEY_SIZE || keylen > MAX_KEY_SIZE)
-			return -EINVAL;
+		अगर (!c)
+			वापस -EINVAL;
+		ret = kम_से_दीर्घ(c, 10, &keylen);
+		अगर (ret < 0 || keylen < MIN_KEY_SIZE || keylen > MAX_KEY_SIZE)
+			वापस -EINVAL;
 		p->key_len = keylen;
 		ret = Opt_new;
-		break;
-	case Opt_load:
+		अवरोध;
+	हाल Opt_load:
 		/* first argument is sealed blob */
 		c = strsep(datablob, " \t");
-		if (!c)
-			return -EINVAL;
-		p->blob_len = strlen(c) / 2;
-		if (p->blob_len > MAX_BLOB_SIZE)
-			return -EINVAL;
+		अगर (!c)
+			वापस -EINVAL;
+		p->blob_len = म_माप(c) / 2;
+		अगर (p->blob_len > MAX_BLOB_SIZE)
+			वापस -EINVAL;
 		ret = hex2bin(p->blob, c, p->blob_len);
-		if (ret < 0)
-			return -EINVAL;
+		अगर (ret < 0)
+			वापस -EINVAL;
 		ret = Opt_load;
-		break;
-	case Opt_update:
+		अवरोध;
+	हाल Opt_update:
 		ret = Opt_update;
-		break;
-	case Opt_err:
-		return -EINVAL;
-	}
-	return ret;
-}
+		अवरोध;
+	हाल Opt_err:
+		वापस -EINVAL;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static struct trusted_key_payload *trusted_payload_alloc(struct key *key)
-{
-	struct trusted_key_payload *p = NULL;
-	int ret;
+अटल काष्ठा trusted_key_payload *trusted_payload_alloc(काष्ठा key *key)
+अणु
+	काष्ठा trusted_key_payload *p = शून्य;
+	पूर्णांक ret;
 
-	ret = key_payload_reserve(key, sizeof(*p));
-	if (ret < 0)
-		goto err;
-	p = kzalloc(sizeof(*p), GFP_KERNEL);
-	if (!p)
-		goto err;
+	ret = key_payload_reserve(key, माप(*p));
+	अगर (ret < 0)
+		जाओ err;
+	p = kzalloc(माप(*p), GFP_KERNEL);
+	अगर (!p)
+		जाओ err;
 
 	p->migratable = migratable;
 err:
-	return p;
-}
+	वापस p;
+पूर्ण
 
 /*
  * trusted_instantiate - create a new trusted key
  *
- * Unseal an existing trusted blob or, for a new key, get a
- * random key, then seal and create a trusted key-type key,
- * adding it to the specified keyring.
+ * Unseal an existing trusted blob or, क्रम a new key, get a
+ * अक्रमom key, then seal and create a trusted key-type key,
+ * adding it to the specअगरied keyring.
  *
- * On success, return 0. Otherwise return errno.
+ * On success, वापस 0. Otherwise वापस त्रुटि_सं.
  */
-static int trusted_instantiate(struct key *key,
-			       struct key_preparsed_payload *prep)
-{
-	struct trusted_key_payload *payload = NULL;
-	size_t datalen = prep->datalen;
-	char *datablob, *orig_datablob;
-	int ret = 0;
-	int key_cmd;
-	size_t key_len;
+अटल पूर्णांक trusted_instantiate(काष्ठा key *key,
+			       काष्ठा key_preparsed_payload *prep)
+अणु
+	काष्ठा trusted_key_payload *payload = शून्य;
+	माप_प्रकार datalen = prep->datalen;
+	अक्षर *datablob, *orig_datablob;
+	पूर्णांक ret = 0;
+	पूर्णांक key_cmd;
+	माप_प्रकार key_len;
 
-	if (datalen <= 0 || datalen > 32767 || !prep->data)
-		return -EINVAL;
+	अगर (datalen <= 0 || datalen > 32767 || !prep->data)
+		वापस -EINVAL;
 
-	orig_datablob = datablob = kmalloc(datalen + 1, GFP_KERNEL);
-	if (!datablob)
-		return -ENOMEM;
-	memcpy(datablob, prep->data, datalen);
+	orig_datablob = datablob = kदो_स्मृति(datalen + 1, GFP_KERNEL);
+	अगर (!datablob)
+		वापस -ENOMEM;
+	स_नकल(datablob, prep->data, datalen);
 	datablob[datalen] = '\0';
 
 	payload = trusted_payload_alloc(key);
-	if (!payload) {
+	अगर (!payload) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	key_cmd = datablob_parse(&datablob, payload);
-	if (key_cmd < 0) {
+	अगर (key_cmd < 0) अणु
 		ret = key_cmd;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dump_payload(payload);
 
-	switch (key_cmd) {
-	case Opt_load:
-		ret = static_call(trusted_key_unseal)(payload, datablob);
+	चयन (key_cmd) अणु
+	हाल Opt_load:
+		ret = अटल_call(trusted_key_unseal)(payload, datablob);
 		dump_payload(payload);
-		if (ret < 0)
+		अगर (ret < 0)
 			pr_info("key_unseal failed (%d)\n", ret);
-		break;
-	case Opt_new:
+		अवरोध;
+	हाल Opt_new:
 		key_len = payload->key_len;
-		ret = static_call(trusted_key_get_random)(payload->key,
+		ret = अटल_call(trusted_key_get_अक्रमom)(payload->key,
 							  key_len);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 
-		if (ret != key_len) {
+		अगर (ret != key_len) अणु
 			pr_info("key_create failed (%d)\n", ret);
 			ret = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		ret = static_call(trusted_key_seal)(payload, datablob);
-		if (ret < 0)
+		ret = अटल_call(trusted_key_seal)(payload, datablob);
+		अगर (ret < 0)
 			pr_info("key_seal failed (%d)\n", ret);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 out:
-	kfree_sensitive(orig_datablob);
-	if (!ret)
-		rcu_assign_keypointer(key, payload);
-	else
-		kfree_sensitive(payload);
-	return ret;
-}
+	kमुक्त_sensitive(orig_datablob);
+	अगर (!ret)
+		rcu_assign_keypoपूर्णांकer(key, payload);
+	अन्यथा
+		kमुक्त_sensitive(payload);
+	वापस ret;
+पूर्ण
 
-static void trusted_rcu_free(struct rcu_head *rcu)
-{
-	struct trusted_key_payload *p;
+अटल व्योम trusted_rcu_मुक्त(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा trusted_key_payload *p;
 
-	p = container_of(rcu, struct trusted_key_payload, rcu);
-	kfree_sensitive(p);
-}
+	p = container_of(rcu, काष्ठा trusted_key_payload, rcu);
+	kमुक्त_sensitive(p);
+पूर्ण
 
 /*
  * trusted_update - reseal an existing key with new PCR values
  */
-static int trusted_update(struct key *key, struct key_preparsed_payload *prep)
-{
-	struct trusted_key_payload *p;
-	struct trusted_key_payload *new_p;
-	size_t datalen = prep->datalen;
-	char *datablob, *orig_datablob;
-	int ret = 0;
+अटल पूर्णांक trusted_update(काष्ठा key *key, काष्ठा key_preparsed_payload *prep)
+अणु
+	काष्ठा trusted_key_payload *p;
+	काष्ठा trusted_key_payload *new_p;
+	माप_प्रकार datalen = prep->datalen;
+	अक्षर *datablob, *orig_datablob;
+	पूर्णांक ret = 0;
 
-	if (key_is_negative(key))
-		return -ENOKEY;
+	अगर (key_is_negative(key))
+		वापस -ENOKEY;
 	p = key->payload.data[0];
-	if (!p->migratable)
-		return -EPERM;
-	if (datalen <= 0 || datalen > 32767 || !prep->data)
-		return -EINVAL;
+	अगर (!p->migratable)
+		वापस -EPERM;
+	अगर (datalen <= 0 || datalen > 32767 || !prep->data)
+		वापस -EINVAL;
 
-	orig_datablob = datablob = kmalloc(datalen + 1, GFP_KERNEL);
-	if (!datablob)
-		return -ENOMEM;
+	orig_datablob = datablob = kदो_स्मृति(datalen + 1, GFP_KERNEL);
+	अगर (!datablob)
+		वापस -ENOMEM;
 
 	new_p = trusted_payload_alloc(key);
-	if (!new_p) {
+	अगर (!new_p) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy(datablob, prep->data, datalen);
+	स_नकल(datablob, prep->data, datalen);
 	datablob[datalen] = '\0';
 	ret = datablob_parse(&datablob, new_p);
-	if (ret != Opt_update) {
+	अगर (ret != Opt_update) अणु
 		ret = -EINVAL;
-		kfree_sensitive(new_p);
-		goto out;
-	}
+		kमुक्त_sensitive(new_p);
+		जाओ out;
+	पूर्ण
 
 	/* copy old key values, and reseal with new pcrs */
 	new_p->migratable = p->migratable;
 	new_p->key_len = p->key_len;
-	memcpy(new_p->key, p->key, p->key_len);
+	स_नकल(new_p->key, p->key, p->key_len);
 	dump_payload(p);
 	dump_payload(new_p);
 
-	ret = static_call(trusted_key_seal)(new_p, datablob);
-	if (ret < 0) {
+	ret = अटल_call(trusted_key_seal)(new_p, datablob);
+	अगर (ret < 0) अणु
 		pr_info("key_seal failed (%d)\n", ret);
-		kfree_sensitive(new_p);
-		goto out;
-	}
+		kमुक्त_sensitive(new_p);
+		जाओ out;
+	पूर्ण
 
-	rcu_assign_keypointer(key, new_p);
-	call_rcu(&p->rcu, trusted_rcu_free);
+	rcu_assign_keypoपूर्णांकer(key, new_p);
+	call_rcu(&p->rcu, trusted_rcu_मुक्त);
 out:
-	kfree_sensitive(orig_datablob);
-	return ret;
-}
+	kमुक्त_sensitive(orig_datablob);
+	वापस ret;
+पूर्ण
 
 /*
- * trusted_read - copy the sealed blob data to userspace in hex.
- * On success, return to userspace the trusted key datablob size.
+ * trusted_पढ़ो - copy the sealed blob data to userspace in hex.
+ * On success, वापस to userspace the trusted key datablob size.
  */
-static long trusted_read(const struct key *key, char *buffer,
-			 size_t buflen)
-{
-	const struct trusted_key_payload *p;
-	char *bufp;
-	int i;
+अटल दीर्घ trusted_पढ़ो(स्थिर काष्ठा key *key, अक्षर *buffer,
+			 माप_प्रकार buflen)
+अणु
+	स्थिर काष्ठा trusted_key_payload *p;
+	अक्षर *bufp;
+	पूर्णांक i;
 
 	p = dereference_key_locked(key);
-	if (!p)
-		return -EINVAL;
+	अगर (!p)
+		वापस -EINVAL;
 
-	if (buffer && buflen >= 2 * p->blob_len) {
+	अगर (buffer && buflen >= 2 * p->blob_len) अणु
 		bufp = buffer;
-		for (i = 0; i < p->blob_len; i++)
+		क्रम (i = 0; i < p->blob_len; i++)
 			bufp = hex_byte_pack(bufp, p->blob[i]);
-	}
-	return 2 * p->blob_len;
-}
+	पूर्ण
+	वापस 2 * p->blob_len;
+पूर्ण
 
 /*
- * trusted_destroy - clear and free the key's payload
+ * trusted_destroy - clear and मुक्त the key's payload
  */
-static void trusted_destroy(struct key *key)
-{
-	kfree_sensitive(key->payload.data[0]);
-}
+अटल व्योम trusted_destroy(काष्ठा key *key)
+अणु
+	kमुक्त_sensitive(key->payload.data[0]);
+पूर्ण
 
-struct key_type key_type_trusted = {
+काष्ठा key_type key_type_trusted = अणु
 	.name = "trusted",
 	.instantiate = trusted_instantiate,
 	.update = trusted_update,
 	.destroy = trusted_destroy,
 	.describe = user_describe,
-	.read = trusted_read,
-};
+	.पढ़ो = trusted_पढ़ो,
+पूर्ण;
 EXPORT_SYMBOL_GPL(key_type_trusted);
 
-static int __init init_trusted(void)
-{
-	int i, ret = 0;
+अटल पूर्णांक __init init_trusted(व्योम)
+अणु
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < ARRAY_SIZE(trusted_key_sources); i++) {
-		if (trusted_key_source &&
-		    strncmp(trusted_key_source, trusted_key_sources[i].name,
-			    strlen(trusted_key_sources[i].name)))
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(trusted_key_sources); i++) अणु
+		अगर (trusted_key_source &&
+		    म_भेदन(trusted_key_source, trusted_key_sources[i].name,
+			    म_माप(trusted_key_sources[i].name)))
+			जारी;
 
-		static_call_update(trusted_key_init,
+		अटल_call_update(trusted_key_init,
 				   trusted_key_sources[i].ops->init);
-		static_call_update(trusted_key_seal,
+		अटल_call_update(trusted_key_seal,
 				   trusted_key_sources[i].ops->seal);
-		static_call_update(trusted_key_unseal,
+		अटल_call_update(trusted_key_unseal,
 				   trusted_key_sources[i].ops->unseal);
-		static_call_update(trusted_key_get_random,
-				   trusted_key_sources[i].ops->get_random);
-		static_call_update(trusted_key_exit,
-				   trusted_key_sources[i].ops->exit);
+		अटल_call_update(trusted_key_get_अक्रमom,
+				   trusted_key_sources[i].ops->get_अक्रमom);
+		अटल_call_update(trusted_key_निकास,
+				   trusted_key_sources[i].ops->निकास);
 		migratable = trusted_key_sources[i].ops->migratable;
 
-		ret = static_call(trusted_key_init)();
-		if (!ret)
-			break;
-	}
+		ret = अटल_call(trusted_key_init)();
+		अगर (!ret)
+			अवरोध;
+	पूर्ण
 
 	/*
-	 * encrypted_keys.ko depends on successful load of this module even if
+	 * encrypted_keys.ko depends on successful load of this module even अगर
 	 * trusted key implementation is not found.
 	 */
-	if (ret == -ENODEV)
-		return 0;
+	अगर (ret == -ENODEV)
+		वापस 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit cleanup_trusted(void)
-{
-	static_call(trusted_key_exit)();
-}
+अटल व्योम __निकास cleanup_trusted(व्योम)
+अणु
+	अटल_call(trusted_key_निकास)();
+पूर्ण
 
 late_initcall(init_trusted);
-module_exit(cleanup_trusted);
+module_निकास(cleanup_trusted);
 
 MODULE_LICENSE("GPL");

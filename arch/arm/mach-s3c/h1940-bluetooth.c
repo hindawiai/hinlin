@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-1.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-1.0+
 //
 // Copyright (c) Arnaud Patard <arnaud.patard@rtp-net.org>
 //
 //	    S3C2410 bluetooth "driver"
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <linux/leds.h>
-#include <linux/gpio.h>
-#include <linux/rfkill.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/leds.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/rfसमाप्त.h>
 
-#include "gpio-cfg.h"
-#include "regs-gpio.h"
-#include "gpio-samsung.h"
+#समावेश "gpio-cfg.h"
+#समावेश "regs-gpio.h"
+#समावेश "gpio-samsung.h"
 
-#include "h1940.h"
+#समावेश "h1940.h"
 
-#define DRV_NAME "h1940-bt"
+#घोषणा DRV_NAME "h1940-bt"
 
 /* Bluetooth control */
-static void h1940bt_enable(int on)
-{
-	if (on) {
+अटल व्योम h1940bt_enable(पूर्णांक on)
+अणु
+	अगर (on) अणु
 		/* Power on the chip */
 		gpio_set_value(H1940_LATCH_BLUETOOTH_POWER, 1);
 		/* Reset the chip */
@@ -34,46 +35,46 @@ static void h1940bt_enable(int on)
 		mdelay(10);
 		gpio_set_value(S3C2410_GPH(1), 0);
 
-		h1940_led_blink_set(NULL, GPIO_LED_BLINK, NULL, NULL);
-	}
-	else {
+		h1940_led_blink_set(शून्य, GPIO_LED_BLINK, शून्य, शून्य);
+	पूर्ण
+	अन्यथा अणु
 		gpio_set_value(S3C2410_GPH(1), 1);
 		mdelay(10);
 		gpio_set_value(S3C2410_GPH(1), 0);
 		mdelay(10);
 		gpio_set_value(H1940_LATCH_BLUETOOTH_POWER, 0);
 
-		h1940_led_blink_set(NULL, GPIO_LED_NO_BLINK_LOW, NULL, NULL);
-	}
-}
+		h1940_led_blink_set(शून्य, GPIO_LED_NO_BLINK_LOW, शून्य, शून्य);
+	पूर्ण
+पूर्ण
 
-static int h1940bt_set_block(void *data, bool blocked)
-{
+अटल पूर्णांक h1940bt_set_block(व्योम *data, bool blocked)
+अणु
 	h1940bt_enable(!blocked);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rfkill_ops h1940bt_rfkill_ops = {
+अटल स्थिर काष्ठा rfसमाप्त_ops h1940bt_rfसमाप्त_ops = अणु
 	.set_block = h1940bt_set_block,
-};
+पूर्ण;
 
-static int h1940bt_probe(struct platform_device *pdev)
-{
-	struct rfkill *rfk;
-	int ret = 0;
+अटल पूर्णांक h1940bt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rfसमाप्त *rfk;
+	पूर्णांक ret = 0;
 
 	ret = gpio_request(S3C2410_GPH(1), dev_name(&pdev->dev));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "could not get GPH1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = gpio_request(H1940_LATCH_BLUETOOTH_POWER, dev_name(&pdev->dev));
-	if (ret) {
-		gpio_free(S3C2410_GPH(1));
+	अगर (ret) अणु
+		gpio_मुक्त(S3C2410_GPH(1));
 		dev_err(&pdev->dev, "could not get BT_POWER\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Configures BT serial port GPIOs */
 	s3c_gpio_cfgpin(S3C2410_GPH(0), S3C2410_GPH0_nCTS0);
@@ -85,55 +86,55 @@ static int h1940bt_probe(struct platform_device *pdev)
 	s3c_gpio_cfgpin(S3C2410_GPH(3), S3C2410_GPH3_RXD0);
 	s3c_gpio_setpull(S3C2410_GPH(3), S3C_GPIO_PULL_NONE);
 
-	rfk = rfkill_alloc(DRV_NAME, &pdev->dev, RFKILL_TYPE_BLUETOOTH,
-			&h1940bt_rfkill_ops, NULL);
-	if (!rfk) {
+	rfk = rfसमाप्त_alloc(DRV_NAME, &pdev->dev, RFKILL_TYPE_BLUETOOTH,
+			&h1940bt_rfसमाप्त_ops, शून्य);
+	अगर (!rfk) अणु
 		ret = -ENOMEM;
-		goto err_rfk_alloc;
-	}
+		जाओ err_rfk_alloc;
+	पूर्ण
 
-	ret = rfkill_register(rfk);
-	if (ret)
-		goto err_rfkill;
+	ret = rfसमाप्त_रेजिस्टर(rfk);
+	अगर (ret)
+		जाओ err_rfसमाप्त;
 
-	platform_set_drvdata(pdev, rfk);
+	platक्रमm_set_drvdata(pdev, rfk);
 
-	return 0;
+	वापस 0;
 
-err_rfkill:
-	rfkill_destroy(rfk);
+err_rfसमाप्त:
+	rfसमाप्त_destroy(rfk);
 err_rfk_alloc:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int h1940bt_remove(struct platform_device *pdev)
-{
-	struct rfkill *rfk = platform_get_drvdata(pdev);
+अटल पूर्णांक h1940bt_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rfसमाप्त *rfk = platक्रमm_get_drvdata(pdev);
 
-	platform_set_drvdata(pdev, NULL);
-	gpio_free(S3C2410_GPH(1));
+	platक्रमm_set_drvdata(pdev, शून्य);
+	gpio_मुक्त(S3C2410_GPH(1));
 
-	if (rfk) {
-		rfkill_unregister(rfk);
-		rfkill_destroy(rfk);
-	}
-	rfk = NULL;
+	अगर (rfk) अणु
+		rfसमाप्त_unरेजिस्टर(rfk);
+		rfसमाप्त_destroy(rfk);
+	पूर्ण
+	rfk = शून्य;
 
 	h1940bt_enable(0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static struct platform_driver h1940bt_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver h1940bt_driver = अणु
+	.driver		= अणु
 		.name	= DRV_NAME,
-	},
+	पूर्ण,
 	.probe		= h1940bt_probe,
-	.remove		= h1940bt_remove,
-};
+	.हटाओ		= h1940bt_हटाओ,
+पूर्ण;
 
-module_platform_driver(h1940bt_driver);
+module_platक्रमm_driver(h1940bt_driver);
 
 MODULE_AUTHOR("Arnaud Patard <arnaud.patard@rtp-net.org>");
 MODULE_DESCRIPTION("Driver for the iPAQ H1940 bluetooth chip");

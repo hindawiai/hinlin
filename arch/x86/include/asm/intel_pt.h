@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_INTEL_PT_H
-#define _ASM_X86_INTEL_PT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_INTEL_PT_H
+#घोषणा _ASM_X86_INTEL_PT_H
 
-#define PT_CPUID_LEAVES		2
-#define PT_CPUID_REGS_NUM	4 /* number of registers (eax, ebx, ecx, edx) */
+#घोषणा PT_CPUID_LEAVES		2
+#घोषणा PT_CPUID_REGS_NUM	4 /* number of रेजिस्टरs (eax, ebx, ecx, edx) */
 
-enum pt_capabilities {
+क्रमागत pt_capabilities अणु
 	PT_CAP_max_subleaf = 0,
 	PT_CAP_cr3_filtering,
 	PT_CAP_psb_cyc,
 	PT_CAP_ip_filtering,
 	PT_CAP_mtc,
-	PT_CAP_ptwrite,
-	PT_CAP_power_event_trace,
+	PT_CAP_ptग_लिखो,
+	PT_CAP_घातer_event_trace,
 	PT_CAP_topa_output,
 	PT_CAP_topa_multiple_entries,
 	PT_CAP_single_range_output,
@@ -22,18 +23,18 @@ enum pt_capabilities {
 	PT_CAP_mtc_periods,
 	PT_CAP_cycle_thresholds,
 	PT_CAP_psb_periods,
-};
+पूर्ण;
 
-#if defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_INTEL)
-void cpu_emergency_stop_pt(void);
-extern u32 intel_pt_validate_hw_cap(enum pt_capabilities cap);
-extern u32 intel_pt_validate_cap(u32 *caps, enum pt_capabilities cap);
-extern int is_intel_pt_event(struct perf_event *event);
-#else
-static inline void cpu_emergency_stop_pt(void) {}
-static inline u32 intel_pt_validate_hw_cap(enum pt_capabilities cap) { return 0; }
-static inline u32 intel_pt_validate_cap(u32 *caps, enum pt_capabilities capability) { return 0; }
-static inline int is_intel_pt_event(struct perf_event *event) { return 0; }
-#endif
+#अगर defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_INTEL)
+व्योम cpu_emergency_stop_pt(व्योम);
+बाह्य u32 पूर्णांकel_pt_validate_hw_cap(क्रमागत pt_capabilities cap);
+बाह्य u32 पूर्णांकel_pt_validate_cap(u32 *caps, क्रमागत pt_capabilities cap);
+बाह्य पूर्णांक is_पूर्णांकel_pt_event(काष्ठा perf_event *event);
+#अन्यथा
+अटल अंतरभूत व्योम cpu_emergency_stop_pt(व्योम) अणुपूर्ण
+अटल अंतरभूत u32 पूर्णांकel_pt_validate_hw_cap(क्रमागत pt_capabilities cap) अणु वापस 0; पूर्ण
+अटल अंतरभूत u32 पूर्णांकel_pt_validate_cap(u32 *caps, क्रमागत pt_capabilities capability) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक is_पूर्णांकel_pt_event(काष्ठा perf_event *event) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_X86_INTEL_PT_H */
+#पूर्ण_अगर /* _ASM_X86_INTEL_PT_H */

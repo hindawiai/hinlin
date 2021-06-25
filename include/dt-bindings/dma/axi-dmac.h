@@ -1,28 +1,29 @@
+<शैली गुरु>
 /*
  * This file is dual-licensed: you can use it either under the terms
  * of the GPL or the X11 license, at your option. Note that this dual
  * licensing only applies to this file, and not this project as a
  * whole.
  *
- *  a) This file is free software; you can redistribute it and/or
- *     modify it under the terms of the GNU General Public License as
+ *  a) This file is मुक्त software; you can redistribute it and/or
+ *     modअगरy it under the terms of the GNU General Public License as
  *     published by the Free Software Foundation; either version 2 of the
  *     License, or (at your option) any later version.
  *
  *     This file is distributed in the hope that it will be useful,
  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
+ *     GNU General Public License क्रम more details.
  *
  * Or, alternatively,
  *
- *  b) Permission is hereby granted, free of charge, to any person
- *     obtaining a copy of this software and associated documentation
+ *  b) Permission is hereby granted, मुक्त of अक्षरge, to any person
+ *     obtaining a copy of this software and associated करोcumentation
  *     files (the "Software"), to deal in the Software without
  *     restriction, including without limitation the rights to use,
- *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     copy, modअगरy, merge, publish, distribute, sublicense, and/or
  *     sell copies of the Software, and to permit persons to whom the
- *     Software is furnished to do so, subject to the following
+ *     Software is furnished to करो so, subject to the following
  *     conditions:
  *
  *     The above copyright notice and this permission notice shall be
@@ -38,11 +39,11 @@
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __DT_BINDINGS_DMA_AXI_DMAC_H__
-#define __DT_BINDINGS_DMA_AXI_DMAC_H__
+#अगर_अघोषित __DT_BINDINGS_DMA_AXI_DMAC_H__
+#घोषणा __DT_BINDINGS_DMA_AXI_DMAC_H__
 
-#define AXI_DMAC_BUS_TYPE_AXI_MM		0
-#define AXI_DMAC_BUS_TYPE_AXI_STREAM	1
-#define AXI_DMAC_BUS_TYPE_FIFO			2
+#घोषणा AXI_DMAC_BUS_TYPE_AXI_MM		0
+#घोषणा AXI_DMAC_BUS_TYPE_AXI_STREAM	1
+#घोषणा AXI_DMAC_BUS_TYPE_FIFO			2
 
-#endif
+#पूर्ण_अगर

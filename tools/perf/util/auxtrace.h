@@ -1,87 +1,88 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * auxtrace.h: AUX area trace support
  * Copyright (c) 2013-2015, Intel Corporation.
  */
 
-#ifndef __PERF_AUXTRACE_H
-#define __PERF_AUXTRACE_H
+#अगर_अघोषित __PERF_AUXTRACE_H
+#घोषणा __PERF_AUXTRACE_H
 
-#include <sys/types.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdio.h> // FILE
-#include <linux/list.h>
-#include <linux/perf_event.h>
-#include <linux/types.h>
-#include <asm/bitsperlong.h>
-#include <asm/barrier.h>
+#समावेश <sys/types.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <stdbool.h>
+#समावेश <मानकघोष.स>
+#समावेश <मानकपन.स> // खाता
+#समावेश <linux/list.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/bitsperदीर्घ.h>
+#समावेश <यंत्र/barrier.h>
 
-union perf_event;
-struct perf_session;
-struct evlist;
-struct evsel;
-struct perf_tool;
-struct mmap;
-struct perf_sample;
-struct option;
-struct record_opts;
-struct perf_record_auxtrace_error;
-struct perf_record_auxtrace_info;
-struct events_stats;
-struct perf_pmu;
+जोड़ perf_event;
+काष्ठा perf_session;
+काष्ठा evlist;
+काष्ठा evsel;
+काष्ठा perf_tool;
+काष्ठा mmap;
+काष्ठा perf_sample;
+काष्ठा option;
+काष्ठा record_opts;
+काष्ठा perf_record_auxtrace_error;
+काष्ठा perf_record_auxtrace_info;
+काष्ठा events_stats;
+काष्ठा perf_pmu;
 
-enum auxtrace_error_type {
+क्रमागत auxtrace_error_type अणु
        PERF_AUXTRACE_ERROR_ITRACE  = 1,
        PERF_AUXTRACE_ERROR_MAX
-};
+पूर्ण;
 
 /* Auxtrace records must have the same alignment as perf event records */
-#define PERF_AUXTRACE_RECORD_ALIGNMENT 8
+#घोषणा PERF_AUXTRACE_RECORD_ALIGNMENT 8
 
-enum auxtrace_type {
+क्रमागत auxtrace_type अणु
 	PERF_AUXTRACE_UNKNOWN,
 	PERF_AUXTRACE_INTEL_PT,
 	PERF_AUXTRACE_INTEL_BTS,
 	PERF_AUXTRACE_CS_ETM,
 	PERF_AUXTRACE_ARM_SPE,
 	PERF_AUXTRACE_S390_CPUMSF,
-};
+पूर्ण;
 
-enum itrace_period_type {
+क्रमागत itrace_period_type अणु
 	PERF_ITRACE_PERIOD_INSTRUCTIONS,
 	PERF_ITRACE_PERIOD_TICKS,
-	PERF_ITRACE_PERIOD_NANOSECS,
-};
+	PERF_ITRACE_PERIOD_न_अंकOSECS,
+पूर्ण;
 
-#define AUXTRACE_ERR_FLG_OVERFLOW	(1 << ('o' - 'a'))
-#define AUXTRACE_ERR_FLG_DATA_LOST	(1 << ('l' - 'a'))
+#घोषणा AUXTRACE_ERR_FLG_OVERFLOW	(1 << ('o' - 'a'))
+#घोषणा AUXTRACE_ERR_FLG_DATA_LOST	(1 << ('l' - 'a'))
 
-#define AUXTRACE_LOG_FLG_ALL_PERF_EVTS	(1 << ('a' - 'a'))
+#घोषणा AUXTRACE_LOG_FLG_ALL_PERF_EVTS	(1 << ('a' - 'a'))
 
 /**
- * struct itrace_synth_opts - AUX area tracing synthesis options.
+ * काष्ठा itrace_synth_opts - AUX area tracing synthesis options.
  * @set: indicates whether or not options have been set
- * @default_no_sample: Default to no sampling.
+ * @शेष_no_sample: Default to no sampling.
  * @inject: indicates the event (not just the sample) must be fully synthesized
- *          because 'perf inject' will write it out
- * @instructions: whether to synthesize 'instructions' events
+ *          because 'perf inject' will ग_लिखो it out
+ * @inकाष्ठाions: whether to synthesize 'instructions' events
  * @branches: whether to synthesize 'branches' events
- *            (branch misses only for Arm SPE)
- * @transactions: whether to synthesize events for transactions
- * @ptwrites: whether to synthesize events for ptwrites
- * @pwr_events: whether to synthesize power events
+ *            (branch misses only क्रम Arm SPE)
+ * @transactions: whether to synthesize events क्रम transactions
+ * @ptग_लिखोs: whether to synthesize events क्रम ptग_लिखोs
+ * @pwr_events: whether to synthesize घातer events
  * @other_events: whether to synthesize other events recorded due to the use of
  *                aux_output
  * @errors: whether to synthesize decoder error events
- * @dont_decode: whether to skip decoding entirely
- * @log: write a decoding log
- * @calls: limit branch samples to calls (can be combined with @returns)
- * @returns: limit branch samples to returns (can be combined with @calls)
+ * @करोnt_decode: whether to skip decoding entirely
+ * @log: ग_लिखो a decoding log
+ * @calls: limit branch samples to calls (can be combined with @वापसs)
+ * @वापसs: limit branch samples to वापसs (can be combined with @calls)
  * @callchain: add callchain to 'instructions' events
  * @add_callchain: add callchain to existing event records
- * @thread_stack: feed branches to the thread_stack
+ * @thपढ़ो_stack: feed branches to the thपढ़ो_stack
  * @last_branch: add branch context to 'instruction' events
  * @add_last_branch: add branch context to existing event records
  * @flc: whether to synthesize first level cache events
@@ -94,33 +95,33 @@ enum itrace_period_type {
  * @period: 'instructions' events period
  * @period_type: 'instructions' events period type
  * @initial_skip: skip N events at the beginning.
- * @cpu_bitmap: CPUs for which to synthesize events, or NULL for all
- * @ptime_range: time intervals to trace or NULL
- * @range_num: number of time intervals to trace
+ * @cpu_biपंचांगap: CPUs क्रम which to synthesize events, or शून्य क्रम all
+ * @pसमय_range: समय पूर्णांकervals to trace or शून्य
+ * @range_num: number of समय पूर्णांकervals to trace
  * @error_plus_flags: flags to affect what errors are reported
  * @error_minus_flags: flags to affect what errors are reported
  * @log_plus_flags: flags to affect what is logged
  * @log_minus_flags: flags to affect what is logged
  * @quick: quicker (less detailed) decoding
  */
-struct itrace_synth_opts {
+काष्ठा itrace_synth_opts अणु
 	bool			set;
-	bool			default_no_sample;
+	bool			शेष_no_sample;
 	bool			inject;
-	bool			instructions;
+	bool			inकाष्ठाions;
 	bool			branches;
 	bool			transactions;
-	bool			ptwrites;
+	bool			ptग_लिखोs;
 	bool			pwr_events;
 	bool			other_events;
 	bool			errors;
-	bool			dont_decode;
+	bool			करोnt_decode;
 	bool			log;
 	bool			calls;
-	bool			returns;
+	bool			वापसs;
 	bool			callchain;
 	bool			add_callchain;
-	bool			thread_stack;
+	bool			thपढ़ो_stack;
 	bool			last_branch;
 	bool			add_last_branch;
 	bool			flc;
@@ -128,500 +129,500 @@ struct itrace_synth_opts {
 	bool			tlb;
 	bool			remote_access;
 	bool			mem;
-	unsigned int		callchain_sz;
-	unsigned int		last_branch_sz;
-	unsigned long long	period;
-	enum itrace_period_type	period_type;
-	unsigned long		initial_skip;
-	unsigned long		*cpu_bitmap;
-	struct perf_time_interval *ptime_range;
-	int			range_num;
-	unsigned int		error_plus_flags;
-	unsigned int		error_minus_flags;
-	unsigned int		log_plus_flags;
-	unsigned int		log_minus_flags;
-	unsigned int		quick;
-};
+	अचिन्हित पूर्णांक		callchain_sz;
+	अचिन्हित पूर्णांक		last_branch_sz;
+	अचिन्हित दीर्घ दीर्घ	period;
+	क्रमागत itrace_period_type	period_type;
+	अचिन्हित दीर्घ		initial_skip;
+	अचिन्हित दीर्घ		*cpu_biपंचांगap;
+	काष्ठा perf_समय_पूर्णांकerval *pसमय_range;
+	पूर्णांक			range_num;
+	अचिन्हित पूर्णांक		error_plus_flags;
+	अचिन्हित पूर्णांक		error_minus_flags;
+	अचिन्हित पूर्णांक		log_plus_flags;
+	अचिन्हित पूर्णांक		log_minus_flags;
+	अचिन्हित पूर्णांक		quick;
+पूर्ण;
 
 /**
- * struct auxtrace_index_entry - indexes a AUX area tracing event within a
+ * काष्ठा auxtrace_index_entry - indexes a AUX area tracing event within a
  *                               perf.data file.
  * @file_offset: offset within the perf.data file
  * @sz: size of the event
  */
-struct auxtrace_index_entry {
+काष्ठा auxtrace_index_entry अणु
 	u64			file_offset;
 	u64			sz;
-};
+पूर्ण;
 
-#define PERF_AUXTRACE_INDEX_ENTRY_COUNT 256
+#घोषणा PERF_AUXTRACE_INDEX_ENTRY_COUNT 256
 
 /**
- * struct auxtrace_index - index of AUX area tracing events within a perf.data
+ * काष्ठा auxtrace_index - index of AUX area tracing events within a perf.data
  *                         file.
  * @list: linking a number of arrays of entries
  * @nr: number of entries
  * @entries: array of entries
  */
-struct auxtrace_index {
-	struct list_head	list;
-	size_t			nr;
-	struct auxtrace_index_entry entries[PERF_AUXTRACE_INDEX_ENTRY_COUNT];
-};
+काष्ठा auxtrace_index अणु
+	काष्ठा list_head	list;
+	माप_प्रकार			nr;
+	काष्ठा auxtrace_index_entry entries[PERF_AUXTRACE_INDEX_ENTRY_COUNT];
+पूर्ण;
 
 /**
- * struct auxtrace - session callbacks to allow AUX area data decoding.
+ * काष्ठा auxtrace - session callbacks to allow AUX area data decoding.
  * @process_event: lets the decoder see all session events
  * @process_auxtrace_event: process a PERF_RECORD_AUXTRACE event
- * @queue_data: queue an AUX sample or PERF_RECORD_AUXTRACE event for later
+ * @queue_data: queue an AUX sample or PERF_RECORD_AUXTRACE event क्रम later
  *              processing
  * @dump_auxtrace_sample: dump AUX area sample data
- * @flush_events: process any remaining data
- * @free_events: free resources associated with event processing
- * @free: free resources associated with the session
+ * @flush_events: process any reमुख्यing data
+ * @मुक्त_events: मुक्त resources associated with event processing
+ * @मुक्त: मुक्त resources associated with the session
  */
-struct auxtrace {
-	int (*process_event)(struct perf_session *session,
-			     union perf_event *event,
-			     struct perf_sample *sample,
-			     struct perf_tool *tool);
-	int (*process_auxtrace_event)(struct perf_session *session,
-				      union perf_event *event,
-				      struct perf_tool *tool);
-	int (*queue_data)(struct perf_session *session,
-			  struct perf_sample *sample, union perf_event *event,
+काष्ठा auxtrace अणु
+	पूर्णांक (*process_event)(काष्ठा perf_session *session,
+			     जोड़ perf_event *event,
+			     काष्ठा perf_sample *sample,
+			     काष्ठा perf_tool *tool);
+	पूर्णांक (*process_auxtrace_event)(काष्ठा perf_session *session,
+				      जोड़ perf_event *event,
+				      काष्ठा perf_tool *tool);
+	पूर्णांक (*queue_data)(काष्ठा perf_session *session,
+			  काष्ठा perf_sample *sample, जोड़ perf_event *event,
 			  u64 data_offset);
-	void (*dump_auxtrace_sample)(struct perf_session *session,
-				     struct perf_sample *sample);
-	int (*flush_events)(struct perf_session *session,
-			    struct perf_tool *tool);
-	void (*free_events)(struct perf_session *session);
-	void (*free)(struct perf_session *session);
-	bool (*evsel_is_auxtrace)(struct perf_session *session,
-				  struct evsel *evsel);
-};
+	व्योम (*dump_auxtrace_sample)(काष्ठा perf_session *session,
+				     काष्ठा perf_sample *sample);
+	पूर्णांक (*flush_events)(काष्ठा perf_session *session,
+			    काष्ठा perf_tool *tool);
+	व्योम (*मुक्त_events)(काष्ठा perf_session *session);
+	व्योम (*मुक्त)(काष्ठा perf_session *session);
+	bool (*evsel_is_auxtrace)(काष्ठा perf_session *session,
+				  काष्ठा evsel *evsel);
+पूर्ण;
 
 /**
- * struct auxtrace_buffer - a buffer containing AUX area tracing data.
- * @list: buffers are queued in a list held by struct auxtrace_queue
+ * काष्ठा auxtrace_buffer - a buffer containing AUX area tracing data.
+ * @list: buffers are queued in a list held by काष्ठा auxtrace_queue
  * @size: size of the buffer in bytes
- * @pid: in per-thread mode, the pid this buffer is associated with
- * @tid: in per-thread mode, the tid this buffer is associated with
+ * @pid: in per-thपढ़ो mode, the pid this buffer is associated with
+ * @tid: in per-thपढ़ो mode, the tid this buffer is associated with
  * @cpu: in per-cpu mode, the cpu this buffer is associated with
- * @data: actual buffer data (can be null if the data has not been loaded)
- * @data_offset: file offset at which the buffer can be read
- * @mmap_addr: mmap address at which the buffer can be read
+ * @data: actual buffer data (can be null अगर the data has not been loaded)
+ * @data_offset: file offset at which the buffer can be पढ़ो
+ * @mmap_addr: mmap address at which the buffer can be पढ़ो
  * @mmap_size: size of the mmap at @mmap_addr
- * @data_needs_freeing: @data was malloc'd so free it when it is no longer
+ * @data_needs_मुक्तing: @data was दो_स्मृति'd so मुक्त it when it is no दीर्घer
  *                      needed
  * @consecutive: the original data was split up and this buffer is consecutive
  *               to the previous buffer
- * @offset: offset as determined by aux_head / aux_tail members of struct
+ * @offset: offset as determined by aux_head / aux_tail members of काष्ठा
  *          perf_event_mmap_page
- * @reference: an implementation-specific reference determined when the data is
+ * @reference: an implementation-specअगरic reference determined when the data is
  *             recorded
  * @buffer_nr: used to number each buffer
  * @use_size: implementation actually only uses this number of bytes
  * @use_data: implementation actually only uses data starting at this address
  */
-struct auxtrace_buffer {
-	struct list_head	list;
-	size_t			size;
+काष्ठा auxtrace_buffer अणु
+	काष्ठा list_head	list;
+	माप_प्रकार			size;
 	pid_t			pid;
 	pid_t			tid;
-	int			cpu;
-	void			*data;
+	पूर्णांक			cpu;
+	व्योम			*data;
 	off_t			data_offset;
-	void			*mmap_addr;
-	size_t			mmap_size;
-	bool			data_needs_freeing;
+	व्योम			*mmap_addr;
+	माप_प्रकार			mmap_size;
+	bool			data_needs_मुक्तing;
 	bool			consecutive;
 	u64			offset;
 	u64			reference;
 	u64			buffer_nr;
-	size_t			use_size;
-	void			*use_data;
-};
+	माप_प्रकार			use_size;
+	व्योम			*use_data;
+पूर्ण;
 
 /**
- * struct auxtrace_queue - a queue of AUX area tracing data buffers.
+ * काष्ठा auxtrace_queue - a queue of AUX area tracing data buffers.
  * @head: head of buffer list
- * @tid: in per-thread mode, the tid this queue is associated with
+ * @tid: in per-thपढ़ो mode, the tid this queue is associated with
  * @cpu: in per-cpu mode, the cpu this queue is associated with
- * @set: %true once this queue has been dedicated to a specific thread or cpu
- * @priv: implementation-specific data
+ * @set: %true once this queue has been dedicated to a specअगरic thपढ़ो or cpu
+ * @priv: implementation-specअगरic data
  */
-struct auxtrace_queue {
-	struct list_head	head;
+काष्ठा auxtrace_queue अणु
+	काष्ठा list_head	head;
 	pid_t			tid;
-	int			cpu;
+	पूर्णांक			cpu;
 	bool			set;
-	void			*priv;
-};
+	व्योम			*priv;
+पूर्ण;
 
 /**
- * struct auxtrace_queues - an array of AUX area tracing queues.
+ * काष्ठा auxtrace_queues - an array of AUX area tracing queues.
  * @queue_array: array of queues
  * @nr_queues: number of queues
  * @new_data: set whenever new data is queued
  * @populated: queues have been fully populated using the auxtrace_index
  * @next_buffer_nr: used to number each buffer
  */
-struct auxtrace_queues {
-	struct auxtrace_queue	*queue_array;
-	unsigned int		nr_queues;
+काष्ठा auxtrace_queues अणु
+	काष्ठा auxtrace_queue	*queue_array;
+	अचिन्हित पूर्णांक		nr_queues;
 	bool			new_data;
 	bool			populated;
 	u64			next_buffer_nr;
-};
+पूर्ण;
 
 /**
- * struct auxtrace_heap_item - element of struct auxtrace_heap.
+ * काष्ठा auxtrace_heap_item - element of काष्ठा auxtrace_heap.
  * @queue_nr: queue number
- * @ordinal: value used for sorting (lowest ordinal is top of the heap) expected
- *           to be a timestamp
+ * @ordinal: value used क्रम sorting (lowest ordinal is top of the heap) expected
+ *           to be a बारtamp
  */
-struct auxtrace_heap_item {
-	unsigned int		queue_nr;
+काष्ठा auxtrace_heap_item अणु
+	अचिन्हित पूर्णांक		queue_nr;
 	u64			ordinal;
-};
+पूर्ण;
 
 /**
- * struct auxtrace_heap - a heap suitable for sorting AUX area tracing queues.
+ * काष्ठा auxtrace_heap - a heap suitable क्रम sorting AUX area tracing queues.
  * @heap_array: the heap
  * @heap_cnt: the number of elements in the heap
  * @heap_sz: maximum number of elements (grows as needed)
  */
-struct auxtrace_heap {
-	struct auxtrace_heap_item	*heap_array;
-	unsigned int		heap_cnt;
-	unsigned int		heap_sz;
-};
+काष्ठा auxtrace_heap अणु
+	काष्ठा auxtrace_heap_item	*heap_array;
+	अचिन्हित पूर्णांक		heap_cnt;
+	अचिन्हित पूर्णांक		heap_sz;
+पूर्ण;
 
 /**
- * struct auxtrace_mmap - records an mmap of the auxtrace buffer.
+ * काष्ठा auxtrace_mmap - records an mmap of the auxtrace buffer.
  * @base: address of mapped area
- * @userpg: pointer to buffer's perf_event_mmap_page
- * @mask: %0 if @len is not a power of two, otherwise (@len - %1)
+ * @userpg: poपूर्णांकer to buffer's perf_event_mmap_page
+ * @mask: %0 अगर @len is not a घातer of two, otherwise (@len - %1)
  * @len: size of mapped area
  * @prev: previous aux_head
  * @idx: index of this mmap
- * @tid: tid for a per-thread mmap (also set if there is only 1 tid on a per-cpu
+ * @tid: tid क्रम a per-thपढ़ो mmap (also set अगर there is only 1 tid on a per-cpu
  *       mmap) otherwise %0
- * @cpu: cpu number for a per-cpu mmap otherwise %-1
+ * @cpu: cpu number क्रम a per-cpu mmap otherwise %-1
  */
-struct auxtrace_mmap {
-	void		*base;
-	void		*userpg;
-	size_t		mask;
-	size_t		len;
+काष्ठा auxtrace_mmap अणु
+	व्योम		*base;
+	व्योम		*userpg;
+	माप_प्रकार		mask;
+	माप_प्रकार		len;
 	u64		prev;
-	int		idx;
+	पूर्णांक		idx;
 	pid_t		tid;
-	int		cpu;
-};
+	पूर्णांक		cpu;
+पूर्ण;
 
 /**
- * struct auxtrace_mmap_params - parameters to set up struct auxtrace_mmap.
- * @mask: %0 if @len is not a power of two, otherwise (@len - %1)
+ * काष्ठा auxtrace_mmap_params - parameters to set up काष्ठा auxtrace_mmap.
+ * @mask: %0 अगर @len is not a घातer of two, otherwise (@len - %1)
  * @offset: file offset of mapped area
  * @len: size of mapped area
  * @prot: mmap memory protection
  * @idx: index of this mmap
- * @tid: tid for a per-thread mmap (also set if there is only 1 tid on a per-cpu
+ * @tid: tid क्रम a per-thपढ़ो mmap (also set अगर there is only 1 tid on a per-cpu
  *       mmap) otherwise %0
- * @cpu: cpu number for a per-cpu mmap otherwise %-1
+ * @cpu: cpu number क्रम a per-cpu mmap otherwise %-1
  */
-struct auxtrace_mmap_params {
-	size_t		mask;
+काष्ठा auxtrace_mmap_params अणु
+	माप_प्रकार		mask;
 	off_t		offset;
-	size_t		len;
-	int		prot;
-	int		idx;
+	माप_प्रकार		len;
+	पूर्णांक		prot;
+	पूर्णांक		idx;
 	pid_t		tid;
-	int		cpu;
-};
+	पूर्णांक		cpu;
+पूर्ण;
 
 /**
- * struct auxtrace_record - callbacks for recording AUX area data.
+ * काष्ठा auxtrace_record - callbacks क्रम recording AUX area data.
  * @recording_options: validate and process recording options
- * @info_priv_size: return the size of the private data in auxtrace_info_event
- * @info_fill: fill-in the private data in auxtrace_info_event
- * @free: free this auxtrace record structure
+ * @info_priv_size: वापस the size of the निजी data in auxtrace_info_event
+ * @info_fill: fill-in the निजी data in auxtrace_info_event
+ * @मुक्त: मुक्त this auxtrace record काष्ठाure
  * @snapshot_start: starting a snapshot
  * @snapshot_finish: finishing a snapshot
  * @find_snapshot: find data to snapshot within auxtrace mmap
  * @parse_snapshot_options: parse snapshot options
- * @reference: provide a 64-bit reference number for auxtrace_event
- * @read_finish: called after reading from an auxtrace mmap
- * @alignment: alignment (if any) for AUX area data
- * @default_aux_sample_size: default sample size for --aux sample option
+ * @reference: provide a 64-bit reference number क्रम auxtrace_event
+ * @पढ़ो_finish: called after पढ़ोing from an auxtrace mmap
+ * @alignment: alignment (अगर any) क्रम AUX area data
+ * @शेष_aux_sample_size: शेष sample size क्रम --aux sample option
  * @pmu: associated pmu
  * @evlist: selected events list
  */
-struct auxtrace_record {
-	int (*recording_options)(struct auxtrace_record *itr,
-				 struct evlist *evlist,
-				 struct record_opts *opts);
-	size_t (*info_priv_size)(struct auxtrace_record *itr,
-				 struct evlist *evlist);
-	int (*info_fill)(struct auxtrace_record *itr,
-			 struct perf_session *session,
-			 struct perf_record_auxtrace_info *auxtrace_info,
-			 size_t priv_size);
-	void (*free)(struct auxtrace_record *itr);
-	int (*snapshot_start)(struct auxtrace_record *itr);
-	int (*snapshot_finish)(struct auxtrace_record *itr);
-	int (*find_snapshot)(struct auxtrace_record *itr, int idx,
-			     struct auxtrace_mmap *mm, unsigned char *data,
+काष्ठा auxtrace_record अणु
+	पूर्णांक (*recording_options)(काष्ठा auxtrace_record *itr,
+				 काष्ठा evlist *evlist,
+				 काष्ठा record_opts *opts);
+	माप_प्रकार (*info_priv_size)(काष्ठा auxtrace_record *itr,
+				 काष्ठा evlist *evlist);
+	पूर्णांक (*info_fill)(काष्ठा auxtrace_record *itr,
+			 काष्ठा perf_session *session,
+			 काष्ठा perf_record_auxtrace_info *auxtrace_info,
+			 माप_प्रकार priv_size);
+	व्योम (*मुक्त)(काष्ठा auxtrace_record *itr);
+	पूर्णांक (*snapshot_start)(काष्ठा auxtrace_record *itr);
+	पूर्णांक (*snapshot_finish)(काष्ठा auxtrace_record *itr);
+	पूर्णांक (*find_snapshot)(काष्ठा auxtrace_record *itr, पूर्णांक idx,
+			     काष्ठा auxtrace_mmap *mm, अचिन्हित अक्षर *data,
 			     u64 *head, u64 *old);
-	int (*parse_snapshot_options)(struct auxtrace_record *itr,
-				      struct record_opts *opts,
-				      const char *str);
-	u64 (*reference)(struct auxtrace_record *itr);
-	int (*read_finish)(struct auxtrace_record *itr, int idx);
-	unsigned int alignment;
-	unsigned int default_aux_sample_size;
-	struct perf_pmu *pmu;
-	struct evlist *evlist;
-};
+	पूर्णांक (*parse_snapshot_options)(काष्ठा auxtrace_record *itr,
+				      काष्ठा record_opts *opts,
+				      स्थिर अक्षर *str);
+	u64 (*reference)(काष्ठा auxtrace_record *itr);
+	पूर्णांक (*पढ़ो_finish)(काष्ठा auxtrace_record *itr, पूर्णांक idx);
+	अचिन्हित पूर्णांक alignment;
+	अचिन्हित पूर्णांक शेष_aux_sample_size;
+	काष्ठा perf_pmu *pmu;
+	काष्ठा evlist *evlist;
+पूर्ण;
 
 /**
- * struct addr_filter - address filter.
+ * काष्ठा addr_filter - address filter.
  * @list: list node
- * @range: true if it is a range filter
- * @start: true if action is 'filter' or 'start'
+ * @range: true अगर it is a range filter
+ * @start: true अगर action is 'filter' or 'start'
  * @action: 'filter', 'start' or 'stop' ('tracestop' is accepted but converted
  *          to 'stop')
- * @sym_from: symbol name for the filter address
+ * @sym_from: symbol name क्रम the filter address
  * @sym_to: symbol name that determines the filter size
  * @sym_from_idx: selects n'th from symbols with the same name (0 means global
  *                and less than 0 means symbol must be unique)
- * @sym_to_idx: same as @sym_from_idx but for @sym_to
+ * @sym_to_idx: same as @sym_from_idx but क्रम @sym_to
  * @addr: filter address
- * @size: filter region size (for range filters)
- * @filename: DSO file name or NULL for the kernel
+ * @size: filter region size (क्रम range filters)
+ * @filename: DSO file name or शून्य क्रम the kernel
  * @str: allocated string that contains the other string members
  */
-struct addr_filter {
-	struct list_head	list;
+काष्ठा addr_filter अणु
+	काष्ठा list_head	list;
 	bool			range;
 	bool			start;
-	const char		*action;
-	const char		*sym_from;
-	const char		*sym_to;
-	int			sym_from_idx;
-	int			sym_to_idx;
+	स्थिर अक्षर		*action;
+	स्थिर अक्षर		*sym_from;
+	स्थिर अक्षर		*sym_to;
+	पूर्णांक			sym_from_idx;
+	पूर्णांक			sym_to_idx;
 	u64			addr;
 	u64			size;
-	const char		*filename;
-	char			*str;
-};
+	स्थिर अक्षर		*filename;
+	अक्षर			*str;
+पूर्ण;
 
 /**
- * struct addr_filters - list of address filters.
+ * काष्ठा addr_filters - list of address filters.
  * @head: list of address filters
  * @cnt: number of address filters
  */
-struct addr_filters {
-	struct list_head	head;
-	int			cnt;
-};
+काष्ठा addr_filters अणु
+	काष्ठा list_head	head;
+	पूर्णांक			cnt;
+पूर्ण;
 
-struct auxtrace_cache;
+काष्ठा auxtrace_cache;
 
-#ifdef HAVE_AUXTRACE_SUPPORT
+#अगर_घोषित HAVE_AUXTRACE_SUPPORT
 
 /*
- * In snapshot mode the mmapped page is read-only which makes using
+ * In snapshot mode the mmapped page is पढ़ो-only which makes using
  * __sync_val_compare_and_swap() problematic.  However, snapshot mode expects
- * the buffer is not updated while the snapshot is made (e.g. Intel PT disables
+ * the buffer is not updated जबतक the snapshot is made (e.g. Intel PT disables
  * the event) so there is not a race anyway.
  */
-static inline u64 auxtrace_mmap__read_snapshot_head(struct auxtrace_mmap *mm)
-{
-	struct perf_event_mmap_page *pc = mm->userpg;
+अटल अंतरभूत u64 auxtrace_mmap__पढ़ो_snapshot_head(काष्ठा auxtrace_mmap *mm)
+अणु
+	काष्ठा perf_event_mmap_page *pc = mm->userpg;
 	u64 head = READ_ONCE(pc->aux_head);
 
-	/* Ensure all reads are done after we read the head */
+	/* Ensure all पढ़ोs are करोne after we पढ़ो the head */
 	rmb();
-	return head;
-}
+	वापस head;
+पूर्ण
 
-static inline u64 auxtrace_mmap__read_head(struct auxtrace_mmap *mm)
-{
-	struct perf_event_mmap_page *pc = mm->userpg;
-#if BITS_PER_LONG == 64 || !defined(HAVE_SYNC_COMPARE_AND_SWAP_SUPPORT)
+अटल अंतरभूत u64 auxtrace_mmap__पढ़ो_head(काष्ठा auxtrace_mmap *mm)
+अणु
+	काष्ठा perf_event_mmap_page *pc = mm->userpg;
+#अगर BITS_PER_LONG == 64 || !defined(HAVE_SYNC_COMPARE_AND_SWAP_SUPPORT)
 	u64 head = READ_ONCE(pc->aux_head);
-#else
+#अन्यथा
 	u64 head = __sync_val_compare_and_swap(&pc->aux_head, 0, 0);
-#endif
+#पूर्ण_अगर
 
-	/* Ensure all reads are done after we read the head */
+	/* Ensure all पढ़ोs are करोne after we पढ़ो the head */
 	rmb();
-	return head;
-}
+	वापस head;
+पूर्ण
 
-static inline void auxtrace_mmap__write_tail(struct auxtrace_mmap *mm, u64 tail)
-{
-	struct perf_event_mmap_page *pc = mm->userpg;
-#if BITS_PER_LONG != 64 && defined(HAVE_SYNC_COMPARE_AND_SWAP_SUPPORT)
+अटल अंतरभूत व्योम auxtrace_mmap__ग_लिखो_tail(काष्ठा auxtrace_mmap *mm, u64 tail)
+अणु
+	काष्ठा perf_event_mmap_page *pc = mm->userpg;
+#अगर BITS_PER_LONG != 64 && defined(HAVE_SYNC_COMPARE_AND_SWAP_SUPPORT)
 	u64 old_tail;
-#endif
+#पूर्ण_अगर
 
-	/* Ensure all reads are done before we write the tail out */
+	/* Ensure all पढ़ोs are करोne beक्रमe we ग_लिखो the tail out */
 	mb();
-#if BITS_PER_LONG == 64 || !defined(HAVE_SYNC_COMPARE_AND_SWAP_SUPPORT)
+#अगर BITS_PER_LONG == 64 || !defined(HAVE_SYNC_COMPARE_AND_SWAP_SUPPORT)
 	pc->aux_tail = tail;
-#else
-	do {
+#अन्यथा
+	करो अणु
 		old_tail = __sync_val_compare_and_swap(&pc->aux_tail, 0, 0);
-	} while (!__sync_bool_compare_and_swap(&pc->aux_tail, old_tail, tail));
-#endif
-}
+	पूर्ण जबतक (!__sync_bool_compare_and_swap(&pc->aux_tail, old_tail, tail));
+#पूर्ण_अगर
+पूर्ण
 
-int auxtrace_mmap__mmap(struct auxtrace_mmap *mm,
-			struct auxtrace_mmap_params *mp,
-			void *userpg, int fd);
-void auxtrace_mmap__munmap(struct auxtrace_mmap *mm);
-void auxtrace_mmap_params__init(struct auxtrace_mmap_params *mp,
+पूर्णांक auxtrace_mmap__mmap(काष्ठा auxtrace_mmap *mm,
+			काष्ठा auxtrace_mmap_params *mp,
+			व्योम *userpg, पूर्णांक fd);
+व्योम auxtrace_mmap__munmap(काष्ठा auxtrace_mmap *mm);
+व्योम auxtrace_mmap_params__init(काष्ठा auxtrace_mmap_params *mp,
 				off_t auxtrace_offset,
-				unsigned int auxtrace_pages,
-				bool auxtrace_overwrite);
-void auxtrace_mmap_params__set_idx(struct auxtrace_mmap_params *mp,
-				   struct evlist *evlist, int idx,
+				अचिन्हित पूर्णांक auxtrace_pages,
+				bool auxtrace_overग_लिखो);
+व्योम auxtrace_mmap_params__set_idx(काष्ठा auxtrace_mmap_params *mp,
+				   काष्ठा evlist *evlist, पूर्णांक idx,
 				   bool per_cpu);
 
-typedef int (*process_auxtrace_t)(struct perf_tool *tool,
-				  struct mmap *map,
-				  union perf_event *event, void *data1,
-				  size_t len1, void *data2, size_t len2);
+प्रकार पूर्णांक (*process_auxtrace_t)(काष्ठा perf_tool *tool,
+				  काष्ठा mmap *map,
+				  जोड़ perf_event *event, व्योम *data1,
+				  माप_प्रकार len1, व्योम *data2, माप_प्रकार len2);
 
-int auxtrace_mmap__read(struct mmap *map, struct auxtrace_record *itr,
-			struct perf_tool *tool, process_auxtrace_t fn);
+पूर्णांक auxtrace_mmap__पढ़ो(काष्ठा mmap *map, काष्ठा auxtrace_record *itr,
+			काष्ठा perf_tool *tool, process_auxtrace_t fn);
 
-int auxtrace_mmap__read_snapshot(struct mmap *map,
-				 struct auxtrace_record *itr,
-				 struct perf_tool *tool, process_auxtrace_t fn,
-				 size_t snapshot_size);
+पूर्णांक auxtrace_mmap__पढ़ो_snapshot(काष्ठा mmap *map,
+				 काष्ठा auxtrace_record *itr,
+				 काष्ठा perf_tool *tool, process_auxtrace_t fn,
+				 माप_प्रकार snapshot_size);
 
-int auxtrace_queues__init(struct auxtrace_queues *queues);
-int auxtrace_queues__add_event(struct auxtrace_queues *queues,
-			       struct perf_session *session,
-			       union perf_event *event, off_t data_offset,
-			       struct auxtrace_buffer **buffer_ptr);
-struct auxtrace_queue *
-auxtrace_queues__sample_queue(struct auxtrace_queues *queues,
-			      struct perf_sample *sample,
-			      struct perf_session *session);
-int auxtrace_queues__add_sample(struct auxtrace_queues *queues,
-				struct perf_session *session,
-				struct perf_sample *sample, u64 data_offset,
+पूर्णांक auxtrace_queues__init(काष्ठा auxtrace_queues *queues);
+पूर्णांक auxtrace_queues__add_event(काष्ठा auxtrace_queues *queues,
+			       काष्ठा perf_session *session,
+			       जोड़ perf_event *event, off_t data_offset,
+			       काष्ठा auxtrace_buffer **buffer_ptr);
+काष्ठा auxtrace_queue *
+auxtrace_queues__sample_queue(काष्ठा auxtrace_queues *queues,
+			      काष्ठा perf_sample *sample,
+			      काष्ठा perf_session *session);
+पूर्णांक auxtrace_queues__add_sample(काष्ठा auxtrace_queues *queues,
+				काष्ठा perf_session *session,
+				काष्ठा perf_sample *sample, u64 data_offset,
 				u64 reference);
-void auxtrace_queues__free(struct auxtrace_queues *queues);
-int auxtrace_queues__process_index(struct auxtrace_queues *queues,
-				   struct perf_session *session);
-int auxtrace_queue_data(struct perf_session *session, bool samples,
+व्योम auxtrace_queues__मुक्त(काष्ठा auxtrace_queues *queues);
+पूर्णांक auxtrace_queues__process_index(काष्ठा auxtrace_queues *queues,
+				   काष्ठा perf_session *session);
+पूर्णांक auxtrace_queue_data(काष्ठा perf_session *session, bool samples,
 			bool events);
-struct auxtrace_buffer *auxtrace_buffer__next(struct auxtrace_queue *queue,
-					      struct auxtrace_buffer *buffer);
-void *auxtrace_buffer__get_data(struct auxtrace_buffer *buffer, int fd);
-void auxtrace_buffer__put_data(struct auxtrace_buffer *buffer);
-void auxtrace_buffer__drop_data(struct auxtrace_buffer *buffer);
-void auxtrace_buffer__free(struct auxtrace_buffer *buffer);
+काष्ठा auxtrace_buffer *auxtrace_buffer__next(काष्ठा auxtrace_queue *queue,
+					      काष्ठा auxtrace_buffer *buffer);
+व्योम *auxtrace_buffer__get_data(काष्ठा auxtrace_buffer *buffer, पूर्णांक fd);
+व्योम auxtrace_buffer__put_data(काष्ठा auxtrace_buffer *buffer);
+व्योम auxtrace_buffer__drop_data(काष्ठा auxtrace_buffer *buffer);
+व्योम auxtrace_buffer__मुक्त(काष्ठा auxtrace_buffer *buffer);
 
-int auxtrace_heap__add(struct auxtrace_heap *heap, unsigned int queue_nr,
+पूर्णांक auxtrace_heap__add(काष्ठा auxtrace_heap *heap, अचिन्हित पूर्णांक queue_nr,
 		       u64 ordinal);
-void auxtrace_heap__pop(struct auxtrace_heap *heap);
-void auxtrace_heap__free(struct auxtrace_heap *heap);
+व्योम auxtrace_heap__pop(काष्ठा auxtrace_heap *heap);
+व्योम auxtrace_heap__मुक्त(काष्ठा auxtrace_heap *heap);
 
-struct auxtrace_cache_entry {
-	struct hlist_node hash;
+काष्ठा auxtrace_cache_entry अणु
+	काष्ठा hlist_node hash;
 	u32 key;
-};
+पूर्ण;
 
-struct auxtrace_cache *auxtrace_cache__new(unsigned int bits, size_t entry_size,
-					   unsigned int limit_percent);
-void auxtrace_cache__free(struct auxtrace_cache *auxtrace_cache);
-void *auxtrace_cache__alloc_entry(struct auxtrace_cache *c);
-void auxtrace_cache__free_entry(struct auxtrace_cache *c, void *entry);
-int auxtrace_cache__add(struct auxtrace_cache *c, u32 key,
-			struct auxtrace_cache_entry *entry);
-void auxtrace_cache__remove(struct auxtrace_cache *c, u32 key);
-void *auxtrace_cache__lookup(struct auxtrace_cache *c, u32 key);
+काष्ठा auxtrace_cache *auxtrace_cache__new(अचिन्हित पूर्णांक bits, माप_प्रकार entry_size,
+					   अचिन्हित पूर्णांक limit_percent);
+व्योम auxtrace_cache__मुक्त(काष्ठा auxtrace_cache *auxtrace_cache);
+व्योम *auxtrace_cache__alloc_entry(काष्ठा auxtrace_cache *c);
+व्योम auxtrace_cache__मुक्त_entry(काष्ठा auxtrace_cache *c, व्योम *entry);
+पूर्णांक auxtrace_cache__add(काष्ठा auxtrace_cache *c, u32 key,
+			काष्ठा auxtrace_cache_entry *entry);
+व्योम auxtrace_cache__हटाओ(काष्ठा auxtrace_cache *c, u32 key);
+व्योम *auxtrace_cache__lookup(काष्ठा auxtrace_cache *c, u32 key);
 
-struct auxtrace_record *auxtrace_record__init(struct evlist *evlist,
-					      int *err);
+काष्ठा auxtrace_record *auxtrace_record__init(काष्ठा evlist *evlist,
+					      पूर्णांक *err);
 
-int auxtrace_parse_snapshot_options(struct auxtrace_record *itr,
-				    struct record_opts *opts,
-				    const char *str);
-int auxtrace_parse_sample_options(struct auxtrace_record *itr,
-				  struct evlist *evlist,
-				  struct record_opts *opts, const char *str);
-void auxtrace_regroup_aux_output(struct evlist *evlist);
-int auxtrace_record__options(struct auxtrace_record *itr,
-			     struct evlist *evlist,
-			     struct record_opts *opts);
-size_t auxtrace_record__info_priv_size(struct auxtrace_record *itr,
-				       struct evlist *evlist);
-int auxtrace_record__info_fill(struct auxtrace_record *itr,
-			       struct perf_session *session,
-			       struct perf_record_auxtrace_info *auxtrace_info,
-			       size_t priv_size);
-void auxtrace_record__free(struct auxtrace_record *itr);
-int auxtrace_record__snapshot_start(struct auxtrace_record *itr);
-int auxtrace_record__snapshot_finish(struct auxtrace_record *itr, bool on_exit);
-int auxtrace_record__find_snapshot(struct auxtrace_record *itr, int idx,
-				   struct auxtrace_mmap *mm,
-				   unsigned char *data, u64 *head, u64 *old);
-u64 auxtrace_record__reference(struct auxtrace_record *itr);
-int auxtrace_record__read_finish(struct auxtrace_record *itr, int idx);
+पूर्णांक auxtrace_parse_snapshot_options(काष्ठा auxtrace_record *itr,
+				    काष्ठा record_opts *opts,
+				    स्थिर अक्षर *str);
+पूर्णांक auxtrace_parse_sample_options(काष्ठा auxtrace_record *itr,
+				  काष्ठा evlist *evlist,
+				  काष्ठा record_opts *opts, स्थिर अक्षर *str);
+व्योम auxtrace_regroup_aux_output(काष्ठा evlist *evlist);
+पूर्णांक auxtrace_record__options(काष्ठा auxtrace_record *itr,
+			     काष्ठा evlist *evlist,
+			     काष्ठा record_opts *opts);
+माप_प्रकार auxtrace_record__info_priv_size(काष्ठा auxtrace_record *itr,
+				       काष्ठा evlist *evlist);
+पूर्णांक auxtrace_record__info_fill(काष्ठा auxtrace_record *itr,
+			       काष्ठा perf_session *session,
+			       काष्ठा perf_record_auxtrace_info *auxtrace_info,
+			       माप_प्रकार priv_size);
+व्योम auxtrace_record__मुक्त(काष्ठा auxtrace_record *itr);
+पूर्णांक auxtrace_record__snapshot_start(काष्ठा auxtrace_record *itr);
+पूर्णांक auxtrace_record__snapshot_finish(काष्ठा auxtrace_record *itr, bool on_निकास);
+पूर्णांक auxtrace_record__find_snapshot(काष्ठा auxtrace_record *itr, पूर्णांक idx,
+				   काष्ठा auxtrace_mmap *mm,
+				   अचिन्हित अक्षर *data, u64 *head, u64 *old);
+u64 auxtrace_record__reference(काष्ठा auxtrace_record *itr);
+पूर्णांक auxtrace_record__पढ़ो_finish(काष्ठा auxtrace_record *itr, पूर्णांक idx);
 
-int auxtrace_index__auxtrace_event(struct list_head *head, union perf_event *event,
+पूर्णांक auxtrace_index__auxtrace_event(काष्ठा list_head *head, जोड़ perf_event *event,
 				   off_t file_offset);
-int auxtrace_index__write(int fd, struct list_head *head);
-int auxtrace_index__process(int fd, u64 size, struct perf_session *session,
+पूर्णांक auxtrace_index__ग_लिखो(पूर्णांक fd, काष्ठा list_head *head);
+पूर्णांक auxtrace_index__process(पूर्णांक fd, u64 size, काष्ठा perf_session *session,
 			    bool needs_swap);
-void auxtrace_index__free(struct list_head *head);
+व्योम auxtrace_index__मुक्त(काष्ठा list_head *head);
 
-void auxtrace_synth_error(struct perf_record_auxtrace_error *auxtrace_error, int type,
-			  int code, int cpu, pid_t pid, pid_t tid, u64 ip,
-			  const char *msg, u64 timestamp);
+व्योम auxtrace_synth_error(काष्ठा perf_record_auxtrace_error *auxtrace_error, पूर्णांक type,
+			  पूर्णांक code, पूर्णांक cpu, pid_t pid, pid_t tid, u64 ip,
+			  स्थिर अक्षर *msg, u64 बारtamp);
 
-int perf_event__process_auxtrace_info(struct perf_session *session,
-				      union perf_event *event);
-s64 perf_event__process_auxtrace(struct perf_session *session,
-				 union perf_event *event);
-int perf_event__process_auxtrace_error(struct perf_session *session,
-				       union perf_event *event);
-int itrace_parse_synth_opts(const struct option *opt, const char *str,
-			    int unset);
-void itrace_synth_opts__set_default(struct itrace_synth_opts *synth_opts,
+पूर्णांक perf_event__process_auxtrace_info(काष्ठा perf_session *session,
+				      जोड़ perf_event *event);
+s64 perf_event__process_auxtrace(काष्ठा perf_session *session,
+				 जोड़ perf_event *event);
+पूर्णांक perf_event__process_auxtrace_error(काष्ठा perf_session *session,
+				       जोड़ perf_event *event);
+पूर्णांक itrace_parse_synth_opts(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
+			    पूर्णांक unset);
+व्योम itrace_synth_opts__set_शेष(काष्ठा itrace_synth_opts *synth_opts,
 				    bool no_sample);
 
-size_t perf_event__fprintf_auxtrace_error(union perf_event *event, FILE *fp);
-void perf_session__auxtrace_error_inc(struct perf_session *session,
-				      union perf_event *event);
-void events_stats__auxtrace_error_warn(const struct events_stats *stats);
+माप_प्रकार perf_event__ख_लिखो_auxtrace_error(जोड़ perf_event *event, खाता *fp);
+व्योम perf_session__auxtrace_error_inc(काष्ठा perf_session *session,
+				      जोड़ perf_event *event);
+व्योम events_stats__auxtrace_error_warn(स्थिर काष्ठा events_stats *stats);
 
-void addr_filters__init(struct addr_filters *filts);
-void addr_filters__exit(struct addr_filters *filts);
-int addr_filters__parse_bare_filter(struct addr_filters *filts,
-				    const char *filter);
-int auxtrace_parse_filters(struct evlist *evlist);
+व्योम addr_filters__init(काष्ठा addr_filters *filts);
+व्योम addr_filters__निकास(काष्ठा addr_filters *filts);
+पूर्णांक addr_filters__parse_bare_filter(काष्ठा addr_filters *filts,
+				    स्थिर अक्षर *filter);
+पूर्णांक auxtrace_parse_filters(काष्ठा evlist *evlist);
 
-int auxtrace__process_event(struct perf_session *session, union perf_event *event,
-			    struct perf_sample *sample, struct perf_tool *tool);
-void auxtrace__dump_auxtrace_sample(struct perf_session *session,
-				    struct perf_sample *sample);
-int auxtrace__flush_events(struct perf_session *session, struct perf_tool *tool);
-void auxtrace__free_events(struct perf_session *session);
-void auxtrace__free(struct perf_session *session);
-bool auxtrace__evsel_is_auxtrace(struct perf_session *session,
-				 struct evsel *evsel);
+पूर्णांक auxtrace__process_event(काष्ठा perf_session *session, जोड़ perf_event *event,
+			    काष्ठा perf_sample *sample, काष्ठा perf_tool *tool);
+व्योम auxtrace__dump_auxtrace_sample(काष्ठा perf_session *session,
+				    काष्ठा perf_sample *sample);
+पूर्णांक auxtrace__flush_events(काष्ठा perf_session *session, काष्ठा perf_tool *tool);
+व्योम auxtrace__मुक्त_events(काष्ठा perf_session *session);
+व्योम auxtrace__मुक्त(काष्ठा perf_session *session);
+bool auxtrace__evsel_is_auxtrace(काष्ठा perf_session *session,
+				 काष्ठा evsel *evsel);
 
-#define ITRACE_HELP \
+#घोषणा ITRACE_HELP \
 "				i[period]:    		synthesize instructions events\n" \
 "				b:	    		synthesize branches events (branch misses for Arm SPE)\n" \
 "				c:	    		synthesize branches events (calls only)\n"	\
@@ -651,201 +652,201 @@ bool auxtrace__evsel_is_auxtrace(struct perf_session *session,
 "				PERIOD[ns|us|ms|i|t]:   specify period to sample stream\n" \
 "				concatenate multiple options. Default is ibxwpe or cewp\n"
 
-static inline
-void itrace_synth_opts__set_time_range(struct itrace_synth_opts *opts,
-				       struct perf_time_interval *ptime_range,
-				       int range_num)
-{
-	opts->ptime_range = ptime_range;
+अटल अंतरभूत
+व्योम itrace_synth_opts__set_समय_range(काष्ठा itrace_synth_opts *opts,
+				       काष्ठा perf_समय_पूर्णांकerval *pसमय_range,
+				       पूर्णांक range_num)
+अणु
+	opts->pसमय_range = pसमय_range;
 	opts->range_num = range_num;
-}
+पूर्ण
 
-static inline
-void itrace_synth_opts__clear_time_range(struct itrace_synth_opts *opts)
-{
-	opts->ptime_range = NULL;
+अटल अंतरभूत
+व्योम itrace_synth_opts__clear_समय_range(काष्ठा itrace_synth_opts *opts)
+अणु
+	opts->pसमय_range = शून्य;
 	opts->range_num = 0;
-}
+पूर्ण
 
-#else
-#include "debug.h"
+#अन्यथा
+#समावेश "debug.h"
 
-static inline struct auxtrace_record *
-auxtrace_record__init(struct evlist *evlist __maybe_unused,
-		      int *err)
-{
+अटल अंतरभूत काष्ठा auxtrace_record *
+auxtrace_record__init(काष्ठा evlist *evlist __maybe_unused,
+		      पूर्णांक *err)
+अणु
 	*err = 0;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline
-void auxtrace_record__free(struct auxtrace_record *itr __maybe_unused)
-{
-}
+अटल अंतरभूत
+व्योम auxtrace_record__मुक्त(काष्ठा auxtrace_record *itr __maybe_unused)
+अणु
+पूर्ण
 
-static inline
-int auxtrace_record__options(struct auxtrace_record *itr __maybe_unused,
-			     struct evlist *evlist __maybe_unused,
-			     struct record_opts *opts __maybe_unused)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक auxtrace_record__options(काष्ठा auxtrace_record *itr __maybe_unused,
+			     काष्ठा evlist *evlist __maybe_unused,
+			     काष्ठा record_opts *opts __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-#define perf_event__process_auxtrace_info		0
-#define perf_event__process_auxtrace			0
-#define perf_event__process_auxtrace_error		0
+#घोषणा perf_event__process_auxtrace_info		0
+#घोषणा perf_event__process_auxtrace			0
+#घोषणा perf_event__process_auxtrace_error		0
 
-static inline
-void perf_session__auxtrace_error_inc(struct perf_session *session
+अटल अंतरभूत
+व्योम perf_session__auxtrace_error_inc(काष्ठा perf_session *session
 				      __maybe_unused,
-				      union perf_event *event
+				      जोड़ perf_event *event
 				      __maybe_unused)
-{
-}
+अणु
+पूर्ण
 
-static inline
-void events_stats__auxtrace_error_warn(const struct events_stats *stats
+अटल अंतरभूत
+व्योम events_stats__auxtrace_error_warn(स्थिर काष्ठा events_stats *stats
 				       __maybe_unused)
-{
-}
+अणु
+पूर्ण
 
-static inline
-int itrace_parse_synth_opts(const struct option *opt __maybe_unused,
-			    const char *str __maybe_unused,
-			    int unset __maybe_unused)
-{
+अटल अंतरभूत
+पूर्णांक itrace_parse_synth_opts(स्थिर काष्ठा option *opt __maybe_unused,
+			    स्थिर अक्षर *str __maybe_unused,
+			    पूर्णांक unset __maybe_unused)
+अणु
 	pr_err("AUX area tracing not supported\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static inline
-int auxtrace_parse_snapshot_options(struct auxtrace_record *itr __maybe_unused,
-				    struct record_opts *opts __maybe_unused,
-				    const char *str)
-{
-	if (!str)
-		return 0;
+अटल अंतरभूत
+पूर्णांक auxtrace_parse_snapshot_options(काष्ठा auxtrace_record *itr __maybe_unused,
+				    काष्ठा record_opts *opts __maybe_unused,
+				    स्थिर अक्षर *str)
+अणु
+	अगर (!str)
+		वापस 0;
 	pr_err("AUX area tracing not supported\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static inline
-int auxtrace_parse_sample_options(struct auxtrace_record *itr __maybe_unused,
-				  struct evlist *evlist __maybe_unused,
-				  struct record_opts *opts __maybe_unused,
-				  const char *str)
-{
-	if (!str)
-		return 0;
+अटल अंतरभूत
+पूर्णांक auxtrace_parse_sample_options(काष्ठा auxtrace_record *itr __maybe_unused,
+				  काष्ठा evlist *evlist __maybe_unused,
+				  काष्ठा record_opts *opts __maybe_unused,
+				  स्थिर अक्षर *str)
+अणु
+	अगर (!str)
+		वापस 0;
 	pr_err("AUX area tracing not supported\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static inline
-void auxtrace_regroup_aux_output(struct evlist *evlist __maybe_unused)
-{
-}
+अटल अंतरभूत
+व्योम auxtrace_regroup_aux_output(काष्ठा evlist *evlist __maybe_unused)
+अणु
+पूर्ण
 
-static inline
-int auxtrace__process_event(struct perf_session *session __maybe_unused,
-			    union perf_event *event __maybe_unused,
-			    struct perf_sample *sample __maybe_unused,
-			    struct perf_tool *tool __maybe_unused)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक auxtrace__process_event(काष्ठा perf_session *session __maybe_unused,
+			    जोड़ perf_event *event __maybe_unused,
+			    काष्ठा perf_sample *sample __maybe_unused,
+			    काष्ठा perf_tool *tool __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-void auxtrace__dump_auxtrace_sample(struct perf_session *session __maybe_unused,
-				    struct perf_sample *sample __maybe_unused)
-{
-}
+अटल अंतरभूत
+व्योम auxtrace__dump_auxtrace_sample(काष्ठा perf_session *session __maybe_unused,
+				    काष्ठा perf_sample *sample __maybe_unused)
+अणु
+पूर्ण
 
-static inline
-int auxtrace__flush_events(struct perf_session *session __maybe_unused,
-			   struct perf_tool *tool __maybe_unused)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक auxtrace__flush_events(काष्ठा perf_session *session __maybe_unused,
+			   काष्ठा perf_tool *tool __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-void auxtrace__free_events(struct perf_session *session __maybe_unused)
-{
-}
+अटल अंतरभूत
+व्योम auxtrace__मुक्त_events(काष्ठा perf_session *session __maybe_unused)
+अणु
+पूर्ण
 
-static inline
-void auxtrace_cache__free(struct auxtrace_cache *auxtrace_cache __maybe_unused)
-{
-}
+अटल अंतरभूत
+व्योम auxtrace_cache__मुक्त(काष्ठा auxtrace_cache *auxtrace_cache __maybe_unused)
+अणु
+पूर्ण
 
-static inline
-void auxtrace__free(struct perf_session *session __maybe_unused)
-{
-}
+अटल अंतरभूत
+व्योम auxtrace__मुक्त(काष्ठा perf_session *session __maybe_unused)
+अणु
+पूर्ण
 
-static inline
-int auxtrace_index__write(int fd __maybe_unused,
-			  struct list_head *head __maybe_unused)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत
+पूर्णांक auxtrace_index__ग_लिखो(पूर्णांक fd __maybe_unused,
+			  काष्ठा list_head *head __maybe_unused)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline
-int auxtrace_index__process(int fd __maybe_unused,
+अटल अंतरभूत
+पूर्णांक auxtrace_index__process(पूर्णांक fd __maybe_unused,
 			    u64 size __maybe_unused,
-			    struct perf_session *session __maybe_unused,
+			    काष्ठा perf_session *session __maybe_unused,
 			    bool needs_swap __maybe_unused)
-{
-	return -EINVAL;
-}
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline
-void auxtrace_index__free(struct list_head *head __maybe_unused)
-{
-}
+अटल अंतरभूत
+व्योम auxtrace_index__मुक्त(काष्ठा list_head *head __maybe_unused)
+अणु
+पूर्ण
 
-static inline
-bool auxtrace__evsel_is_auxtrace(struct perf_session *session __maybe_unused,
-				 struct evsel *evsel __maybe_unused)
-{
-	return false;
-}
+अटल अंतरभूत
+bool auxtrace__evsel_is_auxtrace(काष्ठा perf_session *session __maybe_unused,
+				 काष्ठा evsel *evsel __maybe_unused)
+अणु
+	वापस false;
+पूर्ण
 
-static inline
-int auxtrace_parse_filters(struct evlist *evlist __maybe_unused)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक auxtrace_parse_filters(काष्ठा evlist *evlist __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-int auxtrace_mmap__mmap(struct auxtrace_mmap *mm,
-			struct auxtrace_mmap_params *mp,
-			void *userpg, int fd);
-void auxtrace_mmap__munmap(struct auxtrace_mmap *mm);
-void auxtrace_mmap_params__init(struct auxtrace_mmap_params *mp,
+पूर्णांक auxtrace_mmap__mmap(काष्ठा auxtrace_mmap *mm,
+			काष्ठा auxtrace_mmap_params *mp,
+			व्योम *userpg, पूर्णांक fd);
+व्योम auxtrace_mmap__munmap(काष्ठा auxtrace_mmap *mm);
+व्योम auxtrace_mmap_params__init(काष्ठा auxtrace_mmap_params *mp,
 				off_t auxtrace_offset,
-				unsigned int auxtrace_pages,
-				bool auxtrace_overwrite);
-void auxtrace_mmap_params__set_idx(struct auxtrace_mmap_params *mp,
-				   struct evlist *evlist, int idx,
+				अचिन्हित पूर्णांक auxtrace_pages,
+				bool auxtrace_overग_लिखो);
+व्योम auxtrace_mmap_params__set_idx(काष्ठा auxtrace_mmap_params *mp,
+				   काष्ठा evlist *evlist, पूर्णांक idx,
 				   bool per_cpu);
 
-#define ITRACE_HELP ""
+#घोषणा ITRACE_HELP ""
 
-static inline
-void itrace_synth_opts__set_time_range(struct itrace_synth_opts *opts
+अटल अंतरभूत
+व्योम itrace_synth_opts__set_समय_range(काष्ठा itrace_synth_opts *opts
 				       __maybe_unused,
-				       struct perf_time_interval *ptime_range
+				       काष्ठा perf_समय_पूर्णांकerval *pसमय_range
 				       __maybe_unused,
-				       int range_num __maybe_unused)
-{
-}
+				       पूर्णांक range_num __maybe_unused)
+अणु
+पूर्ण
 
-static inline
-void itrace_synth_opts__clear_time_range(struct itrace_synth_opts *opts
+अटल अंतरभूत
+व्योम itrace_synth_opts__clear_समय_range(काष्ठा itrace_synth_opts *opts
 					 __maybe_unused)
-{
-}
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

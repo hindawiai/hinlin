@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
 /*
  * netup-eeprom.c
@@ -10,84 +11,84 @@
  */
 
 #
-#include "cx23885.h"
-#include "netup-eeprom.h"
+#समावेश "cx23885.h"
+#समावेश "netup-eeprom.h"
 
-#define EEPROM_I2C_ADDR 0x50
+#घोषणा EEPROM_I2C_ADDR 0x50
 
-int netup_eeprom_read(struct i2c_adapter *i2c_adap, u8 addr)
-{
-	int ret;
-	unsigned char buf[2];
+पूर्णांक netup_eeprom_पढ़ो(काष्ठा i2c_adapter *i2c_adap, u8 addr)
+अणु
+	पूर्णांक ret;
+	अचिन्हित अक्षर buf[2];
 
 	/* Read from EEPROM */
-	struct i2c_msg msg[] = {
-		{
+	काष्ठा i2c_msg msg[] = अणु
+		अणु
 			.addr	= EEPROM_I2C_ADDR,
 			.flags	= 0,
 			.buf	= &buf[0],
 			.len	= 1
-		}, {
+		पूर्ण, अणु
 			.addr	= EEPROM_I2C_ADDR,
 			.flags	= I2C_M_RD,
 			.buf	= &buf[1],
 			.len	= 1
-		}
+		पूर्ण
 
-	};
+	पूर्ण;
 
 	buf[0] = addr;
 	buf[1] = 0x0;
 
 	ret = i2c_transfer(i2c_adap, msg, 2);
 
-	if (ret != 2) {
+	अगर (ret != 2) अणु
 		pr_err("eeprom i2c read error, status=%d\n", ret);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return buf[1];
-};
+	वापस buf[1];
+पूर्ण;
 
-int netup_eeprom_write(struct i2c_adapter *i2c_adap, u8 addr, u8 data)
-{
-	int ret;
-	unsigned char bufw[2];
+पूर्णांक netup_eeprom_ग_लिखो(काष्ठा i2c_adapter *i2c_adap, u8 addr, u8 data)
+अणु
+	पूर्णांक ret;
+	अचिन्हित अक्षर bufw[2];
 
-	/* Write into EEPROM */
-	struct i2c_msg msg[] = {
-		{
+	/* Write पूर्णांकo EEPROM */
+	काष्ठा i2c_msg msg[] = अणु
+		अणु
 			.addr	= EEPROM_I2C_ADDR,
 			.flags	= 0,
 			.buf	= &bufw[0],
 			.len	= 2
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
 	bufw[0] = addr;
 	bufw[1] = data;
 
 	ret = i2c_transfer(i2c_adap, msg, 1);
 
-	if (ret != 1) {
+	अगर (ret != 1) अणु
 		pr_err("eeprom i2c write error, status=%d\n", ret);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	mdelay(10); /* prophylactic delay, datasheet write cycle time = 5 ms */
-	return 0;
-};
+	mdelay(10); /* prophylactic delay, datasheet ग_लिखो cycle समय = 5 ms */
+	वापस 0;
+पूर्ण;
 
-void netup_get_card_info(struct i2c_adapter *i2c_adap,
-				struct netup_card_info *cinfo)
-{
-	int i, j;
+व्योम netup_get_card_info(काष्ठा i2c_adapter *i2c_adap,
+				काष्ठा netup_card_info *cinfo)
+अणु
+	पूर्णांक i, j;
 
-	cinfo->rev =  netup_eeprom_read(i2c_adap, 63);
+	cinfo->rev =  netup_eeprom_पढ़ो(i2c_adap, 63);
 
-	for (i = 64, j = 0; i < 70; i++, j++)
-		cinfo->port[0].mac[j] =  netup_eeprom_read(i2c_adap, i);
+	क्रम (i = 64, j = 0; i < 70; i++, j++)
+		cinfo->port[0].mac[j] =  netup_eeprom_पढ़ो(i2c_adap, i);
 
-	for (i = 70, j = 0; i < 76; i++, j++)
-		cinfo->port[1].mac[j] =  netup_eeprom_read(i2c_adap, i);
-};
+	क्रम (i = 70, j = 0; i < 76; i++, j++)
+		cinfo->port[1].mac[j] =  netup_eeprom_पढ़ो(i2c_adap, i);
+पूर्ण;

@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * idprom.c: Routines to load the idprom into kernel addresses and
- *           interpret the data contained within.
+ * idprom.c: Routines to load the idprom पूर्णांकo kernel addresses and
+ *           पूर्णांकerpret the data contained within.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/etherdevice.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/etherdevice.h>
 
-#include <asm/oplib.h>
-#include <asm/idprom.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/idprom.h>
 
-struct idprom *idprom;
+काष्ठा idprom *idprom;
 EXPORT_SYMBOL(idprom);
 
-static struct idprom idprom_buffer;
+अटल काष्ठा idprom idprom_buffer;
 
-#ifdef CONFIG_SPARC32
-#include <asm/machines.h>  /* Fun with Sun released architectures. */
+#अगर_घोषित CONFIG_SPARC32
+#समावेश <यंत्र/machines.h>  /* Fun with Sun released architectures. */
 
 /* Here is the master table of Sun machines which use some implementation
  * of the Sparc CPU and have a meaningful IDPROM machtype value that we
- * know about.  See asm-sparc/machines.h for empirical constants.
+ * know about.  See यंत्र-sparc/machines.h क्रम empirical स्थिरants.
  */
-static struct Sun_Machine_Models Sun_Machines[] = {
+अटल काष्ठा Sun_Machine_Models Sun_Machines[] = अणु
 /* First, Leon */
-{ .name = "Leon3 System-on-a-Chip",  .id_machtype = (M_LEON | M_LEON3_SOC) },
+अणु .name = "Leon3 System-on-a-Chip",  .id_machtype = (M_LEON | M_LEON3_SOC) पूर्ण,
 /* Finally, early Sun4m's */
-{ .name = "Sun4m SparcSystem600",    .id_machtype = (SM_SUN4M | SM_4M_SS60) },
-{ .name = "Sun4m SparcStation10/20", .id_machtype = (SM_SUN4M | SM_4M_SS50) },
-{ .name = "Sun4m SparcStation5",     .id_machtype = (SM_SUN4M | SM_4M_SS40) },
-/* One entry for the OBP arch's which are sun4d, sun4e, and newer sun4m's */
-{ .name = "Sun4M OBP based system",  .id_machtype = (SM_SUN4M_OBP | 0x0) } };
+अणु .name = "Sun4m SparcSystem600",    .id_machtype = (SM_SUN4M | SM_4M_SS60) पूर्ण,
+अणु .name = "Sun4m SparcStation10/20", .id_machtype = (SM_SUN4M | SM_4M_SS50) पूर्ण,
+अणु .name = "Sun4m SparcStation5",     .id_machtype = (SM_SUN4M | SM_4M_SS40) पूर्ण,
+/* One entry क्रम the OBP arch's which are sun4d, sun4e, and newer sun4m's */
+अणु .name = "Sun4M OBP based system",  .id_machtype = (SM_SUN4M_OBP | 0x0) पूर्ण पूर्ण;
 
-static void __init display_system_type(unsigned char machtype)
-{
-	char sysname[128];
-	register int i;
+अटल व्योम __init display_प्रणाली_type(अचिन्हित अक्षर machtype)
+अणु
+	अक्षर sysname[128];
+	रेजिस्टर पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(Sun_Machines); i++) {
-		if (Sun_Machines[i].id_machtype == machtype) {
-			if (machtype != (SM_SUN4M_OBP | 0x00) ||
+	क्रम (i = 0; i < ARRAY_SIZE(Sun_Machines); i++) अणु
+		अगर (Sun_Machines[i].id_machtype == machtype) अणु
+			अगर (machtype != (SM_SUN4M_OBP | 0x00) ||
 			    prom_getproperty(prom_root_node, "banner-name",
-					     sysname, sizeof(sysname)) <= 0)
-				printk(KERN_WARNING "TYPE: %s\n",
+					     sysname, माप(sysname)) <= 0)
+				prपूर्णांकk(KERN_WARNING "TYPE: %s\n",
 				       Sun_Machines[i].name);
-			else
-				printk(KERN_WARNING "TYPE: %s\n", sysname);
-			return;
-		}
-	}
+			अन्यथा
+				prपूर्णांकk(KERN_WARNING "TYPE: %s\n", sysname);
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	prom_printf("IDPROM: Warning, bogus id_machtype value, 0x%x\n", machtype);
-}
-#else
-static void __init display_system_type(unsigned char machtype)
-{
-}
-#endif
+	prom_म_लिखो("IDPROM: Warning, bogus id_machtype value, 0x%x\n", machtype);
+पूर्ण
+#अन्यथा
+अटल व्योम __init display_प्रणाली_type(अचिन्हित अक्षर machtype)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-unsigned char *arch_get_platform_mac_address(void)
-{
-	return idprom->id_ethaddr;
-}
+अचिन्हित अक्षर *arch_get_platक्रमm_mac_address(व्योम)
+अणु
+	वापस idprom->id_ethaddr;
+पूर्ण
 
 /* Calculate the IDPROM checksum (xor of the data bytes). */
-static unsigned char __init calc_idprom_cksum(struct idprom *idprom)
-{
-	unsigned char cksum, i, *ptr = (unsigned char *)idprom;
+अटल अचिन्हित अक्षर __init calc_idprom_cksum(काष्ठा idprom *idprom)
+अणु
+	अचिन्हित अक्षर cksum, i, *ptr = (अचिन्हित अक्षर *)idprom;
 
-	for (i = cksum = 0; i <= 0x0E; i++)
+	क्रम (i = cksum = 0; i <= 0x0E; i++)
 		cksum ^= *ptr++;
 
-	return cksum;
-}
+	वापस cksum;
+पूर्ण
 
-/* Create a local IDPROM copy, verify integrity, and display information. */
-void __init idprom_init(void)
-{
-	prom_get_idprom((char *) &idprom_buffer, sizeof(idprom_buffer));
+/* Create a local IDPROM copy, verअगरy पूर्णांकegrity, and display inक्रमmation. */
+व्योम __init idprom_init(व्योम)
+अणु
+	prom_get_idprom((अक्षर *) &idprom_buffer, माप(idprom_buffer));
 
 	idprom = &idprom_buffer;
 
-	if (idprom->id_format != 0x01)
-		prom_printf("IDPROM: Warning, unknown format type!\n");
+	अगर (idprom->id_क्रमmat != 0x01)
+		prom_म_लिखो("IDPROM: Warning, unknown format type!\n");
 
-	if (idprom->id_cksum != calc_idprom_cksum(idprom))
-		prom_printf("IDPROM: Warning, checksum failure (nvram=%x, calc=%x)!\n",
+	अगर (idprom->id_cksum != calc_idprom_cksum(idprom))
+		prom_म_लिखो("IDPROM: Warning, checksum failure (nvram=%x, calc=%x)!\n",
 			    idprom->id_cksum, calc_idprom_cksum(idprom));
 
-	display_system_type(idprom->id_machtype);
+	display_प्रणाली_type(idprom->id_machtype);
 
-	printk(KERN_WARNING "Ethernet address: %pM\n", idprom->id_ethaddr);
-}
+	prपूर्णांकk(KERN_WARNING "Ethernet address: %pM\n", idprom->id_ethaddr);
+पूर्ण

@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * gpiolib support for Wolfson WM835x PMICs
+ * gpiolib support क्रम Wolfson WM835x PMICs
  *
  * Copyright 2009 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/gpio/driver.h>
-#include <linux/mfd/core.h>
-#include <linux/platform_device.h>
-#include <linux/seq_file.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/seq_file.h>
 
-#include <linux/mfd/wm8350/core.h>
-#include <linux/mfd/wm8350/gpio.h>
+#समावेश <linux/mfd/wm8350/core.h>
+#समावेश <linux/mfd/wm8350/gpपन.स>
 
-struct wm8350_gpio_data {
-	struct wm8350 *wm8350;
-	struct gpio_chip gpio_chip;
-};
+काष्ठा wm8350_gpio_data अणु
+	काष्ठा wm8350 *wm8350;
+	काष्ठा gpio_chip gpio_chip;
+पूर्ण;
 
-static int wm8350_gpio_direction_in(struct gpio_chip *chip, unsigned offset)
-{
-	struct wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
-	struct wm8350 *wm8350 = wm8350_gpio->wm8350;
+अटल पूर्णांक wm8350_gpio_direction_in(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
+	काष्ठा wm8350 *wm8350 = wm8350_gpio->wm8350;
 
-	return wm8350_set_bits(wm8350, WM8350_GPIO_CONFIGURATION_I_O,
+	वापस wm8350_set_bits(wm8350, WM8350_GPIO_CONFIGURATION_I_O,
 			       1 << offset);
-}
+पूर्ण
 
-static int wm8350_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
-	struct wm8350 *wm8350 = wm8350_gpio->wm8350;
-	int ret;
+अटल पूर्णांक wm8350_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
+	काष्ठा wm8350 *wm8350 = wm8350_gpio->wm8350;
+	पूर्णांक ret;
 
-	ret = wm8350_reg_read(wm8350, WM8350_GPIO_LEVEL);
-	if (ret < 0)
-		return ret;
+	ret = wm8350_reg_पढ़ो(wm8350, WM8350_GPIO_LEVEL);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret & (1 << offset))
-		return 1;
-	else
-		return 0;
-}
+	अगर (ret & (1 << offset))
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static void wm8350_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
-	struct wm8350 *wm8350 = wm8350_gpio->wm8350;
+अटल व्योम wm8350_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
+	काष्ठा wm8350 *wm8350 = wm8350_gpio->wm8350;
 
-	if (value)
+	अगर (value)
 		wm8350_set_bits(wm8350, WM8350_GPIO_LEVEL, 1 << offset);
-	else
+	अन्यथा
 		wm8350_clear_bits(wm8350, WM8350_GPIO_LEVEL, 1 << offset);
-}
+पूर्ण
 
-static int wm8350_gpio_direction_out(struct gpio_chip *chip,
-				     unsigned offset, int value)
-{
-	struct wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
-	struct wm8350 *wm8350 = wm8350_gpio->wm8350;
-	int ret;
+अटल पूर्णांक wm8350_gpio_direction_out(काष्ठा gpio_chip *chip,
+				     अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
+	काष्ठा wm8350 *wm8350 = wm8350_gpio->wm8350;
+	पूर्णांक ret;
 
 	ret = wm8350_clear_bits(wm8350, WM8350_GPIO_CONFIGURATION_I_O,
 				1 << offset);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Don't have an atomic direction/value setup */
 	wm8350_gpio_set(chip, offset, value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
-{
-	struct wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
-	struct wm8350 *wm8350 = wm8350_gpio->wm8350;
+अटल पूर्णांक wm8350_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा wm8350_gpio_data *wm8350_gpio = gpiochip_get_data(chip);
+	काष्ठा wm8350 *wm8350 = wm8350_gpio->wm8350;
 
-	if (!wm8350->irq_base)
-		return -EINVAL;
+	अगर (!wm8350->irq_base)
+		वापस -EINVAL;
 
-	return wm8350->irq_base + WM8350_IRQ_GPIO(offset);
-}
+	वापस wm8350->irq_base + WM8350_IRQ_GPIO(offset);
+पूर्ण
 
-static const struct gpio_chip template_chip = {
+अटल स्थिर काष्ठा gpio_chip ढाँचा_chip = अणु
 	.label			= "wm8350",
 	.owner			= THIS_MODULE,
 	.direction_input	= wm8350_gpio_direction_in,
@@ -98,57 +99,57 @@ static const struct gpio_chip template_chip = {
 	.set			= wm8350_gpio_set,
 	.to_irq			= wm8350_gpio_to_irq,
 	.can_sleep		= true,
-};
+पूर्ण;
 
-static int wm8350_gpio_probe(struct platform_device *pdev)
-{
-	struct wm8350 *wm8350 = dev_get_drvdata(pdev->dev.parent);
-	struct wm8350_platform_data *pdata = dev_get_platdata(wm8350->dev);
-	struct wm8350_gpio_data *wm8350_gpio;
-	int ret;
+अटल पूर्णांक wm8350_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm8350 *wm8350 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा wm8350_platक्रमm_data *pdata = dev_get_platdata(wm8350->dev);
+	काष्ठा wm8350_gpio_data *wm8350_gpio;
+	पूर्णांक ret;
 
-	wm8350_gpio = devm_kzalloc(&pdev->dev, sizeof(*wm8350_gpio),
+	wm8350_gpio = devm_kzalloc(&pdev->dev, माप(*wm8350_gpio),
 				   GFP_KERNEL);
-	if (wm8350_gpio == NULL)
-		return -ENOMEM;
+	अगर (wm8350_gpio == शून्य)
+		वापस -ENOMEM;
 
 	wm8350_gpio->wm8350 = wm8350;
-	wm8350_gpio->gpio_chip = template_chip;
+	wm8350_gpio->gpio_chip = ढाँचा_chip;
 	wm8350_gpio->gpio_chip.ngpio = 13;
 	wm8350_gpio->gpio_chip.parent = &pdev->dev;
-	if (pdata && pdata->gpio_base)
+	अगर (pdata && pdata->gpio_base)
 		wm8350_gpio->gpio_chip.base = pdata->gpio_base;
-	else
+	अन्यथा
 		wm8350_gpio->gpio_chip.base = -1;
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &wm8350_gpio->gpio_chip,
 				     wm8350_gpio);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Could not register gpiochip, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, wm8350_gpio);
+	platक्रमm_set_drvdata(pdev, wm8350_gpio);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver wm8350_gpio_driver = {
+अटल काष्ठा platक्रमm_driver wm8350_gpio_driver = अणु
 	.driver.name	= "wm8350-gpio",
 	.probe		= wm8350_gpio_probe,
-};
+पूर्ण;
 
-static int __init wm8350_gpio_init(void)
-{
-	return platform_driver_register(&wm8350_gpio_driver);
-}
+अटल पूर्णांक __init wm8350_gpio_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&wm8350_gpio_driver);
+पूर्ण
 subsys_initcall(wm8350_gpio_init);
 
-static void __exit wm8350_gpio_exit(void)
-{
-	platform_driver_unregister(&wm8350_gpio_driver);
-}
-module_exit(wm8350_gpio_exit);
+अटल व्योम __निकास wm8350_gpio_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&wm8350_gpio_driver);
+पूर्ण
+module_निकास(wm8350_gpio_निकास);
 
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("GPIO interface for WM8350 PMICs");

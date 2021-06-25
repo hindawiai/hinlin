@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  (C) 2004 Margit Schubert-While <margitsw@t-online.de>
  */
 
 /*
- *	Compatibility header file to aid support of different kernel versions
+ *	Compatibility header file to aid support of dअगरferent kernel versions
  */
 
-#ifdef PRISM54_COMPAT24
-#include "prismcompat24.h"
-#else	/* PRISM54_COMPAT24 */
+#अगर_घोषित PRISM54_COMPAT24
+#समावेश "prismcompat24.h"
+#अन्यथा	/* PRISM54_COMPAT24 */
 
-#ifndef _PRISM_COMPAT_H
-#define _PRISM_COMPAT_H
+#अगर_अघोषित _PRISM_COMPAT_H
+#घोषणा _PRISM_COMPAT_H
 
-#include <linux/device.h>
-#include <linux/firmware.h>
-#include <linux/moduleparam.h>
-#include <linux/workqueue.h>
-#include <linux/compiler.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/compiler.h>
 
-#ifndef __iomem
-#define __iomem
-#endif
+#अगर_अघोषित __iomem
+#घोषणा __iomem
+#पूर्ण_अगर
 
-#define PRISM_FW_PDEV		&priv->pdev->dev
+#घोषणा PRISM_FW_PDEV		&priv->pdev->dev
 
-#endif				/* _PRISM_COMPAT_H */
-#endif				/* PRISM54_COMPAT24 */
+#पूर्ण_अगर				/* _PRISM_COMPAT_H */
+#पूर्ण_अगर				/* PRISM54_COMPAT24 */

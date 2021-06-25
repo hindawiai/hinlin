@@ -1,714 +1,715 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include <linux/delay.h>
-#include <linux/dma-fence.h>
-#include <linux/dma-fence-chain.h>
-#include <linux/kernel.h>
-#include <linux/kthread.h>
-#include <linux/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/random.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-fence.h>
+#समावेश <linux/dma-fence-chain.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/अक्रमom.h>
 
-#include "selftest.h"
+#समावेश "selftest.h"
 
-#define CHAIN_SZ (4 << 10)
+#घोषणा CHAIN_SZ (4 << 10)
 
-static struct kmem_cache *slab_fences;
+अटल काष्ठा kmem_cache *slab_fences;
 
-static inline struct mock_fence {
-	struct dma_fence base;
+अटल अंतरभूत काष्ठा mock_fence अणु
+	काष्ठा dma_fence base;
 	spinlock_t lock;
-} *to_mock_fence(struct dma_fence *f) {
-	return container_of(f, struct mock_fence, base);
-}
+पूर्ण *to_mock_fence(काष्ठा dma_fence *f) अणु
+	वापस container_of(f, काष्ठा mock_fence, base);
+पूर्ण
 
-static const char *mock_name(struct dma_fence *f)
-{
-	return "mock";
-}
+अटल स्थिर अक्षर *mock_name(काष्ठा dma_fence *f)
+अणु
+	वापस "mock";
+पूर्ण
 
-static void mock_fence_release(struct dma_fence *f)
-{
-	kmem_cache_free(slab_fences, to_mock_fence(f));
-}
+अटल व्योम mock_fence_release(काष्ठा dma_fence *f)
+अणु
+	kmem_cache_मुक्त(slab_fences, to_mock_fence(f));
+पूर्ण
 
-static const struct dma_fence_ops mock_ops = {
+अटल स्थिर काष्ठा dma_fence_ops mock_ops = अणु
 	.get_driver_name = mock_name,
-	.get_timeline_name = mock_name,
+	.get_समयline_name = mock_name,
 	.release = mock_fence_release,
-};
+पूर्ण;
 
-static struct dma_fence *mock_fence(void)
-{
-	struct mock_fence *f;
+अटल काष्ठा dma_fence *mock_fence(व्योम)
+अणु
+	काष्ठा mock_fence *f;
 
 	f = kmem_cache_alloc(slab_fences, GFP_KERNEL);
-	if (!f)
-		return NULL;
+	अगर (!f)
+		वापस शून्य;
 
 	spin_lock_init(&f->lock);
 	dma_fence_init(&f->base, &mock_ops, &f->lock, 0, 0);
 
-	return &f->base;
-}
+	वापस &f->base;
+पूर्ण
 
-static inline struct mock_chain {
-	struct dma_fence_chain base;
-} *to_mock_chain(struct dma_fence *f) {
-	return container_of(f, struct mock_chain, base.base);
-}
+अटल अंतरभूत काष्ठा mock_chain अणु
+	काष्ठा dma_fence_chain base;
+पूर्ण *to_mock_chain(काष्ठा dma_fence *f) अणु
+	वापस container_of(f, काष्ठा mock_chain, base.base);
+पूर्ण
 
-static struct dma_fence *mock_chain(struct dma_fence *prev,
-				    struct dma_fence *fence,
+अटल काष्ठा dma_fence *mock_chain(काष्ठा dma_fence *prev,
+				    काष्ठा dma_fence *fence,
 				    u64 seqno)
-{
-	struct mock_chain *f;
+अणु
+	काष्ठा mock_chain *f;
 
-	f = kmalloc(sizeof(*f), GFP_KERNEL);
-	if (!f)
-		return NULL;
+	f = kदो_स्मृति(माप(*f), GFP_KERNEL);
+	अगर (!f)
+		वापस शून्य;
 
 	dma_fence_chain_init(&f->base,
 			     dma_fence_get(prev),
 			     dma_fence_get(fence),
 			     seqno);
 
-	return &f->base.base;
-}
+	वापस &f->base.base;
+पूर्ण
 
-static int sanitycheck(void *arg)
-{
-	struct dma_fence *f, *chain;
-	int err = 0;
+अटल पूर्णांक sanitycheck(व्योम *arg)
+अणु
+	काष्ठा dma_fence *f, *chain;
+	पूर्णांक err = 0;
 
 	f = mock_fence();
-	if (!f)
-		return -ENOMEM;
+	अगर (!f)
+		वापस -ENOMEM;
 
-	chain = mock_chain(NULL, f, 1);
-	if (!chain)
+	chain = mock_chain(शून्य, f, 1);
+	अगर (!chain)
 		err = -ENOMEM;
 
-	dma_fence_signal(f);
+	dma_fence_संकेत(f);
 	dma_fence_put(f);
 
 	dma_fence_put(chain);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct fence_chains {
-	unsigned int chain_length;
-	struct dma_fence **fences;
-	struct dma_fence **chains;
+काष्ठा fence_chains अणु
+	अचिन्हित पूर्णांक chain_length;
+	काष्ठा dma_fence **fences;
+	काष्ठा dma_fence **chains;
 
-	struct dma_fence *tail;
-};
+	काष्ठा dma_fence *tail;
+पूर्ण;
 
-static uint64_t seqno_inc(unsigned int i)
-{
-	return i + 1;
-}
+अटल uपूर्णांक64_t seqno_inc(अचिन्हित पूर्णांक i)
+अणु
+	वापस i + 1;
+पूर्ण
 
-static int fence_chains_init(struct fence_chains *fc, unsigned int count,
-			     uint64_t (*seqno_fn)(unsigned int))
-{
-	unsigned int i;
-	int err = 0;
+अटल पूर्णांक fence_chains_init(काष्ठा fence_chains *fc, अचिन्हित पूर्णांक count,
+			     uपूर्णांक64_t (*seqno_fn)(अचिन्हित पूर्णांक))
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err = 0;
 
-	fc->chains = kvmalloc_array(count, sizeof(*fc->chains),
+	fc->chains = kvदो_स्मृति_array(count, माप(*fc->chains),
 				    GFP_KERNEL | __GFP_ZERO);
-	if (!fc->chains)
-		return -ENOMEM;
+	अगर (!fc->chains)
+		वापस -ENOMEM;
 
-	fc->fences = kvmalloc_array(count, sizeof(*fc->fences),
+	fc->fences = kvदो_स्मृति_array(count, माप(*fc->fences),
 				    GFP_KERNEL | __GFP_ZERO);
-	if (!fc->fences) {
+	अगर (!fc->fences) अणु
 		err = -ENOMEM;
-		goto err_chains;
-	}
+		जाओ err_chains;
+	पूर्ण
 
-	fc->tail = NULL;
-	for (i = 0; i < count; i++) {
+	fc->tail = शून्य;
+	क्रम (i = 0; i < count; i++) अणु
 		fc->fences[i] = mock_fence();
-		if (!fc->fences[i]) {
+		अगर (!fc->fences[i]) अणु
 			err = -ENOMEM;
-			goto unwind;
-		}
+			जाओ unwind;
+		पूर्ण
 
 		fc->chains[i] = mock_chain(fc->tail,
 					   fc->fences[i],
 					   seqno_fn(i));
-		if (!fc->chains[i]) {
+		अगर (!fc->chains[i]) अणु
 			err = -ENOMEM;
-			goto unwind;
-		}
+			जाओ unwind;
+		पूर्ण
 
 		fc->tail = fc->chains[i];
-	}
+	पूर्ण
 
 	fc->chain_length = i;
-	return 0;
+	वापस 0;
 
 unwind:
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		dma_fence_put(fc->fences[i]);
 		dma_fence_put(fc->chains[i]);
-	}
-	kvfree(fc->fences);
+	पूर्ण
+	kvमुक्त(fc->fences);
 err_chains:
-	kvfree(fc->chains);
-	return err;
-}
+	kvमुक्त(fc->chains);
+	वापस err;
+पूर्ण
 
-static void fence_chains_fini(struct fence_chains *fc)
-{
-	unsigned int i;
+अटल व्योम fence_chains_fini(काष्ठा fence_chains *fc)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < fc->chain_length; i++) {
-		dma_fence_signal(fc->fences[i]);
+	क्रम (i = 0; i < fc->chain_length; i++) अणु
+		dma_fence_संकेत(fc->fences[i]);
 		dma_fence_put(fc->fences[i]);
-	}
-	kvfree(fc->fences);
+	पूर्ण
+	kvमुक्त(fc->fences);
 
-	for (i = 0; i < fc->chain_length; i++)
+	क्रम (i = 0; i < fc->chain_length; i++)
 		dma_fence_put(fc->chains[i]);
-	kvfree(fc->chains);
-}
+	kvमुक्त(fc->chains);
+पूर्ण
 
-static int find_seqno(void *arg)
-{
-	struct fence_chains fc;
-	struct dma_fence *fence;
-	int err;
-	int i;
+अटल पूर्णांक find_seqno(व्योम *arg)
+अणु
+	काष्ठा fence_chains fc;
+	काष्ठा dma_fence *fence;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = fence_chains_init(&fc, 64, seqno_inc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	fence = dma_fence_get(fc.tail);
 	err = dma_fence_chain_find_seqno(&fence, 0);
 	dma_fence_put(fence);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Reported %d for find_seqno(0)!\n", err);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	for (i = 0; i < fc.chain_length; i++) {
+	क्रम (i = 0; i < fc.chain_length; i++) अणु
 		fence = dma_fence_get(fc.tail);
 		err = dma_fence_chain_find_seqno(&fence, i + 1);
 		dma_fence_put(fence);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Reported %d for find_seqno(%d:%d)!\n",
 			       err, fc.chain_length + 1, i + 1);
-			goto err;
-		}
-		if (fence != fc.chains[i]) {
+			जाओ err;
+		पूर्ण
+		अगर (fence != fc.chains[i]) अणु
 			pr_err("Incorrect fence reported by find_seqno(%d:%d)\n",
 			       fc.chain_length + 1, i + 1);
 			err = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		dma_fence_get(fence);
 		err = dma_fence_chain_find_seqno(&fence, i + 1);
 		dma_fence_put(fence);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Error reported for finding self\n");
-			goto err;
-		}
-		if (fence != fc.chains[i]) {
+			जाओ err;
+		पूर्ण
+		अगर (fence != fc.chains[i]) अणु
 			pr_err("Incorrect fence reported by find self\n");
 			err = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		dma_fence_get(fence);
 		err = dma_fence_chain_find_seqno(&fence, i + 2);
 		dma_fence_put(fence);
-		if (!err) {
+		अगर (!err) अणु
 			pr_err("Error not reported for future fence: find_seqno(%d:%d)!\n",
 			       i + 1, i + 2);
 			err = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		dma_fence_get(fence);
 		err = dma_fence_chain_find_seqno(&fence, i);
 		dma_fence_put(fence);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Error reported for previous fence!\n");
-			goto err;
-		}
-		if (i > 0 && fence != fc.chains[i - 1]) {
+			जाओ err;
+		पूर्ण
+		अगर (i > 0 && fence != fc.chains[i - 1]) अणु
 			pr_err("Incorrect fence reported by find_seqno(%d:%d)\n",
 			       i + 1, i);
 			err = -EINVAL;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 err:
 	fence_chains_fini(&fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int find_signaled(void *arg)
-{
-	struct fence_chains fc;
-	struct dma_fence *fence;
-	int err;
+अटल पूर्णांक find_संकेतed(व्योम *arg)
+अणु
+	काष्ठा fence_chains fc;
+	काष्ठा dma_fence *fence;
+	पूर्णांक err;
 
 	err = fence_chains_init(&fc, 2, seqno_inc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	dma_fence_signal(fc.fences[0]);
+	dma_fence_संकेत(fc.fences[0]);
 
 	fence = dma_fence_get(fc.tail);
 	err = dma_fence_chain_find_seqno(&fence, 1);
 	dma_fence_put(fence);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Reported %d for find_seqno()!\n", err);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (fence && fence != fc.chains[0]) {
+	अगर (fence && fence != fc.chains[0]) अणु
 		pr_err("Incorrect chain-fence.seqno:%lld reported for completed seqno:1\n",
 		       fence->seqno);
 
 		dma_fence_get(fence);
 		err = dma_fence_chain_find_seqno(&fence, 1);
 		dma_fence_put(fence);
-		if (err)
+		अगर (err)
 			pr_err("Reported %d for finding self!\n", err);
 
 		err = -EINVAL;
-	}
+	पूर्ण
 
 err:
 	fence_chains_fini(&fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int find_out_of_order(void *arg)
-{
-	struct fence_chains fc;
-	struct dma_fence *fence;
-	int err;
+अटल पूर्णांक find_out_of_order(व्योम *arg)
+अणु
+	काष्ठा fence_chains fc;
+	काष्ठा dma_fence *fence;
+	पूर्णांक err;
 
 	err = fence_chains_init(&fc, 3, seqno_inc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	dma_fence_signal(fc.fences[1]);
+	dma_fence_संकेत(fc.fences[1]);
 
 	fence = dma_fence_get(fc.tail);
 	err = dma_fence_chain_find_seqno(&fence, 2);
 	dma_fence_put(fence);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Reported %d for find_seqno()!\n", err);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
-	 * We signaled the middle fence (2) of the 1-2-3 chain. The behavior
-	 * of the dma-fence-chain is to make us wait for all the fences up to
-	 * the point we want. Since fence 1 is still not signaled, this what
-	 * we should get as fence to wait upon (fence 2 being garbage
+	 * We संकेतed the middle fence (2) of the 1-2-3 chain. The behavior
+	 * of the dma-fence-chain is to make us रुको क्रम all the fences up to
+	 * the poपूर्णांक we want. Since fence 1 is still not संकेतed, this what
+	 * we should get as fence to रुको upon (fence 2 being garbage
 	 * collected during the traversal of the chain).
 	 */
-	if (fence != fc.chains[0]) {
+	अगर (fence != fc.chains[0]) अणु
 		pr_err("Incorrect chain-fence.seqno:%lld reported for completed seqno:2\n",
 		       fence ? fence->seqno : 0);
 
 		err = -EINVAL;
-	}
+	पूर्ण
 
 err:
 	fence_chains_fini(&fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static uint64_t seqno_inc2(unsigned int i)
-{
-	return 2 * i + 2;
-}
+अटल uपूर्णांक64_t seqno_inc2(अचिन्हित पूर्णांक i)
+अणु
+	वापस 2 * i + 2;
+पूर्ण
 
-static int find_gap(void *arg)
-{
-	struct fence_chains fc;
-	struct dma_fence *fence;
-	int err;
-	int i;
+अटल पूर्णांक find_gap(व्योम *arg)
+अणु
+	काष्ठा fence_chains fc;
+	काष्ठा dma_fence *fence;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = fence_chains_init(&fc, 64, seqno_inc2);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < fc.chain_length; i++) {
+	क्रम (i = 0; i < fc.chain_length; i++) अणु
 		fence = dma_fence_get(fc.tail);
 		err = dma_fence_chain_find_seqno(&fence, 2 * i + 1);
 		dma_fence_put(fence);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Reported %d for find_seqno(%d:%d)!\n",
 			       err, fc.chain_length + 1, 2 * i + 1);
-			goto err;
-		}
-		if (fence != fc.chains[i]) {
+			जाओ err;
+		पूर्ण
+		अगर (fence != fc.chains[i]) अणु
 			pr_err("Incorrect fence.seqno:%lld reported by find_seqno(%d:%d)\n",
 			       fence->seqno,
 			       fc.chain_length + 1,
 			       2 * i + 1);
 			err = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		dma_fence_get(fence);
 		err = dma_fence_chain_find_seqno(&fence, 2 * i + 2);
 		dma_fence_put(fence);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Error reported for finding self\n");
-			goto err;
-		}
-		if (fence != fc.chains[i]) {
+			जाओ err;
+		पूर्ण
+		अगर (fence != fc.chains[i]) अणु
 			pr_err("Incorrect fence reported by find self\n");
 			err = -EINVAL;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 err:
 	fence_chains_fini(&fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct find_race {
-	struct fence_chains fc;
+काष्ठा find_race अणु
+	काष्ठा fence_chains fc;
 	atomic_t children;
-};
+पूर्ण;
 
-static int __find_race(void *arg)
-{
-	struct find_race *data = arg;
-	int err = 0;
+अटल पूर्णांक __find_race(व्योम *arg)
+अणु
+	काष्ठा find_race *data = arg;
+	पूर्णांक err = 0;
 
-	while (!kthread_should_stop()) {
-		struct dma_fence *fence = dma_fence_get(data->fc.tail);
-		int seqno;
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		काष्ठा dma_fence *fence = dma_fence_get(data->fc.tail);
+		पूर्णांक seqno;
 
-		seqno = prandom_u32_max(data->fc.chain_length) + 1;
+		seqno = pअक्रमom_u32_max(data->fc.chain_length) + 1;
 
 		err = dma_fence_chain_find_seqno(&fence, seqno);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Failed to find fence seqno:%d\n",
 			       seqno);
 			dma_fence_put(fence);
-			break;
-		}
-		if (!fence)
-			goto signal;
+			अवरोध;
+		पूर्ण
+		अगर (!fence)
+			जाओ संकेत;
 
 		/*
-		 * We can only find ourselves if we are on fence we were
-		 * looking for.
+		 * We can only find ourselves अगर we are on fence we were
+		 * looking क्रम.
 		 */
-		if (fence->seqno == seqno) {
+		अगर (fence->seqno == seqno) अणु
 			err = dma_fence_chain_find_seqno(&fence, seqno);
-			if (err) {
+			अगर (err) अणु
 				pr_err("Reported an invalid fence for find-self:%d\n",
 				       seqno);
 				dma_fence_put(fence);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		dma_fence_put(fence);
 
-signal:
-		seqno = prandom_u32_max(data->fc.chain_length - 1);
-		dma_fence_signal(data->fc.fences[seqno]);
+संकेत:
+		seqno = pअक्रमom_u32_max(data->fc.chain_length - 1);
+		dma_fence_संकेत(data->fc.fences[seqno]);
 		cond_resched();
-	}
+	पूर्ण
 
-	if (atomic_dec_and_test(&data->children))
+	अगर (atomic_dec_and_test(&data->children))
 		wake_up_var(&data->children);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int find_race(void *arg)
-{
-	struct find_race data;
-	int ncpus = num_online_cpus();
-	struct task_struct **threads;
-	unsigned long count;
-	int err;
-	int i;
+अटल पूर्णांक find_race(व्योम *arg)
+अणु
+	काष्ठा find_race data;
+	पूर्णांक ncpus = num_online_cpus();
+	काष्ठा task_काष्ठा **thपढ़ोs;
+	अचिन्हित दीर्घ count;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = fence_chains_init(&data.fc, CHAIN_SZ, seqno_inc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	threads = kmalloc_array(ncpus, sizeof(*threads), GFP_KERNEL);
-	if (!threads) {
+	thपढ़ोs = kदो_स्मृति_array(ncpus, माप(*thपढ़ोs), GFP_KERNEL);
+	अगर (!thपढ़ोs) अणु
 		err = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	atomic_set(&data.children, 0);
-	for (i = 0; i < ncpus; i++) {
-		threads[i] = kthread_run(__find_race, &data, "dmabuf/%d", i);
-		if (IS_ERR(threads[i])) {
+	क्रम (i = 0; i < ncpus; i++) अणु
+		thपढ़ोs[i] = kthपढ़ो_run(__find_race, &data, "dmabuf/%d", i);
+		अगर (IS_ERR(thपढ़ोs[i])) अणु
 			ncpus = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		atomic_inc(&data.children);
-		get_task_struct(threads[i]);
-	}
+		get_task_काष्ठा(thपढ़ोs[i]);
+	पूर्ण
 
-	wait_var_event_timeout(&data.children,
-			       !atomic_read(&data.children),
+	रुको_var_event_समयout(&data.children,
+			       !atomic_पढ़ो(&data.children),
 			       5 * HZ);
 
-	for (i = 0; i < ncpus; i++) {
-		int ret;
+	क्रम (i = 0; i < ncpus; i++) अणु
+		पूर्णांक ret;
 
-		ret = kthread_stop(threads[i]);
-		if (ret && !err)
+		ret = kthपढ़ो_stop(thपढ़ोs[i]);
+		अगर (ret && !err)
 			err = ret;
-		put_task_struct(threads[i]);
-	}
-	kfree(threads);
+		put_task_काष्ठा(thपढ़ोs[i]);
+	पूर्ण
+	kमुक्त(thपढ़ोs);
 
 	count = 0;
-	for (i = 0; i < data.fc.chain_length; i++)
-		if (dma_fence_is_signaled(data.fc.fences[i]))
+	क्रम (i = 0; i < data.fc.chain_length; i++)
+		अगर (dma_fence_is_संकेतed(data.fc.fences[i]))
 			count++;
 	pr_info("Completed %lu cycles\n", count);
 
 err:
 	fence_chains_fini(&data.fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int signal_forward(void *arg)
-{
-	struct fence_chains fc;
-	int err;
-	int i;
+अटल पूर्णांक संकेत_क्रमward(व्योम *arg)
+अणु
+	काष्ठा fence_chains fc;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = fence_chains_init(&fc, 64, seqno_inc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < fc.chain_length; i++) {
-		dma_fence_signal(fc.fences[i]);
+	क्रम (i = 0; i < fc.chain_length; i++) अणु
+		dma_fence_संकेत(fc.fences[i]);
 
-		if (!dma_fence_is_signaled(fc.chains[i])) {
+		अगर (!dma_fence_is_संकेतed(fc.chains[i])) अणु
 			pr_err("chain[%d] not signaled!\n", i);
 			err = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		if (i + 1 < fc.chain_length &&
-		    dma_fence_is_signaled(fc.chains[i + 1])) {
+		अगर (i + 1 < fc.chain_length &&
+		    dma_fence_is_संकेतed(fc.chains[i + 1])) अणु
 			pr_err("chain[%d] is signaled!\n", i);
 			err = -EINVAL;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 err:
 	fence_chains_fini(&fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int signal_backward(void *arg)
-{
-	struct fence_chains fc;
-	int err;
-	int i;
+अटल पूर्णांक संकेत_backward(व्योम *arg)
+अणु
+	काष्ठा fence_chains fc;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = fence_chains_init(&fc, 64, seqno_inc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = fc.chain_length; i--; ) {
-		dma_fence_signal(fc.fences[i]);
+	क्रम (i = fc.chain_length; i--; ) अणु
+		dma_fence_संकेत(fc.fences[i]);
 
-		if (i > 0 && dma_fence_is_signaled(fc.chains[i])) {
+		अगर (i > 0 && dma_fence_is_संकेतed(fc.chains[i])) अणु
 			pr_err("chain[%d] is signaled!\n", i);
 			err = -EINVAL;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < fc.chain_length; i++) {
-		if (!dma_fence_is_signaled(fc.chains[i])) {
+	क्रम (i = 0; i < fc.chain_length; i++) अणु
+		अगर (!dma_fence_is_संकेतed(fc.chains[i])) अणु
 			pr_err("chain[%d] was not signaled!\n", i);
 			err = -EINVAL;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 err:
 	fence_chains_fini(&fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __wait_fence_chains(void *arg)
-{
-	struct fence_chains *fc = arg;
+अटल पूर्णांक __रुको_fence_chains(व्योम *arg)
+अणु
+	काष्ठा fence_chains *fc = arg;
 
-	if (dma_fence_wait(fc->tail, false))
-		return -EIO;
+	अगर (dma_fence_रुको(fc->tail, false))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wait_forward(void *arg)
-{
-	struct fence_chains fc;
-	struct task_struct *tsk;
-	int err;
-	int i;
+अटल पूर्णांक रुको_क्रमward(व्योम *arg)
+अणु
+	काष्ठा fence_chains fc;
+	काष्ठा task_काष्ठा *tsk;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = fence_chains_init(&fc, CHAIN_SZ, seqno_inc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	tsk = kthread_run(__wait_fence_chains, &fc, "dmabuf/wait");
-	if (IS_ERR(tsk)) {
+	tsk = kthपढ़ो_run(__रुको_fence_chains, &fc, "dmabuf/wait");
+	अगर (IS_ERR(tsk)) अणु
 		err = PTR_ERR(tsk);
-		goto err;
-	}
-	get_task_struct(tsk);
+		जाओ err;
+	पूर्ण
+	get_task_काष्ठा(tsk);
 	yield_to(tsk, true);
 
-	for (i = 0; i < fc.chain_length; i++)
-		dma_fence_signal(fc.fences[i]);
+	क्रम (i = 0; i < fc.chain_length; i++)
+		dma_fence_संकेत(fc.fences[i]);
 
-	err = kthread_stop(tsk);
-	put_task_struct(tsk);
+	err = kthपढ़ो_stop(tsk);
+	put_task_काष्ठा(tsk);
 
 err:
 	fence_chains_fini(&fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int wait_backward(void *arg)
-{
-	struct fence_chains fc;
-	struct task_struct *tsk;
-	int err;
-	int i;
+अटल पूर्णांक रुको_backward(व्योम *arg)
+अणु
+	काष्ठा fence_chains fc;
+	काष्ठा task_काष्ठा *tsk;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = fence_chains_init(&fc, CHAIN_SZ, seqno_inc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	tsk = kthread_run(__wait_fence_chains, &fc, "dmabuf/wait");
-	if (IS_ERR(tsk)) {
+	tsk = kthपढ़ो_run(__रुको_fence_chains, &fc, "dmabuf/wait");
+	अगर (IS_ERR(tsk)) अणु
 		err = PTR_ERR(tsk);
-		goto err;
-	}
-	get_task_struct(tsk);
+		जाओ err;
+	पूर्ण
+	get_task_काष्ठा(tsk);
 	yield_to(tsk, true);
 
-	for (i = fc.chain_length; i--; )
-		dma_fence_signal(fc.fences[i]);
+	क्रम (i = fc.chain_length; i--; )
+		dma_fence_संकेत(fc.fences[i]);
 
-	err = kthread_stop(tsk);
-	put_task_struct(tsk);
+	err = kthपढ़ो_stop(tsk);
+	put_task_काष्ठा(tsk);
 
 err:
 	fence_chains_fini(&fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void randomise_fences(struct fence_chains *fc)
-{
-	unsigned int count = fc->chain_length;
+अटल व्योम अक्रमomise_fences(काष्ठा fence_chains *fc)
+अणु
+	अचिन्हित पूर्णांक count = fc->chain_length;
 
 	/* Fisher-Yates shuffle courtesy of Knuth */
-	while (--count) {
-		unsigned int swp;
+	जबतक (--count) अणु
+		अचिन्हित पूर्णांक swp;
 
-		swp = prandom_u32_max(count + 1);
-		if (swp == count)
-			continue;
+		swp = pअक्रमom_u32_max(count + 1);
+		अगर (swp == count)
+			जारी;
 
 		swap(fc->fences[count], fc->fences[swp]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int wait_random(void *arg)
-{
-	struct fence_chains fc;
-	struct task_struct *tsk;
-	int err;
-	int i;
+अटल पूर्णांक रुको_अक्रमom(व्योम *arg)
+अणु
+	काष्ठा fence_chains fc;
+	काष्ठा task_काष्ठा *tsk;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = fence_chains_init(&fc, CHAIN_SZ, seqno_inc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	randomise_fences(&fc);
+	अक्रमomise_fences(&fc);
 
-	tsk = kthread_run(__wait_fence_chains, &fc, "dmabuf/wait");
-	if (IS_ERR(tsk)) {
+	tsk = kthपढ़ो_run(__रुको_fence_chains, &fc, "dmabuf/wait");
+	अगर (IS_ERR(tsk)) अणु
 		err = PTR_ERR(tsk);
-		goto err;
-	}
-	get_task_struct(tsk);
+		जाओ err;
+	पूर्ण
+	get_task_काष्ठा(tsk);
 	yield_to(tsk, true);
 
-	for (i = 0; i < fc.chain_length; i++)
-		dma_fence_signal(fc.fences[i]);
+	क्रम (i = 0; i < fc.chain_length; i++)
+		dma_fence_संकेत(fc.fences[i]);
 
-	err = kthread_stop(tsk);
-	put_task_struct(tsk);
+	err = kthपढ़ो_stop(tsk);
+	put_task_काष्ठा(tsk);
 
 err:
 	fence_chains_fini(&fc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int dma_fence_chain(void)
-{
-	static const struct subtest tests[] = {
+पूर्णांक dma_fence_chain(व्योम)
+अणु
+	अटल स्थिर काष्ठा subtest tests[] = अणु
 		SUBTEST(sanitycheck),
 		SUBTEST(find_seqno),
-		SUBTEST(find_signaled),
+		SUBTEST(find_संकेतed),
 		SUBTEST(find_out_of_order),
 		SUBTEST(find_gap),
 		SUBTEST(find_race),
-		SUBTEST(signal_forward),
-		SUBTEST(signal_backward),
-		SUBTEST(wait_forward),
-		SUBTEST(wait_backward),
-		SUBTEST(wait_random),
-	};
-	int ret;
+		SUBTEST(संकेत_क्रमward),
+		SUBTEST(संकेत_backward),
+		SUBTEST(रुको_क्रमward),
+		SUBTEST(रुको_backward),
+		SUBTEST(रुको_अक्रमom),
+	पूर्ण;
+	पूर्णांक ret;
 
 	pr_info("sizeof(dma_fence_chain)=%zu\n",
-		sizeof(struct dma_fence_chain));
+		माप(काष्ठा dma_fence_chain));
 
 	slab_fences = KMEM_CACHE(mock_fence,
 				 SLAB_TYPESAFE_BY_RCU |
 				 SLAB_HWCACHE_ALIGN);
-	if (!slab_fences)
-		return -ENOMEM;
+	अगर (!slab_fences)
+		वापस -ENOMEM;
 
-	ret = subtests(tests, NULL);
+	ret = subtests(tests, शून्य);
 
 	kmem_cache_destroy(slab_fences);
-	return ret;
-}
+	वापस ret;
+पूर्ण

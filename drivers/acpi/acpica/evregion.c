@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: evregion - Operation Region support
@@ -7,26 +8,26 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acevents.h"
-#include "acnamesp.h"
-#include "acinterp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acevents.h"
+#समावेश "acnamesp.h"
+#समावेश "acinterp.h"
 
-#define _COMPONENT          ACPI_EVENTS
+#घोषणा _COMPONENT          ACPI_EVENTS
 ACPI_MODULE_NAME("evregion")
 
-extern u8 acpi_gbl_default_address_spaces[];
+बाह्य u8 acpi_gbl_शेष_address_spaces[];
 
 /* Local prototypes */
 
-static void
-acpi_ev_execute_orphan_reg_method(struct acpi_namespace_node *device_node,
+अटल व्योम
+acpi_ev_execute_orphan_reg_method(काष्ठा acpi_namespace_node *device_node,
 				  acpi_adr_space_type space_id);
 
-static acpi_status
+अटल acpi_status
 acpi_ev_reg_run(acpi_handle obj_handle,
-		u32 level, void *context, void **return_value);
+		u32 level, व्योम *context, व्योम **वापस_value);
 
 /*******************************************************************************
  *
@@ -36,82 +37,82 @@ acpi_ev_reg_run(acpi_handle obj_handle,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute _REG methods for all Operation Regions that have
- *              an installed default region handler.
+ * DESCRIPTION: Execute _REG methods क्रम all Operation Regions that have
+ *              an installed शेष region handler.
  *
  ******************************************************************************/
 
-acpi_status acpi_ev_initialize_op_regions(void)
-{
+acpi_status acpi_ev_initialize_op_regions(व्योम)
+अणु
 	acpi_status status;
 	u32 i;
 
 	ACPI_FUNCTION_TRACE(ev_initialize_op_regions);
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	/* Run the _REG methods for op_regions in each default address space */
+	/* Run the _REG methods क्रम op_regions in each शेष address space */
 
-	for (i = 0; i < ACPI_NUM_DEFAULT_SPACES; i++) {
+	क्रम (i = 0; i < ACPI_NUM_DEFAULT_SPACES; i++) अणु
 		/*
 		 * Make sure the installed handler is the DEFAULT handler. If not the
-		 * default, the _REG methods will have already been run (when the
+		 * शेष, the _REG methods will have alपढ़ोy been run (when the
 		 * handler was installed)
 		 */
-		if (acpi_ev_has_default_handler(acpi_gbl_root_node,
-						acpi_gbl_default_address_spaces
-						[i])) {
+		अगर (acpi_ev_has_शेष_handler(acpi_gbl_root_node,
+						acpi_gbl_शेष_address_spaces
+						[i])) अणु
 			acpi_ev_execute_reg_methods(acpi_gbl_root_node,
-						    acpi_gbl_default_address_spaces
+						    acpi_gbl_शेष_address_spaces
 						    [i], ACPI_REG_CONNECT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	return_ACPI_STATUS(status);
-}
+	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_address_space_dispatch
  *
  * PARAMETERS:  region_obj          - Internal region object
- *              field_obj           - Corresponding field. Can be NULL.
+ *              field_obj           - Corresponding field. Can be शून्य.
  *              function            - Read or Write operation
- *              region_offset       - Where in the region to read or write
+ *              region_offset       - Where in the region to पढ़ो or ग_लिखो
  *              bit_width           - Field width in bits (8, 16, 32, or 64)
- *              value               - Pointer to in or out value, must be
- *                                    a full 64-bit integer
+ *              value               - Poपूर्णांकer to in or out value, must be
+ *                                    a full 64-bit पूर्णांकeger
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Dispatch an address space or operation region access to
  *              a previously installed handler.
  *
- * NOTE: During early initialization, we always install the default region
- * handlers for Memory, I/O and PCI_Config. This ensures that these operation
- * region address spaces are always available as per the ACPI specification.
+ * NOTE: During early initialization, we always install the शेष region
+ * handlers क्रम Memory, I/O and PCI_Config. This ensures that these operation
+ * region address spaces are always available as per the ACPI specअगरication.
  * This is especially needed in order to support the execution of
  * module-level AML code during loading of the ACPI tables.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ev_address_space_dispatch(union acpi_operand_object *region_obj,
-			       union acpi_operand_object *field_obj,
+acpi_ev_address_space_dispatch(जोड़ acpi_opeअक्रम_object *region_obj,
+			       जोड़ acpi_opeअक्रम_object *field_obj,
 			       u32 function,
 			       u32 region_offset, u32 bit_width, u64 *value)
-{
+अणु
 	acpi_status status;
 	acpi_adr_space_handler handler;
 	acpi_adr_space_setup region_setup;
-	union acpi_operand_object *handler_desc;
-	union acpi_operand_object *region_obj2;
-	void *region_context = NULL;
-	struct acpi_connection_info *context;
+	जोड़ acpi_opeअक्रम_object *handler_desc;
+	जोड़ acpi_opeअक्रम_object *region_obj2;
+	व्योम *region_context = शून्य;
+	काष्ठा acpi_connection_info *context;
 	acpi_mutex context_mutex;
 	u8 context_locked;
 	acpi_physical_address address;
@@ -119,14 +120,14 @@ acpi_ev_address_space_dispatch(union acpi_operand_object *region_obj,
 	ACPI_FUNCTION_TRACE(ev_address_space_dispatch);
 
 	region_obj2 = acpi_ns_get_secondary_object(region_obj);
-	if (!region_obj2) {
-		return_ACPI_STATUS(AE_NOT_EXIST);
-	}
+	अगर (!region_obj2) अणु
+		वापस_ACPI_STATUS(AE_NOT_EXIST);
+	पूर्ण
 
 	/* Ensure that there is a handler associated with this region */
 
 	handler_desc = region_obj->region.handler;
-	if (!handler_desc) {
+	अगर (!handler_desc) अणु
 		ACPI_ERROR((AE_INFO,
 			    "No handler for Region [%4.4s] (%p) [%s]",
 			    acpi_ut_get_node_name(region_obj->region.node),
@@ -134,74 +135,74 @@ acpi_ev_address_space_dispatch(union acpi_operand_object *region_obj,
 			    acpi_ut_get_region_name(region_obj->region.
 						    space_id)));
 
-		return_ACPI_STATUS(AE_NOT_EXIST);
-	}
+		वापस_ACPI_STATUS(AE_NOT_EXIST);
+	पूर्ण
 
 	context = handler_desc->address_space.context;
 	context_mutex = handler_desc->address_space.context_mutex;
 	context_locked = FALSE;
 
 	/*
-	 * It may be the case that the region has never been initialized.
+	 * It may be the हाल that the region has never been initialized.
 	 * Some types of regions require special init code
 	 */
-	if (!(region_obj->region.flags & AOPOBJ_SETUP_COMPLETE)) {
+	अगर (!(region_obj->region.flags & AOPOBJ_SETUP_COMPLETE)) अणु
 
-		/* This region has not been initialized yet, do it */
+		/* This region has not been initialized yet, करो it */
 
 		region_setup = handler_desc->address_space.setup;
-		if (!region_setup) {
+		अगर (!region_setup) अणु
 
-			/* No initialization routine, exit with error */
+			/* No initialization routine, निकास with error */
 
 			ACPI_ERROR((AE_INFO,
 				    "No init routine for region(%p) [%s]",
 				    region_obj,
 				    acpi_ut_get_region_name(region_obj->region.
 							    space_id)));
-			return_ACPI_STATUS(AE_NOT_EXIST);
-		}
+			वापस_ACPI_STATUS(AE_NOT_EXIST);
+		पूर्ण
 
 		/*
-		 * We must exit the interpreter because the region setup will
-		 * potentially execute control methods (for example, the _REG method
-		 * for this region)
+		 * We must निकास the पूर्णांकerpreter because the region setup will
+		 * potentially execute control methods (क्रम example, the _REG method
+		 * क्रम this region)
 		 */
-		acpi_ex_exit_interpreter();
+		acpi_ex_निकास_पूर्णांकerpreter();
 
 		status = region_setup(region_obj, ACPI_REGION_ACTIVATE,
 				      context, &region_context);
 
-		/* Re-enter the interpreter */
+		/* Re-enter the पूर्णांकerpreter */
 
-		acpi_ex_enter_interpreter();
+		acpi_ex_enter_पूर्णांकerpreter();
 
-		/* Check for failure of the Region Setup */
+		/* Check क्रम failure of the Region Setup */
 
-		if (ACPI_FAILURE(status)) {
+		अगर (ACPI_FAILURE(status)) अणु
 			ACPI_EXCEPTION((AE_INFO, status,
 					"During region initialization: [%s]",
 					acpi_ut_get_region_name(region_obj->
 								region.
 								space_id)));
-			return_ACPI_STATUS(status);
-		}
+			वापस_ACPI_STATUS(status);
+		पूर्ण
 
 		/* Region initialization may have been completed by region_setup */
 
-		if (!(region_obj->region.flags & AOPOBJ_SETUP_COMPLETE)) {
+		अगर (!(region_obj->region.flags & AOPOBJ_SETUP_COMPLETE)) अणु
 			region_obj->region.flags |= AOPOBJ_SETUP_COMPLETE;
 
 			/*
-			 * Save the returned context for use in all accesses to
-			 * the handler for this particular region
+			 * Save the वापसed context क्रम use in all accesses to
+			 * the handler क्रम this particular region
 			 */
-			if (!(region_obj2->extra.region_context)) {
+			अगर (!(region_obj2->extra.region_context)) अणु
 				region_obj2->extra.region_context =
 				    region_context;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* We have everything we need, we can invoke the address space handler */
 
@@ -215,103 +216,103 @@ acpi_ev_address_space_dispatch(union acpi_operand_object *region_obj,
 			  acpi_ut_get_region_name(region_obj->region.
 						  space_id)));
 
-	if (!(handler_desc->address_space.handler_flags &
-	      ACPI_ADDR_HANDLER_DEFAULT_INSTALLED)) {
+	अगर (!(handler_desc->address_space.handler_flags &
+	      ACPI_ADDR_HANDLER_DEFAULT_INSTALLED)) अणु
 		/*
-		 * For handlers other than the default (supplied) handlers, we must
-		 * exit the interpreter because the handler *might* block -- we don't
-		 * know what it will do, so we can't hold the lock on the interpreter.
+		 * For handlers other than the शेष (supplied) handlers, we must
+		 * निकास the पूर्णांकerpreter because the handler *might* block -- we करोn't
+		 * know what it will करो, so we can't hold the lock on the पूर्णांकerpreter.
 		 */
-		acpi_ex_exit_interpreter();
-	}
+		acpi_ex_निकास_पूर्णांकerpreter();
+	पूर्ण
 
 	/*
-	 * Special handling for generic_serial_bus and general_purpose_io:
+	 * Special handling क्रम generic_serial_bus and general_purpose_io:
 	 * There are three extra parameters that must be passed to the
 	 * handler via the context:
-	 *   1) Connection buffer, a resource template from Connection() op
+	 *   1) Connection buffer, a resource ढाँचा from Connection() op
 	 *   2) Length of the above buffer
 	 *   3) Actual access length from the access_as() op
 	 *
 	 * Since we pass these extra parameters via the context, which is
-	 * shared between threads, we must lock the context to avoid these
-	 * parameters being changed from another thread before the handler
+	 * shared between thपढ़ोs, we must lock the context to aव्योम these
+	 * parameters being changed from another thपढ़ो beक्रमe the handler
 	 * has completed running.
 	 *
-	 * In addition, for general_purpose_io, the Address and bit_width fields
+	 * In addition, क्रम general_purpose_io, the Address and bit_width fields
 	 * are defined as follows:
 	 *   1) Address is the pin number index of the field (bit offset from
 	 *      the previous Connection)
 	 *   2) bit_width is the actual bit length of the field (number of pins)
 	 */
-	if ((region_obj->region.space_id == ACPI_ADR_SPACE_GSBUS ||
+	अगर ((region_obj->region.space_id == ACPI_ADR_SPACE_GSBUS ||
 	     region_obj->region.space_id == ACPI_ADR_SPACE_GPIO) &&
-	    context && field_obj) {
+	    context && field_obj) अणु
 
 		status =
 		    acpi_os_acquire_mutex(context_mutex, ACPI_WAIT_FOREVER);
-		if (ACPI_FAILURE(status)) {
-			goto re_enter_interpreter;
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			जाओ re_enter_पूर्णांकerpreter;
+		पूर्ण
 
 		context_locked = TRUE;
 
-		/* Get the Connection (resource_template) buffer */
+		/* Get the Connection (resource_ढाँचा) buffer */
 
 		context->connection = field_obj->field.resource_buffer;
 		context->length = field_obj->field.resource_length;
 		context->access_length = field_obj->field.access_length;
 
-		if (region_obj->region.space_id == ACPI_ADR_SPACE_GPIO) {
+		अगर (region_obj->region.space_id == ACPI_ADR_SPACE_GPIO) अणु
 			address = field_obj->field.pin_number_index;
 			bit_width = field_obj->field.bit_length;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Call the handler */
 
 	status = handler(function, address, bit_width, value, context,
 			 region_obj2->extra.region_context);
 
-	if (context_locked) {
+	अगर (context_locked) अणु
 		acpi_os_release_mutex(context_mutex);
-	}
+	पूर्ण
 
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status, "Returned by Handler for [%s]",
 				acpi_ut_get_region_name(region_obj->region.
 							space_id)));
 
 		/*
-		 * Special case for an EC timeout. These are seen so frequently
+		 * Special हाल क्रम an EC समयout. These are seen so frequently
 		 * that an additional error message is helpful
 		 */
-		if ((region_obj->region.space_id == ACPI_ADR_SPACE_EC) &&
-		    (status == AE_TIME)) {
+		अगर ((region_obj->region.space_id == ACPI_ADR_SPACE_EC) &&
+		    (status == AE_TIME)) अणु
 			ACPI_ERROR((AE_INFO,
 				    "Timeout from EC hardware or EC device driver"));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-re_enter_interpreter:
-	if (!(handler_desc->address_space.handler_flags &
-	      ACPI_ADDR_HANDLER_DEFAULT_INSTALLED)) {
+re_enter_पूर्णांकerpreter:
+	अगर (!(handler_desc->address_space.handler_flags &
+	      ACPI_ADDR_HANDLER_DEFAULT_INSTALLED)) अणु
 		/*
-		 * We just returned from a non-default handler, we must re-enter the
-		 * interpreter
+		 * We just वापसed from a non-शेष handler, we must re-enter the
+		 * पूर्णांकerpreter
 		 */
-		acpi_ex_enter_interpreter();
-	}
+		acpi_ex_enter_पूर्णांकerpreter();
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_detach_region
  *
  * PARAMETERS:  region_obj          - Region Object
- *              acpi_ns_is_locked   - Namespace Region Already Locked?
+ *              acpi_ns_is_locked   - Namespace Region Alपढ़ोy Locked?
  *
  * RETURN:      None
  *
@@ -320,36 +321,36 @@ re_enter_interpreter:
  *
  ******************************************************************************/
 
-void
-acpi_ev_detach_region(union acpi_operand_object *region_obj,
+व्योम
+acpi_ev_detach_region(जोड़ acpi_opeअक्रम_object *region_obj,
 		      u8 acpi_ns_is_locked)
-{
-	union acpi_operand_object *handler_obj;
-	union acpi_operand_object *obj_desc;
-	union acpi_operand_object *start_desc;
-	union acpi_operand_object **last_obj_ptr;
+अणु
+	जोड़ acpi_opeअक्रम_object *handler_obj;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	जोड़ acpi_opeअक्रम_object *start_desc;
+	जोड़ acpi_opeअक्रम_object **last_obj_ptr;
 	acpi_adr_space_setup region_setup;
-	void **region_context;
-	union acpi_operand_object *region_obj2;
+	व्योम **region_context;
+	जोड़ acpi_opeअक्रम_object *region_obj2;
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ev_detach_region);
 
 	region_obj2 = acpi_ns_get_secondary_object(region_obj);
-	if (!region_obj2) {
-		return_VOID;
-	}
+	अगर (!region_obj2) अणु
+		वापस_VOID;
+	पूर्ण
 	region_context = &region_obj2->extra.region_context;
 
 	/* Get the address handler from the region object */
 
 	handler_obj = region_obj->region.handler;
-	if (!handler_obj) {
+	अगर (!handler_obj) अणु
 
-		/* This region has no handler, all done */
+		/* This region has no handler, all करोne */
 
-		return_VOID;
-	}
+		वापस_VOID;
+	पूर्ण
 
 	/* Find this region in the handler's list */
 
@@ -357,53 +358,53 @@ acpi_ev_detach_region(union acpi_operand_object *region_obj,
 	start_desc = obj_desc;
 	last_obj_ptr = &handler_obj->address_space.region_list;
 
-	while (obj_desc) {
+	जबतक (obj_desc) अणु
 
 		/* Is this the correct Region? */
 
-		if (obj_desc == region_obj) {
+		अगर (obj_desc == region_obj) अणु
 			ACPI_DEBUG_PRINT((ACPI_DB_OPREGION,
 					  "Removing Region %p from address handler %p\n",
 					  region_obj, handler_obj));
 
-			/* This is it, remove it from the handler's list */
+			/* This is it, हटाओ it from the handler's list */
 
 			*last_obj_ptr = obj_desc->region.next;
-			obj_desc->region.next = NULL;	/* Must clear field */
+			obj_desc->region.next = शून्य;	/* Must clear field */
 
-			if (acpi_ns_is_locked) {
+			अगर (acpi_ns_is_locked) अणु
 				status =
 				    acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-				if (ACPI_FAILURE(status)) {
-					return_VOID;
-				}
-			}
+				अगर (ACPI_FAILURE(status)) अणु
+					वापस_VOID;
+				पूर्ण
+			पूर्ण
 
 			/* Now stop region accesses by executing the _REG method */
 
 			status =
 			    acpi_ev_execute_reg_method(region_obj,
 						       ACPI_REG_DISCONNECT);
-			if (ACPI_FAILURE(status)) {
+			अगर (ACPI_FAILURE(status)) अणु
 				ACPI_EXCEPTION((AE_INFO, status,
 						"from region _REG, [%s]",
 						acpi_ut_get_region_name
 						(region_obj->region.space_id)));
-			}
+			पूर्ण
 
-			if (acpi_ns_is_locked) {
+			अगर (acpi_ns_is_locked) अणु
 				status =
 				    acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-				if (ACPI_FAILURE(status)) {
-					return_VOID;
-				}
-			}
+				अगर (ACPI_FAILURE(status)) अणु
+					वापस_VOID;
+				पूर्ण
+			पूर्ण
 
 			/*
 			 * If the region has been activated, call the setup handler with
-			 * the deactivate notification
+			 * the deactivate notअगरication
 			 */
-			if (region_obj->region.flags & AOPOBJ_SETUP_COMPLETE) {
+			अगर (region_obj->region.flags & AOPOBJ_SETUP_COMPLETE) अणु
 				region_setup = handler_obj->address_space.setup;
 				status =
 				    region_setup(region_obj,
@@ -413,55 +414,55 @@ acpi_ev_detach_region(union acpi_operand_object *region_obj,
 
 				/*
 				 * region_context should have been released by the deactivate
-				 * operation. We don't need access to it anymore here.
+				 * operation. We करोn't need access to it anymore here.
 				 */
-				if (region_context) {
-					*region_context = NULL;
-				}
+				अगर (region_context) अणु
+					*region_context = शून्य;
+				पूर्ण
 
 				/* Init routine may fail, Just ignore errors */
 
-				if (ACPI_FAILURE(status)) {
+				अगर (ACPI_FAILURE(status)) अणु
 					ACPI_EXCEPTION((AE_INFO, status,
 							"from region handler - deactivate, [%s]",
 							acpi_ut_get_region_name
 							(region_obj->region.
 							 space_id)));
-				}
+				पूर्ण
 
 				region_obj->region.flags &=
 				    ~(AOPOBJ_SETUP_COMPLETE);
-			}
+			पूर्ण
 
 			/*
 			 * Remove handler reference in the region
 			 *
-			 * NOTE: this doesn't mean that the region goes away, the region
+			 * NOTE: this करोesn't mean that the region goes away, the region
 			 * is just inaccessible as indicated to the _REG method
 			 *
 			 * If the region is on the handler's list, this must be the
 			 * region's handler
 			 */
-			region_obj->region.handler = NULL;
-			acpi_ut_remove_reference(handler_obj);
+			region_obj->region.handler = शून्य;
+			acpi_ut_हटाओ_reference(handler_obj);
 
-			return_VOID;
-		}
+			वापस_VOID;
+		पूर्ण
 
 		/* Walk the linked list of handlers */
 
 		last_obj_ptr = &obj_desc->region.next;
 		obj_desc = obj_desc->region.next;
 
-		/* Prevent infinite loop if list is corrupted */
+		/* Prevent infinite loop अगर list is corrupted */
 
-		if (obj_desc == start_desc) {
+		अगर (obj_desc == start_desc) अणु
 			ACPI_ERROR((AE_INFO,
 				    "Circular handler list in region object %p",
 				    region_obj));
-			return_VOID;
-		}
-	}
+			वापस_VOID;
+		पूर्ण
+	पूर्ण
 
 	/* If we get here, the region was not in the handler's region list */
 
@@ -469,8 +470,8 @@ acpi_ev_detach_region(union acpi_operand_object *region_obj,
 			  "Cannot remove region %p from address handler %p\n",
 			  region_obj, handler_obj));
 
-	return_VOID;
-}
+	वापस_VOID;
+पूर्ण
 
 /*******************************************************************************
  *
@@ -478,7 +479,7 @@ acpi_ev_detach_region(union acpi_operand_object *region_obj,
  *
  * PARAMETERS:  handler_obj         - Handler Object
  *              region_obj          - Region Object
- *              acpi_ns_is_locked   - Namespace Region Already Locked?
+ *              acpi_ns_is_locked   - Namespace Region Alपढ़ोy Locked?
  *
  * RETURN:      None
  *
@@ -488,18 +489,18 @@ acpi_ev_detach_region(union acpi_operand_object *region_obj,
  ******************************************************************************/
 
 acpi_status
-acpi_ev_attach_region(union acpi_operand_object *handler_obj,
-		      union acpi_operand_object *region_obj,
+acpi_ev_attach_region(जोड़ acpi_opeअक्रम_object *handler_obj,
+		      जोड़ acpi_opeअक्रम_object *region_obj,
 		      u8 acpi_ns_is_locked)
-{
+अणु
 
 	ACPI_FUNCTION_TRACE(ev_attach_region);
 
 	/* Install the region's handler */
 
-	if (region_obj->region.handler) {
-		return_ACPI_STATUS(AE_ALREADY_EXISTS);
-	}
+	अगर (region_obj->region.handler) अणु
+		वापस_ACPI_STATUS(AE_ALREADY_EXISTS);
+	पूर्ण
 
 	ACPI_DEBUG_PRINT((ACPI_DB_OPREGION,
 			  "Adding Region [%4.4s] %p to address handler %p [%s]\n",
@@ -515,8 +516,8 @@ acpi_ev_attach_region(union acpi_operand_object *handler_obj,
 	region_obj->region.handler = handler_obj;
 	acpi_ut_add_reference(handler_obj);
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -527,33 +528,33 @@ acpi_ev_attach_region(union acpi_operand_object *handler_obj,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute _REG method for a region
+ * DESCRIPTION: Execute _REG method क्रम a region
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ev_execute_reg_method(union acpi_operand_object *region_obj, u32 function)
-{
-	struct acpi_evaluate_info *info;
-	union acpi_operand_object *args[3];
-	union acpi_operand_object *region_obj2;
-	const acpi_name *reg_name_ptr =
+acpi_ev_execute_reg_method(जोड़ acpi_opeअक्रम_object *region_obj, u32 function)
+अणु
+	काष्ठा acpi_evaluate_info *info;
+	जोड़ acpi_opeअक्रम_object *args[3];
+	जोड़ acpi_opeअक्रम_object *region_obj2;
+	स्थिर acpi_name *reg_name_ptr =
 	    ACPI_CAST_PTR(acpi_name, METHOD_NAME__REG);
-	struct acpi_namespace_node *method_node;
-	struct acpi_namespace_node *node;
+	काष्ठा acpi_namespace_node *method_node;
+	काष्ठा acpi_namespace_node *node;
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ev_execute_reg_method);
 
-	if (!acpi_gbl_namespace_initialized ||
-	    region_obj->region.handler == NULL) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (!acpi_gbl_namespace_initialized ||
+	    region_obj->region.handler == शून्य) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	region_obj2 = acpi_ns_get_secondary_object(region_obj);
-	if (!region_obj2) {
-		return_ACPI_STATUS(AE_NOT_EXIST);
-	}
+	अगर (!region_obj2) अणु
+		वापस_ACPI_STATUS(AE_NOT_EXIST);
+	पूर्ण
 
 	/*
 	 * Find any "_REG" method associated with this region definition.
@@ -564,36 +565,36 @@ acpi_ev_execute_reg_method(union acpi_operand_object *region_obj, u32 function)
 	status =
 	    acpi_ns_search_one_scope(*reg_name_ptr, node, ACPI_TYPE_METHOD,
 				     &method_node);
-	if (ACPI_SUCCESS(status)) {
+	अगर (ACPI_SUCCESS(status)) अणु
 		/*
 		 * The _REG method is optional and there can be only one per
 		 * region definition. This will be executed when the handler is
-		 * attached or removed.
+		 * attached or हटाओd.
 		 */
 		region_obj2->extra.method_REG = method_node;
-	}
-	if (region_obj2->extra.method_REG == NULL) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	पूर्ण
+	अगर (region_obj2->extra.method_REG == शून्य) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* _REG(DISCONNECT) should be paired with _REG(CONNECT) */
 
-	if ((function == ACPI_REG_CONNECT &&
+	अगर ((function == ACPI_REG_CONNECT &&
 	     region_obj->common.flags & AOPOBJ_REG_CONNECTED) ||
 	    (function == ACPI_REG_DISCONNECT &&
-	     !(region_obj->common.flags & AOPOBJ_REG_CONNECTED))) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	     !(region_obj->common.flags & AOPOBJ_REG_CONNECTED))) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
-	/* Allocate and initialize the evaluation information block */
+	/* Allocate and initialize the evaluation inक्रमmation block */
 
-	info = ACPI_ALLOCATE_ZEROED(sizeof(struct acpi_evaluate_info));
-	if (!info) {
-		return_ACPI_STATUS(AE_NO_MEMORY);
-	}
+	info = ACPI_ALLOCATE_ZEROED(माप(काष्ठा acpi_evaluate_info));
+	अगर (!info) अणु
+		वापस_ACPI_STATUS(AE_NO_MEMORY);
+	पूर्ण
 
 	info->prefix_node = region_obj2->extra.method_REG;
-	info->relative_pathname = NULL;
+	info->relative_pathname = शून्य;
 	info->parameters = args;
 	info->flags = ACPI_IGNORE_RETURN_VALUE;
 
@@ -604,85 +605,85 @@ acpi_ev_execute_reg_method(union acpi_operand_object *region_obj, u32 function)
 	 *  Operation region space ID Same value as region_obj->Region.space_id
 	 *
 	 * arg1 - Integer:
-	 *  connection status 1 for connecting the handler, 0 for disconnecting
+	 *  connection status 1 क्रम connecting the handler, 0 क्रम disconnecting
 	 *  the handler (Passed as a parameter)
 	 */
 	args[0] =
-	    acpi_ut_create_integer_object((u64)region_obj->region.space_id);
-	if (!args[0]) {
+	    acpi_ut_create_पूर्णांकeger_object((u64)region_obj->region.space_id);
+	अगर (!args[0]) अणु
 		status = AE_NO_MEMORY;
-		goto cleanup1;
-	}
+		जाओ cleanup1;
+	पूर्ण
 
-	args[1] = acpi_ut_create_integer_object((u64)function);
-	if (!args[1]) {
+	args[1] = acpi_ut_create_पूर्णांकeger_object((u64)function);
+	अगर (!args[1]) अणु
 		status = AE_NO_MEMORY;
-		goto cleanup2;
-	}
+		जाओ cleanup2;
+	पूर्ण
 
-	args[2] = NULL;		/* Terminate list */
+	args[2] = शून्य;		/* Terminate list */
 
-	/* Execute the method, no return value */
+	/* Execute the method, no वापस value */
 
 	ACPI_DEBUG_EXEC(acpi_ut_display_init_pathname
-			(ACPI_TYPE_METHOD, info->prefix_node, NULL));
+			(ACPI_TYPE_METHOD, info->prefix_node, शून्य));
 
 	status = acpi_ns_evaluate(info);
-	acpi_ut_remove_reference(args[1]);
+	acpi_ut_हटाओ_reference(args[1]);
 
-	if (ACPI_FAILURE(status)) {
-		goto cleanup2;
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		जाओ cleanup2;
+	पूर्ण
 
-	if (function == ACPI_REG_CONNECT) {
+	अगर (function == ACPI_REG_CONNECT) अणु
 		region_obj->common.flags |= AOPOBJ_REG_CONNECTED;
-	} else {
+	पूर्ण अन्यथा अणु
 		region_obj->common.flags &= ~AOPOBJ_REG_CONNECTED;
-	}
+	पूर्ण
 
 cleanup2:
-	acpi_ut_remove_reference(args[0]);
+	acpi_ut_हटाओ_reference(args[0]);
 
 cleanup1:
 	ACPI_FREE(info);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_execute_reg_methods
  *
- * PARAMETERS:  node            - Namespace node for the device
+ * PARAMETERS:  node            - Namespace node क्रम the device
  *              space_id        - The address space ID
  *              function        - Passed to _REG: On (1) or Off (0)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Run all _REG methods for the input Space ID;
- *              Note: assumes namespace is locked, or system init time.
+ * DESCRIPTION: Run all _REG methods क्रम the input Space ID;
+ *              Note: assumes namespace is locked, or प्रणाली init समय.
  *
  ******************************************************************************/
 
-void
-acpi_ev_execute_reg_methods(struct acpi_namespace_node *node,
+व्योम
+acpi_ev_execute_reg_methods(काष्ठा acpi_namespace_node *node,
 			    acpi_adr_space_type space_id, u32 function)
-{
-	struct acpi_reg_walk_info info;
+अणु
+	काष्ठा acpi_reg_walk_info info;
 
 	ACPI_FUNCTION_TRACE(ev_execute_reg_methods);
 
 	/*
-	 * These address spaces do not need a call to _REG, since the ACPI
-	 * specification defines them as: "must always be accessible". Since
+	 * These address spaces करो not need a call to _REG, since the ACPI
+	 * specअगरication defines them as: "must always be accessible". Since
 	 * they never change state (never become unavailable), no need to ever
 	 * call _REG on them. Also, a data_table is not a "real" address space,
-	 * so do not call _REG. September 2018.
+	 * so करो not call _REG. September 2018.
 	 */
-	if ((space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) ||
+	अगर ((space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) ||
 	    (space_id == ACPI_ADR_SPACE_SYSTEM_IO) ||
-	    (space_id == ACPI_ADR_SPACE_DATA_TABLE)) {
-		return_VOID;
-	}
+	    (space_id == ACPI_ADR_SPACE_DATA_TABLE)) अणु
+		वापस_VOID;
+	पूर्ण
 
 	info.space_id = space_id;
 	info.function = function;
@@ -693,30 +694,30 @@ acpi_ev_execute_reg_methods(struct acpi_namespace_node *node,
 			      acpi_ut_get_region_name(info.space_id)));
 
 	/*
-	 * Run all _REG methods for all Operation Regions for this space ID. This
-	 * is a separate walk in order to handle any interdependencies between
-	 * regions and _REG methods. (i.e. handlers must be installed for all
-	 * regions of this Space ID before we can run any _REG methods)
+	 * Run all _REG methods क्रम all Operation Regions क्रम this space ID. This
+	 * is a separate walk in order to handle any पूर्णांकerdependencies between
+	 * regions and _REG methods. (i.e. handlers must be installed क्रम all
+	 * regions of this Space ID beक्रमe we can run any _REG methods)
 	 */
-	(void)acpi_ns_walk_namespace(ACPI_TYPE_ANY, node, ACPI_UINT32_MAX,
-				     ACPI_NS_WALK_UNLOCK, acpi_ev_reg_run, NULL,
-				     &info, NULL);
+	(व्योम)acpi_ns_walk_namespace(ACPI_TYPE_ANY, node, ACPI_UINT32_MAX,
+				     ACPI_NS_WALK_UNLOCK, acpi_ev_reg_run, शून्य,
+				     &info, शून्य);
 
 	/*
-	 * Special case for EC and GPIO: handle "orphan" _REG methods with
+	 * Special हाल क्रम EC and GPIO: handle "orphan" _REG methods with
 	 * no region.
 	 */
-	if (space_id == ACPI_ADR_SPACE_EC || space_id == ACPI_ADR_SPACE_GPIO) {
+	अगर (space_id == ACPI_ADR_SPACE_EC || space_id == ACPI_ADR_SPACE_GPIO) अणु
 		acpi_ev_execute_orphan_reg_method(node, space_id);
-	}
+	पूर्ण
 
 	ACPI_DEBUG_PRINT_RAW((ACPI_DB_NAMES,
 			      "    Executed %u _REG methods for SpaceId %s\n",
 			      info.reg_run_count,
 			      acpi_ut_get_region_name(info.space_id)));
 
-	return_VOID;
-}
+	वापस_VOID;
+पूर्ण
 
 /*******************************************************************************
  *
@@ -724,65 +725,65 @@ acpi_ev_execute_reg_methods(struct acpi_namespace_node *node,
  *
  * PARAMETERS:  walk_namespace callback
  *
- * DESCRIPTION: Run _REG method for region objects of the requested spaceID
+ * DESCRIPTION: Run _REG method क्रम region objects of the requested spaceID
  *
  ******************************************************************************/
 
-static acpi_status
+अटल acpi_status
 acpi_ev_reg_run(acpi_handle obj_handle,
-		u32 level, void *context, void **return_value)
-{
-	union acpi_operand_object *obj_desc;
-	struct acpi_namespace_node *node;
+		u32 level, व्योम *context, व्योम **वापस_value)
+अणु
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	काष्ठा acpi_namespace_node *node;
 	acpi_status status;
-	struct acpi_reg_walk_info *info;
+	काष्ठा acpi_reg_walk_info *info;
 
-	info = ACPI_CAST_PTR(struct acpi_reg_walk_info, context);
+	info = ACPI_CAST_PTR(काष्ठा acpi_reg_walk_info, context);
 
 	/* Convert and validate the device handle */
 
 	node = acpi_ns_validate_handle(obj_handle);
-	if (!node) {
-		return (AE_BAD_PARAMETER);
-	}
+	अगर (!node) अणु
+		वापस (AE_BAD_PARAMETER);
+	पूर्ण
 
 	/*
 	 * We only care about regions and objects that are allowed to have
 	 * address space handlers
 	 */
-	if ((node->type != ACPI_TYPE_REGION) && (node != acpi_gbl_root_node)) {
-		return (AE_OK);
-	}
+	अगर ((node->type != ACPI_TYPE_REGION) && (node != acpi_gbl_root_node)) अणु
+		वापस (AE_OK);
+	पूर्ण
 
-	/* Check for an existing internal object */
+	/* Check क्रम an existing पूर्णांकernal object */
 
 	obj_desc = acpi_ns_get_attached_object(node);
-	if (!obj_desc) {
+	अगर (!obj_desc) अणु
 
-		/* No object, just exit */
+		/* No object, just निकास */
 
-		return (AE_OK);
-	}
+		वापस (AE_OK);
+	पूर्ण
 
 	/* Object is a Region */
 
-	if (obj_desc->region.space_id != info->space_id) {
+	अगर (obj_desc->region.space_id != info->space_id) अणु
 
-		/* This region is for a different address space, just ignore it */
+		/* This region is क्रम a dअगरferent address space, just ignore it */
 
-		return (AE_OK);
-	}
+		वापस (AE_OK);
+	पूर्ण
 
 	info->reg_run_count++;
 	status = acpi_ev_execute_reg_method(obj_desc, info->function);
-	return (status);
-}
+	वापस (status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_execute_orphan_reg_method
  *
- * PARAMETERS:  device_node         - Namespace node for an ACPI device
+ * PARAMETERS:  device_node         - Namespace node क्रम an ACPI device
  *              space_id            - The address space ID
  *
  * RETURN:      None
@@ -790,8 +791,8 @@ acpi_ev_reg_run(acpi_handle obj_handle,
  * DESCRIPTION: Execute an "orphan" _REG method that appears under an ACPI
  *              device. This is a _REG method that has no corresponding region
  *              within the device's scope. ACPI tables depending on these
- *              "orphan" _REG methods have been seen for both EC and GPIO
- *              Operation Regions. Presumably the Windows ACPI implementation
+ *              "orphan" _REG methods have been seen क्रम both EC and GPIO
+ *              Operation Regions. Presumably the Winकरोws ACPI implementation
  *              always calls the _REG method independent of the presence of
  *              an actual Operation Region with the correct address space ID.
  *
@@ -799,65 +800,65 @@ acpi_ev_reg_run(acpi_handle obj_handle,
  *
  ******************************************************************************/
 
-static void
-acpi_ev_execute_orphan_reg_method(struct acpi_namespace_node *device_node,
+अटल व्योम
+acpi_ev_execute_orphan_reg_method(काष्ठा acpi_namespace_node *device_node,
 				  acpi_adr_space_type space_id)
-{
+अणु
 	acpi_handle reg_method;
-	struct acpi_namespace_node *next_node;
+	काष्ठा acpi_namespace_node *next_node;
 	acpi_status status;
-	struct acpi_object_list args;
-	union acpi_object objects[2];
+	काष्ठा acpi_object_list args;
+	जोड़ acpi_object objects[2];
 
 	ACPI_FUNCTION_TRACE(ev_execute_orphan_reg_method);
 
-	if (!device_node) {
-		return_VOID;
-	}
+	अगर (!device_node) अणु
+		वापस_VOID;
+	पूर्ण
 
 	/* Namespace is currently locked, must release */
 
-	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
 
 	/* Get a handle to a _REG method immediately under the EC device */
 
 	status = acpi_get_handle(device_node, METHOD_NAME__REG, &reg_method);
-	if (ACPI_FAILURE(status)) {
-		goto exit;	/* There is no _REG method present */
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		जाओ निकास;	/* There is no _REG method present */
+	पूर्ण
 
 	/*
-	 * Execute the _REG method only if there is no Operation Region in
+	 * Execute the _REG method only अगर there is no Operation Region in
 	 * this scope with the Embedded Controller space ID. Otherwise, it
-	 * will already have been executed. Note, this allows for Regions
+	 * will alपढ़ोy have been executed. Note, this allows क्रम Regions
 	 * with other space IDs to be present; but the code below will then
 	 * execute the _REG method with the embedded_control space_ID argument.
 	 */
-	next_node = acpi_ns_get_next_node(device_node, NULL);
-	while (next_node) {
-		if ((next_node->type == ACPI_TYPE_REGION) &&
+	next_node = acpi_ns_get_next_node(device_node, शून्य);
+	जबतक (next_node) अणु
+		अगर ((next_node->type == ACPI_TYPE_REGION) &&
 		    (next_node->object) &&
-		    (next_node->object->region.space_id == space_id)) {
-			goto exit;	/* Do not execute the _REG */
-		}
+		    (next_node->object->region.space_id == space_id)) अणु
+			जाओ निकास;	/* Do not execute the _REG */
+		पूर्ण
 
 		next_node = acpi_ns_get_next_node(device_node, next_node);
-	}
+	पूर्ण
 
 	/* Evaluate the _REG(space_id,Connect) method */
 
 	args.count = 2;
-	args.pointer = objects;
+	args.poपूर्णांकer = objects;
 	objects[0].type = ACPI_TYPE_INTEGER;
-	objects[0].integer.value = space_id;
+	objects[0].पूर्णांकeger.value = space_id;
 	objects[1].type = ACPI_TYPE_INTEGER;
-	objects[1].integer.value = ACPI_REG_CONNECT;
+	objects[1].पूर्णांकeger.value = ACPI_REG_CONNECT;
 
-	(void)acpi_evaluate_object(reg_method, NULL, &args, NULL);
+	(व्योम)acpi_evaluate_object(reg_method, शून्य, &args, शून्य);
 
-exit:
-	/* We ignore all errors from above, don't care */
+निकास:
+	/* We ignore all errors from above, करोn't care */
 
-	(void)acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	return_VOID;
-}
+	(व्योम)acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
+	वापस_VOID;
+पूर्ण

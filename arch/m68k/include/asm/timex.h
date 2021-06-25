@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * linux/include/asm-m68k/timex.h
+ * linux/include/यंत्र-m68k/समयx.h
  *
- * m68k architecture timex specifications
+ * m68k architecture समयx specअगरications
  */
-#ifndef _ASMm68K_TIMEX_H
-#define _ASMm68K_TIMEX_H
+#अगर_अघोषित _ASMm68K_TIMEX_H
+#घोषणा _ASMm68K_TIMEX_H
 
-#ifdef CONFIG_COLDFIRE
+#अगर_घोषित CONFIG_COLDFIRE
 /*
- * CLOCK_TICK_RATE should give the underlying frequency of the tick timer
- * to make ntp work best.  For Coldfires, that's the main clock.
+ * CLOCK_TICK_RATE should give the underlying frequency of the tick समयr
+ * to make ntp work best.  For Coldfires, that's the मुख्य घड़ी.
  */
-#include <asm/coldfire.h>
-#define CLOCK_TICK_RATE	MCF_CLK
-#else
+#समावेश <यंत्र/coldfire.h>
+#घोषणा CLOCK_TICK_RATE	MCF_CLK
+#अन्यथा
 /*
- * This default CLOCK_TICK_RATE is probably wrong for many 68k boards
- * Users of those boards will need to check and modify accordingly
+ * This शेष CLOCK_TICK_RATE is probably wrong क्रम many 68k boards
+ * Users of those boards will need to check and modअगरy accordingly
  */
-#define CLOCK_TICK_RATE	1193180 /* Underlying HZ */
-#endif
+#घोषणा CLOCK_TICK_RATE	1193180 /* Underlying HZ */
+#पूर्ण_अगर
 
-typedef unsigned long cycles_t;
+प्रकार अचिन्हित दीर्घ cycles_t;
 
-static inline cycles_t get_cycles(void)
-{
-	return 0;
-}
+अटल अंतरभूत cycles_t get_cycles(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-extern unsigned long (*mach_random_get_entropy)(void);
+बाह्य अचिन्हित दीर्घ (*mach_अक्रमom_get_entropy)(व्योम);
 
-static inline unsigned long random_get_entropy(void)
-{
-	if (mach_random_get_entropy)
-		return mach_random_get_entropy();
-	return 0;
-}
-#define random_get_entropy	random_get_entropy
+अटल अंतरभूत अचिन्हित दीर्घ अक्रमom_get_entropy(व्योम)
+अणु
+	अगर (mach_अक्रमom_get_entropy)
+		वापस mach_अक्रमom_get_entropy();
+	वापस 0;
+पूर्ण
+#घोषणा अक्रमom_get_entropy	अक्रमom_get_entropy
 
-#endif
+#पूर्ण_अगर

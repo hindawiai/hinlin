@@ -1,198 +1,199 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/of_irq.h>
-#include "edp.h"
+#समावेश <linux/of_irq.h>
+#समावेश "edp.h"
 
-static irqreturn_t edp_irq(int irq, void *dev_id)
-{
-	struct msm_edp *edp = dev_id;
+अटल irqवापस_t edp_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा msm_edp *edp = dev_id;
 
 	/* Process eDP irq */
-	return msm_edp_ctrl_irq(edp->ctrl);
-}
+	वापस msm_edp_ctrl_irq(edp->ctrl);
+पूर्ण
 
-static void edp_destroy(struct platform_device *pdev)
-{
-	struct msm_edp *edp = platform_get_drvdata(pdev);
+अटल व्योम edp_destroy(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा msm_edp *edp = platक्रमm_get_drvdata(pdev);
 
-	if (!edp)
-		return;
+	अगर (!edp)
+		वापस;
 
-	if (edp->ctrl) {
+	अगर (edp->ctrl) अणु
 		msm_edp_ctrl_destroy(edp->ctrl);
-		edp->ctrl = NULL;
-	}
+		edp->ctrl = शून्य;
+	पूर्ण
 
-	platform_set_drvdata(pdev, NULL);
-}
+	platक्रमm_set_drvdata(pdev, शून्य);
+पूर्ण
 
-/* construct eDP at bind/probe time, grab all the resources. */
-static struct msm_edp *edp_init(struct platform_device *pdev)
-{
-	struct msm_edp *edp = NULL;
-	int ret;
+/* स्थिरruct eDP at bind/probe समय, grab all the resources. */
+अटल काष्ठा msm_edp *edp_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा msm_edp *edp = शून्य;
+	पूर्णांक ret;
 
-	if (!pdev) {
+	अगर (!pdev) अणु
 		pr_err("no eDP device\n");
 		ret = -ENXIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	edp = devm_kzalloc(&pdev->dev, sizeof(*edp), GFP_KERNEL);
-	if (!edp) {
+	edp = devm_kzalloc(&pdev->dev, माप(*edp), GFP_KERNEL);
+	अगर (!edp) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	DBG("eDP probed=%p", edp);
 
 	edp->pdev = pdev;
-	platform_set_drvdata(pdev, edp);
+	platक्रमm_set_drvdata(pdev, edp);
 
 	ret = msm_edp_ctrl_init(edp);
-	if (ret)
-		goto fail;
+	अगर (ret)
+		जाओ fail;
 
-	return edp;
+	वापस edp;
 
 fail:
-	if (edp)
+	अगर (edp)
 		edp_destroy(pdev);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static int edp_bind(struct device *dev, struct device *master, void *data)
-{
-	struct drm_device *drm = dev_get_drvdata(master);
-	struct msm_drm_private *priv = drm->dev_private;
-	struct msm_edp *edp;
+अटल पूर्णांक edp_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(master);
+	काष्ठा msm_drm_निजी *priv = drm->dev_निजी;
+	काष्ठा msm_edp *edp;
 
 	DBG("");
-	edp = edp_init(to_platform_device(dev));
-	if (IS_ERR(edp))
-		return PTR_ERR(edp);
+	edp = edp_init(to_platक्रमm_device(dev));
+	अगर (IS_ERR(edp))
+		वापस PTR_ERR(edp);
 	priv->edp = edp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void edp_unbind(struct device *dev, struct device *master, void *data)
-{
-	struct drm_device *drm = dev_get_drvdata(master);
-	struct msm_drm_private *priv = drm->dev_private;
+अटल व्योम edp_unbind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(master);
+	काष्ठा msm_drm_निजी *priv = drm->dev_निजी;
 
 	DBG("");
-	if (priv->edp) {
-		edp_destroy(to_platform_device(dev));
-		priv->edp = NULL;
-	}
-}
+	अगर (priv->edp) अणु
+		edp_destroy(to_platक्रमm_device(dev));
+		priv->edp = शून्य;
+	पूर्ण
+पूर्ण
 
-static const struct component_ops edp_ops = {
+अटल स्थिर काष्ठा component_ops edp_ops = अणु
 		.bind   = edp_bind,
 		.unbind = edp_unbind,
-};
+पूर्ण;
 
-static int edp_dev_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक edp_dev_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	DBG("");
-	return component_add(&pdev->dev, &edp_ops);
-}
+	वापस component_add(&pdev->dev, &edp_ops);
+पूर्ण
 
-static int edp_dev_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक edp_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	DBG("");
 	component_del(&pdev->dev, &edp_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id dt_match[] = {
-	{ .compatible = "qcom,mdss-edp" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id dt_match[] = अणु
+	अणु .compatible = "qcom,mdss-edp" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver edp_driver = {
+अटल काष्ठा platक्रमm_driver edp_driver = अणु
 	.probe = edp_dev_probe,
-	.remove = edp_dev_remove,
-	.driver = {
+	.हटाओ = edp_dev_हटाओ,
+	.driver = अणु
 		.name = "msm_edp",
 		.of_match_table = dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-void __init msm_edp_register(void)
-{
+व्योम __init msm_edp_रेजिस्टर(व्योम)
+अणु
 	DBG("");
-	platform_driver_register(&edp_driver);
-}
+	platक्रमm_driver_रेजिस्टर(&edp_driver);
+पूर्ण
 
-void __exit msm_edp_unregister(void)
-{
+व्योम __निकास msm_edp_unरेजिस्टर(व्योम)
+अणु
 	DBG("");
-	platform_driver_unregister(&edp_driver);
-}
+	platक्रमm_driver_unरेजिस्टर(&edp_driver);
+पूर्ण
 
 /* Second part of initialization, the drm/kms level modeset_init */
-int msm_edp_modeset_init(struct msm_edp *edp, struct drm_device *dev,
-				struct drm_encoder *encoder)
-{
-	struct platform_device *pdev = edp->pdev;
-	struct msm_drm_private *priv = dev->dev_private;
-	int ret;
+पूर्णांक msm_edp_modeset_init(काष्ठा msm_edp *edp, काष्ठा drm_device *dev,
+				काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा platक्रमm_device *pdev = edp->pdev;
+	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
+	पूर्णांक ret;
 
 	edp->encoder = encoder;
 	edp->dev = dev;
 
 	edp->bridge = msm_edp_bridge_init(edp);
-	if (IS_ERR(edp->bridge)) {
+	अगर (IS_ERR(edp->bridge)) अणु
 		ret = PTR_ERR(edp->bridge);
 		DRM_DEV_ERROR(dev->dev, "failed to create eDP bridge: %d\n", ret);
-		edp->bridge = NULL;
-		goto fail;
-	}
+		edp->bridge = शून्य;
+		जाओ fail;
+	पूर्ण
 
 	edp->connector = msm_edp_connector_init(edp);
-	if (IS_ERR(edp->connector)) {
+	अगर (IS_ERR(edp->connector)) अणु
 		ret = PTR_ERR(edp->connector);
 		DRM_DEV_ERROR(dev->dev, "failed to create eDP connector: %d\n", ret);
-		edp->connector = NULL;
-		goto fail;
-	}
+		edp->connector = शून्य;
+		जाओ fail;
+	पूर्ण
 
 	edp->irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
-	if (edp->irq < 0) {
+	अगर (edp->irq < 0) अणु
 		ret = edp->irq;
 		DRM_DEV_ERROR(dev->dev, "failed to get IRQ: %d\n", ret);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, edp->irq,
 			edp_irq, IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 			"edp_isr", edp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_DEV_ERROR(dev->dev, "failed to request IRQ%u: %d\n",
 				edp->irq, ret);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	priv->bridges[priv->num_bridges++]       = edp->bridge;
 	priv->connectors[priv->num_connectors++] = edp->connector;
 
-	return 0;
+	वापस 0;
 
 fail:
 	/* bridge/connector are normally destroyed by drm */
-	if (edp->bridge) {
+	अगर (edp->bridge) अणु
 		edp_bridge_destroy(edp->bridge);
-		edp->bridge = NULL;
-	}
-	if (edp->connector) {
+		edp->bridge = शून्य;
+	पूर्ण
+	अगर (edp->connector) अणु
 		edp->connector->funcs->destroy(edp->connector);
-		edp->connector = NULL;
-	}
+		edp->connector = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

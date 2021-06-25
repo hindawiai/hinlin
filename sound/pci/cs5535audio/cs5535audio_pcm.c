@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for audio on multifunction CS5535 companion device
+ * Driver क्रम audio on multअगरunction CS5535 companion device
  * Copyright (C) Jaya Kumar
  *
  * Based on Jaroslav Kysela and Takashi Iwai's examples.
  * This work was sponsored by CIS(M) Sdn Bhd.
  *
- * todo: add be fmt support, spdif, pm
+ * toकरो: add be fmt support, spdअगर, pm
  */
 
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <sound/core.h>
-#include <sound/control.h>
-#include <sound/initval.h>
-#include <sound/asoundef.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/ac97_codec.h>
-#include "cs5535audio.h"
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/ac97_codec.h>
+#समावेश "cs5535audio.h"
 
-static const struct snd_pcm_hardware snd_cs5535audio_playback =
-{
+अटल स्थिर काष्ठा snd_pcm_hardware snd_cs5535audio_playback =
+अणु
 	.info =			(
 				SNDRV_PCM_INFO_MMAP |
 				SNDRV_PCM_INFO_INTERLEAVED |
@@ -30,7 +31,7 @@ static const struct snd_pcm_hardware snd_cs5535audio_playback =
 		 		SNDRV_PCM_INFO_PAUSE |
 				SNDRV_PCM_INFO_RESUME
 				),
-	.formats =		(
+	.क्रमmats =		(
 				SNDRV_PCM_FMTBIT_S16_LE
 				),
 	.rates =		(
@@ -46,18 +47,18 @@ static const struct snd_pcm_hardware snd_cs5535audio_playback =
 	.period_bytes_max =	(64*1024 - 16),
 	.periods_min =		1,
 	.periods_max =		CS5535AUDIO_MAX_DESCRIPTORS,
-	.fifo_size =		0,
-};
+	.fअगरo_size =		0,
+पूर्ण;
 
-static const struct snd_pcm_hardware snd_cs5535audio_capture =
-{
+अटल स्थिर काष्ठा snd_pcm_hardware snd_cs5535audio_capture =
+अणु
 	.info =			(
 				SNDRV_PCM_INFO_MMAP |
 				SNDRV_PCM_INFO_INTERLEAVED |
 		 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		 		SNDRV_PCM_INFO_MMAP_VALID
 				),
-	.formats =		(
+	.क्रमmats =		(
 				SNDRV_PCM_FMTBIT_S16_LE
 				),
 	.rates =		(
@@ -73,80 +74,80 @@ static const struct snd_pcm_hardware snd_cs5535audio_capture =
 	.period_bytes_max =	(64*1024 - 16),
 	.periods_min =		1,
 	.periods_max =		CS5535AUDIO_MAX_DESCRIPTORS,
-	.fifo_size =		0,
-};
+	.fअगरo_size =		0,
+पूर्ण;
 
-static int snd_cs5535audio_playback_open(struct snd_pcm_substream *substream)
-{
-	int err;
-	struct cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_cs5535audio_playback_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक err;
+	काष्ठा cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
-	runtime->hw = snd_cs5535audio_playback;
-	runtime->hw.rates = cs5535au->ac97->rates[AC97_RATES_FRONT_DAC];
-	snd_pcm_limit_hw_rates(runtime);
+	runसमय->hw = snd_cs5535audio_playback;
+	runसमय->hw.rates = cs5535au->ac97->rates[AC97_RATES_FRONT_DAC];
+	snd_pcm_limit_hw_rates(runसमय);
 	cs5535au->playback_substream = substream;
-	runtime->private_data = &(cs5535au->dmas[CS5535AUDIO_DMA_PLAYBACK]);
-	if ((err = snd_pcm_hw_constraint_integer(runtime,
+	runसमय->निजी_data = &(cs5535au->dmas[CS5535AUDIO_DMA_PLAYBACK]);
+	अगर ((err = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
 				SNDRV_PCM_HW_PARAM_PERIODS)) < 0)
-		return err;
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs5535audio_playback_close(struct snd_pcm_substream *substream)
-{
-	return 0;
-}
+अटल पूर्णांक snd_cs5535audio_playback_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस 0;
+पूर्ण
 
-#define CS5535AUDIO_DESC_LIST_SIZE \
-	PAGE_ALIGN(CS5535AUDIO_MAX_DESCRIPTORS * sizeof(struct cs5535audio_dma_desc))
+#घोषणा CS5535AUDIO_DESC_LIST_SIZE \
+	PAGE_ALIGN(CS5535AUDIO_MAX_DESCRIPTORS * माप(काष्ठा cs5535audio_dma_desc))
 
-static int cs5535audio_build_dma_packets(struct cs5535audio *cs5535au,
-					 struct cs5535audio_dma *dma,
-					 struct snd_pcm_substream *substream,
-					 unsigned int periods,
-					 unsigned int period_bytes)
-{
-	unsigned int i;
+अटल पूर्णांक cs5535audio_build_dma_packets(काष्ठा cs5535audio *cs5535au,
+					 काष्ठा cs5535audio_dma *dma,
+					 काष्ठा snd_pcm_substream *substream,
+					 अचिन्हित पूर्णांक periods,
+					 अचिन्हित पूर्णांक period_bytes)
+अणु
+	अचिन्हित पूर्णांक i;
 	u32 addr, desc_addr, jmpprd_addr;
-	struct cs5535audio_dma_desc *lastdesc;
+	काष्ठा cs5535audio_dma_desc *lastdesc;
 
-	if (periods > CS5535AUDIO_MAX_DESCRIPTORS)
-		return -ENOMEM;
+	अगर (periods > CS5535AUDIO_MAX_DESCRIPTORS)
+		वापस -ENOMEM;
 
-	if (dma->desc_buf.area == NULL) {
-		if (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV,
+	अगर (dma->desc_buf.area == शून्य) अणु
+		अगर (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV,
 					&cs5535au->pci->dev,
 					CS5535AUDIO_DESC_LIST_SIZE+1,
 					&dma->desc_buf) < 0)
-			return -ENOMEM;
+			वापस -ENOMEM;
 		dma->period_bytes = dma->periods = 0;
-	}
+	पूर्ण
 
-	if (dma->periods == periods && dma->period_bytes == period_bytes)
-		return 0;
+	अगर (dma->periods == periods && dma->period_bytes == period_bytes)
+		वापस 0;
 
 	/* the u32 cast is okay because in snd*create we successfully told
    	   pci alloc that we're only 32 bit capable so the uppper will be 0 */
-	addr = (u32) substream->runtime->dma_addr;
+	addr = (u32) substream->runसमय->dma_addr;
 	desc_addr = (u32) dma->desc_buf.addr;
-	for (i = 0; i < periods; i++) {
-		struct cs5535audio_dma_desc *desc =
-			&((struct cs5535audio_dma_desc *) dma->desc_buf.area)[i];
+	क्रम (i = 0; i < periods; i++) अणु
+		काष्ठा cs5535audio_dma_desc *desc =
+			&((काष्ठा cs5535audio_dma_desc *) dma->desc_buf.area)[i];
 		desc->addr = cpu_to_le32(addr);
 		desc->size = cpu_to_le16(period_bytes);
 		desc->ctlreserved = cpu_to_le16(PRD_EOP);
-		desc_addr += sizeof(struct cs5535audio_dma_desc);
+		desc_addr += माप(काष्ठा cs5535audio_dma_desc);
 		addr += period_bytes;
-	}
-	/* we reserved one dummy descriptor at the end to do the PRD jump */
-	lastdesc = &((struct cs5535audio_dma_desc *) dma->desc_buf.area)[periods];
+	पूर्ण
+	/* we reserved one dummy descriptor at the end to करो the PRD jump */
+	lastdesc = &((काष्ठा cs5535audio_dma_desc *) dma->desc_buf.area)[periods];
 	lastdesc->addr = cpu_to_le32((u32) dma->desc_buf.addr);
 	lastdesc->size = 0;
 	lastdesc->ctlreserved = cpu_to_le16(PRD_JMP);
 	jmpprd_addr = (u32)dma->desc_buf.addr +
-		sizeof(struct cs5535audio_dma_desc) * periods;
+		माप(काष्ठा cs5535audio_dma_desc) * periods;
 
 	dma->substream = substream;
 	dma->period_bytes = period_bytes;
@@ -155,262 +156,262 @@ static int cs5535audio_build_dma_packets(struct cs5535audio *cs5535au,
 	dma->ops->disable_dma(cs5535au);
 	dma->ops->setup_prd(cs5535au, jmpprd_addr);
 	spin_unlock_irq(&cs5535au->reg_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cs5535audio_playback_enable_dma(struct cs5535audio *cs5535au)
-{
-	cs_writeb(cs5535au, ACC_BM0_CMD, BM_CTL_EN);
-}
+अटल व्योम cs5535audio_playback_enable_dma(काष्ठा cs5535audio *cs5535au)
+अणु
+	cs_ग_लिखोb(cs5535au, ACC_BM0_CMD, BM_CTL_EN);
+पूर्ण
 
-static void cs5535audio_playback_disable_dma(struct cs5535audio *cs5535au)
-{
-	cs_writeb(cs5535au, ACC_BM0_CMD, 0);
-}
+अटल व्योम cs5535audio_playback_disable_dma(काष्ठा cs5535audio *cs5535au)
+अणु
+	cs_ग_लिखोb(cs5535au, ACC_BM0_CMD, 0);
+पूर्ण
 
-static void cs5535audio_playback_pause_dma(struct cs5535audio *cs5535au)
-{
-	cs_writeb(cs5535au, ACC_BM0_CMD, BM_CTL_PAUSE);
-}
+अटल व्योम cs5535audio_playback_छोड़ो_dma(काष्ठा cs5535audio *cs5535au)
+अणु
+	cs_ग_लिखोb(cs5535au, ACC_BM0_CMD, BM_CTL_PAUSE);
+पूर्ण
 
-static void cs5535audio_playback_setup_prd(struct cs5535audio *cs5535au,
+अटल व्योम cs5535audio_playback_setup_prd(काष्ठा cs5535audio *cs5535au,
 					   u32 prd_addr)
-{
-	cs_writel(cs5535au, ACC_BM0_PRD, prd_addr);
-}
+अणु
+	cs_ग_लिखोl(cs5535au, ACC_BM0_PRD, prd_addr);
+पूर्ण
 
-static u32 cs5535audio_playback_read_prd(struct cs5535audio *cs5535au)
-{
-	return cs_readl(cs5535au, ACC_BM0_PRD);
-}
+अटल u32 cs5535audio_playback_पढ़ो_prd(काष्ठा cs5535audio *cs5535au)
+अणु
+	वापस cs_पढ़ोl(cs5535au, ACC_BM0_PRD);
+पूर्ण
 
-static u32 cs5535audio_playback_read_dma_pntr(struct cs5535audio *cs5535au)
-{
-	return cs_readl(cs5535au, ACC_BM0_PNTR);
-}
+अटल u32 cs5535audio_playback_पढ़ो_dma_pntr(काष्ठा cs5535audio *cs5535au)
+अणु
+	वापस cs_पढ़ोl(cs5535au, ACC_BM0_PNTR);
+पूर्ण
 
-static void cs5535audio_capture_enable_dma(struct cs5535audio *cs5535au)
-{
-	cs_writeb(cs5535au, ACC_BM1_CMD, BM_CTL_EN);
-}
+अटल व्योम cs5535audio_capture_enable_dma(काष्ठा cs5535audio *cs5535au)
+अणु
+	cs_ग_लिखोb(cs5535au, ACC_BM1_CMD, BM_CTL_EN);
+पूर्ण
 
-static void cs5535audio_capture_disable_dma(struct cs5535audio *cs5535au)
-{
-	cs_writeb(cs5535au, ACC_BM1_CMD, 0);
-}
+अटल व्योम cs5535audio_capture_disable_dma(काष्ठा cs5535audio *cs5535au)
+अणु
+	cs_ग_लिखोb(cs5535au, ACC_BM1_CMD, 0);
+पूर्ण
 
-static void cs5535audio_capture_pause_dma(struct cs5535audio *cs5535au)
-{
-	cs_writeb(cs5535au, ACC_BM1_CMD, BM_CTL_PAUSE);
-}
+अटल व्योम cs5535audio_capture_छोड़ो_dma(काष्ठा cs5535audio *cs5535au)
+अणु
+	cs_ग_लिखोb(cs5535au, ACC_BM1_CMD, BM_CTL_PAUSE);
+पूर्ण
 
-static void cs5535audio_capture_setup_prd(struct cs5535audio *cs5535au,
+अटल व्योम cs5535audio_capture_setup_prd(काष्ठा cs5535audio *cs5535au,
 					  u32 prd_addr)
-{
-	cs_writel(cs5535au, ACC_BM1_PRD, prd_addr);
-}
+अणु
+	cs_ग_लिखोl(cs5535au, ACC_BM1_PRD, prd_addr);
+पूर्ण
 
-static u32 cs5535audio_capture_read_prd(struct cs5535audio *cs5535au)
-{
-	return cs_readl(cs5535au, ACC_BM1_PRD);
-}
+अटल u32 cs5535audio_capture_पढ़ो_prd(काष्ठा cs5535audio *cs5535au)
+अणु
+	वापस cs_पढ़ोl(cs5535au, ACC_BM1_PRD);
+पूर्ण
 
-static u32 cs5535audio_capture_read_dma_pntr(struct cs5535audio *cs5535au)
-{
-	return cs_readl(cs5535au, ACC_BM1_PNTR);
-}
+अटल u32 cs5535audio_capture_पढ़ो_dma_pntr(काष्ठा cs5535audio *cs5535au)
+अणु
+	वापस cs_पढ़ोl(cs5535au, ACC_BM1_PNTR);
+पूर्ण
 
-static void cs5535audio_clear_dma_packets(struct cs5535audio *cs5535au,
-					  struct cs5535audio_dma *dma,
-					  struct snd_pcm_substream *substream)
-{
-	snd_dma_free_pages(&dma->desc_buf);
-	dma->desc_buf.area = NULL;
-	dma->substream = NULL;
-}
+अटल व्योम cs5535audio_clear_dma_packets(काष्ठा cs5535audio *cs5535au,
+					  काष्ठा cs5535audio_dma *dma,
+					  काष्ठा snd_pcm_substream *substream)
+अणु
+	snd_dma_मुक्त_pages(&dma->desc_buf);
+	dma->desc_buf.area = शून्य;
+	dma->substream = शून्य;
+पूर्ण
 
-static int snd_cs5535audio_hw_params(struct snd_pcm_substream *substream,
-				     struct snd_pcm_hw_params *hw_params)
-{
-	struct cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
-	struct cs5535audio_dma *dma = substream->runtime->private_data;
-	int err;
+अटल पूर्णांक snd_cs5535audio_hw_params(काष्ठा snd_pcm_substream *substream,
+				     काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
+	काष्ठा cs5535audio_dma *dma = substream->runसमय->निजी_data;
+	पूर्णांक err;
 
-	dma->buf_addr = substream->runtime->dma_addr;
+	dma->buf_addr = substream->runसमय->dma_addr;
 	dma->buf_bytes = params_buffer_bytes(hw_params);
 
 	err = cs5535audio_build_dma_packets(cs5535au, dma, substream,
 					    params_periods(hw_params),
 					    params_period_bytes(hw_params));
-	if (!err)
-		dma->pcm_open_flag = 1;
+	अगर (!err)
+		dma->pcm_खोलो_flag = 1;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int snd_cs5535audio_hw_free(struct snd_pcm_substream *substream)
-{
-	struct cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
-	struct cs5535audio_dma *dma = substream->runtime->private_data;
+अटल पूर्णांक snd_cs5535audio_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
+	काष्ठा cs5535audio_dma *dma = substream->runसमय->निजी_data;
 
-	if (dma->pcm_open_flag) {
-		if (substream == cs5535au->playback_substream)
-			snd_ac97_update_power(cs5535au->ac97,
+	अगर (dma->pcm_खोलो_flag) अणु
+		अगर (substream == cs5535au->playback_substream)
+			snd_ac97_update_घातer(cs5535au->ac97,
 					AC97_PCM_FRONT_DAC_RATE, 0);
-		else
-			snd_ac97_update_power(cs5535au->ac97,
+		अन्यथा
+			snd_ac97_update_घातer(cs5535au->ac97,
 					AC97_PCM_LR_ADC_RATE, 0);
-		dma->pcm_open_flag = 0;
-	}
+		dma->pcm_खोलो_flag = 0;
+	पूर्ण
 	cs5535audio_clear_dma_packets(cs5535au, dma, substream);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs5535audio_playback_prepare(struct snd_pcm_substream *substream)
-{
-	struct cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
-	return snd_ac97_set_rate(cs5535au->ac97, AC97_PCM_FRONT_DAC_RATE,
-				 substream->runtime->rate);
-}
+अटल पूर्णांक snd_cs5535audio_playback_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
+	वापस snd_ac97_set_rate(cs5535au->ac97, AC97_PCM_FRONT_DAC_RATE,
+				 substream->runसमय->rate);
+पूर्ण
 
-static int snd_cs5535audio_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
-	struct cs5535audio_dma *dma = substream->runtime->private_data;
-	int err = 0;
+अटल पूर्णांक snd_cs5535audio_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
+	काष्ठा cs5535audio_dma *dma = substream->runसमय->निजी_data;
+	पूर्णांक err = 0;
 
 	spin_lock(&cs5535au->reg_lock);
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		dma->ops->pause_dma(cs5535au);
-		break;
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		dma->ops->छोड़ो_dma(cs5535au);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		dma->ops->enable_dma(cs5535au);
-		break;
-	case SNDRV_PCM_TRIGGER_START:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_START:
 		dma->ops->enable_dma(cs5535au);
-		break;
-	case SNDRV_PCM_TRIGGER_RESUME:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_RESUME:
 		dma->ops->enable_dma(cs5535au);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
 		dma->ops->disable_dma(cs5535au);
-		break;
-	case SNDRV_PCM_TRIGGER_SUSPEND:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
 		dma->ops->disable_dma(cs5535au);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(cs5535au->card->dev, "unhandled trigger\n");
 		err = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock(&cs5535au->reg_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static snd_pcm_uframes_t snd_cs5535audio_pcm_pointer(struct snd_pcm_substream
+अटल snd_pcm_uframes_t snd_cs5535audio_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream
 							*substream)
-{
-	struct cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
+अणु
+	काष्ठा cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
 	u32 curdma;
-	struct cs5535audio_dma *dma;
+	काष्ठा cs5535audio_dma *dma;
 
-	dma = substream->runtime->private_data;
-	curdma = dma->ops->read_dma_pntr(cs5535au);
-	if (curdma < dma->buf_addr) {
+	dma = substream->runसमय->निजी_data;
+	curdma = dma->ops->पढ़ो_dma_pntr(cs5535au);
+	अगर (curdma < dma->buf_addr) अणु
 		dev_err(cs5535au->card->dev, "curdma=%x < %x bufaddr.\n",
 					curdma, dma->buf_addr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	curdma -= dma->buf_addr;
-	if (curdma >= dma->buf_bytes) {
+	अगर (curdma >= dma->buf_bytes) अणु
 		dev_err(cs5535au->card->dev, "diff=%x >= %x buf_bytes.\n",
 					curdma, dma->buf_bytes);
-		return 0;
-	}
-	return bytes_to_frames(substream->runtime, curdma);
-}
+		वापस 0;
+	पूर्ण
+	वापस bytes_to_frames(substream->runसमय, curdma);
+पूर्ण
 
-static int snd_cs5535audio_capture_open(struct snd_pcm_substream *substream)
-{
-	int err;
-	struct cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_cs5535audio_capture_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक err;
+	काष्ठा cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
-	runtime->hw = snd_cs5535audio_capture;
-	runtime->hw.rates = cs5535au->ac97->rates[AC97_RATES_ADC];
-	snd_pcm_limit_hw_rates(runtime);
+	runसमय->hw = snd_cs5535audio_capture;
+	runसमय->hw.rates = cs5535au->ac97->rates[AC97_RATES_ADC];
+	snd_pcm_limit_hw_rates(runसमय);
 	cs5535au->capture_substream = substream;
-	runtime->private_data = &(cs5535au->dmas[CS5535AUDIO_DMA_CAPTURE]);
-	if ((err = snd_pcm_hw_constraint_integer(runtime,
+	runसमय->निजी_data = &(cs5535au->dmas[CS5535AUDIO_DMA_CAPTURE]);
+	अगर ((err = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
 					 SNDRV_PCM_HW_PARAM_PERIODS)) < 0)
-		return err;
-	olpc_capture_open(cs5535au->ac97);
-	return 0;
-}
+		वापस err;
+	olpc_capture_खोलो(cs5535au->ac97);
+	वापस 0;
+पूर्ण
 
-static int snd_cs5535audio_capture_close(struct snd_pcm_substream *substream)
-{
-	struct cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
-	olpc_capture_close(cs5535au->ac97);
-	return 0;
-}
+अटल पूर्णांक snd_cs5535audio_capture_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
+	olpc_capture_बंद(cs5535au->ac97);
+	वापस 0;
+पूर्ण
 
-static int snd_cs5535audio_capture_prepare(struct snd_pcm_substream *substream)
-{
-	struct cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
-	return snd_ac97_set_rate(cs5535au->ac97, AC97_PCM_LR_ADC_RATE,
-				 substream->runtime->rate);
-}
+अटल पूर्णांक snd_cs5535audio_capture_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा cs5535audio *cs5535au = snd_pcm_substream_chip(substream);
+	वापस snd_ac97_set_rate(cs5535au->ac97, AC97_PCM_LR_ADC_RATE,
+				 substream->runसमय->rate);
+पूर्ण
 
-static const struct snd_pcm_ops snd_cs5535audio_playback_ops = {
-	.open =		snd_cs5535audio_playback_open,
-	.close =	snd_cs5535audio_playback_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_cs5535audio_playback_ops = अणु
+	.खोलो =		snd_cs5535audio_playback_खोलो,
+	.बंद =	snd_cs5535audio_playback_बंद,
 	.hw_params =	snd_cs5535audio_hw_params,
-	.hw_free =	snd_cs5535audio_hw_free,
+	.hw_मुक्त =	snd_cs5535audio_hw_मुक्त,
 	.prepare =	snd_cs5535audio_playback_prepare,
 	.trigger =	snd_cs5535audio_trigger,
-	.pointer =	snd_cs5535audio_pcm_pointer,
-};
+	.poपूर्णांकer =	snd_cs5535audio_pcm_poपूर्णांकer,
+पूर्ण;
 
-static const struct snd_pcm_ops snd_cs5535audio_capture_ops = {
-	.open =		snd_cs5535audio_capture_open,
-	.close =	snd_cs5535audio_capture_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_cs5535audio_capture_ops = अणु
+	.खोलो =		snd_cs5535audio_capture_खोलो,
+	.बंद =	snd_cs5535audio_capture_बंद,
 	.hw_params =	snd_cs5535audio_hw_params,
-	.hw_free =	snd_cs5535audio_hw_free,
+	.hw_मुक्त =	snd_cs5535audio_hw_मुक्त,
 	.prepare =	snd_cs5535audio_capture_prepare,
 	.trigger =	snd_cs5535audio_trigger,
-	.pointer =	snd_cs5535audio_pcm_pointer,
-};
+	.poपूर्णांकer =	snd_cs5535audio_pcm_poपूर्णांकer,
+पूर्ण;
 
-static const struct cs5535audio_dma_ops snd_cs5535audio_playback_dma_ops = {
+अटल स्थिर काष्ठा cs5535audio_dma_ops snd_cs5535audio_playback_dma_ops = अणु
         .type = CS5535AUDIO_DMA_PLAYBACK,
         .enable_dma = cs5535audio_playback_enable_dma,
         .disable_dma = cs5535audio_playback_disable_dma,
         .setup_prd = cs5535audio_playback_setup_prd,
-        .read_prd = cs5535audio_playback_read_prd,
-        .pause_dma = cs5535audio_playback_pause_dma,
-        .read_dma_pntr = cs5535audio_playback_read_dma_pntr,
-};
+        .पढ़ो_prd = cs5535audio_playback_पढ़ो_prd,
+        .छोड़ो_dma = cs5535audio_playback_छोड़ो_dma,
+        .पढ़ो_dma_pntr = cs5535audio_playback_पढ़ो_dma_pntr,
+पूर्ण;
 
-static const struct cs5535audio_dma_ops snd_cs5535audio_capture_dma_ops = {
+अटल स्थिर काष्ठा cs5535audio_dma_ops snd_cs5535audio_capture_dma_ops = अणु
         .type = CS5535AUDIO_DMA_CAPTURE,
         .enable_dma = cs5535audio_capture_enable_dma,
         .disable_dma = cs5535audio_capture_disable_dma,
         .setup_prd = cs5535audio_capture_setup_prd,
-        .read_prd = cs5535audio_capture_read_prd,
-        .pause_dma = cs5535audio_capture_pause_dma,
-        .read_dma_pntr = cs5535audio_capture_read_dma_pntr,
-};
+        .पढ़ो_prd = cs5535audio_capture_पढ़ो_prd,
+        .छोड़ो_dma = cs5535audio_capture_छोड़ो_dma,
+        .पढ़ो_dma_pntr = cs5535audio_capture_पढ़ो_dma_pntr,
+पूर्ण;
 
-int snd_cs5535audio_pcm(struct cs5535audio *cs5535au)
-{
-	struct snd_pcm *pcm;
-	int err;
+पूर्णांक snd_cs5535audio_pcm(काष्ठा cs5535audio *cs5535au)
+अणु
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक err;
 
 	err = snd_pcm_new(cs5535au->card, "CS5535 Audio", 0, 1, 1, &pcm);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	cs5535au->dmas[CS5535AUDIO_DMA_PLAYBACK].ops =
 					&snd_cs5535audio_playback_dma_ops;
@@ -421,15 +422,15 @@ int snd_cs5535audio_pcm(struct cs5535audio *cs5535au)
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE,
 					&snd_cs5535audio_capture_ops);
 
-	pcm->private_data = cs5535au;
+	pcm->निजी_data = cs5535au;
 	pcm->info_flags = 0;
-	strcpy(pcm->name, "CS5535 Audio");
+	म_नकल(pcm->name, "CS5535 Audio");
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 				       &cs5535au->pci->dev,
 				       64*1024, 128*1024);
 	cs5535au->pcm = pcm;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

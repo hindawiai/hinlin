@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
-#ifndef __ASM_ARC_PAGE_H
-#define __ASM_ARC_PAGE_H
+#अगर_अघोषित __ASM_ARC_PAGE_H
+#घोषणा __ASM_ARC_PAGE_H
 
-#include <uapi/asm/page.h>
+#समावेश <uapi/यंत्र/page.h>
 
-#ifdef CONFIG_ARC_HAS_PAE40
+#अगर_घोषित CONFIG_ARC_HAS_PAE40
 
-#define MAX_POSSIBLE_PHYSMEM_BITS	40
-#define PAGE_MASK_PHYS			(0xff00000000ull | PAGE_MASK)
+#घोषणा MAX_POSSIBLE_PHYSMEM_BITS	40
+#घोषणा PAGE_MASK_PHYS			(0xff00000000ull | PAGE_MASK)
 
-#else /* CONFIG_ARC_HAS_PAE40 */
+#अन्यथा /* CONFIG_ARC_HAS_PAE40 */
 
-#define MAX_POSSIBLE_PHYSMEM_BITS	32
-#define PAGE_MASK_PHYS			PAGE_MASK
+#घोषणा MAX_POSSIBLE_PHYSMEM_BITS	32
+#घोषणा PAGE_MASK_PHYS			PAGE_MASK
 
-#endif /* CONFIG_ARC_HAS_PAE40 */
+#पूर्ण_अगर /* CONFIG_ARC_HAS_PAE40 */
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#define clear_page(paddr)		memset((paddr), 0, PAGE_SIZE)
-#define copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
-#define copy_page(to, from)		memcpy((to), (from), PAGE_SIZE)
+#घोषणा clear_page(paddr)		स_रखो((paddr), 0, PAGE_SIZE)
+#घोषणा copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
+#घोषणा copy_page(to, from)		स_नकल((to), (from), PAGE_SIZE)
 
-struct vm_area_struct;
-struct page;
+काष्ठा vm_area_काष्ठा;
+काष्ठा page;
 
-#define __HAVE_ARCH_COPY_USER_HIGHPAGE
+#घोषणा __HAVE_ARCH_COPY_USER_HIGHPAGE
 
-void copy_user_highpage(struct page *to, struct page *from,
-			unsigned long u_vaddr, struct vm_area_struct *vma);
-void clear_user_page(void *to, unsigned long u_vaddr, struct page *page);
+व्योम copy_user_highpage(काष्ठा page *to, काष्ठा page *from,
+			अचिन्हित दीर्घ u_vaddr, काष्ठा vm_area_काष्ठा *vma);
+व्योम clear_user_page(व्योम *to, अचिन्हित दीर्घ u_vaddr, काष्ठा page *page);
 
-#undef STRICT_MM_TYPECHECKS
+#अघोषित STRICT_MM_TYPECHECKS
 
-#ifdef STRICT_MM_TYPECHECKS
+#अगर_घोषित STRICT_MM_TYPECHECKS
 /*
  * These are used to make use of C type-checking..
  */
-typedef struct {
-#ifdef CONFIG_ARC_HAS_PAE40
-	unsigned long long pte;
-#else
-	unsigned long pte;
-#endif
-} pte_t;
-typedef struct {
-	unsigned long pgd;
-} pgd_t;
-typedef struct {
-	unsigned long pgprot;
-} pgprot_t;
+प्रकार काष्ठा अणु
+#अगर_घोषित CONFIG_ARC_HAS_PAE40
+	अचिन्हित दीर्घ दीर्घ pte;
+#अन्यथा
+	अचिन्हित दीर्घ pte;
+#पूर्ण_अगर
+पूर्ण pte_t;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ pgd;
+पूर्ण pgd_t;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ pgprot;
+पूर्ण pgprot_t;
 
-#define pte_val(x)      ((x).pte)
-#define pgd_val(x)      ((x).pgd)
-#define pgprot_val(x)   ((x).pgprot)
+#घोषणा pte_val(x)      ((x).pte)
+#घोषणा pgd_val(x)      ((x).pgd)
+#घोषणा pgprot_val(x)   ((x).pgprot)
 
-#define __pte(x)        ((pte_t) { (x) })
-#define __pgd(x)        ((pgd_t) { (x) })
-#define __pgprot(x)     ((pgprot_t) { (x) })
+#घोषणा __pte(x)        ((pte_t) अणु (x) पूर्ण)
+#घोषणा __pgd(x)        ((pgd_t) अणु (x) पूर्ण)
+#घोषणा __pgprot(x)     ((pgprot_t) अणु (x) पूर्ण)
 
-#define pte_pgprot(x) __pgprot(pte_val(x))
+#घोषणा pte_pgprot(x) __pgprot(pte_val(x))
 
-#else /* !STRICT_MM_TYPECHECKS */
+#अन्यथा /* !STRICT_MM_TYPECHECKS */
 
-#ifdef CONFIG_ARC_HAS_PAE40
-typedef unsigned long long pte_t;
-#else
-typedef unsigned long pte_t;
-#endif
-typedef unsigned long pgd_t;
-typedef unsigned long pgprot_t;
+#अगर_घोषित CONFIG_ARC_HAS_PAE40
+प्रकार अचिन्हित दीर्घ दीर्घ pte_t;
+#अन्यथा
+प्रकार अचिन्हित दीर्घ pte_t;
+#पूर्ण_अगर
+प्रकार अचिन्हित दीर्घ pgd_t;
+प्रकार अचिन्हित दीर्घ pgprot_t;
 
-#define pte_val(x)	(x)
-#define pgd_val(x)	(x)
-#define pgprot_val(x)	(x)
-#define __pte(x)	(x)
-#define __pgd(x)	(x)
-#define __pgprot(x)	(x)
-#define pte_pgprot(x)	(x)
+#घोषणा pte_val(x)	(x)
+#घोषणा pgd_val(x)	(x)
+#घोषणा pgprot_val(x)	(x)
+#घोषणा __pte(x)	(x)
+#घोषणा __pgd(x)	(x)
+#घोषणा __pgprot(x)	(x)
+#घोषणा pte_pgprot(x)	(x)
 
-#endif
+#पूर्ण_अगर
 
-typedef pte_t * pgtable_t;
+प्रकार pte_t * pgtable_t;
 
 /*
  * Use virt_to_pfn with caution:
@@ -93,49 +94,49 @@ typedef pte_t * pgtable_t;
  * As a rule of thumb, only use it in helpers starting with virt_
  * You have been warned !
  */
-#define virt_to_pfn(kaddr)	(__pa(kaddr) >> PAGE_SHIFT)
+#घोषणा virt_to_pfn(kaddr)	(__pa(kaddr) >> PAGE_SHIFT)
 
 /*
  * When HIGHMEM is enabled we have holes in the memory map so we need
- * pfn_valid() that takes into account the actual extents of the physical
+ * pfn_valid() that takes पूर्णांकo account the actual extents of the physical
  * memory
  */
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 
-extern unsigned long arch_pfn_offset;
-#define ARCH_PFN_OFFSET		arch_pfn_offset
+बाह्य अचिन्हित दीर्घ arch_pfn_offset;
+#घोषणा ARCH_PFN_OFFSET		arch_pfn_offset
 
-extern int pfn_valid(unsigned long pfn);
-#define pfn_valid		pfn_valid
+बाह्य पूर्णांक pfn_valid(अचिन्हित दीर्घ pfn);
+#घोषणा pfn_valid		pfn_valid
 
-#else /* CONFIG_HIGHMEM */
+#अन्यथा /* CONFIG_HIGHMEM */
 
-#define ARCH_PFN_OFFSET		virt_to_pfn(CONFIG_LINUX_RAM_BASE)
-#define pfn_valid(pfn)		(((pfn) - ARCH_PFN_OFFSET) < max_mapnr)
+#घोषणा ARCH_PFN_OFFSET		virt_to_pfn(CONFIG_LINUX_RAM_BASE)
+#घोषणा pfn_valid(pfn)		(((pfn) - ARCH_PFN_OFFSET) < max_mapnr)
 
-#endif /* CONFIG_HIGHMEM */
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
 /*
- * __pa, __va, virt_to_page (ALERT: deprecated, don't use them)
+ * __pa, __va, virt_to_page (ALERT: deprecated, करोn't use them)
  *
  * These macros have historically been misnamed
  * virt here means link-address/program-address as embedded in object code.
- * And for ARC, link-addr = physical address
+ * And क्रम ARC, link-addr = physical address
  */
-#define __pa(vaddr)  ((unsigned long)(vaddr))
-#define __va(paddr)  ((void *)((unsigned long)(paddr)))
+#घोषणा __pa(vaddr)  ((अचिन्हित दीर्घ)(vaddr))
+#घोषणा __va(paddr)  ((व्योम *)((अचिन्हित दीर्घ)(paddr)))
 
-#define virt_to_page(kaddr)	pfn_to_page(virt_to_pfn(kaddr))
-#define virt_addr_valid(kaddr)  pfn_valid(virt_to_pfn(kaddr))
+#घोषणा virt_to_page(kaddr)	pfn_to_page(virt_to_pfn(kaddr))
+#घोषणा virt_addr_valid(kaddr)  pfn_valid(virt_to_pfn(kaddr))
 
-/* Default Permissions for stack/heaps pages (Non Executable) */
-#define VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_NON_EXEC
+/* Default Permissions क्रम stack/heaps pages (Non Executable) */
+#घोषणा VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_NON_EXEC
 
-#define WANT_PAGE_VIRTUAL   1
+#घोषणा WANT_PAGE_VIRTUAL   1
 
-#include <asm-generic/memory_model.h>   /* page_to_pfn, pfn_to_page */
-#include <asm-generic/getorder.h>
+#समावेश <यंत्र-generic/memory_model.h>   /* page_to_pfn, pfn_to_page */
+#समावेश <यंत्र-generic/getorder.h>
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

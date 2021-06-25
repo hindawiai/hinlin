@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * misc setup functions for MPC83xx
+ * misc setup functions क्रम MPC83xx
  *
- * Maintainer: Kumar Gala <galak@kernel.crashing.org>
+ * Maपूर्णांकainer: Kumar Gala <galak@kernel.crashing.org>
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/of_platform.h>
-#include <linux/pci.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pci.h>
 
-#include <asm/debug.h>
-#include <asm/io.h>
-#include <asm/hw_irq.h>
-#include <asm/ipic.h>
-#include <sysdev/fsl_soc.h>
-#include <sysdev/fsl_pci.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/hw_irq.h>
+#समावेश <यंत्र/ipic.h>
+#समावेश <sysdev/fsl_soc.h>
+#समावेश <sysdev/fsl_pci.h>
 
-#include <mm/mmu_decl.h>
+#समावेश <mm/mmu_decl.h>
 
-#include "mpc83xx.h"
+#समावेश "mpc83xx.h"
 
-static __be32 __iomem *restart_reg_base;
+अटल __be32 __iomem *restart_reg_base;
 
-static int __init mpc83xx_restart_init(void)
-{
+अटल पूर्णांक __init mpc83xx_restart_init(व्योम)
+अणु
 	/* map reset restart_reg_baseister space */
 	restart_reg_base = ioremap(get_immrbase() + 0x900, 0xff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 arch_initcall(mpc83xx_restart_init);
 
-void __noreturn mpc83xx_restart(char *cmd)
-{
-#define RST_OFFSET	0x00000900
-#define RST_PROT_REG	0x00000018
-#define RST_CTRL_REG	0x0000001c
+व्योम __noवापस mpc83xx_restart(अक्षर *cmd)
+अणु
+#घोषणा RST_OFFSET	0x00000900
+#घोषणा RST_PROT_REG	0x00000018
+#घोषणा RST_CTRL_REG	0x0000001c
 
 	local_irq_disable();
 
-	if (restart_reg_base) {
+	अगर (restart_reg_base) अणु
 		/* enable software reset "RSTE" */
 		out_be32(restart_reg_base + (RST_PROT_REG >> 2), 0x52535445);
 
 		/* set software hard reset */
 		out_be32(restart_reg_base + (RST_CTRL_REG >> 2), 0x2);
-	} else {
-		printk (KERN_EMERG "Error: Restart registers not mapped, spinning!\n");
-	}
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk (KERN_EMERG "Error: Restart registers not mapped, spinning!\n");
+	पूर्ण
 
-	for (;;) ;
-}
+	क्रम (;;) ;
+पूर्ण
 
-long __init mpc83xx_time_init(void)
-{
-#define SPCR_OFFSET	0x00000110
-#define SPCR_TBEN	0x00400000
+दीर्घ __init mpc83xx_समय_init(व्योम)
+अणु
+#घोषणा SPCR_OFFSET	0x00000110
+#घोषणा SPCR_TBEN	0x00400000
 	__be32 __iomem *spcr = ioremap(get_immrbase() + SPCR_OFFSET, 4);
-	__be32 tmp;
+	__be32 पंचांगp;
 
-	tmp = in_be32(spcr);
-	out_be32(spcr, tmp | SPCR_TBEN);
+	पंचांगp = in_be32(spcr);
+	out_be32(spcr, पंचांगp | SPCR_TBEN);
 
 	iounmap(spcr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init mpc83xx_ipic_init_IRQ(void)
-{
-	struct device_node *np;
+व्योम __init mpc83xx_ipic_init_IRQ(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	/* looking for fsl,pq2pro-pic which is asl compatible with fsl,ipic */
-	np = of_find_compatible_node(NULL, NULL, "fsl,ipic");
-	if (!np)
-		np = of_find_node_by_type(NULL, "ipic");
-	if (!np)
-		return;
+	/* looking क्रम fsl,pq2pro-pic which is asl compatible with fsl,ipic */
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,ipic");
+	अगर (!np)
+		np = of_find_node_by_type(शून्य, "ipic");
+	अगर (!np)
+		वापस;
 
 	ipic_init(np, 0);
 
 	of_node_put(np);
 
-	/* Initialize the default interrupt mapping priorities,
-	 * in case the boot rom changed something on us.
+	/* Initialize the शेष पूर्णांकerrupt mapping priorities,
+	 * in हाल the boot rom changed something on us.
 	 */
-	ipic_set_default_priority();
-}
+	ipic_set_शेष_priority();
+पूर्ण
 
-static const struct of_device_id of_bus_ids[] __initconst = {
-	{ .type = "soc", },
-	{ .compatible = "soc", },
-	{ .compatible = "simple-bus" },
-	{ .compatible = "gianfar" },
-	{ .compatible = "gpio-leds", },
-	{ .type = "qe", },
-	{ .compatible = "fsl,qe", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_bus_ids[] __initस्थिर = अणु
+	अणु .type = "soc", पूर्ण,
+	अणु .compatible = "soc", पूर्ण,
+	अणु .compatible = "simple-bus" पूर्ण,
+	अणु .compatible = "gianfar" पूर्ण,
+	अणु .compatible = "gpio-leds", पूर्ण,
+	अणु .type = "qe", पूर्ण,
+	अणु .compatible = "fsl,qe", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-int __init mpc83xx_declare_of_platform_devices(void)
-{
-	of_platform_bus_probe(NULL, of_bus_ids, NULL);
-	return 0;
-}
+पूर्णांक __init mpc83xx_declare_of_platक्रमm_devices(व्योम)
+अणु
+	of_platक्रमm_bus_probe(शून्य, of_bus_ids, शून्य);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PCI
-void __init mpc83xx_setup_pci(void)
-{
-	struct device_node *np;
+#अगर_घोषित CONFIG_PCI
+व्योम __init mpc83xx_setup_pci(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	for_each_compatible_node(np, "pci", "fsl,mpc8349-pci")
+	क्रम_each_compatible_node(np, "pci", "fsl,mpc8349-pci")
 		mpc83xx_add_bridge(np);
-	for_each_compatible_node(np, "pci", "fsl,mpc8314-pcie")
+	क्रम_each_compatible_node(np, "pci", "fsl,mpc8314-pcie")
 		mpc83xx_add_bridge(np);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void __init mpc83xx_setup_arch(void)
-{
-	if (ppc_md.progress)
+व्योम __init mpc83xx_setup_arch(व्योम)
+अणु
+	अगर (ppc_md.progress)
 		ppc_md.progress("mpc83xx_setup_arch()", 0);
 
-	if (!__map_without_bats) {
+	अगर (!__map_without_bats) अणु
 		phys_addr_t immrbase = get_immrbase();
-		int immrsize = IS_ALIGNED(immrbase, SZ_2M) ? SZ_2M : SZ_1M;
-		unsigned long va = fix_to_virt(FIX_IMMR_BASE);
+		पूर्णांक immrsize = IS_ALIGNED(immrbase, SZ_2M) ? SZ_2M : SZ_1M;
+		अचिन्हित दीर्घ va = fix_to_virt(FIX_IMMR_BASE);
 
 		setbat(-1, va, immrbase, immrsize, PAGE_KERNEL_NCG);
 		update_bats();
-	}
-}
+	पूर्ण
+पूर्ण
 
-int machine_check_83xx(struct pt_regs *regs)
-{
+पूर्णांक machine_check_83xx(काष्ठा pt_regs *regs)
+अणु
 	u32 mask = 1 << (31 - IPIC_MCP_WDT);
 
-	if (!(regs->msr & SRR1_MCE_MCP) || !(ipic_get_mcp_status() & mask))
-		return machine_check_generic(regs);
+	अगर (!(regs->msr & SRR1_MCE_MCP) || !(ipic_get_mcp_status() & mask))
+		वापस machine_check_generic(regs);
 	ipic_clear_mcp_status(mask);
 
-	if (debugger_fault_handler(regs))
-		return 1;
+	अगर (debugger_fault_handler(regs))
+		वापस 1;
 
 	die("Watchdog NMI Reset", regs, 0);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
     Audio/video-routing-related ivtv functions.
     Copyright (C) 2003-2004  Kevin Thayer <nufan_wfk at yahoo.com>
@@ -6,10 +7,10 @@
 
  */
 
-#ifndef IVTV_ROUTING_H
-#define IVTV_ROUTING_H
+#अगर_अघोषित IVTV_ROUTING_H
+#घोषणा IVTV_ROUTING_H
 
-void ivtv_audio_set_io(struct ivtv *itv);
-void ivtv_video_set_io(struct ivtv *itv);
+व्योम ivtv_audio_set_io(काष्ठा ivtv *itv);
+व्योम ivtv_video_set_io(काष्ठा ivtv *itv);
 
-#endif
+#पूर्ण_अगर

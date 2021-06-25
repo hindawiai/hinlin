@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
  *
  * RMNET Data ingress/egress handler
  */
 
-#include <linux/netdevice.h>
-#include <linux/netdev_features.h>
-#include <linux/if_arp.h>
-#include <net/sock.h>
-#include "rmnet_private.h"
-#include "rmnet_config.h"
-#include "rmnet_vnd.h"
-#include "rmnet_map.h"
-#include "rmnet_handlers.h"
+#समावेश <linux/netdevice.h>
+#समावेश <linux/netdev_features.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <net/sock.h>
+#समावेश "rmnet_private.h"
+#समावेश "rmnet_config.h"
+#समावेश "rmnet_vnd.h"
+#समावेश "rmnet_map.h"
+#समावेश "rmnet_handlers.h"
 
-#define RMNET_IP_VERSION_4 0x40
-#define RMNET_IP_VERSION_6 0x60
+#घोषणा RMNET_IP_VERSION_4 0x40
+#घोषणा RMNET_IP_VERSION_6 0x60
 
 /* Helper Functions */
 
-static void rmnet_set_skb_proto(struct sk_buff *skb)
-{
-	switch (skb->data[0] & 0xF0) {
-	case RMNET_IP_VERSION_4:
+अटल व्योम rmnet_set_skb_proto(काष्ठा sk_buff *skb)
+अणु
+	चयन (skb->data[0] & 0xF0) अणु
+	हाल RMNET_IP_VERSION_4:
 		skb->protocol = htons(ETH_P_IP);
-		break;
-	case RMNET_IP_VERSION_6:
+		अवरोध;
+	हाल RMNET_IP_VERSION_6:
 		skb->protocol = htons(ETH_P_IPV6);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		skb->protocol = htons(ETH_P_MAP);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* Generic handler */
 
-static void
-rmnet_deliver_skb(struct sk_buff *skb)
-{
-	struct rmnet_priv *priv = netdev_priv(skb->dev);
+अटल व्योम
+rmnet_deliver_skb(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rmnet_priv *priv = netdev_priv(skb->dev);
 
 	skb_reset_transport_header(skb);
 	skb_reset_network_header(skb);
@@ -48,184 +49,184 @@ rmnet_deliver_skb(struct sk_buff *skb)
 	skb->pkt_type = PACKET_HOST;
 	skb_set_mac_header(skb, 0);
 	gro_cells_receive(&priv->gro_cells, skb);
-}
+पूर्ण
 
 /* MAP handler */
 
-static void
-__rmnet_map_ingress_handler(struct sk_buff *skb,
-			    struct rmnet_port *port)
-{
-	struct rmnet_map_header *map_header = (void *)skb->data;
-	struct rmnet_endpoint *ep;
+अटल व्योम
+__rmnet_map_ingress_handler(काष्ठा sk_buff *skb,
+			    काष्ठा rmnet_port *port)
+अणु
+	काष्ठा rmnet_map_header *map_header = (व्योम *)skb->data;
+	काष्ठा rmnet_endpoपूर्णांक *ep;
 	u16 len, pad;
 	u8 mux_id;
 
-	if (map_header->flags & MAP_CMD_FLAG) {
+	अगर (map_header->flags & MAP_CMD_FLAG) अणु
 		/* Packet contains a MAP command (not data) */
-		if (port->data_format & RMNET_FLAGS_INGRESS_MAP_COMMANDS)
-			return rmnet_map_command(skb, port);
+		अगर (port->data_क्रमmat & RMNET_FLAGS_INGRESS_MAP_COMMANDS)
+			वापस rmnet_map_command(skb, port);
 
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
 	mux_id = map_header->mux_id;
 	pad = map_header->flags & MAP_PAD_LEN_MASK;
 	len = ntohs(map_header->pkt_len) - pad;
 
-	if (mux_id >= RMNET_MAX_LOGICAL_EP)
-		goto free_skb;
+	अगर (mux_id >= RMNET_MAX_LOGICAL_EP)
+		जाओ मुक्त_skb;
 
-	ep = rmnet_get_endpoint(port, mux_id);
-	if (!ep)
-		goto free_skb;
+	ep = rmnet_get_endpoपूर्णांक(port, mux_id);
+	अगर (!ep)
+		जाओ मुक्त_skb;
 
 	skb->dev = ep->egress_dev;
 
 	/* Subtract MAP header */
-	skb_pull(skb, sizeof(struct rmnet_map_header));
+	skb_pull(skb, माप(काष्ठा rmnet_map_header));
 	rmnet_set_skb_proto(skb);
 
-	if (port->data_format & RMNET_FLAGS_INGRESS_MAP_CKSUMV4) {
-		if (!rmnet_map_checksum_downlink_packet(skb, len + pad))
+	अगर (port->data_क्रमmat & RMNET_FLAGS_INGRESS_MAP_CKSUMV4) अणु
+		अगर (!rmnet_map_checksum_करोwnlink_packet(skb, len + pad))
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-	}
+	पूर्ण
 
 	skb_trim(skb, len);
 	rmnet_deliver_skb(skb);
-	return;
+	वापस;
 
-free_skb:
-	kfree_skb(skb);
-}
+मुक्त_skb:
+	kमुक्त_skb(skb);
+पूर्ण
 
-static void
-rmnet_map_ingress_handler(struct sk_buff *skb,
-			  struct rmnet_port *port)
-{
-	struct sk_buff *skbn;
+अटल व्योम
+rmnet_map_ingress_handler(काष्ठा sk_buff *skb,
+			  काष्ठा rmnet_port *port)
+अणु
+	काष्ठा sk_buff *skbn;
 
-	if (skb->dev->type == ARPHRD_ETHER) {
-		if (pskb_expand_head(skb, ETH_HLEN, 0, GFP_ATOMIC)) {
-			kfree_skb(skb);
-			return;
-		}
+	अगर (skb->dev->type == ARPHRD_ETHER) अणु
+		अगर (pskb_expand_head(skb, ETH_HLEN, 0, GFP_ATOMIC)) अणु
+			kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
 
 		skb_push(skb, ETH_HLEN);
-	}
+	पूर्ण
 
-	if (port->data_format & RMNET_FLAGS_INGRESS_DEAGGREGATION) {
-		while ((skbn = rmnet_map_deaggregate(skb, port)) != NULL)
+	अगर (port->data_क्रमmat & RMNET_FLAGS_INGRESS_DEAGGREGATION) अणु
+		जबतक ((skbn = rmnet_map_deaggregate(skb, port)) != शून्य)
 			__rmnet_map_ingress_handler(skbn, port);
 
 		consume_skb(skb);
-	} else {
+	पूर्ण अन्यथा अणु
 		__rmnet_map_ingress_handler(skb, port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int rmnet_map_egress_handler(struct sk_buff *skb,
-				    struct rmnet_port *port, u8 mux_id,
-				    struct net_device *orig_dev)
-{
-	int required_headroom, additional_header_len;
-	struct rmnet_map_header *map_header;
+अटल पूर्णांक rmnet_map_egress_handler(काष्ठा sk_buff *skb,
+				    काष्ठा rmnet_port *port, u8 mux_id,
+				    काष्ठा net_device *orig_dev)
+अणु
+	पूर्णांक required_headroom, additional_header_len;
+	काष्ठा rmnet_map_header *map_header;
 
 	additional_header_len = 0;
-	required_headroom = sizeof(struct rmnet_map_header);
+	required_headroom = माप(काष्ठा rmnet_map_header);
 
-	if (port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV4) {
-		additional_header_len = sizeof(struct rmnet_map_ul_csum_header);
+	अगर (port->data_क्रमmat & RMNET_FLAGS_EGRESS_MAP_CKSUMV4) अणु
+		additional_header_len = माप(काष्ठा rmnet_map_ul_csum_header);
 		required_headroom += additional_header_len;
-	}
+	पूर्ण
 
-	if (skb_headroom(skb) < required_headroom) {
-		if (pskb_expand_head(skb, required_headroom, 0, GFP_ATOMIC))
-			return -ENOMEM;
-	}
+	अगर (skb_headroom(skb) < required_headroom) अणु
+		अगर (pskb_expand_head(skb, required_headroom, 0, GFP_ATOMIC))
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV4)
+	अगर (port->data_क्रमmat & RMNET_FLAGS_EGRESS_MAP_CKSUMV4)
 		rmnet_map_checksum_uplink_packet(skb, orig_dev);
 
 	map_header = rmnet_map_add_map_header(skb, additional_header_len, 0);
-	if (!map_header)
-		return -ENOMEM;
+	अगर (!map_header)
+		वापस -ENOMEM;
 
 	map_header->mux_id = mux_id;
 
 	skb->protocol = htons(ETH_P_MAP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-rmnet_bridge_handler(struct sk_buff *skb, struct net_device *bridge_dev)
-{
-	if (skb_mac_header_was_set(skb))
+अटल व्योम
+rmnet_bridge_handler(काष्ठा sk_buff *skb, काष्ठा net_device *bridge_dev)
+अणु
+	अगर (skb_mac_header_was_set(skb))
 		skb_push(skb, skb->mac_len);
 
-	if (bridge_dev) {
+	अगर (bridge_dev) अणु
 		skb->dev = bridge_dev;
 		dev_queue_xmit(skb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Ingress / Egress Entry Points */
+/* Ingress / Egress Entry Poपूर्णांकs */
 
-/* Processes packet as per ingress data format for receiving device. Logical
- * endpoint is determined from packet inspection. Packet is then sent to the
- * egress device listed in the logical endpoint configuration.
+/* Processes packet as per ingress data क्रमmat क्रम receiving device. Logical
+ * endpoपूर्णांक is determined from packet inspection. Packet is then sent to the
+ * egress device listed in the logical endpoपूर्णांक configuration.
  */
-rx_handler_result_t rmnet_rx_handler(struct sk_buff **pskb)
-{
-	struct sk_buff *skb = *pskb;
-	struct rmnet_port *port;
-	struct net_device *dev;
+rx_handler_result_t rmnet_rx_handler(काष्ठा sk_buff **pskb)
+अणु
+	काष्ठा sk_buff *skb = *pskb;
+	काष्ठा rmnet_port *port;
+	काष्ठा net_device *dev;
 
-	if (!skb)
-		goto done;
+	अगर (!skb)
+		जाओ करोne;
 
-	if (skb_linearize(skb)) {
-		kfree_skb(skb);
-		goto done;
-	}
+	अगर (skb_linearize(skb)) अणु
+		kमुक्त_skb(skb);
+		जाओ करोne;
+	पूर्ण
 
-	if (skb->pkt_type == PACKET_LOOPBACK)
-		return RX_HANDLER_PASS;
+	अगर (skb->pkt_type == PACKET_LOOPBACK)
+		वापस RX_HANDLER_PASS;
 
 	dev = skb->dev;
 	port = rmnet_get_port_rcu(dev);
-	if (unlikely(!port)) {
-		atomic_long_inc(&skb->dev->rx_nohandler);
-		kfree_skb(skb);
-		goto done;
-	}
+	अगर (unlikely(!port)) अणु
+		atomic_दीर्घ_inc(&skb->dev->rx_nohandler);
+		kमुक्त_skb(skb);
+		जाओ करोne;
+	पूर्ण
 
-	switch (port->rmnet_mode) {
-	case RMNET_EPMODE_VND:
+	चयन (port->rmnet_mode) अणु
+	हाल RMNET_EPMODE_VND:
 		rmnet_map_ingress_handler(skb, port);
-		break;
-	case RMNET_EPMODE_BRIDGE:
+		अवरोध;
+	हाल RMNET_EPMODE_BRIDGE:
 		rmnet_bridge_handler(skb, port->bridge_ep);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-done:
-	return RX_HANDLER_CONSUMED;
-}
+करोne:
+	वापस RX_HANDLER_CONSUMED;
+पूर्ण
 
-/* Modifies packet as per logical endpoint configuration and egress data format
- * for egress device configured in logical endpoint. Packet is then transmitted
+/* Modअगरies packet as per logical endpoपूर्णांक configuration and egress data क्रमmat
+ * क्रम egress device configured in logical endpoपूर्णांक. Packet is then transmitted
  * on the egress device.
  */
-void rmnet_egress_handler(struct sk_buff *skb)
-{
-	struct net_device *orig_dev;
-	struct rmnet_port *port;
-	struct rmnet_priv *priv;
+व्योम rmnet_egress_handler(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *orig_dev;
+	काष्ठा rmnet_port *port;
+	काष्ठा rmnet_priv *priv;
 	u8 mux_id;
 
-	sk_pacing_shift_update(skb->sk, 8);
+	sk_pacing_shअगरt_update(skb->sk, 8);
 
 	orig_dev = skb->dev;
 	priv = netdev_priv(orig_dev);
@@ -233,18 +234,18 @@ void rmnet_egress_handler(struct sk_buff *skb)
 	mux_id = priv->mux_id;
 
 	port = rmnet_get_port_rcu(skb->dev);
-	if (!port)
-		goto drop;
+	अगर (!port)
+		जाओ drop;
 
-	if (rmnet_map_egress_handler(skb, port, mux_id, orig_dev))
-		goto drop;
+	अगर (rmnet_map_egress_handler(skb, port, mux_id, orig_dev))
+		जाओ drop;
 
 	rmnet_vnd_tx_fixup(skb, orig_dev);
 
 	dev_queue_xmit(skb);
-	return;
+	वापस;
 
 drop:
 	this_cpu_inc(priv->pcpu_stats->stats.tx_drops);
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण

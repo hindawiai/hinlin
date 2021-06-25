@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * ddbridge-io.h: Digital Devices bridge I/O inline functions
+ * ddbridge-पन.स: Digital Devices bridge I/O अंतरभूत functions
  *
  * Copyright (C) 2010-2017 Digital Devices GmbH
  *                         Ralph Metzler <rjkm@metzlerbros.de>
  *                         Marcus Metzler <mocm@metzlerbros.de>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * version 2 only, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#ifndef __DDBRIDGE_IO_H__
-#define __DDBRIDGE_IO_H__
+#अगर_अघोषित __DDBRIDGE_IO_H__
+#घोषणा __DDBRIDGE_IO_H__
 
-#include <linux/io.h>
+#समावेश <linux/पन.स>
 
-#include "ddbridge.h"
+#समावेश "ddbridge.h"
 
 /******************************************************************************/
 
-static inline u32 ddblreadl(struct ddb_link *link, u32 adr)
-{
-	return readl(link->dev->regs + adr);
-}
+अटल अंतरभूत u32 ddblपढ़ोl(काष्ठा ddb_link *link, u32 adr)
+अणु
+	वापस पढ़ोl(link->dev->regs + adr);
+पूर्ण
 
-static inline void ddblwritel(struct ddb_link *link, u32 val, u32 adr)
-{
-	writel(val, link->dev->regs + adr);
-}
+अटल अंतरभूत व्योम ddblग_लिखोl(काष्ठा ddb_link *link, u32 val, u32 adr)
+अणु
+	ग_लिखोl(val, link->dev->regs + adr);
+पूर्ण
 
-static inline u32 ddbreadl(struct ddb *dev, u32 adr)
-{
-	return readl(dev->regs + adr);
-}
+अटल अंतरभूत u32 ddbपढ़ोl(काष्ठा ddb *dev, u32 adr)
+अणु
+	वापस पढ़ोl(dev->regs + adr);
+पूर्ण
 
-static inline void ddbwritel(struct ddb *dev, u32 val, u32 adr)
-{
-	writel(val, dev->regs + adr);
-}
+अटल अंतरभूत व्योम ddbग_लिखोl(काष्ठा ddb *dev, u32 val, u32 adr)
+अणु
+	ग_लिखोl(val, dev->regs + adr);
+पूर्ण
 
-static inline void ddbcpyto(struct ddb *dev, u32 adr, void *src, long count)
-{
-	memcpy_toio(dev->regs + adr, src, count);
-}
+अटल अंतरभूत व्योम ddbcpyto(काष्ठा ddb *dev, u32 adr, व्योम *src, दीर्घ count)
+अणु
+	स_नकल_toio(dev->regs + adr, src, count);
+पूर्ण
 
-static inline void ddbcpyfrom(struct ddb *dev, void *dst, u32 adr, long count)
-{
-	memcpy_fromio(dst, dev->regs + adr, count);
-}
+अटल अंतरभूत व्योम ddbcpyfrom(काष्ठा ddb *dev, व्योम *dst, u32 adr, दीर्घ count)
+अणु
+	स_नकल_fromio(dst, dev->regs + adr, count);
+पूर्ण
 
-static inline u32 safe_ddbreadl(struct ddb *dev, u32 adr)
-{
-	u32 val = ddbreadl(dev, adr);
+अटल अंतरभूत u32 safe_ddbपढ़ोl(काष्ठा ddb *dev, u32 adr)
+अणु
+	u32 val = ddbपढ़ोl(dev, adr);
 
-	/* (ddb)readl returns (uint)-1 (all bits set) on failure, catch that */
-	if (val == ~0) {
+	/* (ddb)पढ़ोl वापसs (uपूर्णांक)-1 (all bits set) on failure, catch that */
+	अगर (val == ~0) अणु
 		dev_err(&dev->pdev->dev, "ddbreadl failure, adr=%08x\n", adr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-#endif /* __DDBRIDGE_IO_H__ */
+#पूर्ण_अगर /* __DDBRIDGE_IO_H__ */

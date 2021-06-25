@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /* Copyright (c) 2010-2012 Broadcom. All rights reserved. */
 
-#ifndef VCHIQ_PAGELIST_H
-#define VCHIQ_PAGELIST_H
+#अगर_अघोषित VCHIQ_PAGELIST_H
+#घोषणा VCHIQ_PAGELIST_H
 
-#define PAGELIST_WRITE 0
-#define PAGELIST_READ 1
-#define PAGELIST_READ_WITH_FRAGMENTS 2
+#घोषणा PAGELIST_WRITE 0
+#घोषणा PAGELIST_READ 1
+#घोषणा PAGELIST_READ_WITH_FRAGMENTS 2
 
-struct pagelist {
+काष्ठा pagelist अणु
 	u32 length;
 	u16 type;
 	u16 offset;
@@ -16,6 +17,6 @@ struct pagelist {
 			 * of following pages at consecutive
 			 * addresses.
 			 */
-};
+पूर्ण;
 
-#endif /* VCHIQ_PAGELIST_H */
+#पूर्ण_अगर /* VCHIQ_PAGELIST_H */

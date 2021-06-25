@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *	ipddp.h: Header for IP-over-DDP driver for Linux.
+ *	ipddp.h: Header क्रम IP-over-DDP driver क्रम Linux.
  */
 
-#ifndef __LINUX_IPDDP_H
-#define __LINUX_IPDDP_H
+#अगर_अघोषित __LINUX_IPDDP_H
+#घोषणा __LINUX_IPDDP_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#define SIOCADDIPDDPRT   (SIOCDEVPRIVATE)
-#define SIOCDELIPDDPRT   (SIOCDEVPRIVATE+1)
-#define SIOCFINDIPDDPRT  (SIOCDEVPRIVATE+2)
+#घोषणा SIOCADDIPDDPRT   (SIOCDEVPRIVATE)
+#घोषणा SIOCDELIPDDPRT   (SIOCDEVPRIVATE+1)
+#घोषणा SIOCFINDIPDDPRT  (SIOCDEVPRIVATE+2)
 
-struct ipddp_route
-{
-        struct net_device *dev;             /* Carrier device */
+काष्ठा ipddp_route
+अणु
+        काष्ठा net_device *dev;             /* Carrier device */
         __be32 ip;                       /* IP address */
-        struct atalk_addr at;              /* Gateway appletalk address */
-        int flags;
-        struct ipddp_route *next;
-};
+        काष्ठा atalk_addr at;              /* Gateway appletalk address */
+        पूर्णांक flags;
+        काष्ठा ipddp_route *next;
+पूर्ण;
 
-#define IPDDP_ENCAP	1
-#define IPDDP_DECAP	2
+#घोषणा IPDDP_ENCAP	1
+#घोषणा IPDDP_DECAP	2
 
-#endif	/* __KERNEL__ */
-#endif	/* __LINUX_IPDDP_H */
+#पूर्ण_अगर	/* __KERNEL__ */
+#पूर्ण_अगर	/* __LINUX_IPDDP_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright 2002 H. Peter Anvin - All Rights Reserved
@@ -9,38 +10,38 @@
  * raid6/recov.c
  *
  * RAID-6 data recovery in dual failure mode.  In single failure mode,
- * use the RAID-5 algorithm (or, in the case of Q failure, just reconstruct
+ * use the RAID-5 algorithm (or, in the हाल of Q failure, just reस्थिरruct
  * the syndrome.)
  */
 
-#include <linux/export.h>
-#include <linux/raid/pq.h>
+#समावेश <linux/export.h>
+#समावेश <linux/raid/pq.h>
 
 /* Recover two failed data blocks. */
-static void raid6_2data_recov_intx1(int disks, size_t bytes, int faila,
-		int failb, void **ptrs)
-{
+अटल व्योम raid6_2data_recov_पूर्णांकx1(पूर्णांक disks, माप_प्रकार bytes, पूर्णांक faila,
+		पूर्णांक failb, व्योम **ptrs)
+अणु
 	u8 *p, *q, *dp, *dq;
 	u8 px, qx, db;
-	const u8 *pbmul;	/* P multiplier table for B data */
-	const u8 *qmul;		/* Q multiplier table (for both) */
+	स्थिर u8 *pbmul;	/* P multiplier table क्रम B data */
+	स्थिर u8 *qmul;		/* Q multiplier table (क्रम both) */
 
 	p = (u8 *)ptrs[disks-2];
 	q = (u8 *)ptrs[disks-1];
 
-	/* Compute syndrome with zero for the missing data pages
-	   Use the dead data pages as temporary storage for
+	/* Compute syndrome with zero क्रम the missing data pages
+	   Use the dead data pages as temporary storage क्रम
 	   delta p and delta q */
 	dp = (u8 *)ptrs[faila];
-	ptrs[faila] = (void *)raid6_empty_zero_page;
+	ptrs[faila] = (व्योम *)raid6_empty_zero_page;
 	ptrs[disks-2] = dp;
 	dq = (u8 *)ptrs[failb];
-	ptrs[failb] = (void *)raid6_empty_zero_page;
+	ptrs[failb] = (व्योम *)raid6_empty_zero_page;
 	ptrs[disks-1] = dq;
 
 	raid6_call.gen_syndrome(disks, bytes, ptrs);
 
-	/* Restore pointer table */
+	/* Restore poपूर्णांकer table */
 	ptrs[faila]   = dp;
 	ptrs[failb]   = dq;
 	ptrs[disks-2] = p;
@@ -50,87 +51,87 @@ static void raid6_2data_recov_intx1(int disks, size_t bytes, int faila,
 	pbmul = raid6_gfmul[raid6_gfexi[failb-faila]];
 	qmul  = raid6_gfmul[raid6_gfinv[raid6_gfexp[faila]^raid6_gfexp[failb]]];
 
-	/* Now do it... */
-	while ( bytes-- ) {
+	/* Now करो it... */
+	जबतक ( bytes-- ) अणु
 		px    = *p ^ *dp;
 		qx    = qmul[*q ^ *dq];
-		*dq++ = db = pbmul[px] ^ qx; /* Reconstructed B */
-		*dp++ = db ^ px; /* Reconstructed A */
+		*dq++ = db = pbmul[px] ^ qx; /* Reस्थिरructed B */
+		*dp++ = db ^ px; /* Reस्थिरructed A */
 		p++; q++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Recover failure of one data block plus the P block */
-static void raid6_datap_recov_intx1(int disks, size_t bytes, int faila,
-		void **ptrs)
-{
+अटल व्योम raid6_datap_recov_पूर्णांकx1(पूर्णांक disks, माप_प्रकार bytes, पूर्णांक faila,
+		व्योम **ptrs)
+अणु
 	u8 *p, *q, *dq;
-	const u8 *qmul;		/* Q multiplier table */
+	स्थिर u8 *qmul;		/* Q multiplier table */
 
 	p = (u8 *)ptrs[disks-2];
 	q = (u8 *)ptrs[disks-1];
 
-	/* Compute syndrome with zero for the missing data page
-	   Use the dead data page as temporary storage for delta q */
+	/* Compute syndrome with zero क्रम the missing data page
+	   Use the dead data page as temporary storage क्रम delta q */
 	dq = (u8 *)ptrs[faila];
-	ptrs[faila] = (void *)raid6_empty_zero_page;
+	ptrs[faila] = (व्योम *)raid6_empty_zero_page;
 	ptrs[disks-1] = dq;
 
 	raid6_call.gen_syndrome(disks, bytes, ptrs);
 
-	/* Restore pointer table */
+	/* Restore poपूर्णांकer table */
 	ptrs[faila]   = dq;
 	ptrs[disks-1] = q;
 
 	/* Now, pick the proper data tables */
 	qmul  = raid6_gfmul[raid6_gfinv[raid6_gfexp[faila]]];
 
-	/* Now do it... */
-	while ( bytes-- ) {
+	/* Now करो it... */
+	जबतक ( bytes-- ) अणु
 		*p++ ^= *dq = qmul[*q ^ *dq];
 		q++; dq++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-const struct raid6_recov_calls raid6_recov_intx1 = {
-	.data2 = raid6_2data_recov_intx1,
-	.datap = raid6_datap_recov_intx1,
-	.valid = NULL,
+स्थिर काष्ठा raid6_recov_calls raid6_recov_पूर्णांकx1 = अणु
+	.data2 = raid6_2data_recov_पूर्णांकx1,
+	.datap = raid6_datap_recov_पूर्णांकx1,
+	.valid = शून्य,
 	.name = "intx1",
 	.priority = 0,
-};
+पूर्ण;
 
-#ifndef __KERNEL__
+#अगर_अघोषित __KERNEL__
 /* Testing only */
 
 /* Recover two failed blocks. */
-void raid6_dual_recov(int disks, size_t bytes, int faila, int failb, void **ptrs)
-{
-	if ( faila > failb ) {
-		int tmp = faila;
+व्योम raid6_dual_recov(पूर्णांक disks, माप_प्रकार bytes, पूर्णांक faila, पूर्णांक failb, व्योम **ptrs)
+अणु
+	अगर ( faila > failb ) अणु
+		पूर्णांक पंचांगp = faila;
 		faila = failb;
-		failb = tmp;
-	}
+		failb = पंचांगp;
+	पूर्ण
 
-	if ( failb == disks-1 ) {
-		if ( faila == disks-2 ) {
+	अगर ( failb == disks-1 ) अणु
+		अगर ( faila == disks-2 ) अणु
 			/* P+Q failure.  Just rebuild the syndrome. */
 			raid6_call.gen_syndrome(disks, bytes, ptrs);
-		} else {
-			/* data+Q failure.  Reconstruct data from P,
+		पूर्ण अन्यथा अणु
+			/* data+Q failure.  Reस्थिरruct data from P,
 			   then rebuild syndrome. */
 			/* NOT IMPLEMENTED - equivalent to RAID-5 */
-		}
-	} else {
-		if ( failb == disks-2 ) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ( failb == disks-2 ) अणु
 			/* data+P failure. */
 			raid6_datap_recov(disks, bytes, faila, ptrs);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* data+data failure. */
 			raid6_2data_recov(disks, bytes, faila, failb, ptrs);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर

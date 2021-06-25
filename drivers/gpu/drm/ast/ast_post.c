@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -26,126 +27,126 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  */
 
-#include <linux/delay.h>
-#include <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_print.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "ast_dram_tables.h"
-#include "ast_drv.h"
+#समावेश "ast_dram_tables.h"
+#समावेश "ast_drv.h"
 
-static void ast_post_chip_2300(struct drm_device *dev);
-static void ast_post_chip_2500(struct drm_device *dev);
+अटल व्योम ast_post_chip_2300(काष्ठा drm_device *dev);
+अटल व्योम ast_post_chip_2500(काष्ठा drm_device *dev);
 
-void ast_enable_vga(struct drm_device *dev)
-{
-	struct ast_private *ast = to_ast_private(dev);
+व्योम ast_enable_vga(काष्ठा drm_device *dev)
+अणु
+	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
 
-	ast_io_write8(ast, AST_IO_VGA_ENABLE_PORT, 0x01);
-	ast_io_write8(ast, AST_IO_MISC_PORT_WRITE, 0x01);
-}
+	ast_io_ग_लिखो8(ast, AST_IO_VGA_ENABLE_PORT, 0x01);
+	ast_io_ग_लिखो8(ast, AST_IO_MISC_PORT_WRITE, 0x01);
+पूर्ण
 
-void ast_enable_mmio(struct drm_device *dev)
-{
-	struct ast_private *ast = to_ast_private(dev);
+व्योम ast_enable_mmio(काष्ठा drm_device *dev)
+अणु
+	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
 
 	ast_set_index_reg(ast, AST_IO_CRTC_PORT, 0xa1, 0x06);
-}
+पूर्ण
 
 
-bool ast_is_vga_enabled(struct drm_device *dev)
-{
-	struct ast_private *ast = to_ast_private(dev);
+bool ast_is_vga_enabled(काष्ठा drm_device *dev)
+अणु
+	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
 	u8 ch;
 
-	ch = ast_io_read8(ast, AST_IO_VGA_ENABLE_PORT);
+	ch = ast_io_पढ़ो8(ast, AST_IO_VGA_ENABLE_PORT);
 
-	return !!(ch & 0x01);
-}
+	वापस !!(ch & 0x01);
+पूर्ण
 
-static const u8 extreginfo[] = { 0x0f, 0x04, 0x1c, 0xff };
-static const u8 extreginfo_ast2300a0[] = { 0x0f, 0x04, 0x1c, 0xff };
-static const u8 extreginfo_ast2300[] = { 0x0f, 0x04, 0x1f, 0xff };
+अटल स्थिर u8 extreginfo[] = अणु 0x0f, 0x04, 0x1c, 0xff पूर्ण;
+अटल स्थिर u8 extreginfo_ast2300a0[] = अणु 0x0f, 0x04, 0x1c, 0xff पूर्ण;
+अटल स्थिर u8 extreginfo_ast2300[] = अणु 0x0f, 0x04, 0x1f, 0xff पूर्ण;
 
-static void
-ast_set_def_ext_reg(struct drm_device *dev)
-{
-	struct ast_private *ast = to_ast_private(dev);
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
+अटल व्योम
+ast_set_def_ext_reg(काष्ठा drm_device *dev)
+अणु
+	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
 	u8 i, index, reg;
-	const u8 *ext_reg_info;
+	स्थिर u8 *ext_reg_info;
 
 	/* reset scratch */
-	for (i = 0x81; i <= 0x9f; i++)
+	क्रम (i = 0x81; i <= 0x9f; i++)
 		ast_set_index_reg(ast, AST_IO_CRTC_PORT, i, 0x00);
 
-	if (ast->chip == AST2300 || ast->chip == AST2400 ||
-	    ast->chip == AST2500) {
-		if (pdev->revision >= 0x20)
+	अगर (ast->chip == AST2300 || ast->chip == AST2400 ||
+	    ast->chip == AST2500) अणु
+		अगर (pdev->revision >= 0x20)
 			ext_reg_info = extreginfo_ast2300;
-		else
+		अन्यथा
 			ext_reg_info = extreginfo_ast2300a0;
-	} else
+	पूर्ण अन्यथा
 		ext_reg_info = extreginfo;
 
 	index = 0xa0;
-	while (*ext_reg_info != 0xff) {
+	जबतक (*ext_reg_info != 0xff) अणु
 		ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, index, 0x00, *ext_reg_info);
 		index++;
 		ext_reg_info++;
-	}
+	पूर्ण
 
-	/* disable standard IO/MEM decode if secondary */
+	/* disable standard IO/MEM decode अगर secondary */
 	/* ast_set_index_reg-mask(ast, AST_IO_CRTC_PORT, 0xa1, 0xff, 0x3); */
 
 	/* Set Ext. Default */
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0x8c, 0x00, 0x01);
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0x00, 0x00);
 
-	/* Enable RAMDAC for A1 */
+	/* Enable RAMDAC क्रम A1 */
 	reg = 0x04;
-	if (ast->chip == AST2300 || ast->chip == AST2400 ||
+	अगर (ast->chip == AST2300 || ast->chip == AST2400 ||
 	    ast->chip == AST2500)
 		reg |= 0x20;
 	ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb6, 0xff, reg);
-}
+पूर्ण
 
-u32 ast_mindwm(struct ast_private *ast, u32 r)
-{
-	uint32_t data;
+u32 ast_mindwm(काष्ठा ast_निजी *ast, u32 r)
+अणु
+	uपूर्णांक32_t data;
 
-	ast_write32(ast, 0xf004, r & 0xffff0000);
-	ast_write32(ast, 0xf000, 0x1);
+	ast_ग_लिखो32(ast, 0xf004, r & 0xffff0000);
+	ast_ग_लिखो32(ast, 0xf000, 0x1);
 
-	do {
-		data = ast_read32(ast, 0xf004) & 0xffff0000;
-	} while (data != (r & 0xffff0000));
-	return ast_read32(ast, 0x10000 + (r & 0x0000ffff));
-}
+	करो अणु
+		data = ast_पढ़ो32(ast, 0xf004) & 0xffff0000;
+	पूर्ण जबतक (data != (r & 0xffff0000));
+	वापस ast_पढ़ो32(ast, 0x10000 + (r & 0x0000ffff));
+पूर्ण
 
-void ast_moutdwm(struct ast_private *ast, u32 r, u32 v)
-{
-	uint32_t data;
-	ast_write32(ast, 0xf004, r & 0xffff0000);
-	ast_write32(ast, 0xf000, 0x1);
-	do {
-		data = ast_read32(ast, 0xf004) & 0xffff0000;
-	} while (data != (r & 0xffff0000));
-	ast_write32(ast, 0x10000 + (r & 0x0000ffff), v);
-}
+व्योम ast_moutdwm(काष्ठा ast_निजी *ast, u32 r, u32 v)
+अणु
+	uपूर्णांक32_t data;
+	ast_ग_लिखो32(ast, 0xf004, r & 0xffff0000);
+	ast_ग_लिखो32(ast, 0xf000, 0x1);
+	करो अणु
+		data = ast_पढ़ो32(ast, 0xf004) & 0xffff0000;
+	पूर्ण जबतक (data != (r & 0xffff0000));
+	ast_ग_लिखो32(ast, 0x10000 + (r & 0x0000ffff), v);
+पूर्ण
 
 /*
  * AST2100/2150 DLL CBR Setting
  */
-#define CBR_SIZE_AST2150	     ((16 << 10) - 1)
-#define CBR_PASSNUM_AST2150          5
-#define CBR_THRESHOLD_AST2150        10
-#define CBR_THRESHOLD2_AST2150       10
-#define TIMEOUT_AST2150              5000000
+#घोषणा CBR_SIZE_AST2150	     ((16 << 10) - 1)
+#घोषणा CBR_PASSNUM_AST2150          5
+#घोषणा CBR_THRESHOLD_AST2150        10
+#घोषणा CBR_THRESHOLD2_AST2150       10
+#घोषणा TIMEOUT_AST2150              5000000
 
-#define CBR_PATNUM_AST2150           8
+#घोषणा CBR_PATNUM_AST2150           8
 
-static const u32 pattern_AST2150[14] = {
+अटल स्थिर u32 pattern_AST2150[14] = अणु
 	0xFF00FF00,
 	0xCC33CC33,
 	0xAA55AA55,
@@ -160,87 +161,87 @@ static const u32 pattern_AST2150[14] = {
 	0x41C6167E,
 	0x620152BF,
 	0x20F050E0
-};
+पूर्ण;
 
-static u32 mmctestburst2_ast2150(struct ast_private *ast, u32 datagen)
-{
-	u32 data, timeout;
+अटल u32 mmctestburst2_ast2150(काष्ठा ast_निजी *ast, u32 datagen)
+अणु
+	u32 data, समयout;
 
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000001 | (datagen << 3));
-	timeout = 0;
-	do {
+	समयout = 0;
+	करो अणु
 		data = ast_mindwm(ast, 0x1e6e0070) & 0x40;
-		if (++timeout > TIMEOUT_AST2150) {
+		अगर (++समयout > TIMEOUT_AST2150) अणु
 			ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
-			return 0xffffffff;
-		}
-	} while (!data);
+			वापस 0xffffffff;
+		पूर्ण
+	पूर्ण जबतक (!data);
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000003 | (datagen << 3));
-	timeout = 0;
-	do {
+	समयout = 0;
+	करो अणु
 		data = ast_mindwm(ast, 0x1e6e0070) & 0x40;
-		if (++timeout > TIMEOUT_AST2150) {
+		अगर (++समयout > TIMEOUT_AST2150) अणु
 			ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
-			return 0xffffffff;
-		}
-	} while (!data);
+			वापस 0xffffffff;
+		पूर्ण
+	पूर्ण जबतक (!data);
 	data = (ast_mindwm(ast, 0x1e6e0070) & 0x80) >> 7;
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
-	return data;
-}
+	वापस data;
+पूर्ण
 
-#if 0 /* unused in DDX driver - here for completeness */
-static u32 mmctestsingle2_ast2150(struct ast_private *ast, u32 datagen)
-{
-	u32 data, timeout;
+#अगर 0 /* unused in DDX driver - here क्रम completeness */
+अटल u32 mmctestsingle2_ast2150(काष्ठा ast_निजी *ast, u32 datagen)
+अणु
+	u32 data, समयout;
 
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000005 | (datagen << 3));
-	timeout = 0;
-	do {
+	समयout = 0;
+	करो अणु
 		data = ast_mindwm(ast, 0x1e6e0070) & 0x40;
-		if (++timeout > TIMEOUT_AST2150) {
+		अगर (++समयout > TIMEOUT_AST2150) अणु
 			ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
-			return 0xffffffff;
-		}
-	} while (!data);
+			वापस 0xffffffff;
+		पूर्ण
+	पूर्ण जबतक (!data);
 	data = (ast_mindwm(ast, 0x1e6e0070) & 0x80) >> 7;
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
-	return data;
-}
-#endif
+	वापस data;
+पूर्ण
+#पूर्ण_अगर
 
-static int cbrtest_ast2150(struct ast_private *ast)
-{
-	int i;
+अटल पूर्णांक cbrtest_ast2150(काष्ठा ast_निजी *ast)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 8; i++)
-		if (mmctestburst2_ast2150(ast, i))
-			return 0;
-	return 1;
-}
+	क्रम (i = 0; i < 8; i++)
+		अगर (mmctestburst2_ast2150(ast, i))
+			वापस 0;
+	वापस 1;
+पूर्ण
 
-static int cbrscan_ast2150(struct ast_private *ast, int busw)
-{
+अटल पूर्णांक cbrscan_ast2150(काष्ठा ast_निजी *ast, पूर्णांक busw)
+अणु
 	u32 patcnt, loop;
 
-	for (patcnt = 0; patcnt < CBR_PATNUM_AST2150; patcnt++) {
+	क्रम (patcnt = 0; patcnt < CBR_PATNUM_AST2150; patcnt++) अणु
 		ast_moutdwm(ast, 0x1e6e007c, pattern_AST2150[patcnt]);
-		for (loop = 0; loop < CBR_PASSNUM_AST2150; loop++) {
-			if (cbrtest_ast2150(ast))
-				break;
-		}
-		if (loop == CBR_PASSNUM_AST2150)
-			return 0;
-	}
-	return 1;
-}
+		क्रम (loop = 0; loop < CBR_PASSNUM_AST2150; loop++) अणु
+			अगर (cbrtest_ast2150(ast))
+				अवरोध;
+		पूर्ण
+		अगर (loop == CBR_PASSNUM_AST2150)
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 
-static void cbrdlli_ast2150(struct ast_private *ast, int busw)
-{
+अटल व्योम cbrdlli_ast2150(काष्ठा ast_निजी *ast, पूर्णांक busw)
+अणु
 	u32 dll_min[4], dll_max[4], dlli, data, passcnt;
 
 cbr_start:
@@ -248,157 +249,157 @@ cbr_start:
 	dll_max[0] = dll_max[1] = dll_max[2] = dll_max[3] = 0x0;
 	passcnt = 0;
 
-	for (dlli = 0; dlli < 100; dlli++) {
+	क्रम (dlli = 0; dlli < 100; dlli++) अणु
 		ast_moutdwm(ast, 0x1e6e0068, dlli | (dlli << 8) | (dlli << 16) | (dlli << 24));
 		data = cbrscan_ast2150(ast, busw);
-		if (data != 0) {
-			if (data & 0x1) {
-				if (dll_min[0] > dlli)
+		अगर (data != 0) अणु
+			अगर (data & 0x1) अणु
+				अगर (dll_min[0] > dlli)
 					dll_min[0] = dlli;
-				if (dll_max[0] < dlli)
+				अगर (dll_max[0] < dlli)
 					dll_max[0] = dlli;
-			}
+			पूर्ण
 			passcnt++;
-		} else if (passcnt >= CBR_THRESHOLD_AST2150)
-			goto cbr_start;
-	}
-	if (dll_max[0] == 0 || (dll_max[0]-dll_min[0]) < CBR_THRESHOLD_AST2150)
-		goto cbr_start;
+		पूर्ण अन्यथा अगर (passcnt >= CBR_THRESHOLD_AST2150)
+			जाओ cbr_start;
+	पूर्ण
+	अगर (dll_max[0] == 0 || (dll_max[0]-dll_min[0]) < CBR_THRESHOLD_AST2150)
+		जाओ cbr_start;
 
 	dlli = dll_min[0] + (((dll_max[0] - dll_min[0]) * 7) >> 4);
 	ast_moutdwm(ast, 0x1e6e0068, dlli | (dlli << 8) | (dlli << 16) | (dlli << 24));
-}
+पूर्ण
 
 
 
-static void ast_init_dram_reg(struct drm_device *dev)
-{
-	struct ast_private *ast = to_ast_private(dev);
+अटल व्योम ast_init_dram_reg(काष्ठा drm_device *dev)
+अणु
+	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
 	u8 j;
 	u32 data, temp, i;
-	const struct ast_dramstruct *dram_reg_info;
+	स्थिर काष्ठा ast_dramकाष्ठा *dram_reg_info;
 
 	j = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd0, 0xff);
 
-	if ((j & 0x80) == 0) { /* VGA only */
-		if (ast->chip == AST2000) {
+	अगर ((j & 0x80) == 0) अणु /* VGA only */
+		अगर (ast->chip == AST2000) अणु
 			dram_reg_info = ast2000_dram_table_data;
-			ast_write32(ast, 0xf004, 0x1e6e0000);
-			ast_write32(ast, 0xf000, 0x1);
-			ast_write32(ast, 0x10100, 0xa8);
+			ast_ग_लिखो32(ast, 0xf004, 0x1e6e0000);
+			ast_ग_लिखो32(ast, 0xf000, 0x1);
+			ast_ग_लिखो32(ast, 0x10100, 0xa8);
 
-			do {
+			करो अणु
 				;
-			} while (ast_read32(ast, 0x10100) != 0xa8);
-		} else {/* AST2100/1100 */
-			if (ast->chip == AST2100 || ast->chip == 2200)
+			पूर्ण जबतक (ast_पढ़ो32(ast, 0x10100) != 0xa8);
+		पूर्ण अन्यथा अणु/* AST2100/1100 */
+			अगर (ast->chip == AST2100 || ast->chip == 2200)
 				dram_reg_info = ast2100_dram_table_data;
-			else
+			अन्यथा
 				dram_reg_info = ast1100_dram_table_data;
 
-			ast_write32(ast, 0xf004, 0x1e6e0000);
-			ast_write32(ast, 0xf000, 0x1);
-			ast_write32(ast, 0x12000, 0x1688A8A8);
-			do {
+			ast_ग_लिखो32(ast, 0xf004, 0x1e6e0000);
+			ast_ग_लिखो32(ast, 0xf000, 0x1);
+			ast_ग_लिखो32(ast, 0x12000, 0x1688A8A8);
+			करो अणु
 				;
-			} while (ast_read32(ast, 0x12000) != 0x01);
+			पूर्ण जबतक (ast_पढ़ो32(ast, 0x12000) != 0x01);
 
-			ast_write32(ast, 0x10000, 0xfc600309);
-			do {
+			ast_ग_लिखो32(ast, 0x10000, 0xfc600309);
+			करो अणु
 				;
-			} while (ast_read32(ast, 0x10000) != 0x01);
-		}
+			पूर्ण जबतक (ast_पढ़ो32(ast, 0x10000) != 0x01);
+		पूर्ण
 
-		while (dram_reg_info->index != 0xffff) {
-			if (dram_reg_info->index == 0xff00) {/* delay fn */
-				for (i = 0; i < 15; i++)
+		जबतक (dram_reg_info->index != 0xffff) अणु
+			अगर (dram_reg_info->index == 0xff00) अणु/* delay fn */
+				क्रम (i = 0; i < 15; i++)
 					udelay(dram_reg_info->data);
-			} else if (dram_reg_info->index == 0x4 && ast->chip != AST2000) {
+			पूर्ण अन्यथा अगर (dram_reg_info->index == 0x4 && ast->chip != AST2000) अणु
 				data = dram_reg_info->data;
-				if (ast->dram_type == AST_DRAM_1Gx16)
+				अगर (ast->dram_type == AST_DRAM_1Gx16)
 					data = 0x00000d89;
-				else if (ast->dram_type == AST_DRAM_1Gx32)
+				अन्यथा अगर (ast->dram_type == AST_DRAM_1Gx32)
 					data = 0x00000c8d;
 
-				temp = ast_read32(ast, 0x12070);
+				temp = ast_पढ़ो32(ast, 0x12070);
 				temp &= 0xc;
 				temp <<= 2;
-				ast_write32(ast, 0x10000 + dram_reg_info->index, data | temp);
-			} else
-				ast_write32(ast, 0x10000 + dram_reg_info->index, dram_reg_info->data);
+				ast_ग_लिखो32(ast, 0x10000 + dram_reg_info->index, data | temp);
+			पूर्ण अन्यथा
+				ast_ग_लिखो32(ast, 0x10000 + dram_reg_info->index, dram_reg_info->data);
 			dram_reg_info++;
-		}
+		पूर्ण
 
 		/* AST 2100/2150 DRAM calibration */
-		data = ast_read32(ast, 0x10120);
-		if (data == 0x5061) { /* 266Mhz */
-			data = ast_read32(ast, 0x10004);
-			if (data & 0x40)
+		data = ast_पढ़ो32(ast, 0x10120);
+		अगर (data == 0x5061) अणु /* 266Mhz */
+			data = ast_पढ़ो32(ast, 0x10004);
+			अगर (data & 0x40)
 				cbrdlli_ast2150(ast, 16); /* 16 bits */
-			else
+			अन्यथा
 				cbrdlli_ast2150(ast, 32); /* 32 bits */
-		}
+		पूर्ण
 
-		switch (ast->chip) {
-		case AST2000:
-			temp = ast_read32(ast, 0x10140);
-			ast_write32(ast, 0x10140, temp | 0x40);
-			break;
-		case AST1100:
-		case AST2100:
-		case AST2200:
-		case AST2150:
-			temp = ast_read32(ast, 0x1200c);
-			ast_write32(ast, 0x1200c, temp & 0xfffffffd);
-			temp = ast_read32(ast, 0x12040);
-			ast_write32(ast, 0x12040, temp | 0x40);
-			break;
-		default:
-			break;
-		}
-	}
+		चयन (ast->chip) अणु
+		हाल AST2000:
+			temp = ast_पढ़ो32(ast, 0x10140);
+			ast_ग_लिखो32(ast, 0x10140, temp | 0x40);
+			अवरोध;
+		हाल AST1100:
+		हाल AST2100:
+		हाल AST2200:
+		हाल AST2150:
+			temp = ast_पढ़ो32(ast, 0x1200c);
+			ast_ग_लिखो32(ast, 0x1200c, temp & 0xfffffffd);
+			temp = ast_पढ़ो32(ast, 0x12040);
+			ast_ग_लिखो32(ast, 0x12040, temp | 0x40);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* wait ready */
-	do {
+	/* रुको पढ़ोy */
+	करो अणु
 		j = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd0, 0xff);
-	} while ((j & 0x40) == 0);
-}
+	पूर्ण जबतक ((j & 0x40) == 0);
+पूर्ण
 
-void ast_post_gpu(struct drm_device *dev)
-{
-	struct ast_private *ast = to_ast_private(dev);
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
+व्योम ast_post_gpu(काष्ठा drm_device *dev)
+अणु
+	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
 	u32 reg;
 
-	pci_read_config_dword(pdev, 0x04, &reg);
+	pci_पढ़ो_config_dword(pdev, 0x04, &reg);
 	reg |= 0x3;
-	pci_write_config_dword(pdev, 0x04, reg);
+	pci_ग_लिखो_config_dword(pdev, 0x04, reg);
 
 	ast_enable_vga(dev);
-	ast_open_key(ast);
+	ast_खोलो_key(ast);
 	ast_enable_mmio(dev);
 	ast_set_def_ext_reg(dev);
 
-	if (ast->config_mode == ast_use_p2a) {
-		if (ast->chip == AST2500)
+	अगर (ast->config_mode == ast_use_p2a) अणु
+		अगर (ast->chip == AST2500)
 			ast_post_chip_2500(dev);
-		else if (ast->chip == AST2300 || ast->chip == AST2400)
+		अन्यथा अगर (ast->chip == AST2300 || ast->chip == AST2400)
 			ast_post_chip_2300(dev);
-		else
+		अन्यथा
 			ast_init_dram_reg(dev);
 
 		ast_init_3rdtx(dev);
-	} else {
-		if (ast->tx_chip_type != AST_TX_NONE)
+	पूर्ण अन्यथा अणु
+		अगर (ast->tx_chip_type != AST_TX_NONE)
 			ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xa3, 0xcf, 0x80);	/* Enable DVO */
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* AST 2300 DRAM settings */
-#define AST_DDR3 0
-#define AST_DDR2 1
+#घोषणा AST_DDR3 0
+#घोषणा AST_DDR2 1
 
-struct ast2300_dram_param {
+काष्ठा ast2300_dram_param अणु
 	u32 dram_type;
 	u32 dram_chipid;
 	u32 dram_freq;
@@ -421,22 +422,22 @@ struct ast2300_dram_param {
 	u32 reg_FREQ;
 	u32 madj_max;
 	u32 dll2_finetune_step;
-};
+पूर्ण;
 
 /*
  * DQSI DLL CBR Setting
  */
-#define CBR_SIZE0            ((1  << 10) - 1)
-#define CBR_SIZE1            ((4  << 10) - 1)
-#define CBR_SIZE2            ((64 << 10) - 1)
-#define CBR_PASSNUM          5
-#define CBR_PASSNUM2         5
-#define CBR_THRESHOLD        10
-#define CBR_THRESHOLD2       10
-#define TIMEOUT              5000000
-#define CBR_PATNUM           8
+#घोषणा CBR_SIZE0            ((1  << 10) - 1)
+#घोषणा CBR_SIZE1            ((4  << 10) - 1)
+#घोषणा CBR_SIZE2            ((64 << 10) - 1)
+#घोषणा CBR_PASSNUM          5
+#घोषणा CBR_PASSNUM2         5
+#घोषणा CBR_THRESHOLD        10
+#घोषणा CBR_THRESHOLD2       10
+#घोषणा TIMEOUT              5000000
+#घोषणा CBR_PATNUM           8
 
-static const u32 pattern[8] = {
+अटल स्थिर u32 pattern[8] = अणु
 	0xFF00FF00,
 	0xCC33CC33,
 	0xAA55AA55,
@@ -445,280 +446,280 @@ static const u32 pattern[8] = {
 	0x543D3CDE,
 	0xF1E843C7,
 	0x7C61D253
-};
+पूर्ण;
 
-static bool mmc_test(struct ast_private *ast, u32 datagen, u8 test_ctl)
-{
-	u32 data, timeout;
+अटल bool mmc_test(काष्ठा ast_निजी *ast, u32 datagen, u8 test_ctl)
+अणु
+	u32 data, समयout;
 
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
 	ast_moutdwm(ast, 0x1e6e0070, (datagen << 3) | test_ctl);
-	timeout = 0;
-	do {
+	समयout = 0;
+	करो अणु
 		data = ast_mindwm(ast, 0x1e6e0070) & 0x3000;
-		if (data & 0x2000)
-			return false;
-		if (++timeout > TIMEOUT) {
+		अगर (data & 0x2000)
+			वापस false;
+		अगर (++समयout > TIMEOUT) अणु
 			ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
-			return false;
-		}
-	} while (!data);
+			वापस false;
+		पूर्ण
+	पूर्ण जबतक (!data);
 	ast_moutdwm(ast, 0x1e6e0070, 0x0);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static u32 mmc_test2(struct ast_private *ast, u32 datagen, u8 test_ctl)
-{
-	u32 data, timeout;
+अटल u32 mmc_test2(काष्ठा ast_निजी *ast, u32 datagen, u8 test_ctl)
+अणु
+	u32 data, समयout;
 
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
 	ast_moutdwm(ast, 0x1e6e0070, (datagen << 3) | test_ctl);
-	timeout = 0;
-	do {
+	समयout = 0;
+	करो अणु
 		data = ast_mindwm(ast, 0x1e6e0070) & 0x1000;
-		if (++timeout > TIMEOUT) {
+		अगर (++समयout > TIMEOUT) अणु
 			ast_moutdwm(ast, 0x1e6e0070, 0x0);
-			return 0xffffffff;
-		}
-	} while (!data);
+			वापस 0xffffffff;
+		पूर्ण
+	पूर्ण जबतक (!data);
 	data = ast_mindwm(ast, 0x1e6e0078);
 	data = (data | (data >> 16)) & 0xffff;
 	ast_moutdwm(ast, 0x1e6e0070, 0x00000000);
-	return data;
-}
+	वापस data;
+पूर्ण
 
 
-static bool mmc_test_burst(struct ast_private *ast, u32 datagen)
-{
-	return mmc_test(ast, datagen, 0xc1);
-}
+अटल bool mmc_test_burst(काष्ठा ast_निजी *ast, u32 datagen)
+अणु
+	वापस mmc_test(ast, datagen, 0xc1);
+पूर्ण
 
-static u32 mmc_test_burst2(struct ast_private *ast, u32 datagen)
-{
-	return mmc_test2(ast, datagen, 0x41);
-}
+अटल u32 mmc_test_burst2(काष्ठा ast_निजी *ast, u32 datagen)
+अणु
+	वापस mmc_test2(ast, datagen, 0x41);
+पूर्ण
 
-static bool mmc_test_single(struct ast_private *ast, u32 datagen)
-{
-	return mmc_test(ast, datagen, 0xc5);
-}
+अटल bool mmc_test_single(काष्ठा ast_निजी *ast, u32 datagen)
+अणु
+	वापस mmc_test(ast, datagen, 0xc5);
+पूर्ण
 
-static u32 mmc_test_single2(struct ast_private *ast, u32 datagen)
-{
-	return mmc_test2(ast, datagen, 0x05);
-}
+अटल u32 mmc_test_single2(काष्ठा ast_निजी *ast, u32 datagen)
+अणु
+	वापस mmc_test2(ast, datagen, 0x05);
+पूर्ण
 
-static bool mmc_test_single_2500(struct ast_private *ast, u32 datagen)
-{
-	return mmc_test(ast, datagen, 0x85);
-}
+अटल bool mmc_test_single_2500(काष्ठा ast_निजी *ast, u32 datagen)
+अणु
+	वापस mmc_test(ast, datagen, 0x85);
+पूर्ण
 
-static int cbr_test(struct ast_private *ast)
-{
+अटल पूर्णांक cbr_test(काष्ठा ast_निजी *ast)
+अणु
 	u32 data;
-	int i;
+	पूर्णांक i;
 	data = mmc_test_single2(ast, 0);
-	if ((data & 0xff) && (data & 0xff00))
-		return 0;
-	for (i = 0; i < 8; i++) {
+	अगर ((data & 0xff) && (data & 0xff00))
+		वापस 0;
+	क्रम (i = 0; i < 8; i++) अणु
 		data = mmc_test_burst2(ast, i);
-		if ((data & 0xff) && (data & 0xff00))
-			return 0;
-	}
-	if (!data)
-		return 3;
-	else if (data & 0xff)
-		return 2;
-	return 1;
-}
+		अगर ((data & 0xff) && (data & 0xff00))
+			वापस 0;
+	पूर्ण
+	अगर (!data)
+		वापस 3;
+	अन्यथा अगर (data & 0xff)
+		वापस 2;
+	वापस 1;
+पूर्ण
 
-static int cbr_scan(struct ast_private *ast)
-{
+अटल पूर्णांक cbr_scan(काष्ठा ast_निजी *ast)
+अणु
 	u32 data, data2, patcnt, loop;
 
 	data2 = 3;
-	for (patcnt = 0; patcnt < CBR_PATNUM; patcnt++) {
+	क्रम (patcnt = 0; patcnt < CBR_PATNUM; patcnt++) अणु
 		ast_moutdwm(ast, 0x1e6e007c, pattern[patcnt]);
-		for (loop = 0; loop < CBR_PASSNUM2; loop++) {
-			if ((data = cbr_test(ast)) != 0) {
+		क्रम (loop = 0; loop < CBR_PASSNUM2; loop++) अणु
+			अगर ((data = cbr_test(ast)) != 0) अणु
 				data2 &= data;
-				if (!data2)
-					return 0;
-				break;
-			}
-		}
-		if (loop == CBR_PASSNUM2)
-			return 0;
-	}
-	return data2;
-}
+				अगर (!data2)
+					वापस 0;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (loop == CBR_PASSNUM2)
+			वापस 0;
+	पूर्ण
+	वापस data2;
+पूर्ण
 
-static u32 cbr_test2(struct ast_private *ast)
-{
+अटल u32 cbr_test2(काष्ठा ast_निजी *ast)
+अणु
 	u32 data;
 
 	data = mmc_test_burst2(ast, 0);
-	if (data == 0xffff)
-		return 0;
+	अगर (data == 0xffff)
+		वापस 0;
 	data |= mmc_test_single2(ast, 0);
-	if (data == 0xffff)
-		return 0;
+	अगर (data == 0xffff)
+		वापस 0;
 
-	return ~data & 0xffff;
-}
+	वापस ~data & 0xffff;
+पूर्ण
 
-static u32 cbr_scan2(struct ast_private *ast)
-{
+अटल u32 cbr_scan2(काष्ठा ast_निजी *ast)
+अणु
 	u32 data, data2, patcnt, loop;
 
 	data2 = 0xffff;
-	for (patcnt = 0; patcnt < CBR_PATNUM; patcnt++) {
+	क्रम (patcnt = 0; patcnt < CBR_PATNUM; patcnt++) अणु
 		ast_moutdwm(ast, 0x1e6e007c, pattern[patcnt]);
-		for (loop = 0; loop < CBR_PASSNUM2; loop++) {
-			if ((data = cbr_test2(ast)) != 0) {
+		क्रम (loop = 0; loop < CBR_PASSNUM2; loop++) अणु
+			अगर ((data = cbr_test2(ast)) != 0) अणु
 				data2 &= data;
-				if (!data2)
-					return 0;
-				break;
-			}
-		}
-		if (loop == CBR_PASSNUM2)
-			return 0;
-	}
-	return data2;
-}
+				अगर (!data2)
+					वापस 0;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (loop == CBR_PASSNUM2)
+			वापस 0;
+	पूर्ण
+	वापस data2;
+पूर्ण
 
-static bool cbr_test3(struct ast_private *ast)
-{
-	if (!mmc_test_burst(ast, 0))
-		return false;
-	if (!mmc_test_single(ast, 0))
-		return false;
-	return true;
-}
+अटल bool cbr_test3(काष्ठा ast_निजी *ast)
+अणु
+	अगर (!mmc_test_burst(ast, 0))
+		वापस false;
+	अगर (!mmc_test_single(ast, 0))
+		वापस false;
+	वापस true;
+पूर्ण
 
-static bool cbr_scan3(struct ast_private *ast)
-{
+अटल bool cbr_scan3(काष्ठा ast_निजी *ast)
+अणु
 	u32 patcnt, loop;
 
-	for (patcnt = 0; patcnt < CBR_PATNUM; patcnt++) {
+	क्रम (patcnt = 0; patcnt < CBR_PATNUM; patcnt++) अणु
 		ast_moutdwm(ast, 0x1e6e007c, pattern[patcnt]);
-		for (loop = 0; loop < 2; loop++) {
-			if (cbr_test3(ast))
-				break;
-		}
-		if (loop == 2)
-			return false;
-	}
-	return true;
-}
+		क्रम (loop = 0; loop < 2; loop++) अणु
+			अगर (cbr_test3(ast))
+				अवरोध;
+		पूर्ण
+		अगर (loop == 2)
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static bool finetuneDQI_L(struct ast_private *ast, struct ast2300_dram_param *param)
-{
+अटल bool finetuneDQI_L(काष्ठा ast_निजी *ast, काष्ठा ast2300_dram_param *param)
+अणु
 	u32 gold_sadj[2], dllmin[16], dllmax[16], dlli, data, cnt, mask, passcnt, retry = 0;
 	bool status = false;
 FINETUNE_START:
-	for (cnt = 0; cnt < 16; cnt++) {
+	क्रम (cnt = 0; cnt < 16; cnt++) अणु
 		dllmin[cnt] = 0xff;
 		dllmax[cnt] = 0x0;
-	}
+	पूर्ण
 	passcnt = 0;
-	for (dlli = 0; dlli < 76; dlli++) {
+	क्रम (dlli = 0; dlli < 76; dlli++) अणु
 		ast_moutdwm(ast, 0x1E6E0068, 0x00001400 | (dlli << 16) | (dlli << 24));
 		ast_moutdwm(ast, 0x1E6E0074, CBR_SIZE1);
 		data = cbr_scan2(ast);
-		if (data != 0) {
+		अगर (data != 0) अणु
 			mask = 0x00010001;
-			for (cnt = 0; cnt < 16; cnt++) {
-				if (data & mask) {
-					if (dllmin[cnt] > dlli) {
+			क्रम (cnt = 0; cnt < 16; cnt++) अणु
+				अगर (data & mask) अणु
+					अगर (dllmin[cnt] > dlli) अणु
 						dllmin[cnt] = dlli;
-					}
-					if (dllmax[cnt] < dlli) {
+					पूर्ण
+					अगर (dllmax[cnt] < dlli) अणु
 						dllmax[cnt] = dlli;
-					}
-				}
+					पूर्ण
+				पूर्ण
 				mask <<= 1;
-			}
+			पूर्ण
 			passcnt++;
-		} else if (passcnt >= CBR_THRESHOLD2) {
-			break;
-		}
-	}
+		पूर्ण अन्यथा अगर (passcnt >= CBR_THRESHOLD2) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	gold_sadj[0] = 0x0;
 	passcnt = 0;
-	for (cnt = 0; cnt < 16; cnt++) {
-		if ((dllmax[cnt] > dllmin[cnt]) && ((dllmax[cnt] - dllmin[cnt]) >= CBR_THRESHOLD2)) {
+	क्रम (cnt = 0; cnt < 16; cnt++) अणु
+		अगर ((dllmax[cnt] > dllmin[cnt]) && ((dllmax[cnt] - dllmin[cnt]) >= CBR_THRESHOLD2)) अणु
 			gold_sadj[0] += dllmin[cnt];
 			passcnt++;
-		}
-	}
-	if (retry++ > 10)
-		goto FINETUNE_DONE;
-	if (passcnt != 16) {
-		goto FINETUNE_START;
-	}
+		पूर्ण
+	पूर्ण
+	अगर (retry++ > 10)
+		जाओ FINETUNE_DONE;
+	अगर (passcnt != 16) अणु
+		जाओ FINETUNE_START;
+	पूर्ण
 	status = true;
 FINETUNE_DONE:
 	gold_sadj[0] = gold_sadj[0] >> 4;
 	gold_sadj[1] = gold_sadj[0];
 
 	data = 0;
-	for (cnt = 0; cnt < 8; cnt++) {
+	क्रम (cnt = 0; cnt < 8; cnt++) अणु
 		data >>= 3;
-		if ((dllmax[cnt] > dllmin[cnt]) && ((dllmax[cnt] - dllmin[cnt]) >= CBR_THRESHOLD2)) {
+		अगर ((dllmax[cnt] > dllmin[cnt]) && ((dllmax[cnt] - dllmin[cnt]) >= CBR_THRESHOLD2)) अणु
 			dlli = dllmin[cnt];
-			if (gold_sadj[0] >= dlli) {
+			अगर (gold_sadj[0] >= dlli) अणु
 				dlli = ((gold_sadj[0] - dlli) * 19) >> 5;
-				if (dlli > 3) {
+				अगर (dlli > 3) अणु
 					dlli = 3;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				dlli = ((dlli - gold_sadj[0]) * 19) >> 5;
-				if (dlli > 4) {
+				अगर (dlli > 4) अणु
 					dlli = 4;
-				}
+				पूर्ण
 				dlli = (8 - dlli) & 0x7;
-			}
+			पूर्ण
 			data |= dlli << 21;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ast_moutdwm(ast, 0x1E6E0080, data);
 
 	data = 0;
-	for (cnt = 8; cnt < 16; cnt++) {
+	क्रम (cnt = 8; cnt < 16; cnt++) अणु
 		data >>= 3;
-		if ((dllmax[cnt] > dllmin[cnt]) && ((dllmax[cnt] - dllmin[cnt]) >= CBR_THRESHOLD2)) {
+		अगर ((dllmax[cnt] > dllmin[cnt]) && ((dllmax[cnt] - dllmin[cnt]) >= CBR_THRESHOLD2)) अणु
 			dlli = dllmin[cnt];
-			if (gold_sadj[1] >= dlli) {
+			अगर (gold_sadj[1] >= dlli) अणु
 				dlli = ((gold_sadj[1] - dlli) * 19) >> 5;
-				if (dlli > 3) {
+				अगर (dlli > 3) अणु
 					dlli = 3;
-				} else {
+				पूर्ण अन्यथा अणु
 					dlli = (dlli - 1) & 0x7;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				dlli = ((dlli - gold_sadj[1]) * 19) >> 5;
 				dlli += 1;
-				if (dlli > 4) {
+				अगर (dlli > 4) अणु
 					dlli = 4;
-				}
+				पूर्ण
 				dlli = (8 - dlli) & 0x7;
-			}
+			पूर्ण
 			data |= dlli << 21;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ast_moutdwm(ast, 0x1E6E0084, data);
-	return status;
-} /* finetuneDQI_L */
+	वापस status;
+पूर्ण /* finetuneDQI_L */
 
-static void finetuneDQSI(struct ast_private *ast)
-{
+अटल व्योम finetuneDQSI(काष्ठा ast_निजी *ast)
+अणु
 	u32 dlli, dqsip, dqidly;
-	u32 reg_mcr18, reg_mcr0c, passcnt[2], diff;
+	u32 reg_mcr18, reg_mcr0c, passcnt[2], dअगरf;
 	u32 g_dqidly, g_dqsip, g_margin, g_side;
 	u16 pass[32][2][2];
-	char tag[2][76];
+	अक्षर tag[2][76];
 
 	/* Disable DQI CBR */
 	reg_mcr0c  = ast_mindwm(ast, 0x1E6E000C);
@@ -726,140 +727,140 @@ static void finetuneDQSI(struct ast_private *ast)
 	reg_mcr18 &= 0x0000ffff;
 	ast_moutdwm(ast, 0x1E6E0018, reg_mcr18);
 
-	for (dlli = 0; dlli < 76; dlli++) {
+	क्रम (dlli = 0; dlli < 76; dlli++) अणु
 		tag[0][dlli] = 0x0;
 		tag[1][dlli] = 0x0;
-	}
-	for (dqidly = 0; dqidly < 32; dqidly++) {
+	पूर्ण
+	क्रम (dqidly = 0; dqidly < 32; dqidly++) अणु
 		pass[dqidly][0][0] = 0xff;
 		pass[dqidly][0][1] = 0x0;
 		pass[dqidly][1][0] = 0xff;
 		pass[dqidly][1][1] = 0x0;
-	}
-	for (dqidly = 0; dqidly < 32; dqidly++) {
+	पूर्ण
+	क्रम (dqidly = 0; dqidly < 32; dqidly++) अणु
 		passcnt[0] = passcnt[1] = 0;
-		for (dqsip = 0; dqsip < 2; dqsip++) {
+		क्रम (dqsip = 0; dqsip < 2; dqsip++) अणु
 			ast_moutdwm(ast, 0x1E6E000C, 0);
 			ast_moutdwm(ast, 0x1E6E0018, reg_mcr18 | (dqidly << 16) | (dqsip << 23));
 			ast_moutdwm(ast, 0x1E6E000C, reg_mcr0c);
-			for (dlli = 0; dlli < 76; dlli++) {
+			क्रम (dlli = 0; dlli < 76; dlli++) अणु
 				ast_moutdwm(ast, 0x1E6E0068, 0x00001300 | (dlli << 16) | (dlli << 24));
 				ast_moutdwm(ast, 0x1E6E0070, 0);
 				ast_moutdwm(ast, 0x1E6E0074, CBR_SIZE0);
-				if (cbr_scan3(ast)) {
-					if (dlli == 0)
-						break;
+				अगर (cbr_scan3(ast)) अणु
+					अगर (dlli == 0)
+						अवरोध;
 					passcnt[dqsip]++;
 					tag[dqsip][dlli] = 'P';
-					if (dlli < pass[dqidly][dqsip][0])
+					अगर (dlli < pass[dqidly][dqsip][0])
 						pass[dqidly][dqsip][0] = (u16) dlli;
-					if (dlli > pass[dqidly][dqsip][1])
+					अगर (dlli > pass[dqidly][dqsip][1])
 						pass[dqidly][dqsip][1] = (u16) dlli;
-				} else if (passcnt[dqsip] >= 5)
-					break;
-				else {
+				पूर्ण अन्यथा अगर (passcnt[dqsip] >= 5)
+					अवरोध;
+				अन्यथा अणु
 					pass[dqidly][dqsip][0] = 0xff;
 					pass[dqidly][dqsip][1] = 0x0;
-				}
-			}
-		}
-		if (passcnt[0] == 0 && passcnt[1] == 0)
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		अगर (passcnt[0] == 0 && passcnt[1] == 0)
 			dqidly++;
-	}
+	पूर्ण
 	/* Search margin */
 	g_dqidly = g_dqsip = g_margin = g_side = 0;
 
-	for (dqidly = 0; dqidly < 32; dqidly++) {
-		for (dqsip = 0; dqsip < 2; dqsip++) {
-			if (pass[dqidly][dqsip][0] > pass[dqidly][dqsip][1])
-				continue;
-			diff = pass[dqidly][dqsip][1] - pass[dqidly][dqsip][0];
-			if ((diff+2) < g_margin)
-				continue;
+	क्रम (dqidly = 0; dqidly < 32; dqidly++) अणु
+		क्रम (dqsip = 0; dqsip < 2; dqsip++) अणु
+			अगर (pass[dqidly][dqsip][0] > pass[dqidly][dqsip][1])
+				जारी;
+			dअगरf = pass[dqidly][dqsip][1] - pass[dqidly][dqsip][0];
+			अगर ((dअगरf+2) < g_margin)
+				जारी;
 			passcnt[0] = passcnt[1] = 0;
-			for (dlli = pass[dqidly][dqsip][0]; dlli > 0  && tag[dqsip][dlli] != 0; dlli--, passcnt[0]++);
-			for (dlli = pass[dqidly][dqsip][1]; dlli < 76 && tag[dqsip][dlli] != 0; dlli++, passcnt[1]++);
-			if (passcnt[0] > passcnt[1])
+			क्रम (dlli = pass[dqidly][dqsip][0]; dlli > 0  && tag[dqsip][dlli] != 0; dlli--, passcnt[0]++);
+			क्रम (dlli = pass[dqidly][dqsip][1]; dlli < 76 && tag[dqsip][dlli] != 0; dlli++, passcnt[1]++);
+			अगर (passcnt[0] > passcnt[1])
 				passcnt[0] = passcnt[1];
 			passcnt[1] = 0;
-			if (passcnt[0] > g_side)
+			अगर (passcnt[0] > g_side)
 				passcnt[1] = passcnt[0] - g_side;
-			if (diff > (g_margin+1) && (passcnt[1] > 0 || passcnt[0] > 8)) {
-				g_margin = diff;
+			अगर (dअगरf > (g_margin+1) && (passcnt[1] > 0 || passcnt[0] > 8)) अणु
+				g_margin = dअगरf;
 				g_dqidly = dqidly;
 				g_dqsip  = dqsip;
 				g_side   = passcnt[0];
-			} else if (passcnt[1] > 1 && g_side < 8) {
-				if (diff > g_margin)
-					g_margin = diff;
+			पूर्ण अन्यथा अगर (passcnt[1] > 1 && g_side < 8) अणु
+				अगर (dअगरf > g_margin)
+					g_margin = dअगरf;
 				g_dqidly = dqidly;
 				g_dqsip  = dqsip;
 				g_side   = passcnt[0];
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	reg_mcr18 = reg_mcr18 | (g_dqidly << 16) | (g_dqsip << 23);
 	ast_moutdwm(ast, 0x1E6E0018, reg_mcr18);
 
-}
-static bool cbr_dll2(struct ast_private *ast, struct ast2300_dram_param *param)
-{
+पूर्ण
+अटल bool cbr_dll2(काष्ठा ast_निजी *ast, काष्ठा ast2300_dram_param *param)
+अणु
 	u32 dllmin[2], dllmax[2], dlli, data, passcnt, retry = 0;
 	bool status = false;
 
 	finetuneDQSI(ast);
-	if (finetuneDQI_L(ast, param) == false)
-		return status;
+	अगर (finetuneDQI_L(ast, param) == false)
+		वापस status;
 
 CBR_START2:
 	dllmin[0] = dllmin[1] = 0xff;
 	dllmax[0] = dllmax[1] = 0x0;
 	passcnt = 0;
-	for (dlli = 0; dlli < 76; dlli++) {
+	क्रम (dlli = 0; dlli < 76; dlli++) अणु
 		ast_moutdwm(ast, 0x1E6E0068, 0x00001300 | (dlli << 16) | (dlli << 24));
 		ast_moutdwm(ast, 0x1E6E0074, CBR_SIZE2);
 		data = cbr_scan(ast);
-		if (data != 0) {
-			if (data & 0x1) {
-				if (dllmin[0] > dlli) {
+		अगर (data != 0) अणु
+			अगर (data & 0x1) अणु
+				अगर (dllmin[0] > dlli) अणु
 					dllmin[0] = dlli;
-				}
-				if (dllmax[0] < dlli) {
+				पूर्ण
+				अगर (dllmax[0] < dlli) अणु
 					dllmax[0] = dlli;
-				}
-			}
-			if (data & 0x2) {
-				if (dllmin[1] > dlli) {
+				पूर्ण
+			पूर्ण
+			अगर (data & 0x2) अणु
+				अगर (dllmin[1] > dlli) अणु
 					dllmin[1] = dlli;
-				}
-				if (dllmax[1] < dlli) {
+				पूर्ण
+				अगर (dllmax[1] < dlli) अणु
 					dllmax[1] = dlli;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			passcnt++;
-		} else if (passcnt >= CBR_THRESHOLD) {
-			break;
-		}
-	}
-	if (retry++ > 10)
-		goto CBR_DONE2;
-	if (dllmax[0] == 0 || (dllmax[0]-dllmin[0]) < CBR_THRESHOLD) {
-		goto CBR_START2;
-	}
-	if (dllmax[1] == 0 || (dllmax[1]-dllmin[1]) < CBR_THRESHOLD) {
-		goto CBR_START2;
-	}
+		पूर्ण अन्यथा अगर (passcnt >= CBR_THRESHOLD) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (retry++ > 10)
+		जाओ CBR_DONE2;
+	अगर (dllmax[0] == 0 || (dllmax[0]-dllmin[0]) < CBR_THRESHOLD) अणु
+		जाओ CBR_START2;
+	पूर्ण
+	अगर (dllmax[1] == 0 || (dllmax[1]-dllmin[1]) < CBR_THRESHOLD) अणु
+		जाओ CBR_START2;
+	पूर्ण
 	status = true;
 CBR_DONE2:
 	dlli  = (dllmin[1] + dllmax[1]) >> 1;
 	dlli <<= 8;
 	dlli += (dllmin[0] + dllmax[0]) >> 1;
 	ast_moutdwm(ast, 0x1E6E0068, ast_mindwm(ast, 0x1E720058) | (dlli << 16));
-	return status;
-} /* CBRDLL2 */
+	वापस status;
+पूर्ण /* CBRDLL2 */
 
-static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *param)
-{
+अटल व्योम get_ddr3_info(काष्ठा ast_निजी *ast, काष्ठा ast2300_dram_param *param)
+अणु
 	u32 trap, trap_AC2, trap_MRS;
 
 	ast_moutdwm(ast, 0x1E6E2000, 0x1688A8A8);
@@ -877,8 +878,8 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 	param->reg_PERIOD     = param->dram_freq;
 	param->rodt           = 0;
 
-	switch (param->dram_freq) {
-	case 336:
+	चयन (param->dram_freq) अणु
+	हाल 336:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0190);
 		param->wodt          = 0;
 		param->reg_AC1       = 0x22202725;
@@ -891,22 +892,22 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x00004DC0;
 		param->madj_max      = 96;
 		param->dll2_finetune_step = 3;
-		switch (param->dram_chipid) {
-		default:
-		case AST_DRAM_512Mx16:
-		case AST_DRAM_1Gx16:
+		चयन (param->dram_chipid) अणु
+		शेष:
+		हाल AST_DRAM_512Mx16:
+		हाल AST_DRAM_1Gx16:
 			param->reg_AC2   = 0xAA007613 | trap_AC2;
-			break;
-		case AST_DRAM_2Gx16:
+			अवरोध;
+		हाल AST_DRAM_2Gx16:
 			param->reg_AC2   = 0xAA00761C | trap_AC2;
-			break;
-		case AST_DRAM_4Gx16:
+			अवरोध;
+		हाल AST_DRAM_4Gx16:
 			param->reg_AC2   = 0xAA007636 | trap_AC2;
-			break;
-		}
-		break;
-	default:
-	case 396:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+	हाल 396:
 		ast_moutdwm(ast, 0x1E6E2020, 0x03F1);
 		param->wodt          = 1;
 		param->reg_AC1       = 0x33302825;
@@ -921,22 +922,22 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->madj_max      = 96;
 		param->dll2_finetune_step = 4;
 
-		switch (param->dram_chipid) {
-		default:
-		case AST_DRAM_512Mx16:
-		case AST_DRAM_1Gx16:
+		चयन (param->dram_chipid) अणु
+		शेष:
+		हाल AST_DRAM_512Mx16:
+		हाल AST_DRAM_1Gx16:
 			param->reg_AC2   = 0xCC009617 | trap_AC2;
-			break;
-		case AST_DRAM_2Gx16:
+			अवरोध;
+		हाल AST_DRAM_2Gx16:
 			param->reg_AC2   = 0xCC009622 | trap_AC2;
-			break;
-		case AST_DRAM_4Gx16:
+			अवरोध;
+		हाल AST_DRAM_4Gx16:
 			param->reg_AC2   = 0xCC00963F | trap_AC2;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case 408:
+	हाल 408:
 		ast_moutdwm(ast, 0x1E6E2020, 0x01F0);
 		param->wodt          = 1;
 		param->reg_AC1       = 0x33302825;
@@ -951,22 +952,22 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->madj_max      = 96;
 		param->dll2_finetune_step = 4;
 
-		switch (param->dram_chipid) {
-		default:
-		case AST_DRAM_512Mx16:
-		case AST_DRAM_1Gx16:
+		चयन (param->dram_chipid) अणु
+		शेष:
+		हाल AST_DRAM_512Mx16:
+		हाल AST_DRAM_1Gx16:
 			param->reg_AC2   = 0xCC009617 | trap_AC2;
-			break;
-		case AST_DRAM_2Gx16:
+			अवरोध;
+		हाल AST_DRAM_2Gx16:
 			param->reg_AC2   = 0xCC009622 | trap_AC2;
-			break;
-		case AST_DRAM_4Gx16:
+			अवरोध;
+		हाल AST_DRAM_4Gx16:
 			param->reg_AC2   = 0xCC00963F | trap_AC2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
-	case 456:
+		अवरोध;
+	हाल 456:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0230);
 		param->wodt          = 0;
 		param->reg_AC1       = 0x33302926;
@@ -979,8 +980,8 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000052C0;
 		param->madj_max      = 88;
 		param->dll2_finetune_step = 4;
-		break;
-	case 504:
+		अवरोध;
+	हाल 504:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0270);
 		param->wodt          = 1;
 		param->reg_AC1       = 0x33302926;
@@ -993,8 +994,8 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000054C0;
 		param->madj_max      = 79;
 		param->dll2_finetune_step = 4;
-		break;
-	case 528:
+		अवरोध;
+	हाल 528:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0290);
 		param->wodt          = 1;
 		param->rodt          = 1;
@@ -1009,8 +1010,8 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000055C0;
 		param->madj_max      = 76;
 		param->dll2_finetune_step = 3;
-		break;
-	case 576:
+		अवरोध;
+	हाल 576:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0140);
 		param->reg_MADJ      = 0x00136868;
 		param->reg_SADJ      = 0x00004534;
@@ -1027,8 +1028,8 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000057C0;
 		param->madj_max      = 136;
 		param->dll2_finetune_step = 3;
-		break;
-	case 600:
+		अवरोध;
+	हाल 600:
 		ast_moutdwm(ast, 0x1E6E2020, 0x02E1);
 		param->reg_MADJ      = 0x00136868;
 		param->reg_SADJ      = 0x00004534;
@@ -1045,8 +1046,8 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000058C0;
 		param->madj_max      = 132;
 		param->dll2_finetune_step = 3;
-		break;
-	case 624:
+		अवरोध;
+	हाल 624:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0160);
 		param->reg_MADJ      = 0x00136868;
 		param->reg_SADJ      = 0x00004534;
@@ -1063,45 +1064,45 @@ static void get_ddr3_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000059C0;
 		param->madj_max      = 128;
 		param->dll2_finetune_step = 3;
-		break;
-	} /* switch freq */
+		अवरोध;
+	पूर्ण /* चयन freq */
 
-	switch (param->dram_chipid) {
-	case AST_DRAM_512Mx16:
+	चयन (param->dram_chipid) अणु
+	हाल AST_DRAM_512Mx16:
 		param->dram_config = 0x130;
-		break;
-	default:
-	case AST_DRAM_1Gx16:
+		अवरोध;
+	शेष:
+	हाल AST_DRAM_1Gx16:
 		param->dram_config = 0x131;
-		break;
-	case AST_DRAM_2Gx16:
+		अवरोध;
+	हाल AST_DRAM_2Gx16:
 		param->dram_config = 0x132;
-		break;
-	case AST_DRAM_4Gx16:
+		अवरोध;
+	हाल AST_DRAM_4Gx16:
 		param->dram_config = 0x133;
-		break;
-	} /* switch size */
+		अवरोध;
+	पूर्ण /* चयन size */
 
-	switch (param->vram_size) {
-	default:
-	case AST_VIDMEM_SIZE_8M:
+	चयन (param->vram_size) अणु
+	शेष:
+	हाल AST_VIDMEM_SIZE_8M:
 		param->dram_config |= 0x00;
-		break;
-	case AST_VIDMEM_SIZE_16M:
+		अवरोध;
+	हाल AST_VIDMEM_SIZE_16M:
 		param->dram_config |= 0x04;
-		break;
-	case AST_VIDMEM_SIZE_32M:
+		अवरोध;
+	हाल AST_VIDMEM_SIZE_32M:
 		param->dram_config |= 0x08;
-		break;
-	case AST_VIDMEM_SIZE_64M:
+		अवरोध;
+	हाल AST_VIDMEM_SIZE_64M:
 		param->dram_config |= 0x0c;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-}
+पूर्ण
 
-static void ddr3_init(struct ast_private *ast, struct ast2300_dram_param *param)
-{
+अटल व्योम ddr3_init(काष्ठा ast_निजी *ast, काष्ठा ast2300_dram_param *param)
+अणु
 	u32 data, data2, retry = 0;
 
 ddr3_init_start:
@@ -1141,22 +1142,22 @@ ddr3_init_start:
 	ast_moutdwm(ast, 0x1E6E0078, 0x00000000);
 	ast_moutdwm(ast, 0x1E6E007C, 0x00000000);
 	/* Wait MCLK2X lock to MCLK */
-	do {
+	करो अणु
 		data = ast_mindwm(ast, 0x1E6E001C);
-	} while (!(data & 0x08000000));
+	पूर्ण जबतक (!(data & 0x08000000));
 	data = ast_mindwm(ast, 0x1E6E001C);
 	data = (data >> 8) & 0xff;
-	while ((data & 0x08) || ((data & 0x7) < 2) || (data < 4)) {
+	जबतक ((data & 0x08) || ((data & 0x7) < 2) || (data < 4)) अणु
 		data2 = (ast_mindwm(ast, 0x1E6E0064) & 0xfff3ffff) + 4;
-		if ((data2 & 0xff) > param->madj_max) {
-			break;
-		}
+		अगर ((data2 & 0xff) > param->madj_max) अणु
+			अवरोध;
+		पूर्ण
 		ast_moutdwm(ast, 0x1E6E0064, data2);
-		if (data2 & 0x00100000) {
+		अगर (data2 & 0x00100000) अणु
 			data2 = ((data2 & 0xff) >> 3) + 3;
-		} else {
+		पूर्ण अन्यथा अणु
 			data2 = ((data2 & 0xff) >> 2) + 5;
-		}
+		पूर्ण
 		data = ast_mindwm(ast, 0x1E6E0068) & 0xffff00ff;
 		data2 += data & 0xff;
 		data = data | (data2 << 8);
@@ -1168,13 +1169,13 @@ ddr3_init_start:
 		ast_moutdwm(ast, 0x1E6E0018, data);
 		data = data | 0x200;
 		ast_moutdwm(ast, 0x1E6E0018, data);
-		do {
+		करो अणु
 			data = ast_mindwm(ast, 0x1E6E001C);
-		} while (!(data & 0x08000000));
+		पूर्ण जबतक (!(data & 0x08000000));
 
 		data = ast_mindwm(ast, 0x1E6E001C);
 		data = (data >> 8) & 0xff;
-	}
+	पूर्ण
 	ast_moutdwm(ast, 0x1E720058, ast_mindwm(ast, 0x1E6E0068) & 0xffff);
 	data = ast_mindwm(ast, 0x1E6E0018) | 0xC00;
 	ast_moutdwm(ast, 0x1E6E0018, data);
@@ -1195,36 +1196,36 @@ ddr3_init_start:
 
 	ast_moutdwm(ast, 0x1E6E000C, 0x00005C01);
 	data = 0;
-	if (param->wodt) {
+	अगर (param->wodt) अणु
 		data = 0x300;
-	}
-	if (param->rodt) {
+	पूर्ण
+	अगर (param->rodt) अणु
 		data = data | 0x3000 | ((param->reg_AC2 & 0x60000) >> 3);
-	}
+	पूर्ण
 	ast_moutdwm(ast, 0x1E6E0034, data | 0x3);
 
 	/* Calibrate the DQSI delay */
-	if ((cbr_dll2(ast, param) == false) && (retry++ < 10))
-		goto ddr3_init_start;
+	अगर ((cbr_dll2(ast, param) == false) && (retry++ < 10))
+		जाओ ddr3_init_start;
 
 	ast_moutdwm(ast, 0x1E6E0120, param->reg_FREQ);
 	/* ECC Memory Initialization */
-#ifdef ECC
+#अगर_घोषित ECC
 	ast_moutdwm(ast, 0x1E6E007C, 0x00000000);
 	ast_moutdwm(ast, 0x1E6E0070, 0x221);
-	do {
+	करो अणु
 		data = ast_mindwm(ast, 0x1E6E0070);
-	} while (!(data & 0x00001000));
+	पूर्ण जबतक (!(data & 0x00001000));
 	ast_moutdwm(ast, 0x1E6E0070, 0x00000000);
 	ast_moutdwm(ast, 0x1E6E0050, 0x80000000);
 	ast_moutdwm(ast, 0x1E6E0050, 0x00000000);
-#endif
+#पूर्ण_अगर
 
 
-}
+पूर्ण
 
-static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *param)
-{
+अटल व्योम get_ddr2_info(काष्ठा ast_निजी *ast, काष्ठा ast2300_dram_param *param)
+अणु
 	u32 trap, trap_AC2, trap_MRS;
 
 	ast_moutdwm(ast, 0x1E6E2000, 0x1688A8A8);
@@ -1242,8 +1243,8 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 	param->reg_PERIOD     = param->dram_freq;
 	param->rodt           = 0;
 
-	switch (param->dram_freq) {
-	case 264:
+	चयन (param->dram_freq) अणु
+	हाल 264:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0130);
 		param->wodt          = 0;
 		param->reg_AC1       = 0x11101513;
@@ -1257,8 +1258,8 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x00004AC0;
 		param->madj_max      = 138;
 		param->dll2_finetune_step = 3;
-		break;
-	case 336:
+		अवरोध;
+	हाल 336:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0190);
 		param->wodt          = 1;
 		param->reg_AC1       = 0x22202613;
@@ -1272,24 +1273,24 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x00004DC0;
 		param->madj_max      = 96;
 		param->dll2_finetune_step = 3;
-		switch (param->dram_chipid) {
-		default:
-		case AST_DRAM_512Mx16:
+		चयन (param->dram_chipid) अणु
+		शेष:
+		हाल AST_DRAM_512Mx16:
 			param->reg_AC2   = 0xAA009012 | trap_AC2;
-			break;
-		case AST_DRAM_1Gx16:
+			अवरोध;
+		हाल AST_DRAM_1Gx16:
 			param->reg_AC2   = 0xAA009016 | trap_AC2;
-			break;
-		case AST_DRAM_2Gx16:
+			अवरोध;
+		हाल AST_DRAM_2Gx16:
 			param->reg_AC2   = 0xAA009023 | trap_AC2;
-			break;
-		case AST_DRAM_4Gx16:
+			अवरोध;
+		हाल AST_DRAM_4Gx16:
 			param->reg_AC2   = 0xAA00903B | trap_AC2;
-			break;
-		}
-		break;
-	default:
-	case 396:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+	हाल 396:
 		ast_moutdwm(ast, 0x1E6E2020, 0x03F1);
 		param->wodt          = 1;
 		param->rodt          = 0;
@@ -1305,25 +1306,25 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->madj_max      = 96;
 		param->dll2_finetune_step = 4;
 
-		switch (param->dram_chipid) {
-		case AST_DRAM_512Mx16:
+		चयन (param->dram_chipid) अणु
+		हाल AST_DRAM_512Mx16:
 			param->reg_AC2   = 0xCC00B016 | trap_AC2;
-			break;
-		default:
-		case AST_DRAM_1Gx16:
+			अवरोध;
+		शेष:
+		हाल AST_DRAM_1Gx16:
 			param->reg_AC2   = 0xCC00B01B | trap_AC2;
-			break;
-		case AST_DRAM_2Gx16:
+			अवरोध;
+		हाल AST_DRAM_2Gx16:
 			param->reg_AC2   = 0xCC00B02B | trap_AC2;
-			break;
-		case AST_DRAM_4Gx16:
+			अवरोध;
+		हाल AST_DRAM_4Gx16:
 			param->reg_AC2   = 0xCC00B03F | trap_AC2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case 408:
+	हाल 408:
 		ast_moutdwm(ast, 0x1E6E2020, 0x01F0);
 		param->wodt          = 1;
 		param->rodt          = 0;
@@ -1339,24 +1340,24 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->madj_max      = 96;
 		param->dll2_finetune_step = 4;
 
-		switch (param->dram_chipid) {
-		case AST_DRAM_512Mx16:
+		चयन (param->dram_chipid) अणु
+		हाल AST_DRAM_512Mx16:
 			param->reg_AC2   = 0xCC00B016 | trap_AC2;
-			break;
-		default:
-		case AST_DRAM_1Gx16:
+			अवरोध;
+		शेष:
+		हाल AST_DRAM_1Gx16:
 			param->reg_AC2   = 0xCC00B01B | trap_AC2;
-			break;
-		case AST_DRAM_2Gx16:
+			अवरोध;
+		हाल AST_DRAM_2Gx16:
 			param->reg_AC2   = 0xCC00B02B | trap_AC2;
-			break;
-		case AST_DRAM_4Gx16:
+			अवरोध;
+		हाल AST_DRAM_4Gx16:
 			param->reg_AC2   = 0xCC00B03F | trap_AC2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
-	case 456:
+		अवरोध;
+	हाल 456:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0230);
 		param->wodt          = 0;
 		param->reg_AC1       = 0x33302815;
@@ -1370,8 +1371,8 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000052C0;
 		param->madj_max      = 88;
 		param->dll2_finetune_step = 3;
-		break;
-	case 504:
+		अवरोध;
+	हाल 504:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0261);
 		param->wodt          = 1;
 		param->rodt          = 1;
@@ -1386,8 +1387,8 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000054C0;
 		param->madj_max      = 79;
 		param->dll2_finetune_step = 3;
-		break;
-	case 528:
+		अवरोध;
+	हाल 528:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0120);
 		param->wodt          = 1;
 		param->rodt          = 1;
@@ -1402,8 +1403,8 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000055C0;
 		param->madj_max      = 76;
 		param->dll2_finetune_step = 3;
-		break;
-	case 552:
+		अवरोध;
+	हाल 552:
 		ast_moutdwm(ast, 0x1E6E2020, 0x02A1);
 		param->wodt          = 1;
 		param->rodt          = 1;
@@ -1418,8 +1419,8 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000056C0;
 		param->madj_max      = 76;
 		param->dll2_finetune_step = 3;
-		break;
-	case 576:
+		अवरोध;
+	हाल 576:
 		ast_moutdwm(ast, 0x1E6E2020, 0x0140);
 		param->wodt          = 1;
 		param->rodt          = 1;
@@ -1434,44 +1435,44 @@ static void get_ddr2_info(struct ast_private *ast, struct ast2300_dram_param *pa
 		param->reg_FREQ      = 0x000057C0;
 		param->madj_max      = 76;
 		param->dll2_finetune_step = 3;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (param->dram_chipid) {
-	case AST_DRAM_512Mx16:
+	चयन (param->dram_chipid) अणु
+	हाल AST_DRAM_512Mx16:
 		param->dram_config = 0x100;
-		break;
-	default:
-	case AST_DRAM_1Gx16:
+		अवरोध;
+	शेष:
+	हाल AST_DRAM_1Gx16:
 		param->dram_config = 0x121;
-		break;
-	case AST_DRAM_2Gx16:
+		अवरोध;
+	हाल AST_DRAM_2Gx16:
 		param->dram_config = 0x122;
-		break;
-	case AST_DRAM_4Gx16:
+		अवरोध;
+	हाल AST_DRAM_4Gx16:
 		param->dram_config = 0x123;
-		break;
-	} /* switch size */
+		अवरोध;
+	पूर्ण /* चयन size */
 
-	switch (param->vram_size) {
-	default:
-	case AST_VIDMEM_SIZE_8M:
+	चयन (param->vram_size) अणु
+	शेष:
+	हाल AST_VIDMEM_SIZE_8M:
 		param->dram_config |= 0x00;
-		break;
-	case AST_VIDMEM_SIZE_16M:
+		अवरोध;
+	हाल AST_VIDMEM_SIZE_16M:
 		param->dram_config |= 0x04;
-		break;
-	case AST_VIDMEM_SIZE_32M:
+		अवरोध;
+	हाल AST_VIDMEM_SIZE_32M:
 		param->dram_config |= 0x08;
-		break;
-	case AST_VIDMEM_SIZE_64M:
+		अवरोध;
+	हाल AST_VIDMEM_SIZE_64M:
 		param->dram_config |= 0x0c;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void ddr2_init(struct ast_private *ast, struct ast2300_dram_param *param)
-{
+अटल व्योम ddr2_init(काष्ठा ast_निजी *ast, काष्ठा ast2300_dram_param *param)
+अणु
 	u32 data, data2, retry = 0;
 
 ddr2_init_start:
@@ -1510,22 +1511,22 @@ ddr2_init_start:
 	ast_moutdwm(ast, 0x1E6E007C, 0x00000000);
 
 	/* Wait MCLK2X lock to MCLK */
-	do {
+	करो अणु
 		data = ast_mindwm(ast, 0x1E6E001C);
-	} while (!(data & 0x08000000));
+	पूर्ण जबतक (!(data & 0x08000000));
 	data = ast_mindwm(ast, 0x1E6E001C);
 	data = (data >> 8) & 0xff;
-	while ((data & 0x08) || ((data & 0x7) < 2) || (data < 4)) {
+	जबतक ((data & 0x08) || ((data & 0x7) < 2) || (data < 4)) अणु
 		data2 = (ast_mindwm(ast, 0x1E6E0064) & 0xfff3ffff) + 4;
-		if ((data2 & 0xff) > param->madj_max) {
-			break;
-		}
+		अगर ((data2 & 0xff) > param->madj_max) अणु
+			अवरोध;
+		पूर्ण
 		ast_moutdwm(ast, 0x1E6E0064, data2);
-		if (data2 & 0x00100000) {
+		अगर (data2 & 0x00100000) अणु
 			data2 = ((data2 & 0xff) >> 3) + 3;
-		} else {
+		पूर्ण अन्यथा अणु
 			data2 = ((data2 & 0xff) >> 2) + 5;
-		}
+		पूर्ण
 		data = ast_mindwm(ast, 0x1E6E0068) & 0xffff00ff;
 		data2 += data & 0xff;
 		data = data | (data2 << 8);
@@ -1537,13 +1538,13 @@ ddr2_init_start:
 		ast_moutdwm(ast, 0x1E6E0018, data);
 		data = data | 0x200;
 		ast_moutdwm(ast, 0x1E6E0018, data);
-		do {
+		करो अणु
 			data = ast_mindwm(ast, 0x1E6E001C);
-		} while (!(data & 0x08000000));
+		पूर्ण जबतक (!(data & 0x08000000));
 
 		data = ast_mindwm(ast, 0x1E6E001C);
 		data = (data >> 8) & 0xff;
-	}
+	पूर्ण
 	ast_moutdwm(ast, 0x1E720058, ast_mindwm(ast, 0x1E6E0008) & 0xffff);
 	data = ast_mindwm(ast, 0x1E6E0018) | 0xC00;
 	ast_moutdwm(ast, 0x1E6E0018, data);
@@ -1569,146 +1570,146 @@ ddr2_init_start:
 
 	ast_moutdwm(ast, 0x1E6E000C, 0x7FFF5C01);
 	data = 0;
-	if (param->wodt) {
+	अगर (param->wodt) अणु
 		data = 0x500;
-	}
-	if (param->rodt) {
+	पूर्ण
+	अगर (param->rodt) अणु
 		data = data | 0x3000 | ((param->reg_AC2 & 0x60000) >> 3);
-	}
+	पूर्ण
 	ast_moutdwm(ast, 0x1E6E0034, data | 0x3);
 	ast_moutdwm(ast, 0x1E6E0120, param->reg_FREQ);
 
 	/* Calibrate the DQSI delay */
-	if ((cbr_dll2(ast, param) == false) && (retry++ < 10))
-		goto ddr2_init_start;
+	अगर ((cbr_dll2(ast, param) == false) && (retry++ < 10))
+		जाओ ddr2_init_start;
 
 	/* ECC Memory Initialization */
-#ifdef ECC
+#अगर_घोषित ECC
 	ast_moutdwm(ast, 0x1E6E007C, 0x00000000);
 	ast_moutdwm(ast, 0x1E6E0070, 0x221);
-	do {
+	करो अणु
 		data = ast_mindwm(ast, 0x1E6E0070);
-	} while (!(data & 0x00001000));
+	पूर्ण जबतक (!(data & 0x00001000));
 	ast_moutdwm(ast, 0x1E6E0070, 0x00000000);
 	ast_moutdwm(ast, 0x1E6E0050, 0x80000000);
 	ast_moutdwm(ast, 0x1E6E0050, 0x00000000);
-#endif
+#पूर्ण_अगर
 
-}
+पूर्ण
 
-static void ast_post_chip_2300(struct drm_device *dev)
-{
-	struct ast_private *ast = to_ast_private(dev);
-	struct ast2300_dram_param param;
+अटल व्योम ast_post_chip_2300(काष्ठा drm_device *dev)
+अणु
+	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
+	काष्ठा ast2300_dram_param param;
 	u32 temp;
 	u8 reg;
 
 	reg = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd0, 0xff);
-	if ((reg & 0x80) == 0) {/* vga only */
-		ast_write32(ast, 0xf004, 0x1e6e0000);
-		ast_write32(ast, 0xf000, 0x1);
-		ast_write32(ast, 0x12000, 0x1688a8a8);
-		do {
+	अगर ((reg & 0x80) == 0) अणु/* vga only */
+		ast_ग_लिखो32(ast, 0xf004, 0x1e6e0000);
+		ast_ग_लिखो32(ast, 0xf000, 0x1);
+		ast_ग_लिखो32(ast, 0x12000, 0x1688a8a8);
+		करो अणु
 			;
-		} while (ast_read32(ast, 0x12000) != 0x1);
+		पूर्ण जबतक (ast_पढ़ो32(ast, 0x12000) != 0x1);
 
-		ast_write32(ast, 0x10000, 0xfc600309);
-		do {
+		ast_ग_लिखो32(ast, 0x10000, 0xfc600309);
+		करो अणु
 			;
-		} while (ast_read32(ast, 0x10000) != 0x1);
+		पूर्ण जबतक (ast_पढ़ो32(ast, 0x10000) != 0x1);
 
-		/* Slow down CPU/AHB CLK in VGA only mode */
-		temp = ast_read32(ast, 0x12008);
+		/* Slow करोwn CPU/AHB CLK in VGA only mode */
+		temp = ast_पढ़ो32(ast, 0x12008);
 		temp |= 0x73;
-		ast_write32(ast, 0x12008, temp);
+		ast_ग_लिखो32(ast, 0x12008, temp);
 
 		param.dram_freq = 396;
 		param.dram_type = AST_DDR3;
 		temp = ast_mindwm(ast, 0x1e6e2070);
-		if (temp & 0x01000000)
+		अगर (temp & 0x01000000)
 			param.dram_type = AST_DDR2;
-                switch (temp & 0x18000000) {
-		case 0:
+                चयन (temp & 0x18000000) अणु
+		हाल 0:
 			param.dram_chipid = AST_DRAM_512Mx16;
-			break;
-		default:
-		case 0x08000000:
+			अवरोध;
+		शेष:
+		हाल 0x08000000:
 			param.dram_chipid = AST_DRAM_1Gx16;
-			break;
-		case 0x10000000:
+			अवरोध;
+		हाल 0x10000000:
 			param.dram_chipid = AST_DRAM_2Gx16;
-			break;
-		case 0x18000000:
+			अवरोध;
+		हाल 0x18000000:
 			param.dram_chipid = AST_DRAM_4Gx16;
-			break;
-		}
-                switch (temp & 0x0c) {
-                default:
-		case 0x00:
+			अवरोध;
+		पूर्ण
+                चयन (temp & 0x0c) अणु
+                शेष:
+		हाल 0x00:
 			param.vram_size = AST_VIDMEM_SIZE_8M;
-			break;
+			अवरोध;
 
-		case 0x04:
+		हाल 0x04:
 			param.vram_size = AST_VIDMEM_SIZE_16M;
-			break;
+			अवरोध;
 
-		case 0x08:
+		हाल 0x08:
 			param.vram_size = AST_VIDMEM_SIZE_32M;
-			break;
+			अवरोध;
 
-		case 0x0c:
+		हाल 0x0c:
 			param.vram_size = AST_VIDMEM_SIZE_64M;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (param.dram_type == AST_DDR3) {
+		अगर (param.dram_type == AST_DDR3) अणु
 			get_ddr3_info(ast, &param);
 			ddr3_init(ast, &param);
-		} else {
+		पूर्ण अन्यथा अणु
 			get_ddr2_info(ast, &param);
 			ddr2_init(ast, &param);
-		}
+		पूर्ण
 
 		temp = ast_mindwm(ast, 0x1e6e2040);
 		ast_moutdwm(ast, 0x1e6e2040, temp | 0x40);
-	}
+	पूर्ण
 
-	/* wait ready */
-	do {
+	/* रुको पढ़ोy */
+	करो अणु
 		reg = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd0, 0xff);
-	} while ((reg & 0x40) == 0);
-}
+	पूर्ण जबतक ((reg & 0x40) == 0);
+पूर्ण
 
-static bool cbr_test_2500(struct ast_private *ast)
-{
+अटल bool cbr_test_2500(काष्ठा ast_निजी *ast)
+अणु
 	ast_moutdwm(ast, 0x1E6E0074, 0x0000FFFF);
 	ast_moutdwm(ast, 0x1E6E007C, 0xFF00FF00);
-	if (!mmc_test_burst(ast, 0))
-		return false;
-	if (!mmc_test_single_2500(ast, 0))
-		return false;
-	return true;
-}
+	अगर (!mmc_test_burst(ast, 0))
+		वापस false;
+	अगर (!mmc_test_single_2500(ast, 0))
+		वापस false;
+	वापस true;
+पूर्ण
 
-static bool ddr_test_2500(struct ast_private *ast)
-{
+अटल bool ddr_test_2500(काष्ठा ast_निजी *ast)
+अणु
 	ast_moutdwm(ast, 0x1E6E0074, 0x0000FFFF);
 	ast_moutdwm(ast, 0x1E6E007C, 0xFF00FF00);
-	if (!mmc_test_burst(ast, 0))
-		return false;
-	if (!mmc_test_burst(ast, 1))
-		return false;
-	if (!mmc_test_burst(ast, 2))
-		return false;
-	if (!mmc_test_burst(ast, 3))
-		return false;
-	if (!mmc_test_single_2500(ast, 0))
-		return false;
-	return true;
-}
+	अगर (!mmc_test_burst(ast, 0))
+		वापस false;
+	अगर (!mmc_test_burst(ast, 1))
+		वापस false;
+	अगर (!mmc_test_burst(ast, 2))
+		वापस false;
+	अगर (!mmc_test_burst(ast, 3))
+		वापस false;
+	अगर (!mmc_test_single_2500(ast, 0))
+		वापस false;
+	वापस true;
+पूर्ण
 
-static void ddr_init_common_2500(struct ast_private *ast)
-{
+अटल व्योम ddr_init_common_2500(काष्ठा ast_निजी *ast)
+अणु
 	ast_moutdwm(ast, 0x1E6E0034, 0x00020080);
 	ast_moutdwm(ast, 0x1E6E0008, 0x2003000F);
 	ast_moutdwm(ast, 0x1E6E0038, 0x00000FFF);
@@ -1728,34 +1729,34 @@ static void ddr_init_common_2500(struct ast_private *ast)
 	ast_moutdwm(ast, 0x1E6E0244, 0x00008600);
 	ast_moutdwm(ast, 0x1E6E0248, 0x80000000);
 	ast_moutdwm(ast, 0x1E6E024C, 0x80808080);
-}
+पूर्ण
 
-static void ddr_phy_init_2500(struct ast_private *ast)
-{
-	u32 data, pass, timecnt;
+अटल व्योम ddr_phy_init_2500(काष्ठा ast_निजी *ast)
+अणु
+	u32 data, pass, समयcnt;
 
 	pass = 0;
 	ast_moutdwm(ast, 0x1E6E0060, 0x00000005);
-	while (!pass) {
-		for (timecnt = 0; timecnt < TIMEOUT; timecnt++) {
+	जबतक (!pass) अणु
+		क्रम (समयcnt = 0; समयcnt < TIMEOUT; समयcnt++) अणु
 			data = ast_mindwm(ast, 0x1E6E0060) & 0x1;
-			if (!data)
-				break;
-		}
-		if (timecnt != TIMEOUT) {
+			अगर (!data)
+				अवरोध;
+		पूर्ण
+		अगर (समयcnt != TIMEOUT) अणु
 			data = ast_mindwm(ast, 0x1E6E0300) & 0x000A0000;
-			if (!data)
+			अगर (!data)
 				pass = 1;
-		}
-		if (!pass) {
+		पूर्ण
+		अगर (!pass) अणु
 			ast_moutdwm(ast, 0x1E6E0060, 0x00000000);
 			udelay(10); /* delay 10 us */
 			ast_moutdwm(ast, 0x1E6E0060, 0x00000005);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ast_moutdwm(ast, 0x1E6E0060, 0x00000006);
-}
+पूर्ण
 
 /*
  * Check DRAM Size
@@ -1764,8 +1765,8 @@ static void ddr_phy_init_2500(struct ast_private *ast)
  * 4Gb : 0x80000000 ~ 0x9FFFFFFF
  * 8Gb : 0x80000000 ~ 0xBFFFFFFF
  */
-static void check_dram_size_2500(struct ast_private *ast, u32 tRFC)
-{
+अटल व्योम check_dram_size_2500(काष्ठा ast_निजी *ast, u32 tRFC)
+अणु
 	u32 reg_04, reg_14;
 
 	reg_04 = ast_mindwm(ast, 0x1E6E0004) & 0xfffffffc;
@@ -1777,66 +1778,66 @@ static void check_dram_size_2500(struct ast_private *ast, u32 tRFC)
 	ast_moutdwm(ast, 0x80100000, 0x1D1E1F10);
 
 	/* Check 8Gbit */
-	if (ast_mindwm(ast, 0xA0100000) == 0x41424344) {
+	अगर (ast_mindwm(ast, 0xA0100000) == 0x41424344) अणु
 		reg_04 |= 0x03;
 		reg_14 |= (tRFC >> 24) & 0xFF;
 		/* Check 4Gbit */
-	} else if (ast_mindwm(ast, 0x90100000) == 0x35363738) {
+	पूर्ण अन्यथा अगर (ast_mindwm(ast, 0x90100000) == 0x35363738) अणु
 		reg_04 |= 0x02;
 		reg_14 |= (tRFC >> 16) & 0xFF;
 		/* Check 2Gbit */
-	} else if (ast_mindwm(ast, 0x88100000) == 0x292A2B2C) {
+	पूर्ण अन्यथा अगर (ast_mindwm(ast, 0x88100000) == 0x292A2B2C) अणु
 		reg_04 |= 0x01;
 		reg_14 |= (tRFC >> 8) & 0xFF;
-	} else {
+	पूर्ण अन्यथा अणु
 		reg_14 |= tRFC & 0xFF;
-	}
+	पूर्ण
 	ast_moutdwm(ast, 0x1E6E0004, reg_04);
 	ast_moutdwm(ast, 0x1E6E0014, reg_14);
-}
+पूर्ण
 
-static void enable_cache_2500(struct ast_private *ast)
-{
+अटल व्योम enable_cache_2500(काष्ठा ast_निजी *ast)
+अणु
 	u32 reg_04, data;
 
 	reg_04 = ast_mindwm(ast, 0x1E6E0004);
 	ast_moutdwm(ast, 0x1E6E0004, reg_04 | 0x1000);
 
-	do
+	करो
 		data = ast_mindwm(ast, 0x1E6E0004);
-	while (!(data & 0x80000));
+	जबतक (!(data & 0x80000));
 	ast_moutdwm(ast, 0x1E6E0004, reg_04 | 0x400);
-}
+पूर्ण
 
-static void set_mpll_2500(struct ast_private *ast)
-{
+अटल व्योम set_mpll_2500(काष्ठा ast_निजी *ast)
+अणु
 	u32 addr, data, param;
 
 	/* Reset MMC */
 	ast_moutdwm(ast, 0x1E6E0000, 0xFC600309);
 	ast_moutdwm(ast, 0x1E6E0034, 0x00020080);
-	for (addr = 0x1e6e0004; addr < 0x1e6e0090;) {
+	क्रम (addr = 0x1e6e0004; addr < 0x1e6e0090;) अणु
 		ast_moutdwm(ast, addr, 0x0);
 		addr += 4;
-	}
+	पूर्ण
 	ast_moutdwm(ast, 0x1E6E0034, 0x00020000);
 
 	ast_moutdwm(ast, 0x1E6E2000, 0x1688A8A8);
 	data = ast_mindwm(ast, 0x1E6E2070) & 0x00800000;
-	if (data) {
+	अगर (data) अणु
 		/* CLKIN = 25MHz */
 		param = 0x930023E0;
 		ast_moutdwm(ast, 0x1E6E2160, 0x00011320);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* CLKIN = 24MHz */
 		param = 0x93002400;
-	}
+	पूर्ण
 	ast_moutdwm(ast, 0x1E6E2020, param);
 	udelay(100);
-}
+पूर्ण
 
-static void reset_mmc_2500(struct ast_private *ast)
-{
+अटल व्योम reset_mmc_2500(काष्ठा ast_निजी *ast)
+अणु
 	ast_moutdwm(ast, 0x1E78505C, 0x00000004);
 	ast_moutdwm(ast, 0x1E785044, 0x00000001);
 	ast_moutdwm(ast, 0x1E785048, 0x00004755);
@@ -1844,10 +1845,10 @@ static void reset_mmc_2500(struct ast_private *ast)
 	mdelay(100);
 	ast_moutdwm(ast, 0x1E785054, 0x00000077);
 	ast_moutdwm(ast, 0x1E6E0000, 0xFC600309);
-}
+पूर्ण
 
-static void ddr3_init_2500(struct ast_private *ast, const u32 *ddr_table)
-{
+अटल व्योम ddr3_init_2500(काष्ठा ast_निजी *ast, स्थिर u32 *ddr_table)
+अणु
 
 	ast_moutdwm(ast, 0x1E6E0004, 0x00000303);
 	ast_moutdwm(ast, 0x1E6E0010, ddr_table[REGIDX_010]);
@@ -1877,7 +1878,7 @@ static void ddr3_init_2500(struct ast_private *ast, const u32 *ddr_table)
 	/* Controller Setting */
 	ast_moutdwm(ast, 0x1E6E0034, 0x00020091);
 
-	/* Wait DDR PHY init done */
+	/* Wait DDR PHY init करोne */
 	ddr_phy_init_2500(ast);
 
 	ast_moutdwm(ast, 0x1E6E0120, ddr_table[REGIDX_PLL]);
@@ -1888,10 +1889,10 @@ static void ddr3_init_2500(struct ast_private *ast, const u32 *ddr_table)
 	enable_cache_2500(ast);
 	ast_moutdwm(ast, 0x1E6E001C, 0x00000008);
 	ast_moutdwm(ast, 0x1E6E0038, 0xFFFFFF00);
-}
+पूर्ण
 
-static void ddr4_init_2500(struct ast_private *ast, const u32 *ddr_table)
-{
+अटल व्योम ddr4_init_2500(काष्ठा ast_निजी *ast, स्थिर u32 *ddr_table)
+अणु
 	u32 data, data2, pass, retrycnt;
 	u32 ddr_vref, phy_vref;
 	u32 min_ddr_vref = 0, min_phy_vref = 0;
@@ -1929,65 +1930,65 @@ static void ddr4_init_2500(struct ast_private *ast, const u32 *ddr_table)
 	/* Train PHY Vref first */
 	pass = 0;
 
-	for (retrycnt = 0; retrycnt < 4 && pass == 0; retrycnt++) {
+	क्रम (retrycnt = 0; retrycnt < 4 && pass == 0; retrycnt++) अणु
 		max_phy_vref = 0x0;
 		pass = 0;
 		ast_moutdwm(ast, 0x1E6E02C0, 0x00001C06);
-		for (phy_vref = 0x40; phy_vref < 0x80; phy_vref++) {
+		क्रम (phy_vref = 0x40; phy_vref < 0x80; phy_vref++) अणु
 			ast_moutdwm(ast, 0x1E6E000C, 0x00000000);
 			ast_moutdwm(ast, 0x1E6E0060, 0x00000000);
 			ast_moutdwm(ast, 0x1E6E02CC, phy_vref | (phy_vref << 8));
 			/* Fire DFI Init */
 			ddr_phy_init_2500(ast);
 			ast_moutdwm(ast, 0x1E6E000C, 0x00005C01);
-			if (cbr_test_2500(ast)) {
+			अगर (cbr_test_2500(ast)) अणु
 				pass++;
 				data = ast_mindwm(ast, 0x1E6E03D0);
 				data2 = data >> 8;
 				data  = data & 0xff;
-				if (data > data2)
+				अगर (data > data2)
 					data = data2;
-				if (max_phy_vref < data) {
+				अगर (max_phy_vref < data) अणु
 					max_phy_vref = data;
 					min_phy_vref = phy_vref;
-				}
-			} else if (pass > 0)
-				break;
-		}
-	}
+				पूर्ण
+			पूर्ण अन्यथा अगर (pass > 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	ast_moutdwm(ast, 0x1E6E02CC, min_phy_vref | (min_phy_vref << 8));
 
 	/* Train DDR Vref next */
 	pass = 0;
 
-	for (retrycnt = 0; retrycnt < 4 && pass == 0; retrycnt++) {
+	क्रम (retrycnt = 0; retrycnt < 4 && pass == 0; retrycnt++) अणु
 		min_ddr_vref = 0xFF;
 		max_ddr_vref = 0x0;
 		pass = 0;
-		for (ddr_vref = 0x00; ddr_vref < 0x40; ddr_vref++) {
+		क्रम (ddr_vref = 0x00; ddr_vref < 0x40; ddr_vref++) अणु
 			ast_moutdwm(ast, 0x1E6E000C, 0x00000000);
 			ast_moutdwm(ast, 0x1E6E0060, 0x00000000);
 			ast_moutdwm(ast, 0x1E6E02C0, 0x00000006 | (ddr_vref << 8));
 			/* Fire DFI Init */
 			ddr_phy_init_2500(ast);
 			ast_moutdwm(ast, 0x1E6E000C, 0x00005C01);
-			if (cbr_test_2500(ast)) {
+			अगर (cbr_test_2500(ast)) अणु
 				pass++;
-				if (min_ddr_vref > ddr_vref)
+				अगर (min_ddr_vref > ddr_vref)
 					min_ddr_vref = ddr_vref;
-				if (max_ddr_vref < ddr_vref)
+				अगर (max_ddr_vref < ddr_vref)
 					max_ddr_vref = ddr_vref;
-			} else if (pass != 0)
-				break;
-		}
-	}
+			पूर्ण अन्यथा अगर (pass != 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ast_moutdwm(ast, 0x1E6E000C, 0x00000000);
 	ast_moutdwm(ast, 0x1E6E0060, 0x00000000);
 	ddr_vref = (min_ddr_vref + max_ddr_vref + 1) >> 1;
 	ast_moutdwm(ast, 0x1E6E02C0, 0x00000006 | (ddr_vref << 8));
 
-	/* Wait DDR PHY init done */
+	/* Wait DDR PHY init करोne */
 	ddr_phy_init_2500(ast);
 
 	ast_moutdwm(ast, 0x1E6E0120, ddr_table[REGIDX_PLL]);
@@ -1998,26 +1999,26 @@ static void ddr4_init_2500(struct ast_private *ast, const u32 *ddr_table)
 	enable_cache_2500(ast);
 	ast_moutdwm(ast, 0x1E6E001C, 0x00000008);
 	ast_moutdwm(ast, 0x1E6E0038, 0xFFFFFF00);
-}
+पूर्ण
 
-static bool ast_dram_init_2500(struct ast_private *ast)
-{
+अटल bool ast_dram_init_2500(काष्ठा ast_निजी *ast)
+अणु
 	u32 data;
 	u32 max_tries = 5;
 
-	do {
-		if (max_tries-- == 0)
-			return false;
+	करो अणु
+		अगर (max_tries-- == 0)
+			वापस false;
 		set_mpll_2500(ast);
 		reset_mmc_2500(ast);
 		ddr_init_common_2500(ast);
 
 		data = ast_mindwm(ast, 0x1E6E2070);
-		if (data & 0x01000000)
+		अगर (data & 0x01000000)
 			ddr4_init_2500(ast, ast2500_ddr4_1600_timing_table);
-		else
+		अन्यथा
 			ddr3_init_2500(ast, ast2500_ddr3_1600_timing_table);
-	} while (!ddr_test_2500(ast));
+	पूर्ण जबतक (!ddr_test_2500(ast));
 
 	ast_moutdwm(ast, 0x1E6E2040, ast_mindwm(ast, 0x1E6E2040) | 0x41);
 
@@ -2025,36 +2026,36 @@ static bool ast_dram_init_2500(struct ast_private *ast)
 	data = ast_mindwm(ast, 0x1E6E200C) & 0xF9FFFFFF;
 	ast_moutdwm(ast, 0x1E6E200C, data | 0x10000000);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void ast_post_chip_2500(struct drm_device *dev)
-{
-	struct ast_private *ast = to_ast_private(dev);
+व्योम ast_post_chip_2500(काष्ठा drm_device *dev)
+अणु
+	काष्ठा ast_निजी *ast = to_ast_निजी(dev);
 	u32 temp;
 	u8 reg;
 
 	reg = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd0, 0xff);
-	if ((reg & 0x80) == 0) {/* vga only */
+	अगर ((reg & 0x80) == 0) अणु/* vga only */
 		/* Clear bus lock condition */
 		ast_moutdwm(ast, 0x1e600000, 0xAEED1A03);
 		ast_moutdwm(ast, 0x1e600084, 0x00010000);
 		ast_moutdwm(ast, 0x1e600088, 0x00000000);
 		ast_moutdwm(ast, 0x1e6e2000, 0x1688A8A8);
-		ast_write32(ast, 0xf004, 0x1e6e0000);
-		ast_write32(ast, 0xf000, 0x1);
-		ast_write32(ast, 0x12000, 0x1688a8a8);
-		while (ast_read32(ast, 0x12000) != 0x1)
+		ast_ग_लिखो32(ast, 0xf004, 0x1e6e0000);
+		ast_ग_लिखो32(ast, 0xf000, 0x1);
+		ast_ग_लिखो32(ast, 0x12000, 0x1688a8a8);
+		जबतक (ast_पढ़ो32(ast, 0x12000) != 0x1)
 			;
 
-		ast_write32(ast, 0x10000, 0xfc600309);
-		while (ast_read32(ast, 0x10000) != 0x1)
+		ast_ग_लिखो32(ast, 0x10000, 0xfc600309);
+		जबतक (ast_पढ़ो32(ast, 0x10000) != 0x1)
 			;
 
-		/* Slow down CPU/AHB CLK in VGA only mode */
-		temp = ast_read32(ast, 0x12008);
+		/* Slow करोwn CPU/AHB CLK in VGA only mode */
+		temp = ast_पढ़ो32(ast, 0x12008);
 		temp |= 0x73;
-		ast_write32(ast, 0x12008, temp);
+		ast_ग_लिखो32(ast, 0x12008, temp);
 
 		/* Reset USB port to patch USB unknown device issue */
 		ast_moutdwm(ast, 0x1e6e2090, 0x20000000);
@@ -2062,21 +2063,21 @@ void ast_post_chip_2500(struct drm_device *dev)
 		temp |= 0x00004000;
 		ast_moutdwm(ast, 0x1e6e2094, temp);
 		temp  = ast_mindwm(ast, 0x1e6e2070);
-		if (temp & 0x00800000) {
+		अगर (temp & 0x00800000) अणु
 			ast_moutdwm(ast, 0x1e6e207c, 0x00800000);
 			mdelay(100);
 			ast_moutdwm(ast, 0x1e6e2070, 0x00800000);
-		}
+		पूर्ण
 
-		if (!ast_dram_init_2500(ast))
+		अगर (!ast_dram_init_2500(ast))
 			drm_err(dev, "DRAM init failed !\n");
 
 		temp = ast_mindwm(ast, 0x1e6e2040);
 		ast_moutdwm(ast, 0x1e6e2040, temp | 0x40);
-	}
+	पूर्ण
 
-	/* wait ready */
-	do {
+	/* रुको पढ़ोy */
+	करो अणु
 		reg = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd0, 0xff);
-	} while ((reg & 0x40) == 0);
-}
+	पूर्ण जबतक ((reg & 0x40) == 0);
+पूर्ण

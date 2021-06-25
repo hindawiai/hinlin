@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "../browser.h"
-#include "../helpline.h"
-#include "../ui.h"
-#include "../../util/annotate.h"
-#include "../../util/debug.h"
-#include "../../util/dso.h"
-#include "../../util/hist.h"
-#include "../../util/sort.h"
-#include "../../util/map.h"
-#include "../../util/symbol.h"
-#include "../../util/evsel.h"
-#include "../../util/evlist.h"
-#include <inttypes.h>
-#include <pthread.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/zalloc.h>
-#include <sys/ttydefaults.h>
-#include <asm/bug.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "../browser.h"
+#समावेश "../helpline.h"
+#समावेश "../ui.h"
+#समावेश "../../util/annotate.h"
+#समावेश "../../util/debug.h"
+#समावेश "../../util/dso.h"
+#समावेश "../../util/hist.h"
+#समावेश "../../util/sort.h"
+#समावेश "../../util/map.h"
+#समावेश "../../util/symbol.h"
+#समावेश "../../util/evsel.h"
+#समावेश "../../util/evlist.h"
+#समावेश <पूर्णांकtypes.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
+#समावेश <sys/ttyशेषs.h>
+#समावेश <यंत्र/bug.h>
 
-struct disasm_line_samples {
-	double		      percent;
-	struct sym_hist_entry he;
-};
+काष्ठा disयंत्र_line_samples अणु
+	द्विगुन		      percent;
+	काष्ठा sym_hist_entry he;
+पूर्ण;
 
-struct arch;
+काष्ठा arch;
 
-struct annotate_browser {
-	struct ui_browser	    b;
-	struct rb_root		    entries;
-	struct rb_node		   *curr_hot;
-	struct annotation_line	   *selection;
-	struct arch		   *arch;
-	struct annotation_options  *opts;
+काष्ठा annotate_browser अणु
+	काष्ठा ui_browser	    b;
+	काष्ठा rb_root		    entries;
+	काष्ठा rb_node		   *curr_hot;
+	काष्ठा annotation_line	   *selection;
+	काष्ठा arch		   *arch;
+	काष्ठा annotation_options  *opts;
 	bool			    searching_backwards;
-	char			    search_bf[128];
-};
+	अक्षर			    search_bf[128];
+पूर्ण;
 
-static inline struct annotation *browser__annotation(struct ui_browser *browser)
-{
-	struct map_symbol *ms = browser->priv;
-	return symbol__annotation(ms->sym);
-}
+अटल अंतरभूत काष्ठा annotation *browser__annotation(काष्ठा ui_browser *browser)
+अणु
+	काष्ठा map_symbol *ms = browser->priv;
+	वापस symbol__annotation(ms->sym);
+पूर्ण
 
-static bool disasm_line__filter(struct ui_browser *browser, void *entry)
-{
-	struct annotation *notes = browser__annotation(browser);
-	struct annotation_line *al = list_entry(entry, struct annotation_line, node);
-	return annotation_line__filter(al, notes);
-}
+अटल bool disयंत्र_line__filter(काष्ठा ui_browser *browser, व्योम *entry)
+अणु
+	काष्ठा annotation *notes = browser__annotation(browser);
+	काष्ठा annotation_line *al = list_entry(entry, काष्ठा annotation_line, node);
+	वापस annotation_line__filter(al, notes);
+पूर्ण
 
-static int ui_browser__jumps_percent_color(struct ui_browser *browser, int nr, bool current)
-{
-	struct annotation *notes = browser__annotation(browser);
+अटल पूर्णांक ui_browser__jumps_percent_color(काष्ठा ui_browser *browser, पूर्णांक nr, bool current)
+अणु
+	काष्ठा annotation *notes = browser__annotation(browser);
 
-	if (current && (!browser->use_navkeypressed || browser->navkeypressed))
-		return HE_COLORSET_SELECTED;
-	if (nr == notes->max_jump_sources)
-		return HE_COLORSET_TOP;
-	if (nr > 1)
-		return HE_COLORSET_MEDIUM;
-	return HE_COLORSET_NORMAL;
-}
+	अगर (current && (!browser->use_navkeypressed || browser->navkeypressed))
+		वापस HE_COLORSET_SELECTED;
+	अगर (nr == notes->max_jump_sources)
+		वापस HE_COLORSET_TOP;
+	अगर (nr > 1)
+		वापस HE_COLORSET_MEDIUM;
+	वापस HE_COLORSET_NORMAL;
+पूर्ण
 
-static int ui_browser__set_jumps_percent_color(void *browser, int nr, bool current)
-{
-	 int color = ui_browser__jumps_percent_color(browser, nr, current);
-	 return ui_browser__set_color(browser, color);
-}
+अटल पूर्णांक ui_browser__set_jumps_percent_color(व्योम *browser, पूर्णांक nr, bool current)
+अणु
+	 पूर्णांक color = ui_browser__jumps_percent_color(browser, nr, current);
+	 वापस ui_browser__set_color(browser, color);
+पूर्ण
 
-static int annotate_browser__set_color(void *browser, int color)
-{
-	return ui_browser__set_color(browser, color);
-}
+अटल पूर्णांक annotate_browser__set_color(व्योम *browser, पूर्णांक color)
+अणु
+	वापस ui_browser__set_color(browser, color);
+पूर्ण
 
-static void annotate_browser__write_graph(void *browser, int graph)
-{
-	ui_browser__write_graph(browser, graph);
-}
+अटल व्योम annotate_browser__ग_लिखो_graph(व्योम *browser, पूर्णांक graph)
+अणु
+	ui_browser__ग_लिखो_graph(browser, graph);
+पूर्ण
 
-static void annotate_browser__set_percent_color(void *browser, double percent, bool current)
-{
+अटल व्योम annotate_browser__set_percent_color(व्योम *browser, द्विगुन percent, bool current)
+अणु
 	ui_browser__set_percent_color(browser, percent, current);
-}
+पूर्ण
 
-static void annotate_browser__printf(void *browser, const char *fmt, ...)
-{
-	va_list args;
+अटल व्योम annotate_browser__म_लिखो(व्योम *browser, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
 
-	va_start(args, fmt);
-	ui_browser__vprintf(browser, fmt, args);
-	va_end(args);
-}
+	बहु_शुरू(args, fmt);
+	ui_browser__भ_लिखो(browser, fmt, args);
+	बहु_पूर्ण(args);
+पूर्ण
 
-static void annotate_browser__write(struct ui_browser *browser, void *entry, int row)
-{
-	struct annotate_browser *ab = container_of(browser, struct annotate_browser, b);
-	struct annotation *notes = browser__annotation(browser);
-	struct annotation_line *al = list_entry(entry, struct annotation_line, node);
-	const bool is_current_entry = ui_browser__is_current_entry(browser, row);
-	struct annotation_write_ops ops = {
+अटल व्योम annotate_browser__ग_लिखो(काष्ठा ui_browser *browser, व्योम *entry, पूर्णांक row)
+अणु
+	काष्ठा annotate_browser *ab = container_of(browser, काष्ठा annotate_browser, b);
+	काष्ठा annotation *notes = browser__annotation(browser);
+	काष्ठा annotation_line *al = list_entry(entry, काष्ठा annotation_line, node);
+	स्थिर bool is_current_entry = ui_browser__is_current_entry(browser, row);
+	काष्ठा annotation_ग_लिखो_ops ops = अणु
 		.first_line		 = row == 0,
 		.current_entry		 = is_current_entry,
 		.change_color		 = (!notes->options->hide_src_code &&
@@ -111,92 +112,92 @@ static void annotate_browser__write(struct ui_browser *browser, void *entry, int
 		.set_color		 = annotate_browser__set_color,
 		.set_percent_color	 = annotate_browser__set_percent_color,
 		.set_jumps_percent_color = ui_browser__set_jumps_percent_color,
-		.printf			 = annotate_browser__printf,
-		.write_graph		 = annotate_browser__write_graph,
-	};
+		.म_लिखो			 = annotate_browser__म_लिखो,
+		.ग_लिखो_graph		 = annotate_browser__ग_लिखो_graph,
+	पूर्ण;
 
 	/* The scroll bar isn't being used */
-	if (!browser->navkeypressed)
+	अगर (!browser->navkeypressed)
 		ops.width += 1;
 
-	annotation_line__write(al, notes, &ops, ab->opts);
+	annotation_line__ग_लिखो(al, notes, &ops, ab->opts);
 
-	if (ops.current_entry)
+	अगर (ops.current_entry)
 		ab->selection = al;
-}
+पूर्ण
 
-static bool is_fused(struct annotate_browser *ab, struct disasm_line *cursor)
-{
-	struct disasm_line *pos = list_prev_entry(cursor, al.node);
-	const char *name;
+अटल bool is_fused(काष्ठा annotate_browser *ab, काष्ठा disयंत्र_line *cursor)
+अणु
+	काष्ठा disयंत्र_line *pos = list_prev_entry(cursor, al.node);
+	स्थिर अक्षर *name;
 
-	if (!pos)
-		return false;
+	अगर (!pos)
+		वापस false;
 
-	if (ins__is_lock(&pos->ins))
+	अगर (ins__is_lock(&pos->ins))
 		name = pos->ops.locked.ins.name;
-	else
+	अन्यथा
 		name = pos->ins.name;
 
-	if (!name || !cursor->ins.name)
-		return false;
+	अगर (!name || !cursor->ins.name)
+		वापस false;
 
-	return ins__is_fused(ab->arch, name, cursor->ins.name);
-}
+	वापस ins__is_fused(ab->arch, name, cursor->ins.name);
+पूर्ण
 
-static void annotate_browser__draw_current_jump(struct ui_browser *browser)
-{
-	struct annotate_browser *ab = container_of(browser, struct annotate_browser, b);
-	struct disasm_line *cursor = disasm_line(ab->selection);
-	struct annotation_line *target;
-	unsigned int from, to;
-	struct map_symbol *ms = ab->b.priv;
-	struct symbol *sym = ms->sym;
-	struct annotation *notes = symbol__annotation(sym);
+अटल व्योम annotate_browser__draw_current_jump(काष्ठा ui_browser *browser)
+अणु
+	काष्ठा annotate_browser *ab = container_of(browser, काष्ठा annotate_browser, b);
+	काष्ठा disयंत्र_line *cursor = disयंत्र_line(ab->selection);
+	काष्ठा annotation_line *target;
+	अचिन्हित पूर्णांक from, to;
+	काष्ठा map_symbol *ms = ab->b.priv;
+	काष्ठा symbol *sym = ms->sym;
+	काष्ठा annotation *notes = symbol__annotation(sym);
 	u8 pcnt_width = annotation__pcnt_width(notes);
-	int width;
+	पूर्णांक width;
 
-	/* PLT symbols contain external offsets */
-	if (strstr(sym->name, "@plt"))
-		return;
+	/* PLT symbols contain बाह्यal offsets */
+	अगर (म_माला(sym->name, "@plt"))
+		वापस;
 
-	if (!disasm_line__is_valid_local_jump(cursor, sym))
-		return;
+	अगर (!disयंत्र_line__is_valid_local_jump(cursor, sym))
+		वापस;
 
 	/*
 	 * This first was seen with a gcc function, _cpp_lex_token, that
 	 * has the usual jumps:
 	 *
-	 *  │1159e6c: ↓ jne    115aa32 <_cpp_lex_token@@Base+0xf92>
+	 *  ै1159e6c: ै jne    115aa32 <_cpp_lex_token@@Base+0xf92>
 	 *
 	 * I.e. jumps to a label inside that function (_cpp_lex_token), and
 	 * those works, but also this kind:
 	 *
-	 *  │1159e8b: ↓ jne    c469be <cpp_named_operator2name@@Base+0xa72>
+	 *  ै1159e8b: ै jne    c469be <cpp_named_चालक2name@@Base+0xa72>
 	 *
 	 *  I.e. jumps to another function, outside _cpp_lex_token, which
 	 *  are not being correctly handled generating as a side effect references
-	 *  to ab->offset[] entries that are set to NULL, so to make this code
+	 *  to ab->offset[] entries that are set to शून्य, so to make this code
 	 *  more robust, check that here.
 	 *
-	 *  A proper fix for will be put in place, looking at the function
+	 *  A proper fix क्रम will be put in place, looking at the function
 	 *  name right after the '<' token and probably treating this like a
-	 *  'call' instruction.
+	 *  'call' inकाष्ठाion.
 	 */
 	target = notes->offsets[cursor->ops.target.offset];
-	if (target == NULL) {
-		ui_helpline__printf("WARN: jump target inconsistency, press 'o', notes->offsets[%#x] = NULL\n",
+	अगर (target == शून्य) अणु
+		ui_helpline__म_लिखो("WARN: jump target inconsistency, press 'o', notes->offsets[%#x] = NULL\n",
 				    cursor->ops.target.offset);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (notes->options->hide_src_code) {
-		from = cursor->al.idx_asm;
-		to = target->idx_asm;
-	} else {
+	अगर (notes->options->hide_src_code) अणु
+		from = cursor->al.idx_यंत्र;
+		to = target->idx_यंत्र;
+	पूर्ण अन्यथा अणु
 		from = (u64)cursor->al.idx;
 		to = (u64)target->idx;
-	}
+	पूर्ण
 
 	width = annotation__cycles_width(notes);
 
@@ -205,548 +206,548 @@ static void annotate_browser__draw_current_jump(struct ui_browser *browser)
 				 pcnt_width + 2 + notes->widths.addr + width,
 				 from, to);
 
-	if (is_fused(ab, cursor)) {
+	अगर (is_fused(ab, cursor)) अणु
 		ui_browser__mark_fused(browser,
 				       pcnt_width + 3 + notes->widths.addr + width,
 				       from - 1,
 				       to > from);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int annotate_browser__refresh(struct ui_browser *browser)
-{
-	struct annotation *notes = browser__annotation(browser);
-	int ret = ui_browser__list_head_refresh(browser);
-	int pcnt_width = annotation__pcnt_width(notes);
+अटल अचिन्हित पूर्णांक annotate_browser__refresh(काष्ठा ui_browser *browser)
+अणु
+	काष्ठा annotation *notes = browser__annotation(browser);
+	पूर्णांक ret = ui_browser__list_head_refresh(browser);
+	पूर्णांक pcnt_width = annotation__pcnt_width(notes);
 
-	if (notes->options->jump_arrows)
+	अगर (notes->options->jump_arrows)
 		annotate_browser__draw_current_jump(browser);
 
 	ui_browser__set_color(browser, HE_COLORSET_NORMAL);
 	__ui_browser__vline(browser, pcnt_width, 0, browser->rows - 1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static double disasm__cmp(struct annotation_line *a, struct annotation_line *b,
-						  int percent_type)
-{
-	int i;
+अटल द्विगुन disयंत्र__cmp(काष्ठा annotation_line *a, काष्ठा annotation_line *b,
+						  पूर्णांक percent_type)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < a->data_nr; i++) {
-		if (a->data[i].percent[percent_type] == b->data[i].percent[percent_type])
-			continue;
-		return a->data[i].percent[percent_type] -
+	क्रम (i = 0; i < a->data_nr; i++) अणु
+		अगर (a->data[i].percent[percent_type] == b->data[i].percent[percent_type])
+			जारी;
+		वापस a->data[i].percent[percent_type] -
 			   b->data[i].percent[percent_type];
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void disasm_rb_tree__insert(struct annotate_browser *browser,
-				struct annotation_line *al)
-{
-	struct rb_root *root = &browser->entries;
-	struct rb_node **p = &root->rb_node;
-	struct rb_node *parent = NULL;
-	struct annotation_line *l;
+अटल व्योम disयंत्र_rb_tree__insert(काष्ठा annotate_browser *browser,
+				काष्ठा annotation_line *al)
+अणु
+	काष्ठा rb_root *root = &browser->entries;
+	काष्ठा rb_node **p = &root->rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा annotation_line *l;
 
-	while (*p != NULL) {
+	जबतक (*p != शून्य) अणु
 		parent = *p;
-		l = rb_entry(parent, struct annotation_line, rb_node);
+		l = rb_entry(parent, काष्ठा annotation_line, rb_node);
 
-		if (disasm__cmp(al, l, browser->opts->percent_type) < 0)
+		अगर (disयंत्र__cmp(al, l, browser->opts->percent_type) < 0)
 			p = &(*p)->rb_left;
-		else
+		अन्यथा
 			p = &(*p)->rb_right;
-	}
+	पूर्ण
 	rb_link_node(&al->rb_node, parent, p);
 	rb_insert_color(&al->rb_node, root);
-}
+पूर्ण
 
-static void annotate_browser__set_top(struct annotate_browser *browser,
-				      struct annotation_line *pos, u32 idx)
-{
-	struct annotation *notes = browser__annotation(&browser->b);
-	unsigned back;
+अटल व्योम annotate_browser__set_top(काष्ठा annotate_browser *browser,
+				      काष्ठा annotation_line *pos, u32 idx)
+अणु
+	काष्ठा annotation *notes = browser__annotation(&browser->b);
+	अचिन्हित back;
 
 	ui_browser__refresh_dimensions(&browser->b);
 	back = browser->b.height / 2;
 	browser->b.top_idx = browser->b.index = idx;
 
-	while (browser->b.top_idx != 0 && back != 0) {
-		pos = list_entry(pos->node.prev, struct annotation_line, node);
+	जबतक (browser->b.top_idx != 0 && back != 0) अणु
+		pos = list_entry(pos->node.prev, काष्ठा annotation_line, node);
 
-		if (annotation_line__filter(pos, notes))
-			continue;
+		अगर (annotation_line__filter(pos, notes))
+			जारी;
 
 		--browser->b.top_idx;
 		--back;
-	}
+	पूर्ण
 
 	browser->b.top = pos;
 	browser->b.navkeypressed = true;
-}
+पूर्ण
 
-static void annotate_browser__set_rb_top(struct annotate_browser *browser,
-					 struct rb_node *nd)
-{
-	struct annotation *notes = browser__annotation(&browser->b);
-	struct annotation_line * pos = rb_entry(nd, struct annotation_line, rb_node);
+अटल व्योम annotate_browser__set_rb_top(काष्ठा annotate_browser *browser,
+					 काष्ठा rb_node *nd)
+अणु
+	काष्ठा annotation *notes = browser__annotation(&browser->b);
+	काष्ठा annotation_line * pos = rb_entry(nd, काष्ठा annotation_line, rb_node);
 	u32 idx = pos->idx;
 
-	if (notes->options->hide_src_code)
-		idx = pos->idx_asm;
+	अगर (notes->options->hide_src_code)
+		idx = pos->idx_यंत्र;
 	annotate_browser__set_top(browser, pos, idx);
 	browser->curr_hot = nd;
-}
+पूर्ण
 
-static void annotate_browser__calc_percent(struct annotate_browser *browser,
-					   struct evsel *evsel)
-{
-	struct map_symbol *ms = browser->b.priv;
-	struct symbol *sym = ms->sym;
-	struct annotation *notes = symbol__annotation(sym);
-	struct disasm_line *pos;
+अटल व्योम annotate_browser__calc_percent(काष्ठा annotate_browser *browser,
+					   काष्ठा evsel *evsel)
+अणु
+	काष्ठा map_symbol *ms = browser->b.priv;
+	काष्ठा symbol *sym = ms->sym;
+	काष्ठा annotation *notes = symbol__annotation(sym);
+	काष्ठा disयंत्र_line *pos;
 
 	browser->entries = RB_ROOT;
 
-	pthread_mutex_lock(&notes->lock);
+	pthपढ़ो_mutex_lock(&notes->lock);
 
 	symbol__calc_percent(sym, evsel);
 
-	list_for_each_entry(pos, &notes->src->source, al.node) {
-		double max_percent = 0.0;
-		int i;
+	list_क्रम_each_entry(pos, &notes->src->source, al.node) अणु
+		द्विगुन max_percent = 0.0;
+		पूर्णांक i;
 
-		if (pos->al.offset == -1) {
+		अगर (pos->al.offset == -1) अणु
 			RB_CLEAR_NODE(&pos->al.rb_node);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		for (i = 0; i < pos->al.data_nr; i++) {
-			double percent;
+		क्रम (i = 0; i < pos->al.data_nr; i++) अणु
+			द्विगुन percent;
 
 			percent = annotation_data__percent(&pos->al.data[i],
 							   browser->opts->percent_type);
 
-			if (max_percent < percent)
+			अगर (max_percent < percent)
 				max_percent = percent;
-		}
+		पूर्ण
 
-		if (max_percent < 0.01 && pos->al.ipc == 0) {
+		अगर (max_percent < 0.01 && pos->al.ipc == 0) अणु
 			RB_CLEAR_NODE(&pos->al.rb_node);
-			continue;
-		}
-		disasm_rb_tree__insert(browser, &pos->al);
-	}
-	pthread_mutex_unlock(&notes->lock);
+			जारी;
+		पूर्ण
+		disयंत्र_rb_tree__insert(browser, &pos->al);
+	पूर्ण
+	pthपढ़ो_mutex_unlock(&notes->lock);
 
 	browser->curr_hot = rb_last(&browser->entries);
-}
+पूर्ण
 
-static bool annotate_browser__toggle_source(struct annotate_browser *browser)
-{
-	struct annotation *notes = browser__annotation(&browser->b);
-	struct annotation_line *al;
+अटल bool annotate_browser__toggle_source(काष्ठा annotate_browser *browser)
+अणु
+	काष्ठा annotation *notes = browser__annotation(&browser->b);
+	काष्ठा annotation_line *al;
 	off_t offset = browser->b.index - browser->b.top_idx;
 
-	browser->b.seek(&browser->b, offset, SEEK_CUR);
-	al = list_entry(browser->b.top, struct annotation_line, node);
+	browser->b.seek(&browser->b, offset, प्रस्तुत_से);
+	al = list_entry(browser->b.top, काष्ठा annotation_line, node);
 
-	if (notes->options->hide_src_code) {
-		if (al->idx_asm < offset)
+	अगर (notes->options->hide_src_code) अणु
+		अगर (al->idx_यंत्र < offset)
 			offset = al->idx;
 
 		browser->b.nr_entries = notes->nr_entries;
 		notes->options->hide_src_code = false;
-		browser->b.seek(&browser->b, -offset, SEEK_CUR);
+		browser->b.seek(&browser->b, -offset, प्रस्तुत_से);
 		browser->b.top_idx = al->idx - offset;
 		browser->b.index = al->idx;
-	} else {
-		if (al->idx_asm < 0) {
-			ui_helpline__puts("Only available for assembly lines.");
-			browser->b.seek(&browser->b, -offset, SEEK_CUR);
-			return false;
-		}
+	पूर्ण अन्यथा अणु
+		अगर (al->idx_यंत्र < 0) अणु
+			ui_helpline__माला_दो("Only available for assembly lines.");
+			browser->b.seek(&browser->b, -offset, प्रस्तुत_से);
+			वापस false;
+		पूर्ण
 
-		if (al->idx_asm < offset)
-			offset = al->idx_asm;
+		अगर (al->idx_यंत्र < offset)
+			offset = al->idx_यंत्र;
 
-		browser->b.nr_entries = notes->nr_asm_entries;
+		browser->b.nr_entries = notes->nr_यंत्र_entries;
 		notes->options->hide_src_code = true;
-		browser->b.seek(&browser->b, -offset, SEEK_CUR);
-		browser->b.top_idx = al->idx_asm - offset;
-		browser->b.index = al->idx_asm;
-	}
+		browser->b.seek(&browser->b, -offset, प्रस्तुत_से);
+		browser->b.top_idx = al->idx_यंत्र - offset;
+		browser->b.index = al->idx_यंत्र;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#define SYM_TITLE_MAX_SIZE (PATH_MAX + 64)
+#घोषणा SYM_TITLE_MAX_SIZE (PATH_MAX + 64)
 
-static void annotate_browser__show_full_location(struct ui_browser *browser)
-{
-	struct annotate_browser *ab = container_of(browser, struct annotate_browser, b);
-	struct disasm_line *cursor = disasm_line(ab->selection);
-	struct annotation_line *al = &cursor->al;
+अटल व्योम annotate_browser__show_full_location(काष्ठा ui_browser *browser)
+अणु
+	काष्ठा annotate_browser *ab = container_of(browser, काष्ठा annotate_browser, b);
+	काष्ठा disयंत्र_line *cursor = disयंत्र_line(ab->selection);
+	काष्ठा annotation_line *al = &cursor->al;
 
-	if (al->offset != -1)
-		ui_helpline__puts("Only available for source code lines.");
-	else if (al->fileloc == NULL)
-		ui_helpline__puts("No source file location.");
-	else {
-		char help_line[SYM_TITLE_MAX_SIZE];
-		sprintf (help_line, "Source file location: %s", al->fileloc);
-		ui_helpline__puts(help_line);
-	}
-}
+	अगर (al->offset != -1)
+		ui_helpline__माला_दो("Only available for source code lines.");
+	अन्यथा अगर (al->fileloc == शून्य)
+		ui_helpline__माला_दो("No source file location.");
+	अन्यथा अणु
+		अक्षर help_line[SYM_TITLE_MAX_SIZE];
+		प्र_लिखो (help_line, "Source file location: %s", al->fileloc);
+		ui_helpline__माला_दो(help_line);
+	पूर्ण
+पूर्ण
 
-static void ui_browser__init_asm_mode(struct ui_browser *browser)
-{
-	struct annotation *notes = browser__annotation(browser);
+अटल व्योम ui_browser__init_यंत्र_mode(काष्ठा ui_browser *browser)
+अणु
+	काष्ठा annotation *notes = browser__annotation(browser);
 	ui_browser__reset_index(browser);
-	browser->nr_entries = notes->nr_asm_entries;
-}
+	browser->nr_entries = notes->nr_यंत्र_entries;
+पूर्ण
 
-static int sym_title(struct symbol *sym, struct map *map, char *title,
-		     size_t sz, int percent_type)
-{
-	return snprintf(title, sz, "%s  %s [Percent: %s]", sym->name, map->dso->long_name,
+अटल पूर्णांक sym_title(काष्ठा symbol *sym, काष्ठा map *map, अक्षर *title,
+		     माप_प्रकार sz, पूर्णांक percent_type)
+अणु
+	वापस snम_लिखो(title, sz, "%s  %s [Percent: %s]", sym->name, map->dso->दीर्घ_name,
 			percent_type_str(percent_type));
-}
+पूर्ण
 
 /*
- * This can be called from external jumps, i.e. jumps from one function
+ * This can be called from बाह्यal jumps, i.e. jumps from one function
  * to another, like from the kernel's entry_SYSCALL_64 function to the
- * swapgs_restore_regs_and_return_to_usermode() function.
+ * swapgs_restore_regs_and_वापस_to_usermode() function.
  *
- * So all we check here is that dl->ops.target.sym is set, if it is, just
- * go to that function and when exiting from its disassembly, come back
+ * So all we check here is that dl->ops.target.sym is set, अगर it is, just
+ * go to that function and when निकासing from its disassembly, come back
  * to the calling function.
  */
-static bool annotate_browser__callq(struct annotate_browser *browser,
-				    struct evsel *evsel,
-				    struct hist_browser_timer *hbt)
-{
-	struct map_symbol *ms = browser->b.priv, target_ms;
-	struct disasm_line *dl = disasm_line(browser->selection);
-	struct annotation *notes;
-	char title[SYM_TITLE_MAX_SIZE];
+अटल bool annotate_browser__callq(काष्ठा annotate_browser *browser,
+				    काष्ठा evsel *evsel,
+				    काष्ठा hist_browser_समयr *hbt)
+अणु
+	काष्ठा map_symbol *ms = browser->b.priv, target_ms;
+	काष्ठा disयंत्र_line *dl = disयंत्र_line(browser->selection);
+	काष्ठा annotation *notes;
+	अक्षर title[SYM_TITLE_MAX_SIZE];
 
-	if (!dl->ops.target.sym) {
-		ui_helpline__puts("The called function was not found.");
-		return true;
-	}
+	अगर (!dl->ops.target.sym) अणु
+		ui_helpline__माला_दो("The called function was not found.");
+		वापस true;
+	पूर्ण
 
 	notes = symbol__annotation(dl->ops.target.sym);
-	pthread_mutex_lock(&notes->lock);
+	pthपढ़ो_mutex_lock(&notes->lock);
 
-	if (!symbol__hists(dl->ops.target.sym, evsel->evlist->core.nr_entries)) {
-		pthread_mutex_unlock(&notes->lock);
+	अगर (!symbol__hists(dl->ops.target.sym, evsel->evlist->core.nr_entries)) अणु
+		pthपढ़ो_mutex_unlock(&notes->lock);
 		ui__warning("Not enough memory for annotating '%s' symbol!\n",
 			    dl->ops.target.sym->name);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	target_ms.maps = ms->maps;
 	target_ms.map = ms->map;
 	target_ms.sym = dl->ops.target.sym;
-	pthread_mutex_unlock(&notes->lock);
+	pthपढ़ो_mutex_unlock(&notes->lock);
 	symbol__tui_annotate(&target_ms, evsel, hbt, browser->opts);
-	sym_title(ms->sym, ms->map, title, sizeof(title), browser->opts->percent_type);
+	sym_title(ms->sym, ms->map, title, माप(title), browser->opts->percent_type);
 	ui_browser__show_title(&browser->b, title);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static
-struct disasm_line *annotate_browser__find_offset(struct annotate_browser *browser,
+अटल
+काष्ठा disयंत्र_line *annotate_browser__find_offset(काष्ठा annotate_browser *browser,
 					  s64 offset, s64 *idx)
-{
-	struct annotation *notes = browser__annotation(&browser->b);
-	struct disasm_line *pos;
+अणु
+	काष्ठा annotation *notes = browser__annotation(&browser->b);
+	काष्ठा disयंत्र_line *pos;
 
 	*idx = 0;
-	list_for_each_entry(pos, &notes->src->source, al.node) {
-		if (pos->al.offset == offset)
-			return pos;
-		if (!annotation_line__filter(&pos->al, notes))
+	list_क्रम_each_entry(pos, &notes->src->source, al.node) अणु
+		अगर (pos->al.offset == offset)
+			वापस pos;
+		अगर (!annotation_line__filter(&pos->al, notes))
 			++*idx;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool annotate_browser__jump(struct annotate_browser *browser,
-				   struct evsel *evsel,
-				   struct hist_browser_timer *hbt)
-{
-	struct disasm_line *dl = disasm_line(browser->selection);
+अटल bool annotate_browser__jump(काष्ठा annotate_browser *browser,
+				   काष्ठा evsel *evsel,
+				   काष्ठा hist_browser_समयr *hbt)
+अणु
+	काष्ठा disयंत्र_line *dl = disयंत्र_line(browser->selection);
 	u64 offset;
 	s64 idx;
 
-	if (!ins__is_jump(&dl->ins))
-		return false;
+	अगर (!ins__is_jump(&dl->ins))
+		वापस false;
 
-	if (dl->ops.target.outside) {
+	अगर (dl->ops.target.outside) अणु
 		annotate_browser__callq(browser, evsel, hbt);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	offset = dl->ops.target.offset;
 	dl = annotate_browser__find_offset(browser, offset, &idx);
-	if (dl == NULL) {
-		ui_helpline__printf("Invalid jump offset: %" PRIx64, offset);
-		return true;
-	}
+	अगर (dl == शून्य) अणु
+		ui_helpline__म_लिखो("Invalid jump offset: %" PRIx64, offset);
+		वापस true;
+	पूर्ण
 
 	annotate_browser__set_top(browser, &dl->al, idx);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static
-struct annotation_line *annotate_browser__find_string(struct annotate_browser *browser,
-					  char *s, s64 *idx)
-{
-	struct annotation *notes = browser__annotation(&browser->b);
-	struct annotation_line *al = browser->selection;
+अटल
+काष्ठा annotation_line *annotate_browser__find_string(काष्ठा annotate_browser *browser,
+					  अक्षर *s, s64 *idx)
+अणु
+	काष्ठा annotation *notes = browser__annotation(&browser->b);
+	काष्ठा annotation_line *al = browser->selection;
 
 	*idx = browser->b.index;
-	list_for_each_entry_continue(al, &notes->src->source, node) {
-		if (annotation_line__filter(al, notes))
-			continue;
+	list_क्रम_each_entry_जारी(al, &notes->src->source, node) अणु
+		अगर (annotation_line__filter(al, notes))
+			जारी;
 
 		++*idx;
 
-		if (al->line && strstr(al->line, s) != NULL)
-			return al;
-	}
+		अगर (al->line && म_माला(al->line, s) != शून्य)
+			वापस al;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool __annotate_browser__search(struct annotate_browser *browser)
-{
-	struct annotation_line *al;
+अटल bool __annotate_browser__search(काष्ठा annotate_browser *browser)
+अणु
+	काष्ठा annotation_line *al;
 	s64 idx;
 
 	al = annotate_browser__find_string(browser, browser->search_bf, &idx);
-	if (al == NULL) {
-		ui_helpline__puts("String not found!");
-		return false;
-	}
+	अगर (al == शून्य) अणु
+		ui_helpline__माला_दो("String not found!");
+		वापस false;
+	पूर्ण
 
 	annotate_browser__set_top(browser, al, idx);
 	browser->searching_backwards = false;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static
-struct annotation_line *annotate_browser__find_string_reverse(struct annotate_browser *browser,
-						  char *s, s64 *idx)
-{
-	struct annotation *notes = browser__annotation(&browser->b);
-	struct annotation_line *al = browser->selection;
+अटल
+काष्ठा annotation_line *annotate_browser__find_string_reverse(काष्ठा annotate_browser *browser,
+						  अक्षर *s, s64 *idx)
+अणु
+	काष्ठा annotation *notes = browser__annotation(&browser->b);
+	काष्ठा annotation_line *al = browser->selection;
 
 	*idx = browser->b.index;
-	list_for_each_entry_continue_reverse(al, &notes->src->source, node) {
-		if (annotation_line__filter(al, notes))
-			continue;
+	list_क्रम_each_entry_जारी_reverse(al, &notes->src->source, node) अणु
+		अगर (annotation_line__filter(al, notes))
+			जारी;
 
 		--*idx;
 
-		if (al->line && strstr(al->line, s) != NULL)
-			return al;
-	}
+		अगर (al->line && म_माला(al->line, s) != शून्य)
+			वापस al;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool __annotate_browser__search_reverse(struct annotate_browser *browser)
-{
-	struct annotation_line *al;
+अटल bool __annotate_browser__search_reverse(काष्ठा annotate_browser *browser)
+अणु
+	काष्ठा annotation_line *al;
 	s64 idx;
 
 	al = annotate_browser__find_string_reverse(browser, browser->search_bf, &idx);
-	if (al == NULL) {
-		ui_helpline__puts("String not found!");
-		return false;
-	}
+	अगर (al == शून्य) अणु
+		ui_helpline__माला_दो("String not found!");
+		वापस false;
+	पूर्ण
 
 	annotate_browser__set_top(browser, al, idx);
 	browser->searching_backwards = true;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool annotate_browser__search_window(struct annotate_browser *browser,
-					    int delay_secs)
-{
-	if (ui_browser__input_window("Search", "String: ", browser->search_bf,
+अटल bool annotate_browser__search_winकरोw(काष्ठा annotate_browser *browser,
+					    पूर्णांक delay_secs)
+अणु
+	अगर (ui_browser__input_winकरोw("Search", "String: ", browser->search_bf,
 				     "ENTER: OK, ESC: Cancel",
 				     delay_secs * 2) != K_ENTER ||
 	    !*browser->search_bf)
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool annotate_browser__search(struct annotate_browser *browser, int delay_secs)
-{
-	if (annotate_browser__search_window(browser, delay_secs))
-		return __annotate_browser__search(browser);
+अटल bool annotate_browser__search(काष्ठा annotate_browser *browser, पूर्णांक delay_secs)
+अणु
+	अगर (annotate_browser__search_winकरोw(browser, delay_secs))
+		वापस __annotate_browser__search(browser);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool annotate_browser__continue_search(struct annotate_browser *browser,
-					      int delay_secs)
-{
-	if (!*browser->search_bf)
-		return annotate_browser__search(browser, delay_secs);
+अटल bool annotate_browser__जारी_search(काष्ठा annotate_browser *browser,
+					      पूर्णांक delay_secs)
+अणु
+	अगर (!*browser->search_bf)
+		वापस annotate_browser__search(browser, delay_secs);
 
-	return __annotate_browser__search(browser);
-}
+	वापस __annotate_browser__search(browser);
+पूर्ण
 
-static bool annotate_browser__search_reverse(struct annotate_browser *browser,
-					   int delay_secs)
-{
-	if (annotate_browser__search_window(browser, delay_secs))
-		return __annotate_browser__search_reverse(browser);
+अटल bool annotate_browser__search_reverse(काष्ठा annotate_browser *browser,
+					   पूर्णांक delay_secs)
+अणु
+	अगर (annotate_browser__search_winकरोw(browser, delay_secs))
+		वापस __annotate_browser__search_reverse(browser);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static
-bool annotate_browser__continue_search_reverse(struct annotate_browser *browser,
-					       int delay_secs)
-{
-	if (!*browser->search_bf)
-		return annotate_browser__search_reverse(browser, delay_secs);
+अटल
+bool annotate_browser__जारी_search_reverse(काष्ठा annotate_browser *browser,
+					       पूर्णांक delay_secs)
+अणु
+	अगर (!*browser->search_bf)
+		वापस annotate_browser__search_reverse(browser, delay_secs);
 
-	return __annotate_browser__search_reverse(browser);
-}
+	वापस __annotate_browser__search_reverse(browser);
+पूर्ण
 
-static int annotate_browser__show(struct ui_browser *browser, char *title, const char *help)
-{
-	struct annotate_browser *ab = container_of(browser, struct annotate_browser, b);
-	struct map_symbol *ms = browser->priv;
-	struct symbol *sym = ms->sym;
-	char symbol_dso[SYM_TITLE_MAX_SIZE];
+अटल पूर्णांक annotate_browser__show(काष्ठा ui_browser *browser, अक्षर *title, स्थिर अक्षर *help)
+अणु
+	काष्ठा annotate_browser *ab = container_of(browser, काष्ठा annotate_browser, b);
+	काष्ठा map_symbol *ms = browser->priv;
+	काष्ठा symbol *sym = ms->sym;
+	अक्षर symbol_dso[SYM_TITLE_MAX_SIZE];
 
-	if (ui_browser__show(browser, title, help) < 0)
-		return -1;
+	अगर (ui_browser__show(browser, title, help) < 0)
+		वापस -1;
 
-	sym_title(sym, ms->map, symbol_dso, sizeof(symbol_dso), ab->opts->percent_type);
+	sym_title(sym, ms->map, symbol_dso, माप(symbol_dso), ab->opts->percent_type);
 
-	ui_browser__gotorc_title(browser, 0, 0);
+	ui_browser__जाओrc_title(browser, 0, 0);
 	ui_browser__set_color(browser, HE_COLORSET_ROOT);
-	ui_browser__write_nstring(browser, symbol_dso, browser->width + 1);
-	return 0;
-}
+	ui_browser__ग_लिखो_nstring(browser, symbol_dso, browser->width + 1);
+	वापस 0;
+पूर्ण
 
-static void
-switch_percent_type(struct annotation_options *opts, bool base)
-{
-	switch (opts->percent_type) {
-	case PERCENT_HITS_LOCAL:
-		if (base)
+अटल व्योम
+चयन_percent_type(काष्ठा annotation_options *opts, bool base)
+अणु
+	चयन (opts->percent_type) अणु
+	हाल PERCENT_HITS_LOCAL:
+		अगर (base)
 			opts->percent_type = PERCENT_PERIOD_LOCAL;
-		else
+		अन्यथा
 			opts->percent_type = PERCENT_HITS_GLOBAL;
-		break;
-	case PERCENT_HITS_GLOBAL:
-		if (base)
+		अवरोध;
+	हाल PERCENT_HITS_GLOBAL:
+		अगर (base)
 			opts->percent_type = PERCENT_PERIOD_GLOBAL;
-		else
+		अन्यथा
 			opts->percent_type = PERCENT_HITS_LOCAL;
-		break;
-	case PERCENT_PERIOD_LOCAL:
-		if (base)
+		अवरोध;
+	हाल PERCENT_PERIOD_LOCAL:
+		अगर (base)
 			opts->percent_type = PERCENT_HITS_LOCAL;
-		else
+		अन्यथा
 			opts->percent_type = PERCENT_PERIOD_GLOBAL;
-		break;
-	case PERCENT_PERIOD_GLOBAL:
-		if (base)
+		अवरोध;
+	हाल PERCENT_PERIOD_GLOBAL:
+		अगर (base)
 			opts->percent_type = PERCENT_HITS_GLOBAL;
-		else
+		अन्यथा
 			opts->percent_type = PERCENT_PERIOD_LOCAL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int annotate_browser__run(struct annotate_browser *browser,
-				 struct evsel *evsel,
-				 struct hist_browser_timer *hbt)
-{
-	struct rb_node *nd = NULL;
-	struct hists *hists = evsel__hists(evsel);
-	struct map_symbol *ms = browser->b.priv;
-	struct symbol *sym = ms->sym;
-	struct annotation *notes = symbol__annotation(ms->sym);
-	const char *help = "Press 'h' for help on key bindings";
-	int delay_secs = hbt ? hbt->refresh : 0;
-	char title[256];
-	int key;
+अटल पूर्णांक annotate_browser__run(काष्ठा annotate_browser *browser,
+				 काष्ठा evsel *evsel,
+				 काष्ठा hist_browser_समयr *hbt)
+अणु
+	काष्ठा rb_node *nd = शून्य;
+	काष्ठा hists *hists = evsel__hists(evsel);
+	काष्ठा map_symbol *ms = browser->b.priv;
+	काष्ठा symbol *sym = ms->sym;
+	काष्ठा annotation *notes = symbol__annotation(ms->sym);
+	स्थिर अक्षर *help = "Press 'h' for help on key bindings";
+	पूर्णांक delay_secs = hbt ? hbt->refresh : 0;
+	अक्षर title[256];
+	पूर्णांक key;
 
-	hists__scnprintf_title(hists, title, sizeof(title));
-	if (annotate_browser__show(&browser->b, title, help) < 0)
-		return -1;
+	hists__scnम_लिखो_title(hists, title, माप(title));
+	अगर (annotate_browser__show(&browser->b, title, help) < 0)
+		वापस -1;
 
 	annotate_browser__calc_percent(browser, evsel);
 
-	if (browser->curr_hot) {
+	अगर (browser->curr_hot) अणु
 		annotate_browser__set_rb_top(browser, browser->curr_hot);
 		browser->b.navkeypressed = false;
-	}
+	पूर्ण
 
 	nd = browser->curr_hot;
 
-	while (1) {
+	जबतक (1) अणु
 		key = ui_browser__run(&browser->b, delay_secs);
 
-		if (delay_secs != 0) {
+		अगर (delay_secs != 0) अणु
 			annotate_browser__calc_percent(browser, evsel);
 			/*
 			 * Current line focus got out of the list of most active
-			 * lines, NULL it so that if TAB|UNTAB is pressed, we
+			 * lines, शून्य it so that अगर TAB|UNTAB is pressed, we
 			 * move to curr_hot (current hottest line).
 			 */
-			if (nd != NULL && RB_EMPTY_NODE(nd))
-				nd = NULL;
-		}
+			अगर (nd != शून्य && RB_EMPTY_NODE(nd))
+				nd = शून्य;
+		पूर्ण
 
-		switch (key) {
-		case K_TIMER:
-			if (hbt)
-				hbt->timer(hbt->arg);
+		चयन (key) अणु
+		हाल K_TIMER:
+			अगर (hbt)
+				hbt->समयr(hbt->arg);
 
-			if (delay_secs != 0) {
+			अगर (delay_secs != 0) अणु
 				symbol__annotate_decay_histogram(sym, evsel->idx);
-				hists__scnprintf_title(hists, title, sizeof(title));
+				hists__scnम_लिखो_title(hists, title, माप(title));
 				annotate_browser__show(&browser->b, title, help);
-			}
-			continue;
-		case K_TAB:
-			if (nd != NULL) {
+			पूर्ण
+			जारी;
+		हाल K_TAB:
+			अगर (nd != शून्य) अणु
 				nd = rb_prev(nd);
-				if (nd == NULL)
+				अगर (nd == शून्य)
 					nd = rb_last(&browser->entries);
-			} else
+			पूर्ण अन्यथा
 				nd = browser->curr_hot;
-			break;
-		case K_UNTAB:
-			if (nd != NULL) {
+			अवरोध;
+		हाल K_UNTAB:
+			अगर (nd != शून्य) अणु
 				nd = rb_next(nd);
-				if (nd == NULL)
+				अगर (nd == शून्य)
 					nd = rb_first(&browser->entries);
-			} else
+			पूर्ण अन्यथा
 				nd = browser->curr_hot;
-			break;
-		case K_F1:
-		case 'h':
-			ui_browser__help_window(&browser->b,
+			अवरोध;
+		हाल K_F1:
+		हाल 'h':
+			ui_browser__help_winकरोw(&browser->b,
 		"UP/DOWN/PGUP\n"
 		"PGDN/SPACE    Navigate\n"
 		"q/ESC/CTRL+C  Exit\n\n"
@@ -770,180 +771,180 @@ static int annotate_browser__run(struct annotate_browser *browser,
 		"p             Toggle percent type [local/global]\n"
 		"b             Toggle percent base [period/hits]\n"
 		"?             Search string backwards\n");
-			continue;
-		case 'r':
-			script_browse(NULL, NULL);
+			जारी;
+		हाल 'r':
+			script_browse(शून्य, शून्य);
 			annotate_browser__show(&browser->b, title, help);
-			continue;
-		case 'k':
+			जारी;
+		हाल 'k':
 			notes->options->show_linenr = !notes->options->show_linenr;
-			continue;
-		case 'l':
+			जारी;
+		हाल 'l':
 			annotate_browser__show_full_location (&browser->b);
-			continue;
-		case 'H':
+			जारी;
+		हाल 'H':
 			nd = browser->curr_hot;
-			break;
-		case 's':
-			if (annotate_browser__toggle_source(browser))
-				ui_helpline__puts(help);
-			continue;
-		case 'o':
+			अवरोध;
+		हाल 's':
+			अगर (annotate_browser__toggle_source(browser))
+				ui_helpline__माला_दो(help);
+			जारी;
+		हाल 'o':
 			notes->options->use_offset = !notes->options->use_offset;
 			annotation__update_column_widths(notes);
-			continue;
-		case 'O':
-			if (++notes->options->offset_level > ANNOTATION__MAX_OFFSET_LEVEL)
+			जारी;
+		हाल 'O':
+			अगर (++notes->options->offset_level > ANNOTATION__MAX_OFFSET_LEVEL)
 				notes->options->offset_level = ANNOTATION__MIN_OFFSET_LEVEL;
-			continue;
-		case 'j':
+			जारी;
+		हाल 'j':
 			notes->options->jump_arrows = !notes->options->jump_arrows;
-			continue;
-		case 'J':
+			जारी;
+		हाल 'J':
 			notes->options->show_nr_jumps = !notes->options->show_nr_jumps;
 			annotation__update_column_widths(notes);
-			continue;
-		case '/':
-			if (annotate_browser__search(browser, delay_secs)) {
+			जारी;
+		हाल '/':
+			अगर (annotate_browser__search(browser, delay_secs)) अणु
 show_help:
-				ui_helpline__puts(help);
-			}
-			continue;
-		case 'n':
-			if (browser->searching_backwards ?
-			    annotate_browser__continue_search_reverse(browser, delay_secs) :
-			    annotate_browser__continue_search(browser, delay_secs))
-				goto show_help;
-			continue;
-		case '?':
-			if (annotate_browser__search_reverse(browser, delay_secs))
-				goto show_help;
-			continue;
-		case 'D': {
-			static int seq;
+				ui_helpline__माला_दो(help);
+			पूर्ण
+			जारी;
+		हाल 'n':
+			अगर (browser->searching_backwards ?
+			    annotate_browser__जारी_search_reverse(browser, delay_secs) :
+			    annotate_browser__जारी_search(browser, delay_secs))
+				जाओ show_help;
+			जारी;
+		हाल '?':
+			अगर (annotate_browser__search_reverse(browser, delay_secs))
+				जाओ show_help;
+			जारी;
+		हाल 'D': अणु
+			अटल पूर्णांक seq;
 			ui_helpline__pop();
 			ui_helpline__fpush("%d: nr_ent=%d, height=%d, idx=%d, top_idx=%d, nr_asm_entries=%d",
 					   seq++, browser->b.nr_entries,
 					   browser->b.height,
 					   browser->b.index,
 					   browser->b.top_idx,
-					   notes->nr_asm_entries);
-		}
-			continue;
-		case K_ENTER:
-		case K_RIGHT:
-		{
-			struct disasm_line *dl = disasm_line(browser->selection);
+					   notes->nr_यंत्र_entries);
+		पूर्ण
+			जारी;
+		हाल K_ENTER:
+		हाल K_RIGHT:
+		अणु
+			काष्ठा disयंत्र_line *dl = disयंत्र_line(browser->selection);
 
-			if (browser->selection == NULL)
-				ui_helpline__puts("Huh? No selection. Report to linux-kernel@vger.kernel.org");
-			else if (browser->selection->offset == -1)
-				ui_helpline__puts("Actions are only available for assembly lines.");
-			else if (!dl->ins.ops)
-				goto show_sup_ins;
-			else if (ins__is_ret(&dl->ins))
-				goto out;
-			else if (!(annotate_browser__jump(browser, evsel, hbt) ||
-				     annotate_browser__callq(browser, evsel, hbt))) {
+			अगर (browser->selection == शून्य)
+				ui_helpline__माला_दो("Huh? No selection. Report to linux-kernel@vger.kernel.org");
+			अन्यथा अगर (browser->selection->offset == -1)
+				ui_helpline__माला_दो("Actions are only available for assembly lines.");
+			अन्यथा अगर (!dl->ins.ops)
+				जाओ show_sup_ins;
+			अन्यथा अगर (ins__is_ret(&dl->ins))
+				जाओ out;
+			अन्यथा अगर (!(annotate_browser__jump(browser, evsel, hbt) ||
+				     annotate_browser__callq(browser, evsel, hbt))) अणु
 show_sup_ins:
-				ui_helpline__puts("Actions are only available for function call/return & jump/branch instructions.");
-			}
-			continue;
-		}
-		case 'P':
+				ui_helpline__माला_दो("Actions are only available for function call/return & jump/branch instructions.");
+			पूर्ण
+			जारी;
+		पूर्ण
+		हाल 'P':
 			map_symbol__annotation_dump(ms, evsel, browser->opts);
-			continue;
-		case 't':
-			if (symbol_conf.show_total_period) {
+			जारी;
+		हाल 't':
+			अगर (symbol_conf.show_total_period) अणु
 				symbol_conf.show_total_period = false;
 				symbol_conf.show_nr_samples = true;
-			} else if (symbol_conf.show_nr_samples)
+			पूर्ण अन्यथा अगर (symbol_conf.show_nr_samples)
 				symbol_conf.show_nr_samples = false;
-			else
+			अन्यथा
 				symbol_conf.show_total_period = true;
 			annotation__update_column_widths(notes);
-			continue;
-		case 'c':
-			if (notes->options->show_minmax_cycle)
+			जारी;
+		हाल 'c':
+			अगर (notes->options->show_minmax_cycle)
 				notes->options->show_minmax_cycle = false;
-			else
+			अन्यथा
 				notes->options->show_minmax_cycle = true;
 			annotation__update_column_widths(notes);
-			continue;
-		case 'p':
-		case 'b':
-			switch_percent_type(browser->opts, key == 'b');
-			hists__scnprintf_title(hists, title, sizeof(title));
+			जारी;
+		हाल 'p':
+		हाल 'b':
+			चयन_percent_type(browser->opts, key == 'b');
+			hists__scnम_लिखो_title(hists, title, माप(title));
 			annotate_browser__show(&browser->b, title, help);
-			continue;
-		case K_LEFT:
-		case K_ESC:
-		case 'q':
-		case CTRL('c'):
-			goto out;
-		default:
-			continue;
-		}
+			जारी;
+		हाल K_LEFT:
+		हाल K_ESC:
+		हाल 'q':
+		हाल CTRL('c'):
+			जाओ out;
+		शेष:
+			जारी;
+		पूर्ण
 
-		if (nd != NULL)
+		अगर (nd != शून्य)
 			annotate_browser__set_rb_top(browser, nd);
-	}
+	पूर्ण
 out:
 	ui_browser__hide(&browser->b);
-	return key;
-}
+	वापस key;
+पूर्ण
 
-int map_symbol__tui_annotate(struct map_symbol *ms, struct evsel *evsel,
-			     struct hist_browser_timer *hbt,
-			     struct annotation_options *opts)
-{
-	return symbol__tui_annotate(ms, evsel, hbt, opts);
-}
+पूर्णांक map_symbol__tui_annotate(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
+			     काष्ठा hist_browser_समयr *hbt,
+			     काष्ठा annotation_options *opts)
+अणु
+	वापस symbol__tui_annotate(ms, evsel, hbt, opts);
+पूर्ण
 
-int hist_entry__tui_annotate(struct hist_entry *he, struct evsel *evsel,
-			     struct hist_browser_timer *hbt,
-			     struct annotation_options *opts)
-{
-	/* reset abort key so that it can get Ctrl-C as a key */
+पूर्णांक hist_entry__tui_annotate(काष्ठा hist_entry *he, काष्ठा evsel *evsel,
+			     काष्ठा hist_browser_समयr *hbt,
+			     काष्ठा annotation_options *opts)
+अणु
+	/* reset पात key so that it can get Ctrl-C as a key */
 	SLang_reset_tty();
 	SLang_init_tty(0, 0, 0);
 
-	return map_symbol__tui_annotate(&he->ms, evsel, hbt, opts);
-}
+	वापस map_symbol__tui_annotate(&he->ms, evsel, hbt, opts);
+पूर्ण
 
-int symbol__tui_annotate(struct map_symbol *ms, struct evsel *evsel,
-			 struct hist_browser_timer *hbt,
-			 struct annotation_options *opts)
-{
-	struct symbol *sym = ms->sym;
-	struct annotation *notes = symbol__annotation(sym);
-	struct annotate_browser browser = {
-		.b = {
+पूर्णांक symbol__tui_annotate(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
+			 काष्ठा hist_browser_समयr *hbt,
+			 काष्ठा annotation_options *opts)
+अणु
+	काष्ठा symbol *sym = ms->sym;
+	काष्ठा annotation *notes = symbol__annotation(sym);
+	काष्ठा annotate_browser browser = अणु
+		.b = अणु
 			.refresh = annotate_browser__refresh,
 			.seek	 = ui_browser__list_head_seek,
-			.write	 = annotate_browser__write,
-			.filter  = disasm_line__filter,
-			.extra_title_lines = 1, /* for hists__scnprintf_title() */
+			.ग_लिखो	 = annotate_browser__ग_लिखो,
+			.filter  = disयंत्र_line__filter,
+			.extra_title_lines = 1, /* क्रम hists__scnम_लिखो_title() */
 			.priv	 = ms,
 			.use_navkeypressed = true,
-		},
+		पूर्ण,
 		.opts = opts,
-	};
-	int ret = -1, err;
+	पूर्ण;
+	पूर्णांक ret = -1, err;
 
-	if (sym == NULL)
-		return -1;
+	अगर (sym == शून्य)
+		वापस -1;
 
-	if (ms->map->dso->annotate_warned)
-		return -1;
+	अगर (ms->map->dso->annotate_warned)
+		वापस -1;
 
 	err = symbol__annotate2(ms, evsel, opts, &browser.arch);
-	if (err) {
-		char msg[BUFSIZ];
-		symbol__strerror_disassemble(ms, err, msg, sizeof(msg));
+	अगर (err) अणु
+		अक्षर msg[बफ_मान];
+		symbol__म_त्रुटि_disassemble(ms, err, msg, माप(msg));
 		ui__error("Couldn't annotate %s:\n%s", sym->name, msg);
-		goto out_free_offsets;
-	}
+		जाओ out_मुक्त_offsets;
+	पूर्ण
 
 	ui_helpline__push("Press ESC to exit");
 
@@ -952,14 +953,14 @@ int symbol__tui_annotate(struct map_symbol *ms, struct evsel *evsel,
 	browser.b.entries = &notes->src->source,
 	browser.b.width += 18; /* Percentage */
 
-	if (notes->options->hide_src_code)
-		ui_browser__init_asm_mode(&browser.b);
+	अगर (notes->options->hide_src_code)
+		ui_browser__init_यंत्र_mode(&browser.b);
 
 	ret = annotate_browser__run(&browser, evsel, hbt);
 
 	annotated_source__purge(notes->src);
 
-out_free_offsets:
-	zfree(&notes->offsets);
-	return ret;
-}
+out_मुक्त_offsets:
+	zमुक्त(&notes->offsets);
+	वापस ret;
+पूर्ण

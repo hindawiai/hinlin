@@ -1,453 +1,454 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Register map access API - MMIO support
 //
 // Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
 
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-struct regmap_mmio_context {
-	void __iomem *regs;
-	unsigned val_bytes;
+काष्ठा regmap_mmio_context अणु
+	व्योम __iomem *regs;
+	अचिन्हित val_bytes;
 	bool relaxed_mmio;
 
 	bool attached_clk;
-	struct clk *clk;
+	काष्ठा clk *clk;
 
-	void (*reg_write)(struct regmap_mmio_context *ctx,
-			  unsigned int reg, unsigned int val);
-	unsigned int (*reg_read)(struct regmap_mmio_context *ctx,
-			         unsigned int reg);
-};
+	व्योम (*reg_ग_लिखो)(काष्ठा regmap_mmio_context *ctx,
+			  अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val);
+	अचिन्हित पूर्णांक (*reg_पढ़ो)(काष्ठा regmap_mmio_context *ctx,
+			         अचिन्हित पूर्णांक reg);
+पूर्ण;
 
-static int regmap_mmio_regbits_check(size_t reg_bits)
-{
-	switch (reg_bits) {
-	case 8:
-	case 16:
-	case 32:
-#ifdef CONFIG_64BIT
-	case 64:
-#endif
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक regmap_mmio_regbits_check(माप_प्रकार reg_bits)
+अणु
+	चयन (reg_bits) अणु
+	हाल 8:
+	हाल 16:
+	हाल 32:
+#अगर_घोषित CONFIG_64BIT
+	हाल 64:
+#पूर्ण_अगर
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int regmap_mmio_get_min_stride(size_t val_bits)
-{
-	int min_stride;
+अटल पूर्णांक regmap_mmio_get_min_stride(माप_प्रकार val_bits)
+अणु
+	पूर्णांक min_stride;
 
-	switch (val_bits) {
-	case 8:
+	चयन (val_bits) अणु
+	हाल 8:
 		/* The core treats 0 as 1 */
 		min_stride = 0;
-		return 0;
-	case 16:
+		वापस 0;
+	हाल 16:
 		min_stride = 2;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		min_stride = 4;
-		break;
-#ifdef CONFIG_64BIT
-	case 64:
+		अवरोध;
+#अगर_घोषित CONFIG_64BIT
+	हाल 64:
 		min_stride = 8;
-		break;
-#endif
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return min_stride;
-}
+	वापस min_stride;
+पूर्ण
 
-static void regmap_mmio_write8(struct regmap_mmio_context *ctx,
-				unsigned int reg,
-				unsigned int val)
-{
-	writeb(val, ctx->regs + reg);
-}
+अटल व्योम regmap_mmio_ग_लिखो8(काष्ठा regmap_mmio_context *ctx,
+				अचिन्हित पूर्णांक reg,
+				अचिन्हित पूर्णांक val)
+अणु
+	ग_लिखोb(val, ctx->regs + reg);
+पूर्ण
 
-static void regmap_mmio_write8_relaxed(struct regmap_mmio_context *ctx,
-				unsigned int reg,
-				unsigned int val)
-{
-	writeb_relaxed(val, ctx->regs + reg);
-}
+अटल व्योम regmap_mmio_ग_लिखो8_relaxed(काष्ठा regmap_mmio_context *ctx,
+				अचिन्हित पूर्णांक reg,
+				अचिन्हित पूर्णांक val)
+अणु
+	ग_लिखोb_relaxed(val, ctx->regs + reg);
+पूर्ण
 
-static void regmap_mmio_write16le(struct regmap_mmio_context *ctx,
-				  unsigned int reg,
-				  unsigned int val)
-{
-	writew(val, ctx->regs + reg);
-}
+अटल व्योम regmap_mmio_ग_लिखो16le(काष्ठा regmap_mmio_context *ctx,
+				  अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक val)
+अणु
+	ग_लिखोw(val, ctx->regs + reg);
+पूर्ण
 
-static void regmap_mmio_write16le_relaxed(struct regmap_mmio_context *ctx,
-				  unsigned int reg,
-				  unsigned int val)
-{
-	writew_relaxed(val, ctx->regs + reg);
-}
+अटल व्योम regmap_mmio_ग_लिखो16le_relaxed(काष्ठा regmap_mmio_context *ctx,
+				  अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक val)
+अणु
+	ग_लिखोw_relaxed(val, ctx->regs + reg);
+पूर्ण
 
-static void regmap_mmio_write16be(struct regmap_mmio_context *ctx,
-				  unsigned int reg,
-				  unsigned int val)
-{
-	iowrite16be(val, ctx->regs + reg);
-}
+अटल व्योम regmap_mmio_ग_लिखो16be(काष्ठा regmap_mmio_context *ctx,
+				  अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक val)
+अणु
+	ioग_लिखो16be(val, ctx->regs + reg);
+पूर्ण
 
-static void regmap_mmio_write32le(struct regmap_mmio_context *ctx,
-				  unsigned int reg,
-				  unsigned int val)
-{
-	writel(val, ctx->regs + reg);
-}
+अटल व्योम regmap_mmio_ग_लिखो32le(काष्ठा regmap_mmio_context *ctx,
+				  अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक val)
+अणु
+	ग_लिखोl(val, ctx->regs + reg);
+पूर्ण
 
-static void regmap_mmio_write32le_relaxed(struct regmap_mmio_context *ctx,
-				  unsigned int reg,
-				  unsigned int val)
-{
-	writel_relaxed(val, ctx->regs + reg);
-}
+अटल व्योम regmap_mmio_ग_लिखो32le_relaxed(काष्ठा regmap_mmio_context *ctx,
+				  अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक val)
+अणु
+	ग_लिखोl_relaxed(val, ctx->regs + reg);
+पूर्ण
 
-static void regmap_mmio_write32be(struct regmap_mmio_context *ctx,
-				  unsigned int reg,
-				  unsigned int val)
-{
-	iowrite32be(val, ctx->regs + reg);
-}
+अटल व्योम regmap_mmio_ग_लिखो32be(काष्ठा regmap_mmio_context *ctx,
+				  अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक val)
+अणु
+	ioग_लिखो32be(val, ctx->regs + reg);
+पूर्ण
 
-#ifdef CONFIG_64BIT
-static void regmap_mmio_write64le(struct regmap_mmio_context *ctx,
-				  unsigned int reg,
-				  unsigned int val)
-{
-	writeq(val, ctx->regs + reg);
-}
+#अगर_घोषित CONFIG_64BIT
+अटल व्योम regmap_mmio_ग_लिखो64le(काष्ठा regmap_mmio_context *ctx,
+				  अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक val)
+अणु
+	ग_लिखोq(val, ctx->regs + reg);
+पूर्ण
 
-static void regmap_mmio_write64le_relaxed(struct regmap_mmio_context *ctx,
-				  unsigned int reg,
-				  unsigned int val)
-{
-	writeq_relaxed(val, ctx->regs + reg);
-}
-#endif
+अटल व्योम regmap_mmio_ग_लिखो64le_relaxed(काष्ठा regmap_mmio_context *ctx,
+				  अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक val)
+अणु
+	ग_लिखोq_relaxed(val, ctx->regs + reg);
+पूर्ण
+#पूर्ण_अगर
 
-static int regmap_mmio_write(void *context, unsigned int reg, unsigned int val)
-{
-	struct regmap_mmio_context *ctx = context;
-	int ret;
+अटल पूर्णांक regmap_mmio_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा regmap_mmio_context *ctx = context;
+	पूर्णांक ret;
 
-	if (!IS_ERR(ctx->clk)) {
+	अगर (!IS_ERR(ctx->clk)) अणु
 		ret = clk_enable(ctx->clk);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	ctx->reg_write(ctx, reg, val);
+	ctx->reg_ग_लिखो(ctx, reg, val);
 
-	if (!IS_ERR(ctx->clk))
+	अगर (!IS_ERR(ctx->clk))
 		clk_disable(ctx->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int regmap_mmio_read8(struct regmap_mmio_context *ctx,
-				      unsigned int reg)
-{
-	return readb(ctx->regs + reg);
-}
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो8(काष्ठा regmap_mmio_context *ctx,
+				      अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोb(ctx->regs + reg);
+पूर्ण
 
-static unsigned int regmap_mmio_read8_relaxed(struct regmap_mmio_context *ctx,
-				      unsigned int reg)
-{
-	return readb_relaxed(ctx->regs + reg);
-}
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो8_relaxed(काष्ठा regmap_mmio_context *ctx,
+				      अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोb_relaxed(ctx->regs + reg);
+पूर्ण
 
-static unsigned int regmap_mmio_read16le(struct regmap_mmio_context *ctx,
-				         unsigned int reg)
-{
-	return readw(ctx->regs + reg);
-}
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो16le(काष्ठा regmap_mmio_context *ctx,
+				         अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोw(ctx->regs + reg);
+पूर्ण
 
-static unsigned int regmap_mmio_read16le_relaxed(struct regmap_mmio_context *ctx,
-						 unsigned int reg)
-{
-	return readw_relaxed(ctx->regs + reg);
-}
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो16le_relaxed(काष्ठा regmap_mmio_context *ctx,
+						 अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोw_relaxed(ctx->regs + reg);
+पूर्ण
 
-static unsigned int regmap_mmio_read16be(struct regmap_mmio_context *ctx,
-				         unsigned int reg)
-{
-	return ioread16be(ctx->regs + reg);
-}
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो16be(काष्ठा regmap_mmio_context *ctx,
+				         अचिन्हित पूर्णांक reg)
+अणु
+	वापस ioपढ़ो16be(ctx->regs + reg);
+पूर्ण
 
-static unsigned int regmap_mmio_read32le(struct regmap_mmio_context *ctx,
-				         unsigned int reg)
-{
-	return readl(ctx->regs + reg);
-}
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो32le(काष्ठा regmap_mmio_context *ctx,
+				         अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोl(ctx->regs + reg);
+पूर्ण
 
-static unsigned int regmap_mmio_read32le_relaxed(struct regmap_mmio_context *ctx,
-						 unsigned int reg)
-{
-	return readl_relaxed(ctx->regs + reg);
-}
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो32le_relaxed(काष्ठा regmap_mmio_context *ctx,
+						 अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोl_relaxed(ctx->regs + reg);
+पूर्ण
 
-static unsigned int regmap_mmio_read32be(struct regmap_mmio_context *ctx,
-				         unsigned int reg)
-{
-	return ioread32be(ctx->regs + reg);
-}
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो32be(काष्ठा regmap_mmio_context *ctx,
+				         अचिन्हित पूर्णांक reg)
+अणु
+	वापस ioपढ़ो32be(ctx->regs + reg);
+पूर्ण
 
-#ifdef CONFIG_64BIT
-static unsigned int regmap_mmio_read64le(struct regmap_mmio_context *ctx,
-				         unsigned int reg)
-{
-	return readq(ctx->regs + reg);
-}
+#अगर_घोषित CONFIG_64BIT
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो64le(काष्ठा regmap_mmio_context *ctx,
+				         अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोq(ctx->regs + reg);
+पूर्ण
 
-static unsigned int regmap_mmio_read64le_relaxed(struct regmap_mmio_context *ctx,
-						 unsigned int reg)
-{
-	return readq_relaxed(ctx->regs + reg);
-}
-#endif
+अटल अचिन्हित पूर्णांक regmap_mmio_पढ़ो64le_relaxed(काष्ठा regmap_mmio_context *ctx,
+						 अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोq_relaxed(ctx->regs + reg);
+पूर्ण
+#पूर्ण_अगर
 
-static int regmap_mmio_read(void *context, unsigned int reg, unsigned int *val)
-{
-	struct regmap_mmio_context *ctx = context;
-	int ret;
+अटल पूर्णांक regmap_mmio_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा regmap_mmio_context *ctx = context;
+	पूर्णांक ret;
 
-	if (!IS_ERR(ctx->clk)) {
+	अगर (!IS_ERR(ctx->clk)) अणु
 		ret = clk_enable(ctx->clk);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	*val = ctx->reg_read(ctx, reg);
+	*val = ctx->reg_पढ़ो(ctx, reg);
 
-	if (!IS_ERR(ctx->clk))
+	अगर (!IS_ERR(ctx->clk))
 		clk_disable(ctx->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void regmap_mmio_free_context(void *context)
-{
-	struct regmap_mmio_context *ctx = context;
+अटल व्योम regmap_mmio_मुक्त_context(व्योम *context)
+अणु
+	काष्ठा regmap_mmio_context *ctx = context;
 
-	if (!IS_ERR(ctx->clk)) {
+	अगर (!IS_ERR(ctx->clk)) अणु
 		clk_unprepare(ctx->clk);
-		if (!ctx->attached_clk)
+		अगर (!ctx->attached_clk)
 			clk_put(ctx->clk);
-	}
-	kfree(context);
-}
+	पूर्ण
+	kमुक्त(context);
+पूर्ण
 
-static const struct regmap_bus regmap_mmio = {
+अटल स्थिर काष्ठा regmap_bus regmap_mmio = अणु
 	.fast_io = true,
-	.reg_write = regmap_mmio_write,
-	.reg_read = regmap_mmio_read,
-	.free_context = regmap_mmio_free_context,
-	.val_format_endian_default = REGMAP_ENDIAN_LITTLE,
-};
+	.reg_ग_लिखो = regmap_mmio_ग_लिखो,
+	.reg_पढ़ो = regmap_mmio_पढ़ो,
+	.मुक्त_context = regmap_mmio_मुक्त_context,
+	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
+पूर्ण;
 
-static struct regmap_mmio_context *regmap_mmio_gen_context(struct device *dev,
-					const char *clk_id,
-					void __iomem *regs,
-					const struct regmap_config *config)
-{
-	struct regmap_mmio_context *ctx;
-	int min_stride;
-	int ret;
+अटल काष्ठा regmap_mmio_context *regmap_mmio_gen_context(काष्ठा device *dev,
+					स्थिर अक्षर *clk_id,
+					व्योम __iomem *regs,
+					स्थिर काष्ठा regmap_config *config)
+अणु
+	काष्ठा regmap_mmio_context *ctx;
+	पूर्णांक min_stride;
+	पूर्णांक ret;
 
 	ret = regmap_mmio_regbits_check(config->reg_bits);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	if (config->pad_bits)
-		return ERR_PTR(-EINVAL);
+	अगर (config->pad_bits)
+		वापस ERR_PTR(-EINVAL);
 
 	min_stride = regmap_mmio_get_min_stride(config->val_bits);
-	if (min_stride < 0)
-		return ERR_PTR(min_stride);
+	अगर (min_stride < 0)
+		वापस ERR_PTR(min_stride);
 
-	if (config->reg_stride < min_stride)
-		return ERR_PTR(-EINVAL);
+	अगर (config->reg_stride < min_stride)
+		वापस ERR_PTR(-EINVAL);
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return ERR_PTR(-ENOMEM);
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस ERR_PTR(-ENOMEM);
 
 	ctx->regs = regs;
 	ctx->val_bytes = config->val_bits / 8;
 	ctx->relaxed_mmio = config->use_relaxed_mmio;
 	ctx->clk = ERR_PTR(-ENODEV);
 
-	switch (regmap_get_val_endian(dev, &regmap_mmio, config)) {
-	case REGMAP_ENDIAN_DEFAULT:
-	case REGMAP_ENDIAN_LITTLE:
-#ifdef __LITTLE_ENDIAN
-	case REGMAP_ENDIAN_NATIVE:
-#endif
-		switch (config->val_bits) {
-		case 8:
-			if (ctx->relaxed_mmio) {
-				ctx->reg_read = regmap_mmio_read8_relaxed;
-				ctx->reg_write = regmap_mmio_write8_relaxed;
-			} else {
-				ctx->reg_read = regmap_mmio_read8;
-				ctx->reg_write = regmap_mmio_write8;
-			}
-			break;
-		case 16:
-			if (ctx->relaxed_mmio) {
-				ctx->reg_read = regmap_mmio_read16le_relaxed;
-				ctx->reg_write = regmap_mmio_write16le_relaxed;
-			} else {
-				ctx->reg_read = regmap_mmio_read16le;
-				ctx->reg_write = regmap_mmio_write16le;
-			}
-			break;
-		case 32:
-			if (ctx->relaxed_mmio) {
-				ctx->reg_read = regmap_mmio_read32le_relaxed;
-				ctx->reg_write = regmap_mmio_write32le_relaxed;
-			} else {
-				ctx->reg_read = regmap_mmio_read32le;
-				ctx->reg_write = regmap_mmio_write32le;
-			}
-			break;
-#ifdef CONFIG_64BIT
-		case 64:
-			if (ctx->relaxed_mmio) {
-				ctx->reg_read = regmap_mmio_read64le_relaxed;
-				ctx->reg_write = regmap_mmio_write64le_relaxed;
-			} else {
-				ctx->reg_read = regmap_mmio_read64le;
-				ctx->reg_write = regmap_mmio_write64le;
-			}
-			break;
-#endif
-		default:
+	चयन (regmap_get_val_endian(dev, &regmap_mmio, config)) अणु
+	हाल REGMAP_ENDIAN_DEFAULT:
+	हाल REGMAP_ENDIAN_LITTLE:
+#अगर_घोषित __LITTLE_ENDIAN
+	हाल REGMAP_ENDIAN_NATIVE:
+#पूर्ण_अगर
+		चयन (config->val_bits) अणु
+		हाल 8:
+			अगर (ctx->relaxed_mmio) अणु
+				ctx->reg_पढ़ो = regmap_mmio_पढ़ो8_relaxed;
+				ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो8_relaxed;
+			पूर्ण अन्यथा अणु
+				ctx->reg_पढ़ो = regmap_mmio_पढ़ो8;
+				ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो8;
+			पूर्ण
+			अवरोध;
+		हाल 16:
+			अगर (ctx->relaxed_mmio) अणु
+				ctx->reg_पढ़ो = regmap_mmio_पढ़ो16le_relaxed;
+				ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो16le_relaxed;
+			पूर्ण अन्यथा अणु
+				ctx->reg_पढ़ो = regmap_mmio_पढ़ो16le;
+				ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो16le;
+			पूर्ण
+			अवरोध;
+		हाल 32:
+			अगर (ctx->relaxed_mmio) अणु
+				ctx->reg_पढ़ो = regmap_mmio_पढ़ो32le_relaxed;
+				ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो32le_relaxed;
+			पूर्ण अन्यथा अणु
+				ctx->reg_पढ़ो = regmap_mmio_पढ़ो32le;
+				ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो32le;
+			पूर्ण
+			अवरोध;
+#अगर_घोषित CONFIG_64BIT
+		हाल 64:
+			अगर (ctx->relaxed_mmio) अणु
+				ctx->reg_पढ़ो = regmap_mmio_पढ़ो64le_relaxed;
+				ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो64le_relaxed;
+			पूर्ण अन्यथा अणु
+				ctx->reg_पढ़ो = regmap_mmio_पढ़ो64le;
+				ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो64le;
+			पूर्ण
+			अवरोध;
+#पूर्ण_अगर
+		शेष:
 			ret = -EINVAL;
-			goto err_free;
-		}
-		break;
-	case REGMAP_ENDIAN_BIG:
-#ifdef __BIG_ENDIAN
-	case REGMAP_ENDIAN_NATIVE:
-#endif
-		switch (config->val_bits) {
-		case 8:
-			ctx->reg_read = regmap_mmio_read8;
-			ctx->reg_write = regmap_mmio_write8;
-			break;
-		case 16:
-			ctx->reg_read = regmap_mmio_read16be;
-			ctx->reg_write = regmap_mmio_write16be;
-			break;
-		case 32:
-			ctx->reg_read = regmap_mmio_read32be;
-			ctx->reg_write = regmap_mmio_write32be;
-			break;
-		default:
+			जाओ err_मुक्त;
+		पूर्ण
+		अवरोध;
+	हाल REGMAP_ENDIAN_BIG:
+#अगर_घोषित __BIG_ENDIAN
+	हाल REGMAP_ENDIAN_NATIVE:
+#पूर्ण_अगर
+		चयन (config->val_bits) अणु
+		हाल 8:
+			ctx->reg_पढ़ो = regmap_mmio_पढ़ो8;
+			ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो8;
+			अवरोध;
+		हाल 16:
+			ctx->reg_पढ़ो = regmap_mmio_पढ़ो16be;
+			ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो16be;
+			अवरोध;
+		हाल 32:
+			ctx->reg_पढ़ो = regmap_mmio_पढ़ो32be;
+			ctx->reg_ग_लिखो = regmap_mmio_ग_लिखो32be;
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-			goto err_free;
-		}
-		break;
-	default:
+			जाओ err_मुक्त;
+		पूर्ण
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	if (clk_id == NULL)
-		return ctx;
+	अगर (clk_id == शून्य)
+		वापस ctx;
 
 	ctx->clk = clk_get(dev, clk_id);
-	if (IS_ERR(ctx->clk)) {
+	अगर (IS_ERR(ctx->clk)) अणु
 		ret = PTR_ERR(ctx->clk);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	ret = clk_prepare(ctx->clk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		clk_put(ctx->clk);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	return ctx;
+	वापस ctx;
 
-err_free:
-	kfree(ctx);
+err_मुक्त:
+	kमुक्त(ctx);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-struct regmap *__regmap_init_mmio_clk(struct device *dev, const char *clk_id,
-				      void __iomem *regs,
-				      const struct regmap_config *config,
-				      struct lock_class_key *lock_key,
-				      const char *lock_name)
-{
-	struct regmap_mmio_context *ctx;
+काष्ठा regmap *__regmap_init_mmio_clk(काष्ठा device *dev, स्थिर अक्षर *clk_id,
+				      व्योम __iomem *regs,
+				      स्थिर काष्ठा regmap_config *config,
+				      काष्ठा lock_class_key *lock_key,
+				      स्थिर अक्षर *lock_name)
+अणु
+	काष्ठा regmap_mmio_context *ctx;
 
 	ctx = regmap_mmio_gen_context(dev, clk_id, regs, config);
-	if (IS_ERR(ctx))
-		return ERR_CAST(ctx);
+	अगर (IS_ERR(ctx))
+		वापस ERR_CAST(ctx);
 
-	return __regmap_init(dev, &regmap_mmio, ctx, config,
+	वापस __regmap_init(dev, &regmap_mmio, ctx, config,
 			     lock_key, lock_name);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__regmap_init_mmio_clk);
 
-struct regmap *__devm_regmap_init_mmio_clk(struct device *dev,
-					   const char *clk_id,
-					   void __iomem *regs,
-					   const struct regmap_config *config,
-					   struct lock_class_key *lock_key,
-					   const char *lock_name)
-{
-	struct regmap_mmio_context *ctx;
+काष्ठा regmap *__devm_regmap_init_mmio_clk(काष्ठा device *dev,
+					   स्थिर अक्षर *clk_id,
+					   व्योम __iomem *regs,
+					   स्थिर काष्ठा regmap_config *config,
+					   काष्ठा lock_class_key *lock_key,
+					   स्थिर अक्षर *lock_name)
+अणु
+	काष्ठा regmap_mmio_context *ctx;
 
 	ctx = regmap_mmio_gen_context(dev, clk_id, regs, config);
-	if (IS_ERR(ctx))
-		return ERR_CAST(ctx);
+	अगर (IS_ERR(ctx))
+		वापस ERR_CAST(ctx);
 
-	return __devm_regmap_init(dev, &regmap_mmio, ctx, config,
+	वापस __devm_regmap_init(dev, &regmap_mmio, ctx, config,
 				  lock_key, lock_name);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__devm_regmap_init_mmio_clk);
 
-int regmap_mmio_attach_clk(struct regmap *map, struct clk *clk)
-{
-	struct regmap_mmio_context *ctx = map->bus_context;
+पूर्णांक regmap_mmio_attach_clk(काष्ठा regmap *map, काष्ठा clk *clk)
+अणु
+	काष्ठा regmap_mmio_context *ctx = map->bus_context;
 
 	ctx->clk = clk;
 	ctx->attached_clk = true;
 
-	return clk_prepare(ctx->clk);
-}
+	वापस clk_prepare(ctx->clk);
+पूर्ण
 EXPORT_SYMBOL_GPL(regmap_mmio_attach_clk);
 
-void regmap_mmio_detach_clk(struct regmap *map)
-{
-	struct regmap_mmio_context *ctx = map->bus_context;
+व्योम regmap_mmio_detach_clk(काष्ठा regmap *map)
+अणु
+	काष्ठा regmap_mmio_context *ctx = map->bus_context;
 
 	clk_unprepare(ctx->clk);
 
 	ctx->attached_clk = false;
-	ctx->clk = NULL;
-}
+	ctx->clk = शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(regmap_mmio_detach_clk);
 
 MODULE_LICENSE("GPL v2");

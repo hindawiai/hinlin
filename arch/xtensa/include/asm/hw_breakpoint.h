@@ -1,61 +1,62 @@
+<शैली गुरु>
 /*
- * Xtensa hardware breakpoints/watchpoints handling functions
+ * Xtensa hardware अवरोधpoपूर्णांकs/watchpoपूर्णांकs handling functions
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2016 Cadence Design Systems Inc.
  */
 
-#ifndef __ASM_XTENSA_HW_BREAKPOINT_H
-#define __ASM_XTENSA_HW_BREAKPOINT_H
+#अगर_अघोषित __ASM_XTENSA_HW_BREAKPOINT_H
+#घोषणा __ASM_XTENSA_HW_BREAKPOINT_H
 
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
 
-#include <linux/kdebug.h>
-#include <linux/types.h>
-#include <uapi/linux/hw_breakpoint.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/types.h>
+#समावेश <uapi/linux/hw_अवरोधpoपूर्णांक.h>
 
-/* Breakpoint */
-#define XTENSA_BREAKPOINT_EXECUTE	0
+/* Breakpoपूर्णांक */
+#घोषणा XTENSA_BREAKPOINT_EXECUTE	0
 
-/* Watchpoints */
-#define XTENSA_BREAKPOINT_LOAD		1
-#define XTENSA_BREAKPOINT_STORE		2
+/* Watchpoपूर्णांकs */
+#घोषणा XTENSA_BREAKPOINT_LOAD		1
+#घोषणा XTENSA_BREAKPOINT_STORE		2
 
-struct arch_hw_breakpoint {
-	unsigned long address;
+काष्ठा arch_hw_अवरोधpoपूर्णांक अणु
+	अचिन्हित दीर्घ address;
 	u16 len;
 	u16 type;
-};
+पूर्ण;
 
-struct perf_event_attr;
-struct perf_event;
-struct pt_regs;
-struct task_struct;
+काष्ठा perf_event_attr;
+काष्ठा perf_event;
+काष्ठा pt_regs;
+काष्ठा task_काष्ठा;
 
-int hw_breakpoint_slots(int type);
-int arch_check_bp_in_kernelspace(struct arch_hw_breakpoint *hw);
-int hw_breakpoint_arch_parse(struct perf_event *bp,
-			     const struct perf_event_attr *attr,
-			     struct arch_hw_breakpoint *hw);
-int hw_breakpoint_exceptions_notify(struct notifier_block *unused,
-				    unsigned long val, void *data);
+पूर्णांक hw_अवरोधpoपूर्णांक_slots(पूर्णांक type);
+पूर्णांक arch_check_bp_in_kernelspace(काष्ठा arch_hw_अवरोधpoपूर्णांक *hw);
+पूर्णांक hw_अवरोधpoपूर्णांक_arch_parse(काष्ठा perf_event *bp,
+			     स्थिर काष्ठा perf_event_attr *attr,
+			     काष्ठा arch_hw_अवरोधpoपूर्णांक *hw);
+पूर्णांक hw_अवरोधpoपूर्णांक_exceptions_notअगरy(काष्ठा notअगरier_block *unused,
+				    अचिन्हित दीर्घ val, व्योम *data);
 
-int arch_install_hw_breakpoint(struct perf_event *bp);
-void arch_uninstall_hw_breakpoint(struct perf_event *bp);
-void hw_breakpoint_pmu_read(struct perf_event *bp);
-int check_hw_breakpoint(struct pt_regs *regs);
-void clear_ptrace_hw_breakpoint(struct task_struct *tsk);
+पूर्णांक arch_install_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
+व्योम arch_uninstall_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
+व्योम hw_अवरोधpoपूर्णांक_pmu_पढ़ो(काष्ठा perf_event *bp);
+पूर्णांक check_hw_अवरोधpoपूर्णांक(काष्ठा pt_regs *regs);
+व्योम clear_ptrace_hw_अवरोधpoपूर्णांक(काष्ठा task_काष्ठा *tsk);
 
-#else
+#अन्यथा
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-static inline void clear_ptrace_hw_breakpoint(struct task_struct *tsk)
-{
-}
+अटल अंतरभूत व्योम clear_ptrace_hw_अवरोधpoपूर्णांक(काष्ठा task_काष्ठा *tsk)
+अणु
+पूर्ण
 
-#endif /* CONFIG_HAVE_HW_BREAKPOINT */
-#endif /* __ASM_XTENSA_HW_BREAKPOINT_H */
+#पूर्ण_अगर /* CONFIG_HAVE_HW_BREAKPOINT */
+#पूर्ण_अगर /* __ASM_XTENSA_HW_BREAKPOINT_H */

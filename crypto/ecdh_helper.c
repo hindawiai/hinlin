@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2016, Intel Corporation
- * Authors: Salvatore Benedetto <salvatore.benedetto@intel.com>
+ * Authors: Salvatore Benedetto <salvatore.benedetto@पूर्णांकel.com>
  */
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/err.h>
-#include <linux/string.h>
-#include <crypto/ecdh.h>
-#include <crypto/kpp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/err.h>
+#समावेश <linux/माला.स>
+#समावेश <crypto/ecdh.h>
+#समावेश <crypto/kpp.h>
 
-#define ECDH_KPP_SECRET_MIN_SIZE (sizeof(struct kpp_secret) + sizeof(short))
+#घोषणा ECDH_KPP_SECRET_MIN_SIZE (माप(काष्ठा kpp_secret) + माप(लघु))
 
-static inline u8 *ecdh_pack_data(void *dst, const void *src, size_t sz)
-{
-	memcpy(dst, src, sz);
-	return dst + sz;
-}
+अटल अंतरभूत u8 *ecdh_pack_data(व्योम *dst, स्थिर व्योम *src, माप_प्रकार sz)
+अणु
+	स_नकल(dst, src, sz);
+	वापस dst + sz;
+पूर्ण
 
-static inline const u8 *ecdh_unpack_data(void *dst, const void *src, size_t sz)
-{
-	memcpy(dst, src, sz);
-	return src + sz;
-}
+अटल अंतरभूत स्थिर u8 *ecdh_unpack_data(व्योम *dst, स्थिर व्योम *src, माप_प्रकार sz)
+अणु
+	स_नकल(dst, src, sz);
+	वापस src + sz;
+पूर्ण
 
-unsigned int crypto_ecdh_key_len(const struct ecdh *params)
-{
-	return ECDH_KPP_SECRET_MIN_SIZE + params->key_size;
-}
+अचिन्हित पूर्णांक crypto_ecdh_key_len(स्थिर काष्ठा ecdh *params)
+अणु
+	वापस ECDH_KPP_SECRET_MIN_SIZE + params->key_size;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_ecdh_key_len);
 
-int crypto_ecdh_encode_key(char *buf, unsigned int len,
-			   const struct ecdh *params)
-{
+पूर्णांक crypto_ecdh_encode_key(अक्षर *buf, अचिन्हित पूर्णांक len,
+			   स्थिर काष्ठा ecdh *params)
+अणु
 	u8 *ptr = buf;
-	struct kpp_secret secret = {
+	काष्ठा kpp_secret secret = अणु
 		.type = CRYPTO_KPP_SECRET_TYPE_ECDH,
 		.len = len
-	};
+	पूर्ण;
 
-	if (unlikely(!buf))
-		return -EINVAL;
+	अगर (unlikely(!buf))
+		वापस -EINVAL;
 
-	if (len != crypto_ecdh_key_len(params))
-		return -EINVAL;
+	अगर (len != crypto_ecdh_key_len(params))
+		वापस -EINVAL;
 
-	ptr = ecdh_pack_data(ptr, &secret, sizeof(secret));
-	ptr = ecdh_pack_data(ptr, &params->key_size, sizeof(params->key_size));
+	ptr = ecdh_pack_data(ptr, &secret, माप(secret));
+	ptr = ecdh_pack_data(ptr, &params->key_size, माप(params->key_size));
 	ecdh_pack_data(ptr, params->key, params->key_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_ecdh_encode_key);
 
-int crypto_ecdh_decode_key(const char *buf, unsigned int len,
-			   struct ecdh *params)
-{
-	const u8 *ptr = buf;
-	struct kpp_secret secret;
+पूर्णांक crypto_ecdh_decode_key(स्थिर अक्षर *buf, अचिन्हित पूर्णांक len,
+			   काष्ठा ecdh *params)
+अणु
+	स्थिर u8 *ptr = buf;
+	काष्ठा kpp_secret secret;
 
-	if (unlikely(!buf || len < ECDH_KPP_SECRET_MIN_SIZE))
-		return -EINVAL;
+	अगर (unlikely(!buf || len < ECDH_KPP_SECRET_MIN_SIZE))
+		वापस -EINVAL;
 
-	ptr = ecdh_unpack_data(&secret, ptr, sizeof(secret));
-	if (secret.type != CRYPTO_KPP_SECRET_TYPE_ECDH)
-		return -EINVAL;
+	ptr = ecdh_unpack_data(&secret, ptr, माप(secret));
+	अगर (secret.type != CRYPTO_KPP_SECRET_TYPE_ECDH)
+		वापस -EINVAL;
 
-	if (unlikely(len < secret.len))
-		return -EINVAL;
+	अगर (unlikely(len < secret.len))
+		वापस -EINVAL;
 
-	ptr = ecdh_unpack_data(&params->key_size, ptr, sizeof(params->key_size));
-	if (secret.len != crypto_ecdh_key_len(params))
-		return -EINVAL;
+	ptr = ecdh_unpack_data(&params->key_size, ptr, माप(params->key_size));
+	अगर (secret.len != crypto_ecdh_key_len(params))
+		वापस -EINVAL;
 
-	/* Don't allocate memory. Set pointer to data
+	/* Don't allocate memory. Set poपूर्णांकer to data
 	 * within the given buffer
 	 */
-	params->key = (void *)ptr;
+	params->key = (व्योम *)ptr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_ecdh_decode_key);

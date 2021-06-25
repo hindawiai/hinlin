@@ -1,197 +1,198 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2021 MediaTek Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/platform_device.h>
-#include <linux/soc/mediatek/mtk-cmdq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/soc/mediatek/mtk-cmdq.h>
 
-#include "mtk_disp_drv.h"
-#include "mtk_drm_crtc.h"
-#include "mtk_drm_ddp_comp.h"
+#समावेश "mtk_disp_drv.h"
+#समावेश "mtk_drm_crtc.h"
+#समावेश "mtk_drm_ddp_comp.h"
 
-#define DISP_GAMMA_EN				0x0000
-#define GAMMA_EN					BIT(0)
-#define DISP_GAMMA_CFG				0x0020
-#define GAMMA_LUT_EN					BIT(1)
-#define GAMMA_DITHERING					BIT(2)
-#define DISP_GAMMA_SIZE				0x0030
-#define DISP_GAMMA_LUT				0x0700
+#घोषणा DISP_GAMMA_EN				0x0000
+#घोषणा GAMMA_EN					BIT(0)
+#घोषणा DISP_GAMMA_CFG				0x0020
+#घोषणा GAMMA_LUT_EN					BIT(1)
+#घोषणा GAMMA_DITHERING					BIT(2)
+#घोषणा DISP_GAMMA_SIZE				0x0030
+#घोषणा DISP_GAMMA_LUT				0x0700
 
-#define LUT_10BIT_MASK				0x03ff
+#घोषणा LUT_10BIT_MASK				0x03ff
 
-struct mtk_disp_gamma_data {
+काष्ठा mtk_disp_gamma_data अणु
 	bool has_dither;
-};
+पूर्ण;
 
 /**
- * struct mtk_disp_gamma - DISP_GAMMA driver structure
- * @ddp_comp - structure containing type enum and hardware resources
+ * काष्ठा mtk_disp_gamma - DISP_GAMMA driver काष्ठाure
+ * @ddp_comp - काष्ठाure containing type क्रमागत and hardware resources
  * @crtc - associated crtc to report irq events to
  */
-struct mtk_disp_gamma {
-	struct clk *clk;
-	void __iomem *regs;
-	struct cmdq_client_reg cmdq_reg;
-	const struct mtk_disp_gamma_data *data;
-};
+काष्ठा mtk_disp_gamma अणु
+	काष्ठा clk *clk;
+	व्योम __iomem *regs;
+	काष्ठा cmdq_client_reg cmdq_reg;
+	स्थिर काष्ठा mtk_disp_gamma_data *data;
+पूर्ण;
 
-int mtk_gamma_clk_enable(struct device *dev)
-{
-	struct mtk_disp_gamma *gamma = dev_get_drvdata(dev);
+पूर्णांक mtk_gamma_clk_enable(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_disp_gamma *gamma = dev_get_drvdata(dev);
 
-	return clk_prepare_enable(gamma->clk);
-}
+	वापस clk_prepare_enable(gamma->clk);
+पूर्ण
 
-void mtk_gamma_clk_disable(struct device *dev)
-{
-	struct mtk_disp_gamma *gamma = dev_get_drvdata(dev);
+व्योम mtk_gamma_clk_disable(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_disp_gamma *gamma = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(gamma->clk);
-}
+पूर्ण
 
-void mtk_gamma_set_common(void __iomem *regs, struct drm_crtc_state *state)
-{
-	unsigned int i, reg;
-	struct drm_color_lut *lut;
-	void __iomem *lut_base;
+व्योम mtk_gamma_set_common(व्योम __iomem *regs, काष्ठा drm_crtc_state *state)
+अणु
+	अचिन्हित पूर्णांक i, reg;
+	काष्ठा drm_color_lut *lut;
+	व्योम __iomem *lut_base;
 	u32 word;
 
-	if (state->gamma_lut) {
-		reg = readl(regs + DISP_GAMMA_CFG);
+	अगर (state->gamma_lut) अणु
+		reg = पढ़ोl(regs + DISP_GAMMA_CFG);
 		reg = reg | GAMMA_LUT_EN;
-		writel(reg, regs + DISP_GAMMA_CFG);
+		ग_लिखोl(reg, regs + DISP_GAMMA_CFG);
 		lut_base = regs + DISP_GAMMA_LUT;
-		lut = (struct drm_color_lut *)state->gamma_lut->data;
-		for (i = 0; i < MTK_LUT_SIZE; i++) {
+		lut = (काष्ठा drm_color_lut *)state->gamma_lut->data;
+		क्रम (i = 0; i < MTK_LUT_SIZE; i++) अणु
 			word = (((lut[i].red >> 6) & LUT_10BIT_MASK) << 20) +
 				(((lut[i].green >> 6) & LUT_10BIT_MASK) << 10) +
 				((lut[i].blue >> 6) & LUT_10BIT_MASK);
-			writel(word, (lut_base + i * 4));
-		}
-	}
-}
+			ग_लिखोl(word, (lut_base + i * 4));
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void mtk_gamma_set(struct device *dev, struct drm_crtc_state *state)
-{
-	struct mtk_disp_gamma *gamma = dev_get_drvdata(dev);
+व्योम mtk_gamma_set(काष्ठा device *dev, काष्ठा drm_crtc_state *state)
+अणु
+	काष्ठा mtk_disp_gamma *gamma = dev_get_drvdata(dev);
 
 	mtk_gamma_set_common(gamma->regs, state);
-}
+पूर्ण
 
-void mtk_gamma_config(struct device *dev, unsigned int w,
-		      unsigned int h, unsigned int vrefresh,
-		      unsigned int bpc, struct cmdq_pkt *cmdq_pkt)
-{
-	struct mtk_disp_gamma *gamma = dev_get_drvdata(dev);
+व्योम mtk_gamma_config(काष्ठा device *dev, अचिन्हित पूर्णांक w,
+		      अचिन्हित पूर्णांक h, अचिन्हित पूर्णांक vrefresh,
+		      अचिन्हित पूर्णांक bpc, काष्ठा cmdq_pkt *cmdq_pkt)
+अणु
+	काष्ठा mtk_disp_gamma *gamma = dev_get_drvdata(dev);
 
-	mtk_ddp_write(cmdq_pkt, h << 16 | w, &gamma->cmdq_reg, gamma->regs,
+	mtk_ddp_ग_लिखो(cmdq_pkt, h << 16 | w, &gamma->cmdq_reg, gamma->regs,
 		      DISP_GAMMA_SIZE);
-	if (gamma->data && gamma->data->has_dither)
+	अगर (gamma->data && gamma->data->has_dither)
 		mtk_dither_set_common(gamma->regs, &gamma->cmdq_reg, bpc,
 				      DISP_GAMMA_CFG, GAMMA_DITHERING, cmdq_pkt);
-}
+पूर्ण
 
-void mtk_gamma_start(struct device *dev)
-{
-	struct mtk_disp_gamma *gamma = dev_get_drvdata(dev);
+व्योम mtk_gamma_start(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_disp_gamma *gamma = dev_get_drvdata(dev);
 
-	writel(GAMMA_EN, gamma->regs + DISP_GAMMA_EN);
-}
+	ग_लिखोl(GAMMA_EN, gamma->regs + DISP_GAMMA_EN);
+पूर्ण
 
-void mtk_gamma_stop(struct device *dev)
-{
-	struct mtk_disp_gamma *gamma = dev_get_drvdata(dev);
+व्योम mtk_gamma_stop(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_disp_gamma *gamma = dev_get_drvdata(dev);
 
-	writel_relaxed(0x0, gamma->regs + DISP_GAMMA_EN);
-}
+	ग_लिखोl_relaxed(0x0, gamma->regs + DISP_GAMMA_EN);
+पूर्ण
 
-static int mtk_disp_gamma_bind(struct device *dev, struct device *master,
-			       void *data)
-{
-	return 0;
-}
+अटल पूर्णांक mtk_disp_gamma_bind(काष्ठा device *dev, काष्ठा device *master,
+			       व्योम *data)
+अणु
+	वापस 0;
+पूर्ण
 
-static void mtk_disp_gamma_unbind(struct device *dev, struct device *master,
-				  void *data)
-{
-}
+अटल व्योम mtk_disp_gamma_unbind(काष्ठा device *dev, काष्ठा device *master,
+				  व्योम *data)
+अणु
+पूर्ण
 
-static const struct component_ops mtk_disp_gamma_component_ops = {
+अटल स्थिर काष्ठा component_ops mtk_disp_gamma_component_ops = अणु
 	.bind	= mtk_disp_gamma_bind,
 	.unbind = mtk_disp_gamma_unbind,
-};
+पूर्ण;
 
-static int mtk_disp_gamma_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct mtk_disp_gamma *priv;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक mtk_disp_gamma_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा mtk_disp_gamma *priv;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	priv->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->clk)) {
+	priv->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(priv->clk)) अणु
 		dev_err(dev, "failed to get gamma clk\n");
-		return PTR_ERR(priv->clk);
-	}
+		वापस PTR_ERR(priv->clk);
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->regs = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->regs)) {
+	अगर (IS_ERR(priv->regs)) अणु
 		dev_err(dev, "failed to ioremap gamma\n");
-		return PTR_ERR(priv->regs);
-	}
+		वापस PTR_ERR(priv->regs);
+	पूर्ण
 
-#if IS_REACHABLE(CONFIG_MTK_CMDQ)
+#अगर IS_REACHABLE(CONFIG_MTK_CMDQ)
 	ret = cmdq_dev_get_client_reg(dev, &priv->cmdq_reg, 0);
-	if (ret)
+	अगर (ret)
 		dev_dbg(dev, "get mediatek,gce-client-reg fail!\n");
-#endif
+#पूर्ण_अगर
 
 	priv->data = of_device_get_match_data(dev);
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	ret = component_add(dev, &mtk_disp_gamma_component_ops);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "Failed to add component: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_disp_gamma_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक mtk_disp_gamma_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_del(&pdev->dev, &mtk_disp_gamma_component_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtk_disp_gamma_data mt8173_gamma_driver_data = {
+अटल स्थिर काष्ठा mtk_disp_gamma_data mt8173_gamma_driver_data = अणु
 	.has_dither = true,
-};
+पूर्ण;
 
-static const struct of_device_id mtk_disp_gamma_driver_dt_match[] = {
-	{ .compatible = "mediatek,mt8173-disp-gamma",
-	  .data = &mt8173_gamma_driver_data},
-	{ .compatible = "mediatek,mt8183-disp-gamma"},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id mtk_disp_gamma_driver_dt_match[] = अणु
+	अणु .compatible = "mediatek,mt8173-disp-gamma",
+	  .data = &mt8173_gamma_driver_dataपूर्ण,
+	अणु .compatible = "mediatek,mt8183-disp-gamma"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_disp_gamma_driver_dt_match);
 
-struct platform_driver mtk_disp_gamma_driver = {
+काष्ठा platक्रमm_driver mtk_disp_gamma_driver = अणु
 	.probe		= mtk_disp_gamma_probe,
-	.remove		= mtk_disp_gamma_remove,
-	.driver		= {
+	.हटाओ		= mtk_disp_gamma_हटाओ,
+	.driver		= अणु
 		.name	= "mediatek-disp-gamma",
 		.owner	= THIS_MODULE,
 		.of_match_table = mtk_disp_gamma_driver_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;

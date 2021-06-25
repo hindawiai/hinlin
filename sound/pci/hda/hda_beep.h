@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Digital Beep Input Interface for HD-audio codec
+ * Digital Beep Input Interface क्रम HD-audio codec
  *
  * Author: Matt Ranostay <matt.ranostay@konsulko.com>
  * Copyright (c) 2008 Embedded Alley Solutions Inc
  */
 
-#ifndef __SOUND_HDA_BEEP_H
-#define __SOUND_HDA_BEEP_H
+#अगर_अघोषित __SOUND_HDA_BEEP_H
+#घोषणा __SOUND_HDA_BEEP_H
 
-#include <sound/hda_codec.h>
+#समावेश <sound/hda_codec.h>
 
-#define HDA_BEEP_MODE_OFF	0
-#define HDA_BEEP_MODE_ON	1
+#घोषणा HDA_BEEP_MODE_OFF	0
+#घोषणा HDA_BEEP_MODE_ON	1
 
-/* beep information */
-struct hda_beep {
-	struct input_dev *dev;
-	struct hda_codec *codec;
-	char phys[32];
-	int tone;
+/* beep inक्रमmation */
+काष्ठा hda_beep अणु
+	काष्ठा input_dev *dev;
+	काष्ठा hda_codec *codec;
+	अक्षर phys[32];
+	पूर्णांक tone;
 	hda_nid_t nid;
-	unsigned int registered:1;
-	unsigned int enabled:1;
-	unsigned int linear_tone:1;	/* linear tone for IDT/STAC codec */
-	unsigned int playing:1;
-	struct work_struct beep_work; /* scheduled task for beep event */
-	struct mutex mutex;
-	void (*power_hook)(struct hda_beep *beep, bool on);
-};
+	अचिन्हित पूर्णांक रेजिस्टरed:1;
+	अचिन्हित पूर्णांक enabled:1;
+	अचिन्हित पूर्णांक linear_tone:1;	/* linear tone क्रम IDT/STAC codec */
+	अचिन्हित पूर्णांक playing:1;
+	काष्ठा work_काष्ठा beep_work; /* scheduled task क्रम beep event */
+	काष्ठा mutex mutex;
+	व्योम (*घातer_hook)(काष्ठा hda_beep *beep, bool on);
+पूर्ण;
 
-#ifdef CONFIG_SND_HDA_INPUT_BEEP
-int snd_hda_enable_beep_device(struct hda_codec *codec, int enable);
-int snd_hda_attach_beep_device(struct hda_codec *codec, int nid);
-void snd_hda_detach_beep_device(struct hda_codec *codec);
-#else
-static inline int snd_hda_attach_beep_device(struct hda_codec *codec, int nid)
-{
-	return 0;
-}
-static inline void snd_hda_detach_beep_device(struct hda_codec *codec)
-{
-}
-#endif
-#endif
+#अगर_घोषित CONFIG_SND_HDA_INPUT_BEEP
+पूर्णांक snd_hda_enable_beep_device(काष्ठा hda_codec *codec, पूर्णांक enable);
+पूर्णांक snd_hda_attach_beep_device(काष्ठा hda_codec *codec, पूर्णांक nid);
+व्योम snd_hda_detach_beep_device(काष्ठा hda_codec *codec);
+#अन्यथा
+अटल अंतरभूत पूर्णांक snd_hda_attach_beep_device(काष्ठा hda_codec *codec, पूर्णांक nid)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम snd_hda_detach_beep_device(काष्ठा hda_codec *codec)
+अणु
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

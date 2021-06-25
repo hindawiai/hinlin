@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2017-18 Linaro Limited
 
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/reboot-mode.h>
-#include <linux/regmap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/reboot-mode.h>
+#समावेश <linux/regmap.h>
 
-#define PON_SOFT_RB_SPARE		0x8f
+#घोषणा PON_SOFT_RB_SPARE		0x8f
 
-#define GEN1_REASON_SHIFT		2
-#define GEN2_REASON_SHIFT		1
+#घोषणा GEN1_REASON_SHIFT		2
+#घोषणा GEN2_REASON_SHIFT		1
 
-struct pm8916_pon {
-	struct device *dev;
-	struct regmap *regmap;
+काष्ठा pm8916_pon अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
 	u32 baseaddr;
-	struct reboot_mode_driver reboot_mode;
-	long reason_shift;
-};
+	काष्ठा reboot_mode_driver reboot_mode;
+	दीर्घ reason_shअगरt;
+पूर्ण;
 
-static int pm8916_reboot_mode_write(struct reboot_mode_driver *reboot,
-				    unsigned int magic)
-{
-	struct pm8916_pon *pon = container_of
-			(reboot, struct pm8916_pon, reboot_mode);
-	int ret;
+अटल पूर्णांक pm8916_reboot_mode_ग_लिखो(काष्ठा reboot_mode_driver *reboot,
+				    अचिन्हित पूर्णांक magic)
+अणु
+	काष्ठा pm8916_pon *pon = container_of
+			(reboot, काष्ठा pm8916_pon, reboot_mode);
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(pon->regmap,
 				 pon->baseaddr + PON_SOFT_RB_SPARE,
-				 GENMASK(7, pon->reason_shift),
-				 magic << pon->reason_shift);
-	if (ret < 0)
+				 GENMASK(7, pon->reason_shअगरt),
+				 magic << pon->reason_shअगरt);
+	अगर (ret < 0)
 		dev_err(pon->dev, "update reboot mode bits failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pm8916_pon_probe(struct platform_device *pdev)
-{
-	struct pm8916_pon *pon;
-	int error;
+अटल पूर्णांक pm8916_pon_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pm8916_pon *pon;
+	पूर्णांक error;
 
-	pon = devm_kzalloc(&pdev->dev, sizeof(*pon), GFP_KERNEL);
-	if (!pon)
-		return -ENOMEM;
+	pon = devm_kzalloc(&pdev->dev, माप(*pon), GFP_KERNEL);
+	अगर (!pon)
+		वापस -ENOMEM;
 
 	pon->dev = &pdev->dev;
 
-	pon->regmap = dev_get_regmap(pdev->dev.parent, NULL);
-	if (!pon->regmap) {
+	pon->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
+	अगर (!pon->regmap) अणु
 		dev_err(&pdev->dev, "failed to locate regmap\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	error = of_property_read_u32(pdev->dev.of_node, "reg",
+	error = of_property_पढ़ो_u32(pdev->dev.of_node, "reg",
 				     &pon->baseaddr);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	pon->reboot_mode.dev = &pdev->dev;
-	pon->reason_shift = (long)of_device_get_match_data(&pdev->dev);
-	pon->reboot_mode.write = pm8916_reboot_mode_write;
-	error = devm_reboot_mode_register(&pdev->dev, &pon->reboot_mode);
-	if (error) {
+	pon->reason_shअगरt = (दीर्घ)of_device_get_match_data(&pdev->dev);
+	pon->reboot_mode.ग_लिखो = pm8916_reboot_mode_ग_लिखो;
+	error = devm_reboot_mode_रेजिस्टर(&pdev->dev, &pon->reboot_mode);
+	अगर (error) अणु
 		dev_err(&pdev->dev, "can't register reboot mode\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	platform_set_drvdata(pdev, pon);
+	platक्रमm_set_drvdata(pdev, pon);
 
-	return devm_of_platform_populate(&pdev->dev);
-}
+	वापस devm_of_platक्रमm_populate(&pdev->dev);
+पूर्ण
 
-static const struct of_device_id pm8916_pon_id_table[] = {
-	{ .compatible = "qcom,pm8916-pon", .data = (void *)GEN1_REASON_SHIFT },
-	{ .compatible = "qcom,pms405-pon", .data = (void *)GEN1_REASON_SHIFT },
-	{ .compatible = "qcom,pm8998-pon", .data = (void *)GEN2_REASON_SHIFT },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id pm8916_pon_id_table[] = अणु
+	अणु .compatible = "qcom,pm8916-pon", .data = (व्योम *)GEN1_REASON_SHIFT पूर्ण,
+	अणु .compatible = "qcom,pms405-pon", .data = (व्योम *)GEN1_REASON_SHIFT पूर्ण,
+	अणु .compatible = "qcom,pm8998-pon", .data = (व्योम *)GEN2_REASON_SHIFT पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pm8916_pon_id_table);
 
-static struct platform_driver pm8916_pon_driver = {
+अटल काष्ठा platक्रमm_driver pm8916_pon_driver = अणु
 	.probe = pm8916_pon_probe,
-	.driver = {
+	.driver = अणु
 		.name = "pm8916-pon",
 		.of_match_table = of_match_ptr(pm8916_pon_id_table),
-	},
-};
-module_platform_driver(pm8916_pon_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(pm8916_pon_driver);
 
 MODULE_DESCRIPTION("pm8916 Power On driver");
 MODULE_LICENSE("GPL v2");

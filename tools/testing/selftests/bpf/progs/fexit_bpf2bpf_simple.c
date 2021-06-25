@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019 Facebook */
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-struct sk_buff {
-	unsigned int len;
-};
+काष्ठा sk_buff अणु
+	अचिन्हित पूर्णांक len;
+पूर्ण;
 
 __u64 test_result = 0;
 
 SEC("fexit/test_pkt_md_access")
-int BPF_PROG(test_main2, struct sk_buff *skb, int ret)
-{
-	int len;
+पूर्णांक BPF_PROG(test_मुख्य2, काष्ठा sk_buff *skb, पूर्णांक ret)
+अणु
+	पूर्णांक len;
 
-	__builtin_preserve_access_index(({
+	__builtin_preserve_access_index((अणु
 		len = skb->len;
-	}));
-	if (len != 74 || ret != 0)
-		return 0;
+	पूर्ण));
+	अगर (len != 74 || ret != 0)
+		वापस 0;
 
 	test_result = 1;
-	return 0;
-}
-char _license[] SEC("license") = "GPL";
+	वापस 0;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";

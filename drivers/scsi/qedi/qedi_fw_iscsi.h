@@ -1,114 +1,115 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * QLogic iSCSI Offload Driver
  * Copyright (c) 2016 Cavium Inc.
  */
 
-#ifndef _QEDI_FW_ISCSI_H_
-#define _QEDI_FW_ISCSI_H_
+#अगर_अघोषित _QEDI_FW_ISCSI_H_
+#घोषणा _QEDI_FW_ISCSI_H_
 
-#include "qedi_fw_scsi.h"
+#समावेश "qedi_fw_scsi.h"
 
-struct iscsi_task_params {
-	struct e4_iscsi_task_context *context;
-	struct iscsi_wqe	  *sqe;
+काष्ठा iscsi_task_params अणु
+	काष्ठा e4_iscsi_task_context *context;
+	काष्ठा iscsi_wqe	  *sqe;
 	u32			  tx_io_size;
 	u32			  rx_io_size;
 	u16			  conn_icid;
 	u16			  itid;
 	u8			  cq_rss_number;
-};
+पूर्ण;
 
-struct iscsi_conn_params {
+काष्ठा iscsi_conn_params अणु
 	u32	first_burst_length;
 	u32	max_send_pdu_length;
 	u32	max_burst_length;
 	bool	initial_r2t;
 	bool	immediate_data;
-};
+पूर्ण;
 
-/* @brief init_initiator_read_iscsi_task - initializes iSCSI Initiator Read
+/* @brief init_initiator_पढ़ो_iscsi_task - initializes iSCSI Initiator Read
  * task context.
  *
- * @param task_params	  - Pointer to task parameters struct
+ * @param task_params	  - Poपूर्णांकer to task parameters काष्ठा
  * @param conn_params	  - Connection Parameters
- * @param cmd_params	  - command specific parameters
+ * @param cmd_params	  - command specअगरic parameters
  * @param cmd_pdu_header  - PDU Header Parameters
- * @param sgl_task_params - Pointer to SGL task params
- * @param dif_task_params - Pointer to DIF parameters struct
+ * @param sgl_task_params - Poपूर्णांकer to SGL task params
+ * @param dअगर_task_params - Poपूर्णांकer to DIF parameters काष्ठा
  */
-int init_initiator_rw_iscsi_task(struct iscsi_task_params *task_params,
-				 struct iscsi_conn_params *conn_params,
-				 struct scsi_initiator_cmd_params *cmd_params,
-				 struct iscsi_cmd_hdr *cmd_pdu_header,
-				 struct scsi_sgl_task_params *tx_sgl_params,
-				 struct scsi_sgl_task_params *rx_sgl_params,
-				 struct scsi_dif_task_params *dif_task_params);
+पूर्णांक init_initiator_rw_iscsi_task(काष्ठा iscsi_task_params *task_params,
+				 काष्ठा iscsi_conn_params *conn_params,
+				 काष्ठा scsi_initiator_cmd_params *cmd_params,
+				 काष्ठा iscsi_cmd_hdr *cmd_pdu_header,
+				 काष्ठा scsi_sgl_task_params *tx_sgl_params,
+				 काष्ठा scsi_sgl_task_params *rx_sgl_params,
+				 काष्ठा scsi_dअगर_task_params *dअगर_task_params);
 
 /* @brief init_initiator_login_request_task - initializes iSCSI Initiator Login
  * Request task context.
  *
- * @param task_params		  - Pointer to task parameters struct
+ * @param task_params		  - Poपूर्णांकer to task parameters काष्ठा
  * @param login_req_pdu_header    - PDU Header Parameters
- * @param tx_sgl_task_params	  - Pointer to SGL task params
- * @param rx_sgl_task_params	  - Pointer to SGL task params
+ * @param tx_sgl_task_params	  - Poपूर्णांकer to SGL task params
+ * @param rx_sgl_task_params	  - Poपूर्णांकer to SGL task params
  */
-int init_initiator_login_request_task(struct iscsi_task_params *task_params,
-				      struct iscsi_login_req_hdr *login_header,
-				      struct scsi_sgl_task_params *tx_params,
-				      struct scsi_sgl_task_params *rx_params);
+पूर्णांक init_initiator_login_request_task(काष्ठा iscsi_task_params *task_params,
+				      काष्ठा iscsi_login_req_hdr *login_header,
+				      काष्ठा scsi_sgl_task_params *tx_params,
+				      काष्ठा scsi_sgl_task_params *rx_params);
 
 /* @brief init_initiator_nop_out_task - initializes iSCSI Initiator NOP Out
  * task context.
  *
- * @param task_params		- Pointer to task parameters struct
+ * @param task_params		- Poपूर्णांकer to task parameters काष्ठा
  * @param nop_out_pdu_header    - PDU Header Parameters
- * @param tx_sgl_task_params	- Pointer to SGL task params
- * @param rx_sgl_task_params	- Pointer to SGL task params
+ * @param tx_sgl_task_params	- Poपूर्णांकer to SGL task params
+ * @param rx_sgl_task_params	- Poपूर्णांकer to SGL task params
  */
-int init_initiator_nop_out_task(struct iscsi_task_params *task_params,
-				struct iscsi_nop_out_hdr *nop_out_pdu_header,
-				struct scsi_sgl_task_params *tx_sgl_params,
-				struct scsi_sgl_task_params *rx_sgl_params);
+पूर्णांक init_initiator_nop_out_task(काष्ठा iscsi_task_params *task_params,
+				काष्ठा iscsi_nop_out_hdr *nop_out_pdu_header,
+				काष्ठा scsi_sgl_task_params *tx_sgl_params,
+				काष्ठा scsi_sgl_task_params *rx_sgl_params);
 
 /* @brief init_initiator_logout_request_task - initializes iSCSI Initiator
  * Logout Request task context.
  *
- * @param task_params		- Pointer to task parameters struct
+ * @param task_params		- Poपूर्णांकer to task parameters काष्ठा
  * @param logout_pdu_header  - PDU Header Parameters
- * @param tx_sgl_task_params	- Pointer to SGL task params
- * @param rx_sgl_task_params	- Pointer to SGL task params
+ * @param tx_sgl_task_params	- Poपूर्णांकer to SGL task params
+ * @param rx_sgl_task_params	- Poपूर्णांकer to SGL task params
  */
-int init_initiator_logout_request_task(struct iscsi_task_params *task_params,
-				       struct iscsi_logout_req_hdr *logout_hdr,
-				       struct scsi_sgl_task_params *tx_params,
-				       struct scsi_sgl_task_params *rx_params);
+पूर्णांक init_initiator_logout_request_task(काष्ठा iscsi_task_params *task_params,
+				       काष्ठा iscsi_logout_req_hdr *logout_hdr,
+				       काष्ठा scsi_sgl_task_params *tx_params,
+				       काष्ठा scsi_sgl_task_params *rx_params);
 
-/* @brief init_initiator_tmf_request_task - initializes iSCSI Initiator TMF
+/* @brief init_initiator_पंचांगf_request_task - initializes iSCSI Initiator TMF
  * task context.
  *
- * @param task_params	- Pointer to task parameters struct
- * @param tmf_pdu_header - PDU Header Parameters
+ * @param task_params	- Poपूर्णांकer to task parameters काष्ठा
+ * @param पंचांगf_pdu_header - PDU Header Parameters
  */
-int init_initiator_tmf_request_task(struct iscsi_task_params *task_params,
-				    struct iscsi_tmf_request_hdr *tmf_header);
+पूर्णांक init_initiator_पंचांगf_request_task(काष्ठा iscsi_task_params *task_params,
+				    काष्ठा iscsi_पंचांगf_request_hdr *पंचांगf_header);
 
 /* @brief init_initiator_text_request_task - initializes iSCSI Initiator Text
  * Request task context.
  *
- * @param task_params		     - Pointer to task parameters struct
+ * @param task_params		     - Poपूर्णांकer to task parameters काष्ठा
  * @param text_request_pdu_header    - PDU Header Parameters
- * @param tx_sgl_task_params	     - Pointer to Tx SGL task params
- * @param rx_sgl_task_params	     - Pointer to Rx SGL task params
+ * @param tx_sgl_task_params	     - Poपूर्णांकer to Tx SGL task params
+ * @param rx_sgl_task_params	     - Poपूर्णांकer to Rx SGL task params
  */
-int init_initiator_text_request_task(struct iscsi_task_params *task_params,
-				     struct iscsi_text_request_hdr *text_header,
-				     struct scsi_sgl_task_params *tx_params,
-				     struct scsi_sgl_task_params *rx_params);
+पूर्णांक init_initiator_text_request_task(काष्ठा iscsi_task_params *task_params,
+				     काष्ठा iscsi_text_request_hdr *text_header,
+				     काष्ठा scsi_sgl_task_params *tx_params,
+				     काष्ठा scsi_sgl_task_params *rx_params);
 
 /* @brief init_cleanup_task - initializes Clean task (SQE)
  *
- * @param task_params - Pointer to task parameters struct
+ * @param task_params - Poपूर्णांकer to task parameters काष्ठा
  */
-int init_cleanup_task(struct iscsi_task_params *task_params);
-#endif
+पूर्णांक init_cleanup_task(काष्ठा iscsi_task_params *task_params);
+#पूर्ण_अगर

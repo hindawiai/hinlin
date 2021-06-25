@@ -1,74 +1,75 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_MACH_LOONGSON64_CPUCFG_EMUL_H_
-#define _ASM_MACH_LOONGSON64_CPUCFG_EMUL_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_MACH_LOONGSON64_CPUCFG_EMUL_H_
+#घोषणा _ASM_MACH_LOONGSON64_CPUCFG_EMUL_H_
 
-#include <asm/cpu-info.h>
+#समावेश <यंत्र/cpu-info.h>
 
-#ifdef CONFIG_CPU_LOONGSON3_CPUCFG_EMULATION
+#अगर_घोषित CONFIG_CPU_LOONGSON3_CPUCFG_EMULATION
 
-#include <loongson_regs.h>
+#समावेश <loongson_regs.h>
 
-#define LOONGSON_FPREV_MASK 0x7
+#घोषणा LOONGSON_FPREV_MASK 0x7
 
-void loongson3_cpucfg_synthesize_data(struct cpuinfo_mips *c);
+व्योम loongson3_cpucfg_synthesize_data(काष्ठा cpuinfo_mips *c);
 
-static inline bool loongson3_cpucfg_emulation_enabled(struct cpuinfo_mips *c)
-{
+अटल अंतरभूत bool loongson3_cpucfg_emulation_enabled(काष्ठा cpuinfo_mips *c)
+अणु
 	/* All supported cores have non-zero LOONGSON_CFG1 data. */
-	return c->loongson3_cpucfg_data[0] != 0;
-}
+	वापस c->loongson3_cpucfg_data[0] != 0;
+पूर्ण
 
-static inline u32 loongson3_cpucfg_read_synthesized(struct cpuinfo_mips *c,
+अटल अंतरभूत u32 loongson3_cpucfg_पढ़ो_synthesized(काष्ठा cpuinfo_mips *c,
 	__u64 sel)
-{
-	switch (sel) {
-	case LOONGSON_CFG0:
-		return c->processor_id;
-	case LOONGSON_CFG1:
-	case LOONGSON_CFG2:
-	case LOONGSON_CFG3:
-		return c->loongson3_cpucfg_data[sel - 1];
-	case LOONGSON_CFG4:
-	case LOONGSON_CFG5:
-		/* CPUCFG selects 4 and 5 are related to the input clock
-		 * signal.
+अणु
+	चयन (sel) अणु
+	हाल LOONGSON_CFG0:
+		वापस c->processor_id;
+	हाल LOONGSON_CFG1:
+	हाल LOONGSON_CFG2:
+	हाल LOONGSON_CFG3:
+		वापस c->loongson3_cpucfg_data[sel - 1];
+	हाल LOONGSON_CFG4:
+	हाल LOONGSON_CFG5:
+		/* CPUCFG selects 4 and 5 are related to the input घड़ी
+		 * संकेत.
 		 *
-		 * Unimplemented for now.
+		 * Unimplemented क्रम now.
 		 */
-		return 0;
-	case LOONGSON_CFG6:
-		/* CPUCFG select 6 is for the undocumented Safe Extension. */
-		return 0;
-	case LOONGSON_CFG7:
-		/* CPUCFG select 7 is for the virtualization extension.
-		 * We don't know if the two currently known features are
-		 * supported on older cores according to the public
-		 * documentation, so leave this at zero.
+		वापस 0;
+	हाल LOONGSON_CFG6:
+		/* CPUCFG select 6 is क्रम the unकरोcumented Safe Extension. */
+		वापस 0;
+	हाल LOONGSON_CFG7:
+		/* CPUCFG select 7 is क्रम the भवization extension.
+		 * We करोn't know अगर the two currently known features are
+		 * supported on older cores according to the खुला
+		 * करोcumentation, so leave this at zero.
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Return 0 for unrecognized CPUCFG selects, which is real hardware
+	 * Return 0 क्रम unrecognized CPUCFG selects, which is real hardware
 	 * behavior observed on Loongson 3A R4.
 	 */
-	return 0;
-}
-#else
-static inline void loongson3_cpucfg_synthesize_data(struct cpuinfo_mips *c)
-{
-}
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम loongson3_cpucfg_synthesize_data(काष्ठा cpuinfo_mips *c)
+अणु
+पूर्ण
 
-static inline bool loongson3_cpucfg_emulation_enabled(struct cpuinfo_mips *c)
-{
-	return false;
-}
+अटल अंतरभूत bool loongson3_cpucfg_emulation_enabled(काष्ठा cpuinfo_mips *c)
+अणु
+	वापस false;
+पूर्ण
 
-static inline u32 loongson3_cpucfg_read_synthesized(struct cpuinfo_mips *c,
+अटल अंतरभूत u32 loongson3_cpucfg_पढ़ो_synthesized(काष्ठा cpuinfo_mips *c,
 	__u64 sel)
-{
-	return 0;
-}
-#endif
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_MACH_LOONGSON64_CPUCFG_EMUL_H_ */
+#पूर्ण_अगर /* _ASM_MACH_LOONGSON64_CPUCFG_EMUL_H_ */

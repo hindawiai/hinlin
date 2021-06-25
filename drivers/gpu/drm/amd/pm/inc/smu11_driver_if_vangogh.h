@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,61 +21,61 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __SMU11_DRIVER_IF_VANGOGH_H__
-#define __SMU11_DRIVER_IF_VANGOGH_H__
+#अगर_अघोषित __SMU11_DRIVER_IF_VANGOGH_H__
+#घोषणा __SMU11_DRIVER_IF_VANGOGH_H__
 
 // *** IMPORTANT ***
-// SMU TEAM: Always increment the interface version if
-// any structure is changed in this file
-#define SMU13_DRIVER_IF_VERSION 3
+// SMU TEAM: Always increment the पूर्णांकerface version अगर
+// any काष्ठाure is changed in this file
+#घोषणा SMU13_DRIVER_IF_VERSION 3
 
-typedef struct {
-  int32_t value;
-  uint32_t numFractionalBits;
-} FloatInIntFormat_t;
+प्रकार काष्ठा अणु
+  पूर्णांक32_t value;
+  uपूर्णांक32_t numFractionalBits;
+पूर्ण FloatInIntFormat_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
   DSPCLK_DCFCLK = 0,
   DSPCLK_DISPCLK,
   DSPCLK_PIXCLK,
   DSPCLK_PHYCLK,
   DSPCLK_COUNT,
-} DSPCLK_e;
+पूर्ण DSPCLK_e;
 
-typedef struct {
-  uint16_t Freq; // in MHz
-  uint16_t Vid;  // min voltage in SVI2 VID
-} DisplayClockTable_t;
+प्रकार काष्ठा अणु
+  uपूर्णांक16_t Freq; // in MHz
+  uपूर्णांक16_t Vid;  // min voltage in SVI2 VID
+पूर्ण DisplayClockTable_t;
 
-typedef struct {
-  uint16_t MinClock; // This is either DCFCLK or SOCCLK (in MHz)
-  uint16_t MaxClock; // This is either DCFCLK or SOCCLK (in MHz)
-  uint16_t MinMclk;
-  uint16_t MaxMclk;
+प्रकार काष्ठा अणु
+  uपूर्णांक16_t MinClock; // This is either DCFCLK or SOCCLK (in MHz)
+  uपूर्णांक16_t MaxClock; // This is either DCFCLK or SOCCLK (in MHz)
+  uपूर्णांक16_t MinMclk;
+  uपूर्णांक16_t MaxMclk;
 
-  uint8_t  WmSetting;
-  uint8_t  WmType;  // Used for normal pstate change or memory retraining
-  uint8_t  Padding[2];
-} WatermarkRowGeneric_t;
+  uपूर्णांक8_t  WmSetting;
+  uपूर्णांक8_t  WmType;  // Used क्रम normal pstate change or memory retraining
+  uपूर्णांक8_t  Padding[2];
+पूर्ण WatermarkRowGeneric_t;
 
-#define NUM_WM_RANGES 4
-#define WM_PSTATE_CHG 0
-#define WM_RETRAINING 1
+#घोषणा NUM_WM_RANGES 4
+#घोषणा WM_PSTATE_CHG 0
+#घोषणा WM_RETRAINING 1
 
-typedef enum {
+प्रकार क्रमागत अणु
   WM_SOCCLK = 0,
   WM_DCFCLK,
   WM_COUNT,
-} WM_CLOCK_e;
+पूर्ण WM_CLOCK_e;
 
-typedef struct {
+प्रकार काष्ठा अणु
   // Watermarks
   WatermarkRowGeneric_t WatermarkRow[WM_COUNT][NUM_WM_RANGES];
 
-  uint32_t     MmHubPadding[7]; // SMU internal use
-} Watermarks_t;
+  uपूर्णांक32_t     MmHubPadding[7]; // SMU पूर्णांकernal use
+पूर्ण Watermarks_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
   CUSTOM_DPM_SETTING_GFXCLK,
   CUSTOM_DPM_SETTING_CCLK,
   CUSTOM_DPM_SETTING_FCLK_CCX,
@@ -82,201 +83,201 @@ typedef enum {
   CUSTOM_DPM_SETTING_FCLK_STALLS,
   CUSTOM_DPM_SETTING_LCLK,
   CUSTOM_DPM_SETTING_COUNT,
-} CUSTOM_DPM_SETTING_e;
+पूर्ण CUSTOM_DPM_SETTING_e;
 
-typedef struct {
-  uint8_t             ActiveHystLimit;
-  uint8_t             IdleHystLimit;
-  uint8_t             FPS;
-  uint8_t             MinActiveFreqType;
+प्रकार काष्ठा अणु
+  uपूर्णांक8_t             ActiveHystLimit;
+  uपूर्णांक8_t             IdleHystLimit;
+  uपूर्णांक8_t             FPS;
+  uपूर्णांक8_t             MinActiveFreqType;
   FloatInIntFormat_t  MinActiveFreq;
   FloatInIntFormat_t  PD_Data_limit;
-  FloatInIntFormat_t  PD_Data_time_constant;
+  FloatInIntFormat_t  PD_Data_समय_स्थिरant;
   FloatInIntFormat_t  PD_Data_error_coeff;
   FloatInIntFormat_t  PD_Data_error_rate_coeff;
-} DpmActivityMonitorCoeffExt_t;
+पूर्ण DpmActivityMonitorCoeffExt_t;
 
-typedef struct {
+प्रकार काष्ठा अणु
   DpmActivityMonitorCoeffExt_t DpmActivityMonitorCoeff[CUSTOM_DPM_SETTING_COUNT];
-} CustomDpmSettings_t;
+पूर्ण CustomDpmSettings_t;
 
-#define NUM_DCFCLK_DPM_LEVELS 7
-#define NUM_DISPCLK_DPM_LEVELS 7
-#define NUM_DPPCLK_DPM_LEVELS 7
-#define NUM_SOCCLK_DPM_LEVELS 7
-#define NUM_ISPICLK_DPM_LEVELS 7
-#define NUM_ISPXCLK_DPM_LEVELS 7
-#define NUM_VCN_DPM_LEVELS 5
-#define NUM_FCLK_DPM_LEVELS 4
-#define NUM_SOC_VOLTAGE_LEVELS 8
+#घोषणा NUM_DCFCLK_DPM_LEVELS 7
+#घोषणा NUM_DISPCLK_DPM_LEVELS 7
+#घोषणा NUM_DPPCLK_DPM_LEVELS 7
+#घोषणा NUM_SOCCLK_DPM_LEVELS 7
+#घोषणा NUM_ISPICLK_DPM_LEVELS 7
+#घोषणा NUM_ISPXCLK_DPM_LEVELS 7
+#घोषणा NUM_VCN_DPM_LEVELS 5
+#घोषणा NUM_FCLK_DPM_LEVELS 4
+#घोषणा NUM_SOC_VOLTAGE_LEVELS 8
 
-typedef struct {
-  uint32_t fclk;
-  uint32_t memclk;
-  uint32_t voltage;
-} df_pstate_t;
+प्रकार काष्ठा अणु
+  uपूर्णांक32_t fclk;
+  uपूर्णांक32_t memclk;
+  uपूर्णांक32_t voltage;
+पूर्ण df_pstate_t;
 
-typedef struct {
-  uint32_t vclk;
-  uint32_t dclk;
-} vcn_clk_t;
+प्रकार काष्ठा अणु
+  uपूर्णांक32_t vclk;
+  uपूर्णांक32_t dclk;
+पूर्ण vcn_clk_t;
 
 //Freq in MHz
 //Voltage in milli volts with 2 fractional bits
 
-typedef struct {
-  uint32_t DcfClocks[NUM_DCFCLK_DPM_LEVELS];
-  uint32_t DispClocks[NUM_DISPCLK_DPM_LEVELS];
-  uint32_t DppClocks[NUM_DPPCLK_DPM_LEVELS];
-  uint32_t SocClocks[NUM_SOCCLK_DPM_LEVELS];
-  uint32_t IspiClocks[NUM_ISPICLK_DPM_LEVELS];
-  uint32_t IspxClocks[NUM_ISPXCLK_DPM_LEVELS];
+प्रकार काष्ठा अणु
+  uपूर्णांक32_t DcfClocks[NUM_DCFCLK_DPM_LEVELS];
+  uपूर्णांक32_t DispClocks[NUM_DISPCLK_DPM_LEVELS];
+  uपूर्णांक32_t DppClocks[NUM_DPPCLK_DPM_LEVELS];
+  uपूर्णांक32_t SocClocks[NUM_SOCCLK_DPM_LEVELS];
+  uपूर्णांक32_t IspiClocks[NUM_ISPICLK_DPM_LEVELS];
+  uपूर्णांक32_t IspxClocks[NUM_ISPXCLK_DPM_LEVELS];
   vcn_clk_t VcnClocks[NUM_VCN_DPM_LEVELS];
 
-  uint32_t SocVoltage[NUM_SOC_VOLTAGE_LEVELS];
+  uपूर्णांक32_t SocVoltage[NUM_SOC_VOLTAGE_LEVELS];
 
   df_pstate_t DfPstateTable[NUM_FCLK_DPM_LEVELS];
 
-  uint32_t MinGfxClk;
-  uint32_t MaxGfxClk;
+  uपूर्णांक32_t MinGfxClk;
+  uपूर्णांक32_t MaxGfxClk;
 
-  uint8_t NumDfPstatesEnabled;
-  uint8_t NumDcfclkLevelsEnabled;
-  uint8_t NumDispClkLevelsEnabled;  //applies to both dispclk and dppclk
-  uint8_t NumSocClkLevelsEnabled;
+  uपूर्णांक8_t NumDfPstatesEnabled;
+  uपूर्णांक8_t NumDcfclkLevelsEnabled;
+  uपूर्णांक8_t NumDispClkLevelsEnabled;  //applies to both dispclk and dppclk
+  uपूर्णांक8_t NumSocClkLevelsEnabled;
 
-  uint8_t IspClkLevelsEnabled;  //applies to both ispiclk and ispxclk
-  uint8_t VcnClkLevelsEnabled;  //applies to both vclk/dclk
-  uint8_t spare[2];
-} DpmClocks_t;
+  uपूर्णांक8_t IspClkLevelsEnabled;  //applies to both ispiclk and ispxclk
+  uपूर्णांक8_t VcnClkLevelsEnabled;  //applies to both vclk/dclk
+  uपूर्णांक8_t spare[2];
+पूर्ण DpmClocks_t;
 
 
-// Throttler Status Bitmask
-#define THROTTLER_STATUS_BIT_SPL 0
-#define THROTTLER_STATUS_BIT_FPPT 1
-#define THROTTLER_STATUS_BIT_SPPT 2
-#define THROTTLER_STATUS_BIT_SPPT_APU 3
-#define THROTTLER_STATUS_BIT_THM_CORE 4
-#define THROTTLER_STATUS_BIT_THM_GFX 5
-#define THROTTLER_STATUS_BIT_THM_SOC 6
-#define THROTTLER_STATUS_BIT_TDC_VDD 7
-#define THROTTLER_STATUS_BIT_TDC_SOC 8
-#define THROTTLER_STATUS_BIT_TDC_GFX 9
-#define THROTTLER_STATUS_BIT_TDC_CVIP 10
+// Throttler Status Biपंचांगask
+#घोषणा THROTTLER_STATUS_BIT_SPL 0
+#घोषणा THROTTLER_STATUS_BIT_FPPT 1
+#घोषणा THROTTLER_STATUS_BIT_SPPT 2
+#घोषणा THROTTLER_STATUS_BIT_SPPT_APU 3
+#घोषणा THROTTLER_STATUS_BIT_THM_CORE 4
+#घोषणा THROTTLER_STATUS_BIT_THM_GFX 5
+#घोषणा THROTTLER_STATUS_BIT_THM_SOC 6
+#घोषणा THROTTLER_STATUS_BIT_TDC_VDD 7
+#घोषणा THROTTLER_STATUS_BIT_TDC_SOC 8
+#घोषणा THROTTLER_STATUS_BIT_TDC_GFX 9
+#घोषणा THROTTLER_STATUS_BIT_TDC_CVIP 10
 
-typedef struct {
-  uint16_t GfxclkFrequency;      //[MHz]
-  uint16_t SocclkFrequency;      //[MHz]
-  uint16_t VclkFrequency;        //[MHz]
-  uint16_t DclkFrequency;        //[MHz]
-  uint16_t MemclkFrequency;      //[MHz]
-  uint16_t spare;
+प्रकार काष्ठा अणु
+  uपूर्णांक16_t GfxclkFrequency;      //[MHz]
+  uपूर्णांक16_t SocclkFrequency;      //[MHz]
+  uपूर्णांक16_t VclkFrequency;        //[MHz]
+  uपूर्णांक16_t DclkFrequency;        //[MHz]
+  uपूर्णांक16_t MemclkFrequency;      //[MHz]
+  uपूर्णांक16_t spare;
 
-  uint16_t GfxActivity;          //[centi]
-  uint16_t UvdActivity;          //[centi]
+  uपूर्णांक16_t GfxActivity;          //[centi]
+  uपूर्णांक16_t UvdActivity;          //[centi]
 
-  uint16_t Voltage[3];           //[mV] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
-  uint16_t Current[3];           //[mA] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
-  uint16_t Power[3];             //[mW] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
-  uint16_t CurrentSocketPower;   //[mW]
+  uपूर्णांक16_t Voltage[3];           //[mV] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
+  uपूर्णांक16_t Current[3];           //[mA] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
+  uपूर्णांक16_t Power[3];             //[mW] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
+  uपूर्णांक16_t CurrentSocketPower;   //[mW]
 
-  //3rd party tools in Windows need info in the case of APUs
-  uint16_t CoreFrequency[8];     //[MHz]
-  uint16_t CorePower[8];         //[mW]
-  uint16_t CoreTemperature[8];   //[centi-Celsius]
-  uint16_t L3Frequency[2];       //[MHz]
-  uint16_t L3Temperature[2];     //[centi-Celsius]
+  //3rd party tools in Winकरोws need info in the हाल of APUs
+  uपूर्णांक16_t CoreFrequency[8];     //[MHz]
+  uपूर्णांक16_t CorePower[8];         //[mW]
+  uपूर्णांक16_t CoreTemperature[8];   //[centi-Celsius]
+  uपूर्णांक16_t L3Frequency[2];       //[MHz]
+  uपूर्णांक16_t L3Temperature[2];     //[centi-Celsius]
 
-  uint16_t GfxTemperature;       //[centi-Celsius]
-  uint16_t SocTemperature;       //[centi-Celsius]
-  uint16_t EdgeTemperature;
-  uint16_t ThrottlerStatus;
-} SmuMetrics_legacy_t;
+  uपूर्णांक16_t GfxTemperature;       //[centi-Celsius]
+  uपूर्णांक16_t SocTemperature;       //[centi-Celsius]
+  uपूर्णांक16_t EdgeTemperature;
+  uपूर्णांक16_t ThrottlerStatus;
+पूर्ण SmuMetrics_legacy_t;
 
-typedef struct {
-  uint16_t GfxclkFrequency;      //[MHz]
-  uint16_t SocclkFrequency;      //[MHz]
-  uint16_t VclkFrequency;        //[MHz]
-  uint16_t DclkFrequency;        //[MHz]
-  uint16_t MemclkFrequency;      //[MHz]
-  uint16_t spare;
+प्रकार काष्ठा अणु
+  uपूर्णांक16_t GfxclkFrequency;      //[MHz]
+  uपूर्णांक16_t SocclkFrequency;      //[MHz]
+  uपूर्णांक16_t VclkFrequency;        //[MHz]
+  uपूर्णांक16_t DclkFrequency;        //[MHz]
+  uपूर्णांक16_t MemclkFrequency;      //[MHz]
+  uपूर्णांक16_t spare;
 
-  uint16_t GfxActivity;          //[centi]
-  uint16_t UvdActivity;          //[centi]
-  uint16_t C0Residency[4];       //percentage
+  uपूर्णांक16_t GfxActivity;          //[centi]
+  uपूर्णांक16_t UvdActivity;          //[centi]
+  uपूर्णांक16_t C0Residency[4];       //percentage
 
-  uint16_t Voltage[3];           //[mV] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
-  uint16_t Current[3];           //[mA] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
-  uint16_t Power[3];             //[mW] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
-  uint16_t CurrentSocketPower;   //[mW]
+  uपूर्णांक16_t Voltage[3];           //[mV] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
+  uपूर्णांक16_t Current[3];           //[mA] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
+  uपूर्णांक16_t Power[3];             //[mW] indices: VDDCR_VDD, VDDCR_SOC, VDDCR_GFX
+  uपूर्णांक16_t CurrentSocketPower;   //[mW]
 
-  //3rd party tools in Windows need info in the case of APUs
-  uint16_t CoreFrequency[4];     //[MHz]
-  uint16_t CorePower[4];         //[mW]
-  uint16_t CoreTemperature[4];   //[centi-Celsius]
-  uint16_t L3Frequency[1];       //[MHz]
-  uint16_t L3Temperature[1];     //[centi-Celsius]
+  //3rd party tools in Winकरोws need info in the हाल of APUs
+  uपूर्णांक16_t CoreFrequency[4];     //[MHz]
+  uपूर्णांक16_t CorePower[4];         //[mW]
+  uपूर्णांक16_t CoreTemperature[4];   //[centi-Celsius]
+  uपूर्णांक16_t L3Frequency[1];       //[MHz]
+  uपूर्णांक16_t L3Temperature[1];     //[centi-Celsius]
 
-  uint16_t GfxTemperature;       //[centi-Celsius]
-  uint16_t SocTemperature;       //[centi-Celsius]
-  uint16_t EdgeTemperature;
-  uint16_t ThrottlerStatus;
-} SmuMetricsTable_t;
+  uपूर्णांक16_t GfxTemperature;       //[centi-Celsius]
+  uपूर्णांक16_t SocTemperature;       //[centi-Celsius]
+  uपूर्णांक16_t EdgeTemperature;
+  uपूर्णांक16_t ThrottlerStatus;
+पूर्ण SmuMetricsTable_t;
 
-typedef struct {
+प्रकार काष्ठा अणु
   SmuMetricsTable_t Current;
   SmuMetricsTable_t Average;
-  //uint32_t AccCnt;
-  uint32_t SampleStartTime;
-  uint32_t SampleStopTime;
-} SmuMetrics_t;
+  //uपूर्णांक32_t AccCnt;
+  uपूर्णांक32_t SampleStartTime;
+  uपूर्णांक32_t SampleStopTime;
+पूर्ण SmuMetrics_t;
 
 
 // Workload bits
-#define WORKLOAD_PPLIB_FULL_SCREEN_3D_BIT 0
-#define WORKLOAD_PPLIB_VIDEO_BIT 2
-#define WORKLOAD_PPLIB_VR_BIT 3
-#define WORKLOAD_PPLIB_COMPUTE_BIT 4
-#define WORKLOAD_PPLIB_CUSTOM_BIT 5
-#define WORKLOAD_PPLIB_COUNT 6
+#घोषणा WORKLOAD_PPLIB_FULL_SCREEN_3D_BIT 0
+#घोषणा WORKLOAD_PPLIB_VIDEO_BIT 2
+#घोषणा WORKLOAD_PPLIB_VR_BIT 3
+#घोषणा WORKLOAD_PPLIB_COMPUTE_BIT 4
+#घोषणा WORKLOAD_PPLIB_CUSTOM_BIT 5
+#घोषणा WORKLOAD_PPLIB_COUNT 6
 
-#define TABLE_BIOS_IF            0 // Called by BIOS
-#define TABLE_WATERMARKS         1 // Called by DAL through VBIOS
-#define TABLE_CUSTOM_DPM         2 // Called by Driver
-#define TABLE_SPARE1             3
-#define TABLE_DPMCLOCKS          4 // Called by Driver
-#define TABLE_SPARE2             5 // Called by Tools
-#define TABLE_MODERN_STDBY       6 // Called by Tools for Modern Standby Log
-#define TABLE_SMU_METRICS        7 // Called by Driver
-#define TABLE_COUNT              8
+#घोषणा TABLE_BIOS_IF            0 // Called by BIOS
+#घोषणा TABLE_WATERMARKS         1 // Called by DAL through VBIOS
+#घोषणा TABLE_CUSTOM_DPM         2 // Called by Driver
+#घोषणा TABLE_SPARE1             3
+#घोषणा TABLE_DPMCLOCKS          4 // Called by Driver
+#घोषणा TABLE_SPARE2             5 // Called by Tools
+#घोषणा TABLE_MODERN_STDBY       6 // Called by Tools क्रम Modern Standby Log
+#घोषणा TABLE_SMU_METRICS        7 // Called by Driver
+#घोषणा TABLE_COUNT              8
 
 //ISP tile definitions
-typedef enum {
+प्रकार क्रमागत अणु
   TILE_ISPX = 0, // ISPX
   TILE_ISPM,     // ISPM
   TILE_ISPC,  // ISPCORE
   TILE_ISPPRE,   // ISPPRE
   TILE_ISPPOST,  // ISPPOST
   TILE_MAX
-} TILE_NUM_e;
+पूर्ण TILE_NUM_e;
 
 // Tile Selection (Based on arguments)
-#define TILE_SEL_ISPX       (1<<(TILE_ISPX))
-#define TILE_SEL_ISPM       (1<<(TILE_ISPM))
-#define TILE_SEL_ISPC       (1<<(TILE_ISPC))
-#define TILE_SEL_ISPPRE     (1<<(TILE_ISPPRE))
-#define TILE_SEL_ISPPOST    (1<<(TILE_ISPPOST))
+#घोषणा TILE_SEL_ISPX       (1<<(TILE_ISPX))
+#घोषणा TILE_SEL_ISPM       (1<<(TILE_ISPM))
+#घोषणा TILE_SEL_ISPC       (1<<(TILE_ISPC))
+#घोषणा TILE_SEL_ISPPRE     (1<<(TILE_ISPPRE))
+#घोषणा TILE_SEL_ISPPOST    (1<<(TILE_ISPPOST))
 
-// Mask for ISP tiles in PGFSM PWR Status Registers
+// Mask क्रम ISP tiles in PGFSM PWR Status Registers
 //Bit[1:0] maps to ISPX, (ISPX)
 //Bit[3:2] maps to ISPM, (ISPM)
 //Bit[5:4] maps to ISPCORE, (ISPCORE)
 //Bit[7:6] maps to ISPPRE, (ISPPRE)
 //Bit[9:8] maps to POST, (ISPPOST
-#define TILE_ISPX_MASK      ((1<<0) | (1<<1))
-#define TILE_ISPM_MASK      ((1<<2) | (1<<3))
-#define TILE_ISPC_MASK      ((1<<4) | (1<<5))
-#define TILE_ISPPRE_MASK    ((1<<6) | (1<<7))
-#define TILE_ISPPOST_MASK   ((1<<8) | (1<<9))
+#घोषणा TILE_ISPX_MASK      ((1<<0) | (1<<1))
+#घोषणा TILE_ISPM_MASK      ((1<<2) | (1<<3))
+#घोषणा TILE_ISPC_MASK      ((1<<4) | (1<<5))
+#घोषणा TILE_ISPPRE_MASK    ((1<<6) | (1<<7))
+#घोषणा TILE_ISPPOST_MASK   ((1<<8) | (1<<9))
 
-#endif
+#पूर्ण_अगर

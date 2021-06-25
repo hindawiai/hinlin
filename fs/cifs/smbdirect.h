@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *   Copyright (C) 2017, Microsoft Corporation.
  *
- *   Author(s): Long Li <longli@microsoft.com>
+ *   Author(s): Long Li <दीर्घli@microsoft.com>
  */
-#ifndef _SMBDIRECT_H
-#define _SMBDIRECT_H
+#अगर_अघोषित _SMBसूचीECT_H
+#घोषणा _SMBसूचीECT_H
 
-#ifdef CONFIG_CIFS_SMB_DIRECT
-#define cifs_rdma_enabled(server)	((server)->rdma)
+#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
+#घोषणा cअगरs_rdma_enabled(server)	((server)->rdma)
 
-#include "cifsglob.h"
-#include <rdma/ib_verbs.h>
-#include <rdma/rdma_cm.h>
-#include <linux/mempool.h>
+#समावेश "cifsglob.h"
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/rdma_cm.h>
+#समावेश <linux/mempool.h>
 
-extern int rdma_readwrite_threshold;
-extern int smbd_max_frmr_depth;
-extern int smbd_keep_alive_interval;
-extern int smbd_max_receive_size;
-extern int smbd_max_fragmented_recv_size;
-extern int smbd_max_send_size;
-extern int smbd_send_credit_target;
-extern int smbd_receive_credit_max;
+बाह्य पूर्णांक rdma_पढ़ोग_लिखो_threshold;
+बाह्य पूर्णांक smbd_max_frmr_depth;
+बाह्य पूर्णांक smbd_keep_alive_पूर्णांकerval;
+बाह्य पूर्णांक smbd_max_receive_size;
+बाह्य पूर्णांक smbd_max_fragmented_recv_size;
+बाह्य पूर्णांक smbd_max_send_size;
+बाह्य पूर्णांक smbd_send_credit_target;
+बाह्य पूर्णांक smbd_receive_credit_max;
 
-enum keep_alive_status {
+क्रमागत keep_alive_status अणु
 	KEEP_ALIVE_NONE,
 	KEEP_ALIVE_PENDING,
 	KEEP_ALIVE_SENT,
-};
+पूर्ण;
 
-enum smbd_connection_status {
+क्रमागत smbd_connection_status अणु
 	SMBD_CREATED,
 	SMBD_CONNECTING,
 	SMBD_CONNECTED,
@@ -38,149 +39,149 @@ enum smbd_connection_status {
 	SMBD_DISCONNECTING,
 	SMBD_DISCONNECTED,
 	SMBD_DESTROYED
-};
+पूर्ण;
 
 /*
- * The context for the SMBDirect transport
+ * The context क्रम the SMBDirect transport
  * Everything related to the transport is here. It has several logical parts
- * 1. RDMA related structures
+ * 1. RDMA related काष्ठाures
  * 2. SMBDirect connection parameters
  * 3. Memory registrations
- * 4. Receive and reassembly queues for data receive path
- * 5. mempools for allocating packets
+ * 4. Receive and reassembly queues क्रम data receive path
+ * 5. mempools क्रम allocating packets
  */
-struct smbd_connection {
-	enum smbd_connection_status transport_status;
+काष्ठा smbd_connection अणु
+	क्रमागत smbd_connection_status transport_status;
 
 	/* RDMA related */
-	struct rdma_cm_id *id;
-	struct ib_qp_init_attr qp_attr;
-	struct ib_pd *pd;
-	struct ib_cq *send_cq, *recv_cq;
-	struct ib_device_attr dev_attr;
-	int ri_rc;
-	struct completion ri_done;
-	wait_queue_head_t conn_wait;
-	wait_queue_head_t disconn_wait;
+	काष्ठा rdma_cm_id *id;
+	काष्ठा ib_qp_init_attr qp_attr;
+	काष्ठा ib_pd *pd;
+	काष्ठा ib_cq *send_cq, *recv_cq;
+	काष्ठा ib_device_attr dev_attr;
+	पूर्णांक ri_rc;
+	काष्ठा completion ri_करोne;
+	रुको_queue_head_t conn_रुको;
+	रुको_queue_head_t disconn_रुको;
 
-	struct completion negotiate_completion;
-	bool negotiate_done;
+	काष्ठा completion negotiate_completion;
+	bool negotiate_करोne;
 
-	struct work_struct disconnect_work;
-	struct work_struct post_send_credits_work;
+	काष्ठा work_काष्ठा disconnect_work;
+	काष्ठा work_काष्ठा post_send_credits_work;
 
 	spinlock_t lock_new_credits_offered;
-	int new_credits_offered;
+	पूर्णांक new_credits_offered;
 
 	/* Connection parameters defined in [MS-SMBD] 3.1.1.1 */
-	int receive_credit_max;
-	int send_credit_target;
-	int max_send_size;
-	int max_fragmented_recv_size;
-	int max_fragmented_send_size;
-	int max_receive_size;
-	int keep_alive_interval;
-	int max_readwrite_size;
-	enum keep_alive_status keep_alive_requested;
-	int protocol;
+	पूर्णांक receive_credit_max;
+	पूर्णांक send_credit_target;
+	पूर्णांक max_send_size;
+	पूर्णांक max_fragmented_recv_size;
+	पूर्णांक max_fragmented_send_size;
+	पूर्णांक max_receive_size;
+	पूर्णांक keep_alive_पूर्णांकerval;
+	पूर्णांक max_पढ़ोग_लिखो_size;
+	क्रमागत keep_alive_status keep_alive_requested;
+	पूर्णांक protocol;
 	atomic_t send_credits;
 	atomic_t receive_credits;
-	int receive_credit_target;
-	int fragment_reassembly_remaining;
+	पूर्णांक receive_credit_target;
+	पूर्णांक fragment_reassembly_reमुख्यing;
 
 	/* Memory registrations */
-	/* Maximum number of RDMA read/write outstanding on this connection */
-	int responder_resources;
-	/* Maximum number of SGEs in a RDMA write/read */
-	int max_frmr_depth;
+	/* Maximum number of RDMA पढ़ो/ग_लिखो outstanding on this connection */
+	पूर्णांक responder_resources;
+	/* Maximum number of SGEs in a RDMA ग_लिखो/पढ़ो */
+	पूर्णांक max_frmr_depth;
 	/*
 	 * If payload is less than or equal to the threshold,
 	 * use RDMA send/recv to send upper layer I/O.
 	 * If payload is more than the threshold,
-	 * use RDMA read/write through memory registration for I/O.
+	 * use RDMA पढ़ो/ग_लिखो through memory registration क्रम I/O.
 	 */
-	int rdma_readwrite_threshold;
-	enum ib_mr_type mr_type;
-	struct list_head mr_list;
+	पूर्णांक rdma_पढ़ोग_लिखो_threshold;
+	क्रमागत ib_mr_type mr_type;
+	काष्ठा list_head mr_list;
 	spinlock_t mr_list_lock;
-	/* The number of available MRs ready for memory registration */
-	atomic_t mr_ready_count;
+	/* The number of available MRs पढ़ोy क्रम memory registration */
+	atomic_t mr_पढ़ोy_count;
 	atomic_t mr_used_count;
-	wait_queue_head_t wait_mr;
-	struct work_struct mr_recovery_work;
-	/* Used by transport to wait until all MRs are returned */
-	wait_queue_head_t wait_for_mr_cleanup;
+	रुको_queue_head_t रुको_mr;
+	काष्ठा work_काष्ठा mr_recovery_work;
+	/* Used by transport to रुको until all MRs are वापसed */
+	रुको_queue_head_t रुको_क्रम_mr_cleanup;
 
 	/* Activity accoutning */
 	atomic_t send_pending;
-	wait_queue_head_t wait_send_pending;
-	wait_queue_head_t wait_post_send;
+	रुको_queue_head_t रुको_send_pending;
+	रुको_queue_head_t रुको_post_send;
 
 	/* Receive queue */
-	struct list_head receive_queue;
-	int count_receive_queue;
+	काष्ठा list_head receive_queue;
+	पूर्णांक count_receive_queue;
 	spinlock_t receive_queue_lock;
 
-	struct list_head empty_packet_queue;
-	int count_empty_packet_queue;
+	काष्ठा list_head empty_packet_queue;
+	पूर्णांक count_empty_packet_queue;
 	spinlock_t empty_packet_queue_lock;
 
-	wait_queue_head_t wait_receive_queues;
+	रुको_queue_head_t रुको_receive_queues;
 
 	/* Reassembly queue */
-	struct list_head reassembly_queue;
+	काष्ठा list_head reassembly_queue;
 	spinlock_t reassembly_queue_lock;
-	wait_queue_head_t wait_reassembly_queue;
+	रुको_queue_head_t रुको_reassembly_queue;
 
 	/* total data length of reassembly queue */
-	int reassembly_data_length;
-	int reassembly_queue_length;
+	पूर्णांक reassembly_data_length;
+	पूर्णांक reassembly_queue_length;
 	/* the offset to first buffer in reassembly queue */
-	int first_entry_offset;
+	पूर्णांक first_entry_offset;
 
 	bool send_immediate;
 
-	wait_queue_head_t wait_send_queue;
+	रुको_queue_head_t रुको_send_queue;
 
 	/*
-	 * Indicate if we have received a full packet on the connection
-	 * This is used to identify the first SMBD packet of a assembled
-	 * payload (SMB packet) in reassembly queue so we can return a
+	 * Indicate अगर we have received a full packet on the connection
+	 * This is used to identअगरy the first SMBD packet of a assembled
+	 * payload (SMB packet) in reassembly queue so we can वापस a
 	 * RFC1002 length to upper layer to indicate the length of the SMB
 	 * packet received
 	 */
 	bool full_packet_received;
 
-	struct workqueue_struct *workqueue;
-	struct delayed_work idle_timer_work;
+	काष्ठा workqueue_काष्ठा *workqueue;
+	काष्ठा delayed_work idle_समयr_work;
 
-	/* Memory pool for preallocating buffers */
-	/* request pool for RDMA send */
-	struct kmem_cache *request_cache;
+	/* Memory pool क्रम pपुनः_स्मृतिating buffers */
+	/* request pool क्रम RDMA send */
+	काष्ठा kmem_cache *request_cache;
 	mempool_t *request_mempool;
 
-	/* response pool for RDMA receive */
-	struct kmem_cache *response_cache;
+	/* response pool क्रम RDMA receive */
+	काष्ठा kmem_cache *response_cache;
 	mempool_t *response_mempool;
 
-	/* for debug purposes */
-	unsigned int count_get_receive_buffer;
-	unsigned int count_put_receive_buffer;
-	unsigned int count_reassembly_queue;
-	unsigned int count_enqueue_reassembly_queue;
-	unsigned int count_dequeue_reassembly_queue;
-	unsigned int count_send_empty;
-};
+	/* क्रम debug purposes */
+	अचिन्हित पूर्णांक count_get_receive_buffer;
+	अचिन्हित पूर्णांक count_put_receive_buffer;
+	अचिन्हित पूर्णांक count_reassembly_queue;
+	अचिन्हित पूर्णांक count_enqueue_reassembly_queue;
+	अचिन्हित पूर्णांक count_dequeue_reassembly_queue;
+	अचिन्हित पूर्णांक count_send_empty;
+पूर्ण;
 
-enum smbd_message_type {
+क्रमागत smbd_message_type अणु
 	SMBD_NEGOTIATE_RESP,
 	SMBD_TRANSFER_DATA,
-};
+पूर्ण;
 
-#define SMB_DIRECT_RESPONSE_REQUESTED 0x0001
+#घोषणा SMB_सूचीECT_RESPONSE_REQUESTED 0x0001
 
 /* SMBD negotiation request packet [MS-SMBD] 2.2.1 */
-struct smbd_negotiate_req {
+काष्ठा smbd_negotiate_req अणु
 	__le16 min_version;
 	__le16 max_version;
 	__le16 reserved;
@@ -188,10 +189,10 @@ struct smbd_negotiate_req {
 	__le32 preferred_send_size;
 	__le32 max_receive_size;
 	__le32 max_fragmented_size;
-} __packed;
+पूर्ण __packed;
 
 /* SMBD negotiation response packet [MS-SMBD] 2.2.2 */
-struct smbd_negotiate_resp {
+काष्ठा smbd_negotiate_resp अणु
 	__le16 min_version;
 	__le16 max_version;
 	__le16 negotiated_version;
@@ -199,118 +200,118 @@ struct smbd_negotiate_resp {
 	__le16 credits_requested;
 	__le16 credits_granted;
 	__le32 status;
-	__le32 max_readwrite_size;
+	__le32 max_पढ़ोग_लिखो_size;
 	__le32 preferred_send_size;
 	__le32 max_receive_size;
 	__le32 max_fragmented_size;
-} __packed;
+पूर्ण __packed;
 
 /* SMBD data transfer packet with payload [MS-SMBD] 2.2.3 */
-struct smbd_data_transfer {
+काष्ठा smbd_data_transfer अणु
 	__le16 credits_requested;
 	__le16 credits_granted;
 	__le16 flags;
 	__le16 reserved;
-	__le32 remaining_data_length;
+	__le32 reमुख्यing_data_length;
 	__le32 data_offset;
 	__le32 data_length;
 	__le32 padding;
 	__u8 buffer[];
-} __packed;
+पूर्ण __packed;
 
-/* The packet fields for a registered RDMA buffer */
-struct smbd_buffer_descriptor_v1 {
+/* The packet fields क्रम a रेजिस्टरed RDMA buffer */
+काष्ठा smbd_buffer_descriptor_v1 अणु
 	__le64 offset;
 	__le32 token;
 	__le32 length;
-} __packed;
+पूर्ण __packed;
 
 /* Default maximum number of SGEs in a RDMA send/recv */
-#define SMBDIRECT_MAX_SGE	16
-/* The context for a SMBD request */
-struct smbd_request {
-	struct smbd_connection *info;
-	struct ib_cqe cqe;
+#घोषणा SMBसूचीECT_MAX_SGE	16
+/* The context क्रम a SMBD request */
+काष्ठा smbd_request अणु
+	काष्ठा smbd_connection *info;
+	काष्ठा ib_cqe cqe;
 
-	/* the SGE entries for this packet */
-	struct ib_sge sge[SMBDIRECT_MAX_SGE];
-	int num_sge;
+	/* the SGE entries क्रम this packet */
+	काष्ठा ib_sge sge[SMBसूचीECT_MAX_SGE];
+	पूर्णांक num_sge;
 
-	/* SMBD packet header follows this structure */
+	/* SMBD packet header follows this काष्ठाure */
 	u8 packet[];
-};
+पूर्ण;
 
-/* The context for a SMBD response */
-struct smbd_response {
-	struct smbd_connection *info;
-	struct ib_cqe cqe;
-	struct ib_sge sge;
+/* The context क्रम a SMBD response */
+काष्ठा smbd_response अणु
+	काष्ठा smbd_connection *info;
+	काष्ठा ib_cqe cqe;
+	काष्ठा ib_sge sge;
 
-	enum smbd_message_type type;
+	क्रमागत smbd_message_type type;
 
 	/* Link to receive queue or reassembly queue */
-	struct list_head list;
+	काष्ठा list_head list;
 
-	/* Indicate if this is the 1st packet of a payload */
+	/* Indicate अगर this is the 1st packet of a payload */
 	bool first_segment;
 
-	/* SMBD packet header and payload follows this structure */
+	/* SMBD packet header and payload follows this काष्ठाure */
 	u8 packet[];
-};
+पूर्ण;
 
 /* Create a SMBDirect session */
-struct smbd_connection *smbd_get_connection(
-	struct TCP_Server_Info *server, struct sockaddr *dstaddr);
+काष्ठा smbd_connection *smbd_get_connection(
+	काष्ठा TCP_Server_Info *server, काष्ठा sockaddr *dstaddr);
 
 /* Reconnect SMBDirect session */
-int smbd_reconnect(struct TCP_Server_Info *server);
+पूर्णांक smbd_reconnect(काष्ठा TCP_Server_Info *server);
 /* Destroy SMBDirect session */
-void smbd_destroy(struct TCP_Server_Info *server);
+व्योम smbd_destroy(काष्ठा TCP_Server_Info *server);
 
-/* Interface for carrying upper layer I/O through send/recv */
-int smbd_recv(struct smbd_connection *info, struct msghdr *msg);
-int smbd_send(struct TCP_Server_Info *server,
-	int num_rqst, struct smb_rqst *rqst);
+/* Interface क्रम carrying upper layer I/O through send/recv */
+पूर्णांक smbd_recv(काष्ठा smbd_connection *info, काष्ठा msghdr *msg);
+पूर्णांक smbd_send(काष्ठा TCP_Server_Info *server,
+	पूर्णांक num_rqst, काष्ठा smb_rqst *rqst);
 
-enum mr_state {
+क्रमागत mr_state अणु
 	MR_READY,
 	MR_REGISTERED,
 	MR_INVALIDATED,
 	MR_ERROR
-};
+पूर्ण;
 
-struct smbd_mr {
-	struct smbd_connection	*conn;
-	struct list_head	list;
-	enum mr_state		state;
-	struct ib_mr		*mr;
-	struct scatterlist	*sgl;
-	int			sgl_count;
-	enum dma_data_direction	dir;
-	union {
-		struct ib_reg_wr	wr;
-		struct ib_send_wr	inv_wr;
-	};
-	struct ib_cqe		cqe;
+काष्ठा smbd_mr अणु
+	काष्ठा smbd_connection	*conn;
+	काष्ठा list_head	list;
+	क्रमागत mr_state		state;
+	काष्ठा ib_mr		*mr;
+	काष्ठा scatterlist	*sgl;
+	पूर्णांक			sgl_count;
+	क्रमागत dma_data_direction	dir;
+	जोड़ अणु
+		काष्ठा ib_reg_wr	wr;
+		काष्ठा ib_send_wr	inv_wr;
+	पूर्ण;
+	काष्ठा ib_cqe		cqe;
 	bool			need_invalidate;
-	struct completion	invalidate_done;
-};
+	काष्ठा completion	invalidate_करोne;
+पूर्ण;
 
-/* Interfaces to register and deregister MR for RDMA read/write */
-struct smbd_mr *smbd_register_mr(
-	struct smbd_connection *info, struct page *pages[], int num_pages,
-	int offset, int tailsz, bool writing, bool need_invalidate);
-int smbd_deregister_mr(struct smbd_mr *mr);
+/* Interfaces to रेजिस्टर and deरेजिस्टर MR क्रम RDMA पढ़ो/ग_लिखो */
+काष्ठा smbd_mr *smbd_रेजिस्टर_mr(
+	काष्ठा smbd_connection *info, काष्ठा page *pages[], पूर्णांक num_pages,
+	पूर्णांक offset, पूर्णांक tailsz, bool writing, bool need_invalidate);
+पूर्णांक smbd_deरेजिस्टर_mr(काष्ठा smbd_mr *mr);
 
-#else
-#define cifs_rdma_enabled(server)	0
-struct smbd_connection {};
-static inline void *smbd_get_connection(
-	struct TCP_Server_Info *server, struct sockaddr *dstaddr) {return NULL;}
-static inline int smbd_reconnect(struct TCP_Server_Info *server) {return -1; }
-static inline void smbd_destroy(struct TCP_Server_Info *server) {}
-static inline int smbd_recv(struct smbd_connection *info, struct msghdr *msg) {return -1; }
-static inline int smbd_send(struct TCP_Server_Info *server, int num_rqst, struct smb_rqst *rqst) {return -1; }
-#endif
+#अन्यथा
+#घोषणा cअगरs_rdma_enabled(server)	0
+काष्ठा smbd_connection अणुपूर्ण;
+अटल अंतरभूत व्योम *smbd_get_connection(
+	काष्ठा TCP_Server_Info *server, काष्ठा sockaddr *dstaddr) अणुवापस शून्य;पूर्ण
+अटल अंतरभूत पूर्णांक smbd_reconnect(काष्ठा TCP_Server_Info *server) अणुवापस -1; पूर्ण
+अटल अंतरभूत व्योम smbd_destroy(काष्ठा TCP_Server_Info *server) अणुपूर्ण
+अटल अंतरभूत पूर्णांक smbd_recv(काष्ठा smbd_connection *info, काष्ठा msghdr *msg) अणुवापस -1; पूर्ण
+अटल अंतरभूत पूर्णांक smbd_send(काष्ठा TCP_Server_Info *server, पूर्णांक num_rqst, काष्ठा smb_rqst *rqst) अणुवापस -1; पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

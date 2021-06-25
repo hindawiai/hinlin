@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * leds-regulator.h - platform data structure for regulator driven LEDs.
+ * leds-regulator.h - platक्रमm data काष्ठाure क्रम regulator driven LEDs.
  *
  * Copyright (C) 2009 Antonio Ospite <ospite@studenti.unina.it>
  */
 
-#ifndef __LINUX_LEDS_REGULATOR_H
-#define __LINUX_LEDS_REGULATOR_H
+#अगर_अघोषित __LINUX_LEDS_REGULATOR_H
+#घोषणा __LINUX_LEDS_REGULATOR_H
 
 /*
  * Use "vled" as supply id when declaring the regulator consumer:
  *
- * static struct regulator_consumer_supply pcap_regulator_VVIB_consumers [] = {
- * 	{ .dev_name = "leds-regulator.0", .supply = "vled" },
- * };
+ * अटल काष्ठा regulator_consumer_supply pcap_regulator_VVIB_consumers [] = अणु
+ * 	अणु .dev_name = "leds-regulator.0", .supply = "vled" पूर्ण,
+ * पूर्ण;
  *
  * If you have several regulator driven LEDs, you can append a numerical id to
- * .dev_name as done above, and use the same id when declaring the platform
+ * .dev_name as करोne above, and use the same id when declaring the platक्रमm
  * device:
  *
- * static struct led_regulator_platform_data a780_vibrator_data = {
+ * अटल काष्ठा led_regulator_platक्रमm_data a780_vibrator_data = अणु
  * 	.name   = "a780::vibrator",
- * };
+ * पूर्ण;
  *
- * static struct platform_device a780_vibrator = {
+ * अटल काष्ठा platक्रमm_device a780_vibrator = अणु
  * 	.name = "leds-regulator",
  * 	.id   = 0,
- * 	.dev  = {
- * 		.platform_data = &a780_vibrator_data,
- * 	},
- * };
+ * 	.dev  = अणु
+ * 		.platक्रमm_data = &a780_vibrator_data,
+ * 	पूर्ण,
+ * पूर्ण;
  */
 
-#include <linux/leds.h>
+#समावेश <linux/leds.h>
 
-struct led_regulator_platform_data {
-	char *name;                     /* LED name as expected by LED class */
-	enum led_brightness brightness; /* initial brightness value */
-};
+काष्ठा led_regulator_platक्रमm_data अणु
+	अक्षर *name;                     /* LED name as expected by LED class */
+	क्रमागत led_brightness brightness; /* initial brightness value */
+पूर्ण;
 
-#endif /* __LINUX_LEDS_REGULATOR_H */
+#पूर्ण_अगर /* __LINUX_LEDS_REGULATOR_H */

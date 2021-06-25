@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * nf_nat_snmp_basic.c
  *
  * Basic SNMP Application Layer Gateway
  *
- * This IP NAT module is intended for use with SNMP network
+ * This IP NAT module is पूर्णांकended क्रम use with SNMP network
  * discovery and monitoring applications where target networks use
- * conflicting private address realms.
+ * conflicting निजी address realms.
  *
  * Static NAT is used to remap the networks from the view of the network
- * management system at the IP layer, and this module remaps some application
+ * management प्रणाली at the IP layer, and this module remaps some application
  * layer addresses to match.
  *
- * The simplest form of ALG is performed, where only tagged IP addresses
- * are modified.  The module does not need to be MIB aware and only scans
+ * The simplest क्रमm of ALG is perक्रमmed, where only tagged IP addresses
+ * are modअगरied.  The module करोes not need to be MIB aware and only scans
  * messages at the ASN.1/BER level.
  *
  * Currently, only SNMPv1 and SNMPv2 are supported.
  *
- * More information on ALG and associated issues can be found in
+ * More inक्रमmation on ALG and associated issues can be found in
  * RFC 2962
  *
  * The ASB.1/BER parsing code is derived from the gxsnmp package by Gregory
- * McLean & Jochen Friedrich, stripped down for use in the kernel.
+ * McLean & Jochen Friedrich, stripped करोwn क्रम use in the kernel.
  *
  * Copyright (c) 2000 RP Internet (www.rpi.net.au).
  *
- * Author: James Morris <jmorris@intercode.com.au>
+ * Author: James Morris <jmorris@पूर्णांकercode.com.au>
  *
  * Copyright (c) 2006-2010 Patrick McHardy <kaber@trash.net>
  */
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/udp.h>
-#include <net/checksum.h>
-#include <net/udp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/udp.h>
+#समावेश <net/checksum.h>
+#समावेश <net/udp.h>
 
-#include <net/netfilter/nf_nat.h>
-#include <net/netfilter/nf_conntrack_expect.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <linux/netfilter/nf_conntrack_snmp.h>
-#include "nf_nat_snmp_basic.asn1.h"
+#समावेश <net/netfilter/nf_nat.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <linux/netfilter/nf_conntrack_snmp.h>
+#समावेश "nf_nat_snmp_basic.asn1.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("James Morris <jmorris@intercode.com.au>");
@@ -52,26 +53,26 @@ MODULE_DESCRIPTION("Basic SNMP Application Layer Gateway");
 MODULE_ALIAS("ip_nat_snmp_basic");
 MODULE_ALIAS_NFCT_HELPER("snmp_trap");
 
-#define SNMP_PORT 161
-#define SNMP_TRAP_PORT 162
+#घोषणा SNMP_PORT 161
+#घोषणा SNMP_TRAP_PORT 162
 
-static DEFINE_SPINLOCK(snmp_lock);
+अटल DEFINE_SPINLOCK(snmp_lock);
 
-struct snmp_ctx {
-	unsigned char *begin;
+काष्ठा snmp_ctx अणु
+	अचिन्हित अक्षर *begin;
 	__sum16 *check;
 	__be32 from;
 	__be32 to;
-};
+पूर्ण;
 
-static void fast_csum(struct snmp_ctx *ctx, unsigned char offset)
-{
-	unsigned char s[12] = {0,};
-	int size;
+अटल व्योम fast_csum(काष्ठा snmp_ctx *ctx, अचिन्हित अक्षर offset)
+अणु
+	अचिन्हित अक्षर s[12] = अणु0,पूर्ण;
+	पूर्णांक size;
 
-	if (offset & 1) {
-		memcpy(&s[1], &ctx->from, 4);
-		memcpy(&s[7], &ctx->to, 4);
+	अगर (offset & 1) अणु
+		स_नकल(&s[1], &ctx->from, 4);
+		स_नकल(&s[7], &ctx->to, 4);
 		s[0] = ~0;
 		s[1] = ~s[1];
 		s[2] = ~s[2];
@@ -79,130 +80,130 @@ static void fast_csum(struct snmp_ctx *ctx, unsigned char offset)
 		s[4] = ~s[4];
 		s[5] = ~0;
 		size = 12;
-	} else {
-		memcpy(&s[0], &ctx->from, 4);
-		memcpy(&s[4], &ctx->to, 4);
+	पूर्ण अन्यथा अणु
+		स_नकल(&s[0], &ctx->from, 4);
+		स_नकल(&s[4], &ctx->to, 4);
 		s[0] = ~s[0];
 		s[1] = ~s[1];
 		s[2] = ~s[2];
 		s[3] = ~s[3];
 		size = 8;
-	}
+	पूर्ण
 	*ctx->check = csum_fold(csum_partial(s, size,
 					     ~csum_unfold(*ctx->check)));
-}
+पूर्ण
 
-int snmp_version(void *context, size_t hdrlen, unsigned char tag,
-		 const void *data, size_t datalen)
-{
-	if (datalen != 1)
-		return -EINVAL;
-	if (*(unsigned char *)data > 1)
-		return -ENOTSUPP;
-	return 1;
-}
+पूर्णांक snmp_version(व्योम *context, माप_प्रकार hdrlen, अचिन्हित अक्षर tag,
+		 स्थिर व्योम *data, माप_प्रकार datalen)
+अणु
+	अगर (datalen != 1)
+		वापस -EINVAL;
+	अगर (*(अचिन्हित अक्षर *)data > 1)
+		वापस -ENOTSUPP;
+	वापस 1;
+पूर्ण
 
-int snmp_helper(void *context, size_t hdrlen, unsigned char tag,
-		const void *data, size_t datalen)
-{
-	struct snmp_ctx *ctx = (struct snmp_ctx *)context;
+पूर्णांक snmp_helper(व्योम *context, माप_प्रकार hdrlen, अचिन्हित अक्षर tag,
+		स्थिर व्योम *data, माप_प्रकार datalen)
+अणु
+	काष्ठा snmp_ctx *ctx = (काष्ठा snmp_ctx *)context;
 	__be32 *pdata;
 
-	if (datalen != 4)
-		return -EINVAL;
+	अगर (datalen != 4)
+		वापस -EINVAL;
 	pdata = (__be32 *)data;
-	if (*pdata == ctx->from) {
+	अगर (*pdata == ctx->from) अणु
 		pr_debug("%s: %pI4 to %pI4\n", __func__,
-			 (void *)&ctx->from, (void *)&ctx->to);
+			 (व्योम *)&ctx->from, (व्योम *)&ctx->to);
 
-		if (*ctx->check)
-			fast_csum(ctx, (unsigned char *)data - ctx->begin);
+		अगर (*ctx->check)
+			fast_csum(ctx, (अचिन्हित अक्षर *)data - ctx->begin);
 		*pdata = ctx->to;
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int snmp_translate(struct nf_conn *ct, int dir, struct sk_buff *skb)
-{
-	struct iphdr *iph = ip_hdr(skb);
-	struct udphdr *udph = (struct udphdr *)((__be32 *)iph + iph->ihl);
-	u16 datalen = ntohs(udph->len) - sizeof(struct udphdr);
-	char *data = (unsigned char *)udph + sizeof(struct udphdr);
-	struct snmp_ctx ctx;
-	int ret;
+अटल पूर्णांक snmp_translate(काष्ठा nf_conn *ct, पूर्णांक dir, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा iphdr *iph = ip_hdr(skb);
+	काष्ठा udphdr *udph = (काष्ठा udphdr *)((__be32 *)iph + iph->ihl);
+	u16 datalen = ntohs(udph->len) - माप(काष्ठा udphdr);
+	अक्षर *data = (अचिन्हित अक्षर *)udph + माप(काष्ठा udphdr);
+	काष्ठा snmp_ctx ctx;
+	पूर्णांक ret;
 
-	if (dir == IP_CT_DIR_ORIGINAL) {
+	अगर (dir == IP_CT_सूची_ORIGINAL) अणु
 		ctx.from = ct->tuplehash[dir].tuple.src.u3.ip;
 		ctx.to = ct->tuplehash[!dir].tuple.dst.u3.ip;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctx.from = ct->tuplehash[!dir].tuple.src.u3.ip;
 		ctx.to = ct->tuplehash[dir].tuple.dst.u3.ip;
-	}
+	पूर्ण
 
-	if (ctx.from == ctx.to)
-		return NF_ACCEPT;
+	अगर (ctx.from == ctx.to)
+		वापस NF_ACCEPT;
 
-	ctx.begin = (unsigned char *)udph + sizeof(struct udphdr);
+	ctx.begin = (अचिन्हित अक्षर *)udph + माप(काष्ठा udphdr);
 	ctx.check = &udph->check;
 	ret = asn1_ber_decoder(&nf_nat_snmp_basic_decoder, &ctx, data, datalen);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		nf_ct_helper_log(skb, ct, "parser failed\n");
-		return NF_DROP;
-	}
+		वापस NF_DROP;
+	पूर्ण
 
-	return NF_ACCEPT;
-}
+	वापस NF_ACCEPT;
+पूर्ण
 
-/* We don't actually set up expectations, just adjust internal IP
- * addresses if this is being NATted
+/* We करोn't actually set up expectations, just adjust पूर्णांकernal IP
+ * addresses अगर this is being NATted
  */
-static int help(struct sk_buff *skb, unsigned int protoff,
-		struct nf_conn *ct,
-		enum ip_conntrack_info ctinfo)
-{
-	int dir = CTINFO2DIR(ctinfo);
-	unsigned int ret;
-	const struct iphdr *iph = ip_hdr(skb);
-	const struct udphdr *udph = (struct udphdr *)((__be32 *)iph + iph->ihl);
+अटल पूर्णांक help(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+		काष्ठा nf_conn *ct,
+		क्रमागत ip_conntrack_info ctinfo)
+अणु
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	अचिन्हित पूर्णांक ret;
+	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+	स्थिर काष्ठा udphdr *udph = (काष्ठा udphdr *)((__be32 *)iph + iph->ihl);
 
 	/* SNMP replies and originating SNMP traps get mangled */
-	if (udph->source == htons(SNMP_PORT) && dir != IP_CT_DIR_REPLY)
-		return NF_ACCEPT;
-	if (udph->dest == htons(SNMP_TRAP_PORT) && dir != IP_CT_DIR_ORIGINAL)
-		return NF_ACCEPT;
+	अगर (udph->source == htons(SNMP_PORT) && dir != IP_CT_सूची_REPLY)
+		वापस NF_ACCEPT;
+	अगर (udph->dest == htons(SNMP_TRAP_PORT) && dir != IP_CT_सूची_ORIGINAL)
+		वापस NF_ACCEPT;
 
 	/* No NAT? */
-	if (!(ct->status & IPS_NAT_MASK))
-		return NF_ACCEPT;
+	अगर (!(ct->status & IPS_NAT_MASK))
+		वापस NF_ACCEPT;
 
 	/* Make sure the packet length is ok.  So far, we were only guaranteed
 	 * to have a valid length IP header plus 8 bytes, which means we have
-	 * enough room for a UDP header.  Just verify the UDP length field so we
+	 * enough room क्रम a UDP header.  Just verअगरy the UDP length field so we
 	 * can mess around with the payload.
 	 */
-	if (ntohs(udph->len) != skb->len - (iph->ihl << 2)) {
+	अगर (ntohs(udph->len) != skb->len - (iph->ihl << 2)) अणु
 		nf_ct_helper_log(skb, ct, "dropping malformed packet\n");
-		return NF_DROP;
-	}
+		वापस NF_DROP;
+	पूर्ण
 
-	if (skb_ensure_writable(skb, skb->len)) {
+	अगर (skb_ensure_writable(skb, skb->len)) अणु
 		nf_ct_helper_log(skb, ct, "cannot mangle packet");
-		return NF_DROP;
-	}
+		वापस NF_DROP;
+	पूर्ण
 
 	spin_lock_bh(&snmp_lock);
 	ret = snmp_translate(ct, dir, skb);
 	spin_unlock_bh(&snmp_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nf_conntrack_expect_policy snmp_exp_policy = {
+अटल स्थिर काष्ठा nf_conntrack_expect_policy snmp_exp_policy = अणु
 	.max_expected	= 0,
-	.timeout	= 180,
-};
+	.समयout	= 180,
+पूर्ण;
 
-static struct nf_conntrack_helper snmp_trap_helper __read_mostly = {
+अटल काष्ठा nf_conntrack_helper snmp_trap_helper __पढ़ो_mostly = अणु
 	.me			= THIS_MODULE,
 	.help			= help,
 	.expect_policy		= &snmp_exp_policy,
@@ -210,22 +211,22 @@ static struct nf_conntrack_helper snmp_trap_helper __read_mostly = {
 	.tuple.src.l3num	= AF_INET,
 	.tuple.src.u.udp.port	= cpu_to_be16(SNMP_TRAP_PORT),
 	.tuple.dst.protonum	= IPPROTO_UDP,
-};
+पूर्ण;
 
-static int __init nf_nat_snmp_basic_init(void)
-{
-	BUG_ON(nf_nat_snmp_hook != NULL);
+अटल पूर्णांक __init nf_nat_snmp_basic_init(व्योम)
+अणु
+	BUG_ON(nf_nat_snmp_hook != शून्य);
 	RCU_INIT_POINTER(nf_nat_snmp_hook, help);
 
-	return nf_conntrack_helper_register(&snmp_trap_helper);
-}
+	वापस nf_conntrack_helper_रेजिस्टर(&snmp_trap_helper);
+पूर्ण
 
-static void __exit nf_nat_snmp_basic_fini(void)
-{
-	RCU_INIT_POINTER(nf_nat_snmp_hook, NULL);
+अटल व्योम __निकास nf_nat_snmp_basic_fini(व्योम)
+अणु
+	RCU_INIT_POINTER(nf_nat_snmp_hook, शून्य);
 	synchronize_rcu();
-	nf_conntrack_helper_unregister(&snmp_trap_helper);
-}
+	nf_conntrack_helper_unरेजिस्टर(&snmp_trap_helper);
+पूर्ण
 
 module_init(nf_nat_snmp_basic_init);
-module_exit(nf_nat_snmp_basic_fini);
+module_निकास(nf_nat_snmp_basic_fini);

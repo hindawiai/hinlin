@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Atomic futex routines
  *
@@ -9,16 +10,16 @@
  * Baruch Siach <baruch@tkos.co.il>
  */
 
-#ifndef _ASM_XTENSA_FUTEX_H
-#define _ASM_XTENSA_FUTEX_H
+#अगर_अघोषित _ASM_XTENSA_FUTEX_H
+#घोषणा _ASM_XTENSA_FUTEX_H
 
-#include <linux/futex.h>
-#include <linux/uaccess.h>
-#include <linux/errno.h>
+#समावेश <linux/futex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#if XCHAL_HAVE_EXCLUSIVE
-#define __futex_atomic_op(insn, ret, old, uaddr, arg)	\
-	__asm__ __volatile(				\
+#अगर XCHAL_HAVE_EXCLUSIVE
+#घोषणा __futex_atomic_op(insn, ret, old, uaddr, arg)	\
+	__यंत्र__ __अस्थिर(				\
 	"1:	l32ex	%[oldval], %[addr]\n"		\
 		insn "\n"				\
 	"2:	s32ex	%[newval], %[addr]\n"		\
@@ -40,9 +41,9 @@
 	: [addr] "r" (uaddr), [oparg] "r" (arg),	\
 	  [fault] "I" (-EFAULT)				\
 	: "memory")
-#elif XCHAL_HAVE_S32C1I
-#define __futex_atomic_op(insn, ret, old, uaddr, arg)	\
-	__asm__ __volatile(				\
+#या_अगर XCHAL_HAVE_S32C1I
+#घोषणा __futex_atomic_op(insn, ret, old, uaddr, arg)	\
+	__यंत्र__ __अस्थिर(				\
 	"1:	l32i	%[oldval], %[mem]\n"		\
 		insn "\n"				\
 	"	wsr	%[oldval], scompare1\n"		\
@@ -64,65 +65,65 @@
 	  [mem] "+m" (*(uaddr))				\
 	: [oparg] "r" (arg), [fault] "I" (-EFAULT)	\
 	: "memory")
-#endif
+#पूर्ण_अगर
 
-static inline int arch_futex_atomic_op_inuser(int op, int oparg, int *oval,
+अटल अंतरभूत पूर्णांक arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval,
 		u32 __user *uaddr)
-{
-#if XCHAL_HAVE_S32C1I || XCHAL_HAVE_EXCLUSIVE
-	int oldval = 0, ret;
+अणु
+#अगर XCHAL_HAVE_S32C1I || XCHAL_HAVE_EXCLUSIVE
+	पूर्णांक oldval = 0, ret;
 
-	if (!access_ok(uaddr, sizeof(u32)))
-		return -EFAULT;
+	अगर (!access_ok(uaddr, माप(u32)))
+		वापस -EFAULT;
 
-	switch (op) {
-	case FUTEX_OP_SET:
+	चयन (op) अणु
+	हाल FUTEX_OP_SET:
 		__futex_atomic_op("mov %[newval], %[oparg]",
 				  ret, oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_ADD:
+		अवरोध;
+	हाल FUTEX_OP_ADD:
 		__futex_atomic_op("add %[newval], %[oldval], %[oparg]",
 				  ret, oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_OR:
+		अवरोध;
+	हाल FUTEX_OP_OR:
 		__futex_atomic_op("or %[newval], %[oldval], %[oparg]",
 				  ret, oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_ANDN:
+		अवरोध;
+	हाल FUTEX_OP_ANDN:
 		__futex_atomic_op("and %[newval], %[oldval], %[oparg]",
 				  ret, oldval, uaddr, ~oparg);
-		break;
-	case FUTEX_OP_XOR:
+		अवरोध;
+	हाल FUTEX_OP_XOR:
 		__futex_atomic_op("xor %[newval], %[oldval], %[oparg]",
 				  ret, oldval, uaddr, oparg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENOSYS;
-	}
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		*oval = oldval;
 
-	return ret;
-#else
-	return -ENOSYS;
-#endif
-}
+	वापस ret;
+#अन्यथा
+	वापस -ENOSYS;
+#पूर्ण_अगर
+पूर्ण
 
-static inline int
+अटल अंतरभूत पूर्णांक
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-{
-#if XCHAL_HAVE_S32C1I || XCHAL_HAVE_EXCLUSIVE
-	unsigned long tmp;
-	int ret = 0;
+अणु
+#अगर XCHAL_HAVE_S32C1I || XCHAL_HAVE_EXCLUSIVE
+	अचिन्हित दीर्घ पंचांगp;
+	पूर्णांक ret = 0;
 
-	if (!access_ok(uaddr, sizeof(u32)))
-		return -EFAULT;
+	अगर (!access_ok(uaddr, माप(u32)))
+		वापस -EFAULT;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 	"	# futex_atomic_cmpxchg_inatomic\n"
-#if XCHAL_HAVE_EXCLUSIVE
+#अगर XCHAL_HAVE_EXCLUSIVE
 	"1:	l32ex	%[tmp], %[addr]\n"
 	"	s32i	%[tmp], %[uval], 0\n"
 	"	bne	%[tmp], %[oldval], 2f\n"
@@ -130,11 +131,11 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 	"3:	s32ex	%[tmp], %[addr]\n"
 	"	getex	%[tmp]\n"
 	"	beqz	%[tmp], 1b\n"
-#elif XCHAL_HAVE_S32C1I
+#या_अगर XCHAL_HAVE_S32C1I
 	"	wsr	%[oldval], scompare1\n"
 	"1:	s32c1i	%[newval], %[addr], 0\n"
 	"	s32i	%[newval], %[uval], 0\n"
-#endif
+#पूर्ण_अगर
 	"2:\n"
 	"	.section .fixup,\"ax\"\n"
 	"	.align 4\n"
@@ -145,19 +146,19 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 	"	.previous\n"
 	"	.section __ex_table,\"a\"\n"
 	"	.long 1b, 4b\n"
-#if XCHAL_HAVE_EXCLUSIVE
+#अगर XCHAL_HAVE_EXCLUSIVE
 	"	.long 3b, 4b\n"
-#endif
+#पूर्ण_अगर
 	"	.previous\n"
-	: [ret] "+r" (ret), [newval] "+r" (newval), [tmp] "=&r" (tmp)
+	: [ret] "+r" (ret), [newval] "+r" (newval), [पंचांगp] "=&r" (पंचांगp)
 	: [addr] "r" (uaddr), [oldval] "r" (oldval), [uval] "r" (uval),
 	  [fault] "I" (-EFAULT)
 	: "memory");
 
-	return ret;
-#else
-	return -ENOSYS;
-#endif
-}
+	वापस ret;
+#अन्यथा
+	वापस -ENOSYS;
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* _ASM_XTENSA_FUTEX_H */
+#पूर्ण_अगर /* _ASM_XTENSA_FUTEX_H */

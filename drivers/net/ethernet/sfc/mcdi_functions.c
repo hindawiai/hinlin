@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2019 Solarflare Communications Inc.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
-#include "net_driver.h"
-#include "efx.h"
-#include "nic.h"
-#include "mcdi_functions.h"
-#include "mcdi.h"
-#include "mcdi_pcol.h"
+#समावेश "net_driver.h"
+#समावेश "efx.h"
+#समावेश "nic.h"
+#समावेश "mcdi_functions.h"
+#समावेश "mcdi.h"
+#समावेश "mcdi_pcol.h"
 
-int efx_mcdi_free_vis(struct efx_nic *efx)
-{
+पूर्णांक efx_mcdi_मुक्त_vis(काष्ठा efx_nic *efx)
+अणु
 	MCDI_DECLARE_BUF_ERR(outbuf);
-	size_t outlen;
-	int rc = efx_mcdi_rpc_quiet(efx, MC_CMD_FREE_VIS, NULL, 0,
-				    outbuf, sizeof(outbuf), &outlen);
+	माप_प्रकार outlen;
+	पूर्णांक rc = efx_mcdi_rpc_quiet(efx, MC_CMD_FREE_VIS, शून्य, 0,
+				    outbuf, माप(outbuf), &outlen);
 
-	/* -EALREADY means nothing to free, so ignore */
-	if (rc == -EALREADY)
+	/* -EALREADY means nothing to मुक्त, so ignore */
+	अगर (rc == -EALREADY)
 		rc = 0;
-	if (rc)
+	अगर (rc)
 		efx_mcdi_display_error(efx, MC_CMD_FREE_VIS, 0, outbuf, outlen,
 				       rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_alloc_vis(struct efx_nic *efx, unsigned int min_vis,
-		       unsigned int max_vis, unsigned int *vi_base,
-		       unsigned int *allocated_vis)
-{
+पूर्णांक efx_mcdi_alloc_vis(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक min_vis,
+		       अचिन्हित पूर्णांक max_vis, अचिन्हित पूर्णांक *vi_base,
+		       अचिन्हित पूर्णांक *allocated_vis)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_ALLOC_VIS_OUT_LEN);
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_ALLOC_VIS_IN_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, ALLOC_VIS_IN_MIN_VI_COUNT, min_vis);
 	MCDI_SET_DWORD(inbuf, ALLOC_VIS_IN_MAX_VI_COUNT, max_vis);
-	rc = efx_mcdi_rpc(efx, MC_CMD_ALLOC_VIS, inbuf, sizeof(inbuf),
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc != 0)
-		return rc;
+	rc = efx_mcdi_rpc(efx, MC_CMD_ALLOC_VIS, inbuf, माप(inbuf),
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc != 0)
+		वापस rc;
 
-	if (outlen < MC_CMD_ALLOC_VIS_OUT_LEN)
-		return -EIO;
+	अगर (outlen < MC_CMD_ALLOC_VIS_OUT_LEN)
+		वापस -EIO;
 
-	netif_dbg(efx, drv, efx->net_dev, "base VI is A0x%03x\n",
+	netअगर_dbg(efx, drv, efx->net_dev, "base VI is A0x%03x\n",
 		  MCDI_DWORD(outbuf, ALLOC_VIS_OUT_VI_BASE));
 
-	if (vi_base)
+	अगर (vi_base)
 		*vi_base = MCDI_DWORD(outbuf, ALLOC_VIS_OUT_VI_BASE);
-	if (allocated_vis)
+	अगर (allocated_vis)
 		*allocated_vis = MCDI_DWORD(outbuf, ALLOC_VIS_OUT_VI_COUNT);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int efx_mcdi_ev_probe(struct efx_channel *channel)
-{
-	return efx_nic_alloc_buffer(channel->efx, &channel->eventq.buf,
+पूर्णांक efx_mcdi_ev_probe(काष्ठा efx_channel *channel)
+अणु
+	वापस efx_nic_alloc_buffer(channel->efx, &channel->eventq.buf,
 				    (channel->eventq_mask + 1) *
-				    sizeof(efx_qword_t),
+				    माप(efx_qword_t),
 				    GFP_KERNEL);
-}
+पूर्ण
 
-int efx_mcdi_ev_init(struct efx_channel *channel, bool v1_cut_thru, bool v2)
-{
+पूर्णांक efx_mcdi_ev_init(काष्ठा efx_channel *channel, bool v1_cut_thru, bool v2)
+अणु
 	MCDI_DECLARE_BUF(inbuf,
 			 MC_CMD_INIT_EVQ_V2_IN_LEN(EFX_MAX_EVQ_SIZE * 8 /
 						   EFX_BUF_SIZE));
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_INIT_EVQ_V2_OUT_LEN);
-	size_t entries = channel->eventq.buf.len / EFX_BUF_SIZE;
-	struct efx_nic *efx = channel->efx;
-	size_t inlen, outlen;
+	माप_प्रकार entries = channel->eventq.buf.len / EFX_BUF_SIZE;
+	काष्ठा efx_nic *efx = channel->efx;
+	माप_प्रकार inlen, outlen;
 	dma_addr_t dma_addr;
-	int rc, i;
+	पूर्णांक rc, i;
 
 	/* Fill event queue with all ones (i.e. empty events) */
-	memset(channel->eventq.buf.addr, 0xff, channel->eventq.buf.len);
+	स_रखो(channel->eventq.buf.addr, 0xff, channel->eventq.buf.len);
 
 	MCDI_SET_DWORD(inbuf, INIT_EVQ_IN_SIZE, channel->eventq_mask + 1);
 	MCDI_SET_DWORD(inbuf, INIT_EVQ_IN_INSTANCE, channel->channel);
-	/* INIT_EVQ expects index in vector table, not absolute */
+	/* INIT_EVQ expects index in vector table, not असलolute */
 	MCDI_SET_DWORD(inbuf, INIT_EVQ_IN_IRQ_NUM, channel->channel);
 	MCDI_SET_DWORD(inbuf, INIT_EVQ_IN_TMR_MODE,
 		       MC_CMD_INIT_EVQ_IN_TMR_MODE_DIS);
@@ -95,8 +96,8 @@ int efx_mcdi_ev_init(struct efx_channel *channel, bool v1_cut_thru, bool v2)
 		       MC_CMD_INIT_EVQ_IN_COUNT_MODE_DIS);
 	MCDI_SET_DWORD(inbuf, INIT_EVQ_IN_COUNT_THRSHLD, 0);
 
-	if (v2) {
-		/* Use the new generic approach to specifying event queue
+	अगर (v2) अणु
+		/* Use the new generic approach to specअगरying event queue
 		 * configuration, requesting lower latency or higher throughput.
 		 * The options that actually get used appear in the output.
 		 */
@@ -104,74 +105,74 @@ int efx_mcdi_ev_init(struct efx_channel *channel, bool v1_cut_thru, bool v2)
 				      INIT_EVQ_V2_IN_FLAG_INTERRUPTING, 1,
 				      INIT_EVQ_V2_IN_FLAG_TYPE,
 				      MC_CMD_INIT_EVQ_V2_IN_FLAG_TYPE_AUTO);
-	} else {
+	पूर्ण अन्यथा अणु
 		MCDI_POPULATE_DWORD_4(inbuf, INIT_EVQ_IN_FLAGS,
 				      INIT_EVQ_IN_FLAG_INTERRUPTING, 1,
 				      INIT_EVQ_IN_FLAG_RX_MERGE, 1,
 				      INIT_EVQ_IN_FLAG_TX_MERGE, 1,
 				      INIT_EVQ_IN_FLAG_CUT_THRU, v1_cut_thru);
-	}
+	पूर्ण
 
 	dma_addr = channel->eventq.buf.dma_addr;
-	for (i = 0; i < entries; ++i) {
+	क्रम (i = 0; i < entries; ++i) अणु
 		MCDI_SET_ARRAY_QWORD(inbuf, INIT_EVQ_IN_DMA_ADDR, i, dma_addr);
 		dma_addr += EFX_BUF_SIZE;
-	}
+	पूर्ण
 
 	inlen = MC_CMD_INIT_EVQ_IN_LEN(entries);
 
 	rc = efx_mcdi_rpc(efx, MC_CMD_INIT_EVQ, inbuf, inlen,
-			  outbuf, sizeof(outbuf), &outlen);
+			  outbuf, माप(outbuf), &outlen);
 
-	if (outlen >= MC_CMD_INIT_EVQ_V2_OUT_LEN)
-		netif_dbg(efx, drv, efx->net_dev,
+	अगर (outlen >= MC_CMD_INIT_EVQ_V2_OUT_LEN)
+		netअगर_dbg(efx, drv, efx->net_dev,
 			  "Channel %d using event queue flags %08x\n",
 			  channel->channel,
 			  MCDI_DWORD(outbuf, INIT_EVQ_V2_OUT_FLAGS));
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void efx_mcdi_ev_remove(struct efx_channel *channel)
-{
-	efx_nic_free_buffer(channel->efx, &channel->eventq.buf);
-}
+व्योम efx_mcdi_ev_हटाओ(काष्ठा efx_channel *channel)
+अणु
+	efx_nic_मुक्त_buffer(channel->efx, &channel->eventq.buf);
+पूर्ण
 
-void efx_mcdi_ev_fini(struct efx_channel *channel)
-{
+व्योम efx_mcdi_ev_fini(काष्ठा efx_channel *channel)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_FINI_EVQ_IN_LEN);
 	MCDI_DECLARE_BUF_ERR(outbuf);
-	struct efx_nic *efx = channel->efx;
-	size_t outlen;
-	int rc;
+	काष्ठा efx_nic *efx = channel->efx;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, FINI_EVQ_IN_INSTANCE, channel->channel);
 
-	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_FINI_EVQ, inbuf, sizeof(inbuf),
-				outbuf, sizeof(outbuf), &outlen);
+	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_FINI_EVQ, inbuf, माप(inbuf),
+				outbuf, माप(outbuf), &outlen);
 
-	if (rc && rc != -EALREADY)
-		goto fail;
+	अगर (rc && rc != -EALREADY)
+		जाओ fail;
 
-	return;
+	वापस;
 
 fail:
 	efx_mcdi_display_error(efx, MC_CMD_FINI_EVQ, MC_CMD_FINI_EVQ_IN_LEN,
 			       outbuf, outlen, rc);
-}
+पूर्ण
 
-int efx_mcdi_tx_init(struct efx_tx_queue *tx_queue)
-{
+पूर्णांक efx_mcdi_tx_init(काष्ठा efx_tx_queue *tx_queue)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_INIT_TXQ_IN_LEN(EFX_MAX_DMAQ_SIZE * 8 /
 						       EFX_BUF_SIZE));
 	bool csum_offload = tx_queue->type & EFX_TXQ_TYPE_OUTER_CSUM;
 	bool inner_csum = tx_queue->type & EFX_TXQ_TYPE_INNER_CSUM;
-	size_t entries = tx_queue->txd.buf.len / EFX_BUF_SIZE;
-	struct efx_channel *channel = tx_queue->channel;
-	struct efx_nic *efx = tx_queue->efx;
+	माप_प्रकार entries = tx_queue->txd.buf.len / EFX_BUF_SIZE;
+	काष्ठा efx_channel *channel = tx_queue->channel;
+	काष्ठा efx_nic *efx = tx_queue->efx;
 	dma_addr_t dma_addr;
-	size_t inlen;
-	int rc, i;
+	माप_प्रकार inlen;
+	पूर्णांक rc, i;
 
 	BUILD_BUG_ON(MC_CMD_INIT_TXQ_OUT_LEN != 0);
 
@@ -184,114 +185,114 @@ int efx_mcdi_tx_init(struct efx_tx_queue *tx_queue)
 
 	dma_addr = tx_queue->txd.buf.dma_addr;
 
-	netif_dbg(efx, hw, efx->net_dev, "pushing TXQ %d. %zu entries (%llx)\n",
+	netअगर_dbg(efx, hw, efx->net_dev, "pushing TXQ %d. %zu entries (%llx)\n",
 		  tx_queue->queue, entries, (u64)dma_addr);
 
-	for (i = 0; i < entries; ++i) {
+	क्रम (i = 0; i < entries; ++i) अणु
 		MCDI_SET_ARRAY_QWORD(inbuf, INIT_TXQ_IN_DMA_ADDR, i, dma_addr);
 		dma_addr += EFX_BUF_SIZE;
-	}
+	पूर्ण
 
 	inlen = MC_CMD_INIT_TXQ_IN_LEN(entries);
 
-	do {
+	करो अणु
 		bool tso_v2 = tx_queue->tso_version == 2;
 
-		/* TSOv2 implies IP header checksum offload for TSO frames,
-		 * so we can safely disable IP header checksum offload for
-		 * everything else.  If we don't have TSOv2, then we have to
+		/* TSOv2 implies IP header checksum offload क्रम TSO frames,
+		 * so we can safely disable IP header checksum offload क्रम
+		 * everything अन्यथा.  If we करोn't have TSOv2, then we have to
 		 * enable IP header checksum offload, which is strictly
-		 * incorrect but better than breaking TSO.
+		 * incorrect but better than अवरोधing TSO.
 		 */
 		MCDI_POPULATE_DWORD_6(inbuf, INIT_TXQ_IN_FLAGS,
-				/* This flag was removed from mcdi_pcol.h for
+				/* This flag was हटाओd from mcdi_pcol.h क्रम
 				 * the non-_EXT version of INIT_TXQ.  However,
 				 * firmware still honours it.
 				 */
 				INIT_TXQ_EXT_IN_FLAG_TSOV2_EN, tso_v2,
 				INIT_TXQ_IN_FLAG_IP_CSUM_DIS, !(csum_offload && tso_v2),
 				INIT_TXQ_IN_FLAG_TCP_CSUM_DIS, !csum_offload,
-				INIT_TXQ_EXT_IN_FLAG_TIMESTAMP, tx_queue->timestamping,
+				INIT_TXQ_EXT_IN_FLAG_TIMESTAMP, tx_queue->बारtamping,
 				INIT_TXQ_IN_FLAG_INNER_IP_CSUM_EN, inner_csum && !tso_v2,
 				INIT_TXQ_IN_FLAG_INNER_TCP_CSUM_EN, inner_csum);
 
 		rc = efx_mcdi_rpc_quiet(efx, MC_CMD_INIT_TXQ, inbuf, inlen,
-					NULL, 0, NULL);
-		if (rc == -ENOSPC && tso_v2) {
-			/* Retry without TSOv2 if we're short on contexts. */
+					शून्य, 0, शून्य);
+		अगर (rc == -ENOSPC && tso_v2) अणु
+			/* Retry without TSOv2 अगर we're लघु on contexts. */
 			tx_queue->tso_version = 0;
-			netif_warn(efx, probe, efx->net_dev,
+			netअगर_warn(efx, probe, efx->net_dev,
 				   "TSOv2 context not available to segment in "
 				   "hardware. TCP performance may be reduced.\n"
 				   );
-		} else if (rc) {
+		पूर्ण अन्यथा अगर (rc) अणु
 			efx_mcdi_display_error(efx, MC_CMD_INIT_TXQ,
 					       MC_CMD_INIT_TXQ_EXT_IN_LEN,
-					       NULL, 0, rc);
-			goto fail;
-		}
-	} while (rc);
+					       शून्य, 0, rc);
+			जाओ fail;
+		पूर्ण
+	पूर्ण जबतक (rc);
 
-	return 0;
+	वापस 0;
 
 fail:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void efx_mcdi_tx_remove(struct efx_tx_queue *tx_queue)
-{
-	efx_nic_free_buffer(tx_queue->efx, &tx_queue->txd.buf);
-}
+व्योम efx_mcdi_tx_हटाओ(काष्ठा efx_tx_queue *tx_queue)
+अणु
+	efx_nic_मुक्त_buffer(tx_queue->efx, &tx_queue->txd.buf);
+पूर्ण
 
-void efx_mcdi_tx_fini(struct efx_tx_queue *tx_queue)
-{
+व्योम efx_mcdi_tx_fini(काष्ठा efx_tx_queue *tx_queue)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_FINI_TXQ_IN_LEN);
 	MCDI_DECLARE_BUF_ERR(outbuf);
-	struct efx_nic *efx = tx_queue->efx;
-	size_t outlen;
-	int rc;
+	काष्ठा efx_nic *efx = tx_queue->efx;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, FINI_TXQ_IN_INSTANCE,
 		       tx_queue->queue);
 
-	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_FINI_TXQ, inbuf, sizeof(inbuf),
-				outbuf, sizeof(outbuf), &outlen);
+	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_FINI_TXQ, inbuf, माप(inbuf),
+				outbuf, माप(outbuf), &outlen);
 
-	if (rc && rc != -EALREADY)
-		goto fail;
+	अगर (rc && rc != -EALREADY)
+		जाओ fail;
 
-	return;
+	वापस;
 
 fail:
 	efx_mcdi_display_error(efx, MC_CMD_FINI_TXQ, MC_CMD_FINI_TXQ_IN_LEN,
 			       outbuf, outlen, rc);
-}
+पूर्ण
 
-int efx_mcdi_rx_probe(struct efx_rx_queue *rx_queue)
-{
-	return efx_nic_alloc_buffer(rx_queue->efx, &rx_queue->rxd.buf,
+पूर्णांक efx_mcdi_rx_probe(काष्ठा efx_rx_queue *rx_queue)
+अणु
+	वापस efx_nic_alloc_buffer(rx_queue->efx, &rx_queue->rxd.buf,
 				    (rx_queue->ptr_mask + 1) *
-				    sizeof(efx_qword_t),
+				    माप(efx_qword_t),
 				    GFP_KERNEL);
-}
+पूर्ण
 
-void efx_mcdi_rx_init(struct efx_rx_queue *rx_queue)
-{
-	struct efx_channel *channel = efx_rx_queue_channel(rx_queue);
-	size_t entries = rx_queue->rxd.buf.len / EFX_BUF_SIZE;
+व्योम efx_mcdi_rx_init(काष्ठा efx_rx_queue *rx_queue)
+अणु
+	काष्ठा efx_channel *channel = efx_rx_queue_channel(rx_queue);
+	माप_प्रकार entries = rx_queue->rxd.buf.len / EFX_BUF_SIZE;
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_INIT_RXQ_V4_IN_LEN);
-	struct efx_nic *efx = rx_queue->efx;
-	unsigned int buffer_size;
+	काष्ठा efx_nic *efx = rx_queue->efx;
+	अचिन्हित पूर्णांक buffer_size;
 	dma_addr_t dma_addr;
-	int rc;
-	int i;
+	पूर्णांक rc;
+	पूर्णांक i;
 	BUILD_BUG_ON(MC_CMD_INIT_RXQ_OUT_LEN != 0);
 
 	rx_queue->scatter_n = 0;
 	rx_queue->scatter_len = 0;
-	if (efx->type->revision == EFX_REV_EF100)
+	अगर (efx->type->revision == EFX_REV_EF100)
 		buffer_size = efx->rx_page_buf_step;
-	else
+	अन्यथा
 		buffer_size = 0;
 
 	MCDI_SET_DWORD(inbuf, INIT_RXQ_IN_SIZE, rx_queue->ptr_mask + 1);
@@ -308,124 +309,124 @@ void efx_mcdi_rx_init(struct efx_rx_queue *rx_queue)
 
 	dma_addr = rx_queue->rxd.buf.dma_addr;
 
-	netif_dbg(efx, hw, efx->net_dev, "pushing RXQ %d. %zu entries (%llx)\n",
+	netअगर_dbg(efx, hw, efx->net_dev, "pushing RXQ %d. %zu entries (%llx)\n",
 		  efx_rx_queue_index(rx_queue), entries, (u64)dma_addr);
 
-	for (i = 0; i < entries; ++i) {
+	क्रम (i = 0; i < entries; ++i) अणु
 		MCDI_SET_ARRAY_QWORD(inbuf, INIT_RXQ_IN_DMA_ADDR, i, dma_addr);
 		dma_addr += EFX_BUF_SIZE;
-	}
+	पूर्ण
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_INIT_RXQ, inbuf, sizeof(inbuf),
-			  NULL, 0, NULL);
-	if (rc)
+	rc = efx_mcdi_rpc(efx, MC_CMD_INIT_RXQ, inbuf, माप(inbuf),
+			  शून्य, 0, शून्य);
+	अगर (rc)
 		netdev_WARN(efx->net_dev, "failed to initialise RXQ %d\n",
 			    efx_rx_queue_index(rx_queue));
-}
+पूर्ण
 
-void efx_mcdi_rx_remove(struct efx_rx_queue *rx_queue)
-{
-	efx_nic_free_buffer(rx_queue->efx, &rx_queue->rxd.buf);
-}
+व्योम efx_mcdi_rx_हटाओ(काष्ठा efx_rx_queue *rx_queue)
+अणु
+	efx_nic_मुक्त_buffer(rx_queue->efx, &rx_queue->rxd.buf);
+पूर्ण
 
-void efx_mcdi_rx_fini(struct efx_rx_queue *rx_queue)
-{
+व्योम efx_mcdi_rx_fini(काष्ठा efx_rx_queue *rx_queue)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_FINI_RXQ_IN_LEN);
 	MCDI_DECLARE_BUF_ERR(outbuf);
-	struct efx_nic *efx = rx_queue->efx;
-	size_t outlen;
-	int rc;
+	काष्ठा efx_nic *efx = rx_queue->efx;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, FINI_RXQ_IN_INSTANCE,
 		       efx_rx_queue_index(rx_queue));
 
-	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_FINI_RXQ, inbuf, sizeof(inbuf),
-				outbuf, sizeof(outbuf), &outlen);
+	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_FINI_RXQ, inbuf, माप(inbuf),
+				outbuf, माप(outbuf), &outlen);
 
-	if (rc && rc != -EALREADY)
-		goto fail;
+	अगर (rc && rc != -EALREADY)
+		जाओ fail;
 
-	return;
+	वापस;
 
 fail:
 	efx_mcdi_display_error(efx, MC_CMD_FINI_RXQ, MC_CMD_FINI_RXQ_IN_LEN,
 			       outbuf, outlen, rc);
-}
+पूर्ण
 
-int efx_fini_dmaq(struct efx_nic *efx)
-{
-	struct efx_tx_queue *tx_queue;
-	struct efx_rx_queue *rx_queue;
-	struct efx_channel *channel;
-	int pending;
+पूर्णांक efx_fini_dmaq(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा efx_rx_queue *rx_queue;
+	काष्ठा efx_channel *channel;
+	पूर्णांक pending;
 
-	/* If the MC has just rebooted, the TX/RX queues will have already been
-	 * torn down, but efx->active_queues needs to be set to zero.
+	/* If the MC has just rebooted, the TX/RX queues will have alपढ़ोy been
+	 * torn करोwn, but efx->active_queues needs to be set to zero.
 	 */
-	if (efx->must_realloc_vis) {
+	अगर (efx->must_पुनः_स्मृति_vis) अणु
 		atomic_set(&efx->active_queues, 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Do not attempt to write to the NIC during EEH recovery */
-	if (efx->state != STATE_RECOVERY) {
-		efx_for_each_channel(channel, efx) {
-			efx_for_each_channel_rx_queue(rx_queue, channel)
+	/* Do not attempt to ग_लिखो to the NIC during EEH recovery */
+	अगर (efx->state != STATE_RECOVERY) अणु
+		efx_क्रम_each_channel(channel, efx) अणु
+			efx_क्रम_each_channel_rx_queue(rx_queue, channel)
 				efx_mcdi_rx_fini(rx_queue);
-			efx_for_each_channel_tx_queue(tx_queue, channel)
+			efx_क्रम_each_channel_tx_queue(tx_queue, channel)
 				efx_mcdi_tx_fini(tx_queue);
-		}
+		पूर्ण
 
-		wait_event_timeout(efx->flush_wq,
-				   atomic_read(&efx->active_queues) == 0,
-				   msecs_to_jiffies(EFX_MAX_FLUSH_TIME));
-		pending = atomic_read(&efx->active_queues);
-		if (pending) {
-			netif_err(efx, hw, efx->net_dev, "failed to flush %d queues\n",
+		रुको_event_समयout(efx->flush_wq,
+				   atomic_पढ़ो(&efx->active_queues) == 0,
+				   msecs_to_jअगरfies(EFX_MAX_FLUSH_TIME));
+		pending = atomic_पढ़ो(&efx->active_queues);
+		अगर (pending) अणु
+			netअगर_err(efx, hw, efx->net_dev, "failed to flush %d queues\n",
 				  pending);
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int efx_mcdi_window_mode_to_stride(struct efx_nic *efx, u8 vi_window_mode)
-{
-	switch (vi_window_mode) {
-	case MC_CMD_GET_CAPABILITIES_V3_OUT_VI_WINDOW_MODE_8K:
+पूर्णांक efx_mcdi_winकरोw_mode_to_stride(काष्ठा efx_nic *efx, u8 vi_winकरोw_mode)
+अणु
+	चयन (vi_winकरोw_mode) अणु
+	हाल MC_CMD_GET_CAPABILITIES_V3_OUT_VI_WINDOW_MODE_8K:
 		efx->vi_stride = 8192;
-		break;
-	case MC_CMD_GET_CAPABILITIES_V3_OUT_VI_WINDOW_MODE_16K:
+		अवरोध;
+	हाल MC_CMD_GET_CAPABILITIES_V3_OUT_VI_WINDOW_MODE_16K:
 		efx->vi_stride = 16384;
-		break;
-	case MC_CMD_GET_CAPABILITIES_V3_OUT_VI_WINDOW_MODE_64K:
+		अवरोध;
+	हाल MC_CMD_GET_CAPABILITIES_V3_OUT_VI_WINDOW_MODE_64K:
 		efx->vi_stride = 65536;
-		break;
-	default:
-		netif_err(efx, probe, efx->net_dev,
+		अवरोध;
+	शेष:
+		netअगर_err(efx, probe, efx->net_dev,
 			  "Unrecognised VI window mode %d\n",
-			  vi_window_mode);
-		return -EIO;
-	}
-	netif_dbg(efx, probe, efx->net_dev, "vi_stride = %u\n",
+			  vi_winकरोw_mode);
+		वापस -EIO;
+	पूर्ण
+	netअगर_dbg(efx, probe, efx->net_dev, "vi_stride = %u\n",
 		  efx->vi_stride);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int efx_get_pf_index(struct efx_nic *efx, unsigned int *pf_index)
-{
+पूर्णांक efx_get_pf_index(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक *pf_index)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_FUNCTION_INFO_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_FUNCTION_INFO, NULL, 0, outbuf,
-			  sizeof(outbuf), &outlen);
-	if (rc)
-		return rc;
-	if (outlen < sizeof(outbuf))
-		return -EIO;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_FUNCTION_INFO, शून्य, 0, outbuf,
+			  माप(outbuf), &outlen);
+	अगर (rc)
+		वापस rc;
+	अगर (outlen < माप(outbuf))
+		वापस -EIO;
 
 	*pf_index = MCDI_DWORD(outbuf, GET_FUNCTION_INFO_OUT_PF);
-	return 0;
-}
+	वापस 0;
+पूर्ण

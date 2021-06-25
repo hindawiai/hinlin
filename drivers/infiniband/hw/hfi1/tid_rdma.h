@@ -1,87 +1,88 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause) */
 /*
  * Copyright(c) 2018 Intel Corporation.
  *
  */
-#ifndef HFI1_TID_RDMA_H
-#define HFI1_TID_RDMA_H
+#अगर_अघोषित HFI1_TID_RDMA_H
+#घोषणा HFI1_TID_RDMA_H
 
-#include <linux/circ_buf.h>
-#include "common.h"
+#समावेश <linux/circ_buf.h>
+#समावेश "common.h"
 
 /* Add a convenience helper */
-#define CIRC_ADD(val, add, size) (((val) + (add)) & ((size) - 1))
-#define CIRC_NEXT(val, size) CIRC_ADD(val, 1, size)
-#define CIRC_PREV(val, size) CIRC_ADD(val, -1, size)
+#घोषणा CIRC_ADD(val, add, size) (((val) + (add)) & ((size) - 1))
+#घोषणा CIRC_NEXT(val, size) CIRC_ADD(val, 1, size)
+#घोषणा CIRC_PREV(val, size) CIRC_ADD(val, -1, size)
 
-#define TID_RDMA_MIN_SEGMENT_SIZE       BIT(18)   /* 256 KiB (for now) */
-#define TID_RDMA_MAX_SEGMENT_SIZE       BIT(18)   /* 256 KiB (for now) */
-#define TID_RDMA_MAX_PAGES              (BIT(18) >> PAGE_SHIFT)
-#define TID_RDMA_SEGMENT_SHIFT		18
+#घोषणा TID_RDMA_MIN_SEGMENT_SIZE       BIT(18)   /* 256 KiB (क्रम now) */
+#घोषणा TID_RDMA_MAX_SEGMENT_SIZE       BIT(18)   /* 256 KiB (क्रम now) */
+#घोषणा TID_RDMA_MAX_PAGES              (BIT(18) >> PAGE_SHIFT)
+#घोषणा TID_RDMA_SEGMENT_SHIFT		18
 
 /*
- * Bit definitions for priv->s_flags.
- * These bit flags overload the bit flags defined for the QP's s_flags.
- * Due to the fact that these bit fields are used only for the QP priv
+ * Bit definitions क्रम priv->s_flags.
+ * These bit flags overload the bit flags defined क्रम the QP's s_flags.
+ * Due to the fact that these bit fields are used only क्रम the QP priv
  * s_flags, there are no collisions.
  *
- * HFI1_S_TID_WAIT_INTERLCK - QP is waiting for requester interlock
- * HFI1_R_TID_WAIT_INTERLCK - QP is waiting for responder interlock
+ * HFI1_S_TID_WAIT_INTERLCK - QP is रुकोing क्रम requester पूर्णांकerlock
+ * HFI1_R_TID_WAIT_INTERLCK - QP is रुकोing क्रम responder पूर्णांकerlock
  */
-#define HFI1_S_TID_BUSY_SET       BIT(0)
-/* BIT(1) reserved for RVT_S_BUSY. */
-#define HFI1_R_TID_RSC_TIMER      BIT(2)
-/* BIT(3) reserved for RVT_S_RESP_PENDING. */
-/* BIT(4) reserved for RVT_S_ACK_PENDING. */
-#define HFI1_S_TID_WAIT_INTERLCK  BIT(5)
-#define HFI1_R_TID_WAIT_INTERLCK  BIT(6)
-/* BIT(7) - BIT(15) reserved for RVT_S_WAIT_*. */
-/* BIT(16) reserved for RVT_S_SEND_ONE */
-#define HFI1_S_TID_RETRY_TIMER    BIT(17)
-/* BIT(18) reserved for RVT_S_ECN. */
-#define HFI1_R_TID_SW_PSN         BIT(19)
-/* BIT(26) reserved for HFI1_S_WAIT_HALT */
-/* BIT(27) reserved for HFI1_S_WAIT_TID_RESP */
-/* BIT(28) reserved for HFI1_S_WAIT_TID_SPACE */
+#घोषणा HFI1_S_TID_BUSY_SET       BIT(0)
+/* BIT(1) reserved क्रम RVT_S_BUSY. */
+#घोषणा HFI1_R_TID_RSC_TIMER      BIT(2)
+/* BIT(3) reserved क्रम RVT_S_RESP_PENDING. */
+/* BIT(4) reserved क्रम RVT_S_ACK_PENDING. */
+#घोषणा HFI1_S_TID_WAIT_INTERLCK  BIT(5)
+#घोषणा HFI1_R_TID_WAIT_INTERLCK  BIT(6)
+/* BIT(7) - BIT(15) reserved क्रम RVT_S_WAIT_*. */
+/* BIT(16) reserved क्रम RVT_S_SEND_ONE */
+#घोषणा HFI1_S_TID_RETRY_TIMER    BIT(17)
+/* BIT(18) reserved क्रम RVT_S_ECN. */
+#घोषणा HFI1_R_TID_SW_PSN         BIT(19)
+/* BIT(26) reserved क्रम HFI1_S_WAIT_HALT */
+/* BIT(27) reserved क्रम HFI1_S_WAIT_TID_RESP */
+/* BIT(28) reserved क्रम HFI1_S_WAIT_TID_SPACE */
 
 /*
- * Unlike regular IB RDMA VERBS, which do not require an entry
- * in the s_ack_queue, TID RDMA WRITE requests do because they
+ * Unlike regular IB RDMA VERBS, which करो not require an entry
+ * in the s_ack_queue, TID RDMA WRITE requests करो because they
  * generate responses.
- * Therefore, the s_ack_queue needs to be extended by a certain
- * amount. The key point is that the queue needs to be extended
- * without letting the "user" know so they user doesn't end up
+ * Thereक्रमe, the s_ack_queue needs to be extended by a certain
+ * amount. The key poपूर्णांक is that the queue needs to be extended
+ * without letting the "user" know so they user करोesn't end up
  * using these extra entries.
  */
-#define HFI1_TID_RDMA_WRITE_CNT 8
+#घोषणा HFI1_TID_RDMA_WRITE_CNT 8
 
-struct tid_rdma_params {
-	struct rcu_head rcu_head;
+काष्ठा tid_rdma_params अणु
+	काष्ठा rcu_head rcu_head;
 	u32 qp;
 	u32 max_len;
 	u16 jkey;
-	u8 max_read;
-	u8 max_write;
-	u8 timeout;
+	u8 max_पढ़ो;
+	u8 max_ग_लिखो;
+	u8 समयout;
 	u8 urg;
 	u8 version;
-};
+पूर्ण;
 
-struct tid_rdma_qp_params {
-	struct work_struct trigger_work;
-	struct tid_rdma_params local;
-	struct tid_rdma_params __rcu *remote;
-};
+काष्ठा tid_rdma_qp_params अणु
+	काष्ठा work_काष्ठा trigger_work;
+	काष्ठा tid_rdma_params local;
+	काष्ठा tid_rdma_params __rcu *remote;
+पूर्ण;
 
-/* Track state for each hardware flow */
-struct tid_flow_state {
+/* Track state क्रम each hardware flow */
+काष्ठा tid_flow_state अणु
 	u32 generation;
 	u32 psn;
 	u8 index;
 	u8 last_index;
-};
+पूर्ण;
 
-enum tid_rdma_req_state {
+क्रमागत tid_rdma_req_state अणु
 	TID_REQUEST_INACTIVE = 0,
 	TID_REQUEST_INIT,
 	TID_REQUEST_INIT_RESEND,
@@ -92,19 +93,19 @@ enum tid_rdma_req_state {
 	TID_REQUEST_SYNC,
 	TID_REQUEST_RNR_NAK,
 	TID_REQUEST_COMPLETE,
-};
+पूर्ण;
 
-struct tid_rdma_request {
-	struct rvt_qp *qp;
-	struct hfi1_ctxtdata *rcd;
-	union {
-		struct rvt_swqe *swqe;
-		struct rvt_ack_entry *ack;
-	} e;
+काष्ठा tid_rdma_request अणु
+	काष्ठा rvt_qp *qp;
+	काष्ठा hfi1_ctxtdata *rcd;
+	जोड़ अणु
+		काष्ठा rvt_swqe *swqe;
+		काष्ठा rvt_ack_entry *ack;
+	पूर्ण e;
 
-	struct tid_rdma_flow *flows;	/* array of tid flows */
-	struct rvt_sge_state ss; /* SGE state for TID RDMA requests */
-	u16 n_flows;		/* size of the flow buffer window */
+	काष्ठा tid_rdma_flow *flows;	/* array of tid flows */
+	काष्ठा rvt_sge_state ss; /* SGE state क्रम TID RDMA requests */
+	u16 n_flows;		/* size of the flow buffer winकरोw */
 	u16 setup_head;		/* flow index we are setting up */
 	u16 clear_tail;		/* flow index we are clearing */
 	u16 flow_idx;		/* flow index most recently set up */
@@ -115,7 +116,7 @@ struct tid_rdma_request {
 	u32 r_ack_psn;          /* next expected ack PSN */
 	u32 r_flow_psn;         /* IB PSN of next segment start */
 	u32 r_last_acked;       /* IB PSN of last ACK'ed packet */
-	u32 s_next_psn;		/* IB PSN of next segment start for read */
+	u32 s_next_psn;		/* IB PSN of next segment start क्रम पढ़ो */
 
 	u32 total_segs;		/* segments required to complete a request */
 	u32 cur_seg;		/* index of current segment */
@@ -123,60 +124,60 @@ struct tid_rdma_request {
 	u32 ack_seg;            /* index of last ack'ed segment */
 	u32 alloc_seg;          /* index of next segment to be allocated */
 	u32 isge;		/* index of "current" sge */
-	u32 ack_pending;        /* num acks pending for this request */
+	u32 ack_pending;        /* num acks pending क्रम this request */
 
-	enum tid_rdma_req_state state;
-};
+	क्रमागत tid_rdma_req_state state;
+पूर्ण;
 
 /*
  * When header suppression is used, PSNs associated with a "flow" are
- * relevant (and not the PSNs maintained by verbs). Track per-flow
- * PSNs here for a TID RDMA segment.
+ * relevant (and not the PSNs मुख्यtained by verbs). Track per-flow
+ * PSNs here क्रम a TID RDMA segment.
  *
  */
-struct flow_state {
+काष्ठा flow_state अणु
 	u32 flags;
-	u32 resp_ib_psn;     /* The IB PSN of the response for this flow */
+	u32 resp_ib_psn;     /* The IB PSN of the response क्रम this flow */
 	u32 generation;      /* generation of flow */
 	u32 spsn;            /* starting PSN in TID space */
 	u32 lpsn;            /* last PSN in TID space */
 	u32 r_next_psn;      /* next PSN to be received (in TID space) */
 
-	/* For tid rdma read */
+	/* For tid rdma पढ़ो */
 	u32 ib_spsn;         /* starting PSN in Verbs space */
 	u32 ib_lpsn;         /* last PSn in Verbs space */
-};
+पूर्ण;
 
-struct tid_rdma_pageset {
-	dma_addr_t addr : 48; /* Only needed for the first page */
+काष्ठा tid_rdma_pageset अणु
+	dma_addr_t addr : 48; /* Only needed क्रम the first page */
 	u8 idx: 8;
 	u8 count : 7;
 	u8 mapped: 1;
-};
+पूर्ण;
 
 /**
- * kern_tid_node - used for managing TID's in TID groups
+ * kern_tid_node - used क्रम managing TID's in TID groups
  *
  * @grp_idx: rcd relative index to tid_group
  * @map: grp->map captured prior to programming this TID group in HW
  * @cnt: Only @cnt of available group entries are actually programmed
  */
-struct kern_tid_node {
-	struct tid_group *grp;
+काष्ठा kern_tid_node अणु
+	काष्ठा tid_group *grp;
 	u8 map;
 	u8 cnt;
-};
+पूर्ण;
 
-/* Overall info for a TID RDMA segment */
-struct tid_rdma_flow {
+/* Overall info क्रम a TID RDMA segment */
+काष्ठा tid_rdma_flow अणु
 	/*
 	 * While a TID RDMA segment is being transferred, it uses a QP number
-	 * from the "KDETH section of QP numbers" (which is different from the
+	 * from the "KDETH section of QP numbers" (which is dअगरferent from the
 	 * QP number that originated the request). Bits 11-15 of these QP
-	 * numbers identify the "TID flow" for the segment.
+	 * numbers identअगरy the "TID flow" क्रम the segment.
 	 */
-	struct flow_state flow_state;
-	struct tid_rdma_request *req;
+	काष्ठा flow_state flow_state;
+	काष्ठा tid_rdma_request *req;
 	u32 tid_qpn;
 	u32 tid_offset;
 	u32 length;
@@ -189,131 +190,131 @@ struct tid_rdma_flow {
 	u8 npkts;
 	u8 pkt;
 	u8 resync_npkts;
-	struct kern_tid_node tnode[TID_RDMA_MAX_PAGES];
-	struct tid_rdma_pageset pagesets[TID_RDMA_MAX_PAGES];
+	काष्ठा kern_tid_node tnode[TID_RDMA_MAX_PAGES];
+	काष्ठा tid_rdma_pageset pagesets[TID_RDMA_MAX_PAGES];
 	u32 tid_entry[TID_RDMA_MAX_PAGES];
-};
+पूर्ण;
 
-enum tid_rnr_nak_state {
+क्रमागत tid_rnr_nak_state अणु
 	TID_RNR_NAK_INIT = 0,
 	TID_RNR_NAK_SEND,
 	TID_RNR_NAK_SENT,
-};
+पूर्ण;
 
-bool tid_rdma_conn_req(struct rvt_qp *qp, u64 *data);
-bool tid_rdma_conn_reply(struct rvt_qp *qp, u64 data);
-bool tid_rdma_conn_resp(struct rvt_qp *qp, u64 *data);
-void tid_rdma_conn_error(struct rvt_qp *qp);
-void tid_rdma_opfn_init(struct rvt_qp *qp, struct tid_rdma_params *p);
+bool tid_rdma_conn_req(काष्ठा rvt_qp *qp, u64 *data);
+bool tid_rdma_conn_reply(काष्ठा rvt_qp *qp, u64 data);
+bool tid_rdma_conn_resp(काष्ठा rvt_qp *qp, u64 *data);
+व्योम tid_rdma_conn_error(काष्ठा rvt_qp *qp);
+व्योम tid_rdma_opfn_init(काष्ठा rvt_qp *qp, काष्ठा tid_rdma_params *p);
 
-int hfi1_kern_exp_rcv_init(struct hfi1_ctxtdata *rcd, int reinit);
-int hfi1_kern_exp_rcv_setup(struct tid_rdma_request *req,
-			    struct rvt_sge_state *ss, bool *last);
-int hfi1_kern_exp_rcv_clear(struct tid_rdma_request *req);
-void hfi1_kern_exp_rcv_clear_all(struct tid_rdma_request *req);
-void __trdma_clean_swqe(struct rvt_qp *qp, struct rvt_swqe *wqe);
+पूर्णांक hfi1_kern_exp_rcv_init(काष्ठा hfi1_ctxtdata *rcd, पूर्णांक reinit);
+पूर्णांक hfi1_kern_exp_rcv_setup(काष्ठा tid_rdma_request *req,
+			    काष्ठा rvt_sge_state *ss, bool *last);
+पूर्णांक hfi1_kern_exp_rcv_clear(काष्ठा tid_rdma_request *req);
+व्योम hfi1_kern_exp_rcv_clear_all(काष्ठा tid_rdma_request *req);
+व्योम __trdma_clean_swqe(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe);
 
 /**
- * trdma_clean_swqe - clean flows for swqe if large send queue
+ * trdma_clean_swqe - clean flows क्रम swqe अगर large send queue
  * @qp: the qp
  * @wqe: the send wqe
  */
-static inline void trdma_clean_swqe(struct rvt_qp *qp, struct rvt_swqe *wqe)
-{
-	if (!wqe->priv)
-		return;
+अटल अंतरभूत व्योम trdma_clean_swqe(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe)
+अणु
+	अगर (!wqe->priv)
+		वापस;
 	__trdma_clean_swqe(qp, wqe);
-}
+पूर्ण
 
-void hfi1_kern_read_tid_flow_free(struct rvt_qp *qp);
+व्योम hfi1_kern_पढ़ो_tid_flow_मुक्त(काष्ठा rvt_qp *qp);
 
-int hfi1_qp_priv_init(struct rvt_dev_info *rdi, struct rvt_qp *qp,
-		      struct ib_qp_init_attr *init_attr);
-void hfi1_qp_priv_tid_free(struct rvt_dev_info *rdi, struct rvt_qp *qp);
+पूर्णांक hfi1_qp_priv_init(काष्ठा rvt_dev_info *rdi, काष्ठा rvt_qp *qp,
+		      काष्ठा ib_qp_init_attr *init_attr);
+व्योम hfi1_qp_priv_tid_मुक्त(काष्ठा rvt_dev_info *rdi, काष्ठा rvt_qp *qp);
 
-void hfi1_tid_rdma_flush_wait(struct rvt_qp *qp);
+व्योम hfi1_tid_rdma_flush_रुको(काष्ठा rvt_qp *qp);
 
-int hfi1_kern_setup_hw_flow(struct hfi1_ctxtdata *rcd, struct rvt_qp *qp);
-void hfi1_kern_clear_hw_flow(struct hfi1_ctxtdata *rcd, struct rvt_qp *qp);
-void hfi1_kern_init_ctxt_generations(struct hfi1_ctxtdata *rcd);
+पूर्णांक hfi1_kern_setup_hw_flow(काष्ठा hfi1_ctxtdata *rcd, काष्ठा rvt_qp *qp);
+व्योम hfi1_kern_clear_hw_flow(काष्ठा hfi1_ctxtdata *rcd, काष्ठा rvt_qp *qp);
+व्योम hfi1_kern_init_ctxt_generations(काष्ठा hfi1_ctxtdata *rcd);
 
-struct cntr_entry;
-u64 hfi1_access_sw_tid_wait(const struct cntr_entry *entry,
-			    void *context, int vl, int mode, u64 data);
+काष्ठा cntr_entry;
+u64 hfi1_access_sw_tid_रुको(स्थिर काष्ठा cntr_entry *entry,
+			    व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data);
 
-u32 hfi1_build_tid_rdma_read_packet(struct rvt_swqe *wqe,
-				    struct ib_other_headers *ohdr,
+u32 hfi1_build_tid_rdma_पढ़ो_packet(काष्ठा rvt_swqe *wqe,
+				    काष्ठा ib_other_headers *ohdr,
 				    u32 *bth1, u32 *bth2, u32 *len);
-u32 hfi1_build_tid_rdma_read_req(struct rvt_qp *qp, struct rvt_swqe *wqe,
-				 struct ib_other_headers *ohdr, u32 *bth1,
+u32 hfi1_build_tid_rdma_पढ़ो_req(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe,
+				 काष्ठा ib_other_headers *ohdr, u32 *bth1,
 				 u32 *bth2, u32 *len);
-void hfi1_rc_rcv_tid_rdma_read_req(struct hfi1_packet *packet);
-u32 hfi1_build_tid_rdma_read_resp(struct rvt_qp *qp, struct rvt_ack_entry *e,
-				  struct ib_other_headers *ohdr, u32 *bth0,
+व्योम hfi1_rc_rcv_tid_rdma_पढ़ो_req(काष्ठा hfi1_packet *packet);
+u32 hfi1_build_tid_rdma_पढ़ो_resp(काष्ठा rvt_qp *qp, काष्ठा rvt_ack_entry *e,
+				  काष्ठा ib_other_headers *ohdr, u32 *bth0,
 				  u32 *bth1, u32 *bth2, u32 *len, bool *last);
-void hfi1_rc_rcv_tid_rdma_read_resp(struct hfi1_packet *packet);
-bool hfi1_handle_kdeth_eflags(struct hfi1_ctxtdata *rcd,
-			      struct hfi1_pportdata *ppd,
-			      struct hfi1_packet *packet);
-void hfi1_tid_rdma_restart_req(struct rvt_qp *qp, struct rvt_swqe *wqe,
+व्योम hfi1_rc_rcv_tid_rdma_पढ़ो_resp(काष्ठा hfi1_packet *packet);
+bool hfi1_handle_kdeth_eflags(काष्ठा hfi1_ctxtdata *rcd,
+			      काष्ठा hfi1_pportdata *ppd,
+			      काष्ठा hfi1_packet *packet);
+व्योम hfi1_tid_rdma_restart_req(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe,
 			       u32 *bth2);
-void hfi1_qp_kern_exp_rcv_clear_all(struct rvt_qp *qp);
-bool hfi1_tid_rdma_wqe_interlock(struct rvt_qp *qp, struct rvt_swqe *wqe);
+व्योम hfi1_qp_kern_exp_rcv_clear_all(काष्ठा rvt_qp *qp);
+bool hfi1_tid_rdma_wqe_पूर्णांकerlock(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe);
 
-void setup_tid_rdma_wqe(struct rvt_qp *qp, struct rvt_swqe *wqe);
-static inline void hfi1_setup_tid_rdma_wqe(struct rvt_qp *qp,
-					   struct rvt_swqe *wqe)
-{
-	if (wqe->priv &&
+व्योम setup_tid_rdma_wqe(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe);
+अटल अंतरभूत व्योम hfi1_setup_tid_rdma_wqe(काष्ठा rvt_qp *qp,
+					   काष्ठा rvt_swqe *wqe)
+अणु
+	अगर (wqe->priv &&
 	    (wqe->wr.opcode == IB_WR_RDMA_READ ||
 	     wqe->wr.opcode == IB_WR_RDMA_WRITE) &&
 	    wqe->length >= TID_RDMA_MIN_SEGMENT_SIZE)
 		setup_tid_rdma_wqe(qp, wqe);
-}
+पूर्ण
 
-u32 hfi1_build_tid_rdma_write_req(struct rvt_qp *qp, struct rvt_swqe *wqe,
-				  struct ib_other_headers *ohdr,
+u32 hfi1_build_tid_rdma_ग_लिखो_req(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe,
+				  काष्ठा ib_other_headers *ohdr,
 				  u32 *bth1, u32 *bth2, u32 *len);
 
-void hfi1_rc_rcv_tid_rdma_write_req(struct hfi1_packet *packet);
+व्योम hfi1_rc_rcv_tid_rdma_ग_लिखो_req(काष्ठा hfi1_packet *packet);
 
-u32 hfi1_build_tid_rdma_write_resp(struct rvt_qp *qp, struct rvt_ack_entry *e,
-				   struct ib_other_headers *ohdr, u32 *bth1,
+u32 hfi1_build_tid_rdma_ग_लिखो_resp(काष्ठा rvt_qp *qp, काष्ठा rvt_ack_entry *e,
+				   काष्ठा ib_other_headers *ohdr, u32 *bth1,
 				   u32 bth2, u32 *len,
-				   struct rvt_sge_state **ss);
+				   काष्ठा rvt_sge_state **ss);
 
-void hfi1_del_tid_reap_timer(struct rvt_qp *qp);
+व्योम hfi1_del_tid_reap_समयr(काष्ठा rvt_qp *qp);
 
-void hfi1_rc_rcv_tid_rdma_write_resp(struct hfi1_packet *packet);
+व्योम hfi1_rc_rcv_tid_rdma_ग_लिखो_resp(काष्ठा hfi1_packet *packet);
 
-bool hfi1_build_tid_rdma_packet(struct rvt_swqe *wqe,
-				struct ib_other_headers *ohdr,
+bool hfi1_build_tid_rdma_packet(काष्ठा rvt_swqe *wqe,
+				काष्ठा ib_other_headers *ohdr,
 				u32 *bth1, u32 *bth2, u32 *len);
 
-void hfi1_rc_rcv_tid_rdma_write_data(struct hfi1_packet *packet);
+व्योम hfi1_rc_rcv_tid_rdma_ग_लिखो_data(काष्ठा hfi1_packet *packet);
 
-u32 hfi1_build_tid_rdma_write_ack(struct rvt_qp *qp, struct rvt_ack_entry *e,
-				  struct ib_other_headers *ohdr, u16 iflow,
+u32 hfi1_build_tid_rdma_ग_लिखो_ack(काष्ठा rvt_qp *qp, काष्ठा rvt_ack_entry *e,
+				  काष्ठा ib_other_headers *ohdr, u16 अगरlow,
 				  u32 *bth1, u32 *bth2);
 
-void hfi1_rc_rcv_tid_rdma_ack(struct hfi1_packet *packet);
+व्योम hfi1_rc_rcv_tid_rdma_ack(काष्ठा hfi1_packet *packet);
 
-void hfi1_add_tid_retry_timer(struct rvt_qp *qp);
-void hfi1_del_tid_retry_timer(struct rvt_qp *qp);
+व्योम hfi1_add_tid_retry_समयr(काष्ठा rvt_qp *qp);
+व्योम hfi1_del_tid_retry_समयr(काष्ठा rvt_qp *qp);
 
-u32 hfi1_build_tid_rdma_resync(struct rvt_qp *qp, struct rvt_swqe *wqe,
-			       struct ib_other_headers *ohdr, u32 *bth1,
+u32 hfi1_build_tid_rdma_resync(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe,
+			       काष्ठा ib_other_headers *ohdr, u32 *bth1,
 			       u32 *bth2, u16 fidx);
 
-void hfi1_rc_rcv_tid_rdma_resync(struct hfi1_packet *packet);
+व्योम hfi1_rc_rcv_tid_rdma_resync(काष्ठा hfi1_packet *packet);
 
-struct hfi1_pkt_state;
-int hfi1_make_tid_rdma_pkt(struct rvt_qp *qp, struct hfi1_pkt_state *ps);
+काष्ठा hfi1_pkt_state;
+पूर्णांक hfi1_make_tid_rdma_pkt(काष्ठा rvt_qp *qp, काष्ठा hfi1_pkt_state *ps);
 
-void _hfi1_do_tid_send(struct work_struct *work);
+व्योम _hfi1_करो_tid_send(काष्ठा work_काष्ठा *work);
 
-bool hfi1_schedule_tid_send(struct rvt_qp *qp);
+bool hfi1_schedule_tid_send(काष्ठा rvt_qp *qp);
 
-bool hfi1_tid_rdma_ack_interlock(struct rvt_qp *qp, struct rvt_ack_entry *e);
+bool hfi1_tid_rdma_ack_पूर्णांकerlock(काष्ठा rvt_qp *qp, काष्ठा rvt_ack_entry *e);
 
-#endif /* HFI1_TID_RDMA_H */
+#पूर्ण_अगर /* HFI1_TID_RDMA_H */

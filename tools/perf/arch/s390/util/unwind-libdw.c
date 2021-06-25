@@ -1,24 +1,25 @@
-#include <linux/kernel.h>
-#include <elfutils/libdwfl.h>
-#include "../../util/unwind-libdw.h"
-#include "../../util/perf_regs.h"
-#include "../../util/event.h"
-#include "dwarf-regs-table.h"
+<शैली गुरु>
+#समावेश <linux/kernel.h>
+#समावेश <elfutils/libdwfl.h>
+#समावेश "../../util/unwind-libdw.h"
+#समावेश "../../util/perf_regs.h"
+#समावेश "../../util/event.h"
+#समावेश "dwarf-regs-table.h"
 
 
-bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
-{
-	struct unwind_info *ui = arg;
-	struct regs_dump *user_regs = &ui->sample->user_regs;
+bool libdw__arch_set_initial_रेजिस्टरs(Dwfl_Thपढ़ो *thपढ़ो, व्योम *arg)
+अणु
+	काष्ठा unwind_info *ui = arg;
+	काष्ठा regs_dump *user_regs = &ui->sample->user_regs;
 	Dwarf_Word dwarf_regs[ARRAY_SIZE(s390_dwarf_regs)];
 
-#define REG(r) ({						\
+#घोषणा REG(r) (अणु						\
 	Dwarf_Word val = 0;					\
 	perf_reg_value(&val, user_regs, PERF_REG_S390_##r);	\
 	val;							\
-})
+पूर्ण)
 	/*
-	 * For DWARF register mapping details,
+	 * For DWARF रेजिस्टर mapping details,
 	 * see also perf/arch/s390/include/dwarf-regs-table.h
 	 */
 	dwarf_regs[0]  = REG(R0);
@@ -58,6 +59,6 @@ bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
 	dwarf_regs[64] = REG(MASK);
 	dwarf_regs[65] = REG(PC);
 
-	dwfl_thread_state_register_pc(thread, dwarf_regs[65]);
-	return dwfl_thread_state_registers(thread, 0, 32, dwarf_regs);
-}
+	dwfl_thपढ़ो_state_रेजिस्टर_pc(thपढ़ो, dwarf_regs[65]);
+	वापस dwfl_thपढ़ो_state_रेजिस्टरs(thपढ़ो, 0, 32, dwarf_regs);
+पूर्ण

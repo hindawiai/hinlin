@@ -1,130 +1,131 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * linux/include/linux/sunrpc/debug.h
  *
- * Debugging support for sunrpc module
+ * Debugging support क्रम sunrpc module
  *
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
-#ifndef _LINUX_SUNRPC_DEBUG_H_
-#define _LINUX_SUNRPC_DEBUG_H_
+#अगर_अघोषित _LINUX_SUNRPC_DEBUG_H_
+#घोषणा _LINUX_SUNRPC_DEBUG_H_
 
-#include <uapi/linux/sunrpc/debug.h>
+#समावेश <uapi/linux/sunrpc/debug.h>
 
 /*
  * Debugging macros etc
  */
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-extern unsigned int		rpc_debug;
-extern unsigned int		nfs_debug;
-extern unsigned int		nfsd_debug;
-extern unsigned int		nlm_debug;
-#endif
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+बाह्य अचिन्हित पूर्णांक		rpc_debug;
+बाह्य अचिन्हित पूर्णांक		nfs_debug;
+बाह्य अचिन्हित पूर्णांक		nfsd_debug;
+बाह्य अचिन्हित पूर्णांक		nlm_debug;
+#पूर्ण_अगर
 
-#define dprintk(fmt, ...)						\
-	dfprintk(FACILITY, fmt, ##__VA_ARGS__)
-#define dprintk_cont(fmt, ...)						\
-	dfprintk_cont(FACILITY, fmt, ##__VA_ARGS__)
-#define dprintk_rcu(fmt, ...)						\
-	dfprintk_rcu(FACILITY, fmt, ##__VA_ARGS__)
-#define dprintk_rcu_cont(fmt, ...)					\
-	dfprintk_rcu_cont(FACILITY, fmt, ##__VA_ARGS__)
+#घोषणा dprपूर्णांकk(fmt, ...)						\
+	dfprपूर्णांकk(FACILITY, fmt, ##__VA_ARGS__)
+#घोषणा dprपूर्णांकk_cont(fmt, ...)						\
+	dfprपूर्णांकk_cont(FACILITY, fmt, ##__VA_ARGS__)
+#घोषणा dprपूर्णांकk_rcu(fmt, ...)						\
+	dfprपूर्णांकk_rcu(FACILITY, fmt, ##__VA_ARGS__)
+#घोषणा dprपूर्णांकk_rcu_cont(fmt, ...)					\
+	dfprपूर्णांकk_rcu_cont(FACILITY, fmt, ##__VA_ARGS__)
 
-#undef ifdebug
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-# define ifdebug(fac)		if (unlikely(rpc_debug & RPCDBG_##fac))
+#अघोषित अगरdebug
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+# define अगरdebug(fac)		अगर (unlikely(rpc_debug & RPCDBG_##fac))
 
-# define dfprintk(fac, fmt, ...)					\
-do {									\
-	ifdebug(fac)							\
-		printk(KERN_DEFAULT fmt, ##__VA_ARGS__);		\
-} while (0)
+# define dfprपूर्णांकk(fac, fmt, ...)					\
+करो अणु									\
+	अगरdebug(fac)							\
+		prपूर्णांकk(KERN_DEFAULT fmt, ##__VA_ARGS__);		\
+पूर्ण जबतक (0)
 
-# define dfprintk_cont(fac, fmt, ...)					\
-do {									\
-	ifdebug(fac)							\
-		printk(KERN_CONT fmt, ##__VA_ARGS__);			\
-} while (0)
+# define dfprपूर्णांकk_cont(fac, fmt, ...)					\
+करो अणु									\
+	अगरdebug(fac)							\
+		prपूर्णांकk(KERN_CONT fmt, ##__VA_ARGS__);			\
+पूर्ण जबतक (0)
 
-# define dfprintk_rcu(fac, fmt, ...)					\
-do {									\
-	ifdebug(fac) {							\
-		rcu_read_lock();					\
-		printk(KERN_DEFAULT fmt, ##__VA_ARGS__);		\
-		rcu_read_unlock();					\
-	}								\
-} while (0)
+# define dfprपूर्णांकk_rcu(fac, fmt, ...)					\
+करो अणु									\
+	अगरdebug(fac) अणु							\
+		rcu_पढ़ो_lock();					\
+		prपूर्णांकk(KERN_DEFAULT fmt, ##__VA_ARGS__);		\
+		rcu_पढ़ो_unlock();					\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-# define dfprintk_rcu_cont(fac, fmt, ...)				\
-do {									\
-	ifdebug(fac) {							\
-		rcu_read_lock();					\
-		printk(KERN_CONT fmt, ##__VA_ARGS__);			\
-		rcu_read_unlock();					\
-	}								\
-} while (0)
+# define dfprपूर्णांकk_rcu_cont(fac, fmt, ...)				\
+करो अणु									\
+	अगरdebug(fac) अणु							\
+		rcu_पढ़ो_lock();					\
+		prपूर्णांकk(KERN_CONT fmt, ##__VA_ARGS__);			\
+		rcu_पढ़ो_unlock();					\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
 # define RPC_IFDEBUG(x)		x
-#else
-# define ifdebug(fac)		if (0)
-# define dfprintk(fac, fmt, ...)	do {} while (0)
-# define dfprintk_cont(fac, fmt, ...)	do {} while (0)
-# define dfprintk_rcu(fac, fmt, ...)	do {} while (0)
+#अन्यथा
+# define अगरdebug(fac)		अगर (0)
+# define dfprपूर्णांकk(fac, fmt, ...)	करो अणुपूर्ण जबतक (0)
+# define dfprपूर्णांकk_cont(fac, fmt, ...)	करो अणुपूर्ण जबतक (0)
+# define dfprपूर्णांकk_rcu(fac, fmt, ...)	करो अणुपूर्ण जबतक (0)
 # define RPC_IFDEBUG(x)
-#endif
+#पूर्ण_अगर
 
 /*
- * Sysctl interface for RPC debugging
+ * Sysctl पूर्णांकerface क्रम RPC debugging
  */
 
-struct rpc_clnt;
-struct rpc_xprt;
+काष्ठा rpc_clnt;
+काष्ठा rpc_xprt;
 
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-void		rpc_register_sysctl(void);
-void		rpc_unregister_sysctl(void);
-void		sunrpc_debugfs_init(void);
-void		sunrpc_debugfs_exit(void);
-void		rpc_clnt_debugfs_register(struct rpc_clnt *);
-void		rpc_clnt_debugfs_unregister(struct rpc_clnt *);
-void		rpc_xprt_debugfs_register(struct rpc_xprt *);
-void		rpc_xprt_debugfs_unregister(struct rpc_xprt *);
-#else
-static inline void
-sunrpc_debugfs_init(void)
-{
-	return;
-}
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+व्योम		rpc_रेजिस्टर_sysctl(व्योम);
+व्योम		rpc_unरेजिस्टर_sysctl(व्योम);
+व्योम		sunrpc_debugfs_init(व्योम);
+व्योम		sunrpc_debugfs_निकास(व्योम);
+व्योम		rpc_clnt_debugfs_रेजिस्टर(काष्ठा rpc_clnt *);
+व्योम		rpc_clnt_debugfs_unरेजिस्टर(काष्ठा rpc_clnt *);
+व्योम		rpc_xprt_debugfs_रेजिस्टर(काष्ठा rpc_xprt *);
+व्योम		rpc_xprt_debugfs_unरेजिस्टर(काष्ठा rpc_xprt *);
+#अन्यथा
+अटल अंतरभूत व्योम
+sunrpc_debugfs_init(व्योम)
+अणु
+	वापस;
+पूर्ण
 
-static inline void
-sunrpc_debugfs_exit(void)
-{
-	return;
-}
+अटल अंतरभूत व्योम
+sunrpc_debugfs_निकास(व्योम)
+अणु
+	वापस;
+पूर्ण
 
-static inline void
-rpc_clnt_debugfs_register(struct rpc_clnt *clnt)
-{
-	return;
-}
+अटल अंतरभूत व्योम
+rpc_clnt_debugfs_रेजिस्टर(काष्ठा rpc_clnt *clnt)
+अणु
+	वापस;
+पूर्ण
 
-static inline void
-rpc_clnt_debugfs_unregister(struct rpc_clnt *clnt)
-{
-	return;
-}
+अटल अंतरभूत व्योम
+rpc_clnt_debugfs_unरेजिस्टर(काष्ठा rpc_clnt *clnt)
+अणु
+	वापस;
+पूर्ण
 
-static inline void
-rpc_xprt_debugfs_register(struct rpc_xprt *xprt)
-{
-	return;
-}
+अटल अंतरभूत व्योम
+rpc_xprt_debugfs_रेजिस्टर(काष्ठा rpc_xprt *xprt)
+अणु
+	वापस;
+पूर्ण
 
-static inline void
-rpc_xprt_debugfs_unregister(struct rpc_xprt *xprt)
-{
-	return;
-}
-#endif
+अटल अंतरभूत व्योम
+rpc_xprt_debugfs_unरेजिस्टर(काष्ठा rpc_xprt *xprt)
+अणु
+	वापस;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_SUNRPC_DEBUG_H_ */
+#पूर्ण_अगर /* _LINUX_SUNRPC_DEBUG_H_ */

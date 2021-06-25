@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * wm831x-spi.c  --  SPI access for Wolfson WM831x PMICs
+ * wm831x-spi.c  --  SPI access क्रम Wolfson WM831x PMICs
  *
  * Copyright 2009,2010 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pm.h>
-#include <linux/spi/spi.h>
-#include <linux/regmap.h>
-#include <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/err.h>
 
-#include <linux/mfd/wm831x/core.h>
+#समावेश <linux/mfd/wm831x/core.h>
 
-static int wm831x_spi_probe(struct spi_device *spi)
-{
-	struct wm831x_pdata *pdata = dev_get_platdata(&spi->dev);
-	const struct spi_device_id *id = spi_get_device_id(spi);
-	const struct of_device_id *of_id;
-	struct wm831x *wm831x;
-	enum wm831x_parent type;
-	int ret;
+अटल पूर्णांक wm831x_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा wm831x_pdata *pdata = dev_get_platdata(&spi->dev);
+	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
+	स्थिर काष्ठा of_device_id *of_id;
+	काष्ठा wm831x *wm831x;
+	क्रमागत wm831x_parent type;
+	पूर्णांक ret;
 
-	if (spi->dev.of_node) {
+	अगर (spi->dev.of_node) अणु
 		of_id = of_match_device(wm831x_of_match, &spi->dev);
-		if (!of_id) {
+		अगर (!of_id) अणु
 			dev_err(&spi->dev, "Failed to match device\n");
-			return -ENODEV;
-		}
-		type = (enum wm831x_parent)of_id->data;
-	} else {
-		type = (enum wm831x_parent)id->driver_data;
-	}
+			वापस -ENODEV;
+		पूर्ण
+		type = (क्रमागत wm831x_parent)of_id->data;
+	पूर्ण अन्यथा अणु
+		type = (क्रमागत wm831x_parent)id->driver_data;
+	पूर्ण
 
-	wm831x = devm_kzalloc(&spi->dev, sizeof(struct wm831x), GFP_KERNEL);
-	if (wm831x == NULL)
-		return -ENOMEM;
+	wm831x = devm_kzalloc(&spi->dev, माप(काष्ठा wm831x), GFP_KERNEL);
+	अगर (wm831x == शून्य)
+		वापस -ENOMEM;
 
 	spi->mode = SPI_MODE_0;
 
@@ -49,71 +50,71 @@ static int wm831x_spi_probe(struct spi_device *spi)
 	wm831x->type = type;
 
 	wm831x->regmap = devm_regmap_init_spi(spi, &wm831x_regmap_config);
-	if (IS_ERR(wm831x->regmap)) {
+	अगर (IS_ERR(wm831x->regmap)) अणु
 		ret = PTR_ERR(wm831x->regmap);
 		dev_err(wm831x->dev, "Failed to allocate register map: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (pdata)
-		memcpy(&wm831x->pdata, pdata, sizeof(*pdata));
+	अगर (pdata)
+		स_नकल(&wm831x->pdata, pdata, माप(*pdata));
 
-	return wm831x_device_init(wm831x, spi->irq);
-}
+	वापस wm831x_device_init(wm831x, spi->irq);
+पूर्ण
 
-static int wm831x_spi_suspend(struct device *dev)
-{
-	struct wm831x *wm831x = dev_get_drvdata(dev);
+अटल पूर्णांक wm831x_spi_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा wm831x *wm831x = dev_get_drvdata(dev);
 
-	return wm831x_device_suspend(wm831x);
-}
+	वापस wm831x_device_suspend(wm831x);
+पूर्ण
 
-static int wm831x_spi_poweroff(struct device *dev)
-{
-	struct wm831x *wm831x = dev_get_drvdata(dev);
+अटल पूर्णांक wm831x_spi_घातeroff(काष्ठा device *dev)
+अणु
+	काष्ठा wm831x *wm831x = dev_get_drvdata(dev);
 
-	wm831x_device_shutdown(wm831x);
+	wm831x_device_shutकरोwn(wm831x);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops wm831x_spi_pm = {
-	.freeze = wm831x_spi_suspend,
+अटल स्थिर काष्ठा dev_pm_ops wm831x_spi_pm = अणु
+	.मुक्तze = wm831x_spi_suspend,
 	.suspend = wm831x_spi_suspend,
-	.poweroff = wm831x_spi_poweroff,
-};
+	.घातeroff = wm831x_spi_घातeroff,
+पूर्ण;
 
-static const struct spi_device_id wm831x_spi_ids[] = {
-	{ "wm8310", WM8310 },
-	{ "wm8311", WM8311 },
-	{ "wm8312", WM8312 },
-	{ "wm8320", WM8320 },
-	{ "wm8321", WM8321 },
-	{ "wm8325", WM8325 },
-	{ "wm8326", WM8326 },
-	{ },
-};
+अटल स्थिर काष्ठा spi_device_id wm831x_spi_ids[] = अणु
+	अणु "wm8310", WM8310 पूर्ण,
+	अणु "wm8311", WM8311 पूर्ण,
+	अणु "wm8312", WM8312 पूर्ण,
+	अणु "wm8320", WM8320 पूर्ण,
+	अणु "wm8321", WM8321 पूर्ण,
+	अणु "wm8325", WM8325 पूर्ण,
+	अणु "wm8326", WM8326 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct spi_driver wm831x_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver wm831x_spi_driver = अणु
+	.driver = अणु
 		.name	= "wm831x",
 		.pm	= &wm831x_spi_pm,
 		.of_match_table = of_match_ptr(wm831x_of_match),
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.id_table	= wm831x_spi_ids,
 	.probe		= wm831x_spi_probe,
-};
+पूर्ण;
 
-static int __init wm831x_spi_init(void)
-{
-	int ret;
+अटल पूर्णांक __init wm831x_spi_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = spi_register_driver(&wm831x_spi_driver);
-	if (ret != 0)
+	ret = spi_रेजिस्टर_driver(&wm831x_spi_driver);
+	अगर (ret != 0)
 		pr_err("Failed to register WM831x SPI driver: %d\n", ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(wm831x_spi_init);

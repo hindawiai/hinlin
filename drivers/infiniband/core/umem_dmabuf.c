@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 /*
  * Copyright (c) 2020 Intel Corporation. All rights reserved.
  */
 
-#include <linux/dma-buf.h>
-#include <linux/dma-resv.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/dma-resv.h>
+#समावेश <linux/dma-mapping.h>
 
-#include "uverbs.h"
+#समावेश "uverbs.h"
 
-int ib_umem_dmabuf_map_pages(struct ib_umem_dmabuf *umem_dmabuf)
-{
-	struct sg_table *sgt;
-	struct scatterlist *sg;
-	struct dma_fence *fence;
-	unsigned long start, end, cur = 0;
-	unsigned int nmap = 0;
-	int i;
+पूर्णांक ib_umem_dmabuf_map_pages(काष्ठा ib_umem_dmabuf *umem_dmabuf)
+अणु
+	काष्ठा sg_table *sgt;
+	काष्ठा scatterlist *sg;
+	काष्ठा dma_fence *fence;
+	अचिन्हित दीर्घ start, end, cur = 0;
+	अचिन्हित पूर्णांक nmap = 0;
+	पूर्णांक i;
 
-	dma_resv_assert_held(umem_dmabuf->attach->dmabuf->resv);
+	dma_resv_निश्चित_held(umem_dmabuf->attach->dmabuf->resv);
 
-	if (umem_dmabuf->sgt)
-		goto wait_fence;
+	अगर (umem_dmabuf->sgt)
+		जाओ रुको_fence;
 
-	sgt = dma_buf_map_attachment(umem_dmabuf->attach, DMA_BIDIRECTIONAL);
-	if (IS_ERR(sgt))
-		return PTR_ERR(sgt);
+	sgt = dma_buf_map_attachment(umem_dmabuf->attach, DMA_BIसूचीECTIONAL);
+	अगर (IS_ERR(sgt))
+		वापस PTR_ERR(sgt);
 
-	/* modify the sg list in-place to match umem address and length */
+	/* modअगरy the sg list in-place to match umem address and length */
 
 	start = ALIGN_DOWN(umem_dmabuf->umem.address, PAGE_SIZE);
 	end = ALIGN(umem_dmabuf->umem.address + umem_dmabuf->umem.length,
 		    PAGE_SIZE);
-	for_each_sgtable_dma_sg(sgt, sg, i) {
-		if (start < cur + sg_dma_len(sg) && cur < end)
+	क्रम_each_sgtable_dma_sg(sgt, sg, i) अणु
+		अगर (start < cur + sg_dma_len(sg) && cur < end)
 			nmap++;
-		if (cur <= start && start < cur + sg_dma_len(sg)) {
-			unsigned long offset = start - cur;
+		अगर (cur <= start && start < cur + sg_dma_len(sg)) अणु
+			अचिन्हित दीर्घ offset = start - cur;
 
 			umem_dmabuf->first_sg = sg;
 			umem_dmabuf->first_sg_offset = offset;
 			sg_dma_address(sg) += offset;
 			sg_dma_len(sg) -= offset;
 			cur += offset;
-		}
-		if (cur < end && end <= cur + sg_dma_len(sg)) {
-			unsigned long trim = cur + sg_dma_len(sg) - end;
+		पूर्ण
+		अगर (cur < end && end <= cur + sg_dma_len(sg)) अणु
+			अचिन्हित दीर्घ trim = cur + sg_dma_len(sg) - end;
 
 			umem_dmabuf->last_sg = sg;
 			umem_dmabuf->last_sg_trim = trim;
 			sg_dma_len(sg) -= trim;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		cur += sg_dma_len(sg);
-	}
+	पूर्ण
 
 	umem_dmabuf->umem.sg_head.sgl = umem_dmabuf->first_sg;
 	umem_dmabuf->umem.sg_head.nents = nmap;
 	umem_dmabuf->umem.nmap = nmap;
 	umem_dmabuf->sgt = sgt;
 
-wait_fence:
+रुको_fence:
 	/*
 	 * Although the sg list is valid now, the content of the pages
-	 * may be not up-to-date. Wait for the exporter to finish
+	 * may be not up-to-date. Wait क्रम the exporter to finish
 	 * the migration.
 	 */
 	fence = dma_resv_get_excl(umem_dmabuf->attach->dmabuf->resv);
-	if (fence)
-		return dma_fence_wait(fence, false);
+	अगर (fence)
+		वापस dma_fence_रुको(fence, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ib_umem_dmabuf_map_pages);
 
-void ib_umem_dmabuf_unmap_pages(struct ib_umem_dmabuf *umem_dmabuf)
-{
-	dma_resv_assert_held(umem_dmabuf->attach->dmabuf->resv);
+व्योम ib_umem_dmabuf_unmap_pages(काष्ठा ib_umem_dmabuf *umem_dmabuf)
+अणु
+	dma_resv_निश्चित_held(umem_dmabuf->attach->dmabuf->resv);
 
-	if (!umem_dmabuf->sgt)
-		return;
+	अगर (!umem_dmabuf->sgt)
+		वापस;
 
 	/* retore the original sg list */
-	if (umem_dmabuf->first_sg) {
+	अगर (umem_dmabuf->first_sg) अणु
 		sg_dma_address(umem_dmabuf->first_sg) -=
 			umem_dmabuf->first_sg_offset;
 		sg_dma_len(umem_dmabuf->first_sg) +=
 			umem_dmabuf->first_sg_offset;
-		umem_dmabuf->first_sg = NULL;
+		umem_dmabuf->first_sg = शून्य;
 		umem_dmabuf->first_sg_offset = 0;
-	}
-	if (umem_dmabuf->last_sg) {
+	पूर्ण
+	अगर (umem_dmabuf->last_sg) अणु
 		sg_dma_len(umem_dmabuf->last_sg) +=
 			umem_dmabuf->last_sg_trim;
-		umem_dmabuf->last_sg = NULL;
+		umem_dmabuf->last_sg = शून्य;
 		umem_dmabuf->last_sg_trim = 0;
-	}
+	पूर्ण
 
 	dma_buf_unmap_attachment(umem_dmabuf->attach, umem_dmabuf->sgt,
-				 DMA_BIDIRECTIONAL);
+				 DMA_BIसूचीECTIONAL);
 
-	umem_dmabuf->sgt = NULL;
-}
+	umem_dmabuf->sgt = शून्य;
+पूर्ण
 EXPORT_SYMBOL(ib_umem_dmabuf_unmap_pages);
 
-struct ib_umem_dmabuf *ib_umem_dmabuf_get(struct ib_device *device,
-					  unsigned long offset, size_t size,
-					  int fd, int access,
-					  const struct dma_buf_attach_ops *ops)
-{
-	struct dma_buf *dmabuf;
-	struct ib_umem_dmabuf *umem_dmabuf;
-	struct ib_umem *umem;
-	unsigned long end;
-	struct ib_umem_dmabuf *ret = ERR_PTR(-EINVAL);
+काष्ठा ib_umem_dmabuf *ib_umem_dmabuf_get(काष्ठा ib_device *device,
+					  अचिन्हित दीर्घ offset, माप_प्रकार size,
+					  पूर्णांक fd, पूर्णांक access,
+					  स्थिर काष्ठा dma_buf_attach_ops *ops)
+अणु
+	काष्ठा dma_buf *dmabuf;
+	काष्ठा ib_umem_dmabuf *umem_dmabuf;
+	काष्ठा ib_umem *umem;
+	अचिन्हित दीर्घ end;
+	काष्ठा ib_umem_dmabuf *ret = ERR_PTR(-EINVAL);
 
-	if (check_add_overflow(offset, (unsigned long)size, &end))
-		return ret;
+	अगर (check_add_overflow(offset, (अचिन्हित दीर्घ)size, &end))
+		वापस ret;
 
-	if (unlikely(!ops || !ops->move_notify))
-		return ret;
+	अगर (unlikely(!ops || !ops->move_notअगरy))
+		वापस ret;
 
 	dmabuf = dma_buf_get(fd);
-	if (IS_ERR(dmabuf))
-		return ERR_CAST(dmabuf);
+	अगर (IS_ERR(dmabuf))
+		वापस ERR_CAST(dmabuf);
 
-	if (dmabuf->size < end)
-		goto out_release_dmabuf;
+	अगर (dmabuf->size < end)
+		जाओ out_release_dmabuf;
 
-	umem_dmabuf = kzalloc(sizeof(*umem_dmabuf), GFP_KERNEL);
-	if (!umem_dmabuf) {
+	umem_dmabuf = kzalloc(माप(*umem_dmabuf), GFP_KERNEL);
+	अगर (!umem_dmabuf) अणु
 		ret = ERR_PTR(-ENOMEM);
-		goto out_release_dmabuf;
-	}
+		जाओ out_release_dmabuf;
+	पूर्ण
 
 	umem = &umem_dmabuf->umem;
 	umem->ibdev = device;
@@ -141,38 +142,38 @@ struct ib_umem_dmabuf *ib_umem_dmabuf_get(struct ib_device *device,
 	umem->writable = ib_access_writable(access);
 	umem->is_dmabuf = 1;
 
-	if (!ib_umem_num_pages(umem))
-		goto out_free_umem;
+	अगर (!ib_umem_num_pages(umem))
+		जाओ out_मुक्त_umem;
 
 	umem_dmabuf->attach = dma_buf_dynamic_attach(
 					dmabuf,
 					device->dma_device,
 					ops,
 					umem_dmabuf);
-	if (IS_ERR(umem_dmabuf->attach)) {
+	अगर (IS_ERR(umem_dmabuf->attach)) अणु
 		ret = ERR_CAST(umem_dmabuf->attach);
-		goto out_free_umem;
-	}
-	return umem_dmabuf;
+		जाओ out_मुक्त_umem;
+	पूर्ण
+	वापस umem_dmabuf;
 
-out_free_umem:
-	kfree(umem_dmabuf);
+out_मुक्त_umem:
+	kमुक्त(umem_dmabuf);
 
 out_release_dmabuf:
 	dma_buf_put(dmabuf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(ib_umem_dmabuf_get);
 
-void ib_umem_dmabuf_release(struct ib_umem_dmabuf *umem_dmabuf)
-{
-	struct dma_buf *dmabuf = umem_dmabuf->attach->dmabuf;
+व्योम ib_umem_dmabuf_release(काष्ठा ib_umem_dmabuf *umem_dmabuf)
+अणु
+	काष्ठा dma_buf *dmabuf = umem_dmabuf->attach->dmabuf;
 
-	dma_resv_lock(dmabuf->resv, NULL);
+	dma_resv_lock(dmabuf->resv, शून्य);
 	ib_umem_dmabuf_unmap_pages(umem_dmabuf);
 	dma_resv_unlock(dmabuf->resv);
 
 	dma_buf_detach(dmabuf, umem_dmabuf->attach);
 	dma_buf_put(dmabuf);
-	kfree(umem_dmabuf);
-}
+	kमुक्त(umem_dmabuf);
+पूर्ण

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2016 Samsung Electronics Co.Ltd
  * Authors:
@@ -5,35 +6,35 @@
  *
  * DRM core plane blending related functions
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
+ * Permission to use, copy, modअगरy, distribute, and sell this software and its
+ * करोcumentation क्रम any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that copyright
- * notice and this permission notice appear in supporting documentation, and
+ * notice and this permission notice appear in supporting करोcumentation, and
  * that the name of the copyright holders not be used in advertising or
- * publicity pertaining to distribution of the software without specific,
+ * खुलाity pertaining to distribution of the software without specअगरic,
  * written prior permission.  The copyright holders make no representations
- * about the suitability of this software for any purpose.  It is provided "as
+ * about the suitability of this software क्रम any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
  * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INसूचीECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/sort.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sort.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_blend.h>
-#include <drm/drm_device.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_blend.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "drm_crtc_internal.h"
+#समावेश "drm_crtc_internal.h"
 
 /**
  * DOC: overview
@@ -50,28 +51,28 @@
  * encode the basic plane composition model:
  *
  * SRC_X:
- * 	X coordinate offset for the source rectangle within the
- * 	&drm_framebuffer, in 16.16 fixed point. Must be positive.
+ * 	X coordinate offset क्रम the source rectangle within the
+ * 	&drm_framebuffer, in 16.16 fixed poपूर्णांक. Must be positive.
  * SRC_Y:
- * 	Y coordinate offset for the source rectangle within the
- * 	&drm_framebuffer, in 16.16 fixed point. Must be positive.
+ * 	Y coordinate offset क्रम the source rectangle within the
+ * 	&drm_framebuffer, in 16.16 fixed poपूर्णांक. Must be positive.
  * SRC_W:
- * 	Width for the source rectangle within the &drm_framebuffer, in 16.16
- * 	fixed point. SRC_X plus SRC_W must be within the width of the source
+ * 	Width क्रम the source rectangle within the &drm_framebuffer, in 16.16
+ * 	fixed poपूर्णांक. SRC_X plus SRC_W must be within the width of the source
  * 	framebuffer. Must be positive.
  * SRC_H:
- * 	Height for the source rectangle within the &drm_framebuffer, in 16.16
- * 	fixed point. SRC_Y plus SRC_H must be within the height of the source
+ * 	Height क्रम the source rectangle within the &drm_framebuffer, in 16.16
+ * 	fixed poपूर्णांक. SRC_Y plus SRC_H must be within the height of the source
  * 	framebuffer. Must be positive.
  * CRTC_X:
- * 	X coordinate offset for the destination rectangle. Can be negative.
+ * 	X coordinate offset क्रम the destination rectangle. Can be negative.
  * CRTC_Y:
- * 	Y coordinate offset for the destination rectangle. Can be negative.
+ * 	Y coordinate offset क्रम the destination rectangle. Can be negative.
  * CRTC_W:
- * 	Width for the destination rectangle. CRTC_X plus CRTC_W can extend past
+ * 	Width क्रम the destination rectangle. CRTC_X plus CRTC_W can extend past
  * 	the currently visible horizontal area of the &drm_crtc.
  * CRTC_H:
- * 	Height for the destination rectangle. CRTC_Y plus CRTC_H can extend past
+ * 	Height क्रम the destination rectangle. CRTC_Y plus CRTC_H can extend past
  * 	the currently visible vertical area of the &drm_crtc.
  * FB_ID:
  * 	Mode object ID of the &drm_framebuffer this plane should scan out.
@@ -81,14 +82,14 @@
  * Note that the source rectangle must fully lie within the bounds of the
  * &drm_framebuffer. The destination rectangle can lie outside of the visible
  * area of the current mode of the CRTC. It must be apprpriately clipped by the
- * driver, which can be done by calling drm_plane_helper_check_update(). Drivers
+ * driver, which can be करोne by calling drm_plane_helper_check_update(). Drivers
  * are also allowed to round the subpixel sampling positions appropriately, but
  * only to the next full pixel. No pixel outside of the source rectangle may
  * ever be sampled, which is important when applying more sophisticated
  * filtering than just a bilinear one when scaling. The filtering mode when
- * scaling is unspecified.
+ * scaling is unspecअगरied.
  *
- * On top of this basic transformation additional properties can be exposed by
+ * On top of this basic transक्रमmation additional properties can be exposed by
  * the driver:
  *
  * alpha:
@@ -108,10 +109,10 @@
  *
  *	"rotate-<degrees>":
  *		Signals that a drm plane is rotated <degrees> degrees in counter
- *		clockwise direction.
+ *		घड़ीwise direction.
  *
  *	"reflect-<axis>":
- *		Signals that the contents of a drm plane is reflected along the
+ *		Signals that the contents of a drm plane is reflected aदीर्घ the
  *		<axis> axis, in the same way as mirroring.
  *
  *	reflect-x::
@@ -131,39 +132,39 @@
  *	drm_plane_create_zpos_property(). It controls the visibility of overlapping
  *	planes. Without this property the primary plane is always below the cursor
  *	plane, and ordering between all other planes is undefined. The positive
- *	Z axis points towards the user, i.e. planes with lower Z position values
+ *	Z axis poपूर्णांकs towards the user, i.e. planes with lower Z position values
  *	are underneath planes with higher Z position values. Two planes with the
  *	same Z position value have undefined ordering. Note that the Z position
- *	value can also be immutable, to inform userspace about the hard-coded
+ *	value can also be immutable, to inक्रमm userspace about the hard-coded
  *	stacking of planes, see drm_plane_create_zpos_immutable_property(). If
  *	any plane has a zpos property (either mutable or immutable), then all
  *	planes shall have a zpos property.
  *
  * pixel blend mode:
  *	Pixel blend mode is set up with drm_plane_create_blend_mode_property().
- *	It adds a blend mode for alpha blending equation selection, describing
+ *	It adds a blend mode क्रम alpha blending equation selection, describing
  *	how the pixels from the current plane are composited with the
  *	background.
  *
  *	 Three alpha blending equations are defined:
  *
  *	 "None":
- *		 Blend formula that ignores the pixel alpha::
+ *		 Blend क्रमmula that ignores the pixel alpha::
  *
  *			 out.rgb = plane_alpha * fg.rgb +
  *				 (1 - plane_alpha) * bg.rgb
  *
  *	 "Pre-multiplied":
- *		 Blend formula that assumes the pixel color values
- *		 have been already pre-multiplied with the alpha
+ *		 Blend क्रमmula that assumes the pixel color values
+ *		 have been alपढ़ोy pre-multiplied with the alpha
  *		 channel values::
  *
  *			 out.rgb = plane_alpha * fg.rgb +
  *				 (1 - (plane_alpha * fg.alpha)) * bg.rgb
  *
  *	 "Coverage":
- *		 Blend formula that assumes the pixel color values have not
- *		 been pre-multiplied and will do so when blending them to the
+ *		 Blend क्रमmula that assumes the pixel color values have not
+ *		 been pre-multiplied and will करो so when blending them to the
  *		 background color values::
  *
  *			 out.rgb = plane_alpha * fg.alpha * fg.rgb +
@@ -175,31 +176,31 @@
  *		 Each of the RGB component values from the plane's pixel
  *	 "fg.alpha":
  *		 Alpha component value from the plane's pixel. If the plane's
- *		 pixel format has no alpha component, then this is assumed to be
- *		 1.0. In these cases, this property has no effect, as all three
+ *		 pixel क्रमmat has no alpha component, then this is assumed to be
+ *		 1.0. In these हालs, this property has no effect, as all three
  *		 equations become equivalent.
  *	 "bg.rgb":
  *		 Each of the RGB component values from the background
  *	 "plane_alpha":
  *		 Plane alpha value set by the plane "alpha" property. If the
- *		 plane does not expose the "alpha" property, then this is
+ *		 plane करोes not expose the "alpha" property, then this is
  *		 assumed to be 1.0
  *
  * Note that all the property extensions described here apply either to the
- * plane or the CRTC (e.g. for the background color, which currently is not
+ * plane or the CRTC (e.g. क्रम the background color, which currently is not
  * exposed and assumed to be black).
  *
  * SCALING_FILTER:
- *     Indicates scaling filter to be used for plane scaler
+ *     Indicates scaling filter to be used क्रम plane scaler
  *
  *     The value of this property can be one of the following:
  *
  *     Default:
- *             Driver's default scaling filter
+ *             Driver's शेष scaling filter
  *     Nearest Neighbor:
  *             Nearest Neighbor scaling filter
  *
- * Drivers can set up this property for a plane by calling
+ * Drivers can set up this property क्रम a plane by calling
  * drm_plane_create_scaling_filter_property
  */
 
@@ -208,7 +209,7 @@
  * @plane: drm plane
  *
  * This function creates a generic, mutable, alpha property and enables support
- * for it in the DRM core. It is attached to @plane.
+ * क्रम it in the DRM core. It is attached to @plane.
  *
  * The alpha property will be allowed to be within the bounds of 0
  * (transparent) to 0xffff (opaque).
@@ -216,40 +217,40 @@
  * Returns:
  * 0 on success, negative error code on failure.
  */
-int drm_plane_create_alpha_property(struct drm_plane *plane)
-{
-	struct drm_property *prop;
+पूर्णांक drm_plane_create_alpha_property(काष्ठा drm_plane *plane)
+अणु
+	काष्ठा drm_property *prop;
 
 	prop = drm_property_create_range(plane->dev, 0, "alpha",
 					 0, DRM_BLEND_ALPHA_OPAQUE);
-	if (!prop)
-		return -ENOMEM;
+	अगर (!prop)
+		वापस -ENOMEM;
 
 	drm_object_attach_property(&plane->base, prop, DRM_BLEND_ALPHA_OPAQUE);
 	plane->alpha_property = prop;
 
-	if (plane->state)
+	अगर (plane->state)
 		plane->state->alpha = DRM_BLEND_ALPHA_OPAQUE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_plane_create_alpha_property);
 
 /**
  * drm_plane_create_rotation_property - create a new rotation property
  * @plane: drm plane
  * @rotation: initial value of the rotation property
- * @supported_rotations: bitmask of supported rotations and reflections
+ * @supported_rotations: biपंचांगask of supported rotations and reflections
  *
- * This creates a new property with the selected support for transformations.
+ * This creates a new property with the selected support क्रम transक्रमmations.
  *
- * Since a rotation by 180° degress is the same as reflecting both along the x
+ * Since a rotation by 180तओ degress is the same as reflecting both aदीर्घ the x
  * and the y axis the rotation property is somewhat redundant. Drivers can use
- * drm_rotation_simplify() to normalize values of this property.
+ * drm_rotation_simplअगरy() to normalize values of this property.
  *
- * The property exposed to userspace is a bitmask property (see
- * drm_property_create_bitmask()) called "rotation" and has the following
- * bitmask enumaration values:
+ * The property exposed to userspace is a biपंचांगask property (see
+ * drm_property_create_biपंचांगask()) called "rotation" and has the following
+ * biपंचांगask क्रमागतaration values:
  *
  * DRM_MODE_ROTATE_0:
  * 	"rotate-0"
@@ -264,77 +265,77 @@ EXPORT_SYMBOL(drm_plane_create_alpha_property);
  * DRM_MODE_REFLECT_Y:
  * 	"reflect-y"
  *
- * Rotation is the specified amount in degrees in counter clockwise direction,
- * the X and Y axis are within the source rectangle, i.e.  the X/Y axis before
+ * Rotation is the specअगरied amount in degrees in counter घड़ीwise direction,
+ * the X and Y axis are within the source rectangle, i.e.  the X/Y axis beक्रमe
  * rotation. After reflection, the rotation is applied to the image sampled from
- * the source rectangle, before scaling it to fit the destination rectangle.
+ * the source rectangle, beक्रमe scaling it to fit the destination rectangle.
  */
-int drm_plane_create_rotation_property(struct drm_plane *plane,
-				       unsigned int rotation,
-				       unsigned int supported_rotations)
-{
-	static const struct drm_prop_enum_list props[] = {
-		{ __builtin_ffs(DRM_MODE_ROTATE_0) - 1,   "rotate-0" },
-		{ __builtin_ffs(DRM_MODE_ROTATE_90) - 1,  "rotate-90" },
-		{ __builtin_ffs(DRM_MODE_ROTATE_180) - 1, "rotate-180" },
-		{ __builtin_ffs(DRM_MODE_ROTATE_270) - 1, "rotate-270" },
-		{ __builtin_ffs(DRM_MODE_REFLECT_X) - 1,  "reflect-x" },
-		{ __builtin_ffs(DRM_MODE_REFLECT_Y) - 1,  "reflect-y" },
-	};
-	struct drm_property *prop;
+पूर्णांक drm_plane_create_rotation_property(काष्ठा drm_plane *plane,
+				       अचिन्हित पूर्णांक rotation,
+				       अचिन्हित पूर्णांक supported_rotations)
+अणु
+	अटल स्थिर काष्ठा drm_prop_क्रमागत_list props[] = अणु
+		अणु __builtin_ffs(DRM_MODE_ROTATE_0) - 1,   "rotate-0" पूर्ण,
+		अणु __builtin_ffs(DRM_MODE_ROTATE_90) - 1,  "rotate-90" पूर्ण,
+		अणु __builtin_ffs(DRM_MODE_ROTATE_180) - 1, "rotate-180" पूर्ण,
+		अणु __builtin_ffs(DRM_MODE_ROTATE_270) - 1, "rotate-270" पूर्ण,
+		अणु __builtin_ffs(DRM_MODE_REFLECT_X) - 1,  "reflect-x" पूर्ण,
+		अणु __builtin_ffs(DRM_MODE_REFLECT_Y) - 1,  "reflect-y" पूर्ण,
+	पूर्ण;
+	काष्ठा drm_property *prop;
 
 	WARN_ON((supported_rotations & DRM_MODE_ROTATE_MASK) == 0);
-	WARN_ON(!is_power_of_2(rotation & DRM_MODE_ROTATE_MASK));
+	WARN_ON(!is_घातer_of_2(rotation & DRM_MODE_ROTATE_MASK));
 	WARN_ON(rotation & ~supported_rotations);
 
-	prop = drm_property_create_bitmask(plane->dev, 0, "rotation",
+	prop = drm_property_create_biपंचांगask(plane->dev, 0, "rotation",
 					   props, ARRAY_SIZE(props),
 					   supported_rotations);
-	if (!prop)
-		return -ENOMEM;
+	अगर (!prop)
+		वापस -ENOMEM;
 
 	drm_object_attach_property(&plane->base, prop, rotation);
 
-	if (plane->state)
+	अगर (plane->state)
 		plane->state->rotation = rotation;
 
 	plane->rotation_property = prop;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_plane_create_rotation_property);
 
 /**
- * drm_rotation_simplify() - Try to simplify the rotation
- * @rotation: Rotation to be simplified
+ * drm_rotation_simplअगरy() - Try to simplअगरy the rotation
+ * @rotation: Rotation to be simplअगरied
  * @supported_rotations: Supported rotations
  *
- * Attempt to simplify the rotation to a form that is supported.
- * Eg. if the hardware supports everything except DRM_MODE_REFLECT_X
+ * Attempt to simplअगरy the rotation to a क्रमm that is supported.
+ * Eg. अगर the hardware supports everything except DRM_MODE_REFLECT_X
  * one could call this function like this:
  *
- * drm_rotation_simplify(rotation, DRM_MODE_ROTATE_0 |
+ * drm_rotation_simplअगरy(rotation, DRM_MODE_ROTATE_0 |
  *                       DRM_MODE_ROTATE_90 | DRM_MODE_ROTATE_180 |
  *                       DRM_MODE_ROTATE_270 | DRM_MODE_REFLECT_Y);
  *
  * to eliminate the DRM_MODE_ROTATE_X flag. Depending on what kind of
- * transforms the hardware supports, this function may not
- * be able to produce a supported transform, so the caller should
+ * transक्रमms the hardware supports, this function may not
+ * be able to produce a supported transक्रमm, so the caller should
  * check the result afterwards.
  */
-unsigned int drm_rotation_simplify(unsigned int rotation,
-				   unsigned int supported_rotations)
-{
-	if (rotation & ~supported_rotations) {
+अचिन्हित पूर्णांक drm_rotation_simplअगरy(अचिन्हित पूर्णांक rotation,
+				   अचिन्हित पूर्णांक supported_rotations)
+अणु
+	अगर (rotation & ~supported_rotations) अणु
 		rotation ^= DRM_MODE_REFLECT_X | DRM_MODE_REFLECT_Y;
 		rotation = (rotation & DRM_MODE_REFLECT_MASK) |
 		           BIT((ffs(rotation & DRM_MODE_ROTATE_MASK) + 1)
 		           % 4);
-	}
+	पूर्ण
 
-	return rotation;
-}
-EXPORT_SYMBOL(drm_rotation_simplify);
+	वापस rotation;
+पूर्ण
+EXPORT_SYMBOL(drm_rotation_simplअगरy);
 
 /**
  * drm_plane_create_zpos_property - create mutable zpos property
@@ -344,19 +345,19 @@ EXPORT_SYMBOL(drm_rotation_simplify);
  * @max: maximal possible value of zpos property
  *
  * This function initializes generic mutable zpos property and enables support
- * for it in drm core. Drivers can then attach this property to planes to enable
- * support for configurable planes arrangement during blending operation.
+ * क्रम it in drm core. Drivers can then attach this property to planes to enable
+ * support क्रम configurable planes arrangement during blending operation.
  * Drivers that attach a mutable zpos property to any plane should call the
  * drm_atomic_normalize_zpos() helper during their implementation of
  * &drm_mode_config_funcs.atomic_check(), which will update the normalized zpos
  * values and store them in &drm_plane_state.normalized_zpos. Usually min
- * should be set to 0 and max to maximal number of planes for given crtc - 1.
+ * should be set to 0 and max to maximal number of planes क्रम given crtc - 1.
  *
  * If zpos of some planes cannot be changed (like fixed background or
  * cursor/topmost planes), drivers shall adjust the min/max values and assign
- * those planes immutable zpos properties with lower or higher values (for more
- * information, see drm_plane_create_zpos_immutable_property() function). In such
- * case drivers shall also assign proper initial zpos values for all planes in
+ * those planes immutable zpos properties with lower or higher values (क्रम more
+ * inक्रमmation, see drm_plane_create_zpos_immutable_property() function). In such
+ * हाल drivers shall also assign proper initial zpos values क्रम all planes in
  * its plane_reset() callback, so the planes will be always sorted properly.
  *
  * See also drm_atomic_normalize_zpos().
@@ -364,29 +365,29 @@ EXPORT_SYMBOL(drm_rotation_simplify);
  * The property exposed to userspace is called "zpos".
  *
  * Returns:
- * Zero on success, negative errno on failure.
+ * Zero on success, negative त्रुटि_सं on failure.
  */
-int drm_plane_create_zpos_property(struct drm_plane *plane,
-				   unsigned int zpos,
-				   unsigned int min, unsigned int max)
-{
-	struct drm_property *prop;
+पूर्णांक drm_plane_create_zpos_property(काष्ठा drm_plane *plane,
+				   अचिन्हित पूर्णांक zpos,
+				   अचिन्हित पूर्णांक min, अचिन्हित पूर्णांक max)
+अणु
+	काष्ठा drm_property *prop;
 
 	prop = drm_property_create_range(plane->dev, 0, "zpos", min, max);
-	if (!prop)
-		return -ENOMEM;
+	अगर (!prop)
+		वापस -ENOMEM;
 
 	drm_object_attach_property(&plane->base, prop, zpos);
 
 	plane->zpos_property = prop;
 
-	if (plane->state) {
+	अगर (plane->state) अणु
 		plane->state->zpos = zpos;
 		plane->state->normalized_zpos = zpos;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_plane_create_zpos_property);
 
 /**
@@ -395,224 +396,224 @@ EXPORT_SYMBOL(drm_plane_create_zpos_property);
  * @zpos: value of zpos property
  *
  * This function initializes generic immutable zpos property and enables
- * support for it in drm core. Using this property driver lets userspace
- * to get the arrangement of the planes for blending operation and notifies
- * it that the hardware (or driver) doesn't support changing of the planes'
+ * support क्रम it in drm core. Using this property driver lets userspace
+ * to get the arrangement of the planes क्रम blending operation and notअगरies
+ * it that the hardware (or driver) करोesn't support changing of the planes'
  * order. For mutable zpos see drm_plane_create_zpos_property().
  *
  * The property exposed to userspace is called "zpos".
  *
  * Returns:
- * Zero on success, negative errno on failure.
+ * Zero on success, negative त्रुटि_सं on failure.
  */
-int drm_plane_create_zpos_immutable_property(struct drm_plane *plane,
-					     unsigned int zpos)
-{
-	struct drm_property *prop;
+पूर्णांक drm_plane_create_zpos_immutable_property(काष्ठा drm_plane *plane,
+					     अचिन्हित पूर्णांक zpos)
+अणु
+	काष्ठा drm_property *prop;
 
 	prop = drm_property_create_range(plane->dev, DRM_MODE_PROP_IMMUTABLE,
 					 "zpos", zpos, zpos);
-	if (!prop)
-		return -ENOMEM;
+	अगर (!prop)
+		वापस -ENOMEM;
 
 	drm_object_attach_property(&plane->base, prop, zpos);
 
 	plane->zpos_property = prop;
 
-	if (plane->state) {
+	अगर (plane->state) अणु
 		plane->state->zpos = zpos;
 		plane->state->normalized_zpos = zpos;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_plane_create_zpos_immutable_property);
 
-static int drm_atomic_state_zpos_cmp(const void *a, const void *b)
-{
-	const struct drm_plane_state *sa = *(struct drm_plane_state **)a;
-	const struct drm_plane_state *sb = *(struct drm_plane_state **)b;
+अटल पूर्णांक drm_atomic_state_zpos_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर काष्ठा drm_plane_state *sa = *(काष्ठा drm_plane_state **)a;
+	स्थिर काष्ठा drm_plane_state *sb = *(काष्ठा drm_plane_state **)b;
 
-	if (sa->zpos != sb->zpos)
-		return sa->zpos - sb->zpos;
-	else
-		return sa->plane->base.id - sb->plane->base.id;
-}
+	अगर (sa->zpos != sb->zpos)
+		वापस sa->zpos - sb->zpos;
+	अन्यथा
+		वापस sa->plane->base.id - sb->plane->base.id;
+पूर्ण
 
-static int drm_atomic_helper_crtc_normalize_zpos(struct drm_crtc *crtc,
-					  struct drm_crtc_state *crtc_state)
-{
-	struct drm_atomic_state *state = crtc_state->state;
-	struct drm_device *dev = crtc->dev;
-	int total_planes = dev->mode_config.num_total_plane;
-	struct drm_plane_state **states;
-	struct drm_plane *plane;
-	int i, n = 0;
-	int ret = 0;
+अटल पूर्णांक drm_atomic_helper_crtc_normalize_zpos(काष्ठा drm_crtc *crtc,
+					  काष्ठा drm_crtc_state *crtc_state)
+अणु
+	काष्ठा drm_atomic_state *state = crtc_state->state;
+	काष्ठा drm_device *dev = crtc->dev;
+	पूर्णांक total_planes = dev->mode_config.num_total_plane;
+	काष्ठा drm_plane_state **states;
+	काष्ठा drm_plane *plane;
+	पूर्णांक i, n = 0;
+	पूर्णांक ret = 0;
 
 	DRM_DEBUG_ATOMIC("[CRTC:%d:%s] calculating normalized zpos values\n",
 			 crtc->base.id, crtc->name);
 
-	states = kmalloc_array(total_planes, sizeof(*states), GFP_KERNEL);
-	if (!states)
-		return -ENOMEM;
+	states = kदो_स्मृति_array(total_planes, माप(*states), GFP_KERNEL);
+	अगर (!states)
+		वापस -ENOMEM;
 
 	/*
-	 * Normalization process might create new states for planes which
+	 * Normalization process might create new states क्रम planes which
 	 * normalized_zpos has to be recalculated.
 	 */
-	drm_for_each_plane_mask(plane, dev, crtc_state->plane_mask) {
-		struct drm_plane_state *plane_state =
+	drm_क्रम_each_plane_mask(plane, dev, crtc_state->plane_mask) अणु
+		काष्ठा drm_plane_state *plane_state =
 			drm_atomic_get_plane_state(state, plane);
-		if (IS_ERR(plane_state)) {
+		अगर (IS_ERR(plane_state)) अणु
 			ret = PTR_ERR(plane_state);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		states[n++] = plane_state;
 		DRM_DEBUG_ATOMIC("[PLANE:%d:%s] processing zpos value %d\n",
 				 plane->base.id, plane->name,
 				 plane_state->zpos);
-	}
+	पूर्ण
 
-	sort(states, n, sizeof(*states), drm_atomic_state_zpos_cmp, NULL);
+	sort(states, n, माप(*states), drm_atomic_state_zpos_cmp, शून्य);
 
-	for (i = 0; i < n; i++) {
+	क्रम (i = 0; i < n; i++) अणु
 		plane = states[i]->plane;
 
 		states[i]->normalized_zpos = i;
 		DRM_DEBUG_ATOMIC("[PLANE:%d:%s] normalized zpos value %d\n",
 				 plane->base.id, plane->name, i);
-	}
+	पूर्ण
 	crtc_state->zpos_changed = true;
 
-done:
-	kfree(states);
-	return ret;
-}
+करोne:
+	kमुक्त(states);
+	वापस ret;
+पूर्ण
 
 /**
- * drm_atomic_normalize_zpos - calculate normalized zpos values for all crtcs
+ * drm_atomic_normalize_zpos - calculate normalized zpos values क्रम all crtcs
  * @dev: DRM device
  * @state: atomic state of DRM device
  *
- * This function calculates normalized zpos value for all modified planes in
+ * This function calculates normalized zpos value क्रम all modअगरied planes in
  * the provided atomic state of DRM device.
  *
- * For every CRTC this function checks new states of all planes assigned to
- * it and calculates normalized zpos value for these planes. Planes are compared
- * first by their zpos values, then by plane id (if zpos is equal). The plane
+ * For every CRTC this function checks new states of all planes asचिन्हित to
+ * it and calculates normalized zpos value क्रम these planes. Planes are compared
+ * first by their zpos values, then by plane id (अगर zpos is equal). The plane
  * with lowest zpos value is at the bottom. The &drm_plane_state.normalized_zpos
  * is then filled with unique values from 0 to number of active planes in crtc
  * minus one.
  *
  * RETURNS
- * Zero for success or -errno
+ * Zero क्रम success or -त्रुटि_सं
  */
-int drm_atomic_normalize_zpos(struct drm_device *dev,
-			      struct drm_atomic_state *state)
-{
-	struct drm_crtc *crtc;
-	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
-	struct drm_plane *plane;
-	struct drm_plane_state *old_plane_state, *new_plane_state;
-	int i, ret = 0;
+पूर्णांक drm_atomic_normalize_zpos(काष्ठा drm_device *dev,
+			      काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_crtc_state *old_crtc_state, *new_crtc_state;
+	काष्ठा drm_plane *plane;
+	काष्ठा drm_plane_state *old_plane_state, *new_plane_state;
+	पूर्णांक i, ret = 0;
 
-	for_each_oldnew_plane_in_state(state, plane, old_plane_state, new_plane_state, i) {
+	क्रम_each_oldnew_plane_in_state(state, plane, old_plane_state, new_plane_state, i) अणु
 		crtc = new_plane_state->crtc;
-		if (!crtc)
-			continue;
-		if (old_plane_state->zpos != new_plane_state->zpos) {
+		अगर (!crtc)
+			जारी;
+		अगर (old_plane_state->zpos != new_plane_state->zpos) अणु
 			new_crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
 			new_crtc_state->zpos_changed = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) {
-		if (old_crtc_state->plane_mask != new_crtc_state->plane_mask ||
-		    new_crtc_state->zpos_changed) {
+	क्रम_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) अणु
+		अगर (old_crtc_state->plane_mask != new_crtc_state->plane_mask ||
+		    new_crtc_state->zpos_changed) अणु
 			ret = drm_atomic_helper_crtc_normalize_zpos(crtc,
 								    new_crtc_state);
-			if (ret)
-				return ret;
-		}
-	}
-	return 0;
-}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_atomic_normalize_zpos);
 
 /**
  * drm_plane_create_blend_mode_property - create a new blend mode property
  * @plane: drm plane
- * @supported_modes: bitmask of supported modes, must include
+ * @supported_modes: biपंचांगask of supported modes, must include
  *		     BIT(DRM_MODE_BLEND_PREMULTI). Current DRM assumption is
- *		     that alpha is premultiplied, and old userspace can break if
- *		     the property defaults to anything else.
+ *		     that alpha is premultiplied, and old userspace can अवरोध अगर
+ *		     the property शेषs to anything अन्यथा.
  *
  * This creates a new property describing the blend mode.
  *
- * The property exposed to userspace is an enumeration property (see
- * drm_property_create_enum()) called "pixel blend mode" and has the
- * following enumeration values:
+ * The property exposed to userspace is an क्रमागतeration property (see
+ * drm_property_create_क्रमागत()) called "pixel blend mode" and has the
+ * following क्रमागतeration values:
  *
  * "None":
- *	Blend formula that ignores the pixel alpha.
+ *	Blend क्रमmula that ignores the pixel alpha.
  *
  * "Pre-multiplied":
- *	Blend formula that assumes the pixel color values have been already
+ *	Blend क्रमmula that assumes the pixel color values have been alपढ़ोy
  *	pre-multiplied with the alpha channel values.
  *
  * "Coverage":
- *	Blend formula that assumes the pixel color values have not been
- *	pre-multiplied and will do so when blending them to the background color
+ *	Blend क्रमmula that assumes the pixel color values have not been
+ *	pre-multiplied and will करो so when blending them to the background color
  *	values.
  *
  * RETURNS:
- * Zero for success or -errno
+ * Zero क्रम success or -त्रुटि_सं
  */
-int drm_plane_create_blend_mode_property(struct drm_plane *plane,
-					 unsigned int supported_modes)
-{
-	struct drm_device *dev = plane->dev;
-	struct drm_property *prop;
-	static const struct drm_prop_enum_list props[] = {
-		{ DRM_MODE_BLEND_PIXEL_NONE, "None" },
-		{ DRM_MODE_BLEND_PREMULTI, "Pre-multiplied" },
-		{ DRM_MODE_BLEND_COVERAGE, "Coverage" },
-	};
-	unsigned int valid_mode_mask = BIT(DRM_MODE_BLEND_PIXEL_NONE) |
+पूर्णांक drm_plane_create_blend_mode_property(काष्ठा drm_plane *plane,
+					 अचिन्हित पूर्णांक supported_modes)
+अणु
+	काष्ठा drm_device *dev = plane->dev;
+	काष्ठा drm_property *prop;
+	अटल स्थिर काष्ठा drm_prop_क्रमागत_list props[] = अणु
+		अणु DRM_MODE_BLEND_PIXEL_NONE, "None" पूर्ण,
+		अणु DRM_MODE_BLEND_PREMULTI, "Pre-multiplied" पूर्ण,
+		अणु DRM_MODE_BLEND_COVERAGE, "Coverage" पूर्ण,
+	पूर्ण;
+	अचिन्हित पूर्णांक valid_mode_mask = BIT(DRM_MODE_BLEND_PIXEL_NONE) |
 				       BIT(DRM_MODE_BLEND_PREMULTI)   |
 				       BIT(DRM_MODE_BLEND_COVERAGE);
-	int i;
+	पूर्णांक i;
 
-	if (WARN_ON((supported_modes & ~valid_mode_mask) ||
+	अगर (WARN_ON((supported_modes & ~valid_mode_mask) ||
 		    ((supported_modes & BIT(DRM_MODE_BLEND_PREMULTI)) == 0)))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	prop = drm_property_create(dev, DRM_MODE_PROP_ENUM,
 				   "pixel blend mode",
 				   hweight32(supported_modes));
-	if (!prop)
-		return -ENOMEM;
+	अगर (!prop)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ARRAY_SIZE(props); i++) {
-		int ret;
+	क्रम (i = 0; i < ARRAY_SIZE(props); i++) अणु
+		पूर्णांक ret;
 
-		if (!(BIT(props[i].type) & supported_modes))
-			continue;
+		अगर (!(BIT(props[i].type) & supported_modes))
+			जारी;
 
-		ret = drm_property_add_enum(prop, props[i].type,
+		ret = drm_property_add_क्रमागत(prop, props[i].type,
 					    props[i].name);
 
-		if (ret) {
+		अगर (ret) अणु
 			drm_property_destroy(dev, prop);
 
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	drm_object_attach_property(&plane->base, prop, DRM_MODE_BLEND_PREMULTI);
 	plane->blend_mode_property = prop;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_plane_create_blend_mode_property);

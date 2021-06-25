@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __PERF_CLOCKID_H
-#define __PERF_CLOCKID_H
+#अगर_अघोषित __PERF_CLOCKID_H
+#घोषणा __PERF_CLOCKID_H
 
-struct option;
-int parse_clockid(const struct option *opt, const char *str, int unset);
+काष्ठा option;
+पूर्णांक parse_घड़ीid(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset);
 
-const char *clockid_name(clockid_t clk_id);
+स्थिर अक्षर *घड़ीid_name(घड़ीid_t clk_id);
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-mmp/sram.c
  *
@@ -7,80 +8,80 @@
  *  Copyright (c) 2011 Marvell Semiconductors Inc.
  *  All Rights Reserved
  *
- *  Add for mmp sram support - Leo Yan <leoy@marvell.com>
+ *  Add क्रम mmp sram support - Leo Yan <leoy@marvell.com>
  */
 
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/genalloc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/genभाग.स>
 
-#include <linux/platform_data/dma-mmp_tdma.h>
+#समावेश <linux/platक्रमm_data/dma-mmp_tdma.h>
 
-struct sram_bank_info {
-	char *pool_name;
-	struct gen_pool *gpool;
-	int granularity;
+काष्ठा sram_bank_info अणु
+	अक्षर *pool_name;
+	काष्ठा gen_pool *gpool;
+	पूर्णांक granularity;
 
 	phys_addr_t sram_phys;
-	void __iomem *sram_virt;
+	व्योम __iomem *sram_virt;
 	u32 sram_size;
 
-	struct list_head node;
-};
+	काष्ठा list_head node;
+पूर्ण;
 
-static DEFINE_MUTEX(sram_lock);
-static LIST_HEAD(sram_bank_list);
+अटल DEFINE_MUTEX(sram_lock);
+अटल LIST_HEAD(sram_bank_list);
 
-struct gen_pool *sram_get_gpool(char *pool_name)
-{
-	struct sram_bank_info *info = NULL;
+काष्ठा gen_pool *sram_get_gpool(अक्षर *pool_name)
+अणु
+	काष्ठा sram_bank_info *info = शून्य;
 
-	if (!pool_name)
-		return NULL;
+	अगर (!pool_name)
+		वापस शून्य;
 
 	mutex_lock(&sram_lock);
 
-	list_for_each_entry(info, &sram_bank_list, node)
-		if (!strcmp(pool_name, info->pool_name))
-			break;
+	list_क्रम_each_entry(info, &sram_bank_list, node)
+		अगर (!म_भेद(pool_name, info->pool_name))
+			अवरोध;
 
 	mutex_unlock(&sram_lock);
 
-	if (&info->node == &sram_bank_list)
-		return NULL;
+	अगर (&info->node == &sram_bank_list)
+		वापस शून्य;
 
-	return info->gpool;
-}
+	वापस info->gpool;
+पूर्ण
 EXPORT_SYMBOL(sram_get_gpool);
 
-static int sram_probe(struct platform_device *pdev)
-{
-	struct sram_platdata *pdata = pdev->dev.platform_data;
-	struct sram_bank_info *info;
-	struct resource *res;
-	int ret = 0;
+अटल पूर्णांक sram_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sram_platdata *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा sram_bank_info *info;
+	काष्ठा resource *res;
+	पूर्णांक ret = 0;
 
-	if (!pdata || !pdata->pool_name)
-		return -ENODEV;
+	अगर (!pdata || !pdata->pool_name)
+		वापस -ENODEV;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "no memory resource defined\n");
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!resource_size(res))
-		return 0;
+	अगर (!resource_size(res))
+		वापस 0;
 
 	info->sram_phys   = (phys_addr_t)res->start;
 	info->sram_size   = resource_size(res);
@@ -89,46 +90,46 @@ static int sram_probe(struct platform_device *pdev)
 	info->granularity = pdata->granularity;
 
 	info->gpool = gen_pool_create(ilog2(info->granularity), -1);
-	if (!info->gpool) {
+	अगर (!info->gpool) अणु
 		dev_err(&pdev->dev, "create pool failed\n");
 		ret = -ENOMEM;
-		goto create_pool_err;
-	}
+		जाओ create_pool_err;
+	पूर्ण
 
-	ret = gen_pool_add_virt(info->gpool, (unsigned long)info->sram_virt,
+	ret = gen_pool_add_virt(info->gpool, (अचिन्हित दीर्घ)info->sram_virt,
 				info->sram_phys, info->sram_size, -1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "add new chunk failed\n");
 		ret = -ENOMEM;
-		goto add_chunk_err;
-	}
+		जाओ add_chunk_err;
+	पूर्ण
 
 	mutex_lock(&sram_lock);
 	list_add(&info->node, &sram_bank_list);
 	mutex_unlock(&sram_lock);
 
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
 	dev_info(&pdev->dev, "initialized\n");
-	return 0;
+	वापस 0;
 
 add_chunk_err:
 	gen_pool_destroy(info->gpool);
 create_pool_err:
 	iounmap(info->sram_virt);
-	kfree(info->pool_name);
+	kमुक्त(info->pool_name);
 out:
-	kfree(info);
-	return ret;
-}
+	kमुक्त(info);
+	वापस ret;
+पूर्ण
 
-static int sram_remove(struct platform_device *pdev)
-{
-	struct sram_bank_info *info;
+अटल पूर्णांक sram_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sram_bank_info *info;
 
-	info = platform_get_drvdata(pdev);
-	if (info == NULL)
-		return -ENODEV;
+	info = platक्रमm_get_drvdata(pdev);
+	अगर (info == शून्य)
+		वापस -ENODEV;
 
 	mutex_lock(&sram_lock);
 	list_del(&info->node);
@@ -136,30 +137,30 @@ static int sram_remove(struct platform_device *pdev)
 
 	gen_pool_destroy(info->gpool);
 	iounmap(info->sram_virt);
-	kfree(info->pool_name);
-	kfree(info);
-	return 0;
-}
+	kमुक्त(info->pool_name);
+	kमुक्त(info);
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id sram_id_table[] = {
-	{ "asram", MMP_ASRAM },
-	{ "isram", MMP_ISRAM },
-	{ }
-};
+अटल स्थिर काष्ठा platक्रमm_device_id sram_id_table[] = अणु
+	अणु "asram", MMP_ASRAM पूर्ण,
+	अणु "isram", MMP_ISRAM पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver sram_driver = {
+अटल काष्ठा platक्रमm_driver sram_driver = अणु
 	.probe		= sram_probe,
-	.remove		= sram_remove,
-	.driver		= {
+	.हटाओ		= sram_हटाओ,
+	.driver		= अणु
 		.name	= "mmp-sram",
-	},
+	पूर्ण,
 	.id_table	= sram_id_table,
-};
+पूर्ण;
 
-static int __init sram_init(void)
-{
-	return platform_driver_register(&sram_driver);
-}
+अटल पूर्णांक __init sram_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&sram_driver);
+पूर्ण
 core_initcall(sram_init);
 
 MODULE_LICENSE("GPL");

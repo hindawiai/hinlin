@@ -1,86 +1,87 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* smp.h: Sparc64 specific SMP stuff.
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* smp.h: Sparc64 specअगरic SMP stuff.
  *
  * Copyright (C) 1996, 2008 David S. Miller (davem@davemloft.net)
  */
 
-#ifndef _SPARC64_SMP_H
-#define _SPARC64_SMP_H
+#अगर_अघोषित _SPARC64_SMP_H
+#घोषणा _SPARC64_SMP_H
 
-#include <linux/threads.h>
-#include <asm/asi.h>
-#include <asm/starfire.h>
-#include <asm/spitfire.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <यंत्र/asi.h>
+#समावेश <यंत्र/starfire.h>
+#समावेश <यंत्र/spitfire.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/cpumask.h>
-#include <linux/cache.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/cache.h>
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
 /*
  *	Private routines/data
  */
 
-#include <linux/bitops.h>
-#include <linux/atomic.h>
-#include <asm/percpu.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/percpu.h>
 
 DECLARE_PER_CPU(cpumask_t, cpu_sibling_map);
-extern cpumask_t cpu_core_map[NR_CPUS];
+बाह्य cpumask_t cpu_core_map[NR_CPUS];
 
-void smp_init_cpu_poke(void);
-void scheduler_poke(void);
+व्योम smp_init_cpu_poke(व्योम);
+व्योम scheduler_poke(व्योम);
 
-void arch_send_call_function_single_ipi(int cpu);
-void arch_send_call_function_ipi_mask(const struct cpumask *mask);
+व्योम arch_send_call_function_single_ipi(पूर्णांक cpu);
+व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask);
 
 /*
- *	General functions that each host system must provide.
+ *	General functions that each host प्रणाली must provide.
  */
 
-int hard_smp_processor_id(void);
-#define raw_smp_processor_id() (current_thread_info()->cpu)
+पूर्णांक hard_smp_processor_id(व्योम);
+#घोषणा raw_smp_processor_id() (current_thपढ़ो_info()->cpu)
 
-void smp_fill_in_cpu_possible_map(void);
-void smp_fill_in_sib_core_maps(void);
-void cpu_play_dead(void);
+व्योम smp_fill_in_cpu_possible_map(व्योम);
+व्योम smp_fill_in_sib_core_maps(व्योम);
+व्योम cpu_play_dead(व्योम);
 
-void smp_fetch_global_regs(void);
-void smp_fetch_global_pmu(void);
+व्योम smp_fetch_global_regs(व्योम);
+व्योम smp_fetch_global_pmu(व्योम);
 
-struct seq_file;
-void smp_bogo(struct seq_file *);
-void smp_info(struct seq_file *);
+काष्ठा seq_file;
+व्योम smp_bogo(काष्ठा seq_file *);
+व्योम smp_info(काष्ठा seq_file *);
 
-void smp_callin(void);
-void cpu_panic(void);
-void smp_synchronize_tick_client(void);
-void smp_capture(void);
-void smp_release(void);
+व्योम smp_callin(व्योम);
+व्योम cpu_panic(व्योम);
+व्योम smp_synchronize_tick_client(व्योम);
+व्योम smp_capture(व्योम);
+व्योम smp_release(व्योम);
 
-#ifdef CONFIG_HOTPLUG_CPU
-int __cpu_disable(void);
-void __cpu_die(unsigned int cpu);
-#endif
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+पूर्णांक __cpu_disable(व्योम);
+व्योम __cpu_die(अचिन्हित पूर्णांक cpu);
+#पूर्ण_अगर
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-#else
+#अन्यथा
 
-#define hard_smp_processor_id()		0
-#define smp_fill_in_sib_core_maps() do { } while (0)
-#define smp_fetch_global_regs() do { } while (0)
-#define smp_fetch_global_pmu() do { } while (0)
-#define smp_fill_in_cpu_possible_map() do { } while (0)
-#define smp_init_cpu_poke() do { } while (0)
-#define scheduler_poke() do { } while (0)
+#घोषणा hard_smp_processor_id()		0
+#घोषणा smp_fill_in_sib_core_maps() करो अणु पूर्ण जबतक (0)
+#घोषणा smp_fetch_global_regs() करो अणु पूर्ण जबतक (0)
+#घोषणा smp_fetch_global_pmu() करो अणु पूर्ण जबतक (0)
+#घोषणा smp_fill_in_cpu_possible_map() करो अणु पूर्ण जबतक (0)
+#घोषणा smp_init_cpu_poke() करो अणु पूर्ण जबतक (0)
+#घोषणा scheduler_poke() करो अणु पूर्ण जबतक (0)
 
-#endif /* !(CONFIG_SMP) */
+#पूर्ण_अगर /* !(CONFIG_SMP) */
 
-#endif /* !(_SPARC64_SMP_H) */
+#पूर्ण_अगर /* !(_SPARC64_SMP_H) */

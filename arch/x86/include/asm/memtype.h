@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_MEMTYPE_H
-#define _ASM_X86_MEMTYPE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_MEMTYPE_H
+#घोषणा _ASM_X86_MEMTYPE_H
 
-#include <linux/types.h>
-#include <asm/pgtable_types.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/pgtable_types.h>
 
-extern bool pat_enabled(void);
-extern void pat_disable(const char *reason);
-extern void pat_init(void);
-extern void init_cache_modes(void);
+बाह्य bool pat_enabled(व्योम);
+बाह्य व्योम pat_disable(स्थिर अक्षर *reason);
+बाह्य व्योम pat_init(व्योम);
+बाह्य व्योम init_cache_modes(व्योम);
 
-extern int memtype_reserve(u64 start, u64 end,
-		enum page_cache_mode req_pcm, enum page_cache_mode *ret_pcm);
-extern int memtype_free(u64 start, u64 end);
+बाह्य पूर्णांक memtype_reserve(u64 start, u64 end,
+		क्रमागत page_cache_mode req_pcm, क्रमागत page_cache_mode *ret_pcm);
+बाह्य पूर्णांक memtype_मुक्त(u64 start, u64 end);
 
-extern int memtype_kernel_map_sync(u64 base, unsigned long size,
-		enum page_cache_mode pcm);
+बाह्य पूर्णांक memtype_kernel_map_sync(u64 base, अचिन्हित दीर्घ size,
+		क्रमागत page_cache_mode pcm);
 
-extern int memtype_reserve_io(resource_size_t start, resource_size_t end,
-			enum page_cache_mode *pcm);
+बाह्य पूर्णांक memtype_reserve_io(resource_माप_प्रकार start, resource_माप_प्रकार end,
+			क्रमागत page_cache_mode *pcm);
 
-extern void memtype_free_io(resource_size_t start, resource_size_t end);
+बाह्य व्योम memtype_मुक्त_io(resource_माप_प्रकार start, resource_माप_प्रकार end);
 
-extern bool pat_pfn_immune_to_uc_mtrr(unsigned long pfn);
+बाह्य bool pat_pfn_immune_to_uc_mtrr(अचिन्हित दीर्घ pfn);
 
-bool x86_has_pat_wp(void);
-enum page_cache_mode pgprot2cachemode(pgprot_t pgprot);
+bool x86_has_pat_wp(व्योम);
+क्रमागत page_cache_mode pgprot2cachemode(pgprot_t pgprot);
 
-#endif /* _ASM_X86_MEMTYPE_H */
+#पूर्ण_अगर /* _ASM_X86_MEMTYPE_H */

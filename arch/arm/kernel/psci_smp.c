@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2012 ARM Limited
@@ -6,118 +7,118 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
-#include <linux/init.h>
-#include <linux/smp.h>
-#include <linux/of.h>
-#include <linux/delay.h>
-#include <linux/psci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/of.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/psci.h>
 
-#include <uapi/linux/psci.h>
+#समावेश <uapi/linux/psci.h>
 
-#include <asm/psci.h>
-#include <asm/smp_plat.h>
+#समावेश <यंत्र/psci.h>
+#समावेश <यंत्र/smp_plat.h>
 
 /*
  * psci_smp assumes that the following is true about PSCI:
  *
  * cpu_suspend   Suspend the execution on a CPU
- * @state        we don't currently describe affinity levels, so just pass 0.
- * @entry_point  the first instruction to be executed on return
- * returns 0  success, < 0 on failure
+ * @state        we करोn't currently describe affinity levels, so just pass 0.
+ * @entry_poपूर्णांक  the first inकाष्ठाion to be executed on वापस
+ * वापसs 0  success, < 0 on failure
  *
- * cpu_off       Power down a CPU
- * @state        we don't currently describe affinity levels, so just pass 0.
- * no return on successful call
+ * cpu_off       Power करोwn a CPU
+ * @state        we करोn't currently describe affinity levels, so just pass 0.
+ * no वापस on successful call
  *
  * cpu_on        Power up a CPU
  * @cpuid        cpuid of target CPU, as from MPIDR
- * @entry_point  the first instruction to be executed on return
- * returns 0  success, < 0 on failure
+ * @entry_poपूर्णांक  the first inकाष्ठाion to be executed on वापस
+ * वापसs 0  success, < 0 on failure
  *
- * migrate       Migrate the context to a different CPU
+ * migrate       Migrate the context to a dअगरferent CPU
  * @cpuid        cpuid of target CPU, as from MPIDR
- * returns 0  success, < 0 on failure
+ * वापसs 0  success, < 0 on failure
  *
  */
 
-extern void secondary_startup(void);
+बाह्य व्योम secondary_startup(व्योम);
 
-static int psci_boot_secondary(unsigned int cpu, struct task_struct *idle)
-{
-	if (psci_ops.cpu_on)
-		return psci_ops.cpu_on(cpu_logical_map(cpu),
+अटल पूर्णांक psci_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	अगर (psci_ops.cpu_on)
+		वापस psci_ops.cpu_on(cpu_logical_map(cpu),
 					virt_to_idmap(&secondary_startup));
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static int psci_cpu_disable(unsigned int cpu)
-{
-	/* Fail early if we don't have CPU_OFF support */
-	if (!psci_ops.cpu_off)
-		return -EOPNOTSUPP;
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल पूर्णांक psci_cpu_disable(अचिन्हित पूर्णांक cpu)
+अणु
+	/* Fail early अगर we करोn't have CPU_OFF support */
+	अगर (!psci_ops.cpu_off)
+		वापस -EOPNOTSUPP;
 
 	/* Trusted OS will deny CPU_OFF */
-	if (psci_tos_resident_on(cpu))
-		return -EPERM;
+	अगर (psci_tos_resident_on(cpu))
+		वापस -EPERM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void psci_cpu_die(unsigned int cpu)
-{
+अटल व्योम psci_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
 	u32 state = PSCI_POWER_STATE_TYPE_POWER_DOWN <<
 		    PSCI_0_2_POWER_STATE_TYPE_SHIFT;
 
-	if (psci_ops.cpu_off)
+	अगर (psci_ops.cpu_off)
 		psci_ops.cpu_off(state);
 
-	/* We should never return */
+	/* We should never वापस */
 	panic("psci: cpu %d failed to shutdown\n", cpu);
-}
+पूर्ण
 
-static int psci_cpu_kill(unsigned int cpu)
-{
-	int err, i;
+अटल पूर्णांक psci_cpu_समाप्त(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक err, i;
 
-	if (!psci_ops.affinity_info)
-		return 1;
+	अगर (!psci_ops.affinity_info)
+		वापस 1;
 	/*
-	 * cpu_kill could race with cpu_die and we can
+	 * cpu_समाप्त could race with cpu_die and we can
 	 * potentially end up declaring this cpu undead
-	 * while it is dying. So, try again a few times.
+	 * जबतक it is dying. So, try again a few बार.
 	 */
 
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		err = psci_ops.affinity_info(cpu_logical_map(cpu), 0);
-		if (err == PSCI_0_2_AFFINITY_LEVEL_OFF) {
+		अगर (err == PSCI_0_2_AFFINITY_LEVEL_OFF) अणु
 			pr_info("CPU%d killed.\n", cpu);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		msleep(10);
 		pr_info("Retrying again to check for CPU kill\n");
-	}
+	पूर्ण
 
 	pr_warn("CPU%d may not have shut down cleanly (AFFINITY_INFO reports %d)\n",
 			cpu, err);
-	/* Make platform_cpu_kill() fail. */
-	return 0;
-}
+	/* Make platक्रमm_cpu_समाप्त() fail. */
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-bool __init psci_smp_available(void)
-{
+bool __init psci_smp_available(व्योम)
+अणु
 	/* is cpu_on available at least? */
-	return (psci_ops.cpu_on != NULL);
-}
+	वापस (psci_ops.cpu_on != शून्य);
+पूर्ण
 
-const struct smp_operations psci_smp_ops __initconst = {
+स्थिर काष्ठा smp_operations psci_smp_ops __initस्थिर = अणु
 	.smp_boot_secondary	= psci_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	.cpu_disable		= psci_cpu_disable,
 	.cpu_die		= psci_cpu_die,
-	.cpu_kill		= psci_cpu_kill,
-#endif
-};
+	.cpu_समाप्त		= psci_cpu_समाप्त,
+#पूर्ण_अगर
+पूर्ण;

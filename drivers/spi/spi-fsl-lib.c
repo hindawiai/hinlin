@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Freescale SPI/eSPI controller driver library.
  *
- * Maintainer: Kumar Gala
+ * Maपूर्णांकainer: Kumar Gala
  *
  * Copyright (C) 2006 Polycom, Inc.
  *
@@ -12,40 +13,40 @@
  *
  * Copyright 2010 Freescale Semiconductor, Inc.
  */
-#include <linux/dma-mapping.h>
-#include <linux/fsl_devices.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/spi/spi.h>
-#ifdef CONFIG_FSL_SOC
-#include <sysdev/fsl_soc.h>
-#endif
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/fsl_devices.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/spi/spi.h>
+#अगर_घोषित CONFIG_FSL_SOC
+#समावेश <sysdev/fsl_soc.h>
+#पूर्ण_अगर
 
-#include "spi-fsl-lib.h"
+#समावेश "spi-fsl-lib.h"
 
-#define MPC8XXX_SPI_RX_BUF(type) 					  \
-void mpc8xxx_spi_rx_buf_##type(u32 data, struct mpc8xxx_spi *mpc8xxx_spi) \
-{									  \
+#घोषणा MPC8XXX_SPI_RX_BUF(type) 					  \
+व्योम mpc8xxx_spi_rx_buf_##type(u32 data, काष्ठा mpc8xxx_spi *mpc8xxx_spi) \
+अणु									  \
 	type *rx = mpc8xxx_spi->rx;					  \
-	*rx++ = (type)(data >> mpc8xxx_spi->rx_shift);			  \
+	*rx++ = (type)(data >> mpc8xxx_spi->rx_shअगरt);			  \
 	mpc8xxx_spi->rx = rx;						  \
-}									  \
+पूर्ण									  \
 EXPORT_SYMBOL_GPL(mpc8xxx_spi_rx_buf_##type);
 
-#define MPC8XXX_SPI_TX_BUF(type)				\
-u32 mpc8xxx_spi_tx_buf_##type(struct mpc8xxx_spi *mpc8xxx_spi)	\
-{								\
+#घोषणा MPC8XXX_SPI_TX_BUF(type)				\
+u32 mpc8xxx_spi_tx_buf_##type(काष्ठा mpc8xxx_spi *mpc8xxx_spi)	\
+अणु								\
 	u32 data;						\
-	const type *tx = mpc8xxx_spi->tx;			\
-	if (!tx)						\
-		return 0;					\
-	data = *tx++ << mpc8xxx_spi->tx_shift;			\
+	स्थिर type *tx = mpc8xxx_spi->tx;			\
+	अगर (!tx)						\
+		वापस 0;					\
+	data = *tx++ << mpc8xxx_spi->tx_shअगरt;			\
 	mpc8xxx_spi->tx = tx;					\
-	return data;						\
-}								\
+	वापस data;						\
+पूर्ण								\
 EXPORT_SYMBOL_GPL(mpc8xxx_spi_tx_buf_##type);
 
 MPC8XXX_SPI_RX_BUF(u8)
@@ -55,34 +56,34 @@ MPC8XXX_SPI_TX_BUF(u8)
 MPC8XXX_SPI_TX_BUF(u16)
 MPC8XXX_SPI_TX_BUF(u32)
 
-struct mpc8xxx_spi_probe_info *to_of_pinfo(struct fsl_spi_platform_data *pdata)
-{
-	return container_of(pdata, struct mpc8xxx_spi_probe_info, pdata);
-}
+काष्ठा mpc8xxx_spi_probe_info *to_of_pinfo(काष्ठा fsl_spi_platक्रमm_data *pdata)
+अणु
+	वापस container_of(pdata, काष्ठा mpc8xxx_spi_probe_info, pdata);
+पूर्ण
 EXPORT_SYMBOL_GPL(to_of_pinfo);
 
-const char *mpc8xxx_spi_strmode(unsigned int flags)
-{
-	if (flags & SPI_QE_CPU_MODE) {
-		return "QE CPU";
-	} else if (flags & SPI_CPM_MODE) {
-		if (flags & SPI_QE)
-			return "QE";
-		else if (flags & SPI_CPM2)
-			return "CPM2";
-		else
-			return "CPM1";
-	}
-	return "CPU";
-}
+स्थिर अक्षर *mpc8xxx_spi_strmode(अचिन्हित पूर्णांक flags)
+अणु
+	अगर (flags & SPI_QE_CPU_MODE) अणु
+		वापस "QE CPU";
+	पूर्ण अन्यथा अगर (flags & SPI_CPM_MODE) अणु
+		अगर (flags & SPI_QE)
+			वापस "QE";
+		अन्यथा अगर (flags & SPI_CPM2)
+			वापस "CPM2";
+		अन्यथा
+			वापस "CPM1";
+	पूर्ण
+	वापस "CPU";
+पूर्ण
 EXPORT_SYMBOL_GPL(mpc8xxx_spi_strmode);
 
-void mpc8xxx_spi_probe(struct device *dev, struct resource *mem,
-			unsigned int irq)
-{
-	struct fsl_spi_platform_data *pdata = dev_get_platdata(dev);
-	struct spi_master *master;
-	struct mpc8xxx_spi *mpc8xxx_spi;
+व्योम mpc8xxx_spi_probe(काष्ठा device *dev, काष्ठा resource *mem,
+			अचिन्हित पूर्णांक irq)
+अणु
+	काष्ठा fsl_spi_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा spi_master *master;
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi;
 
 	master = dev_get_drvdata(dev);
 
@@ -100,61 +101,61 @@ void mpc8xxx_spi_probe(struct device *dev, struct resource *mem,
 	mpc8xxx_spi->spibrg = pdata->sysclk;
 	mpc8xxx_spi->irq = irq;
 
-	mpc8xxx_spi->rx_shift = 0;
-	mpc8xxx_spi->tx_shift = 0;
+	mpc8xxx_spi->rx_shअगरt = 0;
+	mpc8xxx_spi->tx_shअगरt = 0;
 
 	master->bus_num = pdata->bus_num;
 	master->num_chipselect = pdata->max_chipselect;
 
-	init_completion(&mpc8xxx_spi->done);
-}
+	init_completion(&mpc8xxx_spi->करोne);
+पूर्ण
 EXPORT_SYMBOL_GPL(mpc8xxx_spi_probe);
 
-int of_mpc8xxx_spi_probe(struct platform_device *ofdev)
-{
-	struct device *dev = &ofdev->dev;
-	struct device_node *np = ofdev->dev.of_node;
-	struct mpc8xxx_spi_probe_info *pinfo;
-	struct fsl_spi_platform_data *pdata;
-	const void *prop;
-	int ret = -ENOMEM;
+पूर्णांक of_mpc8xxx_spi_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा device *dev = &ofdev->dev;
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा mpc8xxx_spi_probe_info *pinfo;
+	काष्ठा fsl_spi_platक्रमm_data *pdata;
+	स्थिर व्योम *prop;
+	पूर्णांक ret = -ENOMEM;
 
-	pinfo = devm_kzalloc(&ofdev->dev, sizeof(*pinfo), GFP_KERNEL);
-	if (!pinfo)
-		return ret;
+	pinfo = devm_kzalloc(&ofdev->dev, माप(*pinfo), GFP_KERNEL);
+	अगर (!pinfo)
+		वापस ret;
 
 	pdata = &pinfo->pdata;
-	dev->platform_data = pdata;
+	dev->platक्रमm_data = pdata;
 
 	/* Allocate bus num dynamically. */
 	pdata->bus_num = -1;
 
-#ifdef CONFIG_FSL_SOC
-	/* SPI controller is either clocked from QE or SoC clock. */
+#अगर_घोषित CONFIG_FSL_SOC
+	/* SPI controller is either घड़ीed from QE or SoC घड़ी. */
 	pdata->sysclk = get_brgfreq();
-	if (pdata->sysclk == -1) {
+	अगर (pdata->sysclk == -1) अणु
 		pdata->sysclk = fsl_get_sys_freq();
-		if (pdata->sysclk == -1)
-			return -ENODEV;
-	}
-#else
-	ret = of_property_read_u32(np, "clock-frequency", &pdata->sysclk);
-	if (ret)
-		return ret;
-#endif
+		अगर (pdata->sysclk == -1)
+			वापस -ENODEV;
+	पूर्ण
+#अन्यथा
+	ret = of_property_पढ़ो_u32(np, "clock-frequency", &pdata->sysclk);
+	अगर (ret)
+		वापस ret;
+#पूर्ण_अगर
 
-	prop = of_get_property(np, "mode", NULL);
-	if (prop && !strcmp(prop, "cpu-qe"))
+	prop = of_get_property(np, "mode", शून्य);
+	अगर (prop && !म_भेद(prop, "cpu-qe"))
 		pdata->flags = SPI_QE_CPU_MODE;
-	else if (prop && !strcmp(prop, "qe"))
+	अन्यथा अगर (prop && !म_भेद(prop, "qe"))
 		pdata->flags = SPI_CPM_MODE | SPI_QE;
-	else if (of_device_is_compatible(np, "fsl,cpm2-spi"))
+	अन्यथा अगर (of_device_is_compatible(np, "fsl,cpm2-spi"))
 		pdata->flags = SPI_CPM_MODE | SPI_CPM2;
-	else if (of_device_is_compatible(np, "fsl,cpm1-spi"))
+	अन्यथा अगर (of_device_is_compatible(np, "fsl,cpm1-spi"))
 		pdata->flags = SPI_CPM_MODE | SPI_CPM1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_mpc8xxx_spi_probe);
 
 MODULE_LICENSE("GPL");

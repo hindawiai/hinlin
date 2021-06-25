@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
 * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,36 +24,36 @@
  *
  */
 
-#ifndef __DC_HWSS_DCN21_H__
-#define __DC_HWSS_DCN21_H__
+#अगर_अघोषित __DC_HWSS_DCN21_H__
+#घोषणा __DC_HWSS_DCN21_H__
 
-#include "hw_sequencer_private.h"
+#समावेश "hw_sequencer_private.h"
 
-struct dc;
+काष्ठा dc;
 
-int dcn21_init_sys_ctx(struct dce_hwseq *hws,
-		struct dc *dc,
-		struct dc_phy_addr_space_config *pa_config);
+पूर्णांक dcn21_init_sys_ctx(काष्ठा dce_hwseq *hws,
+		काष्ठा dc *dc,
+		काष्ठा dc_phy_addr_space_config *pa_config);
 
-bool dcn21_s0i3_golden_init_wa(struct dc *dc);
+bool dcn21_s0i3_golden_init_wa(काष्ठा dc *dc);
 
-void dcn21_exit_optimized_pwr_state(
-		const struct dc *dc,
-		struct dc_state *context);
+व्योम dcn21_निकास_optimized_pwr_state(
+		स्थिर काष्ठा dc *dc,
+		काष्ठा dc_state *context);
 
-void dcn21_optimize_pwr_state(
-		const struct dc *dc,
-		struct dc_state *context);
+व्योम dcn21_optimize_pwr_state(
+		स्थिर काष्ठा dc *dc,
+		काष्ठा dc_state *context);
 
-void dcn21_PLAT_58856_wa(struct dc_state *context,
-		struct pipe_ctx *pipe_ctx);
+व्योम dcn21_PLAT_58856_wa(काष्ठा dc_state *context,
+		काष्ठा pipe_ctx *pipe_ctx);
 
-void dcn21_set_pipe(struct pipe_ctx *pipe_ctx);
-void dcn21_set_abm_immediate_disable(struct pipe_ctx *pipe_ctx);
-bool dcn21_set_backlight_level(struct pipe_ctx *pipe_ctx,
-		uint32_t backlight_pwm_u16_16,
-		uint32_t frame_ramp);
-bool dcn21_is_abm_supported(struct dc *dc,
-		struct dc_state *context, struct dc_stream_state *stream);
+व्योम dcn21_set_pipe(काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn21_set_abm_immediate_disable(काष्ठा pipe_ctx *pipe_ctx);
+bool dcn21_set_backlight_level(काष्ठा pipe_ctx *pipe_ctx,
+		uपूर्णांक32_t backlight_pwm_u16_16,
+		uपूर्णांक32_t frame_ramp);
+bool dcn21_is_abm_supported(काष्ठा dc *dc,
+		काष्ठा dc_state *context, काष्ठा dc_stream_state *stream);
 
-#endif /* __DC_HWSS_DCN21_H__ */
+#पूर्ण_अगर /* __DC_HWSS_DCN21_H__ */

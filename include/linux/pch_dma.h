@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2010 Intel Corporation
  */
 
-#ifndef PCH_DMA_H
-#define PCH_DMA_H
+#अगर_अघोषित PCH_DMA_H
+#घोषणा PCH_DMA_H
 
-#include <linux/dmaengine.h>
+#समावेश <linux/dmaengine.h>
 
-enum pch_dma_width {
+क्रमागत pch_dma_width अणु
 	PCH_DMA_WIDTH_1_BYTE,
 	PCH_DMA_WIDTH_2_BYTES,
 	PCH_DMA_WIDTH_4_BYTES,
-};
+पूर्ण;
 
-struct pch_dma_slave {
-	struct device		*dma_dev;
-	unsigned int		chan_id;
+काष्ठा pch_dma_slave अणु
+	काष्ठा device		*dma_dev;
+	अचिन्हित पूर्णांक		chan_id;
 	dma_addr_t		tx_reg;
 	dma_addr_t		rx_reg;
-	enum pch_dma_width	width;
-};
+	क्रमागत pch_dma_width	width;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

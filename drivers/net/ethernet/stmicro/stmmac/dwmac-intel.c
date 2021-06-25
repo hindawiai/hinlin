@@ -1,460 +1,461 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020, Intel Corporation
  */
 
-#include <linux/clk-provider.h>
-#include <linux/pci.h>
-#include <linux/dmi.h>
-#include "dwmac-intel.h"
-#include "dwmac4.h"
-#include "stmmac.h"
-#include "stmmac_ptp.h"
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/dmi.h>
+#समावेश "dwmac-intel.h"
+#समावेश "dwmac4.h"
+#समावेश "stmmac.h"
+#समावेश "stmmac_ptp.h"
 
-#define INTEL_MGBE_ADHOC_ADDR	0x15
-#define INTEL_MGBE_XPCS_ADDR	0x16
+#घोषणा INTEL_MGBE_ADHOC_ADDR	0x15
+#घोषणा INTEL_MGBE_XPCS_ADDR	0x16
 
-/* Selection for PTP Clock Freq belongs to PSE & PCH GbE */
-#define PSE_PTP_CLK_FREQ_MASK		(GMAC_GPO0 | GMAC_GPO3)
-#define PSE_PTP_CLK_FREQ_19_2MHZ	(GMAC_GPO0)
-#define PSE_PTP_CLK_FREQ_200MHZ		(GMAC_GPO0 | GMAC_GPO3)
-#define PSE_PTP_CLK_FREQ_256MHZ		(0)
-#define PCH_PTP_CLK_FREQ_MASK		(GMAC_GPO0)
-#define PCH_PTP_CLK_FREQ_19_2MHZ	(GMAC_GPO0)
-#define PCH_PTP_CLK_FREQ_200MHZ		(0)
+/* Selection क्रम PTP Clock Freq beदीर्घs to PSE & PCH GbE */
+#घोषणा PSE_PTP_CLK_FREQ_MASK		(GMAC_GPO0 | GMAC_GPO3)
+#घोषणा PSE_PTP_CLK_FREQ_19_2MHZ	(GMAC_GPO0)
+#घोषणा PSE_PTP_CLK_FREQ_200MHZ		(GMAC_GPO0 | GMAC_GPO3)
+#घोषणा PSE_PTP_CLK_FREQ_256MHZ		(0)
+#घोषणा PCH_PTP_CLK_FREQ_MASK		(GMAC_GPO0)
+#घोषणा PCH_PTP_CLK_FREQ_19_2MHZ	(GMAC_GPO0)
+#घोषणा PCH_PTP_CLK_FREQ_200MHZ		(0)
 
-/* Cross-timestamping defines */
-#define ART_CPUID_LEAF		0x15
-#define EHL_PSE_ART_MHZ		19200000
+/* Cross-बारtamping defines */
+#घोषणा ART_CPUID_LEAF		0x15
+#घोषणा EHL_PSE_ART_MHZ		19200000
 
-struct intel_priv_data {
-	int mdio_adhoc_addr;	/* mdio address for serdes & etc */
-	unsigned long crossts_adj;
+काष्ठा पूर्णांकel_priv_data अणु
+	पूर्णांक mdio_adhoc_addr;	/* mdio address क्रम serdes & etc */
+	अचिन्हित दीर्घ crossts_adj;
 	bool is_pse;
-};
+पूर्ण;
 
-/* This struct is used to associate PCI Function of MAC controller on a board,
+/* This काष्ठा is used to associate PCI Function of MAC controller on a board,
  * discovered via DMI, with the address of PHY connected to the MAC. The
  * negative value of the address means that MAC controller is not connected
  * with PHY.
  */
-struct stmmac_pci_func_data {
-	unsigned int func;
-	int phy_addr;
-};
+काष्ठा sपंचांगmac_pci_func_data अणु
+	अचिन्हित पूर्णांक func;
+	पूर्णांक phy_addr;
+पूर्ण;
 
-struct stmmac_pci_dmi_data {
-	const struct stmmac_pci_func_data *func;
-	size_t nfuncs;
-};
+काष्ठा sपंचांगmac_pci_dmi_data अणु
+	स्थिर काष्ठा sपंचांगmac_pci_func_data *func;
+	माप_प्रकार nfuncs;
+पूर्ण;
 
-struct stmmac_pci_info {
-	int (*setup)(struct pci_dev *pdev, struct plat_stmmacenet_data *plat);
-};
+काष्ठा sपंचांगmac_pci_info अणु
+	पूर्णांक (*setup)(काष्ठा pci_dev *pdev, काष्ठा plat_sपंचांगmacenet_data *plat);
+पूर्ण;
 
-static int stmmac_pci_find_phy_addr(struct pci_dev *pdev,
-				    const struct dmi_system_id *dmi_list)
-{
-	const struct stmmac_pci_func_data *func_data;
-	const struct stmmac_pci_dmi_data *dmi_data;
-	const struct dmi_system_id *dmi_id;
-	int func = PCI_FUNC(pdev->devfn);
-	size_t n;
+अटल पूर्णांक sपंचांगmac_pci_find_phy_addr(काष्ठा pci_dev *pdev,
+				    स्थिर काष्ठा dmi_प्रणाली_id *dmi_list)
+अणु
+	स्थिर काष्ठा sपंचांगmac_pci_func_data *func_data;
+	स्थिर काष्ठा sपंचांगmac_pci_dmi_data *dmi_data;
+	स्थिर काष्ठा dmi_प्रणाली_id *dmi_id;
+	पूर्णांक func = PCI_FUNC(pdev->devfn);
+	माप_प्रकार n;
 
 	dmi_id = dmi_first_match(dmi_list);
-	if (!dmi_id)
-		return -ENODEV;
+	अगर (!dmi_id)
+		वापस -ENODEV;
 
 	dmi_data = dmi_id->driver_data;
 	func_data = dmi_data->func;
 
-	for (n = 0; n < dmi_data->nfuncs; n++, func_data++)
-		if (func_data->func == func)
-			return func_data->phy_addr;
+	क्रम (n = 0; n < dmi_data->nfuncs; n++, func_data++)
+		अगर (func_data->func == func)
+			वापस func_data->phy_addr;
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int serdes_status_poll(struct stmmac_priv *priv, int phyaddr,
-			      int phyreg, u32 mask, u32 val)
-{
-	unsigned int retries = 10;
-	int val_rd;
+अटल पूर्णांक serdes_status_poll(काष्ठा sपंचांगmac_priv *priv, पूर्णांक phyaddr,
+			      पूर्णांक phyreg, u32 mask, u32 val)
+अणु
+	अचिन्हित पूर्णांक retries = 10;
+	पूर्णांक val_rd;
 
-	do {
-		val_rd = mdiobus_read(priv->mii, phyaddr, phyreg);
-		if ((val_rd & mask) == (val & mask))
-			return 0;
+	करो अणु
+		val_rd = mdiobus_पढ़ो(priv->mii, phyaddr, phyreg);
+		अगर ((val_rd & mask) == (val & mask))
+			वापस 0;
 		udelay(POLL_DELAY_US);
-	} while (--retries);
+	पूर्ण जबतक (--retries);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int intel_serdes_powerup(struct net_device *ndev, void *priv_data)
-{
-	struct intel_priv_data *intel_priv = priv_data;
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	int serdes_phy_addr = 0;
+अटल पूर्णांक पूर्णांकel_serdes_घातerup(काष्ठा net_device *ndev, व्योम *priv_data)
+अणु
+	काष्ठा पूर्णांकel_priv_data *पूर्णांकel_priv = priv_data;
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	पूर्णांक serdes_phy_addr = 0;
 	u32 data = 0;
 
-	if (!intel_priv->mdio_adhoc_addr)
-		return 0;
+	अगर (!पूर्णांकel_priv->mdio_adhoc_addr)
+		वापस 0;
 
-	serdes_phy_addr = intel_priv->mdio_adhoc_addr;
+	serdes_phy_addr = पूर्णांकel_priv->mdio_adhoc_addr;
 
-	/* assert clk_req */
-	data = mdiobus_read(priv->mii, serdes_phy_addr, SERDES_GCR0);
+	/* निश्चित clk_req */
+	data = mdiobus_पढ़ो(priv->mii, serdes_phy_addr, SERDES_GCR0);
 	data |= SERDES_PLL_CLK;
-	mdiobus_write(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
+	mdiobus_ग_लिखो(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
 
-	/* check for clk_ack assertion */
+	/* check क्रम clk_ack निश्चितion */
 	data = serdes_status_poll(priv, serdes_phy_addr,
 				  SERDES_GSR0,
 				  SERDES_PLL_CLK,
 				  SERDES_PLL_CLK);
 
-	if (data) {
+	अगर (data) अणु
 		dev_err(priv->device, "Serdes PLL clk request timeout\n");
-		return data;
-	}
+		वापस data;
+	पूर्ण
 
-	/* assert lane reset */
-	data = mdiobus_read(priv->mii, serdes_phy_addr, SERDES_GCR0);
+	/* निश्चित lane reset */
+	data = mdiobus_पढ़ो(priv->mii, serdes_phy_addr, SERDES_GCR0);
 	data |= SERDES_RST;
-	mdiobus_write(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
+	mdiobus_ग_लिखो(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
 
-	/* check for assert lane reset reflection */
+	/* check क्रम निश्चित lane reset reflection */
 	data = serdes_status_poll(priv, serdes_phy_addr,
 				  SERDES_GSR0,
 				  SERDES_RST,
 				  SERDES_RST);
 
-	if (data) {
+	अगर (data) अणु
 		dev_err(priv->device, "Serdes assert lane reset timeout\n");
-		return data;
-	}
+		वापस data;
+	पूर्ण
 
-	/*  move power state to P0 */
-	data = mdiobus_read(priv->mii, serdes_phy_addr, SERDES_GCR0);
+	/*  move घातer state to P0 */
+	data = mdiobus_पढ़ो(priv->mii, serdes_phy_addr, SERDES_GCR0);
 
 	data &= ~SERDES_PWR_ST_MASK;
 	data |= SERDES_PWR_ST_P0 << SERDES_PWR_ST_SHIFT;
 
-	mdiobus_write(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
+	mdiobus_ग_लिखो(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
 
-	/* Check for P0 state */
+	/* Check क्रम P0 state */
 	data = serdes_status_poll(priv, serdes_phy_addr,
 				  SERDES_GSR0,
 				  SERDES_PWR_ST_MASK,
 				  SERDES_PWR_ST_P0 << SERDES_PWR_ST_SHIFT);
 
-	if (data) {
+	अगर (data) अणु
 		dev_err(priv->device, "Serdes power state P0 timeout.\n");
-		return data;
-	}
+		वापस data;
+	पूर्ण
 
 	/* PSE only - ungate SGMII PHY Rx Clock */
-	if (intel_priv->is_pse)
-		mdiobus_modify(priv->mii, serdes_phy_addr, SERDES_GCR0,
+	अगर (पूर्णांकel_priv->is_pse)
+		mdiobus_modअगरy(priv->mii, serdes_phy_addr, SERDES_GCR0,
 			       0, SERDES_PHY_RX_CLK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void intel_serdes_powerdown(struct net_device *ndev, void *intel_data)
-{
-	struct intel_priv_data *intel_priv = intel_data;
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	int serdes_phy_addr = 0;
+अटल व्योम पूर्णांकel_serdes_घातerकरोwn(काष्ठा net_device *ndev, व्योम *पूर्णांकel_data)
+अणु
+	काष्ठा पूर्णांकel_priv_data *पूर्णांकel_priv = पूर्णांकel_data;
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	पूर्णांक serdes_phy_addr = 0;
 	u32 data = 0;
 
-	if (!intel_priv->mdio_adhoc_addr)
-		return;
+	अगर (!पूर्णांकel_priv->mdio_adhoc_addr)
+		वापस;
 
-	serdes_phy_addr = intel_priv->mdio_adhoc_addr;
+	serdes_phy_addr = पूर्णांकel_priv->mdio_adhoc_addr;
 
 	/* PSE only - gate SGMII PHY Rx Clock */
-	if (intel_priv->is_pse)
-		mdiobus_modify(priv->mii, serdes_phy_addr, SERDES_GCR0,
+	अगर (पूर्णांकel_priv->is_pse)
+		mdiobus_modअगरy(priv->mii, serdes_phy_addr, SERDES_GCR0,
 			       SERDES_PHY_RX_CLK, 0);
 
-	/*  move power state to P3 */
-	data = mdiobus_read(priv->mii, serdes_phy_addr, SERDES_GCR0);
+	/*  move घातer state to P3 */
+	data = mdiobus_पढ़ो(priv->mii, serdes_phy_addr, SERDES_GCR0);
 
 	data &= ~SERDES_PWR_ST_MASK;
 	data |= SERDES_PWR_ST_P3 << SERDES_PWR_ST_SHIFT;
 
-	mdiobus_write(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
+	mdiobus_ग_लिखो(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
 
-	/* Check for P3 state */
+	/* Check क्रम P3 state */
 	data = serdes_status_poll(priv, serdes_phy_addr,
 				  SERDES_GSR0,
 				  SERDES_PWR_ST_MASK,
 				  SERDES_PWR_ST_P3 << SERDES_PWR_ST_SHIFT);
 
-	if (data) {
+	अगर (data) अणु
 		dev_err(priv->device, "Serdes power state P3 timeout\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* de-assert clk_req */
-	data = mdiobus_read(priv->mii, serdes_phy_addr, SERDES_GCR0);
+	/* de-निश्चित clk_req */
+	data = mdiobus_पढ़ो(priv->mii, serdes_phy_addr, SERDES_GCR0);
 	data &= ~SERDES_PLL_CLK;
-	mdiobus_write(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
+	mdiobus_ग_लिखो(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
 
-	/* check for clk_ack de-assert */
+	/* check क्रम clk_ack de-निश्चित */
 	data = serdes_status_poll(priv, serdes_phy_addr,
 				  SERDES_GSR0,
 				  SERDES_PLL_CLK,
 				  (u32)~SERDES_PLL_CLK);
 
-	if (data) {
+	अगर (data) अणु
 		dev_err(priv->device, "Serdes PLL clk de-assert timeout\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* de-assert lane reset */
-	data = mdiobus_read(priv->mii, serdes_phy_addr, SERDES_GCR0);
+	/* de-निश्चित lane reset */
+	data = mdiobus_पढ़ो(priv->mii, serdes_phy_addr, SERDES_GCR0);
 	data &= ~SERDES_RST;
-	mdiobus_write(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
+	mdiobus_ग_लिखो(priv->mii, serdes_phy_addr, SERDES_GCR0, data);
 
-	/* check for de-assert lane reset reflection */
+	/* check क्रम de-निश्चित lane reset reflection */
 	data = serdes_status_poll(priv, serdes_phy_addr,
 				  SERDES_GSR0,
 				  SERDES_RST,
 				  (u32)~SERDES_RST);
 
-	if (data) {
+	अगर (data) अणु
 		dev_err(priv->device, "Serdes de-assert lane reset timeout\n");
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-/* Program PTP Clock Frequency for different variant of
- * Intel mGBE that has slightly different GPO mapping
+/* Program PTP Clock Frequency क्रम dअगरferent variant of
+ * Intel mGBE that has slightly dअगरferent GPO mapping
  */
-static void intel_mgbe_ptp_clk_freq_config(void *npriv)
-{
-	struct stmmac_priv *priv = (struct stmmac_priv *)npriv;
-	struct intel_priv_data *intel_priv;
+अटल व्योम पूर्णांकel_mgbe_ptp_clk_freq_config(व्योम *npriv)
+अणु
+	काष्ठा sपंचांगmac_priv *priv = (काष्ठा sपंचांगmac_priv *)npriv;
+	काष्ठा पूर्णांकel_priv_data *पूर्णांकel_priv;
 	u32 gpio_value;
 
-	intel_priv = (struct intel_priv_data *)priv->plat->bsp_priv;
+	पूर्णांकel_priv = (काष्ठा पूर्णांकel_priv_data *)priv->plat->bsp_priv;
 
-	gpio_value = readl(priv->ioaddr + GMAC_GPIO_STATUS);
+	gpio_value = पढ़ोl(priv->ioaddr + GMAC_GPIO_STATUS);
 
-	if (intel_priv->is_pse) {
+	अगर (पूर्णांकel_priv->is_pse) अणु
 		/* For PSE GbE, use 200MHz */
 		gpio_value &= ~PSE_PTP_CLK_FREQ_MASK;
 		gpio_value |= PSE_PTP_CLK_FREQ_200MHZ;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* For PCH GbE, use 200MHz */
 		gpio_value &= ~PCH_PTP_CLK_FREQ_MASK;
 		gpio_value |= PCH_PTP_CLK_FREQ_200MHZ;
-	}
+	पूर्ण
 
-	writel(gpio_value, priv->ioaddr + GMAC_GPIO_STATUS);
-}
+	ग_लिखोl(gpio_value, priv->ioaddr + GMAC_GPIO_STATUS);
+पूर्ण
 
-static void get_arttime(struct mii_bus *mii, int intel_adhoc_addr,
-			u64 *art_time)
-{
+अटल व्योम get_artसमय(काष्ठा mii_bus *mii, पूर्णांक पूर्णांकel_adhoc_addr,
+			u64 *art_समय)
+अणु
 	u64 ns;
 
-	ns = mdiobus_read(mii, intel_adhoc_addr, PMC_ART_VALUE3);
+	ns = mdiobus_पढ़ो(mii, पूर्णांकel_adhoc_addr, PMC_ART_VALUE3);
 	ns <<= GMAC4_ART_TIME_SHIFT;
-	ns |= mdiobus_read(mii, intel_adhoc_addr, PMC_ART_VALUE2);
+	ns |= mdiobus_पढ़ो(mii, पूर्णांकel_adhoc_addr, PMC_ART_VALUE2);
 	ns <<= GMAC4_ART_TIME_SHIFT;
-	ns |= mdiobus_read(mii, intel_adhoc_addr, PMC_ART_VALUE1);
+	ns |= mdiobus_पढ़ो(mii, पूर्णांकel_adhoc_addr, PMC_ART_VALUE1);
 	ns <<= GMAC4_ART_TIME_SHIFT;
-	ns |= mdiobus_read(mii, intel_adhoc_addr, PMC_ART_VALUE0);
+	ns |= mdiobus_पढ़ो(mii, पूर्णांकel_adhoc_addr, PMC_ART_VALUE0);
 
-	*art_time = ns;
-}
+	*art_समय = ns;
+पूर्ण
 
-static int intel_crosststamp(ktime_t *device,
-			     struct system_counterval_t *system,
-			     void *ctx)
-{
-	struct intel_priv_data *intel_priv;
+अटल पूर्णांक पूर्णांकel_crosststamp(kसमय_प्रकार *device,
+			     काष्ठा प्रणाली_counterval_t *प्रणाली,
+			     व्योम *ctx)
+अणु
+	काष्ठा पूर्णांकel_priv_data *पूर्णांकel_priv;
 
-	struct stmmac_priv *priv = (struct stmmac_priv *)ctx;
-	void __iomem *ptpaddr = priv->ptpaddr;
-	void __iomem *ioaddr = priv->hw->pcsr;
-	unsigned long flags;
-	u64 art_time = 0;
-	u64 ptp_time = 0;
+	काष्ठा sपंचांगmac_priv *priv = (काष्ठा sपंचांगmac_priv *)ctx;
+	व्योम __iomem *ptpaddr = priv->ptpaddr;
+	व्योम __iomem *ioaddr = priv->hw->pcsr;
+	अचिन्हित दीर्घ flags;
+	u64 art_समय = 0;
+	u64 ptp_समय = 0;
 	u32 num_snapshot;
 	u32 gpio_value;
 	u32 acr_value;
-	int ret;
+	पूर्णांक ret;
 	u32 v;
-	int i;
+	पूर्णांक i;
 
-	if (!boot_cpu_has(X86_FEATURE_ART))
-		return -EOPNOTSUPP;
+	अगर (!boot_cpu_has(X86_FEATURE_ART))
+		वापस -EOPNOTSUPP;
 
-	intel_priv = priv->plat->bsp_priv;
+	पूर्णांकel_priv = priv->plat->bsp_priv;
 
-	/* Both internal crosstimestamping and external triggered event
-	 * timestamping cannot be run concurrently.
+	/* Both पूर्णांकernal crossबारtamping and बाह्यal triggered event
+	 * बारtamping cannot be run concurrently.
 	 */
-	if (priv->plat->ext_snapshot_en)
-		return -EBUSY;
+	अगर (priv->plat->ext_snapshot_en)
+		वापस -EBUSY;
 
 	mutex_lock(&priv->aux_ts_lock);
 	/* Enable Internal snapshot trigger */
-	acr_value = readl(ptpaddr + PTP_ACR);
+	acr_value = पढ़ोl(ptpaddr + PTP_ACR);
 	acr_value &= ~PTP_ACR_MASK;
-	switch (priv->plat->int_snapshot_num) {
-	case AUX_SNAPSHOT0:
+	चयन (priv->plat->पूर्णांक_snapshot_num) अणु
+	हाल AUX_SNAPSHOT0:
 		acr_value |= PTP_ACR_ATSEN0;
-		break;
-	case AUX_SNAPSHOT1:
+		अवरोध;
+	हाल AUX_SNAPSHOT1:
 		acr_value |= PTP_ACR_ATSEN1;
-		break;
-	case AUX_SNAPSHOT2:
+		अवरोध;
+	हाल AUX_SNAPSHOT2:
 		acr_value |= PTP_ACR_ATSEN2;
-		break;
-	case AUX_SNAPSHOT3:
+		अवरोध;
+	हाल AUX_SNAPSHOT3:
 		acr_value |= PTP_ACR_ATSEN3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		mutex_unlock(&priv->aux_ts_lock);
-		return -EINVAL;
-	}
-	writel(acr_value, ptpaddr + PTP_ACR);
+		वापस -EINVAL;
+	पूर्ण
+	ग_लिखोl(acr_value, ptpaddr + PTP_ACR);
 
 	/* Clear FIFO */
-	acr_value = readl(ptpaddr + PTP_ACR);
+	acr_value = पढ़ोl(ptpaddr + PTP_ACR);
 	acr_value |= PTP_ACR_ATSFC;
-	writel(acr_value, ptpaddr + PTP_ACR);
+	ग_लिखोl(acr_value, ptpaddr + PTP_ACR);
 	/* Release the mutex */
 	mutex_unlock(&priv->aux_ts_lock);
 
-	/* Trigger Internal snapshot signal
+	/* Trigger Internal snapshot संकेत
 	 * Create a rising edge by just toggle the GPO1 to low
 	 * and back to high.
 	 */
-	gpio_value = readl(ioaddr + GMAC_GPIO_STATUS);
+	gpio_value = पढ़ोl(ioaddr + GMAC_GPIO_STATUS);
 	gpio_value &= ~GMAC_GPO1;
-	writel(gpio_value, ioaddr + GMAC_GPIO_STATUS);
+	ग_लिखोl(gpio_value, ioaddr + GMAC_GPIO_STATUS);
 	gpio_value |= GMAC_GPO1;
-	writel(gpio_value, ioaddr + GMAC_GPIO_STATUS);
+	ग_लिखोl(gpio_value, ioaddr + GMAC_GPIO_STATUS);
 
-	/* Poll for time sync operation done */
-	ret = readl_poll_timeout(priv->ioaddr + GMAC_INT_STATUS, v,
+	/* Poll क्रम समय sync operation करोne */
+	ret = पढ़ोl_poll_समयout(priv->ioaddr + GMAC_INT_STATUS, v,
 				 (v & GMAC_INT_TSIE), 100, 10000);
 
-	if (ret == -ETIMEDOUT) {
+	अगर (ret == -ETIMEDOUT) अणु
 		pr_err("%s: Wait for time sync operation timeout\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	num_snapshot = (readl(ioaddr + GMAC_TIMESTAMP_STATUS) &
+	num_snapshot = (पढ़ोl(ioaddr + GMAC_TIMESTAMP_STATUS) &
 			GMAC_TIMESTAMP_ATSNS_MASK) >>
 			GMAC_TIMESTAMP_ATSNS_SHIFT;
 
-	/* Repeat until the timestamps are from the FIFO last segment */
-	for (i = 0; i < num_snapshot; i++) {
+	/* Repeat until the बारtamps are from the FIFO last segment */
+	क्रम (i = 0; i < num_snapshot; i++) अणु
 		spin_lock_irqsave(&priv->ptp_lock, flags);
-		stmmac_get_ptptime(priv, ptpaddr, &ptp_time);
-		*device = ns_to_ktime(ptp_time);
+		sपंचांगmac_get_ptpसमय(priv, ptpaddr, &ptp_समय);
+		*device = ns_to_kसमय(ptp_समय);
 		spin_unlock_irqrestore(&priv->ptp_lock, flags);
-		get_arttime(priv->mii, intel_priv->mdio_adhoc_addr, &art_time);
-		*system = convert_art_to_tsc(art_time);
-	}
+		get_artसमय(priv->mii, पूर्णांकel_priv->mdio_adhoc_addr, &art_समय);
+		*प्रणाली = convert_art_to_tsc(art_समय);
+	पूर्ण
 
-	system->cycles *= intel_priv->crossts_adj;
+	प्रणाली->cycles *= पूर्णांकel_priv->crossts_adj;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void intel_mgbe_pse_crossts_adj(struct intel_priv_data *intel_priv,
-				       int base)
-{
-	if (boot_cpu_has(X86_FEATURE_ART)) {
-		unsigned int art_freq;
+अटल व्योम पूर्णांकel_mgbe_pse_crossts_adj(काष्ठा पूर्णांकel_priv_data *पूर्णांकel_priv,
+				       पूर्णांक base)
+अणु
+	अगर (boot_cpu_has(X86_FEATURE_ART)) अणु
+		अचिन्हित पूर्णांक art_freq;
 
-		/* On systems that support ART, ART frequency can be obtained
-		 * from ECX register of CPUID leaf (0x15).
+		/* On प्रणालीs that support ART, ART frequency can be obtained
+		 * from ECX रेजिस्टर of CPUID leaf (0x15).
 		 */
 		art_freq = cpuid_ecx(ART_CPUID_LEAF);
-		do_div(art_freq, base);
-		intel_priv->crossts_adj = art_freq;
-	}
-}
+		करो_भाग(art_freq, base);
+		पूर्णांकel_priv->crossts_adj = art_freq;
+	पूर्ण
+पूर्ण
 
-static void common_default_data(struct plat_stmmacenet_data *plat)
-{
+अटल व्योम common_शेष_data(काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->clk_csr = 2;	/* clk_csr_i = 20-35MHz & MDC = clk_csr_i/16 */
 	plat->has_gmac = 1;
-	plat->force_sf_dma_mode = 1;
+	plat->क्रमce_sf_dma_mode = 1;
 
 	plat->mdio_bus_data->needs_reset = true;
 
-	/* Set default value for multicast hash bins */
+	/* Set शेष value क्रम multicast hash bins */
 	plat->multicast_filter_bins = HASH_TABLE_SIZE;
 
-	/* Set default value for unicast filter entries */
+	/* Set शेष value क्रम unicast filter entries */
 	plat->unicast_filter_entries = 1;
 
-	/* Set the maxmtu to a default of JUMBO_LEN */
+	/* Set the maxmtu to a शेष of JUMBO_LEN */
 	plat->maxmtu = JUMBO_LEN;
 
-	/* Set default number of RX and TX queues to use */
+	/* Set शेष number of RX and TX queues to use */
 	plat->tx_queues_to_use = 1;
 	plat->rx_queues_to_use = 1;
 
-	/* Disable Priority config by default */
+	/* Disable Priority config by शेष */
 	plat->tx_queues_cfg[0].use_prio = false;
 	plat->rx_queues_cfg[0].use_prio = false;
 
-	/* Disable RX queues routing by default */
+	/* Disable RX queues routing by शेष */
 	plat->rx_queues_cfg[0].pkt_route = 0x0;
-}
+पूर्ण
 
-static int intel_mgbe_common_data(struct pci_dev *pdev,
-				  struct plat_stmmacenet_data *plat)
-{
-	char clk_name[20];
-	int ret;
-	int i;
+अटल पूर्णांक पूर्णांकel_mgbe_common_data(काष्ठा pci_dev *pdev,
+				  काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	अक्षर clk_name[20];
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	plat->pdev = pdev;
 	plat->phy_addr = -1;
 	plat->clk_csr = 5;
 	plat->has_gmac = 0;
 	plat->has_gmac4 = 1;
-	plat->force_sf_dma_mode = 0;
+	plat->क्रमce_sf_dma_mode = 0;
 	plat->tso_en = 1;
 
 	plat->rx_sched_algorithm = MTL_RX_ALGORITHM_SP;
 
-	for (i = 0; i < plat->rx_queues_to_use; i++) {
+	क्रम (i = 0; i < plat->rx_queues_to_use; i++) अणु
 		plat->rx_queues_cfg[i].mode_to_use = MTL_QUEUE_DCB;
 		plat->rx_queues_cfg[i].chan = i;
 
-		/* Disable Priority config by default */
+		/* Disable Priority config by शेष */
 		plat->rx_queues_cfg[i].use_prio = false;
 
-		/* Disable RX queues routing by default */
+		/* Disable RX queues routing by शेष */
 		plat->rx_queues_cfg[i].pkt_route = 0x0;
-	}
+	पूर्ण
 
-	for (i = 0; i < plat->tx_queues_to_use; i++) {
+	क्रम (i = 0; i < plat->tx_queues_to_use; i++) अणु
 		plat->tx_queues_cfg[i].mode_to_use = MTL_QUEUE_DCB;
 
-		/* Disable Priority config by default */
+		/* Disable Priority config by शेष */
 		plat->tx_queues_cfg[i].use_prio = false;
-		/* Default TX Q0 to use TSO and rest TXQ for TBS */
-		if (i > 0)
+		/* Default TX Q0 to use TSO and rest TXQ क्रम TBS */
+		अगर (i > 0)
 			plat->tx_queues_cfg[i].tbs_en = 1;
-	}
+	पूर्ण
 
-	/* FIFO size is 4096 bytes for 1 tx/rx queue */
-	plat->tx_fifo_size = plat->tx_queues_to_use * 4096;
-	plat->rx_fifo_size = plat->rx_queues_to_use * 4096;
+	/* FIFO size is 4096 bytes क्रम 1 tx/rx queue */
+	plat->tx_fअगरo_size = plat->tx_queues_to_use * 4096;
+	plat->rx_fअगरo_size = plat->rx_queues_to_use * 4096;
 
 	plat->tx_sched_algorithm = MTL_TX_ALGORITHM_WRR;
 	plat->tx_queues_cfg[0].weight = 0x09;
@@ -473,10 +474,10 @@ static int intel_mgbe_common_data(struct pci_dev *pdev,
 	plat->dma_cfg->aal = 0;
 	plat->dma_cfg->dche = true;
 
-	plat->axi = devm_kzalloc(&pdev->dev, sizeof(*plat->axi),
+	plat->axi = devm_kzalloc(&pdev->dev, माप(*plat->axi),
 				 GFP_KERNEL);
-	if (!plat->axi)
-		return -ENOMEM;
+	अगर (!plat->axi)
+		वापस -ENOMEM;
 
 	plat->axi->axi_lpi_en = 0;
 	plat->axi->axi_xit_frm = 0;
@@ -489,33 +490,33 @@ static int intel_mgbe_common_data(struct pci_dev *pdev,
 	plat->ptp_max_adj = plat->clk_ptp_rate;
 	plat->eee_usecs_rate = plat->clk_ptp_rate;
 
-	/* Set system clock */
-	sprintf(clk_name, "%s-%s", "stmmac", pci_name(pdev));
+	/* Set प्रणाली घड़ी */
+	प्र_लिखो(clk_name, "%s-%s", "stmmac", pci_name(pdev));
 
-	plat->stmmac_clk = clk_register_fixed_rate(&pdev->dev,
-						   clk_name, NULL, 0,
+	plat->sपंचांगmac_clk = clk_रेजिस्टर_fixed_rate(&pdev->dev,
+						   clk_name, शून्य, 0,
 						   plat->clk_ptp_rate);
 
-	if (IS_ERR(plat->stmmac_clk)) {
+	अगर (IS_ERR(plat->sपंचांगmac_clk)) अणु
 		dev_warn(&pdev->dev, "Fail to register stmmac-clk\n");
-		plat->stmmac_clk = NULL;
-	}
+		plat->sपंचांगmac_clk = शून्य;
+	पूर्ण
 
-	ret = clk_prepare_enable(plat->stmmac_clk);
-	if (ret) {
-		clk_unregister_fixed_rate(plat->stmmac_clk);
-		return ret;
-	}
+	ret = clk_prepare_enable(plat->sपंचांगmac_clk);
+	अगर (ret) अणु
+		clk_unरेजिस्टर_fixed_rate(plat->sपंचांगmac_clk);
+		वापस ret;
+	पूर्ण
 
-	plat->ptp_clk_freq_config = intel_mgbe_ptp_clk_freq_config;
+	plat->ptp_clk_freq_config = पूर्णांकel_mgbe_ptp_clk_freq_config;
 
-	/* Set default value for multicast hash bins */
+	/* Set शेष value क्रम multicast hash bins */
 	plat->multicast_filter_bins = HASH_TABLE_SIZE;
 
-	/* Set default value for unicast filter entries */
+	/* Set शेष value क्रम unicast filter entries */
 	plat->unicast_filter_entries = 1;
 
-	/* Set the maxmtu to a default of JUMBO_LEN */
+	/* Set the maxmtu to a शेष of JUMBO_LEN */
 	plat->maxmtu = JUMBO_LEN;
 
 	plat->vlan_fail_q_en = true;
@@ -523,23 +524,23 @@ static int intel_mgbe_common_data(struct pci_dev *pdev,
 	/* Use the last Rx queue */
 	plat->vlan_fail_q = plat->rx_queues_to_use - 1;
 
-	/* Intel mgbe SGMII interface uses pcs-xcps */
-	if (plat->phy_interface == PHY_INTERFACE_MODE_SGMII) {
+	/* Intel mgbe SGMII पूर्णांकerface uses pcs-xcps */
+	अगर (plat->phy_पूर्णांकerface == PHY_INTERFACE_MODE_SGMII) अणु
 		plat->mdio_bus_data->has_xpcs = true;
 		plat->mdio_bus_data->xpcs_an_inband = true;
-	}
+	पूर्ण
 
-	/* Ensure mdio bus scan skips intel serdes and pcs-xpcs */
+	/* Ensure mdio bus scan skips पूर्णांकel serdes and pcs-xpcs */
 	plat->mdio_bus_data->phy_mask = 1 << INTEL_MGBE_ADHOC_ADDR;
 	plat->mdio_bus_data->phy_mask |= 1 << INTEL_MGBE_XPCS_ADDR;
 
-	plat->int_snapshot_num = AUX_SNAPSHOT1;
+	plat->पूर्णांक_snapshot_num = AUX_SNAPSHOT1;
 	plat->ext_snapshot_num = AUX_SNAPSHOT0;
 
 	plat->has_crossts = true;
-	plat->crosststamp = intel_crosststamp;
+	plat->crosststamp = पूर्णांकel_crosststamp;
 
-	/* Setup MSI vector offset specific to Intel mGbE controller */
+	/* Setup MSI vector offset specअगरic to Intel mGbE controller */
 	plat->msi_mac_vec = 29;
 	plat->msi_lpi_vec = 28;
 	plat->msi_sfty_ce_vec = 27;
@@ -547,306 +548,306 @@ static int intel_mgbe_common_data(struct pci_dev *pdev,
 	plat->msi_rx_base_vec = 0;
 	plat->msi_tx_base_vec = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ehl_common_data(struct pci_dev *pdev,
-			   struct plat_stmmacenet_data *plat)
-{
+अटल पूर्णांक ehl_common_data(काष्ठा pci_dev *pdev,
+			   काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->rx_queues_to_use = 8;
 	plat->tx_queues_to_use = 8;
 	plat->clk_ptp_rate = 200000000;
 
-	return intel_mgbe_common_data(pdev, plat);
-}
+	वापस पूर्णांकel_mgbe_common_data(pdev, plat);
+पूर्ण
 
-static int ehl_sgmii_data(struct pci_dev *pdev,
-			  struct plat_stmmacenet_data *plat)
-{
+अटल पूर्णांक ehl_sgmii_data(काष्ठा pci_dev *pdev,
+			  काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->bus_id = 1;
-	plat->phy_interface = PHY_INTERFACE_MODE_SGMII;
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_SGMII;
 
-	plat->serdes_powerup = intel_serdes_powerup;
-	plat->serdes_powerdown = intel_serdes_powerdown;
+	plat->serdes_घातerup = पूर्णांकel_serdes_घातerup;
+	plat->serdes_घातerकरोwn = पूर्णांकel_serdes_घातerकरोwn;
 
-	return ehl_common_data(pdev, plat);
-}
+	वापस ehl_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info ehl_sgmii1g_info = {
+अटल काष्ठा sपंचांगmac_pci_info ehl_sgmii1g_info = अणु
 	.setup = ehl_sgmii_data,
-};
+पूर्ण;
 
-static int ehl_rgmii_data(struct pci_dev *pdev,
-			  struct plat_stmmacenet_data *plat)
-{
+अटल पूर्णांक ehl_rgmii_data(काष्ठा pci_dev *pdev,
+			  काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->bus_id = 1;
-	plat->phy_interface = PHY_INTERFACE_MODE_RGMII;
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_RGMII;
 
-	return ehl_common_data(pdev, plat);
-}
+	वापस ehl_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info ehl_rgmii1g_info = {
+अटल काष्ठा sपंचांगmac_pci_info ehl_rgmii1g_info = अणु
 	.setup = ehl_rgmii_data,
-};
+पूर्ण;
 
-static int ehl_pse0_common_data(struct pci_dev *pdev,
-				struct plat_stmmacenet_data *plat)
-{
-	struct intel_priv_data *intel_priv = plat->bsp_priv;
+अटल पूर्णांक ehl_pse0_common_data(काष्ठा pci_dev *pdev,
+				काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	काष्ठा पूर्णांकel_priv_data *पूर्णांकel_priv = plat->bsp_priv;
 
-	intel_priv->is_pse = true;
+	पूर्णांकel_priv->is_pse = true;
 	plat->bus_id = 2;
 	plat->addr64 = 32;
 
-	intel_mgbe_pse_crossts_adj(intel_priv, EHL_PSE_ART_MHZ);
+	पूर्णांकel_mgbe_pse_crossts_adj(पूर्णांकel_priv, EHL_PSE_ART_MHZ);
 
-	return ehl_common_data(pdev, plat);
-}
+	वापस ehl_common_data(pdev, plat);
+पूर्ण
 
-static int ehl_pse0_rgmii1g_data(struct pci_dev *pdev,
-				 struct plat_stmmacenet_data *plat)
-{
-	plat->phy_interface = PHY_INTERFACE_MODE_RGMII_ID;
-	return ehl_pse0_common_data(pdev, plat);
-}
+अटल पूर्णांक ehl_pse0_rgmii1g_data(काष्ठा pci_dev *pdev,
+				 काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_RGMII_ID;
+	वापस ehl_pse0_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info ehl_pse0_rgmii1g_info = {
+अटल काष्ठा sपंचांगmac_pci_info ehl_pse0_rgmii1g_info = अणु
 	.setup = ehl_pse0_rgmii1g_data,
-};
+पूर्ण;
 
-static int ehl_pse0_sgmii1g_data(struct pci_dev *pdev,
-				 struct plat_stmmacenet_data *plat)
-{
-	plat->phy_interface = PHY_INTERFACE_MODE_SGMII;
-	plat->serdes_powerup = intel_serdes_powerup;
-	plat->serdes_powerdown = intel_serdes_powerdown;
-	return ehl_pse0_common_data(pdev, plat);
-}
+अटल पूर्णांक ehl_pse0_sgmii1g_data(काष्ठा pci_dev *pdev,
+				 काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_SGMII;
+	plat->serdes_घातerup = पूर्णांकel_serdes_घातerup;
+	plat->serdes_घातerकरोwn = पूर्णांकel_serdes_घातerकरोwn;
+	वापस ehl_pse0_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info ehl_pse0_sgmii1g_info = {
+अटल काष्ठा sपंचांगmac_pci_info ehl_pse0_sgmii1g_info = अणु
 	.setup = ehl_pse0_sgmii1g_data,
-};
+पूर्ण;
 
-static int ehl_pse1_common_data(struct pci_dev *pdev,
-				struct plat_stmmacenet_data *plat)
-{
-	struct intel_priv_data *intel_priv = plat->bsp_priv;
+अटल पूर्णांक ehl_pse1_common_data(काष्ठा pci_dev *pdev,
+				काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	काष्ठा पूर्णांकel_priv_data *पूर्णांकel_priv = plat->bsp_priv;
 
-	intel_priv->is_pse = true;
+	पूर्णांकel_priv->is_pse = true;
 	plat->bus_id = 3;
 	plat->addr64 = 32;
 
-	intel_mgbe_pse_crossts_adj(intel_priv, EHL_PSE_ART_MHZ);
+	पूर्णांकel_mgbe_pse_crossts_adj(पूर्णांकel_priv, EHL_PSE_ART_MHZ);
 
-	return ehl_common_data(pdev, plat);
-}
+	वापस ehl_common_data(pdev, plat);
+पूर्ण
 
-static int ehl_pse1_rgmii1g_data(struct pci_dev *pdev,
-				 struct plat_stmmacenet_data *plat)
-{
-	plat->phy_interface = PHY_INTERFACE_MODE_RGMII_ID;
-	return ehl_pse1_common_data(pdev, plat);
-}
+अटल पूर्णांक ehl_pse1_rgmii1g_data(काष्ठा pci_dev *pdev,
+				 काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_RGMII_ID;
+	वापस ehl_pse1_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info ehl_pse1_rgmii1g_info = {
+अटल काष्ठा sपंचांगmac_pci_info ehl_pse1_rgmii1g_info = अणु
 	.setup = ehl_pse1_rgmii1g_data,
-};
+पूर्ण;
 
-static int ehl_pse1_sgmii1g_data(struct pci_dev *pdev,
-				 struct plat_stmmacenet_data *plat)
-{
-	plat->phy_interface = PHY_INTERFACE_MODE_SGMII;
-	plat->serdes_powerup = intel_serdes_powerup;
-	plat->serdes_powerdown = intel_serdes_powerdown;
-	return ehl_pse1_common_data(pdev, plat);
-}
+अटल पूर्णांक ehl_pse1_sgmii1g_data(काष्ठा pci_dev *pdev,
+				 काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_SGMII;
+	plat->serdes_घातerup = पूर्णांकel_serdes_घातerup;
+	plat->serdes_घातerकरोwn = पूर्णांकel_serdes_घातerकरोwn;
+	वापस ehl_pse1_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info ehl_pse1_sgmii1g_info = {
+अटल काष्ठा sपंचांगmac_pci_info ehl_pse1_sgmii1g_info = अणु
 	.setup = ehl_pse1_sgmii1g_data,
-};
+पूर्ण;
 
-static int tgl_common_data(struct pci_dev *pdev,
-			   struct plat_stmmacenet_data *plat)
-{
+अटल पूर्णांक tgl_common_data(काष्ठा pci_dev *pdev,
+			   काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->rx_queues_to_use = 6;
 	plat->tx_queues_to_use = 4;
 	plat->clk_ptp_rate = 200000000;
 
-	return intel_mgbe_common_data(pdev, plat);
-}
+	वापस पूर्णांकel_mgbe_common_data(pdev, plat);
+पूर्ण
 
-static int tgl_sgmii_phy0_data(struct pci_dev *pdev,
-			       struct plat_stmmacenet_data *plat)
-{
+अटल पूर्णांक tgl_sgmii_phy0_data(काष्ठा pci_dev *pdev,
+			       काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->bus_id = 1;
-	plat->phy_interface = PHY_INTERFACE_MODE_SGMII;
-	plat->serdes_powerup = intel_serdes_powerup;
-	plat->serdes_powerdown = intel_serdes_powerdown;
-	return tgl_common_data(pdev, plat);
-}
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_SGMII;
+	plat->serdes_घातerup = पूर्णांकel_serdes_घातerup;
+	plat->serdes_घातerकरोwn = पूर्णांकel_serdes_घातerकरोwn;
+	वापस tgl_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info tgl_sgmii1g_phy0_info = {
+अटल काष्ठा sपंचांगmac_pci_info tgl_sgmii1g_phy0_info = अणु
 	.setup = tgl_sgmii_phy0_data,
-};
+पूर्ण;
 
-static int tgl_sgmii_phy1_data(struct pci_dev *pdev,
-			       struct plat_stmmacenet_data *plat)
-{
+अटल पूर्णांक tgl_sgmii_phy1_data(काष्ठा pci_dev *pdev,
+			       काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->bus_id = 2;
-	plat->phy_interface = PHY_INTERFACE_MODE_SGMII;
-	plat->serdes_powerup = intel_serdes_powerup;
-	plat->serdes_powerdown = intel_serdes_powerdown;
-	return tgl_common_data(pdev, plat);
-}
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_SGMII;
+	plat->serdes_घातerup = पूर्णांकel_serdes_घातerup;
+	plat->serdes_घातerकरोwn = पूर्णांकel_serdes_घातerकरोwn;
+	वापस tgl_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info tgl_sgmii1g_phy1_info = {
+अटल काष्ठा sपंचांगmac_pci_info tgl_sgmii1g_phy1_info = अणु
 	.setup = tgl_sgmii_phy1_data,
-};
+पूर्ण;
 
-static int adls_sgmii_phy0_data(struct pci_dev *pdev,
-				struct plat_stmmacenet_data *plat)
-{
+अटल पूर्णांक adls_sgmii_phy0_data(काष्ठा pci_dev *pdev,
+				काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->bus_id = 1;
-	plat->phy_interface = PHY_INTERFACE_MODE_SGMII;
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_SGMII;
 
-	/* SerDes power up and power down are done in BIOS for ADL */
+	/* SerDes घातer up and घातer करोwn are करोne in BIOS क्रम ADL */
 
-	return tgl_common_data(pdev, plat);
-}
+	वापस tgl_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info adls_sgmii1g_phy0_info = {
+अटल काष्ठा sपंचांगmac_pci_info adls_sgmii1g_phy0_info = अणु
 	.setup = adls_sgmii_phy0_data,
-};
+पूर्ण;
 
-static int adls_sgmii_phy1_data(struct pci_dev *pdev,
-				struct plat_stmmacenet_data *plat)
-{
+अटल पूर्णांक adls_sgmii_phy1_data(काष्ठा pci_dev *pdev,
+				काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->bus_id = 2;
-	plat->phy_interface = PHY_INTERFACE_MODE_SGMII;
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_SGMII;
 
-	/* SerDes power up and power down are done in BIOS for ADL */
+	/* SerDes घातer up and घातer करोwn are करोne in BIOS क्रम ADL */
 
-	return tgl_common_data(pdev, plat);
-}
+	वापस tgl_common_data(pdev, plat);
+पूर्ण
 
-static struct stmmac_pci_info adls_sgmii1g_phy1_info = {
+अटल काष्ठा sपंचांगmac_pci_info adls_sgmii1g_phy1_info = अणु
 	.setup = adls_sgmii_phy1_data,
-};
-static const struct stmmac_pci_func_data galileo_stmmac_func_data[] = {
-	{
+पूर्ण;
+अटल स्थिर काष्ठा sपंचांगmac_pci_func_data galileo_sपंचांगmac_func_data[] = अणु
+	अणु
 		.func = 6,
 		.phy_addr = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct stmmac_pci_dmi_data galileo_stmmac_dmi_data = {
-	.func = galileo_stmmac_func_data,
-	.nfuncs = ARRAY_SIZE(galileo_stmmac_func_data),
-};
+अटल स्थिर काष्ठा sपंचांगmac_pci_dmi_data galileo_sपंचांगmac_dmi_data = अणु
+	.func = galileo_sपंचांगmac_func_data,
+	.nfuncs = ARRAY_SIZE(galileo_sपंचांगmac_func_data),
+पूर्ण;
 
-static const struct stmmac_pci_func_data iot2040_stmmac_func_data[] = {
-	{
+अटल स्थिर काष्ठा sपंचांगmac_pci_func_data iot2040_sपंचांगmac_func_data[] = अणु
+	अणु
 		.func = 6,
 		.phy_addr = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.func = 7,
 		.phy_addr = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct stmmac_pci_dmi_data iot2040_stmmac_dmi_data = {
-	.func = iot2040_stmmac_func_data,
-	.nfuncs = ARRAY_SIZE(iot2040_stmmac_func_data),
-};
+अटल स्थिर काष्ठा sपंचांगmac_pci_dmi_data iot2040_sपंचांगmac_dmi_data = अणु
+	.func = iot2040_sपंचांगmac_func_data,
+	.nfuncs = ARRAY_SIZE(iot2040_sपंचांगmac_func_data),
+पूर्ण;
 
-static const struct dmi_system_id quark_pci_dmi[] = {
-	{
-		.matches = {
+अटल स्थिर काष्ठा dmi_प्रणाली_id quark_pci_dmi[] = अणु
+	अणु
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "Galileo"),
-		},
-		.driver_data = (void *)&galileo_stmmac_dmi_data,
-	},
-	{
-		.matches = {
+		पूर्ण,
+		.driver_data = (व्योम *)&galileo_sपंचांगmac_dmi_data,
+	पूर्ण,
+	अणु
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "GalileoGen2"),
-		},
-		.driver_data = (void *)&galileo_stmmac_dmi_data,
-	},
+		पूर्ण,
+		.driver_data = (व्योम *)&galileo_sपंचांगmac_dmi_data,
+	पूर्ण,
 	/* There are 2 types of SIMATIC IOT2000: IOT2020 and IOT2040.
-	 * The asset tag "6ES7647-0AA00-0YA2" is only for IOT2020 which
-	 * has only one pci network device while other asset tags are
-	 * for IOT2040 which has two.
+	 * The asset tag "6ES7647-0AA00-0YA2" is only क्रम IOT2020 which
+	 * has only one pci network device जबतक other asset tags are
+	 * क्रम IOT2040 which has two.
 	 */
-	{
-		.matches = {
+	अणु
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "SIMATIC IOT2000"),
 			DMI_EXACT_MATCH(DMI_BOARD_ASSET_TAG,
 					"6ES7647-0AA00-0YA2"),
-		},
-		.driver_data = (void *)&galileo_stmmac_dmi_data,
-	},
-	{
-		.matches = {
+		पूर्ण,
+		.driver_data = (व्योम *)&galileo_sपंचांगmac_dmi_data,
+	पूर्ण,
+	अणु
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "SIMATIC IOT2000"),
-		},
-		.driver_data = (void *)&iot2040_stmmac_dmi_data,
-	},
-	{}
-};
+		पूर्ण,
+		.driver_data = (व्योम *)&iot2040_sपंचांगmac_dmi_data,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int quark_default_data(struct pci_dev *pdev,
-			      struct plat_stmmacenet_data *plat)
-{
-	int ret;
+अटल पूर्णांक quark_शेष_data(काष्ठा pci_dev *pdev,
+			      काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	पूर्णांक ret;
 
-	/* Set common default data first */
-	common_default_data(plat);
+	/* Set common शेष data first */
+	common_शेष_data(plat);
 
-	/* Refuse to load the driver and register net device if MAC controller
-	 * does not connect to any PHY interface.
+	/* Refuse to load the driver and रेजिस्टर net device अगर MAC controller
+	 * करोes not connect to any PHY पूर्णांकerface.
 	 */
-	ret = stmmac_pci_find_phy_addr(pdev, quark_pci_dmi);
-	if (ret < 0) {
+	ret = sपंचांगmac_pci_find_phy_addr(pdev, quark_pci_dmi);
+	अगर (ret < 0) अणु
 		/* Return error to the caller on DMI enabled boards. */
-		if (dmi_get_system_info(DMI_BOARD_NAME))
-			return ret;
+		अगर (dmi_get_प्रणाली_info(DMI_BOARD_NAME))
+			वापस ret;
 
-		/* Galileo boards with old firmware don't support DMI. We always
+		/* Galileo boards with old firmware करोn't support DMI. We always
 		 * use 1 here as PHY address, so at least the first found MAC
 		 * controller would be probed.
 		 */
 		ret = 1;
-	}
+	पूर्ण
 
 	plat->bus_id = pci_dev_id(pdev);
 	plat->phy_addr = ret;
-	plat->phy_interface = PHY_INTERFACE_MODE_RMII;
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_RMII;
 
 	plat->dma_cfg->pbl = 16;
 	plat->dma_cfg->pblx8 = true;
 	plat->dma_cfg->fixed_burst = 1;
 	/* AXI (TODO) */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct stmmac_pci_info quark_info = {
-	.setup = quark_default_data,
-};
+अटल स्थिर काष्ठा sपंचांगmac_pci_info quark_info = अणु
+	.setup = quark_शेष_data,
+पूर्ण;
 
-static int stmmac_config_single_msi(struct pci_dev *pdev,
-				    struct plat_stmmacenet_data *plat,
-				    struct stmmac_resources *res)
-{
-	int ret;
+अटल पूर्णांक sपंचांगmac_config_single_msi(काष्ठा pci_dev *pdev,
+				    काष्ठा plat_sपंचांगmacenet_data *plat,
+				    काष्ठा sपंचांगmac_resources *res)
+अणु
+	पूर्णांक ret;
 
 	ret = pci_alloc_irq_vectors(pdev, 1, 1, PCI_IRQ_ALL_TYPES);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_info(&pdev->dev, "%s: Single IRQ enablement failed\n",
 			 __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	res->irq = pci_irq_vector(pdev, 0);
 	res->wol_irq = res->irq;
@@ -854,120 +855,120 @@ static int stmmac_config_single_msi(struct pci_dev *pdev,
 	dev_info(&pdev->dev, "%s: Single IRQ enablement successful\n",
 		 __func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmmac_config_multi_msi(struct pci_dev *pdev,
-				   struct plat_stmmacenet_data *plat,
-				   struct stmmac_resources *res)
-{
-	int ret;
-	int i;
+अटल पूर्णांक sपंचांगmac_config_multi_msi(काष्ठा pci_dev *pdev,
+				   काष्ठा plat_sपंचांगmacenet_data *plat,
+				   काष्ठा sपंचांगmac_resources *res)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (plat->msi_rx_base_vec >= STMMAC_MSI_VEC_MAX ||
-	    plat->msi_tx_base_vec >= STMMAC_MSI_VEC_MAX) {
+	अगर (plat->msi_rx_base_vec >= STMMAC_MSI_VEC_MAX ||
+	    plat->msi_tx_base_vec >= STMMAC_MSI_VEC_MAX) अणु
 		dev_info(&pdev->dev, "%s: Invalid RX & TX vector defined\n",
 			 __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	ret = pci_alloc_irq_vectors(pdev, 2, STMMAC_MSI_VEC_MAX,
 				    PCI_IRQ_MSI | PCI_IRQ_MSIX);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_info(&pdev->dev, "%s: multi MSI enablement failed\n",
 			 __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* For RX MSI */
-	for (i = 0; i < plat->rx_queues_to_use; i++) {
+	क्रम (i = 0; i < plat->rx_queues_to_use; i++) अणु
 		res->rx_irq[i] = pci_irq_vector(pdev,
 						plat->msi_rx_base_vec + i * 2);
-	}
+	पूर्ण
 
 	/* For TX MSI */
-	for (i = 0; i < plat->tx_queues_to_use; i++) {
+	क्रम (i = 0; i < plat->tx_queues_to_use; i++) अणु
 		res->tx_irq[i] = pci_irq_vector(pdev,
 						plat->msi_tx_base_vec + i * 2);
-	}
+	पूर्ण
 
-	if (plat->msi_mac_vec < STMMAC_MSI_VEC_MAX)
+	अगर (plat->msi_mac_vec < STMMAC_MSI_VEC_MAX)
 		res->irq = pci_irq_vector(pdev, plat->msi_mac_vec);
-	if (plat->msi_wol_vec < STMMAC_MSI_VEC_MAX)
+	अगर (plat->msi_wol_vec < STMMAC_MSI_VEC_MAX)
 		res->wol_irq = pci_irq_vector(pdev, plat->msi_wol_vec);
-	if (plat->msi_lpi_vec < STMMAC_MSI_VEC_MAX)
+	अगर (plat->msi_lpi_vec < STMMAC_MSI_VEC_MAX)
 		res->lpi_irq = pci_irq_vector(pdev, plat->msi_lpi_vec);
-	if (plat->msi_sfty_ce_vec < STMMAC_MSI_VEC_MAX)
+	अगर (plat->msi_sfty_ce_vec < STMMAC_MSI_VEC_MAX)
 		res->sfty_ce_irq = pci_irq_vector(pdev, plat->msi_sfty_ce_vec);
-	if (plat->msi_sfty_ue_vec < STMMAC_MSI_VEC_MAX)
+	अगर (plat->msi_sfty_ue_vec < STMMAC_MSI_VEC_MAX)
 		res->sfty_ue_irq = pci_irq_vector(pdev, plat->msi_sfty_ue_vec);
 
 	plat->multi_msi_en = 1;
 	dev_info(&pdev->dev, "%s: multi MSI enablement successful\n", __func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_eth_pci_probe
+ * पूर्णांकel_eth_pci_probe
  *
- * @pdev: pci device pointer
- * @id: pointer to table of device id/id's.
+ * @pdev: pci device poपूर्णांकer
+ * @id: poपूर्णांकer to table of device id/id's.
  *
- * Description: This probing function gets called for all PCI devices which
+ * Description: This probing function माला_लो called क्रम all PCI devices which
  * match the ID table and are not "owned" by other driver yet. This function
- * gets passed a "struct pci_dev *" for each device whose entry in the ID table
- * matches the device. The probe functions returns zero when the driver choose
+ * माला_लो passed a "struct pci_dev *" क्रम each device whose entry in the ID table
+ * matches the device. The probe functions वापसs zero when the driver choose
  * to take "ownership" of the device or an error code(-ve no) otherwise.
  */
-static int intel_eth_pci_probe(struct pci_dev *pdev,
-			       const struct pci_device_id *id)
-{
-	struct stmmac_pci_info *info = (struct stmmac_pci_info *)id->driver_data;
-	struct intel_priv_data *intel_priv;
-	struct plat_stmmacenet_data *plat;
-	struct stmmac_resources res;
-	int ret;
+अटल पूर्णांक पूर्णांकel_eth_pci_probe(काष्ठा pci_dev *pdev,
+			       स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा sपंचांगmac_pci_info *info = (काष्ठा sपंचांगmac_pci_info *)id->driver_data;
+	काष्ठा पूर्णांकel_priv_data *पूर्णांकel_priv;
+	काष्ठा plat_sपंचांगmacenet_data *plat;
+	काष्ठा sपंचांगmac_resources res;
+	पूर्णांक ret;
 
-	intel_priv = devm_kzalloc(&pdev->dev, sizeof(*intel_priv), GFP_KERNEL);
-	if (!intel_priv)
-		return -ENOMEM;
+	पूर्णांकel_priv = devm_kzalloc(&pdev->dev, माप(*पूर्णांकel_priv), GFP_KERNEL);
+	अगर (!पूर्णांकel_priv)
+		वापस -ENOMEM;
 
-	plat = devm_kzalloc(&pdev->dev, sizeof(*plat), GFP_KERNEL);
-	if (!plat)
-		return -ENOMEM;
+	plat = devm_kzalloc(&pdev->dev, माप(*plat), GFP_KERNEL);
+	अगर (!plat)
+		वापस -ENOMEM;
 
 	plat->mdio_bus_data = devm_kzalloc(&pdev->dev,
-					   sizeof(*plat->mdio_bus_data),
+					   माप(*plat->mdio_bus_data),
 					   GFP_KERNEL);
-	if (!plat->mdio_bus_data)
-		return -ENOMEM;
+	अगर (!plat->mdio_bus_data)
+		वापस -ENOMEM;
 
-	plat->dma_cfg = devm_kzalloc(&pdev->dev, sizeof(*plat->dma_cfg),
+	plat->dma_cfg = devm_kzalloc(&pdev->dev, माप(*plat->dma_cfg),
 				     GFP_KERNEL);
-	if (!plat->dma_cfg)
-		return -ENOMEM;
+	अगर (!plat->dma_cfg)
+		वापस -ENOMEM;
 
 	/* Enable pci device */
 	ret = pcim_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "%s: ERROR: failed to enable device\n",
 			__func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = pcim_iomap_regions(pdev, BIT(0), pci_name(pdev));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci_set_master(pdev);
 
-	plat->bsp_priv = intel_priv;
-	intel_priv->mdio_adhoc_addr = INTEL_MGBE_ADHOC_ADDR;
-	intel_priv->crossts_adj = 1;
+	plat->bsp_priv = पूर्णांकel_priv;
+	पूर्णांकel_priv->mdio_adhoc_addr = INTEL_MGBE_ADHOC_ADDR;
+	पूर्णांकel_priv->crossts_adj = 1;
 
 	/* Initialize all MSI vectors to invalid so that it can be set
-	 * according to platform data settings below.
+	 * according to platक्रमm data settings below.
 	 * Note: MSI vector takes value from 0 upto 31 (STMMAC_MSI_VEC_MAX)
 	 */
 	plat->msi_mac_vec = STMMAC_MSI_VEC_MAX;
@@ -979,150 +980,150 @@ static int intel_eth_pci_probe(struct pci_dev *pdev,
 	plat->msi_tx_base_vec = STMMAC_MSI_VEC_MAX;
 
 	ret = info->setup(pdev, plat);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memset(&res, 0, sizeof(res));
+	स_रखो(&res, 0, माप(res));
 	res.addr = pcim_iomap_table(pdev)[0];
 
-	if (plat->eee_usecs_rate > 0) {
+	अगर (plat->eee_usecs_rate > 0) अणु
 		u32 tx_lpi_usec;
 
 		tx_lpi_usec = (plat->eee_usecs_rate / 1000000) - 1;
-		writel(tx_lpi_usec, res.addr + GMAC_1US_TIC_COUNTER);
-	}
+		ग_लिखोl(tx_lpi_usec, res.addr + GMAC_1US_TIC_COUNTER);
+	पूर्ण
 
-	ret = stmmac_config_multi_msi(pdev, plat, &res);
-	if (ret) {
-		ret = stmmac_config_single_msi(pdev, plat, &res);
-		if (ret) {
+	ret = sपंचांगmac_config_multi_msi(pdev, plat, &res);
+	अगर (ret) अणु
+		ret = sपंचांगmac_config_single_msi(pdev, plat, &res);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "%s: ERROR: failed to enable IRQ\n",
 				__func__);
-			goto err_alloc_irq;
-		}
-	}
+			जाओ err_alloc_irq;
+		पूर्ण
+	पूर्ण
 
-	ret = stmmac_dvr_probe(&pdev->dev, plat, &res);
-	if (ret) {
-		goto err_dvr_probe;
-	}
+	ret = sपंचांगmac_dvr_probe(&pdev->dev, plat, &res);
+	अगर (ret) अणु
+		जाओ err_dvr_probe;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_dvr_probe:
-	pci_free_irq_vectors(pdev);
+	pci_मुक्त_irq_vectors(pdev);
 err_alloc_irq:
-	clk_disable_unprepare(plat->stmmac_clk);
-	clk_unregister_fixed_rate(plat->stmmac_clk);
-	return ret;
-}
+	clk_disable_unprepare(plat->sपंचांगmac_clk);
+	clk_unरेजिस्टर_fixed_rate(plat->sपंचांगmac_clk);
+	वापस ret;
+पूर्ण
 
 /**
- * intel_eth_pci_remove
+ * पूर्णांकel_eth_pci_हटाओ
  *
- * @pdev: platform device pointer
- * Description: this function calls the main to free the net resources
+ * @pdev: platक्रमm device poपूर्णांकer
+ * Description: this function calls the मुख्य to मुक्त the net resources
  * and releases the PCI resources.
  */
-static void intel_eth_pci_remove(struct pci_dev *pdev)
-{
-	struct net_device *ndev = dev_get_drvdata(&pdev->dev);
-	struct stmmac_priv *priv = netdev_priv(ndev);
+अटल व्योम पूर्णांकel_eth_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(&pdev->dev);
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
 
-	stmmac_dvr_remove(&pdev->dev);
+	sपंचांगmac_dvr_हटाओ(&pdev->dev);
 
-	clk_unregister_fixed_rate(priv->plat->stmmac_clk);
+	clk_unरेजिस्टर_fixed_rate(priv->plat->sपंचांगmac_clk);
 
 	pcim_iounmap_regions(pdev, BIT(0));
-}
+पूर्ण
 
-static int __maybe_unused intel_eth_pci_suspend(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused पूर्णांकel_eth_pci_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	पूर्णांक ret;
 
-	ret = stmmac_suspend(dev);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_suspend(dev);
+	अगर (ret)
+		वापस ret;
 
 	ret = pci_save_state(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci_wake_from_d3(pdev, true);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused intel_eth_pci_resume(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused पूर्णांकel_eth_pci_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	पूर्णांक ret;
 
 	pci_restore_state(pdev);
-	pci_set_power_state(pdev, PCI_D0);
+	pci_set_घातer_state(pdev, PCI_D0);
 
 	ret = pcim_enable_device(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci_set_master(pdev);
 
-	return stmmac_resume(dev);
-}
+	वापस sपंचांगmac_resume(dev);
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(intel_eth_pm_ops, intel_eth_pci_suspend,
-			 intel_eth_pci_resume);
+अटल SIMPLE_DEV_PM_OPS(पूर्णांकel_eth_pm_ops, पूर्णांकel_eth_pci_suspend,
+			 पूर्णांकel_eth_pci_resume);
 
-#define PCI_DEVICE_ID_INTEL_QUARK		0x0937
-#define PCI_DEVICE_ID_INTEL_EHL_RGMII1G		0x4b30
-#define PCI_DEVICE_ID_INTEL_EHL_SGMII1G		0x4b31
-#define PCI_DEVICE_ID_INTEL_EHL_SGMII2G5	0x4b32
+#घोषणा PCI_DEVICE_ID_INTEL_QUARK		0x0937
+#घोषणा PCI_DEVICE_ID_INTEL_EHL_RGMII1G		0x4b30
+#घोषणा PCI_DEVICE_ID_INTEL_EHL_SGMII1G		0x4b31
+#घोषणा PCI_DEVICE_ID_INTEL_EHL_SGMII2G5	0x4b32
 /* Intel(R) Programmable Services Engine (Intel(R) PSE) consist of 2 MAC
  * which are named PSE0 and PSE1
  */
-#define PCI_DEVICE_ID_INTEL_EHL_PSE0_RGMII1G	0x4ba0
-#define PCI_DEVICE_ID_INTEL_EHL_PSE0_SGMII1G	0x4ba1
-#define PCI_DEVICE_ID_INTEL_EHL_PSE0_SGMII2G5	0x4ba2
-#define PCI_DEVICE_ID_INTEL_EHL_PSE1_RGMII1G	0x4bb0
-#define PCI_DEVICE_ID_INTEL_EHL_PSE1_SGMII1G	0x4bb1
-#define PCI_DEVICE_ID_INTEL_EHL_PSE1_SGMII2G5	0x4bb2
-#define PCI_DEVICE_ID_INTEL_TGLH_SGMII1G_0	0x43ac
-#define PCI_DEVICE_ID_INTEL_TGLH_SGMII1G_1	0x43a2
-#define PCI_DEVICE_ID_INTEL_TGL_SGMII1G		0xa0ac
-#define PCI_DEVICE_ID_INTEL_ADLS_SGMII1G_0	0x7aac
-#define PCI_DEVICE_ID_INTEL_ADLS_SGMII1G_1	0x7aad
+#घोषणा PCI_DEVICE_ID_INTEL_EHL_PSE0_RGMII1G	0x4ba0
+#घोषणा PCI_DEVICE_ID_INTEL_EHL_PSE0_SGMII1G	0x4ba1
+#घोषणा PCI_DEVICE_ID_INTEL_EHL_PSE0_SGMII2G5	0x4ba2
+#घोषणा PCI_DEVICE_ID_INTEL_EHL_PSE1_RGMII1G	0x4bb0
+#घोषणा PCI_DEVICE_ID_INTEL_EHL_PSE1_SGMII1G	0x4bb1
+#घोषणा PCI_DEVICE_ID_INTEL_EHL_PSE1_SGMII2G5	0x4bb2
+#घोषणा PCI_DEVICE_ID_INTEL_TGLH_SGMII1G_0	0x43ac
+#घोषणा PCI_DEVICE_ID_INTEL_TGLH_SGMII1G_1	0x43a2
+#घोषणा PCI_DEVICE_ID_INTEL_TGL_SGMII1G		0xa0ac
+#घोषणा PCI_DEVICE_ID_INTEL_ADLS_SGMII1G_0	0x7aac
+#घोषणा PCI_DEVICE_ID_INTEL_ADLS_SGMII1G_1	0x7aad
 
-static const struct pci_device_id intel_eth_pci_id_table[] = {
-	{ PCI_DEVICE_DATA(INTEL, QUARK, &quark_info) },
-	{ PCI_DEVICE_DATA(INTEL, EHL_RGMII1G, &ehl_rgmii1g_info) },
-	{ PCI_DEVICE_DATA(INTEL, EHL_SGMII1G, &ehl_sgmii1g_info) },
-	{ PCI_DEVICE_DATA(INTEL, EHL_SGMII2G5, &ehl_sgmii1g_info) },
-	{ PCI_DEVICE_DATA(INTEL, EHL_PSE0_RGMII1G, &ehl_pse0_rgmii1g_info) },
-	{ PCI_DEVICE_DATA(INTEL, EHL_PSE0_SGMII1G, &ehl_pse0_sgmii1g_info) },
-	{ PCI_DEVICE_DATA(INTEL, EHL_PSE0_SGMII2G5, &ehl_pse0_sgmii1g_info) },
-	{ PCI_DEVICE_DATA(INTEL, EHL_PSE1_RGMII1G, &ehl_pse1_rgmii1g_info) },
-	{ PCI_DEVICE_DATA(INTEL, EHL_PSE1_SGMII1G, &ehl_pse1_sgmii1g_info) },
-	{ PCI_DEVICE_DATA(INTEL, EHL_PSE1_SGMII2G5, &ehl_pse1_sgmii1g_info) },
-	{ PCI_DEVICE_DATA(INTEL, TGL_SGMII1G, &tgl_sgmii1g_phy0_info) },
-	{ PCI_DEVICE_DATA(INTEL, TGLH_SGMII1G_0, &tgl_sgmii1g_phy0_info) },
-	{ PCI_DEVICE_DATA(INTEL, TGLH_SGMII1G_1, &tgl_sgmii1g_phy1_info) },
-	{ PCI_DEVICE_DATA(INTEL, ADLS_SGMII1G_0, &adls_sgmii1g_phy0_info) },
-	{ PCI_DEVICE_DATA(INTEL, ADLS_SGMII1G_1, &adls_sgmii1g_phy1_info) },
-	{}
-};
-MODULE_DEVICE_TABLE(pci, intel_eth_pci_id_table);
+अटल स्थिर काष्ठा pci_device_id पूर्णांकel_eth_pci_id_table[] = अणु
+	अणु PCI_DEVICE_DATA(INTEL, QUARK, &quark_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, EHL_RGMII1G, &ehl_rgmii1g_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, EHL_SGMII1G, &ehl_sgmii1g_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, EHL_SGMII2G5, &ehl_sgmii1g_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, EHL_PSE0_RGMII1G, &ehl_pse0_rgmii1g_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, EHL_PSE0_SGMII1G, &ehl_pse0_sgmii1g_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, EHL_PSE0_SGMII2G5, &ehl_pse0_sgmii1g_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, EHL_PSE1_RGMII1G, &ehl_pse1_rgmii1g_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, EHL_PSE1_SGMII1G, &ehl_pse1_sgmii1g_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, EHL_PSE1_SGMII2G5, &ehl_pse1_sgmii1g_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, TGL_SGMII1G, &tgl_sgmii1g_phy0_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, TGLH_SGMII1G_0, &tgl_sgmii1g_phy0_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, TGLH_SGMII1G_1, &tgl_sgmii1g_phy1_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, ADLS_SGMII1G_0, &adls_sgmii1g_phy0_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, ADLS_SGMII1G_1, &adls_sgmii1g_phy1_info) पूर्ण,
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(pci, पूर्णांकel_eth_pci_id_table);
 
-static struct pci_driver intel_eth_pci_driver = {
+अटल काष्ठा pci_driver पूर्णांकel_eth_pci_driver = अणु
 	.name = "intel-eth-pci",
-	.id_table = intel_eth_pci_id_table,
-	.probe = intel_eth_pci_probe,
-	.remove = intel_eth_pci_remove,
-	.driver         = {
-		.pm     = &intel_eth_pm_ops,
-	},
-};
+	.id_table = पूर्णांकel_eth_pci_id_table,
+	.probe = पूर्णांकel_eth_pci_probe,
+	.हटाओ = पूर्णांकel_eth_pci_हटाओ,
+	.driver         = अणु
+		.pm     = &पूर्णांकel_eth_pm_ops,
+	पूर्ण,
+पूर्ण;
 
-module_pci_driver(intel_eth_pci_driver);
+module_pci_driver(पूर्णांकel_eth_pci_driver);
 
 MODULE_DESCRIPTION("INTEL 10/100/1000 Ethernet PCI driver");
 MODULE_AUTHOR("Voon Weifeng <weifeng.voon@intel.com>");

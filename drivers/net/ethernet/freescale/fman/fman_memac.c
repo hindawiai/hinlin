@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
  * Copyright 2008-2015 Freescale Semiconductor Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Redistributions in binary क्रमm must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
+ *       करोcumentation and/or other materials provided with the distribution.
  *     * Neither the name of Freescale Semiconductor nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this software without specific prior written permission.
+ *       names of its contributors may be used to enकरोrse or promote products
+ *       derived from this software without specअगरic prior written permission.
  *
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
@@ -22,7 +23,7 @@
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL Freescale Semiconductor BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -30,176 +31,176 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include "fman_memac.h"
-#include "fman.h"
+#समावेश "fman_memac.h"
+#समावेश "fman.h"
 
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/phy.h>
-#include <linux/phy_fixed.h>
-#include <linux/of_mdio.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/phy_fixed.h>
+#समावेश <linux/of_mdपन.स>
 
-/* PCS registers */
-#define MDIO_SGMII_CR			0x00
-#define MDIO_SGMII_DEV_ABIL_SGMII	0x04
-#define MDIO_SGMII_LINK_TMR_L		0x12
-#define MDIO_SGMII_LINK_TMR_H		0x13
-#define MDIO_SGMII_IF_MODE		0x14
+/* PCS रेजिस्टरs */
+#घोषणा MDIO_SGMII_CR			0x00
+#घोषणा MDIO_SGMII_DEV_ABIL_SGMII	0x04
+#घोषणा MDIO_SGMII_LINK_TMR_L		0x12
+#घोषणा MDIO_SGMII_LINK_TMR_H		0x13
+#घोषणा MDIO_SGMII_IF_MODE		0x14
 
 /* SGMII Control defines */
-#define SGMII_CR_AN_EN			0x1000
-#define SGMII_CR_RESTART_AN		0x0200
-#define SGMII_CR_FD			0x0100
-#define SGMII_CR_SPEED_SEL1_1G		0x0040
-#define SGMII_CR_DEF_VAL		(SGMII_CR_AN_EN | SGMII_CR_FD | \
+#घोषणा SGMII_CR_AN_EN			0x1000
+#घोषणा SGMII_CR_RESTART_AN		0x0200
+#घोषणा SGMII_CR_FD			0x0100
+#घोषणा SGMII_CR_SPEED_SEL1_1G		0x0040
+#घोषणा SGMII_CR_DEF_VAL		(SGMII_CR_AN_EN | SGMII_CR_FD | \
 					 SGMII_CR_SPEED_SEL1_1G)
 
-/* SGMII Device Ability for SGMII defines */
-#define MDIO_SGMII_DEV_ABIL_SGMII_MODE	0x4001
-#define MDIO_SGMII_DEV_ABIL_BASEX_MODE	0x01A0
+/* SGMII Device Ability क्रम SGMII defines */
+#घोषणा MDIO_SGMII_DEV_ABIL_SGMII_MODE	0x4001
+#घोषणा MDIO_SGMII_DEV_ABIL_BASEX_MODE	0x01A0
 
-/* Link timer define */
-#define LINK_TMR_L			0xa120
-#define LINK_TMR_H			0x0007
-#define LINK_TMR_L_BASEX		0xaf08
-#define LINK_TMR_H_BASEX		0x002f
+/* Link समयr define */
+#घोषणा LINK_TMR_L			0xa120
+#घोषणा LINK_TMR_H			0x0007
+#घोषणा LINK_TMR_L_BASEX		0xaf08
+#घोषणा LINK_TMR_H_BASEX		0x002f
 
 /* SGMII IF Mode defines */
-#define IF_MODE_USE_SGMII_AN		0x0002
-#define IF_MODE_SGMII_EN		0x0001
-#define IF_MODE_SGMII_SPEED_100M	0x0004
-#define IF_MODE_SGMII_SPEED_1G		0x0008
-#define IF_MODE_SGMII_DUPLEX_HALF	0x0010
+#घोषणा IF_MODE_USE_SGMII_AN		0x0002
+#घोषणा IF_MODE_SGMII_EN		0x0001
+#घोषणा IF_MODE_SGMII_SPEED_100M	0x0004
+#घोषणा IF_MODE_SGMII_SPEED_1G		0x0008
+#घोषणा IF_MODE_SGMII_DUPLEX_HALF	0x0010
 
 /* Num of additional exact match MAC adr regs */
-#define MEMAC_NUM_OF_PADDRS 7
+#घोषणा MEMAC_NUM_OF_PADDRS 7
 
 /* Control and Configuration Register (COMMAND_CONFIG) */
-#define CMD_CFG_REG_LOWP_RXETY	0x01000000 /* 07 Rx low power indication */
-#define CMD_CFG_TX_LOWP_ENA	0x00800000 /* 08 Tx Low Power Idle Enable */
-#define CMD_CFG_PFC_MODE	0x00080000 /* 12 Enable PFC */
-#define CMD_CFG_NO_LEN_CHK	0x00020000 /* 14 Payload length check disable */
-#define CMD_CFG_SW_RESET	0x00001000 /* 19 S/W Reset, self clearing bit */
-#define CMD_CFG_TX_PAD_EN	0x00000800 /* 20 Enable Tx padding of frames */
-#define CMD_CFG_PAUSE_IGNORE	0x00000100 /* 23 Ignore Pause frame quanta */
-#define CMD_CFG_CRC_FWD		0x00000040 /* 25 Terminate/frwd CRC of frames */
-#define CMD_CFG_PAD_EN		0x00000020 /* 26 Frame padding removal */
-#define CMD_CFG_PROMIS_EN	0x00000010 /* 27 Promiscuous operation enable */
-#define CMD_CFG_RX_EN		0x00000002 /* 30 MAC receive path enable */
-#define CMD_CFG_TX_EN		0x00000001 /* 31 MAC transmit path enable */
+#घोषणा CMD_CFG_REG_LOWP_RXETY	0x01000000 /* 07 Rx low घातer indication */
+#घोषणा CMD_CFG_TX_LOWP_ENA	0x00800000 /* 08 Tx Low Power Idle Enable */
+#घोषणा CMD_CFG_PFC_MODE	0x00080000 /* 12 Enable PFC */
+#घोषणा CMD_CFG_NO_LEN_CHK	0x00020000 /* 14 Payload length check disable */
+#घोषणा CMD_CFG_SW_RESET	0x00001000 /* 19 S/W Reset, self clearing bit */
+#घोषणा CMD_CFG_TX_PAD_EN	0x00000800 /* 20 Enable Tx padding of frames */
+#घोषणा CMD_CFG_PAUSE_IGNORE	0x00000100 /* 23 Ignore Pause frame quanta */
+#घोषणा CMD_CFG_CRC_FWD		0x00000040 /* 25 Terminate/frwd CRC of frames */
+#घोषणा CMD_CFG_PAD_EN		0x00000020 /* 26 Frame padding removal */
+#घोषणा CMD_CFG_PROMIS_EN	0x00000010 /* 27 Promiscuous operation enable */
+#घोषणा CMD_CFG_RX_EN		0x00000002 /* 30 MAC receive path enable */
+#घोषणा CMD_CFG_TX_EN		0x00000001 /* 31 MAC transmit path enable */
 
 /* Transmit FIFO Sections Register (TX_FIFO_SECTIONS) */
-#define TX_FIFO_SECTIONS_TX_EMPTY_MASK			0xFFFF0000
-#define TX_FIFO_SECTIONS_TX_AVAIL_MASK			0x0000FFFF
-#define TX_FIFO_SECTIONS_TX_EMPTY_DEFAULT_10G		0x00400000
-#define TX_FIFO_SECTIONS_TX_EMPTY_DEFAULT_1G		0x00100000
-#define TX_FIFO_SECTIONS_TX_AVAIL_10G			0x00000019
-#define TX_FIFO_SECTIONS_TX_AVAIL_1G			0x00000020
-#define TX_FIFO_SECTIONS_TX_AVAIL_SLOW_10G		0x00000060
+#घोषणा TX_FIFO_SECTIONS_TX_EMPTY_MASK			0xFFFF0000
+#घोषणा TX_FIFO_SECTIONS_TX_AVAIL_MASK			0x0000FFFF
+#घोषणा TX_FIFO_SECTIONS_TX_EMPTY_DEFAULT_10G		0x00400000
+#घोषणा TX_FIFO_SECTIONS_TX_EMPTY_DEFAULT_1G		0x00100000
+#घोषणा TX_FIFO_SECTIONS_TX_AVAIL_10G			0x00000019
+#घोषणा TX_FIFO_SECTIONS_TX_AVAIL_1G			0x00000020
+#घोषणा TX_FIFO_SECTIONS_TX_AVAIL_SLOW_10G		0x00000060
 
-#define GET_TX_EMPTY_DEFAULT_VALUE(_val)				\
-do {									\
+#घोषणा GET_TX_EMPTY_DEFAULT_VALUE(_val)				\
+करो अणु									\
 	_val &= ~TX_FIFO_SECTIONS_TX_EMPTY_MASK;			\
 	((_val == TX_FIFO_SECTIONS_TX_AVAIL_10G) ?			\
 			(_val |= TX_FIFO_SECTIONS_TX_EMPTY_DEFAULT_10G) :\
 			(_val |= TX_FIFO_SECTIONS_TX_EMPTY_DEFAULT_1G));\
-} while (0)
+पूर्ण जबतक (0)
 
 /* Interface Mode Register (IF_MODE) */
 
-#define IF_MODE_MASK		0x00000003 /* 30-31 Mask on i/f mode bits */
-#define IF_MODE_10G		0x00000000 /* 30-31 10G interface */
-#define IF_MODE_MII		0x00000001 /* 30-31 MII interface */
-#define IF_MODE_GMII		0x00000002 /* 30-31 GMII (1G) interface */
-#define IF_MODE_RGMII		0x00000004
-#define IF_MODE_RGMII_AUTO	0x00008000
-#define IF_MODE_RGMII_1000	0x00004000 /* 10 - 1000Mbps RGMII */
-#define IF_MODE_RGMII_100	0x00000000 /* 00 - 100Mbps RGMII */
-#define IF_MODE_RGMII_10	0x00002000 /* 01 - 10Mbps RGMII */
-#define IF_MODE_RGMII_SP_MASK	0x00006000 /* Setsp mask bits */
-#define IF_MODE_RGMII_FD	0x00001000 /* Full duplex RGMII */
-#define IF_MODE_HD		0x00000040 /* Half duplex operation */
+#घोषणा IF_MODE_MASK		0x00000003 /* 30-31 Mask on i/f mode bits */
+#घोषणा IF_MODE_10G		0x00000000 /* 30-31 10G पूर्णांकerface */
+#घोषणा IF_MODE_MII		0x00000001 /* 30-31 MII पूर्णांकerface */
+#घोषणा IF_MODE_GMII		0x00000002 /* 30-31 GMII (1G) पूर्णांकerface */
+#घोषणा IF_MODE_RGMII		0x00000004
+#घोषणा IF_MODE_RGMII_AUTO	0x00008000
+#घोषणा IF_MODE_RGMII_1000	0x00004000 /* 10 - 1000Mbps RGMII */
+#घोषणा IF_MODE_RGMII_100	0x00000000 /* 00 - 100Mbps RGMII */
+#घोषणा IF_MODE_RGMII_10	0x00002000 /* 01 - 10Mbps RGMII */
+#घोषणा IF_MODE_RGMII_SP_MASK	0x00006000 /* Setsp mask bits */
+#घोषणा IF_MODE_RGMII_FD	0x00001000 /* Full duplex RGMII */
+#घोषणा IF_MODE_HD		0x00000040 /* Half duplex operation */
 
 /* Hash table Control Register (HASHTABLE_CTRL) */
-#define HASH_CTRL_MCAST_EN	0x00000100
+#घोषणा HASH_CTRL_MCAST_EN	0x00000100
 /* 26-31 Hash table address code */
-#define HASH_CTRL_ADDR_MASK	0x0000003F
+#घोषणा HASH_CTRL_ADDR_MASK	0x0000003F
 /* MAC mcast indication */
-#define GROUP_ADDRESS		0x0000010000000000LL
-#define HASH_TABLE_SIZE		64	/* Hash tbl size */
+#घोषणा GROUP_ADDRESS		0x0000010000000000LL
+#घोषणा HASH_TABLE_SIZE		64	/* Hash tbl size */
 
 /* Interrupt Mask Register (IMASK) */
-#define MEMAC_IMASK_MGI		0x40000000 /* 1 Magic pkt detect indication */
-#define MEMAC_IMASK_TSECC_ER	0x20000000 /* 2 Timestamp FIFO ECC error evnt */
-#define MEMAC_IMASK_TECC_ER	0x02000000 /* 6 Transmit frame ECC error evnt */
-#define MEMAC_IMASK_RECC_ER	0x01000000 /* 7 Receive frame ECC error evnt */
+#घोषणा MEMAC_IMASK_MGI		0x40000000 /* 1 Magic pkt detect indication */
+#घोषणा MEMAC_IMASK_TSECC_ER	0x20000000 /* 2 Timestamp FIFO ECC error evnt */
+#घोषणा MEMAC_IMASK_TECC_ER	0x02000000 /* 6 Transmit frame ECC error evnt */
+#घोषणा MEMAC_IMASK_RECC_ER	0x01000000 /* 7 Receive frame ECC error evnt */
 
-#define MEMAC_ALL_ERRS_IMASK					\
+#घोषणा MEMAC_ALL_ERRS_IMASK					\
 		((u32)(MEMAC_IMASK_TSECC_ER	|	\
 		       MEMAC_IMASK_TECC_ER		|	\
 		       MEMAC_IMASK_RECC_ER		|	\
 		       MEMAC_IMASK_MGI))
 
-#define MEMAC_IEVNT_PCS			0x80000000 /* PCS (XG). Link sync (G) */
-#define MEMAC_IEVNT_AN			0x40000000 /* Auto-negotiation */
-#define MEMAC_IEVNT_LT			0x20000000 /* Link Training/New page */
-#define MEMAC_IEVNT_MGI			0x00004000 /* Magic pkt detection */
-#define MEMAC_IEVNT_TS_ECC_ER		0x00002000 /* Timestamp FIFO ECC error*/
-#define MEMAC_IEVNT_RX_FIFO_OVFL	0x00001000 /* Rx FIFO overflow */
-#define MEMAC_IEVNT_TX_FIFO_UNFL	0x00000800 /* Tx FIFO underflow */
-#define MEMAC_IEVNT_TX_FIFO_OVFL	0x00000400 /* Tx FIFO overflow */
-#define MEMAC_IEVNT_TX_ECC_ER		0x00000200 /* Tx frame ECC error */
-#define MEMAC_IEVNT_RX_ECC_ER		0x00000100 /* Rx frame ECC error */
-#define MEMAC_IEVNT_LI_FAULT		0x00000080 /* Link Interruption flt */
-#define MEMAC_IEVNT_RX_EMPTY		0x00000040 /* Rx FIFO empty */
-#define MEMAC_IEVNT_TX_EMPTY		0x00000020 /* Tx FIFO empty */
-#define MEMAC_IEVNT_RX_LOWP		0x00000010 /* Low Power Idle */
-#define MEMAC_IEVNT_PHY_LOS		0x00000004 /* Phy loss of signal */
-#define MEMAC_IEVNT_REM_FAULT		0x00000002 /* Remote fault (XGMII) */
-#define MEMAC_IEVNT_LOC_FAULT		0x00000001 /* Local fault (XGMII) */
+#घोषणा MEMAC_IEVNT_PCS			0x80000000 /* PCS (XG). Link sync (G) */
+#घोषणा MEMAC_IEVNT_AN			0x40000000 /* Auto-negotiation */
+#घोषणा MEMAC_IEVNT_LT			0x20000000 /* Link Training/New page */
+#घोषणा MEMAC_IEVNT_MGI			0x00004000 /* Magic pkt detection */
+#घोषणा MEMAC_IEVNT_TS_ECC_ER		0x00002000 /* Timestamp FIFO ECC error*/
+#घोषणा MEMAC_IEVNT_RX_FIFO_OVFL	0x00001000 /* Rx FIFO overflow */
+#घोषणा MEMAC_IEVNT_TX_FIFO_UNFL	0x00000800 /* Tx FIFO underflow */
+#घोषणा MEMAC_IEVNT_TX_FIFO_OVFL	0x00000400 /* Tx FIFO overflow */
+#घोषणा MEMAC_IEVNT_TX_ECC_ER		0x00000200 /* Tx frame ECC error */
+#घोषणा MEMAC_IEVNT_RX_ECC_ER		0x00000100 /* Rx frame ECC error */
+#घोषणा MEMAC_IEVNT_LI_FAULT		0x00000080 /* Link Interruption flt */
+#घोषणा MEMAC_IEVNT_RX_EMPTY		0x00000040 /* Rx FIFO empty */
+#घोषणा MEMAC_IEVNT_TX_EMPTY		0x00000020 /* Tx FIFO empty */
+#घोषणा MEMAC_IEVNT_RX_LOWP		0x00000010 /* Low Power Idle */
+#घोषणा MEMAC_IEVNT_PHY_LOS		0x00000004 /* Phy loss of संकेत */
+#घोषणा MEMAC_IEVNT_REM_FAULT		0x00000002 /* Remote fault (XGMII) */
+#घोषणा MEMAC_IEVNT_LOC_FAULT		0x00000001 /* Local fault (XGMII) */
 
-#define DEFAULT_PAUSE_QUANTA	0xf000
-#define DEFAULT_FRAME_LENGTH	0x600
-#define DEFAULT_TX_IPG_LENGTH	12
+#घोषणा DEFAULT_PAUSE_QUANTA	0xf000
+#घोषणा DEFAULT_FRAME_LENGTH	0x600
+#घोषणा DEFAULT_TX_IPG_LENGTH	12
 
-#define CLXY_PAUSE_QUANTA_CLX_PQNT	0x0000FFFF
-#define CLXY_PAUSE_QUANTA_CLY_PQNT	0xFFFF0000
-#define CLXY_PAUSE_THRESH_CLX_QTH	0x0000FFFF
-#define CLXY_PAUSE_THRESH_CLY_QTH	0xFFFF0000
+#घोषणा CLXY_PAUSE_QUANTA_CLX_PQNT	0x0000FFFF
+#घोषणा CLXY_PAUSE_QUANTA_CLY_PQNT	0xFFFF0000
+#घोषणा CLXY_PAUSE_THRESH_CLX_QTH	0x0000FFFF
+#घोषणा CLXY_PAUSE_THRESH_CLY_QTH	0xFFFF0000
 
-struct mac_addr {
+काष्ठा mac_addr अणु
 	/* Lower 32 bits of 48-bit MAC address */
 	u32 mac_addr_l;
 	/* Upper 16 bits of 48-bit MAC address */
 	u32 mac_addr_u;
-};
+पूर्ण;
 
 /* memory map */
-struct memac_regs {
+काष्ठा memac_regs अणु
 	u32 res0000[2];			/* General Control and Status */
 	u32 command_config;		/* 0x008 Ctrl and cfg */
-	struct mac_addr mac_addr0;	/* 0x00C-0x010 MAC_ADDR_0...1 */
+	काष्ठा mac_addr mac_addr0;	/* 0x00C-0x010 MAC_ADDR_0...1 */
 	u32 maxfrm;			/* 0x014 Max frame length */
 	u32 res0018[1];
-	u32 rx_fifo_sections;		/* Receive FIFO configuration reg */
-	u32 tx_fifo_sections;		/* Transmit FIFO configuration reg */
+	u32 rx_fअगरo_sections;		/* Receive FIFO configuration reg */
+	u32 tx_fअगरo_sections;		/* Transmit FIFO configuration reg */
 	u32 res0024[2];
 	u32 hashtable_ctrl;		/* 0x02C Hash table control */
 	u32 res0030[4];
 	u32 ievent;			/* 0x040 Interrupt event */
-	u32 tx_ipg_length;		/* 0x044 Transmitter inter-packet-gap */
+	u32 tx_ipg_length;		/* 0x044 Transmitter पूर्णांकer-packet-gap */
 	u32 res0048;
 	u32 imask;			/* 0x04C Interrupt mask */
 	u32 res0050;
-	u32 pause_quanta[4];		/* 0x054 Pause quanta */
-	u32 pause_thresh[4];		/* 0x064 Pause quanta threshold */
-	u32 rx_pause_status;		/* 0x074 Receive pause status */
+	u32 छोड़ो_quanta[4];		/* 0x054 Pause quanta */
+	u32 छोड़ो_thresh[4];		/* 0x064 Pause quanta threshold */
+	u32 rx_छोड़ो_status;		/* 0x074 Receive छोड़ो status */
 	u32 res0078[2];
-	struct mac_addr mac_addr[MEMAC_NUM_OF_PADDRS];/* 0x80-0x0B4 mac padr */
-	u32 lpwake_timer;		/* 0x0B8 Low Power Wakeup Timer */
-	u32 sleep_timer;		/* 0x0BC Transmit EEE Low Power Timer */
+	काष्ठा mac_addr mac_addr[MEMAC_NUM_OF_PADDRS];/* 0x80-0x0B4 mac padr */
+	u32 lpwake_समयr;		/* 0x0B8 Low Power Wakeup Timer */
+	u32 sleep_समयr;		/* 0x0BC Transmit EEE Low Power Timer */
 	u32 res00c0[8];
 	u32 statn_config;		/* 0x0E0 Statistics configuration */
 	u32 res00e4[7];
@@ -275,8 +276,8 @@ struct memac_regs {
 	u32 terr_u;
 	u32 tuca_l;
 	u32 tuca_u;
-	u32 tmca_l;
-	u32 tmca_u;
+	u32 पंचांगca_l;
+	u32 पंचांगca_u;
 	u32 tbca_l;
 	u32 tbca_u;
 	u32 res0258[2];
@@ -303,877 +304,877 @@ struct memac_regs {
 	u32 tcnp_u;
 	u32 res02c8[14];
 	/* Line Interface Control */
-	u32 if_mode;		/* 0x300 Interface Mode Control */
-	u32 if_status;		/* 0x304 Interface Status */
+	u32 अगर_mode;		/* 0x300 Interface Mode Control */
+	u32 अगर_status;		/* 0x304 Interface Status */
 	u32 res0308[14];
 	/* HiGig/2 */
 	u32 hg_config;		/* 0x340 Control and cfg */
 	u32 res0344[3];
-	u32 hg_pause_quanta;	/* 0x350 Pause quanta */
+	u32 hg_छोड़ो_quanta;	/* 0x350 Pause quanta */
 	u32 res0354[3];
-	u32 hg_pause_thresh;	/* 0x360 Pause quanta threshold */
+	u32 hg_छोड़ो_thresh;	/* 0x360 Pause quanta threshold */
 	u32 res0364[3];
-	u32 hgrx_pause_status;	/* 0x370 Receive pause status */
-	u32 hg_fifos_status;	/* 0x374 fifos status */
+	u32 hgrx_छोड़ो_status;	/* 0x370 Receive छोड़ो status */
+	u32 hg_fअगरos_status;	/* 0x374 fअगरos status */
 	u32 rhm;		/* 0x378 rx messages counter */
 	u32 thm;		/* 0x37C tx messages counter */
-};
+पूर्ण;
 
-struct memac_cfg {
+काष्ठा memac_cfg अणु
 	bool reset_on_init;
-	bool pause_ignore;
+	bool छोड़ो_ignore;
 	bool promiscuous_mode_enable;
-	struct fixed_phy_status *fixed_link;
+	काष्ठा fixed_phy_status *fixed_link;
 	u16 max_frame_length;
-	u16 pause_quanta;
+	u16 छोड़ो_quanta;
 	u32 tx_ipg_length;
-};
+पूर्ण;
 
-struct fman_mac {
-	/* Pointer to MAC memory mapped registers */
-	struct memac_regs __iomem *regs;
+काष्ठा fman_mac अणु
+	/* Poपूर्णांकer to MAC memory mapped रेजिस्टरs */
+	काष्ठा memac_regs __iomem *regs;
 	/* MAC address of device */
 	u64 addr;
-	/* Ethernet physical interface */
-	phy_interface_t phy_if;
+	/* Ethernet physical पूर्णांकerface */
+	phy_पूर्णांकerface_t phy_अगर;
 	u16 max_speed;
-	void *dev_id; /* device cookie used by the exception cbs */
+	व्योम *dev_id; /* device cookie used by the exception cbs */
 	fman_mac_exception_cb *exception_cb;
 	fman_mac_exception_cb *event_cb;
-	/* Pointer to driver's global address hash table  */
-	struct eth_hash_t *multicast_addr_hash;
-	/* Pointer to driver's individual address hash table  */
-	struct eth_hash_t *unicast_addr_hash;
+	/* Poपूर्णांकer to driver's global address hash table  */
+	काष्ठा eth_hash_t *multicast_addr_hash;
+	/* Poपूर्णांकer to driver's inभागidual address hash table  */
+	काष्ठा eth_hash_t *unicast_addr_hash;
 	u8 mac_id;
 	u32 exceptions;
-	struct memac_cfg *memac_drv_param;
-	void *fm;
-	struct fman_rev_info fm_rev_info;
-	bool basex_if;
-	struct phy_device *pcsphy;
+	काष्ठा memac_cfg *memac_drv_param;
+	व्योम *fm;
+	काष्ठा fman_rev_info fm_rev_info;
+	bool basex_अगर;
+	काष्ठा phy_device *pcsphy;
 	bool allmulti_enabled;
-};
+पूर्ण;
 
-static void add_addr_in_paddr(struct memac_regs __iomem *regs, u8 *adr,
+अटल व्योम add_addr_in_paddr(काष्ठा memac_regs __iomem *regs, u8 *adr,
 			      u8 paddr_num)
-{
-	u32 tmp0, tmp1;
+अणु
+	u32 पंचांगp0, पंचांगp1;
 
-	tmp0 = (u32)(adr[0] | adr[1] << 8 | adr[2] << 16 | adr[3] << 24);
-	tmp1 = (u32)(adr[4] | adr[5] << 8);
+	पंचांगp0 = (u32)(adr[0] | adr[1] << 8 | adr[2] << 16 | adr[3] << 24);
+	पंचांगp1 = (u32)(adr[4] | adr[5] << 8);
 
-	if (paddr_num == 0) {
-		iowrite32be(tmp0, &regs->mac_addr0.mac_addr_l);
-		iowrite32be(tmp1, &regs->mac_addr0.mac_addr_u);
-	} else {
-		iowrite32be(tmp0, &regs->mac_addr[paddr_num - 1].mac_addr_l);
-		iowrite32be(tmp1, &regs->mac_addr[paddr_num - 1].mac_addr_u);
-	}
-}
+	अगर (paddr_num == 0) अणु
+		ioग_लिखो32be(पंचांगp0, &regs->mac_addr0.mac_addr_l);
+		ioग_लिखो32be(पंचांगp1, &regs->mac_addr0.mac_addr_u);
+	पूर्ण अन्यथा अणु
+		ioग_लिखो32be(पंचांगp0, &regs->mac_addr[paddr_num - 1].mac_addr_l);
+		ioग_लिखो32be(पंचांगp1, &regs->mac_addr[paddr_num - 1].mac_addr_u);
+	पूर्ण
+पूर्ण
 
-static int reset(struct memac_regs __iomem *regs)
-{
-	u32 tmp;
-	int count;
+अटल पूर्णांक reset(काष्ठा memac_regs __iomem *regs)
+अणु
+	u32 पंचांगp;
+	पूर्णांक count;
 
-	tmp = ioread32be(&regs->command_config);
+	पंचांगp = ioपढ़ो32be(&regs->command_config);
 
-	tmp |= CMD_CFG_SW_RESET;
+	पंचांगp |= CMD_CFG_SW_RESET;
 
-	iowrite32be(tmp, &regs->command_config);
+	ioग_लिखो32be(पंचांगp, &regs->command_config);
 
 	count = 100;
-	do {
+	करो अणु
 		udelay(1);
-	} while ((ioread32be(&regs->command_config) & CMD_CFG_SW_RESET) &&
+	पूर्ण जबतक ((ioपढ़ो32be(&regs->command_config) & CMD_CFG_SW_RESET) &&
 		 --count);
 
-	if (count == 0)
-		return -EBUSY;
+	अगर (count == 0)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_exception(struct memac_regs __iomem *regs, u32 val,
+अटल व्योम set_exception(काष्ठा memac_regs __iomem *regs, u32 val,
 			  bool enable)
-{
-	u32 tmp;
+अणु
+	u32 पंचांगp;
 
-	tmp = ioread32be(&regs->imask);
-	if (enable)
-		tmp |= val;
-	else
-		tmp &= ~val;
+	पंचांगp = ioपढ़ो32be(&regs->imask);
+	अगर (enable)
+		पंचांगp |= val;
+	अन्यथा
+		पंचांगp &= ~val;
 
-	iowrite32be(tmp, &regs->imask);
-}
+	ioग_लिखो32be(पंचांगp, &regs->imask);
+पूर्ण
 
-static int init(struct memac_regs __iomem *regs, struct memac_cfg *cfg,
-		phy_interface_t phy_if, u16 speed, bool slow_10g_if,
+अटल पूर्णांक init(काष्ठा memac_regs __iomem *regs, काष्ठा memac_cfg *cfg,
+		phy_पूर्णांकerface_t phy_अगर, u16 speed, bool slow_10g_अगर,
 		u32 exceptions)
-{
-	u32 tmp;
+अणु
+	u32 पंचांगp;
 
 	/* Config */
-	tmp = 0;
-	if (cfg->promiscuous_mode_enable)
-		tmp |= CMD_CFG_PROMIS_EN;
-	if (cfg->pause_ignore)
-		tmp |= CMD_CFG_PAUSE_IGNORE;
+	पंचांगp = 0;
+	अगर (cfg->promiscuous_mode_enable)
+		पंचांगp |= CMD_CFG_PROMIS_EN;
+	अगर (cfg->छोड़ो_ignore)
+		पंचांगp |= CMD_CFG_PAUSE_IGNORE;
 
 	/* Payload length check disable */
-	tmp |= CMD_CFG_NO_LEN_CHK;
+	पंचांगp |= CMD_CFG_NO_LEN_CHK;
 	/* Enable padding of frames in transmit direction */
-	tmp |= CMD_CFG_TX_PAD_EN;
+	पंचांगp |= CMD_CFG_TX_PAD_EN;
 
-	tmp |= CMD_CFG_CRC_FWD;
+	पंचांगp |= CMD_CFG_CRC_FWD;
 
-	iowrite32be(tmp, &regs->command_config);
+	ioग_लिखो32be(पंचांगp, &regs->command_config);
 
 	/* Max Frame Length */
-	iowrite32be((u32)cfg->max_frame_length, &regs->maxfrm);
+	ioग_लिखो32be((u32)cfg->max_frame_length, &regs->maxfrm);
 
 	/* Pause Time */
-	iowrite32be((u32)cfg->pause_quanta, &regs->pause_quanta[0]);
-	iowrite32be((u32)0, &regs->pause_thresh[0]);
+	ioग_लिखो32be((u32)cfg->छोड़ो_quanta, &regs->छोड़ो_quanta[0]);
+	ioग_लिखो32be((u32)0, &regs->छोड़ो_thresh[0]);
 
 	/* IF_MODE */
-	tmp = 0;
-	switch (phy_if) {
-	case PHY_INTERFACE_MODE_XGMII:
-		tmp |= IF_MODE_10G;
-		break;
-	case PHY_INTERFACE_MODE_MII:
-		tmp |= IF_MODE_MII;
-		break;
-	default:
-		tmp |= IF_MODE_GMII;
-		if (phy_if == PHY_INTERFACE_MODE_RGMII ||
-		    phy_if == PHY_INTERFACE_MODE_RGMII_ID ||
-		    phy_if == PHY_INTERFACE_MODE_RGMII_RXID ||
-		    phy_if == PHY_INTERFACE_MODE_RGMII_TXID)
-			tmp |= IF_MODE_RGMII | IF_MODE_RGMII_AUTO;
-	}
-	iowrite32be(tmp, &regs->if_mode);
+	पंचांगp = 0;
+	चयन (phy_अगर) अणु
+	हाल PHY_INTERFACE_MODE_XGMII:
+		पंचांगp |= IF_MODE_10G;
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_MII:
+		पंचांगp |= IF_MODE_MII;
+		अवरोध;
+	शेष:
+		पंचांगp |= IF_MODE_GMII;
+		अगर (phy_अगर == PHY_INTERFACE_MODE_RGMII ||
+		    phy_अगर == PHY_INTERFACE_MODE_RGMII_ID ||
+		    phy_अगर == PHY_INTERFACE_MODE_RGMII_RXID ||
+		    phy_अगर == PHY_INTERFACE_MODE_RGMII_TXID)
+			पंचांगp |= IF_MODE_RGMII | IF_MODE_RGMII_AUTO;
+	पूर्ण
+	ioग_लिखो32be(पंचांगp, &regs->अगर_mode);
 
 	/* TX_FIFO_SECTIONS */
-	tmp = 0;
-	if (phy_if == PHY_INTERFACE_MODE_XGMII) {
-		if (slow_10g_if) {
-			tmp |= (TX_FIFO_SECTIONS_TX_AVAIL_SLOW_10G |
+	पंचांगp = 0;
+	अगर (phy_अगर == PHY_INTERFACE_MODE_XGMII) अणु
+		अगर (slow_10g_अगर) अणु
+			पंचांगp |= (TX_FIFO_SECTIONS_TX_AVAIL_SLOW_10G |
 				TX_FIFO_SECTIONS_TX_EMPTY_DEFAULT_10G);
-		} else {
-			tmp |= (TX_FIFO_SECTIONS_TX_AVAIL_10G |
+		पूर्ण अन्यथा अणु
+			पंचांगp |= (TX_FIFO_SECTIONS_TX_AVAIL_10G |
 				TX_FIFO_SECTIONS_TX_EMPTY_DEFAULT_10G);
-		}
-	} else {
-		tmp |= (TX_FIFO_SECTIONS_TX_AVAIL_1G |
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		पंचांगp |= (TX_FIFO_SECTIONS_TX_AVAIL_1G |
 			TX_FIFO_SECTIONS_TX_EMPTY_DEFAULT_1G);
-	}
-	iowrite32be(tmp, &regs->tx_fifo_sections);
+	पूर्ण
+	ioग_लिखो32be(पंचांगp, &regs->tx_fअगरo_sections);
 
-	/* clear all pending events and set-up interrupts */
-	iowrite32be(0xffffffff, &regs->ievent);
+	/* clear all pending events and set-up पूर्णांकerrupts */
+	ioग_लिखो32be(0xffffffff, &regs->ievent);
 	set_exception(regs, exceptions, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_dflts(struct memac_cfg *cfg)
-{
+अटल व्योम set_dflts(काष्ठा memac_cfg *cfg)
+अणु
 	cfg->reset_on_init = false;
 	cfg->promiscuous_mode_enable = false;
-	cfg->pause_ignore = false;
+	cfg->छोड़ो_ignore = false;
 	cfg->tx_ipg_length = DEFAULT_TX_IPG_LENGTH;
 	cfg->max_frame_length = DEFAULT_FRAME_LENGTH;
-	cfg->pause_quanta = DEFAULT_PAUSE_QUANTA;
-}
+	cfg->छोड़ो_quanta = DEFAULT_PAUSE_QUANTA;
+पूर्ण
 
-static u32 get_mac_addr_hash_code(u64 eth_addr)
-{
+अटल u32 get_mac_addr_hash_code(u64 eth_addr)
+अणु
 	u64 mask1, mask2;
 	u32 xor_val = 0;
 	u8 i, j;
 
-	for (i = 0; i < 6; i++) {
+	क्रम (i = 0; i < 6; i++) अणु
 		mask1 = eth_addr & (u64)0x01;
 		eth_addr >>= 1;
 
-		for (j = 0; j < 7; j++) {
+		क्रम (j = 0; j < 7; j++) अणु
 			mask2 = eth_addr & (u64)0x01;
 			mask1 ^= mask2;
 			eth_addr >>= 1;
-		}
+		पूर्ण
 
 		xor_val |= (mask1 << (5 - i));
-	}
+	पूर्ण
 
-	return xor_val;
-}
+	वापस xor_val;
+पूर्ण
 
-static void setup_sgmii_internal_phy(struct fman_mac *memac,
-				     struct fixed_phy_status *fixed_link)
-{
-	u16 tmp_reg16;
+अटल व्योम setup_sgmii_पूर्णांकernal_phy(काष्ठा fman_mac *memac,
+				     काष्ठा fixed_phy_status *fixed_link)
+अणु
+	u16 पंचांगp_reg16;
 
-	if (WARN_ON(!memac->pcsphy))
-		return;
+	अगर (WARN_ON(!memac->pcsphy))
+		वापस;
 
 	/* SGMII mode */
-	tmp_reg16 = IF_MODE_SGMII_EN;
-	if (!fixed_link)
+	पंचांगp_reg16 = IF_MODE_SGMII_EN;
+	अगर (!fixed_link)
 		/* AN enable */
-		tmp_reg16 |= IF_MODE_USE_SGMII_AN;
-	else {
-		switch (fixed_link->speed) {
-		case 10:
+		पंचांगp_reg16 |= IF_MODE_USE_SGMII_AN;
+	अन्यथा अणु
+		चयन (fixed_link->speed) अणु
+		हाल 10:
 			/* For 10M: IF_MODE[SPEED_10M] = 0 */
-		break;
-		case 100:
-			tmp_reg16 |= IF_MODE_SGMII_SPEED_100M;
-		break;
-		case 1000:
-		default:
-			tmp_reg16 |= IF_MODE_SGMII_SPEED_1G;
-		break;
-		}
-		if (!fixed_link->duplex)
-			tmp_reg16 |= IF_MODE_SGMII_DUPLEX_HALF;
-	}
-	phy_write(memac->pcsphy, MDIO_SGMII_IF_MODE, tmp_reg16);
+		अवरोध;
+		हाल 100:
+			पंचांगp_reg16 |= IF_MODE_SGMII_SPEED_100M;
+		अवरोध;
+		हाल 1000:
+		शेष:
+			पंचांगp_reg16 |= IF_MODE_SGMII_SPEED_1G;
+		अवरोध;
+		पूर्ण
+		अगर (!fixed_link->duplex)
+			पंचांगp_reg16 |= IF_MODE_SGMII_DUPLEX_HALF;
+	पूर्ण
+	phy_ग_लिखो(memac->pcsphy, MDIO_SGMII_IF_MODE, पंचांगp_reg16);
 
-	/* Device ability according to SGMII specification */
-	tmp_reg16 = MDIO_SGMII_DEV_ABIL_SGMII_MODE;
-	phy_write(memac->pcsphy, MDIO_SGMII_DEV_ABIL_SGMII, tmp_reg16);
+	/* Device ability according to SGMII specअगरication */
+	पंचांगp_reg16 = MDIO_SGMII_DEV_ABIL_SGMII_MODE;
+	phy_ग_लिखो(memac->pcsphy, MDIO_SGMII_DEV_ABIL_SGMII, पंचांगp_reg16);
 
-	/* Adjust link timer for SGMII  -
-	 * According to Cisco SGMII specification the timer should be 1.6 ms.
-	 * The link_timer register is configured in units of the clock.
-	 * - When running as 1G SGMII, Serdes clock is 125 MHz, so
+	/* Adjust link समयr क्रम SGMII  -
+	 * According to Cisco SGMII specअगरication the समयr should be 1.6 ms.
+	 * The link_समयr रेजिस्टर is configured in units of the घड़ी.
+	 * - When running as 1G SGMII, Serdes घड़ी is 125 MHz, so
 	 * unit = 1 / (125*10^6 Hz) = 8 ns.
 	 * 1.6 ms in units of 8 ns = 1.6ms / 8ns = 2*10^5 = 0x30d40
-	 * - When running as 2.5G SGMII, Serdes clock is 312.5 MHz, so
+	 * - When running as 2.5G SGMII, Serdes घड़ी is 312.5 MHz, so
 	 * unit = 1 / (312.5*10^6 Hz) = 3.2 ns.
 	 * 1.6 ms in units of 3.2 ns = 1.6ms / 3.2ns = 5*10^5 = 0x7a120.
-	 * Since link_timer value of 1G SGMII will be too short for 2.5 SGMII,
+	 * Since link_समयr value of 1G SGMII will be too लघु क्रम 2.5 SGMII,
 	 * we always set up here a value of 2.5 SGMII.
 	 */
-	phy_write(memac->pcsphy, MDIO_SGMII_LINK_TMR_H, LINK_TMR_H);
-	phy_write(memac->pcsphy, MDIO_SGMII_LINK_TMR_L, LINK_TMR_L);
+	phy_ग_लिखो(memac->pcsphy, MDIO_SGMII_LINK_TMR_H, LINK_TMR_H);
+	phy_ग_लिखो(memac->pcsphy, MDIO_SGMII_LINK_TMR_L, LINK_TMR_L);
 
-	if (!fixed_link)
+	अगर (!fixed_link)
 		/* Restart AN */
-		tmp_reg16 = SGMII_CR_DEF_VAL | SGMII_CR_RESTART_AN;
-	else
+		पंचांगp_reg16 = SGMII_CR_DEF_VAL | SGMII_CR_RESTART_AN;
+	अन्यथा
 		/* AN disabled */
-		tmp_reg16 = SGMII_CR_DEF_VAL & ~SGMII_CR_AN_EN;
-	phy_write(memac->pcsphy, 0x0, tmp_reg16);
-}
+		पंचांगp_reg16 = SGMII_CR_DEF_VAL & ~SGMII_CR_AN_EN;
+	phy_ग_लिखो(memac->pcsphy, 0x0, पंचांगp_reg16);
+पूर्ण
 
-static void setup_sgmii_internal_phy_base_x(struct fman_mac *memac)
-{
-	u16 tmp_reg16;
+अटल व्योम setup_sgmii_पूर्णांकernal_phy_base_x(काष्ठा fman_mac *memac)
+अणु
+	u16 पंचांगp_reg16;
 
 	/* AN Device capability  */
-	tmp_reg16 = MDIO_SGMII_DEV_ABIL_BASEX_MODE;
-	phy_write(memac->pcsphy, MDIO_SGMII_DEV_ABIL_SGMII, tmp_reg16);
+	पंचांगp_reg16 = MDIO_SGMII_DEV_ABIL_BASEX_MODE;
+	phy_ग_लिखो(memac->pcsphy, MDIO_SGMII_DEV_ABIL_SGMII, पंचांगp_reg16);
 
-	/* Adjust link timer for SGMII  -
-	 * For Serdes 1000BaseX auto-negotiation the timer should be 10 ms.
-	 * The link_timer register is configured in units of the clock.
-	 * - When running as 1G SGMII, Serdes clock is 125 MHz, so
+	/* Adjust link समयr क्रम SGMII  -
+	 * For Serdes 1000BaseX स्वतः-negotiation the समयr should be 10 ms.
+	 * The link_समयr रेजिस्टर is configured in units of the घड़ी.
+	 * - When running as 1G SGMII, Serdes घड़ी is 125 MHz, so
 	 * unit = 1 / (125*10^6 Hz) = 8 ns.
 	 * 10 ms in units of 8 ns = 10ms / 8ns = 1250000 = 0x1312d0
-	 * - When running as 2.5G SGMII, Serdes clock is 312.5 MHz, so
+	 * - When running as 2.5G SGMII, Serdes घड़ी is 312.5 MHz, so
 	 * unit = 1 / (312.5*10^6 Hz) = 3.2 ns.
 	 * 10 ms in units of 3.2 ns = 10ms / 3.2ns = 3125000 = 0x2faf08.
-	 * Since link_timer value of 1G SGMII will be too short for 2.5 SGMII,
+	 * Since link_समयr value of 1G SGMII will be too लघु क्रम 2.5 SGMII,
 	 * we always set up here a value of 2.5 SGMII.
 	 */
-	phy_write(memac->pcsphy, MDIO_SGMII_LINK_TMR_H, LINK_TMR_H_BASEX);
-	phy_write(memac->pcsphy, MDIO_SGMII_LINK_TMR_L, LINK_TMR_L_BASEX);
+	phy_ग_लिखो(memac->pcsphy, MDIO_SGMII_LINK_TMR_H, LINK_TMR_H_BASEX);
+	phy_ग_लिखो(memac->pcsphy, MDIO_SGMII_LINK_TMR_L, LINK_TMR_L_BASEX);
 
 	/* Restart AN */
-	tmp_reg16 = SGMII_CR_DEF_VAL | SGMII_CR_RESTART_AN;
-	phy_write(memac->pcsphy, 0x0, tmp_reg16);
-}
+	पंचांगp_reg16 = SGMII_CR_DEF_VAL | SGMII_CR_RESTART_AN;
+	phy_ग_लिखो(memac->pcsphy, 0x0, पंचांगp_reg16);
+पूर्ण
 
-static int check_init_parameters(struct fman_mac *memac)
-{
-	if (!memac->exception_cb) {
+अटल पूर्णांक check_init_parameters(काष्ठा fman_mac *memac)
+अणु
+	अगर (!memac->exception_cb) अणु
 		pr_err("Uninitialized exception handler\n");
-		return -EINVAL;
-	}
-	if (!memac->event_cb) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!memac->event_cb) अणु
 		pr_warn("Uninitialize event handler\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_exception_flag(enum fman_mac_exceptions exception)
-{
+अटल पूर्णांक get_exception_flag(क्रमागत fman_mac_exceptions exception)
+अणु
 	u32 bit_mask;
 
-	switch (exception) {
-	case FM_MAC_EX_10G_TX_ECC_ER:
+	चयन (exception) अणु
+	हाल FM_MAC_EX_10G_TX_ECC_ER:
 		bit_mask = MEMAC_IMASK_TECC_ER;
-		break;
-	case FM_MAC_EX_10G_RX_ECC_ER:
+		अवरोध;
+	हाल FM_MAC_EX_10G_RX_ECC_ER:
 		bit_mask = MEMAC_IMASK_RECC_ER;
-		break;
-	case FM_MAC_EX_TS_FIFO_ECC_ERR:
+		अवरोध;
+	हाल FM_MAC_EX_TS_FIFO_ECC_ERR:
 		bit_mask = MEMAC_IMASK_TSECC_ER;
-		break;
-	case FM_MAC_EX_MAGIC_PACKET_INDICATION:
+		अवरोध;
+	हाल FM_MAC_EX_MAGIC_PACKET_INDICATION:
 		bit_mask = MEMAC_IMASK_MGI;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		bit_mask = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return bit_mask;
-}
+	वापस bit_mask;
+पूर्ण
 
-static void memac_err_exception(void *handle)
-{
-	struct fman_mac *memac = (struct fman_mac *)handle;
-	struct memac_regs __iomem *regs = memac->regs;
+अटल व्योम memac_err_exception(व्योम *handle)
+अणु
+	काष्ठा fman_mac *memac = (काष्ठा fman_mac *)handle;
+	काष्ठा memac_regs __iomem *regs = memac->regs;
 	u32 event, imask;
 
-	event = ioread32be(&regs->ievent);
-	imask = ioread32be(&regs->imask);
+	event = ioपढ़ो32be(&regs->ievent);
+	imask = ioपढ़ो32be(&regs->imask);
 
-	/* Imask include both error and notification/event bits.
+	/* Imask include both error and notअगरication/event bits.
 	 * Leaving only error bits enabled by imask.
-	 * The imask error bits are shifted by 16 bits offset from
+	 * The imask error bits are shअगरted by 16 bits offset from
 	 * their corresponding location in the ievent - hence the >> 16
 	 */
 	event &= ((imask & MEMAC_ALL_ERRS_IMASK) >> 16);
 
-	iowrite32be(event, &regs->ievent);
+	ioग_लिखो32be(event, &regs->ievent);
 
-	if (event & MEMAC_IEVNT_TS_ECC_ER)
+	अगर (event & MEMAC_IEVNT_TS_ECC_ER)
 		memac->exception_cb(memac->dev_id, FM_MAC_EX_TS_FIFO_ECC_ERR);
-	if (event & MEMAC_IEVNT_TX_ECC_ER)
+	अगर (event & MEMAC_IEVNT_TX_ECC_ER)
 		memac->exception_cb(memac->dev_id, FM_MAC_EX_10G_TX_ECC_ER);
-	if (event & MEMAC_IEVNT_RX_ECC_ER)
+	अगर (event & MEMAC_IEVNT_RX_ECC_ER)
 		memac->exception_cb(memac->dev_id, FM_MAC_EX_10G_RX_ECC_ER);
-}
+पूर्ण
 
-static void memac_exception(void *handle)
-{
-	struct fman_mac *memac = (struct fman_mac *)handle;
-	struct memac_regs __iomem *regs = memac->regs;
+अटल व्योम memac_exception(व्योम *handle)
+अणु
+	काष्ठा fman_mac *memac = (काष्ठा fman_mac *)handle;
+	काष्ठा memac_regs __iomem *regs = memac->regs;
 	u32 event, imask;
 
-	event = ioread32be(&regs->ievent);
-	imask = ioread32be(&regs->imask);
+	event = ioपढ़ो32be(&regs->ievent);
+	imask = ioपढ़ो32be(&regs->imask);
 
-	/* Imask include both error and notification/event bits.
+	/* Imask include both error and notअगरication/event bits.
 	 * Leaving only error bits enabled by imask.
-	 * The imask error bits are shifted by 16 bits offset from
+	 * The imask error bits are shअगरted by 16 bits offset from
 	 * their corresponding location in the ievent - hence the >> 16
 	 */
 	event &= ((imask & MEMAC_ALL_ERRS_IMASK) >> 16);
 
-	iowrite32be(event, &regs->ievent);
+	ioग_लिखो32be(event, &regs->ievent);
 
-	if (event & MEMAC_IEVNT_MGI)
+	अगर (event & MEMAC_IEVNT_MGI)
 		memac->exception_cb(memac->dev_id,
 				    FM_MAC_EX_MAGIC_PACKET_INDICATION);
-}
+पूर्ण
 
-static void free_init_resources(struct fman_mac *memac)
-{
-	fman_unregister_intr(memac->fm, FMAN_MOD_MAC, memac->mac_id,
+अटल व्योम मुक्त_init_resources(काष्ठा fman_mac *memac)
+अणु
+	fman_unरेजिस्टर_पूर्णांकr(memac->fm, FMAN_MOD_MAC, memac->mac_id,
 			     FMAN_INTR_TYPE_ERR);
 
-	fman_unregister_intr(memac->fm, FMAN_MOD_MAC, memac->mac_id,
+	fman_unरेजिस्टर_पूर्णांकr(memac->fm, FMAN_MOD_MAC, memac->mac_id,
 			     FMAN_INTR_TYPE_NORMAL);
 
 	/* release the driver's group hash table */
-	free_hash_table(memac->multicast_addr_hash);
-	memac->multicast_addr_hash = NULL;
+	मुक्त_hash_table(memac->multicast_addr_hash);
+	memac->multicast_addr_hash = शून्य;
 
-	/* release the driver's individual hash table */
-	free_hash_table(memac->unicast_addr_hash);
-	memac->unicast_addr_hash = NULL;
-}
+	/* release the driver's inभागidual hash table */
+	मुक्त_hash_table(memac->unicast_addr_hash);
+	memac->unicast_addr_hash = शून्य;
+पूर्ण
 
-static bool is_init_done(struct memac_cfg *memac_drv_params)
-{
-	/* Checks if mEMAC driver parameters were initialized */
-	if (!memac_drv_params)
-		return true;
+अटल bool is_init_करोne(काष्ठा memac_cfg *memac_drv_params)
+अणु
+	/* Checks अगर mEMAC driver parameters were initialized */
+	अगर (!memac_drv_params)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int memac_enable(struct fman_mac *memac, enum comm_mode mode)
-{
-	struct memac_regs __iomem *regs = memac->regs;
-	u32 tmp;
+पूर्णांक memac_enable(काष्ठा fman_mac *memac, क्रमागत comm_mode mode)
+अणु
+	काष्ठा memac_regs __iomem *regs = memac->regs;
+	u32 पंचांगp;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
-	tmp = ioread32be(&regs->command_config);
-	if (mode & COMM_MODE_RX)
-		tmp |= CMD_CFG_RX_EN;
-	if (mode & COMM_MODE_TX)
-		tmp |= CMD_CFG_TX_EN;
+	पंचांगp = ioपढ़ो32be(&regs->command_config);
+	अगर (mode & COMM_MODE_RX)
+		पंचांगp |= CMD_CFG_RX_EN;
+	अगर (mode & COMM_MODE_TX)
+		पंचांगp |= CMD_CFG_TX_EN;
 
-	iowrite32be(tmp, &regs->command_config);
+	ioग_लिखो32be(पंचांगp, &regs->command_config);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_disable(struct fman_mac *memac, enum comm_mode mode)
-{
-	struct memac_regs __iomem *regs = memac->regs;
-	u32 tmp;
+पूर्णांक memac_disable(काष्ठा fman_mac *memac, क्रमागत comm_mode mode)
+अणु
+	काष्ठा memac_regs __iomem *regs = memac->regs;
+	u32 पंचांगp;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
-	tmp = ioread32be(&regs->command_config);
-	if (mode & COMM_MODE_RX)
-		tmp &= ~CMD_CFG_RX_EN;
-	if (mode & COMM_MODE_TX)
-		tmp &= ~CMD_CFG_TX_EN;
+	पंचांगp = ioपढ़ो32be(&regs->command_config);
+	अगर (mode & COMM_MODE_RX)
+		पंचांगp &= ~CMD_CFG_RX_EN;
+	अगर (mode & COMM_MODE_TX)
+		पंचांगp &= ~CMD_CFG_TX_EN;
 
-	iowrite32be(tmp, &regs->command_config);
+	ioग_लिखो32be(पंचांगp, &regs->command_config);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_set_promiscuous(struct fman_mac *memac, bool new_val)
-{
-	struct memac_regs __iomem *regs = memac->regs;
-	u32 tmp;
+पूर्णांक memac_set_promiscuous(काष्ठा fman_mac *memac, bool new_val)
+अणु
+	काष्ठा memac_regs __iomem *regs = memac->regs;
+	u32 पंचांगp;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
-	tmp = ioread32be(&regs->command_config);
-	if (new_val)
-		tmp |= CMD_CFG_PROMIS_EN;
-	else
-		tmp &= ~CMD_CFG_PROMIS_EN;
+	पंचांगp = ioपढ़ो32be(&regs->command_config);
+	अगर (new_val)
+		पंचांगp |= CMD_CFG_PROMIS_EN;
+	अन्यथा
+		पंचांगp &= ~CMD_CFG_PROMIS_EN;
 
-	iowrite32be(tmp, &regs->command_config);
+	ioग_लिखो32be(पंचांगp, &regs->command_config);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_adjust_link(struct fman_mac *memac, u16 speed)
-{
-	struct memac_regs __iomem *regs = memac->regs;
-	u32 tmp;
+पूर्णांक memac_adjust_link(काष्ठा fman_mac *memac, u16 speed)
+अणु
+	काष्ठा memac_regs __iomem *regs = memac->regs;
+	u32 पंचांगp;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
-	tmp = ioread32be(&regs->if_mode);
+	पंचांगp = ioपढ़ो32be(&regs->अगर_mode);
 
 	/* Set full duplex */
-	tmp &= ~IF_MODE_HD;
+	पंचांगp &= ~IF_MODE_HD;
 
-	if (phy_interface_mode_is_rgmii(memac->phy_if)) {
+	अगर (phy_पूर्णांकerface_mode_is_rgmii(memac->phy_अगर)) अणु
 		/* Configure RGMII in manual mode */
-		tmp &= ~IF_MODE_RGMII_AUTO;
-		tmp &= ~IF_MODE_RGMII_SP_MASK;
+		पंचांगp &= ~IF_MODE_RGMII_AUTO;
+		पंचांगp &= ~IF_MODE_RGMII_SP_MASK;
 		/* Full duplex */
-		tmp |= IF_MODE_RGMII_FD;
+		पंचांगp |= IF_MODE_RGMII_FD;
 
-		switch (speed) {
-		case SPEED_1000:
-			tmp |= IF_MODE_RGMII_1000;
-			break;
-		case SPEED_100:
-			tmp |= IF_MODE_RGMII_100;
-			break;
-		case SPEED_10:
-			tmp |= IF_MODE_RGMII_10;
-			break;
-		default:
-			break;
-		}
-	}
+		चयन (speed) अणु
+		हाल SPEED_1000:
+			पंचांगp |= IF_MODE_RGMII_1000;
+			अवरोध;
+		हाल SPEED_100:
+			पंचांगp |= IF_MODE_RGMII_100;
+			अवरोध;
+		हाल SPEED_10:
+			पंचांगp |= IF_MODE_RGMII_10;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	iowrite32be(tmp, &regs->if_mode);
+	ioग_लिखो32be(पंचांगp, &regs->अगर_mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_cfg_max_frame_len(struct fman_mac *memac, u16 new_val)
-{
-	if (is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+पूर्णांक memac_cfg_max_frame_len(काष्ठा fman_mac *memac, u16 new_val)
+अणु
+	अगर (is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
 	memac->memac_drv_param->max_frame_length = new_val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_cfg_reset_on_init(struct fman_mac *memac, bool enable)
-{
-	if (is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+पूर्णांक memac_cfg_reset_on_init(काष्ठा fman_mac *memac, bool enable)
+अणु
+	अगर (is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
 	memac->memac_drv_param->reset_on_init = enable;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_cfg_fixed_link(struct fman_mac *memac,
-			 struct fixed_phy_status *fixed_link)
-{
-	if (is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+पूर्णांक memac_cfg_fixed_link(काष्ठा fman_mac *memac,
+			 काष्ठा fixed_phy_status *fixed_link)
+अणु
+	अगर (is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
 	memac->memac_drv_param->fixed_link = fixed_link;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_set_tx_pause_frames(struct fman_mac *memac, u8 priority,
-			      u16 pause_time, u16 thresh_time)
-{
-	struct memac_regs __iomem *regs = memac->regs;
-	u32 tmp;
+पूर्णांक memac_set_tx_छोड़ो_frames(काष्ठा fman_mac *memac, u8 priority,
+			      u16 छोड़ो_समय, u16 thresh_समय)
+अणु
+	काष्ठा memac_regs __iomem *regs = memac->regs;
+	u32 पंचांगp;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
-	tmp = ioread32be(&regs->tx_fifo_sections);
+	पंचांगp = ioपढ़ो32be(&regs->tx_fअगरo_sections);
 
-	GET_TX_EMPTY_DEFAULT_VALUE(tmp);
-	iowrite32be(tmp, &regs->tx_fifo_sections);
+	GET_TX_EMPTY_DEFAULT_VALUE(पंचांगp);
+	ioग_लिखो32be(पंचांगp, &regs->tx_fअगरo_sections);
 
-	tmp = ioread32be(&regs->command_config);
-	tmp &= ~CMD_CFG_PFC_MODE;
+	पंचांगp = ioपढ़ो32be(&regs->command_config);
+	पंचांगp &= ~CMD_CFG_PFC_MODE;
 
-	iowrite32be(tmp, &regs->command_config);
+	ioग_लिखो32be(पंचांगp, &regs->command_config);
 
-	tmp = ioread32be(&regs->pause_quanta[priority / 2]);
-	if (priority % 2)
-		tmp &= CLXY_PAUSE_QUANTA_CLX_PQNT;
-	else
-		tmp &= CLXY_PAUSE_QUANTA_CLY_PQNT;
-	tmp |= ((u32)pause_time << (16 * (priority % 2)));
-	iowrite32be(tmp, &regs->pause_quanta[priority / 2]);
+	पंचांगp = ioपढ़ो32be(&regs->छोड़ो_quanta[priority / 2]);
+	अगर (priority % 2)
+		पंचांगp &= CLXY_PAUSE_QUANTA_CLX_PQNT;
+	अन्यथा
+		पंचांगp &= CLXY_PAUSE_QUANTA_CLY_PQNT;
+	पंचांगp |= ((u32)छोड़ो_समय << (16 * (priority % 2)));
+	ioग_लिखो32be(पंचांगp, &regs->छोड़ो_quanta[priority / 2]);
 
-	tmp = ioread32be(&regs->pause_thresh[priority / 2]);
-	if (priority % 2)
-		tmp &= CLXY_PAUSE_THRESH_CLX_QTH;
-	else
-		tmp &= CLXY_PAUSE_THRESH_CLY_QTH;
-	tmp |= ((u32)thresh_time << (16 * (priority % 2)));
-	iowrite32be(tmp, &regs->pause_thresh[priority / 2]);
+	पंचांगp = ioपढ़ो32be(&regs->छोड़ो_thresh[priority / 2]);
+	अगर (priority % 2)
+		पंचांगp &= CLXY_PAUSE_THRESH_CLX_QTH;
+	अन्यथा
+		पंचांगp &= CLXY_PAUSE_THRESH_CLY_QTH;
+	पंचांगp |= ((u32)thresh_समय << (16 * (priority % 2)));
+	ioग_लिखो32be(पंचांगp, &regs->छोड़ो_thresh[priority / 2]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_accept_rx_pause_frames(struct fman_mac *memac, bool en)
-{
-	struct memac_regs __iomem *regs = memac->regs;
-	u32 tmp;
+पूर्णांक memac_accept_rx_छोड़ो_frames(काष्ठा fman_mac *memac, bool en)
+अणु
+	काष्ठा memac_regs __iomem *regs = memac->regs;
+	u32 पंचांगp;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
-	tmp = ioread32be(&regs->command_config);
-	if (en)
-		tmp &= ~CMD_CFG_PAUSE_IGNORE;
-	else
-		tmp |= CMD_CFG_PAUSE_IGNORE;
+	पंचांगp = ioपढ़ो32be(&regs->command_config);
+	अगर (en)
+		पंचांगp &= ~CMD_CFG_PAUSE_IGNORE;
+	अन्यथा
+		पंचांगp |= CMD_CFG_PAUSE_IGNORE;
 
-	iowrite32be(tmp, &regs->command_config);
+	ioग_लिखो32be(पंचांगp, &regs->command_config);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_modify_mac_address(struct fman_mac *memac, enet_addr_t *enet_addr)
-{
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+पूर्णांक memac_modअगरy_mac_address(काष्ठा fman_mac *memac, enet_addr_t *enet_addr)
+अणु
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
 	add_addr_in_paddr(memac->regs, (u8 *)(*enet_addr), 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_add_hash_mac_address(struct fman_mac *memac, enet_addr_t *eth_addr)
-{
-	struct memac_regs __iomem *regs = memac->regs;
-	struct eth_hash_entry *hash_entry;
+पूर्णांक memac_add_hash_mac_address(काष्ठा fman_mac *memac, enet_addr_t *eth_addr)
+अणु
+	काष्ठा memac_regs __iomem *regs = memac->regs;
+	काष्ठा eth_hash_entry *hash_entry;
 	u32 hash;
 	u64 addr;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
 	addr = ENET_ADDR_TO_UINT64(*eth_addr);
 
-	if (!(addr & GROUP_ADDRESS)) {
+	अगर (!(addr & GROUP_ADDRESS)) अणु
 		/* Unicast addresses not supported in hash */
 		pr_err("Unicast Address\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	hash = get_mac_addr_hash_code(addr) & HASH_CTRL_ADDR_MASK;
 
 	/* Create element to be added to the driver hash table */
-	hash_entry = kmalloc(sizeof(*hash_entry), GFP_ATOMIC);
-	if (!hash_entry)
-		return -ENOMEM;
+	hash_entry = kदो_स्मृति(माप(*hash_entry), GFP_ATOMIC);
+	अगर (!hash_entry)
+		वापस -ENOMEM;
 	hash_entry->addr = addr;
 	INIT_LIST_HEAD(&hash_entry->node);
 
 	list_add_tail(&hash_entry->node,
 		      &memac->multicast_addr_hash->lsts[hash]);
-	iowrite32be(hash | HASH_CTRL_MCAST_EN, &regs->hashtable_ctrl);
+	ioग_लिखो32be(hash | HASH_CTRL_MCAST_EN, &regs->hashtable_ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_set_allmulti(struct fman_mac *memac, bool enable)
-{
+पूर्णांक memac_set_allmulti(काष्ठा fman_mac *memac, bool enable)
+अणु
 	u32 entry;
-	struct memac_regs __iomem *regs = memac->regs;
+	काष्ठा memac_regs __iomem *regs = memac->regs;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
-	if (enable) {
-		for (entry = 0; entry < HASH_TABLE_SIZE; entry++)
-			iowrite32be(entry | HASH_CTRL_MCAST_EN,
+	अगर (enable) अणु
+		क्रम (entry = 0; entry < HASH_TABLE_SIZE; entry++)
+			ioग_लिखो32be(entry | HASH_CTRL_MCAST_EN,
 				    &regs->hashtable_ctrl);
-	} else {
-		for (entry = 0; entry < HASH_TABLE_SIZE; entry++)
-			iowrite32be(entry & ~HASH_CTRL_MCAST_EN,
+	पूर्ण अन्यथा अणु
+		क्रम (entry = 0; entry < HASH_TABLE_SIZE; entry++)
+			ioग_लिखो32be(entry & ~HASH_CTRL_MCAST_EN,
 				    &regs->hashtable_ctrl);
-	}
+	पूर्ण
 
 	memac->allmulti_enabled = enable;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_set_tstamp(struct fman_mac *memac, bool enable)
-{
-	return 0; /* Always enabled. */
-}
+पूर्णांक memac_set_tstamp(काष्ठा fman_mac *memac, bool enable)
+अणु
+	वापस 0; /* Always enabled. */
+पूर्ण
 
-int memac_del_hash_mac_address(struct fman_mac *memac, enet_addr_t *eth_addr)
-{
-	struct memac_regs __iomem *regs = memac->regs;
-	struct eth_hash_entry *hash_entry = NULL;
-	struct list_head *pos;
+पूर्णांक memac_del_hash_mac_address(काष्ठा fman_mac *memac, enet_addr_t *eth_addr)
+अणु
+	काष्ठा memac_regs __iomem *regs = memac->regs;
+	काष्ठा eth_hash_entry *hash_entry = शून्य;
+	काष्ठा list_head *pos;
 	u32 hash;
 	u64 addr;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
 	addr = ENET_ADDR_TO_UINT64(*eth_addr);
 
 	hash = get_mac_addr_hash_code(addr) & HASH_CTRL_ADDR_MASK;
 
-	list_for_each(pos, &memac->multicast_addr_hash->lsts[hash]) {
+	list_क्रम_each(pos, &memac->multicast_addr_hash->lsts[hash]) अणु
 		hash_entry = ETH_HASH_ENTRY_OBJ(pos);
-		if (hash_entry && hash_entry->addr == addr) {
+		अगर (hash_entry && hash_entry->addr == addr) अणु
 			list_del_init(&hash_entry->node);
-			kfree(hash_entry);
-			break;
-		}
-	}
+			kमुक्त(hash_entry);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!memac->allmulti_enabled) {
-		if (list_empty(&memac->multicast_addr_hash->lsts[hash]))
-			iowrite32be(hash & ~HASH_CTRL_MCAST_EN,
+	अगर (!memac->allmulti_enabled) अणु
+		अगर (list_empty(&memac->multicast_addr_hash->lsts[hash]))
+			ioग_लिखो32be(hash & ~HASH_CTRL_MCAST_EN,
 				    &regs->hashtable_ctrl);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_set_exception(struct fman_mac *memac,
-			enum fman_mac_exceptions exception, bool enable)
-{
+पूर्णांक memac_set_exception(काष्ठा fman_mac *memac,
+			क्रमागत fman_mac_exceptions exception, bool enable)
+अणु
 	u32 bit_mask = 0;
 
-	if (!is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (!is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
 	bit_mask = get_exception_flag(exception);
-	if (bit_mask) {
-		if (enable)
+	अगर (bit_mask) अणु
+		अगर (enable)
 			memac->exceptions |= bit_mask;
-		else
+		अन्यथा
 			memac->exceptions &= ~bit_mask;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Undefined exception\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	set_exception(memac->regs, bit_mask, enable);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_init(struct fman_mac *memac)
-{
-	struct memac_cfg *memac_drv_param;
+पूर्णांक memac_init(काष्ठा fman_mac *memac)
+अणु
+	काष्ठा memac_cfg *memac_drv_param;
 	u8 i;
 	enet_addr_t eth_addr;
-	bool slow_10g_if = false;
-	struct fixed_phy_status *fixed_link;
-	int err;
+	bool slow_10g_अगर = false;
+	काष्ठा fixed_phy_status *fixed_link;
+	पूर्णांक err;
 	u32 reg32 = 0;
 
-	if (is_init_done(memac->memac_drv_param))
-		return -EINVAL;
+	अगर (is_init_करोne(memac->memac_drv_param))
+		वापस -EINVAL;
 
 	err = check_init_parameters(memac);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	memac_drv_param = memac->memac_drv_param;
 
-	if (memac->fm_rev_info.major == 6 && memac->fm_rev_info.minor == 4)
-		slow_10g_if = true;
+	अगर (memac->fm_rev_info.major == 6 && memac->fm_rev_info.minor == 4)
+		slow_10g_अगर = true;
 
-	/* First, reset the MAC if desired. */
-	if (memac_drv_param->reset_on_init) {
+	/* First, reset the MAC अगर desired. */
+	अगर (memac_drv_param->reset_on_init) अणु
 		err = reset(memac->regs);
-		if (err) {
+		अगर (err) अणु
 			pr_err("mEMAC reset failed\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	/* MAC Address */
-	if (memac->addr != 0) {
+	अगर (memac->addr != 0) अणु
 		MAKE_ENET_ADDR_FROM_UINT64(memac->addr, eth_addr);
 		add_addr_in_paddr(memac->regs, (u8 *)eth_addr, 0);
-	}
+	पूर्ण
 
 	fixed_link = memac_drv_param->fixed_link;
 
-	init(memac->regs, memac->memac_drv_param, memac->phy_if,
-	     memac->max_speed, slow_10g_if, memac->exceptions);
+	init(memac->regs, memac->memac_drv_param, memac->phy_अगर,
+	     memac->max_speed, slow_10g_अगर, memac->exceptions);
 
 	/* FM_RX_FIFO_CORRUPT_ERRATA_10GMAC_A006320 errata workaround
 	 * Exists only in FMan 6.0 and 6.3.
 	 */
-	if ((memac->fm_rev_info.major == 6) &&
+	अगर ((memac->fm_rev_info.major == 6) &&
 	    ((memac->fm_rev_info.minor == 0) ||
-	    (memac->fm_rev_info.minor == 3))) {
+	    (memac->fm_rev_info.minor == 3))) अणु
 		/* MAC strips CRC from received frames - this workaround
 		 * should decrease the likelihood of bug appearance
 		 */
-		reg32 = ioread32be(&memac->regs->command_config);
+		reg32 = ioपढ़ो32be(&memac->regs->command_config);
 		reg32 &= ~CMD_CFG_CRC_FWD;
-		iowrite32be(reg32, &memac->regs->command_config);
-	}
+		ioग_लिखो32be(reg32, &memac->regs->command_config);
+	पूर्ण
 
-	if (memac->phy_if == PHY_INTERFACE_MODE_SGMII) {
-		/* Configure internal SGMII PHY */
-		if (memac->basex_if)
-			setup_sgmii_internal_phy_base_x(memac);
-		else
-			setup_sgmii_internal_phy(memac, fixed_link);
-	} else if (memac->phy_if == PHY_INTERFACE_MODE_QSGMII) {
-		/* Configure 4 internal SGMII PHYs */
-		for (i = 0; i < 4; i++) {
+	अगर (memac->phy_अगर == PHY_INTERFACE_MODE_SGMII) अणु
+		/* Configure पूर्णांकernal SGMII PHY */
+		अगर (memac->basex_अगर)
+			setup_sgmii_पूर्णांकernal_phy_base_x(memac);
+		अन्यथा
+			setup_sgmii_पूर्णांकernal_phy(memac, fixed_link);
+	पूर्ण अन्यथा अगर (memac->phy_अगर == PHY_INTERFACE_MODE_QSGMII) अणु
+		/* Configure 4 पूर्णांकernal SGMII PHYs */
+		क्रम (i = 0; i < 4; i++) अणु
 			u8 qsmgii_phy_addr, phy_addr;
 			/* QSGMII PHY address occupies 3 upper bits of 5-bit
 			 * phy_address; the lower 2 bits are used to extend
-			 * register address space and access each one of 4
+			 * रेजिस्टर address space and access each one of 4
 			 * ports inside QSGMII.
 			 */
 			phy_addr = memac->pcsphy->mdio.addr;
 			qsmgii_phy_addr = (u8)((phy_addr << 2) | i);
 			memac->pcsphy->mdio.addr = qsmgii_phy_addr;
-			if (memac->basex_if)
-				setup_sgmii_internal_phy_base_x(memac);
-			else
-				setup_sgmii_internal_phy(memac, fixed_link);
+			अगर (memac->basex_अगर)
+				setup_sgmii_पूर्णांकernal_phy_base_x(memac);
+			अन्यथा
+				setup_sgmii_पूर्णांकernal_phy(memac, fixed_link);
 
 			memac->pcsphy->mdio.addr = phy_addr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Max Frame Length */
 	err = fman_set_mac_max_frame(memac->fm, memac->mac_id,
 				     memac_drv_param->max_frame_length);
-	if (err) {
+	अगर (err) अणु
 		pr_err("settings Mac max frame length is FAILED\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	memac->multicast_addr_hash = alloc_hash_table(HASH_TABLE_SIZE);
-	if (!memac->multicast_addr_hash) {
-		free_init_resources(memac);
+	अगर (!memac->multicast_addr_hash) अणु
+		मुक्त_init_resources(memac);
 		pr_err("allocation hash table is FAILED\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	memac->unicast_addr_hash = alloc_hash_table(HASH_TABLE_SIZE);
-	if (!memac->unicast_addr_hash) {
-		free_init_resources(memac);
+	अगर (!memac->unicast_addr_hash) अणु
+		मुक्त_init_resources(memac);
 		pr_err("allocation hash table is FAILED\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	fman_register_intr(memac->fm, FMAN_MOD_MAC, memac->mac_id,
+	fman_रेजिस्टर_पूर्णांकr(memac->fm, FMAN_MOD_MAC, memac->mac_id,
 			   FMAN_INTR_TYPE_ERR, memac_err_exception, memac);
 
-	fman_register_intr(memac->fm, FMAN_MOD_MAC, memac->mac_id,
+	fman_रेजिस्टर_पूर्णांकr(memac->fm, FMAN_MOD_MAC, memac->mac_id,
 			   FMAN_INTR_TYPE_NORMAL, memac_exception, memac);
 
-	kfree(memac_drv_param);
-	memac->memac_drv_param = NULL;
+	kमुक्त(memac_drv_param);
+	memac->memac_drv_param = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int memac_free(struct fman_mac *memac)
-{
-	free_init_resources(memac);
+पूर्णांक memac_मुक्त(काष्ठा fman_mac *memac)
+अणु
+	मुक्त_init_resources(memac);
 
-	if (memac->pcsphy)
+	अगर (memac->pcsphy)
 		put_device(&memac->pcsphy->mdio.dev);
 
-	kfree(memac->memac_drv_param);
-	kfree(memac);
+	kमुक्त(memac->memac_drv_param);
+	kमुक्त(memac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct fman_mac *memac_config(struct fman_mac_params *params)
-{
-	struct fman_mac *memac;
-	struct memac_cfg *memac_drv_param;
-	void __iomem *base_addr;
+काष्ठा fman_mac *memac_config(काष्ठा fman_mac_params *params)
+अणु
+	काष्ठा fman_mac *memac;
+	काष्ठा memac_cfg *memac_drv_param;
+	व्योम __iomem *base_addr;
 
 	base_addr = params->base_addr;
-	/* allocate memory for the m_emac data structure */
-	memac = kzalloc(sizeof(*memac), GFP_KERNEL);
-	if (!memac)
-		return NULL;
+	/* allocate memory क्रम the m_emac data काष्ठाure */
+	memac = kzalloc(माप(*memac), GFP_KERNEL);
+	अगर (!memac)
+		वापस शून्य;
 
-	/* allocate memory for the m_emac driver parameters data structure */
-	memac_drv_param = kzalloc(sizeof(*memac_drv_param), GFP_KERNEL);
-	if (!memac_drv_param) {
-		memac_free(memac);
-		return NULL;
-	}
+	/* allocate memory क्रम the m_emac driver parameters data काष्ठाure */
+	memac_drv_param = kzalloc(माप(*memac_drv_param), GFP_KERNEL);
+	अगर (!memac_drv_param) अणु
+		memac_मुक्त(memac);
+		वापस शून्य;
+	पूर्ण
 
-	/* Plant parameter structure pointer */
+	/* Plant parameter काष्ठाure poपूर्णांकer */
 	memac->memac_drv_param = memac_drv_param;
 
 	set_dflts(memac_drv_param);
@@ -1182,7 +1183,7 @@ struct fman_mac *memac_config(struct fman_mac_params *params)
 
 	memac->regs = base_addr;
 	memac->max_speed = params->max_speed;
-	memac->phy_if = params->phy_if;
+	memac->phy_अगर = params->phy_अगर;
 	memac->mac_id = params->mac_id;
 	memac->exceptions = (MEMAC_IMASK_TSECC_ER | MEMAC_IMASK_TECC_ER |
 			     MEMAC_IMASK_RECC_ER | MEMAC_IMASK_MGI);
@@ -1190,26 +1191,26 @@ struct fman_mac *memac_config(struct fman_mac_params *params)
 	memac->event_cb = params->event_cb;
 	memac->dev_id = params->dev_id;
 	memac->fm = params->fm;
-	memac->basex_if = params->basex_if;
+	memac->basex_अगर = params->basex_अगर;
 
 	/* Save FMan revision */
 	fman_get_revision(memac->fm, &memac->fm_rev_info);
 
-	if (memac->phy_if == PHY_INTERFACE_MODE_SGMII ||
-	    memac->phy_if == PHY_INTERFACE_MODE_QSGMII) {
-		if (!params->internal_phy_node) {
+	अगर (memac->phy_अगर == PHY_INTERFACE_MODE_SGMII ||
+	    memac->phy_अगर == PHY_INTERFACE_MODE_QSGMII) अणु
+		अगर (!params->पूर्णांकernal_phy_node) अणु
 			pr_err("PCS PHY node is not available\n");
-			memac_free(memac);
-			return NULL;
-		}
+			memac_मुक्त(memac);
+			वापस शून्य;
+		पूर्ण
 
-		memac->pcsphy = of_phy_find_device(params->internal_phy_node);
-		if (!memac->pcsphy) {
+		memac->pcsphy = of_phy_find_device(params->पूर्णांकernal_phy_node);
+		अगर (!memac->pcsphy) अणु
 			pr_err("of_phy_find_device (PCS PHY) failed\n");
-			memac_free(memac);
-			return NULL;
-		}
-	}
+			memac_मुक्त(memac);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return memac;
-}
+	वापस memac;
+पूर्ण

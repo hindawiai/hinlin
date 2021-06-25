@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_CONNMARK_H_target
-#define _XT_CONNMARK_H_target
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_CONNMARK_H_target
+#घोषणा _XT_CONNMARK_H_target
 
-#include <linux/netfilter/xt_connmark.h>
+#समावेश <linux/netfilter/xt_connmark.h>
 
-#endif /*_XT_CONNMARK_H_target*/
+#पूर्ण_अगर /*_XT_CONNMARK_H_target*/

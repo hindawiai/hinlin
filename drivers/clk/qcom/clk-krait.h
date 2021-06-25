@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __QCOM_CLK_KRAIT_H
-#define __QCOM_CLK_KRAIT_H
+#अगर_अघोषित __QCOM_CLK_KRAIT_H
+#घोषणा __QCOM_CLK_KRAIT_H
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-struct krait_mux_clk {
-	unsigned int	*parent_map;
+काष्ठा krait_mux_clk अणु
+	अचिन्हित पूर्णांक	*parent_map;
 	u32		offset;
 	u32		mask;
-	u32		shift;
+	u32		shअगरt;
 	u32		en_mask;
 	bool		lpl;
 	u8		safe_sel;
 	u8		old_index;
 	bool		reparent;
 
-	struct clk_hw	hw;
-	struct notifier_block   clk_nb;
-};
+	काष्ठा clk_hw	hw;
+	काष्ठा notअगरier_block   clk_nb;
+पूर्ण;
 
-#define to_krait_mux_clk(_hw) container_of(_hw, struct krait_mux_clk, hw)
+#घोषणा to_krait_mux_clk(_hw) container_of(_hw, काष्ठा krait_mux_clk, hw)
 
-extern const struct clk_ops krait_mux_clk_ops;
+बाह्य स्थिर काष्ठा clk_ops krait_mux_clk_ops;
 
-struct krait_div2_clk {
+काष्ठा krait_भाग2_clk अणु
 	u32		offset;
 	u8		width;
-	u32		shift;
+	u32		shअगरt;
 	bool		lpl;
 
-	struct clk_hw	hw;
-};
+	काष्ठा clk_hw	hw;
+पूर्ण;
 
-#define to_krait_div2_clk(_hw) container_of(_hw, struct krait_div2_clk, hw)
+#घोषणा to_krait_भाग2_clk(_hw) container_of(_hw, काष्ठा krait_भाग2_clk, hw)
 
-extern const struct clk_ops krait_div2_clk_ops;
+बाह्य स्थिर काष्ठा clk_ops krait_भाग2_clk_ops;
 
-#endif
+#पूर्ण_अगर

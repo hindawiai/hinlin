@@ -1,1165 +1,1166 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * acpi.h - ACPI Interface
  *
- * Copyright (C) 2001 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
+ * Copyright (C) 2001 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
  */
 
-#ifndef _LINUX_ACPI_H
-#define _LINUX_ACPI_H
+#अगर_अघोषित _LINUX_ACPI_H
+#घोषणा _LINUX_ACPI_H
 
-#include <linux/errno.h>
-#include <linux/ioport.h>	/* for struct resource */
-#include <linux/irqdomain.h>
-#include <linux/resource_ext.h>
-#include <linux/device.h>
-#include <linux/property.h>
-#include <linux/uuid.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>	/* क्रम काष्ठा resource */
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/resource_ext.h>
+#समावेश <linux/device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/uuid.h>
 
-#ifndef _LINUX
-#define _LINUX
-#endif
-#include <acpi/acpi.h>
+#अगर_अघोषित _LINUX
+#घोषणा _LINUX
+#पूर्ण_अगर
+#समावेश <acpi/acpi.h>
 
-#ifdef	CONFIG_ACPI
+#अगर_घोषित	CONFIG_ACPI
 
-#include <linux/list.h>
-#include <linux/mod_devicetable.h>
-#include <linux/dynamic_debug.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/dynamic_debug.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
 
-#include <acpi/acpi_bus.h>
-#include <acpi/acpi_drivers.h>
-#include <acpi/acpi_numa.h>
-#include <acpi/acpi_io.h>
-#include <asm/acpi.h>
+#समावेश <acpi/acpi_bus.h>
+#समावेश <acpi/acpi_drivers.h>
+#समावेश <acpi/acpi_numa.h>
+#समावेश <acpi/acpi_पन.स>
+#समावेश <यंत्र/acpi.h>
 
-static inline acpi_handle acpi_device_handle(struct acpi_device *adev)
-{
-	return adev ? adev->handle : NULL;
-}
+अटल अंतरभूत acpi_handle acpi_device_handle(काष्ठा acpi_device *adev)
+अणु
+	वापस adev ? adev->handle : शून्य;
+पूर्ण
 
-#define ACPI_COMPANION(dev)		to_acpi_device_node((dev)->fwnode)
-#define ACPI_COMPANION_SET(dev, adev)	set_primary_fwnode(dev, (adev) ? \
-	acpi_fwnode_handle(adev) : NULL)
-#define ACPI_HANDLE(dev)		acpi_device_handle(ACPI_COMPANION(dev))
-#define ACPI_HANDLE_FWNODE(fwnode)	\
+#घोषणा ACPI_COMPANION(dev)		to_acpi_device_node((dev)->fwnode)
+#घोषणा ACPI_COMPANION_SET(dev, adev)	set_primary_fwnode(dev, (adev) ? \
+	acpi_fwnode_handle(adev) : शून्य)
+#घोषणा ACPI_HANDLE(dev)		acpi_device_handle(ACPI_COMPANION(dev))
+#घोषणा ACPI_HANDLE_FWNODE(fwnode)	\
 				acpi_device_handle(to_acpi_device_node(fwnode))
 
-static inline struct fwnode_handle *acpi_alloc_fwnode_static(void)
-{
-	struct fwnode_handle *fwnode;
+अटल अंतरभूत काष्ठा fwnode_handle *acpi_alloc_fwnode_अटल(व्योम)
+अणु
+	काष्ठा fwnode_handle *fwnode;
 
-	fwnode = kzalloc(sizeof(struct fwnode_handle), GFP_KERNEL);
-	if (!fwnode)
-		return NULL;
+	fwnode = kzalloc(माप(काष्ठा fwnode_handle), GFP_KERNEL);
+	अगर (!fwnode)
+		वापस शून्य;
 
-	fwnode_init(fwnode, &acpi_static_fwnode_ops);
+	fwnode_init(fwnode, &acpi_अटल_fwnode_ops);
 
-	return fwnode;
-}
+	वापस fwnode;
+पूर्ण
 
-static inline void acpi_free_fwnode_static(struct fwnode_handle *fwnode)
-{
-	if (WARN_ON(!is_acpi_static_node(fwnode)))
-		return;
+अटल अंतरभूत व्योम acpi_मुक्त_fwnode_अटल(काष्ठा fwnode_handle *fwnode)
+अणु
+	अगर (WARN_ON(!is_acpi_अटल_node(fwnode)))
+		वापस;
 
-	kfree(fwnode);
-}
+	kमुक्त(fwnode);
+पूर्ण
 
 /**
  * ACPI_DEVICE_CLASS - macro used to describe an ACPI device with
- * the PCI-defined class-code information
+ * the PCI-defined class-code inक्रमmation
  *
- * @_cls : the class, subclass, prog-if triple for this device
- * @_msk : the class mask for this device
+ * @_cls : the class, subclass, prog-अगर triple क्रम this device
+ * @_msk : the class mask क्रम this device
  *
- * This macro is used to create a struct acpi_device_id that matches a
- * specific PCI class. The .id and .driver_data fields will be left
- * initialized with the default value.
+ * This macro is used to create a काष्ठा acpi_device_id that matches a
+ * specअगरic PCI class. The .id and .driver_data fields will be left
+ * initialized with the शेष value.
  */
-#define ACPI_DEVICE_CLASS(_cls, _msk)	.cls = (_cls), .cls_msk = (_msk),
+#घोषणा ACPI_DEVICE_CLASS(_cls, _msk)	.cls = (_cls), .cls_msk = (_msk),
 
-static inline bool has_acpi_companion(struct device *dev)
-{
-	return is_acpi_device_node(dev->fwnode);
-}
+अटल अंतरभूत bool has_acpi_companion(काष्ठा device *dev)
+अणु
+	वापस is_acpi_device_node(dev->fwnode);
+पूर्ण
 
-static inline void acpi_preset_companion(struct device *dev,
-					 struct acpi_device *parent, u64 addr)
-{
+अटल अंतरभूत व्योम acpi_preset_companion(काष्ठा device *dev,
+					 काष्ठा acpi_device *parent, u64 addr)
+अणु
 	ACPI_COMPANION_SET(dev, acpi_find_child_device(parent, addr, false));
-}
+पूर्ण
 
-static inline const char *acpi_dev_name(struct acpi_device *adev)
-{
-	return dev_name(&adev->dev);
-}
+अटल अंतरभूत स्थिर अक्षर *acpi_dev_name(काष्ठा acpi_device *adev)
+अणु
+	वापस dev_name(&adev->dev);
+पूर्ण
 
-struct device *acpi_get_first_physical_node(struct acpi_device *adev);
+काष्ठा device *acpi_get_first_physical_node(काष्ठा acpi_device *adev);
 
-enum acpi_irq_model_id {
+क्रमागत acpi_irq_model_id अणु
 	ACPI_IRQ_MODEL_PIC = 0,
 	ACPI_IRQ_MODEL_IOAPIC,
 	ACPI_IRQ_MODEL_IOSAPIC,
 	ACPI_IRQ_MODEL_PLATFORM,
 	ACPI_IRQ_MODEL_GIC,
 	ACPI_IRQ_MODEL_COUNT
-};
+पूर्ण;
 
-extern enum acpi_irq_model_id	acpi_irq_model;
+बाह्य क्रमागत acpi_irq_model_id	acpi_irq_model;
 
-enum acpi_interrupt_id {
+क्रमागत acpi_पूर्णांकerrupt_id अणु
 	ACPI_INTERRUPT_PMI	= 1,
 	ACPI_INTERRUPT_INIT,
 	ACPI_INTERRUPT_CPEI,
 	ACPI_INTERRUPT_COUNT
-};
+पूर्ण;
 
-#define	ACPI_SPACE_MEM		0
+#घोषणा	ACPI_SPACE_MEM		0
 
-enum acpi_address_range_id {
+क्रमागत acpi_address_range_id अणु
 	ACPI_ADDRESS_RANGE_MEMORY = 1,
 	ACPI_ADDRESS_RANGE_RESERVED = 2,
 	ACPI_ADDRESS_RANGE_ACPI = 3,
 	ACPI_ADDRESS_RANGE_NVS	= 4,
 	ACPI_ADDRESS_RANGE_COUNT
-};
+पूर्ण;
 
 
 /* Table Handlers */
-union acpi_subtable_headers {
-	struct acpi_subtable_header common;
-	struct acpi_hmat_structure hmat;
-};
+जोड़ acpi_subtable_headers अणु
+	काष्ठा acpi_subtable_header common;
+	काष्ठा acpi_hmat_काष्ठाure hmat;
+पूर्ण;
 
-typedef int (*acpi_tbl_table_handler)(struct acpi_table_header *table);
+प्रकार पूर्णांक (*acpi_tbl_table_handler)(काष्ठा acpi_table_header *table);
 
-typedef int (*acpi_tbl_entry_handler)(union acpi_subtable_headers *header,
-				      const unsigned long end);
+प्रकार पूर्णांक (*acpi_tbl_entry_handler)(जोड़ acpi_subtable_headers *header,
+				      स्थिर अचिन्हित दीर्घ end);
 
 /* Debugger support */
 
-struct acpi_debugger_ops {
-	int (*create_thread)(acpi_osd_exec_callback function, void *context);
-	ssize_t (*write_log)(const char *msg);
-	ssize_t (*read_cmd)(char *buffer, size_t length);
-	int (*wait_command_ready)(bool single_step, char *buffer, size_t length);
-	int (*notify_command_complete)(void);
-};
+काष्ठा acpi_debugger_ops अणु
+	पूर्णांक (*create_thपढ़ो)(acpi_osd_exec_callback function, व्योम *context);
+	sमाप_प्रकार (*ग_लिखो_log)(स्थिर अक्षर *msg);
+	sमाप_प्रकार (*पढ़ो_cmd)(अक्षर *buffer, माप_प्रकार length);
+	पूर्णांक (*रुको_command_पढ़ोy)(bool single_step, अक्षर *buffer, माप_प्रकार length);
+	पूर्णांक (*notअगरy_command_complete)(व्योम);
+पूर्ण;
 
-struct acpi_debugger {
-	const struct acpi_debugger_ops *ops;
-	struct module *owner;
-	struct mutex lock;
-};
+काष्ठा acpi_debugger अणु
+	स्थिर काष्ठा acpi_debugger_ops *ops;
+	काष्ठा module *owner;
+	काष्ठा mutex lock;
+पूर्ण;
 
-#ifdef CONFIG_ACPI_DEBUGGER
-int __init acpi_debugger_init(void);
-int acpi_register_debugger(struct module *owner,
-			   const struct acpi_debugger_ops *ops);
-void acpi_unregister_debugger(const struct acpi_debugger_ops *ops);
-int acpi_debugger_create_thread(acpi_osd_exec_callback function, void *context);
-ssize_t acpi_debugger_write_log(const char *msg);
-ssize_t acpi_debugger_read_cmd(char *buffer, size_t buffer_length);
-int acpi_debugger_wait_command_ready(void);
-int acpi_debugger_notify_command_complete(void);
-#else
-static inline int acpi_debugger_init(void)
-{
-	return -ENODEV;
-}
+#अगर_घोषित CONFIG_ACPI_DEBUGGER
+पूर्णांक __init acpi_debugger_init(व्योम);
+पूर्णांक acpi_रेजिस्टर_debugger(काष्ठा module *owner,
+			   स्थिर काष्ठा acpi_debugger_ops *ops);
+व्योम acpi_unरेजिस्टर_debugger(स्थिर काष्ठा acpi_debugger_ops *ops);
+पूर्णांक acpi_debugger_create_thपढ़ो(acpi_osd_exec_callback function, व्योम *context);
+sमाप_प्रकार acpi_debugger_ग_लिखो_log(स्थिर अक्षर *msg);
+sमाप_प्रकार acpi_debugger_पढ़ो_cmd(अक्षर *buffer, माप_प्रकार buffer_length);
+पूर्णांक acpi_debugger_रुको_command_पढ़ोy(व्योम);
+पूर्णांक acpi_debugger_notअगरy_command_complete(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_debugger_init(व्योम)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_register_debugger(struct module *owner,
-					 const struct acpi_debugger_ops *ops)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_रेजिस्टर_debugger(काष्ठा module *owner,
+					 स्थिर काष्ठा acpi_debugger_ops *ops)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline void acpi_unregister_debugger(const struct acpi_debugger_ops *ops)
-{
-}
+अटल अंतरभूत व्योम acpi_unरेजिस्टर_debugger(स्थिर काष्ठा acpi_debugger_ops *ops)
+अणु
+पूर्ण
 
-static inline int acpi_debugger_create_thread(acpi_osd_exec_callback function,
-					      void *context)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_debugger_create_thपढ़ो(acpi_osd_exec_callback function,
+					      व्योम *context)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_debugger_write_log(const char *msg)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_debugger_ग_लिखो_log(स्थिर अक्षर *msg)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_debugger_read_cmd(char *buffer, u32 buffer_length)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_debugger_पढ़ो_cmd(अक्षर *buffer, u32 buffer_length)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_debugger_wait_command_ready(void)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_debugger_रुको_command_पढ़ोy(व्योम)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_debugger_notify_command_complete(void)
-{
-	return -ENODEV;
-}
-#endif
+अटल अंतरभूत पूर्णांक acpi_debugger_notअगरy_command_complete(व्योम)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-#define BAD_MADT_ENTRY(entry, end) (					    \
-		(!entry) || (unsigned long)entry + sizeof(*entry) > end ||  \
-		((struct acpi_subtable_header *)entry)->length < sizeof(*entry))
+#घोषणा BAD_MADT_ENTRY(entry, end) (					    \
+		(!entry) || (अचिन्हित दीर्घ)entry + माप(*entry) > end ||  \
+		((काष्ठा acpi_subtable_header *)entry)->length < माप(*entry))
 
-struct acpi_subtable_proc {
-	int id;
+काष्ठा acpi_subtable_proc अणु
+	पूर्णांक id;
 	acpi_tbl_entry_handler handler;
-	int count;
-};
+	पूर्णांक count;
+पूर्ण;
 
-void __iomem *__acpi_map_table(unsigned long phys, unsigned long size);
-void __acpi_unmap_table(void __iomem *map, unsigned long size);
-int early_acpi_boot_init(void);
-int acpi_boot_init (void);
-void acpi_boot_table_prepare (void);
-void acpi_boot_table_init (void);
-int acpi_mps_check (void);
-int acpi_numa_init (void);
+व्योम __iomem *__acpi_map_table(अचिन्हित दीर्घ phys, अचिन्हित दीर्घ size);
+व्योम __acpi_unmap_table(व्योम __iomem *map, अचिन्हित दीर्घ size);
+पूर्णांक early_acpi_boot_init(व्योम);
+पूर्णांक acpi_boot_init (व्योम);
+व्योम acpi_boot_table_prepare (व्योम);
+व्योम acpi_boot_table_init (व्योम);
+पूर्णांक acpi_mps_check (व्योम);
+पूर्णांक acpi_numa_init (व्योम);
 
-int acpi_locate_initial_tables (void);
-void acpi_reserve_initial_tables (void);
-void acpi_table_init_complete (void);
-int acpi_table_init (void);
-int acpi_table_parse(char *id, acpi_tbl_table_handler handler);
-int __init acpi_table_parse_entries(char *id, unsigned long table_size,
-			      int entry_id,
+पूर्णांक acpi_locate_initial_tables (व्योम);
+व्योम acpi_reserve_initial_tables (व्योम);
+व्योम acpi_table_init_complete (व्योम);
+पूर्णांक acpi_table_init (व्योम);
+पूर्णांक acpi_table_parse(अक्षर *id, acpi_tbl_table_handler handler);
+पूर्णांक __init acpi_table_parse_entries(अक्षर *id, अचिन्हित दीर्घ table_size,
+			      पूर्णांक entry_id,
 			      acpi_tbl_entry_handler handler,
-			      unsigned int max_entries);
-int __init acpi_table_parse_entries_array(char *id, unsigned long table_size,
-			      struct acpi_subtable_proc *proc, int proc_num,
-			      unsigned int max_entries);
-int acpi_table_parse_madt(enum acpi_madt_type id,
+			      अचिन्हित पूर्णांक max_entries);
+पूर्णांक __init acpi_table_parse_entries_array(अक्षर *id, अचिन्हित दीर्घ table_size,
+			      काष्ठा acpi_subtable_proc *proc, पूर्णांक proc_num,
+			      अचिन्हित पूर्णांक max_entries);
+पूर्णांक acpi_table_parse_madt(क्रमागत acpi_madt_type id,
 			  acpi_tbl_entry_handler handler,
-			  unsigned int max_entries);
-int acpi_parse_mcfg (struct acpi_table_header *header);
-void acpi_table_print_madt_entry (struct acpi_subtable_header *madt);
+			  अचिन्हित पूर्णांक max_entries);
+पूर्णांक acpi_parse_mcfg (काष्ठा acpi_table_header *header);
+व्योम acpi_table_prपूर्णांक_madt_entry (काष्ठा acpi_subtable_header *madt);
 
 /* the following numa functions are architecture-dependent */
-void acpi_numa_slit_init (struct acpi_table_slit *slit);
+व्योम acpi_numa_slit_init (काष्ठा acpi_table_slit *slit);
 
-#if defined(CONFIG_X86) || defined(CONFIG_IA64)
-void acpi_numa_processor_affinity_init (struct acpi_srat_cpu_affinity *pa);
-#else
-static inline void
-acpi_numa_processor_affinity_init(struct acpi_srat_cpu_affinity *pa) { }
-#endif
+#अगर defined(CONFIG_X86) || defined(CONFIG_IA64)
+व्योम acpi_numa_processor_affinity_init (काष्ठा acpi_srat_cpu_affinity *pa);
+#अन्यथा
+अटल अंतरभूत व्योम
+acpi_numa_processor_affinity_init(काष्ठा acpi_srat_cpu_affinity *pa) अणु पूर्ण
+#पूर्ण_अगर
 
-void acpi_numa_x2apic_affinity_init(struct acpi_srat_x2apic_cpu_affinity *pa);
+व्योम acpi_numa_x2apic_affinity_init(काष्ठा acpi_srat_x2apic_cpu_affinity *pa);
 
-#ifdef CONFIG_ARM64
-void acpi_numa_gicc_affinity_init(struct acpi_srat_gicc_affinity *pa);
-#else
-static inline void
-acpi_numa_gicc_affinity_init(struct acpi_srat_gicc_affinity *pa) { }
-#endif
+#अगर_घोषित CONFIG_ARM64
+व्योम acpi_numa_gicc_affinity_init(काष्ठा acpi_srat_gicc_affinity *pa);
+#अन्यथा
+अटल अंतरभूत व्योम
+acpi_numa_gicc_affinity_init(काष्ठा acpi_srat_gicc_affinity *pa) अणु पूर्ण
+#पूर्ण_अगर
 
-int acpi_numa_memory_affinity_init (struct acpi_srat_mem_affinity *ma);
+पूर्णांक acpi_numa_memory_affinity_init (काष्ठा acpi_srat_mem_affinity *ma);
 
-#ifndef PHYS_CPUID_INVALID
-typedef u32 phys_cpuid_t;
-#define PHYS_CPUID_INVALID (phys_cpuid_t)(-1)
-#endif
+#अगर_अघोषित PHYS_CPUID_INVALID
+प्रकार u32 phys_cpuid_t;
+#घोषणा PHYS_CPUID_INVALID (phys_cpuid_t)(-1)
+#पूर्ण_अगर
 
-static inline bool invalid_logical_cpuid(u32 cpuid)
-{
-	return (int)cpuid < 0;
-}
+अटल अंतरभूत bool invalid_logical_cpuid(u32 cpuid)
+अणु
+	वापस (पूर्णांक)cpuid < 0;
+पूर्ण
 
-static inline bool invalid_phys_cpuid(phys_cpuid_t phys_id)
-{
-	return phys_id == PHYS_CPUID_INVALID;
-}
+अटल अंतरभूत bool invalid_phys_cpuid(phys_cpuid_t phys_id)
+अणु
+	वापस phys_id == PHYS_CPUID_INVALID;
+पूर्ण
 
 /* Validate the processor object's proc_id */
-bool acpi_duplicate_processor_id(int proc_id);
+bool acpi_duplicate_processor_id(पूर्णांक proc_id);
 /* Processor _CTS control */
-struct acpi_processor_power;
+काष्ठा acpi_processor_घातer;
 
-#ifdef CONFIG_ACPI_PROCESSOR_CSTATE
-bool acpi_processor_claim_cst_control(void);
-int acpi_processor_evaluate_cst(acpi_handle handle, u32 cpu,
-				struct acpi_processor_power *info);
-#else
-static inline bool acpi_processor_claim_cst_control(void) { return false; }
-static inline int acpi_processor_evaluate_cst(acpi_handle handle, u32 cpu,
-					      struct acpi_processor_power *info)
-{
-	return -ENODEV;
-}
-#endif
+#अगर_घोषित CONFIG_ACPI_PROCESSOR_CSTATE
+bool acpi_processor_claim_cst_control(व्योम);
+पूर्णांक acpi_processor_evaluate_cst(acpi_handle handle, u32 cpu,
+				काष्ठा acpi_processor_घातer *info);
+#अन्यथा
+अटल अंतरभूत bool acpi_processor_claim_cst_control(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत पूर्णांक acpi_processor_evaluate_cst(acpi_handle handle, u32 cpu,
+					      काष्ठा acpi_processor_घातer *info)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_HOTPLUG_CPU
-/* Arch dependent functions for cpu hotplug support */
-int acpi_map_cpu(acpi_handle handle, phys_cpuid_t physid, u32 acpi_id,
-		 int *pcpu);
-int acpi_unmap_cpu(int cpu);
-#endif /* CONFIG_ACPI_HOTPLUG_CPU */
+#अगर_घोषित CONFIG_ACPI_HOTPLUG_CPU
+/* Arch dependent functions क्रम cpu hotplug support */
+पूर्णांक acpi_map_cpu(acpi_handle handle, phys_cpuid_t physid, u32 acpi_id,
+		 पूर्णांक *pcpu);
+पूर्णांक acpi_unmap_cpu(पूर्णांक cpu);
+#पूर्ण_अगर /* CONFIG_ACPI_HOTPLUG_CPU */
 
-#ifdef CONFIG_ACPI_HOTPLUG_IOAPIC
-int acpi_get_ioapic_id(acpi_handle handle, u32 gsi_base, u64 *phys_addr);
-#endif
+#अगर_घोषित CONFIG_ACPI_HOTPLUG_IOAPIC
+पूर्णांक acpi_get_ioapic_id(acpi_handle handle, u32 gsi_base, u64 *phys_addr);
+#पूर्ण_अगर
 
-int acpi_register_ioapic(acpi_handle handle, u64 phys_addr, u32 gsi_base);
-int acpi_unregister_ioapic(acpi_handle handle, u32 gsi_base);
-int acpi_ioapic_registered(acpi_handle handle, u32 gsi_base);
-void acpi_irq_stats_init(void);
-extern u32 acpi_irq_handled;
-extern u32 acpi_irq_not_handled;
-extern unsigned int acpi_sci_irq;
-extern bool acpi_no_s5;
-#define INVALID_ACPI_IRQ	((unsigned)-1)
-static inline bool acpi_sci_irq_valid(void)
-{
-	return acpi_sci_irq != INVALID_ACPI_IRQ;
-}
+पूर्णांक acpi_रेजिस्टर_ioapic(acpi_handle handle, u64 phys_addr, u32 gsi_base);
+पूर्णांक acpi_unरेजिस्टर_ioapic(acpi_handle handle, u32 gsi_base);
+पूर्णांक acpi_ioapic_रेजिस्टरed(acpi_handle handle, u32 gsi_base);
+व्योम acpi_irq_stats_init(व्योम);
+बाह्य u32 acpi_irq_handled;
+बाह्य u32 acpi_irq_not_handled;
+बाह्य अचिन्हित पूर्णांक acpi_sci_irq;
+बाह्य bool acpi_no_s5;
+#घोषणा INVALID_ACPI_IRQ	((अचिन्हित)-1)
+अटल अंतरभूत bool acpi_sci_irq_valid(व्योम)
+अणु
+	वापस acpi_sci_irq != INVALID_ACPI_IRQ;
+पूर्ण
 
-extern int sbf_port;
-extern unsigned long acpi_realmode_flags;
+बाह्य पूर्णांक sbf_port;
+बाह्य अचिन्हित दीर्घ acpi_realmode_flags;
 
-int acpi_register_gsi (struct device *dev, u32 gsi, int triggering, int polarity);
-int acpi_gsi_to_irq (u32 gsi, unsigned int *irq);
-int acpi_isa_irq_to_gsi (unsigned isa_irq, u32 *gsi);
+पूर्णांक acpi_रेजिस्टर_gsi (काष्ठा device *dev, u32 gsi, पूर्णांक triggering, पूर्णांक polarity);
+पूर्णांक acpi_gsi_to_irq (u32 gsi, अचिन्हित पूर्णांक *irq);
+पूर्णांक acpi_isa_irq_to_gsi (अचिन्हित isa_irq, u32 *gsi);
 
-void acpi_set_irq_model(enum acpi_irq_model_id model,
-			struct fwnode_handle *fwnode);
+व्योम acpi_set_irq_model(क्रमागत acpi_irq_model_id model,
+			काष्ठा fwnode_handle *fwnode);
 
-struct irq_domain *acpi_irq_create_hierarchy(unsigned int flags,
-					     unsigned int size,
-					     struct fwnode_handle *fwnode,
-					     const struct irq_domain_ops *ops,
-					     void *host_data);
+काष्ठा irq_करोमुख्य *acpi_irq_create_hierarchy(अचिन्हित पूर्णांक flags,
+					     अचिन्हित पूर्णांक size,
+					     काष्ठा fwnode_handle *fwnode,
+					     स्थिर काष्ठा irq_करोमुख्य_ops *ops,
+					     व्योम *host_data);
 
-#ifdef CONFIG_X86_IO_APIC
-extern int acpi_get_override_irq(u32 gsi, int *trigger, int *polarity);
-#else
-static inline int acpi_get_override_irq(u32 gsi, int *trigger, int *polarity)
-{
-	return -1;
-}
-#endif
+#अगर_घोषित CONFIG_X86_IO_APIC
+बाह्य पूर्णांक acpi_get_override_irq(u32 gsi, पूर्णांक *trigger, पूर्णांक *polarity);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_get_override_irq(u32 gsi, पूर्णांक *trigger, पूर्णांक *polarity)
+अणु
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 /*
- * This function undoes the effect of one call to acpi_register_gsi().
- * If this matches the last registration, any IRQ resources for gsi
- * are freed.
+ * This function unकरोes the effect of one call to acpi_रेजिस्टर_gsi().
+ * If this matches the last registration, any IRQ resources क्रम gsi
+ * are मुक्तd.
  */
-void acpi_unregister_gsi (u32 gsi);
+व्योम acpi_unरेजिस्टर_gsi (u32 gsi);
 
-struct pci_dev;
+काष्ठा pci_dev;
 
-int acpi_pci_irq_enable (struct pci_dev *dev);
-void acpi_penalize_isa_irq(int irq, int active);
-bool acpi_isa_irq_available(int irq);
-#ifdef CONFIG_PCI
-void acpi_penalize_sci_irq(int irq, int trigger, int polarity);
-#else
-static inline void acpi_penalize_sci_irq(int irq, int trigger,
-					int polarity)
-{
-}
-#endif
-void acpi_pci_irq_disable (struct pci_dev *dev);
+पूर्णांक acpi_pci_irq_enable (काष्ठा pci_dev *dev);
+व्योम acpi_penalize_isa_irq(पूर्णांक irq, पूर्णांक active);
+bool acpi_isa_irq_available(पूर्णांक irq);
+#अगर_घोषित CONFIG_PCI
+व्योम acpi_penalize_sci_irq(पूर्णांक irq, पूर्णांक trigger, पूर्णांक polarity);
+#अन्यथा
+अटल अंतरभूत व्योम acpi_penalize_sci_irq(पूर्णांक irq, पूर्णांक trigger,
+					पूर्णांक polarity)
+अणु
+पूर्ण
+#पूर्ण_अगर
+व्योम acpi_pci_irq_disable (काष्ठा pci_dev *dev);
 
-extern int ec_read(u8 addr, u8 *val);
-extern int ec_write(u8 addr, u8 val);
-extern int ec_transaction(u8 command,
-                          const u8 *wdata, unsigned wdata_len,
-                          u8 *rdata, unsigned rdata_len);
-extern acpi_handle ec_get_handle(void);
+बाह्य पूर्णांक ec_पढ़ो(u8 addr, u8 *val);
+बाह्य पूर्णांक ec_ग_लिखो(u8 addr, u8 val);
+बाह्य पूर्णांक ec_transaction(u8 command,
+                          स्थिर u8 *wdata, अचिन्हित wdata_len,
+                          u8 *rdata, अचिन्हित rdata_len);
+बाह्य acpi_handle ec_get_handle(व्योम);
 
-extern bool acpi_is_pnp_device(struct acpi_device *);
+बाह्य bool acpi_is_pnp_device(काष्ठा acpi_device *);
 
-#if defined(CONFIG_ACPI_WMI) || defined(CONFIG_ACPI_WMI_MODULE)
+#अगर defined(CONFIG_ACPI_WMI) || defined(CONFIG_ACPI_WMI_MODULE)
 
-typedef void (*wmi_notify_handler) (u32 value, void *context);
+प्रकार व्योम (*wmi_notअगरy_handler) (u32 value, व्योम *context);
 
-extern acpi_status wmi_evaluate_method(const char *guid, u8 instance,
+बाह्य acpi_status wmi_evaluate_method(स्थिर अक्षर *guid, u8 instance,
 					u32 method_id,
-					const struct acpi_buffer *in,
-					struct acpi_buffer *out);
-extern acpi_status wmi_query_block(const char *guid, u8 instance,
-					struct acpi_buffer *out);
-extern acpi_status wmi_set_block(const char *guid, u8 instance,
-					const struct acpi_buffer *in);
-extern acpi_status wmi_install_notify_handler(const char *guid,
-					wmi_notify_handler handler, void *data);
-extern acpi_status wmi_remove_notify_handler(const char *guid);
-extern acpi_status wmi_get_event_data(u32 event, struct acpi_buffer *out);
-extern bool wmi_has_guid(const char *guid);
-extern char *wmi_get_acpi_device_uid(const char *guid);
+					स्थिर काष्ठा acpi_buffer *in,
+					काष्ठा acpi_buffer *out);
+बाह्य acpi_status wmi_query_block(स्थिर अक्षर *guid, u8 instance,
+					काष्ठा acpi_buffer *out);
+बाह्य acpi_status wmi_set_block(स्थिर अक्षर *guid, u8 instance,
+					स्थिर काष्ठा acpi_buffer *in);
+बाह्य acpi_status wmi_install_notअगरy_handler(स्थिर अक्षर *guid,
+					wmi_notअगरy_handler handler, व्योम *data);
+बाह्य acpi_status wmi_हटाओ_notअगरy_handler(स्थिर अक्षर *guid);
+बाह्य acpi_status wmi_get_event_data(u32 event, काष्ठा acpi_buffer *out);
+बाह्य bool wmi_has_guid(स्थिर अक्षर *guid);
+बाह्य अक्षर *wmi_get_acpi_device_uid(स्थिर अक्षर *guid);
 
-#endif	/* CONFIG_ACPI_WMI */
+#पूर्ण_अगर	/* CONFIG_ACPI_WMI */
 
-#define ACPI_VIDEO_OUTPUT_SWITCHING			0x0001
-#define ACPI_VIDEO_DEVICE_POSTING			0x0002
-#define ACPI_VIDEO_ROM_AVAILABLE			0x0004
-#define ACPI_VIDEO_BACKLIGHT				0x0008
-#define ACPI_VIDEO_BACKLIGHT_FORCE_VENDOR		0x0010
-#define ACPI_VIDEO_BACKLIGHT_FORCE_VIDEO		0x0020
-#define ACPI_VIDEO_OUTPUT_SWITCHING_FORCE_VENDOR	0x0040
-#define ACPI_VIDEO_OUTPUT_SWITCHING_FORCE_VIDEO		0x0080
-#define ACPI_VIDEO_BACKLIGHT_DMI_VENDOR			0x0100
-#define ACPI_VIDEO_BACKLIGHT_DMI_VIDEO			0x0200
-#define ACPI_VIDEO_OUTPUT_SWITCHING_DMI_VENDOR		0x0400
-#define ACPI_VIDEO_OUTPUT_SWITCHING_DMI_VIDEO		0x0800
+#घोषणा ACPI_VIDEO_OUTPUT_SWITCHING			0x0001
+#घोषणा ACPI_VIDEO_DEVICE_POSTING			0x0002
+#घोषणा ACPI_VIDEO_ROM_AVAILABLE			0x0004
+#घोषणा ACPI_VIDEO_BACKLIGHT				0x0008
+#घोषणा ACPI_VIDEO_BACKLIGHT_FORCE_VENDOR		0x0010
+#घोषणा ACPI_VIDEO_BACKLIGHT_FORCE_VIDEO		0x0020
+#घोषणा ACPI_VIDEO_OUTPUT_SWITCHING_FORCE_VENDOR	0x0040
+#घोषणा ACPI_VIDEO_OUTPUT_SWITCHING_FORCE_VIDEO		0x0080
+#घोषणा ACPI_VIDEO_BACKLIGHT_DMI_VENDOR			0x0100
+#घोषणा ACPI_VIDEO_BACKLIGHT_DMI_VIDEO			0x0200
+#घोषणा ACPI_VIDEO_OUTPUT_SWITCHING_DMI_VENDOR		0x0400
+#घोषणा ACPI_VIDEO_OUTPUT_SWITCHING_DMI_VIDEO		0x0800
 
-extern char acpi_video_backlight_string[];
-extern long acpi_is_video_device(acpi_handle handle);
-extern int acpi_blacklisted(void);
-extern void acpi_osi_setup(char *str);
-extern bool acpi_osi_is_win8(void);
+बाह्य अक्षर acpi_video_backlight_string[];
+बाह्य दीर्घ acpi_is_video_device(acpi_handle handle);
+बाह्य पूर्णांक acpi_blacklisted(व्योम);
+बाह्य व्योम acpi_osi_setup(अक्षर *str);
+बाह्य bool acpi_osi_is_win8(व्योम);
 
-#ifdef CONFIG_ACPI_NUMA
-int acpi_map_pxm_to_node(int pxm);
-int acpi_get_node(acpi_handle handle);
+#अगर_घोषित CONFIG_ACPI_NUMA
+पूर्णांक acpi_map_pxm_to_node(पूर्णांक pxm);
+पूर्णांक acpi_get_node(acpi_handle handle);
 
 /**
  * pxm_to_online_node - Map proximity ID to online node
  * @pxm: ACPI proximity ID
  *
- * This is similar to pxm_to_node(), but always returns an online
+ * This is similar to pxm_to_node(), but always वापसs an online
  * node.  When the mapped node from a given proximity ID is offline, it
- * looks up the node distance table and returns the nearest online node.
+ * looks up the node distance table and वापसs the nearest online node.
  *
  * ACPI device drivers, which are called after the NUMA initialization has
- * completed in the kernel, can call this interface to obtain their device
- * NUMA topology from ACPI tables.  Such drivers do not have to deal with
- * offline nodes.  A node may be offline when SRAT memory entry does not exist,
+ * completed in the kernel, can call this पूर्णांकerface to obtain their device
+ * NUMA topology from ACPI tables.  Such drivers करो not have to deal with
+ * offline nodes.  A node may be offline when SRAT memory entry करोes not exist,
  * or NUMA is disabled, ex. "numa=off" on x86.
  */
-static inline int pxm_to_online_node(int pxm)
-{
-	int node = pxm_to_node(pxm);
+अटल अंतरभूत पूर्णांक pxm_to_online_node(पूर्णांक pxm)
+अणु
+	पूर्णांक node = pxm_to_node(pxm);
 
-	return numa_map_to_online_node(node);
-}
-#else
-static inline int pxm_to_online_node(int pxm)
-{
-	return 0;
-}
-static inline int acpi_map_pxm_to_node(int pxm)
-{
-	return 0;
-}
-static inline int acpi_get_node(acpi_handle handle)
-{
-	return 0;
-}
-#endif
-extern int acpi_paddr_to_node(u64 start_addr, u64 size);
+	वापस numa_map_to_online_node(node);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक pxm_to_online_node(पूर्णांक pxm)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक acpi_map_pxm_to_node(पूर्णांक pxm)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक acpi_get_node(acpi_handle handle)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
+बाह्य पूर्णांक acpi_paddr_to_node(u64 start_addr, u64 size);
 
-extern int pnpacpi_disabled;
+बाह्य पूर्णांक pnpacpi_disabled;
 
-#define PXM_INVAL	(-1)
+#घोषणा PXM_INVAL	(-1)
 
-bool acpi_dev_resource_memory(struct acpi_resource *ares, struct resource *res);
-bool acpi_dev_resource_io(struct acpi_resource *ares, struct resource *res);
-bool acpi_dev_resource_address_space(struct acpi_resource *ares,
-				     struct resource_win *win);
-bool acpi_dev_resource_ext_address_space(struct acpi_resource *ares,
-					 struct resource_win *win);
-unsigned long acpi_dev_irq_flags(u8 triggering, u8 polarity, u8 shareable);
-unsigned int acpi_dev_get_irq_type(int triggering, int polarity);
-bool acpi_dev_resource_interrupt(struct acpi_resource *ares, int index,
-				 struct resource *res);
+bool acpi_dev_resource_memory(काष्ठा acpi_resource *ares, काष्ठा resource *res);
+bool acpi_dev_resource_io(काष्ठा acpi_resource *ares, काष्ठा resource *res);
+bool acpi_dev_resource_address_space(काष्ठा acpi_resource *ares,
+				     काष्ठा resource_win *win);
+bool acpi_dev_resource_ext_address_space(काष्ठा acpi_resource *ares,
+					 काष्ठा resource_win *win);
+अचिन्हित दीर्घ acpi_dev_irq_flags(u8 triggering, u8 polarity, u8 shareable);
+अचिन्हित पूर्णांक acpi_dev_get_irq_type(पूर्णांक triggering, पूर्णांक polarity);
+bool acpi_dev_resource_पूर्णांकerrupt(काष्ठा acpi_resource *ares, पूर्णांक index,
+				 काष्ठा resource *res);
 
-void acpi_dev_free_resource_list(struct list_head *list);
-int acpi_dev_get_resources(struct acpi_device *adev, struct list_head *list,
-			   int (*preproc)(struct acpi_resource *, void *),
-			   void *preproc_data);
-int acpi_dev_get_dma_resources(struct acpi_device *adev,
-			       struct list_head *list);
-int acpi_dev_filter_resource_type(struct acpi_resource *ares,
-				  unsigned long types);
+व्योम acpi_dev_मुक्त_resource_list(काष्ठा list_head *list);
+पूर्णांक acpi_dev_get_resources(काष्ठा acpi_device *adev, काष्ठा list_head *list,
+			   पूर्णांक (*preproc)(काष्ठा acpi_resource *, व्योम *),
+			   व्योम *preproc_data);
+पूर्णांक acpi_dev_get_dma_resources(काष्ठा acpi_device *adev,
+			       काष्ठा list_head *list);
+पूर्णांक acpi_dev_filter_resource_type(काष्ठा acpi_resource *ares,
+				  अचिन्हित दीर्घ types);
 
-static inline int acpi_dev_filter_resource_type_cb(struct acpi_resource *ares,
-						   void *arg)
-{
-	return acpi_dev_filter_resource_type(ares, (unsigned long)arg);
-}
+अटल अंतरभूत पूर्णांक acpi_dev_filter_resource_type_cb(काष्ठा acpi_resource *ares,
+						   व्योम *arg)
+अणु
+	वापस acpi_dev_filter_resource_type(ares, (अचिन्हित दीर्घ)arg);
+पूर्ण
 
-struct acpi_device *acpi_resource_consumer(struct resource *res);
+काष्ठा acpi_device *acpi_resource_consumer(काष्ठा resource *res);
 
-int acpi_check_resource_conflict(const struct resource *res);
+पूर्णांक acpi_check_resource_conflict(स्थिर काष्ठा resource *res);
 
-int acpi_check_region(resource_size_t start, resource_size_t n,
-		      const char *name);
+पूर्णांक acpi_check_region(resource_माप_प्रकार start, resource_माप_प्रकार n,
+		      स्थिर अक्षर *name);
 
-acpi_status acpi_release_memory(acpi_handle handle, struct resource *res,
+acpi_status acpi_release_memory(acpi_handle handle, काष्ठा resource *res,
 				u32 level);
 
-int acpi_resources_are_enforced(void);
+पूर्णांक acpi_resources_are_enक्रमced(व्योम);
 
-#ifdef CONFIG_HIBERNATION
-void __init acpi_no_s4_hw_signature(void);
-#endif
+#अगर_घोषित CONFIG_HIBERNATION
+व्योम __init acpi_no_s4_hw_signature(व्योम);
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_SLEEP
-void __init acpi_old_suspend_ordering(void);
-void __init acpi_nvs_nosave(void);
-void __init acpi_nvs_nosave_s3(void);
-void __init acpi_sleep_no_blacklist(void);
-#endif /* CONFIG_PM_SLEEP */
+#अगर_घोषित CONFIG_PM_SLEEP
+व्योम __init acpi_old_suspend_ordering(व्योम);
+व्योम __init acpi_nvs_nosave(व्योम);
+व्योम __init acpi_nvs_nosave_s3(व्योम);
+व्योम __init acpi_sleep_no_blacklist(व्योम);
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-int acpi_register_wakeup_handler(
-	int wake_irq, bool (*wakeup)(void *context), void *context);
-void acpi_unregister_wakeup_handler(
-	bool (*wakeup)(void *context), void *context);
+पूर्णांक acpi_रेजिस्टर_wakeup_handler(
+	पूर्णांक wake_irq, bool (*wakeup)(व्योम *context), व्योम *context);
+व्योम acpi_unरेजिस्टर_wakeup_handler(
+	bool (*wakeup)(व्योम *context), व्योम *context);
 
-struct acpi_osc_context {
-	char *uuid_str;			/* UUID string */
-	int rev;
-	struct acpi_buffer cap;		/* list of DWORD capabilities */
-	struct acpi_buffer ret;		/* free by caller if success */
-};
+काष्ठा acpi_osc_context अणु
+	अक्षर *uuid_str;			/* UUID string */
+	पूर्णांक rev;
+	काष्ठा acpi_buffer cap;		/* list of DWORD capabilities */
+	काष्ठा acpi_buffer ret;		/* मुक्त by caller अगर success */
+पूर्ण;
 
-acpi_status acpi_run_osc(acpi_handle handle, struct acpi_osc_context *context);
+acpi_status acpi_run_osc(acpi_handle handle, काष्ठा acpi_osc_context *context);
 
-/* Indexes into _OSC Capabilities Buffer (DWORDs 2 & 3 are device-specific) */
-#define OSC_QUERY_DWORD				0	/* DWORD 1 */
-#define OSC_SUPPORT_DWORD			1	/* DWORD 2 */
-#define OSC_CONTROL_DWORD			2	/* DWORD 3 */
+/* Indexes पूर्णांकo _OSC Capabilities Buffer (DWORDs 2 & 3 are device-specअगरic) */
+#घोषणा OSC_QUERY_DWORD				0	/* DWORD 1 */
+#घोषणा OSC_SUPPORT_DWORD			1	/* DWORD 2 */
+#घोषणा OSC_CONTROL_DWORD			2	/* DWORD 3 */
 
 /* _OSC Capabilities DWORD 1: Query/Control and Error Returns (generic) */
-#define OSC_QUERY_ENABLE			0x00000001  /* input */
-#define OSC_REQUEST_ERROR			0x00000002  /* return */
-#define OSC_INVALID_UUID_ERROR			0x00000004  /* return */
-#define OSC_INVALID_REVISION_ERROR		0x00000008  /* return */
-#define OSC_CAPABILITIES_MASK_ERROR		0x00000010  /* return */
+#घोषणा OSC_QUERY_ENABLE			0x00000001  /* input */
+#घोषणा OSC_REQUEST_ERROR			0x00000002  /* वापस */
+#घोषणा OSC_INVALID_UUID_ERROR			0x00000004  /* वापस */
+#घोषणा OSC_INVALID_REVISION_ERROR		0x00000008  /* वापस */
+#घोषणा OSC_CAPABILITIES_MASK_ERROR		0x00000010  /* वापस */
 
-/* Platform-Wide Capabilities _OSC: Capabilities DWORD 2: Support Field */
-#define OSC_SB_PAD_SUPPORT			0x00000001
-#define OSC_SB_PPC_OST_SUPPORT			0x00000002
-#define OSC_SB_PR3_SUPPORT			0x00000004
-#define OSC_SB_HOTPLUG_OST_SUPPORT		0x00000008
-#define OSC_SB_APEI_SUPPORT			0x00000010
-#define OSC_SB_CPC_SUPPORT			0x00000020
-#define OSC_SB_CPCV2_SUPPORT			0x00000040
-#define OSC_SB_PCLPI_SUPPORT			0x00000080
-#define OSC_SB_OSLPI_SUPPORT			0x00000100
-#define OSC_SB_CPC_DIVERSE_HIGH_SUPPORT		0x00001000
-#define OSC_SB_GENERIC_INITIATOR_SUPPORT	0x00002000
-#define OSC_SB_NATIVE_USB4_SUPPORT		0x00040000
+/* Platक्रमm-Wide Capabilities _OSC: Capabilities DWORD 2: Support Field */
+#घोषणा OSC_SB_PAD_SUPPORT			0x00000001
+#घोषणा OSC_SB_PPC_OST_SUPPORT			0x00000002
+#घोषणा OSC_SB_PR3_SUPPORT			0x00000004
+#घोषणा OSC_SB_HOTPLUG_OST_SUPPORT		0x00000008
+#घोषणा OSC_SB_APEI_SUPPORT			0x00000010
+#घोषणा OSC_SB_CPC_SUPPORT			0x00000020
+#घोषणा OSC_SB_CPCV2_SUPPORT			0x00000040
+#घोषणा OSC_SB_PCLPI_SUPPORT			0x00000080
+#घोषणा OSC_SB_OSLPI_SUPPORT			0x00000100
+#घोषणा OSC_SB_CPC_DIVERSE_HIGH_SUPPORT		0x00001000
+#घोषणा OSC_SB_GENERIC_INITIATOR_SUPPORT	0x00002000
+#घोषणा OSC_SB_NATIVE_USB4_SUPPORT		0x00040000
 
-extern bool osc_sb_apei_support_acked;
-extern bool osc_pc_lpi_support_confirmed;
-extern bool osc_sb_native_usb4_support_confirmed;
+बाह्य bool osc_sb_apei_support_acked;
+बाह्य bool osc_pc_lpi_support_confirmed;
+बाह्य bool osc_sb_native_usb4_support_confirmed;
 
 /* USB4 Capabilities */
-#define OSC_USB_USB3_TUNNELING			0x00000001
-#define OSC_USB_DP_TUNNELING			0x00000002
-#define OSC_USB_PCIE_TUNNELING			0x00000004
-#define OSC_USB_XDOMAIN				0x00000008
+#घोषणा OSC_USB_USB3_TUNNELING			0x00000001
+#घोषणा OSC_USB_DP_TUNNELING			0x00000002
+#घोषणा OSC_USB_PCIE_TUNNELING			0x00000004
+#घोषणा OSC_USB_XDOMAIN				0x00000008
 
-extern u32 osc_sb_native_usb4_control;
+बाह्य u32 osc_sb_native_usb4_control;
 
 /* PCI Host Bridge _OSC: Capabilities DWORD 2: Support Field */
-#define OSC_PCI_EXT_CONFIG_SUPPORT		0x00000001
-#define OSC_PCI_ASPM_SUPPORT			0x00000002
-#define OSC_PCI_CLOCK_PM_SUPPORT		0x00000004
-#define OSC_PCI_SEGMENT_GROUPS_SUPPORT		0x00000008
-#define OSC_PCI_MSI_SUPPORT			0x00000010
-#define OSC_PCI_EDR_SUPPORT			0x00000080
-#define OSC_PCI_HPX_TYPE_3_SUPPORT		0x00000100
-#define OSC_PCI_SUPPORT_MASKS			0x0000019f
+#घोषणा OSC_PCI_EXT_CONFIG_SUPPORT		0x00000001
+#घोषणा OSC_PCI_ASPM_SUPPORT			0x00000002
+#घोषणा OSC_PCI_CLOCK_PM_SUPPORT		0x00000004
+#घोषणा OSC_PCI_SEGMENT_GROUPS_SUPPORT		0x00000008
+#घोषणा OSC_PCI_MSI_SUPPORT			0x00000010
+#घोषणा OSC_PCI_EDR_SUPPORT			0x00000080
+#घोषणा OSC_PCI_HPX_TYPE_3_SUPPORT		0x00000100
+#घोषणा OSC_PCI_SUPPORT_MASKS			0x0000019f
 
 /* PCI Host Bridge _OSC: Capabilities DWORD 3: Control Field */
-#define OSC_PCI_EXPRESS_NATIVE_HP_CONTROL	0x00000001
-#define OSC_PCI_SHPC_NATIVE_HP_CONTROL		0x00000002
-#define OSC_PCI_EXPRESS_PME_CONTROL		0x00000004
-#define OSC_PCI_EXPRESS_AER_CONTROL		0x00000008
-#define OSC_PCI_EXPRESS_CAPABILITY_CONTROL	0x00000010
-#define OSC_PCI_EXPRESS_LTR_CONTROL		0x00000020
-#define OSC_PCI_EXPRESS_DPC_CONTROL		0x00000080
-#define OSC_PCI_CONTROL_MASKS			0x000000bf
+#घोषणा OSC_PCI_EXPRESS_NATIVE_HP_CONTROL	0x00000001
+#घोषणा OSC_PCI_SHPC_NATIVE_HP_CONTROL		0x00000002
+#घोषणा OSC_PCI_EXPRESS_PME_CONTROL		0x00000004
+#घोषणा OSC_PCI_EXPRESS_AER_CONTROL		0x00000008
+#घोषणा OSC_PCI_EXPRESS_CAPABILITY_CONTROL	0x00000010
+#घोषणा OSC_PCI_EXPRESS_LTR_CONTROL		0x00000020
+#घोषणा OSC_PCI_EXPRESS_DPC_CONTROL		0x00000080
+#घोषणा OSC_PCI_CONTROL_MASKS			0x000000bf
 
-#define ACPI_GSB_ACCESS_ATTRIB_QUICK		0x00000002
-#define ACPI_GSB_ACCESS_ATTRIB_SEND_RCV         0x00000004
-#define ACPI_GSB_ACCESS_ATTRIB_BYTE		0x00000006
-#define ACPI_GSB_ACCESS_ATTRIB_WORD		0x00000008
-#define ACPI_GSB_ACCESS_ATTRIB_BLOCK		0x0000000A
-#define ACPI_GSB_ACCESS_ATTRIB_MULTIBYTE	0x0000000B
-#define ACPI_GSB_ACCESS_ATTRIB_WORD_CALL	0x0000000C
-#define ACPI_GSB_ACCESS_ATTRIB_BLOCK_CALL	0x0000000D
-#define ACPI_GSB_ACCESS_ATTRIB_RAW_BYTES	0x0000000E
-#define ACPI_GSB_ACCESS_ATTRIB_RAW_PROCESS	0x0000000F
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_QUICK		0x00000002
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_SEND_RCV         0x00000004
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_BYTE		0x00000006
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_WORD		0x00000008
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_BLOCK		0x0000000A
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_MULTIBYTE	0x0000000B
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_WORD_CALL	0x0000000C
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_BLOCK_CALL	0x0000000D
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_RAW_BYTES	0x0000000E
+#घोषणा ACPI_GSB_ACCESS_ATTRIB_RAW_PROCESS	0x0000000F
 
 /* Enable _OST when all relevant hotplug operations are enabled */
-#if defined(CONFIG_ACPI_HOTPLUG_CPU) &&			\
+#अगर defined(CONFIG_ACPI_HOTPLUG_CPU) &&			\
 	defined(CONFIG_ACPI_HOTPLUG_MEMORY) &&		\
 	defined(CONFIG_ACPI_CONTAINER)
-#define ACPI_HOTPLUG_OST
-#endif
+#घोषणा ACPI_HOTPLUG_OST
+#पूर्ण_अगर
 
 /* _OST Source Event Code (OSPM Action) */
-#define ACPI_OST_EC_OSPM_SHUTDOWN		0x100
-#define ACPI_OST_EC_OSPM_EJECT			0x103
-#define ACPI_OST_EC_OSPM_INSERTION		0x200
+#घोषणा ACPI_OST_EC_OSPM_SHUTDOWN		0x100
+#घोषणा ACPI_OST_EC_OSPM_EJECT			0x103
+#घोषणा ACPI_OST_EC_OSPM_INSERTION		0x200
 
 /* _OST General Processing Status Code */
-#define ACPI_OST_SC_SUCCESS			0x0
-#define ACPI_OST_SC_NON_SPECIFIC_FAILURE	0x1
-#define ACPI_OST_SC_UNRECOGNIZED_NOTIFY		0x2
+#घोषणा ACPI_OST_SC_SUCCESS			0x0
+#घोषणा ACPI_OST_SC_NON_SPECIFIC_FAILURE	0x1
+#घोषणा ACPI_OST_SC_UNRECOGNIZED_NOTIFY		0x2
 
-/* _OST OS Shutdown Processing (0x100) Status Code */
-#define ACPI_OST_SC_OS_SHUTDOWN_DENIED		0x80
-#define ACPI_OST_SC_OS_SHUTDOWN_IN_PROGRESS	0x81
-#define ACPI_OST_SC_OS_SHUTDOWN_COMPLETED	0x82
-#define ACPI_OST_SC_OS_SHUTDOWN_NOT_SUPPORTED	0x83
+/* _OST OS Shutकरोwn Processing (0x100) Status Code */
+#घोषणा ACPI_OST_SC_OS_SHUTDOWN_DENIED		0x80
+#घोषणा ACPI_OST_SC_OS_SHUTDOWN_IN_PROGRESS	0x81
+#घोषणा ACPI_OST_SC_OS_SHUTDOWN_COMPLETED	0x82
+#घोषणा ACPI_OST_SC_OS_SHUTDOWN_NOT_SUPPORTED	0x83
 
 /* _OST Ejection Request (0x3, 0x103) Status Code */
-#define ACPI_OST_SC_EJECT_NOT_SUPPORTED		0x80
-#define ACPI_OST_SC_DEVICE_IN_USE		0x81
-#define ACPI_OST_SC_DEVICE_BUSY			0x82
-#define ACPI_OST_SC_EJECT_DEPENDENCY_BUSY	0x83
-#define ACPI_OST_SC_EJECT_IN_PROGRESS		0x84
+#घोषणा ACPI_OST_SC_EJECT_NOT_SUPPORTED		0x80
+#घोषणा ACPI_OST_SC_DEVICE_IN_USE		0x81
+#घोषणा ACPI_OST_SC_DEVICE_BUSY			0x82
+#घोषणा ACPI_OST_SC_EJECT_DEPENDENCY_BUSY	0x83
+#घोषणा ACPI_OST_SC_EJECT_IN_PROGRESS		0x84
 
 /* _OST Insertion Request (0x200) Status Code */
-#define ACPI_OST_SC_INSERT_IN_PROGRESS		0x80
-#define ACPI_OST_SC_DRIVER_LOAD_FAILURE		0x81
-#define ACPI_OST_SC_INSERT_NOT_SUPPORTED	0x82
+#घोषणा ACPI_OST_SC_INSERT_IN_PROGRESS		0x80
+#घोषणा ACPI_OST_SC_DRIVER_LOAD_FAILURE		0x81
+#घोषणा ACPI_OST_SC_INSERT_NOT_SUPPORTED	0x82
 
-enum acpi_predicate {
+क्रमागत acpi_predicate अणु
 	all_versions,
 	less_than_or_equal,
 	equal,
 	greater_than_or_equal,
-};
+पूर्ण;
 
-/* Table must be terminted by a NULL entry */
-struct acpi_platform_list {
-	char	oem_id[ACPI_OEM_ID_SIZE+1];
-	char	oem_table_id[ACPI_OEM_TABLE_ID_SIZE+1];
+/* Table must be termपूर्णांकed by a शून्य entry */
+काष्ठा acpi_platक्रमm_list अणु
+	अक्षर	oem_id[ACPI_OEM_ID_SIZE+1];
+	अक्षर	oem_table_id[ACPI_OEM_TABLE_ID_SIZE+1];
 	u32	oem_revision;
-	char	*table;
-	enum acpi_predicate pred;
-	char	*reason;
+	अक्षर	*table;
+	क्रमागत acpi_predicate pred;
+	अक्षर	*reason;
 	u32	data;
-};
-int acpi_match_platform_list(const struct acpi_platform_list *plat);
+पूर्ण;
+पूर्णांक acpi_match_platक्रमm_list(स्थिर काष्ठा acpi_platक्रमm_list *plat);
 
-extern void acpi_early_init(void);
-extern void acpi_subsystem_init(void);
-extern void arch_post_acpi_subsys_init(void);
+बाह्य व्योम acpi_early_init(व्योम);
+बाह्य व्योम acpi_subप्रणाली_init(व्योम);
+बाह्य व्योम arch_post_acpi_subsys_init(व्योम);
 
-extern int acpi_nvs_register(__u64 start, __u64 size);
+बाह्य पूर्णांक acpi_nvs_रेजिस्टर(__u64 start, __u64 size);
 
-extern int acpi_nvs_for_each_region(int (*func)(__u64, __u64, void *),
-				    void *data);
+बाह्य पूर्णांक acpi_nvs_क्रम_each_region(पूर्णांक (*func)(__u64, __u64, व्योम *),
+				    व्योम *data);
 
-const struct acpi_device_id *acpi_match_device(const struct acpi_device_id *ids,
-					       const struct device *dev);
+स्थिर काष्ठा acpi_device_id *acpi_match_device(स्थिर काष्ठा acpi_device_id *ids,
+					       स्थिर काष्ठा device *dev);
 
-const void *acpi_device_get_match_data(const struct device *dev);
-extern bool acpi_driver_match_device(struct device *dev,
-				     const struct device_driver *drv);
-int acpi_device_uevent_modalias(struct device *, struct kobj_uevent_env *);
-int acpi_device_modalias(struct device *, char *, int);
-void acpi_walk_dep_device_list(acpi_handle handle);
+स्थिर व्योम *acpi_device_get_match_data(स्थिर काष्ठा device *dev);
+बाह्य bool acpi_driver_match_device(काष्ठा device *dev,
+				     स्थिर काष्ठा device_driver *drv);
+पूर्णांक acpi_device_uevent_modalias(काष्ठा device *, काष्ठा kobj_uevent_env *);
+पूर्णांक acpi_device_modalias(काष्ठा device *, अक्षर *, पूर्णांक);
+व्योम acpi_walk_dep_device_list(acpi_handle handle);
 
-struct platform_device *acpi_create_platform_device(struct acpi_device *,
-						    struct property_entry *);
-#define ACPI_PTR(_ptr)	(_ptr)
+काष्ठा platक्रमm_device *acpi_create_platक्रमm_device(काष्ठा acpi_device *,
+						    काष्ठा property_entry *);
+#घोषणा ACPI_PTR(_ptr)	(_ptr)
 
-static inline void acpi_device_set_enumerated(struct acpi_device *adev)
-{
+अटल अंतरभूत व्योम acpi_device_set_क्रमागतerated(काष्ठा acpi_device *adev)
+अणु
 	adev->flags.visited = true;
-}
+पूर्ण
 
-static inline void acpi_device_clear_enumerated(struct acpi_device *adev)
-{
+अटल अंतरभूत व्योम acpi_device_clear_क्रमागतerated(काष्ठा acpi_device *adev)
+अणु
 	adev->flags.visited = false;
-}
+पूर्ण
 
-enum acpi_reconfig_event  {
+क्रमागत acpi_reconfig_event  अणु
 	ACPI_RECONFIG_DEVICE_ADD = 0,
 	ACPI_RECONFIG_DEVICE_REMOVE,
-};
+पूर्ण;
 
-int acpi_reconfig_notifier_register(struct notifier_block *nb);
-int acpi_reconfig_notifier_unregister(struct notifier_block *nb);
+पूर्णांक acpi_reconfig_notअगरier_रेजिस्टर(काष्ठा notअगरier_block *nb);
+पूर्णांक acpi_reconfig_notअगरier_unरेजिस्टर(काष्ठा notअगरier_block *nb);
 
-#ifdef CONFIG_ACPI_GTDT
-int acpi_gtdt_init(struct acpi_table_header *table, int *platform_timer_count);
-int acpi_gtdt_map_ppi(int type);
-bool acpi_gtdt_c3stop(int type);
-int acpi_arch_timer_mem_init(struct arch_timer_mem *timer_mem, int *timer_count);
-#endif
+#अगर_घोषित CONFIG_ACPI_GTDT
+पूर्णांक acpi_gtdt_init(काष्ठा acpi_table_header *table, पूर्णांक *platक्रमm_समयr_count);
+पूर्णांक acpi_gtdt_map_ppi(पूर्णांक type);
+bool acpi_gtdt_c3stop(पूर्णांक type);
+पूर्णांक acpi_arch_समयr_mem_init(काष्ठा arch_समयr_mem *समयr_mem, पूर्णांक *समयr_count);
+#पूर्ण_अगर
 
-#ifndef ACPI_HAVE_ARCH_SET_ROOT_POINTER
-static inline void acpi_arch_set_root_pointer(u64 addr)
-{
-}
-#endif
+#अगर_अघोषित ACPI_HAVE_ARCH_SET_ROOT_POINTER
+अटल अंतरभूत व्योम acpi_arch_set_root_poपूर्णांकer(u64 addr)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef ACPI_HAVE_ARCH_GET_ROOT_POINTER
-static inline u64 acpi_arch_get_root_pointer(void)
-{
-	return 0;
-}
-#endif
+#अगर_अघोषित ACPI_HAVE_ARCH_GET_ROOT_POINTER
+अटल अंतरभूत u64 acpi_arch_get_root_poपूर्णांकer(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#else	/* !CONFIG_ACPI */
+#अन्यथा	/* !CONFIG_ACPI */
 
-#define acpi_disabled 1
+#घोषणा acpi_disabled 1
 
-#define ACPI_COMPANION(dev)		(NULL)
-#define ACPI_COMPANION_SET(dev, adev)	do { } while (0)
-#define ACPI_HANDLE(dev)		(NULL)
-#define ACPI_HANDLE_FWNODE(fwnode)	(NULL)
-#define ACPI_DEVICE_CLASS(_cls, _msk)	.cls = (0), .cls_msk = (0),
+#घोषणा ACPI_COMPANION(dev)		(शून्य)
+#घोषणा ACPI_COMPANION_SET(dev, adev)	करो अणु पूर्ण जबतक (0)
+#घोषणा ACPI_HANDLE(dev)		(शून्य)
+#घोषणा ACPI_HANDLE_FWNODE(fwnode)	(शून्य)
+#घोषणा ACPI_DEVICE_CLASS(_cls, _msk)	.cls = (0), .cls_msk = (0),
 
-#include <acpi/acpi_numa.h>
+#समावेश <acpi/acpi_numa.h>
 
-struct fwnode_handle;
+काष्ठा fwnode_handle;
 
-static inline bool acpi_dev_found(const char *hid)
-{
-	return false;
-}
+अटल अंतरभूत bool acpi_dev_found(स्थिर अक्षर *hid)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool acpi_dev_present(const char *hid, const char *uid, s64 hrv)
-{
-	return false;
-}
+अटल अंतरभूत bool acpi_dev_present(स्थिर अक्षर *hid, स्थिर अक्षर *uid, s64 hrv)
+अणु
+	वापस false;
+पूर्ण
 
-struct acpi_device;
+काष्ठा acpi_device;
 
-static inline bool
-acpi_dev_hid_uid_match(struct acpi_device *adev, const char *hid2, const char *uid2)
-{
-	return false;
-}
+अटल अंतरभूत bool
+acpi_dev_hid_uid_match(काष्ठा acpi_device *adev, स्थिर अक्षर *hid2, स्थिर अक्षर *uid2)
+अणु
+	वापस false;
+पूर्ण
 
-static inline struct acpi_device *
-acpi_dev_get_first_match_dev(const char *hid, const char *uid, s64 hrv)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा acpi_device *
+acpi_dev_get_first_match_dev(स्थिर अक्षर *hid, स्थिर अक्षर *uid, s64 hrv)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool acpi_reduced_hardware(void)
-{
-	return false;
-}
+अटल अंतरभूत bool acpi_reduced_hardware(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void acpi_dev_put(struct acpi_device *adev) {}
+अटल अंतरभूत व्योम acpi_dev_put(काष्ठा acpi_device *adev) अणुपूर्ण
 
-static inline bool is_acpi_node(const struct fwnode_handle *fwnode)
-{
-	return false;
-}
+अटल अंतरभूत bool is_acpi_node(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool is_acpi_device_node(const struct fwnode_handle *fwnode)
-{
-	return false;
-}
+अटल अंतरभूत bool is_acpi_device_node(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस false;
+पूर्ण
 
-static inline struct acpi_device *to_acpi_device_node(struct fwnode_handle *fwnode)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा acpi_device *to_acpi_device_node(काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool is_acpi_data_node(const struct fwnode_handle *fwnode)
-{
-	return false;
-}
+अटल अंतरभूत bool is_acpi_data_node(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस false;
+पूर्ण
 
-static inline struct acpi_data_node *to_acpi_data_node(struct fwnode_handle *fwnode)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा acpi_data_node *to_acpi_data_node(काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool acpi_data_node_match(struct fwnode_handle *fwnode,
-					const char *name)
-{
-	return false;
-}
+अटल अंतरभूत bool acpi_data_node_match(काष्ठा fwnode_handle *fwnode,
+					स्थिर अक्षर *name)
+अणु
+	वापस false;
+पूर्ण
 
-static inline struct fwnode_handle *acpi_fwnode_handle(struct acpi_device *adev)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा fwnode_handle *acpi_fwnode_handle(काष्ठा acpi_device *adev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool has_acpi_companion(struct device *dev)
-{
-	return false;
-}
+अटल अंतरभूत bool has_acpi_companion(काष्ठा device *dev)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void acpi_preset_companion(struct device *dev,
-					 struct acpi_device *parent, u64 addr)
-{
-}
+अटल अंतरभूत व्योम acpi_preset_companion(काष्ठा device *dev,
+					 काष्ठा acpi_device *parent, u64 addr)
+अणु
+पूर्ण
 
-static inline const char *acpi_dev_name(struct acpi_device *adev)
-{
-	return NULL;
-}
+अटल अंतरभूत स्थिर अक्षर *acpi_dev_name(काष्ठा acpi_device *adev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct device *acpi_get_first_physical_node(struct acpi_device *adev)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा device *acpi_get_first_physical_node(काष्ठा acpi_device *adev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void acpi_early_init(void) { }
-static inline void acpi_subsystem_init(void) { }
+अटल अंतरभूत व्योम acpi_early_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम acpi_subप्रणाली_init(व्योम) अणु पूर्ण
 
-static inline int early_acpi_boot_init(void)
-{
-	return 0;
-}
-static inline int acpi_boot_init(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक early_acpi_boot_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक acpi_boot_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void acpi_boot_table_prepare(void)
-{
-}
+अटल अंतरभूत व्योम acpi_boot_table_prepare(व्योम)
+अणु
+पूर्ण
 
-static inline void acpi_boot_table_init(void)
-{
-}
+अटल अंतरभूत व्योम acpi_boot_table_init(व्योम)
+अणु
+पूर्ण
 
-static inline int acpi_mps_check(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक acpi_mps_check(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int acpi_check_resource_conflict(struct resource *res)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक acpi_check_resource_conflict(काष्ठा resource *res)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int acpi_check_region(resource_size_t start, resource_size_t n,
-				    const char *name)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक acpi_check_region(resource_माप_प्रकार start, resource_माप_प्रकार n,
+				    स्थिर अक्षर *name)
+अणु
+	वापस 0;
+पूर्ण
 
-struct acpi_table_header;
-static inline int acpi_table_parse(char *id,
-				int (*handler)(struct acpi_table_header *))
-{
-	return -ENODEV;
-}
+काष्ठा acpi_table_header;
+अटल अंतरभूत पूर्णांक acpi_table_parse(अक्षर *id,
+				पूर्णांक (*handler)(काष्ठा acpi_table_header *))
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_nvs_register(__u64 start, __u64 size)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक acpi_nvs_रेजिस्टर(__u64 start, __u64 size)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int acpi_nvs_for_each_region(int (*func)(__u64, __u64, void *),
-					   void *data)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक acpi_nvs_क्रम_each_region(पूर्णांक (*func)(__u64, __u64, व्योम *),
+					   व्योम *data)
+अणु
+	वापस 0;
+पूर्ण
 
-struct acpi_device_id;
+काष्ठा acpi_device_id;
 
-static inline const struct acpi_device_id *acpi_match_device(
-	const struct acpi_device_id *ids, const struct device *dev)
-{
-	return NULL;
-}
+अटल अंतरभूत स्थिर काष्ठा acpi_device_id *acpi_match_device(
+	स्थिर काष्ठा acpi_device_id *ids, स्थिर काष्ठा device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline const void *acpi_device_get_match_data(const struct device *dev)
-{
-	return NULL;
-}
+अटल अंतरभूत स्थिर व्योम *acpi_device_get_match_data(स्थिर काष्ठा device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool acpi_driver_match_device(struct device *dev,
-					    const struct device_driver *drv)
-{
-	return false;
-}
+अटल अंतरभूत bool acpi_driver_match_device(काष्ठा device *dev,
+					    स्थिर काष्ठा device_driver *drv)
+अणु
+	वापस false;
+पूर्ण
 
-static inline union acpi_object *acpi_evaluate_dsm(acpi_handle handle,
-						   const guid_t *guid,
+अटल अंतरभूत जोड़ acpi_object *acpi_evaluate_dsm(acpi_handle handle,
+						   स्थिर guid_t *guid,
 						   u64 rev, u64 func,
-						   union acpi_object *argv4)
-{
-	return NULL;
-}
+						   जोड़ acpi_object *argv4)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int acpi_device_uevent_modalias(struct device *dev,
-				struct kobj_uevent_env *env)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_device_uevent_modalias(काष्ठा device *dev,
+				काष्ठा kobj_uevent_env *env)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_device_modalias(struct device *dev,
-				char *buf, int size)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_device_modalias(काष्ठा device *dev,
+				अक्षर *buf, पूर्णांक size)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline struct platform_device *
-acpi_create_platform_device(struct acpi_device *adev,
-			    struct property_entry *properties)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा platक्रमm_device *
+acpi_create_platक्रमm_device(काष्ठा acpi_device *adev,
+			    काष्ठा property_entry *properties)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool acpi_dma_supported(struct acpi_device *adev)
-{
-	return false;
-}
+अटल अंतरभूत bool acpi_dma_supported(काष्ठा acpi_device *adev)
+अणु
+	वापस false;
+पूर्ण
 
-static inline enum dev_dma_attr acpi_get_dma_attr(struct acpi_device *adev)
-{
-	return DEV_DMA_NOT_SUPPORTED;
-}
+अटल अंतरभूत क्रमागत dev_dma_attr acpi_get_dma_attr(काष्ठा acpi_device *adev)
+अणु
+	वापस DEV_DMA_NOT_SUPPORTED;
+पूर्ण
 
-static inline int acpi_dma_get_range(struct device *dev, u64 *dma_addr,
+अटल अंतरभूत पूर्णांक acpi_dma_get_range(काष्ठा device *dev, u64 *dma_addr,
 				     u64 *offset, u64 *size)
-{
-	return -ENODEV;
-}
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_dma_configure(struct device *dev,
-				     enum dev_dma_attr attr)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक acpi_dma_configure(काष्ठा device *dev,
+				     क्रमागत dev_dma_attr attr)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int acpi_dma_configure_id(struct device *dev,
-					enum dev_dma_attr attr,
-					const u32 *input_id)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक acpi_dma_configure_id(काष्ठा device *dev,
+					क्रमागत dev_dma_attr attr,
+					स्थिर u32 *input_id)
+अणु
+	वापस 0;
+पूर्ण
 
-#define ACPI_PTR(_ptr)	(NULL)
+#घोषणा ACPI_PTR(_ptr)	(शून्य)
 
-static inline void acpi_device_set_enumerated(struct acpi_device *adev)
-{
-}
+अटल अंतरभूत व्योम acpi_device_set_क्रमागतerated(काष्ठा acpi_device *adev)
+अणु
+पूर्ण
 
-static inline void acpi_device_clear_enumerated(struct acpi_device *adev)
-{
-}
+अटल अंतरभूत व्योम acpi_device_clear_क्रमागतerated(काष्ठा acpi_device *adev)
+अणु
+पूर्ण
 
-static inline int acpi_reconfig_notifier_register(struct notifier_block *nb)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक acpi_reconfig_notअगरier_रेजिस्टर(काष्ठा notअगरier_block *nb)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int acpi_reconfig_notifier_unregister(struct notifier_block *nb)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक acpi_reconfig_notअगरier_unरेजिस्टर(काष्ठा notअगरier_block *nb)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline struct acpi_device *acpi_resource_consumer(struct resource *res)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा acpi_device *acpi_resource_consumer(काष्ठा resource *res)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#endif	/* !CONFIG_ACPI */
+#पूर्ण_अगर	/* !CONFIG_ACPI */
 
-#ifdef CONFIG_ACPI_HOTPLUG_IOAPIC
-int acpi_ioapic_add(acpi_handle root);
-#else
-static inline int acpi_ioapic_add(acpi_handle root) { return 0; }
-#endif
+#अगर_घोषित CONFIG_ACPI_HOTPLUG_IOAPIC
+पूर्णांक acpi_ioapic_add(acpi_handle root);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_ioapic_add(acpi_handle root) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
-void acpi_os_set_prepare_sleep(int (*func)(u8 sleep_state,
+#अगर_घोषित CONFIG_ACPI
+व्योम acpi_os_set_prepare_sleep(पूर्णांक (*func)(u8 sleep_state,
 			       u32 pm1a_ctrl,  u32 pm1b_ctrl));
 
 acpi_status acpi_os_prepare_sleep(u8 sleep_state,
 				  u32 pm1a_control, u32 pm1b_control);
 
-void acpi_os_set_prepare_extended_sleep(int (*func)(u8 sleep_state,
+व्योम acpi_os_set_prepare_extended_sleep(पूर्णांक (*func)(u8 sleep_state,
 				        u32 val_a,  u32 val_b));
 
 acpi_status acpi_os_prepare_extended_sleep(u8 sleep_state,
 					   u32 val_a, u32 val_b);
 
-#ifndef CONFIG_IA64
-void arch_reserve_mem_area(acpi_physical_address addr, size_t size);
-#else
-static inline void arch_reserve_mem_area(acpi_physical_address addr,
-					  size_t size)
-{
-}
-#endif /* CONFIG_X86 */
-#else
-#define acpi_os_set_prepare_sleep(func, pm1a_ctrl, pm1b_ctrl) do { } while (0)
-#endif
+#अगर_अघोषित CONFIG_IA64
+व्योम arch_reserve_mem_area(acpi_physical_address addr, माप_प्रकार size);
+#अन्यथा
+अटल अंतरभूत व्योम arch_reserve_mem_area(acpi_physical_address addr,
+					  माप_प्रकार size)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_X86 */
+#अन्यथा
+#घोषणा acpi_os_set_prepare_sleep(func, pm1a_ctrl, pm1b_ctrl) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#if defined(CONFIG_ACPI) && defined(CONFIG_PM)
-int acpi_dev_suspend(struct device *dev, bool wakeup);
-int acpi_dev_resume(struct device *dev);
-int acpi_subsys_runtime_suspend(struct device *dev);
-int acpi_subsys_runtime_resume(struct device *dev);
-int acpi_dev_pm_attach(struct device *dev, bool power_on);
-#else
-static inline int acpi_subsys_runtime_suspend(struct device *dev) { return 0; }
-static inline int acpi_subsys_runtime_resume(struct device *dev) { return 0; }
-static inline int acpi_dev_pm_attach(struct device *dev, bool power_on)
-{
-	return 0;
-}
-#endif
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_PM)
+पूर्णांक acpi_dev_suspend(काष्ठा device *dev, bool wakeup);
+पूर्णांक acpi_dev_resume(काष्ठा device *dev);
+पूर्णांक acpi_subsys_runसमय_suspend(काष्ठा device *dev);
+पूर्णांक acpi_subsys_runसमय_resume(काष्ठा device *dev);
+पूर्णांक acpi_dev_pm_attach(काष्ठा device *dev, bool घातer_on);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_subsys_runसमय_suspend(काष्ठा device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक acpi_subsys_runसमय_resume(काष्ठा device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक acpi_dev_pm_attach(काष्ठा device *dev, bool घातer_on)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_ACPI) && defined(CONFIG_PM_SLEEP)
-int acpi_subsys_prepare(struct device *dev);
-void acpi_subsys_complete(struct device *dev);
-int acpi_subsys_suspend_late(struct device *dev);
-int acpi_subsys_suspend_noirq(struct device *dev);
-int acpi_subsys_suspend(struct device *dev);
-int acpi_subsys_freeze(struct device *dev);
-int acpi_subsys_poweroff(struct device *dev);
-void acpi_ec_mark_gpe_for_wake(void);
-void acpi_ec_set_gpe_wake_mask(u8 action);
-#else
-static inline int acpi_subsys_prepare(struct device *dev) { return 0; }
-static inline void acpi_subsys_complete(struct device *dev) {}
-static inline int acpi_subsys_suspend_late(struct device *dev) { return 0; }
-static inline int acpi_subsys_suspend_noirq(struct device *dev) { return 0; }
-static inline int acpi_subsys_suspend(struct device *dev) { return 0; }
-static inline int acpi_subsys_freeze(struct device *dev) { return 0; }
-static inline int acpi_subsys_poweroff(struct device *dev) { return 0; }
-static inline void acpi_ec_mark_gpe_for_wake(void) {}
-static inline void acpi_ec_set_gpe_wake_mask(u8 action) {}
-#endif
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_PM_SLEEP)
+पूर्णांक acpi_subsys_prepare(काष्ठा device *dev);
+व्योम acpi_subsys_complete(काष्ठा device *dev);
+पूर्णांक acpi_subsys_suspend_late(काष्ठा device *dev);
+पूर्णांक acpi_subsys_suspend_noirq(काष्ठा device *dev);
+पूर्णांक acpi_subsys_suspend(काष्ठा device *dev);
+पूर्णांक acpi_subsys_मुक्तze(काष्ठा device *dev);
+पूर्णांक acpi_subsys_घातeroff(काष्ठा device *dev);
+व्योम acpi_ec_mark_gpe_क्रम_wake(व्योम);
+व्योम acpi_ec_set_gpe_wake_mask(u8 action);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_subsys_prepare(काष्ठा device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम acpi_subsys_complete(काष्ठा device *dev) अणुपूर्ण
+अटल अंतरभूत पूर्णांक acpi_subsys_suspend_late(काष्ठा device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक acpi_subsys_suspend_noirq(काष्ठा device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक acpi_subsys_suspend(काष्ठा device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक acpi_subsys_मुक्तze(काष्ठा device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक acpi_subsys_घातeroff(काष्ठा device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम acpi_ec_mark_gpe_क्रम_wake(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम acpi_ec_set_gpe_wake_mask(u8 action) अणुपूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
-__printf(3, 4)
-void acpi_handle_printk(const char *level, acpi_handle handle,
-			const char *fmt, ...);
-void acpi_evaluation_failure_warn(acpi_handle handle, const char *name,
+#अगर_घोषित CONFIG_ACPI
+__म_लिखो(3, 4)
+व्योम acpi_handle_prपूर्णांकk(स्थिर अक्षर *level, acpi_handle handle,
+			स्थिर अक्षर *fmt, ...);
+व्योम acpi_evaluation_failure_warn(acpi_handle handle, स्थिर अक्षर *name,
 				  acpi_status status);
-#else	/* !CONFIG_ACPI */
-static inline __printf(3, 4) void
-acpi_handle_printk(const char *level, void *handle, const char *fmt, ...) {}
-static inline void acpi_evaluation_failure_warn(acpi_handle handle,
-						const char *name,
-						acpi_status status) {}
-#endif	/* !CONFIG_ACPI */
+#अन्यथा	/* !CONFIG_ACPI */
+अटल अंतरभूत __म_लिखो(3, 4) व्योम
+acpi_handle_prपूर्णांकk(स्थिर अक्षर *level, व्योम *handle, स्थिर अक्षर *fmt, ...) अणुपूर्ण
+अटल अंतरभूत व्योम acpi_evaluation_failure_warn(acpi_handle handle,
+						स्थिर अक्षर *name,
+						acpi_status status) अणुपूर्ण
+#पूर्ण_अगर	/* !CONFIG_ACPI */
 
-#if defined(CONFIG_ACPI) && defined(CONFIG_DYNAMIC_DEBUG)
-__printf(3, 4)
-void __acpi_handle_debug(struct _ddebug *descriptor, acpi_handle handle, const char *fmt, ...);
-#endif
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_DYNAMIC_DEBUG)
+__म_लिखो(3, 4)
+व्योम __acpi_handle_debug(काष्ठा _ddebug *descriptor, acpi_handle handle, स्थिर अक्षर *fmt, ...);
+#पूर्ण_अगर
 
 /*
- * acpi_handle_<level>: Print message with ACPI prefix and object path
+ * acpi_handle_<level>: Prपूर्णांक message with ACPI prefix and object path
  *
- * These interfaces acquire the global namespace mutex to obtain an object
- * path.  In interrupt context, it shows the object path as <n/a>.
+ * These पूर्णांकerfaces acquire the global namespace mutex to obtain an object
+ * path.  In पूर्णांकerrupt context, it shows the object path as <n/a>.
  */
-#define acpi_handle_emerg(handle, fmt, ...)				\
-	acpi_handle_printk(KERN_EMERG, handle, fmt, ##__VA_ARGS__)
-#define acpi_handle_alert(handle, fmt, ...)				\
-	acpi_handle_printk(KERN_ALERT, handle, fmt, ##__VA_ARGS__)
-#define acpi_handle_crit(handle, fmt, ...)				\
-	acpi_handle_printk(KERN_CRIT, handle, fmt, ##__VA_ARGS__)
-#define acpi_handle_err(handle, fmt, ...)				\
-	acpi_handle_printk(KERN_ERR, handle, fmt, ##__VA_ARGS__)
-#define acpi_handle_warn(handle, fmt, ...)				\
-	acpi_handle_printk(KERN_WARNING, handle, fmt, ##__VA_ARGS__)
-#define acpi_handle_notice(handle, fmt, ...)				\
-	acpi_handle_printk(KERN_NOTICE, handle, fmt, ##__VA_ARGS__)
-#define acpi_handle_info(handle, fmt, ...)				\
-	acpi_handle_printk(KERN_INFO, handle, fmt, ##__VA_ARGS__)
+#घोषणा acpi_handle_emerg(handle, fmt, ...)				\
+	acpi_handle_prपूर्णांकk(KERN_EMERG, handle, fmt, ##__VA_ARGS__)
+#घोषणा acpi_handle_alert(handle, fmt, ...)				\
+	acpi_handle_prपूर्णांकk(KERN_ALERT, handle, fmt, ##__VA_ARGS__)
+#घोषणा acpi_handle_crit(handle, fmt, ...)				\
+	acpi_handle_prपूर्णांकk(KERN_CRIT, handle, fmt, ##__VA_ARGS__)
+#घोषणा acpi_handle_err(handle, fmt, ...)				\
+	acpi_handle_prपूर्णांकk(KERN_ERR, handle, fmt, ##__VA_ARGS__)
+#घोषणा acpi_handle_warn(handle, fmt, ...)				\
+	acpi_handle_prपूर्णांकk(KERN_WARNING, handle, fmt, ##__VA_ARGS__)
+#घोषणा acpi_handle_notice(handle, fmt, ...)				\
+	acpi_handle_prपूर्णांकk(KERN_NOTICE, handle, fmt, ##__VA_ARGS__)
+#घोषणा acpi_handle_info(handle, fmt, ...)				\
+	acpi_handle_prपूर्णांकk(KERN_INFO, handle, fmt, ##__VA_ARGS__)
 
-#if defined(DEBUG)
-#define acpi_handle_debug(handle, fmt, ...)				\
-	acpi_handle_printk(KERN_DEBUG, handle, fmt, ##__VA_ARGS__)
-#else
-#if defined(CONFIG_DYNAMIC_DEBUG)
-#define acpi_handle_debug(handle, fmt, ...)				\
+#अगर defined(DEBUG)
+#घोषणा acpi_handle_debug(handle, fmt, ...)				\
+	acpi_handle_prपूर्णांकk(KERN_DEBUG, handle, fmt, ##__VA_ARGS__)
+#अन्यथा
+#अगर defined(CONFIG_DYNAMIC_DEBUG)
+#घोषणा acpi_handle_debug(handle, fmt, ...)				\
 	_dynamic_func_call(fmt, __acpi_handle_debug,			\
 			   handle, pr_fmt(fmt), ##__VA_ARGS__)
-#else
-#define acpi_handle_debug(handle, fmt, ...)				\
-({									\
-	if (0)								\
-		acpi_handle_printk(KERN_DEBUG, handle, fmt, ##__VA_ARGS__); \
+#अन्यथा
+#घोषणा acpi_handle_debug(handle, fmt, ...)				\
+(अणु									\
+	अगर (0)								\
+		acpi_handle_prपूर्णांकk(KERN_DEBUG, handle, fmt, ##__VA_ARGS__); \
 	0;								\
-})
-#endif
-#endif
+पूर्ण)
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#if defined(CONFIG_ACPI) && defined(CONFIG_GPIOLIB)
-bool acpi_gpio_get_irq_resource(struct acpi_resource *ares,
-				struct acpi_resource_gpio **agpio);
-int acpi_dev_gpio_irq_get_by(struct acpi_device *adev, const char *name, int index);
-#else
-static inline bool acpi_gpio_get_irq_resource(struct acpi_resource *ares,
-					      struct acpi_resource_gpio **agpio)
-{
-	return false;
-}
-static inline int acpi_dev_gpio_irq_get_by(struct acpi_device *adev,
-					   const char *name, int index)
-{
-	return -ENXIO;
-}
-#endif
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_GPIOLIB)
+bool acpi_gpio_get_irq_resource(काष्ठा acpi_resource *ares,
+				काष्ठा acpi_resource_gpio **agpio);
+पूर्णांक acpi_dev_gpio_irq_get_by(काष्ठा acpi_device *adev, स्थिर अक्षर *name, पूर्णांक index);
+#अन्यथा
+अटल अंतरभूत bool acpi_gpio_get_irq_resource(काष्ठा acpi_resource *ares,
+					      काष्ठा acpi_resource_gpio **agpio)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत पूर्णांक acpi_dev_gpio_irq_get_by(काष्ठा acpi_device *adev,
+					   स्थिर अक्षर *name, पूर्णांक index)
+अणु
+	वापस -ENXIO;
+पूर्ण
+#पूर्ण_अगर
 
-static inline int acpi_dev_gpio_irq_get(struct acpi_device *adev, int index)
-{
-	return acpi_dev_gpio_irq_get_by(adev, NULL, index);
-}
+अटल अंतरभूत पूर्णांक acpi_dev_gpio_irq_get(काष्ठा acpi_device *adev, पूर्णांक index)
+अणु
+	वापस acpi_dev_gpio_irq_get_by(adev, शून्य, index);
+पूर्ण
 
 /* Device properties */
 
-#ifdef CONFIG_ACPI
-int acpi_dev_get_property(const struct acpi_device *adev, const char *name,
-			  acpi_object_type type, const union acpi_object **obj);
-int __acpi_node_get_property_reference(const struct fwnode_handle *fwnode,
-				const char *name, size_t index, size_t num_args,
-				struct fwnode_reference_args *args);
+#अगर_घोषित CONFIG_ACPI
+पूर्णांक acpi_dev_get_property(स्थिर काष्ठा acpi_device *adev, स्थिर अक्षर *name,
+			  acpi_object_type type, स्थिर जोड़ acpi_object **obj);
+पूर्णांक __acpi_node_get_property_reference(स्थिर काष्ठा fwnode_handle *fwnode,
+				स्थिर अक्षर *name, माप_प्रकार index, माप_प्रकार num_args,
+				काष्ठा fwnode_reference_args *args);
 
-static inline int acpi_node_get_property_reference(
-				const struct fwnode_handle *fwnode,
-				const char *name, size_t index,
-				struct fwnode_reference_args *args)
-{
-	return __acpi_node_get_property_reference(fwnode, name, index,
+अटल अंतरभूत पूर्णांक acpi_node_get_property_reference(
+				स्थिर काष्ठा fwnode_handle *fwnode,
+				स्थिर अक्षर *name, माप_प्रकार index,
+				काष्ठा fwnode_reference_args *args)
+अणु
+	वापस __acpi_node_get_property_reference(fwnode, name, index,
 		NR_FWNODE_REFERENCE_ARGS, args);
-}
+पूर्ण
 
-static inline bool acpi_dev_has_props(const struct acpi_device *adev)
-{
-	return !list_empty(&adev->data.properties);
-}
+अटल अंतरभूत bool acpi_dev_has_props(स्थिर काष्ठा acpi_device *adev)
+अणु
+	वापस !list_empty(&adev->data.properties);
+पूर्ण
 
-struct acpi_device_properties *
-acpi_data_add_props(struct acpi_device_data *data, const guid_t *guid,
-		    const union acpi_object *properties);
+काष्ठा acpi_device_properties *
+acpi_data_add_props(काष्ठा acpi_device_data *data, स्थिर guid_t *guid,
+		    स्थिर जोड़ acpi_object *properties);
 
-int acpi_node_prop_get(const struct fwnode_handle *fwnode, const char *propname,
-		       void **valptr);
+पूर्णांक acpi_node_prop_get(स्थिर काष्ठा fwnode_handle *fwnode, स्थिर अक्षर *propname,
+		       व्योम **valptr);
 
-struct fwnode_handle *acpi_get_next_subnode(const struct fwnode_handle *fwnode,
-					    struct fwnode_handle *child);
-struct fwnode_handle *acpi_node_get_parent(const struct fwnode_handle *fwnode);
+काष्ठा fwnode_handle *acpi_get_next_subnode(स्थिर काष्ठा fwnode_handle *fwnode,
+					    काष्ठा fwnode_handle *child);
+काष्ठा fwnode_handle *acpi_node_get_parent(स्थिर काष्ठा fwnode_handle *fwnode);
 
-struct acpi_probe_entry;
-typedef bool (*acpi_probe_entry_validate_subtbl)(struct acpi_subtable_header *,
-						 struct acpi_probe_entry *);
+काष्ठा acpi_probe_entry;
+प्रकार bool (*acpi_probe_entry_validate_subtbl)(काष्ठा acpi_subtable_header *,
+						 काष्ठा acpi_probe_entry *);
 
-#define ACPI_TABLE_ID_LEN	5
+#घोषणा ACPI_TABLE_ID_LEN	5
 
 /**
- * struct acpi_probe_entry - boot-time probing entry
+ * काष्ठा acpi_probe_entry - boot-समय probing entry
  * @id:			ACPI table name
  * @type:		Optional subtable type to match
- *			(if @id contains subtables)
+ *			(अगर @id contains subtables)
  * @subtable_valid:	Optional callback to check the validity of
  *			the subtable
  * @probe_table:	Callback to the driver being probed when table
@@ -1168,202 +1169,202 @@ typedef bool (*acpi_probe_entry_validate_subtbl)(struct acpi_subtable_header *,
  *			subtable match (and optional callback is successful)
  * @driver_data:	Sideband data provided back to the driver
  */
-struct acpi_probe_entry {
+काष्ठा acpi_probe_entry अणु
 	__u8 id[ACPI_TABLE_ID_LEN];
 	__u8 type;
 	acpi_probe_entry_validate_subtbl subtable_valid;
-	union {
+	जोड़ अणु
 		acpi_tbl_table_handler probe_table;
 		acpi_tbl_entry_handler probe_subtbl;
-	};
-	kernel_ulong_t driver_data;
-};
+	पूर्ण;
+	kernel_uदीर्घ_t driver_data;
+पूर्ण;
 
-#define ACPI_DECLARE_PROBE_ENTRY(table, name, table_id, subtable,	\
+#घोषणा ACPI_DECLARE_PROBE_ENTRY(table, name, table_id, subtable,	\
 				 valid, data, fn)			\
-	static const struct acpi_probe_entry __acpi_probe_##name	\
-		__used __section("__" #table "_acpi_probe_table") = {	\
+	अटल स्थिर काष्ठा acpi_probe_entry __acpi_probe_##name	\
+		__used __section("__" #table "_acpi_probe_table") = अणु	\
 			.id = table_id,					\
 			.type = subtable,				\
 			.subtable_valid = valid,			\
 			.probe_table = fn,				\
 			.driver_data = data,				\
-		}
+		पूर्ण
 
-#define ACPI_DECLARE_SUBTABLE_PROBE_ENTRY(table, name, table_id,	\
+#घोषणा ACPI_DECLARE_SUBTABLE_PROBE_ENTRY(table, name, table_id,	\
 					  subtable, valid, data, fn)	\
-	static const struct acpi_probe_entry __acpi_probe_##name	\
-		__used __section("__" #table "_acpi_probe_table") = {	\
+	अटल स्थिर काष्ठा acpi_probe_entry __acpi_probe_##name	\
+		__used __section("__" #table "_acpi_probe_table") = अणु	\
 			.id = table_id,					\
 			.type = subtable,				\
 			.subtable_valid = valid,			\
 			.probe_subtbl = fn,				\
 			.driver_data = data,				\
-		}
+		पूर्ण
 
-#define ACPI_PROBE_TABLE(name)		__##name##_acpi_probe_table
-#define ACPI_PROBE_TABLE_END(name)	__##name##_acpi_probe_table_end
+#घोषणा ACPI_PROBE_TABLE(name)		__##name##_acpi_probe_table
+#घोषणा ACPI_PROBE_TABLE_END(name)	__##name##_acpi_probe_table_end
 
-int __acpi_probe_device_table(struct acpi_probe_entry *start, int nr);
+पूर्णांक __acpi_probe_device_table(काष्ठा acpi_probe_entry *start, पूर्णांक nr);
 
-#define acpi_probe_device_table(t)					\
-	({ 								\
-		extern struct acpi_probe_entry ACPI_PROBE_TABLE(t),	\
+#घोषणा acpi_probe_device_table(t)					\
+	(अणु 								\
+		बाह्य काष्ठा acpi_probe_entry ACPI_PROBE_TABLE(t),	\
 			                       ACPI_PROBE_TABLE_END(t);	\
 		__acpi_probe_device_table(&ACPI_PROBE_TABLE(t),		\
 					  (&ACPI_PROBE_TABLE_END(t) -	\
 					   &ACPI_PROBE_TABLE(t)));	\
-	})
-#else
-static inline int acpi_dev_get_property(struct acpi_device *adev,
-					const char *name, acpi_object_type type,
-					const union acpi_object **obj)
-{
-	return -ENXIO;
-}
+	पूर्ण)
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_dev_get_property(काष्ठा acpi_device *adev,
+					स्थिर अक्षर *name, acpi_object_type type,
+					स्थिर जोड़ acpi_object **obj)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-static inline int
-__acpi_node_get_property_reference(const struct fwnode_handle *fwnode,
-				const char *name, size_t index, size_t num_args,
-				struct fwnode_reference_args *args)
-{
-	return -ENXIO;
-}
+अटल अंतरभूत पूर्णांक
+__acpi_node_get_property_reference(स्थिर काष्ठा fwnode_handle *fwnode,
+				स्थिर अक्षर *name, माप_प्रकार index, माप_प्रकार num_args,
+				काष्ठा fwnode_reference_args *args)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-static inline int
-acpi_node_get_property_reference(const struct fwnode_handle *fwnode,
-				 const char *name, size_t index,
-				 struct fwnode_reference_args *args)
-{
-	return -ENXIO;
-}
+अटल अंतरभूत पूर्णांक
+acpi_node_get_property_reference(स्थिर काष्ठा fwnode_handle *fwnode,
+				 स्थिर अक्षर *name, माप_प्रकार index,
+				 काष्ठा fwnode_reference_args *args)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-static inline int acpi_node_prop_get(const struct fwnode_handle *fwnode,
-				     const char *propname,
-				     void **valptr)
-{
-	return -ENXIO;
-}
+अटल अंतरभूत पूर्णांक acpi_node_prop_get(स्थिर काष्ठा fwnode_handle *fwnode,
+				     स्थिर अक्षर *propname,
+				     व्योम **valptr)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-static inline struct fwnode_handle *
-acpi_get_next_subnode(const struct fwnode_handle *fwnode,
-		      struct fwnode_handle *child)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा fwnode_handle *
+acpi_get_next_subnode(स्थिर काष्ठा fwnode_handle *fwnode,
+		      काष्ठा fwnode_handle *child)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct fwnode_handle *
-acpi_node_get_parent(const struct fwnode_handle *fwnode)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा fwnode_handle *
+acpi_node_get_parent(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct fwnode_handle *
-acpi_graph_get_next_endpoint(const struct fwnode_handle *fwnode,
-			     struct fwnode_handle *prev)
-{
-	return ERR_PTR(-ENXIO);
-}
+अटल अंतरभूत काष्ठा fwnode_handle *
+acpi_graph_get_next_endpoपूर्णांक(स्थिर काष्ठा fwnode_handle *fwnode,
+			     काष्ठा fwnode_handle *prev)
+अणु
+	वापस ERR_PTR(-ENXIO);
+पूर्ण
 
-static inline int
-acpi_graph_get_remote_endpoint(const struct fwnode_handle *fwnode,
-			       struct fwnode_handle **remote,
-			       struct fwnode_handle **port,
-			       struct fwnode_handle **endpoint)
-{
-	return -ENXIO;
-}
+अटल अंतरभूत पूर्णांक
+acpi_graph_get_remote_endpoपूर्णांक(स्थिर काष्ठा fwnode_handle *fwnode,
+			       काष्ठा fwnode_handle **remote,
+			       काष्ठा fwnode_handle **port,
+			       काष्ठा fwnode_handle **endpoपूर्णांक)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-#define ACPI_DECLARE_PROBE_ENTRY(table, name, table_id, subtable, valid, data, fn) \
-	static const void * __acpi_table_##name[]			\
+#घोषणा ACPI_DECLARE_PROBE_ENTRY(table, name, table_id, subtable, valid, data, fn) \
+	अटल स्थिर व्योम * __acpi_table_##name[]			\
 		__attribute__((unused))					\
-		 = { (void *) table_id,					\
-		     (void *) subtable,					\
-		     (void *) valid,					\
-		     (void *) fn,					\
-		     (void *) data }
+		 = अणु (व्योम *) table_id,					\
+		     (व्योम *) subtable,					\
+		     (व्योम *) valid,					\
+		     (व्योम *) fn,					\
+		     (व्योम *) data पूर्ण
 
-#define acpi_probe_device_table(t)	({ int __r = 0; __r;})
-#endif
+#घोषणा acpi_probe_device_table(t)	(अणु पूर्णांक __r = 0; __r;पूर्ण)
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_TABLE_UPGRADE
-void acpi_table_upgrade(void);
-#else
-static inline void acpi_table_upgrade(void) { }
-#endif
+#अगर_घोषित CONFIG_ACPI_TABLE_UPGRADE
+व्योम acpi_table_upgrade(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम acpi_table_upgrade(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_ACPI) && defined(CONFIG_ACPI_WATCHDOG)
-extern bool acpi_has_watchdog(void);
-#else
-static inline bool acpi_has_watchdog(void) { return false; }
-#endif
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_ACPI_WATCHDOG)
+बाह्य bool acpi_has_watchकरोg(व्योम);
+#अन्यथा
+अटल अंतरभूत bool acpi_has_watchकरोg(व्योम) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_SPCR_TABLE
-extern bool qdf2400_e44_present;
-int acpi_parse_spcr(bool enable_earlycon, bool enable_console);
-#else
-static inline int acpi_parse_spcr(bool enable_earlycon, bool enable_console)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित CONFIG_ACPI_SPCR_TABLE
+बाह्य bool qdf2400_e44_present;
+पूर्णांक acpi_parse_spcr(bool enable_earlycon, bool enable_console);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_parse_spcr(bool enable_earlycon, bool enable_console)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_ACPI_GENERIC_GSI)
-int acpi_irq_get(acpi_handle handle, unsigned int index, struct resource *res);
-#else
-static inline
-int acpi_irq_get(acpi_handle handle, unsigned int index, struct resource *res)
-{
-	return -EINVAL;
-}
-#endif
+#अगर IS_ENABLED(CONFIG_ACPI_GENERIC_GSI)
+पूर्णांक acpi_irq_get(acpi_handle handle, अचिन्हित पूर्णांक index, काष्ठा resource *res);
+#अन्यथा
+अटल अंतरभूत
+पूर्णांक acpi_irq_get(acpi_handle handle, अचिन्हित पूर्णांक index, काष्ठा resource *res)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_LPIT
-int lpit_read_residency_count_address(u64 *address);
-#else
-static inline int lpit_read_residency_count_address(u64 *address)
-{
-	return -EINVAL;
-}
-#endif
+#अगर_घोषित CONFIG_ACPI_LPIT
+पूर्णांक lpit_पढ़ो_residency_count_address(u64 *address);
+#अन्यथा
+अटल अंतरभूत पूर्णांक lpit_पढ़ो_residency_count_address(u64 *address)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_PPTT
-int acpi_pptt_cpu_is_thread(unsigned int cpu);
-int find_acpi_cpu_topology(unsigned int cpu, int level);
-int find_acpi_cpu_topology_package(unsigned int cpu);
-int find_acpi_cpu_topology_hetero_id(unsigned int cpu);
-int find_acpi_cpu_cache_topology(unsigned int cpu, int level);
-#else
-static inline int acpi_pptt_cpu_is_thread(unsigned int cpu)
-{
-	return -EINVAL;
-}
-static inline int find_acpi_cpu_topology(unsigned int cpu, int level)
-{
-	return -EINVAL;
-}
-static inline int find_acpi_cpu_topology_package(unsigned int cpu)
-{
-	return -EINVAL;
-}
-static inline int find_acpi_cpu_topology_hetero_id(unsigned int cpu)
-{
-	return -EINVAL;
-}
-static inline int find_acpi_cpu_cache_topology(unsigned int cpu, int level)
-{
-	return -EINVAL;
-}
-#endif
+#अगर_घोषित CONFIG_ACPI_PPTT
+पूर्णांक acpi_pptt_cpu_is_thपढ़ो(अचिन्हित पूर्णांक cpu);
+पूर्णांक find_acpi_cpu_topology(अचिन्हित पूर्णांक cpu, पूर्णांक level);
+पूर्णांक find_acpi_cpu_topology_package(अचिन्हित पूर्णांक cpu);
+पूर्णांक find_acpi_cpu_topology_hetero_id(अचिन्हित पूर्णांक cpu);
+पूर्णांक find_acpi_cpu_cache_topology(अचिन्हित पूर्णांक cpu, पूर्णांक level);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_pptt_cpu_is_thपढ़ो(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक find_acpi_cpu_topology(अचिन्हित पूर्णांक cpu, पूर्णांक level)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक find_acpi_cpu_topology_package(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक find_acpi_cpu_topology_hetero_id(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक find_acpi_cpu_cache_topology(अचिन्हित पूर्णांक cpu, पूर्णांक level)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
-extern int acpi_platform_notify(struct device *dev, enum kobject_action action);
-#else
-static inline int
-acpi_platform_notify(struct device *dev, enum kobject_action action)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित CONFIG_ACPI
+बाह्य पूर्णांक acpi_platक्रमm_notअगरy(काष्ठा device *dev, क्रमागत kobject_action action);
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+acpi_platक्रमm_notअगरy(काष्ठा device *dev, क्रमागत kobject_action action)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif	/*_LINUX_ACPI_H*/
+#पूर्ण_अगर	/*_LINUX_ACPI_H*/

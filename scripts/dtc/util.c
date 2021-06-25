@@ -1,468 +1,469 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2011 The Chromium Authors, All Rights Reserved.
  * Copyright 2008 Jon Loeliger, Freescale Semiconductor, Inc.
  *
- * util_is_printable_string contributed by
+ * util_is_prपूर्णांकable_string contributed by
  *	Pantelis Antoniou <pantelis.antoniou AT gmail.com>
  */
 
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <assert.h>
-#include <inttypes.h>
+#समावेश <प्रकार.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <मानकतर्क.स>
+#समावेश <माला.स>
+#समावेश <निश्चित.स>
+#समावेश <पूर्णांकtypes.h>
 
-#include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
 
-#include "libfdt.h"
-#include "util.h"
-#include "version_gen.h"
+#समावेश "libfdt.h"
+#समावेश "util.h"
+#समावेश "version_gen.h"
 
-char *xstrdup(const char *s)
-{
-	int len = strlen(s) + 1;
-	char *d = xmalloc(len);
+अक्षर *xstrdup(स्थिर अक्षर *s)
+अणु
+	पूर्णांक len = म_माप(s) + 1;
+	अक्षर *d = xदो_स्मृति(len);
 
-	memcpy(d, s, len);
+	स_नकल(d, s, len);
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-int xavsprintf_append(char **strp, const char *fmt, va_list ap)
-{
-	int n, size = 0;	/* start with 128 bytes */
-	char *p;
-	va_list ap_copy;
+पूर्णांक xaभम_लिखो_append(अक्षर **strp, स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	पूर्णांक n, size = 0;	/* start with 128 bytes */
+	अक्षर *p;
+	बहु_सूची ap_copy;
 
 	p = *strp;
-	if (p)
-		size = strlen(p);
+	अगर (p)
+		size = म_माप(p);
 
 	va_copy(ap_copy, ap);
-	n = vsnprintf(NULL, 0, fmt, ap_copy) + 1;
-	va_end(ap_copy);
+	n = vsnम_लिखो(शून्य, 0, fmt, ap_copy) + 1;
+	बहु_पूर्ण(ap_copy);
 
-	p = xrealloc(p, size + n);
+	p = xपुनः_स्मृति(p, size + n);
 
-	n = vsnprintf(p + size, n, fmt, ap);
+	n = vsnम_लिखो(p + size, n, fmt, ap);
 
 	*strp = p;
-	return strlen(p);
-}
+	वापस म_माप(p);
+पूर्ण
 
-int xasprintf_append(char **strp, const char *fmt, ...)
-{
-	int n;
-	va_list ap;
+पूर्णांक xaप्र_लिखो_append(अक्षर **strp, स्थिर अक्षर *fmt, ...)
+अणु
+	पूर्णांक n;
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
-	n = xavsprintf_append(strp, fmt, ap);
-	va_end(ap);
+	बहु_शुरू(ap, fmt);
+	n = xaभम_लिखो_append(strp, fmt, ap);
+	बहु_पूर्ण(ap);
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-int xasprintf(char **strp, const char *fmt, ...)
-{
-	int n;
-	va_list ap;
+पूर्णांक xaप्र_लिखो(अक्षर **strp, स्थिर अक्षर *fmt, ...)
+अणु
+	पूर्णांक n;
+	बहु_सूची ap;
 
-	*strp = NULL;
+	*strp = शून्य;
 
-	va_start(ap, fmt);
-	n = xavsprintf_append(strp, fmt, ap);
-	va_end(ap);
+	बहु_शुरू(ap, fmt);
+	n = xaभम_लिखो_append(strp, fmt, ap);
+	बहु_पूर्ण(ap);
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-char *join_path(const char *path, const char *name)
-{
-	int lenp = strlen(path);
-	int lenn = strlen(name);
-	int len;
-	int needslash = 1;
-	char *str;
+अक्षर *join_path(स्थिर अक्षर *path, स्थिर अक्षर *name)
+अणु
+	पूर्णांक lenp = म_माप(path);
+	पूर्णांक lenn = म_माप(name);
+	पूर्णांक len;
+	पूर्णांक needslash = 1;
+	अक्षर *str;
 
 	len = lenp + lenn + 2;
-	if ((lenp > 0) && (path[lenp-1] == '/')) {
+	अगर ((lenp > 0) && (path[lenp-1] == '/')) अणु
 		needslash = 0;
 		len--;
-	}
+	पूर्ण
 
-	str = xmalloc(len);
-	memcpy(str, path, lenp);
-	if (needslash) {
+	str = xदो_स्मृति(len);
+	स_नकल(str, path, lenp);
+	अगर (needslash) अणु
 		str[lenp] = '/';
 		lenp++;
-	}
-	memcpy(str+lenp, name, lenn+1);
-	return str;
-}
+	पूर्ण
+	स_नकल(str+lenp, name, lenn+1);
+	वापस str;
+पूर्ण
 
-bool util_is_printable_string(const void *data, int len)
-{
-	const char *s = data;
-	const char *ss, *se;
+bool util_is_prपूर्णांकable_string(स्थिर व्योम *data, पूर्णांक len)
+अणु
+	स्थिर अक्षर *s = data;
+	स्थिर अक्षर *ss, *se;
 
 	/* zero length is not */
-	if (len == 0)
-		return 0;
+	अगर (len == 0)
+		वापस 0;
 
 	/* must terminate with zero */
-	if (s[len - 1] != '\0')
-		return 0;
+	अगर (s[len - 1] != '\0')
+		वापस 0;
 
 	se = s + len;
 
-	while (s < se) {
+	जबतक (s < se) अणु
 		ss = s;
-		while (s < se && *s && isprint((unsigned char)*s))
+		जबतक (s < se && *s && है_छाप((अचिन्हित अक्षर)*s))
 			s++;
 
-		/* not zero, or not done yet */
-		if (*s != '\0' || s == ss)
-			return 0;
+		/* not zero, or not करोne yet */
+		अगर (*s != '\0' || s == ss)
+			वापस 0;
 
 		s++;
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Parse a octal encoded character starting at index i in string s.  The
- * resulting character will be returned and the index i will be updated to
- * point at the character directly after the end of the encoding, this may be
+ * Parse a octal encoded अक्षरacter starting at index i in string s.  The
+ * resulting अक्षरacter will be वापसed and the index i will be updated to
+ * poपूर्णांक at the अक्षरacter directly after the end of the encoding, this may be
  * the '\0' terminator of the string.
  */
-static char get_oct_char(const char *s, int *i)
-{
-	char x[4];
-	char *endx;
-	long val;
+अटल अक्षर get_oct_अक्षर(स्थिर अक्षर *s, पूर्णांक *i)
+अणु
+	अक्षर x[4];
+	अक्षर *endx;
+	दीर्घ val;
 
 	x[3] = '\0';
-	strncpy(x, s + *i, 3);
+	म_नकलन(x, s + *i, 3);
 
-	val = strtol(x, &endx, 8);
+	val = म_से_दीर्घ(x, &endx, 8);
 
-	assert(endx > x);
+	निश्चित(endx > x);
 
 	(*i) += endx - x;
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /*
- * Parse a hexadecimal encoded character starting at index i in string s.  The
- * resulting character will be returned and the index i will be updated to
- * point at the character directly after the end of the encoding, this may be
+ * Parse a hexadecimal encoded अक्षरacter starting at index i in string s.  The
+ * resulting अक्षरacter will be वापसed and the index i will be updated to
+ * poपूर्णांक at the अक्षरacter directly after the end of the encoding, this may be
  * the '\0' terminator of the string.
  */
-static char get_hex_char(const char *s, int *i)
-{
-	char x[3];
-	char *endx;
-	long val;
+अटल अक्षर get_hex_अक्षर(स्थिर अक्षर *s, पूर्णांक *i)
+अणु
+	अक्षर x[3];
+	अक्षर *endx;
+	दीर्घ val;
 
 	x[2] = '\0';
-	strncpy(x, s + *i, 2);
+	म_नकलन(x, s + *i, 2);
 
-	val = strtol(x, &endx, 16);
-	if (!(endx  > x))
+	val = म_से_दीर्घ(x, &endx, 16);
+	अगर (!(endx  > x))
 		die("\\x used with no following hex digits\n");
 
 	(*i) += endx - x;
-	return val;
-}
+	वापस val;
+पूर्ण
 
-char get_escape_char(const char *s, int *i)
-{
-	char	c = s[*i];
-	int	j = *i + 1;
-	char	val;
+अक्षर get_escape_अक्षर(स्थिर अक्षर *s, पूर्णांक *i)
+अणु
+	अक्षर	c = s[*i];
+	पूर्णांक	j = *i + 1;
+	अक्षर	val;
 
-	switch (c) {
-	case 'a':
+	चयन (c) अणु
+	हाल 'a':
 		val = '\a';
-		break;
-	case 'b':
+		अवरोध;
+	हाल 'b':
 		val = '\b';
-		break;
-	case 't':
+		अवरोध;
+	हाल 't':
 		val = '\t';
-		break;
-	case 'n':
+		अवरोध;
+	हाल 'n':
 		val = '\n';
-		break;
-	case 'v':
+		अवरोध;
+	हाल 'v':
 		val = '\v';
-		break;
-	case 'f':
+		अवरोध;
+	हाल 'f':
 		val = '\f';
-		break;
-	case 'r':
+		अवरोध;
+	हाल 'r':
 		val = '\r';
-		break;
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-		j--; /* need to re-read the first digit as
+		अवरोध;
+	हाल '0':
+	हाल '1':
+	हाल '2':
+	हाल '3':
+	हाल '4':
+	हाल '5':
+	हाल '6':
+	हाल '7':
+		j--; /* need to re-पढ़ो the first digit as
 		      * part of the octal value */
-		val = get_oct_char(s, &j);
-		break;
-	case 'x':
-		val = get_hex_char(s, &j);
-		break;
-	default:
+		val = get_oct_अक्षर(s, &j);
+		अवरोध;
+	हाल 'x':
+		val = get_hex_अक्षर(s, &j);
+		अवरोध;
+	शेष:
 		val = c;
-	}
+	पूर्ण
 
 	(*i) = j;
-	return val;
-}
+	वापस val;
+पूर्ण
 
-int utilfdt_read_err(const char *filename, char **buffp, size_t *len)
-{
-	int fd = 0;	/* assume stdin */
-	char *buf = NULL;
-	size_t bufsize = 1024, offset = 0;
-	int ret = 0;
+पूर्णांक utilfdt_पढ़ो_err(स्थिर अक्षर *filename, अक्षर **buffp, माप_प्रकार *len)
+अणु
+	पूर्णांक fd = 0;	/* assume मानक_निवेश */
+	अक्षर *buf = शून्य;
+	माप_प्रकार bufsize = 1024, offset = 0;
+	पूर्णांक ret = 0;
 
-	*buffp = NULL;
-	if (strcmp(filename, "-") != 0) {
-		fd = open(filename, O_RDONLY);
-		if (fd < 0)
-			return errno;
-	}
+	*buffp = शून्य;
+	अगर (म_भेद(filename, "-") != 0) अणु
+		fd = खोलो(filename, O_RDONLY);
+		अगर (fd < 0)
+			वापस त्रुटि_सं;
+	पूर्ण
 
-	/* Loop until we have read everything */
-	buf = xmalloc(bufsize);
-	do {
+	/* Loop until we have पढ़ो everything */
+	buf = xदो_स्मृति(bufsize);
+	करो अणु
 		/* Expand the buffer to hold the next chunk */
-		if (offset == bufsize) {
+		अगर (offset == bufsize) अणु
 			bufsize *= 2;
-			buf = xrealloc(buf, bufsize);
-		}
+			buf = xपुनः_स्मृति(buf, bufsize);
+		पूर्ण
 
-		ret = read(fd, &buf[offset], bufsize - offset);
-		if (ret < 0) {
-			ret = errno;
-			break;
-		}
+		ret = पढ़ो(fd, &buf[offset], bufsize - offset);
+		अगर (ret < 0) अणु
+			ret = त्रुटि_सं;
+			अवरोध;
+		पूर्ण
 		offset += ret;
-	} while (ret != 0);
+	पूर्ण जबतक (ret != 0);
 
-	/* Clean up, including closing stdin; return errno on error */
-	close(fd);
-	if (ret)
-		free(buf);
-	else
+	/* Clean up, including closing मानक_निवेश; वापस त्रुटि_सं on error */
+	बंद(fd);
+	अगर (ret)
+		मुक्त(buf);
+	अन्यथा
 		*buffp = buf;
-	if (len)
+	अगर (len)
 		*len = bufsize;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-char *utilfdt_read(const char *filename, size_t *len)
-{
-	char *buff;
-	int ret = utilfdt_read_err(filename, &buff, len);
+अक्षर *utilfdt_पढ़ो(स्थिर अक्षर *filename, माप_प्रकार *len)
+अणु
+	अक्षर *buff;
+	पूर्णांक ret = utilfdt_पढ़ो_err(filename, &buff, len);
 
-	if (ret) {
-		fprintf(stderr, "Couldn't open blob from '%s': %s\n", filename,
-			strerror(ret));
-		return NULL;
-	}
-	/* Successful read */
-	return buff;
-}
+	अगर (ret) अणु
+		ख_लिखो(मानक_त्रुटि, "Couldn't open blob from '%s': %s\n", filename,
+			म_त्रुटि(ret));
+		वापस शून्य;
+	पूर्ण
+	/* Successful पढ़ो */
+	वापस buff;
+पूर्ण
 
-int utilfdt_write_err(const char *filename, const void *blob)
-{
-	int fd = 1;	/* assume stdout */
-	int totalsize;
-	int offset;
-	int ret = 0;
-	const char *ptr = blob;
+पूर्णांक utilfdt_ग_लिखो_err(स्थिर अक्षर *filename, स्थिर व्योम *blob)
+अणु
+	पूर्णांक fd = 1;	/* assume मानक_निकास */
+	पूर्णांक totalsize;
+	पूर्णांक offset;
+	पूर्णांक ret = 0;
+	स्थिर अक्षर *ptr = blob;
 
-	if (strcmp(filename, "-") != 0) {
-		fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-		if (fd < 0)
-			return errno;
-	}
+	अगर (म_भेद(filename, "-") != 0) अणु
+		fd = खोलो(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+		अगर (fd < 0)
+			वापस त्रुटि_सं;
+	पूर्ण
 
 	totalsize = fdt_totalsize(blob);
 	offset = 0;
 
-	while (offset < totalsize) {
-		ret = write(fd, ptr + offset, totalsize - offset);
-		if (ret < 0) {
-			ret = -errno;
-			break;
-		}
+	जबतक (offset < totalsize) अणु
+		ret = ग_लिखो(fd, ptr + offset, totalsize - offset);
+		अगर (ret < 0) अणु
+			ret = -त्रुटि_सं;
+			अवरोध;
+		पूर्ण
 		offset += ret;
-	}
-	/* Close the file/stdin; return errno on error */
-	if (fd != 1)
-		close(fd);
-	return ret < 0 ? -ret : 0;
-}
+	पूर्ण
+	/* Close the file/मानक_निवेश; वापस त्रुटि_सं on error */
+	अगर (fd != 1)
+		बंद(fd);
+	वापस ret < 0 ? -ret : 0;
+पूर्ण
 
 
-int utilfdt_write(const char *filename, const void *blob)
-{
-	int ret = utilfdt_write_err(filename, blob);
+पूर्णांक utilfdt_ग_लिखो(स्थिर अक्षर *filename, स्थिर व्योम *blob)
+अणु
+	पूर्णांक ret = utilfdt_ग_लिखो_err(filename, blob);
 
-	if (ret) {
-		fprintf(stderr, "Couldn't write blob to '%s': %s\n", filename,
-			strerror(ret));
-	}
-	return ret ? -1 : 0;
-}
+	अगर (ret) अणु
+		ख_लिखो(मानक_त्रुटि, "Couldn't write blob to '%s': %s\n", filename,
+			म_त्रुटि(ret));
+	पूर्ण
+	वापस ret ? -1 : 0;
+पूर्ण
 
-int utilfdt_decode_type(const char *fmt, int *type, int *size)
-{
-	int qualifier = 0;
+पूर्णांक utilfdt_decode_type(स्थिर अक्षर *fmt, पूर्णांक *type, पूर्णांक *size)
+अणु
+	पूर्णांक qualअगरier = 0;
 
-	if (!*fmt)
-		return -1;
+	अगर (!*fmt)
+		वापस -1;
 
-	/* get the conversion qualifier */
+	/* get the conversion qualअगरier */
 	*size = -1;
-	if (strchr("hlLb", *fmt)) {
-		qualifier = *fmt++;
-		if (qualifier == *fmt) {
-			switch (*fmt++) {
-/* TODO:		case 'l': qualifier = 'L'; break;*/
-			case 'h':
-				qualifier = 'b';
-				break;
-			}
-		}
-	}
+	अगर (म_अक्षर("hlLb", *fmt)) अणु
+		qualअगरier = *fmt++;
+		अगर (qualअगरier == *fmt) अणु
+			चयन (*fmt++) अणु
+/* TODO:		हाल 'l': qualifier = 'L'; अवरोध;*/
+			हाल 'h':
+				qualअगरier = 'b';
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* we should now have a type */
-	if ((*fmt == '\0') || !strchr("iuxs", *fmt))
-		return -1;
+	अगर ((*fmt == '\0') || !म_अक्षर("iuxs", *fmt))
+		वापस -1;
 
-	/* convert qualifier (bhL) to byte size */
-	if (*fmt != 's')
-		*size = qualifier == 'b' ? 1 :
-				qualifier == 'h' ? 2 :
-				qualifier == 'l' ? 4 : -1;
+	/* convert qualअगरier (bhL) to byte size */
+	अगर (*fmt != 's')
+		*size = qualअगरier == 'b' ? 1 :
+				qualअगरier == 'h' ? 2 :
+				qualअगरier == 'l' ? 4 : -1;
 	*type = *fmt++;
 
 	/* that should be it! */
-	if (*fmt)
-		return -1;
-	return 0;
-}
+	अगर (*fmt)
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-void utilfdt_print_data(const char *data, int len)
-{
-	int i;
-	const char *s;
+व्योम utilfdt_prपूर्णांक_data(स्थिर अक्षर *data, पूर्णांक len)
+अणु
+	पूर्णांक i;
+	स्थिर अक्षर *s;
 
-	/* no data, don't print */
-	if (len == 0)
-		return;
+	/* no data, करोn't prपूर्णांक */
+	अगर (len == 0)
+		वापस;
 
-	if (util_is_printable_string(data, len)) {
-		printf(" = ");
+	अगर (util_is_prपूर्णांकable_string(data, len)) अणु
+		म_लिखो(" = ");
 
 		s = data;
-		do {
-			printf("\"%s\"", s);
-			s += strlen(s) + 1;
-			if (s < data + len)
-				printf(", ");
-		} while (s < data + len);
+		करो अणु
+			म_लिखो("\"%s\"", s);
+			s += म_माप(s) + 1;
+			अगर (s < data + len)
+				म_लिखो(", ");
+		पूर्ण जबतक (s < data + len);
 
-	} else if ((len % 4) == 0) {
-		const fdt32_t *cell = (const fdt32_t *)data;
+	पूर्ण अन्यथा अगर ((len % 4) == 0) अणु
+		स्थिर fdt32_t *cell = (स्थिर fdt32_t *)data;
 
-		printf(" = <");
-		for (i = 0, len /= 4; i < len; i++)
-			printf("0x%08" PRIx32 "%s", fdt32_to_cpu(cell[i]),
+		म_लिखो(" = <");
+		क्रम (i = 0, len /= 4; i < len; i++)
+			म_लिखो("0x%08" PRIx32 "%s", fdt32_to_cpu(cell[i]),
 			       i < (len - 1) ? " " : "");
-		printf(">");
-	} else {
-		const unsigned char *p = (const unsigned char *)data;
-		printf(" = [");
-		for (i = 0; i < len; i++)
-			printf("%02x%s", *p++, i < len - 1 ? " " : "");
-		printf("]");
-	}
-}
+		म_लिखो(">");
+	पूर्ण अन्यथा अणु
+		स्थिर अचिन्हित अक्षर *p = (स्थिर अचिन्हित अक्षर *)data;
+		म_लिखो(" = [");
+		क्रम (i = 0; i < len; i++)
+			म_लिखो("%02x%s", *p++, i < len - 1 ? " " : "");
+		म_लिखो("]");
+	पूर्ण
+पूर्ण
 
-void NORETURN util_version(void)
-{
-	printf("Version: %s\n", DTC_VERSION);
-	exit(0);
-}
+व्योम NORETURN util_version(व्योम)
+अणु
+	म_लिखो("Version: %s\n", DTC_VERSION);
+	निकास(0);
+पूर्ण
 
-void NORETURN util_usage(const char *errmsg, const char *synopsis,
-			 const char *short_opts,
-			 struct option const long_opts[],
-			 const char * const opts_help[])
-{
-	FILE *fp = errmsg ? stderr : stdout;
-	const char a_arg[] = "<arg>";
-	size_t a_arg_len = strlen(a_arg) + 1;
-	size_t i;
-	int optlen;
+व्योम NORETURN util_usage(स्थिर अक्षर *errmsg, स्थिर अक्षर *synopsis,
+			 स्थिर अक्षर *लघु_opts,
+			 काष्ठा option स्थिर दीर्घ_opts[],
+			 स्थिर अक्षर * स्थिर opts_help[])
+अणु
+	खाता *fp = errmsg ? मानक_त्रुटि : मानक_निकास;
+	स्थिर अक्षर a_arg[] = "<arg>";
+	माप_प्रकार a_arg_len = म_माप(a_arg) + 1;
+	माप_प्रकार i;
+	पूर्णांक optlen;
 
-	fprintf(fp,
+	ख_लिखो(fp,
 		"Usage: %s\n"
 		"\n"
-		"Options: -[%s]\n", synopsis, short_opts);
+		"Options: -[%s]\n", synopsis, लघु_opts);
 
-	/* prescan the --long opt length to auto-align */
+	/* prescan the --दीर्घ opt length to स्वतः-align */
 	optlen = 0;
-	for (i = 0; long_opts[i].name; ++i) {
-		/* +1 is for space between --opt and help text */
-		int l = strlen(long_opts[i].name) + 1;
-		if (long_opts[i].has_arg == a_argument)
+	क्रम (i = 0; दीर्घ_opts[i].name; ++i) अणु
+		/* +1 is क्रम space between --opt and help text */
+		पूर्णांक l = म_माप(दीर्घ_opts[i].name) + 1;
+		अगर (दीर्घ_opts[i].has_arg == a_argument)
 			l += a_arg_len;
-		if (optlen < l)
+		अगर (optlen < l)
 			optlen = l;
-	}
+	पूर्ण
 
-	for (i = 0; long_opts[i].name; ++i) {
+	क्रम (i = 0; दीर्घ_opts[i].name; ++i) अणु
 		/* helps when adding new applets or options */
-		assert(opts_help[i] != NULL);
+		निश्चित(opts_help[i] != शून्य);
 
-		/* first output the short flag if it has one */
-		if (long_opts[i].val > '~')
-			fprintf(fp, "      ");
-		else
-			fprintf(fp, "  -%c, ", long_opts[i].val);
+		/* first output the लघु flag अगर it has one */
+		अगर (दीर्घ_opts[i].val > '~')
+			ख_लिखो(fp, "      ");
+		अन्यथा
+			ख_लिखो(fp, "  -%c, ", दीर्घ_opts[i].val);
 
-		/* then the long flag */
-		if (long_opts[i].has_arg == no_argument)
-			fprintf(fp, "--%-*s", optlen, long_opts[i].name);
-		else
-			fprintf(fp, "--%s %s%*s", long_opts[i].name, a_arg,
-				(int)(optlen - strlen(long_opts[i].name) - a_arg_len), "");
+		/* then the दीर्घ flag */
+		अगर (दीर्घ_opts[i].has_arg == no_argument)
+			ख_लिखो(fp, "--%-*s", optlen, दीर्घ_opts[i].name);
+		अन्यथा
+			ख_लिखो(fp, "--%s %s%*s", दीर्घ_opts[i].name, a_arg,
+				(पूर्णांक)(optlen - म_माप(दीर्घ_opts[i].name) - a_arg_len), "");
 
 		/* finally the help text */
-		fprintf(fp, "%s\n", opts_help[i]);
-	}
+		ख_लिखो(fp, "%s\n", opts_help[i]);
+	पूर्ण
 
-	if (errmsg) {
-		fprintf(fp, "\nError: %s\n", errmsg);
-		exit(EXIT_FAILURE);
-	} else
-		exit(EXIT_SUCCESS);
-}
+	अगर (errmsg) अणु
+		ख_लिखो(fp, "\nError: %s\n", errmsg);
+		निकास(निकास_त्रुटि);
+	पूर्ण अन्यथा
+		निकास(निकास_सफल);
+पूर्ण

@@ -1,690 +1,691 @@
+<शैली गुरु>
 /* Broadcom NetXtreme-C/E network driver.
  *
  * Copyright (c) 2017 Broadcom Limited
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <net/devlink.h>
-#include "bnxt_hsi.h"
-#include "bnxt.h"
-#include "bnxt_vfr.h"
-#include "bnxt_devlink.h"
-#include "bnxt_ethtool.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/devlink.h>
+#समावेश "bnxt_hsi.h"
+#समावेश "bnxt.h"
+#समावेश "bnxt_vfr.h"
+#समावेश "bnxt_devlink.h"
+#समावेश "bnxt_ethtool.h"
 
-static int
-bnxt_dl_flash_update(struct devlink *dl,
-		     struct devlink_flash_update_params *params,
-		     struct netlink_ext_ack *extack)
-{
-	struct bnxt *bp = bnxt_get_bp_from_dl(dl);
-	int rc;
+अटल पूर्णांक
+bnxt_dl_flash_update(काष्ठा devlink *dl,
+		     काष्ठा devlink_flash_update_params *params,
+		     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा bnxt *bp = bnxt_get_bp_from_dl(dl);
+	पूर्णांक rc;
 
-	if (!BNXT_PF(bp)) {
+	अगर (!BNXT_PF(bp)) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "flash update not supported from a VF");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	devlink_flash_update_status_notify(dl, "Preparing to flash", NULL, 0, 0);
+	devlink_flash_update_status_notअगरy(dl, "Preparing to flash", शून्य, 0, 0);
 	rc = bnxt_flash_package_from_fw_obj(bp->dev, params->fw, 0);
-	if (!rc)
-		devlink_flash_update_status_notify(dl, "Flashing done", NULL, 0, 0);
-	else
-		devlink_flash_update_status_notify(dl, "Flashing failed", NULL, 0, 0);
-	return rc;
-}
+	अगर (!rc)
+		devlink_flash_update_status_notअगरy(dl, "Flashing done", शून्य, 0, 0);
+	अन्यथा
+		devlink_flash_update_status_notअगरy(dl, "Flashing failed", शून्य, 0, 0);
+	वापस rc;
+पूर्ण
 
-static int bnxt_fw_reporter_diagnose(struct devlink_health_reporter *reporter,
-				     struct devlink_fmsg *fmsg,
-				     struct netlink_ext_ack *extack)
-{
-	struct bnxt *bp = devlink_health_reporter_priv(reporter);
+अटल पूर्णांक bnxt_fw_reporter_diagnose(काष्ठा devlink_health_reporter *reporter,
+				     काष्ठा devlink_fmsg *fmsg,
+				     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा bnxt *bp = devlink_health_reporter_priv(reporter);
 	u32 val;
-	int rc;
+	पूर्णांक rc;
 
-	if (test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
-		return 0;
+	अगर (test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
+		वापस 0;
 
-	val = bnxt_fw_health_readl(bp, BNXT_FW_HEALTH_REG);
+	val = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_HEALTH_REG);
 
-	if (BNXT_FW_IS_BOOTING(val)) {
+	अगर (BNXT_FW_IS_BOOTING(val)) अणु
 		rc = devlink_fmsg_string_pair_put(fmsg, "Description",
 						  "Not yet completed initialization");
-		if (rc)
-			return rc;
-	} else if (BNXT_FW_IS_ERR(val)) {
+		अगर (rc)
+			वापस rc;
+	पूर्ण अन्यथा अगर (BNXT_FW_IS_ERR(val)) अणु
 		rc = devlink_fmsg_string_pair_put(fmsg, "Description",
 						  "Encountered fatal error and cannot recover");
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (val >> 16) {
+	अगर (val >> 16) अणु
 		rc = devlink_fmsg_u32_pair_put(fmsg, "Error code", val >> 16);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	val = bnxt_fw_health_readl(bp, BNXT_FW_RESET_CNT_REG);
+	val = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_RESET_CNT_REG);
 	rc = devlink_fmsg_u32_pair_put(fmsg, "Reset count", val);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct devlink_health_reporter_ops bnxt_dl_fw_reporter_ops = {
+अटल स्थिर काष्ठा devlink_health_reporter_ops bnxt_dl_fw_reporter_ops = अणु
 	.name = "fw",
 	.diagnose = bnxt_fw_reporter_diagnose,
-};
+पूर्ण;
 
-static int bnxt_fw_reset_recover(struct devlink_health_reporter *reporter,
-				 void *priv_ctx,
-				 struct netlink_ext_ack *extack)
-{
-	struct bnxt *bp = devlink_health_reporter_priv(reporter);
+अटल पूर्णांक bnxt_fw_reset_recover(काष्ठा devlink_health_reporter *reporter,
+				 व्योम *priv_ctx,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा bnxt *bp = devlink_health_reporter_priv(reporter);
 
-	if (!priv_ctx)
-		return -EOPNOTSUPP;
+	अगर (!priv_ctx)
+		वापस -EOPNOTSUPP;
 
 	bnxt_fw_reset(bp);
-	return -EINPROGRESS;
-}
+	वापस -EINPROGRESS;
+पूर्ण
 
-static const
-struct devlink_health_reporter_ops bnxt_dl_fw_reset_reporter_ops = {
+अटल स्थिर
+काष्ठा devlink_health_reporter_ops bnxt_dl_fw_reset_reporter_ops = अणु
 	.name = "fw_reset",
 	.recover = bnxt_fw_reset_recover,
-};
+पूर्ण;
 
-static int bnxt_fw_fatal_recover(struct devlink_health_reporter *reporter,
-				 void *priv_ctx,
-				 struct netlink_ext_ack *extack)
-{
-	struct bnxt *bp = devlink_health_reporter_priv(reporter);
-	struct bnxt_fw_reporter_ctx *fw_reporter_ctx = priv_ctx;
-	unsigned long event;
+अटल पूर्णांक bnxt_fw_fatal_recover(काष्ठा devlink_health_reporter *reporter,
+				 व्योम *priv_ctx,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा bnxt *bp = devlink_health_reporter_priv(reporter);
+	काष्ठा bnxt_fw_reporter_ctx *fw_reporter_ctx = priv_ctx;
+	अचिन्हित दीर्घ event;
 
-	if (!priv_ctx)
-		return -EOPNOTSUPP;
+	अगर (!priv_ctx)
+		वापस -EOPNOTSUPP;
 
 	bp->fw_health->fatal = true;
 	event = fw_reporter_ctx->sp_event;
-	if (event == BNXT_FW_RESET_NOTIFY_SP_EVENT)
+	अगर (event == BNXT_FW_RESET_NOTIFY_SP_EVENT)
 		bnxt_fw_reset(bp);
-	else if (event == BNXT_FW_EXCEPTION_SP_EVENT)
+	अन्यथा अगर (event == BNXT_FW_EXCEPTION_SP_EVENT)
 		bnxt_fw_exception(bp);
 
-	return -EINPROGRESS;
-}
+	वापस -EINPROGRESS;
+पूर्ण
 
-static const
-struct devlink_health_reporter_ops bnxt_dl_fw_fatal_reporter_ops = {
+अटल स्थिर
+काष्ठा devlink_health_reporter_ops bnxt_dl_fw_fatal_reporter_ops = अणु
 	.name = "fw_fatal",
 	.recover = bnxt_fw_fatal_recover,
-};
+पूर्ण;
 
-void bnxt_dl_fw_reporters_create(struct bnxt *bp)
-{
-	struct bnxt_fw_health *health = bp->fw_health;
+व्योम bnxt_dl_fw_reporters_create(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_fw_health *health = bp->fw_health;
 
-	if (!bp->dl || !health)
-		return;
+	अगर (!bp->dl || !health)
+		वापस;
 
-	if (!(bp->fw_cap & BNXT_FW_CAP_HOT_RESET) || health->fw_reset_reporter)
-		goto err_recovery;
+	अगर (!(bp->fw_cap & BNXT_FW_CAP_HOT_RESET) || health->fw_reset_reporter)
+		जाओ err_recovery;
 
 	health->fw_reset_reporter =
 		devlink_health_reporter_create(bp->dl,
 					       &bnxt_dl_fw_reset_reporter_ops,
 					       0, bp);
-	if (IS_ERR(health->fw_reset_reporter)) {
+	अगर (IS_ERR(health->fw_reset_reporter)) अणु
 		netdev_warn(bp->dev, "Failed to create FW fatal health reporter, rc = %ld\n",
 			    PTR_ERR(health->fw_reset_reporter));
-		health->fw_reset_reporter = NULL;
+		health->fw_reset_reporter = शून्य;
 		bp->fw_cap &= ~BNXT_FW_CAP_HOT_RESET;
-	}
+	पूर्ण
 
 err_recovery:
-	if (!(bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY))
-		return;
+	अगर (!(bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY))
+		वापस;
 
-	if (!health->fw_reporter) {
+	अगर (!health->fw_reporter) अणु
 		health->fw_reporter =
 			devlink_health_reporter_create(bp->dl,
 						       &bnxt_dl_fw_reporter_ops,
 						       0, bp);
-		if (IS_ERR(health->fw_reporter)) {
+		अगर (IS_ERR(health->fw_reporter)) अणु
 			netdev_warn(bp->dev, "Failed to create FW health reporter, rc = %ld\n",
 				    PTR_ERR(health->fw_reporter));
-			health->fw_reporter = NULL;
+			health->fw_reporter = शून्य;
 			bp->fw_cap &= ~BNXT_FW_CAP_ERROR_RECOVERY;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (health->fw_fatal_reporter)
-		return;
+	अगर (health->fw_fatal_reporter)
+		वापस;
 
 	health->fw_fatal_reporter =
 		devlink_health_reporter_create(bp->dl,
 					       &bnxt_dl_fw_fatal_reporter_ops,
 					       0, bp);
-	if (IS_ERR(health->fw_fatal_reporter)) {
+	अगर (IS_ERR(health->fw_fatal_reporter)) अणु
 		netdev_warn(bp->dev, "Failed to create FW fatal health reporter, rc = %ld\n",
 			    PTR_ERR(health->fw_fatal_reporter));
-		health->fw_fatal_reporter = NULL;
+		health->fw_fatal_reporter = शून्य;
 		bp->fw_cap &= ~BNXT_FW_CAP_ERROR_RECOVERY;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void bnxt_dl_fw_reporters_destroy(struct bnxt *bp, bool all)
-{
-	struct bnxt_fw_health *health = bp->fw_health;
+व्योम bnxt_dl_fw_reporters_destroy(काष्ठा bnxt *bp, bool all)
+अणु
+	काष्ठा bnxt_fw_health *health = bp->fw_health;
 
-	if (!bp->dl || !health)
-		return;
+	अगर (!bp->dl || !health)
+		वापस;
 
-	if ((all || !(bp->fw_cap & BNXT_FW_CAP_HOT_RESET)) &&
-	    health->fw_reset_reporter) {
+	अगर ((all || !(bp->fw_cap & BNXT_FW_CAP_HOT_RESET)) &&
+	    health->fw_reset_reporter) अणु
 		devlink_health_reporter_destroy(health->fw_reset_reporter);
-		health->fw_reset_reporter = NULL;
-	}
+		health->fw_reset_reporter = शून्य;
+	पूर्ण
 
-	if ((bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY) && !all)
-		return;
+	अगर ((bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY) && !all)
+		वापस;
 
-	if (health->fw_reporter) {
+	अगर (health->fw_reporter) अणु
 		devlink_health_reporter_destroy(health->fw_reporter);
-		health->fw_reporter = NULL;
-	}
+		health->fw_reporter = शून्य;
+	पूर्ण
 
-	if (health->fw_fatal_reporter) {
+	अगर (health->fw_fatal_reporter) अणु
 		devlink_health_reporter_destroy(health->fw_fatal_reporter);
-		health->fw_fatal_reporter = NULL;
-	}
-}
+		health->fw_fatal_reporter = शून्य;
+	पूर्ण
+पूर्ण
 
-void bnxt_devlink_health_report(struct bnxt *bp, unsigned long event)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
-	struct bnxt_fw_reporter_ctx fw_reporter_ctx;
+व्योम bnxt_devlink_health_report(काष्ठा bnxt *bp, अचिन्हित दीर्घ event)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
+	काष्ठा bnxt_fw_reporter_ctx fw_reporter_ctx;
 
 	fw_reporter_ctx.sp_event = event;
-	switch (event) {
-	case BNXT_FW_RESET_NOTIFY_SP_EVENT:
-		if (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state)) {
-			if (!fw_health->fw_fatal_reporter)
-				return;
+	चयन (event) अणु
+	हाल BNXT_FW_RESET_NOTIFY_SP_EVENT:
+		अगर (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state)) अणु
+			अगर (!fw_health->fw_fatal_reporter)
+				वापस;
 
 			devlink_health_report(fw_health->fw_fatal_reporter,
 					      "FW fatal async event received",
 					      &fw_reporter_ctx);
-			return;
-		}
-		if (!fw_health->fw_reset_reporter)
-			return;
+			वापस;
+		पूर्ण
+		अगर (!fw_health->fw_reset_reporter)
+			वापस;
 
 		devlink_health_report(fw_health->fw_reset_reporter,
 				      "FW non-fatal reset event received",
 				      &fw_reporter_ctx);
-		return;
+		वापस;
 
-	case BNXT_FW_EXCEPTION_SP_EVENT:
-		if (!fw_health->fw_fatal_reporter)
-			return;
+	हाल BNXT_FW_EXCEPTION_SP_EVENT:
+		अगर (!fw_health->fw_fatal_reporter)
+			वापस;
 
 		devlink_health_report(fw_health->fw_fatal_reporter,
 				      "FW fatal error reported",
 				      &fw_reporter_ctx);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-void bnxt_dl_health_status_update(struct bnxt *bp, bool healthy)
-{
-	struct bnxt_fw_health *health = bp->fw_health;
+व्योम bnxt_dl_health_status_update(काष्ठा bnxt *bp, bool healthy)
+अणु
+	काष्ठा bnxt_fw_health *health = bp->fw_health;
 	u8 state;
 
-	if (healthy)
+	अगर (healthy)
 		state = DEVLINK_HEALTH_REPORTER_STATE_HEALTHY;
-	else
+	अन्यथा
 		state = DEVLINK_HEALTH_REPORTER_STATE_ERROR;
 
-	if (health->fatal)
+	अगर (health->fatal)
 		devlink_health_reporter_state_update(health->fw_fatal_reporter,
 						     state);
-	else
+	अन्यथा
 		devlink_health_reporter_state_update(health->fw_reset_reporter,
 						     state);
 
 	health->fatal = false;
-}
+पूर्ण
 
-void bnxt_dl_health_recovery_done(struct bnxt *bp)
-{
-	struct bnxt_fw_health *hlth = bp->fw_health;
+व्योम bnxt_dl_health_recovery_करोne(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_fw_health *hlth = bp->fw_health;
 
-	if (hlth->fatal)
-		devlink_health_reporter_recovery_done(hlth->fw_fatal_reporter);
-	else
-		devlink_health_reporter_recovery_done(hlth->fw_reset_reporter);
-}
+	अगर (hlth->fatal)
+		devlink_health_reporter_recovery_करोne(hlth->fw_fatal_reporter);
+	अन्यथा
+		devlink_health_reporter_recovery_करोne(hlth->fw_reset_reporter);
+पूर्ण
 
-static int bnxt_dl_info_get(struct devlink *dl, struct devlink_info_req *req,
-			    struct netlink_ext_ack *extack);
+अटल पूर्णांक bnxt_dl_info_get(काष्ठा devlink *dl, काष्ठा devlink_info_req *req,
+			    काष्ठा netlink_ext_ack *extack);
 
-static const struct devlink_ops bnxt_dl_ops = {
-#ifdef CONFIG_BNXT_SRIOV
-	.eswitch_mode_set = bnxt_dl_eswitch_mode_set,
-	.eswitch_mode_get = bnxt_dl_eswitch_mode_get,
-#endif /* CONFIG_BNXT_SRIOV */
+अटल स्थिर काष्ठा devlink_ops bnxt_dl_ops = अणु
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	.eचयन_mode_set = bnxt_dl_eचयन_mode_set,
+	.eचयन_mode_get = bnxt_dl_eचयन_mode_get,
+#पूर्ण_अगर /* CONFIG_BNXT_SRIOV */
 	.info_get	  = bnxt_dl_info_get,
 	.flash_update	  = bnxt_dl_flash_update,
-};
+पूर्ण;
 
-static const struct devlink_ops bnxt_vf_dl_ops;
+अटल स्थिर काष्ठा devlink_ops bnxt_vf_dl_ops;
 
-enum bnxt_dl_param_id {
+क्रमागत bnxt_dl_param_id अणु
 	BNXT_DEVLINK_PARAM_ID_BASE = DEVLINK_PARAM_GENERIC_ID_MAX,
 	BNXT_DEVLINK_PARAM_ID_GRE_VER_CHECK,
-};
+पूर्ण;
 
-static const struct bnxt_dl_nvm_param nvm_params[] = {
-	{DEVLINK_PARAM_GENERIC_ID_ENABLE_SRIOV, NVM_OFF_ENABLE_SRIOV,
-	 BNXT_NVM_SHARED_CFG, 1, 1},
-	{DEVLINK_PARAM_GENERIC_ID_IGNORE_ARI, NVM_OFF_IGNORE_ARI,
-	 BNXT_NVM_SHARED_CFG, 1, 1},
-	{DEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MAX,
-	 NVM_OFF_MSIX_VEC_PER_PF_MAX, BNXT_NVM_SHARED_CFG, 10, 4},
-	{DEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MIN,
-	 NVM_OFF_MSIX_VEC_PER_PF_MIN, BNXT_NVM_SHARED_CFG, 7, 4},
-	{BNXT_DEVLINK_PARAM_ID_GRE_VER_CHECK, NVM_OFF_DIS_GRE_VER_CHECK,
-	 BNXT_NVM_SHARED_CFG, 1, 1},
-};
+अटल स्थिर काष्ठा bnxt_dl_nvm_param nvm_params[] = अणु
+	अणुDEVLINK_PARAM_GENERIC_ID_ENABLE_SRIOV, NVM_OFF_ENABLE_SRIOV,
+	 BNXT_NVM_SHARED_CFG, 1, 1पूर्ण,
+	अणुDEVLINK_PARAM_GENERIC_ID_IGNORE_ARI, NVM_OFF_IGNORE_ARI,
+	 BNXT_NVM_SHARED_CFG, 1, 1पूर्ण,
+	अणुDEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MAX,
+	 NVM_OFF_MSIX_VEC_PER_PF_MAX, BNXT_NVM_SHARED_CFG, 10, 4पूर्ण,
+	अणुDEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MIN,
+	 NVM_OFF_MSIX_VEC_PER_PF_MIN, BNXT_NVM_SHARED_CFG, 7, 4पूर्ण,
+	अणुBNXT_DEVLINK_PARAM_ID_GRE_VER_CHECK, NVM_OFF_DIS_GRE_VER_CHECK,
+	 BNXT_NVM_SHARED_CFG, 1, 1पूर्ण,
+पूर्ण;
 
-union bnxt_nvm_data {
+जोड़ bnxt_nvm_data अणु
 	u8	val8;
 	__le32	val32;
-};
+पूर्ण;
 
-static void bnxt_copy_to_nvm_data(union bnxt_nvm_data *dst,
-				  union devlink_param_value *src,
-				  int nvm_num_bits, int dl_num_bytes)
-{
+अटल व्योम bnxt_copy_to_nvm_data(जोड़ bnxt_nvm_data *dst,
+				  जोड़ devlink_param_value *src,
+				  पूर्णांक nvm_num_bits, पूर्णांक dl_num_bytes)
+अणु
 	u32 val32 = 0;
 
-	if (nvm_num_bits == 1) {
+	अगर (nvm_num_bits == 1) अणु
 		dst->val8 = src->vbool;
-		return;
-	}
-	if (dl_num_bytes == 4)
+		वापस;
+	पूर्ण
+	अगर (dl_num_bytes == 4)
 		val32 = src->vu32;
-	else if (dl_num_bytes == 2)
+	अन्यथा अगर (dl_num_bytes == 2)
 		val32 = (u32)src->vu16;
-	else if (dl_num_bytes == 1)
+	अन्यथा अगर (dl_num_bytes == 1)
 		val32 = (u32)src->vu8;
 	dst->val32 = cpu_to_le32(val32);
-}
+पूर्ण
 
-static void bnxt_copy_from_nvm_data(union devlink_param_value *dst,
-				    union bnxt_nvm_data *src,
-				    int nvm_num_bits, int dl_num_bytes)
-{
+अटल व्योम bnxt_copy_from_nvm_data(जोड़ devlink_param_value *dst,
+				    जोड़ bnxt_nvm_data *src,
+				    पूर्णांक nvm_num_bits, पूर्णांक dl_num_bytes)
+अणु
 	u32 val32;
 
-	if (nvm_num_bits == 1) {
+	अगर (nvm_num_bits == 1) अणु
 		dst->vbool = src->val8;
-		return;
-	}
+		वापस;
+	पूर्ण
 	val32 = le32_to_cpu(src->val32);
-	if (dl_num_bytes == 4)
+	अगर (dl_num_bytes == 4)
 		dst->vu32 = val32;
-	else if (dl_num_bytes == 2)
+	अन्यथा अगर (dl_num_bytes == 2)
 		dst->vu16 = (u16)val32;
-	else if (dl_num_bytes == 1)
+	अन्यथा अगर (dl_num_bytes == 1)
 		dst->vu8 = (u8)val32;
-}
+पूर्ण
 
-static int bnxt_hwrm_get_nvm_cfg_ver(struct bnxt *bp,
-				     union devlink_param_value *nvm_cfg_ver)
-{
-	struct hwrm_nvm_get_variable_input req = {0};
-	union bnxt_nvm_data *data;
+अटल पूर्णांक bnxt_hwrm_get_nvm_cfg_ver(काष्ठा bnxt *bp,
+				     जोड़ devlink_param_value *nvm_cfg_ver)
+अणु
+	काष्ठा hwrm_nvm_get_variable_input req = अणु0पूर्ण;
+	जोड़ bnxt_nvm_data *data;
 	dma_addr_t data_dma_addr;
-	int rc;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_NVM_GET_VARIABLE, -1, -1);
-	data = dma_alloc_coherent(&bp->pdev->dev, sizeof(*data),
+	data = dma_alloc_coherent(&bp->pdev->dev, माप(*data),
 				  &data_dma_addr, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	req.dest_data_addr = cpu_to_le64(data_dma_addr);
 	req.data_len = cpu_to_le16(BNXT_NVM_CFG_VER_BITS);
 	req.option_num = cpu_to_le16(NVM_OFF_NVM_CFG_VER);
 
-	rc = hwrm_send_message_silent(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc)
+	rc = hwrm_send_message_silent(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc)
 		bnxt_copy_from_nvm_data(nvm_cfg_ver, data,
 					BNXT_NVM_CFG_VER_BITS,
 					BNXT_NVM_CFG_VER_BYTES);
 
-	dma_free_coherent(&bp->pdev->dev, sizeof(*data), data, data_dma_addr);
-	return rc;
-}
+	dma_मुक्त_coherent(&bp->pdev->dev, माप(*data), data, data_dma_addr);
+	वापस rc;
+पूर्ण
 
-static int bnxt_dl_info_put(struct bnxt *bp, struct devlink_info_req *req,
-			    enum bnxt_dl_version_type type, const char *key,
-			    char *buf)
-{
-	if (!strlen(buf))
-		return 0;
+अटल पूर्णांक bnxt_dl_info_put(काष्ठा bnxt *bp, काष्ठा devlink_info_req *req,
+			    क्रमागत bnxt_dl_version_type type, स्थिर अक्षर *key,
+			    अक्षर *buf)
+अणु
+	अगर (!म_माप(buf))
+		वापस 0;
 
-	if ((bp->flags & BNXT_FLAG_CHIP_P5) &&
-	    (!strcmp(key, DEVLINK_INFO_VERSION_GENERIC_FW_NCSI) ||
-	     !strcmp(key, DEVLINK_INFO_VERSION_GENERIC_FW_ROCE)))
-		return 0;
+	अगर ((bp->flags & BNXT_FLAG_CHIP_P5) &&
+	    (!म_भेद(key, DEVLINK_INFO_VERSION_GENERIC_FW_NCSI) ||
+	     !म_भेद(key, DEVLINK_INFO_VERSION_GENERIC_FW_ROCE)))
+		वापस 0;
 
-	switch (type) {
-	case BNXT_VERSION_FIXED:
-		return devlink_info_version_fixed_put(req, key, buf);
-	case BNXT_VERSION_RUNNING:
-		return devlink_info_version_running_put(req, key, buf);
-	case BNXT_VERSION_STORED:
-		return devlink_info_version_stored_put(req, key, buf);
-	}
-	return 0;
-}
+	चयन (type) अणु
+	हाल BNXT_VERSION_FIXED:
+		वापस devlink_info_version_fixed_put(req, key, buf);
+	हाल BNXT_VERSION_RUNNING:
+		वापस devlink_info_version_running_put(req, key, buf);
+	हाल BNXT_VERSION_STORED:
+		वापस devlink_info_version_stored_put(req, key, buf);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define HWRM_FW_VER_STR_LEN	16
+#घोषणा HWRM_FW_VER_STR_LEN	16
 
-static int bnxt_dl_info_get(struct devlink *dl, struct devlink_info_req *req,
-			    struct netlink_ext_ack *extack)
-{
-	struct hwrm_nvm_get_dev_info_output nvm_dev_info;
-	struct bnxt *bp = bnxt_get_bp_from_dl(dl);
-	union devlink_param_value nvm_cfg_ver;
-	struct hwrm_ver_get_output *ver_resp;
-	char mgmt_ver[FW_VER_STR_LEN];
-	char roce_ver[FW_VER_STR_LEN];
-	char ncsi_ver[FW_VER_STR_LEN];
-	char buf[32];
-	int rc;
+अटल पूर्णांक bnxt_dl_info_get(काष्ठा devlink *dl, काष्ठा devlink_info_req *req,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा hwrm_nvm_get_dev_info_output nvm_dev_info;
+	काष्ठा bnxt *bp = bnxt_get_bp_from_dl(dl);
+	जोड़ devlink_param_value nvm_cfg_ver;
+	काष्ठा hwrm_ver_get_output *ver_resp;
+	अक्षर mgmt_ver[FW_VER_STR_LEN];
+	अक्षर roce_ver[FW_VER_STR_LEN];
+	अक्षर ncsi_ver[FW_VER_STR_LEN];
+	अक्षर buf[32];
+	पूर्णांक rc;
 
 	rc = devlink_info_driver_name_put(req, DRV_MODULE_NAME);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (BNXT_PF(bp) && (bp->flags & BNXT_FLAG_DSN_VALID)) {
-		sprintf(buf, "%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X",
+	अगर (BNXT_PF(bp) && (bp->flags & BNXT_FLAG_DSN_VALID)) अणु
+		प्र_लिखो(buf, "%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X",
 			bp->dsn[7], bp->dsn[6], bp->dsn[5], bp->dsn[4],
 			bp->dsn[3], bp->dsn[2], bp->dsn[1], bp->dsn[0]);
 		rc = devlink_info_serial_number_put(req, buf);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (strlen(bp->board_serialno)) {
+	अगर (म_माप(bp->board_serialno)) अणु
 		rc = devlink_info_board_serial_number_put(req, bp->board_serialno);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_FIXED,
 			      DEVLINK_INFO_VERSION_GENERIC_BOARD_ID,
 			      bp->board_partno);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	sprintf(buf, "%X", bp->chip_num);
+	प्र_लिखो(buf, "%X", bp->chip_num);
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_FIXED,
 			      DEVLINK_INFO_VERSION_GENERIC_ASIC_ID, buf);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	ver_resp = &bp->ver_resp;
-	sprintf(buf, "%X", ver_resp->chip_rev);
+	प्र_लिखो(buf, "%X", ver_resp->chip_rev);
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_FIXED,
 			      DEVLINK_INFO_VERSION_GENERIC_ASIC_REV, buf);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_RUNNING,
 			      DEVLINK_INFO_VERSION_GENERIC_FW_PSID,
 			      bp->nvm_cfg_ver);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	buf[0] = 0;
-	strncat(buf, ver_resp->active_pkg_name, HWRM_FW_VER_STR_LEN);
+	म_जोड़न(buf, ver_resp->active_pkg_name, HWRM_FW_VER_STR_LEN);
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_RUNNING,
 			      DEVLINK_INFO_VERSION_GENERIC_FW, buf);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (BNXT_PF(bp) && !bnxt_hwrm_get_nvm_cfg_ver(bp, &nvm_cfg_ver)) {
+	अगर (BNXT_PF(bp) && !bnxt_hwrm_get_nvm_cfg_ver(bp, &nvm_cfg_ver)) अणु
 		u32 ver = nvm_cfg_ver.vu32;
 
-		sprintf(buf, "%d.%d.%d", (ver >> 16) & 0xf, (ver >> 8) & 0xf,
+		प्र_लिखो(buf, "%d.%d.%d", (ver >> 16) & 0xf, (ver >> 8) & 0xf,
 			ver & 0xf);
 		rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_STORED,
 				      DEVLINK_INFO_VERSION_GENERIC_FW_PSID,
 				      buf);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (ver_resp->flags & VER_GET_RESP_FLAGS_EXT_VER_AVAIL) {
-		snprintf(mgmt_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
+	अगर (ver_resp->flags & VER_GET_RESP_FLAGS_EXT_VER_AVAIL) अणु
+		snम_लिखो(mgmt_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
 			 ver_resp->hwrm_fw_major, ver_resp->hwrm_fw_minor,
 			 ver_resp->hwrm_fw_build, ver_resp->hwrm_fw_patch);
 
-		snprintf(ncsi_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
+		snम_लिखो(ncsi_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
 			 ver_resp->mgmt_fw_major, ver_resp->mgmt_fw_minor,
 			 ver_resp->mgmt_fw_build, ver_resp->mgmt_fw_patch);
 
-		snprintf(roce_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
+		snम_लिखो(roce_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
 			 ver_resp->roce_fw_major, ver_resp->roce_fw_minor,
 			 ver_resp->roce_fw_build, ver_resp->roce_fw_patch);
-	} else {
-		snprintf(mgmt_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
+	पूर्ण अन्यथा अणु
+		snम_लिखो(mgmt_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
 			 ver_resp->hwrm_fw_maj_8b, ver_resp->hwrm_fw_min_8b,
 			 ver_resp->hwrm_fw_bld_8b, ver_resp->hwrm_fw_rsvd_8b);
 
-		snprintf(ncsi_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
+		snम_लिखो(ncsi_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
 			 ver_resp->mgmt_fw_maj_8b, ver_resp->mgmt_fw_min_8b,
 			 ver_resp->mgmt_fw_bld_8b, ver_resp->mgmt_fw_rsvd_8b);
 
-		snprintf(roce_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
+		snम_लिखो(roce_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
 			 ver_resp->roce_fw_maj_8b, ver_resp->roce_fw_min_8b,
 			 ver_resp->roce_fw_bld_8b, ver_resp->roce_fw_rsvd_8b);
-	}
+	पूर्ण
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_RUNNING,
 			      DEVLINK_INFO_VERSION_GENERIC_FW_MGMT, mgmt_ver);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_RUNNING,
 			      DEVLINK_INFO_VERSION_GENERIC_FW_MGMT_API,
 			      bp->hwrm_ver_supp);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_RUNNING,
 			      DEVLINK_INFO_VERSION_GENERIC_FW_NCSI, ncsi_ver);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_RUNNING,
 			      DEVLINK_INFO_VERSION_GENERIC_FW_ROCE, roce_ver);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = bnxt_hwrm_nvm_get_dev_info(bp, &nvm_dev_info);
-	if (rc ||
+	अगर (rc ||
 	    !(nvm_dev_info.flags & NVM_GET_DEV_INFO_RESP_FLAGS_FW_VER_VALID))
-		return 0;
+		वापस 0;
 
 	buf[0] = 0;
-	strncat(buf, nvm_dev_info.pkg_name, HWRM_FW_VER_STR_LEN);
+	म_जोड़न(buf, nvm_dev_info.pkg_name, HWRM_FW_VER_STR_LEN);
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_STORED,
 			      DEVLINK_INFO_VERSION_GENERIC_FW, buf);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	snprintf(mgmt_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
+	snम_लिखो(mgmt_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
 		 nvm_dev_info.hwrm_fw_major, nvm_dev_info.hwrm_fw_minor,
 		 nvm_dev_info.hwrm_fw_build, nvm_dev_info.hwrm_fw_patch);
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_STORED,
 			      DEVLINK_INFO_VERSION_GENERIC_FW_MGMT, mgmt_ver);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	snprintf(ncsi_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
+	snम_लिखो(ncsi_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
 		 nvm_dev_info.mgmt_fw_major, nvm_dev_info.mgmt_fw_minor,
 		 nvm_dev_info.mgmt_fw_build, nvm_dev_info.mgmt_fw_patch);
 	rc = bnxt_dl_info_put(bp, req, BNXT_VERSION_STORED,
 			      DEVLINK_INFO_VERSION_GENERIC_FW_NCSI, ncsi_ver);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	snprintf(roce_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
+	snम_लिखो(roce_ver, FW_VER_STR_LEN, "%d.%d.%d.%d",
 		 nvm_dev_info.roce_fw_major, nvm_dev_info.roce_fw_minor,
 		 nvm_dev_info.roce_fw_build, nvm_dev_info.roce_fw_patch);
-	return bnxt_dl_info_put(bp, req, BNXT_VERSION_STORED,
+	वापस bnxt_dl_info_put(bp, req, BNXT_VERSION_STORED,
 				DEVLINK_INFO_VERSION_GENERIC_FW_ROCE, roce_ver);
-}
+पूर्ण
 
-static int bnxt_hwrm_nvm_req(struct bnxt *bp, u32 param_id, void *msg,
-			     int msg_len, union devlink_param_value *val)
-{
-	struct hwrm_nvm_get_variable_input *req = msg;
-	struct bnxt_dl_nvm_param nvm_param;
-	union bnxt_nvm_data *data;
+अटल पूर्णांक bnxt_hwrm_nvm_req(काष्ठा bnxt *bp, u32 param_id, व्योम *msg,
+			     पूर्णांक msg_len, जोड़ devlink_param_value *val)
+अणु
+	काष्ठा hwrm_nvm_get_variable_input *req = msg;
+	काष्ठा bnxt_dl_nvm_param nvm_param;
+	जोड़ bnxt_nvm_data *data;
 	dma_addr_t data_dma_addr;
-	int idx = 0, rc, i;
+	पूर्णांक idx = 0, rc, i;
 
 	/* Get/Set NVM CFG parameter is supported only on PFs */
-	if (BNXT_VF(bp))
-		return -EPERM;
+	अगर (BNXT_VF(bp))
+		वापस -EPERM;
 
-	for (i = 0; i < ARRAY_SIZE(nvm_params); i++) {
-		if (nvm_params[i].id == param_id) {
+	क्रम (i = 0; i < ARRAY_SIZE(nvm_params); i++) अणु
+		अगर (nvm_params[i].id == param_id) अणु
 			nvm_param = nvm_params[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == ARRAY_SIZE(nvm_params))
-		return -EOPNOTSUPP;
+	अगर (i == ARRAY_SIZE(nvm_params))
+		वापस -EOPNOTSUPP;
 
-	if (nvm_param.dir_type == BNXT_NVM_PORT_CFG)
+	अगर (nvm_param.dir_type == BNXT_NVM_PORT_CFG)
 		idx = bp->pf.port_id;
-	else if (nvm_param.dir_type == BNXT_NVM_FUNC_CFG)
+	अन्यथा अगर (nvm_param.dir_type == BNXT_NVM_FUNC_CFG)
 		idx = bp->pf.fw_fid - BNXT_FIRST_PF_FID;
 
-	data = dma_alloc_coherent(&bp->pdev->dev, sizeof(*data),
+	data = dma_alloc_coherent(&bp->pdev->dev, माप(*data),
 				  &data_dma_addr, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	req->dest_data_addr = cpu_to_le64(data_dma_addr);
 	req->data_len = cpu_to_le16(nvm_param.nvm_num_bits);
 	req->option_num = cpu_to_le16(nvm_param.offset);
 	req->index_0 = cpu_to_le16(idx);
-	if (idx)
+	अगर (idx)
 		req->dimensions = cpu_to_le16(1);
 
-	if (req->req_type == cpu_to_le16(HWRM_NVM_SET_VARIABLE)) {
+	अगर (req->req_type == cpu_to_le16(HWRM_NVM_SET_VARIABLE)) अणु
 		bnxt_copy_to_nvm_data(data, val, nvm_param.nvm_num_bits,
 				      nvm_param.dl_num_bytes);
 		rc = hwrm_send_message(bp, msg, msg_len, HWRM_CMD_TIMEOUT);
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = hwrm_send_message_silent(bp, msg, msg_len,
 					      HWRM_CMD_TIMEOUT);
-		if (!rc) {
+		अगर (!rc) अणु
 			bnxt_copy_from_nvm_data(val, data,
 						nvm_param.nvm_num_bits,
 						nvm_param.dl_num_bytes);
-		} else {
-			struct hwrm_err_output *resp = bp->hwrm_cmd_resp_addr;
+		पूर्ण अन्यथा अणु
+			काष्ठा hwrm_err_output *resp = bp->hwrm_cmd_resp_addr;
 
-			if (resp->cmd_err ==
+			अगर (resp->cmd_err ==
 				NVM_GET_VARIABLE_CMD_ERR_CODE_VAR_NOT_EXIST)
 				rc = -EOPNOTSUPP;
-		}
-	}
-	dma_free_coherent(&bp->pdev->dev, sizeof(*data), data, data_dma_addr);
-	if (rc == -EACCES)
+		पूर्ण
+	पूर्ण
+	dma_मुक्त_coherent(&bp->pdev->dev, माप(*data), data, data_dma_addr);
+	अगर (rc == -EACCES)
 		netdev_err(bp->dev, "PF does not have admin privileges to modify NVM config\n");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_dl_nvm_param_get(struct devlink *dl, u32 id,
-				 struct devlink_param_gset_ctx *ctx)
-{
-	struct hwrm_nvm_get_variable_input req = {0};
-	struct bnxt *bp = bnxt_get_bp_from_dl(dl);
-	int rc;
+अटल पूर्णांक bnxt_dl_nvm_param_get(काष्ठा devlink *dl, u32 id,
+				 काष्ठा devlink_param_gset_ctx *ctx)
+अणु
+	काष्ठा hwrm_nvm_get_variable_input req = अणु0पूर्ण;
+	काष्ठा bnxt *bp = bnxt_get_bp_from_dl(dl);
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_NVM_GET_VARIABLE, -1, -1);
-	rc = bnxt_hwrm_nvm_req(bp, id, &req, sizeof(req), &ctx->val);
-	if (!rc)
-		if (id == BNXT_DEVLINK_PARAM_ID_GRE_VER_CHECK)
+	rc = bnxt_hwrm_nvm_req(bp, id, &req, माप(req), &ctx->val);
+	अगर (!rc)
+		अगर (id == BNXT_DEVLINK_PARAM_ID_GRE_VER_CHECK)
 			ctx->val.vbool = !ctx->val.vbool;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_dl_nvm_param_set(struct devlink *dl, u32 id,
-				 struct devlink_param_gset_ctx *ctx)
-{
-	struct hwrm_nvm_set_variable_input req = {0};
-	struct bnxt *bp = bnxt_get_bp_from_dl(dl);
+अटल पूर्णांक bnxt_dl_nvm_param_set(काष्ठा devlink *dl, u32 id,
+				 काष्ठा devlink_param_gset_ctx *ctx)
+अणु
+	काष्ठा hwrm_nvm_set_variable_input req = अणु0पूर्ण;
+	काष्ठा bnxt *bp = bnxt_get_bp_from_dl(dl);
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_NVM_SET_VARIABLE, -1, -1);
 
-	if (id == BNXT_DEVLINK_PARAM_ID_GRE_VER_CHECK)
+	अगर (id == BNXT_DEVLINK_PARAM_ID_GRE_VER_CHECK)
 		ctx->val.vbool = !ctx->val.vbool;
 
-	return bnxt_hwrm_nvm_req(bp, id, &req, sizeof(req), &ctx->val);
-}
+	वापस bnxt_hwrm_nvm_req(bp, id, &req, माप(req), &ctx->val);
+पूर्ण
 
-static int bnxt_dl_msix_validate(struct devlink *dl, u32 id,
-				 union devlink_param_value val,
-				 struct netlink_ext_ack *extack)
-{
-	int max_val = -1;
+अटल पूर्णांक bnxt_dl_msix_validate(काष्ठा devlink *dl, u32 id,
+				 जोड़ devlink_param_value val,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक max_val = -1;
 
-	if (id == DEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MAX)
+	अगर (id == DEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MAX)
 		max_val = BNXT_MSIX_VEC_MAX;
 
-	if (id == DEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MIN)
+	अगर (id == DEVLINK_PARAM_GENERIC_ID_MSIX_VEC_PER_PF_MIN)
 		max_val = BNXT_MSIX_VEC_MIN_MAX;
 
-	if (val.vu32 > max_val) {
+	अगर (val.vu32 > max_val) अणु
 		NL_SET_ERR_MSG_MOD(extack, "MSIX value is exceeding the range");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct devlink_param bnxt_dl_params[] = {
+अटल स्थिर काष्ठा devlink_param bnxt_dl_params[] = अणु
 	DEVLINK_PARAM_GENERIC(ENABLE_SRIOV,
 			      BIT(DEVLINK_PARAM_CMODE_PERMANENT),
 			      bnxt_dl_nvm_param_get, bnxt_dl_nvm_param_set,
-			      NULL),
+			      शून्य),
 	DEVLINK_PARAM_GENERIC(IGNORE_ARI,
 			      BIT(DEVLINK_PARAM_CMODE_PERMANENT),
 			      bnxt_dl_nvm_param_get, bnxt_dl_nvm_param_set,
-			      NULL),
+			      शून्य),
 	DEVLINK_PARAM_GENERIC(MSIX_VEC_PER_PF_MAX,
 			      BIT(DEVLINK_PARAM_CMODE_PERMANENT),
 			      bnxt_dl_nvm_param_get, bnxt_dl_nvm_param_set,
@@ -697,119 +698,119 @@ static const struct devlink_param bnxt_dl_params[] = {
 			     "gre_ver_check", DEVLINK_PARAM_TYPE_BOOL,
 			     BIT(DEVLINK_PARAM_CMODE_PERMANENT),
 			     bnxt_dl_nvm_param_get, bnxt_dl_nvm_param_set,
-			     NULL),
-};
+			     शून्य),
+पूर्ण;
 
-static const struct devlink_param bnxt_dl_port_params[] = {
-};
+अटल स्थिर काष्ठा devlink_param bnxt_dl_port_params[] = अणु
+पूर्ण;
 
-static int bnxt_dl_params_register(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_dl_params_रेजिस्टर(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
-	if (bp->hwrm_spec_code < 0x10600)
-		return 0;
+	अगर (bp->hwrm_spec_code < 0x10600)
+		वापस 0;
 
-	rc = devlink_params_register(bp->dl, bnxt_dl_params,
+	rc = devlink_params_रेजिस्टर(bp->dl, bnxt_dl_params,
 				     ARRAY_SIZE(bnxt_dl_params));
-	if (rc) {
+	अगर (rc) अणु
 		netdev_warn(bp->dev, "devlink_params_register failed. rc=%d\n",
 			    rc);
-		return rc;
-	}
-	rc = devlink_port_params_register(&bp->dl_port, bnxt_dl_port_params,
+		वापस rc;
+	पूर्ण
+	rc = devlink_port_params_रेजिस्टर(&bp->dl_port, bnxt_dl_port_params,
 					  ARRAY_SIZE(bnxt_dl_port_params));
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "devlink_port_params_register failed\n");
-		devlink_params_unregister(bp->dl, bnxt_dl_params,
+		devlink_params_unरेजिस्टर(bp->dl, bnxt_dl_params,
 					  ARRAY_SIZE(bnxt_dl_params));
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	devlink_params_publish(bp->dl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnxt_dl_params_unregister(struct bnxt *bp)
-{
-	if (bp->hwrm_spec_code < 0x10600)
-		return;
+अटल व्योम bnxt_dl_params_unरेजिस्टर(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->hwrm_spec_code < 0x10600)
+		वापस;
 
-	devlink_params_unregister(bp->dl, bnxt_dl_params,
+	devlink_params_unरेजिस्टर(bp->dl, bnxt_dl_params,
 				  ARRAY_SIZE(bnxt_dl_params));
-	devlink_port_params_unregister(&bp->dl_port, bnxt_dl_port_params,
+	devlink_port_params_unरेजिस्टर(&bp->dl_port, bnxt_dl_port_params,
 				       ARRAY_SIZE(bnxt_dl_port_params));
-}
+पूर्ण
 
-int bnxt_dl_register(struct bnxt *bp)
-{
-	struct devlink_port_attrs attrs = {};
-	struct devlink *dl;
-	int rc;
+पूर्णांक bnxt_dl_रेजिस्टर(काष्ठा bnxt *bp)
+अणु
+	काष्ठा devlink_port_attrs attrs = अणुपूर्ण;
+	काष्ठा devlink *dl;
+	पूर्णांक rc;
 
-	if (BNXT_PF(bp))
-		dl = devlink_alloc(&bnxt_dl_ops, sizeof(struct bnxt_dl));
-	else
-		dl = devlink_alloc(&bnxt_vf_dl_ops, sizeof(struct bnxt_dl));
-	if (!dl) {
+	अगर (BNXT_PF(bp))
+		dl = devlink_alloc(&bnxt_dl_ops, माप(काष्ठा bnxt_dl));
+	अन्यथा
+		dl = devlink_alloc(&bnxt_vf_dl_ops, माप(काष्ठा bnxt_dl));
+	अगर (!dl) अणु
 		netdev_warn(bp->dev, "devlink_alloc failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	bnxt_link_bp_to_dl(bp, dl);
 
-	/* Add switchdev eswitch mode setting, if SRIOV supported */
-	if (pci_find_ext_capability(bp->pdev, PCI_EXT_CAP_ID_SRIOV) &&
+	/* Add चयनdev eचयन mode setting, अगर SRIOV supported */
+	अगर (pci_find_ext_capability(bp->pdev, PCI_EXT_CAP_ID_SRIOV) &&
 	    bp->hwrm_spec_code > 0x10803)
-		bp->eswitch_mode = DEVLINK_ESWITCH_MODE_LEGACY;
+		bp->eचयन_mode = DEVLINK_ESWITCH_MODE_LEGACY;
 
-	rc = devlink_register(dl, &bp->pdev->dev);
-	if (rc) {
+	rc = devlink_रेजिस्टर(dl, &bp->pdev->dev);
+	अगर (rc) अणु
 		netdev_warn(bp->dev, "devlink_register failed. rc=%d\n", rc);
-		goto err_dl_free;
-	}
+		जाओ err_dl_मुक्त;
+	पूर्ण
 
-	if (!BNXT_PF(bp))
-		return 0;
+	अगर (!BNXT_PF(bp))
+		वापस 0;
 
 	attrs.flavour = DEVLINK_PORT_FLAVOUR_PHYSICAL;
 	attrs.phys.port_number = bp->pf.port_id;
-	memcpy(attrs.switch_id.id, bp->dsn, sizeof(bp->dsn));
-	attrs.switch_id.id_len = sizeof(bp->dsn);
+	स_नकल(attrs.चयन_id.id, bp->dsn, माप(bp->dsn));
+	attrs.चयन_id.id_len = माप(bp->dsn);
 	devlink_port_attrs_set(&bp->dl_port, &attrs);
-	rc = devlink_port_register(dl, &bp->dl_port, bp->pf.port_id);
-	if (rc) {
+	rc = devlink_port_रेजिस्टर(dl, &bp->dl_port, bp->pf.port_id);
+	अगर (rc) अणु
 		netdev_err(bp->dev, "devlink_port_register failed\n");
-		goto err_dl_unreg;
-	}
+		जाओ err_dl_unreg;
+	पूर्ण
 
-	rc = bnxt_dl_params_register(bp);
-	if (rc)
-		goto err_dl_port_unreg;
+	rc = bnxt_dl_params_रेजिस्टर(bp);
+	अगर (rc)
+		जाओ err_dl_port_unreg;
 
-	return 0;
+	वापस 0;
 
 err_dl_port_unreg:
-	devlink_port_unregister(&bp->dl_port);
+	devlink_port_unरेजिस्टर(&bp->dl_port);
 err_dl_unreg:
-	devlink_unregister(dl);
-err_dl_free:
-	bnxt_link_bp_to_dl(bp, NULL);
-	devlink_free(dl);
-	return rc;
-}
+	devlink_unरेजिस्टर(dl);
+err_dl_मुक्त:
+	bnxt_link_bp_to_dl(bp, शून्य);
+	devlink_मुक्त(dl);
+	वापस rc;
+पूर्ण
 
-void bnxt_dl_unregister(struct bnxt *bp)
-{
-	struct devlink *dl = bp->dl;
+व्योम bnxt_dl_unरेजिस्टर(काष्ठा bnxt *bp)
+अणु
+	काष्ठा devlink *dl = bp->dl;
 
-	if (!dl)
-		return;
+	अगर (!dl)
+		वापस;
 
-	if (BNXT_PF(bp)) {
-		bnxt_dl_params_unregister(bp);
-		devlink_port_unregister(&bp->dl_port);
-	}
-	devlink_unregister(dl);
-	devlink_free(dl);
-}
+	अगर (BNXT_PF(bp)) अणु
+		bnxt_dl_params_unरेजिस्टर(bp);
+		devlink_port_unरेजिस्टर(&bp->dl_port);
+	पूर्ण
+	devlink_unरेजिस्टर(dl);
+	devlink_मुक्त(dl);
+पूर्ण

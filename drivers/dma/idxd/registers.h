@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
-#ifndef _IDXD_REGISTERS_H_
-#define _IDXD_REGISTERS_H_
+#अगर_अघोषित _IDXD_REGISTERS_H_
+#घोषणा _IDXD_REGISTERS_H_
 
 /* PCI Config */
-#define PCI_DEVICE_ID_INTEL_DSA_SPR0	0x0b25
-#define PCI_DEVICE_ID_INTEL_IAX_SPR0	0x0cfe
+#घोषणा PCI_DEVICE_ID_INTEL_DSA_SPR0	0x0b25
+#घोषणा PCI_DEVICE_ID_INTEL_IAX_SPR0	0x0cfe
 
-#define IDXD_MMIO_BAR		0
-#define IDXD_WQ_BAR		2
-#define IDXD_PORTAL_SIZE	PAGE_SIZE
+#घोषणा IDXD_MMIO_BAR		0
+#घोषणा IDXD_WQ_BAR		2
+#घोषणा IDXD_PORTAL_SIZE	PAGE_SIZE
 
 /* MMIO Device BAR0 Registers */
-#define IDXD_VER_OFFSET			0x00
-#define IDXD_VER_MAJOR_MASK		0xf0
-#define IDXD_VER_MINOR_MASK		0x0f
-#define GET_IDXD_VER_MAJOR(x)		(((x) & IDXD_VER_MAJOR_MASK) >> 4)
-#define GET_IDXD_VER_MINOR(x)		((x) & IDXD_VER_MINOR_MASK)
+#घोषणा IDXD_VER_OFFSET			0x00
+#घोषणा IDXD_VER_MAJOR_MASK		0xf0
+#घोषणा IDXD_VER_MINOR_MASK		0x0f
+#घोषणा GET_IDXD_VER_MAJOR(x)		(((x) & IDXD_VER_MAJOR_MASK) >> 4)
+#घोषणा GET_IDXD_VER_MINOR(x)		((x) & IDXD_VER_MINOR_MASK)
 
-union gen_cap_reg {
-	struct {
+जोड़ gen_cap_reg अणु
+	काष्ठा अणु
 		u64 block_on_fault:1;
 		u64 overlap_copy:1;
 		u64 cache_control_mem:1;
 		u64 cache_control_cache:1;
 		u64 cmd_cap:1;
 		u64 rsvd:3;
-		u64 dest_readback:1;
-		u64 drain_readback:1;
+		u64 dest_पढ़ोback:1;
+		u64 drain_पढ़ोback:1;
 		u64 rsvd2:6;
-		u64 max_xfer_shift:5;
-		u64 max_batch_shift:4;
+		u64 max_xfer_shअगरt:5;
+		u64 max_batch_shअगरt:4;
 		u64 max_ims_mult:6;
 		u64 config_en:1;
 		u64 max_descs_per_engine:8;
 		u64 rsvd3:24;
-	};
+	पूर्ण;
 	u64 bits;
-} __packed;
-#define IDXD_GENCAP_OFFSET		0x10
+पूर्ण __packed;
+#घोषणा IDXD_GENCAP_OFFSET		0x10
 
-union wq_cap_reg {
-	struct {
+जोड़ wq_cap_reg अणु
+	काष्ठा अणु
 		u64 total_wq_size:16;
 		u64 num_wqs:8;
 		u64 wqcfg_size:4;
@@ -51,123 +52,123 @@ union wq_cap_reg {
 		u64 wq_ats_support:1;
 		u64 priority:1;
 		u64 occupancy:1;
-		u64 occupancy_int:1;
+		u64 occupancy_पूर्णांक:1;
 		u64 rsvd3:10;
-	};
+	पूर्ण;
 	u64 bits;
-} __packed;
-#define IDXD_WQCAP_OFFSET		0x20
-#define IDXD_WQCFG_MIN			5
+पूर्ण __packed;
+#घोषणा IDXD_WQCAP_OFFSET		0x20
+#घोषणा IDXD_WQCFG_MIN			5
 
-union group_cap_reg {
-	struct {
+जोड़ group_cap_reg अणु
+	काष्ठा अणु
 		u64 num_groups:8;
 		u64 total_tokens:8;
 		u64 token_en:1;
 		u64 token_limit:1;
 		u64 rsvd:46;
-	};
+	पूर्ण;
 	u64 bits;
-} __packed;
-#define IDXD_GRPCAP_OFFSET		0x30
+पूर्ण __packed;
+#घोषणा IDXD_GRPCAP_OFFSET		0x30
 
-union engine_cap_reg {
-	struct {
+जोड़ engine_cap_reg अणु
+	काष्ठा अणु
 		u64 num_engines:8;
 		u64 rsvd:56;
-	};
+	पूर्ण;
 	u64 bits;
-} __packed;
+पूर्ण __packed;
 
-#define IDXD_ENGCAP_OFFSET		0x38
+#घोषणा IDXD_ENGCAP_OFFSET		0x38
 
-#define IDXD_OPCAP_NOOP			0x0001
-#define IDXD_OPCAP_BATCH			0x0002
-#define IDXD_OPCAP_MEMMOVE		0x0008
-struct opcap {
+#घोषणा IDXD_OPCAP_NOOP			0x0001
+#घोषणा IDXD_OPCAP_BATCH			0x0002
+#घोषणा IDXD_OPCAP_MEMMOVE		0x0008
+काष्ठा opcap अणु
 	u64 bits[4];
-};
+पूर्ण;
 
-#define IDXD_OPCAP_OFFSET		0x40
+#घोषणा IDXD_OPCAP_OFFSET		0x40
 
-#define IDXD_TABLE_OFFSET		0x60
-union offsets_reg {
-	struct {
+#घोषणा IDXD_TABLE_OFFSET		0x60
+जोड़ offsets_reg अणु
+	काष्ठा अणु
 		u64 grpcfg:16;
 		u64 wqcfg:16;
 		u64 msix_perm:16;
 		u64 ims:16;
 		u64 perfmon:16;
 		u64 rsvd:48;
-	};
+	पूर्ण;
 	u64 bits[2];
-} __packed;
+पूर्ण __packed;
 
-#define IDXD_TABLE_MULT			0x100
+#घोषणा IDXD_TABLE_MULT			0x100
 
-#define IDXD_GENCFG_OFFSET		0x80
-union gencfg_reg {
-	struct {
+#घोषणा IDXD_GENCFG_OFFSET		0x80
+जोड़ gencfg_reg अणु
+	काष्ठा अणु
 		u32 token_limit:8;
 		u32 rsvd:4;
-		u32 user_int_en:1;
+		u32 user_पूर्णांक_en:1;
 		u32 rsvd2:19;
-	};
+	पूर्ण;
 	u32 bits;
-} __packed;
+पूर्ण __packed;
 
-#define IDXD_GENCTRL_OFFSET		0x88
-union genctrl_reg {
-	struct {
-		u32 softerr_int_en:1;
-		u32 halt_int_en:1;
+#घोषणा IDXD_GENCTRL_OFFSET		0x88
+जोड़ genctrl_reg अणु
+	काष्ठा अणु
+		u32 softerr_पूर्णांक_en:1;
+		u32 halt_पूर्णांक_en:1;
 		u32 rsvd:30;
-	};
+	पूर्ण;
 	u32 bits;
-} __packed;
+पूर्ण __packed;
 
-#define IDXD_GENSTATS_OFFSET		0x90
-union gensts_reg {
-	struct {
+#घोषणा IDXD_GENSTATS_OFFSET		0x90
+जोड़ gensts_reg अणु
+	काष्ठा अणु
 		u32 state:2;
 		u32 reset_type:2;
 		u32 rsvd:28;
-	};
+	पूर्ण;
 	u32 bits;
-} __packed;
+पूर्ण __packed;
 
-enum idxd_device_status_state {
+क्रमागत idxd_device_status_state अणु
 	IDXD_DEVICE_STATE_DISABLED = 0,
 	IDXD_DEVICE_STATE_ENABLED,
 	IDXD_DEVICE_STATE_DRAIN,
 	IDXD_DEVICE_STATE_HALT,
-};
+पूर्ण;
 
-enum idxd_device_reset_type {
+क्रमागत idxd_device_reset_type अणु
 	IDXD_DEVICE_RESET_SOFTWARE = 0,
 	IDXD_DEVICE_RESET_FLR,
 	IDXD_DEVICE_RESET_WARM,
 	IDXD_DEVICE_RESET_COLD,
-};
+पूर्ण;
 
-#define IDXD_INTCAUSE_OFFSET		0x98
-#define IDXD_INTC_ERR			0x01
-#define IDXD_INTC_CMD			0x02
-#define IDXD_INTC_OCCUPY			0x04
-#define IDXD_INTC_PERFMON_OVFL		0x08
+#घोषणा IDXD_INTCAUSE_OFFSET		0x98
+#घोषणा IDXD_INTC_ERR			0x01
+#घोषणा IDXD_INTC_CMD			0x02
+#घोषणा IDXD_INTC_OCCUPY			0x04
+#घोषणा IDXD_INTC_PERFMON_OVFL		0x08
 
-#define IDXD_CMD_OFFSET			0xa0
-union idxd_command_reg {
-	struct {
-		u32 operand:20;
+#घोषणा IDXD_CMD_OFFSET			0xa0
+जोड़ idxd_command_reg अणु
+	काष्ठा अणु
+		u32 opeअक्रम:20;
 		u32 cmd:5;
 		u32 rsvd:6;
-		u32 int_req:1;
-	};
+		u32 पूर्णांक_req:1;
+	पूर्ण;
 	u32 bits;
-} __packed;
+पूर्ण __packed;
 
-enum idxd_cmd {
+क्रमागत idxd_cmd अणु
 	IDXD_CMD_ENABLE_DEVICE = 1,
 	IDXD_CMD_DISABLE_DEVICE,
 	IDXD_CMD_DRAIN_ALL,
@@ -182,25 +183,25 @@ enum idxd_cmd {
 	IDXD_CMD_ABORT_PASID,
 	IDXD_CMD_REQUEST_INT_HANDLE,
 	IDXD_CMD_RELEASE_INT_HANDLE,
-};
+पूर्ण;
 
-#define CMD_INT_HANDLE_IMS		0x10000
+#घोषणा CMD_INT_HANDLE_IMS		0x10000
 
-#define IDXD_CMDSTS_OFFSET		0xa8
-union cmdsts_reg {
-	struct {
+#घोषणा IDXD_CMDSTS_OFFSET		0xa8
+जोड़ cmdsts_reg अणु
+	काष्ठा अणु
 		u8 err;
 		u16 result;
 		u8 rsvd:7;
 		u8 active:1;
-	};
+	पूर्ण;
 	u32 bits;
-} __packed;
-#define IDXD_CMDSTS_ACTIVE		0x80000000
-#define IDXD_CMDSTS_ERR_MASK		0xff
-#define IDXD_CMDSTS_RES_SHIFT		8
+पूर्ण __packed;
+#घोषणा IDXD_CMDSTS_ACTIVE		0x80000000
+#घोषणा IDXD_CMDSTS_ERR_MASK		0xff
+#घोषणा IDXD_CMDSTS_RES_SHIFT		8
 
-enum idxd_cmdsts_err {
+क्रमागत idxd_cmdsts_err अणु
 	IDXD_CMDSTS_SUCCESS = 0,
 	IDXD_CMDSTS_INVAL_CMD,
 	IDXD_CMDSTS_INVAL_WQIDX,
@@ -210,7 +211,7 @@ enum idxd_cmdsts_err {
 	IDXD_CMDSTS_ERR_CONFIG,
 	IDXD_CMDSTS_ERR_BUSMASTER_EN,
 	IDXD_CMDSTS_ERR_PASID_INVAL,
-	IDXD_CMDSTS_ERR_WQ_SIZE_ERANGE,
+	IDXD_CMDSTS_ERR_WQ_SIZE_दुस्फल,
 	IDXD_CMDSTS_ERR_GRP_CONFIG,
 	IDXD_CMDSTS_ERR_GRP_CONFIG2,
 	IDXD_CMDSTS_ERR_GRP_CONFIG3,
@@ -227,21 +228,21 @@ enum idxd_cmdsts_err {
 	IDXD_CMDSTS_ERR_MAX_XFER_SIZE,
 	/* disable device errors */
 	IDXD_CMDSTS_ERR_DIS_DEV_EN = 0x31,
-	/* disable WQ, drain WQ, abort WQ, reset WQ */
+	/* disable WQ, drain WQ, पात WQ, reset WQ */
 	IDXD_CMDSTS_ERR_DEV_NOT_EN,
-	/* request interrupt handle */
+	/* request पूर्णांकerrupt handle */
 	IDXD_CMDSTS_ERR_INVAL_INT_IDX = 0x41,
 	IDXD_CMDSTS_ERR_NO_HANDLE,
-};
+पूर्ण;
 
-#define IDXD_CMDCAP_OFFSET		0xb0
+#घोषणा IDXD_CMDCAP_OFFSET		0xb0
 
-#define IDXD_SWERR_OFFSET		0xc0
-#define IDXD_SWERR_VALID		0x00000001
-#define IDXD_SWERR_OVERFLOW		0x00000002
-#define IDXD_SWERR_ACK			(IDXD_SWERR_VALID | IDXD_SWERR_OVERFLOW)
-union sw_err_reg {
-	struct {
+#घोषणा IDXD_SWERR_OFFSET		0xc0
+#घोषणा IDXD_SWERR_VALID		0x00000001
+#घोषणा IDXD_SWERR_OVERFLOW		0x00000002
+#घोषणा IDXD_SWERR_ACK			(IDXD_SWERR_VALID | IDXD_SWERR_OVERFLOW)
+जोड़ sw_err_reg अणु
+	काष्ठा अणु
 		u64 valid:1;
 		u64 overflow:1;
 		u64 desc_valid:1;
@@ -264,23 +265,23 @@ union sw_err_reg {
 		u64 fault_addr;
 
 		u64 rsvd5;
-	};
+	पूर्ण;
 	u64 bits[4];
-} __packed;
+पूर्ण __packed;
 
-union msix_perm {
-	struct {
+जोड़ msix_perm अणु
+	काष्ठा अणु
 		u32 rsvd:2;
 		u32 ignore:1;
 		u32 pasid_en:1;
 		u32 rsvd2:8;
 		u32 pasid:20;
-	};
+	पूर्ण;
 	u32 bits;
-} __packed;
+पूर्ण __packed;
 
-union group_flags {
-	struct {
+जोड़ group_flags अणु
+	काष्ठा अणु
 		u32 tc_a:3;
 		u32 tc_b:3;
 		u32 rsvd:1;
@@ -289,18 +290,18 @@ union group_flags {
 		u32 rsvd2:4;
 		u32 tokens_allowed:8;
 		u32 rsvd3:4;
-	};
+	पूर्ण;
 	u32 bits;
-} __packed;
+पूर्ण __packed;
 
-struct grpcfg {
+काष्ठा grpcfg अणु
 	u64 wqs[4];
 	u64 engines;
-	union group_flags flags;
-} __packed;
+	जोड़ group_flags flags;
+पूर्ण __packed;
 
-union wqcfg {
-	struct {
+जोड़ wqcfg अणु
+	काष्ठा अणु
 		/* bytes 0-3 */
 		u16 wq_size;
 		u16 rsvd;
@@ -321,75 +322,75 @@ union wqcfg {
 		u32 rsvd3:2;
 
 		/* bytes 12-15 */
-		u32 max_xfer_shift:5;
-		u32 max_batch_shift:4;
+		u32 max_xfer_shअगरt:5;
+		u32 max_batch_shअगरt:4;
 		u32 rsvd4:23;
 
 		/* bytes 16-19 */
-		u16 occupancy_inth;
+		u16 occupancy_पूर्णांकh;
 		u16 occupancy_table_sel:1;
 		u16 rsvd5:15;
 
 		/* bytes 20-23 */
 		u16 occupancy_limit;
-		u16 occupancy_int_en:1;
+		u16 occupancy_पूर्णांक_en:1;
 		u16 rsvd6:15;
 
 		/* bytes 24-27 */
 		u16 occupancy;
-		u16 occupancy_int:1;
+		u16 occupancy_पूर्णांक:1;
 		u16 rsvd7:12;
 		u16 mode_support:1;
 		u16 wq_state:2;
 
 		/* bytes 28-31 */
 		u32 rsvd8;
-	};
+	पूर्ण;
 	u32 bits[8];
-} __packed;
+पूर्ण __packed;
 
-#define WQCFG_PASID_IDX                2
+#घोषणा WQCFG_PASID_IDX                2
 
 /*
- * This macro calculates the offset into the WQCFG register
- * idxd - struct idxd *
+ * This macro calculates the offset पूर्णांकo the WQCFG रेजिस्टर
+ * idxd - काष्ठा idxd *
  * n - wq id
- * ofs - the index of the 32b dword for the config register
+ * ofs - the index of the 32b dword क्रम the config रेजिस्टर
  *
- * The WQCFG register block is divided into groups per each wq. The n index
- * allows us to move to the register group that's for that particular wq.
- * Each register is 32bits. The ofs gives us the number of register to access.
+ * The WQCFG रेजिस्टर block is भागided पूर्णांकo groups per each wq. The n index
+ * allows us to move to the रेजिस्टर group that's क्रम that particular wq.
+ * Each रेजिस्टर is 32bits. The ofs gives us the number of रेजिस्टर to access.
  */
-#define WQCFG_OFFSET(_idxd_dev, n, ofs) \
-({\
+#घोषणा WQCFG_OFFSET(_idxd_dev, n, ofs) \
+(अणु\
 	typeof(_idxd_dev) __idxd_dev = (_idxd_dev);	\
-	(__idxd_dev)->wqcfg_offset + (n) * (__idxd_dev)->wqcfg_size + sizeof(u32) * (ofs);	\
-})
+	(__idxd_dev)->wqcfg_offset + (n) * (__idxd_dev)->wqcfg_size + माप(u32) * (ofs);	\
+पूर्ण)
 
-#define WQCFG_STRIDES(_idxd_dev) ((_idxd_dev)->wqcfg_size / sizeof(u32))
+#घोषणा WQCFG_STRIDES(_idxd_dev) ((_idxd_dev)->wqcfg_size / माप(u32))
 
-#define GRPCFG_SIZE		64
-#define GRPWQCFG_STRIDES	4
+#घोषणा GRPCFG_SIZE		64
+#घोषणा GRPWQCFG_STRIDES	4
 
 /*
- * This macro calculates the offset into the GRPCFG register
- * idxd - struct idxd *
+ * This macro calculates the offset पूर्णांकo the GRPCFG रेजिस्टर
+ * idxd - काष्ठा idxd *
  * n - wq id
- * ofs - the index of the 32b dword for the config register
+ * ofs - the index of the 32b dword क्रम the config रेजिस्टर
  *
- * The WQCFG register block is divided into groups per each wq. The n index
- * allows us to move to the register group that's for that particular wq.
- * Each register is 32bits. The ofs gives us the number of register to access.
+ * The WQCFG रेजिस्टर block is भागided पूर्णांकo groups per each wq. The n index
+ * allows us to move to the रेजिस्टर group that's क्रम that particular wq.
+ * Each रेजिस्टर is 32bits. The ofs gives us the number of रेजिस्टर to access.
  */
-#define GRPWQCFG_OFFSET(idxd_dev, n, ofs) ((idxd_dev)->grpcfg_offset +\
-					   (n) * GRPCFG_SIZE + sizeof(u64) * (ofs))
-#define GRPENGCFG_OFFSET(idxd_dev, n) ((idxd_dev)->grpcfg_offset + (n) * GRPCFG_SIZE + 32)
-#define GRPFLGCFG_OFFSET(idxd_dev, n) ((idxd_dev)->grpcfg_offset + (n) * GRPCFG_SIZE + 40)
+#घोषणा GRPWQCFG_OFFSET(idxd_dev, n, ofs) ((idxd_dev)->grpcfg_offset +\
+					   (n) * GRPCFG_SIZE + माप(u64) * (ofs))
+#घोषणा GRPENGCFG_OFFSET(idxd_dev, n) ((idxd_dev)->grpcfg_offset + (n) * GRPCFG_SIZE + 32)
+#घोषणा GRPFLGCFG_OFFSET(idxd_dev, n) ((idxd_dev)->grpcfg_offset + (n) * GRPCFG_SIZE + 40)
 
-/* Following is performance monitor registers */
-#define IDXD_PERFCAP_OFFSET		0x0
-union idxd_perfcap {
-	struct {
+/* Following is perक्रमmance monitor रेजिस्टरs */
+#घोषणा IDXD_PERFCAP_OFFSET		0x0
+जोड़ idxd_perfcap अणु
+	काष्ठा अणु
 		u64 num_perf_counter:6;
 		u64 rsvd1:2;
 		u64 counter_width:8;
@@ -398,100 +399,100 @@ union idxd_perfcap {
 		u64 filter:8;
 		u64 rsvd2:8;
 		u64 cap_per_counter:1;
-		u64 writeable_counter:1;
-		u64 counter_freeze:1;
-		u64 overflow_interrupt:1;
+		u64 ग_लिखोable_counter:1;
+		u64 counter_मुक्तze:1;
+		u64 overflow_पूर्णांकerrupt:1;
 		u64 rsvd3:8;
-	};
+	पूर्ण;
 	u64 bits;
-} __packed;
+पूर्ण __packed;
 
-#define IDXD_EVNTCAP_OFFSET		0x80
-union idxd_evntcap {
-	struct {
+#घोषणा IDXD_EVNTCAP_OFFSET		0x80
+जोड़ idxd_evntcap अणु
+	काष्ठा अणु
 		u64 events:28;
 		u64 rsvd:36;
-	};
+	पूर्ण;
 	u64 bits;
-} __packed;
+पूर्ण __packed;
 
-struct idxd_event {
-	union {
-		struct {
+काष्ठा idxd_event अणु
+	जोड़ अणु
+		काष्ठा अणु
 			u32 event_category:4;
 			u32 events:28;
-		};
+		पूर्ण;
 		u32 val;
-	};
-} __packed;
+	पूर्ण;
+पूर्ण __packed;
 
-#define IDXD_CNTRCAP_OFFSET		0x800
-struct idxd_cntrcap {
-	union {
-		struct {
+#घोषणा IDXD_CNTRCAP_OFFSET		0x800
+काष्ठा idxd_cntrcap अणु
+	जोड़ अणु
+		काष्ठा अणु
 			u32 counter_width:8;
 			u32 rsvd:20;
 			u32 num_events:4;
-		};
+		पूर्ण;
 		u32 val;
-	};
-	struct idxd_event events[];
-} __packed;
+	पूर्ण;
+	काष्ठा idxd_event events[];
+पूर्ण __packed;
 
-#define IDXD_PERFRST_OFFSET		0x10
-union idxd_perfrst {
-	struct {
+#घोषणा IDXD_PERFRST_OFFSET		0x10
+जोड़ idxd_perfrst अणु
+	काष्ठा अणु
 		u32 perfrst_config:1;
 		u32 perfrst_counter:1;
 		u32 rsvd:30;
-	};
+	पूर्ण;
 	u32 val;
-} __packed;
+पूर्ण __packed;
 
-#define IDXD_OVFSTATUS_OFFSET		0x30
-#define IDXD_PERFFRZ_OFFSET		0x20
-#define IDXD_CNTRCFG_OFFSET		0x100
-union idxd_cntrcfg {
-	struct {
+#घोषणा IDXD_OVFSTATUS_OFFSET		0x30
+#घोषणा IDXD_PERFFRZ_OFFSET		0x20
+#घोषणा IDXD_CNTRCFG_OFFSET		0x100
+जोड़ idxd_cntrcfg अणु
+	काष्ठा अणु
 		u64 enable:1;
-		u64 interrupt_ovf:1;
-		u64 global_freeze_ovf:1;
+		u64 पूर्णांकerrupt_ovf:1;
+		u64 global_मुक्तze_ovf:1;
 		u64 rsvd1:5;
 		u64 event_category:4;
 		u64 rsvd2:20;
 		u64 events:28;
 		u64 rsvd3:4;
-	};
+	पूर्ण;
 	u64 val;
-} __packed;
+पूर्ण __packed;
 
-#define IDXD_FLTCFG_OFFSET		0x300
+#घोषणा IDXD_FLTCFG_OFFSET		0x300
 
-#define IDXD_CNTRDATA_OFFSET		0x200
-union idxd_cntrdata {
-	struct {
+#घोषणा IDXD_CNTRDATA_OFFSET		0x200
+जोड़ idxd_cntrdata अणु
+	काष्ठा अणु
 		u64 event_count_value;
-	};
+	पूर्ण;
 	u64 val;
-} __packed;
+पूर्ण __packed;
 
-union event_cfg {
-	struct {
+जोड़ event_cfg अणु
+	काष्ठा अणु
 		u64 event_cat:4;
 		u64 event_enc:28;
-	};
+	पूर्ण;
 	u64 val;
-} __packed;
+पूर्ण __packed;
 
-union filter_cfg {
-	struct {
+जोड़ filter_cfg अणु
+	काष्ठा अणु
 		u64 wq:32;
 		u64 tc:8;
 		u64 pg_sz:4;
 		u64 xfer_sz:8;
 		u64 eng:8;
-	};
+	पूर्ण;
 	u64 val;
-} __packed;
+पूर्ण __packed;
 
-#endif
+#पूर्ण_अगर

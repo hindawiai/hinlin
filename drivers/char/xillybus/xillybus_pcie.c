@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/drivers/misc/xillybus_pcie.c
  *
  * Copyright 2011 Xillybus Ltd, http://xillybus.com
  *
- * Driver for the Xillybus FPGA/host framework using PCI Express.
+ * Driver क्रम the Xillybus FPGA/host framework using PCI Express.
  */
 
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include "xillybus.h"
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश "xillybus.h"
 
 MODULE_DESCRIPTION("Xillybus driver for PCIe");
 MODULE_AUTHOR("Eli Billauer, Xillybus Ltd.");
@@ -18,64 +19,64 @@ MODULE_VERSION("1.06");
 MODULE_ALIAS("xillybus_pcie");
 MODULE_LICENSE("GPL v2");
 
-#define PCI_DEVICE_ID_XILLYBUS		0xebeb
+#घोषणा PCI_DEVICE_ID_XILLYBUS		0xebeb
 
-#define PCI_VENDOR_ID_ACTEL		0x11aa
-#define PCI_VENDOR_ID_LATTICE		0x1204
+#घोषणा PCI_VENDOR_ID_ACTEL		0x11aa
+#घोषणा PCI_VENDOR_ID_LATTICE		0x1204
 
-static const char xillyname[] = "xillybus_pcie";
+अटल स्थिर अक्षर xillyname[] = "xillybus_pcie";
 
-static const struct pci_device_id xillyids[] = {
-	{PCI_DEVICE(PCI_VENDOR_ID_XILINX, PCI_DEVICE_ID_XILLYBUS)},
-	{PCI_DEVICE(PCI_VENDOR_ID_ALTERA, PCI_DEVICE_ID_XILLYBUS)},
-	{PCI_DEVICE(PCI_VENDOR_ID_ACTEL, PCI_DEVICE_ID_XILLYBUS)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LATTICE, PCI_DEVICE_ID_XILLYBUS)},
-	{ /* End: all zeroes */ }
-};
+अटल स्थिर काष्ठा pci_device_id xillyids[] = अणु
+	अणुPCI_DEVICE(PCI_VENDOR_ID_XILINX, PCI_DEVICE_ID_XILLYBUS)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_ALTERA, PCI_DEVICE_ID_XILLYBUS)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_ACTEL, PCI_DEVICE_ID_XILLYBUS)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LATTICE, PCI_DEVICE_ID_XILLYBUS)पूर्ण,
+	अणु /* End: all zeroes */ पूर्ण
+पूर्ण;
 
-static int xilly_pci_direction(int direction)
-{
-	switch (direction) {
-	case DMA_TO_DEVICE:
-		return PCI_DMA_TODEVICE;
-	case DMA_FROM_DEVICE:
-		return PCI_DMA_FROMDEVICE;
-	default:
-		return PCI_DMA_BIDIRECTIONAL;
-	}
-}
+अटल पूर्णांक xilly_pci_direction(पूर्णांक direction)
+अणु
+	चयन (direction) अणु
+	हाल DMA_TO_DEVICE:
+		वापस PCI_DMA_TODEVICE;
+	हाल DMA_FROM_DEVICE:
+		वापस PCI_DMA_FROMDEVICE;
+	शेष:
+		वापस PCI_DMA_BIसूचीECTIONAL;
+	पूर्ण
+पूर्ण
 
-static void xilly_dma_sync_single_for_cpu_pci(struct xilly_endpoint *ep,
+अटल व्योम xilly_dma_sync_single_क्रम_cpu_pci(काष्ठा xilly_endpoपूर्णांक *ep,
 					      dma_addr_t dma_handle,
-					      size_t size,
-					      int direction)
-{
-	pci_dma_sync_single_for_cpu(ep->pdev,
+					      माप_प्रकार size,
+					      पूर्णांक direction)
+अणु
+	pci_dma_sync_single_क्रम_cpu(ep->pdev,
 				    dma_handle,
 				    size,
 				    xilly_pci_direction(direction));
-}
+पूर्ण
 
-static void xilly_dma_sync_single_for_device_pci(struct xilly_endpoint *ep,
+अटल व्योम xilly_dma_sync_single_क्रम_device_pci(काष्ठा xilly_endpoपूर्णांक *ep,
 						 dma_addr_t dma_handle,
-						 size_t size,
-						 int direction)
-{
-	pci_dma_sync_single_for_device(ep->pdev,
+						 माप_प्रकार size,
+						 पूर्णांक direction)
+अणु
+	pci_dma_sync_single_क्रम_device(ep->pdev,
 				       dma_handle,
 				       size,
 				       xilly_pci_direction(direction));
-}
+पूर्ण
 
-static void xilly_pci_unmap(void *ptr)
-{
-	struct xilly_mapping *data = ptr;
+अटल व्योम xilly_pci_unmap(व्योम *ptr)
+अणु
+	काष्ठा xilly_mapping *data = ptr;
 
 	pci_unmap_single(data->device, data->dma_addr,
 			 data->size, data->direction);
 
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
 /*
  * Map either through the PCI DMA mapper or the non_PCI one. Behind the
@@ -83,29 +84,29 @@ static void xilly_pci_unmap(void *ptr)
  * but that can change.
  */
 
-static int xilly_map_single_pci(struct xilly_endpoint *ep,
-				void *ptr,
-				size_t size,
-				int direction,
+अटल पूर्णांक xilly_map_single_pci(काष्ठा xilly_endpoपूर्णांक *ep,
+				व्योम *ptr,
+				माप_प्रकार size,
+				पूर्णांक direction,
 				dma_addr_t *ret_dma_handle
 	)
-{
-	int pci_direction;
+अणु
+	पूर्णांक pci_direction;
 	dma_addr_t addr;
-	struct xilly_mapping *this;
+	काष्ठा xilly_mapping *this;
 
-	this = kzalloc(sizeof(*this), GFP_KERNEL);
-	if (!this)
-		return -ENOMEM;
+	this = kzalloc(माप(*this), GFP_KERNEL);
+	अगर (!this)
+		वापस -ENOMEM;
 
 	pci_direction = xilly_pci_direction(direction);
 
 	addr = pci_map_single(ep->pdev, ptr, size, pci_direction);
 
-	if (pci_dma_mapping_error(ep->pdev, addr)) {
-		kfree(this);
-		return -ENODEV;
-	}
+	अगर (pci_dma_mapping_error(ep->pdev, addr)) अणु
+		kमुक्त(this);
+		वापस -ENODEV;
+	पूर्ण
 
 	this->device = ep->pdev;
 	this->dma_addr = addr;
@@ -114,104 +115,104 @@ static int xilly_map_single_pci(struct xilly_endpoint *ep,
 
 	*ret_dma_handle = addr;
 
-	return devm_add_action_or_reset(ep->dev, xilly_pci_unmap, this);
-}
+	वापस devm_add_action_or_reset(ep->dev, xilly_pci_unmap, this);
+पूर्ण
 
-static struct xilly_endpoint_hardware pci_hw = {
+अटल काष्ठा xilly_endpoपूर्णांक_hardware pci_hw = अणु
 	.owner = THIS_MODULE,
-	.hw_sync_sgl_for_cpu = xilly_dma_sync_single_for_cpu_pci,
-	.hw_sync_sgl_for_device = xilly_dma_sync_single_for_device_pci,
+	.hw_sync_sgl_क्रम_cpu = xilly_dma_sync_single_क्रम_cpu_pci,
+	.hw_sync_sgl_क्रम_device = xilly_dma_sync_single_क्रम_device_pci,
 	.map_single = xilly_map_single_pci,
-};
+पूर्ण;
 
-static int xilly_probe(struct pci_dev *pdev,
-		       const struct pci_device_id *ent)
-{
-	struct xilly_endpoint *endpoint;
-	int rc;
+अटल पूर्णांक xilly_probe(काष्ठा pci_dev *pdev,
+		       स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक;
+	पूर्णांक rc;
 
-	endpoint = xillybus_init_endpoint(pdev, &pdev->dev, &pci_hw);
+	endpoपूर्णांक = xillybus_init_endpoपूर्णांक(pdev, &pdev->dev, &pci_hw);
 
-	if (!endpoint)
-		return -ENOMEM;
+	अगर (!endpoपूर्णांक)
+		वापस -ENOMEM;
 
-	pci_set_drvdata(pdev, endpoint);
+	pci_set_drvdata(pdev, endpoपूर्णांक);
 
 	rc = pcim_enable_device(pdev);
-	if (rc) {
-		dev_err(endpoint->dev,
+	अगर (rc) अणु
+		dev_err(endpoपूर्णांक->dev,
 			"pcim_enable_device() failed. Aborting.\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* L0s has caused packet drops. No power saving, thank you. */
+	/* L0s has caused packet drops. No घातer saving, thank you. */
 
 	pci_disable_link_state(pdev, PCIE_LINK_STATE_L0S);
 
-	if (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) {
-		dev_err(endpoint->dev,
+	अगर (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) अणु
+		dev_err(endpoपूर्णांक->dev,
 			"Incorrect BAR configuration. Aborting.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	rc = pcim_iomap_regions(pdev, 0x01, xillyname);
-	if (rc) {
-		dev_err(endpoint->dev,
+	अगर (rc) अणु
+		dev_err(endpoपूर्णांक->dev,
 			"pcim_iomap_regions() failed. Aborting.\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	endpoint->registers = pcim_iomap_table(pdev)[0];
+	endpoपूर्णांक->रेजिस्टरs = pcim_iomap_table(pdev)[0];
 
 	pci_set_master(pdev);
 
-	/* Set up a single MSI interrupt */
-	if (pci_enable_msi(pdev)) {
-		dev_err(endpoint->dev,
+	/* Set up a single MSI पूर्णांकerrupt */
+	अगर (pci_enable_msi(pdev)) अणु
+		dev_err(endpoपूर्णांक->dev,
 			"Failed to enable MSI interrupts. Aborting.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	rc = devm_request_irq(&pdev->dev, pdev->irq, xillybus_isr, 0,
-			      xillyname, endpoint);
-	if (rc) {
-		dev_err(endpoint->dev,
+			      xillyname, endpoपूर्णांक);
+	अगर (rc) अणु
+		dev_err(endpoपूर्णांक->dev,
 			"Failed to register MSI handler. Aborting.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
 	 * Some (old and buggy?) hardware drops 64-bit addressed PCIe packets,
 	 * even when the PCIe driver claims that a 64-bit mask is OK. On the
 	 * other hand, on some architectures, 64-bit addressing is mandatory.
-	 * So go for the 64-bit mask only when failing is the other option.
+	 * So go क्रम the 64-bit mask only when failing is the other option.
 	 */
 
-	if (!pci_set_dma_mask(pdev, DMA_BIT_MASK(32))) {
-		endpoint->dma_using_dac = 0;
-	} else if (!pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) {
-		endpoint->dma_using_dac = 1;
-	} else {
-		dev_err(endpoint->dev, "Failed to set DMA mask. Aborting.\n");
-		return -ENODEV;
-	}
+	अगर (!pci_set_dma_mask(pdev, DMA_BIT_MASK(32))) अणु
+		endpoपूर्णांक->dma_using_dac = 0;
+	पूर्ण अन्यथा अगर (!pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) अणु
+		endpoपूर्णांक->dma_using_dac = 1;
+	पूर्ण अन्यथा अणु
+		dev_err(endpoपूर्णांक->dev, "Failed to set DMA mask. Aborting.\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	return xillybus_endpoint_discovery(endpoint);
-}
+	वापस xillybus_endpoपूर्णांक_discovery(endpoपूर्णांक);
+पूर्ण
 
-static void xilly_remove(struct pci_dev *pdev)
-{
-	struct xilly_endpoint *endpoint = pci_get_drvdata(pdev);
+अटल व्योम xilly_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक = pci_get_drvdata(pdev);
 
-	xillybus_endpoint_remove(endpoint);
-}
+	xillybus_endpoपूर्णांक_हटाओ(endpoपूर्णांक);
+पूर्ण
 
 MODULE_DEVICE_TABLE(pci, xillyids);
 
-static struct pci_driver xillybus_driver = {
+अटल काष्ठा pci_driver xillybus_driver = अणु
 	.name = xillyname,
 	.id_table = xillyids,
 	.probe = xilly_probe,
-	.remove = xilly_remove,
-};
+	.हटाओ = xilly_हटाओ,
+पूर्ण;
 
 module_pci_driver(xillybus_driver);

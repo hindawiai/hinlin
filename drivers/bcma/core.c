@@ -1,156 +1,157 @@
+<शैली गुरु>
 /*
- * Broadcom specific AMBA
+ * Broadcom specअगरic AMBA
  * Core ops
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include "bcma_private.h"
-#include <linux/export.h>
-#include <linux/bcma/bcma.h>
+#समावेश "bcma_private.h"
+#समावेश <linux/export.h>
+#समावेश <linux/bcma/bcma.h>
 
-static bool bcma_core_wait_value(struct bcma_device *core, u16 reg, u32 mask,
-				 u32 value, int timeout)
-{
-	unsigned long deadline = jiffies + timeout;
+अटल bool bcma_core_रुको_value(काष्ठा bcma_device *core, u16 reg, u32 mask,
+				 u32 value, पूर्णांक समयout)
+अणु
+	अचिन्हित दीर्घ deadline = jअगरfies + समयout;
 	u32 val;
 
-	do {
-		val = bcma_aread32(core, reg);
-		if ((val & mask) == value)
-			return true;
+	करो अणु
+		val = bcma_aपढ़ो32(core, reg);
+		अगर ((val & mask) == value)
+			वापस true;
 		cpu_relax();
 		udelay(10);
-	} while (!time_after_eq(jiffies, deadline));
+	पूर्ण जबतक (!समय_after_eq(jअगरfies, deadline));
 
 	bcma_warn(core->bus, "Timeout waiting for register 0x%04X!\n", reg);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool bcma_core_is_enabled(struct bcma_device *core)
-{
-	if ((bcma_aread32(core, BCMA_IOCTL) & (BCMA_IOCTL_CLK | BCMA_IOCTL_FGC))
+bool bcma_core_is_enabled(काष्ठा bcma_device *core)
+अणु
+	अगर ((bcma_aपढ़ो32(core, BCMA_IOCTL) & (BCMA_IOCTL_CLK | BCMA_IOCTL_FGC))
 	    != BCMA_IOCTL_CLK)
-		return false;
-	if (bcma_aread32(core, BCMA_RESET_CTL) & BCMA_RESET_CTL_RESET)
-		return false;
-	return true;
-}
+		वापस false;
+	अगर (bcma_aपढ़ो32(core, BCMA_RESET_CTL) & BCMA_RESET_CTL_RESET)
+		वापस false;
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(bcma_core_is_enabled);
 
-void bcma_core_disable(struct bcma_device *core, u32 flags)
-{
-	if (bcma_aread32(core, BCMA_RESET_CTL) & BCMA_RESET_CTL_RESET)
-		return;
+व्योम bcma_core_disable(काष्ठा bcma_device *core, u32 flags)
+अणु
+	अगर (bcma_aपढ़ो32(core, BCMA_RESET_CTL) & BCMA_RESET_CTL_RESET)
+		वापस;
 
-	bcma_core_wait_value(core, BCMA_RESET_ST, ~0, 0, 300);
+	bcma_core_रुको_value(core, BCMA_RESET_ST, ~0, 0, 300);
 
-	bcma_awrite32(core, BCMA_RESET_CTL, BCMA_RESET_CTL_RESET);
-	bcma_aread32(core, BCMA_RESET_CTL);
+	bcma_aग_लिखो32(core, BCMA_RESET_CTL, BCMA_RESET_CTL_RESET);
+	bcma_aपढ़ो32(core, BCMA_RESET_CTL);
 	udelay(1);
 
-	bcma_awrite32(core, BCMA_IOCTL, flags);
-	bcma_aread32(core, BCMA_IOCTL);
+	bcma_aग_लिखो32(core, BCMA_IOCTL, flags);
+	bcma_aपढ़ो32(core, BCMA_IOCTL);
 	udelay(10);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(bcma_core_disable);
 
-int bcma_core_enable(struct bcma_device *core, u32 flags)
-{
+पूर्णांक bcma_core_enable(काष्ठा bcma_device *core, u32 flags)
+अणु
 	bcma_core_disable(core, flags);
 
-	bcma_awrite32(core, BCMA_IOCTL, (BCMA_IOCTL_CLK | BCMA_IOCTL_FGC | flags));
-	bcma_aread32(core, BCMA_IOCTL);
+	bcma_aग_लिखो32(core, BCMA_IOCTL, (BCMA_IOCTL_CLK | BCMA_IOCTL_FGC | flags));
+	bcma_aपढ़ो32(core, BCMA_IOCTL);
 
-	bcma_awrite32(core, BCMA_RESET_CTL, 0);
-	bcma_aread32(core, BCMA_RESET_CTL);
+	bcma_aग_लिखो32(core, BCMA_RESET_CTL, 0);
+	bcma_aपढ़ो32(core, BCMA_RESET_CTL);
 	udelay(1);
 
-	bcma_awrite32(core, BCMA_IOCTL, (BCMA_IOCTL_CLK | flags));
-	bcma_aread32(core, BCMA_IOCTL);
+	bcma_aग_लिखो32(core, BCMA_IOCTL, (BCMA_IOCTL_CLK | flags));
+	bcma_aपढ़ो32(core, BCMA_IOCTL);
 	udelay(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(bcma_core_enable);
 
-void bcma_core_set_clockmode(struct bcma_device *core,
-			     enum bcma_clkmode clkmode)
-{
+व्योम bcma_core_set_घड़ीmode(काष्ठा bcma_device *core,
+			     क्रमागत bcma_clkmode clkmode)
+अणु
 	u16 i;
 
 	WARN_ON(core->id.id != BCMA_CORE_CHIPCOMMON &&
 		core->id.id != BCMA_CORE_PCIE &&
 		core->id.id != BCMA_CORE_80211);
 
-	switch (clkmode) {
-	case BCMA_CLKMODE_FAST:
+	चयन (clkmode) अणु
+	हाल BCMA_CLKMODE_FAST:
 		bcma_set32(core, BCMA_CLKCTLST, BCMA_CLKCTLST_FORCEHT);
 		usleep_range(64, 300);
-		for (i = 0; i < 1500; i++) {
-			if (bcma_read32(core, BCMA_CLKCTLST) &
-			    BCMA_CLKCTLST_HAVEHT) {
+		क्रम (i = 0; i < 1500; i++) अणु
+			अगर (bcma_पढ़ो32(core, BCMA_CLKCTLST) &
+			    BCMA_CLKCTLST_HAVEHT) अणु
 				i = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			udelay(10);
-		}
-		if (i)
+		पूर्ण
+		अगर (i)
 			bcma_err(core->bus, "HT force timeout\n");
-		break;
-	case BCMA_CLKMODE_DYNAMIC:
+		अवरोध;
+	हाल BCMA_CLKMODE_DYNAMIC:
 		bcma_set32(core, BCMA_CLKCTLST, ~BCMA_CLKCTLST_FORCEHT);
-		break;
-	}
-}
-EXPORT_SYMBOL_GPL(bcma_core_set_clockmode);
+		अवरोध;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(bcma_core_set_घड़ीmode);
 
-void bcma_core_pll_ctl(struct bcma_device *core, u32 req, u32 status, bool on)
-{
+व्योम bcma_core_pll_ctl(काष्ठा bcma_device *core, u32 req, u32 status, bool on)
+अणु
 	u16 i;
 
 	WARN_ON(req & ~BCMA_CLKCTLST_EXTRESREQ);
 	WARN_ON(status & ~BCMA_CLKCTLST_EXTRESST);
 
-	if (on) {
+	अगर (on) अणु
 		bcma_set32(core, BCMA_CLKCTLST, req);
-		for (i = 0; i < 10000; i++) {
-			if ((bcma_read32(core, BCMA_CLKCTLST) & status) ==
-			    status) {
+		क्रम (i = 0; i < 10000; i++) अणु
+			अगर ((bcma_पढ़ो32(core, BCMA_CLKCTLST) & status) ==
+			    status) अणु
 				i = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			udelay(10);
-		}
-		if (i)
+		पूर्ण
+		अगर (i)
 			bcma_err(core->bus, "PLL enable timeout\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Mask the PLL but don't wait for it to be disabled. PLL may be
-		 * shared between cores and will be still up if there is another
+		 * Mask the PLL but करोn't रुको क्रम it to be disabled. PLL may be
+		 * shared between cores and will be still up अगर there is another
 		 * core using it.
 		 */
 		bcma_mask32(core, BCMA_CLKCTLST, ~req);
-		bcma_read32(core, BCMA_CLKCTLST);
-	}
-}
+		bcma_पढ़ो32(core, BCMA_CLKCTLST);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(bcma_core_pll_ctl);
 
-u32 bcma_core_dma_translation(struct bcma_device *core)
-{
-	switch (core->bus->hosttype) {
-	case BCMA_HOSTTYPE_SOC:
-		return 0;
-	case BCMA_HOSTTYPE_PCI:
-		if (bcma_aread32(core, BCMA_IOST) & BCMA_IOST_DMA64)
-			return BCMA_DMA_TRANSLATION_DMA64_CMT;
-		else
-			return BCMA_DMA_TRANSLATION_DMA32_CMT;
-	default:
+u32 bcma_core_dma_translation(काष्ठा bcma_device *core)
+अणु
+	चयन (core->bus->hosttype) अणु
+	हाल BCMA_HOSTTYPE_SOC:
+		वापस 0;
+	हाल BCMA_HOSTTYPE_PCI:
+		अगर (bcma_aपढ़ो32(core, BCMA_IOST) & BCMA_IOST_DMA64)
+			वापस BCMA_DMA_TRANSLATION_DMA64_CMT;
+		अन्यथा
+			वापस BCMA_DMA_TRANSLATION_DMA32_CMT;
+	शेष:
 		bcma_err(core->bus, "DMA translation unknown for host %d\n",
 			 core->bus->hosttype);
-	}
-	return BCMA_DMA_TRANSLATION_NONE;
-}
+	पूर्ण
+	वापस BCMA_DMA_TRANSLATION_NONE;
+पूर्ण
 EXPORT_SYMBOL(bcma_core_dma_translation);

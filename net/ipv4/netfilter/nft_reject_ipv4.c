@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2008-2009 Patrick McHardy <kaber@trash.net>
  * Copyright (c) 2013 Eric Leblond <eric@regit.org>
@@ -6,68 +7,68 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/ipv4/nf_reject.h>
-#include <net/netfilter/nft_reject.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/ipv4/nf_reject.h>
+#समावेश <net/netfilter/nft_reject.h>
 
-static void nft_reject_ipv4_eval(const struct nft_expr *expr,
-				 struct nft_regs *regs,
-				 const struct nft_pktinfo *pkt)
-{
-	struct nft_reject *priv = nft_expr_priv(expr);
+अटल व्योम nft_reject_ipv4_eval(स्थिर काष्ठा nft_expr *expr,
+				 काष्ठा nft_regs *regs,
+				 स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	काष्ठा nft_reject *priv = nft_expr_priv(expr);
 
-	switch (priv->type) {
-	case NFT_REJECT_ICMP_UNREACH:
+	चयन (priv->type) अणु
+	हाल NFT_REJECT_ICMP_UNREACH:
 		nf_send_unreach(pkt->skb, priv->icmp_code, nft_hook(pkt));
-		break;
-	case NFT_REJECT_TCP_RST:
+		अवरोध;
+	हाल NFT_REJECT_TCP_RST:
 		nf_send_reset(nft_net(pkt), pkt->xt.state->sk, pkt->skb,
 			      nft_hook(pkt));
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	regs->verdict.code = NF_DROP;
-}
+पूर्ण
 
-static struct nft_expr_type nft_reject_ipv4_type;
-static const struct nft_expr_ops nft_reject_ipv4_ops = {
+अटल काष्ठा nft_expr_type nft_reject_ipv4_type;
+अटल स्थिर काष्ठा nft_expr_ops nft_reject_ipv4_ops = अणु
 	.type		= &nft_reject_ipv4_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_reject)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_reject)),
 	.eval		= nft_reject_ipv4_eval,
 	.init		= nft_reject_init,
 	.dump		= nft_reject_dump,
 	.validate	= nft_reject_validate,
-};
+पूर्ण;
 
-static struct nft_expr_type nft_reject_ipv4_type __read_mostly = {
+अटल काष्ठा nft_expr_type nft_reject_ipv4_type __पढ़ो_mostly = अणु
 	.family		= NFPROTO_IPV4,
 	.name		= "reject",
 	.ops		= &nft_reject_ipv4_ops,
 	.policy		= nft_reject_policy,
 	.maxattr	= NFTA_REJECT_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init nft_reject_ipv4_module_init(void)
-{
-	return nft_register_expr(&nft_reject_ipv4_type);
-}
+अटल पूर्णांक __init nft_reject_ipv4_module_init(व्योम)
+अणु
+	वापस nft_रेजिस्टर_expr(&nft_reject_ipv4_type);
+पूर्ण
 
-static void __exit nft_reject_ipv4_module_exit(void)
-{
-	nft_unregister_expr(&nft_reject_ipv4_type);
-}
+अटल व्योम __निकास nft_reject_ipv4_module_निकास(व्योम)
+अणु
+	nft_unरेजिस्टर_expr(&nft_reject_ipv4_type);
+पूर्ण
 
 module_init(nft_reject_ipv4_module_init);
-module_exit(nft_reject_ipv4_module_exit);
+module_निकास(nft_reject_ipv4_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");

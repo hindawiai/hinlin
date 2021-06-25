@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
  * Copyright (C) 2019 NVIDIA Corporation
  */
 
-#ifndef DRM_TEGRA_HDA_H
-#define DRM_TEGRA_HDA_H 1
+#अगर_अघोषित DRM_TEGRA_HDA_H
+#घोषणा DRM_TEGRA_HDA_H 1
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct tegra_hda_format {
-	unsigned int sample_rate;
-	unsigned int channels;
-	unsigned int bits;
+काष्ठा tegra_hda_क्रमmat अणु
+	अचिन्हित पूर्णांक sample_rate;
+	अचिन्हित पूर्णांक channels;
+	अचिन्हित पूर्णांक bits;
 	bool pcm;
-};
+पूर्ण;
 
-void tegra_hda_parse_format(unsigned int format, struct tegra_hda_format *fmt);
+व्योम tegra_hda_parse_क्रमmat(अचिन्हित पूर्णांक क्रमmat, काष्ठा tegra_hda_क्रमmat *fmt);
 
-#endif
+#पूर्ण_अगर

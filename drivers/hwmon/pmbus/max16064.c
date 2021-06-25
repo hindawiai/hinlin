@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hardware monitoring driver for Maxim MAX16064
+ * Hardware monitoring driver क्रम Maxim MAX16064
  *
  * Copyright (c) 2011 Ericsson AB.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include "pmbus.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश "pmbus.h"
 
-#define MAX16064_MFR_VOUT_PEAK		0xd4
-#define MAX16064_MFR_TEMPERATURE_PEAK	0xd6
+#घोषणा MAX16064_MFR_VOUT_PEAK		0xd4
+#घोषणा MAX16064_MFR_TEMPERATURE_PEAK	0xd6
 
-static int max16064_read_word_data(struct i2c_client *client, int page,
-				   int phase, int reg)
-{
-	int ret;
+अटल पूर्णांक max16064_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				   पूर्णांक phase, पूर्णांक reg)
+अणु
+	पूर्णांक ret;
 
-	switch (reg) {
-	case PMBUS_VIRT_READ_VOUT_MAX:
-		ret = pmbus_read_word_data(client, page, phase,
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_READ_VOUT_MAX:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX16064_MFR_VOUT_PEAK);
-		break;
-	case PMBUS_VIRT_READ_TEMP_MAX:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_TEMP_MAX:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX16064_MFR_TEMPERATURE_PEAK);
-		break;
-	case PMBUS_VIRT_RESET_VOUT_HISTORY:
-	case PMBUS_VIRT_RESET_TEMP_HISTORY:
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_VOUT_HISTORY:
+	हाल PMBUS_VIRT_RESET_TEMP_HISTORY:
 		ret = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int max16064_write_word_data(struct i2c_client *client, int page,
-				    int reg, u16 word)
-{
-	int ret;
+अटल पूर्णांक max16064_ग_लिखो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				    पूर्णांक reg, u16 word)
+अणु
+	पूर्णांक ret;
 
-	switch (reg) {
-	case PMBUS_VIRT_RESET_VOUT_HISTORY:
-		ret = pmbus_write_word_data(client, page,
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_RESET_VOUT_HISTORY:
+		ret = pmbus_ग_लिखो_word_data(client, page,
 					    MAX16064_MFR_VOUT_PEAK, 0);
-		break;
-	case PMBUS_VIRT_RESET_TEMP_HISTORY:
-		ret = pmbus_write_word_data(client, page,
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_TEMP_HISTORY:
+		ret = pmbus_ग_लिखो_word_data(client, page,
 					    MAX16064_MFR_TEMPERATURE_PEAK,
 					    0xffff);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static struct pmbus_driver_info max16064_info = {
+अटल काष्ठा pmbus_driver_info max16064_info = अणु
 	.pages = 4,
-	.format[PSC_VOLTAGE_IN] = direct,
-	.format[PSC_VOLTAGE_OUT] = direct,
-	.format[PSC_TEMPERATURE] = direct,
+	.क्रमmat[PSC_VOLTAGE_IN] = direct,
+	.क्रमmat[PSC_VOLTAGE_OUT] = direct,
+	.क्रमmat[PSC_TEMPERATURE] = direct,
 	.m[PSC_VOLTAGE_IN] = 19995,
 	.b[PSC_VOLTAGE_IN] = 0,
 	.R[PSC_VOLTAGE_IN] = -1,
@@ -81,30 +82,30 @@ static struct pmbus_driver_info max16064_info = {
 	.func[1] = PMBUS_HAVE_VOUT | PMBUS_HAVE_STATUS_VOUT,
 	.func[2] = PMBUS_HAVE_VOUT | PMBUS_HAVE_STATUS_VOUT,
 	.func[3] = PMBUS_HAVE_VOUT | PMBUS_HAVE_STATUS_VOUT,
-	.read_word_data = max16064_read_word_data,
-	.write_word_data = max16064_write_word_data,
-};
+	.पढ़ो_word_data = max16064_पढ़ो_word_data,
+	.ग_लिखो_word_data = max16064_ग_लिखो_word_data,
+पूर्ण;
 
-static int max16064_probe(struct i2c_client *client)
-{
-	return pmbus_do_probe(client, &max16064_info);
-}
+अटल पूर्णांक max16064_probe(काष्ठा i2c_client *client)
+अणु
+	वापस pmbus_करो_probe(client, &max16064_info);
+पूर्ण
 
-static const struct i2c_device_id max16064_id[] = {
-	{"max16064", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id max16064_id[] = अणु
+	अणु"max16064", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, max16064_id);
 
 /* This is the driver that will be inserted */
-static struct i2c_driver max16064_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max16064_driver = अणु
+	.driver = अणु
 		   .name = "max16064",
-		   },
+		   पूर्ण,
 	.probe_new = max16064_probe,
 	.id_table = max16064_id,
-};
+पूर्ण;
 
 module_i2c_driver(max16064_driver);
 

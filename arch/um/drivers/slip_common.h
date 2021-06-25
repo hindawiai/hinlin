@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __UM_SLIP_COMMON_H
-#define __UM_SLIP_COMMON_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __UM_SLIP_COMMON_H
+#घोषणा __UM_SLIP_COMMON_H
 
-#define BUF_SIZE 1500
- /* two bytes each for a (pathological) max packet of escaped chars +  *
-  * terminating END char + initial END char                            */
-#define ENC_BUF_SIZE (2 * BUF_SIZE + 2)
+#घोषणा BUF_SIZE 1500
+ /* two bytes each क्रम a (pathological) max packet of escaped अक्षरs +  *
+  * terminating END अक्षर + initial END अक्षर                            */
+#घोषणा ENC_BUF_SIZE (2 * BUF_SIZE + 2)
 
-/* SLIP protocol characters. */
-#define SLIP_END             0300	/* indicates end of frame	*/
-#define SLIP_ESC             0333	/* indicates byte stuffing	*/
-#define SLIP_ESC_END         0334	/* ESC ESC_END means END 'data'	*/
-#define SLIP_ESC_ESC         0335	/* ESC ESC_ESC means ESC 'data'	*/
+/* SLIP protocol अक्षरacters. */
+#घोषणा SLIP_END             0300	/* indicates end of frame	*/
+#घोषणा SLIP_ESC             0333	/* indicates byte stuffing	*/
+#घोषणा SLIP_ESC_END         0334	/* ESC ESC_END means END 'data'	*/
+#घोषणा SLIP_ESC_ESC         0335	/* ESC ESC_ESC means ESC 'data'	*/
 
-static inline int slip_unesc(unsigned char c, unsigned char *buf, int *pos,
-                             int *esc)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक slip_unesc(अचिन्हित अक्षर c, अचिन्हित अक्षर *buf, पूर्णांक *pos,
+                             पूर्णांक *esc)
+अणु
+	पूर्णांक ret;
 
-	switch(c){
-	case SLIP_END:
+	चयन(c)अणु
+	हाल SLIP_END:
 		*esc = 0;
 		ret=*pos;
 		*pos=0;
-		return(ret);
-	case SLIP_ESC:
+		वापस(ret);
+	हाल SLIP_ESC:
 		*esc = 1;
-		return(0);
-	case SLIP_ESC_ESC:
-		if(*esc){
+		वापस(0);
+	हाल SLIP_ESC_ESC:
+		अगर(*esc)अणु
 			*esc = 0;
 			c = SLIP_ESC;
-		}
-		break;
-	case SLIP_ESC_END:
-		if(*esc){
+		पूर्ण
+		अवरोध;
+	हाल SLIP_ESC_END:
+		अगर(*esc)अणु
 			*esc = 0;
 			c = SLIP_END;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 	buf[(*pos)++] = c;
-	return(0);
-}
+	वापस(0);
+पूर्ण
 
-static inline int slip_esc(unsigned char *s, unsigned char *d, int len)
-{
-	unsigned char *ptr = d;
-	unsigned char c;
+अटल अंतरभूत पूर्णांक slip_esc(अचिन्हित अक्षर *s, अचिन्हित अक्षर *d, पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *ptr = d;
+	अचिन्हित अक्षर c;
 
 	/*
-	 * Send an initial END character to flush out any
+	 * Send an initial END अक्षरacter to flush out any
 	 * data that may have accumulated in the receiver
 	 * due to line noise.
 	 */
@@ -59,48 +60,48 @@ static inline int slip_esc(unsigned char *s, unsigned char *d, int len)
 
 	/*
 	 * For each byte in the packet, send the appropriate
-	 * character sequence, according to the SLIP protocol.
+	 * अक्षरacter sequence, according to the SLIP protocol.
 	 */
 
-	while (len-- > 0) {
-		switch(c = *s++) {
-		case SLIP_END:
+	जबतक (len-- > 0) अणु
+		चयन(c = *s++) अणु
+		हाल SLIP_END:
 			*ptr++ = SLIP_ESC;
 			*ptr++ = SLIP_ESC_END;
-			break;
-		case SLIP_ESC:
+			अवरोध;
+		हाल SLIP_ESC:
 			*ptr++ = SLIP_ESC;
 			*ptr++ = SLIP_ESC_ESC;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			*ptr++ = c;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	*ptr++ = SLIP_END;
-	return (ptr - d);
-}
+	वापस (ptr - d);
+पूर्ण
 
-struct slip_proto {
-	unsigned char ibuf[ENC_BUF_SIZE];
-	unsigned char obuf[ENC_BUF_SIZE];
-	int more; /* more data: do not read fd until ibuf has been drained */
-	int pos;
-	int esc;
-};
+काष्ठा slip_proto अणु
+	अचिन्हित अक्षर ibuf[ENC_BUF_SIZE];
+	अचिन्हित अक्षर obuf[ENC_BUF_SIZE];
+	पूर्णांक more; /* more data: करो not पढ़ो fd until ibuf has been drained */
+	पूर्णांक pos;
+	पूर्णांक esc;
+पूर्ण;
 
-static inline void slip_proto_init(struct slip_proto * slip)
-{
-	memset(slip->ibuf, 0, sizeof(slip->ibuf));
-	memset(slip->obuf, 0, sizeof(slip->obuf));
+अटल अंतरभूत व्योम slip_proto_init(काष्ठा slip_proto * slip)
+अणु
+	स_रखो(slip->ibuf, 0, माप(slip->ibuf));
+	स_रखो(slip->obuf, 0, माप(slip->obuf));
 	slip->more = 0;
 	slip->pos = 0;
 	slip->esc = 0;
-}
+पूर्ण
 
-extern int slip_proto_read(int fd, void *buf, int len,
-			   struct slip_proto *slip);
-extern int slip_proto_write(int fd, void *buf, int len,
-			    struct slip_proto *slip);
+बाह्य पूर्णांक slip_proto_पढ़ो(पूर्णांक fd, व्योम *buf, पूर्णांक len,
+			   काष्ठा slip_proto *slip);
+बाह्य पूर्णांक slip_proto_ग_लिखो(पूर्णांक fd, व्योम *buf, पूर्णांक len,
+			    काष्ठा slip_proto *slip);
 
-#endif
+#पूर्ण_अगर

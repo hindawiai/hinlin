@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * (C) 2001 Clemson University and The University of Chicago
  *
@@ -7,263 +8,263 @@
 
 /*
  *  The ORANGEFS Linux kernel support allows ORANGEFS volumes to be mounted and
- *  accessed through the Linux VFS (i.e. using standard I/O system calls).
- *  This support is only needed on clients that wish to mount the file system.
+ *  accessed through the Linux VFS (i.e. using standard I/O प्रणाली calls).
+ *  This support is only needed on clients that wish to mount the file प्रणाली.
  *
  */
 
 /*
- *  Declarations and macros for the ORANGEFS Linux kernel support.
+ *  Declarations and macros क्रम the ORANGEFS Linux kernel support.
  */
 
-#ifndef __ORANGEFSKERNEL_H
-#define __ORANGEFSKERNEL_H
+#अगर_अघोषित __ORANGEFSKERNEL_H
+#घोषणा __ORANGEFSKERNEL_H
 
-#include <linux/kernel.h>
-#include <linux/moduleparam.h>
-#include <linux/statfs.h>
-#include <linux/backing-dev.h>
-#include <linux/device.h>
-#include <linux/mpage.h>
-#include <linux/namei.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/fs.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/statfs.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mpage.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <linux/aio.h>
-#include <linux/posix_acl.h>
-#include <linux/posix_acl_xattr.h>
-#include <linux/compat.h>
-#include <linux/mount.h>
-#include <linux/uaccess.h>
-#include <linux/atomic.h>
-#include <linux/uio.h>
-#include <linux/sched/signal.h>
-#include <linux/mm.h>
-#include <linux/wait.h>
-#include <linux/dcache.h>
-#include <linux/pagemap.h>
-#include <linux/poll.h>
-#include <linux/rwsem.h>
-#include <linux/xattr.h>
-#include <linux/exportfs.h>
-#include <linux/hashtable.h>
+#समावेश <linux/aपन.स>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/posix_acl_xattr.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/dcache.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/exportfs.h>
+#समावेश <linux/hashtable.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "orangefs-dev-proto.h"
+#समावेश "orangefs-dev-proto.h"
 
-#define ORANGEFS_DEFAULT_OP_TIMEOUT_SECS       20
+#घोषणा ORANGEFS_DEFAULT_OP_TIMEOUT_SECS       20
 
-#define ORANGEFS_BUFMAP_WAIT_TIMEOUT_SECS   30
+#घोषणा ORANGEFS_BUFMAP_WAIT_TIMEOUT_SECS   30
 
-#define ORANGEFS_DEFAULT_SLOT_TIMEOUT_SECS     900	/* 15 minutes */
+#घोषणा ORANGEFS_DEFAULT_SLOT_TIMEOUT_SECS     900	/* 15 minutes */
 
-#define ORANGEFS_REQDEVICE_NAME          "pvfs2-req"
+#घोषणा ORANGEFS_REQDEVICE_NAME          "pvfs2-req"
 
-#define ORANGEFS_DEVREQ_MAGIC             0x20030529
-#define ORANGEFS_PURGE_RETRY_COUNT     0x00000005
+#घोषणा ORANGEFS_DEVREQ_MAGIC             0x20030529
+#घोषणा ORANGEFS_PURGE_RETRY_COUNT     0x00000005
 
-#define MAX_DEV_REQ_UPSIZE (2 * sizeof(__s32) +   \
-sizeof(__u64) + sizeof(struct orangefs_upcall_s))
-#define MAX_DEV_REQ_DOWNSIZE (2 * sizeof(__s32) + \
-sizeof(__u64) + sizeof(struct orangefs_downcall_s))
+#घोषणा MAX_DEV_REQ_UPSIZE (2 * माप(__s32) +   \
+माप(__u64) + माप(काष्ठा orangefs_upcall_s))
+#घोषणा MAX_DEV_REQ_DOWNSIZE (2 * माप(__s32) + \
+माप(__u64) + माप(काष्ठा orangefs_करोwncall_s))
 
 /*
  * valid orangefs kernel operation states
  *
  * unknown  - op was just initialized
- * waiting  - op is on request_list (upward bound)
- * inprogr  - op is in progress (waiting for downcall)
- * serviced - op has matching downcall; ok
- * purged   - op has to start a timer since client-core
- *            exited uncleanly before servicing op
- * given up - submitter has given up waiting for it
+ * रुकोing  - op is on request_list (upward bound)
+ * inprogr  - op is in progress (रुकोing क्रम करोwncall)
+ * serviced - op has matching करोwncall; ok
+ * purged   - op has to start a समयr since client-core
+ *            निकासed uncleanly beक्रमe servicing op
+ * given up - submitter has given up रुकोing क्रम it
  */
-enum orangefs_vfs_op_states {
+क्रमागत orangefs_vfs_op_states अणु
 	OP_VFS_STATE_UNKNOWN = 0,
 	OP_VFS_STATE_WAITING = 1,
 	OP_VFS_STATE_INPROGR = 2,
 	OP_VFS_STATE_SERVICED = 4,
 	OP_VFS_STATE_PURGED = 8,
 	OP_VFS_STATE_GIVEN_UP = 16,
-};
+पूर्ण;
 
 /*
  * orangefs kernel memory related flags
  */
 
-#if (defined CONFIG_DEBUG_SLAB)
-#define ORANGEFS_CACHE_CREATE_FLAGS SLAB_RED_ZONE
-#else
-#define ORANGEFS_CACHE_CREATE_FLAGS 0
-#endif
+#अगर (defined CONFIG_DEBUG_SLAB)
+#घोषणा ORANGEFS_CACHE_CREATE_FLAGS SLAB_RED_ZONE
+#अन्यथा
+#घोषणा ORANGEFS_CACHE_CREATE_FLAGS 0
+#पूर्ण_अगर
 
-extern int orangefs_init_acl(struct inode *inode, struct inode *dir);
-extern const struct xattr_handler *orangefs_xattr_handlers[];
+बाह्य पूर्णांक orangefs_init_acl(काष्ठा inode *inode, काष्ठा inode *dir);
+बाह्य स्थिर काष्ठा xattr_handler *orangefs_xattr_handlers[];
 
-extern struct posix_acl *orangefs_get_acl(struct inode *inode, int type);
-extern int orangefs_set_acl(struct user_namespace *mnt_userns,
-			    struct inode *inode, struct posix_acl *acl,
-			    int type);
+बाह्य काष्ठा posix_acl *orangefs_get_acl(काष्ठा inode *inode, पूर्णांक type);
+बाह्य पूर्णांक orangefs_set_acl(काष्ठा user_namespace *mnt_userns,
+			    काष्ठा inode *inode, काष्ठा posix_acl *acl,
+			    पूर्णांक type);
 
 /*
- * orangefs data structures
+ * orangefs data काष्ठाures
  */
-struct orangefs_kernel_op_s {
-	enum orangefs_vfs_op_states op_state;
+काष्ठा orangefs_kernel_op_s अणु
+	क्रमागत orangefs_vfs_op_states op_state;
 	__u64 tag;
 
 	/*
-	 * Set uses_shared_memory to non zero if this operation uses
+	 * Set uses_shared_memory to non zero अगर this operation uses
 	 * shared memory. If true, then a retry on the op must also
 	 * get a new shared memory buffer and re-populate it.
-	 * Cancels don't care - it only matters for service_operation()
-	 * retry logics and cancels don't go through it anymore. It
-	 * safely stays non-zero when we use it as slot_to_free.
+	 * Cancels करोn't care - it only matters क्रम service_operation()
+	 * retry logics and cancels करोn't go through it anymore. It
+	 * safely stays non-zero when we use it as slot_to_मुक्त.
 	 */
-	union {
-		int uses_shared_memory;
-		int slot_to_free;
-	};
+	जोड़ अणु
+		पूर्णांक uses_shared_memory;
+		पूर्णांक slot_to_मुक्त;
+	पूर्ण;
 
-	struct orangefs_upcall_s upcall;
-	struct orangefs_downcall_s downcall;
+	काष्ठा orangefs_upcall_s upcall;
+	काष्ठा orangefs_करोwncall_s करोwncall;
 
-	struct completion waitq;
+	काष्ठा completion रुकोq;
 	spinlock_t lock;
 
-	int attempts;
+	पूर्णांक attempts;
 
-	struct list_head list;
-};
+	काष्ठा list_head list;
+पूर्ण;
 
-#define set_op_state_waiting(op)     ((op)->op_state = OP_VFS_STATE_WAITING)
-#define set_op_state_inprogress(op)  ((op)->op_state = OP_VFS_STATE_INPROGR)
-#define set_op_state_given_up(op)  ((op)->op_state = OP_VFS_STATE_GIVEN_UP)
-static inline void set_op_state_serviced(struct orangefs_kernel_op_s *op)
-{
+#घोषणा set_op_state_रुकोing(op)     ((op)->op_state = OP_VFS_STATE_WAITING)
+#घोषणा set_op_state_inprogress(op)  ((op)->op_state = OP_VFS_STATE_INPROGR)
+#घोषणा set_op_state_given_up(op)  ((op)->op_state = OP_VFS_STATE_GIVEN_UP)
+अटल अंतरभूत व्योम set_op_state_serviced(काष्ठा orangefs_kernel_op_s *op)
+अणु
 	op->op_state = OP_VFS_STATE_SERVICED;
-	complete(&op->waitq);
-}
+	complete(&op->रुकोq);
+पूर्ण
 
-#define op_state_waiting(op)     ((op)->op_state & OP_VFS_STATE_WAITING)
-#define op_state_in_progress(op) ((op)->op_state & OP_VFS_STATE_INPROGR)
-#define op_state_serviced(op)    ((op)->op_state & OP_VFS_STATE_SERVICED)
-#define op_state_purged(op)      ((op)->op_state & OP_VFS_STATE_PURGED)
-#define op_state_given_up(op)    ((op)->op_state & OP_VFS_STATE_GIVEN_UP)
-#define op_is_cancel(op)         ((op)->upcall.type == ORANGEFS_VFS_OP_CANCEL)
+#घोषणा op_state_रुकोing(op)     ((op)->op_state & OP_VFS_STATE_WAITING)
+#घोषणा op_state_in_progress(op) ((op)->op_state & OP_VFS_STATE_INPROGR)
+#घोषणा op_state_serviced(op)    ((op)->op_state & OP_VFS_STATE_SERVICED)
+#घोषणा op_state_purged(op)      ((op)->op_state & OP_VFS_STATE_PURGED)
+#घोषणा op_state_given_up(op)    ((op)->op_state & OP_VFS_STATE_GIVEN_UP)
+#घोषणा op_is_cancel(op)         ((op)->upcall.type == ORANGEFS_VFS_OP_CANCEL)
 
-void op_release(struct orangefs_kernel_op_s *op);
+व्योम op_release(काष्ठा orangefs_kernel_op_s *op);
 
-extern void orangefs_bufmap_put(int);
-static inline void put_cancel(struct orangefs_kernel_op_s *op)
-{
-	orangefs_bufmap_put(op->slot_to_free);
+बाह्य व्योम orangefs_bufmap_put(पूर्णांक);
+अटल अंतरभूत व्योम put_cancel(काष्ठा orangefs_kernel_op_s *op)
+अणु
+	orangefs_bufmap_put(op->slot_to_मुक्त);
 	op_release(op);
-}
+पूर्ण
 
-static inline void set_op_state_purged(struct orangefs_kernel_op_s *op)
-{
+अटल अंतरभूत व्योम set_op_state_purged(काष्ठा orangefs_kernel_op_s *op)
+अणु
 	spin_lock(&op->lock);
-	if (unlikely(op_is_cancel(op))) {
+	अगर (unlikely(op_is_cancel(op))) अणु
 		list_del_init(&op->list);
 		spin_unlock(&op->lock);
 		put_cancel(op);
-	} else {
+	पूर्ण अन्यथा अणु
 		op->op_state |= OP_VFS_STATE_PURGED;
-		complete(&op->waitq);
+		complete(&op->रुकोq);
 		spin_unlock(&op->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* per inode private orangefs info */
-struct orangefs_inode_s {
-	struct orangefs_object_kref refn;
-	char link_target[ORANGEFS_NAME_MAX];
+/* per inode निजी orangefs info */
+काष्ठा orangefs_inode_s अणु
+	काष्ठा orangefs_object_kref refn;
+	अक्षर link_target[ORANGEFS_NAME_MAX];
 	/*
 	 * Reading/Writing Extended attributes need to acquire the appropriate
-	 * reader/writer semaphore on the orangefs_inode_s structure.
+	 * पढ़ोer/ग_लिखोr semaphore on the orangefs_inode_s काष्ठाure.
 	 */
-	struct rw_semaphore xattr_sem;
+	काष्ठा rw_semaphore xattr_sem;
 
-	struct inode vfs_inode;
-	sector_t last_failed_block_index_read;
+	काष्ठा inode vfs_inode;
+	sector_t last_failed_block_index_पढ़ो;
 
-	unsigned long getattr_time;
-	unsigned long mapping_time;
-	int attr_valid;
+	अचिन्हित दीर्घ getattr_समय;
+	अचिन्हित दीर्घ mapping_समय;
+	पूर्णांक attr_valid;
 	kuid_t attr_uid;
 	kgid_t attr_gid;
-	unsigned long bitlock;
+	अचिन्हित दीर्घ bitlock;
 
 	DECLARE_HASHTABLE(xattr_cache, 4);
-};
+पूर्ण;
 
-/* per superblock private orangefs info */
-struct orangefs_sb_info_s {
-	struct orangefs_khandle root_khandle;
+/* per superblock निजी orangefs info */
+काष्ठा orangefs_sb_info_s अणु
+	काष्ठा orangefs_khandle root_khandle;
 	__s32 fs_id;
-	int id;
-	int flags;
-#define ORANGEFS_OPT_INTR	0x01
-#define ORANGEFS_OPT_LOCAL_LOCK	0x02
-	char devname[ORANGEFS_MAX_SERVER_ADDR_LEN];
-	struct super_block *sb;
-	int mount_pending;
-	int no_list;
-	struct list_head list;
-};
+	पूर्णांक id;
+	पूर्णांक flags;
+#घोषणा ORANGEFS_OPT_INTR	0x01
+#घोषणा ORANGEFS_OPT_LOCAL_LOCK	0x02
+	अक्षर devname[ORANGEFS_MAX_SERVER_ADDR_LEN];
+	काष्ठा super_block *sb;
+	पूर्णांक mount_pending;
+	पूर्णांक no_list;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct orangefs_stats {
-	unsigned long cache_hits;
-	unsigned long cache_misses;
-	unsigned long reads;
-	unsigned long writes;
-};
+काष्ठा orangefs_stats अणु
+	अचिन्हित दीर्घ cache_hits;
+	अचिन्हित दीर्घ cache_misses;
+	अचिन्हित दीर्घ पढ़ोs;
+	अचिन्हित दीर्घ ग_लिखोs;
+पूर्ण;
 
-struct orangefs_cached_xattr {
-	struct hlist_node node;
-	char key[ORANGEFS_MAX_XATTR_NAMELEN];
-	char val[ORANGEFS_MAX_XATTR_VALUELEN];
-	ssize_t length;
-	unsigned long timeout;
-};
+काष्ठा orangefs_cached_xattr अणु
+	काष्ठा hlist_node node;
+	अक्षर key[ORANGEFS_MAX_XATTR_NAMELEN];
+	अक्षर val[ORANGEFS_MAX_XATTR_VALUELEN];
+	sमाप_प्रकार length;
+	अचिन्हित दीर्घ समयout;
+पूर्ण;
 
-struct orangefs_write_range {
+काष्ठा orangefs_ग_लिखो_range अणु
 	loff_t pos;
-	size_t len;
+	माप_प्रकार len;
 	kuid_t uid;
 	kgid_t gid;
-};
+पूर्ण;
 
-extern struct orangefs_stats orangefs_stats;
+बाह्य काष्ठा orangefs_stats orangefs_stats;
 
 /*
- * NOTE: See Documentation/filesystems/porting.rst for information
- * on implementing FOO_I and properly accessing fs private data
+ * NOTE: See Documentation/fileप्रणालीs/porting.rst क्रम inक्रमmation
+ * on implementing FOO_I and properly accessing fs निजी data
  */
-static inline struct orangefs_inode_s *ORANGEFS_I(struct inode *inode)
-{
-	return container_of(inode, struct orangefs_inode_s, vfs_inode);
-}
+अटल अंतरभूत काष्ठा orangefs_inode_s *ORANGEFS_I(काष्ठा inode *inode)
+अणु
+	वापस container_of(inode, काष्ठा orangefs_inode_s, vfs_inode);
+पूर्ण
 
-static inline struct orangefs_sb_info_s *ORANGEFS_SB(struct super_block *sb)
-{
-	return (struct orangefs_sb_info_s *) sb->s_fs_info;
-}
+अटल अंतरभूत काष्ठा orangefs_sb_info_s *ORANGEFS_SB(काष्ठा super_block *sb)
+अणु
+	वापस (काष्ठा orangefs_sb_info_s *) sb->s_fs_info;
+पूर्ण
 
 /* ino_t descends from "unsigned long", 8 bytes, 64 bits. */
-static inline ino_t orangefs_khandle_to_ino(struct orangefs_khandle *khandle)
-{
-	union {
-		unsigned char u[8];
+अटल अंतरभूत ino_t orangefs_khandle_to_ino(काष्ठा orangefs_khandle *khandle)
+अणु
+	जोड़ अणु
+		अचिन्हित अक्षर u[8];
 		__u64 ino;
-	} ihandle;
+	पूर्ण ihandle;
 
 	ihandle.u[0] = khandle->u[0] ^ khandle->u[4];
 	ihandle.u[1] = khandle->u[1] ^ khandle->u[5];
@@ -274,219 +275,219 @@ static inline ino_t orangefs_khandle_to_ino(struct orangefs_khandle *khandle)
 	ihandle.u[6] = khandle->u[14] ^ khandle->u[10];
 	ihandle.u[7] = khandle->u[15] ^ khandle->u[11];
 
-	return ihandle.ino;
-}
+	वापस ihandle.ino;
+पूर्ण
 
-static inline struct orangefs_khandle *get_khandle_from_ino(struct inode *inode)
-{
-	return &(ORANGEFS_I(inode)->refn.khandle);
-}
+अटल अंतरभूत काष्ठा orangefs_khandle *get_khandle_from_ino(काष्ठा inode *inode)
+अणु
+	वापस &(ORANGEFS_I(inode)->refn.khandle);
+पूर्ण
 
-static inline int is_root_handle(struct inode *inode)
-{
+अटल अंतरभूत पूर्णांक is_root_handle(काष्ठा inode *inode)
+अणु
 	gossip_debug(GOSSIP_DCACHE_DEBUG,
 		     "%s: root handle: %pU, this handle: %pU:\n",
 		     __func__,
 		     &ORANGEFS_SB(inode->i_sb)->root_khandle,
 		     get_khandle_from_ino(inode));
 
-	if (ORANGEFS_khandle_cmp(&(ORANGEFS_SB(inode->i_sb)->root_khandle),
+	अगर (ORANGEFS_khandle_cmp(&(ORANGEFS_SB(inode->i_sb)->root_khandle),
 			     get_khandle_from_ino(inode)))
-		return 0;
-	else
-		return 1;
-}
+		वापस 0;
+	अन्यथा
+		वापस 1;
+पूर्ण
 
-static inline int match_handle(struct orangefs_khandle resp_handle,
-			       struct inode *inode)
-{
+अटल अंतरभूत पूर्णांक match_handle(काष्ठा orangefs_khandle resp_handle,
+			       काष्ठा inode *inode)
+अणु
 	gossip_debug(GOSSIP_DCACHE_DEBUG,
 		     "%s: one handle: %pU, another handle:%pU:\n",
 		     __func__,
 		     &resp_handle,
 		     get_khandle_from_ino(inode));
 
-	if (ORANGEFS_khandle_cmp(&resp_handle, get_khandle_from_ino(inode)))
-		return 0;
-	else
-		return 1;
-}
+	अगर (ORANGEFS_khandle_cmp(&resp_handle, get_khandle_from_ino(inode)))
+		वापस 0;
+	अन्यथा
+		वापस 1;
+पूर्ण
 
 /*
  * defined in orangefs-cache.c
  */
-int op_cache_initialize(void);
-int op_cache_finalize(void);
-struct orangefs_kernel_op_s *op_alloc(__s32 type);
-void orangefs_new_tag(struct orangefs_kernel_op_s *op);
-char *get_opname_string(struct orangefs_kernel_op_s *new_op);
+पूर्णांक op_cache_initialize(व्योम);
+पूर्णांक op_cache_finalize(व्योम);
+काष्ठा orangefs_kernel_op_s *op_alloc(__s32 type);
+व्योम orangefs_new_tag(काष्ठा orangefs_kernel_op_s *op);
+अक्षर *get_opname_string(काष्ठा orangefs_kernel_op_s *new_op);
 
-int orangefs_inode_cache_initialize(void);
-int orangefs_inode_cache_finalize(void);
+पूर्णांक orangefs_inode_cache_initialize(व्योम);
+पूर्णांक orangefs_inode_cache_finalize(व्योम);
 
 /*
  * defined in orangefs-mod.c
  */
-void purge_inprogress_ops(void);
+व्योम purge_inprogress_ops(व्योम);
 
 /*
- * defined in waitqueue.c
+ * defined in रुकोqueue.c
  */
-void purge_waiting_ops(void);
+व्योम purge_रुकोing_ops(व्योम);
 
 /*
  * defined in super.c
  */
-extern uint64_t orangefs_features;
+बाह्य uपूर्णांक64_t orangefs_features;
 
-struct dentry *orangefs_mount(struct file_system_type *fst,
-			   int flags,
-			   const char *devname,
-			   void *data);
+काष्ठा dentry *orangefs_mount(काष्ठा file_प्रणाली_type *fst,
+			   पूर्णांक flags,
+			   स्थिर अक्षर *devname,
+			   व्योम *data);
 
-void orangefs_kill_sb(struct super_block *sb);
-int orangefs_remount(struct orangefs_sb_info_s *);
+व्योम orangefs_समाप्त_sb(काष्ठा super_block *sb);
+पूर्णांक orangefs_remount(काष्ठा orangefs_sb_info_s *);
 
-int fsid_key_table_initialize(void);
-void fsid_key_table_finalize(void);
+पूर्णांक fsid_key_table_initialize(व्योम);
+व्योम fsid_key_table_finalize(व्योम);
 
 /*
  * defined in inode.c
  */
-vm_fault_t orangefs_page_mkwrite(struct vm_fault *);
-struct inode *orangefs_new_inode(struct super_block *sb,
-			      struct inode *dir,
-			      int mode,
+vm_fault_t orangefs_page_mkग_लिखो(काष्ठा vm_fault *);
+काष्ठा inode *orangefs_new_inode(काष्ठा super_block *sb,
+			      काष्ठा inode *dir,
+			      पूर्णांक mode,
 			      dev_t dev,
-			      struct orangefs_object_kref *ref);
+			      काष्ठा orangefs_object_kref *ref);
 
-int __orangefs_setattr(struct inode *, struct iattr *);
-int orangefs_setattr(struct user_namespace *, struct dentry *, struct iattr *);
+पूर्णांक __orangefs_setattr(काष्ठा inode *, काष्ठा iattr *);
+पूर्णांक orangefs_setattr(काष्ठा user_namespace *, काष्ठा dentry *, काष्ठा iattr *);
 
-int orangefs_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		     struct kstat *stat, u32 request_mask, unsigned int flags);
+पूर्णांक orangefs_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		     काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक flags);
 
-int orangefs_permission(struct user_namespace *mnt_userns,
-			struct inode *inode, int mask);
+पूर्णांक orangefs_permission(काष्ठा user_namespace *mnt_userns,
+			काष्ठा inode *inode, पूर्णांक mask);
 
-int orangefs_update_time(struct inode *, struct timespec64 *, int);
+पूर्णांक orangefs_update_समय(काष्ठा inode *, काष्ठा बारpec64 *, पूर्णांक);
 
 /*
  * defined in xattr.c
  */
-ssize_t orangefs_listxattr(struct dentry *dentry, char *buffer, size_t size);
+sमाप_प्रकार orangefs_listxattr(काष्ठा dentry *dentry, अक्षर *buffer, माप_प्रकार size);
 
 /*
  * defined in namei.c
  */
-struct inode *orangefs_iget(struct super_block *sb,
-			 struct orangefs_object_kref *ref);
+काष्ठा inode *orangefs_iget(काष्ठा super_block *sb,
+			 काष्ठा orangefs_object_kref *ref);
 
 /*
  * defined in devorangefs-req.c
  */
-extern uint32_t orangefs_userspace_version;
+बाह्य uपूर्णांक32_t orangefs_userspace_version;
 
-int orangefs_dev_init(void);
-void orangefs_dev_cleanup(void);
-int is_daemon_in_service(void);
-bool __is_daemon_in_service(void);
+पूर्णांक orangefs_dev_init(व्योम);
+व्योम orangefs_dev_cleanup(व्योम);
+पूर्णांक is_daemon_in_service(व्योम);
+bool __is_daemon_in_service(व्योम);
 
 /*
  * defined in file.c
  */
-int orangefs_revalidate_mapping(struct inode *);
-ssize_t wait_for_direct_io(enum ORANGEFS_io_type, struct inode *, loff_t *,
-    struct iov_iter *, size_t, loff_t, struct orangefs_write_range *, int *,
-    struct file *);
-ssize_t do_readv_writev(enum ORANGEFS_io_type, struct file *, loff_t *,
-    struct iov_iter *);
+पूर्णांक orangefs_revalidate_mapping(काष्ठा inode *);
+sमाप_प्रकार रुको_क्रम_direct_io(क्रमागत ORANGEFS_io_type, काष्ठा inode *, loff_t *,
+    काष्ठा iov_iter *, माप_प्रकार, loff_t, काष्ठा orangefs_ग_लिखो_range *, पूर्णांक *,
+    काष्ठा file *);
+sमाप_प्रकार करो_पढ़ोv_ग_लिखोv(क्रमागत ORANGEFS_io_type, काष्ठा file *, loff_t *,
+    काष्ठा iov_iter *);
 
 /*
  * defined in orangefs-utils.c
  */
-__s32 fsid_of_op(struct orangefs_kernel_op_s *op);
+__s32 fsid_of_op(काष्ठा orangefs_kernel_op_s *op);
 
-ssize_t orangefs_inode_getxattr(struct inode *inode,
-			     const char *name,
-			     void *buffer,
-			     size_t size);
+sमाप_प्रकार orangefs_inode_getxattr(काष्ठा inode *inode,
+			     स्थिर अक्षर *name,
+			     व्योम *buffer,
+			     माप_प्रकार size);
 
-int orangefs_inode_setxattr(struct inode *inode,
-			 const char *name,
-			 const void *value,
-			 size_t size,
-			 int flags);
+पूर्णांक orangefs_inode_setxattr(काष्ठा inode *inode,
+			 स्थिर अक्षर *name,
+			 स्थिर व्योम *value,
+			 माप_प्रकार size,
+			 पूर्णांक flags);
 
-#define ORANGEFS_GETATTR_NEW 1
-#define ORANGEFS_GETATTR_SIZE 2
+#घोषणा ORANGEFS_GETATTR_NEW 1
+#घोषणा ORANGEFS_GETATTR_SIZE 2
 
-int orangefs_inode_getattr(struct inode *, int);
+पूर्णांक orangefs_inode_getattr(काष्ठा inode *, पूर्णांक);
 
-int orangefs_inode_check_changed(struct inode *inode);
+पूर्णांक orangefs_inode_check_changed(काष्ठा inode *inode);
 
-int orangefs_inode_setattr(struct inode *inode);
+पूर्णांक orangefs_inode_setattr(काष्ठा inode *inode);
 
-bool orangefs_cancel_op_in_progress(struct orangefs_kernel_op_s *op);
+bool orangefs_cancel_op_in_progress(काष्ठा orangefs_kernel_op_s *op);
 
-int orangefs_normalize_to_errno(__s32 error_code);
+पूर्णांक orangefs_normalize_to_त्रुटि_सं(__s32 error_code);
 
-extern struct mutex orangefs_request_mutex;
-extern int op_timeout_secs;
-extern int slot_timeout_secs;
-extern int orangefs_cache_timeout_msecs;
-extern int orangefs_dcache_timeout_msecs;
-extern int orangefs_getattr_timeout_msecs;
-extern struct list_head orangefs_superblocks;
-extern spinlock_t orangefs_superblocks_lock;
-extern struct list_head orangefs_request_list;
-extern spinlock_t orangefs_request_list_lock;
-extern wait_queue_head_t orangefs_request_list_waitq;
-extern struct list_head *orangefs_htable_ops_in_progress;
-extern spinlock_t orangefs_htable_ops_in_progress_lock;
-extern int hash_table_size;
+बाह्य काष्ठा mutex orangefs_request_mutex;
+बाह्य पूर्णांक op_समयout_secs;
+बाह्य पूर्णांक slot_समयout_secs;
+बाह्य पूर्णांक orangefs_cache_समयout_msecs;
+बाह्य पूर्णांक orangefs_dcache_समयout_msecs;
+बाह्य पूर्णांक orangefs_getattr_समयout_msecs;
+बाह्य काष्ठा list_head orangefs_superblocks;
+बाह्य spinlock_t orangefs_superblocks_lock;
+बाह्य काष्ठा list_head orangefs_request_list;
+बाह्य spinlock_t orangefs_request_list_lock;
+बाह्य रुको_queue_head_t orangefs_request_list_रुकोq;
+बाह्य काष्ठा list_head *orangefs_htable_ops_in_progress;
+बाह्य spinlock_t orangefs_htable_ops_in_progress_lock;
+बाह्य पूर्णांक hash_table_size;
 
-extern const struct file_operations orangefs_file_operations;
-extern const struct inode_operations orangefs_symlink_inode_operations;
-extern const struct inode_operations orangefs_dir_inode_operations;
-extern const struct file_operations orangefs_dir_operations;
-extern const struct dentry_operations orangefs_dentry_operations;
+बाह्य स्थिर काष्ठा file_operations orangefs_file_operations;
+बाह्य स्थिर काष्ठा inode_operations orangefs_symlink_inode_operations;
+बाह्य स्थिर काष्ठा inode_operations orangefs_dir_inode_operations;
+बाह्य स्थिर काष्ठा file_operations orangefs_dir_operations;
+बाह्य स्थिर काष्ठा dentry_operations orangefs_dentry_operations;
 
 /*
  * misc convenience macros
  */
 
-#define ORANGEFS_OP_INTERRUPTIBLE 1   /* service_operation() is interruptible */
-#define ORANGEFS_OP_PRIORITY      2   /* service_operation() is high priority */
-#define ORANGEFS_OP_CANCELLATION  4   /* this is a cancellation */
-#define ORANGEFS_OP_NO_MUTEX      8   /* don't acquire request_mutex */
-#define ORANGEFS_OP_ASYNC         16  /* Queue it, but don't wait */
-#define ORANGEFS_OP_WRITEBACK     32
+#घोषणा ORANGEFS_OP_INTERRUPTIBLE 1   /* service_operation() is पूर्णांकerruptible */
+#घोषणा ORANGEFS_OP_PRIORITY      2   /* service_operation() is high priority */
+#घोषणा ORANGEFS_OP_CANCELLATION  4   /* this is a cancellation */
+#घोषणा ORANGEFS_OP_NO_MUTEX      8   /* करोn't acquire request_mutex */
+#घोषणा ORANGEFS_OP_ASYNC         16  /* Queue it, but करोn't रुको */
+#घोषणा ORANGEFS_OP_WRITEBACK     32
 
-int service_operation(struct orangefs_kernel_op_s *op,
-		      const char *op_name,
-		      int flags);
+पूर्णांक service_operation(काष्ठा orangefs_kernel_op_s *op,
+		      स्थिर अक्षर *op_name,
+		      पूर्णांक flags);
 
-#define get_interruptible_flag(inode) \
+#घोषणा get_पूर्णांकerruptible_flag(inode) \
 	((ORANGEFS_SB(inode->i_sb)->flags & ORANGEFS_OPT_INTR) ? \
 		ORANGEFS_OP_INTERRUPTIBLE : 0)
 
-#define fill_default_sys_attrs(sys_attr, type, mode)			\
-do {									\
+#घोषणा fill_शेष_sys_attrs(sys_attr, type, mode)			\
+करो अणु									\
 	sys_attr.owner = from_kuid(&init_user_ns, current_fsuid()); \
 	sys_attr.group = from_kgid(&init_user_ns, current_fsgid()); \
 	sys_attr.perms = ORANGEFS_util_translate_mode(mode);		\
-	sys_attr.mtime = 0;						\
-	sys_attr.atime = 0;						\
-	sys_attr.ctime = 0;						\
+	sys_attr.mसमय = 0;						\
+	sys_attr.aसमय = 0;						\
+	sys_attr.स_समय = 0;						\
 	sys_attr.mask = ORANGEFS_ATTR_SYS_ALL_SETABLE;			\
-} while (0)
+पूर्ण जबतक (0)
 
-static inline void orangefs_set_timeout(struct dentry *dentry)
-{
-	unsigned long time = jiffies + orangefs_dcache_timeout_msecs*HZ/1000;
+अटल अंतरभूत व्योम orangefs_set_समयout(काष्ठा dentry *dentry)
+अणु
+	अचिन्हित दीर्घ समय = jअगरfies + orangefs_dcache_समयout_msecs*HZ/1000;
 
-	dentry->d_fsdata = (void *) time;
-}
+	dentry->d_fsdata = (व्योम *) समय;
+पूर्ण
 
-#endif /* __ORANGEFSKERNEL_H */
+#पूर्ण_अगर /* __ORANGEFSKERNEL_H */

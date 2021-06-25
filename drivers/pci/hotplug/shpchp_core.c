@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Standard Hot Plug Controller Driver
  *
  * Copyright (C) 1995,2001 Compaq Computer Corporation
- * Copyright (C) 2001 Greg Kroah-Hartman (greg@kroah.com)
+ * Copyright (C) 2001 Greg Kroah-Harपंचांगan (greg@kroah.com)
  * Copyright (C) 2001 IBM Corp.
  * Copyright (C) 2003-2004 Intel Corporation
  *
  * All rights reserved.
  *
- * Send feedback to <greg@kroah.com>, <kristen.c.accardi@intel.com>
+ * Send feedback to <greg@kroah.com>, <kristen.c.accardi@पूर्णांकel.com>
  *
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include "shpchp.h"
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश "shpchp.h"
 
 /* Global variables */
 bool shpchp_debug;
 bool shpchp_poll_mode;
-int shpchp_poll_time;
+पूर्णांक shpchp_poll_समय;
 
-#define DRIVER_VERSION	"0.4"
-#define DRIVER_AUTHOR	"Dan Zink <dan.zink@compaq.com>, Greg Kroah-Hartman <greg@kroah.com>, Dely Sy <dely.l.sy@intel.com>"
-#define DRIVER_DESC	"Standard Hot Plug PCI Controller Driver"
+#घोषणा DRIVER_VERSION	"0.4"
+#घोषणा DRIVER_AUTHOR	"Dan Zink <dan.zink@compaq.com>, Greg Kroah-Hartman <greg@kroah.com>, Dely Sy <dely.l.sy@intel.com>"
+#घोषणा DRIVER_DESC	"Standard Hot Plug PCI Controller Driver"
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
@@ -36,45 +37,45 @@ MODULE_LICENSE("GPL");
 
 module_param(shpchp_debug, bool, 0644);
 module_param(shpchp_poll_mode, bool, 0644);
-module_param(shpchp_poll_time, int, 0644);
+module_param(shpchp_poll_समय, पूर्णांक, 0644);
 MODULE_PARM_DESC(shpchp_debug, "Debugging mode enabled or not");
 MODULE_PARM_DESC(shpchp_poll_mode, "Using polling mechanism for hot-plug events or not");
-MODULE_PARM_DESC(shpchp_poll_time, "Polling mechanism frequency, in seconds");
+MODULE_PARM_DESC(shpchp_poll_समय, "Polling mechanism frequency, in seconds");
 
-#define SHPC_MODULE_NAME "shpchp"
+#घोषणा SHPC_MODULE_NAME "shpchp"
 
-static int set_attention_status(struct hotplug_slot *slot, u8 value);
-static int enable_slot(struct hotplug_slot *slot);
-static int disable_slot(struct hotplug_slot *slot);
-static int get_power_status(struct hotplug_slot *slot, u8 *value);
-static int get_attention_status(struct hotplug_slot *slot, u8 *value);
-static int get_latch_status(struct hotplug_slot *slot, u8 *value);
-static int get_adapter_status(struct hotplug_slot *slot, u8 *value);
+अटल पूर्णांक set_attention_status(काष्ठा hotplug_slot *slot, u8 value);
+अटल पूर्णांक enable_slot(काष्ठा hotplug_slot *slot);
+अटल पूर्णांक disable_slot(काष्ठा hotplug_slot *slot);
+अटल पूर्णांक get_घातer_status(काष्ठा hotplug_slot *slot, u8 *value);
+अटल पूर्णांक get_attention_status(काष्ठा hotplug_slot *slot, u8 *value);
+अटल पूर्णांक get_latch_status(काष्ठा hotplug_slot *slot, u8 *value);
+अटल पूर्णांक get_adapter_status(काष्ठा hotplug_slot *slot, u8 *value);
 
-static const struct hotplug_slot_ops shpchp_hotplug_slot_ops = {
+अटल स्थिर काष्ठा hotplug_slot_ops shpchp_hotplug_slot_ops = अणु
 	.set_attention_status =	set_attention_status,
 	.enable_slot =		enable_slot,
 	.disable_slot =		disable_slot,
-	.get_power_status =	get_power_status,
+	.get_घातer_status =	get_घातer_status,
 	.get_attention_status =	get_attention_status,
 	.get_latch_status =	get_latch_status,
 	.get_adapter_status =	get_adapter_status,
-};
+पूर्ण;
 
-static int init_slots(struct controller *ctrl)
-{
-	struct slot *slot;
-	struct hotplug_slot *hotplug_slot;
-	char name[SLOT_NAME_SIZE];
-	int retval;
-	int i;
+अटल पूर्णांक init_slots(काष्ठा controller *ctrl)
+अणु
+	काष्ठा slot *slot;
+	काष्ठा hotplug_slot *hotplug_slot;
+	अक्षर name[SLOT_NAME_SIZE];
+	पूर्णांक retval;
+	पूर्णांक i;
 
-	for (i = 0; i < ctrl->num_slots; i++) {
-		slot = kzalloc(sizeof(*slot), GFP_KERNEL);
-		if (!slot) {
+	क्रम (i = 0; i < ctrl->num_slots; i++) अणु
+		slot = kzalloc(माप(*slot), GFP_KERNEL);
+		अगर (!slot) अणु
 			retval = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		hotplug_slot = &slot->hotplug_slot;
 
@@ -86,66 +87,66 @@ static int init_slots(struct controller *ctrl)
 		slot->number = ctrl->first_slot + (ctrl->slot_num_inc * i);
 
 		slot->wq = alloc_workqueue("shpchp-%d", 0, 0, slot->number);
-		if (!slot->wq) {
+		अगर (!slot->wq) अणु
 			retval = -ENOMEM;
-			goto error_slot;
-		}
+			जाओ error_slot;
+		पूर्ण
 
 		mutex_init(&slot->lock);
 		INIT_DELAYED_WORK(&slot->work, shpchp_queue_pushbutton_work);
 
-		/* register this slot with the hotplug pci core */
-		snprintf(name, SLOT_NAME_SIZE, "%d", slot->number);
+		/* रेजिस्टर this slot with the hotplug pci core */
+		snम_लिखो(name, SLOT_NAME_SIZE, "%d", slot->number);
 		hotplug_slot->ops = &shpchp_hotplug_slot_ops;
 
 		ctrl_dbg(ctrl, "Registering domain:bus:dev=%04x:%02x:%02x hp_slot=%x sun=%x slot_device_offset=%x\n",
-			 pci_domain_nr(ctrl->pci_dev->subordinate),
+			 pci_करोमुख्य_nr(ctrl->pci_dev->subordinate),
 			 slot->bus, slot->device, slot->hp_slot, slot->number,
 			 ctrl->slot_device_offset);
-		retval = pci_hp_register(hotplug_slot,
+		retval = pci_hp_रेजिस्टर(hotplug_slot,
 				ctrl->pci_dev->subordinate, slot->device, name);
-		if (retval) {
+		अगर (retval) अणु
 			ctrl_err(ctrl, "pci_hp_register failed with error %d\n",
 				 retval);
-			goto error_slotwq;
-		}
+			जाओ error_slotwq;
+		पूर्ण
 
-		get_power_status(hotplug_slot, &slot->pwr_save);
+		get_घातer_status(hotplug_slot, &slot->pwr_save);
 		get_attention_status(hotplug_slot, &slot->attention_save);
 		get_latch_status(hotplug_slot, &slot->latch_save);
 		get_adapter_status(hotplug_slot, &slot->presence_save);
 
 		list_add(&slot->slot_list, &ctrl->slot_list);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error_slotwq:
 	destroy_workqueue(slot->wq);
 error_slot:
-	kfree(slot);
+	kमुक्त(slot);
 error:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-void cleanup_slots(struct controller *ctrl)
-{
-	struct slot *slot, *next;
+व्योम cleanup_slots(काष्ठा controller *ctrl)
+अणु
+	काष्ठा slot *slot, *next;
 
-	list_for_each_entry_safe(slot, next, &ctrl->slot_list, slot_list) {
+	list_क्रम_each_entry_safe(slot, next, &ctrl->slot_list, slot_list) अणु
 		list_del(&slot->slot_list);
 		cancel_delayed_work(&slot->work);
 		destroy_workqueue(slot->wq);
-		pci_hp_deregister(&slot->hotplug_slot);
-		kfree(slot);
-	}
-}
+		pci_hp_deरेजिस्टर(&slot->hotplug_slot);
+		kमुक्त(slot);
+	पूर्ण
+पूर्ण
 
 /*
- * set_attention_status - Turns the Amber LED for a slot on, off or blink
+ * set_attention_status - Turns the Amber LED क्रम a slot on, off or blink
  */
-static int set_attention_status(struct hotplug_slot *hotplug_slot, u8 status)
-{
-	struct slot *slot = get_slot(hotplug_slot);
+अटल पूर्णांक set_attention_status(काष्ठा hotplug_slot *hotplug_slot, u8 status)
+अणु
+	काष्ठा slot *slot = get_slot(hotplug_slot);
 
 	ctrl_dbg(slot->ctrl, "%s: physical_slot = %s\n",
 		 __func__, slot_name(slot));
@@ -153,194 +154,194 @@ static int set_attention_status(struct hotplug_slot *hotplug_slot, u8 status)
 	slot->attention_save = status;
 	slot->hpc_ops->set_attention_status(slot, status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enable_slot(struct hotplug_slot *hotplug_slot)
-{
-	struct slot *slot = get_slot(hotplug_slot);
-
-	ctrl_dbg(slot->ctrl, "%s: physical_slot = %s\n",
-		 __func__, slot_name(slot));
-
-	return shpchp_sysfs_enable_slot(slot);
-}
-
-static int disable_slot(struct hotplug_slot *hotplug_slot)
-{
-	struct slot *slot = get_slot(hotplug_slot);
+अटल पूर्णांक enable_slot(काष्ठा hotplug_slot *hotplug_slot)
+अणु
+	काष्ठा slot *slot = get_slot(hotplug_slot);
 
 	ctrl_dbg(slot->ctrl, "%s: physical_slot = %s\n",
 		 __func__, slot_name(slot));
 
-	return shpchp_sysfs_disable_slot(slot);
-}
+	वापस shpchp_sysfs_enable_slot(slot);
+पूर्ण
 
-static int get_power_status(struct hotplug_slot *hotplug_slot, u8 *value)
-{
-	struct slot *slot = get_slot(hotplug_slot);
-	int retval;
+अटल पूर्णांक disable_slot(काष्ठा hotplug_slot *hotplug_slot)
+अणु
+	काष्ठा slot *slot = get_slot(hotplug_slot);
 
 	ctrl_dbg(slot->ctrl, "%s: physical_slot = %s\n",
 		 __func__, slot_name(slot));
 
-	retval = slot->hpc_ops->get_power_status(slot, value);
-	if (retval < 0)
+	वापस shpchp_sysfs_disable_slot(slot);
+पूर्ण
+
+अटल पूर्णांक get_घातer_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
+अणु
+	काष्ठा slot *slot = get_slot(hotplug_slot);
+	पूर्णांक retval;
+
+	ctrl_dbg(slot->ctrl, "%s: physical_slot = %s\n",
+		 __func__, slot_name(slot));
+
+	retval = slot->hpc_ops->get_घातer_status(slot, value);
+	अगर (retval < 0)
 		*value = slot->pwr_save;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_attention_status(struct hotplug_slot *hotplug_slot, u8 *value)
-{
-	struct slot *slot = get_slot(hotplug_slot);
-	int retval;
+अटल पूर्णांक get_attention_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
+अणु
+	काष्ठा slot *slot = get_slot(hotplug_slot);
+	पूर्णांक retval;
 
 	ctrl_dbg(slot->ctrl, "%s: physical_slot = %s\n",
 		 __func__, slot_name(slot));
 
 	retval = slot->hpc_ops->get_attention_status(slot, value);
-	if (retval < 0)
+	अगर (retval < 0)
 		*value = slot->attention_save;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_latch_status(struct hotplug_slot *hotplug_slot, u8 *value)
-{
-	struct slot *slot = get_slot(hotplug_slot);
-	int retval;
+अटल पूर्णांक get_latch_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
+अणु
+	काष्ठा slot *slot = get_slot(hotplug_slot);
+	पूर्णांक retval;
 
 	ctrl_dbg(slot->ctrl, "%s: physical_slot = %s\n",
 		 __func__, slot_name(slot));
 
 	retval = slot->hpc_ops->get_latch_status(slot, value);
-	if (retval < 0)
+	अगर (retval < 0)
 		*value = slot->latch_save;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_adapter_status(struct hotplug_slot *hotplug_slot, u8 *value)
-{
-	struct slot *slot = get_slot(hotplug_slot);
-	int retval;
+अटल पूर्णांक get_adapter_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
+अणु
+	काष्ठा slot *slot = get_slot(hotplug_slot);
+	पूर्णांक retval;
 
 	ctrl_dbg(slot->ctrl, "%s: physical_slot = %s\n",
 		 __func__, slot_name(slot));
 
 	retval = slot->hpc_ops->get_adapter_status(slot, value);
-	if (retval < 0)
+	अगर (retval < 0)
 		*value = slot->presence_save;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool shpc_capable(struct pci_dev *bridge)
-{
+अटल bool shpc_capable(काष्ठा pci_dev *bridge)
+अणु
 	/*
-	 * It is assumed that AMD GOLAM chips support SHPC but they do not
+	 * It is assumed that AMD GOLAM chips support SHPC but they करो not
 	 * have SHPC capability.
 	 */
-	if (bridge->vendor == PCI_VENDOR_ID_AMD &&
+	अगर (bridge->venकरोr == PCI_VENDOR_ID_AMD &&
 	    bridge->device == PCI_DEVICE_ID_AMD_GOLAM_7450)
-		return true;
+		वापस true;
 
-	if (pci_find_capability(bridge, PCI_CAP_ID_SHPC))
-		return true;
+	अगर (pci_find_capability(bridge, PCI_CAP_ID_SHPC))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int shpc_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	int rc;
-	struct controller *ctrl;
+अटल पूर्णांक shpc_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक rc;
+	काष्ठा controller *ctrl;
 
-	if (!shpc_capable(pdev))
-		return -ENODEV;
+	अगर (!shpc_capable(pdev))
+		वापस -ENODEV;
 
-	if (acpi_get_hp_hw_control_from_firmware(pdev))
-		return -ENODEV;
+	अगर (acpi_get_hp_hw_control_from_firmware(pdev))
+		वापस -ENODEV;
 
-	ctrl = kzalloc(sizeof(*ctrl), GFP_KERNEL);
-	if (!ctrl)
-		goto err_out_none;
+	ctrl = kzalloc(माप(*ctrl), GFP_KERNEL);
+	अगर (!ctrl)
+		जाओ err_out_none;
 
 	INIT_LIST_HEAD(&ctrl->slot_list);
 
 	rc = shpc_init(ctrl, pdev);
-	if (rc) {
+	अगर (rc) अणु
 		ctrl_dbg(ctrl, "Controller initialization failed\n");
-		goto err_out_free_ctrl;
-	}
+		जाओ err_out_मुक्त_ctrl;
+	पूर्ण
 
 	pci_set_drvdata(pdev, ctrl);
 
-	/* Setup the slot information structures */
+	/* Setup the slot inक्रमmation काष्ठाures */
 	rc = init_slots(ctrl);
-	if (rc) {
+	अगर (rc) अणु
 		ctrl_err(ctrl, "Slot initialization failed\n");
-		goto err_out_release_ctlr;
-	}
+		जाओ err_out_release_ctlr;
+	पूर्ण
 
 	rc = shpchp_create_ctrl_files(ctrl);
-	if (rc)
-		goto err_cleanup_slots;
+	अगर (rc)
+		जाओ err_cleanup_slots;
 
 	pdev->shpc_managed = 1;
-	return 0;
+	वापस 0;
 
 err_cleanup_slots:
 	cleanup_slots(ctrl);
 err_out_release_ctlr:
 	ctrl->hpc_ops->release_ctlr(ctrl);
-err_out_free_ctrl:
-	kfree(ctrl);
+err_out_मुक्त_ctrl:
+	kमुक्त(ctrl);
 err_out_none:
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void shpc_remove(struct pci_dev *dev)
-{
-	struct controller *ctrl = pci_get_drvdata(dev);
+अटल व्योम shpc_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा controller *ctrl = pci_get_drvdata(dev);
 
 	dev->shpc_managed = 0;
-	shpchp_remove_ctrl_files(ctrl);
+	shpchp_हटाओ_ctrl_files(ctrl);
 	ctrl->hpc_ops->release_ctlr(ctrl);
-	kfree(ctrl);
-}
+	kमुक्त(ctrl);
+पूर्ण
 
-static const struct pci_device_id shpcd_pci_tbl[] = {
-	{PCI_DEVICE_CLASS(((PCI_CLASS_BRIDGE_PCI << 8) | 0x00), ~0)},
-	{ /* end: all zeroes */ }
-};
+अटल स्थिर काष्ठा pci_device_id shpcd_pci_tbl[] = अणु
+	अणुPCI_DEVICE_CLASS(((PCI_CLASS_BRIDGE_PCI << 8) | 0x00), ~0)पूर्ण,
+	अणु /* end: all zeroes */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, shpcd_pci_tbl);
 
-static struct pci_driver shpc_driver = {
+अटल काष्ठा pci_driver shpc_driver = अणु
 	.name =		SHPC_MODULE_NAME,
 	.id_table =	shpcd_pci_tbl,
 	.probe =	shpc_probe,
-	.remove =	shpc_remove,
-};
+	.हटाओ =	shpc_हटाओ,
+पूर्ण;
 
-static int __init shpcd_init(void)
-{
-	int retval;
+अटल पूर्णांक __init shpcd_init(व्योम)
+अणु
+	पूर्णांक retval;
 
-	retval = pci_register_driver(&shpc_driver);
+	retval = pci_रेजिस्टर_driver(&shpc_driver);
 	dbg("%s: pci_register_driver = %d\n", __func__, retval);
 	info(DRIVER_DESC " version: " DRIVER_VERSION "\n");
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void __exit shpcd_cleanup(void)
-{
+अटल व्योम __निकास shpcd_cleanup(व्योम)
+अणु
 	dbg("unload_shpchpd()\n");
-	pci_unregister_driver(&shpc_driver);
+	pci_unरेजिस्टर_driver(&shpc_driver);
 	info(DRIVER_DESC " version: " DRIVER_VERSION " unloaded\n");
-}
+पूर्ण
 
 module_init(shpcd_init);
-module_exit(shpcd_cleanup);
+module_निकास(shpcd_cleanup);

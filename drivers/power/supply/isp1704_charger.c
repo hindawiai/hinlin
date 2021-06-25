@@ -1,268 +1,269 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * ISP1704 USB Charger Detection driver
  *
  * Copyright (C) 2010 Nokia Corporation
- * Copyright (C) 2012 - 2013 Pali Rohár <pali@kernel.org>
+ * Copyright (C) 2012 - 2013 Pali Rohथँr <pali@kernel.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/sysfs.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/delay.h>
-#include <linux/of.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/of.h>
 
-#include <linux/gpio/consumer.h>
-#include <linux/usb/otg.h>
-#include <linux/usb/ulpi.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/usb/otg.h>
+#समावेश <linux/usb/ulpi.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
 
-/* Vendor specific Power Control register */
-#define ISP1704_PWR_CTRL		0x3d
-#define ISP1704_PWR_CTRL_SWCTRL		(1 << 0)
-#define ISP1704_PWR_CTRL_DET_COMP	(1 << 1)
-#define ISP1704_PWR_CTRL_BVALID_RISE	(1 << 2)
-#define ISP1704_PWR_CTRL_BVALID_FALL	(1 << 3)
-#define ISP1704_PWR_CTRL_DP_WKPU_EN	(1 << 4)
-#define ISP1704_PWR_CTRL_VDAT_DET	(1 << 5)
-#define ISP1704_PWR_CTRL_DPVSRC_EN	(1 << 6)
-#define ISP1704_PWR_CTRL_HWDETECT	(1 << 7)
+/* Venकरोr specअगरic Power Control रेजिस्टर */
+#घोषणा ISP1704_PWR_CTRL		0x3d
+#घोषणा ISP1704_PWR_CTRL_SWCTRL		(1 << 0)
+#घोषणा ISP1704_PWR_CTRL_DET_COMP	(1 << 1)
+#घोषणा ISP1704_PWR_CTRL_BVALID_RISE	(1 << 2)
+#घोषणा ISP1704_PWR_CTRL_BVALID_FALL	(1 << 3)
+#घोषणा ISP1704_PWR_CTRL_DP_WKPU_EN	(1 << 4)
+#घोषणा ISP1704_PWR_CTRL_VDAT_DET	(1 << 5)
+#घोषणा ISP1704_PWR_CTRL_DPVSRC_EN	(1 << 6)
+#घोषणा ISP1704_PWR_CTRL_HWDETECT	(1 << 7)
 
-#define NXP_VENDOR_ID			0x04cc
+#घोषणा NXP_VENDOR_ID			0x04cc
 
-static u16 isp170x_id[] = {
+अटल u16 isp170x_id[] = अणु
 	0x1704,
 	0x1707,
-};
+पूर्ण;
 
-struct isp1704_charger {
-	struct device			*dev;
-	struct power_supply		*psy;
-	struct power_supply_desc	psy_desc;
-	struct gpio_desc		*enable_gpio;
-	struct usb_phy			*phy;
-	struct notifier_block		nb;
-	struct work_struct		work;
+काष्ठा isp1704_अक्षरger अणु
+	काष्ठा device			*dev;
+	काष्ठा घातer_supply		*psy;
+	काष्ठा घातer_supply_desc	psy_desc;
+	काष्ठा gpio_desc		*enable_gpio;
+	काष्ठा usb_phy			*phy;
+	काष्ठा notअगरier_block		nb;
+	काष्ठा work_काष्ठा		work;
 
 	/* properties */
-	char			model[8];
-	unsigned		present:1;
-	unsigned		online:1;
-	unsigned		current_max;
-};
+	अक्षर			model[8];
+	अचिन्हित		present:1;
+	अचिन्हित		online:1;
+	अचिन्हित		current_max;
+पूर्ण;
 
-static inline int isp1704_read(struct isp1704_charger *isp, u32 reg)
-{
-	return usb_phy_io_read(isp->phy, reg);
-}
+अटल अंतरभूत पूर्णांक isp1704_पढ़ो(काष्ठा isp1704_अक्षरger *isp, u32 reg)
+अणु
+	वापस usb_phy_io_पढ़ो(isp->phy, reg);
+पूर्ण
 
-static inline int isp1704_write(struct isp1704_charger *isp, u32 reg, u32 val)
-{
-	return usb_phy_io_write(isp->phy, val, reg);
-}
+अटल अंतरभूत पूर्णांक isp1704_ग_लिखो(काष्ठा isp1704_अक्षरger *isp, u32 reg, u32 val)
+अणु
+	वापस usb_phy_io_ग_लिखो(isp->phy, val, reg);
+पूर्ण
 
-static void isp1704_charger_set_power(struct isp1704_charger *isp, bool on)
-{
+अटल व्योम isp1704_अक्षरger_set_घातer(काष्ठा isp1704_अक्षरger *isp, bool on)
+अणु
 	gpiod_set_value(isp->enable_gpio, on);
-}
+पूर्ण
 
 /*
- * Determine is the charging port DCP (dedicated charger) or CDP (Host/HUB
- * chargers).
+ * Determine is the अक्षरging port DCP (dedicated अक्षरger) or CDP (Host/HUB
+ * अक्षरgers).
  *
- * REVISIT: The method is defined in Battery Charging Specification and is
- * applicable to any ULPI transceiver. Nothing isp170x specific here.
+ * REVISIT: The method is defined in Battery Charging Specअगरication and is
+ * applicable to any ULPI transceiver. Nothing isp170x specअगरic here.
  */
-static inline int isp1704_charger_type(struct isp1704_charger *isp)
-{
+अटल अंतरभूत पूर्णांक isp1704_अक्षरger_type(काष्ठा isp1704_अक्षरger *isp)
+अणु
 	u8 reg;
 	u8 func_ctrl;
 	u8 otg_ctrl;
-	int type = POWER_SUPPLY_TYPE_USB_DCP;
+	पूर्णांक type = POWER_SUPPLY_TYPE_USB_DCP;
 
-	func_ctrl = isp1704_read(isp, ULPI_FUNC_CTRL);
-	otg_ctrl = isp1704_read(isp, ULPI_OTG_CTRL);
+	func_ctrl = isp1704_पढ़ो(isp, ULPI_FUNC_CTRL);
+	otg_ctrl = isp1704_पढ़ो(isp, ULPI_OTG_CTRL);
 
-	/* disable pulldowns */
+	/* disable pullकरोwns */
 	reg = ULPI_OTG_CTRL_DM_PULLDOWN | ULPI_OTG_CTRL_DP_PULLDOWN;
-	isp1704_write(isp, ULPI_CLR(ULPI_OTG_CTRL), reg);
+	isp1704_ग_लिखो(isp, ULPI_CLR(ULPI_OTG_CTRL), reg);
 
 	/* full speed */
-	isp1704_write(isp, ULPI_CLR(ULPI_FUNC_CTRL),
+	isp1704_ग_लिखो(isp, ULPI_CLR(ULPI_FUNC_CTRL),
 			ULPI_FUNC_CTRL_XCVRSEL_MASK);
-	isp1704_write(isp, ULPI_SET(ULPI_FUNC_CTRL),
+	isp1704_ग_लिखो(isp, ULPI_SET(ULPI_FUNC_CTRL),
 			ULPI_FUNC_CTRL_FULL_SPEED);
 
 	/* Enable strong pull-up on DP (1.5K) and reset */
 	reg = ULPI_FUNC_CTRL_TERMSELECT | ULPI_FUNC_CTRL_RESET;
-	isp1704_write(isp, ULPI_SET(ULPI_FUNC_CTRL), reg);
+	isp1704_ग_लिखो(isp, ULPI_SET(ULPI_FUNC_CTRL), reg);
 	usleep_range(1000, 2000);
 
-	reg = isp1704_read(isp, ULPI_DEBUG);
-	if ((reg & 3) != 3)
+	reg = isp1704_पढ़ो(isp, ULPI_DEBUG);
+	अगर ((reg & 3) != 3)
 		type = POWER_SUPPLY_TYPE_USB_CDP;
 
 	/* recover original state */
-	isp1704_write(isp, ULPI_FUNC_CTRL, func_ctrl);
-	isp1704_write(isp, ULPI_OTG_CTRL, otg_ctrl);
+	isp1704_ग_लिखो(isp, ULPI_FUNC_CTRL, func_ctrl);
+	isp1704_ग_लिखो(isp, ULPI_OTG_CTRL, otg_ctrl);
 
-	return type;
-}
+	वापस type;
+पूर्ण
 
 /*
- * ISP1704 detects PS/2 adapters as charger. To make sure the detected charger
- * is actually a dedicated charger, the following steps need to be taken.
+ * ISP1704 detects PS/2 adapters as अक्षरger. To make sure the detected अक्षरger
+ * is actually a dedicated अक्षरger, the following steps need to be taken.
  */
-static inline int isp1704_charger_verify(struct isp1704_charger *isp)
-{
-	int	ret = 0;
+अटल अंतरभूत पूर्णांक isp1704_अक्षरger_verअगरy(काष्ठा isp1704_अक्षरger *isp)
+अणु
+	पूर्णांक	ret = 0;
 	u8	r;
 
 	/* Reset the transceiver */
-	r = isp1704_read(isp, ULPI_FUNC_CTRL);
+	r = isp1704_पढ़ो(isp, ULPI_FUNC_CTRL);
 	r |= ULPI_FUNC_CTRL_RESET;
-	isp1704_write(isp, ULPI_FUNC_CTRL, r);
+	isp1704_ग_लिखो(isp, ULPI_FUNC_CTRL, r);
 	usleep_range(1000, 2000);
 
 	/* Set normal mode */
 	r &= ~(ULPI_FUNC_CTRL_RESET | ULPI_FUNC_CTRL_OPMODE_MASK);
-	isp1704_write(isp, ULPI_FUNC_CTRL, r);
+	isp1704_ग_लिखो(isp, ULPI_FUNC_CTRL, r);
 
-	/* Clear the DP and DM pull-down bits */
+	/* Clear the DP and DM pull-करोwn bits */
 	r = ULPI_OTG_CTRL_DP_PULLDOWN | ULPI_OTG_CTRL_DM_PULLDOWN;
-	isp1704_write(isp, ULPI_CLR(ULPI_OTG_CTRL), r);
+	isp1704_ग_लिखो(isp, ULPI_CLR(ULPI_OTG_CTRL), r);
 
 	/* Enable strong pull-up on DP (1.5K) and reset */
 	r = ULPI_FUNC_CTRL_TERMSELECT | ULPI_FUNC_CTRL_RESET;
-	isp1704_write(isp, ULPI_SET(ULPI_FUNC_CTRL), r);
+	isp1704_ग_लिखो(isp, ULPI_SET(ULPI_FUNC_CTRL), r);
 	usleep_range(1000, 2000);
 
 	/* Read the line state */
-	if (!isp1704_read(isp, ULPI_DEBUG)) {
+	अगर (!isp1704_पढ़ो(isp, ULPI_DEBUG)) अणु
 		/* Disable strong pull-up on DP (1.5K) */
-		isp1704_write(isp, ULPI_CLR(ULPI_FUNC_CTRL),
+		isp1704_ग_लिखो(isp, ULPI_CLR(ULPI_FUNC_CTRL),
 				ULPI_FUNC_CTRL_TERMSELECT);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* Is it a charger or PS/2 connection */
+	/* Is it a अक्षरger or PS/2 connection */
 
 	/* Enable weak pull-up resistor on DP */
-	isp1704_write(isp, ULPI_SET(ISP1704_PWR_CTRL),
+	isp1704_ग_लिखो(isp, ULPI_SET(ISP1704_PWR_CTRL),
 			ISP1704_PWR_CTRL_DP_WKPU_EN);
 
 	/* Disable strong pull-up on DP (1.5K) */
-	isp1704_write(isp, ULPI_CLR(ULPI_FUNC_CTRL),
+	isp1704_ग_लिखो(isp, ULPI_CLR(ULPI_FUNC_CTRL),
 			ULPI_FUNC_CTRL_TERMSELECT);
 
-	/* Enable weak pull-down resistor on DM */
-	isp1704_write(isp, ULPI_SET(ULPI_OTG_CTRL),
+	/* Enable weak pull-करोwn resistor on DM */
+	isp1704_ग_लिखो(isp, ULPI_SET(ULPI_OTG_CTRL),
 			ULPI_OTG_CTRL_DM_PULLDOWN);
 
-	/* It's a charger if the line states are clear */
-	if (!(isp1704_read(isp, ULPI_DEBUG)))
+	/* It's a अक्षरger अगर the line states are clear */
+	अगर (!(isp1704_पढ़ो(isp, ULPI_DEBUG)))
 		ret = 1;
 
 	/* Disable weak pull-up resistor on DP */
-	isp1704_write(isp, ULPI_CLR(ISP1704_PWR_CTRL),
+	isp1704_ग_लिखो(isp, ULPI_CLR(ISP1704_PWR_CTRL),
 			ISP1704_PWR_CTRL_DP_WKPU_EN);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int isp1704_charger_detect(struct isp1704_charger *isp)
-{
-	unsigned long	timeout;
+अटल अंतरभूत पूर्णांक isp1704_अक्षरger_detect(काष्ठा isp1704_अक्षरger *isp)
+अणु
+	अचिन्हित दीर्घ	समयout;
 	u8		pwr_ctrl;
-	int		ret = 0;
+	पूर्णांक		ret = 0;
 
-	pwr_ctrl = isp1704_read(isp, ISP1704_PWR_CTRL);
+	pwr_ctrl = isp1704_पढ़ो(isp, ISP1704_PWR_CTRL);
 
-	/* set SW control bit in PWR_CTRL register */
-	isp1704_write(isp, ISP1704_PWR_CTRL,
+	/* set SW control bit in PWR_CTRL रेजिस्टर */
+	isp1704_ग_लिखो(isp, ISP1704_PWR_CTRL,
 			ISP1704_PWR_CTRL_SWCTRL);
 
-	/* enable manual charger detection */
-	isp1704_write(isp, ULPI_SET(ISP1704_PWR_CTRL),
+	/* enable manual अक्षरger detection */
+	isp1704_ग_लिखो(isp, ULPI_SET(ISP1704_PWR_CTRL),
 			ISP1704_PWR_CTRL_SWCTRL
 			| ISP1704_PWR_CTRL_DPVSRC_EN);
 	usleep_range(1000, 2000);
 
-	timeout = jiffies + msecs_to_jiffies(300);
-	do {
-		/* Check if there is a charger */
-		if (isp1704_read(isp, ISP1704_PWR_CTRL)
-				& ISP1704_PWR_CTRL_VDAT_DET) {
-			ret = isp1704_charger_verify(isp);
-			break;
-		}
-	} while (!time_after(jiffies, timeout) && isp->online);
+	समयout = jअगरfies + msecs_to_jअगरfies(300);
+	करो अणु
+		/* Check अगर there is a अक्षरger */
+		अगर (isp1704_पढ़ो(isp, ISP1704_PWR_CTRL)
+				& ISP1704_PWR_CTRL_VDAT_DET) अणु
+			ret = isp1704_अक्षरger_verअगरy(isp);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!समय_after(jअगरfies, समयout) && isp->online);
 
 	/* recover original state */
-	isp1704_write(isp, ISP1704_PWR_CTRL, pwr_ctrl);
+	isp1704_ग_लिखो(isp, ISP1704_PWR_CTRL, pwr_ctrl);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int isp1704_charger_detect_dcp(struct isp1704_charger *isp)
-{
-	if (isp1704_charger_detect(isp) &&
-			isp1704_charger_type(isp) == POWER_SUPPLY_TYPE_USB_DCP)
-		return true;
-	else
-		return false;
-}
+अटल अंतरभूत पूर्णांक isp1704_अक्षरger_detect_dcp(काष्ठा isp1704_अक्षरger *isp)
+अणु
+	अगर (isp1704_अक्षरger_detect(isp) &&
+			isp1704_अक्षरger_type(isp) == POWER_SUPPLY_TYPE_USB_DCP)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static void isp1704_charger_work(struct work_struct *data)
-{
-	struct isp1704_charger	*isp =
-		container_of(data, struct isp1704_charger, work);
-	static DEFINE_MUTEX(lock);
+अटल व्योम isp1704_अक्षरger_work(काष्ठा work_काष्ठा *data)
+अणु
+	काष्ठा isp1704_अक्षरger	*isp =
+		container_of(data, काष्ठा isp1704_अक्षरger, work);
+	अटल DEFINE_MUTEX(lock);
 
 	mutex_lock(&lock);
 
-	switch (isp->phy->last_event) {
-	case USB_EVENT_VBUS:
-		/* do not call wall charger detection more times */
-		if (!isp->present) {
+	चयन (isp->phy->last_event) अणु
+	हाल USB_EVENT_VBUS:
+		/* करो not call wall अक्षरger detection more बार */
+		अगर (!isp->present) अणु
 			isp->online = true;
 			isp->present = 1;
-			isp1704_charger_set_power(isp, 1);
+			isp1704_अक्षरger_set_घातer(isp, 1);
 
-			/* detect wall charger */
-			if (isp1704_charger_detect_dcp(isp)) {
+			/* detect wall अक्षरger */
+			अगर (isp1704_अक्षरger_detect_dcp(isp)) अणु
 				isp->psy_desc.type = POWER_SUPPLY_TYPE_USB_DCP;
 				isp->current_max = 1800;
-			} else {
+			पूर्ण अन्यथा अणु
 				isp->psy_desc.type = POWER_SUPPLY_TYPE_USB;
 				isp->current_max = 500;
-			}
+			पूर्ण
 
 			/* enable data pullups */
-			if (isp->phy->otg->gadget)
+			अगर (isp->phy->otg->gadget)
 				usb_gadget_connect(isp->phy->otg->gadget);
-		}
+		पूर्ण
 
-		if (isp->psy_desc.type != POWER_SUPPLY_TYPE_USB_DCP) {
+		अगर (isp->psy_desc.type != POWER_SUPPLY_TYPE_USB_DCP) अणु
 			/*
 			 * Only 500mA here or high speed chirp
-			 * handshaking may break
+			 * handshaking may अवरोध
 			 */
-			if (isp->current_max > 500)
+			अगर (isp->current_max > 500)
 				isp->current_max = 500;
 
-			if (isp->current_max > 100)
+			अगर (isp->current_max > 100)
 				isp->psy_desc.type = POWER_SUPPLY_TYPE_USB_CDP;
-		}
-		break;
-	case USB_EVENT_NONE:
+		पूर्ण
+		अवरोध;
+	हाल USB_EVENT_NONE:
 		isp->online = false;
 		isp->present = 0;
 		isp->current_max = 0;
@@ -270,243 +271,243 @@ static void isp1704_charger_work(struct work_struct *data)
 
 		/*
 		 * Disable data pullups. We need to prevent the controller from
-		 * enumerating.
+		 * क्रमागतerating.
 		 *
-		 * FIXME: This is here to allow charger detection with Host/HUB
-		 * chargers. The pullups may be enabled elsewhere, so this can
+		 * FIXME: This is here to allow अक्षरger detection with Host/HUB
+		 * अक्षरgers. The pullups may be enabled अन्यथाwhere, so this can
 		 * not be the final solution.
 		 */
-		if (isp->phy->otg->gadget)
+		अगर (isp->phy->otg->gadget)
 			usb_gadget_disconnect(isp->phy->otg->gadget);
 
-		isp1704_charger_set_power(isp, 0);
-		break;
-	default:
-		goto out;
-	}
+		isp1704_अक्षरger_set_घातer(isp, 0);
+		अवरोध;
+	शेष:
+		जाओ out;
+	पूर्ण
 
-	power_supply_changed(isp->psy);
+	घातer_supply_changed(isp->psy);
 out:
 	mutex_unlock(&lock);
-}
+पूर्ण
 
-static int isp1704_notifier_call(struct notifier_block *nb,
-		unsigned long val, void *v)
-{
-	struct isp1704_charger *isp =
-		container_of(nb, struct isp1704_charger, nb);
+अटल पूर्णांक isp1704_notअगरier_call(काष्ठा notअगरier_block *nb,
+		अचिन्हित दीर्घ val, व्योम *v)
+अणु
+	काष्ठा isp1704_अक्षरger *isp =
+		container_of(nb, काष्ठा isp1704_अक्षरger, nb);
 
 	schedule_work(&isp->work);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int isp1704_charger_get_property(struct power_supply *psy,
-				enum power_supply_property psp,
-				union power_supply_propval *val)
-{
-	struct isp1704_charger *isp = power_supply_get_drvdata(psy);
+अटल पूर्णांक isp1704_अक्षरger_get_property(काष्ठा घातer_supply *psy,
+				क्रमागत घातer_supply_property psp,
+				जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा isp1704_अक्षरger *isp = घातer_supply_get_drvdata(psy);
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = isp->present;
-		break;
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = isp->online;
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_MAX:
-		val->intval = isp->current_max;
-		break;
-	case POWER_SUPPLY_PROP_MODEL_NAME:
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		val->पूर्णांकval = isp->present;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = isp->online;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
+		val->पूर्णांकval = isp->current_max;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = isp->model;
-		break;
-	case POWER_SUPPLY_PROP_MANUFACTURER:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = "NXP";
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static enum power_supply_property power_props[] = {
+अटल क्रमागत घातer_supply_property घातer_props[] = अणु
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_CURRENT_MAX,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
-};
+पूर्ण;
 
-static inline int isp1704_test_ulpi(struct isp1704_charger *isp)
-{
-	int vendor;
-	int product;
-	int i;
-	int ret;
+अटल अंतरभूत पूर्णांक isp1704_test_ulpi(काष्ठा isp1704_अक्षरger *isp)
+अणु
+	पूर्णांक venकरोr;
+	पूर्णांक product;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	/* Test ULPI interface */
-	ret = isp1704_write(isp, ULPI_SCRATCH, 0xaa);
-	if (ret < 0)
-		return ret;
+	/* Test ULPI पूर्णांकerface */
+	ret = isp1704_ग_लिखो(isp, ULPI_SCRATCH, 0xaa);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = isp1704_read(isp, ULPI_SCRATCH);
-	if (ret < 0)
-		return ret;
+	ret = isp1704_पढ़ो(isp, ULPI_SCRATCH);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret != 0xaa)
-		return -ENODEV;
+	अगर (ret != 0xaa)
+		वापस -ENODEV;
 
-	/* Verify the product and vendor id matches */
-	vendor = isp1704_read(isp, ULPI_VENDOR_ID_LOW);
-	vendor |= isp1704_read(isp, ULPI_VENDOR_ID_HIGH) << 8;
-	if (vendor != NXP_VENDOR_ID)
-		return -ENODEV;
+	/* Verअगरy the product and venकरोr id matches */
+	venकरोr = isp1704_पढ़ो(isp, ULPI_VENDOR_ID_LOW);
+	venकरोr |= isp1704_पढ़ो(isp, ULPI_VENDOR_ID_HIGH) << 8;
+	अगर (venकरोr != NXP_VENDOR_ID)
+		वापस -ENODEV;
 
-	product = isp1704_read(isp, ULPI_PRODUCT_ID_LOW);
-	product |= isp1704_read(isp, ULPI_PRODUCT_ID_HIGH) << 8;
+	product = isp1704_पढ़ो(isp, ULPI_PRODUCT_ID_LOW);
+	product |= isp1704_पढ़ो(isp, ULPI_PRODUCT_ID_HIGH) << 8;
 
-	for (i = 0; i < ARRAY_SIZE(isp170x_id); i++) {
-		if (product == isp170x_id[i]) {
-			sprintf(isp->model, "isp%x", product);
-			return product;
-		}
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(isp170x_id); i++) अणु
+		अगर (product == isp170x_id[i]) अणु
+			प्र_लिखो(isp->model, "isp%x", product);
+			वापस product;
+		पूर्ण
+	पूर्ण
 
 	dev_err(isp->dev, "product id %x not matching known ids", product);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int isp1704_charger_probe(struct platform_device *pdev)
-{
-	struct isp1704_charger	*isp;
-	int			ret = -ENODEV;
-	struct power_supply_config psy_cfg = {};
+अटल पूर्णांक isp1704_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा isp1704_अक्षरger	*isp;
+	पूर्णांक			ret = -ENODEV;
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
 
-	isp = devm_kzalloc(&pdev->dev, sizeof(*isp), GFP_KERNEL);
-	if (!isp)
-		return -ENOMEM;
+	isp = devm_kzalloc(&pdev->dev, माप(*isp), GFP_KERNEL);
+	अगर (!isp)
+		वापस -ENOMEM;
 
 	isp->enable_gpio = devm_gpiod_get(&pdev->dev, "nxp,enable",
 					  GPIOD_OUT_HIGH);
-	if (IS_ERR(isp->enable_gpio)) {
+	अगर (IS_ERR(isp->enable_gpio)) अणु
 		ret = PTR_ERR(isp->enable_gpio);
 		dev_err(&pdev->dev, "Could not get reset gpio: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (pdev->dev.of_node)
+	अगर (pdev->dev.of_node)
 		isp->phy = devm_usb_get_phy_by_phandle(&pdev->dev, "usb-phy", 0);
-	else
+	अन्यथा
 		isp->phy = devm_usb_get_phy(&pdev->dev, USB_PHY_TYPE_USB2);
 
-	if (IS_ERR(isp->phy)) {
+	अगर (IS_ERR(isp->phy)) अणु
 		ret = PTR_ERR(isp->phy);
 		dev_err(&pdev->dev, "usb_get_phy failed\n");
-		goto fail0;
-	}
+		जाओ fail0;
+	पूर्ण
 
 	isp->dev = &pdev->dev;
-	platform_set_drvdata(pdev, isp);
+	platक्रमm_set_drvdata(pdev, isp);
 
-	isp1704_charger_set_power(isp, 1);
+	isp1704_अक्षरger_set_घातer(isp, 1);
 
 	ret = isp1704_test_ulpi(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "isp1704_test_ulpi failed\n");
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	isp->psy_desc.name		= "isp1704";
 	isp->psy_desc.type		= POWER_SUPPLY_TYPE_USB;
-	isp->psy_desc.properties	= power_props;
-	isp->psy_desc.num_properties	= ARRAY_SIZE(power_props);
-	isp->psy_desc.get_property	= isp1704_charger_get_property;
+	isp->psy_desc.properties	= घातer_props;
+	isp->psy_desc.num_properties	= ARRAY_SIZE(घातer_props);
+	isp->psy_desc.get_property	= isp1704_अक्षरger_get_property;
 
 	psy_cfg.drv_data		= isp;
 
-	isp->psy = power_supply_register(isp->dev, &isp->psy_desc, &psy_cfg);
-	if (IS_ERR(isp->psy)) {
+	isp->psy = घातer_supply_रेजिस्टर(isp->dev, &isp->psy_desc, &psy_cfg);
+	अगर (IS_ERR(isp->psy)) अणु
 		ret = PTR_ERR(isp->psy);
 		dev_err(&pdev->dev, "power_supply_register failed\n");
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	/*
-	 * REVISIT: using work in order to allow the usb notifications to be
+	 * REVISIT: using work in order to allow the usb notअगरications to be
 	 * made atomically in the future.
 	 */
-	INIT_WORK(&isp->work, isp1704_charger_work);
+	INIT_WORK(&isp->work, isp1704_अक्षरger_work);
 
-	isp->nb.notifier_call = isp1704_notifier_call;
+	isp->nb.notअगरier_call = isp1704_notअगरier_call;
 
-	ret = usb_register_notifier(isp->phy, &isp->nb);
-	if (ret) {
+	ret = usb_रेजिस्टर_notअगरier(isp->phy, &isp->nb);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "usb_register_notifier failed\n");
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 
 	dev_info(isp->dev, "registered with product id %s\n", isp->model);
 
 	/*
 	 * Taking over the D+ pullup.
 	 *
-	 * FIXME: The device will be disconnected if it was already
-	 * enumerated. The charger driver should be always loaded before any
+	 * FIXME: The device will be disconnected अगर it was alपढ़ोy
+	 * क्रमागतerated. The अक्षरger driver should be always loaded beक्रमe any
 	 * gadget is loaded.
 	 */
-	if (isp->phy->otg->gadget)
+	अगर (isp->phy->otg->gadget)
 		usb_gadget_disconnect(isp->phy->otg->gadget);
 
-	if (isp->phy->last_event == USB_EVENT_NONE)
-		isp1704_charger_set_power(isp, 0);
+	अगर (isp->phy->last_event == USB_EVENT_NONE)
+		isp1704_अक्षरger_set_घातer(isp, 0);
 
-	/* Detect charger if VBUS is valid (the cable was already plugged). */
-	if (isp->phy->last_event == USB_EVENT_VBUS &&
-			!isp->phy->otg->default_a)
+	/* Detect अक्षरger अगर VBUS is valid (the cable was alपढ़ोy plugged). */
+	अगर (isp->phy->last_event == USB_EVENT_VBUS &&
+			!isp->phy->otg->शेष_a)
 		schedule_work(&isp->work);
 
-	return 0;
+	वापस 0;
 fail2:
-	power_supply_unregister(isp->psy);
+	घातer_supply_unरेजिस्टर(isp->psy);
 fail1:
-	isp1704_charger_set_power(isp, 0);
+	isp1704_अक्षरger_set_घातer(isp, 0);
 fail0:
 	dev_err(&pdev->dev, "failed to register isp1704 with error %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int isp1704_charger_remove(struct platform_device *pdev)
-{
-	struct isp1704_charger *isp = platform_get_drvdata(pdev);
+अटल पूर्णांक isp1704_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा isp1704_अक्षरger *isp = platक्रमm_get_drvdata(pdev);
 
-	usb_unregister_notifier(isp->phy, &isp->nb);
-	power_supply_unregister(isp->psy);
-	isp1704_charger_set_power(isp, 0);
+	usb_unरेजिस्टर_notअगरier(isp->phy, &isp->nb);
+	घातer_supply_unरेजिस्टर(isp->psy);
+	isp1704_अक्षरger_set_घातer(isp, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id omap_isp1704_of_match[] = {
-	{ .compatible = "nxp,isp1704", },
-	{ .compatible = "nxp,isp1707", },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id omap_isp1704_of_match[] = अणु
+	अणु .compatible = "nxp,isp1704", पूर्ण,
+	अणु .compatible = "nxp,isp1707", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, omap_isp1704_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver isp1704_charger_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver isp1704_अक्षरger_driver = अणु
+	.driver = अणु
 		.name = "isp1704_charger",
 		.of_match_table = of_match_ptr(omap_isp1704_of_match),
-	},
-	.probe = isp1704_charger_probe,
-	.remove = isp1704_charger_remove,
-};
+	पूर्ण,
+	.probe = isp1704_अक्षरger_probe,
+	.हटाओ = isp1704_अक्षरger_हटाओ,
+पूर्ण;
 
-module_platform_driver(isp1704_charger_driver);
+module_platक्रमm_driver(isp1704_अक्षरger_driver);
 
 MODULE_ALIAS("platform:isp1704_charger");
 MODULE_AUTHOR("Nokia Corporation");

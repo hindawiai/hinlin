@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Limited
  */
-#ifndef __ASM_VDSO_H
-#define __ASM_VDSO_H
+#अगर_अघोषित __ASM_VDSO_H
+#घोषणा __ASM_VDSO_H
 
 /*
- * Default link address for the vDSO.
- * Since we randomise the VDSO mapping, there's little point in trying
+ * Default link address क्रम the vDSO.
+ * Since we अक्रमomise the VDSO mapping, there's little poपूर्णांक in trying
  * to prelink this.
  */
-#define VDSO_LBASE	0x0
+#घोषणा VDSO_LBASE	0x0
 
-#define __VVAR_PAGES    2
+#घोषणा __VVAR_PAGES    2
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <generated/vdso-offsets.h>
-#ifdef CONFIG_COMPAT_VDSO
-#include <generated/vdso32-offsets.h>
-#endif
+#समावेश <generated/vdso-offsets.h>
+#अगर_घोषित CONFIG_COMPAT_VDSO
+#समावेश <generated/vdso32-offsets.h>
+#पूर्ण_अगर
 
-#define VDSO_SYMBOL(base, name)						   \
-({									   \
-	(void *)(vdso_offset_##name - VDSO_LBASE + (unsigned long)(base)); \
-})
+#घोषणा VDSO_SYMBOL(base, name)						   \
+(अणु									   \
+	(व्योम *)(vdso_offset_##name - VDSO_LBASE + (अचिन्हित दीर्घ)(base)); \
+पूर्ण)
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /* __ASM_VDSO_H */
+#पूर्ण_अगर /* __ASM_VDSO_H */

@@ -1,1143 +1,1144 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/mm/oom_kill.c
+ *  linux/mm/oom_समाप्त.c
  * 
  *  Copyright (C)  1998,2000  Rik van Riel
- *	Thanks go out to Claus Fischer for some serious inspiration and
- *	for goading me into coding this file...
+ *	Thanks go out to Claus Fischer क्रम some serious inspiration and
+ *	क्रम goading me पूर्णांकo coding this file...
  *  Copyright (C)  2010  Google, Inc.
  *	Rewritten by David Rientjes
  *
- *  The routines in this file are used to kill a process when
- *  we're seriously out of memory. This gets called from __alloc_pages()
+ *  The routines in this file are used to समाप्त a process when
+ *  we're seriously out of memory. This माला_लो called from __alloc_pages()
  *  in mm/page_alloc.c when we really run out of memory.
  *
  *  Since we won't call these routines often (on a well-configured
- *  machine) this file will double as a 'coding guide' and a signpost
- *  for newbie kernel hackers. It features several pointers to major
- *  kernel subsystems and hints as to where to find out what things do.
+ *  machine) this file will द्विगुन as a 'coding guide' and a signpost
+ *  क्रम newbie kernel hackers. It features several poपूर्णांकers to major
+ *  kernel subप्रणालीs and hपूर्णांकs as to where to find out what things करो.
  */
 
-#include <linux/oom.h>
-#include <linux/mm.h>
-#include <linux/err.h>
-#include <linux/gfp.h>
-#include <linux/sched.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/coredump.h>
-#include <linux/sched/task.h>
-#include <linux/sched/debug.h>
-#include <linux/swap.h>
-#include <linux/timex.h>
-#include <linux/jiffies.h>
-#include <linux/cpuset.h>
-#include <linux/export.h>
-#include <linux/notifier.h>
-#include <linux/memcontrol.h>
-#include <linux/mempolicy.h>
-#include <linux/security.h>
-#include <linux/ptrace.h>
-#include <linux/freezer.h>
-#include <linux/ftrace.h>
-#include <linux/ratelimit.h>
-#include <linux/kthread.h>
-#include <linux/init.h>
-#include <linux/mmu_notifier.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/coredump.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/cpuset.h>
+#समावेश <linux/export.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/memcontrol.h>
+#समावेश <linux/mempolicy.h>
+#समावेश <linux/security.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mmu_notअगरier.h>
 
-#include <asm/tlb.h>
-#include "internal.h"
-#include "slab.h"
+#समावेश <यंत्र/tlb.h>
+#समावेश "internal.h"
+#समावेश "slab.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/oom.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/oom.h>
 
-int sysctl_panic_on_oom;
-int sysctl_oom_kill_allocating_task;
-int sysctl_oom_dump_tasks = 1;
+पूर्णांक sysctl_panic_on_oom;
+पूर्णांक sysctl_oom_समाप्त_allocating_task;
+पूर्णांक sysctl_oom_dump_tasks = 1;
 
 /*
- * Serializes oom killer invocations (out_of_memory()) from all contexts to
- * prevent from over eager oom killing (e.g. when the oom killer is invoked
- * from different domains).
+ * Serializes oom समाप्तer invocations (out_of_memory()) from all contexts to
+ * prevent from over eager oom समाप्तing (e.g. when the oom समाप्तer is invoked
+ * from dअगरferent करोमुख्यs).
  *
- * oom_killer_disable() relies on this lock to stabilize oom_killer_disabled
+ * oom_समाप्तer_disable() relies on this lock to stabilize oom_समाप्तer_disabled
  * and mark_oom_victim
  */
 DEFINE_MUTEX(oom_lock);
 /* Serializes oom_score_adj and oom_score_adj_min updates */
 DEFINE_MUTEX(oom_adj_mutex);
 
-static inline bool is_memcg_oom(struct oom_control *oc)
-{
-	return oc->memcg != NULL;
-}
+अटल अंतरभूत bool is_memcg_oom(काष्ठा oom_control *oc)
+अणु
+	वापस oc->memcg != शून्य;
+पूर्ण
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 /**
- * oom_cpuset_eligible() - check task eligibility for kill
- * @start: task struct of which task to consider
- * @oc: pointer to struct oom_control
+ * oom_cpuset_eligible() - check task eligibility क्रम समाप्त
+ * @start: task काष्ठा of which task to consider
+ * @oc: poपूर्णांकer to काष्ठा oom_control
  *
  * Task eligibility is determined by whether or not a candidate task, @tsk,
- * shares the same mempolicy nodes as current if it is bound by such a policy
+ * shares the same mempolicy nodes as current अगर it is bound by such a policy
  * and whether or not it has the same set of allowed cpuset nodes.
  *
- * This function is assuming oom-killer context and 'current' has triggered
- * the oom-killer.
+ * This function is assuming oom-समाप्तer context and 'current' has triggered
+ * the oom-समाप्तer.
  */
-static bool oom_cpuset_eligible(struct task_struct *start,
-				struct oom_control *oc)
-{
-	struct task_struct *tsk;
+अटल bool oom_cpuset_eligible(काष्ठा task_काष्ठा *start,
+				काष्ठा oom_control *oc)
+अणु
+	काष्ठा task_काष्ठा *tsk;
 	bool ret = false;
-	const nodemask_t *mask = oc->nodemask;
+	स्थिर nodemask_t *mask = oc->nodemask;
 
-	if (is_memcg_oom(oc))
-		return true;
+	अगर (is_memcg_oom(oc))
+		वापस true;
 
-	rcu_read_lock();
-	for_each_thread(start, tsk) {
-		if (mask) {
+	rcu_पढ़ो_lock();
+	क्रम_each_thपढ़ो(start, tsk) अणु
+		अगर (mask) अणु
 			/*
-			 * If this is a mempolicy constrained oom, tsk's
-			 * cpuset is irrelevant.  Only return true if its
-			 * mempolicy intersects current, otherwise it may be
-			 * needlessly killed.
+			 * If this is a mempolicy स्थिरrained oom, tsk's
+			 * cpuset is irrelevant.  Only वापस true अगर its
+			 * mempolicy पूर्णांकersects current, otherwise it may be
+			 * needlessly समाप्तed.
 			 */
-			ret = mempolicy_nodemask_intersects(tsk, mask);
-		} else {
+			ret = mempolicy_nodemask_पूर्णांकersects(tsk, mask);
+		पूर्ण अन्यथा अणु
 			/*
-			 * This is not a mempolicy constrained oom, so only
+			 * This is not a mempolicy स्थिरrained oom, so only
 			 * check the mems of tsk's cpuset.
 			 */
-			ret = cpuset_mems_allowed_intersects(current, tsk);
-		}
-		if (ret)
-			break;
-	}
-	rcu_read_unlock();
+			ret = cpuset_mems_allowed_पूर्णांकersects(current, tsk);
+		पूर्ण
+		अगर (ret)
+			अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
-#else
-static bool oom_cpuset_eligible(struct task_struct *tsk, struct oom_control *oc)
-{
-	return true;
-}
-#endif /* CONFIG_NUMA */
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल bool oom_cpuset_eligible(काष्ठा task_काष्ठा *tsk, काष्ठा oom_control *oc)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NUMA */
 
 /*
- * The process p may have detached its own ->mm while exiting or through
- * kthread_use_mm(), but one or more of its subthreads may still have a valid
- * pointer.  Return p, or any of its subthreads with a valid ->mm, with
+ * The process p may have detached its own ->mm जबतक निकासing or through
+ * kthपढ़ो_use_mm(), but one or more of its subthपढ़ोs may still have a valid
+ * poपूर्णांकer.  Return p, or any of its subthपढ़ोs with a valid ->mm, with
  * task_lock() held.
  */
-struct task_struct *find_lock_task_mm(struct task_struct *p)
-{
-	struct task_struct *t;
+काष्ठा task_काष्ठा *find_lock_task_mm(काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा task_काष्ठा *t;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	for_each_thread(p, t) {
+	क्रम_each_thपढ़ो(p, t) अणु
 		task_lock(t);
-		if (likely(t->mm))
-			goto found;
+		अगर (likely(t->mm))
+			जाओ found;
 		task_unlock(t);
-	}
-	t = NULL;
+	पूर्ण
+	t = शून्य;
 found:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
 /*
- * order == -1 means the oom kill is required by sysrq, otherwise only
- * for display purposes.
+ * order == -1 means the oom समाप्त is required by sysrq, otherwise only
+ * क्रम display purposes.
  */
-static inline bool is_sysrq_oom(struct oom_control *oc)
-{
-	return oc->order == -1;
-}
+अटल अंतरभूत bool is_sysrq_oom(काष्ठा oom_control *oc)
+अणु
+	वापस oc->order == -1;
+पूर्ण
 
-/* return true if the task is not adequate as candidate victim task. */
-static bool oom_unkillable_task(struct task_struct *p)
-{
-	if (is_global_init(p))
-		return true;
-	if (p->flags & PF_KTHREAD)
-		return true;
-	return false;
-}
+/* वापस true अगर the task is not adequate as candidate victim task. */
+अटल bool oom_unसमाप्तable_task(काष्ठा task_काष्ठा *p)
+अणु
+	अगर (is_global_init(p))
+		वापस true;
+	अगर (p->flags & PF_KTHREAD)
+		वापस true;
+	वापस false;
+पूर्ण
 
 /*
  * Check whether unreclaimable slab amount is greater than
  * all user memory(LRU pages).
- * dump_unreclaimable_slab() could help in the case that
+ * dump_unreclaimable_slab() could help in the हाल that
  * oom due to too much unreclaimable slab used by kernel.
 */
-static bool should_dump_unreclaim_slab(void)
-{
-	unsigned long nr_lru;
+अटल bool should_dump_unreclaim_slab(व्योम)
+अणु
+	अचिन्हित दीर्घ nr_lru;
 
 	nr_lru = global_node_page_state(NR_ACTIVE_ANON) +
 		 global_node_page_state(NR_INACTIVE_ANON) +
-		 global_node_page_state(NR_ACTIVE_FILE) +
-		 global_node_page_state(NR_INACTIVE_FILE) +
+		 global_node_page_state(NR_ACTIVE_खाता) +
+		 global_node_page_state(NR_INACTIVE_खाता) +
 		 global_node_page_state(NR_ISOLATED_ANON) +
-		 global_node_page_state(NR_ISOLATED_FILE) +
+		 global_node_page_state(NR_ISOLATED_खाता) +
 		 global_node_page_state(NR_UNEVICTABLE);
 
-	return (global_node_page_state_pages(NR_SLAB_UNRECLAIMABLE_B) > nr_lru);
-}
+	वापस (global_node_page_state_pages(NR_SLAB_UNRECLAIMABLE_B) > nr_lru);
+पूर्ण
 
 /**
- * oom_badness - heuristic function to determine which candidate task to kill
- * @p: task struct of which task we should calculate
- * @totalpages: total present RAM allowed for page allocation
+ * oom_badness - heuristic function to determine which candidate task to समाप्त
+ * @p: task काष्ठा of which task we should calculate
+ * @totalpages: total present RAM allowed क्रम page allocation
  *
- * The heuristic for determining which task to kill is made to be as simple and
- * predictable as possible.  The goal is to return the highest value for the
- * task consuming the most memory to avoid subsequent oom failures.
+ * The heuristic क्रम determining which task to समाप्त is made to be as simple and
+ * predictable as possible.  The goal is to वापस the highest value क्रम the
+ * task consuming the most memory to aव्योम subsequent oom failures.
  */
-long oom_badness(struct task_struct *p, unsigned long totalpages)
-{
-	long points;
-	long adj;
+दीर्घ oom_badness(काष्ठा task_काष्ठा *p, अचिन्हित दीर्घ totalpages)
+अणु
+	दीर्घ poपूर्णांकs;
+	दीर्घ adj;
 
-	if (oom_unkillable_task(p))
-		return LONG_MIN;
+	अगर (oom_unसमाप्तable_task(p))
+		वापस दीर्घ_न्यून;
 
 	p = find_lock_task_mm(p);
-	if (!p)
-		return LONG_MIN;
+	अगर (!p)
+		वापस दीर्घ_न्यून;
 
 	/*
 	 * Do not even consider tasks which are explicitly marked oom
-	 * unkillable or have been already oom reaped or the are in
-	 * the middle of vfork
+	 * unसमाप्तable or have been alपढ़ोy oom reaped or the are in
+	 * the middle of vविभाजन
 	 */
-	adj = (long)p->signal->oom_score_adj;
-	if (adj == OOM_SCORE_ADJ_MIN ||
+	adj = (दीर्घ)p->संकेत->oom_score_adj;
+	अगर (adj == OOM_SCORE_ADJ_MIN ||
 			test_bit(MMF_OOM_SKIP, &p->mm->flags) ||
-			in_vfork(p)) {
+			in_vविभाजन(p)) अणु
 		task_unlock(p);
-		return LONG_MIN;
-	}
+		वापस दीर्घ_न्यून;
+	पूर्ण
 
 	/*
-	 * The baseline for the badness score is the proportion of RAM that each
+	 * The baseline क्रम the badness score is the proportion of RAM that each
 	 * task's rss, pagetable and swap space use.
 	 */
-	points = get_mm_rss(p->mm) + get_mm_counter(p->mm, MM_SWAPENTS) +
+	poपूर्णांकs = get_mm_rss(p->mm) + get_mm_counter(p->mm, MM_SWAPENTS) +
 		mm_pgtables_bytes(p->mm) / PAGE_SIZE;
 	task_unlock(p);
 
 	/* Normalize to oom_score_adj units */
 	adj *= totalpages / 1000;
-	points += adj;
+	poपूर्णांकs += adj;
 
-	return points;
-}
+	वापस poपूर्णांकs;
+पूर्ण
 
-static const char * const oom_constraint_text[] = {
+अटल स्थिर अक्षर * स्थिर oom_स्थिरraपूर्णांक_text[] = अणु
 	[CONSTRAINT_NONE] = "CONSTRAINT_NONE",
 	[CONSTRAINT_CPUSET] = "CONSTRAINT_CPUSET",
 	[CONSTRAINT_MEMORY_POLICY] = "CONSTRAINT_MEMORY_POLICY",
 	[CONSTRAINT_MEMCG] = "CONSTRAINT_MEMCG",
-};
+पूर्ण;
 
 /*
- * Determine the type of allocation constraint.
+ * Determine the type of allocation स्थिरraपूर्णांक.
  */
-static enum oom_constraint constrained_alloc(struct oom_control *oc)
-{
-	struct zone *zone;
-	struct zoneref *z;
-	enum zone_type highest_zoneidx = gfp_zone(oc->gfp_mask);
+अटल क्रमागत oom_स्थिरraपूर्णांक स्थिरrained_alloc(काष्ठा oom_control *oc)
+अणु
+	काष्ठा zone *zone;
+	काष्ठा zoneref *z;
+	क्रमागत zone_type highest_zoneidx = gfp_zone(oc->gfp_mask);
 	bool cpuset_limited = false;
-	int nid;
+	पूर्णांक nid;
 
-	if (is_memcg_oom(oc)) {
+	अगर (is_memcg_oom(oc)) अणु
 		oc->totalpages = mem_cgroup_get_max(oc->memcg) ?: 1;
-		return CONSTRAINT_MEMCG;
-	}
+		वापस CONSTRAINT_MEMCG;
+	पूर्ण
 
 	/* Default to all available memory */
 	oc->totalpages = totalram_pages() + total_swap_pages;
 
-	if (!IS_ENABLED(CONFIG_NUMA))
-		return CONSTRAINT_NONE;
+	अगर (!IS_ENABLED(CONFIG_NUMA))
+		वापस CONSTRAINT_NONE;
 
-	if (!oc->zonelist)
-		return CONSTRAINT_NONE;
+	अगर (!oc->zonelist)
+		वापस CONSTRAINT_NONE;
 	/*
-	 * Reach here only when __GFP_NOFAIL is used. So, we should avoid
-	 * to kill current.We have to random task kill in this case.
+	 * Reach here only when __GFP_NOFAIL is used. So, we should aव्योम
+	 * to समाप्त current.We have to अक्रमom task समाप्त in this हाल.
 	 * Hopefully, CONSTRAINT_THISNODE...but no way to handle it, now.
 	 */
-	if (oc->gfp_mask & __GFP_THISNODE)
-		return CONSTRAINT_NONE;
+	अगर (oc->gfp_mask & __GFP_THISNODE)
+		वापस CONSTRAINT_NONE;
 
 	/*
 	 * This is not a __GFP_THISNODE allocation, so a truncated nodemask in
 	 * the page allocator means a mempolicy is in effect.  Cpuset policy
-	 * is enforced in get_page_from_freelist().
+	 * is enक्रमced in get_page_from_मुक्तlist().
 	 */
-	if (oc->nodemask &&
-	    !nodes_subset(node_states[N_MEMORY], *oc->nodemask)) {
+	अगर (oc->nodemask &&
+	    !nodes_subset(node_states[N_MEMORY], *oc->nodemask)) अणु
 		oc->totalpages = total_swap_pages;
-		for_each_node_mask(nid, *oc->nodemask)
+		क्रम_each_node_mask(nid, *oc->nodemask)
 			oc->totalpages += node_present_pages(nid);
-		return CONSTRAINT_MEMORY_POLICY;
-	}
+		वापस CONSTRAINT_MEMORY_POLICY;
+	पूर्ण
 
 	/* Check this allocation failure is caused by cpuset's wall function */
-	for_each_zone_zonelist_nodemask(zone, z, oc->zonelist,
+	क्रम_each_zone_zonelist_nodemask(zone, z, oc->zonelist,
 			highest_zoneidx, oc->nodemask)
-		if (!cpuset_zone_allowed(zone, oc->gfp_mask))
+		अगर (!cpuset_zone_allowed(zone, oc->gfp_mask))
 			cpuset_limited = true;
 
-	if (cpuset_limited) {
+	अगर (cpuset_limited) अणु
 		oc->totalpages = total_swap_pages;
-		for_each_node_mask(nid, cpuset_current_mems_allowed)
+		क्रम_each_node_mask(nid, cpuset_current_mems_allowed)
 			oc->totalpages += node_present_pages(nid);
-		return CONSTRAINT_CPUSET;
-	}
-	return CONSTRAINT_NONE;
-}
+		वापस CONSTRAINT_CPUSET;
+	पूर्ण
+	वापस CONSTRAINT_NONE;
+पूर्ण
 
-static int oom_evaluate_task(struct task_struct *task, void *arg)
-{
-	struct oom_control *oc = arg;
-	long points;
+अटल पूर्णांक oom_evaluate_task(काष्ठा task_काष्ठा *task, व्योम *arg)
+अणु
+	काष्ठा oom_control *oc = arg;
+	दीर्घ poपूर्णांकs;
 
-	if (oom_unkillable_task(task))
-		goto next;
+	अगर (oom_unसमाप्तable_task(task))
+		जाओ next;
 
-	/* p may not have freeable memory in nodemask */
-	if (!is_memcg_oom(oc) && !oom_cpuset_eligible(task, oc))
-		goto next;
+	/* p may not have मुक्तable memory in nodemask */
+	अगर (!is_memcg_oom(oc) && !oom_cpuset_eligible(task, oc))
+		जाओ next;
 
 	/*
-	 * This task already has access to memory reserves and is being killed.
+	 * This task alपढ़ोy has access to memory reserves and is being समाप्तed.
 	 * Don't allow any other task to have access to the reserves unless
 	 * the task has MMF_OOM_SKIP because chances that it would release
 	 * any memory is quite low.
 	 */
-	if (!is_sysrq_oom(oc) && tsk_is_oom_victim(task)) {
-		if (test_bit(MMF_OOM_SKIP, &task->signal->oom_mm->flags))
-			goto next;
-		goto abort;
-	}
+	अगर (!is_sysrq_oom(oc) && tsk_is_oom_victim(task)) अणु
+		अगर (test_bit(MMF_OOM_SKIP, &task->संकेत->oom_mm->flags))
+			जाओ next;
+		जाओ पात;
+	पूर्ण
 
 	/*
 	 * If task is allocating a lot of memory and has been marked to be
-	 * killed first if it triggers an oom, then select it.
+	 * समाप्तed first अगर it triggers an oom, then select it.
 	 */
-	if (oom_task_origin(task)) {
-		points = LONG_MAX;
-		goto select;
-	}
+	अगर (oom_task_origin(task)) अणु
+		poपूर्णांकs = दीर्घ_उच्च;
+		जाओ select;
+	पूर्ण
 
-	points = oom_badness(task, oc->totalpages);
-	if (points == LONG_MIN || points < oc->chosen_points)
-		goto next;
+	poपूर्णांकs = oom_badness(task, oc->totalpages);
+	अगर (poपूर्णांकs == दीर्घ_न्यून || poपूर्णांकs < oc->chosen_poपूर्णांकs)
+		जाओ next;
 
 select:
-	if (oc->chosen)
-		put_task_struct(oc->chosen);
-	get_task_struct(task);
+	अगर (oc->chosen)
+		put_task_काष्ठा(oc->chosen);
+	get_task_काष्ठा(task);
 	oc->chosen = task;
-	oc->chosen_points = points;
+	oc->chosen_poपूर्णांकs = poपूर्णांकs;
 next:
-	return 0;
-abort:
-	if (oc->chosen)
-		put_task_struct(oc->chosen);
-	oc->chosen = (void *)-1UL;
-	return 1;
-}
+	वापस 0;
+पात:
+	अगर (oc->chosen)
+		put_task_काष्ठा(oc->chosen);
+	oc->chosen = (व्योम *)-1UL;
+	वापस 1;
+पूर्ण
 
 /*
  * Simple selection loop. We choose the process with the highest number of
- * 'points'. In case scan was aborted, oc->chosen is set to -1.
+ * 'points'. In हाल scan was पातed, oc->chosen is set to -1.
  */
-static void select_bad_process(struct oom_control *oc)
-{
-	oc->chosen_points = LONG_MIN;
+अटल व्योम select_bad_process(काष्ठा oom_control *oc)
+अणु
+	oc->chosen_poपूर्णांकs = दीर्घ_न्यून;
 
-	if (is_memcg_oom(oc))
+	अगर (is_memcg_oom(oc))
 		mem_cgroup_scan_tasks(oc->memcg, oom_evaluate_task, oc);
-	else {
-		struct task_struct *p;
+	अन्यथा अणु
+		काष्ठा task_काष्ठा *p;
 
-		rcu_read_lock();
-		for_each_process(p)
-			if (oom_evaluate_task(p, oc))
-				break;
-		rcu_read_unlock();
-	}
-}
+		rcu_पढ़ो_lock();
+		क्रम_each_process(p)
+			अगर (oom_evaluate_task(p, oc))
+				अवरोध;
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
-static int dump_task(struct task_struct *p, void *arg)
-{
-	struct oom_control *oc = arg;
-	struct task_struct *task;
+अटल पूर्णांक dump_task(काष्ठा task_काष्ठा *p, व्योम *arg)
+अणु
+	काष्ठा oom_control *oc = arg;
+	काष्ठा task_काष्ठा *task;
 
-	if (oom_unkillable_task(p))
-		return 0;
+	अगर (oom_unसमाप्तable_task(p))
+		वापस 0;
 
-	/* p may not have freeable memory in nodemask */
-	if (!is_memcg_oom(oc) && !oom_cpuset_eligible(p, oc))
-		return 0;
+	/* p may not have मुक्तable memory in nodemask */
+	अगर (!is_memcg_oom(oc) && !oom_cpuset_eligible(p, oc))
+		वापस 0;
 
 	task = find_lock_task_mm(p);
-	if (!task) {
+	अगर (!task) अणु
 		/*
 		 * All of p's threads have already detached their mm's. There's
-		 * no need to report them; they can't be oom killed anyway.
+		 * no need to report them; they can't be oom समाप्तed anyway.
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	pr_info("[%7d] %5d %5d %8lu %8lu %8ld %8lu         %5hd %s\n",
 		task->pid, from_kuid(&init_user_ns, task_uid(task)),
 		task->tgid, task->mm->total_vm, get_mm_rss(task->mm),
 		mm_pgtables_bytes(task->mm),
 		get_mm_counter(task->mm, MM_SWAPENTS),
-		task->signal->oom_score_adj, task->comm);
+		task->संकेत->oom_score_adj, task->comm);
 	task_unlock(task);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * dump_tasks - dump current memory state of all system tasks
- * @oc: pointer to struct oom_control
+ * dump_tasks - dump current memory state of all प्रणाली tasks
+ * @oc: poपूर्णांकer to काष्ठा oom_control
  *
  * Dumps the current memory state of all eligible tasks.  Tasks not in the same
- * memcg, not in the same cpuset, or bound to a disjoint set of mempolicy nodes
+ * memcg, not in the same cpuset, or bound to a disjoपूर्णांक set of mempolicy nodes
  * are not shown.
- * State information includes task's pid, uid, tgid, vm size, rss,
+ * State inक्रमmation includes task's pid, uid, tgid, vm size, rss,
  * pgtables_bytes, swapents, oom_score_adj value, and name.
  */
-static void dump_tasks(struct oom_control *oc)
-{
+अटल व्योम dump_tasks(काष्ठा oom_control *oc)
+अणु
 	pr_info("Tasks state (memory values in pages):\n");
 	pr_info("[  pid  ]   uid  tgid total_vm      rss pgtables_bytes swapents oom_score_adj name\n");
 
-	if (is_memcg_oom(oc))
+	अगर (is_memcg_oom(oc))
 		mem_cgroup_scan_tasks(oc->memcg, dump_task, oc);
-	else {
-		struct task_struct *p;
+	अन्यथा अणु
+		काष्ठा task_काष्ठा *p;
 
-		rcu_read_lock();
-		for_each_process(p)
+		rcu_पढ़ो_lock();
+		क्रम_each_process(p)
 			dump_task(p, oc);
-		rcu_read_unlock();
-	}
-}
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
-static void dump_oom_summary(struct oom_control *oc, struct task_struct *victim)
-{
-	/* one line summary of the oom killer context. */
+अटल व्योम dump_oom_summary(काष्ठा oom_control *oc, काष्ठा task_काष्ठा *victim)
+अणु
+	/* one line summary of the oom समाप्तer context. */
 	pr_info("oom-kill:constraint=%s,nodemask=%*pbl",
-			oom_constraint_text[oc->constraint],
+			oom_स्थिरraपूर्णांक_text[oc->स्थिरraपूर्णांक],
 			nodemask_pr_args(oc->nodemask));
-	cpuset_print_current_mems_allowed();
-	mem_cgroup_print_oom_context(oc->memcg, victim);
+	cpuset_prपूर्णांक_current_mems_allowed();
+	mem_cgroup_prपूर्णांक_oom_context(oc->memcg, victim);
 	pr_cont(",task=%s,pid=%d,uid=%d\n", victim->comm, victim->pid,
 		from_kuid(&init_user_ns, task_uid(victim)));
-}
+पूर्ण
 
-static void dump_header(struct oom_control *oc, struct task_struct *p)
-{
+अटल व्योम dump_header(काष्ठा oom_control *oc, काष्ठा task_काष्ठा *p)
+अणु
 	pr_warn("%s invoked oom-killer: gfp_mask=%#x(%pGg), order=%d, oom_score_adj=%hd\n",
 		current->comm, oc->gfp_mask, &oc->gfp_mask, oc->order,
-			current->signal->oom_score_adj);
-	if (!IS_ENABLED(CONFIG_COMPACTION) && oc->order)
+			current->संकेत->oom_score_adj);
+	अगर (!IS_ENABLED(CONFIG_COMPACTION) && oc->order)
 		pr_warn("COMPACTION is disabled!!!\n");
 
 	dump_stack();
-	if (is_memcg_oom(oc))
-		mem_cgroup_print_oom_meminfo(oc->memcg);
-	else {
+	अगर (is_memcg_oom(oc))
+		mem_cgroup_prपूर्णांक_oom_meminfo(oc->memcg);
+	अन्यथा अणु
 		show_mem(SHOW_MEM_FILTER_NODES, oc->nodemask);
-		if (should_dump_unreclaim_slab())
+		अगर (should_dump_unreclaim_slab())
 			dump_unreclaimable_slab();
-	}
-	if (sysctl_oom_dump_tasks)
+	पूर्ण
+	अगर (sysctl_oom_dump_tasks)
 		dump_tasks(oc);
-	if (p)
+	अगर (p)
 		dump_oom_summary(oc, p);
-}
+पूर्ण
 
 /*
  * Number of OOM victims in flight
  */
-static atomic_t oom_victims = ATOMIC_INIT(0);
-static DECLARE_WAIT_QUEUE_HEAD(oom_victims_wait);
+अटल atomic_t oom_victims = ATOMIC_INIT(0);
+अटल DECLARE_WAIT_QUEUE_HEAD(oom_victims_रुको);
 
-static bool oom_killer_disabled __read_mostly;
+अटल bool oom_समाप्तer_disabled __पढ़ो_mostly;
 
-#define K(x) ((x) << (PAGE_SHIFT-10))
+#घोषणा K(x) ((x) << (PAGE_SHIFT-10))
 
 /*
- * task->mm can be NULL if the task is the exited group leader.  So to
+ * task->mm can be शून्य अगर the task is the निकासed group leader.  So to
  * determine whether the task is using a particular mm, we examine all the
- * task's threads: if one of those is using this mm then this task was also
+ * task's thपढ़ोs: अगर one of those is using this mm then this task was also
  * using it.
  */
-bool process_shares_mm(struct task_struct *p, struct mm_struct *mm)
-{
-	struct task_struct *t;
+bool process_shares_mm(काष्ठा task_काष्ठा *p, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा task_काष्ठा *t;
 
-	for_each_thread(p, t) {
-		struct mm_struct *t_mm = READ_ONCE(t->mm);
-		if (t_mm)
-			return t_mm == mm;
-	}
-	return false;
-}
+	क्रम_each_thपढ़ो(p, t) अणु
+		काष्ठा mm_काष्ठा *t_mm = READ_ONCE(t->mm);
+		अगर (t_mm)
+			वापस t_mm == mm;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 /*
- * OOM Reaper kernel thread which tries to reap the memory used by the OOM
- * victim (if that is possible) to help the OOM killer to move on.
+ * OOM Reaper kernel thपढ़ो which tries to reap the memory used by the OOM
+ * victim (अगर that is possible) to help the OOM समाप्तer to move on.
  */
-static struct task_struct *oom_reaper_th;
-static DECLARE_WAIT_QUEUE_HEAD(oom_reaper_wait);
-static struct task_struct *oom_reaper_list;
-static DEFINE_SPINLOCK(oom_reaper_lock);
+अटल काष्ठा task_काष्ठा *oom_reaper_th;
+अटल DECLARE_WAIT_QUEUE_HEAD(oom_reaper_रुको);
+अटल काष्ठा task_काष्ठा *oom_reaper_list;
+अटल DEFINE_SPINLOCK(oom_reaper_lock);
 
-bool __oom_reap_task_mm(struct mm_struct *mm)
-{
-	struct vm_area_struct *vma;
+bool __oom_reap_task_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
 	bool ret = true;
 
 	/*
 	 * Tell all users of get_user/copy_from_user etc... that the content
-	 * is no longer stable. No barriers really needed because unmapping
-	 * should imply barriers already and the reader would hit a page fault
-	 * if it stumbled over a reaped memory.
+	 * is no दीर्घer stable. No barriers really needed because unmapping
+	 * should imply barriers alपढ़ोy and the पढ़ोer would hit a page fault
+	 * अगर it stumbled over a reaped memory.
 	 */
 	set_bit(MMF_UNSTABLE, &mm->flags);
 
-	for (vma = mm->mmap ; vma; vma = vma->vm_next) {
-		if (!can_madv_lru_vma(vma))
-			continue;
+	क्रम (vma = mm->mmap ; vma; vma = vma->vm_next) अणु
+		अगर (!can_madv_lru_vma(vma))
+			जारी;
 
 		/*
 		 * Only anonymous pages have a good chance to be dropped
-		 * without additional steps which we cannot afford as we
-		 * are OOM already.
+		 * without additional steps which we cannot afक्रमd as we
+		 * are OOM alपढ़ोy.
 		 *
-		 * We do not even care about fs backed pages because all
-		 * which are reclaimable have already been reclaimed and
-		 * we do not want to block exit_mmap by keeping mm ref
+		 * We करो not even care about fs backed pages because all
+		 * which are reclaimable have alपढ़ोy been reclaimed and
+		 * we करो not want to block निकास_mmap by keeping mm ref
 		 * count elevated without a good reason.
 		 */
-		if (vma_is_anonymous(vma) || !(vma->vm_flags & VM_SHARED)) {
-			struct mmu_notifier_range range;
-			struct mmu_gather tlb;
+		अगर (vma_is_anonymous(vma) || !(vma->vm_flags & VM_SHARED)) अणु
+			काष्ठा mmu_notअगरier_range range;
+			काष्ठा mmu_gather tlb;
 
-			mmu_notifier_range_init(&range, MMU_NOTIFY_UNMAP, 0,
+			mmu_notअगरier_range_init(&range, MMU_NOTIFY_UNMAP, 0,
 						vma, mm, vma->vm_start,
 						vma->vm_end);
 			tlb_gather_mmu(&tlb, mm);
-			if (mmu_notifier_invalidate_range_start_nonblock(&range)) {
+			अगर (mmu_notअगरier_invalidate_range_start_nonblock(&range)) अणु
 				tlb_finish_mmu(&tlb);
 				ret = false;
-				continue;
-			}
-			unmap_page_range(&tlb, vma, range.start, range.end, NULL);
-			mmu_notifier_invalidate_range_end(&range);
+				जारी;
+			पूर्ण
+			unmap_page_range(&tlb, vma, range.start, range.end, शून्य);
+			mmu_notअगरier_invalidate_range_end(&range);
 			tlb_finish_mmu(&tlb);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Reaps the address space of the give task.
  *
- * Returns true on success and false if none or part of the address space
+ * Returns true on success and false अगर none or part of the address space
  * has been reclaimed and the caller should retry later.
  */
-static bool oom_reap_task_mm(struct task_struct *tsk, struct mm_struct *mm)
-{
+अटल bool oom_reap_task_mm(काष्ठा task_काष्ठा *tsk, काष्ठा mm_काष्ठा *mm)
+अणु
 	bool ret = true;
 
-	if (!mmap_read_trylock(mm)) {
+	अगर (!mmap_पढ़ो_trylock(mm)) अणु
 		trace_skip_task_reaping(tsk->pid);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/*
-	 * MMF_OOM_SKIP is set by exit_mmap when the OOM reaper can't
-	 * work on the mm anymore. The check for MMF_OOM_SKIP must run
-	 * under mmap_lock for reading because it serializes against the
-	 * mmap_write_lock();mmap_write_unlock() cycle in exit_mmap().
+	 * MMF_OOM_SKIP is set by निकास_mmap when the OOM reaper can't
+	 * work on the mm anymore. The check क्रम MMF_OOM_SKIP must run
+	 * under mmap_lock क्रम पढ़ोing because it serializes against the
+	 * mmap_ग_लिखो_lock();mmap_ग_लिखो_unlock() cycle in निकास_mmap().
 	 */
-	if (test_bit(MMF_OOM_SKIP, &mm->flags)) {
+	अगर (test_bit(MMF_OOM_SKIP, &mm->flags)) अणु
 		trace_skip_task_reaping(tsk->pid);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	trace_start_task_reaping(tsk->pid);
 
 	/* failed to reap part of the address space. Try again later */
 	ret = __oom_reap_task_mm(mm);
-	if (!ret)
-		goto out_finish;
+	अगर (!ret)
+		जाओ out_finish;
 
 	pr_info("oom_reaper: reaped process %d (%s), now anon-rss:%lukB, file-rss:%lukB, shmem-rss:%lukB\n",
 			task_pid_nr(tsk), tsk->comm,
 			K(get_mm_counter(mm, MM_ANONPAGES)),
-			K(get_mm_counter(mm, MM_FILEPAGES)),
+			K(get_mm_counter(mm, MM_खाताPAGES)),
 			K(get_mm_counter(mm, MM_SHMEMPAGES)));
 out_finish:
 	trace_finish_task_reaping(tsk->pid);
 out_unlock:
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define MAX_OOM_REAP_RETRIES 10
-static void oom_reap_task(struct task_struct *tsk)
-{
-	int attempts = 0;
-	struct mm_struct *mm = tsk->signal->oom_mm;
+#घोषणा MAX_OOM_REAP_RETRIES 10
+अटल व्योम oom_reap_task(काष्ठा task_काष्ठा *tsk)
+अणु
+	पूर्णांक attempts = 0;
+	काष्ठा mm_काष्ठा *mm = tsk->संकेत->oom_mm;
 
-	/* Retry the mmap_read_trylock(mm) a few times */
-	while (attempts++ < MAX_OOM_REAP_RETRIES && !oom_reap_task_mm(tsk, mm))
-		schedule_timeout_idle(HZ/10);
+	/* Retry the mmap_पढ़ो_trylock(mm) a few बार */
+	जबतक (attempts++ < MAX_OOM_REAP_RETRIES && !oom_reap_task_mm(tsk, mm))
+		schedule_समयout_idle(HZ/10);
 
-	if (attempts <= MAX_OOM_REAP_RETRIES ||
+	अगर (attempts <= MAX_OOM_REAP_RETRIES ||
 	    test_bit(MMF_OOM_SKIP, &mm->flags))
-		goto done;
+		जाओ करोne;
 
 	pr_info("oom_reaper: unable to reap pid:%d (%s)\n",
 		task_pid_nr(tsk), tsk->comm);
 	sched_show_task(tsk);
 	debug_show_all_locks();
 
-done:
-	tsk->oom_reaper_list = NULL;
+करोne:
+	tsk->oom_reaper_list = शून्य;
 
 	/*
-	 * Hide this mm from OOM killer because it has been either reaped or
-	 * somebody can't call mmap_write_unlock(mm).
+	 * Hide this mm from OOM समाप्तer because it has been either reaped or
+	 * somebody can't call mmap_ग_लिखो_unlock(mm).
 	 */
 	set_bit(MMF_OOM_SKIP, &mm->flags);
 
 	/* Drop a reference taken by wake_oom_reaper */
-	put_task_struct(tsk);
-}
+	put_task_काष्ठा(tsk);
+पूर्ण
 
-static int oom_reaper(void *unused)
-{
-	while (true) {
-		struct task_struct *tsk = NULL;
+अटल पूर्णांक oom_reaper(व्योम *unused)
+अणु
+	जबतक (true) अणु
+		काष्ठा task_काष्ठा *tsk = शून्य;
 
-		wait_event_freezable(oom_reaper_wait, oom_reaper_list != NULL);
+		रुको_event_मुक्तzable(oom_reaper_रुको, oom_reaper_list != शून्य);
 		spin_lock(&oom_reaper_lock);
-		if (oom_reaper_list != NULL) {
+		अगर (oom_reaper_list != शून्य) अणु
 			tsk = oom_reaper_list;
 			oom_reaper_list = tsk->oom_reaper_list;
-		}
+		पूर्ण
 		spin_unlock(&oom_reaper_lock);
 
-		if (tsk)
+		अगर (tsk)
 			oom_reap_task(tsk);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wake_oom_reaper(struct task_struct *tsk)
-{
-	/* mm is already queued? */
-	if (test_and_set_bit(MMF_OOM_REAP_QUEUED, &tsk->signal->oom_mm->flags))
-		return;
+अटल व्योम wake_oom_reaper(काष्ठा task_काष्ठा *tsk)
+अणु
+	/* mm is alपढ़ोy queued? */
+	अगर (test_and_set_bit(MMF_OOM_REAP_QUEUED, &tsk->संकेत->oom_mm->flags))
+		वापस;
 
-	get_task_struct(tsk);
+	get_task_काष्ठा(tsk);
 
 	spin_lock(&oom_reaper_lock);
 	tsk->oom_reaper_list = oom_reaper_list;
 	oom_reaper_list = tsk;
 	spin_unlock(&oom_reaper_lock);
 	trace_wake_reaper(tsk->pid);
-	wake_up(&oom_reaper_wait);
-}
+	wake_up(&oom_reaper_रुको);
+पूर्ण
 
-static int __init oom_init(void)
-{
-	oom_reaper_th = kthread_run(oom_reaper, NULL, "oom_reaper");
-	return 0;
-}
+अटल पूर्णांक __init oom_init(व्योम)
+अणु
+	oom_reaper_th = kthपढ़ो_run(oom_reaper, शून्य, "oom_reaper");
+	वापस 0;
+पूर्ण
 subsys_initcall(oom_init)
-#else
-static inline void wake_oom_reaper(struct task_struct *tsk)
-{
-}
-#endif /* CONFIG_MMU */
+#अन्यथा
+अटल अंतरभूत व्योम wake_oom_reaper(काष्ठा task_काष्ठा *tsk)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MMU */
 
 /**
  * mark_oom_victim - mark the given task as OOM victim
  * @tsk: task to mark
  *
  * Has to be called with oom_lock held and never after
- * oom has been disabled already.
+ * oom has been disabled alपढ़ोy.
  *
- * tsk->mm has to be non NULL and caller has to guarantee it is stable (either
+ * tsk->mm has to be non शून्य and caller has to guarantee it is stable (either
  * under task_lock or operate on the current).
  */
-static void mark_oom_victim(struct task_struct *tsk)
-{
-	struct mm_struct *mm = tsk->mm;
+अटल व्योम mark_oom_victim(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा mm_काष्ठा *mm = tsk->mm;
 
-	WARN_ON(oom_killer_disabled);
-	/* OOM killer might race with memcg OOM */
-	if (test_and_set_tsk_thread_flag(tsk, TIF_MEMDIE))
-		return;
+	WARN_ON(oom_समाप्तer_disabled);
+	/* OOM समाप्तer might race with memcg OOM */
+	अगर (test_and_set_tsk_thपढ़ो_flag(tsk, TIF_MEMDIE))
+		वापस;
 
-	/* oom_mm is bound to the signal struct life time. */
-	if (!cmpxchg(&tsk->signal->oom_mm, NULL, mm)) {
-		mmgrab(tsk->signal->oom_mm);
+	/* oom_mm is bound to the संकेत काष्ठा lअगरe समय. */
+	अगर (!cmpxchg(&tsk->संकेत->oom_mm, शून्य, mm)) अणु
+		mmgrab(tsk->संकेत->oom_mm);
 		set_bit(MMF_OOM_VICTIM, &mm->flags);
-	}
+	पूर्ण
 
 	/*
-	 * Make sure that the task is woken up from uninterruptible sleep
-	 * if it is frozen because OOM killer wouldn't be able to free
-	 * any memory and livelock. freezing_slow_path will tell the freezer
+	 * Make sure that the task is woken up from unपूर्णांकerruptible sleep
+	 * अगर it is frozen because OOM समाप्तer wouldn't be able to मुक्त
+	 * any memory and livelock. मुक्तzing_slow_path will tell the मुक्तzer
 	 * that TIF_MEMDIE tasks should be ignored.
 	 */
 	__thaw_task(tsk);
 	atomic_inc(&oom_victims);
 	trace_mark_victim(tsk->pid);
-}
+पूर्ण
 
 /**
- * exit_oom_victim - note the exit of an OOM victim
+ * निकास_oom_victim - note the निकास of an OOM victim
  */
-void exit_oom_victim(void)
-{
-	clear_thread_flag(TIF_MEMDIE);
+व्योम निकास_oom_victim(व्योम)
+अणु
+	clear_thपढ़ो_flag(TIF_MEMDIE);
 
-	if (!atomic_dec_return(&oom_victims))
-		wake_up_all(&oom_victims_wait);
-}
+	अगर (!atomic_dec_वापस(&oom_victims))
+		wake_up_all(&oom_victims_रुको);
+पूर्ण
 
 /**
- * oom_killer_enable - enable OOM killer
+ * oom_समाप्तer_enable - enable OOM समाप्तer
  */
-void oom_killer_enable(void)
-{
-	oom_killer_disabled = false;
+व्योम oom_समाप्तer_enable(व्योम)
+अणु
+	oom_समाप्तer_disabled = false;
 	pr_info("OOM killer enabled.\n");
-}
+पूर्ण
 
 /**
- * oom_killer_disable - disable OOM killer
- * @timeout: maximum timeout to wait for oom victims in jiffies
+ * oom_समाप्तer_disable - disable OOM समाप्तer
+ * @समयout: maximum समयout to रुको क्रम oom victims in jअगरfies
  *
- * Forces all page allocations to fail rather than trigger OOM killer.
- * Will block and wait until all OOM victims are killed or the given
- * timeout expires.
+ * Forces all page allocations to fail rather than trigger OOM समाप्तer.
+ * Will block and रुको until all OOM victims are समाप्तed or the given
+ * समयout expires.
  *
  * The function cannot be called when there are runnable user tasks because
  * the userspace would see unexpected allocation failures as a result. Any
  * new usage of this function should be consulted with MM people.
  *
- * Returns true if successful and false if the OOM killer cannot be
+ * Returns true अगर successful and false अगर the OOM समाप्तer cannot be
  * disabled.
  */
-bool oom_killer_disable(signed long timeout)
-{
-	signed long ret;
+bool oom_समाप्तer_disable(चिन्हित दीर्घ समयout)
+अणु
+	चिन्हित दीर्घ ret;
 
 	/*
-	 * Make sure to not race with an ongoing OOM killer. Check that the
-	 * current is not killed (possibly due to sharing the victim's memory).
+	 * Make sure to not race with an ongoing OOM समाप्तer. Check that the
+	 * current is not समाप्तed (possibly due to sharing the victim's memory).
 	 */
-	if (mutex_lock_killable(&oom_lock))
-		return false;
-	oom_killer_disabled = true;
+	अगर (mutex_lock_समाप्तable(&oom_lock))
+		वापस false;
+	oom_समाप्तer_disabled = true;
 	mutex_unlock(&oom_lock);
 
-	ret = wait_event_interruptible_timeout(oom_victims_wait,
-			!atomic_read(&oom_victims), timeout);
-	if (ret <= 0) {
-		oom_killer_enable();
-		return false;
-	}
+	ret = रुको_event_पूर्णांकerruptible_समयout(oom_victims_रुको,
+			!atomic_पढ़ो(&oom_victims), समयout);
+	अगर (ret <= 0) अणु
+		oom_समाप्तer_enable();
+		वापस false;
+	पूर्ण
 	pr_info("OOM killer disabled.\n");
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool __task_will_free_mem(struct task_struct *task)
-{
-	struct signal_struct *sig = task->signal;
+अटल अंतरभूत bool __task_will_मुक्त_mem(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा संकेत_काष्ठा *sig = task->संकेत;
 
 	/*
-	 * A coredumping process may sleep for an extended period in exit_mm(),
-	 * so the oom killer cannot assume that the process will promptly exit
+	 * A coredumping process may sleep क्रम an extended period in निकास_mm(),
+	 * so the oom समाप्तer cannot assume that the process will promptly निकास
 	 * and release memory.
 	 */
-	if (sig->flags & SIGNAL_GROUP_COREDUMP)
-		return false;
+	अगर (sig->flags & SIGNAL_GROUP_COREDUMP)
+		वापस false;
 
-	if (sig->flags & SIGNAL_GROUP_EXIT)
-		return true;
+	अगर (sig->flags & SIGNAL_GROUP_EXIT)
+		वापस true;
 
-	if (thread_group_empty(task) && (task->flags & PF_EXITING))
-		return true;
+	अगर (thपढ़ो_group_empty(task) && (task->flags & PF_EXITING))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Checks whether the given task is dying or exiting and likely to
- * release its address space. This means that all threads and processes
- * sharing the same mm have to be killed or exiting.
+ * Checks whether the given task is dying or निकासing and likely to
+ * release its address space. This means that all thपढ़ोs and processes
+ * sharing the same mm have to be समाप्तed or निकासing.
  * Caller has to make sure that task->mm is stable (hold task_lock or
  * it operates on the current).
  */
-static bool task_will_free_mem(struct task_struct *task)
-{
-	struct mm_struct *mm = task->mm;
-	struct task_struct *p;
+अटल bool task_will_मुक्त_mem(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा mm_काष्ठा *mm = task->mm;
+	काष्ठा task_काष्ठा *p;
 	bool ret = true;
 
 	/*
-	 * Skip tasks without mm because it might have passed its exit_mm and
-	 * exit_oom_victim. oom_reaper could have rescued that but do not rely
-	 * on that for now. We can consider find_lock_task_mm in future.
+	 * Skip tasks without mm because it might have passed its निकास_mm and
+	 * निकास_oom_victim. oom_reaper could have rescued that but करो not rely
+	 * on that क्रम now. We can consider find_lock_task_mm in future.
 	 */
-	if (!mm)
-		return false;
+	अगर (!mm)
+		वापस false;
 
-	if (!__task_will_free_mem(task))
-		return false;
+	अगर (!__task_will_मुक्त_mem(task))
+		वापस false;
 
 	/*
-	 * This task has already been drained by the oom reaper so there are
-	 * only small chances it will free some more
+	 * This task has alपढ़ोy been drained by the oom reaper so there are
+	 * only small chances it will मुक्त some more
 	 */
-	if (test_bit(MMF_OOM_SKIP, &mm->flags))
-		return false;
+	अगर (test_bit(MMF_OOM_SKIP, &mm->flags))
+		वापस false;
 
-	if (atomic_read(&mm->mm_users) <= 1)
-		return true;
+	अगर (atomic_पढ़ो(&mm->mm_users) <= 1)
+		वापस true;
 
 	/*
 	 * Make sure that all tasks which share the mm with the given tasks
 	 * are dying as well to make sure that a) nobody pins its mm and
 	 * b) the task is also reapable by the oom reaper.
 	 */
-	rcu_read_lock();
-	for_each_process(p) {
-		if (!process_shares_mm(p, mm))
-			continue;
-		if (same_thread_group(task, p))
-			continue;
-		ret = __task_will_free_mem(p);
-		if (!ret)
-			break;
-	}
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	क्रम_each_process(p) अणु
+		अगर (!process_shares_mm(p, mm))
+			जारी;
+		अगर (same_thपढ़ो_group(task, p))
+			जारी;
+		ret = __task_will_मुक्त_mem(p);
+		अगर (!ret)
+			अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __oom_kill_process(struct task_struct *victim, const char *message)
-{
-	struct task_struct *p;
-	struct mm_struct *mm;
+अटल व्योम __oom_समाप्त_process(काष्ठा task_काष्ठा *victim, स्थिर अक्षर *message)
+अणु
+	काष्ठा task_काष्ठा *p;
+	काष्ठा mm_काष्ठा *mm;
 	bool can_oom_reap = true;
 
 	p = find_lock_task_mm(victim);
-	if (!p) {
+	अगर (!p) अणु
 		pr_info("%s: OOM victim %d (%s) is already exiting. Skip killing the task\n",
 			message, task_pid_nr(victim), victim->comm);
-		put_task_struct(victim);
-		return;
-	} else if (victim != p) {
-		get_task_struct(p);
-		put_task_struct(victim);
+		put_task_काष्ठा(victim);
+		वापस;
+	पूर्ण अन्यथा अगर (victim != p) अणु
+		get_task_काष्ठा(p);
+		put_task_काष्ठा(victim);
 		victim = p;
-	}
+	पूर्ण
 
 	/* Get a reference to safely compare mm after task_unlock(victim) */
 	mm = victim->mm;
 	mmgrab(mm);
 
-	/* Raise event before sending signal: task reaper must see this */
+	/* Raise event beक्रमe sending संकेत: task reaper must see this */
 	count_vm_event(OOM_KILL);
 	memcg_memory_event_mm(mm, MEMCG_OOM_KILL);
 
 	/*
-	 * We should send SIGKILL before granting access to memory reserves
+	 * We should send SIGKILL beक्रमe granting access to memory reserves
 	 * in order to prevent the OOM victim from depleting the memory
 	 * reserves from the user space under its control.
 	 */
-	do_send_sig_info(SIGKILL, SEND_SIG_PRIV, victim, PIDTYPE_TGID);
+	करो_send_sig_info(SIGKILL, SEND_SIG_PRIV, victim, PIDTYPE_TGID);
 	mark_oom_victim(victim);
 	pr_err("%s: Killed process %d (%s) total-vm:%lukB, anon-rss:%lukB, file-rss:%lukB, shmem-rss:%lukB, UID:%u pgtables:%lukB oom_score_adj:%hd\n",
 		message, task_pid_nr(victim), victim->comm, K(mm->total_vm),
 		K(get_mm_counter(mm, MM_ANONPAGES)),
-		K(get_mm_counter(mm, MM_FILEPAGES)),
+		K(get_mm_counter(mm, MM_खाताPAGES)),
 		K(get_mm_counter(mm, MM_SHMEMPAGES)),
 		from_kuid(&init_user_ns, task_uid(victim)),
-		mm_pgtables_bytes(mm) >> 10, victim->signal->oom_score_adj);
+		mm_pgtables_bytes(mm) >> 10, victim->संकेत->oom_score_adj);
 	task_unlock(victim);
 
 	/*
-	 * Kill all user processes sharing victim->mm in other thread groups, if
-	 * any.  They don't get access to memory reserves, though, to avoid
+	 * Kill all user processes sharing victim->mm in other thपढ़ो groups, अगर
+	 * any.  They करोn't get access to memory reserves, though, to aव्योम
 	 * depletion of all memory.  This prevents mm->mmap_lock livelock when an
-	 * oom killed thread cannot exit because it requires the semaphore and
-	 * its contended by another thread trying to allocate memory itself.
-	 * That thread will now get access to memory reserves since it has a
-	 * pending fatal signal.
+	 * oom समाप्तed thपढ़ो cannot निकास because it requires the semaphore and
+	 * its contended by another thपढ़ो trying to allocate memory itself.
+	 * That thपढ़ो will now get access to memory reserves since it has a
+	 * pending fatal संकेत.
 	 */
-	rcu_read_lock();
-	for_each_process(p) {
-		if (!process_shares_mm(p, mm))
-			continue;
-		if (same_thread_group(p, victim))
-			continue;
-		if (is_global_init(p)) {
+	rcu_पढ़ो_lock();
+	क्रम_each_process(p) अणु
+		अगर (!process_shares_mm(p, mm))
+			जारी;
+		अगर (same_thपढ़ो_group(p, victim))
+			जारी;
+		अगर (is_global_init(p)) अणु
 			can_oom_reap = false;
 			set_bit(MMF_OOM_SKIP, &mm->flags);
 			pr_info("oom killer %d (%s) has mm pinned by %d (%s)\n",
 					task_pid_nr(victim), victim->comm,
 					task_pid_nr(p), p->comm);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		/*
-		 * No kthead_use_mm() user needs to read from the userspace so
+		 * No kthead_use_mm() user needs to पढ़ो from the userspace so
 		 * we are ok to reap it.
 		 */
-		if (unlikely(p->flags & PF_KTHREAD))
-			continue;
-		do_send_sig_info(SIGKILL, SEND_SIG_PRIV, p, PIDTYPE_TGID);
-	}
-	rcu_read_unlock();
+		अगर (unlikely(p->flags & PF_KTHREAD))
+			जारी;
+		करो_send_sig_info(SIGKILL, SEND_SIG_PRIV, p, PIDTYPE_TGID);
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (can_oom_reap)
+	अगर (can_oom_reap)
 		wake_oom_reaper(victim);
 
 	mmdrop(mm);
-	put_task_struct(victim);
-}
-#undef K
+	put_task_काष्ठा(victim);
+पूर्ण
+#अघोषित K
 
 /*
  * Kill provided task unless it's secured by setting
  * oom_score_adj to OOM_SCORE_ADJ_MIN.
  */
-static int oom_kill_memcg_member(struct task_struct *task, void *message)
-{
-	if (task->signal->oom_score_adj != OOM_SCORE_ADJ_MIN &&
-	    !is_global_init(task)) {
-		get_task_struct(task);
-		__oom_kill_process(task, message);
-	}
-	return 0;
-}
+अटल पूर्णांक oom_समाप्त_memcg_member(काष्ठा task_काष्ठा *task, व्योम *message)
+अणु
+	अगर (task->संकेत->oom_score_adj != OOM_SCORE_ADJ_MIN &&
+	    !is_global_init(task)) अणु
+		get_task_काष्ठा(task);
+		__oom_समाप्त_process(task, message);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void oom_kill_process(struct oom_control *oc, const char *message)
-{
-	struct task_struct *victim = oc->chosen;
-	struct mem_cgroup *oom_group;
-	static DEFINE_RATELIMIT_STATE(oom_rs, DEFAULT_RATELIMIT_INTERVAL,
+अटल व्योम oom_समाप्त_process(काष्ठा oom_control *oc, स्थिर अक्षर *message)
+अणु
+	काष्ठा task_काष्ठा *victim = oc->chosen;
+	काष्ठा mem_cgroup *oom_group;
+	अटल DEFINE_RATELIMIT_STATE(oom_rs, DEFAULT_RATELIMIT_INTERVAL,
 					      DEFAULT_RATELIMIT_BURST);
 
 	/*
-	 * If the task is already exiting, don't alarm the sysadmin or kill
-	 * its children or threads, just give it access to memory reserves
+	 * If the task is alपढ़ोy निकासing, करोn't alarm the sysadmin or समाप्त
+	 * its children or thपढ़ोs, just give it access to memory reserves
 	 * so it can die quickly
 	 */
 	task_lock(victim);
-	if (task_will_free_mem(victim)) {
+	अगर (task_will_मुक्त_mem(victim)) अणु
 		mark_oom_victim(victim);
 		wake_oom_reaper(victim);
 		task_unlock(victim);
-		put_task_struct(victim);
-		return;
-	}
+		put_task_काष्ठा(victim);
+		वापस;
+	पूर्ण
 	task_unlock(victim);
 
-	if (__ratelimit(&oom_rs))
+	अगर (__ratelimit(&oom_rs))
 		dump_header(oc, victim);
 
 	/*
-	 * Do we need to kill the entire memory cgroup?
+	 * Do we need to समाप्त the entire memory cgroup?
 	 * Or even one of the ancestor memory cgroups?
-	 * Check this out before killing the victim task.
+	 * Check this out beक्रमe समाप्तing the victim task.
 	 */
 	oom_group = mem_cgroup_get_oom_group(victim, oc->memcg);
 
-	__oom_kill_process(victim, message);
+	__oom_समाप्त_process(victim, message);
 
 	/*
-	 * If necessary, kill all tasks in the selected memory cgroup.
+	 * If necessary, समाप्त all tasks in the selected memory cgroup.
 	 */
-	if (oom_group) {
-		mem_cgroup_print_oom_group(oom_group);
-		mem_cgroup_scan_tasks(oom_group, oom_kill_memcg_member,
-				      (void *)message);
+	अगर (oom_group) अणु
+		mem_cgroup_prपूर्णांक_oom_group(oom_group);
+		mem_cgroup_scan_tasks(oom_group, oom_समाप्त_memcg_member,
+				      (व्योम *)message);
 		mem_cgroup_put(oom_group);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Determines whether the kernel must panic because of the panic_on_oom sysctl.
  */
-static void check_panic_on_oom(struct oom_control *oc)
-{
-	if (likely(!sysctl_panic_on_oom))
-		return;
-	if (sysctl_panic_on_oom != 2) {
+अटल व्योम check_panic_on_oom(काष्ठा oom_control *oc)
+अणु
+	अगर (likely(!sysctl_panic_on_oom))
+		वापस;
+	अगर (sysctl_panic_on_oom != 2) अणु
 		/*
 		 * panic_on_oom == 1 only affects CONSTRAINT_NONE, the kernel
-		 * does not panic for cpuset, mempolicy, or memcg allocation
+		 * करोes not panic क्रम cpuset, mempolicy, or memcg allocation
 		 * failures.
 		 */
-		if (oc->constraint != CONSTRAINT_NONE)
-			return;
-	}
-	/* Do not panic for oom kills triggered by sysrq */
-	if (is_sysrq_oom(oc))
-		return;
-	dump_header(oc, NULL);
+		अगर (oc->स्थिरraपूर्णांक != CONSTRAINT_NONE)
+			वापस;
+	पूर्ण
+	/* Do not panic क्रम oom समाप्तs triggered by sysrq */
+	अगर (is_sysrq_oom(oc))
+		वापस;
+	dump_header(oc, शून्य);
 	panic("Out of memory: %s panic_on_oom is enabled\n",
 		sysctl_panic_on_oom == 2 ? "compulsory" : "system-wide");
-}
+पूर्ण
 
-static BLOCKING_NOTIFIER_HEAD(oom_notify_list);
+अटल BLOCKING_NOTIFIER_HEAD(oom_notअगरy_list);
 
-int register_oom_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&oom_notify_list, nb);
-}
-EXPORT_SYMBOL_GPL(register_oom_notifier);
+पूर्णांक रेजिस्टर_oom_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&oom_notअगरy_list, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_oom_notअगरier);
 
-int unregister_oom_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&oom_notify_list, nb);
-}
-EXPORT_SYMBOL_GPL(unregister_oom_notifier);
+पूर्णांक unरेजिस्टर_oom_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&oom_notअगरy_list, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_oom_notअगरier);
 
 /**
- * out_of_memory - kill the "best" process when we run out of memory
- * @oc: pointer to struct oom_control
+ * out_of_memory - समाप्त the "best" process when we run out of memory
+ * @oc: poपूर्णांकer to काष्ठा oom_control
  *
  * If we run out of memory, we have the choice between either
- * killing a random task (bad), letting the system crash (worse)
- * OR try to be smart about which process to kill. Note that we
- * don't have to be perfect here, we just have to be good.
+ * समाप्तing a अक्रमom task (bad), letting the प्रणाली crash (worse)
+ * OR try to be smart about which process to समाप्त. Note that we
+ * करोn't have to be perfect here, we just have to be good.
  */
-bool out_of_memory(struct oom_control *oc)
-{
-	unsigned long freed = 0;
+bool out_of_memory(काष्ठा oom_control *oc)
+अणु
+	अचिन्हित दीर्घ मुक्तd = 0;
 
-	if (oom_killer_disabled)
-		return false;
+	अगर (oom_समाप्तer_disabled)
+		वापस false;
 
-	if (!is_memcg_oom(oc)) {
-		blocking_notifier_call_chain(&oom_notify_list, 0, &freed);
-		if (freed > 0)
+	अगर (!is_memcg_oom(oc)) अणु
+		blocking_notअगरier_call_chain(&oom_notअगरy_list, 0, &मुक्तd);
+		अगर (मुक्तd > 0)
 			/* Got some memory back in the last second. */
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
 	/*
-	 * If current has a pending SIGKILL or is exiting, then automatically
+	 * If current has a pending SIGKILL or is निकासing, then स्वतःmatically
 	 * select it.  The goal is to allow it to allocate so that it may
-	 * quickly exit and free its memory.
+	 * quickly निकास and मुक्त its memory.
 	 */
-	if (task_will_free_mem(current)) {
+	अगर (task_will_मुक्त_mem(current)) अणु
 		mark_oom_victim(current);
 		wake_oom_reaper(current);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/*
-	 * The OOM killer does not compensate for IO-less reclaim.
+	 * The OOM समाप्तer करोes not compensate क्रम IO-less reclaim.
 	 * pagefault_out_of_memory lost its gfp context so we have to
 	 * make sure exclude 0 mask - all other users should have at least
-	 * ___GFP_DIRECT_RECLAIM to get here. But mem_cgroup_oom() has to
-	 * invoke the OOM killer even if it is a GFP_NOFS allocation.
+	 * ___GFP_सूचीECT_RECLAIM to get here. But mem_cgroup_oom() has to
+	 * invoke the OOM समाप्तer even अगर it is a GFP_NOFS allocation.
 	 */
-	if (oc->gfp_mask && !(oc->gfp_mask & __GFP_FS) && !is_memcg_oom(oc))
-		return true;
+	अगर (oc->gfp_mask && !(oc->gfp_mask & __GFP_FS) && !is_memcg_oom(oc))
+		वापस true;
 
 	/*
-	 * Check if there were limitations on the allocation (only relevant for
-	 * NUMA and memcg) that may require different handling.
+	 * Check अगर there were limitations on the allocation (only relevant क्रम
+	 * NUMA and memcg) that may require dअगरferent handling.
 	 */
-	oc->constraint = constrained_alloc(oc);
-	if (oc->constraint != CONSTRAINT_MEMORY_POLICY)
-		oc->nodemask = NULL;
+	oc->स्थिरraपूर्णांक = स्थिरrained_alloc(oc);
+	अगर (oc->स्थिरraपूर्णांक != CONSTRAINT_MEMORY_POLICY)
+		oc->nodemask = शून्य;
 	check_panic_on_oom(oc);
 
-	if (!is_memcg_oom(oc) && sysctl_oom_kill_allocating_task &&
-	    current->mm && !oom_unkillable_task(current) &&
+	अगर (!is_memcg_oom(oc) && sysctl_oom_समाप्त_allocating_task &&
+	    current->mm && !oom_unसमाप्तable_task(current) &&
 	    oom_cpuset_eligible(current, oc) &&
-	    current->signal->oom_score_adj != OOM_SCORE_ADJ_MIN) {
-		get_task_struct(current);
+	    current->संकेत->oom_score_adj != OOM_SCORE_ADJ_MIN) अणु
+		get_task_काष्ठा(current);
 		oc->chosen = current;
-		oom_kill_process(oc, "Out of memory (oom_kill_allocating_task)");
-		return true;
-	}
+		oom_समाप्त_process(oc, "Out of memory (oom_kill_allocating_task)");
+		वापस true;
+	पूर्ण
 
 	select_bad_process(oc);
 	/* Found nothing?!?! */
-	if (!oc->chosen) {
-		dump_header(oc, NULL);
+	अगर (!oc->chosen) अणु
+		dump_header(oc, शून्य);
 		pr_warn("Out of memory and no killable processes...\n");
 		/*
 		 * If we got here due to an actual allocation at the
-		 * system level, we cannot survive this and will enter
+		 * प्रणाली level, we cannot survive this and will enter
 		 * an endless loop in the allocator. Bail out now.
 		 */
-		if (!is_sysrq_oom(oc) && !is_memcg_oom(oc))
+		अगर (!is_sysrq_oom(oc) && !is_memcg_oom(oc))
 			panic("System is deadlocked on memory\n");
-	}
-	if (oc->chosen && oc->chosen != (void *)-1UL)
-		oom_kill_process(oc, !is_memcg_oom(oc) ? "Out of memory" :
+	पूर्ण
+	अगर (oc->chosen && oc->chosen != (व्योम *)-1UL)
+		oom_समाप्त_process(oc, !is_memcg_oom(oc) ? "Out of memory" :
 				 "Memory cgroup out of memory");
-	return !!oc->chosen;
-}
+	वापस !!oc->chosen;
+पूर्ण
 
 /*
- * The pagefault handler calls here because it is out of memory, so kill a
- * memory-hogging task. If oom_lock is held by somebody else, a parallel oom
- * killing is already in progress so do nothing.
+ * The pagefault handler calls here because it is out of memory, so समाप्त a
+ * memory-hogging task. If oom_lock is held by somebody अन्यथा, a parallel oom
+ * समाप्तing is alपढ़ोy in progress so करो nothing.
  */
-void pagefault_out_of_memory(void)
-{
-	struct oom_control oc = {
-		.zonelist = NULL,
-		.nodemask = NULL,
-		.memcg = NULL,
+व्योम pagefault_out_of_memory(व्योम)
+अणु
+	काष्ठा oom_control oc = अणु
+		.zonelist = शून्य,
+		.nodemask = शून्य,
+		.memcg = शून्य,
 		.gfp_mask = 0,
 		.order = 0,
-	};
+	पूर्ण;
 
-	if (mem_cgroup_oom_synchronize(true))
-		return;
+	अगर (mem_cgroup_oom_synchronize(true))
+		वापस;
 
-	if (!mutex_trylock(&oom_lock))
-		return;
+	अगर (!mutex_trylock(&oom_lock))
+		वापस;
 	out_of_memory(&oc);
 	mutex_unlock(&oom_lock);
-}
+पूर्ण

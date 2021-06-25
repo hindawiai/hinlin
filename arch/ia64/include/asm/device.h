@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Arch specific extensions to struct device
+ * Arch specअगरic extensions to काष्ठा device
  */
-#ifndef _ASM_IA64_DEVICE_H
-#define _ASM_IA64_DEVICE_H
+#अगर_अघोषित _ASM_IA64_DEVICE_H
+#घोषणा _ASM_IA64_DEVICE_H
 
-struct dev_archdata {
-};
+काष्ठा dev_archdata अणु
+पूर्ण;
 
-struct pdev_archdata {
-};
+काष्ठा pdev_archdata अणु
+पूर्ण;
 
-#endif /* _ASM_IA64_DEVICE_H */
+#पूर्ण_अगर /* _ASM_IA64_DEVICE_H */

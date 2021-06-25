@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *    pata_artop.c - ARTOP ATA controller driver
  *
@@ -7,80 +8,80 @@
  *
  *    Based in part on drivers/ide/pci/aec62xx.c
  *	Copyright (C) 1999-2002	Andre Hedrick <andre@linux-ide.org>
- *	865/865R fixes for Macintosh card version from a patch to the old
+ *	865/865R fixes क्रम Macपूर्णांकosh card version from a patch to the old
  *		driver by Thibaut VARENE <varenet@parisc-linux.org>
- *	When setting the PCI latency we must set 0x80 or higher for burst
- *		performance Alessandro Zummo <alessandro.zummo@towertech.it>
+ *	When setting the PCI latency we must set 0x80 or higher क्रम burst
+ *		perक्रमmance Alessandro Zummo <alessandro.zummo@towertech.it>
  *
  *	TODO
  *	Investigate no_dsc on 850R
  *	Clock detect
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <scsi/scsi_host.h>
-#include <linux/libata.h>
-#include <linux/ata.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <linux/libata.h>
+#समावेश <linux/ata.h>
 
-#define DRV_NAME	"pata_artop"
-#define DRV_VERSION	"0.4.6"
+#घोषणा DRV_NAME	"pata_artop"
+#घोषणा DRV_VERSION	"0.4.6"
 
 /*
  *	The ARTOP has 33 Mhz and "over clocked" timing tables. Until we
  *	get PCI bus speed functionality we leave this as 0. Its a variable
- *	for when we get the functionality and also for folks wanting to
+ *	क्रम when we get the functionality and also क्रम folks wanting to
  *	test stuff.
  */
 
-static int clock = 0;
+अटल पूर्णांक घड़ी = 0;
 
 /**
  *	artop62x0_pre_reset	-	probe begin
  *	@link: link
- *	@deadline: deadline jiffies for the operation
+ *	@deadline: deadline jअगरfies क्रम the operation
  *
  *	Nothing complicated needed here.
  */
 
-static int artop62x0_pre_reset(struct ata_link *link, unsigned long deadline)
-{
-	static const struct pci_bits artop_enable_bits[] = {
-		{ 0x4AU, 1U, 0x02UL, 0x02UL },	/* port 0 */
-		{ 0x4AU, 1U, 0x04UL, 0x04UL },	/* port 1 */
-	};
+अटल पूर्णांक artop62x0_pre_reset(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline)
+अणु
+	अटल स्थिर काष्ठा pci_bits artop_enable_bits[] = अणु
+		अणु 0x4AU, 1U, 0x02UL, 0x02UL पूर्ण,	/* port 0 */
+		अणु 0x4AU, 1U, 0x04UL, 0x04UL पूर्ण,	/* port 1 */
+	पूर्ण;
 
-	struct ata_port *ap = link->ap;
-	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
 
 	/* Odd numbered device ids are the units with enable bits. */
-	if ((pdev->device & 1) &&
+	अगर ((pdev->device & 1) &&
 	    !pci_test_config_bits(pdev, &artop_enable_bits[ap->port_no]))
-		return -ENOENT;
+		वापस -ENOENT;
 
-	return ata_sff_prereset(link, deadline);
-}
+	वापस ata_sff_prereset(link, deadline);
+पूर्ण
 
 /**
- *	artop6260_cable_detect	-	identify cable type
+ *	artop6260_cable_detect	-	identअगरy cable type
  *	@ap: Port
  *
- *	Identify the cable type for the ARTOP interface in question
+ *	Identअगरy the cable type क्रम the ARTOP पूर्णांकerface in question
  */
 
-static int artop6260_cable_detect(struct ata_port *ap)
-{
-	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
-	u8 tmp;
-	pci_read_config_byte(pdev, 0x49, &tmp);
-	if (tmp & (1 << ap->port_no))
-		return ATA_CBL_PATA40;
-	return ATA_CBL_PATA80;
-}
+अटल पूर्णांक artop6260_cable_detect(काष्ठा ata_port *ap)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+	u8 पंचांगp;
+	pci_पढ़ो_config_byte(pdev, 0x49, &पंचांगp);
+	अगर (पंचांगp & (1 << ap->port_no))
+		वापस ATA_CBL_PATA40;
+	वापस ATA_CBL_PATA80;
+पूर्ण
 
 /**
  *	artop6210_load_piomode - Load a set of PATA PIO timings
@@ -88,34 +89,34 @@ static int artop6260_cable_detect(struct ata_port *ap)
  *	@adev: Device
  *	@pio: PIO mode
  *
- *	Set PIO mode for device, in host controller PCI config space. This
+ *	Set PIO mode क्रम device, in host controller PCI config space. This
  *	is used both to set PIO timings in PIO mode and also to set the
- *	matching PIO clocking for UDMA, as well as the MWDMA timings.
+ *	matching PIO घड़ीing क्रम UDMA, as well as the MWDMA timings.
  *
  *	LOCKING:
  *	None (inherited from caller).
  */
 
-static void artop6210_load_piomode(struct ata_port *ap, struct ata_device *adev, unsigned int pio)
-{
-	struct pci_dev *pdev	= to_pci_dev(ap->host->dev);
-	int dn = adev->devno + 2 * ap->port_no;
-	static const u16 timing[2][5] = {
-		{ 0x0000, 0x000A, 0x0008, 0x0303, 0x0301 },
-		{ 0x0700, 0x070A, 0x0708, 0x0403, 0x0401 }
+अटल व्योम artop6210_load_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev, अचिन्हित पूर्णांक pio)
+अणु
+	काष्ठा pci_dev *pdev	= to_pci_dev(ap->host->dev);
+	पूर्णांक dn = adev->devno + 2 * ap->port_no;
+	अटल स्थिर u16 timing[2][5] = अणु
+		अणु 0x0000, 0x000A, 0x0008, 0x0303, 0x0301 पूर्ण,
+		अणु 0x0700, 0x070A, 0x0708, 0x0403, 0x0401 पूर्ण
 
-	};
+	पूर्ण;
 	/* Load the PIO timing active/recovery bits */
-	pci_write_config_word(pdev, 0x40 + 2 * dn, timing[clock][pio]);
-}
+	pci_ग_लिखो_config_word(pdev, 0x40 + 2 * dn, timing[घड़ी][pio]);
+पूर्ण
 
 /**
  *	artop6210_set_piomode - Initialize host controller PATA PIO timings
  *	@ap: Port whose timings we are configuring
  *	@adev: Device we are configuring
  *
- *	Set PIO mode for device, in host controller PCI config space. For
- *	ARTOP we must also clear the UDMA bits if we are not doing UDMA. In
+ *	Set PIO mode क्रम device, in host controller PCI config space. For
+ *	ARTOP we must also clear the UDMA bits अगर we are not करोing UDMA. In
  *	the event UDMA is used the later call to set_dmamode will set the
  *	bits as required.
  *
@@ -123,19 +124,19 @@ static void artop6210_load_piomode(struct ata_port *ap, struct ata_device *adev,
  *	None (inherited from caller).
  */
 
-static void artop6210_set_piomode(struct ata_port *ap, struct ata_device *adev)
-{
-	struct pci_dev *pdev	= to_pci_dev(ap->host->dev);
-	int dn = adev->devno + 2 * ap->port_no;
+अटल व्योम artop6210_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
+अणु
+	काष्ठा pci_dev *pdev	= to_pci_dev(ap->host->dev);
+	पूर्णांक dn = adev->devno + 2 * ap->port_no;
 	u8 ultra;
 
 	artop6210_load_piomode(ap, adev, adev->pio_mode - XFER_PIO_0);
 
-	/* Clear the UDMA mode bits (set_dmamode will redo this if needed) */
-	pci_read_config_byte(pdev, 0x54, &ultra);
+	/* Clear the UDMA mode bits (set_dmamode will reकरो this अगर needed) */
+	pci_पढ़ो_config_byte(pdev, 0x54, &ultra);
 	ultra &= ~(3 << (2 * dn));
-	pci_write_config_byte(pdev, 0x54, ultra);
-}
+	pci_ग_लिखो_config_byte(pdev, 0x54, ultra);
+पूर्ण
 
 /**
  *	artop6260_load_piomode - Initialize host controller PATA PIO timings
@@ -143,33 +144,33 @@ static void artop6210_set_piomode(struct ata_port *ap, struct ata_device *adev)
  *	@adev: Device we are configuring
  *	@pio: PIO mode
  *
- *	Set PIO mode for device, in host controller PCI config space. The
- *	ARTOP6260 and relatives store the timing data differently.
+ *	Set PIO mode क्रम device, in host controller PCI config space. The
+ *	ARTOP6260 and relatives store the timing data dअगरferently.
  *
  *	LOCKING:
  *	None (inherited from caller).
  */
 
-static void artop6260_load_piomode (struct ata_port *ap, struct ata_device *adev, unsigned int pio)
-{
-	struct pci_dev *pdev	= to_pci_dev(ap->host->dev);
-	int dn = adev->devno + 2 * ap->port_no;
-	static const u8 timing[2][5] = {
-		{ 0x00, 0x0A, 0x08, 0x33, 0x31 },
-		{ 0x70, 0x7A, 0x78, 0x43, 0x41 }
+अटल व्योम artop6260_load_piomode (काष्ठा ata_port *ap, काष्ठा ata_device *adev, अचिन्हित पूर्णांक pio)
+अणु
+	काष्ठा pci_dev *pdev	= to_pci_dev(ap->host->dev);
+	पूर्णांक dn = adev->devno + 2 * ap->port_no;
+	अटल स्थिर u8 timing[2][5] = अणु
+		अणु 0x00, 0x0A, 0x08, 0x33, 0x31 पूर्ण,
+		अणु 0x70, 0x7A, 0x78, 0x43, 0x41 पूर्ण
 
-	};
+	पूर्ण;
 	/* Load the PIO timing active/recovery bits */
-	pci_write_config_byte(pdev, 0x40 + dn, timing[clock][pio]);
-}
+	pci_ग_लिखो_config_byte(pdev, 0x40 + dn, timing[घड़ी][pio]);
+पूर्ण
 
 /**
  *	artop6260_set_piomode - Initialize host controller PATA PIO timings
  *	@ap: Port whose timings we are configuring
  *	@adev: Device we are configuring
  *
- *	Set PIO mode for device, in host controller PCI config space. For
- *	ARTOP we must also clear the UDMA bits if we are not doing UDMA. In
+ *	Set PIO mode क्रम device, in host controller PCI config space. For
+ *	ARTOP we must also clear the UDMA bits अगर we are not करोing UDMA. In
  *	the event UDMA is used the later call to set_dmamode will set the
  *	bits as required.
  *
@@ -177,95 +178,95 @@ static void artop6260_load_piomode (struct ata_port *ap, struct ata_device *adev
  *	None (inherited from caller).
  */
 
-static void artop6260_set_piomode(struct ata_port *ap, struct ata_device *adev)
-{
-	struct pci_dev *pdev	= to_pci_dev(ap->host->dev);
+अटल व्योम artop6260_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
+अणु
+	काष्ठा pci_dev *pdev	= to_pci_dev(ap->host->dev);
 	u8 ultra;
 
 	artop6260_load_piomode(ap, adev, adev->pio_mode - XFER_PIO_0);
 
-	/* Clear the UDMA mode bits (set_dmamode will redo this if needed) */
-	pci_read_config_byte(pdev, 0x44 + ap->port_no, &ultra);
+	/* Clear the UDMA mode bits (set_dmamode will reकरो this अगर needed) */
+	pci_पढ़ो_config_byte(pdev, 0x44 + ap->port_no, &ultra);
 	ultra &= ~(7 << (4  * adev->devno));	/* One nibble per drive */
-	pci_write_config_byte(pdev, 0x44 + ap->port_no, ultra);
-}
+	pci_ग_लिखो_config_byte(pdev, 0x44 + ap->port_no, ultra);
+पूर्ण
 
 /**
  *	artop6210_set_dmamode - Initialize host controller PATA PIO timings
  *	@ap: Port whose timings we are configuring
  *	@adev: Device whose timings we are configuring
  *
- *	Set DMA mode for device, in host controller PCI config space.
+ *	Set DMA mode क्रम device, in host controller PCI config space.
  *
  *	LOCKING:
  *	None (inherited from caller).
  */
 
-static void artop6210_set_dmamode (struct ata_port *ap, struct ata_device *adev)
-{
-	unsigned int pio;
-	struct pci_dev *pdev	= to_pci_dev(ap->host->dev);
-	int dn = adev->devno + 2 * ap->port_no;
+अटल व्योम artop6210_set_dmamode (काष्ठा ata_port *ap, काष्ठा ata_device *adev)
+अणु
+	अचिन्हित पूर्णांक pio;
+	काष्ठा pci_dev *pdev	= to_pci_dev(ap->host->dev);
+	पूर्णांक dn = adev->devno + 2 * ap->port_no;
 	u8 ultra;
 
-	if (adev->dma_mode == XFER_MW_DMA_0)
+	अगर (adev->dma_mode == XFER_MW_DMA_0)
 		pio = 1;
-	else
+	अन्यथा
 		pio = 4;
 
 	/* Load the PIO timing active/recovery bits */
 	artop6210_load_piomode(ap, adev, pio);
 
-	pci_read_config_byte(pdev, 0x54, &ultra);
+	pci_पढ़ो_config_byte(pdev, 0x54, &ultra);
 	ultra &= ~(3 << (2 * dn));
 
-	/* Add ultra DMA bits if in UDMA mode */
-	if (adev->dma_mode >= XFER_UDMA_0) {
-		u8 mode = (adev->dma_mode - XFER_UDMA_0) + 1 - clock;
-		if (mode == 0)
+	/* Add ultra DMA bits अगर in UDMA mode */
+	अगर (adev->dma_mode >= XFER_UDMA_0) अणु
+		u8 mode = (adev->dma_mode - XFER_UDMA_0) + 1 - घड़ी;
+		अगर (mode == 0)
 			mode = 1;
 		ultra |= (mode << (2 * dn));
-	}
-	pci_write_config_byte(pdev, 0x54, ultra);
-}
+	पूर्ण
+	pci_ग_लिखो_config_byte(pdev, 0x54, ultra);
+पूर्ण
 
 /**
  *	artop6260_set_dmamode - Initialize host controller PATA PIO timings
  *	@ap: Port whose timings we are configuring
  *	@adev: Device we are configuring
  *
- *	Set DMA mode for device, in host controller PCI config space. The
- *	ARTOP6260 and relatives store the timing data differently.
+ *	Set DMA mode क्रम device, in host controller PCI config space. The
+ *	ARTOP6260 and relatives store the timing data dअगरferently.
  *
  *	LOCKING:
  *	None (inherited from caller).
  */
 
-static void artop6260_set_dmamode (struct ata_port *ap, struct ata_device *adev)
-{
-	unsigned int pio;
-	struct pci_dev *pdev	= to_pci_dev(ap->host->dev);
+अटल व्योम artop6260_set_dmamode (काष्ठा ata_port *ap, काष्ठा ata_device *adev)
+अणु
+	अचिन्हित पूर्णांक pio;
+	काष्ठा pci_dev *pdev	= to_pci_dev(ap->host->dev);
 	u8 ultra;
 
-	if (adev->dma_mode == XFER_MW_DMA_0)
+	अगर (adev->dma_mode == XFER_MW_DMA_0)
 		pio = 1;
-	else
+	अन्यथा
 		pio = 4;
 
 	/* Load the PIO timing active/recovery bits */
 	artop6260_load_piomode(ap, adev, pio);
 
-	/* Add ultra DMA bits if in UDMA mode */
-	pci_read_config_byte(pdev, 0x44 + ap->port_no, &ultra);
+	/* Add ultra DMA bits अगर in UDMA mode */
+	pci_पढ़ो_config_byte(pdev, 0x44 + ap->port_no, &ultra);
 	ultra &= ~(7 << (4  * adev->devno));	/* One nibble per drive */
-	if (adev->dma_mode >= XFER_UDMA_0) {
-		u8 mode = adev->dma_mode - XFER_UDMA_0 + 1 - clock;
-		if (mode == 0)
+	अगर (adev->dma_mode >= XFER_UDMA_0) अणु
+		u8 mode = adev->dma_mode - XFER_UDMA_0 + 1 - घड़ी;
+		अगर (mode == 0)
 			mode = 1;
 		ultra |= (mode << (4 * adev->devno));
-	}
-	pci_write_config_byte(pdev, 0x44 + ap->port_no, ultra);
-}
+	पूर्ण
+	pci_ग_लिखो_config_byte(pdev, 0x44 + ap->port_no, ultra);
+पूर्ण
 
 /**
  *	artop6210_qc_defer	-	implement serialization
@@ -274,76 +275,76 @@ static void artop6260_set_dmamode (struct ata_port *ap, struct ata_device *adev)
  *	Issue commands per host on this chip.
  */
 
-static int artop6210_qc_defer(struct ata_queued_cmd *qc)
-{
-	struct ata_host *host = qc->ap->host;
-	struct ata_port *alt = host->ports[1 ^ qc->ap->port_no];
-	int rc;
+अटल पूर्णांक artop6210_qc_defer(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_host *host = qc->ap->host;
+	काष्ठा ata_port *alt = host->ports[1 ^ qc->ap->port_no];
+	पूर्णांक rc;
 
 	/* First apply the usual rules */
 	rc = ata_std_qc_defer(qc);
-	if (rc != 0)
-		return rc;
+	अगर (rc != 0)
+		वापस rc;
 
-	/* Now apply serialization rules. Only allow a command if the
+	/* Now apply serialization rules. Only allow a command अगर the
 	   other channel state machine is idle */
-	if (alt && alt->qc_active)
-		return	ATA_DEFER_PORT;
-	return 0;
-}
+	अगर (alt && alt->qc_active)
+		वापस	ATA_DEFER_PORT;
+	वापस 0;
+पूर्ण
 
-static struct scsi_host_template artop_sht = {
+अटल काष्ठा scsi_host_ढाँचा artop_sht = अणु
 	ATA_BMDMA_SHT(DRV_NAME),
-};
+पूर्ण;
 
-static struct ata_port_operations artop6210_ops = {
+अटल काष्ठा ata_port_operations artop6210_ops = अणु
 	.inherits		= &ata_bmdma_port_ops,
 	.cable_detect		= ata_cable_40wire,
 	.set_piomode		= artop6210_set_piomode,
 	.set_dmamode		= artop6210_set_dmamode,
 	.prereset		= artop62x0_pre_reset,
 	.qc_defer		= artop6210_qc_defer,
-};
+पूर्ण;
 
-static struct ata_port_operations artop6260_ops = {
+अटल काष्ठा ata_port_operations artop6260_ops = अणु
 	.inherits		= &ata_bmdma_port_ops,
 	.cable_detect		= artop6260_cable_detect,
 	.set_piomode		= artop6260_set_piomode,
 	.set_dmamode		= artop6260_set_dmamode,
 	.prereset		= artop62x0_pre_reset,
-};
+पूर्ण;
 
-static void atp8xx_fixup(struct pci_dev *pdev)
-{
-	if (pdev->device == 0x0005)
-		/* BIOS may have left us in UDMA, clear it before libata probe */
-		pci_write_config_byte(pdev, 0x54, 0);
-	else if (pdev->device == 0x0008 || pdev->device == 0x0009) {
+अटल व्योम atp8xx_fixup(काष्ठा pci_dev *pdev)
+अणु
+	अगर (pdev->device == 0x0005)
+		/* BIOS may have left us in UDMA, clear it beक्रमe libata probe */
+		pci_ग_लिखो_config_byte(pdev, 0x54, 0);
+	अन्यथा अगर (pdev->device == 0x0008 || pdev->device == 0x0009) अणु
 		u8 reg;
 
-		/* Mac systems come up with some registers not set as we
+		/* Mac प्रणालीs come up with some रेजिस्टरs not set as we
 		   will need them */
 
 		/* Clear reset & test bits */
-		pci_read_config_byte(pdev, 0x49, &reg);
-		pci_write_config_byte(pdev, 0x49, reg & ~0x30);
+		pci_पढ़ो_config_byte(pdev, 0x49, &reg);
+		pci_ग_लिखो_config_byte(pdev, 0x49, reg & ~0x30);
 
-		/* PCI latency must be > 0x80 for burst mode, tweak it
-		 * if required.
+		/* PCI latency must be > 0x80 क्रम burst mode, tweak it
+		 * अगर required.
 		 */
-		pci_read_config_byte(pdev, PCI_LATENCY_TIMER, &reg);
-		if (reg <= 0x80)
-			pci_write_config_byte(pdev, PCI_LATENCY_TIMER, 0x90);
+		pci_पढ़ो_config_byte(pdev, PCI_LATENCY_TIMER, &reg);
+		अगर (reg <= 0x80)
+			pci_ग_लिखो_config_byte(pdev, PCI_LATENCY_TIMER, 0x90);
 
 		/* Enable IRQ output and burst mode */
-		pci_read_config_byte(pdev, 0x4a, &reg);
-		pci_write_config_byte(pdev, 0x4a, (reg & ~0x01) | 0x80);
-	}
-}
+		pci_पढ़ो_config_byte(pdev, 0x4a, &reg);
+		pci_ग_लिखो_config_byte(pdev, 0x4a, (reg & ~0x01) | 0x80);
+	पूर्ण
+पूर्ण
 
 /**
  *	artop_init_one - Register ARTOP ATA PCI device with kernel services
- *	@pdev: PCI device to register
+ *	@pdev: PCI device to रेजिस्टर
  *	@id: PCI device ID
  *
  *	Called from kernel PCI layer.
@@ -355,101 +356,101 @@ static void atp8xx_fixup(struct pci_dev *pdev)
  *	Zero on success, or -ERRNO value.
  */
 
-static int artop_init_one (struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	static const struct ata_port_info info_6210 = {
+अटल पूर्णांक artop_init_one (काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	अटल स्थिर काष्ठा ata_port_info info_6210 = अणु
 		.flags		= ATA_FLAG_SLAVE_POSS,
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask 	= ATA_UDMA2,
 		.port_ops	= &artop6210_ops,
-	};
-	static const struct ata_port_info info_626x = {
+	पूर्ण;
+	अटल स्थिर काष्ठा ata_port_info info_626x = अणु
 		.flags		= ATA_FLAG_SLAVE_POSS,
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask 	= ATA_UDMA4,
 		.port_ops	= &artop6260_ops,
-	};
-	static const struct ata_port_info info_628x = {
+	पूर्ण;
+	अटल स्थिर काष्ठा ata_port_info info_628x = अणु
 		.flags		= ATA_FLAG_SLAVE_POSS,
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask 	= ATA_UDMA5,
 		.port_ops	= &artop6260_ops,
-	};
-	static const struct ata_port_info info_628x_fast = {
+	पूर्ण;
+	अटल स्थिर काष्ठा ata_port_info info_628x_fast = अणु
 		.flags		= ATA_FLAG_SLAVE_POSS,
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask 	= ATA_UDMA6,
 		.port_ops	= &artop6260_ops,
-	};
-	const struct ata_port_info *ppi[] = { NULL, NULL };
-	int rc;
+	पूर्ण;
+	स्थिर काष्ठा ata_port_info *ppi[] = अणु शून्य, शून्य पूर्ण;
+	पूर्णांक rc;
 
-	ata_print_version_once(&pdev->dev, DRV_VERSION);
+	ata_prपूर्णांक_version_once(&pdev->dev, DRV_VERSION);
 
 	rc = pcim_enable_device(pdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (id->driver_data == 0)	/* 6210 variant */
+	अगर (id->driver_data == 0)	/* 6210 variant */
 		ppi[0] = &info_6210;
-	else if (id->driver_data == 1)	/* 6260 */
+	अन्यथा अगर (id->driver_data == 1)	/* 6260 */
 		ppi[0] = &info_626x;
-	else if (id->driver_data == 2)	{ /* 6280 or 6280 + fast */
-		unsigned long io = pci_resource_start(pdev, 4);
+	अन्यथा अगर (id->driver_data == 2)	अणु /* 6280 or 6280 + fast */
+		अचिन्हित दीर्घ io = pci_resource_start(pdev, 4);
 
 		ppi[0] = &info_628x;
-		if (inb(io) & 0x10)
+		अगर (inb(io) & 0x10)
 			ppi[0] = &info_628x_fast;
-	}
+	पूर्ण
 
-	BUG_ON(ppi[0] == NULL);
+	BUG_ON(ppi[0] == शून्य);
 
 	atp8xx_fixup(pdev);
 
-	return ata_pci_bmdma_init_one(pdev, ppi, &artop_sht, NULL, 0);
-}
+	वापस ata_pci_bmdma_init_one(pdev, ppi, &artop_sht, शून्य, 0);
+पूर्ण
 
-static const struct pci_device_id artop_pci_tbl[] = {
-	{ PCI_VDEVICE(ARTOP, 0x0005), 0 },
-	{ PCI_VDEVICE(ARTOP, 0x0006), 1 },
-	{ PCI_VDEVICE(ARTOP, 0x0007), 1 },
-	{ PCI_VDEVICE(ARTOP, 0x0008), 2 },
-	{ PCI_VDEVICE(ARTOP, 0x0009), 2 },
+अटल स्थिर काष्ठा pci_device_id artop_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(ARTOP, 0x0005), 0 पूर्ण,
+	अणु PCI_VDEVICE(ARTOP, 0x0006), 1 पूर्ण,
+	अणु PCI_VDEVICE(ARTOP, 0x0007), 1 पूर्ण,
+	अणु PCI_VDEVICE(ARTOP, 0x0008), 2 पूर्ण,
+	अणु PCI_VDEVICE(ARTOP, 0x0009), 2 पूर्ण,
 
-	{ }	/* terminate list */
-};
+	अणु पूर्ण	/* terminate list */
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
-static int atp8xx_reinit_one(struct pci_dev *pdev)
-{
-	struct ata_host *host = pci_get_drvdata(pdev);
-	int rc;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक atp8xx_reinit_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ata_host *host = pci_get_drvdata(pdev);
+	पूर्णांक rc;
 
-	rc = ata_pci_device_do_resume(pdev);
-	if (rc)
-		return rc;
+	rc = ata_pci_device_करो_resume(pdev);
+	अगर (rc)
+		वापस rc;
 
 	atp8xx_fixup(pdev);
 
 	ata_host_resume(host);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static struct pci_driver artop_pci_driver = {
+अटल काष्ठा pci_driver artop_pci_driver = अणु
 	.name			= DRV_NAME,
 	.id_table		= artop_pci_tbl,
 	.probe			= artop_init_one,
-	.remove			= ata_pci_remove_one,
-#ifdef CONFIG_PM_SLEEP
+	.हटाओ			= ata_pci_हटाओ_one,
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend		= ata_pci_device_suspend,
 	.resume			= atp8xx_reinit_one,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_pci_driver(artop_pci_driver);
 

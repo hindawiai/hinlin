@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,201 +31,201 @@
  * SOFTWARE.
  */
 
-#include <linux/security.h>
-#include <linux/completion.h>
-#include <linux/list.h>
+#समावेश <linux/security.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/list.h>
 
-#include <rdma/ib_verbs.h>
-#include <rdma/ib_cache.h>
-#include "core_priv.h"
-#include "mad_priv.h"
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/ib_cache.h>
+#समावेश "core_priv.h"
+#समावेश "mad_priv.h"
 
-static LIST_HEAD(mad_agent_list);
+अटल LIST_HEAD(mad_agent_list);
 /* Lock to protect mad_agent_list */
-static DEFINE_SPINLOCK(mad_agent_list_lock);
+अटल DEFINE_SPINLOCK(mad_agent_list_lock);
 
-static struct pkey_index_qp_list *get_pkey_idx_qp_list(struct ib_port_pkey *pp)
-{
-	struct pkey_index_qp_list *pkey = NULL;
-	struct pkey_index_qp_list *tmp_pkey;
-	struct ib_device *dev = pp->sec->dev;
+अटल काष्ठा pkey_index_qp_list *get_pkey_idx_qp_list(काष्ठा ib_port_pkey *pp)
+अणु
+	काष्ठा pkey_index_qp_list *pkey = शून्य;
+	काष्ठा pkey_index_qp_list *पंचांगp_pkey;
+	काष्ठा ib_device *dev = pp->sec->dev;
 
 	spin_lock(&dev->port_data[pp->port_num].pkey_list_lock);
-	list_for_each_entry (tmp_pkey, &dev->port_data[pp->port_num].pkey_list,
-			     pkey_index_list) {
-		if (tmp_pkey->pkey_index == pp->pkey_index) {
-			pkey = tmp_pkey;
-			break;
-		}
-	}
+	list_क्रम_each_entry (पंचांगp_pkey, &dev->port_data[pp->port_num].pkey_list,
+			     pkey_index_list) अणु
+		अगर (पंचांगp_pkey->pkey_index == pp->pkey_index) अणु
+			pkey = पंचांगp_pkey;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&dev->port_data[pp->port_num].pkey_list_lock);
-	return pkey;
-}
+	वापस pkey;
+पूर्ण
 
-static int get_pkey_and_subnet_prefix(struct ib_port_pkey *pp,
+अटल पूर्णांक get_pkey_and_subnet_prefix(काष्ठा ib_port_pkey *pp,
 				      u16 *pkey,
 				      u64 *subnet_prefix)
-{
-	struct ib_device *dev = pp->sec->dev;
-	int ret;
+अणु
+	काष्ठा ib_device *dev = pp->sec->dev;
+	पूर्णांक ret;
 
 	ret = ib_get_cached_pkey(dev, pp->port_num, pp->pkey_index, pkey);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ib_get_cached_subnet_prefix(dev, pp->port_num, subnet_prefix);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int enforce_qp_pkey_security(u16 pkey,
+अटल पूर्णांक enक्रमce_qp_pkey_security(u16 pkey,
 				    u64 subnet_prefix,
-				    struct ib_qp_security *qp_sec)
-{
-	struct ib_qp_security *shared_qp_sec;
-	int ret;
+				    काष्ठा ib_qp_security *qp_sec)
+अणु
+	काष्ठा ib_qp_security *shared_qp_sec;
+	पूर्णांक ret;
 
 	ret = security_ib_pkey_access(qp_sec->security, subnet_prefix, pkey);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	list_for_each_entry(shared_qp_sec,
+	list_क्रम_each_entry(shared_qp_sec,
 			    &qp_sec->shared_qp_list,
-			    shared_qp_list) {
+			    shared_qp_list) अणु
 		ret = security_ib_pkey_access(shared_qp_sec->security,
 					      subnet_prefix,
 					      pkey);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* The caller of this function must hold the QP security
- * mutex of the QP of the security structure in *pps.
+ * mutex of the QP of the security काष्ठाure in *pps.
  *
- * It takes separate ports_pkeys and security structure
- * because in some cases the pps will be for a new settings
- * or the pps will be for the real QP and security structure
- * will be for a shared QP.
+ * It takes separate ports_pkeys and security काष्ठाure
+ * because in some हालs the pps will be क्रम a new settings
+ * or the pps will be क्रम the real QP and security काष्ठाure
+ * will be क्रम a shared QP.
  */
-static int check_qp_port_pkey_settings(struct ib_ports_pkeys *pps,
-				       struct ib_qp_security *sec)
-{
+अटल पूर्णांक check_qp_port_pkey_settings(काष्ठा ib_ports_pkeys *pps,
+				       काष्ठा ib_qp_security *sec)
+अणु
 	u64 subnet_prefix;
 	u16 pkey;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!pps)
-		return 0;
+	अगर (!pps)
+		वापस 0;
 
-	if (pps->main.state != IB_PORT_PKEY_NOT_VALID) {
-		ret = get_pkey_and_subnet_prefix(&pps->main,
+	अगर (pps->मुख्य.state != IB_PORT_PKEY_NOT_VALID) अणु
+		ret = get_pkey_and_subnet_prefix(&pps->मुख्य,
 						 &pkey,
 						 &subnet_prefix);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = enforce_qp_pkey_security(pkey,
+		ret = enक्रमce_qp_pkey_security(pkey,
 					       subnet_prefix,
 					       sec);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (pps->alt.state != IB_PORT_PKEY_NOT_VALID) {
+	अगर (pps->alt.state != IB_PORT_PKEY_NOT_VALID) अणु
 		ret = get_pkey_and_subnet_prefix(&pps->alt,
 						 &pkey,
 						 &subnet_prefix);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = enforce_qp_pkey_security(pkey,
+		ret = enक्रमce_qp_pkey_security(pkey,
 					       subnet_prefix,
 					       sec);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* The caller of this function must hold the QP security
  * mutex.
  */
-static void qp_to_error(struct ib_qp_security *sec)
-{
-	struct ib_qp_security *shared_qp_sec;
-	struct ib_qp_attr attr = {
+अटल व्योम qp_to_error(काष्ठा ib_qp_security *sec)
+अणु
+	काष्ठा ib_qp_security *shared_qp_sec;
+	काष्ठा ib_qp_attr attr = अणु
 		.qp_state = IB_QPS_ERR
-	};
-	struct ib_event event = {
+	पूर्ण;
+	काष्ठा ib_event event = अणु
 		.event = IB_EVENT_QP_FATAL
-	};
+	पूर्ण;
 
 	/* If the QP is in the process of being destroyed
-	 * the qp pointer in the security structure is
-	 * undefined.  It cannot be modified now.
+	 * the qp poपूर्णांकer in the security काष्ठाure is
+	 * undefined.  It cannot be modअगरied now.
 	 */
-	if (sec->destroying)
-		return;
+	अगर (sec->destroying)
+		वापस;
 
-	ib_modify_qp(sec->qp,
+	ib_modअगरy_qp(sec->qp,
 		     &attr,
 		     IB_QP_STATE);
 
-	if (sec->qp->event_handler && sec->qp->qp_context) {
+	अगर (sec->qp->event_handler && sec->qp->qp_context) अणु
 		event.element.qp = sec->qp;
 		sec->qp->event_handler(&event,
 				       sec->qp->qp_context);
-	}
+	पूर्ण
 
-	list_for_each_entry(shared_qp_sec,
+	list_क्रम_each_entry(shared_qp_sec,
 			    &sec->shared_qp_list,
-			    shared_qp_list) {
-		struct ib_qp *qp = shared_qp_sec->qp;
+			    shared_qp_list) अणु
+		काष्ठा ib_qp *qp = shared_qp_sec->qp;
 
-		if (qp->event_handler && qp->qp_context) {
+		अगर (qp->event_handler && qp->qp_context) अणु
 			event.element.qp = qp;
 			event.device = qp->device;
 			qp->event_handler(&event,
 					  qp->qp_context);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline void check_pkey_qps(struct pkey_index_qp_list *pkey,
-				  struct ib_device *device,
+अटल अंतरभूत व्योम check_pkey_qps(काष्ठा pkey_index_qp_list *pkey,
+				  काष्ठा ib_device *device,
 				  u32 port_num,
 				  u64 subnet_prefix)
-{
-	struct ib_port_pkey *pp, *tmp_pp;
+अणु
+	काष्ठा ib_port_pkey *pp, *पंचांगp_pp;
 	bool comp;
 	LIST_HEAD(to_error_list);
 	u16 pkey_val;
 
-	if (!ib_get_cached_pkey(device,
+	अगर (!ib_get_cached_pkey(device,
 				port_num,
 				pkey->pkey_index,
-				&pkey_val)) {
+				&pkey_val)) अणु
 		spin_lock(&pkey->qp_list_lock);
-		list_for_each_entry(pp, &pkey->qp_list, qp_list) {
-			if (atomic_read(&pp->sec->error_list_count))
-				continue;
+		list_क्रम_each_entry(pp, &pkey->qp_list, qp_list) अणु
+			अगर (atomic_पढ़ो(&pp->sec->error_list_count))
+				जारी;
 
-			if (enforce_qp_pkey_security(pkey_val,
+			अगर (enक्रमce_qp_pkey_security(pkey_val,
 						     subnet_prefix,
-						     pp->sec)) {
+						     pp->sec)) अणु
 				atomic_inc(&pp->sec->error_list_count);
 				list_add(&pp->to_error_list,
 					 &to_error_list);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		spin_unlock(&pkey->qp_list_lock);
-	}
+	पूर्ण
 
-	list_for_each_entry_safe(pp,
-				 tmp_pp,
+	list_क्रम_each_entry_safe(pp,
+				 पंचांगp_pp,
 				 &to_error_list,
-				 to_error_list) {
+				 to_error_list) अणु
 		mutex_lock(&pp->sec->mutex);
 		qp_to_error(pp->sec);
 		list_del(&pp->to_error_list);
@@ -232,60 +233,60 @@ static inline void check_pkey_qps(struct pkey_index_qp_list *pkey,
 		comp = pp->sec->destroying;
 		mutex_unlock(&pp->sec->mutex);
 
-		if (comp)
+		अगर (comp)
 			complete(&pp->sec->error_complete);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* The caller of this function must hold the QP security
  * mutex.
  */
-static int port_pkey_list_insert(struct ib_port_pkey *pp)
-{
-	struct pkey_index_qp_list *tmp_pkey;
-	struct pkey_index_qp_list *pkey;
-	struct ib_device *dev;
+अटल पूर्णांक port_pkey_list_insert(काष्ठा ib_port_pkey *pp)
+अणु
+	काष्ठा pkey_index_qp_list *पंचांगp_pkey;
+	काष्ठा pkey_index_qp_list *pkey;
+	काष्ठा ib_device *dev;
 	u32 port_num = pp->port_num;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (pp->state != IB_PORT_PKEY_VALID)
-		return 0;
+	अगर (pp->state != IB_PORT_PKEY_VALID)
+		वापस 0;
 
 	dev = pp->sec->dev;
 
 	pkey = get_pkey_idx_qp_list(pp);
 
-	if (!pkey) {
+	अगर (!pkey) अणु
 		bool found = false;
 
-		pkey = kzalloc(sizeof(*pkey), GFP_KERNEL);
-		if (!pkey)
-			return -ENOMEM;
+		pkey = kzalloc(माप(*pkey), GFP_KERNEL);
+		अगर (!pkey)
+			वापस -ENOMEM;
 
 		spin_lock(&dev->port_data[port_num].pkey_list_lock);
-		/* Check for the PKey again.  A racing process may
+		/* Check क्रम the PKey again.  A racing process may
 		 * have created it.
 		 */
-		list_for_each_entry(tmp_pkey,
+		list_क्रम_each_entry(पंचांगp_pkey,
 				    &dev->port_data[port_num].pkey_list,
-				    pkey_index_list) {
-			if (tmp_pkey->pkey_index == pp->pkey_index) {
-				kfree(pkey);
-				pkey = tmp_pkey;
+				    pkey_index_list) अणु
+			अगर (पंचांगp_pkey->pkey_index == pp->pkey_index) अणु
+				kमुक्त(pkey);
+				pkey = पंचांगp_pkey;
 				found = true;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (!found) {
+		अगर (!found) अणु
 			pkey->pkey_index = pp->pkey_index;
 			spin_lock_init(&pkey->qp_list_lock);
 			INIT_LIST_HEAD(&pkey->qp_list);
 			list_add(&pkey->pkey_index_list,
 				 &dev->port_data[port_num].pkey_list);
-		}
+		पूर्ण
 		spin_unlock(&dev->port_data[port_num].pkey_list_lock);
-	}
+	पूर्ण
 
 	spin_lock(&pkey->qp_list_lock);
 	list_add(&pp->qp_list, &pkey->qp_list);
@@ -293,18 +294,18 @@ static int port_pkey_list_insert(struct ib_port_pkey *pp)
 
 	pp->state = IB_PORT_PKEY_LISTED;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* The caller of this function must hold the QP security
  * mutex.
  */
-static void port_pkey_list_remove(struct ib_port_pkey *pp)
-{
-	struct pkey_index_qp_list *pkey;
+अटल व्योम port_pkey_list_हटाओ(काष्ठा ib_port_pkey *pp)
+अणु
+	काष्ठा pkey_index_qp_list *pkey;
 
-	if (pp->state != IB_PORT_PKEY_LISTED)
-		return;
+	अगर (pp->state != IB_PORT_PKEY_LISTED)
+		वापस;
 
 	pkey = get_pkey_idx_qp_list(pp);
 
@@ -313,124 +314,124 @@ static void port_pkey_list_remove(struct ib_port_pkey *pp)
 	spin_unlock(&pkey->qp_list_lock);
 
 	/* The setting may still be valid, i.e. after
-	 * a destroy has failed for example.
+	 * a destroy has failed क्रम example.
 	 */
 	pp->state = IB_PORT_PKEY_VALID;
-}
+पूर्ण
 
-static void destroy_qp_security(struct ib_qp_security *sec)
-{
-	security_ib_free_security(sec->security);
-	kfree(sec->ports_pkeys);
-	kfree(sec);
-}
+अटल व्योम destroy_qp_security(काष्ठा ib_qp_security *sec)
+अणु
+	security_ib_मुक्त_security(sec->security);
+	kमुक्त(sec->ports_pkeys);
+	kमुक्त(sec);
+पूर्ण
 
 /* The caller of this function must hold the QP security
  * mutex.
  */
-static struct ib_ports_pkeys *get_new_pps(const struct ib_qp *qp,
-					  const struct ib_qp_attr *qp_attr,
-					  int qp_attr_mask)
-{
-	struct ib_ports_pkeys *new_pps;
-	struct ib_ports_pkeys *qp_pps = qp->qp_sec->ports_pkeys;
+अटल काष्ठा ib_ports_pkeys *get_new_pps(स्थिर काष्ठा ib_qp *qp,
+					  स्थिर काष्ठा ib_qp_attr *qp_attr,
+					  पूर्णांक qp_attr_mask)
+अणु
+	काष्ठा ib_ports_pkeys *new_pps;
+	काष्ठा ib_ports_pkeys *qp_pps = qp->qp_sec->ports_pkeys;
 
-	new_pps = kzalloc(sizeof(*new_pps), GFP_KERNEL);
-	if (!new_pps)
-		return NULL;
+	new_pps = kzalloc(माप(*new_pps), GFP_KERNEL);
+	अगर (!new_pps)
+		वापस शून्य;
 
-	if (qp_attr_mask & IB_QP_PORT)
-		new_pps->main.port_num = qp_attr->port_num;
-	else if (qp_pps)
-		new_pps->main.port_num = qp_pps->main.port_num;
+	अगर (qp_attr_mask & IB_QP_PORT)
+		new_pps->मुख्य.port_num = qp_attr->port_num;
+	अन्यथा अगर (qp_pps)
+		new_pps->मुख्य.port_num = qp_pps->मुख्य.port_num;
 
-	if (qp_attr_mask & IB_QP_PKEY_INDEX)
-		new_pps->main.pkey_index = qp_attr->pkey_index;
-	else if (qp_pps)
-		new_pps->main.pkey_index = qp_pps->main.pkey_index;
+	अगर (qp_attr_mask & IB_QP_PKEY_INDEX)
+		new_pps->मुख्य.pkey_index = qp_attr->pkey_index;
+	अन्यथा अगर (qp_pps)
+		new_pps->मुख्य.pkey_index = qp_pps->मुख्य.pkey_index;
 
-	if (((qp_attr_mask & IB_QP_PKEY_INDEX) &&
+	अगर (((qp_attr_mask & IB_QP_PKEY_INDEX) &&
 	     (qp_attr_mask & IB_QP_PORT)) ||
-	    (qp_pps && qp_pps->main.state != IB_PORT_PKEY_NOT_VALID))
-		new_pps->main.state = IB_PORT_PKEY_VALID;
+	    (qp_pps && qp_pps->मुख्य.state != IB_PORT_PKEY_NOT_VALID))
+		new_pps->मुख्य.state = IB_PORT_PKEY_VALID;
 
-	if (qp_attr_mask & IB_QP_ALT_PATH) {
+	अगर (qp_attr_mask & IB_QP_ALT_PATH) अणु
 		new_pps->alt.port_num = qp_attr->alt_port_num;
 		new_pps->alt.pkey_index = qp_attr->alt_pkey_index;
 		new_pps->alt.state = IB_PORT_PKEY_VALID;
-	} else if (qp_pps) {
+	पूर्ण अन्यथा अगर (qp_pps) अणु
 		new_pps->alt.port_num = qp_pps->alt.port_num;
 		new_pps->alt.pkey_index = qp_pps->alt.pkey_index;
-		if (qp_pps->alt.state != IB_PORT_PKEY_NOT_VALID)
+		अगर (qp_pps->alt.state != IB_PORT_PKEY_NOT_VALID)
 			new_pps->alt.state = IB_PORT_PKEY_VALID;
-	}
+	पूर्ण
 
-	new_pps->main.sec = qp->qp_sec;
+	new_pps->मुख्य.sec = qp->qp_sec;
 	new_pps->alt.sec = qp->qp_sec;
-	return new_pps;
-}
+	वापस new_pps;
+पूर्ण
 
-int ib_open_shared_qp_security(struct ib_qp *qp, struct ib_device *dev)
-{
-	struct ib_qp *real_qp = qp->real_qp;
-	int ret;
+पूर्णांक ib_खोलो_shared_qp_security(काष्ठा ib_qp *qp, काष्ठा ib_device *dev)
+अणु
+	काष्ठा ib_qp *real_qp = qp->real_qp;
+	पूर्णांक ret;
 
 	ret = ib_create_qp_security(qp, dev);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!qp->qp_sec)
-		return 0;
+	अगर (!qp->qp_sec)
+		वापस 0;
 
 	mutex_lock(&real_qp->qp_sec->mutex);
 	ret = check_qp_port_pkey_settings(real_qp->qp_sec->ports_pkeys,
 					  qp->qp_sec);
 
-	if (ret)
-		goto ret;
+	अगर (ret)
+		जाओ ret;
 
-	if (qp != real_qp)
+	अगर (qp != real_qp)
 		list_add(&qp->qp_sec->shared_qp_list,
 			 &real_qp->qp_sec->shared_qp_list);
 ret:
 	mutex_unlock(&real_qp->qp_sec->mutex);
-	if (ret)
+	अगर (ret)
 		destroy_qp_security(qp->qp_sec);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ib_close_shared_qp_security(struct ib_qp_security *sec)
-{
-	struct ib_qp *real_qp = sec->qp->real_qp;
+व्योम ib_बंद_shared_qp_security(काष्ठा ib_qp_security *sec)
+अणु
+	काष्ठा ib_qp *real_qp = sec->qp->real_qp;
 
 	mutex_lock(&real_qp->qp_sec->mutex);
 	list_del(&sec->shared_qp_list);
 	mutex_unlock(&real_qp->qp_sec->mutex);
 
 	destroy_qp_security(sec);
-}
+पूर्ण
 
-int ib_create_qp_security(struct ib_qp *qp, struct ib_device *dev)
-{
-	unsigned int i;
+पूर्णांक ib_create_qp_security(काष्ठा ib_qp *qp, काष्ठा ib_device *dev)
+अणु
+	अचिन्हित पूर्णांक i;
 	bool is_ib = false;
-	int ret;
+	पूर्णांक ret;
 
-	rdma_for_each_port (dev, i) {
+	rdma_क्रम_each_port (dev, i) अणु
 		is_ib = rdma_protocol_ib(dev, i);
-		if (is_ib)
-			break;
-	}
+		अगर (is_ib)
+			अवरोध;
+	पूर्ण
 
 	/* If this isn't an IB device don't create the security context */
-	if (!is_ib)
-		return 0;
+	अगर (!is_ib)
+		वापस 0;
 
-	qp->qp_sec = kzalloc(sizeof(*qp->qp_sec), GFP_KERNEL);
-	if (!qp->qp_sec)
-		return -ENOMEM;
+	qp->qp_sec = kzalloc(माप(*qp->qp_sec), GFP_KERNEL);
+	अगर (!qp->qp_sec)
+		वापस -ENOMEM;
 
 	qp->qp_sec->qp = qp;
 	qp->qp_sec->dev = dev;
@@ -439,144 +440,144 @@ int ib_create_qp_security(struct ib_qp *qp, struct ib_device *dev)
 	atomic_set(&qp->qp_sec->error_list_count, 0);
 	init_completion(&qp->qp_sec->error_complete);
 	ret = security_ib_alloc_security(&qp->qp_sec->security);
-	if (ret) {
-		kfree(qp->qp_sec);
-		qp->qp_sec = NULL;
-	}
+	अगर (ret) अणु
+		kमुक्त(qp->qp_sec);
+		qp->qp_sec = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(ib_create_qp_security);
 
-void ib_destroy_qp_security_begin(struct ib_qp_security *sec)
-{
-	/* Return if not IB */
-	if (!sec)
-		return;
+व्योम ib_destroy_qp_security_begin(काष्ठा ib_qp_security *sec)
+अणु
+	/* Return अगर not IB */
+	अगर (!sec)
+		वापस;
 
 	mutex_lock(&sec->mutex);
 
 	/* Remove the QP from the lists so it won't get added to
 	 * a to_error_list during the destroy process.
 	 */
-	if (sec->ports_pkeys) {
-		port_pkey_list_remove(&sec->ports_pkeys->main);
-		port_pkey_list_remove(&sec->ports_pkeys->alt);
-	}
+	अगर (sec->ports_pkeys) अणु
+		port_pkey_list_हटाओ(&sec->ports_pkeys->मुख्य);
+		port_pkey_list_हटाओ(&sec->ports_pkeys->alt);
+	पूर्ण
 
-	/* If the QP is already in one or more of those lists
+	/* If the QP is alपढ़ोy in one or more of those lists
 	 * the destroying flag will ensure the to error flow
-	 * doesn't operate on an undefined QP.
+	 * करोesn't operate on an undefined QP.
 	 */
 	sec->destroying = true;
 
 	/* Record the error list count to know how many completions
-	 * to wait for.
+	 * to रुको क्रम.
 	 */
-	sec->error_comps_pending = atomic_read(&sec->error_list_count);
+	sec->error_comps_pending = atomic_पढ़ो(&sec->error_list_count);
 
 	mutex_unlock(&sec->mutex);
-}
+पूर्ण
 
-void ib_destroy_qp_security_abort(struct ib_qp_security *sec)
-{
-	int ret;
-	int i;
+व्योम ib_destroy_qp_security_पात(काष्ठा ib_qp_security *sec)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	/* Return if not IB */
-	if (!sec)
-		return;
+	/* Return अगर not IB */
+	अगर (!sec)
+		वापस;
 
 	/* If a concurrent cache update is in progress this
-	 * QP security could be marked for an error state
-	 * transition.  Wait for this to complete.
+	 * QP security could be marked क्रम an error state
+	 * transition.  Wait क्रम this to complete.
 	 */
-	for (i = 0; i < sec->error_comps_pending; i++)
-		wait_for_completion(&sec->error_complete);
+	क्रम (i = 0; i < sec->error_comps_pending; i++)
+		रुको_क्रम_completion(&sec->error_complete);
 
 	mutex_lock(&sec->mutex);
 	sec->destroying = false;
 
-	/* Restore the position in the lists and verify
-	 * access is still allowed in case a cache update
-	 * occurred while attempting to destroy.
+	/* Restore the position in the lists and verअगरy
+	 * access is still allowed in हाल a cache update
+	 * occurred जबतक attempting to destroy.
 	 *
-	 * Because these setting were listed already
-	 * and removed during ib_destroy_qp_security_begin
-	 * we know the pkey_index_qp_list for the PKey
-	 * already exists so port_pkey_list_insert won't fail.
+	 * Because these setting were listed alपढ़ोy
+	 * and हटाओd during ib_destroy_qp_security_begin
+	 * we know the pkey_index_qp_list क्रम the PKey
+	 * alपढ़ोy exists so port_pkey_list_insert won't fail.
 	 */
-	if (sec->ports_pkeys) {
-		port_pkey_list_insert(&sec->ports_pkeys->main);
+	अगर (sec->ports_pkeys) अणु
+		port_pkey_list_insert(&sec->ports_pkeys->मुख्य);
 		port_pkey_list_insert(&sec->ports_pkeys->alt);
-	}
+	पूर्ण
 
 	ret = check_qp_port_pkey_settings(sec->ports_pkeys, sec);
-	if (ret)
+	अगर (ret)
 		qp_to_error(sec);
 
 	mutex_unlock(&sec->mutex);
-}
+पूर्ण
 
-void ib_destroy_qp_security_end(struct ib_qp_security *sec)
-{
-	int i;
+व्योम ib_destroy_qp_security_end(काष्ठा ib_qp_security *sec)
+अणु
+	पूर्णांक i;
 
-	/* Return if not IB */
-	if (!sec)
-		return;
+	/* Return अगर not IB */
+	अगर (!sec)
+		वापस;
 
 	/* If a concurrent cache update is occurring we must
-	 * wait until this QP security structure is processed
-	 * in the QP to error flow before destroying it because
+	 * रुको until this QP security काष्ठाure is processed
+	 * in the QP to error flow beक्रमe destroying it because
 	 * the to_error_list is in use.
 	 */
-	for (i = 0; i < sec->error_comps_pending; i++)
-		wait_for_completion(&sec->error_complete);
+	क्रम (i = 0; i < sec->error_comps_pending; i++)
+		रुको_क्रम_completion(&sec->error_complete);
 
 	destroy_qp_security(sec);
-}
+पूर्ण
 
-void ib_security_cache_change(struct ib_device *device,
+व्योम ib_security_cache_change(काष्ठा ib_device *device,
 			      u32 port_num,
 			      u64 subnet_prefix)
-{
-	struct pkey_index_qp_list *pkey;
+अणु
+	काष्ठा pkey_index_qp_list *pkey;
 
-	list_for_each_entry (pkey, &device->port_data[port_num].pkey_list,
-			     pkey_index_list) {
+	list_क्रम_each_entry (pkey, &device->port_data[port_num].pkey_list,
+			     pkey_index_list) अणु
 		check_pkey_qps(pkey,
 			       device,
 			       port_num,
 			       subnet_prefix);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ib_security_release_port_pkey_list(struct ib_device *device)
-{
-	struct pkey_index_qp_list *pkey, *tmp_pkey;
-	unsigned int i;
+व्योम ib_security_release_port_pkey_list(काष्ठा ib_device *device)
+अणु
+	काष्ठा pkey_index_qp_list *pkey, *पंचांगp_pkey;
+	अचिन्हित पूर्णांक i;
 
-	rdma_for_each_port (device, i) {
-		list_for_each_entry_safe(pkey,
-					 tmp_pkey,
+	rdma_क्रम_each_port (device, i) अणु
+		list_क्रम_each_entry_safe(pkey,
+					 पंचांगp_pkey,
 					 &device->port_data[i].pkey_list,
-					 pkey_index_list) {
+					 pkey_index_list) अणु
 			list_del(&pkey->pkey_index_list);
-			kfree(pkey);
-		}
-	}
-}
+			kमुक्त(pkey);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int ib_security_modify_qp(struct ib_qp *qp,
-			  struct ib_qp_attr *qp_attr,
-			  int qp_attr_mask,
-			  struct ib_udata *udata)
-{
-	int ret = 0;
-	struct ib_ports_pkeys *tmp_pps;
-	struct ib_ports_pkeys *new_pps = NULL;
-	struct ib_qp *real_qp = qp->real_qp;
+पूर्णांक ib_security_modअगरy_qp(काष्ठा ib_qp *qp,
+			  काष्ठा ib_qp_attr *qp_attr,
+			  पूर्णांक qp_attr_mask,
+			  काष्ठा ib_udata *udata)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ib_ports_pkeys *पंचांगp_pps;
+	काष्ठा ib_ports_pkeys *new_pps = शून्य;
+	काष्ठा ib_qp *real_qp = qp->real_qp;
 	bool special_qp = (real_qp->qp_type == IB_QPT_SMI ||
 			   real_qp->qp_type == IB_QPT_GSI ||
 			   real_qp->qp_type >= IB_QPT_RESERVED1);
@@ -589,165 +590,165 @@ int ib_security_modify_qp(struct ib_qp *qp,
 		   "%s: QP security is not initialized for IB QP: %d\n",
 		   __func__, real_qp->qp_num);
 
-	/* The port/pkey settings are maintained only for the real QP. Open
+	/* The port/pkey settings are मुख्यtained only क्रम the real QP. Open
 	 * handles on the real QP will be in the shared_qp_list. When
-	 * enforcing security on the real QP all the shared QPs will be
+	 * enक्रमcing security on the real QP all the shared QPs will be
 	 * checked as well.
 	 */
 
-	if (pps_change && !special_qp && real_qp->qp_sec) {
+	अगर (pps_change && !special_qp && real_qp->qp_sec) अणु
 		mutex_lock(&real_qp->qp_sec->mutex);
 		new_pps = get_new_pps(real_qp,
 				      qp_attr,
 				      qp_attr_mask);
-		if (!new_pps) {
+		अगर (!new_pps) अणु
 			mutex_unlock(&real_qp->qp_sec->mutex);
-			return -ENOMEM;
-		}
-		/* Add this QP to the lists for the new port
-		 * and pkey settings before checking for permission
-		 * in case there is a concurrent cache update
-		 * occurring.  Walking the list for a cache change
-		 * doesn't acquire the security mutex unless it's
+			वापस -ENOMEM;
+		पूर्ण
+		/* Add this QP to the lists क्रम the new port
+		 * and pkey settings beक्रमe checking क्रम permission
+		 * in हाल there is a concurrent cache update
+		 * occurring.  Walking the list क्रम a cache change
+		 * करोesn't acquire the security mutex unless it's
 		 * sending the QP to error.
 		 */
-		ret = port_pkey_list_insert(&new_pps->main);
+		ret = port_pkey_list_insert(&new_pps->मुख्य);
 
-		if (!ret)
+		अगर (!ret)
 			ret = port_pkey_list_insert(&new_pps->alt);
 
-		if (!ret)
+		अगर (!ret)
 			ret = check_qp_port_pkey_settings(new_pps,
 							  real_qp->qp_sec);
-	}
+	पूर्ण
 
-	if (!ret)
-		ret = real_qp->device->ops.modify_qp(real_qp,
+	अगर (!ret)
+		ret = real_qp->device->ops.modअगरy_qp(real_qp,
 						     qp_attr,
 						     qp_attr_mask,
 						     udata);
 
-	if (new_pps) {
-		/* Clean up the lists and free the appropriate
-		 * ports_pkeys structure.
+	अगर (new_pps) अणु
+		/* Clean up the lists and मुक्त the appropriate
+		 * ports_pkeys काष्ठाure.
 		 */
-		if (ret) {
-			tmp_pps = new_pps;
-		} else {
-			tmp_pps = real_qp->qp_sec->ports_pkeys;
+		अगर (ret) अणु
+			पंचांगp_pps = new_pps;
+		पूर्ण अन्यथा अणु
+			पंचांगp_pps = real_qp->qp_sec->ports_pkeys;
 			real_qp->qp_sec->ports_pkeys = new_pps;
-		}
+		पूर्ण
 
-		if (tmp_pps) {
-			port_pkey_list_remove(&tmp_pps->main);
-			port_pkey_list_remove(&tmp_pps->alt);
-		}
-		kfree(tmp_pps);
+		अगर (पंचांगp_pps) अणु
+			port_pkey_list_हटाओ(&पंचांगp_pps->मुख्य);
+			port_pkey_list_हटाओ(&पंचांगp_pps->alt);
+		पूर्ण
+		kमुक्त(पंचांगp_pps);
 		mutex_unlock(&real_qp->qp_sec->mutex);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ib_security_pkey_access(struct ib_device *dev,
+अटल पूर्णांक ib_security_pkey_access(काष्ठा ib_device *dev,
 				   u32 port_num,
 				   u16 pkey_index,
-				   void *sec)
-{
+				   व्योम *sec)
+अणु
 	u64 subnet_prefix;
 	u16 pkey;
-	int ret;
+	पूर्णांक ret;
 
-	if (!rdma_protocol_ib(dev, port_num))
-		return 0;
+	अगर (!rdma_protocol_ib(dev, port_num))
+		वापस 0;
 
 	ret = ib_get_cached_pkey(dev, port_num, pkey_index, &pkey);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ib_get_cached_subnet_prefix(dev, port_num, &subnet_prefix);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return security_ib_pkey_access(sec, subnet_prefix, pkey);
-}
+	वापस security_ib_pkey_access(sec, subnet_prefix, pkey);
+पूर्ण
 
-void ib_mad_agent_security_change(void)
-{
-	struct ib_mad_agent *ag;
+व्योम ib_mad_agent_security_change(व्योम)
+अणु
+	काष्ठा ib_mad_agent *ag;
 
 	spin_lock(&mad_agent_list_lock);
-	list_for_each_entry(ag,
+	list_क्रम_each_entry(ag,
 			    &mad_agent_list,
 			    mad_agent_sec_list)
 		WRITE_ONCE(ag->smp_allowed,
 			   !security_ib_endport_manage_subnet(ag->security,
 				dev_name(&ag->device->dev), ag->port_num));
 	spin_unlock(&mad_agent_list_lock);
-}
+पूर्ण
 
-int ib_mad_agent_security_setup(struct ib_mad_agent *agent,
-				enum ib_qp_type qp_type)
-{
-	int ret;
+पूर्णांक ib_mad_agent_security_setup(काष्ठा ib_mad_agent *agent,
+				क्रमागत ib_qp_type qp_type)
+अणु
+	पूर्णांक ret;
 
-	if (!rdma_protocol_ib(agent->device, agent->port_num))
-		return 0;
+	अगर (!rdma_protocol_ib(agent->device, agent->port_num))
+		वापस 0;
 
 	INIT_LIST_HEAD(&agent->mad_agent_sec_list);
 
 	ret = security_ib_alloc_security(&agent->security);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (qp_type != IB_QPT_SMI)
-		return 0;
+	अगर (qp_type != IB_QPT_SMI)
+		वापस 0;
 
 	spin_lock(&mad_agent_list_lock);
 	ret = security_ib_endport_manage_subnet(agent->security,
 						dev_name(&agent->device->dev),
 						agent->port_num);
-	if (ret)
-		goto free_security;
+	अगर (ret)
+		जाओ मुक्त_security;
 
 	WRITE_ONCE(agent->smp_allowed, true);
 	list_add(&agent->mad_agent_sec_list, &mad_agent_list);
 	spin_unlock(&mad_agent_list_lock);
-	return 0;
+	वापस 0;
 
-free_security:
+मुक्त_security:
 	spin_unlock(&mad_agent_list_lock);
-	security_ib_free_security(agent->security);
-	return ret;
-}
+	security_ib_मुक्त_security(agent->security);
+	वापस ret;
+पूर्ण
 
-void ib_mad_agent_security_cleanup(struct ib_mad_agent *agent)
-{
-	if (!rdma_protocol_ib(agent->device, agent->port_num))
-		return;
+व्योम ib_mad_agent_security_cleanup(काष्ठा ib_mad_agent *agent)
+अणु
+	अगर (!rdma_protocol_ib(agent->device, agent->port_num))
+		वापस;
 
-	if (agent->qp->qp_type == IB_QPT_SMI) {
+	अगर (agent->qp->qp_type == IB_QPT_SMI) अणु
 		spin_lock(&mad_agent_list_lock);
 		list_del(&agent->mad_agent_sec_list);
 		spin_unlock(&mad_agent_list_lock);
-	}
+	पूर्ण
 
-	security_ib_free_security(agent->security);
-}
+	security_ib_मुक्त_security(agent->security);
+पूर्ण
 
-int ib_mad_enforce_security(struct ib_mad_agent_private *map, u16 pkey_index)
-{
-	if (!rdma_protocol_ib(map->agent.device, map->agent.port_num))
-		return 0;
+पूर्णांक ib_mad_enक्रमce_security(काष्ठा ib_mad_agent_निजी *map, u16 pkey_index)
+अणु
+	अगर (!rdma_protocol_ib(map->agent.device, map->agent.port_num))
+		वापस 0;
 
-	if (map->agent.qp->qp_type == IB_QPT_SMI) {
-		if (!READ_ONCE(map->agent.smp_allowed))
-			return -EACCES;
-		return 0;
-	}
+	अगर (map->agent.qp->qp_type == IB_QPT_SMI) अणु
+		अगर (!READ_ONCE(map->agent.smp_allowed))
+			वापस -EACCES;
+		वापस 0;
+	पूर्ण
 
-	return ib_security_pkey_access(map->agent.device,
+	वापस ib_security_pkey_access(map->agent.device,
 				       map->agent.port_num,
 				       pkey_index,
 				       map->agent.security);
-}
+पूर्ण

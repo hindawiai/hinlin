@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_trans.h"
-#include "xfs_trans_priv.h"
-#include "xfs_inode_item.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_trans_priv.h"
+#समावेश "xfs_inode_item.h"
 
-#include <linux/iversion.h>
+#समावेश <linux/iversion.h>
 
 /*
  * Add a locked inode to the transaction.
@@ -23,173 +24,173 @@
  * The inode must be locked, and it cannot be associated with any transaction.
  * If lock_flags is non-zero the inode will be unlocked on transaction commit.
  */
-void
+व्योम
 xfs_trans_ijoin(
-	struct xfs_trans	*tp,
-	struct xfs_inode	*ip,
-	uint			lock_flags)
-{
-	struct xfs_inode_log_item *iip;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_inode	*ip,
+	uपूर्णांक			lock_flags)
+अणु
+	काष्ठा xfs_inode_log_item *iip;
 
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
-	if (ip->i_itemp == NULL)
+	अगर (ip->i_itemp == शून्य)
 		xfs_inode_item_init(ip, ip->i_mount);
 	iip = ip->i_itemp;
 
 	ASSERT(iip->ili_lock_flags == 0);
 	iip->ili_lock_flags = lock_flags;
-	ASSERT(!xfs_iflags_test(ip, XFS_ISTALE));
+	ASSERT(!xfs_अगरlags_test(ip, XFS_ISTALE));
 
 	/*
-	 * Get a log_item_desc to point at the new item.
+	 * Get a log_item_desc to poपूर्णांक at the new item.
 	 */
 	xfs_trans_add_item(tp, &iip->ili_item);
-}
+पूर्ण
 
 /*
- * Transactional inode timestamp update. Requires the inode to be locked and
- * joined to the transaction supplied. Relies on the transaction subsystem to
- * track dirty state and update/writeback the inode accordingly.
+ * Transactional inode बारtamp update. Requires the inode to be locked and
+ * joined to the transaction supplied. Relies on the transaction subप्रणाली to
+ * track dirty state and update/ग_लिखोback the inode accordingly.
  */
-void
-xfs_trans_ichgtime(
-	struct xfs_trans	*tp,
-	struct xfs_inode	*ip,
-	int			flags)
-{
-	struct inode		*inode = VFS_I(ip);
-	struct timespec64	tv;
+व्योम
+xfs_trans_ichgसमय(
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_inode	*ip,
+	पूर्णांक			flags)
+अणु
+	काष्ठा inode		*inode = VFS_I(ip);
+	काष्ठा बारpec64	tv;
 
 	ASSERT(tp);
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
 
-	tv = current_time(inode);
+	tv = current_समय(inode);
 
-	if (flags & XFS_ICHGTIME_MOD)
-		inode->i_mtime = tv;
-	if (flags & XFS_ICHGTIME_CHG)
-		inode->i_ctime = tv;
-	if (flags & XFS_ICHGTIME_CREATE)
-		ip->i_crtime = tv;
-}
+	अगर (flags & XFS_ICHGTIME_MOD)
+		inode->i_mसमय = tv;
+	अगर (flags & XFS_ICHGTIME_CHG)
+		inode->i_स_समय = tv;
+	अगर (flags & XFS_ICHGTIME_CREATE)
+		ip->i_crसमय = tv;
+पूर्ण
 
 /*
  * This is called to mark the fields indicated in fieldmask as needing to be
- * logged when the transaction is committed.  The inode must already be
+ * logged when the transaction is committed.  The inode must alपढ़ोy be
  * associated with the given transaction.
  *
- * The values for fieldmask are defined in xfs_inode_item.h.  We always log all
- * of the core inode if any of it has changed, and we always log all of the
- * inline data/extents/b-tree root if any of them has changed.
+ * The values क्रम fieldmask are defined in xfs_inode_item.h.  We always log all
+ * of the core inode अगर any of it has changed, and we always log all of the
+ * अंतरभूत data/extents/b-tree root अगर any of them has changed.
  *
- * Grab and pin the cluster buffer associated with this inode to avoid RMW
- * cycles at inode writeback time. Avoid the need to add error handling to every
- * xfs_trans_log_inode() call by shutting down on read error.  This will cause
- * transactions to fail and everything to error out, just like if we return a
- * read error in a dirty transaction and cancel it.
+ * Grab and pin the cluster buffer associated with this inode to aव्योम RMW
+ * cycles at inode ग_लिखोback समय. Aव्योम the need to add error handling to every
+ * xfs_trans_log_inode() call by shutting करोwn on पढ़ो error.  This will cause
+ * transactions to fail and everything to error out, just like अगर we वापस a
+ * पढ़ो error in a dirty transaction and cancel it.
  */
-void
+व्योम
 xfs_trans_log_inode(
-	struct xfs_trans	*tp,
-	struct xfs_inode	*ip,
-	uint			flags)
-{
-	struct xfs_inode_log_item *iip = ip->i_itemp;
-	struct inode		*inode = VFS_I(ip);
-	uint			iversion_flags = 0;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_inode	*ip,
+	uपूर्णांक			flags)
+अणु
+	काष्ठा xfs_inode_log_item *iip = ip->i_itemp;
+	काष्ठा inode		*inode = VFS_I(ip);
+	uपूर्णांक			iversion_flags = 0;
 
 	ASSERT(iip);
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
-	ASSERT(!xfs_iflags_test(ip, XFS_ISTALE));
+	ASSERT(!xfs_अगरlags_test(ip, XFS_ISTALE));
 
-	tp->t_flags |= XFS_TRANS_DIRTY;
+	tp->t_flags |= XFS_TRANS_सूचीTY;
 
 	/*
-	 * Don't bother with i_lock for the I_DIRTY_TIME check here, as races
-	 * don't matter - we either will need an extra transaction in 24 hours
-	 * to log the timestamps, or will clear already cleared fields in the
-	 * worst case.
+	 * Don't bother with i_lock क्रम the I_सूचीTY_TIME check here, as races
+	 * करोn't matter - we either will need an extra transaction in 24 hours
+	 * to log the बारtamps, or will clear alपढ़ोy cleared fields in the
+	 * worst हाल.
 	 */
-	if (inode->i_state & I_DIRTY_TIME) {
+	अगर (inode->i_state & I_सूचीTY_TIME) अणु
 		spin_lock(&inode->i_lock);
-		inode->i_state &= ~I_DIRTY_TIME;
+		inode->i_state &= ~I_सूचीTY_TIME;
 		spin_unlock(&inode->i_lock);
-	}
+	पूर्ण
 
 	/*
-	 * First time we log the inode in a transaction, bump the inode change
-	 * counter if it is configured for this to occur. While we have the
-	 * inode locked exclusively for metadata modification, we can usually
-	 * avoid setting XFS_ILOG_CORE if no one has queried the value since
-	 * the last time it was incremented. If we have XFS_ILOG_CORE already
+	 * First समय we log the inode in a transaction, bump the inode change
+	 * counter अगर it is configured क्रम this to occur. While we have the
+	 * inode locked exclusively क्रम metadata modअगरication, we can usually
+	 * aव्योम setting XFS_ILOG_CORE अगर no one has queried the value since
+	 * the last समय it was incremented. If we have XFS_ILOG_CORE alपढ़ोy
 	 * set however, then go ahead and bump the i_version counter
 	 * unconditionally.
 	 */
-	if (!test_and_set_bit(XFS_LI_DIRTY, &iip->ili_item.li_flags)) {
-		if (IS_I_VERSION(inode) &&
+	अगर (!test_and_set_bit(XFS_LI_सूचीTY, &iip->ili_item.li_flags)) अणु
+		अगर (IS_I_VERSION(inode) &&
 		    inode_maybe_inc_iversion(inode, flags & XFS_ILOG_CORE))
 			iversion_flags = XFS_ILOG_CORE;
-	}
+	पूर्ण
 
 	/*
 	 * If we're updating the inode core or the timestamps and it's possible
-	 * to upgrade this inode to bigtime format, do so now.
+	 * to upgrade this inode to bigसमय क्रमmat, करो so now.
 	 */
-	if ((flags & (XFS_ILOG_CORE | XFS_ILOG_TIMESTAMP)) &&
-	    xfs_sb_version_hasbigtime(&ip->i_mount->m_sb) &&
-	    !xfs_inode_has_bigtime(ip)) {
-		ip->i_diflags2 |= XFS_DIFLAG2_BIGTIME;
+	अगर ((flags & (XFS_ILOG_CORE | XFS_ILOG_TIMESTAMP)) &&
+	    xfs_sb_version_hasbigसमय(&ip->i_mount->m_sb) &&
+	    !xfs_inode_has_bigसमय(ip)) अणु
+		ip->i_dअगरlags2 |= XFS_DIFLAG2_BIGTIME;
 		flags |= XFS_ILOG_CORE;
-	}
+	पूर्ण
 
 	/*
-	 * Inode verifiers on older kernels don't check that the extent size
-	 * hint is an integer multiple of the rt extent size on a directory
+	 * Inode verअगरiers on older kernels करोn't check that the extent size
+	 * hपूर्णांक is an पूर्णांकeger multiple of the rt extent size on a directory
 	 * with both rtinherit and extszinherit flags set.  If we're logging a
-	 * directory that is misconfigured in this way, clear the hint.
+	 * directory that is misconfigured in this way, clear the hपूर्णांक.
 	 */
-	if ((ip->i_diflags & XFS_DIFLAG_RTINHERIT) &&
-	    (ip->i_diflags & XFS_DIFLAG_EXTSZINHERIT) &&
-	    (ip->i_extsize % ip->i_mount->m_sb.sb_rextsize) > 0) {
+	अगर ((ip->i_dअगरlags & XFS_DIFLAG_RTINHERIT) &&
+	    (ip->i_dअगरlags & XFS_DIFLAG_EXTSZINHERIT) &&
+	    (ip->i_extsize % ip->i_mount->m_sb.sb_rextsize) > 0) अणु
 		xfs_info_once(ip->i_mount,
 	"Correcting misaligned extent size hint in inode 0x%llx.", ip->i_ino);
-		ip->i_diflags &= ~(XFS_DIFLAG_EXTSIZE |
+		ip->i_dअगरlags &= ~(XFS_DIFLAG_EXTSIZE |
 				   XFS_DIFLAG_EXTSZINHERIT);
 		ip->i_extsize = 0;
 		flags |= XFS_ILOG_CORE;
-	}
+	पूर्ण
 
 	/*
-	 * Record the specific change for fdatasync optimisation. This allows
-	 * fdatasync to skip log forces for inodes that are only timestamp
+	 * Record the specअगरic change क्रम fdatasync optimisation. This allows
+	 * fdatasync to skip log क्रमces क्रम inodes that are only बारtamp
 	 * dirty.
 	 */
 	spin_lock(&iip->ili_lock);
 	iip->ili_fsync_fields |= flags;
 
-	if (!iip->ili_item.li_buf) {
-		struct xfs_buf	*bp;
-		int		error;
+	अगर (!iip->ili_item.li_buf) अणु
+		काष्ठा xfs_buf	*bp;
+		पूर्णांक		error;
 
 		/*
 		 * We hold the ILOCK here, so this inode is not going to be
-		 * flushed while we are here. Further, because there is no
+		 * flushed जबतक we are here. Further, because there is no
 		 * buffer attached to the item, we know that there is no IO in
-		 * progress, so nothing will clear the ili_fields while we read
+		 * progress, so nothing will clear the ili_fields जबतक we पढ़ो
 		 * in the buffer. Hence we can safely drop the spin lock and
-		 * read the buffer knowing that the state will not change from
+		 * पढ़ो the buffer knowing that the state will not change from
 		 * here.
 		 */
 		spin_unlock(&iip->ili_lock);
 		error = xfs_imap_to_bp(ip->i_mount, tp, &ip->i_imap, &bp);
-		if (error) {
-			xfs_force_shutdown(ip->i_mount, SHUTDOWN_META_IO_ERROR);
-			return;
-		}
+		अगर (error) अणु
+			xfs_क्रमce_shutकरोwn(ip->i_mount, SHUTDOWN_META_IO_ERROR);
+			वापस;
+		पूर्ण
 
 		/*
-		 * We need an explicit buffer reference for the log item but
-		 * don't want the buffer to remain attached to the transaction.
+		 * We need an explicit buffer reference क्रम the log item but
+		 * करोn't want the buffer to reमुख्य attached to the transaction.
 		 * Hold the buffer but release the transaction reference once
 		 * we've attached the inode log item to the buffer log item
 		 * list.
@@ -199,29 +200,29 @@ xfs_trans_log_inode(
 		iip->ili_item.li_buf = bp;
 		bp->b_flags |= _XBF_INODES;
 		list_add_tail(&iip->ili_item.li_bio_list, &bp->b_li_list);
-		xfs_trans_brelse(tp, bp);
-	}
+		xfs_trans_brअन्यथा(tp, bp);
+	पूर्ण
 
 	/*
 	 * Always OR in the bits from the ili_last_fields field.  This is to
-	 * coordinate with the xfs_iflush() and xfs_buf_inode_iodone() routines
+	 * coordinate with the xfs_अगरlush() and xfs_buf_inode_ioकरोne() routines
 	 * in the eventual clearing of the ili_fields bits.  See the big comment
-	 * in xfs_iflush() for an explanation of this coordination mechanism.
+	 * in xfs_अगरlush() क्रम an explanation of this coordination mechanism.
 	 */
 	iip->ili_fields |= (flags | iip->ili_last_fields | iversion_flags);
 	spin_unlock(&iip->ili_lock);
-}
+पूर्ण
 
-int
+पूर्णांक
 xfs_trans_roll_inode(
-	struct xfs_trans	**tpp,
-	struct xfs_inode	*ip)
-{
-	int			error;
+	काष्ठा xfs_trans	**tpp,
+	काष्ठा xfs_inode	*ip)
+अणु
+	पूर्णांक			error;
 
 	xfs_trans_log_inode(*tpp, ip, XFS_ILOG_CORE);
 	error = xfs_trans_roll(tpp);
-	if (!error)
+	अगर (!error)
 		xfs_trans_ijoin(*tpp, ip, 0);
-	return error;
-}
+	वापस error;
+पूर्ण

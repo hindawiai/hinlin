@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Handles the Mitac Mio A701 Board
  *
  * Copyright (C) 2008 Robert Jarzmik
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/syscore_ops.h>
-#include <linux/input.h>
-#include <linux/delay.h>
-#include <linux/gpio_keys.h>
-#include <linux/pwm.h>
-#include <linux/pwm_backlight.h>
-#include <linux/rtc.h>
-#include <linux/leds.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/pda_power.h>
-#include <linux/power_supply.h>
-#include <linux/wm97xx.h>
-#include <linux/mtd/physmap.h>
-#include <linux/reboot.h>
-#include <linux/regulator/fixed.h>
-#include <linux/regulator/max1586.h>
-#include <linux/slab.h>
-#include <linux/platform_data/i2c-pxa.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/input.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/pwm_backlight.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/pda_घातer.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/wm97xx.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/regulator/fixed.h>
+#समावेश <linux/regulator/max1586.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "pxa27x.h"
-#include "regs-rtc.h"
-#include <linux/platform_data/keypad-pxa27x.h>
-#include <linux/platform_data/video-pxafb.h>
-#include <linux/platform_data/mmc-pxamci.h>
-#include "udc.h"
-#include "pxa27x-udc.h"
-#include <linux/platform_data/media/camera-pxa.h>
-#include <mach/audio.h>
-#include <mach/smemc.h>
+#समावेश "pxa27x.h"
+#समावेश "regs-rtc.h"
+#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
+#समावेश "udc.h"
+#समावेश "pxa27x-udc.h"
+#समावेश <linux/platक्रमm_data/media/camera-pxa.h>
+#समावेश <mach/audपन.स>
+#समावेश <mach/smemc.h>
 
-#include "mioa701.h"
+#समावेश "mioa701.h"
 
-#include "generic.h"
-#include "devices.h"
+#समावेश "generic.h"
+#समावेश "devices.h"
 
-static unsigned long mioa701_pin_config[] = {
+अटल अचिन्हित दीर्घ mioa701_pin_config[] = अणु
 	/* Mio global */
 	MIO_CFG_OUT(GPIO9_CHARGE_EN, AF0, DRIVE_LOW),
 	MIO_CFG_OUT(GPIO18_POWEROFF, AF0, DRIVE_LOW),
@@ -165,18 +166,18 @@ static unsigned long mioa701_pin_config[] = {
 	MFP_CFG_OUT(GPIO57, AF0, DRIVE_HIGH),
 	MFP_CFG_IN(GPIO96, AF0),
 	MFP_CFG_OUT(GPIO116, AF0, DRIVE_HIGH),
-};
+पूर्ण;
 
-static struct pwm_lookup mioa701_pwm_lookup[] = {
-	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight", NULL, 4000 * 1024,
+अटल काष्ठा pwm_lookup mioa701_pwm_lookup[] = अणु
+	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight", शून्य, 4000 * 1024,
 		   PWM_POLARITY_NORMAL),
-};
+पूर्ण;
 
 /* LCD Screen and Backlight */
-static struct platform_pwm_backlight_data mioa701_backlight_data = {
+अटल काष्ठा platक्रमm_pwm_backlight_data mioa701_backlight_data = अणु
 	.max_brightness	= 100,
 	.dft_brightness	= 50,
-};
+पूर्ण;
 
 /*
  * LTM0305A776C LCD panel timings
@@ -185,8 +186,8 @@ static struct platform_pwm_backlight_data mioa701_backlight_data = {
  *  - the LTM0305A776C datasheet,
  *  - and the PXA27x Programmers' manual
  */
-static struct pxafb_mode_info mioa701_ltm0305a776c = {
-	.pixclock		= 220000,	/* CLK=4.545 MHz */
+अटल काष्ठा pxafb_mode_info mioa701_lपंचांग0305a776c = अणु
+	.pixघड़ी		= 220000,	/* CLK=4.545 MHz */
 	.xres			= 240,
 	.yres			= 320,
 	.bpp			= 16,
@@ -196,24 +197,24 @@ static struct pxafb_mode_info mioa701_ltm0305a776c = {
 	.right_margin		= 4,
 	.upper_margin		= 5,
 	.lower_margin		= 3,
-};
+पूर्ण;
 
-static void mioa701_lcd_power(int on, struct fb_var_screeninfo *si)
-{
+अटल व्योम mioa701_lcd_घातer(पूर्णांक on, काष्ठा fb_var_screeninfo *si)
+अणु
 	gpio_set_value(GPIO87_LCD_POWER, on);
-}
+पूर्ण
 
-static struct pxafb_mach_info mioa701_pxafb_info = {
-	.modes			= &mioa701_ltm0305a776c,
+अटल काष्ठा pxafb_mach_info mioa701_pxafb_info = अणु
+	.modes			= &mioa701_lपंचांग0305a776c,
 	.num_modes		= 1,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP | LCD_PCLK_EDGE_FALL,
-	.pxafb_lcd_power	= mioa701_lcd_power,
-};
+	.pxafb_lcd_घातer	= mioa701_lcd_घातer,
+पूर्ण;
 
 /*
  * Keyboard configuration
  */
-static const unsigned int mioa701_matrix_keys[] = {
+अटल स्थिर अचिन्हित पूर्णांक mioa701_matrix_keys[] = अणु
 	KEY(0, 0, KEY_UP),
 	KEY(0, 1, KEY_RIGHT),
 	KEY(0, 2, KEY_MEDIA),
@@ -223,54 +224,54 @@ static const unsigned int mioa701_matrix_keys[] = {
 	KEY(2, 0, KEY_LEFT),
 	KEY(2, 1, KEY_PHONE),	/* Phone Green key */
 	KEY(2, 2, KEY_CAMERA)	/* Camera key */
-};
+पूर्ण;
 
-static struct matrix_keymap_data mioa701_matrix_keymap_data = {
+अटल काष्ठा matrix_keymap_data mioa701_matrix_keymap_data = अणु
 	.keymap			= mioa701_matrix_keys,
 	.keymap_size		= ARRAY_SIZE(mioa701_matrix_keys),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data mioa701_keypad_info = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data mioa701_keypad_info = अणु
 	.matrix_key_rows = 3,
 	.matrix_key_cols = 3,
 	.matrix_keymap_data = &mioa701_matrix_keymap_data,
-};
+पूर्ण;
 
 /*
  * GPIO Key Configuration
  */
-#define MIO_KEY(key, _gpio, _desc, _wakeup) \
-	{ .code = (key), .gpio = (_gpio), .active_low = 0, \
-	.desc = (_desc), .type = EV_KEY, .wakeup = (_wakeup) }
-static struct gpio_keys_button mioa701_button_table[] = {
+#घोषणा MIO_KEY(key, _gpio, _desc, _wakeup) \
+	अणु .code = (key), .gpio = (_gpio), .active_low = 0, \
+	.desc = (_desc), .type = EV_KEY, .wakeup = (_wakeup) पूर्ण
+अटल काष्ठा gpio_keys_button mioa701_button_table[] = अणु
 	MIO_KEY(KEY_EXIT, GPIO0_KEY_POWER, "Power button", 1),
 	MIO_KEY(KEY_VOLUMEUP, GPIO93_KEY_VOLUME_UP, "Volume up", 0),
 	MIO_KEY(KEY_VOLUMEDOWN, GPIO94_KEY_VOLUME_DOWN, "Volume down", 0),
 	MIO_KEY(KEY_HP, GPIO12_HPJACK_INSERT, "HP jack detect", 0)
-};
+पूर्ण;
 
-static struct gpio_keys_platform_data mioa701_gpio_keys_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data mioa701_gpio_keys_data = अणु
 	.buttons  = mioa701_button_table,
 	.nbuttons = ARRAY_SIZE(mioa701_button_table),
-};
+पूर्ण;
 
 /*
  * Leds and vibrator
  */
-#define ONE_LED(_gpio, _name) \
-{ .gpio = (_gpio), .name = (_name), .active_low = true }
-static struct gpio_led gpio_leds[] = {
+#घोषणा ONE_LED(_gpio, _name) \
+अणु .gpio = (_gpio), .name = (_name), .active_low = true पूर्ण
+अटल काष्ठा gpio_led gpio_leds[] = अणु
 	ONE_LED(GPIO10_LED_nCharging, "mioa701:charging"),
 	ONE_LED(GPIO97_LED_nBlue, "mioa701:blue"),
 	ONE_LED(GPIO98_LED_nOrange, "mioa701:orange"),
 	ONE_LED(GPIO82_LED_nVibra, "mioa701:vibra"),
 	ONE_LED(GPIO115_LED_nKeyboard, "mioa701:keyboard")
-};
+पूर्ण;
 
-static struct gpio_led_platform_data gpio_led_info = {
+अटल काष्ठा gpio_led_platक्रमm_data gpio_led_info = अणु
 	.leds = gpio_leds,
 	.num_leds = ARRAY_SIZE(gpio_leds),
-};
+पूर्ण;
 
 /*
  * GSM Sagem XS200 chip
@@ -285,55 +286,55 @@ static struct gpio_led_platform_data gpio_led_info = {
  *   - turn off : GPIO90_GSM_nMOD_OFF_CMD = 0, msleep(1000),
  *                GPIO90_GSM_nMOD_OFF_CMD = 1
  */
-static int is_gsm_on(void)
-{
-	int is_on;
+अटल पूर्णांक is_gsm_on(व्योम)
+अणु
+	पूर्णांक is_on;
 
 	is_on = !!gpio_get_value(GPIO25_GSM_MOD_ON_STATE);
-	return is_on;
-}
+	वापस is_on;
+पूर्ण
 
-irqreturn_t gsm_on_irq(int irq, void *p)
-{
-	printk(KERN_DEBUG "Mioa701: GSM status changed to %s\n",
+irqवापस_t gsm_on_irq(पूर्णांक irq, व्योम *p)
+अणु
+	prपूर्णांकk(KERN_DEBUG "Mioa701: GSM status changed to %s\n",
 	       is_gsm_on() ? "on" : "off");
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct gpio gsm_gpios[] = {
-	{ GPIO25_GSM_MOD_ON_STATE, GPIOF_IN, "GSM state" },
-	{ GPIO113_GSM_EVENT, GPIOF_IN, "GSM event" },
-};
+अटल काष्ठा gpio gsm_gpios[] = अणु
+	अणु GPIO25_GSM_MOD_ON_STATE, GPIOF_IN, "GSM state" पूर्ण,
+	अणु GPIO113_GSM_EVENT, GPIOF_IN, "GSM event" पूर्ण,
+पूर्ण;
 
-static int __init gsm_init(void)
-{
-	int rc;
+अटल पूर्णांक __init gsm_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	rc = gpio_request_array(ARRAY_AND_SIZE(gsm_gpios));
-	if (rc)
-		goto err_gpio;
+	अगर (rc)
+		जाओ err_gpio;
 	rc = request_irq(gpio_to_irq(GPIO25_GSM_MOD_ON_STATE), gsm_on_irq,
 			 IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
-			 "GSM XS200 Power Irq", NULL);
-	if (rc)
-		goto err_irq;
+			 "GSM XS200 Power Irq", शून्य);
+	अगर (rc)
+		जाओ err_irq;
 
 	gpio_set_wake(GPIO113_GSM_EVENT, 1);
-	return 0;
+	वापस 0;
 
 err_irq:
-	printk(KERN_ERR "Mioa701: Can't request GSM_ON irq\n");
-	gpio_free_array(ARRAY_AND_SIZE(gsm_gpios));
+	prपूर्णांकk(KERN_ERR "Mioa701: Can't request GSM_ON irq\n");
+	gpio_मुक्त_array(ARRAY_AND_SIZE(gsm_gpios));
 err_gpio:
-	printk(KERN_ERR "Mioa701: gsm not available\n");
-	return rc;
-}
+	prपूर्णांकk(KERN_ERR "Mioa701: gsm not available\n");
+	वापस rc;
+पूर्ण
 
-static void gsm_exit(void)
-{
-	free_irq(gpio_to_irq(GPIO25_GSM_MOD_ON_STATE), NULL);
-	gpio_free_array(ARRAY_AND_SIZE(gsm_gpios));
-}
+अटल व्योम gsm_निकास(व्योम)
+अणु
+	मुक्त_irq(gpio_to_irq(GPIO25_GSM_MOD_ON_STATE), शून्य);
+	gpio_मुक्त_array(ARRAY_AND_SIZE(gsm_gpios));
+पूर्ण
 
 /*
  * Bluetooth BRF6150 chip
@@ -356,40 +357,40 @@ static void gsm_exit(void)
 /*
  * USB UDC
  */
-static int is_usb_connected(void)
-{
-	return !gpio_get_value(GPIO13_nUSB_DETECT);
-}
+अटल पूर्णांक is_usb_connected(व्योम)
+अणु
+	वापस !gpio_get_value(GPIO13_nUSB_DETECT);
+पूर्ण
 
-static struct pxa2xx_udc_mach_info mioa701_udc_info = {
+अटल काष्ठा pxa2xx_udc_mach_info mioa701_udc_info = अणु
 	.udc_is_connected = is_usb_connected,
 	.gpio_pullup	  = GPIO22_USB_ENABLE,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table gpio_vbus_gpiod_table = {
+अटल काष्ठा gpiod_lookup_table gpio_vbus_gpiod_table = अणु
 	.dev_id = "gpio-vbus",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO13_nUSB_DETECT,
 			    "vbus", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /*
  * SDIO/MMC Card controller
  */
 /**
- * The card detect interrupt isn't debounced so we delay it by 250ms
+ * The card detect पूर्णांकerrupt isn't debounced so we delay it by 250ms
  * to give the card a chance to fully insert/eject.
  */
-static struct pxamci_platform_data mioa701_mci_info = {
+अटल काष्ठा pxamci_platक्रमm_data mioa701_mci_info = अणु
 	.detect_delay_ms	= 250,
 	.ocr_mask 		= MMC_VDD_32_33 | MMC_VDD_33_34,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table mioa701_mci_gpio_table = {
+अटल काष्ठा gpiod_lookup_table mioa701_mci_gpio_table = अणु
 	.dev_id = "pxa2xx-mci.0",
-	.table = {
+	.table = अणु
 		/* Card detect on GPIO 15 */
 		GPIO_LOOKUP("gpio-pxa", GPIO15_SDIO_INSERT,
 			    "cd", GPIO_ACTIVE_LOW),
@@ -399,63 +400,63 @@ static struct gpiod_lookup_table mioa701_mci_gpio_table = {
 		/* Power on GPIO 91 */
 		GPIO_LOOKUP("gpio-pxa", GPIO91_SDIO_EN,
 			    "power", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /* FlashRAM */
-static struct resource docg3_resource = {
+अटल काष्ठा resource करोcg3_resource = अणु
 	.start = PXA_CS0_PHYS,
 	.end   = PXA_CS0_PHYS + SZ_8K - 1,
 	.flags = IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device docg3 = {
+अटल काष्ठा platक्रमm_device करोcg3 = अणु
 	.name	       = "docg3",
 	.id	       = -1,
-	.resource      = &docg3_resource,
+	.resource      = &करोcg3_resource,
 	.num_resources = 1,
-	.dev = {
-		.platform_data = NULL,
-	},
-};
+	.dev = अणु
+		.platक्रमm_data = शून्य,
+	पूर्ण,
+पूर्ण;
 
 /*
  * Suspend/Resume bootstrap management
  *
  * MIO A701 reboot sequence is highly ROM dependent. From the one dissassembled,
  * this sequence is as follows :
- *   - disables interrupts
- *   - initialize SDRAM (self refresh RAM into active RAM)
+ *   - disables पूर्णांकerrupts
+ *   - initialize SDRAM (self refresh RAM पूर्णांकo active RAM)
  *   - initialize GPIOs (depends on value at 0xa020b020)
  *   - initialize coprossessors
- *   - if edge detect on PWR_SCL(GPIO3), then proceed to cold start
- *   - or if value at 0xa020b000 not equal to 0x0f0f0f0f, proceed to cold start
- *   - else do a resume, ie. jump to addr 0xa0100000
+ *   - अगर edge detect on PWR_SCL(GPIO3), then proceed to cold start
+ *   - or अगर value at 0xa020b000 not equal to 0x0f0f0f0f, proceed to cold start
+ *   - अन्यथा करो a resume, ie. jump to addr 0xa0100000
  */
-#define RESUME_ENABLE_ADDR	0xa020b000
-#define RESUME_ENABLE_VAL	0x0f0f0f0f
-#define RESUME_BT_ADDR		0xa020b020
-#define RESUME_UNKNOWN_ADDR	0xa020b024
-#define RESUME_VECTOR_ADDR	0xa0100000
-#define BOOTSTRAP_WORDS		mioa701_bootstrap_lg/4
+#घोषणा RESUME_ENABLE_ADDR	0xa020b000
+#घोषणा RESUME_ENABLE_VAL	0x0f0f0f0f
+#घोषणा RESUME_BT_ADDR		0xa020b020
+#घोषणा RESUME_UNKNOWN_ADDR	0xa020b024
+#घोषणा RESUME_VECTOR_ADDR	0xa0100000
+#घोषणा BOOTSTRAP_WORDS		mioa701_bootstrap_lg/4
 
-static u32 *save_buffer;
+अटल u32 *save_buffer;
 
-static void install_bootstrap(void)
-{
-	int i;
+अटल व्योम install_bootstrap(व्योम)
+अणु
+	पूर्णांक i;
 	u32 *rom_bootstrap  = phys_to_virt(RESUME_VECTOR_ADDR);
 	u32 *src = &mioa701_bootstrap;
 
-	for (i = 0; i < BOOTSTRAP_WORDS; i++)
+	क्रम (i = 0; i < BOOTSTRAP_WORDS; i++)
 		rom_bootstrap[i] = src[i];
-}
+पूर्ण
 
 
-static int mioa701_sys_suspend(void)
-{
-	int i = 0, is_bt_on;
+अटल पूर्णांक mioa701_sys_suspend(व्योम)
+अणु
+	पूर्णांक i = 0, is_bt_on;
 	u32 *mem_resume_vector	= phys_to_virt(RESUME_VECTOR_ADDR);
 	u32 *mem_resume_enabler = phys_to_virt(RESUME_ENABLE_ADDR);
 	u32 *mem_resume_bt	= phys_to_virt(RESUME_BT_ADDR);
@@ -466,7 +467,7 @@ static int mioa701_sys_suspend(void)
 	pxa2xx_mfp_set_lpm(GPIO83_BT_ON,
 			   is_bt_on ? MFP_LPM_DRIVE_HIGH : MFP_LPM_DRIVE_LOW);
 
-	for (i = 0; i < BOOTSTRAP_WORDS; i++)
+	क्रम (i = 0; i < BOOTSTRAP_WORDS; i++)
 		save_buffer[i] = mem_resume_vector[i];
 	save_buffer[i++] = *mem_resume_enabler;
 	save_buffer[i++] = *mem_resume_bt;
@@ -476,249 +477,249 @@ static int mioa701_sys_suspend(void)
 	*mem_resume_bt	    = is_bt_on;
 
 	install_bootstrap();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mioa701_sys_resume(void)
-{
-	int i = 0;
+अटल व्योम mioa701_sys_resume(व्योम)
+अणु
+	पूर्णांक i = 0;
 	u32 *mem_resume_vector	= phys_to_virt(RESUME_VECTOR_ADDR);
 	u32 *mem_resume_enabler = phys_to_virt(RESUME_ENABLE_ADDR);
 	u32 *mem_resume_bt	= phys_to_virt(RESUME_BT_ADDR);
 	u32 *mem_resume_unknown	= phys_to_virt(RESUME_UNKNOWN_ADDR);
 
-	for (i = 0; i < BOOTSTRAP_WORDS; i++)
+	क्रम (i = 0; i < BOOTSTRAP_WORDS; i++)
 		mem_resume_vector[i] = save_buffer[i];
 	*mem_resume_enabler = save_buffer[i++];
 	*mem_resume_bt	    = save_buffer[i++];
 	*mem_resume_unknown = save_buffer[i++];
-}
+पूर्ण
 
-static struct syscore_ops mioa701_syscore_ops = {
+अटल काष्ठा syscore_ops mioa701_syscore_ops = अणु
 	.suspend	= mioa701_sys_suspend,
 	.resume		= mioa701_sys_resume,
-};
+पूर्ण;
 
-static int __init bootstrap_init(void)
-{
-	int save_size = mioa701_bootstrap_lg + (sizeof(u32) * 3);
+अटल पूर्णांक __init bootstrap_init(व्योम)
+अणु
+	पूर्णांक save_size = mioa701_bootstrap_lg + (माप(u32) * 3);
 
-	register_syscore_ops(&mioa701_syscore_ops);
+	रेजिस्टर_syscore_ops(&mioa701_syscore_ops);
 
-	save_buffer = kmalloc(save_size, GFP_KERNEL);
-	if (!save_buffer)
-		return -ENOMEM;
-	printk(KERN_INFO "MioA701: allocated %d bytes for bootstrap\n",
+	save_buffer = kदो_स्मृति(save_size, GFP_KERNEL);
+	अगर (!save_buffer)
+		वापस -ENOMEM;
+	prपूर्णांकk(KERN_INFO "MioA701: allocated %d bytes for bootstrap\n",
 	       save_size);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bootstrap_exit(void)
-{
-	kfree(save_buffer);
-	unregister_syscore_ops(&mioa701_syscore_ops);
+अटल व्योम bootstrap_निकास(व्योम)
+अणु
+	kमुक्त(save_buffer);
+	unरेजिस्टर_syscore_ops(&mioa701_syscore_ops);
 
-	printk(KERN_CRIT "Unregistering mioa701 suspend will hang next"
+	prपूर्णांकk(KERN_CRIT "Unregistering mioa701 suspend will hang next"
 	       "resume !!!\n");
-}
+पूर्ण
 
 /*
  * Power Supply
  */
-static char *supplicants[] = {
+अटल अक्षर *supplicants[] = अणु
 	"mioa701_battery"
-};
+पूर्ण;
 
-static int is_ac_connected(void)
-{
-	return gpio_get_value(GPIO96_AC_DETECT);
-}
+अटल पूर्णांक is_ac_connected(व्योम)
+अणु
+	वापस gpio_get_value(GPIO96_AC_DETECT);
+पूर्ण
 
-static void mioa701_set_charge(int flags)
-{
+अटल व्योम mioa701_set_अक्षरge(पूर्णांक flags)
+अणु
 	gpio_set_value(GPIO9_CHARGE_EN, (flags == PDA_POWER_CHARGE_USB));
-}
+पूर्ण
 
-static struct pda_power_pdata power_pdata = {
+अटल काष्ठा pda_घातer_pdata घातer_pdata = अणु
 	.is_ac_online	= is_ac_connected,
 	.is_usb_online	= is_usb_connected,
-	.set_charge = mioa701_set_charge,
+	.set_अक्षरge = mioa701_set_अक्षरge,
 	.supplied_to = supplicants,
 	.num_supplicants = ARRAY_SIZE(supplicants),
-};
+पूर्ण;
 
-static struct resource power_resources[] = {
-	[0] = {
+अटल काष्ठा resource घातer_resources[] = अणु
+	[0] = अणु
 		.name	= "ac",
 		.start	= PXA_GPIO_TO_IRQ(GPIO96_AC_DETECT),
 		.end	= PXA_GPIO_TO_IRQ(GPIO96_AC_DETECT),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
 		IORESOURCE_IRQ_LOWEDGE,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.name	= "usb",
 		.start	= PXA_GPIO_TO_IRQ(GPIO13_nUSB_DETECT),
 		.end	= PXA_GPIO_TO_IRQ(GPIO13_nUSB_DETECT),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
 		IORESOURCE_IRQ_LOWEDGE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device power_dev = {
+अटल काष्ठा platक्रमm_device घातer_dev = अणु
 	.name		= "pda-power",
 	.id		= -1,
-	.resource	= power_resources,
-	.num_resources	= ARRAY_SIZE(power_resources),
-	.dev = {
-		.platform_data	= &power_pdata,
-	},
-};
+	.resource	= घातer_resources,
+	.num_resources	= ARRAY_SIZE(घातer_resources),
+	.dev = अणु
+		.platक्रमm_data	= &घातer_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct wm97xx_batt_pdata mioa701_battery_data = {
+अटल काष्ठा wm97xx_batt_pdata mioa701_battery_data = अणु
 	.batt_aux	= WM97XX_AUX_ID1,
 	.temp_aux	= -1,
 	.min_voltage	= 0xc00,
 	.max_voltage	= 0xfc0,
 	.batt_tech	= POWER_SUPPLY_TECHNOLOGY_LION,
-	.batt_div	= 1,
+	.batt_भाग	= 1,
 	.batt_mult	= 1,
 	.batt_name	= "mioa701_battery",
-};
+पूर्ण;
 
-static struct wm97xx_pdata mioa701_wm97xx_pdata = {
+अटल काष्ठा wm97xx_pdata mioa701_wm97xx_pdata = अणु
 	.batt_pdata	= &mioa701_battery_data,
-};
+पूर्ण;
 
 /*
  * Voltage regulation
  */
-static struct regulator_consumer_supply max1586_consumers[] = {
-	REGULATOR_SUPPLY("vcc_core", NULL),
-};
+अटल काष्ठा regulator_consumer_supply max1586_consumers[] = अणु
+	REGULATOR_SUPPLY("vcc_core", शून्य),
+पूर्ण;
 
-static struct regulator_init_data max1586_v3_info = {
-	.constraints = {
+अटल काष्ठा regulator_init_data max1586_v3_info = अणु
+	.स्थिरraपूर्णांकs = अणु
 		.name = "vcc_core range",
 		.min_uV = 1000000,
 		.max_uV = 1705000,
 		.always_on = 1,
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
-	},
+	पूर्ण,
 	.num_consumer_supplies = ARRAY_SIZE(max1586_consumers),
 	.consumer_supplies = max1586_consumers,
-};
+पूर्ण;
 
-static struct max1586_subdev_data max1586_subdevs[] = {
-	{ .name = "vcc_core", .id = MAX1586_V3,
-	  .platform_data = &max1586_v3_info },
-};
+अटल काष्ठा max1586_subdev_data max1586_subdevs[] = अणु
+	अणु .name = "vcc_core", .id = MAX1586_V3,
+	  .platक्रमm_data = &max1586_v3_info पूर्ण,
+पूर्ण;
 
-static struct max1586_platform_data max1586_info = {
+अटल काष्ठा max1586_platक्रमm_data max1586_info = अणु
 	.subdevs = max1586_subdevs,
 	.num_subdevs = ARRAY_SIZE(max1586_subdevs),
 	.v3_gain = MAX1586_GAIN_NO_R24, /* 700..1475 mV */
-};
+पूर्ण;
 
 /*
- * Camera interface
+ * Camera पूर्णांकerface
  */
-struct pxacamera_platform_data mioa701_pxacamera_platform_data = {
+काष्ठा pxacamera_platक्रमm_data mioa701_pxacamera_platक्रमm_data = अणु
 	.flags  = PXA_CAMERA_MASTER | PXA_CAMERA_DATAWIDTH_8 |
 		PXA_CAMERA_PCLK_EN | PXA_CAMERA_MCLK_EN,
 	.mclk_10khz = 5000,
 	.sensor_i2c_adapter_id = 0,
 	.sensor_i2c_address = 0x5d,
-};
+पूर्ण;
 
-static struct i2c_board_info __initdata mioa701_pi2c_devices[] = {
-	{
+अटल काष्ठा i2c_board_info __initdata mioa701_pi2c_devices[] = अणु
+	अणु
 		I2C_BOARD_INFO("max1586", 0x14),
-		.platform_data = &max1586_info,
-	},
-};
+		.platक्रमm_data = &max1586_info,
+	पूर्ण,
+पूर्ण;
 
 /* Board I2C devices. */
-static struct i2c_board_info mioa701_i2c_devices[] = {
-	{
+अटल काष्ठा i2c_board_info mioa701_i2c_devices[] = अणु
+	अणु
 		I2C_BOARD_INFO("mt9m111", 0x5d),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct i2c_pxa_platform_data i2c_pdata = {
+काष्ठा i2c_pxa_platक्रमm_data i2c_pdata = अणु
 	.fast_mode = 1,
-};
+पूर्ण;
 
-static pxa2xx_audio_ops_t mioa701_ac97_info = {
+अटल pxa2xx_audio_ops_t mioa701_ac97_info = अणु
 	.reset_gpio = 95,
-	.codec_pdata = { &mioa701_wm97xx_pdata, },
-};
+	.codec_pdata = अणु &mioa701_wm97xx_pdata, पूर्ण,
+पूर्ण;
 
 /*
  * Mio global
  */
 
 /* Devices */
-#define MIO_PARENT_DEV(var, strname, tparent, pdata)	\
-static struct platform_device var = {			\
+#घोषणा MIO_PARENT_DEV(var, strname, tparent, pdata)	\
+अटल काष्ठा platक्रमm_device var = अणु			\
 	.name		= strname,			\
 	.id		= -1,				\
-	.dev		= {				\
-		.platform_data = pdata,			\
+	.dev		= अणु				\
+		.platक्रमm_data = pdata,			\
 		.parent	= tparent,			\
-	},						\
-};
-#define MIO_SIMPLE_DEV(var, strname, pdata)	\
-	MIO_PARENT_DEV(var, strname, NULL, pdata)
+	पूर्ण,						\
+पूर्ण;
+#घोषणा MIO_SIMPLE_DEV(var, strname, pdata)	\
+	MIO_PARENT_DEV(var, strname, शून्य, pdata)
 
 MIO_SIMPLE_DEV(mioa701_gpio_keys, "gpio-keys",	    &mioa701_gpio_keys_data)
 MIO_PARENT_DEV(mioa701_backlight, "pwm-backlight",  &pxa27x_device_pwm0.dev,
 		&mioa701_backlight_data);
 MIO_SIMPLE_DEV(mioa701_led,	  "leds-gpio",	    &gpio_led_info)
-MIO_SIMPLE_DEV(pxa2xx_pcm,	  "pxa2xx-pcm",	    NULL)
-MIO_SIMPLE_DEV(mioa701_sound,	  "mioa701-wm9713", NULL)
-MIO_SIMPLE_DEV(mioa701_board,	  "mioa701-board",  NULL)
-MIO_SIMPLE_DEV(gpio_vbus,	  "gpio-vbus",      NULL);
+MIO_SIMPLE_DEV(pxa2xx_pcm,	  "pxa2xx-pcm",	    शून्य)
+MIO_SIMPLE_DEV(mioa701_sound,	  "mioa701-wm9713", शून्य)
+MIO_SIMPLE_DEV(mioa701_board,	  "mioa701-board",  शून्य)
+MIO_SIMPLE_DEV(gpio_vbus,	  "gpio-vbus",      शून्य);
 
-static struct platform_device *devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
 	&mioa701_gpio_keys,
 	&mioa701_backlight,
 	&mioa701_led,
 	&pxa2xx_pcm,
 	&mioa701_sound,
-	&power_dev,
-	&docg3,
+	&घातer_dev,
+	&करोcg3,
 	&gpio_vbus,
 	&mioa701_board,
-};
+पूर्ण;
 
-static void mioa701_machine_exit(void);
+अटल व्योम mioa701_machine_निकास(व्योम);
 
-static void mioa701_poweroff(void)
-{
-	mioa701_machine_exit();
-	pxa_restart(REBOOT_SOFT, NULL);
-}
+अटल व्योम mioa701_घातeroff(व्योम)
+अणु
+	mioa701_machine_निकास();
+	pxa_restart(REBOOT_SOFT, शून्य);
+पूर्ण
 
-static void mioa701_restart(enum reboot_mode c, const char *cmd)
-{
-	mioa701_machine_exit();
+अटल व्योम mioa701_restart(क्रमागत reboot_mode c, स्थिर अक्षर *cmd)
+अणु
+	mioa701_machine_निकास();
 	pxa_restart(REBOOT_SOFT, cmd);
-}
+पूर्ण
 
-static struct gpio global_gpios[] = {
-	{ GPIO9_CHARGE_EN, GPIOF_OUT_INIT_HIGH, "Charger enable" },
-	{ GPIO18_POWEROFF, GPIOF_OUT_INIT_LOW, "Power Off" },
-	{ GPIO87_LCD_POWER, GPIOF_OUT_INIT_LOW, "LCD Power" },
-	{ GPIO56_MT9M111_nOE, GPIOF_OUT_INIT_LOW, "Camera nOE" },
-};
+अटल काष्ठा gpio global_gpios[] = अणु
+	अणु GPIO9_CHARGE_EN, GPIOF_OUT_INIT_HIGH, "Charger enable" पूर्ण,
+	अणु GPIO18_POWEROFF, GPIOF_OUT_INIT_LOW, "Power Off" पूर्ण,
+	अणु GPIO87_LCD_POWER, GPIOF_OUT_INIT_LOW, "LCD Power" पूर्ण,
+	अणु GPIO56_MT9M111_nOE, GPIOF_OUT_INIT_LOW, "Camera nOE" पूर्ण,
+पूर्ण;
 
-static struct regulator_consumer_supply fixed_5v0_consumers[] = {
+अटल काष्ठा regulator_consumer_supply fixed_5v0_consumers[] = अणु
 	REGULATOR_SUPPLY("power", "pwm-backlight"),
-};
+पूर्ण;
 
-static void __init mioa701_machine_init(void)
-{
-	int rc;
+अटल व्योम __init mioa701_machine_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	PSLR  = 0xff100000; /* SYSDEL=125ms, PWRDEL=125ms, PSLR_SL_ROD=1 */
 	PCFR = PCFR_DC_EN | PCFR_GPR_EN | PCFR_OPDE;
@@ -726,51 +727,51 @@ static void __init mioa701_machine_init(void)
 	UP2OCR = UP2OCR_HXOE;
 
 	/*
-	 * Set up the flash memory : DiskOnChip G3 on first static memory bank
+	 * Set up the flash memory : DiskOnChip G3 on first अटल memory bank
 	 */
-	__raw_writel(0x7ff02dd8, MSC0);
-	__raw_writel(0x0001c391, MCMEM0);
-	__raw_writel(0x0001c391, MCATT0);
-	__raw_writel(0x0001c391, MCIO0);
+	__raw_ग_लिखोl(0x7ff02dd8, MSC0);
+	__raw_ग_लिखोl(0x0001c391, MCMEM0);
+	__raw_ग_लिखोl(0x0001c391, MCATT0);
+	__raw_ग_लिखोl(0x0001c391, MCIO0);
 
 
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(mioa701_pin_config));
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 	rc = gpio_request_array(ARRAY_AND_SIZE(global_gpios));
-	if (rc)
+	अगर (rc)
 		pr_err("MioA701: Failed to request GPIOs: %d", rc);
 	bootstrap_init();
-	pxa_set_fb_info(NULL, &mioa701_pxafb_info);
+	pxa_set_fb_info(शून्य, &mioa701_pxafb_info);
 	gpiod_add_lookup_table(&mioa701_mci_gpio_table);
 	pxa_set_mci_info(&mioa701_mci_info);
 	pxa_set_keypad_info(&mioa701_keypad_info);
 	pxa_set_udc_info(&mioa701_udc_info);
 	pxa_set_ac97_info(&mioa701_ac97_info);
-	pm_power_off = mioa701_poweroff;
+	pm_घातer_off = mioa701_घातeroff;
 	pwm_add_table(mioa701_pwm_lookup, ARRAY_SIZE(mioa701_pwm_lookup));
 	gpiod_add_lookup_table(&gpio_vbus_gpiod_table);
-	platform_add_devices(devices, ARRAY_SIZE(devices));
+	platक्रमm_add_devices(devices, ARRAY_SIZE(devices));
 	gsm_init();
 
-	i2c_register_board_info(0, ARRAY_AND_SIZE(mioa701_i2c_devices));
-	i2c_register_board_info(1, ARRAY_AND_SIZE(mioa701_pi2c_devices));
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(mioa701_i2c_devices));
+	i2c_रेजिस्टर_board_info(1, ARRAY_AND_SIZE(mioa701_pi2c_devices));
 	pxa_set_i2c_info(&i2c_pdata);
-	pxa27x_set_i2c_power_info(NULL);
-	pxa_set_camera_info(&mioa701_pxacamera_platform_data);
+	pxa27x_set_i2c_घातer_info(शून्य);
+	pxa_set_camera_info(&mioa701_pxacamera_platक्रमm_data);
 
-	regulator_register_always_on(0, "fixed-5.0V", fixed_5v0_consumers,
+	regulator_रेजिस्टर_always_on(0, "fixed-5.0V", fixed_5v0_consumers,
 				     ARRAY_SIZE(fixed_5v0_consumers),
 				     5000000);
-	regulator_has_full_constraints();
-}
+	regulator_has_full_स्थिरraपूर्णांकs();
+पूर्ण
 
-static void mioa701_machine_exit(void)
-{
-	bootstrap_exit();
-	gsm_exit();
-}
+अटल व्योम mioa701_machine_निकास(व्योम)
+अणु
+	bootstrap_निकास();
+	gsm_निकास();
+पूर्ण
 
 MACHINE_START(MIOA701, "MIO A701")
 	.atag_offset	= 0x100,
@@ -779,6 +780,6 @@ MACHINE_START(MIOA701, "MIO A701")
 	.init_irq	= &pxa27x_init_irq,
 	.handle_irq	= &pxa27x_handle_irq,
 	.init_machine	= mioa701_machine_init,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.restart	= mioa701_restart,
 MACHINE_END

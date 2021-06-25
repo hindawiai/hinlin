@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * drxd.h: DRXD DVB-T demodulator driver
  *
  * Copyright (C) 2005-2007 Micronas
  */
 
-#ifndef _DRXD_H_
-#define _DRXD_H_
+#अगर_अघोषित _DRXD_H_
+#घोषणा _DRXD_H_
 
-#include <linux/types.h>
-#include <linux/i2c.h>
+#समावेश <linux/types.h>
+#समावेश <linux/i2c.h>
 
-struct drxd_config {
+काष्ठा drxd_config अणु
 	u8 index;
 
 	u8 pll_address;
 	u8 pll_type;
-#define DRXD_PLL_NONE     0
-#define DRXD_PLL_DTT7520X 1
-#define DRXD_PLL_MT3X0823 2
+#घोषणा DRXD_PLL_NONE     0
+#घोषणा DRXD_PLL_DTT7520X 1
+#घोषणा DRXD_PLL_MT3X0823 2
 
-	u32 clock;
+	u32 घड़ी;
 	u8 insert_rs_byte;
 
 	u8 demod_address;
@@ -28,28 +29,28 @@ struct drxd_config {
 	u8 demod_revision;
 
 	/* If the tuner is not behind an i2c gate, be sure to flip this bit
-	   or else the i2c bus could get wedged */
+	   or अन्यथा the i2c bus could get wedged */
 	u8 disable_i2c_gate_ctrl;
 
 	u32 IF;
-	 s16(*osc_deviation) (void *priv, s16 dev, int flag);
-};
+	 s16(*osc_deviation) (व्योम *priv, s16 dev, पूर्णांक flag);
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_DRXD)
-extern
-struct dvb_frontend *drxd_attach(const struct drxd_config *config,
-				 void *priv, struct i2c_adapter *i2c,
-				 struct device *dev);
-#else
-static inline
-struct dvb_frontend *drxd_attach(const struct drxd_config *config,
-				 void *priv, struct i2c_adapter *i2c,
-				 struct device *dev)
-{
-	printk(KERN_INFO "%s: not probed - driver disabled by Kconfig\n",
+#अगर IS_REACHABLE(CONFIG_DVB_DRXD)
+बाह्य
+काष्ठा dvb_frontend *drxd_attach(स्थिर काष्ठा drxd_config *config,
+				 व्योम *priv, काष्ठा i2c_adapter *i2c,
+				 काष्ठा device *dev);
+#अन्यथा
+अटल अंतरभूत
+काष्ठा dvb_frontend *drxd_attach(स्थिर काष्ठा drxd_config *config,
+				 व्योम *priv, काष्ठा i2c_adapter *i2c,
+				 काष्ठा device *dev)
+अणु
+	prपूर्णांकk(KERN_INFO "%s: not probed - driver disabled by Kconfig\n",
 	       __func__);
-	return NULL;
-}
-#endif
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_UTSNAME_H
-#define _UAPI_LINUX_UTSNAME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_UTSNAME_H
+#घोषणा _UAPI_LINUX_UTSNAME_H
 
-#define __OLD_UTS_LEN 8
+#घोषणा __OLD_UTS_LEN 8
 
-struct oldold_utsname {
-	char sysname[9];
-	char nodename[9];
-	char release[9];
-	char version[9];
-	char machine[9];
-};
+काष्ठा olकरोld_utsname अणु
+	अक्षर sysname[9];
+	अक्षर nodename[9];
+	अक्षर release[9];
+	अक्षर version[9];
+	अक्षर machine[9];
+पूर्ण;
 
-#define __NEW_UTS_LEN 64
+#घोषणा __NEW_UTS_LEN 64
 
-struct old_utsname {
-	char sysname[65];
-	char nodename[65];
-	char release[65];
-	char version[65];
-	char machine[65];
-};
+काष्ठा old_utsname अणु
+	अक्षर sysname[65];
+	अक्षर nodename[65];
+	अक्षर release[65];
+	अक्षर version[65];
+	अक्षर machine[65];
+पूर्ण;
 
-struct new_utsname {
-	char sysname[__NEW_UTS_LEN + 1];
-	char nodename[__NEW_UTS_LEN + 1];
-	char release[__NEW_UTS_LEN + 1];
-	char version[__NEW_UTS_LEN + 1];
-	char machine[__NEW_UTS_LEN + 1];
-	char domainname[__NEW_UTS_LEN + 1];
-};
+काष्ठा new_utsname अणु
+	अक्षर sysname[__NEW_UTS_LEN + 1];
+	अक्षर nodename[__NEW_UTS_LEN + 1];
+	अक्षर release[__NEW_UTS_LEN + 1];
+	अक्षर version[__NEW_UTS_LEN + 1];
+	अक्षर machine[__NEW_UTS_LEN + 1];
+	अक्षर करोमुख्यname[__NEW_UTS_LEN + 1];
+पूर्ण;
 
 
-#endif /* _UAPI_LINUX_UTSNAME_H */
+#पूर्ण_अगर /* _UAPI_LINUX_UTSNAME_H */

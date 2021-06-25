@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-   md.c : Multiple Devices driver for Linux
+   md.c : Multiple Devices driver क्रम Linux
      Copyright (C) 1998, 1999, 2000 Ingo Molnar
 
      completely rewritten, based on the MD driver code from Marc Zyngier
@@ -9,508 +10,508 @@
 
    - RAID-1/RAID-5 extensions by Miguel de Icaza, Gadi Oxman, Ingo Molnar
    - RAID-6 extensions by H. Peter Anvin <hpa@zytor.com>
-   - boot support for linear and striped mode by Harald Hoyer <HarryH@Royal.Net>
+   - boot support क्रम linear and striped mode by Harald Hoyer <HarryH@Royal.Net>
    - kerneld support by Boris Tobotras <boris@xtalk.msk.su>
    - kmod support by: Cyrus Durgin
    - RAID0 bugfixes: Mark Anthony Lisher <markal@iname.com>
-   - Devfs support by Richard Gooch <rgooch@atnf.csiro.au>
+   - Devfs support by Riअक्षरd Gooch <rgooch@atnf.csiro.au>
 
    - lots of fixes and improvements to the RAID1/RAID5 and generic
      RAID code (such as request based resynchronization):
 
      Neil Brown <neilb@cse.unsw.edu.au>.
 
-   - persistent bitmap code
+   - persistent biपंचांगap code
      Copyright (C) 2003-2004, Paul Clements, SteelEye Technology, Inc.
 
 
    Errors, Warnings, etc.
    Please use:
-     pr_crit() for error conditions that risk data loss
-     pr_err() for error conditions that are unexpected, like an IO error
-         or internal inconsistency
-     pr_warn() for error conditions that could have been predicated, like
+     pr_crit() क्रम error conditions that risk data loss
+     pr_err() क्रम error conditions that are unexpected, like an IO error
+         or पूर्णांकernal inconsistency
+     pr_warn() क्रम error conditions that could have been predicated, like
          adding a device to an array when it has incompatible metadata
-     pr_info() for every interesting, very rare events, like an array starting
+     pr_info() क्रम every पूर्णांकeresting, very rare events, like an array starting
          or stopping, or resync starting or stopping
-     pr_debug() for everything else.
+     pr_debug() क्रम everything अन्यथा.
 
 */
 
-#include <linux/sched/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/kthread.h>
-#include <linux/blkdev.h>
-#include <linux/badblocks.h>
-#include <linux/sysctl.h>
-#include <linux/seq_file.h>
-#include <linux/fs.h>
-#include <linux/poll.h>
-#include <linux/ctype.h>
-#include <linux/string.h>
-#include <linux/hdreg.h>
-#include <linux/proc_fs.h>
-#include <linux/random.h>
-#include <linux/module.h>
-#include <linux/reboot.h>
-#include <linux/file.h>
-#include <linux/compat.h>
-#include <linux/delay.h>
-#include <linux/raid/md_p.h>
-#include <linux/raid/md_u.h>
-#include <linux/raid/detect.h>
-#include <linux/slab.h>
-#include <linux/percpu-refcount.h>
-#include <linux/part_stat.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/badblocks.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/module.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/file.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/raid/md_p.h>
+#समावेश <linux/raid/md_u.h>
+#समावेश <linux/raid/detect.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/percpu-refcount.h>
+#समावेश <linux/part_स्थिति.स>
 
-#include <trace/events/block.h>
-#include "md.h"
-#include "md-bitmap.h"
-#include "md-cluster.h"
+#समावेश <trace/events/block.h>
+#समावेश "md.h"
+#समावेश "md-bitmap.h"
+#समावेश "md-cluster.h"
 
-/* pers_list is a list of registered personalities protected
+/* pers_list is a list of रेजिस्टरed personalities रक्षित
  * by pers_lock.
- * pers_lock does extra service to protect accesses to
- * mddev->thread when the mutex cannot be held.
+ * pers_lock करोes extra service to protect accesses to
+ * mddev->thपढ़ो when the mutex cannot be held.
  */
-static LIST_HEAD(pers_list);
-static DEFINE_SPINLOCK(pers_lock);
+अटल LIST_HEAD(pers_list);
+अटल DEFINE_SPINLOCK(pers_lock);
 
-static struct kobj_type md_ktype;
+अटल काष्ठा kobj_type md_ktype;
 
-struct md_cluster_operations *md_cluster_ops;
+काष्ठा md_cluster_operations *md_cluster_ops;
 EXPORT_SYMBOL(md_cluster_ops);
-static struct module *md_cluster_mod;
+अटल काष्ठा module *md_cluster_mod;
 
-static DECLARE_WAIT_QUEUE_HEAD(resync_wait);
-static struct workqueue_struct *md_wq;
-static struct workqueue_struct *md_misc_wq;
-static struct workqueue_struct *md_rdev_misc_wq;
+अटल DECLARE_WAIT_QUEUE_HEAD(resync_रुको);
+अटल काष्ठा workqueue_काष्ठा *md_wq;
+अटल काष्ठा workqueue_काष्ठा *md_misc_wq;
+अटल काष्ठा workqueue_काष्ठा *md_rdev_misc_wq;
 
-static int remove_and_add_spares(struct mddev *mddev,
-				 struct md_rdev *this);
-static void mddev_detach(struct mddev *mddev);
+अटल पूर्णांक हटाओ_and_add_spares(काष्ठा mddev *mddev,
+				 काष्ठा md_rdev *this);
+अटल व्योम mddev_detach(काष्ठा mddev *mddev);
 
 /*
- * Default number of read corrections we'll attempt on an rdev
- * before ejecting it from the array. We divide the read error
- * count by 2 for every hour elapsed between read errors.
+ * Default number of पढ़ो corrections we'll attempt on an rdev
+ * beक्रमe ejecting it from the array. We भागide the पढ़ो error
+ * count by 2 क्रम every hour elapsed between पढ़ो errors.
  */
-#define MD_DEFAULT_MAX_CORRECTED_READ_ERRORS 20
+#घोषणा MD_DEFAULT_MAX_CORRECTED_READ_ERRORS 20
 /* Default safemode delay: 200 msec */
-#define DEFAULT_SAFEMODE_DELAY ((200 * HZ)/1000 +1)
+#घोषणा DEFAULT_SAFEMODE_DELAY ((200 * HZ)/1000 +1)
 /*
- * Current RAID-1,4,5 parallel reconstruction 'guaranteed speed limit'
- * is 1000 KB/sec, so the extra system load does not show up that much.
- * Increase it if you want to have more _guaranteed_ speed. Note that
- * the RAID driver will use the maximum available bandwidth if the IO
- * subsystem is idle. There is also an 'absolute maximum' reconstruction
- * speed limit - in case reconstruction slows down your system despite
+ * Current RAID-1,4,5 parallel reस्थिरruction 'guaranteed speed limit'
+ * is 1000 KB/sec, so the extra प्रणाली load करोes not show up that much.
+ * Increase it अगर you want to have more _guaranteed_ speed. Note that
+ * the RAID driver will use the maximum available bandwidth अगर the IO
+ * subप्रणाली is idle. There is also an 'absolute maximum' reस्थिरruction
+ * speed limit - in हाल reस्थिरruction slows करोwn your प्रणाली despite
  * idle IO detection.
  *
  * you can change it via /proc/sys/dev/raid/speed_limit_min and _max.
- * or /sys/block/mdX/md/sync_speed_{min,max}
+ * or /sys/block/mdX/md/sync_speed_अणुmin,maxपूर्ण
  */
 
-static int sysctl_speed_limit_min = 1000;
-static int sysctl_speed_limit_max = 200000;
-static inline int speed_min(struct mddev *mddev)
-{
-	return mddev->sync_speed_min ?
+अटल पूर्णांक sysctl_speed_limit_min = 1000;
+अटल पूर्णांक sysctl_speed_limit_max = 200000;
+अटल अंतरभूत पूर्णांक speed_min(काष्ठा mddev *mddev)
+अणु
+	वापस mddev->sync_speed_min ?
 		mddev->sync_speed_min : sysctl_speed_limit_min;
-}
+पूर्ण
 
-static inline int speed_max(struct mddev *mddev)
-{
-	return mddev->sync_speed_max ?
+अटल अंतरभूत पूर्णांक speed_max(काष्ठा mddev *mddev)
+अणु
+	वापस mddev->sync_speed_max ?
 		mddev->sync_speed_max : sysctl_speed_limit_max;
-}
+पूर्ण
 
-static void rdev_uninit_serial(struct md_rdev *rdev)
-{
-	if (!test_and_clear_bit(CollisionCheck, &rdev->flags))
-		return;
+अटल व्योम rdev_uninit_serial(काष्ठा md_rdev *rdev)
+अणु
+	अगर (!test_and_clear_bit(CollisionCheck, &rdev->flags))
+		वापस;
 
-	kvfree(rdev->serial);
-	rdev->serial = NULL;
-}
+	kvमुक्त(rdev->serial);
+	rdev->serial = शून्य;
+पूर्ण
 
-static void rdevs_uninit_serial(struct mddev *mddev)
-{
-	struct md_rdev *rdev;
+अटल व्योम rdevs_uninit_serial(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_rdev *rdev;
 
-	rdev_for_each(rdev, mddev)
+	rdev_क्रम_each(rdev, mddev)
 		rdev_uninit_serial(rdev);
-}
+पूर्ण
 
-static int rdev_init_serial(struct md_rdev *rdev)
-{
+अटल पूर्णांक rdev_init_serial(काष्ठा md_rdev *rdev)
+अणु
 	/* serial_nums equals with BARRIER_BUCKETS_NR */
-	int i, serial_nums = 1 << ((PAGE_SHIFT - ilog2(sizeof(atomic_t))));
-	struct serial_in_rdev *serial = NULL;
+	पूर्णांक i, serial_nums = 1 << ((PAGE_SHIFT - ilog2(माप(atomic_t))));
+	काष्ठा serial_in_rdev *serial = शून्य;
 
-	if (test_bit(CollisionCheck, &rdev->flags))
-		return 0;
+	अगर (test_bit(CollisionCheck, &rdev->flags))
+		वापस 0;
 
-	serial = kvmalloc(sizeof(struct serial_in_rdev) * serial_nums,
+	serial = kvदो_स्मृति(माप(काष्ठा serial_in_rdev) * serial_nums,
 			  GFP_KERNEL);
-	if (!serial)
-		return -ENOMEM;
+	अगर (!serial)
+		वापस -ENOMEM;
 
-	for (i = 0; i < serial_nums; i++) {
-		struct serial_in_rdev *serial_tmp = &serial[i];
+	क्रम (i = 0; i < serial_nums; i++) अणु
+		काष्ठा serial_in_rdev *serial_पंचांगp = &serial[i];
 
-		spin_lock_init(&serial_tmp->serial_lock);
-		serial_tmp->serial_rb = RB_ROOT_CACHED;
-		init_waitqueue_head(&serial_tmp->serial_io_wait);
-	}
+		spin_lock_init(&serial_पंचांगp->serial_lock);
+		serial_पंचांगp->serial_rb = RB_ROOT_CACHED;
+		init_रुकोqueue_head(&serial_पंचांगp->serial_io_रुको);
+	पूर्ण
 
 	rdev->serial = serial;
 	set_bit(CollisionCheck, &rdev->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rdevs_init_serial(struct mddev *mddev)
-{
-	struct md_rdev *rdev;
-	int ret = 0;
+अटल पूर्णांक rdevs_init_serial(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_rdev *rdev;
+	पूर्णांक ret = 0;
 
-	rdev_for_each(rdev, mddev) {
+	rdev_क्रम_each(rdev, mddev) अणु
 		ret = rdev_init_serial(rdev);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	/* Free all resources if pool is not existed */
-	if (ret && !mddev->serial_info_pool)
+	/* Free all resources अगर pool is not existed */
+	अगर (ret && !mddev->serial_info_pool)
 		rdevs_uninit_serial(mddev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * rdev needs to enable serial stuffs if it meets the conditions:
- * 1. it is multi-queue device flaged with writemostly.
- * 2. the write-behind mode is enabled.
+ * rdev needs to enable serial stuffs अगर it meets the conditions:
+ * 1. it is multi-queue device flaged with ग_लिखोmostly.
+ * 2. the ग_लिखो-behind mode is enabled.
  */
-static int rdev_need_serial(struct md_rdev *rdev)
-{
-	return (rdev && rdev->mddev->bitmap_info.max_write_behind > 0 &&
+अटल पूर्णांक rdev_need_serial(काष्ठा md_rdev *rdev)
+अणु
+	वापस (rdev && rdev->mddev->biपंचांगap_info.max_ग_लिखो_behind > 0 &&
 		rdev->bdev->bd_disk->queue->nr_hw_queues != 1 &&
 		test_bit(WriteMostly, &rdev->flags));
-}
+पूर्ण
 
 /*
- * Init resource for rdev(s), then create serial_info_pool if:
- * 1. rdev is the first device which return true from rdev_enable_serial.
- * 2. rdev is NULL, means we want to enable serialization for all rdevs.
+ * Init resource क्रम rdev(s), then create serial_info_pool अगर:
+ * 1. rdev is the first device which वापस true from rdev_enable_serial.
+ * 2. rdev is शून्य, means we want to enable serialization क्रम all rdevs.
  */
-void mddev_create_serial_pool(struct mddev *mddev, struct md_rdev *rdev,
+व्योम mddev_create_serial_pool(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev,
 			      bool is_suspend)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 
-	if (rdev && !rdev_need_serial(rdev) &&
+	अगर (rdev && !rdev_need_serial(rdev) &&
 	    !test_bit(CollisionCheck, &rdev->flags))
-		return;
+		वापस;
 
-	if (!is_suspend)
+	अगर (!is_suspend)
 		mddev_suspend(mddev);
 
-	if (!rdev)
+	अगर (!rdev)
 		ret = rdevs_init_serial(mddev);
-	else
+	अन्यथा
 		ret = rdev_init_serial(rdev);
-	if (ret)
-		goto abort;
+	अगर (ret)
+		जाओ पात;
 
-	if (mddev->serial_info_pool == NULL) {
+	अगर (mddev->serial_info_pool == शून्य) अणु
 		/*
-		 * already in memalloc noio context by
+		 * alपढ़ोy in meदो_स्मृति noio context by
 		 * mddev_suspend()
 		 */
 		mddev->serial_info_pool =
-			mempool_create_kmalloc_pool(NR_SERIAL_INFOS,
-						sizeof(struct serial_info));
-		if (!mddev->serial_info_pool) {
+			mempool_create_kदो_स्मृति_pool(NR_SERIAL_INFOS,
+						माप(काष्ठा serial_info));
+		अगर (!mddev->serial_info_pool) अणु
 			rdevs_uninit_serial(mddev);
 			pr_err("can't alloc memory pool for serialization\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-abort:
-	if (!is_suspend)
+पात:
+	अगर (!is_suspend)
 		mddev_resume(mddev);
-}
+पूर्ण
 
 /*
  * Free resource from rdev(s), and destroy serial_info_pool under conditions:
  * 1. rdev is the last device flaged with CollisionCheck.
- * 2. when bitmap is destroyed while policy is not enabled.
- * 3. for disable policy, the pool is destroyed only when no rdev needs it.
+ * 2. when biपंचांगap is destroyed जबतक policy is not enabled.
+ * 3. क्रम disable policy, the pool is destroyed only when no rdev needs it.
  */
-void mddev_destroy_serial_pool(struct mddev *mddev, struct md_rdev *rdev,
+व्योम mddev_destroy_serial_pool(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev,
 			       bool is_suspend)
-{
-	if (rdev && !test_bit(CollisionCheck, &rdev->flags))
-		return;
+अणु
+	अगर (rdev && !test_bit(CollisionCheck, &rdev->flags))
+		वापस;
 
-	if (mddev->serial_info_pool) {
-		struct md_rdev *temp;
-		int num = 0; /* used to track if other rdevs need the pool */
+	अगर (mddev->serial_info_pool) अणु
+		काष्ठा md_rdev *temp;
+		पूर्णांक num = 0; /* used to track अगर other rdevs need the pool */
 
-		if (!is_suspend)
+		अगर (!is_suspend)
 			mddev_suspend(mddev);
-		rdev_for_each(temp, mddev) {
-			if (!rdev) {
-				if (!mddev->serialize_policy ||
+		rdev_क्रम_each(temp, mddev) अणु
+			अगर (!rdev) अणु
+				अगर (!mddev->serialize_policy ||
 				    !rdev_need_serial(temp))
 					rdev_uninit_serial(temp);
-				else
+				अन्यथा
 					num++;
-			} else if (temp != rdev &&
+			पूर्ण अन्यथा अगर (temp != rdev &&
 				   test_bit(CollisionCheck, &temp->flags))
 				num++;
-		}
+		पूर्ण
 
-		if (rdev)
+		अगर (rdev)
 			rdev_uninit_serial(rdev);
 
-		if (num)
+		अगर (num)
 			pr_info("The mempool could be used by other devices\n");
-		else {
+		अन्यथा अणु
 			mempool_destroy(mddev->serial_info_pool);
-			mddev->serial_info_pool = NULL;
-		}
-		if (!is_suspend)
+			mddev->serial_info_pool = शून्य;
+		पूर्ण
+		अगर (!is_suspend)
 			mddev_resume(mddev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct ctl_table_header *raid_table_header;
+अटल काष्ठा ctl_table_header *raid_table_header;
 
-static struct ctl_table raid_table[] = {
-	{
+अटल काष्ठा ctl_table raid_table[] = अणु
+	अणु
 		.procname	= "speed_limit_min",
 		.data		= &sysctl_speed_limit_min,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= S_IRUGO|S_IWUSR,
-		.proc_handler	= proc_dointvec,
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु
 		.procname	= "speed_limit_max",
 		.data		= &sysctl_speed_limit_max,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= S_IRUGO|S_IWUSR,
-		.proc_handler	= proc_dointvec,
-	},
-	{ }
-};
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table raid_dir_table[] = {
-	{
+अटल काष्ठा ctl_table raid_dir_table[] = अणु
+	अणु
 		.procname	= "raid",
 		.maxlen		= 0,
 		.mode		= S_IRUGO|S_IXUGO,
 		.child		= raid_table,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table raid_root_table[] = {
-	{
+अटल काष्ठा ctl_table raid_root_table[] = अणु
+	अणु
 		.procname	= "dev",
 		.maxlen		= 0,
 		.mode		= 0555,
 		.child		= raid_dir_table,
-	},
-	{  }
-};
+	पूर्ण,
+	अणु  पूर्ण
+पूर्ण;
 
-static int start_readonly;
+अटल पूर्णांक start_पढ़ोonly;
 
 /*
- * The original mechanism for creating an md device is to create
- * a device node in /dev and to open it.  This causes races with device-close.
- * The preferred method is to write to the "new_array" module parameter.
- * This can avoid races.
- * Setting create_on_open to false disables the original mechanism
+ * The original mechanism क्रम creating an md device is to create
+ * a device node in /dev and to खोलो it.  This causes races with device-बंद.
+ * The preferred method is to ग_लिखो to the "new_array" module parameter.
+ * This can aव्योम races.
+ * Setting create_on_खोलो to false disables the original mechanism
  * so all the races disappear.
  */
-static bool create_on_open = true;
+अटल bool create_on_खोलो = true;
 
 /*
- * We have a system wide 'event count' that is incremented
- * on any 'interesting' event, and readers of /proc/mdstat
+ * We have a प्रणाली wide 'event count' that is incremented
+ * on any 'interesting' event, and पढ़ोers of /proc/mdstat
  * can use 'poll' or 'select' to find out when the event
  * count increases.
  *
  * Events are:
- *  start array, stop array, error, add device, remove device,
+ *  start array, stop array, error, add device, हटाओ device,
  *  start build, activate spare
  */
-static DECLARE_WAIT_QUEUE_HEAD(md_event_waiters);
-static atomic_t md_event_count;
-void md_new_event(struct mddev *mddev)
-{
+अटल DECLARE_WAIT_QUEUE_HEAD(md_event_रुकोers);
+अटल atomic_t md_event_count;
+व्योम md_new_event(काष्ठा mddev *mddev)
+अणु
 	atomic_inc(&md_event_count);
-	wake_up(&md_event_waiters);
-}
+	wake_up(&md_event_रुकोers);
+पूर्ण
 EXPORT_SYMBOL_GPL(md_new_event);
 
 /*
  * Enables to iterate over all existing md arrays
  * all_mddevs_lock protects this list.
  */
-static LIST_HEAD(all_mddevs);
-static DEFINE_SPINLOCK(all_mddevs_lock);
+अटल LIST_HEAD(all_mddevs);
+अटल DEFINE_SPINLOCK(all_mddevs_lock);
 
 /*
- * iterates through all used mddevs in the system.
+ * iterates through all used mddevs in the प्रणाली.
  * We take care to grab the all_mddevs_lock whenever navigating
  * the list, and to always hold a refcount when unlocked.
- * Any code which breaks out of this loop while own
+ * Any code which अवरोधs out of this loop जबतक own
  * a reference to the current mddev and must mddev_put it.
  */
-#define for_each_mddev(_mddev,_tmp)					\
+#घोषणा क्रम_each_mddev(_mddev,_पंचांगp)					\
 									\
-	for (({ spin_lock(&all_mddevs_lock);				\
-		_tmp = all_mddevs.next;					\
-		_mddev = NULL;});					\
-	     ({ if (_tmp != &all_mddevs)				\
-			mddev_get(list_entry(_tmp, struct mddev, all_mddevs));\
+	क्रम ((अणु spin_lock(&all_mddevs_lock);				\
+		_पंचांगp = all_mddevs.next;					\
+		_mddev = शून्य;पूर्ण);					\
+	     (अणु अगर (_पंचांगp != &all_mddevs)				\
+			mddev_get(list_entry(_पंचांगp, काष्ठा mddev, all_mddevs));\
 		spin_unlock(&all_mddevs_lock);				\
-		if (_mddev) mddev_put(_mddev);				\
-		_mddev = list_entry(_tmp, struct mddev, all_mddevs);	\
-		_tmp != &all_mddevs;});					\
-	     ({ spin_lock(&all_mddevs_lock);				\
-		_tmp = _tmp->next;})					\
+		अगर (_mddev) mddev_put(_mddev);				\
+		_mddev = list_entry(_पंचांगp, काष्ठा mddev, all_mddevs);	\
+		_पंचांगp != &all_mddevs;पूर्ण);					\
+	     (अणु spin_lock(&all_mddevs_lock);				\
+		_पंचांगp = _पंचांगp->next;पूर्ण)					\
 		)
 
-/* Rather than calling directly into the personality make_request function,
- * IO requests come here first so that we can check if the device is
+/* Rather than calling directly पूर्णांकo the personality make_request function,
+ * IO requests come here first so that we can check अगर the device is
  * being suspended pending a reconfiguration.
- * We hold a refcount over the call to ->make_request.  By the time that
- * call has finished, the bio has been linked into some internal structure
- * and so is visible to ->quiesce(), so we don't need the refcount any more.
+ * We hold a refcount over the call to ->make_request.  By the समय that
+ * call has finished, the bio has been linked पूर्णांकo some पूर्णांकernal काष्ठाure
+ * and so is visible to ->quiesce(), so we करोn't need the refcount any more.
  */
-static bool is_suspended(struct mddev *mddev, struct bio *bio)
-{
-	if (mddev->suspended)
-		return true;
-	if (bio_data_dir(bio) != WRITE)
-		return false;
-	if (mddev->suspend_lo >= mddev->suspend_hi)
-		return false;
-	if (bio->bi_iter.bi_sector >= mddev->suspend_hi)
-		return false;
-	if (bio_end_sector(bio) < mddev->suspend_lo)
-		return false;
-	return true;
-}
+अटल bool is_suspended(काष्ठा mddev *mddev, काष्ठा bio *bio)
+अणु
+	अगर (mddev->suspended)
+		वापस true;
+	अगर (bio_data_dir(bio) != WRITE)
+		वापस false;
+	अगर (mddev->suspend_lo >= mddev->suspend_hi)
+		वापस false;
+	अगर (bio->bi_iter.bi_sector >= mddev->suspend_hi)
+		वापस false;
+	अगर (bio_end_sector(bio) < mddev->suspend_lo)
+		वापस false;
+	वापस true;
+पूर्ण
 
-void md_handle_request(struct mddev *mddev, struct bio *bio)
-{
+व्योम md_handle_request(काष्ठा mddev *mddev, काष्ठा bio *bio)
+अणु
 check_suspended:
-	rcu_read_lock();
-	if (is_suspended(mddev, bio)) {
-		DEFINE_WAIT(__wait);
-		for (;;) {
-			prepare_to_wait(&mddev->sb_wait, &__wait,
+	rcu_पढ़ो_lock();
+	अगर (is_suspended(mddev, bio)) अणु
+		DEFINE_WAIT(__रुको);
+		क्रम (;;) अणु
+			prepare_to_रुको(&mddev->sb_रुको, &__रुको,
 					TASK_UNINTERRUPTIBLE);
-			if (!is_suspended(mddev, bio))
-				break;
-			rcu_read_unlock();
+			अगर (!is_suspended(mddev, bio))
+				अवरोध;
+			rcu_पढ़ो_unlock();
 			schedule();
-			rcu_read_lock();
-		}
-		finish_wait(&mddev->sb_wait, &__wait);
-	}
+			rcu_पढ़ो_lock();
+		पूर्ण
+		finish_रुको(&mddev->sb_रुको, &__रुको);
+	पूर्ण
 	atomic_inc(&mddev->active_io);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (!mddev->pers->make_request(mddev, bio)) {
+	अगर (!mddev->pers->make_request(mddev, bio)) अणु
 		atomic_dec(&mddev->active_io);
-		wake_up(&mddev->sb_wait);
-		goto check_suspended;
-	}
+		wake_up(&mddev->sb_रुको);
+		जाओ check_suspended;
+	पूर्ण
 
-	if (atomic_dec_and_test(&mddev->active_io) && mddev->suspended)
-		wake_up(&mddev->sb_wait);
-}
+	अगर (atomic_dec_and_test(&mddev->active_io) && mddev->suspended)
+		wake_up(&mddev->sb_रुको);
+पूर्ण
 EXPORT_SYMBOL(md_handle_request);
 
-struct md_io {
-	struct mddev *mddev;
+काष्ठा md_io अणु
+	काष्ठा mddev *mddev;
 	bio_end_io_t *orig_bi_end_io;
-	void *orig_bi_private;
-	struct block_device *orig_bi_bdev;
-	unsigned long start_time;
-};
+	व्योम *orig_bi_निजी;
+	काष्ठा block_device *orig_bi_bdev;
+	अचिन्हित दीर्घ start_समय;
+पूर्ण;
 
-static void md_end_io(struct bio *bio)
-{
-	struct md_io *md_io = bio->bi_private;
-	struct mddev *mddev = md_io->mddev;
+अटल व्योम md_end_io(काष्ठा bio *bio)
+अणु
+	काष्ठा md_io *md_io = bio->bi_निजी;
+	काष्ठा mddev *mddev = md_io->mddev;
 
-	bio_end_io_acct_remapped(bio, md_io->start_time, md_io->orig_bi_bdev);
+	bio_end_io_acct_remapped(bio, md_io->start_समय, md_io->orig_bi_bdev);
 
 	bio->bi_end_io = md_io->orig_bi_end_io;
-	bio->bi_private = md_io->orig_bi_private;
+	bio->bi_निजी = md_io->orig_bi_निजी;
 
-	mempool_free(md_io, &mddev->md_io_pool);
+	mempool_मुक्त(md_io, &mddev->md_io_pool);
 
-	if (bio->bi_end_io)
+	अगर (bio->bi_end_io)
 		bio->bi_end_io(bio);
-}
+पूर्ण
 
-static blk_qc_t md_submit_bio(struct bio *bio)
-{
-	const int rw = bio_data_dir(bio);
-	struct mddev *mddev = bio->bi_bdev->bd_disk->private_data;
+अटल blk_qc_t md_submit_bio(काष्ठा bio *bio)
+अणु
+	स्थिर पूर्णांक rw = bio_data_dir(bio);
+	काष्ठा mddev *mddev = bio->bi_bdev->bd_disk->निजी_data;
 
-	if (mddev == NULL || mddev->pers == NULL) {
+	अगर (mddev == शून्य || mddev->pers == शून्य) अणु
 		bio_io_error(bio);
-		return BLK_QC_T_NONE;
-	}
+		वापस BLK_QC_T_NONE;
+	पूर्ण
 
-	if (unlikely(test_bit(MD_BROKEN, &mddev->flags)) && (rw == WRITE)) {
+	अगर (unlikely(test_bit(MD_BROKEN, &mddev->flags)) && (rw == WRITE)) अणु
 		bio_io_error(bio);
-		return BLK_QC_T_NONE;
-	}
+		वापस BLK_QC_T_NONE;
+	पूर्ण
 
 	blk_queue_split(&bio);
 
-	if (mddev->ro == 1 && unlikely(rw == WRITE)) {
-		if (bio_sectors(bio) != 0)
+	अगर (mddev->ro == 1 && unlikely(rw == WRITE)) अणु
+		अगर (bio_sectors(bio) != 0)
 			bio->bi_status = BLK_STS_IOERR;
 		bio_endio(bio);
-		return BLK_QC_T_NONE;
-	}
+		वापस BLK_QC_T_NONE;
+	पूर्ण
 
-	if (bio->bi_end_io != md_end_io) {
-		struct md_io *md_io;
+	अगर (bio->bi_end_io != md_end_io) अणु
+		काष्ठा md_io *md_io;
 
 		md_io = mempool_alloc(&mddev->md_io_pool, GFP_NOIO);
 		md_io->mddev = mddev;
 		md_io->orig_bi_end_io = bio->bi_end_io;
-		md_io->orig_bi_private = bio->bi_private;
+		md_io->orig_bi_निजी = bio->bi_निजी;
 		md_io->orig_bi_bdev = bio->bi_bdev;
 
 		bio->bi_end_io = md_end_io;
-		bio->bi_private = md_io;
+		bio->bi_निजी = md_io;
 
-		md_io->start_time = bio_start_io_acct(bio);
-	}
+		md_io->start_समय = bio_start_io_acct(bio);
+	पूर्ण
 
 	/* bio could be mergeable after passing to underlayer */
 	bio->bi_opf &= ~REQ_NOMERGE;
 
 	md_handle_request(mddev, bio);
 
-	return BLK_QC_T_NONE;
-}
+	वापस BLK_QC_T_NONE;
+पूर्ण
 
 /* mddev_suspend makes sure no new requests are submitted
  * to the device, and that any requests that have been submitted
@@ -518,484 +519,484 @@ static blk_qc_t md_submit_bio(struct bio *bio)
  * Once mddev_detach() is called and completes, the module will be
  * completely unused.
  */
-void mddev_suspend(struct mddev *mddev)
-{
-	WARN_ON_ONCE(mddev->thread && current == mddev->thread->tsk);
-	lockdep_assert_held(&mddev->reconfig_mutex);
-	if (mddev->suspended++)
-		return;
+व्योम mddev_suspend(काष्ठा mddev *mddev)
+अणु
+	WARN_ON_ONCE(mddev->thपढ़ो && current == mddev->thपढ़ो->tsk);
+	lockdep_निश्चित_held(&mddev->reconfig_mutex);
+	अगर (mddev->suspended++)
+		वापस;
 	synchronize_rcu();
-	wake_up(&mddev->sb_wait);
+	wake_up(&mddev->sb_रुको);
 	set_bit(MD_ALLOW_SB_UPDATE, &mddev->flags);
 	smp_mb__after_atomic();
-	wait_event(mddev->sb_wait, atomic_read(&mddev->active_io) == 0);
+	रुको_event(mddev->sb_रुको, atomic_पढ़ो(&mddev->active_io) == 0);
 	mddev->pers->quiesce(mddev, 1);
 	clear_bit_unlock(MD_ALLOW_SB_UPDATE, &mddev->flags);
-	wait_event(mddev->sb_wait, !test_bit(MD_UPDATING_SB, &mddev->flags));
+	रुको_event(mddev->sb_रुको, !test_bit(MD_UPDATING_SB, &mddev->flags));
 
-	del_timer_sync(&mddev->safemode_timer);
+	del_समयr_sync(&mddev->safemode_समयr);
 	/* restrict memory reclaim I/O during raid array is suspend */
-	mddev->noio_flag = memalloc_noio_save();
-}
+	mddev->noio_flag = meदो_स्मृति_noio_save();
+पूर्ण
 EXPORT_SYMBOL_GPL(mddev_suspend);
 
-void mddev_resume(struct mddev *mddev)
-{
-	/* entred the memalloc scope from mddev_suspend() */
-	memalloc_noio_restore(mddev->noio_flag);
-	lockdep_assert_held(&mddev->reconfig_mutex);
-	if (--mddev->suspended)
-		return;
-	wake_up(&mddev->sb_wait);
+व्योम mddev_resume(काष्ठा mddev *mddev)
+अणु
+	/* entred the meदो_स्मृति scope from mddev_suspend() */
+	meदो_स्मृति_noio_restore(mddev->noio_flag);
+	lockdep_निश्चित_held(&mddev->reconfig_mutex);
+	अगर (--mddev->suspended)
+		वापस;
+	wake_up(&mddev->sb_रुको);
 	mddev->pers->quiesce(mddev, 0);
 
 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-	md_wakeup_thread(mddev->thread);
-	md_wakeup_thread(mddev->sync_thread); /* possibly kick off a reshape */
-}
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	md_wakeup_thपढ़ो(mddev->sync_thपढ़ो); /* possibly kick off a reshape */
+पूर्ण
 EXPORT_SYMBOL_GPL(mddev_resume);
 
 /*
- * Generic flush handling for md
+ * Generic flush handling क्रम md
  */
 
-static void md_end_flush(struct bio *bio)
-{
-	struct md_rdev *rdev = bio->bi_private;
-	struct mddev *mddev = rdev->mddev;
+अटल व्योम md_end_flush(काष्ठा bio *bio)
+अणु
+	काष्ठा md_rdev *rdev = bio->bi_निजी;
+	काष्ठा mddev *mddev = rdev->mddev;
 
 	rdev_dec_pending(rdev, mddev);
 
-	if (atomic_dec_and_test(&mddev->flush_pending)) {
+	अगर (atomic_dec_and_test(&mddev->flush_pending)) अणु
 		/* The pre-request flush has finished */
 		queue_work(md_wq, &mddev->flush_work);
-	}
+	पूर्ण
 	bio_put(bio);
-}
+पूर्ण
 
-static void md_submit_flush_data(struct work_struct *ws);
+अटल व्योम md_submit_flush_data(काष्ठा work_काष्ठा *ws);
 
-static void submit_flushes(struct work_struct *ws)
-{
-	struct mddev *mddev = container_of(ws, struct mddev, flush_work);
-	struct md_rdev *rdev;
+अटल व्योम submit_flushes(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा mddev *mddev = container_of(ws, काष्ठा mddev, flush_work);
+	काष्ठा md_rdev *rdev;
 
-	mddev->start_flush = ktime_get_boottime();
+	mddev->start_flush = kसमय_get_bootसमय();
 	INIT_WORK(&mddev->flush_work, md_submit_flush_data);
 	atomic_set(&mddev->flush_pending, 1);
-	rcu_read_lock();
-	rdev_for_each_rcu(rdev, mddev)
-		if (rdev->raid_disk >= 0 &&
-		    !test_bit(Faulty, &rdev->flags)) {
+	rcu_पढ़ो_lock();
+	rdev_क्रम_each_rcu(rdev, mddev)
+		अगर (rdev->raid_disk >= 0 &&
+		    !test_bit(Faulty, &rdev->flags)) अणु
 			/* Take two references, one is dropped
 			 * when request finishes, one after
-			 * we reclaim rcu_read_lock
+			 * we reclaim rcu_पढ़ो_lock
 			 */
-			struct bio *bi;
+			काष्ठा bio *bi;
 			atomic_inc(&rdev->nr_pending);
 			atomic_inc(&rdev->nr_pending);
-			rcu_read_unlock();
+			rcu_पढ़ो_unlock();
 			bi = bio_alloc_bioset(GFP_NOIO, 0, &mddev->bio_set);
 			bi->bi_end_io = md_end_flush;
-			bi->bi_private = rdev;
+			bi->bi_निजी = rdev;
 			bio_set_dev(bi, rdev->bdev);
 			bi->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
 			atomic_inc(&mddev->flush_pending);
 			submit_bio(bi);
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			rdev_dec_pending(rdev, mddev);
-		}
-	rcu_read_unlock();
-	if (atomic_dec_and_test(&mddev->flush_pending))
+		पूर्ण
+	rcu_पढ़ो_unlock();
+	अगर (atomic_dec_and_test(&mddev->flush_pending))
 		queue_work(md_wq, &mddev->flush_work);
-}
+पूर्ण
 
-static void md_submit_flush_data(struct work_struct *ws)
-{
-	struct mddev *mddev = container_of(ws, struct mddev, flush_work);
-	struct bio *bio = mddev->flush_bio;
+अटल व्योम md_submit_flush_data(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा mddev *mddev = container_of(ws, काष्ठा mddev, flush_work);
+	काष्ठा bio *bio = mddev->flush_bio;
 
 	/*
-	 * must reset flush_bio before calling into md_handle_request to avoid a
+	 * must reset flush_bio beक्रमe calling पूर्णांकo md_handle_request to aव्योम a
 	 * deadlock, because other bios passed md_handle_request suspend check
-	 * could wait for this and below md_handle_request could wait for those
+	 * could रुको क्रम this and below md_handle_request could रुको क्रम those
 	 * bios because of suspend check
 	 */
 	spin_lock_irq(&mddev->lock);
 	mddev->prev_flush_start = mddev->start_flush;
-	mddev->flush_bio = NULL;
+	mddev->flush_bio = शून्य;
 	spin_unlock_irq(&mddev->lock);
-	wake_up(&mddev->sb_wait);
+	wake_up(&mddev->sb_रुको);
 
-	if (bio->bi_iter.bi_size == 0) {
-		/* an empty barrier - all done */
+	अगर (bio->bi_iter.bi_size == 0) अणु
+		/* an empty barrier - all करोne */
 		bio_endio(bio);
-	} else {
+	पूर्ण अन्यथा अणु
 		bio->bi_opf &= ~REQ_PREFLUSH;
 		md_handle_request(mddev, bio);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Manages consolidation of flushes and submitting any flushes needed for
- * a bio with REQ_PREFLUSH.  Returns true if the bio is finished or is
- * being finished in another context.  Returns false if the flushing is
+ * Manages consolidation of flushes and submitting any flushes needed क्रम
+ * a bio with REQ_PREFLUSH.  Returns true अगर the bio is finished or is
+ * being finished in another context.  Returns false अगर the flushing is
  * complete but still needs the I/O portion of the bio to be processed.
  */
-bool md_flush_request(struct mddev *mddev, struct bio *bio)
-{
-	ktime_t req_start = ktime_get_boottime();
+bool md_flush_request(काष्ठा mddev *mddev, काष्ठा bio *bio)
+अणु
+	kसमय_प्रकार req_start = kसमय_get_bootसमय();
 	spin_lock_irq(&mddev->lock);
-	/* flush requests wait until ongoing flush completes,
+	/* flush requests रुको until ongoing flush completes,
 	 * hence coalescing all the pending requests.
 	 */
-	wait_event_lock_irq(mddev->sb_wait,
+	रुको_event_lock_irq(mddev->sb_रुको,
 			    !mddev->flush_bio ||
-			    ktime_before(req_start, mddev->prev_flush_start),
+			    kसमय_beक्रमe(req_start, mddev->prev_flush_start),
 			    mddev->lock);
 	/* new request after previous flush is completed */
-	if (ktime_after(req_start, mddev->prev_flush_start)) {
+	अगर (kसमय_after(req_start, mddev->prev_flush_start)) अणु
 		WARN_ON(mddev->flush_bio);
 		mddev->flush_bio = bio;
-		bio = NULL;
-	}
+		bio = शून्य;
+	पूर्ण
 	spin_unlock_irq(&mddev->lock);
 
-	if (!bio) {
+	अगर (!bio) अणु
 		INIT_WORK(&mddev->flush_work, submit_flushes);
 		queue_work(md_wq, &mddev->flush_work);
-	} else {
-		/* flush was performed for some other bio while we waited. */
-		if (bio->bi_iter.bi_size == 0)
-			/* an empty barrier - all done */
+	पूर्ण अन्यथा अणु
+		/* flush was perक्रमmed क्रम some other bio जबतक we रुकोed. */
+		अगर (bio->bi_iter.bi_size == 0)
+			/* an empty barrier - all करोne */
 			bio_endio(bio);
-		else {
+		अन्यथा अणु
 			bio->bi_opf &= ~REQ_PREFLUSH;
-			return false;
-		}
-	}
-	return true;
-}
+			वापस false;
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(md_flush_request);
 
-static inline struct mddev *mddev_get(struct mddev *mddev)
-{
+अटल अंतरभूत काष्ठा mddev *mddev_get(काष्ठा mddev *mddev)
+अणु
 	atomic_inc(&mddev->active);
-	return mddev;
-}
+	वापस mddev;
+पूर्ण
 
-static void mddev_delayed_delete(struct work_struct *ws);
+अटल व्योम mddev_delayed_delete(काष्ठा work_काष्ठा *ws);
 
-static void mddev_put(struct mddev *mddev)
-{
-	if (!atomic_dec_and_lock(&mddev->active, &all_mddevs_lock))
-		return;
-	if (!mddev->raid_disks && list_empty(&mddev->disks) &&
-	    mddev->ctime == 0 && !mddev->hold_active) {
+अटल व्योम mddev_put(काष्ठा mddev *mddev)
+अणु
+	अगर (!atomic_dec_and_lock(&mddev->active, &all_mddevs_lock))
+		वापस;
+	अगर (!mddev->raid_disks && list_empty(&mddev->disks) &&
+	    mddev->स_समय == 0 && !mddev->hold_active) अणु
 		/* Array is not configured at all, and not held active,
 		 * so destroy it */
 		list_del_init(&mddev->all_mddevs);
 
 		/*
 		 * Call queue_work inside the spinlock so that
-		 * flush_workqueue() after mddev_find will succeed in waiting
-		 * for the work to be done.
+		 * flush_workqueue() after mddev_find will succeed in रुकोing
+		 * क्रम the work to be करोne.
 		 */
 		INIT_WORK(&mddev->del_work, mddev_delayed_delete);
 		queue_work(md_misc_wq, &mddev->del_work);
-	}
+	पूर्ण
 	spin_unlock(&all_mddevs_lock);
-}
+पूर्ण
 
-static void md_safemode_timeout(struct timer_list *t);
+अटल व्योम md_safemode_समयout(काष्ठा समयr_list *t);
 
-void mddev_init(struct mddev *mddev)
-{
+व्योम mddev_init(काष्ठा mddev *mddev)
+अणु
 	kobject_init(&mddev->kobj, &md_ktype);
-	mutex_init(&mddev->open_mutex);
+	mutex_init(&mddev->खोलो_mutex);
 	mutex_init(&mddev->reconfig_mutex);
-	mutex_init(&mddev->bitmap_info.mutex);
+	mutex_init(&mddev->biपंचांगap_info.mutex);
 	INIT_LIST_HEAD(&mddev->disks);
 	INIT_LIST_HEAD(&mddev->all_mddevs);
-	timer_setup(&mddev->safemode_timer, md_safemode_timeout, 0);
+	समयr_setup(&mddev->safemode_समयr, md_safemode_समयout, 0);
 	atomic_set(&mddev->active, 1);
-	atomic_set(&mddev->openers, 0);
+	atomic_set(&mddev->खोलोers, 0);
 	atomic_set(&mddev->active_io, 0);
 	spin_lock_init(&mddev->lock);
 	atomic_set(&mddev->flush_pending, 0);
-	init_waitqueue_head(&mddev->sb_wait);
-	init_waitqueue_head(&mddev->recovery_wait);
+	init_रुकोqueue_head(&mddev->sb_रुको);
+	init_रुकोqueue_head(&mddev->recovery_रुको);
 	mddev->reshape_position = MaxSector;
 	mddev->reshape_backwards = 0;
 	mddev->last_sync_action = "none";
 	mddev->resync_min = 0;
 	mddev->resync_max = MaxSector;
 	mddev->level = LEVEL_NONE;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mddev_init);
 
-static struct mddev *mddev_find_locked(dev_t unit)
-{
-	struct mddev *mddev;
+अटल काष्ठा mddev *mddev_find_locked(dev_t unit)
+अणु
+	काष्ठा mddev *mddev;
 
-	list_for_each_entry(mddev, &all_mddevs, all_mddevs)
-		if (mddev->unit == unit)
-			return mddev;
+	list_क्रम_each_entry(mddev, &all_mddevs, all_mddevs)
+		अगर (mddev->unit == unit)
+			वापस mddev;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* find an unused unit number */
-static dev_t mddev_alloc_unit(void)
-{
-	static int next_minor = 512;
-	int start = next_minor;
-	bool is_free = 0;
+अटल dev_t mddev_alloc_unit(व्योम)
+अणु
+	अटल पूर्णांक next_minor = 512;
+	पूर्णांक start = next_minor;
+	bool is_मुक्त = 0;
 	dev_t dev = 0;
 
-	while (!is_free) {
+	जबतक (!is_मुक्त) अणु
 		dev = MKDEV(MD_MAJOR, next_minor);
 		next_minor++;
-		if (next_minor > MINORMASK)
+		अगर (next_minor > MINORMASK)
 			next_minor = 0;
-		if (next_minor == start)
-			return 0;		/* Oh dear, all in use. */
-		is_free = !mddev_find_locked(dev);
-	}
+		अगर (next_minor == start)
+			वापस 0;		/* Oh dear, all in use. */
+		is_मुक्त = !mddev_find_locked(dev);
+	पूर्ण
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static struct mddev *mddev_find(dev_t unit)
-{
-	struct mddev *mddev;
+अटल काष्ठा mddev *mddev_find(dev_t unit)
+अणु
+	काष्ठा mddev *mddev;
 
-	if (MAJOR(unit) != MD_MAJOR)
-		unit &= ~((1 << MdpMinorShift) - 1);
+	अगर (MAJOR(unit) != MD_MAJOR)
+		unit &= ~((1 << MdpMinorShअगरt) - 1);
 
 	spin_lock(&all_mddevs_lock);
 	mddev = mddev_find_locked(unit);
-	if (mddev)
+	अगर (mddev)
 		mddev_get(mddev);
 	spin_unlock(&all_mddevs_lock);
 
-	return mddev;
-}
+	वापस mddev;
+पूर्ण
 
-static struct mddev *mddev_alloc(dev_t unit)
-{
-	struct mddev *new;
-	int error;
+अटल काष्ठा mddev *mddev_alloc(dev_t unit)
+अणु
+	काष्ठा mddev *new;
+	पूर्णांक error;
 
-	if (unit && MAJOR(unit) != MD_MAJOR)
-		unit &= ~((1 << MdpMinorShift) - 1);
+	अगर (unit && MAJOR(unit) != MD_MAJOR)
+		unit &= ~((1 << MdpMinorShअगरt) - 1);
 
-	new = kzalloc(sizeof(*new), GFP_KERNEL);
-	if (!new)
-		return ERR_PTR(-ENOMEM);
+	new = kzalloc(माप(*new), GFP_KERNEL);
+	अगर (!new)
+		वापस ERR_PTR(-ENOMEM);
 	mddev_init(new);
 
 	spin_lock(&all_mddevs_lock);
-	if (unit) {
+	अगर (unit) अणु
 		error = -EEXIST;
-		if (mddev_find_locked(unit))
-			goto out_free_new;
+		अगर (mddev_find_locked(unit))
+			जाओ out_मुक्त_new;
 		new->unit = unit;
-		if (MAJOR(unit) == MD_MAJOR)
+		अगर (MAJOR(unit) == MD_MAJOR)
 			new->md_minor = MINOR(unit);
-		else
-			new->md_minor = MINOR(unit) >> MdpMinorShift;
+		अन्यथा
+			new->md_minor = MINOR(unit) >> MdpMinorShअगरt;
 		new->hold_active = UNTIL_IOCTL;
-	} else {
+	पूर्ण अन्यथा अणु
 		error = -ENODEV;
 		new->unit = mddev_alloc_unit();
-		if (!new->unit)
-			goto out_free_new;
+		अगर (!new->unit)
+			जाओ out_मुक्त_new;
 		new->md_minor = MINOR(new->unit);
 		new->hold_active = UNTIL_STOP;
-	}
+	पूर्ण
 
 	list_add(&new->all_mddevs, &all_mddevs);
 	spin_unlock(&all_mddevs_lock);
-	return new;
-out_free_new:
+	वापस new;
+out_मुक्त_new:
 	spin_unlock(&all_mddevs_lock);
-	kfree(new);
-	return ERR_PTR(error);
-}
+	kमुक्त(new);
+	वापस ERR_PTR(error);
+पूर्ण
 
-static struct attribute_group md_redundancy_group;
+अटल काष्ठा attribute_group md_redundancy_group;
 
-void mddev_unlock(struct mddev *mddev)
-{
-	if (mddev->to_remove) {
-		/* These cannot be removed under reconfig_mutex as
+व्योम mddev_unlock(काष्ठा mddev *mddev)
+अणु
+	अगर (mddev->to_हटाओ) अणु
+		/* These cannot be हटाओd under reconfig_mutex as
 		 * an access to the files will try to take reconfig_mutex
-		 * while holding the file unremovable, which leads to
+		 * जबतक holding the file unremovable, which leads to
 		 * a deadlock.
-		 * So hold set sysfs_active while the remove in happeing,
-		 * and anything else which might set ->to_remove or my
+		 * So hold set sysfs_active जबतक the हटाओ in happeing,
+		 * and anything अन्यथा which might set ->to_हटाओ or my
 		 * otherwise change the sysfs namespace will fail with
-		 * -EBUSY if sysfs_active is still set.
-		 * We set sysfs_active under reconfig_mutex and elsewhere
+		 * -EBUSY अगर sysfs_active is still set.
+		 * We set sysfs_active under reconfig_mutex and अन्यथाwhere
 		 * test it under the same mutex to ensure its correct value
 		 * is seen.
 		 */
-		struct attribute_group *to_remove = mddev->to_remove;
-		mddev->to_remove = NULL;
+		काष्ठा attribute_group *to_हटाओ = mddev->to_हटाओ;
+		mddev->to_हटाओ = शून्य;
 		mddev->sysfs_active = 1;
 		mutex_unlock(&mddev->reconfig_mutex);
 
-		if (mddev->kobj.sd) {
-			if (to_remove != &md_redundancy_group)
-				sysfs_remove_group(&mddev->kobj, to_remove);
-			if (mddev->pers == NULL ||
-			    mddev->pers->sync_request == NULL) {
-				sysfs_remove_group(&mddev->kobj, &md_redundancy_group);
-				if (mddev->sysfs_action)
+		अगर (mddev->kobj.sd) अणु
+			अगर (to_हटाओ != &md_redundancy_group)
+				sysfs_हटाओ_group(&mddev->kobj, to_हटाओ);
+			अगर (mddev->pers == शून्य ||
+			    mddev->pers->sync_request == शून्य) अणु
+				sysfs_हटाओ_group(&mddev->kobj, &md_redundancy_group);
+				अगर (mddev->sysfs_action)
 					sysfs_put(mddev->sysfs_action);
-				if (mddev->sysfs_completed)
+				अगर (mddev->sysfs_completed)
 					sysfs_put(mddev->sysfs_completed);
-				if (mddev->sysfs_degraded)
+				अगर (mddev->sysfs_degraded)
 					sysfs_put(mddev->sysfs_degraded);
-				mddev->sysfs_action = NULL;
-				mddev->sysfs_completed = NULL;
-				mddev->sysfs_degraded = NULL;
-			}
-		}
+				mddev->sysfs_action = शून्य;
+				mddev->sysfs_completed = शून्य;
+				mddev->sysfs_degraded = शून्य;
+			पूर्ण
+		पूर्ण
 		mddev->sysfs_active = 0;
-	} else
+	पूर्ण अन्यथा
 		mutex_unlock(&mddev->reconfig_mutex);
 
 	/* As we've dropped the mutex we need a spinlock to
-	 * make sure the thread doesn't disappear
+	 * make sure the thपढ़ो करोesn't disappear
 	 */
 	spin_lock(&pers_lock);
-	md_wakeup_thread(mddev->thread);
-	wake_up(&mddev->sb_wait);
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	wake_up(&mddev->sb_रुको);
 	spin_unlock(&pers_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mddev_unlock);
 
-struct md_rdev *md_find_rdev_nr_rcu(struct mddev *mddev, int nr)
-{
-	struct md_rdev *rdev;
+काष्ठा md_rdev *md_find_rdev_nr_rcu(काष्ठा mddev *mddev, पूर्णांक nr)
+अणु
+	काष्ठा md_rdev *rdev;
 
-	rdev_for_each_rcu(rdev, mddev)
-		if (rdev->desc_nr == nr)
-			return rdev;
+	rdev_क्रम_each_rcu(rdev, mddev)
+		अगर (rdev->desc_nr == nr)
+			वापस rdev;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(md_find_rdev_nr_rcu);
 
-static struct md_rdev *find_rdev(struct mddev *mddev, dev_t dev)
-{
-	struct md_rdev *rdev;
+अटल काष्ठा md_rdev *find_rdev(काष्ठा mddev *mddev, dev_t dev)
+अणु
+	काष्ठा md_rdev *rdev;
 
-	rdev_for_each(rdev, mddev)
-		if (rdev->bdev->bd_dev == dev)
-			return rdev;
+	rdev_क्रम_each(rdev, mddev)
+		अगर (rdev->bdev->bd_dev == dev)
+			वापस rdev;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct md_rdev *md_find_rdev_rcu(struct mddev *mddev, dev_t dev)
-{
-	struct md_rdev *rdev;
+काष्ठा md_rdev *md_find_rdev_rcu(काष्ठा mddev *mddev, dev_t dev)
+अणु
+	काष्ठा md_rdev *rdev;
 
-	rdev_for_each_rcu(rdev, mddev)
-		if (rdev->bdev->bd_dev == dev)
-			return rdev;
+	rdev_क्रम_each_rcu(rdev, mddev)
+		अगर (rdev->bdev->bd_dev == dev)
+			वापस rdev;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(md_find_rdev_rcu);
 
-static struct md_personality *find_pers(int level, char *clevel)
-{
-	struct md_personality *pers;
-	list_for_each_entry(pers, &pers_list, list) {
-		if (level != LEVEL_NONE && pers->level == level)
-			return pers;
-		if (strcmp(pers->name, clevel)==0)
-			return pers;
-	}
-	return NULL;
-}
+अटल काष्ठा md_personality *find_pers(पूर्णांक level, अक्षर *clevel)
+अणु
+	काष्ठा md_personality *pers;
+	list_क्रम_each_entry(pers, &pers_list, list) अणु
+		अगर (level != LEVEL_NONE && pers->level == level)
+			वापस pers;
+		अगर (म_भेद(pers->name, clevel)==0)
+			वापस pers;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-/* return the offset of the super block in 512byte sectors */
-static inline sector_t calc_dev_sboffset(struct md_rdev *rdev)
-{
-	sector_t num_sectors = i_size_read(rdev->bdev->bd_inode) / 512;
-	return MD_NEW_SIZE_SECTORS(num_sectors);
-}
+/* वापस the offset of the super block in 512byte sectors */
+अटल अंतरभूत sector_t calc_dev_sboffset(काष्ठा md_rdev *rdev)
+अणु
+	sector_t num_sectors = i_size_पढ़ो(rdev->bdev->bd_inode) / 512;
+	वापस MD_NEW_SIZE_SECTORS(num_sectors);
+पूर्ण
 
-static int alloc_disk_sb(struct md_rdev *rdev)
-{
+अटल पूर्णांक alloc_disk_sb(काष्ठा md_rdev *rdev)
+अणु
 	rdev->sb_page = alloc_page(GFP_KERNEL);
-	if (!rdev->sb_page)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!rdev->sb_page)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-void md_rdev_clear(struct md_rdev *rdev)
-{
-	if (rdev->sb_page) {
+व्योम md_rdev_clear(काष्ठा md_rdev *rdev)
+अणु
+	अगर (rdev->sb_page) अणु
 		put_page(rdev->sb_page);
 		rdev->sb_loaded = 0;
-		rdev->sb_page = NULL;
+		rdev->sb_page = शून्य;
 		rdev->sb_start = 0;
 		rdev->sectors = 0;
-	}
-	if (rdev->bb_page) {
+	पूर्ण
+	अगर (rdev->bb_page) अणु
 		put_page(rdev->bb_page);
-		rdev->bb_page = NULL;
-	}
-	badblocks_exit(&rdev->badblocks);
-}
+		rdev->bb_page = शून्य;
+	पूर्ण
+	badblocks_निकास(&rdev->badblocks);
+पूर्ण
 EXPORT_SYMBOL_GPL(md_rdev_clear);
 
-static void super_written(struct bio *bio)
-{
-	struct md_rdev *rdev = bio->bi_private;
-	struct mddev *mddev = rdev->mddev;
+अटल व्योम super_written(काष्ठा bio *bio)
+अणु
+	काष्ठा md_rdev *rdev = bio->bi_निजी;
+	काष्ठा mddev *mddev = rdev->mddev;
 
-	if (bio->bi_status) {
+	अगर (bio->bi_status) अणु
 		pr_err("md: %s gets error=%d\n", __func__,
-		       blk_status_to_errno(bio->bi_status));
+		       blk_status_to_त्रुटि_सं(bio->bi_status));
 		md_error(mddev, rdev);
-		if (!test_bit(Faulty, &rdev->flags)
-		    && (bio->bi_opf & MD_FAILFAST)) {
+		अगर (!test_bit(Faulty, &rdev->flags)
+		    && (bio->bi_opf & MD_FAILFAST)) अणु
 			set_bit(MD_SB_NEED_REWRITE, &mddev->sb_flags);
 			set_bit(LastDev, &rdev->flags);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		clear_bit(LastDev, &rdev->flags);
 
-	if (atomic_dec_and_test(&mddev->pending_writes))
-		wake_up(&mddev->sb_wait);
+	अगर (atomic_dec_and_test(&mddev->pending_ग_लिखोs))
+		wake_up(&mddev->sb_रुको);
 	rdev_dec_pending(rdev, mddev);
 	bio_put(bio);
-}
+पूर्ण
 
-void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
-		   sector_t sector, int size, struct page *page)
-{
-	/* write first size bytes of page to sector of rdev
-	 * Increment mddev->pending_writes before returning
-	 * and decrement it on completion, waking up sb_wait
-	 * if zero is reached.
+व्योम md_super_ग_लिखो(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev,
+		   sector_t sector, पूर्णांक size, काष्ठा page *page)
+अणु
+	/* ग_लिखो first size bytes of page to sector of rdev
+	 * Increment mddev->pending_ग_लिखोs beक्रमe वापसing
+	 * and decrement it on completion, waking up sb_रुको
+	 * अगर zero is reached.
 	 * If an error occurred, call md_error
 	 */
-	struct bio *bio;
-	int ff = 0;
+	काष्ठा bio *bio;
+	पूर्णांक ff = 0;
 
-	if (!page)
-		return;
+	अगर (!page)
+		वापस;
 
-	if (test_bit(Faulty, &rdev->flags))
-		return;
+	अगर (test_bit(Faulty, &rdev->flags))
+		वापस;
 
 	bio = bio_alloc_bioset(GFP_NOIO, 1, &mddev->sync_set);
 
@@ -1004,159 +1005,159 @@ void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
 	bio_set_dev(bio, rdev->meta_bdev ? rdev->meta_bdev : rdev->bdev);
 	bio->bi_iter.bi_sector = sector;
 	bio_add_page(bio, page, size, 0);
-	bio->bi_private = rdev;
+	bio->bi_निजी = rdev;
 	bio->bi_end_io = super_written;
 
-	if (test_bit(MD_FAILFAST_SUPPORTED, &mddev->flags) &&
+	अगर (test_bit(MD_FAILFAST_SUPPORTED, &mddev->flags) &&
 	    test_bit(FailFast, &rdev->flags) &&
 	    !test_bit(LastDev, &rdev->flags))
 		ff = MD_FAILFAST;
 	bio->bi_opf = REQ_OP_WRITE | REQ_SYNC | REQ_PREFLUSH | REQ_FUA | ff;
 
-	atomic_inc(&mddev->pending_writes);
+	atomic_inc(&mddev->pending_ग_लिखोs);
 	submit_bio(bio);
-}
+पूर्ण
 
-int md_super_wait(struct mddev *mddev)
-{
-	/* wait for all superblock writes that were scheduled to complete */
-	wait_event(mddev->sb_wait, atomic_read(&mddev->pending_writes)==0);
-	if (test_and_clear_bit(MD_SB_NEED_REWRITE, &mddev->sb_flags))
-		return -EAGAIN;
-	return 0;
-}
+पूर्णांक md_super_रुको(काष्ठा mddev *mddev)
+अणु
+	/* रुको क्रम all superblock ग_लिखोs that were scheduled to complete */
+	रुको_event(mddev->sb_रुको, atomic_पढ़ो(&mddev->pending_ग_लिखोs)==0);
+	अगर (test_and_clear_bit(MD_SB_NEED_REWRITE, &mddev->sb_flags))
+		वापस -EAGAIN;
+	वापस 0;
+पूर्ण
 
-int sync_page_io(struct md_rdev *rdev, sector_t sector, int size,
-		 struct page *page, int op, int op_flags, bool metadata_op)
-{
-	struct bio bio;
-	struct bio_vec bvec;
+पूर्णांक sync_page_io(काष्ठा md_rdev *rdev, sector_t sector, पूर्णांक size,
+		 काष्ठा page *page, पूर्णांक op, पूर्णांक op_flags, bool metadata_op)
+अणु
+	काष्ठा bio bio;
+	काष्ठा bio_vec bvec;
 
 	bio_init(&bio, &bvec, 1);
 
-	if (metadata_op && rdev->meta_bdev)
+	अगर (metadata_op && rdev->meta_bdev)
 		bio_set_dev(&bio, rdev->meta_bdev);
-	else
+	अन्यथा
 		bio_set_dev(&bio, rdev->bdev);
 	bio.bi_opf = op | op_flags;
-	if (metadata_op)
+	अगर (metadata_op)
 		bio.bi_iter.bi_sector = sector + rdev->sb_start;
-	else if (rdev->mddev->reshape_position != MaxSector &&
+	अन्यथा अगर (rdev->mddev->reshape_position != MaxSector &&
 		 (rdev->mddev->reshape_backwards ==
 		  (sector >= rdev->mddev->reshape_position)))
 		bio.bi_iter.bi_sector = sector + rdev->new_data_offset;
-	else
+	अन्यथा
 		bio.bi_iter.bi_sector = sector + rdev->data_offset;
 	bio_add_page(&bio, page, size, 0);
 
-	submit_bio_wait(&bio);
+	submit_bio_रुको(&bio);
 
-	return !bio.bi_status;
-}
+	वापस !bio.bi_status;
+पूर्ण
 EXPORT_SYMBOL_GPL(sync_page_io);
 
-static int read_disk_sb(struct md_rdev *rdev, int size)
-{
-	char b[BDEVNAME_SIZE];
+अटल पूर्णांक पढ़ो_disk_sb(काष्ठा md_rdev *rdev, पूर्णांक size)
+अणु
+	अक्षर b[BDEVNAME_SIZE];
 
-	if (rdev->sb_loaded)
-		return 0;
+	अगर (rdev->sb_loaded)
+		वापस 0;
 
-	if (!sync_page_io(rdev, 0, size, rdev->sb_page, REQ_OP_READ, 0, true))
-		goto fail;
+	अगर (!sync_page_io(rdev, 0, size, rdev->sb_page, REQ_OP_READ, 0, true))
+		जाओ fail;
 	rdev->sb_loaded = 1;
-	return 0;
+	वापस 0;
 
 fail:
 	pr_err("md: disabled device %s, could not read superblock.\n",
 	       bdevname(rdev->bdev,b));
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int md_uuid_equal(mdp_super_t *sb1, mdp_super_t *sb2)
-{
-	return	sb1->set_uuid0 == sb2->set_uuid0 &&
+अटल पूर्णांक md_uuid_equal(mdp_super_t *sb1, mdp_super_t *sb2)
+अणु
+	वापस	sb1->set_uuid0 == sb2->set_uuid0 &&
 		sb1->set_uuid1 == sb2->set_uuid1 &&
 		sb1->set_uuid2 == sb2->set_uuid2 &&
 		sb1->set_uuid3 == sb2->set_uuid3;
-}
+पूर्ण
 
-static int md_sb_equal(mdp_super_t *sb1, mdp_super_t *sb2)
-{
-	int ret;
-	mdp_super_t *tmp1, *tmp2;
+अटल पूर्णांक md_sb_equal(mdp_super_t *sb1, mdp_super_t *sb2)
+अणु
+	पूर्णांक ret;
+	mdp_super_t *पंचांगp1, *पंचांगp2;
 
-	tmp1 = kmalloc(sizeof(*tmp1),GFP_KERNEL);
-	tmp2 = kmalloc(sizeof(*tmp2),GFP_KERNEL);
+	पंचांगp1 = kदो_स्मृति(माप(*पंचांगp1),GFP_KERNEL);
+	पंचांगp2 = kदो_स्मृति(माप(*पंचांगp2),GFP_KERNEL);
 
-	if (!tmp1 || !tmp2) {
+	अगर (!पंचांगp1 || !पंचांगp2) अणु
 		ret = 0;
-		goto abort;
-	}
+		जाओ पात;
+	पूर्ण
 
-	*tmp1 = *sb1;
-	*tmp2 = *sb2;
+	*पंचांगp1 = *sb1;
+	*पंचांगp2 = *sb2;
 
 	/*
-	 * nr_disks is not constant
+	 * nr_disks is not स्थिरant
 	 */
-	tmp1->nr_disks = 0;
-	tmp2->nr_disks = 0;
+	पंचांगp1->nr_disks = 0;
+	पंचांगp2->nr_disks = 0;
 
-	ret = (memcmp(tmp1, tmp2, MD_SB_GENERIC_CONSTANT_WORDS * 4) == 0);
-abort:
-	kfree(tmp1);
-	kfree(tmp2);
-	return ret;
-}
+	ret = (स_भेद(पंचांगp1, पंचांगp2, MD_SB_GENERIC_CONSTANT_WORDS * 4) == 0);
+पात:
+	kमुक्त(पंचांगp1);
+	kमुक्त(पंचांगp2);
+	वापस ret;
+पूर्ण
 
-static u32 md_csum_fold(u32 csum)
-{
+अटल u32 md_csum_fold(u32 csum)
+अणु
 	csum = (csum & 0xffff) + (csum >> 16);
-	return (csum & 0xffff) + (csum >> 16);
-}
+	वापस (csum & 0xffff) + (csum >> 16);
+पूर्ण
 
-static unsigned int calc_sb_csum(mdp_super_t *sb)
-{
+अटल अचिन्हित पूर्णांक calc_sb_csum(mdp_super_t *sb)
+अणु
 	u64 newcsum = 0;
 	u32 *sb32 = (u32*)sb;
-	int i;
-	unsigned int disk_csum, csum;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक disk_csum, csum;
 
 	disk_csum = sb->sb_csum;
 	sb->sb_csum = 0;
 
-	for (i = 0; i < MD_SB_BYTES/4 ; i++)
+	क्रम (i = 0; i < MD_SB_BYTES/4 ; i++)
 		newcsum += sb32[i];
 	csum = (newcsum & 0xffffffff) + (newcsum>>32);
 
-#ifdef CONFIG_ALPHA
-	/* This used to use csum_partial, which was wrong for several
-	 * reasons including that different results are returned on
-	 * different architectures.  It isn't critical that we get exactly
-	 * the same return value as before (we always csum_fold before
-	 * testing, and that removes any differences).  However as we
-	 * know that csum_partial always returned a 16bit value on
-	 * alphas, do a fold to maximise conformity to previous behaviour.
+#अगर_घोषित CONFIG_ALPHA
+	/* This used to use csum_partial, which was wrong क्रम several
+	 * reasons including that dअगरferent results are वापसed on
+	 * dअगरferent architectures.  It isn't critical that we get exactly
+	 * the same वापस value as beक्रमe (we always csum_fold beक्रमe
+	 * testing, and that हटाओs any dअगरferences).  However as we
+	 * know that csum_partial always वापसed a 16bit value on
+	 * alphas, करो a fold to maximise conक्रमmity to previous behaviour.
 	 */
 	sb->sb_csum = md_csum_fold(disk_csum);
-#else
+#अन्यथा
 	sb->sb_csum = disk_csum;
-#endif
-	return csum;
-}
+#पूर्ण_अगर
+	वापस csum;
+पूर्ण
 
 /*
  * Handle superblock details.
- * We want to be able to handle multiple superblock formats
- * so we have a common interface to them all, and an array of
- * different handlers.
- * We rely on user-space to write the initial superblock, and support
- * reading and updating of superblocks.
+ * We want to be able to handle multiple superblock क्रमmats
+ * so we have a common पूर्णांकerface to them all, and an array of
+ * dअगरferent handlers.
+ * We rely on user-space to ग_लिखो the initial superblock, and support
+ * पढ़ोing and updating of superblocks.
  * Interface methods are:
- *   int load_super(struct md_rdev *dev, struct md_rdev *refdev, int minor_version)
+ *   पूर्णांक load_super(काष्ठा md_rdev *dev, काष्ठा md_rdev *refdev, पूर्णांक minor_version)
  *      loads and validates a superblock on dev.
- *      if refdev != NULL, compare superblocks on both devices
+ *      अगर refdev != शून्य, compare superblocks on both devices
  *    Return:
  *      0 - dev has a superblock that is compatible with refdev
  *      1 - dev has a superblock that is compatible and newer than refdev
@@ -1164,60 +1165,60 @@ static unsigned int calc_sb_csum(mdp_super_t *sb)
  *     -EINVAL superblock incompatible or invalid
  *     -othererror e.g. -EIO
  *
- *   int validate_super(struct mddev *mddev, struct md_rdev *dev)
- *      Verify that dev is acceptable into mddev.
- *       The first time, mddev->raid_disks will be 0, and data from
+ *   पूर्णांक validate_super(काष्ठा mddev *mddev, काष्ठा md_rdev *dev)
+ *      Verअगरy that dev is acceptable पूर्णांकo mddev.
+ *       The first समय, mddev->raid_disks will be 0, and data from
  *       dev should be merged in.  Subsequent calls check that dev
  *       is new enough.  Return 0 or -EINVAL
  *
- *   void sync_super(struct mddev *mddev, struct md_rdev *dev)
- *     Update the superblock for rdev with data in mddev
- *     This does not write to disc.
+ *   व्योम sync_super(काष्ठा mddev *mddev, काष्ठा md_rdev *dev)
+ *     Update the superblock क्रम rdev with data in mddev
+ *     This करोes not ग_लिखो to disc.
  *
  */
 
-struct super_type  {
-	char		    *name;
-	struct module	    *owner;
-	int		    (*load_super)(struct md_rdev *rdev,
-					  struct md_rdev *refdev,
-					  int minor_version);
-	int		    (*validate_super)(struct mddev *mddev,
-					      struct md_rdev *rdev);
-	void		    (*sync_super)(struct mddev *mddev,
-					  struct md_rdev *rdev);
-	unsigned long long  (*rdev_size_change)(struct md_rdev *rdev,
+काष्ठा super_type  अणु
+	अक्षर		    *name;
+	काष्ठा module	    *owner;
+	पूर्णांक		    (*load_super)(काष्ठा md_rdev *rdev,
+					  काष्ठा md_rdev *refdev,
+					  पूर्णांक minor_version);
+	पूर्णांक		    (*validate_super)(काष्ठा mddev *mddev,
+					      काष्ठा md_rdev *rdev);
+	व्योम		    (*sync_super)(काष्ठा mddev *mddev,
+					  काष्ठा md_rdev *rdev);
+	अचिन्हित दीर्घ दीर्घ  (*rdev_size_change)(काष्ठा md_rdev *rdev,
 						sector_t num_sectors);
-	int		    (*allow_new_offset)(struct md_rdev *rdev,
-						unsigned long long new_offset);
-};
+	पूर्णांक		    (*allow_new_offset)(काष्ठा md_rdev *rdev,
+						अचिन्हित दीर्घ दीर्घ new_offset);
+पूर्ण;
 
 /*
- * Check that the given mddev has no bitmap.
+ * Check that the given mddev has no biपंचांगap.
  *
- * This function is called from the run method of all personalities that do not
- * support bitmaps. It prints an error message and returns non-zero if mddev
- * has a bitmap. Otherwise, it returns 0.
+ * This function is called from the run method of all personalities that करो not
+ * support biपंचांगaps. It prपूर्णांकs an error message and वापसs non-zero अगर mddev
+ * has a biपंचांगap. Otherwise, it वापसs 0.
  *
  */
-int md_check_no_bitmap(struct mddev *mddev)
-{
-	if (!mddev->bitmap_info.file && !mddev->bitmap_info.offset)
-		return 0;
+पूर्णांक md_check_no_biपंचांगap(काष्ठा mddev *mddev)
+अणु
+	अगर (!mddev->biपंचांगap_info.file && !mddev->biपंचांगap_info.offset)
+		वापस 0;
 	pr_warn("%s: bitmaps are not supported for %s\n",
 		mdname(mddev), mddev->pers->name);
-	return 1;
-}
-EXPORT_SYMBOL(md_check_no_bitmap);
+	वापस 1;
+पूर्ण
+EXPORT_SYMBOL(md_check_no_biपंचांगap);
 
 /*
- * load_super for 0.90.0
+ * load_super क्रम 0.90.0
  */
-static int super_90_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_version)
-{
-	char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
+अटल पूर्णांक super_90_load(काष्ठा md_rdev *rdev, काष्ठा md_rdev *refdev, पूर्णांक minor_version)
+अणु
+	अक्षर b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
 	mdp_super_t *sb;
-	int ret;
+	पूर्णांक ret;
 	bool spare_disk = true;
 
 	/*
@@ -1228,102 +1229,102 @@ static int super_90_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor
 	 */
 	rdev->sb_start = calc_dev_sboffset(rdev);
 
-	ret = read_disk_sb(rdev, MD_SB_BYTES);
-	if (ret)
-		return ret;
+	ret = पढ़ो_disk_sb(rdev, MD_SB_BYTES);
+	अगर (ret)
+		वापस ret;
 
 	ret = -EINVAL;
 
 	bdevname(rdev->bdev, b);
 	sb = page_address(rdev->sb_page);
 
-	if (sb->md_magic != MD_SB_MAGIC) {
+	अगर (sb->md_magic != MD_SB_MAGIC) अणु
 		pr_warn("md: invalid raid superblock magic on %s\n", b);
-		goto abort;
-	}
+		जाओ पात;
+	पूर्ण
 
-	if (sb->major_version != 0 ||
+	अगर (sb->major_version != 0 ||
 	    sb->minor_version < 90 ||
-	    sb->minor_version > 91) {
+	    sb->minor_version > 91) अणु
 		pr_warn("Bad version number %d.%d on %s\n",
 			sb->major_version, sb->minor_version, b);
-		goto abort;
-	}
+		जाओ पात;
+	पूर्ण
 
-	if (sb->raid_disks <= 0)
-		goto abort;
+	अगर (sb->raid_disks <= 0)
+		जाओ पात;
 
-	if (md_csum_fold(calc_sb_csum(sb)) != md_csum_fold(sb->sb_csum)) {
+	अगर (md_csum_fold(calc_sb_csum(sb)) != md_csum_fold(sb->sb_csum)) अणु
 		pr_warn("md: invalid superblock checksum on %s\n", b);
-		goto abort;
-	}
+		जाओ पात;
+	पूर्ण
 
 	rdev->preferred_minor = sb->md_minor;
 	rdev->data_offset = 0;
 	rdev->new_data_offset = 0;
 	rdev->sb_size = MD_SB_BYTES;
-	rdev->badblocks.shift = -1;
+	rdev->badblocks.shअगरt = -1;
 
-	if (sb->level == LEVEL_MULTIPATH)
+	अगर (sb->level == LEVEL_MULTIPATH)
 		rdev->desc_nr = -1;
-	else
+	अन्यथा
 		rdev->desc_nr = sb->this_disk.number;
 
 	/* not spare disk, or LEVEL_MULTIPATH */
-	if (sb->level == LEVEL_MULTIPATH ||
+	अगर (sb->level == LEVEL_MULTIPATH ||
 		(rdev->desc_nr >= 0 &&
 		 rdev->desc_nr < MD_SB_DISKS &&
 		 sb->disks[rdev->desc_nr].state &
 		 ((1<<MD_DISK_SYNC) | (1 << MD_DISK_ACTIVE))))
 		spare_disk = false;
 
-	if (!refdev) {
-		if (!spare_disk)
+	अगर (!refdev) अणु
+		अगर (!spare_disk)
 			ret = 1;
-		else
+		अन्यथा
 			ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		__u64 ev1, ev2;
 		mdp_super_t *refsb = page_address(refdev->sb_page);
-		if (!md_uuid_equal(refsb, sb)) {
+		अगर (!md_uuid_equal(refsb, sb)) अणु
 			pr_warn("md: %s has different UUID to %s\n",
 				b, bdevname(refdev->bdev,b2));
-			goto abort;
-		}
-		if (!md_sb_equal(refsb, sb)) {
+			जाओ पात;
+		पूर्ण
+		अगर (!md_sb_equal(refsb, sb)) अणु
 			pr_warn("md: %s has same UUID but different superblock to %s\n",
 				b, bdevname(refdev->bdev, b2));
-			goto abort;
-		}
+			जाओ पात;
+		पूर्ण
 		ev1 = md_event(sb);
 		ev2 = md_event(refsb);
 
-		if (!spare_disk && ev1 > ev2)
+		अगर (!spare_disk && ev1 > ev2)
 			ret = 1;
-		else
+		अन्यथा
 			ret = 0;
-	}
+	पूर्ण
 	rdev->sectors = rdev->sb_start;
 	/* Limit to 4TB as metadata cannot record more than that.
-	 * (not needed for Linear and RAID0 as metadata doesn't
+	 * (not needed क्रम Linear and RAID0 as metadata करोesn't
 	 * record this size)
 	 */
-	if ((u64)rdev->sectors >= (2ULL << 32) && sb->level >= 1)
+	अगर ((u64)rdev->sectors >= (2ULL << 32) && sb->level >= 1)
 		rdev->sectors = (sector_t)(2ULL << 32) - 2;
 
-	if (rdev->sectors < ((sector_t)sb->size) * 2 && sb->level >= 1)
+	अगर (rdev->sectors < ((sector_t)sb->size) * 2 && sb->level >= 1)
 		/* "this cannot possibly happen" ... */
 		ret = -EINVAL;
 
- abort:
-	return ret;
-}
+ पात:
+	वापस ret;
+पूर्ण
 
 /*
- * validate_super for 0.90.0
+ * validate_super क्रम 0.90.0
  */
-static int super_90_validate(struct mddev *mddev, struct md_rdev *rdev)
-{
+अटल पूर्णांक super_90_validate(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
+अणु
 	mdp_disk_t *desc;
 	mdp_super_t *sb = page_address(rdev->sb_page);
 	__u64 ev1 = md_event(sb);
@@ -1331,217 +1332,217 @@ static int super_90_validate(struct mddev *mddev, struct md_rdev *rdev)
 	rdev->raid_disk = -1;
 	clear_bit(Faulty, &rdev->flags);
 	clear_bit(In_sync, &rdev->flags);
-	clear_bit(Bitmap_sync, &rdev->flags);
+	clear_bit(Biपंचांगap_sync, &rdev->flags);
 	clear_bit(WriteMostly, &rdev->flags);
 
-	if (mddev->raid_disks == 0) {
+	अगर (mddev->raid_disks == 0) अणु
 		mddev->major_version = 0;
 		mddev->minor_version = sb->minor_version;
 		mddev->patch_version = sb->patch_version;
-		mddev->external = 0;
+		mddev->बाह्यal = 0;
 		mddev->chunk_sectors = sb->chunk_size >> 9;
-		mddev->ctime = sb->ctime;
-		mddev->utime = sb->utime;
+		mddev->स_समय = sb->स_समय;
+		mddev->uसमय = sb->uसमय;
 		mddev->level = sb->level;
 		mddev->clevel[0] = 0;
 		mddev->layout = sb->layout;
 		mddev->raid_disks = sb->raid_disks;
 		mddev->dev_sectors = ((sector_t)sb->size) * 2;
 		mddev->events = ev1;
-		mddev->bitmap_info.offset = 0;
-		mddev->bitmap_info.space = 0;
-		/* bitmap can use 60 K after the 4K superblocks */
-		mddev->bitmap_info.default_offset = MD_SB_BYTES >> 9;
-		mddev->bitmap_info.default_space = 64*2 - (MD_SB_BYTES >> 9);
+		mddev->biपंचांगap_info.offset = 0;
+		mddev->biपंचांगap_info.space = 0;
+		/* biपंचांगap can use 60 K after the 4K superblocks */
+		mddev->biपंचांगap_info.शेष_offset = MD_SB_BYTES >> 9;
+		mddev->biपंचांगap_info.शेष_space = 64*2 - (MD_SB_BYTES >> 9);
 		mddev->reshape_backwards = 0;
 
-		if (mddev->minor_version >= 91) {
+		अगर (mddev->minor_version >= 91) अणु
 			mddev->reshape_position = sb->reshape_position;
 			mddev->delta_disks = sb->delta_disks;
 			mddev->new_level = sb->new_level;
 			mddev->new_layout = sb->new_layout;
 			mddev->new_chunk_sectors = sb->new_chunk >> 9;
-			if (mddev->delta_disks < 0)
+			अगर (mddev->delta_disks < 0)
 				mddev->reshape_backwards = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			mddev->reshape_position = MaxSector;
 			mddev->delta_disks = 0;
 			mddev->new_level = mddev->level;
 			mddev->new_layout = mddev->layout;
 			mddev->new_chunk_sectors = mddev->chunk_sectors;
-		}
-		if (mddev->level == 0)
+		पूर्ण
+		अगर (mddev->level == 0)
 			mddev->layout = -1;
 
-		if (sb->state & (1<<MD_SB_CLEAN))
+		अगर (sb->state & (1<<MD_SB_CLEAN))
 			mddev->recovery_cp = MaxSector;
-		else {
-			if (sb->events_hi == sb->cp_events_hi &&
-				sb->events_lo == sb->cp_events_lo) {
+		अन्यथा अणु
+			अगर (sb->events_hi == sb->cp_events_hi &&
+				sb->events_lo == sb->cp_events_lo) अणु
 				mddev->recovery_cp = sb->recovery_cp;
-			} else
+			पूर्ण अन्यथा
 				mddev->recovery_cp = 0;
-		}
+		पूर्ण
 
-		memcpy(mddev->uuid+0, &sb->set_uuid0, 4);
-		memcpy(mddev->uuid+4, &sb->set_uuid1, 4);
-		memcpy(mddev->uuid+8, &sb->set_uuid2, 4);
-		memcpy(mddev->uuid+12,&sb->set_uuid3, 4);
+		स_नकल(mddev->uuid+0, &sb->set_uuid0, 4);
+		स_नकल(mddev->uuid+4, &sb->set_uuid1, 4);
+		स_नकल(mddev->uuid+8, &sb->set_uuid2, 4);
+		स_नकल(mddev->uuid+12,&sb->set_uuid3, 4);
 
 		mddev->max_disks = MD_SB_DISKS;
 
-		if (sb->state & (1<<MD_SB_BITMAP_PRESENT) &&
-		    mddev->bitmap_info.file == NULL) {
-			mddev->bitmap_info.offset =
-				mddev->bitmap_info.default_offset;
-			mddev->bitmap_info.space =
-				mddev->bitmap_info.default_space;
-		}
+		अगर (sb->state & (1<<MD_SB_BITMAP_PRESENT) &&
+		    mddev->biपंचांगap_info.file == शून्य) अणु
+			mddev->biपंचांगap_info.offset =
+				mddev->biपंचांगap_info.शेष_offset;
+			mddev->biपंचांगap_info.space =
+				mddev->biपंचांगap_info.शेष_space;
+		पूर्ण
 
-	} else if (mddev->pers == NULL) {
-		/* Insist on good event counter while assembling, except
-		 * for spares (which don't need an event count) */
+	पूर्ण अन्यथा अगर (mddev->pers == शून्य) अणु
+		/* Insist on good event counter जबतक assembling, except
+		 * क्रम spares (which करोn't need an event count) */
 		++ev1;
-		if (sb->disks[rdev->desc_nr].state & (
+		अगर (sb->disks[rdev->desc_nr].state & (
 			    (1<<MD_DISK_SYNC) | (1 << MD_DISK_ACTIVE)))
-			if (ev1 < mddev->events)
-				return -EINVAL;
-	} else if (mddev->bitmap) {
-		/* if adding to array with a bitmap, then we can accept an
+			अगर (ev1 < mddev->events)
+				वापस -EINVAL;
+	पूर्ण अन्यथा अगर (mddev->biपंचांगap) अणु
+		/* अगर adding to array with a biपंचांगap, then we can accept an
 		 * older device ... but not too old.
 		 */
-		if (ev1 < mddev->bitmap->events_cleared)
-			return 0;
-		if (ev1 < mddev->events)
-			set_bit(Bitmap_sync, &rdev->flags);
-	} else {
-		if (ev1 < mddev->events)
+		अगर (ev1 < mddev->biपंचांगap->events_cleared)
+			वापस 0;
+		अगर (ev1 < mddev->events)
+			set_bit(Biपंचांगap_sync, &rdev->flags);
+	पूर्ण अन्यथा अणु
+		अगर (ev1 < mddev->events)
 			/* just a hot-add of a new device, leave raid_disk at -1 */
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
-	if (mddev->level != LEVEL_MULTIPATH) {
+	अगर (mddev->level != LEVEL_MULTIPATH) अणु
 		desc = sb->disks + rdev->desc_nr;
 
-		if (desc->state & (1<<MD_DISK_FAULTY))
+		अगर (desc->state & (1<<MD_DISK_FAULTY))
 			set_bit(Faulty, &rdev->flags);
-		else if (desc->state & (1<<MD_DISK_SYNC) /* &&
-			    desc->raid_disk < mddev->raid_disks */) {
+		अन्यथा अगर (desc->state & (1<<MD_DISK_SYNC) /* &&
+			    desc->raid_disk < mddev->raid_disks */) अणु
 			set_bit(In_sync, &rdev->flags);
 			rdev->raid_disk = desc->raid_disk;
 			rdev->saved_raid_disk = desc->raid_disk;
-		} else if (desc->state & (1<<MD_DISK_ACTIVE)) {
+		पूर्ण अन्यथा अगर (desc->state & (1<<MD_DISK_ACTIVE)) अणु
 			/* active but not in sync implies recovery up to
-			 * reshape position.  We don't know exactly where
-			 * that is, so set to zero for now */
-			if (mddev->minor_version >= 91) {
+			 * reshape position.  We करोn't know exactly where
+			 * that is, so set to zero क्रम now */
+			अगर (mddev->minor_version >= 91) अणु
 				rdev->recovery_offset = 0;
 				rdev->raid_disk = desc->raid_disk;
-			}
-		}
-		if (desc->state & (1<<MD_DISK_WRITEMOSTLY))
+			पूर्ण
+		पूर्ण
+		अगर (desc->state & (1<<MD_DISK_WRITEMOSTLY))
 			set_bit(WriteMostly, &rdev->flags);
-		if (desc->state & (1<<MD_DISK_FAILFAST))
+		अगर (desc->state & (1<<MD_DISK_FAILFAST))
 			set_bit(FailFast, &rdev->flags);
-	} else /* MULTIPATH are always insync */
+	पूर्ण अन्यथा /* MULTIPATH are always insync */
 		set_bit(In_sync, &rdev->flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * sync_super for 0.90.0
+ * sync_super क्रम 0.90.0
  */
-static void super_90_sync(struct mddev *mddev, struct md_rdev *rdev)
-{
+अटल व्योम super_90_sync(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
+अणु
 	mdp_super_t *sb;
-	struct md_rdev *rdev2;
-	int next_spare = mddev->raid_disks;
+	काष्ठा md_rdev *rdev2;
+	पूर्णांक next_spare = mddev->raid_disks;
 
 	/* make rdev->sb match mddev data..
 	 *
 	 * 1/ zero out disks
-	 * 2/ Add info for each disk, keeping track of highest desc_nr (next_spare);
-	 * 3/ any empty disks < next_spare become removed
+	 * 2/ Add info क्रम each disk, keeping track of highest desc_nr (next_spare);
+	 * 3/ any empty disks < next_spare become हटाओd
 	 *
-	 * disks[0] gets initialised to REMOVED because
-	 * we cannot be sure from other fields if it has
+	 * disks[0] माला_लो initialised to REMOVED because
+	 * we cannot be sure from other fields अगर it has
 	 * been initialised or not.
 	 */
-	int i;
-	int active=0, working=0,failed=0,spare=0,nr_disks=0;
+	पूर्णांक i;
+	पूर्णांक active=0, working=0,failed=0,spare=0,nr_disks=0;
 
 	rdev->sb_size = MD_SB_BYTES;
 
 	sb = page_address(rdev->sb_page);
 
-	memset(sb, 0, sizeof(*sb));
+	स_रखो(sb, 0, माप(*sb));
 
 	sb->md_magic = MD_SB_MAGIC;
 	sb->major_version = mddev->major_version;
 	sb->patch_version = mddev->patch_version;
 	sb->gvalid_words  = 0; /* ignored */
-	memcpy(&sb->set_uuid0, mddev->uuid+0, 4);
-	memcpy(&sb->set_uuid1, mddev->uuid+4, 4);
-	memcpy(&sb->set_uuid2, mddev->uuid+8, 4);
-	memcpy(&sb->set_uuid3, mddev->uuid+12,4);
+	स_नकल(&sb->set_uuid0, mddev->uuid+0, 4);
+	स_नकल(&sb->set_uuid1, mddev->uuid+4, 4);
+	स_नकल(&sb->set_uuid2, mddev->uuid+8, 4);
+	स_नकल(&sb->set_uuid3, mddev->uuid+12,4);
 
-	sb->ctime = clamp_t(time64_t, mddev->ctime, 0, U32_MAX);
+	sb->स_समय = clamp_t(समय64_t, mddev->स_समय, 0, U32_MAX);
 	sb->level = mddev->level;
 	sb->size = mddev->dev_sectors / 2;
 	sb->raid_disks = mddev->raid_disks;
 	sb->md_minor = mddev->md_minor;
 	sb->not_persistent = 0;
-	sb->utime = clamp_t(time64_t, mddev->utime, 0, U32_MAX);
+	sb->uसमय = clamp_t(समय64_t, mddev->uसमय, 0, U32_MAX);
 	sb->state = 0;
 	sb->events_hi = (mddev->events>>32);
 	sb->events_lo = (u32)mddev->events;
 
-	if (mddev->reshape_position == MaxSector)
+	अगर (mddev->reshape_position == MaxSector)
 		sb->minor_version = 90;
-	else {
+	अन्यथा अणु
 		sb->minor_version = 91;
 		sb->reshape_position = mddev->reshape_position;
 		sb->new_level = mddev->new_level;
 		sb->delta_disks = mddev->delta_disks;
 		sb->new_layout = mddev->new_layout;
 		sb->new_chunk = mddev->new_chunk_sectors << 9;
-	}
+	पूर्ण
 	mddev->minor_version = sb->minor_version;
-	if (mddev->in_sync)
-	{
+	अगर (mddev->in_sync)
+	अणु
 		sb->recovery_cp = mddev->recovery_cp;
 		sb->cp_events_hi = (mddev->events>>32);
 		sb->cp_events_lo = (u32)mddev->events;
-		if (mddev->recovery_cp == MaxSector)
+		अगर (mddev->recovery_cp == MaxSector)
 			sb->state = (1<< MD_SB_CLEAN);
-	} else
+	पूर्ण अन्यथा
 		sb->recovery_cp = 0;
 
 	sb->layout = mddev->layout;
 	sb->chunk_size = mddev->chunk_sectors << 9;
 
-	if (mddev->bitmap && mddev->bitmap_info.file == NULL)
+	अगर (mddev->biपंचांगap && mddev->biपंचांगap_info.file == शून्य)
 		sb->state |= (1<<MD_SB_BITMAP_PRESENT);
 
 	sb->disks[0].state = (1<<MD_DISK_REMOVED);
-	rdev_for_each(rdev2, mddev) {
+	rdev_क्रम_each(rdev2, mddev) अणु
 		mdp_disk_t *d;
-		int desc_nr;
-		int is_active = test_bit(In_sync, &rdev2->flags);
+		पूर्णांक desc_nr;
+		पूर्णांक is_active = test_bit(In_sync, &rdev2->flags);
 
-		if (rdev2->raid_disk >= 0 &&
+		अगर (rdev2->raid_disk >= 0 &&
 		    sb->minor_version >= 91)
 			/* we have nowhere to store the recovery_offset,
-			 * but if it is not below the reshape_position,
+			 * but अगर it is not below the reshape_position,
 			 * we can piggy-back on that.
 			 */
 			is_active = 1;
-		if (rdev2->raid_disk < 0 ||
+		अगर (rdev2->raid_disk < 0 ||
 		    test_bit(Faulty, &rdev2->flags))
 			is_active = 0;
-		if (is_active)
+		अगर (is_active)
 			desc_nr = rdev2->raid_disk;
-		else
+		अन्यथा
 			desc_nr = next_spare++;
 		rdev2->desc_nr = desc_nr;
 		d = &sb->disks[rdev2->desc_nr];
@@ -1549,39 +1550,39 @@ static void super_90_sync(struct mddev *mddev, struct md_rdev *rdev)
 		d->number = rdev2->desc_nr;
 		d->major = MAJOR(rdev2->bdev->bd_dev);
 		d->minor = MINOR(rdev2->bdev->bd_dev);
-		if (is_active)
+		अगर (is_active)
 			d->raid_disk = rdev2->raid_disk;
-		else
+		अन्यथा
 			d->raid_disk = rdev2->desc_nr; /* compatibility */
-		if (test_bit(Faulty, &rdev2->flags))
+		अगर (test_bit(Faulty, &rdev2->flags))
 			d->state = (1<<MD_DISK_FAULTY);
-		else if (is_active) {
+		अन्यथा अगर (is_active) अणु
 			d->state = (1<<MD_DISK_ACTIVE);
-			if (test_bit(In_sync, &rdev2->flags))
+			अगर (test_bit(In_sync, &rdev2->flags))
 				d->state |= (1<<MD_DISK_SYNC);
 			active++;
 			working++;
-		} else {
+		पूर्ण अन्यथा अणु
 			d->state = 0;
 			spare++;
 			working++;
-		}
-		if (test_bit(WriteMostly, &rdev2->flags))
+		पूर्ण
+		अगर (test_bit(WriteMostly, &rdev2->flags))
 			d->state |= (1<<MD_DISK_WRITEMOSTLY);
-		if (test_bit(FailFast, &rdev2->flags))
+		अगर (test_bit(FailFast, &rdev2->flags))
 			d->state |= (1<<MD_DISK_FAILFAST);
-	}
+	पूर्ण
 	/* now set the "removed" and "faulty" bits on any missing devices */
-	for (i=0 ; i < mddev->raid_disks ; i++) {
+	क्रम (i=0 ; i < mddev->raid_disks ; i++) अणु
 		mdp_disk_t *d = &sb->disks[i];
-		if (d->state == 0 && d->number == 0) {
+		अगर (d->state == 0 && d->number == 0) अणु
 			d->number = i;
 			d->raid_disk = i;
 			d->state = (1<<MD_DISK_REMOVED);
 			d->state |= (1<<MD_DISK_FAULTY);
 			failed++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	sb->nr_disks = nr_disks;
 	sb->active_disks = active;
 	sb->working_disks = working;
@@ -1590,74 +1591,74 @@ static void super_90_sync(struct mddev *mddev, struct md_rdev *rdev)
 
 	sb->this_disk = sb->disks[rdev->desc_nr];
 	sb->sb_csum = calc_sb_csum(sb);
-}
+पूर्ण
 
 /*
- * rdev_size_change for 0.90.0
+ * rdev_size_change क्रम 0.90.0
  */
-static unsigned long long
-super_90_rdev_size_change(struct md_rdev *rdev, sector_t num_sectors)
-{
-	if (num_sectors && num_sectors < rdev->mddev->dev_sectors)
-		return 0; /* component must fit device */
-	if (rdev->mddev->bitmap_info.offset)
-		return 0; /* can't move bitmap */
+अटल अचिन्हित दीर्घ दीर्घ
+super_90_rdev_size_change(काष्ठा md_rdev *rdev, sector_t num_sectors)
+अणु
+	अगर (num_sectors && num_sectors < rdev->mddev->dev_sectors)
+		वापस 0; /* component must fit device */
+	अगर (rdev->mddev->biपंचांगap_info.offset)
+		वापस 0; /* can't move biपंचांगap */
 	rdev->sb_start = calc_dev_sboffset(rdev);
-	if (!num_sectors || num_sectors > rdev->sb_start)
+	अगर (!num_sectors || num_sectors > rdev->sb_start)
 		num_sectors = rdev->sb_start;
 	/* Limit to 4TB as metadata cannot record more than that.
 	 * 4TB == 2^32 KB, or 2*2^32 sectors.
 	 */
-	if ((u64)num_sectors >= (2ULL << 32) && rdev->mddev->level >= 1)
+	अगर ((u64)num_sectors >= (2ULL << 32) && rdev->mddev->level >= 1)
 		num_sectors = (sector_t)(2ULL << 32) - 2;
-	do {
-		md_super_write(rdev->mddev, rdev, rdev->sb_start, rdev->sb_size,
+	करो अणु
+		md_super_ग_लिखो(rdev->mddev, rdev, rdev->sb_start, rdev->sb_size,
 		       rdev->sb_page);
-	} while (md_super_wait(rdev->mddev) < 0);
-	return num_sectors;
-}
+	पूर्ण जबतक (md_super_रुको(rdev->mddev) < 0);
+	वापस num_sectors;
+पूर्ण
 
-static int
-super_90_allow_new_offset(struct md_rdev *rdev, unsigned long long new_offset)
-{
+अटल पूर्णांक
+super_90_allow_new_offset(काष्ठा md_rdev *rdev, अचिन्हित दीर्घ दीर्घ new_offset)
+अणु
 	/* non-zero offset changes not possible with v0.90 */
-	return new_offset == 0;
-}
+	वापस new_offset == 0;
+पूर्ण
 
 /*
  * version 1 superblock
  */
 
-static __le32 calc_sb_1_csum(struct mdp_superblock_1 *sb)
-{
+अटल __le32 calc_sb_1_csum(काष्ठा mdp_superblock_1 *sb)
+अणु
 	__le32 disk_csum;
 	u32 csum;
-	unsigned long long newcsum;
-	int size = 256 + le32_to_cpu(sb->max_dev)*2;
+	अचिन्हित दीर्घ दीर्घ newcsum;
+	पूर्णांक size = 256 + le32_to_cpu(sb->max_dev)*2;
 	__le32 *isuper = (__le32*)sb;
 
 	disk_csum = sb->sb_csum;
 	sb->sb_csum = 0;
 	newcsum = 0;
-	for (; size >= 4; size -= 4)
+	क्रम (; size >= 4; size -= 4)
 		newcsum += le32_to_cpu(*isuper++);
 
-	if (size == 2)
+	अगर (size == 2)
 		newcsum += le16_to_cpu(*(__le16*) isuper);
 
 	csum = (newcsum & 0xffffffff) + (newcsum >> 32);
 	sb->sb_csum = disk_csum;
-	return cpu_to_le32(csum);
-}
+	वापस cpu_to_le32(csum);
+पूर्ण
 
-static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_version)
-{
-	struct mdp_superblock_1 *sb;
-	int ret;
+अटल पूर्णांक super_1_load(काष्ठा md_rdev *rdev, काष्ठा md_rdev *refdev, पूर्णांक minor_version)
+अणु
+	काष्ठा mdp_superblock_1 *sb;
+	पूर्णांक ret;
 	sector_t sb_start;
 	sector_t sectors;
-	char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
-	int bmask;
+	अक्षर b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
+	पूर्णांक bmask;
 	bool spare_disk = true;
 
 	/*
@@ -1668,353 +1669,353 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
 	 * 1: At start of device
 	 * 2: 4K from start of device.
 	 */
-	switch(minor_version) {
-	case 0:
-		sb_start = i_size_read(rdev->bdev->bd_inode) >> 9;
+	चयन(minor_version) अणु
+	हाल 0:
+		sb_start = i_size_पढ़ो(rdev->bdev->bd_inode) >> 9;
 		sb_start -= 8*2;
 		sb_start &= ~(sector_t)(4*2-1);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		sb_start = 0;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		sb_start = 8;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	rdev->sb_start = sb_start;
 
 	/* superblock is rarely larger than 1K, but it can be larger,
-	 * and it is safe to read 4k, so we do that
+	 * and it is safe to पढ़ो 4k, so we करो that
 	 */
-	ret = read_disk_sb(rdev, 4096);
-	if (ret) return ret;
+	ret = पढ़ो_disk_sb(rdev, 4096);
+	अगर (ret) वापस ret;
 
 	sb = page_address(rdev->sb_page);
 
-	if (sb->magic != cpu_to_le32(MD_SB_MAGIC) ||
+	अगर (sb->magic != cpu_to_le32(MD_SB_MAGIC) ||
 	    sb->major_version != cpu_to_le32(1) ||
 	    le32_to_cpu(sb->max_dev) > (4096-256)/2 ||
 	    le64_to_cpu(sb->super_offset) != rdev->sb_start ||
 	    (le32_to_cpu(sb->feature_map) & ~MD_FEATURE_ALL) != 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (calc_sb_1_csum(sb) != sb->sb_csum) {
+	अगर (calc_sb_1_csum(sb) != sb->sb_csum) अणु
 		pr_warn("md: invalid superblock checksum on %s\n",
 			bdevname(rdev->bdev,b));
-		return -EINVAL;
-	}
-	if (le64_to_cpu(sb->data_size) < 10) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (le64_to_cpu(sb->data_size) < 10) अणु
 		pr_warn("md: data_size too small on %s\n",
 			bdevname(rdev->bdev,b));
-		return -EINVAL;
-	}
-	if (sb->pad0 ||
+		वापस -EINVAL;
+	पूर्ण
+	अगर (sb->pad0 ||
 	    sb->pad3[0] ||
-	    memcmp(sb->pad3, sb->pad3+1, sizeof(sb->pad3) - sizeof(sb->pad3[1])))
+	    स_भेद(sb->pad3, sb->pad3+1, माप(sb->pad3) - माप(sb->pad3[1])))
 		/* Some padding is non-zero, might be a new feature */
-		return -EINVAL;
+		वापस -EINVAL;
 
 	rdev->preferred_minor = 0xffff;
 	rdev->data_offset = le64_to_cpu(sb->data_offset);
 	rdev->new_data_offset = rdev->data_offset;
-	if ((le32_to_cpu(sb->feature_map) & MD_FEATURE_RESHAPE_ACTIVE) &&
+	अगर ((le32_to_cpu(sb->feature_map) & MD_FEATURE_RESHAPE_ACTIVE) &&
 	    (le32_to_cpu(sb->feature_map) & MD_FEATURE_NEW_OFFSET))
 		rdev->new_data_offset += (s32)le32_to_cpu(sb->new_offset);
-	atomic_set(&rdev->corrected_errors, le32_to_cpu(sb->cnt_corrected_read));
+	atomic_set(&rdev->corrected_errors, le32_to_cpu(sb->cnt_corrected_पढ़ो));
 
 	rdev->sb_size = le32_to_cpu(sb->max_dev) * 2 + 256;
 	bmask = queue_logical_block_size(rdev->bdev->bd_disk->queue)-1;
-	if (rdev->sb_size & bmask)
+	अगर (rdev->sb_size & bmask)
 		rdev->sb_size = (rdev->sb_size | bmask) + 1;
 
-	if (minor_version
+	अगर (minor_version
 	    && rdev->data_offset < sb_start + (rdev->sb_size/512))
-		return -EINVAL;
-	if (minor_version
+		वापस -EINVAL;
+	अगर (minor_version
 	    && rdev->new_data_offset < sb_start + (rdev->sb_size/512))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (sb->level == cpu_to_le32(LEVEL_MULTIPATH))
+	अगर (sb->level == cpu_to_le32(LEVEL_MULTIPATH))
 		rdev->desc_nr = -1;
-	else
+	अन्यथा
 		rdev->desc_nr = le32_to_cpu(sb->dev_number);
 
-	if (!rdev->bb_page) {
+	अगर (!rdev->bb_page) अणु
 		rdev->bb_page = alloc_page(GFP_KERNEL);
-		if (!rdev->bb_page)
-			return -ENOMEM;
-	}
-	if ((le32_to_cpu(sb->feature_map) & MD_FEATURE_BAD_BLOCKS) &&
-	    rdev->badblocks.count == 0) {
+		अगर (!rdev->bb_page)
+			वापस -ENOMEM;
+	पूर्ण
+	अगर ((le32_to_cpu(sb->feature_map) & MD_FEATURE_BAD_BLOCKS) &&
+	    rdev->badblocks.count == 0) अणु
 		/* need to load the bad block list.
 		 * Currently we limit it to one page.
 		 */
 		s32 offset;
 		sector_t bb_sector;
 		__le64 *bbp;
-		int i;
-		int sectors = le16_to_cpu(sb->bblog_size);
-		if (sectors > (PAGE_SIZE / 512))
-			return -EINVAL;
+		पूर्णांक i;
+		पूर्णांक sectors = le16_to_cpu(sb->bblog_size);
+		अगर (sectors > (PAGE_SIZE / 512))
+			वापस -EINVAL;
 		offset = le32_to_cpu(sb->bblog_offset);
-		if (offset == 0)
-			return -EINVAL;
-		bb_sector = (long long)offset;
-		if (!sync_page_io(rdev, bb_sector, sectors << 9,
+		अगर (offset == 0)
+			वापस -EINVAL;
+		bb_sector = (दीर्घ दीर्घ)offset;
+		अगर (!sync_page_io(rdev, bb_sector, sectors << 9,
 				  rdev->bb_page, REQ_OP_READ, 0, true))
-			return -EIO;
+			वापस -EIO;
 		bbp = (__le64 *)page_address(rdev->bb_page);
-		rdev->badblocks.shift = sb->bblog_shift;
-		for (i = 0 ; i < (sectors << (9-3)) ; i++, bbp++) {
+		rdev->badblocks.shअगरt = sb->bblog_shअगरt;
+		क्रम (i = 0 ; i < (sectors << (9-3)) ; i++, bbp++) अणु
 			u64 bb = le64_to_cpu(*bbp);
-			int count = bb & (0x3ff);
+			पूर्णांक count = bb & (0x3ff);
 			u64 sector = bb >> 10;
-			sector <<= sb->bblog_shift;
-			count <<= sb->bblog_shift;
-			if (bb + 1 == 0)
-				break;
-			if (badblocks_set(&rdev->badblocks, sector, count, 1))
-				return -EINVAL;
-		}
-	} else if (sb->bblog_offset != 0)
-		rdev->badblocks.shift = 0;
+			sector <<= sb->bblog_shअगरt;
+			count <<= sb->bblog_shअगरt;
+			अगर (bb + 1 == 0)
+				अवरोध;
+			अगर (badblocks_set(&rdev->badblocks, sector, count, 1))
+				वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अगर (sb->bblog_offset != 0)
+		rdev->badblocks.shअगरt = 0;
 
-	if ((le32_to_cpu(sb->feature_map) &
-	    (MD_FEATURE_PPL | MD_FEATURE_MULTIPLE_PPLS))) {
+	अगर ((le32_to_cpu(sb->feature_map) &
+	    (MD_FEATURE_PPL | MD_FEATURE_MULTIPLE_PPLS))) अणु
 		rdev->ppl.offset = (__s16)le16_to_cpu(sb->ppl.offset);
 		rdev->ppl.size = le16_to_cpu(sb->ppl.size);
 		rdev->ppl.sector = rdev->sb_start + rdev->ppl.offset;
-	}
+	पूर्ण
 
-	if ((le32_to_cpu(sb->feature_map) & MD_FEATURE_RAID0_LAYOUT) &&
+	अगर ((le32_to_cpu(sb->feature_map) & MD_FEATURE_RAID0_LAYOUT) &&
 	    sb->level != 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* not spare disk, or LEVEL_MULTIPATH */
-	if (sb->level == cpu_to_le32(LEVEL_MULTIPATH) ||
+	अगर (sb->level == cpu_to_le32(LEVEL_MULTIPATH) ||
 		(rdev->desc_nr >= 0 &&
 		rdev->desc_nr < le32_to_cpu(sb->max_dev) &&
 		(le16_to_cpu(sb->dev_roles[rdev->desc_nr]) < MD_DISK_ROLE_MAX ||
 		 le16_to_cpu(sb->dev_roles[rdev->desc_nr]) == MD_DISK_ROLE_JOURNAL)))
 		spare_disk = false;
 
-	if (!refdev) {
-		if (!spare_disk)
+	अगर (!refdev) अणु
+		अगर (!spare_disk)
 			ret = 1;
-		else
+		अन्यथा
 			ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		__u64 ev1, ev2;
-		struct mdp_superblock_1 *refsb = page_address(refdev->sb_page);
+		काष्ठा mdp_superblock_1 *refsb = page_address(refdev->sb_page);
 
-		if (memcmp(sb->set_uuid, refsb->set_uuid, 16) != 0 ||
+		अगर (स_भेद(sb->set_uuid, refsb->set_uuid, 16) != 0 ||
 		    sb->level != refsb->level ||
 		    sb->layout != refsb->layout ||
-		    sb->chunksize != refsb->chunksize) {
+		    sb->chunksize != refsb->chunksize) अणु
 			pr_warn("md: %s has strangely different superblock to %s\n",
 				bdevname(rdev->bdev,b),
 				bdevname(refdev->bdev,b2));
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ev1 = le64_to_cpu(sb->events);
 		ev2 = le64_to_cpu(refsb->events);
 
-		if (!spare_disk && ev1 > ev2)
+		अगर (!spare_disk && ev1 > ev2)
 			ret = 1;
-		else
+		अन्यथा
 			ret = 0;
-	}
-	if (minor_version) {
-		sectors = (i_size_read(rdev->bdev->bd_inode) >> 9);
+	पूर्ण
+	अगर (minor_version) अणु
+		sectors = (i_size_पढ़ो(rdev->bdev->bd_inode) >> 9);
 		sectors -= rdev->data_offset;
-	} else
+	पूर्ण अन्यथा
 		sectors = rdev->sb_start;
-	if (sectors < le64_to_cpu(sb->data_size))
-		return -EINVAL;
+	अगर (sectors < le64_to_cpu(sb->data_size))
+		वापस -EINVAL;
 	rdev->sectors = le64_to_cpu(sb->data_size);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int super_1_validate(struct mddev *mddev, struct md_rdev *rdev)
-{
-	struct mdp_superblock_1 *sb = page_address(rdev->sb_page);
+अटल पूर्णांक super_1_validate(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
+अणु
+	काष्ठा mdp_superblock_1 *sb = page_address(rdev->sb_page);
 	__u64 ev1 = le64_to_cpu(sb->events);
 
 	rdev->raid_disk = -1;
 	clear_bit(Faulty, &rdev->flags);
 	clear_bit(In_sync, &rdev->flags);
-	clear_bit(Bitmap_sync, &rdev->flags);
+	clear_bit(Biपंचांगap_sync, &rdev->flags);
 	clear_bit(WriteMostly, &rdev->flags);
 
-	if (mddev->raid_disks == 0) {
+	अगर (mddev->raid_disks == 0) अणु
 		mddev->major_version = 1;
 		mddev->patch_version = 0;
-		mddev->external = 0;
+		mddev->बाह्यal = 0;
 		mddev->chunk_sectors = le32_to_cpu(sb->chunksize);
-		mddev->ctime = le64_to_cpu(sb->ctime);
-		mddev->utime = le64_to_cpu(sb->utime);
+		mddev->स_समय = le64_to_cpu(sb->स_समय);
+		mddev->uसमय = le64_to_cpu(sb->uसमय);
 		mddev->level = le32_to_cpu(sb->level);
 		mddev->clevel[0] = 0;
 		mddev->layout = le32_to_cpu(sb->layout);
 		mddev->raid_disks = le32_to_cpu(sb->raid_disks);
 		mddev->dev_sectors = le64_to_cpu(sb->size);
 		mddev->events = ev1;
-		mddev->bitmap_info.offset = 0;
-		mddev->bitmap_info.space = 0;
-		/* Default location for bitmap is 1K after superblock
+		mddev->biपंचांगap_info.offset = 0;
+		mddev->biपंचांगap_info.space = 0;
+		/* Default location क्रम biपंचांगap is 1K after superblock
 		 * using 3K - total of 4K
 		 */
-		mddev->bitmap_info.default_offset = 1024 >> 9;
-		mddev->bitmap_info.default_space = (4096-1024) >> 9;
+		mddev->biपंचांगap_info.शेष_offset = 1024 >> 9;
+		mddev->biपंचांगap_info.शेष_space = (4096-1024) >> 9;
 		mddev->reshape_backwards = 0;
 
 		mddev->recovery_cp = le64_to_cpu(sb->resync_offset);
-		memcpy(mddev->uuid, sb->set_uuid, 16);
+		स_नकल(mddev->uuid, sb->set_uuid, 16);
 
 		mddev->max_disks =  (4096-256)/2;
 
-		if ((le32_to_cpu(sb->feature_map) & MD_FEATURE_BITMAP_OFFSET) &&
-		    mddev->bitmap_info.file == NULL) {
-			mddev->bitmap_info.offset =
-				(__s32)le32_to_cpu(sb->bitmap_offset);
-			/* Metadata doesn't record how much space is available.
+		अगर ((le32_to_cpu(sb->feature_map) & MD_FEATURE_BITMAP_OFFSET) &&
+		    mddev->biपंचांगap_info.file == शून्य) अणु
+			mddev->biपंचांगap_info.offset =
+				(__s32)le32_to_cpu(sb->biपंचांगap_offset);
+			/* Metadata करोesn't record how much space is available.
 			 * For 1.0, we assume we can use up to the superblock
-			 * if before, else to 4K beyond superblock.
+			 * अगर beक्रमe, अन्यथा to 4K beyond superblock.
 			 * For others, assume no change is possible.
 			 */
-			if (mddev->minor_version > 0)
-				mddev->bitmap_info.space = 0;
-			else if (mddev->bitmap_info.offset > 0)
-				mddev->bitmap_info.space =
-					8 - mddev->bitmap_info.offset;
-			else
-				mddev->bitmap_info.space =
-					-mddev->bitmap_info.offset;
-		}
+			अगर (mddev->minor_version > 0)
+				mddev->biपंचांगap_info.space = 0;
+			अन्यथा अगर (mddev->biपंचांगap_info.offset > 0)
+				mddev->biपंचांगap_info.space =
+					8 - mddev->biपंचांगap_info.offset;
+			अन्यथा
+				mddev->biपंचांगap_info.space =
+					-mddev->biपंचांगap_info.offset;
+		पूर्ण
 
-		if ((le32_to_cpu(sb->feature_map) & MD_FEATURE_RESHAPE_ACTIVE)) {
+		अगर ((le32_to_cpu(sb->feature_map) & MD_FEATURE_RESHAPE_ACTIVE)) अणु
 			mddev->reshape_position = le64_to_cpu(sb->reshape_position);
 			mddev->delta_disks = le32_to_cpu(sb->delta_disks);
 			mddev->new_level = le32_to_cpu(sb->new_level);
 			mddev->new_layout = le32_to_cpu(sb->new_layout);
 			mddev->new_chunk_sectors = le32_to_cpu(sb->new_chunk);
-			if (mddev->delta_disks < 0 ||
+			अगर (mddev->delta_disks < 0 ||
 			    (mddev->delta_disks == 0 &&
 			     (le32_to_cpu(sb->feature_map)
 			      & MD_FEATURE_RESHAPE_BACKWARDS)))
 				mddev->reshape_backwards = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			mddev->reshape_position = MaxSector;
 			mddev->delta_disks = 0;
 			mddev->new_level = mddev->level;
 			mddev->new_layout = mddev->layout;
 			mddev->new_chunk_sectors = mddev->chunk_sectors;
-		}
+		पूर्ण
 
-		if (mddev->level == 0 &&
+		अगर (mddev->level == 0 &&
 		    !(le32_to_cpu(sb->feature_map) & MD_FEATURE_RAID0_LAYOUT))
 			mddev->layout = -1;
 
-		if (le32_to_cpu(sb->feature_map) & MD_FEATURE_JOURNAL)
+		अगर (le32_to_cpu(sb->feature_map) & MD_FEATURE_JOURNAL)
 			set_bit(MD_HAS_JOURNAL, &mddev->flags);
 
-		if (le32_to_cpu(sb->feature_map) &
-		    (MD_FEATURE_PPL | MD_FEATURE_MULTIPLE_PPLS)) {
-			if (le32_to_cpu(sb->feature_map) &
+		अगर (le32_to_cpu(sb->feature_map) &
+		    (MD_FEATURE_PPL | MD_FEATURE_MULTIPLE_PPLS)) अणु
+			अगर (le32_to_cpu(sb->feature_map) &
 			    (MD_FEATURE_BITMAP_OFFSET | MD_FEATURE_JOURNAL))
-				return -EINVAL;
-			if ((le32_to_cpu(sb->feature_map) & MD_FEATURE_PPL) &&
+				वापस -EINVAL;
+			अगर ((le32_to_cpu(sb->feature_map) & MD_FEATURE_PPL) &&
 			    (le32_to_cpu(sb->feature_map) &
 					    MD_FEATURE_MULTIPLE_PPLS))
-				return -EINVAL;
+				वापस -EINVAL;
 			set_bit(MD_HAS_PPL, &mddev->flags);
-		}
-	} else if (mddev->pers == NULL) {
-		/* Insist of good event counter while assembling, except for
-		 * spares (which don't need an event count) */
+		पूर्ण
+	पूर्ण अन्यथा अगर (mddev->pers == शून्य) अणु
+		/* Insist of good event counter जबतक assembling, except क्रम
+		 * spares (which करोn't need an event count) */
 		++ev1;
-		if (rdev->desc_nr >= 0 &&
+		अगर (rdev->desc_nr >= 0 &&
 		    rdev->desc_nr < le32_to_cpu(sb->max_dev) &&
 		    (le16_to_cpu(sb->dev_roles[rdev->desc_nr]) < MD_DISK_ROLE_MAX ||
 		     le16_to_cpu(sb->dev_roles[rdev->desc_nr]) == MD_DISK_ROLE_JOURNAL))
-			if (ev1 < mddev->events)
-				return -EINVAL;
-	} else if (mddev->bitmap) {
-		/* If adding to array with a bitmap, then we can accept an
+			अगर (ev1 < mddev->events)
+				वापस -EINVAL;
+	पूर्ण अन्यथा अगर (mddev->biपंचांगap) अणु
+		/* If adding to array with a biपंचांगap, then we can accept an
 		 * older device, but not too old.
 		 */
-		if (ev1 < mddev->bitmap->events_cleared)
-			return 0;
-		if (ev1 < mddev->events)
-			set_bit(Bitmap_sync, &rdev->flags);
-	} else {
-		if (ev1 < mddev->events)
+		अगर (ev1 < mddev->biपंचांगap->events_cleared)
+			वापस 0;
+		अगर (ev1 < mddev->events)
+			set_bit(Biपंचांगap_sync, &rdev->flags);
+	पूर्ण अन्यथा अणु
+		अगर (ev1 < mddev->events)
 			/* just a hot-add of a new device, leave raid_disk at -1 */
-			return 0;
-	}
-	if (mddev->level != LEVEL_MULTIPATH) {
-		int role;
-		if (rdev->desc_nr < 0 ||
-		    rdev->desc_nr >= le32_to_cpu(sb->max_dev)) {
+			वापस 0;
+	पूर्ण
+	अगर (mddev->level != LEVEL_MULTIPATH) अणु
+		पूर्णांक role;
+		अगर (rdev->desc_nr < 0 ||
+		    rdev->desc_nr >= le32_to_cpu(sb->max_dev)) अणु
 			role = MD_DISK_ROLE_SPARE;
 			rdev->desc_nr = -1;
-		} else
+		पूर्ण अन्यथा
 			role = le16_to_cpu(sb->dev_roles[rdev->desc_nr]);
-		switch(role) {
-		case MD_DISK_ROLE_SPARE: /* spare */
-			break;
-		case MD_DISK_ROLE_FAULTY: /* faulty */
+		चयन(role) अणु
+		हाल MD_DISK_ROLE_SPARE: /* spare */
+			अवरोध;
+		हाल MD_DISK_ROLE_FAULTY: /* faulty */
 			set_bit(Faulty, &rdev->flags);
-			break;
-		case MD_DISK_ROLE_JOURNAL: /* journal device */
-			if (!(le32_to_cpu(sb->feature_map) & MD_FEATURE_JOURNAL)) {
+			अवरोध;
+		हाल MD_DISK_ROLE_JOURNAL: /* journal device */
+			अगर (!(le32_to_cpu(sb->feature_map) & MD_FEATURE_JOURNAL)) अणु
 				/* journal device without journal feature */
 				pr_warn("md: journal device provided without journal feature, ignoring the device\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			set_bit(Journal, &rdev->flags);
 			rdev->journal_tail = le64_to_cpu(sb->journal_tail);
 			rdev->raid_disk = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			rdev->saved_raid_disk = role;
-			if ((le32_to_cpu(sb->feature_map) &
-			     MD_FEATURE_RECOVERY_OFFSET)) {
+			अगर ((le32_to_cpu(sb->feature_map) &
+			     MD_FEATURE_RECOVERY_OFFSET)) अणु
 				rdev->recovery_offset = le64_to_cpu(sb->recovery_offset);
-				if (!(le32_to_cpu(sb->feature_map) &
+				अगर (!(le32_to_cpu(sb->feature_map) &
 				      MD_FEATURE_RECOVERY_BITMAP))
 					rdev->saved_raid_disk = -1;
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
 				 * If the array is FROZEN, then the device can't
 				 * be in_sync with rest of array.
 				 */
-				if (!test_bit(MD_RECOVERY_FROZEN,
+				अगर (!test_bit(MD_RECOVERY_FROZEN,
 					      &mddev->recovery))
 					set_bit(In_sync, &rdev->flags);
-			}
+			पूर्ण
 			rdev->raid_disk = role;
-			break;
-		}
-		if (sb->devflags & WriteMostly1)
+			अवरोध;
+		पूर्ण
+		अगर (sb->devflags & WriteMostly1)
 			set_bit(WriteMostly, &rdev->flags);
-		if (sb->devflags & FailFast1)
+		अगर (sb->devflags & FailFast1)
 			set_bit(FailFast, &rdev->flags);
-		if (le32_to_cpu(sb->feature_map) & MD_FEATURE_REPLACEMENT)
+		अगर (le32_to_cpu(sb->feature_map) & MD_FEATURE_REPLACEMENT)
 			set_bit(Replacement, &rdev->flags);
-	} else /* MULTIPATH are always insync */
+	पूर्ण अन्यथा /* MULTIPATH are always insync */
 		set_bit(In_sync, &rdev->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void super_1_sync(struct mddev *mddev, struct md_rdev *rdev)
-{
-	struct mdp_superblock_1 *sb;
-	struct md_rdev *rdev2;
-	int max_dev, i;
+अटल व्योम super_1_sync(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
+अणु
+	काष्ठा mdp_superblock_1 *sb;
+	काष्ठा md_rdev *rdev2;
+	पूर्णांक max_dev, i;
 	/* make rdev->sb match mddev and rdev data. */
 
 	sb = page_address(rdev->sb_page);
@@ -2022,264 +2023,264 @@ static void super_1_sync(struct mddev *mddev, struct md_rdev *rdev)
 	sb->feature_map = 0;
 	sb->pad0 = 0;
 	sb->recovery_offset = cpu_to_le64(0);
-	memset(sb->pad3, 0, sizeof(sb->pad3));
+	स_रखो(sb->pad3, 0, माप(sb->pad3));
 
-	sb->utime = cpu_to_le64((__u64)mddev->utime);
+	sb->uसमय = cpu_to_le64((__u64)mddev->uसमय);
 	sb->events = cpu_to_le64(mddev->events);
-	if (mddev->in_sync)
+	अगर (mddev->in_sync)
 		sb->resync_offset = cpu_to_le64(mddev->recovery_cp);
-	else if (test_bit(MD_JOURNAL_CLEAN, &mddev->flags))
+	अन्यथा अगर (test_bit(MD_JOURNAL_CLEAN, &mddev->flags))
 		sb->resync_offset = cpu_to_le64(MaxSector);
-	else
+	अन्यथा
 		sb->resync_offset = cpu_to_le64(0);
 
-	sb->cnt_corrected_read = cpu_to_le32(atomic_read(&rdev->corrected_errors));
+	sb->cnt_corrected_पढ़ो = cpu_to_le32(atomic_पढ़ो(&rdev->corrected_errors));
 
 	sb->raid_disks = cpu_to_le32(mddev->raid_disks);
 	sb->size = cpu_to_le64(mddev->dev_sectors);
 	sb->chunksize = cpu_to_le32(mddev->chunk_sectors);
 	sb->level = cpu_to_le32(mddev->level);
 	sb->layout = cpu_to_le32(mddev->layout);
-	if (test_bit(FailFast, &rdev->flags))
+	अगर (test_bit(FailFast, &rdev->flags))
 		sb->devflags |= FailFast1;
-	else
+	अन्यथा
 		sb->devflags &= ~FailFast1;
 
-	if (test_bit(WriteMostly, &rdev->flags))
+	अगर (test_bit(WriteMostly, &rdev->flags))
 		sb->devflags |= WriteMostly1;
-	else
+	अन्यथा
 		sb->devflags &= ~WriteMostly1;
 	sb->data_offset = cpu_to_le64(rdev->data_offset);
 	sb->data_size = cpu_to_le64(rdev->sectors);
 
-	if (mddev->bitmap && mddev->bitmap_info.file == NULL) {
-		sb->bitmap_offset = cpu_to_le32((__u32)mddev->bitmap_info.offset);
+	अगर (mddev->biपंचांगap && mddev->biपंचांगap_info.file == शून्य) अणु
+		sb->biपंचांगap_offset = cpu_to_le32((__u32)mddev->biपंचांगap_info.offset);
 		sb->feature_map = cpu_to_le32(MD_FEATURE_BITMAP_OFFSET);
-	}
+	पूर्ण
 
-	if (rdev->raid_disk >= 0 && !test_bit(Journal, &rdev->flags) &&
-	    !test_bit(In_sync, &rdev->flags)) {
+	अगर (rdev->raid_disk >= 0 && !test_bit(Journal, &rdev->flags) &&
+	    !test_bit(In_sync, &rdev->flags)) अणु
 		sb->feature_map |=
 			cpu_to_le32(MD_FEATURE_RECOVERY_OFFSET);
 		sb->recovery_offset =
 			cpu_to_le64(rdev->recovery_offset);
-		if (rdev->saved_raid_disk >= 0 && mddev->bitmap)
+		अगर (rdev->saved_raid_disk >= 0 && mddev->biपंचांगap)
 			sb->feature_map |=
 				cpu_to_le32(MD_FEATURE_RECOVERY_BITMAP);
-	}
+	पूर्ण
 	/* Note: recovery_offset and journal_tail share space  */
-	if (test_bit(Journal, &rdev->flags))
+	अगर (test_bit(Journal, &rdev->flags))
 		sb->journal_tail = cpu_to_le64(rdev->journal_tail);
-	if (test_bit(Replacement, &rdev->flags))
+	अगर (test_bit(Replacement, &rdev->flags))
 		sb->feature_map |=
 			cpu_to_le32(MD_FEATURE_REPLACEMENT);
 
-	if (mddev->reshape_position != MaxSector) {
+	अगर (mddev->reshape_position != MaxSector) अणु
 		sb->feature_map |= cpu_to_le32(MD_FEATURE_RESHAPE_ACTIVE);
 		sb->reshape_position = cpu_to_le64(mddev->reshape_position);
 		sb->new_layout = cpu_to_le32(mddev->new_layout);
 		sb->delta_disks = cpu_to_le32(mddev->delta_disks);
 		sb->new_level = cpu_to_le32(mddev->new_level);
 		sb->new_chunk = cpu_to_le32(mddev->new_chunk_sectors);
-		if (mddev->delta_disks == 0 &&
+		अगर (mddev->delta_disks == 0 &&
 		    mddev->reshape_backwards)
 			sb->feature_map
 				|= cpu_to_le32(MD_FEATURE_RESHAPE_BACKWARDS);
-		if (rdev->new_data_offset != rdev->data_offset) {
+		अगर (rdev->new_data_offset != rdev->data_offset) अणु
 			sb->feature_map
 				|= cpu_to_le32(MD_FEATURE_NEW_OFFSET);
 			sb->new_offset = cpu_to_le32((__u32)(rdev->new_data_offset
 							     - rdev->data_offset));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (mddev_is_clustered(mddev))
+	अगर (mddev_is_clustered(mddev))
 		sb->feature_map |= cpu_to_le32(MD_FEATURE_CLUSTERED);
 
-	if (rdev->badblocks.count == 0)
-		/* Nothing to do for bad blocks*/ ;
-	else if (sb->bblog_offset == 0)
+	अगर (rdev->badblocks.count == 0)
+		/* Nothing to करो क्रम bad blocks*/ ;
+	अन्यथा अगर (sb->bblog_offset == 0)
 		/* Cannot record bad blocks on this device */
 		md_error(mddev, rdev);
-	else {
-		struct badblocks *bb = &rdev->badblocks;
+	अन्यथा अणु
+		काष्ठा badblocks *bb = &rdev->badblocks;
 		__le64 *bbp = (__le64 *)page_address(rdev->bb_page);
 		u64 *p = bb->page;
 		sb->feature_map |= cpu_to_le32(MD_FEATURE_BAD_BLOCKS);
-		if (bb->changed) {
-			unsigned seq;
+		अगर (bb->changed) अणु
+			अचिन्हित seq;
 
 retry:
-			seq = read_seqbegin(&bb->lock);
+			seq = पढ़ो_seqbegin(&bb->lock);
 
-			memset(bbp, 0xff, PAGE_SIZE);
+			स_रखो(bbp, 0xff, PAGE_SIZE);
 
-			for (i = 0 ; i < bb->count ; i++) {
-				u64 internal_bb = p[i];
-				u64 store_bb = ((BB_OFFSET(internal_bb) << 10)
-						| BB_LEN(internal_bb));
+			क्रम (i = 0 ; i < bb->count ; i++) अणु
+				u64 पूर्णांकernal_bb = p[i];
+				u64 store_bb = ((BB_OFFSET(पूर्णांकernal_bb) << 10)
+						| BB_LEN(पूर्णांकernal_bb));
 				bbp[i] = cpu_to_le64(store_bb);
-			}
+			पूर्ण
 			bb->changed = 0;
-			if (read_seqretry(&bb->lock, seq))
-				goto retry;
+			अगर (पढ़ो_seqretry(&bb->lock, seq))
+				जाओ retry;
 
 			bb->sector = (rdev->sb_start +
-				      (int)le32_to_cpu(sb->bblog_offset));
+				      (पूर्णांक)le32_to_cpu(sb->bblog_offset));
 			bb->size = le16_to_cpu(sb->bblog_size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	max_dev = 0;
-	rdev_for_each(rdev2, mddev)
-		if (rdev2->desc_nr+1 > max_dev)
+	rdev_क्रम_each(rdev2, mddev)
+		अगर (rdev2->desc_nr+1 > max_dev)
 			max_dev = rdev2->desc_nr+1;
 
-	if (max_dev > le32_to_cpu(sb->max_dev)) {
-		int bmask;
+	अगर (max_dev > le32_to_cpu(sb->max_dev)) अणु
+		पूर्णांक bmask;
 		sb->max_dev = cpu_to_le32(max_dev);
 		rdev->sb_size = max_dev * 2 + 256;
 		bmask = queue_logical_block_size(rdev->bdev->bd_disk->queue)-1;
-		if (rdev->sb_size & bmask)
+		अगर (rdev->sb_size & bmask)
 			rdev->sb_size = (rdev->sb_size | bmask) + 1;
-	} else
+	पूर्ण अन्यथा
 		max_dev = le32_to_cpu(sb->max_dev);
 
-	for (i=0; i<max_dev;i++)
+	क्रम (i=0; i<max_dev;i++)
 		sb->dev_roles[i] = cpu_to_le16(MD_DISK_ROLE_SPARE);
 
-	if (test_bit(MD_HAS_JOURNAL, &mddev->flags))
+	अगर (test_bit(MD_HAS_JOURNAL, &mddev->flags))
 		sb->feature_map |= cpu_to_le32(MD_FEATURE_JOURNAL);
 
-	if (test_bit(MD_HAS_PPL, &mddev->flags)) {
-		if (test_bit(MD_HAS_MULTIPLE_PPLS, &mddev->flags))
+	अगर (test_bit(MD_HAS_PPL, &mddev->flags)) अणु
+		अगर (test_bit(MD_HAS_MULTIPLE_PPLS, &mddev->flags))
 			sb->feature_map |=
 			    cpu_to_le32(MD_FEATURE_MULTIPLE_PPLS);
-		else
+		अन्यथा
 			sb->feature_map |= cpu_to_le32(MD_FEATURE_PPL);
 		sb->ppl.offset = cpu_to_le16(rdev->ppl.offset);
 		sb->ppl.size = cpu_to_le16(rdev->ppl.size);
-	}
+	पूर्ण
 
-	rdev_for_each(rdev2, mddev) {
+	rdev_क्रम_each(rdev2, mddev) अणु
 		i = rdev2->desc_nr;
-		if (test_bit(Faulty, &rdev2->flags))
+		अगर (test_bit(Faulty, &rdev2->flags))
 			sb->dev_roles[i] = cpu_to_le16(MD_DISK_ROLE_FAULTY);
-		else if (test_bit(In_sync, &rdev2->flags))
+		अन्यथा अगर (test_bit(In_sync, &rdev2->flags))
 			sb->dev_roles[i] = cpu_to_le16(rdev2->raid_disk);
-		else if (test_bit(Journal, &rdev2->flags))
+		अन्यथा अगर (test_bit(Journal, &rdev2->flags))
 			sb->dev_roles[i] = cpu_to_le16(MD_DISK_ROLE_JOURNAL);
-		else if (rdev2->raid_disk >= 0)
+		अन्यथा अगर (rdev2->raid_disk >= 0)
 			sb->dev_roles[i] = cpu_to_le16(rdev2->raid_disk);
-		else
+		अन्यथा
 			sb->dev_roles[i] = cpu_to_le16(MD_DISK_ROLE_SPARE);
-	}
+	पूर्ण
 
 	sb->sb_csum = calc_sb_1_csum(sb);
-}
+पूर्ण
 
-static sector_t super_1_choose_bm_space(sector_t dev_size)
-{
+अटल sector_t super_1_choose_bm_space(sector_t dev_size)
+अणु
 	sector_t bm_space;
 
-	/* if the device is bigger than 8Gig, save 64k for bitmap
-	 * usage, if bigger than 200Gig, save 128k
+	/* अगर the device is bigger than 8Gig, save 64k क्रम biपंचांगap
+	 * usage, अगर bigger than 200Gig, save 128k
 	 */
-	if (dev_size < 64*2)
+	अगर (dev_size < 64*2)
 		bm_space = 0;
-	else if (dev_size - 64*2 >= 200*1024*1024*2)
+	अन्यथा अगर (dev_size - 64*2 >= 200*1024*1024*2)
 		bm_space = 128*2;
-	else if (dev_size - 4*2 > 8*1024*1024*2)
+	अन्यथा अगर (dev_size - 4*2 > 8*1024*1024*2)
 		bm_space = 64*2;
-	else
+	अन्यथा
 		bm_space = 4*2;
-	return bm_space;
-}
+	वापस bm_space;
+पूर्ण
 
-static unsigned long long
-super_1_rdev_size_change(struct md_rdev *rdev, sector_t num_sectors)
-{
-	struct mdp_superblock_1 *sb;
+अटल अचिन्हित दीर्घ दीर्घ
+super_1_rdev_size_change(काष्ठा md_rdev *rdev, sector_t num_sectors)
+अणु
+	काष्ठा mdp_superblock_1 *sb;
 	sector_t max_sectors;
-	if (num_sectors && num_sectors < rdev->mddev->dev_sectors)
-		return 0; /* component must fit device */
-	if (rdev->data_offset != rdev->new_data_offset)
-		return 0; /* too confusing */
-	if (rdev->sb_start < rdev->data_offset) {
-		/* minor versions 1 and 2; superblock before data */
-		max_sectors = i_size_read(rdev->bdev->bd_inode) >> 9;
+	अगर (num_sectors && num_sectors < rdev->mddev->dev_sectors)
+		वापस 0; /* component must fit device */
+	अगर (rdev->data_offset != rdev->new_data_offset)
+		वापस 0; /* too confusing */
+	अगर (rdev->sb_start < rdev->data_offset) अणु
+		/* minor versions 1 and 2; superblock beक्रमe data */
+		max_sectors = i_size_पढ़ो(rdev->bdev->bd_inode) >> 9;
 		max_sectors -= rdev->data_offset;
-		if (!num_sectors || num_sectors > max_sectors)
+		अगर (!num_sectors || num_sectors > max_sectors)
 			num_sectors = max_sectors;
-	} else if (rdev->mddev->bitmap_info.offset) {
-		/* minor version 0 with bitmap we can't move */
-		return 0;
-	} else {
+	पूर्ण अन्यथा अगर (rdev->mddev->biपंचांगap_info.offset) अणु
+		/* minor version 0 with biपंचांगap we can't move */
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		/* minor version 0; superblock after data */
 		sector_t sb_start, bm_space;
-		sector_t dev_size = i_size_read(rdev->bdev->bd_inode) >> 9;
+		sector_t dev_size = i_size_पढ़ो(rdev->bdev->bd_inode) >> 9;
 
-		/* 8K is for superblock */
+		/* 8K is क्रम superblock */
 		sb_start = dev_size - 8*2;
 		sb_start &= ~(sector_t)(4*2 - 1);
 
 		bm_space = super_1_choose_bm_space(dev_size);
 
 		/* Space that can be used to store date needs to decrease
-		 * superblock bitmap space and bad block space(4K)
+		 * superblock biपंचांगap space and bad block space(4K)
 		 */
 		max_sectors = sb_start - bm_space - 4*2;
 
-		if (!num_sectors || num_sectors > max_sectors)
+		अगर (!num_sectors || num_sectors > max_sectors)
 			num_sectors = max_sectors;
-	}
+	पूर्ण
 	sb = page_address(rdev->sb_page);
 	sb->data_size = cpu_to_le64(num_sectors);
 	sb->super_offset = cpu_to_le64(rdev->sb_start);
 	sb->sb_csum = calc_sb_1_csum(sb);
-	do {
-		md_super_write(rdev->mddev, rdev, rdev->sb_start, rdev->sb_size,
+	करो अणु
+		md_super_ग_लिखो(rdev->mddev, rdev, rdev->sb_start, rdev->sb_size,
 			       rdev->sb_page);
-	} while (md_super_wait(rdev->mddev) < 0);
-	return num_sectors;
+	पूर्ण जबतक (md_super_रुको(rdev->mddev) < 0);
+	वापस num_sectors;
 
-}
+पूर्ण
 
-static int
-super_1_allow_new_offset(struct md_rdev *rdev,
-			 unsigned long long new_offset)
-{
-	/* All necessary checks on new >= old have been done */
-	struct bitmap *bitmap;
-	if (new_offset >= rdev->data_offset)
-		return 1;
+अटल पूर्णांक
+super_1_allow_new_offset(काष्ठा md_rdev *rdev,
+			 अचिन्हित दीर्घ दीर्घ new_offset)
+अणु
+	/* All necessary checks on new >= old have been करोne */
+	काष्ठा biपंचांगap *biपंचांगap;
+	अगर (new_offset >= rdev->data_offset)
+		वापस 1;
 
-	/* with 1.0 metadata, there is no metadata to tread on
+	/* with 1.0 metadata, there is no metadata to tपढ़ो on
 	 * so we can always move back */
-	if (rdev->mddev->minor_version == 0)
-		return 1;
+	अगर (rdev->mddev->minor_version == 0)
+		वापस 1;
 
 	/* otherwise we must be sure not to step on
 	 * any metadata, so stay:
 	 * 36K beyond start of superblock
 	 * beyond end of badblocks
-	 * beyond write-intent bitmap
+	 * beyond ग_लिखो-पूर्णांकent biपंचांगap
 	 */
-	if (rdev->sb_start + (32+4)*2 > new_offset)
-		return 0;
-	bitmap = rdev->mddev->bitmap;
-	if (bitmap && !rdev->mddev->bitmap_info.file &&
-	    rdev->sb_start + rdev->mddev->bitmap_info.offset +
-	    bitmap->storage.file_pages * (PAGE_SIZE>>9) > new_offset)
-		return 0;
-	if (rdev->badblocks.sector + rdev->badblocks.size > new_offset)
-		return 0;
+	अगर (rdev->sb_start + (32+4)*2 > new_offset)
+		वापस 0;
+	biपंचांगap = rdev->mddev->biपंचांगap;
+	अगर (biपंचांगap && !rdev->mddev->biपंचांगap_info.file &&
+	    rdev->sb_start + rdev->mddev->biपंचांगap_info.offset +
+	    biपंचांगap->storage.file_pages * (PAGE_SIZE>>9) > new_offset)
+		वापस 0;
+	अगर (rdev->badblocks.sector + rdev->badblocks.size > new_offset)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct super_type super_types[] = {
-	[0] = {
+अटल काष्ठा super_type super_types[] = अणु
+	[0] = अणु
 		.name	= "0.90.0",
 		.owner	= THIS_MODULE,
 		.load_super	    = super_90_load,
@@ -2287,8 +2288,8 @@ static struct super_type super_types[] = {
 		.sync_super	    = super_90_sync,
 		.rdev_size_change   = super_90_rdev_size_change,
 		.allow_new_offset   = super_90_allow_new_offset,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.name	= "md-1",
 		.owner	= THIS_MODULE,
 		.load_super	    = super_1_load,
@@ -2296,194 +2297,194 @@ static struct super_type super_types[] = {
 		.sync_super	    = super_1_sync,
 		.rdev_size_change   = super_1_rdev_size_change,
 		.allow_new_offset   = super_1_allow_new_offset,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void sync_super(struct mddev *mddev, struct md_rdev *rdev)
-{
-	if (mddev->sync_super) {
+अटल व्योम sync_super(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
+अणु
+	अगर (mddev->sync_super) अणु
 		mddev->sync_super(mddev, rdev);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	BUG_ON(mddev->major_version >= ARRAY_SIZE(super_types));
 
 	super_types[mddev->major_version].sync_super(mddev, rdev);
-}
+पूर्ण
 
-static int match_mddev_units(struct mddev *mddev1, struct mddev *mddev2)
-{
-	struct md_rdev *rdev, *rdev2;
+अटल पूर्णांक match_mddev_units(काष्ठा mddev *mddev1, काष्ठा mddev *mddev2)
+अणु
+	काष्ठा md_rdev *rdev, *rdev2;
 
-	rcu_read_lock();
-	rdev_for_each_rcu(rdev, mddev1) {
-		if (test_bit(Faulty, &rdev->flags) ||
+	rcu_पढ़ो_lock();
+	rdev_क्रम_each_rcu(rdev, mddev1) अणु
+		अगर (test_bit(Faulty, &rdev->flags) ||
 		    test_bit(Journal, &rdev->flags) ||
 		    rdev->raid_disk == -1)
-			continue;
-		rdev_for_each_rcu(rdev2, mddev2) {
-			if (test_bit(Faulty, &rdev2->flags) ||
+			जारी;
+		rdev_क्रम_each_rcu(rdev2, mddev2) अणु
+			अगर (test_bit(Faulty, &rdev2->flags) ||
 			    test_bit(Journal, &rdev2->flags) ||
 			    rdev2->raid_disk == -1)
-				continue;
-			if (rdev->bdev->bd_disk == rdev2->bdev->bd_disk) {
-				rcu_read_unlock();
-				return 1;
-			}
-		}
-	}
-	rcu_read_unlock();
-	return 0;
-}
+				जारी;
+			अगर (rdev->bdev->bd_disk == rdev2->bdev->bd_disk) अणु
+				rcu_पढ़ो_unlock();
+				वापस 1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस 0;
+पूर्ण
 
-static LIST_HEAD(pending_raid_disks);
+अटल LIST_HEAD(pending_raid_disks);
 
 /*
- * Try to register data integrity profile for an mddev
+ * Try to रेजिस्टर data पूर्णांकegrity profile क्रम an mddev
  *
  * This is called when an array is started and after a disk has been kicked
- * from the array. It only succeeds if all working and active component devices
- * are integrity capable with matching profiles.
+ * from the array. It only succeeds अगर all working and active component devices
+ * are पूर्णांकegrity capable with matching profiles.
  */
-int md_integrity_register(struct mddev *mddev)
-{
-	struct md_rdev *rdev, *reference = NULL;
+पूर्णांक md_पूर्णांकegrity_रेजिस्टर(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_rdev *rdev, *reference = शून्य;
 
-	if (list_empty(&mddev->disks))
-		return 0; /* nothing to do */
-	if (!mddev->gendisk || blk_get_integrity(mddev->gendisk))
-		return 0; /* shouldn't register, or already is */
-	rdev_for_each(rdev, mddev) {
+	अगर (list_empty(&mddev->disks))
+		वापस 0; /* nothing to करो */
+	अगर (!mddev->gendisk || blk_get_पूर्णांकegrity(mddev->gendisk))
+		वापस 0; /* shouldn't रेजिस्टर, or alपढ़ोy is */
+	rdev_क्रम_each(rdev, mddev) अणु
 		/* skip spares and non-functional disks */
-		if (test_bit(Faulty, &rdev->flags))
-			continue;
-		if (rdev->raid_disk < 0)
-			continue;
-		if (!reference) {
+		अगर (test_bit(Faulty, &rdev->flags))
+			जारी;
+		अगर (rdev->raid_disk < 0)
+			जारी;
+		अगर (!reference) अणु
 			/* Use the first rdev as the reference */
 			reference = rdev;
-			continue;
-		}
-		/* does this rdev's profile match the reference profile? */
-		if (blk_integrity_compare(reference->bdev->bd_disk,
+			जारी;
+		पूर्ण
+		/* करोes this rdev's profile match the reference profile? */
+		अगर (blk_पूर्णांकegrity_compare(reference->bdev->bd_disk,
 				rdev->bdev->bd_disk) < 0)
-			return -EINVAL;
-	}
-	if (!reference || !bdev_get_integrity(reference->bdev))
-		return 0;
+			वापस -EINVAL;
+	पूर्ण
+	अगर (!reference || !bdev_get_पूर्णांकegrity(reference->bdev))
+		वापस 0;
 	/*
-	 * All component devices are integrity capable and have matching
-	 * profiles, register the common profile for the md device.
+	 * All component devices are पूर्णांकegrity capable and have matching
+	 * profiles, रेजिस्टर the common profile क्रम the md device.
 	 */
-	blk_integrity_register(mddev->gendisk,
-			       bdev_get_integrity(reference->bdev));
+	blk_पूर्णांकegrity_रेजिस्टर(mddev->gendisk,
+			       bdev_get_पूर्णांकegrity(reference->bdev));
 
 	pr_debug("md: data integrity enabled on %s\n", mdname(mddev));
-	if (bioset_integrity_create(&mddev->bio_set, BIO_POOL_SIZE)) {
+	अगर (bioset_पूर्णांकegrity_create(&mddev->bio_set, BIO_POOL_SIZE)) अणु
 		pr_err("md: failed to create integrity pool for %s\n",
 		       mdname(mddev));
-		return -EINVAL;
-	}
-	return 0;
-}
-EXPORT_SYMBOL(md_integrity_register);
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(md_पूर्णांकegrity_रेजिस्टर);
 
 /*
- * Attempt to add an rdev, but only if it is consistent with the current
- * integrity profile
+ * Attempt to add an rdev, but only अगर it is consistent with the current
+ * पूर्णांकegrity profile
  */
-int md_integrity_add_rdev(struct md_rdev *rdev, struct mddev *mddev)
-{
-	struct blk_integrity *bi_mddev;
-	char name[BDEVNAME_SIZE];
+पूर्णांक md_पूर्णांकegrity_add_rdev(काष्ठा md_rdev *rdev, काष्ठा mddev *mddev)
+अणु
+	काष्ठा blk_पूर्णांकegrity *bi_mddev;
+	अक्षर name[BDEVNAME_SIZE];
 
-	if (!mddev->gendisk)
-		return 0;
+	अगर (!mddev->gendisk)
+		वापस 0;
 
-	bi_mddev = blk_get_integrity(mddev->gendisk);
+	bi_mddev = blk_get_पूर्णांकegrity(mddev->gendisk);
 
-	if (!bi_mddev) /* nothing to do */
-		return 0;
+	अगर (!bi_mddev) /* nothing to करो */
+		वापस 0;
 
-	if (blk_integrity_compare(mddev->gendisk, rdev->bdev->bd_disk) != 0) {
+	अगर (blk_पूर्णांकegrity_compare(mddev->gendisk, rdev->bdev->bd_disk) != 0) अणु
 		pr_err("%s: incompatible integrity profile for %s\n",
 		       mdname(mddev), bdevname(rdev->bdev, name));
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(md_integrity_add_rdev);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(md_पूर्णांकegrity_add_rdev);
 
-static bool rdev_read_only(struct md_rdev *rdev)
-{
-	return bdev_read_only(rdev->bdev) ||
-		(rdev->meta_bdev && bdev_read_only(rdev->meta_bdev));
-}
+अटल bool rdev_पढ़ो_only(काष्ठा md_rdev *rdev)
+अणु
+	वापस bdev_पढ़ो_only(rdev->bdev) ||
+		(rdev->meta_bdev && bdev_पढ़ो_only(rdev->meta_bdev));
+पूर्ण
 
-static int bind_rdev_to_array(struct md_rdev *rdev, struct mddev *mddev)
-{
-	char b[BDEVNAME_SIZE];
-	int err;
+अटल पूर्णांक bind_rdev_to_array(काष्ठा md_rdev *rdev, काष्ठा mddev *mddev)
+अणु
+	अक्षर b[BDEVNAME_SIZE];
+	पूर्णांक err;
 
 	/* prevent duplicates */
-	if (find_rdev(mddev, rdev->bdev->bd_dev))
-		return -EEXIST;
+	अगर (find_rdev(mddev, rdev->bdev->bd_dev))
+		वापस -EEXIST;
 
-	if (rdev_read_only(rdev) && mddev->pers)
-		return -EROFS;
+	अगर (rdev_पढ़ो_only(rdev) && mddev->pers)
+		वापस -EROFS;
 
 	/* make sure rdev->sectors exceeds mddev->dev_sectors */
-	if (!test_bit(Journal, &rdev->flags) &&
+	अगर (!test_bit(Journal, &rdev->flags) &&
 	    rdev->sectors &&
-	    (mddev->dev_sectors == 0 || rdev->sectors < mddev->dev_sectors)) {
-		if (mddev->pers) {
+	    (mddev->dev_sectors == 0 || rdev->sectors < mddev->dev_sectors)) अणु
+		अगर (mddev->pers) अणु
 			/* Cannot change size, so fail
-			 * If mddev->level <= 0, then we don't care
+			 * If mddev->level <= 0, then we करोn't care
 			 * about aligning sizes (e.g. linear)
 			 */
-			if (mddev->level > 0)
-				return -ENOSPC;
-		} else
+			अगर (mddev->level > 0)
+				वापस -ENOSPC;
+		पूर्ण अन्यथा
 			mddev->dev_sectors = rdev->sectors;
-	}
+	पूर्ण
 
-	/* Verify rdev->desc_nr is unique.
-	 * If it is -1, assign a free number, else
+	/* Verअगरy rdev->desc_nr is unique.
+	 * If it is -1, assign a मुक्त number, अन्यथा
 	 * check number is not in use
 	 */
-	rcu_read_lock();
-	if (rdev->desc_nr < 0) {
-		int choice = 0;
-		if (mddev->pers)
+	rcu_पढ़ो_lock();
+	अगर (rdev->desc_nr < 0) अणु
+		पूर्णांक choice = 0;
+		अगर (mddev->pers)
 			choice = mddev->raid_disks;
-		while (md_find_rdev_nr_rcu(mddev, choice))
+		जबतक (md_find_rdev_nr_rcu(mddev, choice))
 			choice++;
 		rdev->desc_nr = choice;
-	} else {
-		if (md_find_rdev_nr_rcu(mddev, rdev->desc_nr)) {
-			rcu_read_unlock();
-			return -EBUSY;
-		}
-	}
-	rcu_read_unlock();
-	if (!test_bit(Journal, &rdev->flags) &&
-	    mddev->max_disks && rdev->desc_nr >= mddev->max_disks) {
+	पूर्ण अन्यथा अणु
+		अगर (md_find_rdev_nr_rcu(mddev, rdev->desc_nr)) अणु
+			rcu_पढ़ो_unlock();
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	अगर (!test_bit(Journal, &rdev->flags) &&
+	    mddev->max_disks && rdev->desc_nr >= mddev->max_disks) अणु
 		pr_warn("md: %s: array is limited to %d devices\n",
 			mdname(mddev), mddev->max_disks);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	bdevname(rdev->bdev,b);
 	strreplace(b, '/', '!');
 
 	rdev->mddev = mddev;
 	pr_debug("md: bind<%s>\n", b);
 
-	if (mddev->raid_disks)
+	अगर (mddev->raid_disks)
 		mddev_create_serial_pool(mddev, rdev, false);
 
-	if ((err = kobject_add(&rdev->kobj, &mddev->kobj, "dev-%s", b)))
-		goto fail;
+	अगर ((err = kobject_add(&rdev->kobj, &mddev->kobj, "dev-%s", b)))
+		जाओ fail;
 
 	/* failure here is OK */
 	err = sysfs_create_link(&rdev->kobj, bdev_kobj(rdev->bdev), "block");
@@ -2499,37 +2500,37 @@ static int bind_rdev_to_array(struct md_rdev *rdev, struct mddev *mddev)
 	/* May as well allow recovery to be retried once */
 	mddev->recovery_disabled++;
 
-	return 0;
+	वापस 0;
 
  fail:
 	pr_warn("md: failed to register dev-%s for %s\n",
 		b, mdname(mddev));
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rdev_delayed_delete(struct work_struct *ws)
-{
-	struct md_rdev *rdev = container_of(ws, struct md_rdev, del_work);
+अटल व्योम rdev_delayed_delete(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा md_rdev *rdev = container_of(ws, काष्ठा md_rdev, del_work);
 	kobject_del(&rdev->kobj);
 	kobject_put(&rdev->kobj);
-}
+पूर्ण
 
-static void unbind_rdev_from_array(struct md_rdev *rdev)
-{
-	char b[BDEVNAME_SIZE];
+अटल व्योम unbind_rdev_from_array(काष्ठा md_rdev *rdev)
+अणु
+	अक्षर b[BDEVNAME_SIZE];
 
 	bd_unlink_disk_holder(rdev->bdev, rdev->mddev->gendisk);
 	list_del_rcu(&rdev->same_set);
 	pr_debug("md: unbind<%s>\n", bdevname(rdev->bdev,b));
 	mddev_destroy_serial_pool(rdev->mddev, rdev, false);
-	rdev->mddev = NULL;
-	sysfs_remove_link(&rdev->kobj, "block");
+	rdev->mddev = शून्य;
+	sysfs_हटाओ_link(&rdev->kobj, "block");
 	sysfs_put(rdev->sysfs_state);
 	sysfs_put(rdev->sysfs_unack_badblocks);
 	sysfs_put(rdev->sysfs_badblocks);
-	rdev->sysfs_state = NULL;
-	rdev->sysfs_unack_badblocks = NULL;
-	rdev->sysfs_badblocks = NULL;
+	rdev->sysfs_state = शून्य;
+	rdev->sysfs_unack_badblocks = शून्य;
+	rdev->sysfs_badblocks = शून्य;
 	rdev->badblocks.count = 0;
 	/* We need to delay this, otherwise we can deadlock when
 	 * writing to 'remove' to "dev/state".  We also need
@@ -2539,201 +2540,201 @@ static void unbind_rdev_from_array(struct md_rdev *rdev)
 	INIT_WORK(&rdev->del_work, rdev_delayed_delete);
 	kobject_get(&rdev->kobj);
 	queue_work(md_rdev_misc_wq, &rdev->del_work);
-}
+पूर्ण
 
 /*
  * prevent the device from being mounted, repartitioned or
  * otherwise reused by a RAID array (or any other kernel
- * subsystem), by bd_claiming the device.
+ * subप्रणाली), by bd_claiming the device.
  */
-static int lock_rdev(struct md_rdev *rdev, dev_t dev, int shared)
-{
-	int err = 0;
-	struct block_device *bdev;
+अटल पूर्णांक lock_rdev(काष्ठा md_rdev *rdev, dev_t dev, पूर्णांक shared)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा block_device *bdev;
 
 	bdev = blkdev_get_by_dev(dev, FMODE_READ|FMODE_WRITE|FMODE_EXCL,
-				 shared ? (struct md_rdev *)lock_rdev : rdev);
-	if (IS_ERR(bdev)) {
+				 shared ? (काष्ठा md_rdev *)lock_rdev : rdev);
+	अगर (IS_ERR(bdev)) अणु
 		pr_warn("md: could not open device unknown-block(%u,%u).\n",
 			MAJOR(dev), MINOR(dev));
-		return PTR_ERR(bdev);
-	}
+		वापस PTR_ERR(bdev);
+	पूर्ण
 	rdev->bdev = bdev;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void unlock_rdev(struct md_rdev *rdev)
-{
-	struct block_device *bdev = rdev->bdev;
-	rdev->bdev = NULL;
+अटल व्योम unlock_rdev(काष्ठा md_rdev *rdev)
+अणु
+	काष्ठा block_device *bdev = rdev->bdev;
+	rdev->bdev = शून्य;
 	blkdev_put(bdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL);
-}
+पूर्ण
 
-void md_autodetect_dev(dev_t dev);
+व्योम md_स्वतःdetect_dev(dev_t dev);
 
-static void export_rdev(struct md_rdev *rdev)
-{
-	char b[BDEVNAME_SIZE];
+अटल व्योम export_rdev(काष्ठा md_rdev *rdev)
+अणु
+	अक्षर b[BDEVNAME_SIZE];
 
 	pr_debug("md: export_rdev(%s)\n", bdevname(rdev->bdev,b));
 	md_rdev_clear(rdev);
-#ifndef MODULE
-	if (test_bit(AutoDetected, &rdev->flags))
-		md_autodetect_dev(rdev->bdev->bd_dev);
-#endif
+#अगर_अघोषित MODULE
+	अगर (test_bit(AutoDetected, &rdev->flags))
+		md_स्वतःdetect_dev(rdev->bdev->bd_dev);
+#पूर्ण_अगर
 	unlock_rdev(rdev);
 	kobject_put(&rdev->kobj);
-}
+पूर्ण
 
-void md_kick_rdev_from_array(struct md_rdev *rdev)
-{
+व्योम md_kick_rdev_from_array(काष्ठा md_rdev *rdev)
+अणु
 	unbind_rdev_from_array(rdev);
 	export_rdev(rdev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(md_kick_rdev_from_array);
 
-static void export_array(struct mddev *mddev)
-{
-	struct md_rdev *rdev;
+अटल व्योम export_array(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_rdev *rdev;
 
-	while (!list_empty(&mddev->disks)) {
-		rdev = list_first_entry(&mddev->disks, struct md_rdev,
+	जबतक (!list_empty(&mddev->disks)) अणु
+		rdev = list_first_entry(&mddev->disks, काष्ठा md_rdev,
 					same_set);
 		md_kick_rdev_from_array(rdev);
-	}
+	पूर्ण
 	mddev->raid_disks = 0;
 	mddev->major_version = 0;
-}
+पूर्ण
 
-static bool set_in_sync(struct mddev *mddev)
-{
-	lockdep_assert_held(&mddev->lock);
-	if (!mddev->in_sync) {
+अटल bool set_in_sync(काष्ठा mddev *mddev)
+अणु
+	lockdep_निश्चित_held(&mddev->lock);
+	अगर (!mddev->in_sync) अणु
 		mddev->sync_checkers++;
 		spin_unlock(&mddev->lock);
-		percpu_ref_switch_to_atomic_sync(&mddev->writes_pending);
+		percpu_ref_चयन_to_atomic_sync(&mddev->ग_लिखोs_pending);
 		spin_lock(&mddev->lock);
-		if (!mddev->in_sync &&
-		    percpu_ref_is_zero(&mddev->writes_pending)) {
+		अगर (!mddev->in_sync &&
+		    percpu_ref_is_zero(&mddev->ग_लिखोs_pending)) अणु
 			mddev->in_sync = 1;
 			/*
-			 * Ensure ->in_sync is visible before we clear
+			 * Ensure ->in_sync is visible beक्रमe we clear
 			 * ->sync_checkers.
 			 */
 			smp_mb();
 			set_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags);
-			sysfs_notify_dirent_safe(mddev->sysfs_state);
-		}
-		if (--mddev->sync_checkers == 0)
-			percpu_ref_switch_to_percpu(&mddev->writes_pending);
-	}
-	if (mddev->safemode == 1)
+			sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
+		पूर्ण
+		अगर (--mddev->sync_checkers == 0)
+			percpu_ref_चयन_to_percpu(&mddev->ग_लिखोs_pending);
+	पूर्ण
+	अगर (mddev->safemode == 1)
 		mddev->safemode = 0;
-	return mddev->in_sync;
-}
+	वापस mddev->in_sync;
+पूर्ण
 
-static void sync_sbs(struct mddev *mddev, int nospares)
-{
+अटल व्योम sync_sbs(काष्ठा mddev *mddev, पूर्णांक nospares)
+अणु
 	/* Update each superblock (in-memory image), but
-	 * if we are allowed to, skip spares which already
+	 * अगर we are allowed to, skip spares which alपढ़ोy
 	 * have the right event counter, or have one earlier
 	 * (which would mean they aren't being marked as dirty
 	 * with the rest of the array)
 	 */
-	struct md_rdev *rdev;
-	rdev_for_each(rdev, mddev) {
-		if (rdev->sb_events == mddev->events ||
+	काष्ठा md_rdev *rdev;
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (rdev->sb_events == mddev->events ||
 		    (nospares &&
 		     rdev->raid_disk < 0 &&
-		     rdev->sb_events+1 == mddev->events)) {
+		     rdev->sb_events+1 == mddev->events)) अणु
 			/* Don't update this superblock */
 			rdev->sb_loaded = 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			sync_super(mddev, rdev);
 			rdev->sb_loaded = 1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool does_sb_need_changing(struct mddev *mddev)
-{
-	struct md_rdev *rdev;
-	struct mdp_superblock_1 *sb;
-	int role;
+अटल bool करोes_sb_need_changing(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_rdev *rdev;
+	काष्ठा mdp_superblock_1 *sb;
+	पूर्णांक role;
 
 	/* Find a good rdev */
-	rdev_for_each(rdev, mddev)
-		if ((rdev->raid_disk >= 0) && !test_bit(Faulty, &rdev->flags))
-			break;
+	rdev_क्रम_each(rdev, mddev)
+		अगर ((rdev->raid_disk >= 0) && !test_bit(Faulty, &rdev->flags))
+			अवरोध;
 
 	/* No good device found. */
-	if (!rdev)
-		return false;
+	अगर (!rdev)
+		वापस false;
 
 	sb = page_address(rdev->sb_page);
-	/* Check if a device has become faulty or a spare become active */
-	rdev_for_each(rdev, mddev) {
+	/* Check अगर a device has become faulty or a spare become active */
+	rdev_क्रम_each(rdev, mddev) अणु
 		role = le16_to_cpu(sb->dev_roles[rdev->desc_nr]);
 		/* Device activated? */
-		if (role == 0xffff && rdev->raid_disk >=0 &&
+		अगर (role == 0xffff && rdev->raid_disk >=0 &&
 		    !test_bit(Faulty, &rdev->flags))
-			return true;
+			वापस true;
 		/* Device turned faulty? */
-		if (test_bit(Faulty, &rdev->flags) && (role < 0xfffd))
-			return true;
-	}
+		अगर (test_bit(Faulty, &rdev->flags) && (role < 0xfffd))
+			वापस true;
+	पूर्ण
 
-	/* Check if any mddev parameters have changed */
-	if ((mddev->dev_sectors != le64_to_cpu(sb->size)) ||
+	/* Check अगर any mddev parameters have changed */
+	अगर ((mddev->dev_sectors != le64_to_cpu(sb->size)) ||
 	    (mddev->reshape_position != le64_to_cpu(sb->reshape_position)) ||
 	    (mddev->layout != le32_to_cpu(sb->layout)) ||
 	    (mddev->raid_disks != le32_to_cpu(sb->raid_disks)) ||
 	    (mddev->chunk_sectors != le32_to_cpu(sb->chunksize)))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void md_update_sb(struct mddev *mddev, int force_change)
-{
-	struct md_rdev *rdev;
-	int sync_req;
-	int nospares = 0;
-	int any_badblocks_changed = 0;
-	int ret = -1;
+व्योम md_update_sb(काष्ठा mddev *mddev, पूर्णांक क्रमce_change)
+अणु
+	काष्ठा md_rdev *rdev;
+	पूर्णांक sync_req;
+	पूर्णांक nospares = 0;
+	पूर्णांक any_badblocks_changed = 0;
+	पूर्णांक ret = -1;
 
-	if (mddev->ro) {
-		if (force_change)
+	अगर (mddev->ro) अणु
+		अगर (क्रमce_change)
 			set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 repeat:
-	if (mddev_is_clustered(mddev)) {
-		if (test_and_clear_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags))
-			force_change = 1;
-		if (test_and_clear_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags))
+	अगर (mddev_is_clustered(mddev)) अणु
+		अगर (test_and_clear_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags))
+			क्रमce_change = 1;
+		अगर (test_and_clear_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags))
 			nospares = 1;
 		ret = md_cluster_ops->metadata_update_start(mddev);
-		/* Has someone else has updated the sb */
-		if (!does_sb_need_changing(mddev)) {
-			if (ret == 0)
+		/* Has someone अन्यथा has updated the sb */
+		अगर (!करोes_sb_need_changing(mddev)) अणु
+			अगर (ret == 0)
 				md_cluster_ops->metadata_update_cancel(mddev);
 			bit_clear_unless(&mddev->sb_flags, BIT(MD_SB_CHANGE_PENDING),
 							 BIT(MD_SB_CHANGE_DEVS) |
 							 BIT(MD_SB_CHANGE_CLEAN));
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * First make sure individual recovery_offsets are correct
+	 * First make sure inभागidual recovery_offsets are correct
 	 * curr_resync_completed can only be used during recovery.
 	 * During reshape/resync it might use array-addresses rather
 	 * that device addresses.
 	 */
-	rdev_for_each(rdev, mddev) {
-		if (rdev->raid_disk >= 0 &&
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (rdev->raid_disk >= 0 &&
 		    mddev->delta_disks >= 0 &&
 		    test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) &&
 		    test_bit(MD_RECOVERY_RECOVER, &mddev->recovery) &&
@@ -2743,48 +2744,48 @@ repeat:
 		    mddev->curr_resync_completed > rdev->recovery_offset)
 				rdev->recovery_offset = mddev->curr_resync_completed;
 
-	}
-	if (!mddev->persistent) {
+	पूर्ण
+	अगर (!mddev->persistent) अणु
 		clear_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags);
 		clear_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
-		if (!mddev->external) {
+		अगर (!mddev->बाह्यal) अणु
 			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
-			rdev_for_each(rdev, mddev) {
-				if (rdev->badblocks.changed) {
+			rdev_क्रम_each(rdev, mddev) अणु
+				अगर (rdev->badblocks.changed) अणु
 					rdev->badblocks.changed = 0;
 					ack_all_badblocks(&rdev->badblocks);
 					md_error(mddev, rdev);
-				}
+				पूर्ण
 				clear_bit(Blocked, &rdev->flags);
 				clear_bit(BlockedBadBlocks, &rdev->flags);
-				wake_up(&rdev->blocked_wait);
-			}
-		}
-		wake_up(&mddev->sb_wait);
-		return;
-	}
+				wake_up(&rdev->blocked_रुको);
+			पूर्ण
+		पूर्ण
+		wake_up(&mddev->sb_रुको);
+		वापस;
+	पूर्ण
 
 	spin_lock(&mddev->lock);
 
-	mddev->utime = ktime_get_real_seconds();
+	mddev->uसमय = kसमय_get_real_seconds();
 
-	if (test_and_clear_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags))
-		force_change = 1;
-	if (test_and_clear_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags))
+	अगर (test_and_clear_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags))
+		क्रमce_change = 1;
+	अगर (test_and_clear_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags))
 		/* just a clean<-> dirty transition, possibly leave spares alone,
-		 * though if events isn't the right even/odd, we will have to do
+		 * though अगर events isn't the right even/odd, we will have to करो
 		 * spares after all
 		 */
 		nospares = 1;
-	if (force_change)
+	अगर (क्रमce_change)
 		nospares = 0;
-	if (mddev->degraded)
+	अगर (mddev->degraded)
 		/* If the array is degraded, then skipping spares is both
-		 * dangerous and fairly pointless.
-		 * Dangerous because a device that was removed from the array
+		 * dangerous and fairly poपूर्णांकless.
+		 * Dangerous because a device that was हटाओd from the array
 		 * might have a event_count that still looks up-to-date,
 		 * so it can be re-added without a resync.
-		 * Pointless because if there are any spares to skip,
+		 * Poपूर्णांकless because अगर there are any spares to skip,
 		 * then a recovery will happen and soon that array won't
 		 * be degraded any more and the spare can go back to sleep then.
 		 */
@@ -2794,17 +2795,17 @@ repeat:
 
 	/* If this is just a dirty<->clean transition, and the array is clean
 	 * and 'events' is odd, we can roll back to the previous clean state */
-	if (nospares
+	अगर (nospares
 	    && (mddev->in_sync && mddev->recovery_cp == MaxSector)
 	    && mddev->can_decrease_events
-	    && mddev->events != 1) {
+	    && mddev->events != 1) अणु
 		mddev->events--;
 		mddev->can_decrease_events = 0;
-	} else {
-		/* otherwise we have to go forward and ... */
+	पूर्ण अन्यथा अणु
+		/* otherwise we have to go क्रमward and ... */
 		mddev->events ++;
 		mddev->can_decrease_events = nospares;
-	}
+	पूर्ण
 
 	/*
 	 * This 64-bit counter should never wrap.
@@ -2813,12 +2814,12 @@ repeat:
 	 */
 	WARN_ON(mddev->events == 0);
 
-	rdev_for_each(rdev, mddev) {
-		if (rdev->badblocks.changed)
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (rdev->badblocks.changed)
 			any_badblocks_changed++;
-		if (test_bit(Faulty, &rdev->flags))
+		अगर (test_bit(Faulty, &rdev->flags))
 			set_bit(FaultRecorded, &rdev->flags);
-	}
+	पूर्ण
 
 	sync_sbs(mddev, nospares);
 	spin_unlock(&mddev->lock);
@@ -2826,683 +2827,683 @@ repeat:
 	pr_debug("md: updating %s RAID superblock on device (in sync %d)\n",
 		 mdname(mddev), mddev->in_sync);
 
-	if (mddev->queue)
+	अगर (mddev->queue)
 		blk_add_trace_msg(mddev->queue, "md md_update_sb");
-rewrite:
-	md_bitmap_update_sb(mddev->bitmap);
-	rdev_for_each(rdev, mddev) {
-		char b[BDEVNAME_SIZE];
+reग_लिखो:
+	md_biपंचांगap_update_sb(mddev->biपंचांगap);
+	rdev_क्रम_each(rdev, mddev) अणु
+		अक्षर b[BDEVNAME_SIZE];
 
-		if (rdev->sb_loaded != 1)
-			continue; /* no noise on spare devices */
+		अगर (rdev->sb_loaded != 1)
+			जारी; /* no noise on spare devices */
 
-		if (!test_bit(Faulty, &rdev->flags)) {
-			md_super_write(mddev,rdev,
+		अगर (!test_bit(Faulty, &rdev->flags)) अणु
+			md_super_ग_लिखो(mddev,rdev,
 				       rdev->sb_start, rdev->sb_size,
 				       rdev->sb_page);
 			pr_debug("md: (write) %s's sb offset: %llu\n",
 				 bdevname(rdev->bdev, b),
-				 (unsigned long long)rdev->sb_start);
+				 (अचिन्हित दीर्घ दीर्घ)rdev->sb_start);
 			rdev->sb_events = mddev->events;
-			if (rdev->badblocks.size) {
-				md_super_write(mddev, rdev,
+			अगर (rdev->badblocks.size) अणु
+				md_super_ग_लिखो(mddev, rdev,
 					       rdev->badblocks.sector,
 					       rdev->badblocks.size << 9,
 					       rdev->bb_page);
 				rdev->badblocks.size = 0;
-			}
+			पूर्ण
 
-		} else
+		पूर्ण अन्यथा
 			pr_debug("md: %s (skipping faulty)\n",
 				 bdevname(rdev->bdev, b));
 
-		if (mddev->level == LEVEL_MULTIPATH)
-			/* only need to write one superblock... */
-			break;
-	}
-	if (md_super_wait(mddev) < 0)
-		goto rewrite;
-	/* if there was a failure, MD_SB_CHANGE_DEVS was set, and we re-write super */
+		अगर (mddev->level == LEVEL_MULTIPATH)
+			/* only need to ग_लिखो one superblock... */
+			अवरोध;
+	पूर्ण
+	अगर (md_super_रुको(mddev) < 0)
+		जाओ reग_लिखो;
+	/* अगर there was a failure, MD_SB_CHANGE_DEVS was set, and we re-ग_लिखो super */
 
-	if (mddev_is_clustered(mddev) && ret == 0)
+	अगर (mddev_is_clustered(mddev) && ret == 0)
 		md_cluster_ops->metadata_update_finish(mddev);
 
-	if (mddev->in_sync != sync_req ||
+	अगर (mddev->in_sync != sync_req ||
 	    !bit_clear_unless(&mddev->sb_flags, BIT(MD_SB_CHANGE_PENDING),
 			       BIT(MD_SB_CHANGE_DEVS) | BIT(MD_SB_CHANGE_CLEAN)))
-		/* have to write it out again */
-		goto repeat;
-	wake_up(&mddev->sb_wait);
-	if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
-		sysfs_notify_dirent_safe(mddev->sysfs_completed);
+		/* have to ग_लिखो it out again */
+		जाओ repeat;
+	wake_up(&mddev->sb_रुको);
+	अगर (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_completed);
 
-	rdev_for_each(rdev, mddev) {
-		if (test_and_clear_bit(FaultRecorded, &rdev->flags))
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (test_and_clear_bit(FaultRecorded, &rdev->flags))
 			clear_bit(Blocked, &rdev->flags);
 
-		if (any_badblocks_changed)
+		अगर (any_badblocks_changed)
 			ack_all_badblocks(&rdev->badblocks);
 		clear_bit(BlockedBadBlocks, &rdev->flags);
-		wake_up(&rdev->blocked_wait);
-	}
-}
+		wake_up(&rdev->blocked_रुको);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(md_update_sb);
 
-static int add_bound_rdev(struct md_rdev *rdev)
-{
-	struct mddev *mddev = rdev->mddev;
-	int err = 0;
+अटल पूर्णांक add_bound_rdev(काष्ठा md_rdev *rdev)
+अणु
+	काष्ठा mddev *mddev = rdev->mddev;
+	पूर्णांक err = 0;
 	bool add_journal = test_bit(Journal, &rdev->flags);
 
-	if (!mddev->pers->hot_remove_disk || add_journal) {
-		/* If there is hot_add_disk but no hot_remove_disk
-		 * then added disks for geometry changes,
+	अगर (!mddev->pers->hot_हटाओ_disk || add_journal) अणु
+		/* If there is hot_add_disk but no hot_हटाओ_disk
+		 * then added disks क्रम geometry changes,
 		 * and should be added immediately.
 		 */
 		super_types[mddev->major_version].
 			validate_super(mddev, rdev);
-		if (add_journal)
+		अगर (add_journal)
 			mddev_suspend(mddev);
 		err = mddev->pers->hot_add_disk(mddev, rdev);
-		if (add_journal)
+		अगर (add_journal)
 			mddev_resume(mddev);
-		if (err) {
+		अगर (err) अणु
 			md_kick_rdev_from_array(rdev);
-			return err;
-		}
-	}
-	sysfs_notify_dirent_safe(rdev->sysfs_state);
+			वापस err;
+		पूर्ण
+	पूर्ण
+	sysfs_notअगरy_dirent_safe(rdev->sysfs_state);
 
 	set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
-	if (mddev->degraded)
+	अगर (mddev->degraded)
 		set_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
 	md_new_event(mddev);
-	md_wakeup_thread(mddev->thread);
-	return 0;
-}
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	वापस 0;
+पूर्ण
 
-/* words written to sysfs files may, or may not, be \n terminated.
- * We want to accept with case. For this we use cmd_match.
+/* words written to sysfs files may, or may not, be \न terminated.
+ * We want to accept with हाल. For this we use cmd_match.
  */
-static int cmd_match(const char *cmd, const char *str)
-{
-	/* See if cmd, written into a sysfs file, matches
+अटल पूर्णांक cmd_match(स्थिर अक्षर *cmd, स्थिर अक्षर *str)
+अणु
+	/* See अगर cmd, written पूर्णांकo a sysfs file, matches
 	 * str.  They must either be the same, or cmd can
 	 * have a trailing newline
 	 */
-	while (*cmd && *str && *cmd == *str) {
+	जबतक (*cmd && *str && *cmd == *str) अणु
 		cmd++;
 		str++;
-	}
-	if (*cmd == '\n')
+	पूर्ण
+	अगर (*cmd == '\n')
 		cmd++;
-	if (*str || *cmd)
-		return 0;
-	return 1;
-}
+	अगर (*str || *cmd)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-struct rdev_sysfs_entry {
-	struct attribute attr;
-	ssize_t (*show)(struct md_rdev *, char *);
-	ssize_t (*store)(struct md_rdev *, const char *, size_t);
-};
+काष्ठा rdev_sysfs_entry अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा md_rdev *, अक्षर *);
+	sमाप_प्रकार (*store)(काष्ठा md_rdev *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-static ssize_t
-state_show(struct md_rdev *rdev, char *page)
-{
-	char *sep = ",";
-	size_t len = 0;
-	unsigned long flags = READ_ONCE(rdev->flags);
+अटल sमाप_प्रकार
+state_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	अक्षर *sep = ",";
+	माप_प्रकार len = 0;
+	अचिन्हित दीर्घ flags = READ_ONCE(rdev->flags);
 
-	if (test_bit(Faulty, &flags) ||
+	अगर (test_bit(Faulty, &flags) ||
 	    (!test_bit(ExternalBbl, &flags) &&
 	    rdev->badblocks.unacked_exist))
-		len += sprintf(page+len, "faulty%s", sep);
-	if (test_bit(In_sync, &flags))
-		len += sprintf(page+len, "in_sync%s", sep);
-	if (test_bit(Journal, &flags))
-		len += sprintf(page+len, "journal%s", sep);
-	if (test_bit(WriteMostly, &flags))
-		len += sprintf(page+len, "write_mostly%s", sep);
-	if (test_bit(Blocked, &flags) ||
+		len += प्र_लिखो(page+len, "faulty%s", sep);
+	अगर (test_bit(In_sync, &flags))
+		len += प्र_लिखो(page+len, "in_sync%s", sep);
+	अगर (test_bit(Journal, &flags))
+		len += प्र_लिखो(page+len, "journal%s", sep);
+	अगर (test_bit(WriteMostly, &flags))
+		len += प्र_लिखो(page+len, "write_mostly%s", sep);
+	अगर (test_bit(Blocked, &flags) ||
 	    (rdev->badblocks.unacked_exist
 	     && !test_bit(Faulty, &flags)))
-		len += sprintf(page+len, "blocked%s", sep);
-	if (!test_bit(Faulty, &flags) &&
+		len += प्र_लिखो(page+len, "blocked%s", sep);
+	अगर (!test_bit(Faulty, &flags) &&
 	    !test_bit(Journal, &flags) &&
 	    !test_bit(In_sync, &flags))
-		len += sprintf(page+len, "spare%s", sep);
-	if (test_bit(WriteErrorSeen, &flags))
-		len += sprintf(page+len, "write_error%s", sep);
-	if (test_bit(WantReplacement, &flags))
-		len += sprintf(page+len, "want_replacement%s", sep);
-	if (test_bit(Replacement, &flags))
-		len += sprintf(page+len, "replacement%s", sep);
-	if (test_bit(ExternalBbl, &flags))
-		len += sprintf(page+len, "external_bbl%s", sep);
-	if (test_bit(FailFast, &flags))
-		len += sprintf(page+len, "failfast%s", sep);
+		len += प्र_लिखो(page+len, "spare%s", sep);
+	अगर (test_bit(WriteErrorSeen, &flags))
+		len += प्र_लिखो(page+len, "write_error%s", sep);
+	अगर (test_bit(WantReplacement, &flags))
+		len += प्र_लिखो(page+len, "want_replacement%s", sep);
+	अगर (test_bit(Replacement, &flags))
+		len += प्र_लिखो(page+len, "replacement%s", sep);
+	अगर (test_bit(ExternalBbl, &flags))
+		len += प्र_लिखो(page+len, "external_bbl%s", sep);
+	अगर (test_bit(FailFast, &flags))
+		len += प्र_लिखो(page+len, "failfast%s", sep);
 
-	if (len)
-		len -= strlen(sep);
+	अगर (len)
+		len -= म_माप(sep);
 
-	return len+sprintf(page+len, "\n");
-}
+	वापस len+प्र_लिखो(page+len, "\n");
+पूर्ण
 
-static ssize_t
-state_store(struct md_rdev *rdev, const char *buf, size_t len)
-{
-	/* can write
+अटल sमाप_प्रकार
+state_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	/* can ग_लिखो
 	 *  faulty  - simulates an error
-	 *  remove  - disconnects the device
-	 *  writemostly - sets write_mostly
-	 *  -writemostly - clears write_mostly
+	 *  हटाओ  - disconnects the device
+	 *  ग_लिखोmostly - sets ग_लिखो_mostly
+	 *  -ग_लिखोmostly - clears ग_लिखो_mostly
 	 *  blocked - sets the Blocked flags
 	 *  -blocked - clears the Blocked and possibly simulates an error
 	 *  insync - sets Insync providing device isn't active
-	 *  -insync - clear Insync for a device with a slot assigned,
-	 *            so that it gets rebuilt based on bitmap
-	 *  write_error - sets WriteErrorSeen
-	 *  -write_error - clears WriteErrorSeen
-	 *  {,-}failfast - set/clear FailFast
+	 *  -insync - clear Insync क्रम a device with a slot asचिन्हित,
+	 *            so that it माला_लो rebuilt based on biपंचांगap
+	 *  ग_लिखो_error - sets WriteErrorSeen
+	 *  -ग_लिखो_error - clears WriteErrorSeen
+	 *  अणु,-पूर्णfailfast - set/clear FailFast
 	 */
-	int err = -EINVAL;
-	if (cmd_match(buf, "faulty") && rdev->mddev->pers) {
+	पूर्णांक err = -EINVAL;
+	अगर (cmd_match(buf, "faulty") && rdev->mddev->pers) अणु
 		md_error(rdev->mddev, rdev);
-		if (test_bit(Faulty, &rdev->flags))
+		अगर (test_bit(Faulty, &rdev->flags))
 			err = 0;
-		else
+		अन्यथा
 			err = -EBUSY;
-	} else if (cmd_match(buf, "remove")) {
-		if (rdev->mddev->pers) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "remove")) अणु
+		अगर (rdev->mddev->pers) अणु
 			clear_bit(Blocked, &rdev->flags);
-			remove_and_add_spares(rdev->mddev, rdev);
-		}
-		if (rdev->raid_disk >= 0)
+			हटाओ_and_add_spares(rdev->mddev, rdev);
+		पूर्ण
+		अगर (rdev->raid_disk >= 0)
 			err = -EBUSY;
-		else {
-			struct mddev *mddev = rdev->mddev;
+		अन्यथा अणु
+			काष्ठा mddev *mddev = rdev->mddev;
 			err = 0;
-			if (mddev_is_clustered(mddev))
-				err = md_cluster_ops->remove_disk(mddev, rdev);
+			अगर (mddev_is_clustered(mddev))
+				err = md_cluster_ops->हटाओ_disk(mddev, rdev);
 
-			if (err == 0) {
+			अगर (err == 0) अणु
 				md_kick_rdev_from_array(rdev);
-				if (mddev->pers) {
+				अगर (mddev->pers) अणु
 					set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
-					md_wakeup_thread(mddev->thread);
-				}
+					md_wakeup_thपढ़ो(mddev->thपढ़ो);
+				पूर्ण
 				md_new_event(mddev);
-			}
-		}
-	} else if (cmd_match(buf, "writemostly")) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (cmd_match(buf, "writemostly")) अणु
 		set_bit(WriteMostly, &rdev->flags);
 		mddev_create_serial_pool(rdev->mddev, rdev, false);
 		err = 0;
-	} else if (cmd_match(buf, "-writemostly")) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "-writemostly")) अणु
 		mddev_destroy_serial_pool(rdev->mddev, rdev, false);
 		clear_bit(WriteMostly, &rdev->flags);
 		err = 0;
-	} else if (cmd_match(buf, "blocked")) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "blocked")) अणु
 		set_bit(Blocked, &rdev->flags);
 		err = 0;
-	} else if (cmd_match(buf, "-blocked")) {
-		if (!test_bit(Faulty, &rdev->flags) &&
+	पूर्ण अन्यथा अगर (cmd_match(buf, "-blocked")) अणु
+		अगर (!test_bit(Faulty, &rdev->flags) &&
 		    !test_bit(ExternalBbl, &rdev->flags) &&
-		    rdev->badblocks.unacked_exist) {
-			/* metadata handler doesn't understand badblocks,
+		    rdev->badblocks.unacked_exist) अणु
+			/* metadata handler करोesn't understand badblocks,
 			 * so we need to fail the device
 			 */
 			md_error(rdev->mddev, rdev);
-		}
+		पूर्ण
 		clear_bit(Blocked, &rdev->flags);
 		clear_bit(BlockedBadBlocks, &rdev->flags);
-		wake_up(&rdev->blocked_wait);
+		wake_up(&rdev->blocked_रुको);
 		set_bit(MD_RECOVERY_NEEDED, &rdev->mddev->recovery);
-		md_wakeup_thread(rdev->mddev->thread);
+		md_wakeup_thपढ़ो(rdev->mddev->thपढ़ो);
 
 		err = 0;
-	} else if (cmd_match(buf, "insync") && rdev->raid_disk == -1) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "insync") && rdev->raid_disk == -1) अणु
 		set_bit(In_sync, &rdev->flags);
 		err = 0;
-	} else if (cmd_match(buf, "failfast")) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "failfast")) अणु
 		set_bit(FailFast, &rdev->flags);
 		err = 0;
-	} else if (cmd_match(buf, "-failfast")) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "-failfast")) अणु
 		clear_bit(FailFast, &rdev->flags);
 		err = 0;
-	} else if (cmd_match(buf, "-insync") && rdev->raid_disk >= 0 &&
-		   !test_bit(Journal, &rdev->flags)) {
-		if (rdev->mddev->pers == NULL) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "-insync") && rdev->raid_disk >= 0 &&
+		   !test_bit(Journal, &rdev->flags)) अणु
+		अगर (rdev->mddev->pers == शून्य) अणु
 			clear_bit(In_sync, &rdev->flags);
 			rdev->saved_raid_disk = rdev->raid_disk;
 			rdev->raid_disk = -1;
 			err = 0;
-		}
-	} else if (cmd_match(buf, "write_error")) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (cmd_match(buf, "write_error")) अणु
 		set_bit(WriteErrorSeen, &rdev->flags);
 		err = 0;
-	} else if (cmd_match(buf, "-write_error")) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "-write_error")) अणु
 		clear_bit(WriteErrorSeen, &rdev->flags);
 		err = 0;
-	} else if (cmd_match(buf, "want_replacement")) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "want_replacement")) अणु
 		/* Any non-spare device that is not a replacement can
-		 * become want_replacement at any time, but we then need to
-		 * check if recovery is needed.
+		 * become want_replacement at any समय, but we then need to
+		 * check अगर recovery is needed.
 		 */
-		if (rdev->raid_disk >= 0 &&
+		अगर (rdev->raid_disk >= 0 &&
 		    !test_bit(Journal, &rdev->flags) &&
 		    !test_bit(Replacement, &rdev->flags))
 			set_bit(WantReplacement, &rdev->flags);
 		set_bit(MD_RECOVERY_NEEDED, &rdev->mddev->recovery);
-		md_wakeup_thread(rdev->mddev->thread);
+		md_wakeup_thपढ़ो(rdev->mddev->thपढ़ो);
 		err = 0;
-	} else if (cmd_match(buf, "-want_replacement")) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "-want_replacement")) अणु
 		/* Clearing 'want_replacement' is always allowed.
 		 * Once replacements starts it is too late though.
 		 */
 		err = 0;
 		clear_bit(WantReplacement, &rdev->flags);
-	} else if (cmd_match(buf, "replacement")) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "replacement")) अणु
 		/* Can only set a device as a replacement when array has not
-		 * yet been started.  Once running, replacement is automatic
+		 * yet been started.  Once running, replacement is स्वतःmatic
 		 * from spares, or by assigning 'slot'.
 		 */
-		if (rdev->mddev->pers)
+		अगर (rdev->mddev->pers)
 			err = -EBUSY;
-		else {
+		अन्यथा अणु
 			set_bit(Replacement, &rdev->flags);
 			err = 0;
-		}
-	} else if (cmd_match(buf, "-replacement")) {
-		/* Similarly, can only clear Replacement before start */
-		if (rdev->mddev->pers)
+		पूर्ण
+	पूर्ण अन्यथा अगर (cmd_match(buf, "-replacement")) अणु
+		/* Similarly, can only clear Replacement beक्रमe start */
+		अगर (rdev->mddev->pers)
 			err = -EBUSY;
-		else {
+		अन्यथा अणु
 			clear_bit(Replacement, &rdev->flags);
 			err = 0;
-		}
-	} else if (cmd_match(buf, "re-add")) {
-		if (!rdev->mddev->pers)
+		पूर्ण
+	पूर्ण अन्यथा अगर (cmd_match(buf, "re-add")) अणु
+		अगर (!rdev->mddev->pers)
 			err = -EINVAL;
-		else if (test_bit(Faulty, &rdev->flags) && (rdev->raid_disk == -1) &&
-				rdev->saved_raid_disk >= 0) {
-			/* clear_bit is performed _after_ all the devices
-			 * have their local Faulty bit cleared. If any writes
-			 * happen in the meantime in the local node, they
-			 * will land in the local bitmap, which will be synced
+		अन्यथा अगर (test_bit(Faulty, &rdev->flags) && (rdev->raid_disk == -1) &&
+				rdev->saved_raid_disk >= 0) अणु
+			/* clear_bit is perक्रमmed _after_ all the devices
+			 * have their local Faulty bit cleared. If any ग_लिखोs
+			 * happen in the meanसमय in the local node, they
+			 * will land in the local biपंचांगap, which will be synced
 			 * by this node eventually
 			 */
-			if (!mddev_is_clustered(rdev->mddev) ||
-			    (err = md_cluster_ops->gather_bitmaps(rdev)) == 0) {
+			अगर (!mddev_is_clustered(rdev->mddev) ||
+			    (err = md_cluster_ops->gather_biपंचांगaps(rdev)) == 0) अणु
 				clear_bit(Faulty, &rdev->flags);
 				err = add_bound_rdev(rdev);
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			err = -EBUSY;
-	} else if (cmd_match(buf, "external_bbl") && (rdev->mddev->external)) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "external_bbl") && (rdev->mddev->बाह्यal)) अणु
 		set_bit(ExternalBbl, &rdev->flags);
-		rdev->badblocks.shift = 0;
+		rdev->badblocks.shअगरt = 0;
 		err = 0;
-	} else if (cmd_match(buf, "-external_bbl") && (rdev->mddev->external)) {
+	पूर्ण अन्यथा अगर (cmd_match(buf, "-external_bbl") && (rdev->mddev->बाह्यal)) अणु
 		clear_bit(ExternalBbl, &rdev->flags);
 		err = 0;
-	}
-	if (!err)
-		sysfs_notify_dirent_safe(rdev->sysfs_state);
-	return err ? err : len;
-}
-static struct rdev_sysfs_entry rdev_state =
+	पूर्ण
+	अगर (!err)
+		sysfs_notअगरy_dirent_safe(rdev->sysfs_state);
+	वापस err ? err : len;
+पूर्ण
+अटल काष्ठा rdev_sysfs_entry rdev_state =
 __ATTR_PREALLOC(state, S_IRUGO|S_IWUSR, state_show, state_store);
 
-static ssize_t
-errors_show(struct md_rdev *rdev, char *page)
-{
-	return sprintf(page, "%d\n", atomic_read(&rdev->corrected_errors));
-}
+अटल sमाप_प्रकार
+errors_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d\n", atomic_पढ़ो(&rdev->corrected_errors));
+पूर्ण
 
-static ssize_t
-errors_store(struct md_rdev *rdev, const char *buf, size_t len)
-{
-	unsigned int n;
-	int rv;
+अटल sमाप_प्रकार
+errors_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक n;
+	पूर्णांक rv;
 
-	rv = kstrtouint(buf, 10, &n);
-	if (rv < 0)
-		return rv;
+	rv = kstrtouपूर्णांक(buf, 10, &n);
+	अगर (rv < 0)
+		वापस rv;
 	atomic_set(&rdev->corrected_errors, n);
-	return len;
-}
-static struct rdev_sysfs_entry rdev_errors =
+	वापस len;
+पूर्ण
+अटल काष्ठा rdev_sysfs_entry rdev_errors =
 __ATTR(errors, S_IRUGO|S_IWUSR, errors_show, errors_store);
 
-static ssize_t
-slot_show(struct md_rdev *rdev, char *page)
-{
-	if (test_bit(Journal, &rdev->flags))
-		return sprintf(page, "journal\n");
-	else if (rdev->raid_disk < 0)
-		return sprintf(page, "none\n");
-	else
-		return sprintf(page, "%d\n", rdev->raid_disk);
-}
+अटल sमाप_प्रकार
+slot_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	अगर (test_bit(Journal, &rdev->flags))
+		वापस प्र_लिखो(page, "journal\n");
+	अन्यथा अगर (rdev->raid_disk < 0)
+		वापस प्र_लिखो(page, "none\n");
+	अन्यथा
+		वापस प्र_लिखो(page, "%d\n", rdev->raid_disk);
+पूर्ण
 
-static ssize_t
-slot_store(struct md_rdev *rdev, const char *buf, size_t len)
-{
-	int slot;
-	int err;
+अटल sमाप_प्रकार
+slot_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	पूर्णांक slot;
+	पूर्णांक err;
 
-	if (test_bit(Journal, &rdev->flags))
-		return -EBUSY;
-	if (strncmp(buf, "none", 4)==0)
+	अगर (test_bit(Journal, &rdev->flags))
+		वापस -EBUSY;
+	अगर (म_भेदन(buf, "none", 4)==0)
 		slot = -1;
-	else {
-		err = kstrtouint(buf, 10, (unsigned int *)&slot);
-		if (err < 0)
-			return err;
-	}
-	if (rdev->mddev->pers && slot == -1) {
+	अन्यथा अणु
+		err = kstrtouपूर्णांक(buf, 10, (अचिन्हित पूर्णांक *)&slot);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	अगर (rdev->mddev->pers && slot == -1) अणु
 		/* Setting 'slot' on an active array requires also
 		 * updating the 'rd%d' link, and communicating
 		 * with the personality with ->hot_*_disk.
 		 * For now we only support removing
-		 * failed/spare devices.  This normally happens automatically,
-		 * but not when the metadata is externally managed.
+		 * failed/spare devices.  This normally happens स्वतःmatically,
+		 * but not when the metadata is बाह्यally managed.
 		 */
-		if (rdev->raid_disk == -1)
-			return -EEXIST;
-		/* personality does all needed checks */
-		if (rdev->mddev->pers->hot_remove_disk == NULL)
-			return -EINVAL;
+		अगर (rdev->raid_disk == -1)
+			वापस -EEXIST;
+		/* personality करोes all needed checks */
+		अगर (rdev->mddev->pers->hot_हटाओ_disk == शून्य)
+			वापस -EINVAL;
 		clear_bit(Blocked, &rdev->flags);
-		remove_and_add_spares(rdev->mddev, rdev);
-		if (rdev->raid_disk >= 0)
-			return -EBUSY;
+		हटाओ_and_add_spares(rdev->mddev, rdev);
+		अगर (rdev->raid_disk >= 0)
+			वापस -EBUSY;
 		set_bit(MD_RECOVERY_NEEDED, &rdev->mddev->recovery);
-		md_wakeup_thread(rdev->mddev->thread);
-	} else if (rdev->mddev->pers) {
+		md_wakeup_thपढ़ो(rdev->mddev->thपढ़ो);
+	पूर्ण अन्यथा अगर (rdev->mddev->pers) अणु
 		/* Activating a spare .. or possibly reactivating
-		 * if we ever get bitmaps working here.
+		 * अगर we ever get biपंचांगaps working here.
 		 */
-		int err;
+		पूर्णांक err;
 
-		if (rdev->raid_disk != -1)
-			return -EBUSY;
+		अगर (rdev->raid_disk != -1)
+			वापस -EBUSY;
 
-		if (test_bit(MD_RECOVERY_RUNNING, &rdev->mddev->recovery))
-			return -EBUSY;
+		अगर (test_bit(MD_RECOVERY_RUNNING, &rdev->mddev->recovery))
+			वापस -EBUSY;
 
-		if (rdev->mddev->pers->hot_add_disk == NULL)
-			return -EINVAL;
+		अगर (rdev->mddev->pers->hot_add_disk == शून्य)
+			वापस -EINVAL;
 
-		if (slot >= rdev->mddev->raid_disks &&
+		अगर (slot >= rdev->mddev->raid_disks &&
 		    slot >= rdev->mddev->raid_disks + rdev->mddev->delta_disks)
-			return -ENOSPC;
+			वापस -ENOSPC;
 
 		rdev->raid_disk = slot;
-		if (test_bit(In_sync, &rdev->flags))
+		अगर (test_bit(In_sync, &rdev->flags))
 			rdev->saved_raid_disk = slot;
-		else
+		अन्यथा
 			rdev->saved_raid_disk = -1;
 		clear_bit(In_sync, &rdev->flags);
-		clear_bit(Bitmap_sync, &rdev->flags);
+		clear_bit(Biपंचांगap_sync, &rdev->flags);
 		err = rdev->mddev->pers->hot_add_disk(rdev->mddev, rdev);
-		if (err) {
+		अगर (err) अणु
 			rdev->raid_disk = -1;
-			return err;
-		} else
-			sysfs_notify_dirent_safe(rdev->sysfs_state);
+			वापस err;
+		पूर्ण अन्यथा
+			sysfs_notअगरy_dirent_safe(rdev->sysfs_state);
 		/* failure here is OK */;
 		sysfs_link_rdev(rdev->mddev, rdev);
-		/* don't wakeup anyone, leave that to userspace. */
-	} else {
-		if (slot >= rdev->mddev->raid_disks &&
+		/* करोn't wakeup anyone, leave that to userspace. */
+	पूर्ण अन्यथा अणु
+		अगर (slot >= rdev->mddev->raid_disks &&
 		    slot >= rdev->mddev->raid_disks + rdev->mddev->delta_disks)
-			return -ENOSPC;
+			वापस -ENOSPC;
 		rdev->raid_disk = slot;
 		/* assume it is working */
 		clear_bit(Faulty, &rdev->flags);
 		clear_bit(WriteMostly, &rdev->flags);
 		set_bit(In_sync, &rdev->flags);
-		sysfs_notify_dirent_safe(rdev->sysfs_state);
-	}
-	return len;
-}
+		sysfs_notअगरy_dirent_safe(rdev->sysfs_state);
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static struct rdev_sysfs_entry rdev_slot =
+अटल काष्ठा rdev_sysfs_entry rdev_slot =
 __ATTR(slot, S_IRUGO|S_IWUSR, slot_show, slot_store);
 
-static ssize_t
-offset_show(struct md_rdev *rdev, char *page)
-{
-	return sprintf(page, "%llu\n", (unsigned long long)rdev->data_offset);
-}
+अटल sमाप_प्रकार
+offset_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%llu\n", (अचिन्हित दीर्घ दीर्घ)rdev->data_offset);
+पूर्ण
 
-static ssize_t
-offset_store(struct md_rdev *rdev, const char *buf, size_t len)
-{
-	unsigned long long offset;
-	if (kstrtoull(buf, 10, &offset) < 0)
-		return -EINVAL;
-	if (rdev->mddev->pers && rdev->raid_disk >= 0)
-		return -EBUSY;
-	if (rdev->sectors && rdev->mddev->external)
-		/* Must set offset before size, so overlap checks
+अटल sमाप_प्रकार
+offset_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ दीर्घ offset;
+	अगर (kम_से_अदीर्घl(buf, 10, &offset) < 0)
+		वापस -EINVAL;
+	अगर (rdev->mddev->pers && rdev->raid_disk >= 0)
+		वापस -EBUSY;
+	अगर (rdev->sectors && rdev->mddev->बाह्यal)
+		/* Must set offset beक्रमe size, so overlap checks
 		 * can be sane */
-		return -EBUSY;
+		वापस -EBUSY;
 	rdev->data_offset = offset;
 	rdev->new_data_offset = offset;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct rdev_sysfs_entry rdev_offset =
+अटल काष्ठा rdev_sysfs_entry rdev_offset =
 __ATTR(offset, S_IRUGO|S_IWUSR, offset_show, offset_store);
 
-static ssize_t new_offset_show(struct md_rdev *rdev, char *page)
-{
-	return sprintf(page, "%llu\n",
-		       (unsigned long long)rdev->new_data_offset);
-}
+अटल sमाप_प्रकार new_offset_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%llu\n",
+		       (अचिन्हित दीर्घ दीर्घ)rdev->new_data_offset);
+पूर्ण
 
-static ssize_t new_offset_store(struct md_rdev *rdev,
-				const char *buf, size_t len)
-{
-	unsigned long long new_offset;
-	struct mddev *mddev = rdev->mddev;
+अटल sमाप_प्रकार new_offset_store(काष्ठा md_rdev *rdev,
+				स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ दीर्घ new_offset;
+	काष्ठा mddev *mddev = rdev->mddev;
 
-	if (kstrtoull(buf, 10, &new_offset) < 0)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घl(buf, 10, &new_offset) < 0)
+		वापस -EINVAL;
 
-	if (mddev->sync_thread ||
+	अगर (mddev->sync_thपढ़ो ||
 	    test_bit(MD_RECOVERY_RUNNING,&mddev->recovery))
-		return -EBUSY;
-	if (new_offset == rdev->data_offset)
+		वापस -EBUSY;
+	अगर (new_offset == rdev->data_offset)
 		/* reset is always permitted */
 		;
-	else if (new_offset > rdev->data_offset) {
+	अन्यथा अगर (new_offset > rdev->data_offset) अणु
 		/* must not push array size beyond rdev_sectors */
-		if (new_offset - rdev->data_offset
+		अगर (new_offset - rdev->data_offset
 		    + mddev->dev_sectors > rdev->sectors)
-				return -E2BIG;
-	}
+				वापस -E2BIG;
+	पूर्ण
 	/* Metadata worries about other space details. */
 
 	/* decreasing the offset is inconsistent with a backwards
 	 * reshape.
 	 */
-	if (new_offset < rdev->data_offset &&
+	अगर (new_offset < rdev->data_offset &&
 	    mddev->reshape_backwards)
-		return -EINVAL;
-	/* Increasing offset is inconsistent with forwards
+		वापस -EINVAL;
+	/* Increasing offset is inconsistent with क्रमwards
 	 * reshape.  reshape_direction should be set to
 	 * 'backwards' first.
 	 */
-	if (new_offset > rdev->data_offset &&
+	अगर (new_offset > rdev->data_offset &&
 	    !mddev->reshape_backwards)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (mddev->pers && mddev->persistent &&
+	अगर (mddev->pers && mddev->persistent &&
 	    !super_types[mddev->major_version]
 	    .allow_new_offset(rdev, new_offset))
-		return -E2BIG;
+		वापस -E2BIG;
 	rdev->new_data_offset = new_offset;
-	if (new_offset > rdev->data_offset)
+	अगर (new_offset > rdev->data_offset)
 		mddev->reshape_backwards = 1;
-	else if (new_offset < rdev->data_offset)
+	अन्यथा अगर (new_offset < rdev->data_offset)
 		mddev->reshape_backwards = 0;
 
-	return len;
-}
-static struct rdev_sysfs_entry rdev_new_offset =
+	वापस len;
+पूर्ण
+अटल काष्ठा rdev_sysfs_entry rdev_new_offset =
 __ATTR(new_offset, S_IRUGO|S_IWUSR, new_offset_show, new_offset_store);
 
-static ssize_t
-rdev_size_show(struct md_rdev *rdev, char *page)
-{
-	return sprintf(page, "%llu\n", (unsigned long long)rdev->sectors / 2);
-}
+अटल sमाप_प्रकार
+rdev_size_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%llu\n", (अचिन्हित दीर्घ दीर्घ)rdev->sectors / 2);
+पूर्ण
 
-static int overlaps(sector_t s1, sector_t l1, sector_t s2, sector_t l2)
-{
-	/* check if two start/length pairs overlap */
-	if (s1+l1 <= s2)
-		return 0;
-	if (s2+l2 <= s1)
-		return 0;
-	return 1;
-}
+अटल पूर्णांक overlaps(sector_t s1, sector_t l1, sector_t s2, sector_t l2)
+अणु
+	/* check अगर two start/length pairs overlap */
+	अगर (s1+l1 <= s2)
+		वापस 0;
+	अगर (s2+l2 <= s1)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static int strict_blocks_to_sectors(const char *buf, sector_t *sectors)
-{
-	unsigned long long blocks;
+अटल पूर्णांक strict_blocks_to_sectors(स्थिर अक्षर *buf, sector_t *sectors)
+अणु
+	अचिन्हित दीर्घ दीर्घ blocks;
 	sector_t new;
 
-	if (kstrtoull(buf, 10, &blocks) < 0)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घl(buf, 10, &blocks) < 0)
+		वापस -EINVAL;
 
-	if (blocks & 1ULL << (8 * sizeof(blocks) - 1))
-		return -EINVAL; /* sector conversion overflow */
+	अगर (blocks & 1ULL << (8 * माप(blocks) - 1))
+		वापस -EINVAL; /* sector conversion overflow */
 
 	new = blocks * 2;
-	if (new != blocks * 2)
-		return -EINVAL; /* unsigned long long to sector_t overflow */
+	अगर (new != blocks * 2)
+		वापस -EINVAL; /* अचिन्हित दीर्घ दीर्घ to sector_t overflow */
 
 	*sectors = new;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-rdev_size_store(struct md_rdev *rdev, const char *buf, size_t len)
-{
-	struct mddev *my_mddev = rdev->mddev;
+अटल sमाप_प्रकार
+rdev_size_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा mddev *my_mddev = rdev->mddev;
 	sector_t oldsectors = rdev->sectors;
 	sector_t sectors;
 
-	if (test_bit(Journal, &rdev->flags))
-		return -EBUSY;
-	if (strict_blocks_to_sectors(buf, &sectors) < 0)
-		return -EINVAL;
-	if (rdev->data_offset != rdev->new_data_offset)
-		return -EINVAL; /* too confusing */
-	if (my_mddev->pers && rdev->raid_disk >= 0) {
-		if (my_mddev->persistent) {
+	अगर (test_bit(Journal, &rdev->flags))
+		वापस -EBUSY;
+	अगर (strict_blocks_to_sectors(buf, &sectors) < 0)
+		वापस -EINVAL;
+	अगर (rdev->data_offset != rdev->new_data_offset)
+		वापस -EINVAL; /* too confusing */
+	अगर (my_mddev->pers && rdev->raid_disk >= 0) अणु
+		अगर (my_mddev->persistent) अणु
 			sectors = super_types[my_mddev->major_version].
 				rdev_size_change(rdev, sectors);
-			if (!sectors)
-				return -EBUSY;
-		} else if (!sectors)
-			sectors = (i_size_read(rdev->bdev->bd_inode) >> 9) -
+			अगर (!sectors)
+				वापस -EBUSY;
+		पूर्ण अन्यथा अगर (!sectors)
+			sectors = (i_size_पढ़ो(rdev->bdev->bd_inode) >> 9) -
 				rdev->data_offset;
-		if (!my_mddev->pers->resize)
-			/* Cannot change size for RAID0 or Linear etc */
-			return -EINVAL;
-	}
-	if (sectors < my_mddev->dev_sectors)
-		return -EINVAL; /* component must fit device */
+		अगर (!my_mddev->pers->resize)
+			/* Cannot change size क्रम RAID0 or Linear etc */
+			वापस -EINVAL;
+	पूर्ण
+	अगर (sectors < my_mddev->dev_sectors)
+		वापस -EINVAL; /* component must fit device */
 
 	rdev->sectors = sectors;
-	if (sectors > oldsectors && my_mddev->external) {
+	अगर (sectors > oldsectors && my_mddev->बाह्यal) अणु
 		/* Need to check that all other rdevs with the same
-		 * ->bdev do not overlap.  'rcu' is sufficient to walk
+		 * ->bdev करो not overlap.  'rcu' is sufficient to walk
 		 * the rdev lists safely.
-		 * This check does not provide a hard guarantee, it
-		 * just helps avoid dangerous mistakes.
+		 * This check करोes not provide a hard guarantee, it
+		 * just helps aव्योम dangerous mistakes.
 		 */
-		struct mddev *mddev;
-		int overlap = 0;
-		struct list_head *tmp;
+		काष्ठा mddev *mddev;
+		पूर्णांक overlap = 0;
+		काष्ठा list_head *पंचांगp;
 
-		rcu_read_lock();
-		for_each_mddev(mddev, tmp) {
-			struct md_rdev *rdev2;
+		rcu_पढ़ो_lock();
+		क्रम_each_mddev(mddev, पंचांगp) अणु
+			काष्ठा md_rdev *rdev2;
 
-			rdev_for_each(rdev2, mddev)
-				if (rdev->bdev == rdev2->bdev &&
+			rdev_क्रम_each(rdev2, mddev)
+				अगर (rdev->bdev == rdev2->bdev &&
 				    rdev != rdev2 &&
 				    overlaps(rdev->data_offset, rdev->sectors,
 					     rdev2->data_offset,
-					     rdev2->sectors)) {
+					     rdev2->sectors)) अणु
 					overlap = 1;
-					break;
-				}
-			if (overlap) {
+					अवरोध;
+				पूर्ण
+			अगर (overlap) अणु
 				mddev_put(mddev);
-				break;
-			}
-		}
-		rcu_read_unlock();
-		if (overlap) {
-			/* Someone else could have slipped in a size
-			 * change here, but doing so is just silly.
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		rcu_पढ़ो_unlock();
+		अगर (overlap) अणु
+			/* Someone अन्यथा could have slipped in a size
+			 * change here, but करोing so is just silly.
 			 * We put oldsectors back because we *know* it is
 			 * safe, and trust userspace not to race with
 			 * itself
 			 */
 			rdev->sectors = oldsectors;
-			return -EBUSY;
-		}
-	}
-	return len;
-}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static struct rdev_sysfs_entry rdev_size =
+अटल काष्ठा rdev_sysfs_entry rdev_size =
 __ATTR(size, S_IRUGO|S_IWUSR, rdev_size_show, rdev_size_store);
 
-static ssize_t recovery_start_show(struct md_rdev *rdev, char *page)
-{
-	unsigned long long recovery_start = rdev->recovery_offset;
+अटल sमाप_प्रकार recovery_start_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	अचिन्हित दीर्घ दीर्घ recovery_start = rdev->recovery_offset;
 
-	if (test_bit(In_sync, &rdev->flags) ||
+	अगर (test_bit(In_sync, &rdev->flags) ||
 	    recovery_start == MaxSector)
-		return sprintf(page, "none\n");
+		वापस प्र_लिखो(page, "none\n");
 
-	return sprintf(page, "%llu\n", recovery_start);
-}
+	वापस प्र_लिखो(page, "%llu\n", recovery_start);
+पूर्ण
 
-static ssize_t recovery_start_store(struct md_rdev *rdev, const char *buf, size_t len)
-{
-	unsigned long long recovery_start;
+अटल sमाप_प्रकार recovery_start_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ दीर्घ recovery_start;
 
-	if (cmd_match(buf, "none"))
+	अगर (cmd_match(buf, "none"))
 		recovery_start = MaxSector;
-	else if (kstrtoull(buf, 10, &recovery_start))
-		return -EINVAL;
+	अन्यथा अगर (kम_से_अदीर्घl(buf, 10, &recovery_start))
+		वापस -EINVAL;
 
-	if (rdev->mddev->pers &&
+	अगर (rdev->mddev->pers &&
 	    rdev->raid_disk >= 0)
-		return -EBUSY;
+		वापस -EBUSY;
 
 	rdev->recovery_offset = recovery_start;
-	if (recovery_start == MaxSector)
+	अगर (recovery_start == MaxSector)
 		set_bit(In_sync, &rdev->flags);
-	else
+	अन्यथा
 		clear_bit(In_sync, &rdev->flags);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct rdev_sysfs_entry rdev_recovery_start =
+अटल काष्ठा rdev_sysfs_entry rdev_recovery_start =
 __ATTR(recovery_start, S_IRUGO|S_IWUSR, recovery_start_show, recovery_start_store);
 
 /* sysfs access to bad-blocks list.
@@ -3514,107 +3515,107 @@ __ATTR(recovery_start, S_IRUGO|S_IWUSR, recovery_start_show, recovery_start_stor
  *    bad block list.
  * 'unacknowledged-bad-blocks' lists bad blocks that have not yet
  *    been acknowledged.  Writing to this file adds bad blocks
- *    without acknowledging them.  This is largely for testing.
+ *    without acknowledging them.  This is largely क्रम testing.
  */
-static ssize_t bb_show(struct md_rdev *rdev, char *page)
-{
-	return badblocks_show(&rdev->badblocks, page, 0);
-}
-static ssize_t bb_store(struct md_rdev *rdev, const char *page, size_t len)
-{
-	int rv = badblocks_store(&rdev->badblocks, page, len, 0);
+अटल sमाप_प्रकार bb_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	वापस badblocks_show(&rdev->badblocks, page, 0);
+पूर्ण
+अटल sमाप_प्रकार bb_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	पूर्णांक rv = badblocks_store(&rdev->badblocks, page, len, 0);
 	/* Maybe that ack was all we needed */
-	if (test_and_clear_bit(BlockedBadBlocks, &rdev->flags))
-		wake_up(&rdev->blocked_wait);
-	return rv;
-}
-static struct rdev_sysfs_entry rdev_bad_blocks =
+	अगर (test_and_clear_bit(BlockedBadBlocks, &rdev->flags))
+		wake_up(&rdev->blocked_रुको);
+	वापस rv;
+पूर्ण
+अटल काष्ठा rdev_sysfs_entry rdev_bad_blocks =
 __ATTR(bad_blocks, S_IRUGO|S_IWUSR, bb_show, bb_store);
 
-static ssize_t ubb_show(struct md_rdev *rdev, char *page)
-{
-	return badblocks_show(&rdev->badblocks, page, 1);
-}
-static ssize_t ubb_store(struct md_rdev *rdev, const char *page, size_t len)
-{
-	return badblocks_store(&rdev->badblocks, page, len, 1);
-}
-static struct rdev_sysfs_entry rdev_unack_bad_blocks =
+अटल sमाप_प्रकार ubb_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	वापस badblocks_show(&rdev->badblocks, page, 1);
+पूर्ण
+अटल sमाप_प्रकार ubb_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	वापस badblocks_store(&rdev->badblocks, page, len, 1);
+पूर्ण
+अटल काष्ठा rdev_sysfs_entry rdev_unack_bad_blocks =
 __ATTR(unacknowledged_bad_blocks, S_IRUGO|S_IWUSR, ubb_show, ubb_store);
 
-static ssize_t
-ppl_sector_show(struct md_rdev *rdev, char *page)
-{
-	return sprintf(page, "%llu\n", (unsigned long long)rdev->ppl.sector);
-}
+अटल sमाप_प्रकार
+ppl_sector_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%llu\n", (अचिन्हित दीर्घ दीर्घ)rdev->ppl.sector);
+पूर्ण
 
-static ssize_t
-ppl_sector_store(struct md_rdev *rdev, const char *buf, size_t len)
-{
-	unsigned long long sector;
+अटल sमाप_प्रकार
+ppl_sector_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ दीर्घ sector;
 
-	if (kstrtoull(buf, 10, &sector) < 0)
-		return -EINVAL;
-	if (sector != (sector_t)sector)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घl(buf, 10, &sector) < 0)
+		वापस -EINVAL;
+	अगर (sector != (sector_t)sector)
+		वापस -EINVAL;
 
-	if (rdev->mddev->pers && test_bit(MD_HAS_PPL, &rdev->mddev->flags) &&
+	अगर (rdev->mddev->pers && test_bit(MD_HAS_PPL, &rdev->mddev->flags) &&
 	    rdev->raid_disk >= 0)
-		return -EBUSY;
+		वापस -EBUSY;
 
-	if (rdev->mddev->persistent) {
-		if (rdev->mddev->major_version == 0)
-			return -EINVAL;
-		if ((sector > rdev->sb_start &&
+	अगर (rdev->mddev->persistent) अणु
+		अगर (rdev->mddev->major_version == 0)
+			वापस -EINVAL;
+		अगर ((sector > rdev->sb_start &&
 		     sector - rdev->sb_start > S16_MAX) ||
 		    (sector < rdev->sb_start &&
 		     rdev->sb_start - sector > -S16_MIN))
-			return -EINVAL;
+			वापस -EINVAL;
 		rdev->ppl.offset = sector - rdev->sb_start;
-	} else if (!rdev->mddev->external) {
-		return -EBUSY;
-	}
+	पूर्ण अन्यथा अगर (!rdev->mddev->बाह्यal) अणु
+		वापस -EBUSY;
+	पूर्ण
 	rdev->ppl.sector = sector;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct rdev_sysfs_entry rdev_ppl_sector =
+अटल काष्ठा rdev_sysfs_entry rdev_ppl_sector =
 __ATTR(ppl_sector, S_IRUGO|S_IWUSR, ppl_sector_show, ppl_sector_store);
 
-static ssize_t
-ppl_size_show(struct md_rdev *rdev, char *page)
-{
-	return sprintf(page, "%u\n", rdev->ppl.size);
-}
+अटल sमाप_प्रकार
+ppl_size_show(काष्ठा md_rdev *rdev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%u\n", rdev->ppl.size);
+पूर्ण
 
-static ssize_t
-ppl_size_store(struct md_rdev *rdev, const char *buf, size_t len)
-{
-	unsigned int size;
+अटल sमाप_प्रकार
+ppl_size_store(काष्ठा md_rdev *rdev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक size;
 
-	if (kstrtouint(buf, 10, &size) < 0)
-		return -EINVAL;
+	अगर (kstrtouपूर्णांक(buf, 10, &size) < 0)
+		वापस -EINVAL;
 
-	if (rdev->mddev->pers && test_bit(MD_HAS_PPL, &rdev->mddev->flags) &&
+	अगर (rdev->mddev->pers && test_bit(MD_HAS_PPL, &rdev->mddev->flags) &&
 	    rdev->raid_disk >= 0)
-		return -EBUSY;
+		वापस -EBUSY;
 
-	if (rdev->mddev->persistent) {
-		if (rdev->mddev->major_version == 0)
-			return -EINVAL;
-		if (size > U16_MAX)
-			return -EINVAL;
-	} else if (!rdev->mddev->external) {
-		return -EBUSY;
-	}
+	अगर (rdev->mddev->persistent) अणु
+		अगर (rdev->mddev->major_version == 0)
+			वापस -EINVAL;
+		अगर (size > U16_MAX)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अगर (!rdev->mddev->बाह्यal) अणु
+		वापस -EBUSY;
+	पूर्ण
 	rdev->ppl.size = size;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct rdev_sysfs_entry rdev_ppl_size =
+अटल काष्ठा rdev_sysfs_entry rdev_ppl_size =
 __ATTR(ppl_size, S_IRUGO|S_IWUSR, ppl_size_show, ppl_size_store);
 
-static struct attribute *rdev_default_attrs[] = {
+अटल काष्ठा attribute *rdev_शेष_attrs[] = अणु
 	&rdev_state.attr,
 	&rdev_errors.attr,
 	&rdev_slot.attr,
@@ -3626,62 +3627,62 @@ static struct attribute *rdev_default_attrs[] = {
 	&rdev_unack_bad_blocks.attr,
 	&rdev_ppl_sector.attr,
 	&rdev_ppl_size.attr,
-	NULL,
-};
-static ssize_t
-rdev_attr_show(struct kobject *kobj, struct attribute *attr, char *page)
-{
-	struct rdev_sysfs_entry *entry = container_of(attr, struct rdev_sysfs_entry, attr);
-	struct md_rdev *rdev = container_of(kobj, struct md_rdev, kobj);
+	शून्य,
+पूर्ण;
+अटल sमाप_प्रकार
+rdev_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr, अक्षर *page)
+अणु
+	काष्ठा rdev_sysfs_entry *entry = container_of(attr, काष्ठा rdev_sysfs_entry, attr);
+	काष्ठा md_rdev *rdev = container_of(kobj, काष्ठा md_rdev, kobj);
 
-	if (!entry->show)
-		return -EIO;
-	if (!rdev->mddev)
-		return -ENODEV;
-	return entry->show(rdev, page);
-}
+	अगर (!entry->show)
+		वापस -EIO;
+	अगर (!rdev->mddev)
+		वापस -ENODEV;
+	वापस entry->show(rdev, page);
+पूर्ण
 
-static ssize_t
-rdev_attr_store(struct kobject *kobj, struct attribute *attr,
-	      const char *page, size_t length)
-{
-	struct rdev_sysfs_entry *entry = container_of(attr, struct rdev_sysfs_entry, attr);
-	struct md_rdev *rdev = container_of(kobj, struct md_rdev, kobj);
-	ssize_t rv;
-	struct mddev *mddev = rdev->mddev;
+अटल sमाप_प्रकार
+rdev_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+	      स्थिर अक्षर *page, माप_प्रकार length)
+अणु
+	काष्ठा rdev_sysfs_entry *entry = container_of(attr, काष्ठा rdev_sysfs_entry, attr);
+	काष्ठा md_rdev *rdev = container_of(kobj, काष्ठा md_rdev, kobj);
+	sमाप_प्रकार rv;
+	काष्ठा mddev *mddev = rdev->mddev;
 
-	if (!entry->store)
-		return -EIO;
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
+	अगर (!entry->store)
+		वापस -EIO;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
 	rv = mddev ? mddev_lock(mddev) : -ENODEV;
-	if (!rv) {
-		if (rdev->mddev == NULL)
+	अगर (!rv) अणु
+		अगर (rdev->mddev == शून्य)
 			rv = -ENODEV;
-		else
+		अन्यथा
 			rv = entry->store(rdev, page, length);
 		mddev_unlock(mddev);
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-static void rdev_free(struct kobject *ko)
-{
-	struct md_rdev *rdev = container_of(ko, struct md_rdev, kobj);
-	kfree(rdev);
-}
-static const struct sysfs_ops rdev_sysfs_ops = {
+अटल व्योम rdev_मुक्त(काष्ठा kobject *ko)
+अणु
+	काष्ठा md_rdev *rdev = container_of(ko, काष्ठा md_rdev, kobj);
+	kमुक्त(rdev);
+पूर्ण
+अटल स्थिर काष्ठा sysfs_ops rdev_sysfs_ops = अणु
 	.show		= rdev_attr_show,
 	.store		= rdev_attr_store,
-};
-static struct kobj_type rdev_ktype = {
-	.release	= rdev_free,
+पूर्ण;
+अटल काष्ठा kobj_type rdev_ktype = अणु
+	.release	= rdev_मुक्त,
 	.sysfs_ops	= &rdev_sysfs_ops,
-	.default_attrs	= rdev_default_attrs,
-};
+	.शेष_attrs	= rdev_शेष_attrs,
+पूर्ण;
 
-int md_rdev_init(struct md_rdev *rdev)
-{
+पूर्णांक md_rdev_init(काष्ठा md_rdev *rdev)
+अणु
 	rdev->desc_nr = -1;
 	rdev->saved_raid_disk = -1;
 	rdev->raid_disk = -1;
@@ -3689,280 +3690,280 @@ int md_rdev_init(struct md_rdev *rdev)
 	rdev->data_offset = 0;
 	rdev->new_data_offset = 0;
 	rdev->sb_events = 0;
-	rdev->last_read_error = 0;
+	rdev->last_पढ़ो_error = 0;
 	rdev->sb_loaded = 0;
-	rdev->bb_page = NULL;
+	rdev->bb_page = शून्य;
 	atomic_set(&rdev->nr_pending, 0);
-	atomic_set(&rdev->read_errors, 0);
+	atomic_set(&rdev->पढ़ो_errors, 0);
 	atomic_set(&rdev->corrected_errors, 0);
 
 	INIT_LIST_HEAD(&rdev->same_set);
-	init_waitqueue_head(&rdev->blocked_wait);
+	init_रुकोqueue_head(&rdev->blocked_रुको);
 
 	/* Add space to store bad block list.
 	 * This reserves the space even on arrays where it cannot
-	 * be used - I wonder if that matters
+	 * be used - I wonder अगर that matters
 	 */
-	return badblocks_init(&rdev->badblocks, 0);
-}
+	वापस badblocks_init(&rdev->badblocks, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(md_rdev_init);
 /*
  * Import a device. If 'super_format' >= 0, then sanity check the superblock
  *
- * mark the device faulty if:
+ * mark the device faulty अगर:
  *
  *   - the device is nonexistent (zero size)
  *   - the device has no valid superblock
  *
  * a faulty rdev _never_ has rdev->sb set.
  */
-static struct md_rdev *md_import_device(dev_t newdev, int super_format, int super_minor)
-{
-	char b[BDEVNAME_SIZE];
-	int err;
-	struct md_rdev *rdev;
+अटल काष्ठा md_rdev *md_import_device(dev_t newdev, पूर्णांक super_क्रमmat, पूर्णांक super_minor)
+अणु
+	अक्षर b[BDEVNAME_SIZE];
+	पूर्णांक err;
+	काष्ठा md_rdev *rdev;
 	sector_t size;
 
-	rdev = kzalloc(sizeof(*rdev), GFP_KERNEL);
-	if (!rdev)
-		return ERR_PTR(-ENOMEM);
+	rdev = kzalloc(माप(*rdev), GFP_KERNEL);
+	अगर (!rdev)
+		वापस ERR_PTR(-ENOMEM);
 
 	err = md_rdev_init(rdev);
-	if (err)
-		goto abort_free;
+	अगर (err)
+		जाओ पात_मुक्त;
 	err = alloc_disk_sb(rdev);
-	if (err)
-		goto abort_free;
+	अगर (err)
+		जाओ पात_मुक्त;
 
-	err = lock_rdev(rdev, newdev, super_format == -2);
-	if (err)
-		goto abort_free;
+	err = lock_rdev(rdev, newdev, super_क्रमmat == -2);
+	अगर (err)
+		जाओ पात_मुक्त;
 
 	kobject_init(&rdev->kobj, &rdev_ktype);
 
-	size = i_size_read(rdev->bdev->bd_inode) >> BLOCK_SIZE_BITS;
-	if (!size) {
+	size = i_size_पढ़ो(rdev->bdev->bd_inode) >> BLOCK_SIZE_BITS;
+	अगर (!size) अणु
 		pr_warn("md: %s has zero or unknown size, marking faulty!\n",
 			bdevname(rdev->bdev,b));
 		err = -EINVAL;
-		goto abort_free;
-	}
+		जाओ पात_मुक्त;
+	पूर्ण
 
-	if (super_format >= 0) {
-		err = super_types[super_format].
-			load_super(rdev, NULL, super_minor);
-		if (err == -EINVAL) {
+	अगर (super_क्रमmat >= 0) अणु
+		err = super_types[super_क्रमmat].
+			load_super(rdev, शून्य, super_minor);
+		अगर (err == -EINVAL) अणु
 			pr_warn("md: %s does not have a valid v%d.%d superblock, not importing!\n",
 				bdevname(rdev->bdev,b),
-				super_format, super_minor);
-			goto abort_free;
-		}
-		if (err < 0) {
+				super_क्रमmat, super_minor);
+			जाओ पात_मुक्त;
+		पूर्ण
+		अगर (err < 0) अणु
 			pr_warn("md: could not read %s's sb, not importing!\n",
 				bdevname(rdev->bdev,b));
-			goto abort_free;
-		}
-	}
+			जाओ पात_मुक्त;
+		पूर्ण
+	पूर्ण
 
-	return rdev;
+	वापस rdev;
 
-abort_free:
-	if (rdev->bdev)
+पात_मुक्त:
+	अगर (rdev->bdev)
 		unlock_rdev(rdev);
 	md_rdev_clear(rdev);
-	kfree(rdev);
-	return ERR_PTR(err);
-}
+	kमुक्त(rdev);
+	वापस ERR_PTR(err);
+पूर्ण
 
 /*
- * Check a full RAID array for plausibility
+ * Check a full RAID array क्रम plausibility
  */
 
-static int analyze_sbs(struct mddev *mddev)
-{
-	int i;
-	struct md_rdev *rdev, *freshest, *tmp;
-	char b[BDEVNAME_SIZE];
+अटल पूर्णांक analyze_sbs(काष्ठा mddev *mddev)
+अणु
+	पूर्णांक i;
+	काष्ठा md_rdev *rdev, *freshest, *पंचांगp;
+	अक्षर b[BDEVNAME_SIZE];
 
-	freshest = NULL;
-	rdev_for_each_safe(rdev, tmp, mddev)
-		switch (super_types[mddev->major_version].
-			load_super(rdev, freshest, mddev->minor_version)) {
-		case 1:
+	freshest = शून्य;
+	rdev_क्रम_each_safe(rdev, पंचांगp, mddev)
+		चयन (super_types[mddev->major_version].
+			load_super(rdev, freshest, mddev->minor_version)) अणु
+		हाल 1:
 			freshest = rdev;
-			break;
-		case 0:
-			break;
-		default:
+			अवरोध;
+		हाल 0:
+			अवरोध;
+		शेष:
 			pr_warn("md: fatal superblock inconsistency in %s -- removing from array\n",
 				bdevname(rdev->bdev,b));
 			md_kick_rdev_from_array(rdev);
-		}
+		पूर्ण
 
 	/* Cannot find a valid fresh disk */
-	if (!freshest) {
+	अगर (!freshest) अणु
 		pr_warn("md: cannot find a valid disk\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	super_types[mddev->major_version].
 		validate_super(mddev, freshest);
 
 	i = 0;
-	rdev_for_each_safe(rdev, tmp, mddev) {
-		if (mddev->max_disks &&
+	rdev_क्रम_each_safe(rdev, पंचांगp, mddev) अणु
+		अगर (mddev->max_disks &&
 		    (rdev->desc_nr >= mddev->max_disks ||
-		     i > mddev->max_disks)) {
+		     i > mddev->max_disks)) अणु
 			pr_warn("md: %s: %s: only %d devices permitted\n",
 				mdname(mddev), bdevname(rdev->bdev, b),
 				mddev->max_disks);
 			md_kick_rdev_from_array(rdev);
-			continue;
-		}
-		if (rdev != freshest) {
-			if (super_types[mddev->major_version].
-			    validate_super(mddev, rdev)) {
+			जारी;
+		पूर्ण
+		अगर (rdev != freshest) अणु
+			अगर (super_types[mddev->major_version].
+			    validate_super(mddev, rdev)) अणु
 				pr_warn("md: kicking non-fresh %s from array!\n",
 					bdevname(rdev->bdev,b));
 				md_kick_rdev_from_array(rdev);
-				continue;
-			}
-		}
-		if (mddev->level == LEVEL_MULTIPATH) {
+				जारी;
+			पूर्ण
+		पूर्ण
+		अगर (mddev->level == LEVEL_MULTIPATH) अणु
 			rdev->desc_nr = i++;
 			rdev->raid_disk = rdev->desc_nr;
 			set_bit(In_sync, &rdev->flags);
-		} else if (rdev->raid_disk >=
+		पूर्ण अन्यथा अगर (rdev->raid_disk >=
 			    (mddev->raid_disks - min(0, mddev->delta_disks)) &&
-			   !test_bit(Journal, &rdev->flags)) {
+			   !test_bit(Journal, &rdev->flags)) अणु
 			rdev->raid_disk = -1;
 			clear_bit(In_sync, &rdev->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Read a fixed-point number.
+/* Read a fixed-poपूर्णांक number.
  * Numbers in sysfs attributes should be in "standard" units where
- * possible, so time should be in seconds.
- * However we internally use a a much smaller unit such as
- * milliseconds or jiffies.
+ * possible, so समय should be in seconds.
+ * However we पूर्णांकernally use a a much smaller unit such as
+ * milliseconds or jअगरfies.
  * This function takes a decimal number with a possible fractional
- * component, and produces an integer which is the result of
+ * component, and produces an पूर्णांकeger which is the result of
  * multiplying that number by 10^'scale'.
- * all without any floating-point arithmetic.
+ * all without any भग्नing-poपूर्णांक arithmetic.
  */
-int strict_strtoul_scaled(const char *cp, unsigned long *res, int scale)
-{
-	unsigned long result = 0;
-	long decimals = -1;
-	while (isdigit(*cp) || (*cp == '.' && decimals < 0)) {
-		if (*cp == '.')
+पूर्णांक strict_म_से_अदीर्घ_scaled(स्थिर अक्षर *cp, अचिन्हित दीर्घ *res, पूर्णांक scale)
+अणु
+	अचिन्हित दीर्घ result = 0;
+	दीर्घ decimals = -1;
+	जबतक (है_अंक(*cp) || (*cp == '.' && decimals < 0)) अणु
+		अगर (*cp == '.')
 			decimals = 0;
-		else if (decimals < scale) {
-			unsigned int value;
+		अन्यथा अगर (decimals < scale) अणु
+			अचिन्हित पूर्णांक value;
 			value = *cp - '0';
 			result = result * 10 + value;
-			if (decimals >= 0)
+			अगर (decimals >= 0)
 				decimals++;
-		}
+		पूर्ण
 		cp++;
-	}
-	if (*cp == '\n')
+	पूर्ण
+	अगर (*cp == '\n')
 		cp++;
-	if (*cp)
-		return -EINVAL;
-	if (decimals < 0)
+	अगर (*cp)
+		वापस -EINVAL;
+	अगर (decimals < 0)
 		decimals = 0;
-	*res = result * int_pow(10, scale - decimals);
-	return 0;
-}
+	*res = result * पूर्णांक_घात(10, scale - decimals);
+	वापस 0;
+पूर्ण
 
-static ssize_t
-safe_delay_show(struct mddev *mddev, char *page)
-{
-	int msec = (mddev->safemode_delay*1000)/HZ;
-	return sprintf(page, "%d.%03d\n", msec/1000, msec%1000);
-}
-static ssize_t
-safe_delay_store(struct mddev *mddev, const char *cbuf, size_t len)
-{
-	unsigned long msec;
+अटल sमाप_प्रकार
+safe_delay_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	पूर्णांक msec = (mddev->safemode_delay*1000)/HZ;
+	वापस प्र_लिखो(page, "%d.%03d\n", msec/1000, msec%1000);
+पूर्ण
+अटल sमाप_प्रकार
+safe_delay_store(काष्ठा mddev *mddev, स्थिर अक्षर *cbuf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ msec;
 
-	if (mddev_is_clustered(mddev)) {
+	अगर (mddev_is_clustered(mddev)) अणु
 		pr_warn("md: Safemode is disabled for clustered mode\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (strict_strtoul_scaled(cbuf, &msec, 3) < 0)
-		return -EINVAL;
-	if (msec == 0)
+	अगर (strict_म_से_अदीर्घ_scaled(cbuf, &msec, 3) < 0)
+		वापस -EINVAL;
+	अगर (msec == 0)
 		mddev->safemode_delay = 0;
-	else {
-		unsigned long old_delay = mddev->safemode_delay;
-		unsigned long new_delay = (msec*HZ)/1000;
+	अन्यथा अणु
+		अचिन्हित दीर्घ old_delay = mddev->safemode_delay;
+		अचिन्हित दीर्घ new_delay = (msec*HZ)/1000;
 
-		if (new_delay == 0)
+		अगर (new_delay == 0)
 			new_delay = 1;
 		mddev->safemode_delay = new_delay;
-		if (new_delay < old_delay || old_delay == 0)
-			mod_timer(&mddev->safemode_timer, jiffies+1);
-	}
-	return len;
-}
-static struct md_sysfs_entry md_safe_delay =
+		अगर (new_delay < old_delay || old_delay == 0)
+			mod_समयr(&mddev->safemode_समयr, jअगरfies+1);
+	पूर्ण
+	वापस len;
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_safe_delay =
 __ATTR(safe_mode_delay, S_IRUGO|S_IWUSR,safe_delay_show, safe_delay_store);
 
-static ssize_t
-level_show(struct mddev *mddev, char *page)
-{
-	struct md_personality *p;
-	int ret;
+अटल sमाप_प्रकार
+level_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	काष्ठा md_personality *p;
+	पूर्णांक ret;
 	spin_lock(&mddev->lock);
 	p = mddev->pers;
-	if (p)
-		ret = sprintf(page, "%s\n", p->name);
-	else if (mddev->clevel[0])
-		ret = sprintf(page, "%s\n", mddev->clevel);
-	else if (mddev->level != LEVEL_NONE)
-		ret = sprintf(page, "%d\n", mddev->level);
-	else
+	अगर (p)
+		ret = प्र_लिखो(page, "%s\n", p->name);
+	अन्यथा अगर (mddev->clevel[0])
+		ret = प्र_लिखो(page, "%s\n", mddev->clevel);
+	अन्यथा अगर (mddev->level != LEVEL_NONE)
+		ret = प्र_लिखो(page, "%d\n", mddev->level);
+	अन्यथा
 		ret = 0;
 	spin_unlock(&mddev->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-level_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	char clevel[16];
-	ssize_t rv;
-	size_t slen = len;
-	struct md_personality *pers, *oldpers;
-	long level;
-	void *priv, *oldpriv;
-	struct md_rdev *rdev;
+अटल sमाप_प्रकार
+level_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अक्षर clevel[16];
+	sमाप_प्रकार rv;
+	माप_प्रकार slen = len;
+	काष्ठा md_personality *pers, *oldpers;
+	दीर्घ level;
+	व्योम *priv, *oldpriv;
+	काष्ठा md_rdev *rdev;
 
-	if (slen == 0 || slen >= sizeof(clevel))
-		return -EINVAL;
+	अगर (slen == 0 || slen >= माप(clevel))
+		वापस -EINVAL;
 
 	rv = mddev_lock(mddev);
-	if (rv)
-		return rv;
+	अगर (rv)
+		वापस rv;
 
-	if (mddev->pers == NULL) {
-		strncpy(mddev->clevel, buf, slen);
-		if (mddev->clevel[slen-1] == '\n')
+	अगर (mddev->pers == शून्य) अणु
+		म_नकलन(mddev->clevel, buf, slen);
+		अगर (mddev->clevel[slen-1] == '\n')
 			slen--;
 		mddev->clevel[slen] = 0;
 		mddev->level = LEVEL_NONE;
 		rv = len;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	rv = -EROFS;
-	if (mddev->ro)
-		goto out_unlock;
+	अगर (mddev->ro)
+		जाओ out_unlock;
 
 	/* request to change the personality.  Need to ensure:
 	 *  - array is not engaged in resync/recovery/reshape
@@ -3971,61 +3972,61 @@ level_store(struct mddev *mddev, const char *buf, size_t len)
 	 */
 
 	rv = -EBUSY;
-	if (mddev->sync_thread ||
+	अगर (mddev->sync_thपढ़ो ||
 	    test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
 	    mddev->reshape_position != MaxSector ||
 	    mddev->sysfs_active)
-		goto out_unlock;
+		जाओ out_unlock;
 
 	rv = -EINVAL;
-	if (!mddev->pers->quiesce) {
+	अगर (!mddev->pers->quiesce) अणु
 		pr_warn("md: %s: %s does not support online personality change\n",
 			mdname(mddev), mddev->pers->name);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/* Now find the new personality */
-	strncpy(clevel, buf, slen);
-	if (clevel[slen-1] == '\n')
+	म_नकलन(clevel, buf, slen);
+	अगर (clevel[slen-1] == '\n')
 		slen--;
 	clevel[slen] = 0;
-	if (kstrtol(clevel, 10, &level))
+	अगर (kम_से_दीर्घ(clevel, 10, &level))
 		level = LEVEL_NONE;
 
-	if (request_module("md-%s", clevel) != 0)
+	अगर (request_module("md-%s", clevel) != 0)
 		request_module("md-level-%s", clevel);
 	spin_lock(&pers_lock);
 	pers = find_pers(level, clevel);
-	if (!pers || !try_module_get(pers->owner)) {
+	अगर (!pers || !try_module_get(pers->owner)) अणु
 		spin_unlock(&pers_lock);
 		pr_warn("md: personality %s not loaded\n", clevel);
 		rv = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	spin_unlock(&pers_lock);
 
-	if (pers == mddev->pers) {
-		/* Nothing to do! */
+	अगर (pers == mddev->pers) अणु
+		/* Nothing to करो! */
 		module_put(pers->owner);
 		rv = len;
-		goto out_unlock;
-	}
-	if (!pers->takeover) {
+		जाओ out_unlock;
+	पूर्ण
+	अगर (!pers->takeover) अणु
 		module_put(pers->owner);
 		pr_warn("md: %s: %s does not support personality takeover\n",
 			mdname(mddev), clevel);
 		rv = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	rdev_for_each(rdev, mddev)
+	rdev_क्रम_each(rdev, mddev)
 		rdev->new_raid_disk = rdev->raid_disk;
 
 	/* ->takeover must set new_* and/or delta_disks
-	 * if it succeeds, and may set them when it fails.
+	 * अगर it succeeds, and may set them when it fails.
 	 */
 	priv = pers->takeover(mddev);
-	if (IS_ERR(priv)) {
+	अगर (IS_ERR(priv)) अणु
 		mddev->new_level = mddev->level;
 		mddev->new_layout = mddev->layout;
 		mddev->new_chunk_sectors = mddev->chunk_sectors;
@@ -4036,8 +4037,8 @@ level_store(struct mddev *mddev, const char *buf, size_t len)
 		pr_warn("md: %s: %s would not accept array\n",
 			mdname(mddev), clevel);
 		rv = PTR_ERR(priv);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/* Looks like we have a winner */
 	mddev_suspend(mddev);
@@ -4045,10 +4046,10 @@ level_store(struct mddev *mddev, const char *buf, size_t len)
 
 	spin_lock(&mddev->lock);
 	oldpers = mddev->pers;
-	oldpriv = mddev->private;
+	oldpriv = mddev->निजी;
 	mddev->pers = pers;
-	mddev->private = priv;
-	strlcpy(mddev->clevel, pers->name, sizeof(mddev->clevel));
+	mddev->निजी = priv;
+	strlcpy(mddev->clevel, pers->name, माप(mddev->clevel));
 	mddev->level = mddev->new_level;
 	mddev->layout = mddev->new_layout;
 	mddev->chunk_sectors = mddev->new_chunk_sectors;
@@ -4057,283 +4058,283 @@ level_store(struct mddev *mddev, const char *buf, size_t len)
 	mddev->degraded = 0;
 	spin_unlock(&mddev->lock);
 
-	if (oldpers->sync_request == NULL &&
-	    mddev->external) {
+	अगर (oldpers->sync_request == शून्य &&
+	    mddev->बाह्यal) अणु
 		/* We are converting from a no-redundancy array
 		 * to a redundancy array and metadata is managed
-		 * externally so we need to be sure that writes
+		 * बाह्यally so we need to be sure that ग_लिखोs
 		 * won't block due to a need to transition
 		 *      clean->dirty
-		 * until external management is started.
+		 * until बाह्यal management is started.
 		 */
 		mddev->in_sync = 0;
 		mddev->safemode_delay = 0;
 		mddev->safemode = 0;
-	}
+	पूर्ण
 
-	oldpers->free(mddev, oldpriv);
+	oldpers->मुक्त(mddev, oldpriv);
 
-	if (oldpers->sync_request == NULL &&
-	    pers->sync_request != NULL) {
+	अगर (oldpers->sync_request == शून्य &&
+	    pers->sync_request != शून्य) अणु
 		/* need to add the md_redundancy_group */
-		if (sysfs_create_group(&mddev->kobj, &md_redundancy_group))
+		अगर (sysfs_create_group(&mddev->kobj, &md_redundancy_group))
 			pr_warn("md: cannot register extra attributes for %s\n",
 				mdname(mddev));
 		mddev->sysfs_action = sysfs_get_dirent(mddev->kobj.sd, "sync_action");
 		mddev->sysfs_completed = sysfs_get_dirent_safe(mddev->kobj.sd, "sync_completed");
 		mddev->sysfs_degraded = sysfs_get_dirent_safe(mddev->kobj.sd, "degraded");
-	}
-	if (oldpers->sync_request != NULL &&
-	    pers->sync_request == NULL) {
-		/* need to remove the md_redundancy_group */
-		if (mddev->to_remove == NULL)
-			mddev->to_remove = &md_redundancy_group;
-	}
+	पूर्ण
+	अगर (oldpers->sync_request != शून्य &&
+	    pers->sync_request == शून्य) अणु
+		/* need to हटाओ the md_redundancy_group */
+		अगर (mddev->to_हटाओ == शून्य)
+			mddev->to_हटाओ = &md_redundancy_group;
+	पूर्ण
 
 	module_put(oldpers->owner);
 
-	rdev_for_each(rdev, mddev) {
-		if (rdev->raid_disk < 0)
-			continue;
-		if (rdev->new_raid_disk >= mddev->raid_disks)
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (rdev->raid_disk < 0)
+			जारी;
+		अगर (rdev->new_raid_disk >= mddev->raid_disks)
 			rdev->new_raid_disk = -1;
-		if (rdev->new_raid_disk == rdev->raid_disk)
-			continue;
+		अगर (rdev->new_raid_disk == rdev->raid_disk)
+			जारी;
 		sysfs_unlink_rdev(mddev, rdev);
-	}
-	rdev_for_each(rdev, mddev) {
-		if (rdev->raid_disk < 0)
-			continue;
-		if (rdev->new_raid_disk == rdev->raid_disk)
-			continue;
+	पूर्ण
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (rdev->raid_disk < 0)
+			जारी;
+		अगर (rdev->new_raid_disk == rdev->raid_disk)
+			जारी;
 		rdev->raid_disk = rdev->new_raid_disk;
-		if (rdev->raid_disk < 0)
+		अगर (rdev->raid_disk < 0)
 			clear_bit(In_sync, &rdev->flags);
-		else {
-			if (sysfs_link_rdev(mddev, rdev))
+		अन्यथा अणु
+			अगर (sysfs_link_rdev(mddev, rdev))
 				pr_warn("md: cannot register rd%d for %s after level change\n",
 					rdev->raid_disk, mdname(mddev));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pers->sync_request == NULL) {
+	अगर (pers->sync_request == शून्य) अणु
 		/* this is now an array without redundancy, so
 		 * it must always be in_sync
 		 */
 		mddev->in_sync = 1;
-		del_timer_sync(&mddev->safemode_timer);
-	}
+		del_समयr_sync(&mddev->safemode_समयr);
+	पूर्ण
 	blk_set_stacking_limits(&mddev->queue->limits);
 	pers->run(mddev);
 	set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
 	mddev_resume(mddev);
-	if (!mddev->thread)
+	अगर (!mddev->thपढ़ो)
 		md_update_sb(mddev, 1);
-	sysfs_notify_dirent_safe(mddev->sysfs_level);
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_level);
 	md_new_event(mddev);
 	rv = len;
 out_unlock:
 	mddev_unlock(mddev);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static struct md_sysfs_entry md_level =
+अटल काष्ठा md_sysfs_entry md_level =
 __ATTR(level, S_IRUGO|S_IWUSR, level_show, level_store);
 
-static ssize_t
-layout_show(struct mddev *mddev, char *page)
-{
-	/* just a number, not meaningful for all levels */
-	if (mddev->reshape_position != MaxSector &&
+अटल sमाप_प्रकार
+layout_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	/* just a number, not meaningful क्रम all levels */
+	अगर (mddev->reshape_position != MaxSector &&
 	    mddev->layout != mddev->new_layout)
-		return sprintf(page, "%d (%d)\n",
+		वापस प्र_लिखो(page, "%d (%d)\n",
 			       mddev->new_layout, mddev->layout);
-	return sprintf(page, "%d\n", mddev->layout);
-}
+	वापस प्र_लिखो(page, "%d\n", mddev->layout);
+पूर्ण
 
-static ssize_t
-layout_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned int n;
-	int err;
+अटल sमाप_प्रकार
+layout_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक n;
+	पूर्णांक err;
 
-	err = kstrtouint(buf, 10, &n);
-	if (err < 0)
-		return err;
+	err = kstrtouपूर्णांक(buf, 10, &n);
+	अगर (err < 0)
+		वापस err;
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (mddev->pers) {
-		if (mddev->pers->check_reshape == NULL)
+	अगर (mddev->pers) अणु
+		अगर (mddev->pers->check_reshape == शून्य)
 			err = -EBUSY;
-		else if (mddev->ro)
+		अन्यथा अगर (mddev->ro)
 			err = -EROFS;
-		else {
+		अन्यथा अणु
 			mddev->new_layout = n;
 			err = mddev->pers->check_reshape(mddev);
-			if (err)
+			अगर (err)
 				mddev->new_layout = mddev->layout;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mddev->new_layout = n;
-		if (mddev->reshape_position == MaxSector)
+		अगर (mddev->reshape_position == MaxSector)
 			mddev->layout = n;
-	}
+	पूर्ण
 	mddev_unlock(mddev);
-	return err ?: len;
-}
-static struct md_sysfs_entry md_layout =
+	वापस err ?: len;
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_layout =
 __ATTR(layout, S_IRUGO|S_IWUSR, layout_show, layout_store);
 
-static ssize_t
-raid_disks_show(struct mddev *mddev, char *page)
-{
-	if (mddev->raid_disks == 0)
-		return 0;
-	if (mddev->reshape_position != MaxSector &&
+अटल sमाप_प्रकार
+raid_disks_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अगर (mddev->raid_disks == 0)
+		वापस 0;
+	अगर (mddev->reshape_position != MaxSector &&
 	    mddev->delta_disks != 0)
-		return sprintf(page, "%d (%d)\n", mddev->raid_disks,
+		वापस प्र_लिखो(page, "%d (%d)\n", mddev->raid_disks,
 			       mddev->raid_disks - mddev->delta_disks);
-	return sprintf(page, "%d\n", mddev->raid_disks);
-}
+	वापस प्र_लिखो(page, "%d\n", mddev->raid_disks);
+पूर्ण
 
-static int update_raid_disks(struct mddev *mddev, int raid_disks);
+अटल पूर्णांक update_raid_disks(काष्ठा mddev *mddev, पूर्णांक raid_disks);
 
-static ssize_t
-raid_disks_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned int n;
-	int err;
+अटल sमाप_प्रकार
+raid_disks_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक n;
+	पूर्णांक err;
 
-	err = kstrtouint(buf, 10, &n);
-	if (err < 0)
-		return err;
+	err = kstrtouपूर्णांक(buf, 10, &n);
+	अगर (err < 0)
+		वापस err;
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
-	if (mddev->pers)
+	अगर (err)
+		वापस err;
+	अगर (mddev->pers)
 		err = update_raid_disks(mddev, n);
-	else if (mddev->reshape_position != MaxSector) {
-		struct md_rdev *rdev;
-		int olddisks = mddev->raid_disks - mddev->delta_disks;
+	अन्यथा अगर (mddev->reshape_position != MaxSector) अणु
+		काष्ठा md_rdev *rdev;
+		पूर्णांक olddisks = mddev->raid_disks - mddev->delta_disks;
 
 		err = -EINVAL;
-		rdev_for_each(rdev, mddev) {
-			if (olddisks < n &&
+		rdev_क्रम_each(rdev, mddev) अणु
+			अगर (olddisks < n &&
 			    rdev->data_offset < rdev->new_data_offset)
-				goto out_unlock;
-			if (olddisks > n &&
+				जाओ out_unlock;
+			अगर (olddisks > n &&
 			    rdev->data_offset > rdev->new_data_offset)
-				goto out_unlock;
-		}
+				जाओ out_unlock;
+		पूर्ण
 		err = 0;
 		mddev->delta_disks = n - olddisks;
 		mddev->raid_disks = n;
 		mddev->reshape_backwards = (mddev->delta_disks < 0);
-	} else
+	पूर्ण अन्यथा
 		mddev->raid_disks = n;
 out_unlock:
 	mddev_unlock(mddev);
-	return err ? err : len;
-}
-static struct md_sysfs_entry md_raid_disks =
+	वापस err ? err : len;
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_raid_disks =
 __ATTR(raid_disks, S_IRUGO|S_IWUSR, raid_disks_show, raid_disks_store);
 
-static ssize_t
-uuid_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%pU\n", mddev->uuid);
-}
-static struct md_sysfs_entry md_uuid =
-__ATTR(uuid, S_IRUGO, uuid_show, NULL);
+अटल sमाप_प्रकार
+uuid_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%pU\n", mddev->uuid);
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_uuid =
+__ATTR(uuid, S_IRUGO, uuid_show, शून्य);
 
-static ssize_t
-chunk_size_show(struct mddev *mddev, char *page)
-{
-	if (mddev->reshape_position != MaxSector &&
+अटल sमाप_प्रकार
+chunk_size_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अगर (mddev->reshape_position != MaxSector &&
 	    mddev->chunk_sectors != mddev->new_chunk_sectors)
-		return sprintf(page, "%d (%d)\n",
+		वापस प्र_लिखो(page, "%d (%d)\n",
 			       mddev->new_chunk_sectors << 9,
 			       mddev->chunk_sectors << 9);
-	return sprintf(page, "%d\n", mddev->chunk_sectors << 9);
-}
+	वापस प्र_लिखो(page, "%d\n", mddev->chunk_sectors << 9);
+पूर्ण
 
-static ssize_t
-chunk_size_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned long n;
-	int err;
+अटल sमाप_प्रकार
+chunk_size_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ n;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &n);
-	if (err < 0)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &n);
+	अगर (err < 0)
+		वापस err;
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
-	if (mddev->pers) {
-		if (mddev->pers->check_reshape == NULL)
+	अगर (err)
+		वापस err;
+	अगर (mddev->pers) अणु
+		अगर (mddev->pers->check_reshape == शून्य)
 			err = -EBUSY;
-		else if (mddev->ro)
+		अन्यथा अगर (mddev->ro)
 			err = -EROFS;
-		else {
+		अन्यथा अणु
 			mddev->new_chunk_sectors = n >> 9;
 			err = mddev->pers->check_reshape(mddev);
-			if (err)
+			अगर (err)
 				mddev->new_chunk_sectors = mddev->chunk_sectors;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mddev->new_chunk_sectors = n >> 9;
-		if (mddev->reshape_position == MaxSector)
+		अगर (mddev->reshape_position == MaxSector)
 			mddev->chunk_sectors = n >> 9;
-	}
+	पूर्ण
 	mddev_unlock(mddev);
-	return err ?: len;
-}
-static struct md_sysfs_entry md_chunk_size =
+	वापस err ?: len;
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_chunk_size =
 __ATTR(chunk_size, S_IRUGO|S_IWUSR, chunk_size_show, chunk_size_store);
 
-static ssize_t
-resync_start_show(struct mddev *mddev, char *page)
-{
-	if (mddev->recovery_cp == MaxSector)
-		return sprintf(page, "none\n");
-	return sprintf(page, "%llu\n", (unsigned long long)mddev->recovery_cp);
-}
+अटल sमाप_प्रकार
+resync_start_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अगर (mddev->recovery_cp == MaxSector)
+		वापस प्र_लिखो(page, "none\n");
+	वापस प्र_लिखो(page, "%llu\n", (अचिन्हित दीर्घ दीर्घ)mddev->recovery_cp);
+पूर्ण
 
-static ssize_t
-resync_start_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned long long n;
-	int err;
+अटल sमाप_प्रकार
+resync_start_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ दीर्घ n;
+	पूर्णांक err;
 
-	if (cmd_match(buf, "none"))
+	अगर (cmd_match(buf, "none"))
 		n = MaxSector;
-	else {
-		err = kstrtoull(buf, 10, &n);
-		if (err < 0)
-			return err;
-		if (n != (sector_t)n)
-			return -EINVAL;
-	}
+	अन्यथा अणु
+		err = kम_से_अदीर्घl(buf, 10, &n);
+		अगर (err < 0)
+			वापस err;
+		अगर (n != (sector_t)n)
+			वापस -EINVAL;
+	पूर्ण
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
-	if (mddev->pers && !test_bit(MD_RECOVERY_FROZEN, &mddev->recovery))
+	अगर (err)
+		वापस err;
+	अगर (mddev->pers && !test_bit(MD_RECOVERY_FROZEN, &mddev->recovery))
 		err = -EBUSY;
 
-	if (!err) {
+	अगर (!err) अणु
 		mddev->recovery_cp = n;
-		if (mddev->pers)
+		अगर (mddev->pers)
 			set_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags);
-	}
+	पूर्ण
 	mddev_unlock(mddev);
-	return err ?: len;
-}
-static struct md_sysfs_entry md_resync_start =
+	वापस err ?: len;
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_resync_start =
 __ATTR_PREALLOC(resync_start, S_IRUGO|S_IWUSR,
 		resync_start_show, resync_start_store);
 
@@ -4346,31 +4347,31 @@ __ATTR_PREALLOC(resync_start, S_IRUGO|S_IWUSR,
  * inactive
  *     May have some settings, but array is not active
  *        all IO results in error
- *     When written, doesn't tear down array, but just stops it
+ *     When written, करोesn't tear करोwn array, but just stops it
  * suspended (not supported yet)
  *     All IO requests will block. The array can be reconfigured.
- *     Writing this, if accepted, will block until array is quiescent
- * readonly
+ *     Writing this, अगर accepted, will block until array is quiescent
+ * पढ़ोonly
  *     no resync can happen.  no superblocks get written.
- *     write requests fail
- * read-auto
- *     like readonly, but behaves like 'clean' on a write request.
+ *     ग_लिखो requests fail
+ * पढ़ो-स्वतः
+ *     like पढ़ोonly, but behaves like 'clean' on a ग_लिखो request.
  *
- * clean - no pending writes, but otherwise active.
+ * clean - no pending ग_लिखोs, but otherwise active.
  *     When written to inactive array, starts without resync
- *     If a write request arrives then
- *       if metadata is known, mark 'dirty' and switch to 'active'.
- *       if not known, block and switch to write-pending
- *     If written to an active array that has pending writes, then fails.
+ *     If a ग_लिखो request arrives then
+ *       अगर metadata is known, mark 'dirty' and switch to 'active'.
+ *       अगर not known, block and चयन to ग_लिखो-pending
+ *     If written to an active array that has pending ग_लिखोs, then fails.
  * active
  *     fully active: IO and resync can be happening.
  *     When written to inactive array, starts with resync
  *
- * write-pending
- *     clean, but writes are blocked waiting for 'active' to be written.
+ * ग_लिखो-pending
+ *     clean, but ग_लिखोs are blocked रुकोing क्रम 'active' to be written.
  *
  * active-idle
- *     like active, but no writes have been seen for a while (100msec).
+ *     like active, but no ग_लिखोs have been seen क्रम a जबतक (100msec).
  *
  * broken
  *     RAID0/LINEAR-only: same as clean, but array is missing a member.
@@ -4378,810 +4379,810 @@ __ATTR_PREALLOC(resync_start, S_IRUGO|S_IWUSR,
  *     when a member is gone, so this state will at least alert the
  *     user that something is wrong.
  */
-enum array_state { clear, inactive, suspended, readonly, read_auto, clean, active,
-		   write_pending, active_idle, broken, bad_word};
-static char *array_states[] = {
+क्रमागत array_state अणु clear, inactive, suspended, पढ़ोonly, पढ़ो_स्वतः, clean, active,
+		   ग_लिखो_pending, active_idle, broken, bad_wordपूर्ण;
+अटल अक्षर *array_states[] = अणु
 	"clear", "inactive", "suspended", "readonly", "read-auto", "clean", "active",
-	"write-pending", "active-idle", "broken", NULL };
+	"write-pending", "active-idle", "broken", शून्य पूर्ण;
 
-static int match_word(const char *word, char **list)
-{
-	int n;
-	for (n=0; list[n]; n++)
-		if (cmd_match(word, list[n]))
-			break;
-	return n;
-}
+अटल पूर्णांक match_word(स्थिर अक्षर *word, अक्षर **list)
+अणु
+	पूर्णांक n;
+	क्रम (n=0; list[n]; n++)
+		अगर (cmd_match(word, list[n]))
+			अवरोध;
+	वापस n;
+पूर्ण
 
-static ssize_t
-array_state_show(struct mddev *mddev, char *page)
-{
-	enum array_state st = inactive;
+अटल sमाप_प्रकार
+array_state_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	क्रमागत array_state st = inactive;
 
-	if (mddev->pers && !test_bit(MD_NOT_READY, &mddev->flags)) {
-		switch(mddev->ro) {
-		case 1:
-			st = readonly;
-			break;
-		case 2:
-			st = read_auto;
-			break;
-		case 0:
+	अगर (mddev->pers && !test_bit(MD_NOT_READY, &mddev->flags)) अणु
+		चयन(mddev->ro) अणु
+		हाल 1:
+			st = पढ़ोonly;
+			अवरोध;
+		हाल 2:
+			st = पढ़ो_स्वतः;
+			अवरोध;
+		हाल 0:
 			spin_lock(&mddev->lock);
-			if (test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags))
-				st = write_pending;
-			else if (mddev->in_sync)
+			अगर (test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags))
+				st = ग_लिखो_pending;
+			अन्यथा अगर (mddev->in_sync)
 				st = clean;
-			else if (mddev->safemode)
+			अन्यथा अगर (mddev->safemode)
 				st = active_idle;
-			else
+			अन्यथा
 				st = active;
 			spin_unlock(&mddev->lock);
-		}
+		पूर्ण
 
-		if (test_bit(MD_BROKEN, &mddev->flags) && st == clean)
+		अगर (test_bit(MD_BROKEN, &mddev->flags) && st == clean)
 			st = broken;
-	} else {
-		if (list_empty(&mddev->disks) &&
+	पूर्ण अन्यथा अणु
+		अगर (list_empty(&mddev->disks) &&
 		    mddev->raid_disks == 0 &&
 		    mddev->dev_sectors == 0)
 			st = clear;
-		else
+		अन्यथा
 			st = inactive;
-	}
-	return sprintf(page, "%s\n", array_states[st]);
-}
+	पूर्ण
+	वापस प्र_लिखो(page, "%s\n", array_states[st]);
+पूर्ण
 
-static int do_md_stop(struct mddev *mddev, int ro, struct block_device *bdev);
-static int md_set_readonly(struct mddev *mddev, struct block_device *bdev);
-static int restart_array(struct mddev *mddev);
+अटल पूर्णांक करो_md_stop(काष्ठा mddev *mddev, पूर्णांक ro, काष्ठा block_device *bdev);
+अटल पूर्णांक md_set_पढ़ोonly(काष्ठा mddev *mddev, काष्ठा block_device *bdev);
+अटल पूर्णांक restart_array(काष्ठा mddev *mddev);
 
-static ssize_t
-array_state_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	int err = 0;
-	enum array_state st = match_word(buf, array_states);
+अटल sमाप_प्रकार
+array_state_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	पूर्णांक err = 0;
+	क्रमागत array_state st = match_word(buf, array_states);
 
-	if (mddev->pers && (st == active || st == clean) && mddev->ro != 1) {
-		/* don't take reconfig_mutex when toggling between
+	अगर (mddev->pers && (st == active || st == clean) && mddev->ro != 1) अणु
+		/* करोn't take reconfig_mutex when toggling between
 		 * clean and active
 		 */
 		spin_lock(&mddev->lock);
-		if (st == active) {
+		अगर (st == active) अणु
 			restart_array(mddev);
 			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
-			md_wakeup_thread(mddev->thread);
-			wake_up(&mddev->sb_wait);
-		} else /* st == clean */ {
+			md_wakeup_thपढ़ो(mddev->thपढ़ो);
+			wake_up(&mddev->sb_रुको);
+		पूर्ण अन्यथा /* st == clean */ अणु
 			restart_array(mddev);
-			if (!set_in_sync(mddev))
+			अगर (!set_in_sync(mddev))
 				err = -EBUSY;
-		}
-		if (!err)
-			sysfs_notify_dirent_safe(mddev->sysfs_state);
+		पूर्ण
+		अगर (!err)
+			sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
 		spin_unlock(&mddev->lock);
-		return err ?: len;
-	}
+		वापस err ?: len;
+	पूर्ण
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = -EINVAL;
-	switch(st) {
-	case bad_word:
-		break;
-	case clear:
+	चयन(st) अणु
+	हाल bad_word:
+		अवरोध;
+	हाल clear:
 		/* stopping an active array */
-		err = do_md_stop(mddev, 0, NULL);
-		break;
-	case inactive:
+		err = करो_md_stop(mddev, 0, शून्य);
+		अवरोध;
+	हाल inactive:
 		/* stopping an active array */
-		if (mddev->pers)
-			err = do_md_stop(mddev, 2, NULL);
-		else
-			err = 0; /* already inactive */
-		break;
-	case suspended:
-		break; /* not supported yet */
-	case readonly:
-		if (mddev->pers)
-			err = md_set_readonly(mddev, NULL);
-		else {
+		अगर (mddev->pers)
+			err = करो_md_stop(mddev, 2, शून्य);
+		अन्यथा
+			err = 0; /* alपढ़ोy inactive */
+		अवरोध;
+	हाल suspended:
+		अवरोध; /* not supported yet */
+	हाल पढ़ोonly:
+		अगर (mddev->pers)
+			err = md_set_पढ़ोonly(mddev, शून्य);
+		अन्यथा अणु
 			mddev->ro = 1;
 			set_disk_ro(mddev->gendisk, 1);
-			err = do_md_run(mddev);
-		}
-		break;
-	case read_auto:
-		if (mddev->pers) {
-			if (mddev->ro == 0)
-				err = md_set_readonly(mddev, NULL);
-			else if (mddev->ro == 1)
+			err = करो_md_run(mddev);
+		पूर्ण
+		अवरोध;
+	हाल पढ़ो_स्वतः:
+		अगर (mddev->pers) अणु
+			अगर (mddev->ro == 0)
+				err = md_set_पढ़ोonly(mddev, शून्य);
+			अन्यथा अगर (mddev->ro == 1)
 				err = restart_array(mddev);
-			if (err == 0) {
+			अगर (err == 0) अणु
 				mddev->ro = 2;
 				set_disk_ro(mddev->gendisk, 0);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			mddev->ro = 2;
-			err = do_md_run(mddev);
-		}
-		break;
-	case clean:
-		if (mddev->pers) {
+			err = करो_md_run(mddev);
+		पूर्ण
+		अवरोध;
+	हाल clean:
+		अगर (mddev->pers) अणु
 			err = restart_array(mddev);
-			if (err)
-				break;
+			अगर (err)
+				अवरोध;
 			spin_lock(&mddev->lock);
-			if (!set_in_sync(mddev))
+			अगर (!set_in_sync(mddev))
 				err = -EBUSY;
 			spin_unlock(&mddev->lock);
-		} else
+		पूर्ण अन्यथा
 			err = -EINVAL;
-		break;
-	case active:
-		if (mddev->pers) {
+		अवरोध;
+	हाल active:
+		अगर (mddev->pers) अणु
 			err = restart_array(mddev);
-			if (err)
-				break;
+			अगर (err)
+				अवरोध;
 			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
-			wake_up(&mddev->sb_wait);
+			wake_up(&mddev->sb_रुको);
 			err = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			mddev->ro = 0;
 			set_disk_ro(mddev->gendisk, 0);
-			err = do_md_run(mddev);
-		}
-		break;
-	case write_pending:
-	case active_idle:
-	case broken:
+			err = करो_md_run(mddev);
+		पूर्ण
+		अवरोध;
+	हाल ग_लिखो_pending:
+	हाल active_idle:
+	हाल broken:
 		/* these cannot be set */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!err) {
-		if (mddev->hold_active == UNTIL_IOCTL)
+	अगर (!err) अणु
+		अगर (mddev->hold_active == UNTIL_IOCTL)
 			mddev->hold_active = 0;
-		sysfs_notify_dirent_safe(mddev->sysfs_state);
-	}
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
+	पूर्ण
 	mddev_unlock(mddev);
-	return err ?: len;
-}
-static struct md_sysfs_entry md_array_state =
+	वापस err ?: len;
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_array_state =
 __ATTR_PREALLOC(array_state, S_IRUGO|S_IWUSR, array_state_show, array_state_store);
 
-static ssize_t
-max_corrected_read_errors_show(struct mddev *mddev, char *page) {
-	return sprintf(page, "%d\n",
-		       atomic_read(&mddev->max_corr_read_errors));
-}
+अटल sमाप_प्रकार
+max_corrected_पढ़ो_errors_show(काष्ठा mddev *mddev, अक्षर *page) अणु
+	वापस प्र_लिखो(page, "%d\n",
+		       atomic_पढ़ो(&mddev->max_corr_पढ़ो_errors));
+पूर्ण
 
-static ssize_t
-max_corrected_read_errors_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned int n;
-	int rv;
+अटल sमाप_प्रकार
+max_corrected_पढ़ो_errors_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक n;
+	पूर्णांक rv;
 
-	rv = kstrtouint(buf, 10, &n);
-	if (rv < 0)
-		return rv;
-	atomic_set(&mddev->max_corr_read_errors, n);
-	return len;
-}
+	rv = kstrtouपूर्णांक(buf, 10, &n);
+	अगर (rv < 0)
+		वापस rv;
+	atomic_set(&mddev->max_corr_पढ़ो_errors, n);
+	वापस len;
+पूर्ण
 
-static struct md_sysfs_entry max_corr_read_errors =
-__ATTR(max_read_errors, S_IRUGO|S_IWUSR, max_corrected_read_errors_show,
-	max_corrected_read_errors_store);
+अटल काष्ठा md_sysfs_entry max_corr_पढ़ो_errors =
+__ATTR(max_पढ़ो_errors, S_IRUGO|S_IWUSR, max_corrected_पढ़ो_errors_show,
+	max_corrected_पढ़ो_errors_store);
 
-static ssize_t
-null_show(struct mddev *mddev, char *page)
-{
-	return -EINVAL;
-}
+अटल sमाप_प्रकार
+null_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
 /* need to ensure rdev_delayed_delete() has completed */
-static void flush_rdev_wq(struct mddev *mddev)
-{
-	struct md_rdev *rdev;
+अटल व्योम flush_rdev_wq(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_rdev *rdev;
 
-	rcu_read_lock();
-	rdev_for_each_rcu(rdev, mddev)
-		if (work_pending(&rdev->del_work)) {
+	rcu_पढ़ो_lock();
+	rdev_क्रम_each_rcu(rdev, mddev)
+		अगर (work_pending(&rdev->del_work)) अणु
 			flush_workqueue(md_rdev_misc_wq);
-			break;
-		}
-	rcu_read_unlock();
-}
+			अवरोध;
+		पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static ssize_t
-new_dev_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	/* buf must be %d:%d\n? giving major and minor numbers */
+अटल sमाप_प्रकार
+new_dev_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	/* buf must be %d:%d\न? giving major and minor numbers */
 	/* The new device is added to the array.
-	 * If the array has a persistent superblock, we read the
+	 * If the array has a persistent superblock, we पढ़ो the
 	 * superblock to initialise info and check validity.
-	 * Otherwise, only checking done is that in bind_rdev_to_array,
-	 * which mainly checks size.
+	 * Otherwise, only checking करोne is that in bind_rdev_to_array,
+	 * which मुख्यly checks size.
 	 */
-	char *e;
-	int major = simple_strtoul(buf, &e, 10);
-	int minor;
+	अक्षर *e;
+	पूर्णांक major = simple_म_से_अदीर्घ(buf, &e, 10);
+	पूर्णांक minor;
 	dev_t dev;
-	struct md_rdev *rdev;
-	int err;
+	काष्ठा md_rdev *rdev;
+	पूर्णांक err;
 
-	if (!*buf || *e != ':' || !e[1] || e[1] == '\n')
-		return -EINVAL;
-	minor = simple_strtoul(e+1, &e, 10);
-	if (*e && *e != '\n')
-		return -EINVAL;
+	अगर (!*buf || *e != ':' || !e[1] || e[1] == '\n')
+		वापस -EINVAL;
+	minor = simple_म_से_अदीर्घ(e+1, &e, 10);
+	अगर (*e && *e != '\n')
+		वापस -EINVAL;
 	dev = MKDEV(major, minor);
-	if (major != MAJOR(dev) ||
+	अगर (major != MAJOR(dev) ||
 	    minor != MINOR(dev))
-		return -EOVERFLOW;
+		वापस -EOVERFLOW;
 
 	flush_rdev_wq(mddev);
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
-	if (mddev->persistent) {
+	अगर (err)
+		वापस err;
+	अगर (mddev->persistent) अणु
 		rdev = md_import_device(dev, mddev->major_version,
 					mddev->minor_version);
-		if (!IS_ERR(rdev) && !list_empty(&mddev->disks)) {
-			struct md_rdev *rdev0
+		अगर (!IS_ERR(rdev) && !list_empty(&mddev->disks)) अणु
+			काष्ठा md_rdev *rdev0
 				= list_entry(mddev->disks.next,
-					     struct md_rdev, same_set);
+					     काष्ठा md_rdev, same_set);
 			err = super_types[mddev->major_version]
 				.load_super(rdev, rdev0, mddev->minor_version);
-			if (err < 0)
-				goto out;
-		}
-	} else if (mddev->external)
+			अगर (err < 0)
+				जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अगर (mddev->बाह्यal)
 		rdev = md_import_device(dev, -2, -1);
-	else
+	अन्यथा
 		rdev = md_import_device(dev, -1, -1);
 
-	if (IS_ERR(rdev)) {
+	अगर (IS_ERR(rdev)) अणु
 		mddev_unlock(mddev);
-		return PTR_ERR(rdev);
-	}
+		वापस PTR_ERR(rdev);
+	पूर्ण
 	err = bind_rdev_to_array(rdev, mddev);
  out:
-	if (err)
+	अगर (err)
 		export_rdev(rdev);
 	mddev_unlock(mddev);
-	if (!err)
+	अगर (!err)
 		md_new_event(mddev);
-	return err ? err : len;
-}
+	वापस err ? err : len;
+पूर्ण
 
-static struct md_sysfs_entry md_new_device =
+अटल काष्ठा md_sysfs_entry md_new_device =
 __ATTR(new_dev, S_IWUSR, null_show, new_dev_store);
 
-static ssize_t
-bitmap_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	char *end;
-	unsigned long chunk, end_chunk;
-	int err;
+अटल sमाप_प्रकार
+biपंचांगap_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अक्षर *end;
+	अचिन्हित दीर्घ chunk, end_chunk;
+	पूर्णांक err;
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
-	if (!mddev->bitmap)
-		goto out;
+	अगर (err)
+		वापस err;
+	अगर (!mddev->biपंचांगap)
+		जाओ out;
 	/* buf should be <chunk> <chunk> ... or <chunk>-<chunk> ... (range) */
-	while (*buf) {
-		chunk = end_chunk = simple_strtoul(buf, &end, 0);
-		if (buf == end) break;
-		if (*end == '-') { /* range */
+	जबतक (*buf) अणु
+		chunk = end_chunk = simple_म_से_अदीर्घ(buf, &end, 0);
+		अगर (buf == end) अवरोध;
+		अगर (*end == '-') अणु /* range */
 			buf = end + 1;
-			end_chunk = simple_strtoul(buf, &end, 0);
-			if (buf == end) break;
-		}
-		if (*end && !isspace(*end)) break;
-		md_bitmap_dirty_bits(mddev->bitmap, chunk, end_chunk);
+			end_chunk = simple_म_से_अदीर्घ(buf, &end, 0);
+			अगर (buf == end) अवरोध;
+		पूर्ण
+		अगर (*end && !है_खाली(*end)) अवरोध;
+		md_biपंचांगap_dirty_bits(mddev->biपंचांगap, chunk, end_chunk);
 		buf = skip_spaces(end);
-	}
-	md_bitmap_unplug(mddev->bitmap); /* flush the bits to disk */
+	पूर्ण
+	md_biपंचांगap_unplug(mddev->biपंचांगap); /* flush the bits to disk */
 out:
 	mddev_unlock(mddev);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct md_sysfs_entry md_bitmap =
-__ATTR(bitmap_set_bits, S_IWUSR, null_show, bitmap_store);
+अटल काष्ठा md_sysfs_entry md_biपंचांगap =
+__ATTR(biपंचांगap_set_bits, S_IWUSR, null_show, biपंचांगap_store);
 
-static ssize_t
-size_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%llu\n",
-		(unsigned long long)mddev->dev_sectors / 2);
-}
+अटल sमाप_प्रकार
+size_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%llu\n",
+		(अचिन्हित दीर्घ दीर्घ)mddev->dev_sectors / 2);
+पूर्ण
 
-static int update_size(struct mddev *mddev, sector_t num_sectors);
+अटल पूर्णांक update_size(काष्ठा mddev *mddev, sector_t num_sectors);
 
-static ssize_t
-size_store(struct mddev *mddev, const char *buf, size_t len)
-{
+अटल sमाप_प्रकार
+size_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
 	/* If array is inactive, we can reduce the component size, but
 	 * not increase it (except from 0).
 	 * If array is active, we can try an on-line resize
 	 */
 	sector_t sectors;
-	int err = strict_blocks_to_sectors(buf, &sectors);
+	पूर्णांक err = strict_blocks_to_sectors(buf, &sectors);
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
-	if (mddev->pers) {
+	अगर (err)
+		वापस err;
+	अगर (mddev->pers) अणु
 		err = update_size(mddev, sectors);
-		if (err == 0)
+		अगर (err == 0)
 			md_update_sb(mddev, 1);
-	} else {
-		if (mddev->dev_sectors == 0 ||
+	पूर्ण अन्यथा अणु
+		अगर (mddev->dev_sectors == 0 ||
 		    mddev->dev_sectors > sectors)
 			mddev->dev_sectors = sectors;
-		else
+		अन्यथा
 			err = -ENOSPC;
-	}
+	पूर्ण
 	mddev_unlock(mddev);
-	return err ? err : len;
-}
+	वापस err ? err : len;
+पूर्ण
 
-static struct md_sysfs_entry md_size =
+अटल काष्ठा md_sysfs_entry md_size =
 __ATTR(component_size, S_IRUGO|S_IWUSR, size_show, size_store);
 
 /* Metadata version.
  * This is one of
- *   'none' for arrays with no metadata (good luck...)
- *   'external' for arrays with externally managed metadata,
- * or N.M for internally known formats
+ *   'none' क्रम arrays with no metadata (good luck...)
+ *   'external' क्रम arrays with बाह्यally managed metadata,
+ * or N.M क्रम पूर्णांकernally known क्रमmats
  */
-static ssize_t
-metadata_show(struct mddev *mddev, char *page)
-{
-	if (mddev->persistent)
-		return sprintf(page, "%d.%d\n",
+अटल sमाप_प्रकार
+metadata_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अगर (mddev->persistent)
+		वापस प्र_लिखो(page, "%d.%d\n",
 			       mddev->major_version, mddev->minor_version);
-	else if (mddev->external)
-		return sprintf(page, "external:%s\n", mddev->metadata_type);
-	else
-		return sprintf(page, "none\n");
-}
+	अन्यथा अगर (mddev->बाह्यal)
+		वापस प्र_लिखो(page, "external:%s\n", mddev->metadata_type);
+	अन्यथा
+		वापस प्र_लिखो(page, "none\n");
+पूर्ण
 
-static ssize_t
-metadata_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	int major, minor;
-	char *e;
-	int err;
+अटल sमाप_प्रकार
+metadata_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	पूर्णांक major, minor;
+	अक्षर *e;
+	पूर्णांक err;
 	/* Changing the details of 'external' metadata is
 	 * always permitted.  Otherwise there must be
 	 * no devices attached to the array.
 	 */
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = -EBUSY;
-	if (mddev->external && strncmp(buf, "external:", 9) == 0)
+	अगर (mddev->बाह्यal && म_भेदन(buf, "external:", 9) == 0)
 		;
-	else if (!list_empty(&mddev->disks))
-		goto out_unlock;
+	अन्यथा अगर (!list_empty(&mddev->disks))
+		जाओ out_unlock;
 
 	err = 0;
-	if (cmd_match(buf, "none")) {
+	अगर (cmd_match(buf, "none")) अणु
 		mddev->persistent = 0;
-		mddev->external = 0;
+		mddev->बाह्यal = 0;
 		mddev->major_version = 0;
 		mddev->minor_version = 90;
-		goto out_unlock;
-	}
-	if (strncmp(buf, "external:", 9) == 0) {
-		size_t namelen = len-9;
-		if (namelen >= sizeof(mddev->metadata_type))
-			namelen = sizeof(mddev->metadata_type)-1;
-		strncpy(mddev->metadata_type, buf+9, namelen);
+		जाओ out_unlock;
+	पूर्ण
+	अगर (म_भेदन(buf, "external:", 9) == 0) अणु
+		माप_प्रकार namelen = len-9;
+		अगर (namelen >= माप(mddev->metadata_type))
+			namelen = माप(mddev->metadata_type)-1;
+		म_नकलन(mddev->metadata_type, buf+9, namelen);
 		mddev->metadata_type[namelen] = 0;
-		if (namelen && mddev->metadata_type[namelen-1] == '\n')
+		अगर (namelen && mddev->metadata_type[namelen-1] == '\n')
 			mddev->metadata_type[--namelen] = 0;
 		mddev->persistent = 0;
-		mddev->external = 1;
+		mddev->बाह्यal = 1;
 		mddev->major_version = 0;
 		mddev->minor_version = 90;
-		goto out_unlock;
-	}
-	major = simple_strtoul(buf, &e, 10);
+		जाओ out_unlock;
+	पूर्ण
+	major = simple_म_से_अदीर्घ(buf, &e, 10);
 	err = -EINVAL;
-	if (e==buf || *e != '.')
-		goto out_unlock;
+	अगर (e==buf || *e != '.')
+		जाओ out_unlock;
 	buf = e+1;
-	minor = simple_strtoul(buf, &e, 10);
-	if (e==buf || (*e && *e != '\n') )
-		goto out_unlock;
+	minor = simple_म_से_अदीर्घ(buf, &e, 10);
+	अगर (e==buf || (*e && *e != '\n') )
+		जाओ out_unlock;
 	err = -ENOENT;
-	if (major >= ARRAY_SIZE(super_types) || super_types[major].name == NULL)
-		goto out_unlock;
+	अगर (major >= ARRAY_SIZE(super_types) || super_types[major].name == शून्य)
+		जाओ out_unlock;
 	mddev->major_version = major;
 	mddev->minor_version = minor;
 	mddev->persistent = 1;
-	mddev->external = 0;
+	mddev->बाह्यal = 0;
 	err = 0;
 out_unlock:
 	mddev_unlock(mddev);
-	return err ?: len;
-}
+	वापस err ?: len;
+पूर्ण
 
-static struct md_sysfs_entry md_metadata =
+अटल काष्ठा md_sysfs_entry md_metadata =
 __ATTR_PREALLOC(metadata_version, S_IRUGO|S_IWUSR, metadata_show, metadata_store);
 
-static ssize_t
-action_show(struct mddev *mddev, char *page)
-{
-	char *type = "idle";
-	unsigned long recovery = mddev->recovery;
-	if (test_bit(MD_RECOVERY_FROZEN, &recovery))
+अटल sमाप_प्रकार
+action_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अक्षर *type = "idle";
+	अचिन्हित दीर्घ recovery = mddev->recovery;
+	अगर (test_bit(MD_RECOVERY_FROZEN, &recovery))
 		type = "frozen";
-	else if (test_bit(MD_RECOVERY_RUNNING, &recovery) ||
-	    (!mddev->ro && test_bit(MD_RECOVERY_NEEDED, &recovery))) {
-		if (test_bit(MD_RECOVERY_RESHAPE, &recovery))
+	अन्यथा अगर (test_bit(MD_RECOVERY_RUNNING, &recovery) ||
+	    (!mddev->ro && test_bit(MD_RECOVERY_NEEDED, &recovery))) अणु
+		अगर (test_bit(MD_RECOVERY_RESHAPE, &recovery))
 			type = "reshape";
-		else if (test_bit(MD_RECOVERY_SYNC, &recovery)) {
-			if (!test_bit(MD_RECOVERY_REQUESTED, &recovery))
+		अन्यथा अगर (test_bit(MD_RECOVERY_SYNC, &recovery)) अणु
+			अगर (!test_bit(MD_RECOVERY_REQUESTED, &recovery))
 				type = "resync";
-			else if (test_bit(MD_RECOVERY_CHECK, &recovery))
+			अन्यथा अगर (test_bit(MD_RECOVERY_CHECK, &recovery))
 				type = "check";
-			else
+			अन्यथा
 				type = "repair";
-		} else if (test_bit(MD_RECOVERY_RECOVER, &recovery))
+		पूर्ण अन्यथा अगर (test_bit(MD_RECOVERY_RECOVER, &recovery))
 			type = "recover";
-		else if (mddev->reshape_position != MaxSector)
+		अन्यथा अगर (mddev->reshape_position != MaxSector)
 			type = "reshape";
-	}
-	return sprintf(page, "%s\n", type);
-}
+	पूर्ण
+	वापस प्र_लिखो(page, "%s\n", type);
+पूर्ण
 
-static ssize_t
-action_store(struct mddev *mddev, const char *page, size_t len)
-{
-	if (!mddev->pers || !mddev->pers->sync_request)
-		return -EINVAL;
+अटल sमाप_प्रकार
+action_store(काष्ठा mddev *mddev, स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	अगर (!mddev->pers || !mddev->pers->sync_request)
+		वापस -EINVAL;
 
 
-	if (cmd_match(page, "idle") || cmd_match(page, "frozen")) {
-		if (cmd_match(page, "frozen"))
+	अगर (cmd_match(page, "idle") || cmd_match(page, "frozen")) अणु
+		अगर (cmd_match(page, "frozen"))
 			set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-		else
+		अन्यथा
 			clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-		if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) &&
-		    mddev_lock(mddev) == 0) {
-			if (work_pending(&mddev->del_work))
+		अगर (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) &&
+		    mddev_lock(mddev) == 0) अणु
+			अगर (work_pending(&mddev->del_work))
 				flush_workqueue(md_misc_wq);
-			if (mddev->sync_thread) {
+			अगर (mddev->sync_thपढ़ो) अणु
 				set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-				md_reap_sync_thread(mddev);
-			}
+				md_reap_sync_thपढ़ो(mddev);
+			पूर्ण
 			mddev_unlock(mddev);
-		}
-	} else if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
-		return -EBUSY;
-	else if (cmd_match(page, "resync"))
+		पूर्ण
+	पूर्ण अन्यथा अगर (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+		वापस -EBUSY;
+	अन्यथा अगर (cmd_match(page, "resync"))
 		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-	else if (cmd_match(page, "recover")) {
+	अन्यथा अगर (cmd_match(page, "recover")) अणु
 		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
 		set_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
-	} else if (cmd_match(page, "reshape")) {
-		int err;
-		if (mddev->pers->start_reshape == NULL)
-			return -EINVAL;
+	पूर्ण अन्यथा अगर (cmd_match(page, "reshape")) अणु
+		पूर्णांक err;
+		अगर (mddev->pers->start_reshape == शून्य)
+			वापस -EINVAL;
 		err = mddev_lock(mddev);
-		if (!err) {
-			if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+		अगर (!err) अणु
+			अगर (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
 				err =  -EBUSY;
-			else {
+			अन्यथा अणु
 				clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
 				err = mddev->pers->start_reshape(mddev);
-			}
+			पूर्ण
 			mddev_unlock(mddev);
-		}
-		if (err)
-			return err;
-		sysfs_notify_dirent_safe(mddev->sysfs_degraded);
-	} else {
-		if (cmd_match(page, "check"))
+		पूर्ण
+		अगर (err)
+			वापस err;
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_degraded);
+	पूर्ण अन्यथा अणु
+		अगर (cmd_match(page, "check"))
 			set_bit(MD_RECOVERY_CHECK, &mddev->recovery);
-		else if (!cmd_match(page, "repair"))
-			return -EINVAL;
+		अन्यथा अगर (!cmd_match(page, "repair"))
+			वापस -EINVAL;
 		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
 		set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
 		set_bit(MD_RECOVERY_SYNC, &mddev->recovery);
-	}
-	if (mddev->ro == 2) {
-		/* A write to sync_action is enough to justify
-		 * canceling read-auto mode
+	पूर्ण
+	अगर (mddev->ro == 2) अणु
+		/* A ग_लिखो to sync_action is enough to justअगरy
+		 * canceling पढ़ो-स्वतः mode
 		 */
 		mddev->ro = 0;
-		md_wakeup_thread(mddev->sync_thread);
-	}
+		md_wakeup_thपढ़ो(mddev->sync_thपढ़ो);
+	पूर्ण
 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-	md_wakeup_thread(mddev->thread);
-	sysfs_notify_dirent_safe(mddev->sysfs_action);
-	return len;
-}
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_action);
+	वापस len;
+पूर्ण
 
-static struct md_sysfs_entry md_scan_mode =
+अटल काष्ठा md_sysfs_entry md_scan_mode =
 __ATTR_PREALLOC(sync_action, S_IRUGO|S_IWUSR, action_show, action_store);
 
-static ssize_t
-last_sync_action_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%s\n", mddev->last_sync_action);
-}
+अटल sमाप_प्रकार
+last_sync_action_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%s\n", mddev->last_sync_action);
+पूर्ण
 
-static struct md_sysfs_entry md_last_scan_mode = __ATTR_RO(last_sync_action);
+अटल काष्ठा md_sysfs_entry md_last_scan_mode = __ATTR_RO(last_sync_action);
 
-static ssize_t
-mismatch_cnt_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%llu\n",
-		       (unsigned long long)
-		       atomic64_read(&mddev->resync_mismatches));
-}
+अटल sमाप_प्रकार
+mismatch_cnt_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%llu\n",
+		       (अचिन्हित दीर्घ दीर्घ)
+		       atomic64_पढ़ो(&mddev->resync_mismatches));
+पूर्ण
 
-static struct md_sysfs_entry md_mismatches = __ATTR_RO(mismatch_cnt);
+अटल काष्ठा md_sysfs_entry md_mismatches = __ATTR_RO(mismatch_cnt);
 
-static ssize_t
-sync_min_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%d (%s)\n", speed_min(mddev),
+अटल sमाप_प्रकार
+sync_min_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d (%s)\n", speed_min(mddev),
 		       mddev->sync_speed_min ? "local": "system");
-}
+पूर्ण
 
-static ssize_t
-sync_min_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned int min;
-	int rv;
+अटल sमाप_प्रकार
+sync_min_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक min;
+	पूर्णांक rv;
 
-	if (strncmp(buf, "system", 6)==0) {
+	अगर (म_भेदन(buf, "system", 6)==0) अणु
 		min = 0;
-	} else {
-		rv = kstrtouint(buf, 10, &min);
-		if (rv < 0)
-			return rv;
-		if (min == 0)
-			return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		rv = kstrtouपूर्णांक(buf, 10, &min);
+		अगर (rv < 0)
+			वापस rv;
+		अगर (min == 0)
+			वापस -EINVAL;
+	पूर्ण
 	mddev->sync_speed_min = min;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct md_sysfs_entry md_sync_min =
+अटल काष्ठा md_sysfs_entry md_sync_min =
 __ATTR(sync_speed_min, S_IRUGO|S_IWUSR, sync_min_show, sync_min_store);
 
-static ssize_t
-sync_max_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%d (%s)\n", speed_max(mddev),
+अटल sमाप_प्रकार
+sync_max_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d (%s)\n", speed_max(mddev),
 		       mddev->sync_speed_max ? "local": "system");
-}
+पूर्ण
 
-static ssize_t
-sync_max_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned int max;
-	int rv;
+अटल sमाप_प्रकार
+sync_max_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक max;
+	पूर्णांक rv;
 
-	if (strncmp(buf, "system", 6)==0) {
+	अगर (म_भेदन(buf, "system", 6)==0) अणु
 		max = 0;
-	} else {
-		rv = kstrtouint(buf, 10, &max);
-		if (rv < 0)
-			return rv;
-		if (max == 0)
-			return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		rv = kstrtouपूर्णांक(buf, 10, &max);
+		अगर (rv < 0)
+			वापस rv;
+		अगर (max == 0)
+			वापस -EINVAL;
+	पूर्ण
 	mddev->sync_speed_max = max;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct md_sysfs_entry md_sync_max =
+अटल काष्ठा md_sysfs_entry md_sync_max =
 __ATTR(sync_speed_max, S_IRUGO|S_IWUSR, sync_max_show, sync_max_store);
 
-static ssize_t
-degraded_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%d\n", mddev->degraded);
-}
-static struct md_sysfs_entry md_degraded = __ATTR_RO(degraded);
+अटल sमाप_प्रकार
+degraded_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d\n", mddev->degraded);
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_degraded = __ATTR_RO(degraded);
 
-static ssize_t
-sync_force_parallel_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%d\n", mddev->parallel_resync);
-}
+अटल sमाप_प्रकार
+sync_क्रमce_parallel_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d\n", mddev->parallel_resync);
+पूर्ण
 
-static ssize_t
-sync_force_parallel_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	long n;
+अटल sमाप_प्रकार
+sync_क्रमce_parallel_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	दीर्घ n;
 
-	if (kstrtol(buf, 10, &n))
-		return -EINVAL;
+	अगर (kम_से_दीर्घ(buf, 10, &n))
+		वापस -EINVAL;
 
-	if (n != 0 && n != 1)
-		return -EINVAL;
+	अगर (n != 0 && n != 1)
+		वापस -EINVAL;
 
 	mddev->parallel_resync = n;
 
-	if (mddev->sync_thread)
-		wake_up(&resync_wait);
+	अगर (mddev->sync_thपढ़ो)
+		wake_up(&resync_रुको);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-/* force parallel resync, even with shared block devices */
-static struct md_sysfs_entry md_sync_force_parallel =
-__ATTR(sync_force_parallel, S_IRUGO|S_IWUSR,
-       sync_force_parallel_show, sync_force_parallel_store);
+/* क्रमce parallel resync, even with shared block devices */
+अटल काष्ठा md_sysfs_entry md_sync_क्रमce_parallel =
+__ATTR(sync_क्रमce_parallel, S_IRUGO|S_IWUSR,
+       sync_क्रमce_parallel_show, sync_क्रमce_parallel_store);
 
-static ssize_t
-sync_speed_show(struct mddev *mddev, char *page)
-{
-	unsigned long resync, dt, db;
-	if (mddev->curr_resync == 0)
-		return sprintf(page, "none\n");
-	resync = mddev->curr_mark_cnt - atomic_read(&mddev->recovery_active);
-	dt = (jiffies - mddev->resync_mark) / HZ;
-	if (!dt) dt++;
+अटल sमाप_प्रकार
+sync_speed_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अचिन्हित दीर्घ resync, dt, db;
+	अगर (mddev->curr_resync == 0)
+		वापस प्र_लिखो(page, "none\n");
+	resync = mddev->curr_mark_cnt - atomic_पढ़ो(&mddev->recovery_active);
+	dt = (jअगरfies - mddev->resync_mark) / HZ;
+	अगर (!dt) dt++;
 	db = resync - mddev->resync_mark_cnt;
-	return sprintf(page, "%lu\n", db/dt/2); /* K/sec */
-}
+	वापस प्र_लिखो(page, "%lu\n", db/dt/2); /* K/sec */
+पूर्ण
 
-static struct md_sysfs_entry md_sync_speed = __ATTR_RO(sync_speed);
+अटल काष्ठा md_sysfs_entry md_sync_speed = __ATTR_RO(sync_speed);
 
-static ssize_t
-sync_completed_show(struct mddev *mddev, char *page)
-{
-	unsigned long long max_sectors, resync;
+अटल sमाप_प्रकार
+sync_completed_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अचिन्हित दीर्घ दीर्घ max_sectors, resync;
 
-	if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
-		return sprintf(page, "none\n");
+	अगर (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+		वापस प्र_लिखो(page, "none\n");
 
-	if (mddev->curr_resync == 1 ||
+	अगर (mddev->curr_resync == 1 ||
 	    mddev->curr_resync == 2)
-		return sprintf(page, "delayed\n");
+		वापस प्र_लिखो(page, "delayed\n");
 
-	if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery) ||
+	अगर (test_bit(MD_RECOVERY_SYNC, &mddev->recovery) ||
 	    test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery))
 		max_sectors = mddev->resync_max_sectors;
-	else
+	अन्यथा
 		max_sectors = mddev->dev_sectors;
 
 	resync = mddev->curr_resync_completed;
-	return sprintf(page, "%llu / %llu\n", resync, max_sectors);
-}
+	वापस प्र_लिखो(page, "%llu / %llu\n", resync, max_sectors);
+पूर्ण
 
-static struct md_sysfs_entry md_sync_completed =
-	__ATTR_PREALLOC(sync_completed, S_IRUGO, sync_completed_show, NULL);
+अटल काष्ठा md_sysfs_entry md_sync_completed =
+	__ATTR_PREALLOC(sync_completed, S_IRUGO, sync_completed_show, शून्य);
 
-static ssize_t
-min_sync_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%llu\n",
-		       (unsigned long long)mddev->resync_min);
-}
-static ssize_t
-min_sync_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned long long min;
-	int err;
+अटल sमाप_प्रकार
+min_sync_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%llu\n",
+		       (अचिन्हित दीर्घ दीर्घ)mddev->resync_min);
+पूर्ण
+अटल sमाप_प्रकार
+min_sync_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ दीर्घ min;
+	पूर्णांक err;
 
-	if (kstrtoull(buf, 10, &min))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घl(buf, 10, &min))
+		वापस -EINVAL;
 
 	spin_lock(&mddev->lock);
 	err = -EINVAL;
-	if (min > mddev->resync_max)
-		goto out_unlock;
+	अगर (min > mddev->resync_max)
+		जाओ out_unlock;
 
 	err = -EBUSY;
-	if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
-		goto out_unlock;
+	अगर (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+		जाओ out_unlock;
 
-	/* Round down to multiple of 4K for safety */
-	mddev->resync_min = round_down(min, 8);
+	/* Round करोwn to multiple of 4K क्रम safety */
+	mddev->resync_min = round_करोwn(min, 8);
 	err = 0;
 
 out_unlock:
 	spin_unlock(&mddev->lock);
-	return err ?: len;
-}
+	वापस err ?: len;
+पूर्ण
 
-static struct md_sysfs_entry md_min_sync =
+अटल काष्ठा md_sysfs_entry md_min_sync =
 __ATTR(sync_min, S_IRUGO|S_IWUSR, min_sync_show, min_sync_store);
 
-static ssize_t
-max_sync_show(struct mddev *mddev, char *page)
-{
-	if (mddev->resync_max == MaxSector)
-		return sprintf(page, "max\n");
-	else
-		return sprintf(page, "%llu\n",
-			       (unsigned long long)mddev->resync_max);
-}
-static ssize_t
-max_sync_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	int err;
+अटल sमाप_प्रकार
+max_sync_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अगर (mddev->resync_max == MaxSector)
+		वापस प्र_लिखो(page, "max\n");
+	अन्यथा
+		वापस प्र_लिखो(page, "%llu\n",
+			       (अचिन्हित दीर्घ दीर्घ)mddev->resync_max);
+पूर्ण
+अटल sमाप_प्रकार
+max_sync_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	पूर्णांक err;
 	spin_lock(&mddev->lock);
-	if (strncmp(buf, "max", 3) == 0)
+	अगर (म_भेदन(buf, "max", 3) == 0)
 		mddev->resync_max = MaxSector;
-	else {
-		unsigned long long max;
-		int chunk;
+	अन्यथा अणु
+		अचिन्हित दीर्घ दीर्घ max;
+		पूर्णांक chunk;
 
 		err = -EINVAL;
-		if (kstrtoull(buf, 10, &max))
-			goto out_unlock;
-		if (max < mddev->resync_min)
-			goto out_unlock;
+		अगर (kम_से_अदीर्घl(buf, 10, &max))
+			जाओ out_unlock;
+		अगर (max < mddev->resync_min)
+			जाओ out_unlock;
 
 		err = -EBUSY;
-		if (max < mddev->resync_max &&
+		अगर (max < mddev->resync_max &&
 		    mddev->ro == 0 &&
 		    test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
-			goto out_unlock;
+			जाओ out_unlock;
 
 		/* Must be a multiple of chunk_size */
 		chunk = mddev->chunk_sectors;
-		if (chunk) {
+		अगर (chunk) अणु
 			sector_t temp = max;
 
 			err = -EINVAL;
-			if (sector_div(temp, chunk))
-				goto out_unlock;
-		}
+			अगर (sector_भाग(temp, chunk))
+				जाओ out_unlock;
+		पूर्ण
 		mddev->resync_max = max;
-	}
-	wake_up(&mddev->recovery_wait);
+	पूर्ण
+	wake_up(&mddev->recovery_रुको);
 	err = 0;
 out_unlock:
 	spin_unlock(&mddev->lock);
-	return err ?: len;
-}
+	वापस err ?: len;
+पूर्ण
 
-static struct md_sysfs_entry md_max_sync =
+अटल काष्ठा md_sysfs_entry md_max_sync =
 __ATTR(sync_max, S_IRUGO|S_IWUSR, max_sync_show, max_sync_store);
 
-static ssize_t
-suspend_lo_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%llu\n", (unsigned long long)mddev->suspend_lo);
-}
+अटल sमाप_प्रकार
+suspend_lo_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%llu\n", (अचिन्हित दीर्घ दीर्घ)mddev->suspend_lo);
+पूर्ण
 
-static ssize_t
-suspend_lo_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned long long new;
-	int err;
+अटल sमाप_प्रकार
+suspend_lo_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ दीर्घ new;
+	पूर्णांक err;
 
-	err = kstrtoull(buf, 10, &new);
-	if (err < 0)
-		return err;
-	if (new != (sector_t)new)
-		return -EINVAL;
+	err = kम_से_अदीर्घl(buf, 10, &new);
+	अगर (err < 0)
+		वापस err;
+	अगर (new != (sector_t)new)
+		वापस -EINVAL;
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = -EINVAL;
-	if (mddev->pers == NULL ||
-	    mddev->pers->quiesce == NULL)
-		goto unlock;
+	अगर (mddev->pers == शून्य ||
+	    mddev->pers->quiesce == शून्य)
+		जाओ unlock;
 	mddev_suspend(mddev);
 	mddev->suspend_lo = new;
 	mddev_resume(mddev);
@@ -5189,35 +5190,35 @@ suspend_lo_store(struct mddev *mddev, const char *buf, size_t len)
 	err = 0;
 unlock:
 	mddev_unlock(mddev);
-	return err ?: len;
-}
-static struct md_sysfs_entry md_suspend_lo =
+	वापस err ?: len;
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_suspend_lo =
 __ATTR(suspend_lo, S_IRUGO|S_IWUSR, suspend_lo_show, suspend_lo_store);
 
-static ssize_t
-suspend_hi_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%llu\n", (unsigned long long)mddev->suspend_hi);
-}
+अटल sमाप_प्रकार
+suspend_hi_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%llu\n", (अचिन्हित दीर्घ दीर्घ)mddev->suspend_hi);
+पूर्ण
 
-static ssize_t
-suspend_hi_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	unsigned long long new;
-	int err;
+अटल sमाप_प्रकार
+suspend_hi_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ दीर्घ new;
+	पूर्णांक err;
 
-	err = kstrtoull(buf, 10, &new);
-	if (err < 0)
-		return err;
-	if (new != (sector_t)new)
-		return -EINVAL;
+	err = kम_से_अदीर्घl(buf, 10, &new);
+	अगर (err < 0)
+		वापस err;
+	अगर (new != (sector_t)new)
+		वापस -EINVAL;
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = -EINVAL;
-	if (mddev->pers == NULL)
-		goto unlock;
+	अगर (mddev->pers == शून्य)
+		जाओ unlock;
 
 	mddev_suspend(mddev);
 	mddev->suspend_hi = new;
@@ -5226,280 +5227,280 @@ suspend_hi_store(struct mddev *mddev, const char *buf, size_t len)
 	err = 0;
 unlock:
 	mddev_unlock(mddev);
-	return err ?: len;
-}
-static struct md_sysfs_entry md_suspend_hi =
+	वापस err ?: len;
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_suspend_hi =
 __ATTR(suspend_hi, S_IRUGO|S_IWUSR, suspend_hi_show, suspend_hi_store);
 
-static ssize_t
-reshape_position_show(struct mddev *mddev, char *page)
-{
-	if (mddev->reshape_position != MaxSector)
-		return sprintf(page, "%llu\n",
-			       (unsigned long long)mddev->reshape_position);
-	strcpy(page, "none\n");
-	return 5;
-}
+अटल sमाप_प्रकार
+reshape_position_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अगर (mddev->reshape_position != MaxSector)
+		वापस प्र_लिखो(page, "%llu\n",
+			       (अचिन्हित दीर्घ दीर्घ)mddev->reshape_position);
+	म_नकल(page, "none\n");
+	वापस 5;
+पूर्ण
 
-static ssize_t
-reshape_position_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	struct md_rdev *rdev;
-	unsigned long long new;
-	int err;
+अटल sमाप_प्रकार
+reshape_position_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा md_rdev *rdev;
+	अचिन्हित दीर्घ दीर्घ new;
+	पूर्णांक err;
 
-	err = kstrtoull(buf, 10, &new);
-	if (err < 0)
-		return err;
-	if (new != (sector_t)new)
-		return -EINVAL;
+	err = kम_से_अदीर्घl(buf, 10, &new);
+	अगर (err < 0)
+		वापस err;
+	अगर (new != (sector_t)new)
+		वापस -EINVAL;
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = -EBUSY;
-	if (mddev->pers)
-		goto unlock;
+	अगर (mddev->pers)
+		जाओ unlock;
 	mddev->reshape_position = new;
 	mddev->delta_disks = 0;
 	mddev->reshape_backwards = 0;
 	mddev->new_level = mddev->level;
 	mddev->new_layout = mddev->layout;
 	mddev->new_chunk_sectors = mddev->chunk_sectors;
-	rdev_for_each(rdev, mddev)
+	rdev_क्रम_each(rdev, mddev)
 		rdev->new_data_offset = rdev->data_offset;
 	err = 0;
 unlock:
 	mddev_unlock(mddev);
-	return err ?: len;
-}
+	वापस err ?: len;
+पूर्ण
 
-static struct md_sysfs_entry md_reshape_position =
+अटल काष्ठा md_sysfs_entry md_reshape_position =
 __ATTR(reshape_position, S_IRUGO|S_IWUSR, reshape_position_show,
        reshape_position_store);
 
-static ssize_t
-reshape_direction_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%s\n",
+अटल sमाप_प्रकार
+reshape_direction_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%s\n",
 		       mddev->reshape_backwards ? "backwards" : "forwards");
-}
+पूर्ण
 
-static ssize_t
-reshape_direction_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	int backwards = 0;
-	int err;
+अटल sमाप_प्रकार
+reshape_direction_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	पूर्णांक backwards = 0;
+	पूर्णांक err;
 
-	if (cmd_match(buf, "forwards"))
+	अगर (cmd_match(buf, "forwards"))
 		backwards = 0;
-	else if (cmd_match(buf, "backwards"))
+	अन्यथा अगर (cmd_match(buf, "backwards"))
 		backwards = 1;
-	else
-		return -EINVAL;
-	if (mddev->reshape_backwards == backwards)
-		return len;
+	अन्यथा
+		वापस -EINVAL;
+	अगर (mddev->reshape_backwards == backwards)
+		वापस len;
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
-	/* check if we are allowed to change */
-	if (mddev->delta_disks)
+	अगर (err)
+		वापस err;
+	/* check अगर we are allowed to change */
+	अगर (mddev->delta_disks)
 		err = -EBUSY;
-	else if (mddev->persistent &&
+	अन्यथा अगर (mddev->persistent &&
 	    mddev->major_version == 0)
 		err =  -EINVAL;
-	else
+	अन्यथा
 		mddev->reshape_backwards = backwards;
 	mddev_unlock(mddev);
-	return err ?: len;
-}
+	वापस err ?: len;
+पूर्ण
 
-static struct md_sysfs_entry md_reshape_direction =
+अटल काष्ठा md_sysfs_entry md_reshape_direction =
 __ATTR(reshape_direction, S_IRUGO|S_IWUSR, reshape_direction_show,
        reshape_direction_store);
 
-static ssize_t
-array_size_show(struct mddev *mddev, char *page)
-{
-	if (mddev->external_size)
-		return sprintf(page, "%llu\n",
-			       (unsigned long long)mddev->array_sectors/2);
-	else
-		return sprintf(page, "default\n");
-}
+अटल sमाप_प्रकार
+array_size_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अगर (mddev->बाह्यal_size)
+		वापस प्र_लिखो(page, "%llu\n",
+			       (अचिन्हित दीर्घ दीर्घ)mddev->array_sectors/2);
+	अन्यथा
+		वापस प्र_लिखो(page, "default\n");
+पूर्ण
 
-static ssize_t
-array_size_store(struct mddev *mddev, const char *buf, size_t len)
-{
+अटल sमाप_प्रकार
+array_size_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
 	sector_t sectors;
-	int err;
+	पूर्णांक err;
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* cluster raid doesn't support change array_sectors */
-	if (mddev_is_clustered(mddev)) {
+	/* cluster raid करोesn't support change array_sectors */
+	अगर (mddev_is_clustered(mddev)) अणु
 		mddev_unlock(mddev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (strncmp(buf, "default", 7) == 0) {
-		if (mddev->pers)
+	अगर (म_भेदन(buf, "default", 7) == 0) अणु
+		अगर (mddev->pers)
 			sectors = mddev->pers->size(mddev, 0, 0);
-		else
+		अन्यथा
 			sectors = mddev->array_sectors;
 
-		mddev->external_size = 0;
-	} else {
-		if (strict_blocks_to_sectors(buf, &sectors) < 0)
+		mddev->बाह्यal_size = 0;
+	पूर्ण अन्यथा अणु
+		अगर (strict_blocks_to_sectors(buf, &sectors) < 0)
 			err = -EINVAL;
-		else if (mddev->pers && mddev->pers->size(mddev, 0, 0) < sectors)
+		अन्यथा अगर (mddev->pers && mddev->pers->size(mddev, 0, 0) < sectors)
 			err = -E2BIG;
-		else
-			mddev->external_size = 1;
-	}
+		अन्यथा
+			mddev->बाह्यal_size = 1;
+	पूर्ण
 
-	if (!err) {
+	अगर (!err) अणु
 		mddev->array_sectors = sectors;
-		if (mddev->pers)
-			set_capacity_and_notify(mddev->gendisk,
+		अगर (mddev->pers)
+			set_capacity_and_notअगरy(mddev->gendisk,
 						mddev->array_sectors);
-	}
+	पूर्ण
 	mddev_unlock(mddev);
-	return err ?: len;
-}
+	वापस err ?: len;
+पूर्ण
 
-static struct md_sysfs_entry md_array_size =
+अटल काष्ठा md_sysfs_entry md_array_size =
 __ATTR(array_size, S_IRUGO|S_IWUSR, array_size_show,
        array_size_store);
 
-static ssize_t
-consistency_policy_show(struct mddev *mddev, char *page)
-{
-	int ret;
+अटल sमाप_प्रकार
+consistency_policy_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	पूर्णांक ret;
 
-	if (test_bit(MD_HAS_JOURNAL, &mddev->flags)) {
-		ret = sprintf(page, "journal\n");
-	} else if (test_bit(MD_HAS_PPL, &mddev->flags)) {
-		ret = sprintf(page, "ppl\n");
-	} else if (mddev->bitmap) {
-		ret = sprintf(page, "bitmap\n");
-	} else if (mddev->pers) {
-		if (mddev->pers->sync_request)
-			ret = sprintf(page, "resync\n");
-		else
-			ret = sprintf(page, "none\n");
-	} else {
-		ret = sprintf(page, "unknown\n");
-	}
+	अगर (test_bit(MD_HAS_JOURNAL, &mddev->flags)) अणु
+		ret = प्र_लिखो(page, "journal\n");
+	पूर्ण अन्यथा अगर (test_bit(MD_HAS_PPL, &mddev->flags)) अणु
+		ret = प्र_लिखो(page, "ppl\n");
+	पूर्ण अन्यथा अगर (mddev->biपंचांगap) अणु
+		ret = प्र_लिखो(page, "bitmap\n");
+	पूर्ण अन्यथा अगर (mddev->pers) अणु
+		अगर (mddev->pers->sync_request)
+			ret = प्र_लिखो(page, "resync\n");
+		अन्यथा
+			ret = प्र_लिखो(page, "none\n");
+	पूर्ण अन्यथा अणु
+		ret = प्र_लिखो(page, "unknown\n");
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-consistency_policy_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	int err = 0;
+अटल sमाप_प्रकार
+consistency_policy_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	पूर्णांक err = 0;
 
-	if (mddev->pers) {
-		if (mddev->pers->change_consistency_policy)
+	अगर (mddev->pers) अणु
+		अगर (mddev->pers->change_consistency_policy)
 			err = mddev->pers->change_consistency_policy(mddev, buf);
-		else
+		अन्यथा
 			err = -EBUSY;
-	} else if (mddev->external && strncmp(buf, "ppl", 3) == 0) {
+	पूर्ण अन्यथा अगर (mddev->बाह्यal && म_भेदन(buf, "ppl", 3) == 0) अणु
 		set_bit(MD_HAS_PPL, &mddev->flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	return err ? err : len;
-}
+	वापस err ? err : len;
+पूर्ण
 
-static struct md_sysfs_entry md_consistency_policy =
+अटल काष्ठा md_sysfs_entry md_consistency_policy =
 __ATTR(consistency_policy, S_IRUGO | S_IWUSR, consistency_policy_show,
        consistency_policy_store);
 
-static ssize_t fail_last_dev_show(struct mddev *mddev, char *page)
-{
-	return sprintf(page, "%d\n", mddev->fail_last_dev);
-}
+अटल sमाप_प्रकार fail_last_dev_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d\n", mddev->fail_last_dev);
+पूर्ण
 
 /*
- * Setting fail_last_dev to true to allow last device to be forcibly removed
+ * Setting fail_last_dev to true to allow last device to be क्रमcibly हटाओd
  * from RAID1/RAID10.
  */
-static ssize_t
-fail_last_dev_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	int ret;
+अटल sमाप_प्रकार
+fail_last_dev_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	पूर्णांक ret;
 	bool value;
 
 	ret = kstrtobool(buf, &value);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (value != mddev->fail_last_dev)
+	अगर (value != mddev->fail_last_dev)
 		mddev->fail_last_dev = value;
 
-	return len;
-}
-static struct md_sysfs_entry md_fail_last_dev =
+	वापस len;
+पूर्ण
+अटल काष्ठा md_sysfs_entry md_fail_last_dev =
 __ATTR(fail_last_dev, S_IRUGO | S_IWUSR, fail_last_dev_show,
        fail_last_dev_store);
 
-static ssize_t serialize_policy_show(struct mddev *mddev, char *page)
-{
-	if (mddev->pers == NULL || (mddev->pers->level != 1))
-		return sprintf(page, "n/a\n");
-	else
-		return sprintf(page, "%d\n", mddev->serialize_policy);
-}
+अटल sमाप_प्रकार serialize_policy_show(काष्ठा mddev *mddev, अक्षर *page)
+अणु
+	अगर (mddev->pers == शून्य || (mddev->pers->level != 1))
+		वापस प्र_लिखो(page, "n/a\n");
+	अन्यथा
+		वापस प्र_लिखो(page, "%d\n", mddev->serialize_policy);
+पूर्ण
 
 /*
- * Setting serialize_policy to true to enforce write IO is not reordered
- * for raid1.
+ * Setting serialize_policy to true to enक्रमce ग_लिखो IO is not reordered
+ * क्रम raid1.
  */
-static ssize_t
-serialize_policy_store(struct mddev *mddev, const char *buf, size_t len)
-{
-	int err;
+अटल sमाप_प्रकार
+serialize_policy_store(काष्ठा mddev *mddev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	पूर्णांक err;
 	bool value;
 
 	err = kstrtobool(buf, &value);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (value == mddev->serialize_policy)
-		return len;
+	अगर (value == mddev->serialize_policy)
+		वापस len;
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
-	if (mddev->pers == NULL || (mddev->pers->level != 1)) {
+	अगर (err)
+		वापस err;
+	अगर (mddev->pers == शून्य || (mddev->pers->level != 1)) अणु
 		pr_err("md: serialize_policy is only effective for raid1\n");
 		err = -EINVAL;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	mddev_suspend(mddev);
-	if (value)
-		mddev_create_serial_pool(mddev, NULL, true);
-	else
-		mddev_destroy_serial_pool(mddev, NULL, true);
+	अगर (value)
+		mddev_create_serial_pool(mddev, शून्य, true);
+	अन्यथा
+		mddev_destroy_serial_pool(mddev, शून्य, true);
 	mddev->serialize_policy = value;
 	mddev_resume(mddev);
 unlock:
 	mddev_unlock(mddev);
-	return err ?: len;
-}
+	वापस err ?: len;
+पूर्ण
 
-static struct md_sysfs_entry md_serialize_policy =
+अटल काष्ठा md_sysfs_entry md_serialize_policy =
 __ATTR(serialize_policy, S_IRUGO | S_IWUSR, serialize_policy_show,
        serialize_policy_store);
 
 
-static struct attribute *md_default_attrs[] = {
+अटल काष्ठा attribute *md_शेष_attrs[] = अणु
 	&md_level.attr,
 	&md_layout.attr,
 	&md_raid_disks.attr,
@@ -5514,454 +5515,454 @@ static struct attribute *md_default_attrs[] = {
 	&md_reshape_position.attr,
 	&md_reshape_direction.attr,
 	&md_array_size.attr,
-	&max_corr_read_errors.attr,
+	&max_corr_पढ़ो_errors.attr,
 	&md_consistency_policy.attr,
 	&md_fail_last_dev.attr,
 	&md_serialize_policy.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *md_redundancy_attrs[] = {
+अटल काष्ठा attribute *md_redundancy_attrs[] = अणु
 	&md_scan_mode.attr,
 	&md_last_scan_mode.attr,
 	&md_mismatches.attr,
 	&md_sync_min.attr,
 	&md_sync_max.attr,
 	&md_sync_speed.attr,
-	&md_sync_force_parallel.attr,
+	&md_sync_क्रमce_parallel.attr,
 	&md_sync_completed.attr,
 	&md_min_sync.attr,
 	&md_max_sync.attr,
 	&md_suspend_lo.attr,
 	&md_suspend_hi.attr,
-	&md_bitmap.attr,
+	&md_biपंचांगap.attr,
 	&md_degraded.attr,
-	NULL,
-};
-static struct attribute_group md_redundancy_group = {
-	.name = NULL,
+	शून्य,
+पूर्ण;
+अटल काष्ठा attribute_group md_redundancy_group = अणु
+	.name = शून्य,
 	.attrs = md_redundancy_attrs,
-};
+पूर्ण;
 
-static ssize_t
-md_attr_show(struct kobject *kobj, struct attribute *attr, char *page)
-{
-	struct md_sysfs_entry *entry = container_of(attr, struct md_sysfs_entry, attr);
-	struct mddev *mddev = container_of(kobj, struct mddev, kobj);
-	ssize_t rv;
+अटल sमाप_प्रकार
+md_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr, अक्षर *page)
+अणु
+	काष्ठा md_sysfs_entry *entry = container_of(attr, काष्ठा md_sysfs_entry, attr);
+	काष्ठा mddev *mddev = container_of(kobj, काष्ठा mddev, kobj);
+	sमाप_प्रकार rv;
 
-	if (!entry->show)
-		return -EIO;
+	अगर (!entry->show)
+		वापस -EIO;
 	spin_lock(&all_mddevs_lock);
-	if (list_empty(&mddev->all_mddevs)) {
+	अगर (list_empty(&mddev->all_mddevs)) अणु
 		spin_unlock(&all_mddevs_lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	mddev_get(mddev);
 	spin_unlock(&all_mddevs_lock);
 
 	rv = entry->show(mddev, page);
 	mddev_put(mddev);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static ssize_t
-md_attr_store(struct kobject *kobj, struct attribute *attr,
-	      const char *page, size_t length)
-{
-	struct md_sysfs_entry *entry = container_of(attr, struct md_sysfs_entry, attr);
-	struct mddev *mddev = container_of(kobj, struct mddev, kobj);
-	ssize_t rv;
+अटल sमाप_प्रकार
+md_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+	      स्थिर अक्षर *page, माप_प्रकार length)
+अणु
+	काष्ठा md_sysfs_entry *entry = container_of(attr, काष्ठा md_sysfs_entry, attr);
+	काष्ठा mddev *mddev = container_of(kobj, काष्ठा mddev, kobj);
+	sमाप_प्रकार rv;
 
-	if (!entry->store)
-		return -EIO;
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
+	अगर (!entry->store)
+		वापस -EIO;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
 	spin_lock(&all_mddevs_lock);
-	if (list_empty(&mddev->all_mddevs)) {
+	अगर (list_empty(&mddev->all_mddevs)) अणु
 		spin_unlock(&all_mddevs_lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	mddev_get(mddev);
 	spin_unlock(&all_mddevs_lock);
 	rv = entry->store(mddev, page, length);
 	mddev_put(mddev);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static void md_free(struct kobject *ko)
-{
-	struct mddev *mddev = container_of(ko, struct mddev, kobj);
+अटल व्योम md_मुक्त(काष्ठा kobject *ko)
+अणु
+	काष्ठा mddev *mddev = container_of(ko, काष्ठा mddev, kobj);
 
-	if (mddev->sysfs_state)
+	अगर (mddev->sysfs_state)
 		sysfs_put(mddev->sysfs_state);
-	if (mddev->sysfs_level)
+	अगर (mddev->sysfs_level)
 		sysfs_put(mddev->sysfs_level);
 
-	if (mddev->gendisk)
+	अगर (mddev->gendisk)
 		del_gendisk(mddev->gendisk);
-	if (mddev->queue)
+	अगर (mddev->queue)
 		blk_cleanup_queue(mddev->queue);
-	if (mddev->gendisk)
+	अगर (mddev->gendisk)
 		put_disk(mddev->gendisk);
-	percpu_ref_exit(&mddev->writes_pending);
+	percpu_ref_निकास(&mddev->ग_लिखोs_pending);
 
-	bioset_exit(&mddev->bio_set);
-	bioset_exit(&mddev->sync_set);
-	mempool_exit(&mddev->md_io_pool);
-	kfree(mddev);
-}
+	bioset_निकास(&mddev->bio_set);
+	bioset_निकास(&mddev->sync_set);
+	mempool_निकास(&mddev->md_io_pool);
+	kमुक्त(mddev);
+पूर्ण
 
-static const struct sysfs_ops md_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops md_sysfs_ops = अणु
 	.show	= md_attr_show,
 	.store	= md_attr_store,
-};
-static struct kobj_type md_ktype = {
-	.release	= md_free,
+पूर्ण;
+अटल काष्ठा kobj_type md_ktype = अणु
+	.release	= md_मुक्त,
 	.sysfs_ops	= &md_sysfs_ops,
-	.default_attrs	= md_default_attrs,
-};
+	.शेष_attrs	= md_शेष_attrs,
+पूर्ण;
 
-int mdp_major = 0;
+पूर्णांक mdp_major = 0;
 
-static void mddev_delayed_delete(struct work_struct *ws)
-{
-	struct mddev *mddev = container_of(ws, struct mddev, del_work);
+अटल व्योम mddev_delayed_delete(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा mddev *mddev = container_of(ws, काष्ठा mddev, del_work);
 
-	sysfs_remove_group(&mddev->kobj, &md_bitmap_group);
+	sysfs_हटाओ_group(&mddev->kobj, &md_biपंचांगap_group);
 	kobject_del(&mddev->kobj);
 	kobject_put(&mddev->kobj);
-}
+पूर्ण
 
-static void no_op(struct percpu_ref *r) {}
+अटल व्योम no_op(काष्ठा percpu_ref *r) अणुपूर्ण
 
-int mddev_init_writes_pending(struct mddev *mddev)
-{
-	if (mddev->writes_pending.percpu_count_ptr)
-		return 0;
-	if (percpu_ref_init(&mddev->writes_pending, no_op,
+पूर्णांक mddev_init_ग_लिखोs_pending(काष्ठा mddev *mddev)
+अणु
+	अगर (mddev->ग_लिखोs_pending.percpu_count_ptr)
+		वापस 0;
+	अगर (percpu_ref_init(&mddev->ग_लिखोs_pending, no_op,
 			    PERCPU_REF_ALLOW_REINIT, GFP_KERNEL) < 0)
-		return -ENOMEM;
+		वापस -ENOMEM;
 	/* We want to start with the refcount at zero */
-	percpu_ref_put(&mddev->writes_pending);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mddev_init_writes_pending);
+	percpu_ref_put(&mddev->ग_लिखोs_pending);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mddev_init_ग_लिखोs_pending);
 
-static int md_alloc(dev_t dev, char *name)
-{
+अटल पूर्णांक md_alloc(dev_t dev, अक्षर *name)
+अणु
 	/*
 	 * If dev is zero, name is the name of a device to allocate with
 	 * an arbitrary minor number.  It will be "md_???"
 	 * If dev is non-zero it must be a device number with a MAJOR of
-	 * MD_MAJOR or mdp_major.  In this case, if "name" is NULL, then
-	 * the device is being created by opening a node in /dev.
-	 * If "name" is not NULL, the device is being created by
+	 * MD_MAJOR or mdp_major.  In this हाल, अगर "name" is शून्य, then
+	 * the device is being created by खोलोing a node in /dev.
+	 * If "name" is not शून्य, the device is being created by
 	 * writing to /sys/module/md_mod/parameters/new_array.
 	 */
-	static DEFINE_MUTEX(disks_mutex);
-	struct mddev *mddev;
-	struct gendisk *disk;
-	int partitioned;
-	int shift;
-	int unit;
-	int error ;
+	अटल DEFINE_MUTEX(disks_mutex);
+	काष्ठा mddev *mddev;
+	काष्ठा gendisk *disk;
+	पूर्णांक partitioned;
+	पूर्णांक shअगरt;
+	पूर्णांक unit;
+	पूर्णांक error ;
 
 	/*
-	 * Wait for any previous instance of this device to be completely
-	 * removed (mddev_delayed_delete).
+	 * Wait क्रम any previous instance of this device to be completely
+	 * हटाओd (mddev_delayed_delete).
 	 */
 	flush_workqueue(md_misc_wq);
 
 	mutex_lock(&disks_mutex);
 	mddev = mddev_alloc(dev);
-	if (IS_ERR(mddev)) {
+	अगर (IS_ERR(mddev)) अणु
 		mutex_unlock(&disks_mutex);
-		return PTR_ERR(mddev);
-	}
+		वापस PTR_ERR(mddev);
+	पूर्ण
 
 	partitioned = (MAJOR(mddev->unit) != MD_MAJOR);
-	shift = partitioned ? MdpMinorShift : 0;
-	unit = MINOR(mddev->unit) >> shift;
+	shअगरt = partitioned ? MdpMinorShअगरt : 0;
+	unit = MINOR(mddev->unit) >> shअगरt;
 
-	if (name && !dev) {
+	अगर (name && !dev) अणु
 		/* Need to ensure that 'name' is not a duplicate.
 		 */
-		struct mddev *mddev2;
+		काष्ठा mddev *mddev2;
 		spin_lock(&all_mddevs_lock);
 
-		list_for_each_entry(mddev2, &all_mddevs, all_mddevs)
-			if (mddev2->gendisk &&
-			    strcmp(mddev2->gendisk->disk_name, name) == 0) {
+		list_क्रम_each_entry(mddev2, &all_mddevs, all_mddevs)
+			अगर (mddev2->gendisk &&
+			    म_भेद(mddev2->gendisk->disk_name, name) == 0) अणु
 				spin_unlock(&all_mddevs_lock);
 				error = -EEXIST;
-				goto abort;
-			}
+				जाओ पात;
+			पूर्ण
 		spin_unlock(&all_mddevs_lock);
-	}
-	if (name && dev)
+	पूर्ण
+	अगर (name && dev)
 		/*
 		 * Creating /dev/mdNNN via "newarray", so adjust hold_active.
 		 */
 		mddev->hold_active = UNTIL_STOP;
 
-	error = mempool_init_kmalloc_pool(&mddev->md_io_pool, BIO_POOL_SIZE,
-					  sizeof(struct md_io));
-	if (error)
-		goto abort;
+	error = mempool_init_kदो_स्मृति_pool(&mddev->md_io_pool, BIO_POOL_SIZE,
+					  माप(काष्ठा md_io));
+	अगर (error)
+		जाओ पात;
 
 	error = -ENOMEM;
 	mddev->queue = blk_alloc_queue(NUMA_NO_NODE);
-	if (!mddev->queue)
-		goto abort;
+	अगर (!mddev->queue)
+		जाओ पात;
 
 	blk_set_stacking_limits(&mddev->queue->limits);
 
-	disk = alloc_disk(1 << shift);
-	if (!disk) {
+	disk = alloc_disk(1 << shअगरt);
+	अगर (!disk) अणु
 		blk_cleanup_queue(mddev->queue);
-		mddev->queue = NULL;
-		goto abort;
-	}
+		mddev->queue = शून्य;
+		जाओ पात;
+	पूर्ण
 	disk->major = MAJOR(mddev->unit);
-	disk->first_minor = unit << shift;
-	if (name)
-		strcpy(disk->disk_name, name);
-	else if (partitioned)
-		sprintf(disk->disk_name, "md_d%d", unit);
-	else
-		sprintf(disk->disk_name, "md%d", unit);
+	disk->first_minor = unit << shअगरt;
+	अगर (name)
+		म_नकल(disk->disk_name, name);
+	अन्यथा अगर (partitioned)
+		प्र_लिखो(disk->disk_name, "md_d%d", unit);
+	अन्यथा
+		प्र_लिखो(disk->disk_name, "md%d", unit);
 	disk->fops = &md_fops;
-	disk->private_data = mddev;
+	disk->निजी_data = mddev;
 	disk->queue = mddev->queue;
-	blk_queue_write_cache(mddev->queue, true, true);
+	blk_queue_ग_लिखो_cache(mddev->queue, true, true);
 	/* Allow extended partitions.  This makes the
 	 * 'mdp' device redundant, but we can't really
-	 * remove it now.
+	 * हटाओ it now.
 	 */
 	disk->flags |= GENHD_FL_EXT_DEVT;
 	disk->events |= DISK_EVENT_MEDIA_CHANGE;
 	mddev->gendisk = disk;
-	/* As soon as we call add_disk(), another thread could get
-	 * through to md_open, so make sure it doesn't get too far
+	/* As soon as we call add_disk(), another thपढ़ो could get
+	 * through to md_खोलो, so make sure it करोesn't get too far
 	 */
-	mutex_lock(&mddev->open_mutex);
+	mutex_lock(&mddev->खोलो_mutex);
 	add_disk(disk);
 
 	error = kobject_add(&mddev->kobj, &disk_to_dev(disk)->kobj, "%s", "md");
-	if (error) {
+	अगर (error) अणु
 		/* This isn't possible, but as kobject_init_and_add is marked
-		 * __must_check, we must do something with the result
+		 * __must_check, we must करो something with the result
 		 */
 		pr_debug("md: cannot register %s/md - name in use\n",
 			 disk->disk_name);
 		error = 0;
-	}
-	if (mddev->kobj.sd &&
-	    sysfs_create_group(&mddev->kobj, &md_bitmap_group))
+	पूर्ण
+	अगर (mddev->kobj.sd &&
+	    sysfs_create_group(&mddev->kobj, &md_biपंचांगap_group))
 		pr_debug("pointless warning\n");
-	mutex_unlock(&mddev->open_mutex);
- abort:
+	mutex_unlock(&mddev->खोलो_mutex);
+ पात:
 	mutex_unlock(&disks_mutex);
-	if (!error && mddev->kobj.sd) {
+	अगर (!error && mddev->kobj.sd) अणु
 		kobject_uevent(&mddev->kobj, KOBJ_ADD);
 		mddev->sysfs_state = sysfs_get_dirent_safe(mddev->kobj.sd, "array_state");
 		mddev->sysfs_level = sysfs_get_dirent_safe(mddev->kobj.sd, "level");
-	}
+	पूर्ण
 	mddev_put(mddev);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void md_probe(dev_t dev)
-{
-	if (MAJOR(dev) == MD_MAJOR && MINOR(dev) >= 512)
-		return;
-	if (create_on_open)
-		md_alloc(dev, NULL);
-}
+अटल व्योम md_probe(dev_t dev)
+अणु
+	अगर (MAJOR(dev) == MD_MAJOR && MINOR(dev) >= 512)
+		वापस;
+	अगर (create_on_खोलो)
+		md_alloc(dev, शून्य);
+पूर्ण
 
-static int add_named_array(const char *val, const struct kernel_param *kp)
-{
+अटल पूर्णांक add_named_array(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
 	/*
 	 * val must be "md_*" or "mdNNN".
-	 * For "md_*" we allocate an array with a large free minor number, and
-	 * set the name to val.  val must not already be an active name.
+	 * For "md_*" we allocate an array with a large मुक्त minor number, and
+	 * set the name to val.  val must not alपढ़ोy be an active name.
 	 * For "mdNNN" we allocate an array with the minor number NNN
-	 * which must not already be in use.
+	 * which must not alपढ़ोy be in use.
 	 */
-	int len = strlen(val);
-	char buf[DISK_NAME_LEN];
-	unsigned long devnum;
+	पूर्णांक len = म_माप(val);
+	अक्षर buf[DISK_NAME_LEN];
+	अचिन्हित दीर्घ devnum;
 
-	while (len && val[len-1] == '\n')
+	जबतक (len && val[len-1] == '\n')
 		len--;
-	if (len >= DISK_NAME_LEN)
-		return -E2BIG;
+	अगर (len >= DISK_NAME_LEN)
+		वापस -E2BIG;
 	strlcpy(buf, val, len+1);
-	if (strncmp(buf, "md_", 3) == 0)
-		return md_alloc(0, buf);
-	if (strncmp(buf, "md", 2) == 0 &&
-	    isdigit(buf[2]) &&
-	    kstrtoul(buf+2, 10, &devnum) == 0 &&
+	अगर (म_भेदन(buf, "md_", 3) == 0)
+		वापस md_alloc(0, buf);
+	अगर (म_भेदन(buf, "md", 2) == 0 &&
+	    है_अंक(buf[2]) &&
+	    kम_से_अदीर्घ(buf+2, 10, &devnum) == 0 &&
 	    devnum <= MINORMASK)
-		return md_alloc(MKDEV(MD_MAJOR, devnum), NULL);
+		वापस md_alloc(MKDEV(MD_MAJOR, devnum), शून्य);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void md_safemode_timeout(struct timer_list *t)
-{
-	struct mddev *mddev = from_timer(mddev, t, safemode_timer);
+अटल व्योम md_safemode_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mddev *mddev = from_समयr(mddev, t, safemode_समयr);
 
 	mddev->safemode = 1;
-	if (mddev->external)
-		sysfs_notify_dirent_safe(mddev->sysfs_state);
+	अगर (mddev->बाह्यal)
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
 
-	md_wakeup_thread(mddev->thread);
-}
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
+पूर्ण
 
-static int start_dirty_degraded;
+अटल पूर्णांक start_dirty_degraded;
 
-int md_run(struct mddev *mddev)
-{
-	int err;
-	struct md_rdev *rdev;
-	struct md_personality *pers;
+पूर्णांक md_run(काष्ठा mddev *mddev)
+अणु
+	पूर्णांक err;
+	काष्ठा md_rdev *rdev;
+	काष्ठा md_personality *pers;
 
-	if (list_empty(&mddev->disks))
+	अगर (list_empty(&mddev->disks))
 		/* cannot run an array with no devices.. */
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (mddev->pers)
-		return -EBUSY;
+	अगर (mddev->pers)
+		वापस -EBUSY;
 	/* Cannot run until previous stop completes properly */
-	if (mddev->sysfs_active)
-		return -EBUSY;
+	अगर (mddev->sysfs_active)
+		वापस -EBUSY;
 
 	/*
 	 * Analyze all RAID superblock(s)
 	 */
-	if (!mddev->raid_disks) {
-		if (!mddev->persistent)
-			return -EINVAL;
+	अगर (!mddev->raid_disks) अणु
+		अगर (!mddev->persistent)
+			वापस -EINVAL;
 		err = analyze_sbs(mddev);
-		if (err)
-			return -EINVAL;
-	}
+		अगर (err)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (mddev->level != LEVEL_NONE)
+	अगर (mddev->level != LEVEL_NONE)
 		request_module("md-level-%d", mddev->level);
-	else if (mddev->clevel[0])
+	अन्यथा अगर (mddev->clevel[0])
 		request_module("md-%s", mddev->clevel);
 
 	/*
 	 * Drop all container device buffers, from now on
-	 * the only valid external interface is through the md
+	 * the only valid बाह्यal पूर्णांकerface is through the md
 	 * device.
 	 */
 	mddev->has_superblocks = false;
-	rdev_for_each(rdev, mddev) {
-		if (test_bit(Faulty, &rdev->flags))
-			continue;
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (test_bit(Faulty, &rdev->flags))
+			जारी;
 		sync_blockdev(rdev->bdev);
 		invalidate_bdev(rdev->bdev);
-		if (mddev->ro != 1 && rdev_read_only(rdev)) {
+		अगर (mddev->ro != 1 && rdev_पढ़ो_only(rdev)) अणु
 			mddev->ro = 1;
-			if (mddev->gendisk)
+			अगर (mddev->gendisk)
 				set_disk_ro(mddev->gendisk, 1);
-		}
+		पूर्ण
 
-		if (rdev->sb_page)
+		अगर (rdev->sb_page)
 			mddev->has_superblocks = true;
 
-		/* perform some consistency tests on the device.
-		 * We don't want the data to overlap the metadata,
-		 * Internal Bitmap issues have been handled elsewhere.
+		/* perक्रमm some consistency tests on the device.
+		 * We करोn't want the data to overlap the metadata,
+		 * Internal Biपंचांगap issues have been handled अन्यथाwhere.
 		 */
-		if (rdev->meta_bdev) {
+		अगर (rdev->meta_bdev) अणु
 			/* Nothing to check */;
-		} else if (rdev->data_offset < rdev->sb_start) {
-			if (mddev->dev_sectors &&
+		पूर्ण अन्यथा अगर (rdev->data_offset < rdev->sb_start) अणु
+			अगर (mddev->dev_sectors &&
 			    rdev->data_offset + mddev->dev_sectors
-			    > rdev->sb_start) {
+			    > rdev->sb_start) अणु
 				pr_warn("md: %s: data overlaps metadata\n",
 					mdname(mddev));
-				return -EINVAL;
-			}
-		} else {
-			if (rdev->sb_start + rdev->sb_size/512
-			    > rdev->data_offset) {
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (rdev->sb_start + rdev->sb_size/512
+			    > rdev->data_offset) अणु
 				pr_warn("md: %s: metadata overlaps data\n",
 					mdname(mddev));
-				return -EINVAL;
-			}
-		}
-		sysfs_notify_dirent_safe(rdev->sysfs_state);
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+		sysfs_notअगरy_dirent_safe(rdev->sysfs_state);
+	पूर्ण
 
-	if (!bioset_initialized(&mddev->bio_set)) {
+	अगर (!bioset_initialized(&mddev->bio_set)) अणु
 		err = bioset_init(&mddev->bio_set, BIO_POOL_SIZE, 0, BIOSET_NEED_BVECS);
-		if (err)
-			return err;
-	}
-	if (!bioset_initialized(&mddev->sync_set)) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (!bioset_initialized(&mddev->sync_set)) अणु
 		err = bioset_init(&mddev->sync_set, BIO_POOL_SIZE, 0, BIOSET_NEED_BVECS);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	spin_lock(&pers_lock);
 	pers = find_pers(mddev->level, mddev->clevel);
-	if (!pers || !try_module_get(pers->owner)) {
+	अगर (!pers || !try_module_get(pers->owner)) अणु
 		spin_unlock(&pers_lock);
-		if (mddev->level != LEVEL_NONE)
+		अगर (mddev->level != LEVEL_NONE)
 			pr_warn("md: personality for level %d is not loaded!\n",
 				mddev->level);
-		else
+		अन्यथा
 			pr_warn("md: personality for level %s is not loaded!\n",
 				mddev->clevel);
 		err = -EINVAL;
-		goto abort;
-	}
+		जाओ पात;
+	पूर्ण
 	spin_unlock(&pers_lock);
-	if (mddev->level != pers->level) {
+	अगर (mddev->level != pers->level) अणु
 		mddev->level = pers->level;
 		mddev->new_level = pers->level;
-	}
-	strlcpy(mddev->clevel, pers->name, sizeof(mddev->clevel));
+	पूर्ण
+	strlcpy(mddev->clevel, pers->name, माप(mddev->clevel));
 
-	if (mddev->reshape_position != MaxSector &&
-	    pers->start_reshape == NULL) {
+	अगर (mddev->reshape_position != MaxSector &&
+	    pers->start_reshape == शून्य) अणु
 		/* This personality cannot handle reshaping... */
 		module_put(pers->owner);
 		err = -EINVAL;
-		goto abort;
-	}
+		जाओ पात;
+	पूर्ण
 
-	if (pers->sync_request) {
-		/* Warn if this is a potentially silly
+	अगर (pers->sync_request) अणु
+		/* Warn अगर this is a potentially silly
 		 * configuration.
 		 */
-		char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
-		struct md_rdev *rdev2;
-		int warned = 0;
+		अक्षर b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
+		काष्ठा md_rdev *rdev2;
+		पूर्णांक warned = 0;
 
-		rdev_for_each(rdev, mddev)
-			rdev_for_each(rdev2, mddev) {
-				if (rdev < rdev2 &&
+		rdev_क्रम_each(rdev, mddev)
+			rdev_क्रम_each(rdev2, mddev) अणु
+				अगर (rdev < rdev2 &&
 				    rdev->bdev->bd_disk ==
-				    rdev2->bdev->bd_disk) {
+				    rdev2->bdev->bd_disk) अणु
 					pr_warn("%s: WARNING: %s appears to be on the same physical disk as %s.\n",
 						mdname(mddev),
 						bdevname(rdev->bdev,b),
 						bdevname(rdev2->bdev,b2));
 					warned = 1;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-		if (warned)
+		अगर (warned)
 			pr_warn("True protection against single-disk failure might be compromised.\n");
-	}
+	पूर्ण
 
 	mddev->recovery = 0;
 	/* may be over-ridden by personality */
@@ -5969,230 +5970,230 @@ int md_run(struct mddev *mddev)
 
 	mddev->ok_start_degraded = start_dirty_degraded;
 
-	if (start_readonly && mddev->ro == 0)
-		mddev->ro = 2; /* read-only, but switch on first write */
+	अगर (start_पढ़ोonly && mddev->ro == 0)
+		mddev->ro = 2; /* पढ़ो-only, but चयन on first ग_लिखो */
 
 	err = pers->run(mddev);
-	if (err)
+	अगर (err)
 		pr_warn("md: pers->run() failed ...\n");
-	else if (pers->size(mddev, 0, 0) < mddev->array_sectors) {
-		WARN_ONCE(!mddev->external_size,
+	अन्यथा अगर (pers->size(mddev, 0, 0) < mddev->array_sectors) अणु
+		WARN_ONCE(!mddev->बाह्यal_size,
 			  "%s: default size too small, but 'external_size' not in effect?\n",
 			  __func__);
 		pr_warn("md: invalid array_size %llu > default size %llu\n",
-			(unsigned long long)mddev->array_sectors / 2,
-			(unsigned long long)pers->size(mddev, 0, 0) / 2);
+			(अचिन्हित दीर्घ दीर्घ)mddev->array_sectors / 2,
+			(अचिन्हित दीर्घ दीर्घ)pers->size(mddev, 0, 0) / 2);
 		err = -EINVAL;
-	}
-	if (err == 0 && pers->sync_request &&
-	    (mddev->bitmap_info.file || mddev->bitmap_info.offset)) {
-		struct bitmap *bitmap;
+	पूर्ण
+	अगर (err == 0 && pers->sync_request &&
+	    (mddev->biपंचांगap_info.file || mddev->biपंचांगap_info.offset)) अणु
+		काष्ठा biपंचांगap *biपंचांगap;
 
-		bitmap = md_bitmap_create(mddev, -1);
-		if (IS_ERR(bitmap)) {
-			err = PTR_ERR(bitmap);
+		biपंचांगap = md_biपंचांगap_create(mddev, -1);
+		अगर (IS_ERR(biपंचांगap)) अणु
+			err = PTR_ERR(biपंचांगap);
 			pr_warn("%s: failed to create bitmap (%d)\n",
 				mdname(mddev), err);
-		} else
-			mddev->bitmap = bitmap;
+		पूर्ण अन्यथा
+			mddev->biपंचांगap = biपंचांगap;
 
-	}
-	if (err)
-		goto bitmap_abort;
+	पूर्ण
+	अगर (err)
+		जाओ biपंचांगap_पात;
 
-	if (mddev->bitmap_info.max_write_behind > 0) {
+	अगर (mddev->biपंचांगap_info.max_ग_लिखो_behind > 0) अणु
 		bool create_pool = false;
 
-		rdev_for_each(rdev, mddev) {
-			if (test_bit(WriteMostly, &rdev->flags) &&
+		rdev_क्रम_each(rdev, mddev) अणु
+			अगर (test_bit(WriteMostly, &rdev->flags) &&
 			    rdev_init_serial(rdev))
 				create_pool = true;
-		}
-		if (create_pool && mddev->serial_info_pool == NULL) {
+		पूर्ण
+		अगर (create_pool && mddev->serial_info_pool == शून्य) अणु
 			mddev->serial_info_pool =
-				mempool_create_kmalloc_pool(NR_SERIAL_INFOS,
-						    sizeof(struct serial_info));
-			if (!mddev->serial_info_pool) {
+				mempool_create_kदो_स्मृति_pool(NR_SERIAL_INFOS,
+						    माप(काष्ठा serial_info));
+			अगर (!mddev->serial_info_pool) अणु
 				err = -ENOMEM;
-				goto bitmap_abort;
-			}
-		}
-	}
+				जाओ biपंचांगap_पात;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (mddev->queue) {
+	अगर (mddev->queue) अणु
 		bool nonrot = true;
 
-		rdev_for_each(rdev, mddev) {
-			if (rdev->raid_disk >= 0 &&
-			    !blk_queue_nonrot(bdev_get_queue(rdev->bdev))) {
+		rdev_क्रम_each(rdev, mddev) अणु
+			अगर (rdev->raid_disk >= 0 &&
+			    !blk_queue_nonrot(bdev_get_queue(rdev->bdev))) अणु
 				nonrot = false;
-				break;
-			}
-		}
-		if (mddev->degraded)
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (mddev->degraded)
 			nonrot = false;
-		if (nonrot)
+		अगर (nonrot)
 			blk_queue_flag_set(QUEUE_FLAG_NONROT, mddev->queue);
-		else
+		अन्यथा
 			blk_queue_flag_clear(QUEUE_FLAG_NONROT, mddev->queue);
-	}
-	if (pers->sync_request) {
-		if (mddev->kobj.sd &&
+	पूर्ण
+	अगर (pers->sync_request) अणु
+		अगर (mddev->kobj.sd &&
 		    sysfs_create_group(&mddev->kobj, &md_redundancy_group))
 			pr_warn("md: cannot register extra attributes for %s\n",
 				mdname(mddev));
 		mddev->sysfs_action = sysfs_get_dirent_safe(mddev->kobj.sd, "sync_action");
 		mddev->sysfs_completed = sysfs_get_dirent_safe(mddev->kobj.sd, "sync_completed");
 		mddev->sysfs_degraded = sysfs_get_dirent_safe(mddev->kobj.sd, "degraded");
-	} else if (mddev->ro == 2) /* auto-readonly not meaningful */
+	पूर्ण अन्यथा अगर (mddev->ro == 2) /* स्वतः-पढ़ोonly not meaningful */
 		mddev->ro = 0;
 
-	atomic_set(&mddev->max_corr_read_errors,
+	atomic_set(&mddev->max_corr_पढ़ो_errors,
 		   MD_DEFAULT_MAX_CORRECTED_READ_ERRORS);
 	mddev->safemode = 0;
-	if (mddev_is_clustered(mddev))
+	अगर (mddev_is_clustered(mddev))
 		mddev->safemode_delay = 0;
-	else
+	अन्यथा
 		mddev->safemode_delay = DEFAULT_SAFEMODE_DELAY;
 	mddev->in_sync = 1;
 	smp_wmb();
 	spin_lock(&mddev->lock);
 	mddev->pers = pers;
 	spin_unlock(&mddev->lock);
-	rdev_for_each(rdev, mddev)
-		if (rdev->raid_disk >= 0)
+	rdev_क्रम_each(rdev, mddev)
+		अगर (rdev->raid_disk >= 0)
 			sysfs_link_rdev(mddev, rdev); /* failure here is OK */
 
-	if (mddev->degraded && !mddev->ro)
+	अगर (mddev->degraded && !mddev->ro)
 		/* This ensures that recovering status is reported immediately
 		 * via sysfs - until a lack of spares is confirmed.
 		 */
 		set_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
 
-	if (mddev->sb_flags)
+	अगर (mddev->sb_flags)
 		md_update_sb(mddev, 0);
 
 	md_new_event(mddev);
-	return 0;
+	वापस 0;
 
-bitmap_abort:
+biपंचांगap_पात:
 	mddev_detach(mddev);
-	if (mddev->private)
-		pers->free(mddev, mddev->private);
-	mddev->private = NULL;
+	अगर (mddev->निजी)
+		pers->मुक्त(mddev, mddev->निजी);
+	mddev->निजी = शून्य;
 	module_put(pers->owner);
-	md_bitmap_destroy(mddev);
-abort:
-	bioset_exit(&mddev->bio_set);
-	bioset_exit(&mddev->sync_set);
-	return err;
-}
+	md_biपंचांगap_destroy(mddev);
+पात:
+	bioset_निकास(&mddev->bio_set);
+	bioset_निकास(&mddev->sync_set);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(md_run);
 
-int do_md_run(struct mddev *mddev)
-{
-	int err;
+पूर्णांक करो_md_run(काष्ठा mddev *mddev)
+अणु
+	पूर्णांक err;
 
 	set_bit(MD_NOT_READY, &mddev->flags);
 	err = md_run(mddev);
-	if (err)
-		goto out;
-	err = md_bitmap_load(mddev);
-	if (err) {
-		md_bitmap_destroy(mddev);
-		goto out;
-	}
+	अगर (err)
+		जाओ out;
+	err = md_biपंचांगap_load(mddev);
+	अगर (err) अणु
+		md_biपंचांगap_destroy(mddev);
+		जाओ out;
+	पूर्ण
 
-	if (mddev_is_clustered(mddev))
-		md_allow_write(mddev);
+	अगर (mddev_is_clustered(mddev))
+		md_allow_ग_लिखो(mddev);
 
-	/* run start up tasks that require md_thread */
+	/* run start up tasks that require md_thपढ़ो */
 	md_start(mddev);
 
-	md_wakeup_thread(mddev->thread);
-	md_wakeup_thread(mddev->sync_thread); /* possibly kick off a reshape */
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	md_wakeup_thपढ़ो(mddev->sync_thपढ़ो); /* possibly kick off a reshape */
 
-	set_capacity_and_notify(mddev->gendisk, mddev->array_sectors);
+	set_capacity_and_notअगरy(mddev->gendisk, mddev->array_sectors);
 	clear_bit(MD_NOT_READY, &mddev->flags);
 	mddev->changed = 1;
 	kobject_uevent(&disk_to_dev(mddev->gendisk)->kobj, KOBJ_CHANGE);
-	sysfs_notify_dirent_safe(mddev->sysfs_state);
-	sysfs_notify_dirent_safe(mddev->sysfs_action);
-	sysfs_notify_dirent_safe(mddev->sysfs_degraded);
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_action);
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_degraded);
 out:
 	clear_bit(MD_NOT_READY, &mddev->flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int md_start(struct mddev *mddev)
-{
-	int ret = 0;
+पूर्णांक md_start(काष्ठा mddev *mddev)
+अणु
+	पूर्णांक ret = 0;
 
-	if (mddev->pers->start) {
+	अगर (mddev->pers->start) अणु
 		set_bit(MD_RECOVERY_WAIT, &mddev->recovery);
-		md_wakeup_thread(mddev->thread);
+		md_wakeup_thपढ़ो(mddev->thपढ़ो);
 		ret = mddev->pers->start(mddev);
 		clear_bit(MD_RECOVERY_WAIT, &mddev->recovery);
-		md_wakeup_thread(mddev->sync_thread);
-	}
-	return ret;
-}
+		md_wakeup_thपढ़ो(mddev->sync_thपढ़ो);
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(md_start);
 
-static int restart_array(struct mddev *mddev)
-{
-	struct gendisk *disk = mddev->gendisk;
-	struct md_rdev *rdev;
+अटल पूर्णांक restart_array(काष्ठा mddev *mddev)
+अणु
+	काष्ठा gendisk *disk = mddev->gendisk;
+	काष्ठा md_rdev *rdev;
 	bool has_journal = false;
-	bool has_readonly = false;
+	bool has_पढ़ोonly = false;
 
-	/* Complain if it has no devices */
-	if (list_empty(&mddev->disks))
-		return -ENXIO;
-	if (!mddev->pers)
-		return -EINVAL;
-	if (!mddev->ro)
-		return -EBUSY;
+	/* Complain अगर it has no devices */
+	अगर (list_empty(&mddev->disks))
+		वापस -ENXIO;
+	अगर (!mddev->pers)
+		वापस -EINVAL;
+	अगर (!mddev->ro)
+		वापस -EBUSY;
 
-	rcu_read_lock();
-	rdev_for_each_rcu(rdev, mddev) {
-		if (test_bit(Journal, &rdev->flags) &&
+	rcu_पढ़ो_lock();
+	rdev_क्रम_each_rcu(rdev, mddev) अणु
+		अगर (test_bit(Journal, &rdev->flags) &&
 		    !test_bit(Faulty, &rdev->flags))
 			has_journal = true;
-		if (rdev_read_only(rdev))
-			has_readonly = true;
-	}
-	rcu_read_unlock();
-	if (test_bit(MD_HAS_JOURNAL, &mddev->flags) && !has_journal)
+		अगर (rdev_पढ़ो_only(rdev))
+			has_पढ़ोonly = true;
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	अगर (test_bit(MD_HAS_JOURNAL, &mddev->flags) && !has_journal)
 		/* Don't restart rw with journal missing/faulty */
-			return -EINVAL;
-	if (has_readonly)
-		return -EROFS;
+			वापस -EINVAL;
+	अगर (has_पढ़ोonly)
+		वापस -EROFS;
 
 	mddev->safemode = 0;
 	mddev->ro = 0;
 	set_disk_ro(disk, 0);
 	pr_debug("md: %s switched to read-write mode.\n", mdname(mddev));
-	/* Kick recovery or resync if necessary */
+	/* Kick recovery or resync अगर necessary */
 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-	md_wakeup_thread(mddev->thread);
-	md_wakeup_thread(mddev->sync_thread);
-	sysfs_notify_dirent_safe(mddev->sysfs_state);
-	return 0;
-}
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	md_wakeup_thपढ़ो(mddev->sync_thपढ़ो);
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
+	वापस 0;
+पूर्ण
 
-static void md_clean(struct mddev *mddev)
-{
+अटल व्योम md_clean(काष्ठा mddev *mddev)
+अणु
 	mddev->array_sectors = 0;
-	mddev->external_size = 0;
+	mddev->बाह्यal_size = 0;
 	mddev->dev_sectors = 0;
 	mddev->raid_disks = 0;
 	mddev->recovery_cp = 0;
 	mddev->resync_min = 0;
 	mddev->resync_max = MaxSector;
 	mddev->reshape_position = MaxSector;
-	mddev->external = 0;
+	mddev->बाह्यal = 0;
 	mddev->persistent = 0;
 	mddev->level = LEVEL_NONE;
 	mddev->clevel[0] = 0;
@@ -6201,7 +6202,7 @@ static void md_clean(struct mddev *mddev)
 	mddev->ro = 0;
 	mddev->metadata_type[0] = 0;
 	mddev->chunk_sectors = 0;
-	mddev->ctime = mddev->utime = 0;
+	mddev->स_समय = mddev->uसमय = 0;
 	mddev->layout = 0;
 	mddev->max_disks = 0;
 	mddev->events = 0;
@@ -6220,420 +6221,420 @@ static void md_clean(struct mddev *mddev)
 	mddev->changed = 0;
 	mddev->degraded = 0;
 	mddev->safemode = 0;
-	mddev->private = NULL;
-	mddev->cluster_info = NULL;
-	mddev->bitmap_info.offset = 0;
-	mddev->bitmap_info.default_offset = 0;
-	mddev->bitmap_info.default_space = 0;
-	mddev->bitmap_info.chunksize = 0;
-	mddev->bitmap_info.daemon_sleep = 0;
-	mddev->bitmap_info.max_write_behind = 0;
-	mddev->bitmap_info.nodes = 0;
-}
+	mddev->निजी = शून्य;
+	mddev->cluster_info = शून्य;
+	mddev->biपंचांगap_info.offset = 0;
+	mddev->biपंचांगap_info.शेष_offset = 0;
+	mddev->biपंचांगap_info.शेष_space = 0;
+	mddev->biपंचांगap_info.chunksize = 0;
+	mddev->biपंचांगap_info.daemon_sleep = 0;
+	mddev->biपंचांगap_info.max_ग_लिखो_behind = 0;
+	mddev->biपंचांगap_info.nodes = 0;
+पूर्ण
 
-static void __md_stop_writes(struct mddev *mddev)
-{
+अटल व्योम __md_stop_ग_लिखोs(काष्ठा mddev *mddev)
+अणु
 	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-	if (work_pending(&mddev->del_work))
+	अगर (work_pending(&mddev->del_work))
 		flush_workqueue(md_misc_wq);
-	if (mddev->sync_thread) {
+	अगर (mddev->sync_thपढ़ो) अणु
 		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-		md_reap_sync_thread(mddev);
-	}
+		md_reap_sync_thपढ़ो(mddev);
+	पूर्ण
 
-	del_timer_sync(&mddev->safemode_timer);
+	del_समयr_sync(&mddev->safemode_समयr);
 
-	if (mddev->pers && mddev->pers->quiesce) {
+	अगर (mddev->pers && mddev->pers->quiesce) अणु
 		mddev->pers->quiesce(mddev, 1);
 		mddev->pers->quiesce(mddev, 0);
-	}
-	md_bitmap_flush(mddev);
+	पूर्ण
+	md_biपंचांगap_flush(mddev);
 
-	if (mddev->ro == 0 &&
+	अगर (mddev->ro == 0 &&
 	    ((!mddev->in_sync && !mddev_is_clustered(mddev)) ||
-	     mddev->sb_flags)) {
-		/* mark array as shutdown cleanly */
-		if (!mddev_is_clustered(mddev))
+	     mddev->sb_flags)) अणु
+		/* mark array as shutकरोwn cleanly */
+		अगर (!mddev_is_clustered(mddev))
 			mddev->in_sync = 1;
 		md_update_sb(mddev, 1);
-	}
-	/* disable policy to guarantee rdevs free resources for serialization */
+	पूर्ण
+	/* disable policy to guarantee rdevs मुक्त resources क्रम serialization */
 	mddev->serialize_policy = 0;
-	mddev_destroy_serial_pool(mddev, NULL, true);
-}
+	mddev_destroy_serial_pool(mddev, शून्य, true);
+पूर्ण
 
-void md_stop_writes(struct mddev *mddev)
-{
-	mddev_lock_nointr(mddev);
-	__md_stop_writes(mddev);
+व्योम md_stop_ग_लिखोs(काष्ठा mddev *mddev)
+अणु
+	mddev_lock_noपूर्णांकr(mddev);
+	__md_stop_ग_लिखोs(mddev);
 	mddev_unlock(mddev);
-}
-EXPORT_SYMBOL_GPL(md_stop_writes);
+पूर्ण
+EXPORT_SYMBOL_GPL(md_stop_ग_लिखोs);
 
-static void mddev_detach(struct mddev *mddev)
-{
-	md_bitmap_wait_behind_writes(mddev);
-	if (mddev->pers && mddev->pers->quiesce && !mddev->suspended) {
+अटल व्योम mddev_detach(काष्ठा mddev *mddev)
+अणु
+	md_biपंचांगap_रुको_behind_ग_लिखोs(mddev);
+	अगर (mddev->pers && mddev->pers->quiesce && !mddev->suspended) अणु
 		mddev->pers->quiesce(mddev, 1);
 		mddev->pers->quiesce(mddev, 0);
-	}
-	md_unregister_thread(&mddev->thread);
-	if (mddev->queue)
+	पूर्ण
+	md_unरेजिस्टर_thपढ़ो(&mddev->thपढ़ो);
+	अगर (mddev->queue)
 		blk_sync_queue(mddev->queue); /* the unplug fn references 'conf'*/
-}
+पूर्ण
 
-static void __md_stop(struct mddev *mddev)
-{
-	struct md_personality *pers = mddev->pers;
-	md_bitmap_destroy(mddev);
+अटल व्योम __md_stop(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_personality *pers = mddev->pers;
+	md_biपंचांगap_destroy(mddev);
 	mddev_detach(mddev);
-	/* Ensure ->event_work is done */
-	if (mddev->event_work.func)
+	/* Ensure ->event_work is करोne */
+	अगर (mddev->event_work.func)
 		flush_workqueue(md_misc_wq);
 	spin_lock(&mddev->lock);
-	mddev->pers = NULL;
+	mddev->pers = शून्य;
 	spin_unlock(&mddev->lock);
-	pers->free(mddev, mddev->private);
-	mddev->private = NULL;
-	if (pers->sync_request && mddev->to_remove == NULL)
-		mddev->to_remove = &md_redundancy_group;
+	pers->मुक्त(mddev, mddev->निजी);
+	mddev->निजी = शून्य;
+	अगर (pers->sync_request && mddev->to_हटाओ == शून्य)
+		mddev->to_हटाओ = &md_redundancy_group;
 	module_put(pers->owner);
 	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-}
+पूर्ण
 
-void md_stop(struct mddev *mddev)
-{
-	/* stop the array and free an attached data structures.
+व्योम md_stop(काष्ठा mddev *mddev)
+अणु
+	/* stop the array and मुक्त an attached data काष्ठाures.
 	 * This is called from dm-raid
 	 */
 	__md_stop(mddev);
-	bioset_exit(&mddev->bio_set);
-	bioset_exit(&mddev->sync_set);
-}
+	bioset_निकास(&mddev->bio_set);
+	bioset_निकास(&mddev->sync_set);
+पूर्ण
 
 EXPORT_SYMBOL_GPL(md_stop);
 
-static int md_set_readonly(struct mddev *mddev, struct block_device *bdev)
-{
-	int err = 0;
-	int did_freeze = 0;
+अटल पूर्णांक md_set_पढ़ोonly(काष्ठा mddev *mddev, काष्ठा block_device *bdev)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक did_मुक्तze = 0;
 
-	if (!test_bit(MD_RECOVERY_FROZEN, &mddev->recovery)) {
-		did_freeze = 1;
+	अगर (!test_bit(MD_RECOVERY_FROZEN, &mddev->recovery)) अणु
+		did_मुक्तze = 1;
 		set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-		md_wakeup_thread(mddev->thread);
-	}
-	if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+		md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	पूर्ण
+	अगर (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
 		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-	if (mddev->sync_thread)
-		/* Thread might be blocked waiting for metadata update
+	अगर (mddev->sync_thपढ़ो)
+		/* Thपढ़ो might be blocked रुकोing क्रम metadata update
 		 * which will now never happen */
-		wake_up_process(mddev->sync_thread->tsk);
+		wake_up_process(mddev->sync_thपढ़ो->tsk);
 
-	if (mddev->external && test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags))
-		return -EBUSY;
+	अगर (mddev->बाह्यal && test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags))
+		वापस -EBUSY;
 	mddev_unlock(mddev);
-	wait_event(resync_wait, !test_bit(MD_RECOVERY_RUNNING,
+	रुको_event(resync_रुको, !test_bit(MD_RECOVERY_RUNNING,
 					  &mddev->recovery));
-	wait_event(mddev->sb_wait,
+	रुको_event(mddev->sb_रुको,
 		   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
-	mddev_lock_nointr(mddev);
+	mddev_lock_noपूर्णांकr(mddev);
 
-	mutex_lock(&mddev->open_mutex);
-	if ((mddev->pers && atomic_read(&mddev->openers) > !!bdev) ||
-	    mddev->sync_thread ||
-	    test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
+	mutex_lock(&mddev->खोलो_mutex);
+	अगर ((mddev->pers && atomic_पढ़ो(&mddev->खोलोers) > !!bdev) ||
+	    mddev->sync_thपढ़ो ||
+	    test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) अणु
 		pr_warn("md: %s still in use.\n",mdname(mddev));
-		if (did_freeze) {
+		अगर (did_मुक्तze) अणु
 			clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
 			set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-			md_wakeup_thread(mddev->thread);
-		}
+			md_wakeup_thपढ़ो(mddev->thपढ़ो);
+		पूर्ण
 		err = -EBUSY;
-		goto out;
-	}
-	if (mddev->pers) {
-		__md_stop_writes(mddev);
+		जाओ out;
+	पूर्ण
+	अगर (mddev->pers) अणु
+		__md_stop_ग_लिखोs(mddev);
 
 		err  = -ENXIO;
-		if (mddev->ro==1)
-			goto out;
+		अगर (mddev->ro==1)
+			जाओ out;
 		mddev->ro = 1;
 		set_disk_ro(mddev->gendisk, 1);
 		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
 		set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-		md_wakeup_thread(mddev->thread);
-		sysfs_notify_dirent_safe(mddev->sysfs_state);
+		md_wakeup_thपढ़ो(mddev->thपढ़ो);
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
 		err = 0;
-	}
+	पूर्ण
 out:
-	mutex_unlock(&mddev->open_mutex);
-	return err;
-}
+	mutex_unlock(&mddev->खोलो_mutex);
+	वापस err;
+पूर्ण
 
 /* mode:
  *   0 - completely stop and dis-assemble array
- *   2 - stop but do not disassemble array
+ *   2 - stop but करो not disassemble array
  */
-static int do_md_stop(struct mddev *mddev, int mode,
-		      struct block_device *bdev)
-{
-	struct gendisk *disk = mddev->gendisk;
-	struct md_rdev *rdev;
-	int did_freeze = 0;
+अटल पूर्णांक करो_md_stop(काष्ठा mddev *mddev, पूर्णांक mode,
+		      काष्ठा block_device *bdev)
+अणु
+	काष्ठा gendisk *disk = mddev->gendisk;
+	काष्ठा md_rdev *rdev;
+	पूर्णांक did_मुक्तze = 0;
 
-	if (!test_bit(MD_RECOVERY_FROZEN, &mddev->recovery)) {
-		did_freeze = 1;
+	अगर (!test_bit(MD_RECOVERY_FROZEN, &mddev->recovery)) अणु
+		did_मुक्तze = 1;
 		set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-		md_wakeup_thread(mddev->thread);
-	}
-	if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+		md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	पूर्ण
+	अगर (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
 		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-	if (mddev->sync_thread)
-		/* Thread might be blocked waiting for metadata update
+	अगर (mddev->sync_thपढ़ो)
+		/* Thपढ़ो might be blocked रुकोing क्रम metadata update
 		 * which will now never happen */
-		wake_up_process(mddev->sync_thread->tsk);
+		wake_up_process(mddev->sync_thपढ़ो->tsk);
 
 	mddev_unlock(mddev);
-	wait_event(resync_wait, (mddev->sync_thread == NULL &&
+	रुको_event(resync_रुको, (mddev->sync_thपढ़ो == शून्य &&
 				 !test_bit(MD_RECOVERY_RUNNING,
 					   &mddev->recovery)));
-	mddev_lock_nointr(mddev);
+	mddev_lock_noपूर्णांकr(mddev);
 
-	mutex_lock(&mddev->open_mutex);
-	if ((mddev->pers && atomic_read(&mddev->openers) > !!bdev) ||
+	mutex_lock(&mddev->खोलो_mutex);
+	अगर ((mddev->pers && atomic_पढ़ो(&mddev->खोलोers) > !!bdev) ||
 	    mddev->sysfs_active ||
-	    mddev->sync_thread ||
-	    test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
+	    mddev->sync_thपढ़ो ||
+	    test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) अणु
 		pr_warn("md: %s still in use.\n",mdname(mddev));
-		mutex_unlock(&mddev->open_mutex);
-		if (did_freeze) {
+		mutex_unlock(&mddev->खोलो_mutex);
+		अगर (did_मुक्तze) अणु
 			clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
 			set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-			md_wakeup_thread(mddev->thread);
-		}
-		return -EBUSY;
-	}
-	if (mddev->pers) {
-		if (mddev->ro)
+			md_wakeup_thपढ़ो(mddev->thपढ़ो);
+		पूर्ण
+		वापस -EBUSY;
+	पूर्ण
+	अगर (mddev->pers) अणु
+		अगर (mddev->ro)
 			set_disk_ro(disk, 0);
 
-		__md_stop_writes(mddev);
+		__md_stop_ग_लिखोs(mddev);
 		__md_stop(mddev);
 
 		/* tell userspace to handle 'inactive' */
-		sysfs_notify_dirent_safe(mddev->sysfs_state);
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
 
-		rdev_for_each(rdev, mddev)
-			if (rdev->raid_disk >= 0)
+		rdev_क्रम_each(rdev, mddev)
+			अगर (rdev->raid_disk >= 0)
 				sysfs_unlink_rdev(mddev, rdev);
 
-		set_capacity_and_notify(disk, 0);
-		mutex_unlock(&mddev->open_mutex);
+		set_capacity_and_notअगरy(disk, 0);
+		mutex_unlock(&mddev->खोलो_mutex);
 		mddev->changed = 1;
 
-		if (mddev->ro)
+		अगर (mddev->ro)
 			mddev->ro = 0;
-	} else
-		mutex_unlock(&mddev->open_mutex);
+	पूर्ण अन्यथा
+		mutex_unlock(&mddev->खोलो_mutex);
 	/*
-	 * Free resources if final stop
+	 * Free resources अगर final stop
 	 */
-	if (mode == 0) {
+	अगर (mode == 0) अणु
 		pr_info("md: %s stopped.\n", mdname(mddev));
 
-		if (mddev->bitmap_info.file) {
-			struct file *f = mddev->bitmap_info.file;
+		अगर (mddev->biपंचांगap_info.file) अणु
+			काष्ठा file *f = mddev->biपंचांगap_info.file;
 			spin_lock(&mddev->lock);
-			mddev->bitmap_info.file = NULL;
+			mddev->biपंचांगap_info.file = शून्य;
 			spin_unlock(&mddev->lock);
 			fput(f);
-		}
-		mddev->bitmap_info.offset = 0;
+		पूर्ण
+		mddev->biपंचांगap_info.offset = 0;
 
 		export_array(mddev);
 
 		md_clean(mddev);
-		if (mddev->hold_active == UNTIL_STOP)
+		अगर (mddev->hold_active == UNTIL_STOP)
 			mddev->hold_active = 0;
-	}
+	पूर्ण
 	md_new_event(mddev);
-	sysfs_notify_dirent_safe(mddev->sysfs_state);
-	return 0;
-}
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
+	वापस 0;
+पूर्ण
 
-#ifndef MODULE
-static void autorun_array(struct mddev *mddev)
-{
-	struct md_rdev *rdev;
-	int err;
+#अगर_अघोषित MODULE
+अटल व्योम स्वतःrun_array(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_rdev *rdev;
+	पूर्णांक err;
 
-	if (list_empty(&mddev->disks))
-		return;
+	अगर (list_empty(&mddev->disks))
+		वापस;
 
 	pr_info("md: running: ");
 
-	rdev_for_each(rdev, mddev) {
-		char b[BDEVNAME_SIZE];
+	rdev_क्रम_each(rdev, mddev) अणु
+		अक्षर b[BDEVNAME_SIZE];
 		pr_cont("<%s>", bdevname(rdev->bdev,b));
-	}
+	पूर्ण
 	pr_cont("\n");
 
-	err = do_md_run(mddev);
-	if (err) {
+	err = करो_md_run(mddev);
+	अगर (err) अणु
 		pr_warn("md: do_md_run() returned %d\n", err);
-		do_md_stop(mddev, 0, NULL);
-	}
-}
+		करो_md_stop(mddev, 0, शून्य);
+	पूर्ण
+पूर्ण
 
 /*
  * lets try to run arrays based on all disks that have arrived
  * until now. (those are in pending_raid_disks)
  *
  * the method: pick the first pending disk, collect all disks with
- * the same UUID, remove all from the pending list and put them into
+ * the same UUID, हटाओ all from the pending list and put them पूर्णांकo
  * the 'same_array' list. Then order this list based on superblock
- * update time (freshest comes first), kick out 'old' disks and
+ * update समय (freshest comes first), kick out 'old' disks and
  * compare superblocks. If everything's fine then run it.
  *
  * If "unit" is allocated, then bump its reference count
  */
-static void autorun_devices(int part)
-{
-	struct md_rdev *rdev0, *rdev, *tmp;
-	struct mddev *mddev;
-	char b[BDEVNAME_SIZE];
+अटल व्योम स्वतःrun_devices(पूर्णांक part)
+अणु
+	काष्ठा md_rdev *rdev0, *rdev, *पंचांगp;
+	काष्ठा mddev *mddev;
+	अक्षर b[BDEVNAME_SIZE];
 
 	pr_info("md: autorun ...\n");
-	while (!list_empty(&pending_raid_disks)) {
-		int unit;
+	जबतक (!list_empty(&pending_raid_disks)) अणु
+		पूर्णांक unit;
 		dev_t dev;
 		LIST_HEAD(candidates);
 		rdev0 = list_entry(pending_raid_disks.next,
-					 struct md_rdev, same_set);
+					 काष्ठा md_rdev, same_set);
 
 		pr_debug("md: considering %s ...\n", bdevname(rdev0->bdev,b));
 		INIT_LIST_HEAD(&candidates);
-		rdev_for_each_list(rdev, tmp, &pending_raid_disks)
-			if (super_90_load(rdev, rdev0, 0) >= 0) {
+		rdev_क्रम_each_list(rdev, पंचांगp, &pending_raid_disks)
+			अगर (super_90_load(rdev, rdev0, 0) >= 0) अणु
 				pr_debug("md:  adding %s ...\n",
 					 bdevname(rdev->bdev,b));
 				list_move(&rdev->same_set, &candidates);
-			}
+			पूर्ण
 		/*
 		 * now we have a set of devices, with all of them having
-		 * mostly sane superblocks. It's time to allocate the
+		 * mostly sane superblocks. It's समय to allocate the
 		 * mddev.
 		 */
-		if (part) {
+		अगर (part) अणु
 			dev = MKDEV(mdp_major,
-				    rdev0->preferred_minor << MdpMinorShift);
-			unit = MINOR(dev) >> MdpMinorShift;
-		} else {
+				    rdev0->preferred_minor << MdpMinorShअगरt);
+			unit = MINOR(dev) >> MdpMinorShअगरt;
+		पूर्ण अन्यथा अणु
 			dev = MKDEV(MD_MAJOR, rdev0->preferred_minor);
 			unit = MINOR(dev);
-		}
-		if (rdev0->preferred_minor != unit) {
+		पूर्ण
+		अगर (rdev0->preferred_minor != unit) अणु
 			pr_warn("md: unit number in %s is bad: %d\n",
 				bdevname(rdev0->bdev, b), rdev0->preferred_minor);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		md_probe(dev);
 		mddev = mddev_find(dev);
-		if (!mddev)
-			break;
+		अगर (!mddev)
+			अवरोध;
 
-		if (mddev_lock(mddev))
+		अगर (mddev_lock(mddev))
 			pr_warn("md: %s locked, cannot run\n", mdname(mddev));
-		else if (mddev->raid_disks || mddev->major_version
-			 || !list_empty(&mddev->disks)) {
+		अन्यथा अगर (mddev->raid_disks || mddev->major_version
+			 || !list_empty(&mddev->disks)) अणु
 			pr_warn("md: %s already running, cannot run %s\n",
 				mdname(mddev), bdevname(rdev0->bdev,b));
 			mddev_unlock(mddev);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_debug("md: created %s\n", mdname(mddev));
 			mddev->persistent = 1;
-			rdev_for_each_list(rdev, tmp, &candidates) {
+			rdev_क्रम_each_list(rdev, पंचांगp, &candidates) अणु
 				list_del_init(&rdev->same_set);
-				if (bind_rdev_to_array(rdev, mddev))
+				अगर (bind_rdev_to_array(rdev, mddev))
 					export_rdev(rdev);
-			}
-			autorun_array(mddev);
+			पूर्ण
+			स्वतःrun_array(mddev);
 			mddev_unlock(mddev);
-		}
+		पूर्ण
 		/* on success, candidates will be empty, on error
 		 * it won't...
 		 */
-		rdev_for_each_list(rdev, tmp, &candidates) {
+		rdev_क्रम_each_list(rdev, पंचांगp, &candidates) अणु
 			list_del_init(&rdev->same_set);
 			export_rdev(rdev);
-		}
+		पूर्ण
 		mddev_put(mddev);
-	}
+	पूर्ण
 	pr_info("md: ... autorun DONE.\n");
-}
-#endif /* !MODULE */
+पूर्ण
+#पूर्ण_अगर /* !MODULE */
 
-static int get_version(void __user *arg)
-{
+अटल पूर्णांक get_version(व्योम __user *arg)
+अणु
 	mdu_version_t ver;
 
 	ver.major = MD_MAJOR_VERSION;
 	ver.minor = MD_MINOR_VERSION;
 	ver.patchlevel = MD_PATCHLEVEL_VERSION;
 
-	if (copy_to_user(arg, &ver, sizeof(ver)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &ver, माप(ver)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_array_info(struct mddev *mddev, void __user *arg)
-{
+अटल पूर्णांक get_array_info(काष्ठा mddev *mddev, व्योम __user *arg)
+अणु
 	mdu_array_info_t info;
-	int nr,working,insync,failed,spare;
-	struct md_rdev *rdev;
+	पूर्णांक nr,working,insync,failed,spare;
+	काष्ठा md_rdev *rdev;
 
 	nr = working = insync = failed = spare = 0;
-	rcu_read_lock();
-	rdev_for_each_rcu(rdev, mddev) {
+	rcu_पढ़ो_lock();
+	rdev_क्रम_each_rcu(rdev, mddev) अणु
 		nr++;
-		if (test_bit(Faulty, &rdev->flags))
+		अगर (test_bit(Faulty, &rdev->flags))
 			failed++;
-		else {
+		अन्यथा अणु
 			working++;
-			if (test_bit(In_sync, &rdev->flags))
+			अगर (test_bit(In_sync, &rdev->flags))
 				insync++;
-			else if (test_bit(Journal, &rdev->flags))
+			अन्यथा अगर (test_bit(Journal, &rdev->flags))
 				/* TODO: add journal count to md_u.h */
 				;
-			else
+			अन्यथा
 				spare++;
-		}
-	}
-	rcu_read_unlock();
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	info.major_version = mddev->major_version;
 	info.minor_version = mddev->minor_version;
 	info.patch_version = MD_PATCHLEVEL_VERSION;
-	info.ctime         = clamp_t(time64_t, mddev->ctime, 0, U32_MAX);
+	info.स_समय         = clamp_t(समय64_t, mddev->स_समय, 0, U32_MAX);
 	info.level         = mddev->level;
 	info.size          = mddev->dev_sectors / 2;
-	if (info.size != mddev->dev_sectors / 2) /* overflow */
+	अगर (info.size != mddev->dev_sectors / 2) /* overflow */
 		info.size = -1;
 	info.nr_disks      = nr;
 	info.raid_disks    = mddev->raid_disks;
 	info.md_minor      = mddev->md_minor;
 	info.not_persistent= !mddev->persistent;
 
-	info.utime         = clamp_t(time64_t, mddev->utime, 0, U32_MAX);
+	info.uसमय         = clamp_t(समय64_t, mddev->uसमय, 0, U32_MAX);
 	info.state         = 0;
-	if (mddev->in_sync)
+	अगर (mddev->in_sync)
 		info.state = (1<<MD_SB_CLEAN);
-	if (mddev->bitmap && mddev->bitmap_info.offset)
+	अगर (mddev->biपंचांगap && mddev->biपंचांगap_info.offset)
 		info.state |= (1<<MD_SB_BITMAP_PRESENT);
-	if (mddev_is_clustered(mddev))
+	अगर (mddev_is_clustered(mddev))
 		info.state |= (1<<MD_SB_CLUSTERED);
 	info.active_disks  = insync;
 	info.working_disks = working;
@@ -6643,566 +6644,566 @@ static int get_array_info(struct mddev *mddev, void __user *arg)
 	info.layout        = mddev->layout;
 	info.chunk_size    = mddev->chunk_sectors << 9;
 
-	if (copy_to_user(arg, &info, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &info, माप(info)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_bitmap_file(struct mddev *mddev, void __user * arg)
-{
-	mdu_bitmap_file_t *file = NULL; /* too big for stack allocation */
-	char *ptr;
-	int err;
+अटल पूर्णांक get_biपंचांगap_file(काष्ठा mddev *mddev, व्योम __user * arg)
+अणु
+	mdu_biपंचांगap_file_t *file = शून्य; /* too big क्रम stack allocation */
+	अक्षर *ptr;
+	पूर्णांक err;
 
-	file = kzalloc(sizeof(*file), GFP_NOIO);
-	if (!file)
-		return -ENOMEM;
+	file = kzalloc(माप(*file), GFP_NOIO);
+	अगर (!file)
+		वापस -ENOMEM;
 
 	err = 0;
 	spin_lock(&mddev->lock);
-	/* bitmap enabled */
-	if (mddev->bitmap_info.file) {
-		ptr = file_path(mddev->bitmap_info.file, file->pathname,
-				sizeof(file->pathname));
-		if (IS_ERR(ptr))
+	/* biपंचांगap enabled */
+	अगर (mddev->biपंचांगap_info.file) अणु
+		ptr = file_path(mddev->biपंचांगap_info.file, file->pathname,
+				माप(file->pathname));
+		अगर (IS_ERR(ptr))
 			err = PTR_ERR(ptr);
-		else
-			memmove(file->pathname, ptr,
-				sizeof(file->pathname)-(ptr-file->pathname));
-	}
+		अन्यथा
+			स_हटाओ(file->pathname, ptr,
+				माप(file->pathname)-(ptr-file->pathname));
+	पूर्ण
 	spin_unlock(&mddev->lock);
 
-	if (err == 0 &&
-	    copy_to_user(arg, file, sizeof(*file)))
+	अगर (err == 0 &&
+	    copy_to_user(arg, file, माप(*file)))
 		err = -EFAULT;
 
-	kfree(file);
-	return err;
-}
+	kमुक्त(file);
+	वापस err;
+पूर्ण
 
-static int get_disk_info(struct mddev *mddev, void __user * arg)
-{
+अटल पूर्णांक get_disk_info(काष्ठा mddev *mddev, व्योम __user * arg)
+अणु
 	mdu_disk_info_t info;
-	struct md_rdev *rdev;
+	काष्ठा md_rdev *rdev;
 
-	if (copy_from_user(&info, arg, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_from_user(&info, arg, माप(info)))
+		वापस -EFAULT;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	rdev = md_find_rdev_nr_rcu(mddev, info.number);
-	if (rdev) {
+	अगर (rdev) अणु
 		info.major = MAJOR(rdev->bdev->bd_dev);
 		info.minor = MINOR(rdev->bdev->bd_dev);
 		info.raid_disk = rdev->raid_disk;
 		info.state = 0;
-		if (test_bit(Faulty, &rdev->flags))
+		अगर (test_bit(Faulty, &rdev->flags))
 			info.state |= (1<<MD_DISK_FAULTY);
-		else if (test_bit(In_sync, &rdev->flags)) {
+		अन्यथा अगर (test_bit(In_sync, &rdev->flags)) अणु
 			info.state |= (1<<MD_DISK_ACTIVE);
 			info.state |= (1<<MD_DISK_SYNC);
-		}
-		if (test_bit(Journal, &rdev->flags))
+		पूर्ण
+		अगर (test_bit(Journal, &rdev->flags))
 			info.state |= (1<<MD_DISK_JOURNAL);
-		if (test_bit(WriteMostly, &rdev->flags))
+		अगर (test_bit(WriteMostly, &rdev->flags))
 			info.state |= (1<<MD_DISK_WRITEMOSTLY);
-		if (test_bit(FailFast, &rdev->flags))
+		अगर (test_bit(FailFast, &rdev->flags))
 			info.state |= (1<<MD_DISK_FAILFAST);
-	} else {
+	पूर्ण अन्यथा अणु
 		info.major = info.minor = 0;
 		info.raid_disk = -1;
 		info.state = (1<<MD_DISK_REMOVED);
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (copy_to_user(arg, &info, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &info, माप(info)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int md_add_new_disk(struct mddev *mddev, struct mdu_disk_info_s *info)
-{
-	char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
-	struct md_rdev *rdev;
+पूर्णांक md_add_new_disk(काष्ठा mddev *mddev, काष्ठा mdu_disk_info_s *info)
+अणु
+	अक्षर b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
+	काष्ठा md_rdev *rdev;
 	dev_t dev = MKDEV(info->major,info->minor);
 
-	if (mddev_is_clustered(mddev) &&
-		!(info->state & ((1 << MD_DISK_CLUSTER_ADD) | (1 << MD_DISK_CANDIDATE)))) {
+	अगर (mddev_is_clustered(mddev) &&
+		!(info->state & ((1 << MD_DISK_CLUSTER_ADD) | (1 << MD_DISK_CANDIDATE)))) अणु
 		pr_warn("%s: Cannot add to clustered mddev.\n",
 			mdname(mddev));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (info->major != MAJOR(dev) || info->minor != MINOR(dev))
-		return -EOVERFLOW;
+	अगर (info->major != MAJOR(dev) || info->minor != MINOR(dev))
+		वापस -EOVERFLOW;
 
-	if (!mddev->raid_disks) {
-		int err;
+	अगर (!mddev->raid_disks) अणु
+		पूर्णांक err;
 		/* expecting a device which has a superblock */
 		rdev = md_import_device(dev, mddev->major_version, mddev->minor_version);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			pr_warn("md: md_import_device returned %ld\n",
 				PTR_ERR(rdev));
-			return PTR_ERR(rdev);
-		}
-		if (!list_empty(&mddev->disks)) {
-			struct md_rdev *rdev0
+			वापस PTR_ERR(rdev);
+		पूर्ण
+		अगर (!list_empty(&mddev->disks)) अणु
+			काष्ठा md_rdev *rdev0
 				= list_entry(mddev->disks.next,
-					     struct md_rdev, same_set);
+					     काष्ठा md_rdev, same_set);
 			err = super_types[mddev->major_version]
 				.load_super(rdev, rdev0, mddev->minor_version);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				pr_warn("md: %s has different UUID to %s\n",
 					bdevname(rdev->bdev,b),
 					bdevname(rdev0->bdev,b2));
 				export_rdev(rdev);
-				return -EINVAL;
-			}
-		}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 		err = bind_rdev_to_array(rdev, mddev);
-		if (err)
+		अगर (err)
 			export_rdev(rdev);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/*
 	 * md_add_new_disk can be used once the array is assembled
-	 * to add "hot spares".  They must already have a superblock
+	 * to add "hot spares".  They must alपढ़ोy have a superblock
 	 * written
 	 */
-	if (mddev->pers) {
-		int err;
-		if (!mddev->pers->hot_add_disk) {
+	अगर (mddev->pers) अणु
+		पूर्णांक err;
+		अगर (!mddev->pers->hot_add_disk) अणु
 			pr_warn("%s: personality does not support diskops!\n",
 				mdname(mddev));
-			return -EINVAL;
-		}
-		if (mddev->persistent)
+			वापस -EINVAL;
+		पूर्ण
+		अगर (mddev->persistent)
 			rdev = md_import_device(dev, mddev->major_version,
 						mddev->minor_version);
-		else
+		अन्यथा
 			rdev = md_import_device(dev, -1, -1);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			pr_warn("md: md_import_device returned %ld\n",
 				PTR_ERR(rdev));
-			return PTR_ERR(rdev);
-		}
-		/* set saved_raid_disk if appropriate */
-		if (!mddev->persistent) {
-			if (info->state & (1<<MD_DISK_SYNC)  &&
-			    info->raid_disk < mddev->raid_disks) {
+			वापस PTR_ERR(rdev);
+		पूर्ण
+		/* set saved_raid_disk अगर appropriate */
+		अगर (!mddev->persistent) अणु
+			अगर (info->state & (1<<MD_DISK_SYNC)  &&
+			    info->raid_disk < mddev->raid_disks) अणु
 				rdev->raid_disk = info->raid_disk;
 				set_bit(In_sync, &rdev->flags);
-				clear_bit(Bitmap_sync, &rdev->flags);
-			} else
+				clear_bit(Biपंचांगap_sync, &rdev->flags);
+			पूर्ण अन्यथा
 				rdev->raid_disk = -1;
 			rdev->saved_raid_disk = rdev->raid_disk;
-		} else
+		पूर्ण अन्यथा
 			super_types[mddev->major_version].
 				validate_super(mddev, rdev);
-		if ((info->state & (1<<MD_DISK_SYNC)) &&
-		     rdev->raid_disk != info->raid_disk) {
-			/* This was a hot-add request, but events doesn't
+		अगर ((info->state & (1<<MD_DISK_SYNC)) &&
+		     rdev->raid_disk != info->raid_disk) अणु
+			/* This was a hot-add request, but events करोesn't
 			 * match, so reject it.
 			 */
 			export_rdev(rdev);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		clear_bit(In_sync, &rdev->flags); /* just to be sure */
-		if (info->state & (1<<MD_DISK_WRITEMOSTLY))
+		अगर (info->state & (1<<MD_DISK_WRITEMOSTLY))
 			set_bit(WriteMostly, &rdev->flags);
-		else
+		अन्यथा
 			clear_bit(WriteMostly, &rdev->flags);
-		if (info->state & (1<<MD_DISK_FAILFAST))
+		अगर (info->state & (1<<MD_DISK_FAILFAST))
 			set_bit(FailFast, &rdev->flags);
-		else
+		अन्यथा
 			clear_bit(FailFast, &rdev->flags);
 
-		if (info->state & (1<<MD_DISK_JOURNAL)) {
-			struct md_rdev *rdev2;
+		अगर (info->state & (1<<MD_DISK_JOURNAL)) अणु
+			काष्ठा md_rdev *rdev2;
 			bool has_journal = false;
 
 			/* make sure no existing journal disk */
-			rdev_for_each(rdev2, mddev) {
-				if (test_bit(Journal, &rdev2->flags)) {
+			rdev_क्रम_each(rdev2, mddev) अणु
+				अगर (test_bit(Journal, &rdev2->flags)) अणु
 					has_journal = true;
-					break;
-				}
-			}
-			if (has_journal || mddev->bitmap) {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (has_journal || mddev->biपंचांगap) अणु
 				export_rdev(rdev);
-				return -EBUSY;
-			}
+				वापस -EBUSY;
+			पूर्ण
 			set_bit(Journal, &rdev->flags);
-		}
+		पूर्ण
 		/*
 		 * check whether the device shows up in other nodes
 		 */
-		if (mddev_is_clustered(mddev)) {
-			if (info->state & (1 << MD_DISK_CANDIDATE))
+		अगर (mddev_is_clustered(mddev)) अणु
+			अगर (info->state & (1 << MD_DISK_CANDIDATE))
 				set_bit(Candidate, &rdev->flags);
-			else if (info->state & (1 << MD_DISK_CLUSTER_ADD)) {
+			अन्यथा अगर (info->state & (1 << MD_DISK_CLUSTER_ADD)) अणु
 				/* --add initiated by this node */
 				err = md_cluster_ops->add_new_disk(mddev, rdev);
-				if (err) {
+				अगर (err) अणु
 					export_rdev(rdev);
-					return err;
-				}
-			}
-		}
+					वापस err;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		rdev->raid_disk = -1;
 		err = bind_rdev_to_array(rdev, mddev);
 
-		if (err)
+		अगर (err)
 			export_rdev(rdev);
 
-		if (mddev_is_clustered(mddev)) {
-			if (info->state & (1 << MD_DISK_CANDIDATE)) {
-				if (!err) {
+		अगर (mddev_is_clustered(mddev)) अणु
+			अगर (info->state & (1 << MD_DISK_CANDIDATE)) अणु
+				अगर (!err) अणु
 					err = md_cluster_ops->new_disk_ack(mddev,
 						err == 0);
-					if (err)
+					अगर (err)
 						md_kick_rdev_from_array(rdev);
-				}
-			} else {
-				if (err)
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (err)
 					md_cluster_ops->add_new_disk_cancel(mddev);
-				else
+				अन्यथा
 					err = add_bound_rdev(rdev);
-			}
+			पूर्ण
 
-		} else if (!err)
+		पूर्ण अन्यथा अगर (!err)
 			err = add_bound_rdev(rdev);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* otherwise, md_add_new_disk is only allowed
-	 * for major_version==0 superblocks
+	 * क्रम major_version==0 superblocks
 	 */
-	if (mddev->major_version != 0) {
+	अगर (mddev->major_version != 0) अणु
 		pr_warn("%s: ADD_NEW_DISK not supported\n", mdname(mddev));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(info->state & (1<<MD_DISK_FAULTY))) {
-		int err;
+	अगर (!(info->state & (1<<MD_DISK_FAULTY))) अणु
+		पूर्णांक err;
 		rdev = md_import_device(dev, -1, 0);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			pr_warn("md: error, md_import_device() returned %ld\n",
 				PTR_ERR(rdev));
-			return PTR_ERR(rdev);
-		}
+			वापस PTR_ERR(rdev);
+		पूर्ण
 		rdev->desc_nr = info->number;
-		if (info->raid_disk < mddev->raid_disks)
+		अगर (info->raid_disk < mddev->raid_disks)
 			rdev->raid_disk = info->raid_disk;
-		else
+		अन्यथा
 			rdev->raid_disk = -1;
 
-		if (rdev->raid_disk < mddev->raid_disks)
-			if (info->state & (1<<MD_DISK_SYNC))
+		अगर (rdev->raid_disk < mddev->raid_disks)
+			अगर (info->state & (1<<MD_DISK_SYNC))
 				set_bit(In_sync, &rdev->flags);
 
-		if (info->state & (1<<MD_DISK_WRITEMOSTLY))
+		अगर (info->state & (1<<MD_DISK_WRITEMOSTLY))
 			set_bit(WriteMostly, &rdev->flags);
-		if (info->state & (1<<MD_DISK_FAILFAST))
+		अगर (info->state & (1<<MD_DISK_FAILFAST))
 			set_bit(FailFast, &rdev->flags);
 
-		if (!mddev->persistent) {
+		अगर (!mddev->persistent) अणु
 			pr_debug("md: nonpersistent superblock ...\n");
-			rdev->sb_start = i_size_read(rdev->bdev->bd_inode) / 512;
-		} else
+			rdev->sb_start = i_size_पढ़ो(rdev->bdev->bd_inode) / 512;
+		पूर्ण अन्यथा
 			rdev->sb_start = calc_dev_sboffset(rdev);
 		rdev->sectors = rdev->sb_start;
 
 		err = bind_rdev_to_array(rdev, mddev);
-		if (err) {
+		अगर (err) अणु
 			export_rdev(rdev);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hot_remove_disk(struct mddev *mddev, dev_t dev)
-{
-	char b[BDEVNAME_SIZE];
-	struct md_rdev *rdev;
+अटल पूर्णांक hot_हटाओ_disk(काष्ठा mddev *mddev, dev_t dev)
+अणु
+	अक्षर b[BDEVNAME_SIZE];
+	काष्ठा md_rdev *rdev;
 
-	if (!mddev->pers)
-		return -ENODEV;
+	अगर (!mddev->pers)
+		वापस -ENODEV;
 
 	rdev = find_rdev(mddev, dev);
-	if (!rdev)
-		return -ENXIO;
+	अगर (!rdev)
+		वापस -ENXIO;
 
-	if (rdev->raid_disk < 0)
-		goto kick_rdev;
+	अगर (rdev->raid_disk < 0)
+		जाओ kick_rdev;
 
 	clear_bit(Blocked, &rdev->flags);
-	remove_and_add_spares(mddev, rdev);
+	हटाओ_and_add_spares(mddev, rdev);
 
-	if (rdev->raid_disk >= 0)
-		goto busy;
+	अगर (rdev->raid_disk >= 0)
+		जाओ busy;
 
 kick_rdev:
-	if (mddev_is_clustered(mddev)) {
-		if (md_cluster_ops->remove_disk(mddev, rdev))
-			goto busy;
-	}
+	अगर (mddev_is_clustered(mddev)) अणु
+		अगर (md_cluster_ops->हटाओ_disk(mddev, rdev))
+			जाओ busy;
+	पूर्ण
 
 	md_kick_rdev_from_array(rdev);
 	set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
-	if (mddev->thread)
-		md_wakeup_thread(mddev->thread);
-	else
+	अगर (mddev->thपढ़ो)
+		md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	अन्यथा
 		md_update_sb(mddev, 1);
 	md_new_event(mddev);
 
-	return 0;
+	वापस 0;
 busy:
 	pr_debug("md: cannot remove active disk %s from %s ...\n",
 		 bdevname(rdev->bdev,b), mdname(mddev));
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int hot_add_disk(struct mddev *mddev, dev_t dev)
-{
-	char b[BDEVNAME_SIZE];
-	int err;
-	struct md_rdev *rdev;
+अटल पूर्णांक hot_add_disk(काष्ठा mddev *mddev, dev_t dev)
+अणु
+	अक्षर b[BDEVNAME_SIZE];
+	पूर्णांक err;
+	काष्ठा md_rdev *rdev;
 
-	if (!mddev->pers)
-		return -ENODEV;
+	अगर (!mddev->pers)
+		वापस -ENODEV;
 
-	if (mddev->major_version != 0) {
+	अगर (mddev->major_version != 0) अणु
 		pr_warn("%s: HOT_ADD may only be used with version-0 superblocks.\n",
 			mdname(mddev));
-		return -EINVAL;
-	}
-	if (!mddev->pers->hot_add_disk) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!mddev->pers->hot_add_disk) अणु
 		pr_warn("%s: personality does not support diskops!\n",
 			mdname(mddev));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rdev = md_import_device(dev, -1, 0);
-	if (IS_ERR(rdev)) {
+	अगर (IS_ERR(rdev)) अणु
 		pr_warn("md: error, md_import_device() returned %ld\n",
 			PTR_ERR(rdev));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (mddev->persistent)
+	अगर (mddev->persistent)
 		rdev->sb_start = calc_dev_sboffset(rdev);
-	else
-		rdev->sb_start = i_size_read(rdev->bdev->bd_inode) / 512;
+	अन्यथा
+		rdev->sb_start = i_size_पढ़ो(rdev->bdev->bd_inode) / 512;
 
 	rdev->sectors = rdev->sb_start;
 
-	if (test_bit(Faulty, &rdev->flags)) {
+	अगर (test_bit(Faulty, &rdev->flags)) अणु
 		pr_warn("md: can not hot-add faulty %s disk to %s!\n",
 			bdevname(rdev->bdev,b), mdname(mddev));
 		err = -EINVAL;
-		goto abort_export;
-	}
+		जाओ पात_export;
+	पूर्ण
 
 	clear_bit(In_sync, &rdev->flags);
 	rdev->desc_nr = -1;
 	rdev->saved_raid_disk = -1;
 	err = bind_rdev_to_array(rdev, mddev);
-	if (err)
-		goto abort_export;
+	अगर (err)
+		जाओ पात_export;
 
 	/*
 	 * The rest should better be atomic, we can have disk failures
-	 * noticed in interrupt contexts ...
+	 * noticed in पूर्णांकerrupt contexts ...
 	 */
 
 	rdev->raid_disk = -1;
 
 	set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
-	if (!mddev->thread)
+	अगर (!mddev->thपढ़ो)
 		md_update_sb(mddev, 1);
 	/*
 	 * Kick recovery, maybe this spare has to be added to the
 	 * array immediately.
 	 */
 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-	md_wakeup_thread(mddev->thread);
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
 	md_new_event(mddev);
-	return 0;
+	वापस 0;
 
-abort_export:
+पात_export:
 	export_rdev(rdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int set_bitmap_file(struct mddev *mddev, int fd)
-{
-	int err = 0;
+अटल पूर्णांक set_biपंचांगap_file(काष्ठा mddev *mddev, पूर्णांक fd)
+अणु
+	पूर्णांक err = 0;
 
-	if (mddev->pers) {
-		if (!mddev->pers->quiesce || !mddev->thread)
-			return -EBUSY;
-		if (mddev->recovery || mddev->sync_thread)
-			return -EBUSY;
-		/* we should be able to change the bitmap.. */
-	}
+	अगर (mddev->pers) अणु
+		अगर (!mddev->pers->quiesce || !mddev->thपढ़ो)
+			वापस -EBUSY;
+		अगर (mddev->recovery || mddev->sync_thपढ़ो)
+			वापस -EBUSY;
+		/* we should be able to change the biपंचांगap.. */
+	पूर्ण
 
-	if (fd >= 0) {
-		struct inode *inode;
-		struct file *f;
+	अगर (fd >= 0) अणु
+		काष्ठा inode *inode;
+		काष्ठा file *f;
 
-		if (mddev->bitmap || mddev->bitmap_info.file)
-			return -EEXIST; /* cannot add when bitmap is present */
+		अगर (mddev->biपंचांगap || mddev->biपंचांगap_info.file)
+			वापस -EEXIST; /* cannot add when biपंचांगap is present */
 		f = fget(fd);
 
-		if (f == NULL) {
+		अगर (f == शून्य) अणु
 			pr_warn("%s: error: failed to get bitmap file\n",
 				mdname(mddev));
-			return -EBADF;
-		}
+			वापस -EBADF;
+		पूर्ण
 
 		inode = f->f_mapping->host;
-		if (!S_ISREG(inode->i_mode)) {
+		अगर (!S_ISREG(inode->i_mode)) अणु
 			pr_warn("%s: error: bitmap file must be a regular file\n",
 				mdname(mddev));
 			err = -EBADF;
-		} else if (!(f->f_mode & FMODE_WRITE)) {
+		पूर्ण अन्यथा अगर (!(f->f_mode & FMODE_WRITE)) अणु
 			pr_warn("%s: error: bitmap file must open for write\n",
 				mdname(mddev));
 			err = -EBADF;
-		} else if (atomic_read(&inode->i_writecount) != 1) {
+		पूर्ण अन्यथा अगर (atomic_पढ़ो(&inode->i_ग_लिखोcount) != 1) अणु
 			pr_warn("%s: error: bitmap file is already in use\n",
 				mdname(mddev));
 			err = -EBUSY;
-		}
-		if (err) {
+		पूर्ण
+		अगर (err) अणु
 			fput(f);
-			return err;
-		}
-		mddev->bitmap_info.file = f;
-		mddev->bitmap_info.offset = 0; /* file overrides offset */
-	} else if (mddev->bitmap == NULL)
-		return -ENOENT; /* cannot remove what isn't there */
+			वापस err;
+		पूर्ण
+		mddev->biपंचांगap_info.file = f;
+		mddev->biपंचांगap_info.offset = 0; /* file overrides offset */
+	पूर्ण अन्यथा अगर (mddev->biपंचांगap == शून्य)
+		वापस -ENOENT; /* cannot हटाओ what isn't there */
 	err = 0;
-	if (mddev->pers) {
-		if (fd >= 0) {
-			struct bitmap *bitmap;
+	अगर (mddev->pers) अणु
+		अगर (fd >= 0) अणु
+			काष्ठा biपंचांगap *biपंचांगap;
 
-			bitmap = md_bitmap_create(mddev, -1);
+			biपंचांगap = md_biपंचांगap_create(mddev, -1);
 			mddev_suspend(mddev);
-			if (!IS_ERR(bitmap)) {
-				mddev->bitmap = bitmap;
-				err = md_bitmap_load(mddev);
-			} else
-				err = PTR_ERR(bitmap);
-			if (err) {
-				md_bitmap_destroy(mddev);
+			अगर (!IS_ERR(biपंचांगap)) अणु
+				mddev->biपंचांगap = biपंचांगap;
+				err = md_biपंचांगap_load(mddev);
+			पूर्ण अन्यथा
+				err = PTR_ERR(biपंचांगap);
+			अगर (err) अणु
+				md_biपंचांगap_destroy(mddev);
 				fd = -1;
-			}
+			पूर्ण
 			mddev_resume(mddev);
-		} else if (fd < 0) {
+		पूर्ण अन्यथा अगर (fd < 0) अणु
 			mddev_suspend(mddev);
-			md_bitmap_destroy(mddev);
+			md_biपंचांगap_destroy(mddev);
 			mddev_resume(mddev);
-		}
-	}
-	if (fd < 0) {
-		struct file *f = mddev->bitmap_info.file;
-		if (f) {
+		पूर्ण
+	पूर्ण
+	अगर (fd < 0) अणु
+		काष्ठा file *f = mddev->biपंचांगap_info.file;
+		अगर (f) अणु
 			spin_lock(&mddev->lock);
-			mddev->bitmap_info.file = NULL;
+			mddev->biपंचांगap_info.file = शून्य;
 			spin_unlock(&mddev->lock);
 			fput(f);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * md_set_array_info is used two different ways
+ * md_set_array_info is used two dअगरferent ways
  * The original usage is when creating a new array.
  * In this usage, raid_disks is > 0 and it together with
  *  level, size, not_persistent,layout,chunksize determine the
  *  shape of the array.
  *  This will always create an array with a type-0.90.0 superblock.
  * The newer usage is when assembling an array.
- *  In this case raid_disks will be 0, and the major_version field is
+ *  In this हाल raid_disks will be 0, and the major_version field is
  *  use to determine which style super-blocks are to be found on the devices.
- *  The minor and patch _version numbers are also kept incase the
- *  super_block handler wishes to interpret them.
+ *  The minor and patch _version numbers are also kept inहाल the
+ *  super_block handler wishes to पूर्णांकerpret them.
  */
-int md_set_array_info(struct mddev *mddev, struct mdu_array_info_s *info)
-{
-	if (info->raid_disks == 0) {
-		/* just setting version number for superblock loading */
-		if (info->major_version < 0 ||
+पूर्णांक md_set_array_info(काष्ठा mddev *mddev, काष्ठा mdu_array_info_s *info)
+अणु
+	अगर (info->raid_disks == 0) अणु
+		/* just setting version number क्रम superblock loading */
+		अगर (info->major_version < 0 ||
 		    info->major_version >= ARRAY_SIZE(super_types) ||
-		    super_types[info->major_version].name == NULL) {
-			/* maybe try to auto-load a module? */
+		    super_types[info->major_version].name == शून्य) अणु
+			/* maybe try to स्वतः-load a module? */
 			pr_warn("md: superblock version %d not known\n",
 				info->major_version);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		mddev->major_version = info->major_version;
 		mddev->minor_version = info->minor_version;
 		mddev->patch_version = info->patch_version;
 		mddev->persistent = !info->not_persistent;
-		/* ensure mddev_put doesn't delete this now that there
+		/* ensure mddev_put करोesn't delete this now that there
 		 * is some minimal configuration.
 		 */
-		mddev->ctime         = ktime_get_real_seconds();
-		return 0;
-	}
+		mddev->स_समय         = kसमय_get_real_seconds();
+		वापस 0;
+	पूर्ण
 	mddev->major_version = MD_MAJOR_VERSION;
 	mddev->minor_version = MD_MINOR_VERSION;
 	mddev->patch_version = MD_PATCHLEVEL_VERSION;
-	mddev->ctime         = ktime_get_real_seconds();
+	mddev->स_समय         = kसमय_get_real_seconds();
 
 	mddev->level         = info->level;
 	mddev->clevel[0]     = 0;
 	mddev->dev_sectors   = 2 * (sector_t)info->size;
 	mddev->raid_disks    = info->raid_disks;
-	/* don't set md_minor, it is determined by which /dev/md* was
-	 * openned
+	/* करोn't set md_minor, it is determined by which /dev/md* was
+	 * खोलोned
 	 */
-	if (info->state & (1<<MD_SB_CLEAN))
+	अगर (info->state & (1<<MD_SB_CLEAN))
 		mddev->recovery_cp = MaxSector;
-	else
+	अन्यथा
 		mddev->recovery_cp = 0;
 	mddev->persistent    = ! info->not_persistent;
-	mddev->external	     = 0;
+	mddev->बाह्यal	     = 0;
 
 	mddev->layout        = info->layout;
-	if (mddev->level == 0)
+	अगर (mddev->level == 0)
 		/* Cannot trust RAID0 layout info here */
 		mddev->layout = -1;
 	mddev->chunk_sectors = info->chunk_size >> 9;
 
-	if (mddev->persistent) {
+	अगर (mddev->persistent) अणु
 		mddev->max_disks = MD_SB_DISKS;
 		mddev->flags = 0;
 		mddev->sb_flags = 0;
-	}
+	पूर्ण
 	set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
 
-	mddev->bitmap_info.default_offset = MD_SB_BYTES >> 9;
-	mddev->bitmap_info.default_space = 64*2 - (MD_SB_BYTES >> 9);
-	mddev->bitmap_info.offset = 0;
+	mddev->biपंचांगap_info.शेष_offset = MD_SB_BYTES >> 9;
+	mddev->biपंचांगap_info.शेष_space = 64*2 - (MD_SB_BYTES >> 9);
+	mddev->biपंचांगap_info.offset = 0;
 
 	mddev->reshape_position = MaxSector;
 
 	/*
 	 * Generate a 128 bit UUID
 	 */
-	get_random_bytes(mddev->uuid, 16);
+	get_अक्रमom_bytes(mddev->uuid, 16);
 
 	mddev->new_level = mddev->level;
 	mddev->new_chunk_sectors = mddev->chunk_sectors;
@@ -7210,127 +7211,127 @@ int md_set_array_info(struct mddev *mddev, struct mdu_array_info_s *info)
 	mddev->delta_disks = 0;
 	mddev->reshape_backwards = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void md_set_array_sectors(struct mddev *mddev, sector_t array_sectors)
-{
-	lockdep_assert_held(&mddev->reconfig_mutex);
+व्योम md_set_array_sectors(काष्ठा mddev *mddev, sector_t array_sectors)
+अणु
+	lockdep_निश्चित_held(&mddev->reconfig_mutex);
 
-	if (mddev->external_size)
-		return;
+	अगर (mddev->बाह्यal_size)
+		वापस;
 
 	mddev->array_sectors = array_sectors;
-}
+पूर्ण
 EXPORT_SYMBOL(md_set_array_sectors);
 
-static int update_size(struct mddev *mddev, sector_t num_sectors)
-{
-	struct md_rdev *rdev;
-	int rv;
-	int fit = (num_sectors == 0);
+अटल पूर्णांक update_size(काष्ठा mddev *mddev, sector_t num_sectors)
+अणु
+	काष्ठा md_rdev *rdev;
+	पूर्णांक rv;
+	पूर्णांक fit = (num_sectors == 0);
 	sector_t old_dev_sectors = mddev->dev_sectors;
 
-	if (mddev->pers->resize == NULL)
-		return -EINVAL;
+	अगर (mddev->pers->resize == शून्य)
+		वापस -EINVAL;
 	/* The "num_sectors" is the number of sectors of each device that
-	 * is used.  This can only make sense for arrays with redundancy.
+	 * is used.  This can only make sense क्रम arrays with redundancy.
 	 * linear and raid0 always use whatever space is available. We can only
-	 * consider changing this number if no resync or reconstruction is
-	 * happening, and if the new size is acceptable. It must fit before the
-	 * sb_start or, if that is <data_offset, it must fit before the size
+	 * consider changing this number अगर no resync or reस्थिरruction is
+	 * happening, and अगर the new size is acceptable. It must fit beक्रमe the
+	 * sb_start or, अगर that is <data_offset, it must fit beक्रमe the size
 	 * of each device.  If num_sectors is zero, we find the largest size
 	 * that fits.
 	 */
-	if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
-	    mddev->sync_thread)
-		return -EBUSY;
-	if (mddev->ro)
-		return -EROFS;
+	अगर (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
+	    mddev->sync_thपढ़ो)
+		वापस -EBUSY;
+	अगर (mddev->ro)
+		वापस -EROFS;
 
-	rdev_for_each(rdev, mddev) {
+	rdev_क्रम_each(rdev, mddev) अणु
 		sector_t avail = rdev->sectors;
 
-		if (fit && (num_sectors == 0 || num_sectors > avail))
+		अगर (fit && (num_sectors == 0 || num_sectors > avail))
 			num_sectors = avail;
-		if (avail < num_sectors)
-			return -ENOSPC;
-	}
+		अगर (avail < num_sectors)
+			वापस -ENOSPC;
+	पूर्ण
 	rv = mddev->pers->resize(mddev, num_sectors);
-	if (!rv) {
-		if (mddev_is_clustered(mddev))
+	अगर (!rv) अणु
+		अगर (mddev_is_clustered(mddev))
 			md_cluster_ops->update_size(mddev, old_dev_sectors);
-		else if (mddev->queue) {
-			set_capacity_and_notify(mddev->gendisk,
+		अन्यथा अगर (mddev->queue) अणु
+			set_capacity_and_notअगरy(mddev->gendisk,
 						mddev->array_sectors);
-		}
-	}
-	return rv;
-}
+		पूर्ण
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-static int update_raid_disks(struct mddev *mddev, int raid_disks)
-{
-	int rv;
-	struct md_rdev *rdev;
+अटल पूर्णांक update_raid_disks(काष्ठा mddev *mddev, पूर्णांक raid_disks)
+अणु
+	पूर्णांक rv;
+	काष्ठा md_rdev *rdev;
 	/* change the number of raid disks */
-	if (mddev->pers->check_reshape == NULL)
-		return -EINVAL;
-	if (mddev->ro)
-		return -EROFS;
-	if (raid_disks <= 0 ||
+	अगर (mddev->pers->check_reshape == शून्य)
+		वापस -EINVAL;
+	अगर (mddev->ro)
+		वापस -EROFS;
+	अगर (raid_disks <= 0 ||
 	    (mddev->max_disks && raid_disks >= mddev->max_disks))
-		return -EINVAL;
-	if (mddev->sync_thread ||
+		वापस -EINVAL;
+	अगर (mddev->sync_thपढ़ो ||
 	    test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
 	    test_bit(MD_RESYNCING_REMOTE, &mddev->recovery) ||
 	    mddev->reshape_position != MaxSector)
-		return -EBUSY;
+		वापस -EBUSY;
 
-	rdev_for_each(rdev, mddev) {
-		if (mddev->raid_disks < raid_disks &&
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (mddev->raid_disks < raid_disks &&
 		    rdev->data_offset < rdev->new_data_offset)
-			return -EINVAL;
-		if (mddev->raid_disks > raid_disks &&
+			वापस -EINVAL;
+		अगर (mddev->raid_disks > raid_disks &&
 		    rdev->data_offset > rdev->new_data_offset)
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
 	mddev->delta_disks = raid_disks - mddev->raid_disks;
-	if (mddev->delta_disks < 0)
+	अगर (mddev->delta_disks < 0)
 		mddev->reshape_backwards = 1;
-	else if (mddev->delta_disks > 0)
+	अन्यथा अगर (mddev->delta_disks > 0)
 		mddev->reshape_backwards = 0;
 
 	rv = mddev->pers->check_reshape(mddev);
-	if (rv < 0) {
+	अगर (rv < 0) अणु
 		mddev->delta_disks = 0;
 		mddev->reshape_backwards = 0;
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
 /*
  * update_array_info is used to change the configuration of an
  * on-line array.
- * The version, ctime,level,size,raid_disks,not_persistent, layout,chunk_size
+ * The version, स_समय,level,size,raid_disks,not_persistent, layout,chunk_size
  * fields in the info are checked against the array.
- * Any differences that cannot be handled will cause an error.
- * Normally, only one change can be managed at a time.
+ * Any dअगरferences that cannot be handled will cause an error.
+ * Normally, only one change can be managed at a समय.
  */
-static int update_array_info(struct mddev *mddev, mdu_array_info_t *info)
-{
-	int rv = 0;
-	int cnt = 0;
-	int state = 0;
+अटल पूर्णांक update_array_info(काष्ठा mddev *mddev, mdu_array_info_t *info)
+अणु
+	पूर्णांक rv = 0;
+	पूर्णांक cnt = 0;
+	पूर्णांक state = 0;
 
 	/* calculate expected state,ignoring low bits */
-	if (mddev->bitmap && mddev->bitmap_info.offset)
+	अगर (mddev->biपंचांगap && mddev->biपंचांगap_info.offset)
 		state |= (1 << MD_SB_BITMAP_PRESENT);
 
-	if (mddev->major_version != info->major_version ||
+	अगर (mddev->major_version != info->major_version ||
 	    mddev->minor_version != info->minor_version ||
 /*	    mddev->patch_version != info->patch_version || */
-	    mddev->ctime         != info->ctime         ||
+	    mddev->स_समय         != info->स_समय         ||
 	    mddev->level         != info->level         ||
 /*	    mddev->layout        != info->layout        || */
 	    mddev->persistent	 != !info->not_persistent ||
@@ -7338,780 +7339,780 @@ static int update_array_info(struct mddev *mddev, mdu_array_info_t *info)
 	    /* ignore bottom 8 bits of state, and allow SB_BITMAP_PRESENT to change */
 	    ((state^info->state) & 0xfffffe00)
 		)
-		return -EINVAL;
+		वापस -EINVAL;
 	/* Check there is only one change */
-	if (info->size >= 0 && mddev->dev_sectors / 2 != info->size)
+	अगर (info->size >= 0 && mddev->dev_sectors / 2 != info->size)
 		cnt++;
-	if (mddev->raid_disks != info->raid_disks)
+	अगर (mddev->raid_disks != info->raid_disks)
 		cnt++;
-	if (mddev->layout != info->layout)
+	अगर (mddev->layout != info->layout)
 		cnt++;
-	if ((state ^ info->state) & (1<<MD_SB_BITMAP_PRESENT))
+	अगर ((state ^ info->state) & (1<<MD_SB_BITMAP_PRESENT))
 		cnt++;
-	if (cnt == 0)
-		return 0;
-	if (cnt > 1)
-		return -EINVAL;
+	अगर (cnt == 0)
+		वापस 0;
+	अगर (cnt > 1)
+		वापस -EINVAL;
 
-	if (mddev->layout != info->layout) {
+	अगर (mddev->layout != info->layout) अणु
 		/* Change layout
-		 * we don't need to do anything at the md level, the
+		 * we करोn't need to करो anything at the md level, the
 		 * personality will take care of it all.
 		 */
-		if (mddev->pers->check_reshape == NULL)
-			return -EINVAL;
-		else {
+		अगर (mddev->pers->check_reshape == शून्य)
+			वापस -EINVAL;
+		अन्यथा अणु
 			mddev->new_layout = info->layout;
 			rv = mddev->pers->check_reshape(mddev);
-			if (rv)
+			अगर (rv)
 				mddev->new_layout = mddev->layout;
-			return rv;
-		}
-	}
-	if (info->size >= 0 && mddev->dev_sectors / 2 != info->size)
+			वापस rv;
+		पूर्ण
+	पूर्ण
+	अगर (info->size >= 0 && mddev->dev_sectors / 2 != info->size)
 		rv = update_size(mddev, (sector_t)info->size * 2);
 
-	if (mddev->raid_disks    != info->raid_disks)
+	अगर (mddev->raid_disks    != info->raid_disks)
 		rv = update_raid_disks(mddev, info->raid_disks);
 
-	if ((state ^ info->state) & (1<<MD_SB_BITMAP_PRESENT)) {
-		if (mddev->pers->quiesce == NULL || mddev->thread == NULL) {
+	अगर ((state ^ info->state) & (1<<MD_SB_BITMAP_PRESENT)) अणु
+		अगर (mddev->pers->quiesce == शून्य || mddev->thपढ़ो == शून्य) अणु
 			rv = -EINVAL;
-			goto err;
-		}
-		if (mddev->recovery || mddev->sync_thread) {
+			जाओ err;
+		पूर्ण
+		अगर (mddev->recovery || mddev->sync_thपढ़ो) अणु
 			rv = -EBUSY;
-			goto err;
-		}
-		if (info->state & (1<<MD_SB_BITMAP_PRESENT)) {
-			struct bitmap *bitmap;
-			/* add the bitmap */
-			if (mddev->bitmap) {
+			जाओ err;
+		पूर्ण
+		अगर (info->state & (1<<MD_SB_BITMAP_PRESENT)) अणु
+			काष्ठा biपंचांगap *biपंचांगap;
+			/* add the biपंचांगap */
+			अगर (mddev->biपंचांगap) अणु
 				rv = -EEXIST;
-				goto err;
-			}
-			if (mddev->bitmap_info.default_offset == 0) {
+				जाओ err;
+			पूर्ण
+			अगर (mddev->biपंचांगap_info.शेष_offset == 0) अणु
 				rv = -EINVAL;
-				goto err;
-			}
-			mddev->bitmap_info.offset =
-				mddev->bitmap_info.default_offset;
-			mddev->bitmap_info.space =
-				mddev->bitmap_info.default_space;
-			bitmap = md_bitmap_create(mddev, -1);
+				जाओ err;
+			पूर्ण
+			mddev->biपंचांगap_info.offset =
+				mddev->biपंचांगap_info.शेष_offset;
+			mddev->biपंचांगap_info.space =
+				mddev->biपंचांगap_info.शेष_space;
+			biपंचांगap = md_biपंचांगap_create(mddev, -1);
 			mddev_suspend(mddev);
-			if (!IS_ERR(bitmap)) {
-				mddev->bitmap = bitmap;
-				rv = md_bitmap_load(mddev);
-			} else
-				rv = PTR_ERR(bitmap);
-			if (rv)
-				md_bitmap_destroy(mddev);
+			अगर (!IS_ERR(biपंचांगap)) अणु
+				mddev->biपंचांगap = biपंचांगap;
+				rv = md_biपंचांगap_load(mddev);
+			पूर्ण अन्यथा
+				rv = PTR_ERR(biपंचांगap);
+			अगर (rv)
+				md_biपंचांगap_destroy(mddev);
 			mddev_resume(mddev);
-		} else {
-			/* remove the bitmap */
-			if (!mddev->bitmap) {
+		पूर्ण अन्यथा अणु
+			/* हटाओ the biपंचांगap */
+			अगर (!mddev->biपंचांगap) अणु
 				rv = -ENOENT;
-				goto err;
-			}
-			if (mddev->bitmap->storage.file) {
+				जाओ err;
+			पूर्ण
+			अगर (mddev->biपंचांगap->storage.file) अणु
 				rv = -EINVAL;
-				goto err;
-			}
-			if (mddev->bitmap_info.nodes) {
-				/* hold PW on all the bitmap lock */
-				if (md_cluster_ops->lock_all_bitmaps(mddev) <= 0) {
+				जाओ err;
+			पूर्ण
+			अगर (mddev->biपंचांगap_info.nodes) अणु
+				/* hold PW on all the biपंचांगap lock */
+				अगर (md_cluster_ops->lock_all_biपंचांगaps(mddev) <= 0) अणु
 					pr_warn("md: can't change bitmap to none since the array is in use by more than one node\n");
 					rv = -EPERM;
-					md_cluster_ops->unlock_all_bitmaps(mddev);
-					goto err;
-				}
+					md_cluster_ops->unlock_all_biपंचांगaps(mddev);
+					जाओ err;
+				पूर्ण
 
-				mddev->bitmap_info.nodes = 0;
+				mddev->biपंचांगap_info.nodes = 0;
 				md_cluster_ops->leave(mddev);
 				module_put(md_cluster_mod);
 				mddev->safemode_delay = DEFAULT_SAFEMODE_DELAY;
-			}
+			पूर्ण
 			mddev_suspend(mddev);
-			md_bitmap_destroy(mddev);
+			md_biपंचांगap_destroy(mddev);
 			mddev_resume(mddev);
-			mddev->bitmap_info.offset = 0;
-		}
-	}
+			mddev->biपंचांगap_info.offset = 0;
+		पूर्ण
+	पूर्ण
 	md_update_sb(mddev, 1);
-	return rv;
+	वापस rv;
 err:
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int set_disk_faulty(struct mddev *mddev, dev_t dev)
-{
-	struct md_rdev *rdev;
-	int err = 0;
+अटल पूर्णांक set_disk_faulty(काष्ठा mddev *mddev, dev_t dev)
+अणु
+	काष्ठा md_rdev *rdev;
+	पूर्णांक err = 0;
 
-	if (mddev->pers == NULL)
-		return -ENODEV;
+	अगर (mddev->pers == शून्य)
+		वापस -ENODEV;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	rdev = md_find_rdev_rcu(mddev, dev);
-	if (!rdev)
+	अगर (!rdev)
 		err =  -ENODEV;
-	else {
+	अन्यथा अणु
 		md_error(mddev, rdev);
-		if (!test_bit(Faulty, &rdev->flags))
+		अगर (!test_bit(Faulty, &rdev->flags))
 			err = -EBUSY;
-	}
-	rcu_read_unlock();
-	return err;
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 
 /*
  * We have a problem here : there is no easy way to give a CHS
- * virtual geometry. We currently pretend that we have a 2 heads
+ * भव geometry. We currently pretend that we have a 2 heads
  * 4 sectors (with a BIG number of cylinders...). This drives
- * dosfs just mad... ;-)
+ * करोsfs just mad... ;-)
  */
-static int md_getgeo(struct block_device *bdev, struct hd_geometry *geo)
-{
-	struct mddev *mddev = bdev->bd_disk->private_data;
+अटल पूर्णांक md_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
+अणु
+	काष्ठा mddev *mddev = bdev->bd_disk->निजी_data;
 
 	geo->heads = 2;
 	geo->sectors = 4;
 	geo->cylinders = mddev->array_sectors / 8;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool md_ioctl_valid(unsigned int cmd)
-{
-	switch (cmd) {
-	case ADD_NEW_DISK:
-	case GET_ARRAY_INFO:
-	case GET_BITMAP_FILE:
-	case GET_DISK_INFO:
-	case HOT_ADD_DISK:
-	case HOT_REMOVE_DISK:
-	case RAID_VERSION:
-	case RESTART_ARRAY_RW:
-	case RUN_ARRAY:
-	case SET_ARRAY_INFO:
-	case SET_BITMAP_FILE:
-	case SET_DISK_FAULTY:
-	case STOP_ARRAY:
-	case STOP_ARRAY_RO:
-	case CLUSTERED_DISK_NACK:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल अंतरभूत bool md_ioctl_valid(अचिन्हित पूर्णांक cmd)
+अणु
+	चयन (cmd) अणु
+	हाल ADD_NEW_DISK:
+	हाल GET_ARRAY_INFO:
+	हाल GET_BITMAP_खाता:
+	हाल GET_DISK_INFO:
+	हाल HOT_ADD_DISK:
+	हाल HOT_REMOVE_DISK:
+	हाल RAID_VERSION:
+	हाल RESTART_ARRAY_RW:
+	हाल RUN_ARRAY:
+	हाल SET_ARRAY_INFO:
+	हाल SET_BITMAP_खाता:
+	हाल SET_DISK_FAULTY:
+	हाल STOP_ARRAY:
+	हाल STOP_ARRAY_RO:
+	हाल CLUSTERED_DISK_NACK:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int md_ioctl(struct block_device *bdev, fmode_t mode,
-			unsigned int cmd, unsigned long arg)
-{
-	int err = 0;
-	void __user *argp = (void __user *)arg;
-	struct mddev *mddev = NULL;
+अटल पूर्णांक md_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक err = 0;
+	व्योम __user *argp = (व्योम __user *)arg;
+	काष्ठा mddev *mddev = शून्य;
 	bool did_set_md_closing = false;
 
-	if (!md_ioctl_valid(cmd))
-		return -ENOTTY;
+	अगर (!md_ioctl_valid(cmd))
+		वापस -ENOTTY;
 
-	switch (cmd) {
-	case RAID_VERSION:
-	case GET_ARRAY_INFO:
-	case GET_DISK_INFO:
-		break;
-	default:
-		if (!capable(CAP_SYS_ADMIN))
-			return -EACCES;
-	}
+	चयन (cmd) अणु
+	हाल RAID_VERSION:
+	हाल GET_ARRAY_INFO:
+	हाल GET_DISK_INFO:
+		अवरोध;
+	शेष:
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस -EACCES;
+	पूर्ण
 
 	/*
 	 * Commands dealing with the RAID driver but not any
 	 * particular array:
 	 */
-	switch (cmd) {
-	case RAID_VERSION:
+	चयन (cmd) अणु
+	हाल RAID_VERSION:
 		err = get_version(argp);
-		goto out;
-	default:;
-	}
+		जाओ out;
+	शेष:;
+	पूर्ण
 
 	/*
 	 * Commands creating/starting a new array:
 	 */
 
-	mddev = bdev->bd_disk->private_data;
+	mddev = bdev->bd_disk->निजी_data;
 
-	if (!mddev) {
+	अगर (!mddev) अणु
 		BUG();
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Some actions do not requires the mutex */
-	switch (cmd) {
-	case GET_ARRAY_INFO:
-		if (!mddev->raid_disks && !mddev->external)
+	/* Some actions करो not requires the mutex */
+	चयन (cmd) अणु
+	हाल GET_ARRAY_INFO:
+		अगर (!mddev->raid_disks && !mddev->बाह्यal)
 			err = -ENODEV;
-		else
+		अन्यथा
 			err = get_array_info(mddev, argp);
-		goto out;
+		जाओ out;
 
-	case GET_DISK_INFO:
-		if (!mddev->raid_disks && !mddev->external)
+	हाल GET_DISK_INFO:
+		अगर (!mddev->raid_disks && !mddev->बाह्यal)
 			err = -ENODEV;
-		else
+		अन्यथा
 			err = get_disk_info(mddev, argp);
-		goto out;
+		जाओ out;
 
-	case SET_DISK_FAULTY:
+	हाल SET_DISK_FAULTY:
 		err = set_disk_faulty(mddev, new_decode_dev(arg));
-		goto out;
+		जाओ out;
 
-	case GET_BITMAP_FILE:
-		err = get_bitmap_file(mddev, argp);
-		goto out;
+	हाल GET_BITMAP_खाता:
+		err = get_biपंचांगap_file(mddev, argp);
+		जाओ out;
 
-	}
+	पूर्ण
 
-	if (cmd == ADD_NEW_DISK || cmd == HOT_ADD_DISK)
+	अगर (cmd == ADD_NEW_DISK || cmd == HOT_ADD_DISK)
 		flush_rdev_wq(mddev);
 
-	if (cmd == HOT_REMOVE_DISK)
-		/* need to ensure recovery thread has run */
-		wait_event_interruptible_timeout(mddev->sb_wait,
+	अगर (cmd == HOT_REMOVE_DISK)
+		/* need to ensure recovery thपढ़ो has run */
+		रुको_event_पूर्णांकerruptible_समयout(mddev->sb_रुको,
 						 !test_bit(MD_RECOVERY_NEEDED,
 							   &mddev->recovery),
-						 msecs_to_jiffies(5000));
-	if (cmd == STOP_ARRAY || cmd == STOP_ARRAY_RO) {
-		/* Need to flush page cache, and ensure no-one else opens
-		 * and writes
+						 msecs_to_jअगरfies(5000));
+	अगर (cmd == STOP_ARRAY || cmd == STOP_ARRAY_RO) अणु
+		/* Need to flush page cache, and ensure no-one अन्यथा खोलोs
+		 * and ग_लिखोs
 		 */
-		mutex_lock(&mddev->open_mutex);
-		if (mddev->pers && atomic_read(&mddev->openers) > 1) {
-			mutex_unlock(&mddev->open_mutex);
+		mutex_lock(&mddev->खोलो_mutex);
+		अगर (mddev->pers && atomic_पढ़ो(&mddev->खोलोers) > 1) अणु
+			mutex_unlock(&mddev->खोलो_mutex);
 			err = -EBUSY;
-			goto out;
-		}
-		if (test_and_set_bit(MD_CLOSING, &mddev->flags)) {
-			mutex_unlock(&mddev->open_mutex);
+			जाओ out;
+		पूर्ण
+		अगर (test_and_set_bit(MD_CLOSING, &mddev->flags)) अणु
+			mutex_unlock(&mddev->खोलो_mutex);
 			err = -EBUSY;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		did_set_md_closing = true;
-		mutex_unlock(&mddev->open_mutex);
+		mutex_unlock(&mddev->खोलो_mutex);
 		sync_blockdev(bdev);
-	}
+	पूर्ण
 	err = mddev_lock(mddev);
-	if (err) {
+	अगर (err) अणु
 		pr_debug("md: ioctl lock interrupted, reason %d, cmd %d\n",
 			 err, cmd);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (cmd == SET_ARRAY_INFO) {
+	अगर (cmd == SET_ARRAY_INFO) अणु
 		mdu_array_info_t info;
-		if (!arg)
-			memset(&info, 0, sizeof(info));
-		else if (copy_from_user(&info, argp, sizeof(info))) {
+		अगर (!arg)
+			स_रखो(&info, 0, माप(info));
+		अन्यथा अगर (copy_from_user(&info, argp, माप(info))) अणु
 			err = -EFAULT;
-			goto unlock;
-		}
-		if (mddev->pers) {
+			जाओ unlock;
+		पूर्ण
+		अगर (mddev->pers) अणु
 			err = update_array_info(mddev, &info);
-			if (err) {
+			अगर (err) अणु
 				pr_warn("md: couldn't update array info. %d\n", err);
-				goto unlock;
-			}
-			goto unlock;
-		}
-		if (!list_empty(&mddev->disks)) {
+				जाओ unlock;
+			पूर्ण
+			जाओ unlock;
+		पूर्ण
+		अगर (!list_empty(&mddev->disks)) अणु
 			pr_warn("md: array %s already has disks!\n", mdname(mddev));
 			err = -EBUSY;
-			goto unlock;
-		}
-		if (mddev->raid_disks) {
+			जाओ unlock;
+		पूर्ण
+		अगर (mddev->raid_disks) अणु
 			pr_warn("md: array %s already initialised!\n", mdname(mddev));
 			err = -EBUSY;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 		err = md_set_array_info(mddev, &info);
-		if (err) {
+		अगर (err) अणु
 			pr_warn("md: couldn't set array info. %d\n", err);
-			goto unlock;
-		}
-		goto unlock;
-	}
+			जाओ unlock;
+		पूर्ण
+		जाओ unlock;
+	पूर्ण
 
 	/*
 	 * Commands querying/configuring an existing array:
 	 */
-	/* if we are not initialised yet, only ADD_NEW_DISK, STOP_ARRAY,
-	 * RUN_ARRAY, and GET_ and SET_BITMAP_FILE are allowed */
-	if ((!mddev->raid_disks && !mddev->external)
+	/* अगर we are not initialised yet, only ADD_NEW_DISK, STOP_ARRAY,
+	 * RUN_ARRAY, and GET_ and SET_BITMAP_खाता are allowed */
+	अगर ((!mddev->raid_disks && !mddev->बाह्यal)
 	    && cmd != ADD_NEW_DISK && cmd != STOP_ARRAY
-	    && cmd != RUN_ARRAY && cmd != SET_BITMAP_FILE
-	    && cmd != GET_BITMAP_FILE) {
+	    && cmd != RUN_ARRAY && cmd != SET_BITMAP_खाता
+	    && cmd != GET_BITMAP_खाता) अणु
 		err = -ENODEV;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	/*
-	 * Commands even a read-only array can execute:
+	 * Commands even a पढ़ो-only array can execute:
 	 */
-	switch (cmd) {
-	case RESTART_ARRAY_RW:
+	चयन (cmd) अणु
+	हाल RESTART_ARRAY_RW:
 		err = restart_array(mddev);
-		goto unlock;
+		जाओ unlock;
 
-	case STOP_ARRAY:
-		err = do_md_stop(mddev, 0, bdev);
-		goto unlock;
+	हाल STOP_ARRAY:
+		err = करो_md_stop(mddev, 0, bdev);
+		जाओ unlock;
 
-	case STOP_ARRAY_RO:
-		err = md_set_readonly(mddev, bdev);
-		goto unlock;
+	हाल STOP_ARRAY_RO:
+		err = md_set_पढ़ोonly(mddev, bdev);
+		जाओ unlock;
 
-	case HOT_REMOVE_DISK:
-		err = hot_remove_disk(mddev, new_decode_dev(arg));
-		goto unlock;
+	हाल HOT_REMOVE_DISK:
+		err = hot_हटाओ_disk(mddev, new_decode_dev(arg));
+		जाओ unlock;
 
-	case ADD_NEW_DISK:
-		/* We can support ADD_NEW_DISK on read-only arrays
-		 * only if we are re-adding a preexisting device.
+	हाल ADD_NEW_DISK:
+		/* We can support ADD_NEW_DISK on पढ़ो-only arrays
+		 * only अगर we are re-adding a preexisting device.
 		 * So require mddev->pers and MD_DISK_SYNC.
 		 */
-		if (mddev->pers) {
+		अगर (mddev->pers) अणु
 			mdu_disk_info_t info;
-			if (copy_from_user(&info, argp, sizeof(info)))
+			अगर (copy_from_user(&info, argp, माप(info)))
 				err = -EFAULT;
-			else if (!(info.state & (1<<MD_DISK_SYNC)))
-				/* Need to clear read-only for this */
-				break;
-			else
+			अन्यथा अगर (!(info.state & (1<<MD_DISK_SYNC)))
+				/* Need to clear पढ़ो-only क्रम this */
+				अवरोध;
+			अन्यथा
 				err = md_add_new_disk(mddev, &info);
-			goto unlock;
-		}
-		break;
-	}
+			जाओ unlock;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * The remaining ioctls are changing the state of the
-	 * superblock, so we do not allow them on read-only arrays.
+	 * The reमुख्यing ioctls are changing the state of the
+	 * superblock, so we करो not allow them on पढ़ो-only arrays.
 	 */
-	if (mddev->ro && mddev->pers) {
-		if (mddev->ro == 2) {
+	अगर (mddev->ro && mddev->pers) अणु
+		अगर (mddev->ro == 2) अणु
 			mddev->ro = 0;
-			sysfs_notify_dirent_safe(mddev->sysfs_state);
+			sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
 			set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-			/* mddev_unlock will wake thread */
-			/* If a device failed while we were read-only, we
+			/* mddev_unlock will wake thपढ़ो */
+			/* If a device failed जबतक we were पढ़ो-only, we
 			 * need to make sure the metadata is updated now.
 			 */
-			if (test_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags)) {
+			अगर (test_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags)) अणु
 				mddev_unlock(mddev);
-				wait_event(mddev->sb_wait,
+				रुको_event(mddev->sb_रुको,
 					   !test_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags) &&
 					   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
-				mddev_lock_nointr(mddev);
-			}
-		} else {
+				mddev_lock_noपूर्णांकr(mddev);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			err = -EROFS;
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	switch (cmd) {
-	case ADD_NEW_DISK:
-	{
+	चयन (cmd) अणु
+	हाल ADD_NEW_DISK:
+	अणु
 		mdu_disk_info_t info;
-		if (copy_from_user(&info, argp, sizeof(info)))
+		अगर (copy_from_user(&info, argp, माप(info)))
 			err = -EFAULT;
-		else
+		अन्यथा
 			err = md_add_new_disk(mddev, &info);
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	case CLUSTERED_DISK_NACK:
-		if (mddev_is_clustered(mddev))
+	हाल CLUSTERED_DISK_NACK:
+		अगर (mddev_is_clustered(mddev))
 			md_cluster_ops->new_disk_ack(mddev, false);
-		else
+		अन्यथा
 			err = -EINVAL;
-		goto unlock;
+		जाओ unlock;
 
-	case HOT_ADD_DISK:
+	हाल HOT_ADD_DISK:
 		err = hot_add_disk(mddev, new_decode_dev(arg));
-		goto unlock;
+		जाओ unlock;
 
-	case RUN_ARRAY:
-		err = do_md_run(mddev);
-		goto unlock;
+	हाल RUN_ARRAY:
+		err = करो_md_run(mddev);
+		जाओ unlock;
 
-	case SET_BITMAP_FILE:
-		err = set_bitmap_file(mddev, (int)arg);
-		goto unlock;
+	हाल SET_BITMAP_खाता:
+		err = set_biपंचांगap_file(mddev, (पूर्णांक)arg);
+		जाओ unlock;
 
-	default:
+	शेष:
 		err = -EINVAL;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 unlock:
-	if (mddev->hold_active == UNTIL_IOCTL &&
+	अगर (mddev->hold_active == UNTIL_IOCTL &&
 	    err != -EINVAL)
 		mddev->hold_active = 0;
 	mddev_unlock(mddev);
 out:
-	if(did_set_md_closing)
+	अगर(did_set_md_closing)
 		clear_bit(MD_CLOSING, &mddev->flags);
-	return err;
-}
-#ifdef CONFIG_COMPAT
-static int md_compat_ioctl(struct block_device *bdev, fmode_t mode,
-		    unsigned int cmd, unsigned long arg)
-{
-	switch (cmd) {
-	case HOT_REMOVE_DISK:
-	case HOT_ADD_DISK:
-	case SET_DISK_FAULTY:
-	case SET_BITMAP_FILE:
-		/* These take in integer arg, do not convert */
-		break;
-	default:
-		arg = (unsigned long)compat_ptr(arg);
-		break;
-	}
+	वापस err;
+पूर्ण
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक md_compat_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+		    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल HOT_REMOVE_DISK:
+	हाल HOT_ADD_DISK:
+	हाल SET_DISK_FAULTY:
+	हाल SET_BITMAP_खाता:
+		/* These take in पूर्णांकeger arg, करो not convert */
+		अवरोध;
+	शेष:
+		arg = (अचिन्हित दीर्घ)compat_ptr(arg);
+		अवरोध;
+	पूर्ण
 
-	return md_ioctl(bdev, mode, cmd, arg);
-}
-#endif /* CONFIG_COMPAT */
+	वापस md_ioctl(bdev, mode, cmd, arg);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
-static int md_set_read_only(struct block_device *bdev, bool ro)
-{
-	struct mddev *mddev = bdev->bd_disk->private_data;
-	int err;
+अटल पूर्णांक md_set_पढ़ो_only(काष्ठा block_device *bdev, bool ro)
+अणु
+	काष्ठा mddev *mddev = bdev->bd_disk->निजी_data;
+	पूर्णांक err;
 
 	err = mddev_lock(mddev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!mddev->raid_disks && !mddev->external) {
+	अगर (!mddev->raid_disks && !mddev->बाह्यal) अणु
 		err = -ENODEV;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
-	 * Transitioning to read-auto need only happen for arrays that call
-	 * md_write_start and which are not ready for writes yet.
+	 * Transitioning to पढ़ो-स्वतः need only happen क्रम arrays that call
+	 * md_ग_लिखो_start and which are not पढ़ोy क्रम ग_लिखोs yet.
 	 */
-	if (!ro && mddev->ro == 1 && mddev->pers) {
+	अगर (!ro && mddev->ro == 1 && mddev->pers) अणु
 		err = restart_array(mddev);
-		if (err)
-			goto out_unlock;
+		अगर (err)
+			जाओ out_unlock;
 		mddev->ro = 2;
-	}
+	पूर्ण
 
 out_unlock:
 	mddev_unlock(mddev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int md_open(struct block_device *bdev, fmode_t mode)
-{
+अटल पूर्णांक md_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
 	/*
-	 * Succeed if we can lock the mddev, which confirms that
+	 * Succeed अगर we can lock the mddev, which confirms that
 	 * it isn't being stopped right now.
 	 */
-	struct mddev *mddev = mddev_find(bdev->bd_dev);
-	int err;
+	काष्ठा mddev *mddev = mddev_find(bdev->bd_dev);
+	पूर्णांक err;
 
-	if (!mddev)
-		return -ENODEV;
+	अगर (!mddev)
+		वापस -ENODEV;
 
-	if (mddev->gendisk != bdev->bd_disk) {
+	अगर (mddev->gendisk != bdev->bd_disk) अणु
 		/* we are racing with mddev_put which is discarding this
 		 * bd_disk.
 		 */
 		mddev_put(mddev);
 		/* Wait until bdev->bd_disk is definitely gone */
-		if (work_pending(&mddev->del_work))
+		अगर (work_pending(&mddev->del_work))
 			flush_workqueue(md_misc_wq);
-		return -EBUSY;
-	}
-	BUG_ON(mddev != bdev->bd_disk->private_data);
+		वापस -EBUSY;
+	पूर्ण
+	BUG_ON(mddev != bdev->bd_disk->निजी_data);
 
-	if ((err = mutex_lock_interruptible(&mddev->open_mutex)))
-		goto out;
+	अगर ((err = mutex_lock_पूर्णांकerruptible(&mddev->खोलो_mutex)))
+		जाओ out;
 
-	if (test_bit(MD_CLOSING, &mddev->flags)) {
-		mutex_unlock(&mddev->open_mutex);
+	अगर (test_bit(MD_CLOSING, &mddev->flags)) अणु
+		mutex_unlock(&mddev->खोलो_mutex);
 		err = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = 0;
-	atomic_inc(&mddev->openers);
-	mutex_unlock(&mddev->open_mutex);
+	atomic_inc(&mddev->खोलोers);
+	mutex_unlock(&mddev->खोलो_mutex);
 
 	bdev_check_media_change(bdev);
  out:
-	if (err)
+	अगर (err)
 		mddev_put(mddev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void md_release(struct gendisk *disk, fmode_t mode)
-{
-	struct mddev *mddev = disk->private_data;
+अटल व्योम md_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
+अणु
+	काष्ठा mddev *mddev = disk->निजी_data;
 
 	BUG_ON(!mddev);
-	atomic_dec(&mddev->openers);
+	atomic_dec(&mddev->खोलोers);
 	mddev_put(mddev);
-}
+पूर्ण
 
-static unsigned int md_check_events(struct gendisk *disk, unsigned int clearing)
-{
-	struct mddev *mddev = disk->private_data;
-	unsigned int ret = 0;
+अटल अचिन्हित पूर्णांक md_check_events(काष्ठा gendisk *disk, अचिन्हित पूर्णांक clearing)
+अणु
+	काष्ठा mddev *mddev = disk->निजी_data;
+	अचिन्हित पूर्णांक ret = 0;
 
-	if (mddev->changed)
+	अगर (mddev->changed)
 		ret = DISK_EVENT_MEDIA_CHANGE;
 	mddev->changed = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct block_device_operations md_fops =
-{
+स्थिर काष्ठा block_device_operations md_fops =
+अणु
 	.owner		= THIS_MODULE,
 	.submit_bio	= md_submit_bio,
-	.open		= md_open,
+	.खोलो		= md_खोलो,
 	.release	= md_release,
 	.ioctl		= md_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= md_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.getgeo		= md_getgeo,
 	.check_events	= md_check_events,
-	.set_read_only	= md_set_read_only,
-};
+	.set_पढ़ो_only	= md_set_पढ़ो_only,
+पूर्ण;
 
-static int md_thread(void *arg)
-{
-	struct md_thread *thread = arg;
+अटल पूर्णांक md_thपढ़ो(व्योम *arg)
+अणु
+	काष्ठा md_thपढ़ो *thपढ़ो = arg;
 
 	/*
-	 * md_thread is a 'system-thread', it's priority should be very
-	 * high. We avoid resource deadlocks individually in each
-	 * raid personality. (RAID5 does preallocation) We also use RR and
+	 * md_thपढ़ो is a 'system-thread', it's priority should be very
+	 * high. We aव्योम resource deadlocks inभागidually in each
+	 * raid personality. (RAID5 करोes pपुनः_स्मृतिation) We also use RR and
 	 * the very same RT priority as kswapd, thus we will never get
-	 * into a priority inversion deadlock.
+	 * पूर्णांकo a priority inversion deadlock.
 	 *
 	 * we definitely have to have equal or higher priority than
-	 * bdflush, otherwise bdflush will deadlock if there are too
+	 * bdflush, otherwise bdflush will deadlock अगर there are too
 	 * many dirty RAID5 blocks.
 	 */
 
-	allow_signal(SIGKILL);
-	while (!kthread_should_stop()) {
+	allow_संकेत(SIGKILL);
+	जबतक (!kthपढ़ो_should_stop()) अणु
 
-		/* We need to wait INTERRUPTIBLE so that
-		 * we don't add to the load-average.
-		 * That means we need to be sure no signals are
+		/* We need to रुको INTERRUPTIBLE so that
+		 * we करोn't add to the load-average.
+		 * That means we need to be sure no संकेतs are
 		 * pending
 		 */
-		if (signal_pending(current))
-			flush_signals(current);
+		अगर (संकेत_pending(current))
+			flush_संकेतs(current);
 
-		wait_event_interruptible_timeout
-			(thread->wqueue,
-			 test_bit(THREAD_WAKEUP, &thread->flags)
-			 || kthread_should_stop() || kthread_should_park(),
-			 thread->timeout);
+		रुको_event_पूर्णांकerruptible_समयout
+			(thपढ़ो->wqueue,
+			 test_bit(THREAD_WAKEUP, &thपढ़ो->flags)
+			 || kthपढ़ो_should_stop() || kthपढ़ो_should_park(),
+			 thपढ़ो->समयout);
 
-		clear_bit(THREAD_WAKEUP, &thread->flags);
-		if (kthread_should_park())
-			kthread_parkme();
-		if (!kthread_should_stop())
-			thread->run(thread);
-	}
+		clear_bit(THREAD_WAKEUP, &thपढ़ो->flags);
+		अगर (kthपढ़ो_should_park())
+			kthपढ़ो_parkme();
+		अगर (!kthपढ़ो_should_stop())
+			thपढ़ो->run(thपढ़ो);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void md_wakeup_thread(struct md_thread *thread)
-{
-	if (thread) {
-		pr_debug("md: waking up MD thread %s.\n", thread->tsk->comm);
-		set_bit(THREAD_WAKEUP, &thread->flags);
-		wake_up(&thread->wqueue);
-	}
-}
-EXPORT_SYMBOL(md_wakeup_thread);
+व्योम md_wakeup_thपढ़ो(काष्ठा md_thपढ़ो *thपढ़ो)
+अणु
+	अगर (thपढ़ो) अणु
+		pr_debug("md: waking up MD thread %s.\n", thपढ़ो->tsk->comm);
+		set_bit(THREAD_WAKEUP, &thपढ़ो->flags);
+		wake_up(&thपढ़ो->wqueue);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(md_wakeup_thपढ़ो);
 
-struct md_thread *md_register_thread(void (*run) (struct md_thread *),
-		struct mddev *mddev, const char *name)
-{
-	struct md_thread *thread;
+काष्ठा md_thपढ़ो *md_रेजिस्टर_thपढ़ो(व्योम (*run) (काष्ठा md_thपढ़ो *),
+		काष्ठा mddev *mddev, स्थिर अक्षर *name)
+अणु
+	काष्ठा md_thपढ़ो *thपढ़ो;
 
-	thread = kzalloc(sizeof(struct md_thread), GFP_KERNEL);
-	if (!thread)
-		return NULL;
+	thपढ़ो = kzalloc(माप(काष्ठा md_thपढ़ो), GFP_KERNEL);
+	अगर (!thपढ़ो)
+		वापस शून्य;
 
-	init_waitqueue_head(&thread->wqueue);
+	init_रुकोqueue_head(&thपढ़ो->wqueue);
 
-	thread->run = run;
-	thread->mddev = mddev;
-	thread->timeout = MAX_SCHEDULE_TIMEOUT;
-	thread->tsk = kthread_run(md_thread, thread,
+	thपढ़ो->run = run;
+	thपढ़ो->mddev = mddev;
+	thपढ़ो->समयout = MAX_SCHEDULE_TIMEOUT;
+	thपढ़ो->tsk = kthपढ़ो_run(md_thपढ़ो, thपढ़ो,
 				  "%s_%s",
-				  mdname(thread->mddev),
+				  mdname(thपढ़ो->mddev),
 				  name);
-	if (IS_ERR(thread->tsk)) {
-		kfree(thread);
-		return NULL;
-	}
-	return thread;
-}
-EXPORT_SYMBOL(md_register_thread);
+	अगर (IS_ERR(thपढ़ो->tsk)) अणु
+		kमुक्त(thपढ़ो);
+		वापस शून्य;
+	पूर्ण
+	वापस thपढ़ो;
+पूर्ण
+EXPORT_SYMBOL(md_रेजिस्टर_thपढ़ो);
 
-void md_unregister_thread(struct md_thread **threadp)
-{
-	struct md_thread *thread = *threadp;
-	if (!thread)
-		return;
-	pr_debug("interrupting MD-thread pid %d\n", task_pid_nr(thread->tsk));
-	/* Locking ensures that mddev_unlock does not wake_up a
-	 * non-existent thread
+व्योम md_unरेजिस्टर_thपढ़ो(काष्ठा md_thपढ़ो **thपढ़ोp)
+अणु
+	काष्ठा md_thपढ़ो *thपढ़ो = *thपढ़ोp;
+	अगर (!thपढ़ो)
+		वापस;
+	pr_debug("interrupting MD-thread pid %d\n", task_pid_nr(thपढ़ो->tsk));
+	/* Locking ensures that mddev_unlock करोes not wake_up a
+	 * non-existent thपढ़ो
 	 */
 	spin_lock(&pers_lock);
-	*threadp = NULL;
+	*thपढ़ोp = शून्य;
 	spin_unlock(&pers_lock);
 
-	kthread_stop(thread->tsk);
-	kfree(thread);
-}
-EXPORT_SYMBOL(md_unregister_thread);
+	kthपढ़ो_stop(thपढ़ो->tsk);
+	kमुक्त(thपढ़ो);
+पूर्ण
+EXPORT_SYMBOL(md_unरेजिस्टर_thपढ़ो);
 
-void md_error(struct mddev *mddev, struct md_rdev *rdev)
-{
-	if (!rdev || test_bit(Faulty, &rdev->flags))
-		return;
+व्योम md_error(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
+अणु
+	अगर (!rdev || test_bit(Faulty, &rdev->flags))
+		वापस;
 
-	if (!mddev->pers || !mddev->pers->error_handler)
-		return;
+	अगर (!mddev->pers || !mddev->pers->error_handler)
+		वापस;
 	mddev->pers->error_handler(mddev,rdev);
-	if (mddev->degraded)
+	अगर (mddev->degraded)
 		set_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
-	sysfs_notify_dirent_safe(rdev->sysfs_state);
+	sysfs_notअगरy_dirent_safe(rdev->sysfs_state);
 	set_bit(MD_RECOVERY_INTR, &mddev->recovery);
 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-	md_wakeup_thread(mddev->thread);
-	if (mddev->event_work.func)
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	अगर (mddev->event_work.func)
 		queue_work(md_misc_wq, &mddev->event_work);
 	md_new_event(mddev);
-}
+पूर्ण
 EXPORT_SYMBOL(md_error);
 
 /* seq_file implementation /proc/mdstat */
 
-static void status_unused(struct seq_file *seq)
-{
-	int i = 0;
-	struct md_rdev *rdev;
+अटल व्योम status_unused(काष्ठा seq_file *seq)
+अणु
+	पूर्णांक i = 0;
+	काष्ठा md_rdev *rdev;
 
-	seq_printf(seq, "unused devices: ");
+	seq_म_लिखो(seq, "unused devices: ");
 
-	list_for_each_entry(rdev, &pending_raid_disks, same_set) {
-		char b[BDEVNAME_SIZE];
+	list_क्रम_each_entry(rdev, &pending_raid_disks, same_set) अणु
+		अक्षर b[BDEVNAME_SIZE];
 		i++;
-		seq_printf(seq, "%s ",
+		seq_म_लिखो(seq, "%s ",
 			      bdevname(rdev->bdev,b));
-	}
-	if (!i)
-		seq_printf(seq, "<none>");
+	पूर्ण
+	अगर (!i)
+		seq_म_लिखो(seq, "<none>");
 
-	seq_printf(seq, "\n");
-}
+	seq_म_लिखो(seq, "\n");
+पूर्ण
 
-static int status_resync(struct seq_file *seq, struct mddev *mddev)
-{
+अटल पूर्णांक status_resync(काष्ठा seq_file *seq, काष्ठा mddev *mddev)
+अणु
 	sector_t max_sectors, resync, res;
-	unsigned long dt, db = 0;
+	अचिन्हित दीर्घ dt, db = 0;
 	sector_t rt, curr_mark_cnt, resync_mark_cnt;
-	int scale, recovery_active;
-	unsigned int per_milli;
+	पूर्णांक scale, recovery_active;
+	अचिन्हित पूर्णांक per_milli;
 
-	if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery) ||
+	अगर (test_bit(MD_RECOVERY_SYNC, &mddev->recovery) ||
 	    test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery))
 		max_sectors = mddev->resync_max_sectors;
-	else
+	अन्यथा
 		max_sectors = mddev->dev_sectors;
 
 	resync = mddev->curr_resync;
-	if (resync <= 3) {
-		if (test_bit(MD_RECOVERY_DONE, &mddev->recovery))
+	अगर (resync <= 3) अणु
+		अगर (test_bit(MD_RECOVERY_DONE, &mddev->recovery))
 			/* Still cleaning up */
 			resync = max_sectors;
-	} else if (resync > max_sectors)
+	पूर्ण अन्यथा अगर (resync > max_sectors)
 		resync = max_sectors;
-	else
-		resync -= atomic_read(&mddev->recovery_active);
+	अन्यथा
+		resync -= atomic_पढ़ो(&mddev->recovery_active);
 
-	if (resync == 0) {
-		if (test_bit(MD_RESYNCING_REMOTE, &mddev->recovery)) {
-			struct md_rdev *rdev;
+	अगर (resync == 0) अणु
+		अगर (test_bit(MD_RESYNCING_REMOTE, &mddev->recovery)) अणु
+			काष्ठा md_rdev *rdev;
 
-			rdev_for_each(rdev, mddev)
-				if (rdev->raid_disk >= 0 &&
+			rdev_क्रम_each(rdev, mddev)
+				अगर (rdev->raid_disk >= 0 &&
 				    !test_bit(Faulty, &rdev->flags) &&
 				    rdev->recovery_offset != MaxSector &&
-				    rdev->recovery_offset) {
-					seq_printf(seq, "\trecover=REMOTE");
-					return 1;
-				}
-			if (mddev->reshape_position != MaxSector)
-				seq_printf(seq, "\treshape=REMOTE");
-			else
-				seq_printf(seq, "\tresync=REMOTE");
-			return 1;
-		}
-		if (mddev->recovery_cp < MaxSector) {
-			seq_printf(seq, "\tresync=PENDING");
-			return 1;
-		}
-		return 0;
-	}
-	if (resync < 3) {
-		seq_printf(seq, "\tresync=DELAYED");
-		return 1;
-	}
+				    rdev->recovery_offset) अणु
+					seq_म_लिखो(seq, "\trecover=REMOTE");
+					वापस 1;
+				पूर्ण
+			अगर (mddev->reshape_position != MaxSector)
+				seq_म_लिखो(seq, "\treshape=REMOTE");
+			अन्यथा
+				seq_म_लिखो(seq, "\tresync=REMOTE");
+			वापस 1;
+		पूर्ण
+		अगर (mddev->recovery_cp < MaxSector) अणु
+			seq_म_लिखो(seq, "\tresync=PENDING");
+			वापस 1;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	अगर (resync < 3) अणु
+		seq_म_लिखो(seq, "\tresync=DELAYED");
+		वापस 1;
+	पूर्ण
 
 	WARN_ON(max_sectors == 0);
 	/* Pick 'scale' such that (resync>>scale)*1000 will fit
 	 * in a sector_t, and (max_sectors>>scale) will fit in a
-	 * u32, as those are the requirements for sector_div.
+	 * u32, as those are the requirements क्रम sector_भाग.
 	 * Thus 'scale' must be at least 10
 	 */
 	scale = 10;
-	if (sizeof(sector_t) > sizeof(unsigned long)) {
-		while ( max_sectors/2 > (1ULL<<(scale+32)))
+	अगर (माप(sector_t) > माप(अचिन्हित दीर्घ)) अणु
+		जबतक ( max_sectors/2 > (1ULL<<(scale+32)))
 			scale++;
-	}
+	पूर्ण
 	res = (resync>>scale)*1000;
-	sector_div(res, (u32)((max_sectors>>scale)+1));
+	sector_भाग(res, (u32)((max_sectors>>scale)+1));
 
 	per_milli = res;
-	{
-		int i, x = per_milli/50, y = 20-x;
-		seq_printf(seq, "[");
-		for (i = 0; i < x; i++)
-			seq_printf(seq, "=");
-		seq_printf(seq, ">");
-		for (i = 0; i < y; i++)
-			seq_printf(seq, ".");
-		seq_printf(seq, "] ");
-	}
-	seq_printf(seq, " %s =%3u.%u%% (%llu/%llu)",
+	अणु
+		पूर्णांक i, x = per_milli/50, y = 20-x;
+		seq_म_लिखो(seq, "[");
+		क्रम (i = 0; i < x; i++)
+			seq_म_लिखो(seq, "=");
+		seq_म_लिखो(seq, ">");
+		क्रम (i = 0; i < y; i++)
+			seq_म_लिखो(seq, ".");
+		seq_म_लिखो(seq, "] ");
+	पूर्ण
+	seq_म_लिखो(seq, " %s =%3u.%u%% (%llu/%llu)",
 		   (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery)?
 		    "reshape" :
 		    (test_bit(MD_RECOVERY_CHECK, &mddev->recovery)?
@@ -8119,360 +8120,360 @@ static int status_resync(struct seq_file *seq, struct mddev *mddev)
 		     (test_bit(MD_RECOVERY_SYNC, &mddev->recovery) ?
 		      "resync" : "recovery"))),
 		   per_milli/10, per_milli % 10,
-		   (unsigned long long) resync/2,
-		   (unsigned long long) max_sectors/2);
+		   (अचिन्हित दीर्घ दीर्घ) resync/2,
+		   (अचिन्हित दीर्घ दीर्घ) max_sectors/2);
 
 	/*
-	 * dt: time from mark until now
+	 * dt: समय from mark until now
 	 * db: blocks written from mark until now
-	 * rt: remaining time
+	 * rt: reमुख्यing समय
 	 *
 	 * rt is a sector_t, which is always 64bit now. We are keeping
 	 * the original algorithm, but it is not really necessary.
 	 *
 	 * Original algorithm:
-	 *   So we divide before multiply in case it is 32bit and close
+	 *   So we भागide beक्रमe multiply in हाल it is 32bit and बंद
 	 *   to the limit.
-	 *   We scale the divisor (db) by 32 to avoid losing precision
-	 *   near the end of resync when the number of remaining sectors
-	 *   is close to 'db'.
-	 *   We then divide rt by 32 after multiplying by db to compensate.
-	 *   The '+1' avoids division by zero if db is very small.
+	 *   We scale the भागisor (db) by 32 to aव्योम losing precision
+	 *   near the end of resync when the number of reमुख्यing sectors
+	 *   is बंद to 'db'.
+	 *   We then भागide rt by 32 after multiplying by db to compensate.
+	 *   The '+1' aव्योमs भागision by zero अगर db is very small.
 	 */
-	dt = ((jiffies - mddev->resync_mark) / HZ);
-	if (!dt) dt++;
+	dt = ((jअगरfies - mddev->resync_mark) / HZ);
+	अगर (!dt) dt++;
 
 	curr_mark_cnt = mddev->curr_mark_cnt;
-	recovery_active = atomic_read(&mddev->recovery_active);
+	recovery_active = atomic_पढ़ो(&mddev->recovery_active);
 	resync_mark_cnt = mddev->resync_mark_cnt;
 
-	if (curr_mark_cnt >= (recovery_active + resync_mark_cnt))
+	अगर (curr_mark_cnt >= (recovery_active + resync_mark_cnt))
 		db = curr_mark_cnt - (recovery_active + resync_mark_cnt);
 
-	rt = max_sectors - resync;    /* number of remaining sectors */
-	rt = div64_u64(rt, db/32+1);
+	rt = max_sectors - resync;    /* number of reमुख्यing sectors */
+	rt = भाग64_u64(rt, db/32+1);
 	rt *= dt;
 	rt >>= 5;
 
-	seq_printf(seq, " finish=%lu.%lumin", (unsigned long)rt / 60,
-		   ((unsigned long)rt % 60)/6);
+	seq_म_लिखो(seq, " finish=%lu.%lumin", (अचिन्हित दीर्घ)rt / 60,
+		   ((अचिन्हित दीर्घ)rt % 60)/6);
 
-	seq_printf(seq, " speed=%ldK/sec", db/2/dt);
-	return 1;
-}
+	seq_म_लिखो(seq, " speed=%ldK/sec", db/2/dt);
+	वापस 1;
+पूर्ण
 
-static void *md_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct list_head *tmp;
+अटल व्योम *md_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा list_head *पंचांगp;
 	loff_t l = *pos;
-	struct mddev *mddev;
+	काष्ठा mddev *mddev;
 
-	if (l == 0x10000) {
+	अगर (l == 0x10000) अणु
 		++*pos;
-		return (void *)2;
-	}
-	if (l > 0x10000)
-		return NULL;
-	if (!l--)
+		वापस (व्योम *)2;
+	पूर्ण
+	अगर (l > 0x10000)
+		वापस शून्य;
+	अगर (!l--)
 		/* header */
-		return (void*)1;
+		वापस (व्योम*)1;
 
 	spin_lock(&all_mddevs_lock);
-	list_for_each(tmp,&all_mddevs)
-		if (!l--) {
-			mddev = list_entry(tmp, struct mddev, all_mddevs);
+	list_क्रम_each(पंचांगp,&all_mddevs)
+		अगर (!l--) अणु
+			mddev = list_entry(पंचांगp, काष्ठा mddev, all_mddevs);
 			mddev_get(mddev);
 			spin_unlock(&all_mddevs_lock);
-			return mddev;
-		}
+			वापस mddev;
+		पूर्ण
 	spin_unlock(&all_mddevs_lock);
-	if (!l--)
-		return (void*)2;/* tail */
-	return NULL;
-}
+	अगर (!l--)
+		वापस (व्योम*)2;/* tail */
+	वापस शून्य;
+पूर्ण
 
-static void *md_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct list_head *tmp;
-	struct mddev *next_mddev, *mddev = v;
+अटल व्योम *md_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा list_head *पंचांगp;
+	काष्ठा mddev *next_mddev, *mddev = v;
 
 	++*pos;
-	if (v == (void*)2)
-		return NULL;
+	अगर (v == (व्योम*)2)
+		वापस शून्य;
 
 	spin_lock(&all_mddevs_lock);
-	if (v == (void*)1)
-		tmp = all_mddevs.next;
-	else
-		tmp = mddev->all_mddevs.next;
-	if (tmp != &all_mddevs)
-		next_mddev = mddev_get(list_entry(tmp,struct mddev,all_mddevs));
-	else {
-		next_mddev = (void*)2;
+	अगर (v == (व्योम*)1)
+		पंचांगp = all_mddevs.next;
+	अन्यथा
+		पंचांगp = mddev->all_mddevs.next;
+	अगर (पंचांगp != &all_mddevs)
+		next_mddev = mddev_get(list_entry(पंचांगp,काष्ठा mddev,all_mddevs));
+	अन्यथा अणु
+		next_mddev = (व्योम*)2;
 		*pos = 0x10000;
-	}
+	पूर्ण
 	spin_unlock(&all_mddevs_lock);
 
-	if (v != (void*)1)
+	अगर (v != (व्योम*)1)
 		mddev_put(mddev);
-	return next_mddev;
+	वापस next_mddev;
 
-}
+पूर्ण
 
-static void md_seq_stop(struct seq_file *seq, void *v)
-{
-	struct mddev *mddev = v;
+अटल व्योम md_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा mddev *mddev = v;
 
-	if (mddev && v != (void*)1 && v != (void*)2)
+	अगर (mddev && v != (व्योम*)1 && v != (व्योम*)2)
 		mddev_put(mddev);
-}
+पूर्ण
 
-static int md_seq_show(struct seq_file *seq, void *v)
-{
-	struct mddev *mddev = v;
+अटल पूर्णांक md_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा mddev *mddev = v;
 	sector_t sectors;
-	struct md_rdev *rdev;
+	काष्ठा md_rdev *rdev;
 
-	if (v == (void*)1) {
-		struct md_personality *pers;
-		seq_printf(seq, "Personalities : ");
+	अगर (v == (व्योम*)1) अणु
+		काष्ठा md_personality *pers;
+		seq_म_लिखो(seq, "Personalities : ");
 		spin_lock(&pers_lock);
-		list_for_each_entry(pers, &pers_list, list)
-			seq_printf(seq, "[%s] ", pers->name);
+		list_क्रम_each_entry(pers, &pers_list, list)
+			seq_म_लिखो(seq, "[%s] ", pers->name);
 
 		spin_unlock(&pers_lock);
-		seq_printf(seq, "\n");
-		seq->poll_event = atomic_read(&md_event_count);
-		return 0;
-	}
-	if (v == (void*)2) {
+		seq_म_लिखो(seq, "\n");
+		seq->poll_event = atomic_पढ़ो(&md_event_count);
+		वापस 0;
+	पूर्ण
+	अगर (v == (व्योम*)2) अणु
 		status_unused(seq);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	spin_lock(&mddev->lock);
-	if (mddev->pers || mddev->raid_disks || !list_empty(&mddev->disks)) {
-		seq_printf(seq, "%s : %sactive", mdname(mddev),
+	अगर (mddev->pers || mddev->raid_disks || !list_empty(&mddev->disks)) अणु
+		seq_म_लिखो(seq, "%s : %sactive", mdname(mddev),
 						mddev->pers ? "" : "in");
-		if (mddev->pers) {
-			if (mddev->ro==1)
-				seq_printf(seq, " (read-only)");
-			if (mddev->ro==2)
-				seq_printf(seq, " (auto-read-only)");
-			seq_printf(seq, " %s", mddev->pers->name);
-		}
+		अगर (mddev->pers) अणु
+			अगर (mddev->ro==1)
+				seq_म_लिखो(seq, " (read-only)");
+			अगर (mddev->ro==2)
+				seq_म_लिखो(seq, " (auto-read-only)");
+			seq_म_लिखो(seq, " %s", mddev->pers->name);
+		पूर्ण
 
 		sectors = 0;
-		rcu_read_lock();
-		rdev_for_each_rcu(rdev, mddev) {
-			char b[BDEVNAME_SIZE];
-			seq_printf(seq, " %s[%d]",
+		rcu_पढ़ो_lock();
+		rdev_क्रम_each_rcu(rdev, mddev) अणु
+			अक्षर b[BDEVNAME_SIZE];
+			seq_म_लिखो(seq, " %s[%d]",
 				bdevname(rdev->bdev,b), rdev->desc_nr);
-			if (test_bit(WriteMostly, &rdev->flags))
-				seq_printf(seq, "(W)");
-			if (test_bit(Journal, &rdev->flags))
-				seq_printf(seq, "(J)");
-			if (test_bit(Faulty, &rdev->flags)) {
-				seq_printf(seq, "(F)");
-				continue;
-			}
-			if (rdev->raid_disk < 0)
-				seq_printf(seq, "(S)"); /* spare */
-			if (test_bit(Replacement, &rdev->flags))
-				seq_printf(seq, "(R)");
+			अगर (test_bit(WriteMostly, &rdev->flags))
+				seq_म_लिखो(seq, "(W)");
+			अगर (test_bit(Journal, &rdev->flags))
+				seq_म_लिखो(seq, "(J)");
+			अगर (test_bit(Faulty, &rdev->flags)) अणु
+				seq_म_लिखो(seq, "(F)");
+				जारी;
+			पूर्ण
+			अगर (rdev->raid_disk < 0)
+				seq_म_लिखो(seq, "(S)"); /* spare */
+			अगर (test_bit(Replacement, &rdev->flags))
+				seq_म_लिखो(seq, "(R)");
 			sectors += rdev->sectors;
-		}
-		rcu_read_unlock();
+		पूर्ण
+		rcu_पढ़ो_unlock();
 
-		if (!list_empty(&mddev->disks)) {
-			if (mddev->pers)
-				seq_printf(seq, "\n      %llu blocks",
-					   (unsigned long long)
+		अगर (!list_empty(&mddev->disks)) अणु
+			अगर (mddev->pers)
+				seq_म_लिखो(seq, "\n      %llu blocks",
+					   (अचिन्हित दीर्घ दीर्घ)
 					   mddev->array_sectors / 2);
-			else
-				seq_printf(seq, "\n      %llu blocks",
-					   (unsigned long long)sectors / 2);
-		}
-		if (mddev->persistent) {
-			if (mddev->major_version != 0 ||
-			    mddev->minor_version != 90) {
-				seq_printf(seq," super %d.%d",
+			अन्यथा
+				seq_म_लिखो(seq, "\n      %llu blocks",
+					   (अचिन्हित दीर्घ दीर्घ)sectors / 2);
+		पूर्ण
+		अगर (mddev->persistent) अणु
+			अगर (mddev->major_version != 0 ||
+			    mddev->minor_version != 90) अणु
+				seq_म_लिखो(seq," super %d.%d",
 					   mddev->major_version,
 					   mddev->minor_version);
-			}
-		} else if (mddev->external)
-			seq_printf(seq, " super external:%s",
+			पूर्ण
+		पूर्ण अन्यथा अगर (mddev->बाह्यal)
+			seq_म_लिखो(seq, " super external:%s",
 				   mddev->metadata_type);
-		else
-			seq_printf(seq, " super non-persistent");
+		अन्यथा
+			seq_म_लिखो(seq, " super non-persistent");
 
-		if (mddev->pers) {
+		अगर (mddev->pers) अणु
 			mddev->pers->status(seq, mddev);
-			seq_printf(seq, "\n      ");
-			if (mddev->pers->sync_request) {
-				if (status_resync(seq, mddev))
-					seq_printf(seq, "\n      ");
-			}
-		} else
-			seq_printf(seq, "\n       ");
+			seq_म_लिखो(seq, "\n      ");
+			अगर (mddev->pers->sync_request) अणु
+				अगर (status_resync(seq, mddev))
+					seq_म_लिखो(seq, "\n      ");
+			पूर्ण
+		पूर्ण अन्यथा
+			seq_म_लिखो(seq, "\n       ");
 
-		md_bitmap_status(seq, mddev->bitmap);
+		md_biपंचांगap_status(seq, mddev->biपंचांगap);
 
-		seq_printf(seq, "\n");
-	}
+		seq_म_लिखो(seq, "\n");
+	पूर्ण
 	spin_unlock(&mddev->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations md_seq_ops = {
+अटल स्थिर काष्ठा seq_operations md_seq_ops = अणु
 	.start  = md_seq_start,
 	.next   = md_seq_next,
 	.stop   = md_seq_stop,
 	.show   = md_seq_show,
-};
+पूर्ण;
 
-static int md_seq_open(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq;
-	int error;
+अटल पूर्णांक md_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq;
+	पूर्णांक error;
 
-	error = seq_open(file, &md_seq_ops);
-	if (error)
-		return error;
+	error = seq_खोलो(file, &md_seq_ops);
+	अगर (error)
+		वापस error;
 
-	seq = file->private_data;
-	seq->poll_event = atomic_read(&md_event_count);
-	return error;
-}
+	seq = file->निजी_data;
+	seq->poll_event = atomic_पढ़ो(&md_event_count);
+	वापस error;
+पूर्ण
 
-static int md_unloading;
-static __poll_t mdstat_poll(struct file *filp, poll_table *wait)
-{
-	struct seq_file *seq = filp->private_data;
+अटल पूर्णांक md_unloading;
+अटल __poll_t mdstat_poll(काष्ठा file *filp, poll_table *रुको)
+अणु
+	काष्ठा seq_file *seq = filp->निजी_data;
 	__poll_t mask;
 
-	if (md_unloading)
-		return EPOLLIN|EPOLLRDNORM|EPOLLERR|EPOLLPRI;
-	poll_wait(filp, &md_event_waiters, wait);
+	अगर (md_unloading)
+		वापस EPOLLIN|EPOLLRDNORM|EPOLLERR|EPOLLPRI;
+	poll_रुको(filp, &md_event_रुकोers, रुको);
 
-	/* always allow read */
+	/* always allow पढ़ो */
 	mask = EPOLLIN | EPOLLRDNORM;
 
-	if (seq->poll_event != atomic_read(&md_event_count))
+	अगर (seq->poll_event != atomic_पढ़ो(&md_event_count))
 		mask |= EPOLLERR | EPOLLPRI;
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static const struct proc_ops mdstat_proc_ops = {
-	.proc_open	= md_seq_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops mdstat_proc_ops = अणु
+	.proc_खोलो	= md_seq_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= seq_release,
 	.proc_poll	= mdstat_poll,
-};
+पूर्ण;
 
-int register_md_personality(struct md_personality *p)
-{
+पूर्णांक रेजिस्टर_md_personality(काष्ठा md_personality *p)
+अणु
 	pr_debug("md: %s personality registered for level %d\n",
 		 p->name, p->level);
 	spin_lock(&pers_lock);
 	list_add_tail(&p->list, &pers_list);
 	spin_unlock(&pers_lock);
-	return 0;
-}
-EXPORT_SYMBOL(register_md_personality);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_md_personality);
 
-int unregister_md_personality(struct md_personality *p)
-{
+पूर्णांक unरेजिस्टर_md_personality(काष्ठा md_personality *p)
+अणु
 	pr_debug("md: %s personality unregistered\n", p->name);
 	spin_lock(&pers_lock);
 	list_del_init(&p->list);
 	spin_unlock(&pers_lock);
-	return 0;
-}
-EXPORT_SYMBOL(unregister_md_personality);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_md_personality);
 
-int register_md_cluster_operations(struct md_cluster_operations *ops,
-				   struct module *module)
-{
-	int ret = 0;
+पूर्णांक रेजिस्टर_md_cluster_operations(काष्ठा md_cluster_operations *ops,
+				   काष्ठा module *module)
+अणु
+	पूर्णांक ret = 0;
 	spin_lock(&pers_lock);
-	if (md_cluster_ops != NULL)
+	अगर (md_cluster_ops != शून्य)
 		ret = -EALREADY;
-	else {
+	अन्यथा अणु
 		md_cluster_ops = ops;
 		md_cluster_mod = module;
-	}
+	पूर्ण
 	spin_unlock(&pers_lock);
-	return ret;
-}
-EXPORT_SYMBOL(register_md_cluster_operations);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_md_cluster_operations);
 
-int unregister_md_cluster_operations(void)
-{
+पूर्णांक unरेजिस्टर_md_cluster_operations(व्योम)
+अणु
 	spin_lock(&pers_lock);
-	md_cluster_ops = NULL;
+	md_cluster_ops = शून्य;
 	spin_unlock(&pers_lock);
-	return 0;
-}
-EXPORT_SYMBOL(unregister_md_cluster_operations);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_md_cluster_operations);
 
-int md_setup_cluster(struct mddev *mddev, int nodes)
-{
-	int ret;
-	if (!md_cluster_ops)
+पूर्णांक md_setup_cluster(काष्ठा mddev *mddev, पूर्णांक nodes)
+अणु
+	पूर्णांक ret;
+	अगर (!md_cluster_ops)
 		request_module("md-cluster");
 	spin_lock(&pers_lock);
 	/* ensure module won't be unloaded */
-	if (!md_cluster_ops || !try_module_get(md_cluster_mod)) {
+	अगर (!md_cluster_ops || !try_module_get(md_cluster_mod)) अणु
 		pr_warn("can't find md-cluster module or get it's reference.\n");
 		spin_unlock(&pers_lock);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 	spin_unlock(&pers_lock);
 
 	ret = md_cluster_ops->join(mddev, nodes);
-	if (!ret)
+	अगर (!ret)
 		mddev->safemode_delay = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void md_cluster_stop(struct mddev *mddev)
-{
-	if (!md_cluster_ops)
-		return;
+व्योम md_cluster_stop(काष्ठा mddev *mddev)
+अणु
+	अगर (!md_cluster_ops)
+		वापस;
 	md_cluster_ops->leave(mddev);
 	module_put(md_cluster_mod);
-}
+पूर्ण
 
-static int is_mddev_idle(struct mddev *mddev, int init)
-{
-	struct md_rdev *rdev;
-	int idle;
-	int curr_events;
+अटल पूर्णांक is_mddev_idle(काष्ठा mddev *mddev, पूर्णांक init)
+अणु
+	काष्ठा md_rdev *rdev;
+	पूर्णांक idle;
+	पूर्णांक curr_events;
 
 	idle = 1;
-	rcu_read_lock();
-	rdev_for_each_rcu(rdev, mddev) {
-		struct gendisk *disk = rdev->bdev->bd_disk;
-		curr_events = (int)part_stat_read_accum(disk->part0, sectors) -
-			      atomic_read(&disk->sync_io);
-		/* sync IO will cause sync_io to increase before the disk_stats
+	rcu_पढ़ो_lock();
+	rdev_क्रम_each_rcu(rdev, mddev) अणु
+		काष्ठा gendisk *disk = rdev->bdev->bd_disk;
+		curr_events = (पूर्णांक)part_stat_पढ़ो_accum(disk->part0, sectors) -
+			      atomic_पढ़ो(&disk->sync_io);
+		/* sync IO will cause sync_io to increase beक्रमe the disk_stats
 		 * as sync_io is counted when a request starts, and
 		 * disk_stats is counted when it completes.
 		 * So resync activity will cause curr_events to be smaller than
 		 * when there was no such activity.
 		 * non-sync IO will cause disk_stat to increase without
 		 * increasing sync_io so curr_events will (eventually)
-		 * be larger than it was before.  Once it becomes
+		 * be larger than it was beक्रमe.  Once it becomes
 		 * substantially larger, the test below will cause
 		 * the array to appear non-idle, and resync will slow
-		 * down.
+		 * करोwn.
 		 * If there is a lot of outstanding resync activity when
 		 * we set last_event to curr_events, then all that activity
 		 * completing might cause the array to appear non-idle
-		 * and resync will be slowed down even though there might
+		 * and resync will be slowed करोwn even though there might
 		 * not have been non-resync activity.  This will only
 		 * happen once though.  'last_events' will soon reflect
 		 * the state where there is little or no outstanding
@@ -8480,229 +8481,229 @@ static int is_mddev_idle(struct mddev *mddev, int init)
 		 * always make curr_events less than last_events.
 		 *
 		 */
-		if (init || curr_events - rdev->last_events > 64) {
+		अगर (init || curr_events - rdev->last_events > 64) अणु
 			rdev->last_events = curr_events;
 			idle = 0;
-		}
-	}
-	rcu_read_unlock();
-	return idle;
-}
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस idle;
+पूर्ण
 
-void md_done_sync(struct mddev *mddev, int blocks, int ok)
-{
+व्योम md_करोne_sync(काष्ठा mddev *mddev, पूर्णांक blocks, पूर्णांक ok)
+अणु
 	/* another "blocks" (512byte) blocks have been synced */
 	atomic_sub(blocks, &mddev->recovery_active);
-	wake_up(&mddev->recovery_wait);
-	if (!ok) {
+	wake_up(&mddev->recovery_रुको);
+	अगर (!ok) अणु
 		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
 		set_bit(MD_RECOVERY_ERROR, &mddev->recovery);
-		md_wakeup_thread(mddev->thread);
-		// stop recovery, signal do_sync ....
-	}
-}
-EXPORT_SYMBOL(md_done_sync);
+		md_wakeup_thपढ़ो(mddev->thपढ़ो);
+		// stop recovery, संकेत करो_sync ....
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(md_करोne_sync);
 
-/* md_write_start(mddev, bi)
+/* md_ग_लिखो_start(mddev, bi)
  * If we need to update some array metadata (e.g. 'active' flag
- * in superblock) before writing, schedule a superblock update
- * and wait for it to complete.
- * A return value of 'false' means that the write wasn't recorded
+ * in superblock) beक्रमe writing, schedule a superblock update
+ * and रुको क्रम it to complete.
+ * A वापस value of 'false' means that the write wasn't recorded
  * and cannot proceed as the array is being suspend.
  */
-bool md_write_start(struct mddev *mddev, struct bio *bi)
-{
-	int did_change = 0;
+bool md_ग_लिखो_start(काष्ठा mddev *mddev, काष्ठा bio *bi)
+अणु
+	पूर्णांक did_change = 0;
 
-	if (bio_data_dir(bi) != WRITE)
-		return true;
+	अगर (bio_data_dir(bi) != WRITE)
+		वापस true;
 
 	BUG_ON(mddev->ro == 1);
-	if (mddev->ro == 2) {
-		/* need to switch to read/write */
+	अगर (mddev->ro == 2) अणु
+		/* need to चयन to पढ़ो/ग_लिखो */
 		mddev->ro = 0;
 		set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-		md_wakeup_thread(mddev->thread);
-		md_wakeup_thread(mddev->sync_thread);
+		md_wakeup_thपढ़ो(mddev->thपढ़ो);
+		md_wakeup_thपढ़ो(mddev->sync_thपढ़ो);
 		did_change = 1;
-	}
-	rcu_read_lock();
-	percpu_ref_get(&mddev->writes_pending);
+	पूर्ण
+	rcu_पढ़ो_lock();
+	percpu_ref_get(&mddev->ग_लिखोs_pending);
 	smp_mb(); /* Match smp_mb in set_in_sync() */
-	if (mddev->safemode == 1)
+	अगर (mddev->safemode == 1)
 		mddev->safemode = 0;
-	/* sync_checkers is always 0 when writes_pending is in per-cpu mode */
-	if (mddev->in_sync || mddev->sync_checkers) {
+	/* sync_checkers is always 0 when ग_लिखोs_pending is in per-cpu mode */
+	अगर (mddev->in_sync || mddev->sync_checkers) अणु
 		spin_lock(&mddev->lock);
-		if (mddev->in_sync) {
+		अगर (mddev->in_sync) अणु
 			mddev->in_sync = 0;
 			set_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags);
 			set_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
-			md_wakeup_thread(mddev->thread);
+			md_wakeup_thपढ़ो(mddev->thपढ़ो);
 			did_change = 1;
-		}
+		पूर्ण
 		spin_unlock(&mddev->lock);
-	}
-	rcu_read_unlock();
-	if (did_change)
-		sysfs_notify_dirent_safe(mddev->sysfs_state);
-	if (!mddev->has_superblocks)
-		return true;
-	wait_event(mddev->sb_wait,
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	अगर (did_change)
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
+	अगर (!mddev->has_superblocks)
+		वापस true;
+	रुको_event(mddev->sb_रुको,
 		   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) ||
 		   mddev->suspended);
-	if (test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags)) {
-		percpu_ref_put(&mddev->writes_pending);
-		return false;
-	}
-	return true;
-}
-EXPORT_SYMBOL(md_write_start);
+	अगर (test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags)) अणु
+		percpu_ref_put(&mddev->ग_लिखोs_pending);
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
+EXPORT_SYMBOL(md_ग_लिखो_start);
 
-/* md_write_inc can only be called when md_write_start() has
- * already been called at least once of the current request.
+/* md_ग_लिखो_inc can only be called when md_ग_लिखो_start() has
+ * alपढ़ोy been called at least once of the current request.
  * It increments the counter and is useful when a single request
- * is split into several parts.  Each part causes an increment and
- * so needs a matching md_write_end().
- * Unlike md_write_start(), it is safe to call md_write_inc() inside
+ * is split पूर्णांकo several parts.  Each part causes an increment and
+ * so needs a matching md_ग_लिखो_end().
+ * Unlike md_ग_लिखो_start(), it is safe to call md_ग_लिखो_inc() inside
  * a spinlocked region.
  */
-void md_write_inc(struct mddev *mddev, struct bio *bi)
-{
-	if (bio_data_dir(bi) != WRITE)
-		return;
+व्योम md_ग_लिखो_inc(काष्ठा mddev *mddev, काष्ठा bio *bi)
+अणु
+	अगर (bio_data_dir(bi) != WRITE)
+		वापस;
 	WARN_ON_ONCE(mddev->in_sync || mddev->ro);
-	percpu_ref_get(&mddev->writes_pending);
-}
-EXPORT_SYMBOL(md_write_inc);
+	percpu_ref_get(&mddev->ग_लिखोs_pending);
+पूर्ण
+EXPORT_SYMBOL(md_ग_लिखो_inc);
 
-void md_write_end(struct mddev *mddev)
-{
-	percpu_ref_put(&mddev->writes_pending);
+व्योम md_ग_लिखो_end(काष्ठा mddev *mddev)
+अणु
+	percpu_ref_put(&mddev->ग_लिखोs_pending);
 
-	if (mddev->safemode == 2)
-		md_wakeup_thread(mddev->thread);
-	else if (mddev->safemode_delay)
-		/* The roundup() ensures this only performs locking once
-		 * every ->safemode_delay jiffies
+	अगर (mddev->safemode == 2)
+		md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	अन्यथा अगर (mddev->safemode_delay)
+		/* The roundup() ensures this only perक्रमms locking once
+		 * every ->safemode_delay jअगरfies
 		 */
-		mod_timer(&mddev->safemode_timer,
-			  roundup(jiffies, mddev->safemode_delay) +
+		mod_समयr(&mddev->safemode_समयr,
+			  roundup(jअगरfies, mddev->safemode_delay) +
 			  mddev->safemode_delay);
-}
+पूर्ण
 
-EXPORT_SYMBOL(md_write_end);
+EXPORT_SYMBOL(md_ग_लिखो_end);
 
 /* This is used by raid0 and raid10 */
-void md_submit_discard_bio(struct mddev *mddev, struct md_rdev *rdev,
-			struct bio *bio, sector_t start, sector_t size)
-{
-	struct bio *discard_bio = NULL;
+व्योम md_submit_discard_bio(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev,
+			काष्ठा bio *bio, sector_t start, sector_t size)
+अणु
+	काष्ठा bio *discard_bio = शून्य;
 
-	if (__blkdev_issue_discard(rdev->bdev, start, size, GFP_NOIO, 0,
+	अगर (__blkdev_issue_discard(rdev->bdev, start, size, GFP_NOIO, 0,
 			&discard_bio) || !discard_bio)
-		return;
+		वापस;
 
 	bio_chain(discard_bio, bio);
 	bio_clone_blkg_association(discard_bio, bio);
-	if (mddev->gendisk)
+	अगर (mddev->gendisk)
 		trace_block_bio_remap(discard_bio,
 				disk_devt(mddev->gendisk),
 				bio->bi_iter.bi_sector);
 	submit_bio_noacct(discard_bio);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(md_submit_discard_bio);
 
-/* md_allow_write(mddev)
- * Calling this ensures that the array is marked 'active' so that writes
- * may proceed without blocking.  It is important to call this before
- * attempting a GFP_KERNEL allocation while holding the mddev lock.
+/* md_allow_ग_लिखो(mddev)
+ * Calling this ensures that the array is marked 'active' so that ग_लिखोs
+ * may proceed without blocking.  It is important to call this beक्रमe
+ * attempting a GFP_KERNEL allocation जबतक holding the mddev lock.
  * Must be called with mddev_lock held.
  */
-void md_allow_write(struct mddev *mddev)
-{
-	if (!mddev->pers)
-		return;
-	if (mddev->ro)
-		return;
-	if (!mddev->pers->sync_request)
-		return;
+व्योम md_allow_ग_लिखो(काष्ठा mddev *mddev)
+अणु
+	अगर (!mddev->pers)
+		वापस;
+	अगर (mddev->ro)
+		वापस;
+	अगर (!mddev->pers->sync_request)
+		वापस;
 
 	spin_lock(&mddev->lock);
-	if (mddev->in_sync) {
+	अगर (mddev->in_sync) अणु
 		mddev->in_sync = 0;
 		set_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags);
 		set_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
-		if (mddev->safemode_delay &&
+		अगर (mddev->safemode_delay &&
 		    mddev->safemode == 0)
 			mddev->safemode = 1;
 		spin_unlock(&mddev->lock);
 		md_update_sb(mddev, 0);
-		sysfs_notify_dirent_safe(mddev->sysfs_state);
-		/* wait for the dirty state to be recorded in the metadata */
-		wait_event(mddev->sb_wait,
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_state);
+		/* रुको क्रम the dirty state to be recorded in the metadata */
+		रुको_event(mddev->sb_रुको,
 			   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
-	} else
+	पूर्ण अन्यथा
 		spin_unlock(&mddev->lock);
-}
-EXPORT_SYMBOL_GPL(md_allow_write);
+पूर्ण
+EXPORT_SYMBOL_GPL(md_allow_ग_लिखो);
 
-#define SYNC_MARKS	10
-#define	SYNC_MARK_STEP	(3*HZ)
-#define UPDATE_FREQUENCY (5*60*HZ)
-void md_do_sync(struct md_thread *thread)
-{
-	struct mddev *mddev = thread->mddev;
-	struct mddev *mddev2;
-	unsigned int currspeed = 0, window;
-	sector_t max_sectors,j, io_sectors, recovery_done;
-	unsigned long mark[SYNC_MARKS];
-	unsigned long update_time;
+#घोषणा SYNC_MARKS	10
+#घोषणा	SYNC_MARK_STEP	(3*HZ)
+#घोषणा UPDATE_FREQUENCY (5*60*HZ)
+व्योम md_करो_sync(काष्ठा md_thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा mddev *mddev = thपढ़ो->mddev;
+	काष्ठा mddev *mddev2;
+	अचिन्हित पूर्णांक currspeed = 0, winकरोw;
+	sector_t max_sectors,j, io_sectors, recovery_करोne;
+	अचिन्हित दीर्घ mark[SYNC_MARKS];
+	अचिन्हित दीर्घ update_समय;
 	sector_t mark_cnt[SYNC_MARKS];
-	int last_mark,m;
-	struct list_head *tmp;
+	पूर्णांक last_mark,m;
+	काष्ठा list_head *पंचांगp;
 	sector_t last_check;
-	int skipped = 0;
-	struct md_rdev *rdev;
-	char *desc, *action = NULL;
-	struct blk_plug plug;
-	int ret;
+	पूर्णांक skipped = 0;
+	काष्ठा md_rdev *rdev;
+	अक्षर *desc, *action = शून्य;
+	काष्ठा blk_plug plug;
+	पूर्णांक ret;
 
-	/* just incase thread restarts... */
-	if (test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
+	/* just inहाल thपढ़ो restarts... */
+	अगर (test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
 	    test_bit(MD_RECOVERY_WAIT, &mddev->recovery))
-		return;
-	if (mddev->ro) {/* never try to sync a read-only array */
+		वापस;
+	अगर (mddev->ro) अणु/* never try to sync a पढ़ो-only array */
 		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (mddev_is_clustered(mddev)) {
+	अगर (mddev_is_clustered(mddev)) अणु
 		ret = md_cluster_ops->resync_start(mddev);
-		if (ret)
-			goto skip;
+		अगर (ret)
+			जाओ skip;
 
 		set_bit(MD_CLUSTER_RESYNC_LOCKED, &mddev->flags);
-		if (!(test_bit(MD_RECOVERY_SYNC, &mddev->recovery) ||
+		अगर (!(test_bit(MD_RECOVERY_SYNC, &mddev->recovery) ||
 			test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) ||
 			test_bit(MD_RECOVERY_RECOVER, &mddev->recovery))
-		     && ((unsigned long long)mddev->curr_resync_completed
-			 < (unsigned long long)mddev->resync_max_sectors))
-			goto skip;
-	}
+		     && ((अचिन्हित दीर्घ दीर्घ)mddev->curr_resync_completed
+			 < (अचिन्हित दीर्घ दीर्घ)mddev->resync_max_sectors))
+			जाओ skip;
+	पूर्ण
 
-	if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery)) {
-		if (test_bit(MD_RECOVERY_CHECK, &mddev->recovery)) {
+	अगर (test_bit(MD_RECOVERY_SYNC, &mddev->recovery)) अणु
+		अगर (test_bit(MD_RECOVERY_CHECK, &mddev->recovery)) अणु
 			desc = "data-check";
 			action = "check";
-		} else if (test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery)) {
+		पूर्ण अन्यथा अगर (test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery)) अणु
 			desc = "requested-resync";
 			action = "repair";
-		} else
+		पूर्ण अन्यथा
 			desc = "resync";
-	} else if (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery))
+	पूर्ण अन्यथा अगर (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery))
 		desc = "reshape";
-	else
+	अन्यथा
 		desc = "recovery";
 
 	mddev->last_sync_action = action ?: desc;
@@ -8714,114 +8715,114 @@ void md_do_sync(struct md_thread *thread)
 	 *		commence
 	 * other == active in resync - this many blocks
 	 *
-	 * Before starting a resync we must have set curr_resync to
+	 * Beक्रमe starting a resync we must have set curr_resync to
 	 * 2, and then checked that every "conflicting" array has curr_resync
 	 * less than ours.  When we find one that is the same or higher
-	 * we wait on resync_wait.  To avoid deadlock, we reduce curr_resync
-	 * to 1 if we choose to yield (based arbitrarily on address of mddev structure).
+	 * we रुको on resync_रुको.  To aव्योम deadlock, we reduce curr_resync
+	 * to 1 अगर we choose to yield (based arbitrarily on address of mddev काष्ठाure).
 	 * This will mean we have to start checking from the beginning again.
 	 *
 	 */
 
-	do {
-		int mddev2_minor = -1;
+	करो अणु
+		पूर्णांक mddev2_minor = -1;
 		mddev->curr_resync = 2;
 
 	try_again:
-		if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
-			goto skip;
-		for_each_mddev(mddev2, tmp) {
-			if (mddev2 == mddev)
-				continue;
-			if (!mddev->parallel_resync
+		अगर (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
+			जाओ skip;
+		क्रम_each_mddev(mddev2, पंचांगp) अणु
+			अगर (mddev2 == mddev)
+				जारी;
+			अगर (!mddev->parallel_resync
 			&&  mddev2->curr_resync
-			&&  match_mddev_units(mddev, mddev2)) {
+			&&  match_mddev_units(mddev, mddev2)) अणु
 				DEFINE_WAIT(wq);
-				if (mddev < mddev2 && mddev->curr_resync == 2) {
+				अगर (mddev < mddev2 && mddev->curr_resync == 2) अणु
 					/* arbitrarily yield */
 					mddev->curr_resync = 1;
-					wake_up(&resync_wait);
-				}
-				if (mddev > mddev2 && mddev->curr_resync == 1)
-					/* no need to wait here, we can wait the next
-					 * time 'round when curr_resync == 2
+					wake_up(&resync_रुको);
+				पूर्ण
+				अगर (mddev > mddev2 && mddev->curr_resync == 1)
+					/* no need to रुको here, we can रुको the next
+					 * समय 'round when curr_resync == 2
 					 */
-					continue;
-				/* We need to wait 'interruptible' so as not to
+					जारी;
+				/* We need to रुको 'interruptible' so as not to
 				 * contribute to the load average, and not to
 				 * be caught by 'softlockup'
 				 */
-				prepare_to_wait(&resync_wait, &wq, TASK_INTERRUPTIBLE);
-				if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery) &&
-				    mddev2->curr_resync >= mddev->curr_resync) {
-					if (mddev2_minor != mddev2->md_minor) {
+				prepare_to_रुको(&resync_रुको, &wq, TASK_INTERRUPTIBLE);
+				अगर (!test_bit(MD_RECOVERY_INTR, &mddev->recovery) &&
+				    mddev2->curr_resync >= mddev->curr_resync) अणु
+					अगर (mddev2_minor != mddev2->md_minor) अणु
 						mddev2_minor = mddev2->md_minor;
 						pr_info("md: delaying %s of %s until %s has finished (they share one or more physical units)\n",
 							desc, mdname(mddev),
 							mdname(mddev2));
-					}
+					पूर्ण
 					mddev_put(mddev2);
-					if (signal_pending(current))
-						flush_signals(current);
+					अगर (संकेत_pending(current))
+						flush_संकेतs(current);
 					schedule();
-					finish_wait(&resync_wait, &wq);
-					goto try_again;
-				}
-				finish_wait(&resync_wait, &wq);
-			}
-		}
-	} while (mddev->curr_resync < 2);
+					finish_रुको(&resync_रुको, &wq);
+					जाओ try_again;
+				पूर्ण
+				finish_रुको(&resync_रुको, &wq);
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (mddev->curr_resync < 2);
 
 	j = 0;
-	if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery)) {
+	अगर (test_bit(MD_RECOVERY_SYNC, &mddev->recovery)) अणु
 		/* resync follows the size requested by the personality,
-		 * which defaults to physical size, but can be virtual size
+		 * which शेषs to physical size, but can be भव size
 		 */
 		max_sectors = mddev->resync_max_sectors;
 		atomic64_set(&mddev->resync_mismatches, 0);
-		/* we don't use the checkpoint if there's a bitmap */
-		if (test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery))
+		/* we करोn't use the checkpoint if there's a biपंचांगap */
+		अगर (test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery))
 			j = mddev->resync_min;
-		else if (!mddev->bitmap)
+		अन्यथा अगर (!mddev->biपंचांगap)
 			j = mddev->recovery_cp;
 
-	} else if (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery)) {
+	पूर्ण अन्यथा अगर (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery)) अणु
 		max_sectors = mddev->resync_max_sectors;
 		/*
-		 * If the original node aborts reshaping then we continue the
-		 * reshaping, so set j again to avoid restart reshape from the
+		 * If the original node पातs reshaping then we जारी the
+		 * reshaping, so set j again to aव्योम restart reshape from the
 		 * first beginning
 		 */
-		if (mddev_is_clustered(mddev) &&
+		अगर (mddev_is_clustered(mddev) &&
 		    mddev->reshape_position != MaxSector)
 			j = mddev->reshape_position;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* recovery follows the physical size of devices */
 		max_sectors = mddev->dev_sectors;
 		j = MaxSector;
-		rcu_read_lock();
-		rdev_for_each_rcu(rdev, mddev)
-			if (rdev->raid_disk >= 0 &&
+		rcu_पढ़ो_lock();
+		rdev_क्रम_each_rcu(rdev, mddev)
+			अगर (rdev->raid_disk >= 0 &&
 			    !test_bit(Journal, &rdev->flags) &&
 			    !test_bit(Faulty, &rdev->flags) &&
 			    !test_bit(In_sync, &rdev->flags) &&
 			    rdev->recovery_offset < j)
 				j = rdev->recovery_offset;
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
-		/* If there is a bitmap, we need to make sure all
-		 * writes that started before we added a spare
-		 * complete before we start doing a recovery.
-		 * Otherwise the write might complete and (via
-		 * bitmap_endwrite) set a bit in the bitmap after the
+		/* If there is a biपंचांगap, we need to make sure all
+		 * ग_लिखोs that started beक्रमe we added a spare
+		 * complete beक्रमe we start करोing a recovery.
+		 * Otherwise the ग_लिखो might complete and (via
+		 * biपंचांगap_endग_लिखो) set a bit in the biपंचांगap after the
 		 * recovery has checked that bit and skipped that
 		 * region.
 		 */
-		if (mddev->bitmap) {
+		अगर (mddev->biपंचांगap) अणु
 			mddev->pers->quiesce(mddev, 1);
 			mddev->pers->quiesce(mddev, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	pr_info("md: %s of RAID array %s\n", desc, mdname(mddev));
 	pr_debug("md: minimum _guaranteed_  speed: %d KB/sec/disk.\n", speed_min(mddev));
@@ -8831,345 +8832,345 @@ void md_do_sync(struct md_thread *thread)
 	is_mddev_idle(mddev, 1); /* this initializes IO event counters */
 
 	io_sectors = 0;
-	for (m = 0; m < SYNC_MARKS; m++) {
-		mark[m] = jiffies;
+	क्रम (m = 0; m < SYNC_MARKS; m++) अणु
+		mark[m] = jअगरfies;
 		mark_cnt[m] = io_sectors;
-	}
+	पूर्ण
 	last_mark = 0;
 	mddev->resync_mark = mark[last_mark];
 	mddev->resync_mark_cnt = mark_cnt[last_mark];
 
 	/*
-	 * Tune reconstruction:
+	 * Tune reस्थिरruction:
 	 */
-	window = 32 * (PAGE_SIZE / 512);
+	winकरोw = 32 * (PAGE_SIZE / 512);
 	pr_debug("md: using %dk window, over a total of %lluk.\n",
-		 window/2, (unsigned long long)max_sectors/2);
+		 winकरोw/2, (अचिन्हित दीर्घ दीर्घ)max_sectors/2);
 
 	atomic_set(&mddev->recovery_active, 0);
 	last_check = 0;
 
-	if (j>2) {
+	अगर (j>2) अणु
 		pr_debug("md: resuming %s of %s from checkpoint.\n",
 			 desc, mdname(mddev));
 		mddev->curr_resync = j;
-	} else
-		mddev->curr_resync = 3; /* no longer delayed */
+	पूर्ण अन्यथा
+		mddev->curr_resync = 3; /* no दीर्घer delayed */
 	mddev->curr_resync_completed = j;
-	sysfs_notify_dirent_safe(mddev->sysfs_completed);
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_completed);
 	md_new_event(mddev);
-	update_time = jiffies;
+	update_समय = jअगरfies;
 
 	blk_start_plug(&plug);
-	while (j < max_sectors) {
+	जबतक (j < max_sectors) अणु
 		sector_t sectors;
 
 		skipped = 0;
 
-		if (!test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
+		अगर (!test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
 		    ((mddev->curr_resync > mddev->curr_resync_completed &&
 		      (mddev->curr_resync - mddev->curr_resync_completed)
 		      > (max_sectors >> 4)) ||
-		     time_after_eq(jiffies, update_time + UPDATE_FREQUENCY) ||
+		     समय_after_eq(jअगरfies, update_समय + UPDATE_FREQUENCY) ||
 		     (j - mddev->curr_resync_completed)*2
 		     >= mddev->resync_max - mddev->curr_resync_completed ||
 		     mddev->curr_resync_completed > mddev->resync_max
-			    )) {
-			/* time to update curr_resync_completed */
-			wait_event(mddev->recovery_wait,
-				   atomic_read(&mddev->recovery_active) == 0);
+			    )) अणु
+			/* समय to update curr_resync_completed */
+			रुको_event(mddev->recovery_रुको,
+				   atomic_पढ़ो(&mddev->recovery_active) == 0);
 			mddev->curr_resync_completed = j;
-			if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery) &&
+			अगर (test_bit(MD_RECOVERY_SYNC, &mddev->recovery) &&
 			    j > mddev->recovery_cp)
 				mddev->recovery_cp = j;
-			update_time = jiffies;
+			update_समय = jअगरfies;
 			set_bit(MD_SB_CHANGE_CLEAN, &mddev->sb_flags);
-			sysfs_notify_dirent_safe(mddev->sysfs_completed);
-		}
+			sysfs_notअगरy_dirent_safe(mddev->sysfs_completed);
+		पूर्ण
 
-		while (j >= mddev->resync_max &&
-		       !test_bit(MD_RECOVERY_INTR, &mddev->recovery)) {
+		जबतक (j >= mddev->resync_max &&
+		       !test_bit(MD_RECOVERY_INTR, &mddev->recovery)) अणु
 			/* As this condition is controlled by user-space,
 			 * we can block indefinitely, so use '_interruptible'
-			 * to avoid triggering warnings.
+			 * to aव्योम triggering warnings.
 			 */
-			flush_signals(current); /* just in case */
-			wait_event_interruptible(mddev->recovery_wait,
+			flush_संकेतs(current); /* just in हाल */
+			रुको_event_पूर्णांकerruptible(mddev->recovery_रुको,
 						 mddev->resync_max > j
 						 || test_bit(MD_RECOVERY_INTR,
 							     &mddev->recovery));
-		}
+		पूर्ण
 
-		if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
-			break;
+		अगर (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
+			अवरोध;
 
 		sectors = mddev->pers->sync_request(mddev, j, &skipped);
-		if (sectors == 0) {
+		अगर (sectors == 0) अणु
 			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!skipped) { /* actual IO requested */
+		अगर (!skipped) अणु /* actual IO requested */
 			io_sectors += sectors;
 			atomic_add(sectors, &mddev->recovery_active);
-		}
+		पूर्ण
 
-		if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
-			break;
+		अगर (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
+			अवरोध;
 
 		j += sectors;
-		if (j > max_sectors)
-			/* when skipping, extra large numbers can be returned. */
+		अगर (j > max_sectors)
+			/* when skipping, extra large numbers can be वापसed. */
 			j = max_sectors;
-		if (j > 2)
+		अगर (j > 2)
 			mddev->curr_resync = j;
 		mddev->curr_mark_cnt = io_sectors;
-		if (last_check == 0)
+		अगर (last_check == 0)
 			/* this is the earliest that rebuild will be
 			 * visible in /proc/mdstat
 			 */
 			md_new_event(mddev);
 
-		if (last_check + window > io_sectors || j == max_sectors)
-			continue;
+		अगर (last_check + winकरोw > io_sectors || j == max_sectors)
+			जारी;
 
 		last_check = io_sectors;
 	repeat:
-		if (time_after_eq(jiffies, mark[last_mark] + SYNC_MARK_STEP )) {
+		अगर (समय_after_eq(jअगरfies, mark[last_mark] + SYNC_MARK_STEP )) अणु
 			/* step marks */
-			int next = (last_mark+1) % SYNC_MARKS;
+			पूर्णांक next = (last_mark+1) % SYNC_MARKS;
 
 			mddev->resync_mark = mark[next];
 			mddev->resync_mark_cnt = mark_cnt[next];
-			mark[next] = jiffies;
-			mark_cnt[next] = io_sectors - atomic_read(&mddev->recovery_active);
+			mark[next] = jअगरfies;
+			mark_cnt[next] = io_sectors - atomic_पढ़ो(&mddev->recovery_active);
 			last_mark = next;
-		}
+		पूर्ण
 
-		if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
-			break;
+		अगर (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
+			अवरोध;
 
 		/*
-		 * this loop exits only if either when we are slower than
-		 * the 'hard' speed limit, or the system was IO-idle for
-		 * a jiffy.
-		 * the system might be non-idle CPU-wise, but we only care
-		 * about not overloading the IO subsystem. (things like an
-		 * e2fsck being done on the RAID array should execute fast)
+		 * this loop निकासs only अगर either when we are slower than
+		 * the 'hard' speed limit, or the प्रणाली was IO-idle क्रम
+		 * a jअगरfy.
+		 * the प्रणाली might be non-idle CPU-wise, but we only care
+		 * about not overloading the IO subप्रणाली. (things like an
+		 * e2fsck being करोne on the RAID array should execute fast)
 		 */
 		cond_resched();
 
-		recovery_done = io_sectors - atomic_read(&mddev->recovery_active);
-		currspeed = ((unsigned long)(recovery_done - mddev->resync_mark_cnt))/2
-			/((jiffies-mddev->resync_mark)/HZ +1) +1;
+		recovery_करोne = io_sectors - atomic_पढ़ो(&mddev->recovery_active);
+		currspeed = ((अचिन्हित दीर्घ)(recovery_करोne - mddev->resync_mark_cnt))/2
+			/((jअगरfies-mddev->resync_mark)/HZ +1) +1;
 
-		if (currspeed > speed_min(mddev)) {
-			if (currspeed > speed_max(mddev)) {
+		अगर (currspeed > speed_min(mddev)) अणु
+			अगर (currspeed > speed_max(mddev)) अणु
 				msleep(500);
-				goto repeat;
-			}
-			if (!is_mddev_idle(mddev, 0)) {
+				जाओ repeat;
+			पूर्ण
+			अगर (!is_mddev_idle(mddev, 0)) अणु
 				/*
 				 * Give other IO more of a chance.
-				 * The faster the devices, the less we wait.
+				 * The faster the devices, the less we रुको.
 				 */
-				wait_event(mddev->recovery_wait,
-					   !atomic_read(&mddev->recovery_active));
-			}
-		}
-	}
+				रुको_event(mddev->recovery_रुको,
+					   !atomic_पढ़ो(&mddev->recovery_active));
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	pr_info("md: %s: %s %s.\n",mdname(mddev), desc,
 		test_bit(MD_RECOVERY_INTR, &mddev->recovery)
 		? "interrupted" : "done");
 	/*
-	 * this also signals 'finished resyncing' to md_stop
+	 * this also संकेतs 'finished resyncing' to md_stop
 	 */
 	blk_finish_plug(&plug);
-	wait_event(mddev->recovery_wait, !atomic_read(&mddev->recovery_active));
+	रुको_event(mddev->recovery_रुको, !atomic_पढ़ो(&mddev->recovery_active));
 
-	if (!test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
+	अगर (!test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
 	    !test_bit(MD_RECOVERY_INTR, &mddev->recovery) &&
-	    mddev->curr_resync > 3) {
+	    mddev->curr_resync > 3) अणु
 		mddev->curr_resync_completed = mddev->curr_resync;
-		sysfs_notify_dirent_safe(mddev->sysfs_completed);
-	}
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_completed);
+	पूर्ण
 	mddev->pers->sync_request(mddev, max_sectors, &skipped);
 
-	if (!test_bit(MD_RECOVERY_CHECK, &mddev->recovery) &&
-	    mddev->curr_resync > 3) {
-		if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery)) {
-			if (test_bit(MD_RECOVERY_INTR, &mddev->recovery)) {
-				if (mddev->curr_resync >= mddev->recovery_cp) {
+	अगर (!test_bit(MD_RECOVERY_CHECK, &mddev->recovery) &&
+	    mddev->curr_resync > 3) अणु
+		अगर (test_bit(MD_RECOVERY_SYNC, &mddev->recovery)) अणु
+			अगर (test_bit(MD_RECOVERY_INTR, &mddev->recovery)) अणु
+				अगर (mddev->curr_resync >= mddev->recovery_cp) अणु
 					pr_debug("md: checkpointing %s of %s.\n",
 						 desc, mdname(mddev));
-					if (test_bit(MD_RECOVERY_ERROR,
+					अगर (test_bit(MD_RECOVERY_ERROR,
 						&mddev->recovery))
 						mddev->recovery_cp =
 							mddev->curr_resync_completed;
-					else
+					अन्यथा
 						mddev->recovery_cp =
 							mddev->curr_resync;
-				}
-			} else
+				पूर्ण
+			पूर्ण अन्यथा
 				mddev->recovery_cp = MaxSector;
-		} else {
-			if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery))
+		पूर्ण अन्यथा अणु
+			अगर (!test_bit(MD_RECOVERY_INTR, &mddev->recovery))
 				mddev->curr_resync = MaxSector;
-			if (!test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
-			    test_bit(MD_RECOVERY_RECOVER, &mddev->recovery)) {
-				rcu_read_lock();
-				rdev_for_each_rcu(rdev, mddev)
-					if (rdev->raid_disk >= 0 &&
+			अगर (!test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
+			    test_bit(MD_RECOVERY_RECOVER, &mddev->recovery)) अणु
+				rcu_पढ़ो_lock();
+				rdev_क्रम_each_rcu(rdev, mddev)
+					अगर (rdev->raid_disk >= 0 &&
 					    mddev->delta_disks >= 0 &&
 					    !test_bit(Journal, &rdev->flags) &&
 					    !test_bit(Faulty, &rdev->flags) &&
 					    !test_bit(In_sync, &rdev->flags) &&
 					    rdev->recovery_offset < mddev->curr_resync)
 						rdev->recovery_offset = mddev->curr_resync;
-				rcu_read_unlock();
-			}
-		}
-	}
+				rcu_पढ़ो_unlock();
+			पूर्ण
+		पूर्ण
+	पूर्ण
  skip:
 	/* set CHANGE_PENDING here since maybe another update is needed,
-	 * so other nodes are informed. It should be harmless for normal
+	 * so other nodes are inक्रमmed. It should be harmless क्रम normal
 	 * raid */
 	set_mask_bits(&mddev->sb_flags, 0,
 		      BIT(MD_SB_CHANGE_PENDING) | BIT(MD_SB_CHANGE_DEVS));
 
-	if (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
+	अगर (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
 			!test_bit(MD_RECOVERY_INTR, &mddev->recovery) &&
 			mddev->delta_disks > 0 &&
 			mddev->pers->finish_reshape &&
 			mddev->pers->size &&
-			mddev->queue) {
-		mddev_lock_nointr(mddev);
+			mddev->queue) अणु
+		mddev_lock_noपूर्णांकr(mddev);
 		md_set_array_sectors(mddev, mddev->pers->size(mddev, 0, 0));
 		mddev_unlock(mddev);
-		if (!mddev_is_clustered(mddev))
-			set_capacity_and_notify(mddev->gendisk,
+		अगर (!mddev_is_clustered(mddev))
+			set_capacity_and_notअगरy(mddev->gendisk,
 						mddev->array_sectors);
-	}
+	पूर्ण
 
 	spin_lock(&mddev->lock);
-	if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery)) {
-		/* We completed so min/max setting can be forgotten if used. */
-		if (test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery))
+	अगर (!test_bit(MD_RECOVERY_INTR, &mddev->recovery)) अणु
+		/* We completed so min/max setting can be क्रमgotten अगर used. */
+		अगर (test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery))
 			mddev->resync_min = 0;
 		mddev->resync_max = MaxSector;
-	} else if (test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery))
+	पूर्ण अन्यथा अगर (test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery))
 		mddev->resync_min = mddev->curr_resync_completed;
 	set_bit(MD_RECOVERY_DONE, &mddev->recovery);
 	mddev->curr_resync = 0;
 	spin_unlock(&mddev->lock);
 
-	wake_up(&resync_wait);
-	md_wakeup_thread(mddev->thread);
-	return;
-}
-EXPORT_SYMBOL_GPL(md_do_sync);
+	wake_up(&resync_रुको);
+	md_wakeup_thपढ़ो(mddev->thपढ़ो);
+	वापस;
+पूर्ण
+EXPORT_SYMBOL_GPL(md_करो_sync);
 
-static int remove_and_add_spares(struct mddev *mddev,
-				 struct md_rdev *this)
-{
-	struct md_rdev *rdev;
-	int spares = 0;
-	int removed = 0;
-	bool remove_some = false;
+अटल पूर्णांक हटाओ_and_add_spares(काष्ठा mddev *mddev,
+				 काष्ठा md_rdev *this)
+अणु
+	काष्ठा md_rdev *rdev;
+	पूर्णांक spares = 0;
+	पूर्णांक हटाओd = 0;
+	bool हटाओ_some = false;
 
-	if (this && test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
-		/* Mustn't remove devices when resync thread is running */
-		return 0;
+	अगर (this && test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+		/* Mustn't हटाओ devices when resync thपढ़ो is running */
+		वापस 0;
 
-	rdev_for_each(rdev, mddev) {
-		if ((this == NULL || rdev == this) &&
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर ((this == शून्य || rdev == this) &&
 		    rdev->raid_disk >= 0 &&
 		    !test_bit(Blocked, &rdev->flags) &&
 		    test_bit(Faulty, &rdev->flags) &&
-		    atomic_read(&rdev->nr_pending)==0) {
+		    atomic_पढ़ो(&rdev->nr_pending)==0) अणु
 			/* Faulty non-Blocked devices with nr_pending == 0
 			 * never get nr_pending incremented,
 			 * never get Faulty cleared, and never get Blocked set.
 			 * So we can synchronize_rcu now rather than once per device
 			 */
-			remove_some = true;
+			हटाओ_some = true;
 			set_bit(RemoveSynchronized, &rdev->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (remove_some)
+	अगर (हटाओ_some)
 		synchronize_rcu();
-	rdev_for_each(rdev, mddev) {
-		if ((this == NULL || rdev == this) &&
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर ((this == शून्य || rdev == this) &&
 		    rdev->raid_disk >= 0 &&
 		    !test_bit(Blocked, &rdev->flags) &&
 		    ((test_bit(RemoveSynchronized, &rdev->flags) ||
 		     (!test_bit(In_sync, &rdev->flags) &&
 		      !test_bit(Journal, &rdev->flags))) &&
-		    atomic_read(&rdev->nr_pending)==0)) {
-			if (mddev->pers->hot_remove_disk(
-				    mddev, rdev) == 0) {
+		    atomic_पढ़ो(&rdev->nr_pending)==0)) अणु
+			अगर (mddev->pers->hot_हटाओ_disk(
+				    mddev, rdev) == 0) अणु
 				sysfs_unlink_rdev(mddev, rdev);
 				rdev->saved_raid_disk = rdev->raid_disk;
 				rdev->raid_disk = -1;
-				removed++;
-			}
-		}
-		if (remove_some && test_bit(RemoveSynchronized, &rdev->flags))
+				हटाओd++;
+			पूर्ण
+		पूर्ण
+		अगर (हटाओ_some && test_bit(RemoveSynchronized, &rdev->flags))
 			clear_bit(RemoveSynchronized, &rdev->flags);
-	}
+	पूर्ण
 
-	if (removed && mddev->kobj.sd)
-		sysfs_notify_dirent_safe(mddev->sysfs_degraded);
+	अगर (हटाओd && mddev->kobj.sd)
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_degraded);
 
-	if (this && removed)
-		goto no_add;
+	अगर (this && हटाओd)
+		जाओ no_add;
 
-	rdev_for_each(rdev, mddev) {
-		if (this && this != rdev)
-			continue;
-		if (test_bit(Candidate, &rdev->flags))
-			continue;
-		if (rdev->raid_disk >= 0 &&
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (this && this != rdev)
+			जारी;
+		अगर (test_bit(Candidate, &rdev->flags))
+			जारी;
+		अगर (rdev->raid_disk >= 0 &&
 		    !test_bit(In_sync, &rdev->flags) &&
 		    !test_bit(Journal, &rdev->flags) &&
 		    !test_bit(Faulty, &rdev->flags))
 			spares++;
-		if (rdev->raid_disk >= 0)
-			continue;
-		if (test_bit(Faulty, &rdev->flags))
-			continue;
-		if (!test_bit(Journal, &rdev->flags)) {
-			if (mddev->ro &&
+		अगर (rdev->raid_disk >= 0)
+			जारी;
+		अगर (test_bit(Faulty, &rdev->flags))
+			जारी;
+		अगर (!test_bit(Journal, &rdev->flags)) अणु
+			अगर (mddev->ro &&
 			    ! (rdev->saved_raid_disk >= 0 &&
-			       !test_bit(Bitmap_sync, &rdev->flags)))
-				continue;
+			       !test_bit(Biपंचांगap_sync, &rdev->flags)))
+				जारी;
 
 			rdev->recovery_offset = 0;
-		}
-		if (mddev->pers->hot_add_disk(mddev, rdev) == 0) {
+		पूर्ण
+		अगर (mddev->pers->hot_add_disk(mddev, rdev) == 0) अणु
 			/* failure here is OK */
 			sysfs_link_rdev(mddev, rdev);
-			if (!test_bit(Journal, &rdev->flags))
+			अगर (!test_bit(Journal, &rdev->flags))
 				spares++;
 			md_new_event(mddev);
 			set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 no_add:
-	if (removed)
+	अगर (हटाओd)
 		set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
-	return spares;
-}
+	वापस spares;
+पूर्ण
 
-static void md_start_sync(struct work_struct *ws)
-{
-	struct mddev *mddev = container_of(ws, struct mddev, del_work);
+अटल व्योम md_start_sync(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा mddev *mddev = container_of(ws, काष्ठा mddev, del_work);
 
-	mddev->sync_thread = md_register_thread(md_do_sync,
+	mddev->sync_thपढ़ो = md_रेजिस्टर_thपढ़ो(md_करो_sync,
 						mddev,
 						"resync");
-	if (!mddev->sync_thread) {
+	अगर (!mddev->sync_thपढ़ो) अणु
 		pr_warn("%s: could not start resync thread...\n",
 			mdname(mddev));
 		/* leave the spares where they are, it shouldn't hurt */
@@ -9178,254 +9179,254 @@ static void md_start_sync(struct work_struct *ws)
 		clear_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
 		clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
 		clear_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
-		wake_up(&resync_wait);
-		if (test_and_clear_bit(MD_RECOVERY_RECOVER,
+		wake_up(&resync_रुको);
+		अगर (test_and_clear_bit(MD_RECOVERY_RECOVER,
 				       &mddev->recovery))
-			if (mddev->sysfs_action)
-				sysfs_notify_dirent_safe(mddev->sysfs_action);
-	} else
-		md_wakeup_thread(mddev->sync_thread);
-	sysfs_notify_dirent_safe(mddev->sysfs_action);
+			अगर (mddev->sysfs_action)
+				sysfs_notअगरy_dirent_safe(mddev->sysfs_action);
+	पूर्ण अन्यथा
+		md_wakeup_thपढ़ो(mddev->sync_thपढ़ो);
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_action);
 	md_new_event(mddev);
-}
+पूर्ण
 
 /*
- * This routine is regularly called by all per-raid-array threads to
+ * This routine is regularly called by all per-raid-array thपढ़ोs to
  * deal with generic issues like resync and super-block update.
- * Raid personalities that don't have a thread (linear/raid0) do not
- * need this as they never do any recovery or update the superblock.
+ * Raid personalities that करोn't have a thपढ़ो (linear/raid0) करो not
+ * need this as they never करो any recovery or update the superblock.
  *
- * It does not do any resync itself, but rather "forks" off other threads
- * to do that as needed.
+ * It करोes not करो any resync itself, but rather "forks" off other thपढ़ोs
+ * to करो that as needed.
  * When it is determined that resync is needed, we set MD_RECOVERY_RUNNING in
- * "->recovery" and create a thread at ->sync_thread.
- * When the thread finishes it sets MD_RECOVERY_DONE
- * and wakeups up this thread which will reap the thread and finish up.
- * This thread also removes any faulty devices (with nr_pending == 0).
+ * "->recovery" and create a thपढ़ो at ->sync_thपढ़ो.
+ * When the thपढ़ो finishes it sets MD_RECOVERY_DONE
+ * and wakeups up this thपढ़ो which will reap the thपढ़ो and finish up.
+ * This thपढ़ो also हटाओs any faulty devices (with nr_pending == 0).
  *
  * The overall approach is:
- *  1/ if the superblock needs updating, update it.
- *  2/ If a recovery thread is running, don't do anything else.
+ *  1/ अगर the superblock needs updating, update it.
+ *  2/ If a recovery thपढ़ो is running, करोn't करो anything अन्यथा.
  *  3/ If recovery has finished, clean up, possibly marking spares active.
- *  4/ If there are any faulty devices, remove them.
+ *  4/ If there are any faulty devices, हटाओ them.
  *  5/ If array is degraded, try to add spares devices
- *  6/ If array has spares or is not in-sync, start a resync thread.
+ *  6/ If array has spares or is not in-sync, start a resync thपढ़ो.
  */
-void md_check_recovery(struct mddev *mddev)
-{
-	if (test_bit(MD_ALLOW_SB_UPDATE, &mddev->flags) && mddev->sb_flags) {
-		/* Write superblock - thread that called mddev_suspend()
-		 * holds reconfig_mutex for us.
+व्योम md_check_recovery(काष्ठा mddev *mddev)
+अणु
+	अगर (test_bit(MD_ALLOW_SB_UPDATE, &mddev->flags) && mddev->sb_flags) अणु
+		/* Write superblock - thपढ़ो that called mddev_suspend()
+		 * holds reconfig_mutex क्रम us.
 		 */
 		set_bit(MD_UPDATING_SB, &mddev->flags);
 		smp_mb__after_atomic();
-		if (test_bit(MD_ALLOW_SB_UPDATE, &mddev->flags))
+		अगर (test_bit(MD_ALLOW_SB_UPDATE, &mddev->flags))
 			md_update_sb(mddev, 0);
 		clear_bit_unlock(MD_UPDATING_SB, &mddev->flags);
-		wake_up(&mddev->sb_wait);
-	}
+		wake_up(&mddev->sb_रुको);
+	पूर्ण
 
-	if (mddev->suspended)
-		return;
+	अगर (mddev->suspended)
+		वापस;
 
-	if (mddev->bitmap)
-		md_bitmap_daemon_work(mddev);
+	अगर (mddev->biपंचांगap)
+		md_biपंचांगap_daemon_work(mddev);
 
-	if (signal_pending(current)) {
-		if (mddev->pers->sync_request && !mddev->external) {
+	अगर (संकेत_pending(current)) अणु
+		अगर (mddev->pers->sync_request && !mddev->बाह्यal) अणु
 			pr_debug("md: %s in immediate safe mode\n",
 				 mdname(mddev));
 			mddev->safemode = 2;
-		}
-		flush_signals(current);
-	}
+		पूर्ण
+		flush_संकेतs(current);
+	पूर्ण
 
-	if (mddev->ro && !test_bit(MD_RECOVERY_NEEDED, &mddev->recovery))
-		return;
-	if ( ! (
+	अगर (mddev->ro && !test_bit(MD_RECOVERY_NEEDED, &mddev->recovery))
+		वापस;
+	अगर ( ! (
 		(mddev->sb_flags & ~ (1<<MD_SB_CHANGE_PENDING)) ||
 		test_bit(MD_RECOVERY_NEEDED, &mddev->recovery) ||
 		test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
-		(mddev->external == 0 && mddev->safemode == 1) ||
+		(mddev->बाह्यal == 0 && mddev->safemode == 1) ||
 		(mddev->safemode == 2
 		 && !mddev->in_sync && mddev->recovery_cp == MaxSector)
 		))
-		return;
+		वापस;
 
-	if (mddev_trylock(mddev)) {
-		int spares = 0;
+	अगर (mddev_trylock(mddev)) अणु
+		पूर्णांक spares = 0;
 		bool try_set_sync = mddev->safemode != 0;
 
-		if (!mddev->external && mddev->safemode == 1)
+		अगर (!mddev->बाह्यal && mddev->safemode == 1)
 			mddev->safemode = 0;
 
-		if (mddev->ro) {
-			struct md_rdev *rdev;
-			if (!mddev->external && mddev->in_sync)
+		अगर (mddev->ro) अणु
+			काष्ठा md_rdev *rdev;
+			अगर (!mddev->बाह्यal && mddev->in_sync)
 				/* 'Blocked' flag not needed as failed devices
-				 * will be recorded if array switched to read/write.
+				 * will be recorded अगर array चयनed to पढ़ो/ग_लिखो.
 				 * Leaving it set will prevent the device
-				 * from being removed.
+				 * from being हटाओd.
 				 */
-				rdev_for_each(rdev, mddev)
+				rdev_क्रम_each(rdev, mddev)
 					clear_bit(Blocked, &rdev->flags);
-			/* On a read-only array we can:
-			 * - remove failed devices
-			 * - add already-in_sync devices if the array itself
+			/* On a पढ़ो-only array we can:
+			 * - हटाओ failed devices
+			 * - add alपढ़ोy-in_sync devices अगर the array itself
 			 *   is in-sync.
-			 * As we only add devices that are already in-sync,
+			 * As we only add devices that are alपढ़ोy in-sync,
 			 * we can activate the spares immediately.
 			 */
-			remove_and_add_spares(mddev, NULL);
-			/* There is no thread, but we need to call
+			हटाओ_and_add_spares(mddev, शून्य);
+			/* There is no thपढ़ो, but we need to call
 			 * ->spare_active and clear saved_raid_disk
 			 */
 			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-			md_reap_sync_thread(mddev);
+			md_reap_sync_thपढ़ो(mddev);
 			clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
 			clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
 			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
-		if (mddev_is_clustered(mddev)) {
-			struct md_rdev *rdev, *tmp;
-			/* kick the device if another node issued a
-			 * remove disk.
+		अगर (mddev_is_clustered(mddev)) अणु
+			काष्ठा md_rdev *rdev, *पंचांगp;
+			/* kick the device अगर another node issued a
+			 * हटाओ disk.
 			 */
-			rdev_for_each_safe(rdev, tmp, mddev) {
-				if (test_and_clear_bit(ClusterRemove, &rdev->flags) &&
+			rdev_क्रम_each_safe(rdev, पंचांगp, mddev) अणु
+				अगर (test_and_clear_bit(ClusterRemove, &rdev->flags) &&
 						rdev->raid_disk < 0)
 					md_kick_rdev_from_array(rdev);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (try_set_sync && !mddev->external && !mddev->in_sync) {
+		अगर (try_set_sync && !mddev->बाह्यal && !mddev->in_sync) अणु
 			spin_lock(&mddev->lock);
 			set_in_sync(mddev);
 			spin_unlock(&mddev->lock);
-		}
+		पूर्ण
 
-		if (mddev->sb_flags)
+		अगर (mddev->sb_flags)
 			md_update_sb(mddev, 0);
 
-		if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) &&
-		    !test_bit(MD_RECOVERY_DONE, &mddev->recovery)) {
+		अगर (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) &&
+		    !test_bit(MD_RECOVERY_DONE, &mddev->recovery)) अणु
 			/* resync/recovery still happening */
 			clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-			goto unlock;
-		}
-		if (mddev->sync_thread) {
-			md_reap_sync_thread(mddev);
-			goto unlock;
-		}
-		/* Set RUNNING before clearing NEEDED to avoid
+			जाओ unlock;
+		पूर्ण
+		अगर (mddev->sync_thपढ़ो) अणु
+			md_reap_sync_thपढ़ो(mddev);
+			जाओ unlock;
+		पूर्ण
+		/* Set RUNNING beक्रमe clearing NEEDED to aव्योम
 		 * any transients in the value of "sync_action".
 		 */
 		mddev->curr_resync_completed = 0;
 		spin_lock(&mddev->lock);
 		set_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
 		spin_unlock(&mddev->lock);
-		/* Clear some bits that don't mean anything, but
+		/* Clear some bits that करोn't mean anything, but
 		 * might be left set
 		 */
 		clear_bit(MD_RECOVERY_INTR, &mddev->recovery);
 		clear_bit(MD_RECOVERY_DONE, &mddev->recovery);
 
-		if (!test_and_clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery) ||
+		अगर (!test_and_clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery) ||
 		    test_bit(MD_RECOVERY_FROZEN, &mddev->recovery))
-			goto not_running;
+			जाओ not_running;
 		/* no recovery is running.
-		 * remove any failed drives, then
-		 * add spares if possible.
-		 * Spares are also removed and re-added, to allow
+		 * हटाओ any failed drives, then
+		 * add spares अगर possible.
+		 * Spares are also हटाओd and re-added, to allow
 		 * the personality to fail the re-add.
 		 */
 
-		if (mddev->reshape_position != MaxSector) {
-			if (mddev->pers->check_reshape == NULL ||
+		अगर (mddev->reshape_position != MaxSector) अणु
+			अगर (mddev->pers->check_reshape == शून्य ||
 			    mddev->pers->check_reshape(mddev) != 0)
 				/* Cannot proceed */
-				goto not_running;
+				जाओ not_running;
 			set_bit(MD_RECOVERY_RESHAPE, &mddev->recovery);
 			clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
-		} else if ((spares = remove_and_add_spares(mddev, NULL))) {
+		पूर्ण अन्यथा अगर ((spares = हटाओ_and_add_spares(mddev, शून्य))) अणु
 			clear_bit(MD_RECOVERY_SYNC, &mddev->recovery);
 			clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
 			clear_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
 			set_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
-		} else if (mddev->recovery_cp < MaxSector) {
+		पूर्ण अन्यथा अगर (mddev->recovery_cp < MaxSector) अणु
 			set_bit(MD_RECOVERY_SYNC, &mddev->recovery);
 			clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
-		} else if (!test_bit(MD_RECOVERY_SYNC, &mddev->recovery))
-			/* nothing to be done ... */
-			goto not_running;
+		पूर्ण अन्यथा अगर (!test_bit(MD_RECOVERY_SYNC, &mddev->recovery))
+			/* nothing to be करोne ... */
+			जाओ not_running;
 
-		if (mddev->pers->sync_request) {
-			if (spares) {
+		अगर (mddev->pers->sync_request) अणु
+			अगर (spares) अणु
 				/* We are adding a device or devices to an array
-				 * which has the bitmap stored on all devices.
-				 * So make sure all bitmap pages get written
+				 * which has the biपंचांगap stored on all devices.
+				 * So make sure all biपंचांगap pages get written
 				 */
-				md_bitmap_write_all(mddev->bitmap);
-			}
+				md_biपंचांगap_ग_लिखो_all(mddev->biपंचांगap);
+			पूर्ण
 			INIT_WORK(&mddev->del_work, md_start_sync);
 			queue_work(md_misc_wq, &mddev->del_work);
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 	not_running:
-		if (!mddev->sync_thread) {
+		अगर (!mddev->sync_thपढ़ो) अणु
 			clear_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
-			wake_up(&resync_wait);
-			if (test_and_clear_bit(MD_RECOVERY_RECOVER,
+			wake_up(&resync_रुको);
+			अगर (test_and_clear_bit(MD_RECOVERY_RECOVER,
 					       &mddev->recovery))
-				if (mddev->sysfs_action)
-					sysfs_notify_dirent_safe(mddev->sysfs_action);
-		}
+				अगर (mddev->sysfs_action)
+					sysfs_notअगरy_dirent_safe(mddev->sysfs_action);
+		पूर्ण
 	unlock:
-		wake_up(&mddev->sb_wait);
+		wake_up(&mddev->sb_रुको);
 		mddev_unlock(mddev);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(md_check_recovery);
 
-void md_reap_sync_thread(struct mddev *mddev)
-{
-	struct md_rdev *rdev;
+व्योम md_reap_sync_thपढ़ो(काष्ठा mddev *mddev)
+अणु
+	काष्ठा md_rdev *rdev;
 	sector_t old_dev_sectors = mddev->dev_sectors;
 	bool is_reshaped = false;
 
 	/* resync has finished, collect result */
-	md_unregister_thread(&mddev->sync_thread);
-	if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery) &&
+	md_unरेजिस्टर_thपढ़ो(&mddev->sync_thपढ़ो);
+	अगर (!test_bit(MD_RECOVERY_INTR, &mddev->recovery) &&
 	    !test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery) &&
-	    mddev->degraded != mddev->raid_disks) {
+	    mddev->degraded != mddev->raid_disks) अणु
 		/* success...*/
 		/* activate any spares */
-		if (mddev->pers->spare_active(mddev)) {
-			sysfs_notify_dirent_safe(mddev->sysfs_degraded);
+		अगर (mddev->pers->spare_active(mddev)) अणु
+			sysfs_notअगरy_dirent_safe(mddev->sysfs_degraded);
 			set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
-		}
-	}
-	if (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
-	    mddev->pers->finish_reshape) {
+		पूर्ण
+	पूर्ण
+	अगर (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
+	    mddev->pers->finish_reshape) अणु
 		mddev->pers->finish_reshape(mddev);
-		if (mddev_is_clustered(mddev))
+		अगर (mddev_is_clustered(mddev))
 			is_reshaped = true;
-	}
+	पूर्ण
 
-	/* If array is no-longer degraded, then any saved_raid_disk
-	 * information must be scrapped.
+	/* If array is no-दीर्घer degraded, then any saved_raid_disk
+	 * inक्रमmation must be scrapped.
 	 */
-	if (!mddev->degraded)
-		rdev_for_each(rdev, mddev)
+	अगर (!mddev->degraded)
+		rdev_क्रम_each(rdev, mddev)
 			rdev->saved_raid_disk = -1;
 
 	md_update_sb(mddev, 1);
 	/* MD_SB_CHANGE_PENDING should be cleared by md_update_sb, so we can
-	 * call resync_finish here if MD_CLUSTER_RESYNC_LOCKED is set by
+	 * call resync_finish here अगर MD_CLUSTER_RESYNC_LOCKED is set by
 	 * clustered raid */
-	if (test_and_clear_bit(MD_CLUSTER_RESYNC_LOCKED, &mddev->flags))
+	अगर (test_and_clear_bit(MD_CLUSTER_RESYNC_LOCKED, &mddev->flags))
 		md_cluster_ops->resync_finish(mddev);
 	clear_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
 	clear_bit(MD_RECOVERY_DONE, &mddev->recovery);
@@ -9436,164 +9437,164 @@ void md_reap_sync_thread(struct mddev *mddev)
 	/*
 	 * We call md_cluster_ops->update_size here because sync_size could
 	 * be changed by md_update_sb, and MD_RECOVERY_RESHAPE is cleared,
-	 * so it is time to update size across cluster.
+	 * so it is समय to update size across cluster.
 	 */
-	if (mddev_is_clustered(mddev) && is_reshaped
+	अगर (mddev_is_clustered(mddev) && is_reshaped
 				      && !test_bit(MD_CLOSING, &mddev->flags))
 		md_cluster_ops->update_size(mddev, old_dev_sectors);
-	wake_up(&resync_wait);
-	/* flag recovery needed just to double check */
+	wake_up(&resync_रुको);
+	/* flag recovery needed just to द्विगुन check */
 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-	sysfs_notify_dirent_safe(mddev->sysfs_action);
+	sysfs_notअगरy_dirent_safe(mddev->sysfs_action);
 	md_new_event(mddev);
-	if (mddev->event_work.func)
+	अगर (mddev->event_work.func)
 		queue_work(md_misc_wq, &mddev->event_work);
-}
-EXPORT_SYMBOL(md_reap_sync_thread);
+पूर्ण
+EXPORT_SYMBOL(md_reap_sync_thपढ़ो);
 
-void md_wait_for_blocked_rdev(struct md_rdev *rdev, struct mddev *mddev)
-{
-	sysfs_notify_dirent_safe(rdev->sysfs_state);
-	wait_event_timeout(rdev->blocked_wait,
+व्योम md_रुको_क्रम_blocked_rdev(काष्ठा md_rdev *rdev, काष्ठा mddev *mddev)
+अणु
+	sysfs_notअगरy_dirent_safe(rdev->sysfs_state);
+	रुको_event_समयout(rdev->blocked_रुको,
 			   !test_bit(Blocked, &rdev->flags) &&
 			   !test_bit(BlockedBadBlocks, &rdev->flags),
-			   msecs_to_jiffies(5000));
+			   msecs_to_jअगरfies(5000));
 	rdev_dec_pending(rdev, mddev);
-}
-EXPORT_SYMBOL(md_wait_for_blocked_rdev);
+पूर्ण
+EXPORT_SYMBOL(md_रुको_क्रम_blocked_rdev);
 
-void md_finish_reshape(struct mddev *mddev)
-{
+व्योम md_finish_reshape(काष्ठा mddev *mddev)
+अणु
 	/* called be personality module when reshape completes. */
-	struct md_rdev *rdev;
+	काष्ठा md_rdev *rdev;
 
-	rdev_for_each(rdev, mddev) {
-		if (rdev->data_offset > rdev->new_data_offset)
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (rdev->data_offset > rdev->new_data_offset)
 			rdev->sectors += rdev->data_offset - rdev->new_data_offset;
-		else
+		अन्यथा
 			rdev->sectors -= rdev->new_data_offset - rdev->data_offset;
 		rdev->data_offset = rdev->new_data_offset;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(md_finish_reshape);
 
 /* Bad block management */
 
 /* Returns 1 on success, 0 on failure */
-int rdev_set_badblocks(struct md_rdev *rdev, sector_t s, int sectors,
-		       int is_new)
-{
-	struct mddev *mddev = rdev->mddev;
-	int rv;
-	if (is_new)
+पूर्णांक rdev_set_badblocks(काष्ठा md_rdev *rdev, sector_t s, पूर्णांक sectors,
+		       पूर्णांक is_new)
+अणु
+	काष्ठा mddev *mddev = rdev->mddev;
+	पूर्णांक rv;
+	अगर (is_new)
 		s += rdev->new_data_offset;
-	else
+	अन्यथा
 		s += rdev->data_offset;
 	rv = badblocks_set(&rdev->badblocks, s, sectors, 0);
-	if (rv == 0) {
+	अगर (rv == 0) अणु
 		/* Make sure they get written out promptly */
-		if (test_bit(ExternalBbl, &rdev->flags))
-			sysfs_notify_dirent_safe(rdev->sysfs_unack_badblocks);
-		sysfs_notify_dirent_safe(rdev->sysfs_state);
+		अगर (test_bit(ExternalBbl, &rdev->flags))
+			sysfs_notअगरy_dirent_safe(rdev->sysfs_unack_badblocks);
+		sysfs_notअगरy_dirent_safe(rdev->sysfs_state);
 		set_mask_bits(&mddev->sb_flags, 0,
 			      BIT(MD_SB_CHANGE_CLEAN) | BIT(MD_SB_CHANGE_PENDING));
-		md_wakeup_thread(rdev->mddev->thread);
-		return 1;
-	} else
-		return 0;
-}
+		md_wakeup_thपढ़ो(rdev->mddev->thपढ़ो);
+		वापस 1;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rdev_set_badblocks);
 
-int rdev_clear_badblocks(struct md_rdev *rdev, sector_t s, int sectors,
-			 int is_new)
-{
-	int rv;
-	if (is_new)
+पूर्णांक rdev_clear_badblocks(काष्ठा md_rdev *rdev, sector_t s, पूर्णांक sectors,
+			 पूर्णांक is_new)
+अणु
+	पूर्णांक rv;
+	अगर (is_new)
 		s += rdev->new_data_offset;
-	else
+	अन्यथा
 		s += rdev->data_offset;
 	rv = badblocks_clear(&rdev->badblocks, s, sectors);
-	if ((rv == 0) && test_bit(ExternalBbl, &rdev->flags))
-		sysfs_notify_dirent_safe(rdev->sysfs_badblocks);
-	return rv;
-}
+	अगर ((rv == 0) && test_bit(ExternalBbl, &rdev->flags))
+		sysfs_notअगरy_dirent_safe(rdev->sysfs_badblocks);
+	वापस rv;
+पूर्ण
 EXPORT_SYMBOL_GPL(rdev_clear_badblocks);
 
-static int md_notify_reboot(struct notifier_block *this,
-			    unsigned long code, void *x)
-{
-	struct list_head *tmp;
-	struct mddev *mddev;
-	int need_delay = 0;
+अटल पूर्णांक md_notअगरy_reboot(काष्ठा notअगरier_block *this,
+			    अचिन्हित दीर्घ code, व्योम *x)
+अणु
+	काष्ठा list_head *पंचांगp;
+	काष्ठा mddev *mddev;
+	पूर्णांक need_delay = 0;
 
-	for_each_mddev(mddev, tmp) {
-		if (mddev_trylock(mddev)) {
-			if (mddev->pers)
-				__md_stop_writes(mddev);
-			if (mddev->persistent)
+	क्रम_each_mddev(mddev, पंचांगp) अणु
+		अगर (mddev_trylock(mddev)) अणु
+			अगर (mddev->pers)
+				__md_stop_ग_लिखोs(mddev);
+			अगर (mddev->persistent)
 				mddev->safemode = 2;
 			mddev_unlock(mddev);
-		}
+		पूर्ण
 		need_delay = 1;
-	}
+	पूर्ण
 	/*
 	 * certain more exotic SCSI devices are known to be
-	 * volatile wrt too early system reboots. While the
+	 * अस्थिर wrt too early प्रणाली reboots. While the
 	 * right place to handle this issue is the given
-	 * driver, we do want to have a safe RAID driver ...
+	 * driver, we करो want to have a safe RAID driver ...
 	 */
-	if (need_delay)
+	अगर (need_delay)
 		mdelay(1000*1);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block md_notifier = {
-	.notifier_call	= md_notify_reboot,
-	.next		= NULL,
-	.priority	= INT_MAX, /* before any real devices */
-};
+अटल काष्ठा notअगरier_block md_notअगरier = अणु
+	.notअगरier_call	= md_notअगरy_reboot,
+	.next		= शून्य,
+	.priority	= पूर्णांक_उच्च, /* beक्रमe any real devices */
+पूर्ण;
 
-static void md_geninit(void)
-{
-	pr_debug("md: sizeof(mdp_super_t) = %d\n", (int)sizeof(mdp_super_t));
+अटल व्योम md_geninit(व्योम)
+अणु
+	pr_debug("md: sizeof(mdp_super_t) = %d\n", (पूर्णांक)माप(mdp_super_t));
 
-	proc_create("mdstat", S_IRUGO, NULL, &mdstat_proc_ops);
-}
+	proc_create("mdstat", S_IRUGO, शून्य, &mdstat_proc_ops);
+पूर्ण
 
-static int __init md_init(void)
-{
-	int ret = -ENOMEM;
+अटल पूर्णांक __init md_init(व्योम)
+अणु
+	पूर्णांक ret = -ENOMEM;
 
 	md_wq = alloc_workqueue("md", WQ_MEM_RECLAIM, 0);
-	if (!md_wq)
-		goto err_wq;
+	अगर (!md_wq)
+		जाओ err_wq;
 
 	md_misc_wq = alloc_workqueue("md_misc", 0, 0);
-	if (!md_misc_wq)
-		goto err_misc_wq;
+	अगर (!md_misc_wq)
+		जाओ err_misc_wq;
 
 	md_rdev_misc_wq = alloc_workqueue("md_rdev_misc", 0, 0);
-	if (!md_rdev_misc_wq)
-		goto err_rdev_misc_wq;
+	अगर (!md_rdev_misc_wq)
+		जाओ err_rdev_misc_wq;
 
-	ret = __register_blkdev(MD_MAJOR, "md", md_probe);
-	if (ret < 0)
-		goto err_md;
+	ret = __रेजिस्टर_blkdev(MD_MAJOR, "md", md_probe);
+	अगर (ret < 0)
+		जाओ err_md;
 
-	ret = __register_blkdev(0, "mdp", md_probe);
-	if (ret < 0)
-		goto err_mdp;
+	ret = __रेजिस्टर_blkdev(0, "mdp", md_probe);
+	अगर (ret < 0)
+		जाओ err_mdp;
 	mdp_major = ret;
 
-	register_reboot_notifier(&md_notifier);
-	raid_table_header = register_sysctl_table(raid_root_table);
+	रेजिस्टर_reboot_notअगरier(&md_notअगरier);
+	raid_table_header = रेजिस्टर_sysctl_table(raid_root_table);
 
 	md_geninit();
-	return 0;
+	वापस 0;
 
 err_mdp:
-	unregister_blkdev(MD_MAJOR, "md");
+	unरेजिस्टर_blkdev(MD_MAJOR, "md");
 err_md:
 	destroy_workqueue(md_rdev_misc_wq);
 err_rdev_misc_wq:
@@ -9601,218 +9602,218 @@ err_rdev_misc_wq:
 err_misc_wq:
 	destroy_workqueue(md_wq);
 err_wq:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void check_sb_changes(struct mddev *mddev, struct md_rdev *rdev)
-{
-	struct mdp_superblock_1 *sb = page_address(rdev->sb_page);
-	struct md_rdev *rdev2, *tmp;
-	int role, ret;
-	char b[BDEVNAME_SIZE];
+अटल व्योम check_sb_changes(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
+अणु
+	काष्ठा mdp_superblock_1 *sb = page_address(rdev->sb_page);
+	काष्ठा md_rdev *rdev2, *पंचांगp;
+	पूर्णांक role, ret;
+	अक्षर b[BDEVNAME_SIZE];
 
 	/*
 	 * If size is changed in another node then we need to
-	 * do resize as well.
+	 * करो resize as well.
 	 */
-	if (mddev->dev_sectors != le64_to_cpu(sb->size)) {
+	अगर (mddev->dev_sectors != le64_to_cpu(sb->size)) अणु
 		ret = mddev->pers->resize(mddev, le64_to_cpu(sb->size));
-		if (ret)
+		अगर (ret)
 			pr_info("md-cluster: resize failed\n");
-		else
-			md_bitmap_update_sb(mddev->bitmap);
-	}
+		अन्यथा
+			md_biपंचांगap_update_sb(mddev->biपंचांगap);
+	पूर्ण
 
-	/* Check for change of roles in the active devices */
-	rdev_for_each_safe(rdev2, tmp, mddev) {
-		if (test_bit(Faulty, &rdev2->flags))
-			continue;
+	/* Check क्रम change of roles in the active devices */
+	rdev_क्रम_each_safe(rdev2, पंचांगp, mddev) अणु
+		अगर (test_bit(Faulty, &rdev2->flags))
+			जारी;
 
-		/* Check if the roles changed */
+		/* Check अगर the roles changed */
 		role = le16_to_cpu(sb->dev_roles[rdev2->desc_nr]);
 
-		if (test_bit(Candidate, &rdev2->flags)) {
-			if (role == 0xfffe) {
+		अगर (test_bit(Candidate, &rdev2->flags)) अणु
+			अगर (role == 0xfffe) अणु
 				pr_info("md: Removing Candidate device %s because add failed\n", bdevname(rdev2->bdev,b));
 				md_kick_rdev_from_array(rdev2);
-				continue;
-			}
-			else
+				जारी;
+			पूर्ण
+			अन्यथा
 				clear_bit(Candidate, &rdev2->flags);
-		}
+		पूर्ण
 
-		if (role != rdev2->raid_disk) {
+		अगर (role != rdev2->raid_disk) अणु
 			/*
 			 * got activated except reshape is happening.
 			 */
-			if (rdev2->raid_disk == -1 && role != 0xffff &&
+			अगर (rdev2->raid_disk == -1 && role != 0xffff &&
 			    !(le32_to_cpu(sb->feature_map) &
-			      MD_FEATURE_RESHAPE_ACTIVE)) {
+			      MD_FEATURE_RESHAPE_ACTIVE)) अणु
 				rdev2->saved_raid_disk = role;
-				ret = remove_and_add_spares(mddev, rdev2);
+				ret = हटाओ_and_add_spares(mddev, rdev2);
 				pr_info("Activated spare: %s\n",
 					bdevname(rdev2->bdev,b));
-				/* wakeup mddev->thread here, so array could
-				 * perform resync with the new activated disk */
+				/* wakeup mddev->thपढ़ो here, so array could
+				 * perक्रमm resync with the new activated disk */
 				set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-				md_wakeup_thread(mddev->thread);
-			}
+				md_wakeup_thपढ़ो(mddev->thपढ़ो);
+			पूर्ण
 			/* device faulty
-			 * We just want to do the minimum to mark the disk
-			 * as faulty. The recovery is performed by the
+			 * We just want to करो the minimum to mark the disk
+			 * as faulty. The recovery is perक्रमmed by the
 			 * one who initiated the error.
 			 */
-			if ((role == 0xfffe) || (role == 0xfffd)) {
+			अगर ((role == 0xfffe) || (role == 0xfffd)) अणु
 				md_error(mddev, rdev2);
 				clear_bit(Blocked, &rdev2->flags);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (mddev->raid_disks != le32_to_cpu(sb->raid_disks)) {
+	अगर (mddev->raid_disks != le32_to_cpu(sb->raid_disks)) अणु
 		ret = update_raid_disks(mddev, le32_to_cpu(sb->raid_disks));
-		if (ret)
+		अगर (ret)
 			pr_warn("md: updating array disks failed. %d\n", ret);
-	}
+	पूर्ण
 
 	/*
-	 * Since mddev->delta_disks has already updated in update_raid_disks,
-	 * so it is time to check reshape.
+	 * Since mddev->delta_disks has alपढ़ोy updated in update_raid_disks,
+	 * so it is समय to check reshape.
 	 */
-	if (test_bit(MD_RESYNCING_REMOTE, &mddev->recovery) &&
-	    (le32_to_cpu(sb->feature_map) & MD_FEATURE_RESHAPE_ACTIVE)) {
+	अगर (test_bit(MD_RESYNCING_REMOTE, &mddev->recovery) &&
+	    (le32_to_cpu(sb->feature_map) & MD_FEATURE_RESHAPE_ACTIVE)) अणु
 		/*
 		 * reshape is happening in the remote node, we need to
 		 * update reshape_position and call start_reshape.
 		 */
 		mddev->reshape_position = le64_to_cpu(sb->reshape_position);
-		if (mddev->pers->update_reshape_pos)
+		अगर (mddev->pers->update_reshape_pos)
 			mddev->pers->update_reshape_pos(mddev);
-		if (mddev->pers->start_reshape)
+		अगर (mddev->pers->start_reshape)
 			mddev->pers->start_reshape(mddev);
-	} else if (test_bit(MD_RESYNCING_REMOTE, &mddev->recovery) &&
+	पूर्ण अन्यथा अगर (test_bit(MD_RESYNCING_REMOTE, &mddev->recovery) &&
 		   mddev->reshape_position != MaxSector &&
-		   !(le32_to_cpu(sb->feature_map) & MD_FEATURE_RESHAPE_ACTIVE)) {
-		/* reshape is just done in another node. */
+		   !(le32_to_cpu(sb->feature_map) & MD_FEATURE_RESHAPE_ACTIVE)) अणु
+		/* reshape is just करोne in another node. */
 		mddev->reshape_position = MaxSector;
-		if (mddev->pers->update_reshape_pos)
+		अगर (mddev->pers->update_reshape_pos)
 			mddev->pers->update_reshape_pos(mddev);
-	}
+	पूर्ण
 
 	/* Finally set the event to be up to date */
 	mddev->events = le64_to_cpu(sb->events);
-}
+पूर्ण
 
-static int read_rdev(struct mddev *mddev, struct md_rdev *rdev)
-{
-	int err;
-	struct page *swapout = rdev->sb_page;
-	struct mdp_superblock_1 *sb;
+अटल पूर्णांक पढ़ो_rdev(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
+अणु
+	पूर्णांक err;
+	काष्ठा page *swapout = rdev->sb_page;
+	काष्ठा mdp_superblock_1 *sb;
 
 	/* Store the sb page of the rdev in the swapout temporary
-	 * variable in case we err in the future
+	 * variable in हाल we err in the future
 	 */
-	rdev->sb_page = NULL;
+	rdev->sb_page = शून्य;
 	err = alloc_disk_sb(rdev);
-	if (err == 0) {
+	अगर (err == 0) अणु
 		ClearPageUptodate(rdev->sb_page);
 		rdev->sb_loaded = 0;
 		err = super_types[mddev->major_version].
-			load_super(rdev, NULL, mddev->minor_version);
-	}
-	if (err < 0) {
+			load_super(rdev, शून्य, mddev->minor_version);
+	पूर्ण
+	अगर (err < 0) अणु
 		pr_warn("%s: %d Could not reload rdev(%d) err: %d. Restoring old values\n",
 				__func__, __LINE__, rdev->desc_nr, err);
-		if (rdev->sb_page)
+		अगर (rdev->sb_page)
 			put_page(rdev->sb_page);
 		rdev->sb_page = swapout;
 		rdev->sb_loaded = 1;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	sb = page_address(rdev->sb_page);
-	/* Read the offset unconditionally, even if MD_FEATURE_RECOVERY_OFFSET
+	/* Read the offset unconditionally, even अगर MD_FEATURE_RECOVERY_OFFSET
 	 * is not set
 	 */
 
-	if ((le32_to_cpu(sb->feature_map) & MD_FEATURE_RECOVERY_OFFSET))
+	अगर ((le32_to_cpu(sb->feature_map) & MD_FEATURE_RECOVERY_OFFSET))
 		rdev->recovery_offset = le64_to_cpu(sb->recovery_offset);
 
 	/* The other node finished recovery, call spare_active to set
 	 * device In_sync and mddev->degraded
 	 */
-	if (rdev->recovery_offset == MaxSector &&
+	अगर (rdev->recovery_offset == MaxSector &&
 	    !test_bit(In_sync, &rdev->flags) &&
 	    mddev->pers->spare_active(mddev))
-		sysfs_notify_dirent_safe(mddev->sysfs_degraded);
+		sysfs_notअगरy_dirent_safe(mddev->sysfs_degraded);
 
 	put_page(swapout);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void md_reload_sb(struct mddev *mddev, int nr)
-{
-	struct md_rdev *rdev;
-	int err;
+व्योम md_reload_sb(काष्ठा mddev *mddev, पूर्णांक nr)
+अणु
+	काष्ठा md_rdev *rdev;
+	पूर्णांक err;
 
 	/* Find the rdev */
-	rdev_for_each_rcu(rdev, mddev) {
-		if (rdev->desc_nr == nr)
-			break;
-	}
+	rdev_क्रम_each_rcu(rdev, mddev) अणु
+		अगर (rdev->desc_nr == nr)
+			अवरोध;
+	पूर्ण
 
-	if (!rdev || rdev->desc_nr != nr) {
+	अगर (!rdev || rdev->desc_nr != nr) अणु
 		pr_warn("%s: %d Could not find rdev with nr %d\n", __func__, __LINE__, nr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	err = read_rdev(mddev, rdev);
-	if (err < 0)
-		return;
+	err = पढ़ो_rdev(mddev, rdev);
+	अगर (err < 0)
+		वापस;
 
 	check_sb_changes(mddev, rdev);
 
 	/* Read all rdev's to update recovery_offset */
-	rdev_for_each_rcu(rdev, mddev) {
-		if (!test_bit(Faulty, &rdev->flags))
-			read_rdev(mddev, rdev);
-	}
-}
+	rdev_क्रम_each_rcu(rdev, mddev) अणु
+		अगर (!test_bit(Faulty, &rdev->flags))
+			पढ़ो_rdev(mddev, rdev);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(md_reload_sb);
 
-#ifndef MODULE
+#अगर_अघोषित MODULE
 
 /*
- * Searches all registered partitions for autorun RAID arrays
- * at boot time.
+ * Searches all रेजिस्टरed partitions क्रम स्वतःrun RAID arrays
+ * at boot समय.
  */
 
-static DEFINE_MUTEX(detected_devices_mutex);
-static LIST_HEAD(all_detected_devices);
-struct detected_devices_node {
-	struct list_head list;
+अटल DEFINE_MUTEX(detected_devices_mutex);
+अटल LIST_HEAD(all_detected_devices);
+काष्ठा detected_devices_node अणु
+	काष्ठा list_head list;
 	dev_t dev;
-};
+पूर्ण;
 
-void md_autodetect_dev(dev_t dev)
-{
-	struct detected_devices_node *node_detected_dev;
+व्योम md_स्वतःdetect_dev(dev_t dev)
+अणु
+	काष्ठा detected_devices_node *node_detected_dev;
 
-	node_detected_dev = kzalloc(sizeof(*node_detected_dev), GFP_KERNEL);
-	if (node_detected_dev) {
+	node_detected_dev = kzalloc(माप(*node_detected_dev), GFP_KERNEL);
+	अगर (node_detected_dev) अणु
 		node_detected_dev->dev = dev;
 		mutex_lock(&detected_devices_mutex);
 		list_add_tail(&node_detected_dev->list, &all_detected_devices);
 		mutex_unlock(&detected_devices_mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void md_autostart_arrays(int part)
-{
-	struct md_rdev *rdev;
-	struct detected_devices_node *node_detected_dev;
+व्योम md_स्वतःstart_arrays(पूर्णांक part)
+अणु
+	काष्ठा md_rdev *rdev;
+	काष्ठा detected_devices_node *node_detected_dev;
 	dev_t dev;
-	int i_scanned, i_passed;
+	पूर्णांक i_scanned, i_passed;
 
 	i_scanned = 0;
 	i_passed = 0;
@@ -9820,90 +9821,90 @@ void md_autostart_arrays(int part)
 	pr_info("md: Autodetecting RAID arrays.\n");
 
 	mutex_lock(&detected_devices_mutex);
-	while (!list_empty(&all_detected_devices) && i_scanned < INT_MAX) {
+	जबतक (!list_empty(&all_detected_devices) && i_scanned < पूर्णांक_उच्च) अणु
 		i_scanned++;
 		node_detected_dev = list_entry(all_detected_devices.next,
-					struct detected_devices_node, list);
+					काष्ठा detected_devices_node, list);
 		list_del(&node_detected_dev->list);
 		dev = node_detected_dev->dev;
-		kfree(node_detected_dev);
+		kमुक्त(node_detected_dev);
 		mutex_unlock(&detected_devices_mutex);
 		rdev = md_import_device(dev,0, 90);
 		mutex_lock(&detected_devices_mutex);
-		if (IS_ERR(rdev))
-			continue;
+		अगर (IS_ERR(rdev))
+			जारी;
 
-		if (test_bit(Faulty, &rdev->flags))
-			continue;
+		अगर (test_bit(Faulty, &rdev->flags))
+			जारी;
 
 		set_bit(AutoDetected, &rdev->flags);
 		list_add(&rdev->same_set, &pending_raid_disks);
 		i_passed++;
-	}
+	पूर्ण
 	mutex_unlock(&detected_devices_mutex);
 
 	pr_debug("md: Scanned %d and added %d devices.\n", i_scanned, i_passed);
 
-	autorun_devices(part);
-}
+	स्वतःrun_devices(part);
+पूर्ण
 
-#endif /* !MODULE */
+#पूर्ण_अगर /* !MODULE */
 
-static __exit void md_exit(void)
-{
-	struct mddev *mddev;
-	struct list_head *tmp;
-	int delay = 1;
+अटल __निकास व्योम md_निकास(व्योम)
+अणु
+	काष्ठा mddev *mddev;
+	काष्ठा list_head *पंचांगp;
+	पूर्णांक delay = 1;
 
-	unregister_blkdev(MD_MAJOR,"md");
-	unregister_blkdev(mdp_major, "mdp");
-	unregister_reboot_notifier(&md_notifier);
-	unregister_sysctl_table(raid_table_header);
+	unरेजिस्टर_blkdev(MD_MAJOR,"md");
+	unरेजिस्टर_blkdev(mdp_major, "mdp");
+	unरेजिस्टर_reboot_notअगरier(&md_notअगरier);
+	unरेजिस्टर_sysctl_table(raid_table_header);
 
-	/* We cannot unload the modules while some process is
-	 * waiting for us in select() or poll() - wake them up
+	/* We cannot unload the modules जबतक some process is
+	 * रुकोing क्रम us in select() or poll() - wake them up
 	 */
 	md_unloading = 1;
-	while (waitqueue_active(&md_event_waiters)) {
+	जबतक (रुकोqueue_active(&md_event_रुकोers)) अणु
 		/* not safe to leave yet */
-		wake_up(&md_event_waiters);
+		wake_up(&md_event_रुकोers);
 		msleep(delay);
 		delay += delay;
-	}
-	remove_proc_entry("mdstat", NULL);
+	पूर्ण
+	हटाओ_proc_entry("mdstat", शून्य);
 
-	for_each_mddev(mddev, tmp) {
+	क्रम_each_mddev(mddev, पंचांगp) अणु
 		export_array(mddev);
-		mddev->ctime = 0;
+		mddev->स_समय = 0;
 		mddev->hold_active = 0;
 		/*
-		 * for_each_mddev() will call mddev_put() at the end of each
+		 * क्रम_each_mddev() will call mddev_put() at the end of each
 		 * iteration.  As the mddev is now fully clear, this will
-		 * schedule the mddev for destruction by a workqueue, and the
-		 * destroy_workqueue() below will wait for that to complete.
+		 * schedule the mddev क्रम deकाष्ठाion by a workqueue, and the
+		 * destroy_workqueue() below will रुको क्रम that to complete.
 		 */
-	}
+	पूर्ण
 	destroy_workqueue(md_rdev_misc_wq);
 	destroy_workqueue(md_misc_wq);
 	destroy_workqueue(md_wq);
-}
+पूर्ण
 
 subsys_initcall(md_init);
-module_exit(md_exit)
+module_निकास(md_निकास)
 
-static int get_ro(char *buffer, const struct kernel_param *kp)
-{
-	return sprintf(buffer, "%d\n", start_readonly);
-}
-static int set_ro(const char *val, const struct kernel_param *kp)
-{
-	return kstrtouint(val, 10, (unsigned int *)&start_readonly);
-}
+अटल पूर्णांक get_ro(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस प्र_लिखो(buffer, "%d\n", start_पढ़ोonly);
+पूर्ण
+अटल पूर्णांक set_ro(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस kstrtouपूर्णांक(val, 10, (अचिन्हित पूर्णांक *)&start_पढ़ोonly);
+पूर्ण
 
-module_param_call(start_ro, set_ro, get_ro, NULL, S_IRUSR|S_IWUSR);
-module_param(start_dirty_degraded, int, S_IRUGO|S_IWUSR);
-module_param_call(new_array, add_named_array, NULL, NULL, S_IWUSR);
-module_param(create_on_open, bool, S_IRUSR|S_IWUSR);
+module_param_call(start_ro, set_ro, get_ro, शून्य, S_IRUSR|S_IWUSR);
+module_param(start_dirty_degraded, पूर्णांक, S_IRUGO|S_IWUSR);
+module_param_call(new_array, add_named_array, शून्य, शून्य, S_IWUSR);
+module_param(create_on_खोलो, bool, S_IRUSR|S_IWUSR);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("MD RAID framework");

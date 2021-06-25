@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Copyright (C) 2010 Willow Garage <http://www.willowgarage.com>
 	Copyright (C) 2004 - 2010 Ivo van Doorn <IvDoorn@gmail.com>
@@ -9,68 +10,68 @@
 
 /*
 	Module: rt2x00
-	Abstract: rt2x00 global information.
+	Abstract: rt2x00 global inक्रमmation.
  */
 
-#ifndef RT2X00_H
-#define RT2X00_H
+#अगर_अघोषित RT2X00_H
+#घोषणा RT2X00_H
 
-#include <linux/bitops.h>
-#include <linux/interrupt.h>
-#include <linux/skbuff.h>
-#include <linux/workqueue.h>
-#include <linux/firmware.h>
-#include <linux/leds.h>
-#include <linux/mutex.h>
-#include <linux/etherdevice.h>
-#include <linux/kfifo.h>
-#include <linux/hrtimer.h>
-#include <linux/average.h>
-#include <linux/usb.h>
-#include <linux/clk.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/average.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/clk.h>
 
-#include <net/mac80211.h>
+#समावेश <net/mac80211.h>
 
-#include "rt2x00debug.h"
-#include "rt2x00dump.h"
-#include "rt2x00leds.h"
-#include "rt2x00reg.h"
-#include "rt2x00queue.h"
+#समावेश "rt2x00debug.h"
+#समावेश "rt2x00dump.h"
+#समावेश "rt2x00leds.h"
+#समावेश "rt2x00reg.h"
+#समावेश "rt2x00queue.h"
 
 /*
- * Module information.
+ * Module inक्रमmation.
  */
-#define DRV_VERSION	"2.3.0"
-#define DRV_PROJECT	"http://rt2x00.serialmonkey.com"
+#घोषणा DRV_VERSION	"2.3.0"
+#घोषणा DRV_PROJECT	"http://rt2x00.serialmonkey.com"
 
 /* Debug definitions.
- * Debug output has to be enabled during compile time.
+ * Debug output has to be enabled during compile समय.
  */
-#ifdef CONFIG_RT2X00_DEBUG
-#define DEBUG
-#endif /* CONFIG_RT2X00_DEBUG */
+#अगर_घोषित CONFIG_RT2X00_DEBUG
+#घोषणा DEBUG
+#पूर्ण_अगर /* CONFIG_RT2X00_DEBUG */
 
-/* Utility printing macros
- * rt2x00_probe_err is for messages when rt2x00_dev is uninitialized
+/* Utility prपूर्णांकing macros
+ * rt2x00_probe_err is क्रम messages when rt2x00_dev is uninitialized
  */
-#define rt2x00_probe_err(fmt, ...)					\
-	printk(KERN_ERR KBUILD_MODNAME ": %s: Error - " fmt,		\
+#घोषणा rt2x00_probe_err(fmt, ...)					\
+	prपूर्णांकk(KERN_ERR KBUILD_MODNAME ": %s: Error - " fmt,		\
 	       __func__, ##__VA_ARGS__)
-#define rt2x00_err(dev, fmt, ...)					\
+#घोषणा rt2x00_err(dev, fmt, ...)					\
 	wiphy_err_ratelimited((dev)->hw->wiphy, "%s: Error - " fmt,	\
 		  __func__, ##__VA_ARGS__)
-#define rt2x00_warn(dev, fmt, ...)					\
+#घोषणा rt2x00_warn(dev, fmt, ...)					\
 	wiphy_warn_ratelimited((dev)->hw->wiphy, "%s: Warning - " fmt,	\
 		   __func__, ##__VA_ARGS__)
-#define rt2x00_info(dev, fmt, ...)					\
+#घोषणा rt2x00_info(dev, fmt, ...)					\
 	wiphy_info((dev)->hw->wiphy, "%s: Info - " fmt,			\
 		   __func__, ##__VA_ARGS__)
 
 /* Various debug levels */
-#define rt2x00_dbg(dev, fmt, ...)					\
+#घोषणा rt2x00_dbg(dev, fmt, ...)					\
 	wiphy_dbg((dev)->hw->wiphy, "%s: Debug - " fmt,			\
 		  __func__, ##__VA_ARGS__)
-#define rt2x00_eeprom_dbg(dev, fmt, ...)				\
+#घोषणा rt2x00_eeprom_dbg(dev, fmt, ...)				\
 	wiphy_dbg((dev)->hw->wiphy, "%s: EEPROM recovery - " fmt,	\
 		  __func__, ##__VA_ARGS__)
 
@@ -81,14 +82,14 @@
  * then the size is multiplied with 10 to make the
  * real rate -> rate argument correction.
  */
-#define GET_DURATION(__size, __rate)	(((__size) * 8 * 10) / (__rate))
-#define GET_DURATION_RES(__size, __rate)(((__size) * 8 * 10) % (__rate))
+#घोषणा GET_DURATION(__size, __rate)	(((__size) * 8 * 10) / (__rate))
+#घोषणा GET_DURATION_RES(__size, __rate)(((__size) * 8 * 10) % (__rate))
 
 /*
  * Determine the number of L2 padding bytes required between the header and
  * the payload.
  */
-#define L2PAD_SIZE(__hdrlen)	(-(__hdrlen) & 3)
+#घोषणा L2PAD_SIZE(__hdrlen)	(-(__hdrlen) & 3)
 
 /*
  * Determine the alignment requirement,
@@ -96,137 +97,137 @@
  * we must determine the address of the payload and calculate the
  * amount of bytes needed to move the data.
  */
-#define ALIGN_SIZE(__skb, __header) \
-	(((unsigned long)((__skb)->data + (__header))) & 3)
+#घोषणा ALIGN_SIZE(__skb, __header) \
+	(((अचिन्हित दीर्घ)((__skb)->data + (__header))) & 3)
 
 /*
- * Constants for extra TX headroom for alignment purposes.
+ * Constants क्रम extra TX headroom क्रम alignment purposes.
  */
-#define RT2X00_ALIGN_SIZE	4 /* Only whole frame needs alignment */
-#define RT2X00_L2PAD_SIZE	8 /* Both header & payload need alignment */
+#घोषणा RT2X00_ALIGN_SIZE	4 /* Only whole frame needs alignment */
+#घोषणा RT2X00_L2PAD_SIZE	8 /* Both header & payload need alignment */
 
 /*
  * Standard timing and size defines.
- * These values should follow the ieee80211 specifications.
+ * These values should follow the ieee80211 specअगरications.
  */
-#define ACK_SIZE		14
-#define IEEE80211_HEADER	24
-#define PLCP			48
-#define BEACON			100
-#define PREAMBLE		144
-#define SHORT_PREAMBLE		72
-#define SLOT_TIME		20
-#define SHORT_SLOT_TIME		9
-#define SIFS			10
-#define PIFS			(SIFS + SLOT_TIME)
-#define SHORT_PIFS		(SIFS + SHORT_SLOT_TIME)
-#define DIFS			(PIFS + SLOT_TIME)
-#define SHORT_DIFS		(SHORT_PIFS + SHORT_SLOT_TIME)
-#define EIFS			(SIFS + DIFS + \
+#घोषणा ACK_SIZE		14
+#घोषणा IEEE80211_HEADER	24
+#घोषणा PLCP			48
+#घोषणा BEACON			100
+#घोषणा PREAMBLE		144
+#घोषणा SHORT_PREAMBLE		72
+#घोषणा SLOT_TIME		20
+#घोषणा SHORT_SLOT_TIME		9
+#घोषणा SIFS			10
+#घोषणा PIFS			(SIFS + SLOT_TIME)
+#घोषणा SHORT_PIFS		(SIFS + SHORT_SLOT_TIME)
+#घोषणा DIFS			(PIFS + SLOT_TIME)
+#घोषणा SHORT_DIFS		(SHORT_PIFS + SHORT_SLOT_TIME)
+#घोषणा EIFS			(SIFS + DIFS + \
 				  GET_DURATION(IEEE80211_HEADER + ACK_SIZE, 10))
-#define SHORT_EIFS		(SIFS + SHORT_DIFS + \
+#घोषणा SHORT_EIFS		(SIFS + SHORT_DIFS + \
 				  GET_DURATION(IEEE80211_HEADER + ACK_SIZE, 10))
 
-enum rt2x00_chip_intf {
+क्रमागत rt2x00_chip_पूर्णांकf अणु
 	RT2X00_CHIP_INTF_PCI,
 	RT2X00_CHIP_INTF_PCIE,
 	RT2X00_CHIP_INTF_USB,
 	RT2X00_CHIP_INTF_SOC,
-};
+पूर्ण;
 
 /*
- * Chipset identification
+ * Chipset identअगरication
  * The chipset on the device is composed of a RT and RF chip.
- * The chipset combination is important for determining device capabilities.
+ * The chipset combination is important क्रम determining device capabilities.
  */
-struct rt2x00_chip {
+काष्ठा rt2x00_chip अणु
 	u16 rt;
-#define RT2460		0x2460
-#define RT2560		0x2560
-#define RT2570		0x2570
-#define RT2661		0x2661
-#define RT2573		0x2573
-#define RT2860		0x2860	/* 2.4GHz */
-#define RT2872		0x2872	/* WSOC */
-#define RT2883		0x2883	/* WSOC */
-#define RT3070		0x3070
-#define RT3071		0x3071
-#define RT3090		0x3090	/* 2.4GHz PCIe */
-#define RT3290		0x3290
-#define RT3352		0x3352  /* WSOC */
-#define RT3390		0x3390
-#define RT3572		0x3572
-#define RT3593		0x3593
-#define RT3883		0x3883	/* WSOC */
-#define RT5350		0x5350  /* WSOC 2.4GHz */
-#define RT5390		0x5390  /* 2.4GHz */
-#define RT5392		0x5392  /* 2.4GHz */
-#define RT5592		0x5592
-#define RT6352		0x6352  /* WSOC 2.4GHz */
+#घोषणा RT2460		0x2460
+#घोषणा RT2560		0x2560
+#घोषणा RT2570		0x2570
+#घोषणा RT2661		0x2661
+#घोषणा RT2573		0x2573
+#घोषणा RT2860		0x2860	/* 2.4GHz */
+#घोषणा RT2872		0x2872	/* WSOC */
+#घोषणा RT2883		0x2883	/* WSOC */
+#घोषणा RT3070		0x3070
+#घोषणा RT3071		0x3071
+#घोषणा RT3090		0x3090	/* 2.4GHz PCIe */
+#घोषणा RT3290		0x3290
+#घोषणा RT3352		0x3352  /* WSOC */
+#घोषणा RT3390		0x3390
+#घोषणा RT3572		0x3572
+#घोषणा RT3593		0x3593
+#घोषणा RT3883		0x3883	/* WSOC */
+#घोषणा RT5350		0x5350  /* WSOC 2.4GHz */
+#घोषणा RT5390		0x5390  /* 2.4GHz */
+#घोषणा RT5392		0x5392  /* 2.4GHz */
+#घोषणा RT5592		0x5592
+#घोषणा RT6352		0x6352  /* WSOC 2.4GHz */
 
 	u16 rf;
 	u16 rev;
 
-	enum rt2x00_chip_intf intf;
-};
+	क्रमागत rt2x00_chip_पूर्णांकf पूर्णांकf;
+पूर्ण;
 
 /*
- * RF register values that belong to a particular channel.
+ * RF रेजिस्टर values that beदीर्घ to a particular channel.
  */
-struct rf_channel {
-	int channel;
+काष्ठा rf_channel अणु
+	पूर्णांक channel;
 	u32 rf1;
 	u32 rf2;
 	u32 rf3;
 	u32 rf4;
-};
+पूर्ण;
 
 /*
- * Information structure for channel survey.
+ * Inक्रमmation काष्ठाure क्रम channel survey.
  */
-struct rt2x00_chan_survey {
-	u64 time_idle;
-	u64 time_busy;
-	u64 time_ext_busy;
-};
+काष्ठा rt2x00_chan_survey अणु
+	u64 समय_idle;
+	u64 समय_busy;
+	u64 समय_ext_busy;
+पूर्ण;
 
 /*
- * Channel information structure
+ * Channel inक्रमmation काष्ठाure
  */
-struct channel_info {
-	unsigned int flags;
-#define GEOGRAPHY_ALLOWED	0x00000001
+काष्ठा channel_info अणु
+	अचिन्हित पूर्णांक flags;
+#घोषणा GEOGRAPHY_ALLOWED	0x00000001
 
-	short max_power;
-	short default_power1;
-	short default_power2;
-	short default_power3;
-};
+	लघु max_घातer;
+	लघु शेष_घातer1;
+	लघु शेष_घातer2;
+	लघु शेष_घातer3;
+पूर्ण;
 
 /*
  * Antenna setup values.
  */
-struct antenna_setup {
-	enum antenna rx;
-	enum antenna tx;
+काष्ठा antenna_setup अणु
+	क्रमागत antenna rx;
+	क्रमागत antenna tx;
 	u8 rx_chain_num;
 	u8 tx_chain_num;
-};
+पूर्ण;
 
 /*
  * Quality statistics about the currently active link.
  */
-struct link_qual {
+काष्ठा link_qual अणु
 	/*
-	 * Statistics required for Link tuning by driver
+	 * Statistics required क्रम Link tuning by driver
 	 * The rssi value is provided by rt2x00lib during the
 	 * link_tuner() callback function.
 	 * The false_cca field is filled during the link_stats()
 	 * callback function and could be used during the
 	 * link_tuner() callback function.
 	 */
-	int rssi;
-	int false_cca;
+	पूर्णांक rssi;
+	पूर्णांक false_cca;
 
 	/*
 	 * VGC levels
@@ -235,232 +236,232 @@ struct link_qual {
 	 * is determined based on the link quality statistics like
 	 * average RSSI and the false CCA count.
 	 *
-	 * In some cases the drivers need to differentiate between
+	 * In some हालs the drivers need to dअगरferentiate between
 	 * the currently "desired" VGC level and the level configured
 	 * in the hardware. The latter is important to reduce the
-	 * number of BBP register reads to reduce register access
+	 * number of BBP रेजिस्टर पढ़ोs to reduce रेजिस्टर access
 	 * overhead. For this reason we store both values here.
 	 */
 	u8 vgc_level;
 	u8 vgc_level_reg;
 
 	/*
-	 * Statistics required for Signal quality calculation.
+	 * Statistics required क्रम Signal quality calculation.
 	 * These fields might be changed during the link_stats()
 	 * callback function.
 	 */
-	int rx_success;
-	int rx_failed;
-	int tx_success;
-	int tx_failed;
-};
+	पूर्णांक rx_success;
+	पूर्णांक rx_failed;
+	पूर्णांक tx_success;
+	पूर्णांक tx_failed;
+पूर्ण;
 
 DECLARE_EWMA(rssi, 10, 8)
 
 /*
  * Antenna settings about the currently active link.
  */
-struct link_ant {
+काष्ठा link_ant अणु
 	/*
 	 * Antenna flags
 	 */
-	unsigned int flags;
-#define ANTENNA_RX_DIVERSITY	0x00000001
-#define ANTENNA_TX_DIVERSITY	0x00000002
-#define ANTENNA_MODE_SAMPLE	0x00000004
+	अचिन्हित पूर्णांक flags;
+#घोषणा ANTENNA_RX_DIVERSITY	0x00000001
+#घोषणा ANTENNA_TX_DIVERSITY	0x00000002
+#घोषणा ANTENNA_MODE_SAMPLE	0x00000004
 
 	/*
 	 * Currently active TX/RX antenna setup.
-	 * When software diversity is used, this will indicate
-	 * which antenna is actually used at this time.
+	 * When software भागersity is used, this will indicate
+	 * which antenna is actually used at this समय.
 	 */
-	struct antenna_setup active;
+	काष्ठा antenna_setup active;
 
 	/*
-	 * RSSI history information for the antenna.
-	 * Used to determine when to switch antenna
-	 * when using software diversity.
+	 * RSSI history inक्रमmation क्रम the antenna.
+	 * Used to determine when to चयन antenna
+	 * when using software भागersity.
 	 */
-	int rssi_history;
+	पूर्णांक rssi_history;
 
 	/*
 	 * Current RSSI average of the currently active antenna.
-	 * Similar to the avg_rssi in the link_qual structure
+	 * Similar to the avg_rssi in the link_qual काष्ठाure
 	 * this value is updated by using the walking average.
 	 */
-	struct ewma_rssi rssi_ant;
-};
+	काष्ठा ewma_rssi rssi_ant;
+पूर्ण;
 
 /*
  * To optimize the quality of the link we need to store
  * the quality of received frames and periodically
  * optimize the link.
  */
-struct link {
+काष्ठा link अणु
 	/*
 	 * Link tuner counter
-	 * The number of times the link has been tuned
-	 * since the radio has been switched on.
+	 * The number of बार the link has been tuned
+	 * since the radio has been चयनed on.
 	 */
 	u32 count;
 
 	/*
 	 * Quality measurement values.
 	 */
-	struct link_qual qual;
+	काष्ठा link_qual qual;
 
 	/*
 	 * TX/RX antenna setup.
 	 */
-	struct link_ant ant;
+	काष्ठा link_ant ant;
 
 	/*
 	 * Currently active average RSSI value
 	 */
-	struct ewma_rssi avg_rssi;
+	काष्ठा ewma_rssi avg_rssi;
 
 	/*
-	 * Work structure for scheduling periodic link tuning.
+	 * Work काष्ठाure क्रम scheduling periodic link tuning.
 	 */
-	struct delayed_work work;
+	काष्ठा delayed_work work;
 
 	/*
-	 * Work structure for scheduling periodic watchdog monitoring.
-	 * This work must be scheduled on the kernel workqueue, while
-	 * all other work structures must be queued on the mac80211
-	 * workqueue. This guarantees that the watchdog can schedule
-	 * other work structures and wait for their completion in order
-	 * to bring the device/driver back into the desired state.
+	 * Work काष्ठाure क्रम scheduling periodic watchकरोg monitoring.
+	 * This work must be scheduled on the kernel workqueue, जबतक
+	 * all other work काष्ठाures must be queued on the mac80211
+	 * workqueue. This guarantees that the watchकरोg can schedule
+	 * other work काष्ठाures and रुको क्रम their completion in order
+	 * to bring the device/driver back पूर्णांकo the desired state.
 	 */
-	struct delayed_work watchdog_work;
-	unsigned int watchdog_interval;
-	bool watchdog_disabled;
+	काष्ठा delayed_work watchकरोg_work;
+	अचिन्हित पूर्णांक watchकरोg_पूर्णांकerval;
+	bool watchकरोg_disabled;
 
 	/*
-	 * Work structure for scheduling periodic AGC adjustments.
+	 * Work काष्ठाure क्रम scheduling periodic AGC adjusपंचांगents.
 	 */
-	struct delayed_work agc_work;
+	काष्ठा delayed_work agc_work;
 
 	/*
-	 * Work structure for scheduling periodic VCO calibration.
+	 * Work काष्ठाure क्रम scheduling periodic VCO calibration.
 	 */
-	struct delayed_work vco_work;
-};
+	काष्ठा delayed_work vco_work;
+पूर्ण;
 
-enum rt2x00_delayed_flags {
+क्रमागत rt2x00_delayed_flags अणु
 	DELAYED_UPDATE_BEACON,
-};
+पूर्ण;
 
 /*
- * Interface structure
- * Per interface configuration details, this structure
- * is allocated as the private data for ieee80211_vif.
+ * Interface काष्ठाure
+ * Per पूर्णांकerface configuration details, this काष्ठाure
+ * is allocated as the निजी data क्रम ieee80211_vअगर.
  */
-struct rt2x00_intf {
+काष्ठा rt2x00_पूर्णांकf अणु
 	/*
-	 * beacon->skb must be protected with the mutex.
+	 * beacon->skb must be रक्षित with the mutex.
 	 */
-	struct mutex beacon_skb_mutex;
+	काष्ठा mutex beacon_skb_mutex;
 
 	/*
-	 * Entry in the beacon queue which belongs to
-	 * this interface. Each interface has its own
+	 * Entry in the beacon queue which beदीर्घs to
+	 * this पूर्णांकerface. Each पूर्णांकerface has its own
 	 * dedicated beacon entry.
 	 */
-	struct queue_entry *beacon;
+	काष्ठा queue_entry *beacon;
 	bool enable_beacon;
 
 	/*
 	 * Actions that needed rescheduling.
 	 */
-	unsigned long delayed_flags;
+	अचिन्हित दीर्घ delayed_flags;
 
 	/*
 	 * Software sequence counter, this is only required
-	 * for hardware which doesn't support hardware
+	 * क्रम hardware which करोesn't support hardware
 	 * sequence counting.
 	 */
 	atomic_t seqno;
-};
+पूर्ण;
 
-static inline struct rt2x00_intf* vif_to_intf(struct ieee80211_vif *vif)
-{
-	return (struct rt2x00_intf *)vif->drv_priv;
-}
+अटल अंतरभूत काष्ठा rt2x00_पूर्णांकf* vअगर_to_पूर्णांकf(काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	वापस (काष्ठा rt2x00_पूर्णांकf *)vअगर->drv_priv;
+पूर्ण
 
 /**
- * struct hw_mode_spec: Hardware specifications structure
+ * काष्ठा hw_mode_spec: Hardware specअगरications काष्ठाure
  *
  * Details about the supported modes, rates and channels
  * of a particular chipset. This is used by rt2x00lib
- * to build the ieee80211_hw_mode array for mac80211.
+ * to build the ieee80211_hw_mode array क्रम mac80211.
  *
- * @supported_bands: Bitmask contained the supported bands (2.4GHz, 5.2GHz).
+ * @supported_bands: Biपंचांगask contained the supported bands (2.4GHz, 5.2GHz).
  * @supported_rates: Rate types which are supported (CCK, OFDM).
  * @num_channels: Number of supported channels. This is used as array size
- *	for @tx_power_a, @tx_power_bg and @channels.
- * @channels: Device/chipset specific channel values (See &struct rf_channel).
- * @channels_info: Additional information for channels (See &struct channel_info).
+ *	क्रम @tx_घातer_a, @tx_घातer_bg and @channels.
+ * @channels: Device/chipset specअगरic channel values (See &काष्ठा rf_channel).
+ * @channels_info: Additional inक्रमmation क्रम channels (See &काष्ठा channel_info).
  * @ht: Driver HT Capabilities (See &ieee80211_sta_ht_cap).
  */
-struct hw_mode_spec {
-	unsigned int supported_bands;
-#define SUPPORT_BAND_2GHZ	0x00000001
-#define SUPPORT_BAND_5GHZ	0x00000002
+काष्ठा hw_mode_spec अणु
+	अचिन्हित पूर्णांक supported_bands;
+#घोषणा SUPPORT_BAND_2GHZ	0x00000001
+#घोषणा SUPPORT_BAND_5GHZ	0x00000002
 
-	unsigned int supported_rates;
-#define SUPPORT_RATE_CCK	0x00000001
-#define SUPPORT_RATE_OFDM	0x00000002
+	अचिन्हित पूर्णांक supported_rates;
+#घोषणा SUPPORT_RATE_CCK	0x00000001
+#घोषणा SUPPORT_RATE_OFDM	0x00000002
 
-	unsigned int num_channels;
-	const struct rf_channel *channels;
-	const struct channel_info *channels_info;
+	अचिन्हित पूर्णांक num_channels;
+	स्थिर काष्ठा rf_channel *channels;
+	स्थिर काष्ठा channel_info *channels_info;
 
-	struct ieee80211_sta_ht_cap ht;
-};
+	काष्ठा ieee80211_sta_ht_cap ht;
+पूर्ण;
 
 /*
- * Configuration structure wrapper around the
- * mac80211 configuration structure.
+ * Configuration काष्ठाure wrapper around the
+ * mac80211 configuration काष्ठाure.
  * When mac80211 configures the driver, rt2x00lib
- * can precalculate values which are equal for all
+ * can precalculate values which are equal क्रम all
  * rt2x00 drivers. Those values can be stored in here.
  */
-struct rt2x00lib_conf {
-	struct ieee80211_conf *conf;
+काष्ठा rt2x00lib_conf अणु
+	काष्ठा ieee80211_conf *conf;
 
-	struct rf_channel rf;
-	struct channel_info channel;
-};
+	काष्ठा rf_channel rf;
+	काष्ठा channel_info channel;
+पूर्ण;
 
 /*
- * Configuration structure for erp settings.
+ * Configuration काष्ठाure क्रम erp settings.
  */
-struct rt2x00lib_erp {
-	int short_preamble;
-	int cts_protection;
+काष्ठा rt2x00lib_erp अणु
+	पूर्णांक लघु_preamble;
+	पूर्णांक cts_protection;
 
 	u32 basic_rates;
 
-	int slot_time;
+	पूर्णांक slot_समय;
 
-	short sifs;
-	short pifs;
-	short difs;
-	short eifs;
+	लघु sअगरs;
+	लघु pअगरs;
+	लघु dअगरs;
+	लघु eअगरs;
 
-	u16 beacon_int;
+	u16 beacon_पूर्णांक;
 	u16 ht_opmode;
-};
+पूर्ण;
 
 /*
- * Configuration structure for hardware encryption.
+ * Configuration काष्ठाure क्रम hardware encryption.
  */
-struct rt2x00lib_crypto {
-	enum cipher cipher;
+काष्ठा rt2x00lib_crypto अणु
+	क्रमागत cipher cipher;
 
-	enum set_key_cmd cmd;
-	const u8 *address;
+	क्रमागत set_key_cmd cmd;
+	स्थिर u8 *address;
 
 	u32 bssidx;
 
@@ -468,57 +469,57 @@ struct rt2x00lib_crypto {
 	u8 tx_mic[8];
 	u8 rx_mic[8];
 
-	int wcid;
-};
+	पूर्णांक wcid;
+पूर्ण;
 
 /*
- * Configuration structure wrapper around the
- * rt2x00 interface configuration handler.
+ * Configuration काष्ठाure wrapper around the
+ * rt2x00 पूर्णांकerface configuration handler.
  */
-struct rt2x00intf_conf {
+काष्ठा rt2x00पूर्णांकf_conf अणु
 	/*
 	 * Interface type
 	 */
-	enum nl80211_iftype type;
+	क्रमागत nl80211_अगरtype type;
 
 	/*
 	 * TSF sync value, this is dependent on the operation type.
 	 */
-	enum tsf_sync sync;
+	क्रमागत tsf_sync sync;
 
 	/*
 	 * The MAC and BSSID addresses are simple array of bytes,
 	 * these arrays are little endian, so when sending the addresses
-	 * to the drivers, copy the it into a endian-signed variable.
+	 * to the drivers, copy the it पूर्णांकo a endian-चिन्हित variable.
 	 *
 	 * Note that all devices (except rt2500usb) have 32 bits
-	 * register word sizes. This means that whatever variable we
+	 * रेजिस्टर word sizes. This means that whatever variable we
 	 * pass _must_ be a multiple of 32 bits. Otherwise the device
 	 * might not accept what we are sending to it.
-	 * This will also make it easier for the driver to write
+	 * This will also make it easier क्रम the driver to ग_लिखो
 	 * the data to the device.
 	 */
 	__le32 mac[2];
 	__le32 bssid[2];
-};
+पूर्ण;
 
 /*
- * Private structure for storing STA details
+ * Private काष्ठाure क्रम storing STA details
  * wcid: Wireless Client ID
  */
-struct rt2x00_sta {
-	int wcid;
-};
+काष्ठा rt2x00_sta अणु
+	पूर्णांक wcid;
+पूर्ण;
 
-static inline struct rt2x00_sta* sta_to_rt2x00_sta(struct ieee80211_sta *sta)
-{
-	return (struct rt2x00_sta *)sta->drv_priv;
-}
+अटल अंतरभूत काष्ठा rt2x00_sta* sta_to_rt2x00_sta(काष्ठा ieee80211_sta *sta)
+अणु
+	वापस (काष्ठा rt2x00_sta *)sta->drv_priv;
+पूर्ण
 
 /*
  * rt2x00lib callback functions.
  */
-struct rt2x00lib_ops {
+काष्ठा rt2x00lib_ops अणु
 	/*
 	 * Interrupt handlers.
 	 */
@@ -527,135 +528,135 @@ struct rt2x00lib_ops {
 	/*
 	 * TX status tasklet handler.
 	 */
-	void (*txstatus_tasklet) (struct tasklet_struct *t);
-	void (*pretbtt_tasklet) (struct tasklet_struct *t);
-	void (*tbtt_tasklet) (struct tasklet_struct *t);
-	void (*rxdone_tasklet) (struct tasklet_struct *t);
-	void (*autowake_tasklet) (struct tasklet_struct *t);
+	व्योम (*txstatus_tasklet) (काष्ठा tasklet_काष्ठा *t);
+	व्योम (*pretbtt_tasklet) (काष्ठा tasklet_काष्ठा *t);
+	व्योम (*tbtt_tasklet) (काष्ठा tasklet_काष्ठा *t);
+	व्योम (*rxकरोne_tasklet) (काष्ठा tasklet_काष्ठा *t);
+	व्योम (*स्वतःwake_tasklet) (काष्ठा tasklet_काष्ठा *t);
 
 	/*
 	 * Device init handlers.
 	 */
-	int (*probe_hw) (struct rt2x00_dev *rt2x00dev);
-	char *(*get_firmware_name) (struct rt2x00_dev *rt2x00dev);
-	int (*check_firmware) (struct rt2x00_dev *rt2x00dev,
-			       const u8 *data, const size_t len);
-	int (*load_firmware) (struct rt2x00_dev *rt2x00dev,
-			      const u8 *data, const size_t len);
+	पूर्णांक (*probe_hw) (काष्ठा rt2x00_dev *rt2x00dev);
+	अक्षर *(*get_firmware_name) (काष्ठा rt2x00_dev *rt2x00dev);
+	पूर्णांक (*check_firmware) (काष्ठा rt2x00_dev *rt2x00dev,
+			       स्थिर u8 *data, स्थिर माप_प्रकार len);
+	पूर्णांक (*load_firmware) (काष्ठा rt2x00_dev *rt2x00dev,
+			      स्थिर u8 *data, स्थिर माप_प्रकार len);
 
 	/*
 	 * Device initialization/deinitialization handlers.
 	 */
-	int (*initialize) (struct rt2x00_dev *rt2x00dev);
-	void (*uninitialize) (struct rt2x00_dev *rt2x00dev);
+	पूर्णांक (*initialize) (काष्ठा rt2x00_dev *rt2x00dev);
+	व्योम (*uninitialize) (काष्ठा rt2x00_dev *rt2x00dev);
 
 	/*
 	 * queue initialization handlers
 	 */
-	bool (*get_entry_state) (struct queue_entry *entry);
-	void (*clear_entry) (struct queue_entry *entry);
+	bool (*get_entry_state) (काष्ठा queue_entry *entry);
+	व्योम (*clear_entry) (काष्ठा queue_entry *entry);
 
 	/*
 	 * Radio control handlers.
 	 */
-	int (*set_device_state) (struct rt2x00_dev *rt2x00dev,
-				 enum dev_state state);
-	int (*rfkill_poll) (struct rt2x00_dev *rt2x00dev);
-	void (*link_stats) (struct rt2x00_dev *rt2x00dev,
-			    struct link_qual *qual);
-	void (*reset_tuner) (struct rt2x00_dev *rt2x00dev,
-			     struct link_qual *qual);
-	void (*link_tuner) (struct rt2x00_dev *rt2x00dev,
-			    struct link_qual *qual, const u32 count);
-	void (*gain_calibration) (struct rt2x00_dev *rt2x00dev);
-	void (*vco_calibration) (struct rt2x00_dev *rt2x00dev);
+	पूर्णांक (*set_device_state) (काष्ठा rt2x00_dev *rt2x00dev,
+				 क्रमागत dev_state state);
+	पूर्णांक (*rfसमाप्त_poll) (काष्ठा rt2x00_dev *rt2x00dev);
+	व्योम (*link_stats) (काष्ठा rt2x00_dev *rt2x00dev,
+			    काष्ठा link_qual *qual);
+	व्योम (*reset_tuner) (काष्ठा rt2x00_dev *rt2x00dev,
+			     काष्ठा link_qual *qual);
+	व्योम (*link_tuner) (काष्ठा rt2x00_dev *rt2x00dev,
+			    काष्ठा link_qual *qual, स्थिर u32 count);
+	व्योम (*gain_calibration) (काष्ठा rt2x00_dev *rt2x00dev);
+	व्योम (*vco_calibration) (काष्ठा rt2x00_dev *rt2x00dev);
 
 	/*
 	 * Data queue handlers.
 	 */
-	void (*watchdog) (struct rt2x00_dev *rt2x00dev);
-	void (*start_queue) (struct data_queue *queue);
-	void (*kick_queue) (struct data_queue *queue);
-	void (*stop_queue) (struct data_queue *queue);
-	void (*flush_queue) (struct data_queue *queue, bool drop);
-	void (*tx_dma_done) (struct queue_entry *entry);
+	व्योम (*watchकरोg) (काष्ठा rt2x00_dev *rt2x00dev);
+	व्योम (*start_queue) (काष्ठा data_queue *queue);
+	व्योम (*kick_queue) (काष्ठा data_queue *queue);
+	व्योम (*stop_queue) (काष्ठा data_queue *queue);
+	व्योम (*flush_queue) (काष्ठा data_queue *queue, bool drop);
+	व्योम (*tx_dma_करोne) (काष्ठा queue_entry *entry);
 
 	/*
 	 * TX control handlers
 	 */
-	void (*write_tx_desc) (struct queue_entry *entry,
-			       struct txentry_desc *txdesc);
-	void (*write_tx_data) (struct queue_entry *entry,
-			       struct txentry_desc *txdesc);
-	void (*write_beacon) (struct queue_entry *entry,
-			      struct txentry_desc *txdesc);
-	void (*clear_beacon) (struct queue_entry *entry);
-	int (*get_tx_data_len) (struct queue_entry *entry);
+	व्योम (*ग_लिखो_tx_desc) (काष्ठा queue_entry *entry,
+			       काष्ठा txentry_desc *txdesc);
+	व्योम (*ग_लिखो_tx_data) (काष्ठा queue_entry *entry,
+			       काष्ठा txentry_desc *txdesc);
+	व्योम (*ग_लिखो_beacon) (काष्ठा queue_entry *entry,
+			      काष्ठा txentry_desc *txdesc);
+	व्योम (*clear_beacon) (काष्ठा queue_entry *entry);
+	पूर्णांक (*get_tx_data_len) (काष्ठा queue_entry *entry);
 
 	/*
 	 * RX control handlers
 	 */
-	void (*fill_rxdone) (struct queue_entry *entry,
-			     struct rxdone_entry_desc *rxdesc);
+	व्योम (*fill_rxकरोne) (काष्ठा queue_entry *entry,
+			     काष्ठा rxकरोne_entry_desc *rxdesc);
 
 	/*
 	 * Configuration handlers.
 	 */
-	int (*config_shared_key) (struct rt2x00_dev *rt2x00dev,
-				  struct rt2x00lib_crypto *crypto,
-				  struct ieee80211_key_conf *key);
-	int (*config_pairwise_key) (struct rt2x00_dev *rt2x00dev,
-				    struct rt2x00lib_crypto *crypto,
-				    struct ieee80211_key_conf *key);
-	void (*config_filter) (struct rt2x00_dev *rt2x00dev,
-			       const unsigned int filter_flags);
-	void (*config_intf) (struct rt2x00_dev *rt2x00dev,
-			     struct rt2x00_intf *intf,
-			     struct rt2x00intf_conf *conf,
-			     const unsigned int flags);
-#define CONFIG_UPDATE_TYPE		( 1 << 1 )
-#define CONFIG_UPDATE_MAC		( 1 << 2 )
-#define CONFIG_UPDATE_BSSID		( 1 << 3 )
+	पूर्णांक (*config_shared_key) (काष्ठा rt2x00_dev *rt2x00dev,
+				  काष्ठा rt2x00lib_crypto *crypto,
+				  काष्ठा ieee80211_key_conf *key);
+	पूर्णांक (*config_pairwise_key) (काष्ठा rt2x00_dev *rt2x00dev,
+				    काष्ठा rt2x00lib_crypto *crypto,
+				    काष्ठा ieee80211_key_conf *key);
+	व्योम (*config_filter) (काष्ठा rt2x00_dev *rt2x00dev,
+			       स्थिर अचिन्हित पूर्णांक filter_flags);
+	व्योम (*config_पूर्णांकf) (काष्ठा rt2x00_dev *rt2x00dev,
+			     काष्ठा rt2x00_पूर्णांकf *पूर्णांकf,
+			     काष्ठा rt2x00पूर्णांकf_conf *conf,
+			     स्थिर अचिन्हित पूर्णांक flags);
+#घोषणा CONFIG_UPDATE_TYPE		( 1 << 1 )
+#घोषणा CONFIG_UPDATE_MAC		( 1 << 2 )
+#घोषणा CONFIG_UPDATE_BSSID		( 1 << 3 )
 
-	void (*config_erp) (struct rt2x00_dev *rt2x00dev,
-			    struct rt2x00lib_erp *erp,
+	व्योम (*config_erp) (काष्ठा rt2x00_dev *rt2x00dev,
+			    काष्ठा rt2x00lib_erp *erp,
 			    u32 changed);
-	void (*config_ant) (struct rt2x00_dev *rt2x00dev,
-			    struct antenna_setup *ant);
-	void (*config) (struct rt2x00_dev *rt2x00dev,
-			struct rt2x00lib_conf *libconf,
-			const unsigned int changed_flags);
-	void (*pre_reset_hw) (struct rt2x00_dev *rt2x00dev);
-	int (*sta_add) (struct rt2x00_dev *rt2x00dev,
-			struct ieee80211_vif *vif,
-			struct ieee80211_sta *sta);
-	int (*sta_remove) (struct rt2x00_dev *rt2x00dev,
-			   struct ieee80211_sta *sta);
-};
+	व्योम (*config_ant) (काष्ठा rt2x00_dev *rt2x00dev,
+			    काष्ठा antenna_setup *ant);
+	व्योम (*config) (काष्ठा rt2x00_dev *rt2x00dev,
+			काष्ठा rt2x00lib_conf *libconf,
+			स्थिर अचिन्हित पूर्णांक changed_flags);
+	व्योम (*pre_reset_hw) (काष्ठा rt2x00_dev *rt2x00dev);
+	पूर्णांक (*sta_add) (काष्ठा rt2x00_dev *rt2x00dev,
+			काष्ठा ieee80211_vअगर *vअगर,
+			काष्ठा ieee80211_sta *sta);
+	पूर्णांक (*sta_हटाओ) (काष्ठा rt2x00_dev *rt2x00dev,
+			   काष्ठा ieee80211_sta *sta);
+पूर्ण;
 
 /*
- * rt2x00 driver callback operation structure.
+ * rt2x00 driver callback operation काष्ठाure.
  */
-struct rt2x00_ops {
-	const char *name;
-	const unsigned int drv_data_size;
-	const unsigned int max_ap_intf;
-	const unsigned int eeprom_size;
-	const unsigned int rf_size;
-	const unsigned int tx_queues;
-	void (*queue_init)(struct data_queue *queue);
-	const struct rt2x00lib_ops *lib;
-	const void *drv;
-	const struct ieee80211_ops *hw;
-#ifdef CONFIG_RT2X00_LIB_DEBUGFS
-	const struct rt2x00debug *debugfs;
-#endif /* CONFIG_RT2X00_LIB_DEBUGFS */
-};
+काष्ठा rt2x00_ops अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित पूर्णांक drv_data_size;
+	स्थिर अचिन्हित पूर्णांक max_ap_पूर्णांकf;
+	स्थिर अचिन्हित पूर्णांक eeprom_size;
+	स्थिर अचिन्हित पूर्णांक rf_size;
+	स्थिर अचिन्हित पूर्णांक tx_queues;
+	व्योम (*queue_init)(काष्ठा data_queue *queue);
+	स्थिर काष्ठा rt2x00lib_ops *lib;
+	स्थिर व्योम *drv;
+	स्थिर काष्ठा ieee80211_ops *hw;
+#अगर_घोषित CONFIG_RT2X00_LIB_DEBUGFS
+	स्थिर काष्ठा rt2x00debug *debugfs;
+#पूर्ण_अगर /* CONFIG_RT2X00_LIB_DEBUGFS */
+पूर्ण;
 
 /*
  * rt2x00 state flags
  */
-enum rt2x00_state_flags {
+क्रमागत rt2x00_state_flags अणु
 	/*
 	 * Device flags
 	 */
@@ -677,16 +678,16 @@ enum rt2x00_state_flags {
 	CONFIG_MONITORING,
 
 	/*
-	 * Mark we currently are sequentially reading TX_STA_FIFO register
-	 * FIXME: this is for only rt2800usb, should go to private data
+	 * Mark we currently are sequentially पढ़ोing TX_STA_FIFO रेजिस्टर
+	 * FIXME: this is क्रम only rt2800usb, should go to निजी data
 	 */
 	TX_STATUS_READING,
-};
+पूर्ण;
 
 /*
  * rt2x00 capability flags
  */
-enum rt2x00_capability_flags {
+क्रमागत rt2x00_capability_flags अणु
 	/*
 	 * Requirements
 	 */
@@ -723,157 +724,157 @@ enum rt2x00_capability_flags {
 	CAPABILITY_EXTERNAL_PA_TX0,
 	CAPABILITY_EXTERNAL_PA_TX1,
 	CAPABILITY_RESTART_HW,
-};
+पूर्ण;
 
 /*
  * Interface combinations
  */
-enum {
+क्रमागत अणु
 	IF_COMB_AP = 0,
 	NUM_IF_COMB,
-};
+पूर्ण;
 
 /*
- * rt2x00 device structure.
+ * rt2x00 device काष्ठाure.
  */
-struct rt2x00_dev {
+काष्ठा rt2x00_dev अणु
 	/*
-	 * Device structure.
-	 * The structure stored in here depends on the
-	 * system bus (PCI or USB).
-	 * When accessing this variable, the rt2x00dev_{pci,usb}
-	 * macros should be used for correct typecasting.
+	 * Device काष्ठाure.
+	 * The काष्ठाure stored in here depends on the
+	 * प्रणाली bus (PCI or USB).
+	 * When accessing this variable, the rt2x00dev_अणुpci,usbपूर्ण
+	 * macros should be used क्रम correct typecasting.
 	 */
-	struct device *dev;
+	काष्ठा device *dev;
 
 	/*
 	 * Callback functions.
 	 */
-	const struct rt2x00_ops *ops;
+	स्थिर काष्ठा rt2x00_ops *ops;
 
 	/*
 	 * Driver data.
 	 */
-	void *drv_data;
+	व्योम *drv_data;
 
 	/*
-	 * IEEE80211 control structure.
+	 * IEEE80211 control काष्ठाure.
 	 */
-	struct ieee80211_hw *hw;
-	struct ieee80211_supported_band bands[NUM_NL80211_BANDS];
-	struct rt2x00_chan_survey *chan_survey;
-	enum nl80211_band curr_band;
-	int curr_freq;
+	काष्ठा ieee80211_hw *hw;
+	काष्ठा ieee80211_supported_band bands[NUM_NL80211_BANDS];
+	काष्ठा rt2x00_chan_survey *chan_survey;
+	क्रमागत nl80211_band curr_band;
+	पूर्णांक curr_freq;
 
 	/*
-	 * If enabled, the debugfs interface structures
-	 * required for deregistration of debugfs.
+	 * If enabled, the debugfs पूर्णांकerface काष्ठाures
+	 * required क्रम deregistration of debugfs.
 	 */
-#ifdef CONFIG_RT2X00_LIB_DEBUGFS
-	struct rt2x00debug_intf *debugfs_intf;
-#endif /* CONFIG_RT2X00_LIB_DEBUGFS */
+#अगर_घोषित CONFIG_RT2X00_LIB_DEBUGFS
+	काष्ठा rt2x00debug_पूर्णांकf *debugfs_पूर्णांकf;
+#पूर्ण_अगर /* CONFIG_RT2X00_LIB_DEBUGFS */
 
 	/*
-	 * LED structure for changing the LED status
+	 * LED काष्ठाure क्रम changing the LED status
 	 * by mac8011 or the kernel.
 	 */
-#ifdef CONFIG_RT2X00_LIB_LEDS
-	struct rt2x00_led led_radio;
-	struct rt2x00_led led_assoc;
-	struct rt2x00_led led_qual;
+#अगर_घोषित CONFIG_RT2X00_LIB_LEDS
+	काष्ठा rt2x00_led led_radio;
+	काष्ठा rt2x00_led led_assoc;
+	काष्ठा rt2x00_led led_qual;
 	u16 led_mcu_reg;
-#endif /* CONFIG_RT2X00_LIB_LEDS */
+#पूर्ण_अगर /* CONFIG_RT2X00_LIB_LEDS */
 
 	/*
 	 * Device state flags.
 	 * In these flags the current status is stored.
 	 * Access to these flags should occur atomically.
 	 */
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * Device capabiltiy flags.
 	 * In these flags the device/driver capabilities are stored.
 	 * Access to these flags should occur non-atomically.
 	 */
-	unsigned long cap_flags;
+	अचिन्हित दीर्घ cap_flags;
 
 	/*
-	 * Device information, Bus IRQ and name (PCI, SoC)
+	 * Device inक्रमmation, Bus IRQ and name (PCI, SoC)
 	 */
-	int irq;
-	const char *name;
+	पूर्णांक irq;
+	स्थिर अक्षर *name;
 
 	/*
-	 * Chipset identification.
+	 * Chipset identअगरication.
 	 */
-	struct rt2x00_chip chip;
+	काष्ठा rt2x00_chip chip;
 
 	/*
-	 * hw capability specifications.
+	 * hw capability specअगरications.
 	 */
-	struct hw_mode_spec spec;
+	काष्ठा hw_mode_spec spec;
 
 	/*
-	 * This is the default TX/RX antenna setup as indicated
+	 * This is the शेष TX/RX antenna setup as indicated
 	 * by the device's EEPROM.
 	 */
-	struct antenna_setup default_ant;
+	काष्ठा antenna_setup शेष_ant;
 
 	/*
-	 * Register pointers
-	 * csr.base: CSR base register address. (PCI)
-	 * csr.cache: CSR cache for usb_control_msg. (USB)
+	 * Register poपूर्णांकers
+	 * csr.base: CSR base रेजिस्टर address. (PCI)
+	 * csr.cache: CSR cache क्रम usb_control_msg. (USB)
 	 */
-	union csr {
-		void __iomem *base;
-		void *cache;
-	} csr;
+	जोड़ csr अणु
+		व्योम __iomem *base;
+		व्योम *cache;
+	पूर्ण csr;
 
 	/*
-	 * Mutex to protect register accesses.
+	 * Mutex to protect रेजिस्टर accesses.
 	 * For PCI and USB devices it protects against concurrent indirect
-	 * register access (BBP, RF, MCU) since accessing those
-	 * registers require multiple calls to the CSR registers.
+	 * रेजिस्टर access (BBP, RF, MCU) since accessing those
+	 * रेजिस्टरs require multiple calls to the CSR रेजिस्टरs.
 	 * For USB devices it also protects the csr_cache since that
-	 * field is used for normal CSR access and it cannot support
+	 * field is used क्रम normal CSR access and it cannot support
 	 * multiple callers simultaneously.
 	 */
-	struct mutex csr_mutex;
+	काष्ठा mutex csr_mutex;
 
 	/*
 	 * Mutex to synchronize config and link tuner.
 	 */
-	struct mutex conf_mutex;
+	काष्ठा mutex conf_mutex;
 	/*
-	 * Current packet filter configuration for the device.
+	 * Current packet filter configuration क्रम the device.
 	 * This contains all currently active FIF_* flags send
 	 * to us by mac80211 during configure_filter().
 	 */
-	unsigned int packet_filter;
+	अचिन्हित पूर्णांक packet_filter;
 
 	/*
 	 * Interface details:
-	 *  - Open ap interface count.
-	 *  - Open sta interface count.
+	 *  - Open ap पूर्णांकerface count.
+	 *  - Open sta पूर्णांकerface count.
 	 *  - Association count.
 	 *  - Beaconing enabled count.
 	 */
-	unsigned int intf_ap_count;
-	unsigned int intf_sta_count;
-	unsigned int intf_associated;
-	unsigned int intf_beaconing;
+	अचिन्हित पूर्णांक पूर्णांकf_ap_count;
+	अचिन्हित पूर्णांक पूर्णांकf_sta_count;
+	अचिन्हित पूर्णांक पूर्णांकf_associated;
+	अचिन्हित पूर्णांक पूर्णांकf_beaconing;
 
 	/*
 	 * Interface combinations
 	 */
-	struct ieee80211_iface_limit if_limits_ap;
-	struct ieee80211_iface_combination if_combinations[NUM_IF_COMB];
+	काष्ठा ieee80211_अगरace_limit अगर_limits_ap;
+	काष्ठा ieee80211_अगरace_combination अगर_combinations[NUM_IF_COMB];
 
 	/*
 	 * Link quality
 	 */
-	struct link link;
+	काष्ठा link link;
 
 	/*
 	 * EEPROM data.
@@ -881,30 +882,30 @@ struct rt2x00_dev {
 	__le16 *eeprom;
 
 	/*
-	 * Active RF register values.
-	 * These are stored here so we don't need
-	 * to read the rf registers and can directly
+	 * Active RF रेजिस्टर values.
+	 * These are stored here so we करोn't need
+	 * to पढ़ो the rf रेजिस्टरs and can directly
 	 * use this value instead.
 	 * This field should be accessed by using
-	 * rt2x00_rf_read() and rt2x00_rf_write().
+	 * rt2x00_rf_पढ़ो() and rt2x00_rf_ग_लिखो().
 	 */
 	u32 *rf;
 
 	/*
 	 * LNA gain
 	 */
-	short lna_gain;
+	लघु lna_gain;
 
 	/*
-	 * Current TX power value.
+	 * Current TX घातer value.
 	 */
-	u16 tx_power;
+	u16 tx_घातer;
 
 	/*
 	 * Current retry values.
 	 */
-	u8 short_retry;
-	u8 long_retry;
+	u8 लघु_retry;
+	u8 दीर्घ_retry;
 
 	/*
 	 * Rssi <-> Dbm offset
@@ -922,184 +923,184 @@ struct rt2x00_dev {
 	u16 aid;
 
 	/*
-	 * Beacon interval.
+	 * Beacon पूर्णांकerval.
 	 */
-	u16 beacon_int;
+	u16 beacon_पूर्णांक;
 
 	/**
 	 * Timestamp of last received beacon
 	 */
-	unsigned long last_beacon;
+	अचिन्हित दीर्घ last_beacon;
 
 	/*
 	 * Low level statistics which will have
-	 * to be kept up to date while device is running.
+	 * to be kept up to date जबतक device is running.
 	 */
-	struct ieee80211_low_level_stats low_level_stats;
+	काष्ठा ieee80211_low_level_stats low_level_stats;
 
 	/**
-	 * Work queue for all work which should not be placed
+	 * Work queue क्रम all work which should not be placed
 	 * on the mac80211 workqueue (because of dependencies
-	 * between various work structures).
+	 * between various work काष्ठाures).
 	 */
-	struct workqueue_struct *workqueue;
+	काष्ठा workqueue_काष्ठा *workqueue;
 
 	/*
 	 * Scheduled work.
-	 * NOTE: intf_work will use ieee80211_iterate_active_interfaces()
+	 * NOTE: पूर्णांकf_work will use ieee80211_iterate_active_पूर्णांकerfaces()
 	 * which means it cannot be placed on the hw->workqueue
 	 * due to RTNL locking requirements.
 	 */
-	struct work_struct intf_work;
+	काष्ठा work_काष्ठा पूर्णांकf_work;
 
 	/**
-	 * Scheduled work for TX/RX done handling (USB devices)
+	 * Scheduled work क्रम TX/RX करोne handling (USB devices)
 	 */
-	struct work_struct rxdone_work;
-	struct work_struct txdone_work;
+	काष्ठा work_काष्ठा rxकरोne_work;
+	काष्ठा work_काष्ठा txकरोne_work;
 
 	/*
 	 * Powersaving work
 	 */
-	struct delayed_work autowakeup_work;
-	struct work_struct sleep_work;
+	काष्ठा delayed_work स्वतःwakeup_work;
+	काष्ठा work_काष्ठा sleep_work;
 
 	/*
-	 * Data queue arrays for RX, TX, Beacon and ATIM.
+	 * Data queue arrays क्रम RX, TX, Beacon and ATIM.
 	 */
-	unsigned int data_queues;
-	struct data_queue *rx;
-	struct data_queue *tx;
-	struct data_queue *bcn;
-	struct data_queue *atim;
+	अचिन्हित पूर्णांक data_queues;
+	काष्ठा data_queue *rx;
+	काष्ठा data_queue *tx;
+	काष्ठा data_queue *bcn;
+	काष्ठा data_queue *atim;
 
 	/*
 	 * Firmware image.
 	 */
-	const struct firmware *fw;
+	स्थिर काष्ठा firmware *fw;
 
 	/*
-	 * FIFO for storing tx status reports between isr and tasklet.
+	 * FIFO क्रम storing tx status reports between isr and tasklet.
 	 */
-	DECLARE_KFIFO_PTR(txstatus_fifo, u32);
+	DECLARE_KFIFO_PTR(txstatus_fअगरo, u32);
 
 	/*
-	 * Timer to ensure tx status reports are read (rt2800usb).
+	 * Timer to ensure tx status reports are पढ़ो (rt2800usb).
 	 */
-	struct hrtimer txstatus_timer;
+	काष्ठा hrसमयr txstatus_समयr;
 
 	/*
-	 * Tasklet for processing tx status reports (rt2800pci).
+	 * Tasklet क्रम processing tx status reports (rt2800pci).
 	 */
-	struct tasklet_struct txstatus_tasklet;
-	struct tasklet_struct pretbtt_tasklet;
-	struct tasklet_struct tbtt_tasklet;
-	struct tasklet_struct rxdone_tasklet;
-	struct tasklet_struct autowake_tasklet;
+	काष्ठा tasklet_काष्ठा txstatus_tasklet;
+	काष्ठा tasklet_काष्ठा pretbtt_tasklet;
+	काष्ठा tasklet_काष्ठा tbtt_tasklet;
+	काष्ठा tasklet_काष्ठा rxकरोne_tasklet;
+	काष्ठा tasklet_काष्ठा स्वतःwake_tasklet;
 
 	/*
-	 * Used for VCO periodic calibration.
+	 * Used क्रम VCO periodic calibration.
 	 */
-	int rf_channel;
+	पूर्णांक rf_channel;
 
 	/*
-	 * Protect the interrupt mask register.
+	 * Protect the पूर्णांकerrupt mask रेजिस्टर.
 	 */
 	spinlock_t irqmask_lock;
 
 	/*
 	 * List of BlockAckReq TX entries that need driver BlockAck processing.
 	 */
-	struct list_head bar_list;
+	काष्ठा list_head bar_list;
 	spinlock_t bar_list_lock;
 
-	/* Extra TX headroom required for alignment purposes. */
-	unsigned int extra_tx_headroom;
+	/* Extra TX headroom required क्रम alignment purposes. */
+	अचिन्हित पूर्णांक extra_tx_headroom;
 
-	struct usb_anchor *anchor;
-	unsigned int num_proto_errs;
+	काष्ठा usb_anchor *anchor;
+	अचिन्हित पूर्णांक num_proto_errs;
 
-	/* Clock for System On Chip devices. */
-	struct clk *clk;
-};
+	/* Clock क्रम System On Chip devices. */
+	काष्ठा clk *clk;
+पूर्ण;
 
-struct rt2x00_bar_list_entry {
-	struct list_head list;
-	struct rcu_head head;
+काष्ठा rt2x00_bar_list_entry अणु
+	काष्ठा list_head list;
+	काष्ठा rcu_head head;
 
-	struct queue_entry *entry;
-	int block_acked;
+	काष्ठा queue_entry *entry;
+	पूर्णांक block_acked;
 
 	/* Relevant parts of the IEEE80211 BAR header */
 	__u8 ra[6];
 	__u8 ta[6];
 	__le16 control;
 	__le16 start_seq_num;
-};
+पूर्ण;
 
 /*
  * Register defines.
- * Some registers require multiple attempts before success,
- * in those cases REGISTER_BUSY_COUNT attempts should be
- * taken with a REGISTER_BUSY_DELAY interval. Due to USB
- * bus delays, we do not have to loop so many times to wait
- * for valid register value on that bus.
+ * Some रेजिस्टरs require multiple attempts beक्रमe success,
+ * in those हालs REGISTER_BUSY_COUNT attempts should be
+ * taken with a REGISTER_BUSY_DELAY पूर्णांकerval. Due to USB
+ * bus delays, we करो not have to loop so many बार to रुको
+ * क्रम valid रेजिस्टर value on that bus.
  */
-#define REGISTER_BUSY_COUNT	100
-#define REGISTER_USB_BUSY_COUNT 20
-#define REGISTER_BUSY_DELAY	100
+#घोषणा REGISTER_BUSY_COUNT	100
+#घोषणा REGISTER_USB_BUSY_COUNT 20
+#घोषणा REGISTER_BUSY_DELAY	100
 
 /*
  * Generic RF access.
  * The RF is being accessed by word index.
  */
-static inline u32 rt2x00_rf_read(struct rt2x00_dev *rt2x00dev,
-				 const unsigned int word)
-{
-	BUG_ON(word < 1 || word > rt2x00dev->ops->rf_size / sizeof(u32));
-	return rt2x00dev->rf[word - 1];
-}
+अटल अंतरभूत u32 rt2x00_rf_पढ़ो(काष्ठा rt2x00_dev *rt2x00dev,
+				 स्थिर अचिन्हित पूर्णांक word)
+अणु
+	BUG_ON(word < 1 || word > rt2x00dev->ops->rf_size / माप(u32));
+	वापस rt2x00dev->rf[word - 1];
+पूर्ण
 
-static inline void rt2x00_rf_write(struct rt2x00_dev *rt2x00dev,
-				   const unsigned int word, u32 data)
-{
-	BUG_ON(word < 1 || word > rt2x00dev->ops->rf_size / sizeof(u32));
+अटल अंतरभूत व्योम rt2x00_rf_ग_लिखो(काष्ठा rt2x00_dev *rt2x00dev,
+				   स्थिर अचिन्हित पूर्णांक word, u32 data)
+अणु
+	BUG_ON(word < 1 || word > rt2x00dev->ops->rf_size / माप(u32));
 	rt2x00dev->rf[word - 1] = data;
-}
+पूर्ण
 
 /*
  * Generic EEPROM access. The EEPROM is being accessed by word or byte index.
  */
-static inline void *rt2x00_eeprom_addr(struct rt2x00_dev *rt2x00dev,
-				       const unsigned int word)
-{
-	return (void *)&rt2x00dev->eeprom[word];
-}
+अटल अंतरभूत व्योम *rt2x00_eeprom_addr(काष्ठा rt2x00_dev *rt2x00dev,
+				       स्थिर अचिन्हित पूर्णांक word)
+अणु
+	वापस (व्योम *)&rt2x00dev->eeprom[word];
+पूर्ण
 
-static inline u16 rt2x00_eeprom_read(struct rt2x00_dev *rt2x00dev,
-				     const unsigned int word)
-{
-	return le16_to_cpu(rt2x00dev->eeprom[word]);
-}
+अटल अंतरभूत u16 rt2x00_eeprom_पढ़ो(काष्ठा rt2x00_dev *rt2x00dev,
+				     स्थिर अचिन्हित पूर्णांक word)
+अणु
+	वापस le16_to_cpu(rt2x00dev->eeprom[word]);
+पूर्ण
 
-static inline void rt2x00_eeprom_write(struct rt2x00_dev *rt2x00dev,
-				       const unsigned int word, u16 data)
-{
+अटल अंतरभूत व्योम rt2x00_eeprom_ग_लिखो(काष्ठा rt2x00_dev *rt2x00dev,
+				       स्थिर अचिन्हित पूर्णांक word, u16 data)
+अणु
 	rt2x00dev->eeprom[word] = cpu_to_le16(data);
-}
+पूर्ण
 
-static inline u8 rt2x00_eeprom_byte(struct rt2x00_dev *rt2x00dev,
-				    const unsigned int byte)
-{
-	return *(((u8 *)rt2x00dev->eeprom) + byte);
-}
+अटल अंतरभूत u8 rt2x00_eeprom_byte(काष्ठा rt2x00_dev *rt2x00dev,
+				    स्थिर अचिन्हित पूर्णांक byte)
+अणु
+	वापस *(((u8 *)rt2x00dev->eeprom) + byte);
+पूर्ण
 
 /*
  * Chipset handlers
  */
-static inline void rt2x00_set_chip(struct rt2x00_dev *rt2x00dev,
-				   const u16 rt, const u16 rf, const u16 rev)
-{
+अटल अंतरभूत व्योम rt2x00_set_chip(काष्ठा rt2x00_dev *rt2x00dev,
+				   स्थिर u16 rt, स्थिर u16 rf, स्थिर u16 rev)
+अणु
 	rt2x00dev->chip.rt = rt;
 	rt2x00dev->chip.rf = rf;
 	rt2x00dev->chip.rev = rev;
@@ -1107,398 +1108,398 @@ static inline void rt2x00_set_chip(struct rt2x00_dev *rt2x00dev,
 	rt2x00_info(rt2x00dev, "Chipset detected - rt: %04x, rf: %04x, rev: %04x\n",
 		    rt2x00dev->chip.rt, rt2x00dev->chip.rf,
 		    rt2x00dev->chip.rev);
-}
+पूर्ण
 
-static inline void rt2x00_set_rt(struct rt2x00_dev *rt2x00dev,
-				 const u16 rt, const u16 rev)
-{
+अटल अंतरभूत व्योम rt2x00_set_rt(काष्ठा rt2x00_dev *rt2x00dev,
+				 स्थिर u16 rt, स्थिर u16 rev)
+अणु
 	rt2x00dev->chip.rt = rt;
 	rt2x00dev->chip.rev = rev;
 
 	rt2x00_info(rt2x00dev, "RT chipset %04x, rev %04x detected\n",
 		    rt2x00dev->chip.rt, rt2x00dev->chip.rev);
-}
+पूर्ण
 
-static inline void rt2x00_set_rf(struct rt2x00_dev *rt2x00dev, const u16 rf)
-{
+अटल अंतरभूत व्योम rt2x00_set_rf(काष्ठा rt2x00_dev *rt2x00dev, स्थिर u16 rf)
+अणु
 	rt2x00dev->chip.rf = rf;
 
 	rt2x00_info(rt2x00dev, "RF chipset %04x detected\n",
 		    rt2x00dev->chip.rf);
-}
+पूर्ण
 
-static inline bool rt2x00_rt(struct rt2x00_dev *rt2x00dev, const u16 rt)
-{
-	return (rt2x00dev->chip.rt == rt);
-}
+अटल अंतरभूत bool rt2x00_rt(काष्ठा rt2x00_dev *rt2x00dev, स्थिर u16 rt)
+अणु
+	वापस (rt2x00dev->chip.rt == rt);
+पूर्ण
 
-static inline bool rt2x00_rf(struct rt2x00_dev *rt2x00dev, const u16 rf)
-{
-	return (rt2x00dev->chip.rf == rf);
-}
+अटल अंतरभूत bool rt2x00_rf(काष्ठा rt2x00_dev *rt2x00dev, स्थिर u16 rf)
+अणु
+	वापस (rt2x00dev->chip.rf == rf);
+पूर्ण
 
-static inline u16 rt2x00_rev(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00dev->chip.rev;
-}
+अटल अंतरभूत u16 rt2x00_rev(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00dev->chip.rev;
+पूर्ण
 
-static inline bool rt2x00_rt_rev(struct rt2x00_dev *rt2x00dev,
-				 const u16 rt, const u16 rev)
-{
-	return (rt2x00_rt(rt2x00dev, rt) && rt2x00_rev(rt2x00dev) == rev);
-}
+अटल अंतरभूत bool rt2x00_rt_rev(काष्ठा rt2x00_dev *rt2x00dev,
+				 स्थिर u16 rt, स्थिर u16 rev)
+अणु
+	वापस (rt2x00_rt(rt2x00dev, rt) && rt2x00_rev(rt2x00dev) == rev);
+पूर्ण
 
-static inline bool rt2x00_rt_rev_lt(struct rt2x00_dev *rt2x00dev,
-				    const u16 rt, const u16 rev)
-{
-	return (rt2x00_rt(rt2x00dev, rt) && rt2x00_rev(rt2x00dev) < rev);
-}
+अटल अंतरभूत bool rt2x00_rt_rev_lt(काष्ठा rt2x00_dev *rt2x00dev,
+				    स्थिर u16 rt, स्थिर u16 rev)
+अणु
+	वापस (rt2x00_rt(rt2x00dev, rt) && rt2x00_rev(rt2x00dev) < rev);
+पूर्ण
 
-static inline bool rt2x00_rt_rev_gte(struct rt2x00_dev *rt2x00dev,
-				     const u16 rt, const u16 rev)
-{
-	return (rt2x00_rt(rt2x00dev, rt) && rt2x00_rev(rt2x00dev) >= rev);
-}
+अटल अंतरभूत bool rt2x00_rt_rev_gte(काष्ठा rt2x00_dev *rt2x00dev,
+				     स्थिर u16 rt, स्थिर u16 rev)
+अणु
+	वापस (rt2x00_rt(rt2x00dev, rt) && rt2x00_rev(rt2x00dev) >= rev);
+पूर्ण
 
-static inline void rt2x00_set_chip_intf(struct rt2x00_dev *rt2x00dev,
-					enum rt2x00_chip_intf intf)
-{
-	rt2x00dev->chip.intf = intf;
-}
+अटल अंतरभूत व्योम rt2x00_set_chip_पूर्णांकf(काष्ठा rt2x00_dev *rt2x00dev,
+					क्रमागत rt2x00_chip_पूर्णांकf पूर्णांकf)
+अणु
+	rt2x00dev->chip.पूर्णांकf = पूर्णांकf;
+पूर्ण
 
-static inline bool rt2x00_intf(struct rt2x00_dev *rt2x00dev,
-			       enum rt2x00_chip_intf intf)
-{
-	return (rt2x00dev->chip.intf == intf);
-}
+अटल अंतरभूत bool rt2x00_पूर्णांकf(काष्ठा rt2x00_dev *rt2x00dev,
+			       क्रमागत rt2x00_chip_पूर्णांकf पूर्णांकf)
+अणु
+	वापस (rt2x00dev->chip.पूर्णांकf == पूर्णांकf);
+पूर्ण
 
-static inline bool rt2x00_is_pci(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_intf(rt2x00dev, RT2X00_CHIP_INTF_PCI) ||
-	       rt2x00_intf(rt2x00dev, RT2X00_CHIP_INTF_PCIE);
-}
+अटल अंतरभूत bool rt2x00_is_pci(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_पूर्णांकf(rt2x00dev, RT2X00_CHIP_INTF_PCI) ||
+	       rt2x00_पूर्णांकf(rt2x00dev, RT2X00_CHIP_INTF_PCIE);
+पूर्ण
 
-static inline bool rt2x00_is_pcie(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_intf(rt2x00dev, RT2X00_CHIP_INTF_PCIE);
-}
+अटल अंतरभूत bool rt2x00_is_pcie(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_पूर्णांकf(rt2x00dev, RT2X00_CHIP_INTF_PCIE);
+पूर्ण
 
-static inline bool rt2x00_is_usb(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_intf(rt2x00dev, RT2X00_CHIP_INTF_USB);
-}
+अटल अंतरभूत bool rt2x00_is_usb(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_पूर्णांकf(rt2x00dev, RT2X00_CHIP_INTF_USB);
+पूर्ण
 
-static inline bool rt2x00_is_soc(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_intf(rt2x00dev, RT2X00_CHIP_INTF_SOC);
-}
+अटल अंतरभूत bool rt2x00_is_soc(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_पूर्णांकf(rt2x00dev, RT2X00_CHIP_INTF_SOC);
+पूर्ण
 
-/* Helpers for capability flags */
+/* Helpers क्रम capability flags */
 
-static inline bool
-rt2x00_has_cap_flag(struct rt2x00_dev *rt2x00dev,
-		    enum rt2x00_capability_flags cap_flag)
-{
-	return test_bit(cap_flag, &rt2x00dev->cap_flags);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_flag(काष्ठा rt2x00_dev *rt2x00dev,
+		    क्रमागत rt2x00_capability_flags cap_flag)
+अणु
+	वापस test_bit(cap_flag, &rt2x00dev->cap_flags);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_hw_crypto(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_HW_CRYPTO);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_hw_crypto(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_HW_CRYPTO);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_power_limit(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_POWER_LIMIT);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_घातer_limit(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_POWER_LIMIT);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_control_filters(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_CONTROL_FILTERS);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_control_filters(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_CONTROL_FILTERS);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_control_filter_pspoll(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_CONTROL_FILTER_PSPOLL);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_control_filter_pspoll(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_CONTROL_FILTER_PSPOLL);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_pre_tbtt_interrupt(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_PRE_TBTT_INTERRUPT);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_pre_tbtt_पूर्णांकerrupt(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_PRE_TBTT_INTERRUPT);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_link_tuning(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_LINK_TUNING);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_link_tuning(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_LINK_TUNING);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_frame_type(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_FRAME_TYPE);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_frame_type(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_FRAME_TYPE);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_rf_sequence(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_RF_SEQUENCE);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_rf_sequence(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_RF_SEQUENCE);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_external_lna_a(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_EXTERNAL_LNA_A);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_बाह्यal_lna_a(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_EXTERNAL_LNA_A);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_external_lna_bg(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_EXTERNAL_LNA_BG);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_बाह्यal_lna_bg(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_EXTERNAL_LNA_BG);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_double_antenna(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_DOUBLE_ANTENNA);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_द्विगुन_antenna(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_DOUBLE_ANTENNA);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_bt_coexist(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_BT_COEXIST);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_bt_coexist(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_BT_COEXIST);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_vco_recalibration(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_VCO_RECALIBRATION);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_vco_recalibration(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_VCO_RECALIBRATION);
+पूर्ण
 
-static inline bool
-rt2x00_has_cap_restart_hw(struct rt2x00_dev *rt2x00dev)
-{
-	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_RESTART_HW);
-}
+अटल अंतरभूत bool
+rt2x00_has_cap_restart_hw(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	वापस rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_RESTART_HW);
+पूर्ण
 
 /**
- * rt2x00queue_map_txskb - Map a skb into DMA for TX purposes.
- * @entry: Pointer to &struct queue_entry
+ * rt2x00queue_map_txskb - Map a skb पूर्णांकo DMA क्रम TX purposes.
+ * @entry: Poपूर्णांकer to &काष्ठा queue_entry
  *
- * Returns -ENOMEM if mapping fail, 0 otherwise.
+ * Returns -ENOMEM अगर mapping fail, 0 otherwise.
  */
-int rt2x00queue_map_txskb(struct queue_entry *entry);
+पूर्णांक rt2x00queue_map_txskb(काष्ठा queue_entry *entry);
 
 /**
  * rt2x00queue_unmap_skb - Unmap a skb from DMA.
- * @entry: Pointer to &struct queue_entry
+ * @entry: Poपूर्णांकer to &काष्ठा queue_entry
  */
-void rt2x00queue_unmap_skb(struct queue_entry *entry);
+व्योम rt2x00queue_unmap_skb(काष्ठा queue_entry *entry);
 
 /**
- * rt2x00queue_get_tx_queue - Convert tx queue index to queue pointer
- * @rt2x00dev: Pointer to &struct rt2x00_dev.
- * @queue: rt2x00 queue index (see &enum data_queue_qid).
+ * rt2x00queue_get_tx_queue - Convert tx queue index to queue poपूर्णांकer
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev.
+ * @queue: rt2x00 queue index (see &क्रमागत data_queue_qid).
  *
- * Returns NULL for non tx queues.
+ * Returns शून्य क्रम non tx queues.
  */
-static inline struct data_queue *
-rt2x00queue_get_tx_queue(struct rt2x00_dev *rt2x00dev,
-			 const enum data_queue_qid queue)
-{
-	if (queue < rt2x00dev->ops->tx_queues && rt2x00dev->tx)
-		return &rt2x00dev->tx[queue];
+अटल अंतरभूत काष्ठा data_queue *
+rt2x00queue_get_tx_queue(काष्ठा rt2x00_dev *rt2x00dev,
+			 स्थिर क्रमागत data_queue_qid queue)
+अणु
+	अगर (queue < rt2x00dev->ops->tx_queues && rt2x00dev->tx)
+		वापस &rt2x00dev->tx[queue];
 
-	if (queue == QID_ATIM)
-		return rt2x00dev->atim;
+	अगर (queue == QID_ATIM)
+		वापस rt2x00dev->atim;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * rt2x00queue_get_entry - Get queue entry where the given index points to.
- * @queue: Pointer to &struct data_queue from where we obtain the entry.
- * @index: Index identifier for obtaining the correct index.
+ * rt2x00queue_get_entry - Get queue entry where the given index poपूर्णांकs to.
+ * @queue: Poपूर्णांकer to &काष्ठा data_queue from where we obtain the entry.
+ * @index: Index identअगरier क्रम obtaining the correct index.
  */
-struct queue_entry *rt2x00queue_get_entry(struct data_queue *queue,
-					  enum queue_index index);
+काष्ठा queue_entry *rt2x00queue_get_entry(काष्ठा data_queue *queue,
+					  क्रमागत queue_index index);
 
 /**
- * rt2x00queue_pause_queue - Pause a data queue
- * @queue: Pointer to &struct data_queue.
+ * rt2x00queue_छोड़ो_queue - Pause a data queue
+ * @queue: Poपूर्णांकer to &काष्ठा data_queue.
  *
- * This function will pause the data queue locally, preventing
- * new frames to be added to the queue (while the hardware is
+ * This function will छोड़ो the data queue locally, preventing
+ * new frames to be added to the queue (जबतक the hardware is
  * still allowed to run).
  */
-void rt2x00queue_pause_queue(struct data_queue *queue);
+व्योम rt2x00queue_छोड़ो_queue(काष्ठा data_queue *queue);
 
 /**
- * rt2x00queue_unpause_queue - unpause a data queue
- * @queue: Pointer to &struct data_queue.
+ * rt2x00queue_unछोड़ो_queue - unछोड़ो a data queue
+ * @queue: Poपूर्णांकer to &काष्ठा data_queue.
  *
- * This function will unpause the data queue locally, allowing
+ * This function will unछोड़ो the data queue locally, allowing
  * new frames to be added to the queue again.
  */
-void rt2x00queue_unpause_queue(struct data_queue *queue);
+व्योम rt2x00queue_unछोड़ो_queue(काष्ठा data_queue *queue);
 
 /**
  * rt2x00queue_start_queue - Start a data queue
- * @queue: Pointer to &struct data_queue.
+ * @queue: Poपूर्णांकer to &काष्ठा data_queue.
  *
  * This function will start handling all pending frames in the queue.
  */
-void rt2x00queue_start_queue(struct data_queue *queue);
+व्योम rt2x00queue_start_queue(काष्ठा data_queue *queue);
 
 /**
  * rt2x00queue_stop_queue - Halt a data queue
- * @queue: Pointer to &struct data_queue.
+ * @queue: Poपूर्णांकer to &काष्ठा data_queue.
  *
  * This function will stop all pending frames in the queue.
  */
-void rt2x00queue_stop_queue(struct data_queue *queue);
+व्योम rt2x00queue_stop_queue(काष्ठा data_queue *queue);
 
 /**
  * rt2x00queue_flush_queue - Flush a data queue
- * @queue: Pointer to &struct data_queue.
+ * @queue: Poपूर्णांकer to &काष्ठा data_queue.
  * @drop: True to drop all pending frames.
  *
  * This function will flush the queue. After this call
  * the queue is guaranteed to be empty.
  */
-void rt2x00queue_flush_queue(struct data_queue *queue, bool drop);
+व्योम rt2x00queue_flush_queue(काष्ठा data_queue *queue, bool drop);
 
 /**
  * rt2x00queue_start_queues - Start all data queues
- * @rt2x00dev: Pointer to &struct rt2x00_dev.
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev.
  *
  * This function will loop through all available queues to start them
  */
-void rt2x00queue_start_queues(struct rt2x00_dev *rt2x00dev);
+व्योम rt2x00queue_start_queues(काष्ठा rt2x00_dev *rt2x00dev);
 
 /**
  * rt2x00queue_stop_queues - Halt all data queues
- * @rt2x00dev: Pointer to &struct rt2x00_dev.
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev.
  *
  * This function will loop through all available queues to stop
  * any pending frames.
  */
-void rt2x00queue_stop_queues(struct rt2x00_dev *rt2x00dev);
+व्योम rt2x00queue_stop_queues(काष्ठा rt2x00_dev *rt2x00dev);
 
 /**
  * rt2x00queue_flush_queues - Flush all data queues
- * @rt2x00dev: Pointer to &struct rt2x00_dev.
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev.
  * @drop: True to drop all pending frames.
  *
  * This function will loop through all available queues to flush
  * any pending frames.
  */
-void rt2x00queue_flush_queues(struct rt2x00_dev *rt2x00dev, bool drop);
+व्योम rt2x00queue_flush_queues(काष्ठा rt2x00_dev *rt2x00dev, bool drop);
 
 /*
  * Debugfs handlers.
  */
 /**
  * rt2x00debug_dump_frame - Dump a frame to userspace through debugfs.
- * @rt2x00dev: Pointer to &struct rt2x00_dev.
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev.
  * @type: The type of frame that is being dumped.
  * @entry: The queue entry containing the frame to be dumped.
  */
-#ifdef CONFIG_RT2X00_LIB_DEBUGFS
-void rt2x00debug_dump_frame(struct rt2x00_dev *rt2x00dev,
-			    enum rt2x00_dump_type type, struct queue_entry *entry);
-#else
-static inline void rt2x00debug_dump_frame(struct rt2x00_dev *rt2x00dev,
-					  enum rt2x00_dump_type type,
-					  struct queue_entry *entry)
-{
-}
-#endif /* CONFIG_RT2X00_LIB_DEBUGFS */
+#अगर_घोषित CONFIG_RT2X00_LIB_DEBUGFS
+व्योम rt2x00debug_dump_frame(काष्ठा rt2x00_dev *rt2x00dev,
+			    क्रमागत rt2x00_dump_type type, काष्ठा queue_entry *entry);
+#अन्यथा
+अटल अंतरभूत व्योम rt2x00debug_dump_frame(काष्ठा rt2x00_dev *rt2x00dev,
+					  क्रमागत rt2x00_dump_type type,
+					  काष्ठा queue_entry *entry)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_RT2X00_LIB_DEBUGFS */
 
 /*
  * Utility functions.
  */
-u32 rt2x00lib_get_bssidx(struct rt2x00_dev *rt2x00dev,
-			 struct ieee80211_vif *vif);
-void rt2x00lib_set_mac_address(struct rt2x00_dev *rt2x00dev, u8 *eeprom_mac_addr);
+u32 rt2x00lib_get_bssidx(काष्ठा rt2x00_dev *rt2x00dev,
+			 काष्ठा ieee80211_vअगर *vअगर);
+व्योम rt2x00lib_set_mac_address(काष्ठा rt2x00_dev *rt2x00dev, u8 *eeprom_mac_addr);
 
 /*
  * Interrupt context handlers.
  */
-void rt2x00lib_beacondone(struct rt2x00_dev *rt2x00dev);
-void rt2x00lib_pretbtt(struct rt2x00_dev *rt2x00dev);
-void rt2x00lib_dmastart(struct queue_entry *entry);
-void rt2x00lib_dmadone(struct queue_entry *entry);
-void rt2x00lib_txdone(struct queue_entry *entry,
-		      struct txdone_entry_desc *txdesc);
-void rt2x00lib_txdone_nomatch(struct queue_entry *entry,
-			      struct txdone_entry_desc *txdesc);
-void rt2x00lib_txdone_noinfo(struct queue_entry *entry, u32 status);
-void rt2x00lib_rxdone(struct queue_entry *entry, gfp_t gfp);
+व्योम rt2x00lib_beaconकरोne(काष्ठा rt2x00_dev *rt2x00dev);
+व्योम rt2x00lib_pretbtt(काष्ठा rt2x00_dev *rt2x00dev);
+व्योम rt2x00lib_dmastart(काष्ठा queue_entry *entry);
+व्योम rt2x00lib_dmaकरोne(काष्ठा queue_entry *entry);
+व्योम rt2x00lib_txकरोne(काष्ठा queue_entry *entry,
+		      काष्ठा txकरोne_entry_desc *txdesc);
+व्योम rt2x00lib_txकरोne_nomatch(काष्ठा queue_entry *entry,
+			      काष्ठा txकरोne_entry_desc *txdesc);
+व्योम rt2x00lib_txकरोne_noinfo(काष्ठा queue_entry *entry, u32 status);
+व्योम rt2x00lib_rxकरोne(काष्ठा queue_entry *entry, gfp_t gfp);
 
 /*
  * mac80211 handlers.
  */
-void rt2x00mac_tx(struct ieee80211_hw *hw,
-		  struct ieee80211_tx_control *control,
-		  struct sk_buff *skb);
-int rt2x00mac_start(struct ieee80211_hw *hw);
-void rt2x00mac_stop(struct ieee80211_hw *hw);
-void rt2x00mac_reconfig_complete(struct ieee80211_hw *hw,
-				 enum ieee80211_reconfig_type reconfig_type);
-int rt2x00mac_add_interface(struct ieee80211_hw *hw,
-			    struct ieee80211_vif *vif);
-void rt2x00mac_remove_interface(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif);
-int rt2x00mac_config(struct ieee80211_hw *hw, u32 changed);
-void rt2x00mac_configure_filter(struct ieee80211_hw *hw,
-				unsigned int changed_flags,
-				unsigned int *total_flags,
+व्योम rt2x00mac_tx(काष्ठा ieee80211_hw *hw,
+		  काष्ठा ieee80211_tx_control *control,
+		  काष्ठा sk_buff *skb);
+पूर्णांक rt2x00mac_start(काष्ठा ieee80211_hw *hw);
+व्योम rt2x00mac_stop(काष्ठा ieee80211_hw *hw);
+व्योम rt2x00mac_reconfig_complete(काष्ठा ieee80211_hw *hw,
+				 क्रमागत ieee80211_reconfig_type reconfig_type);
+पूर्णांक rt2x00mac_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+			    काष्ठा ieee80211_vअगर *vअगर);
+व्योम rt2x00mac_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर);
+पूर्णांक rt2x00mac_config(काष्ठा ieee80211_hw *hw, u32 changed);
+व्योम rt2x00mac_configure_filter(काष्ठा ieee80211_hw *hw,
+				अचिन्हित पूर्णांक changed_flags,
+				अचिन्हित पूर्णांक *total_flags,
 				u64 multicast);
-int rt2x00mac_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
+पूर्णांक rt2x00mac_set_tim(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_sta *sta,
 		      bool set);
-#ifdef CONFIG_RT2X00_LIB_CRYPTO
-int rt2x00mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
-		      struct ieee80211_vif *vif, struct ieee80211_sta *sta,
-		      struct ieee80211_key_conf *key);
-#else
-#define rt2x00mac_set_key	NULL
-#endif /* CONFIG_RT2X00_LIB_CRYPTO */
-void rt2x00mac_sw_scan_start(struct ieee80211_hw *hw,
-			     struct ieee80211_vif *vif,
-			     const u8 *mac_addr);
-void rt2x00mac_sw_scan_complete(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif);
-int rt2x00mac_get_stats(struct ieee80211_hw *hw,
-			struct ieee80211_low_level_stats *stats);
-void rt2x00mac_bss_info_changed(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif,
-				struct ieee80211_bss_conf *bss_conf,
+#अगर_घोषित CONFIG_RT2X00_LIB_CRYPTO
+पूर्णांक rt2x00mac_set_key(काष्ठा ieee80211_hw *hw, क्रमागत set_key_cmd cmd,
+		      काष्ठा ieee80211_vअगर *vअगर, काष्ठा ieee80211_sta *sta,
+		      काष्ठा ieee80211_key_conf *key);
+#अन्यथा
+#घोषणा rt2x00mac_set_key	शून्य
+#पूर्ण_अगर /* CONFIG_RT2X00_LIB_CRYPTO */
+व्योम rt2x00mac_sw_scan_start(काष्ठा ieee80211_hw *hw,
+			     काष्ठा ieee80211_vअगर *vअगर,
+			     स्थिर u8 *mac_addr);
+व्योम rt2x00mac_sw_scan_complete(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर);
+पूर्णांक rt2x00mac_get_stats(काष्ठा ieee80211_hw *hw,
+			काष्ठा ieee80211_low_level_stats *stats);
+व्योम rt2x00mac_bss_info_changed(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर,
+				काष्ठा ieee80211_bss_conf *bss_conf,
 				u32 changes);
-int rt2x00mac_conf_tx(struct ieee80211_hw *hw,
-		      struct ieee80211_vif *vif, u16 queue,
-		      const struct ieee80211_tx_queue_params *params);
-void rt2x00mac_rfkill_poll(struct ieee80211_hw *hw);
-void rt2x00mac_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+पूर्णांक rt2x00mac_conf_tx(काष्ठा ieee80211_hw *hw,
+		      काष्ठा ieee80211_vअगर *vअगर, u16 queue,
+		      स्थिर काष्ठा ieee80211_tx_queue_params *params);
+व्योम rt2x00mac_rfसमाप्त_poll(काष्ठा ieee80211_hw *hw);
+व्योम rt2x00mac_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
 		     u32 queues, bool drop);
-int rt2x00mac_set_antenna(struct ieee80211_hw *hw, u32 tx_ant, u32 rx_ant);
-int rt2x00mac_get_antenna(struct ieee80211_hw *hw, u32 *tx_ant, u32 *rx_ant);
-void rt2x00mac_get_ringparam(struct ieee80211_hw *hw,
+पूर्णांक rt2x00mac_set_antenna(काष्ठा ieee80211_hw *hw, u32 tx_ant, u32 rx_ant);
+पूर्णांक rt2x00mac_get_antenna(काष्ठा ieee80211_hw *hw, u32 *tx_ant, u32 *rx_ant);
+व्योम rt2x00mac_get_ringparam(काष्ठा ieee80211_hw *hw,
 			     u32 *tx, u32 *tx_max, u32 *rx, u32 *rx_max);
-bool rt2x00mac_tx_frames_pending(struct ieee80211_hw *hw);
+bool rt2x00mac_tx_frames_pending(काष्ठा ieee80211_hw *hw);
 
 /*
  * Driver allocation handlers.
  */
-int rt2x00lib_probe_dev(struct rt2x00_dev *rt2x00dev);
-void rt2x00lib_remove_dev(struct rt2x00_dev *rt2x00dev);
+पूर्णांक rt2x00lib_probe_dev(काष्ठा rt2x00_dev *rt2x00dev);
+व्योम rt2x00lib_हटाओ_dev(काष्ठा rt2x00_dev *rt2x00dev);
 
-int rt2x00lib_suspend(struct rt2x00_dev *rt2x00dev);
-int rt2x00lib_resume(struct rt2x00_dev *rt2x00dev);
+पूर्णांक rt2x00lib_suspend(काष्ठा rt2x00_dev *rt2x00dev);
+पूर्णांक rt2x00lib_resume(काष्ठा rt2x00_dev *rt2x00dev);
 
-#endif /* RT2X00_H */
+#पूर्ण_अगर /* RT2X00_H */

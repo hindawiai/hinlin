@@ -1,187 +1,188 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Register map access API - I2C support
 //
 // Copyright 2011 Wolfson Microelectronics plc
 //
-// Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+// Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
 
-#include <linux/regmap.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static int regmap_smbus_byte_reg_read(void *context, unsigned int reg,
-				      unsigned int *val)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	int ret;
+अटल पूर्णांक regmap_smbus_byte_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
+				      अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	पूर्णांक ret;
 
-	if (reg > 0xff)
-		return -EINVAL;
+	अगर (reg > 0xff)
+		वापस -EINVAL;
 
-	ret = i2c_smbus_read_byte_data(i2c, reg);
-	if (ret < 0)
-		return ret;
-
-	*val = ret;
-
-	return 0;
-}
-
-static int regmap_smbus_byte_reg_write(void *context, unsigned int reg,
-				       unsigned int val)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-
-	if (val > 0xff || reg > 0xff)
-		return -EINVAL;
-
-	return i2c_smbus_write_byte_data(i2c, reg, val);
-}
-
-static const struct regmap_bus regmap_smbus_byte = {
-	.reg_write = regmap_smbus_byte_reg_write,
-	.reg_read = regmap_smbus_byte_reg_read,
-};
-
-static int regmap_smbus_word_reg_read(void *context, unsigned int reg,
-				      unsigned int *val)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	int ret;
-
-	if (reg > 0xff)
-		return -EINVAL;
-
-	ret = i2c_smbus_read_word_data(i2c, reg);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_byte_data(i2c, reg);
+	अगर (ret < 0)
+		वापस ret;
 
 	*val = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regmap_smbus_word_reg_write(void *context, unsigned int reg,
-				       unsigned int val)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
+अटल पूर्णांक regmap_smbus_byte_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
+				       अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
 
-	if (val > 0xffff || reg > 0xff)
-		return -EINVAL;
+	अगर (val > 0xff || reg > 0xff)
+		वापस -EINVAL;
 
-	return i2c_smbus_write_word_data(i2c, reg, val);
-}
+	वापस i2c_smbus_ग_लिखो_byte_data(i2c, reg, val);
+पूर्ण
 
-static const struct regmap_bus regmap_smbus_word = {
-	.reg_write = regmap_smbus_word_reg_write,
-	.reg_read = regmap_smbus_word_reg_read,
-};
+अटल स्थिर काष्ठा regmap_bus regmap_smbus_byte = अणु
+	.reg_ग_लिखो = regmap_smbus_byte_reg_ग_लिखो,
+	.reg_पढ़ो = regmap_smbus_byte_reg_पढ़ो,
+पूर्ण;
 
-static int regmap_smbus_word_read_swapped(void *context, unsigned int reg,
-					  unsigned int *val)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	int ret;
+अटल पूर्णांक regmap_smbus_word_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
+				      अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	पूर्णांक ret;
 
-	if (reg > 0xff)
-		return -EINVAL;
+	अगर (reg > 0xff)
+		वापस -EINVAL;
 
-	ret = i2c_smbus_read_word_swapped(i2c, reg);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_word_data(i2c, reg);
+	अगर (ret < 0)
+		वापस ret;
 
 	*val = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regmap_smbus_word_write_swapped(void *context, unsigned int reg,
-					   unsigned int val)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
+अटल पूर्णांक regmap_smbus_word_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
+				       अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
 
-	if (val > 0xffff || reg > 0xff)
-		return -EINVAL;
+	अगर (val > 0xffff || reg > 0xff)
+		वापस -EINVAL;
 
-	return i2c_smbus_write_word_swapped(i2c, reg, val);
-}
+	वापस i2c_smbus_ग_लिखो_word_data(i2c, reg, val);
+पूर्ण
 
-static const struct regmap_bus regmap_smbus_word_swapped = {
-	.reg_write = regmap_smbus_word_write_swapped,
-	.reg_read = regmap_smbus_word_read_swapped,
-};
+अटल स्थिर काष्ठा regmap_bus regmap_smbus_word = अणु
+	.reg_ग_लिखो = regmap_smbus_word_reg_ग_लिखो,
+	.reg_पढ़ो = regmap_smbus_word_reg_पढ़ो,
+पूर्ण;
 
-static int regmap_i2c_write(void *context, const void *data, size_t count)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	int ret;
+अटल पूर्णांक regmap_smbus_word_पढ़ो_swapped(व्योम *context, अचिन्हित पूर्णांक reg,
+					  अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	पूर्णांक ret;
+
+	अगर (reg > 0xff)
+		वापस -EINVAL;
+
+	ret = i2c_smbus_पढ़ो_word_swapped(i2c, reg);
+	अगर (ret < 0)
+		वापस ret;
+
+	*val = ret;
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक regmap_smbus_word_ग_लिखो_swapped(व्योम *context, अचिन्हित पूर्णांक reg,
+					   अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+
+	अगर (val > 0xffff || reg > 0xff)
+		वापस -EINVAL;
+
+	वापस i2c_smbus_ग_लिखो_word_swapped(i2c, reg, val);
+पूर्ण
+
+अटल स्थिर काष्ठा regmap_bus regmap_smbus_word_swapped = अणु
+	.reg_ग_लिखो = regmap_smbus_word_ग_लिखो_swapped,
+	.reg_पढ़ो = regmap_smbus_word_पढ़ो_swapped,
+पूर्ण;
+
+अटल पूर्णांक regmap_i2c_ग_लिखो(व्योम *context, स्थिर व्योम *data, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	पूर्णांक ret;
 
 	ret = i2c_master_send(i2c, data, count);
-	if (ret == count)
-		return 0;
-	else if (ret < 0)
-		return ret;
-	else
-		return -EIO;
-}
+	अगर (ret == count)
+		वापस 0;
+	अन्यथा अगर (ret < 0)
+		वापस ret;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
-static int regmap_i2c_gather_write(void *context,
-				   const void *reg, size_t reg_size,
-				   const void *val, size_t val_size)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	struct i2c_msg xfer[2];
-	int ret;
+अटल पूर्णांक regmap_i2c_gather_ग_लिखो(व्योम *context,
+				   स्थिर व्योम *reg, माप_प्रकार reg_size,
+				   स्थिर व्योम *val, माप_प्रकार val_size)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	काष्ठा i2c_msg xfer[2];
+	पूर्णांक ret;
 
-	/* If the I2C controller can't do a gather tell the core, it
-	 * will substitute in a linear write for us.
+	/* If the I2C controller can't करो a gather tell the core, it
+	 * will substitute in a linear ग_लिखो क्रम us.
 	 */
-	if (!i2c_check_functionality(i2c->adapter, I2C_FUNC_NOSTART))
-		return -ENOTSUPP;
+	अगर (!i2c_check_functionality(i2c->adapter, I2C_FUNC_NOSTART))
+		वापस -ENOTSUPP;
 
 	xfer[0].addr = i2c->addr;
 	xfer[0].flags = 0;
 	xfer[0].len = reg_size;
-	xfer[0].buf = (void *)reg;
+	xfer[0].buf = (व्योम *)reg;
 
 	xfer[1].addr = i2c->addr;
 	xfer[1].flags = I2C_M_NOSTART;
 	xfer[1].len = val_size;
-	xfer[1].buf = (void *)val;
+	xfer[1].buf = (व्योम *)val;
 
 	ret = i2c_transfer(i2c->adapter, xfer, 2);
-	if (ret == 2)
-		return 0;
-	if (ret < 0)
-		return ret;
-	else
-		return -EIO;
-}
+	अगर (ret == 2)
+		वापस 0;
+	अगर (ret < 0)
+		वापस ret;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
-static int regmap_i2c_read(void *context,
-			   const void *reg, size_t reg_size,
-			   void *val, size_t val_size)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	struct i2c_msg xfer[2];
-	int ret;
+अटल पूर्णांक regmap_i2c_पढ़ो(व्योम *context,
+			   स्थिर व्योम *reg, माप_प्रकार reg_size,
+			   व्योम *val, माप_प्रकार val_size)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	काष्ठा i2c_msg xfer[2];
+	पूर्णांक ret;
 
 	xfer[0].addr = i2c->addr;
 	xfer[0].flags = 0;
 	xfer[0].len = reg_size;
-	xfer[0].buf = (void *)reg;
+	xfer[0].buf = (व्योम *)reg;
 
 	xfer[1].addr = i2c->addr;
 	xfer[1].flags = I2C_M_RD;
@@ -189,180 +190,180 @@ static int regmap_i2c_read(void *context,
 	xfer[1].buf = val;
 
 	ret = i2c_transfer(i2c->adapter, xfer, 2);
-	if (ret == 2)
-		return 0;
-	else if (ret < 0)
-		return ret;
-	else
-		return -EIO;
-}
+	अगर (ret == 2)
+		वापस 0;
+	अन्यथा अगर (ret < 0)
+		वापस ret;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
-static const struct regmap_bus regmap_i2c = {
-	.write = regmap_i2c_write,
-	.gather_write = regmap_i2c_gather_write,
-	.read = regmap_i2c_read,
-	.reg_format_endian_default = REGMAP_ENDIAN_BIG,
-	.val_format_endian_default = REGMAP_ENDIAN_BIG,
-};
+अटल स्थिर काष्ठा regmap_bus regmap_i2c = अणु
+	.ग_लिखो = regmap_i2c_ग_लिखो,
+	.gather_ग_लिखो = regmap_i2c_gather_ग_लिखो,
+	.पढ़ो = regmap_i2c_पढ़ो,
+	.reg_क्रमmat_endian_शेष = REGMAP_ENDIAN_BIG,
+	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_BIG,
+पूर्ण;
 
-static int regmap_i2c_smbus_i2c_write(void *context, const void *data,
-				      size_t count)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
+अटल पूर्णांक regmap_i2c_smbus_i2c_ग_लिखो(व्योम *context, स्थिर व्योम *data,
+				      माप_प्रकार count)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
 
-	if (count < 1)
-		return -EINVAL;
+	अगर (count < 1)
+		वापस -EINVAL;
 
 	--count;
-	return i2c_smbus_write_i2c_block_data(i2c, ((u8 *)data)[0], count,
+	वापस i2c_smbus_ग_लिखो_i2c_block_data(i2c, ((u8 *)data)[0], count,
 					      ((u8 *)data + 1));
-}
+पूर्ण
 
-static int regmap_i2c_smbus_i2c_read(void *context, const void *reg,
-				     size_t reg_size, void *val,
-				     size_t val_size)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	int ret;
+अटल पूर्णांक regmap_i2c_smbus_i2c_पढ़ो(व्योम *context, स्थिर व्योम *reg,
+				     माप_प्रकार reg_size, व्योम *val,
+				     माप_प्रकार val_size)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	पूर्णांक ret;
 
-	if (reg_size != 1 || val_size < 1)
-		return -EINVAL;
+	अगर (reg_size != 1 || val_size < 1)
+		वापस -EINVAL;
 
-	ret = i2c_smbus_read_i2c_block_data(i2c, ((u8 *)reg)[0], val_size, val);
-	if (ret == val_size)
-		return 0;
-	else if (ret < 0)
-		return ret;
-	else
-		return -EIO;
-}
+	ret = i2c_smbus_पढ़ो_i2c_block_data(i2c, ((u8 *)reg)[0], val_size, val);
+	अगर (ret == val_size)
+		वापस 0;
+	अन्यथा अगर (ret < 0)
+		वापस ret;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
-static const struct regmap_bus regmap_i2c_smbus_i2c_block = {
-	.write = regmap_i2c_smbus_i2c_write,
-	.read = regmap_i2c_smbus_i2c_read,
-	.max_raw_read = I2C_SMBUS_BLOCK_MAX,
-	.max_raw_write = I2C_SMBUS_BLOCK_MAX,
-};
+अटल स्थिर काष्ठा regmap_bus regmap_i2c_smbus_i2c_block = अणु
+	.ग_लिखो = regmap_i2c_smbus_i2c_ग_लिखो,
+	.पढ़ो = regmap_i2c_smbus_i2c_पढ़ो,
+	.max_raw_पढ़ो = I2C_SMBUS_BLOCK_MAX,
+	.max_raw_ग_लिखो = I2C_SMBUS_BLOCK_MAX,
+पूर्ण;
 
-static int regmap_i2c_smbus_i2c_write_reg16(void *context, const void *data,
-				      size_t count)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
+अटल पूर्णांक regmap_i2c_smbus_i2c_ग_लिखो_reg16(व्योम *context, स्थिर व्योम *data,
+				      माप_प्रकार count)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
 
-	if (count < 2)
-		return -EINVAL;
+	अगर (count < 2)
+		वापस -EINVAL;
 
 	count--;
-	return i2c_smbus_write_i2c_block_data(i2c, ((u8 *)data)[0], count,
+	वापस i2c_smbus_ग_लिखो_i2c_block_data(i2c, ((u8 *)data)[0], count,
 					      (u8 *)data + 1);
-}
+पूर्ण
 
-static int regmap_i2c_smbus_i2c_read_reg16(void *context, const void *reg,
-				     size_t reg_size, void *val,
-				     size_t val_size)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	int ret, count, len = val_size;
+अटल पूर्णांक regmap_i2c_smbus_i2c_पढ़ो_reg16(व्योम *context, स्थिर व्योम *reg,
+				     माप_प्रकार reg_size, व्योम *val,
+				     माप_प्रकार val_size)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	पूर्णांक ret, count, len = val_size;
 
-	if (reg_size != 2)
-		return -EINVAL;
+	अगर (reg_size != 2)
+		वापस -EINVAL;
 
-	ret = i2c_smbus_write_byte_data(i2c, ((u16 *)reg)[0] & 0xff,
+	ret = i2c_smbus_ग_लिखो_byte_data(i2c, ((u16 *)reg)[0] & 0xff,
 					((u16 *)reg)[0] >> 8);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	count = 0;
-	do {
+	करो अणु
 		/* Current Address Read */
-		ret = i2c_smbus_read_byte(i2c);
-		if (ret < 0)
-			break;
+		ret = i2c_smbus_पढ़ो_byte(i2c);
+		अगर (ret < 0)
+			अवरोध;
 
 		*((u8 *)val++) = ret;
 		count++;
 		len--;
-	} while (len > 0);
+	पूर्ण जबतक (len > 0);
 
-	if (count == val_size)
-		return 0;
-	else if (ret < 0)
-		return ret;
-	else
-		return -EIO;
-}
+	अगर (count == val_size)
+		वापस 0;
+	अन्यथा अगर (ret < 0)
+		वापस ret;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
-static const struct regmap_bus regmap_i2c_smbus_i2c_block_reg16 = {
-	.write = regmap_i2c_smbus_i2c_write_reg16,
-	.read = regmap_i2c_smbus_i2c_read_reg16,
-	.max_raw_read = I2C_SMBUS_BLOCK_MAX,
-	.max_raw_write = I2C_SMBUS_BLOCK_MAX,
-};
+अटल स्थिर काष्ठा regmap_bus regmap_i2c_smbus_i2c_block_reg16 = अणु
+	.ग_लिखो = regmap_i2c_smbus_i2c_ग_लिखो_reg16,
+	.पढ़ो = regmap_i2c_smbus_i2c_पढ़ो_reg16,
+	.max_raw_पढ़ो = I2C_SMBUS_BLOCK_MAX,
+	.max_raw_ग_लिखो = I2C_SMBUS_BLOCK_MAX,
+पूर्ण;
 
-static const struct regmap_bus *regmap_get_i2c_bus(struct i2c_client *i2c,
-					const struct regmap_config *config)
-{
-	if (i2c_check_functionality(i2c->adapter, I2C_FUNC_I2C))
-		return &regmap_i2c;
-	else if (config->val_bits == 8 && config->reg_bits == 8 &&
+अटल स्थिर काष्ठा regmap_bus *regmap_get_i2c_bus(काष्ठा i2c_client *i2c,
+					स्थिर काष्ठा regmap_config *config)
+अणु
+	अगर (i2c_check_functionality(i2c->adapter, I2C_FUNC_I2C))
+		वापस &regmap_i2c;
+	अन्यथा अगर (config->val_bits == 8 && config->reg_bits == 8 &&
 		 i2c_check_functionality(i2c->adapter,
 					 I2C_FUNC_SMBUS_I2C_BLOCK))
-		return &regmap_i2c_smbus_i2c_block;
-	else if (config->val_bits == 8 && config->reg_bits == 16 &&
+		वापस &regmap_i2c_smbus_i2c_block;
+	अन्यथा अगर (config->val_bits == 8 && config->reg_bits == 16 &&
 		i2c_check_functionality(i2c->adapter,
 					I2C_FUNC_SMBUS_I2C_BLOCK))
-		return &regmap_i2c_smbus_i2c_block_reg16;
-	else if (config->val_bits == 16 && config->reg_bits == 8 &&
+		वापस &regmap_i2c_smbus_i2c_block_reg16;
+	अन्यथा अगर (config->val_bits == 16 && config->reg_bits == 8 &&
 		 i2c_check_functionality(i2c->adapter,
 					 I2C_FUNC_SMBUS_WORD_DATA))
-		switch (regmap_get_val_endian(&i2c->dev, NULL, config)) {
-		case REGMAP_ENDIAN_LITTLE:
-			return &regmap_smbus_word;
-		case REGMAP_ENDIAN_BIG:
-			return &regmap_smbus_word_swapped;
-		default:		/* everything else is not supported */
-			break;
-		}
-	else if (config->val_bits == 8 && config->reg_bits == 8 &&
+		चयन (regmap_get_val_endian(&i2c->dev, शून्य, config)) अणु
+		हाल REGMAP_ENDIAN_LITTLE:
+			वापस &regmap_smbus_word;
+		हाल REGMAP_ENDIAN_BIG:
+			वापस &regmap_smbus_word_swapped;
+		शेष:		/* everything अन्यथा is not supported */
+			अवरोध;
+		पूर्ण
+	अन्यथा अगर (config->val_bits == 8 && config->reg_bits == 8 &&
 		 i2c_check_functionality(i2c->adapter,
 					 I2C_FUNC_SMBUS_BYTE_DATA))
-		return &regmap_smbus_byte;
+		वापस &regmap_smbus_byte;
 
-	return ERR_PTR(-ENOTSUPP);
-}
+	वापस ERR_PTR(-ENOTSUPP);
+पूर्ण
 
-struct regmap *__regmap_init_i2c(struct i2c_client *i2c,
-				 const struct regmap_config *config,
-				 struct lock_class_key *lock_key,
-				 const char *lock_name)
-{
-	const struct regmap_bus *bus = regmap_get_i2c_bus(i2c, config);
+काष्ठा regmap *__regmap_init_i2c(काष्ठा i2c_client *i2c,
+				 स्थिर काष्ठा regmap_config *config,
+				 काष्ठा lock_class_key *lock_key,
+				 स्थिर अक्षर *lock_name)
+अणु
+	स्थिर काष्ठा regmap_bus *bus = regmap_get_i2c_bus(i2c, config);
 
-	if (IS_ERR(bus))
-		return ERR_CAST(bus);
+	अगर (IS_ERR(bus))
+		वापस ERR_CAST(bus);
 
-	return __regmap_init(&i2c->dev, bus, &i2c->dev, config,
+	वापस __regmap_init(&i2c->dev, bus, &i2c->dev, config,
 			     lock_key, lock_name);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__regmap_init_i2c);
 
-struct regmap *__devm_regmap_init_i2c(struct i2c_client *i2c,
-				      const struct regmap_config *config,
-				      struct lock_class_key *lock_key,
-				      const char *lock_name)
-{
-	const struct regmap_bus *bus = regmap_get_i2c_bus(i2c, config);
+काष्ठा regmap *__devm_regmap_init_i2c(काष्ठा i2c_client *i2c,
+				      स्थिर काष्ठा regmap_config *config,
+				      काष्ठा lock_class_key *lock_key,
+				      स्थिर अक्षर *lock_name)
+अणु
+	स्थिर काष्ठा regmap_bus *bus = regmap_get_i2c_bus(i2c, config);
 
-	if (IS_ERR(bus))
-		return ERR_CAST(bus);
+	अगर (IS_ERR(bus))
+		वापस ERR_CAST(bus);
 
-	return __devm_regmap_init(&i2c->dev, bus, &i2c->dev, config,
+	वापस __devm_regmap_init(&i2c->dev, bus, &i2c->dev, config,
 				  lock_key, lock_name);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__devm_regmap_init_i2c);
 
 MODULE_LICENSE("GPL");

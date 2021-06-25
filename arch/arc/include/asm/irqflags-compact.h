@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2014-15 Synopsys, Inc. (www.synopsys.com)
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef __ASM_IRQFLAGS_ARCOMPACT_H
-#define __ASM_IRQFLAGS_ARCOMPACT_H
+#अगर_अघोषित __ASM_IRQFLAGS_ARCOMPACT_H
+#घोषणा __ASM_IRQFLAGS_ARCOMPACT_H
 
 /* vineetg: March 2010 : local_irq_save( ) optimisation
- *  -Remove explicit mov of current status32 into reg, that is not needed
+ *  -Remove explicit mov of current status32 पूर्णांकo reg, that is not needed
  *  -Use BIC  insn instead of INVERTED + AND
- *  -Conditionally disable interrupts (if they are not enabled, don't disable)
+ *  -Conditionally disable पूर्णांकerrupts (अगर they are not enabled, करोn't disable)
 */
 
-#include <asm/arcregs.h>
+#समावेश <यंत्र/arcregs.h>
 
 /* status32 Reg bits related to Interrupt Handling */
-#define STATUS_E1_BIT		1	/* Int 1 enable */
-#define STATUS_E2_BIT		2	/* Int 2 enable */
-#define STATUS_A1_BIT		3	/* Int 1 active */
-#define STATUS_A2_BIT		4	/* Int 2 active */
-#define STATUS_AE_BIT		5	/* Exception active */
+#घोषणा STATUS_E1_BIT		1	/* Int 1 enable */
+#घोषणा STATUS_E2_BIT		2	/* Int 2 enable */
+#घोषणा STATUS_A1_BIT		3	/* Int 1 active */
+#घोषणा STATUS_A2_BIT		4	/* Int 2 active */
+#घोषणा STATUS_AE_BIT		5	/* Exception active */
 
-#define STATUS_E1_MASK		(1<<STATUS_E1_BIT)
-#define STATUS_E2_MASK		(1<<STATUS_E2_BIT)
-#define STATUS_A1_MASK		(1<<STATUS_A1_BIT)
-#define STATUS_A2_MASK		(1<<STATUS_A2_BIT)
-#define STATUS_AE_MASK		(1<<STATUS_AE_BIT)
-#define STATUS_IE_MASK		(STATUS_E1_MASK | STATUS_E2_MASK)
+#घोषणा STATUS_E1_MASK		(1<<STATUS_E1_BIT)
+#घोषणा STATUS_E2_MASK		(1<<STATUS_E2_BIT)
+#घोषणा STATUS_A1_MASK		(1<<STATUS_A1_BIT)
+#घोषणा STATUS_A2_MASK		(1<<STATUS_A2_BIT)
+#घोषणा STATUS_AE_MASK		(1<<STATUS_AE_BIT)
+#घोषणा STATUS_IE_MASK		(STATUS_E1_MASK | STATUS_E2_MASK)
 
 /* Other Interrupt Handling related Aux regs */
-#define AUX_IRQ_LEV		0x200	/* IRQ Priority: L1 or L2 */
-#define AUX_IRQ_HINT		0x201	/* For generating Soft Interrupts */
-#define AUX_IRQ_LV12		0x43	/* interrupt level register */
+#घोषणा AUX_IRQ_LEV		0x200	/* IRQ Priority: L1 or L2 */
+#घोषणा AUX_IRQ_HINT		0x201	/* For generating Soft Interrupts */
+#घोषणा AUX_IRQ_LV12		0x43	/* पूर्णांकerrupt level रेजिस्टर */
 
-#define AUX_IENABLE		0x40c
-#define AUX_ITRIGGER		0x40d
-#define AUX_IPULSE		0x415
+#घोषणा AUX_IENABLE		0x40c
+#घोषणा AUX_ITRIGGER		0x40d
+#घोषणा AUX_IPULSE		0x415
 
-#define ISA_INIT_STATUS_BITS	STATUS_IE_MASK
+#घोषणा ISA_INIT_STATUS_BITS	STATUS_IE_MASK
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
 /******************************************************************
  * IRQ Control Macros
  *
  * All of them have "memory" clobber (compiler barrier) which is needed to
  * ensure that LD/ST requiring irq safetly (R-M-W when LLSC is not available)
- * are redone after IRQs are re-enabled (and gcc doesn't reuse stale register)
+ * are reकरोne after IRQs are re-enabled (and gcc करोesn't reuse stale रेजिस्टर)
  *
- * Noted at the time of Abilis Timer List corruption
+ * Noted at the समय of Abilis Timer List corruption
  *	Orig Bug + Rejected solution	: https://lkml.org/lkml/2013/3/29/67
  *	Reasoning			: https://lkml.org/lkml/2013/4/8/15
  *
@@ -58,11 +59,11 @@
 /*
  * Save IRQ state and disable IRQs
  */
-static inline long arch_local_irq_save(void)
-{
-	unsigned long temp, flags;
+अटल अंतरभूत दीर्घ arch_local_irq_save(व्योम)
+अणु
+	अचिन्हित दीर्घ temp, flags;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	lr  %1, [status32]	\n"
 	"	bic %0, %1, %2		\n"
 	"	and.f 0, %1, %2	\n"
@@ -71,94 +72,94 @@ static inline long arch_local_irq_save(void)
 	: "n"((STATUS_E1_MASK | STATUS_E2_MASK))
 	: "memory", "cc");
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 /*
  * restore saved IRQ state
  */
-static inline void arch_local_irq_restore(unsigned long flags)
-{
+अटल अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
+अणु
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	flag %0			\n"
 	:
 	: "r"(flags)
 	: "memory");
-}
+पूर्ण
 
 /*
  * Unconditionally Enable IRQs
  */
-#ifdef CONFIG_ARC_COMPACT_IRQ_LEVELS
-extern void arch_local_irq_enable(void);
-#else
-static inline void arch_local_irq_enable(void)
-{
-	unsigned long temp;
+#अगर_घोषित CONFIG_ARC_COMPACT_IRQ_LEVELS
+बाह्य व्योम arch_local_irq_enable(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम arch_local_irq_enable(व्योम)
+अणु
+	अचिन्हित दीर्घ temp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	lr   %0, [status32]	\n"
 	"	or   %0, %0, %1		\n"
 	"	flag %0			\n"
 	: "=&r"(temp)
 	: "n"((STATUS_E1_MASK | STATUS_E2_MASK))
 	: "cc", "memory");
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Unconditionally Disable IRQs
  */
-static inline void arch_local_irq_disable(void)
-{
-	unsigned long temp;
+अटल अंतरभूत व्योम arch_local_irq_disable(व्योम)
+अणु
+	अचिन्हित दीर्घ temp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	lr  %0, [status32]	\n"
 	"	and %0, %0, %1		\n"
 	"	flag %0			\n"
 	: "=&r"(temp)
 	: "n"(~(STATUS_E1_MASK | STATUS_E2_MASK))
 	: "memory");
-}
+पूर्ण
 
 /*
  * save IRQ state
  */
-static inline long arch_local_save_flags(void)
-{
-	unsigned long temp;
+अटल अंतरभूत दीर्घ arch_local_save_flags(व्योम)
+अणु
+	अचिन्हित दीर्घ temp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	lr  %0, [status32]	\n"
 	: "=&r"(temp)
 	:
 	: "memory");
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
 /*
  * Query IRQ state
  */
-static inline int arch_irqs_disabled_flags(unsigned long flags)
-{
-	return !(flags & (STATUS_E1_MASK
-#ifdef CONFIG_ARC_COMPACT_IRQ_LEVELS
+अटल अंतरभूत पूर्णांक arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
+अणु
+	वापस !(flags & (STATUS_E1_MASK
+#अगर_घोषित CONFIG_ARC_COMPACT_IRQ_LEVELS
 			| STATUS_E2_MASK
-#endif
+#पूर्ण_अगर
 		));
-}
+पूर्ण
 
-static inline int arch_irqs_disabled(void)
-{
-	return arch_irqs_disabled_flags(arch_local_save_flags());
-}
+अटल अंतरभूत पूर्णांक arch_irqs_disabled(व्योम)
+अणु
+	वापस arch_irqs_disabled_flags(arch_local_save_flags());
+पूर्ण
 
-#else
+#अन्यथा
 
-#ifdef CONFIG_TRACE_IRQFLAGS
+#अगर_घोषित CONFIG_TRACE_IRQFLAGS
 
 .macro TRACE_ASM_IRQ_DISABLE
 	bl	trace_hardirqs_off
@@ -168,7 +169,7 @@ static inline int arch_irqs_disabled(void)
 	bl	trace_hardirqs_on
 .endm
 
-#else
+#अन्यथा
 
 .macro TRACE_ASM_IRQ_DISABLE
 .endm
@@ -176,7 +177,7 @@ static inline int arch_irqs_disabled(void)
 .macro TRACE_ASM_IRQ_ENABLE
 .endm
 
-#endif
+#पूर्ण_अगर
 
 .macro IRQ_DISABLE  scratch
 	lr	\scratch, [status32]
@@ -192,6 +193,6 @@ static inline int arch_irqs_disabled(void)
 	flag	\scratch
 .endm
 
-#endif	/* __ASSEMBLY__ */
+#पूर्ण_अगर	/* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
- * Arch specific extensions to struct device
+ * Arch specअगरic extensions to काष्ठा device
  */
-#ifndef __ASM_SH_DEVICE_H
-#define __ASM_SH_DEVICE_H
+#अगर_अघोषित __ASM_SH_DEVICE_H
+#घोषणा __ASM_SH_DEVICE_H
 
-#include <asm-generic/device.h>
+#समावेश <यंत्र-generic/device.h>
 
-struct platform_device;
-/* allocate contiguous memory chunk and fill in struct resource */
-int platform_resource_setup_memory(struct platform_device *pdev,
-				   char *name, unsigned long memsize);
+काष्ठा platक्रमm_device;
+/* allocate contiguous memory chunk and fill in काष्ठा resource */
+पूर्णांक platक्रमm_resource_setup_memory(काष्ठा platक्रमm_device *pdev,
+				   अक्षर *name, अचिन्हित दीर्घ memsize);
 
-void plat_early_device_setup(void);
+व्योम plat_early_device_setup(व्योम);
 
-#endif /* __ASM_SH_DEVICE_H */
+#पूर्ण_अगर /* __ASM_SH_DEVICE_H */

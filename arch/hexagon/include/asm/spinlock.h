@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Spinlock support for the Hexagon architecture
+ * Spinlock support क्रम the Hexagon architecture
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_SPINLOCK_H
-#define _ASM_SPINLOCK_H
+#अगर_अघोषित _ASM_SPINLOCK_H
+#घोषणा _ASM_SPINLOCK_H
 
-#include <asm/irqflags.h>
-#include <asm/barrier.h>
-#include <asm/processor.h>
+#समावेश <यंत्र/irqflags.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/processor.h>
 
 /*
- * This file is pulled in for SMP builds.
- * Really need to check all the barrier stuff for "true" SMP
+ * This file is pulled in क्रम SMP builds.
+ * Really need to check all the barrier stuff क्रम "true" SMP
  */
 
 /*
  * Read locks:
  * - load the lock value
  * - increment it
- * - if the lock value is still negative, go back and try again.
+ * - अगर the lock value is still negative, go back and try again.
  * - unsuccessful store is unsuccessful.  Go back and try again.  Loser.
- * - successful store new lock value if positive -> lock acquired
+ * - successful store new lock value अगर positive -> lock acquired
  */
-static inline void arch_read_lock(arch_rwlock_t *lock)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत व्योम arch_पढ़ो_lock(arch_rwlock_t *lock)
+अणु
+	__यंत्र__ __अस्थिर__(
 		"1:	R6 = memw_locked(%0);\n"
 		"	{ P3 = cmp.ge(R6,#0); R6 = add(R6,#1);}\n"
 		"	{ if (!P3) jump 1b; }\n"
@@ -38,11 +39,11 @@ static inline void arch_read_lock(arch_rwlock_t *lock)
 		: "memory", "r6", "p3"
 	);
 
-}
+पूर्ण
 
-static inline void arch_read_unlock(arch_rwlock_t *lock)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत व्योम arch_पढ़ो_unlock(arch_rwlock_t *lock)
+अणु
+	__यंत्र__ __अस्थिर__(
 		"1:	R6 = memw_locked(%0);\n"
 		"	R6 = add(R6,#-1);\n"
 		"	memw_locked(%0,P3) = R6\n"
@@ -52,13 +53,13 @@ static inline void arch_read_unlock(arch_rwlock_t *lock)
 		: "memory", "r6", "p3"
 	);
 
-}
+पूर्ण
 
-/*  I think this returns 0 on fail, 1 on success.  */
-static inline int arch_read_trylock(arch_rwlock_t *lock)
-{
-	int temp;
-	__asm__ __volatile__(
+/*  I think this वापसs 0 on fail, 1 on success.  */
+अटल अंतरभूत पूर्णांक arch_पढ़ो_trylock(arch_rwlock_t *lock)
+अणु
+	पूर्णांक temp;
+	__यंत्र__ __अस्थिर__(
 		"	R6 = memw_locked(%1);\n"
 		"	{ %0 = #0; P3 = cmp.ge(R6,#0); R6 = add(R6,#1);}\n"
 		"	{ if (!P3) jump 1f; }\n"
@@ -69,13 +70,13 @@ static inline int arch_read_trylock(arch_rwlock_t *lock)
 		: "r" (&lock->lock)
 		: "memory", "r6", "p3"
 	);
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
 /*  Stuffs a -1 in the lock value?  */
-static inline void arch_write_lock(arch_rwlock_t *lock)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत व्योम arch_ग_लिखो_lock(arch_rwlock_t *lock)
+अणु
+	__यंत्र__ __अस्थिर__(
 		"1:	R6 = memw_locked(%0)\n"
 		"	{ P3 = cmp.eq(R6,#0);  R6 = #-1;}\n"
 		"	{ if (!P3) jump 1b; }\n"
@@ -85,13 +86,13 @@ static inline void arch_write_lock(arch_rwlock_t *lock)
 		: "r" (&lock->lock)
 		: "memory", "r6", "p3"
 	);
-}
+पूर्ण
 
 
-static inline int arch_write_trylock(arch_rwlock_t *lock)
-{
-	int temp;
-	__asm__ __volatile__(
+अटल अंतरभूत पूर्णांक arch_ग_लिखो_trylock(arch_rwlock_t *lock)
+अणु
+	पूर्णांक temp;
+	__यंत्र__ __अस्थिर__(
 		"	R6 = memw_locked(%1)\n"
 		"	{ %0 = #0; P3 = cmp.eq(R6,#0);  R6 = #-1;}\n"
 		"	{ if (!P3) jump 1f; }\n"
@@ -102,19 +103,19 @@ static inline int arch_write_trylock(arch_rwlock_t *lock)
 		: "r" (&lock->lock)
 		: "memory", "r6", "p3"
 	);
-	return temp;
+	वापस temp;
 
-}
+पूर्ण
 
-static inline void arch_write_unlock(arch_rwlock_t *lock)
-{
+अटल अंतरभूत व्योम arch_ग_लिखो_unlock(arch_rwlock_t *lock)
+अणु
 	smp_mb();
 	lock->lock = 0;
-}
+पूर्ण
 
-static inline void arch_spin_lock(arch_spinlock_t *lock)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत व्योम arch_spin_lock(arch_spinlock_t *lock)
+अणु
+	__यंत्र__ __अस्थिर__(
 		"1:	R6 = memw_locked(%0);\n"
 		"	P3 = cmp.eq(R6,#0);\n"
 		"	{ if (!P3) jump 1b; R6 = #1; }\n"
@@ -125,18 +126,18 @@ static inline void arch_spin_lock(arch_spinlock_t *lock)
 		: "memory", "r6", "p3"
 	);
 
-}
+पूर्ण
 
-static inline void arch_spin_unlock(arch_spinlock_t *lock)
-{
+अटल अंतरभूत व्योम arch_spin_unlock(arch_spinlock_t *lock)
+अणु
 	smp_mb();
 	lock->lock = 0;
-}
+पूर्ण
 
-static inline unsigned int arch_spin_trylock(arch_spinlock_t *lock)
-{
-	int temp;
-	__asm__ __volatile__(
+अटल अंतरभूत अचिन्हित पूर्णांक arch_spin_trylock(arch_spinlock_t *lock)
+अणु
+	पूर्णांक temp;
+	__यंत्र__ __अस्थिर__(
 		"	R6 = memw_locked(%1);\n"
 		"	P3 = cmp.eq(R6,#0);\n"
 		"	{ if (!P3) jump 1f; R6 = #1; %0 = #0; }\n"
@@ -147,12 +148,12 @@ static inline unsigned int arch_spin_trylock(arch_spinlock_t *lock)
 		: "r" (&lock->lock)
 		: "memory", "r6", "p3"
 	);
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
 /*
- * SMP spinlocks are intended to allow only a single CPU at the lock
+ * SMP spinlocks are पूर्णांकended to allow only a single CPU at the lock
  */
-#define arch_spin_is_locked(x) ((x)->lock != 0)
+#घोषणा arch_spin_is_locked(x) ((x)->lock != 0)
 
-#endif
+#पूर्ण_अगर

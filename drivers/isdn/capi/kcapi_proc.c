@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Kernel CAPI 2.0 Module - /proc/capi handling
  *
@@ -10,21 +11,21 @@
  */
 
 
-#include "kcapi.h"
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/init.h>
-#include <linux/export.h>
+#समावेश "kcapi.h"
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
 
-static char *state2str(unsigned short state)
-{
-	switch (state) {
-	case CAPI_CTR_DETECTED:	return "detected";
-	case CAPI_CTR_LOADING:	return "loading";
-	case CAPI_CTR_RUNNING:	return "running";
-	default:	        return "???";
-	}
-}
+अटल अक्षर *state2str(अचिन्हित लघु state)
+अणु
+	चयन (state) अणु
+	हाल CAPI_CTR_DETECTED:	वापस "detected";
+	हाल CAPI_CTR_LOADING:	वापस "loading";
+	हाल CAPI_CTR_RUNNING:	वापस "running";
+	शेष:	        वापस "???";
+	पूर्ण
+पूर्ण
 
 // /proc/capi
 // ===========================================================================
@@ -35,78 +36,78 @@ static char *state2str(unsigned short state)
 //      cnr nrecvctlpkt nrecvdatapkt nsentctlpkt nsentdatapkt
 // ---------------------------------------------------------------------------
 
-static void *controller_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *controller_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(capi_controller_lock)
-{
+अणु
 	mutex_lock(&capi_controller_lock);
 
-	if (*pos < CAPI_MAXCONTR)
-		return &capi_controller[*pos];
+	अगर (*pos < CAPI_MAXCONTR)
+		वापस &capi_controller[*pos];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *controller_next(struct seq_file *seq, void *v, loff_t *pos)
-{
+अटल व्योम *controller_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	if (*pos < CAPI_MAXCONTR)
-		return &capi_controller[*pos];
+	अगर (*pos < CAPI_MAXCONTR)
+		वापस &capi_controller[*pos];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void controller_stop(struct seq_file *seq, void *v)
+अटल व्योम controller_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(capi_controller_lock)
-{
+अणु
 	mutex_unlock(&capi_controller_lock);
-}
+पूर्ण
 
-static int controller_show(struct seq_file *seq, void *v)
-{
-	struct capi_ctr *ctr = *(struct capi_ctr **) v;
+अटल पूर्णांक controller_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा capi_ctr *ctr = *(काष्ठा capi_ctr **) v;
 
-	if (!ctr)
-		return 0;
+	अगर (!ctr)
+		वापस 0;
 
-	seq_printf(seq, "%d %-10s %-8s %-16s %s\n",
+	seq_म_लिखो(seq, "%d %-10s %-8s %-16s %s\n",
 		   ctr->cnr, ctr->driver_name,
 		   state2str(ctr->state),
 		   ctr->name,
 		   ctr->procinfo ?  ctr->procinfo(ctr) : "");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int contrstats_show(struct seq_file *seq, void *v)
-{
-	struct capi_ctr *ctr = *(struct capi_ctr **) v;
+अटल पूर्णांक contrstats_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा capi_ctr *ctr = *(काष्ठा capi_ctr **) v;
 
-	if (!ctr)
-		return 0;
+	अगर (!ctr)
+		वापस 0;
 
-	seq_printf(seq, "%d %lu %lu %lu %lu\n",
+	seq_म_लिखो(seq, "%d %lu %lu %lu %lu\n",
 		   ctr->cnr,
 		   ctr->nrecvctlpkt,
 		   ctr->nrecvdatapkt,
 		   ctr->nsentctlpkt,
 		   ctr->nsentdatapkt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations seq_controller_ops = {
+अटल स्थिर काष्ठा seq_operations seq_controller_ops = अणु
 	.start	= controller_start,
 	.next	= controller_next,
 	.stop	= controller_stop,
 	.show	= controller_show,
-};
+पूर्ण;
 
-static const struct seq_operations seq_contrstats_ops = {
+अटल स्थिर काष्ठा seq_operations seq_contrstats_ops = अणु
 	.start	= controller_start,
 	.next	= controller_next,
 	.stop	= controller_stop,
 	.show	= contrstats_show,
-};
+पूर्ण;
 
 // /proc/capi/applications:
 //      applid l3cnt dblkcnt dblklen #ncci recvqueuelen
@@ -114,118 +115,118 @@ static const struct seq_operations seq_contrstats_ops = {
 //      applid nrecvctlpkt nrecvdatapkt nsentctlpkt nsentdatapkt
 // ---------------------------------------------------------------------------
 
-static void *applications_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *applications_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(capi_controller_lock)
-{
+अणु
 	mutex_lock(&capi_controller_lock);
 
-	if (*pos < CAPI_MAXAPPL)
-		return &capi_applications[*pos];
+	अगर (*pos < CAPI_MAXAPPL)
+		वापस &capi_applications[*pos];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *
-applications_next(struct seq_file *seq, void *v, loff_t *pos)
-{
+अटल व्योम *
+applications_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	if (*pos < CAPI_MAXAPPL)
-		return &capi_applications[*pos];
+	अगर (*pos < CAPI_MAXAPPL)
+		वापस &capi_applications[*pos];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void applications_stop(struct seq_file *seq, void *v)
+अटल व्योम applications_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(capi_controller_lock)
-{
+अणु
 	mutex_unlock(&capi_controller_lock);
-}
+पूर्ण
 
-static int
-applications_show(struct seq_file *seq, void *v)
-{
-	struct capi20_appl *ap = *(struct capi20_appl **) v;
+अटल पूर्णांक
+applications_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा capi20_appl *ap = *(काष्ठा capi20_appl **) v;
 
-	if (!ap)
-		return 0;
+	अगर (!ap)
+		वापस 0;
 
-	seq_printf(seq, "%u %d %d %d\n",
+	seq_म_लिखो(seq, "%u %d %d %d\n",
 		   ap->applid,
 		   ap->rparam.level3cnt,
 		   ap->rparam.datablkcnt,
 		   ap->rparam.datablklen);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-applstats_show(struct seq_file *seq, void *v)
-{
-	struct capi20_appl *ap = *(struct capi20_appl **) v;
+अटल पूर्णांक
+applstats_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा capi20_appl *ap = *(काष्ठा capi20_appl **) v;
 
-	if (!ap)
-		return 0;
+	अगर (!ap)
+		वापस 0;
 
-	seq_printf(seq, "%u %lu %lu %lu %lu\n",
+	seq_म_लिखो(seq, "%u %lu %lu %lu %lu\n",
 		   ap->applid,
 		   ap->nrecvctlpkt,
 		   ap->nrecvdatapkt,
 		   ap->nsentctlpkt,
 		   ap->nsentdatapkt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations seq_applications_ops = {
+अटल स्थिर काष्ठा seq_operations seq_applications_ops = अणु
 	.start	= applications_start,
 	.next	= applications_next,
 	.stop	= applications_stop,
 	.show	= applications_show,
-};
+पूर्ण;
 
-static const struct seq_operations seq_applstats_ops = {
+अटल स्थिर काष्ठा seq_operations seq_applstats_ops = अणु
 	.start	= applications_start,
 	.next	= applications_next,
 	.stop	= applications_stop,
 	.show	= applstats_show,
-};
+पूर्ण;
 
 // ---------------------------------------------------------------------------
 
 /* /proc/capi/drivers is always empty */
-static ssize_t empty_read(struct file *file, char __user *buf,
-			  size_t size, loff_t *off)
-{
-	return 0;
-}
+अटल sमाप_प्रकार empty_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			  माप_प्रकार size, loff_t *off)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct proc_ops empty_proc_ops = {
-	.proc_read	= empty_read,
-	.proc_lseek	= default_llseek,
-};
+अटल स्थिर काष्ठा proc_ops empty_proc_ops = अणु
+	.proc_पढ़ो	= empty_पढ़ो,
+	.proc_lseek	= शेष_llseek,
+पूर्ण;
 
 // ---------------------------------------------------------------------------
 
-void __init
-kcapi_proc_init(void)
-{
-	proc_mkdir("capi",             NULL);
-	proc_mkdir("capi/controllers", NULL);
-	proc_create_seq("capi/controller",   0, NULL, &seq_controller_ops);
-	proc_create_seq("capi/contrstats",   0, NULL, &seq_contrstats_ops);
-	proc_create_seq("capi/applications", 0, NULL, &seq_applications_ops);
-	proc_create_seq("capi/applstats",    0, NULL, &seq_applstats_ops);
-	proc_create("capi/driver",           0, NULL, &empty_proc_ops);
-}
+व्योम __init
+kcapi_proc_init(व्योम)
+अणु
+	proc_सूची_गढ़ो("capi",             शून्य);
+	proc_सूची_गढ़ो("capi/controllers", शून्य);
+	proc_create_seq("capi/controller",   0, शून्य, &seq_controller_ops);
+	proc_create_seq("capi/contrstats",   0, शून्य, &seq_contrstats_ops);
+	proc_create_seq("capi/applications", 0, शून्य, &seq_applications_ops);
+	proc_create_seq("capi/applstats",    0, शून्य, &seq_applstats_ops);
+	proc_create("capi/driver",           0, शून्य, &empty_proc_ops);
+पूर्ण
 
-void
-kcapi_proc_exit(void)
-{
-	remove_proc_entry("capi/driver",       NULL);
-	remove_proc_entry("capi/controller",   NULL);
-	remove_proc_entry("capi/contrstats",   NULL);
-	remove_proc_entry("capi/applications", NULL);
-	remove_proc_entry("capi/applstats",    NULL);
-	remove_proc_entry("capi/controllers",  NULL);
-	remove_proc_entry("capi",              NULL);
-}
+व्योम
+kcapi_proc_निकास(व्योम)
+अणु
+	हटाओ_proc_entry("capi/driver",       शून्य);
+	हटाओ_proc_entry("capi/controller",   शून्य);
+	हटाओ_proc_entry("capi/contrstats",   शून्य);
+	हटाओ_proc_entry("capi/applications", शून्य);
+	हटाओ_proc_entry("capi/applstats",    शून्य);
+	हटाओ_proc_entry("capi/controllers",  शून्य);
+	हटाओ_proc_entry("capi",              शून्य);
+पूर्ण

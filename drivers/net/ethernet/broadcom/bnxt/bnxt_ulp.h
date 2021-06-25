@@ -1,112 +1,113 @@
+<शैली गुरु>
 /* Broadcom NetXtreme-C/E network driver.
  *
  * Copyright (c) 2016-2018 Broadcom Limited
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#ifndef BNXT_ULP_H
-#define BNXT_ULP_H
+#अगर_अघोषित BNXT_ULP_H
+#घोषणा BNXT_ULP_H
 
-#define BNXT_ROCE_ULP	0
-#define BNXT_OTHER_ULP	1
-#define BNXT_MAX_ULP	2
+#घोषणा BNXT_ROCE_ULP	0
+#घोषणा BNXT_OTHER_ULP	1
+#घोषणा BNXT_MAX_ULP	2
 
-#define BNXT_MIN_ROCE_CP_RINGS	2
-#define BNXT_MIN_ROCE_STAT_CTXS	1
+#घोषणा BNXT_MIN_ROCE_CP_RINGS	2
+#घोषणा BNXT_MIN_ROCE_STAT_CTXS	1
 
-struct hwrm_async_event_cmpl;
-struct bnxt;
+काष्ठा hwrm_async_event_cmpl;
+काष्ठा bnxt;
 
-struct bnxt_msix_entry {
+काष्ठा bnxt_msix_entry अणु
 	u32	vector;
 	u32	ring_idx;
 	u32	db_offset;
-};
+पूर्ण;
 
-struct bnxt_ulp_ops {
-	/* async_notifier() cannot sleep (in BH context) */
-	void (*ulp_async_notifier)(void *, struct hwrm_async_event_cmpl *);
-	void (*ulp_stop)(void *);
-	void (*ulp_start)(void *);
-	void (*ulp_sriov_config)(void *, int);
-	void (*ulp_shutdown)(void *);
-	void (*ulp_irq_stop)(void *);
-	void (*ulp_irq_restart)(void *, struct bnxt_msix_entry *);
-};
+काष्ठा bnxt_ulp_ops अणु
+	/* async_notअगरier() cannot sleep (in BH context) */
+	व्योम (*ulp_async_notअगरier)(व्योम *, काष्ठा hwrm_async_event_cmpl *);
+	व्योम (*ulp_stop)(व्योम *);
+	व्योम (*ulp_start)(व्योम *);
+	व्योम (*ulp_sriov_config)(व्योम *, पूर्णांक);
+	व्योम (*ulp_shutकरोwn)(व्योम *);
+	व्योम (*ulp_irq_stop)(व्योम *);
+	व्योम (*ulp_irq_restart)(व्योम *, काष्ठा bnxt_msix_entry *);
+पूर्ण;
 
-struct bnxt_fw_msg {
-	void	*msg;
-	int	msg_len;
-	void	*resp;
-	int	resp_max_len;
-	int	timeout;
-};
+काष्ठा bnxt_fw_msg अणु
+	व्योम	*msg;
+	पूर्णांक	msg_len;
+	व्योम	*resp;
+	पूर्णांक	resp_max_len;
+	पूर्णांक	समयout;
+पूर्ण;
 
-struct bnxt_ulp {
-	void		*handle;
-	struct bnxt_ulp_ops __rcu *ulp_ops;
-	unsigned long	*async_events_bmap;
+काष्ठा bnxt_ulp अणु
+	व्योम		*handle;
+	काष्ठा bnxt_ulp_ops __rcu *ulp_ops;
+	अचिन्हित दीर्घ	*async_events_bmap;
 	u16		max_async_event_id;
 	u16		msix_requested;
 	u16		msix_base;
 	atomic_t	ref_count;
-};
+पूर्ण;
 
-struct bnxt_en_dev {
-	struct net_device *net;
-	struct pci_dev *pdev;
+काष्ठा bnxt_en_dev अणु
+	काष्ठा net_device *net;
+	काष्ठा pci_dev *pdev;
 	u32 flags;
-	#define BNXT_EN_FLAG_ROCEV1_CAP		0x1
-	#define BNXT_EN_FLAG_ROCEV2_CAP		0x2
-	#define BNXT_EN_FLAG_ROCE_CAP		(BNXT_EN_FLAG_ROCEV1_CAP | \
+	#घोषणा BNXT_EN_FLAG_ROCEV1_CAP		0x1
+	#घोषणा BNXT_EN_FLAG_ROCEV2_CAP		0x2
+	#घोषणा BNXT_EN_FLAG_ROCE_CAP		(BNXT_EN_FLAG_ROCEV1_CAP | \
 						 BNXT_EN_FLAG_ROCEV2_CAP)
-	#define BNXT_EN_FLAG_MSIX_REQUESTED	0x4
-	#define BNXT_EN_FLAG_ULP_STOPPED	0x8
-	const struct bnxt_en_ops	*en_ops;
-	struct bnxt_ulp			ulp_tbl[BNXT_MAX_ULP];
-	int				l2_db_size;	/* Doorbell BAR size in
+	#घोषणा BNXT_EN_FLAG_MSIX_REQUESTED	0x4
+	#घोषणा BNXT_EN_FLAG_ULP_STOPPED	0x8
+	स्थिर काष्ठा bnxt_en_ops	*en_ops;
+	काष्ठा bnxt_ulp			ulp_tbl[BNXT_MAX_ULP];
+	पूर्णांक				l2_db_size;	/* Doorbell BAR size in
 							 * bytes mapped by L2
 							 * driver.
 							 */
-	int				l2_db_size_nc;	/* Doorbell BAR size in
+	पूर्णांक				l2_db_size_nc;	/* Doorbell BAR size in
 							 * bytes mapped as non-
 							 * cacheable.
 							 */
-};
+पूर्ण;
 
-struct bnxt_en_ops {
-	int (*bnxt_register_device)(struct bnxt_en_dev *, int,
-				    struct bnxt_ulp_ops *, void *);
-	int (*bnxt_unregister_device)(struct bnxt_en_dev *, int);
-	int (*bnxt_request_msix)(struct bnxt_en_dev *, int,
-				 struct bnxt_msix_entry *, int);
-	int (*bnxt_free_msix)(struct bnxt_en_dev *, int);
-	int (*bnxt_send_fw_msg)(struct bnxt_en_dev *, int,
-				struct bnxt_fw_msg *);
-	int (*bnxt_register_fw_async_events)(struct bnxt_en_dev *, int,
-					     unsigned long *, u16);
-};
+काष्ठा bnxt_en_ops अणु
+	पूर्णांक (*bnxt_रेजिस्टर_device)(काष्ठा bnxt_en_dev *, पूर्णांक,
+				    काष्ठा bnxt_ulp_ops *, व्योम *);
+	पूर्णांक (*bnxt_unरेजिस्टर_device)(काष्ठा bnxt_en_dev *, पूर्णांक);
+	पूर्णांक (*bnxt_request_msix)(काष्ठा bnxt_en_dev *, पूर्णांक,
+				 काष्ठा bnxt_msix_entry *, पूर्णांक);
+	पूर्णांक (*bnxt_मुक्त_msix)(काष्ठा bnxt_en_dev *, पूर्णांक);
+	पूर्णांक (*bnxt_send_fw_msg)(काष्ठा bnxt_en_dev *, पूर्णांक,
+				काष्ठा bnxt_fw_msg *);
+	पूर्णांक (*bnxt_रेजिस्टर_fw_async_events)(काष्ठा bnxt_en_dev *, पूर्णांक,
+					     अचिन्हित दीर्घ *, u16);
+पूर्ण;
 
-static inline bool bnxt_ulp_registered(struct bnxt_en_dev *edev, int ulp_id)
-{
-	if (edev && rcu_access_pointer(edev->ulp_tbl[ulp_id].ulp_ops))
-		return true;
-	return false;
-}
+अटल अंतरभूत bool bnxt_ulp_रेजिस्टरed(काष्ठा bnxt_en_dev *edev, पूर्णांक ulp_id)
+अणु
+	अगर (edev && rcu_access_poपूर्णांकer(edev->ulp_tbl[ulp_id].ulp_ops))
+		वापस true;
+	वापस false;
+पूर्ण
 
-int bnxt_get_ulp_msix_num(struct bnxt *bp);
-int bnxt_get_ulp_msix_base(struct bnxt *bp);
-int bnxt_get_ulp_stat_ctxs(struct bnxt *bp);
-void bnxt_ulp_stop(struct bnxt *bp);
-void bnxt_ulp_start(struct bnxt *bp, int err);
-void bnxt_ulp_sriov_cfg(struct bnxt *bp, int num_vfs);
-void bnxt_ulp_shutdown(struct bnxt *bp);
-void bnxt_ulp_irq_stop(struct bnxt *bp);
-void bnxt_ulp_irq_restart(struct bnxt *bp, int err);
-void bnxt_ulp_async_events(struct bnxt *bp, struct hwrm_async_event_cmpl *cmpl);
-struct bnxt_en_dev *bnxt_ulp_probe(struct net_device *dev);
+पूर्णांक bnxt_get_ulp_msix_num(काष्ठा bnxt *bp);
+पूर्णांक bnxt_get_ulp_msix_base(काष्ठा bnxt *bp);
+पूर्णांक bnxt_get_ulp_stat_ctxs(काष्ठा bnxt *bp);
+व्योम bnxt_ulp_stop(काष्ठा bnxt *bp);
+व्योम bnxt_ulp_start(काष्ठा bnxt *bp, पूर्णांक err);
+व्योम bnxt_ulp_sriov_cfg(काष्ठा bnxt *bp, पूर्णांक num_vfs);
+व्योम bnxt_ulp_shutकरोwn(काष्ठा bnxt *bp);
+व्योम bnxt_ulp_irq_stop(काष्ठा bnxt *bp);
+व्योम bnxt_ulp_irq_restart(काष्ठा bnxt *bp, पूर्णांक err);
+व्योम bnxt_ulp_async_events(काष्ठा bnxt *bp, काष्ठा hwrm_async_event_cmpl *cmpl);
+काष्ठा bnxt_en_dev *bnxt_ulp_probe(काष्ठा net_device *dev);
 
-#endif
+#पूर्ण_अगर

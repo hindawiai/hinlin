@@ -1,329 +1,330 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 - Virtual Open Systems and Columbia University
- * Author: Christoffer Dall <c.dall@virtualopensystems.com>
+ * Author: Christoffer Dall <c.dall@भवखोलोप्रणालीs.com>
  */
 
-#include <linux/mman.h>
-#include <linux/kvm_host.h>
-#include <linux/io.h>
-#include <linux/hugetlb.h>
-#include <linux/sched/signal.h>
-#include <trace/events/kvm.h>
-#include <asm/pgalloc.h>
-#include <asm/cacheflush.h>
-#include <asm/kvm_arm.h>
-#include <asm/kvm_mmu.h>
-#include <asm/kvm_pgtable.h>
-#include <asm/kvm_ras.h>
-#include <asm/kvm_asm.h>
-#include <asm/kvm_emulate.h>
-#include <asm/virt.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <trace/events/kvm.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/kvm_arm.h>
+#समावेश <यंत्र/kvm_mmu.h>
+#समावेश <यंत्र/kvm_pgtable.h>
+#समावेश <यंत्र/kvm_ras.h>
+#समावेश <यंत्र/kvm_यंत्र.h>
+#समावेश <यंत्र/kvm_emulate.h>
+#समावेश <यंत्र/virt.h>
 
-#include "trace.h"
+#समावेश "trace.h"
 
-static struct kvm_pgtable *hyp_pgtable;
-static DEFINE_MUTEX(kvm_hyp_pgd_mutex);
+अटल काष्ठा kvm_pgtable *hyp_pgtable;
+अटल DEFINE_MUTEX(kvm_hyp_pgd_mutex);
 
-static unsigned long hyp_idmap_start;
-static unsigned long hyp_idmap_end;
-static phys_addr_t hyp_idmap_vector;
+अटल अचिन्हित दीर्घ hyp_idmap_start;
+अटल अचिन्हित दीर्घ hyp_idmap_end;
+अटल phys_addr_t hyp_idmap_vector;
 
-static unsigned long io_map_base;
+अटल अचिन्हित दीर्घ io_map_base;
 
 
 /*
- * Release kvm_mmu_lock periodically if the memory region is large. Otherwise,
+ * Release kvm_mmu_lock periodically अगर the memory region is large. Otherwise,
  * we may see kernel panics with CONFIG_DETECT_HUNG_TASK,
  * CONFIG_LOCKUP_DETECTOR, CONFIG_LOCKDEP. Additionally, holding the lock too
- * long will also starve other vCPUs. We have to also make sure that the page
- * tables are not freed while we released the lock.
+ * दीर्घ will also starve other vCPUs. We have to also make sure that the page
+ * tables are not मुक्तd जबतक we released the lock.
  */
-static int stage2_apply_range(struct kvm *kvm, phys_addr_t addr,
+अटल पूर्णांक stage2_apply_range(काष्ठा kvm *kvm, phys_addr_t addr,
 			      phys_addr_t end,
-			      int (*fn)(struct kvm_pgtable *, u64, u64),
+			      पूर्णांक (*fn)(काष्ठा kvm_pgtable *, u64, u64),
 			      bool resched)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u64 next;
 
-	do {
-		struct kvm_pgtable *pgt = kvm->arch.mmu.pgt;
-		if (!pgt)
-			return -EINVAL;
+	करो अणु
+		काष्ठा kvm_pgtable *pgt = kvm->arch.mmu.pgt;
+		अगर (!pgt)
+			वापस -EINVAL;
 
 		next = stage2_pgd_addr_end(kvm, addr, end);
 		ret = fn(pgt, addr, next - addr);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
-		if (resched && next != end)
+		अगर (resched && next != end)
 			cond_resched_lock(&kvm->mmu_lock);
-	} while (addr = next, addr != end);
+	पूर्ण जबतक (addr = next, addr != end);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define stage2_apply_range_resched(kvm, addr, end, fn)			\
+#घोषणा stage2_apply_range_resched(kvm, addr, end, fn)			\
 	stage2_apply_range(kvm, addr, end, fn, true)
 
-static bool memslot_is_logging(struct kvm_memory_slot *memslot)
-{
-	return memslot->dirty_bitmap && !(memslot->flags & KVM_MEM_READONLY);
-}
+अटल bool memslot_is_logging(काष्ठा kvm_memory_slot *memslot)
+अणु
+	वापस memslot->dirty_biपंचांगap && !(memslot->flags & KVM_MEM_READONLY);
+पूर्ण
 
 /**
- * kvm_flush_remote_tlbs() - flush all VM TLB entries for v7/8
- * @kvm:	pointer to kvm structure.
+ * kvm_flush_remote_tlbs() - flush all VM TLB entries क्रम v7/8
+ * @kvm:	poपूर्णांकer to kvm काष्ठाure.
  *
  * Interface to HYP function to flush all VM TLB entries
  */
-void kvm_flush_remote_tlbs(struct kvm *kvm)
-{
+व्योम kvm_flush_remote_tlbs(काष्ठा kvm *kvm)
+अणु
 	kvm_call_hyp(__kvm_tlb_flush_vmid, &kvm->arch.mmu);
-}
+पूर्ण
 
-static bool kvm_is_device_pfn(unsigned long pfn)
-{
-	return !pfn_valid(pfn);
-}
+अटल bool kvm_is_device_pfn(अचिन्हित दीर्घ pfn)
+अणु
+	वापस !pfn_valid(pfn);
+पूर्ण
 
-static void *stage2_memcache_zalloc_page(void *arg)
-{
-	struct kvm_mmu_memory_cache *mc = arg;
+अटल व्योम *stage2_memcache_zalloc_page(व्योम *arg)
+अणु
+	काष्ठा kvm_mmu_memory_cache *mc = arg;
 
 	/* Allocated with __GFP_ZERO, so no need to zero */
-	return kvm_mmu_memory_cache_alloc(mc);
-}
+	वापस kvm_mmu_memory_cache_alloc(mc);
+पूर्ण
 
-static void *kvm_host_zalloc_pages_exact(size_t size)
-{
-	return alloc_pages_exact(size, GFP_KERNEL_ACCOUNT | __GFP_ZERO);
-}
+अटल व्योम *kvm_host_zalloc_pages_exact(माप_प्रकार size)
+अणु
+	वापस alloc_pages_exact(size, GFP_KERNEL_ACCOUNT | __GFP_ZERO);
+पूर्ण
 
-static void kvm_host_get_page(void *addr)
-{
+अटल व्योम kvm_host_get_page(व्योम *addr)
+अणु
 	get_page(virt_to_page(addr));
-}
+पूर्ण
 
-static void kvm_host_put_page(void *addr)
-{
+अटल व्योम kvm_host_put_page(व्योम *addr)
+अणु
 	put_page(virt_to_page(addr));
-}
+पूर्ण
 
-static int kvm_host_page_count(void *addr)
-{
-	return page_count(virt_to_page(addr));
-}
+अटल पूर्णांक kvm_host_page_count(व्योम *addr)
+अणु
+	वापस page_count(virt_to_page(addr));
+पूर्ण
 
-static phys_addr_t kvm_host_pa(void *addr)
-{
-	return __pa(addr);
-}
+अटल phys_addr_t kvm_host_pa(व्योम *addr)
+अणु
+	वापस __pa(addr);
+पूर्ण
 
-static void *kvm_host_va(phys_addr_t phys)
-{
-	return __va(phys);
-}
+अटल व्योम *kvm_host_va(phys_addr_t phys)
+अणु
+	वापस __va(phys);
+पूर्ण
 
 /*
  * Unmapping vs dcache management:
  *
- * If a guest maps certain memory pages as uncached, all writes will
+ * If a guest maps certain memory pages as uncached, all ग_लिखोs will
  * bypass the data cache and go directly to RAM.  However, the CPUs
- * can still speculate reads (not writes) and fill cache lines with
+ * can still speculate पढ़ोs (not ग_लिखोs) and fill cache lines with
  * data.
  *
  * Those cache lines will be *clean* cache lines though, so a
  * clean+invalidate operation is equivalent to an invalidate
  * operation, because no cache lines are marked dirty.
  *
- * Those clean cache lines could be filled prior to an uncached write
- * by the guest, and the cache coherent IO subsystem would therefore
+ * Those clean cache lines could be filled prior to an uncached ग_लिखो
+ * by the guest, and the cache coherent IO subप्रणाली would thereक्रमe
  * end up writing old data to disk.
  *
  * This is why right after unmapping a page/section and invalidating
- * the corresponding TLBs, we flush to make sure the IO subsystem will
+ * the corresponding TLBs, we flush to make sure the IO subप्रणाली will
  * never hit in the cache.
  *
- * This is all avoided on systems that have ARM64_HAS_STAGE2_FWB, as
- * we then fully enforce cacheability of RAM, no matter what the guest
- * does.
+ * This is all aव्योमed on प्रणालीs that have ARM64_HAS_STAGE2_FWB, as
+ * we then fully enक्रमce cacheability of RAM, no matter what the guest
+ * करोes.
  */
 /**
  * unmap_stage2_range -- Clear stage2 page table entries to unmap a range
- * @mmu:   The KVM stage-2 MMU pointer
- * @start: The intermediate physical base address of the range to unmap
+ * @mmu:   The KVM stage-2 MMU poपूर्णांकer
+ * @start: The पूर्णांकermediate physical base address of the range to unmap
  * @size:  The size of the area to unmap
  * @may_block: Whether or not we are permitted to block
  *
  * Clear a range of stage-2 mappings, lowering the various ref-counts.  Must
- * be called while holding mmu_lock (unless for freeing the stage2 pgd before
+ * be called जबतक holding mmu_lock (unless क्रम मुक्तing the stage2 pgd beक्रमe
  * destroying the VM), otherwise another faulting VCPU may come in and mess
  * with things behind our backs.
  */
-static void __unmap_stage2_range(struct kvm_s2_mmu *mmu, phys_addr_t start, u64 size,
+अटल व्योम __unmap_stage2_range(काष्ठा kvm_s2_mmu *mmu, phys_addr_t start, u64 size,
 				 bool may_block)
-{
-	struct kvm *kvm = kvm_s2_mmu_to_kvm(mmu);
+अणु
+	काष्ठा kvm *kvm = kvm_s2_mmu_to_kvm(mmu);
 	phys_addr_t end = start + size;
 
-	assert_spin_locked(&kvm->mmu_lock);
+	निश्चित_spin_locked(&kvm->mmu_lock);
 	WARN_ON(size & ~PAGE_MASK);
 	WARN_ON(stage2_apply_range(kvm, start, end, kvm_pgtable_stage2_unmap,
 				   may_block));
-}
+पूर्ण
 
-static void unmap_stage2_range(struct kvm_s2_mmu *mmu, phys_addr_t start, u64 size)
-{
+अटल व्योम unmap_stage2_range(काष्ठा kvm_s2_mmu *mmu, phys_addr_t start, u64 size)
+अणु
 	__unmap_stage2_range(mmu, start, size, true);
-}
+पूर्ण
 
-static void stage2_flush_memslot(struct kvm *kvm,
-				 struct kvm_memory_slot *memslot)
-{
+अटल व्योम stage2_flush_memslot(काष्ठा kvm *kvm,
+				 काष्ठा kvm_memory_slot *memslot)
+अणु
 	phys_addr_t addr = memslot->base_gfn << PAGE_SHIFT;
 	phys_addr_t end = addr + PAGE_SIZE * memslot->npages;
 
 	stage2_apply_range_resched(kvm, addr, end, kvm_pgtable_stage2_flush);
-}
+पूर्ण
 
 /**
- * stage2_flush_vm - Invalidate cache for pages mapped in stage 2
- * @kvm: The struct kvm pointer
+ * stage2_flush_vm - Invalidate cache क्रम pages mapped in stage 2
+ * @kvm: The काष्ठा kvm poपूर्णांकer
  *
  * Go through the stage 2 page tables and invalidate any cache lines
- * backing memory already mapped to the VM.
+ * backing memory alपढ़ोy mapped to the VM.
  */
-static void stage2_flush_vm(struct kvm *kvm)
-{
-	struct kvm_memslots *slots;
-	struct kvm_memory_slot *memslot;
-	int idx;
+अटल व्योम stage2_flush_vm(काष्ठा kvm *kvm)
+अणु
+	काष्ठा kvm_memslots *slots;
+	काष्ठा kvm_memory_slot *memslot;
+	पूर्णांक idx;
 
-	idx = srcu_read_lock(&kvm->srcu);
+	idx = srcu_पढ़ो_lock(&kvm->srcu);
 	spin_lock(&kvm->mmu_lock);
 
 	slots = kvm_memslots(kvm);
-	kvm_for_each_memslot(memslot, slots)
+	kvm_क्रम_each_memslot(memslot, slots)
 		stage2_flush_memslot(kvm, memslot);
 
 	spin_unlock(&kvm->mmu_lock);
-	srcu_read_unlock(&kvm->srcu, idx);
-}
+	srcu_पढ़ो_unlock(&kvm->srcu, idx);
+पूर्ण
 
 /**
- * free_hyp_pgds - free Hyp-mode page tables
+ * मुक्त_hyp_pgds - मुक्त Hyp-mode page tables
  */
-void free_hyp_pgds(void)
-{
+व्योम मुक्त_hyp_pgds(व्योम)
+अणु
 	mutex_lock(&kvm_hyp_pgd_mutex);
-	if (hyp_pgtable) {
+	अगर (hyp_pgtable) अणु
 		kvm_pgtable_hyp_destroy(hyp_pgtable);
-		kfree(hyp_pgtable);
-		hyp_pgtable = NULL;
-	}
+		kमुक्त(hyp_pgtable);
+		hyp_pgtable = शून्य;
+	पूर्ण
 	mutex_unlock(&kvm_hyp_pgd_mutex);
-}
+पूर्ण
 
-static bool kvm_host_owns_hyp_mappings(void)
-{
-	if (static_branch_likely(&kvm_protected_mode_initialized))
-		return false;
+अटल bool kvm_host_owns_hyp_mappings(व्योम)
+अणु
+	अगर (अटल_branch_likely(&kvm_रक्षित_mode_initialized))
+		वापस false;
 
 	/*
-	 * This can happen at boot time when __create_hyp_mappings() is called
-	 * after the hyp protection has been enabled, but the static key has
+	 * This can happen at boot समय when __create_hyp_mappings() is called
+	 * after the hyp protection has been enabled, but the अटल key has
 	 * not been flipped yet.
 	 */
-	if (!hyp_pgtable && is_protected_kvm_enabled())
-		return false;
+	अगर (!hyp_pgtable && is_रक्षित_kvm_enabled())
+		वापस false;
 
 	WARN_ON(!hyp_pgtable);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int __create_hyp_mappings(unsigned long start, unsigned long size,
-				 unsigned long phys, enum kvm_pgtable_prot prot)
-{
-	int err;
+अटल पूर्णांक __create_hyp_mappings(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size,
+				 अचिन्हित दीर्घ phys, क्रमागत kvm_pgtable_prot prot)
+अणु
+	पूर्णांक err;
 
-	if (!kvm_host_owns_hyp_mappings()) {
-		return kvm_call_hyp_nvhe(__pkvm_create_mappings,
+	अगर (!kvm_host_owns_hyp_mappings()) अणु
+		वापस kvm_call_hyp_nvhe(__pkvm_create_mappings,
 					 start, size, phys, prot);
-	}
+	पूर्ण
 
 	mutex_lock(&kvm_hyp_pgd_mutex);
 	err = kvm_pgtable_hyp_map(hyp_pgtable, start, size, phys, prot);
 	mutex_unlock(&kvm_hyp_pgd_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static phys_addr_t kvm_kaddr_to_phys(void *kaddr)
-{
-	if (!is_vmalloc_addr(kaddr)) {
+अटल phys_addr_t kvm_kaddr_to_phys(व्योम *kaddr)
+अणु
+	अगर (!is_vदो_स्मृति_addr(kaddr)) अणु
 		BUG_ON(!virt_addr_valid(kaddr));
-		return __pa(kaddr);
-	} else {
-		return page_to_phys(vmalloc_to_page(kaddr)) +
+		वापस __pa(kaddr);
+	पूर्ण अन्यथा अणु
+		वापस page_to_phys(vदो_स्मृति_to_page(kaddr)) +
 		       offset_in_page(kaddr);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * create_hyp_mappings - duplicate a kernel virtual address range in Hyp mode
- * @from:	The virtual kernel start address of the range
- * @to:		The virtual kernel end address of the range (exclusive)
+ * create_hyp_mappings - duplicate a kernel भव address range in Hyp mode
+ * @from:	The भव kernel start address of the range
+ * @to:		The भव kernel end address of the range (exclusive)
  * @prot:	The protection to be applied to this range
  *
- * The same virtual address as the kernel virtual address is also used
+ * The same भव address as the kernel भव address is also used
  * in Hyp-mode mapping (modulo HYP_PAGE_OFFSET) to the same underlying
  * physical pages.
  */
-int create_hyp_mappings(void *from, void *to, enum kvm_pgtable_prot prot)
-{
+पूर्णांक create_hyp_mappings(व्योम *from, व्योम *to, क्रमागत kvm_pgtable_prot prot)
+अणु
 	phys_addr_t phys_addr;
-	unsigned long virt_addr;
-	unsigned long start = kern_hyp_va((unsigned long)from);
-	unsigned long end = kern_hyp_va((unsigned long)to);
+	अचिन्हित दीर्घ virt_addr;
+	अचिन्हित दीर्घ start = kern_hyp_va((अचिन्हित दीर्घ)from);
+	अचिन्हित दीर्घ end = kern_hyp_va((अचिन्हित दीर्घ)to);
 
-	if (is_kernel_in_hyp_mode())
-		return 0;
+	अगर (is_kernel_in_hyp_mode())
+		वापस 0;
 
 	start = start & PAGE_MASK;
 	end = PAGE_ALIGN(end);
 
-	for (virt_addr = start; virt_addr < end; virt_addr += PAGE_SIZE) {
-		int err;
+	क्रम (virt_addr = start; virt_addr < end; virt_addr += PAGE_SIZE) अणु
+		पूर्णांक err;
 
 		phys_addr = kvm_kaddr_to_phys(from + virt_addr - start);
 		err = __create_hyp_mappings(virt_addr, PAGE_SIZE, phys_addr,
 					    prot);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __create_hyp_private_mapping(phys_addr_t phys_addr, size_t size,
-					unsigned long *haddr,
-					enum kvm_pgtable_prot prot)
-{
-	unsigned long base;
-	int ret = 0;
+अटल पूर्णांक __create_hyp_निजी_mapping(phys_addr_t phys_addr, माप_प्रकार size,
+					अचिन्हित दीर्घ *haddr,
+					क्रमागत kvm_pgtable_prot prot)
+अणु
+	अचिन्हित दीर्घ base;
+	पूर्णांक ret = 0;
 
-	if (!kvm_host_owns_hyp_mappings()) {
-		base = kvm_call_hyp_nvhe(__pkvm_create_private_mapping,
+	अगर (!kvm_host_owns_hyp_mappings()) अणु
+		base = kvm_call_hyp_nvhe(__pkvm_create_निजी_mapping,
 					 phys_addr, size, prot);
-		if (IS_ERR_OR_NULL((void *)base))
-			return PTR_ERR((void *)base);
+		अगर (IS_ERR_OR_शून्य((व्योम *)base))
+			वापस PTR_ERR((व्योम *)base);
 		*haddr = base;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	mutex_lock(&kvm_hyp_pgd_mutex);
 
@@ -331,7 +332,7 @@ static int __create_hyp_private_mapping(phys_addr_t phys_addr, size_t size,
 	 * This assumes that we have enough space below the idmap
 	 * page to allocate our VAs. If not, the check below will
 	 * kick. A potential alternative would be to detect that
-	 * overflow and switch to an allocation above the idmap.
+	 * overflow and चयन to an allocation above the idmap.
 	 *
 	 * The allocated size is always a multiple of PAGE_SIZE.
 	 */
@@ -339,153 +340,153 @@ static int __create_hyp_private_mapping(phys_addr_t phys_addr, size_t size,
 	base = io_map_base - size;
 
 	/*
-	 * Verify that BIT(VA_BITS - 1) hasn't been flipped by
+	 * Verअगरy that BIT(VA_BITS - 1) hasn't been flipped by
 	 * allocating the new area, as it would indicate we've
 	 * overflowed the idmap/IO address range.
 	 */
-	if ((base ^ io_map_base) & BIT(VA_BITS - 1))
+	अगर ((base ^ io_map_base) & BIT(VA_BITS - 1))
 		ret = -ENOMEM;
-	else
+	अन्यथा
 		io_map_base = base;
 
 	mutex_unlock(&kvm_hyp_pgd_mutex);
 
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = __create_hyp_mappings(base, size, phys_addr, prot);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	*haddr = base + offset_in_page(phys_addr);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * create_hyp_io_mappings - Map IO into both kernel and HYP
- * @phys_addr:	The physical start address which gets mapped
+ * create_hyp_io_mappings - Map IO पूर्णांकo both kernel and HYP
+ * @phys_addr:	The physical start address which माला_लो mapped
  * @size:	Size of the region being mapped
- * @kaddr:	Kernel VA for this mapping
- * @haddr:	HYP VA for this mapping
+ * @kaddr:	Kernel VA क्रम this mapping
+ * @haddr:	HYP VA क्रम this mapping
  */
-int create_hyp_io_mappings(phys_addr_t phys_addr, size_t size,
-			   void __iomem **kaddr,
-			   void __iomem **haddr)
-{
-	unsigned long addr;
-	int ret;
+पूर्णांक create_hyp_io_mappings(phys_addr_t phys_addr, माप_प्रकार size,
+			   व्योम __iomem **kaddr,
+			   व्योम __iomem **haddr)
+अणु
+	अचिन्हित दीर्घ addr;
+	पूर्णांक ret;
 
 	*kaddr = ioremap(phys_addr, size);
-	if (!*kaddr)
-		return -ENOMEM;
+	अगर (!*kaddr)
+		वापस -ENOMEM;
 
-	if (is_kernel_in_hyp_mode()) {
+	अगर (is_kernel_in_hyp_mode()) अणु
 		*haddr = *kaddr;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ret = __create_hyp_private_mapping(phys_addr, size,
+	ret = __create_hyp_निजी_mapping(phys_addr, size,
 					   &addr, PAGE_HYP_DEVICE);
-	if (ret) {
+	अगर (ret) अणु
 		iounmap(*kaddr);
-		*kaddr = NULL;
-		*haddr = NULL;
-		return ret;
-	}
+		*kaddr = शून्य;
+		*haddr = शून्य;
+		वापस ret;
+	पूर्ण
 
-	*haddr = (void __iomem *)addr;
-	return 0;
-}
+	*haddr = (व्योम __iomem *)addr;
+	वापस 0;
+पूर्ण
 
 /**
- * create_hyp_exec_mappings - Map an executable range into HYP
- * @phys_addr:	The physical start address which gets mapped
+ * create_hyp_exec_mappings - Map an executable range पूर्णांकo HYP
+ * @phys_addr:	The physical start address which माला_लो mapped
  * @size:	Size of the region being mapped
- * @haddr:	HYP VA for this mapping
+ * @haddr:	HYP VA क्रम this mapping
  */
-int create_hyp_exec_mappings(phys_addr_t phys_addr, size_t size,
-			     void **haddr)
-{
-	unsigned long addr;
-	int ret;
+पूर्णांक create_hyp_exec_mappings(phys_addr_t phys_addr, माप_प्रकार size,
+			     व्योम **haddr)
+अणु
+	अचिन्हित दीर्घ addr;
+	पूर्णांक ret;
 
 	BUG_ON(is_kernel_in_hyp_mode());
 
-	ret = __create_hyp_private_mapping(phys_addr, size,
+	ret = __create_hyp_निजी_mapping(phys_addr, size,
 					   &addr, PAGE_HYP_EXEC);
-	if (ret) {
-		*haddr = NULL;
-		return ret;
-	}
+	अगर (ret) अणु
+		*haddr = शून्य;
+		वापस ret;
+	पूर्ण
 
-	*haddr = (void *)addr;
-	return 0;
-}
+	*haddr = (व्योम *)addr;
+	वापस 0;
+पूर्ण
 
-static struct kvm_pgtable_mm_ops kvm_s2_mm_ops = {
+अटल काष्ठा kvm_pgtable_mm_ops kvm_s2_mm_ops = अणु
 	.zalloc_page		= stage2_memcache_zalloc_page,
 	.zalloc_pages_exact	= kvm_host_zalloc_pages_exact,
-	.free_pages_exact	= free_pages_exact,
+	.मुक्त_pages_exact	= मुक्त_pages_exact,
 	.get_page		= kvm_host_get_page,
 	.put_page		= kvm_host_put_page,
 	.page_count		= kvm_host_page_count,
 	.phys_to_virt		= kvm_host_va,
 	.virt_to_phys		= kvm_host_pa,
-};
+पूर्ण;
 
 /**
  * kvm_init_stage2_mmu - Initialise a S2 MMU strucrure
- * @kvm:	The pointer to the KVM structure
- * @mmu:	The pointer to the s2 MMU structure
+ * @kvm:	The poपूर्णांकer to the KVM काष्ठाure
+ * @mmu:	The poपूर्णांकer to the s2 MMU काष्ठाure
  *
  * Allocates only the stage-2 HW PGD level table(s).
- * Note we don't need locking here as this is only called when the VM is
- * created, which can only be done once.
+ * Note we करोn't need locking here as this is only called when the VM is
+ * created, which can only be करोne once.
  */
-int kvm_init_stage2_mmu(struct kvm *kvm, struct kvm_s2_mmu *mmu)
-{
-	int cpu, err;
-	struct kvm_pgtable *pgt;
+पूर्णांक kvm_init_stage2_mmu(काष्ठा kvm *kvm, काष्ठा kvm_s2_mmu *mmu)
+अणु
+	पूर्णांक cpu, err;
+	काष्ठा kvm_pgtable *pgt;
 
-	if (mmu->pgt != NULL) {
+	अगर (mmu->pgt != शून्य) अणु
 		kvm_err("kvm_arch already initialized?\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pgt = kzalloc(sizeof(*pgt), GFP_KERNEL);
-	if (!pgt)
-		return -ENOMEM;
+	pgt = kzalloc(माप(*pgt), GFP_KERNEL);
+	अगर (!pgt)
+		वापस -ENOMEM;
 
 	err = kvm_pgtable_stage2_init(pgt, &kvm->arch, &kvm_s2_mm_ops);
-	if (err)
-		goto out_free_pgtable;
+	अगर (err)
+		जाओ out_मुक्त_pgtable;
 
 	mmu->last_vcpu_ran = alloc_percpu(typeof(*mmu->last_vcpu_ran));
-	if (!mmu->last_vcpu_ran) {
+	अगर (!mmu->last_vcpu_ran) अणु
 		err = -ENOMEM;
-		goto out_destroy_pgtable;
-	}
+		जाओ out_destroy_pgtable;
+	पूर्ण
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		*per_cpu_ptr(mmu->last_vcpu_ran, cpu) = -1;
 
 	mmu->arch = &kvm->arch;
 	mmu->pgt = pgt;
 	mmu->pgd_phys = __pa(pgt->pgd);
 	mmu->vmid.vmid_gen = 0;
-	return 0;
+	वापस 0;
 
 out_destroy_pgtable:
 	kvm_pgtable_stage2_destroy(pgt);
-out_free_pgtable:
-	kfree(pgt);
-	return err;
-}
+out_मुक्त_pgtable:
+	kमुक्त(pgt);
+	वापस err;
+पूर्ण
 
-static void stage2_unmap_memslot(struct kvm *kvm,
-				 struct kvm_memory_slot *memslot)
-{
+अटल व्योम stage2_unmap_memslot(काष्ठा kvm *kvm,
+				 काष्ठा kvm_memory_slot *memslot)
+अणु
 	hva_t hva = memslot->userspace_addr;
 	phys_addr_t addr = memslot->base_gfn << PAGE_SHIFT;
 	phys_addr_t size = PAGE_SIZE * memslot->npages;
@@ -493,7 +494,7 @@ static void stage2_unmap_memslot(struct kvm *kvm,
 
 	/*
 	 * A memory region could potentially cover multiple VMAs, and any holes
-	 * between them, so iterate over all of them to find out if we should
+	 * between them, so iterate over all of them to find out अगर we should
 	 * unmap any of them.
 	 *
 	 *     +--------------------------------------------+
@@ -503,150 +504,150 @@ static void stage2_unmap_memslot(struct kvm *kvm,
 	 *     |               memory region                |
 	 *     +--------------------------------------------+
 	 */
-	do {
-		struct vm_area_struct *vma;
+	करो अणु
+		काष्ठा vm_area_काष्ठा *vma;
 		hva_t vm_start, vm_end;
 
-		vma = find_vma_intersection(current->mm, hva, reg_end);
-		if (!vma)
-			break;
+		vma = find_vma_पूर्णांकersection(current->mm, hva, reg_end);
+		अगर (!vma)
+			अवरोध;
 
 		/*
-		 * Take the intersection of this VMA with the memory region
+		 * Take the पूर्णांकersection of this VMA with the memory region
 		 */
 		vm_start = max(hva, vma->vm_start);
 		vm_end = min(reg_end, vma->vm_end);
 
-		if (!(vma->vm_flags & VM_PFNMAP)) {
+		अगर (!(vma->vm_flags & VM_PFNMAP)) अणु
 			gpa_t gpa = addr + (vm_start - memslot->userspace_addr);
 			unmap_stage2_range(&kvm->arch.mmu, gpa, vm_end - vm_start);
-		}
+		पूर्ण
 		hva = vm_end;
-	} while (hva < reg_end);
-}
+	पूर्ण जबतक (hva < reg_end);
+पूर्ण
 
 /**
  * stage2_unmap_vm - Unmap Stage-2 RAM mappings
- * @kvm: The struct kvm pointer
+ * @kvm: The काष्ठा kvm poपूर्णांकer
  *
  * Go through the memregions and unmap any regular RAM
- * backing memory already mapped to the VM.
+ * backing memory alपढ़ोy mapped to the VM.
  */
-void stage2_unmap_vm(struct kvm *kvm)
-{
-	struct kvm_memslots *slots;
-	struct kvm_memory_slot *memslot;
-	int idx;
+व्योम stage2_unmap_vm(काष्ठा kvm *kvm)
+अणु
+	काष्ठा kvm_memslots *slots;
+	काष्ठा kvm_memory_slot *memslot;
+	पूर्णांक idx;
 
-	idx = srcu_read_lock(&kvm->srcu);
-	mmap_read_lock(current->mm);
+	idx = srcu_पढ़ो_lock(&kvm->srcu);
+	mmap_पढ़ो_lock(current->mm);
 	spin_lock(&kvm->mmu_lock);
 
 	slots = kvm_memslots(kvm);
-	kvm_for_each_memslot(memslot, slots)
+	kvm_क्रम_each_memslot(memslot, slots)
 		stage2_unmap_memslot(kvm, memslot);
 
 	spin_unlock(&kvm->mmu_lock);
-	mmap_read_unlock(current->mm);
-	srcu_read_unlock(&kvm->srcu, idx);
-}
+	mmap_पढ़ो_unlock(current->mm);
+	srcu_पढ़ो_unlock(&kvm->srcu, idx);
+पूर्ण
 
-void kvm_free_stage2_pgd(struct kvm_s2_mmu *mmu)
-{
-	struct kvm *kvm = kvm_s2_mmu_to_kvm(mmu);
-	struct kvm_pgtable *pgt = NULL;
+व्योम kvm_मुक्त_stage2_pgd(काष्ठा kvm_s2_mmu *mmu)
+अणु
+	काष्ठा kvm *kvm = kvm_s2_mmu_to_kvm(mmu);
+	काष्ठा kvm_pgtable *pgt = शून्य;
 
 	spin_lock(&kvm->mmu_lock);
 	pgt = mmu->pgt;
-	if (pgt) {
+	अगर (pgt) अणु
 		mmu->pgd_phys = 0;
-		mmu->pgt = NULL;
-		free_percpu(mmu->last_vcpu_ran);
-	}
+		mmu->pgt = शून्य;
+		मुक्त_percpu(mmu->last_vcpu_ran);
+	पूर्ण
 	spin_unlock(&kvm->mmu_lock);
 
-	if (pgt) {
+	अगर (pgt) अणु
 		kvm_pgtable_stage2_destroy(pgt);
-		kfree(pgt);
-	}
-}
+		kमुक्त(pgt);
+	पूर्ण
+पूर्ण
 
 /**
  * kvm_phys_addr_ioremap - map a device range to guest IPA
  *
- * @kvm:	The KVM pointer
+ * @kvm:	The KVM poपूर्णांकer
  * @guest_ipa:	The IPA at which to insert the mapping
  * @pa:		The physical address of the device
  * @size:	The size of the mapping
  * @writable:   Whether or not to create a writable mapping
  */
-int kvm_phys_addr_ioremap(struct kvm *kvm, phys_addr_t guest_ipa,
-			  phys_addr_t pa, unsigned long size, bool writable)
-{
+पूर्णांक kvm_phys_addr_ioremap(काष्ठा kvm *kvm, phys_addr_t guest_ipa,
+			  phys_addr_t pa, अचिन्हित दीर्घ size, bool writable)
+अणु
 	phys_addr_t addr;
-	int ret = 0;
-	struct kvm_mmu_memory_cache cache = { 0, __GFP_ZERO, NULL, };
-	struct kvm_pgtable *pgt = kvm->arch.mmu.pgt;
-	enum kvm_pgtable_prot prot = KVM_PGTABLE_PROT_DEVICE |
+	पूर्णांक ret = 0;
+	काष्ठा kvm_mmu_memory_cache cache = अणु 0, __GFP_ZERO, शून्य, पूर्ण;
+	काष्ठा kvm_pgtable *pgt = kvm->arch.mmu.pgt;
+	क्रमागत kvm_pgtable_prot prot = KVM_PGTABLE_PROT_DEVICE |
 				     KVM_PGTABLE_PROT_R |
 				     (writable ? KVM_PGTABLE_PROT_W : 0);
 
 	size += offset_in_page(guest_ipa);
 	guest_ipa &= PAGE_MASK;
 
-	for (addr = guest_ipa; addr < guest_ipa + size; addr += PAGE_SIZE) {
+	क्रम (addr = guest_ipa; addr < guest_ipa + size; addr += PAGE_SIZE) अणु
 		ret = kvm_mmu_topup_memory_cache(&cache,
 						 kvm_mmu_cache_min_pages(kvm));
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		spin_lock(&kvm->mmu_lock);
 		ret = kvm_pgtable_stage2_map(pgt, addr, PAGE_SIZE, pa, prot,
 					     &cache);
 		spin_unlock(&kvm->mmu_lock);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		pa += PAGE_SIZE;
-	}
+	पूर्ण
 
-	kvm_mmu_free_memory_cache(&cache);
-	return ret;
-}
+	kvm_mmu_मुक्त_memory_cache(&cache);
+	वापस ret;
+पूर्ण
 
 /**
- * stage2_wp_range() - write protect stage2 memory region range
- * @mmu:        The KVM stage-2 MMU pointer
+ * stage2_wp_range() - ग_लिखो protect stage2 memory region range
+ * @mmu:        The KVM stage-2 MMU poपूर्णांकer
  * @addr:	Start address of range
  * @end:	End address of range
  */
-static void stage2_wp_range(struct kvm_s2_mmu *mmu, phys_addr_t addr, phys_addr_t end)
-{
-	struct kvm *kvm = kvm_s2_mmu_to_kvm(mmu);
+अटल व्योम stage2_wp_range(काष्ठा kvm_s2_mmu *mmu, phys_addr_t addr, phys_addr_t end)
+अणु
+	काष्ठा kvm *kvm = kvm_s2_mmu_to_kvm(mmu);
 	stage2_apply_range_resched(kvm, addr, end, kvm_pgtable_stage2_wrprotect);
-}
+पूर्ण
 
 /**
- * kvm_mmu_wp_memory_region() - write protect stage 2 entries for memory slot
- * @kvm:	The KVM pointer
- * @slot:	The memory slot to write protect
+ * kvm_mmu_wp_memory_region() - ग_लिखो protect stage 2 entries क्रम memory slot
+ * @kvm:	The KVM poपूर्णांकer
+ * @slot:	The memory slot to ग_लिखो protect
  *
  * Called to start logging dirty pages after memory region
- * KVM_MEM_LOG_DIRTY_PAGES operation is called. After this function returns
- * all present PUD, PMD and PTEs are write protected in the memory region.
- * Afterwards read of dirty page log can be called.
+ * KVM_MEM_LOG_सूचीTY_PAGES operation is called. After this function वापसs
+ * all present PUD, PMD and PTEs are ग_लिखो रक्षित in the memory region.
+ * Afterwards पढ़ो of dirty page log can be called.
  *
  * Acquires kvm_mmu_lock. Called with kvm->slots_lock mutex acquired,
- * serializing operations for VM memory regions.
+ * serializing operations क्रम VM memory regions.
  */
-static void kvm_mmu_wp_memory_region(struct kvm *kvm, int slot)
-{
-	struct kvm_memslots *slots = kvm_memslots(kvm);
-	struct kvm_memory_slot *memslot = id_to_memslot(slots, slot);
+अटल व्योम kvm_mmu_wp_memory_region(काष्ठा kvm *kvm, पूर्णांक slot)
+अणु
+	काष्ठा kvm_memslots *slots = kvm_memslots(kvm);
+	काष्ठा kvm_memory_slot *memslot = id_to_memslot(slots, slot);
 	phys_addr_t start, end;
 
-	if (WARN_ON_ONCE(!memslot))
-		return;
+	अगर (WARN_ON_ONCE(!memslot))
+		वापस;
 
 	start = memslot->base_gfn << PAGE_SHIFT;
 	end = (memslot->base_gfn + memslot->npages) << PAGE_SHIFT;
@@ -655,70 +656,70 @@ static void kvm_mmu_wp_memory_region(struct kvm *kvm, int slot)
 	stage2_wp_range(&kvm->arch.mmu, start, end);
 	spin_unlock(&kvm->mmu_lock);
 	kvm_flush_remote_tlbs(kvm);
-}
+पूर्ण
 
 /**
- * kvm_mmu_write_protect_pt_masked() - write protect dirty pages
- * @kvm:	The KVM pointer
+ * kvm_mmu_ग_लिखो_protect_pt_masked() - ग_लिखो protect dirty pages
+ * @kvm:	The KVM poपूर्णांकer
  * @slot:	The memory slot associated with mask
  * @gfn_offset:	The gfn offset in memory slot
  * @mask:	The mask of dirty pages at offset 'gfn_offset' in this memory
- *		slot to be write protected
+ *		slot to be ग_लिखो रक्षित
  *
- * Walks bits set in mask write protects the associated pte's. Caller must
+ * Walks bits set in mask ग_लिखो protects the associated pte's. Caller must
  * acquire kvm_mmu_lock.
  */
-static void kvm_mmu_write_protect_pt_masked(struct kvm *kvm,
-		struct kvm_memory_slot *slot,
-		gfn_t gfn_offset, unsigned long mask)
-{
+अटल व्योम kvm_mmu_ग_लिखो_protect_pt_masked(काष्ठा kvm *kvm,
+		काष्ठा kvm_memory_slot *slot,
+		gfn_t gfn_offset, अचिन्हित दीर्घ mask)
+अणु
 	phys_addr_t base_gfn = slot->base_gfn + gfn_offset;
 	phys_addr_t start = (base_gfn +  __ffs(mask)) << PAGE_SHIFT;
 	phys_addr_t end = (base_gfn + __fls(mask) + 1) << PAGE_SHIFT;
 
 	stage2_wp_range(&kvm->arch.mmu, start, end);
-}
+पूर्ण
 
 /*
- * kvm_arch_mmu_enable_log_dirty_pt_masked - enable dirty logging for selected
+ * kvm_arch_mmu_enable_log_dirty_pt_masked - enable dirty logging क्रम selected
  * dirty pages.
  *
- * It calls kvm_mmu_write_protect_pt_masked to write protect selected pages to
- * enable dirty logging for them.
+ * It calls kvm_mmu_ग_लिखो_protect_pt_masked to ग_लिखो protect selected pages to
+ * enable dirty logging क्रम them.
  */
-void kvm_arch_mmu_enable_log_dirty_pt_masked(struct kvm *kvm,
-		struct kvm_memory_slot *slot,
-		gfn_t gfn_offset, unsigned long mask)
-{
-	kvm_mmu_write_protect_pt_masked(kvm, slot, gfn_offset, mask);
-}
+व्योम kvm_arch_mmu_enable_log_dirty_pt_masked(काष्ठा kvm *kvm,
+		काष्ठा kvm_memory_slot *slot,
+		gfn_t gfn_offset, अचिन्हित दीर्घ mask)
+अणु
+	kvm_mmu_ग_लिखो_protect_pt_masked(kvm, slot, gfn_offset, mask);
+पूर्ण
 
-static void clean_dcache_guest_page(kvm_pfn_t pfn, unsigned long size)
-{
+अटल व्योम clean_dcache_guest_page(kvm_pfn_t pfn, अचिन्हित दीर्घ size)
+अणु
 	__clean_dcache_guest_page(pfn, size);
-}
+पूर्ण
 
-static void invalidate_icache_guest_page(kvm_pfn_t pfn, unsigned long size)
-{
+अटल व्योम invalidate_icache_guest_page(kvm_pfn_t pfn, अचिन्हित दीर्घ size)
+अणु
 	__invalidate_icache_guest_page(pfn, size);
-}
+पूर्ण
 
-static void kvm_send_hwpoison_signal(unsigned long address, short lsb)
-{
-	send_sig_mceerr(BUS_MCEERR_AR, (void __user *)address, lsb, current);
-}
+अटल व्योम kvm_send_hwpoison_संकेत(अचिन्हित दीर्घ address, लघु lsb)
+अणु
+	send_sig_mceerr(BUS_MCEERR_AR, (व्योम __user *)address, lsb, current);
+पूर्ण
 
-static bool fault_supports_stage2_huge_mapping(struct kvm_memory_slot *memslot,
-					       unsigned long hva,
-					       unsigned long map_size)
-{
+अटल bool fault_supports_stage2_huge_mapping(काष्ठा kvm_memory_slot *memslot,
+					       अचिन्हित दीर्घ hva,
+					       अचिन्हित दीर्घ map_size)
+अणु
 	gpa_t gpa_start;
 	hva_t uaddr_start, uaddr_end;
-	size_t size;
+	माप_प्रकार size;
 
 	/* The memslot and the VMA are guaranteed to be aligned to PAGE_SIZE */
-	if (map_size == PAGE_SIZE)
-		return true;
+	अगर (map_size == PAGE_SIZE)
+		वापस true;
 
 	size = memslot->npages * PAGE_SIZE;
 
@@ -728,8 +729,8 @@ static bool fault_supports_stage2_huge_mapping(struct kvm_memory_slot *memslot,
 	uaddr_end = uaddr_start + size;
 
 	/*
-	 * Pages belonging to memslots that don't have the same alignment
-	 * within a PMD/PUD for userspace and IPA cannot be mapped with stage-2
+	 * Pages beदीर्घing to memslots that करोn't have the same alignment
+	 * within a PMD/PUD क्रम userspace and IPA cannot be mapped with stage-2
 	 * PMD/PUD entries, because we'll end up mapping the wrong pages.
 	 *
 	 * Consider a layout like the following:
@@ -750,63 +751,63 @@ static bool fault_supports_stage2_huge_mapping(struct kvm_memory_slot *memslot,
 	 *   e -> g
 	 *   f -> h
 	 */
-	if ((gpa_start & (map_size - 1)) != (uaddr_start & (map_size - 1)))
-		return false;
+	अगर ((gpa_start & (map_size - 1)) != (uaddr_start & (map_size - 1)))
+		वापस false;
 
 	/*
 	 * Next, let's make sure we're not trying to map anything not covered
 	 * by the memslot. This means we have to prohibit block size mappings
-	 * for the beginning and end of a non-block aligned and non-block sized
+	 * क्रम the beginning and end of a non-block aligned and non-block sized
 	 * memory slot (illustrated by the head and tail parts of the
 	 * userspace view above containing pages 'abcde' and 'xyz',
 	 * respectively).
 	 *
-	 * Note that it doesn't matter if we do the check using the
+	 * Note that it करोesn't matter अगर we करो the check using the
 	 * userspace_addr or the base_gfn, as both are equally aligned (per
 	 * the check above) and equally sized.
 	 */
-	return (hva & ~(map_size - 1)) >= uaddr_start &&
+	वापस (hva & ~(map_size - 1)) >= uaddr_start &&
 	       (hva & ~(map_size - 1)) + map_size <= uaddr_end;
-}
+पूर्ण
 
 /*
- * Check if the given hva is backed by a transparent huge page (THP) and
+ * Check अगर the given hva is backed by a transparent huge page (THP) and
  * whether it can be mapped using block mapping in stage2. If so, adjust
  * the stage2 PFN and IPA accordingly. Only PMD_SIZE THPs are currently
  * supported. This will need to be updated to support other THP sizes.
  *
  * Returns the size of the mapping.
  */
-static unsigned long
-transparent_hugepage_adjust(struct kvm_memory_slot *memslot,
-			    unsigned long hva, kvm_pfn_t *pfnp,
+अटल अचिन्हित दीर्घ
+transparent_hugepage_adjust(काष्ठा kvm_memory_slot *memslot,
+			    अचिन्हित दीर्घ hva, kvm_pfn_t *pfnp,
 			    phys_addr_t *ipap)
-{
+अणु
 	kvm_pfn_t pfn = *pfnp;
 
 	/*
-	 * Make sure the adjustment is done only for THP pages. Also make
+	 * Make sure the adjusपंचांगent is करोne only क्रम THP pages. Also make
 	 * sure that the HVA and IPA are sufficiently aligned and that the
 	 * block map is contained within the memslot.
 	 */
-	if (kvm_is_transparent_hugepage(pfn) &&
-	    fault_supports_stage2_huge_mapping(memslot, hva, PMD_SIZE)) {
+	अगर (kvm_is_transparent_hugepage(pfn) &&
+	    fault_supports_stage2_huge_mapping(memslot, hva, PMD_SIZE)) अणु
 		/*
 		 * The address we faulted on is backed by a transparent huge
 		 * page.  However, because we map the compound huge page and
-		 * not the individual tail page, we need to transfer the
+		 * not the inभागidual tail page, we need to transfer the
 		 * refcount to the head page.  We have to be careful that the
-		 * THP doesn't start to split while we are adjusting the
+		 * THP करोesn't start to split जबतक we are adjusting the
 		 * refcounts.
 		 *
-		 * We are sure this doesn't happen, because mmu_notifier_retry
-		 * was successful and we are holding the mmu_lock, so if this
+		 * We are sure this करोesn't happen, because mmu_notअगरier_retry
+		 * was successful and we are holding the mmu_lock, so अगर this
 		 * THP is trying to split, it will be blocked in the mmu
-		 * notifier before touching any of the pages, specifically
-		 * before being able to call __split_huge_page_refcount().
+		 * notअगरier beक्रमe touching any of the pages, specअगरically
+		 * beक्रमe being able to call __split_huge_page_refcount().
 		 *
-		 * We can therefore safely transfer the refcount from PG_tail
-		 * to PG_head and switch the pfn from a tail page to the head
+		 * We can thereक्रमe safely transfer the refcount from PG_tail
+		 * to PG_head and चयन the pfn from a tail page to the head
 		 * page accordingly.
 		 */
 		*ipap &= PMD_MASK;
@@ -815,207 +816,207 @@ transparent_hugepage_adjust(struct kvm_memory_slot *memslot,
 		kvm_get_pfn(pfn);
 		*pfnp = pfn;
 
-		return PMD_SIZE;
-	}
+		वापस PMD_SIZE;
+	पूर्ण
 
-	/* Use page mapping if we cannot use block mapping. */
-	return PAGE_SIZE;
-}
+	/* Use page mapping अगर we cannot use block mapping. */
+	वापस PAGE_SIZE;
+पूर्ण
 
-static int user_mem_abort(struct kvm_vcpu *vcpu, phys_addr_t fault_ipa,
-			  struct kvm_memory_slot *memslot, unsigned long hva,
-			  unsigned long fault_status)
-{
-	int ret = 0;
-	bool write_fault, writable, force_pte = false;
+अटल पूर्णांक user_mem_पात(काष्ठा kvm_vcpu *vcpu, phys_addr_t fault_ipa,
+			  काष्ठा kvm_memory_slot *memslot, अचिन्हित दीर्घ hva,
+			  अचिन्हित दीर्घ fault_status)
+अणु
+	पूर्णांक ret = 0;
+	bool ग_लिखो_fault, writable, क्रमce_pte = false;
 	bool exec_fault;
 	bool device = false;
-	unsigned long mmu_seq;
-	struct kvm *kvm = vcpu->kvm;
-	struct kvm_mmu_memory_cache *memcache = &vcpu->arch.mmu_page_cache;
-	struct vm_area_struct *vma;
-	short vma_shift;
+	अचिन्हित दीर्घ mmu_seq;
+	काष्ठा kvm *kvm = vcpu->kvm;
+	काष्ठा kvm_mmu_memory_cache *memcache = &vcpu->arch.mmu_page_cache;
+	काष्ठा vm_area_काष्ठा *vma;
+	लघु vma_shअगरt;
 	gfn_t gfn;
 	kvm_pfn_t pfn;
 	bool logging_active = memslot_is_logging(memslot);
-	unsigned long fault_level = kvm_vcpu_trap_get_fault_level(vcpu);
-	unsigned long vma_pagesize, fault_granule;
-	enum kvm_pgtable_prot prot = KVM_PGTABLE_PROT_R;
-	struct kvm_pgtable *pgt;
+	अचिन्हित दीर्घ fault_level = kvm_vcpu_trap_get_fault_level(vcpu);
+	अचिन्हित दीर्घ vma_pagesize, fault_granule;
+	क्रमागत kvm_pgtable_prot prot = KVM_PGTABLE_PROT_R;
+	काष्ठा kvm_pgtable *pgt;
 
 	fault_granule = 1UL << ARM64_HW_PGTABLE_LEVEL_SHIFT(fault_level);
-	write_fault = kvm_is_write_fault(vcpu);
+	ग_लिखो_fault = kvm_is_ग_लिखो_fault(vcpu);
 	exec_fault = kvm_vcpu_trap_is_exec_fault(vcpu);
-	VM_BUG_ON(write_fault && exec_fault);
+	VM_BUG_ON(ग_लिखो_fault && exec_fault);
 
-	if (fault_status == FSC_PERM && !write_fault && !exec_fault) {
+	अगर (fault_status == FSC_PERM && !ग_लिखो_fault && !exec_fault) अणु
 		kvm_err("Unexpected L2 read permission error\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	/* Let's check if we will get back a huge page backed by hugetlbfs */
-	mmap_read_lock(current->mm);
-	vma = find_vma_intersection(current->mm, hva, hva + 1);
-	if (unlikely(!vma)) {
+	/* Let's check अगर we will get back a huge page backed by hugetlbfs */
+	mmap_पढ़ो_lock(current->mm);
+	vma = find_vma_पूर्णांकersection(current->mm, hva, hva + 1);
+	अगर (unlikely(!vma)) अणु
 		kvm_err("Failed to find VMA for hva 0x%lx\n", hva);
-		mmap_read_unlock(current->mm);
-		return -EFAULT;
-	}
+		mmap_पढ़ो_unlock(current->mm);
+		वापस -EFAULT;
+	पूर्ण
 
-	if (is_vm_hugetlb_page(vma))
-		vma_shift = huge_page_shift(hstate_vma(vma));
-	else
-		vma_shift = PAGE_SHIFT;
+	अगर (is_vm_hugetlb_page(vma))
+		vma_shअगरt = huge_page_shअगरt(hstate_vma(vma));
+	अन्यथा
+		vma_shअगरt = PAGE_SHIFT;
 
-	if (logging_active ||
-	    (vma->vm_flags & VM_PFNMAP)) {
-		force_pte = true;
-		vma_shift = PAGE_SHIFT;
-	}
+	अगर (logging_active ||
+	    (vma->vm_flags & VM_PFNMAP)) अणु
+		क्रमce_pte = true;
+		vma_shअगरt = PAGE_SHIFT;
+	पूर्ण
 
-	switch (vma_shift) {
-#ifndef __PAGETABLE_PMD_FOLDED
-	case PUD_SHIFT:
-		if (fault_supports_stage2_huge_mapping(memslot, hva, PUD_SIZE))
-			break;
+	चयन (vma_shअगरt) अणु
+#अगर_अघोषित __PAGETABLE_PMD_FOLDED
+	हाल PUD_SHIFT:
+		अगर (fault_supports_stage2_huge_mapping(memslot, hva, PUD_SIZE))
+			अवरोध;
 		fallthrough;
-#endif
-	case CONT_PMD_SHIFT:
-		vma_shift = PMD_SHIFT;
+#पूर्ण_अगर
+	हाल CONT_PMD_SHIFT:
+		vma_shअगरt = PMD_SHIFT;
 		fallthrough;
-	case PMD_SHIFT:
-		if (fault_supports_stage2_huge_mapping(memslot, hva, PMD_SIZE))
-			break;
+	हाल PMD_SHIFT:
+		अगर (fault_supports_stage2_huge_mapping(memslot, hva, PMD_SIZE))
+			अवरोध;
 		fallthrough;
-	case CONT_PTE_SHIFT:
-		vma_shift = PAGE_SHIFT;
-		force_pte = true;
+	हाल CONT_PTE_SHIFT:
+		vma_shअगरt = PAGE_SHIFT;
+		क्रमce_pte = true;
 		fallthrough;
-	case PAGE_SHIFT:
-		break;
-	default:
-		WARN_ONCE(1, "Unknown vma_shift %d", vma_shift);
-	}
+	हाल PAGE_SHIFT:
+		अवरोध;
+	शेष:
+		WARN_ONCE(1, "Unknown vma_shift %d", vma_shअगरt);
+	पूर्ण
 
-	vma_pagesize = 1UL << vma_shift;
-	if (vma_pagesize == PMD_SIZE || vma_pagesize == PUD_SIZE)
+	vma_pagesize = 1UL << vma_shअगरt;
+	अगर (vma_pagesize == PMD_SIZE || vma_pagesize == PUD_SIZE)
 		fault_ipa &= ~(vma_pagesize - 1);
 
 	gfn = fault_ipa >> PAGE_SHIFT;
-	mmap_read_unlock(current->mm);
+	mmap_पढ़ो_unlock(current->mm);
 
 	/*
 	 * Permission faults just need to update the existing leaf entry,
-	 * and so normally don't require allocations from the memcache. The
-	 * only exception to this is when dirty logging is enabled at runtime
-	 * and a write fault needs to collapse a block entry into a table.
+	 * and so normally करोn't require allocations from the memcache. The
+	 * only exception to this is when dirty logging is enabled at runसमय
+	 * and a ग_लिखो fault needs to collapse a block entry पूर्णांकo a table.
 	 */
-	if (fault_status != FSC_PERM || (logging_active && write_fault)) {
+	अगर (fault_status != FSC_PERM || (logging_active && ग_लिखो_fault)) अणु
 		ret = kvm_mmu_topup_memory_cache(memcache,
 						 kvm_mmu_cache_min_pages(kvm));
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	mmu_seq = vcpu->kvm->mmu_notifier_seq;
+	mmu_seq = vcpu->kvm->mmu_notअगरier_seq;
 	/*
-	 * Ensure the read of mmu_notifier_seq happens before we call
-	 * gfn_to_pfn_prot (which calls get_user_pages), so that we don't risk
-	 * the page we just got a reference to gets unmapped before we have a
-	 * chance to grab the mmu_lock, which ensure that if the page gets
+	 * Ensure the पढ़ो of mmu_notअगरier_seq happens beक्रमe we call
+	 * gfn_to_pfn_prot (which calls get_user_pages), so that we करोn't risk
+	 * the page we just got a reference to माला_लो unmapped beक्रमe we have a
+	 * chance to grab the mmu_lock, which ensure that अगर the page माला_लो
 	 * unmapped afterwards, the call to kvm_unmap_gfn will take it away
-	 * from us again properly. This smp_rmb() interacts with the smp_wmb()
-	 * in kvm_mmu_notifier_invalidate_<page|range_end>.
+	 * from us again properly. This smp_rmb() पूर्णांकeracts with the smp_wmb()
+	 * in kvm_mmu_notअगरier_invalidate_<page|range_end>.
 	 *
 	 * Besides, __gfn_to_pfn_memslot() instead of gfn_to_pfn_prot() is
-	 * used to avoid unnecessary overhead introduced to locate the memory
-	 * slot because it's always fixed even @gfn is adjusted for huge pages.
+	 * used to aव्योम unnecessary overhead पूर्णांकroduced to locate the memory
+	 * slot because it's always fixed even @gfn is adjusted क्रम huge pages.
 	 */
 	smp_rmb();
 
-	pfn = __gfn_to_pfn_memslot(memslot, gfn, false, NULL,
-				   write_fault, &writable, NULL);
-	if (pfn == KVM_PFN_ERR_HWPOISON) {
-		kvm_send_hwpoison_signal(hva, vma_shift);
-		return 0;
-	}
-	if (is_error_noslot_pfn(pfn))
-		return -EFAULT;
+	pfn = __gfn_to_pfn_memslot(memslot, gfn, false, शून्य,
+				   ग_लिखो_fault, &writable, शून्य);
+	अगर (pfn == KVM_PFN_ERR_HWPOISON) अणु
+		kvm_send_hwpoison_संकेत(hva, vma_shअगरt);
+		वापस 0;
+	पूर्ण
+	अगर (is_error_noslot_pfn(pfn))
+		वापस -EFAULT;
 
-	if (kvm_is_device_pfn(pfn)) {
+	अगर (kvm_is_device_pfn(pfn)) अणु
 		device = true;
-		force_pte = true;
-	} else if (logging_active && !write_fault) {
+		क्रमce_pte = true;
+	पूर्ण अन्यथा अगर (logging_active && !ग_लिखो_fault) अणु
 		/*
-		 * Only actually map the page as writable if this was a write
+		 * Only actually map the page as writable अगर this was a ग_लिखो
 		 * fault.
 		 */
 		writable = false;
-	}
+	पूर्ण
 
-	if (exec_fault && device)
-		return -ENOEXEC;
+	अगर (exec_fault && device)
+		वापस -ENOEXEC;
 
 	spin_lock(&kvm->mmu_lock);
 	pgt = vcpu->arch.hw_mmu->pgt;
-	if (mmu_notifier_retry(kvm, mmu_seq))
-		goto out_unlock;
+	अगर (mmu_notअगरier_retry(kvm, mmu_seq))
+		जाओ out_unlock;
 
 	/*
-	 * If we are not forced to use page mapping, check if we are
-	 * backed by a THP and thus use block mapping if possible.
+	 * If we are not क्रमced to use page mapping, check अगर we are
+	 * backed by a THP and thus use block mapping अगर possible.
 	 */
-	if (vma_pagesize == PAGE_SIZE && !force_pte)
+	अगर (vma_pagesize == PAGE_SIZE && !क्रमce_pte)
 		vma_pagesize = transparent_hugepage_adjust(memslot, hva,
 							   &pfn, &fault_ipa);
-	if (writable)
+	अगर (writable)
 		prot |= KVM_PGTABLE_PROT_W;
 
-	if (fault_status != FSC_PERM && !device)
+	अगर (fault_status != FSC_PERM && !device)
 		clean_dcache_guest_page(pfn, vma_pagesize);
 
-	if (exec_fault) {
+	अगर (exec_fault) अणु
 		prot |= KVM_PGTABLE_PROT_X;
 		invalidate_icache_guest_page(pfn, vma_pagesize);
-	}
+	पूर्ण
 
-	if (device)
+	अगर (device)
 		prot |= KVM_PGTABLE_PROT_DEVICE;
-	else if (cpus_have_const_cap(ARM64_HAS_CACHE_DIC))
+	अन्यथा अगर (cpus_have_स्थिर_cap(ARM64_HAS_CACHE_DIC))
 		prot |= KVM_PGTABLE_PROT_X;
 
 	/*
 	 * Under the premise of getting a FSC_PERM fault, we just need to relax
-	 * permissions only if vma_pagesize equals fault_granule. Otherwise,
+	 * permissions only अगर vma_pagesize equals fault_granule. Otherwise,
 	 * kvm_pgtable_stage2_map() should be called to change block size.
 	 */
-	if (fault_status == FSC_PERM && vma_pagesize == fault_granule) {
+	अगर (fault_status == FSC_PERM && vma_pagesize == fault_granule) अणु
 		ret = kvm_pgtable_stage2_relax_perms(pgt, fault_ipa, prot);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = kvm_pgtable_stage2_map(pgt, fault_ipa, vma_pagesize,
 					     __pfn_to_phys(pfn), prot,
 					     memcache);
-	}
+	पूर्ण
 
-	/* Mark the page dirty only if the fault is handled successfully */
-	if (writable && !ret) {
+	/* Mark the page dirty only अगर the fault is handled successfully */
+	अगर (writable && !ret) अणु
 		kvm_set_pfn_dirty(pfn);
 		mark_page_dirty_in_slot(kvm, memslot, gfn);
-	}
+	पूर्ण
 
 out_unlock:
 	spin_unlock(&kvm->mmu_lock);
 	kvm_set_pfn_accessed(pfn);
 	kvm_release_pfn_clean(pfn);
-	return ret != -EAGAIN ? ret : 0;
-}
+	वापस ret != -EAGAIN ? ret : 0;
+पूर्ण
 
 /* Resolve the access fault by making the page young again. */
-static void handle_access_fault(struct kvm_vcpu *vcpu, phys_addr_t fault_ipa)
-{
+अटल व्योम handle_access_fault(काष्ठा kvm_vcpu *vcpu, phys_addr_t fault_ipa)
+अणु
 	pte_t pte;
 	kvm_pte_t kpte;
-	struct kvm_s2_mmu *mmu;
+	काष्ठा kvm_s2_mmu *mmu;
 
 	trace_kvm_access_fault(fault_ipa);
 
@@ -1025,30 +1026,30 @@ static void handle_access_fault(struct kvm_vcpu *vcpu, phys_addr_t fault_ipa)
 	spin_unlock(&vcpu->kvm->mmu_lock);
 
 	pte = __pte(kpte);
-	if (pte_valid(pte))
+	अगर (pte_valid(pte))
 		kvm_set_pfn_accessed(pte_pfn(pte));
-}
+पूर्ण
 
 /**
- * kvm_handle_guest_abort - handles all 2nd stage aborts
- * @vcpu:	the VCPU pointer
+ * kvm_handle_guest_पात - handles all 2nd stage पातs
+ * @vcpu:	the VCPU poपूर्णांकer
  *
- * Any abort that gets to the host is almost guaranteed to be caused by a
+ * Any पात that माला_लो to the host is almost guaranteed to be caused by a
  * missing second stage translation table entry, which can mean that either the
  * guest simply needs more memory and we must allocate an appropriate page or it
  * can mean that the guest tried to access I/O memory, which is emulated by user
  * space. The distinction is based on the IPA causing the fault and whether this
- * memory region has been registered as standard RAM by user space.
+ * memory region has been रेजिस्टरed as standard RAM by user space.
  */
-int kvm_handle_guest_abort(struct kvm_vcpu *vcpu)
-{
-	unsigned long fault_status;
+पूर्णांक kvm_handle_guest_पात(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित दीर्घ fault_status;
 	phys_addr_t fault_ipa;
-	struct kvm_memory_slot *memslot;
-	unsigned long hva;
-	bool is_iabt, write_fault, writable;
+	काष्ठा kvm_memory_slot *memslot;
+	अचिन्हित दीर्घ hva;
+	bool is_iabt, ग_लिखो_fault, writable;
 	gfn_t gfn;
-	int ret, idx;
+	पूर्णांक ret, idx;
 
 	fault_status = kvm_vcpu_trap_get_fault_type(vcpu);
 
@@ -1056,69 +1057,69 @@ int kvm_handle_guest_abort(struct kvm_vcpu *vcpu)
 	is_iabt = kvm_vcpu_trap_is_iabt(vcpu);
 
 	/* Synchronous External Abort? */
-	if (kvm_vcpu_abt_issea(vcpu)) {
+	अगर (kvm_vcpu_abt_issea(vcpu)) अणु
 		/*
-		 * For RAS the host kernel may handle this abort.
-		 * There is no need to pass the error into the guest.
+		 * For RAS the host kernel may handle this पात.
+		 * There is no need to pass the error पूर्णांकo the guest.
 		 */
-		if (kvm_handle_guest_sea(fault_ipa, kvm_vcpu_get_esr(vcpu)))
+		अगर (kvm_handle_guest_sea(fault_ipa, kvm_vcpu_get_esr(vcpu)))
 			kvm_inject_vabt(vcpu);
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	trace_kvm_guest_fault(*vcpu_pc(vcpu), kvm_vcpu_get_esr(vcpu),
 			      kvm_vcpu_get_hfar(vcpu), fault_ipa);
 
-	/* Check the stage-2 fault is trans. fault or write fault */
-	if (fault_status != FSC_FAULT && fault_status != FSC_PERM &&
-	    fault_status != FSC_ACCESS) {
+	/* Check the stage-2 fault is trans. fault or ग_लिखो fault */
+	अगर (fault_status != FSC_FAULT && fault_status != FSC_PERM &&
+	    fault_status != FSC_ACCESS) अणु
 		kvm_err("Unsupported FSC: EC=%#x xFSC=%#lx ESR_EL2=%#lx\n",
 			kvm_vcpu_trap_get_class(vcpu),
-			(unsigned long)kvm_vcpu_trap_get_fault(vcpu),
-			(unsigned long)kvm_vcpu_get_esr(vcpu));
-		return -EFAULT;
-	}
+			(अचिन्हित दीर्घ)kvm_vcpu_trap_get_fault(vcpu),
+			(अचिन्हित दीर्घ)kvm_vcpu_get_esr(vcpu));
+		वापस -EFAULT;
+	पूर्ण
 
-	idx = srcu_read_lock(&vcpu->kvm->srcu);
+	idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
 
 	gfn = fault_ipa >> PAGE_SHIFT;
 	memslot = gfn_to_memslot(vcpu->kvm, gfn);
 	hva = gfn_to_hva_memslot_prot(memslot, gfn, &writable);
-	write_fault = kvm_is_write_fault(vcpu);
-	if (kvm_is_error_hva(hva) || (write_fault && !writable)) {
+	ग_लिखो_fault = kvm_is_ग_लिखो_fault(vcpu);
+	अगर (kvm_is_error_hva(hva) || (ग_लिखो_fault && !writable)) अणु
 		/*
-		 * The guest has put either its instructions or its page-tables
-		 * somewhere it shouldn't have. Userspace won't be able to do
-		 * anything about this (there's no syndrome for a start), so
-		 * re-inject the abort back into the guest.
+		 * The guest has put either its inकाष्ठाions or its page-tables
+		 * somewhere it shouldn't have. Userspace won't be able to करो
+		 * anything about this (there's no syndrome क्रम a start), so
+		 * re-inject the पात back पूर्णांकo the guest.
 		 */
-		if (is_iabt) {
+		अगर (is_iabt) अणु
 			ret = -ENOEXEC;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (kvm_vcpu_abt_iss1tw(vcpu)) {
+		अगर (kvm_vcpu_abt_iss1tw(vcpu)) अणु
 			kvm_inject_dabt(vcpu, kvm_vcpu_get_hfar(vcpu));
 			ret = 1;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		/*
-		 * Check for a cache maintenance operation. Since we
+		 * Check क्रम a cache मुख्यtenance operation. Since we
 		 * ended-up here, we know it is outside of any memory
-		 * slot. But we can't find out if that is for a device,
-		 * or if the guest is just being stupid. The only thing
-		 * we know for sure is that this range cannot be cached.
+		 * slot. But we can't find out अगर that is क्रम a device,
+		 * or अगर the guest is just being stupid. The only thing
+		 * we know क्रम sure is that this range cannot be cached.
 		 *
 		 * So let's assume that the guest is just being
-		 * cautious, and skip the instruction.
+		 * cautious, and skip the inकाष्ठाion.
 		 */
-		if (kvm_is_error_hva(hva) && kvm_vcpu_dabt_is_cm(vcpu)) {
+		अगर (kvm_is_error_hva(hva) && kvm_vcpu_dabt_is_cm(vcpu)) अणु
 			kvm_incr_pc(vcpu);
 			ret = 1;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		/*
 		 * The IPA is reported as [MAX:12], so we need to
@@ -1127,50 +1128,50 @@ int kvm_handle_guest_abort(struct kvm_vcpu *vcpu)
 		 * of the page size.
 		 */
 		fault_ipa |= kvm_vcpu_get_hfar(vcpu) & ((1 << 12) - 1);
-		ret = io_mem_abort(vcpu, fault_ipa);
-		goto out_unlock;
-	}
+		ret = io_mem_पात(vcpu, fault_ipa);
+		जाओ out_unlock;
+	पूर्ण
 
-	/* Userspace should not be able to register out-of-bounds IPAs */
+	/* Userspace should not be able to रेजिस्टर out-of-bounds IPAs */
 	VM_BUG_ON(fault_ipa >= kvm_phys_size(vcpu->kvm));
 
-	if (fault_status == FSC_ACCESS) {
+	अगर (fault_status == FSC_ACCESS) अणु
 		handle_access_fault(vcpu, fault_ipa);
 		ret = 1;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	ret = user_mem_abort(vcpu, fault_ipa, memslot, hva, fault_status);
-	if (ret == 0)
+	ret = user_mem_पात(vcpu, fault_ipa, memslot, hva, fault_status);
+	अगर (ret == 0)
 		ret = 1;
 out:
-	if (ret == -ENOEXEC) {
+	अगर (ret == -ENOEXEC) अणु
 		kvm_inject_pabt(vcpu, kvm_vcpu_get_hfar(vcpu));
 		ret = 1;
-	}
+	पूर्ण
 out_unlock:
-	srcu_read_unlock(&vcpu->kvm->srcu, idx);
-	return ret;
-}
+	srcu_पढ़ो_unlock(&vcpu->kvm->srcu, idx);
+	वापस ret;
+पूर्ण
 
-bool kvm_unmap_gfn_range(struct kvm *kvm, struct kvm_gfn_range *range)
-{
-	if (!kvm->arch.mmu.pgt)
-		return false;
+bool kvm_unmap_gfn_range(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
+अणु
+	अगर (!kvm->arch.mmu.pgt)
+		वापस false;
 
 	__unmap_stage2_range(&kvm->arch.mmu, range->start << PAGE_SHIFT,
 			     (range->end - range->start) << PAGE_SHIFT,
 			     range->may_block);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool kvm_set_spte_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
-{
+bool kvm_set_spte_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
+अणु
 	kvm_pfn_t pfn = pte_pfn(range->pte);
 
-	if (!kvm->arch.mmu.pgt)
-		return false;
+	अगर (!kvm->arch.mmu.pgt)
+		वापस false;
 
 	WARN_ON(range->end - range->start != 1);
 
@@ -1181,82 +1182,82 @@ bool kvm_set_spte_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
 	clean_dcache_guest_page(pfn, PAGE_SIZE);
 
 	/*
-	 * The MMU notifiers will have unmapped a huge PMD before calling
+	 * The MMU notअगरiers will have unmapped a huge PMD beक्रमe calling
 	 * ->change_pte() (which in turn calls kvm_set_spte_gfn()) and
-	 * therefore we never need to clear out a huge PMD through this
+	 * thereक्रमe we never need to clear out a huge PMD through this
 	 * calling path and a memcache is not required.
 	 */
 	kvm_pgtable_stage2_map(kvm->arch.mmu.pgt, range->start << PAGE_SHIFT,
 			       PAGE_SIZE, __pfn_to_phys(pfn),
-			       KVM_PGTABLE_PROT_R, NULL);
+			       KVM_PGTABLE_PROT_R, शून्य);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool kvm_age_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
-{
+bool kvm_age_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
+अणु
 	u64 size = (range->end - range->start) << PAGE_SHIFT;
 	kvm_pte_t kpte;
 	pte_t pte;
 
-	if (!kvm->arch.mmu.pgt)
-		return false;
+	अगर (!kvm->arch.mmu.pgt)
+		वापस false;
 
 	WARN_ON(size != PAGE_SIZE && size != PMD_SIZE && size != PUD_SIZE);
 
 	kpte = kvm_pgtable_stage2_mkold(kvm->arch.mmu.pgt,
 					range->start << PAGE_SHIFT);
 	pte = __pte(kpte);
-	return pte_valid(pte) && pte_young(pte);
-}
+	वापस pte_valid(pte) && pte_young(pte);
+पूर्ण
 
-bool kvm_test_age_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
-{
-	if (!kvm->arch.mmu.pgt)
-		return false;
+bool kvm_test_age_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
+अणु
+	अगर (!kvm->arch.mmu.pgt)
+		वापस false;
 
-	return kvm_pgtable_stage2_is_young(kvm->arch.mmu.pgt,
+	वापस kvm_pgtable_stage2_is_young(kvm->arch.mmu.pgt,
 					   range->start << PAGE_SHIFT);
-}
+पूर्ण
 
-phys_addr_t kvm_mmu_get_httbr(void)
-{
-	return __pa(hyp_pgtable->pgd);
-}
+phys_addr_t kvm_mmu_get_httbr(व्योम)
+अणु
+	वापस __pa(hyp_pgtable->pgd);
+पूर्ण
 
-phys_addr_t kvm_get_idmap_vector(void)
-{
-	return hyp_idmap_vector;
-}
+phys_addr_t kvm_get_idmap_vector(व्योम)
+अणु
+	वापस hyp_idmap_vector;
+पूर्ण
 
-static int kvm_map_idmap_text(void)
-{
-	unsigned long size = hyp_idmap_end - hyp_idmap_start;
-	int err = __create_hyp_mappings(hyp_idmap_start, size, hyp_idmap_start,
+अटल पूर्णांक kvm_map_idmap_text(व्योम)
+अणु
+	अचिन्हित दीर्घ size = hyp_idmap_end - hyp_idmap_start;
+	पूर्णांक err = __create_hyp_mappings(hyp_idmap_start, size, hyp_idmap_start,
 					PAGE_HYP_EXEC);
-	if (err)
+	अगर (err)
 		kvm_err("Failed to idmap %lx-%lx\n",
 			hyp_idmap_start, hyp_idmap_end);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void *kvm_hyp_zalloc_page(void *arg)
-{
-	return (void *)get_zeroed_page(GFP_KERNEL);
-}
+अटल व्योम *kvm_hyp_zalloc_page(व्योम *arg)
+अणु
+	वापस (व्योम *)get_zeroed_page(GFP_KERNEL);
+पूर्ण
 
-static struct kvm_pgtable_mm_ops kvm_hyp_mm_ops = {
+अटल काष्ठा kvm_pgtable_mm_ops kvm_hyp_mm_ops = अणु
 	.zalloc_page		= kvm_hyp_zalloc_page,
 	.get_page		= kvm_host_get_page,
 	.put_page		= kvm_host_put_page,
 	.phys_to_virt		= kvm_host_va,
 	.virt_to_phys		= kvm_host_pa,
-};
+पूर्ण;
 
-int kvm_mmu_init(u32 *hyp_va_bits)
-{
-	int err;
+पूर्णांक kvm_mmu_init(u32 *hyp_va_bits)
+अणु
+	पूर्णांक err;
 
 	hyp_idmap_start = __pa_symbol(__hyp_idmap_text_start);
 	hyp_idmap_start = ALIGN_DOWN(hyp_idmap_start, PAGE_SIZE);
@@ -1265,8 +1266,8 @@ int kvm_mmu_init(u32 *hyp_va_bits)
 	hyp_idmap_vector = __pa_symbol(__kvm_hyp_init);
 
 	/*
-	 * We rely on the linker script to ensure at build time that the HYP
-	 * init code does not cross a page boundary.
+	 * We rely on the linker script to ensure at build समय that the HYP
+	 * init code करोes not cross a page boundary.
 	 */
 	BUG_ON((hyp_idmap_start ^ (hyp_idmap_end - 1)) & PAGE_MASK);
 
@@ -1275,95 +1276,95 @@ int kvm_mmu_init(u32 *hyp_va_bits)
 	kvm_debug("IDMAP page: %lx\n", hyp_idmap_start);
 	kvm_debug("HYP VA range: %lx:%lx\n",
 		  kern_hyp_va(PAGE_OFFSET),
-		  kern_hyp_va((unsigned long)high_memory - 1));
+		  kern_hyp_va((अचिन्हित दीर्घ)high_memory - 1));
 
-	if (hyp_idmap_start >= kern_hyp_va(PAGE_OFFSET) &&
-	    hyp_idmap_start <  kern_hyp_va((unsigned long)high_memory - 1) &&
-	    hyp_idmap_start != (unsigned long)__hyp_idmap_text_start) {
+	अगर (hyp_idmap_start >= kern_hyp_va(PAGE_OFFSET) &&
+	    hyp_idmap_start <  kern_hyp_va((अचिन्हित दीर्घ)high_memory - 1) &&
+	    hyp_idmap_start != (अचिन्हित दीर्घ)__hyp_idmap_text_start) अणु
 		/*
-		 * The idmap page is intersecting with the VA space,
-		 * it is not safe to continue further.
+		 * The idmap page is पूर्णांकersecting with the VA space,
+		 * it is not safe to जारी further.
 		 */
 		kvm_err("IDMAP intersecting with HYP VA, unable to continue\n");
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	hyp_pgtable = kzalloc(sizeof(*hyp_pgtable), GFP_KERNEL);
-	if (!hyp_pgtable) {
+	hyp_pgtable = kzalloc(माप(*hyp_pgtable), GFP_KERNEL);
+	अगर (!hyp_pgtable) अणु
 		kvm_err("Hyp mode page-table not allocated\n");
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = kvm_pgtable_hyp_init(hyp_pgtable, *hyp_va_bits, &kvm_hyp_mm_ops);
-	if (err)
-		goto out_free_pgtable;
+	अगर (err)
+		जाओ out_मुक्त_pgtable;
 
 	err = kvm_map_idmap_text();
-	if (err)
-		goto out_destroy_pgtable;
+	अगर (err)
+		जाओ out_destroy_pgtable;
 
 	io_map_base = hyp_idmap_start;
-	return 0;
+	वापस 0;
 
 out_destroy_pgtable:
 	kvm_pgtable_hyp_destroy(hyp_pgtable);
-out_free_pgtable:
-	kfree(hyp_pgtable);
-	hyp_pgtable = NULL;
+out_मुक्त_pgtable:
+	kमुक्त(hyp_pgtable);
+	hyp_pgtable = शून्य;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void kvm_arch_commit_memory_region(struct kvm *kvm,
-				   const struct kvm_userspace_memory_region *mem,
-				   struct kvm_memory_slot *old,
-				   const struct kvm_memory_slot *new,
-				   enum kvm_mr_change change)
-{
+व्योम kvm_arch_commit_memory_region(काष्ठा kvm *kvm,
+				   स्थिर काष्ठा kvm_userspace_memory_region *mem,
+				   काष्ठा kvm_memory_slot *old,
+				   स्थिर काष्ठा kvm_memory_slot *new,
+				   क्रमागत kvm_mr_change change)
+अणु
 	/*
-	 * At this point memslot has been committed and there is an
-	 * allocated dirty_bitmap[], dirty pages will be tracked while the
-	 * memory slot is write protected.
+	 * At this poपूर्णांक memslot has been committed and there is an
+	 * allocated dirty_biपंचांगap[], dirty pages will be tracked जबतक the
+	 * memory slot is ग_लिखो रक्षित.
 	 */
-	if (change != KVM_MR_DELETE && mem->flags & KVM_MEM_LOG_DIRTY_PAGES) {
+	अगर (change != KVM_MR_DELETE && mem->flags & KVM_MEM_LOG_सूचीTY_PAGES) अणु
 		/*
-		 * If we're with initial-all-set, we don't need to write
+		 * If we're with initial-all-set, we don't need to ग_लिखो
 		 * protect any pages because they're all reported as dirty.
-		 * Huge pages and normal pages will be write protect gradually.
+		 * Huge pages and normal pages will be ग_लिखो protect gradually.
 		 */
-		if (!kvm_dirty_log_manual_protect_and_init_set(kvm)) {
+		अगर (!kvm_dirty_log_manual_protect_and_init_set(kvm)) अणु
 			kvm_mmu_wp_memory_region(kvm, mem->slot);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int kvm_arch_prepare_memory_region(struct kvm *kvm,
-				   struct kvm_memory_slot *memslot,
-				   const struct kvm_userspace_memory_region *mem,
-				   enum kvm_mr_change change)
-{
+पूर्णांक kvm_arch_prepare_memory_region(काष्ठा kvm *kvm,
+				   काष्ठा kvm_memory_slot *memslot,
+				   स्थिर काष्ठा kvm_userspace_memory_region *mem,
+				   क्रमागत kvm_mr_change change)
+अणु
 	hva_t hva = mem->userspace_addr;
 	hva_t reg_end = hva + mem->memory_size;
 	bool writable = !(mem->flags & KVM_MEM_READONLY);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (change != KVM_MR_CREATE && change != KVM_MR_MOVE &&
+	अगर (change != KVM_MR_CREATE && change != KVM_MR_MOVE &&
 			change != KVM_MR_FLAGS_ONLY)
-		return 0;
+		वापस 0;
 
 	/*
 	 * Prevent userspace from creating a memory region outside of the IPA
 	 * space addressable by the KVM guest IPA space.
 	 */
-	if ((memslot->base_gfn + memslot->npages) > (kvm_phys_size(kvm) >> PAGE_SHIFT))
-		return -EFAULT;
+	अगर ((memslot->base_gfn + memslot->npages) > (kvm_phys_size(kvm) >> PAGE_SHIFT))
+		वापस -EFAULT;
 
-	mmap_read_lock(current->mm);
+	mmap_पढ़ो_lock(current->mm);
 	/*
 	 * A memory region could potentially cover multiple VMAs, and any holes
-	 * between them, so iterate over all of them to find out if we can map
+	 * between them, so iterate over all of them to find out अगर we can map
 	 * any of them right now.
 	 *
 	 *     +--------------------------------------------+
@@ -1373,21 +1374,21 @@ int kvm_arch_prepare_memory_region(struct kvm *kvm,
 	 *     |               memory region                |
 	 *     +--------------------------------------------+
 	 */
-	do {
-		struct vm_area_struct *vma;
+	करो अणु
+		काष्ठा vm_area_काष्ठा *vma;
 		hva_t vm_start, vm_end;
 
-		vma = find_vma_intersection(current->mm, hva, reg_end);
-		if (!vma)
-			break;
+		vma = find_vma_पूर्णांकersection(current->mm, hva, reg_end);
+		अगर (!vma)
+			अवरोध;
 
 		/*
-		 * Take the intersection of this VMA with the memory region
+		 * Take the पूर्णांकersection of this VMA with the memory region
 		 */
 		vm_start = max(hva, vma->vm_start);
 		vm_end = min(reg_end, vma->vm_end);
 
-		if (vma->vm_flags & VM_PFNMAP) {
+		अगर (vma->vm_flags & VM_PFNMAP) अणु
 			gpa_t gpa = mem->guest_phys_addr +
 				    (vm_start - mem->userspace_addr);
 			phys_addr_t pa;
@@ -1396,122 +1397,122 @@ int kvm_arch_prepare_memory_region(struct kvm *kvm,
 			pa += vm_start - vma->vm_start;
 
 			/* IO region dirty page logging not allowed */
-			if (memslot->flags & KVM_MEM_LOG_DIRTY_PAGES) {
+			अगर (memslot->flags & KVM_MEM_LOG_सूचीTY_PAGES) अणु
 				ret = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			ret = kvm_phys_addr_ioremap(kvm, gpa, pa,
 						    vm_end - vm_start,
 						    writable);
-			if (ret)
-				break;
-		}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
 		hva = vm_end;
-	} while (hva < reg_end);
+	पूर्ण जबतक (hva < reg_end);
 
-	if (change == KVM_MR_FLAGS_ONLY)
-		goto out;
+	अगर (change == KVM_MR_FLAGS_ONLY)
+		जाओ out;
 
 	spin_lock(&kvm->mmu_lock);
-	if (ret)
+	अगर (ret)
 		unmap_stage2_range(&kvm->arch.mmu, mem->guest_phys_addr, mem->memory_size);
-	else if (!cpus_have_final_cap(ARM64_HAS_STAGE2_FWB))
+	अन्यथा अगर (!cpus_have_final_cap(ARM64_HAS_STAGE2_FWB))
 		stage2_flush_memslot(kvm, memslot);
 	spin_unlock(&kvm->mmu_lock);
 out:
-	mmap_read_unlock(current->mm);
-	return ret;
-}
+	mmap_पढ़ो_unlock(current->mm);
+	वापस ret;
+पूर्ण
 
-void kvm_arch_free_memslot(struct kvm *kvm, struct kvm_memory_slot *slot)
-{
-}
+व्योम kvm_arch_मुक्त_memslot(काष्ठा kvm *kvm, काष्ठा kvm_memory_slot *slot)
+अणु
+पूर्ण
 
-void kvm_arch_memslots_updated(struct kvm *kvm, u64 gen)
-{
-}
+व्योम kvm_arch_memslots_updated(काष्ठा kvm *kvm, u64 gen)
+अणु
+पूर्ण
 
-void kvm_arch_flush_shadow_all(struct kvm *kvm)
-{
-	kvm_free_stage2_pgd(&kvm->arch.mmu);
-}
+व्योम kvm_arch_flush_shaकरोw_all(काष्ठा kvm *kvm)
+अणु
+	kvm_मुक्त_stage2_pgd(&kvm->arch.mmu);
+पूर्ण
 
-void kvm_arch_flush_shadow_memslot(struct kvm *kvm,
-				   struct kvm_memory_slot *slot)
-{
+व्योम kvm_arch_flush_shaकरोw_memslot(काष्ठा kvm *kvm,
+				   काष्ठा kvm_memory_slot *slot)
+अणु
 	gpa_t gpa = slot->base_gfn << PAGE_SHIFT;
 	phys_addr_t size = slot->npages << PAGE_SHIFT;
 
 	spin_lock(&kvm->mmu_lock);
 	unmap_stage2_range(&kvm->arch.mmu, gpa, size);
 	spin_unlock(&kvm->mmu_lock);
-}
+पूर्ण
 
 /*
- * See note at ARMv7 ARM B1.14.4 (TL;DR: S/W ops are not easily virtualized).
+ * See note at ARMv7 ARM B1.14.4 (TL;DR: S/W ops are not easily भवized).
  *
  * Main problems:
  * - S/W ops are local to a CPU (not broadcast)
  * - We have line migration behind our back (speculation)
- * - System caches don't support S/W at all (damn!)
+ * - System caches करोn't support S/W at all (damn!)
  *
- * In the face of the above, the best we can do is to try and convert
+ * In the face of the above, the best we can करो is to try and convert
  * S/W ops to VA ops. Because the guest is not allowed to infer the
  * S/W to PA mapping, it can only use S/W to nuke the whole cache,
- * which is a rather good thing for us.
+ * which is a rather good thing क्रम us.
  *
  * Also, it is only used when turning caches on/off ("The expected
- * usage of the cache maintenance instructions that operate by set/way
- * is associated with the cache maintenance instructions associated
- * with the powerdown and powerup of caches, if this is required by
+ * usage of the cache मुख्यtenance inकाष्ठाions that operate by set/way
+ * is associated with the cache मुख्यtenance inकाष्ठाions associated
+ * with the घातerकरोwn and घातerup of caches, अगर this is required by
  * the implementation.").
  *
  * We use the following policy:
  *
  * - If we trap a S/W operation, we enable VM trapping to detect
- *   caches being turned on/off, and do a full clean.
+ *   caches being turned on/off, and करो a full clean.
  *
  * - We flush the caches on both caches being turned on and off.
  *
  * - Once the caches are enabled, we stop trapping VM ops.
  */
-void kvm_set_way_flush(struct kvm_vcpu *vcpu)
-{
-	unsigned long hcr = *vcpu_hcr(vcpu);
+व्योम kvm_set_way_flush(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित दीर्घ hcr = *vcpu_hcr(vcpu);
 
 	/*
-	 * If this is the first time we do a S/W operation
+	 * If this is the first समय we करो a S/W operation
 	 * (i.e. HCR_TVM not set) flush the whole memory, and set the
 	 * VM trapping.
 	 *
-	 * Otherwise, rely on the VM trapping to wait for the MMU +
-	 * Caches to be turned off. At that point, we'll be able to
+	 * Otherwise, rely on the VM trapping to रुको क्रम the MMU +
+	 * Caches to be turned off. At that poपूर्णांक, we'll be able to
 	 * clean the caches again.
 	 */
-	if (!(hcr & HCR_TVM)) {
+	अगर (!(hcr & HCR_TVM)) अणु
 		trace_kvm_set_way_flush(*vcpu_pc(vcpu),
 					vcpu_has_cache_enabled(vcpu));
 		stage2_flush_vm(vcpu->kvm);
 		*vcpu_hcr(vcpu) = hcr | HCR_TVM;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void kvm_toggle_cache(struct kvm_vcpu *vcpu, bool was_enabled)
-{
+व्योम kvm_toggle_cache(काष्ठा kvm_vcpu *vcpu, bool was_enabled)
+अणु
 	bool now_enabled = vcpu_has_cache_enabled(vcpu);
 
 	/*
-	 * If switching the MMU+caches on, need to invalidate the caches.
-	 * If switching it off, need to clean the caches.
-	 * Clean + invalidate does the trick always.
+	 * If चयनing the MMU+caches on, need to invalidate the caches.
+	 * If चयनing it off, need to clean the caches.
+	 * Clean + invalidate करोes the trick always.
 	 */
-	if (now_enabled != was_enabled)
+	अगर (now_enabled != was_enabled)
 		stage2_flush_vm(vcpu->kvm);
 
 	/* Caches are now on, stop trapping VM ops (until a S/W op) */
-	if (now_enabled)
+	अगर (now_enabled)
 		*vcpu_hcr(vcpu) &= ~HCR_TVM;
 
 	trace_kvm_toggle_cache(*vcpu_pc(vcpu), was_enabled, now_enabled);
-}
+पूर्ण

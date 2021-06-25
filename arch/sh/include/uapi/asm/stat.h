@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __ASM_SH_STAT_H
-#define __ASM_SH_STAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __ASM_SH_STAT_H
+#घोषणा __ASM_SH_STAT_H
 
-struct __old_kernel_stat {
-	unsigned short st_dev;
-	unsigned short st_ino;
-	unsigned short st_mode;
-	unsigned short st_nlink;
-	unsigned short st_uid;
-	unsigned short st_gid;
-	unsigned short st_rdev;
-	unsigned long  st_size;
-	unsigned long  st_atime;
-	unsigned long  st_mtime;
-	unsigned long  st_ctime;
-};
+काष्ठा __old_kernel_stat अणु
+	अचिन्हित लघु st_dev;
+	अचिन्हित लघु st_ino;
+	अचिन्हित लघु st_mode;
+	अचिन्हित लघु st_nlink;
+	अचिन्हित लघु st_uid;
+	अचिन्हित लघु st_gid;
+	अचिन्हित लघु st_rdev;
+	अचिन्हित दीर्घ  st_size;
+	अचिन्हित दीर्घ  st_aसमय;
+	अचिन्हित दीर्घ  st_mसमय;
+	अचिन्हित दीर्घ  st_स_समय;
+पूर्ण;
 
-struct stat {
-	unsigned long  st_dev;
-	unsigned long  st_ino;
-	unsigned short st_mode;
-	unsigned short st_nlink;
-	unsigned short st_uid;
-	unsigned short st_gid;
-	unsigned long  st_rdev;
-	unsigned long  st_size;
-	unsigned long  st_blksize;
-	unsigned long  st_blocks;
-	unsigned long  st_atime;
-	unsigned long  st_atime_nsec;
-	unsigned long  st_mtime;
-	unsigned long  st_mtime_nsec;
-	unsigned long  st_ctime;
-	unsigned long  st_ctime_nsec;
-	unsigned long  __unused4;
-	unsigned long  __unused5;
-};
+काष्ठा stat अणु
+	अचिन्हित दीर्घ  st_dev;
+	अचिन्हित दीर्घ  st_ino;
+	अचिन्हित लघु st_mode;
+	अचिन्हित लघु st_nlink;
+	अचिन्हित लघु st_uid;
+	अचिन्हित लघु st_gid;
+	अचिन्हित दीर्घ  st_rdev;
+	अचिन्हित दीर्घ  st_size;
+	अचिन्हित दीर्घ  st_blksize;
+	अचिन्हित दीर्घ  st_blocks;
+	अचिन्हित दीर्घ  st_aसमय;
+	अचिन्हित दीर्घ  st_aसमय_nsec;
+	अचिन्हित दीर्घ  st_mसमय;
+	अचिन्हित दीर्घ  st_mसमय_nsec;
+	अचिन्हित दीर्घ  st_स_समय;
+	अचिन्हित दीर्घ  st_स_समय_nsec;
+	अचिन्हित दीर्घ  __unused4;
+	अचिन्हित दीर्घ  __unused5;
+पूर्ण;
 
-/* This matches struct stat64 in glibc2.1, hence the absolutely
+/* This matches काष्ठा stat64 in glibc2.1, hence the असलolutely
  * insane amounts of padding around dev_t's.
  */
-struct stat64 {
-	unsigned long long	st_dev;
-	unsigned char	__pad0[4];
+काष्ठा stat64 अणु
+	अचिन्हित दीर्घ दीर्घ	st_dev;
+	अचिन्हित अक्षर	__pad0[4];
 
-#define STAT64_HAS_BROKEN_ST_INO	1
-	unsigned long	__st_ino;
+#घोषणा STAT64_HAS_BROKEN_ST_INO	1
+	अचिन्हित दीर्घ	__st_ino;
 
-	unsigned int	st_mode;
-	unsigned int	st_nlink;
+	अचिन्हित पूर्णांक	st_mode;
+	अचिन्हित पूर्णांक	st_nlink;
 
-	unsigned long	st_uid;
-	unsigned long	st_gid;
+	अचिन्हित दीर्घ	st_uid;
+	अचिन्हित दीर्घ	st_gid;
 
-	unsigned long long	st_rdev;
-	unsigned char	__pad3[4];
+	अचिन्हित दीर्घ दीर्घ	st_rdev;
+	अचिन्हित अक्षर	__pad3[4];
 
-	long long	st_size;
-	unsigned long	st_blksize;
+	दीर्घ दीर्घ	st_size;
+	अचिन्हित दीर्घ	st_blksize;
 
-	unsigned long long	st_blocks;	/* Number 512-byte blocks allocated. */
+	अचिन्हित दीर्घ दीर्घ	st_blocks;	/* Number 512-byte blocks allocated. */
 
-	unsigned long	st_atime;
-	unsigned long	st_atime_nsec;
+	अचिन्हित दीर्घ	st_aसमय;
+	अचिन्हित दीर्घ	st_aसमय_nsec;
 
-	unsigned long	st_mtime;
-	unsigned long	st_mtime_nsec;
+	अचिन्हित दीर्घ	st_mसमय;
+	अचिन्हित दीर्घ	st_mसमय_nsec;
 
-	unsigned long	st_ctime;
-	unsigned long	st_ctime_nsec;
+	अचिन्हित दीर्घ	st_स_समय;
+	अचिन्हित दीर्घ	st_स_समय_nsec;
 
-	unsigned long long	st_ino;
-};
+	अचिन्हित दीर्घ दीर्घ	st_ino;
+पूर्ण;
 
-#define STAT_HAVE_NSEC 1
+#घोषणा STAT_HAVE_NSEC 1
 
-#endif /* __ASM_SH_STAT_H */
+#पूर्ण_अगर /* __ASM_SH_STAT_H */

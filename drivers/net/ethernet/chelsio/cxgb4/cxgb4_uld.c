@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * cxgb4_uld.c:Chelsio Upper Layer Driver Interface for T4/T5/T6 SGE management
+ * cxgb4_uld.c:Chelsio Upper Layer Driver Interface क्रम T4/T5/T6 SGE management
  *
  * Copyright (c) 2016 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -35,565 +36,565 @@
  *  Written by: Hariprasad Shenai (hariprasad@chelsio.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/debugfs.h>
-#include <linux/export.h>
-#include <linux/list.h>
-#include <linux/skbuff.h>
-#include <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/export.h>
+#समावेश <linux/list.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/pci.h>
 
-#include "cxgb4.h"
-#include "cxgb4_uld.h"
-#include "t4_regs.h"
-#include "t4fw_api.h"
-#include "t4_msg.h"
+#समावेश "cxgb4.h"
+#समावेश "cxgb4_uld.h"
+#समावेश "t4_regs.h"
+#समावेश "t4fw_api.h"
+#समावेश "t4_msg.h"
 
-#define for_each_uldrxq(m, i) for (i = 0; i < ((m)->nrxq + (m)->nciq); i++)
+#घोषणा क्रम_each_uldrxq(m, i) क्रम (i = 0; i < ((m)->nrxq + (m)->nciq); i++)
 
 /* Flush the aggregated lro sessions */
-static void uldrx_flush_handler(struct sge_rspq *q)
-{
-	struct adapter *adap = q->adap;
+अटल व्योम uldrx_flush_handler(काष्ठा sge_rspq *q)
+अणु
+	काष्ठा adapter *adap = q->adap;
 
-	if (adap->uld[q->uld].lro_flush)
+	अगर (adap->uld[q->uld].lro_flush)
 		adap->uld[q->uld].lro_flush(&q->lro_mgr);
-}
+पूर्ण
 
 /**
- *	uldrx_handler - response queue handler for ULD queues
+ *	uldrx_handler - response queue handler क्रम ULD queues
  *	@q: the response queue that received the packet
  *	@rsp: the response queue descriptor holding the offload message
  *	@gl: the gather list of packet fragments
  *
- *	Deliver an ingress offload packet to a ULD.  All processing is done by
- *	the ULD, we just maintain statistics.
+ *	Deliver an ingress offload packet to a ULD.  All processing is करोne by
+ *	the ULD, we just मुख्यtain statistics.
  */
-static int uldrx_handler(struct sge_rspq *q, const __be64 *rsp,
-			 const struct pkt_gl *gl)
-{
-	struct adapter *adap = q->adap;
-	struct sge_ofld_rxq *rxq = container_of(q, struct sge_ofld_rxq, rspq);
-	int ret;
+अटल पूर्णांक uldrx_handler(काष्ठा sge_rspq *q, स्थिर __be64 *rsp,
+			 स्थिर काष्ठा pkt_gl *gl)
+अणु
+	काष्ठा adapter *adap = q->adap;
+	काष्ठा sge_ofld_rxq *rxq = container_of(q, काष्ठा sge_ofld_rxq, rspq);
+	पूर्णांक ret;
 
 	/* FW can send CPLs encapsulated in a CPL_FW4_MSG */
-	if (((const struct rss_header *)rsp)->opcode == CPL_FW4_MSG &&
-	    ((const struct cpl_fw4_msg *)(rsp + 1))->type == FW_TYPE_RSSCPL)
+	अगर (((स्थिर काष्ठा rss_header *)rsp)->opcode == CPL_FW4_MSG &&
+	    ((स्थिर काष्ठा cpl_fw4_msg *)(rsp + 1))->type == FW_TYPE_RSSCPL)
 		rsp += 2;
 
-	if (q->flush_handler)
+	अगर (q->flush_handler)
 		ret = adap->uld[q->uld].lro_rx_handler(adap->uld[q->uld].handle,
 				rsp, gl, &q->lro_mgr,
 				&q->napi);
-	else
+	अन्यथा
 		ret = adap->uld[q->uld].rx_handler(adap->uld[q->uld].handle,
 				rsp, gl);
 
-	if (ret) {
+	अगर (ret) अणु
 		rxq->stats.nomem++;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (!gl)
+	अगर (!gl)
 		rxq->stats.imm++;
-	else if (gl == CXGB4_MSG_AN)
+	अन्यथा अगर (gl == CXGB4_MSG_AN)
 		rxq->stats.an++;
-	else
+	अन्यथा
 		rxq->stats.pkts++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int alloc_uld_rxqs(struct adapter *adap,
-			  struct sge_uld_rxq_info *rxq_info, bool lro)
-{
-	unsigned int nq = rxq_info->nrxq + rxq_info->nciq;
-	struct sge_ofld_rxq *q = rxq_info->uldrxq;
-	unsigned short *ids = rxq_info->rspq_id;
-	int i, err, msi_idx, que_idx = 0;
-	struct sge *s = &adap->sge;
-	unsigned int per_chan;
+अटल पूर्णांक alloc_uld_rxqs(काष्ठा adapter *adap,
+			  काष्ठा sge_uld_rxq_info *rxq_info, bool lro)
+अणु
+	अचिन्हित पूर्णांक nq = rxq_info->nrxq + rxq_info->nciq;
+	काष्ठा sge_ofld_rxq *q = rxq_info->uldrxq;
+	अचिन्हित लघु *ids = rxq_info->rspq_id;
+	पूर्णांक i, err, msi_idx, que_idx = 0;
+	काष्ठा sge *s = &adap->sge;
+	अचिन्हित पूर्णांक per_chan;
 
 	per_chan = rxq_info->nrxq / adap->params.nports;
 
-	if (adap->flags & CXGB4_USING_MSIX)
+	अगर (adap->flags & CXGB4_USING_MSIX)
 		msi_idx = 1;
-	else
-		msi_idx = -((int)s->intrq.abs_id + 1);
+	अन्यथा
+		msi_idx = -((पूर्णांक)s->पूर्णांकrq.असल_id + 1);
 
-	for (i = 0; i < nq; i++, q++) {
-		if (i == rxq_info->nrxq) {
+	क्रम (i = 0; i < nq; i++, q++) अणु
+		अगर (i == rxq_info->nrxq) अणु
 			/* start allocation of concentrator queues */
 			per_chan = rxq_info->nciq / adap->params.nports;
 			que_idx = 0;
-		}
+		पूर्ण
 
-		if (msi_idx >= 0) {
+		अगर (msi_idx >= 0) अणु
 			msi_idx = cxgb4_get_msix_idx_from_bmap(adap);
-			if (msi_idx < 0) {
+			अगर (msi_idx < 0) अणु
 				err = -ENOSPC;
-				goto freeout;
-			}
+				जाओ मुक्तout;
+			पूर्ण
 
-			snprintf(adap->msix_info[msi_idx].desc,
-				 sizeof(adap->msix_info[msi_idx].desc),
+			snम_लिखो(adap->msix_info[msi_idx].desc,
+				 माप(adap->msix_info[msi_idx].desc),
 				 "%s-%s%d",
 				 adap->port[0]->name, rxq_info->name, i);
 
 			q->msix = &adap->msix_info[msi_idx];
-		}
+		पूर्ण
 		err = t4_sge_alloc_rxq(adap, &q->rspq, false,
 				       adap->port[que_idx++ / per_chan],
 				       msi_idx,
-				       q->fl.size ? &q->fl : NULL,
+				       q->fl.size ? &q->fl : शून्य,
 				       uldrx_handler,
-				       lro ? uldrx_flush_handler : NULL,
+				       lro ? uldrx_flush_handler : शून्य,
 				       0);
-		if (err)
-			goto freeout;
+		अगर (err)
+			जाओ मुक्तout;
 
-		memset(&q->stats, 0, sizeof(q->stats));
-		if (ids)
-			ids[i] = q->rspq.abs_id;
-	}
-	return 0;
-freeout:
+		स_रखो(&q->stats, 0, माप(q->stats));
+		अगर (ids)
+			ids[i] = q->rspq.असल_id;
+	पूर्ण
+	वापस 0;
+मुक्तout:
 	q = rxq_info->uldrxq;
-	for ( ; i; i--, q++) {
-		if (q->rspq.desc)
-			free_rspq_fl(adap, &q->rspq,
-				     q->fl.size ? &q->fl : NULL);
-		if (q->msix)
-			cxgb4_free_msix_idx_in_bmap(adap, q->msix->idx);
-	}
-	return err;
-}
+	क्रम ( ; i; i--, q++) अणु
+		अगर (q->rspq.desc)
+			मुक्त_rspq_fl(adap, &q->rspq,
+				     q->fl.size ? &q->fl : शून्य);
+		अगर (q->msix)
+			cxgb4_मुक्त_msix_idx_in_bmap(adap, q->msix->idx);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int
-setup_sge_queues_uld(struct adapter *adap, unsigned int uld_type, bool lro)
-{
-	struct sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
-	int i, ret;
+अटल पूर्णांक
+setup_sge_queues_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type, bool lro)
+अणु
+	काष्ठा sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
+	पूर्णांक i, ret;
 
 	ret = alloc_uld_rxqs(adap, rxq_info, lro);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Tell uP to route control queue completions to rdma rspq */
-	if (adap->flags & CXGB4_FULL_INIT_DONE && uld_type == CXGB4_ULD_RDMA) {
-		struct sge *s = &adap->sge;
-		unsigned int cmplqid;
-		u32 param, cmdop;
+	अगर (adap->flags & CXGB4_FULL_INIT_DONE && uld_type == CXGB4_ULD_RDMA) अणु
+		काष्ठा sge *s = &adap->sge;
+		अचिन्हित पूर्णांक cmplqid;
+		u32 param, cmकरोp;
 
-		cmdop = FW_PARAMS_PARAM_DMAQ_EQ_CMPLIQID_CTRL;
-		for_each_port(adap, i) {
+		cmकरोp = FW_PARAMS_PARAM_DMAQ_EQ_CMPLIQID_CTRL;
+		क्रम_each_port(adap, i) अणु
 			cmplqid = rxq_info->uldrxq[i].rspq.cntxt_id;
 			param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DMAQ) |
-				 FW_PARAMS_PARAM_X_V(cmdop) |
+				 FW_PARAMS_PARAM_X_V(cmकरोp) |
 				 FW_PARAMS_PARAM_YZ_V(s->ctrlq[i].q.cntxt_id));
 			ret = t4_set_params(adap, adap->mbox, adap->pf,
 					    0, 1, &param, &cmplqid);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void t4_free_uld_rxqs(struct adapter *adap, int n,
-			     struct sge_ofld_rxq *q)
-{
-	for ( ; n; n--, q++) {
-		if (q->rspq.desc)
-			free_rspq_fl(adap, &q->rspq,
-				     q->fl.size ? &q->fl : NULL);
-	}
-}
+अटल व्योम t4_मुक्त_uld_rxqs(काष्ठा adapter *adap, पूर्णांक n,
+			     काष्ठा sge_ofld_rxq *q)
+अणु
+	क्रम ( ; n; n--, q++) अणु
+		अगर (q->rspq.desc)
+			मुक्त_rspq_fl(adap, &q->rspq,
+				     q->fl.size ? &q->fl : शून्य);
+	पूर्ण
+पूर्ण
 
-static void free_sge_queues_uld(struct adapter *adap, unsigned int uld_type)
-{
-	struct sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
+अटल व्योम मुक्त_sge_queues_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type)
+अणु
+	काष्ठा sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
 
-	if (adap->flags & CXGB4_FULL_INIT_DONE && uld_type == CXGB4_ULD_RDMA) {
-		struct sge *s = &adap->sge;
-		u32 param, cmdop, cmplqid = 0;
-		int i;
+	अगर (adap->flags & CXGB4_FULL_INIT_DONE && uld_type == CXGB4_ULD_RDMA) अणु
+		काष्ठा sge *s = &adap->sge;
+		u32 param, cmकरोp, cmplqid = 0;
+		पूर्णांक i;
 
-		cmdop = FW_PARAMS_PARAM_DMAQ_EQ_CMPLIQID_CTRL;
-		for_each_port(adap, i) {
+		cmकरोp = FW_PARAMS_PARAM_DMAQ_EQ_CMPLIQID_CTRL;
+		क्रम_each_port(adap, i) अणु
 			param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DMAQ) |
-				 FW_PARAMS_PARAM_X_V(cmdop) |
+				 FW_PARAMS_PARAM_X_V(cmकरोp) |
 				 FW_PARAMS_PARAM_YZ_V(s->ctrlq[i].q.cntxt_id));
 			t4_set_params(adap, adap->mbox, adap->pf,
 				      0, 1, &param, &cmplqid);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rxq_info->nciq)
-		t4_free_uld_rxqs(adap, rxq_info->nciq,
+	अगर (rxq_info->nciq)
+		t4_मुक्त_uld_rxqs(adap, rxq_info->nciq,
 				 rxq_info->uldrxq + rxq_info->nrxq);
-	t4_free_uld_rxqs(adap, rxq_info->nrxq, rxq_info->uldrxq);
-}
+	t4_मुक्त_uld_rxqs(adap, rxq_info->nrxq, rxq_info->uldrxq);
+पूर्ण
 
-static int cfg_queues_uld(struct adapter *adap, unsigned int uld_type,
-			  const struct cxgb4_uld_info *uld_info)
-{
-	struct sge *s = &adap->sge;
-	struct sge_uld_rxq_info *rxq_info;
-	int i, nrxq, ciq_size;
+अटल पूर्णांक cfg_queues_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type,
+			  स्थिर काष्ठा cxgb4_uld_info *uld_info)
+अणु
+	काष्ठा sge *s = &adap->sge;
+	काष्ठा sge_uld_rxq_info *rxq_info;
+	पूर्णांक i, nrxq, ciq_size;
 
-	rxq_info = kzalloc(sizeof(*rxq_info), GFP_KERNEL);
-	if (!rxq_info)
-		return -ENOMEM;
+	rxq_info = kzalloc(माप(*rxq_info), GFP_KERNEL);
+	अगर (!rxq_info)
+		वापस -ENOMEM;
 
-	if (adap->flags & CXGB4_USING_MSIX && uld_info->nrxq > s->nqs_per_uld) {
+	अगर (adap->flags & CXGB4_USING_MSIX && uld_info->nrxq > s->nqs_per_uld) अणु
 		i = s->nqs_per_uld;
 		rxq_info->nrxq = roundup(i, adap->params.nports);
-	} else {
-		i = min_t(int, uld_info->nrxq,
+	पूर्ण अन्यथा अणु
+		i = min_t(पूर्णांक, uld_info->nrxq,
 			  num_online_cpus());
 		rxq_info->nrxq = roundup(i, adap->params.nports);
-	}
-	if (!uld_info->ciq) {
+	पूर्ण
+	अगर (!uld_info->ciq) अणु
 		rxq_info->nciq = 0;
-	} else  {
-		if (adap->flags & CXGB4_USING_MSIX)
-			rxq_info->nciq = min_t(int, s->nqs_per_uld,
+	पूर्ण अन्यथा  अणु
+		अगर (adap->flags & CXGB4_USING_MSIX)
+			rxq_info->nciq = min_t(पूर्णांक, s->nqs_per_uld,
 					       num_online_cpus());
-		else
-			rxq_info->nciq = min_t(int, MAX_OFLD_QSETS,
+		अन्यथा
+			rxq_info->nciq = min_t(पूर्णांक, MAX_OFLD_QSETS,
 					       num_online_cpus());
 		rxq_info->nciq = ((rxq_info->nciq / adap->params.nports) *
 				  adap->params.nports);
-		rxq_info->nciq = max_t(int, rxq_info->nciq,
+		rxq_info->nciq = max_t(पूर्णांक, rxq_info->nciq,
 				       adap->params.nports);
-	}
+	पूर्ण
 
 	nrxq = rxq_info->nrxq + rxq_info->nciq; /* total rxq's */
-	rxq_info->uldrxq = kcalloc(nrxq, sizeof(struct sge_ofld_rxq),
+	rxq_info->uldrxq = kसुस्मृति(nrxq, माप(काष्ठा sge_ofld_rxq),
 				   GFP_KERNEL);
-	if (!rxq_info->uldrxq) {
-		kfree(rxq_info);
-		return -ENOMEM;
-	}
+	अगर (!rxq_info->uldrxq) अणु
+		kमुक्त(rxq_info);
+		वापस -ENOMEM;
+	पूर्ण
 
-	rxq_info->rspq_id = kcalloc(nrxq, sizeof(unsigned short), GFP_KERNEL);
-	if (!rxq_info->rspq_id) {
-		kfree(rxq_info->uldrxq);
-		kfree(rxq_info);
-		return -ENOMEM;
-	}
+	rxq_info->rspq_id = kसुस्मृति(nrxq, माप(अचिन्हित लघु), GFP_KERNEL);
+	अगर (!rxq_info->rspq_id) अणु
+		kमुक्त(rxq_info->uldrxq);
+		kमुक्त(rxq_info);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < rxq_info->nrxq; i++) {
-		struct sge_ofld_rxq *r = &rxq_info->uldrxq[i];
+	क्रम (i = 0; i < rxq_info->nrxq; i++) अणु
+		काष्ठा sge_ofld_rxq *r = &rxq_info->uldrxq[i];
 
 		init_rspq(adap, &r->rspq, 5, 1, uld_info->rxq_size, 64);
 		r->rspq.uld = uld_type;
 		r->fl.size = 72;
-	}
+	पूर्ण
 
 	ciq_size = 64 + adap->vres.cq.size + adap->tids.nftids;
-	if (ciq_size > SGE_MAX_IQ_SIZE) {
+	अगर (ciq_size > SGE_MAX_IQ_SIZE) अणु
 		dev_warn(adap->pdev_dev, "CIQ size too small for available IQs\n");
 		ciq_size = SGE_MAX_IQ_SIZE;
-	}
+	पूर्ण
 
-	for (i = rxq_info->nrxq; i < nrxq; i++) {
-		struct sge_ofld_rxq *r = &rxq_info->uldrxq[i];
+	क्रम (i = rxq_info->nrxq; i < nrxq; i++) अणु
+		काष्ठा sge_ofld_rxq *r = &rxq_info->uldrxq[i];
 
 		init_rspq(adap, &r->rspq, 5, 1, ciq_size, 64);
 		r->rspq.uld = uld_type;
-	}
+	पूर्ण
 
-	memcpy(rxq_info->name, uld_info->name, IFNAMSIZ);
+	स_नकल(rxq_info->name, uld_info->name, IFNAMSIZ);
 	adap->sge.uld_rxq_info[uld_type] = rxq_info;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_queues_uld(struct adapter *adap, unsigned int uld_type)
-{
-	struct sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
+अटल व्योम मुक्त_queues_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type)
+अणु
+	काष्ठा sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
 
-	adap->sge.uld_rxq_info[uld_type] = NULL;
-	kfree(rxq_info->rspq_id);
-	kfree(rxq_info->uldrxq);
-	kfree(rxq_info);
-}
+	adap->sge.uld_rxq_info[uld_type] = शून्य;
+	kमुक्त(rxq_info->rspq_id);
+	kमुक्त(rxq_info->uldrxq);
+	kमुक्त(rxq_info);
+पूर्ण
 
-static int
-request_msix_queue_irqs_uld(struct adapter *adap, unsigned int uld_type)
-{
-	struct sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
-	struct msix_info *minfo;
-	unsigned int idx;
-	int err = 0;
+अटल पूर्णांक
+request_msix_queue_irqs_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type)
+अणु
+	काष्ठा sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
+	काष्ठा msix_info *minfo;
+	अचिन्हित पूर्णांक idx;
+	पूर्णांक err = 0;
 
-	for_each_uldrxq(rxq_info, idx) {
+	क्रम_each_uldrxq(rxq_info, idx) अणु
 		minfo = rxq_info->uldrxq[idx].msix;
 		err = request_irq(minfo->vec,
-				  t4_sge_intr_msix, 0,
+				  t4_sge_पूर्णांकr_msix, 0,
 				  minfo->desc,
 				  &rxq_info->uldrxq[idx].rspq);
-		if (err)
-			goto unwind;
+		अगर (err)
+			जाओ unwind;
 
 		cxgb4_set_msix_aff(adap, minfo->vec,
 				   &minfo->aff_mask, idx);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 unwind:
-	while (idx-- > 0) {
+	जबतक (idx-- > 0) अणु
 		minfo = rxq_info->uldrxq[idx].msix;
 		cxgb4_clear_msix_aff(minfo->vec, minfo->aff_mask);
-		cxgb4_free_msix_idx_in_bmap(adap, minfo->idx);
-		free_irq(minfo->vec, &rxq_info->uldrxq[idx].rspq);
-	}
-	return err;
-}
+		cxgb4_मुक्त_msix_idx_in_bmap(adap, minfo->idx);
+		मुक्त_irq(minfo->vec, &rxq_info->uldrxq[idx].rspq);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void
-free_msix_queue_irqs_uld(struct adapter *adap, unsigned int uld_type)
-{
-	struct sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
-	struct msix_info *minfo;
-	unsigned int idx;
+अटल व्योम
+मुक्त_msix_queue_irqs_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type)
+अणु
+	काष्ठा sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
+	काष्ठा msix_info *minfo;
+	अचिन्हित पूर्णांक idx;
 
-	for_each_uldrxq(rxq_info, idx) {
+	क्रम_each_uldrxq(rxq_info, idx) अणु
 		minfo = rxq_info->uldrxq[idx].msix;
 		cxgb4_clear_msix_aff(minfo->vec, minfo->aff_mask);
-		cxgb4_free_msix_idx_in_bmap(adap, minfo->idx);
-		free_irq(minfo->vec, &rxq_info->uldrxq[idx].rspq);
-	}
-}
+		cxgb4_मुक्त_msix_idx_in_bmap(adap, minfo->idx);
+		मुक्त_irq(minfo->vec, &rxq_info->uldrxq[idx].rspq);
+	पूर्ण
+पूर्ण
 
-static void enable_rx_uld(struct adapter *adap, unsigned int uld_type)
-{
-	struct sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
-	int idx;
+अटल व्योम enable_rx_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type)
+अणु
+	काष्ठा sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
+	पूर्णांक idx;
 
-	for_each_uldrxq(rxq_info, idx) {
-		struct sge_rspq *q = &rxq_info->uldrxq[idx].rspq;
+	क्रम_each_uldrxq(rxq_info, idx) अणु
+		काष्ठा sge_rspq *q = &rxq_info->uldrxq[idx].rspq;
 
-		if (!q)
-			continue;
+		अगर (!q)
+			जारी;
 
 		cxgb4_enable_rx(adap, q);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void quiesce_rx_uld(struct adapter *adap, unsigned int uld_type)
-{
-	struct sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
-	int idx;
+अटल व्योम quiesce_rx_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type)
+अणु
+	काष्ठा sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
+	पूर्णांक idx;
 
-	for_each_uldrxq(rxq_info, idx) {
-		struct sge_rspq *q = &rxq_info->uldrxq[idx].rspq;
+	क्रम_each_uldrxq(rxq_info, idx) अणु
+		काष्ठा sge_rspq *q = &rxq_info->uldrxq[idx].rspq;
 
-		if (!q)
-			continue;
+		अगर (!q)
+			जारी;
 
 		cxgb4_quiesce_rx(q);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-free_sge_txq_uld(struct adapter *adap, struct sge_uld_txq_info *txq_info)
-{
-	int nq = txq_info->ntxq;
-	int i;
+अटल व्योम
+मुक्त_sge_txq_uld(काष्ठा adapter *adap, काष्ठा sge_uld_txq_info *txq_info)
+अणु
+	पूर्णांक nq = txq_info->ntxq;
+	पूर्णांक i;
 
-	for (i = 0; i < nq; i++) {
-		struct sge_uld_txq *txq = &txq_info->uldtxq[i];
+	क्रम (i = 0; i < nq; i++) अणु
+		काष्ठा sge_uld_txq *txq = &txq_info->uldtxq[i];
 
-		if (txq && txq->q.desc) {
-			tasklet_kill(&txq->qresume_tsk);
-			t4_ofld_eq_free(adap, adap->mbox, adap->pf, 0,
+		अगर (txq && txq->q.desc) अणु
+			tasklet_समाप्त(&txq->qresume_tsk);
+			t4_ofld_eq_मुक्त(adap, adap->mbox, adap->pf, 0,
 					txq->q.cntxt_id);
-			free_tx_desc(adap, &txq->q, txq->q.in_use, false);
-			kfree(txq->q.sdesc);
+			मुक्त_tx_desc(adap, &txq->q, txq->q.in_use, false);
+			kमुक्त(txq->q.sdesc);
 			__skb_queue_purge(&txq->sendq);
-			free_txq(adap, &txq->q);
-		}
-	}
-}
+			मुक्त_txq(adap, &txq->q);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int
-alloc_sge_txq_uld(struct adapter *adap, struct sge_uld_txq_info *txq_info,
-		  unsigned int uld_type)
-{
-	struct sge *s = &adap->sge;
-	int nq = txq_info->ntxq;
-	int i, j, err;
+अटल पूर्णांक
+alloc_sge_txq_uld(काष्ठा adapter *adap, काष्ठा sge_uld_txq_info *txq_info,
+		  अचिन्हित पूर्णांक uld_type)
+अणु
+	काष्ठा sge *s = &adap->sge;
+	पूर्णांक nq = txq_info->ntxq;
+	पूर्णांक i, j, err;
 
 	j = nq / adap->params.nports;
-	for (i = 0; i < nq; i++) {
-		struct sge_uld_txq *txq = &txq_info->uldtxq[i];
+	क्रम (i = 0; i < nq; i++) अणु
+		काष्ठा sge_uld_txq *txq = &txq_info->uldtxq[i];
 
 		txq->q.size = 1024;
 		err = t4_sge_alloc_uld_txq(adap, txq, adap->port[i / j],
 					   s->fw_evtq.cntxt_id, uld_type);
-		if (err)
-			goto freeout;
-	}
-	return 0;
-freeout:
-	free_sge_txq_uld(adap, txq_info);
-	return err;
-}
+		अगर (err)
+			जाओ मुक्तout;
+	पूर्ण
+	वापस 0;
+मुक्तout:
+	मुक्त_sge_txq_uld(adap, txq_info);
+	वापस err;
+पूर्ण
 
-static void
-release_sge_txq_uld(struct adapter *adap, unsigned int uld_type)
-{
-	struct sge_uld_txq_info *txq_info = NULL;
-	int tx_uld_type = TX_ULD(uld_type);
+अटल व्योम
+release_sge_txq_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type)
+अणु
+	काष्ठा sge_uld_txq_info *txq_info = शून्य;
+	पूर्णांक tx_uld_type = TX_ULD(uld_type);
 
 	txq_info = adap->sge.uld_txq_info[tx_uld_type];
 
-	if (txq_info && atomic_dec_and_test(&txq_info->users)) {
-		free_sge_txq_uld(adap, txq_info);
-		kfree(txq_info->uldtxq);
-		kfree(txq_info);
-		adap->sge.uld_txq_info[tx_uld_type] = NULL;
-	}
-}
+	अगर (txq_info && atomic_dec_and_test(&txq_info->users)) अणु
+		मुक्त_sge_txq_uld(adap, txq_info);
+		kमुक्त(txq_info->uldtxq);
+		kमुक्त(txq_info);
+		adap->sge.uld_txq_info[tx_uld_type] = शून्य;
+	पूर्ण
+पूर्ण
 
-static int
-setup_sge_txq_uld(struct adapter *adap, unsigned int uld_type,
-		  const struct cxgb4_uld_info *uld_info)
-{
-	struct sge_uld_txq_info *txq_info = NULL;
-	int tx_uld_type, i;
+अटल पूर्णांक
+setup_sge_txq_uld(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type,
+		  स्थिर काष्ठा cxgb4_uld_info *uld_info)
+अणु
+	काष्ठा sge_uld_txq_info *txq_info = शून्य;
+	पूर्णांक tx_uld_type, i;
 
 	tx_uld_type = TX_ULD(uld_type);
 	txq_info = adap->sge.uld_txq_info[tx_uld_type];
 
-	if ((tx_uld_type == CXGB4_TX_OFLD) && txq_info &&
-	    (atomic_inc_return(&txq_info->users) > 1))
-		return 0;
+	अगर ((tx_uld_type == CXGB4_TX_OFLD) && txq_info &&
+	    (atomic_inc_वापस(&txq_info->users) > 1))
+		वापस 0;
 
-	txq_info = kzalloc(sizeof(*txq_info), GFP_KERNEL);
-	if (!txq_info)
-		return -ENOMEM;
-	if (uld_type == CXGB4_ULD_CRYPTO) {
-		i = min_t(int, adap->vres.ncrypto_fc,
+	txq_info = kzalloc(माप(*txq_info), GFP_KERNEL);
+	अगर (!txq_info)
+		वापस -ENOMEM;
+	अगर (uld_type == CXGB4_ULD_CRYPTO) अणु
+		i = min_t(पूर्णांक, adap->vres.ncrypto_fc,
 			  num_online_cpus());
-		txq_info->ntxq = rounddown(i, adap->params.nports);
-		if (txq_info->ntxq <= 0) {
+		txq_info->ntxq = roundकरोwn(i, adap->params.nports);
+		अगर (txq_info->ntxq <= 0) अणु
 			dev_warn(adap->pdev_dev, "Crypto Tx Queues can't be zero\n");
-			kfree(txq_info);
-			return -EINVAL;
-		}
+			kमुक्त(txq_info);
+			वापस -EINVAL;
+		पूर्ण
 
-	} else {
-		i = min_t(int, uld_info->ntxq, num_online_cpus());
+	पूर्ण अन्यथा अणु
+		i = min_t(पूर्णांक, uld_info->ntxq, num_online_cpus());
 		txq_info->ntxq = roundup(i, adap->params.nports);
-	}
-	txq_info->uldtxq = kcalloc(txq_info->ntxq, sizeof(struct sge_uld_txq),
+	पूर्ण
+	txq_info->uldtxq = kसुस्मृति(txq_info->ntxq, माप(काष्ठा sge_uld_txq),
 				   GFP_KERNEL);
-	if (!txq_info->uldtxq) {
-		kfree(txq_info);
-		return -ENOMEM;
-	}
+	अगर (!txq_info->uldtxq) अणु
+		kमुक्त(txq_info);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (alloc_sge_txq_uld(adap, txq_info, tx_uld_type)) {
-		kfree(txq_info->uldtxq);
-		kfree(txq_info);
-		return -ENOMEM;
-	}
+	अगर (alloc_sge_txq_uld(adap, txq_info, tx_uld_type)) अणु
+		kमुक्त(txq_info->uldtxq);
+		kमुक्त(txq_info);
+		वापस -ENOMEM;
+	पूर्ण
 
 	atomic_inc(&txq_info->users);
 	adap->sge.uld_txq_info[tx_uld_type] = txq_info;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void uld_queue_init(struct adapter *adap, unsigned int uld_type,
-			   struct cxgb4_lld_info *lli)
-{
-	struct sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
-	int tx_uld_type = TX_ULD(uld_type);
-	struct sge_uld_txq_info *txq_info = adap->sge.uld_txq_info[tx_uld_type];
+अटल व्योम uld_queue_init(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld_type,
+			   काष्ठा cxgb4_lld_info *lli)
+अणु
+	काष्ठा sge_uld_rxq_info *rxq_info = adap->sge.uld_rxq_info[uld_type];
+	पूर्णांक tx_uld_type = TX_ULD(uld_type);
+	काष्ठा sge_uld_txq_info *txq_info = adap->sge.uld_txq_info[tx_uld_type];
 
 	lli->rxq_ids = rxq_info->rspq_id;
 	lli->nrxq = rxq_info->nrxq;
 	lli->ciq_ids = rxq_info->rspq_id + rxq_info->nrxq;
 	lli->nciq = rxq_info->nciq;
 	lli->ntxq = txq_info->ntxq;
-}
+पूर्ण
 
-int t4_uld_mem_alloc(struct adapter *adap)
-{
-	struct sge *s = &adap->sge;
+पूर्णांक t4_uld_mem_alloc(काष्ठा adapter *adap)
+अणु
+	काष्ठा sge *s = &adap->sge;
 
-	adap->uld = kcalloc(CXGB4_ULD_MAX, sizeof(*adap->uld), GFP_KERNEL);
-	if (!adap->uld)
-		return -ENOMEM;
+	adap->uld = kसुस्मृति(CXGB4_ULD_MAX, माप(*adap->uld), GFP_KERNEL);
+	अगर (!adap->uld)
+		वापस -ENOMEM;
 
-	s->uld_rxq_info = kcalloc(CXGB4_ULD_MAX,
-				  sizeof(struct sge_uld_rxq_info *),
+	s->uld_rxq_info = kसुस्मृति(CXGB4_ULD_MAX,
+				  माप(काष्ठा sge_uld_rxq_info *),
 				  GFP_KERNEL);
-	if (!s->uld_rxq_info)
-		goto err_uld;
+	अगर (!s->uld_rxq_info)
+		जाओ err_uld;
 
-	s->uld_txq_info = kcalloc(CXGB4_TX_MAX,
-				  sizeof(struct sge_uld_txq_info *),
+	s->uld_txq_info = kसुस्मृति(CXGB4_TX_MAX,
+				  माप(काष्ठा sge_uld_txq_info *),
 				  GFP_KERNEL);
-	if (!s->uld_txq_info)
-		goto err_uld_rx;
-	return 0;
+	अगर (!s->uld_txq_info)
+		जाओ err_uld_rx;
+	वापस 0;
 
 err_uld_rx:
-	kfree(s->uld_rxq_info);
+	kमुक्त(s->uld_rxq_info);
 err_uld:
-	kfree(adap->uld);
-	return -ENOMEM;
-}
+	kमुक्त(adap->uld);
+	वापस -ENOMEM;
+पूर्ण
 
-void t4_uld_mem_free(struct adapter *adap)
-{
-	struct sge *s = &adap->sge;
+व्योम t4_uld_mem_मुक्त(काष्ठा adapter *adap)
+अणु
+	काष्ठा sge *s = &adap->sge;
 
-	kfree(s->uld_txq_info);
-	kfree(s->uld_rxq_info);
-	kfree(adap->uld);
-}
+	kमुक्त(s->uld_txq_info);
+	kमुक्त(s->uld_rxq_info);
+	kमुक्त(adap->uld);
+पूर्ण
 
 /* This function should be called with uld_mutex taken. */
-static void cxgb4_shutdown_uld_adapter(struct adapter *adap, enum cxgb4_uld type)
-{
-	if (adap->uld[type].handle) {
-		adap->uld[type].handle = NULL;
-		adap->uld[type].add = NULL;
+अटल व्योम cxgb4_shutकरोwn_uld_adapter(काष्ठा adapter *adap, क्रमागत cxgb4_uld type)
+अणु
+	अगर (adap->uld[type].handle) अणु
+		adap->uld[type].handle = शून्य;
+		adap->uld[type].add = शून्य;
 		release_sge_txq_uld(adap, type);
 
-		if (adap->flags & CXGB4_FULL_INIT_DONE)
+		अगर (adap->flags & CXGB4_FULL_INIT_DONE)
 			quiesce_rx_uld(adap, type);
 
-		if (adap->flags & CXGB4_USING_MSIX)
-			free_msix_queue_irqs_uld(adap, type);
+		अगर (adap->flags & CXGB4_USING_MSIX)
+			मुक्त_msix_queue_irqs_uld(adap, type);
 
-		free_sge_queues_uld(adap, type);
-		free_queues_uld(adap, type);
-	}
-}
+		मुक्त_sge_queues_uld(adap, type);
+		मुक्त_queues_uld(adap, type);
+	पूर्ण
+पूर्ण
 
-void t4_uld_clean_up(struct adapter *adap)
-{
-	unsigned int i;
+व्योम t4_uld_clean_up(काष्ठा adapter *adap)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	mutex_lock(&uld_mutex);
-	for (i = 0; i < CXGB4_ULD_MAX; i++) {
-		if (!adap->uld[i].handle)
-			continue;
+	क्रम (i = 0; i < CXGB4_ULD_MAX; i++) अणु
+		अगर (!adap->uld[i].handle)
+			जारी;
 
-		cxgb4_shutdown_uld_adapter(adap, i);
-	}
+		cxgb4_shutकरोwn_uld_adapter(adap, i);
+	पूर्ण
 	mutex_unlock(&uld_mutex);
-}
+पूर्ण
 
-static void uld_init(struct adapter *adap, struct cxgb4_lld_info *lld)
-{
-	int i;
+अटल व्योम uld_init(काष्ठा adapter *adap, काष्ठा cxgb4_lld_info *lld)
+अणु
+	पूर्णांक i;
 
 	lld->pdev = adap->pdev;
 	lld->pf = adap->pf;
@@ -606,10 +607,10 @@ static void uld_init(struct adapter *adap, struct cxgb4_lld_info *lld)
 	lld->nports = adap->params.nports;
 	lld->wr_cred = adap->params.ofldq_wr_cred;
 	lld->crypto = adap->params.crypto;
-	lld->iscsi_iolen = MAXRXDATA_G(t4_read_reg(adap, TP_PARA_REG2_A));
-	lld->iscsi_tagmask = t4_read_reg(adap, ULP_RX_ISCSI_TAGMASK_A);
-	lld->iscsi_pgsz_order = t4_read_reg(adap, ULP_RX_ISCSI_PSZ_A);
-	lld->iscsi_llimit = t4_read_reg(adap, ULP_RX_ISCSI_LLIMIT_A);
+	lld->iscsi_iolen = MAXRXDATA_G(t4_पढ़ो_reg(adap, TP_PARA_REG2_A));
+	lld->iscsi_tagmask = t4_पढ़ो_reg(adap, ULP_RX_ISCSI_TAGMASK_A);
+	lld->iscsi_pgsz_order = t4_पढ़ो_reg(adap, ULP_RX_ISCSI_PSZ_A);
+	lld->iscsi_llimit = t4_पढ़ो_reg(adap, ULP_RX_ISCSI_LLIMIT_A);
 	lld->iscsi_ppm = &adap->iscsi_ppm;
 	lld->adapter_type = adap->params.chip;
 	lld->cclk_ps = 1000000000 / adap->params.vpd.cclk;
@@ -618,239 +619,239 @@ static void uld_init(struct adapter *adap, struct cxgb4_lld_info *lld)
 	lld->sge_host_page_size = 1 << (adap->params.sge.hps + 10);
 	lld->filt_mode = adap->params.tp.vlan_pri_map;
 	/* MODQ_REQ_MAP sets queues 0-3 to chan 0-3 */
-	for (i = 0; i < NCHAN; i++)
+	क्रम (i = 0; i < NCHAN; i++)
 		lld->tx_modq[i] = i;
 	lld->gts_reg = adap->regs + MYPF_REG(SGE_PF_GTS_A);
 	lld->db_reg = adap->regs + MYPF_REG(SGE_PF_KDOORBELL_A);
 	lld->fw_vers = adap->params.fw_vers;
-	lld->dbfifo_int_thresh = dbfifo_int_thresh;
+	lld->dbfअगरo_पूर्णांक_thresh = dbfअगरo_पूर्णांक_thresh;
 	lld->sge_ingpadboundary = adap->sge.fl_align;
 	lld->sge_egrstatuspagesize = adap->sge.stat_len;
-	lld->sge_pktshift = adap->sge.pktshift;
+	lld->sge_pktshअगरt = adap->sge.pktshअगरt;
 	lld->ulp_crypto = adap->params.crypto;
 	lld->enable_fw_ofld_conn = adap->flags & CXGB4_FW_OFLD_CONN;
 	lld->max_ordird_qp = adap->params.max_ordird_qp;
 	lld->max_ird_adapter = adap->params.max_ird_adapter;
-	lld->ulptx_memwrite_dsgl = adap->params.ulptx_memwrite_dsgl;
+	lld->ulptx_memग_लिखो_dsgl = adap->params.ulptx_memग_लिखो_dsgl;
 	lld->nodeid = dev_to_node(adap->pdev_dev);
 	lld->fr_nsmr_tpte_wr_support = adap->params.fr_nsmr_tpte_wr_support;
-	lld->write_w_imm_support = adap->params.write_w_imm_support;
-	lld->write_cmpl_support = adap->params.write_cmpl_support;
-}
+	lld->ग_लिखो_w_imm_support = adap->params.ग_लिखो_w_imm_support;
+	lld->ग_लिखो_cmpl_support = adap->params.ग_लिखो_cmpl_support;
+पूर्ण
 
-static int uld_attach(struct adapter *adap, unsigned int uld)
-{
-	struct cxgb4_lld_info lli;
-	void *handle;
+अटल पूर्णांक uld_attach(काष्ठा adapter *adap, अचिन्हित पूर्णांक uld)
+अणु
+	काष्ठा cxgb4_lld_info lli;
+	व्योम *handle;
 
 	uld_init(adap, &lli);
 	uld_queue_init(adap, uld, &lli);
 
 	handle = adap->uld[uld].add(&lli);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		dev_warn(adap->pdev_dev,
 			 "could not attach to the %s driver, error %ld\n",
 			 adap->uld[uld].name, PTR_ERR(handle));
-		return PTR_ERR(handle);
-	}
+		वापस PTR_ERR(handle);
+	पूर्ण
 
 	adap->uld[uld].handle = handle;
-	t4_register_netevent_notifier();
+	t4_रेजिस्टर_netevent_notअगरier();
 
-	if (adap->flags & CXGB4_FULL_INIT_DONE)
+	अगर (adap->flags & CXGB4_FULL_INIT_DONE)
 		adap->uld[uld].state_change(handle, CXGB4_STATE_UP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_CHELSIO_TLS_DEVICE)
-static bool cxgb4_uld_in_use(struct adapter *adap)
-{
-	const struct tid_info *t = &adap->tids;
+#अगर IS_ENABLED(CONFIG_CHELSIO_TLS_DEVICE)
+अटल bool cxgb4_uld_in_use(काष्ठा adapter *adap)
+अणु
+	स्थिर काष्ठा tid_info *t = &adap->tids;
 
-	return (atomic_read(&t->conns_in_use) || t->stids_in_use);
-}
+	वापस (atomic_पढ़ो(&t->conns_in_use) || t->stids_in_use);
+पूर्ण
 
 /* cxgb4_set_ktls_feature: request FW to enable/disable ktls settings.
  * @adap: adapter info
  * @enable: 1 to enable / 0 to disable ktls settings.
  */
-int cxgb4_set_ktls_feature(struct adapter *adap, bool enable)
-{
-	int ret = 0;
+पूर्णांक cxgb4_set_ktls_feature(काष्ठा adapter *adap, bool enable)
+अणु
+	पूर्णांक ret = 0;
 	u32 params =
 		FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
 		FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_KTLS_HW) |
 		FW_PARAMS_PARAM_Y_V(enable) |
 		FW_PARAMS_PARAM_Z_V(FW_PARAMS_PARAM_DEV_KTLS_HW_USER_ENABLE);
 
-	if (enable) {
-		if (!refcount_read(&adap->chcr_ktls.ktls_refcount)) {
-			/* At this moment if ULD connection are up means, other
-			 * ULD is/are already active, return failure.
+	अगर (enable) अणु
+		अगर (!refcount_पढ़ो(&adap->chcr_ktls.ktls_refcount)) अणु
+			/* At this moment अगर ULD connection are up means, other
+			 * ULD is/are alपढ़ोy active, वापस failure.
 			 */
-			if (cxgb4_uld_in_use(adap)) {
+			अगर (cxgb4_uld_in_use(adap)) अणु
 				dev_dbg(adap->pdev_dev,
 					"ULD connections (tid/stid) active. Can't enable kTLS\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			ret = t4_set_params(adap, adap->mbox, adap->pf,
 					    0, 1, &params, &params);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			refcount_set(&adap->chcr_ktls.ktls_refcount, 1);
 			pr_debug("kTLS has been enabled. Restrictions placed on ULD support\n");
-		} else {
-			/* ktls settings already up, just increment refcount. */
+		पूर्ण अन्यथा अणु
+			/* ktls settings alपढ़ोy up, just increment refcount. */
 			refcount_inc(&adap->chcr_ktls.ktls_refcount);
-		}
-	} else {
-		/* return failure if refcount is already 0. */
-		if (!refcount_read(&adap->chcr_ktls.ktls_refcount))
-			return -EINVAL;
-		/* decrement refcount and test, if 0, disable ktls feature,
-		 * else return command success.
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* वापस failure अगर refcount is alपढ़ोy 0. */
+		अगर (!refcount_पढ़ो(&adap->chcr_ktls.ktls_refcount))
+			वापस -EINVAL;
+		/* decrement refcount and test, अगर 0, disable ktls feature,
+		 * अन्यथा वापस command success.
 		 */
-		if (refcount_dec_and_test(&adap->chcr_ktls.ktls_refcount)) {
+		अगर (refcount_dec_and_test(&adap->chcr_ktls.ktls_refcount)) अणु
 			ret = t4_set_params(adap, adap->mbox, adap->pf,
 					    0, 1, &params, &params);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			pr_debug("kTLS is disabled. Restrictions on ULD support removed\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static void cxgb4_uld_alloc_resources(struct adapter *adap,
-				      enum cxgb4_uld type,
-				      const struct cxgb4_uld_info *p)
-{
-	int ret = 0;
+अटल व्योम cxgb4_uld_alloc_resources(काष्ठा adapter *adap,
+				      क्रमागत cxgb4_uld type,
+				      स्थिर काष्ठा cxgb4_uld_info *p)
+अणु
+	पूर्णांक ret = 0;
 
-	if ((type == CXGB4_ULD_CRYPTO && !is_pci_uld(adap)) ||
+	अगर ((type == CXGB4_ULD_CRYPTO && !is_pci_uld(adap)) ||
 	    (type != CXGB4_ULD_CRYPTO && !is_offload(adap)))
-		return;
-	if (type == CXGB4_ULD_ISCSIT && is_t4(adap->params.chip))
-		return;
+		वापस;
+	अगर (type == CXGB4_ULD_ISCSIT && is_t4(adap->params.chip))
+		वापस;
 	ret = cfg_queues_uld(adap, type, p);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 	ret = setup_sge_queues_uld(adap, type, p->lro);
-	if (ret)
-		goto free_queues;
-	if (adap->flags & CXGB4_USING_MSIX) {
+	अगर (ret)
+		जाओ मुक्त_queues;
+	अगर (adap->flags & CXGB4_USING_MSIX) अणु
 		ret = request_msix_queue_irqs_uld(adap, type);
-		if (ret)
-			goto free_rxq;
-	}
-	if (adap->flags & CXGB4_FULL_INIT_DONE)
+		अगर (ret)
+			जाओ मुक्त_rxq;
+	पूर्ण
+	अगर (adap->flags & CXGB4_FULL_INIT_DONE)
 		enable_rx_uld(adap, type);
-	if (adap->uld[type].add)
-		goto free_irq;
+	अगर (adap->uld[type].add)
+		जाओ मुक्त_irq;
 	ret = setup_sge_txq_uld(adap, type, p);
-	if (ret)
-		goto free_irq;
+	अगर (ret)
+		जाओ मुक्त_irq;
 	adap->uld[type] = *p;
 	ret = uld_attach(adap, type);
-	if (ret)
-		goto free_txq;
-	return;
-free_txq:
+	अगर (ret)
+		जाओ मुक्त_txq;
+	वापस;
+मुक्त_txq:
 	release_sge_txq_uld(adap, type);
-free_irq:
-	if (adap->flags & CXGB4_FULL_INIT_DONE)
+मुक्त_irq:
+	अगर (adap->flags & CXGB4_FULL_INIT_DONE)
 		quiesce_rx_uld(adap, type);
-	if (adap->flags & CXGB4_USING_MSIX)
-		free_msix_queue_irqs_uld(adap, type);
-free_rxq:
-	free_sge_queues_uld(adap, type);
-free_queues:
-	free_queues_uld(adap, type);
+	अगर (adap->flags & CXGB4_USING_MSIX)
+		मुक्त_msix_queue_irqs_uld(adap, type);
+मुक्त_rxq:
+	मुक्त_sge_queues_uld(adap, type);
+मुक्त_queues:
+	मुक्त_queues_uld(adap, type);
 out:
 	dev_warn(adap->pdev_dev,
 		 "ULD registration failed for uld type %d\n", type);
-}
+पूर्ण
 
-void cxgb4_uld_enable(struct adapter *adap)
-{
-	struct cxgb4_uld_list *uld_entry;
+व्योम cxgb4_uld_enable(काष्ठा adapter *adap)
+अणु
+	काष्ठा cxgb4_uld_list *uld_entry;
 
 	mutex_lock(&uld_mutex);
 	list_add_tail(&adap->list_node, &adapter_list);
-	list_for_each_entry(uld_entry, &uld_list, list_node)
+	list_क्रम_each_entry(uld_entry, &uld_list, list_node)
 		cxgb4_uld_alloc_resources(adap, uld_entry->uld_type,
 					  &uld_entry->uld_info);
 	mutex_unlock(&uld_mutex);
-}
+पूर्ण
 
-/* cxgb4_register_uld - register an upper-layer driver
+/* cxgb4_रेजिस्टर_uld - रेजिस्टर an upper-layer driver
  * @type: the ULD type
  * @p: the ULD methods
  *
- * Registers an upper-layer driver with this driver and notifies the ULD
+ * Registers an upper-layer driver with this driver and notअगरies the ULD
  * about any presently available devices that support its type.
  */
-void cxgb4_register_uld(enum cxgb4_uld type,
-			const struct cxgb4_uld_info *p)
-{
-	struct cxgb4_uld_list *uld_entry;
-	struct adapter *adap;
+व्योम cxgb4_रेजिस्टर_uld(क्रमागत cxgb4_uld type,
+			स्थिर काष्ठा cxgb4_uld_info *p)
+अणु
+	काष्ठा cxgb4_uld_list *uld_entry;
+	काष्ठा adapter *adap;
 
-	if (type >= CXGB4_ULD_MAX)
-		return;
+	अगर (type >= CXGB4_ULD_MAX)
+		वापस;
 
-	uld_entry = kzalloc(sizeof(*uld_entry), GFP_KERNEL);
-	if (!uld_entry)
-		return;
+	uld_entry = kzalloc(माप(*uld_entry), GFP_KERNEL);
+	अगर (!uld_entry)
+		वापस;
 
-	memcpy(&uld_entry->uld_info, p, sizeof(struct cxgb4_uld_info));
+	स_नकल(&uld_entry->uld_info, p, माप(काष्ठा cxgb4_uld_info));
 	mutex_lock(&uld_mutex);
-	list_for_each_entry(adap, &adapter_list, list_node)
+	list_क्रम_each_entry(adap, &adapter_list, list_node)
 		cxgb4_uld_alloc_resources(adap, type, p);
 
 	uld_entry->uld_type = type;
 	list_add_tail(&uld_entry->list_node, &uld_list);
 	mutex_unlock(&uld_mutex);
-	return;
-}
-EXPORT_SYMBOL(cxgb4_register_uld);
+	वापस;
+पूर्ण
+EXPORT_SYMBOL(cxgb4_रेजिस्टर_uld);
 
 /**
- *	cxgb4_unregister_uld - unregister an upper-layer driver
+ *	cxgb4_unरेजिस्टर_uld - unरेजिस्टर an upper-layer driver
  *	@type: the ULD type
  *
- *	Unregisters an existing upper-layer driver.
+ *	Unरेजिस्टरs an existing upper-layer driver.
  */
-int cxgb4_unregister_uld(enum cxgb4_uld type)
-{
-	struct cxgb4_uld_list *uld_entry, *tmp;
-	struct adapter *adap;
+पूर्णांक cxgb4_unरेजिस्टर_uld(क्रमागत cxgb4_uld type)
+अणु
+	काष्ठा cxgb4_uld_list *uld_entry, *पंचांगp;
+	काष्ठा adapter *adap;
 
-	if (type >= CXGB4_ULD_MAX)
-		return -EINVAL;
+	अगर (type >= CXGB4_ULD_MAX)
+		वापस -EINVAL;
 
 	mutex_lock(&uld_mutex);
-	list_for_each_entry(adap, &adapter_list, list_node) {
-		if ((type == CXGB4_ULD_CRYPTO && !is_pci_uld(adap)) ||
+	list_क्रम_each_entry(adap, &adapter_list, list_node) अणु
+		अगर ((type == CXGB4_ULD_CRYPTO && !is_pci_uld(adap)) ||
 		    (type != CXGB4_ULD_CRYPTO && !is_offload(adap)))
-			continue;
-		if (type == CXGB4_ULD_ISCSIT && is_t4(adap->params.chip))
-			continue;
+			जारी;
+		अगर (type == CXGB4_ULD_ISCSIT && is_t4(adap->params.chip))
+			जारी;
 
-		cxgb4_shutdown_uld_adapter(adap, type);
-	}
+		cxgb4_shutकरोwn_uld_adapter(adap, type);
+	पूर्ण
 
-	list_for_each_entry_safe(uld_entry, tmp, &uld_list, list_node) {
-		if (uld_entry->uld_type == type) {
+	list_क्रम_each_entry_safe(uld_entry, पंचांगp, &uld_list, list_node) अणु
+		अगर (uld_entry->uld_type == type) अणु
 			list_del(&uld_entry->list_node);
-			kfree(uld_entry);
-		}
-	}
+			kमुक्त(uld_entry);
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&uld_mutex);
 
-	return 0;
-}
-EXPORT_SYMBOL(cxgb4_unregister_uld);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(cxgb4_unरेजिस्टर_uld);

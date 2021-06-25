@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2010 - 2013 UNISYS CORPORATION
  * All rights reserved.
@@ -7,97 +8,97 @@
 /*
  *  This header file is to be included by other kernel mode components that
  *  implement a particular kind of visor_device.  Each of these other kernel
- *  mode components is called a visor device driver.  Refer to visortemplate
- *  for a minimal sample visor device driver.
+ *  mode components is called a visor device driver.  Refer to visorढाँचा
+ *  क्रम a minimal sample visor device driver.
  *
- *  There should be nothing in this file that is private to the visorbus
+ *  There should be nothing in this file that is निजी to the visorbus
  *  bus implementation itself.
  */
 
-#ifndef __VISORBUS_H__
-#define __VISORBUS_H__
+#अगर_अघोषित __VISORBUS_H__
+#घोषणा __VISORBUS_H__
 
-#include <linux/device.h>
+#समावेश <linux/device.h>
 
-#define VISOR_CHANNEL_SIGNATURE ('L' << 24 | 'N' << 16 | 'C' << 8 | 'E')
+#घोषणा VISOR_CHANNEL_SIGNATURE ('L' << 24 | 'N' << 16 | 'C' << 8 | 'E')
 
 /*
- * enum channel_serverstate
+ * क्रमागत channel_serverstate
  * @CHANNELSRV_UNINITIALIZED: Channel is in an undefined state.
  * @CHANNELSRV_READY:	      Channel has been initialized by server.
  */
-enum channel_serverstate {
+क्रमागत channel_serverstate अणु
 	CHANNELSRV_UNINITIALIZED = 0,
 	CHANNELSRV_READY = 1
-};
+पूर्ण;
 
 /*
- * enum channel_clientstate
+ * क्रमागत channel_clientstate
  * @CHANNELCLI_DETACHED:
  * @CHANNELCLI_DISABLED:  Client can see channel but is NOT allowed to use it
  *			  unless given TBD* explicit request
  *			  (should actually be < DETACHED).
- * @CHANNELCLI_ATTACHING: Legacy EFI client request for EFI server to attach.
- * @CHANNELCLI_ATTACHED:  Idle, but client may want to use channel any time.
+ * @CHANNELCLI_ATTACHING: Legacy EFI client request क्रम EFI server to attach.
+ * @CHANNELCLI_ATTACHED:  Idle, but client may want to use channel any समय.
  * @CHANNELCLI_BUSY:	  Client either wants to use or is using channel.
  * @CHANNELCLI_OWNED:	  "No worries" state - client can access channel
- *			  anytime.
+ *			  anyसमय.
  */
-enum channel_clientstate {
+क्रमागत channel_clientstate अणु
 	CHANNELCLI_DETACHED = 0,
 	CHANNELCLI_DISABLED = 1,
 	CHANNELCLI_ATTACHING = 2,
 	CHANNELCLI_ATTACHED = 3,
 	CHANNELCLI_BUSY = 4,
 	CHANNELCLI_OWNED = 5
-};
+पूर्ण;
 
 /*
- * Values for VISOR_CHANNEL_PROTOCOL.Features: This define exists so that
+ * Values क्रम VISOR_CHANNEL_PROTOCOL.Features: This define exists so that
  * a guest can look at the FeatureFlags in the io channel, and configure the
- * driver to use interrupts or not based on this setting. All feature bits for
+ * driver to use पूर्णांकerrupts or not based on this setting. All feature bits क्रम
  * all channels should be defined here. The io channel feature bits are defined
  * below.
  */
-#define VISOR_DRIVER_ENABLES_INTS (0x1ULL << 1)
-#define VISOR_CHANNEL_IS_POLLING (0x1ULL << 3)
-#define VISOR_IOVM_OK_DRIVER_DISABLING_INTS (0x1ULL << 4)
-#define VISOR_DRIVER_DISABLES_INTS (0x1ULL << 5)
-#define VISOR_DRIVER_ENHANCED_RCVBUF_CHECKING (0x1ULL << 6)
+#घोषणा VISOR_DRIVER_ENABLES_INTS (0x1ULL << 1)
+#घोषणा VISOR_CHANNEL_IS_POLLING (0x1ULL << 3)
+#घोषणा VISOR_IOVM_OK_DRIVER_DISABLING_INTS (0x1ULL << 4)
+#घोषणा VISOR_DRIVER_DISABLES_INTS (0x1ULL << 5)
+#घोषणा VISOR_DRIVER_ENHANCED_RCVBUF_CHECKING (0x1ULL << 6)
 
 /*
- * struct channel_header - Common Channel Header
+ * काष्ठा channel_header - Common Channel Header
  * @signature:	       Signature.
  * @legacy_state:      DEPRECATED - being replaced by.
- * @header_size:       sizeof(struct channel_header).
+ * @header_size:       माप(काष्ठा channel_header).
  * @size:	       Total size of this channel in bytes.
- * @features:	       Flags to modify behavior.
+ * @features:	       Flags to modअगरy behavior.
  * @chtype:	       Channel type: data, bus, control, etc..
  * @partition_handle:  ID of guest partition.
  * @handle:	       Device number of this channel in client.
- * @ch_space_offset:   Offset in bytes to channel specific area.
+ * @ch_space_offset:   Offset in bytes to channel specअगरic area.
  * @version_id:	       Struct channel_header Version ID.
  * @partition_index:   Index of guest partition.
  * @zone_uuid:	       Guid of Channel's zone.
  * @cli_str_offset:    Offset from channel header to null-terminated
- *		       ClientString (0 if ClientString not present).
+ *		       ClientString (0 अगर ClientString not present).
  * @cli_state_boot:    CHANNEL_CLIENTSTATE of pre-boot EFI client of this
  *		       channel.
- * @cmd_state_cli:     CHANNEL_COMMANDSTATE (overloaded in Windows drivers, see
+ * @cmd_state_cli:     CHANNEL_COMMANDSTATE (overloaded in Winकरोws drivers, see
  *		       ServerStateUp, ServerStateDown, etc).
  * @cli_state_os:      CHANNEL_CLIENTSTATE of Guest OS client of this channel.
- * @ch_characteristic: CHANNEL_CHARACTERISTIC_<xxx>.
- * @cmd_state_srv:     CHANNEL_COMMANDSTATE (overloaded in Windows drivers, see
+ * @ch_अक्षरacteristic: CHANNEL_CHARACTERISTIC_<xxx>.
+ * @cmd_state_srv:     CHANNEL_COMMANDSTATE (overloaded in Winकरोws drivers, see
  *		       ServerStateUp, ServerStateDown, etc).
  * @srv_state:	       CHANNEL_SERVERSTATE.
- * @cli_error_boot:    Bits to indicate err states for boot clients, so err
+ * @cli_error_boot:    Bits to indicate err states क्रम boot clients, so err
  *		       messages can be throttled.
- * @cli_error_os:      Bits to indicate err states for OS clients, so err
+ * @cli_error_os:      Bits to indicate err states क्रम OS clients, so err
  *		       messages can be throttled.
  * @filler:	       Pad out to 128 byte cacheline.
  * @recover_channel:   Please add all new single-byte values below here.
  */
-struct channel_header {
+काष्ठा channel_header अणु
 	u64 signature;
 	u32 legacy_state;
 	/* SrvState, CliStateBoot, and CliStateOS below */
@@ -115,45 +116,45 @@ struct channel_header {
 	u32 cli_state_boot;
 	u32 cmd_state_cli;
 	u32 cli_state_os;
-	u32 ch_characteristic;
+	u32 ch_अक्षरacteristic;
 	u32 cmd_state_srv;
 	u32 srv_state;
 	u8 cli_error_boot;
 	u8 cli_error_os;
 	u8 filler[1];
 	u8 recover_channel;
-} __packed;
+पूर्ण __packed;
 
-#define VISOR_CHANNEL_ENABLE_INTS (0x1ULL << 0)
+#घोषणा VISOR_CHANNEL_ENABLE_INTS (0x1ULL << 0)
 
 /*
- * struct signal_queue_header - Subheader for the Signal Type variation of the
+ * काष्ठा संकेत_queue_header - Subheader क्रम the Signal Type variation of the
  *                              Common Channel.
  * @version:	      SIGNAL_QUEUE_HEADER Version ID.
  * @chtype:	      Queue type: storage, network.
  * @size:	      Total size of this queue in bytes.
- * @sig_base_offset:  Offset to signal queue area.
- * @features:	      Flags to modify behavior.
- * @num_sent:	      Total # of signals placed in this queue.
+ * @sig_base_offset:  Offset to संकेत queue area.
+ * @features:	      Flags to modअगरy behavior.
+ * @num_sent:	      Total # of संकेतs placed in this queue.
  * @num_overflows:    Total # of inserts failed due to full queue.
- * @signal_size:      Total size of a signal for this queue.
+ * @संकेत_size:      Total size of a संकेत क्रम this queue.
  * @max_slots:        Max # of slots in queue, 1 slot is always empty.
- * @max_signals:      Max # of signals in queue (MaxSignalSlots-1).
- * @head:	      Queue head signal #.
- * @num_received:     Total # of signals removed from this queue.
- * @tail:	      Queue tail signal.
+ * @max_संकेतs:      Max # of संकेतs in queue (MaxSignalSlots-1).
+ * @head:	      Queue head संकेत #.
+ * @num_received:     Total # of संकेतs हटाओd from this queue.
+ * @tail:	      Queue tail संकेत.
  * @reserved1:	      Reserved field.
  * @reserved2:	      Reserved field.
  * @client_queue:
  * @num_irq_received: Total # of Interrupts received. This is incremented by the
- *		      ISR in the guest windows driver.
- * @num_empty:	      Number of times that visor_signal_remove is called and
- *		      returned Empty Status.
+ *		      ISR in the guest winकरोws driver.
+ * @num_empty:	      Number of बार that visor_संकेत_हटाओ is called and
+ *		      वापसed Empty Status.
  * @errorflags:	      Error bits set during SignalReinit to denote trouble with
  *		      client's fields.
  * @filler:	      Pad out to 64 byte cacheline.
  */
-struct signal_queue_header {
+काष्ठा संकेत_queue_header अणु
 	/* 1st cache line */
 	u32 version;
 	u32 chtype;
@@ -162,9 +163,9 @@ struct signal_queue_header {
 	u64 features;
 	u64 num_sent;
 	u64 num_overflows;
-	u32 signal_size;
+	u32 संकेत_size;
 	u32 max_slots;
-	u32 max_signals;
+	u32 max_संकेतs;
 	u32 head;
 	/* 2nd cache line */
 	u64 num_received;
@@ -176,99 +177,99 @@ struct signal_queue_header {
 	u64 num_empty;
 	u32 errorflags;
 	u8 filler[12];
-} __packed;
+पूर्ण __packed;
 
 /* VISORCHANNEL Guids */
-/* {414815ed-c58c-11da-95a9-00e08161165f} */
-#define VISOR_VHBA_CHANNEL_GUID \
+/* अणु414815ed-c58c-11da-95a9-00e08161165fपूर्ण */
+#घोषणा VISOR_VHBA_CHANNEL_GUID \
 	GUID_INIT(0x414815ed, 0xc58c, 0x11da, \
 		  0x95, 0xa9, 0x0, 0xe0, 0x81, 0x61, 0x16, 0x5f)
-#define VISOR_VHBA_CHANNEL_GUID_STR \
+#घोषणा VISOR_VHBA_CHANNEL_GUID_STR \
 	"414815ed-c58c-11da-95a9-00e08161165f"
-struct visorchipset_state {
+काष्ठा visorchipset_state अणु
 	u32 created:1;
 	u32 attached:1;
 	u32 configured:1;
 	u32 running:1;
-	/* Remaining bits in this 32-bit word are reserved. */
-};
+	/* Reमुख्यing bits in this 32-bit word are reserved. */
+पूर्ण;
 
 /**
- * struct visor_device - A device type for things "plugged" into the visorbus
+ * काष्ठा visor_device - A device type क्रम things "plugged" पूर्णांकo the visorbus
  *                       bus
- * @visorchannel:		Points to the channel that the device is
+ * @visorchannel:		Poपूर्णांकs to the channel that the device is
  *				associated with.
- * @channel_type_guid:		Identifies the channel type to the bus driver.
- * @device:			Device struct meant for use by the bus driver
+ * @channel_type_guid:		Identअगरies the channel type to the bus driver.
+ * @device:			Device काष्ठा meant क्रम use by the bus driver
  *				only.
- * @list_all:			Used by the bus driver to enumerate devices.
- * @timer:		        Timer fired periodically to do interrupt-type
+ * @list_all:			Used by the bus driver to क्रमागतerate devices.
+ * @समयr:		        Timer fired periodically to करो पूर्णांकerrupt-type
  *				activity.
- * @being_removed:		Indicates that the device is being removed from
+ * @being_हटाओd:		Indicates that the device is being हटाओd from
  *				the bus. Private bus driver use only.
  * @visordriver_callback_lock:	Used by the bus driver to lock when adding and
  *				removing devices.
- * @pausing:			Indicates that a change towards a paused state.
- *				is in progress. Only modified by the bus driver.
+ * @pausing:			Indicates that a change towards a छोड़ोd state.
+ *				is in progress. Only modअगरied by the bus driver.
  * @resuming:			Indicates that a change towards a running state
- *				is in progress. Only modified by the bus driver.
+ *				is in progress. Only modअगरied by the bus driver.
  * @chipset_bus_no:		Private field used by the bus driver.
  * @chipset_dev_no:		Private field used the bus driver.
  * @state:			Used to indicate the current state of the
  *				device.
- * @inst:			Unique GUID for this instance of the device.
+ * @inst:			Unique GUID क्रम this instance of the device.
  * @name:			Name of the device.
- * @pending_msg_hdr:		For private use by bus driver to respond to
+ * @pending_msg_hdr:		For निजी use by bus driver to respond to
  *				hypervisor requests.
- * @vbus_hdr_info:		A pointer to header info. Private use by bus
+ * @vbus_hdr_info:		A poपूर्णांकer to header info. Private use by bus
  *				driver.
  * @partition_guid:		Indicates client partion id. This should be the
  *				same across all visor_devices in the current
  *				guest. Private use by bus driver only.
  */
-struct visor_device {
-	struct visorchannel *visorchannel;
+काष्ठा visor_device अणु
+	काष्ठा visorchannel *visorchannel;
 	guid_t channel_type_guid;
-	/* These fields are for private use by the bus driver only. */
-	struct device device;
-	struct list_head list_all;
-	struct timer_list timer;
-	bool timer_active;
-	bool being_removed;
-	struct mutex visordriver_callback_lock; /* synchronize probe/remove */
+	/* These fields are क्रम निजी use by the bus driver only. */
+	काष्ठा device device;
+	काष्ठा list_head list_all;
+	काष्ठा समयr_list समयr;
+	bool समयr_active;
+	bool being_हटाओd;
+	काष्ठा mutex visordriver_callback_lock; /* synchronize probe/हटाओ */
 	bool pausing;
 	bool resuming;
 	u32 chipset_bus_no;
 	u32 chipset_dev_no;
-	struct visorchipset_state state;
+	काष्ठा visorchipset_state state;
 	guid_t inst;
 	u8 *name;
-	struct controlvm_message_header *pending_msg_hdr;
-	void *vbus_hdr_info;
+	काष्ठा controlvm_message_header *pending_msg_hdr;
+	व्योम *vbus_hdr_info;
 	guid_t partition_guid;
-	struct dentry *debugfs_dir;
-	struct dentry *debugfs_bus_info;
-};
+	काष्ठा dentry *debugfs_dir;
+	काष्ठा dentry *debugfs_bus_info;
+पूर्ण;
 
-#define to_visor_device(x) container_of(x, struct visor_device, device)
+#घोषणा to_visor_device(x) container_of(x, काष्ठा visor_device, device)
 
-typedef void (*visorbus_state_complete_func) (struct visor_device *dev,
-					      int status);
+प्रकार व्योम (*visorbus_state_complete_func) (काष्ठा visor_device *dev,
+					      पूर्णांक status);
 
 /*
- * This struct describes a specific visor channel, by providing its GUID, name,
+ * This काष्ठा describes a specअगरic visor channel, by providing its GUID, name,
  * and sizes.
  */
-struct visor_channeltype_descriptor {
-	const guid_t guid;
-	const char *name;
+काष्ठा visor_channeltype_descriptor अणु
+	स्थिर guid_t guid;
+	स्थिर अक्षर *name;
 	u64 min_bytes;
 	u32 version;
-};
+पूर्ण;
 
 /**
- * struct visor_driver - Information provided by each visor driver when it
- *                       registers with the visorbus driver
+ * काष्ठा visor_driver - Inक्रमmation provided by each visor driver when it
+ *                       रेजिस्टरs with the visorbus driver
  * @name:		Name of the visor driver.
  * @owner:		The module owner.
  * @channel_types:	Types of channels handled by this driver, ending with
@@ -277,68 +278,68 @@ struct visor_channeltype_descriptor {
  *			driver will in fact handle a new device that it has
  *			detected.
  * @probe:		Called when a new device comes online, by our probe()
- *			function specified by driver.probe() (triggered
- *			ultimately by some call to driver_register(),
+ *			function specअगरied by driver.probe() (triggered
+ *			ultimately by some call to driver_रेजिस्टर(),
  *			bus_add_driver(), or driver_attach()).
- * @remove:		Called when a new device is removed, by our remove()
- *			function specified by driver.remove() (triggered
+ * @हटाओ:		Called when a new device is हटाओd, by our हटाओ()
+ *			function specअगरied by driver.हटाओ() (triggered
  *			ultimately by some call to device_release_driver()).
- * @channel_interrupt:	Called periodically, whenever there is a possiblity
+ * @channel_पूर्णांकerrupt:	Called periodically, whenever there is a possiblity
  *			that "something interesting" may have happened to the
  *			channel.
- * @pause:		Called to initiate a change of the device's state.  If
- *			the return valu`e is < 0, there was an error and the
- *			state transition will NOT occur.  If the return value
+ * @छोड़ो:		Called to initiate a change of the device's state.  If
+ *			the वापस valu`e is < 0, there was an error and the
+ *			state transition will NOT occur.  If the वापस value
  *			is >= 0, then the state transition was INITIATED
  *			successfully, and complete_func() will be called (or
  *			was just called) with the final status when either the
  *			state transition fails or completes successfully.
- * @resume:		Behaves similar to pause.
+ * @resume:		Behaves similar to छोड़ो.
  * @driver:		Private reference to the device driver. For use by bus
  *			driver only.
  */
-struct visor_driver {
-	const char *name;
-	struct module *owner;
-	struct visor_channeltype_descriptor *channel_types;
-	int (*probe)(struct visor_device *dev);
-	void (*remove)(struct visor_device *dev);
-	void (*channel_interrupt)(struct visor_device *dev);
-	int (*pause)(struct visor_device *dev,
+काष्ठा visor_driver अणु
+	स्थिर अक्षर *name;
+	काष्ठा module *owner;
+	काष्ठा visor_channeltype_descriptor *channel_types;
+	पूर्णांक (*probe)(काष्ठा visor_device *dev);
+	व्योम (*हटाओ)(काष्ठा visor_device *dev);
+	व्योम (*channel_पूर्णांकerrupt)(काष्ठा visor_device *dev);
+	पूर्णांक (*छोड़ो)(काष्ठा visor_device *dev,
 		     visorbus_state_complete_func complete_func);
-	int (*resume)(struct visor_device *dev,
+	पूर्णांक (*resume)(काष्ठा visor_device *dev,
 		      visorbus_state_complete_func complete_func);
 
-	/* These fields are for private use by the bus driver only. */
-	struct device_driver driver;
-};
+	/* These fields are क्रम निजी use by the bus driver only. */
+	काष्ठा device_driver driver;
+पूर्ण;
 
-#define to_visor_driver(x) (container_of(x, struct visor_driver, driver))
+#घोषणा to_visor_driver(x) (container_of(x, काष्ठा visor_driver, driver))
 
-int visor_check_channel(struct channel_header *ch, struct device *dev,
-			const guid_t *expected_uuid, char *chname,
+पूर्णांक visor_check_channel(काष्ठा channel_header *ch, काष्ठा device *dev,
+			स्थिर guid_t *expected_uuid, अक्षर *chname,
 			u64 expected_min_bytes,	u32 expected_version,
 			u64 expected_signature);
 
-int visorbus_register_visor_driver(struct visor_driver *drv);
-void visorbus_unregister_visor_driver(struct visor_driver *drv);
-int visorbus_read_channel(struct visor_device *dev,
-			  unsigned long offset, void *dest,
-			  unsigned long nbytes);
-int visorbus_write_channel(struct visor_device *dev,
-			   unsigned long offset, void *src,
-			   unsigned long nbytes);
-int visorbus_enable_channel_interrupts(struct visor_device *dev);
-void visorbus_disable_channel_interrupts(struct visor_device *dev);
+पूर्णांक visorbus_रेजिस्टर_visor_driver(काष्ठा visor_driver *drv);
+व्योम visorbus_unरेजिस्टर_visor_driver(काष्ठा visor_driver *drv);
+पूर्णांक visorbus_पढ़ो_channel(काष्ठा visor_device *dev,
+			  अचिन्हित दीर्घ offset, व्योम *dest,
+			  अचिन्हित दीर्घ nbytes);
+पूर्णांक visorbus_ग_लिखो_channel(काष्ठा visor_device *dev,
+			   अचिन्हित दीर्घ offset, व्योम *src,
+			   अचिन्हित दीर्घ nbytes);
+पूर्णांक visorbus_enable_channel_पूर्णांकerrupts(काष्ठा visor_device *dev);
+व्योम visorbus_disable_channel_पूर्णांकerrupts(काष्ठा visor_device *dev);
 
-int visorchannel_signalremove(struct visorchannel *channel, u32 queue,
-			      void *msg);
-int visorchannel_signalinsert(struct visorchannel *channel, u32 queue,
-			      void *msg);
-bool visorchannel_signalempty(struct visorchannel *channel, u32 queue);
-const guid_t *visorchannel_get_guid(struct visorchannel *channel);
+पूर्णांक visorchannel_संकेतहटाओ(काष्ठा visorchannel *channel, u32 queue,
+			      व्योम *msg);
+पूर्णांक visorchannel_संकेतinsert(काष्ठा visorchannel *channel, u32 queue,
+			      व्योम *msg);
+bool visorchannel_संकेतempty(काष्ठा visorchannel *channel, u32 queue);
+स्थिर guid_t *visorchannel_get_guid(काष्ठा visorchannel *channel);
 
-#define BUS_ROOT_DEVICE UINT_MAX
-struct visor_device *visorbus_get_device_by_id(u32 bus_no, u32 dev_no,
-					       struct visor_device *from);
-#endif
+#घोषणा BUS_ROOT_DEVICE अच_पूर्णांक_उच्च
+काष्ठा visor_device *visorbus_get_device_by_id(u32 bus_no, u32 dev_no,
+					       काष्ठा visor_device *from);
+#पूर्ण_अगर

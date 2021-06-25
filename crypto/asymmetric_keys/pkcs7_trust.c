@@ -1,188 +1,189 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Validate the trust chain of a PKCS#7 message.
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define pr_fmt(fmt) "PKCS7: "fmt
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/asn1.h>
-#include <linux/key.h>
-#include <keys/asymmetric-type.h>
-#include <crypto/public_key.h>
-#include "pkcs7_parser.h"
+#घोषणा pr_fmt(fmt) "PKCS7: "fmt
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/asn1.h>
+#समावेश <linux/key.h>
+#समावेश <keys/asymmetric-type.h>
+#समावेश <crypto/खुला_key.h>
+#समावेश "pkcs7_parser.h"
 
 /*
  * Check the trust on one PKCS#7 SignedInfo block.
  */
-static int pkcs7_validate_trust_one(struct pkcs7_message *pkcs7,
-				    struct pkcs7_signed_info *sinfo,
-				    struct key *trust_keyring)
-{
-	struct public_key_signature *sig = sinfo->sig;
-	struct x509_certificate *x509, *last = NULL, *p;
-	struct key *key;
-	int ret;
+अटल पूर्णांक pkcs7_validate_trust_one(काष्ठा pkcs7_message *pkcs7,
+				    काष्ठा pkcs7_चिन्हित_info *sinfo,
+				    काष्ठा key *trust_keyring)
+अणु
+	काष्ठा खुला_key_signature *sig = sinfo->sig;
+	काष्ठा x509_certअगरicate *x509, *last = शून्य, *p;
+	काष्ठा key *key;
+	पूर्णांक ret;
 
 	kenter(",%u,", sinfo->index);
 
-	if (sinfo->unsupported_crypto) {
+	अगर (sinfo->unsupported_crypto) अणु
 		kleave(" = -ENOPKG [cached]");
-		return -ENOPKG;
-	}
+		वापस -ENOPKG;
+	पूर्ण
 
-	for (x509 = sinfo->signer; x509; x509 = x509->signer) {
-		if (x509->seen) {
-			if (x509->verified)
-				goto verified;
+	क्रम (x509 = sinfo->signer; x509; x509 = x509->signer) अणु
+		अगर (x509->seen) अणु
+			अगर (x509->verअगरied)
+				जाओ verअगरied;
 			kleave(" = -ENOKEY [cached]");
-			return -ENOKEY;
-		}
+			वापस -ENOKEY;
+		पूर्ण
 		x509->seen = true;
 
-		/* Look to see if this certificate is present in the trusted
+		/* Look to see अगर this certअगरicate is present in the trusted
 		 * keys.
 		 */
 		key = find_asymmetric_key(trust_keyring,
 					  x509->id, x509->skid, false);
-		if (!IS_ERR(key)) {
-			/* One of the X.509 certificates in the PKCS#7 message
-			 * is apparently the same as one we already trust.
-			 * Verify that the trusted variant can also validate
+		अगर (!IS_ERR(key)) अणु
+			/* One of the X.509 certअगरicates in the PKCS#7 message
+			 * is apparently the same as one we alपढ़ोy trust.
+			 * Verअगरy that the trusted variant can also validate
 			 * the signature on the descendant.
 			 */
 			pr_devel("sinfo %u: Cert %u as key %x\n",
 				 sinfo->index, x509->index, key_serial(key));
-			goto matched;
-		}
-		if (key == ERR_PTR(-ENOMEM))
-			return -ENOMEM;
+			जाओ matched;
+		पूर्ण
+		अगर (key == ERR_PTR(-ENOMEM))
+			वापस -ENOMEM;
 
-		 /* Self-signed certificates form roots of their own, and if we
-		  * don't know them, then we can't accept them.
+		 /* Self-चिन्हित certअगरicates क्रमm roots of their own, and अगर we
+		  * करोn't know them, then we can't accept them.
 		  */
-		if (x509->signer == x509) {
+		अगर (x509->signer == x509) अणु
 			kleave(" = -ENOKEY [unknown self-signed]");
-			return -ENOKEY;
-		}
+			वापस -ENOKEY;
+		पूर्ण
 
 		might_sleep();
 		last = x509;
 		sig = last->sig;
-	}
+	पूर्ण
 
-	/* No match - see if the root certificate has a signer amongst the
+	/* No match - see अगर the root certअगरicate has a signer amongst the
 	 * trusted keys.
 	 */
-	if (last && (last->sig->auth_ids[0] || last->sig->auth_ids[1])) {
+	अगर (last && (last->sig->auth_ids[0] || last->sig->auth_ids[1])) अणु
 		key = find_asymmetric_key(trust_keyring,
 					  last->sig->auth_ids[0],
 					  last->sig->auth_ids[1],
 					  false);
-		if (!IS_ERR(key)) {
+		अगर (!IS_ERR(key)) अणु
 			x509 = last;
 			pr_devel("sinfo %u: Root cert %u signer is key %x\n",
 				 sinfo->index, x509->index, key_serial(key));
-			goto matched;
-		}
-		if (PTR_ERR(key) != -ENOKEY)
-			return PTR_ERR(key);
-	}
+			जाओ matched;
+		पूर्ण
+		अगर (PTR_ERR(key) != -ENOKEY)
+			वापस PTR_ERR(key);
+	पूर्ण
 
-	/* As a last resort, see if we have a trusted public key that matches
-	 * the signed info directly.
+	/* As a last resort, see अगर we have a trusted खुला key that matches
+	 * the चिन्हित info directly.
 	 */
 	key = find_asymmetric_key(trust_keyring,
-				  sinfo->sig->auth_ids[0], NULL, false);
-	if (!IS_ERR(key)) {
+				  sinfo->sig->auth_ids[0], शून्य, false);
+	अगर (!IS_ERR(key)) अणु
 		pr_devel("sinfo %u: Direct signer is key %x\n",
 			 sinfo->index, key_serial(key));
-		x509 = NULL;
+		x509 = शून्य;
 		sig = sinfo->sig;
-		goto matched;
-	}
-	if (PTR_ERR(key) != -ENOKEY)
-		return PTR_ERR(key);
+		जाओ matched;
+	पूर्ण
+	अगर (PTR_ERR(key) != -ENOKEY)
+		वापस PTR_ERR(key);
 
 	kleave(" = -ENOKEY [no backref]");
-	return -ENOKEY;
+	वापस -ENOKEY;
 
 matched:
-	ret = verify_signature(key, sig);
+	ret = verअगरy_signature(key, sig);
 	key_put(key);
-	if (ret < 0) {
-		if (ret == -ENOMEM)
-			return ret;
+	अगर (ret < 0) अणु
+		अगर (ret == -ENOMEM)
+			वापस ret;
 		kleave(" = -EKEYREJECTED [verify %d]", ret);
-		return -EKEYREJECTED;
-	}
+		वापस -EKEYREJECTED;
+	पूर्ण
 
-verified:
-	if (x509) {
-		x509->verified = true;
-		for (p = sinfo->signer; p != x509; p = p->signer)
-			p->verified = true;
-	}
+verअगरied:
+	अगर (x509) अणु
+		x509->verअगरied = true;
+		क्रम (p = sinfo->signer; p != x509; p = p->signer)
+			p->verअगरied = true;
+	पूर्ण
 	kleave(" = 0");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pkcs7_validate_trust - Validate PKCS#7 trust chain
- * @pkcs7: The PKCS#7 certificate to validate
- * @trust_keyring: Signing certificates to use as starting points
+ * @pkcs7: The PKCS#7 certअगरicate to validate
+ * @trust_keyring: Signing certअगरicates to use as starting poपूर्णांकs
  *
- * Validate that the certificate chain inside the PKCS#7 message intersects
- * keys we already know and trust.
+ * Validate that the certअगरicate chain inside the PKCS#7 message पूर्णांकersects
+ * keys we alपढ़ोy know and trust.
  *
  * Returns, in order of descending priority:
  *
- *  (*) -EKEYREJECTED if a signature failed to match for which we have a valid
+ *  (*) -EKEYREJECTED अगर a signature failed to match क्रम which we have a valid
  *	key, or:
  *
- *  (*) 0 if at least one signature chain intersects with the keys in the trust
+ *  (*) 0 अगर at least one signature chain पूर्णांकersects with the keys in the trust
  *	keyring, or:
  *
- *  (*) -ENOPKG if a suitable crypto module couldn't be found for a check on a
+ *  (*) -ENOPKG अगर a suitable crypto module couldn't be found क्रम a check on a
  *	chain.
  *
- *  (*) -ENOKEY if we couldn't find a match for any of the signature chains in
+ *  (*) -ENOKEY अगर we couldn't find a match क्रम any of the signature chains in
  *	the message.
  *
- * May also return -ENOMEM.
+ * May also वापस -ENOMEM.
  */
-int pkcs7_validate_trust(struct pkcs7_message *pkcs7,
-			 struct key *trust_keyring)
-{
-	struct pkcs7_signed_info *sinfo;
-	struct x509_certificate *p;
-	int cached_ret = -ENOKEY;
-	int ret;
+पूर्णांक pkcs7_validate_trust(काष्ठा pkcs7_message *pkcs7,
+			 काष्ठा key *trust_keyring)
+अणु
+	काष्ठा pkcs7_चिन्हित_info *sinfo;
+	काष्ठा x509_certअगरicate *p;
+	पूर्णांक cached_ret = -ENOKEY;
+	पूर्णांक ret;
 
-	for (p = pkcs7->certs; p; p = p->next)
+	क्रम (p = pkcs7->certs; p; p = p->next)
 		p->seen = false;
 
-	for (sinfo = pkcs7->signed_infos; sinfo; sinfo = sinfo->next) {
+	क्रम (sinfo = pkcs7->चिन्हित_infos; sinfo; sinfo = sinfo->next) अणु
 		ret = pkcs7_validate_trust_one(pkcs7, sinfo, trust_keyring);
-		switch (ret) {
-		case -ENOKEY:
-			continue;
-		case -ENOPKG:
-			if (cached_ret == -ENOKEY)
+		चयन (ret) अणु
+		हाल -ENOKEY:
+			जारी;
+		हाल -ENOPKG:
+			अगर (cached_ret == -ENOKEY)
 				cached_ret = -ENOPKG;
-			continue;
-		case 0:
+			जारी;
+		हाल 0:
 			cached_ret = 0;
-			continue;
-		default:
-			return ret;
-		}
-	}
+			जारी;
+		शेष:
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return cached_ret;
-}
+	वापस cached_ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pkcs7_validate_trust);

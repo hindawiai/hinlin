@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for GalaxyCore GC0310 VGA camera sensor.
+ * Support क्रम GalaxyCore GC0310 VGA camera sensor.
  *
  * Copyright (c) 2013 Intel Corporation. All Rights Reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kmod.h>
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/moduleparam.h>
-#include <media/v4l2-device.h>
-#include <linux/io.h>
-#include "../include/linux/atomisp_gmin_platform.h"
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <linux/पन.स>
+#समावेश "../include/linux/atomisp_gmin_platform.h"
 
-#include "gc0310.h"
+#समावेश "gc0310.h"
 
-/* i2c read/write stuff */
-static int gc0310_read_reg(struct i2c_client *client,
+/* i2c पढ़ो/ग_लिखो stuff */
+अटल पूर्णांक gc0310_पढ़ो_reg(काष्ठा i2c_client *client,
 			   u16 data_length, u8 reg, u8 *val)
-{
-	int err;
-	struct i2c_msg msg[2];
-	unsigned char data[1];
+अणु
+	पूर्णांक err;
+	काष्ठा i2c_msg msg[2];
+	अचिन्हित अक्षर data[1];
 
-	if (!client->adapter) {
+	अगर (!client->adapter) अणु
 		dev_err(&client->dev, "%s error, no client->adapter\n",
 			__func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (data_length != GC0310_8BIT) {
+	अगर (data_length != GC0310_8BIT) अणु
 		dev_err(&client->dev, "%s error, invalid data length\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(msg, 0, sizeof(msg));
+	स_रखो(msg, 0, माप(msg));
 
 	msg[0].addr = client->addr;
 	msg[0].flags = 0;
@@ -70,27 +71,27 @@ static int gc0310_read_reg(struct i2c_client *client,
 	msg[1].buf = data;
 
 	err = i2c_transfer(client->adapter, msg, 2);
-	if (err != 2) {
-		if (err >= 0)
+	अगर (err != 2) अणु
+		अगर (err >= 0)
 			err = -EIO;
 		dev_err(&client->dev,
 			"read from offset 0x%x error %d", reg, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	*val = 0;
 	/* high byte comes first */
-	if (data_length == GC0310_8BIT)
+	अगर (data_length == GC0310_8BIT)
 		*val = (u8)data[0];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_i2c_write(struct i2c_client *client, u16 len, u8 *data)
-{
-	struct i2c_msg msg;
-	const int num_msg = 1;
-	int ret;
+अटल पूर्णांक gc0310_i2c_ग_लिखो(काष्ठा i2c_client *client, u16 len, u8 *data)
+अणु
+	काष्ठा i2c_msg msg;
+	स्थिर पूर्णांक num_msg = 1;
+	पूर्णांक ret;
 
 	msg.addr = client->addr;
 	msg.flags = 0;
@@ -98,272 +99,272 @@ static int gc0310_i2c_write(struct i2c_client *client, u16 len, u8 *data)
 	msg.buf = data;
 	ret = i2c_transfer(client->adapter, &msg, 1);
 
-	return ret == num_msg ? 0 : -EIO;
-}
+	वापस ret == num_msg ? 0 : -EIO;
+पूर्ण
 
-static int gc0310_write_reg(struct i2c_client *client, u16 data_length,
+अटल पूर्णांक gc0310_ग_लिखो_reg(काष्ठा i2c_client *client, u16 data_length,
 			    u8 reg, u8 val)
-{
-	int ret;
-	unsigned char data[2] = {0};
+अणु
+	पूर्णांक ret;
+	अचिन्हित अक्षर data[2] = अणु0पूर्ण;
 	u8 *wreg = (u8 *)data;
-	const u16 len = data_length + sizeof(u8); /* 8-bit address + data */
+	स्थिर u16 len = data_length + माप(u8); /* 8-bit address + data */
 
-	if (data_length != GC0310_8BIT) {
+	अगर (data_length != GC0310_8BIT) अणु
 		dev_err(&client->dev,
 			"%s error, invalid data_length\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* high byte goes out first */
 	*wreg = (u8)(reg & 0xff);
 
-	if (data_length == GC0310_8BIT)
+	अगर (data_length == GC0310_8BIT)
 		data[1] = (u8)(val);
 
-	ret = gc0310_i2c_write(client, len, data);
-	if (ret)
+	ret = gc0310_i2c_ग_लिखो(client, len, data);
+	अगर (ret)
 		dev_err(&client->dev,
 			"write error: wrote 0x%x to offset 0x%x error %d",
 			val, reg, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * gc0310_write_reg_array - Initializes a list of GC0310 registers
- * @client: i2c driver client structure
- * @reglist: list of registers to be written
+ * gc0310_ग_लिखो_reg_array - Initializes a list of GC0310 रेजिस्टरs
+ * @client: i2c driver client काष्ठाure
+ * @reglist: list of रेजिस्टरs to be written
  *
- * This function initializes a list of registers. When consecutive addresses
+ * This function initializes a list of रेजिस्टरs. When consecutive addresses
  * are found in a row on the list, this function creates a buffer and sends
  * consecutive data in a single i2c_transfer().
  *
  * __gc0310_flush_reg_array, __gc0310_buf_reg_array() and
- * __gc0310_write_reg_is_consecutive() are internal functions to
- * gc0310_write_reg_array_fast() and should be not used anywhere else.
+ * __gc0310_ग_लिखो_reg_is_consecutive() are पूर्णांकernal functions to
+ * gc0310_ग_लिखो_reg_array_fast() and should be not used anywhere अन्यथा.
  *
  */
 
-static int __gc0310_flush_reg_array(struct i2c_client *client,
-				    struct gc0310_write_ctrl *ctrl)
-{
+अटल पूर्णांक __gc0310_flush_reg_array(काष्ठा i2c_client *client,
+				    काष्ठा gc0310_ग_लिखो_ctrl *ctrl)
+अणु
 	u16 size;
 
-	if (ctrl->index == 0)
-		return 0;
+	अगर (ctrl->index == 0)
+		वापस 0;
 
-	size = sizeof(u8) + ctrl->index; /* 8-bit address + data */
+	size = माप(u8) + ctrl->index; /* 8-bit address + data */
 	ctrl->buffer.addr = (u8)(ctrl->buffer.addr);
 	ctrl->index = 0;
 
-	return gc0310_i2c_write(client, size, (u8 *)&ctrl->buffer);
-}
+	वापस gc0310_i2c_ग_लिखो(client, size, (u8 *)&ctrl->buffer);
+पूर्ण
 
-static int __gc0310_buf_reg_array(struct i2c_client *client,
-				  struct gc0310_write_ctrl *ctrl,
-				  const struct gc0310_reg *next)
-{
-	int size;
+अटल पूर्णांक __gc0310_buf_reg_array(काष्ठा i2c_client *client,
+				  काष्ठा gc0310_ग_लिखो_ctrl *ctrl,
+				  स्थिर काष्ठा gc0310_reg *next)
+अणु
+	पूर्णांक size;
 
-	switch (next->type) {
-	case GC0310_8BIT:
+	चयन (next->type) अणु
+	हाल GC0310_8BIT:
 		size = 1;
 		ctrl->buffer.data[ctrl->index] = (u8)next->val;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* When first item is added, we need to store its starting address */
-	if (ctrl->index == 0)
+	अगर (ctrl->index == 0)
 		ctrl->buffer.addr = next->reg;
 
 	ctrl->index += size;
 
 	/*
-	 * Buffer cannot guarantee free space for u32? Better flush it to avoid
-	 * possible lack of memory for next item.
+	 * Buffer cannot guarantee मुक्त space क्रम u32? Better flush it to aव्योम
+	 * possible lack of memory क्रम next item.
 	 */
-	if (ctrl->index + sizeof(u8) >= GC0310_MAX_WRITE_BUF_SIZE)
-		return __gc0310_flush_reg_array(client, ctrl);
+	अगर (ctrl->index + माप(u8) >= GC0310_MAX_WRITE_BUF_SIZE)
+		वापस __gc0310_flush_reg_array(client, ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __gc0310_write_reg_is_consecutive(struct i2c_client *client,
-					     struct gc0310_write_ctrl *ctrl,
-					     const struct gc0310_reg *next)
-{
-	if (ctrl->index == 0)
-		return 1;
+अटल पूर्णांक __gc0310_ग_लिखो_reg_is_consecutive(काष्ठा i2c_client *client,
+					     काष्ठा gc0310_ग_लिखो_ctrl *ctrl,
+					     स्थिर काष्ठा gc0310_reg *next)
+अणु
+	अगर (ctrl->index == 0)
+		वापस 1;
 
-	return ctrl->buffer.addr + ctrl->index == next->reg;
-}
+	वापस ctrl->buffer.addr + ctrl->index == next->reg;
+पूर्ण
 
-static int gc0310_write_reg_array(struct i2c_client *client,
-				  const struct gc0310_reg *reglist)
-{
-	const struct gc0310_reg *next = reglist;
-	struct gc0310_write_ctrl ctrl;
-	int err;
+अटल पूर्णांक gc0310_ग_लिखो_reg_array(काष्ठा i2c_client *client,
+				  स्थिर काष्ठा gc0310_reg *reglist)
+अणु
+	स्थिर काष्ठा gc0310_reg *next = reglist;
+	काष्ठा gc0310_ग_लिखो_ctrl ctrl;
+	पूर्णांक err;
 
 	ctrl.index = 0;
-	for (; next->type != GC0310_TOK_TERM; next++) {
-		switch (next->type & GC0310_TOK_MASK) {
-		case GC0310_TOK_DELAY:
+	क्रम (; next->type != GC0310_TOK_TERM; next++) अणु
+		चयन (next->type & GC0310_TOK_MASK) अणु
+		हाल GC0310_TOK_DELAY:
 			err = __gc0310_flush_reg_array(client, &ctrl);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			msleep(next->val);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
 			 * If next address is not consecutive, data needs to be
-			 * flushed before proceed.
+			 * flushed beक्रमe proceed.
 			 */
-			if (!__gc0310_write_reg_is_consecutive(client, &ctrl,
-							       next)) {
+			अगर (!__gc0310_ग_लिखो_reg_is_consecutive(client, &ctrl,
+							       next)) अणु
 				err = __gc0310_flush_reg_array(client, &ctrl);
-				if (err)
-					return err;
-			}
+				अगर (err)
+					वापस err;
+			पूर्ण
 			err = __gc0310_buf_reg_array(client, &ctrl, next);
-			if (err) {
+			अगर (err) अणु
 				dev_err(&client->dev, "%s: write error, aborted\n",
 					__func__);
-				return err;
-			}
-			break;
-		}
-	}
+				वापस err;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return __gc0310_flush_reg_array(client, &ctrl);
-}
+	वापस __gc0310_flush_reg_array(client, &ctrl);
+पूर्ण
 
-static int gc0310_g_focal(struct v4l2_subdev *sd, s32 *val)
-{
+अटल पूर्णांक gc0310_g_focal(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
 	*val = (GC0310_FOCAL_LENGTH_NUM << 16) | GC0310_FOCAL_LENGTH_DEM;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_g_fnumber(struct v4l2_subdev *sd, s32 *val)
-{
-	/*const f number for imx*/
+अटल पूर्णांक gc0310_g_fnumber(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	/*स्थिर f number क्रम imx*/
 	*val = (GC0310_F_NUMBER_DEFAULT_NUM << 16) | GC0310_F_NUMBER_DEM;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_g_fnumber_range(struct v4l2_subdev *sd, s32 *val)
-{
+अटल पूर्णांक gc0310_g_fnumber_range(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
 	*val = (GC0310_F_NUMBER_DEFAULT_NUM << 24) |
 	       (GC0310_F_NUMBER_DEM << 16) |
 	       (GC0310_F_NUMBER_DEFAULT_NUM << 8) | GC0310_F_NUMBER_DEM;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_g_bin_factor_x(struct v4l2_subdev *sd, s32 *val)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
+अटल पूर्णांक gc0310_g_bin_factor_x(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
 
 	*val = gc0310_res[dev->fmt_idx].bin_factor_x;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_g_bin_factor_y(struct v4l2_subdev *sd, s32 *val)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
+अटल पूर्णांक gc0310_g_bin_factor_y(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
 
 	*val = gc0310_res[dev->fmt_idx].bin_factor_y;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_get_intg_factor(struct i2c_client *client,
-				  struct camera_mipi_info *info,
-				  const struct gc0310_resolution *res)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
-	struct atomisp_sensor_mode_data *buf = &info->data;
+अटल पूर्णांक gc0310_get_पूर्णांकg_factor(काष्ठा i2c_client *client,
+				  काष्ठा camera_mipi_info *info,
+				  स्थिर काष्ठा gc0310_resolution *res)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
+	काष्ठा atomisp_sensor_mode_data *buf = &info->data;
 	u16 val;
 	u8 reg_val;
-	int ret;
-	unsigned int hori_blanking;
-	unsigned int vert_blanking;
-	unsigned int sh_delay;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक hori_blanking;
+	अचिन्हित पूर्णांक vert_blanking;
+	अचिन्हित पूर्णांक sh_delay;
 
-	if (!info)
-		return -EINVAL;
+	अगर (!info)
+		वापस -EINVAL;
 
-	/* pixel clock calculattion */
+	/* pixel घड़ी calculattion */
 	dev->vt_pix_clk_freq_mhz = 14400000; // 16.8MHz
 	buf->vt_pix_clk_freq_mhz = dev->vt_pix_clk_freq_mhz;
 	pr_info("vt_pix_clk_freq_mhz=%d\n", buf->vt_pix_clk_freq_mhz);
 
-	/* get integration time */
-	buf->coarse_integration_time_min = GC0310_COARSE_INTG_TIME_MIN;
-	buf->coarse_integration_time_max_margin =
+	/* get पूर्णांकegration समय */
+	buf->coarse_पूर्णांकegration_समय_min = GC0310_COARSE_INTG_TIME_MIN;
+	buf->coarse_पूर्णांकegration_समय_max_margin =
 	    GC0310_COARSE_INTG_TIME_MAX_MARGIN;
 
-	buf->fine_integration_time_min = GC0310_FINE_INTG_TIME_MIN;
-	buf->fine_integration_time_max_margin =
+	buf->fine_पूर्णांकegration_समय_min = GC0310_FINE_INTG_TIME_MIN;
+	buf->fine_पूर्णांकegration_समय_max_margin =
 	    GC0310_FINE_INTG_TIME_MAX_MARGIN;
 
-	buf->fine_integration_time_def = GC0310_FINE_INTG_TIME_MIN;
-	buf->read_mode = res->bin_mode;
+	buf->fine_पूर्णांकegration_समय_def = GC0310_FINE_INTG_TIME_MIN;
+	buf->पढ़ो_mode = res->bin_mode;
 
-	/* get the cropping and output resolution to ISP for this mode. */
+	/* get the cropping and output resolution to ISP क्रम this mode. */
 	/* Getting crop_horizontal_start */
-	ret =  gc0310_read_reg(client, GC0310_8BIT,
+	ret =  gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			       GC0310_H_CROP_START_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	val = (reg_val & 0xFF) << 8;
-	ret =  gc0310_read_reg(client, GC0310_8BIT,
+	ret =  gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			       GC0310_H_CROP_START_L, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->crop_horizontal_start = val | (reg_val & 0xFF);
 	pr_info("crop_horizontal_start=%d\n", buf->crop_horizontal_start);
 
 	/* Getting crop_vertical_start */
-	ret =  gc0310_read_reg(client, GC0310_8BIT,
+	ret =  gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			       GC0310_V_CROP_START_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	val = (reg_val & 0xFF) << 8;
-	ret =  gc0310_read_reg(client, GC0310_8BIT,
+	ret =  gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			       GC0310_V_CROP_START_L, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->crop_vertical_start = val | (reg_val & 0xFF);
 	pr_info("crop_vertical_start=%d\n", buf->crop_vertical_start);
 
 	/* Getting output_width */
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_H_OUTSIZE_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	val = (reg_val & 0xFF) << 8;
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_H_OUTSIZE_L, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->output_width = val | (reg_val & 0xFF);
 	pr_info("output_width=%d\n", buf->output_width);
 
 	/* Getting output_height */
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_V_OUTSIZE_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	val = (reg_val & 0xFF) << 8;
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_V_OUTSIZE_L, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->output_height = val | (reg_val & 0xFF);
 	pr_info("output_height=%d\n", buf->output_height);
 
@@ -373,35 +374,35 @@ static int gc0310_get_intg_factor(struct i2c_client *client,
 	pr_info("crop_vertical_end=%d\n", buf->crop_vertical_end);
 
 	/* Getting line_length_pck */
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_H_BLANKING_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	val = (reg_val & 0xFF) << 8;
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_H_BLANKING_L, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	hori_blanking = val | (reg_val & 0xFF);
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_SH_DELAY, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	sh_delay = reg_val;
 	buf->line_length_pck = buf->output_width + hori_blanking + sh_delay + 4;
 	pr_info("hori_blanking=%d sh_delay=%d line_length_pck=%d\n", hori_blanking,
 		sh_delay, buf->line_length_pck);
 
 	/* Getting frame_length_lines */
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_V_BLANKING_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	val = (reg_val & 0xFF) << 8;
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_V_BLANKING_L, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	vert_blanking = val | (reg_val & 0xFF);
 	buf->frame_length_lines = buf->output_height + vert_blanking;
 	pr_info("vert_blanking=%d frame_length_lines=%d\n", vert_blanking,
@@ -411,220 +412,220 @@ static int gc0310_get_intg_factor(struct i2c_client *client,
 				res->bin_factor_x : 1;
 	buf->binning_factor_y = res->bin_factor_y ?
 				res->bin_factor_y : 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_set_gain(struct v4l2_subdev *sd, int gain)
+अटल पूर्णांक gc0310_set_gain(काष्ठा v4l2_subdev *sd, पूर्णांक gain)
 
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret;
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret;
 	u8 again, dgain;
 
-	if (gain < 0x20)
+	अगर (gain < 0x20)
 		gain = 0x20;
-	if (gain > 0x80)
+	अगर (gain > 0x80)
 		gain = 0x80;
 
-	if (gain >= 0x20 && gain < 0x40) {
-		again = 0x0; /* sqrt(2) */
+	अगर (gain >= 0x20 && gain < 0x40) अणु
+		again = 0x0; /* वर्ग_मूल(2) */
 		dgain = gain;
-	} else {
-		again = 0x2; /* 2 * sqrt(2) */
+	पूर्ण अन्यथा अणु
+		again = 0x2; /* 2 * वर्ग_मूल(2) */
 		dgain = gain / 2;
-	}
+	पूर्ण
 
 	pr_info("gain=0x%x again=0x%x dgain=0x%x\n", gain, again, dgain);
 
 	/* set analog gain */
-	ret = gc0310_write_reg(client, GC0310_8BIT,
+	ret = gc0310_ग_लिखो_reg(client, GC0310_8BIT,
 			       GC0310_AGC_ADJ, again);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* set digital gain */
-	ret = gc0310_write_reg(client, GC0310_8BIT,
+	ret = gc0310_ग_लिखो_reg(client, GC0310_8BIT,
 			       GC0310_DGC_ADJ, dgain);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __gc0310_set_exposure(struct v4l2_subdev *sd, int coarse_itg,
-				 int gain, int digitgain)
+अटल पूर्णांक __gc0310_set_exposure(काष्ठा v4l2_subdev *sd, पूर्णांक coarse_itg,
+				 पूर्णांक gain, पूर्णांक digitgain)
 
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret;
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret;
 
 	pr_info("coarse_itg=%d gain=%d digitgain=%d\n", coarse_itg, gain, digitgain);
 
 	/* set exposure */
-	ret = gc0310_write_reg(client, GC0310_8BIT,
+	ret = gc0310_ग_लिखो_reg(client, GC0310_8BIT,
 			       GC0310_AEC_PK_EXPO_L,
 			       coarse_itg & 0xff);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = gc0310_write_reg(client, GC0310_8BIT,
+	ret = gc0310_ग_लिखो_reg(client, GC0310_8BIT,
 			       GC0310_AEC_PK_EXPO_H,
 			       (coarse_itg >> 8) & 0x0f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = gc0310_set_gain(sd, gain);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gc0310_set_exposure(struct v4l2_subdev *sd, int exposure,
-			       int gain, int digitgain)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
-	int ret;
+अटल पूर्णांक gc0310_set_exposure(काष्ठा v4l2_subdev *sd, पूर्णांक exposure,
+			       पूर्णांक gain, पूर्णांक digitgain)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
+	पूर्णांक ret;
 
 	mutex_lock(&dev->input_lock);
 	ret = __gc0310_set_exposure(sd, exposure, gain, digitgain);
 	mutex_unlock(&dev->input_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long gc0310_s_exposure(struct v4l2_subdev *sd,
-			      struct atomisp_exposure *exposure)
-{
-	int exp = exposure->integration_time[0];
-	int gain = exposure->gain[0];
-	int digitgain = exposure->gain[1];
+अटल दीर्घ gc0310_s_exposure(काष्ठा v4l2_subdev *sd,
+			      काष्ठा atomisp_exposure *exposure)
+अणु
+	पूर्णांक exp = exposure->पूर्णांकegration_समय[0];
+	पूर्णांक gain = exposure->gain[0];
+	पूर्णांक digitgain = exposure->gain[1];
 
 	/* we should not accept the invalid value below. */
-	if (gain == 0) {
-		struct i2c_client *client = v4l2_get_subdevdata(sd);
+	अगर (gain == 0) अणु
+		काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 
 		v4l2_err(client, "%s: invalid value\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return gc0310_set_exposure(sd, exp, gain, digitgain);
-}
-
-/* TO DO */
-static int gc0310_v_flip(struct v4l2_subdev *sd, s32 value)
-{
-	return 0;
-}
+	वापस gc0310_set_exposure(sd, exp, gain, digitgain);
+पूर्ण
 
 /* TO DO */
-static int gc0310_h_flip(struct v4l2_subdev *sd, s32 value)
-{
-	return 0;
-}
+अटल पूर्णांक gc0310_v_flip(काष्ठा v4l2_subdev *sd, s32 value)
+अणु
+	वापस 0;
+पूर्ण
 
-static long gc0310_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
-{
-	switch (cmd) {
-	case ATOMISP_IOC_S_EXPOSURE:
-		return gc0310_s_exposure(sd, arg);
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+/* TO DO */
+अटल पूर्णांक gc0310_h_flip(काष्ठा v4l2_subdev *sd, s32 value)
+अणु
+	वापस 0;
+पूर्ण
 
-/* This returns the exposure time being used. This should only be used
- * for filling in EXIF data, not for actual image processing.
+अटल दीर्घ gc0310_ioctl(काष्ठा v4l2_subdev *sd, अचिन्हित पूर्णांक cmd, व्योम *arg)
+अणु
+	चयन (cmd) अणु
+	हाल ATOMISP_IOC_S_EXPOSURE:
+		वापस gc0310_s_exposure(sd, arg);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
+
+/* This वापसs the exposure समय being used. This should only be used
+ * क्रम filling in EXIF data, not क्रम actual image processing.
  */
-static int gc0310_q_exposure(struct v4l2_subdev *sd, s32 *value)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल पूर्णांक gc0310_q_exposure(काष्ठा v4l2_subdev *sd, s32 *value)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 	u8 reg_v;
-	int ret;
+	पूर्णांक ret;
 
 	/* get exposure */
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_AEC_PK_EXPO_L,
 			      &reg_v);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	*value = reg_v;
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_AEC_PK_EXPO_H,
 			      &reg_v);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	*value = *value + (reg_v << 8);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gc0310_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct gc0310_device *dev =
-	    container_of(ctrl->handler, struct gc0310_device, ctrl_handler);
-	struct i2c_client *client = v4l2_get_subdevdata(&dev->sd);
-	int ret = 0;
+अटल पूर्णांक gc0310_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा gc0310_device *dev =
+	    container_of(ctrl->handler, काष्ठा gc0310_device, ctrl_handler);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&dev->sd);
+	पूर्णांक ret = 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_VFLIP:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_VFLIP:
 		dev_dbg(&client->dev, "%s: CID_VFLIP:%d.\n",
 			__func__, ctrl->val);
 		ret = gc0310_v_flip(&dev->sd, ctrl->val);
-		break;
-	case V4L2_CID_HFLIP:
+		अवरोध;
+	हाल V4L2_CID_HFLIP:
 		dev_dbg(&client->dev, "%s: CID_HFLIP:%d.\n",
 			__func__, ctrl->val);
 		ret = gc0310_h_flip(&dev->sd, ctrl->val);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int gc0310_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct gc0310_device *dev =
-	    container_of(ctrl->handler, struct gc0310_device, ctrl_handler);
-	int ret = 0;
+अटल पूर्णांक gc0310_g_अस्थिर_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा gc0310_device *dev =
+	    container_of(ctrl->handler, काष्ठा gc0310_device, ctrl_handler);
+	पूर्णांक ret = 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_EXPOSURE_ABSOLUTE:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_EXPOSURE_ABSOLUTE:
 		ret = gc0310_q_exposure(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FOCAL_ABSOLUTE:
+		अवरोध;
+	हाल V4L2_CID_FOCAL_ABSOLUTE:
 		ret = gc0310_g_focal(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FNUMBER_ABSOLUTE:
+		अवरोध;
+	हाल V4L2_CID_FNUMBER_ABSOLUTE:
 		ret = gc0310_g_fnumber(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FNUMBER_RANGE:
+		अवरोध;
+	हाल V4L2_CID_FNUMBER_RANGE:
 		ret = gc0310_g_fnumber_range(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_BIN_FACTOR_HORZ:
+		अवरोध;
+	हाल V4L2_CID_BIN_FACTOR_HORZ:
 		ret = gc0310_g_bin_factor_x(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_BIN_FACTOR_VERT:
+		अवरोध;
+	हाल V4L2_CID_BIN_FACTOR_VERT:
 		ret = gc0310_g_bin_factor_y(&dev->sd, &ctrl->val);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_ctrl_ops ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops ctrl_ops = अणु
 	.s_ctrl = gc0310_s_ctrl,
-	.g_volatile_ctrl = gc0310_g_volatile_ctrl
-};
+	.g_अस्थिर_ctrl = gc0310_g_अस्थिर_ctrl
+पूर्ण;
 
-static const struct v4l2_ctrl_config gc0310_controls[] = {
-	{
+अटल स्थिर काष्ठा v4l2_ctrl_config gc0310_controls[] = अणु
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_EXPOSURE_ABSOLUTE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -634,8 +635,8 @@ static const struct v4l2_ctrl_config gc0310_controls[] = {
 		.step = 0x01,
 		.def = 0x00,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_VFLIP,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
@@ -644,8 +645,8 @@ static const struct v4l2_ctrl_config gc0310_controls[] = {
 		.max = 1,
 		.step = 1,
 		.def = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_HFLIP,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
@@ -654,8 +655,8 @@ static const struct v4l2_ctrl_config gc0310_controls[] = {
 		.max = 1,
 		.step = 1,
 		.def = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FOCAL_ABSOLUTE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -665,8 +666,8 @@ static const struct v4l2_ctrl_config gc0310_controls[] = {
 		.step = 0x01,
 		.def = GC0310_FOCAL_LENGTH_DEFAULT,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FNUMBER_ABSOLUTE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -676,8 +677,8 @@ static const struct v4l2_ctrl_config gc0310_controls[] = {
 		.step = 0x01,
 		.def = GC0310_F_NUMBER_DEFAULT,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FNUMBER_RANGE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -687,8 +688,8 @@ static const struct v4l2_ctrl_config gc0310_controls[] = {
 		.step = 0x01,
 		.def = GC0310_F_NUMBER_RANGE,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_BIN_FACTOR_HORZ,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -698,8 +699,8 @@ static const struct v4l2_ctrl_config gc0310_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_BIN_FACTOR_VERT,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -709,20 +710,20 @@ static const struct v4l2_ctrl_config gc0310_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int gc0310_init(struct v4l2_subdev *sd)
-{
-	int ret;
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
+अटल पूर्णांक gc0310_init(काष्ठा v4l2_subdev *sd)
+अणु
+	पूर्णांक ret;
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
 
 	pr_info("%s S\n", __func__);
 	mutex_lock(&dev->input_lock);
 
-	/* set initial registers */
-	ret  = gc0310_write_reg_array(client, gc0310_reset_register);
+	/* set initial रेजिस्टरs */
+	ret  = gc0310_ग_लिखो_reg_array(client, gc0310_reset_रेजिस्टर);
 
 	/* restore settings */
 	gc0310_res = gc0310_res_preview;
@@ -731,156 +732,156 @@ static int gc0310_init(struct v4l2_subdev *sd)
 	mutex_unlock(&dev->input_lock);
 
 	pr_info("%s E\n", __func__);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int power_ctrl(struct v4l2_subdev *sd, bool flag)
-{
-	int ret = 0;
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
+अटल पूर्णांक घातer_ctrl(काष्ठा v4l2_subdev *sd, bool flag)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
 
-	if (!dev || !dev->platform_data)
-		return -ENODEV;
+	अगर (!dev || !dev->platक्रमm_data)
+		वापस -ENODEV;
 
-	if (flag) {
+	अगर (flag) अणु
 		/* The upstream module driver (written to Crystal
 		 * Cove) had this logic to pulse the rails low first.
-		 * This appears to break things on the MRD7 with the
+		 * This appears to अवरोध things on the MRD7 with the
 		 * X-Powers PMIC...
 		 *
-		 *     ret = dev->platform_data->v1p8_ctrl(sd, 0);
-		 *     ret |= dev->platform_data->v2p8_ctrl(sd, 0);
+		 *     ret = dev->platक्रमm_data->v1p8_ctrl(sd, 0);
+		 *     ret |= dev->platक्रमm_data->v2p8_ctrl(sd, 0);
 		 *     mdelay(50);
 		 */
-		ret |= dev->platform_data->v1p8_ctrl(sd, 1);
-		ret |= dev->platform_data->v2p8_ctrl(sd, 1);
+		ret |= dev->platक्रमm_data->v1p8_ctrl(sd, 1);
+		ret |= dev->platक्रमm_data->v2p8_ctrl(sd, 1);
 		usleep_range(10000, 15000);
-	}
+	पूर्ण
 
-	if (!flag || ret) {
-		ret |= dev->platform_data->v1p8_ctrl(sd, 0);
-		ret |= dev->platform_data->v2p8_ctrl(sd, 0);
-	}
-	return ret;
-}
+	अगर (!flag || ret) अणु
+		ret |= dev->platक्रमm_data->v1p8_ctrl(sd, 0);
+		ret |= dev->platक्रमm_data->v2p8_ctrl(sd, 0);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int gpio_ctrl(struct v4l2_subdev *sd, bool flag)
-{
-	int ret;
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
+अटल पूर्णांक gpio_ctrl(काष्ठा v4l2_subdev *sd, bool flag)
+अणु
+	पूर्णांक ret;
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
 
-	if (!dev || !dev->platform_data)
-		return -ENODEV;
+	अगर (!dev || !dev->platक्रमm_data)
+		वापस -ENODEV;
 
 	/* GPIO0 == "reset" (active low), GPIO1 == "power down" */
-	if (flag) {
-		/* Pulse reset, then release power down */
-		ret = dev->platform_data->gpio0_ctrl(sd, 0);
+	अगर (flag) अणु
+		/* Pulse reset, then release घातer करोwn */
+		ret = dev->platक्रमm_data->gpio0_ctrl(sd, 0);
 		usleep_range(5000, 10000);
-		ret |= dev->platform_data->gpio0_ctrl(sd, 1);
+		ret |= dev->platक्रमm_data->gpio0_ctrl(sd, 1);
 		usleep_range(10000, 15000);
-		ret |= dev->platform_data->gpio1_ctrl(sd, 0);
+		ret |= dev->platक्रमm_data->gpio1_ctrl(sd, 0);
 		usleep_range(10000, 15000);
-	} else {
-		ret = dev->platform_data->gpio1_ctrl(sd, 1);
-		ret |= dev->platform_data->gpio0_ctrl(sd, 0);
-	}
-	return ret;
-}
+	पूर्ण अन्यथा अणु
+		ret = dev->platक्रमm_data->gpio1_ctrl(sd, 1);
+		ret |= dev->platक्रमm_data->gpio0_ctrl(sd, 0);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int power_down(struct v4l2_subdev *sd);
+अटल पूर्णांक घातer_करोwn(काष्ठा v4l2_subdev *sd);
 
-static int power_up(struct v4l2_subdev *sd)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret;
+अटल पूर्णांक घातer_up(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret;
 
 	pr_info("%s S\n", __func__);
-	if (!dev->platform_data) {
+	अगर (!dev->platक्रमm_data) अणु
 		dev_err(&client->dev,
 			"no camera_sensor_platform_data");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* power control */
-	ret = power_ctrl(sd, 1);
-	if (ret)
-		goto fail_power;
+	/* घातer control */
+	ret = घातer_ctrl(sd, 1);
+	अगर (ret)
+		जाओ fail_घातer;
 
-	/* flis clock control */
-	ret = dev->platform_data->flisclk_ctrl(sd, 1);
-	if (ret)
-		goto fail_clk;
+	/* flis घड़ी control */
+	ret = dev->platक्रमm_data->flisclk_ctrl(sd, 1);
+	अगर (ret)
+		जाओ fail_clk;
 
 	/* gpio ctrl */
 	ret = gpio_ctrl(sd, 1);
-	if (ret) {
+	अगर (ret) अणु
 		ret = gpio_ctrl(sd, 1);
-		if (ret)
-			goto fail_gpio;
-	}
+		अगर (ret)
+			जाओ fail_gpio;
+	पूर्ण
 
 	msleep(100);
 
 	pr_info("%s E\n", __func__);
-	return 0;
+	वापस 0;
 
 fail_gpio:
-	dev->platform_data->flisclk_ctrl(sd, 0);
+	dev->platक्रमm_data->flisclk_ctrl(sd, 0);
 fail_clk:
-	power_ctrl(sd, 0);
-fail_power:
+	घातer_ctrl(sd, 0);
+fail_घातer:
 	dev_err(&client->dev, "sensor power-up failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int power_down(struct v4l2_subdev *sd)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret = 0;
+अटल पूर्णांक घातer_करोwn(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret = 0;
 
-	if (!dev->platform_data) {
+	अगर (!dev->platक्रमm_data) अणु
 		dev_err(&client->dev,
 			"no camera_sensor_platform_data");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* gpio ctrl */
 	ret = gpio_ctrl(sd, 0);
-	if (ret) {
+	अगर (ret) अणु
 		ret = gpio_ctrl(sd, 0);
-		if (ret)
+		अगर (ret)
 			dev_err(&client->dev, "gpio failed 2\n");
-	}
+	पूर्ण
 
-	ret = dev->platform_data->flisclk_ctrl(sd, 0);
-	if (ret)
+	ret = dev->platक्रमm_data->flisclk_ctrl(sd, 0);
+	अगर (ret)
 		dev_err(&client->dev, "flisclk failed\n");
 
-	/* power control */
-	ret = power_ctrl(sd, 0);
-	if (ret)
+	/* घातer control */
+	ret = घातer_ctrl(sd, 0);
+	अगर (ret)
 		dev_err(&client->dev, "vprog failed.\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gc0310_s_power(struct v4l2_subdev *sd, int on)
-{
-	int ret;
+अटल पूर्णांक gc0310_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
+अणु
+	पूर्णांक ret;
 
-	if (on == 0)
-		return power_down(sd);
+	अगर (on == 0)
+		वापस घातer_करोwn(sd);
 
-	ret = power_up(sd);
-	if (ret)
-		return ret;
+	ret = घातer_up(sd);
+	अगर (ret)
+		वापस ret;
 
-	return gc0310_init(sd);
-}
+	वापस gc0310_init(sd);
+पूर्ण
 
 /*
  * distance - calculate the distance
@@ -890,504 +891,504 @@ static int gc0310_s_power(struct v4l2_subdev *sd, int on)
  *
  * Get the gap between resolution and w/h.
  * res->width/height smaller than w/h wouldn't be considered.
- * Returns the value of gap or -1 if fail.
+ * Returns the value of gap or -1 अगर fail.
  */
-#define LARGEST_ALLOWED_RATIO_MISMATCH 800
-static int distance(struct gc0310_resolution *res, u32 w, u32 h)
-{
-	unsigned int w_ratio = (res->width << 13) / w;
-	unsigned int h_ratio;
-	int match;
+#घोषणा LARGEST_ALLOWED_RATIO_MISMATCH 800
+अटल पूर्णांक distance(काष्ठा gc0310_resolution *res, u32 w, u32 h)
+अणु
+	अचिन्हित पूर्णांक w_ratio = (res->width << 13) / w;
+	अचिन्हित पूर्णांक h_ratio;
+	पूर्णांक match;
 
-	if (h == 0)
-		return -1;
+	अगर (h == 0)
+		वापस -1;
 	h_ratio = (res->height << 13) / h;
-	if (h_ratio == 0)
-		return -1;
-	match   = abs(((w_ratio << 13) / h_ratio) - 8192);
+	अगर (h_ratio == 0)
+		वापस -1;
+	match   = असल(((w_ratio << 13) / h_ratio) - 8192);
 
-	if ((w_ratio < 8192) || (h_ratio < 8192)  ||
+	अगर ((w_ratio < 8192) || (h_ratio < 8192)  ||
 	    (match > LARGEST_ALLOWED_RATIO_MISMATCH))
-		return -1;
+		वापस -1;
 
-	return w_ratio + h_ratio;
-}
+	वापस w_ratio + h_ratio;
+पूर्ण
 
 /* Return the nearest higher resolution index */
-static int nearest_resolution_index(int w, int h)
-{
-	int i;
-	int idx = -1;
-	int dist;
-	int min_dist = INT_MAX;
-	struct gc0310_resolution *tmp_res = NULL;
+अटल पूर्णांक nearest_resolution_index(पूर्णांक w, पूर्णांक h)
+अणु
+	पूर्णांक i;
+	पूर्णांक idx = -1;
+	पूर्णांक dist;
+	पूर्णांक min_dist = पूर्णांक_उच्च;
+	काष्ठा gc0310_resolution *पंचांगp_res = शून्य;
 
-	for (i = 0; i < N_RES; i++) {
-		tmp_res = &gc0310_res[i];
-		dist = distance(tmp_res, w, h);
-		if (dist == -1)
-			continue;
-		if (dist < min_dist) {
+	क्रम (i = 0; i < N_RES; i++) अणु
+		पंचांगp_res = &gc0310_res[i];
+		dist = distance(पंचांगp_res, w, h);
+		अगर (dist == -1)
+			जारी;
+		अगर (dist < min_dist) अणु
 			min_dist = dist;
 			idx = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static int get_resolution_index(int w, int h)
-{
-	int i;
+अटल पूर्णांक get_resolution_index(पूर्णांक w, पूर्णांक h)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < N_RES; i++) {
-		if (w != gc0310_res[i].width)
-			continue;
-		if (h != gc0310_res[i].height)
-			continue;
+	क्रम (i = 0; i < N_RES; i++) अणु
+		अगर (w != gc0310_res[i].width)
+			जारी;
+		अगर (h != gc0310_res[i].height)
+			जारी;
 
-		return i;
-	}
+		वापस i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-/* TODO: remove it. */
-static int startup(struct v4l2_subdev *sd)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret = 0;
+/* TODO: हटाओ it. */
+अटल पूर्णांक startup(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret = 0;
 
 	pr_info("%s S\n", __func__);
 
-	ret = gc0310_write_reg_array(client, gc0310_res[dev->fmt_idx].regs);
-	if (ret) {
+	ret = gc0310_ग_लिखो_reg_array(client, gc0310_res[dev->fmt_idx].regs);
+	अगर (ret) अणु
 		dev_err(&client->dev, "gc0310 write register err.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pr_info("%s E\n", __func__);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gc0310_set_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *format)
-{
-	struct v4l2_mbus_framefmt *fmt = &format->format;
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct camera_mipi_info *gc0310_info = NULL;
-	int ret = 0;
-	int idx = 0;
+अटल पूर्णांक gc0310_set_fmt(काष्ठा v4l2_subdev *sd,
+			  काष्ठा v4l2_subdev_pad_config *cfg,
+			  काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	काष्ठा v4l2_mbus_framefmt *fmt = &क्रमmat->क्रमmat;
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा camera_mipi_info *gc0310_info = शून्य;
+	पूर्णांक ret = 0;
+	पूर्णांक idx = 0;
 
 	pr_info("%s S\n", __func__);
 
-	if (format->pad)
-		return -EINVAL;
+	अगर (क्रमmat->pad)
+		वापस -EINVAL;
 
-	if (!fmt)
-		return -EINVAL;
+	अगर (!fmt)
+		वापस -EINVAL;
 
 	gc0310_info = v4l2_get_subdev_hostdata(sd);
-	if (!gc0310_info)
-		return -EINVAL;
+	अगर (!gc0310_info)
+		वापस -EINVAL;
 
 	mutex_lock(&dev->input_lock);
 
 	idx = nearest_resolution_index(fmt->width, fmt->height);
-	if (idx == -1) {
-		/* return the largest resolution */
+	अगर (idx == -1) अणु
+		/* वापस the largest resolution */
 		fmt->width = gc0310_res[N_RES - 1].width;
 		fmt->height = gc0310_res[N_RES - 1].height;
-	} else {
+	पूर्ण अन्यथा अणु
 		fmt->width = gc0310_res[idx].width;
 		fmt->height = gc0310_res[idx].height;
-	}
+	पूर्ण
 	fmt->code = MEDIA_BUS_FMT_SGRBG8_1X8;
 
-	if (format->which == V4L2_SUBDEV_FORMAT_TRY) {
+	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY) अणु
 		cfg->try_fmt = *fmt;
 		mutex_unlock(&dev->input_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev->fmt_idx = get_resolution_index(fmt->width, fmt->height);
-	if (dev->fmt_idx == -1) {
+	अगर (dev->fmt_idx == -1) अणु
 		dev_err(&client->dev, "get resolution fail\n");
 		mutex_unlock(&dev->input_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	printk("%s: before gc0310_write_reg_array %s\n", __func__,
+	prपूर्णांकk("%s: before gc0310_write_reg_array %s\n", __func__,
 	       gc0310_res[dev->fmt_idx].desc);
 	ret = startup(sd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "gc0310 startup err\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = gc0310_get_intg_factor(client, gc0310_info,
+	ret = gc0310_get_पूर्णांकg_factor(client, gc0310_info,
 				     &gc0310_res[dev->fmt_idx]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "failed to get integration_factor\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	pr_info("%s E\n", __func__);
 err:
 	mutex_unlock(&dev->input_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gc0310_get_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *format)
-{
-	struct v4l2_mbus_framefmt *fmt = &format->format;
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
+अटल पूर्णांक gc0310_get_fmt(काष्ठा v4l2_subdev *sd,
+			  काष्ठा v4l2_subdev_pad_config *cfg,
+			  काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	काष्ठा v4l2_mbus_framefmt *fmt = &क्रमmat->क्रमmat;
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
 
-	if (format->pad)
-		return -EINVAL;
+	अगर (क्रमmat->pad)
+		वापस -EINVAL;
 
-	if (!fmt)
-		return -EINVAL;
+	अगर (!fmt)
+		वापस -EINVAL;
 
 	fmt->width = gc0310_res[dev->fmt_idx].width;
 	fmt->height = gc0310_res[dev->fmt_idx].height;
 	fmt->code = MEDIA_BUS_FMT_SGRBG8_1X8;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_detect(struct i2c_client *client)
-{
-	struct i2c_adapter *adapter = client->adapter;
+अटल पूर्णांक gc0310_detect(काष्ठा i2c_client *client)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
 	u8 high, low;
-	int ret;
+	पूर्णांक ret;
 	u16 id;
 
 	pr_info("%s S\n", __func__);
-	if (!i2c_check_functionality(adapter, I2C_FUNC_I2C))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_I2C))
+		वापस -ENODEV;
 
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_SC_CMMN_CHIP_ID_H, &high);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "read sensor_id_high failed\n");
-		return -ENODEV;
-	}
-	ret = gc0310_read_reg(client, GC0310_8BIT,
+		वापस -ENODEV;
+	पूर्ण
+	ret = gc0310_पढ़ो_reg(client, GC0310_8BIT,
 			      GC0310_SC_CMMN_CHIP_ID_L, &low);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "read sensor_id_low failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	id = ((((u16)high) << 8) | (u16)low);
 	pr_info("sensor ID = 0x%x\n", id);
 
-	if (id != GC0310_ID) {
+	अगर (id != GC0310_ID) अणु
 		dev_err(&client->dev, "sensor ID error, read id = 0x%x, target id = 0x%x\n", id,
 			GC0310_ID);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dev_dbg(&client->dev, "detect gc0310 success\n");
 
 	pr_info("%s E\n", __func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_s_stream(struct v4l2_subdev *sd, int enable)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret;
+अटल पूर्णांक gc0310_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret;
 
 	pr_info("%s S enable=%d\n", __func__, enable);
 	mutex_lock(&dev->input_lock);
 
-	if (enable) {
+	अगर (enable) अणु
 		/* enable per frame MIPI and sensor ctrl reset  */
-		ret = gc0310_write_reg(client, GC0310_8BIT,
+		ret = gc0310_ग_लिखो_reg(client, GC0310_8BIT,
 				       0xFE, 0x30);
-		if (ret) {
+		अगर (ret) अणु
 			mutex_unlock(&dev->input_lock);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ret = gc0310_write_reg(client, GC0310_8BIT,
+	ret = gc0310_ग_लिखो_reg(client, GC0310_8BIT,
 			       GC0310_RESET_RELATED, GC0310_REGISTER_PAGE_3);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&dev->input_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = gc0310_write_reg(client, GC0310_8BIT, GC0310_SW_STREAM,
+	ret = gc0310_ग_लिखो_reg(client, GC0310_8BIT, GC0310_SW_STREAM,
 			       enable ? GC0310_START_STREAMING :
 			       GC0310_STOP_STREAMING);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&dev->input_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = gc0310_write_reg(client, GC0310_8BIT,
+	ret = gc0310_ग_लिखो_reg(client, GC0310_8BIT,
 			       GC0310_RESET_RELATED, GC0310_REGISTER_PAGE_0);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&dev->input_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mutex_unlock(&dev->input_lock);
 	pr_info("%s E\n", __func__);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gc0310_s_config(struct v4l2_subdev *sd,
-			   int irq, void *platform_data)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret = 0;
+अटल पूर्णांक gc0310_s_config(काष्ठा v4l2_subdev *sd,
+			   पूर्णांक irq, व्योम *platक्रमm_data)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret = 0;
 
 	pr_info("%s S\n", __func__);
-	if (!platform_data)
-		return -ENODEV;
+	अगर (!platक्रमm_data)
+		वापस -ENODEV;
 
-	dev->platform_data =
-	    (struct camera_sensor_platform_data *)platform_data;
+	dev->platक्रमm_data =
+	    (काष्ठा camera_sensor_platक्रमm_data *)platक्रमm_data;
 
 	mutex_lock(&dev->input_lock);
-	/* power off the module, then power on it in future
-	 * as first power on by board may not fulfill the
-	 * power on sequqence needed by the module
+	/* घातer off the module, then घातer on it in future
+	 * as first घातer on by board may not fulfill the
+	 * घातer on sequqence needed by the module
 	 */
-	ret = power_down(sd);
-	if (ret) {
+	ret = घातer_करोwn(sd);
+	अगर (ret) अणु
 		dev_err(&client->dev, "gc0310 power-off err.\n");
-		goto fail_power_off;
-	}
+		जाओ fail_घातer_off;
+	पूर्ण
 
-	ret = power_up(sd);
-	if (ret) {
+	ret = घातer_up(sd);
+	अगर (ret) अणु
 		dev_err(&client->dev, "gc0310 power-up err.\n");
-		goto fail_power_on;
-	}
+		जाओ fail_घातer_on;
+	पूर्ण
 
-	ret = dev->platform_data->csi_cfg(sd, 1);
-	if (ret)
-		goto fail_csi_cfg;
+	ret = dev->platक्रमm_data->csi_cfg(sd, 1);
+	अगर (ret)
+		जाओ fail_csi_cfg;
 
 	/* config & detect sensor */
 	ret = gc0310_detect(client);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "gc0310_detect err s_config.\n");
-		goto fail_csi_cfg;
-	}
+		जाओ fail_csi_cfg;
+	पूर्ण
 
 	/* turn off sensor, after probed */
-	ret = power_down(sd);
-	if (ret) {
+	ret = घातer_करोwn(sd);
+	अगर (ret) अणु
 		dev_err(&client->dev, "gc0310 power-off err.\n");
-		goto fail_csi_cfg;
-	}
+		जाओ fail_csi_cfg;
+	पूर्ण
 	mutex_unlock(&dev->input_lock);
 
 	pr_info("%s E\n", __func__);
-	return 0;
+	वापस 0;
 
 fail_csi_cfg:
-	dev->platform_data->csi_cfg(sd, 0);
-fail_power_on:
-	power_down(sd);
+	dev->platक्रमm_data->csi_cfg(sd, 0);
+fail_घातer_on:
+	घातer_करोwn(sd);
 	dev_err(&client->dev, "sensor power-gating failed\n");
-fail_power_off:
+fail_घातer_off:
 	mutex_unlock(&dev->input_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gc0310_g_frame_interval(struct v4l2_subdev *sd,
-				   struct v4l2_subdev_frame_interval *interval)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
+अटल पूर्णांक gc0310_g_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+				   काष्ठा v4l2_subdev_frame_पूर्णांकerval *पूर्णांकerval)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
 
-	interval->interval.numerator = 1;
-	interval->interval.denominator = gc0310_res[dev->fmt_idx].fps;
+	पूर्णांकerval->पूर्णांकerval.numerator = 1;
+	पूर्णांकerval->पूर्णांकerval.denominator = gc0310_res[dev->fmt_idx].fps;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_enum_mbus_code(struct v4l2_subdev *sd,
-				 struct v4l2_subdev_pad_config *cfg,
-				 struct v4l2_subdev_mbus_code_enum *code)
-{
-	if (code->index >= MAX_FMTS)
-		return -EINVAL;
+अटल पूर्णांक gc0310_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
+				 काष्ठा v4l2_subdev_pad_config *cfg,
+				 काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
+	अगर (code->index >= MAX_FMTS)
+		वापस -EINVAL;
 
 	code->code = MEDIA_BUS_FMT_SGRBG8_1X8;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_enum_frame_size(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_pad_config *cfg,
-				  struct v4l2_subdev_frame_size_enum *fse)
-{
-	int index = fse->index;
+अटल पूर्णांक gc0310_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_subdev_pad_config *cfg,
+				  काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
+अणु
+	पूर्णांक index = fse->index;
 
-	if (index >= N_RES)
-		return -EINVAL;
+	अगर (index >= N_RES)
+		वापस -EINVAL;
 
 	fse->min_width = gc0310_res[index].width;
 	fse->min_height = gc0310_res[index].height;
 	fse->max_width = gc0310_res[index].width;
 	fse->max_height = gc0310_res[index].height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_g_skip_frames(struct v4l2_subdev *sd, u32 *frames)
-{
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
+अटल पूर्णांक gc0310_g_skip_frames(काष्ठा v4l2_subdev *sd, u32 *frames)
+अणु
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
 
 	mutex_lock(&dev->input_lock);
 	*frames = gc0310_res[dev->fmt_idx].skip_frames;
 	mutex_unlock(&dev->input_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_sensor_ops gc0310_sensor_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_sensor_ops gc0310_sensor_ops = अणु
 	.g_skip_frames	= gc0310_g_skip_frames,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops gc0310_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops gc0310_video_ops = अणु
 	.s_stream = gc0310_s_stream,
-	.g_frame_interval = gc0310_g_frame_interval,
-};
+	.g_frame_पूर्णांकerval = gc0310_g_frame_पूर्णांकerval,
+पूर्ण;
 
-static const struct v4l2_subdev_core_ops gc0310_core_ops = {
-	.s_power = gc0310_s_power,
+अटल स्थिर काष्ठा v4l2_subdev_core_ops gc0310_core_ops = अणु
+	.s_घातer = gc0310_s_घातer,
 	.ioctl = gc0310_ioctl,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_pad_ops gc0310_pad_ops = {
-	.enum_mbus_code = gc0310_enum_mbus_code,
-	.enum_frame_size = gc0310_enum_frame_size,
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops gc0310_pad_ops = अणु
+	.क्रमागत_mbus_code = gc0310_क्रमागत_mbus_code,
+	.क्रमागत_frame_size = gc0310_क्रमागत_frame_size,
 	.get_fmt = gc0310_get_fmt,
 	.set_fmt = gc0310_set_fmt,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops gc0310_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops gc0310_ops = अणु
 	.core = &gc0310_core_ops,
 	.video = &gc0310_video_ops,
 	.pad = &gc0310_pad_ops,
 	.sensor = &gc0310_sensor_ops,
-};
+पूर्ण;
 
-static int gc0310_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct gc0310_device *dev = to_gc0310_sensor(sd);
+अटल पूर्णांक gc0310_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा gc0310_device *dev = to_gc0310_sensor(sd);
 
 	dev_dbg(&client->dev, "gc0310_remove...\n");
 
-	dev->platform_data->csi_cfg(sd, 0);
+	dev->platक्रमm_data->csi_cfg(sd, 0);
 
-	v4l2_device_unregister_subdev(sd);
+	v4l2_device_unरेजिस्टर_subdev(sd);
 	media_entity_cleanup(&dev->sd.entity);
-	v4l2_ctrl_handler_free(&dev->ctrl_handler);
-	kfree(dev);
+	v4l2_ctrl_handler_मुक्त(&dev->ctrl_handler);
+	kमुक्त(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gc0310_probe(struct i2c_client *client)
-{
-	struct gc0310_device *dev;
-	int ret;
-	void *pdata;
-	unsigned int i;
+अटल पूर्णांक gc0310_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा gc0310_device *dev;
+	पूर्णांक ret;
+	व्योम *pdata;
+	अचिन्हित पूर्णांक i;
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	mutex_init(&dev->input_lock);
 
 	dev->fmt_idx = 0;
 	v4l2_i2c_subdev_init(&dev->sd, client, &gc0310_ops);
 
-	pdata = gmin_camera_platform_data(&dev->sd,
+	pdata = gmin_camera_platक्रमm_data(&dev->sd,
 					  ATOMISP_INPUT_FORMAT_RAW_8,
 					  atomisp_bayer_order_grbg);
-	if (!pdata) {
+	अगर (!pdata) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = gc0310_s_config(&dev->sd, client->irq, pdata);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	ret = atomisp_register_i2c_module(&dev->sd, pdata, RAW_CAMERA);
-	if (ret)
-		goto out_free;
+	ret = atomisp_रेजिस्टर_i2c_module(&dev->sd, pdata, RAW_CAMERA);
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	dev->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	dev->pad.flags = MEDIA_PAD_FL_SOURCE;
-	dev->format.code = MEDIA_BUS_FMT_SGRBG8_1X8;
+	dev->क्रमmat.code = MEDIA_BUS_FMT_SGRBG8_1X8;
 	dev->sd.entity.function = MEDIA_ENT_F_CAM_SENSOR;
 	ret =
 	    v4l2_ctrl_handler_init(&dev->ctrl_handler,
 				   ARRAY_SIZE(gc0310_controls));
-	if (ret) {
-		gc0310_remove(client);
-		return ret;
-	}
+	अगर (ret) अणु
+		gc0310_हटाओ(client);
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(gc0310_controls); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(gc0310_controls); i++)
 		v4l2_ctrl_new_custom(&dev->ctrl_handler, &gc0310_controls[i],
-				     NULL);
+				     शून्य);
 
-	if (dev->ctrl_handler.error) {
-		gc0310_remove(client);
-		return dev->ctrl_handler.error;
-	}
+	अगर (dev->ctrl_handler.error) अणु
+		gc0310_हटाओ(client);
+		वापस dev->ctrl_handler.error;
+	पूर्ण
 
-	/* Use same lock for controls as for everything else. */
+	/* Use same lock क्रम controls as क्रम everything अन्यथा. */
 	dev->ctrl_handler.lock = &dev->input_lock;
 	dev->sd.ctrl_handler = &dev->ctrl_handler;
 
 	ret = media_entity_pads_init(&dev->sd.entity, 1, &dev->pad);
-	if (ret)
-		gc0310_remove(client);
+	अगर (ret)
+		gc0310_हटाओ(client);
 
 	pr_info("%s E\n", __func__);
-	return ret;
-out_free:
-	v4l2_device_unregister_subdev(&dev->sd);
-	kfree(dev);
-	return ret;
-}
+	वापस ret;
+out_मुक्त:
+	v4l2_device_unरेजिस्टर_subdev(&dev->sd);
+	kमुक्त(dev);
+	वापस ret;
+पूर्ण
 
-static const struct acpi_device_id gc0310_acpi_match[] = {
-	{"XXGC0310"},
-	{"INT0310"},
-	{},
-};
+अटल स्थिर काष्ठा acpi_device_id gc0310_acpi_match[] = अणु
+	अणु"XXGC0310"पूर्ण,
+	अणु"INT0310"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, gc0310_acpi_match);
 
-static struct i2c_driver gc0310_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver gc0310_driver = अणु
+	.driver = अणु
 		.name = "gc0310",
 		.acpi_match_table = gc0310_acpi_match,
-	},
+	पूर्ण,
 	.probe_new = gc0310_probe,
-	.remove = gc0310_remove,
-};
+	.हटाओ = gc0310_हटाओ,
+पूर्ण;
 module_i2c_driver(gc0310_driver);
 
 MODULE_AUTHOR("Lai, Angie <angie.lai@intel.com>");

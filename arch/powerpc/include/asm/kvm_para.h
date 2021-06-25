@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  * Copyright IBM Corp. 2008
  *
- * Authors: Hollis Blanchard <hollisb@us.ibm.com>
+ * Authors: Hollis Blanअक्षरd <hollisb@us.ibm.com>
  */
-#ifndef __POWERPC_KVM_PARA_H__
-#define __POWERPC_KVM_PARA_H__
+#अगर_अघोषित __POWERPC_KVM_PARA_H__
+#घोषणा __POWERPC_KVM_PARA_H__
 
-#include <asm/kvm_guest.h>
+#समावेश <यंत्र/kvm_guest.h>
 
-#include <uapi/asm/kvm_para.h>
+#समावेश <uapi/यंत्र/kvm_para.h>
 
-static inline int kvm_para_available(void)
-{
-	return IS_ENABLED(CONFIG_KVM_GUEST) && is_kvm_guest();
-}
+अटल अंतरभूत पूर्णांक kvm_para_available(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_KVM_GUEST) && is_kvm_guest();
+पूर्ण
 
-static inline unsigned int kvm_arch_para_features(void)
-{
-	unsigned long r;
+अटल अंतरभूत अचिन्हित पूर्णांक kvm_arch_para_features(व्योम)
+अणु
+	अचिन्हित दीर्घ r;
 
-	if (!kvm_para_available())
-		return 0;
+	अगर (!kvm_para_available())
+		वापस 0;
 
-	if(epapr_hypercall0_1(KVM_HCALL_TOKEN(KVM_HC_FEATURES), &r))
-		return 0;
+	अगर(epapr_hypercall0_1(KVM_HCALL_TOKEN(KVM_HC_FEATURES), &r))
+		वापस 0;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static inline unsigned int kvm_arch_para_hints(void)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक kvm_arch_para_hपूर्णांकs(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline bool kvm_check_and_clear_guest_paused(void)
-{
-	return false;
-}
+अटल अंतरभूत bool kvm_check_and_clear_guest_छोड़ोd(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-#endif /* __POWERPC_KVM_PARA_H__ */
+#पूर्ण_अगर /* __POWERPC_KVM_PARA_H__ */

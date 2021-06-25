@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <sys/select.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
-#include <sys/ioctl.h>
-#include "pager.h"
-#include "run-command.h"
-#include "sigchain.h"
-#include "subcmd-config.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <sys/select.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <sys/ioctl.h>
+#समावेश "pager.h"
+#समावेश "run-command.h"
+#समावेश "sigchain.h"
+#समावेश "subcmd-config.h"
 
 /*
- * This is split up from the rest of git so that we can do
- * something different on Windows.
+ * This is split up from the rest of git so that we can करो
+ * something dअगरferent on Winकरोws.
  */
 
-static int spawned_pager;
-static int pager_columns;
+अटल पूर्णांक spawned_pager;
+अटल पूर्णांक pager_columns;
 
-void pager_init(const char *pager_env)
-{
+व्योम pager_init(स्थिर अक्षर *pager_env)
+अणु
 	subcmd_config.pager_env = pager_env;
-}
+पूर्ण
 
-static const char *forced_pager;
+अटल स्थिर अक्षर *क्रमced_pager;
 
-void force_pager(const char *pager)
-{
-	forced_pager = pager;
-}
+व्योम क्रमce_pager(स्थिर अक्षर *pager)
+अणु
+	क्रमced_pager = pager;
+पूर्ण
 
-static void pager_preexec(void)
-{
+अटल व्योम pager_preexec(व्योम)
+अणु
 	/*
 	 * Work around bug in "less" by not starting it until we
 	 * have real input
@@ -43,52 +44,52 @@ static void pager_preexec(void)
 	FD_ZERO(&exception);
 	FD_SET(0, &in);
 	FD_SET(0, &exception);
-	select(1, &in, NULL, &exception, NULL);
+	select(1, &in, शून्य, &exception, शून्य);
 
 	setenv("LESS", "FRSX", 0);
-}
+पूर्ण
 
-static const char *pager_argv[] = { "sh", "-c", NULL, NULL };
-static struct child_process pager_process;
+अटल स्थिर अक्षर *pager_argv[] = अणु "sh", "-c", शून्य, शून्य पूर्ण;
+अटल काष्ठा child_process pager_process;
 
-static void wait_for_pager(void)
-{
-	fflush(stdout);
-	fflush(stderr);
-	/* signal EOF to pager */
-	close(1);
-	close(2);
+अटल व्योम रुको_क्रम_pager(व्योम)
+अणु
+	ख_साफ(मानक_निकास);
+	ख_साफ(मानक_त्रुटि);
+	/* संकेत खातापूर्ण to pager */
+	बंद(1);
+	बंद(2);
 	finish_command(&pager_process);
-}
+पूर्ण
 
-static void wait_for_pager_signal(int signo)
-{
-	wait_for_pager();
+अटल व्योम रुको_क्रम_pager_संकेत(पूर्णांक signo)
+अणु
+	रुको_क्रम_pager();
 	sigchain_pop(signo);
-	raise(signo);
-}
+	उठाओ(signo);
+पूर्ण
 
-void setup_pager(void)
-{
-	const char *pager = getenv(subcmd_config.pager_env);
-	struct winsize sz;
+व्योम setup_pager(व्योम)
+अणु
+	स्थिर अक्षर *pager = दो_पर्या(subcmd_config.pager_env);
+	काष्ठा winsize sz;
 
-	if (forced_pager)
-		pager = forced_pager;
-	if (!isatty(1) && !forced_pager)
-		return;
-	if (ioctl(1, TIOCGWINSZ, &sz) == 0)
+	अगर (क्रमced_pager)
+		pager = क्रमced_pager;
+	अगर (!isatty(1) && !क्रमced_pager)
+		वापस;
+	अगर (ioctl(1, TIOCGWINSZ, &sz) == 0)
 		pager_columns = sz.ws_col;
-	if (!pager)
-		pager = getenv("PAGER");
-	if (!(pager || access("/usr/bin/pager", X_OK)))
+	अगर (!pager)
+		pager = दो_पर्या("PAGER");
+	अगर (!(pager || access("/usr/bin/pager", X_OK)))
 		pager = "/usr/bin/pager";
-	if (!(pager || access("/usr/bin/less", X_OK)))
+	अगर (!(pager || access("/usr/bin/less", X_OK)))
 		pager = "/usr/bin/less";
-	if (!pager)
+	अगर (!pager)
 		pager = "cat";
-	if (!*pager || !strcmp(pager, "cat"))
-		return;
+	अगर (!*pager || !म_भेद(pager, "cat"))
+		वापस;
 
 	spawned_pager = 1; /* means we are emitting to terminal */
 
@@ -98,32 +99,32 @@ void setup_pager(void)
 	pager_process.in = -1;
 	pager_process.preexec_cb = pager_preexec;
 
-	if (start_command(&pager_process))
-		return;
+	अगर (start_command(&pager_process))
+		वापस;
 
-	/* original process continues, but writes to the pipe */
+	/* original process जारीs, but ग_लिखोs to the pipe */
 	dup2(pager_process.in, 1);
-	if (isatty(2))
+	अगर (isatty(2))
 		dup2(pager_process.in, 2);
-	close(pager_process.in);
+	बंद(pager_process.in);
 
 	/* this makes sure that the parent terminates after the pager */
-	sigchain_push_common(wait_for_pager_signal);
-	atexit(wait_for_pager);
-}
+	sigchain_push_common(रुको_क्रम_pager_संकेत);
+	निकास_पर(रुको_क्रम_pager);
+पूर्ण
 
-int pager_in_use(void)
-{
-	return spawned_pager;
-}
+पूर्णांक pager_in_use(व्योम)
+अणु
+	वापस spawned_pager;
+पूर्ण
 
-int pager_get_columns(void)
-{
-	char *s;
+पूर्णांक pager_get_columns(व्योम)
+अणु
+	अक्षर *s;
 
-	s = getenv("COLUMNS");
-	if (s)
-		return atoi(s);
+	s = दो_पर्या("COLUMNS");
+	अगर (s)
+		वापस म_से_प(s);
 
-	return (pager_columns ? pager_columns : 80) - 2;
-}
+	वापस (pager_columns ? pager_columns : 80) - 2;
+पूर्ण

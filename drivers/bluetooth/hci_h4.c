@@ -1,274 +1,275 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  *  Bluetooth HCI UART driver
  *
  *  Copyright (C) 2000-2001  Qualcomm Incorporated
  *  Copyright (C) 2002-2003  Maxim Krasnyansky <maxk@qualcomm.com>
- *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
+ *  Copyright (C) 2004-2005  Marcel Holपंचांगann <marcel@holपंचांगann.org>
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/interrupt.h>
-#include <linux/ptrace.h>
-#include <linux/poll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/poll.h>
 
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/signal.h>
-#include <linux/ioctl.h>
-#include <linux/skbuff.h>
-#include <asm/unaligned.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/skbuff.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
 
-#include "hci_uart.h"
+#समावेश "hci_uart.h"
 
-struct h4_struct {
-	struct sk_buff *rx_skb;
-	struct sk_buff_head txq;
-};
+काष्ठा h4_काष्ठा अणु
+	काष्ठा sk_buff *rx_skb;
+	काष्ठा sk_buff_head txq;
+पूर्ण;
 
 /* Initialize protocol */
-static int h4_open(struct hci_uart *hu)
-{
-	struct h4_struct *h4;
+अटल पूर्णांक h4_खोलो(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा h4_काष्ठा *h4;
 
 	BT_DBG("hu %p", hu);
 
-	h4 = kzalloc(sizeof(*h4), GFP_KERNEL);
-	if (!h4)
-		return -ENOMEM;
+	h4 = kzalloc(माप(*h4), GFP_KERNEL);
+	अगर (!h4)
+		वापस -ENOMEM;
 
 	skb_queue_head_init(&h4->txq);
 
 	hu->priv = h4;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Flush protocol data */
-static int h4_flush(struct hci_uart *hu)
-{
-	struct h4_struct *h4 = hu->priv;
+अटल पूर्णांक h4_flush(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा h4_काष्ठा *h4 = hu->priv;
 
 	BT_DBG("hu %p", hu);
 
 	skb_queue_purge(&h4->txq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Close protocol */
-static int h4_close(struct hci_uart *hu)
-{
-	struct h4_struct *h4 = hu->priv;
+अटल पूर्णांक h4_बंद(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा h4_काष्ठा *h4 = hu->priv;
 
 	BT_DBG("hu %p", hu);
 
 	skb_queue_purge(&h4->txq);
 
-	kfree_skb(h4->rx_skb);
+	kमुक्त_skb(h4->rx_skb);
 
-	hu->priv = NULL;
-	kfree(h4);
+	hu->priv = शून्य;
+	kमुक्त(h4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Enqueue frame for transmission (padding, crc, etc) */
-static int h4_enqueue(struct hci_uart *hu, struct sk_buff *skb)
-{
-	struct h4_struct *h4 = hu->priv;
+/* Enqueue frame क्रम transmission (padding, crc, etc) */
+अटल पूर्णांक h4_enqueue(काष्ठा hci_uart *hu, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा h4_काष्ठा *h4 = hu->priv;
 
 	BT_DBG("hu %p skb %p", hu, skb);
 
 	/* Prepend skb with frame type */
-	memcpy(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
+	स_नकल(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
 	skb_queue_tail(&h4->txq, skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct h4_recv_pkt h4_recv_pkts[] = {
-	{ H4_RECV_ACL,   .recv = hci_recv_frame },
-	{ H4_RECV_SCO,   .recv = hci_recv_frame },
-	{ H4_RECV_EVENT, .recv = hci_recv_frame },
-	{ H4_RECV_ISO,   .recv = hci_recv_frame },
-};
+अटल स्थिर काष्ठा h4_recv_pkt h4_recv_pkts[] = अणु
+	अणु H4_RECV_ACL,   .recv = hci_recv_frame पूर्ण,
+	अणु H4_RECV_SCO,   .recv = hci_recv_frame पूर्ण,
+	अणु H4_RECV_EVENT, .recv = hci_recv_frame पूर्ण,
+	अणु H4_RECV_ISO,   .recv = hci_recv_frame पूर्ण,
+पूर्ण;
 
 /* Recv data */
-static int h4_recv(struct hci_uart *hu, const void *data, int count)
-{
-	struct h4_struct *h4 = hu->priv;
+अटल पूर्णांक h4_recv(काष्ठा hci_uart *hu, स्थिर व्योम *data, पूर्णांक count)
+अणु
+	काष्ठा h4_काष्ठा *h4 = hu->priv;
 
-	if (!test_bit(HCI_UART_REGISTERED, &hu->flags))
-		return -EUNATCH;
+	अगर (!test_bit(HCI_UART_REGISTERED, &hu->flags))
+		वापस -EUNATCH;
 
 	h4->rx_skb = h4_recv_buf(hu->hdev, h4->rx_skb, data, count,
 				 h4_recv_pkts, ARRAY_SIZE(h4_recv_pkts));
-	if (IS_ERR(h4->rx_skb)) {
-		int err = PTR_ERR(h4->rx_skb);
+	अगर (IS_ERR(h4->rx_skb)) अणु
+		पूर्णांक err = PTR_ERR(h4->rx_skb);
 		bt_dev_err(hu->hdev, "Frame reassembly failed (%d)", err);
-		h4->rx_skb = NULL;
-		return err;
-	}
+		h4->rx_skb = शून्य;
+		वापस err;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct sk_buff *h4_dequeue(struct hci_uart *hu)
-{
-	struct h4_struct *h4 = hu->priv;
-	return skb_dequeue(&h4->txq);
-}
+अटल काष्ठा sk_buff *h4_dequeue(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा h4_काष्ठा *h4 = hu->priv;
+	वापस skb_dequeue(&h4->txq);
+पूर्ण
 
-static const struct hci_uart_proto h4p = {
+अटल स्थिर काष्ठा hci_uart_proto h4p = अणु
 	.id		= HCI_UART_H4,
 	.name		= "H4",
-	.open		= h4_open,
-	.close		= h4_close,
+	.खोलो		= h4_खोलो,
+	.बंद		= h4_बंद,
 	.recv		= h4_recv,
 	.enqueue	= h4_enqueue,
 	.dequeue	= h4_dequeue,
 	.flush		= h4_flush,
-};
+पूर्ण;
 
-int __init h4_init(void)
-{
-	return hci_uart_register_proto(&h4p);
-}
+पूर्णांक __init h4_init(व्योम)
+अणु
+	वापस hci_uart_रेजिस्टर_proto(&h4p);
+पूर्ण
 
-int __exit h4_deinit(void)
-{
-	return hci_uart_unregister_proto(&h4p);
-}
+पूर्णांक __निकास h4_deinit(व्योम)
+अणु
+	वापस hci_uart_unरेजिस्टर_proto(&h4p);
+पूर्ण
 
-struct sk_buff *h4_recv_buf(struct hci_dev *hdev, struct sk_buff *skb,
-			    const unsigned char *buffer, int count,
-			    const struct h4_recv_pkt *pkts, int pkts_count)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
+काष्ठा sk_buff *h4_recv_buf(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb,
+			    स्थिर अचिन्हित अक्षर *buffer, पूर्णांक count,
+			    स्थिर काष्ठा h4_recv_pkt *pkts, पूर्णांक pkts_count)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
 	u8 alignment = hu->alignment ? hu->alignment : 1;
 
-	/* Check for error from previous call */
-	if (IS_ERR(skb))
-		skb = NULL;
+	/* Check क्रम error from previous call */
+	अगर (IS_ERR(skb))
+		skb = शून्य;
 
-	while (count) {
-		int i, len;
+	जबतक (count) अणु
+		पूर्णांक i, len;
 
-		/* remove padding bytes from buffer */
-		for (; hu->padding && count > 0; hu->padding--) {
+		/* हटाओ padding bytes from buffer */
+		क्रम (; hu->padding && count > 0; hu->padding--) अणु
 			count--;
 			buffer++;
-		}
-		if (!count)
-			break;
+		पूर्ण
+		अगर (!count)
+			अवरोध;
 
-		if (!skb) {
-			for (i = 0; i < pkts_count; i++) {
-				if (buffer[0] != (&pkts[i])->type)
-					continue;
+		अगर (!skb) अणु
+			क्रम (i = 0; i < pkts_count; i++) अणु
+				अगर (buffer[0] != (&pkts[i])->type)
+					जारी;
 
 				skb = bt_skb_alloc((&pkts[i])->maxlen,
 						   GFP_ATOMIC);
-				if (!skb)
-					return ERR_PTR(-ENOMEM);
+				अगर (!skb)
+					वापस ERR_PTR(-ENOMEM);
 
 				hci_skb_pkt_type(skb) = (&pkts[i])->type;
 				hci_skb_expect(skb) = (&pkts[i])->hlen;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			/* Check for invalid packet type */
-			if (!skb)
-				return ERR_PTR(-EILSEQ);
+			/* Check क्रम invalid packet type */
+			अगर (!skb)
+				वापस ERR_PTR(-EILSEQ);
 
 			count -= 1;
 			buffer += 1;
-		}
+		पूर्ण
 
-		len = min_t(uint, hci_skb_expect(skb) - skb->len, count);
+		len = min_t(uपूर्णांक, hci_skb_expect(skb) - skb->len, count);
 		skb_put_data(skb, buffer, len);
 
 		count -= len;
 		buffer += len;
 
-		/* Check for partial packet */
-		if (skb->len < hci_skb_expect(skb))
-			continue;
+		/* Check क्रम partial packet */
+		अगर (skb->len < hci_skb_expect(skb))
+			जारी;
 
-		for (i = 0; i < pkts_count; i++) {
-			if (hci_skb_pkt_type(skb) == (&pkts[i])->type)
-				break;
-		}
+		क्रम (i = 0; i < pkts_count; i++) अणु
+			अगर (hci_skb_pkt_type(skb) == (&pkts[i])->type)
+				अवरोध;
+		पूर्ण
 
-		if (i >= pkts_count) {
-			kfree_skb(skb);
-			return ERR_PTR(-EILSEQ);
-		}
+		अगर (i >= pkts_count) अणु
+			kमुक्त_skb(skb);
+			वापस ERR_PTR(-EILSEQ);
+		पूर्ण
 
-		if (skb->len == (&pkts[i])->hlen) {
+		अगर (skb->len == (&pkts[i])->hlen) अणु
 			u16 dlen;
 
-			switch ((&pkts[i])->lsize) {
-			case 0:
+			चयन ((&pkts[i])->lsize) अणु
+			हाल 0:
 				/* No variable data length */
 				dlen = 0;
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				/* Single octet variable length */
 				dlen = skb->data[(&pkts[i])->loff];
 				hci_skb_expect(skb) += dlen;
 
-				if (skb_tailroom(skb) < dlen) {
-					kfree_skb(skb);
-					return ERR_PTR(-EMSGSIZE);
-				}
-				break;
-			case 2:
+				अगर (skb_tailroom(skb) < dlen) अणु
+					kमुक्त_skb(skb);
+					वापस ERR_PTR(-EMSGSIZE);
+				पूर्ण
+				अवरोध;
+			हाल 2:
 				/* Double octet variable length */
 				dlen = get_unaligned_le16(skb->data +
 							  (&pkts[i])->loff);
 				hci_skb_expect(skb) += dlen;
 
-				if (skb_tailroom(skb) < dlen) {
-					kfree_skb(skb);
-					return ERR_PTR(-EMSGSIZE);
-				}
-				break;
-			default:
+				अगर (skb_tailroom(skb) < dlen) अणु
+					kमुक्त_skb(skb);
+					वापस ERR_PTR(-EMSGSIZE);
+				पूर्ण
+				अवरोध;
+			शेष:
 				/* Unsupported variable length */
-				kfree_skb(skb);
-				return ERR_PTR(-EILSEQ);
-			}
+				kमुक्त_skb(skb);
+				वापस ERR_PTR(-EILSEQ);
+			पूर्ण
 
-			if (!dlen) {
+			अगर (!dlen) अणु
 				hu->padding = (skb->len - 1) % alignment;
 				hu->padding = (alignment - hu->padding) % alignment;
 
 				/* No more data, complete frame */
 				(&pkts[i])->recv(hdev, skb);
-				skb = NULL;
-			}
-		} else {
+				skb = शून्य;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			hu->padding = (skb->len - 1) % alignment;
 			hu->padding = (alignment - hu->padding) % alignment;
 
 			/* Complete frame */
 			(&pkts[i])->recv(hdev, skb);
-			skb = NULL;
-		}
-	}
+			skb = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 EXPORT_SYMBOL_GPL(h4_recv_buf);

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * File: if_phonet.h
+ * File: अगर_phonet.h
  *
- * Phonet interface kernel definitions
+ * Phonet पूर्णांकerface kernel definitions
  *
  * Copyright (C) 2008 Nokia Corporation. All rights reserved.
  */
-#ifndef _UAPILINUX_IF_PHONET_H
-#define _UAPILINUX_IF_PHONET_H
+#अगर_अघोषित _UAPILINUX_IF_PHONET_H
+#घोषणा _UAPILINUX_IF_PHONET_H
 
-#define PHONET_MIN_MTU		6	/* pn_length = 0 */
-#define PHONET_MAX_MTU		65541	/* pn_length = 0xffff */
-#define PHONET_DEV_MTU		PHONET_MAX_MTU
+#घोषणा PHONET_MIN_MTU		6	/* pn_length = 0 */
+#घोषणा PHONET_MAX_MTU		65541	/* pn_length = 0xffff */
+#घोषणा PHONET_DEV_MTU		PHONET_MAX_MTU
 
 
-#endif /* _UAPILINUX_IF_PHONET_H */
+#पूर्ण_अगर /* _UAPILINUX_IF_PHONET_H */

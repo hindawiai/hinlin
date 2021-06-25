@@ -1,144 +1,145 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // ir-nec-decoder.c - handle NEC IR Pulse/Space protocol
 //
 // Copyright (C) 2010 by Mauro Carvalho Chehab
 
-#include <linux/bitrev.h>
-#include <linux/module.h>
-#include "rc-core-priv.h"
+#समावेश <linux/bitrev.h>
+#समावेश <linux/module.h>
+#समावेश "rc-core-priv.h"
 
-#define NEC_NBITS		32
-#define NEC_UNIT		563  /* us */
-#define NEC_HEADER_PULSE	(16 * NEC_UNIT)
-#define NECX_HEADER_PULSE	(8  * NEC_UNIT) /* Less common NEC variant */
-#define NEC_HEADER_SPACE	(8  * NEC_UNIT)
-#define NEC_REPEAT_SPACE	(4  * NEC_UNIT)
-#define NEC_BIT_PULSE		(1  * NEC_UNIT)
-#define NEC_BIT_0_SPACE		(1  * NEC_UNIT)
-#define NEC_BIT_1_SPACE		(3  * NEC_UNIT)
-#define	NEC_TRAILER_PULSE	(1  * NEC_UNIT)
-#define	NEC_TRAILER_SPACE	(10 * NEC_UNIT) /* even longer in reality */
-#define NECX_REPEAT_BITS	1
+#घोषणा NEC_NBITS		32
+#घोषणा NEC_UNIT		563  /* us */
+#घोषणा NEC_HEADER_PULSE	(16 * NEC_UNIT)
+#घोषणा NECX_HEADER_PULSE	(8  * NEC_UNIT) /* Less common NEC variant */
+#घोषणा NEC_HEADER_SPACE	(8  * NEC_UNIT)
+#घोषणा NEC_REPEAT_SPACE	(4  * NEC_UNIT)
+#घोषणा NEC_BIT_PULSE		(1  * NEC_UNIT)
+#घोषणा NEC_BIT_0_SPACE		(1  * NEC_UNIT)
+#घोषणा NEC_BIT_1_SPACE		(3  * NEC_UNIT)
+#घोषणा	NEC_TRAILER_PULSE	(1  * NEC_UNIT)
+#घोषणा	NEC_TRAILER_SPACE	(10 * NEC_UNIT) /* even दीर्घer in reality */
+#घोषणा NECX_REPEAT_BITS	1
 
-enum nec_state {
+क्रमागत nec_state अणु
 	STATE_INACTIVE,
 	STATE_HEADER_SPACE,
 	STATE_BIT_PULSE,
 	STATE_BIT_SPACE,
 	STATE_TRAILER_PULSE,
 	STATE_TRAILER_SPACE,
-};
+पूर्ण;
 
 /**
  * ir_nec_decode() - Decode one NEC pulse or space
- * @dev:	the struct rc_dev descriptor of the device
- * @ev:		the struct ir_raw_event descriptor of the pulse/space
+ * @dev:	the काष्ठा rc_dev descriptor of the device
+ * @ev:		the काष्ठा ir_raw_event descriptor of the pulse/space
  *
- * This function returns -EINVAL if the pulse violates the state machine
+ * This function वापसs -EINVAL अगर the pulse violates the state machine
  */
-static int ir_nec_decode(struct rc_dev *dev, struct ir_raw_event ev)
-{
-	struct nec_dec *data = &dev->raw->nec;
+अटल पूर्णांक ir_nec_decode(काष्ठा rc_dev *dev, काष्ठा ir_raw_event ev)
+अणु
+	काष्ठा nec_dec *data = &dev->raw->nec;
 	u32 scancode;
-	enum rc_proto rc_proto;
+	क्रमागत rc_proto rc_proto;
 	u8 address, not_address, command, not_command;
 
-	if (!is_timing_event(ev)) {
-		if (ev.reset)
+	अगर (!is_timing_event(ev)) अणु
+		अगर (ev.reset)
 			data->state = STATE_INACTIVE;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_dbg(&dev->dev, "NEC decode started at state %d (%uus %s)\n",
 		data->state, ev.duration, TO_STR(ev.pulse));
 
-	switch (data->state) {
+	चयन (data->state) अणु
 
-	case STATE_INACTIVE:
-		if (!ev.pulse)
-			break;
+	हाल STATE_INACTIVE:
+		अगर (!ev.pulse)
+			अवरोध;
 
-		if (eq_margin(ev.duration, NEC_HEADER_PULSE, NEC_UNIT * 2)) {
+		अगर (eq_margin(ev.duration, NEC_HEADER_PULSE, NEC_UNIT * 2)) अणु
 			data->is_nec_x = false;
 			data->necx_repeat = false;
-		} else if (eq_margin(ev.duration, NECX_HEADER_PULSE, NEC_UNIT / 2))
+		पूर्ण अन्यथा अगर (eq_margin(ev.duration, NECX_HEADER_PULSE, NEC_UNIT / 2))
 			data->is_nec_x = true;
-		else
-			break;
+		अन्यथा
+			अवरोध;
 
 		data->count = 0;
 		data->state = STATE_HEADER_SPACE;
-		return 0;
+		वापस 0;
 
-	case STATE_HEADER_SPACE:
-		if (ev.pulse)
-			break;
+	हाल STATE_HEADER_SPACE:
+		अगर (ev.pulse)
+			अवरोध;
 
-		if (eq_margin(ev.duration, NEC_HEADER_SPACE, NEC_UNIT)) {
+		अगर (eq_margin(ev.duration, NEC_HEADER_SPACE, NEC_UNIT)) अणु
 			data->state = STATE_BIT_PULSE;
-			return 0;
-		} else if (eq_margin(ev.duration, NEC_REPEAT_SPACE, NEC_UNIT / 2)) {
+			वापस 0;
+		पूर्ण अन्यथा अगर (eq_margin(ev.duration, NEC_REPEAT_SPACE, NEC_UNIT / 2)) अणु
 			data->state = STATE_TRAILER_PULSE;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case STATE_BIT_PULSE:
-		if (!ev.pulse)
-			break;
+	हाल STATE_BIT_PULSE:
+		अगर (!ev.pulse)
+			अवरोध;
 
-		if (!eq_margin(ev.duration, NEC_BIT_PULSE, NEC_UNIT / 2))
-			break;
+		अगर (!eq_margin(ev.duration, NEC_BIT_PULSE, NEC_UNIT / 2))
+			अवरोध;
 
 		data->state = STATE_BIT_SPACE;
-		return 0;
+		वापस 0;
 
-	case STATE_BIT_SPACE:
-		if (ev.pulse)
-			break;
+	हाल STATE_BIT_SPACE:
+		अगर (ev.pulse)
+			अवरोध;
 
-		if (data->necx_repeat && data->count == NECX_REPEAT_BITS &&
-		    geq_margin(ev.duration, NEC_TRAILER_SPACE, NEC_UNIT / 2)) {
+		अगर (data->necx_repeat && data->count == NECX_REPEAT_BITS &&
+		    geq_margin(ev.duration, NEC_TRAILER_SPACE, NEC_UNIT / 2)) अणु
 			dev_dbg(&dev->dev, "Repeat last key\n");
 			rc_repeat(dev);
 			data->state = STATE_INACTIVE;
-			return 0;
-		} else if (data->count > NECX_REPEAT_BITS)
+			वापस 0;
+		पूर्ण अन्यथा अगर (data->count > NECX_REPEAT_BITS)
 			data->necx_repeat = false;
 
 		data->bits <<= 1;
-		if (eq_margin(ev.duration, NEC_BIT_1_SPACE, NEC_UNIT / 2))
+		अगर (eq_margin(ev.duration, NEC_BIT_1_SPACE, NEC_UNIT / 2))
 			data->bits |= 1;
-		else if (!eq_margin(ev.duration, NEC_BIT_0_SPACE, NEC_UNIT / 2))
-			break;
+		अन्यथा अगर (!eq_margin(ev.duration, NEC_BIT_0_SPACE, NEC_UNIT / 2))
+			अवरोध;
 		data->count++;
 
-		if (data->count == NEC_NBITS)
+		अगर (data->count == NEC_NBITS)
 			data->state = STATE_TRAILER_PULSE;
-		else
+		अन्यथा
 			data->state = STATE_BIT_PULSE;
 
-		return 0;
+		वापस 0;
 
-	case STATE_TRAILER_PULSE:
-		if (!ev.pulse)
-			break;
+	हाल STATE_TRAILER_PULSE:
+		अगर (!ev.pulse)
+			अवरोध;
 
-		if (!eq_margin(ev.duration, NEC_TRAILER_PULSE, NEC_UNIT / 2))
-			break;
+		अगर (!eq_margin(ev.duration, NEC_TRAILER_PULSE, NEC_UNIT / 2))
+			अवरोध;
 
 		data->state = STATE_TRAILER_SPACE;
-		return 0;
+		वापस 0;
 
-	case STATE_TRAILER_SPACE:
-		if (ev.pulse)
-			break;
+	हाल STATE_TRAILER_SPACE:
+		अगर (ev.pulse)
+			अवरोध;
 
-		if (!geq_margin(ev.duration, NEC_TRAILER_SPACE, NEC_UNIT / 2))
-			break;
+		अगर (!geq_margin(ev.duration, NEC_TRAILER_SPACE, NEC_UNIT / 2))
+			अवरोध;
 
-		if (data->count == NEC_NBITS) {
+		अगर (data->count == NEC_NBITS) अणु
 			address     = bitrev8((data->bits >> 24) & 0xff);
 			not_address = bitrev8((data->bits >> 16) & 0xff);
 			command	    = bitrev8((data->bits >>  8) & 0xff);
@@ -150,63 +151,63 @@ static int ir_nec_decode(struct rc_dev *dev, struct ir_raw_event ev)
 							    not_command,
 							    &rc_proto);
 
-			if (data->is_nec_x)
+			अगर (data->is_nec_x)
 				data->necx_repeat = true;
 
-			rc_keydown(dev, rc_proto, scancode, 0);
-		} else {
+			rc_keyकरोwn(dev, rc_proto, scancode, 0);
+		पूर्ण अन्यथा अणु
 			rc_repeat(dev);
-		}
+		पूर्ण
 
 		data->state = STATE_INACTIVE;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_dbg(&dev->dev, "NEC decode failed at count %d state %d (%uus %s)\n",
 		data->count, data->state, ev.duration, TO_STR(ev.pulse));
 	data->state = STATE_INACTIVE;
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
- * ir_nec_scancode_to_raw() - encode an NEC scancode ready for modulation.
- * @protocol:	specific protocol to use
+ * ir_nec_scancode_to_raw() - encode an NEC scancode पढ़ोy क्रम modulation.
+ * @protocol:	specअगरic protocol to use
  * @scancode:	a single NEC scancode.
  */
-static u32 ir_nec_scancode_to_raw(enum rc_proto protocol, u32 scancode)
-{
-	unsigned int addr, addr_inv, data, data_inv;
+अटल u32 ir_nec_scancode_to_raw(क्रमागत rc_proto protocol, u32 scancode)
+अणु
+	अचिन्हित पूर्णांक addr, addr_inv, data, data_inv;
 
 	data = scancode & 0xff;
 
-	if (protocol == RC_PROTO_NEC32) {
+	अगर (protocol == RC_PROTO_NEC32) अणु
 		/* 32-bit NEC (used by Apple and TiVo remotes) */
 		/* scan encoding: aaAAddDD */
 		addr_inv   = (scancode >> 24) & 0xff;
 		addr       = (scancode >> 16) & 0xff;
 		data_inv   = (scancode >>  8) & 0xff;
-	} else if (protocol == RC_PROTO_NECX) {
+	पूर्ण अन्यथा अगर (protocol == RC_PROTO_NECX) अणु
 		/* Extended NEC */
 		/* scan encoding AAaaDD */
 		addr       = (scancode >> 16) & 0xff;
 		addr_inv   = (scancode >>  8) & 0xff;
 		data_inv   = data ^ 0xff;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Normal NEC */
 		/* scan encoding: AADD */
 		addr       = (scancode >>  8) & 0xff;
 		addr_inv   = addr ^ 0xff;
 		data_inv   = data ^ 0xff;
-	}
+	पूर्ण
 
 	/* raw encoding: ddDDaaAA */
-	return data_inv << 24 |
+	वापस data_inv << 24 |
 	       data     << 16 |
 	       addr_inv <<  8 |
 	       addr;
-}
+पूर्ण
 
-static const struct ir_raw_timings_pd ir_nec_timings = {
+अटल स्थिर काष्ठा ir_raw_timings_pd ir_nec_timings = अणु
 	.header_pulse	= NEC_HEADER_PULSE,
 	.header_space	= NEC_HEADER_SPACE,
 	.bit_pulse	= NEC_BIT_PULSE,
@@ -215,25 +216,25 @@ static const struct ir_raw_timings_pd ir_nec_timings = {
 	.trailer_pulse	= NEC_TRAILER_PULSE,
 	.trailer_space	= NEC_TRAILER_SPACE,
 	.msb_first	= 0,
-};
+पूर्ण;
 
 /**
  * ir_nec_encode() - Encode a scancode as a stream of raw events
  *
  * @protocol:	protocol to encode
  * @scancode:	scancode to encode
- * @events:	array of raw ir events to write into
+ * @events:	array of raw ir events to ग_लिखो पूर्णांकo
  * @max:	maximum size of @events
  *
  * Returns:	The number of events written.
- *		-ENOBUFS if there isn't enough space in the array to fit the
- *		encoding. In this case all @max events will have been written.
+ *		-ENOBUFS अगर there isn't enough space in the array to fit the
+ *		encoding. In this हाल all @max events will have been written.
  */
-static int ir_nec_encode(enum rc_proto protocol, u32 scancode,
-			 struct ir_raw_event *events, unsigned int max)
-{
-	struct ir_raw_event *e = events;
-	int ret;
+अटल पूर्णांक ir_nec_encode(क्रमागत rc_proto protocol, u32 scancode,
+			 काष्ठा ir_raw_event *events, अचिन्हित पूर्णांक max)
+अणु
+	काष्ठा ir_raw_event *e = events;
+	पूर्णांक ret;
 	u32 raw;
 
 	/* Convert a NEC scancode to raw NEC data */
@@ -241,36 +242,36 @@ static int ir_nec_encode(enum rc_proto protocol, u32 scancode,
 
 	/* Modulate the raw data using a pulse distance modulation */
 	ret = ir_raw_gen_pd(&e, max, &ir_nec_timings, NEC_NBITS, raw);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return e - events;
-}
+	वापस e - events;
+पूर्ण
 
-static struct ir_raw_handler nec_handler = {
+अटल काष्ठा ir_raw_handler nec_handler = अणु
 	.protocols	= RC_PROTO_BIT_NEC | RC_PROTO_BIT_NECX |
 							RC_PROTO_BIT_NEC32,
 	.decode		= ir_nec_decode,
 	.encode		= ir_nec_encode,
 	.carrier	= 38000,
-	.min_timeout	= NEC_TRAILER_SPACE,
-};
+	.min_समयout	= NEC_TRAILER_SPACE,
+पूर्ण;
 
-static int __init ir_nec_decode_init(void)
-{
-	ir_raw_handler_register(&nec_handler);
+अटल पूर्णांक __init ir_nec_decode_init(व्योम)
+अणु
+	ir_raw_handler_रेजिस्टर(&nec_handler);
 
-	printk(KERN_INFO "IR NEC protocol handler initialized\n");
-	return 0;
-}
+	prपूर्णांकk(KERN_INFO "IR NEC protocol handler initialized\n");
+	वापस 0;
+पूर्ण
 
-static void __exit ir_nec_decode_exit(void)
-{
-	ir_raw_handler_unregister(&nec_handler);
-}
+अटल व्योम __निकास ir_nec_decode_निकास(व्योम)
+अणु
+	ir_raw_handler_unरेजिस्टर(&nec_handler);
+पूर्ण
 
 module_init(ir_nec_decode_init);
-module_exit(ir_nec_decode_exit);
+module_निकास(ir_nec_decode_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Mauro Carvalho Chehab");

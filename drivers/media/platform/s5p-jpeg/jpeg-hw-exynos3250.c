@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* linux/drivers/media/platform/exynos3250-jpeg/jpeg-hw.h
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* linux/drivers/media/platक्रमm/exynos3250-jpeg/jpeg-hw.h
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -7,246 +8,246 @@
  * Author: Jacek Anaszewski <j.anaszewski@samsung.com>
  */
 
-#include <linux/io.h>
-#include <linux/videodev2.h>
-#include <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/delay.h>
 
-#include "jpeg-core.h"
-#include "jpeg-regs.h"
-#include "jpeg-hw-exynos3250.h"
+#समावेश "jpeg-core.h"
+#समावेश "jpeg-regs.h"
+#समावेश "jpeg-hw-exynos3250.h"
 
-void exynos3250_jpeg_reset(void __iomem *regs)
-{
+व्योम exynos3250_jpeg_reset(व्योम __iomem *regs)
+अणु
 	u32 reg = 1;
-	int count = 1000;
+	पूर्णांक count = 1000;
 
-	writel(1, regs + EXYNOS3250_SW_RESET);
-	/* no other way but polling for when JPEG IP becomes operational */
-	while (reg != 0 && --count > 0) {
+	ग_लिखोl(1, regs + EXYNOS3250_SW_RESET);
+	/* no other way but polling क्रम when JPEG IP becomes operational */
+	जबतक (reg != 0 && --count > 0) अणु
 		udelay(1);
 		cpu_relax();
-		reg = readl(regs + EXYNOS3250_SW_RESET);
-	}
+		reg = पढ़ोl(regs + EXYNOS3250_SW_RESET);
+	पूर्ण
 
 	reg = 0;
 	count = 1000;
 
-	while (reg != 1 && --count > 0) {
-		writel(1, regs + EXYNOS3250_JPGDRI);
+	जबतक (reg != 1 && --count > 0) अणु
+		ग_लिखोl(1, regs + EXYNOS3250_JPGDRI);
 		udelay(1);
 		cpu_relax();
-		reg = readl(regs + EXYNOS3250_JPGDRI);
-	}
+		reg = पढ़ोl(regs + EXYNOS3250_JPGDRI);
+	पूर्ण
 
-	writel(0, regs + EXYNOS3250_JPGDRI);
-}
+	ग_लिखोl(0, regs + EXYNOS3250_JPGDRI);
+पूर्ण
 
-void exynos3250_jpeg_poweron(void __iomem *regs)
-{
-	writel(EXYNOS3250_POWER_ON, regs + EXYNOS3250_JPGCLKCON);
-}
+व्योम exynos3250_jpeg_घातeron(व्योम __iomem *regs)
+अणु
+	ग_लिखोl(EXYNOS3250_POWER_ON, regs + EXYNOS3250_JPGCLKCON);
+पूर्ण
 
-void exynos3250_jpeg_set_dma_num(void __iomem *regs)
-{
-	writel(((EXYNOS3250_DMA_MO_COUNT << EXYNOS3250_WDMA_ISSUE_NUM_SHIFT) &
+व्योम exynos3250_jpeg_set_dma_num(व्योम __iomem *regs)
+अणु
+	ग_लिखोl(((EXYNOS3250_DMA_MO_COUNT << EXYNOS3250_WDMA_ISSUE_NUM_SHIFT) &
 			EXYNOS3250_WDMA_ISSUE_NUM_MASK) |
 	       ((EXYNOS3250_DMA_MO_COUNT << EXYNOS3250_RDMA_ISSUE_NUM_SHIFT) &
 			EXYNOS3250_RDMA_ISSUE_NUM_MASK) |
 	       ((EXYNOS3250_DMA_MO_COUNT << EXYNOS3250_ISSUE_GATHER_NUM_SHIFT) &
 			EXYNOS3250_ISSUE_GATHER_NUM_MASK),
 		regs + EXYNOS3250_DMA_ISSUE_NUM);
-}
+पूर्ण
 
-void exynos3250_jpeg_clk_set(void __iomem *base)
-{
+व्योम exynos3250_jpeg_clk_set(व्योम __iomem *base)
+अणु
 	u32 reg;
 
-	reg = readl(base + EXYNOS3250_JPGCMOD) & ~EXYNOS3250_HALF_EN_MASK;
+	reg = पढ़ोl(base + EXYNOS3250_JPGCMOD) & ~EXYNOS3250_HALF_EN_MASK;
 
-	writel(reg | EXYNOS3250_HALF_EN, base + EXYNOS3250_JPGCMOD);
-}
+	ग_लिखोl(reg | EXYNOS3250_HALF_EN, base + EXYNOS3250_JPGCMOD);
+पूर्ण
 
-void exynos3250_jpeg_input_raw_fmt(void __iomem *regs, unsigned int fmt)
-{
+व्योम exynos3250_jpeg_input_raw_fmt(व्योम __iomem *regs, अचिन्हित पूर्णांक fmt)
+अणु
 	u32 reg;
 
-	reg = readl(regs + EXYNOS3250_JPGCMOD) &
+	reg = पढ़ोl(regs + EXYNOS3250_JPGCMOD) &
 			EXYNOS3250_MODE_Y16_MASK;
 
-	switch (fmt) {
-	case V4L2_PIX_FMT_RGB32:
+	चयन (fmt) अणु
+	हाल V4L2_PIX_FMT_RGB32:
 		reg |= EXYNOS3250_MODE_SEL_ARGB8888;
-		break;
-	case V4L2_PIX_FMT_BGR32:
+		अवरोध;
+	हाल V4L2_PIX_FMT_BGR32:
 		reg |= EXYNOS3250_MODE_SEL_ARGB8888 | EXYNOS3250_SRC_SWAP_RGB;
-		break;
-	case V4L2_PIX_FMT_RGB565:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB565:
 		reg |= EXYNOS3250_MODE_SEL_RGB565;
-		break;
-	case V4L2_PIX_FMT_RGB565X:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB565X:
 		reg |= EXYNOS3250_MODE_SEL_RGB565 | EXYNOS3250_SRC_SWAP_RGB;
-		break;
-	case V4L2_PIX_FMT_YUYV:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUYV:
 		reg |= EXYNOS3250_MODE_SEL_422_1P_LUM_CHR;
-		break;
-	case V4L2_PIX_FMT_YVYU:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YVYU:
 		reg |= EXYNOS3250_MODE_SEL_422_1P_LUM_CHR |
 			EXYNOS3250_SRC_SWAP_UV;
-		break;
-	case V4L2_PIX_FMT_UYVY:
+		अवरोध;
+	हाल V4L2_PIX_FMT_UYVY:
 		reg |= EXYNOS3250_MODE_SEL_422_1P_CHR_LUM;
-		break;
-	case V4L2_PIX_FMT_VYUY:
+		अवरोध;
+	हाल V4L2_PIX_FMT_VYUY:
 		reg |= EXYNOS3250_MODE_SEL_422_1P_CHR_LUM |
 			EXYNOS3250_SRC_SWAP_UV;
-		break;
-	case V4L2_PIX_FMT_NV12:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV12:
 		reg |= EXYNOS3250_MODE_SEL_420_2P | EXYNOS3250_SRC_NV12;
-		break;
-	case V4L2_PIX_FMT_NV21:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV21:
 		reg |= EXYNOS3250_MODE_SEL_420_2P | EXYNOS3250_SRC_NV21;
-		break;
-	case V4L2_PIX_FMT_YUV420:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUV420:
 		reg |= EXYNOS3250_MODE_SEL_420_3P;
-		break;
-	default:
-		break;
+		अवरोध;
+	शेष:
+		अवरोध;
 
-	}
+	पूर्ण
 
-	writel(reg, regs + EXYNOS3250_JPGCMOD);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_JPGCMOD);
+पूर्ण
 
-void exynos3250_jpeg_set_y16(void __iomem *regs, bool y16)
-{
+व्योम exynos3250_jpeg_set_y16(व्योम __iomem *regs, bool y16)
+अणु
 	u32 reg;
 
-	reg = readl(regs + EXYNOS3250_JPGCMOD);
-	if (y16)
+	reg = पढ़ोl(regs + EXYNOS3250_JPGCMOD);
+	अगर (y16)
 		reg |= EXYNOS3250_MODE_Y16;
-	else
+	अन्यथा
 		reg &= ~EXYNOS3250_MODE_Y16_MASK;
-	writel(reg, regs + EXYNOS3250_JPGCMOD);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_JPGCMOD);
+पूर्ण
 
-void exynos3250_jpeg_proc_mode(void __iomem *regs, unsigned int mode)
-{
+व्योम exynos3250_jpeg_proc_mode(व्योम __iomem *regs, अचिन्हित पूर्णांक mode)
+अणु
 	u32 reg, m;
 
-	if (mode == S5P_JPEG_ENCODE)
+	अगर (mode == S5P_JPEG_ENCODE)
 		m = EXYNOS3250_PROC_MODE_COMPR;
-	else
+	अन्यथा
 		m = EXYNOS3250_PROC_MODE_DECOMPR;
-	reg = readl(regs + EXYNOS3250_JPGMOD);
+	reg = पढ़ोl(regs + EXYNOS3250_JPGMOD);
 	reg &= ~EXYNOS3250_PROC_MODE_MASK;
 	reg |= m;
-	writel(reg, regs + EXYNOS3250_JPGMOD);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_JPGMOD);
+पूर्ण
 
-void exynos3250_jpeg_subsampling_mode(void __iomem *regs, unsigned int mode)
-{
+व्योम exynos3250_jpeg_subsampling_mode(व्योम __iomem *regs, अचिन्हित पूर्णांक mode)
+अणु
 	u32 reg, m = 0;
 
-	switch (mode) {
-	case V4L2_JPEG_CHROMA_SUBSAMPLING_444:
+	चयन (mode) अणु
+	हाल V4L2_JPEG_CHROMA_SUBSAMPLING_444:
 		m = EXYNOS3250_SUBSAMPLING_MODE_444;
-		break;
-	case V4L2_JPEG_CHROMA_SUBSAMPLING_422:
+		अवरोध;
+	हाल V4L2_JPEG_CHROMA_SUBSAMPLING_422:
 		m = EXYNOS3250_SUBSAMPLING_MODE_422;
-		break;
-	case V4L2_JPEG_CHROMA_SUBSAMPLING_420:
+		अवरोध;
+	हाल V4L2_JPEG_CHROMA_SUBSAMPLING_420:
 		m = EXYNOS3250_SUBSAMPLING_MODE_420;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	reg = readl(regs + EXYNOS3250_JPGMOD);
+	reg = पढ़ोl(regs + EXYNOS3250_JPGMOD);
 	reg &= ~EXYNOS3250_SUBSAMPLING_MODE_MASK;
 	reg |= m;
-	writel(reg, regs + EXYNOS3250_JPGMOD);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_JPGMOD);
+पूर्ण
 
-unsigned int exynos3250_jpeg_get_subsampling_mode(void __iomem *regs)
-{
-	return readl(regs + EXYNOS3250_JPGMOD) &
+अचिन्हित पूर्णांक exynos3250_jpeg_get_subsampling_mode(व्योम __iomem *regs)
+अणु
+	वापस पढ़ोl(regs + EXYNOS3250_JPGMOD) &
 				EXYNOS3250_SUBSAMPLING_MODE_MASK;
-}
+पूर्ण
 
-void exynos3250_jpeg_dri(void __iomem *regs, unsigned int dri)
-{
+व्योम exynos3250_jpeg_dri(व्योम __iomem *regs, अचिन्हित पूर्णांक dri)
+अणु
 	u32 reg;
 
 	reg = dri & EXYNOS3250_JPGDRI_MASK;
-	writel(reg, regs + EXYNOS3250_JPGDRI);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_JPGDRI);
+पूर्ण
 
-void exynos3250_jpeg_qtbl(void __iomem *regs, unsigned int t, unsigned int n)
-{
-	unsigned long reg;
+व्योम exynos3250_jpeg_qtbl(व्योम __iomem *regs, अचिन्हित पूर्णांक t, अचिन्हित पूर्णांक n)
+अणु
+	अचिन्हित दीर्घ reg;
 
-	reg = readl(regs + EXYNOS3250_QHTBL);
+	reg = पढ़ोl(regs + EXYNOS3250_QHTBL);
 	reg &= ~EXYNOS3250_QT_NUM_MASK(t);
 	reg |= (n << EXYNOS3250_QT_NUM_SHIFT(t)) &
 					EXYNOS3250_QT_NUM_MASK(t);
-	writel(reg, regs + EXYNOS3250_QHTBL);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_QHTBL);
+पूर्ण
 
-void exynos3250_jpeg_htbl_ac(void __iomem *regs, unsigned int t)
-{
-	unsigned long reg;
+व्योम exynos3250_jpeg_htbl_ac(व्योम __iomem *regs, अचिन्हित पूर्णांक t)
+अणु
+	अचिन्हित दीर्घ reg;
 
-	reg = readl(regs + EXYNOS3250_QHTBL);
+	reg = पढ़ोl(regs + EXYNOS3250_QHTBL);
 	reg &= ~EXYNOS3250_HT_NUM_AC_MASK(t);
-	/* this driver uses table 0 for all color components */
+	/* this driver uses table 0 क्रम all color components */
 	reg |= (0 << EXYNOS3250_HT_NUM_AC_SHIFT(t)) &
 					EXYNOS3250_HT_NUM_AC_MASK(t);
-	writel(reg, regs + EXYNOS3250_QHTBL);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_QHTBL);
+पूर्ण
 
-void exynos3250_jpeg_htbl_dc(void __iomem *regs, unsigned int t)
-{
-	unsigned long reg;
+व्योम exynos3250_jpeg_htbl_dc(व्योम __iomem *regs, अचिन्हित पूर्णांक t)
+अणु
+	अचिन्हित दीर्घ reg;
 
-	reg = readl(regs + EXYNOS3250_QHTBL);
+	reg = पढ़ोl(regs + EXYNOS3250_QHTBL);
 	reg &= ~EXYNOS3250_HT_NUM_DC_MASK(t);
-	/* this driver uses table 0 for all color components */
+	/* this driver uses table 0 क्रम all color components */
 	reg |= (0 << EXYNOS3250_HT_NUM_DC_SHIFT(t)) &
 					EXYNOS3250_HT_NUM_DC_MASK(t);
-	writel(reg, regs + EXYNOS3250_QHTBL);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_QHTBL);
+पूर्ण
 
-void exynos3250_jpeg_set_y(void __iomem *regs, unsigned int y)
-{
+व्योम exynos3250_jpeg_set_y(व्योम __iomem *regs, अचिन्हित पूर्णांक y)
+अणु
 	u32 reg;
 
 	reg = y & EXYNOS3250_JPGY_MASK;
-	writel(reg, regs + EXYNOS3250_JPGY);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_JPGY);
+पूर्ण
 
-void exynos3250_jpeg_set_x(void __iomem *regs, unsigned int x)
-{
+व्योम exynos3250_jpeg_set_x(व्योम __iomem *regs, अचिन्हित पूर्णांक x)
+अणु
 	u32 reg;
 
 	reg = x & EXYNOS3250_JPGX_MASK;
-	writel(reg, regs + EXYNOS3250_JPGX);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_JPGX);
+पूर्ण
 
-#if 0	/* Currently unused */
-unsigned int exynos3250_jpeg_get_y(void __iomem *regs)
-{
-	return readl(regs + EXYNOS3250_JPGY);
-}
+#अगर 0	/* Currently unused */
+अचिन्हित पूर्णांक exynos3250_jpeg_get_y(व्योम __iomem *regs)
+अणु
+	वापस पढ़ोl(regs + EXYNOS3250_JPGY);
+पूर्ण
 
-unsigned int exynos3250_jpeg_get_x(void __iomem *regs)
-{
-	return readl(regs + EXYNOS3250_JPGX);
-}
-#endif
+अचिन्हित पूर्णांक exynos3250_jpeg_get_x(व्योम __iomem *regs)
+अणु
+	वापस पढ़ोl(regs + EXYNOS3250_JPGX);
+पूर्ण
+#पूर्ण_अगर
 
-void exynos3250_jpeg_interrupts_enable(void __iomem *regs)
-{
+व्योम exynos3250_jpeg_पूर्णांकerrupts_enable(व्योम __iomem *regs)
+अणु
 	u32 reg;
 
-	reg = readl(regs + EXYNOS3250_JPGINTSE);
+	reg = पढ़ोl(regs + EXYNOS3250_JPGINTSE);
 	reg |= (EXYNOS3250_JPEG_DONE_EN |
 		EXYNOS3250_WDMA_DONE_EN |
 		EXYNOS3250_RDMA_DONE_EN |
@@ -254,115 +255,115 @@ void exynos3250_jpeg_interrupts_enable(void __iomem *regs)
 		EXYNOS3250_CORE_DONE_EN |
 		EXYNOS3250_ERR_INT_EN |
 		EXYNOS3250_HEAD_INT_EN);
-	writel(reg, regs + EXYNOS3250_JPGINTSE);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_JPGINTSE);
+पूर्ण
 
-void exynos3250_jpeg_enc_stream_bound(void __iomem *regs, unsigned int size)
-{
+व्योम exynos3250_jpeg_enc_stream_bound(व्योम __iomem *regs, अचिन्हित पूर्णांक size)
+अणु
 	u32 reg;
 
 	reg = size & EXYNOS3250_ENC_STREAM_BOUND_MASK;
-	writel(reg, regs + EXYNOS3250_ENC_STREAM_BOUND);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_ENC_STREAM_BOUND);
+पूर्ण
 
-void exynos3250_jpeg_output_raw_fmt(void __iomem *regs, unsigned int fmt)
-{
+व्योम exynos3250_jpeg_output_raw_fmt(व्योम __iomem *regs, अचिन्हित पूर्णांक fmt)
+अणु
 	u32 reg;
 
-	switch (fmt) {
-	case V4L2_PIX_FMT_RGB32:
+	चयन (fmt) अणु
+	हाल V4L2_PIX_FMT_RGB32:
 		reg = EXYNOS3250_OUT_FMT_ARGB8888;
-		break;
-	case V4L2_PIX_FMT_BGR32:
+		अवरोध;
+	हाल V4L2_PIX_FMT_BGR32:
 		reg = EXYNOS3250_OUT_FMT_ARGB8888 | EXYNOS3250_OUT_SWAP_RGB;
-		break;
-	case V4L2_PIX_FMT_RGB565:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB565:
 		reg = EXYNOS3250_OUT_FMT_RGB565;
-		break;
-	case V4L2_PIX_FMT_RGB565X:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB565X:
 		reg = EXYNOS3250_OUT_FMT_RGB565 | EXYNOS3250_OUT_SWAP_RGB;
-		break;
-	case V4L2_PIX_FMT_YUYV:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUYV:
 		reg = EXYNOS3250_OUT_FMT_422_1P_LUM_CHR;
-		break;
-	case V4L2_PIX_FMT_YVYU:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YVYU:
 		reg = EXYNOS3250_OUT_FMT_422_1P_LUM_CHR |
 			EXYNOS3250_OUT_SWAP_UV;
-		break;
-	case V4L2_PIX_FMT_UYVY:
+		अवरोध;
+	हाल V4L2_PIX_FMT_UYVY:
 		reg = EXYNOS3250_OUT_FMT_422_1P_CHR_LUM;
-		break;
-	case V4L2_PIX_FMT_VYUY:
+		अवरोध;
+	हाल V4L2_PIX_FMT_VYUY:
 		reg = EXYNOS3250_OUT_FMT_422_1P_CHR_LUM |
 			EXYNOS3250_OUT_SWAP_UV;
-		break;
-	case V4L2_PIX_FMT_NV12:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV12:
 		reg = EXYNOS3250_OUT_FMT_420_2P | EXYNOS3250_OUT_NV12;
-		break;
-	case V4L2_PIX_FMT_NV21:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV21:
 		reg = EXYNOS3250_OUT_FMT_420_2P | EXYNOS3250_OUT_NV21;
-		break;
-	case V4L2_PIX_FMT_YUV420:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUV420:
 		reg = EXYNOS3250_OUT_FMT_420_3P;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		reg = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	writel(reg, regs + EXYNOS3250_OUTFORM);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_OUTFORM);
+पूर्ण
 
-void exynos3250_jpeg_jpgadr(void __iomem *regs, unsigned int addr)
-{
-	writel(addr, regs + EXYNOS3250_JPG_JPGADR);
-}
+व्योम exynos3250_jpeg_jpgadr(व्योम __iomem *regs, अचिन्हित पूर्णांक addr)
+अणु
+	ग_लिखोl(addr, regs + EXYNOS3250_JPG_JPGADR);
+पूर्ण
 
-void exynos3250_jpeg_imgadr(void __iomem *regs, struct s5p_jpeg_addr *img_addr)
-{
-	writel(img_addr->y, regs + EXYNOS3250_LUMA_BASE);
-	writel(img_addr->cb, regs + EXYNOS3250_CHROMA_BASE);
-	writel(img_addr->cr, regs + EXYNOS3250_CHROMA_CR_BASE);
-}
+व्योम exynos3250_jpeg_imgadr(व्योम __iomem *regs, काष्ठा s5p_jpeg_addr *img_addr)
+अणु
+	ग_लिखोl(img_addr->y, regs + EXYNOS3250_LUMA_BASE);
+	ग_लिखोl(img_addr->cb, regs + EXYNOS3250_CHROMA_BASE);
+	ग_लिखोl(img_addr->cr, regs + EXYNOS3250_CHROMA_CR_BASE);
+पूर्ण
 
-void exynos3250_jpeg_stride(void __iomem *regs, unsigned int img_fmt,
-			    unsigned int width)
-{
+व्योम exynos3250_jpeg_stride(व्योम __iomem *regs, अचिन्हित पूर्णांक img_fmt,
+			    अचिन्हित पूर्णांक width)
+अणु
 	u32 reg_luma = 0, reg_cr = 0, reg_cb = 0;
 
-	switch (img_fmt) {
-	case V4L2_PIX_FMT_RGB32:
+	चयन (img_fmt) अणु
+	हाल V4L2_PIX_FMT_RGB32:
 		reg_luma = 4 * width;
-		break;
-	case V4L2_PIX_FMT_RGB565:
-	case V4L2_PIX_FMT_RGB565X:
-	case V4L2_PIX_FMT_YUYV:
-	case V4L2_PIX_FMT_YVYU:
-	case V4L2_PIX_FMT_UYVY:
-	case V4L2_PIX_FMT_VYUY:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB565:
+	हाल V4L2_PIX_FMT_RGB565X:
+	हाल V4L2_PIX_FMT_YUYV:
+	हाल V4L2_PIX_FMT_YVYU:
+	हाल V4L2_PIX_FMT_UYVY:
+	हाल V4L2_PIX_FMT_VYUY:
 		reg_luma = 2 * width;
-		break;
-	case V4L2_PIX_FMT_NV12:
-	case V4L2_PIX_FMT_NV21:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV12:
+	हाल V4L2_PIX_FMT_NV21:
 		reg_luma = width;
 		reg_cb = reg_luma;
-		break;
-	case V4L2_PIX_FMT_YUV420:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUV420:
 		reg_luma = width;
 		reg_cb = reg_cr = reg_luma / 2;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	writel(reg_luma, regs + EXYNOS3250_LUMA_STRIDE);
-	writel(reg_cb, regs + EXYNOS3250_CHROMA_STRIDE);
-	writel(reg_cr, regs + EXYNOS3250_CHROMA_CR_STRIDE);
-}
+	ग_लिखोl(reg_luma, regs + EXYNOS3250_LUMA_STRIDE);
+	ग_लिखोl(reg_cb, regs + EXYNOS3250_CHROMA_STRIDE);
+	ग_लिखोl(reg_cr, regs + EXYNOS3250_CHROMA_CR_STRIDE);
+पूर्ण
 
-void exynos3250_jpeg_offset(void __iomem *regs, unsigned int x_offset,
-				unsigned int y_offset)
-{
+व्योम exynos3250_jpeg_offset(व्योम __iomem *regs, अचिन्हित पूर्णांक x_offset,
+				अचिन्हित पूर्णांक y_offset)
+अणु
 	u32 reg;
 
 	reg = (y_offset << EXYNOS3250_LUMA_YY_OFFSET_SHIFT) &
@@ -370,117 +371,117 @@ void exynos3250_jpeg_offset(void __iomem *regs, unsigned int x_offset,
 	reg |= (x_offset << EXYNOS3250_LUMA_YX_OFFSET_SHIFT) &
 			EXYNOS3250_LUMA_YX_OFFSET_MASK;
 
-	writel(reg, regs + EXYNOS3250_LUMA_XY_OFFSET);
+	ग_लिखोl(reg, regs + EXYNOS3250_LUMA_XY_OFFSET);
 
 	reg = (y_offset << EXYNOS3250_CHROMA_YY_OFFSET_SHIFT) &
 			EXYNOS3250_CHROMA_YY_OFFSET_MASK;
 	reg |= (x_offset << EXYNOS3250_CHROMA_YX_OFFSET_SHIFT) &
 			EXYNOS3250_CHROMA_YX_OFFSET_MASK;
 
-	writel(reg, regs + EXYNOS3250_CHROMA_XY_OFFSET);
+	ग_लिखोl(reg, regs + EXYNOS3250_CHROMA_XY_OFFSET);
 
 	reg = (y_offset << EXYNOS3250_CHROMA_CR_YY_OFFSET_SHIFT) &
 			EXYNOS3250_CHROMA_CR_YY_OFFSET_MASK;
 	reg |= (x_offset << EXYNOS3250_CHROMA_CR_YX_OFFSET_SHIFT) &
 			EXYNOS3250_CHROMA_CR_YX_OFFSET_MASK;
 
-	writel(reg, regs + EXYNOS3250_CHROMA_CR_XY_OFFSET);
-}
+	ग_लिखोl(reg, regs + EXYNOS3250_CHROMA_CR_XY_OFFSET);
+पूर्ण
 
-void exynos3250_jpeg_coef(void __iomem *base, unsigned int mode)
-{
-	if (mode == S5P_JPEG_ENCODE) {
-		writel(EXYNOS3250_JPEG_ENC_COEF1,
+व्योम exynos3250_jpeg_coef(व्योम __iomem *base, अचिन्हित पूर्णांक mode)
+अणु
+	अगर (mode == S5P_JPEG_ENCODE) अणु
+		ग_लिखोl(EXYNOS3250_JPEG_ENC_COEF1,
 					base + EXYNOS3250_JPG_COEF(1));
-		writel(EXYNOS3250_JPEG_ENC_COEF2,
+		ग_लिखोl(EXYNOS3250_JPEG_ENC_COEF2,
 					base + EXYNOS3250_JPG_COEF(2));
-		writel(EXYNOS3250_JPEG_ENC_COEF3,
+		ग_लिखोl(EXYNOS3250_JPEG_ENC_COEF3,
 					base + EXYNOS3250_JPG_COEF(3));
-	} else {
-		writel(EXYNOS3250_JPEG_DEC_COEF1,
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(EXYNOS3250_JPEG_DEC_COEF1,
 					base + EXYNOS3250_JPG_COEF(1));
-		writel(EXYNOS3250_JPEG_DEC_COEF2,
+		ग_लिखोl(EXYNOS3250_JPEG_DEC_COEF2,
 					base + EXYNOS3250_JPG_COEF(2));
-		writel(EXYNOS3250_JPEG_DEC_COEF3,
+		ग_लिखोl(EXYNOS3250_JPEG_DEC_COEF3,
 					base + EXYNOS3250_JPG_COEF(3));
-	}
-}
+	पूर्ण
+पूर्ण
 
-void exynos3250_jpeg_start(void __iomem *regs)
-{
-	writel(1, regs + EXYNOS3250_JSTART);
-}
+व्योम exynos3250_jpeg_start(व्योम __iomem *regs)
+अणु
+	ग_लिखोl(1, regs + EXYNOS3250_JSTART);
+पूर्ण
 
-void exynos3250_jpeg_rstart(void __iomem *regs)
-{
-	writel(1, regs + EXYNOS3250_JRSTART);
-}
+व्योम exynos3250_jpeg_rstart(व्योम __iomem *regs)
+अणु
+	ग_लिखोl(1, regs + EXYNOS3250_JRSTART);
+पूर्ण
 
-unsigned int exynos3250_jpeg_get_int_status(void __iomem *regs)
-{
-	return readl(regs + EXYNOS3250_JPGINTST);
-}
+अचिन्हित पूर्णांक exynos3250_jpeg_get_पूर्णांक_status(व्योम __iomem *regs)
+अणु
+	वापस पढ़ोl(regs + EXYNOS3250_JPGINTST);
+पूर्ण
 
-void exynos3250_jpeg_clear_int_status(void __iomem *regs,
-				      unsigned int value)
-{
-	writel(value, regs + EXYNOS3250_JPGINTST);
-}
+व्योम exynos3250_jpeg_clear_पूर्णांक_status(व्योम __iomem *regs,
+				      अचिन्हित पूर्णांक value)
+अणु
+	ग_लिखोl(value, regs + EXYNOS3250_JPGINTST);
+पूर्ण
 
-unsigned int exynos3250_jpeg_operating(void __iomem *regs)
-{
-	return readl(regs + S5P_JPGOPR) & EXYNOS3250_JPGOPR_MASK;
-}
+अचिन्हित पूर्णांक exynos3250_jpeg_operating(व्योम __iomem *regs)
+अणु
+	वापस पढ़ोl(regs + S5P_JPGOPR) & EXYNOS3250_JPGOPR_MASK;
+पूर्ण
 
-unsigned int exynos3250_jpeg_compressed_size(void __iomem *regs)
-{
-	return readl(regs + EXYNOS3250_JPGCNT) & EXYNOS3250_JPGCNT_MASK;
-}
+अचिन्हित पूर्णांक exynos3250_jpeg_compressed_size(व्योम __iomem *regs)
+अणु
+	वापस पढ़ोl(regs + EXYNOS3250_JPGCNT) & EXYNOS3250_JPGCNT_MASK;
+पूर्ण
 
-void exynos3250_jpeg_dec_stream_size(void __iomem *regs,
-						unsigned int size)
-{
-	writel(size & EXYNOS3250_DEC_STREAM_MASK,
+व्योम exynos3250_jpeg_dec_stream_size(व्योम __iomem *regs,
+						अचिन्हित पूर्णांक size)
+अणु
+	ग_लिखोl(size & EXYNOS3250_DEC_STREAM_MASK,
 				regs + EXYNOS3250_DEC_STREAM_SIZE);
-}
+पूर्ण
 
-void exynos3250_jpeg_dec_scaling_ratio(void __iomem *regs,
-						unsigned int sratio)
-{
-	switch (sratio) {
-	case 1:
-	default:
+व्योम exynos3250_jpeg_dec_scaling_ratio(व्योम __iomem *regs,
+						अचिन्हित पूर्णांक sratio)
+अणु
+	चयन (sratio) अणु
+	हाल 1:
+	शेष:
 		sratio = EXYNOS3250_DEC_SCALE_FACTOR_8_8;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		sratio = EXYNOS3250_DEC_SCALE_FACTOR_4_8;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		sratio = EXYNOS3250_DEC_SCALE_FACTOR_2_8;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		sratio = EXYNOS3250_DEC_SCALE_FACTOR_1_8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	writel(sratio & EXYNOS3250_DEC_SCALE_FACTOR_MASK,
+	ग_लिखोl(sratio & EXYNOS3250_DEC_SCALE_FACTOR_MASK,
 				regs + EXYNOS3250_DEC_SCALING_RATIO);
-}
+पूर्ण
 
-void exynos3250_jpeg_set_timer(void __iomem *regs, unsigned int time_value)
-{
-	time_value &= EXYNOS3250_TIMER_INIT_MASK;
+व्योम exynos3250_jpeg_set_समयr(व्योम __iomem *regs, अचिन्हित पूर्णांक समय_value)
+अणु
+	समय_value &= EXYNOS3250_TIMER_INIT_MASK;
 
-	writel(EXYNOS3250_TIMER_INT_STAT | time_value,
+	ग_लिखोl(EXYNOS3250_TIMER_INT_STAT | समय_value,
 					regs + EXYNOS3250_TIMER_SE);
-}
+पूर्ण
 
-unsigned int exynos3250_jpeg_get_timer_status(void __iomem *regs)
-{
-	return readl(regs + EXYNOS3250_TIMER_ST);
-}
+अचिन्हित पूर्णांक exynos3250_jpeg_get_समयr_status(व्योम __iomem *regs)
+अणु
+	वापस पढ़ोl(regs + EXYNOS3250_TIMER_ST);
+पूर्ण
 
-void exynos3250_jpeg_clear_timer_status(void __iomem *regs)
-{
-	writel(EXYNOS3250_TIMER_INT_STAT, regs + EXYNOS3250_TIMER_ST);
-}
+व्योम exynos3250_jpeg_clear_समयr_status(व्योम __iomem *regs)
+अणु
+	ग_लिखोl(EXYNOS3250_TIMER_INT_STAT, regs + EXYNOS3250_TIMER_ST);
+पूर्ण

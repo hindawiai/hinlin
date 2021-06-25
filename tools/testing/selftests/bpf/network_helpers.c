@@ -1,245 +1,246 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <errno.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <त्रुटिसं.स>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
 
-#include <arpa/inet.h>
+#समावेश <arpa/inet.h>
 
-#include <linux/err.h>
-#include <linux/in.h>
-#include <linux/in6.h>
+#समावेश <linux/err.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
 
-#include "bpf_util.h"
-#include "network_helpers.h"
+#समावेश "bpf_util.h"
+#समावेश "network_helpers.h"
 
-#define clean_errno() (errno == 0 ? "None" : strerror(errno))
-#define log_err(MSG, ...) ({						\
-			int __save = errno;				\
-			fprintf(stderr, "(%s:%d: errno: %s) " MSG "\n", \
-				__FILE__, __LINE__, clean_errno(),	\
+#घोषणा clean_त्रुटि_सं() (त्रुटि_सं == 0 ? "None" : म_त्रुटि(त्रुटि_सं))
+#घोषणा log_err(MSG, ...) (अणु						\
+			पूर्णांक __save = त्रुटि_सं;				\
+			ख_लिखो(मानक_त्रुटि, "(%s:%d: errno: %s) " MSG "\n", \
+				__खाता__, __LINE__, clean_त्रुटि_सं(),	\
 				##__VA_ARGS__);				\
-			errno = __save;					\
-})
+			त्रुटि_सं = __save;					\
+पूर्ण)
 
-struct ipv4_packet pkt_v4 = {
-	.eth.h_proto = __bpf_constant_htons(ETH_P_IP),
+काष्ठा ipv4_packet pkt_v4 = अणु
+	.eth.h_proto = __bpf_स्थिरant_htons(ETH_P_IP),
 	.iph.ihl = 5,
 	.iph.protocol = IPPROTO_TCP,
-	.iph.tot_len = __bpf_constant_htons(MAGIC_BYTES),
+	.iph.tot_len = __bpf_स्थिरant_htons(MAGIC_BYTES),
 	.tcp.urg_ptr = 123,
-	.tcp.doff = 5,
-};
+	.tcp.करोff = 5,
+पूर्ण;
 
-struct ipv6_packet pkt_v6 = {
-	.eth.h_proto = __bpf_constant_htons(ETH_P_IPV6),
+काष्ठा ipv6_packet pkt_v6 = अणु
+	.eth.h_proto = __bpf_स्थिरant_htons(ETH_P_IPV6),
 	.iph.nexthdr = IPPROTO_TCP,
-	.iph.payload_len = __bpf_constant_htons(MAGIC_BYTES),
+	.iph.payload_len = __bpf_स्थिरant_htons(MAGIC_BYTES),
 	.tcp.urg_ptr = 123,
-	.tcp.doff = 5,
-};
+	.tcp.करोff = 5,
+पूर्ण;
 
-int settimeo(int fd, int timeout_ms)
-{
-	struct timeval timeout = { .tv_sec = 3 };
+पूर्णांक समय_रखोo(पूर्णांक fd, पूर्णांक समयout_ms)
+अणु
+	काष्ठा समयval समयout = अणु .tv_sec = 3 पूर्ण;
 
-	if (timeout_ms > 0) {
-		timeout.tv_sec = timeout_ms / 1000;
-		timeout.tv_usec = (timeout_ms % 1000) * 1000;
-	}
+	अगर (समयout_ms > 0) अणु
+		समयout.tv_sec = समयout_ms / 1000;
+		समयout.tv_usec = (समयout_ms % 1000) * 1000;
+	पूर्ण
 
-	if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
-		       sizeof(timeout))) {
+	अगर (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &समयout,
+		       माप(समयout))) अणु
 		log_err("Failed to set SO_RCVTIMEO");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout,
-		       sizeof(timeout))) {
+	अगर (setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &समयout,
+		       माप(समयout))) अणु
 		log_err("Failed to set SO_SNDTIMEO");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define save_errno_close(fd) ({ int __save = errno; close(fd); errno = __save; })
+#घोषणा save_त्रुटि_सं_बंद(fd) (अणु पूर्णांक __save = त्रुटि_सं; बंद(fd); त्रुटि_सं = __save; पूर्ण)
 
-int start_server(int family, int type, const char *addr_str, __u16 port,
-		 int timeout_ms)
-{
-	struct sockaddr_storage addr = {};
+पूर्णांक start_server(पूर्णांक family, पूर्णांक type, स्थिर अक्षर *addr_str, __u16 port,
+		 पूर्णांक समयout_ms)
+अणु
+	काष्ठा sockaddr_storage addr = अणुपूर्ण;
 	socklen_t len;
-	int fd;
+	पूर्णांक fd;
 
-	if (make_sockaddr(family, addr_str, port, &addr, &len))
-		return -1;
+	अगर (make_sockaddr(family, addr_str, port, &addr, &len))
+		वापस -1;
 
 	fd = socket(family, type, 0);
-	if (fd < 0) {
+	अगर (fd < 0) अणु
 		log_err("Failed to create server socket");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (settimeo(fd, timeout_ms))
-		goto error_close;
+	अगर (समय_रखोo(fd, समयout_ms))
+		जाओ error_बंद;
 
-	if (bind(fd, (const struct sockaddr *)&addr, len) < 0) {
+	अगर (bind(fd, (स्थिर काष्ठा sockaddr *)&addr, len) < 0) अणु
 		log_err("Failed to bind socket");
-		goto error_close;
-	}
+		जाओ error_बंद;
+	पूर्ण
 
-	if (type == SOCK_STREAM) {
-		if (listen(fd, 1) < 0) {
+	अगर (type == SOCK_STREAM) अणु
+		अगर (listen(fd, 1) < 0) अणु
 			log_err("Failed to listed on socket");
-			goto error_close;
-		}
-	}
+			जाओ error_बंद;
+		पूर्ण
+	पूर्ण
 
-	return fd;
+	वापस fd;
 
-error_close:
-	save_errno_close(fd);
-	return -1;
-}
+error_बंद:
+	save_त्रुटि_सं_बंद(fd);
+	वापस -1;
+पूर्ण
 
-int fastopen_connect(int server_fd, const char *data, unsigned int data_len,
-		     int timeout_ms)
-{
-	struct sockaddr_storage addr;
-	socklen_t addrlen = sizeof(addr);
-	struct sockaddr_in *addr_in;
-	int fd, ret;
+पूर्णांक fastखोलो_connect(पूर्णांक server_fd, स्थिर अक्षर *data, अचिन्हित पूर्णांक data_len,
+		     पूर्णांक समयout_ms)
+अणु
+	काष्ठा sockaddr_storage addr;
+	socklen_t addrlen = माप(addr);
+	काष्ठा sockaddr_in *addr_in;
+	पूर्णांक fd, ret;
 
-	if (getsockname(server_fd, (struct sockaddr *)&addr, &addrlen)) {
+	अगर (माला_लोockname(server_fd, (काष्ठा sockaddr *)&addr, &addrlen)) अणु
 		log_err("Failed to get server addr");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	addr_in = (struct sockaddr_in *)&addr;
+	addr_in = (काष्ठा sockaddr_in *)&addr;
 	fd = socket(addr_in->sin_family, SOCK_STREAM, 0);
-	if (fd < 0) {
+	अगर (fd < 0) अणु
 		log_err("Failed to create client socket");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (settimeo(fd, timeout_ms))
-		goto error_close;
+	अगर (समय_रखोo(fd, समयout_ms))
+		जाओ error_बंद;
 
-	ret = sendto(fd, data, data_len, MSG_FASTOPEN, (struct sockaddr *)&addr,
+	ret = sendto(fd, data, data_len, MSG_FASTOPEN, (काष्ठा sockaddr *)&addr,
 		     addrlen);
-	if (ret != data_len) {
+	अगर (ret != data_len) अणु
 		log_err("sendto(data, %u) != %d\n", data_len, ret);
-		goto error_close;
-	}
+		जाओ error_बंद;
+	पूर्ण
 
-	return fd;
+	वापस fd;
 
-error_close:
-	save_errno_close(fd);
-	return -1;
-}
+error_बंद:
+	save_त्रुटि_सं_बंद(fd);
+	वापस -1;
+पूर्ण
 
-static int connect_fd_to_addr(int fd,
-			      const struct sockaddr_storage *addr,
+अटल पूर्णांक connect_fd_to_addr(पूर्णांक fd,
+			      स्थिर काष्ठा sockaddr_storage *addr,
 			      socklen_t addrlen)
-{
-	if (connect(fd, (const struct sockaddr *)addr, addrlen)) {
+अणु
+	अगर (connect(fd, (स्थिर काष्ठा sockaddr *)addr, addrlen)) अणु
 		log_err("Failed to connect to server");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int connect_to_fd(int server_fd, int timeout_ms)
-{
-	struct sockaddr_storage addr;
-	struct sockaddr_in *addr_in;
+पूर्णांक connect_to_fd(पूर्णांक server_fd, पूर्णांक समयout_ms)
+अणु
+	काष्ठा sockaddr_storage addr;
+	काष्ठा sockaddr_in *addr_in;
 	socklen_t addrlen, optlen;
-	int fd, type;
+	पूर्णांक fd, type;
 
-	optlen = sizeof(type);
-	if (getsockopt(server_fd, SOL_SOCKET, SO_TYPE, &type, &optlen)) {
+	optlen = माप(type);
+	अगर (माला_लोockopt(server_fd, SOL_SOCKET, SO_TYPE, &type, &optlen)) अणु
 		log_err("getsockopt(SOL_TYPE)");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	addrlen = sizeof(addr);
-	if (getsockname(server_fd, (struct sockaddr *)&addr, &addrlen)) {
+	addrlen = माप(addr);
+	अगर (माला_लोockname(server_fd, (काष्ठा sockaddr *)&addr, &addrlen)) अणु
 		log_err("Failed to get server addr");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	addr_in = (struct sockaddr_in *)&addr;
+	addr_in = (काष्ठा sockaddr_in *)&addr;
 	fd = socket(addr_in->sin_family, type, 0);
-	if (fd < 0) {
+	अगर (fd < 0) अणु
 		log_err("Failed to create client socket");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (settimeo(fd, timeout_ms))
-		goto error_close;
+	अगर (समय_रखोo(fd, समयout_ms))
+		जाओ error_बंद;
 
-	if (connect_fd_to_addr(fd, &addr, addrlen))
-		goto error_close;
+	अगर (connect_fd_to_addr(fd, &addr, addrlen))
+		जाओ error_बंद;
 
-	return fd;
+	वापस fd;
 
-error_close:
-	save_errno_close(fd);
-	return -1;
-}
+error_बंद:
+	save_त्रुटि_सं_बंद(fd);
+	वापस -1;
+पूर्ण
 
-int connect_fd_to_fd(int client_fd, int server_fd, int timeout_ms)
-{
-	struct sockaddr_storage addr;
-	socklen_t len = sizeof(addr);
+पूर्णांक connect_fd_to_fd(पूर्णांक client_fd, पूर्णांक server_fd, पूर्णांक समयout_ms)
+अणु
+	काष्ठा sockaddr_storage addr;
+	socklen_t len = माप(addr);
 
-	if (settimeo(client_fd, timeout_ms))
-		return -1;
+	अगर (समय_रखोo(client_fd, समयout_ms))
+		वापस -1;
 
-	if (getsockname(server_fd, (struct sockaddr *)&addr, &len)) {
+	अगर (माला_लोockname(server_fd, (काष्ठा sockaddr *)&addr, &len)) अणु
 		log_err("Failed to get server addr");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (connect_fd_to_addr(client_fd, &addr, len))
-		return -1;
+	अगर (connect_fd_to_addr(client_fd, &addr, len))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int make_sockaddr(int family, const char *addr_str, __u16 port,
-		  struct sockaddr_storage *addr, socklen_t *len)
-{
-	if (family == AF_INET) {
-		struct sockaddr_in *sin = (void *)addr;
+पूर्णांक make_sockaddr(पूर्णांक family, स्थिर अक्षर *addr_str, __u16 port,
+		  काष्ठा sockaddr_storage *addr, socklen_t *len)
+अणु
+	अगर (family == AF_INET) अणु
+		काष्ठा sockaddr_in *sin = (व्योम *)addr;
 
 		sin->sin_family = AF_INET;
 		sin->sin_port = htons(port);
-		if (addr_str &&
-		    inet_pton(AF_INET, addr_str, &sin->sin_addr) != 1) {
+		अगर (addr_str &&
+		    inet_pton(AF_INET, addr_str, &sin->sin_addr) != 1) अणु
 			log_err("inet_pton(AF_INET, %s)", addr_str);
-			return -1;
-		}
-		if (len)
-			*len = sizeof(*sin);
-		return 0;
-	} else if (family == AF_INET6) {
-		struct sockaddr_in6 *sin6 = (void *)addr;
+			वापस -1;
+		पूर्ण
+		अगर (len)
+			*len = माप(*sin);
+		वापस 0;
+	पूर्ण अन्यथा अगर (family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *sin6 = (व्योम *)addr;
 
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = htons(port);
-		if (addr_str &&
-		    inet_pton(AF_INET6, addr_str, &sin6->sin6_addr) != 1) {
+		अगर (addr_str &&
+		    inet_pton(AF_INET6, addr_str, &sin6->sin6_addr) != 1) अणु
 			log_err("inet_pton(AF_INET6, %s)", addr_str);
-			return -1;
-		}
-		if (len)
-			*len = sizeof(*sin6);
-		return 0;
-	}
-	return -1;
-}
+			वापस -1;
+		पूर्ण
+		अगर (len)
+			*len = माप(*sin6);
+		वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण

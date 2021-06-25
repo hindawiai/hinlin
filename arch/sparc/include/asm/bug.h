@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC_BUG_H
-#define _SPARC_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC_BUG_H
+#घोषणा _SPARC_BUG_H
 
-#ifdef CONFIG_BUG
-#include <linux/compiler.h>
+#अगर_घोषित CONFIG_BUG
+#समावेश <linux/compiler.h>
 
-#ifdef CONFIG_DEBUG_BUGVERBOSE
-void do_BUG(const char *file, int line);
-#define BUG() do {					\
-	do_BUG(__FILE__, __LINE__);			\
-	barrier_before_unreachable();			\
+#अगर_घोषित CONFIG_DEBUG_BUGVERBOSE
+व्योम करो_BUG(स्थिर अक्षर *file, पूर्णांक line);
+#घोषणा BUG() करो अणु					\
+	करो_BUG(__खाता__, __LINE__);			\
+	barrier_beक्रमe_unreachable();			\
 	__builtin_trap();				\
-} while (0)
-#else
-#define BUG() do {					\
-	barrier_before_unreachable();			\
+पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा BUG() करो अणु					\
+	barrier_beक्रमe_unreachable();			\
 	__builtin_trap();				\
-} while (0)
-#endif
+पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define HAVE_ARCH_BUG
-#endif
+#घोषणा HAVE_ARCH_BUG
+#पूर्ण_अगर
 
-#include <asm-generic/bug.h>
+#समावेश <यंत्र-generic/bug.h>
 
-struct pt_regs;
-void __noreturn die_if_kernel(char *str, struct pt_regs *regs);
+काष्ठा pt_regs;
+व्योम __noवापस die_अगर_kernel(अक्षर *str, काष्ठा pt_regs *regs);
 
-#endif
+#पूर्ण_अगर

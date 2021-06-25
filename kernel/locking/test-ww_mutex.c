@@ -1,197 +1,198 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Module-based API test facility for ww_mutexes
+ * Module-based API test facility क्रम ww_mutexes
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/kthread.h>
-#include <linux/module.h>
-#include <linux/random.h>
-#include <linux/slab.h>
-#include <linux/ww_mutex.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/module.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ww_mutex.h>
 
-static DEFINE_WD_CLASS(ww_class);
-struct workqueue_struct *wq;
+अटल DEFINE_WD_CLASS(ww_class);
+काष्ठा workqueue_काष्ठा *wq;
 
-struct test_mutex {
-	struct work_struct work;
-	struct ww_mutex mutex;
-	struct completion ready, go, done;
-	unsigned int flags;
-};
+काष्ठा test_mutex अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा ww_mutex mutex;
+	काष्ठा completion पढ़ोy, go, करोne;
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
-#define TEST_MTX_SPIN BIT(0)
-#define TEST_MTX_TRY BIT(1)
-#define TEST_MTX_CTX BIT(2)
-#define __TEST_MTX_LAST BIT(3)
+#घोषणा TEST_MTX_SPIN BIT(0)
+#घोषणा TEST_MTX_TRY BIT(1)
+#घोषणा TEST_MTX_CTX BIT(2)
+#घोषणा __TEST_MTX_LAST BIT(3)
 
-static void test_mutex_work(struct work_struct *work)
-{
-	struct test_mutex *mtx = container_of(work, typeof(*mtx), work);
+अटल व्योम test_mutex_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा test_mutex *mtx = container_of(work, typeof(*mtx), work);
 
-	complete(&mtx->ready);
-	wait_for_completion(&mtx->go);
+	complete(&mtx->पढ़ोy);
+	रुको_क्रम_completion(&mtx->go);
 
-	if (mtx->flags & TEST_MTX_TRY) {
-		while (!ww_mutex_trylock(&mtx->mutex))
+	अगर (mtx->flags & TEST_MTX_TRY) अणु
+		जबतक (!ww_mutex_trylock(&mtx->mutex))
 			cond_resched();
-	} else {
-		ww_mutex_lock(&mtx->mutex, NULL);
-	}
-	complete(&mtx->done);
+	पूर्ण अन्यथा अणु
+		ww_mutex_lock(&mtx->mutex, शून्य);
+	पूर्ण
+	complete(&mtx->करोne);
 	ww_mutex_unlock(&mtx->mutex);
-}
+पूर्ण
 
-static int __test_mutex(unsigned int flags)
-{
-#define TIMEOUT (HZ / 16)
-	struct test_mutex mtx;
-	struct ww_acquire_ctx ctx;
-	int ret;
+अटल पूर्णांक __test_mutex(अचिन्हित पूर्णांक flags)
+अणु
+#घोषणा TIMEOUT (HZ / 16)
+	काष्ठा test_mutex mtx;
+	काष्ठा ww_acquire_ctx ctx;
+	पूर्णांक ret;
 
 	ww_mutex_init(&mtx.mutex, &ww_class);
 	ww_acquire_init(&ctx, &ww_class);
 
 	INIT_WORK_ONSTACK(&mtx.work, test_mutex_work);
-	init_completion(&mtx.ready);
+	init_completion(&mtx.पढ़ोy);
 	init_completion(&mtx.go);
-	init_completion(&mtx.done);
+	init_completion(&mtx.करोne);
 	mtx.flags = flags;
 
 	schedule_work(&mtx.work);
 
-	wait_for_completion(&mtx.ready);
-	ww_mutex_lock(&mtx.mutex, (flags & TEST_MTX_CTX) ? &ctx : NULL);
+	रुको_क्रम_completion(&mtx.पढ़ोy);
+	ww_mutex_lock(&mtx.mutex, (flags & TEST_MTX_CTX) ? &ctx : शून्य);
 	complete(&mtx.go);
-	if (flags & TEST_MTX_SPIN) {
-		unsigned long timeout = jiffies + TIMEOUT;
+	अगर (flags & TEST_MTX_SPIN) अणु
+		अचिन्हित दीर्घ समयout = jअगरfies + TIMEOUT;
 
 		ret = 0;
-		do {
-			if (completion_done(&mtx.done)) {
+		करो अणु
+			अगर (completion_करोne(&mtx.करोne)) अणु
 				ret = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			cond_resched();
-		} while (time_before(jiffies, timeout));
-	} else {
-		ret = wait_for_completion_timeout(&mtx.done, TIMEOUT);
-	}
+		पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
+	पूर्ण अन्यथा अणु
+		ret = रुको_क्रम_completion_समयout(&mtx.करोne, TIMEOUT);
+	पूर्ण
 	ww_mutex_unlock(&mtx.mutex);
 	ww_acquire_fini(&ctx);
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s(flags=%x): mutual exclusion failure\n",
 		       __func__, flags);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	flush_work(&mtx.work);
 	destroy_work_on_stack(&mtx.work);
-	return ret;
-#undef TIMEOUT
-}
+	वापस ret;
+#अघोषित TIMEOUT
+पूर्ण
 
-static int test_mutex(void)
-{
-	int ret;
-	int i;
+अटल पूर्णांक test_mutex(व्योम)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < __TEST_MTX_LAST; i++) {
+	क्रम (i = 0; i < __TEST_MTX_LAST; i++) अणु
 		ret = __test_mutex(i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int test_aa(void)
-{
-	struct ww_mutex mutex;
-	struct ww_acquire_ctx ctx;
-	int ret;
+अटल पूर्णांक test_aa(व्योम)
+अणु
+	काष्ठा ww_mutex mutex;
+	काष्ठा ww_acquire_ctx ctx;
+	पूर्णांक ret;
 
 	ww_mutex_init(&mutex, &ww_class);
 	ww_acquire_init(&ctx, &ww_class);
 
 	ww_mutex_lock(&mutex, &ctx);
 
-	if (ww_mutex_trylock(&mutex))  {
+	अगर (ww_mutex_trylock(&mutex))  अणु
 		pr_err("%s: trylocked itself!\n", __func__);
 		ww_mutex_unlock(&mutex);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = ww_mutex_lock(&mutex, &ctx);
-	if (ret != -EALREADY) {
+	अगर (ret != -EALREADY) अणु
 		pr_err("%s: missed deadlock for recursing, ret=%d\n",
 		       __func__, ret);
-		if (!ret)
+		अगर (!ret)
 			ww_mutex_unlock(&mutex);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = 0;
 out:
 	ww_mutex_unlock(&mutex);
 	ww_acquire_fini(&ctx);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct test_abba {
-	struct work_struct work;
-	struct ww_mutex a_mutex;
-	struct ww_mutex b_mutex;
-	struct completion a_ready;
-	struct completion b_ready;
+काष्ठा test_abba अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा ww_mutex a_mutex;
+	काष्ठा ww_mutex b_mutex;
+	काष्ठा completion a_पढ़ोy;
+	काष्ठा completion b_पढ़ोy;
 	bool resolve;
-	int result;
-};
+	पूर्णांक result;
+पूर्ण;
 
-static void test_abba_work(struct work_struct *work)
-{
-	struct test_abba *abba = container_of(work, typeof(*abba), work);
-	struct ww_acquire_ctx ctx;
-	int err;
+अटल व्योम test_abba_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा test_abba *abba = container_of(work, typeof(*abba), work);
+	काष्ठा ww_acquire_ctx ctx;
+	पूर्णांक err;
 
 	ww_acquire_init(&ctx, &ww_class);
 	ww_mutex_lock(&abba->b_mutex, &ctx);
 
-	complete(&abba->b_ready);
-	wait_for_completion(&abba->a_ready);
+	complete(&abba->b_पढ़ोy);
+	रुको_क्रम_completion(&abba->a_पढ़ोy);
 
 	err = ww_mutex_lock(&abba->a_mutex, &ctx);
-	if (abba->resolve && err == -EDEADLK) {
+	अगर (abba->resolve && err == -EDEADLK) अणु
 		ww_mutex_unlock(&abba->b_mutex);
 		ww_mutex_lock_slow(&abba->a_mutex, &ctx);
 		err = ww_mutex_lock(&abba->b_mutex, &ctx);
-	}
+	पूर्ण
 
-	if (!err)
+	अगर (!err)
 		ww_mutex_unlock(&abba->a_mutex);
 	ww_mutex_unlock(&abba->b_mutex);
 	ww_acquire_fini(&ctx);
 
 	abba->result = err;
-}
+पूर्ण
 
-static int test_abba(bool resolve)
-{
-	struct test_abba abba;
-	struct ww_acquire_ctx ctx;
-	int err, ret;
+अटल पूर्णांक test_abba(bool resolve)
+अणु
+	काष्ठा test_abba abba;
+	काष्ठा ww_acquire_ctx ctx;
+	पूर्णांक err, ret;
 
 	ww_mutex_init(&abba.a_mutex, &ww_class);
 	ww_mutex_init(&abba.b_mutex, &ww_class);
 	INIT_WORK_ONSTACK(&abba.work, test_abba_work);
-	init_completion(&abba.a_ready);
-	init_completion(&abba.b_ready);
+	init_completion(&abba.a_पढ़ोy);
+	init_completion(&abba.b_पढ़ोy);
 	abba.resolve = resolve;
 
 	schedule_work(&abba.work);
@@ -199,17 +200,17 @@ static int test_abba(bool resolve)
 	ww_acquire_init(&ctx, &ww_class);
 	ww_mutex_lock(&abba.a_mutex, &ctx);
 
-	complete(&abba.a_ready);
-	wait_for_completion(&abba.b_ready);
+	complete(&abba.a_पढ़ोy);
+	रुको_क्रम_completion(&abba.b_पढ़ोy);
 
 	err = ww_mutex_lock(&abba.b_mutex, &ctx);
-	if (resolve && err == -EDEADLK) {
+	अगर (resolve && err == -EDEADLK) अणु
 		ww_mutex_unlock(&abba.a_mutex);
 		ww_mutex_lock_slow(&abba.b_mutex, &ctx);
 		err = ww_mutex_lock(&abba.a_mutex, &ctx);
-	}
+	पूर्ण
 
-	if (!err)
+	अगर (!err)
 		ww_mutex_unlock(&abba.b_mutex);
 	ww_mutex_unlock(&abba.a_mutex);
 	ww_acquire_fini(&ctx);
@@ -218,417 +219,417 @@ static int test_abba(bool resolve)
 	destroy_work_on_stack(&abba.work);
 
 	ret = 0;
-	if (resolve) {
-		if (err || abba.result) {
+	अगर (resolve) अणु
+		अगर (err || abba.result) अणु
 			pr_err("%s: failed to resolve ABBA deadlock, A err=%d, B err=%d\n",
 			       __func__, err, abba.result);
 			ret = -EINVAL;
-		}
-	} else {
-		if (err != -EDEADLK && abba.result != -EDEADLK) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (err != -EDEADLK && abba.result != -EDEADLK) अणु
 			pr_err("%s: missed ABBA deadlock, A err=%d, B err=%d\n",
 			       __func__, err, abba.result);
 			ret = -EINVAL;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-struct test_cycle {
-	struct work_struct work;
-	struct ww_mutex a_mutex;
-	struct ww_mutex *b_mutex;
-	struct completion *a_signal;
-	struct completion b_signal;
-	int result;
-};
+काष्ठा test_cycle अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा ww_mutex a_mutex;
+	काष्ठा ww_mutex *b_mutex;
+	काष्ठा completion *a_संकेत;
+	काष्ठा completion b_संकेत;
+	पूर्णांक result;
+पूर्ण;
 
-static void test_cycle_work(struct work_struct *work)
-{
-	struct test_cycle *cycle = container_of(work, typeof(*cycle), work);
-	struct ww_acquire_ctx ctx;
-	int err, erra = 0;
+अटल व्योम test_cycle_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा test_cycle *cycle = container_of(work, typeof(*cycle), work);
+	काष्ठा ww_acquire_ctx ctx;
+	पूर्णांक err, erra = 0;
 
 	ww_acquire_init(&ctx, &ww_class);
 	ww_mutex_lock(&cycle->a_mutex, &ctx);
 
-	complete(cycle->a_signal);
-	wait_for_completion(&cycle->b_signal);
+	complete(cycle->a_संकेत);
+	रुको_क्रम_completion(&cycle->b_संकेत);
 
 	err = ww_mutex_lock(cycle->b_mutex, &ctx);
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = 0;
 		ww_mutex_unlock(&cycle->a_mutex);
 		ww_mutex_lock_slow(cycle->b_mutex, &ctx);
 		erra = ww_mutex_lock(&cycle->a_mutex, &ctx);
-	}
+	पूर्ण
 
-	if (!err)
+	अगर (!err)
 		ww_mutex_unlock(cycle->b_mutex);
-	if (!erra)
+	अगर (!erra)
 		ww_mutex_unlock(&cycle->a_mutex);
 	ww_acquire_fini(&ctx);
 
 	cycle->result = err ?: erra;
-}
+पूर्ण
 
-static int __test_cycle(unsigned int nthreads)
-{
-	struct test_cycle *cycles;
-	unsigned int n, last = nthreads - 1;
-	int ret;
+अटल पूर्णांक __test_cycle(अचिन्हित पूर्णांक nthपढ़ोs)
+अणु
+	काष्ठा test_cycle *cycles;
+	अचिन्हित पूर्णांक n, last = nthपढ़ोs - 1;
+	पूर्णांक ret;
 
-	cycles = kmalloc_array(nthreads, sizeof(*cycles), GFP_KERNEL);
-	if (!cycles)
-		return -ENOMEM;
+	cycles = kदो_स्मृति_array(nthपढ़ोs, माप(*cycles), GFP_KERNEL);
+	अगर (!cycles)
+		वापस -ENOMEM;
 
-	for (n = 0; n < nthreads; n++) {
-		struct test_cycle *cycle = &cycles[n];
+	क्रम (n = 0; n < nthपढ़ोs; n++) अणु
+		काष्ठा test_cycle *cycle = &cycles[n];
 
 		ww_mutex_init(&cycle->a_mutex, &ww_class);
-		if (n == last)
+		अगर (n == last)
 			cycle->b_mutex = &cycles[0].a_mutex;
-		else
+		अन्यथा
 			cycle->b_mutex = &cycles[n + 1].a_mutex;
 
-		if (n == 0)
-			cycle->a_signal = &cycles[last].b_signal;
-		else
-			cycle->a_signal = &cycles[n - 1].b_signal;
-		init_completion(&cycle->b_signal);
+		अगर (n == 0)
+			cycle->a_संकेत = &cycles[last].b_संकेत;
+		अन्यथा
+			cycle->a_संकेत = &cycles[n - 1].b_संकेत;
+		init_completion(&cycle->b_संकेत);
 
 		INIT_WORK(&cycle->work, test_cycle_work);
 		cycle->result = 0;
-	}
+	पूर्ण
 
-	for (n = 0; n < nthreads; n++)
+	क्रम (n = 0; n < nthपढ़ोs; n++)
 		queue_work(wq, &cycles[n].work);
 
 	flush_workqueue(wq);
 
 	ret = 0;
-	for (n = 0; n < nthreads; n++) {
-		struct test_cycle *cycle = &cycles[n];
+	क्रम (n = 0; n < nthपढ़ोs; n++) अणु
+		काष्ठा test_cycle *cycle = &cycles[n];
 
-		if (!cycle->result)
-			continue;
+		अगर (!cycle->result)
+			जारी;
 
 		pr_err("cyclic deadlock not resolved, ret[%d/%d] = %d\n",
-		       n, nthreads, cycle->result);
+		       n, nthपढ़ोs, cycle->result);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	for (n = 0; n < nthreads; n++)
+	क्रम (n = 0; n < nthपढ़ोs; n++)
 		ww_mutex_destroy(&cycles[n].a_mutex);
-	kfree(cycles);
-	return ret;
-}
+	kमुक्त(cycles);
+	वापस ret;
+पूर्ण
 
-static int test_cycle(unsigned int ncpus)
-{
-	unsigned int n;
-	int ret;
+अटल पूर्णांक test_cycle(अचिन्हित पूर्णांक ncpus)
+अणु
+	अचिन्हित पूर्णांक n;
+	पूर्णांक ret;
 
-	for (n = 2; n <= ncpus + 1; n++) {
+	क्रम (n = 2; n <= ncpus + 1; n++) अणु
 		ret = __test_cycle(n);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct stress {
-	struct work_struct work;
-	struct ww_mutex *locks;
-	unsigned long timeout;
-	int nlocks;
-};
+काष्ठा stress अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा ww_mutex *locks;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक nlocks;
+पूर्ण;
 
-static int *get_random_order(int count)
-{
-	int *order;
-	int n, r, tmp;
+अटल पूर्णांक *get_अक्रमom_order(पूर्णांक count)
+अणु
+	पूर्णांक *order;
+	पूर्णांक n, r, पंचांगp;
 
-	order = kmalloc_array(count, sizeof(*order), GFP_KERNEL);
-	if (!order)
-		return order;
+	order = kदो_स्मृति_array(count, माप(*order), GFP_KERNEL);
+	अगर (!order)
+		वापस order;
 
-	for (n = 0; n < count; n++)
+	क्रम (n = 0; n < count; n++)
 		order[n] = n;
 
-	for (n = count - 1; n > 1; n--) {
-		r = get_random_int() % (n + 1);
-		if (r != n) {
-			tmp = order[n];
+	क्रम (n = count - 1; n > 1; n--) अणु
+		r = get_अक्रमom_पूर्णांक() % (n + 1);
+		अगर (r != n) अणु
+			पंचांगp = order[n];
 			order[n] = order[r];
-			order[r] = tmp;
-		}
-	}
+			order[r] = पंचांगp;
+		पूर्ण
+	पूर्ण
 
-	return order;
-}
+	वापस order;
+पूर्ण
 
-static void dummy_load(struct stress *stress)
-{
+अटल व्योम dummy_load(काष्ठा stress *stress)
+अणु
 	usleep_range(1000, 2000);
-}
+पूर्ण
 
-static void stress_inorder_work(struct work_struct *work)
-{
-	struct stress *stress = container_of(work, typeof(*stress), work);
-	const int nlocks = stress->nlocks;
-	struct ww_mutex *locks = stress->locks;
-	struct ww_acquire_ctx ctx;
-	int *order;
+अटल व्योम stress_inorder_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा stress *stress = container_of(work, typeof(*stress), work);
+	स्थिर पूर्णांक nlocks = stress->nlocks;
+	काष्ठा ww_mutex *locks = stress->locks;
+	काष्ठा ww_acquire_ctx ctx;
+	पूर्णांक *order;
 
-	order = get_random_order(nlocks);
-	if (!order)
-		return;
+	order = get_अक्रमom_order(nlocks);
+	अगर (!order)
+		वापस;
 
-	do {
-		int contended = -1;
-		int n, err;
+	करो अणु
+		पूर्णांक contended = -1;
+		पूर्णांक n, err;
 
 		ww_acquire_init(&ctx, &ww_class);
 retry:
 		err = 0;
-		for (n = 0; n < nlocks; n++) {
-			if (n == contended)
-				continue;
+		क्रम (n = 0; n < nlocks; n++) अणु
+			अगर (n == contended)
+				जारी;
 
 			err = ww_mutex_lock(&locks[order[n]], &ctx);
-			if (err < 0)
-				break;
-		}
-		if (!err)
+			अगर (err < 0)
+				अवरोध;
+		पूर्ण
+		अगर (!err)
 			dummy_load(stress);
 
-		if (contended > n)
+		अगर (contended > n)
 			ww_mutex_unlock(&locks[order[contended]]);
 		contended = n;
-		while (n--)
+		जबतक (n--)
 			ww_mutex_unlock(&locks[order[n]]);
 
-		if (err == -EDEADLK) {
+		अगर (err == -EDEADLK) अणु
 			ww_mutex_lock_slow(&locks[order[contended]], &ctx);
-			goto retry;
-		}
+			जाओ retry;
+		पूर्ण
 
-		if (err) {
+		अगर (err) अणु
 			pr_err_once("stress (%s) failed with %d\n",
 				    __func__, err);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ww_acquire_fini(&ctx);
-	} while (!time_after(jiffies, stress->timeout));
+	पूर्ण जबतक (!समय_after(jअगरfies, stress->समयout));
 
-	kfree(order);
-	kfree(stress);
-}
+	kमुक्त(order);
+	kमुक्त(stress);
+पूर्ण
 
-struct reorder_lock {
-	struct list_head link;
-	struct ww_mutex *lock;
-};
+काष्ठा reorder_lock अणु
+	काष्ठा list_head link;
+	काष्ठा ww_mutex *lock;
+पूर्ण;
 
-static void stress_reorder_work(struct work_struct *work)
-{
-	struct stress *stress = container_of(work, typeof(*stress), work);
+अटल व्योम stress_reorder_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा stress *stress = container_of(work, typeof(*stress), work);
 	LIST_HEAD(locks);
-	struct ww_acquire_ctx ctx;
-	struct reorder_lock *ll, *ln;
-	int *order;
-	int n, err;
+	काष्ठा ww_acquire_ctx ctx;
+	काष्ठा reorder_lock *ll, *ln;
+	पूर्णांक *order;
+	पूर्णांक n, err;
 
-	order = get_random_order(stress->nlocks);
-	if (!order)
-		return;
+	order = get_अक्रमom_order(stress->nlocks);
+	अगर (!order)
+		वापस;
 
-	for (n = 0; n < stress->nlocks; n++) {
-		ll = kmalloc(sizeof(*ll), GFP_KERNEL);
-		if (!ll)
-			goto out;
+	क्रम (n = 0; n < stress->nlocks; n++) अणु
+		ll = kदो_स्मृति(माप(*ll), GFP_KERNEL);
+		अगर (!ll)
+			जाओ out;
 
 		ll->lock = &stress->locks[order[n]];
 		list_add(&ll->link, &locks);
-	}
-	kfree(order);
-	order = NULL;
+	पूर्ण
+	kमुक्त(order);
+	order = शून्य;
 
-	do {
+	करो अणु
 		ww_acquire_init(&ctx, &ww_class);
 
-		list_for_each_entry(ll, &locks, link) {
+		list_क्रम_each_entry(ll, &locks, link) अणु
 			err = ww_mutex_lock(ll->lock, &ctx);
-			if (!err)
-				continue;
+			अगर (!err)
+				जारी;
 
 			ln = ll;
-			list_for_each_entry_continue_reverse(ln, &locks, link)
+			list_क्रम_each_entry_जारी_reverse(ln, &locks, link)
 				ww_mutex_unlock(ln->lock);
 
-			if (err != -EDEADLK) {
+			अगर (err != -EDEADLK) अणु
 				pr_err_once("stress (%s) failed with %d\n",
 					    __func__, err);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			ww_mutex_lock_slow(ll->lock, &ctx);
 			list_move(&ll->link, &locks); /* restarts iteration */
-		}
+		पूर्ण
 
 		dummy_load(stress);
-		list_for_each_entry(ll, &locks, link)
+		list_क्रम_each_entry(ll, &locks, link)
 			ww_mutex_unlock(ll->lock);
 
 		ww_acquire_fini(&ctx);
-	} while (!time_after(jiffies, stress->timeout));
+	पूर्ण जबतक (!समय_after(jअगरfies, stress->समयout));
 
 out:
-	list_for_each_entry_safe(ll, ln, &locks, link)
-		kfree(ll);
-	kfree(order);
-	kfree(stress);
-}
+	list_क्रम_each_entry_safe(ll, ln, &locks, link)
+		kमुक्त(ll);
+	kमुक्त(order);
+	kमुक्त(stress);
+पूर्ण
 
-static void stress_one_work(struct work_struct *work)
-{
-	struct stress *stress = container_of(work, typeof(*stress), work);
-	const int nlocks = stress->nlocks;
-	struct ww_mutex *lock = stress->locks + (get_random_int() % nlocks);
-	int err;
+अटल व्योम stress_one_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा stress *stress = container_of(work, typeof(*stress), work);
+	स्थिर पूर्णांक nlocks = stress->nlocks;
+	काष्ठा ww_mutex *lock = stress->locks + (get_अक्रमom_पूर्णांक() % nlocks);
+	पूर्णांक err;
 
-	do {
-		err = ww_mutex_lock(lock, NULL);
-		if (!err) {
+	करो अणु
+		err = ww_mutex_lock(lock, शून्य);
+		अगर (!err) अणु
 			dummy_load(stress);
 			ww_mutex_unlock(lock);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err_once("stress (%s) failed with %d\n",
 				    __func__, err);
-			break;
-		}
-	} while (!time_after(jiffies, stress->timeout));
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!समय_after(jअगरfies, stress->समयout));
 
-	kfree(stress);
-}
+	kमुक्त(stress);
+पूर्ण
 
-#define STRESS_INORDER BIT(0)
-#define STRESS_REORDER BIT(1)
-#define STRESS_ONE BIT(2)
-#define STRESS_ALL (STRESS_INORDER | STRESS_REORDER | STRESS_ONE)
+#घोषणा STRESS_INORDER BIT(0)
+#घोषणा STRESS_REORDER BIT(1)
+#घोषणा STRESS_ONE BIT(2)
+#घोषणा STRESS_ALL (STRESS_INORDER | STRESS_REORDER | STRESS_ONE)
 
-static int stress(int nlocks, int nthreads, unsigned int flags)
-{
-	struct ww_mutex *locks;
-	int n;
+अटल पूर्णांक stress(पूर्णांक nlocks, पूर्णांक nthपढ़ोs, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा ww_mutex *locks;
+	पूर्णांक n;
 
-	locks = kmalloc_array(nlocks, sizeof(*locks), GFP_KERNEL);
-	if (!locks)
-		return -ENOMEM;
+	locks = kदो_स्मृति_array(nlocks, माप(*locks), GFP_KERNEL);
+	अगर (!locks)
+		वापस -ENOMEM;
 
-	for (n = 0; n < nlocks; n++)
+	क्रम (n = 0; n < nlocks; n++)
 		ww_mutex_init(&locks[n], &ww_class);
 
-	for (n = 0; nthreads; n++) {
-		struct stress *stress;
-		void (*fn)(struct work_struct *work);
+	क्रम (n = 0; nthपढ़ोs; n++) अणु
+		काष्ठा stress *stress;
+		व्योम (*fn)(काष्ठा work_काष्ठा *work);
 
-		fn = NULL;
-		switch (n & 3) {
-		case 0:
-			if (flags & STRESS_INORDER)
+		fn = शून्य;
+		चयन (n & 3) अणु
+		हाल 0:
+			अगर (flags & STRESS_INORDER)
 				fn = stress_inorder_work;
-			break;
-		case 1:
-			if (flags & STRESS_REORDER)
+			अवरोध;
+		हाल 1:
+			अगर (flags & STRESS_REORDER)
 				fn = stress_reorder_work;
-			break;
-		case 2:
-			if (flags & STRESS_ONE)
+			अवरोध;
+		हाल 2:
+			अगर (flags & STRESS_ONE)
 				fn = stress_one_work;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!fn)
-			continue;
+		अगर (!fn)
+			जारी;
 
-		stress = kmalloc(sizeof(*stress), GFP_KERNEL);
-		if (!stress)
-			break;
+		stress = kदो_स्मृति(माप(*stress), GFP_KERNEL);
+		अगर (!stress)
+			अवरोध;
 
 		INIT_WORK(&stress->work, fn);
 		stress->locks = locks;
 		stress->nlocks = nlocks;
-		stress->timeout = jiffies + 2*HZ;
+		stress->समयout = jअगरfies + 2*HZ;
 
 		queue_work(wq, &stress->work);
-		nthreads--;
-	}
+		nthपढ़ोs--;
+	पूर्ण
 
 	flush_workqueue(wq);
 
-	for (n = 0; n < nlocks; n++)
+	क्रम (n = 0; n < nlocks; n++)
 		ww_mutex_destroy(&locks[n]);
-	kfree(locks);
+	kमुक्त(locks);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init test_ww_mutex_init(void)
-{
-	int ncpus = num_online_cpus();
-	int ret;
+अटल पूर्णांक __init test_ww_mutex_init(व्योम)
+अणु
+	पूर्णांक ncpus = num_online_cpus();
+	पूर्णांक ret;
 
 	wq = alloc_workqueue("test-ww_mutex", WQ_UNBOUND, 0);
-	if (!wq)
-		return -ENOMEM;
+	अगर (!wq)
+		वापस -ENOMEM;
 
 	ret = test_mutex();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = test_aa();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = test_abba(false);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = test_abba(true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = test_cycle(ncpus);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = stress(16, 2*ncpus, STRESS_INORDER);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = stress(16, 2*ncpus, STRESS_REORDER);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = stress(4095, hweight32(STRESS_ALL)*ncpus, STRESS_ALL);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit test_ww_mutex_exit(void)
-{
+अटल व्योम __निकास test_ww_mutex_निकास(व्योम)
+अणु
 	destroy_workqueue(wq);
-}
+पूर्ण
 
 module_init(test_ww_mutex_init);
-module_exit(test_ww_mutex_exit);
+module_निकास(test_ww_mutex_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Intel Corporation");

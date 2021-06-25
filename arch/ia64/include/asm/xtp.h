@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_XTP_H
-#define _ASM_IA64_XTP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_XTP_H
+#घोषणा _ASM_IA64_XTP_H
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-#define XTP_OFFSET		0x1e0008
+#घोषणा XTP_OFFSET		0x1e0008
 
-#define SMP_IRQ_REDIRECTION	(1 << 0)
-#define SMP_IPI_REDIRECTION	(1 << 1)
+#घोषणा SMP_IRQ_REसूचीECTION	(1 << 0)
+#घोषणा SMP_IPI_REसूचीECTION	(1 << 1)
 
-extern unsigned char smp_int_redirect;
+बाह्य अचिन्हित अक्षर smp_पूर्णांक_redirect;
 
 /*
  * XTP control functions:
- *	min_xtp   : route all interrupts to this CPU
+ *	min_xtp   : route all पूर्णांकerrupts to this CPU
  *	normal_xtp: nominal XTP value
- *	max_xtp   : never deliver interrupts to this CPU.
+ *	max_xtp   : never deliver पूर्णांकerrupts to this CPU.
  */
 
-static inline void
-min_xtp (void)
-{
-	if (smp_int_redirect & SMP_IRQ_REDIRECTION)
-		writeb(0x00, ipi_base_addr + XTP_OFFSET); /* XTP to min */
-}
+अटल अंतरभूत व्योम
+min_xtp (व्योम)
+अणु
+	अगर (smp_पूर्णांक_redirect & SMP_IRQ_REसूचीECTION)
+		ग_लिखोb(0x00, ipi_base_addr + XTP_OFFSET); /* XTP to min */
+पूर्ण
 
-static inline void
-normal_xtp (void)
-{
-	if (smp_int_redirect & SMP_IRQ_REDIRECTION)
-		writeb(0x08, ipi_base_addr + XTP_OFFSET); /* XTP normal */
-}
+अटल अंतरभूत व्योम
+normal_xtp (व्योम)
+अणु
+	अगर (smp_पूर्णांक_redirect & SMP_IRQ_REसूचीECTION)
+		ग_लिखोb(0x08, ipi_base_addr + XTP_OFFSET); /* XTP normal */
+पूर्ण
 
-static inline void
-max_xtp (void)
-{
-	if (smp_int_redirect & SMP_IRQ_REDIRECTION)
-		writeb(0x0f, ipi_base_addr + XTP_OFFSET); /* Set XTP to max */
-}
+अटल अंतरभूत व्योम
+max_xtp (व्योम)
+अणु
+	अगर (smp_पूर्णांक_redirect & SMP_IRQ_REसूचीECTION)
+		ग_लिखोb(0x0f, ipi_base_addr + XTP_OFFSET); /* Set XTP to max */
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-#endif /* _ASM_IA64_XTP_Hy */
+#पूर्ण_अगर /* _ASM_IA64_XTP_Hy */

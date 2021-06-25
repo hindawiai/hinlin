@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _HTT_H_
-#define _HTT_H_
+#अगर_अघोषित _HTT_H_
+#घोषणा _HTT_H_
 
-#include <linux/bug.h>
-#include <linux/interrupt.h>
-#include <linux/dmapool.h>
-#include <linux/hashtable.h>
-#include <linux/kfifo.h>
-#include <net/mac80211.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/hashtable.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <net/mac80211.h>
 
-#include "htc.h"
-#include "hw.h"
-#include "rx_desc.h"
+#समावेश "htc.h"
+#समावेश "hw.h"
+#समावेश "rx_desc.h"
 
-enum htt_dbg_stats_type {
+क्रमागत htt_dbg_stats_type अणु
 	HTT_DBG_STATS_WAL_PDEV_TXRX = 1 << 0,
 	HTT_DBG_STATS_RX_REORDER    = 1 << 1,
 	HTT_DBG_STATS_RX_RATE_INFO  = 1 << 2,
@@ -28,9 +29,9 @@ enum htt_dbg_stats_type {
 	/* bits 5-23 currently reserved */
 
 	HTT_DBG_NUM_STATS /* keep this last */
-};
+पूर्ण;
 
-enum htt_h2t_msg_type { /* host-to-target */
+क्रमागत htt_h2t_msg_type अणु /* host-to-target */
 	HTT_H2T_MSG_TYPE_VERSION_REQ        = 0,
 	HTT_H2T_MSG_TYPE_TX_FRM             = 1,
 	HTT_H2T_MSG_TYPE_RX_RING_CFG        = 2,
@@ -39,183 +40,183 @@ enum htt_h2t_msg_type { /* host-to-target */
 	HTT_H2T_MSG_TYPE_AGGR_CFG           = 5,
 	HTT_H2T_MSG_TYPE_FRAG_DESC_BANK_CFG = 6,
 
-	/* This command is used for sending management frames in HTT < 3.0.
-	 * HTT >= 3.0 uses TX_FRM for everything.
+	/* This command is used क्रम sending management frames in HTT < 3.0.
+	 * HTT >= 3.0 uses TX_FRM क्रम everything.
 	 */
 	HTT_H2T_MSG_TYPE_MGMT_TX            = 7,
 	HTT_H2T_MSG_TYPE_TX_FETCH_RESP      = 11,
 
 	HTT_H2T_NUM_MSGS /* keep this last */
-};
+पूर्ण;
 
-struct htt_cmd_hdr {
+काष्ठा htt_cmd_hdr अणु
 	u8 msg_type;
-} __packed;
+पूर्ण __packed;
 
-struct htt_ver_req {
-	u8 pad[sizeof(u32) - sizeof(struct htt_cmd_hdr)];
-} __packed;
+काष्ठा htt_ver_req अणु
+	u8 pad[माप(u32) - माप(काष्ठा htt_cmd_hdr)];
+पूर्ण __packed;
 
 /*
  * HTT tx MSDU descriptor
  *
- * The HTT tx MSDU descriptor is created by the host HTT SW for each
- * tx MSDU.  The HTT tx MSDU descriptor contains the information that
- * the target firmware needs for the FW's tx processing, particularly
- * for creating the HW msdu descriptor.
- * The same HTT tx descriptor is used for HL and LL systems, though
+ * The HTT tx MSDU descriptor is created by the host HTT SW क्रम each
+ * tx MSDU.  The HTT tx MSDU descriptor contains the inक्रमmation that
+ * the target firmware needs क्रम the FW's tx processing, particularly
+ * क्रम creating the HW msdu descriptor.
+ * The same HTT tx descriptor is used क्रम HL and LL प्रणालीs, though
  * a few fields within the tx descriptor are used only by LL or
  * only by HL.
- * The HTT tx descriptor is defined in two manners: by a struct with
- * bitfields, and by a series of [dword offset, bit mask, bit shift]
+ * The HTT tx descriptor is defined in two manners: by a काष्ठा with
+ * bitfields, and by a series of [dword offset, bit mask, bit shअगरt]
  * definitions.
- * The target should use the struct def, for simplicitly and clarity,
- * but the host shall use the bit-mast + bit-shift defs, to be endian-
- * neutral.  Specifically, the host shall use the get/set macros built
- * around the mask + shift defs.
+ * The target should use the काष्ठा def, क्रम simplicitly and clarity,
+ * but the host shall use the bit-mast + bit-shअगरt defs, to be endian-
+ * neutral.  Specअगरically, the host shall use the get/set macros built
+ * around the mask + shअगरt defs.
  */
-struct htt_data_tx_desc_frag {
-	union {
-		struct double_word_addr {
+काष्ठा htt_data_tx_desc_frag अणु
+	जोड़ अणु
+		काष्ठा द्विगुन_word_addr अणु
 			__le32 paddr;
 			__le32 len;
-		} __packed dword_addr;
-		struct triple_word_addr {
+		पूर्ण __packed dword_addr;
+		काष्ठा triple_word_addr अणु
 			__le32 paddr_lo;
 			__le16 paddr_hi;
 			__le16 len_16;
-		} __packed tword_addr;
-	} __packed;
-} __packed;
+		पूर्ण __packed tword_addr;
+	पूर्ण __packed;
+पूर्ण __packed;
 
-struct htt_msdu_ext_desc {
+काष्ठा htt_msdu_ext_desc अणु
 	__le32 tso_flag[3];
-	__le16 ip_identification;
+	__le16 ip_identअगरication;
 	u8 flags;
 	u8 reserved;
-	struct htt_data_tx_desc_frag frags[6];
-};
+	काष्ठा htt_data_tx_desc_frag frags[6];
+पूर्ण;
 
-struct htt_msdu_ext_desc_64 {
+काष्ठा htt_msdu_ext_desc_64 अणु
 	__le32 tso_flag[5];
-	__le16 ip_identification;
+	__le16 ip_identअगरication;
 	u8 flags;
 	u8 reserved;
-	struct htt_data_tx_desc_frag frags[6];
-};
+	काष्ठा htt_data_tx_desc_frag frags[6];
+पूर्ण;
 
-#define	HTT_MSDU_EXT_DESC_FLAG_IPV4_CSUM_ENABLE		BIT(0)
-#define	HTT_MSDU_EXT_DESC_FLAG_UDP_IPV4_CSUM_ENABLE	BIT(1)
-#define	HTT_MSDU_EXT_DESC_FLAG_UDP_IPV6_CSUM_ENABLE	BIT(2)
-#define	HTT_MSDU_EXT_DESC_FLAG_TCP_IPV4_CSUM_ENABLE	BIT(3)
-#define	HTT_MSDU_EXT_DESC_FLAG_TCP_IPV6_CSUM_ENABLE	BIT(4)
+#घोषणा	HTT_MSDU_EXT_DESC_FLAG_IPV4_CSUM_ENABLE		BIT(0)
+#घोषणा	HTT_MSDU_EXT_DESC_FLAG_UDP_IPV4_CSUM_ENABLE	BIT(1)
+#घोषणा	HTT_MSDU_EXT_DESC_FLAG_UDP_IPV6_CSUM_ENABLE	BIT(2)
+#घोषणा	HTT_MSDU_EXT_DESC_FLAG_TCP_IPV4_CSUM_ENABLE	BIT(3)
+#घोषणा	HTT_MSDU_EXT_DESC_FLAG_TCP_IPV6_CSUM_ENABLE	BIT(4)
 
-#define HTT_MSDU_CHECKSUM_ENABLE (HTT_MSDU_EXT_DESC_FLAG_IPV4_CSUM_ENABLE \
+#घोषणा HTT_MSDU_CHECKSUM_ENABLE (HTT_MSDU_EXT_DESC_FLAG_IPV4_CSUM_ENABLE \
 				 | HTT_MSDU_EXT_DESC_FLAG_UDP_IPV4_CSUM_ENABLE \
 				 | HTT_MSDU_EXT_DESC_FLAG_UDP_IPV6_CSUM_ENABLE \
 				 | HTT_MSDU_EXT_DESC_FLAG_TCP_IPV4_CSUM_ENABLE \
 				 | HTT_MSDU_EXT_DESC_FLAG_TCP_IPV6_CSUM_ENABLE)
 
-#define HTT_MSDU_EXT_DESC_FLAG_IPV4_CSUM_ENABLE_64		BIT(16)
-#define HTT_MSDU_EXT_DESC_FLAG_UDP_IPV4_CSUM_ENABLE_64		BIT(17)
-#define HTT_MSDU_EXT_DESC_FLAG_UDP_IPV6_CSUM_ENABLE_64		BIT(18)
-#define HTT_MSDU_EXT_DESC_FLAG_TCP_IPV4_CSUM_ENABLE_64		BIT(19)
-#define HTT_MSDU_EXT_DESC_FLAG_TCP_IPV6_CSUM_ENABLE_64		BIT(20)
-#define HTT_MSDU_EXT_DESC_FLAG_PARTIAL_CSUM_ENABLE_64		BIT(21)
+#घोषणा HTT_MSDU_EXT_DESC_FLAG_IPV4_CSUM_ENABLE_64		BIT(16)
+#घोषणा HTT_MSDU_EXT_DESC_FLAG_UDP_IPV4_CSUM_ENABLE_64		BIT(17)
+#घोषणा HTT_MSDU_EXT_DESC_FLAG_UDP_IPV6_CSUM_ENABLE_64		BIT(18)
+#घोषणा HTT_MSDU_EXT_DESC_FLAG_TCP_IPV4_CSUM_ENABLE_64		BIT(19)
+#घोषणा HTT_MSDU_EXT_DESC_FLAG_TCP_IPV6_CSUM_ENABLE_64		BIT(20)
+#घोषणा HTT_MSDU_EXT_DESC_FLAG_PARTIAL_CSUM_ENABLE_64		BIT(21)
 
-#define HTT_MSDU_CHECKSUM_ENABLE_64  (HTT_MSDU_EXT_DESC_FLAG_IPV4_CSUM_ENABLE_64 \
+#घोषणा HTT_MSDU_CHECKSUM_ENABLE_64  (HTT_MSDU_EXT_DESC_FLAG_IPV4_CSUM_ENABLE_64 \
 				     | HTT_MSDU_EXT_DESC_FLAG_UDP_IPV4_CSUM_ENABLE_64 \
 				     | HTT_MSDU_EXT_DESC_FLAG_UDP_IPV6_CSUM_ENABLE_64 \
 				     | HTT_MSDU_EXT_DESC_FLAG_TCP_IPV4_CSUM_ENABLE_64 \
 				     | HTT_MSDU_EXT_DESC_FLAG_TCP_IPV6_CSUM_ENABLE_64)
 
-enum htt_data_tx_desc_flags0 {
+क्रमागत htt_data_tx_desc_flags0 अणु
 	HTT_DATA_TX_DESC_FLAGS0_MAC_HDR_PRESENT = 1 << 0,
 	HTT_DATA_TX_DESC_FLAGS0_NO_AGGR         = 1 << 1,
 	HTT_DATA_TX_DESC_FLAGS0_NO_ENCRYPT      = 1 << 2,
 	HTT_DATA_TX_DESC_FLAGS0_NO_CLASSIFY     = 1 << 3,
 	HTT_DATA_TX_DESC_FLAGS0_RSVD0           = 1 << 4
-#define HTT_DATA_TX_DESC_FLAGS0_PKT_TYPE_MASK 0xE0
-#define HTT_DATA_TX_DESC_FLAGS0_PKT_TYPE_LSB 5
-};
+#घोषणा HTT_DATA_TX_DESC_FLAGS0_PKT_TYPE_MASK 0xE0
+#घोषणा HTT_DATA_TX_DESC_FLAGS0_PKT_TYPE_LSB 5
+पूर्ण;
 
-enum htt_data_tx_desc_flags1 {
-#define HTT_DATA_TX_DESC_FLAGS1_VDEV_ID_BITS 6
-#define HTT_DATA_TX_DESC_FLAGS1_VDEV_ID_MASK 0x003F
-#define HTT_DATA_TX_DESC_FLAGS1_VDEV_ID_LSB  0
-#define HTT_DATA_TX_DESC_FLAGS1_EXT_TID_BITS 5
-#define HTT_DATA_TX_DESC_FLAGS1_EXT_TID_MASK 0x07C0
-#define HTT_DATA_TX_DESC_FLAGS1_EXT_TID_LSB  6
+क्रमागत htt_data_tx_desc_flags1 अणु
+#घोषणा HTT_DATA_TX_DESC_FLAGS1_VDEV_ID_BITS 6
+#घोषणा HTT_DATA_TX_DESC_FLAGS1_VDEV_ID_MASK 0x003F
+#घोषणा HTT_DATA_TX_DESC_FLAGS1_VDEV_ID_LSB  0
+#घोषणा HTT_DATA_TX_DESC_FLAGS1_EXT_TID_BITS 5
+#घोषणा HTT_DATA_TX_DESC_FLAGS1_EXT_TID_MASK 0x07C0
+#घोषणा HTT_DATA_TX_DESC_FLAGS1_EXT_TID_LSB  6
 	HTT_DATA_TX_DESC_FLAGS1_POSTPONED        = 1 << 11,
 	HTT_DATA_TX_DESC_FLAGS1_MORE_IN_BATCH    = 1 << 12,
 	HTT_DATA_TX_DESC_FLAGS1_CKSUM_L3_OFFLOAD = 1 << 13,
 	HTT_DATA_TX_DESC_FLAGS1_CKSUM_L4_OFFLOAD = 1 << 14,
 	HTT_DATA_TX_DESC_FLAGS1_TX_COMPLETE      = 1 << 15
-};
+पूर्ण;
 
-#define HTT_TX_CREDIT_DELTA_ABS_M      0xffff0000
-#define HTT_TX_CREDIT_DELTA_ABS_S      16
-#define HTT_TX_CREDIT_DELTA_ABS_GET(word) \
+#घोषणा HTT_TX_CREDIT_DELTA_ABS_M      0xffff0000
+#घोषणा HTT_TX_CREDIT_DELTA_ABS_S      16
+#घोषणा HTT_TX_CREDIT_DELTA_ABS_GET(word) \
 	    (((word) & HTT_TX_CREDIT_DELTA_ABS_M) >> HTT_TX_CREDIT_DELTA_ABS_S)
 
-#define HTT_TX_CREDIT_SIGN_BIT_M       0x00000100
-#define HTT_TX_CREDIT_SIGN_BIT_S       8
-#define HTT_TX_CREDIT_SIGN_BIT_GET(word) \
+#घोषणा HTT_TX_CREDIT_SIGN_BIT_M       0x00000100
+#घोषणा HTT_TX_CREDIT_SIGN_BIT_S       8
+#घोषणा HTT_TX_CREDIT_SIGN_BIT_GET(word) \
 	    (((word) & HTT_TX_CREDIT_SIGN_BIT_M) >> HTT_TX_CREDIT_SIGN_BIT_S)
 
-enum htt_data_tx_ext_tid {
+क्रमागत htt_data_tx_ext_tid अणु
 	HTT_DATA_TX_EXT_TID_NON_QOS_MCAST_BCAST = 16,
 	HTT_DATA_TX_EXT_TID_MGMT                = 17,
 	HTT_DATA_TX_EXT_TID_INVALID             = 31
-};
+पूर्ण;
 
-#define HTT_INVALID_PEERID 0xFFFF
+#घोषणा HTT_INVALID_PEERID 0xFFFF
 
 /*
- * htt_data_tx_desc - used for data tx path
+ * htt_data_tx_desc - used क्रम data tx path
  *
- * Note: vdev_id irrelevant for pkt_type == raw and no_classify == 1.
- *       ext_tid: for qos-data frames (0-15), see %HTT_DATA_TX_EXT_TID_
- *                for special kinds of tids
- *       postponed: only for HL hosts. indicates if this is a resend
+ * Note: vdev_id irrelevant क्रम pkt_type == raw and no_classअगरy == 1.
+ *       ext_tid: क्रम qos-data frames (0-15), see %HTT_DATA_TX_EXT_TID_
+ *                क्रम special kinds of tids
+ *       postponed: only क्रम HL hosts. indicates अगर this is a resend
  *                  (HL hosts manage queues on the host )
- *       more_in_batch: only for HL hosts. indicates if more packets are
- *                      pending. this allows target to wait and aggregate
- *       freq: 0 means home channel of given vdev. intended for offchannel
+ *       more_in_batch: only क्रम HL hosts. indicates अगर more packets are
+ *                      pending. this allows target to रुको and aggregate
+ *       freq: 0 means home channel of given vdev. पूर्णांकended क्रम offchannel
  */
-struct htt_data_tx_desc {
+काष्ठा htt_data_tx_desc अणु
 	u8 flags0; /* %HTT_DATA_TX_DESC_FLAGS0_ */
 	__le16 flags1; /* %HTT_DATA_TX_DESC_FLAGS1_ */
 	__le16 len;
 	__le16 id;
 	__le32 frags_paddr;
-	union {
+	जोड़ अणु
 		__le32 peerid;
-		struct {
+		काष्ठा अणु
 			__le16 peerid;
 			__le16 freq;
-		} __packed offchan_tx;
-	} __packed;
-	u8 prefetch[0]; /* start of frame, for FW classification engine */
-} __packed;
+		पूर्ण __packed offchan_tx;
+	पूर्ण __packed;
+	u8 prefetch[0]; /* start of frame, क्रम FW classअगरication engine */
+पूर्ण __packed;
 
-struct htt_data_tx_desc_64 {
+काष्ठा htt_data_tx_desc_64 अणु
 	u8 flags0; /* %HTT_DATA_TX_DESC_FLAGS0_ */
 	__le16 flags1; /* %HTT_DATA_TX_DESC_FLAGS1_ */
 	__le16 len;
 	__le16 id;
 	__le64 frags_paddr;
-	union {
+	जोड़ अणु
 		__le32 peerid;
-		struct {
+		काष्ठा अणु
 			__le16 peerid;
 			__le16 freq;
-		} __packed offchan_tx;
-	} __packed;
-	u8 prefetch[0]; /* start of frame, for FW classification engine */
-} __packed;
+		पूर्ण __packed offchan_tx;
+	पूर्ण __packed;
+	u8 prefetch[0]; /* start of frame, क्रम FW classअगरication engine */
+पूर्ण __packed;
 
-enum htt_rx_ring_flags {
+क्रमागत htt_rx_ring_flags अणु
 	HTT_RX_RING_FLAGS_MAC80211_HDR = 1 << 0,
 	HTT_RX_RING_FLAGS_MSDU_PAYLOAD = 1 << 1,
 	HTT_RX_RING_FLAGS_PPDU_START   = 1 << 2,
@@ -230,18 +231,18 @@ enum htt_rx_ring_flags {
 	HTT_RX_RING_FLAGS_MULTICAST_RX = 1 << 11,
 	HTT_RX_RING_FLAGS_CTRL_RX      = 1 << 12,
 	HTT_RX_RING_FLAGS_MGMT_RX      = 1 << 13,
-	HTT_RX_RING_FLAGS_NULL_RX      = 1 << 14,
+	HTT_RX_RING_FLAGS_शून्य_RX      = 1 << 14,
 	HTT_RX_RING_FLAGS_PHY_DATA_RX  = 1 << 15
-};
+पूर्ण;
 
-#define HTT_RX_RING_SIZE_MIN 128
-#define HTT_RX_RING_SIZE_MAX 2048
-#define HTT_RX_RING_SIZE HTT_RX_RING_SIZE_MAX
-#define HTT_RX_RING_FILL_LEVEL (((HTT_RX_RING_SIZE) / 2) - 1)
-#define HTT_RX_RING_FILL_LEVEL_DUAL_MAC (HTT_RX_RING_SIZE - 1)
+#घोषणा HTT_RX_RING_SIZE_MIN 128
+#घोषणा HTT_RX_RING_SIZE_MAX 2048
+#घोषणा HTT_RX_RING_SIZE HTT_RX_RING_SIZE_MAX
+#घोषणा HTT_RX_RING_FILL_LEVEL (((HTT_RX_RING_SIZE) / 2) - 1)
+#घोषणा HTT_RX_RING_FILL_LEVEL_DUAL_MAC (HTT_RX_RING_SIZE - 1)
 
-struct htt_rx_ring_setup_ring32 {
-	__le32 fw_idx_shadow_reg_paddr;
+काष्ठा htt_rx_ring_setup_ring32 अणु
+	__le32 fw_idx_shaकरोw_reg_paddr;
 	__le32 rx_ring_base_paddr;
 	__le16 rx_ring_len; /* in 4-byte words */
 	__le16 rx_ring_bufsize; /* rx skb size - in bytes */
@@ -259,10 +260,10 @@ struct htt_rx_ring_setup_ring32 {
 	__le16 msdu_end_offset;
 	__le16 rx_attention_offset;
 	__le16 frag_info_offset;
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_ring_setup_ring64 {
-	__le64 fw_idx_shadow_reg_paddr;
+काष्ठा htt_rx_ring_setup_ring64 अणु
+	__le64 fw_idx_shaकरोw_reg_paddr;
 	__le64 rx_ring_base_paddr;
 	__le16 rx_ring_len; /* in 4-byte words */
 	__le16 rx_ring_bufsize; /* rx skb size - in bytes */
@@ -280,116 +281,116 @@ struct htt_rx_ring_setup_ring64 {
 	__le16 msdu_end_offset;
 	__le16 rx_attention_offset;
 	__le16 frag_info_offset;
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_ring_setup_hdr {
+काष्ठा htt_rx_ring_setup_hdr अणु
 	u8 num_rings; /* supported values: 1, 2 */
 	__le16 rsvd0;
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_ring_setup_32 {
-	struct htt_rx_ring_setup_hdr hdr;
-	struct htt_rx_ring_setup_ring32 rings[];
-} __packed;
+काष्ठा htt_rx_ring_setup_32 अणु
+	काष्ठा htt_rx_ring_setup_hdr hdr;
+	काष्ठा htt_rx_ring_setup_ring32 rings[];
+पूर्ण __packed;
 
-struct htt_rx_ring_setup_64 {
-	struct htt_rx_ring_setup_hdr hdr;
-	struct htt_rx_ring_setup_ring64 rings[];
-} __packed;
+काष्ठा htt_rx_ring_setup_64 अणु
+	काष्ठा htt_rx_ring_setup_hdr hdr;
+	काष्ठा htt_rx_ring_setup_ring64 rings[];
+पूर्ण __packed;
 
 /*
- * htt_stats_req - request target to send specified statistics
+ * htt_stats_req - request target to send specअगरied statistics
  *
  * @msg_type: hardcoded %HTT_H2T_MSG_TYPE_STATS_REQ
  * @upload_types: see %htt_dbg_stats_type. this is 24bit field actually
  *	so make sure its little-endian.
  * @reset_types: see %htt_dbg_stats_type. this is 24bit field actually
  *	so make sure its little-endian.
- * @cfg_val: stat_type specific configuration
+ * @cfg_val: stat_type specअगरic configuration
  * @stat_type: see %htt_dbg_stats_type
- * @cookie_lsb: used for confirmation message from target->host
+ * @cookie_lsb: used क्रम confirmation message from target->host
  * @cookie_msb: ditto as %cookie
  */
-struct htt_stats_req {
+काष्ठा htt_stats_req अणु
 	u8 upload_types[3];
 	u8 rsvd0;
 	u8 reset_types[3];
-	struct {
+	काष्ठा अणु
 		u8 mpdu_bytes;
 		u8 mpdu_num_msdus;
 		u8 msdu_bytes;
-	} __packed;
+	पूर्ण __packed;
 	u8 stat_type;
 	__le32 cookie_lsb;
 	__le32 cookie_msb;
-} __packed;
+पूर्ण __packed;
 
-#define HTT_STATS_REQ_CFG_STAT_TYPE_INVALID 0xff
-#define HTT_STATS_BIT_MASK GENMASK(16, 0)
+#घोषणा HTT_STATS_REQ_CFG_STAT_TYPE_INVALID 0xff
+#घोषणा HTT_STATS_BIT_MASK GENMASK(16, 0)
 
 /*
  * htt_oob_sync_req - request out-of-band sync
  *
  * The HTT SYNC tells the target to suspend processing of subsequent
  * HTT host-to-target messages until some other target agent locally
- * informs the target HTT FW that the current sync counter is equal to
- * or greater than (in a modulo sense) the sync counter specified in
+ * inक्रमms the target HTT FW that the current sync counter is equal to
+ * or greater than (in a modulo sense) the sync counter specअगरied in
  * the SYNC message.
  *
  * This allows other host-target components to synchronize their operation
- * with HTT, e.g. to ensure that tx frames don't get transmitted until a
- * security key has been downloaded to and activated by the target.
- * In the absence of any explicit synchronization counter value
- * specification, the target HTT FW will use zero as the default current
+ * with HTT, e.g. to ensure that tx frames करोn't get transmitted until a
+ * security key has been करोwnloaded to and activated by the target.
+ * In the असलence of any explicit synchronization counter value
+ * specअगरication, the target HTT FW will use zero as the शेष current
  * sync value.
  *
- * The HTT target FW will suspend its host->target message processing as long
+ * The HTT target FW will suspend its host->target message processing as दीर्घ
  * as 0 < (in-band sync counter - out-of-band sync counter) & 0xff < 128.
  */
-struct htt_oob_sync_req {
+काष्ठा htt_oob_sync_req अणु
 	u8 sync_count;
 	__le16 rsvd0;
-} __packed;
+पूर्ण __packed;
 
-struct htt_aggr_conf {
+काष्ठा htt_aggr_conf अणु
 	u8 max_num_ampdu_subframes;
 	/* amsdu_subframes is limited by 0x1F mask */
 	u8 max_num_amsdu_subframes;
-} __packed;
+पूर्ण __packed;
 
-struct htt_aggr_conf_v2 {
+काष्ठा htt_aggr_conf_v2 अणु
 	u8 max_num_ampdu_subframes;
 	/* amsdu_subframes is limited by 0x1F mask */
 	u8 max_num_amsdu_subframes;
 	u8 reserved;
-} __packed;
+पूर्ण __packed;
 
-#define HTT_MGMT_FRM_HDR_DOWNLOAD_LEN 32
-struct htt_mgmt_tx_desc_qca99x0 {
+#घोषणा HTT_MGMT_FRM_HDR_DOWNLOAD_LEN 32
+काष्ठा htt_mgmt_tx_desc_qca99x0 अणु
 	__le32 rate;
-} __packed;
+पूर्ण __packed;
 
-struct htt_mgmt_tx_desc {
-	u8 pad[sizeof(u32) - sizeof(struct htt_cmd_hdr)];
+काष्ठा htt_mgmt_tx_desc अणु
+	u8 pad[माप(u32) - माप(काष्ठा htt_cmd_hdr)];
 	__le32 msdu_paddr;
 	__le32 desc_id;
 	__le32 len;
 	__le32 vdev_id;
 	u8 hdr[HTT_MGMT_FRM_HDR_DOWNLOAD_LEN];
-	union {
-		struct htt_mgmt_tx_desc_qca99x0 qca99x0;
-	} __packed;
-} __packed;
+	जोड़ अणु
+		काष्ठा htt_mgmt_tx_desc_qca99x0 qca99x0;
+	पूर्ण __packed;
+पूर्ण __packed;
 
-enum htt_mgmt_tx_status {
+क्रमागत htt_mgmt_tx_status अणु
 	HTT_MGMT_TX_STATUS_OK    = 0,
 	HTT_MGMT_TX_STATUS_RETRY = 1,
 	HTT_MGMT_TX_STATUS_DROP  = 2
-};
+पूर्ण;
 
 /*=== target -> host messages ===============================================*/
 
-enum htt_main_t2h_msg_type {
+क्रमागत htt_मुख्य_t2h_msg_type अणु
 	HTT_MAIN_T2H_MSG_TYPE_VERSION_CONF             = 0x0,
 	HTT_MAIN_T2H_MSG_TYPE_RX_IND                   = 0x1,
 	HTT_MAIN_T2H_MSG_TYPE_RX_FLUSH                 = 0x2,
@@ -410,9 +411,9 @@ enum htt_main_t2h_msg_type {
 	HTT_MAIN_T2H_MSG_TYPE_TEST,
 	/* keep this last */
 	HTT_MAIN_T2H_NUM_MSGS
-};
+पूर्ण;
 
-enum htt_10x_t2h_msg_type {
+क्रमागत htt_10x_t2h_msg_type अणु
 	HTT_10X_T2H_MSG_TYPE_VERSION_CONF              = 0x0,
 	HTT_10X_T2H_MSG_TYPE_RX_IND                    = 0x1,
 	HTT_10X_T2H_MSG_TYPE_RX_FLUSH                  = 0x2,
@@ -434,9 +435,9 @@ enum htt_10x_t2h_msg_type {
 	HTT_10X_T2H_MSG_TYPE_MGMT_TX_COMPL_IND         = 0x13,
 	/* keep this last */
 	HTT_10X_T2H_NUM_MSGS
-};
+पूर्ण;
 
-enum htt_tlv_t2h_msg_type {
+क्रमागत htt_tlv_t2h_msg_type अणु
 	HTT_TLV_T2H_MSG_TYPE_VERSION_CONF              = 0x0,
 	HTT_TLV_T2H_MSG_TYPE_RX_IND                    = 0x1,
 	HTT_TLV_T2H_MSG_TYPE_RX_FLUSH                  = 0x2,
@@ -463,9 +464,9 @@ enum htt_tlv_t2h_msg_type {
 	HTT_TLV_T2H_MSG_TYPE_TEST,
 	/* keep this last */
 	HTT_TLV_T2H_NUM_MSGS
-};
+पूर्ण;
 
-enum htt_10_4_t2h_msg_type {
+क्रमागत htt_10_4_t2h_msg_type अणु
 	HTT_10_4_T2H_MSG_TYPE_VERSION_CONF           = 0x0,
 	HTT_10_4_T2H_MSG_TYPE_RX_IND                 = 0x1,
 	HTT_10_4_T2H_MSG_TYPE_RX_FLUSH               = 0x2,
@@ -496,9 +497,9 @@ enum htt_10_4_t2h_msg_type {
 	HTT_10_4_T2H_MSG_TYPE_PEER_STATS	     = 0x31,
 	/* keep this last */
 	HTT_10_4_T2H_NUM_MSGS
-};
+पूर्ण;
 
-enum htt_t2h_msg_type {
+क्रमागत htt_t2h_msg_type अणु
 	HTT_T2H_MSG_TYPE_VERSION_CONF,
 	HTT_T2H_MSG_TYPE_RX_IND,
 	HTT_T2H_MSG_TYPE_RX_FLUSH,
@@ -531,33 +532,33 @@ enum htt_t2h_msg_type {
 	HTT_T2H_MSG_TYPE_PEER_STATS,
 	/* keep this last */
 	HTT_T2H_NUM_MSGS
-};
+पूर्ण;
 
 /*
- * htt_resp_hdr - header for target-to-host messages
+ * htt_resp_hdr - header क्रम target-to-host messages
  *
  * msg_type: see htt_t2h_msg_type
  */
-struct htt_resp_hdr {
+काष्ठा htt_resp_hdr अणु
 	u8 msg_type;
-} __packed;
+पूर्ण __packed;
 
-#define HTT_RESP_HDR_MSG_TYPE_OFFSET 0
-#define HTT_RESP_HDR_MSG_TYPE_MASK   0xff
-#define HTT_RESP_HDR_MSG_TYPE_LSB    0
+#घोषणा HTT_RESP_HDR_MSG_TYPE_OFFSET 0
+#घोषणा HTT_RESP_HDR_MSG_TYPE_MASK   0xff
+#घोषणा HTT_RESP_HDR_MSG_TYPE_LSB    0
 
-/* htt_ver_resp - response sent for htt_ver_req */
-struct htt_ver_resp {
+/* htt_ver_resp - response sent क्रम htt_ver_req */
+काष्ठा htt_ver_resp अणु
 	u8 minor;
 	u8 major;
 	u8 rsvd0;
-} __packed;
+पूर्ण __packed;
 
-#define HTT_MGMT_TX_CMPL_FLAG_ACK_RSSI BIT(0)
+#घोषणा HTT_MGMT_TX_CMPL_FLAG_ACK_RSSI BIT(0)
 
-#define HTT_MGMT_TX_CMPL_INFO_ACK_RSSI_MASK	GENMASK(7, 0)
+#घोषणा HTT_MGMT_TX_CMPL_INFO_ACK_RSSI_MASK	GENMASK(7, 0)
 
-struct htt_mgmt_tx_completion {
+काष्ठा htt_mgmt_tx_completion अणु
 	u8 rsvd0;
 	u8 rsvd1;
 	u8 flags;
@@ -565,58 +566,58 @@ struct htt_mgmt_tx_completion {
 	__le32 status;
 	__le32 ppdu_id;
 	__le32 info;
-} __packed;
+पूर्ण __packed;
 
-#define HTT_RX_INDICATION_INFO0_EXT_TID_MASK  (0x1F)
-#define HTT_RX_INDICATION_INFO0_EXT_TID_LSB   (0)
-#define HTT_RX_INDICATION_INFO0_FLUSH_VALID   (1 << 5)
-#define HTT_RX_INDICATION_INFO0_RELEASE_VALID (1 << 6)
-#define HTT_RX_INDICATION_INFO0_PPDU_DURATION BIT(7)
+#घोषणा HTT_RX_INDICATION_INFO0_EXT_TID_MASK  (0x1F)
+#घोषणा HTT_RX_INDICATION_INFO0_EXT_TID_LSB   (0)
+#घोषणा HTT_RX_INDICATION_INFO0_FLUSH_VALID   (1 << 5)
+#घोषणा HTT_RX_INDICATION_INFO0_RELEASE_VALID (1 << 6)
+#घोषणा HTT_RX_INDICATION_INFO0_PPDU_DURATION BIT(7)
 
-#define HTT_RX_INDICATION_INFO1_FLUSH_START_SEQNO_MASK   0x0000003F
-#define HTT_RX_INDICATION_INFO1_FLUSH_START_SEQNO_LSB    0
-#define HTT_RX_INDICATION_INFO1_FLUSH_END_SEQNO_MASK     0x00000FC0
-#define HTT_RX_INDICATION_INFO1_FLUSH_END_SEQNO_LSB      6
-#define HTT_RX_INDICATION_INFO1_RELEASE_START_SEQNO_MASK 0x0003F000
-#define HTT_RX_INDICATION_INFO1_RELEASE_START_SEQNO_LSB  12
-#define HTT_RX_INDICATION_INFO1_RELEASE_END_SEQNO_MASK   0x00FC0000
-#define HTT_RX_INDICATION_INFO1_RELEASE_END_SEQNO_LSB    18
-#define HTT_RX_INDICATION_INFO1_NUM_MPDU_RANGES_MASK     0xFF000000
-#define HTT_RX_INDICATION_INFO1_NUM_MPDU_RANGES_LSB      24
+#घोषणा HTT_RX_INDICATION_INFO1_FLUSH_START_SEQNO_MASK   0x0000003F
+#घोषणा HTT_RX_INDICATION_INFO1_FLUSH_START_SEQNO_LSB    0
+#घोषणा HTT_RX_INDICATION_INFO1_FLUSH_END_SEQNO_MASK     0x00000FC0
+#घोषणा HTT_RX_INDICATION_INFO1_FLUSH_END_SEQNO_LSB      6
+#घोषणा HTT_RX_INDICATION_INFO1_RELEASE_START_SEQNO_MASK 0x0003F000
+#घोषणा HTT_RX_INDICATION_INFO1_RELEASE_START_SEQNO_LSB  12
+#घोषणा HTT_RX_INDICATION_INFO1_RELEASE_END_SEQNO_MASK   0x00FC0000
+#घोषणा HTT_RX_INDICATION_INFO1_RELEASE_END_SEQNO_LSB    18
+#घोषणा HTT_RX_INDICATION_INFO1_NUM_MPDU_RANGES_MASK     0xFF000000
+#घोषणा HTT_RX_INDICATION_INFO1_NUM_MPDU_RANGES_LSB      24
 
-#define HTT_TX_CMPL_FLAG_DATA_RSSI		BIT(0)
-#define HTT_TX_CMPL_FLAG_PPID_PRESENT		BIT(1)
-#define HTT_TX_CMPL_FLAG_PA_PRESENT		BIT(2)
-#define HTT_TX_CMPL_FLAG_PPDU_DURATION_PRESENT	BIT(3)
+#घोषणा HTT_TX_CMPL_FLAG_DATA_RSSI		BIT(0)
+#घोषणा HTT_TX_CMPL_FLAG_PPID_PRESENT		BIT(1)
+#घोषणा HTT_TX_CMPL_FLAG_PA_PRESENT		BIT(2)
+#घोषणा HTT_TX_CMPL_FLAG_PPDU_DURATION_PRESENT	BIT(3)
 
-#define HTT_TX_DATA_RSSI_ENABLE_WCN3990 BIT(3)
-#define HTT_TX_DATA_APPEND_RETRIES BIT(0)
-#define HTT_TX_DATA_APPEND_TIMESTAMP BIT(1)
+#घोषणा HTT_TX_DATA_RSSI_ENABLE_WCN3990 BIT(3)
+#घोषणा HTT_TX_DATA_APPEND_RETRIES BIT(0)
+#घोषणा HTT_TX_DATA_APPEND_TIMESTAMP BIT(1)
 
-struct htt_rx_indication_hdr {
+काष्ठा htt_rx_indication_hdr अणु
 	u8 info0; /* %HTT_RX_INDICATION_INFO0_ */
 	__le16 peer_id;
 	__le32 info1; /* %HTT_RX_INDICATION_INFO1_ */
-} __packed;
+पूर्ण __packed;
 
-#define HTT_RX_INDICATION_INFO0_PHY_ERR_VALID    (1 << 0)
-#define HTT_RX_INDICATION_INFO0_LEGACY_RATE_MASK (0x1E)
-#define HTT_RX_INDICATION_INFO0_LEGACY_RATE_LSB  (1)
-#define HTT_RX_INDICATION_INFO0_LEGACY_RATE_CCK  (1 << 5)
-#define HTT_RX_INDICATION_INFO0_END_VALID        (1 << 6)
-#define HTT_RX_INDICATION_INFO0_START_VALID      (1 << 7)
+#घोषणा HTT_RX_INDICATION_INFO0_PHY_ERR_VALID    (1 << 0)
+#घोषणा HTT_RX_INDICATION_INFO0_LEGACY_RATE_MASK (0x1E)
+#घोषणा HTT_RX_INDICATION_INFO0_LEGACY_RATE_LSB  (1)
+#घोषणा HTT_RX_INDICATION_INFO0_LEGACY_RATE_CCK  (1 << 5)
+#घोषणा HTT_RX_INDICATION_INFO0_END_VALID        (1 << 6)
+#घोषणा HTT_RX_INDICATION_INFO0_START_VALID      (1 << 7)
 
-#define HTT_RX_INDICATION_INFO1_VHT_SIG_A1_MASK    0x00FFFFFF
-#define HTT_RX_INDICATION_INFO1_VHT_SIG_A1_LSB     0
-#define HTT_RX_INDICATION_INFO1_PREAMBLE_TYPE_MASK 0xFF000000
-#define HTT_RX_INDICATION_INFO1_PREAMBLE_TYPE_LSB  24
+#घोषणा HTT_RX_INDICATION_INFO1_VHT_SIG_A1_MASK    0x00FFFFFF
+#घोषणा HTT_RX_INDICATION_INFO1_VHT_SIG_A1_LSB     0
+#घोषणा HTT_RX_INDICATION_INFO1_PREAMBLE_TYPE_MASK 0xFF000000
+#घोषणा HTT_RX_INDICATION_INFO1_PREAMBLE_TYPE_LSB  24
 
-#define HTT_RX_INDICATION_INFO2_VHT_SIG_A1_MASK 0x00FFFFFF
-#define HTT_RX_INDICATION_INFO2_VHT_SIG_A1_LSB  0
-#define HTT_RX_INDICATION_INFO2_SERVICE_MASK    0xFF000000
-#define HTT_RX_INDICATION_INFO2_SERVICE_LSB     24
+#घोषणा HTT_RX_INDICATION_INFO2_VHT_SIG_A1_MASK 0x00FFFFFF
+#घोषणा HTT_RX_INDICATION_INFO2_VHT_SIG_A1_LSB  0
+#घोषणा HTT_RX_INDICATION_INFO2_SERVICE_MASK    0xFF000000
+#घोषणा HTT_RX_INDICATION_INFO2_SERVICE_LSB     24
 
-enum htt_rx_legacy_rate {
+क्रमागत htt_rx_legacy_rate अणु
 	HTT_RX_OFDM_48 = 0,
 	HTT_RX_OFDM_24 = 1,
 	HTT_RX_OFDM_12,
@@ -626,58 +627,58 @@ enum htt_rx_legacy_rate {
 	HTT_RX_OFDM_18,
 	HTT_RX_OFDM_9,
 
-	/* long preamble */
+	/* दीर्घ preamble */
 	HTT_RX_CCK_11_LP = 0,
 	HTT_RX_CCK_5_5_LP = 1,
 	HTT_RX_CCK_2_LP,
 	HTT_RX_CCK_1_LP,
-	/* short preamble */
+	/* लघु preamble */
 	HTT_RX_CCK_11_SP,
 	HTT_RX_CCK_5_5_SP,
 	HTT_RX_CCK_2_SP
-};
+पूर्ण;
 
-enum htt_rx_legacy_rate_type {
+क्रमागत htt_rx_legacy_rate_type अणु
 	HTT_RX_LEGACY_RATE_OFDM = 0,
 	HTT_RX_LEGACY_RATE_CCK
-};
+पूर्ण;
 
-enum htt_rx_preamble_type {
+क्रमागत htt_rx_preamble_type अणु
 	HTT_RX_LEGACY        = 0x4,
 	HTT_RX_HT            = 0x8,
 	HTT_RX_HT_WITH_TXBF  = 0x9,
 	HTT_RX_VHT           = 0xC,
 	HTT_RX_VHT_WITH_TXBF = 0xD,
-};
+पूर्ण;
 
 /*
  * Fields: phy_err_valid, phy_err_code, tsf,
- * usec_timestamp, sub_usec_timestamp
- * ..are valid only if end_valid == 1.
+ * usec_बारtamp, sub_usec_बारtamp
+ * ..are valid only अगर end_valid == 1.
  *
  * Fields: rssi_chains, legacy_rate_type,
  * legacy_rate_cck, preamble_type, service,
  * vht_sig_*
- * ..are valid only if start_valid == 1;
+ * ..are valid only अगर start_valid == 1;
  */
-struct htt_rx_indication_ppdu {
+काष्ठा htt_rx_indication_ppdu अणु
 	u8 combined_rssi;
-	u8 sub_usec_timestamp;
+	u8 sub_usec_बारtamp;
 	u8 phy_err_code;
 	u8 info0; /* HTT_RX_INDICATION_INFO0_ */
-	struct {
+	काष्ठा अणु
 		u8 pri20_db;
 		u8 ext20_db;
 		u8 ext40_db;
 		u8 ext80_db;
-	} __packed rssi_chains[4];
+	पूर्ण __packed rssi_chains[4];
 	__le32 tsf;
-	__le32 usec_timestamp;
+	__le32 usec_बारtamp;
 	__le32 info1; /* HTT_RX_INDICATION_INFO1_ */
 	__le32 info2; /* HTT_RX_INDICATION_INFO2_ */
-} __packed;
+पूर्ण __packed;
 
-enum htt_rx_mpdu_status {
+क्रमागत htt_rx_mpdu_status अणु
 	HTT_RX_IND_MPDU_STATUS_UNKNOWN = 0x0,
 	HTT_RX_IND_MPDU_STATUS_OK,
 	HTT_RX_IND_MPDU_STATUS_ERR_FCS,
@@ -696,29 +697,29 @@ enum htt_rx_mpdu_status {
 	HTT_RX_IND_MPDU_STATUS_PRIVACY_ERR,
 
 	/*
-	 * MISC: discard for unspecified reasons.
-	 * Leave this enum value last.
+	 * MISC: discard क्रम unspecअगरied reasons.
+	 * Leave this क्रमागत value last.
 	 */
 	HTT_RX_IND_MPDU_STATUS_ERR_MISC = 0xFF
-};
+पूर्ण;
 
-struct htt_rx_indication_mpdu_range {
+काष्ठा htt_rx_indication_mpdu_range अणु
 	u8 mpdu_count;
 	u8 mpdu_range_status; /* %htt_rx_mpdu_status */
 	u8 pad0;
 	u8 pad1;
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_indication_prefix {
+काष्ठा htt_rx_indication_prefix अणु
 	__le16 fw_rx_desc_bytes;
 	u8 pad0;
 	u8 pad1;
-};
+पूर्ण;
 
-struct htt_rx_indication {
-	struct htt_rx_indication_hdr hdr;
-	struct htt_rx_indication_ppdu ppdu;
-	struct htt_rx_indication_prefix prefix;
+काष्ठा htt_rx_indication अणु
+	काष्ठा htt_rx_indication_hdr hdr;
+	काष्ठा htt_rx_indication_ppdu ppdu;
+	काष्ठा htt_rx_indication_prefix prefix;
 
 	/*
 	 * the following fields are both dynamically sized, so
@@ -726,111 +727,111 @@ struct htt_rx_indication {
 	 */
 
 	/* the size of this is %fw_rx_desc_bytes */
-	struct fw_rx_desc_base fw_desc;
+	काष्ठा fw_rx_desc_base fw_desc;
 
 	/*
 	 * %mpdu_ranges starts after &%prefix + roundup(%fw_rx_desc_bytes, 4)
 	 * and has %num_mpdu_ranges elements.
 	 */
-	struct htt_rx_indication_mpdu_range mpdu_ranges[];
-} __packed;
+	काष्ठा htt_rx_indication_mpdu_range mpdu_ranges[];
+पूर्ण __packed;
 
 /* High latency version of the RX indication */
-struct htt_rx_indication_hl {
-	struct htt_rx_indication_hdr hdr;
-	struct htt_rx_indication_ppdu ppdu;
-	struct htt_rx_indication_prefix prefix;
-	struct fw_rx_desc_hl fw_desc;
-	struct htt_rx_indication_mpdu_range mpdu_ranges[];
-} __packed;
+काष्ठा htt_rx_indication_hl अणु
+	काष्ठा htt_rx_indication_hdr hdr;
+	काष्ठा htt_rx_indication_ppdu ppdu;
+	काष्ठा htt_rx_indication_prefix prefix;
+	काष्ठा fw_rx_desc_hl fw_desc;
+	काष्ठा htt_rx_indication_mpdu_range mpdu_ranges[];
+पूर्ण __packed;
 
-struct htt_hl_rx_desc {
+काष्ठा htt_hl_rx_desc अणु
 	__le32 info;
 	__le32 pn_31_0;
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			__le16 pn_47_32;
 			__le16 pn_63_48;
-		} pn16;
+		पूर्ण pn16;
 		__le32 pn_63_32;
-	} u0;
+	पूर्ण u0;
 	__le32 pn_95_64;
 	__le32 pn_127_96;
-} __packed;
+पूर्ण __packed;
 
-static inline struct htt_rx_indication_mpdu_range *
-		htt_rx_ind_get_mpdu_ranges(struct htt_rx_indication *rx_ind)
-{
-	void *ptr = rx_ind;
+अटल अंतरभूत काष्ठा htt_rx_indication_mpdu_range *
+		htt_rx_ind_get_mpdu_ranges(काष्ठा htt_rx_indication *rx_ind)
+अणु
+	व्योम *ptr = rx_ind;
 
-	ptr += sizeof(rx_ind->hdr)
-	     + sizeof(rx_ind->ppdu)
-	     + sizeof(rx_ind->prefix)
+	ptr += माप(rx_ind->hdr)
+	     + माप(rx_ind->ppdu)
+	     + माप(rx_ind->prefix)
 	     + roundup(__le16_to_cpu(rx_ind->prefix.fw_rx_desc_bytes), 4);
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static inline struct htt_rx_indication_mpdu_range *
-	htt_rx_ind_get_mpdu_ranges_hl(struct htt_rx_indication_hl *rx_ind)
-{
-	void *ptr = rx_ind;
+अटल अंतरभूत काष्ठा htt_rx_indication_mpdu_range *
+	htt_rx_ind_get_mpdu_ranges_hl(काष्ठा htt_rx_indication_hl *rx_ind)
+अणु
+	व्योम *ptr = rx_ind;
 
-	ptr += sizeof(rx_ind->hdr)
-	     + sizeof(rx_ind->ppdu)
-	     + sizeof(rx_ind->prefix)
-	     + sizeof(rx_ind->fw_desc);
-	return ptr;
-}
+	ptr += माप(rx_ind->hdr)
+	     + माप(rx_ind->ppdu)
+	     + माप(rx_ind->prefix)
+	     + माप(rx_ind->fw_desc);
+	वापस ptr;
+पूर्ण
 
-enum htt_rx_flush_mpdu_status {
+क्रमागत htt_rx_flush_mpdu_status अणु
 	HTT_RX_FLUSH_MPDU_DISCARD = 0,
 	HTT_RX_FLUSH_MPDU_REORDER = 1,
-};
+पूर्ण;
 
 /*
  * htt_rx_flush - discard or reorder given range of mpdus
  *
- * Note: host must check if all sequence numbers between
+ * Note: host must check अगर all sequence numbers between
  *	[seq_num_start, seq_num_end-1] are valid.
  */
-struct htt_rx_flush {
+काष्ठा htt_rx_flush अणु
 	__le16 peer_id;
 	u8 tid;
 	u8 rsvd0;
 	u8 mpdu_status; /* %htt_rx_flush_mpdu_status */
 	u8 seq_num_start; /* it is 6 LSBs of 802.11 seq no */
 	u8 seq_num_end; /* it is 6 LSBs of 802.11 seq no */
-};
+पूर्ण;
 
-struct htt_rx_peer_map {
+काष्ठा htt_rx_peer_map अणु
 	u8 vdev_id;
 	__le16 peer_id;
 	u8 addr[6];
 	u8 rsvd0;
 	u8 rsvd1;
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_peer_unmap {
+काष्ठा htt_rx_peer_unmap अणु
 	u8 rsvd0;
 	__le16 peer_id;
-} __packed;
+पूर्ण __packed;
 
-enum htt_txrx_sec_cast_type {
+क्रमागत htt_txrx_sec_cast_type अणु
 	HTT_TXRX_SEC_MCAST = 0,
 	HTT_TXRX_SEC_UCAST
-};
+पूर्ण;
 
-enum htt_rx_pn_check_type {
+क्रमागत htt_rx_pn_check_type अणु
 	HTT_RX_NON_PN_CHECK = 0,
 	HTT_RX_PN_CHECK
-};
+पूर्ण;
 
-enum htt_rx_tkip_demic_type {
+क्रमागत htt_rx_tkip_demic_type अणु
 	HTT_RX_NON_TKIP_MIC = 0,
 	HTT_RX_TKIP_MIC
-};
+पूर्ण;
 
-enum htt_security_types {
+क्रमागत htt_security_types अणु
 	HTT_SECURITY_NONE,
 	HTT_SECURITY_WEP128,
 	HTT_SECURITY_WEP104,
@@ -841,82 +842,82 @@ enum htt_security_types {
 	HTT_SECURITY_WAPI,
 
 	HTT_NUM_SECURITY_TYPES /* keep this last! */
-};
+पूर्ण;
 
-#define ATH10K_HTT_TXRX_PEER_SECURITY_MAX 2
-#define ATH10K_TXRX_NUM_EXT_TIDS 19
-#define ATH10K_TXRX_NON_QOS_TID 16
+#घोषणा ATH10K_HTT_TXRX_PEER_SECURITY_MAX 2
+#घोषणा ATH10K_TXRX_NUM_EXT_TIDS 19
+#घोषणा ATH10K_TXRX_NON_QOS_TID 16
 
-enum htt_security_flags {
-#define HTT_SECURITY_TYPE_MASK 0x7F
-#define HTT_SECURITY_TYPE_LSB  0
+क्रमागत htt_security_flags अणु
+#घोषणा HTT_SECURITY_TYPE_MASK 0x7F
+#घोषणा HTT_SECURITY_TYPE_LSB  0
 	HTT_SECURITY_IS_UNICAST = 1 << 7
-};
+पूर्ण;
 
-struct htt_security_indication {
-	union {
-		/* dont use bitfields; undefined behaviour */
+काष्ठा htt_security_indication अणु
+	जोड़ अणु
+		/* करोnt use bitfields; undefined behaviour */
 		u8 flags; /* %htt_security_flags */
-		struct {
+		काष्ठा अणु
 			u8 security_type:7, /* %htt_security_types */
 			   is_unicast:1;
-		} __packed;
-	} __packed;
+		पूर्ण __packed;
+	पूर्ण __packed;
 	__le16 peer_id;
 	u8 michael_key[8];
 	u8 wapi_rsc[16];
-} __packed;
+पूर्ण __packed;
 
-#define HTT_RX_BA_INFO0_TID_MASK     0x000F
-#define HTT_RX_BA_INFO0_TID_LSB      0
-#define HTT_RX_BA_INFO0_PEER_ID_MASK 0xFFF0
-#define HTT_RX_BA_INFO0_PEER_ID_LSB  4
+#घोषणा HTT_RX_BA_INFO0_TID_MASK     0x000F
+#घोषणा HTT_RX_BA_INFO0_TID_LSB      0
+#घोषणा HTT_RX_BA_INFO0_PEER_ID_MASK 0xFFF0
+#घोषणा HTT_RX_BA_INFO0_PEER_ID_LSB  4
 
-struct htt_rx_addba {
-	u8 window_size;
+काष्ठा htt_rx_addba अणु
+	u8 winकरोw_size;
 	__le16 info0; /* %HTT_RX_BA_INFO0_ */
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_delba {
+काष्ठा htt_rx_delba अणु
 	u8 rsvd0;
 	__le16 info0; /* %HTT_RX_BA_INFO0_ */
-} __packed;
+पूर्ण __packed;
 
-enum htt_data_tx_status {
+क्रमागत htt_data_tx_status अणु
 	HTT_DATA_TX_STATUS_OK            = 0,
 	HTT_DATA_TX_STATUS_DISCARD       = 1,
 	HTT_DATA_TX_STATUS_NO_ACK        = 2,
 	HTT_DATA_TX_STATUS_POSTPONE      = 3, /* HL only */
 	HTT_DATA_TX_STATUS_DOWNLOAD_FAIL = 128
-};
+पूर्ण;
 
-enum htt_data_tx_flags {
-#define HTT_DATA_TX_STATUS_MASK 0x07
-#define HTT_DATA_TX_STATUS_LSB  0
-#define HTT_DATA_TX_TID_MASK    0x78
-#define HTT_DATA_TX_TID_LSB     3
+क्रमागत htt_data_tx_flags अणु
+#घोषणा HTT_DATA_TX_STATUS_MASK 0x07
+#घोषणा HTT_DATA_TX_STATUS_LSB  0
+#घोषणा HTT_DATA_TX_TID_MASK    0x78
+#घोषणा HTT_DATA_TX_TID_LSB     3
 	HTT_DATA_TX_TID_INVALID = 1 << 7
-};
+पूर्ण;
 
-#define HTT_TX_COMPL_INV_MSDU_ID 0xFFFF
+#घोषणा HTT_TX_COMPL_INV_MSDU_ID 0xFFFF
 
-struct htt_append_retries {
+काष्ठा htt_append_retries अणु
 	__le16 msdu_id;
 	u8 tx_retries;
 	u8 flag;
-} __packed;
+पूर्ण __packed;
 
-struct htt_data_tx_completion_ext {
-	struct htt_append_retries a_retries;
+काष्ठा htt_data_tx_completion_ext अणु
+	काष्ठा htt_append_retries a_retries;
 	__le32 t_stamp;
 	__le16 msdus_rssi[];
-} __packed;
+पूर्ण __packed;
 
 /**
  * @brief target -> host TX completion indication message definition
  *
  * @details
- * The following diagram shows the format of the TX completion indication sent
+ * The following diagram shows the क्रमmat of the TX completion indication sent
  * from the target to the host
  *
  *          |31 28|27|26|25|24|23        16| 15 |14 11|10   8|7          0|
@@ -927,9 +928,9 @@ struct htt_data_tx_completion_ext {
  *          |-------------------------------------------------------------|
  *          :            MSDU3 ID          :         MSDU2 ID             :
  *          |-------------------------------------------------------------|
- *          |          struct htt_tx_compl_ind_append_retries             |
+ *          |          काष्ठा htt_tx_compl_ind_append_retries             |
  *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|
- *          |          struct htt_tx_compl_ind_append_tx_tstamp           |
+ *          |          काष्ठा htt_tx_compl_ind_append_tx_tstamp           |
  *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|
  *          |           MSDU1 ACK RSSI     |        MSDU0 ACK RSSI        |
  *          |-------------------------------------------------------------|
@@ -937,7 +938,7 @@ struct htt_data_tx_completion_ext {
  *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|
  *    -msg_type
  *     Bits 7:0
- *     Purpose: identifies this as HTT TX completion indication
+ *     Purpose: identअगरies this as HTT TX completion indication
  *    -status
  *     Bits 10:8
  *     Purpose: the TX completion status of payload fragmentations descriptors
@@ -957,24 +958,24 @@ struct htt_data_tx_completion_ext {
  *     Value: 1 to 255
  *    -A0 = append
  *     Bits 24:24
- *     Purpose: append the struct htt_tx_compl_ind_append_retries which contains
- *            the number of tx retries for one MSDU at the end of this message
+ *     Purpose: append the काष्ठा htt_tx_compl_ind_append_retries which contains
+ *            the number of tx retries क्रम one MSDU at the end of this message
  *     Value: 0 indicates no appending, 1 indicates appending
  *    -A1 = append1
  *     Bits 25:25
- *     Purpose: Append the struct htt_tx_compl_ind_append_tx_tstamp which
- *            contains the timestamp info for each TX msdu id in payload.
+ *     Purpose: Append the काष्ठा htt_tx_compl_ind_append_tx_tstamp which
+ *            contains the बारtamp info क्रम each TX msdu id in payload.
  *     Value: 0 indicates no appending, 1 indicates appending
- *    -TP = MSDU tx power presence
+ *    -TP = MSDU tx घातer presence
  *     Bits 26:26
- *     Purpose: Indicate whether the TX_COMPL_IND includes a tx power report
- *            for each MSDU referenced by the TX_COMPL_IND message.
- *            The order of the per-MSDU tx power reports matches the order
+ *     Purpose: Indicate whether the TX_COMPL_IND includes a tx घातer report
+ *            क्रम each MSDU referenced by the TX_COMPL_IND message.
+ *            The order of the per-MSDU tx घातer reports matches the order
  *            of the MSDU IDs.
  *     Value: 0 indicates not appending, 1 indicates appending
  *    -A2 = append2
  *     Bits 27:27
- *     Purpose: Indicate whether data ACK RSSI is appended for each MSDU in
+ *     Purpose: Indicate whether data ACK RSSI is appended क्रम each MSDU in
  *            TX_COMP_IND message.  The order of the per-MSDU ACK RSSI report
  *            matches the order of the MSDU IDs.
  *            The ACK RSSI values are valid when status is COMPLETE_OK (and
@@ -982,94 +983,94 @@ struct htt_data_tx_completion_ext {
  *     Value: 0 indicates not appending, 1 indicates appending
  */
 
-struct htt_data_tx_completion {
-	union {
+काष्ठा htt_data_tx_completion अणु
+	जोड़ अणु
 		u8 flags;
-		struct {
+		काष्ठा अणु
 			u8 status:3,
 			   tid:4,
 			   tid_invalid:1;
-		} __packed;
-	} __packed;
+		पूर्ण __packed;
+	पूर्ण __packed;
 	u8 num_msdus;
 	u8 flags2; /* HTT_TX_CMPL_FLAG_DATA_RSSI */
 	__le16 msdus[]; /* variable length based on %num_msdus */
-} __packed;
+पूर्ण __packed;
 
-#define HTT_TX_PPDU_DUR_INFO0_PEER_ID_MASK	GENMASK(15, 0)
-#define HTT_TX_PPDU_DUR_INFO0_TID_MASK		GENMASK(20, 16)
+#घोषणा HTT_TX_PPDU_DUR_INFO0_PEER_ID_MASK	GENMASK(15, 0)
+#घोषणा HTT_TX_PPDU_DUR_INFO0_TID_MASK		GENMASK(20, 16)
 
-struct htt_data_tx_ppdu_dur {
+काष्ठा htt_data_tx_ppdu_dur अणु
 	__le32 info0; /* HTT_TX_PPDU_DUR_INFO0_ */
 	__le32 tx_duration; /* in usecs */
-} __packed;
+पूर्ण __packed;
 
-#define HTT_TX_COMPL_PPDU_DUR_INFO0_NUM_ENTRIES_MASK	GENMASK(7, 0)
+#घोषणा HTT_TX_COMPL_PPDU_DUR_INFO0_NUM_ENTRIES_MASK	GENMASK(7, 0)
 
-struct htt_data_tx_compl_ppdu_dur {
+काष्ठा htt_data_tx_compl_ppdu_dur अणु
 	__le32 info0; /* HTT_TX_COMPL_PPDU_DUR_INFO0_ */
-	struct htt_data_tx_ppdu_dur ppdu_dur[];
-} __packed;
+	काष्ठा htt_data_tx_ppdu_dur ppdu_dur[];
+पूर्ण __packed;
 
-struct htt_tx_compl_ind_base {
+काष्ठा htt_tx_compl_ind_base अणु
 	u32 hdr;
 	u16 payload[1/*or more*/];
-} __packed;
+पूर्ण __packed;
 
-struct htt_rc_tx_done_params {
+काष्ठा htt_rc_tx_करोne_params अणु
 	u32 rate_code;
 	u32 rate_code_flags;
 	u32 flags;
-	u32 num_enqued; /* 1 for non-AMPDU */
+	u32 num_enqued; /* 1 क्रम non-AMPDU */
 	u32 num_retries;
-	u32 num_failed; /* for AMPDU */
+	u32 num_failed; /* क्रम AMPDU */
 	u32 ack_rssi;
-	u32 time_stamp;
+	u32 समय_stamp;
 	u32 is_probe;
-};
+पूर्ण;
 
-struct htt_rc_update {
+काष्ठा htt_rc_update अणु
 	u8 vdev_id;
 	__le16 peer_id;
 	u8 addr[6];
 	u8 num_elems;
 	u8 rsvd0;
-	struct htt_rc_tx_done_params params[]; /* variable length %num_elems */
-} __packed;
+	काष्ठा htt_rc_tx_करोne_params params[]; /* variable length %num_elems */
+पूर्ण __packed;
 
-/* see htt_rx_indication for similar fields and descriptions */
-struct htt_rx_fragment_indication {
-	union {
+/* see htt_rx_indication क्रम similar fields and descriptions */
+काष्ठा htt_rx_fragment_indication अणु
+	जोड़ अणु
 		u8 info0; /* %HTT_RX_FRAG_IND_INFO0_ */
-		struct {
+		काष्ठा अणु
 			u8 ext_tid:5,
 			   flush_valid:1;
-		} __packed;
-	} __packed;
+		पूर्ण __packed;
+	पूर्ण __packed;
 	__le16 peer_id;
 	__le32 info1; /* %HTT_RX_FRAG_IND_INFO1_ */
 	__le16 fw_rx_desc_bytes;
 	__le16 rsvd0;
 
 	u8 fw_msdu_rx_desc[];
-} __packed;
+पूर्ण __packed;
 
-#define ATH10K_IEEE80211_EXTIV               BIT(5)
-#define ATH10K_IEEE80211_TKIP_MICLEN         8   /* trailing MIC */
+#घोषणा ATH10K_IEEE80211_EXTIV               BIT(5)
+#घोषणा ATH10K_IEEE80211_TKIP_MICLEN         8   /* trailing MIC */
 
-#define HTT_RX_FRAG_IND_INFO0_HEADER_LEN     16
+#घोषणा HTT_RX_FRAG_IND_INFO0_HEADER_LEN     16
 
-#define HTT_RX_FRAG_IND_INFO0_EXT_TID_MASK     0x1F
-#define HTT_RX_FRAG_IND_INFO0_EXT_TID_LSB      0
-#define HTT_RX_FRAG_IND_INFO0_FLUSH_VALID_MASK 0x20
-#define HTT_RX_FRAG_IND_INFO0_FLUSH_VALID_LSB  5
+#घोषणा HTT_RX_FRAG_IND_INFO0_EXT_TID_MASK     0x1F
+#घोषणा HTT_RX_FRAG_IND_INFO0_EXT_TID_LSB      0
+#घोषणा HTT_RX_FRAG_IND_INFO0_FLUSH_VALID_MASK 0x20
+#घोषणा HTT_RX_FRAG_IND_INFO0_FLUSH_VALID_LSB  5
 
-#define HTT_RX_FRAG_IND_INFO1_FLUSH_SEQ_NUM_START_MASK 0x0000003F
-#define HTT_RX_FRAG_IND_INFO1_FLUSH_SEQ_NUM_START_LSB  0
-#define HTT_RX_FRAG_IND_INFO1_FLUSH_SEQ_NUM_END_MASK   0x00000FC0
-#define HTT_RX_FRAG_IND_INFO1_FLUSH_SEQ_NUM_END_LSB    6
+#घोषणा HTT_RX_FRAG_IND_INFO1_FLUSH_SEQ_NUM_START_MASK 0x0000003F
+#घोषणा HTT_RX_FRAG_IND_INFO1_FLUSH_SEQ_NUM_START_LSB  0
+#घोषणा HTT_RX_FRAG_IND_INFO1_FLUSH_SEQ_NUM_END_MASK   0x00000FC0
+#घोषणा HTT_RX_FRAG_IND_INFO1_FLUSH_SEQ_NUM_END_LSB    6
 
-struct htt_rx_pn_ind {
+काष्ठा htt_rx_pn_ind अणु
 	__le16 peer_id;
 	u8 tid;
 	u8 seqno_start;
@@ -1077,117 +1078,117 @@ struct htt_rx_pn_ind {
 	u8 pn_ie_count;
 	u8 reserved;
 	u8 pn_ies[];
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_offload_msdu {
+काष्ठा htt_rx_offload_msdu अणु
 	__le16 msdu_len;
 	__le16 peer_id;
 	u8 vdev_id;
 	u8 tid;
 	u8 fw_desc;
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_offload_ind {
+काष्ठा htt_rx_offload_ind अणु
 	u8 reserved;
 	__le16 msdu_count;
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_in_ord_msdu_desc {
+काष्ठा htt_rx_in_ord_msdu_desc अणु
 	__le32 msdu_paddr;
 	__le16 msdu_len;
 	u8 fw_desc;
 	u8 reserved;
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_in_ord_msdu_desc_ext {
+काष्ठा htt_rx_in_ord_msdu_desc_ext अणु
 	__le64 msdu_paddr;
 	__le16 msdu_len;
 	u8 fw_desc;
 	u8 reserved;
-} __packed;
+पूर्ण __packed;
 
-struct htt_rx_in_ord_ind {
+काष्ठा htt_rx_in_ord_ind अणु
 	u8 info;
 	__le16 peer_id;
 	u8 vdev_id;
 	u8 reserved;
 	__le16 msdu_count;
-	union {
-		struct htt_rx_in_ord_msdu_desc msdu_descs32[0];
-		struct htt_rx_in_ord_msdu_desc_ext msdu_descs64[0];
-	} __packed;
-} __packed;
+	जोड़ अणु
+		काष्ठा htt_rx_in_ord_msdu_desc msdu_descs32[0];
+		काष्ठा htt_rx_in_ord_msdu_desc_ext msdu_descs64[0];
+	पूर्ण __packed;
+पूर्ण __packed;
 
-#define HTT_RX_IN_ORD_IND_INFO_TID_MASK		0x0000001f
-#define HTT_RX_IN_ORD_IND_INFO_TID_LSB		0
-#define HTT_RX_IN_ORD_IND_INFO_OFFLOAD_MASK	0x00000020
-#define HTT_RX_IN_ORD_IND_INFO_OFFLOAD_LSB	5
-#define HTT_RX_IN_ORD_IND_INFO_FRAG_MASK	0x00000040
-#define HTT_RX_IN_ORD_IND_INFO_FRAG_LSB		6
+#घोषणा HTT_RX_IN_ORD_IND_INFO_TID_MASK		0x0000001f
+#घोषणा HTT_RX_IN_ORD_IND_INFO_TID_LSB		0
+#घोषणा HTT_RX_IN_ORD_IND_INFO_OFFLOAD_MASK	0x00000020
+#घोषणा HTT_RX_IN_ORD_IND_INFO_OFFLOAD_LSB	5
+#घोषणा HTT_RX_IN_ORD_IND_INFO_FRAG_MASK	0x00000040
+#घोषणा HTT_RX_IN_ORD_IND_INFO_FRAG_LSB		6
 
 /*
  * target -> host test message definition
  *
- * The following field definitions describe the format of the test
+ * The following field definitions describe the क्रमmat of the test
  * message sent from the target to the host.
  * The message consists of a 4-octet header, followed by a variable
- * number of 32-bit integer values, followed by a variable number
- * of 8-bit character values.
+ * number of 32-bit पूर्णांकeger values, followed by a variable number
+ * of 8-bit अक्षरacter values.
  *
  * |31                         16|15           8|7            0|
  * |-----------------------------------------------------------|
- * |          num chars          |   num ints   |   msg type   |
+ * |          num अक्षरs          |   num पूर्णांकs   |   msg type   |
  * |-----------------------------------------------------------|
- * |                           int 0                           |
+ * |                           पूर्णांक 0                           |
  * |-----------------------------------------------------------|
- * |                           int 1                           |
+ * |                           पूर्णांक 1                           |
  * |-----------------------------------------------------------|
  * |                            ...                            |
  * |-----------------------------------------------------------|
- * |    char 3    |    char 2    |    char 1    |    char 0    |
+ * |    अक्षर 3    |    अक्षर 2    |    अक्षर 1    |    अक्षर 0    |
  * |-----------------------------------------------------------|
- * |              |              |      ...     |    char 4    |
+ * |              |              |      ...     |    अक्षर 4    |
  * |-----------------------------------------------------------|
  *   - MSG_TYPE
  *     Bits 7:0
- *     Purpose: identifies this as a test message
+ *     Purpose: identअगरies this as a test message
  *     Value: HTT_MSG_TYPE_TEST
  *   - NUM_INTS
  *     Bits 15:8
- *     Purpose: indicate how many 32-bit integers follow the message header
+ *     Purpose: indicate how many 32-bit पूर्णांकegers follow the message header
  *   - NUM_CHARS
  *     Bits 31:16
- *     Purpose: indicate how many 8-bit characters follow the series of integers
+ *     Purpose: indicate how many 8-bit अक्षरacters follow the series of पूर्णांकegers
  */
-struct htt_rx_test {
-	u8 num_ints;
-	__le16 num_chars;
+काष्ठा htt_rx_test अणु
+	u8 num_पूर्णांकs;
+	__le16 num_अक्षरs;
 
 	/* payload consists of 2 lists:
-	 *  a) num_ints * sizeof(__le32)
-	 *  b) num_chars * sizeof(u8) aligned to 4bytes
+	 *  a) num_पूर्णांकs * माप(__le32)
+	 *  b) num_अक्षरs * माप(u8) aligned to 4bytes
 	 */
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-static inline __le32 *htt_rx_test_get_ints(struct htt_rx_test *rx_test)
-{
-	return (__le32 *)rx_test->payload;
-}
+अटल अंतरभूत __le32 *htt_rx_test_get_पूर्णांकs(काष्ठा htt_rx_test *rx_test)
+अणु
+	वापस (__le32 *)rx_test->payload;
+पूर्ण
 
-static inline u8 *htt_rx_test_get_chars(struct htt_rx_test *rx_test)
-{
-	return rx_test->payload + (rx_test->num_ints * sizeof(__le32));
-}
+अटल अंतरभूत u8 *htt_rx_test_get_अक्षरs(काष्ठा htt_rx_test *rx_test)
+अणु
+	वापस rx_test->payload + (rx_test->num_पूर्णांकs * माप(__le32));
+पूर्ण
 
 /*
  * target -> host packet log message
  *
- * The following field definitions describe the format of the packet log
+ * The following field definitions describe the क्रमmat of the packet log
  * message sent from the target to the host.
  * The message consists of a 4-octet header,followed by a variable number
- * of 32-bit character values.
+ * of 32-bit अक्षरacter values.
  *
  * |31          24|23          16|15           8|7            0|
  * |-----------------------------------------------------------|
@@ -1197,25 +1198,25 @@ static inline u8 *htt_rx_test_get_chars(struct htt_rx_test *rx_test)
  * |-----------------------------------------------------------|
  *   - MSG_TYPE
  *     Bits 7:0
- *     Purpose: identifies this as a test message
+ *     Purpose: identअगरies this as a test message
  *     Value: HTT_MSG_TYPE_PACKETLOG
  */
-struct htt_pktlog_msg {
+काष्ठा htt_pktlog_msg अणु
 	u8 pad[3];
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-struct htt_dbg_stats_rx_reorder_stats {
+काष्ठा htt_dbg_stats_rx_reorder_stats अणु
 	/* Non QoS MPDUs received */
 	__le32 deliver_non_qos;
 
 	/* MPDUs received in-order */
 	__le32 deliver_in_order;
 
-	/* Flush due to reorder timer expired */
-	__le32 deliver_flush_timeout;
+	/* Flush due to reorder समयr expired */
+	__le32 deliver_flush_समयout;
 
-	/* Flush due to move out of window */
+	/* Flush due to move out of winकरोw */
 	__le32 deliver_flush_oow;
 
 	/* Flush due to DELBA */
@@ -1233,23 +1234,23 @@ struct htt_dbg_stats_rx_reorder_stats {
 	/* MPDUs dropped due to duplication (non aggregation) */
 	__le32 dup_non_aggr;
 
-	/* MPDUs dropped due to processed before */
+	/* MPDUs dropped due to processed beक्रमe */
 	__le32 dup_past;
 
 	/* MPDUs dropped due to duplicate in reorder queue */
 	__le32 dup_in_reorder;
 
-	/* Reorder timeout happened */
-	__le32 reorder_timeout;
+	/* Reorder समयout happened */
+	__le32 reorder_समयout;
 
 	/* invalid bar ssn */
 	__le32 invalid_bar_ssn;
 
 	/* reorder reset due to bar ssn */
 	__le32 ssn_reset;
-};
+पूर्ण;
 
-struct htt_dbg_stats_wal_tx_stats {
+काष्ठा htt_dbg_stats_wal_tx_stats अणु
 	/* Num HTT cookies queued to dispatch list */
 	__le32 comp_queued;
 
@@ -1268,8 +1269,8 @@ struct htt_dbg_stats_wal_tx_stats {
 	/* Num Local frames queued */
 	__le32 local_enqued;
 
-	/* Num Local frames done */
-	__le32 local_freed;
+	/* Num Local frames करोne */
+	__le32 local_मुक्तd;
 
 	/* Num queued to HW */
 	__le32 hw_queued;
@@ -1280,8 +1281,8 @@ struct htt_dbg_stats_wal_tx_stats {
 	/* Num underruns */
 	__le32 underrun;
 
-	/* Num PPDUs cleaned up in TX abort */
-	__le32 tx_abort;
+	/* Num PPDUs cleaned up in TX पात */
+	__le32 tx_पात;
 
 	/* Num MPDUs requed by SW */
 	__le32 mpdus_requed;
@@ -1305,7 +1306,7 @@ struct htt_dbg_stats_wal_tx_stats {
 	__le32 pdev_cont_xretry;
 
 	/* wal pdev continuous xretry */
-	__le32 pdev_tx_timeout;
+	__le32 pdev_tx_समयout;
 
 	/* wal pdev resets  */
 	__le32 pdev_resets;
@@ -1314,9 +1315,9 @@ struct htt_dbg_stats_wal_tx_stats {
 
 	/* MPDU is more than txop limit */
 	__le32 txop_ovf;
-} __packed;
+पूर्ण __packed;
 
-struct htt_dbg_stats_wal_rx_stats {
+काष्ठा htt_dbg_stats_wal_rx_stats अणु
 	/* Cnts any change in ring routing mid-ppdu */
 	__le32 mid_ppdu_route_change;
 
@@ -1348,19 +1349,19 @@ struct htt_dbg_stats_wal_rx_stats {
 
 	/* Number of mpdu errors - FCS, MIC, ENC etc. */
 	__le32 mpdu_errs;
-} __packed;
+पूर्ण __packed;
 
-struct htt_dbg_stats_wal_peer_stats {
+काष्ठा htt_dbg_stats_wal_peer_stats अणु
 	__le32 dummy; /* REMOVE THIS ONCE REAL PEER STAT COUNTERS ARE ADDED */
-} __packed;
+पूर्ण __packed;
 
-struct htt_dbg_stats_wal_pdev_txrx {
-	struct htt_dbg_stats_wal_tx_stats tx_stats;
-	struct htt_dbg_stats_wal_rx_stats rx_stats;
-	struct htt_dbg_stats_wal_peer_stats peer_stats;
-} __packed;
+काष्ठा htt_dbg_stats_wal_pdev_txrx अणु
+	काष्ठा htt_dbg_stats_wal_tx_stats tx_stats;
+	काष्ठा htt_dbg_stats_wal_rx_stats rx_stats;
+	काष्ठा htt_dbg_stats_wal_peer_stats peer_stats;
+पूर्ण __packed;
 
-struct htt_dbg_stats_rx_rate_info {
+काष्ठा htt_dbg_stats_rx_rate_info अणु
 	__le32 mcs[10];
 	__le32 sgi[10];
 	__le32 nss[4];
@@ -1369,49 +1370,49 @@ struct htt_dbg_stats_rx_rate_info {
 	__le32 pream[6];
 	__le32 ldpc;
 	__le32 txbf;
-};
+पूर्ण;
 
 /*
  * htt_dbg_stats_status -
  * present -     The requested stats have been delivered in full.
- *               This indicates that either the stats information was contained
- *               in its entirety within this message, or else this message
+ *               This indicates that either the stats inक्रमmation was contained
+ *               in its entirety within this message, or अन्यथा this message
  *               completes the delivery of the requested stats info that was
  *               partially delivered through earlier STATS_CONF messages.
  * partial -     The requested stats have been delivered in part.
  *               One or more subsequent STATS_CONF messages with the same
- *               cookie value will be sent to deliver the remainder of the
- *               information.
- * error -       The requested stats could not be delivered, for example due
- *               to a shortage of memory to construct a message holding the
+ *               cookie value will be sent to deliver the reमुख्यder of the
+ *               inक्रमmation.
+ * error -       The requested stats could not be delivered, क्रम example due
+ *               to a लघुage of memory to स्थिरruct a message holding the
  *               requested stats.
  * invalid -     The requested stat type is either not recognized, or the
  *               target is configured to not gather the stats type in question.
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- * series_done - This special value indicates that no further stats info
+ * series_करोne - This special value indicates that no further stats info
  *               elements are present within a series of stats info elems
  *               (within a stats upload confirmation message).
  */
-enum htt_dbg_stats_status {
+क्रमागत htt_dbg_stats_status अणु
 	HTT_DBG_STATS_STATUS_PRESENT     = 0,
 	HTT_DBG_STATS_STATUS_PARTIAL     = 1,
 	HTT_DBG_STATS_STATUS_ERROR       = 2,
 	HTT_DBG_STATS_STATUS_INVALID     = 3,
 	HTT_DBG_STATS_STATUS_SERIES_DONE = 7
-};
+पूर्ण;
 
 /*
  * target -> host statistics upload
  *
- * The following field definitions describe the format of the HTT target
+ * The following field definitions describe the क्रमmat of the HTT target
  * to host stats upload confirmation message.
  * The message contains a cookie echoed from the HTT host->target stats
- * upload request, which identifies which request the confirmation is
- * for, and a series of tag-length-value stats information elements.
- * The tag-length header for each stats info element also includes a
- * status field, to indicate whether the request for the stat type in
+ * upload request, which identअगरies which request the confirmation is
+ * क्रम, and a series of tag-length-value stats inक्रमmation elements.
+ * The tag-length header क्रम each stats info element also includes a
+ * status field, to indicate whether the request क्रम the stat type in
  * question was fully met, partially met, unable to be met, or invalid
- * (if the stat type in question is disabled in the target).
+ * (अगर the stat type in question is disabled in the target).
  * A special value of all 1's in this status field is used to indicate
  * the end of the series of stats info elements.
  *
@@ -1427,13 +1428,13 @@ enum htt_dbg_stats_status {
  * |      stats entry length     |   reserved   |  S  |stat type|
  * |------------------------------------------------------------|
  * |                                                            |
- * |                  type-specific stats info                  |
+ * |                  type-specअगरic stats info                  |
  * |                                                            |
  * |------------------------------------------------------------|
  * |      stats entry length     |   reserved   |  S  |stat type|
  * |------------------------------------------------------------|
  * |                                                            |
- * |                  type-specific stats info                  |
+ * |                  type-specअगरic stats info                  |
  * |                                                            |
  * |------------------------------------------------------------|
  * |              n/a            |   reserved   | 111 |   n/a   |
@@ -1441,24 +1442,24 @@ enum htt_dbg_stats_status {
  * Header fields:
  *  - MSG_TYPE
  *    Bits 7:0
- *    Purpose: identifies this is a statistics upload confirmation message
+ *    Purpose: identअगरies this is a statistics upload confirmation message
  *    Value: 0x9
  *  - COOKIE_LSBS
  *    Bits 31:0
  *    Purpose: Provide a mechanism to match a target->host stats confirmation
  *        message with its preceding host->target stats request message.
- *    Value: LSBs of the opaque cookie specified by the host-side requestor
+ *    Value: LSBs of the opaque cookie specअगरied by the host-side requestor
  *  - COOKIE_MSBS
  *    Bits 31:0
  *    Purpose: Provide a mechanism to match a target->host stats confirmation
  *        message with its preceding host->target stats request message.
- *    Value: MSBs of the opaque cookie specified by the host-side requestor
+ *    Value: MSBs of the opaque cookie specअगरied by the host-side requestor
  *
- * Stats Information Element tag-length header fields:
+ * Stats Inक्रमmation Element tag-length header fields:
  *  - STAT_TYPE
  *    Bits 4:0
- *    Purpose: identifies the type of statistics info held in the
- *        following information element
+ *    Purpose: identअगरies the type of statistics info held in the
+ *        following inक्रमmation element
  *    Value: htt_dbg_stats_type
  *  - STATUS
  *    Bits 7:5
@@ -1467,63 +1468,63 @@ enum htt_dbg_stats_status {
  *        the completion of the stats entry series
  *  - LENGTH
  *    Bits 31:16
- *    Purpose: indicate the stats information size
- *    Value: This field specifies the number of bytes of stats information
+ *    Purpose: indicate the stats inक्रमmation size
+ *    Value: This field specअगरies the number of bytes of stats inक्रमmation
  *       that follows the element tag-length header.
  *       It is expected but not required that this length is a multiple of
- *       4 bytes.  Even if the length is not an integer multiple of 4, the
+ *       4 bytes.  Even अगर the length is not an पूर्णांकeger multiple of 4, the
  *       subsequent stats entry header will begin on a 4-byte aligned
  *       boundary.
  */
 
-#define HTT_STATS_CONF_ITEM_INFO_STAT_TYPE_MASK 0x1F
-#define HTT_STATS_CONF_ITEM_INFO_STAT_TYPE_LSB  0
-#define HTT_STATS_CONF_ITEM_INFO_STATUS_MASK    0xE0
-#define HTT_STATS_CONF_ITEM_INFO_STATUS_LSB     5
+#घोषणा HTT_STATS_CONF_ITEM_INFO_STAT_TYPE_MASK 0x1F
+#घोषणा HTT_STATS_CONF_ITEM_INFO_STAT_TYPE_LSB  0
+#घोषणा HTT_STATS_CONF_ITEM_INFO_STATUS_MASK    0xE0
+#घोषणा HTT_STATS_CONF_ITEM_INFO_STATUS_LSB     5
 
-struct htt_stats_conf_item {
-	union {
+काष्ठा htt_stats_conf_item अणु
+	जोड़ अणु
 		u8 info;
-		struct {
+		काष्ठा अणु
 			u8 stat_type:5; /* %HTT_DBG_STATS_ */
 			u8 status:3; /* %HTT_DBG_STATS_STATUS_ */
-		} __packed;
-	} __packed;
+		पूर्ण __packed;
+	पूर्ण __packed;
 	u8 pad;
 	__le16 length;
-	u8 payload[]; /* roundup(length, 4) long */
-} __packed;
+	u8 payload[]; /* roundup(length, 4) दीर्घ */
+पूर्ण __packed;
 
-struct htt_stats_conf {
+काष्ठा htt_stats_conf अणु
 	u8 pad[3];
 	__le32 cookie_lsb;
 	__le32 cookie_msb;
 
 	/* each item has variable length! */
-	struct htt_stats_conf_item items[];
-} __packed;
+	काष्ठा htt_stats_conf_item items[];
+पूर्ण __packed;
 
-static inline struct htt_stats_conf_item *htt_stats_conf_next_item(
-					const struct htt_stats_conf_item *item)
-{
-	return (void *)item + sizeof(*item) + roundup(item->length, 4);
-}
+अटल अंतरभूत काष्ठा htt_stats_conf_item *htt_stats_conf_next_item(
+					स्थिर काष्ठा htt_stats_conf_item *item)
+अणु
+	वापस (व्योम *)item + माप(*item) + roundup(item->length, 4);
+पूर्ण
 
 /*
  * host -> target FRAG DESCRIPTOR/MSDU_EXT DESC bank
  *
- * The following field definitions describe the format of the HTT host
+ * The following field definitions describe the क्रमmat of the HTT host
  * to target frag_desc/msdu_ext bank configuration message.
  * The message contains the based address and the min and max id of the
  * MSDU_EXT/FRAG_DESC that will be used by the HTT to map MSDU DESC and
  * MSDU_EXT/FRAG_DESC.
  * HTT will use id in HTT descriptor instead sending the frag_desc_ptr.
  * For QCA988X HW the firmware will use fragment_desc_ptr but in WIFI2.0
- * the hardware does the mapping/translation.
+ * the hardware करोes the mapping/translation.
  *
  * Total banks that can be configured is configured to 16.
  *
- * This should be called before any TX has be initiated by the HTT
+ * This should be called beक्रमe any TX has be initiated by the HTT
  *
  * |31                         16|15           8|7   5|4       0|
  * |------------------------------------------------------------|
@@ -1547,95 +1548,95 @@ static inline struct htt_stats_conf_item *htt_stats_conf_next_item(
  *    Value: 0x6
  *  - BANKx_BASE_ADDRESS
  *    Bits 31:0
- *    Purpose: Provide a mechanism to specify the base address of the MSDU_EXT
+ *    Purpose: Provide a mechanism to specअगरy the base address of the MSDU_EXT
  *         bank physical/bus address.
  *  - BANKx_MIN_ID
  *    Bits 15:0
- *    Purpose: Provide a mechanism to specify the min index that needs to
+ *    Purpose: Provide a mechanism to specअगरy the min index that needs to
  *          mapped.
  *  - BANKx_MAX_ID
  *    Bits 31:16
- *    Purpose: Provide a mechanism to specify the max index that needs to
+ *    Purpose: Provide a mechanism to specअगरy the max index that needs to
  *
  */
-struct htt_frag_desc_bank_id {
+काष्ठा htt_frag_desc_bank_id अणु
 	__le16 bank_min_id;
 	__le16 bank_max_id;
-} __packed;
+पूर्ण __packed;
 
 /* real is 16 but it wouldn't fit in the max htt message size
- * so we use a conservatively safe value for now
+ * so we use a conservatively safe value क्रम now
  */
-#define HTT_FRAG_DESC_BANK_MAX 4
+#घोषणा HTT_FRAG_DESC_BANK_MAX 4
 
-#define HTT_FRAG_DESC_BANK_CFG_INFO_PDEV_ID_MASK		0x03
-#define HTT_FRAG_DESC_BANK_CFG_INFO_PDEV_ID_LSB			0
-#define HTT_FRAG_DESC_BANK_CFG_INFO_SWAP			BIT(2)
-#define HTT_FRAG_DESC_BANK_CFG_INFO_Q_STATE_VALID		BIT(3)
-#define HTT_FRAG_DESC_BANK_CFG_INFO_Q_STATE_DEPTH_TYPE_MASK	BIT(4)
-#define HTT_FRAG_DESC_BANK_CFG_INFO_Q_STATE_DEPTH_TYPE_LSB	4
+#घोषणा HTT_FRAG_DESC_BANK_CFG_INFO_PDEV_ID_MASK		0x03
+#घोषणा HTT_FRAG_DESC_BANK_CFG_INFO_PDEV_ID_LSB			0
+#घोषणा HTT_FRAG_DESC_BANK_CFG_INFO_SWAP			BIT(2)
+#घोषणा HTT_FRAG_DESC_BANK_CFG_INFO_Q_STATE_VALID		BIT(3)
+#घोषणा HTT_FRAG_DESC_BANK_CFG_INFO_Q_STATE_DEPTH_TYPE_MASK	BIT(4)
+#घोषणा HTT_FRAG_DESC_BANK_CFG_INFO_Q_STATE_DEPTH_TYPE_LSB	4
 
-enum htt_q_depth_type {
+क्रमागत htt_q_depth_type अणु
 	HTT_Q_DEPTH_TYPE_BYTES = 0,
 	HTT_Q_DEPTH_TYPE_MSDUS = 1,
-};
+पूर्ण;
 
-#define HTT_TX_Q_STATE_NUM_PEERS		(TARGET_10_4_NUM_QCACHE_PEERS_MAX + \
+#घोषणा HTT_TX_Q_STATE_NUM_PEERS		(TARGET_10_4_NUM_QCACHE_PEERS_MAX + \
 						 TARGET_10_4_NUM_VDEVS)
-#define HTT_TX_Q_STATE_NUM_TIDS			8
-#define HTT_TX_Q_STATE_ENTRY_SIZE		1
-#define HTT_TX_Q_STATE_ENTRY_MULTIPLIER		0
+#घोषणा HTT_TX_Q_STATE_NUM_TIDS			8
+#घोषणा HTT_TX_Q_STATE_ENTRY_SIZE		1
+#घोषणा HTT_TX_Q_STATE_ENTRY_MULTIPLIER		0
 
 /**
- * htt_q_state_conf - part of htt_frag_desc_bank_cfg for host q state config
+ * htt_q_state_conf - part of htt_frag_desc_bank_cfg क्रम host q state config
  *
- * Defines host q state format and behavior. See htt_q_state.
+ * Defines host q state क्रमmat and behavior. See htt_q_state.
  *
  * @record_size: Defines the size of each host q entry in bytes. In practice
  *	however firmware (at least 10.4.3-00191) ignores this host
  *	configuration value and uses hardcoded value of 1.
  * @record_multiplier: This is valid only when q depth type is MSDUs. It
- *	defines the exponent for the power of 2 multiplication.
+ *	defines the exponent क्रम the घातer of 2 multiplication.
  */
-struct htt_q_state_conf {
+काष्ठा htt_q_state_conf अणु
 	__le32 paddr;
 	__le16 num_peers;
 	__le16 num_tids;
 	u8 record_size;
 	u8 record_multiplier;
 	u8 pad[2];
-} __packed;
+पूर्ण __packed;
 
-struct htt_frag_desc_bank_cfg32 {
+काष्ठा htt_frag_desc_bank_cfg32 अणु
 	u8 info; /* HTT_FRAG_DESC_BANK_CFG_INFO_ */
 	u8 num_banks;
 	u8 desc_size;
 	__le32 bank_base_addrs[HTT_FRAG_DESC_BANK_MAX];
-	struct htt_frag_desc_bank_id bank_id[HTT_FRAG_DESC_BANK_MAX];
-	struct htt_q_state_conf q_state;
-} __packed;
+	काष्ठा htt_frag_desc_bank_id bank_id[HTT_FRAG_DESC_BANK_MAX];
+	काष्ठा htt_q_state_conf q_state;
+पूर्ण __packed;
 
-struct htt_frag_desc_bank_cfg64 {
+काष्ठा htt_frag_desc_bank_cfg64 अणु
 	u8 info; /* HTT_FRAG_DESC_BANK_CFG_INFO_ */
 	u8 num_banks;
 	u8 desc_size;
 	__le64 bank_base_addrs[HTT_FRAG_DESC_BANK_MAX];
-	struct htt_frag_desc_bank_id bank_id[HTT_FRAG_DESC_BANK_MAX];
-	struct htt_q_state_conf q_state;
-} __packed;
+	काष्ठा htt_frag_desc_bank_id bank_id[HTT_FRAG_DESC_BANK_MAX];
+	काष्ठा htt_q_state_conf q_state;
+पूर्ण __packed;
 
-#define HTT_TX_Q_STATE_ENTRY_COEFFICIENT	128
-#define HTT_TX_Q_STATE_ENTRY_FACTOR_MASK	0x3f
-#define HTT_TX_Q_STATE_ENTRY_FACTOR_LSB		0
-#define HTT_TX_Q_STATE_ENTRY_EXP_MASK		0xc0
-#define HTT_TX_Q_STATE_ENTRY_EXP_LSB		6
+#घोषणा HTT_TX_Q_STATE_ENTRY_COEFFICIENT	128
+#घोषणा HTT_TX_Q_STATE_ENTRY_FACTOR_MASK	0x3f
+#घोषणा HTT_TX_Q_STATE_ENTRY_FACTOR_LSB		0
+#घोषणा HTT_TX_Q_STATE_ENTRY_EXP_MASK		0xc0
+#घोषणा HTT_TX_Q_STATE_ENTRY_EXP_LSB		6
 
 /**
  * htt_q_state - shared between host and firmware via DMA
  *
- * This structure is used for the host to expose it's software queue state to
- * firmware so that its rate control can schedule fetch requests for optimized
- * performance. This is most notably used for MU-MIMO aggregation when multiple
+ * This काष्ठाure is used क्रम the host to expose it's software queue state to
+ * firmware so that its rate control can schedule fetch requests क्रम optimized
+ * perक्रमmance. This is most notably used क्रम MU-MIMO aggregation when multiple
  * MU clients are connected.
  *
  * @count: Each element defines the host queue depth. When q depth type was
@@ -1645,101 +1646,101 @@ struct htt_frag_desc_bank_cfg64 {
  *	HTT_Q_DEPTH_TYPE_MSDUS the number of packets is scaled by 2 **
  *	record_multiplier (see htt_q_state_conf).
  * @map: Used by firmware to quickly check which host queues are not empty. It
- *	is a bitmap simply saying.
- * @seq: Used by firmware to quickly check if the host queues were updated
+ *	is a biपंचांगap simply saying.
+ * @seq: Used by firmware to quickly check अगर the host queues were updated
  *	since it last checked.
  *
  * FIXME: Is the q_state map[] size calculation really correct?
  */
-struct htt_q_state {
+काष्ठा htt_q_state अणु
 	u8 count[HTT_TX_Q_STATE_NUM_TIDS][HTT_TX_Q_STATE_NUM_PEERS];
 	u32 map[HTT_TX_Q_STATE_NUM_TIDS][(HTT_TX_Q_STATE_NUM_PEERS + 31) / 32];
 	__le32 seq;
-} __packed;
+पूर्ण __packed;
 
-#define HTT_TX_FETCH_RECORD_INFO_PEER_ID_MASK	0x0fff
-#define HTT_TX_FETCH_RECORD_INFO_PEER_ID_LSB	0
-#define HTT_TX_FETCH_RECORD_INFO_TID_MASK	0xf000
-#define HTT_TX_FETCH_RECORD_INFO_TID_LSB	12
+#घोषणा HTT_TX_FETCH_RECORD_INFO_PEER_ID_MASK	0x0fff
+#घोषणा HTT_TX_FETCH_RECORD_INFO_PEER_ID_LSB	0
+#घोषणा HTT_TX_FETCH_RECORD_INFO_TID_MASK	0xf000
+#घोषणा HTT_TX_FETCH_RECORD_INFO_TID_LSB	12
 
-struct htt_tx_fetch_record {
+काष्ठा htt_tx_fetch_record अणु
 	__le16 info; /* HTT_TX_FETCH_IND_RECORD_INFO_ */
 	__le16 num_msdus;
 	__le32 num_bytes;
-} __packed;
+पूर्ण __packed;
 
-struct htt_tx_fetch_ind {
+काष्ठा htt_tx_fetch_ind अणु
 	u8 pad0;
 	__le16 fetch_seq_num;
 	__le32 token;
 	__le16 num_resp_ids;
 	__le16 num_records;
 	__le32 resp_ids[0]; /* ath10k_htt_get_tx_fetch_ind_resp_ids() */
-	struct htt_tx_fetch_record records[];
-} __packed;
+	काष्ठा htt_tx_fetch_record records[];
+पूर्ण __packed;
 
-static inline void *
-ath10k_htt_get_tx_fetch_ind_resp_ids(struct htt_tx_fetch_ind *ind)
-{
-	return (void *)&ind->records[le16_to_cpu(ind->num_records)];
-}
+अटल अंतरभूत व्योम *
+ath10k_htt_get_tx_fetch_ind_resp_ids(काष्ठा htt_tx_fetch_ind *ind)
+अणु
+	वापस (व्योम *)&ind->records[le16_to_cpu(ind->num_records)];
+पूर्ण
 
-struct htt_tx_fetch_resp {
+काष्ठा htt_tx_fetch_resp अणु
 	u8 pad0;
 	__le16 resp_id;
 	__le16 fetch_seq_num;
 	__le16 num_records;
 	__le32 token;
-	struct htt_tx_fetch_record records[];
-} __packed;
+	काष्ठा htt_tx_fetch_record records[];
+पूर्ण __packed;
 
-struct htt_tx_fetch_confirm {
+काष्ठा htt_tx_fetch_confirm अणु
 	u8 pad0;
 	__le16 num_resp_ids;
 	__le32 resp_ids[];
-} __packed;
+पूर्ण __packed;
 
-enum htt_tx_mode_switch_mode {
+क्रमागत htt_tx_mode_चयन_mode अणु
 	HTT_TX_MODE_SWITCH_PUSH = 0,
 	HTT_TX_MODE_SWITCH_PUSH_PULL = 1,
-};
+पूर्ण;
 
-#define HTT_TX_MODE_SWITCH_IND_INFO0_ENABLE		BIT(0)
-#define HTT_TX_MODE_SWITCH_IND_INFO0_NUM_RECORDS_MASK	0xfffe
-#define HTT_TX_MODE_SWITCH_IND_INFO0_NUM_RECORDS_LSB	1
+#घोषणा HTT_TX_MODE_SWITCH_IND_INFO0_ENABLE		BIT(0)
+#घोषणा HTT_TX_MODE_SWITCH_IND_INFO0_NUM_RECORDS_MASK	0xfffe
+#घोषणा HTT_TX_MODE_SWITCH_IND_INFO0_NUM_RECORDS_LSB	1
 
-#define HTT_TX_MODE_SWITCH_IND_INFO1_MODE_MASK		0x0003
-#define HTT_TX_MODE_SWITCH_IND_INFO1_MODE_LSB		0
-#define HTT_TX_MODE_SWITCH_IND_INFO1_THRESHOLD_MASK	0xfffc
-#define HTT_TX_MODE_SWITCH_IND_INFO1_THRESHOLD_LSB	2
+#घोषणा HTT_TX_MODE_SWITCH_IND_INFO1_MODE_MASK		0x0003
+#घोषणा HTT_TX_MODE_SWITCH_IND_INFO1_MODE_LSB		0
+#घोषणा HTT_TX_MODE_SWITCH_IND_INFO1_THRESHOLD_MASK	0xfffc
+#घोषणा HTT_TX_MODE_SWITCH_IND_INFO1_THRESHOLD_LSB	2
 
-#define HTT_TX_MODE_SWITCH_RECORD_INFO0_PEER_ID_MASK	0x0fff
-#define HTT_TX_MODE_SWITCH_RECORD_INFO0_PEER_ID_LSB	0
-#define HTT_TX_MODE_SWITCH_RECORD_INFO0_TID_MASK	0xf000
-#define HTT_TX_MODE_SWITCH_RECORD_INFO0_TID_LSB		12
+#घोषणा HTT_TX_MODE_SWITCH_RECORD_INFO0_PEER_ID_MASK	0x0fff
+#घोषणा HTT_TX_MODE_SWITCH_RECORD_INFO0_PEER_ID_LSB	0
+#घोषणा HTT_TX_MODE_SWITCH_RECORD_INFO0_TID_MASK	0xf000
+#घोषणा HTT_TX_MODE_SWITCH_RECORD_INFO0_TID_LSB		12
 
-struct htt_tx_mode_switch_record {
+काष्ठा htt_tx_mode_चयन_record अणु
 	__le16 info0; /* HTT_TX_MODE_SWITCH_RECORD_INFO0_ */
 	__le16 num_max_msdus;
-} __packed;
+पूर्ण __packed;
 
-struct htt_tx_mode_switch_ind {
+काष्ठा htt_tx_mode_चयन_ind अणु
 	u8 pad0;
 	__le16 info0; /* HTT_TX_MODE_SWITCH_IND_INFO0_ */
 	__le16 info1; /* HTT_TX_MODE_SWITCH_IND_INFO1_ */
 	u8 pad1[2];
-	struct htt_tx_mode_switch_record records[];
-} __packed;
+	काष्ठा htt_tx_mode_चयन_record records[];
+पूर्ण __packed;
 
-struct htt_channel_change {
+काष्ठा htt_channel_change अणु
 	u8 pad[3];
 	__le32 freq;
 	__le32 center_freq1;
 	__le32 center_freq2;
 	__le32 phymode;
-} __packed;
+पूर्ण __packed;
 
-struct htt_per_peer_tx_stats_ind {
+काष्ठा htt_per_peer_tx_stats_ind अणु
 	__le32	succ_bytes;
 	__le32  retry_bytes;
 	__le32  failed_bytes;
@@ -1752,19 +1753,19 @@ struct htt_per_peer_tx_stats_ind {
 	__le16	tx_duration;
 	__le32	reserved1;
 	__le32	reserved2;
-} __packed;
+पूर्ण __packed;
 
-struct htt_peer_tx_stats {
+काष्ठा htt_peer_tx_stats अणु
 	u8 num_ppdu;
 	u8 ppdu_len;
 	u8 version;
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-#define ATH10K_10_2_TX_STATS_OFFSET	136
-#define PEER_STATS_FOR_NO_OF_PPDUS	4
+#घोषणा ATH10K_10_2_TX_STATS_OFFSET	136
+#घोषणा PEER_STATS_FOR_NO_OF_PPDUS	4
 
-struct ath10k_10_2_peer_tx_stats {
+काष्ठा ath10k_10_2_peer_tx_stats अणु
 	u8 ratecode[PEER_STATS_FOR_NO_OF_PPDUS];
 	u8 success_pkts[PEER_STATS_FOR_NO_OF_PPDUS];
 	__le16 success_bytes[PEER_STATS_FOR_NO_OF_PPDUS];
@@ -1776,9 +1777,9 @@ struct ath10k_10_2_peer_tx_stats {
 	__le32 tx_duration;
 	u8 tx_ppdu_cnt;
 	u8 peer_id;
-} __packed;
+पूर्ण __packed;
 
-union htt_rx_pn_t {
+जोड़ htt_rx_pn_t अणु
 	/* WEP: 24-bit PN */
 	u32 pn24;
 
@@ -1787,111 +1788,111 @@ union htt_rx_pn_t {
 
 	/* WAPI: 128-bit PN */
 	u64 pn128[2];
-};
+पूर्ण;
 
-struct htt_cmd {
-	struct htt_cmd_hdr hdr;
-	union {
-		struct htt_ver_req ver_req;
-		struct htt_mgmt_tx_desc mgmt_tx;
-		struct htt_data_tx_desc data_tx;
-		struct htt_rx_ring_setup_32 rx_setup_32;
-		struct htt_rx_ring_setup_64 rx_setup_64;
-		struct htt_stats_req stats_req;
-		struct htt_oob_sync_req oob_sync_req;
-		struct htt_aggr_conf aggr_conf;
-		struct htt_aggr_conf_v2 aggr_conf_v2;
-		struct htt_frag_desc_bank_cfg32 frag_desc_bank_cfg32;
-		struct htt_frag_desc_bank_cfg64 frag_desc_bank_cfg64;
-		struct htt_tx_fetch_resp tx_fetch_resp;
-	};
-} __packed;
+काष्ठा htt_cmd अणु
+	काष्ठा htt_cmd_hdr hdr;
+	जोड़ अणु
+		काष्ठा htt_ver_req ver_req;
+		काष्ठा htt_mgmt_tx_desc mgmt_tx;
+		काष्ठा htt_data_tx_desc data_tx;
+		काष्ठा htt_rx_ring_setup_32 rx_setup_32;
+		काष्ठा htt_rx_ring_setup_64 rx_setup_64;
+		काष्ठा htt_stats_req stats_req;
+		काष्ठा htt_oob_sync_req oob_sync_req;
+		काष्ठा htt_aggr_conf aggr_conf;
+		काष्ठा htt_aggr_conf_v2 aggr_conf_v2;
+		काष्ठा htt_frag_desc_bank_cfg32 frag_desc_bank_cfg32;
+		काष्ठा htt_frag_desc_bank_cfg64 frag_desc_bank_cfg64;
+		काष्ठा htt_tx_fetch_resp tx_fetch_resp;
+	पूर्ण;
+पूर्ण __packed;
 
-struct htt_resp {
-	struct htt_resp_hdr hdr;
-	union {
-		struct htt_ver_resp ver_resp;
-		struct htt_mgmt_tx_completion mgmt_tx_completion;
-		struct htt_data_tx_completion data_tx_completion;
-		struct htt_rx_indication rx_ind;
-		struct htt_rx_indication_hl rx_ind_hl;
-		struct htt_rx_fragment_indication rx_frag_ind;
-		struct htt_rx_peer_map peer_map;
-		struct htt_rx_peer_unmap peer_unmap;
-		struct htt_rx_flush rx_flush;
-		struct htt_rx_addba rx_addba;
-		struct htt_rx_delba rx_delba;
-		struct htt_security_indication security_indication;
-		struct htt_rc_update rc_update;
-		struct htt_rx_test rx_test;
-		struct htt_pktlog_msg pktlog_msg;
-		struct htt_stats_conf stats_conf;
-		struct htt_rx_pn_ind rx_pn_ind;
-		struct htt_rx_offload_ind rx_offload_ind;
-		struct htt_rx_in_ord_ind rx_in_ord_ind;
-		struct htt_tx_fetch_ind tx_fetch_ind;
-		struct htt_tx_fetch_confirm tx_fetch_confirm;
-		struct htt_tx_mode_switch_ind tx_mode_switch_ind;
-		struct htt_channel_change chan_change;
-		struct htt_peer_tx_stats peer_tx_stats;
-	};
-} __packed;
+काष्ठा htt_resp अणु
+	काष्ठा htt_resp_hdr hdr;
+	जोड़ अणु
+		काष्ठा htt_ver_resp ver_resp;
+		काष्ठा htt_mgmt_tx_completion mgmt_tx_completion;
+		काष्ठा htt_data_tx_completion data_tx_completion;
+		काष्ठा htt_rx_indication rx_ind;
+		काष्ठा htt_rx_indication_hl rx_ind_hl;
+		काष्ठा htt_rx_fragment_indication rx_frag_ind;
+		काष्ठा htt_rx_peer_map peer_map;
+		काष्ठा htt_rx_peer_unmap peer_unmap;
+		काष्ठा htt_rx_flush rx_flush;
+		काष्ठा htt_rx_addba rx_addba;
+		काष्ठा htt_rx_delba rx_delba;
+		काष्ठा htt_security_indication security_indication;
+		काष्ठा htt_rc_update rc_update;
+		काष्ठा htt_rx_test rx_test;
+		काष्ठा htt_pktlog_msg pktlog_msg;
+		काष्ठा htt_stats_conf stats_conf;
+		काष्ठा htt_rx_pn_ind rx_pn_ind;
+		काष्ठा htt_rx_offload_ind rx_offload_ind;
+		काष्ठा htt_rx_in_ord_ind rx_in_ord_ind;
+		काष्ठा htt_tx_fetch_ind tx_fetch_ind;
+		काष्ठा htt_tx_fetch_confirm tx_fetch_confirm;
+		काष्ठा htt_tx_mode_चयन_ind tx_mode_चयन_ind;
+		काष्ठा htt_channel_change chan_change;
+		काष्ठा htt_peer_tx_stats peer_tx_stats;
+	पूर्ण;
+पूर्ण __packed;
 
-/*** host side structures follow ***/
+/*** host side काष्ठाures follow ***/
 
-struct htt_tx_done {
+काष्ठा htt_tx_करोne अणु
 	u16 msdu_id;
 	u16 status;
 	u8 ack_rssi;
-};
+पूर्ण;
 
-enum htt_tx_compl_state {
+क्रमागत htt_tx_compl_state अणु
 	HTT_TX_COMPL_STATE_NONE,
 	HTT_TX_COMPL_STATE_ACK,
 	HTT_TX_COMPL_STATE_NOACK,
 	HTT_TX_COMPL_STATE_DISCARD,
-};
+पूर्ण;
 
-struct htt_peer_map_event {
+काष्ठा htt_peer_map_event अणु
 	u8 vdev_id;
 	u16 peer_id;
 	u8 addr[ETH_ALEN];
-};
+पूर्ण;
 
-struct htt_peer_unmap_event {
+काष्ठा htt_peer_unmap_event अणु
 	u16 peer_id;
-};
+पूर्ण;
 
-struct ath10k_htt_txbuf_32 {
-	struct htt_data_tx_desc_frag frags[2];
-	struct ath10k_htc_hdr htc_hdr;
-	struct htt_cmd_hdr cmd_hdr;
-	struct htt_data_tx_desc cmd_tx;
-} __packed __aligned(4);
+काष्ठा ath10k_htt_txbuf_32 अणु
+	काष्ठा htt_data_tx_desc_frag frags[2];
+	काष्ठा ath10k_htc_hdr htc_hdr;
+	काष्ठा htt_cmd_hdr cmd_hdr;
+	काष्ठा htt_data_tx_desc cmd_tx;
+पूर्ण __packed __aligned(4);
 
-struct ath10k_htt_txbuf_64 {
-	struct htt_data_tx_desc_frag frags[2];
-	struct ath10k_htc_hdr htc_hdr;
-	struct htt_cmd_hdr cmd_hdr;
-	struct htt_data_tx_desc_64 cmd_tx;
-} __packed __aligned(4);
+काष्ठा ath10k_htt_txbuf_64 अणु
+	काष्ठा htt_data_tx_desc_frag frags[2];
+	काष्ठा ath10k_htc_hdr htc_hdr;
+	काष्ठा htt_cmd_hdr cmd_hdr;
+	काष्ठा htt_data_tx_desc_64 cmd_tx;
+पूर्ण __packed __aligned(4);
 
-struct ath10k_htt {
-	struct ath10k *ar;
-	enum ath10k_htc_ep_id eid;
+काष्ठा ath10k_htt अणु
+	काष्ठा ath10k *ar;
+	क्रमागत ath10k_htc_ep_id eid;
 
-	struct sk_buff_head rx_indication_head;
+	काष्ठा sk_buff_head rx_indication_head;
 
 	u8 target_version_major;
 	u8 target_version_minor;
-	struct completion target_version_received;
+	काष्ठा completion target_version_received;
 	u8 max_num_amsdu;
 	u8 max_num_ampdu;
 
-	const enum htt_t2h_msg_type *t2h_msg_types;
+	स्थिर क्रमागत htt_t2h_msg_type *t2h_msg_types;
 	u32 t2h_msg_types_max;
 
-	struct {
+	काष्ठा अणु
 		/*
 		 * Ring of network buffer objects - This ring is
 		 * used exclusively by the host SW. This ring
@@ -1901,17 +1902,17 @@ struct ath10k_htt {
 		 * buffer objects whose data buffers the HW has
 		 * filled.
 		 */
-		struct sk_buff **netbufs_ring;
+		काष्ठा sk_buff **netbufs_ring;
 
 		/* This is used only with firmware supporting IN_ORD_IND.
 		 *
 		 * With Full Rx Reorder the HTT Rx Ring is more of a temporary
 		 * buffer ring from which buffer addresses are copied by the
 		 * firmware to MAC Rx ring. Firmware then delivers IN_ORD_IND
-		 * pointing to specific (re-ordered) buffers.
+		 * poपूर्णांकing to specअगरic (re-ordered) buffers.
 		 *
 		 * FIXME: With kernel generic hashing functions there's a lot
-		 * of hash collisions for sk_buffs.
+		 * of hash collisions क्रम sk_buffs.
 		 */
 		bool in_ord_rx;
 		DECLARE_HASHTABLE(skb_table, 4);
@@ -1919,13 +1920,13 @@ struct ath10k_htt {
 		/*
 		 * Ring of buffer addresses -
 		 * This ring holds the "physical" device address of the
-		 * rx buffers the host SW provides for the MAC HW to
+		 * rx buffers the host SW provides क्रम the MAC HW to
 		 * fill.
 		 */
-		union {
+		जोड़ अणु
 			__le64 *paddrs_ring_64;
 			__le32 *paddrs_ring_32;
-		};
+		पूर्ण;
 
 		/*
 		 * Base address of ring, as a "physical" device address
@@ -1933,382 +1934,382 @@ struct ath10k_htt {
 		 */
 		dma_addr_t base_paddr;
 
-		/* how many elems in the ring (power of 2) */
-		int size;
+		/* how many elems in the ring (घातer of 2) */
+		पूर्णांक size;
 
 		/* size - 1 */
-		unsigned int size_mask;
+		अचिन्हित पूर्णांक size_mask;
 
 		/* how many rx buffers to keep in the ring */
-		int fill_level;
+		पूर्णांक fill_level;
 
 		/* how many rx buffers (full+empty) are in the ring */
-		int fill_cnt;
+		पूर्णांक fill_cnt;
 
 		/*
 		 * alloc_idx - where HTT SW has deposited empty buffers
 		 * This is allocated in consistent mem, so that the FW can
-		 * read this variable, and program the HW's FW_IDX reg with
-		 * the value of this shadow register.
+		 * पढ़ो this variable, and program the HW's FW_IDX reg with
+		 * the value of this shaकरोw रेजिस्टर.
 		 */
-		struct {
+		काष्ठा अणु
 			__le32 *vaddr;
 			dma_addr_t paddr;
-		} alloc_idx;
+		पूर्ण alloc_idx;
 
 		/* where HTT SW has processed bufs filled by rx MAC DMA */
-		struct {
-			unsigned int msdu_payld;
-		} sw_rd_idx;
+		काष्ठा अणु
+			अचिन्हित पूर्णांक msdu_payld;
+		पूर्ण sw_rd_idx;
 
 		/*
-		 * refill_retry_timer - timer triggered when the ring is
+		 * refill_retry_समयr - समयr triggered when the ring is
 		 * not refilled to the level expected
 		 */
-		struct timer_list refill_retry_timer;
+		काष्ठा समयr_list refill_retry_समयr;
 
 		/* Protects access to all rx ring buffer state variables */
 		spinlock_t lock;
-	} rx_ring;
+	पूर्ण rx_ring;
 
-	unsigned int prefetch_len;
+	अचिन्हित पूर्णांक prefetch_len;
 
 	/* Protects access to pending_tx, num_pending_tx */
 	spinlock_t tx_lock;
-	int max_num_pending_tx;
-	int num_pending_tx;
-	int num_pending_mgmt_tx;
-	struct idr pending_tx;
-	wait_queue_head_t empty_tx_wq;
+	पूर्णांक max_num_pending_tx;
+	पूर्णांक num_pending_tx;
+	पूर्णांक num_pending_mgmt_tx;
+	काष्ठा idr pending_tx;
+	रुको_queue_head_t empty_tx_wq;
 
-	/* FIFO for storing tx done status {ack, no-ack, discard} and msdu id */
-	DECLARE_KFIFO_PTR(txdone_fifo, struct htt_tx_done);
+	/* FIFO क्रम storing tx करोne status अणुack, no-ack, discardपूर्ण and msdu id */
+	DECLARE_KFIFO_PTR(txकरोne_fअगरo, काष्ठा htt_tx_करोne);
 
-	/* set if host-fw communication goes haywire
-	 * used to avoid further failures
+	/* set अगर host-fw communication goes haywire
+	 * used to aव्योम further failures
 	 */
 	bool rx_confused;
-	atomic_t num_mpdus_ready;
+	atomic_t num_mpdus_पढ़ोy;
 
 	/* This is used to group tx/rx completions separately and process them
 	 * in batches to reduce cache stalls
 	 */
-	struct sk_buff_head rx_msdus_q;
-	struct sk_buff_head rx_in_ord_compl_q;
-	struct sk_buff_head tx_fetch_ind_q;
+	काष्ठा sk_buff_head rx_msdus_q;
+	काष्ठा sk_buff_head rx_in_ord_compl_q;
+	काष्ठा sk_buff_head tx_fetch_ind_q;
 
-	/* rx_status template */
-	struct ieee80211_rx_status rx_status;
+	/* rx_status ढाँचा */
+	काष्ठा ieee80211_rx_status rx_status;
 
-	struct {
+	काष्ठा अणु
 		dma_addr_t paddr;
-		union {
-			struct htt_msdu_ext_desc *vaddr_desc_32;
-			struct htt_msdu_ext_desc_64 *vaddr_desc_64;
-		};
-		size_t size;
-	} frag_desc;
+		जोड़ अणु
+			काष्ठा htt_msdu_ext_desc *vaddr_desc_32;
+			काष्ठा htt_msdu_ext_desc_64 *vaddr_desc_64;
+		पूर्ण;
+		माप_प्रकार size;
+	पूर्ण frag_desc;
 
-	struct {
+	काष्ठा अणु
 		dma_addr_t paddr;
-		union {
-			struct ath10k_htt_txbuf_32 *vaddr_txbuff_32;
-			struct ath10k_htt_txbuf_64 *vaddr_txbuff_64;
-		};
-		size_t size;
-	} txbuf;
+		जोड़ अणु
+			काष्ठा ath10k_htt_txbuf_32 *vaddr_txbuff_32;
+			काष्ठा ath10k_htt_txbuf_64 *vaddr_txbuff_64;
+		पूर्ण;
+		माप_प्रकार size;
+	पूर्ण txbuf;
 
-	struct {
+	काष्ठा अणु
 		bool enabled;
-		struct htt_q_state *vaddr;
+		काष्ठा htt_q_state *vaddr;
 		dma_addr_t paddr;
 		u16 num_push_allowed;
 		u16 num_peers;
 		u16 num_tids;
-		enum htt_tx_mode_switch_mode mode;
-		enum htt_q_depth_type type;
-	} tx_q_state;
+		क्रमागत htt_tx_mode_चयन_mode mode;
+		क्रमागत htt_q_depth_type type;
+	पूर्ण tx_q_state;
 
 	bool tx_mem_allocated;
-	const struct ath10k_htt_tx_ops *tx_ops;
-	const struct ath10k_htt_rx_ops *rx_ops;
+	स्थिर काष्ठा ath10k_htt_tx_ops *tx_ops;
+	स्थिर काष्ठा ath10k_htt_rx_ops *rx_ops;
 	bool disable_tx_comp;
 	bool bundle_tx;
-	struct sk_buff_head tx_req_head;
-	struct sk_buff_head tx_complete_head;
-};
+	काष्ठा sk_buff_head tx_req_head;
+	काष्ठा sk_buff_head tx_complete_head;
+पूर्ण;
 
-struct ath10k_htt_tx_ops {
-	int (*htt_send_rx_ring_cfg)(struct ath10k_htt *htt);
-	int (*htt_send_frag_desc_bank_cfg)(struct ath10k_htt *htt);
-	int (*htt_alloc_frag_desc)(struct ath10k_htt *htt);
-	void (*htt_free_frag_desc)(struct ath10k_htt *htt);
-	int (*htt_tx)(struct ath10k_htt *htt, enum ath10k_hw_txrx_mode txmode,
-		      struct sk_buff *msdu);
-	int (*htt_alloc_txbuff)(struct ath10k_htt *htt);
-	void (*htt_free_txbuff)(struct ath10k_htt *htt);
-	int (*htt_h2t_aggr_cfg_msg)(struct ath10k_htt *htt,
+काष्ठा ath10k_htt_tx_ops अणु
+	पूर्णांक (*htt_send_rx_ring_cfg)(काष्ठा ath10k_htt *htt);
+	पूर्णांक (*htt_send_frag_desc_bank_cfg)(काष्ठा ath10k_htt *htt);
+	पूर्णांक (*htt_alloc_frag_desc)(काष्ठा ath10k_htt *htt);
+	व्योम (*htt_मुक्त_frag_desc)(काष्ठा ath10k_htt *htt);
+	पूर्णांक (*htt_tx)(काष्ठा ath10k_htt *htt, क्रमागत ath10k_hw_txrx_mode txmode,
+		      काष्ठा sk_buff *msdu);
+	पूर्णांक (*htt_alloc_txbuff)(काष्ठा ath10k_htt *htt);
+	व्योम (*htt_मुक्त_txbuff)(काष्ठा ath10k_htt *htt);
+	पूर्णांक (*htt_h2t_aggr_cfg_msg)(काष्ठा ath10k_htt *htt,
 				    u8 max_subfrms_ampdu,
 				    u8 max_subfrms_amsdu);
-	void (*htt_flush_tx)(struct ath10k_htt *htt);
-};
+	व्योम (*htt_flush_tx)(काष्ठा ath10k_htt *htt);
+पूर्ण;
 
-static inline int ath10k_htt_send_rx_ring_cfg(struct ath10k_htt *htt)
-{
-	if (!htt->tx_ops->htt_send_rx_ring_cfg)
-		return -EOPNOTSUPP;
+अटल अंतरभूत पूर्णांक ath10k_htt_send_rx_ring_cfg(काष्ठा ath10k_htt *htt)
+अणु
+	अगर (!htt->tx_ops->htt_send_rx_ring_cfg)
+		वापस -EOPNOTSUPP;
 
-	return htt->tx_ops->htt_send_rx_ring_cfg(htt);
-}
+	वापस htt->tx_ops->htt_send_rx_ring_cfg(htt);
+पूर्ण
 
-static inline int ath10k_htt_send_frag_desc_bank_cfg(struct ath10k_htt *htt)
-{
-	if (!htt->tx_ops->htt_send_frag_desc_bank_cfg)
-		return -EOPNOTSUPP;
+अटल अंतरभूत पूर्णांक ath10k_htt_send_frag_desc_bank_cfg(काष्ठा ath10k_htt *htt)
+अणु
+	अगर (!htt->tx_ops->htt_send_frag_desc_bank_cfg)
+		वापस -EOPNOTSUPP;
 
-	return htt->tx_ops->htt_send_frag_desc_bank_cfg(htt);
-}
+	वापस htt->tx_ops->htt_send_frag_desc_bank_cfg(htt);
+पूर्ण
 
-static inline int ath10k_htt_alloc_frag_desc(struct ath10k_htt *htt)
-{
-	if (!htt->tx_ops->htt_alloc_frag_desc)
-		return -EOPNOTSUPP;
+अटल अंतरभूत पूर्णांक ath10k_htt_alloc_frag_desc(काष्ठा ath10k_htt *htt)
+अणु
+	अगर (!htt->tx_ops->htt_alloc_frag_desc)
+		वापस -EOPNOTSUPP;
 
-	return htt->tx_ops->htt_alloc_frag_desc(htt);
-}
+	वापस htt->tx_ops->htt_alloc_frag_desc(htt);
+पूर्ण
 
-static inline void ath10k_htt_free_frag_desc(struct ath10k_htt *htt)
-{
-	if (htt->tx_ops->htt_free_frag_desc)
-		htt->tx_ops->htt_free_frag_desc(htt);
-}
+अटल अंतरभूत व्योम ath10k_htt_मुक्त_frag_desc(काष्ठा ath10k_htt *htt)
+अणु
+	अगर (htt->tx_ops->htt_मुक्त_frag_desc)
+		htt->tx_ops->htt_मुक्त_frag_desc(htt);
+पूर्ण
 
-static inline int ath10k_htt_tx(struct ath10k_htt *htt,
-				enum ath10k_hw_txrx_mode txmode,
-				struct sk_buff *msdu)
-{
-	return htt->tx_ops->htt_tx(htt, txmode, msdu);
-}
+अटल अंतरभूत पूर्णांक ath10k_htt_tx(काष्ठा ath10k_htt *htt,
+				क्रमागत ath10k_hw_txrx_mode txmode,
+				काष्ठा sk_buff *msdu)
+अणु
+	वापस htt->tx_ops->htt_tx(htt, txmode, msdu);
+पूर्ण
 
-static inline void ath10k_htt_flush_tx(struct ath10k_htt *htt)
-{
-	if (htt->tx_ops->htt_flush_tx)
+अटल अंतरभूत व्योम ath10k_htt_flush_tx(काष्ठा ath10k_htt *htt)
+अणु
+	अगर (htt->tx_ops->htt_flush_tx)
 		htt->tx_ops->htt_flush_tx(htt);
-}
+पूर्ण
 
-static inline int ath10k_htt_alloc_txbuff(struct ath10k_htt *htt)
-{
-	if (!htt->tx_ops->htt_alloc_txbuff)
-		return -EOPNOTSUPP;
+अटल अंतरभूत पूर्णांक ath10k_htt_alloc_txbuff(काष्ठा ath10k_htt *htt)
+अणु
+	अगर (!htt->tx_ops->htt_alloc_txbuff)
+		वापस -EOPNOTSUPP;
 
-	return htt->tx_ops->htt_alloc_txbuff(htt);
-}
+	वापस htt->tx_ops->htt_alloc_txbuff(htt);
+पूर्ण
 
-static inline void ath10k_htt_free_txbuff(struct ath10k_htt *htt)
-{
-	if (htt->tx_ops->htt_free_txbuff)
-		htt->tx_ops->htt_free_txbuff(htt);
-}
+अटल अंतरभूत व्योम ath10k_htt_मुक्त_txbuff(काष्ठा ath10k_htt *htt)
+अणु
+	अगर (htt->tx_ops->htt_मुक्त_txbuff)
+		htt->tx_ops->htt_मुक्त_txbuff(htt);
+पूर्ण
 
-static inline int ath10k_htt_h2t_aggr_cfg_msg(struct ath10k_htt *htt,
+अटल अंतरभूत पूर्णांक ath10k_htt_h2t_aggr_cfg_msg(काष्ठा ath10k_htt *htt,
 					      u8 max_subfrms_ampdu,
 					      u8 max_subfrms_amsdu)
 
-{
-	if (!htt->tx_ops->htt_h2t_aggr_cfg_msg)
-		return -EOPNOTSUPP;
+अणु
+	अगर (!htt->tx_ops->htt_h2t_aggr_cfg_msg)
+		वापस -EOPNOTSUPP;
 
-	return htt->tx_ops->htt_h2t_aggr_cfg_msg(htt,
+	वापस htt->tx_ops->htt_h2t_aggr_cfg_msg(htt,
 						 max_subfrms_ampdu,
 						 max_subfrms_amsdu);
-}
+पूर्ण
 
-struct ath10k_htt_rx_ops {
-	size_t (*htt_get_rx_ring_size)(struct ath10k_htt *htt);
-	void (*htt_config_paddrs_ring)(struct ath10k_htt *htt, void *vaddr);
-	void (*htt_set_paddrs_ring)(struct ath10k_htt *htt, dma_addr_t paddr,
-				    int idx);
-	void* (*htt_get_vaddr_ring)(struct ath10k_htt *htt);
-	void (*htt_reset_paddrs_ring)(struct ath10k_htt *htt, int idx);
-	bool (*htt_rx_proc_rx_frag_ind)(struct ath10k_htt *htt,
-					struct htt_rx_fragment_indication *rx,
-					struct sk_buff *skb);
-};
+काष्ठा ath10k_htt_rx_ops अणु
+	माप_प्रकार (*htt_get_rx_ring_size)(काष्ठा ath10k_htt *htt);
+	व्योम (*htt_config_paddrs_ring)(काष्ठा ath10k_htt *htt, व्योम *vaddr);
+	व्योम (*htt_set_paddrs_ring)(काष्ठा ath10k_htt *htt, dma_addr_t paddr,
+				    पूर्णांक idx);
+	व्योम* (*htt_get_vaddr_ring)(काष्ठा ath10k_htt *htt);
+	व्योम (*htt_reset_paddrs_ring)(काष्ठा ath10k_htt *htt, पूर्णांक idx);
+	bool (*htt_rx_proc_rx_frag_ind)(काष्ठा ath10k_htt *htt,
+					काष्ठा htt_rx_fragment_indication *rx,
+					काष्ठा sk_buff *skb);
+पूर्ण;
 
-static inline size_t ath10k_htt_get_rx_ring_size(struct ath10k_htt *htt)
-{
-	if (!htt->rx_ops->htt_get_rx_ring_size)
-		return 0;
+अटल अंतरभूत माप_प्रकार ath10k_htt_get_rx_ring_size(काष्ठा ath10k_htt *htt)
+अणु
+	अगर (!htt->rx_ops->htt_get_rx_ring_size)
+		वापस 0;
 
-	return htt->rx_ops->htt_get_rx_ring_size(htt);
-}
+	वापस htt->rx_ops->htt_get_rx_ring_size(htt);
+पूर्ण
 
-static inline void ath10k_htt_config_paddrs_ring(struct ath10k_htt *htt,
-						 void *vaddr)
-{
-	if (htt->rx_ops->htt_config_paddrs_ring)
+अटल अंतरभूत व्योम ath10k_htt_config_paddrs_ring(काष्ठा ath10k_htt *htt,
+						 व्योम *vaddr)
+अणु
+	अगर (htt->rx_ops->htt_config_paddrs_ring)
 		htt->rx_ops->htt_config_paddrs_ring(htt, vaddr);
-}
+पूर्ण
 
-static inline void ath10k_htt_set_paddrs_ring(struct ath10k_htt *htt,
+अटल अंतरभूत व्योम ath10k_htt_set_paddrs_ring(काष्ठा ath10k_htt *htt,
 					      dma_addr_t paddr,
-					      int idx)
-{
-	if (htt->rx_ops->htt_set_paddrs_ring)
+					      पूर्णांक idx)
+अणु
+	अगर (htt->rx_ops->htt_set_paddrs_ring)
 		htt->rx_ops->htt_set_paddrs_ring(htt, paddr, idx);
-}
+पूर्ण
 
-static inline void *ath10k_htt_get_vaddr_ring(struct ath10k_htt *htt)
-{
-	if (!htt->rx_ops->htt_get_vaddr_ring)
-		return NULL;
+अटल अंतरभूत व्योम *ath10k_htt_get_vaddr_ring(काष्ठा ath10k_htt *htt)
+अणु
+	अगर (!htt->rx_ops->htt_get_vaddr_ring)
+		वापस शून्य;
 
-	return htt->rx_ops->htt_get_vaddr_ring(htt);
-}
+	वापस htt->rx_ops->htt_get_vaddr_ring(htt);
+पूर्ण
 
-static inline void ath10k_htt_reset_paddrs_ring(struct ath10k_htt *htt, int idx)
-{
-	if (htt->rx_ops->htt_reset_paddrs_ring)
+अटल अंतरभूत व्योम ath10k_htt_reset_paddrs_ring(काष्ठा ath10k_htt *htt, पूर्णांक idx)
+अणु
+	अगर (htt->rx_ops->htt_reset_paddrs_ring)
 		htt->rx_ops->htt_reset_paddrs_ring(htt, idx);
-}
+पूर्ण
 
-static inline bool ath10k_htt_rx_proc_rx_frag_ind(struct ath10k_htt *htt,
-						  struct htt_rx_fragment_indication *rx,
-						  struct sk_buff *skb)
-{
-	if (!htt->rx_ops->htt_rx_proc_rx_frag_ind)
-		return true;
+अटल अंतरभूत bool ath10k_htt_rx_proc_rx_frag_ind(काष्ठा ath10k_htt *htt,
+						  काष्ठा htt_rx_fragment_indication *rx,
+						  काष्ठा sk_buff *skb)
+अणु
+	अगर (!htt->rx_ops->htt_rx_proc_rx_frag_ind)
+		वापस true;
 
-	return htt->rx_ops->htt_rx_proc_rx_frag_ind(htt, rx, skb);
-}
+	वापस htt->rx_ops->htt_rx_proc_rx_frag_ind(htt, rx, skb);
+पूर्ण
 
-#define RX_HTT_HDR_STATUS_LEN 64
+#घोषणा RX_HTT_HDR_STATUS_LEN 64
 
-/* This structure layout is programmed via rx ring setup
+/* This काष्ठाure layout is programmed via rx ring setup
  * so that FW knows how to transfer the rx descriptor to the host.
  * Buffers like this are placed on the rx ring.
  */
-struct htt_rx_desc {
-	union {
+काष्ठा htt_rx_desc अणु
+	जोड़ अणु
 		/* This field is filled on the host using the msdu buffer
 		 * from htt_rx_indication
 		 */
-		struct fw_rx_desc_base fw_desc;
+		काष्ठा fw_rx_desc_base fw_desc;
 		u32 pad;
-	} __packed;
-	struct {
-		struct rx_attention attention;
-		struct rx_frag_info frag_info;
-		struct rx_mpdu_start mpdu_start;
-		struct rx_msdu_start msdu_start;
-		struct rx_msdu_end msdu_end;
-		struct rx_mpdu_end mpdu_end;
-		struct rx_ppdu_start ppdu_start;
-		struct rx_ppdu_end ppdu_end;
-	} __packed;
+	पूर्ण __packed;
+	काष्ठा अणु
+		काष्ठा rx_attention attention;
+		काष्ठा rx_frag_info frag_info;
+		काष्ठा rx_mpdu_start mpdu_start;
+		काष्ठा rx_msdu_start msdu_start;
+		काष्ठा rx_msdu_end msdu_end;
+		काष्ठा rx_mpdu_end mpdu_end;
+		काष्ठा rx_ppdu_start ppdu_start;
+		काष्ठा rx_ppdu_end ppdu_end;
+	पूर्ण __packed;
 	u8 rx_hdr_status[RX_HTT_HDR_STATUS_LEN];
 	u8 msdu_payload[];
-};
+पूर्ण;
 
-#define HTT_RX_DESC_HL_INFO_SEQ_NUM_MASK           0x00000fff
-#define HTT_RX_DESC_HL_INFO_SEQ_NUM_LSB            0
-#define HTT_RX_DESC_HL_INFO_ENCRYPTED_MASK         0x00001000
-#define HTT_RX_DESC_HL_INFO_ENCRYPTED_LSB          12
-#define HTT_RX_DESC_HL_INFO_CHAN_INFO_PRESENT_MASK 0x00002000
-#define HTT_RX_DESC_HL_INFO_CHAN_INFO_PRESENT_LSB  13
-#define HTT_RX_DESC_HL_INFO_MCAST_BCAST_MASK       0x00010000
-#define HTT_RX_DESC_HL_INFO_MCAST_BCAST_LSB        16
-#define HTT_RX_DESC_HL_INFO_KEY_ID_OCT_MASK        0x01fe0000
-#define HTT_RX_DESC_HL_INFO_KEY_ID_OCT_LSB         17
+#घोषणा HTT_RX_DESC_HL_INFO_SEQ_NUM_MASK           0x00000fff
+#घोषणा HTT_RX_DESC_HL_INFO_SEQ_NUM_LSB            0
+#घोषणा HTT_RX_DESC_HL_INFO_ENCRYPTED_MASK         0x00001000
+#घोषणा HTT_RX_DESC_HL_INFO_ENCRYPTED_LSB          12
+#घोषणा HTT_RX_DESC_HL_INFO_CHAN_INFO_PRESENT_MASK 0x00002000
+#घोषणा HTT_RX_DESC_HL_INFO_CHAN_INFO_PRESENT_LSB  13
+#घोषणा HTT_RX_DESC_HL_INFO_MCAST_BCAST_MASK       0x00010000
+#घोषणा HTT_RX_DESC_HL_INFO_MCAST_BCAST_LSB        16
+#घोषणा HTT_RX_DESC_HL_INFO_KEY_ID_OCT_MASK        0x01fe0000
+#घोषणा HTT_RX_DESC_HL_INFO_KEY_ID_OCT_LSB         17
 
-struct htt_rx_desc_base_hl {
+काष्ठा htt_rx_desc_base_hl अणु
 	__le32 info; /* HTT_RX_DESC_HL_INFO_ */
-};
+पूर्ण;
 
-struct htt_rx_chan_info {
+काष्ठा htt_rx_chan_info अणु
 	__le16 primary_chan_center_freq_mhz;
 	__le16 contig_chan1_center_freq_mhz;
 	__le16 contig_chan2_center_freq_mhz;
 	u8 phy_mode;
 	u8 reserved;
-} __packed;
+पूर्ण __packed;
 
-#define HTT_RX_DESC_ALIGN 8
+#घोषणा HTT_RX_DESC_ALIGN 8
 
-#define HTT_MAC_ADDR_LEN 6
+#घोषणा HTT_MAC_ADDR_LEN 6
 
 /*
  * FIX THIS
- * Should be: sizeof(struct htt_host_rx_desc) + max rx MSDU size,
+ * Should be: माप(काष्ठा htt_host_rx_desc) + max rx MSDU size,
  * rounded up to a cache line size.
  */
-#define HTT_RX_BUF_SIZE 2048
-#define HTT_RX_MSDU_SIZE (HTT_RX_BUF_SIZE - (int)sizeof(struct htt_rx_desc))
+#घोषणा HTT_RX_BUF_SIZE 2048
+#घोषणा HTT_RX_MSDU_SIZE (HTT_RX_BUF_SIZE - (पूर्णांक)माप(काष्ठा htt_rx_desc))
 
-/* Refill a bunch of RX buffers for each refill round so that FW/HW can handle
+/* Refill a bunch of RX buffers क्रम each refill round so that FW/HW can handle
  * aggregated traffic more nicely.
  */
-#define ATH10K_HTT_MAX_NUM_REFILL 100
+#घोषणा ATH10K_HTT_MAX_NUM_REFILL 100
 
 /*
- * DMA_MAP expects the buffer to be an integral number of cache lines.
+ * DMA_MAP expects the buffer to be an पूर्णांकegral number of cache lines.
  * Rather than checking the actual cache line size, this code makes a
  * conservative estimate of what the cache line size could be.
  */
-#define HTT_LOG2_MAX_CACHE_LINE_SIZE 7	/* 2^7 = 128 */
-#define HTT_MAX_CACHE_LINE_SIZE_MASK ((1 << HTT_LOG2_MAX_CACHE_LINE_SIZE) - 1)
+#घोषणा HTT_LOG2_MAX_CACHE_LINE_SIZE 7	/* 2^7 = 128 */
+#घोषणा HTT_MAX_CACHE_LINE_SIZE_MASK ((1 << HTT_LOG2_MAX_CACHE_LINE_SIZE) - 1)
 
-/* These values are default in most firmware revisions and apparently are a
- * sweet spot performance wise.
+/* These values are शेष in most firmware revisions and apparently are a
+ * sweet spot perक्रमmance wise.
  */
-#define ATH10K_HTT_MAX_NUM_AMSDU_DEFAULT 3
-#define ATH10K_HTT_MAX_NUM_AMPDU_DEFAULT 64
+#घोषणा ATH10K_HTT_MAX_NUM_AMSDU_DEFAULT 3
+#घोषणा ATH10K_HTT_MAX_NUM_AMPDU_DEFAULT 64
 
-int ath10k_htt_connect(struct ath10k_htt *htt);
-int ath10k_htt_init(struct ath10k *ar);
-int ath10k_htt_setup(struct ath10k_htt *htt);
+पूर्णांक ath10k_htt_connect(काष्ठा ath10k_htt *htt);
+पूर्णांक ath10k_htt_init(काष्ठा ath10k *ar);
+पूर्णांक ath10k_htt_setup(काष्ठा ath10k_htt *htt);
 
-int ath10k_htt_tx_start(struct ath10k_htt *htt);
-void ath10k_htt_tx_stop(struct ath10k_htt *htt);
-void ath10k_htt_tx_destroy(struct ath10k_htt *htt);
-void ath10k_htt_tx_free(struct ath10k_htt *htt);
+पूर्णांक ath10k_htt_tx_start(काष्ठा ath10k_htt *htt);
+व्योम ath10k_htt_tx_stop(काष्ठा ath10k_htt *htt);
+व्योम ath10k_htt_tx_destroy(काष्ठा ath10k_htt *htt);
+व्योम ath10k_htt_tx_मुक्त(काष्ठा ath10k_htt *htt);
 
-int ath10k_htt_rx_alloc(struct ath10k_htt *htt);
-int ath10k_htt_rx_ring_refill(struct ath10k *ar);
-void ath10k_htt_rx_free(struct ath10k_htt *htt);
+पूर्णांक ath10k_htt_rx_alloc(काष्ठा ath10k_htt *htt);
+पूर्णांक ath10k_htt_rx_ring_refill(काष्ठा ath10k *ar);
+व्योम ath10k_htt_rx_मुक्त(काष्ठा ath10k_htt *htt);
 
-void ath10k_htt_htc_tx_complete(struct ath10k *ar, struct sk_buff *skb);
-void ath10k_htt_htc_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb);
-bool ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb);
-int ath10k_htt_h2t_ver_req_msg(struct ath10k_htt *htt);
-int ath10k_htt_h2t_stats_req(struct ath10k_htt *htt, u32 mask, u32 reset_mask,
+व्योम ath10k_htt_htc_tx_complete(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
+व्योम ath10k_htt_htc_t2h_msg_handler(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
+bool ath10k_htt_t2h_msg_handler(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
+पूर्णांक ath10k_htt_h2t_ver_req_msg(काष्ठा ath10k_htt *htt);
+पूर्णांक ath10k_htt_h2t_stats_req(काष्ठा ath10k_htt *htt, u32 mask, u32 reset_mask,
 			     u64 cookie);
-void ath10k_htt_hif_tx_complete(struct ath10k *ar, struct sk_buff *skb);
-int ath10k_htt_tx_fetch_resp(struct ath10k *ar,
+व्योम ath10k_htt_hअगर_tx_complete(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
+पूर्णांक ath10k_htt_tx_fetch_resp(काष्ठा ath10k *ar,
 			     __le32 token,
 			     __le16 fetch_seq_num,
-			     struct htt_tx_fetch_record *records,
-			     size_t num_records);
-void ath10k_htt_op_ep_tx_credits(struct ath10k *ar);
+			     काष्ठा htt_tx_fetch_record *records,
+			     माप_प्रकार num_records);
+व्योम ath10k_htt_op_ep_tx_credits(काष्ठा ath10k *ar);
 
-void ath10k_htt_tx_txq_update(struct ieee80211_hw *hw,
-			      struct ieee80211_txq *txq);
-void ath10k_htt_tx_txq_recalc(struct ieee80211_hw *hw,
-			      struct ieee80211_txq *txq);
-void ath10k_htt_tx_txq_sync(struct ath10k *ar);
-void ath10k_htt_tx_dec_pending(struct ath10k_htt *htt);
-int ath10k_htt_tx_inc_pending(struct ath10k_htt *htt);
-void ath10k_htt_tx_mgmt_dec_pending(struct ath10k_htt *htt);
-int ath10k_htt_tx_mgmt_inc_pending(struct ath10k_htt *htt, bool is_mgmt,
+व्योम ath10k_htt_tx_txq_update(काष्ठा ieee80211_hw *hw,
+			      काष्ठा ieee80211_txq *txq);
+व्योम ath10k_htt_tx_txq_recalc(काष्ठा ieee80211_hw *hw,
+			      काष्ठा ieee80211_txq *txq);
+व्योम ath10k_htt_tx_txq_sync(काष्ठा ath10k *ar);
+व्योम ath10k_htt_tx_dec_pending(काष्ठा ath10k_htt *htt);
+पूर्णांक ath10k_htt_tx_inc_pending(काष्ठा ath10k_htt *htt);
+व्योम ath10k_htt_tx_mgmt_dec_pending(काष्ठा ath10k_htt *htt);
+पूर्णांक ath10k_htt_tx_mgmt_inc_pending(काष्ठा ath10k_htt *htt, bool is_mgmt,
 				   bool is_presp);
 
-int ath10k_htt_tx_alloc_msdu_id(struct ath10k_htt *htt, struct sk_buff *skb);
-void ath10k_htt_tx_free_msdu_id(struct ath10k_htt *htt, u16 msdu_id);
-int ath10k_htt_mgmt_tx(struct ath10k_htt *htt, struct sk_buff *msdu);
-void ath10k_htt_rx_pktlog_completion_handler(struct ath10k *ar,
-					     struct sk_buff *skb);
-int ath10k_htt_txrx_compl_task(struct ath10k *ar, int budget);
-int ath10k_htt_rx_hl_indication(struct ath10k *ar, int budget);
-void ath10k_htt_set_tx_ops(struct ath10k_htt *htt);
-void ath10k_htt_set_rx_ops(struct ath10k_htt *htt);
-#endif
+पूर्णांक ath10k_htt_tx_alloc_msdu_id(काष्ठा ath10k_htt *htt, काष्ठा sk_buff *skb);
+व्योम ath10k_htt_tx_मुक्त_msdu_id(काष्ठा ath10k_htt *htt, u16 msdu_id);
+पूर्णांक ath10k_htt_mgmt_tx(काष्ठा ath10k_htt *htt, काष्ठा sk_buff *msdu);
+व्योम ath10k_htt_rx_pktlog_completion_handler(काष्ठा ath10k *ar,
+					     काष्ठा sk_buff *skb);
+पूर्णांक ath10k_htt_txrx_compl_task(काष्ठा ath10k *ar, पूर्णांक budget);
+पूर्णांक ath10k_htt_rx_hl_indication(काष्ठा ath10k *ar, पूर्णांक budget);
+व्योम ath10k_htt_set_tx_ops(काष्ठा ath10k_htt *htt);
+व्योम ath10k_htt_set_rx_ops(काष्ठा ath10k_htt *htt);
+#पूर्ण_अगर

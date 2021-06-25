@@ -1,91 +1,92 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Medifield PNW Camera Imaging ISP subsystem.
+ * Support क्रम Medअगरield PNW Camera Imaging ISP subप्रणाली.
  *
  * Copyright (c) 2010 Intel Corporation. All Rights Reserved.
  *
  * Copyright (c) 2010 Silicon Hive www.siliconhive.com.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  *
  */
 /*
- * ISP MMU driver for classic two-level page tables
+ * ISP MMU driver क्रम classic two-level page tables
  */
-#ifndef	__ISP_MMU_H__
-#define	__ISP_MMU_H__
+#अगर_अघोषित	__ISP_MMU_H__
+#घोषणा	__ISP_MMU_H__
 
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
 
 /*
- * do not change these values, the page size for ISP must be the
+ * करो not change these values, the page size क्रम ISP must be the
  * same as kernel's page size.
  */
-#define	ISP_PAGE_OFFSET		12
-#define	ISP_PAGE_SIZE		BIT(ISP_PAGE_OFFSET)
-#define	ISP_PAGE_MASK		(~(phys_addr_t)(ISP_PAGE_SIZE - 1))
+#घोषणा	ISP_PAGE_OFFSET		12
+#घोषणा	ISP_PAGE_SIZE		BIT(ISP_PAGE_OFFSET)
+#घोषणा	ISP_PAGE_MASK		(~(phys_addr_t)(ISP_PAGE_SIZE - 1))
 
-#define	ISP_L1PT_OFFSET		22
-#define	ISP_L1PT_MASK		(~((1U << ISP_L1PT_OFFSET) - 1))
+#घोषणा	ISP_L1PT_OFFSET		22
+#घोषणा	ISP_L1PT_MASK		(~((1U << ISP_L1PT_OFFSET) - 1))
 
-#define	ISP_L2PT_OFFSET		12
-#define	ISP_L2PT_MASK		(~(ISP_L1PT_MASK | (~(ISP_PAGE_MASK))))
+#घोषणा	ISP_L2PT_OFFSET		12
+#घोषणा	ISP_L2PT_MASK		(~(ISP_L1PT_MASK | (~(ISP_PAGE_MASK))))
 
-#define	ISP_L1PT_PTES		1024
-#define	ISP_L2PT_PTES		1024
+#घोषणा	ISP_L1PT_PTES		1024
+#घोषणा	ISP_L2PT_PTES		1024
 
-#define	ISP_PTR_TO_L1_IDX(x)	((((x) & ISP_L1PT_MASK)) \
+#घोषणा	ISP_PTR_TO_L1_IDX(x)	((((x) & ISP_L1PT_MASK)) \
 					>> ISP_L1PT_OFFSET)
 
-#define	ISP_PTR_TO_L2_IDX(x)	((((x) & ISP_L2PT_MASK)) \
+#घोषणा	ISP_PTR_TO_L2_IDX(x)	((((x) & ISP_L2PT_MASK)) \
 					>> ISP_L2PT_OFFSET)
 
-#define	ISP_PAGE_ALIGN(x)	(((x) + (ISP_PAGE_SIZE - 1)) \
+#घोषणा	ISP_PAGE_ALIGN(x)	(((x) + (ISP_PAGE_SIZE - 1)) \
 					& ISP_PAGE_MASK)
 
-#define	ISP_PT_TO_VIRT(l1_idx, l2_idx, offset) do {\
+#घोषणा	ISP_PT_TO_VIRT(l1_idx, l2_idx, offset) करो अणु\
 		((l1_idx) << ISP_L1PT_OFFSET) | \
 		((l2_idx) << ISP_L2PT_OFFSET) | \
 		(offset)\
-} while (0)
+पूर्ण जबतक (0)
 
-#define	pgnr_to_size(pgnr)	((pgnr) << ISP_PAGE_OFFSET)
-#define	size_to_pgnr_ceil(size)	(((size) + (1 << ISP_PAGE_OFFSET) - 1)\
+#घोषणा	pgnr_to_size(pgnr)	((pgnr) << ISP_PAGE_OFFSET)
+#घोषणा	माप_प्रकारo_pgnr_उच्चमान(size)	(((size) + (1 << ISP_PAGE_OFFSET) - 1)\
 						>> ISP_PAGE_OFFSET)
-#define	size_to_pgnr_bottom(size)	((size) >> ISP_PAGE_OFFSET)
+#घोषणा	माप_प्रकारo_pgnr_bottom(size)	((size) >> ISP_PAGE_OFFSET)
 
-struct isp_mmu;
+काष्ठा isp_mmu;
 
-struct isp_mmu_client {
+काष्ठा isp_mmu_client अणु
 	/*
-	 * const value
+	 * स्थिर value
 	 *
 	 * @name:
 	 *      driver name
 	 * @pte_valid_mask:
 	 *      should be 1 bit valid data, meaning the value should
-	 *      be power of 2.
+	 *      be घातer of 2.
 	 */
-	char *name;
-	unsigned int pte_valid_mask;
-	unsigned int null_pte;
+	अक्षर *name;
+	अचिन्हित पूर्णांक pte_valid_mask;
+	अचिन्हित पूर्णांक null_pte;
 
 	/*
 	 * get page directory base address (physical address).
 	 *
 	 * must be provided.
 	 */
-	unsigned int (*get_pd_base)(struct isp_mmu *mmu, phys_addr_t pd_base);
+	अचिन्हित पूर्णांक (*get_pd_base)(काष्ठा isp_mmu *mmu, phys_addr_t pd_base);
 	/*
 	 * callback to flush tlb.
 	 *
@@ -94,76 +95,76 @@ struct isp_mmu_client {
 	 *
 	 * tlb_flush_all will flush all TLBs.
 	 *
-	 * tlb_flush_all is must be provided. if tlb_flush_range is
-	 * not valid, it will set to tlb_flush_all by default.
+	 * tlb_flush_all is must be provided. अगर tlb_flush_range is
+	 * not valid, it will set to tlb_flush_all by शेष.
 	 */
-	void (*tlb_flush_range)(struct isp_mmu *mmu,
-				unsigned int addr, unsigned int size);
-	void (*tlb_flush_all)(struct isp_mmu *mmu);
-	unsigned int (*phys_to_pte)(struct isp_mmu *mmu,
+	व्योम (*tlb_flush_range)(काष्ठा isp_mmu *mmu,
+				अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक size);
+	व्योम (*tlb_flush_all)(काष्ठा isp_mmu *mmu);
+	अचिन्हित पूर्णांक (*phys_to_pte)(काष्ठा isp_mmu *mmu,
 				    phys_addr_t phys);
-	phys_addr_t (*pte_to_phys)(struct isp_mmu *mmu,
-				   unsigned int pte);
+	phys_addr_t (*pte_to_phys)(काष्ठा isp_mmu *mmu,
+				   अचिन्हित पूर्णांक pte);
 
-};
+पूर्ण;
 
-struct isp_mmu {
-	struct isp_mmu_client *driver;
-	unsigned int l1_pte;
-	int l2_pgt_refcount[ISP_L1PT_PTES];
+काष्ठा isp_mmu अणु
+	काष्ठा isp_mmu_client *driver;
+	अचिन्हित पूर्णांक l1_pte;
+	पूर्णांक l2_pgt_refcount[ISP_L1PT_PTES];
 	phys_addr_t base_address;
 
-	struct mutex pt_mutex;
-};
+	काष्ठा mutex pt_mutex;
+पूर्ण;
 
-/* flags for PDE and PTE */
-#define	ISP_PTE_VALID_MASK(mmu)	\
+/* flags क्रम PDE and PTE */
+#घोषणा	ISP_PTE_VALID_MASK(mmu)	\
 	((mmu)->driver->pte_valid_mask)
 
-#define	ISP_PTE_VALID(mmu, pte)	\
+#घोषणा	ISP_PTE_VALID(mmu, pte)	\
 	((pte) & ISP_PTE_VALID_MASK(mmu))
 
-#define	NULL_PAGE	((phys_addr_t)(-1) & ISP_PAGE_MASK)
-#define	PAGE_VALID(page)	((page) != NULL_PAGE)
+#घोषणा	शून्य_PAGE	((phys_addr_t)(-1) & ISP_PAGE_MASK)
+#घोषणा	PAGE_VALID(page)	((page) != शून्य_PAGE)
 
 /*
- * init mmu with specific mmu driver.
+ * init mmu with specअगरic mmu driver.
  */
-int isp_mmu_init(struct isp_mmu *mmu, struct isp_mmu_client *driver);
+पूर्णांक isp_mmu_init(काष्ठा isp_mmu *mmu, काष्ठा isp_mmu_client *driver);
 /*
  * cleanup all mmu related things.
  */
-void isp_mmu_exit(struct isp_mmu *mmu);
+व्योम isp_mmu_निकास(काष्ठा isp_mmu *mmu);
 
 /*
- * setup/remove address mapping for pgnr continuous physical pages
+ * setup/हटाओ address mapping क्रम pgnr continuous physical pages
  * and isp_virt.
  *
- * map/unmap is mutex lock protected, and caller does not have
- * to do lock/unlock operation.
+ * map/unmap is mutex lock रक्षित, and caller करोes not have
+ * to करो lock/unlock operation.
  *
  * map/unmap will not flush tlb, and caller needs to deal with
  * this itself.
  */
-int isp_mmu_map(struct isp_mmu *mmu, unsigned int isp_virt,
-		phys_addr_t phys, unsigned int pgnr);
+पूर्णांक isp_mmu_map(काष्ठा isp_mmu *mmu, अचिन्हित पूर्णांक isp_virt,
+		phys_addr_t phys, अचिन्हित पूर्णांक pgnr);
 
-void isp_mmu_unmap(struct isp_mmu *mmu, unsigned int isp_virt,
-		   unsigned int pgnr);
+व्योम isp_mmu_unmap(काष्ठा isp_mmu *mmu, अचिन्हित पूर्णांक isp_virt,
+		   अचिन्हित पूर्णांक pgnr);
 
-static inline void isp_mmu_flush_tlb_all(struct isp_mmu *mmu)
-{
-	if (mmu->driver && mmu->driver->tlb_flush_all)
+अटल अंतरभूत व्योम isp_mmu_flush_tlb_all(काष्ठा isp_mmu *mmu)
+अणु
+	अगर (mmu->driver && mmu->driver->tlb_flush_all)
 		mmu->driver->tlb_flush_all(mmu);
-}
+पूर्ण
 
-#define isp_mmu_flush_tlb isp_mmu_flush_tlb_all
+#घोषणा isp_mmu_flush_tlb isp_mmu_flush_tlb_all
 
-static inline void isp_mmu_flush_tlb_range(struct isp_mmu *mmu,
-	unsigned int start, unsigned int size)
-{
-	if (mmu->driver && mmu->driver->tlb_flush_range)
+अटल अंतरभूत व्योम isp_mmu_flush_tlb_range(काष्ठा isp_mmu *mmu,
+	अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक size)
+अणु
+	अगर (mmu->driver && mmu->driver->tlb_flush_range)
 		mmu->driver->tlb_flush_range(mmu, start, size);
-}
+पूर्ण
 
-#endif /* ISP_MMU_H_ */
+#पूर्ण_अगर /* ISP_MMU_H_ */

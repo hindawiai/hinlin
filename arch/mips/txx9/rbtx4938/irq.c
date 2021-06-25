@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Toshiba RBTX4938 specific interrupt handlers
+ * Toshiba RBTX4938 specअगरic पूर्णांकerrupt handlers
  * Copyright (C) 2000-2001 Toshiba Corporation
  *
  * 2003-2005 (c) MontaVista Software, Inc. This file is licensed under the
@@ -7,17 +8,17 @@
  * licensed "as is" without any warranty of any kind, whether express
  * or implied.
  *
- * Support for TX4938 in 2.6 - Manish Lachwani (mlachwani@mvista.com)
+ * Support क्रम TX4938 in 2.6 - Manish Lachwani (mlachwani@mvista.com)
  */
 
 /*
  * MIPS_CPU_IRQ_BASE+00 Software 0
  * MIPS_CPU_IRQ_BASE+01 Software 1
  * MIPS_CPU_IRQ_BASE+02 Cascade TX4938-CP0
- * MIPS_CPU_IRQ_BASE+03 Multiplexed -- do not use
- * MIPS_CPU_IRQ_BASE+04 Multiplexed -- do not use
- * MIPS_CPU_IRQ_BASE+05 Multiplexed -- do not use
- * MIPS_CPU_IRQ_BASE+06 Multiplexed -- do not use
+ * MIPS_CPU_IRQ_BASE+03 Multiplexed -- करो not use
+ * MIPS_CPU_IRQ_BASE+04 Multiplexed -- करो not use
+ * MIPS_CPU_IRQ_BASE+05 Multiplexed -- करो not use
+ * MIPS_CPU_IRQ_BASE+06 Multiplexed -- करो not use
  * MIPS_CPU_IRQ_BASE+07 CPU TIMER
  *
  * TXX9_IRQ_BASE+00
@@ -62,96 +63,96 @@
  * RBTX4938_IRQ_IOC+06 MODEM
  * RBTX4938_IRQ_IOC+07 SWINT
  */
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <asm/mipsregs.h>
-#include <asm/txx9/generic.h>
-#include <asm/txx9/rbtx4938.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/txx9/generic.h>
+#समावेश <यंत्र/txx9/rbtx4938.h>
 
-static int toshiba_rbtx4938_irq_nested(int sw_irq)
-{
+अटल पूर्णांक toshiba_rbtx4938_irq_nested(पूर्णांक sw_irq)
+अणु
 	u8 level3;
 
-	level3 = readb(rbtx4938_imstat_addr);
-	if (unlikely(!level3))
-		return -1;
+	level3 = पढ़ोb(rbtx4938_imstat_addr);
+	अगर (unlikely(!level3))
+		वापस -1;
 	/* must use fls so onboard ATA has priority */
-	return RBTX4938_IRQ_IOC + __fls8(level3);
-}
+	वापस RBTX4938_IRQ_IOC + __fls8(level3);
+पूर्ण
 
-static void toshiba_rbtx4938_irq_ioc_enable(struct irq_data *d)
-{
-	unsigned char v;
+अटल व्योम toshiba_rbtx4938_irq_ioc_enable(काष्ठा irq_data *d)
+अणु
+	अचिन्हित अक्षर v;
 
-	v = readb(rbtx4938_imask_addr);
+	v = पढ़ोb(rbtx4938_imask_addr);
 	v |= (1 << (d->irq - RBTX4938_IRQ_IOC));
-	writeb(v, rbtx4938_imask_addr);
+	ग_लिखोb(v, rbtx4938_imask_addr);
 	mmiowb();
-}
+पूर्ण
 
-static void toshiba_rbtx4938_irq_ioc_disable(struct irq_data *d)
-{
-	unsigned char v;
+अटल व्योम toshiba_rbtx4938_irq_ioc_disable(काष्ठा irq_data *d)
+अणु
+	अचिन्हित अक्षर v;
 
-	v = readb(rbtx4938_imask_addr);
+	v = पढ़ोb(rbtx4938_imask_addr);
 	v &= ~(1 << (d->irq - RBTX4938_IRQ_IOC));
-	writeb(v, rbtx4938_imask_addr);
+	ग_लिखोb(v, rbtx4938_imask_addr);
 	mmiowb();
-}
+पूर्ण
 
-#define TOSHIBA_RBTX4938_IOC_NAME "RBTX4938-IOC"
-static struct irq_chip toshiba_rbtx4938_irq_ioc_type = {
+#घोषणा TOSHIBA_RBTX4938_IOC_NAME "RBTX4938-IOC"
+अटल काष्ठा irq_chip toshiba_rbtx4938_irq_ioc_type = अणु
 	.name = TOSHIBA_RBTX4938_IOC_NAME,
 	.irq_mask = toshiba_rbtx4938_irq_ioc_disable,
 	.irq_unmask = toshiba_rbtx4938_irq_ioc_enable,
-};
+पूर्ण;
 
-static int rbtx4938_irq_dispatch(int pending)
-{
-	int irq;
+अटल पूर्णांक rbtx4938_irq_dispatch(पूर्णांक pending)
+अणु
+	पूर्णांक irq;
 
-	if (pending & STATUSF_IP7)
+	अगर (pending & STATUSF_IP7)
 		irq = MIPS_CPU_IRQ_BASE + 7;
-	else if (pending & STATUSF_IP2) {
+	अन्यथा अगर (pending & STATUSF_IP2) अणु
 		irq = txx9_irq();
-		if (irq == RBTX4938_IRQ_IOCINT)
+		अगर (irq == RBTX4938_IRQ_IOCINT)
 			irq = toshiba_rbtx4938_irq_nested(irq);
-	} else if (pending & STATUSF_IP1)
+	पूर्ण अन्यथा अगर (pending & STATUSF_IP1)
 		irq = MIPS_CPU_IRQ_BASE + 0;
-	else if (pending & STATUSF_IP0)
+	अन्यथा अगर (pending & STATUSF_IP0)
 		irq = MIPS_CPU_IRQ_BASE + 1;
-	else
+	अन्यथा
 		irq = -1;
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static void __init toshiba_rbtx4938_irq_ioc_init(void)
-{
-	int i;
+अटल व्योम __init toshiba_rbtx4938_irq_ioc_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = RBTX4938_IRQ_IOC;
+	क्रम (i = RBTX4938_IRQ_IOC;
 	     i < RBTX4938_IRQ_IOC + RBTX4938_NR_IRQ_IOC; i++)
 		irq_set_chip_and_handler(i, &toshiba_rbtx4938_irq_ioc_type,
 					 handle_level_irq);
 
 	irq_set_chained_handler(RBTX4938_IRQ_IOCINT, handle_simple_irq);
-}
+पूर्ण
 
-void __init rbtx4938_irq_setup(void)
-{
+व्योम __init rbtx4938_irq_setup(व्योम)
+अणु
 	txx9_irq_dispatch = rbtx4938_irq_dispatch;
-	/* Now, interrupt control disabled, */
-	/* all IRC interrupts are masked, */
-	/* all IRC interrupt mode are Low Active. */
+	/* Now, पूर्णांकerrupt control disabled, */
+	/* all IRC पूर्णांकerrupts are masked, */
+	/* all IRC पूर्णांकerrupt mode are Low Active. */
 
-	/* mask all IOC interrupts */
-	writeb(0, rbtx4938_imask_addr);
+	/* mask all IOC पूर्णांकerrupts */
+	ग_लिखोb(0, rbtx4938_imask_addr);
 
-	/* clear SoftInt interrupts */
-	writeb(0, rbtx4938_softint_addr);
+	/* clear SoftInt पूर्णांकerrupts */
+	ग_लिखोb(0, rbtx4938_softपूर्णांक_addr);
 	tx4938_irq_init();
 	toshiba_rbtx4938_irq_ioc_init();
 	/* Onboard 10M Ether: High Active */
 	irq_set_irq_type(RBTX4938_IRQ_ETHER, IRQF_TRIGGER_HIGH);
-}
+पूर्ण

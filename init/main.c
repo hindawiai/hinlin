@@ -1,881 +1,882 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/init/main.c
+ *  linux/init/मुख्य.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
  *  GK 2/5/95  -  Changed to support mounting root fs via NFS
  *  Added initrd & change_root: Werner Almesberger & Hans Lermen, Feb '96
- *  Moan early if gcc is old, avoiding bogus kernels - Paul Gortmaker, May '96
- *  Simplified starting of init:  Michael A. Griffith <grif@acm.org>
+ *  Moan early अगर gcc is old, aव्योमing bogus kernels - Paul Gorपंचांगaker, May '96
+ *  Simplअगरied starting of init:  Michael A. Grअगरfith <grअगर@acm.org>
  */
 
-#define DEBUG		/* Enable initcall_debug */
+#घोषणा DEBUG		/* Enable initcall_debug */
 
-#include <linux/types.h>
-#include <linux/extable.h>
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/binfmts.h>
-#include <linux/kernel.h>
-#include <linux/syscalls.h>
-#include <linux/stackprotector.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <linux/delay.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/initrd.h>
-#include <linux/memblock.h>
-#include <linux/acpi.h>
-#include <linux/bootconfig.h>
-#include <linux/console.h>
-#include <linux/nmi.h>
-#include <linux/percpu.h>
-#include <linux/kmod.h>
-#include <linux/kprobes.h>
-#include <linux/vmalloc.h>
-#include <linux/kernel_stat.h>
-#include <linux/start_kernel.h>
-#include <linux/security.h>
-#include <linux/smp.h>
-#include <linux/profile.h>
-#include <linux/kfence.h>
-#include <linux/rcupdate.h>
-#include <linux/moduleparam.h>
-#include <linux/kallsyms.h>
-#include <linux/writeback.h>
-#include <linux/cpu.h>
-#include <linux/cpuset.h>
-#include <linux/cgroup.h>
-#include <linux/efi.h>
-#include <linux/tick.h>
-#include <linux/sched/isolation.h>
-#include <linux/interrupt.h>
-#include <linux/taskstats_kern.h>
-#include <linux/delayacct.h>
-#include <linux/unistd.h>
-#include <linux/utsname.h>
-#include <linux/rmap.h>
-#include <linux/mempolicy.h>
-#include <linux/key.h>
-#include <linux/page_ext.h>
-#include <linux/debug_locks.h>
-#include <linux/debugobjects.h>
-#include <linux/lockdep.h>
-#include <linux/kmemleak.h>
-#include <linux/padata.h>
-#include <linux/pid_namespace.h>
-#include <linux/device/driver.h>
-#include <linux/kthread.h>
-#include <linux/sched.h>
-#include <linux/sched/init.h>
-#include <linux/signal.h>
-#include <linux/idr.h>
-#include <linux/kgdb.h>
-#include <linux/ftrace.h>
-#include <linux/async.h>
-#include <linux/shmem_fs.h>
-#include <linux/slab.h>
-#include <linux/perf_event.h>
-#include <linux/ptrace.h>
-#include <linux/pti.h>
-#include <linux/blkdev.h>
-#include <linux/elevator.h>
-#include <linux/sched/clock.h>
-#include <linux/sched/task.h>
-#include <linux/sched/task_stack.h>
-#include <linux/context_tracking.h>
-#include <linux/random.h>
-#include <linux/list.h>
-#include <linux/integrity.h>
-#include <linux/proc_ns.h>
-#include <linux/io.h>
-#include <linux/cache.h>
-#include <linux/rodata_test.h>
-#include <linux/jump_label.h>
-#include <linux/mem_encrypt.h>
-#include <linux/kcsan.h>
-#include <linux/init_syscalls.h>
-#include <linux/stackdepot.h>
+#समावेश <linux/types.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/stackprotector.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bootconfig.h>
+#समावेश <linux/console.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/start_kernel.h>
+#समावेश <linux/security.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/profile.h>
+#समावेश <linux/kfence.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpuset.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/tick.h>
+#समावेश <linux/sched/isolation.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/taskstats_kern.h>
+#समावेश <linux/delayacct.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/rmap.h>
+#समावेश <linux/mempolicy.h>
+#समावेश <linux/key.h>
+#समावेश <linux/page_ext.h>
+#समावेश <linux/debug_locks.h>
+#समावेश <linux/debugobjects.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/kmemleak.h>
+#समावेश <linux/padata.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/device/driver.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/init.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/idr.h>
+#समावेश <linux/kgdb.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/async.h>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/pti.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/elevator.h>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/context_tracking.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकegrity.h>
+#समावेश <linux/proc_ns.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/cache.h>
+#समावेश <linux/rodata_test.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/mem_encrypt.h>
+#समावेश <linux/kcsan.h>
+#समावेश <linux/init_syscalls.h>
+#समावेश <linux/stackdepot.h>
 
-#include <asm/io.h>
-#include <asm/bugs.h>
-#include <asm/setup.h>
-#include <asm/sections.h>
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/bugs.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/cacheflush.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/initcall.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/initcall.h>
 
-#include <kunit/test.h>
+#समावेश <kunit/test.h>
 
-static int kernel_init(void *);
+अटल पूर्णांक kernel_init(व्योम *);
 
-extern void init_IRQ(void);
-extern void radix_tree_init(void);
+बाह्य व्योम init_IRQ(व्योम);
+बाह्य व्योम radix_tree_init(व्योम);
 
 /*
  * Debug helper: via this flag we know that we are in 'early bootup code'
  * where only the boot processor is running with IRQ disabled.  This means
- * two things - IRQ must not be enabled before the flag is cleared and some
- * operations which are not allowed with IRQ disabled are allowed while the
+ * two things - IRQ must not be enabled beक्रमe the flag is cleared and some
+ * operations which are not allowed with IRQ disabled are allowed जबतक the
  * flag is set.
  */
-bool early_boot_irqs_disabled __read_mostly;
+bool early_boot_irqs_disabled __पढ़ो_mostly;
 
-enum system_states system_state __read_mostly;
-EXPORT_SYMBOL(system_state);
+क्रमागत प्रणाली_states प्रणाली_state __पढ़ो_mostly;
+EXPORT_SYMBOL(प्रणाली_state);
 
 /*
  * Boot command-line arguments
  */
-#define MAX_INIT_ARGS CONFIG_INIT_ENV_ARG_LIMIT
-#define MAX_INIT_ENVS CONFIG_INIT_ENV_ARG_LIMIT
+#घोषणा MAX_INIT_ARGS CONFIG_INIT_ENV_ARG_LIMIT
+#घोषणा MAX_INIT_ENVS CONFIG_INIT_ENV_ARG_LIMIT
 
-extern void time_init(void);
-/* Default late time init is NULL. archs can override this later. */
-void (*__initdata late_time_init)(void);
+बाह्य व्योम समय_init(व्योम);
+/* Default late समय init is शून्य. archs can override this later. */
+व्योम (*__initdata late_समय_init)(व्योम);
 
-/* Untouched command line saved by arch-specific code. */
-char __initdata boot_command_line[COMMAND_LINE_SIZE];
-/* Untouched saved command line (eg. for /proc) */
-char *saved_command_line;
-/* Command line for parameter parsing */
-static char *static_command_line;
+/* Untouched command line saved by arch-specअगरic code. */
+अक्षर __initdata boot_command_line[COMMAND_LINE_SIZE];
+/* Untouched saved command line (eg. क्रम /proc) */
+अक्षर *saved_command_line;
+/* Command line क्रम parameter parsing */
+अटल अक्षर *अटल_command_line;
 /* Untouched extra command line */
-static char *extra_command_line;
+अटल अक्षर *extra_command_line;
 /* Extra init arguments */
-static char *extra_init_args;
+अटल अक्षर *extra_init_args;
 
-#ifdef CONFIG_BOOT_CONFIG
+#अगर_घोषित CONFIG_BOOT_CONFIG
 /* Is bootconfig on command line? */
-static bool bootconfig_found;
-static bool initargs_found;
-#else
+अटल bool bootconfig_found;
+अटल bool initargs_found;
+#अन्यथा
 # define bootconfig_found false
 # define initargs_found false
-#endif
+#पूर्ण_अगर
 
-static char *execute_command;
-static char *ramdisk_execute_command = "/init";
+अटल अक्षर *execute_command;
+अटल अक्षर *ramdisk_execute_command = "/init";
 
 /*
- * Used to generate warnings if static_key manipulation functions are used
- * before jump_label_init is called.
+ * Used to generate warnings अगर अटल_key manipulation functions are used
+ * beक्रमe jump_label_init is called.
  */
-bool static_key_initialized __read_mostly;
-EXPORT_SYMBOL_GPL(static_key_initialized);
+bool अटल_key_initialized __पढ़ो_mostly;
+EXPORT_SYMBOL_GPL(अटल_key_initialized);
 
 /*
  * If set, this is an indication to the drivers that reset the underlying
- * device before going ahead with the initialization otherwise driver might
+ * device beक्रमe going ahead with the initialization otherwise driver might
  * rely on the BIOS and skip the reset operation.
  *
- * This is useful if kernel is booting in an unreliable environment.
+ * This is useful अगर kernel is booting in an unreliable environment.
  * For ex. kdump situation where previous kernel has crashed, BIOS has been
  * skipped and devices will be in unknown state.
  */
-unsigned int reset_devices;
+अचिन्हित पूर्णांक reset_devices;
 EXPORT_SYMBOL(reset_devices);
 
-static int __init set_reset_devices(char *str)
-{
+अटल पूर्णांक __init set_reset_devices(अक्षर *str)
+अणु
 	reset_devices = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("reset_devices", set_reset_devices);
 
-static const char *argv_init[MAX_INIT_ARGS+2] = { "init", NULL, };
-const char *envp_init[MAX_INIT_ENVS+2] = { "HOME=/", "TERM=linux", NULL, };
-static const char *panic_later, *panic_param;
+अटल स्थिर अक्षर *argv_init[MAX_INIT_ARGS+2] = अणु "init", शून्य, पूर्ण;
+स्थिर अक्षर *envp_init[MAX_INIT_ENVS+2] = अणु "HOME=/", "TERM=linux", शून्य, पूर्ण;
+अटल स्थिर अक्षर *panic_later, *panic_param;
 
-extern const struct obs_kernel_param __setup_start[], __setup_end[];
+बाह्य स्थिर काष्ठा obs_kernel_param __setup_start[], __setup_end[];
 
-static bool __init obsolete_checksetup(char *line)
-{
-	const struct obs_kernel_param *p;
+अटल bool __init obsolete_checksetup(अक्षर *line)
+अणु
+	स्थिर काष्ठा obs_kernel_param *p;
 	bool had_early_param = false;
 
 	p = __setup_start;
-	do {
-		int n = strlen(p->str);
-		if (parameqn(line, p->str, n)) {
-			if (p->early) {
-				/* Already done in parse_early_param?
+	करो अणु
+		पूर्णांक n = म_माप(p->str);
+		अगर (parameqn(line, p->str, n)) अणु
+			अगर (p->early) अणु
+				/* Alपढ़ोy करोne in parse_early_param?
 				 * (Needs exact match on param part).
 				 * Keep iterating, as we can have early
 				 * params and __setups of same names 8( */
-				if (line[n] == '\0' || line[n] == '=')
+				अगर (line[n] == '\0' || line[n] == '=')
 					had_early_param = true;
-			} else if (!p->setup_func) {
+			पूर्ण अन्यथा अगर (!p->setup_func) अणु
 				pr_warn("Parameter %s is obsolete, ignored\n",
 					p->str);
-				return true;
-			} else if (p->setup_func(line + n))
-				return true;
-		}
+				वापस true;
+			पूर्ण अन्यथा अगर (p->setup_func(line + n))
+				वापस true;
+		पूर्ण
 		p++;
-	} while (p < __setup_end);
+	पूर्ण जबतक (p < __setup_end);
 
-	return had_early_param;
-}
+	वापस had_early_param;
+पूर्ण
 
 /*
- * This should be approx 2 Bo*oMips to start (note initial shift), and will
- * still work even if initially too large, it will just take slightly longer
+ * This should be approx 2 Bo*oMips to start (note initial shअगरt), and will
+ * still work even अगर initially too large, it will just take slightly दीर्घer
  */
-unsigned long loops_per_jiffy = (1<<12);
-EXPORT_SYMBOL(loops_per_jiffy);
+अचिन्हित दीर्घ loops_per_jअगरfy = (1<<12);
+EXPORT_SYMBOL(loops_per_jअगरfy);
 
-static int __init debug_kernel(char *str)
-{
+अटल पूर्णांक __init debug_kernel(अक्षर *str)
+अणु
 	console_loglevel = CONSOLE_LOGLEVEL_DEBUG;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init quiet_kernel(char *str)
-{
+अटल पूर्णांक __init quiet_kernel(अक्षर *str)
+अणु
 	console_loglevel = CONSOLE_LOGLEVEL_QUIET;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 early_param("debug", debug_kernel);
 early_param("quiet", quiet_kernel);
 
-static int __init loglevel(char *str)
-{
-	int newlevel;
+अटल पूर्णांक __init loglevel(अक्षर *str)
+अणु
+	पूर्णांक newlevel;
 
 	/*
 	 * Only update loglevel value when a correct setting was passed,
 	 * to prevent blind crashes (when loglevel being set to 0) that
 	 * are quite hard to debug
 	 */
-	if (get_option(&str, &newlevel)) {
+	अगर (get_option(&str, &newlevel)) अणु
 		console_loglevel = newlevel;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 early_param("loglevel", loglevel);
 
-#ifdef CONFIG_BLK_DEV_INITRD
-static void * __init get_boot_config_from_initrd(u32 *_size, u32 *_csum)
-{
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+अटल व्योम * __init get_boot_config_from_initrd(u32 *_size, u32 *_csum)
+अणु
 	u32 size, csum;
-	char *data;
+	अक्षर *data;
 	u32 *hdr;
-	int i;
+	पूर्णांक i;
 
-	if (!initrd_end)
-		return NULL;
+	अगर (!initrd_end)
+		वापस शून्य;
 
-	data = (char *)initrd_end - BOOTCONFIG_MAGIC_LEN;
+	data = (अक्षर *)initrd_end - BOOTCONFIG_MAGIC_LEN;
 	/*
 	 * Since Grub may align the size of initrd to 4, we must
 	 * check the preceding 3 bytes as well.
 	 */
-	for (i = 0; i < 4; i++) {
-		if (!memcmp(data, BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_LEN))
-			goto found;
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (!स_भेद(data, BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_LEN))
+			जाओ found;
 		data--;
-	}
-	return NULL;
+	पूर्ण
+	वापस शून्य;
 
 found:
 	hdr = (u32 *)(data - 8);
 	size = le32_to_cpu(hdr[0]);
 	csum = le32_to_cpu(hdr[1]);
 
-	data = ((void *)hdr) - size;
-	if ((unsigned long)data < initrd_start) {
+	data = ((व्योम *)hdr) - size;
+	अगर ((अचिन्हित दीर्घ)data < initrd_start) अणु
 		pr_err("bootconfig size %d is greater than initrd size %ld\n",
 			size, initrd_end - initrd_start);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* Remove bootconfig from initramfs/initrd */
-	initrd_end = (unsigned long)data;
-	if (_size)
+	initrd_end = (अचिन्हित दीर्घ)data;
+	अगर (_size)
 		*_size = size;
-	if (_csum)
+	अगर (_csum)
 		*_csum = csum;
 
-	return data;
-}
-#else
-static void * __init get_boot_config_from_initrd(u32 *_size, u32 *_csum)
-{
-	return NULL;
-}
-#endif
+	वापस data;
+पूर्ण
+#अन्यथा
+अटल व्योम * __init get_boot_config_from_initrd(u32 *_size, u32 *_csum)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_BOOT_CONFIG
+#अगर_घोषित CONFIG_BOOT_CONFIG
 
-static char xbc_namebuf[XBC_KEYLEN_MAX] __initdata;
+अटल अक्षर xbc_namebuf[XBC_KEYLEN_MAX] __initdata;
 
-#define rest(dst, end) ((end) > (dst) ? (end) - (dst) : 0)
+#घोषणा rest(dst, end) ((end) > (dst) ? (end) - (dst) : 0)
 
-static int __init xbc_snprint_cmdline(char *buf, size_t size,
-				      struct xbc_node *root)
-{
-	struct xbc_node *knode, *vnode;
-	char *end = buf + size;
-	const char *val;
-	int ret;
+अटल पूर्णांक __init xbc_snprपूर्णांक_cmdline(अक्षर *buf, माप_प्रकार size,
+				      काष्ठा xbc_node *root)
+अणु
+	काष्ठा xbc_node *knode, *vnode;
+	अक्षर *end = buf + size;
+	स्थिर अक्षर *val;
+	पूर्णांक ret;
 
-	xbc_node_for_each_key_value(root, knode, val) {
+	xbc_node_क्रम_each_key_value(root, knode, val) अणु
 		ret = xbc_node_compose_key_after(root, knode,
 					xbc_namebuf, XBC_KEYLEN_MAX);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		vnode = xbc_node_get_child(knode);
-		if (!vnode) {
-			ret = snprintf(buf, rest(buf, end), "%s ", xbc_namebuf);
-			if (ret < 0)
-				return ret;
+		अगर (!vnode) अणु
+			ret = snम_लिखो(buf, rest(buf, end), "%s ", xbc_namebuf);
+			अगर (ret < 0)
+				वापस ret;
 			buf += ret;
-			continue;
-		}
-		xbc_array_for_each_value(vnode, val) {
-			ret = snprintf(buf, rest(buf, end), "%s=\"%s\" ",
+			जारी;
+		पूर्ण
+		xbc_array_क्रम_each_value(vnode, val) अणु
+			ret = snम_लिखो(buf, rest(buf, end), "%s=\"%s\" ",
 				       xbc_namebuf, val);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			buf += ret;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return buf - (end - size);
-}
-#undef rest
+	वापस buf - (end - size);
+पूर्ण
+#अघोषित rest
 
 /* Make an extra command line under given key word */
-static char * __init xbc_make_cmdline(const char *key)
-{
-	struct xbc_node *root;
-	char *new_cmdline;
-	int ret, len = 0;
+अटल अक्षर * __init xbc_make_cmdline(स्थिर अक्षर *key)
+अणु
+	काष्ठा xbc_node *root;
+	अक्षर *new_cmdline;
+	पूर्णांक ret, len = 0;
 
 	root = xbc_find_node(key);
-	if (!root)
-		return NULL;
+	अगर (!root)
+		वापस शून्य;
 
 	/* Count required buffer size */
-	len = xbc_snprint_cmdline(NULL, 0, root);
-	if (len <= 0)
-		return NULL;
+	len = xbc_snprपूर्णांक_cmdline(शून्य, 0, root);
+	अगर (len <= 0)
+		वापस शून्य;
 
 	new_cmdline = memblock_alloc(len + 1, SMP_CACHE_BYTES);
-	if (!new_cmdline) {
+	अगर (!new_cmdline) अणु
 		pr_err("Failed to allocate memory for extra kernel cmdline.\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	ret = xbc_snprint_cmdline(new_cmdline, len + 1, root);
-	if (ret < 0 || ret > len) {
+	ret = xbc_snprपूर्णांक_cmdline(new_cmdline, len + 1, root);
+	अगर (ret < 0 || ret > len) अणु
 		pr_err("Failed to print extra kernel cmdline.\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return new_cmdline;
-}
+	वापस new_cmdline;
+पूर्ण
 
-static u32 boot_config_checksum(unsigned char *p, u32 size)
-{
+अटल u32 boot_config_checksum(अचिन्हित अक्षर *p, u32 size)
+अणु
 	u32 ret = 0;
 
-	while (size--)
+	जबतक (size--)
 		ret += *p++;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init bootconfig_params(char *param, char *val,
-				    const char *unused, void *arg)
-{
-	if (strcmp(param, "bootconfig") == 0) {
+अटल पूर्णांक __init bootconfig_params(अक्षर *param, अक्षर *val,
+				    स्थिर अक्षर *unused, व्योम *arg)
+अणु
+	अगर (म_भेद(param, "bootconfig") == 0) अणु
 		bootconfig_found = true;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __init setup_boot_config(void)
-{
-	static char tmp_cmdline[COMMAND_LINE_SIZE] __initdata;
-	const char *msg;
-	int pos;
+अटल व्योम __init setup_boot_config(व्योम)
+अणु
+	अटल अक्षर पंचांगp_cmdline[COMMAND_LINE_SIZE] __initdata;
+	स्थिर अक्षर *msg;
+	पूर्णांक pos;
 	u32 size, csum;
-	char *data, *copy, *err;
-	int ret;
+	अक्षर *data, *copy, *err;
+	पूर्णांक ret;
 
-	/* Cut out the bootconfig data even if we have no bootconfig option */
+	/* Cut out the bootconfig data even अगर we have no bootconfig option */
 	data = get_boot_config_from_initrd(&size, &csum);
 
-	strlcpy(tmp_cmdline, boot_command_line, COMMAND_LINE_SIZE);
-	err = parse_args("bootconfig", tmp_cmdline, NULL, 0, 0, 0, NULL,
+	strlcpy(पंचांगp_cmdline, boot_command_line, COMMAND_LINE_SIZE);
+	err = parse_args("bootconfig", पंचांगp_cmdline, शून्य, 0, 0, 0, शून्य,
 			 bootconfig_params);
 
-	if (IS_ERR(err) || !bootconfig_found)
-		return;
+	अगर (IS_ERR(err) || !bootconfig_found)
+		वापस;
 
-	/* parse_args() stops at '--' and returns an address */
-	if (err)
+	/* parse_args() stops at '--' and वापसs an address */
+	अगर (err)
 		initargs_found = true;
 
-	if (!data) {
+	अगर (!data) अणु
 		pr_err("'bootconfig' found on command line, but no bootconfig found\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (size >= XBC_DATA_MAX) {
+	अगर (size >= XBC_DATA_MAX) अणु
 		pr_err("bootconfig size %d greater than max size %d\n",
 			size, XBC_DATA_MAX);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (boot_config_checksum((unsigned char *)data, size) != csum) {
+	अगर (boot_config_checksum((अचिन्हित अक्षर *)data, size) != csum) अणु
 		pr_err("bootconfig checksum failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	copy = memblock_alloc(size + 1, SMP_CACHE_BYTES);
-	if (!copy) {
+	अगर (!copy) अणु
 		pr_err("Failed to allocate memory for bootconfig\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memcpy(copy, data, size);
+	स_नकल(copy, data, size);
 	copy[size] = '\0';
 
 	ret = xbc_init(copy, &msg, &pos);
-	if (ret < 0) {
-		if (pos < 0)
+	अगर (ret < 0) अणु
+		अगर (pos < 0)
 			pr_err("Failed to init bootconfig: %s.\n", msg);
-		else
+		अन्यथा
 			pr_err("Failed to parse bootconfig: %s at %d.\n",
 				msg, pos);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_info("Load bootconfig: %d bytes %d nodes\n", size, ret);
 		/* keys starting with "kernel." are passed via cmdline */
 		extra_command_line = xbc_make_cmdline("kernel");
 		/* Also, "init." keys are init arguments */
 		extra_init_args = xbc_make_cmdline("init");
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
-#else
+#अन्यथा
 
-static void __init setup_boot_config(void)
-{
+अटल व्योम __init setup_boot_config(व्योम)
+अणु
 	/* Remove bootconfig data from initrd */
-	get_boot_config_from_initrd(NULL, NULL);
-}
+	get_boot_config_from_initrd(शून्य, शून्य);
+पूर्ण
 
-static int __init warn_bootconfig(char *str)
-{
+अटल पूर्णांक __init warn_bootconfig(अक्षर *str)
+अणु
 	pr_warn("WARNING: 'bootconfig' found on the kernel command line but CONFIG_BOOT_CONFIG is not set.\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("bootconfig", warn_bootconfig);
 
-#endif
+#पूर्ण_अगर
 
 /* Change NUL term back to "=", to make "param" the whole string. */
-static void __init repair_env_string(char *param, char *val)
-{
-	if (val) {
+अटल व्योम __init repair_env_string(अक्षर *param, अक्षर *val)
+अणु
+	अगर (val) अणु
 		/* param=val or param="val"? */
-		if (val == param+strlen(param)+1)
+		अगर (val == param+म_माप(param)+1)
 			val[-1] = '=';
-		else if (val == param+strlen(param)+2) {
+		अन्यथा अगर (val == param+म_माप(param)+2) अणु
 			val[-2] = '=';
-			memmove(val-1, val, strlen(val)+1);
-		} else
+			स_हटाओ(val-1, val, म_माप(val)+1);
+		पूर्ण अन्यथा
 			BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Anything after -- gets handed straight to init. */
-static int __init set_init_arg(char *param, char *val,
-			       const char *unused, void *arg)
-{
-	unsigned int i;
+/* Anything after -- माला_लो handed straight to init. */
+अटल पूर्णांक __init set_init_arg(अक्षर *param, अक्षर *val,
+			       स्थिर अक्षर *unused, व्योम *arg)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (panic_later)
-		return 0;
+	अगर (panic_later)
+		वापस 0;
 
 	repair_env_string(param, val);
 
-	for (i = 0; argv_init[i]; i++) {
-		if (i == MAX_INIT_ARGS) {
+	क्रम (i = 0; argv_init[i]; i++) अणु
+		अगर (i == MAX_INIT_ARGS) अणु
 			panic_later = "init";
 			panic_param = param;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	argv_init[i] = param;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Unknown boot options get handed to init, unless they look like
  * unused parameters (modprobe will find them in /proc/cmdline).
  */
-static int __init unknown_bootoption(char *param, char *val,
-				     const char *unused, void *arg)
-{
-	size_t len = strlen(param);
+अटल पूर्णांक __init unknown_bootoption(अक्षर *param, अक्षर *val,
+				     स्थिर अक्षर *unused, व्योम *arg)
+अणु
+	माप_प्रकार len = म_माप(param);
 
 	repair_env_string(param, val);
 
 	/* Handle obsolete-style parameters */
-	if (obsolete_checksetup(param))
-		return 0;
+	अगर (obsolete_checksetup(param))
+		वापस 0;
 
 	/* Unused module parameter. */
-	if (strnchr(param, len, '.'))
-		return 0;
+	अगर (strnchr(param, len, '.'))
+		वापस 0;
 
-	if (panic_later)
-		return 0;
+	अगर (panic_later)
+		वापस 0;
 
-	if (val) {
+	अगर (val) अणु
 		/* Environment option */
-		unsigned int i;
-		for (i = 0; envp_init[i]; i++) {
-			if (i == MAX_INIT_ENVS) {
+		अचिन्हित पूर्णांक i;
+		क्रम (i = 0; envp_init[i]; i++) अणु
+			अगर (i == MAX_INIT_ENVS) अणु
 				panic_later = "env";
 				panic_param = param;
-			}
-			if (!strncmp(param, envp_init[i], len+1))
-				break;
-		}
+			पूर्ण
+			अगर (!म_भेदन(param, envp_init[i], len+1))
+				अवरोध;
+		पूर्ण
 		envp_init[i] = param;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Command line option */
-		unsigned int i;
-		for (i = 0; argv_init[i]; i++) {
-			if (i == MAX_INIT_ARGS) {
+		अचिन्हित पूर्णांक i;
+		क्रम (i = 0; argv_init[i]; i++) अणु
+			अगर (i == MAX_INIT_ARGS) अणु
 				panic_later = "init";
 				panic_param = param;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		argv_init[i] = param;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __init init_setup(char *str)
-{
-	unsigned int i;
+अटल पूर्णांक __init init_setup(अक्षर *str)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	execute_command = str;
 	/*
-	 * In case LILO is going to boot us with default command line,
-	 * it prepends "auto" before the whole cmdline which makes
+	 * In हाल LILO is going to boot us with शेष command line,
+	 * it prepends "auto" beक्रमe the whole cmdline which makes
 	 * the shell think it should execute a script with such name.
-	 * So we ignore all arguments entered _before_ init=... [MJ]
+	 * So we ignore all arguments entered _beक्रमe_ init=... [MJ]
 	 */
-	for (i = 1; i < MAX_INIT_ARGS; i++)
-		argv_init[i] = NULL;
-	return 1;
-}
+	क्रम (i = 1; i < MAX_INIT_ARGS; i++)
+		argv_init[i] = शून्य;
+	वापस 1;
+पूर्ण
 __setup("init=", init_setup);
 
-static int __init rdinit_setup(char *str)
-{
-	unsigned int i;
+अटल पूर्णांक __init rdinit_setup(अक्षर *str)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	ramdisk_execute_command = str;
 	/* See "auto" comment in init_setup */
-	for (i = 1; i < MAX_INIT_ARGS; i++)
-		argv_init[i] = NULL;
-	return 1;
-}
+	क्रम (i = 1; i < MAX_INIT_ARGS; i++)
+		argv_init[i] = शून्य;
+	वापस 1;
+पूर्ण
 __setup("rdinit=", rdinit_setup);
 
-#ifndef CONFIG_SMP
-static const unsigned int setup_max_cpus = NR_CPUS;
-static inline void setup_nr_cpu_ids(void) { }
-static inline void smp_prepare_cpus(unsigned int maxcpus) { }
-#endif
+#अगर_अघोषित CONFIG_SMP
+अटल स्थिर अचिन्हित पूर्णांक setup_max_cpus = NR_CPUS;
+अटल अंतरभूत व्योम setup_nr_cpu_ids(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम smp_prepare_cpus(अचिन्हित पूर्णांक maxcpus) अणु पूर्ण
+#पूर्ण_अगर
 
 /*
- * We need to store the untouched command line for future reference.
+ * We need to store the untouched command line क्रम future reference.
  * We also need to store the touched command line since the parameter
- * parsing is performed in place, and we should allow a component to
- * store reference of name/value for future reference.
+ * parsing is perक्रमmed in place, and we should allow a component to
+ * store reference of name/value क्रम future reference.
  */
-static void __init setup_command_line(char *command_line)
-{
-	size_t len, xlen = 0, ilen = 0;
+अटल व्योम __init setup_command_line(अक्षर *command_line)
+अणु
+	माप_प्रकार len, xlen = 0, ilen = 0;
 
-	if (extra_command_line)
-		xlen = strlen(extra_command_line);
-	if (extra_init_args)
-		ilen = strlen(extra_init_args) + 4; /* for " -- " */
+	अगर (extra_command_line)
+		xlen = म_माप(extra_command_line);
+	अगर (extra_init_args)
+		ilen = म_माप(extra_init_args) + 4; /* क्रम " -- " */
 
-	len = xlen + strlen(boot_command_line) + 1;
+	len = xlen + म_माप(boot_command_line) + 1;
 
 	saved_command_line = memblock_alloc(len + ilen, SMP_CACHE_BYTES);
-	if (!saved_command_line)
+	अगर (!saved_command_line)
 		panic("%s: Failed to allocate %zu bytes\n", __func__, len + ilen);
 
-	static_command_line = memblock_alloc(len, SMP_CACHE_BYTES);
-	if (!static_command_line)
+	अटल_command_line = memblock_alloc(len, SMP_CACHE_BYTES);
+	अगर (!अटल_command_line)
 		panic("%s: Failed to allocate %zu bytes\n", __func__, len);
 
-	if (xlen) {
+	अगर (xlen) अणु
 		/*
-		 * We have to put extra_command_line before boot command
+		 * We have to put extra_command_line beक्रमe boot command
 		 * lines because there could be dashes (separator of init
 		 * command line) in the command lines.
 		 */
-		strcpy(saved_command_line, extra_command_line);
-		strcpy(static_command_line, extra_command_line);
-	}
-	strcpy(saved_command_line + xlen, boot_command_line);
-	strcpy(static_command_line + xlen, command_line);
+		म_नकल(saved_command_line, extra_command_line);
+		म_नकल(अटल_command_line, extra_command_line);
+	पूर्ण
+	म_नकल(saved_command_line + xlen, boot_command_line);
+	म_नकल(अटल_command_line + xlen, command_line);
 
-	if (ilen) {
+	अगर (ilen) अणु
 		/*
 		 * Append supplemental init boot args to saved_command_line
 		 * so that user can check what command line options passed
 		 * to init.
 		 */
-		len = strlen(saved_command_line);
-		if (initargs_found) {
+		len = म_माप(saved_command_line);
+		अगर (initargs_found) अणु
 			saved_command_line[len++] = ' ';
-		} else {
-			strcpy(saved_command_line + len, " -- ");
+		पूर्ण अन्यथा अणु
+			म_नकल(saved_command_line + len, " -- ");
 			len += 4;
-		}
+		पूर्ण
 
-		strcpy(saved_command_line + len, extra_init_args);
-	}
-}
+		म_नकल(saved_command_line + len, extra_init_args);
+	पूर्ण
+पूर्ण
 
 /*
- * We need to finalize in a non-__init function or else race conditions
- * between the root thread and the init thread may cause start_kernel to
- * be reaped by free_initmem before the root thread has proceeded to
+ * We need to finalize in a non-__init function or अन्यथा race conditions
+ * between the root thपढ़ो and the init thपढ़ो may cause start_kernel to
+ * be reaped by मुक्त_iniपंचांगem beक्रमe the root thपढ़ो has proceeded to
  * cpu_idle.
  *
- * gcc-3.4 accidentally inlines this function, so use noinline.
+ * gcc-3.4 accidentally अंतरभूतs this function, so use noअंतरभूत.
  */
 
-static __initdata DECLARE_COMPLETION(kthreadd_done);
+अटल __initdata DECLARE_COMPLETION(kthपढ़ोd_करोne);
 
-noinline void __ref rest_init(void)
-{
-	struct task_struct *tsk;
-	int pid;
+noअंतरभूत व्योम __ref rest_init(व्योम)
+अणु
+	काष्ठा task_काष्ठा *tsk;
+	पूर्णांक pid;
 
 	rcu_scheduler_starting();
 	/*
 	 * We need to spawn init first so that it obtains pid 1, however
-	 * the init task will end up wanting to create kthreads, which, if
-	 * we schedule it before we create kthreadd, will OOPS.
+	 * the init task will end up wanting to create kthपढ़ोs, which, अगर
+	 * we schedule it beक्रमe we create kthपढ़ोd, will OOPS.
 	 */
-	pid = kernel_thread(kernel_init, NULL, CLONE_FS);
+	pid = kernel_thपढ़ो(kernel_init, शून्य, CLONE_FS);
 	/*
 	 * Pin init on the boot CPU. Task migration is not properly working
 	 * until sched_init_smp() has been run. It will set the allowed
-	 * CPUs for init to the non isolated CPUs.
+	 * CPUs क्रम init to the non isolated CPUs.
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tsk = find_task_by_pid_ns(pid, &init_pid_ns);
 	set_cpus_allowed_ptr(tsk, cpumask_of(smp_processor_id()));
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	numa_default_policy();
-	pid = kernel_thread(kthreadd, NULL, CLONE_FS | CLONE_FILES);
-	rcu_read_lock();
-	kthreadd_task = find_task_by_pid_ns(pid, &init_pid_ns);
-	rcu_read_unlock();
+	numa_शेष_policy();
+	pid = kernel_thपढ़ो(kthपढ़ोd, शून्य, CLONE_FS | CLONE_खाताS);
+	rcu_पढ़ो_lock();
+	kthपढ़ोd_task = find_task_by_pid_ns(pid, &init_pid_ns);
+	rcu_पढ़ो_unlock();
 
 	/*
 	 * Enable might_sleep() and smp_processor_id() checks.
 	 * They cannot be enabled earlier because with CONFIG_PREEMPTION=y
-	 * kernel_thread() would trigger might_sleep() splats. With
+	 * kernel_thपढ़ो() would trigger might_sleep() splats. With
 	 * CONFIG_PREEMPT_VOLUNTARY=y the init task might have scheduled
-	 * already, but it's stuck on the kthreadd_done completion.
+	 * alपढ़ोy, but it's stuck on the kthपढ़ोd_करोne completion.
 	 */
-	system_state = SYSTEM_SCHEDULING;
+	प्रणाली_state = SYSTEM_SCHEDULING;
 
-	complete(&kthreadd_done);
+	complete(&kthपढ़ोd_करोne);
 
 	/*
-	 * The boot idle thread must execute schedule()
+	 * The boot idle thपढ़ो must execute schedule()
 	 * at least once to get things moving:
 	 */
 	schedule_preempt_disabled();
-	/* Call into cpu_idle with preempt disabled */
+	/* Call पूर्णांकo cpu_idle with preempt disabled */
 	cpu_startup_entry(CPUHP_ONLINE);
-}
+पूर्ण
 
-/* Check for early params. */
-static int __init do_early_param(char *param, char *val,
-				 const char *unused, void *arg)
-{
-	const struct obs_kernel_param *p;
+/* Check क्रम early params. */
+अटल पूर्णांक __init करो_early_param(अक्षर *param, अक्षर *val,
+				 स्थिर अक्षर *unused, व्योम *arg)
+अणु
+	स्थिर काष्ठा obs_kernel_param *p;
 
-	for (p = __setup_start; p < __setup_end; p++) {
-		if ((p->early && parameq(param, p->str)) ||
-		    (strcmp(param, "console") == 0 &&
-		     strcmp(p->str, "earlycon") == 0)
-		) {
-			if (p->setup_func(val) != 0)
+	क्रम (p = __setup_start; p < __setup_end; p++) अणु
+		अगर ((p->early && parameq(param, p->str)) ||
+		    (म_भेद(param, "console") == 0 &&
+		     म_भेद(p->str, "earlycon") == 0)
+		) अणु
+			अगर (p->setup_func(val) != 0)
 				pr_warn("Malformed early option '%s'\n", param);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* We accept everything at this stage. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init parse_early_options(char *cmdline)
-{
-	parse_args("early options", cmdline, NULL, 0, 0, 0, NULL,
-		   do_early_param);
-}
+व्योम __init parse_early_options(अक्षर *cmdline)
+अणु
+	parse_args("early options", cmdline, शून्य, 0, 0, 0, शून्य,
+		   करो_early_param);
+पूर्ण
 
-/* Arch code calls this early on, or if not, just before other parsing. */
-void __init parse_early_param(void)
-{
-	static int done __initdata;
-	static char tmp_cmdline[COMMAND_LINE_SIZE] __initdata;
+/* Arch code calls this early on, or अगर not, just beक्रमe other parsing. */
+व्योम __init parse_early_param(व्योम)
+अणु
+	अटल पूर्णांक करोne __initdata;
+	अटल अक्षर पंचांगp_cmdline[COMMAND_LINE_SIZE] __initdata;
 
-	if (done)
-		return;
+	अगर (करोne)
+		वापस;
 
-	/* All fall through to do_early_param. */
-	strlcpy(tmp_cmdline, boot_command_line, COMMAND_LINE_SIZE);
-	parse_early_options(tmp_cmdline);
-	done = 1;
-}
+	/* All fall through to करो_early_param. */
+	strlcpy(पंचांगp_cmdline, boot_command_line, COMMAND_LINE_SIZE);
+	parse_early_options(पंचांगp_cmdline);
+	करोne = 1;
+पूर्ण
 
-void __init __weak arch_post_acpi_subsys_init(void) { }
+व्योम __init __weak arch_post_acpi_subsys_init(व्योम) अणु पूर्ण
 
-void __init __weak smp_setup_processor_id(void)
-{
-}
+व्योम __init __weak smp_setup_processor_id(व्योम)
+अणु
+पूर्ण
 
-# if THREAD_SIZE >= PAGE_SIZE
-void __init __weak thread_stack_cache_init(void)
-{
-}
-#endif
+# अगर THREAD_SIZE >= PAGE_SIZE
+व्योम __init __weak thपढ़ो_stack_cache_init(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-void __init __weak mem_encrypt_init(void) { }
+व्योम __init __weak mem_encrypt_init(व्योम) अणु पूर्ण
 
-void __init __weak poking_init(void) { }
+व्योम __init __weak poking_init(व्योम) अणु पूर्ण
 
-void __init __weak pgtable_cache_init(void) { }
+व्योम __init __weak pgtable_cache_init(व्योम) अणु पूर्ण
 
 bool initcall_debug;
 core_param(initcall_debug, initcall_debug, bool, 0644);
 
-#ifdef TRACEPOINTS_ENABLED
-static void __init initcall_debug_enable(void);
-#else
-static inline void initcall_debug_enable(void)
-{
-}
-#endif
+#अगर_घोषित TRACEPOINTS_ENABLED
+अटल व्योम __init initcall_debug_enable(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम initcall_debug_enable(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-/* Report memory auto-initialization states for this boot. */
-static void __init report_meminit(void)
-{
-	const char *stack;
+/* Report memory स्वतः-initialization states क्रम this boot. */
+अटल व्योम __init report_meminit(व्योम)
+अणु
+	स्थिर अक्षर *stack;
 
-	if (IS_ENABLED(CONFIG_INIT_STACK_ALL_PATTERN))
+	अगर (IS_ENABLED(CONFIG_INIT_STACK_ALL_PATTERN))
 		stack = "all(pattern)";
-	else if (IS_ENABLED(CONFIG_INIT_STACK_ALL_ZERO))
+	अन्यथा अगर (IS_ENABLED(CONFIG_INIT_STACK_ALL_ZERO))
 		stack = "all(zero)";
-	else if (IS_ENABLED(CONFIG_GCC_PLUGIN_STRUCTLEAK_BYREF_ALL))
+	अन्यथा अगर (IS_ENABLED(CONFIG_GCC_PLUGIN_STRUCTLEAK_BYREF_ALL))
 		stack = "byref_all(zero)";
-	else if (IS_ENABLED(CONFIG_GCC_PLUGIN_STRUCTLEAK_BYREF))
+	अन्यथा अगर (IS_ENABLED(CONFIG_GCC_PLUGIN_STRUCTLEAK_BYREF))
 		stack = "byref(zero)";
-	else if (IS_ENABLED(CONFIG_GCC_PLUGIN_STRUCTLEAK_USER))
+	अन्यथा अगर (IS_ENABLED(CONFIG_GCC_PLUGIN_STRUCTLEAK_USER))
 		stack = "__user(zero)";
-	else
+	अन्यथा
 		stack = "off";
 
 	pr_info("mem auto-init: stack:%s, heap alloc:%s, heap free:%s\n",
 		stack, want_init_on_alloc(GFP_KERNEL) ? "on" : "off",
-		want_init_on_free() ? "on" : "off");
-	if (want_init_on_free())
+		want_init_on_मुक्त() ? "on" : "off");
+	अगर (want_init_on_मुक्त())
 		pr_info("mem auto-init: clearing system memory may take some time...\n");
-}
+पूर्ण
 
 /*
  * Set up kernel memory allocators
  */
-static void __init mm_init(void)
-{
+अटल व्योम __init mm_init(व्योम)
+अणु
 	/*
 	 * page_ext requires contiguous pages,
 	 * bigger than MAX_ORDER unless SPARSEMEM.
 	 */
-	page_ext_init_flatmem();
+	page_ext_init_flaपंचांगem();
 	init_mem_debugging_and_hardening();
 	kfence_alloc_pool();
 	report_meminit();
 	stack_depot_init();
 	mem_init();
-	mem_init_print_info();
-	/* page_owner must be initialized after buddy is ready */
-	page_ext_init_flatmem_late();
+	mem_init_prपूर्णांक_info();
+	/* page_owner must be initialized after buddy is पढ़ोy */
+	page_ext_init_flaपंचांगem_late();
 	kmem_cache_init();
 	kmemleak_init();
 	pgtable_init();
 	debug_objects_mem_init();
-	vmalloc_init();
-	/* Should be run before the first non-init thread is created */
+	vदो_स्मृति_init();
+	/* Should be run beक्रमe the first non-init thपढ़ो is created */
 	init_espfix_bsp();
 	/* Should be run after espfix64 is set up. */
 	pti_init();
-}
+पूर्ण
 
-#ifdef CONFIG_HAVE_ARCH_RANDOMIZE_KSTACK_OFFSET
+#अगर_घोषित CONFIG_HAVE_ARCH_RANDOMIZE_KSTACK_OFFSET
 DEFINE_STATIC_KEY_MAYBE_RO(CONFIG_RANDOMIZE_KSTACK_OFFSET_DEFAULT,
-			   randomize_kstack_offset);
+			   अक्रमomize_kstack_offset);
 DEFINE_PER_CPU(u32, kstack_offset);
 
-static int __init early_randomize_kstack_offset(char *buf)
-{
-	int ret;
+अटल पूर्णांक __init early_अक्रमomize_kstack_offset(अक्षर *buf)
+अणु
+	पूर्णांक ret;
 	bool bool_result;
 
 	ret = kstrtobool(buf, &bool_result);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (bool_result)
-		static_branch_enable(&randomize_kstack_offset);
-	else
-		static_branch_disable(&randomize_kstack_offset);
-	return 0;
-}
-early_param("randomize_kstack_offset", early_randomize_kstack_offset);
-#endif
+	अगर (bool_result)
+		अटल_branch_enable(&अक्रमomize_kstack_offset);
+	अन्यथा
+		अटल_branch_disable(&अक्रमomize_kstack_offset);
+	वापस 0;
+पूर्ण
+early_param("randomize_kstack_offset", early_अक्रमomize_kstack_offset);
+#पूर्ण_अगर
 
-void __init __weak arch_call_rest_init(void)
-{
+व्योम __init __weak arch_call_rest_init(व्योम)
+अणु
 	rest_init();
-}
+पूर्ण
 
-asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
-{
-	char *command_line;
-	char *after_dashes;
+यंत्रlinkage __visible व्योम __init __no_sanitize_address start_kernel(व्योम)
+अणु
+	अक्षर *command_line;
+	अक्षर *after_dashes;
 
 	set_task_stack_end_magic(&init_task);
 	smp_setup_processor_id();
@@ -899,67 +900,67 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	setup_command_line(command_line);
 	setup_nr_cpu_ids();
 	setup_per_cpu_areas();
-	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
+	smp_prepare_boot_cpu();	/* arch-specअगरic boot-cpu hooks */
 	boot_cpu_hotplug_init();
 
-	build_all_zonelists(NULL);
+	build_all_zonelists(शून्य);
 	page_alloc_init();
 
 	pr_notice("Kernel command line: %s\n", saved_command_line);
-	/* parameters may set static keys */
+	/* parameters may set अटल keys */
 	jump_label_init();
 	parse_early_param();
 	after_dashes = parse_args("Booting kernel",
-				  static_command_line, __start___param,
+				  अटल_command_line, __start___param,
 				  __stop___param - __start___param,
-				  -1, -1, NULL, &unknown_bootoption);
-	if (!IS_ERR_OR_NULL(after_dashes))
-		parse_args("Setting init args", after_dashes, NULL, 0, -1, -1,
-			   NULL, set_init_arg);
-	if (extra_init_args)
+				  -1, -1, शून्य, &unknown_bootoption);
+	अगर (!IS_ERR_OR_शून्य(after_dashes))
+		parse_args("Setting init args", after_dashes, शून्य, 0, -1, -1,
+			   शून्य, set_init_arg);
+	अगर (extra_init_args)
 		parse_args("Setting extra init args", extra_init_args,
-			   NULL, 0, -1, -1, NULL, set_init_arg);
+			   शून्य, 0, -1, -1, शून्य, set_init_arg);
 
 	/*
-	 * These use large bootmem allocations and must precede
+	 * These use large booपंचांगem allocations and must precede
 	 * kmem_cache_init()
 	 */
 	setup_log_buf(0);
 	vfs_caches_init_early();
-	sort_main_extable();
+	sort_मुख्य_extable();
 	trap_init();
 	mm_init();
 
 	ftrace_init();
 
-	/* trace_printk can be enabled here */
+	/* trace_prपूर्णांकk can be enabled here */
 	early_trace_init();
 
 	/*
-	 * Set up the scheduler prior starting any interrupts (such as the
-	 * timer interrupt). Full topology setup happens at smp_init()
-	 * time - but meanwhile we still have a functioning scheduler.
+	 * Set up the scheduler prior starting any पूर्णांकerrupts (such as the
+	 * समयr पूर्णांकerrupt). Full topology setup happens at smp_init()
+	 * समय - but meanजबतक we still have a functioning scheduler.
 	 */
 	sched_init();
 	/*
 	 * Disable preemption - early bootup scheduling is extremely
-	 * fragile until we cpu_idle() for the first time.
+	 * fragile until we cpu_idle() क्रम the first समय.
 	 */
 	preempt_disable();
-	if (WARN(!irqs_disabled(),
+	अगर (WARN(!irqs_disabled(),
 		 "Interrupts were enabled *very* early, fixing it\n"))
 		local_irq_disable();
 	radix_tree_init();
 
 	/*
-	 * Set up housekeeping before setting up workqueues to allow the unbound
-	 * workqueue to take non-housekeeping into account.
+	 * Set up housekeeping beक्रमe setting up workqueues to allow the unbound
+	 * workqueue to take non-housekeeping पूर्णांकo account.
 	 */
 	housekeeping_init();
 
 	/*
 	 * Allow workqueue creation and work item queueing/cancelling
-	 * early.  Work item execution depends on kthreads and starts after
+	 * early.  Work item execution depends on kthपढ़ोs and starts after
 	 * workqueue_init().
 	 */
 	workqueue_init_early();
@@ -969,35 +970,35 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	/* Trace events are available after this */
 	trace_init();
 
-	if (initcall_debug)
+	अगर (initcall_debug)
 		initcall_debug_enable();
 
 	context_tracking_init();
-	/* init some links before init_ISA_irqs() */
+	/* init some links beक्रमe init_ISA_irqs() */
 	early_irq_init();
 	init_IRQ();
 	tick_init();
 	rcu_init_nohz();
-	init_timers();
-	hrtimers_init();
+	init_समयrs();
+	hrसमयrs_init();
 	softirq_init();
-	timekeeping_init();
+	समयkeeping_init();
 	kfence_init();
 
 	/*
 	 * For best initial stack canary entropy, prepare it after:
-	 * - setup_arch() for any UEFI RNG entropy and boot cmdline access
-	 * - timekeeping_init() for ktime entropy used in rand_initialize()
-	 * - rand_initialize() to get any arch-specific entropy like RDRAND
+	 * - setup_arch() क्रम any UEFI RNG entropy and boot cmdline access
+	 * - समयkeeping_init() क्रम kसमय entropy used in अक्रम_initialize()
+	 * - अक्रम_initialize() to get any arch-specअगरic entropy like RDRAND
 	 * - add_latent_entropy() to get any latent entropy
 	 * - adding command line entropy
 	 */
-	rand_initialize();
+	अक्रम_initialize();
 	add_latent_entropy();
-	add_device_randomness(command_line, strlen(command_line));
+	add_device_अक्रमomness(command_line, म_माप(command_line));
 	boot_init_stack_canary();
 
-	time_init();
+	समय_init();
 	perf_event_init();
 	profile_init();
 	call_function_init();
@@ -1009,12 +1010,12 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	kmem_cache_init_late();
 
 	/*
-	 * HACK ALERT! This is early. We're enabling the console before
-	 * we've done PCI setups etc, and console_init() must be aware of
-	 * this. But we do want output early, in case something goes wrong.
+	 * HACK ALERT! This is early. We're enabling the console beक्रमe
+	 * we've करोne PCI setups etc, and console_init() must be aware of
+	 * this. But we करो want output early, in हाल something goes wrong.
 	 */
 	console_init();
-	if (panic_later)
+	अगर (panic_later)
 		panic("Too many boot %s vars at `%s'", panic_later,
 		      panic_param);
 
@@ -1028,38 +1029,38 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	locking_selftest();
 
 	/*
-	 * This needs to be called before any devices perform DMA
+	 * This needs to be called beक्रमe any devices perक्रमm DMA
 	 * operations that might use the SWIOTLB bounce buffers. It will
 	 * mark the bounce buffers as decrypted so that their usage will
 	 * not cause "plain-text" data to be decrypted when accessed.
 	 */
 	mem_encrypt_init();
 
-#ifdef CONFIG_BLK_DEV_INITRD
-	if (initrd_start && !initrd_below_start_ok &&
-	    page_to_pfn(virt_to_page((void *)initrd_start)) < min_low_pfn) {
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	अगर (initrd_start && !initrd_below_start_ok &&
+	    page_to_pfn(virt_to_page((व्योम *)initrd_start)) < min_low_pfn) अणु
 		pr_crit("initrd overwritten (0x%08lx < 0x%08lx) - disabling it.\n",
-		    page_to_pfn(virt_to_page((void *)initrd_start)),
+		    page_to_pfn(virt_to_page((व्योम *)initrd_start)),
 		    min_low_pfn);
 		initrd_start = 0;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	setup_per_cpu_pageset();
 	numa_policy_init();
 	acpi_early_init();
-	if (late_time_init)
-		late_time_init();
-	sched_clock_init();
+	अगर (late_समय_init)
+		late_समय_init();
+	sched_घड़ी_init();
 	calibrate_delay();
 	pid_idr_init();
 	anon_vma_init();
-#ifdef CONFIG_X86
-	if (efi_enabled(EFI_RUNTIME_SERVICES))
-		efi_enter_virtual_mode();
-#endif
-	thread_stack_cache_init();
+#अगर_घोषित CONFIG_X86
+	अगर (efi_enabled(EFI_RUNTIME_SERVICES))
+		efi_enter_भव_mode();
+#पूर्ण_अगर
+	thपढ़ो_stack_cache_init();
 	cred_init();
-	fork_init();
+	विभाजन_init();
 	proc_caches_init();
 	uts_ns_init();
 	key_init();
@@ -1067,7 +1068,7 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	dbg_late_init();
 	vfs_caches_init();
 	pagecache_init();
-	signals_init();
+	संकेतs_init();
 	seq_file_init();
 	proc_root_init();
 	nsfs_init();
@@ -1079,7 +1080,7 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	poking_init();
 	check_bugs();
 
-	acpi_subsystem_init();
+	acpi_subप्रणाली_init();
 	arch_post_acpi_subsys_init();
 	kcsan_init();
 
@@ -1087,197 +1088,197 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	arch_call_rest_init();
 
 	prevent_tail_call_optimization();
-}
+पूर्ण
 
-/* Call all constructor functions linked into the kernel. */
-static void __init do_ctors(void)
-{
+/* Call all स्थिरructor functions linked पूर्णांकo the kernel. */
+अटल व्योम __init करो_ctors(व्योम)
+अणु
 /*
- * For UML, the constructors have already been called by the
+ * For UML, the स्थिरructors have alपढ़ोy been called by the
  * normal setup code as it's just a normal ELF binary, so we
- * cannot do it again - but we do need CONFIG_CONSTRUCTORS
- * even on UML for modules.
+ * cannot करो it again - but we करो need CONFIG_CONSTRUCTORS
+ * even on UML क्रम modules.
  */
-#if defined(CONFIG_CONSTRUCTORS) && !defined(CONFIG_UML)
+#अगर defined(CONFIG_CONSTRUCTORS) && !defined(CONFIG_UML)
 	ctor_fn_t *fn = (ctor_fn_t *) __ctors_start;
 
-	for (; fn < (ctor_fn_t *) __ctors_end; fn++)
+	क्रम (; fn < (ctor_fn_t *) __ctors_end; fn++)
 		(*fn)();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_KALLSYMS
-struct blacklist_entry {
-	struct list_head next;
-	char *buf;
-};
+#अगर_घोषित CONFIG_KALLSYMS
+काष्ठा blacklist_entry अणु
+	काष्ठा list_head next;
+	अक्षर *buf;
+पूर्ण;
 
-static __initdata_or_module LIST_HEAD(blacklisted_initcalls);
+अटल __initdata_or_module LIST_HEAD(blacklisted_initcalls);
 
-static int __init initcall_blacklist(char *str)
-{
-	char *str_entry;
-	struct blacklist_entry *entry;
+अटल पूर्णांक __init initcall_blacklist(अक्षर *str)
+अणु
+	अक्षर *str_entry;
+	काष्ठा blacklist_entry *entry;
 
 	/* str argument is a comma-separated list of functions */
-	do {
+	करो अणु
 		str_entry = strsep(&str, ",");
-		if (str_entry) {
+		अगर (str_entry) अणु
 			pr_debug("blacklisting initcall %s\n", str_entry);
-			entry = memblock_alloc(sizeof(*entry),
+			entry = memblock_alloc(माप(*entry),
 					       SMP_CACHE_BYTES);
-			if (!entry)
+			अगर (!entry)
 				panic("%s: Failed to allocate %zu bytes\n",
-				      __func__, sizeof(*entry));
-			entry->buf = memblock_alloc(strlen(str_entry) + 1,
+				      __func__, माप(*entry));
+			entry->buf = memblock_alloc(म_माप(str_entry) + 1,
 						    SMP_CACHE_BYTES);
-			if (!entry->buf)
+			अगर (!entry->buf)
 				panic("%s: Failed to allocate %zu bytes\n",
-				      __func__, strlen(str_entry) + 1);
-			strcpy(entry->buf, str_entry);
+				      __func__, म_माप(str_entry) + 1);
+			म_नकल(entry->buf, str_entry);
 			list_add(&entry->next, &blacklisted_initcalls);
-		}
-	} while (str_entry);
+		पूर्ण
+	पूर्ण जबतक (str_entry);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool __init_or_module initcall_blacklisted(initcall_t fn)
-{
-	struct blacklist_entry *entry;
-	char fn_name[KSYM_SYMBOL_LEN];
-	unsigned long addr;
+अटल bool __init_or_module initcall_blacklisted(initcall_t fn)
+अणु
+	काष्ठा blacklist_entry *entry;
+	अक्षर fn_name[KSYM_SYMBOL_LEN];
+	अचिन्हित दीर्घ addr;
 
-	if (list_empty(&blacklisted_initcalls))
-		return false;
+	अगर (list_empty(&blacklisted_initcalls))
+		वापस false;
 
-	addr = (unsigned long) dereference_function_descriptor(fn);
-	sprint_symbol_no_offset(fn_name, addr);
+	addr = (अचिन्हित दीर्घ) dereference_function_descriptor(fn);
+	sprपूर्णांक_symbol_no_offset(fn_name, addr);
 
 	/*
 	 * fn will be "function_name [module_name]" where [module_name] is not
-	 * displayed for built-in init functions.  Strip off the [module_name].
+	 * displayed क्रम built-in init functions.  Strip off the [module_name].
 	 */
 	strreplace(fn_name, ' ', '\0');
 
-	list_for_each_entry(entry, &blacklisted_initcalls, next) {
-		if (!strcmp(fn_name, entry->buf)) {
+	list_क्रम_each_entry(entry, &blacklisted_initcalls, next) अणु
+		अगर (!म_भेद(fn_name, entry->buf)) अणु
 			pr_debug("initcall %s blacklisted\n", fn_name);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
-#else
-static int __init initcall_blacklist(char *str)
-{
+	वापस false;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक __init initcall_blacklist(अक्षर *str)
+अणु
 	pr_warn("initcall_blacklist requires CONFIG_KALLSYMS\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool __init_or_module initcall_blacklisted(initcall_t fn)
-{
-	return false;
-}
-#endif
+अटल bool __init_or_module initcall_blacklisted(initcall_t fn)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 __setup("initcall_blacklist=", initcall_blacklist);
 
-static __init_or_module void
-trace_initcall_start_cb(void *data, initcall_t fn)
-{
-	ktime_t *calltime = (ktime_t *)data;
+अटल __init_or_module व्योम
+trace_initcall_start_cb(व्योम *data, initcall_t fn)
+अणु
+	kसमय_प्रकार *callसमय = (kसमय_प्रकार *)data;
 
-	printk(KERN_DEBUG "calling  %pS @ %i\n", fn, task_pid_nr(current));
-	*calltime = ktime_get();
-}
+	prपूर्णांकk(KERN_DEBUG "calling  %pS @ %i\n", fn, task_pid_nr(current));
+	*callसमय = kसमय_get();
+पूर्ण
 
-static __init_or_module void
-trace_initcall_finish_cb(void *data, initcall_t fn, int ret)
-{
-	ktime_t *calltime = (ktime_t *)data;
-	ktime_t delta, rettime;
-	unsigned long long duration;
+अटल __init_or_module व्योम
+trace_initcall_finish_cb(व्योम *data, initcall_t fn, पूर्णांक ret)
+अणु
+	kसमय_प्रकार *callसमय = (kसमय_प्रकार *)data;
+	kसमय_प्रकार delta, retसमय;
+	अचिन्हित दीर्घ दीर्घ duration;
 
-	rettime = ktime_get();
-	delta = ktime_sub(rettime, *calltime);
-	duration = (unsigned long long) ktime_to_ns(delta) >> 10;
-	printk(KERN_DEBUG "initcall %pS returned %d after %lld usecs\n",
+	retसमय = kसमय_get();
+	delta = kसमय_sub(retसमय, *callसमय);
+	duration = (अचिन्हित दीर्घ दीर्घ) kसमय_प्रकारo_ns(delta) >> 10;
+	prपूर्णांकk(KERN_DEBUG "initcall %pS returned %d after %lld usecs\n",
 		 fn, ret, duration);
-}
+पूर्ण
 
-static ktime_t initcall_calltime;
+अटल kसमय_प्रकार initcall_callसमय;
 
-#ifdef TRACEPOINTS_ENABLED
-static void __init initcall_debug_enable(void)
-{
-	int ret;
+#अगर_घोषित TRACEPOINTS_ENABLED
+अटल व्योम __init initcall_debug_enable(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_trace_initcall_start(trace_initcall_start_cb,
-					    &initcall_calltime);
-	ret |= register_trace_initcall_finish(trace_initcall_finish_cb,
-					      &initcall_calltime);
+	ret = रेजिस्टर_trace_initcall_start(trace_initcall_start_cb,
+					    &initcall_callसमय);
+	ret |= रेजिस्टर_trace_initcall_finish(trace_initcall_finish_cb,
+					      &initcall_callसमय);
 	WARN(ret, "Failed to register initcall tracepoints\n");
-}
-# define do_trace_initcall_start	trace_initcall_start
-# define do_trace_initcall_finish	trace_initcall_finish
-#else
-static inline void do_trace_initcall_start(initcall_t fn)
-{
-	if (!initcall_debug)
-		return;
-	trace_initcall_start_cb(&initcall_calltime, fn);
-}
-static inline void do_trace_initcall_finish(initcall_t fn, int ret)
-{
-	if (!initcall_debug)
-		return;
-	trace_initcall_finish_cb(&initcall_calltime, fn, ret);
-}
-#endif /* !TRACEPOINTS_ENABLED */
+पूर्ण
+# define करो_trace_initcall_start	trace_initcall_start
+# define करो_trace_initcall_finish	trace_initcall_finish
+#अन्यथा
+अटल अंतरभूत व्योम करो_trace_initcall_start(initcall_t fn)
+अणु
+	अगर (!initcall_debug)
+		वापस;
+	trace_initcall_start_cb(&initcall_callसमय, fn);
+पूर्ण
+अटल अंतरभूत व्योम करो_trace_initcall_finish(initcall_t fn, पूर्णांक ret)
+अणु
+	अगर (!initcall_debug)
+		वापस;
+	trace_initcall_finish_cb(&initcall_callसमय, fn, ret);
+पूर्ण
+#पूर्ण_अगर /* !TRACEPOINTS_ENABLED */
 
-int __init_or_module do_one_initcall(initcall_t fn)
-{
-	int count = preempt_count();
-	char msgbuf[64];
-	int ret;
+पूर्णांक __init_or_module करो_one_initcall(initcall_t fn)
+अणु
+	पूर्णांक count = preempt_count();
+	अक्षर msgbuf[64];
+	पूर्णांक ret;
 
-	if (initcall_blacklisted(fn))
-		return -EPERM;
+	अगर (initcall_blacklisted(fn))
+		वापस -EPERM;
 
-	do_trace_initcall_start(fn);
+	करो_trace_initcall_start(fn);
 	ret = fn();
-	do_trace_initcall_finish(fn, ret);
+	करो_trace_initcall_finish(fn, ret);
 
 	msgbuf[0] = 0;
 
-	if (preempt_count() != count) {
-		sprintf(msgbuf, "preemption imbalance ");
+	अगर (preempt_count() != count) अणु
+		प्र_लिखो(msgbuf, "preemption imbalance ");
 		preempt_count_set(count);
-	}
-	if (irqs_disabled()) {
-		strlcat(msgbuf, "disabled interrupts ", sizeof(msgbuf));
+	पूर्ण
+	अगर (irqs_disabled()) अणु
+		strlcat(msgbuf, "disabled interrupts ", माप(msgbuf));
 		local_irq_enable();
-	}
+	पूर्ण
 	WARN(msgbuf[0], "initcall %pS returned with %s\n", fn, msgbuf);
 
 	add_latent_entropy();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-extern initcall_entry_t __initcall_start[];
-extern initcall_entry_t __initcall0_start[];
-extern initcall_entry_t __initcall1_start[];
-extern initcall_entry_t __initcall2_start[];
-extern initcall_entry_t __initcall3_start[];
-extern initcall_entry_t __initcall4_start[];
-extern initcall_entry_t __initcall5_start[];
-extern initcall_entry_t __initcall6_start[];
-extern initcall_entry_t __initcall7_start[];
-extern initcall_entry_t __initcall_end[];
+बाह्य initcall_entry_t __initcall_start[];
+बाह्य initcall_entry_t __initcall0_start[];
+बाह्य initcall_entry_t __initcall1_start[];
+बाह्य initcall_entry_t __initcall2_start[];
+बाह्य initcall_entry_t __initcall3_start[];
+बाह्य initcall_entry_t __initcall4_start[];
+बाह्य initcall_entry_t __initcall5_start[];
+बाह्य initcall_entry_t __initcall6_start[];
+बाह्य initcall_entry_t __initcall7_start[];
+बाह्य initcall_entry_t __initcall_end[];
 
-static initcall_entry_t *initcall_levels[] __initdata = {
+अटल initcall_entry_t *initcall_levels[] __initdata = अणु
 	__initcall0_start,
 	__initcall1_start,
 	__initcall2_start,
@@ -1287,10 +1288,10 @@ static initcall_entry_t *initcall_levels[] __initdata = {
 	__initcall6_start,
 	__initcall7_start,
 	__initcall_end,
-};
+पूर्ण;
 
 /* Keep these in sync with initcalls in include/linux/init.h */
-static const char *initcall_level_names[] __initdata = {
+अटल स्थिर अक्षर *initcall_level_names[] __initdata = अणु
 	"pure",
 	"core",
 	"postcore",
@@ -1299,159 +1300,159 @@ static const char *initcall_level_names[] __initdata = {
 	"fs",
 	"device",
 	"late",
-};
+पूर्ण;
 
-static int __init ignore_unknown_bootoption(char *param, char *val,
-			       const char *unused, void *arg)
-{
-	return 0;
-}
+अटल पूर्णांक __init ignore_unknown_bootoption(अक्षर *param, अक्षर *val,
+			       स्थिर अक्षर *unused, व्योम *arg)
+अणु
+	वापस 0;
+पूर्ण
 
-static void __init do_initcall_level(int level, char *command_line)
-{
+अटल व्योम __init करो_initcall_level(पूर्णांक level, अक्षर *command_line)
+अणु
 	initcall_entry_t *fn;
 
 	parse_args(initcall_level_names[level],
 		   command_line, __start___param,
 		   __stop___param - __start___param,
 		   level, level,
-		   NULL, ignore_unknown_bootoption);
+		   शून्य, ignore_unknown_bootoption);
 
 	trace_initcall_level(initcall_level_names[level]);
-	for (fn = initcall_levels[level]; fn < initcall_levels[level+1]; fn++)
-		do_one_initcall(initcall_from_entry(fn));
-}
+	क्रम (fn = initcall_levels[level]; fn < initcall_levels[level+1]; fn++)
+		करो_one_initcall(initcall_from_entry(fn));
+पूर्ण
 
-static void __init do_initcalls(void)
-{
-	int level;
-	size_t len = strlen(saved_command_line) + 1;
-	char *command_line;
+अटल व्योम __init करो_initcalls(व्योम)
+अणु
+	पूर्णांक level;
+	माप_प्रकार len = म_माप(saved_command_line) + 1;
+	अक्षर *command_line;
 
 	command_line = kzalloc(len, GFP_KERNEL);
-	if (!command_line)
+	अगर (!command_line)
 		panic("%s: Failed to allocate %zu bytes\n", __func__, len);
 
-	for (level = 0; level < ARRAY_SIZE(initcall_levels) - 1; level++) {
-		/* Parser modifies command_line, restore it each time */
-		strcpy(command_line, saved_command_line);
-		do_initcall_level(level, command_line);
-	}
+	क्रम (level = 0; level < ARRAY_SIZE(initcall_levels) - 1; level++) अणु
+		/* Parser modअगरies command_line, restore it each समय */
+		म_नकल(command_line, saved_command_line);
+		करो_initcall_level(level, command_line);
+	पूर्ण
 
-	kfree(command_line);
-}
+	kमुक्त(command_line);
+पूर्ण
 
 /*
  * Ok, the machine is now initialized. None of the devices
- * have been touched yet, but the CPU subsystem is up and
+ * have been touched yet, but the CPU subप्रणाली is up and
  * running, and memory and process management works.
  *
- * Now we can finally start doing some real work..
+ * Now we can finally start करोing some real work..
  */
-static void __init do_basic_setup(void)
-{
+अटल व्योम __init करो_basic_setup(व्योम)
+अणु
 	cpuset_init_smp();
 	driver_init();
 	init_irq_proc();
-	do_ctors();
+	करो_ctors();
 	usermodehelper_enable();
-	do_initcalls();
-}
+	करो_initcalls();
+पूर्ण
 
-static void __init do_pre_smp_initcalls(void)
-{
+अटल व्योम __init करो_pre_smp_initcalls(व्योम)
+अणु
 	initcall_entry_t *fn;
 
 	trace_initcall_level("early");
-	for (fn = __initcall_start; fn < __initcall0_start; fn++)
-		do_one_initcall(initcall_from_entry(fn));
-}
+	क्रम (fn = __initcall_start; fn < __initcall0_start; fn++)
+		करो_one_initcall(initcall_from_entry(fn));
+पूर्ण
 
-static int run_init_process(const char *init_filename)
-{
-	const char *const *p;
+अटल पूर्णांक run_init_process(स्थिर अक्षर *init_filename)
+अणु
+	स्थिर अक्षर *स्थिर *p;
 
 	argv_init[0] = init_filename;
 	pr_info("Run %s as init process\n", init_filename);
 	pr_debug("  with arguments:\n");
-	for (p = argv_init; *p; p++)
+	क्रम (p = argv_init; *p; p++)
 		pr_debug("    %s\n", *p);
 	pr_debug("  with environment:\n");
-	for (p = envp_init; *p; p++)
+	क्रम (p = envp_init; *p; p++)
 		pr_debug("    %s\n", *p);
-	return kernel_execve(init_filename, argv_init, envp_init);
-}
+	वापस kernel_execve(init_filename, argv_init, envp_init);
+पूर्ण
 
-static int try_to_run_init_process(const char *init_filename)
-{
-	int ret;
+अटल पूर्णांक try_to_run_init_process(स्थिर अक्षर *init_filename)
+अणु
+	पूर्णांक ret;
 
 	ret = run_init_process(init_filename);
 
-	if (ret && ret != -ENOENT) {
+	अगर (ret && ret != -ENOENT) अणु
 		pr_err("Starting init: %s exists but couldn't execute it (error %d)\n",
 		       init_filename, ret);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static noinline void __init kernel_init_freeable(void);
+अटल noअंतरभूत व्योम __init kernel_init_मुक्तable(व्योम);
 
-#if defined(CONFIG_STRICT_KERNEL_RWX) || defined(CONFIG_STRICT_MODULE_RWX)
+#अगर defined(CONFIG_STRICT_KERNEL_RWX) || defined(CONFIG_STRICT_MODULE_RWX)
 bool rodata_enabled __ro_after_init = true;
-static int __init set_debug_rodata(char *str)
-{
-	return strtobool(str, &rodata_enabled);
-}
+अटल पूर्णांक __init set_debug_rodata(अक्षर *str)
+अणु
+	वापस strtobool(str, &rodata_enabled);
+पूर्ण
 __setup("rodata=", set_debug_rodata);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_STRICT_KERNEL_RWX
-static void mark_readonly(void)
-{
-	if (rodata_enabled) {
+#अगर_घोषित CONFIG_STRICT_KERNEL_RWX
+अटल व्योम mark_पढ़ोonly(व्योम)
+अणु
+	अगर (rodata_enabled) अणु
 		/*
 		 * load_module() results in W+X mappings, which are cleaned
 		 * up with call_rcu().  Let's make sure that queued work is
-		 * flushed so that we don't hit false positives looking for
+		 * flushed so that we करोn't hit false positives looking क्रम
 		 * insecure pages which are W+X.
 		 */
 		rcu_barrier();
 		mark_rodata_ro();
 		rodata_test();
-	} else
+	पूर्ण अन्यथा
 		pr_info("Kernel memory protection disabled.\n");
-}
-#elif defined(CONFIG_ARCH_HAS_STRICT_KERNEL_RWX)
-static inline void mark_readonly(void)
-{
+पूर्ण
+#या_अगर defined(CONFIG_ARCH_HAS_STRICT_KERNEL_RWX)
+अटल अंतरभूत व्योम mark_पढ़ोonly(व्योम)
+अणु
 	pr_warn("Kernel memory protection not selected by kernel config.\n");
-}
-#else
-static inline void mark_readonly(void)
-{
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम mark_पढ़ोonly(व्योम)
+अणु
 	pr_warn("This architecture does not have kernel memory protection.\n");
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void __weak free_initmem(void)
-{
-	free_initmem_default(POISON_FREE_INITMEM);
-}
+व्योम __weak मुक्त_iniपंचांगem(व्योम)
+अणु
+	मुक्त_iniपंचांगem_शेष(POISON_FREE_INITMEM);
+पूर्ण
 
-static int __ref kernel_init(void *unused)
-{
-	int ret;
+अटल पूर्णांक __ref kernel_init(व्योम *unused)
+अणु
+	पूर्णांक ret;
 
-	kernel_init_freeable();
-	/* need to finish all async __init code before freeing the memory */
+	kernel_init_मुक्तable();
+	/* need to finish all async __init code beक्रमe मुक्तing the memory */
 	async_synchronize_full();
-	kprobe_free_init_mem();
-	ftrace_free_init_mem();
-	kgdb_free_init_mem();
-	free_initmem();
-	mark_readonly();
+	kprobe_मुक्त_init_mem();
+	ftrace_मुक्त_init_mem();
+	kgdb_मुक्त_init_mem();
+	मुक्त_iniपंचांगem();
+	mark_पढ़ोonly();
 
 	/*
 	 * Kernel mappings are now finalized - update the userspace page-table
@@ -1459,77 +1460,77 @@ static int __ref kernel_init(void *unused)
 	 */
 	pti_finalize();
 
-	system_state = SYSTEM_RUNNING;
-	numa_default_policy();
+	प्रणाली_state = SYSTEM_RUNNING;
+	numa_शेष_policy();
 
 	rcu_end_inkernel_boot();
 
-	do_sysctl_args();
+	करो_sysctl_args();
 
-	if (ramdisk_execute_command) {
+	अगर (ramdisk_execute_command) अणु
 		ret = run_init_process(ramdisk_execute_command);
-		if (!ret)
-			return 0;
+		अगर (!ret)
+			वापस 0;
 		pr_err("Failed to execute %s (error %d)\n",
 		       ramdisk_execute_command, ret);
-	}
+	पूर्ण
 
 	/*
 	 * We try each of these until one succeeds.
 	 *
-	 * The Bourne shell can be used instead of init if we are
+	 * The Bourne shell can be used instead of init अगर we are
 	 * trying to recover a really broken machine.
 	 */
-	if (execute_command) {
+	अगर (execute_command) अणु
 		ret = run_init_process(execute_command);
-		if (!ret)
-			return 0;
+		अगर (!ret)
+			वापस 0;
 		panic("Requested init %s failed (error %d).",
 		      execute_command, ret);
-	}
+	पूर्ण
 
-	if (CONFIG_DEFAULT_INIT[0] != '\0') {
+	अगर (CONFIG_DEFAULT_INIT[0] != '\0') अणु
 		ret = run_init_process(CONFIG_DEFAULT_INIT);
-		if (ret)
+		अगर (ret)
 			pr_err("Default init %s failed (error %d)\n",
 			       CONFIG_DEFAULT_INIT, ret);
-		else
-			return 0;
-	}
+		अन्यथा
+			वापस 0;
+	पूर्ण
 
-	if (!try_to_run_init_process("/sbin/init") ||
+	अगर (!try_to_run_init_process("/sbin/init") ||
 	    !try_to_run_init_process("/etc/init") ||
 	    !try_to_run_init_process("/bin/init") ||
 	    !try_to_run_init_process("/bin/sh"))
-		return 0;
+		वापस 0;
 
 	panic("No working init found.  Try passing init= option to kernel. "
 	      "See Linux Documentation/admin-guide/init.rst for guidance.");
-}
+पूर्ण
 
-/* Open /dev/console, for stdin/stdout/stderr, this should never fail */
-void __init console_on_rootfs(void)
-{
-	struct file *file = filp_open("/dev/console", O_RDWR, 0);
+/* Open /dev/console, क्रम मानक_निवेश/मानक_निकास/मानक_त्रुटि, this should never fail */
+व्योम __init console_on_rootfs(व्योम)
+अणु
+	काष्ठा file *file = filp_खोलो("/dev/console", O_RDWR, 0);
 
-	if (IS_ERR(file)) {
+	अगर (IS_ERR(file)) अणु
 		pr_err("Warning: unable to open an initial console.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	init_dup(file);
 	init_dup(file);
 	init_dup(file);
 	fput(file);
-}
+पूर्ण
 
-static noinline void __init kernel_init_freeable(void)
-{
+अटल noअंतरभूत व्योम __init kernel_init_मुक्तable(व्योम)
+अणु
 	/*
-	 * Wait until kthreadd is all set-up.
+	 * Wait until kthपढ़ोd is all set-up.
 	 */
-	wait_for_completion(&kthreadd_done);
+	रुको_क्रम_completion(&kthपढ़ोd_करोne);
 
-	/* Now the scheduler is fully set up and can do blocking allocations */
+	/* Now the scheduler is fully set up and can करो blocking allocations */
 	gfp_allowed_mask = __GFP_BITS_MASK;
 
 	/*
@@ -1543,10 +1544,10 @@ static noinline void __init kernel_init_freeable(void)
 
 	workqueue_init();
 
-	init_mm_internals();
+	init_mm_पूर्णांकernals();
 
 	rcu_init_tasks_generic();
-	do_pre_smp_initcalls();
+	करो_pre_smp_initcalls();
 	lockup_detector_init();
 
 	smp_init();
@@ -1554,33 +1555,33 @@ static noinline void __init kernel_init_freeable(void)
 
 	padata_init();
 	page_alloc_init_late();
-	/* Initialize page ext after all struct pages are initialized. */
+	/* Initialize page ext after all काष्ठा pages are initialized. */
 	page_ext_init();
 
-	do_basic_setup();
+	करो_basic_setup();
 
 	kunit_run_all_tests();
 
-	wait_for_initramfs();
+	रुको_क्रम_initramfs();
 	console_on_rootfs();
 
 	/*
-	 * check if there is an early userspace init.  If yes, let it do all
+	 * check अगर there is an early userspace init.  If yes, let it करो all
 	 * the work
 	 */
-	if (init_eaccess(ramdisk_execute_command) != 0) {
-		ramdisk_execute_command = NULL;
+	अगर (init_eaccess(ramdisk_execute_command) != 0) अणु
+		ramdisk_execute_command = शून्य;
 		prepare_namespace();
-	}
+	पूर्ण
 
 	/*
 	 * Ok, we have completed the initial bootup, and
 	 * we're essentially up and running. Get rid of the
-	 * initmem segments and start the user-mode stuff..
+	 * iniपंचांगem segments and start the user-mode stuff..
 	 *
-	 * rootfs is available now, try loading the public keys
-	 * and default modules
+	 * rootfs is available now, try loading the खुला keys
+	 * and शेष modules
 	 */
 
-	integrity_load_keys();
-}
+	पूर्णांकegrity_load_keys();
+पूर्ण

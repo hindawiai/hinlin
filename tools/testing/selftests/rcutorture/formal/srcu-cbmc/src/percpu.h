@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PERCPU_H
-#define PERCPU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PERCPU_H
+#घोषणा PERCPU_H
 
-#include <stddef.h>
-#include "bug_on.h"
-#include "preempt.h"
+#समावेश <मानकघोष.स>
+#समावेश "bug_on.h"
+#समावेश "preempt.h"
 
-#define __percpu
+#घोषणा __percpu
 
 /* Maximum size of any percpu data. */
-#define PERCPU_OFFSET (4 * sizeof(long))
+#घोषणा PERCPU_OFFSET (4 * माप(दीर्घ))
 
-/* Ignore alignment, as CBMC doesn't care about false sharing. */
-#define alloc_percpu(type) __alloc_percpu(sizeof(type), 1)
+/* Ignore alignment, as CBMC करोesn't care about false sharing. */
+#घोषणा alloc_percpu(type) __alloc_percpu(माप(type), 1)
 
-static inline void *__alloc_percpu(size_t size, size_t align)
-{
+अटल अंतरभूत व्योम *__alloc_percpu(माप_प्रकार size, माप_प्रकार align)
+अणु
 	BUG();
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline void free_percpu(void *ptr)
-{
+अटल अंतरभूत व्योम मुक्त_percpu(व्योम *ptr)
+अणु
 	BUG();
-}
+पूर्ण
 
-#define per_cpu_ptr(ptr, cpu) \
-	((typeof(ptr)) ((char *) (ptr) + PERCPU_OFFSET * cpu))
+#घोषणा per_cpu_ptr(ptr, cpu) \
+	((typeof(ptr)) ((अक्षर *) (ptr) + PERCPU_OFFSET * cpu))
 
-#define __this_cpu_inc(pcp) __this_cpu_add(pcp, 1)
-#define __this_cpu_dec(pcp) __this_cpu_sub(pcp, 1)
-#define __this_cpu_sub(pcp, n) __this_cpu_add(pcp, -(typeof(pcp)) (n))
+#घोषणा __this_cpu_inc(pcp) __this_cpu_add(pcp, 1)
+#घोषणा __this_cpu_dec(pcp) __this_cpu_sub(pcp, 1)
+#घोषणा __this_cpu_sub(pcp, n) __this_cpu_add(pcp, -(typeof(pcp)) (n))
 
-#define this_cpu_inc(pcp) this_cpu_add(pcp, 1)
-#define this_cpu_dec(pcp) this_cpu_sub(pcp, 1)
-#define this_cpu_sub(pcp, n) this_cpu_add(pcp, -(typeof(pcp)) (n))
+#घोषणा this_cpu_inc(pcp) this_cpu_add(pcp, 1)
+#घोषणा this_cpu_dec(pcp) this_cpu_sub(pcp, 1)
+#घोषणा this_cpu_sub(pcp, n) this_cpu_add(pcp, -(typeof(pcp)) (n))
 
 /* Make CBMC use atomics to work around bug. */
-#ifdef RUN
-#define THIS_CPU_ADD_HELPER(ptr, x) (*(ptr) += (x))
-#else
+#अगर_घोषित RUN
+#घोषणा THIS_CPU_ADD_HELPER(ptr, x) (*(ptr) += (x))
+#अन्यथा
 /*
- * Split the atomic into a read and a write so that it has the least
+ * Split the atomic पूर्णांकo a पढ़ो and a ग_लिखो so that it has the least
  * possible ordering.
  */
-#define THIS_CPU_ADD_HELPER(ptr, x) \
-	do { \
+#घोषणा THIS_CPU_ADD_HELPER(ptr, x) \
+	करो अणु \
 		typeof(ptr) this_cpu_add_helper_ptr = (ptr); \
 		typeof(ptr) this_cpu_add_helper_x = (x); \
 		typeof(*ptr) this_cpu_add_helper_temp; \
@@ -56,38 +57,38 @@ static inline void free_percpu(void *ptr)
 		__CPROVER_atomic_begin(); \
 		*(this_cpu_add_helper_ptr) = this_cpu_add_helper_temp; \
 		__CPROVER_atomic_end(); \
-	} while (0)
-#endif
+	पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
  * For some reason CBMC needs an atomic operation even though this is percpu
  * data.
  */
-#define __this_cpu_add(pcp, n) \
-	do { \
+#घोषणा __this_cpu_add(pcp, n) \
+	करो अणु \
 		BUG_ON(preemptible()); \
-		THIS_CPU_ADD_HELPER(per_cpu_ptr(&(pcp), thread_cpu_id), \
+		THIS_CPU_ADD_HELPER(per_cpu_ptr(&(pcp), thपढ़ो_cpu_id), \
 				    (typeof(pcp)) (n)); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define this_cpu_add(pcp, n) \
-	do { \
-		int this_cpu_add_impl_cpu = get_cpu(); \
+#घोषणा this_cpu_add(pcp, n) \
+	करो अणु \
+		पूर्णांक this_cpu_add_impl_cpu = get_cpu(); \
 		THIS_CPU_ADD_HELPER(per_cpu_ptr(&(pcp), this_cpu_add_impl_cpu), \
 				    (typeof(pcp)) (n)); \
 		put_cpu(); \
-	} while (0)
+	पूर्ण जबतक (0)
 
 /*
- * This will cause a compiler warning because of the cast from char[][] to
- * type*. This will cause a compile time error if type is too big.
+ * This will cause a compiler warning because of the cast from अक्षर[][] to
+ * type*. This will cause a compile समय error अगर type is too big.
  */
-#define DEFINE_PER_CPU(type, name) \
-	char name[NR_CPUS][PERCPU_OFFSET]; \
-	typedef char percpu_too_big_##name \
-		[sizeof(type) > PERCPU_OFFSET ? -1 : 1]
+#घोषणा DEFINE_PER_CPU(type, name) \
+	अक्षर name[NR_CPUS][PERCPU_OFFSET]; \
+	प्रकार अक्षर percpu_too_big_##name \
+		[माप(type) > PERCPU_OFFSET ? -1 : 1]
 
-#define for_each_possible_cpu(cpu) \
-	for ((cpu) = 0; (cpu) < NR_CPUS; ++(cpu))
+#घोषणा क्रम_each_possible_cpu(cpu) \
+	क्रम ((cpu) = 0; (cpu) < NR_CPUS; ++(cpu))
 
-#endif
+#पूर्ण_अगर

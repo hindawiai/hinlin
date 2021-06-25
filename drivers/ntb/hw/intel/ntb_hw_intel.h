@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- *   redistributing this file, you may do so under either license.
+ *   redistributing this file, you may करो so under either license.
  *
  *   GPL LICENSE SUMMARY
  *
  *   Copyright(c) 2012 Intel Corporation. All rights reserved.
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
  *
- *   This program is free software; you can redistribute it and/or modify
+ *   This program is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of version 2 of the GNU General Public License as
  *   published by the Free Software Foundation.
  *
@@ -16,25 +17,25 @@
  *   Copyright(c) 2012 Intel Corporation. All rights reserved.
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
  *
- *   Redistribution and use in source and binary forms, with or without
- *   modification, are permitted provided that the following conditions
+ *   Redistribution and use in source and binary क्रमms, with or without
+ *   modअगरication, are permitted provided that the following conditions
  *   are met:
  *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copy
+ *     * Redistributions in binary क्रमm must reproduce the above copy
  *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
+ *       the करोcumentation and/or other materials provided with the
  *       distribution.
  *     * Neither the name of Intel Corporation nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
+ *       contributors may be used to enकरोrse or promote products derived
+ *       from this software without specअगरic prior written permission.
  *
  *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -44,118 +45,118 @@
  *
  * Intel PCIe NTB Linux driver
  *
- * Contact Information:
- * Jon Mason <jon.mason@intel.com>
+ * Contact Inक्रमmation:
+ * Jon Mason <jon.mason@पूर्णांकel.com>
  */
 
-#ifndef NTB_HW_INTEL_H
-#define NTB_HW_INTEL_H
+#अगर_अघोषित NTB_HW_INTEL_H
+#घोषणा NTB_HW_INTEL_H
 
-#include <linux/ntb.h>
-#include <linux/pci.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/ntb.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
 
 /* PCI device IDs */
-#define PCI_DEVICE_ID_INTEL_NTB_B2B_JSF	0x3725
-#define PCI_DEVICE_ID_INTEL_NTB_PS_JSF	0x3726
-#define PCI_DEVICE_ID_INTEL_NTB_SS_JSF	0x3727
-#define PCI_DEVICE_ID_INTEL_NTB_B2B_SNB	0x3C0D
-#define PCI_DEVICE_ID_INTEL_NTB_PS_SNB	0x3C0E
-#define PCI_DEVICE_ID_INTEL_NTB_SS_SNB	0x3C0F
-#define PCI_DEVICE_ID_INTEL_NTB_B2B_IVT	0x0E0D
-#define PCI_DEVICE_ID_INTEL_NTB_PS_IVT	0x0E0E
-#define PCI_DEVICE_ID_INTEL_NTB_SS_IVT	0x0E0F
-#define PCI_DEVICE_ID_INTEL_NTB_B2B_HSX	0x2F0D
-#define PCI_DEVICE_ID_INTEL_NTB_PS_HSX	0x2F0E
-#define PCI_DEVICE_ID_INTEL_NTB_SS_HSX	0x2F0F
-#define PCI_DEVICE_ID_INTEL_NTB_B2B_BDX	0x6F0D
-#define PCI_DEVICE_ID_INTEL_NTB_PS_BDX	0x6F0E
-#define PCI_DEVICE_ID_INTEL_NTB_SS_BDX	0x6F0F
-#define PCI_DEVICE_ID_INTEL_NTB_B2B_SKX	0x201C
-#define PCI_DEVICE_ID_INTEL_NTB_B2B_ICX	0x347e
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_B2B_JSF	0x3725
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_PS_JSF	0x3726
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_SS_JSF	0x3727
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_B2B_SNB	0x3C0D
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_PS_SNB	0x3C0E
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_SS_SNB	0x3C0F
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_B2B_IVT	0x0E0D
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_PS_IVT	0x0E0E
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_SS_IVT	0x0E0F
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_B2B_HSX	0x2F0D
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_PS_HSX	0x2F0E
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_SS_HSX	0x2F0F
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_B2B_BDX	0x6F0D
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_PS_BDX	0x6F0E
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_SS_BDX	0x6F0F
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_B2B_SKX	0x201C
+#घोषणा PCI_DEVICE_ID_INTEL_NTB_B2B_ICX	0x347e
 
 /* Ntb control and link status */
-#define NTB_CTL_CFG_LOCK		BIT(0)
-#define NTB_CTL_DISABLE			BIT(1)
-#define NTB_CTL_S2P_BAR2_SNOOP		BIT(2)
-#define NTB_CTL_P2S_BAR2_SNOOP		BIT(4)
-#define NTB_CTL_S2P_BAR4_SNOOP		BIT(6)
-#define NTB_CTL_P2S_BAR4_SNOOP		BIT(8)
-#define NTB_CTL_S2P_BAR5_SNOOP		BIT(12)
-#define NTB_CTL_P2S_BAR5_SNOOP		BIT(14)
+#घोषणा NTB_CTL_CFG_LOCK		BIT(0)
+#घोषणा NTB_CTL_DISABLE			BIT(1)
+#घोषणा NTB_CTL_S2P_BAR2_SNOOP		BIT(2)
+#घोषणा NTB_CTL_P2S_BAR2_SNOOP		BIT(4)
+#घोषणा NTB_CTL_S2P_BAR4_SNOOP		BIT(6)
+#घोषणा NTB_CTL_P2S_BAR4_SNOOP		BIT(8)
+#घोषणा NTB_CTL_S2P_BAR5_SNOOP		BIT(12)
+#घोषणा NTB_CTL_P2S_BAR5_SNOOP		BIT(14)
 
-#define NTB_LNK_STA_ACTIVE_BIT		0x2000
-#define NTB_LNK_STA_SPEED_MASK		0x000f
-#define NTB_LNK_STA_WIDTH_MASK		0x03f0
-#define NTB_LNK_STA_ACTIVE(x)		(!!((x) & NTB_LNK_STA_ACTIVE_BIT))
-#define NTB_LNK_STA_SPEED(x)		((x) & NTB_LNK_STA_SPEED_MASK)
-#define NTB_LNK_STA_WIDTH(x)		(((x) & NTB_LNK_STA_WIDTH_MASK) >> 4)
+#घोषणा NTB_LNK_STA_ACTIVE_BIT		0x2000
+#घोषणा NTB_LNK_STA_SPEED_MASK		0x000f
+#घोषणा NTB_LNK_STA_WIDTH_MASK		0x03f0
+#घोषणा NTB_LNK_STA_ACTIVE(x)		(!!((x) & NTB_LNK_STA_ACTIVE_BIT))
+#घोषणा NTB_LNK_STA_SPEED(x)		((x) & NTB_LNK_STA_SPEED_MASK)
+#घोषणा NTB_LNK_STA_WIDTH(x)		(((x) & NTB_LNK_STA_WIDTH_MASK) >> 4)
 
 /* flags to indicate unsafe api */
-#define NTB_UNSAFE_DB			BIT_ULL(0)
-#define NTB_UNSAFE_SPAD			BIT_ULL(1)
+#घोषणा NTB_UNSAFE_DB			BIT_ULL(0)
+#घोषणा NTB_UNSAFE_SPAD			BIT_ULL(1)
 
-#define NTB_BAR_MASK_64			~(0xfull)
-#define NTB_BAR_MASK_32			~(0xfu)
+#घोषणा NTB_BAR_MASK_64			~(0xfull)
+#घोषणा NTB_BAR_MASK_32			~(0xfu)
 
-struct intel_ntb_dev;
+काष्ठा पूर्णांकel_ntb_dev;
 
-struct intel_ntb_reg {
-	int (*poll_link)(struct intel_ntb_dev *ndev);
-	int (*link_is_up)(struct intel_ntb_dev *ndev);
-	u64 (*db_ioread)(const void __iomem *mmio);
-	void (*db_iowrite)(u64 db_bits, void __iomem *mmio);
-	unsigned long			ntb_ctl;
-	resource_size_t			db_size;
-	int				mw_bar[];
-};
+काष्ठा पूर्णांकel_ntb_reg अणु
+	पूर्णांक (*poll_link)(काष्ठा पूर्णांकel_ntb_dev *ndev);
+	पूर्णांक (*link_is_up)(काष्ठा पूर्णांकel_ntb_dev *ndev);
+	u64 (*db_ioपढ़ो)(स्थिर व्योम __iomem *mmio);
+	व्योम (*db_ioग_लिखो)(u64 db_bits, व्योम __iomem *mmio);
+	अचिन्हित दीर्घ			ntb_ctl;
+	resource_माप_प्रकार			db_size;
+	पूर्णांक				mw_bar[];
+पूर्ण;
 
-struct intel_ntb_alt_reg {
-	unsigned long			db_bell;
-	unsigned long			db_mask;
-	unsigned long			db_clear;
-	unsigned long			spad;
-};
+काष्ठा पूर्णांकel_ntb_alt_reg अणु
+	अचिन्हित दीर्घ			db_bell;
+	अचिन्हित दीर्घ			db_mask;
+	अचिन्हित दीर्घ			db_clear;
+	अचिन्हित दीर्घ			spad;
+पूर्ण;
 
-struct intel_ntb_xlat_reg {
-	unsigned long			bar0_base;
-	unsigned long			bar2_xlat;
-	unsigned long			bar2_limit;
-	unsigned short			bar2_idx;
-};
+काष्ठा पूर्णांकel_ntb_xlat_reg अणु
+	अचिन्हित दीर्घ			bar0_base;
+	अचिन्हित दीर्घ			bar2_xlat;
+	अचिन्हित दीर्घ			bar2_limit;
+	अचिन्हित लघु			bar2_idx;
+पूर्ण;
 
-struct intel_b2b_addr {
+काष्ठा पूर्णांकel_b2b_addr अणु
 	phys_addr_t			bar0_addr;
 	phys_addr_t			bar2_addr64;
 	phys_addr_t			bar4_addr64;
 	phys_addr_t			bar4_addr32;
 	phys_addr_t			bar5_addr32;
-};
+पूर्ण;
 
-struct intel_ntb_vec {
-	struct intel_ntb_dev		*ndev;
-	int				num;
-};
+काष्ठा पूर्णांकel_ntb_vec अणु
+	काष्ठा पूर्णांकel_ntb_dev		*ndev;
+	पूर्णांक				num;
+पूर्ण;
 
-struct intel_ntb_dev {
-	struct ntb_dev			ntb;
+काष्ठा पूर्णांकel_ntb_dev अणु
+	काष्ठा ntb_dev			ntb;
 
 	/* offset of peer bar0 in b2b bar */
-	unsigned long			b2b_off;
+	अचिन्हित दीर्घ			b2b_off;
 	/* mw idx used to access peer bar0 */
-	unsigned int			b2b_idx;
+	अचिन्हित पूर्णांक			b2b_idx;
 
-	/* BAR45 is split into BAR4 and BAR5 */
+	/* BAR45 is split पूर्णांकo BAR4 and BAR5 */
 	bool				bar4_split;
 
 	u32				ntb_ctl;
 	u32				lnk_sta;
 
-	unsigned char			mw_count;
-	unsigned char			spad_count;
-	unsigned char			db_count;
-	unsigned char			db_vec_count;
-	unsigned char			db_vec_shift;
+	अचिन्हित अक्षर			mw_count;
+	अचिन्हित अक्षर			spad_count;
+	अचिन्हित अक्षर			db_count;
+	अचिन्हित अक्षर			db_vec_count;
+	अचिन्हित अक्षर			db_vec_shअगरt;
 
 	u64				db_valid_mask;
 	u64				db_link_mask;
@@ -164,71 +165,71 @@ struct intel_ntb_dev {
 	/* synchronize rmw access of db_mask and hw reg */
 	spinlock_t			db_mask_lock;
 
-	struct msix_entry		*msix;
-	struct intel_ntb_vec		*vec;
+	काष्ठा msix_entry		*msix;
+	काष्ठा पूर्णांकel_ntb_vec		*vec;
 
-	const struct intel_ntb_reg	*reg;
-	const struct intel_ntb_alt_reg	*self_reg;
-	const struct intel_ntb_alt_reg	*peer_reg;
-	const struct intel_ntb_xlat_reg	*xlat_reg;
-	void				__iomem *self_mmio;
-	void				__iomem *peer_mmio;
+	स्थिर काष्ठा पूर्णांकel_ntb_reg	*reg;
+	स्थिर काष्ठा पूर्णांकel_ntb_alt_reg	*self_reg;
+	स्थिर काष्ठा पूर्णांकel_ntb_alt_reg	*peer_reg;
+	स्थिर काष्ठा पूर्णांकel_ntb_xlat_reg	*xlat_reg;
+	व्योम				__iomem *self_mmio;
+	व्योम				__iomem *peer_mmio;
 	phys_addr_t			peer_addr;
 
-	unsigned long			last_ts;
-	struct delayed_work		hb_timer;
+	अचिन्हित दीर्घ			last_ts;
+	काष्ठा delayed_work		hb_समयr;
 
-	unsigned long			hwerr_flags;
-	unsigned long			unsafe_flags;
-	unsigned long			unsafe_flags_ignore;
+	अचिन्हित दीर्घ			hwerr_flags;
+	अचिन्हित दीर्घ			unsafe_flags;
+	अचिन्हित दीर्घ			unsafe_flags_ignore;
 
-	struct dentry			*debugfs_dir;
-	struct dentry			*debugfs_info;
+	काष्ठा dentry			*debugfs_dir;
+	काष्ठा dentry			*debugfs_info;
 
 	/* gen4 entries */
-	int				dev_up;
-};
+	पूर्णांक				dev_up;
+पूर्ण;
 
-#define ntb_ndev(__ntb) container_of(__ntb, struct intel_ntb_dev, ntb)
-#define hb_ndev(__work) container_of(__work, struct intel_ntb_dev, \
-				     hb_timer.work)
+#घोषणा ntb_ndev(__ntb) container_of(__ntb, काष्ठा पूर्णांकel_ntb_dev, ntb)
+#घोषणा hb_ndev(__work) container_of(__work, काष्ठा पूर्णांकel_ntb_dev, \
+				     hb_समयr.work)
 
-static inline int pdev_is_gen1(struct pci_dev *pdev)
-{
-	switch (pdev->device) {
-	case PCI_DEVICE_ID_INTEL_NTB_SS_JSF:
-	case PCI_DEVICE_ID_INTEL_NTB_SS_SNB:
-	case PCI_DEVICE_ID_INTEL_NTB_SS_IVT:
-	case PCI_DEVICE_ID_INTEL_NTB_SS_HSX:
-	case PCI_DEVICE_ID_INTEL_NTB_SS_BDX:
-	case PCI_DEVICE_ID_INTEL_NTB_PS_JSF:
-	case PCI_DEVICE_ID_INTEL_NTB_PS_SNB:
-	case PCI_DEVICE_ID_INTEL_NTB_PS_IVT:
-	case PCI_DEVICE_ID_INTEL_NTB_PS_HSX:
-	case PCI_DEVICE_ID_INTEL_NTB_PS_BDX:
-	case PCI_DEVICE_ID_INTEL_NTB_B2B_JSF:
-	case PCI_DEVICE_ID_INTEL_NTB_B2B_SNB:
-	case PCI_DEVICE_ID_INTEL_NTB_B2B_IVT:
-	case PCI_DEVICE_ID_INTEL_NTB_B2B_HSX:
-	case PCI_DEVICE_ID_INTEL_NTB_B2B_BDX:
-		return 1;
-	}
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pdev_is_gen1(काष्ठा pci_dev *pdev)
+अणु
+	चयन (pdev->device) अणु
+	हाल PCI_DEVICE_ID_INTEL_NTB_SS_JSF:
+	हाल PCI_DEVICE_ID_INTEL_NTB_SS_SNB:
+	हाल PCI_DEVICE_ID_INTEL_NTB_SS_IVT:
+	हाल PCI_DEVICE_ID_INTEL_NTB_SS_HSX:
+	हाल PCI_DEVICE_ID_INTEL_NTB_SS_BDX:
+	हाल PCI_DEVICE_ID_INTEL_NTB_PS_JSF:
+	हाल PCI_DEVICE_ID_INTEL_NTB_PS_SNB:
+	हाल PCI_DEVICE_ID_INTEL_NTB_PS_IVT:
+	हाल PCI_DEVICE_ID_INTEL_NTB_PS_HSX:
+	हाल PCI_DEVICE_ID_INTEL_NTB_PS_BDX:
+	हाल PCI_DEVICE_ID_INTEL_NTB_B2B_JSF:
+	हाल PCI_DEVICE_ID_INTEL_NTB_B2B_SNB:
+	हाल PCI_DEVICE_ID_INTEL_NTB_B2B_IVT:
+	हाल PCI_DEVICE_ID_INTEL_NTB_B2B_HSX:
+	हाल PCI_DEVICE_ID_INTEL_NTB_B2B_BDX:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int pdev_is_gen3(struct pci_dev *pdev)
-{
-	if (pdev->device == PCI_DEVICE_ID_INTEL_NTB_B2B_SKX)
-		return 1;
+अटल अंतरभूत पूर्णांक pdev_is_gen3(काष्ठा pci_dev *pdev)
+अणु
+	अगर (pdev->device == PCI_DEVICE_ID_INTEL_NTB_B2B_SKX)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int pdev_is_gen4(struct pci_dev *pdev)
-{
-	if (pdev->device == PCI_DEVICE_ID_INTEL_NTB_B2B_ICX)
-		return 1;
+अटल अंतरभूत पूर्णांक pdev_is_gen4(काष्ठा pci_dev *pdev)
+अणु
+	अगर (pdev->device == PCI_DEVICE_ID_INTEL_NTB_B2B_ICX)
+		वापस 1;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर

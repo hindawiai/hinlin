@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,68 +22,68 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include <subdev/bios.h>
-#include <subdev/bios/bit.h>
-#include <subdev/bios/image.h>
-#include <subdev/bios/pmu.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/bit.h>
+#समावेश <subdev/bios/image.h>
+#समावेश <subdev/bios/pmu.h>
 
 u32
-nvbios_pmuTe(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
-{
-	struct bit_entry bit_p;
+nvbios_pmuTe(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
+अणु
+	काष्ठा bit_entry bit_p;
 	u32 data = 0;
 
-	if (!bit_entry(bios, 'p', &bit_p)) {
-		if (bit_p.version == 2 && bit_p.length >= 4)
+	अगर (!bit_entry(bios, 'p', &bit_p)) अणु
+		अगर (bit_p.version == 2 && bit_p.length >= 4)
 			data = nvbios_rd32(bios, bit_p.offset + 0x00);
-		if (data) {
+		अगर (data) अणु
 			*ver = nvbios_rd08(bios, data + 0x00); /* maybe? */
 			*hdr = nvbios_rd08(bios, data + 0x01);
 			*len = nvbios_rd08(bios, data + 0x02);
 			*cnt = nvbios_rd08(bios, data + 0x03);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
 u32
-nvbios_pmuEe(struct nvkm_bios *bios, int idx, u8 *ver, u8 *hdr)
-{
+nvbios_pmuEe(काष्ठा nvkm_bios *bios, पूर्णांक idx, u8 *ver, u8 *hdr)
+अणु
 	u8  cnt, len;
 	u32 data = nvbios_pmuTe(bios, ver, hdr, &cnt, &len);
-	if (data && idx < cnt) {
+	अगर (data && idx < cnt) अणु
 		data = data + *hdr + (idx * len);
 		*hdr = len;
-		return data;
-	}
-	return 0;
-}
+		वापस data;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 u32
-nvbios_pmuEp(struct nvkm_bios *bios, int idx, u8 *ver, u8 *hdr,
-	     struct nvbios_pmuE *info)
-{
+nvbios_pmuEp(काष्ठा nvkm_bios *bios, पूर्णांक idx, u8 *ver, u8 *hdr,
+	     काष्ठा nvbios_pmuE *info)
+अणु
 	u32 data = nvbios_pmuEe(bios, idx, ver, hdr);
-	memset(info, 0x00, sizeof(*info));
-	switch (!!data * *ver) {
-	default:
+	स_रखो(info, 0x00, माप(*info));
+	चयन (!!data * *ver) अणु
+	शेष:
 		info->type = nvbios_rd08(bios, data + 0x00);
 		info->data = nvbios_rd32(bios, data + 0x02);
-		break;
-	}
-	return data;
-}
+		अवरोध;
+	पूर्ण
+	वापस data;
+पूर्ण
 
 bool
-nvbios_pmuRm(struct nvkm_bios *bios, u8 type, struct nvbios_pmuR *info)
-{
-	struct nvbios_pmuE pmuE;
+nvbios_pmuRm(काष्ठा nvkm_bios *bios, u8 type, काष्ठा nvbios_pmuR *info)
+अणु
+	काष्ठा nvbios_pmuE pmuE;
 	u8  ver, hdr, idx = 0;
 	u32 data;
-	memset(info, 0x00, sizeof(*info));
-	while ((data = nvbios_pmuEp(bios, idx++, &ver, &hdr, &pmuE))) {
-		if (pmuE.type == type && (data = pmuE.data)) {
+	स_रखो(info, 0x00, माप(*info));
+	जबतक ((data = nvbios_pmuEp(bios, idx++, &ver, &hdr, &pmuE))) अणु
+		अगर (pmuE.type == type && (data = pmuE.data)) अणु
 			info->init_addr_pmu = nvbios_rd32(bios, data + 0x08);
 			info->args_addr_pmu = nvbios_rd32(bios, data + 0x0c);
 			info->boot_addr     = data + 0x30;
@@ -98,8 +99,8 @@ nvbios_pmuRm(struct nvkm_bios *bios, u8 type, struct nvbios_pmuR *info)
 					      nvbios_rd32(bios, data + 0x24);
 			info->data_addr_pmu = nvbios_rd32(bios, data + 0x28);
 			info->data_size     = nvbios_rd32(bios, data + 0x2c);
-			return true;
-		}
-	}
-	return false;
-}
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण

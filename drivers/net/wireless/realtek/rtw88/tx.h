@@ -1,74 +1,75 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
-#ifndef __RTW_TX_H_
-#define __RTW_TX_H_
+#अगर_अघोषित __RTW_TX_H_
+#घोषणा __RTW_TX_H_
 
-#define RTK_TX_MAX_AGG_NUM_MASK		0x1f
+#घोषणा RTK_TX_MAX_AGG_NUM_MASK		0x1f
 
-#define RTW_TX_PROBE_TIMEOUT		msecs_to_jiffies(500)
+#घोषणा RTW_TX_PROBE_TIMEOUT		msecs_to_jअगरfies(500)
 
-#define SET_TX_DESC_TXPKTSIZE(txdesc, value)                                   \
+#घोषणा SET_TX_DESC_TXPKTSIZE(txdesc, value)                                   \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x00, value, GENMASK(15, 0))
-#define SET_TX_DESC_OFFSET(txdesc, value)                                      \
+#घोषणा SET_TX_DESC_OFFSET(txdesc, value)                                      \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x00, value, GENMASK(23, 16))
-#define SET_TX_DESC_PKT_OFFSET(txdesc, value)                                  \
+#घोषणा SET_TX_DESC_PKT_OFFSET(txdesc, value)                                  \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x01, value, GENMASK(28, 24))
-#define SET_TX_DESC_QSEL(txdesc, value)                                        \
+#घोषणा SET_TX_DESC_QSEL(txdesc, value)                                        \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x01, value, GENMASK(12, 8))
-#define SET_TX_DESC_BMC(txdesc, value)                                         \
+#घोषणा SET_TX_DESC_BMC(txdesc, value)                                         \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x00, value, BIT(24))
-#define SET_TX_DESC_RATE_ID(txdesc, value)                                     \
+#घोषणा SET_TX_DESC_RATE_ID(txdesc, value)                                     \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x01, value, GENMASK(20, 16))
-#define SET_TX_DESC_DATARATE(txdesc, value)                                    \
+#घोषणा SET_TX_DESC_DATARATE(txdesc, value)                                    \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x04, value, GENMASK(6, 0))
-#define SET_TX_DESC_DISDATAFB(txdesc, value)                                   \
+#घोषणा SET_TX_DESC_DISDATAFB(txdesc, value)                                   \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x03, value, BIT(10))
-#define SET_TX_DESC_USE_RATE(txdesc, value)                                    \
+#घोषणा SET_TX_DESC_USE_RATE(txdesc, value)                                    \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x03, value, BIT(8))
-#define SET_TX_DESC_SEC_TYPE(txdesc, value)                                    \
+#घोषणा SET_TX_DESC_SEC_TYPE(txdesc, value)                                    \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x01, value, GENMASK(23, 22))
-#define SET_TX_DESC_DATA_BW(txdesc, value)                                     \
+#घोषणा SET_TX_DESC_DATA_BW(txdesc, value)                                     \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x05, value, GENMASK(6, 5))
-#define SET_TX_DESC_SW_SEQ(txdesc, value)                                      \
+#घोषणा SET_TX_DESC_SW_SEQ(txdesc, value)                                      \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x09, value, GENMASK(23, 12))
-#define SET_TX_DESC_MAX_AGG_NUM(txdesc, value)                                 \
+#घोषणा SET_TX_DESC_MAX_AGG_NUM(txdesc, value)                                 \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x03, value, GENMASK(21, 17))
-#define SET_TX_DESC_USE_RTS(tx_desc, value)                                    \
+#घोषणा SET_TX_DESC_USE_RTS(tx_desc, value)                                    \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x03, value, BIT(12))
-#define SET_TX_DESC_RTSRATE(txdesc, value)                                     \
+#घोषणा SET_TX_DESC_RTSRATE(txdesc, value)                                     \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x04, value, GENMASK(28, 24))
-#define SET_TX_DESC_DATA_RTS_SHORT(txdesc, value)                              \
+#घोषणा SET_TX_DESC_DATA_RTS_SHORT(txdesc, value)                              \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x05, value, BIT(12))
-#define SET_TX_DESC_AMPDU_DENSITY(txdesc, value)                               \
+#घोषणा SET_TX_DESC_AMPDU_DENSITY(txdesc, value)                               \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x02, value, GENMASK(22, 20))
-#define SET_TX_DESC_DATA_STBC(txdesc, value)                                   \
+#घोषणा SET_TX_DESC_DATA_STBC(txdesc, value)                                   \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x05, value, GENMASK(9, 8))
-#define SET_TX_DESC_DATA_LDPC(txdesc, value)                                   \
+#घोषणा SET_TX_DESC_DATA_LDPC(txdesc, value)                                   \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x05, value, BIT(7))
-#define SET_TX_DESC_AGG_EN(txdesc, value)                                      \
+#घोषणा SET_TX_DESC_AGG_EN(txdesc, value)                                      \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x02, value, BIT(12))
-#define SET_TX_DESC_LS(txdesc, value)                                          \
+#घोषणा SET_TX_DESC_LS(txdesc, value)                                          \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x00, value, BIT(26))
-#define SET_TX_DESC_DATA_SHORT(txdesc, value)				       \
+#घोषणा SET_TX_DESC_DATA_SHORT(txdesc, value)				       \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x05, value, BIT(4))
-#define SET_TX_DESC_SPE_RPT(tx_desc, value)                                    \
+#घोषणा SET_TX_DESC_SPE_RPT(tx_desc, value)                                    \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x02, value, BIT(19))
-#define SET_TX_DESC_SW_DEFINE(tx_desc, value)                                  \
+#घोषणा SET_TX_DESC_SW_DEFINE(tx_desc, value)                                  \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x06, value, GENMASK(11, 0))
-#define SET_TX_DESC_DISQSELSEQ(txdesc, value)                                 \
+#घोषणा SET_TX_DESC_DISQSELSEQ(txdesc, value)                                 \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x00, value, BIT(31))
-#define SET_TX_DESC_EN_HWSEQ(txdesc, value)                                   \
+#घोषणा SET_TX_DESC_EN_HWSEQ(txdesc, value)                                   \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x08, value, BIT(15))
-#define SET_TX_DESC_HW_SSN_SEL(txdesc, value)                                 \
+#घोषणा SET_TX_DESC_HW_SSN_SEL(txdesc, value)                                 \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x03, value, GENMASK(7, 6))
-#define SET_TX_DESC_NAVUSEHDR(txdesc, value)				       \
+#घोषणा SET_TX_DESC_NAVUSEHDR(txdesc, value)				       \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x03, value, BIT(15))
-#define SET_TX_DESC_BT_NULL(txdesc, value)				       \
+#घोषणा SET_TX_DESC_BT_शून्य(txdesc, value)				       \
 	le32p_replace_bits((__le32 *)(txdesc) + 0x02, value, BIT(23))
 
-enum rtw_tx_desc_queue_select {
+क्रमागत rtw_tx_desc_queue_select अणु
 	TX_DESC_QSEL_TID0	= 0,
 	TX_DESC_QSEL_TID1	= 1,
 	TX_DESC_QSEL_TID2	= 2,
@@ -89,34 +90,34 @@ enum rtw_tx_desc_queue_select {
 	TX_DESC_QSEL_HIGH	= 17,
 	TX_DESC_QSEL_MGMT	= 18,
 	TX_DESC_QSEL_H2C	= 19,
-};
+पूर्ण;
 
-enum rtw_rsvd_packet_type;
+क्रमागत rtw_rsvd_packet_type;
 
-void rtw_tx(struct rtw_dev *rtwdev,
-	    struct ieee80211_tx_control *control,
-	    struct sk_buff *skb);
-void rtw_txq_init(struct rtw_dev *rtwdev, struct ieee80211_txq *txq);
-void rtw_txq_cleanup(struct rtw_dev *rtwdev, struct ieee80211_txq *txq);
-void rtw_tx_work(struct work_struct *w);
-void rtw_tx_pkt_info_update(struct rtw_dev *rtwdev,
-			    struct rtw_tx_pkt_info *pkt_info,
-			    struct ieee80211_sta *sta,
-			    struct sk_buff *skb);
-void rtw_tx_fill_tx_desc(struct rtw_tx_pkt_info *pkt_info, struct sk_buff *skb);
-void rtw_tx_report_enqueue(struct rtw_dev *rtwdev, struct sk_buff *skb, u8 sn);
-void rtw_tx_report_handle(struct rtw_dev *rtwdev, struct sk_buff *skb, int src);
-void rtw_tx_rsvd_page_pkt_info_update(struct rtw_dev *rtwdev,
-				      struct rtw_tx_pkt_info *pkt_info,
-				      struct sk_buff *skb,
-				      enum rtw_rsvd_packet_type type);
-struct sk_buff *
-rtw_tx_write_data_rsvd_page_get(struct rtw_dev *rtwdev,
-				struct rtw_tx_pkt_info *pkt_info,
+व्योम rtw_tx(काष्ठा rtw_dev *rtwdev,
+	    काष्ठा ieee80211_tx_control *control,
+	    काष्ठा sk_buff *skb);
+व्योम rtw_txq_init(काष्ठा rtw_dev *rtwdev, काष्ठा ieee80211_txq *txq);
+व्योम rtw_txq_cleanup(काष्ठा rtw_dev *rtwdev, काष्ठा ieee80211_txq *txq);
+व्योम rtw_tx_work(काष्ठा work_काष्ठा *w);
+व्योम rtw_tx_pkt_info_update(काष्ठा rtw_dev *rtwdev,
+			    काष्ठा rtw_tx_pkt_info *pkt_info,
+			    काष्ठा ieee80211_sta *sta,
+			    काष्ठा sk_buff *skb);
+व्योम rtw_tx_fill_tx_desc(काष्ठा rtw_tx_pkt_info *pkt_info, काष्ठा sk_buff *skb);
+व्योम rtw_tx_report_enqueue(काष्ठा rtw_dev *rtwdev, काष्ठा sk_buff *skb, u8 sn);
+व्योम rtw_tx_report_handle(काष्ठा rtw_dev *rtwdev, काष्ठा sk_buff *skb, पूर्णांक src);
+व्योम rtw_tx_rsvd_page_pkt_info_update(काष्ठा rtw_dev *rtwdev,
+				      काष्ठा rtw_tx_pkt_info *pkt_info,
+				      काष्ठा sk_buff *skb,
+				      क्रमागत rtw_rsvd_packet_type type);
+काष्ठा sk_buff *
+rtw_tx_ग_लिखो_data_rsvd_page_get(काष्ठा rtw_dev *rtwdev,
+				काष्ठा rtw_tx_pkt_info *pkt_info,
 				u8 *buf, u32 size);
-struct sk_buff *
-rtw_tx_write_data_h2c_get(struct rtw_dev *rtwdev,
-			  struct rtw_tx_pkt_info *pkt_info,
+काष्ठा sk_buff *
+rtw_tx_ग_लिखो_data_h2c_get(काष्ठा rtw_dev *rtwdev,
+			  काष्ठा rtw_tx_pkt_info *pkt_info,
 			  u8 *buf, u32 size);
 
-#endif
+#पूर्ण_अगर

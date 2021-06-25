@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#include <errno.h>
-#include <fcntl.h>
-#include <sched.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <time.h>
-#include <unistd.h>
-#include <string.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <sched.h>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/syscall.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <समय.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
 
-#include "log.h"
-#include "timens.h"
+#समावेश "log.h"
+#समावेश "timens.h"
 
-#define OFFSET (36000)
+#घोषणा OFFSET (36000)
 
-int main(int argc, char *argv[])
-{
-	struct timespec now, tst;
-	int status, i;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	काष्ठा बारpec now, tst;
+	पूर्णांक status, i;
 	pid_t pid;
 
-	if (argc > 1) {
-		if (sscanf(argv[1], "%ld", &now.tv_sec) != 1)
-			return pr_perror("sscanf");
+	अगर (argc > 1) अणु
+		अगर (माला_पूछो(argv[1], "%ld", &now.tv_sec) != 1)
+			वापस pr_लिखो_त्रुटि("sscanf");
 
-		for (i = 0; i < 2; i++) {
-			_gettime(CLOCK_MONOTONIC, &tst, i);
-			if (abs(tst.tv_sec - now.tv_sec) > 5)
-				return pr_fail("%ld %ld\n", now.tv_sec, tst.tv_sec);
-		}
-		return 0;
-	}
+		क्रम (i = 0; i < 2; i++) अणु
+			_समय_लो(CLOCK_MONOTONIC, &tst, i);
+			अगर (असल(tst.tv_sec - now.tv_sec) > 5)
+				वापस pr_fail("%ld %ld\n", now.tv_sec, tst.tv_sec);
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	nscheck();
 
 	ksft_set_plan(1);
 
-	clock_gettime(CLOCK_MONOTONIC, &now);
+	घड़ी_समय_लो(CLOCK_MONOTONIC, &now);
 
-	if (unshare_timens())
-		return 1;
+	अगर (unshare_समयns())
+		वापस 1;
 
-	if (_settime(CLOCK_MONOTONIC, OFFSET))
-		return 1;
+	अगर (_समय_रखो(CLOCK_MONOTONIC, OFFSET))
+		वापस 1;
 
-	for (i = 0; i < 2; i++) {
-		_gettime(CLOCK_MONOTONIC, &tst, i);
-		if (abs(tst.tv_sec - now.tv_sec) > 5)
-			return pr_fail("%ld %ld\n",
+	क्रम (i = 0; i < 2; i++) अणु
+		_समय_लो(CLOCK_MONOTONIC, &tst, i);
+		अगर (असल(tst.tv_sec - now.tv_sec) > 5)
+			वापस pr_fail("%ld %ld\n",
 					now.tv_sec, tst.tv_sec);
-	}
+	पूर्ण
 
-	if (argc > 1)
-		return 0;
+	अगर (argc > 1)
+		वापस 0;
 
-	pid = fork();
-	if (pid < 0)
-		return pr_perror("fork");
+	pid = विभाजन();
+	अगर (pid < 0)
+		वापस pr_लिखो_त्रुटि("fork");
 
-	if (pid == 0) {
-		char now_str[64];
-		char *cargv[] = {"exec", now_str, NULL};
-		char *cenv[] = {NULL};
+	अगर (pid == 0) अणु
+		अक्षर now_str[64];
+		अक्षर *cargv[] = अणु"exec", now_str, शून्यपूर्ण;
+		अक्षर *cenv[] = अणुशून्यपूर्ण;
 
-		/* Check that a child process is in the new timens. */
-		for (i = 0; i < 2; i++) {
-			_gettime(CLOCK_MONOTONIC, &tst, i);
-			if (abs(tst.tv_sec - now.tv_sec - OFFSET) > 5)
-				return pr_fail("%ld %ld\n",
+		/* Check that a child process is in the new समयns. */
+		क्रम (i = 0; i < 2; i++) अणु
+			_समय_लो(CLOCK_MONOTONIC, &tst, i);
+			अगर (असल(tst.tv_sec - now.tv_sec - OFFSET) > 5)
+				वापस pr_fail("%ld %ld\n",
 						now.tv_sec + OFFSET, tst.tv_sec);
-		}
+		पूर्ण
 
-		/* Check for proper vvar offsets after execve. */
-		snprintf(now_str, sizeof(now_str), "%ld", now.tv_sec + OFFSET);
+		/* Check क्रम proper vvar offsets after execve. */
+		snम_लिखो(now_str, माप(now_str), "%ld", now.tv_sec + OFFSET);
 		execve("/proc/self/exe", cargv, cenv);
-		return pr_perror("execve");
-	}
+		वापस pr_लिखो_त्रुटि("execve");
+	पूर्ण
 
-	if (waitpid(pid, &status, 0) != pid)
-		return pr_perror("waitpid");
+	अगर (रुकोpid(pid, &status, 0) != pid)
+		वापस pr_लिखो_त्रुटि("waitpid");
 
-	if (status)
-		ksft_exit_fail();
+	अगर (status)
+		ksft_निकास_fail();
 
 	ksft_test_result_pass("exec\n");
-	ksft_exit_pass();
-	return 0;
-}
+	ksft_निकास_pass();
+	वापस 0;
+पूर्ण

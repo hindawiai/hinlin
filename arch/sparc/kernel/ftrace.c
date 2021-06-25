@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/spinlock.h>
-#include <linux/hardirq.h>
-#include <linux/ftrace.h>
-#include <linux/percpu.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <trace/syscall.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/spinlock.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <trace/syscall.h>
 
-#include <asm/ftrace.h>
+#समावेश <यंत्र/ftrace.h>
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-static const u32 ftrace_nop = 0x01000000;
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+अटल स्थिर u32 ftrace_nop = 0x01000000;
 
-static u32 ftrace_call_replace(unsigned long ip, unsigned long addr)
-{
+अटल u32 ftrace_call_replace(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ addr)
+अणु
 	u32 call;
 	s32 off;
 
 	off = ((s32)addr - (s32)ip);
 	call = 0x40000000 | ((u32)off >> 2);
 
-	return call;
-}
+	वापस call;
+पूर्ण
 
-static int ftrace_modify_code(unsigned long ip, u32 old, u32 new)
-{
+अटल पूर्णांक ftrace_modअगरy_code(अचिन्हित दीर्घ ip, u32 old, u32 new)
+अणु
 	u32 replaced;
-	int faulted;
+	पूर्णांक faulted;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"1:	cas	[%[ip]], %[old], %[new]\n"
 	"	flush	%[ip]\n"
 	"	mov	0, %[faulted]\n"
@@ -47,92 +48,92 @@ static int ftrace_modify_code(unsigned long ip, u32 old, u32 new)
 	: [new] "0" (new), [old] "r" (old), [ip] "r" (ip)
 	: "memory");
 
-	if (replaced != old && replaced != new)
+	अगर (replaced != old && replaced != new)
 		faulted = 2;
 
-	return faulted;
-}
+	वापस faulted;
+पूर्ण
 
-int ftrace_make_nop(struct module *mod, struct dyn_ftrace *rec, unsigned long addr)
-{
-	unsigned long ip = rec->ip;
+पूर्णांक ftrace_make_nop(काष्ठा module *mod, काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
+अणु
+	अचिन्हित दीर्घ ip = rec->ip;
 	u32 old, new;
 
 	old = ftrace_call_replace(ip, addr);
 	new = ftrace_nop;
-	return ftrace_modify_code(ip, old, new);
-}
+	वापस ftrace_modअगरy_code(ip, old, new);
+पूर्ण
 
-int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
-{
-	unsigned long ip = rec->ip;
+पूर्णांक ftrace_make_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
+अणु
+	अचिन्हित दीर्घ ip = rec->ip;
 	u32 old, new;
 
 	old = ftrace_nop;
 	new = ftrace_call_replace(ip, addr);
-	return ftrace_modify_code(ip, old, new);
-}
+	वापस ftrace_modअगरy_code(ip, old, new);
+पूर्ण
 
-int ftrace_update_ftrace_func(ftrace_func_t func)
-{
-	unsigned long ip = (unsigned long)(&ftrace_call);
+पूर्णांक ftrace_update_ftrace_func(ftrace_func_t func)
+अणु
+	अचिन्हित दीर्घ ip = (अचिन्हित दीर्घ)(&ftrace_call);
 	u32 old, new;
 
 	old = *(u32 *) &ftrace_call;
-	new = ftrace_call_replace(ip, (unsigned long)func);
-	return ftrace_modify_code(ip, old, new);
-}
+	new = ftrace_call_replace(ip, (अचिन्हित दीर्घ)func);
+	वापस ftrace_modअगरy_code(ip, old, new);
+पूर्ण
 
-int __init ftrace_dyn_arch_init(void)
-{
-	return 0;
-}
-#endif
+पूर्णांक __init ftrace_dyn_arch_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-extern void ftrace_graph_call(void);
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+बाह्य व्योम ftrace_graph_call(व्योम);
 
-int ftrace_enable_ftrace_graph_caller(void)
-{
-	unsigned long ip = (unsigned long)(&ftrace_graph_call);
+पूर्णांक ftrace_enable_ftrace_graph_caller(व्योम)
+अणु
+	अचिन्हित दीर्घ ip = (अचिन्हित दीर्घ)(&ftrace_graph_call);
 	u32 old, new;
 
 	old = *(u32 *) &ftrace_graph_call;
-	new = ftrace_call_replace(ip, (unsigned long) &ftrace_graph_caller);
-	return ftrace_modify_code(ip, old, new);
-}
+	new = ftrace_call_replace(ip, (अचिन्हित दीर्घ) &ftrace_graph_caller);
+	वापस ftrace_modअगरy_code(ip, old, new);
+पूर्ण
 
-int ftrace_disable_ftrace_graph_caller(void)
-{
-	unsigned long ip = (unsigned long)(&ftrace_graph_call);
+पूर्णांक ftrace_disable_ftrace_graph_caller(व्योम)
+अणु
+	अचिन्हित दीर्घ ip = (अचिन्हित दीर्घ)(&ftrace_graph_call);
 	u32 old, new;
 
 	old = *(u32 *) &ftrace_graph_call;
-	new = ftrace_call_replace(ip, (unsigned long) &ftrace_stub);
+	new = ftrace_call_replace(ip, (अचिन्हित दीर्घ) &ftrace_stub);
 
-	return ftrace_modify_code(ip, old, new);
-}
+	वापस ftrace_modअगरy_code(ip, old, new);
+पूर्ण
 
-#endif /* !CONFIG_DYNAMIC_FTRACE */
+#पूर्ण_अगर /* !CONFIG_DYNAMIC_FTRACE */
 
 /*
- * Hook the return address and push it in the stack of return addrs
- * in current thread info.
+ * Hook the वापस address and push it in the stack of वापस addrs
+ * in current thपढ़ो info.
  */
-unsigned long prepare_ftrace_return(unsigned long parent,
-				    unsigned long self_addr,
-				    unsigned long frame_pointer)
-{
-	unsigned long return_hooker = (unsigned long) &return_to_handler;
+अचिन्हित दीर्घ prepare_ftrace_वापस(अचिन्हित दीर्घ parent,
+				    अचिन्हित दीर्घ self_addr,
+				    अचिन्हित दीर्घ frame_poपूर्णांकer)
+अणु
+	अचिन्हित दीर्घ वापस_hooker = (अचिन्हित दीर्घ) &वापस_to_handler;
 
-	if (unlikely(atomic_read(&current->tracing_graph_pause)))
-		return parent + 8UL;
+	अगर (unlikely(atomic_पढ़ो(&current->tracing_graph_छोड़ो)))
+		वापस parent + 8UL;
 
-	if (function_graph_enter(parent, self_addr, frame_pointer, NULL))
-		return parent + 8UL;
+	अगर (function_graph_enter(parent, self_addr, frame_poपूर्णांकer, शून्य))
+		वापस parent + 8UL;
 
-	return return_hooker;
-}
-#endif /* CONFIG_FUNCTION_GRAPH_TRACER */
+	वापस वापस_hooker;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_FUNCTION_GRAPH_TRACER */

@@ -1,332 +1,333 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Atheros AR71XX/AR724X/AR913X built-in hardware watchdog timer.
+ * Atheros AR71XX/AR724X/AR913X built-in hardware watchकरोg समयr.
  *
- * Copyright (C) 2008-2011 Gabor Juhos <juhosg@openwrt.org>
- * Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
+ * Copyright (C) 2008-2011 Gabor Juhos <juhosg@खोलोwrt.org>
+ * Copyright (C) 2008 Imre Kaloz <kaloz@खोलोwrt.org>
  *
- * This driver was based on: drivers/watchdog/ixp4xx_wdt.c
- *	Author: Deepak Saxena <dsaxena@plexity.net>
+ * This driver was based on: drivers/watchकरोg/ixp4xx_wdt.c
+ *	Author: Deepak Saxena <dsaxena@plनिकासy.net>
  *	Copyright 2004 (c) MontaVista, Software, Inc.
  *
  * which again was based on sa1100 driver,
  *	Copyright (C) 2000 Oleg Drokin <green@crimea.edu>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
-#include <linux/types.h>
-#include <linux/watchdog.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/uaccess.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/uaccess.h>
 
-#define DRIVER_NAME	"ath79-wdt"
+#घोषणा DRIVER_NAME	"ath79-wdt"
 
-#define WDT_TIMEOUT	15	/* seconds */
+#घोषणा WDT_TIMEOUT	15	/* seconds */
 
-#define WDOG_REG_CTRL		0x00
-#define WDOG_REG_TIMER		0x04
+#घोषणा WDOG_REG_CTRL		0x00
+#घोषणा WDOG_REG_TIMER		0x04
 
-#define WDOG_CTRL_LAST_RESET	BIT(31)
-#define WDOG_CTRL_ACTION_MASK	3
-#define WDOG_CTRL_ACTION_NONE	0	/* no action */
-#define WDOG_CTRL_ACTION_GPI	1	/* general purpose interrupt */
-#define WDOG_CTRL_ACTION_NMI	2	/* NMI */
-#define WDOG_CTRL_ACTION_FCR	3	/* full chip reset */
+#घोषणा WDOG_CTRL_LAST_RESET	BIT(31)
+#घोषणा WDOG_CTRL_ACTION_MASK	3
+#घोषणा WDOG_CTRL_ACTION_NONE	0	/* no action */
+#घोषणा WDOG_CTRL_ACTION_GPI	1	/* general purpose पूर्णांकerrupt */
+#घोषणा WDOG_CTRL_ACTION_NMI	2	/* NMI */
+#घोषणा WDOG_CTRL_ACTION_FCR	3	/* full chip reset */
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started "
 			   "(default=" __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static int timeout = WDT_TIMEOUT;
-module_param(timeout, int, 0);
-MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds "
+अटल पूर्णांक समयout = WDT_TIMEOUT;
+module_param(समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds "
 			  "(default=" __MODULE_STRING(WDT_TIMEOUT) "s)");
 
-static unsigned long wdt_flags;
+अटल अचिन्हित दीर्घ wdt_flags;
 
-#define WDT_FLAGS_BUSY		0
-#define WDT_FLAGS_EXPECT_CLOSE	1
+#घोषणा WDT_FLAGS_BUSY		0
+#घोषणा WDT_FLAGS_EXPECT_CLOSE	1
 
-static struct clk *wdt_clk;
-static unsigned long wdt_freq;
-static int boot_status;
-static int max_timeout;
-static void __iomem *wdt_base;
+अटल काष्ठा clk *wdt_clk;
+अटल अचिन्हित दीर्घ wdt_freq;
+अटल पूर्णांक boot_status;
+अटल पूर्णांक max_समयout;
+अटल व्योम __iomem *wdt_base;
 
-static inline void ath79_wdt_wr(unsigned reg, u32 val)
-{
-	iowrite32(val, wdt_base + reg);
-}
+अटल अंतरभूत व्योम ath79_wdt_wr(अचिन्हित reg, u32 val)
+अणु
+	ioग_लिखो32(val, wdt_base + reg);
+पूर्ण
 
-static inline u32 ath79_wdt_rr(unsigned reg)
-{
-	return ioread32(wdt_base + reg);
-}
+अटल अंतरभूत u32 ath79_wdt_rr(अचिन्हित reg)
+अणु
+	वापस ioपढ़ो32(wdt_base + reg);
+पूर्ण
 
-static inline void ath79_wdt_keepalive(void)
-{
-	ath79_wdt_wr(WDOG_REG_TIMER, wdt_freq * timeout);
-	/* flush write */
+अटल अंतरभूत व्योम ath79_wdt_keepalive(व्योम)
+अणु
+	ath79_wdt_wr(WDOG_REG_TIMER, wdt_freq * समयout);
+	/* flush ग_लिखो */
 	ath79_wdt_rr(WDOG_REG_TIMER);
-}
+पूर्ण
 
-static inline void ath79_wdt_enable(void)
-{
+अटल अंतरभूत व्योम ath79_wdt_enable(व्योम)
+अणु
 	ath79_wdt_keepalive();
 
 	/*
-	 * Updating the TIMER register requires a few microseconds
+	 * Updating the TIMER रेजिस्टर requires a few microseconds
 	 * on the AR934x SoCs at least. Use a small delay to ensure
-	 * that the TIMER register is updated within the hardware
-	 * before enabling the watchdog.
+	 * that the TIMER रेजिस्टर is updated within the hardware
+	 * beक्रमe enabling the watchकरोg.
 	 */
 	udelay(2);
 
 	ath79_wdt_wr(WDOG_REG_CTRL, WDOG_CTRL_ACTION_FCR);
-	/* flush write */
+	/* flush ग_लिखो */
 	ath79_wdt_rr(WDOG_REG_CTRL);
-}
+पूर्ण
 
-static inline void ath79_wdt_disable(void)
-{
+अटल अंतरभूत व्योम ath79_wdt_disable(व्योम)
+अणु
 	ath79_wdt_wr(WDOG_REG_CTRL, WDOG_CTRL_ACTION_NONE);
-	/* flush write */
+	/* flush ग_लिखो */
 	ath79_wdt_rr(WDOG_REG_CTRL);
-}
+पूर्ण
 
-static int ath79_wdt_set_timeout(int val)
-{
-	if (val < 1 || val > max_timeout)
-		return -EINVAL;
+अटल पूर्णांक ath79_wdt_set_समयout(पूर्णांक val)
+अणु
+	अगर (val < 1 || val > max_समयout)
+		वापस -EINVAL;
 
-	timeout = val;
+	समयout = val;
 	ath79_wdt_keepalive();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath79_wdt_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(WDT_FLAGS_BUSY, &wdt_flags))
-		return -EBUSY;
+अटल पूर्णांक ath79_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_and_set_bit(WDT_FLAGS_BUSY, &wdt_flags))
+		वापस -EBUSY;
 
 	clear_bit(WDT_FLAGS_EXPECT_CLOSE, &wdt_flags);
 	ath79_wdt_enable();
 
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int ath79_wdt_release(struct inode *inode, struct file *file)
-{
-	if (test_bit(WDT_FLAGS_EXPECT_CLOSE, &wdt_flags))
+अटल पूर्णांक ath79_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_bit(WDT_FLAGS_EXPECT_CLOSE, &wdt_flags))
 		ath79_wdt_disable();
-	else {
+	अन्यथा अणु
 		pr_crit("device closed unexpectedly, watchdog timer will not stop!\n");
 		ath79_wdt_keepalive();
-	}
+	पूर्ण
 
 	clear_bit(WDT_FLAGS_BUSY, &wdt_flags);
 	clear_bit(WDT_FLAGS_EXPECT_CLOSE, &wdt_flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t ath79_wdt_write(struct file *file, const char *data,
-				size_t len, loff_t *ppos)
-{
-	if (len) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार ath79_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर *data,
+				माप_प्रकार len, loff_t *ppos)
+अणु
+	अगर (len) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
 			clear_bit(WDT_FLAGS_EXPECT_CLOSE, &wdt_flags);
 
-			for (i = 0; i != len; i++) {
-				char c;
+			क्रम (i = 0; i != len; i++) अणु
+				अक्षर c;
 
-				if (get_user(c, data + i))
-					return -EFAULT;
+				अगर (get_user(c, data + i))
+					वापस -EFAULT;
 
-				if (c == 'V')
+				अगर (c == 'V')
 					set_bit(WDT_FLAGS_EXPECT_CLOSE,
 						&wdt_flags);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		ath79_wdt_keepalive();
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const struct watchdog_info ath79_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info ath79_wdt_info = अणु
 	.options		= WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 				  WDIOF_MAGICCLOSE | WDIOF_CARDRESET,
 	.firmware_version	= 0,
 	.identity		= "ATH79 watchdog",
-};
+पूर्ण;
 
-static long ath79_wdt_ioctl(struct file *file, unsigned int cmd,
-			    unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	int err;
-	int t;
+अटल दीर्घ ath79_wdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			    अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	पूर्णांक err;
+	पूर्णांक t;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
 		err = copy_to_user(argp, &ath79_wdt_info,
-				   sizeof(ath79_wdt_info)) ? -EFAULT : 0;
-		break;
+				   माप(ath79_wdt_info)) ? -EFAULT : 0;
+		अवरोध;
 
-	case WDIOC_GETSTATUS:
+	हाल WDIOC_GETSTATUS:
 		err = put_user(0, p);
-		break;
+		अवरोध;
 
-	case WDIOC_GETBOOTSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
 		err = put_user(boot_status, p);
-		break;
+		अवरोध;
 
-	case WDIOC_KEEPALIVE:
+	हाल WDIOC_KEEPALIVE:
 		ath79_wdt_keepalive();
 		err = 0;
-		break;
+		अवरोध;
 
-	case WDIOC_SETTIMEOUT:
+	हाल WDIOC_SETTIMEOUT:
 		err = get_user(t, p);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
-		err = ath79_wdt_set_timeout(t);
-		if (err)
-			break;
+		err = ath79_wdt_set_समयout(t);
+		अगर (err)
+			अवरोध;
 		fallthrough;
 
-	case WDIOC_GETTIMEOUT:
-		err = put_user(timeout, p);
-		break;
+	हाल WDIOC_GETTIMEOUT:
+		err = put_user(समयout, p);
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOTTY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct file_operations ath79_wdt_fops = {
+अटल स्थिर काष्ठा file_operations ath79_wdt_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.write		= ath79_wdt_write,
+	.ग_लिखो		= ath79_wdt_ग_लिखो,
 	.unlocked_ioctl	= ath79_wdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= ath79_wdt_open,
+	.खोलो		= ath79_wdt_खोलो,
 	.release	= ath79_wdt_release,
-};
+पूर्ण;
 
-static struct miscdevice ath79_wdt_miscdev = {
+अटल काष्ठा miscdevice ath79_wdt_miscdev = अणु
 	.minor = WATCHDOG_MINOR,
 	.name = "watchdog",
 	.fops = &ath79_wdt_fops,
-};
+पूर्ण;
 
-static int ath79_wdt_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक ath79_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	u32 ctrl;
-	int err;
+	पूर्णांक err;
 
-	if (wdt_base)
-		return -EBUSY;
+	अगर (wdt_base)
+		वापस -EBUSY;
 
-	wdt_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(wdt_base))
-		return PTR_ERR(wdt_base);
+	wdt_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(wdt_base))
+		वापस PTR_ERR(wdt_base);
 
 	wdt_clk = devm_clk_get(&pdev->dev, "wdt");
-	if (IS_ERR(wdt_clk))
-		return PTR_ERR(wdt_clk);
+	अगर (IS_ERR(wdt_clk))
+		वापस PTR_ERR(wdt_clk);
 
 	err = clk_prepare_enable(wdt_clk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	wdt_freq = clk_get_rate(wdt_clk);
-	if (!wdt_freq) {
+	अगर (!wdt_freq) अणु
 		err = -EINVAL;
-		goto err_clk_disable;
-	}
+		जाओ err_clk_disable;
+	पूर्ण
 
-	max_timeout = (0xfffffffful / wdt_freq);
-	if (timeout < 1 || timeout > max_timeout) {
-		timeout = max_timeout;
+	max_समयout = (0xfffffffful / wdt_freq);
+	अगर (समयout < 1 || समयout > max_समयout) अणु
+		समयout = max_समयout;
 		dev_info(&pdev->dev,
 			"timeout value must be 0 < timeout < %d, using %d\n",
-			max_timeout, timeout);
-	}
+			max_समयout, समयout);
+	पूर्ण
 
 	ctrl = ath79_wdt_rr(WDOG_REG_CTRL);
 	boot_status = (ctrl & WDOG_CTRL_LAST_RESET) ? WDIOF_CARDRESET : 0;
 
-	err = misc_register(&ath79_wdt_miscdev);
-	if (err) {
+	err = misc_रेजिस्टर(&ath79_wdt_miscdev);
+	अगर (err) अणु
 		dev_err(&pdev->dev,
 			"unable to register misc device, err=%d\n", err);
-		goto err_clk_disable;
-	}
+		जाओ err_clk_disable;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_clk_disable:
 	clk_disable_unprepare(wdt_clk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ath79_wdt_remove(struct platform_device *pdev)
-{
-	misc_deregister(&ath79_wdt_miscdev);
+अटल पूर्णांक ath79_wdt_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	misc_deरेजिस्टर(&ath79_wdt_miscdev);
 	clk_disable_unprepare(wdt_clk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ath79_wdt_shutdown(struct platform_device *pdev)
-{
+अटल व्योम ath79_wdt_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
 	ath79_wdt_disable();
-}
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id ath79_wdt_match[] = {
-	{ .compatible = "qca,ar7130-wdt" },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id ath79_wdt_match[] = अणु
+	अणु .compatible = "qca,ar7130-wdt" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ath79_wdt_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver ath79_wdt_driver = {
+अटल काष्ठा platक्रमm_driver ath79_wdt_driver = अणु
 	.probe		= ath79_wdt_probe,
-	.remove		= ath79_wdt_remove,
-	.shutdown	= ath79_wdt_shutdown,
-	.driver		= {
+	.हटाओ		= ath79_wdt_हटाओ,
+	.shutकरोwn	= ath79_wdt_shutकरोwn,
+	.driver		= अणु
 		.name	= DRIVER_NAME,
 		.of_match_table = of_match_ptr(ath79_wdt_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ath79_wdt_driver);
+module_platक्रमm_driver(ath79_wdt_driver);
 
 MODULE_DESCRIPTION("Atheros AR71XX/AR724X/AR913X hardware watchdog driver");
 MODULE_AUTHOR("Gabor Juhos <juhosg@openwrt.org");

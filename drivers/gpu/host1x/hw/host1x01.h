@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Host1x init for T20 and T30 Architecture Chips
+ * Host1x init क्रम T20 and T30 Architecture Chips
  *
  * Copyright (c) 2011-2013, NVIDIA Corporation.
  */
-#ifndef HOST1X_HOST1X01_H
-#define HOST1X_HOST1X01_H
+#अगर_अघोषित HOST1X_HOST1X01_H
+#घोषणा HOST1X_HOST1X01_H
 
-struct host1x;
+काष्ठा host1x;
 
-int host1x01_init(struct host1x *host);
+पूर्णांक host1x01_init(काष्ठा host1x *host);
 
-#endif /* HOST1X_HOST1X01_H_ */
+#पूर्ण_अगर /* HOST1X_HOST1X01_H_ */

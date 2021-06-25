@@ -1,627 +1,628 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2002,2005 Silicon Graphics, Inc.
  * Copyright (c) 2013 Red Hat, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_dir2.h"
-#include "xfs_dir2_priv.h"
-#include "xfs_error.h"
-#include "xfs_trans.h"
-#include "xfs_buf_item.h"
-#include "xfs_log.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_dir2.h"
+#समावेश "xfs_dir2_priv.h"
+#समावेश "xfs_error.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_buf_item.h"
+#समावेश "xfs_log.h"
 
-static xfs_failaddr_t xfs_dir2_data_freefind_verify(
-		struct xfs_dir2_data_hdr *hdr, struct xfs_dir2_data_free *bf,
-		struct xfs_dir2_data_unused *dup,
-		struct xfs_dir2_data_free **bf_ent);
+अटल xfs_failaddr_t xfs_dir2_data_मुक्तfind_verअगरy(
+		काष्ठा xfs_dir2_data_hdr *hdr, काष्ठा xfs_dir2_data_मुक्त *bf,
+		काष्ठा xfs_dir2_data_unused *dup,
+		काष्ठा xfs_dir2_data_मुक्त **bf_ent);
 
-struct xfs_dir2_data_free *
-xfs_dir2_data_bestfree_p(
-	struct xfs_mount		*mp,
-	struct xfs_dir2_data_hdr	*hdr)
-{
-	if (xfs_sb_version_hascrc(&mp->m_sb))
-		return ((struct xfs_dir3_data_hdr *)hdr)->best_free;
-	return hdr->bestfree;
-}
+काष्ठा xfs_dir2_data_मुक्त *
+xfs_dir2_data_bestमुक्त_p(
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_dir2_data_hdr	*hdr)
+अणु
+	अगर (xfs_sb_version_hascrc(&mp->m_sb))
+		वापस ((काष्ठा xfs_dir3_data_hdr *)hdr)->best_मुक्त;
+	वापस hdr->bestमुक्त;
+पूर्ण
 
 /*
- * Pointer to an entry's tag word.
+ * Poपूर्णांकer to an entry's tag word.
  */
 __be16 *
 xfs_dir2_data_entry_tag_p(
-	struct xfs_mount		*mp,
-	struct xfs_dir2_data_entry	*dep)
-{
-	return (__be16 *)((char *)dep +
-		xfs_dir2_data_entsize(mp, dep->namelen) - sizeof(__be16));
-}
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_dir2_data_entry	*dep)
+अणु
+	वापस (__be16 *)((अक्षर *)dep +
+		xfs_dir2_data_entsize(mp, dep->namelen) - माप(__be16));
+पूर्ण
 
-uint8_t
+uपूर्णांक8_t
 xfs_dir2_data_get_ftype(
-	struct xfs_mount		*mp,
-	struct xfs_dir2_data_entry	*dep)
-{
-	if (xfs_sb_version_hasftype(&mp->m_sb)) {
-		uint8_t			ftype = dep->name[dep->namelen];
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_dir2_data_entry	*dep)
+अणु
+	अगर (xfs_sb_version_hasftype(&mp->m_sb)) अणु
+		uपूर्णांक8_t			ftype = dep->name[dep->namelen];
 
-		if (likely(ftype < XFS_DIR3_FT_MAX))
-			return ftype;
-	}
+		अगर (likely(ftype < XFS_सूची3_FT_MAX))
+			वापस ftype;
+	पूर्ण
 
-	return XFS_DIR3_FT_UNKNOWN;
-}
+	वापस XFS_सूची3_FT_UNKNOWN;
+पूर्ण
 
-void
+व्योम
 xfs_dir2_data_put_ftype(
-	struct xfs_mount		*mp,
-	struct xfs_dir2_data_entry	*dep,
-	uint8_t				ftype)
-{
-	ASSERT(ftype < XFS_DIR3_FT_MAX);
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_dir2_data_entry	*dep,
+	uपूर्णांक8_t				ftype)
+अणु
+	ASSERT(ftype < XFS_सूची3_FT_MAX);
 	ASSERT(dep->namelen != 0);
 
-	if (xfs_sb_version_hasftype(&mp->m_sb))
+	अगर (xfs_sb_version_hasftype(&mp->m_sb))
 		dep->name[dep->namelen] = ftype;
-}
+पूर्ण
 
 /*
  * The number of leaf entries is limited by the size of the block and the amount
- * of space used by the data entries.  We don't know how much space is used by
+ * of space used by the data entries.  We करोn't know how much space is used by
  * the data entries yet, so just ensure that the count falls somewhere inside
  * the block right now.
  */
-static inline unsigned int
+अटल अंतरभूत अचिन्हित पूर्णांक
 xfs_dir2_data_max_leaf_entries(
-	struct xfs_da_geometry		*geo)
-{
-	return (geo->blksize - sizeof(struct xfs_dir2_block_tail) -
+	काष्ठा xfs_da_geometry		*geo)
+अणु
+	वापस (geo->blksize - माप(काष्ठा xfs_dir2_block_tail) -
 		geo->data_entry_offset) /
-			sizeof(struct xfs_dir2_leaf_entry);
-}
+			माप(काष्ठा xfs_dir2_leaf_entry);
+पूर्ण
 
 /*
  * Check the consistency of the data block.
- * The input can also be a block-format directory.
- * Return NULL if the buffer is good, otherwise the address of the error.
+ * The input can also be a block-क्रमmat directory.
+ * Return शून्य अगर the buffer is good, otherwise the address of the error.
  */
 xfs_failaddr_t
 __xfs_dir3_data_check(
-	struct xfs_inode	*dp,		/* incore inode pointer */
-	struct xfs_buf		*bp)		/* data block's buffer */
-{
-	xfs_dir2_dataptr_t	addr;		/* addr for leaf lookup */
-	xfs_dir2_data_free_t	*bf;		/* bestfree table */
-	xfs_dir2_block_tail_t	*btp=NULL;	/* block tail */
-	int			count;		/* count of entries found */
+	काष्ठा xfs_inode	*dp,		/* incore inode poपूर्णांकer */
+	काष्ठा xfs_buf		*bp)		/* data block's buffer */
+अणु
+	xfs_dir2_dataptr_t	addr;		/* addr क्रम leaf lookup */
+	xfs_dir2_data_मुक्त_t	*bf;		/* bestमुक्त table */
+	xfs_dir2_block_tail_t	*btp=शून्य;	/* block tail */
+	पूर्णांक			count;		/* count of entries found */
 	xfs_dir2_data_hdr_t	*hdr;		/* data block header */
-	xfs_dir2_data_free_t	*dfp;		/* bestfree entry */
-	int			freeseen;	/* mask of bestfrees seen */
+	xfs_dir2_data_मुक्त_t	*dfp;		/* bestमुक्त entry */
+	पूर्णांक			मुक्तseen;	/* mask of bestमुक्तs seen */
 	xfs_dahash_t		hash;		/* hash of current name */
-	int			i;		/* leaf index */
-	int			lastfree;	/* last entry was unused */
-	xfs_dir2_leaf_entry_t	*lep=NULL;	/* block leaf entries */
-	struct xfs_mount	*mp = bp->b_mount;
-	int			stale;		/* count of stale leaves */
-	struct xfs_name		name;
-	unsigned int		offset;
-	unsigned int		end;
-	struct xfs_da_geometry	*geo = mp->m_dir_geo;
+	पूर्णांक			i;		/* leaf index */
+	पूर्णांक			lastमुक्त;	/* last entry was unused */
+	xfs_dir2_leaf_entry_t	*lep=शून्य;	/* block leaf entries */
+	काष्ठा xfs_mount	*mp = bp->b_mount;
+	पूर्णांक			stale;		/* count of stale leaves */
+	काष्ठा xfs_name		name;
+	अचिन्हित पूर्णांक		offset;
+	अचिन्हित पूर्णांक		end;
+	काष्ठा xfs_da_geometry	*geo = mp->m_dir_geo;
 
 	/*
 	 * If this isn't a directory, something is seriously wrong.  Bail out.
 	 */
-	if (dp && !S_ISDIR(VFS_I(dp)->i_mode))
-		return __this_address;
+	अगर (dp && !S_ISसूची(VFS_I(dp)->i_mode))
+		वापस __this_address;
 
 	hdr = bp->b_addr;
 	offset = geo->data_entry_offset;
 
-	switch (hdr->magic) {
-	case cpu_to_be32(XFS_DIR3_BLOCK_MAGIC):
-	case cpu_to_be32(XFS_DIR2_BLOCK_MAGIC):
+	चयन (hdr->magic) अणु
+	हाल cpu_to_be32(XFS_सूची3_BLOCK_MAGIC):
+	हाल cpu_to_be32(XFS_सूची2_BLOCK_MAGIC):
 		btp = xfs_dir2_block_tail_p(geo, hdr);
 		lep = xfs_dir2_block_leaf_p(btp);
 
-		if (be32_to_cpu(btp->count) >=
+		अगर (be32_to_cpu(btp->count) >=
 		    xfs_dir2_data_max_leaf_entries(geo))
-			return __this_address;
-		break;
-	case cpu_to_be32(XFS_DIR3_DATA_MAGIC):
-	case cpu_to_be32(XFS_DIR2_DATA_MAGIC):
-		break;
-	default:
-		return __this_address;
-	}
+			वापस __this_address;
+		अवरोध;
+	हाल cpu_to_be32(XFS_सूची3_DATA_MAGIC):
+	हाल cpu_to_be32(XFS_सूची2_DATA_MAGIC):
+		अवरोध;
+	शेष:
+		वापस __this_address;
+	पूर्ण
 	end = xfs_dir3_data_end_offset(geo, hdr);
-	if (!end)
-		return __this_address;
+	अगर (!end)
+		वापस __this_address;
 
 	/*
-	 * Account for zero bestfree entries.
+	 * Account क्रम zero bestमुक्त entries.
 	 */
-	bf = xfs_dir2_data_bestfree_p(mp, hdr);
-	count = lastfree = freeseen = 0;
-	if (!bf[0].length) {
-		if (bf[0].offset)
-			return __this_address;
-		freeseen |= 1 << 0;
-	}
-	if (!bf[1].length) {
-		if (bf[1].offset)
-			return __this_address;
-		freeseen |= 1 << 1;
-	}
-	if (!bf[2].length) {
-		if (bf[2].offset)
-			return __this_address;
-		freeseen |= 1 << 2;
-	}
+	bf = xfs_dir2_data_bestमुक्त_p(mp, hdr);
+	count = lastमुक्त = मुक्तseen = 0;
+	अगर (!bf[0].length) अणु
+		अगर (bf[0].offset)
+			वापस __this_address;
+		मुक्तseen |= 1 << 0;
+	पूर्ण
+	अगर (!bf[1].length) अणु
+		अगर (bf[1].offset)
+			वापस __this_address;
+		मुक्तseen |= 1 << 1;
+	पूर्ण
+	अगर (!bf[2].length) अणु
+		अगर (bf[2].offset)
+			वापस __this_address;
+		मुक्तseen |= 1 << 2;
+	पूर्ण
 
-	if (be16_to_cpu(bf[0].length) < be16_to_cpu(bf[1].length))
-		return __this_address;
-	if (be16_to_cpu(bf[1].length) < be16_to_cpu(bf[2].length))
-		return __this_address;
+	अगर (be16_to_cpu(bf[0].length) < be16_to_cpu(bf[1].length))
+		वापस __this_address;
+	अगर (be16_to_cpu(bf[1].length) < be16_to_cpu(bf[2].length))
+		वापस __this_address;
 	/*
 	 * Loop over the data/unused entries.
 	 */
-	while (offset < end) {
-		struct xfs_dir2_data_unused	*dup = bp->b_addr + offset;
-		struct xfs_dir2_data_entry	*dep = bp->b_addr + offset;
+	जबतक (offset < end) अणु
+		काष्ठा xfs_dir2_data_unused	*dup = bp->b_addr + offset;
+		काष्ठा xfs_dir2_data_entry	*dep = bp->b_addr + offset;
 
 		/*
-		 * If it's unused, look for the space in the bestfree table.
-		 * If we find it, account for that, else make sure it
-		 * doesn't need to be there.
+		 * If it's unused, look क्रम the space in the bestमुक्त table.
+		 * If we find it, account क्रम that, अन्यथा make sure it
+		 * करोesn't need to be there.
 		 */
-		if (be16_to_cpu(dup->freetag) == XFS_DIR2_DATA_FREE_TAG) {
+		अगर (be16_to_cpu(dup->मुक्तtag) == XFS_सूची2_DATA_FREE_TAG) अणु
 			xfs_failaddr_t	fa;
 
-			if (lastfree != 0)
-				return __this_address;
-			if (offset + be16_to_cpu(dup->length) > end)
-				return __this_address;
-			if (be16_to_cpu(*xfs_dir2_data_unused_tag_p(dup)) !=
+			अगर (lastमुक्त != 0)
+				वापस __this_address;
+			अगर (offset + be16_to_cpu(dup->length) > end)
+				वापस __this_address;
+			अगर (be16_to_cpu(*xfs_dir2_data_unused_tag_p(dup)) !=
 			    offset)
-				return __this_address;
-			fa = xfs_dir2_data_freefind_verify(hdr, bf, dup, &dfp);
-			if (fa)
-				return fa;
-			if (dfp) {
-				i = (int)(dfp - bf);
-				if ((freeseen & (1 << i)) != 0)
-					return __this_address;
-				freeseen |= 1 << i;
-			} else {
-				if (be16_to_cpu(dup->length) >
+				वापस __this_address;
+			fa = xfs_dir2_data_मुक्तfind_verअगरy(hdr, bf, dup, &dfp);
+			अगर (fa)
+				वापस fa;
+			अगर (dfp) अणु
+				i = (पूर्णांक)(dfp - bf);
+				अगर ((मुक्तseen & (1 << i)) != 0)
+					वापस __this_address;
+				मुक्तseen |= 1 << i;
+			पूर्ण अन्यथा अणु
+				अगर (be16_to_cpu(dup->length) >
 				    be16_to_cpu(bf[2].length))
-					return __this_address;
-			}
+					वापस __this_address;
+			पूर्ण
 			offset += be16_to_cpu(dup->length);
-			lastfree = 1;
-			continue;
-		}
+			lastमुक्त = 1;
+			जारी;
+		पूर्ण
 		/*
 		 * It's a real entry.  Validate the fields.
 		 * If this is a block directory then make sure it's
 		 * in the leaf section of the block.
 		 * The linear search is crude but this is DEBUG code.
 		 */
-		if (dep->namelen == 0)
-			return __this_address;
-		if (!xfs_verify_dir_ino(mp, be64_to_cpu(dep->inumber)))
-			return __this_address;
-		if (offset + xfs_dir2_data_entsize(mp, dep->namelen) > end)
-			return __this_address;
-		if (be16_to_cpu(*xfs_dir2_data_entry_tag_p(mp, dep)) != offset)
-			return __this_address;
-		if (xfs_dir2_data_get_ftype(mp, dep) >= XFS_DIR3_FT_MAX)
-			return __this_address;
+		अगर (dep->namelen == 0)
+			वापस __this_address;
+		अगर (!xfs_verअगरy_dir_ino(mp, be64_to_cpu(dep->inumber)))
+			वापस __this_address;
+		अगर (offset + xfs_dir2_data_entsize(mp, dep->namelen) > end)
+			वापस __this_address;
+		अगर (be16_to_cpu(*xfs_dir2_data_entry_tag_p(mp, dep)) != offset)
+			वापस __this_address;
+		अगर (xfs_dir2_data_get_ftype(mp, dep) >= XFS_सूची3_FT_MAX)
+			वापस __this_address;
 		count++;
-		lastfree = 0;
-		if (hdr->magic == cpu_to_be32(XFS_DIR2_BLOCK_MAGIC) ||
-		    hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC)) {
+		lastमुक्त = 0;
+		अगर (hdr->magic == cpu_to_be32(XFS_सूची2_BLOCK_MAGIC) ||
+		    hdr->magic == cpu_to_be32(XFS_सूची3_BLOCK_MAGIC)) अणु
 			addr = xfs_dir2_db_off_to_dataptr(geo, geo->datablk,
 						(xfs_dir2_data_aoff_t)
-						((char *)dep - (char *)hdr));
+						((अक्षर *)dep - (अक्षर *)hdr));
 			name.name = dep->name;
 			name.len = dep->namelen;
 			hash = xfs_dir2_hashname(mp, &name);
-			for (i = 0; i < be32_to_cpu(btp->count); i++) {
-				if (be32_to_cpu(lep[i].address) == addr &&
+			क्रम (i = 0; i < be32_to_cpu(btp->count); i++) अणु
+				अगर (be32_to_cpu(lep[i].address) == addr &&
 				    be32_to_cpu(lep[i].hashval) == hash)
-					break;
-			}
-			if (i >= be32_to_cpu(btp->count))
-				return __this_address;
-		}
+					अवरोध;
+			पूर्ण
+			अगर (i >= be32_to_cpu(btp->count))
+				वापस __this_address;
+		पूर्ण
 		offset += xfs_dir2_data_entsize(mp, dep->namelen);
-	}
+	पूर्ण
 	/*
-	 * Need to have seen all the entries and all the bestfree slots.
+	 * Need to have seen all the entries and all the bestमुक्त slots.
 	 */
-	if (freeseen != 7)
-		return __this_address;
-	if (hdr->magic == cpu_to_be32(XFS_DIR2_BLOCK_MAGIC) ||
-	    hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC)) {
-		for (i = stale = 0; i < be32_to_cpu(btp->count); i++) {
-			if (lep[i].address ==
-			    cpu_to_be32(XFS_DIR2_NULL_DATAPTR))
+	अगर (मुक्तseen != 7)
+		वापस __this_address;
+	अगर (hdr->magic == cpu_to_be32(XFS_सूची2_BLOCK_MAGIC) ||
+	    hdr->magic == cpu_to_be32(XFS_सूची3_BLOCK_MAGIC)) अणु
+		क्रम (i = stale = 0; i < be32_to_cpu(btp->count); i++) अणु
+			अगर (lep[i].address ==
+			    cpu_to_be32(XFS_सूची2_शून्य_DATAPTR))
 				stale++;
-			if (i > 0 && be32_to_cpu(lep[i].hashval) <
+			अगर (i > 0 && be32_to_cpu(lep[i].hashval) <
 				     be32_to_cpu(lep[i - 1].hashval))
-				return __this_address;
-		}
-		if (count != be32_to_cpu(btp->count) - be32_to_cpu(btp->stale))
-			return __this_address;
-		if (stale != be32_to_cpu(btp->stale))
-			return __this_address;
-	}
-	return NULL;
-}
+				वापस __this_address;
+		पूर्ण
+		अगर (count != be32_to_cpu(btp->count) - be32_to_cpu(btp->stale))
+			वापस __this_address;
+		अगर (stale != be32_to_cpu(btp->stale))
+			वापस __this_address;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-#ifdef DEBUG
-void
+#अगर_घोषित DEBUG
+व्योम
 xfs_dir3_data_check(
-	struct xfs_inode	*dp,
-	struct xfs_buf		*bp)
-{
+	काष्ठा xfs_inode	*dp,
+	काष्ठा xfs_buf		*bp)
+अणु
 	xfs_failaddr_t		fa;
 
 	fa = __xfs_dir3_data_check(dp, bp);
-	if (!fa)
-		return;
+	अगर (!fa)
+		वापस;
 	xfs_corruption_error(__func__, XFS_ERRLEVEL_LOW, dp->i_mount,
-			bp->b_addr, BBTOB(bp->b_length), __FILE__, __LINE__,
+			bp->b_addr, BBTOB(bp->b_length), __खाता__, __LINE__,
 			fa);
 	ASSERT(0);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static xfs_failaddr_t
-xfs_dir3_data_verify(
-	struct xfs_buf		*bp)
-{
-	struct xfs_mount	*mp = bp->b_mount;
-	struct xfs_dir3_blk_hdr	*hdr3 = bp->b_addr;
+अटल xfs_failaddr_t
+xfs_dir3_data_verअगरy(
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
+	काष्ठा xfs_dir3_blk_hdr	*hdr3 = bp->b_addr;
 
-	if (!xfs_verify_magic(bp, hdr3->magic))
-		return __this_address;
+	अगर (!xfs_verअगरy_magic(bp, hdr3->magic))
+		वापस __this_address;
 
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
-		if (!uuid_equal(&hdr3->uuid, &mp->m_sb.sb_meta_uuid))
-			return __this_address;
-		if (be64_to_cpu(hdr3->blkno) != bp->b_bn)
-			return __this_address;
-		if (!xfs_log_check_lsn(mp, be64_to_cpu(hdr3->lsn)))
-			return __this_address;
-	}
-	return __xfs_dir3_data_check(NULL, bp);
-}
+	अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
+		अगर (!uuid_equal(&hdr3->uuid, &mp->m_sb.sb_meta_uuid))
+			वापस __this_address;
+		अगर (be64_to_cpu(hdr3->blkno) != bp->b_bn)
+			वापस __this_address;
+		अगर (!xfs_log_check_lsn(mp, be64_to_cpu(hdr3->lsn)))
+			वापस __this_address;
+	पूर्ण
+	वापस __xfs_dir3_data_check(शून्य, bp);
+पूर्ण
 
 /*
- * Readahead of the first block of the directory when it is opened is completely
- * oblivious to the format of the directory. Hence we can either get a block
- * format buffer or a data format buffer on readahead.
+ * Readahead of the first block of the directory when it is खोलोed is completely
+ * oblivious to the क्रमmat of the directory. Hence we can either get a block
+ * क्रमmat buffer or a data क्रमmat buffer on पढ़ोahead.
  */
-static void
-xfs_dir3_data_reada_verify(
-	struct xfs_buf		*bp)
-{
-	struct xfs_dir2_data_hdr *hdr = bp->b_addr;
+अटल व्योम
+xfs_dir3_data_पढ़ोa_verअगरy(
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_dir2_data_hdr *hdr = bp->b_addr;
 
-	switch (hdr->magic) {
-	case cpu_to_be32(XFS_DIR2_BLOCK_MAGIC):
-	case cpu_to_be32(XFS_DIR3_BLOCK_MAGIC):
+	चयन (hdr->magic) अणु
+	हाल cpu_to_be32(XFS_सूची2_BLOCK_MAGIC):
+	हाल cpu_to_be32(XFS_सूची3_BLOCK_MAGIC):
 		bp->b_ops = &xfs_dir3_block_buf_ops;
-		bp->b_ops->verify_read(bp);
-		return;
-	case cpu_to_be32(XFS_DIR2_DATA_MAGIC):
-	case cpu_to_be32(XFS_DIR3_DATA_MAGIC):
+		bp->b_ops->verअगरy_पढ़ो(bp);
+		वापस;
+	हाल cpu_to_be32(XFS_सूची2_DATA_MAGIC):
+	हाल cpu_to_be32(XFS_सूची3_DATA_MAGIC):
 		bp->b_ops = &xfs_dir3_data_buf_ops;
-		bp->b_ops->verify_read(bp);
-		return;
-	default:
-		xfs_verifier_error(bp, -EFSCORRUPTED, __this_address);
-		break;
-	}
-}
+		bp->b_ops->verअगरy_पढ़ो(bp);
+		वापस;
+	शेष:
+		xfs_verअगरier_error(bp, -EFSCORRUPTED, __this_address);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-xfs_dir3_data_read_verify(
-	struct xfs_buf	*bp)
-{
-	struct xfs_mount	*mp = bp->b_mount;
+अटल व्योम
+xfs_dir3_data_पढ़ो_verअगरy(
+	काष्ठा xfs_buf	*bp)
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
 	xfs_failaddr_t		fa;
 
-	if (xfs_sb_version_hascrc(&mp->m_sb) &&
-	    !xfs_buf_verify_cksum(bp, XFS_DIR3_DATA_CRC_OFF))
-		xfs_verifier_error(bp, -EFSBADCRC, __this_address);
-	else {
-		fa = xfs_dir3_data_verify(bp);
-		if (fa)
-			xfs_verifier_error(bp, -EFSCORRUPTED, fa);
-	}
-}
+	अगर (xfs_sb_version_hascrc(&mp->m_sb) &&
+	    !xfs_buf_verअगरy_cksum(bp, XFS_सूची3_DATA_CRC_OFF))
+		xfs_verअगरier_error(bp, -EFSBADCRC, __this_address);
+	अन्यथा अणु
+		fa = xfs_dir3_data_verअगरy(bp);
+		अगर (fa)
+			xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
+	पूर्ण
+पूर्ण
 
-static void
-xfs_dir3_data_write_verify(
-	struct xfs_buf	*bp)
-{
-	struct xfs_mount	*mp = bp->b_mount;
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
-	struct xfs_dir3_blk_hdr	*hdr3 = bp->b_addr;
+अटल व्योम
+xfs_dir3_data_ग_लिखो_verअगरy(
+	काष्ठा xfs_buf	*bp)
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_dir3_blk_hdr	*hdr3 = bp->b_addr;
 	xfs_failaddr_t		fa;
 
-	fa = xfs_dir3_data_verify(bp);
-	if (fa) {
-		xfs_verifier_error(bp, -EFSCORRUPTED, fa);
-		return;
-	}
+	fa = xfs_dir3_data_verअगरy(bp);
+	अगर (fa) अणु
+		xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
+		वापस;
+	पूर्ण
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
-		return;
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+		वापस;
 
-	if (bip)
+	अगर (bip)
 		hdr3->lsn = cpu_to_be64(bip->bli_item.li_lsn);
 
-	xfs_buf_update_cksum(bp, XFS_DIR3_DATA_CRC_OFF);
-}
+	xfs_buf_update_cksum(bp, XFS_सूची3_DATA_CRC_OFF);
+पूर्ण
 
-const struct xfs_buf_ops xfs_dir3_data_buf_ops = {
+स्थिर काष्ठा xfs_buf_ops xfs_dir3_data_buf_ops = अणु
 	.name = "xfs_dir3_data",
-	.magic = { cpu_to_be32(XFS_DIR2_DATA_MAGIC),
-		   cpu_to_be32(XFS_DIR3_DATA_MAGIC) },
-	.verify_read = xfs_dir3_data_read_verify,
-	.verify_write = xfs_dir3_data_write_verify,
-	.verify_struct = xfs_dir3_data_verify,
-};
+	.magic = अणु cpu_to_be32(XFS_सूची2_DATA_MAGIC),
+		   cpu_to_be32(XFS_सूची3_DATA_MAGIC) पूर्ण,
+	.verअगरy_पढ़ो = xfs_dir3_data_पढ़ो_verअगरy,
+	.verअगरy_ग_लिखो = xfs_dir3_data_ग_लिखो_verअगरy,
+	.verअगरy_काष्ठा = xfs_dir3_data_verअगरy,
+पूर्ण;
 
-static const struct xfs_buf_ops xfs_dir3_data_reada_buf_ops = {
+अटल स्थिर काष्ठा xfs_buf_ops xfs_dir3_data_पढ़ोa_buf_ops = अणु
 	.name = "xfs_dir3_data_reada",
-	.magic = { cpu_to_be32(XFS_DIR2_DATA_MAGIC),
-		   cpu_to_be32(XFS_DIR3_DATA_MAGIC) },
-	.verify_read = xfs_dir3_data_reada_verify,
-	.verify_write = xfs_dir3_data_write_verify,
-};
+	.magic = अणु cpu_to_be32(XFS_सूची2_DATA_MAGIC),
+		   cpu_to_be32(XFS_सूची3_DATA_MAGIC) पूर्ण,
+	.verअगरy_पढ़ो = xfs_dir3_data_पढ़ोa_verअगरy,
+	.verअगरy_ग_लिखो = xfs_dir3_data_ग_लिखो_verअगरy,
+पूर्ण;
 
-static xfs_failaddr_t
+अटल xfs_failaddr_t
 xfs_dir3_data_header_check(
-	struct xfs_inode	*dp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_mount	*mp = dp->i_mount;
+	काष्ठा xfs_inode	*dp,
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_mount	*mp = dp->i_mount;
 
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
-		struct xfs_dir3_data_hdr *hdr3 = bp->b_addr;
+	अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
+		काष्ठा xfs_dir3_data_hdr *hdr3 = bp->b_addr;
 
-		if (be64_to_cpu(hdr3->hdr.owner) != dp->i_ino)
-			return __this_address;
-	}
+		अगर (be64_to_cpu(hdr3->hdr.owner) != dp->i_ino)
+			वापस __this_address;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int
-xfs_dir3_data_read(
-	struct xfs_trans	*tp,
-	struct xfs_inode	*dp,
+पूर्णांक
+xfs_dir3_data_पढ़ो(
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_inode	*dp,
 	xfs_dablk_t		bno,
-	unsigned int		flags,
-	struct xfs_buf		**bpp)
-{
+	अचिन्हित पूर्णांक		flags,
+	काष्ठा xfs_buf		**bpp)
+अणु
 	xfs_failaddr_t		fa;
-	int			err;
+	पूर्णांक			err;
 
-	err = xfs_da_read_buf(tp, dp, bno, flags, bpp, XFS_DATA_FORK,
+	err = xfs_da_पढ़ो_buf(tp, dp, bno, flags, bpp, XFS_DATA_FORK,
 			&xfs_dir3_data_buf_ops);
-	if (err || !*bpp)
-		return err;
+	अगर (err || !*bpp)
+		वापस err;
 
-	/* Check things that we can't do in the verifier. */
+	/* Check things that we can't करो in the verअगरier. */
 	fa = xfs_dir3_data_header_check(dp, *bpp);
-	if (fa) {
+	अगर (fa) अणु
 		__xfs_buf_mark_corrupt(*bpp, fa);
-		xfs_trans_brelse(tp, *bpp);
-		*bpp = NULL;
-		return -EFSCORRUPTED;
-	}
+		xfs_trans_brअन्यथा(tp, *bpp);
+		*bpp = शून्य;
+		वापस -EFSCORRUPTED;
+	पूर्ण
 
-	xfs_trans_buf_set_type(tp, *bpp, XFS_BLFT_DIR_DATA_BUF);
-	return err;
-}
+	xfs_trans_buf_set_type(tp, *bpp, XFS_BLFT_सूची_DATA_BUF);
+	वापस err;
+पूर्ण
 
-int
-xfs_dir3_data_readahead(
-	struct xfs_inode	*dp,
+पूर्णांक
+xfs_dir3_data_पढ़ोahead(
+	काष्ठा xfs_inode	*dp,
 	xfs_dablk_t		bno,
-	unsigned int		flags)
-{
-	return xfs_da_reada_buf(dp, bno, flags, XFS_DATA_FORK,
-				&xfs_dir3_data_reada_buf_ops);
-}
+	अचिन्हित पूर्णांक		flags)
+अणु
+	वापस xfs_da_पढ़ोa_buf(dp, bno, flags, XFS_DATA_FORK,
+				&xfs_dir3_data_पढ़ोa_buf_ops);
+पूर्ण
 
 /*
- * Find the bestfree entry that exactly coincides with unused directory space
- * or a verifier error because the bestfree data are bad.
+ * Find the bestमुक्त entry that exactly coincides with unused directory space
+ * or a verअगरier error because the bestमुक्त data are bad.
  */
-static xfs_failaddr_t
-xfs_dir2_data_freefind_verify(
-	struct xfs_dir2_data_hdr	*hdr,
-	struct xfs_dir2_data_free	*bf,
-	struct xfs_dir2_data_unused	*dup,
-	struct xfs_dir2_data_free	**bf_ent)
-{
-	struct xfs_dir2_data_free	*dfp;
+अटल xfs_failaddr_t
+xfs_dir2_data_मुक्तfind_verअगरy(
+	काष्ठा xfs_dir2_data_hdr	*hdr,
+	काष्ठा xfs_dir2_data_मुक्त	*bf,
+	काष्ठा xfs_dir2_data_unused	*dup,
+	काष्ठा xfs_dir2_data_मुक्त	**bf_ent)
+अणु
+	काष्ठा xfs_dir2_data_मुक्त	*dfp;
 	xfs_dir2_data_aoff_t		off;
 	bool				matched = false;
 	bool				seenzero = false;
 
-	*bf_ent = NULL;
-	off = (xfs_dir2_data_aoff_t)((char *)dup - (char *)hdr);
+	*bf_ent = शून्य;
+	off = (xfs_dir2_data_aoff_t)((अक्षर *)dup - (अक्षर *)hdr);
 
 	/*
-	 * Validate some consistency in the bestfree table.
-	 * Check order, non-overlapping entries, and if we find the
-	 * one we're looking for it has to be exact.
+	 * Validate some consistency in the bestमुक्त table.
+	 * Check order, non-overlapping entries, and अगर we find the
+	 * one we're looking क्रम it has to be exact.
 	 */
-	for (dfp = &bf[0]; dfp < &bf[XFS_DIR2_DATA_FD_COUNT]; dfp++) {
-		if (!dfp->offset) {
-			if (dfp->length)
-				return __this_address;
+	क्रम (dfp = &bf[0]; dfp < &bf[XFS_सूची2_DATA_FD_COUNT]; dfp++) अणु
+		अगर (!dfp->offset) अणु
+			अगर (dfp->length)
+				वापस __this_address;
 			seenzero = true;
-			continue;
-		}
-		if (seenzero)
-			return __this_address;
-		if (be16_to_cpu(dfp->offset) == off) {
+			जारी;
+		पूर्ण
+		अगर (seenzero)
+			वापस __this_address;
+		अगर (be16_to_cpu(dfp->offset) == off) अणु
 			matched = true;
-			if (dfp->length != dup->length)
-				return __this_address;
-		} else if (be16_to_cpu(dfp->offset) > off) {
-			if (off + be16_to_cpu(dup->length) >
+			अगर (dfp->length != dup->length)
+				वापस __this_address;
+		पूर्ण अन्यथा अगर (be16_to_cpu(dfp->offset) > off) अणु
+			अगर (off + be16_to_cpu(dup->length) >
 					be16_to_cpu(dfp->offset))
-				return __this_address;
-		} else {
-			if (be16_to_cpu(dfp->offset) +
+				वापस __this_address;
+		पूर्ण अन्यथा अणु
+			अगर (be16_to_cpu(dfp->offset) +
 					be16_to_cpu(dfp->length) > off)
-				return __this_address;
-		}
-		if (!matched &&
+				वापस __this_address;
+		पूर्ण
+		अगर (!matched &&
 		    be16_to_cpu(dfp->length) < be16_to_cpu(dup->length))
-			return __this_address;
-		if (dfp > &bf[0] &&
+			वापस __this_address;
+		अगर (dfp > &bf[0] &&
 		    be16_to_cpu(dfp[-1].length) < be16_to_cpu(dfp[0].length))
-			return __this_address;
-	}
+			वापस __this_address;
+	पूर्ण
 
-	/* Looks ok so far; now try to match up with a bestfree entry. */
-	*bf_ent = xfs_dir2_data_freefind(hdr, bf, dup);
-	return NULL;
-}
+	/* Looks ok so far; now try to match up with a bestमुक्त entry. */
+	*bf_ent = xfs_dir2_data_मुक्तfind(hdr, bf, dup);
+	वापस शून्य;
+पूर्ण
 
 /*
  * Given a data block and an unused entry from that block,
- * return the bestfree entry if any that corresponds to it.
+ * वापस the bestमुक्त entry अगर any that corresponds to it.
  */
-xfs_dir2_data_free_t *
-xfs_dir2_data_freefind(
-	struct xfs_dir2_data_hdr *hdr,		/* data block header */
-	struct xfs_dir2_data_free *bf,		/* bestfree table pointer */
-	struct xfs_dir2_data_unused *dup)	/* unused space */
-{
-	xfs_dir2_data_free_t	*dfp;		/* bestfree entry */
+xfs_dir2_data_मुक्त_t *
+xfs_dir2_data_मुक्तfind(
+	काष्ठा xfs_dir2_data_hdr *hdr,		/* data block header */
+	काष्ठा xfs_dir2_data_मुक्त *bf,		/* bestमुक्त table poपूर्णांकer */
+	काष्ठा xfs_dir2_data_unused *dup)	/* unused space */
+अणु
+	xfs_dir2_data_मुक्त_t	*dfp;		/* bestमुक्त entry */
 	xfs_dir2_data_aoff_t	off;		/* offset value needed */
 
-	off = (xfs_dir2_data_aoff_t)((char *)dup - (char *)hdr);
+	off = (xfs_dir2_data_aoff_t)((अक्षर *)dup - (अक्षर *)hdr);
 
 	/*
-	 * If this is smaller than the smallest bestfree entry,
+	 * If this is smaller than the smallest bestमुक्त entry,
 	 * it can't be there since they're sorted.
 	 */
-	if (be16_to_cpu(dup->length) <
-	    be16_to_cpu(bf[XFS_DIR2_DATA_FD_COUNT - 1].length))
-		return NULL;
+	अगर (be16_to_cpu(dup->length) <
+	    be16_to_cpu(bf[XFS_सूची2_DATA_FD_COUNT - 1].length))
+		वापस शून्य;
 	/*
-	 * Look at the three bestfree entries for our guy.
+	 * Look at the three bestमुक्त entries क्रम our guy.
 	 */
-	for (dfp = &bf[0]; dfp < &bf[XFS_DIR2_DATA_FD_COUNT]; dfp++) {
-		if (!dfp->offset)
-			return NULL;
-		if (be16_to_cpu(dfp->offset) == off)
-			return dfp;
-	}
+	क्रम (dfp = &bf[0]; dfp < &bf[XFS_सूची2_DATA_FD_COUNT]; dfp++) अणु
+		अगर (!dfp->offset)
+			वापस शून्य;
+		अगर (be16_to_cpu(dfp->offset) == off)
+			वापस dfp;
+	पूर्ण
 	/*
-	 * Didn't find it.  This only happens if there are duplicate lengths.
+	 * Didn't find it.  This only happens अगर there are duplicate lengths.
 	 */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Insert an unused-space entry into the bestfree table.
+ * Insert an unused-space entry पूर्णांकo the bestमुक्त table.
  */
-xfs_dir2_data_free_t *				/* entry inserted */
-xfs_dir2_data_freeinsert(
-	struct xfs_dir2_data_hdr *hdr,		/* data block pointer */
-	struct xfs_dir2_data_free *dfp,		/* bestfree table pointer */
-	struct xfs_dir2_data_unused *dup,	/* unused space */
-	int			*loghead)	/* log the data header (out) */
-{
-	xfs_dir2_data_free_t	new;		/* new bestfree entry */
+xfs_dir2_data_मुक्त_t *				/* entry inserted */
+xfs_dir2_data_मुक्तinsert(
+	काष्ठा xfs_dir2_data_hdr *hdr,		/* data block poपूर्णांकer */
+	काष्ठा xfs_dir2_data_मुक्त *dfp,		/* bestमुक्त table poपूर्णांकer */
+	काष्ठा xfs_dir2_data_unused *dup,	/* unused space */
+	पूर्णांक			*loghead)	/* log the data header (out) */
+अणु
+	xfs_dir2_data_मुक्त_t	new;		/* new bestमुक्त entry */
 
-	ASSERT(hdr->magic == cpu_to_be32(XFS_DIR2_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR2_BLOCK_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC));
+	ASSERT(hdr->magic == cpu_to_be32(XFS_सूची2_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची2_BLOCK_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_BLOCK_MAGIC));
 
 	new.length = dup->length;
-	new.offset = cpu_to_be16((char *)dup - (char *)hdr);
+	new.offset = cpu_to_be16((अक्षर *)dup - (अक्षर *)hdr);
 
 	/*
 	 * Insert at position 0, 1, or 2; or not at all.
 	 */
-	if (be16_to_cpu(new.length) > be16_to_cpu(dfp[0].length)) {
+	अगर (be16_to_cpu(new.length) > be16_to_cpu(dfp[0].length)) अणु
 		dfp[2] = dfp[1];
 		dfp[1] = dfp[0];
 		dfp[0] = new;
 		*loghead = 1;
-		return &dfp[0];
-	}
-	if (be16_to_cpu(new.length) > be16_to_cpu(dfp[1].length)) {
+		वापस &dfp[0];
+	पूर्ण
+	अगर (be16_to_cpu(new.length) > be16_to_cpu(dfp[1].length)) अणु
 		dfp[2] = dfp[1];
 		dfp[1] = new;
 		*loghead = 1;
-		return &dfp[1];
-	}
-	if (be16_to_cpu(new.length) > be16_to_cpu(dfp[2].length)) {
+		वापस &dfp[1];
+	पूर्ण
+	अगर (be16_to_cpu(new.length) > be16_to_cpu(dfp[2].length)) अणु
 		dfp[2] = new;
 		*loghead = 1;
-		return &dfp[2];
-	}
-	return NULL;
-}
+		वापस &dfp[2];
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * Remove a bestfree entry from the table.
+ * Remove a bestमुक्त entry from the table.
  */
-STATIC void
-xfs_dir2_data_freeremove(
-	struct xfs_dir2_data_hdr *hdr,		/* data block header */
-	struct xfs_dir2_data_free *bf,		/* bestfree table pointer */
-	struct xfs_dir2_data_free *dfp,		/* bestfree entry pointer */
-	int			*loghead)	/* out: log data header */
-{
+STATIC व्योम
+xfs_dir2_data_मुक्तहटाओ(
+	काष्ठा xfs_dir2_data_hdr *hdr,		/* data block header */
+	काष्ठा xfs_dir2_data_मुक्त *bf,		/* bestमुक्त table poपूर्णांकer */
+	काष्ठा xfs_dir2_data_मुक्त *dfp,		/* bestमुक्त entry poपूर्णांकer */
+	पूर्णांक			*loghead)	/* out: log data header */
+अणु
 
-	ASSERT(hdr->magic == cpu_to_be32(XFS_DIR2_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR2_BLOCK_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC));
+	ASSERT(hdr->magic == cpu_to_be32(XFS_सूची2_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची2_BLOCK_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_BLOCK_MAGIC));
 
 	/*
 	 * It's the first entry, slide the next 2 up.
 	 */
-	if (dfp == &bf[0]) {
+	अगर (dfp == &bf[0]) अणु
 		bf[0] = bf[1];
 		bf[1] = bf[2];
-	}
+	पूर्ण
 	/*
 	 * It's the second entry, slide the 3rd entry up.
 	 */
-	else if (dfp == &bf[1])
+	अन्यथा अगर (dfp == &bf[1])
 		bf[1] = bf[2];
 	/*
 	 * Must be the last entry.
 	 */
-	else
+	अन्यथा
 		ASSERT(dfp == &bf[2]);
 	/*
 	 * Clear the 3rd entry, must be zero now.
@@ -629,49 +630,49 @@ xfs_dir2_data_freeremove(
 	bf[2].length = 0;
 	bf[2].offset = 0;
 	*loghead = 1;
-}
+पूर्ण
 
 /*
- * Given a data block, reconstruct its bestfree map.
+ * Given a data block, reस्थिरruct its bestमुक्त map.
  */
-void
-xfs_dir2_data_freescan(
-	struct xfs_mount		*mp,
-	struct xfs_dir2_data_hdr	*hdr,
-	int				*loghead)
-{
-	struct xfs_da_geometry		*geo = mp->m_dir_geo;
-	struct xfs_dir2_data_free	*bf = xfs_dir2_data_bestfree_p(mp, hdr);
-	void				*addr = hdr;
-	unsigned int			offset = geo->data_entry_offset;
-	unsigned int			end;
+व्योम
+xfs_dir2_data_मुक्तscan(
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_dir2_data_hdr	*hdr,
+	पूर्णांक				*loghead)
+अणु
+	काष्ठा xfs_da_geometry		*geo = mp->m_dir_geo;
+	काष्ठा xfs_dir2_data_मुक्त	*bf = xfs_dir2_data_bestमुक्त_p(mp, hdr);
+	व्योम				*addr = hdr;
+	अचिन्हित पूर्णांक			offset = geo->data_entry_offset;
+	अचिन्हित पूर्णांक			end;
 
-	ASSERT(hdr->magic == cpu_to_be32(XFS_DIR2_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR2_BLOCK_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC));
+	ASSERT(hdr->magic == cpu_to_be32(XFS_सूची2_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची2_BLOCK_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_BLOCK_MAGIC));
 
 	/*
 	 * Start by clearing the table.
 	 */
-	memset(bf, 0, sizeof(*bf) * XFS_DIR2_DATA_FD_COUNT);
+	स_रखो(bf, 0, माप(*bf) * XFS_सूची2_DATA_FD_COUNT);
 	*loghead = 1;
 
 	end = xfs_dir3_data_end_offset(geo, addr);
-	while (offset < end) {
-		struct xfs_dir2_data_unused	*dup = addr + offset;
-		struct xfs_dir2_data_entry	*dep = addr + offset;
+	जबतक (offset < end) अणु
+		काष्ठा xfs_dir2_data_unused	*dup = addr + offset;
+		काष्ठा xfs_dir2_data_entry	*dep = addr + offset;
 
 		/*
-		 * If it's a free entry, insert it.
+		 * If it's a मुक्त entry, insert it.
 		 */
-		if (be16_to_cpu(dup->freetag) == XFS_DIR2_DATA_FREE_TAG) {
+		अगर (be16_to_cpu(dup->मुक्तtag) == XFS_सूची2_DATA_FREE_TAG) अणु
 			ASSERT(offset ==
 			       be16_to_cpu(*xfs_dir2_data_unused_tag_p(dup)));
-			xfs_dir2_data_freeinsert(hdr, bf, dup, loghead);
+			xfs_dir2_data_मुक्तinsert(hdr, bf, dup, loghead);
 			offset += be16_to_cpu(dup->length);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * For active entries, check their tags and skip them.
@@ -679,175 +680,175 @@ xfs_dir2_data_freescan(
 		ASSERT(offset ==
 		       be16_to_cpu(*xfs_dir2_data_entry_tag_p(mp, dep)));
 		offset += xfs_dir2_data_entsize(mp, dep->namelen);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Initialize a data block at the given block number in the directory.
- * Give back the buffer for the created block.
+ * Give back the buffer क्रम the created block.
  */
-int						/* error */
+पूर्णांक						/* error */
 xfs_dir3_data_init(
-	struct xfs_da_args		*args,	/* directory operation args */
+	काष्ठा xfs_da_args		*args,	/* directory operation args */
 	xfs_dir2_db_t			blkno,	/* logical dir block number */
-	struct xfs_buf			**bpp)	/* output block buffer */
-{
-	struct xfs_trans		*tp = args->trans;
-	struct xfs_inode		*dp = args->dp;
-	struct xfs_mount		*mp = dp->i_mount;
-	struct xfs_da_geometry		*geo = args->geo;
-	struct xfs_buf			*bp;
-	struct xfs_dir2_data_hdr	*hdr;
-	struct xfs_dir2_data_unused	*dup;
-	struct xfs_dir2_data_free 	*bf;
-	int				error;
-	int				i;
+	काष्ठा xfs_buf			**bpp)	/* output block buffer */
+अणु
+	काष्ठा xfs_trans		*tp = args->trans;
+	काष्ठा xfs_inode		*dp = args->dp;
+	काष्ठा xfs_mount		*mp = dp->i_mount;
+	काष्ठा xfs_da_geometry		*geo = args->geo;
+	काष्ठा xfs_buf			*bp;
+	काष्ठा xfs_dir2_data_hdr	*hdr;
+	काष्ठा xfs_dir2_data_unused	*dup;
+	काष्ठा xfs_dir2_data_मुक्त 	*bf;
+	पूर्णांक				error;
+	पूर्णांक				i;
 
 	/*
-	 * Get the buffer set up for the block.
+	 * Get the buffer set up क्रम the block.
 	 */
 	error = xfs_da_get_buf(tp, dp, xfs_dir2_db_to_da(args->geo, blkno),
 			       &bp, XFS_DATA_FORK);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	bp->b_ops = &xfs_dir3_data_buf_ops;
-	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_DIR_DATA_BUF);
+	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_सूची_DATA_BUF);
 
 	/*
 	 * Initialize the header.
 	 */
 	hdr = bp->b_addr;
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
-		struct xfs_dir3_blk_hdr *hdr3 = bp->b_addr;
+	अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
+		काष्ठा xfs_dir3_blk_hdr *hdr3 = bp->b_addr;
 
-		memset(hdr3, 0, sizeof(*hdr3));
-		hdr3->magic = cpu_to_be32(XFS_DIR3_DATA_MAGIC);
+		स_रखो(hdr3, 0, माप(*hdr3));
+		hdr3->magic = cpu_to_be32(XFS_सूची3_DATA_MAGIC);
 		hdr3->blkno = cpu_to_be64(bp->b_bn);
 		hdr3->owner = cpu_to_be64(dp->i_ino);
 		uuid_copy(&hdr3->uuid, &mp->m_sb.sb_meta_uuid);
 
-	} else
-		hdr->magic = cpu_to_be32(XFS_DIR2_DATA_MAGIC);
+	पूर्ण अन्यथा
+		hdr->magic = cpu_to_be32(XFS_सूची2_DATA_MAGIC);
 
-	bf = xfs_dir2_data_bestfree_p(mp, hdr);
+	bf = xfs_dir2_data_bestमुक्त_p(mp, hdr);
 	bf[0].offset = cpu_to_be16(geo->data_entry_offset);
 	bf[0].length = cpu_to_be16(geo->blksize - geo->data_entry_offset);
-	for (i = 1; i < XFS_DIR2_DATA_FD_COUNT; i++) {
+	क्रम (i = 1; i < XFS_सूची2_DATA_FD_COUNT; i++) अणु
 		bf[i].length = 0;
 		bf[i].offset = 0;
-	}
+	पूर्ण
 
 	/*
-	 * Set up an unused entry for the block's body.
+	 * Set up an unused entry क्रम the block's body.
 	 */
 	dup = bp->b_addr + geo->data_entry_offset;
-	dup->freetag = cpu_to_be16(XFS_DIR2_DATA_FREE_TAG);
+	dup->मुक्तtag = cpu_to_be16(XFS_सूची2_DATA_FREE_TAG);
 	dup->length = bf[0].length;
-	*xfs_dir2_data_unused_tag_p(dup) = cpu_to_be16((char *)dup - (char *)hdr);
+	*xfs_dir2_data_unused_tag_p(dup) = cpu_to_be16((अक्षर *)dup - (अक्षर *)hdr);
 
 	/*
-	 * Log it and return it.
+	 * Log it and वापस it.
 	 */
 	xfs_dir2_data_log_header(args, bp);
 	xfs_dir2_data_log_unused(args, bp, dup);
 	*bpp = bp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Log an active data entry from the block.
  */
-void
+व्योम
 xfs_dir2_data_log_entry(
-	struct xfs_da_args	*args,
-	struct xfs_buf		*bp,
-	xfs_dir2_data_entry_t	*dep)		/* data entry pointer */
-{
-	struct xfs_mount	*mp = bp->b_mount;
-	struct xfs_dir2_data_hdr *hdr = bp->b_addr;
+	काष्ठा xfs_da_args	*args,
+	काष्ठा xfs_buf		*bp,
+	xfs_dir2_data_entry_t	*dep)		/* data entry poपूर्णांकer */
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
+	काष्ठा xfs_dir2_data_hdr *hdr = bp->b_addr;
 
-	ASSERT(hdr->magic == cpu_to_be32(XFS_DIR2_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR2_BLOCK_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC));
+	ASSERT(hdr->magic == cpu_to_be32(XFS_सूची2_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची2_BLOCK_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_BLOCK_MAGIC));
 
-	xfs_trans_log_buf(args->trans, bp, (uint)((char *)dep - (char *)hdr),
-		(uint)((char *)(xfs_dir2_data_entry_tag_p(mp, dep) + 1) -
-		       (char *)hdr - 1));
-}
+	xfs_trans_log_buf(args->trans, bp, (uपूर्णांक)((अक्षर *)dep - (अक्षर *)hdr),
+		(uपूर्णांक)((अक्षर *)(xfs_dir2_data_entry_tag_p(mp, dep) + 1) -
+		       (अक्षर *)hdr - 1));
+पूर्ण
 
 /*
  * Log a data block header.
  */
-void
+व्योम
 xfs_dir2_data_log_header(
-	struct xfs_da_args	*args,
-	struct xfs_buf		*bp)
-{
-#ifdef DEBUG
-	struct xfs_dir2_data_hdr *hdr = bp->b_addr;
+	काष्ठा xfs_da_args	*args,
+	काष्ठा xfs_buf		*bp)
+अणु
+#अगर_घोषित DEBUG
+	काष्ठा xfs_dir2_data_hdr *hdr = bp->b_addr;
 
-	ASSERT(hdr->magic == cpu_to_be32(XFS_DIR2_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR2_BLOCK_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC));
-#endif
+	ASSERT(hdr->magic == cpu_to_be32(XFS_सूची2_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची2_BLOCK_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_BLOCK_MAGIC));
+#पूर्ण_अगर
 
 	xfs_trans_log_buf(args->trans, bp, 0, args->geo->data_entry_offset - 1);
-}
+पूर्ण
 
 /*
  * Log a data unused entry.
  */
-void
+व्योम
 xfs_dir2_data_log_unused(
-	struct xfs_da_args	*args,
-	struct xfs_buf		*bp,
-	xfs_dir2_data_unused_t	*dup)		/* data unused pointer */
-{
+	काष्ठा xfs_da_args	*args,
+	काष्ठा xfs_buf		*bp,
+	xfs_dir2_data_unused_t	*dup)		/* data unused poपूर्णांकer */
+अणु
 	xfs_dir2_data_hdr_t	*hdr = bp->b_addr;
 
-	ASSERT(hdr->magic == cpu_to_be32(XFS_DIR2_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_DATA_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR2_BLOCK_MAGIC) ||
-	       hdr->magic == cpu_to_be32(XFS_DIR3_BLOCK_MAGIC));
+	ASSERT(hdr->magic == cpu_to_be32(XFS_सूची2_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_DATA_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची2_BLOCK_MAGIC) ||
+	       hdr->magic == cpu_to_be32(XFS_सूची3_BLOCK_MAGIC));
 
 	/*
 	 * Log the first part of the unused entry.
 	 */
-	xfs_trans_log_buf(args->trans, bp, (uint)((char *)dup - (char *)hdr),
-		(uint)((char *)&dup->length + sizeof(dup->length) -
-		       1 - (char *)hdr));
+	xfs_trans_log_buf(args->trans, bp, (uपूर्णांक)((अक्षर *)dup - (अक्षर *)hdr),
+		(uपूर्णांक)((अक्षर *)&dup->length + माप(dup->length) -
+		       1 - (अक्षर *)hdr));
 	/*
 	 * Log the end (tag) of the unused entry.
 	 */
 	xfs_trans_log_buf(args->trans, bp,
-		(uint)((char *)xfs_dir2_data_unused_tag_p(dup) - (char *)hdr),
-		(uint)((char *)xfs_dir2_data_unused_tag_p(dup) - (char *)hdr +
-		       sizeof(xfs_dir2_data_off_t) - 1));
-}
+		(uपूर्णांक)((अक्षर *)xfs_dir2_data_unused_tag_p(dup) - (अक्षर *)hdr),
+		(uपूर्णांक)((अक्षर *)xfs_dir2_data_unused_tag_p(dup) - (अक्षर *)hdr +
+		       माप(xfs_dir2_data_off_t) - 1));
+पूर्ण
 
 /*
  * Make a byte range in the data block unused.
  * Its current contents are unimportant.
  */
-void
-xfs_dir2_data_make_free(
-	struct xfs_da_args	*args,
-	struct xfs_buf		*bp,
+व्योम
+xfs_dir2_data_make_मुक्त(
+	काष्ठा xfs_da_args	*args,
+	काष्ठा xfs_buf		*bp,
 	xfs_dir2_data_aoff_t	offset,		/* starting byte offset */
 	xfs_dir2_data_aoff_t	len,		/* length in bytes */
-	int			*needlogp,	/* out: log header */
-	int			*needscanp)	/* out: regen bestfree */
-{
-	xfs_dir2_data_hdr_t	*hdr;		/* data block pointer */
-	xfs_dir2_data_free_t	*dfp;		/* bestfree pointer */
-	int			needscan;	/* need to regen bestfree */
+	पूर्णांक			*needlogp,	/* out: log header */
+	पूर्णांक			*needscanp)	/* out: regen bestमुक्त */
+अणु
+	xfs_dir2_data_hdr_t	*hdr;		/* data block poपूर्णांकer */
+	xfs_dir2_data_मुक्त_t	*dfp;		/* bestमुक्त poपूर्णांकer */
+	पूर्णांक			needscan;	/* need to regen bestमुक्त */
 	xfs_dir2_data_unused_t	*newdup;	/* new unused entry */
 	xfs_dir2_data_unused_t	*postdup;	/* unused entry after us */
-	xfs_dir2_data_unused_t	*prevdup;	/* unused entry before us */
-	unsigned int		end;
-	struct xfs_dir2_data_free *bf;
+	xfs_dir2_data_unused_t	*prevdup;	/* unused entry beक्रमe us */
+	अचिन्हित पूर्णांक		end;
+	काष्ठा xfs_dir2_data_मुक्त *bf;
 
 	hdr = bp->b_addr;
 
@@ -859,365 +860,365 @@ xfs_dir2_data_make_free(
 
 	/*
 	 * If this isn't the start of the block, then back up to
-	 * the previous entry and see if it's free.
+	 * the previous entry and see अगर it's मुक्त.
 	 */
-	if (offset > args->geo->data_entry_offset) {
-		__be16			*tagp;	/* tag just before us */
+	अगर (offset > args->geo->data_entry_offset) अणु
+		__be16			*tagp;	/* tag just beक्रमe us */
 
-		tagp = (__be16 *)((char *)hdr + offset) - 1;
-		prevdup = (xfs_dir2_data_unused_t *)((char *)hdr + be16_to_cpu(*tagp));
-		if (be16_to_cpu(prevdup->freetag) != XFS_DIR2_DATA_FREE_TAG)
-			prevdup = NULL;
-	} else
-		prevdup = NULL;
+		tagp = (__be16 *)((अक्षर *)hdr + offset) - 1;
+		prevdup = (xfs_dir2_data_unused_t *)((अक्षर *)hdr + be16_to_cpu(*tagp));
+		अगर (be16_to_cpu(prevdup->मुक्तtag) != XFS_सूची2_DATA_FREE_TAG)
+			prevdup = शून्य;
+	पूर्ण अन्यथा
+		prevdup = शून्य;
 	/*
-	 * If this isn't the end of the block, see if the entry after
-	 * us is free.
+	 * If this isn't the end of the block, see अगर the entry after
+	 * us is मुक्त.
 	 */
-	if (offset + len < end) {
+	अगर (offset + len < end) अणु
 		postdup =
-			(xfs_dir2_data_unused_t *)((char *)hdr + offset + len);
-		if (be16_to_cpu(postdup->freetag) != XFS_DIR2_DATA_FREE_TAG)
-			postdup = NULL;
-	} else
-		postdup = NULL;
+			(xfs_dir2_data_unused_t *)((अक्षर *)hdr + offset + len);
+		अगर (be16_to_cpu(postdup->मुक्तtag) != XFS_सूची2_DATA_FREE_TAG)
+			postdup = शून्य;
+	पूर्ण अन्यथा
+		postdup = शून्य;
 	ASSERT(*needscanp == 0);
 	needscan = 0;
 	/*
-	 * Previous and following entries are both free,
-	 * merge everything into a single free entry.
+	 * Previous and following entries are both मुक्त,
+	 * merge everything पूर्णांकo a single मुक्त entry.
 	 */
-	bf = xfs_dir2_data_bestfree_p(args->dp->i_mount, hdr);
-	if (prevdup && postdup) {
-		xfs_dir2_data_free_t	*dfp2;	/* another bestfree pointer */
+	bf = xfs_dir2_data_bestमुक्त_p(args->dp->i_mount, hdr);
+	अगर (prevdup && postdup) अणु
+		xfs_dir2_data_मुक्त_t	*dfp2;	/* another bestमुक्त poपूर्णांकer */
 
 		/*
-		 * See if prevdup and/or postdup are in bestfree table.
+		 * See अगर prevdup and/or postdup are in bestमुक्त table.
 		 */
-		dfp = xfs_dir2_data_freefind(hdr, bf, prevdup);
-		dfp2 = xfs_dir2_data_freefind(hdr, bf, postdup);
+		dfp = xfs_dir2_data_मुक्तfind(hdr, bf, prevdup);
+		dfp2 = xfs_dir2_data_मुक्तfind(hdr, bf, postdup);
 		/*
-		 * We need a rescan unless there are exactly 2 free entries
+		 * We need a rescan unless there are exactly 2 मुक्त entries
 		 * namely our two.  Then we know what's happening, otherwise
-		 * since the third bestfree is there, there might be more
+		 * since the third bestमुक्त is there, there might be more
 		 * entries.
 		 */
 		needscan = (bf[2].length != 0);
 		/*
-		 * Fix up the new big freespace.
+		 * Fix up the new big मुक्तspace.
 		 */
 		be16_add_cpu(&prevdup->length, len + be16_to_cpu(postdup->length));
 		*xfs_dir2_data_unused_tag_p(prevdup) =
-			cpu_to_be16((char *)prevdup - (char *)hdr);
+			cpu_to_be16((अक्षर *)prevdup - (अक्षर *)hdr);
 		xfs_dir2_data_log_unused(args, bp, prevdup);
-		if (!needscan) {
+		अगर (!needscan) अणु
 			/*
-			 * Has to be the case that entries 0 and 1 are
-			 * dfp and dfp2 (don't know which is which), and
+			 * Has to be the हाल that entries 0 and 1 are
+			 * dfp and dfp2 (करोn't know which is which), and
 			 * entry 2 is empty.
 			 * Remove entry 1 first then entry 0.
 			 */
 			ASSERT(dfp && dfp2);
-			if (dfp == &bf[1]) {
+			अगर (dfp == &bf[1]) अणु
 				dfp = &bf[0];
 				ASSERT(dfp2 == dfp);
 				dfp2 = &bf[1];
-			}
-			xfs_dir2_data_freeremove(hdr, bf, dfp2, needlogp);
-			xfs_dir2_data_freeremove(hdr, bf, dfp, needlogp);
+			पूर्ण
+			xfs_dir2_data_मुक्तहटाओ(hdr, bf, dfp2, needlogp);
+			xfs_dir2_data_मुक्तहटाओ(hdr, bf, dfp, needlogp);
 			/*
 			 * Now insert the new entry.
 			 */
-			dfp = xfs_dir2_data_freeinsert(hdr, bf, prevdup,
+			dfp = xfs_dir2_data_मुक्तinsert(hdr, bf, prevdup,
 						       needlogp);
 			ASSERT(dfp == &bf[0]);
 			ASSERT(dfp->length == prevdup->length);
 			ASSERT(!dfp[1].length);
 			ASSERT(!dfp[2].length);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
-	 * The entry before us is free, merge with it.
+	 * The entry beक्रमe us is मुक्त, merge with it.
 	 */
-	else if (prevdup) {
-		dfp = xfs_dir2_data_freefind(hdr, bf, prevdup);
+	अन्यथा अगर (prevdup) अणु
+		dfp = xfs_dir2_data_मुक्तfind(hdr, bf, prevdup);
 		be16_add_cpu(&prevdup->length, len);
 		*xfs_dir2_data_unused_tag_p(prevdup) =
-			cpu_to_be16((char *)prevdup - (char *)hdr);
+			cpu_to_be16((अक्षर *)prevdup - (अक्षर *)hdr);
 		xfs_dir2_data_log_unused(args, bp, prevdup);
 		/*
 		 * If the previous entry was in the table, the new entry
-		 * is longer, so it will be in the table too.  Remove
+		 * is दीर्घer, so it will be in the table too.  Remove
 		 * the old one and add the new one.
 		 */
-		if (dfp) {
-			xfs_dir2_data_freeremove(hdr, bf, dfp, needlogp);
-			xfs_dir2_data_freeinsert(hdr, bf, prevdup, needlogp);
-		}
+		अगर (dfp) अणु
+			xfs_dir2_data_मुक्तहटाओ(hdr, bf, dfp, needlogp);
+			xfs_dir2_data_मुक्तinsert(hdr, bf, prevdup, needlogp);
+		पूर्ण
 		/*
-		 * Otherwise we need a scan if the new entry is big enough.
+		 * Otherwise we need a scan अगर the new entry is big enough.
 		 */
-		else {
+		अन्यथा अणु
 			needscan = be16_to_cpu(prevdup->length) >
 				   be16_to_cpu(bf[2].length);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
-	 * The following entry is free, merge with it.
+	 * The following entry is मुक्त, merge with it.
 	 */
-	else if (postdup) {
-		dfp = xfs_dir2_data_freefind(hdr, bf, postdup);
-		newdup = (xfs_dir2_data_unused_t *)((char *)hdr + offset);
-		newdup->freetag = cpu_to_be16(XFS_DIR2_DATA_FREE_TAG);
+	अन्यथा अगर (postdup) अणु
+		dfp = xfs_dir2_data_मुक्तfind(hdr, bf, postdup);
+		newdup = (xfs_dir2_data_unused_t *)((अक्षर *)hdr + offset);
+		newdup->मुक्तtag = cpu_to_be16(XFS_सूची2_DATA_FREE_TAG);
 		newdup->length = cpu_to_be16(len + be16_to_cpu(postdup->length));
 		*xfs_dir2_data_unused_tag_p(newdup) =
-			cpu_to_be16((char *)newdup - (char *)hdr);
+			cpu_to_be16((अक्षर *)newdup - (अक्षर *)hdr);
 		xfs_dir2_data_log_unused(args, bp, newdup);
 		/*
 		 * If the following entry was in the table, the new entry
-		 * is longer, so it will be in the table too.  Remove
+		 * is दीर्घer, so it will be in the table too.  Remove
 		 * the old one and add the new one.
 		 */
-		if (dfp) {
-			xfs_dir2_data_freeremove(hdr, bf, dfp, needlogp);
-			xfs_dir2_data_freeinsert(hdr, bf, newdup, needlogp);
-		}
+		अगर (dfp) अणु
+			xfs_dir2_data_मुक्तहटाओ(hdr, bf, dfp, needlogp);
+			xfs_dir2_data_मुक्तinsert(hdr, bf, newdup, needlogp);
+		पूर्ण
 		/*
-		 * Otherwise we need a scan if the new entry is big enough.
+		 * Otherwise we need a scan अगर the new entry is big enough.
 		 */
-		else {
+		अन्यथा अणु
 			needscan = be16_to_cpu(newdup->length) >
 				   be16_to_cpu(bf[2].length);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
-	 * Neither neighbor is free.  Make a new entry.
+	 * Neither neighbor is मुक्त.  Make a new entry.
 	 */
-	else {
-		newdup = (xfs_dir2_data_unused_t *)((char *)hdr + offset);
-		newdup->freetag = cpu_to_be16(XFS_DIR2_DATA_FREE_TAG);
+	अन्यथा अणु
+		newdup = (xfs_dir2_data_unused_t *)((अक्षर *)hdr + offset);
+		newdup->मुक्तtag = cpu_to_be16(XFS_सूची2_DATA_FREE_TAG);
 		newdup->length = cpu_to_be16(len);
 		*xfs_dir2_data_unused_tag_p(newdup) =
-			cpu_to_be16((char *)newdup - (char *)hdr);
+			cpu_to_be16((अक्षर *)newdup - (अक्षर *)hdr);
 		xfs_dir2_data_log_unused(args, bp, newdup);
-		xfs_dir2_data_freeinsert(hdr, bf, newdup, needlogp);
-	}
+		xfs_dir2_data_मुक्तinsert(hdr, bf, newdup, needlogp);
+	पूर्ण
 	*needscanp = needscan;
-}
+पूर्ण
 
-/* Check our free data for obvious signs of corruption. */
-static inline xfs_failaddr_t
-xfs_dir2_data_check_free(
-	struct xfs_dir2_data_hdr	*hdr,
-	struct xfs_dir2_data_unused	*dup,
+/* Check our मुक्त data क्रम obvious signs of corruption. */
+अटल अंतरभूत xfs_failaddr_t
+xfs_dir2_data_check_मुक्त(
+	काष्ठा xfs_dir2_data_hdr	*hdr,
+	काष्ठा xfs_dir2_data_unused	*dup,
 	xfs_dir2_data_aoff_t		offset,
 	xfs_dir2_data_aoff_t		len)
-{
-	if (hdr->magic != cpu_to_be32(XFS_DIR2_DATA_MAGIC) &&
-	    hdr->magic != cpu_to_be32(XFS_DIR3_DATA_MAGIC) &&
-	    hdr->magic != cpu_to_be32(XFS_DIR2_BLOCK_MAGIC) &&
-	    hdr->magic != cpu_to_be32(XFS_DIR3_BLOCK_MAGIC))
-		return __this_address;
-	if (be16_to_cpu(dup->freetag) != XFS_DIR2_DATA_FREE_TAG)
-		return __this_address;
-	if (offset < (char *)dup - (char *)hdr)
-		return __this_address;
-	if (offset + len > (char *)dup + be16_to_cpu(dup->length) - (char *)hdr)
-		return __this_address;
-	if ((char *)dup - (char *)hdr !=
+अणु
+	अगर (hdr->magic != cpu_to_be32(XFS_सूची2_DATA_MAGIC) &&
+	    hdr->magic != cpu_to_be32(XFS_सूची3_DATA_MAGIC) &&
+	    hdr->magic != cpu_to_be32(XFS_सूची2_BLOCK_MAGIC) &&
+	    hdr->magic != cpu_to_be32(XFS_सूची3_BLOCK_MAGIC))
+		वापस __this_address;
+	अगर (be16_to_cpu(dup->मुक्तtag) != XFS_सूची2_DATA_FREE_TAG)
+		वापस __this_address;
+	अगर (offset < (अक्षर *)dup - (अक्षर *)hdr)
+		वापस __this_address;
+	अगर (offset + len > (अक्षर *)dup + be16_to_cpu(dup->length) - (अक्षर *)hdr)
+		वापस __this_address;
+	अगर ((अक्षर *)dup - (अक्षर *)hdr !=
 			be16_to_cpu(*xfs_dir2_data_unused_tag_p(dup)))
-		return __this_address;
-	return NULL;
-}
+		वापस __this_address;
+	वापस शून्य;
+पूर्ण
 
-/* Sanity-check a new bestfree entry. */
-static inline xfs_failaddr_t
-xfs_dir2_data_check_new_free(
-	struct xfs_dir2_data_hdr	*hdr,
-	struct xfs_dir2_data_free	*dfp,
-	struct xfs_dir2_data_unused	*newdup)
-{
-	if (dfp == NULL)
-		return __this_address;
-	if (dfp->length != newdup->length)
-		return __this_address;
-	if (be16_to_cpu(dfp->offset) != (char *)newdup - (char *)hdr)
-		return __this_address;
-	return NULL;
-}
+/* Sanity-check a new bestमुक्त entry. */
+अटल अंतरभूत xfs_failaddr_t
+xfs_dir2_data_check_new_मुक्त(
+	काष्ठा xfs_dir2_data_hdr	*hdr,
+	काष्ठा xfs_dir2_data_मुक्त	*dfp,
+	काष्ठा xfs_dir2_data_unused	*newdup)
+अणु
+	अगर (dfp == शून्य)
+		वापस __this_address;
+	अगर (dfp->length != newdup->length)
+		वापस __this_address;
+	अगर (be16_to_cpu(dfp->offset) != (अक्षर *)newdup - (अक्षर *)hdr)
+		वापस __this_address;
+	वापस शून्य;
+पूर्ण
 
 /*
- * Take a byte range out of an existing unused space and make it un-free.
+ * Take a byte range out of an existing unused space and make it un-मुक्त.
  */
-int
-xfs_dir2_data_use_free(
-	struct xfs_da_args	*args,
-	struct xfs_buf		*bp,
+पूर्णांक
+xfs_dir2_data_use_मुक्त(
+	काष्ठा xfs_da_args	*args,
+	काष्ठा xfs_buf		*bp,
 	xfs_dir2_data_unused_t	*dup,		/* unused entry */
 	xfs_dir2_data_aoff_t	offset,		/* starting offset to use */
 	xfs_dir2_data_aoff_t	len,		/* length to use */
-	int			*needlogp,	/* out: need to log header */
-	int			*needscanp)	/* out: need regen bestfree */
-{
+	पूर्णांक			*needlogp,	/* out: need to log header */
+	पूर्णांक			*needscanp)	/* out: need regen bestमुक्त */
+अणु
 	xfs_dir2_data_hdr_t	*hdr;		/* data block header */
-	xfs_dir2_data_free_t	*dfp;		/* bestfree pointer */
+	xfs_dir2_data_मुक्त_t	*dfp;		/* bestमुक्त poपूर्णांकer */
 	xfs_dir2_data_unused_t	*newdup;	/* new unused entry */
 	xfs_dir2_data_unused_t	*newdup2;	/* another new unused entry */
-	struct xfs_dir2_data_free *bf;
+	काष्ठा xfs_dir2_data_मुक्त *bf;
 	xfs_failaddr_t		fa;
-	int			matchback;	/* matches end of freespace */
-	int			matchfront;	/* matches start of freespace */
-	int			needscan;	/* need to regen bestfree */
-	int			oldlen;		/* old unused entry's length */
+	पूर्णांक			matchback;	/* matches end of मुक्तspace */
+	पूर्णांक			matchfront;	/* matches start of मुक्तspace */
+	पूर्णांक			needscan;	/* need to regen bestमुक्त */
+	पूर्णांक			oldlen;		/* old unused entry's length */
 
 	hdr = bp->b_addr;
-	fa = xfs_dir2_data_check_free(hdr, dup, offset, len);
-	if (fa)
-		goto corrupt;
+	fa = xfs_dir2_data_check_मुक्त(hdr, dup, offset, len);
+	अगर (fa)
+		जाओ corrupt;
 	/*
-	 * Look up the entry in the bestfree table.
+	 * Look up the entry in the bestमुक्त table.
 	 */
 	oldlen = be16_to_cpu(dup->length);
-	bf = xfs_dir2_data_bestfree_p(args->dp->i_mount, hdr);
-	dfp = xfs_dir2_data_freefind(hdr, bf, dup);
+	bf = xfs_dir2_data_bestमुक्त_p(args->dp->i_mount, hdr);
+	dfp = xfs_dir2_data_मुक्तfind(hdr, bf, dup);
 	ASSERT(dfp || oldlen <= be16_to_cpu(bf[2].length));
 	/*
-	 * Check for alignment with front and back of the entry.
+	 * Check क्रम alignment with front and back of the entry.
 	 */
-	matchfront = (char *)dup - (char *)hdr == offset;
-	matchback = (char *)dup + oldlen - (char *)hdr == offset + len;
+	matchfront = (अक्षर *)dup - (अक्षर *)hdr == offset;
+	matchback = (अक्षर *)dup + oldlen - (अक्षर *)hdr == offset + len;
 	ASSERT(*needscanp == 0);
 	needscan = 0;
 	/*
 	 * If we matched it exactly we just need to get rid of it from
-	 * the bestfree table.
+	 * the bestमुक्त table.
 	 */
-	if (matchfront && matchback) {
-		if (dfp) {
+	अगर (matchfront && matchback) अणु
+		अगर (dfp) अणु
 			needscan = (bf[2].offset != 0);
-			if (!needscan)
-				xfs_dir2_data_freeremove(hdr, bf, dfp,
+			अगर (!needscan)
+				xfs_dir2_data_मुक्तहटाओ(hdr, bf, dfp,
 							 needlogp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * We match the first part of the entry.
-	 * Make a new entry with the remaining freespace.
+	 * Make a new entry with the reमुख्यing मुक्तspace.
 	 */
-	else if (matchfront) {
-		newdup = (xfs_dir2_data_unused_t *)((char *)hdr + offset + len);
-		newdup->freetag = cpu_to_be16(XFS_DIR2_DATA_FREE_TAG);
+	अन्यथा अगर (matchfront) अणु
+		newdup = (xfs_dir2_data_unused_t *)((अक्षर *)hdr + offset + len);
+		newdup->मुक्तtag = cpu_to_be16(XFS_सूची2_DATA_FREE_TAG);
 		newdup->length = cpu_to_be16(oldlen - len);
 		*xfs_dir2_data_unused_tag_p(newdup) =
-			cpu_to_be16((char *)newdup - (char *)hdr);
+			cpu_to_be16((अक्षर *)newdup - (अक्षर *)hdr);
 		xfs_dir2_data_log_unused(args, bp, newdup);
 		/*
-		 * If it was in the table, remove it and add the new one.
+		 * If it was in the table, हटाओ it and add the new one.
 		 */
-		if (dfp) {
-			xfs_dir2_data_freeremove(hdr, bf, dfp, needlogp);
-			dfp = xfs_dir2_data_freeinsert(hdr, bf, newdup,
+		अगर (dfp) अणु
+			xfs_dir2_data_मुक्तहटाओ(hdr, bf, dfp, needlogp);
+			dfp = xfs_dir2_data_मुक्तinsert(hdr, bf, newdup,
 						       needlogp);
-			fa = xfs_dir2_data_check_new_free(hdr, dfp, newdup);
-			if (fa)
-				goto corrupt;
+			fa = xfs_dir2_data_check_new_मुक्त(hdr, dfp, newdup);
+			अगर (fa)
+				जाओ corrupt;
 			/*
 			 * If we got inserted at the last slot,
-			 * that means we don't know if there was a better
-			 * choice for the last slot, or not.  Rescan.
+			 * that means we करोn't know अगर there was a better
+			 * choice क्रम the last slot, or not.  Rescan.
 			 */
 			needscan = dfp == &bf[2];
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * We match the last part of the entry.
 	 * Trim the allocated space off the tail of the entry.
 	 */
-	else if (matchback) {
+	अन्यथा अगर (matchback) अणु
 		newdup = dup;
-		newdup->length = cpu_to_be16(((char *)hdr + offset) - (char *)newdup);
+		newdup->length = cpu_to_be16(((अक्षर *)hdr + offset) - (अक्षर *)newdup);
 		*xfs_dir2_data_unused_tag_p(newdup) =
-			cpu_to_be16((char *)newdup - (char *)hdr);
+			cpu_to_be16((अक्षर *)newdup - (अक्षर *)hdr);
 		xfs_dir2_data_log_unused(args, bp, newdup);
 		/*
-		 * If it was in the table, remove it and add the new one.
+		 * If it was in the table, हटाओ it and add the new one.
 		 */
-		if (dfp) {
-			xfs_dir2_data_freeremove(hdr, bf, dfp, needlogp);
-			dfp = xfs_dir2_data_freeinsert(hdr, bf, newdup,
+		अगर (dfp) अणु
+			xfs_dir2_data_मुक्तहटाओ(hdr, bf, dfp, needlogp);
+			dfp = xfs_dir2_data_मुक्तinsert(hdr, bf, newdup,
 						       needlogp);
-			fa = xfs_dir2_data_check_new_free(hdr, dfp, newdup);
-			if (fa)
-				goto corrupt;
+			fa = xfs_dir2_data_check_new_मुक्त(hdr, dfp, newdup);
+			अगर (fa)
+				जाओ corrupt;
 			/*
 			 * If we got inserted at the last slot,
-			 * that means we don't know if there was a better
-			 * choice for the last slot, or not.  Rescan.
+			 * that means we करोn't know अगर there was a better
+			 * choice क्रम the last slot, or not.  Rescan.
 			 */
 			needscan = dfp == &bf[2];
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * Poking out the middle of an entry.
 	 * Make two new entries.
 	 */
-	else {
+	अन्यथा अणु
 		newdup = dup;
-		newdup->length = cpu_to_be16(((char *)hdr + offset) - (char *)newdup);
+		newdup->length = cpu_to_be16(((अक्षर *)hdr + offset) - (अक्षर *)newdup);
 		*xfs_dir2_data_unused_tag_p(newdup) =
-			cpu_to_be16((char *)newdup - (char *)hdr);
+			cpu_to_be16((अक्षर *)newdup - (अक्षर *)hdr);
 		xfs_dir2_data_log_unused(args, bp, newdup);
-		newdup2 = (xfs_dir2_data_unused_t *)((char *)hdr + offset + len);
-		newdup2->freetag = cpu_to_be16(XFS_DIR2_DATA_FREE_TAG);
+		newdup2 = (xfs_dir2_data_unused_t *)((अक्षर *)hdr + offset + len);
+		newdup2->मुक्तtag = cpu_to_be16(XFS_सूची2_DATA_FREE_TAG);
 		newdup2->length = cpu_to_be16(oldlen - len - be16_to_cpu(newdup->length));
 		*xfs_dir2_data_unused_tag_p(newdup2) =
-			cpu_to_be16((char *)newdup2 - (char *)hdr);
+			cpu_to_be16((अक्षर *)newdup2 - (अक्षर *)hdr);
 		xfs_dir2_data_log_unused(args, bp, newdup2);
 		/*
 		 * If the old entry was in the table, we need to scan
-		 * if the 3rd entry was valid, since these entries
+		 * अगर the 3rd entry was valid, since these entries
 		 * are smaller than the old one.
-		 * If we don't need to scan that means there were 1 or 2
+		 * If we करोn't need to scan that means there were 1 or 2
 		 * entries in the table, and removing the old and adding
 		 * the 2 new will work.
 		 */
-		if (dfp) {
+		अगर (dfp) अणु
 			needscan = (bf[2].length != 0);
-			if (!needscan) {
-				xfs_dir2_data_freeremove(hdr, bf, dfp,
+			अगर (!needscan) अणु
+				xfs_dir2_data_मुक्तहटाओ(hdr, bf, dfp,
 							 needlogp);
-				xfs_dir2_data_freeinsert(hdr, bf, newdup,
+				xfs_dir2_data_मुक्तinsert(hdr, bf, newdup,
 							 needlogp);
-				xfs_dir2_data_freeinsert(hdr, bf, newdup2,
+				xfs_dir2_data_मुक्तinsert(hdr, bf, newdup2,
 							 needlogp);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	*needscanp = needscan;
-	return 0;
+	वापस 0;
 corrupt:
 	xfs_corruption_error(__func__, XFS_ERRLEVEL_LOW, args->dp->i_mount,
-			hdr, sizeof(*hdr), __FILE__, __LINE__, fa);
-	return -EFSCORRUPTED;
-}
+			hdr, माप(*hdr), __खाता__, __LINE__, fa);
+	वापस -EFSCORRUPTED;
+पूर्ण
 
-/* Find the end of the entry data in a data/block format dir block. */
-unsigned int
+/* Find the end of the entry data in a data/block क्रमmat dir block. */
+अचिन्हित पूर्णांक
 xfs_dir3_data_end_offset(
-	struct xfs_da_geometry		*geo,
-	struct xfs_dir2_data_hdr	*hdr)
-{
-	void				*p;
+	काष्ठा xfs_da_geometry		*geo,
+	काष्ठा xfs_dir2_data_hdr	*hdr)
+अणु
+	व्योम				*p;
 
-	switch (hdr->magic) {
-	case cpu_to_be32(XFS_DIR3_BLOCK_MAGIC):
-	case cpu_to_be32(XFS_DIR2_BLOCK_MAGIC):
+	चयन (hdr->magic) अणु
+	हाल cpu_to_be32(XFS_सूची3_BLOCK_MAGIC):
+	हाल cpu_to_be32(XFS_सूची2_BLOCK_MAGIC):
 		p = xfs_dir2_block_leaf_p(xfs_dir2_block_tail_p(geo, hdr));
-		return p - (void *)hdr;
-	case cpu_to_be32(XFS_DIR3_DATA_MAGIC):
-	case cpu_to_be32(XFS_DIR2_DATA_MAGIC):
-		return geo->blksize;
-	default:
-		return 0;
-	}
-}
+		वापस p - (व्योम *)hdr;
+	हाल cpu_to_be32(XFS_सूची3_DATA_MAGIC):
+	हाल cpu_to_be32(XFS_सूची2_DATA_MAGIC):
+		वापस geo->blksize;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण

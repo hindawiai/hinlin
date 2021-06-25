@@ -1,59 +1,60 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <linux/module.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/mmc.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/mmc/sdio_ids.h>
-#include <linux/mmc/sdio.h>
-#include <linux/mmc/sd.h>
-#include "hif.h"
-#include "hif-ops.h"
-#include "target.h"
-#include "debug.h"
-#include "cfg80211.h"
-#include "trace.h"
+#समावेश <linux/module.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/mmc/sdio_ids.h>
+#समावेश <linux/mmc/sdपन.स>
+#समावेश <linux/mmc/sd.h>
+#समावेश "hif.h"
+#समावेश "hif-ops.h"
+#समावेश "target.h"
+#समावेश "debug.h"
+#समावेश "cfg80211.h"
+#समावेश "trace.h"
 
-struct ath6kl_sdio {
-	struct sdio_func *func;
+काष्ठा ath6kl_sdio अणु
+	काष्ठा sdio_func *func;
 
-	/* protects access to bus_req_freeq */
+	/* protects access to bus_req_मुक्तq */
 	spinlock_t lock;
 
-	/* free list */
-	struct list_head bus_req_freeq;
+	/* मुक्त list */
+	काष्ठा list_head bus_req_मुक्तq;
 
 	/* available bus requests */
-	struct bus_request bus_req[BUS_REQUEST_MAX_NUM];
+	काष्ठा bus_request bus_req[BUS_REQUEST_MAX_NUM];
 
-	struct ath6kl *ar;
+	काष्ठा ath6kl *ar;
 
 	u8 *dma_buffer;
 
 	/* protects access to dma_buffer */
-	struct mutex dma_buffer_mutex;
+	काष्ठा mutex dma_buffer_mutex;
 
 	/* scatter request list head */
-	struct list_head scat_req;
+	काष्ठा list_head scat_req;
 
 	atomic_t irq_handling;
-	wait_queue_head_t irq_wq;
+	रुको_queue_head_t irq_wq;
 
 	/* protects access to scat_req */
 	spinlock_t scat_lock;
@@ -61,41 +62,41 @@ struct ath6kl_sdio {
 	bool scatter_enabled;
 
 	bool is_disabled;
-	const struct sdio_device_id *id;
-	struct work_struct wr_async_work;
-	struct list_head wr_asyncq;
+	स्थिर काष्ठा sdio_device_id *id;
+	काष्ठा work_काष्ठा wr_async_work;
+	काष्ठा list_head wr_asyncq;
 
 	/* protects access to wr_asyncq */
 	spinlock_t wr_async_lock;
-};
+पूर्ण;
 
-#define CMD53_ARG_READ          0
-#define CMD53_ARG_WRITE         1
-#define CMD53_ARG_BLOCK_BASIS   1
-#define CMD53_ARG_FIXED_ADDRESS 0
-#define CMD53_ARG_INCR_ADDRESS  1
+#घोषणा CMD53_ARG_READ          0
+#घोषणा CMD53_ARG_WRITE         1
+#घोषणा CMD53_ARG_BLOCK_BASIS   1
+#घोषणा CMD53_ARG_FIXED_ADDRESS 0
+#घोषणा CMD53_ARG_INCR_ADDRESS  1
 
-static int ath6kl_sdio_config(struct ath6kl *ar);
+अटल पूर्णांक ath6kl_sdio_config(काष्ठा ath6kl *ar);
 
-static inline struct ath6kl_sdio *ath6kl_sdio_priv(struct ath6kl *ar)
-{
-	return ar->hif_priv;
-}
+अटल अंतरभूत काष्ठा ath6kl_sdio *ath6kl_sdio_priv(काष्ठा ath6kl *ar)
+अणु
+	वापस ar->hअगर_priv;
+पूर्ण
 
 /*
- * Macro to check if DMA buffer is WORD-aligned and DMA-able.
+ * Macro to check अगर DMA buffer is WORD-aligned and DMA-able.
  * Most host controllers assume the buffer is DMA'able and will
  * bug-check otherwise (i.e. buffers on the stack). virt_addr_valid
  * check fails on stack memory.
  */
-static inline bool buf_needs_bounce(u8 *buf)
-{
-	return ((unsigned long) buf & 0x3) || !virt_addr_valid(buf);
-}
+अटल अंतरभूत bool buf_needs_bounce(u8 *buf)
+अणु
+	वापस ((अचिन्हित दीर्घ) buf & 0x3) || !virt_addr_valid(buf);
+पूर्ण
 
-static void ath6kl_sdio_set_mbox_info(struct ath6kl *ar)
-{
-	struct ath6kl_mbox_info *mbox_info = &ar->mbox_info;
+अटल व्योम ath6kl_sdio_set_mbox_info(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_mbox_info *mbox_info = &ar->mbox_info;
 
 	/* EP1 has an extended range */
 	mbox_info->htc_addr = HIF_MBOX_BASE_ADDR;
@@ -104,127 +105,127 @@ static void ath6kl_sdio_set_mbox_info(struct ath6kl *ar)
 	mbox_info->block_size = HIF_MBOX_BLOCK_SIZE;
 	mbox_info->gmbox_addr = HIF_GMBOX_BASE_ADDR;
 	mbox_info->gmbox_sz = HIF_GMBOX_WIDTH;
-}
+पूर्ण
 
-static inline void ath6kl_sdio_set_cmd53_arg(u32 *arg, u8 rw, u8 func,
+अटल अंतरभूत व्योम ath6kl_sdio_set_cmd53_arg(u32 *arg, u8 rw, u8 func,
 					     u8 mode, u8 opcode, u32 addr,
 					     u16 blksz)
-{
+अणु
 	*arg = (((rw & 1) << 31) |
 		((func & 0x7) << 28) |
 		((mode & 1) << 27) |
 		((opcode & 1) << 26) |
 		((addr & 0x1FFFF) << 9) |
 		(blksz & 0x1FF));
-}
+पूर्ण
 
-static inline void ath6kl_sdio_set_cmd52_arg(u32 *arg, u8 write, u8 raw,
-					     unsigned int address,
-					     unsigned char val)
-{
-	const u8 func = 0;
+अटल अंतरभूत व्योम ath6kl_sdio_set_cmd52_arg(u32 *arg, u8 ग_लिखो, u8 raw,
+					     अचिन्हित पूर्णांक address,
+					     अचिन्हित अक्षर val)
+अणु
+	स्थिर u8 func = 0;
 
-	*arg = ((write & 1) << 31) |
+	*arg = ((ग_लिखो & 1) << 31) |
 	       ((func & 0x7) << 28) |
 	       ((raw & 1) << 27) |
 	       (1 << 26) |
 	       ((address & 0x1FFFF) << 9) |
 	       (1 << 8) |
 	       (val & 0xFF);
-}
+पूर्ण
 
-static int ath6kl_sdio_func0_cmd52_wr_byte(struct mmc_card *card,
-					   unsigned int address,
-					   unsigned char byte)
-{
-	struct mmc_command io_cmd;
+अटल पूर्णांक ath6kl_sdio_func0_cmd52_wr_byte(काष्ठा mmc_card *card,
+					   अचिन्हित पूर्णांक address,
+					   अचिन्हित अक्षर byte)
+अणु
+	काष्ठा mmc_command io_cmd;
 
-	memset(&io_cmd, 0, sizeof(io_cmd));
+	स_रखो(&io_cmd, 0, माप(io_cmd));
 	ath6kl_sdio_set_cmd52_arg(&io_cmd.arg, 1, 0, address, byte);
-	io_cmd.opcode = SD_IO_RW_DIRECT;
+	io_cmd.opcode = SD_IO_RW_सूचीECT;
 	io_cmd.flags = MMC_RSP_R5 | MMC_CMD_AC;
 
-	return mmc_wait_for_cmd(card->host, &io_cmd, 0);
-}
+	वापस mmc_रुको_क्रम_cmd(card->host, &io_cmd, 0);
+पूर्ण
 
-static int ath6kl_sdio_io(struct sdio_func *func, u32 request, u32 addr,
+अटल पूर्णांक ath6kl_sdio_io(काष्ठा sdio_func *func, u32 request, u32 addr,
 			  u8 *buf, u32 len)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 
 	sdio_claim_host(func);
 
-	if (request & HIF_WRITE) {
-		/* FIXME: looks like ugly workaround for something */
-		if (addr >= HIF_MBOX_BASE_ADDR &&
+	अगर (request & HIF_WRITE) अणु
+		/* FIXME: looks like ugly workaround क्रम something */
+		अगर (addr >= HIF_MBOX_BASE_ADDR &&
 		    addr <= HIF_MBOX_END_ADDR)
 			addr += (HIF_MBOX_WIDTH - len);
 
 		/* FIXME: this also looks like ugly workaround */
-		if (addr == HIF_MBOX0_EXT_BASE_ADDR)
+		अगर (addr == HIF_MBOX0_EXT_BASE_ADDR)
 			addr += HIF_MBOX0_EXT_WIDTH - len;
 
-		if (request & HIF_FIXED_ADDRESS)
-			ret = sdio_writesb(func, addr, buf, len);
-		else
-			ret = sdio_memcpy_toio(func, addr, buf, len);
-	} else {
-		if (request & HIF_FIXED_ADDRESS)
-			ret = sdio_readsb(func, buf, addr, len);
-		else
-			ret = sdio_memcpy_fromio(func, buf, addr, len);
-	}
+		अगर (request & HIF_FIXED_ADDRESS)
+			ret = sdio_ग_लिखोsb(func, addr, buf, len);
+		अन्यथा
+			ret = sdio_स_नकल_toio(func, addr, buf, len);
+	पूर्ण अन्यथा अणु
+		अगर (request & HIF_FIXED_ADDRESS)
+			ret = sdio_पढ़ोsb(func, buf, addr, len);
+		अन्यथा
+			ret = sdio_स_नकल_fromio(func, buf, addr, len);
+	पूर्ण
 
 	sdio_release_host(func);
 
 	ath6kl_dbg(ATH6KL_DBG_SDIO, "%s addr 0x%x%s buf 0x%p len %d\n",
 		   request & HIF_WRITE ? "wr" : "rd", addr,
 		   request & HIF_FIXED_ADDRESS ? " (fixed)" : "", buf, len);
-	ath6kl_dbg_dump(ATH6KL_DBG_SDIO_DUMP, NULL, "sdio ", buf, len);
+	ath6kl_dbg_dump(ATH6KL_DBG_SDIO_DUMP, शून्य, "sdio ", buf, len);
 
 	trace_ath6kl_sdio(addr, request, buf, len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct bus_request *ath6kl_sdio_alloc_busreq(struct ath6kl_sdio *ar_sdio)
-{
-	struct bus_request *bus_req;
+अटल काष्ठा bus_request *ath6kl_sdio_alloc_busreq(काष्ठा ath6kl_sdio *ar_sdio)
+अणु
+	काष्ठा bus_request *bus_req;
 
 	spin_lock_bh(&ar_sdio->lock);
 
-	if (list_empty(&ar_sdio->bus_req_freeq)) {
+	अगर (list_empty(&ar_sdio->bus_req_मुक्तq)) अणु
 		spin_unlock_bh(&ar_sdio->lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	bus_req = list_first_entry(&ar_sdio->bus_req_freeq,
-				   struct bus_request, list);
+	bus_req = list_first_entry(&ar_sdio->bus_req_मुक्तq,
+				   काष्ठा bus_request, list);
 	list_del(&bus_req->list);
 
 	spin_unlock_bh(&ar_sdio->lock);
 	ath6kl_dbg(ATH6KL_DBG_SCATTER, "%s: bus request 0x%p\n",
 		   __func__, bus_req);
 
-	return bus_req;
-}
+	वापस bus_req;
+पूर्ण
 
-static void ath6kl_sdio_free_bus_req(struct ath6kl_sdio *ar_sdio,
-				     struct bus_request *bus_req)
-{
+अटल व्योम ath6kl_sdio_मुक्त_bus_req(काष्ठा ath6kl_sdio *ar_sdio,
+				     काष्ठा bus_request *bus_req)
+अणु
 	ath6kl_dbg(ATH6KL_DBG_SCATTER, "%s: bus request 0x%p\n",
 		   __func__, bus_req);
 
 	spin_lock_bh(&ar_sdio->lock);
-	list_add_tail(&bus_req->list, &ar_sdio->bus_req_freeq);
+	list_add_tail(&bus_req->list, &ar_sdio->bus_req_मुक्तq);
 	spin_unlock_bh(&ar_sdio->lock);
-}
+पूर्ण
 
-static void ath6kl_sdio_setup_scat_data(struct hif_scatter_req *scat_req,
-					struct mmc_data *data)
-{
-	struct scatterlist *sg;
-	int i;
+अटल व्योम ath6kl_sdio_setup_scat_data(काष्ठा hअगर_scatter_req *scat_req,
+					काष्ठा mmc_data *data)
+अणु
+	काष्ठा scatterlist *sg;
+	पूर्णांक i;
 
 	data->blksz = HIF_MBOX_BLOCK_SIZE;
 	data->blocks = scat_req->len / HIF_MBOX_BLOCK_SIZE;
@@ -243,46 +244,46 @@ static void ath6kl_sdio_setup_scat_data(struct hif_scatter_req *scat_req,
 	sg_init_table(sg, scat_req->scat_entries);
 
 	/* assemble SG list */
-	for (i = 0; i < scat_req->scat_entries; i++, sg++) {
+	क्रम (i = 0; i < scat_req->scat_entries; i++, sg++) अणु
 		ath6kl_dbg(ATH6KL_DBG_SCATTER, "%d: addr:0x%p, len:%d\n",
 			   i, scat_req->scat_list[i].buf,
 			   scat_req->scat_list[i].len);
 
 		sg_set_buf(sg, scat_req->scat_list[i].buf,
 			   scat_req->scat_list[i].len);
-	}
+	पूर्ण
 
-	/* set scatter-gather table for request */
+	/* set scatter-gather table क्रम request */
 	data->sg = scat_req->sgentries;
 	data->sg_len = scat_req->scat_entries;
-}
+पूर्ण
 
-static int ath6kl_sdio_scat_rw(struct ath6kl_sdio *ar_sdio,
-			       struct bus_request *req)
-{
-	struct mmc_request mmc_req;
-	struct mmc_command cmd;
-	struct mmc_data data;
-	struct hif_scatter_req *scat_req;
+अटल पूर्णांक ath6kl_sdio_scat_rw(काष्ठा ath6kl_sdio *ar_sdio,
+			       काष्ठा bus_request *req)
+अणु
+	काष्ठा mmc_request mmc_req;
+	काष्ठा mmc_command cmd;
+	काष्ठा mmc_data data;
+	काष्ठा hअगर_scatter_req *scat_req;
 	u8 opcode, rw;
-	int status, len;
+	पूर्णांक status, len;
 
 	scat_req = req->scat_req;
 
-	if (scat_req->virt_scat) {
+	अगर (scat_req->virt_scat) अणु
 		len = scat_req->len;
-		if (scat_req->req & HIF_BLOCK_BASIS)
-			len = round_down(len, HIF_MBOX_BLOCK_SIZE);
+		अगर (scat_req->req & HIF_BLOCK_BASIS)
+			len = round_करोwn(len, HIF_MBOX_BLOCK_SIZE);
 
 		status = ath6kl_sdio_io(ar_sdio->func, scat_req->req,
 					scat_req->addr, scat_req->virt_dma_buf,
 					len);
-		goto scat_complete;
-	}
+		जाओ scat_complete;
+	पूर्ण
 
-	memset(&mmc_req, 0, sizeof(struct mmc_request));
-	memset(&cmd, 0, sizeof(struct mmc_command));
-	memset(&data, 0, sizeof(struct mmc_data));
+	स_रखो(&mmc_req, 0, माप(काष्ठा mmc_request));
+	स_रखो(&cmd, 0, माप(काष्ठा mmc_command));
+	स_रखो(&data, 0, माप(काष्ठा mmc_data));
 
 	ath6kl_sdio_setup_scat_data(scat_req, &data);
 
@@ -292,13 +293,13 @@ static int ath6kl_sdio_scat_rw(struct ath6kl_sdio *ar_sdio,
 	rw = (scat_req->req & HIF_WRITE) ? CMD53_ARG_WRITE : CMD53_ARG_READ;
 
 	/* Fixup the address so that the last byte will fall on MBOX EOM */
-	if (scat_req->req & HIF_WRITE) {
-		if (scat_req->addr == HIF_MBOX_BASE_ADDR)
+	अगर (scat_req->req & HIF_WRITE) अणु
+		अगर (scat_req->addr == HIF_MBOX_BASE_ADDR)
 			scat_req->addr += HIF_MBOX_WIDTH - scat_req->len;
-		else
+		अन्यथा
 			/* Uses extended address range */
 			scat_req->addr += HIF_MBOX0_EXT_WIDTH - scat_req->len;
-	}
+	पूर्ण
 
 	/* set command argument */
 	ath6kl_sdio_set_cmd53_arg(&cmd.arg, rw, ar_sdio->func->num,
@@ -313,7 +314,7 @@ static int ath6kl_sdio_scat_rw(struct ath6kl_sdio *ar_sdio,
 
 	sdio_claim_host(ar_sdio->func);
 
-	mmc_set_data_timeout(&data, ar_sdio->func->card);
+	mmc_set_data_समयout(&data, ar_sdio->func->card);
 
 	trace_ath6kl_sdio_scat(scat_req->addr,
 			       scat_req->req,
@@ -322,7 +323,7 @@ static int ath6kl_sdio_scat_rw(struct ath6kl_sdio *ar_sdio,
 			       scat_req->scat_list);
 
 	/* synchronous call to process request */
-	mmc_wait_for_req(ar_sdio->func->card->host, &mmc_req);
+	mmc_रुको_क्रम_req(ar_sdio->func->card->host, &mmc_req);
 
 	sdio_release_host(ar_sdio->func);
 
@@ -331,67 +332,67 @@ static int ath6kl_sdio_scat_rw(struct ath6kl_sdio *ar_sdio,
 scat_complete:
 	scat_req->status = status;
 
-	if (scat_req->status)
+	अगर (scat_req->status)
 		ath6kl_err("Scatter write request failed:%d\n",
 			   scat_req->status);
 
-	if (scat_req->req & HIF_ASYNCHRONOUS)
+	अगर (scat_req->req & HIF_ASYNCHRONOUS)
 		scat_req->complete(ar_sdio->ar->htc_target, scat_req);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ath6kl_sdio_alloc_prep_scat_req(struct ath6kl_sdio *ar_sdio,
-					   int n_scat_entry, int n_scat_req,
+अटल पूर्णांक ath6kl_sdio_alloc_prep_scat_req(काष्ठा ath6kl_sdio *ar_sdio,
+					   पूर्णांक n_scat_entry, पूर्णांक n_scat_req,
 					   bool virt_scat)
-{
-	struct hif_scatter_req *s_req;
-	struct bus_request *bus_req;
-	int i, scat_req_sz, scat_list_sz, size;
+अणु
+	काष्ठा hअगर_scatter_req *s_req;
+	काष्ठा bus_request *bus_req;
+	पूर्णांक i, scat_req_sz, scat_list_sz, size;
 	u8 *virt_buf;
 
-	scat_list_sz = n_scat_entry * sizeof(struct hif_scatter_item);
-	scat_req_sz = sizeof(*s_req) + scat_list_sz;
+	scat_list_sz = n_scat_entry * माप(काष्ठा hअगर_scatter_item);
+	scat_req_sz = माप(*s_req) + scat_list_sz;
 
-	if (!virt_scat)
-		size = sizeof(struct scatterlist) * n_scat_entry;
-	else
+	अगर (!virt_scat)
+		size = माप(काष्ठा scatterlist) * n_scat_entry;
+	अन्यथा
 		size =  2 * L1_CACHE_BYTES +
 			ATH6KL_MAX_TRANSFER_SIZE_PER_SCATTER;
 
-	for (i = 0; i < n_scat_req; i++) {
+	क्रम (i = 0; i < n_scat_req; i++) अणु
 		/* allocate the scatter request */
 		s_req = kzalloc(scat_req_sz, GFP_KERNEL);
-		if (!s_req)
-			return -ENOMEM;
+		अगर (!s_req)
+			वापस -ENOMEM;
 
-		if (virt_scat) {
+		अगर (virt_scat) अणु
 			virt_buf = kzalloc(size, GFP_KERNEL);
-			if (!virt_buf) {
-				kfree(s_req);
-				return -ENOMEM;
-			}
+			अगर (!virt_buf) अणु
+				kमुक्त(s_req);
+				वापस -ENOMEM;
+			पूर्ण
 
 			s_req->virt_dma_buf =
-				(u8 *)L1_CACHE_ALIGN((unsigned long)virt_buf);
-		} else {
+				(u8 *)L1_CACHE_ALIGN((अचिन्हित दीर्घ)virt_buf);
+		पूर्ण अन्यथा अणु
 			/* allocate sglist */
 			s_req->sgentries = kzalloc(size, GFP_KERNEL);
 
-			if (!s_req->sgentries) {
-				kfree(s_req);
-				return -ENOMEM;
-			}
-		}
+			अगर (!s_req->sgentries) अणु
+				kमुक्त(s_req);
+				वापस -ENOMEM;
+			पूर्ण
+		पूर्ण
 
-		/* allocate a bus request for this scatter request */
+		/* allocate a bus request क्रम this scatter request */
 		bus_req = ath6kl_sdio_alloc_busreq(ar_sdio);
-		if (!bus_req) {
-			kfree(s_req->sgentries);
-			kfree(s_req->virt_dma_buf);
-			kfree(s_req);
-			return -ENOMEM;
-		}
+		अगर (!bus_req) अणु
+			kमुक्त(s_req->sgentries);
+			kमुक्त(s_req->virt_dma_buf);
+			kमुक्त(s_req);
+			वापस -ENOMEM;
+		पूर्ण
 
 		/* assign the scatter request to this bus request */
 		bus_req->scat_req = s_req;
@@ -400,153 +401,153 @@ static int ath6kl_sdio_alloc_prep_scat_req(struct ath6kl_sdio *ar_sdio,
 		s_req->virt_scat = virt_scat;
 
 		/* add it to the scatter pool */
-		hif_scatter_req_add(ar_sdio->ar, s_req);
-	}
+		hअगर_scatter_req_add(ar_sdio->ar, s_req);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_sdio_read_write_sync(struct ath6kl *ar, u32 addr, u8 *buf,
+अटल पूर्णांक ath6kl_sdio_पढ़ो_ग_लिखो_sync(काष्ठा ath6kl *ar, u32 addr, u8 *buf,
 				       u32 len, u32 request)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	u8  *tbuf = NULL;
-	int ret;
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	u8  *tbuf = शून्य;
+	पूर्णांक ret;
 	bool bounced = false;
 
-	if (request & HIF_BLOCK_BASIS)
-		len = round_down(len, HIF_MBOX_BLOCK_SIZE);
+	अगर (request & HIF_BLOCK_BASIS)
+		len = round_करोwn(len, HIF_MBOX_BLOCK_SIZE);
 
-	if (buf_needs_bounce(buf)) {
-		if (!ar_sdio->dma_buffer)
-			return -ENOMEM;
+	अगर (buf_needs_bounce(buf)) अणु
+		अगर (!ar_sdio->dma_buffer)
+			वापस -ENOMEM;
 		mutex_lock(&ar_sdio->dma_buffer_mutex);
 		tbuf = ar_sdio->dma_buffer;
 
-		if (request & HIF_WRITE)
-			memcpy(tbuf, buf, len);
+		अगर (request & HIF_WRITE)
+			स_नकल(tbuf, buf, len);
 
 		bounced = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		tbuf = buf;
-	}
+	पूर्ण
 
 	ret = ath6kl_sdio_io(ar_sdio->func, request, addr, tbuf, len);
-	if ((request & HIF_READ) && bounced)
-		memcpy(buf, tbuf, len);
+	अगर ((request & HIF_READ) && bounced)
+		स_नकल(buf, tbuf, len);
 
-	if (bounced)
+	अगर (bounced)
 		mutex_unlock(&ar_sdio->dma_buffer_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __ath6kl_sdio_write_async(struct ath6kl_sdio *ar_sdio,
-				      struct bus_request *req)
-{
-	if (req->scat_req) {
+अटल व्योम __ath6kl_sdio_ग_लिखो_async(काष्ठा ath6kl_sdio *ar_sdio,
+				      काष्ठा bus_request *req)
+अणु
+	अगर (req->scat_req) अणु
 		ath6kl_sdio_scat_rw(ar_sdio, req);
-	} else {
-		void *context;
-		int status;
+	पूर्ण अन्यथा अणु
+		व्योम *context;
+		पूर्णांक status;
 
-		status = ath6kl_sdio_read_write_sync(ar_sdio->ar, req->address,
+		status = ath6kl_sdio_पढ़ो_ग_लिखो_sync(ar_sdio->ar, req->address,
 						     req->buffer, req->length,
 						     req->request);
 		context = req->packet;
-		ath6kl_sdio_free_bus_req(ar_sdio, req);
-		ath6kl_hif_rw_comp_handler(context, status);
-	}
-}
+		ath6kl_sdio_मुक्त_bus_req(ar_sdio, req);
+		ath6kl_hअगर_rw_comp_handler(context, status);
+	पूर्ण
+पूर्ण
 
-static void ath6kl_sdio_write_async_work(struct work_struct *work)
-{
-	struct ath6kl_sdio *ar_sdio;
-	struct bus_request *req, *tmp_req;
+अटल व्योम ath6kl_sdio_ग_लिखो_async_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio;
+	काष्ठा bus_request *req, *पंचांगp_req;
 
-	ar_sdio = container_of(work, struct ath6kl_sdio, wr_async_work);
+	ar_sdio = container_of(work, काष्ठा ath6kl_sdio, wr_async_work);
 
 	spin_lock_bh(&ar_sdio->wr_async_lock);
-	list_for_each_entry_safe(req, tmp_req, &ar_sdio->wr_asyncq, list) {
+	list_क्रम_each_entry_safe(req, पंचांगp_req, &ar_sdio->wr_asyncq, list) अणु
 		list_del(&req->list);
 		spin_unlock_bh(&ar_sdio->wr_async_lock);
-		__ath6kl_sdio_write_async(ar_sdio, req);
+		__ath6kl_sdio_ग_लिखो_async(ar_sdio, req);
 		spin_lock_bh(&ar_sdio->wr_async_lock);
-	}
+	पूर्ण
 	spin_unlock_bh(&ar_sdio->wr_async_lock);
-}
+पूर्ण
 
-static void ath6kl_sdio_irq_handler(struct sdio_func *func)
-{
-	int status;
-	struct ath6kl_sdio *ar_sdio;
+अटल व्योम ath6kl_sdio_irq_handler(काष्ठा sdio_func *func)
+अणु
+	पूर्णांक status;
+	काष्ठा ath6kl_sdio *ar_sdio;
 
 	ath6kl_dbg(ATH6KL_DBG_SDIO, "irq\n");
 
 	ar_sdio = sdio_get_drvdata(func);
 	atomic_set(&ar_sdio->irq_handling, 1);
 	/*
-	 * Release the host during interrups so we can pick it back up when
+	 * Release the host during पूर्णांकerrups so we can pick it back up when
 	 * we process commands.
 	 */
 	sdio_release_host(ar_sdio->func);
 
-	status = ath6kl_hif_intr_bh_handler(ar_sdio->ar);
+	status = ath6kl_hअगर_पूर्णांकr_bh_handler(ar_sdio->ar);
 	sdio_claim_host(ar_sdio->func);
 
 	atomic_set(&ar_sdio->irq_handling, 0);
 	wake_up(&ar_sdio->irq_wq);
 
 	WARN_ON(status && status != -ECANCELED);
-}
+पूर्ण
 
-static int ath6kl_sdio_power_on(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	struct sdio_func *func = ar_sdio->func;
-	int ret = 0;
+अटल पूर्णांक ath6kl_sdio_घातer_on(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	काष्ठा sdio_func *func = ar_sdio->func;
+	पूर्णांक ret = 0;
 
-	if (!ar_sdio->is_disabled)
-		return 0;
+	अगर (!ar_sdio->is_disabled)
+		वापस 0;
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "sdio power on\n");
 
 	sdio_claim_host(func);
 
 	ret = sdio_enable_func(func);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Unable to enable sdio func: %d)\n", ret);
 		sdio_release_host(func);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sdio_release_host(func);
 
 	/*
-	 * Wait for hardware to initialise. It should take a lot less than
+	 * Wait क्रम hardware to initialise. It should take a lot less than
 	 * 10 ms but let's be conservative here.
 	 */
 	msleep(10);
 
 	ret = ath6kl_sdio_config(ar);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to config sdio: %d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ar_sdio->is_disabled = false;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath6kl_sdio_power_off(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	int ret;
+अटल पूर्णांक ath6kl_sdio_घातer_off(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	पूर्णांक ret;
 
-	if (ar_sdio->is_disabled)
-		return 0;
+	अगर (ar_sdio->is_disabled)
+		वापस 0;
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT, "sdio power off\n");
 
@@ -555,25 +556,25 @@ static int ath6kl_sdio_power_off(struct ath6kl *ar)
 	ret = sdio_disable_func(ar_sdio->func);
 	sdio_release_host(ar_sdio->func);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ar_sdio->is_disabled = true;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath6kl_sdio_write_async(struct ath6kl *ar, u32 address, u8 *buffer,
+अटल पूर्णांक ath6kl_sdio_ग_लिखो_async(काष्ठा ath6kl *ar, u32 address, u8 *buffer,
 				   u32 length, u32 request,
-				   struct htc_packet *packet)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	struct bus_request *bus_req;
+				   काष्ठा htc_packet *packet)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	काष्ठा bus_request *bus_req;
 
 	bus_req = ath6kl_sdio_alloc_busreq(ar_sdio);
 
-	if (WARN_ON_ONCE(!bus_req))
-		return -ENOMEM;
+	अगर (WARN_ON_ONCE(!bus_req))
+		वापस -ENOMEM;
 
 	bus_req->address = address;
 	bus_req->buffer = buffer;
@@ -586,174 +587,174 @@ static int ath6kl_sdio_write_async(struct ath6kl *ar, u32 address, u8 *buffer,
 	spin_unlock_bh(&ar_sdio->wr_async_lock);
 	queue_work(ar->ath6kl_wq, &ar_sdio->wr_async_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ath6kl_sdio_irq_enable(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	int ret;
+अटल व्योम ath6kl_sdio_irq_enable(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	पूर्णांक ret;
 
 	sdio_claim_host(ar_sdio->func);
 
 	/* Register the isr */
 	ret =  sdio_claim_irq(ar_sdio->func, ath6kl_sdio_irq_handler);
-	if (ret)
+	अगर (ret)
 		ath6kl_err("Failed to claim sdio irq: %d\n", ret);
 
 	sdio_release_host(ar_sdio->func);
-}
+पूर्ण
 
-static bool ath6kl_sdio_is_on_irq(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+अटल bool ath6kl_sdio_is_on_irq(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
 
-	return !atomic_read(&ar_sdio->irq_handling);
-}
+	वापस !atomic_पढ़ो(&ar_sdio->irq_handling);
+पूर्ण
 
-static void ath6kl_sdio_irq_disable(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	int ret;
+अटल व्योम ath6kl_sdio_irq_disable(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	पूर्णांक ret;
 
 	sdio_claim_host(ar_sdio->func);
 
-	if (atomic_read(&ar_sdio->irq_handling)) {
+	अगर (atomic_पढ़ो(&ar_sdio->irq_handling)) अणु
 		sdio_release_host(ar_sdio->func);
 
-		ret = wait_event_interruptible(ar_sdio->irq_wq,
+		ret = रुको_event_पूर्णांकerruptible(ar_sdio->irq_wq,
 					       ath6kl_sdio_is_on_irq(ar));
-		if (ret)
-			return;
+		अगर (ret)
+			वापस;
 
 		sdio_claim_host(ar_sdio->func);
-	}
+	पूर्ण
 
 	ret = sdio_release_irq(ar_sdio->func);
-	if (ret)
+	अगर (ret)
 		ath6kl_err("Failed to release sdio irq: %d\n", ret);
 
 	sdio_release_host(ar_sdio->func);
-}
+पूर्ण
 
-static struct hif_scatter_req *ath6kl_sdio_scatter_req_get(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	struct hif_scatter_req *node = NULL;
+अटल काष्ठा hअगर_scatter_req *ath6kl_sdio_scatter_req_get(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	काष्ठा hअगर_scatter_req *node = शून्य;
 
 	spin_lock_bh(&ar_sdio->scat_lock);
 
-	if (!list_empty(&ar_sdio->scat_req)) {
+	अगर (!list_empty(&ar_sdio->scat_req)) अणु
 		node = list_first_entry(&ar_sdio->scat_req,
-					struct hif_scatter_req, list);
+					काष्ठा hअगर_scatter_req, list);
 		list_del(&node->list);
 
 		node->scat_q_depth = get_queue_depth(&ar_sdio->scat_req);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&ar_sdio->scat_lock);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-static void ath6kl_sdio_scatter_req_add(struct ath6kl *ar,
-					struct hif_scatter_req *s_req)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+अटल व्योम ath6kl_sdio_scatter_req_add(काष्ठा ath6kl *ar,
+					काष्ठा hअगर_scatter_req *s_req)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
 
 	spin_lock_bh(&ar_sdio->scat_lock);
 
 	list_add_tail(&s_req->list, &ar_sdio->scat_req);
 
 	spin_unlock_bh(&ar_sdio->scat_lock);
-}
+पूर्ण
 
-/* scatter gather read write request */
-static int ath6kl_sdio_async_rw_scatter(struct ath6kl *ar,
-					struct hif_scatter_req *scat_req)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+/* scatter gather पढ़ो ग_लिखो request */
+अटल पूर्णांक ath6kl_sdio_async_rw_scatter(काष्ठा ath6kl *ar,
+					काष्ठा hअगर_scatter_req *scat_req)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
 	u32 request = scat_req->req;
-	int status = 0;
+	पूर्णांक status = 0;
 
-	if (!scat_req->len)
-		return -EINVAL;
+	अगर (!scat_req->len)
+		वापस -EINVAL;
 
 	ath6kl_dbg(ATH6KL_DBG_SCATTER,
 		   "hif-scatter: total len: %d scatter entries: %d\n",
 		   scat_req->len, scat_req->scat_entries);
 
-	if (request & HIF_SYNCHRONOUS) {
+	अगर (request & HIF_SYNCHRONOUS) अणु
 		status = ath6kl_sdio_scat_rw(ar_sdio, scat_req->busrequest);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_lock_bh(&ar_sdio->wr_async_lock);
 		list_add_tail(&scat_req->busrequest->list, &ar_sdio->wr_asyncq);
 		spin_unlock_bh(&ar_sdio->wr_async_lock);
 		queue_work(ar->ath6kl_wq, &ar_sdio->wr_async_work);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* clean up scatter support */
-static void ath6kl_sdio_cleanup_scatter(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	struct hif_scatter_req *s_req, *tmp_req;
+अटल व्योम ath6kl_sdio_cleanup_scatter(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	काष्ठा hअगर_scatter_req *s_req, *पंचांगp_req;
 
-	/* empty the free list */
+	/* empty the मुक्त list */
 	spin_lock_bh(&ar_sdio->scat_lock);
-	list_for_each_entry_safe(s_req, tmp_req, &ar_sdio->scat_req, list) {
+	list_क्रम_each_entry_safe(s_req, पंचांगp_req, &ar_sdio->scat_req, list) अणु
 		list_del(&s_req->list);
 		spin_unlock_bh(&ar_sdio->scat_lock);
 
 		/*
 		 * FIXME: should we also call completion handler with
-		 * ath6kl_hif_rw_comp_handler() with status -ECANCELED so
-		 * that the packet is properly freed?
+		 * ath6kl_hअगर_rw_comp_handler() with status -ECANCELED so
+		 * that the packet is properly मुक्तd?
 		 */
-		if (s_req->busrequest) {
-			s_req->busrequest->scat_req = NULL;
-			ath6kl_sdio_free_bus_req(ar_sdio, s_req->busrequest);
-		}
-		kfree(s_req->virt_dma_buf);
-		kfree(s_req->sgentries);
-		kfree(s_req);
+		अगर (s_req->busrequest) अणु
+			s_req->busrequest->scat_req = शून्य;
+			ath6kl_sdio_मुक्त_bus_req(ar_sdio, s_req->busrequest);
+		पूर्ण
+		kमुक्त(s_req->virt_dma_buf);
+		kमुक्त(s_req->sgentries);
+		kमुक्त(s_req);
 
 		spin_lock_bh(&ar_sdio->scat_lock);
-	}
+	पूर्ण
 	spin_unlock_bh(&ar_sdio->scat_lock);
 
 	ar_sdio->scatter_enabled = false;
-}
+पूर्ण
 
 /* setup of HIF scatter resources */
-static int ath6kl_sdio_enable_scatter(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	struct htc_target *target = ar->htc_target;
-	int ret = 0;
+अटल पूर्णांक ath6kl_sdio_enable_scatter(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	काष्ठा htc_target *target = ar->htc_target;
+	पूर्णांक ret = 0;
 	bool virt_scat = false;
 
-	if (ar_sdio->scatter_enabled)
-		return 0;
+	अगर (ar_sdio->scatter_enabled)
+		वापस 0;
 
 	ar_sdio->scatter_enabled = true;
 
-	/* check if host supports scatter and it meets our requirements */
-	if (ar_sdio->func->card->host->max_segs < MAX_SCATTER_ENTRIES_PER_REQ) {
+	/* check अगर host supports scatter and it meets our requirements */
+	अगर (ar_sdio->func->card->host->max_segs < MAX_SCATTER_ENTRIES_PER_REQ) अणु
 		ath6kl_err("host only supports scatter of :%d entries, need: %d\n",
 			   ar_sdio->func->card->host->max_segs,
 			   MAX_SCATTER_ENTRIES_PER_REQ);
 		virt_scat = true;
-	}
+	पूर्ण
 
-	if (!virt_scat) {
+	अगर (!virt_scat) अणु
 		ret = ath6kl_sdio_alloc_prep_scat_req(ar_sdio,
 				MAX_SCATTER_ENTRIES_PER_REQ,
 				MAX_SCATTER_REQUESTS, virt_scat);
 
-		if (!ret) {
+		अगर (!ret) अणु
 			ath6kl_dbg(ATH6KL_DBG_BOOT,
 				   "hif-scatter enabled requests %d entries %d\n",
 				   MAX_SCATTER_REQUESTS,
@@ -762,22 +763,22 @@ static int ath6kl_sdio_enable_scatter(struct ath6kl *ar)
 			target->max_scat_entries = MAX_SCATTER_ENTRIES_PER_REQ;
 			target->max_xfer_szper_scatreq =
 						MAX_SCATTER_REQ_TRANSFER_SIZE;
-		} else {
+		पूर्ण अन्यथा अणु
 			ath6kl_sdio_cleanup_scatter(ar);
 			ath6kl_warn("hif scatter resource setup failed, trying virtual scatter method\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (virt_scat || ret) {
+	अगर (virt_scat || ret) अणु
 		ret = ath6kl_sdio_alloc_prep_scat_req(ar_sdio,
 				ATH6KL_SCATTER_ENTRIES_PER_REQ,
 				ATH6KL_SCATTER_REQS, virt_scat);
 
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("failed to alloc virtual scatter resources !\n");
 			ath6kl_sdio_cleanup_scatter(ar);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ath6kl_dbg(ATH6KL_DBG_BOOT,
 			   "virtual scatter enabled requests %d entries %d\n",
@@ -786,444 +787,444 @@ static int ath6kl_sdio_enable_scatter(struct ath6kl *ar)
 		target->max_scat_entries = ATH6KL_SCATTER_ENTRIES_PER_REQ;
 		target->max_xfer_szper_scatreq =
 					ATH6KL_MAX_TRANSFER_SIZE_PER_SCATTER;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_sdio_config(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	struct sdio_func *func = ar_sdio->func;
-	int ret;
+अटल पूर्णांक ath6kl_sdio_config(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	काष्ठा sdio_func *func = ar_sdio->func;
+	पूर्णांक ret;
 
 	sdio_claim_host(func);
 
-	if (ar_sdio->id->device >= SDIO_DEVICE_ID_ATHEROS_AR6003_00) {
-		/* enable 4-bit ASYNC interrupt on AR6003 or later */
+	अगर (ar_sdio->id->device >= SDIO_DEVICE_ID_ATHEROS_AR6003_00) अणु
+		/* enable 4-bit ASYNC पूर्णांकerrupt on AR6003 or later */
 		ret = ath6kl_sdio_func0_cmd52_wr_byte(func->card,
 						CCCR_SDIO_IRQ_MODE_REG,
 						SDIO_IRQ_MODE_ASYNC_4BIT_IRQ);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("Failed to enable 4-bit async irq mode %d\n",
 				   ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ath6kl_dbg(ATH6KL_DBG_BOOT, "4-bit async irq mode enabled\n");
-	}
+	पूर्ण
 
-	/* give us some time to enable, in ms */
-	func->enable_timeout = 100;
+	/* give us some समय to enable, in ms */
+	func->enable_समयout = 100;
 
 	ret = sdio_set_block_size(func, HIF_MBOX_BLOCK_SIZE);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Set sdio block size %d failed: %d)\n",
 			   HIF_MBOX_BLOCK_SIZE, ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
 	sdio_release_host(func);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath6kl_set_sdio_pm_caps(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	struct sdio_func *func = ar_sdio->func;
+अटल पूर्णांक ath6kl_set_sdio_pm_caps(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	काष्ठा sdio_func *func = ar_sdio->func;
 	mmc_pm_flag_t flags;
-	int ret;
+	पूर्णांक ret;
 
 	flags = sdio_get_host_pm_caps(func);
 
 	ath6kl_dbg(ATH6KL_DBG_SUSPEND, "sdio suspend pm_caps 0x%x\n", flags);
 
-	if (!(flags & MMC_PM_WAKE_SDIO_IRQ) ||
+	अगर (!(flags & MMC_PM_WAKE_SDIO_IRQ) ||
 	    !(flags & MMC_PM_KEEP_POWER))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("set sdio keep pwr flag failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* sdio irq wakes up host */
 	ret = sdio_set_host_pm_flags(func, MMC_PM_WAKE_SDIO_IRQ);
-	if (ret)
+	अगर (ret)
 		ath6kl_err("set sdio wake irq flag failed: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath6kl_sdio_suspend(struct ath6kl *ar, struct cfg80211_wowlan *wow)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	struct sdio_func *func = ar_sdio->func;
+अटल पूर्णांक ath6kl_sdio_suspend(काष्ठा ath6kl *ar, काष्ठा cfg80211_wowlan *wow)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	काष्ठा sdio_func *func = ar_sdio->func;
 	mmc_pm_flag_t flags;
 	bool try_deepsleep = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (ar->suspend_mode == WLAN_POWER_STATE_WOW ||
-	    (!ar->suspend_mode && wow)) {
+	अगर (ar->suspend_mode == WLAN_POWER_STATE_WOW ||
+	    (!ar->suspend_mode && wow)) अणु
 		ret = ath6kl_set_sdio_pm_caps(ar);
-		if (ret)
-			goto cut_pwr;
+		अगर (ret)
+			जाओ cut_pwr;
 
 		ret = ath6kl_cfg80211_suspend(ar, ATH6KL_CFG_SUSPEND_WOW, wow);
-		if (ret && ret != -ENOTCONN)
+		अगर (ret && ret != -ENOTCONN)
 			ath6kl_err("wow suspend failed: %d\n", ret);
 
-		if (ret &&
+		अगर (ret &&
 		    (!ar->wow_suspend_mode ||
 		     ar->wow_suspend_mode == WLAN_POWER_STATE_DEEP_SLEEP))
 			try_deepsleep = true;
-		else if (ret &&
+		अन्यथा अगर (ret &&
 			 ar->wow_suspend_mode == WLAN_POWER_STATE_CUT_PWR)
-			goto cut_pwr;
-		if (!ret)
-			return 0;
-	}
+			जाओ cut_pwr;
+		अगर (!ret)
+			वापस 0;
+	पूर्ण
 
-	if (ar->suspend_mode == WLAN_POWER_STATE_DEEP_SLEEP ||
-	    !ar->suspend_mode || try_deepsleep) {
+	अगर (ar->suspend_mode == WLAN_POWER_STATE_DEEP_SLEEP ||
+	    !ar->suspend_mode || try_deepsleep) अणु
 		flags = sdio_get_host_pm_caps(func);
-		if (!(flags & MMC_PM_KEEP_POWER))
-			goto cut_pwr;
+		अगर (!(flags & MMC_PM_KEEP_POWER))
+			जाओ cut_pwr;
 
 		ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
-		if (ret)
-			goto cut_pwr;
+		अगर (ret)
+			जाओ cut_pwr;
 
 		/*
 		 * Workaround to support Deep Sleep with MSM, set the host pm
 		 * flag as MMC_PM_WAKE_SDIO_IRQ to allow SDCC deiver to disable
-		 * the sdc2_clock and internally allows MSM to enter
-		 * TCXO shutdown properly.
+		 * the sdc2_घड़ी and पूर्णांकernally allows MSM to enter
+		 * TCXO shutकरोwn properly.
 		 */
-		if ((flags & MMC_PM_WAKE_SDIO_IRQ)) {
+		अगर ((flags & MMC_PM_WAKE_SDIO_IRQ)) अणु
 			ret = sdio_set_host_pm_flags(func,
 						MMC_PM_WAKE_SDIO_IRQ);
-			if (ret)
-				goto cut_pwr;
-		}
+			अगर (ret)
+				जाओ cut_pwr;
+		पूर्ण
 
 		ret = ath6kl_cfg80211_suspend(ar, ATH6KL_CFG_SUSPEND_DEEPSLEEP,
-					      NULL);
-		if (ret)
-			goto cut_pwr;
+					      शून्य);
+		अगर (ret)
+			जाओ cut_pwr;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 cut_pwr:
-	if (func->card && func->card->host)
+	अगर (func->card && func->card->host)
 		func->card->host->pm_flags &= ~MMC_PM_KEEP_POWER;
 
-	return ath6kl_cfg80211_suspend(ar, ATH6KL_CFG_SUSPEND_CUTPOWER, NULL);
-}
+	वापस ath6kl_cfg80211_suspend(ar, ATH6KL_CFG_SUSPEND_CUTPOWER, शून्य);
+पूर्ण
 
-static int ath6kl_sdio_resume(struct ath6kl *ar)
-{
-	switch (ar->state) {
-	case ATH6KL_STATE_OFF:
-	case ATH6KL_STATE_CUTPOWER:
+अटल पूर्णांक ath6kl_sdio_resume(काष्ठा ath6kl *ar)
+अणु
+	चयन (ar->state) अणु
+	हाल ATH6KL_STATE_OFF:
+	हाल ATH6KL_STATE_CUTPOWER:
 		ath6kl_dbg(ATH6KL_DBG_SUSPEND,
 			   "sdio resume configuring sdio\n");
 
-		/* need to set sdio settings after power is cut from sdio */
+		/* need to set sdio settings after घातer is cut from sdio */
 		ath6kl_sdio_config(ar);
-		break;
+		अवरोध;
 
-	case ATH6KL_STATE_ON:
-		break;
+	हाल ATH6KL_STATE_ON:
+		अवरोध;
 
-	case ATH6KL_STATE_DEEPSLEEP:
-		break;
+	हाल ATH6KL_STATE_DEEPSLEEP:
+		अवरोध;
 
-	case ATH6KL_STATE_WOW:
-		break;
+	हाल ATH6KL_STATE_WOW:
+		अवरोध;
 
-	case ATH6KL_STATE_SUSPENDING:
-		break;
+	हाल ATH6KL_STATE_SUSPENDING:
+		अवरोध;
 
-	case ATH6KL_STATE_RESUMING:
-		break;
+	हाल ATH6KL_STATE_RESUMING:
+		अवरोध;
 
-	case ATH6KL_STATE_RECOVERY:
-		break;
-	}
+	हाल ATH6KL_STATE_RECOVERY:
+		अवरोध;
+	पूर्ण
 
 	ath6kl_cfg80211_resume(ar);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* set the window address register (using 4-byte register access ). */
-static int ath6kl_set_addrwin_reg(struct ath6kl *ar, u32 reg_addr, u32 addr)
-{
-	int status;
+/* set the winकरोw address रेजिस्टर (using 4-byte रेजिस्टर access ). */
+अटल पूर्णांक ath6kl_set_addrwin_reg(काष्ठा ath6kl *ar, u32 reg_addr, u32 addr)
+अणु
+	पूर्णांक status;
 	u8 addr_val[4];
 	s32 i;
 
 	/*
-	 * Write bytes 1,2,3 of the register to set the upper address bytes,
+	 * Write bytes 1,2,3 of the रेजिस्टर to set the upper address bytes,
 	 * the LSB is written last to initiate the access cycle
 	 */
 
-	for (i = 1; i <= 3; i++) {
+	क्रम (i = 1; i <= 3; i++) अणु
 		/*
 		 * Fill the buffer with the address byte value we want to
-		 * hit 4 times.
+		 * hit 4 बार.
 		 */
-		memset(addr_val, ((u8 *)&addr)[i], 4);
+		स_रखो(addr_val, ((u8 *)&addr)[i], 4);
 
 		/*
-		 * Hit each byte of the register address with a 4-byte
-		 * write operation to the same address, this is a harmless
+		 * Hit each byte of the रेजिस्टर address with a 4-byte
+		 * ग_लिखो operation to the same address, this is a harmless
 		 * operation.
 		 */
-		status = ath6kl_sdio_read_write_sync(ar, reg_addr + i, addr_val,
+		status = ath6kl_sdio_पढ़ो_ग_लिखो_sync(ar, reg_addr + i, addr_val,
 					     4, HIF_WR_SYNC_BYTE_FIX);
-		if (status)
-			break;
-	}
+		अगर (status)
+			अवरोध;
+	पूर्ण
 
-	if (status) {
+	अगर (status) अणु
 		ath6kl_err("%s: failed to write initial bytes of 0x%x to window reg: 0x%X\n",
 			   __func__, addr, reg_addr);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	/*
-	 * Write the address register again, this time write the whole
-	 * 4-byte value. The effect here is that the LSB write causes the
-	 * cycle to start, the extra 3 byte write to bytes 1,2,3 has no
+	 * Write the address रेजिस्टर again, this समय ग_लिखो the whole
+	 * 4-byte value. The effect here is that the LSB ग_लिखो causes the
+	 * cycle to start, the extra 3 byte ग_लिखो to bytes 1,2,3 has no
 	 * effect since we are writing the same values again
 	 */
-	status = ath6kl_sdio_read_write_sync(ar, reg_addr, (u8 *)(&addr),
+	status = ath6kl_sdio_पढ़ो_ग_लिखो_sync(ar, reg_addr, (u8 *)(&addr),
 				     4, HIF_WR_SYNC_BYTE_INC);
 
-	if (status) {
+	अगर (status) अणु
 		ath6kl_err("%s: failed to write 0x%x to window reg: 0x%X\n",
 			   __func__, addr, reg_addr);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_sdio_diag_read32(struct ath6kl *ar, u32 address, u32 *data)
-{
-	int status;
+अटल पूर्णांक ath6kl_sdio_diag_पढ़ो32(काष्ठा ath6kl *ar, u32 address, u32 *data)
+अणु
+	पूर्णांक status;
 
-	/* set window register to start read cycle */
+	/* set winकरोw रेजिस्टर to start पढ़ो cycle */
 	status = ath6kl_set_addrwin_reg(ar, WINDOW_READ_ADDR_ADDRESS,
 					address);
 
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	/* read the data */
-	status = ath6kl_sdio_read_write_sync(ar, WINDOW_DATA_ADDRESS,
-				(u8 *)data, sizeof(u32), HIF_RD_SYNC_BYTE_INC);
-	if (status) {
+	/* पढ़ो the data */
+	status = ath6kl_sdio_पढ़ो_ग_लिखो_sync(ar, WINDOW_DATA_ADDRESS,
+				(u8 *)data, माप(u32), HIF_RD_SYNC_BYTE_INC);
+	अगर (status) अणु
 		ath6kl_err("%s: failed to read from window data addr\n",
 			   __func__);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ath6kl_sdio_diag_write32(struct ath6kl *ar, u32 address,
+अटल पूर्णांक ath6kl_sdio_diag_ग_लिखो32(काष्ठा ath6kl *ar, u32 address,
 				    __le32 data)
-{
-	int status;
-	u32 val = (__force u32) data;
+अणु
+	पूर्णांक status;
+	u32 val = (__क्रमce u32) data;
 
-	/* set write data */
-	status = ath6kl_sdio_read_write_sync(ar, WINDOW_DATA_ADDRESS,
-				(u8 *) &val, sizeof(u32), HIF_WR_SYNC_BYTE_INC);
-	if (status) {
+	/* set ग_लिखो data */
+	status = ath6kl_sdio_पढ़ो_ग_लिखो_sync(ar, WINDOW_DATA_ADDRESS,
+				(u8 *) &val, माप(u32), HIF_WR_SYNC_BYTE_INC);
+	अगर (status) अणु
 		ath6kl_err("%s: failed to write 0x%x to window data addr\n",
 			   __func__, data);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	/* set window register, which starts the write cycle */
-	return ath6kl_set_addrwin_reg(ar, WINDOW_WRITE_ADDR_ADDRESS,
+	/* set winकरोw रेजिस्टर, which starts the ग_लिखो cycle */
+	वापस ath6kl_set_addrwin_reg(ar, WINDOW_WRITE_ADDR_ADDRESS,
 				      address);
-}
+पूर्ण
 
-static int ath6kl_sdio_bmi_credits(struct ath6kl *ar)
-{
+अटल पूर्णांक ath6kl_sdio_bmi_credits(काष्ठा ath6kl *ar)
+अणु
 	u32 addr;
-	unsigned long timeout;
-	int ret;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक ret;
 
 	ar->bmi.cmd_credits = 0;
 
-	/* Read the counter register to get the command credits */
+	/* Read the counter रेजिस्टर to get the command credits */
 	addr = COUNT_DEC_ADDRESS + (HTC_MAILBOX_NUM_MAX + ENDPOINT1) * 4;
 
-	timeout = jiffies + msecs_to_jiffies(BMI_COMMUNICATION_TIMEOUT);
-	while (time_before(jiffies, timeout) && !ar->bmi.cmd_credits) {
+	समयout = jअगरfies + msecs_to_jअगरfies(BMI_COMMUNICATION_TIMEOUT);
+	जबतक (समय_beक्रमe(jअगरfies, समयout) && !ar->bmi.cmd_credits) अणु
 		/*
 		 * Hit the credit counter with a 4-byte access, the first byte
-		 * read will hit the counter and cause a decrement, while the
-		 * remaining 3 bytes has no effect. The rationale behind this
+		 * पढ़ो will hit the counter and cause a decrement, जबतक the
+		 * reमुख्यing 3 bytes has no effect. The rationale behind this
 		 * is to make all HIF accesses 4-byte aligned.
 		 */
-		ret = ath6kl_sdio_read_write_sync(ar, addr,
+		ret = ath6kl_sdio_पढ़ो_ग_लिखो_sync(ar, addr,
 					 (u8 *)&ar->bmi.cmd_credits, 4,
 					 HIF_RD_SYNC_BYTE_INC);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("Unable to decrement the command credit count register: %d\n",
 				   ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/* The counter is only 8 bits.
 		 * Ignore anything in the upper 3 bytes
 		 */
 		ar->bmi.cmd_credits &= 0xFF;
-	}
+	पूर्ण
 
-	if (!ar->bmi.cmd_credits) {
+	अगर (!ar->bmi.cmd_credits) अणु
 		ath6kl_err("bmi communication timeout\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_bmi_get_rx_lkahd(struct ath6kl *ar)
-{
-	unsigned long timeout;
+अटल पूर्णांक ath6kl_bmi_get_rx_lkahd(काष्ठा ath6kl *ar)
+अणु
+	अचिन्हित दीर्घ समयout;
 	u32 rx_word = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	timeout = jiffies + msecs_to_jiffies(BMI_COMMUNICATION_TIMEOUT);
-	while ((time_before(jiffies, timeout)) && !rx_word) {
-		ret = ath6kl_sdio_read_write_sync(ar,
+	समयout = jअगरfies + msecs_to_jअगरfies(BMI_COMMUNICATION_TIMEOUT);
+	जबतक ((समय_beक्रमe(jअगरfies, समयout)) && !rx_word) अणु
+		ret = ath6kl_sdio_पढ़ो_ग_लिखो_sync(ar,
 					RX_LOOKAHEAD_VALID_ADDRESS,
-					(u8 *)&rx_word, sizeof(rx_word),
+					(u8 *)&rx_word, माप(rx_word),
 					HIF_RD_SYNC_BYTE_INC);
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("unable to read RX_LOOKAHEAD_VALID\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		 /* all we really want is one bit */
 		rx_word &= (1 << ENDPOINT1);
-	}
+	पूर्ण
 
-	if (!rx_word) {
+	अगर (!rx_word) अणु
 		ath6kl_err("bmi_recv_buf FIFO empty\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath6kl_sdio_bmi_write(struct ath6kl *ar, u8 *buf, u32 len)
-{
-	int ret;
+अटल पूर्णांक ath6kl_sdio_bmi_ग_लिखो(काष्ठा ath6kl *ar, u8 *buf, u32 len)
+अणु
+	पूर्णांक ret;
 	u32 addr;
 
 	ret = ath6kl_sdio_bmi_credits(ar);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	addr = ar->mbox_info.htc_addr;
 
-	ret = ath6kl_sdio_read_write_sync(ar, addr, buf, len,
+	ret = ath6kl_sdio_पढ़ो_ग_लिखो_sync(ar, addr, buf, len,
 					  HIF_WR_SYNC_BYTE_INC);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("unable to send the bmi data to the device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_sdio_bmi_read(struct ath6kl *ar, u8 *buf, u32 len)
-{
-	int ret;
+अटल पूर्णांक ath6kl_sdio_bmi_पढ़ो(काष्ठा ath6kl *ar, u8 *buf, u32 len)
+अणु
+	पूर्णांक ret;
 	u32 addr;
 
 	/*
-	 * During normal bootup, small reads may be required.
-	 * Rather than issue an HIF Read and then wait as the Target
-	 * adds successive bytes to the FIFO, we wait here until
+	 * During normal bootup, small पढ़ोs may be required.
+	 * Rather than issue an HIF Read and then रुको as the Target
+	 * adds successive bytes to the FIFO, we रुको here until
 	 * we know that response data is available.
 	 *
-	 * This allows us to cleanly timeout on an unexpected
+	 * This allows us to cleanly समयout on an unexpected
 	 * Target failure rather than risk problems at the HIF level.
-	 * In particular, this avoids SDIO timeouts and possibly garbage
-	 * data on some host controllers.  And on an interconnect
+	 * In particular, this aव्योमs SDIO समयouts and possibly garbage
+	 * data on some host controllers.  And on an पूर्णांकerconnect
 	 * such as Compact Flash (as well as some SDIO masters) which
-	 * does not provide any indication on data timeout, it avoids
+	 * करोes not provide any indication on data समयout, it aव्योमs
 	 * a potential hang or garbage response.
 	 *
-	 * Synchronization is more difficult for reads larger than the
+	 * Synchronization is more dअगरficult क्रम पढ़ोs larger than the
 	 * size of the MBOX FIFO (128B), because the Target is unable
 	 * to push the 129th byte of data until AFTER the Host posts an
-	 * HIF Read and removes some FIFO data.  So for large reads the
+	 * HIF Read and हटाओs some FIFO data.  So क्रम large पढ़ोs the
 	 * Host proceeds to post an HIF Read BEFORE all the data is
-	 * actually available to read.  Fortunately, large BMI reads do
-	 * not occur in practice -- they're supported for debug/development.
+	 * actually available to पढ़ो.  Fortunately, large BMI पढ़ोs करो
+	 * not occur in practice -- they're supported क्रम debug/development.
 	 *
-	 * So Host/Target BMI synchronization is divided into these cases:
+	 * So Host/Target BMI synchronization is भागided पूर्णांकo these हालs:
 	 *  CASE 1: length < 4
 	 *        Should not happen
 	 *
 	 *  CASE 2: 4 <= length <= 128
-	 *        Wait for first 4 bytes to be in FIFO
-	 *        If CONSERVATIVE_BMI_READ is enabled, also wait for
+	 *        Wait क्रम first 4 bytes to be in FIFO
+	 *        If CONSERVATIVE_BMI_READ is enabled, also रुको क्रम
 	 *        a BMI command credit, which indicates that the ENTIRE
 	 *        response is available in the the FIFO
 	 *
 	 *  CASE 3: length > 128
-	 *        Wait for the first 4 bytes to be in FIFO
+	 *        Wait क्रम the first 4 bytes to be in FIFO
 	 *
-	 * For most uses, a small timeout should be sufficient and we will
+	 * For most uses, a small समयout should be sufficient and we will
 	 * usually see a response quickly; but there may be some unusual
-	 * (debug) cases of BMI_EXECUTE where we want an larger timeout.
-	 * For now, we use an unbounded busy loop while waiting for
+	 * (debug) हालs of BMI_EXECUTE where we want an larger समयout.
+	 * For now, we use an unbounded busy loop जबतक रुकोing क्रम
 	 * BMI_EXECUTE.
 	 *
-	 * If BMI_EXECUTE ever needs to support longer-latency execution,
+	 * If BMI_EXECUTE ever needs to support दीर्घer-latency execution,
 	 * especially in production, this code needs to be enhanced to sleep
 	 * and yield.  Also note that BMI_COMMUNICATION_TIMEOUT is currently
 	 * a function of Host processor speed.
 	 */
-	if (len >= 4) { /* NB: Currently, always true */
+	अगर (len >= 4) अणु /* NB: Currently, always true */
 		ret = ath6kl_bmi_get_rx_lkahd(ar);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	addr = ar->mbox_info.htc_addr;
-	ret = ath6kl_sdio_read_write_sync(ar, addr, buf, len,
+	ret = ath6kl_sdio_पढ़ो_ग_लिखो_sync(ar, addr, buf, len,
 				  HIF_RD_SYNC_BYTE_INC);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Unable to read the bmi data from the device: %d\n",
 			   ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ath6kl_sdio_stop(struct ath6kl *ar)
-{
-	struct ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
-	struct bus_request *req, *tmp_req;
-	void *context;
+अटल व्योम ath6kl_sdio_stop(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio = ath6kl_sdio_priv(ar);
+	काष्ठा bus_request *req, *पंचांगp_req;
+	व्योम *context;
 
 	/* FIXME: make sure that wq is not queued again */
 
@@ -1231,29 +1232,29 @@ static void ath6kl_sdio_stop(struct ath6kl *ar)
 
 	spin_lock_bh(&ar_sdio->wr_async_lock);
 
-	list_for_each_entry_safe(req, tmp_req, &ar_sdio->wr_asyncq, list) {
+	list_क्रम_each_entry_safe(req, पंचांगp_req, &ar_sdio->wr_asyncq, list) अणु
 		list_del(&req->list);
 
-		if (req->scat_req) {
+		अगर (req->scat_req) अणु
 			/* this is a scatter gather request */
 			req->scat_req->status = -ECANCELED;
 			req->scat_req->complete(ar_sdio->ar->htc_target,
 						req->scat_req);
-		} else {
+		पूर्ण अन्यथा अणु
 			context = req->packet;
-			ath6kl_sdio_free_bus_req(ar_sdio, req);
-			ath6kl_hif_rw_comp_handler(context, -ECANCELED);
-		}
-	}
+			ath6kl_sdio_मुक्त_bus_req(ar_sdio, req);
+			ath6kl_hअगर_rw_comp_handler(context, -ECANCELED);
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_bh(&ar_sdio->wr_async_lock);
 
 	WARN_ON(get_queue_depth(&ar_sdio->scat_req) != 4);
-}
+पूर्ण
 
-static const struct ath6kl_hif_ops ath6kl_sdio_ops = {
-	.read_write_sync = ath6kl_sdio_read_write_sync,
-	.write_async = ath6kl_sdio_write_async,
+अटल स्थिर काष्ठा ath6kl_hअगर_ops ath6kl_sdio_ops = अणु
+	.पढ़ो_ग_लिखो_sync = ath6kl_sdio_पढ़ो_ग_लिखो_sync,
+	.ग_लिखो_async = ath6kl_sdio_ग_लिखो_async,
 	.irq_enable = ath6kl_sdio_irq_enable,
 	.irq_disable = ath6kl_sdio_irq_disable,
 	.scatter_req_get = ath6kl_sdio_scatter_req_get,
@@ -1263,68 +1264,68 @@ static const struct ath6kl_hif_ops ath6kl_sdio_ops = {
 	.cleanup_scatter = ath6kl_sdio_cleanup_scatter,
 	.suspend = ath6kl_sdio_suspend,
 	.resume = ath6kl_sdio_resume,
-	.diag_read32 = ath6kl_sdio_diag_read32,
-	.diag_write32 = ath6kl_sdio_diag_write32,
-	.bmi_read = ath6kl_sdio_bmi_read,
-	.bmi_write = ath6kl_sdio_bmi_write,
-	.power_on = ath6kl_sdio_power_on,
-	.power_off = ath6kl_sdio_power_off,
+	.diag_पढ़ो32 = ath6kl_sdio_diag_पढ़ो32,
+	.diag_ग_लिखो32 = ath6kl_sdio_diag_ग_लिखो32,
+	.bmi_पढ़ो = ath6kl_sdio_bmi_पढ़ो,
+	.bmi_ग_लिखो = ath6kl_sdio_bmi_ग_लिखो,
+	.घातer_on = ath6kl_sdio_घातer_on,
+	.घातer_off = ath6kl_sdio_घातer_off,
 	.stop = ath6kl_sdio_stop,
-};
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 
 /*
- * Empty handlers so that mmc subsystem doesn't remove us entirely during
+ * Empty handlers so that mmc subप्रणाली करोesn't हटाओ us entirely during
  * suspend. We instead follow cfg80211 suspend/resume handlers.
  */
-static int ath6kl_sdio_pm_suspend(struct device *device)
-{
+अटल पूर्णांक ath6kl_sdio_pm_suspend(काष्ठा device *device)
+अणु
 	ath6kl_dbg(ATH6KL_DBG_SUSPEND, "sdio pm suspend\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath6kl_sdio_pm_resume(struct device *device)
-{
+अटल पूर्णांक ath6kl_sdio_pm_resume(काष्ठा device *device)
+अणु
 	ath6kl_dbg(ATH6KL_DBG_SUSPEND, "sdio pm resume\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(ath6kl_sdio_pm_ops, ath6kl_sdio_pm_suspend,
+अटल SIMPLE_DEV_PM_OPS(ath6kl_sdio_pm_ops, ath6kl_sdio_pm_suspend,
 			 ath6kl_sdio_pm_resume);
 
-#define ATH6KL_SDIO_PM_OPS (&ath6kl_sdio_pm_ops)
+#घोषणा ATH6KL_SDIO_PM_OPS (&ath6kl_sdio_pm_ops)
 
-#else
+#अन्यथा
 
-#define ATH6KL_SDIO_PM_OPS NULL
+#घोषणा ATH6KL_SDIO_PM_OPS शून्य
 
-#endif /* CONFIG_PM_SLEEP */
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static int ath6kl_sdio_probe(struct sdio_func *func,
-			     const struct sdio_device_id *id)
-{
-	int ret;
-	struct ath6kl_sdio *ar_sdio;
-	struct ath6kl *ar;
-	int count;
+अटल पूर्णांक ath6kl_sdio_probe(काष्ठा sdio_func *func,
+			     स्थिर काष्ठा sdio_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा ath6kl_sdio *ar_sdio;
+	काष्ठा ath6kl *ar;
+	पूर्णांक count;
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT,
 		   "sdio new func %d vendor 0x%x device 0x%x block 0x%x/0x%x\n",
-		   func->num, func->vendor, func->device,
+		   func->num, func->venकरोr, func->device,
 		   func->max_blksize, func->cur_blksize);
 
-	ar_sdio = kzalloc(sizeof(struct ath6kl_sdio), GFP_KERNEL);
-	if (!ar_sdio)
-		return -ENOMEM;
+	ar_sdio = kzalloc(माप(काष्ठा ath6kl_sdio), GFP_KERNEL);
+	अगर (!ar_sdio)
+		वापस -ENOMEM;
 
 	ar_sdio->dma_buffer = kzalloc(HIF_DMA_BUFFER_SIZE, GFP_KERNEL);
-	if (!ar_sdio->dma_buffer) {
+	अगर (!ar_sdio->dma_buffer) अणु
 		ret = -ENOMEM;
-		goto err_hif;
-	}
+		जाओ err_hअगर;
+	पूर्ण
 
 	ar_sdio->func = func;
 	sdio_set_drvdata(func, ar_sdio);
@@ -1338,62 +1339,62 @@ static int ath6kl_sdio_probe(struct sdio_func *func,
 	mutex_init(&ar_sdio->dma_buffer_mutex);
 
 	INIT_LIST_HEAD(&ar_sdio->scat_req);
-	INIT_LIST_HEAD(&ar_sdio->bus_req_freeq);
+	INIT_LIST_HEAD(&ar_sdio->bus_req_मुक्तq);
 	INIT_LIST_HEAD(&ar_sdio->wr_asyncq);
 
-	INIT_WORK(&ar_sdio->wr_async_work, ath6kl_sdio_write_async_work);
+	INIT_WORK(&ar_sdio->wr_async_work, ath6kl_sdio_ग_लिखो_async_work);
 
-	init_waitqueue_head(&ar_sdio->irq_wq);
+	init_रुकोqueue_head(&ar_sdio->irq_wq);
 
-	for (count = 0; count < BUS_REQUEST_MAX_NUM; count++)
-		ath6kl_sdio_free_bus_req(ar_sdio, &ar_sdio->bus_req[count]);
+	क्रम (count = 0; count < BUS_REQUEST_MAX_NUM; count++)
+		ath6kl_sdio_मुक्त_bus_req(ar_sdio, &ar_sdio->bus_req[count]);
 
 	ar = ath6kl_core_create(&ar_sdio->func->dev);
-	if (!ar) {
+	अगर (!ar) अणु
 		ath6kl_err("Failed to alloc ath6kl core\n");
 		ret = -ENOMEM;
-		goto err_dma;
-	}
+		जाओ err_dma;
+	पूर्ण
 
 	ar_sdio->ar = ar;
-	ar->hif_type = ATH6KL_HIF_TYPE_SDIO;
-	ar->hif_priv = ar_sdio;
-	ar->hif_ops = &ath6kl_sdio_ops;
+	ar->hअगर_type = ATH6KL_HIF_TYPE_SDIO;
+	ar->hअगर_priv = ar_sdio;
+	ar->hअगर_ops = &ath6kl_sdio_ops;
 	ar->bmi.max_data_size = 256;
 
 	ath6kl_sdio_set_mbox_info(ar);
 
 	ret = ath6kl_sdio_config(ar);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to config sdio: %d\n", ret);
-		goto err_core_alloc;
-	}
+		जाओ err_core_alloc;
+	पूर्ण
 
 	ret = ath6kl_core_init(ar, ATH6KL_HTC_TYPE_MBOX);
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Failed to init ath6kl core\n");
-		goto err_core_alloc;
-	}
+		जाओ err_core_alloc;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 err_core_alloc:
 	ath6kl_core_destroy(ar_sdio->ar);
 err_dma:
-	kfree(ar_sdio->dma_buffer);
-err_hif:
-	kfree(ar_sdio);
+	kमुक्त(ar_sdio->dma_buffer);
+err_hअगर:
+	kमुक्त(ar_sdio);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ath6kl_sdio_remove(struct sdio_func *func)
-{
-	struct ath6kl_sdio *ar_sdio;
+अटल व्योम ath6kl_sdio_हटाओ(काष्ठा sdio_func *func)
+अणु
+	काष्ठा ath6kl_sdio *ar_sdio;
 
 	ath6kl_dbg(ATH6KL_DBG_BOOT,
 		   "sdio removed func %d vendor 0x%x device 0x%x\n",
-		   func->num, func->vendor, func->device);
+		   func->num, func->venकरोr, func->device);
 
 	ar_sdio = sdio_get_drvdata(func);
 
@@ -1403,73 +1404,73 @@ static void ath6kl_sdio_remove(struct sdio_func *func)
 	ath6kl_core_cleanup(ar_sdio->ar);
 	ath6kl_core_destroy(ar_sdio->ar);
 
-	kfree(ar_sdio->dma_buffer);
-	kfree(ar_sdio);
-}
+	kमुक्त(ar_sdio->dma_buffer);
+	kमुक्त(ar_sdio);
+पूर्ण
 
-static const struct sdio_device_id ath6kl_sdio_devices[] = {
-	{SDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6003_00)},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6003_01)},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_00)},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_01)},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_02)},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_18)},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_19)},
-	{},
-};
+अटल स्थिर काष्ठा sdio_device_id ath6kl_sdio_devices[] = अणु
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6003_00)पूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6003_01)पूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_00)पूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_01)पूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_02)पूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_18)पूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_ATHEROS, SDIO_DEVICE_ID_ATHEROS_AR6004_19)पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(sdio, ath6kl_sdio_devices);
 
-static struct sdio_driver ath6kl_sdio_driver = {
+अटल काष्ठा sdio_driver ath6kl_sdio_driver = अणु
 	.name = "ath6kl_sdio",
 	.id_table = ath6kl_sdio_devices,
 	.probe = ath6kl_sdio_probe,
-	.remove = ath6kl_sdio_remove,
+	.हटाओ = ath6kl_sdio_हटाओ,
 	.drv.pm = ATH6KL_SDIO_PM_OPS,
-};
+पूर्ण;
 
-static int __init ath6kl_sdio_init(void)
-{
-	int ret;
+अटल पूर्णांक __init ath6kl_sdio_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = sdio_register_driver(&ath6kl_sdio_driver);
-	if (ret)
+	ret = sdio_रेजिस्टर_driver(&ath6kl_sdio_driver);
+	अगर (ret)
 		ath6kl_err("sdio driver registration failed: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit ath6kl_sdio_exit(void)
-{
-	sdio_unregister_driver(&ath6kl_sdio_driver);
-}
+अटल व्योम __निकास ath6kl_sdio_निकास(व्योम)
+अणु
+	sdio_unरेजिस्टर_driver(&ath6kl_sdio_driver);
+पूर्ण
 
 module_init(ath6kl_sdio_init);
-module_exit(ath6kl_sdio_exit);
+module_निकास(ath6kl_sdio_निकास);
 
 MODULE_AUTHOR("Atheros Communications, Inc.");
 MODULE_DESCRIPTION("Driver support for Atheros AR600x SDIO devices");
 MODULE_LICENSE("Dual BSD/GPL");
 
-MODULE_FIRMWARE(AR6003_HW_2_0_FW_DIR "/" AR6003_HW_2_0_OTP_FILE);
-MODULE_FIRMWARE(AR6003_HW_2_0_FW_DIR "/" AR6003_HW_2_0_FIRMWARE_FILE);
-MODULE_FIRMWARE(AR6003_HW_2_0_FW_DIR "/" AR6003_HW_2_0_PATCH_FILE);
-MODULE_FIRMWARE(AR6003_HW_2_0_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6003_HW_2_0_DEFAULT_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6003_HW_2_1_1_FW_DIR "/" AR6003_HW_2_1_1_OTP_FILE);
-MODULE_FIRMWARE(AR6003_HW_2_1_1_FW_DIR "/" AR6003_HW_2_1_1_FIRMWARE_FILE);
-MODULE_FIRMWARE(AR6003_HW_2_1_1_FW_DIR "/" AR6003_HW_2_1_1_PATCH_FILE);
-MODULE_FIRMWARE(AR6003_HW_2_1_1_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6003_HW_2_1_1_DEFAULT_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_0_FW_DIR "/" AR6004_HW_1_0_FIRMWARE_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_0_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_0_DEFAULT_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_1_FW_DIR "/" AR6004_HW_1_1_FIRMWARE_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_1_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_1_DEFAULT_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_2_FW_DIR "/" AR6004_HW_1_2_FIRMWARE_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_2_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_2_DEFAULT_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_3_FW_DIR "/" AR6004_HW_1_3_FIRMWARE_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_3_BOARD_DATA_FILE);
-MODULE_FIRMWARE(AR6004_HW_1_3_DEFAULT_BOARD_DATA_FILE);
+MODULE_FIRMWARE(AR6003_HW_2_0_FW_सूची "/" AR6003_HW_2_0_OTP_खाता);
+MODULE_FIRMWARE(AR6003_HW_2_0_FW_सूची "/" AR6003_HW_2_0_FIRMWARE_खाता);
+MODULE_FIRMWARE(AR6003_HW_2_0_FW_सूची "/" AR6003_HW_2_0_PATCH_खाता);
+MODULE_FIRMWARE(AR6003_HW_2_0_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6003_HW_2_0_DEFAULT_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6003_HW_2_1_1_FW_सूची "/" AR6003_HW_2_1_1_OTP_खाता);
+MODULE_FIRMWARE(AR6003_HW_2_1_1_FW_सूची "/" AR6003_HW_2_1_1_FIRMWARE_खाता);
+MODULE_FIRMWARE(AR6003_HW_2_1_1_FW_सूची "/" AR6003_HW_2_1_1_PATCH_खाता);
+MODULE_FIRMWARE(AR6003_HW_2_1_1_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6003_HW_2_1_1_DEFAULT_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_0_FW_सूची "/" AR6004_HW_1_0_FIRMWARE_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_0_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_0_DEFAULT_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_1_FW_सूची "/" AR6004_HW_1_1_FIRMWARE_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_1_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_1_DEFAULT_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_2_FW_सूची "/" AR6004_HW_1_2_FIRMWARE_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_2_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_2_DEFAULT_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_3_FW_सूची "/" AR6004_HW_1_3_FIRMWARE_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_3_BOARD_DATA_खाता);
+MODULE_FIRMWARE(AR6004_HW_1_3_DEFAULT_BOARD_DATA_खाता);

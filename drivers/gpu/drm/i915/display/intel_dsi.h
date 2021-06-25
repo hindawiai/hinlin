@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2013 Intel Corporation
+ * Copyright तऊ 2013 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,72 +22,72 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _INTEL_DSI_H
-#define _INTEL_DSI_H
+#अगर_अघोषित _INTEL_DSI_H
+#घोषणा _INTEL_DSI_H
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_mipi_dsi.h>
 
-#include "intel_display_types.h"
+#समावेश "intel_display_types.h"
 
-#define INTEL_DSI_VIDEO_MODE	0
-#define INTEL_DSI_COMMAND_MODE	1
+#घोषणा INTEL_DSI_VIDEO_MODE	0
+#घोषणा INTEL_DSI_COMMAND_MODE	1
 
 /* Dual Link support */
-#define DSI_DUAL_LINK_NONE		0
-#define DSI_DUAL_LINK_FRONT_BACK	1
-#define DSI_DUAL_LINK_PIXEL_ALT		2
+#घोषणा DSI_DUAL_LINK_NONE		0
+#घोषणा DSI_DUAL_LINK_FRONT_BACK	1
+#घोषणा DSI_DUAL_LINK_PIXEL_ALT		2
 
-struct intel_dsi_host;
+काष्ठा पूर्णांकel_dsi_host;
 
-struct intel_dsi {
-	struct intel_encoder base;
+काष्ठा पूर्णांकel_dsi अणु
+	काष्ठा पूर्णांकel_encoder base;
 
-	struct intel_dsi_host *dsi_hosts[I915_MAX_PORTS];
-	intel_wakeref_t io_wakeref[I915_MAX_PORTS];
+	काष्ठा पूर्णांकel_dsi_host *dsi_hosts[I915_MAX_PORTS];
+	पूर्णांकel_wakeref_t io_wakeref[I915_MAX_PORTS];
 
-	/* GPIO Desc for panel and backlight control */
-	struct gpio_desc *gpio_panel;
-	struct gpio_desc *gpio_backlight;
+	/* GPIO Desc क्रम panel and backlight control */
+	काष्ठा gpio_desc *gpio_panel;
+	काष्ठा gpio_desc *gpio_backlight;
 
-	struct intel_connector *attached_connector;
+	काष्ठा पूर्णांकel_connector *attached_connector;
 
 	/* bit mask of ports (vlv dsi) or phys (icl dsi) being driven */
-	union {
+	जोड़ अणु
 		u16 ports;	/* VLV DSI */
 		u16 phys;	/* ICL DSI */
-	};
+	पूर्ण;
 
-	/* if true, use HS mode, otherwise LP */
+	/* अगर true, use HS mode, otherwise LP */
 	bool hs;
 
-	/* virtual channel */
-	int channel;
+	/* भव channel */
+	पूर्णांक channel;
 
 	/* Video mode or command mode */
 	u16 operation_mode;
 
 	/* number of DSI lanes */
-	unsigned int lane_count;
+	अचिन्हित पूर्णांक lane_count;
 
 	/* i2c bus associated with the slave device */
-	int i2c_bus_num;
+	पूर्णांक i2c_bus_num;
 
 	/*
-	 * video mode pixel format
+	 * video mode pixel क्रमmat
 	 *
-	 * XXX: consolidate on .format in struct mipi_dsi_device.
+	 * XXX: consolidate on .क्रमmat in काष्ठा mipi_dsi_device.
 	 */
-	enum mipi_dsi_pixel_format pixel_format;
+	क्रमागत mipi_dsi_pixel_क्रमmat pixel_क्रमmat;
 
-	/* video mode format for MIPI_VIDEO_MODE_FORMAT register */
-	u32 video_mode_format;
+	/* video mode क्रमmat क्रम MIPI_VIDEO_MODE_FORMAT रेजिस्टर */
+	u32 video_mode_क्रमmat;
 
-	/* eot for MIPI_EOT_DISABLE register */
+	/* eot क्रम MIPI_EOT_DISABLE रेजिस्टर */
 	u8 eotp_pkt;
-	u8 clock_stop;
+	u8 घड़ी_stop;
 
-	u8 escape_clk_div;
+	u8 escape_clk_भाग;
 	u8 dual_link;
 
 	u16 dcs_backlight_ports;
@@ -97,7 +98,7 @@ struct intel_dsi {
 
 	u8 pixel_overlap;
 	u32 port_bits;
-	u32 bw_timer;
+	u32 bw_समयr;
 	u32 dphy_reg;
 
 	/* data lanes dphy timing */
@@ -105,11 +106,11 @@ struct intel_dsi {
 	u32 video_frmt_cfg_bits;
 	u16 lp_byte_clk;
 
-	/* timeouts in byte clocks */
-	u16 hs_tx_timeout;
-	u16 lp_rx_timeout;
+	/* समयouts in byte घड़ीs */
+	u16 hs_tx_समयout;
+	u16 lp_rx_समयout;
 	u16 turn_arnd_val;
-	u16 rst_timer_val;
+	u16 rst_समयr_val;
 	u16 hs_to_lp_count;
 	u16 clk_lp_to_hs_count;
 	u16 clk_hs_to_lp_count;
@@ -124,95 +125,95 @@ struct intel_dsi {
 	u16 panel_on_delay;
 	u16 panel_off_delay;
 	u16 panel_pwr_cycle_delay;
-};
+पूर्ण;
 
-struct intel_dsi_host {
-	struct mipi_dsi_host base;
-	struct intel_dsi *intel_dsi;
-	enum port port;
+काष्ठा पूर्णांकel_dsi_host अणु
+	काष्ठा mipi_dsi_host base;
+	काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi;
+	क्रमागत port port;
 
 	/* our little hack */
-	struct mipi_dsi_device *device;
-};
+	काष्ठा mipi_dsi_device *device;
+पूर्ण;
 
-static inline struct intel_dsi_host *to_intel_dsi_host(struct mipi_dsi_host *h)
-{
-	return container_of(h, struct intel_dsi_host, base);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_dsi_host *to_पूर्णांकel_dsi_host(काष्ठा mipi_dsi_host *h)
+अणु
+	वापस container_of(h, काष्ठा पूर्णांकel_dsi_host, base);
+पूर्ण
 
-#define for_each_dsi_port(__port, __ports_mask) \
-	for_each_port_masked(__port, __ports_mask)
-#define for_each_dsi_phy(__phy, __phys_mask) \
-	for_each_phy_masked(__phy, __phys_mask)
+#घोषणा क्रम_each_dsi_port(__port, __ports_mask) \
+	क्रम_each_port_masked(__port, __ports_mask)
+#घोषणा क्रम_each_dsi_phy(__phy, __phys_mask) \
+	क्रम_each_phy_masked(__phy, __phys_mask)
 
-static inline struct intel_dsi *enc_to_intel_dsi(struct intel_encoder *encoder)
-{
-	return container_of(&encoder->base, struct intel_dsi, base.base);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_dsi *enc_to_पूर्णांकel_dsi(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	वापस container_of(&encoder->base, काष्ठा पूर्णांकel_dsi, base.base);
+पूर्ण
 
-static inline bool is_vid_mode(struct intel_dsi *intel_dsi)
-{
-	return intel_dsi->operation_mode == INTEL_DSI_VIDEO_MODE;
-}
+अटल अंतरभूत bool is_vid_mode(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi)
+अणु
+	वापस पूर्णांकel_dsi->operation_mode == INTEL_DSI_VIDEO_MODE;
+पूर्ण
 
-static inline bool is_cmd_mode(struct intel_dsi *intel_dsi)
-{
-	return intel_dsi->operation_mode == INTEL_DSI_COMMAND_MODE;
-}
+अटल अंतरभूत bool is_cmd_mode(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi)
+अणु
+	वापस पूर्णांकel_dsi->operation_mode == INTEL_DSI_COMMAND_MODE;
+पूर्ण
 
-static inline u16 intel_dsi_encoder_ports(struct intel_encoder *encoder)
-{
-	return enc_to_intel_dsi(encoder)->ports;
-}
+अटल अंतरभूत u16 पूर्णांकel_dsi_encoder_ports(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	वापस enc_to_पूर्णांकel_dsi(encoder)->ports;
+पूर्ण
 
 /* icl_dsi.c */
-void icl_dsi_init(struct drm_i915_private *dev_priv);
-void icl_dsi_frame_update(struct intel_crtc_state *crtc_state);
+व्योम icl_dsi_init(काष्ठा drm_i915_निजी *dev_priv);
+व्योम icl_dsi_frame_update(काष्ठा पूर्णांकel_crtc_state *crtc_state);
 
-/* intel_dsi.c */
-int intel_dsi_bitrate(const struct intel_dsi *intel_dsi);
-int intel_dsi_tlpx_ns(const struct intel_dsi *intel_dsi);
-enum drm_panel_orientation
-intel_dsi_get_panel_orientation(struct intel_connector *connector);
+/* पूर्णांकel_dsi.c */
+पूर्णांक पूर्णांकel_dsi_bitrate(स्थिर काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi);
+पूर्णांक पूर्णांकel_dsi_tlpx_ns(स्थिर काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi);
+क्रमागत drm_panel_orientation
+पूर्णांकel_dsi_get_panel_orientation(काष्ठा पूर्णांकel_connector *connector);
 
 /* vlv_dsi.c */
-void vlv_dsi_wait_for_fifo_empty(struct intel_dsi *intel_dsi, enum port port);
-enum mipi_dsi_pixel_format pixel_format_from_register_bits(u32 fmt);
-int intel_dsi_get_modes(struct drm_connector *connector);
-enum drm_mode_status intel_dsi_mode_valid(struct drm_connector *connector,
-					  struct drm_display_mode *mode);
-struct intel_dsi_host *intel_dsi_host_init(struct intel_dsi *intel_dsi,
-					   const struct mipi_dsi_host_ops *funcs,
-					   enum port port);
-void vlv_dsi_init(struct drm_i915_private *dev_priv);
+व्योम vlv_dsi_रुको_क्रम_fअगरo_empty(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi, क्रमागत port port);
+क्रमागत mipi_dsi_pixel_क्रमmat pixel_क्रमmat_from_रेजिस्टर_bits(u32 fmt);
+पूर्णांक पूर्णांकel_dsi_get_modes(काष्ठा drm_connector *connector);
+क्रमागत drm_mode_status पूर्णांकel_dsi_mode_valid(काष्ठा drm_connector *connector,
+					  काष्ठा drm_display_mode *mode);
+काष्ठा पूर्णांकel_dsi_host *पूर्णांकel_dsi_host_init(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi,
+					   स्थिर काष्ठा mipi_dsi_host_ops *funcs,
+					   क्रमागत port port);
+व्योम vlv_dsi_init(काष्ठा drm_i915_निजी *dev_priv);
 
 /* vlv_dsi_pll.c */
-int vlv_dsi_pll_compute(struct intel_encoder *encoder,
-			struct intel_crtc_state *config);
-void vlv_dsi_pll_enable(struct intel_encoder *encoder,
-			const struct intel_crtc_state *config);
-void vlv_dsi_pll_disable(struct intel_encoder *encoder);
-u32 vlv_dsi_get_pclk(struct intel_encoder *encoder,
-		     struct intel_crtc_state *config);
-void vlv_dsi_reset_clocks(struct intel_encoder *encoder, enum port port);
+पूर्णांक vlv_dsi_pll_compute(काष्ठा पूर्णांकel_encoder *encoder,
+			काष्ठा पूर्णांकel_crtc_state *config);
+व्योम vlv_dsi_pll_enable(काष्ठा पूर्णांकel_encoder *encoder,
+			स्थिर काष्ठा पूर्णांकel_crtc_state *config);
+व्योम vlv_dsi_pll_disable(काष्ठा पूर्णांकel_encoder *encoder);
+u32 vlv_dsi_get_pclk(काष्ठा पूर्णांकel_encoder *encoder,
+		     काष्ठा पूर्णांकel_crtc_state *config);
+व्योम vlv_dsi_reset_घड़ीs(काष्ठा पूर्णांकel_encoder *encoder, क्रमागत port port);
 
-bool bxt_dsi_pll_is_enabled(struct drm_i915_private *dev_priv);
-int bxt_dsi_pll_compute(struct intel_encoder *encoder,
-			struct intel_crtc_state *config);
-void bxt_dsi_pll_enable(struct intel_encoder *encoder,
-			const struct intel_crtc_state *config);
-void bxt_dsi_pll_disable(struct intel_encoder *encoder);
-u32 bxt_dsi_get_pclk(struct intel_encoder *encoder,
-		     struct intel_crtc_state *config);
-void bxt_dsi_reset_clocks(struct intel_encoder *encoder, enum port port);
+bool bxt_dsi_pll_is_enabled(काष्ठा drm_i915_निजी *dev_priv);
+पूर्णांक bxt_dsi_pll_compute(काष्ठा पूर्णांकel_encoder *encoder,
+			काष्ठा पूर्णांकel_crtc_state *config);
+व्योम bxt_dsi_pll_enable(काष्ठा पूर्णांकel_encoder *encoder,
+			स्थिर काष्ठा पूर्णांकel_crtc_state *config);
+व्योम bxt_dsi_pll_disable(काष्ठा पूर्णांकel_encoder *encoder);
+u32 bxt_dsi_get_pclk(काष्ठा पूर्णांकel_encoder *encoder,
+		     काष्ठा पूर्णांकel_crtc_state *config);
+व्योम bxt_dsi_reset_घड़ीs(काष्ठा पूर्णांकel_encoder *encoder, क्रमागत port port);
 
-/* intel_dsi_vbt.c */
-bool intel_dsi_vbt_init(struct intel_dsi *intel_dsi, u16 panel_id);
-void intel_dsi_vbt_gpio_init(struct intel_dsi *intel_dsi, bool panel_is_on);
-void intel_dsi_vbt_gpio_cleanup(struct intel_dsi *intel_dsi);
-void intel_dsi_vbt_exec_sequence(struct intel_dsi *intel_dsi,
-				 enum mipi_seq seq_id);
-void intel_dsi_msleep(struct intel_dsi *intel_dsi, int msec);
-void intel_dsi_log_params(struct intel_dsi *intel_dsi);
+/* पूर्णांकel_dsi_vbt.c */
+bool पूर्णांकel_dsi_vbt_init(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi, u16 panel_id);
+व्योम पूर्णांकel_dsi_vbt_gpio_init(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi, bool panel_is_on);
+व्योम पूर्णांकel_dsi_vbt_gpio_cleanup(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi);
+व्योम पूर्णांकel_dsi_vbt_exec_sequence(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi,
+				 क्रमागत mipi_seq seq_id);
+व्योम पूर्णांकel_dsi_msleep(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi, पूर्णांक msec);
+व्योम पूर्णांकel_dsi_log_params(काष्ठा पूर्णांकel_dsi *पूर्णांकel_dsi);
 
-#endif /* _INTEL_DSI_H */
+#पूर्ण_अगर /* _INTEL_DSI_H */

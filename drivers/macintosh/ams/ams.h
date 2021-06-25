@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/kthread.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/of_device.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/i2c.h>
+#समावेश <linux/input.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/of_device.h>
 
-enum ams_irq {
+क्रमागत ams_irq अणु
 	AMS_IRQ_FREEFALL = 0x01,
 	AMS_IRQ_SHOCK = 0x02,
 	AMS_IRQ_GLOBAL = 0x04,
@@ -15,57 +16,57 @@ enum ams_irq {
 		AMS_IRQ_FREEFALL |
 		AMS_IRQ_SHOCK |
 		AMS_IRQ_GLOBAL,
-};
+पूर्ण;
 
-struct ams {
+काष्ठा ams अणु
 	/* Locks */
 	spinlock_t irq_lock;
-	struct mutex lock;
+	काष्ठा mutex lock;
 
 	/* General properties */
-	struct device_node *of_node;
-	struct platform_device *of_dev;
-	char has_device;
-	char vflag;
+	काष्ठा device_node *of_node;
+	काष्ठा platक्रमm_device *of_dev;
+	अक्षर has_device;
+	अक्षर vflag;
 	u32 orient1;
 	u32 orient2;
 
 	/* Interrupt worker */
-	struct work_struct worker;
+	काष्ठा work_काष्ठा worker;
 	u8 worker_irqs;
 
 	/* Implementation
 	 *
-	 * Only call these functions with the main lock held.
+	 * Only call these functions with the मुख्य lock held.
 	 */
-	void (*exit)(void);
+	व्योम (*निकास)(व्योम);
 
-	void (*get_xyz)(s8 *x, s8 *y, s8 *z);
-	u8 (*get_vendor)(void);
+	व्योम (*get_xyz)(s8 *x, s8 *y, s8 *z);
+	u8 (*get_venकरोr)(व्योम);
 
-	void (*clear_irq)(enum ams_irq reg);
+	व्योम (*clear_irq)(क्रमागत ams_irq reg);
 
-#ifdef CONFIG_SENSORS_AMS_I2C
+#अगर_घोषित CONFIG_SENSORS_AMS_I2C
 	/* I2C properties */
-	struct i2c_client *i2c_client;
-#endif
+	काष्ठा i2c_client *i2c_client;
+#पूर्ण_अगर
 
 	/* Joystick emulation */
-	struct input_dev *idev;
+	काष्ठा input_dev *idev;
 	__u16 bustype;
 
 	/* calibrated null values */
-	int xcalib, ycalib, zcalib;
-};
+	पूर्णांक xcalib, ycalib, zcalib;
+पूर्ण;
 
-extern struct ams ams_info;
+बाह्य काष्ठा ams ams_info;
 
-extern void ams_sensors(s8 *x, s8 *y, s8 *z);
-extern int ams_sensor_attach(void);
-extern void ams_sensor_detach(void);
+बाह्य व्योम ams_sensors(s8 *x, s8 *y, s8 *z);
+बाह्य पूर्णांक ams_sensor_attach(व्योम);
+बाह्य व्योम ams_sensor_detach(व्योम);
 
-extern int ams_pmu_init(struct device_node *np);
-extern int ams_i2c_init(struct device_node *np);
+बाह्य पूर्णांक ams_pmu_init(काष्ठा device_node *np);
+बाह्य पूर्णांक ams_i2c_init(काष्ठा device_node *np);
 
-extern int ams_input_init(void);
-extern void ams_input_exit(void);
+बाह्य पूर्णांक ams_input_init(व्योम);
+बाह्य व्योम ams_input_निकास(व्योम);

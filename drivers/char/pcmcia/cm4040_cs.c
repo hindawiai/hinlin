@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
- * A driver for the Omnikey PCMCIA smartcard reader CardMan 4040
+ * A driver क्रम the Omnikey PCMCIA smartcard पढ़ोer CardMan 4040
  *
  * (c) 2000-2004 Omnikey AG (http://www.omnikey.com/)
  *
- * (C) 2005-2006 Harald Welte <laforge@gnumonks.org>
- * 	- add support for poll()
+ * (C) 2005-2006 Harald Welte <laक्रमge@gnumonks.org>
+ * 	- add support क्रम poll()
  * 	- driver cleanup
- * 	- add waitqueues
+ * 	- add रुकोqueues
  * 	- adhere to linux kernel coding style and policies
- * 	- support 2.6.13 "new style" pcmcia interface
- * 	- add class interface for udev device creation
+ * 	- support 2.6.13 "new style" pcmcia पूर्णांकerface
+ * 	- add class पूर्णांकerface क्रम udev device creation
  *
  * The device basically is a USB CCID compliant device that has been
  * attached to an I/O-Mapped FIFO.
@@ -17,524 +18,524 @@
  * All rights reserved, Dual BSD/GPL Licensed.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/delay.h>
-#include <linux/poll.h>
-#include <linux/mutex.h>
-#include <linux/wait.h>
-#include <linux/uaccess.h>
-#include <asm/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/cisreg.h>
-#include <pcmcia/ciscode.h>
-#include <pcmcia/ds.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/cisreg.h>
+#समावेश <pcmcia/ciscode.h>
+#समावेश <pcmcia/ds.h>
 
-#include "cm4040_cs.h"
+#समावेश "cm4040_cs.h"
 
 
-#define reader_to_dev(x)	(&x->p_dev->dev)
+#घोषणा पढ़ोer_to_dev(x)	(&x->p_dev->dev)
 
 /* n (debug level) is ignored */
 /* additional debug output may be enabled by re-compiling with
  * CM4040_DEBUG set */
-/* #define CM4040_DEBUG */
-#define DEBUGP(n, rdr, x, args...) do { 		\
-		dev_dbg(reader_to_dev(rdr), "%s:" x, 	\
+/* #घोषणा CM4040_DEBUG */
+#घोषणा DEBUGP(n, rdr, x, args...) करो अणु 		\
+		dev_dbg(पढ़ोer_to_dev(rdr), "%s:" x, 	\
 			   __func__ , ## args);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-static DEFINE_MUTEX(cm4040_mutex);
+अटल DEFINE_MUTEX(cm4040_mutex);
 
-#define	CCID_DRIVER_BULK_DEFAULT_TIMEOUT  	(150*HZ)
-#define	CCID_DRIVER_ASYNC_POWERUP_TIMEOUT 	(35*HZ)
-#define	CCID_DRIVER_MINIMUM_TIMEOUT 		(3*HZ)
-#define READ_WRITE_BUFFER_SIZE 512
-#define POLL_LOOP_COUNT				1000
+#घोषणा	CCID_DRIVER_BULK_DEFAULT_TIMEOUT  	(150*HZ)
+#घोषणा	CCID_DRIVER_ASYNC_POWERUP_TIMEOUT 	(35*HZ)
+#घोषणा	CCID_DRIVER_MINIMUM_TIMEOUT 		(3*HZ)
+#घोषणा READ_WRITE_BUFFER_SIZE 512
+#घोषणा POLL_LOOP_COUNT				1000
 
-/* how often to poll for fifo status change */
-#define POLL_PERIOD 				msecs_to_jiffies(10)
+/* how often to poll क्रम fअगरo status change */
+#घोषणा POLL_PERIOD 				msecs_to_jअगरfies(10)
 
-static void reader_release(struct pcmcia_device *link);
+अटल व्योम पढ़ोer_release(काष्ठा pcmcia_device *link);
 
-static int major;
-static struct class *cmx_class;
+अटल पूर्णांक major;
+अटल काष्ठा class *cmx_class;
 
-#define		BS_READABLE	0x01
-#define		BS_WRITABLE	0x02
+#घोषणा		BS_READABLE	0x01
+#घोषणा		BS_WRITABLE	0x02
 
-struct reader_dev {
-	struct pcmcia_device	*p_dev;
-	wait_queue_head_t	devq;
-	wait_queue_head_t	poll_wait;
-	wait_queue_head_t	read_wait;
-	wait_queue_head_t	write_wait;
-	unsigned long 	  	buffer_status;
-	unsigned long     	timeout;
-	unsigned char     	s_buf[READ_WRITE_BUFFER_SIZE];
-	unsigned char     	r_buf[READ_WRITE_BUFFER_SIZE];
-	struct timer_list 	poll_timer;
-};
+काष्ठा पढ़ोer_dev अणु
+	काष्ठा pcmcia_device	*p_dev;
+	रुको_queue_head_t	devq;
+	रुको_queue_head_t	poll_रुको;
+	रुको_queue_head_t	पढ़ो_रुको;
+	रुको_queue_head_t	ग_लिखो_रुको;
+	अचिन्हित दीर्घ 	  	buffer_status;
+	अचिन्हित दीर्घ     	समयout;
+	अचिन्हित अक्षर     	s_buf[READ_WRITE_BUFFER_SIZE];
+	अचिन्हित अक्षर     	r_buf[READ_WRITE_BUFFER_SIZE];
+	काष्ठा समयr_list 	poll_समयr;
+पूर्ण;
 
-static struct pcmcia_device *dev_table[CM_MAX_DEV];
+अटल काष्ठा pcmcia_device *dev_table[CM_MAX_DEV];
 
-#ifndef CM4040_DEBUG
-#define	xoutb	outb
-#define	xinb	inb
-#else
-static inline void xoutb(unsigned char val, unsigned short port)
-{
+#अगर_अघोषित CM4040_DEBUG
+#घोषणा	xoutb	outb
+#घोषणा	xinb	inb
+#अन्यथा
+अटल अंतरभूत व्योम xoutb(अचिन्हित अक्षर val, अचिन्हित लघु port)
+अणु
 	pr_debug("outb(val=%.2x,port=%.4x)\n", val, port);
 	outb(val, port);
-}
+पूर्ण
 
-static inline unsigned char xinb(unsigned short port)
-{
-	unsigned char val;
+अटल अंतरभूत अचिन्हित अक्षर xinb(अचिन्हित लघु port)
+अणु
+	अचिन्हित अक्षर val;
 
 	val = inb(port);
 	pr_debug("%.2x=inb(%.4x)\n", val, port);
-	return val;
-}
-#endif
+	वापस val;
+पूर्ण
+#पूर्ण_अगर
 
-/* poll the device fifo status register.  not to be confused with
+/* poll the device fअगरo status रेजिस्टर.  not to be confused with
  * the poll syscall. */
-static void cm4040_do_poll(struct timer_list *t)
-{
-	struct reader_dev *dev = from_timer(dev, t, poll_timer);
-	unsigned int obs = xinb(dev->p_dev->resource[0]->start
+अटल व्योम cm4040_करो_poll(काष्ठा समयr_list *t)
+अणु
+	काष्ठा पढ़ोer_dev *dev = from_समयr(dev, t, poll_समयr);
+	अचिन्हित पूर्णांक obs = xinb(dev->p_dev->resource[0]->start
 				+ REG_OFFSET_BUFFER_STATUS);
 
-	if ((obs & BSR_BULK_IN_FULL)) {
+	अगर ((obs & BSR_BULK_IN_FULL)) अणु
 		set_bit(BS_READABLE, &dev->buffer_status);
 		DEBUGP(4, dev, "waking up read_wait\n");
-		wake_up_interruptible(&dev->read_wait);
-	} else
+		wake_up_पूर्णांकerruptible(&dev->पढ़ो_रुको);
+	पूर्ण अन्यथा
 		clear_bit(BS_READABLE, &dev->buffer_status);
 
-	if (!(obs & BSR_BULK_OUT_FULL)) {
+	अगर (!(obs & BSR_BULK_OUT_FULL)) अणु
 		set_bit(BS_WRITABLE, &dev->buffer_status);
 		DEBUGP(4, dev, "waking up write_wait\n");
-		wake_up_interruptible(&dev->write_wait);
-	} else
+		wake_up_पूर्णांकerruptible(&dev->ग_लिखो_रुको);
+	पूर्ण अन्यथा
 		clear_bit(BS_WRITABLE, &dev->buffer_status);
 
-	if (dev->buffer_status)
-		wake_up_interruptible(&dev->poll_wait);
+	अगर (dev->buffer_status)
+		wake_up_पूर्णांकerruptible(&dev->poll_रुको);
 
-	mod_timer(&dev->poll_timer, jiffies + POLL_PERIOD);
-}
+	mod_समयr(&dev->poll_समयr, jअगरfies + POLL_PERIOD);
+पूर्ण
 
-static void cm4040_stop_poll(struct reader_dev *dev)
-{
-	del_timer_sync(&dev->poll_timer);
-}
+अटल व्योम cm4040_stop_poll(काष्ठा पढ़ोer_dev *dev)
+अणु
+	del_समयr_sync(&dev->poll_समयr);
+पूर्ण
 
-static int wait_for_bulk_out_ready(struct reader_dev *dev)
-{
-	int i, rc;
-	int iobase = dev->p_dev->resource[0]->start;
+अटल पूर्णांक रुको_क्रम_bulk_out_पढ़ोy(काष्ठा पढ़ोer_dev *dev)
+अणु
+	पूर्णांक i, rc;
+	पूर्णांक iobase = dev->p_dev->resource[0]->start;
 
-	for (i = 0; i < POLL_LOOP_COUNT; i++) {
-		if ((xinb(iobase + REG_OFFSET_BUFFER_STATUS)
-		    & BSR_BULK_OUT_FULL) == 0) {
+	क्रम (i = 0; i < POLL_LOOP_COUNT; i++) अणु
+		अगर ((xinb(iobase + REG_OFFSET_BUFFER_STATUS)
+		    & BSR_BULK_OUT_FULL) == 0) अणु
 			DEBUGP(4, dev, "BulkOut empty (i=%d)\n", i);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 	DEBUGP(4, dev, "wait_event_interruptible_timeout(timeout=%ld\n",
-		dev->timeout);
-	rc = wait_event_interruptible_timeout(dev->write_wait,
+		dev->समयout);
+	rc = रुको_event_पूर्णांकerruptible_समयout(dev->ग_लिखो_रुको,
 					      test_and_clear_bit(BS_WRITABLE,
 						       &dev->buffer_status),
-					      dev->timeout);
+					      dev->समयout);
 
-	if (rc > 0)
+	अगर (rc > 0)
 		DEBUGP(4, dev, "woke up: BulkOut empty\n");
-	else if (rc == 0)
+	अन्यथा अगर (rc == 0)
 		DEBUGP(4, dev, "woke up: BulkOut full, returning 0 :(\n");
-	else if (rc < 0)
+	अन्यथा अगर (rc < 0)
 		DEBUGP(4, dev, "woke up: signal arrived\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Write to Sync Control Register */
-static int write_sync_reg(unsigned char val, struct reader_dev *dev)
-{
-	int iobase = dev->p_dev->resource[0]->start;
-	int rc;
+अटल पूर्णांक ग_लिखो_sync_reg(अचिन्हित अक्षर val, काष्ठा पढ़ोer_dev *dev)
+अणु
+	पूर्णांक iobase = dev->p_dev->resource[0]->start;
+	पूर्णांक rc;
 
-	rc = wait_for_bulk_out_ready(dev);
-	if (rc <= 0)
-		return rc;
+	rc = रुको_क्रम_bulk_out_पढ़ोy(dev);
+	अगर (rc <= 0)
+		वापस rc;
 
 	xoutb(val, iobase + REG_OFFSET_SYNC_CONTROL);
-	rc = wait_for_bulk_out_ready(dev);
-	if (rc <= 0)
-		return rc;
+	rc = रुको_क्रम_bulk_out_पढ़ोy(dev);
+	अगर (rc <= 0)
+		वापस rc;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int wait_for_bulk_in_ready(struct reader_dev *dev)
-{
-	int i, rc;
-	int iobase = dev->p_dev->resource[0]->start;
+अटल पूर्णांक रुको_क्रम_bulk_in_पढ़ोy(काष्ठा पढ़ोer_dev *dev)
+अणु
+	पूर्णांक i, rc;
+	पूर्णांक iobase = dev->p_dev->resource[0]->start;
 
-	for (i = 0; i < POLL_LOOP_COUNT; i++) {
-		if ((xinb(iobase + REG_OFFSET_BUFFER_STATUS)
-		    & BSR_BULK_IN_FULL) == BSR_BULK_IN_FULL) {
+	क्रम (i = 0; i < POLL_LOOP_COUNT; i++) अणु
+		अगर ((xinb(iobase + REG_OFFSET_BUFFER_STATUS)
+		    & BSR_BULK_IN_FULL) == BSR_BULK_IN_FULL) अणु
 			DEBUGP(3, dev, "BulkIn full (i=%d)\n", i);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 	DEBUGP(4, dev, "wait_event_interruptible_timeout(timeout=%ld\n",
-		dev->timeout);
-	rc = wait_event_interruptible_timeout(dev->read_wait,
+		dev->समयout);
+	rc = रुको_event_पूर्णांकerruptible_समयout(dev->पढ़ो_रुको,
 					      test_and_clear_bit(BS_READABLE,
 						 	&dev->buffer_status),
-					      dev->timeout);
-	if (rc > 0)
+					      dev->समयout);
+	अगर (rc > 0)
 		DEBUGP(4, dev, "woke up: BulkIn full\n");
-	else if (rc == 0)
+	अन्यथा अगर (rc == 0)
 		DEBUGP(4, dev, "woke up: BulkIn not full, returning 0 :(\n");
-	else if (rc < 0)
+	अन्यथा अगर (rc < 0)
 		DEBUGP(4, dev, "woke up: signal arrived\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t cm4040_read(struct file *filp, char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	struct reader_dev *dev = filp->private_data;
-	int iobase = dev->p_dev->resource[0]->start;
-	size_t bytes_to_read;
-	unsigned long i;
-	size_t min_bytes_to_read;
-	int rc;
-	unsigned char uc;
+अटल sमाप_प्रकार cm4040_पढ़ो(काष्ठा file *filp, अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा पढ़ोer_dev *dev = filp->निजी_data;
+	पूर्णांक iobase = dev->p_dev->resource[0]->start;
+	माप_प्रकार bytes_to_पढ़ो;
+	अचिन्हित दीर्घ i;
+	माप_प्रकार min_bytes_to_पढ़ो;
+	पूर्णांक rc;
+	अचिन्हित अक्षर uc;
 
 	DEBUGP(2, dev, "-> cm4040_read(%s,%d)\n", current->comm, current->pid);
 
-	if (count == 0)
-		return 0;
+	अगर (count == 0)
+		वापस 0;
 
-	if (count < 10)
-		return -EFAULT;
+	अगर (count < 10)
+		वापस -EFAULT;
 
-	if (filp->f_flags & O_NONBLOCK) {
+	अगर (filp->f_flags & O_NONBLOCK) अणु
 		DEBUGP(4, dev, "filep->f_flags O_NONBLOCK set\n");
 		DEBUGP(2, dev, "<- cm4040_read (failure)\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (!pcmcia_dev_present(dev->p_dev))
-		return -ENODEV;
+	अगर (!pcmcia_dev_present(dev->p_dev))
+		वापस -ENODEV;
 
-	for (i = 0; i < 5; i++) {
-		rc = wait_for_bulk_in_ready(dev);
-		if (rc <= 0) {
+	क्रम (i = 0; i < 5; i++) अणु
+		rc = रुको_क्रम_bulk_in_पढ़ोy(dev);
+		अगर (rc <= 0) अणु
 			DEBUGP(5, dev, "wait_for_bulk_in_ready rc=%.2x\n", rc);
 			DEBUGP(2, dev, "<- cm4040_read (failed)\n");
-			if (rc == -ERESTARTSYS)
-				return rc;
-			return -EIO;
-		}
+			अगर (rc == -ERESTARTSYS)
+				वापस rc;
+			वापस -EIO;
+		पूर्ण
 	  	dev->r_buf[i] = xinb(iobase + REG_OFFSET_BULK_IN);
-#ifdef CM4040_DEBUG
+#अगर_घोषित CM4040_DEBUG
 		pr_debug("%lu:%2x ", i, dev->r_buf[i]);
-	}
+	पूर्ण
 	pr_debug("\n");
-#else
-	}
-#endif
+#अन्यथा
+	पूर्ण
+#पूर्ण_अगर
 
-	bytes_to_read = 5 + le32_to_cpu(*(__le32 *)&dev->r_buf[1]);
+	bytes_to_पढ़ो = 5 + le32_to_cpu(*(__le32 *)&dev->r_buf[1]);
 
-	DEBUGP(6, dev, "BytesToRead=%zu\n", bytes_to_read);
+	DEBUGP(6, dev, "BytesToRead=%zu\n", bytes_to_पढ़ो);
 
-	min_bytes_to_read = min(count, bytes_to_read + 5);
-	min_bytes_to_read = min_t(size_t, min_bytes_to_read, READ_WRITE_BUFFER_SIZE);
+	min_bytes_to_पढ़ो = min(count, bytes_to_पढ़ो + 5);
+	min_bytes_to_पढ़ो = min_t(माप_प्रकार, min_bytes_to_पढ़ो, READ_WRITE_BUFFER_SIZE);
 
-	DEBUGP(6, dev, "Min=%zu\n", min_bytes_to_read);
+	DEBUGP(6, dev, "Min=%zu\n", min_bytes_to_पढ़ो);
 
-	for (i = 0; i < (min_bytes_to_read-5); i++) {
-		rc = wait_for_bulk_in_ready(dev);
-		if (rc <= 0) {
+	क्रम (i = 0; i < (min_bytes_to_पढ़ो-5); i++) अणु
+		rc = रुको_क्रम_bulk_in_पढ़ोy(dev);
+		अगर (rc <= 0) अणु
 			DEBUGP(5, dev, "wait_for_bulk_in_ready rc=%.2x\n", rc);
 			DEBUGP(2, dev, "<- cm4040_read (failed)\n");
-			if (rc == -ERESTARTSYS)
-				return rc;
-			return -EIO;
-		}
+			अगर (rc == -ERESTARTSYS)
+				वापस rc;
+			वापस -EIO;
+		पूर्ण
 		dev->r_buf[i+5] = xinb(iobase + REG_OFFSET_BULK_IN);
-#ifdef CM4040_DEBUG
+#अगर_घोषित CM4040_DEBUG
 		pr_debug("%lu:%2x ", i, dev->r_buf[i]);
-	}
+	पूर्ण
 	pr_debug("\n");
-#else
-	}
-#endif
+#अन्यथा
+	पूर्ण
+#पूर्ण_अगर
 
-	*ppos = min_bytes_to_read;
-	if (copy_to_user(buf, dev->r_buf, min_bytes_to_read))
-		return -EFAULT;
+	*ppos = min_bytes_to_पढ़ो;
+	अगर (copy_to_user(buf, dev->r_buf, min_bytes_to_पढ़ो))
+		वापस -EFAULT;
 
-	rc = wait_for_bulk_in_ready(dev);
-	if (rc <= 0) {
+	rc = रुको_क्रम_bulk_in_पढ़ोy(dev);
+	अगर (rc <= 0) अणु
 		DEBUGP(5, dev, "wait_for_bulk_in_ready rc=%.2x\n", rc);
 		DEBUGP(2, dev, "<- cm4040_read (failed)\n");
-		if (rc == -ERESTARTSYS)
-			return rc;
-		return -EIO;
-	}
+		अगर (rc == -ERESTARTSYS)
+			वापस rc;
+		वापस -EIO;
+	पूर्ण
 
-	rc = write_sync_reg(SCR_READER_TO_HOST_DONE, dev);
-	if (rc <= 0) {
+	rc = ग_लिखो_sync_reg(SCR_READER_TO_HOST_DONE, dev);
+	अगर (rc <= 0) अणु
 		DEBUGP(5, dev, "write_sync_reg c=%.2x\n", rc);
 		DEBUGP(2, dev, "<- cm4040_read (failed)\n");
-		if (rc == -ERESTARTSYS)
-			return rc;
-		else
-			return -EIO;
-	}
+		अगर (rc == -ERESTARTSYS)
+			वापस rc;
+		अन्यथा
+			वापस -EIO;
+	पूर्ण
 
 	uc = xinb(iobase + REG_OFFSET_BULK_IN);
 
 	DEBUGP(2, dev, "<- cm4040_read (successfully)\n");
-	return min_bytes_to_read;
-}
+	वापस min_bytes_to_पढ़ो;
+पूर्ण
 
-static ssize_t cm4040_write(struct file *filp, const char __user *buf,
-			 size_t count, loff_t *ppos)
-{
-	struct reader_dev *dev = filp->private_data;
-	int iobase = dev->p_dev->resource[0]->start;
-	ssize_t rc;
-	int i;
-	unsigned int bytes_to_write;
+अटल sमाप_प्रकार cm4040_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा पढ़ोer_dev *dev = filp->निजी_data;
+	पूर्णांक iobase = dev->p_dev->resource[0]->start;
+	sमाप_प्रकार rc;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक bytes_to_ग_लिखो;
 
 	DEBUGP(2, dev, "-> cm4040_write(%s,%d)\n", current->comm, current->pid);
 
-	if (count == 0) {
+	अगर (count == 0) अणु
 		DEBUGP(2, dev, "<- cm4040_write empty read (successfully)\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if ((count < 5) || (count > READ_WRITE_BUFFER_SIZE)) {
+	अगर ((count < 5) || (count > READ_WRITE_BUFFER_SIZE)) अणु
 		DEBUGP(2, dev, "<- cm4040_write buffersize=%zd < 5\n", count);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (filp->f_flags & O_NONBLOCK) {
+	अगर (filp->f_flags & O_NONBLOCK) अणु
 		DEBUGP(4, dev, "filep->f_flags O_NONBLOCK set\n");
 		DEBUGP(4, dev, "<- cm4040_write (failure)\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (!pcmcia_dev_present(dev->p_dev))
-		return -ENODEV;
+	अगर (!pcmcia_dev_present(dev->p_dev))
+		वापस -ENODEV;
 
-	bytes_to_write = count;
-	if (copy_from_user(dev->s_buf, buf, bytes_to_write))
-		return -EFAULT;
+	bytes_to_ग_लिखो = count;
+	अगर (copy_from_user(dev->s_buf, buf, bytes_to_ग_लिखो))
+		वापस -EFAULT;
 
-	switch (dev->s_buf[0]) {
-		case CMD_PC_TO_RDR_XFRBLOCK:
-		case CMD_PC_TO_RDR_SECURE:
-		case CMD_PC_TO_RDR_TEST_SECURE:
-		case CMD_PC_TO_RDR_OK_SECURE:
-			dev->timeout = CCID_DRIVER_BULK_DEFAULT_TIMEOUT;
-			break;
+	चयन (dev->s_buf[0]) अणु
+		हाल CMD_PC_TO_RDR_XFRBLOCK:
+		हाल CMD_PC_TO_RDR_SECURE:
+		हाल CMD_PC_TO_RDR_TEST_SECURE:
+		हाल CMD_PC_TO_RDR_OK_SECURE:
+			dev->समयout = CCID_DRIVER_BULK_DEFAULT_TIMEOUT;
+			अवरोध;
 
-		case CMD_PC_TO_RDR_ICCPOWERON:
-			dev->timeout = CCID_DRIVER_ASYNC_POWERUP_TIMEOUT;
-			break;
+		हाल CMD_PC_TO_RDR_ICCPOWERON:
+			dev->समयout = CCID_DRIVER_ASYNC_POWERUP_TIMEOUT;
+			अवरोध;
 
-		case CMD_PC_TO_RDR_GETSLOTSTATUS:
-		case CMD_PC_TO_RDR_ICCPOWEROFF:
-		case CMD_PC_TO_RDR_GETPARAMETERS:
-		case CMD_PC_TO_RDR_RESETPARAMETERS:
-		case CMD_PC_TO_RDR_SETPARAMETERS:
-		case CMD_PC_TO_RDR_ESCAPE:
-		case CMD_PC_TO_RDR_ICCCLOCK:
-		default:
-			dev->timeout = CCID_DRIVER_MINIMUM_TIMEOUT;
-			break;
-	}
+		हाल CMD_PC_TO_RDR_GETSLOTSTATUS:
+		हाल CMD_PC_TO_RDR_ICCPOWEROFF:
+		हाल CMD_PC_TO_RDR_GETPARAMETERS:
+		हाल CMD_PC_TO_RDR_RESETPARAMETERS:
+		हाल CMD_PC_TO_RDR_SETPARAMETERS:
+		हाल CMD_PC_TO_RDR_ESCAPE:
+		हाल CMD_PC_TO_RDR_ICCCLOCK:
+		शेष:
+			dev->समयout = CCID_DRIVER_MINIMUM_TIMEOUT;
+			अवरोध;
+	पूर्ण
 
-	rc = write_sync_reg(SCR_HOST_TO_READER_START, dev);
-	if (rc <= 0) {
+	rc = ग_लिखो_sync_reg(SCR_HOST_TO_READER_START, dev);
+	अगर (rc <= 0) अणु
 		DEBUGP(5, dev, "write_sync_reg c=%.2zx\n", rc);
 		DEBUGP(2, dev, "<- cm4040_write (failed)\n");
-		if (rc == -ERESTARTSYS)
-			return rc;
-		else
-			return -EIO;
-	}
+		अगर (rc == -ERESTARTSYS)
+			वापस rc;
+		अन्यथा
+			वापस -EIO;
+	पूर्ण
 
 	DEBUGP(4, dev, "start \n");
 
-	for (i = 0; i < bytes_to_write; i++) {
-		rc = wait_for_bulk_out_ready(dev);
-		if (rc <= 0) {
+	क्रम (i = 0; i < bytes_to_ग_लिखो; i++) अणु
+		rc = रुको_क्रम_bulk_out_पढ़ोy(dev);
+		अगर (rc <= 0) अणु
 			DEBUGP(5, dev, "wait_for_bulk_out_ready rc=%.2zx\n",
 			       rc);
 			DEBUGP(2, dev, "<- cm4040_write (failed)\n");
-			if (rc == -ERESTARTSYS)
-				return rc;
-			else
-				return -EIO;
-		}
+			अगर (rc == -ERESTARTSYS)
+				वापस rc;
+			अन्यथा
+				वापस -EIO;
+		पूर्ण
 
 		xoutb(dev->s_buf[i],iobase + REG_OFFSET_BULK_OUT);
-	}
+	पूर्ण
 	DEBUGP(4, dev, "end\n");
 
-	rc = write_sync_reg(SCR_HOST_TO_READER_DONE, dev);
+	rc = ग_लिखो_sync_reg(SCR_HOST_TO_READER_DONE, dev);
 
-	if (rc <= 0) {
+	अगर (rc <= 0) अणु
 		DEBUGP(5, dev, "write_sync_reg c=%.2zx\n", rc);
 		DEBUGP(2, dev, "<- cm4040_write (failed)\n");
-		if (rc == -ERESTARTSYS)
-			return rc;
-		else
-			return -EIO;
-	}
+		अगर (rc == -ERESTARTSYS)
+			वापस rc;
+		अन्यथा
+			वापस -EIO;
+	पूर्ण
 
 	DEBUGP(2, dev, "<- cm4040_write (successfully)\n");
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static __poll_t cm4040_poll(struct file *filp, poll_table *wait)
-{
-	struct reader_dev *dev = filp->private_data;
+अटल __poll_t cm4040_poll(काष्ठा file *filp, poll_table *रुको)
+अणु
+	काष्ठा पढ़ोer_dev *dev = filp->निजी_data;
 	__poll_t mask = 0;
 
-	poll_wait(filp, &dev->poll_wait, wait);
+	poll_रुको(filp, &dev->poll_रुको, रुको);
 
-	if (test_and_clear_bit(BS_READABLE, &dev->buffer_status))
+	अगर (test_and_clear_bit(BS_READABLE, &dev->buffer_status))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	if (test_and_clear_bit(BS_WRITABLE, &dev->buffer_status))
+	अगर (test_and_clear_bit(BS_WRITABLE, &dev->buffer_status))
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
 	DEBUGP(2, dev, "<- cm4040_poll(%u)\n", mask);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int cm4040_open(struct inode *inode, struct file *filp)
-{
-	struct reader_dev *dev;
-	struct pcmcia_device *link;
-	int minor = iminor(inode);
-	int ret;
+अटल पूर्णांक cm4040_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा पढ़ोer_dev *dev;
+	काष्ठा pcmcia_device *link;
+	पूर्णांक minor = iminor(inode);
+	पूर्णांक ret;
 
-	if (minor >= CM_MAX_DEV)
-		return -ENODEV;
+	अगर (minor >= CM_MAX_DEV)
+		वापस -ENODEV;
 
 	mutex_lock(&cm4040_mutex);
 	link = dev_table[minor];
-	if (link == NULL || !pcmcia_dev_present(link)) {
+	अगर (link == शून्य || !pcmcia_dev_present(link)) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (link->open) {
+	अगर (link->खोलो) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev = link->priv;
-	filp->private_data = dev;
+	filp->निजी_data = dev;
 
-	if (filp->f_flags & O_NONBLOCK) {
+	अगर (filp->f_flags & O_NONBLOCK) अणु
 		DEBUGP(4, dev, "filep->f_flags O_NONBLOCK set\n");
 		ret = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	link->open = 1;
+	link->खोलो = 1;
 
-	mod_timer(&dev->poll_timer, jiffies + POLL_PERIOD);
+	mod_समयr(&dev->poll_समयr, jअगरfies + POLL_PERIOD);
 
 	DEBUGP(2, dev, "<- cm4040_open (successfully)\n");
-	ret = nonseekable_open(inode, filp);
+	ret = nonseekable_खोलो(inode, filp);
 out:
 	mutex_unlock(&cm4040_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cm4040_close(struct inode *inode, struct file *filp)
-{
-	struct reader_dev *dev = filp->private_data;
-	struct pcmcia_device *link;
-	int minor = iminor(inode);
+अटल पूर्णांक cm4040_बंद(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा पढ़ोer_dev *dev = filp->निजी_data;
+	काष्ठा pcmcia_device *link;
+	पूर्णांक minor = iminor(inode);
 
 	DEBUGP(2, dev, "-> cm4040_close(maj/min=%d.%d)\n", imajor(inode),
 	      iminor(inode));
 
-	if (minor >= CM_MAX_DEV)
-		return -ENODEV;
+	अगर (minor >= CM_MAX_DEV)
+		वापस -ENODEV;
 
 	link = dev_table[minor];
-	if (link == NULL)
-		return -ENODEV;
+	अगर (link == शून्य)
+		वापस -ENODEV;
 
 	cm4040_stop_poll(dev);
 
-	link->open = 0;
+	link->खोलो = 0;
 	wake_up(&dev->devq);
 
 	DEBUGP(2, dev, "<- cm4040_close\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cm4040_reader_release(struct pcmcia_device *link)
-{
-	struct reader_dev *dev = link->priv;
+अटल व्योम cm4040_पढ़ोer_release(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा पढ़ोer_dev *dev = link->priv;
 
 	DEBUGP(3, dev, "-> cm4040_reader_release\n");
-	while (link->open) {
+	जबतक (link->खोलो) अणु
 		DEBUGP(3, dev, MODULE_NAME ": delaying release "
 		       "until process has terminated\n");
- 		wait_event(dev->devq, (link->open == 0));
-	}
+ 		रुको_event(dev->devq, (link->खोलो == 0));
+	पूर्ण
 	DEBUGP(3, dev, "<- cm4040_reader_release\n");
-	return;
-}
+	वापस;
+पूर्ण
 
-static int cm4040_config_check(struct pcmcia_device *p_dev, void *priv_data)
-{
-	return pcmcia_request_io(p_dev);
-}
+अटल पूर्णांक cm4040_config_check(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
+अणु
+	वापस pcmcia_request_io(p_dev);
+पूर्ण
 
 
-static int reader_config(struct pcmcia_device *link, int devno)
-{
-	struct reader_dev *dev;
-	int fail_rc;
+अटल पूर्णांक पढ़ोer_config(काष्ठा pcmcia_device *link, पूर्णांक devno)
+अणु
+	काष्ठा पढ़ोer_dev *dev;
+	पूर्णांक fail_rc;
 
 	link->config_flags |= CONF_AUTO_SET_IO;
 
-	if (pcmcia_loop_config(link, cm4040_config_check, NULL))
-		goto cs_release;
+	अगर (pcmcia_loop_config(link, cm4040_config_check, शून्य))
+		जाओ cs_release;
 
 	fail_rc = pcmcia_enable_device(link);
-	if (fail_rc != 0) {
+	अगर (fail_rc != 0) अणु
 		dev_info(&link->dev, "pcmcia_enable_device failed 0x%x\n",
 			 fail_rc);
-		goto cs_release;
-	}
+		जाओ cs_release;
+	पूर्ण
 
 	dev = link->priv;
 
@@ -542,37 +543,37 @@ static int reader_config(struct pcmcia_device *link, int devno)
 	      link->resource[0]);
 	DEBUGP(2, dev, "<- reader_config (succ)\n");
 
-	return 0;
+	वापस 0;
 
 cs_release:
-	reader_release(link);
-	return -ENODEV;
-}
+	पढ़ोer_release(link);
+	वापस -ENODEV;
+पूर्ण
 
-static void reader_release(struct pcmcia_device *link)
-{
-	cm4040_reader_release(link);
+अटल व्योम पढ़ोer_release(काष्ठा pcmcia_device *link)
+अणु
+	cm4040_पढ़ोer_release(link);
 	pcmcia_disable_device(link);
-}
+पूर्ण
 
-static int reader_probe(struct pcmcia_device *link)
-{
-	struct reader_dev *dev;
-	int i, ret;
+अटल पूर्णांक पढ़ोer_probe(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा पढ़ोer_dev *dev;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < CM_MAX_DEV; i++) {
-		if (dev_table[i] == NULL)
-			break;
-	}
+	क्रम (i = 0; i < CM_MAX_DEV; i++) अणु
+		अगर (dev_table[i] == शून्य)
+			अवरोध;
+	पूर्ण
 
-	if (i == CM_MAX_DEV)
-		return -ENODEV;
+	अगर (i == CM_MAX_DEV)
+		वापस -ENODEV;
 
-	dev = kzalloc(sizeof(struct reader_dev), GFP_KERNEL);
-	if (dev == NULL)
-		return -ENOMEM;
+	dev = kzalloc(माप(काष्ठा पढ़ोer_dev), GFP_KERNEL);
+	अगर (dev == शून्य)
+		वापस -ENOMEM;
 
-	dev->timeout = CCID_DRIVER_MINIMUM_TIMEOUT;
+	dev->समयout = CCID_DRIVER_MINIMUM_TIMEOUT;
 	dev->buffer_status = 0;
 
 	link->priv = dev;
@@ -580,106 +581,106 @@ static int reader_probe(struct pcmcia_device *link)
 
 	dev_table[i] = link;
 
-	init_waitqueue_head(&dev->devq);
-	init_waitqueue_head(&dev->poll_wait);
-	init_waitqueue_head(&dev->read_wait);
-	init_waitqueue_head(&dev->write_wait);
-	timer_setup(&dev->poll_timer, cm4040_do_poll, 0);
+	init_रुकोqueue_head(&dev->devq);
+	init_रुकोqueue_head(&dev->poll_रुको);
+	init_रुकोqueue_head(&dev->पढ़ो_रुको);
+	init_रुकोqueue_head(&dev->ग_लिखो_रुको);
+	समयr_setup(&dev->poll_समयr, cm4040_करो_poll, 0);
 
-	ret = reader_config(link, i);
-	if (ret) {
-		dev_table[i] = NULL;
-		kfree(dev);
-		return ret;
-	}
+	ret = पढ़ोer_config(link, i);
+	अगर (ret) अणु
+		dev_table[i] = शून्य;
+		kमुक्त(dev);
+		वापस ret;
+	पूर्ण
 
-	device_create(cmx_class, NULL, MKDEV(major, i), NULL, "cmx%d", i);
+	device_create(cmx_class, शून्य, MKDEV(major, i), शून्य, "cmx%d", i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void reader_detach(struct pcmcia_device *link)
-{
-	struct reader_dev *dev = link->priv;
-	int devno;
+अटल व्योम पढ़ोer_detach(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा पढ़ोer_dev *dev = link->priv;
+	पूर्णांक devno;
 
 	/* find device */
-	for (devno = 0; devno < CM_MAX_DEV; devno++) {
-		if (dev_table[devno] == link)
-			break;
-	}
-	if (devno == CM_MAX_DEV)
-		return;
+	क्रम (devno = 0; devno < CM_MAX_DEV; devno++) अणु
+		अगर (dev_table[devno] == link)
+			अवरोध;
+	पूर्ण
+	अगर (devno == CM_MAX_DEV)
+		वापस;
 
-	reader_release(link);
+	पढ़ोer_release(link);
 
-	dev_table[devno] = NULL;
-	kfree(dev);
+	dev_table[devno] = शून्य;
+	kमुक्त(dev);
 
 	device_destroy(cmx_class, MKDEV(major, devno));
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static const struct file_operations reader_fops = {
+अटल स्थिर काष्ठा file_operations पढ़ोer_fops = अणु
 	.owner		= THIS_MODULE,
-	.read		= cm4040_read,
-	.write		= cm4040_write,
-	.open		= cm4040_open,
-	.release	= cm4040_close,
+	.पढ़ो		= cm4040_पढ़ो,
+	.ग_लिखो		= cm4040_ग_लिखो,
+	.खोलो		= cm4040_खोलो,
+	.release	= cm4040_बंद,
 	.poll		= cm4040_poll,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static const struct pcmcia_device_id cm4040_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id cm4040_ids[] = अणु
 	PCMCIA_DEVICE_MANF_CARD(0x0223, 0x0200),
 	PCMCIA_DEVICE_PROD_ID12("OMNIKEY", "CardMan 4040",
 				0xE32CDD8C, 0x8F23318B),
-	PCMCIA_DEVICE_NULL,
-};
+	PCMCIA_DEVICE_शून्य,
+पूर्ण;
 MODULE_DEVICE_TABLE(pcmcia, cm4040_ids);
 
-static struct pcmcia_driver reader_driver = {
+अटल काष्ठा pcmcia_driver पढ़ोer_driver = अणु
   	.owner		= THIS_MODULE,
 	.name		= "cm4040_cs",
-	.probe		= reader_probe,
-	.remove		= reader_detach,
+	.probe		= पढ़ोer_probe,
+	.हटाओ		= पढ़ोer_detach,
 	.id_table	= cm4040_ids,
-};
+पूर्ण;
 
-static int __init cm4040_init(void)
-{
-	int rc;
+अटल पूर्णांक __init cm4040_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	cmx_class = class_create(THIS_MODULE, "cardman_4040");
-	if (IS_ERR(cmx_class))
-		return PTR_ERR(cmx_class);
+	अगर (IS_ERR(cmx_class))
+		वापस PTR_ERR(cmx_class);
 
-	major = register_chrdev(0, DEVICE_NAME, &reader_fops);
-	if (major < 0) {
-		printk(KERN_WARNING MODULE_NAME
+	major = रेजिस्टर_chrdev(0, DEVICE_NAME, &पढ़ोer_fops);
+	अगर (major < 0) अणु
+		prपूर्णांकk(KERN_WARNING MODULE_NAME
 			": could not get major number\n");
 		class_destroy(cmx_class);
-		return major;
-	}
+		वापस major;
+	पूर्ण
 
-	rc = pcmcia_register_driver(&reader_driver);
-	if (rc < 0) {
-		unregister_chrdev(major, DEVICE_NAME);
+	rc = pcmcia_रेजिस्टर_driver(&पढ़ोer_driver);
+	अगर (rc < 0) अणु
+		unरेजिस्टर_chrdev(major, DEVICE_NAME);
 		class_destroy(cmx_class);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit cm4040_exit(void)
-{
-	pcmcia_unregister_driver(&reader_driver);
-	unregister_chrdev(major, DEVICE_NAME);
+अटल व्योम __निकास cm4040_निकास(व्योम)
+अणु
+	pcmcia_unरेजिस्टर_driver(&पढ़ोer_driver);
+	unरेजिस्टर_chrdev(major, DEVICE_NAME);
 	class_destroy(cmx_class);
-}
+पूर्ण
 
 module_init(cm4040_init);
-module_exit(cm4040_exit);
+module_निकास(cm4040_निकास);
 MODULE_LICENSE("Dual BSD/GPL");

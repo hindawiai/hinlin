@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Extcon charger detection driver for Intel Cherrytrail Whiskey Cove PMIC
+ * Extcon अक्षरger detection driver क्रम Intel Cherrytrail Whiskey Cove PMIC
  * Copyright (C) 2017 Hans de Goede <hdegoede@redhat.com>
  *
  * Based on various non upstream patches to support the CHT Whiskey Cove PMIC:
  * Copyright (C) 2013-2015 Intel Corporation. All rights reserved.
  */
 
-#include <linux/extcon-provider.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/mfd/intel_soc_pmic.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/extcon-provider.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/पूर्णांकel_soc_pmic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#include "extcon-intel.h"
+#समावेश "extcon-intel.h"
 
-#define CHT_WC_PHYCTRL			0x5e07
+#घोषणा CHT_WC_PHYCTRL			0x5e07
 
-#define CHT_WC_CHGRCTRL0		0x5e16
-#define CHT_WC_CHGRCTRL0_CHGRRESET	BIT(0)
-#define CHT_WC_CHGRCTRL0_EMRGCHREN	BIT(1)
-#define CHT_WC_CHGRCTRL0_EXTCHRDIS	BIT(2)
-#define CHT_WC_CHGRCTRL0_SWCONTROL	BIT(3)
-#define CHT_WC_CHGRCTRL0_TTLCK		BIT(4)
-#define CHT_WC_CHGRCTRL0_CCSM_OFF	BIT(5)
-#define CHT_WC_CHGRCTRL0_DBPOFF		BIT(6)
-#define CHT_WC_CHGRCTRL0_CHR_WDT_NOKICK	BIT(7)
+#घोषणा CHT_WC_CHGRCTRL0		0x5e16
+#घोषणा CHT_WC_CHGRCTRL0_CHGRRESET	BIT(0)
+#घोषणा CHT_WC_CHGRCTRL0_EMRGCHREN	BIT(1)
+#घोषणा CHT_WC_CHGRCTRL0_EXTCHRDIS	BIT(2)
+#घोषणा CHT_WC_CHGRCTRL0_SWCONTROL	BIT(3)
+#घोषणा CHT_WC_CHGRCTRL0_TTLCK		BIT(4)
+#घोषणा CHT_WC_CHGRCTRL0_CCSM_OFF	BIT(5)
+#घोषणा CHT_WC_CHGRCTRL0_DBPOFF		BIT(6)
+#घोषणा CHT_WC_CHGRCTRL0_CHR_WDT_NOKICK	BIT(7)
 
-#define CHT_WC_CHGRCTRL1			0x5e17
-#define CHT_WC_CHGRCTRL1_FUSB_INLMT_100		BIT(0)
-#define CHT_WC_CHGRCTRL1_FUSB_INLMT_150		BIT(1)
-#define CHT_WC_CHGRCTRL1_FUSB_INLMT_500		BIT(2)
-#define CHT_WC_CHGRCTRL1_FUSB_INLMT_900		BIT(3)
-#define CHT_WC_CHGRCTRL1_FUSB_INLMT_1500	BIT(4)
-#define CHT_WC_CHGRCTRL1_FTEMP_EVENT		BIT(5)
-#define CHT_WC_CHGRCTRL1_OTGMODE		BIT(6)
-#define CHT_WC_CHGRCTRL1_DBPEN			BIT(7)
+#घोषणा CHT_WC_CHGRCTRL1			0x5e17
+#घोषणा CHT_WC_CHGRCTRL1_FUSB_INLMT_100		BIT(0)
+#घोषणा CHT_WC_CHGRCTRL1_FUSB_INLMT_150		BIT(1)
+#घोषणा CHT_WC_CHGRCTRL1_FUSB_INLMT_500		BIT(2)
+#घोषणा CHT_WC_CHGRCTRL1_FUSB_INLMT_900		BIT(3)
+#घोषणा CHT_WC_CHGRCTRL1_FUSB_INLMT_1500	BIT(4)
+#घोषणा CHT_WC_CHGRCTRL1_FTEMP_EVENT		BIT(5)
+#घोषणा CHT_WC_CHGRCTRL1_OTGMODE		BIT(6)
+#घोषणा CHT_WC_CHGRCTRL1_DBPEN			BIT(7)
 
-#define CHT_WC_USBSRC			0x5e29
-#define CHT_WC_USBSRC_STS_MASK		GENMASK(1, 0)
-#define CHT_WC_USBSRC_STS_SUCCESS	2
-#define CHT_WC_USBSRC_STS_FAIL		3
-#define CHT_WC_USBSRC_TYPE_SHIFT	2
-#define CHT_WC_USBSRC_TYPE_MASK		GENMASK(5, 2)
-#define CHT_WC_USBSRC_TYPE_NONE		0
-#define CHT_WC_USBSRC_TYPE_SDP		1
-#define CHT_WC_USBSRC_TYPE_DCP		2
-#define CHT_WC_USBSRC_TYPE_CDP		3
-#define CHT_WC_USBSRC_TYPE_ACA		4
-#define CHT_WC_USBSRC_TYPE_SE1		5
-#define CHT_WC_USBSRC_TYPE_MHL		6
-#define CHT_WC_USBSRC_TYPE_FLOATING	7
-#define CHT_WC_USBSRC_TYPE_OTHER	8
-#define CHT_WC_USBSRC_TYPE_DCP_EXTPHY	9
+#घोषणा CHT_WC_USBSRC			0x5e29
+#घोषणा CHT_WC_USBSRC_STS_MASK		GENMASK(1, 0)
+#घोषणा CHT_WC_USBSRC_STS_SUCCESS	2
+#घोषणा CHT_WC_USBSRC_STS_FAIL		3
+#घोषणा CHT_WC_USBSRC_TYPE_SHIFT	2
+#घोषणा CHT_WC_USBSRC_TYPE_MASK		GENMASK(5, 2)
+#घोषणा CHT_WC_USBSRC_TYPE_NONE		0
+#घोषणा CHT_WC_USBSRC_TYPE_SDP		1
+#घोषणा CHT_WC_USBSRC_TYPE_DCP		2
+#घोषणा CHT_WC_USBSRC_TYPE_CDP		3
+#घोषणा CHT_WC_USBSRC_TYPE_ACA		4
+#घोषणा CHT_WC_USBSRC_TYPE_SE1		5
+#घोषणा CHT_WC_USBSRC_TYPE_MHL		6
+#घोषणा CHT_WC_USBSRC_TYPE_FLOATING	7
+#घोषणा CHT_WC_USBSRC_TYPE_OTHER	8
+#घोषणा CHT_WC_USBSRC_TYPE_DCP_EXTPHY	9
 
-#define CHT_WC_CHGDISCTRL		0x5e2f
-#define CHT_WC_CHGDISCTRL_OUT		BIT(0)
-/* 0 - open drain, 1 - regular push-pull output */
-#define CHT_WC_CHGDISCTRL_DRV		BIT(4)
+#घोषणा CHT_WC_CHGDISCTRL		0x5e2f
+#घोषणा CHT_WC_CHGDISCTRL_OUT		BIT(0)
+/* 0 - खोलो drain, 1 - regular push-pull output */
+#घोषणा CHT_WC_CHGDISCTRL_DRV		BIT(4)
 /* 0 - pin is controlled by SW, 1 - by HW */
-#define CHT_WC_CHGDISCTRL_FN		BIT(6)
+#घोषणा CHT_WC_CHGDISCTRL_FN		BIT(6)
 
-#define CHT_WC_PWRSRC_IRQ		0x6e03
-#define CHT_WC_PWRSRC_IRQ_MASK		0x6e0f
-#define CHT_WC_PWRSRC_STS		0x6e1e
-#define CHT_WC_PWRSRC_VBUS		BIT(0)
-#define CHT_WC_PWRSRC_DC		BIT(1)
-#define CHT_WC_PWRSRC_BATT		BIT(2)
-#define CHT_WC_PWRSRC_USBID_MASK	GENMASK(4, 3)
-#define CHT_WC_PWRSRC_USBID_SHIFT	3
-#define CHT_WC_PWRSRC_RID_ACA		0
-#define CHT_WC_PWRSRC_RID_GND		1
-#define CHT_WC_PWRSRC_RID_FLOAT		2
+#घोषणा CHT_WC_PWRSRC_IRQ		0x6e03
+#घोषणा CHT_WC_PWRSRC_IRQ_MASK		0x6e0f
+#घोषणा CHT_WC_PWRSRC_STS		0x6e1e
+#घोषणा CHT_WC_PWRSRC_VBUS		BIT(0)
+#घोषणा CHT_WC_PWRSRC_DC		BIT(1)
+#घोषणा CHT_WC_PWRSRC_BATT		BIT(2)
+#घोषणा CHT_WC_PWRSRC_USBID_MASK	GENMASK(4, 3)
+#घोषणा CHT_WC_PWRSRC_USBID_SHIFT	3
+#घोषणा CHT_WC_PWRSRC_RID_ACA		0
+#घोषणा CHT_WC_PWRSRC_RID_GND		1
+#घोषणा CHT_WC_PWRSRC_RID_FLOAT		2
 
-#define CHT_WC_VBUS_GPIO_CTLO		0x6e2d
-#define CHT_WC_VBUS_GPIO_CTLO_OUTPUT	BIT(0)
-#define CHT_WC_VBUS_GPIO_CTLO_DRV_OD	BIT(4)
-#define CHT_WC_VBUS_GPIO_CTLO_DIR_OUT	BIT(5)
+#घोषणा CHT_WC_VBUS_GPIO_CTLO		0x6e2d
+#घोषणा CHT_WC_VBUS_GPIO_CTLO_OUTPUT	BIT(0)
+#घोषणा CHT_WC_VBUS_GPIO_CTLO_DRV_OD	BIT(4)
+#घोषणा CHT_WC_VBUS_GPIO_CTLO_सूची_OUT	BIT(5)
 
-enum cht_wc_mux_select {
+क्रमागत cht_wc_mux_select अणु
 	MUX_SEL_PMIC = 0,
 	MUX_SEL_SOC,
-};
+पूर्ण;
 
-static const unsigned int cht_wc_extcon_cables[] = {
+अटल स्थिर अचिन्हित पूर्णांक cht_wc_extcon_cables[] = अणु
 	EXTCON_USB,
 	EXTCON_USB_HOST,
 	EXTCON_CHG_USB_SDP,
@@ -95,231 +96,231 @@ static const unsigned int cht_wc_extcon_cables[] = {
 	EXTCON_CHG_USB_DCP,
 	EXTCON_CHG_USB_ACA,
 	EXTCON_NONE,
-};
+पूर्ण;
 
-struct cht_wc_extcon_data {
-	struct device *dev;
-	struct regmap *regmap;
-	struct extcon_dev *edev;
-	unsigned int previous_cable;
+काष्ठा cht_wc_extcon_data अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	काष्ठा extcon_dev *edev;
+	अचिन्हित पूर्णांक previous_cable;
 	bool usb_host;
-};
+पूर्ण;
 
-static int cht_wc_extcon_get_id(struct cht_wc_extcon_data *ext, int pwrsrc_sts)
-{
-	switch ((pwrsrc_sts & CHT_WC_PWRSRC_USBID_MASK) >> CHT_WC_PWRSRC_USBID_SHIFT) {
-	case CHT_WC_PWRSRC_RID_GND:
-		return INTEL_USB_ID_GND;
-	case CHT_WC_PWRSRC_RID_FLOAT:
-		return INTEL_USB_ID_FLOAT;
-	case CHT_WC_PWRSRC_RID_ACA:
-	default:
+अटल पूर्णांक cht_wc_extcon_get_id(काष्ठा cht_wc_extcon_data *ext, पूर्णांक pwrsrc_sts)
+अणु
+	चयन ((pwrsrc_sts & CHT_WC_PWRSRC_USBID_MASK) >> CHT_WC_PWRSRC_USBID_SHIFT) अणु
+	हाल CHT_WC_PWRSRC_RID_GND:
+		वापस INTEL_USB_ID_GND;
+	हाल CHT_WC_PWRSRC_RID_FLOAT:
+		वापस INTEL_USB_ID_FLOAT;
+	हाल CHT_WC_PWRSRC_RID_ACA:
+	शेष:
 		/*
-		 * Once we have IIO support for the GPADC we should read
+		 * Once we have IIO support क्रम the GPADC we should पढ़ो
 		 * the USBID GPADC channel here and determine ACA role
 		 * based on that.
 		 */
-		return INTEL_USB_ID_FLOAT;
-	}
-}
+		वापस INTEL_USB_ID_FLOAT;
+	पूर्ण
+पूर्ण
 
-static int cht_wc_extcon_get_charger(struct cht_wc_extcon_data *ext,
+अटल पूर्णांक cht_wc_extcon_get_अक्षरger(काष्ठा cht_wc_extcon_data *ext,
 				     bool ignore_errors)
-{
-	int ret, usbsrc, status;
-	unsigned long timeout;
+अणु
+	पूर्णांक ret, usbsrc, status;
+	अचिन्हित दीर्घ समयout;
 
-	/* Charger detection can take upto 600ms, wait 800ms max. */
-	timeout = jiffies + msecs_to_jiffies(800);
-	do {
-		ret = regmap_read(ext->regmap, CHT_WC_USBSRC, &usbsrc);
-		if (ret) {
+	/* Charger detection can take upto 600ms, रुको 800ms max. */
+	समयout = jअगरfies + msecs_to_jअगरfies(800);
+	करो अणु
+		ret = regmap_पढ़ो(ext->regmap, CHT_WC_USBSRC, &usbsrc);
+		अगर (ret) अणु
 			dev_err(ext->dev, "Error reading usbsrc: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		status = usbsrc & CHT_WC_USBSRC_STS_MASK;
-		if (status == CHT_WC_USBSRC_STS_SUCCESS ||
+		अगर (status == CHT_WC_USBSRC_STS_SUCCESS ||
 		    status == CHT_WC_USBSRC_STS_FAIL)
-			break;
+			अवरोध;
 
-		msleep(50); /* Wait a bit before retrying */
-	} while (time_before(jiffies, timeout));
+		msleep(50); /* Wait a bit beक्रमe retrying */
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
 
-	if (status != CHT_WC_USBSRC_STS_SUCCESS) {
-		if (ignore_errors)
-			return EXTCON_CHG_USB_SDP; /* Save fallback */
+	अगर (status != CHT_WC_USBSRC_STS_SUCCESS) अणु
+		अगर (ignore_errors)
+			वापस EXTCON_CHG_USB_SDP; /* Save fallback */
 
-		if (status == CHT_WC_USBSRC_STS_FAIL)
+		अगर (status == CHT_WC_USBSRC_STS_FAIL)
 			dev_warn(ext->dev, "Could not detect charger type\n");
-		else
+		अन्यथा
 			dev_warn(ext->dev, "Timeout detecting charger type\n");
-		return EXTCON_CHG_USB_SDP; /* Save fallback */
-	}
+		वापस EXTCON_CHG_USB_SDP; /* Save fallback */
+	पूर्ण
 
 	usbsrc = (usbsrc & CHT_WC_USBSRC_TYPE_MASK) >> CHT_WC_USBSRC_TYPE_SHIFT;
-	switch (usbsrc) {
-	default:
+	चयन (usbsrc) अणु
+	शेष:
 		dev_warn(ext->dev,
 			"Unhandled charger type %d, defaulting to SDP\n",
 			 ret);
-		return EXTCON_CHG_USB_SDP;
-	case CHT_WC_USBSRC_TYPE_SDP:
-	case CHT_WC_USBSRC_TYPE_FLOATING:
-	case CHT_WC_USBSRC_TYPE_OTHER:
-		return EXTCON_CHG_USB_SDP;
-	case CHT_WC_USBSRC_TYPE_CDP:
-		return EXTCON_CHG_USB_CDP;
-	case CHT_WC_USBSRC_TYPE_DCP:
-	case CHT_WC_USBSRC_TYPE_DCP_EXTPHY:
-	case CHT_WC_USBSRC_TYPE_MHL: /* MHL2+ delivers upto 2A, treat as DCP */
-		return EXTCON_CHG_USB_DCP;
-	case CHT_WC_USBSRC_TYPE_ACA:
-		return EXTCON_CHG_USB_ACA;
-	}
-}
+		वापस EXTCON_CHG_USB_SDP;
+	हाल CHT_WC_USBSRC_TYPE_SDP:
+	हाल CHT_WC_USBSRC_TYPE_FLOATING:
+	हाल CHT_WC_USBSRC_TYPE_OTHER:
+		वापस EXTCON_CHG_USB_SDP;
+	हाल CHT_WC_USBSRC_TYPE_CDP:
+		वापस EXTCON_CHG_USB_CDP;
+	हाल CHT_WC_USBSRC_TYPE_DCP:
+	हाल CHT_WC_USBSRC_TYPE_DCP_EXTPHY:
+	हाल CHT_WC_USBSRC_TYPE_MHL: /* MHL2+ delivers upto 2A, treat as DCP */
+		वापस EXTCON_CHG_USB_DCP;
+	हाल CHT_WC_USBSRC_TYPE_ACA:
+		वापस EXTCON_CHG_USB_ACA;
+	पूर्ण
+पूर्ण
 
-static void cht_wc_extcon_set_phymux(struct cht_wc_extcon_data *ext, u8 state)
-{
-	int ret;
+अटल व्योम cht_wc_extcon_set_phymux(काष्ठा cht_wc_extcon_data *ext, u8 state)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_write(ext->regmap, CHT_WC_PHYCTRL, state);
-	if (ret)
+	ret = regmap_ग_लिखो(ext->regmap, CHT_WC_PHYCTRL, state);
+	अगर (ret)
 		dev_err(ext->dev, "Error writing phyctrl: %d\n", ret);
-}
+पूर्ण
 
-static void cht_wc_extcon_set_5v_boost(struct cht_wc_extcon_data *ext,
+अटल व्योम cht_wc_extcon_set_5v_boost(काष्ठा cht_wc_extcon_data *ext,
 				       bool enable)
-{
-	int ret, val;
+अणु
+	पूर्णांक ret, val;
 
 	/*
 	 * The 5V boost converter is enabled through a gpio on the PMIC, since
 	 * there currently is no gpio driver we access the gpio reg directly.
 	 */
-	val = CHT_WC_VBUS_GPIO_CTLO_DRV_OD | CHT_WC_VBUS_GPIO_CTLO_DIR_OUT;
-	if (enable)
+	val = CHT_WC_VBUS_GPIO_CTLO_DRV_OD | CHT_WC_VBUS_GPIO_CTLO_सूची_OUT;
+	अगर (enable)
 		val |= CHT_WC_VBUS_GPIO_CTLO_OUTPUT;
 
-	ret = regmap_write(ext->regmap, CHT_WC_VBUS_GPIO_CTLO, val);
-	if (ret)
+	ret = regmap_ग_लिखो(ext->regmap, CHT_WC_VBUS_GPIO_CTLO, val);
+	अगर (ret)
 		dev_err(ext->dev, "Error writing Vbus GPIO CTLO: %d\n", ret);
-}
+पूर्ण
 
-static void cht_wc_extcon_set_otgmode(struct cht_wc_extcon_data *ext,
+अटल व्योम cht_wc_extcon_set_otgmode(काष्ठा cht_wc_extcon_data *ext,
 				      bool enable)
-{
-	unsigned int val = enable ? CHT_WC_CHGRCTRL1_OTGMODE : 0;
-	int ret;
+अणु
+	अचिन्हित पूर्णांक val = enable ? CHT_WC_CHGRCTRL1_OTGMODE : 0;
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(ext->regmap, CHT_WC_CHGRCTRL1,
 				 CHT_WC_CHGRCTRL1_OTGMODE, val);
-	if (ret)
+	अगर (ret)
 		dev_err(ext->dev, "Error updating CHGRCTRL1 reg: %d\n", ret);
-}
+पूर्ण
 
-static void cht_wc_extcon_enable_charging(struct cht_wc_extcon_data *ext,
+अटल व्योम cht_wc_extcon_enable_अक्षरging(काष्ठा cht_wc_extcon_data *ext,
 					  bool enable)
-{
-	unsigned int val = enable ? 0 : CHT_WC_CHGDISCTRL_OUT;
-	int ret;
+अणु
+	अचिन्हित पूर्णांक val = enable ? 0 : CHT_WC_CHGDISCTRL_OUT;
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(ext->regmap, CHT_WC_CHGDISCTRL,
 				 CHT_WC_CHGDISCTRL_OUT, val);
-	if (ret)
+	अगर (ret)
 		dev_err(ext->dev, "Error updating CHGDISCTRL reg: %d\n", ret);
-}
+पूर्ण
 
 /* Small helper to sync EXTCON_CHG_USB_SDP and EXTCON_USB state */
-static void cht_wc_extcon_set_state(struct cht_wc_extcon_data *ext,
-				    unsigned int cable, bool state)
-{
+अटल व्योम cht_wc_extcon_set_state(काष्ठा cht_wc_extcon_data *ext,
+				    अचिन्हित पूर्णांक cable, bool state)
+अणु
 	extcon_set_state_sync(ext->edev, cable, state);
-	if (cable == EXTCON_CHG_USB_SDP)
+	अगर (cable == EXTCON_CHG_USB_SDP)
 		extcon_set_state_sync(ext->edev, EXTCON_USB, state);
-}
+पूर्ण
 
-static void cht_wc_extcon_pwrsrc_event(struct cht_wc_extcon_data *ext)
-{
-	int ret, pwrsrc_sts, id;
-	unsigned int cable = EXTCON_NONE;
+अटल व्योम cht_wc_extcon_pwrsrc_event(काष्ठा cht_wc_extcon_data *ext)
+अणु
+	पूर्णांक ret, pwrsrc_sts, id;
+	अचिन्हित पूर्णांक cable = EXTCON_NONE;
 	/* Ignore errors in host mode, as the 5v boost converter is on then */
-	bool ignore_get_charger_errors = ext->usb_host;
+	bool ignore_get_अक्षरger_errors = ext->usb_host;
 
-	ret = regmap_read(ext->regmap, CHT_WC_PWRSRC_STS, &pwrsrc_sts);
-	if (ret) {
+	ret = regmap_पढ़ो(ext->regmap, CHT_WC_PWRSRC_STS, &pwrsrc_sts);
+	अगर (ret) अणु
 		dev_err(ext->dev, "Error reading pwrsrc status: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	id = cht_wc_extcon_get_id(ext, pwrsrc_sts);
-	if (id == INTEL_USB_ID_GND) {
-		cht_wc_extcon_enable_charging(ext, false);
+	अगर (id == INTEL_USB_ID_GND) अणु
+		cht_wc_extcon_enable_अक्षरging(ext, false);
 		cht_wc_extcon_set_otgmode(ext, true);
 
 		/* The 5v boost causes a false VBUS / SDP detect, skip */
-		goto charger_det_done;
-	}
+		जाओ अक्षरger_det_करोne;
+	पूर्ण
 
 	cht_wc_extcon_set_otgmode(ext, false);
-	cht_wc_extcon_enable_charging(ext, true);
+	cht_wc_extcon_enable_अक्षरging(ext, true);
 
-	/* Plugged into a host/charger or not connected? */
-	if (!(pwrsrc_sts & CHT_WC_PWRSRC_VBUS)) {
-		/* Route D+ and D- to PMIC for future charger detection */
+	/* Plugged पूर्णांकo a host/अक्षरger or not connected? */
+	अगर (!(pwrsrc_sts & CHT_WC_PWRSRC_VBUS)) अणु
+		/* Route D+ and D- to PMIC क्रम future अक्षरger detection */
 		cht_wc_extcon_set_phymux(ext, MUX_SEL_PMIC);
-		goto set_state;
-	}
+		जाओ set_state;
+	पूर्ण
 
-	ret = cht_wc_extcon_get_charger(ext, ignore_get_charger_errors);
-	if (ret >= 0)
+	ret = cht_wc_extcon_get_अक्षरger(ext, ignore_get_अक्षरger_errors);
+	अगर (ret >= 0)
 		cable = ret;
 
-charger_det_done:
-	/* Route D+ and D- to SoC for the host or gadget controller */
+अक्षरger_det_करोne:
+	/* Route D+ and D- to SoC क्रम the host or gadget controller */
 	cht_wc_extcon_set_phymux(ext, MUX_SEL_SOC);
 
 set_state:
-	if (cable != ext->previous_cable) {
+	अगर (cable != ext->previous_cable) अणु
 		cht_wc_extcon_set_state(ext, cable, true);
 		cht_wc_extcon_set_state(ext, ext->previous_cable, false);
 		ext->previous_cable = cable;
-	}
+	पूर्ण
 
 	ext->usb_host = ((id == INTEL_USB_ID_GND) || (id == INTEL_USB_RID_A));
 	extcon_set_state_sync(ext->edev, EXTCON_USB_HOST, ext->usb_host);
-}
+पूर्ण
 
-static irqreturn_t cht_wc_extcon_isr(int irq, void *data)
-{
-	struct cht_wc_extcon_data *ext = data;
-	int ret, irqs;
+अटल irqवापस_t cht_wc_extcon_isr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cht_wc_extcon_data *ext = data;
+	पूर्णांक ret, irqs;
 
-	ret = regmap_read(ext->regmap, CHT_WC_PWRSRC_IRQ, &irqs);
-	if (ret) {
+	ret = regmap_पढ़ो(ext->regmap, CHT_WC_PWRSRC_IRQ, &irqs);
+	अगर (ret) अणु
 		dev_err(ext->dev, "Error reading irqs: %d\n", ret);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	cht_wc_extcon_pwrsrc_event(ext);
 
-	ret = regmap_write(ext->regmap, CHT_WC_PWRSRC_IRQ, irqs);
-	if (ret) {
+	ret = regmap_ग_लिखो(ext->regmap, CHT_WC_PWRSRC_IRQ, irqs);
+	अगर (ret) अणु
 		dev_err(ext->dev, "Error writing irqs: %d\n", ret);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int cht_wc_extcon_sw_control(struct cht_wc_extcon_data *ext, bool enable)
-{
-	int ret, mask, val;
+अटल पूर्णांक cht_wc_extcon_sw_control(काष्ठा cht_wc_extcon_data *ext, bool enable)
+अणु
+	पूर्णांक ret, mask, val;
 
 	val = enable ? 0 : CHT_WC_CHGDISCTRL_FN;
 	ret = regmap_update_bits(ext->regmap, CHT_WC_CHGDISCTRL,
 				 CHT_WC_CHGDISCTRL_FN, val);
-	if (ret)
+	अगर (ret)
 		dev_err(ext->dev,
 			"Error setting sw control for CHGDIS pin: %d\n",
 			ret);
@@ -327,27 +328,27 @@ static int cht_wc_extcon_sw_control(struct cht_wc_extcon_data *ext, bool enable)
 	mask = CHT_WC_CHGRCTRL0_SWCONTROL | CHT_WC_CHGRCTRL0_CCSM_OFF;
 	val = enable ? mask : 0;
 	ret = regmap_update_bits(ext->regmap, CHT_WC_CHGRCTRL0, mask, val);
-	if (ret)
+	अगर (ret)
 		dev_err(ext->dev, "Error setting sw control: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cht_wc_extcon_probe(struct platform_device *pdev)
-{
-	struct intel_soc_pmic *pmic = dev_get_drvdata(pdev->dev.parent);
-	struct cht_wc_extcon_data *ext;
-	unsigned long mask = ~(CHT_WC_PWRSRC_VBUS | CHT_WC_PWRSRC_USBID_MASK);
-	int pwrsrc_sts, id;
-	int irq, ret;
+अटल पूर्णांक cht_wc_extcon_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा पूर्णांकel_soc_pmic *pmic = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा cht_wc_extcon_data *ext;
+	अचिन्हित दीर्घ mask = ~(CHT_WC_PWRSRC_VBUS | CHT_WC_PWRSRC_USBID_MASK);
+	पूर्णांक pwrsrc_sts, id;
+	पूर्णांक irq, ret;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	ext = devm_kzalloc(&pdev->dev, sizeof(*ext), GFP_KERNEL);
-	if (!ext)
-		return -ENOMEM;
+	ext = devm_kzalloc(&pdev->dev, माप(*ext), GFP_KERNEL);
+	अगर (!ext)
+		वापस -ENOMEM;
 
 	ext->dev = &pdev->dev;
 	ext->regmap = pmic->regmap;
@@ -355,103 +356,103 @@ static int cht_wc_extcon_probe(struct platform_device *pdev)
 
 	/* Initialize extcon device */
 	ext->edev = devm_extcon_dev_allocate(ext->dev, cht_wc_extcon_cables);
-	if (IS_ERR(ext->edev))
-		return PTR_ERR(ext->edev);
+	अगर (IS_ERR(ext->edev))
+		वापस PTR_ERR(ext->edev);
 
 	/*
-	 * When a host-cable is detected the BIOS enables an external 5v boost
-	 * converter to power connected devices there are 2 problems with this:
-	 * 1) This gets seen by the external battery charger as a valid Vbus
+	 * When a host-cable is detected the BIOS enables an बाह्यal 5v boost
+	 * converter to घातer connected devices there are 2 problems with this:
+	 * 1) This माला_लो seen by the बाह्यal battery अक्षरger as a valid Vbus
 	 *    supply and it then tries to feed Vsys from this creating a
 	 *    feedback loop which causes aprox. 300 mA extra battery drain
-	 *    (and unless we drive the external-charger-disable pin high it
-	 *    also tries to charge the battery causing even more feedback).
-	 * 2) This gets seen by the pwrsrc block as a SDP USB Vbus supply
-	 * Since the external battery charger has its own 5v boost converter
-	 * which does not have these issues, we simply turn the separate
-	 * external 5v boost converter off and leave it off entirely.
+	 *    (and unless we drive the बाह्यal-अक्षरger-disable pin high it
+	 *    also tries to अक्षरge the battery causing even more feedback).
+	 * 2) This माला_लो seen by the pwrsrc block as a SDP USB Vbus supply
+	 * Since the बाह्यal battery अक्षरger has its own 5v boost converter
+	 * which करोes not have these issues, we simply turn the separate
+	 * बाह्यal 5v boost converter off and leave it off entirely.
 	 */
 	cht_wc_extcon_set_5v_boost(ext, false);
 
 	/* Enable sw control */
 	ret = cht_wc_extcon_sw_control(ext, true);
-	if (ret)
-		goto disable_sw_control;
+	अगर (ret)
+		जाओ disable_sw_control;
 
-	/* Disable charging by external battery charger */
-	cht_wc_extcon_enable_charging(ext, false);
+	/* Disable अक्षरging by बाह्यal battery अक्षरger */
+	cht_wc_extcon_enable_अक्षरging(ext, false);
 
 	/* Register extcon device */
-	ret = devm_extcon_dev_register(ext->dev, ext->edev);
-	if (ret) {
+	ret = devm_extcon_dev_रेजिस्टर(ext->dev, ext->edev);
+	अगर (ret) अणु
 		dev_err(ext->dev, "Error registering extcon device: %d\n", ret);
-		goto disable_sw_control;
-	}
+		जाओ disable_sw_control;
+	पूर्ण
 
-	ret = regmap_read(ext->regmap, CHT_WC_PWRSRC_STS, &pwrsrc_sts);
-	if (ret) {
+	ret = regmap_पढ़ो(ext->regmap, CHT_WC_PWRSRC_STS, &pwrsrc_sts);
+	अगर (ret) अणु
 		dev_err(ext->dev, "Error reading pwrsrc status: %d\n", ret);
-		goto disable_sw_control;
-	}
+		जाओ disable_sw_control;
+	पूर्ण
 
 	/*
-	 * If no USB host or device connected, route D+ and D- to PMIC for
-	 * initial charger detection
+	 * If no USB host or device connected, route D+ and D- to PMIC क्रम
+	 * initial अक्षरger detection
 	 */
 	id = cht_wc_extcon_get_id(ext, pwrsrc_sts);
-	if (id != INTEL_USB_ID_GND)
+	अगर (id != INTEL_USB_ID_GND)
 		cht_wc_extcon_set_phymux(ext, MUX_SEL_PMIC);
 
 	/* Get initial state */
 	cht_wc_extcon_pwrsrc_event(ext);
 
-	ret = devm_request_threaded_irq(ext->dev, irq, NULL, cht_wc_extcon_isr,
+	ret = devm_request_thपढ़ोed_irq(ext->dev, irq, शून्य, cht_wc_extcon_isr,
 					IRQF_ONESHOT, pdev->name, ext);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(ext->dev, "Error requesting interrupt: %d\n", ret);
-		goto disable_sw_control;
-	}
+		जाओ disable_sw_control;
+	पूर्ण
 
 	/* Unmask irqs */
-	ret = regmap_write(ext->regmap, CHT_WC_PWRSRC_IRQ_MASK, mask);
-	if (ret) {
+	ret = regmap_ग_लिखो(ext->regmap, CHT_WC_PWRSRC_IRQ_MASK, mask);
+	अगर (ret) अणु
 		dev_err(ext->dev, "Error writing irq-mask: %d\n", ret);
-		goto disable_sw_control;
-	}
+		जाओ disable_sw_control;
+	पूर्ण
 
-	platform_set_drvdata(pdev, ext);
+	platक्रमm_set_drvdata(pdev, ext);
 
-	return 0;
+	वापस 0;
 
 disable_sw_control:
 	cht_wc_extcon_sw_control(ext, false);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cht_wc_extcon_remove(struct platform_device *pdev)
-{
-	struct cht_wc_extcon_data *ext = platform_get_drvdata(pdev);
+अटल पूर्णांक cht_wc_extcon_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cht_wc_extcon_data *ext = platक्रमm_get_drvdata(pdev);
 
 	cht_wc_extcon_sw_control(ext, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id cht_wc_extcon_table[] = {
-	{ .name = "cht_wcove_pwrsrc" },
-	{},
-};
-MODULE_DEVICE_TABLE(platform, cht_wc_extcon_table);
+अटल स्थिर काष्ठा platक्रमm_device_id cht_wc_extcon_table[] = अणु
+	अणु .name = "cht_wcove_pwrsrc" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, cht_wc_extcon_table);
 
-static struct platform_driver cht_wc_extcon_driver = {
+अटल काष्ठा platक्रमm_driver cht_wc_extcon_driver = अणु
 	.probe = cht_wc_extcon_probe,
-	.remove = cht_wc_extcon_remove,
+	.हटाओ = cht_wc_extcon_हटाओ,
 	.id_table = cht_wc_extcon_table,
-	.driver = {
+	.driver = अणु
 		.name = "cht_wcove_pwrsrc",
-	},
-};
-module_platform_driver(cht_wc_extcon_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(cht_wc_extcon_driver);
 
 MODULE_DESCRIPTION("Intel Cherrytrail Whiskey Cove PMIC extcon driver");
 MODULE_AUTHOR("Hans de Goede <hdegoede@redhat.com>");

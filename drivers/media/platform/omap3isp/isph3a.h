@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * isph3a.h
  *
@@ -8,14 +9,14 @@
  * Copyright (C) 2009 Texas Instruments, Inc.
  *
  * Contacts: David Cohen <dacohen@gmail.com>
- *	     Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ *	     Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#ifndef OMAP3_ISP_H3A_H
-#define OMAP3_ISP_H3A_H
+#अगर_अघोषित OMAP3_ISP_H3A_H
+#घोषणा OMAP3_ISP_H3A_H
 
-#include <linux/omap3isp.h>
+#समावेश <linux/omap3isp.h>
 
 /*
  * ----------
@@ -23,27 +24,27 @@
  * ----------
  */
 
-#define AEWB_PACKET_SIZE	16
-#define AEWB_SATURATION_LIMIT	0x3ff
+#घोषणा AEWB_PACKET_SIZE	16
+#घोषणा AEWB_SATURATION_LIMIT	0x3ff
 
-/* Flags for changed registers */
-#define PCR_CHNG		(1 << 0)
-#define AEWWIN1_CHNG		(1 << 1)
-#define AEWINSTART_CHNG		(1 << 2)
-#define AEWINBLK_CHNG		(1 << 3)
-#define AEWSUBWIN_CHNG		(1 << 4)
-#define PRV_WBDGAIN_CHNG	(1 << 5)
-#define PRV_WBGAIN_CHNG		(1 << 6)
+/* Flags क्रम changed रेजिस्टरs */
+#घोषणा PCR_CHNG		(1 << 0)
+#घोषणा AEWWIN1_CHNG		(1 << 1)
+#घोषणा AEWINSTART_CHNG		(1 << 2)
+#घोषणा AEWINBLK_CHNG		(1 << 3)
+#घोषणा AEWSUBWIN_CHNG		(1 << 4)
+#घोषणा PRV_WBDGAIN_CHNG	(1 << 5)
+#घोषणा PRV_WBGAIN_CHNG		(1 << 6)
 
 /* ISPH3A REGISTERS bits */
-#define ISPH3A_PCR_AF_EN	(1 << 0)
-#define ISPH3A_PCR_AF_ALAW_EN	(1 << 1)
-#define ISPH3A_PCR_AF_MED_EN	(1 << 2)
-#define ISPH3A_PCR_AF_BUSY	(1 << 15)
-#define ISPH3A_PCR_AEW_EN	(1 << 16)
-#define ISPH3A_PCR_AEW_ALAW_EN	(1 << 17)
-#define ISPH3A_PCR_AEW_BUSY	(1 << 18)
-#define ISPH3A_PCR_AEW_MASK	(ISPH3A_PCR_AEW_ALAW_EN | \
+#घोषणा ISPH3A_PCR_AF_EN	(1 << 0)
+#घोषणा ISPH3A_PCR_AF_ALAW_EN	(1 << 1)
+#घोषणा ISPH3A_PCR_AF_MED_EN	(1 << 2)
+#घोषणा ISPH3A_PCR_AF_BUSY	(1 << 15)
+#घोषणा ISPH3A_PCR_AEW_EN	(1 << 16)
+#घोषणा ISPH3A_PCR_AEW_ALAW_EN	(1 << 17)
+#घोषणा ISPH3A_PCR_AEW_BUSY	(1 << 18)
+#घोषणा ISPH3A_PCR_AEW_MASK	(ISPH3A_PCR_AEW_ALAW_EN | \
 				 ISPH3A_PCR_AEW_AVE2LMT_MASK)
 
 /*
@@ -53,52 +54,52 @@
  */
 
 /* Peripheral Revision */
-#define AFPID				0x0
+#घोषणा AFPID				0x0
 
-#define AFCOEF_OFFSET			0x00000004	/* COEF base address */
+#घोषणा AFCOEF_OFFSET			0x00000004	/* COEF base address */
 
 /* PCR fields */
-#define AF_BUSYAF			(1 << 15)
-#define AF_FVMODE			(1 << 14)
-#define AF_RGBPOS			(0x7 << 11)
-#define AF_MED_TH			(0xFF << 3)
-#define AF_MED_EN			(1 << 2)
-#define AF_ALAW_EN			(1 << 1)
-#define AF_EN				(1 << 0)
-#define AF_PCR_MASK			(AF_FVMODE | AF_RGBPOS | AF_MED_TH | \
+#घोषणा AF_BUSYAF			(1 << 15)
+#घोषणा AF_FVMODE			(1 << 14)
+#घोषणा AF_RGBPOS			(0x7 << 11)
+#घोषणा AF_MED_TH			(0xFF << 3)
+#घोषणा AF_MED_EN			(1 << 2)
+#घोषणा AF_ALAW_EN			(1 << 1)
+#घोषणा AF_EN				(1 << 0)
+#घोषणा AF_PCR_MASK			(AF_FVMODE | AF_RGBPOS | AF_MED_TH | \
 					 AF_MED_EN | AF_ALAW_EN)
 
 /* AFPAX1 fields */
-#define AF_PAXW				(0x7F << 16)
-#define AF_PAXH				0x7F
+#घोषणा AF_PAXW				(0x7F << 16)
+#घोषणा AF_PAXH				0x7F
 
 /* AFPAX2 fields */
-#define AF_AFINCV			(0xF << 13)
-#define AF_PAXVC			(0x7F << 6)
-#define AF_PAXHC			0x3F
+#घोषणा AF_AFINCV			(0xF << 13)
+#घोषणा AF_PAXVC			(0x7F << 6)
+#घोषणा AF_PAXHC			0x3F
 
 /* AFPAXSTART fields */
-#define AF_PAXSH			(0xFFF<<16)
-#define AF_PAXSV			0xFFF
+#घोषणा AF_PAXSH			(0xFFF<<16)
+#घोषणा AF_PAXSV			0xFFF
 
 /* COEFFICIENT MASK */
-#define AF_COEF_MASK0			0xFFF
-#define AF_COEF_MASK1			(0xFFF<<16)
+#घोषणा AF_COEF_MASK0			0xFFF
+#घोषणा AF_COEF_MASK1			(0xFFF<<16)
 
 /* BIT SHIFTS */
-#define AF_RGBPOS_SHIFT			11
-#define AF_MED_TH_SHIFT			3
-#define AF_PAXW_SHIFT			16
-#define AF_LINE_INCR_SHIFT		13
-#define AF_VT_COUNT_SHIFT		6
-#define AF_HZ_START_SHIFT		16
-#define AF_COEF_SHIFT			16
+#घोषणा AF_RGBPOS_SHIFT			11
+#घोषणा AF_MED_TH_SHIFT			3
+#घोषणा AF_PAXW_SHIFT			16
+#घोषणा AF_LINE_INCR_SHIFT		13
+#घोषणा AF_VT_COUNT_SHIFT		6
+#घोषणा AF_HZ_START_SHIFT		16
+#घोषणा AF_COEF_SHIFT			16
 
 /* Init and cleanup functions */
-int omap3isp_h3a_aewb_init(struct isp_device *isp);
-int omap3isp_h3a_af_init(struct isp_device *isp);
+पूर्णांक omap3isp_h3a_aewb_init(काष्ठा isp_device *isp);
+पूर्णांक omap3isp_h3a_af_init(काष्ठा isp_device *isp);
 
-void omap3isp_h3a_aewb_cleanup(struct isp_device *isp);
-void omap3isp_h3a_af_cleanup(struct isp_device *isp);
+व्योम omap3isp_h3a_aewb_cleanup(काष्ठा isp_device *isp);
+व्योम omap3isp_h3a_af_cleanup(काष्ठा isp_device *isp);
 
-#endif /* OMAP3_ISP_H3A_H */
+#पूर्ण_अगर /* OMAP3_ISP_H3A_H */

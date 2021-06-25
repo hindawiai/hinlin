@@ -1,121 +1,122 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
- *  Definitions for SMC Connections, Link Groups and Links
+ *  Definitions क्रम SMC Connections, Link Groups and Links
  *
  *  Copyright IBM Corp. 2016
  *
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
-#ifndef _SMC_CORE_H
-#define _SMC_CORE_H
+#अगर_अघोषित _SMC_CORE_H
+#घोषणा _SMC_CORE_H
 
-#include <linux/atomic.h>
-#include <linux/smc.h>
-#include <linux/pci.h>
-#include <rdma/ib_verbs.h>
-#include <net/genetlink.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/smc.h>
+#समावेश <linux/pci.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <net/genetlink.h>
 
-#include "smc.h"
-#include "smc_ib.h"
+#समावेश "smc.h"
+#समावेश "smc_ib.h"
 
-#define SMC_RMBS_PER_LGR_MAX	255	/* max. # of RMBs per link group */
+#घोषणा SMC_RMBS_PER_LGR_MAX	255	/* max. # of RMBs per link group */
 
-struct smc_lgr_list {			/* list of link group definition */
-	struct list_head	list;
+काष्ठा smc_lgr_list अणु			/* list of link group definition */
+	काष्ठा list_head	list;
 	spinlock_t		lock;	/* protects list of link groups */
 	u32			num;	/* unique link group number */
-};
+पूर्ण;
 
-enum smc_lgr_role {		/* possible roles of a link group */
+क्रमागत smc_lgr_role अणु		/* possible roles of a link group */
 	SMC_CLNT,	/* client */
 	SMC_SERV	/* server */
-};
+पूर्ण;
 
-enum smc_link_state {			/* possible states of a link */
+क्रमागत smc_link_state अणु			/* possible states of a link */
 	SMC_LNK_UNUSED,		/* link is unused */
 	SMC_LNK_INACTIVE,	/* link is inactive */
 	SMC_LNK_ACTIVATING,	/* link is being activated */
 	SMC_LNK_ACTIVE,		/* link is active */
-};
+पूर्ण;
 
-#define SMC_WR_BUF_SIZE		48	/* size of work request buffer */
+#घोषणा SMC_WR_BUF_SIZE		48	/* size of work request buffer */
 
-struct smc_wr_buf {
+काष्ठा smc_wr_buf अणु
 	u8	raw[SMC_WR_BUF_SIZE];
-};
+पूर्ण;
 
-#define SMC_WR_REG_MR_WAIT_TIME	(5 * HZ)/* wait time for ib_wr_reg_mr result */
+#घोषणा SMC_WR_REG_MR_WAIT_TIME	(5 * HZ)/* रुको समय क्रम ib_wr_reg_mr result */
 
-enum smc_wr_reg_state {
+क्रमागत smc_wr_reg_state अणु
 	POSTED,		/* ib_wr_reg_mr request posted */
 	CONFIRMED,	/* ib_wr_reg_mr response: successful */
 	FAILED		/* ib_wr_reg_mr response: failure */
-};
+पूर्ण;
 
-struct smc_rdma_sge {				/* sges for RDMA writes */
-	struct ib_sge		wr_tx_rdma_sge[SMC_IB_MAX_SEND_SGE];
-};
+काष्ठा smc_rdma_sge अणु				/* sges क्रम RDMA ग_लिखोs */
+	काष्ठा ib_sge		wr_tx_rdma_sge[SMC_IB_MAX_SEND_SGE];
+पूर्ण;
 
-#define SMC_MAX_RDMA_WRITES	2		/* max. # of RDMA writes per
+#घोषणा SMC_MAX_RDMA_WRITES	2		/* max. # of RDMA ग_लिखोs per
 						 * message send
 						 */
 
-struct smc_rdma_sges {				/* sges per message send */
-	struct smc_rdma_sge	tx_rdma_sge[SMC_MAX_RDMA_WRITES];
-};
+काष्ठा smc_rdma_sges अणु				/* sges per message send */
+	काष्ठा smc_rdma_sge	tx_rdma_sge[SMC_MAX_RDMA_WRITES];
+पूर्ण;
 
-struct smc_rdma_wr {				/* work requests per message
+काष्ठा smc_rdma_wr अणु				/* work requests per message
 						 * send
 						 */
-	struct ib_rdma_wr	wr_tx_rdma[SMC_MAX_RDMA_WRITES];
-};
+	काष्ठा ib_rdma_wr	wr_tx_rdma[SMC_MAX_RDMA_WRITES];
+पूर्ण;
 
-#define SMC_LGR_ID_SIZE		4
+#घोषणा SMC_LGR_ID_SIZE		4
 
-struct smc_link {
-	struct smc_ib_device	*smcibdev;	/* ib-device */
+काष्ठा smc_link अणु
+	काष्ठा smc_ib_device	*smcibdev;	/* ib-device */
 	u8			ibport;		/* port - values 1 | 2 */
-	struct ib_pd		*roce_pd;	/* IB protection domain,
-						 * unique for every RoCE QP
+	काष्ठा ib_pd		*roce_pd;	/* IB protection करोमुख्य,
+						 * unique क्रम every RoCE QP
 						 */
-	struct ib_qp		*roce_qp;	/* IB queue pair */
-	struct ib_qp_attr	qp_attr;	/* IB queue pair attributes */
+	काष्ठा ib_qp		*roce_qp;	/* IB queue pair */
+	काष्ठा ib_qp_attr	qp_attr;	/* IB queue pair attributes */
 
-	struct smc_wr_buf	*wr_tx_bufs;	/* WR send payload buffers */
-	struct ib_send_wr	*wr_tx_ibs;	/* WR send meta data */
-	struct ib_sge		*wr_tx_sges;	/* WR send gather meta data */
-	struct smc_rdma_sges	*wr_tx_rdma_sges;/*RDMA WRITE gather meta data*/
-	struct smc_rdma_wr	*wr_tx_rdmas;	/* WR RDMA WRITE */
-	struct smc_wr_tx_pend	*wr_tx_pends;	/* WR send waiting for CQE */
-	struct completion	*wr_tx_compl;	/* WR send CQE completion */
+	काष्ठा smc_wr_buf	*wr_tx_bufs;	/* WR send payload buffers */
+	काष्ठा ib_send_wr	*wr_tx_ibs;	/* WR send meta data */
+	काष्ठा ib_sge		*wr_tx_sges;	/* WR send gather meta data */
+	काष्ठा smc_rdma_sges	*wr_tx_rdma_sges;/*RDMA WRITE gather meta data*/
+	काष्ठा smc_rdma_wr	*wr_tx_rdmas;	/* WR RDMA WRITE */
+	काष्ठा smc_wr_tx_pend	*wr_tx_pends;	/* WR send रुकोing क्रम CQE */
+	काष्ठा completion	*wr_tx_compl;	/* WR send CQE completion */
 	/* above four vectors have wr_tx_cnt elements and use the same index */
 	dma_addr_t		wr_tx_dma_addr;	/* DMA address of wr_tx_bufs */
-	atomic_long_t		wr_tx_id;	/* seq # of last sent WR */
-	unsigned long		*wr_tx_mask;	/* bit mask of used indexes */
+	atomic_दीर्घ_t		wr_tx_id;	/* seq # of last sent WR */
+	अचिन्हित दीर्घ		*wr_tx_mask;	/* bit mask of used indexes */
 	u32			wr_tx_cnt;	/* number of WR send buffers */
-	wait_queue_head_t	wr_tx_wait;	/* wait for free WR send buf */
+	रुको_queue_head_t	wr_tx_रुको;	/* रुको क्रम मुक्त WR send buf */
 
-	struct smc_wr_buf	*wr_rx_bufs;	/* WR recv payload buffers */
-	struct ib_recv_wr	*wr_rx_ibs;	/* WR recv meta data */
-	struct ib_sge		*wr_rx_sges;	/* WR recv scatter meta data */
+	काष्ठा smc_wr_buf	*wr_rx_bufs;	/* WR recv payload buffers */
+	काष्ठा ib_recv_wr	*wr_rx_ibs;	/* WR recv meta data */
+	काष्ठा ib_sge		*wr_rx_sges;	/* WR recv scatter meta data */
 	/* above three vectors have wr_rx_cnt elements and use the same index */
 	dma_addr_t		wr_rx_dma_addr;	/* DMA address of wr_rx_bufs */
 	u64			wr_rx_id;	/* seq # of last recv WR */
 	u32			wr_rx_cnt;	/* number of WR recv buffers */
-	unsigned long		wr_rx_tstamp;	/* jiffies when last buf rx */
+	अचिन्हित दीर्घ		wr_rx_tstamp;	/* jअगरfies when last buf rx */
 
-	struct ib_reg_wr	wr_reg;		/* WR register memory region */
-	wait_queue_head_t	wr_reg_wait;	/* wait for wr_reg result */
-	enum smc_wr_reg_state	wr_reg_state;	/* state of wr_reg request */
+	काष्ठा ib_reg_wr	wr_reg;		/* WR रेजिस्टर memory region */
+	रुको_queue_head_t	wr_reg_रुको;	/* रुको क्रम wr_reg result */
+	क्रमागत smc_wr_reg_state	wr_reg_state;	/* state of wr_reg request */
 
 	u8			gid[SMC_GID_SIZE];/* gid matching used vlan id*/
-	u8			sgid_index;	/* gid index for vlan id      */
+	u8			sgid_index;	/* gid index क्रम vlan id      */
 	u32			peer_qpn;	/* QP number of peer */
-	enum ib_mtu		path_mtu;	/* used mtu */
-	enum ib_mtu		peer_mtu;	/* mtu size of peer */
+	क्रमागत ib_mtu		path_mtu;	/* used mtu */
+	क्रमागत ib_mtu		peer_mtu;	/* mtu size of peer */
 	u32			psn_initial;	/* QP tx initial packet seqno */
 	u32			peer_psn;	/* QP rx initial packet seqno */
 	u8			peer_mac[ETH_ALEN];	/* = gid[8:10||13:15] */
@@ -125,253 +126,253 @@ struct smc_link {
 	u8			peer_link_uid[SMC_LGR_ID_SIZE]; /* peer uid */
 	u8			link_idx;	/* index in lgr link array */
 	u8			link_is_asym;	/* is link asymmetric? */
-	struct smc_link_group	*lgr;		/* parent link group */
-	struct work_struct	link_down_wrk;	/* wrk to bring link down */
-	char			ibname[IB_DEVICE_NAME_MAX]; /* ib device name */
-	int			ndev_ifidx; /* network device ifindex */
+	काष्ठा smc_link_group	*lgr;		/* parent link group */
+	काष्ठा work_काष्ठा	link_करोwn_wrk;	/* wrk to bring link करोwn */
+	अक्षर			ibname[IB_DEVICE_NAME_MAX]; /* ib device name */
+	पूर्णांक			ndev_अगरidx; /* network device अगरindex */
 
-	enum smc_link_state	state;		/* state of link */
-	struct delayed_work	llc_testlink_wrk; /* testlink worker */
-	struct completion	llc_testlink_resp; /* wait for rx of testlink */
-	int			llc_testlink_time; /* testlink interval */
+	क्रमागत smc_link_state	state;		/* state of link */
+	काष्ठा delayed_work	llc_testlink_wrk; /* testlink worker */
+	काष्ठा completion	llc_testlink_resp; /* रुको क्रम rx of testlink */
+	पूर्णांक			llc_testlink_समय; /* testlink पूर्णांकerval */
 	atomic_t		conn_cnt; /* connections on this link */
-};
+पूर्ण;
 
 /* For now we just allow one parallel link per link group. The SMC protocol
  * allows more (up to 8).
  */
-#define SMC_LINKS_PER_LGR_MAX	3
-#define SMC_SINGLE_LINK		0
+#घोषणा SMC_LINKS_PER_LGR_MAX	3
+#घोषणा SMC_SINGLE_LINK		0
 
-/* tx/rx buffer list element for sndbufs list and rmbs list of a lgr */
-struct smc_buf_desc {
-	struct list_head	list;
-	void			*cpu_addr;	/* virtual address of buffer */
-	struct page		*pages;
-	int			len;		/* length of buffer */
+/* tx/rx buffer list element क्रम sndbufs list and rmbs list of a lgr */
+काष्ठा smc_buf_desc अणु
+	काष्ठा list_head	list;
+	व्योम			*cpu_addr;	/* भव address of buffer */
+	काष्ठा page		*pages;
+	पूर्णांक			len;		/* length of buffer */
 	u32			used;		/* currently used / unused */
-	union {
-		struct { /* SMC-R */
-			struct sg_table	sgt[SMC_LINKS_PER_LGR_MAX];
-					/* virtual buffer */
-			struct ib_mr	*mr_rx[SMC_LINKS_PER_LGR_MAX];
-					/* for rmb only: memory region
+	जोड़ अणु
+		काष्ठा अणु /* SMC-R */
+			काष्ठा sg_table	sgt[SMC_LINKS_PER_LGR_MAX];
+					/* भव buffer */
+			काष्ठा ib_mr	*mr_rx[SMC_LINKS_PER_LGR_MAX];
+					/* क्रम rmb only: memory region
 					 * incl. rkey provided to peer
 					 */
 			u32		order;	/* allocation order */
 
 			u8		is_conf_rkey;
-					/* confirm_rkey done */
+					/* confirm_rkey करोne */
 			u8		is_reg_mr[SMC_LINKS_PER_LGR_MAX];
-					/* mem region registered */
+					/* mem region रेजिस्टरed */
 			u8		is_map_ib[SMC_LINKS_PER_LGR_MAX];
 					/* mem region mapped to lnk */
 			u8		is_reg_err;
 					/* buffer registration err */
-		};
-		struct { /* SMC-D */
-			unsigned short	sba_idx;
+		पूर्ण;
+		काष्ठा अणु /* SMC-D */
+			अचिन्हित लघु	sba_idx;
 					/* SBA index number */
 			u64		token;
 					/* DMB token number */
 			dma_addr_t	dma_addr;
 					/* DMA address */
-		};
-	};
-};
+		पूर्ण;
+	पूर्ण;
+पूर्ण;
 
-struct smc_rtoken {				/* address/key of remote RMB */
+काष्ठा smc_rtoken अणु				/* address/key of remote RMB */
 	u64			dma_addr;
 	u32			rkey;
-};
+पूर्ण;
 
-#define SMC_BUF_MIN_SIZE	16384	/* minimum size of an RMB */
-#define SMC_RMBE_SIZES		16	/* number of distinct RMBE sizes */
+#घोषणा SMC_BUF_MIN_SIZE	16384	/* minimum size of an RMB */
+#घोषणा SMC_RMBE_SIZES		16	/* number of distinct RMBE sizes */
 /* theoretically, the RFC states that largest size would be 512K,
  * i.e. compressed 5 and thus 6 sizes (0..5), despite
- * struct smc_clc_msg_accept_confirm.rmbe_size being a 4 bit value (0..15)
+ * काष्ठा smc_clc_msg_accept_confirm.rmbe_size being a 4 bit value (0..15)
  */
 
-struct smcd_dev;
+काष्ठा smcd_dev;
 
-enum smc_lgr_type {				/* redundancy state of lgr */
+क्रमागत smc_lgr_type अणु				/* redundancy state of lgr */
 	SMC_LGR_NONE,			/* no active links, lgr to be deleted */
 	SMC_LGR_SINGLE,			/* 1 active RNIC on each peer */
 	SMC_LGR_SYMMETRIC,		/* 2 active RNICs on each peer */
 	SMC_LGR_ASYMMETRIC_PEER,	/* local has 2, peer 1 active RNICs */
 	SMC_LGR_ASYMMETRIC_LOCAL,	/* local has 1, peer 2 active RNICs */
-};
+पूर्ण;
 
-enum smc_llc_flowtype {
+क्रमागत smc_llc_flowtype अणु
 	SMC_LLC_FLOW_NONE	= 0,
 	SMC_LLC_FLOW_ADD_LINK	= 2,
 	SMC_LLC_FLOW_DEL_LINK	= 4,
 	SMC_LLC_FLOW_RKEY	= 6,
-};
+पूर्ण;
 
-struct smc_llc_qentry;
+काष्ठा smc_llc_qentry;
 
-struct smc_llc_flow {
-	enum smc_llc_flowtype type;
-	struct smc_llc_qentry *qentry;
-};
+काष्ठा smc_llc_flow अणु
+	क्रमागत smc_llc_flowtype type;
+	काष्ठा smc_llc_qentry *qentry;
+पूर्ण;
 
-struct smc_link_group {
-	struct list_head	list;
-	struct rb_root		conns_all;	/* connection tree */
+काष्ठा smc_link_group अणु
+	काष्ठा list_head	list;
+	काष्ठा rb_root		conns_all;	/* connection tree */
 	rwlock_t		conns_lock;	/* protects conns_all */
-	unsigned int		conns_num;	/* current # of connections */
-	unsigned short		vlan_id;	/* vlan id of link group */
+	अचिन्हित पूर्णांक		conns_num;	/* current # of connections */
+	अचिन्हित लघु		vlan_id;	/* vlan id of link group */
 
-	struct list_head	sndbufs[SMC_RMBE_SIZES];/* tx buffers */
-	struct mutex		sndbufs_lock;	/* protects tx buffers */
-	struct list_head	rmbs[SMC_RMBE_SIZES];	/* rx buffers */
-	struct mutex		rmbs_lock;	/* protects rx buffers */
+	काष्ठा list_head	sndbufs[SMC_RMBE_SIZES];/* tx buffers */
+	काष्ठा mutex		sndbufs_lock;	/* protects tx buffers */
+	काष्ठा list_head	rmbs[SMC_RMBE_SIZES];	/* rx buffers */
+	काष्ठा mutex		rmbs_lock;	/* protects rx buffers */
 
 	u8			id[SMC_LGR_ID_SIZE];	/* unique lgr id */
-	struct delayed_work	free_work;	/* delayed freeing of an lgr */
-	struct work_struct	terminate_work;	/* abnormal lgr termination */
-	struct workqueue_struct	*tx_wq;		/* wq for conn. tx workers */
-	u8			sync_err : 1;	/* lgr no longer fits to peer */
+	काष्ठा delayed_work	मुक्त_work;	/* delayed मुक्तing of an lgr */
+	काष्ठा work_काष्ठा	terminate_work;	/* abnormal lgr termination */
+	काष्ठा workqueue_काष्ठा	*tx_wq;		/* wq क्रम conn. tx workers */
+	u8			sync_err : 1;	/* lgr no दीर्घer fits to peer */
 	u8			terminating : 1;/* lgr is terminating */
-	u8			freeing : 1;	/* lgr is being freed */
+	u8			मुक्तing : 1;	/* lgr is being मुक्तd */
 
 	bool			is_smcd;	/* SMC-R or SMC-D */
 	u8			smc_version;
 	u8			negotiated_eid[SMC_MAX_EID_LEN];
-	u8			peer_os;	/* peer operating system */
+	u8			peer_os;	/* peer operating प्रणाली */
 	u8			peer_smc_release;
 	u8			peer_hostname[SMC_MAX_HOSTNAME_LEN];
-	union {
-		struct { /* SMC-R */
-			enum smc_lgr_role	role;
+	जोड़ अणु
+		काष्ठा अणु /* SMC-R */
+			क्रमागत smc_lgr_role	role;
 						/* client or server */
-			struct smc_link		lnk[SMC_LINKS_PER_LGR_MAX];
+			काष्ठा smc_link		lnk[SMC_LINKS_PER_LGR_MAX];
 						/* smc link */
-			char			peer_systemid[SMC_SYSTEMID_LEN];
-						/* unique system_id of peer */
-			struct smc_rtoken	rtokens[SMC_RMBS_PER_LGR_MAX]
+			अक्षर			peer_प्रणालीid[SMC_SYSTEMID_LEN];
+						/* unique प्रणाली_id of peer */
+			काष्ठा smc_rtoken	rtokens[SMC_RMBS_PER_LGR_MAX]
 						[SMC_LINKS_PER_LGR_MAX];
 						/* remote addr/key pairs */
 			DECLARE_BITMAP(rtokens_used_mask, SMC_RMBS_PER_LGR_MAX);
 						/* used rtoken elements */
 			u8			next_link_id;
-			enum smc_lgr_type	type;
+			क्रमागत smc_lgr_type	type;
 						/* redundancy state */
 			u8			pnet_id[SMC_MAX_PNETID_LEN + 1];
 						/* pnet id of this lgr */
-			struct list_head	llc_event_q;
-						/* queue for llc events */
+			काष्ठा list_head	llc_event_q;
+						/* queue क्रम llc events */
 			spinlock_t		llc_event_q_lock;
 						/* protects llc_event_q */
-			struct mutex		llc_conf_mutex;
+			काष्ठा mutex		llc_conf_mutex;
 						/* protects lgr reconfig. */
-			struct work_struct	llc_add_link_work;
-			struct work_struct	llc_del_link_work;
-			struct work_struct	llc_event_work;
+			काष्ठा work_काष्ठा	llc_add_link_work;
+			काष्ठा work_काष्ठा	llc_del_link_work;
+			काष्ठा work_काष्ठा	llc_event_work;
 						/* llc event worker */
-			wait_queue_head_t	llc_flow_waiter;
+			रुको_queue_head_t	llc_flow_रुकोer;
 						/* w4 next llc event */
-			wait_queue_head_t	llc_msg_waiter;
+			रुको_queue_head_t	llc_msg_रुकोer;
 						/* w4 next llc msg */
-			struct smc_llc_flow	llc_flow_lcl;
+			काष्ठा smc_llc_flow	llc_flow_lcl;
 						/* llc local control field */
-			struct smc_llc_flow	llc_flow_rmt;
+			काष्ठा smc_llc_flow	llc_flow_rmt;
 						/* llc remote control field */
-			struct smc_llc_qentry	*delayed_event;
+			काष्ठा smc_llc_qentry	*delayed_event;
 						/* arrived when flow active */
 			spinlock_t		llc_flow_lock;
 						/* protects llc flow */
-			int			llc_testlink_time;
-						/* link keep alive time */
+			पूर्णांक			llc_testlink_समय;
+						/* link keep alive समय */
 			u32			llc_termination_rsn;
-						/* rsn code for termination */
-		};
-		struct { /* SMC-D */
+						/* rsn code क्रम termination */
+		पूर्ण;
+		काष्ठा अणु /* SMC-D */
 			u64			peer_gid;
 						/* Peer GID (remote) */
-			struct smcd_dev		*smcd;
-						/* ISM device for VLAN reg. */
-			u8			peer_shutdown : 1;
-						/* peer triggered shutdownn */
-		};
-	};
-};
+			काष्ठा smcd_dev		*smcd;
+						/* ISM device क्रम VLAN reg. */
+			u8			peer_shutकरोwn : 1;
+						/* peer triggered shutकरोwnn */
+		पूर्ण;
+	पूर्ण;
+पूर्ण;
 
-struct smc_clc_msg_local;
+काष्ठा smc_clc_msg_local;
 
-struct smc_init_info {
+काष्ठा smc_init_info अणु
 	u8			is_smcd;
 	u8			smc_type_v1;
 	u8			smc_type_v2;
 	u8			first_contact_peer;
 	u8			first_contact_local;
-	unsigned short		vlan_id;
+	अचिन्हित लघु		vlan_id;
 	u32			rc;
 	/* SMC-R */
-	struct smc_clc_msg_local *ib_lcl;
-	struct smc_ib_device	*ib_dev;
+	काष्ठा smc_clc_msg_local *ib_lcl;
+	काष्ठा smc_ib_device	*ib_dev;
 	u8			ib_gid[SMC_GID_SIZE];
 	u8			ib_port;
 	u32			ib_clcqpn;
 	/* SMC-D */
 	u64			ism_peer_gid[SMC_MAX_ISM_DEVS + 1];
-	struct smcd_dev		*ism_dev[SMC_MAX_ISM_DEVS + 1];
+	काष्ठा smcd_dev		*ism_dev[SMC_MAX_ISM_DEVS + 1];
 	u16			ism_chid[SMC_MAX_ISM_DEVS + 1];
 	u8			ism_offered_cnt; /* # of ISM devices offered */
 	u8			ism_selected;    /* index of selected ISM dev*/
 	u8			smcd_version;
-};
+पूर्ण;
 
 /* Find the connection associated with the given alert token in the link group.
  * To use rbtrees we have to implement our own search core.
  * Requires @conns_lock
- * @token	alert token to search for
+ * @token	alert token to search क्रम
  * @lgr		 link group to search in
- * Returns connection associated with token if found, NULL otherwise.
+ * Returns connection associated with token अगर found, शून्य otherwise.
  */
-static inline struct smc_connection *smc_lgr_find_conn(
-	u32 token, struct smc_link_group *lgr)
-{
-	struct smc_connection *res = NULL;
-	struct rb_node *node;
+अटल अंतरभूत काष्ठा smc_connection *smc_lgr_find_conn(
+	u32 token, काष्ठा smc_link_group *lgr)
+अणु
+	काष्ठा smc_connection *res = शून्य;
+	काष्ठा rb_node *node;
 
 	node = lgr->conns_all.rb_node;
-	while (node) {
-		struct smc_connection *cur = rb_entry(node,
-					struct smc_connection, alert_node);
+	जबतक (node) अणु
+		काष्ठा smc_connection *cur = rb_entry(node,
+					काष्ठा smc_connection, alert_node);
 
-		if (cur->alert_token_local > token) {
+		अगर (cur->alert_token_local > token) अणु
 			node = node->rb_left;
-		} else {
-			if (cur->alert_token_local < token) {
+		पूर्ण अन्यथा अणु
+			अगर (cur->alert_token_local < token) अणु
 				node = node->rb_right;
-			} else {
+			पूर्ण अन्यथा अणु
 				res = cur;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-/* returns true if the specified link is usable */
-static inline bool smc_link_usable(struct smc_link *lnk)
-{
-	if (lnk->state == SMC_LNK_UNUSED || lnk->state == SMC_LNK_INACTIVE)
-		return false;
-	return true;
-}
+/* वापसs true अगर the specअगरied link is usable */
+अटल अंतरभूत bool smc_link_usable(काष्ठा smc_link *lnk)
+अणु
+	अगर (lnk->state == SMC_LNK_UNUSED || lnk->state == SMC_LNK_INACTIVE)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static inline bool smc_link_active(struct smc_link *lnk)
-{
-	return lnk->state == SMC_LNK_ACTIVE;
-}
+अटल अंतरभूत bool smc_link_active(काष्ठा smc_link *lnk)
+अणु
+	वापस lnk->state == SMC_LNK_ACTIVE;
+पूर्ण
 
-static inline void smc_gid_be16_convert(__u8 *buf, u8 *gid_raw)
-{
-	sprintf(buf, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
+अटल अंतरभूत व्योम smc_gid_be16_convert(__u8 *buf, u8 *gid_raw)
+अणु
+	प्र_लिखो(buf, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
 		be16_to_cpu(((__be16 *)gid_raw)[0]),
 		be16_to_cpu(((__be16 *)gid_raw)[1]),
 		be16_to_cpu(((__be16 *)gid_raw)[2]),
@@ -380,87 +381,87 @@ static inline void smc_gid_be16_convert(__u8 *buf, u8 *gid_raw)
 		be16_to_cpu(((__be16 *)gid_raw)[5]),
 		be16_to_cpu(((__be16 *)gid_raw)[6]),
 		be16_to_cpu(((__be16 *)gid_raw)[7]));
-}
+पूर्ण
 
-struct smc_pci_dev {
+काष्ठा smc_pci_dev अणु
 	__u32		pci_fid;
 	__u16		pci_pchid;
-	__u16		pci_vendor;
+	__u16		pci_venकरोr;
 	__u16		pci_device;
 	__u8		pci_id[SMC_PCI_ID_STR_LEN];
-};
+पूर्ण;
 
-static inline void smc_set_pci_values(struct pci_dev *pci_dev,
-				      struct smc_pci_dev *smc_dev)
-{
-	smc_dev->pci_vendor = pci_dev->vendor;
+अटल अंतरभूत व्योम smc_set_pci_values(काष्ठा pci_dev *pci_dev,
+				      काष्ठा smc_pci_dev *smc_dev)
+अणु
+	smc_dev->pci_venकरोr = pci_dev->venकरोr;
 	smc_dev->pci_device = pci_dev->device;
-	snprintf(smc_dev->pci_id, sizeof(smc_dev->pci_id), "%s",
+	snम_लिखो(smc_dev->pci_id, माप(smc_dev->pci_id), "%s",
 		 pci_name(pci_dev));
-#if IS_ENABLED(CONFIG_S390)
-	{ /* Set s390 specific PCI information */
-	struct zpci_dev *zdev;
+#अगर IS_ENABLED(CONFIG_S390)
+	अणु /* Set s390 specअगरic PCI inक्रमmation */
+	काष्ठा zpci_dev *zdev;
 
 	zdev = to_zpci(pci_dev);
 	smc_dev->pci_fid = zdev->fid;
 	smc_dev->pci_pchid = zdev->pchid;
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-struct smc_sock;
-struct smc_clc_msg_accept_confirm;
+काष्ठा smc_sock;
+काष्ठा smc_clc_msg_accept_confirm;
 
-void smc_lgr_cleanup_early(struct smc_connection *conn);
-void smc_lgr_terminate_sched(struct smc_link_group *lgr);
-void smcr_port_add(struct smc_ib_device *smcibdev, u8 ibport);
-void smcr_port_err(struct smc_ib_device *smcibdev, u8 ibport);
-void smc_smcd_terminate(struct smcd_dev *dev, u64 peer_gid,
-			unsigned short vlan);
-void smc_smcd_terminate_all(struct smcd_dev *dev);
-void smc_smcr_terminate_all(struct smc_ib_device *smcibdev);
-int smc_buf_create(struct smc_sock *smc, bool is_smcd);
-int smc_uncompress_bufsize(u8 compressed);
-int smc_rmb_rtoken_handling(struct smc_connection *conn, struct smc_link *link,
-			    struct smc_clc_msg_accept_confirm *clc);
-int smc_rtoken_add(struct smc_link *lnk, __be64 nw_vaddr, __be32 nw_rkey);
-int smc_rtoken_delete(struct smc_link *lnk, __be32 nw_rkey);
-void smc_rtoken_set(struct smc_link_group *lgr, int link_idx, int link_idx_new,
+व्योम smc_lgr_cleanup_early(काष्ठा smc_connection *conn);
+व्योम smc_lgr_terminate_sched(काष्ठा smc_link_group *lgr);
+व्योम smcr_port_add(काष्ठा smc_ib_device *smcibdev, u8 ibport);
+व्योम smcr_port_err(काष्ठा smc_ib_device *smcibdev, u8 ibport);
+व्योम smc_smcd_terminate(काष्ठा smcd_dev *dev, u64 peer_gid,
+			अचिन्हित लघु vlan);
+व्योम smc_smcd_terminate_all(काष्ठा smcd_dev *dev);
+व्योम smc_smcr_terminate_all(काष्ठा smc_ib_device *smcibdev);
+पूर्णांक smc_buf_create(काष्ठा smc_sock *smc, bool is_smcd);
+पूर्णांक smc_uncompress_bufsize(u8 compressed);
+पूर्णांक smc_rmb_rtoken_handling(काष्ठा smc_connection *conn, काष्ठा smc_link *link,
+			    काष्ठा smc_clc_msg_accept_confirm *clc);
+पूर्णांक smc_rtoken_add(काष्ठा smc_link *lnk, __be64 nw_vaddr, __be32 nw_rkey);
+पूर्णांक smc_rtoken_delete(काष्ठा smc_link *lnk, __be32 nw_rkey);
+व्योम smc_rtoken_set(काष्ठा smc_link_group *lgr, पूर्णांक link_idx, पूर्णांक link_idx_new,
 		    __be32 nw_rkey_known, __be64 nw_vaddr, __be32 nw_rkey);
-void smc_rtoken_set2(struct smc_link_group *lgr, int rtok_idx, int link_id,
+व्योम smc_rtoken_set2(काष्ठा smc_link_group *lgr, पूर्णांक rtok_idx, पूर्णांक link_id,
 		     __be64 nw_vaddr, __be32 nw_rkey);
-void smc_sndbuf_sync_sg_for_cpu(struct smc_connection *conn);
-void smc_sndbuf_sync_sg_for_device(struct smc_connection *conn);
-void smc_rmb_sync_sg_for_cpu(struct smc_connection *conn);
-void smc_rmb_sync_sg_for_device(struct smc_connection *conn);
-int smc_vlan_by_tcpsk(struct socket *clcsock, struct smc_init_info *ini);
+व्योम smc_sndbuf_sync_sg_क्रम_cpu(काष्ठा smc_connection *conn);
+व्योम smc_sndbuf_sync_sg_क्रम_device(काष्ठा smc_connection *conn);
+व्योम smc_rmb_sync_sg_क्रम_cpu(काष्ठा smc_connection *conn);
+व्योम smc_rmb_sync_sg_क्रम_device(काष्ठा smc_connection *conn);
+पूर्णांक smc_vlan_by_tcpsk(काष्ठा socket *clcsock, काष्ठा smc_init_info *ini);
 
-void smc_conn_free(struct smc_connection *conn);
-int smc_conn_create(struct smc_sock *smc, struct smc_init_info *ini);
-void smc_lgr_schedule_free_work_fast(struct smc_link_group *lgr);
-int smc_core_init(void);
-void smc_core_exit(void);
+व्योम smc_conn_मुक्त(काष्ठा smc_connection *conn);
+पूर्णांक smc_conn_create(काष्ठा smc_sock *smc, काष्ठा smc_init_info *ini);
+व्योम smc_lgr_schedule_मुक्त_work_fast(काष्ठा smc_link_group *lgr);
+पूर्णांक smc_core_init(व्योम);
+व्योम smc_core_निकास(व्योम);
 
-int smcr_link_init(struct smc_link_group *lgr, struct smc_link *lnk,
-		   u8 link_idx, struct smc_init_info *ini);
-void smcr_link_clear(struct smc_link *lnk, bool log);
-int smcr_buf_map_lgr(struct smc_link *lnk);
-int smcr_buf_reg_lgr(struct smc_link *lnk);
-void smcr_lgr_set_type(struct smc_link_group *lgr, enum smc_lgr_type new_type);
-void smcr_lgr_set_type_asym(struct smc_link_group *lgr,
-			    enum smc_lgr_type new_type, int asym_lnk_idx);
-int smcr_link_reg_rmb(struct smc_link *link, struct smc_buf_desc *rmb_desc);
-struct smc_link *smc_switch_conns(struct smc_link_group *lgr,
-				  struct smc_link *from_lnk, bool is_dev_err);
-void smcr_link_down_cond(struct smc_link *lnk);
-void smcr_link_down_cond_sched(struct smc_link *lnk);
-int smc_nl_get_sys_info(struct sk_buff *skb, struct netlink_callback *cb);
-int smcr_nl_get_lgr(struct sk_buff *skb, struct netlink_callback *cb);
-int smcr_nl_get_link(struct sk_buff *skb, struct netlink_callback *cb);
-int smcd_nl_get_lgr(struct sk_buff *skb, struct netlink_callback *cb);
+पूर्णांक smcr_link_init(काष्ठा smc_link_group *lgr, काष्ठा smc_link *lnk,
+		   u8 link_idx, काष्ठा smc_init_info *ini);
+व्योम smcr_link_clear(काष्ठा smc_link *lnk, bool log);
+पूर्णांक smcr_buf_map_lgr(काष्ठा smc_link *lnk);
+पूर्णांक smcr_buf_reg_lgr(काष्ठा smc_link *lnk);
+व्योम smcr_lgr_set_type(काष्ठा smc_link_group *lgr, क्रमागत smc_lgr_type new_type);
+व्योम smcr_lgr_set_type_asym(काष्ठा smc_link_group *lgr,
+			    क्रमागत smc_lgr_type new_type, पूर्णांक asym_lnk_idx);
+पूर्णांक smcr_link_reg_rmb(काष्ठा smc_link *link, काष्ठा smc_buf_desc *rmb_desc);
+काष्ठा smc_link *smc_चयन_conns(काष्ठा smc_link_group *lgr,
+				  काष्ठा smc_link *from_lnk, bool is_dev_err);
+व्योम smcr_link_करोwn_cond(काष्ठा smc_link *lnk);
+व्योम smcr_link_करोwn_cond_sched(काष्ठा smc_link *lnk);
+पूर्णांक smc_nl_get_sys_info(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक smcr_nl_get_lgr(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक smcr_nl_get_link(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक smcd_nl_get_lgr(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
 
-static inline struct smc_link_group *smc_get_lgr(struct smc_link *link)
-{
-	return link->lgr;
-}
-#endif
+अटल अंतरभूत काष्ठा smc_link_group *smc_get_lgr(काष्ठा smc_link *link)
+अणु
+	वापस link->lgr;
+पूर्ण
+#पूर्ण_अगर

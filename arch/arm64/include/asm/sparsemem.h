@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_SPARSEMEM_H
-#define __ASM_SPARSEMEM_H
+#अगर_अघोषित __ASM_SPARSEMEM_H
+#घोषणा __ASM_SPARSEMEM_H
 
-#define MAX_PHYSMEM_BITS	CONFIG_ARM64_PA_BITS
+#घोषणा MAX_PHYSMEM_BITS	CONFIG_ARM64_PA_BITS
 
 /*
- * Section size must be at least 512MB for 64K base
+ * Section size must be at least 512MB क्रम 64K base
  * page size config. Otherwise it will be less than
  * (MAX_ORDER - 1) and the build process will fail.
  */
-#ifdef CONFIG_ARM64_64K_PAGES
-#define SECTION_SIZE_BITS 29
+#अगर_घोषित CONFIG_ARM64_64K_PAGES
+#घोषणा SECTION_SIZE_BITS 29
 
-#else
+#अन्यथा
 
 /*
- * Section size must be at least 128MB for 4K base
+ * Section size must be at least 128MB क्रम 4K base
  * page size config. Otherwise PMD based huge page
- * entries could not be created for vmemmap mappings.
- * 16K follows 4K for simplicity.
+ * entries could not be created क्रम vmemmap mappings.
+ * 16K follows 4K क्रम simplicity.
  */
-#define SECTION_SIZE_BITS 27
-#endif /* CONFIG_ARM64_64K_PAGES */
+#घोषणा SECTION_SIZE_BITS 27
+#पूर्ण_अगर /* CONFIG_ARM64_64K_PAGES */
 
-#endif
+#पूर्ण_अगर

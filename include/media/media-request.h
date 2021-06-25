@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Media device request objects
  *
@@ -6,35 +7,35 @@
  * Copyright (C) 2018 Intel Corporation
  *
  * Author: Hans Verkuil <hans.verkuil@cisco.com>
- * Author: Sakari Ailus <sakari.ailus@linux.intel.com>
+ * Author: Sakari Ailus <sakari.ailus@linux.पूर्णांकel.com>
  */
 
-#ifndef MEDIA_REQUEST_H
-#define MEDIA_REQUEST_H
+#अगर_अघोषित MEDIA_REQUEST_H
+#घोषणा MEDIA_REQUEST_H
 
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/refcount.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/refcount.h>
 
-#include <media/media-device.h>
+#समावेश <media/media-device.h>
 
 /**
- * enum media_request_state - media request state
+ * क्रमागत media_request_state - media request state
  *
  * @MEDIA_REQUEST_STATE_IDLE:		Idle
  * @MEDIA_REQUEST_STATE_VALIDATING:	Validating the request, no state changes
  *					allowed
  * @MEDIA_REQUEST_STATE_QUEUED:		Queued
- * @MEDIA_REQUEST_STATE_COMPLETE:	Completed, the request is done
+ * @MEDIA_REQUEST_STATE_COMPLETE:	Completed, the request is करोne
  * @MEDIA_REQUEST_STATE_CLEANING:	Cleaning, the request is being re-inited
  * @MEDIA_REQUEST_STATE_UPDATING:	The request is being updated, i.e.
  *					request objects are being added,
- *					modified or removed
+ *					modअगरied or हटाओd
  * @NR_OF_MEDIA_REQUEST_STATE:		The number of media request states, used
- *					internally for sanity check purposes
+ *					पूर्णांकernally क्रम sanity check purposes
  */
-enum media_request_state {
+क्रमागत media_request_state अणु
 	MEDIA_REQUEST_STATE_IDLE,
 	MEDIA_REQUEST_STATE_VALIDATING,
 	MEDIA_REQUEST_STATE_QUEUED,
@@ -42,130 +43,130 @@ enum media_request_state {
 	MEDIA_REQUEST_STATE_CLEANING,
 	MEDIA_REQUEST_STATE_UPDATING,
 	NR_OF_MEDIA_REQUEST_STATE,
-};
+पूर्ण;
 
-struct media_request_object;
+काष्ठा media_request_object;
 
 /**
- * struct media_request - Media device request
- * @mdev: Media device this request belongs to
+ * काष्ठा media_request - Media device request
+ * @mdev: Media device this request beदीर्घs to
  * @kref: Reference count
- * @debug_str: Prefix for debug messages (process name:fd)
+ * @debug_str: Prefix क्रम debug messages (process name:fd)
  * @state: The state of the request
  * @updating_count: count the number of request updates that are in progress
  * @access_count: count the number of request accesses that are in progress
- * @objects: List of @struct media_request_object request objects
+ * @objects: List of @काष्ठा media_request_object request objects
  * @num_incomplete_objects: The number of incomplete objects in the request
- * @poll_wait: Wait queue for poll
- * @lock: Serializes access to this struct
+ * @poll_रुको: Wait queue क्रम poll
+ * @lock: Serializes access to this काष्ठा
  */
-struct media_request {
-	struct media_device *mdev;
-	struct kref kref;
-	char debug_str[TASK_COMM_LEN + 11];
-	enum media_request_state state;
-	unsigned int updating_count;
-	unsigned int access_count;
-	struct list_head objects;
-	unsigned int num_incomplete_objects;
-	wait_queue_head_t poll_wait;
+काष्ठा media_request अणु
+	काष्ठा media_device *mdev;
+	काष्ठा kref kref;
+	अक्षर debug_str[TASK_COMM_LEN + 11];
+	क्रमागत media_request_state state;
+	अचिन्हित पूर्णांक updating_count;
+	अचिन्हित पूर्णांक access_count;
+	काष्ठा list_head objects;
+	अचिन्हित पूर्णांक num_incomplete_objects;
+	रुको_queue_head_t poll_रुको;
 	spinlock_t lock;
-};
+पूर्ण;
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 
 /**
- * media_request_lock_for_access - Lock the request to access its objects
+ * media_request_lock_क्रम_access - Lock the request to access its objects
  *
  * @req: The media request
  *
- * Use before accessing a completed request. A reference to the request must
- * be held during the access. This usually takes place automatically through
- * a file handle. Use @media_request_unlock_for_access when done.
+ * Use beक्रमe accessing a completed request. A reference to the request must
+ * be held during the access. This usually takes place स्वतःmatically through
+ * a file handle. Use @media_request_unlock_क्रम_access when करोne.
  */
-static inline int __must_check
-media_request_lock_for_access(struct media_request *req)
-{
-	unsigned long flags;
-	int ret = -EBUSY;
+अटल अंतरभूत पूर्णांक __must_check
+media_request_lock_क्रम_access(काष्ठा media_request *req)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = -EBUSY;
 
 	spin_lock_irqsave(&req->lock, flags);
-	if (req->state == MEDIA_REQUEST_STATE_COMPLETE) {
+	अगर (req->state == MEDIA_REQUEST_STATE_COMPLETE) अणु
 		req->access_count++;
 		ret = 0;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&req->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * media_request_unlock_for_access - Unlock a request previously locked for
+ * media_request_unlock_क्रम_access - Unlock a request previously locked क्रम
  *				     access
  *
  * @req: The media request
  *
  * Unlock a request that has previously been locked using
- * @media_request_lock_for_access.
+ * @media_request_lock_क्रम_access.
  */
-static inline void media_request_unlock_for_access(struct media_request *req)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम media_request_unlock_क्रम_access(काष्ठा media_request *req)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&req->lock, flags);
-	if (!WARN_ON(!req->access_count))
+	अगर (!WARN_ON(!req->access_count))
 		req->access_count--;
 	spin_unlock_irqrestore(&req->lock, flags);
-}
+पूर्ण
 
 /**
- * media_request_lock_for_update - Lock the request for updating its objects
+ * media_request_lock_क्रम_update - Lock the request क्रम updating its objects
  *
  * @req: The media request
  *
- * Use before updating a request, i.e. adding, modifying or removing a request
+ * Use beक्रमe updating a request, i.e. adding, modअगरying or removing a request
  * object in it. A reference to the request must be held during the update. This
- * usually takes place automatically through a file handle. Use
- * @media_request_unlock_for_update when done.
+ * usually takes place स्वतःmatically through a file handle. Use
+ * @media_request_unlock_क्रम_update when करोne.
  */
-static inline int __must_check
-media_request_lock_for_update(struct media_request *req)
-{
-	unsigned long flags;
-	int ret = 0;
+अटल अंतरभूत पूर्णांक __must_check
+media_request_lock_क्रम_update(काष्ठा media_request *req)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&req->lock, flags);
-	if (req->state == MEDIA_REQUEST_STATE_IDLE ||
-	    req->state == MEDIA_REQUEST_STATE_UPDATING) {
+	अगर (req->state == MEDIA_REQUEST_STATE_IDLE ||
+	    req->state == MEDIA_REQUEST_STATE_UPDATING) अणु
 		req->state = MEDIA_REQUEST_STATE_UPDATING;
 		req->updating_count++;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EBUSY;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&req->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * media_request_unlock_for_update - Unlock a request previously locked for
+ * media_request_unlock_क्रम_update - Unlock a request previously locked क्रम
  *				     update
  *
  * @req: The media request
  *
  * Unlock a request that has previously been locked using
- * @media_request_lock_for_update.
+ * @media_request_lock_क्रम_update.
  */
-static inline void media_request_unlock_for_update(struct media_request *req)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम media_request_unlock_क्रम_update(काष्ठा media_request *req)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&req->lock, flags);
 	WARN_ON(req->updating_count <= 0);
-	if (!--req->updating_count)
+	अगर (!--req->updating_count)
 		req->state = MEDIA_REQUEST_STATE_IDLE;
 	spin_unlock_irqrestore(&req->lock, flags);
-}
+पूर्ण
 
 /**
  * media_request_get - Get the media request
@@ -174,10 +175,10 @@ static inline void media_request_unlock_for_update(struct media_request *req)
  *
  * Get the media request.
  */
-static inline void media_request_get(struct media_request *req)
-{
+अटल अंतरभूत व्योम media_request_get(काष्ठा media_request *req)
+अणु
 	kref_get(&req->kref);
-}
+पूर्ण
 
 /**
  * media_request_put - Put the media request
@@ -187,95 +188,95 @@ static inline void media_request_get(struct media_request *req)
  * Put the media request. The media request will be released
  * when the refcount reaches 0.
  */
-void media_request_put(struct media_request *req);
+व्योम media_request_put(काष्ठा media_request *req);
 
 /**
  * media_request_get_by_fd - Get a media request by fd
  *
- * @mdev: Media device this request belongs to
+ * @mdev: Media device this request beदीर्घs to
  * @request_fd: The file descriptor of the request
  *
  * Get the request represented by @request_fd that is owned
  * by the media device.
  *
- * Return a -EBADR error pointer if requests are not supported
- * by this driver. Return -EINVAL if the request was not found.
- * Return the pointer to the request if found: the caller will
+ * Return a -EBADR error poपूर्णांकer अगर requests are not supported
+ * by this driver. Return -EINVAL अगर the request was not found.
+ * Return the poपूर्णांकer to the request अगर found: the caller will
  * have to call @media_request_put when it finished using the
  * request.
  */
-struct media_request *
-media_request_get_by_fd(struct media_device *mdev, int request_fd);
+काष्ठा media_request *
+media_request_get_by_fd(काष्ठा media_device *mdev, पूर्णांक request_fd);
 
 /**
  * media_request_alloc - Allocate the media request
  *
- * @mdev: Media device this request belongs to
- * @alloc_fd: Store the request's file descriptor in this int
+ * @mdev: Media device this request beदीर्घs to
+ * @alloc_fd: Store the request's file descriptor in this पूर्णांक
  *
  * Allocated the media request and put the fd in @alloc_fd.
  */
-int media_request_alloc(struct media_device *mdev,
-			int *alloc_fd);
+पूर्णांक media_request_alloc(काष्ठा media_device *mdev,
+			पूर्णांक *alloc_fd);
 
-#else
+#अन्यथा
 
-static inline void media_request_get(struct media_request *req)
-{
-}
+अटल अंतरभूत व्योम media_request_get(काष्ठा media_request *req)
+अणु
+पूर्ण
 
-static inline void media_request_put(struct media_request *req)
-{
-}
+अटल अंतरभूत व्योम media_request_put(काष्ठा media_request *req)
+अणु
+पूर्ण
 
-static inline struct media_request *
-media_request_get_by_fd(struct media_device *mdev, int request_fd)
-{
-	return ERR_PTR(-EBADR);
-}
+अटल अंतरभूत काष्ठा media_request *
+media_request_get_by_fd(काष्ठा media_device *mdev, पूर्णांक request_fd)
+अणु
+	वापस ERR_PTR(-EBADR);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /**
- * struct media_request_object_ops - Media request object operations
+ * काष्ठा media_request_object_ops - Media request object operations
  * @prepare: Validate and prepare the request object, optional.
  * @unprepare: Unprepare the request object, optional.
  * @queue: Queue the request object, optional.
  * @unbind: Unbind the request object, optional.
  * @release: Release the request object, required.
  */
-struct media_request_object_ops {
-	int (*prepare)(struct media_request_object *object);
-	void (*unprepare)(struct media_request_object *object);
-	void (*queue)(struct media_request_object *object);
-	void (*unbind)(struct media_request_object *object);
-	void (*release)(struct media_request_object *object);
-};
+काष्ठा media_request_object_ops अणु
+	पूर्णांक (*prepare)(काष्ठा media_request_object *object);
+	व्योम (*unprepare)(काष्ठा media_request_object *object);
+	व्योम (*queue)(काष्ठा media_request_object *object);
+	व्योम (*unbind)(काष्ठा media_request_object *object);
+	व्योम (*release)(काष्ठा media_request_object *object);
+पूर्ण;
 
 /**
- * struct media_request_object - An opaque object that belongs to a media
+ * काष्ठा media_request_object - An opaque object that beदीर्घs to a media
  *				 request
  *
  * @ops: object's operations
- * @priv: object's priv pointer
- * @req: the request this object belongs to (can be NULL)
- * @list: List entry of the object for @struct media_request
- * @kref: Reference count of the object, acquire before releasing req->lock
+ * @priv: object's priv poपूर्णांकer
+ * @req: the request this object beदीर्घs to (can be शून्य)
+ * @list: List entry of the object क्रम @काष्ठा media_request
+ * @kref: Reference count of the object, acquire beक्रमe releasing req->lock
  * @completed: If true, then this object was completed.
  *
- * An object related to the request. This struct is always embedded in
- * another struct that contains the actual data for this request object.
+ * An object related to the request. This काष्ठा is always embedded in
+ * another काष्ठा that contains the actual data क्रम this request object.
  */
-struct media_request_object {
-	const struct media_request_object_ops *ops;
-	void *priv;
-	struct media_request *req;
-	struct list_head list;
-	struct kref kref;
+काष्ठा media_request_object अणु
+	स्थिर काष्ठा media_request_object_ops *ops;
+	व्योम *priv;
+	काष्ठा media_request *req;
+	काष्ठा list_head list;
+	काष्ठा kref kref;
 	bool completed;
-};
+पूर्ण;
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 
 /**
  * media_request_object_get - Get a media request object
@@ -284,10 +285,10 @@ struct media_request_object {
  *
  * Get a media request object.
  */
-static inline void media_request_object_get(struct media_request_object *obj)
-{
+अटल अंतरभूत व्योम media_request_object_get(काष्ठा media_request_object *obj)
+अणु
 	kref_get(&obj->kref);
-}
+पूर्ण
 
 /**
  * media_request_object_put - Put a media request object
@@ -297,7 +298,7 @@ static inline void media_request_object_get(struct media_request_object *obj)
  * Put a media request object. Once all references are gone, the
  * object's memory is released.
  */
-void media_request_object_put(struct media_request_object *obj);
+व्योम media_request_object_put(काष्ठा media_request_object *obj);
 
 /**
  * media_request_object_find - Find an object in a request
@@ -306,18 +307,18 @@ void media_request_object_put(struct media_request_object *obj);
  * @ops: Find an object with this ops value
  * @priv: Find an object with this priv value
  *
- * Both @ops and @priv must be non-NULL.
+ * Both @ops and @priv must be non-शून्य.
  *
- * Returns the object pointer or NULL if not found. The caller must
+ * Returns the object poपूर्णांकer or शून्य अगर not found. The caller must
  * call media_request_object_put() once it finished using the object.
  *
  * Since this function needs to walk the list of objects it takes
  * the @req->lock spin lock to make this safe.
  */
-struct media_request_object *
-media_request_object_find(struct media_request *req,
-			  const struct media_request_object_ops *ops,
-			  void *priv);
+काष्ठा media_request_object *
+media_request_object_find(काष्ठा media_request *req,
+			  स्थिर काष्ठा media_request_object_ops *ops,
+			  व्योम *priv);
 
 /**
  * media_request_object_init - Initialise a media request object
@@ -328,22 +329,22 @@ media_request_object_find(struct media_request *req,
  * release callback of the ops once it has no references (this function
  * initialises references to one).
  */
-void media_request_object_init(struct media_request_object *obj);
+व्योम media_request_object_init(काष्ठा media_request_object *obj);
 
 /**
  * media_request_object_bind - Bind a media request object to a request
  *
  * @req: The media request
- * @ops: The object ops for this object
- * @priv: A driver-specific priv pointer associated with this object
- * @is_buffer: Set to true if the object a buffer object.
+ * @ops: The object ops क्रम this object
+ * @priv: A driver-specअगरic priv poपूर्णांकer associated with this object
+ * @is_buffer: Set to true अगर the object a buffer object.
  * @obj: The object
  *
  * Bind this object to the request and set the ops and priv values of
  * the object so it can be found later with media_request_object_find().
  *
  * Every bound object must be unbound or completed by the kernel at some
- * point in time, otherwise the request will never complete. When the
+ * poपूर्णांक in समय, otherwise the request will never complete. When the
  * request is released all completed objects will be unbound by the
  * request core code.
  *
@@ -353,10 +354,10 @@ void media_request_object_init(struct media_request_object *obj);
  * and that all non-buffer objects that they depend on are processed
  * first.
  */
-int media_request_object_bind(struct media_request *req,
-			      const struct media_request_object_ops *ops,
-			      void *priv, bool is_buffer,
-			      struct media_request_object *obj);
+पूर्णांक media_request_object_bind(काष्ठा media_request *req,
+			      स्थिर काष्ठा media_request_object_ops *ops,
+			      व्योम *priv, bool is_buffer,
+			      काष्ठा media_request_object *obj);
 
 /**
  * media_request_object_unbind - Unbind a media request object
@@ -365,7 +366,7 @@ int media_request_object_bind(struct media_request *req,
  *
  * Unbind the media request object from the request.
  */
-void media_request_object_unbind(struct media_request_object *obj);
+व्योम media_request_object_unbind(काष्ठा media_request_object *obj);
 
 /**
  * media_request_object_complete - Mark the media request object as complete
@@ -375,68 +376,68 @@ void media_request_object_unbind(struct media_request_object *obj);
  * Mark the media request object as complete. Only bound objects can
  * be completed.
  */
-void media_request_object_complete(struct media_request_object *obj);
+व्योम media_request_object_complete(काष्ठा media_request_object *obj);
 
-#else
+#अन्यथा
 
-static inline int __must_check
-media_request_lock_for_access(struct media_request *req)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक __must_check
+media_request_lock_क्रम_access(काष्ठा media_request *req)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void media_request_unlock_for_access(struct media_request *req)
-{
-}
+अटल अंतरभूत व्योम media_request_unlock_क्रम_access(काष्ठा media_request *req)
+अणु
+पूर्ण
 
-static inline int __must_check
-media_request_lock_for_update(struct media_request *req)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक __must_check
+media_request_lock_क्रम_update(काष्ठा media_request *req)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void media_request_unlock_for_update(struct media_request *req)
-{
-}
+अटल अंतरभूत व्योम media_request_unlock_क्रम_update(काष्ठा media_request *req)
+अणु
+पूर्ण
 
-static inline void media_request_object_get(struct media_request_object *obj)
-{
-}
+अटल अंतरभूत व्योम media_request_object_get(काष्ठा media_request_object *obj)
+अणु
+पूर्ण
 
-static inline void media_request_object_put(struct media_request_object *obj)
-{
-}
+अटल अंतरभूत व्योम media_request_object_put(काष्ठा media_request_object *obj)
+अणु
+पूर्ण
 
-static inline struct media_request_object *
-media_request_object_find(struct media_request *req,
-			  const struct media_request_object_ops *ops,
-			  void *priv)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा media_request_object *
+media_request_object_find(काष्ठा media_request *req,
+			  स्थिर काष्ठा media_request_object_ops *ops,
+			  व्योम *priv)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void media_request_object_init(struct media_request_object *obj)
-{
-	obj->ops = NULL;
-	obj->req = NULL;
-}
+अटल अंतरभूत व्योम media_request_object_init(काष्ठा media_request_object *obj)
+अणु
+	obj->ops = शून्य;
+	obj->req = शून्य;
+पूर्ण
 
-static inline int media_request_object_bind(struct media_request *req,
-			       const struct media_request_object_ops *ops,
-			       void *priv, bool is_buffer,
-			       struct media_request_object *obj)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक media_request_object_bind(काष्ठा media_request *req,
+			       स्थिर काष्ठा media_request_object_ops *ops,
+			       व्योम *priv, bool is_buffer,
+			       काष्ठा media_request_object *obj)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void media_request_object_unbind(struct media_request_object *obj)
-{
-}
+अटल अंतरभूत व्योम media_request_object_unbind(काष्ठा media_request_object *obj)
+अणु
+पूर्ण
 
-static inline void media_request_object_complete(struct media_request_object *obj)
-{
-}
+अटल अंतरभूत व्योम media_request_object_complete(काष्ठा media_request_object *obj)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

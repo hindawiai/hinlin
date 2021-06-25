@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * NXP Wireless LAN device driver: major functions
  *
@@ -5,38 +6,38 @@
  *
  * This software file (the "File") is distributed by NXP
  * under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modify this File in
+ * (the "License").  You may use, redistribute and/or modअगरy this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available by writing to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
+ * 51 Franklin Street, Fअगरth Floor, Boston, MA 02110-1301 USA or on the
  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
- * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  */
 
-#include <linux/suspend.h>
+#समावेश <linux/suspend.h>
 
-#include "main.h"
-#include "wmm.h"
-#include "cfg80211.h"
-#include "11n.h"
+#समावेश "main.h"
+#समावेश "wmm.h"
+#समावेश "cfg80211.h"
+#समावेश "11n.h"
 
-#define VERSION	"1.0"
-#define MFG_FIRMWARE	"mwifiex_mfg.bin"
+#घोषणा VERSION	"1.0"
+#घोषणा MFG_FIRMWARE	"mwifiex_mfg.bin"
 
-static unsigned int debug_mask = MWIFIEX_DEFAULT_DEBUG_MASK;
-module_param(debug_mask, uint, 0);
+अटल अचिन्हित पूर्णांक debug_mask = MWIFIEX_DEFAULT_DEBUG_MASK;
+module_param(debug_mask, uपूर्णांक, 0);
 MODULE_PARM_DESC(debug_mask, "bitmap for debug flags");
 
-const char driver_version[] = "mwifiex " VERSION " (%s) ";
-static char *cal_data_cfg;
-module_param(cal_data_cfg, charp, 0);
+स्थिर अक्षर driver_version[] = "mwifiex " VERSION " (%s) ";
+अटल अक्षर *cal_data_cfg;
+module_param(cal_data_cfg, अक्षरp, 0);
 
-static unsigned short driver_mode;
-module_param(driver_mode, ushort, 0);
+अटल अचिन्हित लघु driver_mode;
+module_param(driver_mode, uलघु, 0);
 MODULE_PARM_DESC(driver_mode,
 		 "station=0x1(default), ap-sta=0x3, station-p2p=0x5, ap-sta-p2p=0x7");
 
@@ -48,796 +49,796 @@ bool aggr_ctrl;
 module_param(aggr_ctrl, bool, 0000);
 MODULE_PARM_DESC(aggr_ctrl, "usb tx aggregation enable:1, disable:0");
 
-const u16 mwifiex_1d_to_wmm_queue[8] = { 1, 0, 0, 1, 2, 2, 3, 3 };
+स्थिर u16 mwअगरiex_1d_to_wmm_queue[8] = अणु 1, 0, 0, 1, 2, 2, 3, 3 पूर्ण;
 
 /*
- * This function registers the device and performs all the necessary
+ * This function रेजिस्टरs the device and perक्रमms all the necessary
  * initializations.
  *
- * The following initialization operations are performed -
- *      - Allocate adapter structure
- *      - Save interface specific operations table in adapter
- *      - Call interface specific initialization routine
- *      - Allocate private structures
- *      - Set default adapter structure parameters
+ * The following initialization operations are perक्रमmed -
+ *      - Allocate adapter काष्ठाure
+ *      - Save पूर्णांकerface specअगरic operations table in adapter
+ *      - Call पूर्णांकerface specअगरic initialization routine
+ *      - Allocate निजी काष्ठाures
+ *      - Set शेष adapter काष्ठाure parameters
  *      - Initialize locks
  *
- * In case of any errors during inittialization, this function also ensures
- * proper cleanup before exiting.
+ * In हाल of any errors during inittialization, this function also ensures
+ * proper cleanup beक्रमe निकासing.
  */
-static int mwifiex_register(void *card, struct device *dev,
-			    struct mwifiex_if_ops *if_ops, void **padapter)
-{
-	struct mwifiex_adapter *adapter;
-	int i;
+अटल पूर्णांक mwअगरiex_रेजिस्टर(व्योम *card, काष्ठा device *dev,
+			    काष्ठा mwअगरiex_अगर_ops *अगर_ops, व्योम **padapter)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter;
+	पूर्णांक i;
 
-	adapter = kzalloc(sizeof(struct mwifiex_adapter), GFP_KERNEL);
-	if (!adapter)
-		return -ENOMEM;
+	adapter = kzalloc(माप(काष्ठा mwअगरiex_adapter), GFP_KERNEL);
+	अगर (!adapter)
+		वापस -ENOMEM;
 
 	*padapter = adapter;
 	adapter->dev = dev;
 	adapter->card = card;
 
-	/* Save interface specific operations in adapter */
-	memmove(&adapter->if_ops, if_ops, sizeof(struct mwifiex_if_ops));
+	/* Save पूर्णांकerface specअगरic operations in adapter */
+	स_हटाओ(&adapter->अगर_ops, अगर_ops, माप(काष्ठा mwअगरiex_अगर_ops));
 	adapter->debug_mask = debug_mask;
 
-	/* card specific initialization has been deferred until now .. */
-	if (adapter->if_ops.init_if)
-		if (adapter->if_ops.init_if(adapter))
-			goto error;
+	/* card specअगरic initialization has been deferred until now .. */
+	अगर (adapter->अगर_ops.init_अगर)
+		अगर (adapter->अगर_ops.init_अगर(adapter))
+			जाओ error;
 
 	adapter->priv_num = 0;
 
-	for (i = 0; i < MWIFIEX_MAX_BSS_NUM; i++) {
-		/* Allocate memory for private structure */
+	क्रम (i = 0; i < MWIFIEX_MAX_BSS_NUM; i++) अणु
+		/* Allocate memory क्रम निजी काष्ठाure */
 		adapter->priv[i] =
-			kzalloc(sizeof(struct mwifiex_private), GFP_KERNEL);
-		if (!adapter->priv[i])
-			goto error;
+			kzalloc(माप(काष्ठा mwअगरiex_निजी), GFP_KERNEL);
+		अगर (!adapter->priv[i])
+			जाओ error;
 
 		adapter->priv[i]->adapter = adapter;
 		adapter->priv_num++;
-	}
-	mwifiex_init_lock_list(adapter);
+	पूर्ण
+	mwअगरiex_init_lock_list(adapter);
 
-	timer_setup(&adapter->cmd_timer, mwifiex_cmd_timeout_func, 0);
+	समयr_setup(&adapter->cmd_समयr, mwअगरiex_cmd_समयout_func, 0);
 
-	return 0;
+	वापस 0;
 
 error:
-	mwifiex_dbg(adapter, ERROR,
+	mwअगरiex_dbg(adapter, ERROR,
 		    "info: leave mwifiex_register with error\n");
 
-	for (i = 0; i < adapter->priv_num; i++)
-		kfree(adapter->priv[i]);
+	क्रम (i = 0; i < adapter->priv_num; i++)
+		kमुक्त(adapter->priv[i]);
 
-	kfree(adapter);
+	kमुक्त(adapter);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
- * This function unregisters the device and performs all the necessary
+ * This function unरेजिस्टरs the device and perक्रमms all the necessary
  * cleanups.
  *
- * The following cleanup operations are performed -
- *      - Free the timers
+ * The following cleanup operations are perक्रमmed -
+ *      - Free the समयrs
  *      - Free beacon buffers
- *      - Free private structures
- *      - Free adapter structure
+ *      - Free निजी काष्ठाures
+ *      - Free adapter काष्ठाure
  */
-static int mwifiex_unregister(struct mwifiex_adapter *adapter)
-{
+अटल पूर्णांक mwअगरiex_unरेजिस्टर(काष्ठा mwअगरiex_adapter *adapter)
+अणु
 	s32 i;
 
-	if (adapter->if_ops.cleanup_if)
-		adapter->if_ops.cleanup_if(adapter);
+	अगर (adapter->अगर_ops.cleanup_अगर)
+		adapter->अगर_ops.cleanup_अगर(adapter);
 
-	del_timer_sync(&adapter->cmd_timer);
+	del_समयr_sync(&adapter->cmd_समयr);
 
-	/* Free private structures */
-	for (i = 0; i < adapter->priv_num; i++) {
-		if (adapter->priv[i]) {
-			mwifiex_free_curr_bcn(adapter->priv[i]);
-			kfree(adapter->priv[i]);
-		}
-	}
+	/* Free निजी काष्ठाures */
+	क्रम (i = 0; i < adapter->priv_num; i++) अणु
+		अगर (adapter->priv[i]) अणु
+			mwअगरiex_मुक्त_curr_bcn(adapter->priv[i]);
+			kमुक्त(adapter->priv[i]);
+		पूर्ण
+	पूर्ण
 
-	if (adapter->nd_info) {
-		for (i = 0 ; i < adapter->nd_info->n_matches ; i++)
-			kfree(adapter->nd_info->matches[i]);
-		kfree(adapter->nd_info);
-		adapter->nd_info = NULL;
-	}
+	अगर (adapter->nd_info) अणु
+		क्रम (i = 0 ; i < adapter->nd_info->n_matches ; i++)
+			kमुक्त(adapter->nd_info->matches[i]);
+		kमुक्त(adapter->nd_info);
+		adapter->nd_info = शून्य;
+	पूर्ण
 
-	kfree(adapter->regd);
+	kमुक्त(adapter->regd);
 
-	kfree(adapter);
-	return 0;
-}
+	kमुक्त(adapter);
+	वापस 0;
+पूर्ण
 
-void mwifiex_queue_main_work(struct mwifiex_adapter *adapter)
-{
-	unsigned long flags;
+व्योम mwअगरiex_queue_मुख्य_work(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&adapter->main_proc_lock, flags);
-	if (adapter->mwifiex_processing) {
+	spin_lock_irqsave(&adapter->मुख्य_proc_lock, flags);
+	अगर (adapter->mwअगरiex_processing) अणु
 		adapter->more_task_flag = true;
-		spin_unlock_irqrestore(&adapter->main_proc_lock, flags);
-	} else {
-		spin_unlock_irqrestore(&adapter->main_proc_lock, flags);
-		queue_work(adapter->workqueue, &adapter->main_work);
-	}
-}
-EXPORT_SYMBOL_GPL(mwifiex_queue_main_work);
+		spin_unlock_irqrestore(&adapter->मुख्य_proc_lock, flags);
+	पूर्ण अन्यथा अणु
+		spin_unlock_irqrestore(&adapter->मुख्य_proc_lock, flags);
+		queue_work(adapter->workqueue, &adapter->मुख्य_work);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_queue_मुख्य_work);
 
-static void mwifiex_queue_rx_work(struct mwifiex_adapter *adapter)
-{
+अटल व्योम mwअगरiex_queue_rx_work(काष्ठा mwअगरiex_adapter *adapter)
+अणु
 	spin_lock_bh(&adapter->rx_proc_lock);
-	if (adapter->rx_processing) {
+	अगर (adapter->rx_processing) अणु
 		spin_unlock_bh(&adapter->rx_proc_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_bh(&adapter->rx_proc_lock);
 		queue_work(adapter->rx_workqueue, &adapter->rx_work);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int mwifiex_process_rx(struct mwifiex_adapter *adapter)
-{
-	struct sk_buff *skb;
-	struct mwifiex_rxinfo *rx_info;
+अटल पूर्णांक mwअगरiex_process_rx(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा mwअगरiex_rxinfo *rx_info;
 
 	spin_lock_bh(&adapter->rx_proc_lock);
-	if (adapter->rx_processing || adapter->rx_locked) {
+	अगर (adapter->rx_processing || adapter->rx_locked) अणु
 		spin_unlock_bh(&adapter->rx_proc_lock);
-		goto exit_rx_proc;
-	} else {
+		जाओ निकास_rx_proc;
+	पूर्ण अन्यथा अणु
 		adapter->rx_processing = true;
 		spin_unlock_bh(&adapter->rx_proc_lock);
-	}
+	पूर्ण
 
-	/* Check for Rx data */
-	while ((skb = skb_dequeue(&adapter->rx_data_q))) {
+	/* Check क्रम Rx data */
+	जबतक ((skb = skb_dequeue(&adapter->rx_data_q))) अणु
 		atomic_dec(&adapter->rx_pending);
-		if ((adapter->delay_main_work ||
-		     adapter->iface_type == MWIFIEX_USB) &&
-		    (atomic_read(&adapter->rx_pending) < LOW_RX_PENDING)) {
-			if (adapter->if_ops.submit_rem_rx_urbs)
-				adapter->if_ops.submit_rem_rx_urbs(adapter);
-			adapter->delay_main_work = false;
-			mwifiex_queue_main_work(adapter);
-		}
+		अगर ((adapter->delay_मुख्य_work ||
+		     adapter->अगरace_type == MWIFIEX_USB) &&
+		    (atomic_पढ़ो(&adapter->rx_pending) < LOW_RX_PENDING)) अणु
+			अगर (adapter->अगर_ops.submit_rem_rx_urbs)
+				adapter->अगर_ops.submit_rem_rx_urbs(adapter);
+			adapter->delay_मुख्य_work = false;
+			mwअगरiex_queue_मुख्य_work(adapter);
+		पूर्ण
 		rx_info = MWIFIEX_SKB_RXCB(skb);
-		if (rx_info->buf_type == MWIFIEX_TYPE_AGGR_DATA) {
-			if (adapter->if_ops.deaggr_pkt)
-				adapter->if_ops.deaggr_pkt(adapter, skb);
-			dev_kfree_skb_any(skb);
-		} else {
-			mwifiex_handle_rx_packet(adapter, skb);
-		}
-	}
+		अगर (rx_info->buf_type == MWIFIEX_TYPE_AGGR_DATA) अणु
+			अगर (adapter->अगर_ops.deaggr_pkt)
+				adapter->अगर_ops.deaggr_pkt(adapter, skb);
+			dev_kमुक्त_skb_any(skb);
+		पूर्ण अन्यथा अणु
+			mwअगरiex_handle_rx_packet(adapter, skb);
+		पूर्ण
+	पूर्ण
 	spin_lock_bh(&adapter->rx_proc_lock);
 	adapter->rx_processing = false;
 	spin_unlock_bh(&adapter->rx_proc_lock);
 
-exit_rx_proc:
-	return 0;
-}
+निकास_rx_proc:
+	वापस 0;
+पूर्ण
 
 /*
- * The main process.
+ * The मुख्य process.
  *
- * This function is the main procedure of the driver and handles various driver
+ * This function is the मुख्य procedure of the driver and handles various driver
  * operations. It runs in a loop and provides the core functionalities.
  *
- * The main responsibilities of this function are -
+ * The मुख्य responsibilities of this function are -
  *      - Ensure concurrency control
- *      - Handle pending interrupts and call interrupt handlers
- *      - Wake up the card if required
+ *      - Handle pending पूर्णांकerrupts and call पूर्णांकerrupt handlers
+ *      - Wake up the card अगर required
  *      - Handle command responses and call response handlers
  *      - Handle events and call event handlers
  *      - Execute pending commands
  *      - Transmit pending data packets
  */
-int mwifiex_main_process(struct mwifiex_adapter *adapter)
-{
-	int ret = 0;
-	unsigned long flags;
+पूर्णांक mwअगरiex_मुख्य_process(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&adapter->main_proc_lock, flags);
+	spin_lock_irqsave(&adapter->मुख्य_proc_lock, flags);
 
-	/* Check if already processing */
-	if (adapter->mwifiex_processing || adapter->main_locked) {
+	/* Check अगर alपढ़ोy processing */
+	अगर (adapter->mwअगरiex_processing || adapter->मुख्य_locked) अणु
 		adapter->more_task_flag = true;
-		spin_unlock_irqrestore(&adapter->main_proc_lock, flags);
-		return 0;
-	} else {
-		adapter->mwifiex_processing = true;
-		spin_unlock_irqrestore(&adapter->main_proc_lock, flags);
-	}
+		spin_unlock_irqrestore(&adapter->मुख्य_proc_lock, flags);
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		adapter->mwअगरiex_processing = true;
+		spin_unlock_irqrestore(&adapter->मुख्य_proc_lock, flags);
+	पूर्ण
 process_start:
-	do {
-		if (adapter->hw_status == MWIFIEX_HW_STATUS_NOT_READY)
-			break;
+	करो अणु
+		अगर (adapter->hw_status == MWIFIEX_HW_STATUS_NOT_READY)
+			अवरोध;
 
-		/* For non-USB interfaces, If we process interrupts first, it
-		 * would increase RX pending even further. Avoid this by
-		 * checking if rx_pending has crossed high threshold and
-		 * schedule rx work queue and then process interrupts.
-		 * For USB interface, there are no interrupts. We already have
+		/* For non-USB पूर्णांकerfaces, If we process पूर्णांकerrupts first, it
+		 * would increase RX pending even further. Aव्योम this by
+		 * checking अगर rx_pending has crossed high threshold and
+		 * schedule rx work queue and then process पूर्णांकerrupts.
+		 * For USB पूर्णांकerface, there are no पूर्णांकerrupts. We alपढ़ोy have
 		 * HIGH_RX_PENDING check in usb.c
 		 */
-		if (atomic_read(&adapter->rx_pending) >= HIGH_RX_PENDING &&
-		    adapter->iface_type != MWIFIEX_USB) {
-			adapter->delay_main_work = true;
-			mwifiex_queue_rx_work(adapter);
-			break;
-		}
+		अगर (atomic_पढ़ो(&adapter->rx_pending) >= HIGH_RX_PENDING &&
+		    adapter->अगरace_type != MWIFIEX_USB) अणु
+			adapter->delay_मुख्य_work = true;
+			mwअगरiex_queue_rx_work(adapter);
+			अवरोध;
+		पूर्ण
 
-		/* Handle pending interrupt if any */
-		if (adapter->int_status) {
-			if (adapter->hs_activated)
-				mwifiex_process_hs_config(adapter);
-			if (adapter->if_ops.process_int_status)
-				adapter->if_ops.process_int_status(adapter);
-		}
+		/* Handle pending पूर्णांकerrupt अगर any */
+		अगर (adapter->पूर्णांक_status) अणु
+			अगर (adapter->hs_activated)
+				mwअगरiex_process_hs_config(adapter);
+			अगर (adapter->अगर_ops.process_पूर्णांक_status)
+				adapter->अगर_ops.process_पूर्णांक_status(adapter);
+		पूर्ण
 
-		if (adapter->rx_work_enabled && adapter->data_received)
-			mwifiex_queue_rx_work(adapter);
+		अगर (adapter->rx_work_enabled && adapter->data_received)
+			mwअगरiex_queue_rx_work(adapter);
 
 		/* Need to wake up the card ? */
-		if ((adapter->ps_state == PS_STATE_SLEEP) &&
+		अगर ((adapter->ps_state == PS_STATE_SLEEP) &&
 		    (adapter->pm_wakeup_card_req &&
 		     !adapter->pm_wakeup_fw_try) &&
 		    (is_command_pending(adapter) ||
 		     !skb_queue_empty(&adapter->tx_data_q) ||
-		     !mwifiex_bypass_txlist_empty(adapter) ||
-		     !mwifiex_wmm_lists_empty(adapter))) {
+		     !mwअगरiex_bypass_txlist_empty(adapter) ||
+		     !mwअगरiex_wmm_lists_empty(adapter))) अणु
 			adapter->pm_wakeup_fw_try = true;
-			mod_timer(&adapter->wakeup_timer, jiffies + (HZ*3));
-			adapter->if_ops.wakeup(adapter);
-			continue;
-		}
+			mod_समयr(&adapter->wakeup_समयr, jअगरfies + (HZ*3));
+			adapter->अगर_ops.wakeup(adapter);
+			जारी;
+		पूर्ण
 
-		if (IS_CARD_RX_RCVD(adapter)) {
+		अगर (IS_CARD_RX_RCVD(adapter)) अणु
 			adapter->data_received = false;
 			adapter->pm_wakeup_fw_try = false;
-			del_timer(&adapter->wakeup_timer);
-			if (adapter->ps_state == PS_STATE_SLEEP)
+			del_समयr(&adapter->wakeup_समयr);
+			अगर (adapter->ps_state == PS_STATE_SLEEP)
 				adapter->ps_state = PS_STATE_AWAKE;
-		} else {
-			/* We have tried to wakeup the card already */
-			if (adapter->pm_wakeup_fw_try)
-				break;
-			if (adapter->ps_state == PS_STATE_PRE_SLEEP)
-				mwifiex_check_ps_cond(adapter);
+		पूर्ण अन्यथा अणु
+			/* We have tried to wakeup the card alपढ़ोy */
+			अगर (adapter->pm_wakeup_fw_try)
+				अवरोध;
+			अगर (adapter->ps_state == PS_STATE_PRE_SLEEP)
+				mwअगरiex_check_ps_cond(adapter);
 
-			if (adapter->ps_state != PS_STATE_AWAKE)
-				break;
-			if (adapter->tx_lock_flag) {
-				if (adapter->iface_type == MWIFIEX_USB) {
-					if (!adapter->usb_mc_setup)
-						break;
-				} else
-					break;
-			}
+			अगर (adapter->ps_state != PS_STATE_AWAKE)
+				अवरोध;
+			अगर (adapter->tx_lock_flag) अणु
+				अगर (adapter->अगरace_type == MWIFIEX_USB) अणु
+					अगर (!adapter->usb_mc_setup)
+						अवरोध;
+				पूर्ण अन्यथा
+					अवरोध;
+			पूर्ण
 
-			if ((!adapter->scan_chan_gap_enabled &&
+			अगर ((!adapter->scan_chan_gap_enabled &&
 			     adapter->scan_processing) || adapter->data_sent ||
-			     mwifiex_is_tdls_chan_switching
-			     (mwifiex_get_priv(adapter,
+			     mwअगरiex_is_tdls_chan_चयनing
+			     (mwअगरiex_get_priv(adapter,
 					       MWIFIEX_BSS_ROLE_STA)) ||
-			    (mwifiex_wmm_lists_empty(adapter) &&
-			     mwifiex_bypass_txlist_empty(adapter) &&
-			     skb_queue_empty(&adapter->tx_data_q))) {
-				if (adapter->cmd_sent || adapter->curr_cmd ||
-					!mwifiex_is_send_cmd_allowed
-						(mwifiex_get_priv(adapter,
+			    (mwअगरiex_wmm_lists_empty(adapter) &&
+			     mwअगरiex_bypass_txlist_empty(adapter) &&
+			     skb_queue_empty(&adapter->tx_data_q))) अणु
+				अगर (adapter->cmd_sent || adapter->curr_cmd ||
+					!mwअगरiex_is_send_cmd_allowed
+						(mwअगरiex_get_priv(adapter,
 						MWIFIEX_BSS_ROLE_STA)) ||
 				    (!is_command_pending(adapter)))
-					break;
-			}
-		}
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
-		/* Check for event */
-		if (adapter->event_received) {
+		/* Check क्रम event */
+		अगर (adapter->event_received) अणु
 			adapter->event_received = false;
-			mwifiex_process_event(adapter);
-		}
+			mwअगरiex_process_event(adapter);
+		पूर्ण
 
-		/* Check for Cmd Resp */
-		if (adapter->cmd_resp_received) {
+		/* Check क्रम Cmd Resp */
+		अगर (adapter->cmd_resp_received) अणु
 			adapter->cmd_resp_received = false;
-			mwifiex_process_cmdresp(adapter);
+			mwअगरiex_process_cmdresp(adapter);
 
-			/* call mwifiex back when init_fw is done */
-			if (adapter->hw_status == MWIFIEX_HW_STATUS_INIT_DONE) {
+			/* call mwअगरiex back when init_fw is करोne */
+			अगर (adapter->hw_status == MWIFIEX_HW_STATUS_INIT_DONE) अणु
 				adapter->hw_status = MWIFIEX_HW_STATUS_READY;
-				mwifiex_init_fw_complete(adapter);
-			}
-		}
+				mwअगरiex_init_fw_complete(adapter);
+			पूर्ण
+		पूर्ण
 
-		/* Check if we need to confirm Sleep Request
+		/* Check अगर we need to confirm Sleep Request
 		   received previously */
-		if (adapter->ps_state == PS_STATE_PRE_SLEEP)
-			mwifiex_check_ps_cond(adapter);
+		अगर (adapter->ps_state == PS_STATE_PRE_SLEEP)
+			mwअगरiex_check_ps_cond(adapter);
 
 		/* * The ps_state may have been changed during processing of
 		 * Sleep Request event.
 		 */
-		if ((adapter->ps_state == PS_STATE_SLEEP) ||
+		अगर ((adapter->ps_state == PS_STATE_SLEEP) ||
 		    (adapter->ps_state == PS_STATE_PRE_SLEEP) ||
-		    (adapter->ps_state == PS_STATE_SLEEP_CFM)) {
-			continue;
-		}
+		    (adapter->ps_state == PS_STATE_SLEEP_CFM)) अणु
+			जारी;
+		पूर्ण
 
-		if (adapter->tx_lock_flag) {
-			if (adapter->iface_type == MWIFIEX_USB) {
-				if (!adapter->usb_mc_setup)
-					continue;
-			} else
-				continue;
-		}
+		अगर (adapter->tx_lock_flag) अणु
+			अगर (adapter->अगरace_type == MWIFIEX_USB) अणु
+				अगर (!adapter->usb_mc_setup)
+					जारी;
+			पूर्ण अन्यथा
+				जारी;
+		पूर्ण
 
-		if (!adapter->cmd_sent && !adapter->curr_cmd &&
-		    mwifiex_is_send_cmd_allowed
-		    (mwifiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA))) {
-			if (mwifiex_exec_next_cmd(adapter) == -1) {
+		अगर (!adapter->cmd_sent && !adapter->curr_cmd &&
+		    mwअगरiex_is_send_cmd_allowed
+		    (mwअगरiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA))) अणु
+			अगर (mwअगरiex_exec_next_cmd(adapter) == -1) अणु
 				ret = -1;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/** If USB Multi channel setup ongoing,
-		 *  wait for ready to tx data.
+		 *  रुको क्रम पढ़ोy to tx data.
 		 */
-		if (adapter->iface_type == MWIFIEX_USB &&
+		अगर (adapter->अगरace_type == MWIFIEX_USB &&
 		    adapter->usb_mc_setup)
-			continue;
+			जारी;
 
-		if ((adapter->scan_chan_gap_enabled ||
+		अगर ((adapter->scan_chan_gap_enabled ||
 		     !adapter->scan_processing) &&
 		    !adapter->data_sent &&
-		    !skb_queue_empty(&adapter->tx_data_q)) {
-			mwifiex_process_tx_queue(adapter);
-			if (adapter->hs_activated) {
+		    !skb_queue_empty(&adapter->tx_data_q)) अणु
+			mwअगरiex_process_tx_queue(adapter);
+			अगर (adapter->hs_activated) अणु
 				clear_bit(MWIFIEX_IS_HS_CONFIGURED,
 					  &adapter->work_flags);
-				mwifiex_hs_activated_event
-					(mwifiex_get_priv
+				mwअगरiex_hs_activated_event
+					(mwअगरiex_get_priv
 					(adapter, MWIFIEX_BSS_ROLE_ANY),
 					false);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if ((adapter->scan_chan_gap_enabled ||
+		अगर ((adapter->scan_chan_gap_enabled ||
 		     !adapter->scan_processing) &&
 		    !adapter->data_sent &&
-		    !mwifiex_bypass_txlist_empty(adapter) &&
-		    !mwifiex_is_tdls_chan_switching
-			(mwifiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA))) {
-			mwifiex_process_bypass_tx(adapter);
-			if (adapter->hs_activated) {
+		    !mwअगरiex_bypass_txlist_empty(adapter) &&
+		    !mwअगरiex_is_tdls_chan_चयनing
+			(mwअगरiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA))) अणु
+			mwअगरiex_process_bypass_tx(adapter);
+			अगर (adapter->hs_activated) अणु
 				clear_bit(MWIFIEX_IS_HS_CONFIGURED,
 					  &adapter->work_flags);
-				mwifiex_hs_activated_event
-					(mwifiex_get_priv
+				mwअगरiex_hs_activated_event
+					(mwअगरiex_get_priv
 					 (adapter, MWIFIEX_BSS_ROLE_ANY),
 					 false);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if ((adapter->scan_chan_gap_enabled ||
+		अगर ((adapter->scan_chan_gap_enabled ||
 		     !adapter->scan_processing) &&
-		    !adapter->data_sent && !mwifiex_wmm_lists_empty(adapter) &&
-		    !mwifiex_is_tdls_chan_switching
-			(mwifiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA))) {
-			mwifiex_wmm_process_tx(adapter);
-			if (adapter->hs_activated) {
+		    !adapter->data_sent && !mwअगरiex_wmm_lists_empty(adapter) &&
+		    !mwअगरiex_is_tdls_chan_चयनing
+			(mwअगरiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA))) अणु
+			mwअगरiex_wmm_process_tx(adapter);
+			अगर (adapter->hs_activated) अणु
 				clear_bit(MWIFIEX_IS_HS_CONFIGURED,
 					  &adapter->work_flags);
-				mwifiex_hs_activated_event
-					(mwifiex_get_priv
+				mwअगरiex_hs_activated_event
+					(mwअगरiex_get_priv
 					 (adapter, MWIFIEX_BSS_ROLE_ANY),
 					 false);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (adapter->delay_null_pkt && !adapter->cmd_sent &&
+		अगर (adapter->delay_null_pkt && !adapter->cmd_sent &&
 		    !adapter->curr_cmd && !is_command_pending(adapter) &&
-		    (mwifiex_wmm_lists_empty(adapter) &&
-		     mwifiex_bypass_txlist_empty(adapter) &&
-		     skb_queue_empty(&adapter->tx_data_q))) {
-			if (!mwifiex_send_null_packet
-			    (mwifiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA),
-			     MWIFIEX_TxPD_POWER_MGMT_NULL_PACKET |
-			     MWIFIEX_TxPD_POWER_MGMT_LAST_PACKET)) {
+		    (mwअगरiex_wmm_lists_empty(adapter) &&
+		     mwअगरiex_bypass_txlist_empty(adapter) &&
+		     skb_queue_empty(&adapter->tx_data_q))) अणु
+			अगर (!mwअगरiex_send_null_packet
+			    (mwअगरiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA),
+			     MWIFIEX_TxPD_POWER_MGMT_शून्य_PACKET |
+			     MWIFIEX_TxPD_POWER_MGMT_LAST_PACKET)) अणु
 				adapter->delay_null_pkt = false;
 				adapter->ps_state = PS_STATE_SLEEP;
-			}
-			break;
-		}
-	} while (true);
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (true);
 
-	spin_lock_irqsave(&adapter->main_proc_lock, flags);
-	if (adapter->more_task_flag) {
+	spin_lock_irqsave(&adapter->मुख्य_proc_lock, flags);
+	अगर (adapter->more_task_flag) अणु
 		adapter->more_task_flag = false;
-		spin_unlock_irqrestore(&adapter->main_proc_lock, flags);
-		goto process_start;
-	}
-	adapter->mwifiex_processing = false;
-	spin_unlock_irqrestore(&adapter->main_proc_lock, flags);
+		spin_unlock_irqrestore(&adapter->मुख्य_proc_lock, flags);
+		जाओ process_start;
+	पूर्ण
+	adapter->mwअगरiex_processing = false;
+	spin_unlock_irqrestore(&adapter->मुख्य_proc_lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(mwifiex_main_process);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_मुख्य_process);
 
 /*
- * This function frees the adapter structure.
+ * This function मुक्तs the adapter काष्ठाure.
  *
- * Additionally, this closes the netlink socket, frees the timers
- * and private structures.
+ * Additionally, this बंदs the netlink socket, मुक्तs the समयrs
+ * and निजी काष्ठाures.
  */
-static void mwifiex_free_adapter(struct mwifiex_adapter *adapter)
-{
-	if (!adapter) {
+अटल व्योम mwअगरiex_मुक्त_adapter(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	अगर (!adapter) अणु
 		pr_err("%s: adapter is NULL\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mwifiex_unregister(adapter);
+	mwअगरiex_unरेजिस्टर(adapter);
 	pr_debug("info: %s: free adapter\n", __func__);
-}
+पूर्ण
 
 /*
  * This function cancels all works in the queue and destroys
- * the main workqueue.
+ * the मुख्य workqueue.
  */
-static void mwifiex_terminate_workqueue(struct mwifiex_adapter *adapter)
-{
-	if (adapter->workqueue) {
+अटल व्योम mwअगरiex_terminate_workqueue(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	अगर (adapter->workqueue) अणु
 		flush_workqueue(adapter->workqueue);
 		destroy_workqueue(adapter->workqueue);
-		adapter->workqueue = NULL;
-	}
+		adapter->workqueue = शून्य;
+	पूर्ण
 
-	if (adapter->rx_workqueue) {
+	अगर (adapter->rx_workqueue) अणु
 		flush_workqueue(adapter->rx_workqueue);
 		destroy_workqueue(adapter->rx_workqueue);
-		adapter->rx_workqueue = NULL;
-	}
-}
+		adapter->rx_workqueue = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
- * This function gets firmware and initializes it.
+ * This function माला_लो firmware and initializes it.
  *
- * The main initialization steps followed are -
+ * The मुख्य initialization steps followed are -
  *      - Download the correct firmware to card
  *      - Issue the init commands to firmware
  */
-static int _mwifiex_fw_dpc(const struct firmware *firmware, void *context)
-{
-	int ret;
-	char fmt[64];
-	struct mwifiex_adapter *adapter = context;
-	struct mwifiex_fw_image fw;
+अटल पूर्णांक _mwअगरiex_fw_dpc(स्थिर काष्ठा firmware *firmware, व्योम *context)
+अणु
+	पूर्णांक ret;
+	अक्षर fmt[64];
+	काष्ठा mwअगरiex_adapter *adapter = context;
+	काष्ठा mwअगरiex_fw_image fw;
 	bool init_failed = false;
-	struct wireless_dev *wdev;
-	struct completion *fw_done = adapter->fw_done;
+	काष्ठा wireless_dev *wdev;
+	काष्ठा completion *fw_करोne = adapter->fw_करोne;
 
-	if (!firmware) {
-		mwifiex_dbg(adapter, ERROR,
+	अगर (!firmware) अणु
+		mwअगरiex_dbg(adapter, ERROR,
 			    "Failed to get firmware %s\n", adapter->fw_name);
-		goto err_dnld_fw;
-	}
+		जाओ err_dnld_fw;
+	पूर्ण
 
-	memset(&fw, 0, sizeof(struct mwifiex_fw_image));
+	स_रखो(&fw, 0, माप(काष्ठा mwअगरiex_fw_image));
 	adapter->firmware = firmware;
 	fw.fw_buf = (u8 *) adapter->firmware->data;
 	fw.fw_len = adapter->firmware->size;
 
-	if (adapter->if_ops.dnld_fw) {
-		ret = adapter->if_ops.dnld_fw(adapter, &fw);
-	} else {
-		ret = mwifiex_dnld_fw(adapter, &fw);
-	}
+	अगर (adapter->अगर_ops.dnld_fw) अणु
+		ret = adapter->अगर_ops.dnld_fw(adapter, &fw);
+	पूर्ण अन्यथा अणु
+		ret = mwअगरiex_dnld_fw(adapter, &fw);
+	पूर्ण
 
-	if (ret == -1)
-		goto err_dnld_fw;
+	अगर (ret == -1)
+		जाओ err_dnld_fw;
 
-	mwifiex_dbg(adapter, MSG, "WLAN FW is active\n");
+	mwअगरiex_dbg(adapter, MSG, "WLAN FW is active\n");
 
-	if (cal_data_cfg) {
-		if ((request_firmware(&adapter->cal_data, cal_data_cfg,
+	अगर (cal_data_cfg) अणु
+		अगर ((request_firmware(&adapter->cal_data, cal_data_cfg,
 				      adapter->dev)) < 0)
-			mwifiex_dbg(adapter, ERROR,
+			mwअगरiex_dbg(adapter, ERROR,
 				    "Cal data request_firmware() failed\n");
-	}
+	पूर्ण
 
-	/* enable host interrupt after fw dnld is successful */
-	if (adapter->if_ops.enable_int) {
-		if (adapter->if_ops.enable_int(adapter))
-			goto err_dnld_fw;
-	}
+	/* enable host पूर्णांकerrupt after fw dnld is successful */
+	अगर (adapter->अगर_ops.enable_पूर्णांक) अणु
+		अगर (adapter->अगर_ops.enable_पूर्णांक(adapter))
+			जाओ err_dnld_fw;
+	पूर्ण
 
-	adapter->init_wait_q_woken = false;
-	ret = mwifiex_init_fw(adapter);
-	if (ret == -1) {
-		goto err_init_fw;
-	} else if (!ret) {
+	adapter->init_रुको_q_woken = false;
+	ret = mwअगरiex_init_fw(adapter);
+	अगर (ret == -1) अणु
+		जाओ err_init_fw;
+	पूर्ण अन्यथा अगर (!ret) अणु
 		adapter->hw_status = MWIFIEX_HW_STATUS_READY;
-		goto done;
-	}
-	/* Wait for mwifiex_init to complete */
-	if (!adapter->mfg_mode) {
-		wait_event_interruptible(adapter->init_wait_q,
-					 adapter->init_wait_q_woken);
-		if (adapter->hw_status != MWIFIEX_HW_STATUS_READY)
-			goto err_init_fw;
-	}
+		जाओ करोne;
+	पूर्ण
+	/* Wait क्रम mwअगरiex_init to complete */
+	अगर (!adapter->mfg_mode) अणु
+		रुको_event_पूर्णांकerruptible(adapter->init_रुको_q,
+					 adapter->init_रुको_q_woken);
+		अगर (adapter->hw_status != MWIFIEX_HW_STATUS_READY)
+			जाओ err_init_fw;
+	पूर्ण
 
-	if (!adapter->wiphy) {
-		if (mwifiex_register_cfg80211(adapter)) {
-			mwifiex_dbg(adapter, ERROR,
+	अगर (!adapter->wiphy) अणु
+		अगर (mwअगरiex_रेजिस्टर_cfg80211(adapter)) अणु
+			mwअगरiex_dbg(adapter, ERROR,
 				    "cannot register with cfg80211\n");
-			goto err_init_fw;
-		}
-	}
+			जाओ err_init_fw;
+		पूर्ण
+	पूर्ण
 
-	if (mwifiex_init_channel_scan_gap(adapter)) {
-		mwifiex_dbg(adapter, ERROR,
+	अगर (mwअगरiex_init_channel_scan_gap(adapter)) अणु
+		mwअगरiex_dbg(adapter, ERROR,
 			    "could not init channel stats table\n");
-		goto err_init_chan_scan;
-	}
+		जाओ err_init_chan_scan;
+	पूर्ण
 
-	if (driver_mode) {
+	अगर (driver_mode) अणु
 		driver_mode &= MWIFIEX_DRIVER_MODE_BITMASK;
 		driver_mode |= MWIFIEX_DRIVER_MODE_STA;
-	}
+	पूर्ण
 
 	rtnl_lock();
 	wiphy_lock(adapter->wiphy);
-	/* Create station interface by default */
-	wdev = mwifiex_add_virtual_intf(adapter->wiphy, "mlan%d", NET_NAME_ENUM,
-					NL80211_IFTYPE_STATION, NULL);
-	if (IS_ERR(wdev)) {
-		mwifiex_dbg(adapter, ERROR,
+	/* Create station पूर्णांकerface by शेष */
+	wdev = mwअगरiex_add_भव_पूर्णांकf(adapter->wiphy, "mlan%d", NET_NAME_ENUM,
+					NL80211_IFTYPE_STATION, शून्य);
+	अगर (IS_ERR(wdev)) अणु
+		mwअगरiex_dbg(adapter, ERROR,
 			    "cannot create default STA interface\n");
 		wiphy_unlock(adapter->wiphy);
 		rtnl_unlock();
-		goto err_add_intf;
-	}
+		जाओ err_add_पूर्णांकf;
+	पूर्ण
 
-	if (driver_mode & MWIFIEX_DRIVER_MODE_UAP) {
-		wdev = mwifiex_add_virtual_intf(adapter->wiphy, "uap%d", NET_NAME_ENUM,
-						NL80211_IFTYPE_AP, NULL);
-		if (IS_ERR(wdev)) {
-			mwifiex_dbg(adapter, ERROR,
+	अगर (driver_mode & MWIFIEX_DRIVER_MODE_UAP) अणु
+		wdev = mwअगरiex_add_भव_पूर्णांकf(adapter->wiphy, "uap%d", NET_NAME_ENUM,
+						NL80211_IFTYPE_AP, शून्य);
+		अगर (IS_ERR(wdev)) अणु
+			mwअगरiex_dbg(adapter, ERROR,
 				    "cannot create AP interface\n");
 			wiphy_unlock(adapter->wiphy);
 			rtnl_unlock();
-			goto err_add_intf;
-		}
-	}
+			जाओ err_add_पूर्णांकf;
+		पूर्ण
+	पूर्ण
 
-	if (driver_mode & MWIFIEX_DRIVER_MODE_P2P) {
-		wdev = mwifiex_add_virtual_intf(adapter->wiphy, "p2p%d", NET_NAME_ENUM,
-						NL80211_IFTYPE_P2P_CLIENT, NULL);
-		if (IS_ERR(wdev)) {
-			mwifiex_dbg(adapter, ERROR,
+	अगर (driver_mode & MWIFIEX_DRIVER_MODE_P2P) अणु
+		wdev = mwअगरiex_add_भव_पूर्णांकf(adapter->wiphy, "p2p%d", NET_NAME_ENUM,
+						NL80211_IFTYPE_P2P_CLIENT, शून्य);
+		अगर (IS_ERR(wdev)) अणु
+			mwअगरiex_dbg(adapter, ERROR,
 				    "cannot create p2p client interface\n");
 			wiphy_unlock(adapter->wiphy);
 			rtnl_unlock();
-			goto err_add_intf;
-		}
-	}
+			जाओ err_add_पूर्णांकf;
+		पूर्ण
+	पूर्ण
 	wiphy_unlock(adapter->wiphy);
 	rtnl_unlock();
 
-	mwifiex_drv_get_driver_version(adapter, fmt, sizeof(fmt) - 1);
-	mwifiex_dbg(adapter, MSG, "driver_version = %s\n", fmt);
+	mwअगरiex_drv_get_driver_version(adapter, fmt, माप(fmt) - 1);
+	mwअगरiex_dbg(adapter, MSG, "driver_version = %s\n", fmt);
 	adapter->is_up = true;
-	goto done;
+	जाओ करोne;
 
-err_add_intf:
-	vfree(adapter->chan_stats);
+err_add_पूर्णांकf:
+	vमुक्त(adapter->chan_stats);
 err_init_chan_scan:
-	wiphy_unregister(adapter->wiphy);
-	wiphy_free(adapter->wiphy);
+	wiphy_unरेजिस्टर(adapter->wiphy);
+	wiphy_मुक्त(adapter->wiphy);
 err_init_fw:
-	if (adapter->if_ops.disable_int)
-		adapter->if_ops.disable_int(adapter);
+	अगर (adapter->अगर_ops.disable_पूर्णांक)
+		adapter->अगर_ops.disable_पूर्णांक(adapter);
 err_dnld_fw:
-	mwifiex_dbg(adapter, ERROR,
+	mwअगरiex_dbg(adapter, ERROR,
 		    "info: %s: unregister device\n", __func__);
-	if (adapter->if_ops.unregister_dev)
-		adapter->if_ops.unregister_dev(adapter);
+	अगर (adapter->अगर_ops.unरेजिस्टर_dev)
+		adapter->अगर_ops.unरेजिस्टर_dev(adapter);
 
 	set_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags);
-	mwifiex_terminate_workqueue(adapter);
+	mwअगरiex_terminate_workqueue(adapter);
 
-	if (adapter->hw_status == MWIFIEX_HW_STATUS_READY) {
+	अगर (adapter->hw_status == MWIFIEX_HW_STATUS_READY) अणु
 		pr_debug("info: %s: shutdown mwifiex\n", __func__);
-		mwifiex_shutdown_drv(adapter);
-		mwifiex_free_cmd_buffers(adapter);
-	}
+		mwअगरiex_shutकरोwn_drv(adapter);
+		mwअगरiex_मुक्त_cmd_buffers(adapter);
+	पूर्ण
 
 	init_failed = true;
-done:
-	if (adapter->cal_data) {
+करोne:
+	अगर (adapter->cal_data) अणु
 		release_firmware(adapter->cal_data);
-		adapter->cal_data = NULL;
-	}
-	if (adapter->firmware) {
+		adapter->cal_data = शून्य;
+	पूर्ण
+	अगर (adapter->firmware) अणु
 		release_firmware(adapter->firmware);
-		adapter->firmware = NULL;
-	}
-	if (init_failed) {
-		if (adapter->irq_wakeup >= 0)
+		adapter->firmware = शून्य;
+	पूर्ण
+	अगर (init_failed) अणु
+		अगर (adapter->irq_wakeup >= 0)
 			device_init_wakeup(adapter->dev, false);
-		mwifiex_free_adapter(adapter);
-	}
-	/* Tell all current and future waiters we're finished */
-	complete_all(fw_done);
+		mwअगरiex_मुक्त_adapter(adapter);
+	पूर्ण
+	/* Tell all current and future रुकोers we're finished */
+	complete_all(fw_करोne);
 
-	return init_failed ? -EIO : 0;
-}
+	वापस init_failed ? -EIO : 0;
+पूर्ण
 
-static void mwifiex_fw_dpc(const struct firmware *firmware, void *context)
-{
-	_mwifiex_fw_dpc(firmware, context);
-}
+अटल व्योम mwअगरiex_fw_dpc(स्थिर काष्ठा firmware *firmware, व्योम *context)
+अणु
+	_mwअगरiex_fw_dpc(firmware, context);
+पूर्ण
 
 /*
- * This function gets the firmware and (if called asynchronously) kicks off the
- * HW init when done.
+ * This function माला_लो the firmware and (अगर called asynchronously) kicks off the
+ * HW init when करोne.
  */
-static int mwifiex_init_hw_fw(struct mwifiex_adapter *adapter,
-			      bool req_fw_nowait)
-{
-	int ret;
+अटल पूर्णांक mwअगरiex_init_hw_fw(काष्ठा mwअगरiex_adapter *adapter,
+			      bool req_fw_noरुको)
+अणु
+	पूर्णांक ret;
 
-	/* Override default firmware with manufacturing one if
+	/* Override शेष firmware with manufacturing one अगर
 	 * manufacturing mode is enabled
 	 */
-	if (mfg_mode) {
-		if (strlcpy(adapter->fw_name, MFG_FIRMWARE,
-			    sizeof(adapter->fw_name)) >=
-			    sizeof(adapter->fw_name)) {
+	अगर (mfg_mode) अणु
+		अगर (strlcpy(adapter->fw_name, MFG_FIRMWARE,
+			    माप(adapter->fw_name)) >=
+			    माप(adapter->fw_name)) अणु
 			pr_err("%s: fw_name too long!\n", __func__);
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if (req_fw_nowait) {
-		ret = request_firmware_nowait(THIS_MODULE, 1, adapter->fw_name,
+	अगर (req_fw_noरुको) अणु
+		ret = request_firmware_noरुको(THIS_MODULE, 1, adapter->fw_name,
 					      adapter->dev, GFP_KERNEL, adapter,
-					      mwifiex_fw_dpc);
-	} else {
+					      mwअगरiex_fw_dpc);
+	पूर्ण अन्यथा अणु
 		ret = request_firmware(&adapter->firmware,
 				       adapter->fw_name,
 				       adapter->dev);
-	}
+	पूर्ण
 
-	if (ret < 0)
-		mwifiex_dbg(adapter, ERROR, "request_firmware%s error %d\n",
-			    req_fw_nowait ? "_nowait" : "", ret);
-	return ret;
-}
+	अगर (ret < 0)
+		mwअगरiex_dbg(adapter, ERROR, "request_firmware%s error %d\n",
+			    req_fw_noरुको ? "_nowait" : "", ret);
+	वापस ret;
+पूर्ण
 
 /*
- * CFG802.11 network device handler for open.
+ * CFG802.11 network device handler क्रम खोलो.
  *
  * Starts the data queue.
  */
-static int
-mwifiex_open(struct net_device *dev)
-{
-	netif_carrier_off(dev);
+अटल पूर्णांक
+mwअगरiex_खोलो(काष्ठा net_device *dev)
+अणु
+	netअगर_carrier_off(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * CFG802.11 network device handler for close.
+ * CFG802.11 network device handler क्रम बंद.
  */
-static int
-mwifiex_close(struct net_device *dev)
-{
-	struct mwifiex_private *priv = mwifiex_netdev_get_priv(dev);
+अटल पूर्णांक
+mwअगरiex_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = mwअगरiex_netdev_get_priv(dev);
 
-	if (priv->scan_request) {
-		struct cfg80211_scan_info info = {
-			.aborted = true,
-		};
+	अगर (priv->scan_request) अणु
+		काष्ठा cfg80211_scan_info info = अणु
+			.पातed = true,
+		पूर्ण;
 
-		mwifiex_dbg(priv->adapter, INFO,
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "aborting scan on ndo_stop\n");
-		cfg80211_scan_done(priv->scan_request, &info);
-		priv->scan_request = NULL;
-		priv->scan_aborting = true;
-	}
+		cfg80211_scan_करोne(priv->scan_request, &info);
+		priv->scan_request = शून्य;
+		priv->scan_पातing = true;
+	पूर्ण
 
-	if (priv->sched_scanning) {
-		mwifiex_dbg(priv->adapter, INFO,
+	अगर (priv->sched_scanning) अणु
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "aborting bgscan on ndo_stop\n");
-		mwifiex_stop_bg_scan(priv);
+		mwअगरiex_stop_bg_scan(priv);
 		cfg80211_sched_scan_stopped(priv->wdev.wiphy, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool
-mwifiex_bypass_tx_queue(struct mwifiex_private *priv,
-			struct sk_buff *skb)
-{
-	struct ethhdr *eth_hdr = (struct ethhdr *)skb->data;
+अटल bool
+mwअगरiex_bypass_tx_queue(काष्ठा mwअगरiex_निजी *priv,
+			काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ethhdr *eth_hdr = (काष्ठा ethhdr *)skb->data;
 
-	if (ntohs(eth_hdr->h_proto) == ETH_P_PAE ||
-	    mwifiex_is_skb_mgmt_frame(skb) ||
+	अगर (ntohs(eth_hdr->h_proto) == ETH_P_PAE ||
+	    mwअगरiex_is_skb_mgmt_frame(skb) ||
 	    (GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_STA &&
 	     ISSUPP_TDLS_ENABLED(priv->adapter->fw_cap_info) &&
-	     (ntohs(eth_hdr->h_proto) == ETH_P_TDLS))) {
-		mwifiex_dbg(priv->adapter, DATA,
+	     (ntohs(eth_hdr->h_proto) == ETH_P_TDLS))) अणु
+		mwअगरiex_dbg(priv->adapter, DATA,
 			    "bypass txqueue; eth type %#x, mgmt %d\n",
 			     ntohs(eth_hdr->h_proto),
-			     mwifiex_is_skb_mgmt_frame(skb));
-		return true;
-	}
+			     mwअगरiex_is_skb_mgmt_frame(skb));
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 /*
- * Add buffer into wmm tx queue and queue work to transmit it.
+ * Add buffer पूर्णांकo wmm tx queue and queue work to transmit it.
  */
-int mwifiex_queue_tx_pkt(struct mwifiex_private *priv, struct sk_buff *skb)
-{
-	struct netdev_queue *txq;
-	int index = mwifiex_1d_to_wmm_queue[skb->priority];
+पूर्णांक mwअगरiex_queue_tx_pkt(काष्ठा mwअगरiex_निजी *priv, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा netdev_queue *txq;
+	पूर्णांक index = mwअगरiex_1d_to_wmm_queue[skb->priority];
 
-	if (atomic_inc_return(&priv->wmm_tx_pending[index]) >= MAX_TX_PENDING) {
+	अगर (atomic_inc_वापस(&priv->wmm_tx_pending[index]) >= MAX_TX_PENDING) अणु
 		txq = netdev_get_tx_queue(priv->netdev, index);
-		if (!netif_tx_queue_stopped(txq)) {
-			netif_tx_stop_queue(txq);
-			mwifiex_dbg(priv->adapter, DATA,
+		अगर (!netअगर_tx_queue_stopped(txq)) अणु
+			netअगर_tx_stop_queue(txq);
+			mwअगरiex_dbg(priv->adapter, DATA,
 				    "stop queue: %d\n", index);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (mwifiex_bypass_tx_queue(priv, skb)) {
+	अगर (mwअगरiex_bypass_tx_queue(priv, skb)) अणु
 		atomic_inc(&priv->adapter->tx_pending);
 		atomic_inc(&priv->adapter->bypass_tx_pending);
-		mwifiex_wmm_add_buf_bypass_txqueue(priv, skb);
-	 } else {
+		mwअगरiex_wmm_add_buf_bypass_txqueue(priv, skb);
+	 पूर्ण अन्यथा अणु
 		atomic_inc(&priv->adapter->tx_pending);
-		mwifiex_wmm_add_buf_txqueue(priv, skb);
-	 }
+		mwअगरiex_wmm_add_buf_txqueue(priv, skb);
+	 पूर्ण
 
-	mwifiex_queue_main_work(priv->adapter);
+	mwअगरiex_queue_मुख्य_work(priv->adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct sk_buff *
-mwifiex_clone_skb_for_tx_status(struct mwifiex_private *priv,
-				struct sk_buff *skb, u8 flag, u64 *cookie)
-{
-	struct sk_buff *orig_skb = skb;
-	struct mwifiex_txinfo *tx_info, *orig_tx_info;
+काष्ठा sk_buff *
+mwअगरiex_clone_skb_क्रम_tx_status(काष्ठा mwअगरiex_निजी *priv,
+				काष्ठा sk_buff *skb, u8 flag, u64 *cookie)
+अणु
+	काष्ठा sk_buff *orig_skb = skb;
+	काष्ठा mwअगरiex_txinfo *tx_info, *orig_tx_info;
 
 	skb = skb_clone(skb, GFP_ATOMIC);
-	if (skb) {
-		int id;
+	अगर (skb) अणु
+		पूर्णांक id;
 
 		spin_lock_bh(&priv->ack_status_lock);
 		id = idr_alloc(&priv->ack_status_frames, orig_skb,
 			       1, 0x10, GFP_ATOMIC);
 		spin_unlock_bh(&priv->ack_status_lock);
 
-		if (id >= 0) {
+		अगर (id >= 0) अणु
 			tx_info = MWIFIEX_SKB_TXCB(skb);
 			tx_info->ack_frame_id = id;
 			tx_info->flags |= flag;
@@ -845,976 +846,976 @@ mwifiex_clone_skb_for_tx_status(struct mwifiex_private *priv,
 			orig_tx_info->ack_frame_id = id;
 			orig_tx_info->flags |= flag;
 
-			if (flag == MWIFIEX_BUF_FLAG_ACTION_TX_STATUS && cookie)
+			अगर (flag == MWIFIEX_BUF_FLAG_ACTION_TX_STATUS && cookie)
 				orig_tx_info->cookie = *cookie;
 
-		} else if (skb_shared(skb)) {
-			kfree_skb(orig_skb);
-		} else {
-			kfree_skb(skb);
+		पूर्ण अन्यथा अगर (skb_shared(skb)) अणु
+			kमुक्त_skb(orig_skb);
+		पूर्ण अन्यथा अणु
+			kमुक्त_skb(skb);
 			skb = orig_skb;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* couldn't clone -- lose tx status ... */
 		skb = orig_skb;
-	}
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /*
- * CFG802.11 network device handler for data transmission.
+ * CFG802.11 network device handler क्रम data transmission.
  */
-static netdev_tx_t
-mwifiex_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct mwifiex_private *priv = mwifiex_netdev_get_priv(dev);
-	struct sk_buff *new_skb;
-	struct mwifiex_txinfo *tx_info;
+अटल netdev_tx_t
+mwअगरiex_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = mwअगरiex_netdev_get_priv(dev);
+	काष्ठा sk_buff *new_skb;
+	काष्ठा mwअगरiex_txinfo *tx_info;
 	bool multicast;
 
-	mwifiex_dbg(priv->adapter, DATA,
+	mwअगरiex_dbg(priv->adapter, DATA,
 		    "data: %lu BSS(%d-%d): Data <= kernel\n",
-		    jiffies, priv->bss_type, priv->bss_num);
+		    jअगरfies, priv->bss_type, priv->bss_num);
 
-	if (test_bit(MWIFIEX_SURPRISE_REMOVED, &priv->adapter->work_flags)) {
-		kfree_skb(skb);
+	अगर (test_bit(MWIFIEX_SURPRISE_REMOVED, &priv->adapter->work_flags)) अणु
+		kमुक्त_skb(skb);
 		priv->stats.tx_dropped++;
-		return 0;
-	}
-	if (!skb->len || (skb->len > ETH_FRAME_LEN)) {
-		mwifiex_dbg(priv->adapter, ERROR,
+		वापस 0;
+	पूर्ण
+	अगर (!skb->len || (skb->len > ETH_FRAME_LEN)) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "Tx: bad skb len %d\n", skb->len);
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		priv->stats.tx_dropped++;
-		return 0;
-	}
-	if (skb_headroom(skb) < MWIFIEX_MIN_DATA_HEADER_LEN) {
-		mwifiex_dbg(priv->adapter, DATA,
+		वापस 0;
+	पूर्ण
+	अगर (skb_headroom(skb) < MWIFIEX_MIN_DATA_HEADER_LEN) अणु
+		mwअगरiex_dbg(priv->adapter, DATA,
 			    "data: Tx: insufficient skb headroom %d\n",
 			    skb_headroom(skb));
 		/* Insufficient skb headroom - allocate a new skb */
 		new_skb =
-			skb_realloc_headroom(skb, MWIFIEX_MIN_DATA_HEADER_LEN);
-		if (unlikely(!new_skb)) {
-			mwifiex_dbg(priv->adapter, ERROR,
+			skb_पुनः_स्मृति_headroom(skb, MWIFIEX_MIN_DATA_HEADER_LEN);
+		अगर (unlikely(!new_skb)) अणु
+			mwअगरiex_dbg(priv->adapter, ERROR,
 				    "Tx: cannot alloca new_skb\n");
-			kfree_skb(skb);
+			kमुक्त_skb(skb);
 			priv->stats.tx_dropped++;
-			return 0;
-		}
-		kfree_skb(skb);
+			वापस 0;
+		पूर्ण
+		kमुक्त_skb(skb);
 		skb = new_skb;
-		mwifiex_dbg(priv->adapter, INFO,
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "info: new skb headroomd %d\n",
 			    skb_headroom(skb));
-	}
+	पूर्ण
 
 	tx_info = MWIFIEX_SKB_TXCB(skb);
-	memset(tx_info, 0, sizeof(*tx_info));
+	स_रखो(tx_info, 0, माप(*tx_info));
 	tx_info->bss_num = priv->bss_num;
 	tx_info->bss_type = priv->bss_type;
 	tx_info->pkt_len = skb->len;
 
 	multicast = is_multicast_ether_addr(skb->data);
 
-	if (unlikely(!multicast && skb->sk &&
+	अगर (unlikely(!multicast && skb->sk &&
 		     skb_shinfo(skb)->tx_flags & SKBTX_WIFI_STATUS &&
 		     priv->adapter->fw_api_ver == MWIFIEX_FW_V15))
-		skb = mwifiex_clone_skb_for_tx_status(priv,
+		skb = mwअगरiex_clone_skb_क्रम_tx_status(priv,
 						      skb,
-					MWIFIEX_BUF_FLAG_EAPOL_TX_STATUS, NULL);
+					MWIFIEX_BUF_FLAG_EAPOL_TX_STATUS, शून्य);
 
-	/* Record the current time the packet was queued; used to
-	 * determine the amount of time the packet was queued in
-	 * the driver before it was sent to the firmware.
-	 * The delay is then sent along with the packet to the
-	 * firmware for aggregate delay calculation for stats and
-	 * MSDU lifetime expiry.
+	/* Record the current समय the packet was queued; used to
+	 * determine the amount of समय the packet was queued in
+	 * the driver beक्रमe it was sent to the firmware.
+	 * The delay is then sent aदीर्घ with the packet to the
+	 * firmware क्रम aggregate delay calculation क्रम stats and
+	 * MSDU lअगरeसमय expiry.
 	 */
-	__net_timestamp(skb);
+	__net_बारtamp(skb);
 
-	if (ISSUPP_TDLS_ENABLED(priv->adapter->fw_cap_info) &&
+	अगर (ISSUPP_TDLS_ENABLED(priv->adapter->fw_cap_info) &&
 	    priv->bss_type == MWIFIEX_BSS_TYPE_STA &&
-	    !ether_addr_equal_unaligned(priv->cfg_bssid, skb->data)) {
-		if (priv->adapter->auto_tdls && priv->check_tdls_tx)
-			mwifiex_tdls_check_tx(priv, skb);
-	}
+	    !ether_addr_equal_unaligned(priv->cfg_bssid, skb->data)) अणु
+		अगर (priv->adapter->स्वतः_tdls && priv->check_tdls_tx)
+			mwअगरiex_tdls_check_tx(priv, skb);
+	पूर्ण
 
-	mwifiex_queue_tx_pkt(priv, skb);
+	mwअगरiex_queue_tx_pkt(priv, skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mwifiex_set_mac_address(struct mwifiex_private *priv,
-			    struct net_device *dev, bool external,
+पूर्णांक mwअगरiex_set_mac_address(काष्ठा mwअगरiex_निजी *priv,
+			    काष्ठा net_device *dev, bool बाह्यal,
 			    u8 *new_mac)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u64 mac_addr, old_mac_addr;
 
 	old_mac_addr = ether_addr_to_u64(priv->curr_addr);
 
-	if (external) {
+	अगर (बाह्यal) अणु
 		mac_addr = ether_addr_to_u64(new_mac);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Internal mac address change */
-		if (priv->bss_type == MWIFIEX_BSS_TYPE_ANY)
-			return -EOPNOTSUPP;
+		अगर (priv->bss_type == MWIFIEX_BSS_TYPE_ANY)
+			वापस -EOPNOTSUPP;
 
 		mac_addr = old_mac_addr;
 
-		if (priv->bss_type == MWIFIEX_BSS_TYPE_P2P) {
+		अगर (priv->bss_type == MWIFIEX_BSS_TYPE_P2P) अणु
 			mac_addr |= BIT_ULL(MWIFIEX_MAC_LOCAL_ADMIN_BIT);
 			mac_addr += priv->bss_num;
-		} else if (priv->adapter->priv[0] != priv) {
+		पूर्ण अन्यथा अगर (priv->adapter->priv[0] != priv) अणु
 			/* Set mac address based on bss_type/bss_num */
 			mac_addr ^= BIT_ULL(priv->bss_type + 8);
 			mac_addr += priv->bss_num;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	u64_to_ether_addr(mac_addr, priv->curr_addr);
 
 	/* Send request to firmware */
-	ret = mwifiex_send_cmd(priv, HostCmd_CMD_802_11_MAC_ADDRESS,
-			       HostCmd_ACT_GEN_SET, 0, NULL, true);
+	ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_MAC_ADDRESS,
+			       HostCmd_ACT_GEN_SET, 0, शून्य, true);
 
-	if (ret) {
+	अगर (ret) अणु
 		u64_to_ether_addr(old_mac_addr, priv->curr_addr);
-		mwifiex_dbg(priv->adapter, ERROR,
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "set mac address failed: ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ether_addr_copy(dev->dev_addr, priv->curr_addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* CFG802.11 network device handler for setting MAC address.
+/* CFG802.11 network device handler क्रम setting MAC address.
  */
-static int
-mwifiex_ndo_set_mac_address(struct net_device *dev, void *addr)
-{
-	struct mwifiex_private *priv = mwifiex_netdev_get_priv(dev);
-	struct sockaddr *hw_addr = addr;
+अटल पूर्णांक
+mwअगरiex_nकरो_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = mwअगरiex_netdev_get_priv(dev);
+	काष्ठा sockaddr *hw_addr = addr;
 
-	return mwifiex_set_mac_address(priv, dev, true, hw_addr->sa_data);
-}
+	वापस mwअगरiex_set_mac_address(priv, dev, true, hw_addr->sa_data);
+पूर्ण
 
 /*
- * CFG802.11 network device handler for setting multicast list.
+ * CFG802.11 network device handler क्रम setting multicast list.
  */
-static void mwifiex_set_multicast_list(struct net_device *dev)
-{
-	struct mwifiex_private *priv = mwifiex_netdev_get_priv(dev);
-	struct mwifiex_multicast_list mcast_list;
+अटल व्योम mwअगरiex_set_multicast_list(काष्ठा net_device *dev)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = mwअगरiex_netdev_get_priv(dev);
+	काष्ठा mwअगरiex_multicast_list mcast_list;
 
-	if (dev->flags & IFF_PROMISC) {
+	अगर (dev->flags & IFF_PROMISC) अणु
 		mcast_list.mode = MWIFIEX_PROMISC_MODE;
-	} else if (dev->flags & IFF_ALLMULTI ||
-		   netdev_mc_count(dev) > MWIFIEX_MAX_MULTICAST_LIST_SIZE) {
+	पूर्ण अन्यथा अगर (dev->flags & IFF_ALLMULTI ||
+		   netdev_mc_count(dev) > MWIFIEX_MAX_MULTICAST_LIST_SIZE) अणु
 		mcast_list.mode = MWIFIEX_ALL_MULTI_MODE;
-	} else {
+	पूर्ण अन्यथा अणु
 		mcast_list.mode = MWIFIEX_MULTICAST_MODE;
 		mcast_list.num_multicast_addr =
-			mwifiex_copy_mcast_addr(&mcast_list, dev);
-	}
-	mwifiex_request_set_multicast_list(priv, &mcast_list);
-}
+			mwअगरiex_copy_mcast_addr(&mcast_list, dev);
+	पूर्ण
+	mwअगरiex_request_set_multicast_list(priv, &mcast_list);
+पूर्ण
 
 /*
- * CFG802.11 network device handler for transmission timeout.
+ * CFG802.11 network device handler क्रम transmission समयout.
  */
-static void
-mwifiex_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct mwifiex_private *priv = mwifiex_netdev_get_priv(dev);
+अटल व्योम
+mwअगरiex_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = mwअगरiex_netdev_get_priv(dev);
 
-	priv->num_tx_timeout++;
-	priv->tx_timeout_cnt++;
-	mwifiex_dbg(priv->adapter, ERROR,
+	priv->num_tx_समयout++;
+	priv->tx_समयout_cnt++;
+	mwअगरiex_dbg(priv->adapter, ERROR,
 		    "%lu : Tx timeout(#%d), bss_type-num = %d-%d\n",
-		    jiffies, priv->tx_timeout_cnt, priv->bss_type,
+		    jअगरfies, priv->tx_समयout_cnt, priv->bss_type,
 		    priv->bss_num);
-	mwifiex_set_trans_start(dev);
+	mwअगरiex_set_trans_start(dev);
 
-	if (priv->tx_timeout_cnt > TX_TIMEOUT_THRESHOLD &&
-	    priv->adapter->if_ops.card_reset) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (priv->tx_समयout_cnt > TX_TIMEOUT_THRESHOLD &&
+	    priv->adapter->अगर_ops.card_reset) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "tx_timeout_cnt exceeds threshold.\t"
 			    "Triggering card reset!\n");
-		priv->adapter->if_ops.card_reset(priv->adapter);
-	}
-}
+		priv->adapter->अगर_ops.card_reset(priv->adapter);
+	पूर्ण
+पूर्ण
 
-void mwifiex_multi_chan_resync(struct mwifiex_adapter *adapter)
-{
-	struct usb_card_rec *card = adapter->card;
-	struct mwifiex_private *priv;
+व्योम mwअगरiex_multi_chan_resync(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	काष्ठा usb_card_rec *card = adapter->card;
+	काष्ठा mwअगरiex_निजी *priv;
 	u16 tx_buf_size;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	card->mc_resync_flag = true;
-	for (i = 0; i < MWIFIEX_TX_DATA_PORT; i++) {
-		if (atomic_read(&card->port[i].tx_data_urb_pending)) {
-			mwifiex_dbg(adapter, WARN, "pending data urb in sys\n");
-			return;
-		}
-	}
+	क्रम (i = 0; i < MWIFIEX_TX_DATA_PORT; i++) अणु
+		अगर (atomic_पढ़ो(&card->port[i].tx_data_urb_pending)) अणु
+			mwअगरiex_dbg(adapter, WARN, "pending data urb in sys\n");
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	card->mc_resync_flag = false;
 	tx_buf_size = 0xffff;
-	priv = mwifiex_get_priv(adapter, MWIFIEX_BSS_ROLE_ANY);
-	ret = mwifiex_send_cmd(priv, HostCmd_CMD_RECONFIGURE_TX_BUFF,
+	priv = mwअगरiex_get_priv(adapter, MWIFIEX_BSS_ROLE_ANY);
+	ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_RECONFIGURE_TX_BUFF,
 			       HostCmd_ACT_GEN_SET, 0, &tx_buf_size, false);
-	if (ret)
-		mwifiex_dbg(adapter, ERROR,
+	अगर (ret)
+		mwअगरiex_dbg(adapter, ERROR,
 			    "send reconfig tx buf size cmd err\n");
-}
-EXPORT_SYMBOL_GPL(mwifiex_multi_chan_resync);
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_multi_chan_resync);
 
-void mwifiex_upload_device_dump(struct mwifiex_adapter *adapter)
-{
-	/* Dump all the memory data into single file, a userspace script will
+व्योम mwअगरiex_upload_device_dump(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	/* Dump all the memory data पूर्णांकo single file, a userspace script will
 	 * be used to split all the memory data to multiple files
 	 */
-	mwifiex_dbg(adapter, MSG,
+	mwअगरiex_dbg(adapter, MSG,
 		    "== mwifiex dump information to /sys/class/devcoredump start\n");
 	dev_coredumpv(adapter->dev, adapter->devdump_data, adapter->devdump_len,
 		      GFP_KERNEL);
-	mwifiex_dbg(adapter, MSG,
+	mwअगरiex_dbg(adapter, MSG,
 		    "== mwifiex dump information to /sys/class/devcoredump end\n");
 
-	/* Device dump data will be freed in device coredump release function
+	/* Device dump data will be मुक्तd in device coredump release function
 	 * after 5 min. Here reset adapter->devdump_data and ->devdump_len
-	 * to avoid it been accidentally reused.
+	 * to aव्योम it been accidentally reused.
 	 */
-	adapter->devdump_data = NULL;
+	adapter->devdump_data = शून्य;
 	adapter->devdump_len = 0;
-}
-EXPORT_SYMBOL_GPL(mwifiex_upload_device_dump);
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_upload_device_dump);
 
-void mwifiex_drv_info_dump(struct mwifiex_adapter *adapter)
-{
-	char *p;
-	char drv_version[64];
-	struct usb_card_rec *cardp;
-	struct sdio_mmc_card *sdio_card;
-	struct mwifiex_private *priv;
-	int i, idx;
-	struct netdev_queue *txq;
-	struct mwifiex_debug_info *debug_info;
+व्योम mwअगरiex_drv_info_dump(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	अक्षर *p;
+	अक्षर drv_version[64];
+	काष्ठा usb_card_rec *cardp;
+	काष्ठा sdio_mmc_card *sdio_card;
+	काष्ठा mwअगरiex_निजी *priv;
+	पूर्णांक i, idx;
+	काष्ठा netdev_queue *txq;
+	काष्ठा mwअगरiex_debug_info *debug_info;
 
-	mwifiex_dbg(adapter, MSG, "===mwifiex driverinfo dump start===\n");
+	mwअगरiex_dbg(adapter, MSG, "===mwifiex driverinfo dump start===\n");
 
 	p = adapter->devdump_data;
-	strcpy(p, "========Start dump driverinfo========\n");
-	p += strlen("========Start dump driverinfo========\n");
-	p += sprintf(p, "driver_name = " "\"mwifiex\"\n");
+	म_नकल(p, "========Start dump driverinfo========\n");
+	p += म_माप("========Start dump driverinfo========\n");
+	p += प्र_लिखो(p, "driver_name = " "\"mwifiex\"\n");
 
-	mwifiex_drv_get_driver_version(adapter, drv_version,
-				       sizeof(drv_version) - 1);
-	p += sprintf(p, "driver_version = %s\n", drv_version);
+	mwअगरiex_drv_get_driver_version(adapter, drv_version,
+				       माप(drv_version) - 1);
+	p += प्र_लिखो(p, "driver_version = %s\n", drv_version);
 
-	if (adapter->iface_type == MWIFIEX_USB) {
-		cardp = (struct usb_card_rec *)adapter->card;
-		p += sprintf(p, "tx_cmd_urb_pending = %d\n",
-			     atomic_read(&cardp->tx_cmd_urb_pending));
-		p += sprintf(p, "tx_data_urb_pending_port_0 = %d\n",
-			     atomic_read(&cardp->port[0].tx_data_urb_pending));
-		p += sprintf(p, "tx_data_urb_pending_port_1 = %d\n",
-			     atomic_read(&cardp->port[1].tx_data_urb_pending));
-		p += sprintf(p, "rx_cmd_urb_pending = %d\n",
-			     atomic_read(&cardp->rx_cmd_urb_pending));
-		p += sprintf(p, "rx_data_urb_pending = %d\n",
-			     atomic_read(&cardp->rx_data_urb_pending));
-	}
+	अगर (adapter->अगरace_type == MWIFIEX_USB) अणु
+		cardp = (काष्ठा usb_card_rec *)adapter->card;
+		p += प्र_लिखो(p, "tx_cmd_urb_pending = %d\n",
+			     atomic_पढ़ो(&cardp->tx_cmd_urb_pending));
+		p += प्र_लिखो(p, "tx_data_urb_pending_port_0 = %d\n",
+			     atomic_पढ़ो(&cardp->port[0].tx_data_urb_pending));
+		p += प्र_लिखो(p, "tx_data_urb_pending_port_1 = %d\n",
+			     atomic_पढ़ो(&cardp->port[1].tx_data_urb_pending));
+		p += प्र_लिखो(p, "rx_cmd_urb_pending = %d\n",
+			     atomic_पढ़ो(&cardp->rx_cmd_urb_pending));
+		p += प्र_लिखो(p, "rx_data_urb_pending = %d\n",
+			     atomic_पढ़ो(&cardp->rx_data_urb_pending));
+	पूर्ण
 
-	p += sprintf(p, "tx_pending = %d\n",
-		     atomic_read(&adapter->tx_pending));
-	p += sprintf(p, "rx_pending = %d\n",
-		     atomic_read(&adapter->rx_pending));
+	p += प्र_लिखो(p, "tx_pending = %d\n",
+		     atomic_पढ़ो(&adapter->tx_pending));
+	p += प्र_लिखो(p, "rx_pending = %d\n",
+		     atomic_पढ़ो(&adapter->rx_pending));
 
-	if (adapter->iface_type == MWIFIEX_SDIO) {
-		sdio_card = (struct sdio_mmc_card *)adapter->card;
-		p += sprintf(p, "\nmp_rd_bitmap=0x%x curr_rd_port=0x%x\n",
-			     sdio_card->mp_rd_bitmap, sdio_card->curr_rd_port);
-		p += sprintf(p, "mp_wr_bitmap=0x%x curr_wr_port=0x%x\n",
-			     sdio_card->mp_wr_bitmap, sdio_card->curr_wr_port);
-	}
+	अगर (adapter->अगरace_type == MWIFIEX_SDIO) अणु
+		sdio_card = (काष्ठा sdio_mmc_card *)adapter->card;
+		p += प्र_लिखो(p, "\nmp_rd_bitmap=0x%x curr_rd_port=0x%x\n",
+			     sdio_card->mp_rd_biपंचांगap, sdio_card->curr_rd_port);
+		p += प्र_लिखो(p, "mp_wr_bitmap=0x%x curr_wr_port=0x%x\n",
+			     sdio_card->mp_wr_biपंचांगap, sdio_card->curr_wr_port);
+	पूर्ण
 
-	for (i = 0; i < adapter->priv_num; i++) {
-		if (!adapter->priv[i] || !adapter->priv[i]->netdev)
-			continue;
+	क्रम (i = 0; i < adapter->priv_num; i++) अणु
+		अगर (!adapter->priv[i] || !adapter->priv[i]->netdev)
+			जारी;
 		priv = adapter->priv[i];
-		p += sprintf(p, "\n[interface  : \"%s\"]\n",
+		p += प्र_लिखो(p, "\n[interface  : \"%s\"]\n",
 			     priv->netdev->name);
-		p += sprintf(p, "wmm_tx_pending[0] = %d\n",
-			     atomic_read(&priv->wmm_tx_pending[0]));
-		p += sprintf(p, "wmm_tx_pending[1] = %d\n",
-			     atomic_read(&priv->wmm_tx_pending[1]));
-		p += sprintf(p, "wmm_tx_pending[2] = %d\n",
-			     atomic_read(&priv->wmm_tx_pending[2]));
-		p += sprintf(p, "wmm_tx_pending[3] = %d\n",
-			     atomic_read(&priv->wmm_tx_pending[3]));
-		p += sprintf(p, "media_state=\"%s\"\n", !priv->media_connected ?
+		p += प्र_लिखो(p, "wmm_tx_pending[0] = %d\n",
+			     atomic_पढ़ो(&priv->wmm_tx_pending[0]));
+		p += प्र_लिखो(p, "wmm_tx_pending[1] = %d\n",
+			     atomic_पढ़ो(&priv->wmm_tx_pending[1]));
+		p += प्र_लिखो(p, "wmm_tx_pending[2] = %d\n",
+			     atomic_पढ़ो(&priv->wmm_tx_pending[2]));
+		p += प्र_लिखो(p, "wmm_tx_pending[3] = %d\n",
+			     atomic_पढ़ो(&priv->wmm_tx_pending[3]));
+		p += प्र_लिखो(p, "media_state=\"%s\"\n", !priv->media_connected ?
 			     "Disconnected" : "Connected");
-		p += sprintf(p, "carrier %s\n", (netif_carrier_ok(priv->netdev)
+		p += प्र_लिखो(p, "carrier %s\n", (netअगर_carrier_ok(priv->netdev)
 			     ? "on" : "off"));
-		for (idx = 0; idx < priv->netdev->num_tx_queues; idx++) {
+		क्रम (idx = 0; idx < priv->netdev->num_tx_queues; idx++) अणु
 			txq = netdev_get_tx_queue(priv->netdev, idx);
-			p += sprintf(p, "tx queue %d:%s  ", idx,
-				     netif_tx_queue_stopped(txq) ?
+			p += प्र_लिखो(p, "tx queue %d:%s  ", idx,
+				     netअगर_tx_queue_stopped(txq) ?
 				     "stopped" : "started");
-		}
-		p += sprintf(p, "\n%s: num_tx_timeout = %d\n",
-			     priv->netdev->name, priv->num_tx_timeout);
-	}
+		पूर्ण
+		p += प्र_लिखो(p, "\n%s: num_tx_timeout = %d\n",
+			     priv->netdev->name, priv->num_tx_समयout);
+	पूर्ण
 
-	if (adapter->iface_type == MWIFIEX_SDIO ||
-	    adapter->iface_type == MWIFIEX_PCIE) {
-		p += sprintf(p, "\n=== %s register dump===\n",
-			     adapter->iface_type == MWIFIEX_SDIO ?
+	अगर (adapter->अगरace_type == MWIFIEX_SDIO ||
+	    adapter->अगरace_type == MWIFIEX_PCIE) अणु
+		p += प्र_लिखो(p, "\n=== %s register dump===\n",
+			     adapter->अगरace_type == MWIFIEX_SDIO ?
 							"SDIO" : "PCIE");
-		if (adapter->if_ops.reg_dump)
-			p += adapter->if_ops.reg_dump(adapter, p);
-	}
-	p += sprintf(p, "\n=== more debug information\n");
-	debug_info = kzalloc(sizeof(*debug_info), GFP_KERNEL);
-	if (debug_info) {
-		for (i = 0; i < adapter->priv_num; i++) {
-			if (!adapter->priv[i] || !adapter->priv[i]->netdev)
-				continue;
+		अगर (adapter->अगर_ops.reg_dump)
+			p += adapter->अगर_ops.reg_dump(adapter, p);
+	पूर्ण
+	p += प्र_लिखो(p, "\n=== more debug information\n");
+	debug_info = kzalloc(माप(*debug_info), GFP_KERNEL);
+	अगर (debug_info) अणु
+		क्रम (i = 0; i < adapter->priv_num; i++) अणु
+			अगर (!adapter->priv[i] || !adapter->priv[i]->netdev)
+				जारी;
 			priv = adapter->priv[i];
-			mwifiex_get_debug_info(priv, debug_info);
-			p += mwifiex_debug_info_to_buffer(priv, p, debug_info);
-			break;
-		}
-		kfree(debug_info);
-	}
+			mwअगरiex_get_debug_info(priv, debug_info);
+			p += mwअगरiex_debug_info_to_buffer(priv, p, debug_info);
+			अवरोध;
+		पूर्ण
+		kमुक्त(debug_info);
+	पूर्ण
 
-	strcpy(p, "\n========End dump========\n");
-	p += strlen("\n========End dump========\n");
-	mwifiex_dbg(adapter, MSG, "===mwifiex driverinfo dump end===\n");
-	adapter->devdump_len = p - (char *)adapter->devdump_data;
-}
-EXPORT_SYMBOL_GPL(mwifiex_drv_info_dump);
+	म_नकल(p, "\n========End dump========\n");
+	p += म_माप("\n========End dump========\n");
+	mwअगरiex_dbg(adapter, MSG, "===mwifiex driverinfo dump end===\n");
+	adapter->devdump_len = p - (अक्षर *)adapter->devdump_data;
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_drv_info_dump);
 
-void mwifiex_prepare_fw_dump_info(struct mwifiex_adapter *adapter)
-{
+व्योम mwअगरiex_prepare_fw_dump_info(काष्ठा mwअगरiex_adapter *adapter)
+अणु
 	u8 idx;
-	char *fw_dump_ptr;
+	अक्षर *fw_dump_ptr;
 	u32 dump_len = 0;
 
-	for (idx = 0; idx < adapter->num_mem_types; idx++) {
-		struct memory_type_mapping *entry =
+	क्रम (idx = 0; idx < adapter->num_mem_types; idx++) अणु
+		काष्ठा memory_type_mapping *entry =
 				&adapter->mem_type_mapping_tbl[idx];
 
-		if (entry->mem_ptr) {
-			dump_len += (strlen("========Start dump ") +
-					strlen(entry->mem_name) +
-					strlen("========\n") +
+		अगर (entry->mem_ptr) अणु
+			dump_len += (म_माप("========Start dump ") +
+					म_माप(entry->mem_name) +
+					म_माप("========\n") +
 					(entry->mem_size + 1) +
-					strlen("\n========End dump========\n"));
-		}
-	}
+					म_माप("\n========End dump========\n"));
+		पूर्ण
+	पूर्ण
 
-	if (dump_len + 1 + adapter->devdump_len > MWIFIEX_FW_DUMP_SIZE) {
-		/* Realloc in case buffer overflow */
+	अगर (dump_len + 1 + adapter->devdump_len > MWIFIEX_FW_DUMP_SIZE) अणु
+		/* Realloc in हाल buffer overflow */
 		fw_dump_ptr = vzalloc(dump_len + 1 + adapter->devdump_len);
-		mwifiex_dbg(adapter, MSG, "Realloc device dump data.\n");
-		if (!fw_dump_ptr) {
-			vfree(adapter->devdump_data);
-			mwifiex_dbg(adapter, ERROR,
+		mwअगरiex_dbg(adapter, MSG, "Realloc device dump data.\n");
+		अगर (!fw_dump_ptr) अणु
+			vमुक्त(adapter->devdump_data);
+			mwअगरiex_dbg(adapter, ERROR,
 				    "vzalloc devdump data failure!\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		memmove(fw_dump_ptr, adapter->devdump_data,
+		स_हटाओ(fw_dump_ptr, adapter->devdump_data,
 			adapter->devdump_len);
-		vfree(adapter->devdump_data);
+		vमुक्त(adapter->devdump_data);
 		adapter->devdump_data = fw_dump_ptr;
-	}
+	पूर्ण
 
-	fw_dump_ptr = (char *)adapter->devdump_data + adapter->devdump_len;
+	fw_dump_ptr = (अक्षर *)adapter->devdump_data + adapter->devdump_len;
 
-	for (idx = 0; idx < adapter->num_mem_types; idx++) {
-		struct memory_type_mapping *entry =
+	क्रम (idx = 0; idx < adapter->num_mem_types; idx++) अणु
+		काष्ठा memory_type_mapping *entry =
 					&adapter->mem_type_mapping_tbl[idx];
 
-		if (entry->mem_ptr) {
-			strcpy(fw_dump_ptr, "========Start dump ");
-			fw_dump_ptr += strlen("========Start dump ");
+		अगर (entry->mem_ptr) अणु
+			म_नकल(fw_dump_ptr, "========Start dump ");
+			fw_dump_ptr += म_माप("========Start dump ");
 
-			strcpy(fw_dump_ptr, entry->mem_name);
-			fw_dump_ptr += strlen(entry->mem_name);
+			म_नकल(fw_dump_ptr, entry->mem_name);
+			fw_dump_ptr += म_माप(entry->mem_name);
 
-			strcpy(fw_dump_ptr, "========\n");
-			fw_dump_ptr += strlen("========\n");
+			म_नकल(fw_dump_ptr, "========\n");
+			fw_dump_ptr += म_माप("========\n");
 
-			memcpy(fw_dump_ptr, entry->mem_ptr, entry->mem_size);
+			स_नकल(fw_dump_ptr, entry->mem_ptr, entry->mem_size);
 			fw_dump_ptr += entry->mem_size;
 
-			strcpy(fw_dump_ptr, "\n========End dump========\n");
-			fw_dump_ptr += strlen("\n========End dump========\n");
-		}
-	}
+			म_नकल(fw_dump_ptr, "\n========End dump========\n");
+			fw_dump_ptr += म_माप("\n========End dump========\n");
+		पूर्ण
+	पूर्ण
 
-	adapter->devdump_len = fw_dump_ptr - (char *)adapter->devdump_data;
+	adapter->devdump_len = fw_dump_ptr - (अक्षर *)adapter->devdump_data;
 
-	for (idx = 0; idx < adapter->num_mem_types; idx++) {
-		struct memory_type_mapping *entry =
+	क्रम (idx = 0; idx < adapter->num_mem_types; idx++) अणु
+		काष्ठा memory_type_mapping *entry =
 			&adapter->mem_type_mapping_tbl[idx];
 
-		vfree(entry->mem_ptr);
-		entry->mem_ptr = NULL;
+		vमुक्त(entry->mem_ptr);
+		entry->mem_ptr = शून्य;
 		entry->mem_size = 0;
-	}
-}
-EXPORT_SYMBOL_GPL(mwifiex_prepare_fw_dump_info);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_prepare_fw_dump_info);
 
 /*
- * CFG802.11 network device handler for statistics retrieval.
+ * CFG802.11 network device handler क्रम statistics retrieval.
  */
-static struct net_device_stats *mwifiex_get_stats(struct net_device *dev)
-{
-	struct mwifiex_private *priv = mwifiex_netdev_get_priv(dev);
+अटल काष्ठा net_device_stats *mwअगरiex_get_stats(काष्ठा net_device *dev)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = mwअगरiex_netdev_get_priv(dev);
 
-	return &priv->stats;
-}
+	वापस &priv->stats;
+पूर्ण
 
-static u16
-mwifiex_netdev_select_wmm_queue(struct net_device *dev, struct sk_buff *skb,
-				struct net_device *sb_dev)
-{
-	skb->priority = cfg80211_classify8021d(skb, NULL);
-	return mwifiex_1d_to_wmm_queue[skb->priority];
-}
+अटल u16
+mwअगरiex_netdev_select_wmm_queue(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+				काष्ठा net_device *sb_dev)
+अणु
+	skb->priority = cfg80211_classअगरy8021d(skb, शून्य);
+	वापस mwअगरiex_1d_to_wmm_queue[skb->priority];
+पूर्ण
 
 /* Network device handlers */
-static const struct net_device_ops mwifiex_netdev_ops = {
-	.ndo_open = mwifiex_open,
-	.ndo_stop = mwifiex_close,
-	.ndo_start_xmit = mwifiex_hard_start_xmit,
-	.ndo_set_mac_address = mwifiex_ndo_set_mac_address,
-	.ndo_validate_addr = eth_validate_addr,
-	.ndo_tx_timeout = mwifiex_tx_timeout,
-	.ndo_get_stats = mwifiex_get_stats,
-	.ndo_set_rx_mode = mwifiex_set_multicast_list,
-	.ndo_select_queue = mwifiex_netdev_select_wmm_queue,
-};
+अटल स्थिर काष्ठा net_device_ops mwअगरiex_netdev_ops = अणु
+	.nकरो_खोलो = mwअगरiex_खोलो,
+	.nकरो_stop = mwअगरiex_बंद,
+	.nकरो_start_xmit = mwअगरiex_hard_start_xmit,
+	.nकरो_set_mac_address = mwअगरiex_nकरो_set_mac_address,
+	.nकरो_validate_addr = eth_validate_addr,
+	.nकरो_tx_समयout = mwअगरiex_tx_समयout,
+	.nकरो_get_stats = mwअगरiex_get_stats,
+	.nकरो_set_rx_mode = mwअगरiex_set_multicast_list,
+	.nकरो_select_queue = mwअगरiex_netdev_select_wmm_queue,
+पूर्ण;
 
 /*
- * This function initializes the private structure parameters.
+ * This function initializes the निजी काष्ठाure parameters.
  *
- * The following wait queues are initialized -
- *      - IOCTL wait queue
- *      - Command wait queue
- *      - Statistics wait queue
+ * The following रुको queues are initialized -
+ *      - IOCTL रुको queue
+ *      - Command रुको queue
+ *      - Statistics रुको queue
  *
- * ...and the following default parameters are set -
+ * ...and the following शेष parameters are set -
  *      - Current key index     : Set to 0
- *      - Rate index            : Set to auto
+ *      - Rate index            : Set to स्वतः
  *      - Media connected       : Set to disconnected
  *      - Adhoc link sensed     : Set to false
  *      - Nick name             : Set to null
- *      - Number of Tx timeout  : Set to 0
+ *      - Number of Tx समयout  : Set to 0
  *      - Device address        : Set to current address
  *      - Rx histogram statistc : Set to 0
  *
  * In addition, the CFG80211 work queue is also created.
  */
-void mwifiex_init_priv_params(struct mwifiex_private *priv,
-			      struct net_device *dev)
-{
-	dev->netdev_ops = &mwifiex_netdev_ops;
-	dev->needs_free_netdev = true;
-	/* Initialize private structure */
+व्योम mwअगरiex_init_priv_params(काष्ठा mwअगरiex_निजी *priv,
+			      काष्ठा net_device *dev)
+अणु
+	dev->netdev_ops = &mwअगरiex_netdev_ops;
+	dev->needs_मुक्त_netdev = true;
+	/* Initialize निजी काष्ठाure */
 	priv->current_key_index = 0;
 	priv->media_connected = false;
-	memset(priv->mgmt_ie, 0,
-	       sizeof(struct mwifiex_ie) * MAX_MGMT_IE_INDEX);
+	स_रखो(priv->mgmt_ie, 0,
+	       माप(काष्ठा mwअगरiex_ie) * MAX_MGMT_IE_INDEX);
 	priv->beacon_idx = MWIFIEX_AUTO_IDX_MASK;
 	priv->proberesp_idx = MWIFIEX_AUTO_IDX_MASK;
 	priv->assocresp_idx = MWIFIEX_AUTO_IDX_MASK;
 	priv->gen_idx = MWIFIEX_AUTO_IDX_MASK;
-	priv->num_tx_timeout = 0;
-	if (is_valid_ether_addr(dev->dev_addr))
+	priv->num_tx_समयout = 0;
+	अगर (is_valid_ether_addr(dev->dev_addr))
 		ether_addr_copy(priv->curr_addr, dev->dev_addr);
-	else
+	अन्यथा
 		ether_addr_copy(priv->curr_addr, priv->adapter->perm_addr);
 
-	if (GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_STA ||
-	    GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_UAP) {
-		priv->hist_data = kmalloc(sizeof(*priv->hist_data), GFP_KERNEL);
-		if (priv->hist_data)
-			mwifiex_hist_data_reset(priv);
-	}
-}
+	अगर (GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_STA ||
+	    GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_UAP) अणु
+		priv->hist_data = kदो_स्मृति(माप(*priv->hist_data), GFP_KERNEL);
+		अगर (priv->hist_data)
+			mwअगरiex_hist_data_reset(priv);
+	पूर्ण
+पूर्ण
 
 /*
- * This function check if command is pending.
+ * This function check अगर command is pending.
  */
-int is_command_pending(struct mwifiex_adapter *adapter)
-{
-	int is_cmd_pend_q_empty;
+पूर्णांक is_command_pending(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	पूर्णांक is_cmd_pend_q_empty;
 
 	spin_lock_bh(&adapter->cmd_pending_q_lock);
 	is_cmd_pend_q_empty = list_empty(&adapter->cmd_pending_q);
 	spin_unlock_bh(&adapter->cmd_pending_q_lock);
 
-	return !is_cmd_pend_q_empty;
-}
+	वापस !is_cmd_pend_q_empty;
+पूर्ण
 
 /*
  * This is the RX work queue function.
  *
  * It handles the RX operations.
  */
-static void mwifiex_rx_work_queue(struct work_struct *work)
-{
-	struct mwifiex_adapter *adapter =
-		container_of(work, struct mwifiex_adapter, rx_work);
+अटल व्योम mwअगरiex_rx_work_queue(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter =
+		container_of(work, काष्ठा mwअगरiex_adapter, rx_work);
 
-	if (test_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags))
-		return;
-	mwifiex_process_rx(adapter);
-}
+	अगर (test_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags))
+		वापस;
+	mwअगरiex_process_rx(adapter);
+पूर्ण
 
 /*
- * This is the main work queue function.
+ * This is the मुख्य work queue function.
  *
- * It handles the main process, which in turn handles the complete
+ * It handles the मुख्य process, which in turn handles the complete
  * driver operations.
  */
-static void mwifiex_main_work_queue(struct work_struct *work)
-{
-	struct mwifiex_adapter *adapter =
-		container_of(work, struct mwifiex_adapter, main_work);
+अटल व्योम mwअगरiex_मुख्य_work_queue(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter =
+		container_of(work, काष्ठा mwअगरiex_adapter, मुख्य_work);
 
-	if (test_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags))
-		return;
-	mwifiex_main_process(adapter);
-}
+	अगर (test_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags))
+		वापस;
+	mwअगरiex_मुख्य_process(adapter);
+पूर्ण
 
-/* Common teardown code used for both device removal and reset */
-static void mwifiex_uninit_sw(struct mwifiex_adapter *adapter)
-{
-	struct mwifiex_private *priv;
-	int i;
+/* Common tearकरोwn code used क्रम both device removal and reset */
+अटल व्योम mwअगरiex_uninit_sw(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	काष्ठा mwअगरiex_निजी *priv;
+	पूर्णांक i;
 
-	/* We can no longer handle interrupts once we start doing the teardown
+	/* We can no दीर्घer handle पूर्णांकerrupts once we start करोing the tearकरोwn
 	 * below.
 	 */
-	if (adapter->if_ops.disable_int)
-		adapter->if_ops.disable_int(adapter);
+	अगर (adapter->अगर_ops.disable_पूर्णांक)
+		adapter->अगर_ops.disable_पूर्णांक(adapter);
 
 	set_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags);
-	mwifiex_terminate_workqueue(adapter);
-	adapter->int_status = 0;
+	mwअगरiex_terminate_workqueue(adapter);
+	adapter->पूर्णांक_status = 0;
 
 	/* Stop data */
-	for (i = 0; i < adapter->priv_num; i++) {
+	क्रम (i = 0; i < adapter->priv_num; i++) अणु
 		priv = adapter->priv[i];
-		if (priv && priv->netdev) {
-			mwifiex_stop_net_dev_queue(priv->netdev, adapter);
-			if (netif_carrier_ok(priv->netdev))
-				netif_carrier_off(priv->netdev);
-			netif_device_detach(priv->netdev);
-		}
-	}
+		अगर (priv && priv->netdev) अणु
+			mwअगरiex_stop_net_dev_queue(priv->netdev, adapter);
+			अगर (netअगर_carrier_ok(priv->netdev))
+				netअगर_carrier_off(priv->netdev);
+			netअगर_device_detach(priv->netdev);
+		पूर्ण
+	पूर्ण
 
-	mwifiex_dbg(adapter, CMD, "cmd: calling mwifiex_shutdown_drv...\n");
-	mwifiex_shutdown_drv(adapter);
-	mwifiex_dbg(adapter, CMD, "cmd: mwifiex_shutdown_drv done\n");
+	mwअगरiex_dbg(adapter, CMD, "cmd: calling mwifiex_shutdown_drv...\n");
+	mwअगरiex_shutकरोwn_drv(adapter);
+	mwअगरiex_dbg(adapter, CMD, "cmd: mwifiex_shutdown_drv done\n");
 
-	if (atomic_read(&adapter->rx_pending) ||
-	    atomic_read(&adapter->tx_pending) ||
-	    atomic_read(&adapter->cmd_pending)) {
-		mwifiex_dbg(adapter, ERROR,
+	अगर (atomic_पढ़ो(&adapter->rx_pending) ||
+	    atomic_पढ़ो(&adapter->tx_pending) ||
+	    atomic_पढ़ो(&adapter->cmd_pending)) अणु
+		mwअगरiex_dbg(adapter, ERROR,
 			    "rx_pending=%d, tx_pending=%d,\t"
 			    "cmd_pending=%d\n",
-			    atomic_read(&adapter->rx_pending),
-			    atomic_read(&adapter->tx_pending),
-			    atomic_read(&adapter->cmd_pending));
-	}
+			    atomic_पढ़ो(&adapter->rx_pending),
+			    atomic_पढ़ो(&adapter->tx_pending),
+			    atomic_पढ़ो(&adapter->cmd_pending));
+	पूर्ण
 
-	for (i = 0; i < adapter->priv_num; i++) {
+	क्रम (i = 0; i < adapter->priv_num; i++) अणु
 		priv = adapter->priv[i];
-		if (!priv)
-			continue;
+		अगर (!priv)
+			जारी;
 		rtnl_lock();
 		wiphy_lock(adapter->wiphy);
-		if (priv->netdev &&
-		    priv->wdev.iftype != NL80211_IFTYPE_UNSPECIFIED)
-			mwifiex_del_virtual_intf(adapter->wiphy, &priv->wdev);
+		अगर (priv->netdev &&
+		    priv->wdev.अगरtype != NL80211_IFTYPE_UNSPECIFIED)
+			mwअगरiex_del_भव_पूर्णांकf(adapter->wiphy, &priv->wdev);
 		wiphy_unlock(adapter->wiphy);
 		rtnl_unlock();
-	}
+	पूर्ण
 
-	wiphy_unregister(adapter->wiphy);
-	wiphy_free(adapter->wiphy);
-	adapter->wiphy = NULL;
+	wiphy_unरेजिस्टर(adapter->wiphy);
+	wiphy_मुक्त(adapter->wiphy);
+	adapter->wiphy = शून्य;
 
-	vfree(adapter->chan_stats);
-	mwifiex_free_cmd_buffers(adapter);
-}
+	vमुक्त(adapter->chan_stats);
+	mwअगरiex_मुक्त_cmd_buffers(adapter);
+पूर्ण
 
 /*
- * This function can be used for shutting down the adapter SW.
+ * This function can be used क्रम shutting करोwn the adapter SW.
  */
-int mwifiex_shutdown_sw(struct mwifiex_adapter *adapter)
-{
-	struct mwifiex_private *priv;
+पूर्णांक mwअगरiex_shutकरोwn_sw(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	काष्ठा mwअगरiex_निजी *priv;
 
-	if (!adapter)
-		return 0;
+	अगर (!adapter)
+		वापस 0;
 
-	wait_for_completion(adapter->fw_done);
-	/* Caller should ensure we aren't suspending while this happens */
-	reinit_completion(adapter->fw_done);
+	रुको_क्रम_completion(adapter->fw_करोne);
+	/* Caller should ensure we aren't suspending जबतक this happens */
+	reinit_completion(adapter->fw_करोne);
 
-	priv = mwifiex_get_priv(adapter, MWIFIEX_BSS_ROLE_ANY);
-	mwifiex_deauthenticate(priv, NULL);
+	priv = mwअगरiex_get_priv(adapter, MWIFIEX_BSS_ROLE_ANY);
+	mwअगरiex_deauthenticate(priv, शून्य);
 
-	mwifiex_init_shutdown_fw(priv, MWIFIEX_FUNC_SHUTDOWN);
+	mwअगरiex_init_shutकरोwn_fw(priv, MWIFIEX_FUNC_SHUTDOWN);
 
-	mwifiex_uninit_sw(adapter);
+	mwअगरiex_uninit_sw(adapter);
 	adapter->is_up = false;
 
-	if (adapter->if_ops.down_dev)
-		adapter->if_ops.down_dev(adapter);
+	अगर (adapter->अगर_ops.करोwn_dev)
+		adapter->अगर_ops.करोwn_dev(adapter);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mwifiex_shutdown_sw);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_shutकरोwn_sw);
 
-/* This function can be used for reinitting the adapter SW. Required
- * code is extracted from mwifiex_add_card()
+/* This function can be used क्रम reinitting the adapter SW. Required
+ * code is extracted from mwअगरiex_add_card()
  */
-int
-mwifiex_reinit_sw(struct mwifiex_adapter *adapter)
-{
-	int ret;
+पूर्णांक
+mwअगरiex_reinit_sw(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	पूर्णांक ret;
 
-	mwifiex_init_lock_list(adapter);
-	if (adapter->if_ops.up_dev)
-		adapter->if_ops.up_dev(adapter);
+	mwअगरiex_init_lock_list(adapter);
+	अगर (adapter->अगर_ops.up_dev)
+		adapter->अगर_ops.up_dev(adapter);
 
 	adapter->hw_status = MWIFIEX_HW_STATUS_INITIALIZING;
 	clear_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags);
-	init_waitqueue_head(&adapter->init_wait_q);
+	init_रुकोqueue_head(&adapter->init_रुको_q);
 	clear_bit(MWIFIEX_IS_SUSPENDED, &adapter->work_flags);
 	adapter->hs_activated = false;
 	clear_bit(MWIFIEX_IS_CMD_TIMEDOUT, &adapter->work_flags);
-	init_waitqueue_head(&adapter->hs_activate_wait_q);
-	init_waitqueue_head(&adapter->cmd_wait_q.wait);
-	adapter->cmd_wait_q.status = 0;
-	adapter->scan_wait_q_woken = false;
+	init_रुकोqueue_head(&adapter->hs_activate_रुको_q);
+	init_रुकोqueue_head(&adapter->cmd_रुको_q.रुको);
+	adapter->cmd_रुको_q.status = 0;
+	adapter->scan_रुको_q_woken = false;
 
-	if ((num_possible_cpus() > 1) || adapter->iface_type == MWIFIEX_USB)
+	अगर ((num_possible_cpus() > 1) || adapter->अगरace_type == MWIFIEX_USB)
 		adapter->rx_work_enabled = true;
 
 	adapter->workqueue =
 		alloc_workqueue("MWIFIEX_WORK_QUEUE",
 				WQ_HIGHPRI | WQ_MEM_RECLAIM | WQ_UNBOUND, 1);
-	if (!adapter->workqueue)
-		goto err_kmalloc;
+	अगर (!adapter->workqueue)
+		जाओ err_kदो_स्मृति;
 
-	INIT_WORK(&adapter->main_work, mwifiex_main_work_queue);
+	INIT_WORK(&adapter->मुख्य_work, mwअगरiex_मुख्य_work_queue);
 
-	if (adapter->rx_work_enabled) {
+	अगर (adapter->rx_work_enabled) अणु
 		adapter->rx_workqueue = alloc_workqueue("MWIFIEX_RX_WORK_QUEUE",
 							WQ_HIGHPRI |
 							WQ_MEM_RECLAIM |
 							WQ_UNBOUND, 1);
-		if (!adapter->rx_workqueue)
-			goto err_kmalloc;
-		INIT_WORK(&adapter->rx_work, mwifiex_rx_work_queue);
-	}
+		अगर (!adapter->rx_workqueue)
+			जाओ err_kदो_स्मृति;
+		INIT_WORK(&adapter->rx_work, mwअगरiex_rx_work_queue);
+	पूर्ण
 
-	/* Register the device. Fill up the private data structure with
-	 * relevant information from the card. Some code extracted from
-	 * mwifiex_register_dev()
+	/* Register the device. Fill up the निजी data काष्ठाure with
+	 * relevant inक्रमmation from the card. Some code extracted from
+	 * mwअगरiex_रेजिस्टर_dev()
 	 */
-	mwifiex_dbg(adapter, INFO, "%s, mwifiex_init_hw_fw()...\n", __func__);
+	mwअगरiex_dbg(adapter, INFO, "%s, mwifiex_init_hw_fw()...\n", __func__);
 
-	if (mwifiex_init_hw_fw(adapter, false)) {
-		mwifiex_dbg(adapter, ERROR,
+	अगर (mwअगरiex_init_hw_fw(adapter, false)) अणु
+		mwअगरiex_dbg(adapter, ERROR,
 			    "%s: firmware init failed\n", __func__);
-		goto err_init_fw;
-	}
+		जाओ err_init_fw;
+	पूर्ण
 
-	/* _mwifiex_fw_dpc() does its own cleanup */
-	ret = _mwifiex_fw_dpc(adapter->firmware, adapter);
-	if (ret) {
+	/* _mwअगरiex_fw_dpc() करोes its own cleanup */
+	ret = _mwअगरiex_fw_dpc(adapter->firmware, adapter);
+	अगर (ret) अणु
 		pr_err("Failed to bring up adapter: %d\n", ret);
-		return ret;
-	}
-	mwifiex_dbg(adapter, INFO, "%s, successful\n", __func__);
+		वापस ret;
+	पूर्ण
+	mwअगरiex_dbg(adapter, INFO, "%s, successful\n", __func__);
 
-	return 0;
+	वापस 0;
 
 err_init_fw:
-	mwifiex_dbg(adapter, ERROR, "info: %s: unregister device\n", __func__);
-	if (adapter->if_ops.unregister_dev)
-		adapter->if_ops.unregister_dev(adapter);
+	mwअगरiex_dbg(adapter, ERROR, "info: %s: unregister device\n", __func__);
+	अगर (adapter->अगर_ops.unरेजिस्टर_dev)
+		adapter->अगर_ops.unरेजिस्टर_dev(adapter);
 
-err_kmalloc:
+err_kदो_स्मृति:
 	set_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags);
-	mwifiex_terminate_workqueue(adapter);
-	if (adapter->hw_status == MWIFIEX_HW_STATUS_READY) {
-		mwifiex_dbg(adapter, ERROR,
+	mwअगरiex_terminate_workqueue(adapter);
+	अगर (adapter->hw_status == MWIFIEX_HW_STATUS_READY) अणु
+		mwअगरiex_dbg(adapter, ERROR,
 			    "info: %s: shutdown mwifiex\n", __func__);
-		mwifiex_shutdown_drv(adapter);
-		mwifiex_free_cmd_buffers(adapter);
-	}
+		mwअगरiex_shutकरोwn_drv(adapter);
+		mwअगरiex_मुक्त_cmd_buffers(adapter);
+	पूर्ण
 
-	complete_all(adapter->fw_done);
-	mwifiex_dbg(adapter, INFO, "%s, error\n", __func__);
+	complete_all(adapter->fw_करोne);
+	mwअगरiex_dbg(adapter, INFO, "%s, error\n", __func__);
 
-	return -1;
-}
-EXPORT_SYMBOL_GPL(mwifiex_reinit_sw);
+	वापस -1;
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_reinit_sw);
 
-static irqreturn_t mwifiex_irq_wakeup_handler(int irq, void *priv)
-{
-	struct mwifiex_adapter *adapter = priv;
+अटल irqवापस_t mwअगरiex_irq_wakeup_handler(पूर्णांक irq, व्योम *priv)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter = priv;
 
 	dev_dbg(adapter->dev, "%s: wake by wifi", __func__);
-	adapter->wake_by_wifi = true;
+	adapter->wake_by_wअगरi = true;
 	disable_irq_nosync(irq);
 
-	/* Notify PM core we are wakeup source */
+	/* Notअगरy PM core we are wakeup source */
 	pm_wakeup_event(adapter->dev, 0);
-	pm_system_wakeup();
+	pm_प्रणाली_wakeup();
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void mwifiex_probe_of(struct mwifiex_adapter *adapter)
-{
-	int ret;
-	struct device *dev = adapter->dev;
+अटल व्योम mwअगरiex_probe_of(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	पूर्णांक ret;
+	काष्ठा device *dev = adapter->dev;
 
-	if (!dev->of_node)
-		goto err_exit;
+	अगर (!dev->of_node)
+		जाओ err_निकास;
 
 	adapter->dt_node = dev->of_node;
 	adapter->irq_wakeup = irq_of_parse_and_map(adapter->dt_node, 0);
-	if (!adapter->irq_wakeup) {
+	अगर (!adapter->irq_wakeup) अणु
 		dev_dbg(dev, "fail to parse irq_wakeup from device tree\n");
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
 	ret = devm_request_irq(dev, adapter->irq_wakeup,
-			       mwifiex_irq_wakeup_handler, IRQF_TRIGGER_LOW,
+			       mwअगरiex_irq_wakeup_handler, IRQF_TRIGGER_LOW,
 			       "wifi_wake", adapter);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to request irq_wakeup %d (%d)\n",
 			adapter->irq_wakeup, ret);
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
 	disable_irq(adapter->irq_wakeup);
-	if (device_init_wakeup(dev, true)) {
+	अगर (device_init_wakeup(dev, true)) अणु
 		dev_err(dev, "fail to init wakeup for mwifiex\n");
-		goto err_exit;
-	}
-	return;
+		जाओ err_निकास;
+	पूर्ण
+	वापस;
 
-err_exit:
+err_निकास:
 	adapter->irq_wakeup = -1;
-}
+पूर्ण
 
 /*
  * This function adds the card.
  *
  * This function follows the following major steps to set up the device -
- *      - Initialize software. This includes probing the card, registering
- *        the interface operations table, and allocating/initializing the
- *        adapter structure
+ *      - Initialize software. This includes probing the card, रेजिस्टरing
+ *        the पूर्णांकerface operations table, and allocating/initializing the
+ *        adapter काष्ठाure
  *      - Set up the netlink socket
- *      - Create and start the main work queue
+ *      - Create and start the मुख्य work queue
  *      - Register the device
  *      - Initialize firmware and hardware
- *      - Add logical interfaces
+ *      - Add logical पूर्णांकerfaces
  */
-int
-mwifiex_add_card(void *card, struct completion *fw_done,
-		 struct mwifiex_if_ops *if_ops, u8 iface_type,
-		 struct device *dev)
-{
-	struct mwifiex_adapter *adapter;
+पूर्णांक
+mwअगरiex_add_card(व्योम *card, काष्ठा completion *fw_करोne,
+		 काष्ठा mwअगरiex_अगर_ops *अगर_ops, u8 अगरace_type,
+		 काष्ठा device *dev)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter;
 
-	if (mwifiex_register(card, dev, if_ops, (void **)&adapter)) {
+	अगर (mwअगरiex_रेजिस्टर(card, dev, अगर_ops, (व्योम **)&adapter)) अणु
 		pr_err("%s: software init failed\n", __func__);
-		goto err_init_sw;
-	}
+		जाओ err_init_sw;
+	पूर्ण
 
-	mwifiex_probe_of(adapter);
+	mwअगरiex_probe_of(adapter);
 
-	adapter->iface_type = iface_type;
-	adapter->fw_done = fw_done;
+	adapter->अगरace_type = अगरace_type;
+	adapter->fw_करोne = fw_करोne;
 
 	adapter->hw_status = MWIFIEX_HW_STATUS_INITIALIZING;
 	clear_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags);
-	init_waitqueue_head(&adapter->init_wait_q);
+	init_रुकोqueue_head(&adapter->init_रुको_q);
 	clear_bit(MWIFIEX_IS_SUSPENDED, &adapter->work_flags);
 	adapter->hs_activated = false;
-	init_waitqueue_head(&adapter->hs_activate_wait_q);
-	init_waitqueue_head(&adapter->cmd_wait_q.wait);
-	adapter->cmd_wait_q.status = 0;
-	adapter->scan_wait_q_woken = false;
+	init_रुकोqueue_head(&adapter->hs_activate_रुको_q);
+	init_रुकोqueue_head(&adapter->cmd_रुको_q.रुको);
+	adapter->cmd_रुको_q.status = 0;
+	adapter->scan_रुको_q_woken = false;
 
-	if ((num_possible_cpus() > 1) || adapter->iface_type == MWIFIEX_USB)
+	अगर ((num_possible_cpus() > 1) || adapter->अगरace_type == MWIFIEX_USB)
 		adapter->rx_work_enabled = true;
 
 	adapter->workqueue =
 		alloc_workqueue("MWIFIEX_WORK_QUEUE",
 				WQ_HIGHPRI | WQ_MEM_RECLAIM | WQ_UNBOUND, 1);
-	if (!adapter->workqueue)
-		goto err_kmalloc;
+	अगर (!adapter->workqueue)
+		जाओ err_kदो_स्मृति;
 
-	INIT_WORK(&adapter->main_work, mwifiex_main_work_queue);
+	INIT_WORK(&adapter->मुख्य_work, mwअगरiex_मुख्य_work_queue);
 
-	if (adapter->rx_work_enabled) {
+	अगर (adapter->rx_work_enabled) अणु
 		adapter->rx_workqueue = alloc_workqueue("MWIFIEX_RX_WORK_QUEUE",
 							WQ_HIGHPRI |
 							WQ_MEM_RECLAIM |
 							WQ_UNBOUND, 1);
-		if (!adapter->rx_workqueue)
-			goto err_kmalloc;
+		अगर (!adapter->rx_workqueue)
+			जाओ err_kदो_स्मृति;
 
-		INIT_WORK(&adapter->rx_work, mwifiex_rx_work_queue);
-	}
+		INIT_WORK(&adapter->rx_work, mwअगरiex_rx_work_queue);
+	पूर्ण
 
-	/* Register the device. Fill up the private data structure with relevant
-	   information from the card. */
-	if (adapter->if_ops.register_dev(adapter)) {
+	/* Register the device. Fill up the निजी data काष्ठाure with relevant
+	   inक्रमmation from the card. */
+	अगर (adapter->अगर_ops.रेजिस्टर_dev(adapter)) अणु
 		pr_err("%s: failed to register mwifiex device\n", __func__);
-		goto err_registerdev;
-	}
+		जाओ err_रेजिस्टरdev;
+	पूर्ण
 
-	if (mwifiex_init_hw_fw(adapter, true)) {
+	अगर (mwअगरiex_init_hw_fw(adapter, true)) अणु
 		pr_err("%s: firmware init failed\n", __func__);
-		goto err_init_fw;
-	}
+		जाओ err_init_fw;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_init_fw:
 	pr_debug("info: %s: unregister device\n", __func__);
-	if (adapter->if_ops.unregister_dev)
-		adapter->if_ops.unregister_dev(adapter);
-err_registerdev:
+	अगर (adapter->अगर_ops.unरेजिस्टर_dev)
+		adapter->अगर_ops.unरेजिस्टर_dev(adapter);
+err_रेजिस्टरdev:
 	set_bit(MWIFIEX_SURPRISE_REMOVED, &adapter->work_flags);
-	mwifiex_terminate_workqueue(adapter);
-	if (adapter->hw_status == MWIFIEX_HW_STATUS_READY) {
+	mwअगरiex_terminate_workqueue(adapter);
+	अगर (adapter->hw_status == MWIFIEX_HW_STATUS_READY) अणु
 		pr_debug("info: %s: shutdown mwifiex\n", __func__);
-		mwifiex_shutdown_drv(adapter);
-		mwifiex_free_cmd_buffers(adapter);
-	}
-err_kmalloc:
-	if (adapter->irq_wakeup >= 0)
+		mwअगरiex_shutकरोwn_drv(adapter);
+		mwअगरiex_मुक्त_cmd_buffers(adapter);
+	पूर्ण
+err_kदो_स्मृति:
+	अगर (adapter->irq_wakeup >= 0)
 		device_init_wakeup(adapter->dev, false);
-	mwifiex_free_adapter(adapter);
+	mwअगरiex_मुक्त_adapter(adapter);
 
 err_init_sw:
 
-	return -1;
-}
-EXPORT_SYMBOL_GPL(mwifiex_add_card);
+	वापस -1;
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_add_card);
 
 /*
- * This function removes the card.
+ * This function हटाओs the card.
  *
- * This function follows the following major steps to remove the device -
+ * This function follows the following major steps to हटाओ the device -
  *      - Stop data traffic
- *      - Shutdown firmware
- *      - Remove the logical interfaces
+ *      - Shutकरोwn firmware
+ *      - Remove the logical पूर्णांकerfaces
  *      - Terminate the work queue
- *      - Unregister the device
- *      - Free the adapter structure
+ *      - Unरेजिस्टर the device
+ *      - Free the adapter काष्ठाure
  */
-int mwifiex_remove_card(struct mwifiex_adapter *adapter)
-{
-	if (!adapter)
-		return 0;
+पूर्णांक mwअगरiex_हटाओ_card(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	अगर (!adapter)
+		वापस 0;
 
-	if (adapter->is_up)
-		mwifiex_uninit_sw(adapter);
+	अगर (adapter->is_up)
+		mwअगरiex_uninit_sw(adapter);
 
-	if (adapter->irq_wakeup >= 0)
+	अगर (adapter->irq_wakeup >= 0)
 		device_init_wakeup(adapter->dev, false);
 
-	/* Unregister device */
-	mwifiex_dbg(adapter, INFO,
+	/* Unरेजिस्टर device */
+	mwअगरiex_dbg(adapter, INFO,
 		    "info: unregister device\n");
-	if (adapter->if_ops.unregister_dev)
-		adapter->if_ops.unregister_dev(adapter);
-	/* Free adapter structure */
-	mwifiex_dbg(adapter, INFO,
+	अगर (adapter->अगर_ops.unरेजिस्टर_dev)
+		adapter->अगर_ops.unरेजिस्टर_dev(adapter);
+	/* Free adapter काष्ठाure */
+	mwअगरiex_dbg(adapter, INFO,
 		    "info: free adapter\n");
-	mwifiex_free_adapter(adapter);
+	mwअगरiex_मुक्त_adapter(adapter);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mwifiex_remove_card);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_हटाओ_card);
 
-void _mwifiex_dbg(const struct mwifiex_adapter *adapter, int mask,
-		  const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम _mwअगरiex_dbg(स्थिर काष्ठा mwअगरiex_adapter *adapter, पूर्णांक mask,
+		  स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	if (!(adapter->debug_mask & mask))
-		return;
+	अगर (!(adapter->debug_mask & mask))
+		वापस;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	if (adapter->dev)
+	अगर (adapter->dev)
 		dev_info(adapter->dev, "%pV", &vaf);
-	else
+	अन्यथा
 		pr_info("%pV", &vaf);
 
-	va_end(args);
-}
-EXPORT_SYMBOL_GPL(_mwifiex_dbg);
+	बहु_पूर्ण(args);
+पूर्ण
+EXPORT_SYMBOL_GPL(_mwअगरiex_dbg);
 
 /*
  * This function initializes the module.
  *
- * The debug FS is also initialized if configured.
+ * The debug FS is also initialized अगर configured.
  */
-static int
-mwifiex_init_module(void)
-{
-#ifdef CONFIG_DEBUG_FS
-	mwifiex_debugfs_init();
-#endif
-	return 0;
-}
+अटल पूर्णांक
+mwअगरiex_init_module(व्योम)
+अणु
+#अगर_घोषित CONFIG_DEBUG_FS
+	mwअगरiex_debugfs_init();
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
  * This function cleans up the module.
  *
- * The debug FS is removed if available.
+ * The debug FS is हटाओd अगर available.
  */
-static void
-mwifiex_cleanup_module(void)
-{
-#ifdef CONFIG_DEBUG_FS
-	mwifiex_debugfs_remove();
-#endif
-}
+अटल व्योम
+mwअगरiex_cleanup_module(व्योम)
+अणु
+#अगर_घोषित CONFIG_DEBUG_FS
+	mwअगरiex_debugfs_हटाओ();
+#पूर्ण_अगर
+पूर्ण
 
-module_init(mwifiex_init_module);
-module_exit(mwifiex_cleanup_module);
+module_init(mwअगरiex_init_module);
+module_निकास(mwअगरiex_cleanup_module);
 
 MODULE_AUTHOR("Marvell International Ltd.");
 MODULE_DESCRIPTION("Marvell WiFi-Ex Driver version " VERSION);

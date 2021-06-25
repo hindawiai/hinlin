@@ -1,228 +1,229 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2003, 2004 Ralf Baechle
  * Copyright (C) 2004  Maciej W. Rozycki
  */
-#ifndef __ASM_CPU_TYPE_H
-#define __ASM_CPU_TYPE_H
+#अगर_अघोषित __ASM_CPU_TYPE_H
+#घोषणा __ASM_CPU_TYPE_H
 
-#include <linux/smp.h>
-#include <linux/compiler.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/compiler.h>
 
-static inline int __pure __get_cpu_type(const int cpu_type)
-{
-	switch (cpu_type) {
-#if defined(CONFIG_SYS_HAS_CPU_LOONGSON2E) || \
+अटल अंतरभूत पूर्णांक __pure __get_cpu_type(स्थिर पूर्णांक cpu_type)
+अणु
+	चयन (cpu_type) अणु
+#अगर defined(CONFIG_SYS_HAS_CPU_LOONGSON2E) || \
     defined(CONFIG_SYS_HAS_CPU_LOONGSON2F)
-	case CPU_LOONGSON2EF:
-#endif
+	हाल CPU_LOONGSON2EF:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_LOONGSON64
-	case CPU_LOONGSON64:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_LOONGSON64
+	हाल CPU_LOONGSON64:
+#पूर्ण_अगर
 
-#if defined(CONFIG_SYS_HAS_CPU_LOONGSON1B) || \
+#अगर defined(CONFIG_SYS_HAS_CPU_LOONGSON1B) || \
     defined(CONFIG_SYS_HAS_CPU_LOONGSON1C)
-	case CPU_LOONGSON32:
-#endif
+	हाल CPU_LOONGSON32:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_MIPS32_R1
-	case CPU_4KC:
-	case CPU_ALCHEMY:
-	case CPU_PR4450:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_MIPS32_R1
+	हाल CPU_4KC:
+	हाल CPU_ALCHEMY:
+	हाल CPU_PR4450:
+#पूर्ण_अगर
 
-#if defined(CONFIG_SYS_HAS_CPU_MIPS32_R1) || \
+#अगर defined(CONFIG_SYS_HAS_CPU_MIPS32_R1) || \
     defined(CONFIG_SYS_HAS_CPU_MIPS32_R2)
-	case CPU_4KEC:
-	case CPU_XBURST:
-#endif
+	हाल CPU_4KEC:
+	हाल CPU_XBURST:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_MIPS32_R2
-	case CPU_4KSC:
-	case CPU_24K:
-	case CPU_34K:
-	case CPU_1004K:
-	case CPU_74K:
-	case CPU_1074K:
-	case CPU_M14KC:
-	case CPU_M14KEC:
-	case CPU_INTERAPTIV:
-	case CPU_PROAPTIV:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_MIPS32_R2
+	हाल CPU_4KSC:
+	हाल CPU_24K:
+	हाल CPU_34K:
+	हाल CPU_1004K:
+	हाल CPU_74K:
+	हाल CPU_1074K:
+	हाल CPU_M14KC:
+	हाल CPU_M14KEC:
+	हाल CPU_INTERAPTIV:
+	हाल CPU_PROAPTIV:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_MIPS32_R5
-	case CPU_M5150:
-	case CPU_P5600:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_MIPS32_R5
+	हाल CPU_M5150:
+	हाल CPU_P5600:
+#पूर्ण_अगर
 
-#if defined(CONFIG_SYS_HAS_CPU_MIPS32_R2) || \
+#अगर defined(CONFIG_SYS_HAS_CPU_MIPS32_R2) || \
     defined(CONFIG_SYS_HAS_CPU_MIPS32_R5) || \
     defined(CONFIG_SYS_HAS_CPU_MIPS32_R6) || \
     defined(CONFIG_SYS_HAS_CPU_MIPS64_R2) || \
     defined(CONFIG_SYS_HAS_CPU_MIPS64_R5) || \
     defined(CONFIG_SYS_HAS_CPU_MIPS64_R6)
-	case CPU_QEMU_GENERIC:
-#endif
+	हाल CPU_QEMU_GENERIC:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_MIPS64_R1
-	case CPU_5KC:
-	case CPU_5KE:
-	case CPU_20KC:
-	case CPU_25KF:
-	case CPU_SB1:
-	case CPU_SB1A:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_MIPS64_R1
+	हाल CPU_5KC:
+	हाल CPU_5KE:
+	हाल CPU_20KC:
+	हाल CPU_25KF:
+	हाल CPU_SB1:
+	हाल CPU_SB1A:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_MIPS64_R2
+#अगर_घोषित CONFIG_SYS_HAS_CPU_MIPS64_R2
 	/*
 	 * All MIPS64 R2 processors have their own special symbols.  That is,
 	 * there currently is no pure R2 core
 	 */
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_MIPS32_R6
-	case CPU_M6250:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_MIPS32_R6
+	हाल CPU_M6250:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_MIPS64_R6
-	case CPU_I6400:
-	case CPU_I6500:
-	case CPU_P6600:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_MIPS64_R6
+	हाल CPU_I6400:
+	हाल CPU_I6500:
+	हाल CPU_P6600:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_R3000
-	case CPU_R2000:
-	case CPU_R3000:
-	case CPU_R3000A:
-	case CPU_R3041:
-	case CPU_R3051:
-	case CPU_R3052:
-	case CPU_R3081:
-	case CPU_R3081E:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_R3000
+	हाल CPU_R2000:
+	हाल CPU_R3000:
+	हाल CPU_R3000A:
+	हाल CPU_R3041:
+	हाल CPU_R3051:
+	हाल CPU_R3052:
+	हाल CPU_R3081:
+	हाल CPU_R3081E:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_TX39XX
-	case CPU_TX3912:
-	case CPU_TX3922:
-	case CPU_TX3927:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_TX39XX
+	हाल CPU_TX3912:
+	हाल CPU_TX3922:
+	हाल CPU_TX3927:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_VR41XX
-	case CPU_VR41XX:
-	case CPU_VR4111:
-	case CPU_VR4121:
-	case CPU_VR4122:
-	case CPU_VR4131:
-	case CPU_VR4133:
-	case CPU_VR4181:
-	case CPU_VR4181A:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_VR41XX
+	हाल CPU_VR41XX:
+	हाल CPU_VR4111:
+	हाल CPU_VR4121:
+	हाल CPU_VR4122:
+	हाल CPU_VR4131:
+	हाल CPU_VR4133:
+	हाल CPU_VR4181:
+	हाल CPU_VR4181A:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_R4300
-	case CPU_R4300:
-	case CPU_R4310:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_R4300
+	हाल CPU_R4300:
+	हाल CPU_R4310:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_R4X00
-	case CPU_R4000PC:
-	case CPU_R4000SC:
-	case CPU_R4000MC:
-	case CPU_R4200:
-	case CPU_R4400PC:
-	case CPU_R4400SC:
-	case CPU_R4400MC:
-	case CPU_R4600:
-	case CPU_R4700:
-	case CPU_R4640:
-	case CPU_R4650:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_R4X00
+	हाल CPU_R4000PC:
+	हाल CPU_R4000SC:
+	हाल CPU_R4000MC:
+	हाल CPU_R4200:
+	हाल CPU_R4400PC:
+	हाल CPU_R4400SC:
+	हाल CPU_R4400MC:
+	हाल CPU_R4600:
+	हाल CPU_R4700:
+	हाल CPU_R4640:
+	हाल CPU_R4650:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_TX49XX
-	case CPU_TX49XX:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_TX49XX
+	हाल CPU_TX49XX:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_R5000
-	case CPU_R5000:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_R5000
+	हाल CPU_R5000:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_R5500
-	case CPU_R5500:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_R5500
+	हाल CPU_R5500:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_NEVADA
-	case CPU_NEVADA:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_NEVADA
+	हाल CPU_NEVADA:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_R10000
-	case CPU_R10000:
-	case CPU_R12000:
-	case CPU_R14000:
-	case CPU_R16000:
-#endif
-#ifdef CONFIG_SYS_HAS_CPU_RM7000
-	case CPU_RM7000:
-	case CPU_SR71000:
-#endif
-#ifdef CONFIG_SYS_HAS_CPU_SB1
-	case CPU_SB1:
-	case CPU_SB1A:
-#endif
-#ifdef CONFIG_SYS_HAS_CPU_CAVIUM_OCTEON
-	case CPU_CAVIUM_OCTEON:
-	case CPU_CAVIUM_OCTEON_PLUS:
-	case CPU_CAVIUM_OCTEON2:
-	case CPU_CAVIUM_OCTEON3:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_R10000
+	हाल CPU_R10000:
+	हाल CPU_R12000:
+	हाल CPU_R14000:
+	हाल CPU_R16000:
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SYS_HAS_CPU_RM7000
+	हाल CPU_RM7000:
+	हाल CPU_SR71000:
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SYS_HAS_CPU_SB1
+	हाल CPU_SB1:
+	हाल CPU_SB1A:
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SYS_HAS_CPU_CAVIUM_OCTEON
+	हाल CPU_CAVIUM_OCTEON:
+	हाल CPU_CAVIUM_OCTEON_PLUS:
+	हाल CPU_CAVIUM_OCTEON2:
+	हाल CPU_CAVIUM_OCTEON3:
+#पूर्ण_अगर
 
-#if defined(CONFIG_SYS_HAS_CPU_BMIPS32_3300) || \
+#अगर defined(CONFIG_SYS_HAS_CPU_BMIPS32_3300) || \
 	defined (CONFIG_SYS_HAS_CPU_MIPS32_R1)
-	case CPU_BMIPS32:
-	case CPU_BMIPS3300:
-#endif
+	हाल CPU_BMIPS32:
+	हाल CPU_BMIPS3300:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_BMIPS4350
-	case CPU_BMIPS4350:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_BMIPS4350
+	हाल CPU_BMIPS4350:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_BMIPS4380
-	case CPU_BMIPS4380:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_BMIPS4380
+	हाल CPU_BMIPS4380:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_BMIPS5000
-	case CPU_BMIPS5000:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_BMIPS5000
+	हाल CPU_BMIPS5000:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_XLP
-	case CPU_XLP:
-#endif
+#अगर_घोषित CONFIG_SYS_HAS_CPU_XLP
+	हाल CPU_XLP:
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYS_HAS_CPU_XLR
-	case CPU_XLR:
-#endif
-		break;
-	default:
+#अगर_घोषित CONFIG_SYS_HAS_CPU_XLR
+	हाल CPU_XLR:
+#पूर्ण_अगर
+		अवरोध;
+	शेष:
 		unreachable();
-	}
+	पूर्ण
 
-	return cpu_type;
-}
+	वापस cpu_type;
+पूर्ण
 
-static inline int __pure current_cpu_type(void)
-{
-	const int cpu_type = current_cpu_data.cputype;
+अटल अंतरभूत पूर्णांक __pure current_cpu_type(व्योम)
+अणु
+	स्थिर पूर्णांक cpu_type = current_cpu_data.cputype;
 
-	return __get_cpu_type(cpu_type);
-}
+	वापस __get_cpu_type(cpu_type);
+पूर्ण
 
-static inline int __pure boot_cpu_type(void)
-{
-	const int cpu_type = cpu_data[0].cputype;
+अटल अंतरभूत पूर्णांक __pure boot_cpu_type(व्योम)
+अणु
+	स्थिर पूर्णांक cpu_type = cpu_data[0].cputype;
 
-	return __get_cpu_type(cpu_type);
-}
+	वापस __get_cpu_type(cpu_type);
+पूर्ण
 
-#endif /* __ASM_CPU_TYPE_H */
+#पूर्ण_अगर /* __ASM_CPU_TYPE_H */

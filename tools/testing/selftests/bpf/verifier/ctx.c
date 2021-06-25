@@ -1,82 +1,83 @@
-{
+<शैली गुरु>
+अणु
 	"context stores via ST",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-	BPF_ST_MEM(BPF_DW, BPF_REG_1, offsetof(struct __sk_buff, mark), 0),
+	BPF_ST_MEM(BPF_DW, BPF_REG_1, दुरत्व(काष्ठा __sk_buff, mark), 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "BPF_ST stores into R1 ctx is not allowed",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-},
-{
+पूर्ण,
+अणु
 	"context stores via BPF_ATOMIC",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-	BPF_ATOMIC_OP(BPF_W, BPF_ADD, BPF_REG_1, BPF_REG_0, offsetof(struct __sk_buff, mark)),
+	BPF_ATOMIC_OP(BPF_W, BPF_ADD, BPF_REG_1, BPF_REG_0, दुरत्व(काष्ठा __sk_buff, mark)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "BPF_ATOMIC stores into R1 ctx is not allowed",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-},
-{
+पूर्ण,
+अणु
 	"arithmetic ops make PTR_TO_CTX unusable",
-	.insns = {
+	.insns = अणु
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_1,
-			      offsetof(struct __sk_buff, data) -
-			      offsetof(struct __sk_buff, mark)),
+			      दुरत्व(काष्ठा __sk_buff, data) -
+			      दुरत्व(काष्ठा __sk_buff, mark)),
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    offsetof(struct __sk_buff, mark)),
+			    दुरत्व(काष्ठा __sk_buff, mark)),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "dereference of modified ctx ptr",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-},
-{
+पूर्ण,
+अणु
 	"pass unmodified ctx pointer to helper",
-	.insns = {
+	.insns = अणु
 		BPF_MOV64_IMM(BPF_REG_2, 0),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_csum_update),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"pass modified ctx pointer to helper, 1",
-	.insns = {
+	.insns = अणु
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -612),
 		BPF_MOV64_IMM(BPF_REG_2, 0),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_csum_update),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = REJECT,
 	.errstr = "dereference of modified ctx ptr",
-},
-{
+पूर्ण,
+अणु
 	"pass modified ctx pointer to helper, 2",
-	.insns = {
+	.insns = अणु
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -612),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_socket_cookie),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result_unpriv = REJECT,
 	.result = REJECT,
 	.errstr_unpriv = "dereference of modified ctx ptr",
 	.errstr = "dereference of modified ctx ptr",
-},
-{
+पूर्ण,
+अणु
 	"pass modified ctx pointer to helper, 3",
-	.insns = {
+	.insns = अणु
 		BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_1, 0),
 		BPF_ALU64_IMM(BPF_AND, BPF_REG_3, 4),
 		BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
@@ -85,113 +86,113 @@
 			     BPF_FUNC_csum_update),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = REJECT,
 	.errstr = "variable ctx access var_off=(0x0; 0x4)",
-},
-{
+पूर्ण,
+अणु
 	"pass ctx or null check, 1: ctx",
-	.insns = {
+	.insns = अणु
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_netns_cookie),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
 	.expected_attach_type = BPF_CGROUP_UDP6_SENDMSG,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"pass ctx or null check, 2: null",
-	.insns = {
+	.insns = अणु
 		BPF_MOV64_IMM(BPF_REG_1, 0),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_netns_cookie),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
 	.expected_attach_type = BPF_CGROUP_UDP6_SENDMSG,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"pass ctx or null check, 3: 1",
-	.insns = {
+	.insns = अणु
 		BPF_MOV64_IMM(BPF_REG_1, 1),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_netns_cookie),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
 	.expected_attach_type = BPF_CGROUP_UDP6_SENDMSG,
 	.result = REJECT,
 	.errstr = "R1 type=inv expected=ctx",
-},
-{
+पूर्ण,
+अणु
 	"pass ctx or null check, 4: ctx - const",
-	.insns = {
+	.insns = अणु
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -612),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_netns_cookie),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
 	.expected_attach_type = BPF_CGROUP_UDP6_SENDMSG,
 	.result = REJECT,
 	.errstr = "dereference of modified ctx ptr",
-},
-{
+पूर्ण,
+अणु
 	"pass ctx or null check, 5: null (connect)",
-	.insns = {
+	.insns = अणु
 		BPF_MOV64_IMM(BPF_REG_1, 0),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_netns_cookie),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
 	.expected_attach_type = BPF_CGROUP_INET4_CONNECT,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"pass ctx or null check, 6: null (bind)",
-	.insns = {
+	.insns = अणु
 		BPF_MOV64_IMM(BPF_REG_1, 0),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_netns_cookie),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK,
 	.expected_attach_type = BPF_CGROUP_INET4_POST_BIND,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"pass ctx or null check, 7: ctx (bind)",
-	.insns = {
+	.insns = अणु
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_socket_cookie),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK,
 	.expected_attach_type = BPF_CGROUP_INET4_POST_BIND,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"pass ctx or null check, 8: null (bind)",
-	.insns = {
+	.insns = अणु
 		BPF_MOV64_IMM(BPF_REG_1, 0),
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_socket_cookie),
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK,
 	.expected_attach_type = BPF_CGROUP_INET4_POST_BIND,
 	.result = REJECT,
 	.errstr = "R1 type=inv expected=ctx",
-},
+पूर्ण,

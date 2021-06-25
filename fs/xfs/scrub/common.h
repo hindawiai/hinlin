@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef __XFS_SCRUB_COMMON_H__
-#define __XFS_SCRUB_COMMON_H__
+#अगर_अघोषित __XFS_SCRUB_COMMON_H__
+#घोषणा __XFS_SCRUB_COMMON_H__
 
 /*
  * We /could/ terminate a scrub/repair operation early.  If we're not
- * in a good place to continue (fatal signal, etc.) then bail out.
+ * in a good place to जारी (fatal संकेत, etc.) then bail out.
  * Note that we're careful not to make any judgements about *error.
  */
-static inline bool
+अटल अंतरभूत bool
 xchk_should_terminate(
-	struct xfs_scrub	*sc,
-	int			*error)
-{
+	काष्ठा xfs_scrub	*sc,
+	पूर्णांक			*error)
+अणु
 	/*
 	 * If preemption is disabled, we need to yield to the scheduler every
-	 * few seconds so that we don't run afoul of the soft lockup watchdog
+	 * few seconds so that we करोn't run afoul of the soft lockup watchकरोg
 	 * or RCU stall detector.
 	 */
 	cond_resched();
 
-	if (fatal_signal_pending(current)) {
-		if (*error == 0)
+	अगर (fatal_संकेत_pending(current)) अणु
+		अगर (*error == 0)
 			*error = -EAGAIN;
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-int xchk_trans_alloc(struct xfs_scrub *sc, uint resblks);
-bool xchk_process_error(struct xfs_scrub *sc, xfs_agnumber_t agno,
-		xfs_agblock_t bno, int *error);
-bool xchk_fblock_process_error(struct xfs_scrub *sc, int whichfork,
-		xfs_fileoff_t offset, int *error);
+पूर्णांक xchk_trans_alloc(काष्ठा xfs_scrub *sc, uपूर्णांक resblks);
+bool xchk_process_error(काष्ठा xfs_scrub *sc, xfs_agnumber_t agno,
+		xfs_agblock_t bno, पूर्णांक *error);
+bool xchk_fblock_process_error(काष्ठा xfs_scrub *sc, पूर्णांक whichविभाजन,
+		xfs_fileoff_t offset, पूर्णांक *error);
 
-bool xchk_xref_process_error(struct xfs_scrub *sc,
-		xfs_agnumber_t agno, xfs_agblock_t bno, int *error);
-bool xchk_fblock_xref_process_error(struct xfs_scrub *sc,
-		int whichfork, xfs_fileoff_t offset, int *error);
+bool xchk_xref_process_error(काष्ठा xfs_scrub *sc,
+		xfs_agnumber_t agno, xfs_agblock_t bno, पूर्णांक *error);
+bool xchk_fblock_xref_process_error(काष्ठा xfs_scrub *sc,
+		पूर्णांक whichविभाजन, xfs_fileoff_t offset, पूर्णांक *error);
 
-void xchk_block_set_preen(struct xfs_scrub *sc,
-		struct xfs_buf *bp);
-void xchk_ino_set_preen(struct xfs_scrub *sc, xfs_ino_t ino);
+व्योम xchk_block_set_preen(काष्ठा xfs_scrub *sc,
+		काष्ठा xfs_buf *bp);
+व्योम xchk_ino_set_preen(काष्ठा xfs_scrub *sc, xfs_ino_t ino);
 
-void xchk_set_corrupt(struct xfs_scrub *sc);
-void xchk_block_set_corrupt(struct xfs_scrub *sc,
-		struct xfs_buf *bp);
-void xchk_ino_set_corrupt(struct xfs_scrub *sc, xfs_ino_t ino);
-void xchk_fblock_set_corrupt(struct xfs_scrub *sc, int whichfork,
+व्योम xchk_set_corrupt(काष्ठा xfs_scrub *sc);
+व्योम xchk_block_set_corrupt(काष्ठा xfs_scrub *sc,
+		काष्ठा xfs_buf *bp);
+व्योम xchk_ino_set_corrupt(काष्ठा xfs_scrub *sc, xfs_ino_t ino);
+व्योम xchk_fblock_set_corrupt(काष्ठा xfs_scrub *sc, पूर्णांक whichविभाजन,
 		xfs_fileoff_t offset);
 
-void xchk_block_xref_set_corrupt(struct xfs_scrub *sc,
-		struct xfs_buf *bp);
-void xchk_ino_xref_set_corrupt(struct xfs_scrub *sc,
+व्योम xchk_block_xref_set_corrupt(काष्ठा xfs_scrub *sc,
+		काष्ठा xfs_buf *bp);
+व्योम xchk_ino_xref_set_corrupt(काष्ठा xfs_scrub *sc,
 		xfs_ino_t ino);
-void xchk_fblock_xref_set_corrupt(struct xfs_scrub *sc,
-		int whichfork, xfs_fileoff_t offset);
+व्योम xchk_fblock_xref_set_corrupt(काष्ठा xfs_scrub *sc,
+		पूर्णांक whichविभाजन, xfs_fileoff_t offset);
 
-void xchk_ino_set_warning(struct xfs_scrub *sc, xfs_ino_t ino);
-void xchk_fblock_set_warning(struct xfs_scrub *sc, int whichfork,
+व्योम xchk_ino_set_warning(काष्ठा xfs_scrub *sc, xfs_ino_t ino);
+व्योम xchk_fblock_set_warning(काष्ठा xfs_scrub *sc, पूर्णांक whichविभाजन,
 		xfs_fileoff_t offset);
 
-void xchk_set_incomplete(struct xfs_scrub *sc);
-int xchk_checkpoint_log(struct xfs_mount *mp);
+व्योम xchk_set_incomplete(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_checkpoपूर्णांक_log(काष्ठा xfs_mount *mp);
 
-/* Are we set up for a cross-referencing check? */
-bool xchk_should_check_xref(struct xfs_scrub *sc, int *error,
-			   struct xfs_btree_cur **curpp);
+/* Are we set up क्रम a cross-referencing check? */
+bool xchk_should_check_xref(काष्ठा xfs_scrub *sc, पूर्णांक *error,
+			   काष्ठा xfs_btree_cur **curpp);
 
 /* Setup functions */
-int xchk_setup_fs(struct xfs_scrub *sc);
-int xchk_setup_ag_allocbt(struct xfs_scrub *sc);
-int xchk_setup_ag_iallocbt(struct xfs_scrub *sc);
-int xchk_setup_ag_rmapbt(struct xfs_scrub *sc);
-int xchk_setup_ag_refcountbt(struct xfs_scrub *sc);
-int xchk_setup_inode(struct xfs_scrub *sc);
-int xchk_setup_inode_bmap(struct xfs_scrub *sc);
-int xchk_setup_inode_bmap_data(struct xfs_scrub *sc);
-int xchk_setup_directory(struct xfs_scrub *sc);
-int xchk_setup_xattr(struct xfs_scrub *sc);
-int xchk_setup_symlink(struct xfs_scrub *sc);
-int xchk_setup_parent(struct xfs_scrub *sc);
-#ifdef CONFIG_XFS_RT
-int xchk_setup_rt(struct xfs_scrub *sc);
-#else
-static inline int
-xchk_setup_rt(struct xfs_scrub *sc)
-{
-	return -ENOENT;
-}
-#endif
-#ifdef CONFIG_XFS_QUOTA
-int xchk_setup_quota(struct xfs_scrub *sc);
-#else
-static inline int
-xchk_setup_quota(struct xfs_scrub *sc)
-{
-	return -ENOENT;
-}
-#endif
-int xchk_setup_fscounters(struct xfs_scrub *sc);
+पूर्णांक xchk_setup_fs(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_ag_allocbt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_ag_iallocbt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_ag_rmapbt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_ag_refcountbt(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_inode(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_inode_bmap(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_inode_bmap_data(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_directory(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_xattr(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_symlink(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_parent(काष्ठा xfs_scrub *sc);
+#अगर_घोषित CONFIG_XFS_RT
+पूर्णांक xchk_setup_rt(काष्ठा xfs_scrub *sc);
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+xchk_setup_rt(काष्ठा xfs_scrub *sc)
+अणु
+	वापस -ENOENT;
+पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_XFS_QUOTA
+पूर्णांक xchk_setup_quota(काष्ठा xfs_scrub *sc);
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+xchk_setup_quota(काष्ठा xfs_scrub *sc)
+अणु
+	वापस -ENOENT;
+पूर्ण
+#पूर्ण_अगर
+पूर्णांक xchk_setup_fscounters(काष्ठा xfs_scrub *sc);
 
-void xchk_ag_free(struct xfs_scrub *sc, struct xchk_ag *sa);
-int xchk_ag_init(struct xfs_scrub *sc, xfs_agnumber_t agno,
-		struct xchk_ag *sa);
-void xchk_perag_get(struct xfs_mount *mp, struct xchk_ag *sa);
-int xchk_ag_read_headers(struct xfs_scrub *sc, xfs_agnumber_t agno,
-		struct xchk_ag *sa);
-void xchk_ag_btcur_free(struct xchk_ag *sa);
-void xchk_ag_btcur_init(struct xfs_scrub *sc, struct xchk_ag *sa);
-int xchk_count_rmap_ownedby_ag(struct xfs_scrub *sc, struct xfs_btree_cur *cur,
-		const struct xfs_owner_info *oinfo, xfs_filblks_t *blocks);
+व्योम xchk_ag_मुक्त(काष्ठा xfs_scrub *sc, काष्ठा xchk_ag *sa);
+पूर्णांक xchk_ag_init(काष्ठा xfs_scrub *sc, xfs_agnumber_t agno,
+		काष्ठा xchk_ag *sa);
+व्योम xchk_perag_get(काष्ठा xfs_mount *mp, काष्ठा xchk_ag *sa);
+पूर्णांक xchk_ag_पढ़ो_headers(काष्ठा xfs_scrub *sc, xfs_agnumber_t agno,
+		काष्ठा xchk_ag *sa);
+व्योम xchk_ag_btcur_मुक्त(काष्ठा xchk_ag *sa);
+व्योम xchk_ag_btcur_init(काष्ठा xfs_scrub *sc, काष्ठा xchk_ag *sa);
+पूर्णांक xchk_count_rmap_ownedby_ag(काष्ठा xfs_scrub *sc, काष्ठा xfs_btree_cur *cur,
+		स्थिर काष्ठा xfs_owner_info *oinfo, xfs_filblks_t *blocks);
 
-int xchk_setup_ag_btree(struct xfs_scrub *sc, bool force_log);
-int xchk_get_inode(struct xfs_scrub *sc);
-int xchk_setup_inode_contents(struct xfs_scrub *sc, unsigned int resblks);
-void xchk_buffer_recheck(struct xfs_scrub *sc, struct xfs_buf *bp);
+पूर्णांक xchk_setup_ag_btree(काष्ठा xfs_scrub *sc, bool क्रमce_log);
+पूर्णांक xchk_get_inode(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_setup_inode_contents(काष्ठा xfs_scrub *sc, अचिन्हित पूर्णांक resblks);
+व्योम xchk_buffer_recheck(काष्ठा xfs_scrub *sc, काष्ठा xfs_buf *bp);
 
 /*
- * Don't bother cross-referencing if we already found corruption or cross
+ * Don't bother cross-referencing अगर we alपढ़ोy found corruption or cross
  * referencing discrepancies.
  */
-static inline bool xchk_skip_xref(struct xfs_scrub_metadata *sm)
-{
-	return sm->sm_flags & (XFS_SCRUB_OFLAG_CORRUPT |
+अटल अंतरभूत bool xchk_skip_xref(काष्ठा xfs_scrub_metadata *sm)
+अणु
+	वापस sm->sm_flags & (XFS_SCRUB_OFLAG_CORRUPT |
 			       XFS_SCRUB_OFLAG_XCORRUPT);
-}
+पूर्ण
 
-int xchk_metadata_inode_forks(struct xfs_scrub *sc);
-int xchk_ilock_inverted(struct xfs_inode *ip, uint lock_mode);
-void xchk_stop_reaping(struct xfs_scrub *sc);
-void xchk_start_reaping(struct xfs_scrub *sc);
+पूर्णांक xchk_metadata_inode_विभाजनs(काष्ठा xfs_scrub *sc);
+पूर्णांक xchk_ilock_inverted(काष्ठा xfs_inode *ip, uपूर्णांक lock_mode);
+व्योम xchk_stop_reaping(काष्ठा xfs_scrub *sc);
+व्योम xchk_start_reaping(काष्ठा xfs_scrub *sc);
 
-#endif	/* __XFS_SCRUB_COMMON_H__ */
+#पूर्ण_अगर	/* __XFS_SCRUB_COMMON_H__ */

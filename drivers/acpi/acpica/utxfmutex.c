@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: utxfmutex - external AML mutex access functions
+ * Module Name: utxfmutex - बाह्यal AML mutex access functions
  *
  ******************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acnamesp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utxfmutex")
 
 /* Local prototypes */
-static acpi_status
+अटल acpi_status
 acpi_ut_get_mutex_object(acpi_handle handle,
 			 acpi_string pathname,
-			 union acpi_operand_object **ret_obj);
+			 जोड़ acpi_opeअक्रम_object **ret_obj);
 
 /*******************************************************************************
  *
@@ -24,59 +25,59 @@ acpi_ut_get_mutex_object(acpi_handle handle,
  *
  * PARAMETERS:  handle              - Mutex or prefix handle (optional)
  *              pathname            - Mutex pathname (optional)
- *              ret_obj             - Where the mutex object is returned
+ *              ret_obj             - Where the mutex object is वापसed
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Get an AML mutex object. The mutex node is pointed to by
- *              Handle:Pathname. Either Handle or Pathname can be NULL, but
+ * DESCRIPTION: Get an AML mutex object. The mutex node is poपूर्णांकed to by
+ *              Handle:Pathname. Either Handle or Pathname can be शून्य, but
  *              not both.
  *
  ******************************************************************************/
 
-static acpi_status
+अटल acpi_status
 acpi_ut_get_mutex_object(acpi_handle handle,
 			 acpi_string pathname,
-			 union acpi_operand_object **ret_obj)
-{
-	struct acpi_namespace_node *mutex_node;
-	union acpi_operand_object *mutex_obj;
+			 जोड़ acpi_opeअक्रम_object **ret_obj)
+अणु
+	काष्ठा acpi_namespace_node *mutex_node;
+	जोड़ acpi_opeअक्रम_object *mutex_obj;
 	acpi_status status;
 
 	/* Parameter validation */
 
-	if (!ret_obj || (!handle && !pathname)) {
-		return (AE_BAD_PARAMETER);
-	}
+	अगर (!ret_obj || (!handle && !pathname)) अणु
+		वापस (AE_BAD_PARAMETER);
+	पूर्ण
 
-	/* Get a the namespace node for the mutex */
+	/* Get a the namespace node क्रम the mutex */
 
 	mutex_node = handle;
-	if (pathname != NULL) {
+	अगर (pathname != शून्य) अणु
 		status =
 		    acpi_get_handle(handle, pathname,
 				    ACPI_CAST_PTR(acpi_handle, &mutex_node));
-		if (ACPI_FAILURE(status)) {
-			return (status);
-		}
-	}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस (status);
+		पूर्ण
+	पूर्ण
 
 	/* Ensure that we actually have a Mutex object */
 
-	if (!mutex_node || (mutex_node->type != ACPI_TYPE_MUTEX)) {
-		return (AE_TYPE);
-	}
+	अगर (!mutex_node || (mutex_node->type != ACPI_TYPE_MUTEX)) अणु
+		वापस (AE_TYPE);
+	पूर्ण
 
 	/* Get the low-level mutex object */
 
 	mutex_obj = acpi_ns_get_attached_object(mutex_node);
-	if (!mutex_obj) {
-		return (AE_NULL_OBJECT);
-	}
+	अगर (!mutex_obj) अणु
+		वापस (AE_शून्य_OBJECT);
+	पूर्ण
 
 	*ret_obj = mutex_obj;
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -84,36 +85,36 @@ acpi_ut_get_mutex_object(acpi_handle handle,
  *
  * PARAMETERS:  handle              - Mutex or prefix handle (optional)
  *              pathname            - Mutex pathname (optional)
- *              timeout             - Max time to wait for the lock (millisec)
+ *              समयout             - Max समय to रुको क्रम the lock (millisec)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Acquire an AML mutex. This is a device driver interface to
- *              AML mutex objects, and allows for transaction locking between
- *              drivers and AML code. The mutex node is pointed to by
- *              Handle:Pathname. Either Handle or Pathname can be NULL, but
+ * DESCRIPTION: Acquire an AML mutex. This is a device driver पूर्णांकerface to
+ *              AML mutex objects, and allows क्रम transaction locking between
+ *              drivers and AML code. The mutex node is poपूर्णांकed to by
+ *              Handle:Pathname. Either Handle or Pathname can be शून्य, but
  *              not both.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_acquire_mutex(acpi_handle handle, acpi_string pathname, u16 timeout)
-{
+acpi_acquire_mutex(acpi_handle handle, acpi_string pathname, u16 समयout)
+अणु
 	acpi_status status;
-	union acpi_operand_object *mutex_obj;
+	जोड़ acpi_opeअक्रम_object *mutex_obj;
 
 	/* Get the low-level mutex associated with Handle:Pathname */
 
 	status = acpi_ut_get_mutex_object(handle, pathname, &mutex_obj);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
 	/* Acquire the OS mutex */
 
-	status = acpi_os_acquire_mutex(mutex_obj->mutex.os_mutex, timeout);
-	return (status);
-}
+	status = acpi_os_acquire_mutex(mutex_obj->mutex.os_mutex, समयout);
+	वापस (status);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_acquire_mutex)
 
@@ -126,29 +127,29 @@ ACPI_EXPORT_SYMBOL(acpi_acquire_mutex)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Release an AML mutex. This is a device driver interface to
- *              AML mutex objects, and allows for transaction locking between
- *              drivers and AML code. The mutex node is pointed to by
- *              Handle:Pathname. Either Handle or Pathname can be NULL, but
+ * DESCRIPTION: Release an AML mutex. This is a device driver पूर्णांकerface to
+ *              AML mutex objects, and allows क्रम transaction locking between
+ *              drivers and AML code. The mutex node is poपूर्णांकed to by
+ *              Handle:Pathname. Either Handle or Pathname can be शून्य, but
  *              not both.
  *
  ******************************************************************************/
 acpi_status acpi_release_mutex(acpi_handle handle, acpi_string pathname)
-{
+अणु
 	acpi_status status;
-	union acpi_operand_object *mutex_obj;
+	जोड़ acpi_opeअक्रम_object *mutex_obj;
 
 	/* Get the low-level mutex associated with Handle:Pathname */
 
 	status = acpi_ut_get_mutex_object(handle, pathname, &mutex_obj);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
 	/* Release the OS mutex */
 
 	acpi_os_release_mutex(mutex_obj->mutex.os_mutex);
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_release_mutex)

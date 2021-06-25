@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
-#include "hclge_main.h"
-#include "hclge_mbx.h"
-#include "hnae3.h"
+#समावेश "hclge_main.h"
+#समावेश "hclge_mbx.h"
+#समावेश "hnae3.h"
 
-#define CREATE_TRACE_POINTS
-#include "hclge_trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "hclge_trace.h"
 
-static u16 hclge_errno_to_resp(int errno)
-{
-	return abs(errno);
-}
+अटल u16 hclge_त्रुटि_सं_to_resp(पूर्णांक त्रुटि_सं)
+अणु
+	वापस असल(त्रुटि_सं);
+पूर्ण
 
 /* hclge_gen_resp_to_vf: used to generate a synchronous response to VF when PF
  * receives a mailbox message from VF.
- * @vport: pointer to struct hclge_vport
- * @vf_to_pf_req: pointer to hclge_mbx_vf_to_pf_cmd of the original mailbox
+ * @vport: poपूर्णांकer to काष्ठा hclge_vport
+ * @vf_to_pf_req: poपूर्णांकer to hclge_mbx_vf_to_pf_cmd of the original mailbox
  *		  message
  * @resp_status: indicate to VF whether its request success(0) or failed.
  */
-static int hclge_gen_resp_to_vf(struct hclge_vport *vport,
-				struct hclge_mbx_vf_to_pf_cmd *vf_to_pf_req,
-				struct hclge_respond_to_vf_msg *resp_msg)
-{
-	struct hclge_mbx_pf_to_vf_cmd *resp_pf_to_vf;
-	struct hclge_dev *hdev = vport->back;
-	enum hclge_cmd_status status;
-	struct hclge_desc desc;
+अटल पूर्णांक hclge_gen_resp_to_vf(काष्ठा hclge_vport *vport,
+				काष्ठा hclge_mbx_vf_to_pf_cmd *vf_to_pf_req,
+				काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
+	काष्ठा hclge_mbx_pf_to_vf_cmd *resp_pf_to_vf;
+	काष्ठा hclge_dev *hdev = vport->back;
+	क्रमागत hclge_cmd_status status;
+	काष्ठा hclge_desc desc;
 	u16 resp;
 
-	resp_pf_to_vf = (struct hclge_mbx_pf_to_vf_cmd *)desc.data;
+	resp_pf_to_vf = (काष्ठा hclge_mbx_pf_to_vf_cmd *)desc.data;
 
-	if (resp_msg->len > HCLGE_MBX_MAX_RESP_DATA_SIZE) {
+	अगर (resp_msg->len > HCLGE_MBX_MAX_RESP_DATA_SIZE) अणु
 		dev_err(&hdev->pdev->dev,
 			"PF fail to gen resp to VF len %u exceeds max len %u\n",
 			resp_msg->len,
 			HCLGE_MBX_MAX_RESP_DATA_SIZE);
-		/* If resp_msg->len is too long, set the value to max length
-		 * and return the msg to VF
+		/* If resp_msg->len is too दीर्घ, set the value to max length
+		 * and वापस the msg to VF
 		 */
 		resp_msg->len = HCLGE_MBX_MAX_RESP_DATA_SIZE;
-	}
+	पूर्ण
 
 	hclge_cmd_setup_basic_desc(&desc, HCLGEVF_OPC_MBX_PF_TO_VF, false);
 
@@ -51,39 +52,39 @@ static int hclge_gen_resp_to_vf(struct hclge_vport *vport,
 	resp_pf_to_vf->msg.code = HCLGE_MBX_PF_VF_RESP;
 	resp_pf_to_vf->msg.vf_mbx_msg_code = vf_to_pf_req->msg.code;
 	resp_pf_to_vf->msg.vf_mbx_msg_subcode = vf_to_pf_req->msg.subcode;
-	resp = hclge_errno_to_resp(resp_msg->status);
-	if (resp < SHRT_MAX) {
+	resp = hclge_त्रुटि_सं_to_resp(resp_msg->status);
+	अगर (resp < लघु_उच्च) अणु
 		resp_pf_to_vf->msg.resp_status = resp;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_warn(&hdev->pdev->dev,
 			 "failed to send response to VF, response status %u is out-of-bound\n",
 			 resp);
 		resp_pf_to_vf->msg.resp_status = EIO;
-	}
+	पूर्ण
 
-	if (resp_msg->len > 0)
-		memcpy(resp_pf_to_vf->msg.resp_data, resp_msg->data,
+	अगर (resp_msg->len > 0)
+		स_नकल(resp_pf_to_vf->msg.resp_data, resp_msg->data,
 		       resp_msg->len);
 
 	status = hclge_cmd_send(&hdev->hw, &desc, 1);
-	if (status)
+	अगर (status)
 		dev_err(&hdev->pdev->dev,
 			"failed to send response to VF, status: %d, vfid: %u, code: %u, subcode: %u.\n",
 			status, vf_to_pf_req->mbx_src_vfid,
 			vf_to_pf_req->msg.code, vf_to_pf_req->msg.subcode);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int hclge_send_mbx_msg(struct hclge_vport *vport, u8 *msg, u16 msg_len,
+अटल पूर्णांक hclge_send_mbx_msg(काष्ठा hclge_vport *vport, u8 *msg, u16 msg_len,
 			      u16 mbx_opcode, u8 dest_vfid)
-{
-	struct hclge_mbx_pf_to_vf_cmd *resp_pf_to_vf;
-	struct hclge_dev *hdev = vport->back;
-	enum hclge_cmd_status status;
-	struct hclge_desc desc;
+अणु
+	काष्ठा hclge_mbx_pf_to_vf_cmd *resp_pf_to_vf;
+	काष्ठा hclge_dev *hdev = vport->back;
+	क्रमागत hclge_cmd_status status;
+	काष्ठा hclge_desc desc;
 
-	resp_pf_to_vf = (struct hclge_mbx_pf_to_vf_cmd *)desc.data;
+	resp_pf_to_vf = (काष्ठा hclge_mbx_pf_to_vf_cmd *)desc.data;
 
 	hclge_cmd_setup_basic_desc(&desc, HCLGEVF_OPC_MBX_PF_TO_VF, false);
 
@@ -91,22 +92,22 @@ static int hclge_send_mbx_msg(struct hclge_vport *vport, u8 *msg, u16 msg_len,
 	resp_pf_to_vf->msg_len = msg_len;
 	resp_pf_to_vf->msg.code = mbx_opcode;
 
-	memcpy(&resp_pf_to_vf->msg.vf_mbx_msg_code, msg, msg_len);
+	स_नकल(&resp_pf_to_vf->msg.vf_mbx_msg_code, msg, msg_len);
 
 	trace_hclge_pf_mbx_send(hdev, resp_pf_to_vf);
 
 	status = hclge_cmd_send(&hdev->hw, &desc, 1);
-	if (status)
+	अगर (status)
 		dev_err(&hdev->pdev->dev,
 			"failed to send mailbox to VF, status: %d, vfid: %u, opcode: %u\n",
 			status, dest_vfid, mbx_opcode);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int hclge_inform_reset_assert_to_vf(struct hclge_vport *vport)
-{
-	struct hclge_dev *hdev = vport->back;
+पूर्णांक hclge_inक्रमm_reset_निश्चित_to_vf(काष्ठा hclge_vport *vport)
+अणु
+	काष्ठा hclge_dev *hdev = vport->back;
 	u16 reset_type;
 	u8 msg_data[2];
 	u8 dest_vfid;
@@ -115,81 +116,81 @@ int hclge_inform_reset_assert_to_vf(struct hclge_vport *vport)
 
 	dest_vfid = (u8)vport->vport_id;
 
-	if (hdev->reset_type == HNAE3_FUNC_RESET)
+	अगर (hdev->reset_type == HNAE3_FUNC_RESET)
 		reset_type = HNAE3_VF_PF_FUNC_RESET;
-	else if (hdev->reset_type == HNAE3_FLR_RESET)
+	अन्यथा अगर (hdev->reset_type == HNAE3_FLR_RESET)
 		reset_type = HNAE3_VF_FULL_RESET;
-	else
+	अन्यथा
 		reset_type = HNAE3_VF_FUNC_RESET;
 
-	memcpy(&msg_data[0], &reset_type, sizeof(u16));
+	स_नकल(&msg_data[0], &reset_type, माप(u16));
 
 	/* send this requested info to VF */
-	return hclge_send_mbx_msg(vport, msg_data, sizeof(msg_data),
+	वापस hclge_send_mbx_msg(vport, msg_data, माप(msg_data),
 				  HCLGE_MBX_ASSERTING_RESET, dest_vfid);
-}
+पूर्ण
 
-static void hclge_free_vector_ring_chain(struct hnae3_ring_chain_node *head)
-{
-	struct hnae3_ring_chain_node *chain_tmp, *chain;
+अटल व्योम hclge_मुक्त_vector_ring_chain(काष्ठा hnae3_ring_chain_node *head)
+अणु
+	काष्ठा hnae3_ring_chain_node *chain_पंचांगp, *chain;
 
 	chain = head->next;
 
-	while (chain) {
-		chain_tmp = chain->next;
-		kfree_sensitive(chain);
-		chain = chain_tmp;
-	}
-}
+	जबतक (chain) अणु
+		chain_पंचांगp = chain->next;
+		kमुक्त_sensitive(chain);
+		chain = chain_पंचांगp;
+	पूर्ण
+पूर्ण
 
-/* hclge_get_ring_chain_from_mbx: get ring type & tqp id & int_gl idx
+/* hclge_get_ring_chain_from_mbx: get ring type & tqp id & पूर्णांक_gl idx
  * from mailbox message
  * msg[0]: opcode
  * msg[1]: <not relevant to this function>
  * msg[2]: ring_num
  * msg[3]: first ring type (TX|RX)
  * msg[4]: first tqp id
- * msg[5]: first int_gl idx
- * msg[6] ~ msg[14]: other ring type, tqp id and int_gl idx
+ * msg[5]: first पूर्णांक_gl idx
+ * msg[6] ~ msg[14]: other ring type, tqp id and पूर्णांक_gl idx
  */
-static int hclge_get_ring_chain_from_mbx(
-			struct hclge_mbx_vf_to_pf_cmd *req,
-			struct hnae3_ring_chain_node *ring_chain,
-			struct hclge_vport *vport)
-{
-	struct hnae3_ring_chain_node *cur_chain, *new_chain;
-	struct hclge_dev *hdev = vport->back;
-	int ring_num;
-	int i;
+अटल पूर्णांक hclge_get_ring_chain_from_mbx(
+			काष्ठा hclge_mbx_vf_to_pf_cmd *req,
+			काष्ठा hnae3_ring_chain_node *ring_chain,
+			काष्ठा hclge_vport *vport)
+अणु
+	काष्ठा hnae3_ring_chain_node *cur_chain, *new_chain;
+	काष्ठा hclge_dev *hdev = vport->back;
+	पूर्णांक ring_num;
+	पूर्णांक i;
 
 	ring_num = req->msg.ring_num;
 
-	if (ring_num > HCLGE_MBX_MAX_RING_CHAIN_PARAM_NUM)
-		return -ENOMEM;
+	अगर (ring_num > HCLGE_MBX_MAX_RING_CHAIN_PARAM_NUM)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ring_num; i++) {
-		if (req->msg.param[i].tqp_index >= vport->nic.kinfo.rss_size) {
+	क्रम (i = 0; i < ring_num; i++) अणु
+		अगर (req->msg.param[i].tqp_index >= vport->nic.kinfo.rss_size) अणु
 			dev_err(&hdev->pdev->dev, "tqp index(%u) is out of range(0-%u)\n",
 				req->msg.param[i].tqp_index,
 				vport->nic.kinfo.rss_size - 1);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	hnae3_set_bit(ring_chain->flag, HNAE3_RING_TYPE_B,
 		      req->msg.param[0].ring_type);
 	ring_chain->tqp_index =
 		hclge_get_queue_id(vport->nic.kinfo.tqp
 				   [req->msg.param[0].tqp_index]);
-	hnae3_set_field(ring_chain->int_gl_idx, HNAE3_RING_GL_IDX_M,
-			HNAE3_RING_GL_IDX_S, req->msg.param[0].int_gl_index);
+	hnae3_set_field(ring_chain->पूर्णांक_gl_idx, HNAE3_RING_GL_IDX_M,
+			HNAE3_RING_GL_IDX_S, req->msg.param[0].पूर्णांक_gl_index);
 
 	cur_chain = ring_chain;
 
-	for (i = 1; i < ring_num; i++) {
-		new_chain = kzalloc(sizeof(*new_chain), GFP_KERNEL);
-		if (!new_chain)
-			goto err;
+	क्रम (i = 1; i < ring_num; i++) अणु
+		new_chain = kzalloc(माप(*new_chain), GFP_KERNEL);
+		अगर (!new_chain)
+			जाओ err;
 
 		hnae3_set_bit(new_chain->flag, HNAE3_RING_TYPE_B,
 			      req->msg.param[i].ring_type);
@@ -198,56 +199,56 @@ static int hclge_get_ring_chain_from_mbx(
 		hclge_get_queue_id(vport->nic.kinfo.tqp
 			[req->msg.param[i].tqp_index]);
 
-		hnae3_set_field(new_chain->int_gl_idx, HNAE3_RING_GL_IDX_M,
+		hnae3_set_field(new_chain->पूर्णांक_gl_idx, HNAE3_RING_GL_IDX_M,
 				HNAE3_RING_GL_IDX_S,
-				req->msg.param[i].int_gl_index);
+				req->msg.param[i].पूर्णांक_gl_index);
 
 		cur_chain->next = new_chain;
 		cur_chain = new_chain;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	hclge_free_vector_ring_chain(ring_chain);
-	return -ENOMEM;
-}
+	hclge_मुक्त_vector_ring_chain(ring_chain);
+	वापस -ENOMEM;
+पूर्ण
 
-static int hclge_map_unmap_ring_to_vf_vector(struct hclge_vport *vport, bool en,
-					     struct hclge_mbx_vf_to_pf_cmd *req)
-{
-	struct hnae3_ring_chain_node ring_chain;
-	int vector_id = req->msg.vector_id;
-	int ret;
+अटल पूर्णांक hclge_map_unmap_ring_to_vf_vector(काष्ठा hclge_vport *vport, bool en,
+					     काष्ठा hclge_mbx_vf_to_pf_cmd *req)
+अणु
+	काष्ठा hnae3_ring_chain_node ring_chain;
+	पूर्णांक vector_id = req->msg.vector_id;
+	पूर्णांक ret;
 
-	memset(&ring_chain, 0, sizeof(ring_chain));
+	स_रखो(&ring_chain, 0, माप(ring_chain));
 	ret = hclge_get_ring_chain_from_mbx(req, &ring_chain, vport);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = hclge_bind_ring_with_vector(vport, vector_id, en, &ring_chain);
 
-	hclge_free_vector_ring_chain(&ring_chain);
+	hclge_मुक्त_vector_ring_chain(&ring_chain);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hclge_set_vf_promisc_mode(struct hclge_vport *vport,
-				     struct hclge_mbx_vf_to_pf_cmd *req)
-{
+अटल पूर्णांक hclge_set_vf_promisc_mode(काष्ठा hclge_vport *vport,
+				     काष्ठा hclge_mbx_vf_to_pf_cmd *req)
+अणु
 	bool en_bc = req->msg.en_bc ? true : false;
 	bool en_uc = req->msg.en_uc ? true : false;
 	bool en_mc = req->msg.en_mc ? true : false;
-	struct hnae3_handle *handle = &vport->nic;
-	int ret;
+	काष्ठा hnae3_handle *handle = &vport->nic;
+	पूर्णांक ret;
 
-	if (!vport->vf_info.trusted) {
+	अगर (!vport->vf_info.trusted) अणु
 		en_uc = false;
 		en_mc = false;
-	}
+	पूर्ण
 
-	if (req->msg.en_limit_promisc)
+	अगर (req->msg.en_limit_promisc)
 		set_bit(HNAE3_PFLAG_LIMIT_PROMISC, &handle->priv_flags);
-	else
+	अन्यथा
 		clear_bit(HNAE3_PFLAG_LIMIT_PROMISC,
 			  &handle->priv_flags);
 
@@ -255,285 +256,285 @@ static int hclge_set_vf_promisc_mode(struct hclge_vport *vport,
 
 	vport->vf_info.promisc_enable = (en_uc || en_mc) ? 1 : 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void hclge_inform_vf_promisc_info(struct hclge_vport *vport)
-{
+व्योम hclge_inक्रमm_vf_promisc_info(काष्ठा hclge_vport *vport)
+अणु
 	u8 dest_vfid = (u8)vport->vport_id;
 	u8 msg_data[2];
 
-	memcpy(&msg_data[0], &vport->vf_info.promisc_enable, sizeof(u16));
+	स_नकल(&msg_data[0], &vport->vf_info.promisc_enable, माप(u16));
 
-	hclge_send_mbx_msg(vport, msg_data, sizeof(msg_data),
+	hclge_send_mbx_msg(vport, msg_data, माप(msg_data),
 			   HCLGE_MBX_PUSH_PROMISC_INFO, dest_vfid);
-}
+पूर्ण
 
-static int hclge_set_vf_uc_mac_addr(struct hclge_vport *vport,
-				    struct hclge_mbx_vf_to_pf_cmd *mbx_req)
-{
-#define HCLGE_MBX_VF_OLD_MAC_ADDR_OFFSET	6
+अटल पूर्णांक hclge_set_vf_uc_mac_addr(काष्ठा hclge_vport *vport,
+				    काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req)
+अणु
+#घोषणा HCLGE_MBX_VF_OLD_MAC_ADDR_OFFSET	6
 
-	const u8 *mac_addr = (const u8 *)(mbx_req->msg.data);
-	struct hclge_dev *hdev = vport->back;
-	int status;
+	स्थिर u8 *mac_addr = (स्थिर u8 *)(mbx_req->msg.data);
+	काष्ठा hclge_dev *hdev = vport->back;
+	पूर्णांक status;
 
-	if (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_UC_MODIFY) {
-		const u8 *old_addr = (const u8 *)
+	अगर (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_UC_MODIFY) अणु
+		स्थिर u8 *old_addr = (स्थिर u8 *)
 		(&mbx_req->msg.data[HCLGE_MBX_VF_OLD_MAC_ADDR_OFFSET]);
 
 		/* If VF MAC has been configured by the host then it
-		 * cannot be overridden by the MAC specified by the VM.
+		 * cannot be overridden by the MAC specअगरied by the VM.
 		 */
-		if (!is_zero_ether_addr(vport->vf_info.mac) &&
+		अगर (!is_zero_ether_addr(vport->vf_info.mac) &&
 		    !ether_addr_equal(mac_addr, vport->vf_info.mac))
-			return -EPERM;
+			वापस -EPERM;
 
-		if (!is_valid_ether_addr(mac_addr))
-			return -EINVAL;
+		अगर (!is_valid_ether_addr(mac_addr))
+			वापस -EINVAL;
 
 		spin_lock_bh(&vport->mac_list_lock);
-		status = hclge_update_mac_node_for_dev_addr(vport, old_addr,
+		status = hclge_update_mac_node_क्रम_dev_addr(vport, old_addr,
 							    mac_addr);
 		spin_unlock_bh(&vport->mac_list_lock);
 		hclge_task_schedule(hdev, 0);
-	} else if (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_UC_ADD) {
+	पूर्ण अन्यथा अगर (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_UC_ADD) अणु
 		status = hclge_update_mac_list(vport, HCLGE_MAC_TO_ADD,
 					       HCLGE_MAC_ADDR_UC, mac_addr);
-	} else if (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_UC_REMOVE) {
+	पूर्ण अन्यथा अगर (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_UC_REMOVE) अणु
 		status = hclge_update_mac_list(vport, HCLGE_MAC_TO_DEL,
 					       HCLGE_MAC_ADDR_UC, mac_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&hdev->pdev->dev,
 			"failed to set unicast mac addr, unknown subcode %u\n",
 			mbx_req->msg.subcode);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int hclge_set_vf_mc_mac_addr(struct hclge_vport *vport,
-				    struct hclge_mbx_vf_to_pf_cmd *mbx_req)
-{
-	const u8 *mac_addr = (const u8 *)(mbx_req->msg.data);
-	struct hclge_dev *hdev = vport->back;
+अटल पूर्णांक hclge_set_vf_mc_mac_addr(काष्ठा hclge_vport *vport,
+				    काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req)
+अणु
+	स्थिर u8 *mac_addr = (स्थिर u8 *)(mbx_req->msg.data);
+	काष्ठा hclge_dev *hdev = vport->back;
 
-	if (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_MC_ADD) {
+	अगर (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_MC_ADD) अणु
 		hclge_update_mac_list(vport, HCLGE_MAC_TO_ADD,
 				      HCLGE_MAC_ADDR_MC, mac_addr);
-	} else if (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_MC_REMOVE) {
+	पूर्ण अन्यथा अगर (mbx_req->msg.subcode == HCLGE_MBX_MAC_VLAN_MC_REMOVE) अणु
 		hclge_update_mac_list(vport, HCLGE_MAC_TO_DEL,
 				      HCLGE_MAC_ADDR_MC, mac_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&hdev->pdev->dev,
 			"failed to set mcast mac addr, unknown subcode %u\n",
 			mbx_req->msg.subcode);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hclge_push_vf_port_base_vlan_info(struct hclge_vport *vport, u8 vfid,
+पूर्णांक hclge_push_vf_port_base_vlan_info(काष्ठा hclge_vport *vport, u8 vfid,
 				      u16 state, u16 vlan_tag, u16 qos,
 				      u16 vlan_proto)
-{
-#define MSG_DATA_SIZE	8
+अणु
+#घोषणा MSG_DATA_SIZE	8
 
 	u8 msg_data[MSG_DATA_SIZE];
 
-	memcpy(&msg_data[0], &state, sizeof(u16));
-	memcpy(&msg_data[2], &vlan_proto, sizeof(u16));
-	memcpy(&msg_data[4], &qos, sizeof(u16));
-	memcpy(&msg_data[6], &vlan_tag, sizeof(u16));
+	स_नकल(&msg_data[0], &state, माप(u16));
+	स_नकल(&msg_data[2], &vlan_proto, माप(u16));
+	स_नकल(&msg_data[4], &qos, माप(u16));
+	स_नकल(&msg_data[6], &vlan_tag, माप(u16));
 
-	return hclge_send_mbx_msg(vport, msg_data, sizeof(msg_data),
+	वापस hclge_send_mbx_msg(vport, msg_data, माप(msg_data),
 				  HCLGE_MBX_PUSH_VLAN_INFO, vfid);
-}
+पूर्ण
 
-static int hclge_set_vf_vlan_cfg(struct hclge_vport *vport,
-				 struct hclge_mbx_vf_to_pf_cmd *mbx_req,
-				 struct hclge_respond_to_vf_msg *resp_msg)
-{
-#define HCLGE_MBX_VLAN_STATE_OFFSET	0
-#define HCLGE_MBX_VLAN_INFO_OFFSET	2
+अटल पूर्णांक hclge_set_vf_vlan_cfg(काष्ठा hclge_vport *vport,
+				 काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req,
+				 काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
+#घोषणा HCLGE_MBX_VLAN_STATE_OFFSET	0
+#घोषणा HCLGE_MBX_VLAN_INFO_OFFSET	2
 
-	struct hclge_vf_vlan_cfg *msg_cmd;
-	int status = 0;
+	काष्ठा hclge_vf_vlan_cfg *msg_cmd;
+	पूर्णांक status = 0;
 
-	msg_cmd = (struct hclge_vf_vlan_cfg *)&mbx_req->msg;
-	if (msg_cmd->subcode == HCLGE_MBX_VLAN_FILTER) {
-		struct hnae3_handle *handle = &vport->nic;
+	msg_cmd = (काष्ठा hclge_vf_vlan_cfg *)&mbx_req->msg;
+	अगर (msg_cmd->subcode == HCLGE_MBX_VLAN_FILTER) अणु
+		काष्ठा hnae3_handle *handle = &vport->nic;
 		u16 vlan, proto;
-		bool is_kill;
+		bool is_समाप्त;
 
-		is_kill = !!msg_cmd->is_kill;
+		is_समाप्त = !!msg_cmd->is_समाप्त;
 		vlan =  msg_cmd->vlan;
 		proto =  msg_cmd->proto;
 		status = hclge_set_vlan_filter(handle, cpu_to_be16(proto),
-					       vlan, is_kill);
-	} else if (msg_cmd->subcode == HCLGE_MBX_VLAN_RX_OFF_CFG) {
-		struct hnae3_handle *handle = &vport->nic;
-		bool en = msg_cmd->is_kill ? true : false;
+					       vlan, is_समाप्त);
+	पूर्ण अन्यथा अगर (msg_cmd->subcode == HCLGE_MBX_VLAN_RX_OFF_CFG) अणु
+		काष्ठा hnae3_handle *handle = &vport->nic;
+		bool en = msg_cmd->is_समाप्त ? true : false;
 
 		status = hclge_en_hw_strip_rxvtag(handle, en);
-	} else if (msg_cmd->subcode == HCLGE_MBX_PORT_BASE_VLAN_CFG) {
-		struct hclge_vlan_info *vlan_info;
+	पूर्ण अन्यथा अगर (msg_cmd->subcode == HCLGE_MBX_PORT_BASE_VLAN_CFG) अणु
+		काष्ठा hclge_vlan_info *vlan_info;
 		u16 *state;
 
 		state = (u16 *)&mbx_req->msg.data[HCLGE_MBX_VLAN_STATE_OFFSET];
-		vlan_info = (struct hclge_vlan_info *)
+		vlan_info = (काष्ठा hclge_vlan_info *)
 			&mbx_req->msg.data[HCLGE_MBX_VLAN_INFO_OFFSET];
 		status = hclge_update_port_base_vlan_cfg(vport, *state,
 							 vlan_info);
-	} else if (msg_cmd->subcode == HCLGE_MBX_GET_PORT_BASE_VLAN_STATE) {
-		struct hnae3_ae_dev *ae_dev = pci_get_drvdata(vport->nic.pdev);
-		/* vf does not need to know about the port based VLAN state
-		 * on device HNAE3_DEVICE_VERSION_V3. So always return disable
-		 * on device HNAE3_DEVICE_VERSION_V3 if vf queries the port
+	पूर्ण अन्यथा अगर (msg_cmd->subcode == HCLGE_MBX_GET_PORT_BASE_VLAN_STATE) अणु
+		काष्ठा hnae3_ae_dev *ae_dev = pci_get_drvdata(vport->nic.pdev);
+		/* vf करोes not need to know about the port based VLAN state
+		 * on device HNAE3_DEVICE_VERSION_V3. So always वापस disable
+		 * on device HNAE3_DEVICE_VERSION_V3 अगर vf queries the port
 		 * based VLAN state.
 		 */
 		resp_msg->data[0] =
 			ae_dev->dev_version >= HNAE3_DEVICE_VERSION_V3 ?
 			HNAE3_PORT_BASE_VLAN_DISABLE :
 			vport->port_base_vlan_cfg.state;
-		resp_msg->len = sizeof(u8);
-	}
+		resp_msg->len = माप(u8);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int hclge_set_vf_alive(struct hclge_vport *vport,
-			      struct hclge_mbx_vf_to_pf_cmd *mbx_req)
-{
+अटल पूर्णांक hclge_set_vf_alive(काष्ठा hclge_vport *vport,
+			      काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req)
+अणु
 	bool alive = !!mbx_req->msg.data[0];
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (alive)
+	अगर (alive)
 		ret = hclge_vport_start(vport);
-	else
+	अन्यथा
 		hclge_vport_stop(vport);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hclge_get_vf_tcinfo(struct hclge_vport *vport,
-				struct hclge_respond_to_vf_msg *resp_msg)
-{
-	struct hnae3_knic_private_info *kinfo = &vport->nic.kinfo;
-	unsigned int i;
+अटल व्योम hclge_get_vf_tcinfo(काष्ठा hclge_vport *vport,
+				काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
+	काष्ठा hnae3_knic_निजी_info *kinfo = &vport->nic.kinfo;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < kinfo->tc_info.num_tc; i++)
+	क्रम (i = 0; i < kinfo->tc_info.num_tc; i++)
 		resp_msg->data[0] |= BIT(i);
 
-	resp_msg->len = sizeof(u8);
-}
+	resp_msg->len = माप(u8);
+पूर्ण
 
-static void hclge_get_vf_queue_info(struct hclge_vport *vport,
-				    struct hclge_respond_to_vf_msg *resp_msg)
-{
-#define HCLGE_TQPS_RSS_INFO_LEN		6
-#define HCLGE_TQPS_ALLOC_OFFSET		0
-#define HCLGE_TQPS_RSS_SIZE_OFFSET	2
-#define HCLGE_TQPS_RX_BUFFER_LEN_OFFSET	4
+अटल व्योम hclge_get_vf_queue_info(काष्ठा hclge_vport *vport,
+				    काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
+#घोषणा HCLGE_TQPS_RSS_INFO_LEN		6
+#घोषणा HCLGE_TQPS_ALLOC_OFFSET		0
+#घोषणा HCLGE_TQPS_RSS_SIZE_OFFSET	2
+#घोषणा HCLGE_TQPS_RX_BUFFER_LEN_OFFSET	4
 
-	struct hclge_dev *hdev = vport->back;
+	काष्ठा hclge_dev *hdev = vport->back;
 
 	/* get the queue related info */
-	memcpy(&resp_msg->data[HCLGE_TQPS_ALLOC_OFFSET],
-	       &vport->alloc_tqps, sizeof(u16));
-	memcpy(&resp_msg->data[HCLGE_TQPS_RSS_SIZE_OFFSET],
-	       &vport->nic.kinfo.rss_size, sizeof(u16));
-	memcpy(&resp_msg->data[HCLGE_TQPS_RX_BUFFER_LEN_OFFSET],
-	       &hdev->rx_buf_len, sizeof(u16));
+	स_नकल(&resp_msg->data[HCLGE_TQPS_ALLOC_OFFSET],
+	       &vport->alloc_tqps, माप(u16));
+	स_नकल(&resp_msg->data[HCLGE_TQPS_RSS_SIZE_OFFSET],
+	       &vport->nic.kinfo.rss_size, माप(u16));
+	स_नकल(&resp_msg->data[HCLGE_TQPS_RX_BUFFER_LEN_OFFSET],
+	       &hdev->rx_buf_len, माप(u16));
 	resp_msg->len = HCLGE_TQPS_RSS_INFO_LEN;
-}
+पूर्ण
 
-static void hclge_get_vf_mac_addr(struct hclge_vport *vport,
-				  struct hclge_respond_to_vf_msg *resp_msg)
-{
+अटल व्योम hclge_get_vf_mac_addr(काष्ठा hclge_vport *vport,
+				  काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
 	ether_addr_copy(resp_msg->data, vport->vf_info.mac);
 	resp_msg->len = ETH_ALEN;
-}
+पूर्ण
 
-static void hclge_get_vf_queue_depth(struct hclge_vport *vport,
-				     struct hclge_respond_to_vf_msg *resp_msg)
-{
-#define HCLGE_TQPS_DEPTH_INFO_LEN	4
-#define HCLGE_TQPS_NUM_TX_DESC_OFFSET	0
-#define HCLGE_TQPS_NUM_RX_DESC_OFFSET	2
+अटल व्योम hclge_get_vf_queue_depth(काष्ठा hclge_vport *vport,
+				     काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
+#घोषणा HCLGE_TQPS_DEPTH_INFO_LEN	4
+#घोषणा HCLGE_TQPS_NUM_TX_DESC_OFFSET	0
+#घोषणा HCLGE_TQPS_NUM_RX_DESC_OFFSET	2
 
-	struct hclge_dev *hdev = vport->back;
+	काष्ठा hclge_dev *hdev = vport->back;
 
 	/* get the queue depth info */
-	memcpy(&resp_msg->data[HCLGE_TQPS_NUM_TX_DESC_OFFSET],
-	       &hdev->num_tx_desc, sizeof(u16));
-	memcpy(&resp_msg->data[HCLGE_TQPS_NUM_RX_DESC_OFFSET],
-	       &hdev->num_rx_desc, sizeof(u16));
+	स_नकल(&resp_msg->data[HCLGE_TQPS_NUM_TX_DESC_OFFSET],
+	       &hdev->num_tx_desc, माप(u16));
+	स_नकल(&resp_msg->data[HCLGE_TQPS_NUM_RX_DESC_OFFSET],
+	       &hdev->num_rx_desc, माप(u16));
 	resp_msg->len = HCLGE_TQPS_DEPTH_INFO_LEN;
-}
+पूर्ण
 
-static void hclge_get_vf_media_type(struct hclge_vport *vport,
-				    struct hclge_respond_to_vf_msg *resp_msg)
-{
-#define HCLGE_VF_MEDIA_TYPE_OFFSET	0
-#define HCLGE_VF_MODULE_TYPE_OFFSET	1
-#define HCLGE_VF_MEDIA_TYPE_LENGTH	2
+अटल व्योम hclge_get_vf_media_type(काष्ठा hclge_vport *vport,
+				    काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
+#घोषणा HCLGE_VF_MEDIA_TYPE_OFFSET	0
+#घोषणा HCLGE_VF_MODULE_TYPE_OFFSET	1
+#घोषणा HCLGE_VF_MEDIA_TYPE_LENGTH	2
 
-	struct hclge_dev *hdev = vport->back;
+	काष्ठा hclge_dev *hdev = vport->back;
 
 	resp_msg->data[HCLGE_VF_MEDIA_TYPE_OFFSET] =
 		hdev->hw.mac.media_type;
 	resp_msg->data[HCLGE_VF_MODULE_TYPE_OFFSET] =
 		hdev->hw.mac.module_type;
 	resp_msg->len = HCLGE_VF_MEDIA_TYPE_LENGTH;
-}
+पूर्ण
 
-int hclge_push_vf_link_status(struct hclge_vport *vport)
-{
-#define HCLGE_VF_LINK_STATE_UP		1U
-#define HCLGE_VF_LINK_STATE_DOWN	0U
+पूर्णांक hclge_push_vf_link_status(काष्ठा hclge_vport *vport)
+अणु
+#घोषणा HCLGE_VF_LINK_STATE_UP		1U
+#घोषणा HCLGE_VF_LINK_STATE_DOWN	0U
 
-	struct hclge_dev *hdev = vport->back;
+	काष्ठा hclge_dev *hdev = vport->back;
 	u16 link_status;
 	u8 msg_data[9];
 	u16 duplex;
 
 	/* mac.link can only be 0 or 1 */
-	switch (vport->vf_info.link_state) {
-	case IFLA_VF_LINK_STATE_ENABLE:
+	चयन (vport->vf_info.link_state) अणु
+	हाल IFLA_VF_LINK_STATE_ENABLE:
 		link_status = HCLGE_VF_LINK_STATE_UP;
-		break;
-	case IFLA_VF_LINK_STATE_DISABLE:
+		अवरोध;
+	हाल IFLA_VF_LINK_STATE_DISABLE:
 		link_status = HCLGE_VF_LINK_STATE_DOWN;
-		break;
-	case IFLA_VF_LINK_STATE_AUTO:
-	default:
+		अवरोध;
+	हाल IFLA_VF_LINK_STATE_AUTO:
+	शेष:
 		link_status = (u16)hdev->hw.mac.link;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	duplex = hdev->hw.mac.duplex;
-	memcpy(&msg_data[0], &link_status, sizeof(u16));
-	memcpy(&msg_data[2], &hdev->hw.mac.speed, sizeof(u32));
-	memcpy(&msg_data[6], &duplex, sizeof(u16));
+	स_नकल(&msg_data[0], &link_status, माप(u16));
+	स_नकल(&msg_data[2], &hdev->hw.mac.speed, माप(u32));
+	स_नकल(&msg_data[6], &duplex, माप(u16));
 	msg_data[8] = HCLGE_MBX_PUSH_LINK_STATUS_EN;
 
 	/* send this requested info to VF */
-	return hclge_send_mbx_msg(vport, msg_data, sizeof(msg_data),
+	वापस hclge_send_mbx_msg(vport, msg_data, माप(msg_data),
 				  HCLGE_MBX_LINK_STAT_CHANGE, vport->vport_id);
-}
+पूर्ण
 
-static void hclge_get_link_mode(struct hclge_vport *vport,
-				struct hclge_mbx_vf_to_pf_cmd *mbx_req)
-{
-#define HCLGE_SUPPORTED   1
-	struct hclge_dev *hdev = vport->back;
-	unsigned long advertising;
-	unsigned long supported;
-	unsigned long send_data;
-	u8 msg_data[10] = {};
+अटल व्योम hclge_get_link_mode(काष्ठा hclge_vport *vport,
+				काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req)
+अणु
+#घोषणा HCLGE_SUPPORTED   1
+	काष्ठा hclge_dev *hdev = vport->back;
+	अचिन्हित दीर्घ advertising;
+	अचिन्हित दीर्घ supported;
+	अचिन्हित दीर्घ send_data;
+	u8 msg_data[10] = अणुपूर्ण;
 	u8 dest_vfid;
 
 	advertising = hdev->hw.mac.advertising[0];
@@ -543,82 +544,82 @@ static void hclge_get_link_mode(struct hclge_vport *vport,
 
 	send_data = msg_data[0] == HCLGE_SUPPORTED ? supported : advertising;
 
-	memcpy(&msg_data[2], &send_data, sizeof(unsigned long));
-	hclge_send_mbx_msg(vport, msg_data, sizeof(msg_data),
+	स_नकल(&msg_data[2], &send_data, माप(अचिन्हित दीर्घ));
+	hclge_send_mbx_msg(vport, msg_data, माप(msg_data),
 			   HCLGE_MBX_LINK_STAT_MODE, dest_vfid);
-}
+पूर्ण
 
-static int hclge_mbx_reset_vf_queue(struct hclge_vport *vport,
-				    struct hclge_mbx_vf_to_pf_cmd *mbx_req,
-				    struct hclge_respond_to_vf_msg *resp_msg)
-{
-#define HCLGE_RESET_ALL_QUEUE_DONE	1U
-	struct hnae3_handle *handle = &vport->nic;
-	struct hclge_dev *hdev = vport->back;
+अटल पूर्णांक hclge_mbx_reset_vf_queue(काष्ठा hclge_vport *vport,
+				    काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req,
+				    काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
+#घोषणा HCLGE_RESET_ALL_QUEUE_DONE	1U
+	काष्ठा hnae3_handle *handle = &vport->nic;
+	काष्ठा hclge_dev *hdev = vport->back;
 	u16 queue_id;
-	int ret;
+	पूर्णांक ret;
 
-	memcpy(&queue_id, mbx_req->msg.data, sizeof(queue_id));
+	स_नकल(&queue_id, mbx_req->msg.data, माप(queue_id));
 	resp_msg->data[0] = HCLGE_RESET_ALL_QUEUE_DONE;
-	resp_msg->len = sizeof(u8);
+	resp_msg->len = माप(u8);
 
-	/* pf will reset vf's all queues at a time. So it is unnecessary
-	 * to reset queues if queue_id > 0, just return success.
+	/* pf will reset vf's all queues at a समय. So it is unnecessary
+	 * to reset queues अगर queue_id > 0, just वापस success.
 	 */
-	if (queue_id > 0)
-		return 0;
+	अगर (queue_id > 0)
+		वापस 0;
 
 	ret = hclge_reset_tqp(handle);
-	if (ret)
+	अगर (ret)
 		dev_err(&hdev->pdev->dev, "failed to reset vf %u queue, ret = %d\n",
 			vport->vport_id - HCLGE_VF_VPORT_START_NUM, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hclge_reset_vf(struct hclge_vport *vport)
-{
-	struct hclge_dev *hdev = vport->back;
+अटल पूर्णांक hclge_reset_vf(काष्ठा hclge_vport *vport)
+अणु
+	काष्ठा hclge_dev *hdev = vport->back;
 
 	dev_warn(&hdev->pdev->dev, "PF received VF reset request from VF %u!",
 		 vport->vport_id);
 
-	return hclge_func_reset_cmd(hdev, vport->vport_id);
-}
+	वापस hclge_func_reset_cmd(hdev, vport->vport_id);
+पूर्ण
 
-static void hclge_vf_keep_alive(struct hclge_vport *vport)
-{
-	vport->last_active_jiffies = jiffies;
-}
+अटल व्योम hclge_vf_keep_alive(काष्ठा hclge_vport *vport)
+अणु
+	vport->last_active_jअगरfies = jअगरfies;
+पूर्ण
 
-static int hclge_set_vf_mtu(struct hclge_vport *vport,
-			    struct hclge_mbx_vf_to_pf_cmd *mbx_req)
-{
+अटल पूर्णांक hclge_set_vf_mtu(काष्ठा hclge_vport *vport,
+			    काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req)
+अणु
 	u32 mtu;
 
-	memcpy(&mtu, mbx_req->msg.data, sizeof(mtu));
+	स_नकल(&mtu, mbx_req->msg.data, माप(mtu));
 
-	return hclge_set_vport_mtu(vport, mtu);
-}
+	वापस hclge_set_vport_mtu(vport, mtu);
+पूर्ण
 
-static void hclge_get_queue_id_in_pf(struct hclge_vport *vport,
-				     struct hclge_mbx_vf_to_pf_cmd *mbx_req,
-				     struct hclge_respond_to_vf_msg *resp_msg)
-{
+अटल व्योम hclge_get_queue_id_in_pf(काष्ठा hclge_vport *vport,
+				     काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req,
+				     काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
 	u16 queue_id, qid_in_pf;
 
-	memcpy(&queue_id, mbx_req->msg.data, sizeof(queue_id));
+	स_नकल(&queue_id, mbx_req->msg.data, माप(queue_id));
 	qid_in_pf = hclge_covert_handle_qid_global(&vport->nic, queue_id);
-	memcpy(resp_msg->data, &qid_in_pf, sizeof(qid_in_pf));
-	resp_msg->len = sizeof(qid_in_pf);
-}
+	स_नकल(resp_msg->data, &qid_in_pf, माप(qid_in_pf));
+	resp_msg->len = माप(qid_in_pf);
+पूर्ण
 
-static void hclge_get_rss_key(struct hclge_vport *vport,
-			      struct hclge_mbx_vf_to_pf_cmd *mbx_req,
-			      struct hclge_respond_to_vf_msg *resp_msg)
-{
-#define HCLGE_RSS_MBX_RESP_LEN	8
-	struct hclge_dev *hdev = vport->back;
+अटल व्योम hclge_get_rss_key(काष्ठा hclge_vport *vport,
+			      काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req,
+			      काष्ठा hclge_respond_to_vf_msg *resp_msg)
+अणु
+#घोषणा HCLGE_RSS_MBX_RESP_LEN	8
+	काष्ठा hclge_dev *hdev = vport->back;
 	u8 index;
 
 	index = mbx_req->msg.data[0];
@@ -626,103 +627,103 @@ static void hclge_get_rss_key(struct hclge_vport *vport,
 	/* Check the query index of rss_hash_key from VF, make sure no
 	 * more than the size of rss_hash_key.
 	 */
-	if (((index + 1) * HCLGE_RSS_MBX_RESP_LEN) >
-	      sizeof(vport[0].rss_hash_key)) {
+	अगर (((index + 1) * HCLGE_RSS_MBX_RESP_LEN) >
+	      माप(vport[0].rss_hash_key)) अणु
 		dev_warn(&hdev->pdev->dev,
 			 "failed to get the rss hash key, the index(%u) invalid !\n",
 			 index);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memcpy(resp_msg->data,
+	स_नकल(resp_msg->data,
 	       &hdev->vport[0].rss_hash_key[index * HCLGE_RSS_MBX_RESP_LEN],
 	       HCLGE_RSS_MBX_RESP_LEN);
 	resp_msg->len = HCLGE_RSS_MBX_RESP_LEN;
-}
+पूर्ण
 
-static void hclge_link_fail_parse(struct hclge_dev *hdev, u8 link_fail_code)
-{
-	switch (link_fail_code) {
-	case HCLGE_LF_REF_CLOCK_LOST:
+अटल व्योम hclge_link_fail_parse(काष्ठा hclge_dev *hdev, u8 link_fail_code)
+अणु
+	चयन (link_fail_code) अणु
+	हाल HCLGE_LF_REF_CLOCK_LOST:
 		dev_warn(&hdev->pdev->dev, "Reference clock lost!\n");
-		break;
-	case HCLGE_LF_XSFP_TX_DISABLE:
+		अवरोध;
+	हाल HCLGE_LF_XSFP_TX_DISABLE:
 		dev_warn(&hdev->pdev->dev, "SFP tx is disabled!\n");
-		break;
-	case HCLGE_LF_XSFP_ABSENT:
+		अवरोध;
+	हाल HCLGE_LF_XSFP_ABSENT:
 		dev_warn(&hdev->pdev->dev, "SFP is absent!\n");
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void hclge_handle_link_change_event(struct hclge_dev *hdev,
-					   struct hclge_mbx_vf_to_pf_cmd *req)
-{
+अटल व्योम hclge_handle_link_change_event(काष्ठा hclge_dev *hdev,
+					   काष्ठा hclge_mbx_vf_to_pf_cmd *req)
+अणु
 	hclge_task_schedule(hdev, 0);
 
-	if (!req->msg.subcode)
+	अगर (!req->msg.subcode)
 		hclge_link_fail_parse(hdev, req->msg.data[0]);
-}
+पूर्ण
 
-static bool hclge_cmd_crq_empty(struct hclge_hw *hw)
-{
-	u32 tail = hclge_read_dev(hw, HCLGE_NIC_CRQ_TAIL_REG);
+अटल bool hclge_cmd_crq_empty(काष्ठा hclge_hw *hw)
+अणु
+	u32 tail = hclge_पढ़ो_dev(hw, HCLGE_NIC_CRQ_TAIL_REG);
 
-	return tail == hw->cmq.crq.next_to_use;
-}
+	वापस tail == hw->cmq.crq.next_to_use;
+पूर्ण
 
-static void hclge_handle_ncsi_error(struct hclge_dev *hdev)
-{
-	struct hnae3_ae_dev *ae_dev = hdev->ae_dev;
+अटल व्योम hclge_handle_ncsi_error(काष्ठा hclge_dev *hdev)
+अणु
+	काष्ठा hnae3_ae_dev *ae_dev = hdev->ae_dev;
 
-	ae_dev->ops->set_default_reset_request(ae_dev, HNAE3_GLOBAL_RESET);
+	ae_dev->ops->set_शेष_reset_request(ae_dev, HNAE3_GLOBAL_RESET);
 	dev_warn(&hdev->pdev->dev, "requesting reset due to NCSI error\n");
-	ae_dev->ops->reset_event(hdev->pdev, NULL);
-}
+	ae_dev->ops->reset_event(hdev->pdev, शून्य);
+पूर्ण
 
-static void hclge_handle_vf_tbl(struct hclge_vport *vport,
-				struct hclge_mbx_vf_to_pf_cmd *mbx_req)
-{
-	struct hclge_dev *hdev = vport->back;
-	struct hclge_vf_vlan_cfg *msg_cmd;
+अटल व्योम hclge_handle_vf_tbl(काष्ठा hclge_vport *vport,
+				काष्ठा hclge_mbx_vf_to_pf_cmd *mbx_req)
+अणु
+	काष्ठा hclge_dev *hdev = vport->back;
+	काष्ठा hclge_vf_vlan_cfg *msg_cmd;
 
-	msg_cmd = (struct hclge_vf_vlan_cfg *)&mbx_req->msg;
-	if (msg_cmd->subcode == HCLGE_MBX_VPORT_LIST_CLEAR) {
+	msg_cmd = (काष्ठा hclge_vf_vlan_cfg *)&mbx_req->msg;
+	अगर (msg_cmd->subcode == HCLGE_MBX_VPORT_LIST_CLEAR) अणु
 		hclge_rm_vport_all_mac_table(vport, true, HCLGE_MAC_ADDR_UC);
 		hclge_rm_vport_all_mac_table(vport, true, HCLGE_MAC_ADDR_MC);
 		hclge_rm_vport_all_vlan_table(vport, true);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_warn(&hdev->pdev->dev, "Invalid cmd(%u)\n",
 			 msg_cmd->subcode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hclge_mbx_handler(struct hclge_dev *hdev)
-{
-	struct hclge_cmq_ring *crq = &hdev->hw.cmq.crq;
-	struct hclge_respond_to_vf_msg resp_msg;
-	struct hclge_mbx_vf_to_pf_cmd *req;
-	struct hclge_vport *vport;
-	struct hclge_desc *desc;
+व्योम hclge_mbx_handler(काष्ठा hclge_dev *hdev)
+अणु
+	काष्ठा hclge_cmq_ring *crq = &hdev->hw.cmq.crq;
+	काष्ठा hclge_respond_to_vf_msg resp_msg;
+	काष्ठा hclge_mbx_vf_to_pf_cmd *req;
+	काष्ठा hclge_vport *vport;
+	काष्ठा hclge_desc *desc;
 	bool is_del = false;
-	unsigned int flag;
-	int ret = 0;
+	अचिन्हित पूर्णांक flag;
+	पूर्णांक ret = 0;
 
 	/* handle all the mailbox requests in the queue */
-	while (!hclge_cmd_crq_empty(&hdev->hw)) {
-		if (test_bit(HCLGE_STATE_CMD_DISABLE, &hdev->state)) {
+	जबतक (!hclge_cmd_crq_empty(&hdev->hw)) अणु
+		अगर (test_bit(HCLGE_STATE_CMD_DISABLE, &hdev->state)) अणु
 			dev_warn(&hdev->pdev->dev,
 				 "command queue needs re-initializing\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		desc = &crq->desc[crq->next_to_use];
-		req = (struct hclge_mbx_vf_to_pf_cmd *)desc->data;
+		req = (काष्ठा hclge_mbx_vf_to_pf_cmd *)desc->data;
 
 		flag = le16_to_cpu(crq->desc[crq->next_to_use].flag);
-		if (unlikely(!hnae3_get_bit(flag, HCLGE_CMDQ_RX_OUTVLD_B))) {
+		अगर (unlikely(!hnae3_get_bit(flag, HCLGE_CMDQ_RX_OUTVLD_B))) अणु
 			dev_warn(&hdev->pdev->dev,
 				 "dropped invalid mailbox message, code = %u\n",
 				 req->msg.code);
@@ -730,145 +731,145 @@ void hclge_mbx_handler(struct hclge_dev *hdev)
 			/* dropping/not processing this invalid message */
 			crq->desc[crq->next_to_use].flag = 0;
 			hclge_mbx_ring_ptr_move_crq(crq);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		vport = &hdev->vport[req->mbx_src_vfid];
 
 		trace_hclge_pf_mbx_get(hdev, req);
 
-		/* clear the resp_msg before processing every mailbox message */
-		memset(&resp_msg, 0, sizeof(resp_msg));
+		/* clear the resp_msg beक्रमe processing every mailbox message */
+		स_रखो(&resp_msg, 0, माप(resp_msg));
 
-		switch (req->msg.code) {
-		case HCLGE_MBX_MAP_RING_TO_VECTOR:
+		चयन (req->msg.code) अणु
+		हाल HCLGE_MBX_MAP_RING_TO_VECTOR:
 			ret = hclge_map_unmap_ring_to_vf_vector(vport, true,
 								req);
-			break;
-		case HCLGE_MBX_UNMAP_RING_TO_VECTOR:
+			अवरोध;
+		हाल HCLGE_MBX_UNMAP_RING_TO_VECTOR:
 			ret = hclge_map_unmap_ring_to_vf_vector(vport, false,
 								req);
-			break;
-		case HCLGE_MBX_SET_PROMISC_MODE:
+			अवरोध;
+		हाल HCLGE_MBX_SET_PROMISC_MODE:
 			ret = hclge_set_vf_promisc_mode(vport, req);
-			if (ret)
+			अगर (ret)
 				dev_err(&hdev->pdev->dev,
 					"PF fail(%d) to set VF promisc mode\n",
 					ret);
-			break;
-		case HCLGE_MBX_SET_UNICAST:
+			अवरोध;
+		हाल HCLGE_MBX_SET_UNICAST:
 			ret = hclge_set_vf_uc_mac_addr(vport, req);
-			if (ret)
+			अगर (ret)
 				dev_err(&hdev->pdev->dev,
 					"PF fail(%d) to set VF UC MAC Addr\n",
 					ret);
-			break;
-		case HCLGE_MBX_SET_MULTICAST:
+			अवरोध;
+		हाल HCLGE_MBX_SET_MULTICAST:
 			ret = hclge_set_vf_mc_mac_addr(vport, req);
-			if (ret)
+			अगर (ret)
 				dev_err(&hdev->pdev->dev,
 					"PF fail(%d) to set VF MC MAC Addr\n",
 					ret);
-			break;
-		case HCLGE_MBX_SET_VLAN:
+			अवरोध;
+		हाल HCLGE_MBX_SET_VLAN:
 			ret = hclge_set_vf_vlan_cfg(vport, req, &resp_msg);
-			if (ret)
+			अगर (ret)
 				dev_err(&hdev->pdev->dev,
 					"PF failed(%d) to config VF's VLAN\n",
 					ret);
-			break;
-		case HCLGE_MBX_SET_ALIVE:
+			अवरोध;
+		हाल HCLGE_MBX_SET_ALIVE:
 			ret = hclge_set_vf_alive(vport, req);
-			if (ret)
+			अगर (ret)
 				dev_err(&hdev->pdev->dev,
 					"PF failed(%d) to set VF's ALIVE\n",
 					ret);
-			break;
-		case HCLGE_MBX_GET_QINFO:
+			अवरोध;
+		हाल HCLGE_MBX_GET_QINFO:
 			hclge_get_vf_queue_info(vport, &resp_msg);
-			break;
-		case HCLGE_MBX_GET_QDEPTH:
+			अवरोध;
+		हाल HCLGE_MBX_GET_QDEPTH:
 			hclge_get_vf_queue_depth(vport, &resp_msg);
-			break;
-		case HCLGE_MBX_GET_TCINFO:
+			अवरोध;
+		हाल HCLGE_MBX_GET_TCINFO:
 			hclge_get_vf_tcinfo(vport, &resp_msg);
-			break;
-		case HCLGE_MBX_GET_LINK_STATUS:
+			अवरोध;
+		हाल HCLGE_MBX_GET_LINK_STATUS:
 			ret = hclge_push_vf_link_status(vport);
-			if (ret)
+			अगर (ret)
 				dev_err(&hdev->pdev->dev,
 					"failed to inform link stat to VF, ret = %d\n",
 					ret);
-			break;
-		case HCLGE_MBX_QUEUE_RESET:
+			अवरोध;
+		हाल HCLGE_MBX_QUEUE_RESET:
 			ret = hclge_mbx_reset_vf_queue(vport, req, &resp_msg);
-			break;
-		case HCLGE_MBX_RESET:
+			अवरोध;
+		हाल HCLGE_MBX_RESET:
 			ret = hclge_reset_vf(vport);
-			break;
-		case HCLGE_MBX_KEEP_ALIVE:
+			अवरोध;
+		हाल HCLGE_MBX_KEEP_ALIVE:
 			hclge_vf_keep_alive(vport);
-			break;
-		case HCLGE_MBX_SET_MTU:
+			अवरोध;
+		हाल HCLGE_MBX_SET_MTU:
 			ret = hclge_set_vf_mtu(vport, req);
-			if (ret)
+			अगर (ret)
 				dev_err(&hdev->pdev->dev,
 					"VF fail(%d) to set mtu\n", ret);
-			break;
-		case HCLGE_MBX_GET_QID_IN_PF:
+			अवरोध;
+		हाल HCLGE_MBX_GET_QID_IN_PF:
 			hclge_get_queue_id_in_pf(vport, req, &resp_msg);
-			break;
-		case HCLGE_MBX_GET_RSS_KEY:
+			अवरोध;
+		हाल HCLGE_MBX_GET_RSS_KEY:
 			hclge_get_rss_key(vport, req, &resp_msg);
-			break;
-		case HCLGE_MBX_GET_LINK_MODE:
+			अवरोध;
+		हाल HCLGE_MBX_GET_LINK_MODE:
 			hclge_get_link_mode(vport, req);
-			break;
-		case HCLGE_MBX_GET_VF_FLR_STATUS:
-		case HCLGE_MBX_VF_UNINIT:
+			अवरोध;
+		हाल HCLGE_MBX_GET_VF_FLR_STATUS:
+		हाल HCLGE_MBX_VF_UNINIT:
 			is_del = req->msg.code == HCLGE_MBX_VF_UNINIT;
 			hclge_rm_vport_all_mac_table(vport, is_del,
 						     HCLGE_MAC_ADDR_UC);
 			hclge_rm_vport_all_mac_table(vport, is_del,
 						     HCLGE_MAC_ADDR_MC);
 			hclge_rm_vport_all_vlan_table(vport, is_del);
-			break;
-		case HCLGE_MBX_GET_MEDIA_TYPE:
+			अवरोध;
+		हाल HCLGE_MBX_GET_MEDIA_TYPE:
 			hclge_get_vf_media_type(vport, &resp_msg);
-			break;
-		case HCLGE_MBX_PUSH_LINK_STATUS:
+			अवरोध;
+		हाल HCLGE_MBX_PUSH_LINK_STATUS:
 			hclge_handle_link_change_event(hdev, req);
-			break;
-		case HCLGE_MBX_GET_MAC_ADDR:
+			अवरोध;
+		हाल HCLGE_MBX_GET_MAC_ADDR:
 			hclge_get_vf_mac_addr(vport, &resp_msg);
-			break;
-		case HCLGE_MBX_NCSI_ERROR:
+			अवरोध;
+		हाल HCLGE_MBX_NCSI_ERROR:
 			hclge_handle_ncsi_error(hdev);
-			break;
-		case HCLGE_MBX_HANDLE_VF_TBL:
+			अवरोध;
+		हाल HCLGE_MBX_HANDLE_VF_TBL:
 			hclge_handle_vf_tbl(vport, req);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(&hdev->pdev->dev,
 				"un-supported mailbox message, code = %u\n",
 				req->msg.code);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* PF driver should not reply IMP */
-		if (hnae3_get_bit(req->mbx_need_resp, HCLGE_MBX_NEED_RESP_B) &&
-		    req->msg.code < HCLGE_MBX_GET_VF_FLR_STATUS) {
+		अगर (hnae3_get_bit(req->mbx_need_resp, HCLGE_MBX_NEED_RESP_B) &&
+		    req->msg.code < HCLGE_MBX_GET_VF_FLR_STATUS) अणु
 			resp_msg.status = ret;
 			hclge_gen_resp_to_vf(vport, req, &resp_msg);
-		}
+		पूर्ण
 
 		crq->desc[crq->next_to_use].flag = 0;
 		hclge_mbx_ring_ptr_move_crq(crq);
 
 		/* reinitialize ret after complete the mbx message processing */
 		ret = 0;
-	}
+	पूर्ण
 
-	/* Write back CMDQ_RQ header pointer, M7 need this pointer */
-	hclge_write_dev(&hdev->hw, HCLGE_NIC_CRQ_HEAD_REG, crq->next_to_use);
-}
+	/* Write back CMDQ_RQ header poपूर्णांकer, M7 need this poपूर्णांकer */
+	hclge_ग_लिखो_dev(&hdev->hw, HCLGE_NIC_CRQ_HEAD_REG, crq->next_to_use);
+पूर्ण

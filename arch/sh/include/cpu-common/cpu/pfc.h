@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
  * SH Pin Function Control Initialization
  *
  * Copyright (C) 2012  Renesas Solutions Corp.
  */
 
-#ifndef __ARCH_SH_CPU_PFC_H__
-#define __ARCH_SH_CPU_PFC_H__
+#अगर_अघोषित __ARCH_SH_CPU_PFC_H__
+#घोषणा __ARCH_SH_CPU_PFC_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct resource;
+काष्ठा resource;
 
-int sh_pfc_register(const char *name,
-		    struct resource *resource, u32 num_resources);
+पूर्णांक sh_pfc_रेजिस्टर(स्थिर अक्षर *name,
+		    काष्ठा resource *resource, u32 num_resources);
 
-#endif /* __ARCH_SH_CPU_PFC_H__ */
+#पूर्ण_अगर /* __ARCH_SH_CPU_PFC_H__ */

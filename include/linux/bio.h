@@ -1,825 +1,826 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2001 Jens Axboe <axboe@suse.de>
  */
-#ifndef __LINUX_BIO_H
-#define __LINUX_BIO_H
+#अगर_अघोषित __LINUX_BIO_H
+#घोषणा __LINUX_BIO_H
 
-#include <linux/highmem.h>
-#include <linux/mempool.h>
-#include <linux/ioprio.h>
-/* struct bio, bio_vec and BIO_* flags are defined in blk_types.h */
-#include <linux/blk_types.h>
-#include <linux/uio.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/mempool.h>
+#समावेश <linux/ioprपन.स>
+/* काष्ठा bio, bio_vec and BIO_* flags are defined in blk_types.h */
+#समावेश <linux/blk_types.h>
+#समावेश <linux/uपन.स>
 
-#define BIO_DEBUG
+#घोषणा BIO_DEBUG
 
-#ifdef BIO_DEBUG
-#define BIO_BUG_ON	BUG_ON
-#else
-#define BIO_BUG_ON
-#endif
+#अगर_घोषित BIO_DEBUG
+#घोषणा BIO_BUG_ON	BUG_ON
+#अन्यथा
+#घोषणा BIO_BUG_ON
+#पूर्ण_अगर
 
-#define BIO_MAX_VECS		256U
+#घोषणा BIO_MAX_VECS		256U
 
-static inline unsigned int bio_max_segs(unsigned int nr_segs)
-{
-	return min(nr_segs, BIO_MAX_VECS);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक bio_max_segs(अचिन्हित पूर्णांक nr_segs)
+अणु
+	वापस min(nr_segs, BIO_MAX_VECS);
+पूर्ण
 
-#define bio_prio(bio)			(bio)->bi_ioprio
-#define bio_set_prio(bio, prio)		((bio)->bi_ioprio = prio)
+#घोषणा bio_prio(bio)			(bio)->bi_ioprio
+#घोषणा bio_set_prio(bio, prio)		((bio)->bi_ioprio = prio)
 
-#define bio_iter_iovec(bio, iter)				\
+#घोषणा bio_iter_iovec(bio, iter)				\
 	bvec_iter_bvec((bio)->bi_io_vec, (iter))
 
-#define bio_iter_page(bio, iter)				\
+#घोषणा bio_iter_page(bio, iter)				\
 	bvec_iter_page((bio)->bi_io_vec, (iter))
-#define bio_iter_len(bio, iter)					\
+#घोषणा bio_iter_len(bio, iter)					\
 	bvec_iter_len((bio)->bi_io_vec, (iter))
-#define bio_iter_offset(bio, iter)				\
+#घोषणा bio_iter_offset(bio, iter)				\
 	bvec_iter_offset((bio)->bi_io_vec, (iter))
 
-#define bio_page(bio)		bio_iter_page((bio), (bio)->bi_iter)
-#define bio_offset(bio)		bio_iter_offset((bio), (bio)->bi_iter)
-#define bio_iovec(bio)		bio_iter_iovec((bio), (bio)->bi_iter)
+#घोषणा bio_page(bio)		bio_iter_page((bio), (bio)->bi_iter)
+#घोषणा bio_offset(bio)		bio_iter_offset((bio), (bio)->bi_iter)
+#घोषणा bio_iovec(bio)		bio_iter_iovec((bio), (bio)->bi_iter)
 
-#define bio_multiple_segments(bio)				\
+#घोषणा bio_multiple_segments(bio)				\
 	((bio)->bi_iter.bi_size != bio_iovec(bio).bv_len)
 
-#define bvec_iter_sectors(iter)	((iter).bi_size >> 9)
-#define bvec_iter_end_sector(iter) ((iter).bi_sector + bvec_iter_sectors((iter)))
+#घोषणा bvec_iter_sectors(iter)	((iter).bi_size >> 9)
+#घोषणा bvec_iter_end_sector(iter) ((iter).bi_sector + bvec_iter_sectors((iter)))
 
-#define bio_sectors(bio)	bvec_iter_sectors((bio)->bi_iter)
-#define bio_end_sector(bio)	bvec_iter_end_sector((bio)->bi_iter)
+#घोषणा bio_sectors(bio)	bvec_iter_sectors((bio)->bi_iter)
+#घोषणा bio_end_sector(bio)	bvec_iter_end_sector((bio)->bi_iter)
 
 /*
  * Return the data direction, READ or WRITE.
  */
-#define bio_data_dir(bio) \
-	(op_is_write(bio_op(bio)) ? WRITE : READ)
+#घोषणा bio_data_dir(bio) \
+	(op_is_ग_लिखो(bio_op(bio)) ? WRITE : READ)
 
 /*
- * Check whether this bio carries any data or not. A NULL bio is allowed.
+ * Check whether this bio carries any data or not. A शून्य bio is allowed.
  */
-static inline bool bio_has_data(struct bio *bio)
-{
-	if (bio &&
+अटल अंतरभूत bool bio_has_data(काष्ठा bio *bio)
+अणु
+	अगर (bio &&
 	    bio->bi_iter.bi_size &&
 	    bio_op(bio) != REQ_OP_DISCARD &&
 	    bio_op(bio) != REQ_OP_SECURE_ERASE &&
 	    bio_op(bio) != REQ_OP_WRITE_ZEROES)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool bio_no_advance_iter(const struct bio *bio)
-{
-	return bio_op(bio) == REQ_OP_DISCARD ||
+अटल अंतरभूत bool bio_no_advance_iter(स्थिर काष्ठा bio *bio)
+अणु
+	वापस bio_op(bio) == REQ_OP_DISCARD ||
 	       bio_op(bio) == REQ_OP_SECURE_ERASE ||
 	       bio_op(bio) == REQ_OP_WRITE_SAME ||
 	       bio_op(bio) == REQ_OP_WRITE_ZEROES;
-}
+पूर्ण
 
-static inline bool bio_mergeable(struct bio *bio)
-{
-	if (bio->bi_opf & REQ_NOMERGE_FLAGS)
-		return false;
+अटल अंतरभूत bool bio_mergeable(काष्ठा bio *bio)
+अणु
+	अगर (bio->bi_opf & REQ_NOMERGE_FLAGS)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline unsigned int bio_cur_bytes(struct bio *bio)
-{
-	if (bio_has_data(bio))
-		return bio_iovec(bio).bv_len;
-	else /* dataless requests such as discard */
-		return bio->bi_iter.bi_size;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक bio_cur_bytes(काष्ठा bio *bio)
+अणु
+	अगर (bio_has_data(bio))
+		वापस bio_iovec(bio).bv_len;
+	अन्यथा /* dataless requests such as discard */
+		वापस bio->bi_iter.bi_size;
+पूर्ण
 
-static inline void *bio_data(struct bio *bio)
-{
-	if (bio_has_data(bio))
-		return page_address(bio_page(bio)) + bio_offset(bio);
+अटल अंतरभूत व्योम *bio_data(काष्ठा bio *bio)
+अणु
+	अगर (bio_has_data(bio))
+		वापस page_address(bio_page(bio)) + bio_offset(bio);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * bio_full - check if the bio is full
+ * bio_full - check अगर the bio is full
  * @bio:	bio to check
  * @len:	length of one segment to be added
  *
- * Return true if @bio is full and one segment with @len bytes can't be
- * added to the bio, otherwise return false
+ * Return true अगर @bio is full and one segment with @len bytes can't be
+ * added to the bio, otherwise वापस false
  */
-static inline bool bio_full(struct bio *bio, unsigned len)
-{
-	if (bio->bi_vcnt >= bio->bi_max_vecs)
-		return true;
+अटल अंतरभूत bool bio_full(काष्ठा bio *bio, अचिन्हित len)
+अणु
+	अगर (bio->bi_vcnt >= bio->bi_max_vecs)
+		वापस true;
 
-	if (bio->bi_iter.bi_size > UINT_MAX - len)
-		return true;
+	अगर (bio->bi_iter.bi_size > अच_पूर्णांक_उच्च - len)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool bio_next_segment(const struct bio *bio,
-				    struct bvec_iter_all *iter)
-{
-	if (iter->idx >= bio->bi_vcnt)
-		return false;
+अटल अंतरभूत bool bio_next_segment(स्थिर काष्ठा bio *bio,
+				    काष्ठा bvec_iter_all *iter)
+अणु
+	अगर (iter->idx >= bio->bi_vcnt)
+		वापस false;
 
 	bvec_advance(&bio->bi_io_vec[iter->idx], iter);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * drivers should _never_ use the all version - the bio may have been split
- * before it got to the driver and the driver won't own all of it
+ * beक्रमe it got to the driver and the driver won't own all of it
  */
-#define bio_for_each_segment_all(bvl, bio, iter) \
-	for (bvl = bvec_init_iter_all(&iter); bio_next_segment((bio), &iter); )
+#घोषणा bio_क्रम_each_segment_all(bvl, bio, iter) \
+	क्रम (bvl = bvec_init_iter_all(&iter); bio_next_segment((bio), &iter); )
 
-static inline void bio_advance_iter(const struct bio *bio,
-				    struct bvec_iter *iter, unsigned int bytes)
-{
+अटल अंतरभूत व्योम bio_advance_iter(स्थिर काष्ठा bio *bio,
+				    काष्ठा bvec_iter *iter, अचिन्हित पूर्णांक bytes)
+अणु
 	iter->bi_sector += bytes >> 9;
 
-	if (bio_no_advance_iter(bio))
+	अगर (bio_no_advance_iter(bio))
 		iter->bi_size -= bytes;
-	else
+	अन्यथा
 		bvec_iter_advance(bio->bi_io_vec, iter, bytes);
 		/* TODO: It is reasonable to complete bio with error here. */
-}
+पूर्ण
 
 /* @bytes should be less or equal to bvec[i->bi_idx].bv_len */
-static inline void bio_advance_iter_single(const struct bio *bio,
-					   struct bvec_iter *iter,
-					   unsigned int bytes)
-{
+अटल अंतरभूत व्योम bio_advance_iter_single(स्थिर काष्ठा bio *bio,
+					   काष्ठा bvec_iter *iter,
+					   अचिन्हित पूर्णांक bytes)
+अणु
 	iter->bi_sector += bytes >> 9;
 
-	if (bio_no_advance_iter(bio))
+	अगर (bio_no_advance_iter(bio))
 		iter->bi_size -= bytes;
-	else
+	अन्यथा
 		bvec_iter_advance_single(bio->bi_io_vec, iter, bytes);
-}
+पूर्ण
 
-#define __bio_for_each_segment(bvl, bio, iter, start)			\
-	for (iter = (start);						\
+#घोषणा __bio_क्रम_each_segment(bvl, bio, iter, start)			\
+	क्रम (iter = (start);						\
 	     (iter).bi_size &&						\
 		((bvl = bio_iter_iovec((bio), (iter))), 1);		\
 	     bio_advance_iter_single((bio), &(iter), (bvl).bv_len))
 
-#define bio_for_each_segment(bvl, bio, iter)				\
-	__bio_for_each_segment(bvl, bio, iter, (bio)->bi_iter)
+#घोषणा bio_क्रम_each_segment(bvl, bio, iter)				\
+	__bio_क्रम_each_segment(bvl, bio, iter, (bio)->bi_iter)
 
-#define __bio_for_each_bvec(bvl, bio, iter, start)		\
-	for (iter = (start);						\
+#घोषणा __bio_क्रम_each_bvec(bvl, bio, iter, start)		\
+	क्रम (iter = (start);						\
 	     (iter).bi_size &&						\
 		((bvl = mp_bvec_iter_bvec((bio)->bi_io_vec, (iter))), 1); \
 	     bio_advance_iter_single((bio), &(iter), (bvl).bv_len))
 
 /* iterate over multi-page bvec */
-#define bio_for_each_bvec(bvl, bio, iter)			\
-	__bio_for_each_bvec(bvl, bio, iter, (bio)->bi_iter)
+#घोषणा bio_क्रम_each_bvec(bvl, bio, iter)			\
+	__bio_क्रम_each_bvec(bvl, bio, iter, (bio)->bi_iter)
 
 /*
- * Iterate over all multi-page bvecs. Drivers shouldn't use this version for the
- * same reasons as bio_for_each_segment_all().
+ * Iterate over all multi-page bvecs. Drivers shouldn't use this version क्रम the
+ * same reasons as bio_क्रम_each_segment_all().
  */
-#define bio_for_each_bvec_all(bvl, bio, i)		\
-	for (i = 0, bvl = bio_first_bvec_all(bio);	\
+#घोषणा bio_क्रम_each_bvec_all(bvl, bio, i)		\
+	क्रम (i = 0, bvl = bio_first_bvec_all(bio);	\
 	     i < (bio)->bi_vcnt; i++, bvl++)		\
 
-#define bio_iter_last(bvec, iter) ((iter).bi_size == (bvec).bv_len)
+#घोषणा bio_iter_last(bvec, iter) ((iter).bi_size == (bvec).bv_len)
 
-static inline unsigned bio_segments(struct bio *bio)
-{
-	unsigned segs = 0;
-	struct bio_vec bv;
-	struct bvec_iter iter;
+अटल अंतरभूत अचिन्हित bio_segments(काष्ठा bio *bio)
+अणु
+	अचिन्हित segs = 0;
+	काष्ठा bio_vec bv;
+	काष्ठा bvec_iter iter;
 
 	/*
-	 * We special case discard/write same/write zeroes, because they
-	 * interpret bi_size differently:
+	 * We special हाल discard/ग_लिखो same/ग_लिखो zeroes, because they
+	 * पूर्णांकerpret bi_size dअगरferently:
 	 */
 
-	switch (bio_op(bio)) {
-	case REQ_OP_DISCARD:
-	case REQ_OP_SECURE_ERASE:
-	case REQ_OP_WRITE_ZEROES:
-		return 0;
-	case REQ_OP_WRITE_SAME:
-		return 1;
-	default:
-		break;
-	}
+	चयन (bio_op(bio)) अणु
+	हाल REQ_OP_DISCARD:
+	हाल REQ_OP_SECURE_ERASE:
+	हाल REQ_OP_WRITE_ZEROES:
+		वापस 0;
+	हाल REQ_OP_WRITE_SAME:
+		वापस 1;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	bio_for_each_segment(bv, bio, iter)
+	bio_क्रम_each_segment(bv, bio, iter)
 		segs++;
 
-	return segs;
-}
+	वापस segs;
+पूर्ण
 
 /*
- * get a reference to a bio, so it won't disappear. the intended use is
+ * get a reference to a bio, so it won't disappear. the पूर्णांकended use is
  * something like:
  *
  * bio_get(bio);
  * submit_bio(rw, bio);
- * if (bio->bi_flags ...)
- *	do_something
+ * अगर (bio->bi_flags ...)
+ *	करो_something
  * bio_put(bio);
  *
- * without the bio_get(), it could potentially complete I/O before submit_bio
- * returns. and then bio would be freed memory when if (bio->bi_flags ...)
+ * without the bio_get(), it could potentially complete I/O beक्रमe submit_bio
+ * वापसs. and then bio would be मुक्तd memory when अगर (bio->bi_flags ...)
  * runs
  */
-static inline void bio_get(struct bio *bio)
-{
+अटल अंतरभूत व्योम bio_get(काष्ठा bio *bio)
+अणु
 	bio->bi_flags |= (1 << BIO_REFFED);
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	atomic_inc(&bio->__bi_cnt);
-}
+पूर्ण
 
-static inline void bio_cnt_set(struct bio *bio, unsigned int count)
-{
-	if (count != 1) {
+अटल अंतरभूत व्योम bio_cnt_set(काष्ठा bio *bio, अचिन्हित पूर्णांक count)
+अणु
+	अगर (count != 1) अणु
 		bio->bi_flags |= (1 << BIO_REFFED);
 		smp_mb();
-	}
+	पूर्ण
 	atomic_set(&bio->__bi_cnt, count);
-}
+पूर्ण
 
-static inline bool bio_flagged(struct bio *bio, unsigned int bit)
-{
-	return (bio->bi_flags & (1U << bit)) != 0;
-}
+अटल अंतरभूत bool bio_flagged(काष्ठा bio *bio, अचिन्हित पूर्णांक bit)
+अणु
+	वापस (bio->bi_flags & (1U << bit)) != 0;
+पूर्ण
 
-static inline void bio_set_flag(struct bio *bio, unsigned int bit)
-{
+अटल अंतरभूत व्योम bio_set_flag(काष्ठा bio *bio, अचिन्हित पूर्णांक bit)
+अणु
 	bio->bi_flags |= (1U << bit);
-}
+पूर्ण
 
-static inline void bio_clear_flag(struct bio *bio, unsigned int bit)
-{
+अटल अंतरभूत व्योम bio_clear_flag(काष्ठा bio *bio, अचिन्हित पूर्णांक bit)
+अणु
 	bio->bi_flags &= ~(1U << bit);
-}
+पूर्ण
 
-static inline void bio_get_first_bvec(struct bio *bio, struct bio_vec *bv)
-{
+अटल अंतरभूत व्योम bio_get_first_bvec(काष्ठा bio *bio, काष्ठा bio_vec *bv)
+अणु
 	*bv = bio_iovec(bio);
-}
+पूर्ण
 
-static inline void bio_get_last_bvec(struct bio *bio, struct bio_vec *bv)
-{
-	struct bvec_iter iter = bio->bi_iter;
-	int idx;
+अटल अंतरभूत व्योम bio_get_last_bvec(काष्ठा bio *bio, काष्ठा bio_vec *bv)
+अणु
+	काष्ठा bvec_iter iter = bio->bi_iter;
+	पूर्णांक idx;
 
-	if (unlikely(!bio_multiple_segments(bio))) {
+	अगर (unlikely(!bio_multiple_segments(bio))) अणु
 		*bv = bio_iovec(bio);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bio_advance_iter(bio, &iter, iter.bi_size);
 
-	if (!iter.bi_bvec_done)
+	अगर (!iter.bi_bvec_करोne)
 		idx = iter.bi_idx - 1;
-	else	/* in the middle of bvec */
+	अन्यथा	/* in the middle of bvec */
 		idx = iter.bi_idx;
 
 	*bv = bio->bi_io_vec[idx];
 
 	/*
-	 * iter.bi_bvec_done records actual length of the last bvec
-	 * if this bio ends in the middle of one io vector
+	 * iter.bi_bvec_करोne records actual length of the last bvec
+	 * अगर this bio ends in the middle of one io vector
 	 */
-	if (iter.bi_bvec_done)
-		bv->bv_len = iter.bi_bvec_done;
-}
+	अगर (iter.bi_bvec_करोne)
+		bv->bv_len = iter.bi_bvec_करोne;
+पूर्ण
 
-static inline struct bio_vec *bio_first_bvec_all(struct bio *bio)
-{
+अटल अंतरभूत काष्ठा bio_vec *bio_first_bvec_all(काष्ठा bio *bio)
+अणु
 	WARN_ON_ONCE(bio_flagged(bio, BIO_CLONED));
-	return bio->bi_io_vec;
-}
+	वापस bio->bi_io_vec;
+पूर्ण
 
-static inline struct page *bio_first_page_all(struct bio *bio)
-{
-	return bio_first_bvec_all(bio)->bv_page;
-}
+अटल अंतरभूत काष्ठा page *bio_first_page_all(काष्ठा bio *bio)
+अणु
+	वापस bio_first_bvec_all(bio)->bv_page;
+पूर्ण
 
-static inline struct bio_vec *bio_last_bvec_all(struct bio *bio)
-{
+अटल अंतरभूत काष्ठा bio_vec *bio_last_bvec_all(काष्ठा bio *bio)
+अणु
 	WARN_ON_ONCE(bio_flagged(bio, BIO_CLONED));
-	return &bio->bi_io_vec[bio->bi_vcnt - 1];
-}
+	वापस &bio->bi_io_vec[bio->bi_vcnt - 1];
+पूर्ण
 
-enum bip_flags {
-	BIP_BLOCK_INTEGRITY	= 1 << 0, /* block layer owns integrity data */
+क्रमागत bip_flags अणु
+	BIP_BLOCK_INTEGRITY	= 1 << 0, /* block layer owns पूर्णांकegrity data */
 	BIP_MAPPED_INTEGRITY	= 1 << 1, /* ref tag has been remapped */
-	BIP_CTRL_NOCHECK	= 1 << 2, /* disable HBA integrity checking */
-	BIP_DISK_NOCHECK	= 1 << 3, /* disable disk integrity checking */
+	BIP_CTRL_NOCHECK	= 1 << 2, /* disable HBA पूर्णांकegrity checking */
+	BIP_DISK_NOCHECK	= 1 << 3, /* disable disk पूर्णांकegrity checking */
 	BIP_IP_CHECKSUM		= 1 << 4, /* IP checksum */
-};
+पूर्ण;
 
 /*
- * bio integrity payload
+ * bio पूर्णांकegrity payload
  */
-struct bio_integrity_payload {
-	struct bio		*bip_bio;	/* parent bio */
+काष्ठा bio_पूर्णांकegrity_payload अणु
+	काष्ठा bio		*bip_bio;	/* parent bio */
 
-	struct bvec_iter	bip_iter;
+	काष्ठा bvec_iter	bip_iter;
 
-	unsigned short		bip_vcnt;	/* # of integrity bio_vecs */
-	unsigned short		bip_max_vcnt;	/* integrity bio_vec slots */
-	unsigned short		bip_flags;	/* control flags */
+	अचिन्हित लघु		bip_vcnt;	/* # of पूर्णांकegrity bio_vecs */
+	अचिन्हित लघु		bip_max_vcnt;	/* पूर्णांकegrity bio_vec slots */
+	अचिन्हित लघु		bip_flags;	/* control flags */
 
-	struct bvec_iter	bio_iter;	/* for rewinding parent bio */
+	काष्ठा bvec_iter	bio_iter;	/* क्रम शुरुआतing parent bio */
 
-	struct work_struct	bip_work;	/* I/O completion */
+	काष्ठा work_काष्ठा	bip_work;	/* I/O completion */
 
-	struct bio_vec		*bip_vec;
-	struct bio_vec		bip_inline_vecs[];/* embedded bvec array */
-};
+	काष्ठा bio_vec		*bip_vec;
+	काष्ठा bio_vec		bip_अंतरभूत_vecs[];/* embedded bvec array */
+पूर्ण;
 
-#if defined(CONFIG_BLK_DEV_INTEGRITY)
+#अगर defined(CONFIG_BLK_DEV_INTEGRITY)
 
-static inline struct bio_integrity_payload *bio_integrity(struct bio *bio)
-{
-	if (bio->bi_opf & REQ_INTEGRITY)
-		return bio->bi_integrity;
+अटल अंतरभूत काष्ठा bio_पूर्णांकegrity_payload *bio_पूर्णांकegrity(काष्ठा bio *bio)
+अणु
+	अगर (bio->bi_opf & REQ_INTEGRITY)
+		वापस bio->bi_पूर्णांकegrity;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline bool bio_integrity_flagged(struct bio *bio, enum bip_flags flag)
-{
-	struct bio_integrity_payload *bip = bio_integrity(bio);
+अटल अंतरभूत bool bio_पूर्णांकegrity_flagged(काष्ठा bio *bio, क्रमागत bip_flags flag)
+अणु
+	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(bio);
 
-	if (bip)
-		return bip->bip_flags & flag;
+	अगर (bip)
+		वापस bip->bip_flags & flag;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline sector_t bip_get_seed(struct bio_integrity_payload *bip)
-{
-	return bip->bip_iter.bi_sector;
-}
+अटल अंतरभूत sector_t bip_get_seed(काष्ठा bio_पूर्णांकegrity_payload *bip)
+अणु
+	वापस bip->bip_iter.bi_sector;
+पूर्ण
 
-static inline void bip_set_seed(struct bio_integrity_payload *bip,
+अटल अंतरभूत व्योम bip_set_seed(काष्ठा bio_पूर्णांकegrity_payload *bip,
 				sector_t seed)
-{
+अणु
 	bip->bip_iter.bi_sector = seed;
-}
+पूर्ण
 
-#endif /* CONFIG_BLK_DEV_INTEGRITY */
+#पूर्ण_अगर /* CONFIG_BLK_DEV_INTEGRITY */
 
-extern void bio_trim(struct bio *bio, int offset, int size);
-extern struct bio *bio_split(struct bio *bio, int sectors,
-			     gfp_t gfp, struct bio_set *bs);
+बाह्य व्योम bio_trim(काष्ठा bio *bio, पूर्णांक offset, पूर्णांक size);
+बाह्य काष्ठा bio *bio_split(काष्ठा bio *bio, पूर्णांक sectors,
+			     gfp_t gfp, काष्ठा bio_set *bs);
 
 /**
- * bio_next_split - get next @sectors from a bio, splitting if necessary
+ * bio_next_split - get next @sectors from a bio, splitting अगर necessary
  * @bio:	bio to split
  * @sectors:	number of sectors to split from the front of @bio
  * @gfp:	gfp mask
  * @bs:		bio set to allocate from
  *
- * Returns a bio representing the next @sectors of @bio - if the bio is smaller
- * than @sectors, returns the original bio unchanged.
+ * Returns a bio representing the next @sectors of @bio - अगर the bio is smaller
+ * than @sectors, वापसs the original bio unchanged.
  */
-static inline struct bio *bio_next_split(struct bio *bio, int sectors,
-					 gfp_t gfp, struct bio_set *bs)
-{
-	if (sectors >= bio_sectors(bio))
-		return bio;
+अटल अंतरभूत काष्ठा bio *bio_next_split(काष्ठा bio *bio, पूर्णांक sectors,
+					 gfp_t gfp, काष्ठा bio_set *bs)
+अणु
+	अगर (sectors >= bio_sectors(bio))
+		वापस bio;
 
-	return bio_split(bio, sectors, gfp, bs);
-}
+	वापस bio_split(bio, sectors, gfp, bs);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	BIOSET_NEED_BVECS = BIT(0),
 	BIOSET_NEED_RESCUER = BIT(1),
-};
-extern int bioset_init(struct bio_set *, unsigned int, unsigned int, int flags);
-extern void bioset_exit(struct bio_set *);
-extern int biovec_init_pool(mempool_t *pool, int pool_entries);
-extern int bioset_init_from_src(struct bio_set *bs, struct bio_set *src);
+पूर्ण;
+बाह्य पूर्णांक bioset_init(काष्ठा bio_set *, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक, पूर्णांक flags);
+बाह्य व्योम bioset_निकास(काष्ठा bio_set *);
+बाह्य पूर्णांक biovec_init_pool(mempool_t *pool, पूर्णांक pool_entries);
+बाह्य पूर्णांक bioset_init_from_src(काष्ठा bio_set *bs, काष्ठा bio_set *src);
 
-struct bio *bio_alloc_bioset(gfp_t gfp, unsigned short nr_iovecs,
-		struct bio_set *bs);
-struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned short nr_iovecs);
-extern void bio_put(struct bio *);
+काष्ठा bio *bio_alloc_bioset(gfp_t gfp, अचिन्हित लघु nr_iovecs,
+		काष्ठा bio_set *bs);
+काष्ठा bio *bio_kदो_स्मृति(gfp_t gfp_mask, अचिन्हित लघु nr_iovecs);
+बाह्य व्योम bio_put(काष्ठा bio *);
 
-extern void __bio_clone_fast(struct bio *, struct bio *);
-extern struct bio *bio_clone_fast(struct bio *, gfp_t, struct bio_set *);
+बाह्य व्योम __bio_clone_fast(काष्ठा bio *, काष्ठा bio *);
+बाह्य काष्ठा bio *bio_clone_fast(काष्ठा bio *, gfp_t, काष्ठा bio_set *);
 
-extern struct bio_set fs_bio_set;
+बाह्य काष्ठा bio_set fs_bio_set;
 
-static inline struct bio *bio_alloc(gfp_t gfp_mask, unsigned short nr_iovecs)
-{
-	return bio_alloc_bioset(gfp_mask, nr_iovecs, &fs_bio_set);
-}
+अटल अंतरभूत काष्ठा bio *bio_alloc(gfp_t gfp_mask, अचिन्हित लघु nr_iovecs)
+अणु
+	वापस bio_alloc_bioset(gfp_mask, nr_iovecs, &fs_bio_set);
+पूर्ण
 
-extern blk_qc_t submit_bio(struct bio *);
+बाह्य blk_qc_t submit_bio(काष्ठा bio *);
 
-extern void bio_endio(struct bio *);
+बाह्य व्योम bio_endio(काष्ठा bio *);
 
-static inline void bio_io_error(struct bio *bio)
-{
+अटल अंतरभूत व्योम bio_io_error(काष्ठा bio *bio)
+अणु
 	bio->bi_status = BLK_STS_IOERR;
 	bio_endio(bio);
-}
+पूर्ण
 
-static inline void bio_wouldblock_error(struct bio *bio)
-{
+अटल अंतरभूत व्योम bio_wouldblock_error(काष्ठा bio *bio)
+अणु
 	bio_set_flag(bio, BIO_QUIET);
 	bio->bi_status = BLK_STS_AGAIN;
 	bio_endio(bio);
-}
+पूर्ण
 
 /*
  * Calculate number of bvec segments that should be allocated to fit data
- * pointed by @iter. If @iter is backed by bvec it's going to be reused
+ * poपूर्णांकed by @iter. If @iter is backed by bvec it's going to be reused
  * instead of allocating a new one.
  */
-static inline int bio_iov_vecs_to_alloc(struct iov_iter *iter, int max_segs)
-{
-	if (iov_iter_is_bvec(iter))
-		return 0;
-	return iov_iter_npages(iter, max_segs);
-}
+अटल अंतरभूत पूर्णांक bio_iov_vecs_to_alloc(काष्ठा iov_iter *iter, पूर्णांक max_segs)
+अणु
+	अगर (iov_iter_is_bvec(iter))
+		वापस 0;
+	वापस iov_iter_npages(iter, max_segs);
+पूर्ण
 
-struct request_queue;
+काष्ठा request_queue;
 
-extern int submit_bio_wait(struct bio *bio);
-extern void bio_advance(struct bio *, unsigned);
+बाह्य पूर्णांक submit_bio_रुको(काष्ठा bio *bio);
+बाह्य व्योम bio_advance(काष्ठा bio *, अचिन्हित);
 
-extern void bio_init(struct bio *bio, struct bio_vec *table,
-		     unsigned short max_vecs);
-extern void bio_uninit(struct bio *);
-extern void bio_reset(struct bio *);
-void bio_chain(struct bio *, struct bio *);
+बाह्य व्योम bio_init(काष्ठा bio *bio, काष्ठा bio_vec *table,
+		     अचिन्हित लघु max_vecs);
+बाह्य व्योम bio_uninit(काष्ठा bio *);
+बाह्य व्योम bio_reset(काष्ठा bio *);
+व्योम bio_chain(काष्ठा bio *, काष्ठा bio *);
 
-extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
-extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
-			   unsigned int, unsigned int);
-int bio_add_zone_append_page(struct bio *bio, struct page *page,
-			     unsigned int len, unsigned int offset);
-bool __bio_try_merge_page(struct bio *bio, struct page *page,
-		unsigned int len, unsigned int off, bool *same_page);
-void __bio_add_page(struct bio *bio, struct page *page,
-		unsigned int len, unsigned int off);
-int bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter);
-void bio_release_pages(struct bio *bio, bool mark_dirty);
-extern void bio_set_pages_dirty(struct bio *bio);
-extern void bio_check_pages_dirty(struct bio *bio);
+बाह्य पूर्णांक bio_add_page(काष्ठा bio *, काष्ठा page *, अचिन्हित पूर्णांक,अचिन्हित पूर्णांक);
+बाह्य पूर्णांक bio_add_pc_page(काष्ठा request_queue *, काष्ठा bio *, काष्ठा page *,
+			   अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+पूर्णांक bio_add_zone_append_page(काष्ठा bio *bio, काष्ठा page *page,
+			     अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक offset);
+bool __bio_try_merge_page(काष्ठा bio *bio, काष्ठा page *page,
+		अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off, bool *same_page);
+व्योम __bio_add_page(काष्ठा bio *bio, काष्ठा page *page,
+		अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off);
+पूर्णांक bio_iov_iter_get_pages(काष्ठा bio *bio, काष्ठा iov_iter *iter);
+व्योम bio_release_pages(काष्ठा bio *bio, bool mark_dirty);
+बाह्य व्योम bio_set_pages_dirty(काष्ठा bio *bio);
+बाह्य व्योम bio_check_pages_dirty(काष्ठा bio *bio);
 
-extern void bio_copy_data_iter(struct bio *dst, struct bvec_iter *dst_iter,
-			       struct bio *src, struct bvec_iter *src_iter);
-extern void bio_copy_data(struct bio *dst, struct bio *src);
-extern void bio_free_pages(struct bio *bio);
-void bio_truncate(struct bio *bio, unsigned new_size);
-void guard_bio_eod(struct bio *bio);
-void zero_fill_bio(struct bio *bio);
+बाह्य व्योम bio_copy_data_iter(काष्ठा bio *dst, काष्ठा bvec_iter *dst_iter,
+			       काष्ठा bio *src, काष्ठा bvec_iter *src_iter);
+बाह्य व्योम bio_copy_data(काष्ठा bio *dst, काष्ठा bio *src);
+बाह्य व्योम bio_मुक्त_pages(काष्ठा bio *bio);
+व्योम bio_truncate(काष्ठा bio *bio, अचिन्हित new_size);
+व्योम guard_bio_eod(काष्ठा bio *bio);
+व्योम zero_fill_bio(काष्ठा bio *bio);
 
-extern const char *bio_devname(struct bio *bio, char *buffer);
+बाह्य स्थिर अक्षर *bio_devname(काष्ठा bio *bio, अक्षर *buffer);
 
-#define bio_set_dev(bio, bdev) 				\
-do {							\
+#घोषणा bio_set_dev(bio, bdev) 				\
+करो अणु							\
 	bio_clear_flag(bio, BIO_REMAPPED);		\
-	if ((bio)->bi_bdev != (bdev))			\
+	अगर ((bio)->bi_bdev != (bdev))			\
 		bio_clear_flag(bio, BIO_THROTTLED);	\
 	(bio)->bi_bdev = (bdev);			\
 	bio_associate_blkg(bio);			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define bio_copy_dev(dst, src)			\
-do {						\
+#घोषणा bio_copy_dev(dst, src)			\
+करो अणु						\
 	bio_clear_flag(dst, BIO_REMAPPED);		\
 	(dst)->bi_bdev = (src)->bi_bdev;	\
 	bio_clone_blkg_association(dst, src);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define bio_dev(bio) \
+#घोषणा bio_dev(bio) \
 	disk_devt((bio)->bi_bdev->bd_disk)
 
-#ifdef CONFIG_BLK_CGROUP
-void bio_associate_blkg(struct bio *bio);
-void bio_associate_blkg_from_css(struct bio *bio,
-				 struct cgroup_subsys_state *css);
-void bio_clone_blkg_association(struct bio *dst, struct bio *src);
-#else	/* CONFIG_BLK_CGROUP */
-static inline void bio_associate_blkg(struct bio *bio) { }
-static inline void bio_associate_blkg_from_css(struct bio *bio,
-					       struct cgroup_subsys_state *css)
-{ }
-static inline void bio_clone_blkg_association(struct bio *dst,
-					      struct bio *src) { }
-#endif	/* CONFIG_BLK_CGROUP */
+#अगर_घोषित CONFIG_BLK_CGROUP
+व्योम bio_associate_blkg(काष्ठा bio *bio);
+व्योम bio_associate_blkg_from_css(काष्ठा bio *bio,
+				 काष्ठा cgroup_subsys_state *css);
+व्योम bio_clone_blkg_association(काष्ठा bio *dst, काष्ठा bio *src);
+#अन्यथा	/* CONFIG_BLK_CGROUP */
+अटल अंतरभूत व्योम bio_associate_blkg(काष्ठा bio *bio) अणु पूर्ण
+अटल अंतरभूत व्योम bio_associate_blkg_from_css(काष्ठा bio *bio,
+					       काष्ठा cgroup_subsys_state *css)
+अणु पूर्ण
+अटल अंतरभूत व्योम bio_clone_blkg_association(काष्ठा bio *dst,
+					      काष्ठा bio *src) अणु पूर्ण
+#पूर्ण_अगर	/* CONFIG_BLK_CGROUP */
 
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 /*
- * remember never ever reenable interrupts between a bvec_kmap_irq and
+ * remember never ever reenable पूर्णांकerrupts between a bvec_kmap_irq and
  * bvec_kunmap_irq!
  */
-static inline char *bvec_kmap_irq(struct bio_vec *bvec, unsigned long *flags)
-{
-	unsigned long addr;
+अटल अंतरभूत अक्षर *bvec_kmap_irq(काष्ठा bio_vec *bvec, अचिन्हित दीर्घ *flags)
+अणु
+	अचिन्हित दीर्घ addr;
 
 	/*
 	 * might not be a highmem page, but the preempt/irq count
 	 * balancing is a lot nicer this way
 	 */
 	local_irq_save(*flags);
-	addr = (unsigned long) kmap_atomic(bvec->bv_page);
+	addr = (अचिन्हित दीर्घ) kmap_atomic(bvec->bv_page);
 
 	BUG_ON(addr & ~PAGE_MASK);
 
-	return (char *) addr + bvec->bv_offset;
-}
+	वापस (अक्षर *) addr + bvec->bv_offset;
+पूर्ण
 
-static inline void bvec_kunmap_irq(char *buffer, unsigned long *flags)
-{
-	unsigned long ptr = (unsigned long) buffer & PAGE_MASK;
+अटल अंतरभूत व्योम bvec_kunmap_irq(अक्षर *buffer, अचिन्हित दीर्घ *flags)
+अणु
+	अचिन्हित दीर्घ ptr = (अचिन्हित दीर्घ) buffer & PAGE_MASK;
 
-	kunmap_atomic((void *) ptr);
+	kunmap_atomic((व्योम *) ptr);
 	local_irq_restore(*flags);
-}
+पूर्ण
 
-#else
-static inline char *bvec_kmap_irq(struct bio_vec *bvec, unsigned long *flags)
-{
-	return page_address(bvec->bv_page) + bvec->bv_offset;
-}
+#अन्यथा
+अटल अंतरभूत अक्षर *bvec_kmap_irq(काष्ठा bio_vec *bvec, अचिन्हित दीर्घ *flags)
+अणु
+	वापस page_address(bvec->bv_page) + bvec->bv_offset;
+पूर्ण
 
-static inline void bvec_kunmap_irq(char *buffer, unsigned long *flags)
-{
+अटल अंतरभूत व्योम bvec_kunmap_irq(अक्षर *buffer, अचिन्हित दीर्घ *flags)
+अणु
 	*flags = 0;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * BIO list management for use by remapping drivers (e.g. DM or MD) and loop.
+ * BIO list management क्रम use by remapping drivers (e.g. DM or MD) and loop.
  *
  * A bio_list anchors a singly-linked list of bios chained through the bi_next
  * member of the bio.  The bio_list also caches the last list member to allow
  * fast access to the tail.
  */
-struct bio_list {
-	struct bio *head;
-	struct bio *tail;
-};
+काष्ठा bio_list अणु
+	काष्ठा bio *head;
+	काष्ठा bio *tail;
+पूर्ण;
 
-static inline int bio_list_empty(const struct bio_list *bl)
-{
-	return bl->head == NULL;
-}
+अटल अंतरभूत पूर्णांक bio_list_empty(स्थिर काष्ठा bio_list *bl)
+अणु
+	वापस bl->head == शून्य;
+पूर्ण
 
-static inline void bio_list_init(struct bio_list *bl)
-{
-	bl->head = bl->tail = NULL;
-}
+अटल अंतरभूत व्योम bio_list_init(काष्ठा bio_list *bl)
+अणु
+	bl->head = bl->tail = शून्य;
+पूर्ण
 
-#define BIO_EMPTY_LIST	{ NULL, NULL }
+#घोषणा BIO_EMPTY_LIST	अणु शून्य, शून्य पूर्ण
 
-#define bio_list_for_each(bio, bl) \
-	for (bio = (bl)->head; bio; bio = bio->bi_next)
+#घोषणा bio_list_क्रम_each(bio, bl) \
+	क्रम (bio = (bl)->head; bio; bio = bio->bi_next)
 
-static inline unsigned bio_list_size(const struct bio_list *bl)
-{
-	unsigned sz = 0;
-	struct bio *bio;
+अटल अंतरभूत अचिन्हित bio_list_size(स्थिर काष्ठा bio_list *bl)
+अणु
+	अचिन्हित sz = 0;
+	काष्ठा bio *bio;
 
-	bio_list_for_each(bio, bl)
+	bio_list_क्रम_each(bio, bl)
 		sz++;
 
-	return sz;
-}
+	वापस sz;
+पूर्ण
 
-static inline void bio_list_add(struct bio_list *bl, struct bio *bio)
-{
-	bio->bi_next = NULL;
+अटल अंतरभूत व्योम bio_list_add(काष्ठा bio_list *bl, काष्ठा bio *bio)
+अणु
+	bio->bi_next = शून्य;
 
-	if (bl->tail)
+	अगर (bl->tail)
 		bl->tail->bi_next = bio;
-	else
+	अन्यथा
 		bl->head = bio;
 
 	bl->tail = bio;
-}
+पूर्ण
 
-static inline void bio_list_add_head(struct bio_list *bl, struct bio *bio)
-{
+अटल अंतरभूत व्योम bio_list_add_head(काष्ठा bio_list *bl, काष्ठा bio *bio)
+अणु
 	bio->bi_next = bl->head;
 
 	bl->head = bio;
 
-	if (!bl->tail)
+	अगर (!bl->tail)
 		bl->tail = bio;
-}
+पूर्ण
 
-static inline void bio_list_merge(struct bio_list *bl, struct bio_list *bl2)
-{
-	if (!bl2->head)
-		return;
+अटल अंतरभूत व्योम bio_list_merge(काष्ठा bio_list *bl, काष्ठा bio_list *bl2)
+अणु
+	अगर (!bl2->head)
+		वापस;
 
-	if (bl->tail)
+	अगर (bl->tail)
 		bl->tail->bi_next = bl2->head;
-	else
+	अन्यथा
 		bl->head = bl2->head;
 
 	bl->tail = bl2->tail;
-}
+पूर्ण
 
-static inline void bio_list_merge_head(struct bio_list *bl,
-				       struct bio_list *bl2)
-{
-	if (!bl2->head)
-		return;
+अटल अंतरभूत व्योम bio_list_merge_head(काष्ठा bio_list *bl,
+				       काष्ठा bio_list *bl2)
+अणु
+	अगर (!bl2->head)
+		वापस;
 
-	if (bl->head)
+	अगर (bl->head)
 		bl2->tail->bi_next = bl->head;
-	else
+	अन्यथा
 		bl->tail = bl2->tail;
 
 	bl->head = bl2->head;
-}
+पूर्ण
 
-static inline struct bio *bio_list_peek(struct bio_list *bl)
-{
-	return bl->head;
-}
+अटल अंतरभूत काष्ठा bio *bio_list_peek(काष्ठा bio_list *bl)
+अणु
+	वापस bl->head;
+पूर्ण
 
-static inline struct bio *bio_list_pop(struct bio_list *bl)
-{
-	struct bio *bio = bl->head;
+अटल अंतरभूत काष्ठा bio *bio_list_pop(काष्ठा bio_list *bl)
+अणु
+	काष्ठा bio *bio = bl->head;
 
-	if (bio) {
+	अगर (bio) अणु
 		bl->head = bl->head->bi_next;
-		if (!bl->head)
-			bl->tail = NULL;
+		अगर (!bl->head)
+			bl->tail = शून्य;
 
-		bio->bi_next = NULL;
-	}
+		bio->bi_next = शून्य;
+	पूर्ण
 
-	return bio;
-}
+	वापस bio;
+पूर्ण
 
-static inline struct bio *bio_list_get(struct bio_list *bl)
-{
-	struct bio *bio = bl->head;
+अटल अंतरभूत काष्ठा bio *bio_list_get(काष्ठा bio_list *bl)
+अणु
+	काष्ठा bio *bio = bl->head;
 
-	bl->head = bl->tail = NULL;
+	bl->head = bl->tail = शून्य;
 
-	return bio;
-}
+	वापस bio;
+पूर्ण
 
 /*
- * Increment chain count for the bio. Make sure the CHAIN flag update
- * is visible before the raised count.
+ * Increment chain count क्रम the bio. Make sure the CHAIN flag update
+ * is visible beक्रमe the उठाओd count.
  */
-static inline void bio_inc_remaining(struct bio *bio)
-{
+अटल अंतरभूत व्योम bio_inc_reमुख्यing(काष्ठा bio *bio)
+अणु
 	bio_set_flag(bio, BIO_CHAIN);
-	smp_mb__before_atomic();
-	atomic_inc(&bio->__bi_remaining);
-}
+	smp_mb__beक्रमe_atomic();
+	atomic_inc(&bio->__bi_reमुख्यing);
+पूर्ण
 
 /*
- * bio_set is used to allow other portions of the IO system to
- * allocate their own private memory pools for bio and iovec structures.
+ * bio_set is used to allow other portions of the IO प्रणाली to
+ * allocate their own निजी memory pools क्रम bio and iovec काष्ठाures.
  * These memory pools in turn all allocate from the bio_slab
- * and the bvec_slabs[].
+ * and the bvec_sद_असल[].
  */
-#define BIO_POOL_SIZE 2
+#घोषणा BIO_POOL_SIZE 2
 
-struct bio_set {
-	struct kmem_cache *bio_slab;
-	unsigned int front_pad;
+काष्ठा bio_set अणु
+	काष्ठा kmem_cache *bio_slab;
+	अचिन्हित पूर्णांक front_pad;
 
 	mempool_t bio_pool;
 	mempool_t bvec_pool;
-#if defined(CONFIG_BLK_DEV_INTEGRITY)
-	mempool_t bio_integrity_pool;
-	mempool_t bvec_integrity_pool;
-#endif
+#अगर defined(CONFIG_BLK_DEV_INTEGRITY)
+	mempool_t bio_पूर्णांकegrity_pool;
+	mempool_t bvec_पूर्णांकegrity_pool;
+#पूर्ण_अगर
 
-	unsigned int back_pad;
+	अचिन्हित पूर्णांक back_pad;
 	/*
-	 * Deadlock avoidance for stacking block drivers: see comments in
-	 * bio_alloc_bioset() for details
+	 * Deadlock aव्योमance क्रम stacking block drivers: see comments in
+	 * bio_alloc_bioset() क्रम details
 	 */
 	spinlock_t		rescue_lock;
-	struct bio_list		rescue_list;
-	struct work_struct	rescue_work;
-	struct workqueue_struct	*rescue_workqueue;
-};
+	काष्ठा bio_list		rescue_list;
+	काष्ठा work_काष्ठा	rescue_work;
+	काष्ठा workqueue_काष्ठा	*rescue_workqueue;
+पूर्ण;
 
-static inline bool bioset_initialized(struct bio_set *bs)
-{
-	return bs->bio_slab != NULL;
-}
+अटल अंतरभूत bool bioset_initialized(काष्ठा bio_set *bs)
+अणु
+	वापस bs->bio_slab != शून्य;
+पूर्ण
 
-#if defined(CONFIG_BLK_DEV_INTEGRITY)
+#अगर defined(CONFIG_BLK_DEV_INTEGRITY)
 
-#define bip_for_each_vec(bvl, bip, iter)				\
-	for_each_bvec(bvl, (bip)->bip_vec, iter, (bip)->bip_iter)
+#घोषणा bip_क्रम_each_vec(bvl, bip, iter)				\
+	क्रम_each_bvec(bvl, (bip)->bip_vec, iter, (bip)->bip_iter)
 
-#define bio_for_each_integrity_vec(_bvl, _bio, _iter)			\
-	for_each_bio(_bio)						\
-		bip_for_each_vec(_bvl, _bio->bi_integrity, _iter)
+#घोषणा bio_क्रम_each_पूर्णांकegrity_vec(_bvl, _bio, _iter)			\
+	क्रम_each_bio(_bio)						\
+		bip_क्रम_each_vec(_bvl, _bio->bi_पूर्णांकegrity, _iter)
 
-extern struct bio_integrity_payload *bio_integrity_alloc(struct bio *, gfp_t, unsigned int);
-extern int bio_integrity_add_page(struct bio *, struct page *, unsigned int, unsigned int);
-extern bool bio_integrity_prep(struct bio *);
-extern void bio_integrity_advance(struct bio *, unsigned int);
-extern void bio_integrity_trim(struct bio *);
-extern int bio_integrity_clone(struct bio *, struct bio *, gfp_t);
-extern int bioset_integrity_create(struct bio_set *, int);
-extern void bioset_integrity_free(struct bio_set *);
-extern void bio_integrity_init(void);
+बाह्य काष्ठा bio_पूर्णांकegrity_payload *bio_पूर्णांकegrity_alloc(काष्ठा bio *, gfp_t, अचिन्हित पूर्णांक);
+बाह्य पूर्णांक bio_पूर्णांकegrity_add_page(काष्ठा bio *, काष्ठा page *, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+बाह्य bool bio_पूर्णांकegrity_prep(काष्ठा bio *);
+बाह्य व्योम bio_पूर्णांकegrity_advance(काष्ठा bio *, अचिन्हित पूर्णांक);
+बाह्य व्योम bio_पूर्णांकegrity_trim(काष्ठा bio *);
+बाह्य पूर्णांक bio_पूर्णांकegrity_clone(काष्ठा bio *, काष्ठा bio *, gfp_t);
+बाह्य पूर्णांक bioset_पूर्णांकegrity_create(काष्ठा bio_set *, पूर्णांक);
+बाह्य व्योम bioset_पूर्णांकegrity_मुक्त(काष्ठा bio_set *);
+बाह्य व्योम bio_पूर्णांकegrity_init(व्योम);
 
-#else /* CONFIG_BLK_DEV_INTEGRITY */
+#अन्यथा /* CONFIG_BLK_DEV_INTEGRITY */
 
-static inline void *bio_integrity(struct bio *bio)
-{
-	return NULL;
-}
+अटल अंतरभूत व्योम *bio_पूर्णांकegrity(काष्ठा bio *bio)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int bioset_integrity_create(struct bio_set *bs, int pool_size)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक bioset_पूर्णांकegrity_create(काष्ठा bio_set *bs, पूर्णांक pool_size)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void bioset_integrity_free (struct bio_set *bs)
-{
-	return;
-}
+अटल अंतरभूत व्योम bioset_पूर्णांकegrity_मुक्त (काष्ठा bio_set *bs)
+अणु
+	वापस;
+पूर्ण
 
-static inline bool bio_integrity_prep(struct bio *bio)
-{
-	return true;
-}
+अटल अंतरभूत bool bio_पूर्णांकegrity_prep(काष्ठा bio *bio)
+अणु
+	वापस true;
+पूर्ण
 
-static inline int bio_integrity_clone(struct bio *bio, struct bio *bio_src,
+अटल अंतरभूत पूर्णांक bio_पूर्णांकegrity_clone(काष्ठा bio *bio, काष्ठा bio *bio_src,
 				      gfp_t gfp_mask)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void bio_integrity_advance(struct bio *bio,
-					 unsigned int bytes_done)
-{
-	return;
-}
+अटल अंतरभूत व्योम bio_पूर्णांकegrity_advance(काष्ठा bio *bio,
+					 अचिन्हित पूर्णांक bytes_करोne)
+अणु
+	वापस;
+पूर्ण
 
-static inline void bio_integrity_trim(struct bio *bio)
-{
-	return;
-}
+अटल अंतरभूत व्योम bio_पूर्णांकegrity_trim(काष्ठा bio *bio)
+अणु
+	वापस;
+पूर्ण
 
-static inline void bio_integrity_init(void)
-{
-	return;
-}
+अटल अंतरभूत व्योम bio_पूर्णांकegrity_init(व्योम)
+अणु
+	वापस;
+पूर्ण
 
-static inline bool bio_integrity_flagged(struct bio *bio, enum bip_flags flag)
-{
-	return false;
-}
+अटल अंतरभूत bool bio_पूर्णांकegrity_flagged(काष्ठा bio *bio, क्रमागत bip_flags flag)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void *bio_integrity_alloc(struct bio * bio, gfp_t gfp,
-								unsigned int nr)
-{
-	return ERR_PTR(-EINVAL);
-}
+अटल अंतरभूत व्योम *bio_पूर्णांकegrity_alloc(काष्ठा bio * bio, gfp_t gfp,
+								अचिन्हित पूर्णांक nr)
+अणु
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static inline int bio_integrity_add_page(struct bio *bio, struct page *page,
-					unsigned int len, unsigned int offset)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक bio_पूर्णांकegrity_add_page(काष्ठा bio *bio, काष्ठा page *page,
+					अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक offset)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_BLK_DEV_INTEGRITY */
+#पूर्ण_अगर /* CONFIG_BLK_DEV_INTEGRITY */
 
 /*
- * Mark a bio as polled. Note that for async polled IO, the caller must
- * expect -EWOULDBLOCK if we cannot allocate a request (or other resources).
- * We cannot block waiting for requests on polled IO, as those completions
- * must be found by the caller. This is different than IRQ driven IO, where
- * it's safe to wait for IO to complete.
+ * Mark a bio as polled. Note that क्रम async polled IO, the caller must
+ * expect -EWOULDBLOCK अगर we cannot allocate a request (or other resources).
+ * We cannot block रुकोing क्रम requests on polled IO, as those completions
+ * must be found by the caller. This is dअगरferent than IRQ driven IO, where
+ * it's safe to रुको क्रम IO to complete.
  */
-static inline void bio_set_polled(struct bio *bio, struct kiocb *kiocb)
-{
+अटल अंतरभूत व्योम bio_set_polled(काष्ठा bio *bio, काष्ठा kiocb *kiocb)
+अणु
 	bio->bi_opf |= REQ_HIPRI;
-	if (!is_sync_kiocb(kiocb))
+	अगर (!is_sync_kiocb(kiocb))
 		bio->bi_opf |= REQ_NOWAIT;
-}
+पूर्ण
 
-#endif /* __LINUX_BIO_H */
+#पूर्ण_अगर /* __LINUX_BIO_H */

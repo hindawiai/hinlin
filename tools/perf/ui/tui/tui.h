@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PERF_TUI_H_
-#define _PERF_TUI_H_ 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PERF_TUI_H_
+#घोषणा _PERF_TUI_H_ 1
 
-void tui_progress__init(void);
+व्योम tui_progress__init(व्योम);
 
-#endif /* _PERF_TUI_H_ */
+#पूर्ण_अगर /* _PERF_TUI_H_ */

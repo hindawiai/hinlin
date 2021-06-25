@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/sys_soc.h>
-#include <linux/of.h>
-#include <linux/of_dma.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/workqueue.h>
-#include <linux/completion.h>
-#include <linux/soc/ti/k3-ringacc.h>
-#include <linux/soc/ti/ti_sci_protocol.h>
-#include <linux/soc/ti/ti_sci_inta_msi.h>
-#include <linux/dma/k3-event-router.h>
-#include <linux/dma/ti-cppi5.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sys_soc.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/soc/ti/k3-ringacc.h>
+#समावेश <linux/soc/ti/ti_sci_protocol.h>
+#समावेश <linux/soc/ti/ti_sci_पूर्णांकa_msi.h>
+#समावेश <linux/dma/k3-event-router.h>
+#समावेश <linux/dma/ti-cppi5.h>
 
-#include "../virt-dma.h"
-#include "k3-udma.h"
-#include "k3-psil-priv.h"
+#समावेश "../virt-dma.h"
+#समावेश "k3-udma.h"
+#समावेश "k3-psil-priv.h"
 
-struct udma_static_tr {
+काष्ठा udma_अटल_tr अणु
 	u8 elsize; /* RPSTR0 */
 	u16 elcnt; /* RPSTR0 */
 	u16 bstcnt; /* RPSTR1 */
-};
+पूर्ण;
 
-#define K3_UDMA_MAX_RFLOWS		1024
-#define K3_UDMA_DEFAULT_RING_SIZE	16
+#घोषणा K3_UDMA_MAX_RFLOWS		1024
+#घोषणा K3_UDMA_DEFAULT_RING_SIZE	16
 
 /* How SRC/DST tag should be updated by UDMA in the descriptor's Word 3 */
-#define UDMA_RFLOW_SRCTAG_NONE		0
-#define UDMA_RFLOW_SRCTAG_CFG_TAG	1
-#define UDMA_RFLOW_SRCTAG_FLOW_ID	2
-#define UDMA_RFLOW_SRCTAG_SRC_TAG	4
+#घोषणा UDMA_RFLOW_SRCTAG_NONE		0
+#घोषणा UDMA_RFLOW_SRCTAG_CFG_TAG	1
+#घोषणा UDMA_RFLOW_SRCTAG_FLOW_ID	2
+#घोषणा UDMA_RFLOW_SRCTAG_SRC_TAG	4
 
-#define UDMA_RFLOW_DSTTAG_NONE		0
-#define UDMA_RFLOW_DSTTAG_CFG_TAG	1
-#define UDMA_RFLOW_DSTTAG_FLOW_ID	2
-#define UDMA_RFLOW_DSTTAG_DST_TAG_LO	4
-#define UDMA_RFLOW_DSTTAG_DST_TAG_HI	5
+#घोषणा UDMA_RFLOW_DSTTAG_NONE		0
+#घोषणा UDMA_RFLOW_DSTTAG_CFG_TAG	1
+#घोषणा UDMA_RFLOW_DSTTAG_FLOW_ID	2
+#घोषणा UDMA_RFLOW_DSTTAG_DST_TAG_LO	4
+#घोषणा UDMA_RFLOW_DSTTAG_DST_TAG_HI	5
 
-struct udma_chan;
+काष्ठा udma_chan;
 
-enum k3_dma_type {
+क्रमागत k3_dma_type अणु
 	DMA_TYPE_UDMA = 0,
 	DMA_TYPE_BCDMA,
 	DMA_TYPE_PKTDMA,
-};
+पूर्ण;
 
-enum udma_mmr {
+क्रमागत udma_mmr अणु
 	MMR_GCFG = 0,
 	MMR_BCHANRT,
 	MMR_RCHANRT,
 	MMR_TCHANRT,
 	MMR_LAST,
-};
+पूर्ण;
 
-static const char * const mmr_names[] = {
+अटल स्थिर अक्षर * स्थिर mmr_names[] = अणु
 	[MMR_GCFG] = "gcfg",
 	[MMR_BCHANRT] = "bchanrt",
 	[MMR_RCHANRT] = "rchanrt",
 	[MMR_TCHANRT] = "tchanrt",
-};
+पूर्ण;
 
-struct udma_tchan {
-	void __iomem *reg_rt;
+काष्ठा udma_tchan अणु
+	व्योम __iomem *reg_rt;
 
-	int id;
-	struct k3_ring *t_ring; /* Transmit ring */
-	struct k3_ring *tc_ring; /* Transmit Completion ring */
-	int tflow_id; /* applicable only for PKTDMA */
+	पूर्णांक id;
+	काष्ठा k3_ring *t_ring; /* Transmit ring */
+	काष्ठा k3_ring *tc_ring; /* Transmit Completion ring */
+	पूर्णांक tflow_id; /* applicable only क्रम PKTDMA */
 
-};
+पूर्ण;
 
-#define udma_bchan udma_tchan
+#घोषणा udma_bchan udma_tchan
 
-struct udma_rflow {
-	int id;
-	struct k3_ring *fd_ring; /* Free Descriptor ring */
-	struct k3_ring *r_ring; /* Receive ring */
-};
+काष्ठा udma_rflow अणु
+	पूर्णांक id;
+	काष्ठा k3_ring *fd_ring; /* Free Descriptor ring */
+	काष्ठा k3_ring *r_ring; /* Receive ring */
+पूर्ण;
 
-struct udma_rchan {
-	void __iomem *reg_rt;
+काष्ठा udma_rchan अणु
+	व्योम __iomem *reg_rt;
 
-	int id;
-};
+	पूर्णांक id;
+पूर्ण;
 
-struct udma_oes_offsets {
+काष्ठा udma_oes_offsets अणु
 	/* K3 UDMA Output Event Offset */
 	u32 udma_rchan;
 
@@ -116,1104 +117,1104 @@ struct udma_oes_offsets {
 	/* PKTDMA Output Event Offsets */
 	u32 pktdma_tchan_flow;
 	u32 pktdma_rchan_flow;
-};
+पूर्ण;
 
-#define UDMA_FLAG_PDMA_ACC32		BIT(0)
-#define UDMA_FLAG_PDMA_BURST		BIT(1)
-#define UDMA_FLAG_TDTYPE		BIT(2)
-#define UDMA_FLAG_BURST_SIZE		BIT(3)
-#define UDMA_FLAGS_J7_CLASS		(UDMA_FLAG_PDMA_ACC32 | \
+#घोषणा UDMA_FLAG_PDMA_ACC32		BIT(0)
+#घोषणा UDMA_FLAG_PDMA_BURST		BIT(1)
+#घोषणा UDMA_FLAG_TDTYPE		BIT(2)
+#घोषणा UDMA_FLAG_BURST_SIZE		BIT(3)
+#घोषणा UDMA_FLAGS_J7_CLASS		(UDMA_FLAG_PDMA_ACC32 | \
 					 UDMA_FLAG_PDMA_BURST | \
 					 UDMA_FLAG_TDTYPE | \
 					 UDMA_FLAG_BURST_SIZE)
 
-struct udma_match_data {
-	enum k3_dma_type type;
+काष्ठा udma_match_data अणु
+	क्रमागत k3_dma_type type;
 	u32 psil_base;
-	bool enable_memcpy_support;
+	bool enable_स_नकल_support;
 	u32 flags;
-	u32 statictr_z_mask;
+	u32 अटलtr_z_mask;
 	u8 burst_size[3];
-};
+पूर्ण;
 
-struct udma_soc_data {
-	struct udma_oes_offsets oes;
+काष्ठा udma_soc_data अणु
+	काष्ठा udma_oes_offsets oes;
 	u32 bcdma_trigger_event_offset;
-};
+पूर्ण;
 
-struct udma_hwdesc {
-	size_t cppi5_desc_size;
-	void *cppi5_desc_vaddr;
+काष्ठा udma_hwdesc अणु
+	माप_प्रकार cppi5_desc_size;
+	व्योम *cppi5_desc_vaddr;
 	dma_addr_t cppi5_desc_paddr;
 
-	/* TR descriptor internal pointers */
-	void *tr_req_base;
-	struct cppi5_tr_resp_t *tr_resp_base;
-};
+	/* TR descriptor पूर्णांकernal poपूर्णांकers */
+	व्योम *tr_req_base;
+	काष्ठा cppi5_tr_resp_t *tr_resp_base;
+पूर्ण;
 
-struct udma_rx_flush {
-	struct udma_hwdesc hwdescs[2];
+काष्ठा udma_rx_flush अणु
+	काष्ठा udma_hwdesc hwdescs[2];
 
-	size_t buffer_size;
-	void *buffer_vaddr;
+	माप_प्रकार buffer_size;
+	व्योम *buffer_vaddr;
 	dma_addr_t buffer_paddr;
-};
+पूर्ण;
 
-struct udma_tpl {
+काष्ठा udma_tpl अणु
 	u8 levels;
 	u32 start_idx[3];
-};
+पूर्ण;
 
-struct udma_dev {
-	struct dma_device ddev;
-	struct device *dev;
-	void __iomem *mmrs[MMR_LAST];
-	const struct udma_match_data *match_data;
-	const struct udma_soc_data *soc_data;
+काष्ठा udma_dev अणु
+	काष्ठा dma_device ddev;
+	काष्ठा device *dev;
+	व्योम __iomem *mmrs[MMR_LAST];
+	स्थिर काष्ठा udma_match_data *match_data;
+	स्थिर काष्ठा udma_soc_data *soc_data;
 
-	struct udma_tpl bchan_tpl;
-	struct udma_tpl tchan_tpl;
-	struct udma_tpl rchan_tpl;
+	काष्ठा udma_tpl bchan_tpl;
+	काष्ठा udma_tpl tchan_tpl;
+	काष्ठा udma_tpl rchan_tpl;
 
-	size_t desc_align; /* alignment to use for descriptors */
+	माप_प्रकार desc_align; /* alignment to use क्रम descriptors */
 
-	struct udma_tisci_rm tisci_rm;
+	काष्ठा udma_tisci_rm tisci_rm;
 
-	struct k3_ringacc *ringacc;
+	काष्ठा k3_ringacc *ringacc;
 
-	struct work_struct purge_work;
-	struct list_head desc_to_purge;
+	काष्ठा work_काष्ठा purge_work;
+	काष्ठा list_head desc_to_purge;
 	spinlock_t lock;
 
-	struct udma_rx_flush rx_flush;
+	काष्ठा udma_rx_flush rx_flush;
 
-	int bchan_cnt;
-	int tchan_cnt;
-	int echan_cnt;
-	int rchan_cnt;
-	int rflow_cnt;
-	int tflow_cnt;
-	unsigned long *bchan_map;
-	unsigned long *tchan_map;
-	unsigned long *rchan_map;
-	unsigned long *rflow_gp_map;
-	unsigned long *rflow_gp_map_allocated;
-	unsigned long *rflow_in_use;
-	unsigned long *tflow_map;
+	पूर्णांक bchan_cnt;
+	पूर्णांक tchan_cnt;
+	पूर्णांक echan_cnt;
+	पूर्णांक rchan_cnt;
+	पूर्णांक rflow_cnt;
+	पूर्णांक tflow_cnt;
+	अचिन्हित दीर्घ *bchan_map;
+	अचिन्हित दीर्घ *tchan_map;
+	अचिन्हित दीर्घ *rchan_map;
+	अचिन्हित दीर्घ *rflow_gp_map;
+	अचिन्हित दीर्घ *rflow_gp_map_allocated;
+	अचिन्हित दीर्घ *rflow_in_use;
+	अचिन्हित दीर्घ *tflow_map;
 
-	struct udma_bchan *bchans;
-	struct udma_tchan *tchans;
-	struct udma_rchan *rchans;
-	struct udma_rflow *rflows;
+	काष्ठा udma_bchan *bchans;
+	काष्ठा udma_tchan *tchans;
+	काष्ठा udma_rchan *rchans;
+	काष्ठा udma_rflow *rflows;
 
-	struct udma_chan *channels;
+	काष्ठा udma_chan *channels;
 	u32 psil_base;
 	u32 atype;
 	u32 asel;
-};
+पूर्ण;
 
-struct udma_desc {
-	struct virt_dma_desc vd;
+काष्ठा udma_desc अणु
+	काष्ठा virt_dma_desc vd;
 
 	bool terminated;
 
-	enum dma_transfer_direction dir;
+	क्रमागत dma_transfer_direction dir;
 
-	struct udma_static_tr static_tr;
+	काष्ठा udma_अटल_tr अटल_tr;
 	u32 residue;
 
-	unsigned int sglen;
-	unsigned int desc_idx; /* Only used for cyclic in packet mode */
-	unsigned int tr_idx;
+	अचिन्हित पूर्णांक sglen;
+	अचिन्हित पूर्णांक desc_idx; /* Only used क्रम cyclic in packet mode */
+	अचिन्हित पूर्णांक tr_idx;
 
 	u32 metadata_size;
-	void *metadata; /* pointer to provided metadata buffer (EPIP, PSdata) */
+	व्योम *metadata; /* poपूर्णांकer to provided metadata buffer (EPIP, PSdata) */
 
-	unsigned int hwdesc_count;
-	struct udma_hwdesc hwdesc[];
-};
+	अचिन्हित पूर्णांक hwdesc_count;
+	काष्ठा udma_hwdesc hwdesc[];
+पूर्ण;
 
-enum udma_chan_state {
-	UDMA_CHAN_IS_IDLE = 0, /* not active, no teardown is in progress */
+क्रमागत udma_chan_state अणु
+	UDMA_CHAN_IS_IDLE = 0, /* not active, no tearकरोwn is in progress */
 	UDMA_CHAN_IS_ACTIVE, /* Normal operation */
 	UDMA_CHAN_IS_TERMINATING, /* channel is being terminated */
-};
+पूर्ण;
 
-struct udma_tx_drain {
-	struct delayed_work work;
-	ktime_t tstamp;
+काष्ठा udma_tx_drain अणु
+	काष्ठा delayed_work work;
+	kसमय_प्रकार tstamp;
 	u32 residue;
-};
+पूर्ण;
 
-struct udma_chan_config {
+काष्ठा udma_chan_config अणु
 	bool pkt_mode; /* TR or packet */
-	bool needs_epib; /* EPIB is needed for the communication or not */
-	u32 psd_size; /* size of Protocol Specific Data */
+	bool needs_epib; /* EPIB is needed क्रम the communication or not */
+	u32 psd_size; /* size of Protocol Specअगरic Data */
 	u32 metadata_size; /* (needs_epib ? 16:0) + psd_size */
 	u32 hdesc_size; /* Size of a packet descriptor in packet mode */
 	bool notdpkt; /* Suppress sending TDC packet */
-	int remote_thread_id;
+	पूर्णांक remote_thपढ़ो_id;
 	u32 atype;
 	u32 asel;
-	u32 src_thread;
-	u32 dst_thread;
-	enum psil_endpoint_type ep_type;
+	u32 src_thपढ़ो;
+	u32 dst_thपढ़ो;
+	क्रमागत psil_endpoपूर्णांक_type ep_type;
 	bool enable_acc32;
 	bool enable_burst;
-	enum udma_tp_level channel_tpl; /* Channel Throughput Level */
+	क्रमागत udma_tp_level channel_tpl; /* Channel Throughput Level */
 
 	u32 tr_trigger_type;
 
 	/* PKDMA mapped channel */
-	int mapped_channel_id;
-	/* PKTDMA default tflow or rflow for mapped channel */
-	int default_flow_id;
+	पूर्णांक mapped_channel_id;
+	/* PKTDMA शेष tflow or rflow क्रम mapped channel */
+	पूर्णांक शेष_flow_id;
 
-	enum dma_transfer_direction dir;
-};
+	क्रमागत dma_transfer_direction dir;
+पूर्ण;
 
-struct udma_chan {
-	struct virt_dma_chan vc;
-	struct dma_slave_config	cfg;
-	struct udma_dev *ud;
-	struct device *dma_dev;
-	struct udma_desc *desc;
-	struct udma_desc *terminated_desc;
-	struct udma_static_tr static_tr;
-	char *name;
+काष्ठा udma_chan अणु
+	काष्ठा virt_dma_chan vc;
+	काष्ठा dma_slave_config	cfg;
+	काष्ठा udma_dev *ud;
+	काष्ठा device *dma_dev;
+	काष्ठा udma_desc *desc;
+	काष्ठा udma_desc *terminated_desc;
+	काष्ठा udma_अटल_tr अटल_tr;
+	अक्षर *name;
 
-	struct udma_bchan *bchan;
-	struct udma_tchan *tchan;
-	struct udma_rchan *rchan;
-	struct udma_rflow *rflow;
+	काष्ठा udma_bchan *bchan;
+	काष्ठा udma_tchan *tchan;
+	काष्ठा udma_rchan *rchan;
+	काष्ठा udma_rflow *rflow;
 
 	bool psil_paired;
 
-	int irq_num_ring;
-	int irq_num_udma;
+	पूर्णांक irq_num_ring;
+	पूर्णांक irq_num_udma;
 
 	bool cyclic;
-	bool paused;
+	bool छोड़ोd;
 
-	enum udma_chan_state state;
-	struct completion teardown_completed;
+	क्रमागत udma_chan_state state;
+	काष्ठा completion tearकरोwn_completed;
 
-	struct udma_tx_drain tx_drain;
+	काष्ठा udma_tx_drain tx_drain;
 
 	u32 bcnt; /* number of bytes completed since the start of the channel */
 
 	/* Channel configuration parameters */
-	struct udma_chan_config config;
+	काष्ठा udma_chan_config config;
 
-	/* dmapool for packet mode descriptors */
+	/* dmapool क्रम packet mode descriptors */
 	bool use_dma_pool;
-	struct dma_pool *hdesc_pool;
+	काष्ठा dma_pool *hdesc_pool;
 
 	u32 id;
-};
+पूर्ण;
 
-static inline struct udma_dev *to_udma_dev(struct dma_device *d)
-{
-	return container_of(d, struct udma_dev, ddev);
-}
+अटल अंतरभूत काष्ठा udma_dev *to_udma_dev(काष्ठा dma_device *d)
+अणु
+	वापस container_of(d, काष्ठा udma_dev, ddev);
+पूर्ण
 
-static inline struct udma_chan *to_udma_chan(struct dma_chan *c)
-{
-	return container_of(c, struct udma_chan, vc.chan);
-}
+अटल अंतरभूत काष्ठा udma_chan *to_udma_chan(काष्ठा dma_chan *c)
+अणु
+	वापस container_of(c, काष्ठा udma_chan, vc.chan);
+पूर्ण
 
-static inline struct udma_desc *to_udma_desc(struct dma_async_tx_descriptor *t)
-{
-	return container_of(t, struct udma_desc, vd.tx);
-}
+अटल अंतरभूत काष्ठा udma_desc *to_udma_desc(काष्ठा dma_async_tx_descriptor *t)
+अणु
+	वापस container_of(t, काष्ठा udma_desc, vd.tx);
+पूर्ण
 
-/* Generic register access functions */
-static inline u32 udma_read(void __iomem *base, int reg)
-{
-	return readl(base + reg);
-}
+/* Generic रेजिस्टर access functions */
+अटल अंतरभूत u32 udma_पढ़ो(व्योम __iomem *base, पूर्णांक reg)
+अणु
+	वापस पढ़ोl(base + reg);
+पूर्ण
 
-static inline void udma_write(void __iomem *base, int reg, u32 val)
-{
-	writel(val, base + reg);
-}
+अटल अंतरभूत व्योम udma_ग_लिखो(व्योम __iomem *base, पूर्णांक reg, u32 val)
+अणु
+	ग_लिखोl(val, base + reg);
+पूर्ण
 
-static inline void udma_update_bits(void __iomem *base, int reg,
+अटल अंतरभूत व्योम udma_update_bits(व्योम __iomem *base, पूर्णांक reg,
 				    u32 mask, u32 val)
-{
-	u32 tmp, orig;
+अणु
+	u32 पंचांगp, orig;
 
-	orig = readl(base + reg);
-	tmp = orig & ~mask;
-	tmp |= (val & mask);
+	orig = पढ़ोl(base + reg);
+	पंचांगp = orig & ~mask;
+	पंचांगp |= (val & mask);
 
-	if (tmp != orig)
-		writel(tmp, base + reg);
-}
+	अगर (पंचांगp != orig)
+		ग_लिखोl(पंचांगp, base + reg);
+पूर्ण
 
 /* TCHANRT */
-static inline u32 udma_tchanrt_read(struct udma_chan *uc, int reg)
-{
-	if (!uc->tchan)
-		return 0;
-	return udma_read(uc->tchan->reg_rt, reg);
-}
+अटल अंतरभूत u32 udma_tchanrt_पढ़ो(काष्ठा udma_chan *uc, पूर्णांक reg)
+अणु
+	अगर (!uc->tchan)
+		वापस 0;
+	वापस udma_पढ़ो(uc->tchan->reg_rt, reg);
+पूर्ण
 
-static inline void udma_tchanrt_write(struct udma_chan *uc, int reg, u32 val)
-{
-	if (!uc->tchan)
-		return;
-	udma_write(uc->tchan->reg_rt, reg, val);
-}
+अटल अंतरभूत व्योम udma_tchanrt_ग_लिखो(काष्ठा udma_chan *uc, पूर्णांक reg, u32 val)
+अणु
+	अगर (!uc->tchan)
+		वापस;
+	udma_ग_लिखो(uc->tchan->reg_rt, reg, val);
+पूर्ण
 
-static inline void udma_tchanrt_update_bits(struct udma_chan *uc, int reg,
+अटल अंतरभूत व्योम udma_tchanrt_update_bits(काष्ठा udma_chan *uc, पूर्णांक reg,
 					    u32 mask, u32 val)
-{
-	if (!uc->tchan)
-		return;
+अणु
+	अगर (!uc->tchan)
+		वापस;
 	udma_update_bits(uc->tchan->reg_rt, reg, mask, val);
-}
+पूर्ण
 
 /* RCHANRT */
-static inline u32 udma_rchanrt_read(struct udma_chan *uc, int reg)
-{
-	if (!uc->rchan)
-		return 0;
-	return udma_read(uc->rchan->reg_rt, reg);
-}
+अटल अंतरभूत u32 udma_rchanrt_पढ़ो(काष्ठा udma_chan *uc, पूर्णांक reg)
+अणु
+	अगर (!uc->rchan)
+		वापस 0;
+	वापस udma_पढ़ो(uc->rchan->reg_rt, reg);
+पूर्ण
 
-static inline void udma_rchanrt_write(struct udma_chan *uc, int reg, u32 val)
-{
-	if (!uc->rchan)
-		return;
-	udma_write(uc->rchan->reg_rt, reg, val);
-}
+अटल अंतरभूत व्योम udma_rchanrt_ग_लिखो(काष्ठा udma_chan *uc, पूर्णांक reg, u32 val)
+अणु
+	अगर (!uc->rchan)
+		वापस;
+	udma_ग_लिखो(uc->rchan->reg_rt, reg, val);
+पूर्ण
 
-static inline void udma_rchanrt_update_bits(struct udma_chan *uc, int reg,
+अटल अंतरभूत व्योम udma_rchanrt_update_bits(काष्ठा udma_chan *uc, पूर्णांक reg,
 					    u32 mask, u32 val)
-{
-	if (!uc->rchan)
-		return;
+अणु
+	अगर (!uc->rchan)
+		वापस;
 	udma_update_bits(uc->rchan->reg_rt, reg, mask, val);
-}
+पूर्ण
 
-static int navss_psil_pair(struct udma_dev *ud, u32 src_thread, u32 dst_thread)
-{
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+अटल पूर्णांक navss_psil_pair(काष्ठा udma_dev *ud, u32 src_thपढ़ो, u32 dst_thपढ़ो)
+अणु
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
 
-	dst_thread |= K3_PSIL_DST_THREAD_ID_OFFSET;
-	return tisci_rm->tisci_psil_ops->pair(tisci_rm->tisci,
+	dst_thपढ़ो |= K3_PSIL_DST_THREAD_ID_OFFSET;
+	वापस tisci_rm->tisci_psil_ops->pair(tisci_rm->tisci,
 					      tisci_rm->tisci_navss_dev_id,
-					      src_thread, dst_thread);
-}
+					      src_thपढ़ो, dst_thपढ़ो);
+पूर्ण
 
-static int navss_psil_unpair(struct udma_dev *ud, u32 src_thread,
-			     u32 dst_thread)
-{
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+अटल पूर्णांक navss_psil_unpair(काष्ठा udma_dev *ud, u32 src_thपढ़ो,
+			     u32 dst_thपढ़ो)
+अणु
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
 
-	dst_thread |= K3_PSIL_DST_THREAD_ID_OFFSET;
-	return tisci_rm->tisci_psil_ops->unpair(tisci_rm->tisci,
+	dst_thपढ़ो |= K3_PSIL_DST_THREAD_ID_OFFSET;
+	वापस tisci_rm->tisci_psil_ops->unpair(tisci_rm->tisci,
 						tisci_rm->tisci_navss_dev_id,
-						src_thread, dst_thread);
-}
+						src_thपढ़ो, dst_thपढ़ो);
+पूर्ण
 
-static void k3_configure_chan_coherency(struct dma_chan *chan, u32 asel)
-{
-	struct device *chan_dev = &chan->dev->device;
+अटल व्योम k3_configure_chan_coherency(काष्ठा dma_chan *chan, u32 asel)
+अणु
+	काष्ठा device *chan_dev = &chan->dev->device;
 
-	if (asel == 0) {
-		/* No special handling for the channel */
+	अगर (asel == 0) अणु
+		/* No special handling क्रम the channel */
 		chan->dev->chan_dma_dev = false;
 
 		chan_dev->dma_coherent = false;
-		chan_dev->dma_parms = NULL;
-	} else if (asel == 14 || asel == 15) {
+		chan_dev->dma_parms = शून्य;
+	पूर्ण अन्यथा अगर (asel == 14 || asel == 15) अणु
 		chan->dev->chan_dma_dev = true;
 
 		chan_dev->dma_coherent = true;
 		dma_coerce_mask_and_coherent(chan_dev, DMA_BIT_MASK(48));
 		chan_dev->dma_parms = chan_dev->parent->dma_parms;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_warn(chan->device->dev, "Invalid ASEL value: %u\n", asel);
 
 		chan_dev->dma_coherent = false;
-		chan_dev->dma_parms = NULL;
-	}
-}
+		chan_dev->dma_parms = शून्य;
+	पूर्ण
+पूर्ण
 
-static u8 udma_get_chan_tpl_index(struct udma_tpl *tpl_map, int chan_id)
-{
-	int i;
+अटल u8 udma_get_chan_tpl_index(काष्ठा udma_tpl *tpl_map, पूर्णांक chan_id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < tpl_map->levels; i++) {
-		if (chan_id >= tpl_map->start_idx[i])
-			return i;
-	}
+	क्रम (i = 0; i < tpl_map->levels; i++) अणु
+		अगर (chan_id >= tpl_map->start_idx[i])
+			वापस i;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void udma_reset_uchan(struct udma_chan *uc)
-{
-	memset(&uc->config, 0, sizeof(uc->config));
-	uc->config.remote_thread_id = -1;
+अटल व्योम udma_reset_uchan(काष्ठा udma_chan *uc)
+अणु
+	स_रखो(&uc->config, 0, माप(uc->config));
+	uc->config.remote_thपढ़ो_id = -1;
 	uc->config.mapped_channel_id = -1;
-	uc->config.default_flow_id = -1;
+	uc->config.शेष_flow_id = -1;
 	uc->state = UDMA_CHAN_IS_IDLE;
-}
+पूर्ण
 
-static void udma_dump_chan_stdata(struct udma_chan *uc)
-{
-	struct device *dev = uc->ud->dev;
+अटल व्योम udma_dump_chan_stdata(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा device *dev = uc->ud->dev;
 	u32 offset;
-	int i;
+	पूर्णांक i;
 
-	if (uc->config.dir == DMA_MEM_TO_DEV || uc->config.dir == DMA_MEM_TO_MEM) {
+	अगर (uc->config.dir == DMA_MEM_TO_DEV || uc->config.dir == DMA_MEM_TO_MEM) अणु
 		dev_dbg(dev, "TCHAN State data:\n");
-		for (i = 0; i < 32; i++) {
+		क्रम (i = 0; i < 32; i++) अणु
 			offset = UDMA_CHAN_RT_STDATA_REG + i * 4;
 			dev_dbg(dev, "TRT_STDATA[%02d]: 0x%08x\n", i,
-				udma_tchanrt_read(uc, offset));
-		}
-	}
+				udma_tchanrt_पढ़ो(uc, offset));
+		पूर्ण
+	पूर्ण
 
-	if (uc->config.dir == DMA_DEV_TO_MEM || uc->config.dir == DMA_MEM_TO_MEM) {
+	अगर (uc->config.dir == DMA_DEV_TO_MEM || uc->config.dir == DMA_MEM_TO_MEM) अणु
 		dev_dbg(dev, "RCHAN State data:\n");
-		for (i = 0; i < 32; i++) {
+		क्रम (i = 0; i < 32; i++) अणु
 			offset = UDMA_CHAN_RT_STDATA_REG + i * 4;
 			dev_dbg(dev, "RRT_STDATA[%02d]: 0x%08x\n", i,
-				udma_rchanrt_read(uc, offset));
-		}
-	}
-}
+				udma_rchanrt_पढ़ो(uc, offset));
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline dma_addr_t udma_curr_cppi5_desc_paddr(struct udma_desc *d,
-						    int idx)
-{
-	return d->hwdesc[idx].cppi5_desc_paddr;
-}
+अटल अंतरभूत dma_addr_t udma_curr_cppi5_desc_paddr(काष्ठा udma_desc *d,
+						    पूर्णांक idx)
+अणु
+	वापस d->hwdesc[idx].cppi5_desc_paddr;
+पूर्ण
 
-static inline void *udma_curr_cppi5_desc_vaddr(struct udma_desc *d, int idx)
-{
-	return d->hwdesc[idx].cppi5_desc_vaddr;
-}
+अटल अंतरभूत व्योम *udma_curr_cppi5_desc_vaddr(काष्ठा udma_desc *d, पूर्णांक idx)
+अणु
+	वापस d->hwdesc[idx].cppi5_desc_vaddr;
+पूर्ण
 
-static struct udma_desc *udma_udma_desc_from_paddr(struct udma_chan *uc,
+अटल काष्ठा udma_desc *udma_udma_desc_from_paddr(काष्ठा udma_chan *uc,
 						   dma_addr_t paddr)
-{
-	struct udma_desc *d = uc->terminated_desc;
+अणु
+	काष्ठा udma_desc *d = uc->terminated_desc;
 
-	if (d) {
+	अगर (d) अणु
 		dma_addr_t desc_paddr = udma_curr_cppi5_desc_paddr(d,
 								   d->desc_idx);
 
-		if (desc_paddr != paddr)
-			d = NULL;
-	}
+		अगर (desc_paddr != paddr)
+			d = शून्य;
+	पूर्ण
 
-	if (!d) {
+	अगर (!d) अणु
 		d = uc->desc;
-		if (d) {
+		अगर (d) अणु
 			dma_addr_t desc_paddr = udma_curr_cppi5_desc_paddr(d,
 								d->desc_idx);
 
-			if (desc_paddr != paddr)
-				d = NULL;
-		}
-	}
+			अगर (desc_paddr != paddr)
+				d = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static void udma_free_hwdesc(struct udma_chan *uc, struct udma_desc *d)
-{
-	if (uc->use_dma_pool) {
-		int i;
+अटल व्योम udma_मुक्त_hwdesc(काष्ठा udma_chan *uc, काष्ठा udma_desc *d)
+अणु
+	अगर (uc->use_dma_pool) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < d->hwdesc_count; i++) {
-			if (!d->hwdesc[i].cppi5_desc_vaddr)
-				continue;
+		क्रम (i = 0; i < d->hwdesc_count; i++) अणु
+			अगर (!d->hwdesc[i].cppi5_desc_vaddr)
+				जारी;
 
-			dma_pool_free(uc->hdesc_pool,
+			dma_pool_मुक्त(uc->hdesc_pool,
 				      d->hwdesc[i].cppi5_desc_vaddr,
 				      d->hwdesc[i].cppi5_desc_paddr);
 
-			d->hwdesc[i].cppi5_desc_vaddr = NULL;
-		}
-	} else if (d->hwdesc[0].cppi5_desc_vaddr) {
-		dma_free_coherent(uc->dma_dev, d->hwdesc[0].cppi5_desc_size,
+			d->hwdesc[i].cppi5_desc_vaddr = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अगर (d->hwdesc[0].cppi5_desc_vaddr) अणु
+		dma_मुक्त_coherent(uc->dma_dev, d->hwdesc[0].cppi5_desc_size,
 				  d->hwdesc[0].cppi5_desc_vaddr,
 				  d->hwdesc[0].cppi5_desc_paddr);
 
-		d->hwdesc[0].cppi5_desc_vaddr = NULL;
-	}
-}
+		d->hwdesc[0].cppi5_desc_vaddr = शून्य;
+	पूर्ण
+पूर्ण
 
-static void udma_purge_desc_work(struct work_struct *work)
-{
-	struct udma_dev *ud = container_of(work, typeof(*ud), purge_work);
-	struct virt_dma_desc *vd, *_vd;
-	unsigned long flags;
+अटल व्योम udma_purge_desc_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा udma_dev *ud = container_of(work, typeof(*ud), purge_work);
+	काष्ठा virt_dma_desc *vd, *_vd;
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&ud->lock, flags);
 	list_splice_tail_init(&ud->desc_to_purge, &head);
 	spin_unlock_irqrestore(&ud->lock, flags);
 
-	list_for_each_entry_safe(vd, _vd, &head, node) {
-		struct udma_chan *uc = to_udma_chan(vd->tx.chan);
-		struct udma_desc *d = to_udma_desc(&vd->tx);
+	list_क्रम_each_entry_safe(vd, _vd, &head, node) अणु
+		काष्ठा udma_chan *uc = to_udma_chan(vd->tx.chan);
+		काष्ठा udma_desc *d = to_udma_desc(&vd->tx);
 
-		udma_free_hwdesc(uc, d);
+		udma_मुक्त_hwdesc(uc, d);
 		list_del(&vd->node);
-		kfree(d);
-	}
+		kमुक्त(d);
+	पूर्ण
 
 	/* If more to purge, schedule the work again */
-	if (!list_empty(&ud->desc_to_purge))
+	अगर (!list_empty(&ud->desc_to_purge))
 		schedule_work(&ud->purge_work);
-}
+पूर्ण
 
-static void udma_desc_free(struct virt_dma_desc *vd)
-{
-	struct udma_dev *ud = to_udma_dev(vd->tx.chan->device);
-	struct udma_chan *uc = to_udma_chan(vd->tx.chan);
-	struct udma_desc *d = to_udma_desc(&vd->tx);
-	unsigned long flags;
+अटल व्योम udma_desc_मुक्त(काष्ठा virt_dma_desc *vd)
+अणु
+	काष्ठा udma_dev *ud = to_udma_dev(vd->tx.chan->device);
+	काष्ठा udma_chan *uc = to_udma_chan(vd->tx.chan);
+	काष्ठा udma_desc *d = to_udma_desc(&vd->tx);
+	अचिन्हित दीर्घ flags;
 
-	if (uc->terminated_desc == d)
-		uc->terminated_desc = NULL;
+	अगर (uc->terminated_desc == d)
+		uc->terminated_desc = शून्य;
 
-	if (uc->use_dma_pool) {
-		udma_free_hwdesc(uc, d);
-		kfree(d);
-		return;
-	}
+	अगर (uc->use_dma_pool) अणु
+		udma_मुक्त_hwdesc(uc, d);
+		kमुक्त(d);
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&ud->lock, flags);
 	list_add_tail(&vd->node, &ud->desc_to_purge);
 	spin_unlock_irqrestore(&ud->lock, flags);
 
 	schedule_work(&ud->purge_work);
-}
+पूर्ण
 
-static bool udma_is_chan_running(struct udma_chan *uc)
-{
+अटल bool udma_is_chan_running(काष्ठा udma_chan *uc)
+अणु
 	u32 trt_ctl = 0;
 	u32 rrt_ctl = 0;
 
-	if (uc->tchan)
-		trt_ctl = udma_tchanrt_read(uc, UDMA_CHAN_RT_CTL_REG);
-	if (uc->rchan)
-		rrt_ctl = udma_rchanrt_read(uc, UDMA_CHAN_RT_CTL_REG);
+	अगर (uc->tchan)
+		trt_ctl = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_CTL_REG);
+	अगर (uc->rchan)
+		rrt_ctl = udma_rchanrt_पढ़ो(uc, UDMA_CHAN_RT_CTL_REG);
 
-	if (trt_ctl & UDMA_CHAN_RT_CTL_EN || rrt_ctl & UDMA_CHAN_RT_CTL_EN)
-		return true;
+	अगर (trt_ctl & UDMA_CHAN_RT_CTL_EN || rrt_ctl & UDMA_CHAN_RT_CTL_EN)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool udma_is_chan_paused(struct udma_chan *uc)
-{
-	u32 val, pause_mask;
+अटल bool udma_is_chan_छोड़ोd(काष्ठा udma_chan *uc)
+अणु
+	u32 val, छोड़ो_mask;
 
-	switch (uc->config.dir) {
-	case DMA_DEV_TO_MEM:
-		val = udma_rchanrt_read(uc, UDMA_CHAN_RT_PEER_RT_EN_REG);
-		pause_mask = UDMA_PEER_RT_EN_PAUSE;
-		break;
-	case DMA_MEM_TO_DEV:
-		val = udma_tchanrt_read(uc, UDMA_CHAN_RT_PEER_RT_EN_REG);
-		pause_mask = UDMA_PEER_RT_EN_PAUSE;
-		break;
-	case DMA_MEM_TO_MEM:
-		val = udma_tchanrt_read(uc, UDMA_CHAN_RT_CTL_REG);
-		pause_mask = UDMA_CHAN_RT_CTL_PAUSE;
-		break;
-	default:
-		return false;
-	}
+	चयन (uc->config.dir) अणु
+	हाल DMA_DEV_TO_MEM:
+		val = udma_rchanrt_पढ़ो(uc, UDMA_CHAN_RT_PEER_RT_EN_REG);
+		छोड़ो_mask = UDMA_PEER_RT_EN_PAUSE;
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
+		val = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_PEER_RT_EN_REG);
+		छोड़ो_mask = UDMA_PEER_RT_EN_PAUSE;
+		अवरोध;
+	हाल DMA_MEM_TO_MEM:
+		val = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_CTL_REG);
+		छोड़ो_mask = UDMA_CHAN_RT_CTL_PAUSE;
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	if (val & pause_mask)
-		return true;
+	अगर (val & छोड़ो_mask)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline dma_addr_t udma_get_rx_flush_hwdesc_paddr(struct udma_chan *uc)
-{
-	return uc->ud->rx_flush.hwdescs[uc->config.pkt_mode].cppi5_desc_paddr;
-}
+अटल अंतरभूत dma_addr_t udma_get_rx_flush_hwdesc_paddr(काष्ठा udma_chan *uc)
+अणु
+	वापस uc->ud->rx_flush.hwdescs[uc->config.pkt_mode].cppi5_desc_paddr;
+पूर्ण
 
-static int udma_push_to_ring(struct udma_chan *uc, int idx)
-{
-	struct udma_desc *d = uc->desc;
-	struct k3_ring *ring = NULL;
+अटल पूर्णांक udma_push_to_ring(काष्ठा udma_chan *uc, पूर्णांक idx)
+अणु
+	काष्ठा udma_desc *d = uc->desc;
+	काष्ठा k3_ring *ring = शून्य;
 	dma_addr_t paddr;
 
-	switch (uc->config.dir) {
-	case DMA_DEV_TO_MEM:
+	चयन (uc->config.dir) अणु
+	हाल DMA_DEV_TO_MEM:
 		ring = uc->rflow->fd_ring;
-		break;
-	case DMA_MEM_TO_DEV:
-	case DMA_MEM_TO_MEM:
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
+	हाल DMA_MEM_TO_MEM:
 		ring = uc->tchan->t_ring;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* RX flush packet: idx == -1 is only passed in case of DEV_TO_MEM */
-	if (idx == -1) {
+	/* RX flush packet: idx == -1 is only passed in हाल of DEV_TO_MEM */
+	अगर (idx == -1) अणु
 		paddr = udma_get_rx_flush_hwdesc_paddr(uc);
-	} else {
+	पूर्ण अन्यथा अणु
 		paddr = udma_curr_cppi5_desc_paddr(d, idx);
 
-		wmb(); /* Ensure that writes are not moved over this point */
-	}
+		wmb(); /* Ensure that ग_लिखोs are not moved over this poपूर्णांक */
+	पूर्ण
 
-	return k3_ringacc_ring_push(ring, &paddr);
-}
+	वापस k3_ringacc_ring_push(ring, &paddr);
+पूर्ण
 
-static bool udma_desc_is_rx_flush(struct udma_chan *uc, dma_addr_t addr)
-{
-	if (uc->config.dir != DMA_DEV_TO_MEM)
-		return false;
+अटल bool udma_desc_is_rx_flush(काष्ठा udma_chan *uc, dma_addr_t addr)
+अणु
+	अगर (uc->config.dir != DMA_DEV_TO_MEM)
+		वापस false;
 
-	if (addr == udma_get_rx_flush_hwdesc_paddr(uc))
-		return true;
+	अगर (addr == udma_get_rx_flush_hwdesc_paddr(uc))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int udma_pop_from_ring(struct udma_chan *uc, dma_addr_t *addr)
-{
-	struct k3_ring *ring = NULL;
-	int ret;
+अटल पूर्णांक udma_pop_from_ring(काष्ठा udma_chan *uc, dma_addr_t *addr)
+अणु
+	काष्ठा k3_ring *ring = शून्य;
+	पूर्णांक ret;
 
-	switch (uc->config.dir) {
-	case DMA_DEV_TO_MEM:
+	चयन (uc->config.dir) अणु
+	हाल DMA_DEV_TO_MEM:
 		ring = uc->rflow->r_ring;
-		break;
-	case DMA_MEM_TO_DEV:
-	case DMA_MEM_TO_MEM:
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
+	हाल DMA_MEM_TO_MEM:
 		ring = uc->tchan->tc_ring;
-		break;
-	default:
-		return -ENOENT;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
 	ret = k3_ringacc_ring_pop(ring, addr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	rmb(); /* Ensure that reads are not moved before this point */
+	rmb(); /* Ensure that पढ़ोs are not moved beक्रमe this poपूर्णांक */
 
-	/* Teardown completion */
-	if (cppi5_desc_is_tdcm(*addr))
-		return 0;
+	/* Tearकरोwn completion */
+	अगर (cppi5_desc_is_tdcm(*addr))
+		वापस 0;
 
-	/* Check for flush descriptor */
-	if (udma_desc_is_rx_flush(uc, *addr))
-		return -ENOENT;
+	/* Check क्रम flush descriptor */
+	अगर (udma_desc_is_rx_flush(uc, *addr))
+		वापस -ENOENT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void udma_reset_rings(struct udma_chan *uc)
-{
-	struct k3_ring *ring1 = NULL;
-	struct k3_ring *ring2 = NULL;
+अटल व्योम udma_reset_rings(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा k3_ring *ring1 = शून्य;
+	काष्ठा k3_ring *ring2 = शून्य;
 
-	switch (uc->config.dir) {
-	case DMA_DEV_TO_MEM:
-		if (uc->rchan) {
+	चयन (uc->config.dir) अणु
+	हाल DMA_DEV_TO_MEM:
+		अगर (uc->rchan) अणु
 			ring1 = uc->rflow->fd_ring;
 			ring2 = uc->rflow->r_ring;
-		}
-		break;
-	case DMA_MEM_TO_DEV:
-	case DMA_MEM_TO_MEM:
-		if (uc->tchan) {
+		पूर्ण
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
+	हाल DMA_MEM_TO_MEM:
+		अगर (uc->tchan) अणु
 			ring1 = uc->tchan->t_ring;
 			ring2 = uc->tchan->tc_ring;
-		}
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (ring1)
+	अगर (ring1)
 		k3_ringacc_ring_reset_dma(ring1,
 					  k3_ringacc_ring_get_occ(ring1));
-	if (ring2)
+	अगर (ring2)
 		k3_ringacc_ring_reset(ring2);
 
 	/* make sure we are not leaking memory by stalled descriptor */
-	if (uc->terminated_desc) {
-		udma_desc_free(&uc->terminated_desc->vd);
-		uc->terminated_desc = NULL;
-	}
-}
+	अगर (uc->terminated_desc) अणु
+		udma_desc_मुक्त(&uc->terminated_desc->vd);
+		uc->terminated_desc = शून्य;
+	पूर्ण
+पूर्ण
 
-static void udma_reset_counters(struct udma_chan *uc)
-{
+अटल व्योम udma_reset_counters(काष्ठा udma_chan *uc)
+अणु
 	u32 val;
 
-	if (uc->tchan) {
-		val = udma_tchanrt_read(uc, UDMA_CHAN_RT_BCNT_REG);
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_BCNT_REG, val);
+	अगर (uc->tchan) अणु
+		val = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_BCNT_REG);
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_BCNT_REG, val);
 
-		val = udma_tchanrt_read(uc, UDMA_CHAN_RT_SBCNT_REG);
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_SBCNT_REG, val);
+		val = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_SBCNT_REG);
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_SBCNT_REG, val);
 
-		val = udma_tchanrt_read(uc, UDMA_CHAN_RT_PCNT_REG);
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_PCNT_REG, val);
+		val = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_PCNT_REG);
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PCNT_REG, val);
 
-		if (!uc->bchan) {
-			val = udma_tchanrt_read(uc, UDMA_CHAN_RT_PEER_BCNT_REG);
-			udma_tchanrt_write(uc, UDMA_CHAN_RT_PEER_BCNT_REG, val);
-		}
-	}
+		अगर (!uc->bchan) अणु
+			val = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_PEER_BCNT_REG);
+			udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PEER_BCNT_REG, val);
+		पूर्ण
+	पूर्ण
 
-	if (uc->rchan) {
-		val = udma_rchanrt_read(uc, UDMA_CHAN_RT_BCNT_REG);
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_BCNT_REG, val);
+	अगर (uc->rchan) अणु
+		val = udma_rchanrt_पढ़ो(uc, UDMA_CHAN_RT_BCNT_REG);
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_BCNT_REG, val);
 
-		val = udma_rchanrt_read(uc, UDMA_CHAN_RT_SBCNT_REG);
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_SBCNT_REG, val);
+		val = udma_rchanrt_पढ़ो(uc, UDMA_CHAN_RT_SBCNT_REG);
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_SBCNT_REG, val);
 
-		val = udma_rchanrt_read(uc, UDMA_CHAN_RT_PCNT_REG);
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_PCNT_REG, val);
+		val = udma_rchanrt_पढ़ो(uc, UDMA_CHAN_RT_PCNT_REG);
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PCNT_REG, val);
 
-		val = udma_rchanrt_read(uc, UDMA_CHAN_RT_PEER_BCNT_REG);
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_PEER_BCNT_REG, val);
-	}
+		val = udma_rchanrt_पढ़ो(uc, UDMA_CHAN_RT_PEER_BCNT_REG);
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PEER_BCNT_REG, val);
+	पूर्ण
 
 	uc->bcnt = 0;
-}
+पूर्ण
 
-static int udma_reset_chan(struct udma_chan *uc, bool hard)
-{
-	switch (uc->config.dir) {
-	case DMA_DEV_TO_MEM:
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_PEER_RT_EN_REG, 0);
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_CTL_REG, 0);
-		break;
-	case DMA_MEM_TO_DEV:
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_CTL_REG, 0);
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_PEER_RT_EN_REG, 0);
-		break;
-	case DMA_MEM_TO_MEM:
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_CTL_REG, 0);
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_CTL_REG, 0);
-		break;
-	default:
-		return -EINVAL;
-	}
+अटल पूर्णांक udma_reset_chan(काष्ठा udma_chan *uc, bool hard)
+अणु
+	चयन (uc->config.dir) अणु
+	हाल DMA_DEV_TO_MEM:
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PEER_RT_EN_REG, 0);
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG, 0);
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG, 0);
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PEER_RT_EN_REG, 0);
+		अवरोध;
+	हाल DMA_MEM_TO_MEM:
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG, 0);
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG, 0);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Reset all counters */
 	udma_reset_counters(uc);
 
 	/* Hard reset: re-initialize the channel to reset */
-	if (hard) {
-		struct udma_chan_config ucc_backup;
-		int ret;
+	अगर (hard) अणु
+		काष्ठा udma_chan_config ucc_backup;
+		पूर्णांक ret;
 
-		memcpy(&ucc_backup, &uc->config, sizeof(uc->config));
-		uc->ud->ddev.device_free_chan_resources(&uc->vc.chan);
+		स_नकल(&ucc_backup, &uc->config, माप(uc->config));
+		uc->ud->ddev.device_मुक्त_chan_resources(&uc->vc.chan);
 
 		/* restore the channel configuration */
-		memcpy(&uc->config, &ucc_backup, sizeof(uc->config));
+		स_नकल(&uc->config, &ucc_backup, माप(uc->config));
 		ret = uc->ud->ddev.device_alloc_chan_resources(&uc->vc.chan);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/*
-		 * Setting forced teardown after forced reset helps recovering
+		 * Setting क्रमced tearकरोwn after क्रमced reset helps recovering
 		 * the rchan.
 		 */
-		if (uc->config.dir == DMA_DEV_TO_MEM)
-			udma_rchanrt_write(uc, UDMA_CHAN_RT_CTL_REG,
+		अगर (uc->config.dir == DMA_DEV_TO_MEM)
+			udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG,
 					   UDMA_CHAN_RT_CTL_EN |
 					   UDMA_CHAN_RT_CTL_TDOWN |
 					   UDMA_CHAN_RT_CTL_FTDOWN);
-	}
+	पूर्ण
 	uc->state = UDMA_CHAN_IS_IDLE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void udma_start_desc(struct udma_chan *uc)
-{
-	struct udma_chan_config *ucc = &uc->config;
+अटल व्योम udma_start_desc(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_chan_config *ucc = &uc->config;
 
-	if (uc->ud->match_data->type == DMA_TYPE_UDMA && ucc->pkt_mode &&
-	    (uc->cyclic || ucc->dir == DMA_DEV_TO_MEM)) {
-		int i;
+	अगर (uc->ud->match_data->type == DMA_TYPE_UDMA && ucc->pkt_mode &&
+	    (uc->cyclic || ucc->dir == DMA_DEV_TO_MEM)) अणु
+		पूर्णांक i;
 
 		/*
-		 * UDMA only: Push all descriptors to ring for packet mode
+		 * UDMA only: Push all descriptors to ring क्रम packet mode
 		 * cyclic or RX
 		 * PKTDMA supports pre-linked descriptor and cyclic is not
 		 * supported
 		 */
-		for (i = 0; i < uc->desc->sglen; i++)
+		क्रम (i = 0; i < uc->desc->sglen; i++)
 			udma_push_to_ring(uc, i);
-	} else {
+	पूर्ण अन्यथा अणु
 		udma_push_to_ring(uc, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool udma_chan_needs_reconfiguration(struct udma_chan *uc)
-{
-	/* Only PDMAs have staticTR */
-	if (uc->config.ep_type == PSIL_EP_NATIVE)
-		return false;
+अटल bool udma_chan_needs_reconfiguration(काष्ठा udma_chan *uc)
+अणु
+	/* Only PDMAs have अटलTR */
+	अगर (uc->config.ep_type == PSIL_EP_NATIVE)
+		वापस false;
 
-	/* Check if the staticTR configuration has changed for TX */
-	if (memcmp(&uc->static_tr, &uc->desc->static_tr, sizeof(uc->static_tr)))
-		return true;
+	/* Check अगर the अटलTR configuration has changed क्रम TX */
+	अगर (स_भेद(&uc->अटल_tr, &uc->desc->अटल_tr, माप(uc->अटल_tr)))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int udma_start(struct udma_chan *uc)
-{
-	struct virt_dma_desc *vd = vchan_next_desc(&uc->vc);
+अटल पूर्णांक udma_start(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा virt_dma_desc *vd = vchan_next_desc(&uc->vc);
 
-	if (!vd) {
-		uc->desc = NULL;
-		return -ENOENT;
-	}
+	अगर (!vd) अणु
+		uc->desc = शून्य;
+		वापस -ENOENT;
+	पूर्ण
 
 	list_del(&vd->node);
 
 	uc->desc = to_udma_desc(&vd->tx);
 
-	/* Channel is already running and does not need reconfiguration */
-	if (udma_is_chan_running(uc) && !udma_chan_needs_reconfiguration(uc)) {
+	/* Channel is alपढ़ोy running and करोes not need reconfiguration */
+	अगर (udma_is_chan_running(uc) && !udma_chan_needs_reconfiguration(uc)) अणु
 		udma_start_desc(uc);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Make sure that we clear the teardown bit, if it is set */
+	/* Make sure that we clear the tearकरोwn bit, अगर it is set */
 	udma_reset_chan(uc, false);
 
-	/* Push descriptors before we start the channel */
+	/* Push descriptors beक्रमe we start the channel */
 	udma_start_desc(uc);
 
-	switch (uc->desc->dir) {
-	case DMA_DEV_TO_MEM:
+	चयन (uc->desc->dir) अणु
+	हाल DMA_DEV_TO_MEM:
 		/* Config remote TR */
-		if (uc->config.ep_type == PSIL_EP_PDMA_XY) {
-			u32 val = PDMA_STATIC_TR_Y(uc->desc->static_tr.elcnt) |
-				  PDMA_STATIC_TR_X(uc->desc->static_tr.elsize);
-			const struct udma_match_data *match_data =
+		अगर (uc->config.ep_type == PSIL_EP_PDMA_XY) अणु
+			u32 val = PDMA_STATIC_TR_Y(uc->desc->अटल_tr.elcnt) |
+				  PDMA_STATIC_TR_X(uc->desc->अटल_tr.elsize);
+			स्थिर काष्ठा udma_match_data *match_data =
 							uc->ud->match_data;
 
-			if (uc->config.enable_acc32)
+			अगर (uc->config.enable_acc32)
 				val |= PDMA_STATIC_TR_XY_ACC32;
-			if (uc->config.enable_burst)
+			अगर (uc->config.enable_burst)
 				val |= PDMA_STATIC_TR_XY_BURST;
 
-			udma_rchanrt_write(uc,
+			udma_rchanrt_ग_लिखो(uc,
 					   UDMA_CHAN_RT_PEER_STATIC_TR_XY_REG,
 					   val);
 
-			udma_rchanrt_write(uc,
+			udma_rchanrt_ग_लिखो(uc,
 				UDMA_CHAN_RT_PEER_STATIC_TR_Z_REG,
-				PDMA_STATIC_TR_Z(uc->desc->static_tr.bstcnt,
-						 match_data->statictr_z_mask));
+				PDMA_STATIC_TR_Z(uc->desc->अटल_tr.bstcnt,
+						 match_data->अटलtr_z_mask));
 
-			/* save the current staticTR configuration */
-			memcpy(&uc->static_tr, &uc->desc->static_tr,
-			       sizeof(uc->static_tr));
-		}
+			/* save the current अटलTR configuration */
+			स_नकल(&uc->अटल_tr, &uc->desc->अटल_tr,
+			       माप(uc->अटल_tr));
+		पूर्ण
 
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_CTL_REG,
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG,
 				   UDMA_CHAN_RT_CTL_EN);
 
 		/* Enable remote */
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
 				   UDMA_PEER_RT_EN_ENABLE);
 
-		break;
-	case DMA_MEM_TO_DEV:
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
 		/* Config remote TR */
-		if (uc->config.ep_type == PSIL_EP_PDMA_XY) {
-			u32 val = PDMA_STATIC_TR_Y(uc->desc->static_tr.elcnt) |
-				  PDMA_STATIC_TR_X(uc->desc->static_tr.elsize);
+		अगर (uc->config.ep_type == PSIL_EP_PDMA_XY) अणु
+			u32 val = PDMA_STATIC_TR_Y(uc->desc->अटल_tr.elcnt) |
+				  PDMA_STATIC_TR_X(uc->desc->अटल_tr.elsize);
 
-			if (uc->config.enable_acc32)
+			अगर (uc->config.enable_acc32)
 				val |= PDMA_STATIC_TR_XY_ACC32;
-			if (uc->config.enable_burst)
+			अगर (uc->config.enable_burst)
 				val |= PDMA_STATIC_TR_XY_BURST;
 
-			udma_tchanrt_write(uc,
+			udma_tchanrt_ग_लिखो(uc,
 					   UDMA_CHAN_RT_PEER_STATIC_TR_XY_REG,
 					   val);
 
-			/* save the current staticTR configuration */
-			memcpy(&uc->static_tr, &uc->desc->static_tr,
-			       sizeof(uc->static_tr));
-		}
+			/* save the current अटलTR configuration */
+			स_नकल(&uc->अटल_tr, &uc->desc->अटल_tr,
+			       माप(uc->अटल_tr));
+		पूर्ण
 
 		/* Enable remote */
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
 				   UDMA_PEER_RT_EN_ENABLE);
 
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_CTL_REG,
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG,
 				   UDMA_CHAN_RT_CTL_EN);
 
-		break;
-	case DMA_MEM_TO_MEM:
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_CTL_REG,
+		अवरोध;
+	हाल DMA_MEM_TO_MEM:
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG,
 				   UDMA_CHAN_RT_CTL_EN);
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_CTL_REG,
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG,
 				   UDMA_CHAN_RT_CTL_EN);
 
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	uc->state = UDMA_CHAN_IS_ACTIVE;
 out:
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int udma_stop(struct udma_chan *uc)
-{
-	enum udma_chan_state old_state = uc->state;
+अटल पूर्णांक udma_stop(काष्ठा udma_chan *uc)
+अणु
+	क्रमागत udma_chan_state old_state = uc->state;
 
 	uc->state = UDMA_CHAN_IS_TERMINATING;
-	reinit_completion(&uc->teardown_completed);
+	reinit_completion(&uc->tearकरोwn_completed);
 
-	switch (uc->config.dir) {
-	case DMA_DEV_TO_MEM:
-		if (!uc->cyclic && !uc->desc)
+	चयन (uc->config.dir) अणु
+	हाल DMA_DEV_TO_MEM:
+		अगर (!uc->cyclic && !uc->desc)
 			udma_push_to_ring(uc, -1);
 
-		udma_rchanrt_write(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
+		udma_rchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
 				   UDMA_PEER_RT_EN_ENABLE |
 				   UDMA_PEER_RT_EN_TEARDOWN);
-		break;
-	case DMA_MEM_TO_DEV:
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
 				   UDMA_PEER_RT_EN_ENABLE |
 				   UDMA_PEER_RT_EN_FLUSH);
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_CTL_REG,
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG,
 				   UDMA_CHAN_RT_CTL_EN |
 				   UDMA_CHAN_RT_CTL_TDOWN);
-		break;
-	case DMA_MEM_TO_MEM:
-		udma_tchanrt_write(uc, UDMA_CHAN_RT_CTL_REG,
+		अवरोध;
+	हाल DMA_MEM_TO_MEM:
+		udma_tchanrt_ग_लिखो(uc, UDMA_CHAN_RT_CTL_REG,
 				   UDMA_CHAN_RT_CTL_EN |
 				   UDMA_CHAN_RT_CTL_TDOWN);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		uc->state = old_state;
-		complete_all(&uc->teardown_completed);
-		return -EINVAL;
-	}
+		complete_all(&uc->tearकरोwn_completed);
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void udma_cyclic_packet_elapsed(struct udma_chan *uc)
-{
-	struct udma_desc *d = uc->desc;
-	struct cppi5_host_desc_t *h_desc;
+अटल व्योम udma_cyclic_packet_elapsed(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_desc *d = uc->desc;
+	काष्ठा cppi5_host_desc_t *h_desc;
 
 	h_desc = d->hwdesc[d->desc_idx].cppi5_desc_vaddr;
 	cppi5_hdesc_reset_to_original(h_desc);
 	udma_push_to_ring(uc, d->desc_idx);
 	d->desc_idx = (d->desc_idx + 1) % d->sglen;
-}
+पूर्ण
 
-static inline void udma_fetch_epib(struct udma_chan *uc, struct udma_desc *d)
-{
-	struct cppi5_host_desc_t *h_desc = d->hwdesc[0].cppi5_desc_vaddr;
+अटल अंतरभूत व्योम udma_fetch_epib(काष्ठा udma_chan *uc, काष्ठा udma_desc *d)
+अणु
+	काष्ठा cppi5_host_desc_t *h_desc = d->hwdesc[0].cppi5_desc_vaddr;
 
-	memcpy(d->metadata, h_desc->epib, d->metadata_size);
-}
+	स_नकल(d->metadata, h_desc->epib, d->metadata_size);
+पूर्ण
 
-static bool udma_is_desc_really_done(struct udma_chan *uc, struct udma_desc *d)
-{
+अटल bool udma_is_desc_really_करोne(काष्ठा udma_chan *uc, काष्ठा udma_desc *d)
+अणु
 	u32 peer_bcnt, bcnt;
 
 	/* Only TX towards PDMA is affected */
-	if (uc->config.ep_type == PSIL_EP_NATIVE ||
+	अगर (uc->config.ep_type == PSIL_EP_NATIVE ||
 	    uc->config.dir != DMA_MEM_TO_DEV)
-		return true;
+		वापस true;
 
-	peer_bcnt = udma_tchanrt_read(uc, UDMA_CHAN_RT_PEER_BCNT_REG);
-	bcnt = udma_tchanrt_read(uc, UDMA_CHAN_RT_BCNT_REG);
+	peer_bcnt = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_PEER_BCNT_REG);
+	bcnt = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_BCNT_REG);
 
-	/* Transfer is incomplete, store current residue and time stamp */
-	if (peer_bcnt < bcnt) {
+	/* Transfer is incomplete, store current residue and समय stamp */
+	अगर (peer_bcnt < bcnt) अणु
 		uc->tx_drain.residue = bcnt - peer_bcnt;
-		uc->tx_drain.tstamp = ktime_get();
-		return false;
-	}
+		uc->tx_drain.tstamp = kसमय_get();
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void udma_check_tx_completion(struct work_struct *work)
-{
-	struct udma_chan *uc = container_of(work, typeof(*uc),
+अटल व्योम udma_check_tx_completion(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा udma_chan *uc = container_of(work, typeof(*uc),
 					    tx_drain.work.work);
-	bool desc_done = true;
-	u32 residue_diff;
-	ktime_t time_diff;
-	unsigned long delay;
+	bool desc_करोne = true;
+	u32 residue_dअगरf;
+	kसमय_प्रकार समय_dअगरf;
+	अचिन्हित दीर्घ delay;
 
-	while (1) {
-		if (uc->desc) {
-			/* Get previous residue and time stamp */
-			residue_diff = uc->tx_drain.residue;
-			time_diff = uc->tx_drain.tstamp;
+	जबतक (1) अणु
+		अगर (uc->desc) अणु
+			/* Get previous residue and समय stamp */
+			residue_dअगरf = uc->tx_drain.residue;
+			समय_dअगरf = uc->tx_drain.tstamp;
 			/*
-			 * Get current residue and time stamp or see if
+			 * Get current residue and समय stamp or see अगर
 			 * transfer is complete
 			 */
-			desc_done = udma_is_desc_really_done(uc, uc->desc);
-		}
+			desc_करोne = udma_is_desc_really_करोne(uc, uc->desc);
+		पूर्ण
 
-		if (!desc_done) {
+		अगर (!desc_करोne) अणु
 			/*
-			 * Find the time delta and residue delta w.r.t
+			 * Find the समय delta and residue delta w.r.t
 			 * previous poll
 			 */
-			time_diff = ktime_sub(uc->tx_drain.tstamp,
-					      time_diff) + 1;
-			residue_diff -= uc->tx_drain.residue;
-			if (residue_diff) {
+			समय_dअगरf = kसमय_sub(uc->tx_drain.tstamp,
+					      समय_dअगरf) + 1;
+			residue_dअगरf -= uc->tx_drain.residue;
+			अगर (residue_dअगरf) अणु
 				/*
 				 * Try to guess when we should check
-				 * next time by calculating rate at
+				 * next समय by calculating rate at
 				 * which data is being drained at the
 				 * peer device
 				 */
-				delay = (time_diff / residue_diff) *
+				delay = (समय_dअगरf / residue_dअगरf) *
 					uc->tx_drain.residue;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* No progress, check again in 1 second  */
 				schedule_delayed_work(&uc->tx_drain.work, HZ);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			usleep_range(ktime_to_us(delay),
-				     ktime_to_us(delay) + 10);
-			continue;
-		}
+			usleep_range(kसमय_प्रकारo_us(delay),
+				     kसमय_प्रकारo_us(delay) + 10);
+			जारी;
+		पूर्ण
 
-		if (uc->desc) {
-			struct udma_desc *d = uc->desc;
+		अगर (uc->desc) अणु
+			काष्ठा udma_desc *d = uc->desc;
 
 			uc->bcnt += d->residue;
 			udma_start(uc);
 			vchan_cookie_complete(&d->vd);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t udma_ring_irq_handler(int irq, void *data)
-{
-	struct udma_chan *uc = data;
-	struct udma_desc *d;
+अटल irqवापस_t udma_ring_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा udma_chan *uc = data;
+	काष्ठा udma_desc *d;
 	dma_addr_t paddr = 0;
 
-	if (udma_pop_from_ring(uc, &paddr) || !paddr)
-		return IRQ_HANDLED;
+	अगर (udma_pop_from_ring(uc, &paddr) || !paddr)
+		वापस IRQ_HANDLED;
 
 	spin_lock(&uc->vc.lock);
 
-	/* Teardown completion message */
-	if (cppi5_desc_is_tdcm(paddr)) {
-		complete_all(&uc->teardown_completed);
+	/* Tearकरोwn completion message */
+	अगर (cppi5_desc_is_tdcm(paddr)) अणु
+		complete_all(&uc->tearकरोwn_completed);
 
-		if (uc->terminated_desc) {
-			udma_desc_free(&uc->terminated_desc->vd);
-			uc->terminated_desc = NULL;
-		}
+		अगर (uc->terminated_desc) अणु
+			udma_desc_मुक्त(&uc->terminated_desc->vd);
+			uc->terminated_desc = शून्य;
+		पूर्ण
 
-		if (!uc->desc)
+		अगर (!uc->desc)
 			udma_start(uc);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	d = udma_udma_desc_from_paddr(uc, paddr);
 
-	if (d) {
+	अगर (d) अणु
 		dma_addr_t desc_paddr = udma_curr_cppi5_desc_paddr(d,
 								   d->desc_idx);
-		if (desc_paddr != paddr) {
+		अगर (desc_paddr != paddr) अणु
 			dev_err(uc->ud->dev, "not matching descriptors!\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (d == uc->desc) {
+		अगर (d == uc->desc) अणु
 			/* active descriptor */
-			if (uc->cyclic) {
+			अगर (uc->cyclic) अणु
 				udma_cyclic_packet_elapsed(uc);
 				vchan_cyclic_callback(&d->vd);
-			} else {
-				if (udma_is_desc_really_done(uc, d)) {
+			पूर्ण अन्यथा अणु
+				अगर (udma_is_desc_really_करोne(uc, d)) अणु
 					uc->bcnt += d->residue;
 					udma_start(uc);
 					vchan_cookie_complete(&d->vd);
-				} else {
+				पूर्ण अन्यथा अणु
 					schedule_delayed_work(&uc->tx_drain.work,
 							      0);
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/*
 			 * terminated descriptor, mark the descriptor as
 			 * completed to update the channel's cookie marker
 			 */
 			dma_cookie_complete(&d->vd.tx);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	spin_unlock(&uc->vc.lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t udma_udma_irq_handler(int irq, void *data)
-{
-	struct udma_chan *uc = data;
-	struct udma_desc *d;
+अटल irqवापस_t udma_udma_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा udma_chan *uc = data;
+	काष्ठा udma_desc *d;
 
 	spin_lock(&uc->vc.lock);
 	d = uc->desc;
-	if (d) {
+	अगर (d) अणु
 		d->tr_idx = (d->tr_idx + 1) % d->sglen;
 
-		if (uc->cyclic) {
+		अगर (uc->cyclic) अणु
 			vchan_cyclic_callback(&d->vd);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* TODO: figure out the real amount of data */
 			uc->bcnt += d->residue;
 			udma_start(uc);
 			vchan_cookie_complete(&d->vd);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&uc->vc.lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * __udma_alloc_gp_rflow_range - alloc range of GP RX flows
@@ -1221,378 +1222,378 @@ static irqreturn_t udma_udma_irq_handler(int irq, void *data)
  * @from: Start the search from this flow id number
  * @cnt: Number of consecutive flow ids to allocate
  *
- * Allocate range of RX flow ids for future use, those flows can be requested
- * only using explicit flow id number. if @from is set to -1 it will try to find
- * first free range. if @from is positive value it will force allocation only
- * of the specified range of flows.
+ * Allocate range of RX flow ids क्रम future use, those flows can be requested
+ * only using explicit flow id number. अगर @from is set to -1 it will try to find
+ * first मुक्त range. अगर @from is positive value it will क्रमce allocation only
+ * of the specअगरied range of flows.
  *
- * Returns -ENOMEM if can't find free range.
- * -EEXIST if requested range is busy.
- * -EINVAL if wrong input values passed.
+ * Returns -ENOMEM अगर can't find मुक्त range.
+ * -EEXIST अगर requested range is busy.
+ * -EINVAL अगर wrong input values passed.
  * Returns flow id on success.
  */
-static int __udma_alloc_gp_rflow_range(struct udma_dev *ud, int from, int cnt)
-{
-	int start, tmp_from;
-	DECLARE_BITMAP(tmp, K3_UDMA_MAX_RFLOWS);
+अटल पूर्णांक __udma_alloc_gp_rflow_range(काष्ठा udma_dev *ud, पूर्णांक from, पूर्णांक cnt)
+अणु
+	पूर्णांक start, पंचांगp_from;
+	DECLARE_BITMAP(पंचांगp, K3_UDMA_MAX_RFLOWS);
 
-	tmp_from = from;
-	if (tmp_from < 0)
-		tmp_from = ud->rchan_cnt;
-	/* default flows can't be allocated and accessible only by id */
-	if (tmp_from < ud->rchan_cnt)
-		return -EINVAL;
+	पंचांगp_from = from;
+	अगर (पंचांगp_from < 0)
+		पंचांगp_from = ud->rchan_cnt;
+	/* शेष flows can't be allocated and accessible only by id */
+	अगर (पंचांगp_from < ud->rchan_cnt)
+		वापस -EINVAL;
 
-	if (tmp_from + cnt > ud->rflow_cnt)
-		return -EINVAL;
+	अगर (पंचांगp_from + cnt > ud->rflow_cnt)
+		वापस -EINVAL;
 
-	bitmap_or(tmp, ud->rflow_gp_map, ud->rflow_gp_map_allocated,
+	biपंचांगap_or(पंचांगp, ud->rflow_gp_map, ud->rflow_gp_map_allocated,
 		  ud->rflow_cnt);
 
-	start = bitmap_find_next_zero_area(tmp,
+	start = biपंचांगap_find_next_zero_area(पंचांगp,
 					   ud->rflow_cnt,
-					   tmp_from, cnt, 0);
-	if (start >= ud->rflow_cnt)
-		return -ENOMEM;
+					   पंचांगp_from, cnt, 0);
+	अगर (start >= ud->rflow_cnt)
+		वापस -ENOMEM;
 
-	if (from >= 0 && start != from)
-		return -EEXIST;
+	अगर (from >= 0 && start != from)
+		वापस -EEXIST;
 
-	bitmap_set(ud->rflow_gp_map_allocated, start, cnt);
-	return start;
-}
+	biपंचांगap_set(ud->rflow_gp_map_allocated, start, cnt);
+	वापस start;
+पूर्ण
 
-static int __udma_free_gp_rflow_range(struct udma_dev *ud, int from, int cnt)
-{
-	if (from < ud->rchan_cnt)
-		return -EINVAL;
-	if (from + cnt > ud->rflow_cnt)
-		return -EINVAL;
+अटल पूर्णांक __udma_मुक्त_gp_rflow_range(काष्ठा udma_dev *ud, पूर्णांक from, पूर्णांक cnt)
+अणु
+	अगर (from < ud->rchan_cnt)
+		वापस -EINVAL;
+	अगर (from + cnt > ud->rflow_cnt)
+		वापस -EINVAL;
 
-	bitmap_clear(ud->rflow_gp_map_allocated, from, cnt);
-	return 0;
-}
+	biपंचांगap_clear(ud->rflow_gp_map_allocated, from, cnt);
+	वापस 0;
+पूर्ण
 
-static struct udma_rflow *__udma_get_rflow(struct udma_dev *ud, int id)
-{
+अटल काष्ठा udma_rflow *__udma_get_rflow(काष्ठा udma_dev *ud, पूर्णांक id)
+अणु
 	/*
-	 * Attempt to request rflow by ID can be made for any rflow
-	 * if not in use with assumption that caller knows what's doing.
-	 * TI-SCI FW will perform additional permission check ant way, it's
+	 * Attempt to request rflow by ID can be made क्रम any rflow
+	 * अगर not in use with assumption that caller knows what's करोing.
+	 * TI-SCI FW will perक्रमm additional permission check ant way, it's
 	 * safe
 	 */
 
-	if (id < 0 || id >= ud->rflow_cnt)
-		return ERR_PTR(-ENOENT);
+	अगर (id < 0 || id >= ud->rflow_cnt)
+		वापस ERR_PTR(-ENOENT);
 
-	if (test_bit(id, ud->rflow_in_use))
-		return ERR_PTR(-ENOENT);
+	अगर (test_bit(id, ud->rflow_in_use))
+		वापस ERR_PTR(-ENOENT);
 
-	if (ud->rflow_gp_map) {
+	अगर (ud->rflow_gp_map) अणु
 		/* GP rflow has to be allocated first */
-		if (!test_bit(id, ud->rflow_gp_map) &&
+		अगर (!test_bit(id, ud->rflow_gp_map) &&
 		    !test_bit(id, ud->rflow_gp_map_allocated))
-			return ERR_PTR(-EINVAL);
-	}
+			वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	dev_dbg(ud->dev, "get rflow%d\n", id);
 	set_bit(id, ud->rflow_in_use);
-	return &ud->rflows[id];
-}
+	वापस &ud->rflows[id];
+पूर्ण
 
-static void __udma_put_rflow(struct udma_dev *ud, struct udma_rflow *rflow)
-{
-	if (!test_bit(rflow->id, ud->rflow_in_use)) {
+अटल व्योम __udma_put_rflow(काष्ठा udma_dev *ud, काष्ठा udma_rflow *rflow)
+अणु
+	अगर (!test_bit(rflow->id, ud->rflow_in_use)) अणु
 		dev_err(ud->dev, "attempt to put unused rflow%d\n", rflow->id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_dbg(ud->dev, "put rflow%d\n", rflow->id);
 	clear_bit(rflow->id, ud->rflow_in_use);
-}
+पूर्ण
 
-#define UDMA_RESERVE_RESOURCE(res)					\
-static struct udma_##res *__udma_reserve_##res(struct udma_dev *ud,	\
-					       enum udma_tp_level tpl,	\
-					       int id)			\
-{									\
-	if (id >= 0) {							\
-		if (test_bit(id, ud->res##_map)) {			\
+#घोषणा UDMA_RESERVE_RESOURCE(res)					\
+अटल काष्ठा udma_##res *__udma_reserve_##res(काष्ठा udma_dev *ud,	\
+					       क्रमागत udma_tp_level tpl,	\
+					       पूर्णांक id)			\
+अणु									\
+	अगर (id >= 0) अणु							\
+		अगर (test_bit(id, ud->res##_map)) अणु			\
 			dev_err(ud->dev, "res##%d is in use\n", id);	\
-			return ERR_PTR(-ENOENT);			\
-		}							\
-	} else {							\
-		int start;						\
+			वापस ERR_PTR(-ENOENT);			\
+		पूर्ण							\
+	पूर्ण अन्यथा अणु							\
+		पूर्णांक start;						\
 									\
-		if (tpl >= ud->res##_tpl.levels)			\
+		अगर (tpl >= ud->res##_tpl.levels)			\
 			tpl = ud->res##_tpl.levels - 1;			\
 									\
 		start = ud->res##_tpl.start_idx[tpl];			\
 									\
 		id = find_next_zero_bit(ud->res##_map, ud->res##_cnt,	\
 					start);				\
-		if (id == ud->res##_cnt) {				\
-			return ERR_PTR(-ENOENT);			\
-		}							\
-	}								\
+		अगर (id == ud->res##_cnt) अणु				\
+			वापस ERR_PTR(-ENOENT);			\
+		पूर्ण							\
+	पूर्ण								\
 									\
 	set_bit(id, ud->res##_map);					\
-	return &ud->res##s[id];						\
-}
+	वापस &ud->res##s[id];						\
+पूर्ण
 
 UDMA_RESERVE_RESOURCE(bchan);
 UDMA_RESERVE_RESOURCE(tchan);
 UDMA_RESERVE_RESOURCE(rchan);
 
-static int bcdma_get_bchan(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	enum udma_tp_level tpl;
+अटल पूर्णांक bcdma_get_bchan(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	क्रमागत udma_tp_level tpl;
 
-	if (uc->bchan) {
+	अगर (uc->bchan) अणु
 		dev_dbg(ud->dev, "chan%d: already have bchan%d allocated\n",
 			uc->id, uc->bchan->id);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Use normal channels for peripherals, and highest TPL channel for
+	 * Use normal channels क्रम peripherals, and highest TPL channel क्रम
 	 * mem2mem
 	 */
-	if (uc->config.tr_trigger_type)
+	अगर (uc->config.tr_trigger_type)
 		tpl = 0;
-	else
+	अन्यथा
 		tpl = ud->bchan_tpl.levels - 1;
 
 	uc->bchan = __udma_reserve_bchan(ud, tpl, -1);
-	if (IS_ERR(uc->bchan))
-		return PTR_ERR(uc->bchan);
+	अगर (IS_ERR(uc->bchan))
+		वापस PTR_ERR(uc->bchan);
 
 	uc->tchan = uc->bchan;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int udma_get_tchan(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
+अटल पूर्णांक udma_get_tchan(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
 
-	if (uc->tchan) {
+	अगर (uc->tchan) अणु
 		dev_dbg(ud->dev, "chan%d: already have tchan%d allocated\n",
 			uc->id, uc->tchan->id);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * mapped_channel_id is -1 for UDMA, BCDMA and PKTDMA unmapped channels.
+	 * mapped_channel_id is -1 क्रम UDMA, BCDMA and PKTDMA unmapped channels.
 	 * For PKTDMA mapped channels it is configured to a channel which must
 	 * be used to service the peripheral.
 	 */
 	uc->tchan = __udma_reserve_tchan(ud, uc->config.channel_tpl,
 					 uc->config.mapped_channel_id);
-	if (IS_ERR(uc->tchan))
-		return PTR_ERR(uc->tchan);
+	अगर (IS_ERR(uc->tchan))
+		वापस PTR_ERR(uc->tchan);
 
-	if (ud->tflow_cnt) {
-		int tflow_id;
+	अगर (ud->tflow_cnt) अणु
+		पूर्णांक tflow_id;
 
-		/* Only PKTDMA have support for tx flows */
-		if (uc->config.default_flow_id >= 0)
-			tflow_id = uc->config.default_flow_id;
-		else
+		/* Only PKTDMA have support क्रम tx flows */
+		अगर (uc->config.शेष_flow_id >= 0)
+			tflow_id = uc->config.शेष_flow_id;
+		अन्यथा
 			tflow_id = uc->tchan->id;
 
-		if (test_bit(tflow_id, ud->tflow_map)) {
+		अगर (test_bit(tflow_id, ud->tflow_map)) अणु
 			dev_err(ud->dev, "tflow%d is in use\n", tflow_id);
 			clear_bit(uc->tchan->id, ud->tchan_map);
-			uc->tchan = NULL;
-			return -ENOENT;
-		}
+			uc->tchan = शून्य;
+			वापस -ENOENT;
+		पूर्ण
 
 		uc->tchan->tflow_id = tflow_id;
 		set_bit(tflow_id, ud->tflow_map);
-	} else {
+	पूर्ण अन्यथा अणु
 		uc->tchan->tflow_id = -1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int udma_get_rchan(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
+अटल पूर्णांक udma_get_rchan(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
 
-	if (uc->rchan) {
+	अगर (uc->rchan) अणु
 		dev_dbg(ud->dev, "chan%d: already have rchan%d allocated\n",
 			uc->id, uc->rchan->id);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * mapped_channel_id is -1 for UDMA, BCDMA and PKTDMA unmapped channels.
+	 * mapped_channel_id is -1 क्रम UDMA, BCDMA and PKTDMA unmapped channels.
 	 * For PKTDMA mapped channels it is configured to a channel which must
 	 * be used to service the peripheral.
 	 */
 	uc->rchan = __udma_reserve_rchan(ud, uc->config.channel_tpl,
 					 uc->config.mapped_channel_id);
 
-	return PTR_ERR_OR_ZERO(uc->rchan);
-}
+	वापस PTR_ERR_OR_ZERO(uc->rchan);
+पूर्ण
 
-static int udma_get_chan_pair(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	int chan_id, end;
+अटल पूर्णांक udma_get_chan_pair(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	पूर्णांक chan_id, end;
 
-	if ((uc->tchan && uc->rchan) && uc->tchan->id == uc->rchan->id) {
+	अगर ((uc->tchan && uc->rchan) && uc->tchan->id == uc->rchan->id) अणु
 		dev_info(ud->dev, "chan%d: already have %d pair allocated\n",
 			 uc->id, uc->tchan->id);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (uc->tchan) {
+	अगर (uc->tchan) अणु
 		dev_err(ud->dev, "chan%d: already have tchan%d allocated\n",
 			uc->id, uc->tchan->id);
-		return -EBUSY;
-	} else if (uc->rchan) {
+		वापस -EBUSY;
+	पूर्ण अन्यथा अगर (uc->rchan) अणु
 		dev_err(ud->dev, "chan%d: already have rchan%d allocated\n",
 			uc->id, uc->rchan->id);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Can be optimized, but let's have it like this for now */
+	/* Can be optimized, but let's have it like this क्रम now */
 	end = min(ud->tchan_cnt, ud->rchan_cnt);
 	/*
-	 * Try to use the highest TPL channel pair for MEM_TO_MEM channels
+	 * Try to use the highest TPL channel pair क्रम MEM_TO_MEM channels
 	 * Note: in UDMAP the channel TPL is symmetric between tchan and rchan
 	 */
 	chan_id = ud->tchan_tpl.start_idx[ud->tchan_tpl.levels - 1];
-	for (; chan_id < end; chan_id++) {
-		if (!test_bit(chan_id, ud->tchan_map) &&
+	क्रम (; chan_id < end; chan_id++) अणु
+		अगर (!test_bit(chan_id, ud->tchan_map) &&
 		    !test_bit(chan_id, ud->rchan_map))
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	if (chan_id == end)
-		return -ENOENT;
+	अगर (chan_id == end)
+		वापस -ENOENT;
 
 	set_bit(chan_id, ud->tchan_map);
 	set_bit(chan_id, ud->rchan_map);
 	uc->tchan = &ud->tchans[chan_id];
 	uc->rchan = &ud->rchans[chan_id];
 
-	/* UDMA does not use tx flows */
+	/* UDMA करोes not use tx flows */
 	uc->tchan->tflow_id = -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int udma_get_rflow(struct udma_chan *uc, int flow_id)
-{
-	struct udma_dev *ud = uc->ud;
+अटल पूर्णांक udma_get_rflow(काष्ठा udma_chan *uc, पूर्णांक flow_id)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
 
-	if (!uc->rchan) {
+	अगर (!uc->rchan) अणु
 		dev_err(ud->dev, "chan%d: does not have rchan??\n", uc->id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (uc->rflow) {
+	अगर (uc->rflow) अणु
 		dev_dbg(ud->dev, "chan%d: already have rflow%d allocated\n",
 			uc->id, uc->rflow->id);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	uc->rflow = __udma_get_rflow(ud, flow_id);
 
-	return PTR_ERR_OR_ZERO(uc->rflow);
-}
+	वापस PTR_ERR_OR_ZERO(uc->rflow);
+पूर्ण
 
-static void bcdma_put_bchan(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
+अटल व्योम bcdma_put_bchan(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
 
-	if (uc->bchan) {
+	अगर (uc->bchan) अणु
 		dev_dbg(ud->dev, "chan%d: put bchan%d\n", uc->id,
 			uc->bchan->id);
 		clear_bit(uc->bchan->id, ud->bchan_map);
-		uc->bchan = NULL;
-		uc->tchan = NULL;
-	}
-}
+		uc->bchan = शून्य;
+		uc->tchan = शून्य;
+	पूर्ण
+पूर्ण
 
-static void udma_put_rchan(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
+अटल व्योम udma_put_rchan(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
 
-	if (uc->rchan) {
+	अगर (uc->rchan) अणु
 		dev_dbg(ud->dev, "chan%d: put rchan%d\n", uc->id,
 			uc->rchan->id);
 		clear_bit(uc->rchan->id, ud->rchan_map);
-		uc->rchan = NULL;
-	}
-}
+		uc->rchan = शून्य;
+	पूर्ण
+पूर्ण
 
-static void udma_put_tchan(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
+अटल व्योम udma_put_tchan(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
 
-	if (uc->tchan) {
+	अगर (uc->tchan) अणु
 		dev_dbg(ud->dev, "chan%d: put tchan%d\n", uc->id,
 			uc->tchan->id);
 		clear_bit(uc->tchan->id, ud->tchan_map);
 
-		if (uc->tchan->tflow_id >= 0)
+		अगर (uc->tchan->tflow_id >= 0)
 			clear_bit(uc->tchan->tflow_id, ud->tflow_map);
 
-		uc->tchan = NULL;
-	}
-}
+		uc->tchan = शून्य;
+	पूर्ण
+पूर्ण
 
-static void udma_put_rflow(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
+अटल व्योम udma_put_rflow(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
 
-	if (uc->rflow) {
+	अगर (uc->rflow) अणु
 		dev_dbg(ud->dev, "chan%d: put rflow%d\n", uc->id,
 			uc->rflow->id);
 		__udma_put_rflow(ud, uc->rflow);
-		uc->rflow = NULL;
-	}
-}
+		uc->rflow = शून्य;
+	पूर्ण
+पूर्ण
 
-static void bcdma_free_bchan_resources(struct udma_chan *uc)
-{
-	if (!uc->bchan)
-		return;
+अटल व्योम bcdma_मुक्त_bchan_resources(काष्ठा udma_chan *uc)
+अणु
+	अगर (!uc->bchan)
+		वापस;
 
-	k3_ringacc_ring_free(uc->bchan->tc_ring);
-	k3_ringacc_ring_free(uc->bchan->t_ring);
-	uc->bchan->tc_ring = NULL;
-	uc->bchan->t_ring = NULL;
+	k3_ringacc_ring_मुक्त(uc->bchan->tc_ring);
+	k3_ringacc_ring_मुक्त(uc->bchan->t_ring);
+	uc->bchan->tc_ring = शून्य;
+	uc->bchan->t_ring = शून्य;
 	k3_configure_chan_coherency(&uc->vc.chan, 0);
 
 	bcdma_put_bchan(uc);
-}
+पूर्ण
 
-static int bcdma_alloc_bchan_resources(struct udma_chan *uc)
-{
-	struct k3_ring_cfg ring_cfg;
-	struct udma_dev *ud = uc->ud;
-	int ret;
+अटल पूर्णांक bcdma_alloc_bchan_resources(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा k3_ring_cfg ring_cfg;
+	काष्ठा udma_dev *ud = uc->ud;
+	पूर्णांक ret;
 
 	ret = bcdma_get_bchan(uc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = k3_ringacc_request_rings_pair(ud->ringacc, uc->bchan->id, -1,
 					    &uc->bchan->t_ring,
 					    &uc->bchan->tc_ring);
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EBUSY;
-		goto err_ring;
-	}
+		जाओ err_ring;
+	पूर्ण
 
-	memset(&ring_cfg, 0, sizeof(ring_cfg));
+	स_रखो(&ring_cfg, 0, माप(ring_cfg));
 	ring_cfg.size = K3_UDMA_DEFAULT_RING_SIZE;
 	ring_cfg.elm_size = K3_RINGACC_RING_ELSIZE_8;
 	ring_cfg.mode = K3_RINGACC_RING_MODE_RING;
@@ -1602,206 +1603,206 @@ static int bcdma_alloc_bchan_resources(struct udma_chan *uc)
 	ring_cfg.dma_dev = dmaengine_get_dma_device(&uc->vc.chan);
 
 	ret = k3_ringacc_ring_cfg(uc->bchan->t_ring, &ring_cfg);
-	if (ret)
-		goto err_ringcfg;
+	अगर (ret)
+		जाओ err_ringcfg;
 
-	return 0;
+	वापस 0;
 
 err_ringcfg:
-	k3_ringacc_ring_free(uc->bchan->tc_ring);
-	uc->bchan->tc_ring = NULL;
-	k3_ringacc_ring_free(uc->bchan->t_ring);
-	uc->bchan->t_ring = NULL;
+	k3_ringacc_ring_मुक्त(uc->bchan->tc_ring);
+	uc->bchan->tc_ring = शून्य;
+	k3_ringacc_ring_मुक्त(uc->bchan->t_ring);
+	uc->bchan->t_ring = शून्य;
 	k3_configure_chan_coherency(&uc->vc.chan, 0);
 err_ring:
 	bcdma_put_bchan(uc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void udma_free_tx_resources(struct udma_chan *uc)
-{
-	if (!uc->tchan)
-		return;
+अटल व्योम udma_मुक्त_tx_resources(काष्ठा udma_chan *uc)
+अणु
+	अगर (!uc->tchan)
+		वापस;
 
-	k3_ringacc_ring_free(uc->tchan->t_ring);
-	k3_ringacc_ring_free(uc->tchan->tc_ring);
-	uc->tchan->t_ring = NULL;
-	uc->tchan->tc_ring = NULL;
+	k3_ringacc_ring_मुक्त(uc->tchan->t_ring);
+	k3_ringacc_ring_मुक्त(uc->tchan->tc_ring);
+	uc->tchan->t_ring = शून्य;
+	uc->tchan->tc_ring = शून्य;
 
 	udma_put_tchan(uc);
-}
+पूर्ण
 
-static int udma_alloc_tx_resources(struct udma_chan *uc)
-{
-	struct k3_ring_cfg ring_cfg;
-	struct udma_dev *ud = uc->ud;
-	struct udma_tchan *tchan;
-	int ring_idx, ret;
+अटल पूर्णांक udma_alloc_tx_resources(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा k3_ring_cfg ring_cfg;
+	काष्ठा udma_dev *ud = uc->ud;
+	काष्ठा udma_tchan *tchan;
+	पूर्णांक ring_idx, ret;
 
 	ret = udma_get_tchan(uc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	tchan = uc->tchan;
-	if (tchan->tflow_id >= 0)
+	अगर (tchan->tflow_id >= 0)
 		ring_idx = tchan->tflow_id;
-	else
+	अन्यथा
 		ring_idx = ud->bchan_cnt + tchan->id;
 
 	ret = k3_ringacc_request_rings_pair(ud->ringacc, ring_idx, -1,
 					    &tchan->t_ring,
 					    &tchan->tc_ring);
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EBUSY;
-		goto err_ring;
-	}
+		जाओ err_ring;
+	पूर्ण
 
-	memset(&ring_cfg, 0, sizeof(ring_cfg));
+	स_रखो(&ring_cfg, 0, माप(ring_cfg));
 	ring_cfg.size = K3_UDMA_DEFAULT_RING_SIZE;
 	ring_cfg.elm_size = K3_RINGACC_RING_ELSIZE_8;
-	if (ud->match_data->type == DMA_TYPE_UDMA) {
+	अगर (ud->match_data->type == DMA_TYPE_UDMA) अणु
 		ring_cfg.mode = K3_RINGACC_RING_MODE_MESSAGE;
-	} else {
+	पूर्ण अन्यथा अणु
 		ring_cfg.mode = K3_RINGACC_RING_MODE_RING;
 
 		k3_configure_chan_coherency(&uc->vc.chan, uc->config.asel);
 		ring_cfg.asel = uc->config.asel;
 		ring_cfg.dma_dev = dmaengine_get_dma_device(&uc->vc.chan);
-	}
+	पूर्ण
 
 	ret = k3_ringacc_ring_cfg(tchan->t_ring, &ring_cfg);
 	ret |= k3_ringacc_ring_cfg(tchan->tc_ring, &ring_cfg);
 
-	if (ret)
-		goto err_ringcfg;
+	अगर (ret)
+		जाओ err_ringcfg;
 
-	return 0;
+	वापस 0;
 
 err_ringcfg:
-	k3_ringacc_ring_free(uc->tchan->tc_ring);
-	uc->tchan->tc_ring = NULL;
-	k3_ringacc_ring_free(uc->tchan->t_ring);
-	uc->tchan->t_ring = NULL;
+	k3_ringacc_ring_मुक्त(uc->tchan->tc_ring);
+	uc->tchan->tc_ring = शून्य;
+	k3_ringacc_ring_मुक्त(uc->tchan->t_ring);
+	uc->tchan->t_ring = शून्य;
 err_ring:
 	udma_put_tchan(uc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void udma_free_rx_resources(struct udma_chan *uc)
-{
-	if (!uc->rchan)
-		return;
+अटल व्योम udma_मुक्त_rx_resources(काष्ठा udma_chan *uc)
+अणु
+	अगर (!uc->rchan)
+		वापस;
 
-	if (uc->rflow) {
-		struct udma_rflow *rflow = uc->rflow;
+	अगर (uc->rflow) अणु
+		काष्ठा udma_rflow *rflow = uc->rflow;
 
-		k3_ringacc_ring_free(rflow->fd_ring);
-		k3_ringacc_ring_free(rflow->r_ring);
-		rflow->fd_ring = NULL;
-		rflow->r_ring = NULL;
+		k3_ringacc_ring_मुक्त(rflow->fd_ring);
+		k3_ringacc_ring_मुक्त(rflow->r_ring);
+		rflow->fd_ring = शून्य;
+		rflow->r_ring = शून्य;
 
 		udma_put_rflow(uc);
-	}
+	पूर्ण
 
 	udma_put_rchan(uc);
-}
+पूर्ण
 
-static int udma_alloc_rx_resources(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	struct k3_ring_cfg ring_cfg;
-	struct udma_rflow *rflow;
-	int fd_ring_id;
-	int ret;
+अटल पूर्णांक udma_alloc_rx_resources(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	काष्ठा k3_ring_cfg ring_cfg;
+	काष्ठा udma_rflow *rflow;
+	पूर्णांक fd_ring_id;
+	पूर्णांक ret;
 
 	ret = udma_get_rchan(uc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* For MEM_TO_MEM we don't need rflow or rings */
-	if (uc->config.dir == DMA_MEM_TO_MEM)
-		return 0;
+	/* For MEM_TO_MEM we करोn't need rflow or rings */
+	अगर (uc->config.dir == DMA_MEM_TO_MEM)
+		वापस 0;
 
-	if (uc->config.default_flow_id >= 0)
-		ret = udma_get_rflow(uc, uc->config.default_flow_id);
-	else
+	अगर (uc->config.शेष_flow_id >= 0)
+		ret = udma_get_rflow(uc, uc->config.शेष_flow_id);
+	अन्यथा
 		ret = udma_get_rflow(uc, uc->rchan->id);
 
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EBUSY;
-		goto err_rflow;
-	}
+		जाओ err_rflow;
+	पूर्ण
 
 	rflow = uc->rflow;
-	if (ud->tflow_cnt)
+	अगर (ud->tflow_cnt)
 		fd_ring_id = ud->tflow_cnt + rflow->id;
-	else
+	अन्यथा
 		fd_ring_id = ud->bchan_cnt + ud->tchan_cnt + ud->echan_cnt +
 			     uc->rchan->id;
 
 	ret = k3_ringacc_request_rings_pair(ud->ringacc, fd_ring_id, -1,
 					    &rflow->fd_ring, &rflow->r_ring);
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EBUSY;
-		goto err_ring;
-	}
+		जाओ err_ring;
+	पूर्ण
 
-	memset(&ring_cfg, 0, sizeof(ring_cfg));
+	स_रखो(&ring_cfg, 0, माप(ring_cfg));
 
 	ring_cfg.elm_size = K3_RINGACC_RING_ELSIZE_8;
-	if (ud->match_data->type == DMA_TYPE_UDMA) {
-		if (uc->config.pkt_mode)
+	अगर (ud->match_data->type == DMA_TYPE_UDMA) अणु
+		अगर (uc->config.pkt_mode)
 			ring_cfg.size = SG_MAX_SEGMENTS;
-		else
+		अन्यथा
 			ring_cfg.size = K3_UDMA_DEFAULT_RING_SIZE;
 
 		ring_cfg.mode = K3_RINGACC_RING_MODE_MESSAGE;
-	} else {
+	पूर्ण अन्यथा अणु
 		ring_cfg.size = K3_UDMA_DEFAULT_RING_SIZE;
 		ring_cfg.mode = K3_RINGACC_RING_MODE_RING;
 
 		k3_configure_chan_coherency(&uc->vc.chan, uc->config.asel);
 		ring_cfg.asel = uc->config.asel;
 		ring_cfg.dma_dev = dmaengine_get_dma_device(&uc->vc.chan);
-	}
+	पूर्ण
 
 	ret = k3_ringacc_ring_cfg(rflow->fd_ring, &ring_cfg);
 
 	ring_cfg.size = K3_UDMA_DEFAULT_RING_SIZE;
 	ret |= k3_ringacc_ring_cfg(rflow->r_ring, &ring_cfg);
 
-	if (ret)
-		goto err_ringcfg;
+	अगर (ret)
+		जाओ err_ringcfg;
 
-	return 0;
+	वापस 0;
 
 err_ringcfg:
-	k3_ringacc_ring_free(rflow->r_ring);
-	rflow->r_ring = NULL;
-	k3_ringacc_ring_free(rflow->fd_ring);
-	rflow->fd_ring = NULL;
+	k3_ringacc_ring_मुक्त(rflow->r_ring);
+	rflow->r_ring = शून्य;
+	k3_ringacc_ring_मुक्त(rflow->fd_ring);
+	rflow->fd_ring = शून्य;
 err_ring:
 	udma_put_rflow(uc);
 err_rflow:
 	udma_put_rchan(uc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define TISCI_BCDMA_BCHAN_VALID_PARAMS (			\
+#घोषणा TISCI_BCDMA_BCHAN_VALID_PARAMS (			\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_PAUSE_ON_ERR_VALID |	\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_EXTENDED_CH_TYPE_VALID)
 
-#define TISCI_BCDMA_TCHAN_VALID_PARAMS (			\
+#घोषणा TISCI_BCDMA_TCHAN_VALID_PARAMS (			\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_PAUSE_ON_ERR_VALID |	\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_TX_SUPR_TDPKT_VALID)
 
-#define TISCI_BCDMA_RCHAN_VALID_PARAMS (			\
+#घोषणा TISCI_BCDMA_RCHAN_VALID_PARAMS (			\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_PAUSE_ON_ERR_VALID)
 
-#define TISCI_UDMA_TCHAN_VALID_PARAMS (				\
+#घोषणा TISCI_UDMA_TCHAN_VALID_PARAMS (				\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_PAUSE_ON_ERR_VALID |	\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_TX_FILT_EINFO_VALID |	\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_TX_FILT_PSWORDS_VALID |	\
@@ -1811,7 +1812,7 @@ err_rflow:
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_CQ_QNUM_VALID |		\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_ATYPE_VALID)
 
-#define TISCI_UDMA_RCHAN_VALID_PARAMS (				\
+#घोषणा TISCI_UDMA_RCHAN_VALID_PARAMS (				\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_PAUSE_ON_ERR_VALID |	\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_FETCH_SIZE_VALID |		\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_CQ_QNUM_VALID |		\
@@ -1822,117 +1823,117 @@ err_rflow:
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_RX_FLOWID_CNT_VALID |	\
 	TI_SCI_MSG_VALUE_RM_UDMAP_CH_ATYPE_VALID)
 
-static int udma_tisci_m2m_channel_config(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
-	const struct ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
-	struct udma_tchan *tchan = uc->tchan;
-	struct udma_rchan *rchan = uc->rchan;
+अटल पूर्णांक udma_tisci_m2m_channel_config(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+	स्थिर काष्ठा ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
+	काष्ठा udma_tchan *tchan = uc->tchan;
+	काष्ठा udma_rchan *rchan = uc->rchan;
 	u8 burst_size = 0;
-	int ret;
+	पूर्णांक ret;
 	u8 tpl;
 
 	/* Non synchronized - mem to mem type of transfer */
-	int tc_ring = k3_ringacc_get_ring_id(tchan->tc_ring);
-	struct ti_sci_msg_rm_udmap_tx_ch_cfg req_tx = { 0 };
-	struct ti_sci_msg_rm_udmap_rx_ch_cfg req_rx = { 0 };
+	पूर्णांक tc_ring = k3_ringacc_get_ring_id(tchan->tc_ring);
+	काष्ठा ti_sci_msg_rm_udmap_tx_ch_cfg req_tx = अणु 0 पूर्ण;
+	काष्ठा ti_sci_msg_rm_udmap_rx_ch_cfg req_rx = अणु 0 पूर्ण;
 
-	if (ud->match_data->flags & UDMA_FLAG_BURST_SIZE) {
+	अगर (ud->match_data->flags & UDMA_FLAG_BURST_SIZE) अणु
 		tpl = udma_get_chan_tpl_index(&ud->tchan_tpl, tchan->id);
 
 		burst_size = ud->match_data->burst_size[tpl];
-	}
+	पूर्ण
 
 	req_tx.valid_params = TISCI_UDMA_TCHAN_VALID_PARAMS;
 	req_tx.nav_id = tisci_rm->tisci_dev_id;
 	req_tx.index = tchan->id;
 	req_tx.tx_chan_type = TI_SCI_RM_UDMAP_CHAN_TYPE_3RDP_BCOPY_PBRR;
-	req_tx.tx_fetch_size = sizeof(struct cppi5_desc_hdr_t) >> 2;
+	req_tx.tx_fetch_size = माप(काष्ठा cppi5_desc_hdr_t) >> 2;
 	req_tx.txcq_qnum = tc_ring;
 	req_tx.tx_atype = ud->atype;
-	if (burst_size) {
+	अगर (burst_size) अणु
 		req_tx.valid_params |= TI_SCI_MSG_VALUE_RM_UDMAP_CH_BURST_SIZE_VALID;
 		req_tx.tx_burst_size = burst_size;
-	}
+	पूर्ण
 
 	ret = tisci_ops->tx_ch_cfg(tisci_rm->tisci, &req_tx);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(ud->dev, "tchan%d cfg failed %d\n", tchan->id, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	req_rx.valid_params = TISCI_UDMA_RCHAN_VALID_PARAMS;
 	req_rx.nav_id = tisci_rm->tisci_dev_id;
 	req_rx.index = rchan->id;
-	req_rx.rx_fetch_size = sizeof(struct cppi5_desc_hdr_t) >> 2;
+	req_rx.rx_fetch_size = माप(काष्ठा cppi5_desc_hdr_t) >> 2;
 	req_rx.rxcq_qnum = tc_ring;
 	req_rx.rx_chan_type = TI_SCI_RM_UDMAP_CHAN_TYPE_3RDP_BCOPY_PBRR;
 	req_rx.rx_atype = ud->atype;
-	if (burst_size) {
+	अगर (burst_size) अणु
 		req_rx.valid_params |= TI_SCI_MSG_VALUE_RM_UDMAP_CH_BURST_SIZE_VALID;
 		req_rx.rx_burst_size = burst_size;
-	}
+	पूर्ण
 
 	ret = tisci_ops->rx_ch_cfg(tisci_rm->tisci, &req_rx);
-	if (ret)
+	अगर (ret)
 		dev_err(ud->dev, "rchan%d alloc failed %d\n", rchan->id, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bcdma_tisci_m2m_channel_config(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
-	const struct ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
-	struct ti_sci_msg_rm_udmap_tx_ch_cfg req_tx = { 0 };
-	struct udma_bchan *bchan = uc->bchan;
+अटल पूर्णांक bcdma_tisci_m2m_channel_config(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+	स्थिर काष्ठा ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
+	काष्ठा ti_sci_msg_rm_udmap_tx_ch_cfg req_tx = अणु 0 पूर्ण;
+	काष्ठा udma_bchan *bchan = uc->bchan;
 	u8 burst_size = 0;
-	int ret;
+	पूर्णांक ret;
 	u8 tpl;
 
-	if (ud->match_data->flags & UDMA_FLAG_BURST_SIZE) {
+	अगर (ud->match_data->flags & UDMA_FLAG_BURST_SIZE) अणु
 		tpl = udma_get_chan_tpl_index(&ud->bchan_tpl, bchan->id);
 
 		burst_size = ud->match_data->burst_size[tpl];
-	}
+	पूर्ण
 
 	req_tx.valid_params = TISCI_BCDMA_BCHAN_VALID_PARAMS;
 	req_tx.nav_id = tisci_rm->tisci_dev_id;
 	req_tx.extended_ch_type = TI_SCI_RM_BCDMA_EXTENDED_CH_TYPE_BCHAN;
 	req_tx.index = bchan->id;
-	if (burst_size) {
+	अगर (burst_size) अणु
 		req_tx.valid_params |= TI_SCI_MSG_VALUE_RM_UDMAP_CH_BURST_SIZE_VALID;
 		req_tx.tx_burst_size = burst_size;
-	}
+	पूर्ण
 
 	ret = tisci_ops->tx_ch_cfg(tisci_rm->tisci, &req_tx);
-	if (ret)
+	अगर (ret)
 		dev_err(ud->dev, "bchan%d cfg failed %d\n", bchan->id, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int udma_tisci_tx_channel_config(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
-	const struct ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
-	struct udma_tchan *tchan = uc->tchan;
-	int tc_ring = k3_ringacc_get_ring_id(tchan->tc_ring);
-	struct ti_sci_msg_rm_udmap_tx_ch_cfg req_tx = { 0 };
+अटल पूर्णांक udma_tisci_tx_channel_config(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+	स्थिर काष्ठा ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
+	काष्ठा udma_tchan *tchan = uc->tchan;
+	पूर्णांक tc_ring = k3_ringacc_get_ring_id(tchan->tc_ring);
+	काष्ठा ti_sci_msg_rm_udmap_tx_ch_cfg req_tx = अणु 0 पूर्ण;
 	u32 mode, fetch_size;
-	int ret;
+	पूर्णांक ret;
 
-	if (uc->config.pkt_mode) {
+	अगर (uc->config.pkt_mode) अणु
 		mode = TI_SCI_RM_UDMAP_CHAN_TYPE_PKT_PBRR;
 		fetch_size = cppi5_hdesc_calc_size(uc->config.needs_epib,
 						   uc->config.psd_size, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		mode = TI_SCI_RM_UDMAP_CHAN_TYPE_3RDP_PBRR;
-		fetch_size = sizeof(struct cppi5_desc_hdr_t);
-	}
+		fetch_size = माप(काष्ठा cppi5_desc_hdr_t);
+	पूर्ण
 
 	req_tx.valid_params = TISCI_UDMA_TCHAN_VALID_PARAMS;
 	req_tx.nav_id = tisci_rm->tisci_dev_id;
@@ -1942,71 +1943,71 @@ static int udma_tisci_tx_channel_config(struct udma_chan *uc)
 	req_tx.tx_fetch_size = fetch_size >> 2;
 	req_tx.txcq_qnum = tc_ring;
 	req_tx.tx_atype = uc->config.atype;
-	if (uc->config.ep_type == PSIL_EP_PDMA_XY &&
-	    ud->match_data->flags & UDMA_FLAG_TDTYPE) {
-		/* wait for peer to complete the teardown for PDMAs */
+	अगर (uc->config.ep_type == PSIL_EP_PDMA_XY &&
+	    ud->match_data->flags & UDMA_FLAG_TDTYPE) अणु
+		/* रुको क्रम peer to complete the tearकरोwn क्रम PDMAs */
 		req_tx.valid_params |=
 				TI_SCI_MSG_VALUE_RM_UDMAP_CH_TX_TDTYPE_VALID;
 		req_tx.tx_tdtype = 1;
-	}
+	पूर्ण
 
 	ret = tisci_ops->tx_ch_cfg(tisci_rm->tisci, &req_tx);
-	if (ret)
+	अगर (ret)
 		dev_err(ud->dev, "tchan%d cfg failed %d\n", tchan->id, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bcdma_tisci_tx_channel_config(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
-	const struct ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
-	struct udma_tchan *tchan = uc->tchan;
-	struct ti_sci_msg_rm_udmap_tx_ch_cfg req_tx = { 0 };
-	int ret;
+अटल पूर्णांक bcdma_tisci_tx_channel_config(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+	स्थिर काष्ठा ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
+	काष्ठा udma_tchan *tchan = uc->tchan;
+	काष्ठा ti_sci_msg_rm_udmap_tx_ch_cfg req_tx = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
 	req_tx.valid_params = TISCI_BCDMA_TCHAN_VALID_PARAMS;
 	req_tx.nav_id = tisci_rm->tisci_dev_id;
 	req_tx.index = tchan->id;
 	req_tx.tx_supr_tdpkt = uc->config.notdpkt;
-	if (ud->match_data->flags & UDMA_FLAG_TDTYPE) {
-		/* wait for peer to complete the teardown for PDMAs */
+	अगर (ud->match_data->flags & UDMA_FLAG_TDTYPE) अणु
+		/* रुको क्रम peer to complete the tearकरोwn क्रम PDMAs */
 		req_tx.valid_params |=
 				TI_SCI_MSG_VALUE_RM_UDMAP_CH_TX_TDTYPE_VALID;
 		req_tx.tx_tdtype = 1;
-	}
+	पूर्ण
 
 	ret = tisci_ops->tx_ch_cfg(tisci_rm->tisci, &req_tx);
-	if (ret)
+	अगर (ret)
 		dev_err(ud->dev, "tchan%d cfg failed %d\n", tchan->id, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define pktdma_tisci_tx_channel_config bcdma_tisci_tx_channel_config
+#घोषणा pktdma_tisci_tx_channel_config bcdma_tisci_tx_channel_config
 
-static int udma_tisci_rx_channel_config(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
-	const struct ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
-	struct udma_rchan *rchan = uc->rchan;
-	int fd_ring = k3_ringacc_get_ring_id(uc->rflow->fd_ring);
-	int rx_ring = k3_ringacc_get_ring_id(uc->rflow->r_ring);
-	struct ti_sci_msg_rm_udmap_rx_ch_cfg req_rx = { 0 };
-	struct ti_sci_msg_rm_udmap_flow_cfg flow_req = { 0 };
+अटल पूर्णांक udma_tisci_rx_channel_config(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+	स्थिर काष्ठा ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
+	काष्ठा udma_rchan *rchan = uc->rchan;
+	पूर्णांक fd_ring = k3_ringacc_get_ring_id(uc->rflow->fd_ring);
+	पूर्णांक rx_ring = k3_ringacc_get_ring_id(uc->rflow->r_ring);
+	काष्ठा ti_sci_msg_rm_udmap_rx_ch_cfg req_rx = अणु 0 पूर्ण;
+	काष्ठा ti_sci_msg_rm_udmap_flow_cfg flow_req = अणु 0 पूर्ण;
 	u32 mode, fetch_size;
-	int ret;
+	पूर्णांक ret;
 
-	if (uc->config.pkt_mode) {
+	अगर (uc->config.pkt_mode) अणु
 		mode = TI_SCI_RM_UDMAP_CHAN_TYPE_PKT_PBRR;
 		fetch_size = cppi5_hdesc_calc_size(uc->config.needs_epib,
 						   uc->config.psd_size, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		mode = TI_SCI_RM_UDMAP_CHAN_TYPE_3RDP_PBRR;
-		fetch_size = sizeof(struct cppi5_desc_hdr_t);
-	}
+		fetch_size = माप(काष्ठा cppi5_desc_hdr_t);
+	पूर्ण
 
 	req_rx.valid_params = TISCI_UDMA_RCHAN_VALID_PARAMS;
 	req_rx.nav_id = tisci_rm->tisci_dev_id;
@@ -2017,10 +2018,10 @@ static int udma_tisci_rx_channel_config(struct udma_chan *uc)
 	req_rx.rx_atype = uc->config.atype;
 
 	ret = tisci_ops->rx_ch_cfg(tisci_rm->tisci, &req_rx);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(ud->dev, "rchan%d cfg failed %d\n", rchan->id, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	flow_req.valid_params =
 		TI_SCI_MSG_VALUE_RM_UDMAP_FLOW_EINFO_PRESENT_VALID |
@@ -2040,13 +2041,13 @@ static int udma_tisci_rx_channel_config(struct udma_chan *uc)
 	flow_req.nav_id = tisci_rm->tisci_dev_id;
 	flow_req.flow_index = rchan->id;
 
-	if (uc->config.needs_epib)
+	अगर (uc->config.needs_epib)
 		flow_req.rx_einfo_present = 1;
-	else
+	अन्यथा
 		flow_req.rx_einfo_present = 0;
-	if (uc->config.psd_size)
+	अगर (uc->config.psd_size)
 		flow_req.rx_psinfo_present = 1;
-	else
+	अन्यथा
 		flow_req.rx_psinfo_present = 0;
 	flow_req.rx_error_handling = 1;
 	flow_req.rx_dest_qnum = rx_ring;
@@ -2061,50 +2062,50 @@ static int udma_tisci_rx_channel_config(struct udma_chan *uc)
 
 	ret = tisci_ops->rx_flow_cfg(tisci_rm->tisci, &flow_req);
 
-	if (ret)
+	अगर (ret)
 		dev_err(ud->dev, "flow%d config failed: %d\n", rchan->id, ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcdma_tisci_rx_channel_config(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
-	const struct ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
-	struct udma_rchan *rchan = uc->rchan;
-	struct ti_sci_msg_rm_udmap_rx_ch_cfg req_rx = { 0 };
-	int ret;
+अटल पूर्णांक bcdma_tisci_rx_channel_config(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+	स्थिर काष्ठा ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
+	काष्ठा udma_rchan *rchan = uc->rchan;
+	काष्ठा ti_sci_msg_rm_udmap_rx_ch_cfg req_rx = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
 	req_rx.valid_params = TISCI_BCDMA_RCHAN_VALID_PARAMS;
 	req_rx.nav_id = tisci_rm->tisci_dev_id;
 	req_rx.index = rchan->id;
 
 	ret = tisci_ops->rx_ch_cfg(tisci_rm->tisci, &req_rx);
-	if (ret)
+	अगर (ret)
 		dev_err(ud->dev, "rchan%d cfg failed %d\n", rchan->id, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pktdma_tisci_rx_channel_config(struct udma_chan *uc)
-{
-	struct udma_dev *ud = uc->ud;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
-	const struct ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
-	struct ti_sci_msg_rm_udmap_rx_ch_cfg req_rx = { 0 };
-	struct ti_sci_msg_rm_udmap_flow_cfg flow_req = { 0 };
-	int ret;
+अटल पूर्णांक pktdma_tisci_rx_channel_config(काष्ठा udma_chan *uc)
+अणु
+	काष्ठा udma_dev *ud = uc->ud;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+	स्थिर काष्ठा ti_sci_rm_udmap_ops *tisci_ops = tisci_rm->tisci_udmap_ops;
+	काष्ठा ti_sci_msg_rm_udmap_rx_ch_cfg req_rx = अणु 0 पूर्ण;
+	काष्ठा ti_sci_msg_rm_udmap_flow_cfg flow_req = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
 	req_rx.valid_params = TISCI_BCDMA_RCHAN_VALID_PARAMS;
 	req_rx.nav_id = tisci_rm->tisci_dev_id;
 	req_rx.index = uc->rchan->id;
 
 	ret = tisci_ops->rx_ch_cfg(tisci_rm->tisci, &req_rx);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(ud->dev, "rchan%d cfg failed %d\n", uc->rchan->id, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	flow_req.valid_params =
 		TI_SCI_MSG_VALUE_RM_UDMAP_FLOW_EINFO_PRESENT_VALID |
@@ -2114,558 +2115,558 @@ static int pktdma_tisci_rx_channel_config(struct udma_chan *uc)
 	flow_req.nav_id = tisci_rm->tisci_dev_id;
 	flow_req.flow_index = uc->rflow->id;
 
-	if (uc->config.needs_epib)
+	अगर (uc->config.needs_epib)
 		flow_req.rx_einfo_present = 1;
-	else
+	अन्यथा
 		flow_req.rx_einfo_present = 0;
-	if (uc->config.psd_size)
+	अगर (uc->config.psd_size)
 		flow_req.rx_psinfo_present = 1;
-	else
+	अन्यथा
 		flow_req.rx_psinfo_present = 0;
 	flow_req.rx_error_handling = 1;
 
 	ret = tisci_ops->rx_flow_cfg(tisci_rm->tisci, &flow_req);
 
-	if (ret)
+	अगर (ret)
 		dev_err(ud->dev, "flow%d config failed: %d\n", uc->rflow->id,
 			ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int udma_alloc_chan_resources(struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	struct udma_dev *ud = to_udma_dev(chan->device);
-	const struct udma_soc_data *soc_data = ud->soc_data;
-	struct k3_ring *irq_ring;
+अटल पूर्णांक udma_alloc_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	काष्ठा udma_dev *ud = to_udma_dev(chan->device);
+	स्थिर काष्ठा udma_soc_data *soc_data = ud->soc_data;
+	काष्ठा k3_ring *irq_ring;
 	u32 irq_udma_idx;
-	int ret;
+	पूर्णांक ret;
 
 	uc->dma_dev = ud->dev;
 
-	if (uc->config.pkt_mode || uc->config.dir == DMA_MEM_TO_MEM) {
+	अगर (uc->config.pkt_mode || uc->config.dir == DMA_MEM_TO_MEM) अणु
 		uc->use_dma_pool = true;
-		/* in case of MEM_TO_MEM we have maximum of two TRs */
-		if (uc->config.dir == DMA_MEM_TO_MEM) {
+		/* in हाल of MEM_TO_MEM we have maximum of two TRs */
+		अगर (uc->config.dir == DMA_MEM_TO_MEM) अणु
 			uc->config.hdesc_size = cppi5_trdesc_calc_size(
-					sizeof(struct cppi5_tr_type15_t), 2);
+					माप(काष्ठा cppi5_tr_type15_t), 2);
 			uc->config.pkt_mode = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (uc->use_dma_pool) {
+	अगर (uc->use_dma_pool) अणु
 		uc->hdesc_pool = dma_pool_create(uc->name, ud->ddev.dev,
 						 uc->config.hdesc_size,
 						 ud->desc_align,
 						 0);
-		if (!uc->hdesc_pool) {
+		अगर (!uc->hdesc_pool) अणु
 			dev_err(ud->ddev.dev,
 				"Descriptor pool allocation failed\n");
 			uc->use_dma_pool = false;
 			ret = -ENOMEM;
-			goto err_cleanup;
-		}
-	}
+			जाओ err_cleanup;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Make sure that the completion is in a known state:
-	 * No teardown, the channel is idle
+	 * No tearकरोwn, the channel is idle
 	 */
-	reinit_completion(&uc->teardown_completed);
-	complete_all(&uc->teardown_completed);
+	reinit_completion(&uc->tearकरोwn_completed);
+	complete_all(&uc->tearकरोwn_completed);
 	uc->state = UDMA_CHAN_IS_IDLE;
 
-	switch (uc->config.dir) {
-	case DMA_MEM_TO_MEM:
+	चयन (uc->config.dir) अणु
+	हाल DMA_MEM_TO_MEM:
 		/* Non synchronized - mem to mem type of transfer */
 		dev_dbg(uc->ud->dev, "%s: chan%d as MEM-to-MEM\n", __func__,
 			uc->id);
 
 		ret = udma_get_chan_pair(uc);
-		if (ret)
-			goto err_cleanup;
+		अगर (ret)
+			जाओ err_cleanup;
 
 		ret = udma_alloc_tx_resources(uc);
-		if (ret) {
+		अगर (ret) अणु
 			udma_put_rchan(uc);
-			goto err_cleanup;
-		}
+			जाओ err_cleanup;
+		पूर्ण
 
 		ret = udma_alloc_rx_resources(uc);
-		if (ret) {
-			udma_free_tx_resources(uc);
-			goto err_cleanup;
-		}
+		अगर (ret) अणु
+			udma_मुक्त_tx_resources(uc);
+			जाओ err_cleanup;
+		पूर्ण
 
-		uc->config.src_thread = ud->psil_base + uc->tchan->id;
-		uc->config.dst_thread = (ud->psil_base + uc->rchan->id) |
+		uc->config.src_thपढ़ो = ud->psil_base + uc->tchan->id;
+		uc->config.dst_thपढ़ो = (ud->psil_base + uc->rchan->id) |
 					K3_PSIL_DST_THREAD_ID_OFFSET;
 
 		irq_ring = uc->tchan->tc_ring;
 		irq_udma_idx = uc->tchan->id;
 
 		ret = udma_tisci_m2m_channel_config(uc);
-		break;
-	case DMA_MEM_TO_DEV:
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
 		/* Slave transfer synchronized - mem to dev (TX) trasnfer */
 		dev_dbg(uc->ud->dev, "%s: chan%d as MEM-to-DEV\n", __func__,
 			uc->id);
 
 		ret = udma_alloc_tx_resources(uc);
-		if (ret)
-			goto err_cleanup;
+		अगर (ret)
+			जाओ err_cleanup;
 
-		uc->config.src_thread = ud->psil_base + uc->tchan->id;
-		uc->config.dst_thread = uc->config.remote_thread_id;
-		uc->config.dst_thread |= K3_PSIL_DST_THREAD_ID_OFFSET;
+		uc->config.src_thपढ़ो = ud->psil_base + uc->tchan->id;
+		uc->config.dst_thपढ़ो = uc->config.remote_thपढ़ो_id;
+		uc->config.dst_thपढ़ो |= K3_PSIL_DST_THREAD_ID_OFFSET;
 
 		irq_ring = uc->tchan->tc_ring;
 		irq_udma_idx = uc->tchan->id;
 
 		ret = udma_tisci_tx_channel_config(uc);
-		break;
-	case DMA_DEV_TO_MEM:
+		अवरोध;
+	हाल DMA_DEV_TO_MEM:
 		/* Slave transfer synchronized - dev to mem (RX) trasnfer */
 		dev_dbg(uc->ud->dev, "%s: chan%d as DEV-to-MEM\n", __func__,
 			uc->id);
 
 		ret = udma_alloc_rx_resources(uc);
-		if (ret)
-			goto err_cleanup;
+		अगर (ret)
+			जाओ err_cleanup;
 
-		uc->config.src_thread = uc->config.remote_thread_id;
-		uc->config.dst_thread = (ud->psil_base + uc->rchan->id) |
+		uc->config.src_thपढ़ो = uc->config.remote_thपढ़ो_id;
+		uc->config.dst_thपढ़ो = (ud->psil_base + uc->rchan->id) |
 					K3_PSIL_DST_THREAD_ID_OFFSET;
 
 		irq_ring = uc->rflow->r_ring;
 		irq_udma_idx = soc_data->oes.udma_rchan + uc->rchan->id;
 
 		ret = udma_tisci_rx_channel_config(uc);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Can not happen */
 		dev_err(uc->ud->dev, "%s: chan%d invalid direction (%u)\n",
 			__func__, uc->id, uc->config.dir);
 		ret = -EINVAL;
-		goto err_cleanup;
+		जाओ err_cleanup;
 
-	}
+	पूर्ण
 
-	/* check if the channel configuration was successful */
-	if (ret)
-		goto err_res_free;
+	/* check अगर the channel configuration was successful */
+	अगर (ret)
+		जाओ err_res_मुक्त;
 
-	if (udma_is_chan_running(uc)) {
+	अगर (udma_is_chan_running(uc)) अणु
 		dev_warn(ud->dev, "chan%d: is running!\n", uc->id);
 		udma_reset_chan(uc, false);
-		if (udma_is_chan_running(uc)) {
+		अगर (udma_is_chan_running(uc)) अणु
 			dev_err(ud->dev, "chan%d: won't stop!\n", uc->id);
 			ret = -EBUSY;
-			goto err_res_free;
-		}
-	}
+			जाओ err_res_मुक्त;
+		पूर्ण
+	पूर्ण
 
 	/* PSI-L pairing */
-	ret = navss_psil_pair(ud, uc->config.src_thread, uc->config.dst_thread);
-	if (ret) {
+	ret = navss_psil_pair(ud, uc->config.src_thपढ़ो, uc->config.dst_thपढ़ो);
+	अगर (ret) अणु
 		dev_err(ud->dev, "PSI-L pairing failed: 0x%04x -> 0x%04x\n",
-			uc->config.src_thread, uc->config.dst_thread);
-		goto err_res_free;
-	}
+			uc->config.src_thपढ़ो, uc->config.dst_thपढ़ो);
+		जाओ err_res_मुक्त;
+	पूर्ण
 
 	uc->psil_paired = true;
 
 	uc->irq_num_ring = k3_ringacc_get_ring_irq_num(irq_ring);
-	if (uc->irq_num_ring <= 0) {
+	अगर (uc->irq_num_ring <= 0) अणु
 		dev_err(ud->dev, "Failed to get ring irq (index: %u)\n",
 			k3_ringacc_get_ring_id(irq_ring));
 		ret = -EINVAL;
-		goto err_psi_free;
-	}
+		जाओ err_psi_मुक्त;
+	पूर्ण
 
 	ret = request_irq(uc->irq_num_ring, udma_ring_irq_handler,
 			  IRQF_TRIGGER_HIGH, uc->name, uc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(ud->dev, "chan%d: ring irq request failed\n", uc->id);
-		goto err_irq_free;
-	}
+		जाओ err_irq_मुक्त;
+	पूर्ण
 
-	/* Event from UDMA (TR events) only needed for slave TR mode channels */
-	if (is_slave_direction(uc->config.dir) && !uc->config.pkt_mode) {
-		uc->irq_num_udma = ti_sci_inta_msi_get_virq(ud->dev,
+	/* Event from UDMA (TR events) only needed क्रम slave TR mode channels */
+	अगर (is_slave_direction(uc->config.dir) && !uc->config.pkt_mode) अणु
+		uc->irq_num_udma = ti_sci_पूर्णांकa_msi_get_virq(ud->dev,
 							    irq_udma_idx);
-		if (uc->irq_num_udma <= 0) {
+		अगर (uc->irq_num_udma <= 0) अणु
 			dev_err(ud->dev, "Failed to get udma irq (index: %u)\n",
 				irq_udma_idx);
-			free_irq(uc->irq_num_ring, uc);
+			मुक्त_irq(uc->irq_num_ring, uc);
 			ret = -EINVAL;
-			goto err_irq_free;
-		}
+			जाओ err_irq_मुक्त;
+		पूर्ण
 
 		ret = request_irq(uc->irq_num_udma, udma_udma_irq_handler, 0,
 				  uc->name, uc);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(ud->dev, "chan%d: UDMA irq request failed\n",
 				uc->id);
-			free_irq(uc->irq_num_ring, uc);
-			goto err_irq_free;
-		}
-	} else {
+			मुक्त_irq(uc->irq_num_ring, uc);
+			जाओ err_irq_मुक्त;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		uc->irq_num_udma = 0;
-	}
+	पूर्ण
 
 	udma_reset_rings(uc);
 
-	return 0;
+	वापस 0;
 
-err_irq_free:
+err_irq_मुक्त:
 	uc->irq_num_ring = 0;
 	uc->irq_num_udma = 0;
-err_psi_free:
-	navss_psil_unpair(ud, uc->config.src_thread, uc->config.dst_thread);
+err_psi_मुक्त:
+	navss_psil_unpair(ud, uc->config.src_thपढ़ो, uc->config.dst_thपढ़ो);
 	uc->psil_paired = false;
-err_res_free:
-	udma_free_tx_resources(uc);
-	udma_free_rx_resources(uc);
+err_res_मुक्त:
+	udma_मुक्त_tx_resources(uc);
+	udma_मुक्त_rx_resources(uc);
 err_cleanup:
 	udma_reset_uchan(uc);
 
-	if (uc->use_dma_pool) {
+	अगर (uc->use_dma_pool) अणु
 		dma_pool_destroy(uc->hdesc_pool);
 		uc->use_dma_pool = false;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bcdma_alloc_chan_resources(struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	struct udma_dev *ud = to_udma_dev(chan->device);
-	const struct udma_oes_offsets *oes = &ud->soc_data->oes;
+अटल पूर्णांक bcdma_alloc_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	काष्ठा udma_dev *ud = to_udma_dev(chan->device);
+	स्थिर काष्ठा udma_oes_offsets *oes = &ud->soc_data->oes;
 	u32 irq_udma_idx, irq_ring_idx;
-	int ret;
+	पूर्णांक ret;
 
 	/* Only TR mode is supported */
 	uc->config.pkt_mode = false;
 
 	/*
 	 * Make sure that the completion is in a known state:
-	 * No teardown, the channel is idle
+	 * No tearकरोwn, the channel is idle
 	 */
-	reinit_completion(&uc->teardown_completed);
-	complete_all(&uc->teardown_completed);
+	reinit_completion(&uc->tearकरोwn_completed);
+	complete_all(&uc->tearकरोwn_completed);
 	uc->state = UDMA_CHAN_IS_IDLE;
 
-	switch (uc->config.dir) {
-	case DMA_MEM_TO_MEM:
+	चयन (uc->config.dir) अणु
+	हाल DMA_MEM_TO_MEM:
 		/* Non synchronized - mem to mem type of transfer */
 		dev_dbg(uc->ud->dev, "%s: chan%d as MEM-to-MEM\n", __func__,
 			uc->id);
 
 		ret = bcdma_alloc_bchan_resources(uc);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		irq_ring_idx = uc->bchan->id + oes->bcdma_bchan_ring;
 		irq_udma_idx = uc->bchan->id + oes->bcdma_bchan_data;
 
 		ret = bcdma_tisci_m2m_channel_config(uc);
-		break;
-	case DMA_MEM_TO_DEV:
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
 		/* Slave transfer synchronized - mem to dev (TX) trasnfer */
 		dev_dbg(uc->ud->dev, "%s: chan%d as MEM-to-DEV\n", __func__,
 			uc->id);
 
 		ret = udma_alloc_tx_resources(uc);
-		if (ret) {
-			uc->config.remote_thread_id = -1;
-			return ret;
-		}
+		अगर (ret) अणु
+			uc->config.remote_thपढ़ो_id = -1;
+			वापस ret;
+		पूर्ण
 
-		uc->config.src_thread = ud->psil_base + uc->tchan->id;
-		uc->config.dst_thread = uc->config.remote_thread_id;
-		uc->config.dst_thread |= K3_PSIL_DST_THREAD_ID_OFFSET;
+		uc->config.src_thपढ़ो = ud->psil_base + uc->tchan->id;
+		uc->config.dst_thपढ़ो = uc->config.remote_thपढ़ो_id;
+		uc->config.dst_thपढ़ो |= K3_PSIL_DST_THREAD_ID_OFFSET;
 
 		irq_ring_idx = uc->tchan->id + oes->bcdma_tchan_ring;
 		irq_udma_idx = uc->tchan->id + oes->bcdma_tchan_data;
 
 		ret = bcdma_tisci_tx_channel_config(uc);
-		break;
-	case DMA_DEV_TO_MEM:
+		अवरोध;
+	हाल DMA_DEV_TO_MEM:
 		/* Slave transfer synchronized - dev to mem (RX) trasnfer */
 		dev_dbg(uc->ud->dev, "%s: chan%d as DEV-to-MEM\n", __func__,
 			uc->id);
 
 		ret = udma_alloc_rx_resources(uc);
-		if (ret) {
-			uc->config.remote_thread_id = -1;
-			return ret;
-		}
+		अगर (ret) अणु
+			uc->config.remote_thपढ़ो_id = -1;
+			वापस ret;
+		पूर्ण
 
-		uc->config.src_thread = uc->config.remote_thread_id;
-		uc->config.dst_thread = (ud->psil_base + uc->rchan->id) |
+		uc->config.src_thपढ़ो = uc->config.remote_thपढ़ो_id;
+		uc->config.dst_thपढ़ो = (ud->psil_base + uc->rchan->id) |
 					K3_PSIL_DST_THREAD_ID_OFFSET;
 
 		irq_ring_idx = uc->rchan->id + oes->bcdma_rchan_ring;
 		irq_udma_idx = uc->rchan->id + oes->bcdma_rchan_data;
 
 		ret = bcdma_tisci_rx_channel_config(uc);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Can not happen */
 		dev_err(uc->ud->dev, "%s: chan%d invalid direction (%u)\n",
 			__func__, uc->id, uc->config.dir);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* check if the channel configuration was successful */
-	if (ret)
-		goto err_res_free;
+	/* check अगर the channel configuration was successful */
+	अगर (ret)
+		जाओ err_res_मुक्त;
 
-	if (udma_is_chan_running(uc)) {
+	अगर (udma_is_chan_running(uc)) अणु
 		dev_warn(ud->dev, "chan%d: is running!\n", uc->id);
 		udma_reset_chan(uc, false);
-		if (udma_is_chan_running(uc)) {
+		अगर (udma_is_chan_running(uc)) अणु
 			dev_err(ud->dev, "chan%d: won't stop!\n", uc->id);
 			ret = -EBUSY;
-			goto err_res_free;
-		}
-	}
+			जाओ err_res_मुक्त;
+		पूर्ण
+	पूर्ण
 
 	uc->dma_dev = dmaengine_get_dma_device(chan);
-	if (uc->config.dir == DMA_MEM_TO_MEM  && !uc->config.tr_trigger_type) {
+	अगर (uc->config.dir == DMA_MEM_TO_MEM  && !uc->config.tr_trigger_type) अणु
 		uc->config.hdesc_size = cppi5_trdesc_calc_size(
-					sizeof(struct cppi5_tr_type15_t), 2);
+					माप(काष्ठा cppi5_tr_type15_t), 2);
 
 		uc->hdesc_pool = dma_pool_create(uc->name, ud->ddev.dev,
 						 uc->config.hdesc_size,
 						 ud->desc_align,
 						 0);
-		if (!uc->hdesc_pool) {
+		अगर (!uc->hdesc_pool) अणु
 			dev_err(ud->ddev.dev,
 				"Descriptor pool allocation failed\n");
 			uc->use_dma_pool = false;
 			ret = -ENOMEM;
-			goto err_res_free;
-		}
+			जाओ err_res_मुक्त;
+		पूर्ण
 
 		uc->use_dma_pool = true;
-	} else if (uc->config.dir != DMA_MEM_TO_MEM) {
+	पूर्ण अन्यथा अगर (uc->config.dir != DMA_MEM_TO_MEM) अणु
 		/* PSI-L pairing */
-		ret = navss_psil_pair(ud, uc->config.src_thread,
-				      uc->config.dst_thread);
-		if (ret) {
+		ret = navss_psil_pair(ud, uc->config.src_thपढ़ो,
+				      uc->config.dst_thपढ़ो);
+		अगर (ret) अणु
 			dev_err(ud->dev,
 				"PSI-L pairing failed: 0x%04x -> 0x%04x\n",
-				uc->config.src_thread, uc->config.dst_thread);
-			goto err_res_free;
-		}
+				uc->config.src_thपढ़ो, uc->config.dst_thपढ़ो);
+			जाओ err_res_मुक्त;
+		पूर्ण
 
 		uc->psil_paired = true;
-	}
+	पूर्ण
 
-	uc->irq_num_ring = ti_sci_inta_msi_get_virq(ud->dev, irq_ring_idx);
-	if (uc->irq_num_ring <= 0) {
+	uc->irq_num_ring = ti_sci_पूर्णांकa_msi_get_virq(ud->dev, irq_ring_idx);
+	अगर (uc->irq_num_ring <= 0) अणु
 		dev_err(ud->dev, "Failed to get ring irq (index: %u)\n",
 			irq_ring_idx);
 		ret = -EINVAL;
-		goto err_psi_free;
-	}
+		जाओ err_psi_मुक्त;
+	पूर्ण
 
 	ret = request_irq(uc->irq_num_ring, udma_ring_irq_handler,
 			  IRQF_TRIGGER_HIGH, uc->name, uc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(ud->dev, "chan%d: ring irq request failed\n", uc->id);
-		goto err_irq_free;
-	}
+		जाओ err_irq_मुक्त;
+	पूर्ण
 
-	/* Event from BCDMA (TR events) only needed for slave channels */
-	if (is_slave_direction(uc->config.dir)) {
-		uc->irq_num_udma = ti_sci_inta_msi_get_virq(ud->dev,
+	/* Event from BCDMA (TR events) only needed क्रम slave channels */
+	अगर (is_slave_direction(uc->config.dir)) अणु
+		uc->irq_num_udma = ti_sci_पूर्णांकa_msi_get_virq(ud->dev,
 							    irq_udma_idx);
-		if (uc->irq_num_udma <= 0) {
+		अगर (uc->irq_num_udma <= 0) अणु
 			dev_err(ud->dev, "Failed to get bcdma irq (index: %u)\n",
 				irq_udma_idx);
-			free_irq(uc->irq_num_ring, uc);
+			मुक्त_irq(uc->irq_num_ring, uc);
 			ret = -EINVAL;
-			goto err_irq_free;
-		}
+			जाओ err_irq_मुक्त;
+		पूर्ण
 
 		ret = request_irq(uc->irq_num_udma, udma_udma_irq_handler, 0,
 				  uc->name, uc);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(ud->dev, "chan%d: BCDMA irq request failed\n",
 				uc->id);
-			free_irq(uc->irq_num_ring, uc);
-			goto err_irq_free;
-		}
-	} else {
+			मुक्त_irq(uc->irq_num_ring, uc);
+			जाओ err_irq_मुक्त;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		uc->irq_num_udma = 0;
-	}
+	पूर्ण
 
 	udma_reset_rings(uc);
 
 	INIT_DELAYED_WORK_ONSTACK(&uc->tx_drain.work,
 				  udma_check_tx_completion);
-	return 0;
+	वापस 0;
 
-err_irq_free:
+err_irq_मुक्त:
 	uc->irq_num_ring = 0;
 	uc->irq_num_udma = 0;
-err_psi_free:
-	if (uc->psil_paired)
-		navss_psil_unpair(ud, uc->config.src_thread,
-				  uc->config.dst_thread);
+err_psi_मुक्त:
+	अगर (uc->psil_paired)
+		navss_psil_unpair(ud, uc->config.src_thपढ़ो,
+				  uc->config.dst_thपढ़ो);
 	uc->psil_paired = false;
-err_res_free:
-	bcdma_free_bchan_resources(uc);
-	udma_free_tx_resources(uc);
-	udma_free_rx_resources(uc);
+err_res_मुक्त:
+	bcdma_मुक्त_bchan_resources(uc);
+	udma_मुक्त_tx_resources(uc);
+	udma_मुक्त_rx_resources(uc);
 
 	udma_reset_uchan(uc);
 
-	if (uc->use_dma_pool) {
+	अगर (uc->use_dma_pool) अणु
 		dma_pool_destroy(uc->hdesc_pool);
 		uc->use_dma_pool = false;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bcdma_router_config(struct dma_chan *chan)
-{
-	struct k3_event_route_data *router_data = chan->route_data;
-	struct udma_chan *uc = to_udma_chan(chan);
+अटल पूर्णांक bcdma_router_config(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा k3_event_route_data *router_data = chan->route_data;
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
 	u32 trigger_event;
 
-	if (!uc->bchan)
-		return -EINVAL;
+	अगर (!uc->bchan)
+		वापस -EINVAL;
 
-	if (uc->config.tr_trigger_type != 1 && uc->config.tr_trigger_type != 2)
-		return -EINVAL;
+	अगर (uc->config.tr_trigger_type != 1 && uc->config.tr_trigger_type != 2)
+		वापस -EINVAL;
 
 	trigger_event = uc->ud->soc_data->bcdma_trigger_event_offset;
 	trigger_event += (uc->bchan->id * 2) + uc->config.tr_trigger_type - 1;
 
-	return router_data->set_event(router_data->priv, trigger_event);
-}
+	वापस router_data->set_event(router_data->priv, trigger_event);
+पूर्ण
 
-static int pktdma_alloc_chan_resources(struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	struct udma_dev *ud = to_udma_dev(chan->device);
-	const struct udma_oes_offsets *oes = &ud->soc_data->oes;
+अटल पूर्णांक pktdma_alloc_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	काष्ठा udma_dev *ud = to_udma_dev(chan->device);
+	स्थिर काष्ठा udma_oes_offsets *oes = &ud->soc_data->oes;
 	u32 irq_ring_idx;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * Make sure that the completion is in a known state:
-	 * No teardown, the channel is idle
+	 * No tearकरोwn, the channel is idle
 	 */
-	reinit_completion(&uc->teardown_completed);
-	complete_all(&uc->teardown_completed);
+	reinit_completion(&uc->tearकरोwn_completed);
+	complete_all(&uc->tearकरोwn_completed);
 	uc->state = UDMA_CHAN_IS_IDLE;
 
-	switch (uc->config.dir) {
-	case DMA_MEM_TO_DEV:
+	चयन (uc->config.dir) अणु
+	हाल DMA_MEM_TO_DEV:
 		/* Slave transfer synchronized - mem to dev (TX) trasnfer */
 		dev_dbg(uc->ud->dev, "%s: chan%d as MEM-to-DEV\n", __func__,
 			uc->id);
 
 		ret = udma_alloc_tx_resources(uc);
-		if (ret) {
-			uc->config.remote_thread_id = -1;
-			return ret;
-		}
+		अगर (ret) अणु
+			uc->config.remote_thपढ़ो_id = -1;
+			वापस ret;
+		पूर्ण
 
-		uc->config.src_thread = ud->psil_base + uc->tchan->id;
-		uc->config.dst_thread = uc->config.remote_thread_id;
-		uc->config.dst_thread |= K3_PSIL_DST_THREAD_ID_OFFSET;
+		uc->config.src_thपढ़ो = ud->psil_base + uc->tchan->id;
+		uc->config.dst_thपढ़ो = uc->config.remote_thपढ़ो_id;
+		uc->config.dst_thपढ़ो |= K3_PSIL_DST_THREAD_ID_OFFSET;
 
 		irq_ring_idx = uc->tchan->tflow_id + oes->pktdma_tchan_flow;
 
 		ret = pktdma_tisci_tx_channel_config(uc);
-		break;
-	case DMA_DEV_TO_MEM:
+		अवरोध;
+	हाल DMA_DEV_TO_MEM:
 		/* Slave transfer synchronized - dev to mem (RX) trasnfer */
 		dev_dbg(uc->ud->dev, "%s: chan%d as DEV-to-MEM\n", __func__,
 			uc->id);
 
 		ret = udma_alloc_rx_resources(uc);
-		if (ret) {
-			uc->config.remote_thread_id = -1;
-			return ret;
-		}
+		अगर (ret) अणु
+			uc->config.remote_thपढ़ो_id = -1;
+			वापस ret;
+		पूर्ण
 
-		uc->config.src_thread = uc->config.remote_thread_id;
-		uc->config.dst_thread = (ud->psil_base + uc->rchan->id) |
+		uc->config.src_thपढ़ो = uc->config.remote_thपढ़ो_id;
+		uc->config.dst_thपढ़ो = (ud->psil_base + uc->rchan->id) |
 					K3_PSIL_DST_THREAD_ID_OFFSET;
 
 		irq_ring_idx = uc->rflow->id + oes->pktdma_rchan_flow;
 
 		ret = pktdma_tisci_rx_channel_config(uc);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Can not happen */
 		dev_err(uc->ud->dev, "%s: chan%d invalid direction (%u)\n",
 			__func__, uc->id, uc->config.dir);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* check if the channel configuration was successful */
-	if (ret)
-		goto err_res_free;
+	/* check अगर the channel configuration was successful */
+	अगर (ret)
+		जाओ err_res_मुक्त;
 
-	if (udma_is_chan_running(uc)) {
+	अगर (udma_is_chan_running(uc)) अणु
 		dev_warn(ud->dev, "chan%d: is running!\n", uc->id);
 		udma_reset_chan(uc, false);
-		if (udma_is_chan_running(uc)) {
+		अगर (udma_is_chan_running(uc)) अणु
 			dev_err(ud->dev, "chan%d: won't stop!\n", uc->id);
 			ret = -EBUSY;
-			goto err_res_free;
-		}
-	}
+			जाओ err_res_मुक्त;
+		पूर्ण
+	पूर्ण
 
 	uc->dma_dev = dmaengine_get_dma_device(chan);
 	uc->hdesc_pool = dma_pool_create(uc->name, uc->dma_dev,
 					 uc->config.hdesc_size, ud->desc_align,
 					 0);
-	if (!uc->hdesc_pool) {
+	अगर (!uc->hdesc_pool) अणु
 		dev_err(ud->ddev.dev,
 			"Descriptor pool allocation failed\n");
 		uc->use_dma_pool = false;
 		ret = -ENOMEM;
-		goto err_res_free;
-	}
+		जाओ err_res_मुक्त;
+	पूर्ण
 
 	uc->use_dma_pool = true;
 
 	/* PSI-L pairing */
-	ret = navss_psil_pair(ud, uc->config.src_thread, uc->config.dst_thread);
-	if (ret) {
+	ret = navss_psil_pair(ud, uc->config.src_thपढ़ो, uc->config.dst_thपढ़ो);
+	अगर (ret) अणु
 		dev_err(ud->dev, "PSI-L pairing failed: 0x%04x -> 0x%04x\n",
-			uc->config.src_thread, uc->config.dst_thread);
-		goto err_res_free;
-	}
+			uc->config.src_thपढ़ो, uc->config.dst_thपढ़ो);
+		जाओ err_res_मुक्त;
+	पूर्ण
 
 	uc->psil_paired = true;
 
-	uc->irq_num_ring = ti_sci_inta_msi_get_virq(ud->dev, irq_ring_idx);
-	if (uc->irq_num_ring <= 0) {
+	uc->irq_num_ring = ti_sci_पूर्णांकa_msi_get_virq(ud->dev, irq_ring_idx);
+	अगर (uc->irq_num_ring <= 0) अणु
 		dev_err(ud->dev, "Failed to get ring irq (index: %u)\n",
 			irq_ring_idx);
 		ret = -EINVAL;
-		goto err_psi_free;
-	}
+		जाओ err_psi_मुक्त;
+	पूर्ण
 
 	ret = request_irq(uc->irq_num_ring, udma_ring_irq_handler,
 			  IRQF_TRIGGER_HIGH, uc->name, uc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(ud->dev, "chan%d: ring irq request failed\n", uc->id);
-		goto err_irq_free;
-	}
+		जाओ err_irq_मुक्त;
+	पूर्ण
 
 	uc->irq_num_udma = 0;
 
@@ -2674,83 +2675,83 @@ static int pktdma_alloc_chan_resources(struct dma_chan *chan)
 	INIT_DELAYED_WORK_ONSTACK(&uc->tx_drain.work,
 				  udma_check_tx_completion);
 
-	if (uc->tchan)
+	अगर (uc->tchan)
 		dev_dbg(ud->dev,
 			"chan%d: tchan%d, tflow%d, Remote thread: 0x%04x\n",
 			uc->id, uc->tchan->id, uc->tchan->tflow_id,
-			uc->config.remote_thread_id);
-	else if (uc->rchan)
+			uc->config.remote_thपढ़ो_id);
+	अन्यथा अगर (uc->rchan)
 		dev_dbg(ud->dev,
 			"chan%d: rchan%d, rflow%d, Remote thread: 0x%04x\n",
 			uc->id, uc->rchan->id, uc->rflow->id,
-			uc->config.remote_thread_id);
-	return 0;
+			uc->config.remote_thपढ़ो_id);
+	वापस 0;
 
-err_irq_free:
+err_irq_मुक्त:
 	uc->irq_num_ring = 0;
-err_psi_free:
-	navss_psil_unpair(ud, uc->config.src_thread, uc->config.dst_thread);
+err_psi_मुक्त:
+	navss_psil_unpair(ud, uc->config.src_thपढ़ो, uc->config.dst_thपढ़ो);
 	uc->psil_paired = false;
-err_res_free:
-	udma_free_tx_resources(uc);
-	udma_free_rx_resources(uc);
+err_res_मुक्त:
+	udma_मुक्त_tx_resources(uc);
+	udma_मुक्त_rx_resources(uc);
 
 	udma_reset_uchan(uc);
 
 	dma_pool_destroy(uc->hdesc_pool);
 	uc->use_dma_pool = false;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int udma_slave_config(struct dma_chan *chan,
-			     struct dma_slave_config *cfg)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
+अटल पूर्णांक udma_slave_config(काष्ठा dma_chan *chan,
+			     काष्ठा dma_slave_config *cfg)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
 
-	memcpy(&uc->cfg, cfg, sizeof(uc->cfg));
+	स_नकल(&uc->cfg, cfg, माप(uc->cfg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct udma_desc *udma_alloc_tr_desc(struct udma_chan *uc,
-					    size_t tr_size, int tr_count,
-					    enum dma_transfer_direction dir)
-{
-	struct udma_hwdesc *hwdesc;
-	struct cppi5_desc_hdr_t *tr_desc;
-	struct udma_desc *d;
+अटल काष्ठा udma_desc *udma_alloc_tr_desc(काष्ठा udma_chan *uc,
+					    माप_प्रकार tr_size, पूर्णांक tr_count,
+					    क्रमागत dma_transfer_direction dir)
+अणु
+	काष्ठा udma_hwdesc *hwdesc;
+	काष्ठा cppi5_desc_hdr_t *tr_desc;
+	काष्ठा udma_desc *d;
 	u32 reload_count = 0;
 	u32 ring_id;
 
-	switch (tr_size) {
-	case 16:
-	case 32:
-	case 64:
-	case 128:
-		break;
-	default:
+	चयन (tr_size) अणु
+	हाल 16:
+	हाल 32:
+	हाल 64:
+	हाल 128:
+		अवरोध;
+	शेष:
 		dev_err(uc->ud->dev, "Unsupported TR size of %zu\n", tr_size);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* We have only one descriptor containing multiple TRs */
-	d = kzalloc(sizeof(*d) + sizeof(d->hwdesc[0]), GFP_NOWAIT);
-	if (!d)
-		return NULL;
+	d = kzalloc(माप(*d) + माप(d->hwdesc[0]), GFP_NOWAIT);
+	अगर (!d)
+		वापस शून्य;
 
 	d->sglen = tr_count;
 
 	d->hwdesc_count = 1;
 	hwdesc = &d->hwdesc[0];
 
-	/* Allocate memory for DMA ring descriptor */
-	if (uc->use_dma_pool) {
+	/* Allocate memory क्रम DMA ring descriptor */
+	अगर (uc->use_dma_pool) अणु
 		hwdesc->cppi5_desc_size = uc->config.hdesc_size;
 		hwdesc->cppi5_desc_vaddr = dma_pool_zalloc(uc->hdesc_pool,
 						GFP_NOWAIT,
 						&hwdesc->cppi5_desc_paddr);
-	} else {
+	पूर्ण अन्यथा अणु
 		hwdesc->cppi5_desc_size = cppi5_trdesc_calc_size(tr_size,
 								 tr_count);
 		hwdesc->cppi5_desc_size = ALIGN(hwdesc->cppi5_desc_size,
@@ -2759,12 +2760,12 @@ static struct udma_desc *udma_alloc_tr_desc(struct udma_chan *uc,
 						hwdesc->cppi5_desc_size,
 						&hwdesc->cppi5_desc_paddr,
 						GFP_NOWAIT);
-	}
+	पूर्ण
 
-	if (!hwdesc->cppi5_desc_vaddr) {
-		kfree(d);
-		return NULL;
-	}
+	अगर (!hwdesc->cppi5_desc_vaddr) अणु
+		kमुक्त(d);
+		वापस शून्य;
+	पूर्ण
 
 	/* Start of the TR req records */
 	hwdesc->tr_req_base = hwdesc->cppi5_desc_vaddr + tr_size;
@@ -2773,12 +2774,12 @@ static struct udma_desc *udma_alloc_tr_desc(struct udma_chan *uc,
 
 	tr_desc = hwdesc->cppi5_desc_vaddr;
 
-	if (uc->cyclic)
+	अगर (uc->cyclic)
 		reload_count = CPPI5_INFO0_TRDESC_RLDCNT_INFINITE;
 
-	if (dir == DMA_DEV_TO_MEM)
+	अगर (dir == DMA_DEV_TO_MEM)
 		ring_id = k3_ringacc_get_ring_id(uc->rflow->r_ring);
-	else
+	अन्यथा
 		ring_id = k3_ringacc_get_ring_id(uc->tchan->tc_ring);
 
 	cppi5_trdesc_init(tr_desc, tr_count, tr_size, 0, reload_count);
@@ -2786,103 +2787,103 @@ static struct udma_desc *udma_alloc_tr_desc(struct udma_chan *uc,
 			      CPPI5_INFO1_DESC_FLOWID_DEFAULT);
 	cppi5_desc_set_retpolicy(tr_desc, 0, ring_id);
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
 /**
- * udma_get_tr_counters - calculate TR counters for a given length
+ * udma_get_tr_counters - calculate TR counters क्रम a given length
  * @len: Length of the trasnfer
  * @align_to: Preferred alignment
  * @tr0_cnt0: First TR icnt0
  * @tr0_cnt1: First TR icnt1
- * @tr1_cnt0: Second (if used) TR icnt0
+ * @tr1_cnt0: Second (अगर used) TR icnt0
  *
  * For len < SZ_64K only one TR is enough, tr1_cnt0 is not updated
  * For len >= SZ_64K two TRs are used in a simple way:
  * First TR: SZ_64K-alignment blocks (tr0_cnt0, tr0_cnt1)
- * Second TR: the remaining length (tr1_cnt0)
+ * Second TR: the reमुख्यing length (tr1_cnt0)
  *
  * Returns the number of TRs the length needs (1 or 2)
- * -EINVAL if the length can not be supported
+ * -EINVAL अगर the length can not be supported
  */
-static int udma_get_tr_counters(size_t len, unsigned long align_to,
+अटल पूर्णांक udma_get_tr_counters(माप_प्रकार len, अचिन्हित दीर्घ align_to,
 				u16 *tr0_cnt0, u16 *tr0_cnt1, u16 *tr1_cnt0)
-{
-	if (len < SZ_64K) {
+अणु
+	अगर (len < SZ_64K) अणु
 		*tr0_cnt0 = len;
 		*tr0_cnt1 = 1;
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (align_to > 3)
+	अगर (align_to > 3)
 		align_to = 3;
 
 realign:
 	*tr0_cnt0 = SZ_64K - BIT(align_to);
-	if (len / *tr0_cnt0 >= SZ_64K) {
-		if (align_to) {
+	अगर (len / *tr0_cnt0 >= SZ_64K) अणु
+		अगर (align_to) अणु
 			align_to--;
-			goto realign;
-		}
-		return -EINVAL;
-	}
+			जाओ realign;
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 
 	*tr0_cnt1 = len / *tr0_cnt0;
 	*tr1_cnt0 = len % *tr0_cnt0;
 
-	return 2;
-}
+	वापस 2;
+पूर्ण
 
-static struct udma_desc *
-udma_prep_slave_sg_tr(struct udma_chan *uc, struct scatterlist *sgl,
-		      unsigned int sglen, enum dma_transfer_direction dir,
-		      unsigned long tx_flags, void *context)
-{
-	struct scatterlist *sgent;
-	struct udma_desc *d;
-	struct cppi5_tr_type1_t *tr_req = NULL;
+अटल काष्ठा udma_desc *
+udma_prep_slave_sg_tr(काष्ठा udma_chan *uc, काष्ठा scatterlist *sgl,
+		      अचिन्हित पूर्णांक sglen, क्रमागत dma_transfer_direction dir,
+		      अचिन्हित दीर्घ tx_flags, व्योम *context)
+अणु
+	काष्ठा scatterlist *sgent;
+	काष्ठा udma_desc *d;
+	काष्ठा cppi5_tr_type1_t *tr_req = शून्य;
 	u16 tr0_cnt0, tr0_cnt1, tr1_cnt0;
-	unsigned int i;
-	size_t tr_size;
-	int num_tr = 0;
-	int tr_idx = 0;
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार tr_size;
+	पूर्णांक num_tr = 0;
+	पूर्णांक tr_idx = 0;
 	u64 asel;
 
 	/* estimate the number of TRs we will need */
-	for_each_sg(sgl, sgent, sglen, i) {
-		if (sg_dma_len(sgent) < SZ_64K)
+	क्रम_each_sg(sgl, sgent, sglen, i) अणु
+		अगर (sg_dma_len(sgent) < SZ_64K)
 			num_tr++;
-		else
+		अन्यथा
 			num_tr += 2;
-	}
+	पूर्ण
 
 	/* Now allocate and setup the descriptor. */
-	tr_size = sizeof(struct cppi5_tr_type1_t);
+	tr_size = माप(काष्ठा cppi5_tr_type1_t);
 	d = udma_alloc_tr_desc(uc, tr_size, num_tr, dir);
-	if (!d)
-		return NULL;
+	अगर (!d)
+		वापस शून्य;
 
 	d->sglen = sglen;
 
-	if (uc->ud->match_data->type == DMA_TYPE_UDMA)
+	अगर (uc->ud->match_data->type == DMA_TYPE_UDMA)
 		asel = 0;
-	else
+	अन्यथा
 		asel = (u64)uc->config.asel << K3_ADDRESS_ASEL_SHIFT;
 
 	tr_req = d->hwdesc[0].tr_req_base;
-	for_each_sg(sgl, sgent, sglen, i) {
+	क्रम_each_sg(sgl, sgent, sglen, i) अणु
 		dma_addr_t sg_addr = sg_dma_address(sgent);
 
 		num_tr = udma_get_tr_counters(sg_dma_len(sgent), __ffs(sg_addr),
 					      &tr0_cnt0, &tr0_cnt1, &tr1_cnt0);
-		if (num_tr < 0) {
+		अगर (num_tr < 0) अणु
 			dev_err(uc->ud->dev, "size %u is not supported\n",
 				sg_dma_len(sgent));
-			udma_free_hwdesc(uc, d);
-			kfree(d);
-			return NULL;
-		}
+			udma_मुक्त_hwdesc(uc, d);
+			kमुक्त(d);
+			वापस शून्य;
+		पूर्ण
 
 		cppi5_tr_init(&tr_req[tr_idx].flags, CPPI5_TR_TYPE1, false,
 			      false, CPPI5_TR_EVENT_SIZE_COMPLETION, 0);
@@ -2895,7 +2896,7 @@ udma_prep_slave_sg_tr(struct udma_chan *uc, struct scatterlist *sgl,
 		tr_req[tr_idx].dim1 = tr0_cnt0;
 		tr_idx++;
 
-		if (num_tr == 2) {
+		अगर (num_tr == 2) अणु
 			cppi5_tr_init(&tr_req[tr_idx].flags, CPPI5_TR_TYPE1,
 				      false, false,
 				      CPPI5_TR_EVENT_SIZE_COMPLETION, 0);
@@ -2907,116 +2908,116 @@ udma_prep_slave_sg_tr(struct udma_chan *uc, struct scatterlist *sgl,
 			tr_req[tr_idx].icnt1 = 1;
 			tr_req[tr_idx].dim1 = tr1_cnt0;
 			tr_idx++;
-		}
+		पूर्ण
 
 		d->residue += sg_dma_len(sgent);
-	}
+	पूर्ण
 
 	cppi5_tr_csf_set(&tr_req[tr_idx - 1].flags,
 			 CPPI5_TR_CSF_SUPR_EVT | CPPI5_TR_CSF_EOP);
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static struct udma_desc *
-udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
-				unsigned int sglen,
-				enum dma_transfer_direction dir,
-				unsigned long tx_flags, void *context)
-{
-	struct scatterlist *sgent;
-	struct cppi5_tr_type15_t *tr_req = NULL;
-	enum dma_slave_buswidth dev_width;
+अटल काष्ठा udma_desc *
+udma_prep_slave_sg_triggered_tr(काष्ठा udma_chan *uc, काष्ठा scatterlist *sgl,
+				अचिन्हित पूर्णांक sglen,
+				क्रमागत dma_transfer_direction dir,
+				अचिन्हित दीर्घ tx_flags, व्योम *context)
+अणु
+	काष्ठा scatterlist *sgent;
+	काष्ठा cppi5_tr_type15_t *tr_req = शून्य;
+	क्रमागत dma_slave_buswidth dev_width;
 	u16 tr_cnt0, tr_cnt1;
 	dma_addr_t dev_addr;
-	struct udma_desc *d;
-	unsigned int i;
-	size_t tr_size, sg_len;
-	int num_tr = 0;
-	int tr_idx = 0;
-	u32 burst, trigger_size, port_window;
+	काष्ठा udma_desc *d;
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार tr_size, sg_len;
+	पूर्णांक num_tr = 0;
+	पूर्णांक tr_idx = 0;
+	u32 burst, trigger_size, port_winकरोw;
 	u64 asel;
 
-	if (dir == DMA_DEV_TO_MEM) {
+	अगर (dir == DMA_DEV_TO_MEM) अणु
 		dev_addr = uc->cfg.src_addr;
 		dev_width = uc->cfg.src_addr_width;
 		burst = uc->cfg.src_maxburst;
-		port_window = uc->cfg.src_port_window_size;
-	} else if (dir == DMA_MEM_TO_DEV) {
+		port_winकरोw = uc->cfg.src_port_winकरोw_size;
+	पूर्ण अन्यथा अगर (dir == DMA_MEM_TO_DEV) अणु
 		dev_addr = uc->cfg.dst_addr;
 		dev_width = uc->cfg.dst_addr_width;
 		burst = uc->cfg.dst_maxburst;
-		port_window = uc->cfg.dst_port_window_size;
-	} else {
+		port_winकरोw = uc->cfg.dst_port_winकरोw_size;
+	पूर्ण अन्यथा अणु
 		dev_err(uc->ud->dev, "%s: bad direction?\n", __func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!burst)
+	अगर (!burst)
 		burst = 1;
 
-	if (port_window) {
-		if (port_window != burst) {
+	अगर (port_winकरोw) अणु
+		अगर (port_winकरोw != burst) अणु
 			dev_err(uc->ud->dev,
 				"The burst must be equal to port_window\n");
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		tr_cnt0 = dev_width * port_window;
+		tr_cnt0 = dev_width * port_winकरोw;
 		tr_cnt1 = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		tr_cnt0 = dev_width;
 		tr_cnt1 = burst;
-	}
+	पूर्ण
 	trigger_size = tr_cnt0 * tr_cnt1;
 
 	/* estimate the number of TRs we will need */
-	for_each_sg(sgl, sgent, sglen, i) {
+	क्रम_each_sg(sgl, sgent, sglen, i) अणु
 		sg_len = sg_dma_len(sgent);
 
-		if (sg_len % trigger_size) {
+		अगर (sg_len % trigger_size) अणु
 			dev_err(uc->ud->dev,
 				"Not aligned SG entry (%zu for %u)\n", sg_len,
 				trigger_size);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		if (sg_len / trigger_size < SZ_64K)
+		अगर (sg_len / trigger_size < SZ_64K)
 			num_tr++;
-		else
+		अन्यथा
 			num_tr += 2;
-	}
+	पूर्ण
 
 	/* Now allocate and setup the descriptor. */
-	tr_size = sizeof(struct cppi5_tr_type15_t);
+	tr_size = माप(काष्ठा cppi5_tr_type15_t);
 	d = udma_alloc_tr_desc(uc, tr_size, num_tr, dir);
-	if (!d)
-		return NULL;
+	अगर (!d)
+		वापस शून्य;
 
 	d->sglen = sglen;
 
-	if (uc->ud->match_data->type == DMA_TYPE_UDMA) {
+	अगर (uc->ud->match_data->type == DMA_TYPE_UDMA) अणु
 		asel = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		asel = (u64)uc->config.asel << K3_ADDRESS_ASEL_SHIFT;
 		dev_addr |= asel;
-	}
+	पूर्ण
 
 	tr_req = d->hwdesc[0].tr_req_base;
-	for_each_sg(sgl, sgent, sglen, i) {
+	क्रम_each_sg(sgl, sgent, sglen, i) अणु
 		u16 tr0_cnt2, tr0_cnt3, tr1_cnt2;
 		dma_addr_t sg_addr = sg_dma_address(sgent);
 
 		sg_len = sg_dma_len(sgent);
 		num_tr = udma_get_tr_counters(sg_len / trigger_size, 0,
 					      &tr0_cnt2, &tr0_cnt3, &tr1_cnt2);
-		if (num_tr < 0) {
+		अगर (num_tr < 0) अणु
 			dev_err(uc->ud->dev, "size %zu is not supported\n",
 				sg_len);
-			udma_free_hwdesc(uc, d);
-			kfree(d);
-			return NULL;
-		}
+			udma_मुक्त_hwdesc(uc, d);
+			kमुक्त(d);
+			वापस शून्य;
+		पूर्ण
 
 		cppi5_tr_init(&tr_req[tr_idx].flags, CPPI5_TR_TYPE15, false,
 			      true, CPPI5_TR_EVENT_SIZE_COMPLETION, 0);
@@ -3026,7 +3027,7 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 				     CPPI5_TR_TRIGGER_TYPE_ICNT2_DEC, 0, 0);
 
 		sg_addr |= asel;
-		if (dir == DMA_DEV_TO_MEM) {
+		अगर (dir == DMA_DEV_TO_MEM) अणु
 			tr_req[tr_idx].addr = dev_addr;
 			tr_req[tr_idx].icnt0 = tr_cnt0;
 			tr_req[tr_idx].icnt1 = tr_cnt1;
@@ -3042,7 +3043,7 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 			tr_req[tr_idx].ddim1 = tr_cnt0;
 			tr_req[tr_idx].ddim2 = trigger_size;
 			tr_req[tr_idx].ddim3 = trigger_size * tr0_cnt2;
-		} else {
+		पूर्ण अन्यथा अणु
 			tr_req[tr_idx].addr = sg_addr;
 			tr_req[tr_idx].icnt0 = tr_cnt0;
 			tr_req[tr_idx].icnt1 = tr_cnt1;
@@ -3058,11 +3059,11 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 			tr_req[tr_idx].dicnt2 = tr0_cnt2;
 			tr_req[tr_idx].dicnt3 = tr0_cnt3;
 			tr_req[tr_idx].ddim1 = (-1) * tr_cnt0;
-		}
+		पूर्ण
 
 		tr_idx++;
 
-		if (num_tr == 2) {
+		अगर (num_tr == 2) अणु
 			cppi5_tr_init(&tr_req[tr_idx].flags, CPPI5_TR_TYPE15,
 				      false, true,
 				      CPPI5_TR_EVENT_SIZE_COMPLETION, 0);
@@ -3074,7 +3075,7 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 					     0, 0);
 
 			sg_addr += trigger_size * tr0_cnt2 * tr0_cnt3;
-			if (dir == DMA_DEV_TO_MEM) {
+			अगर (dir == DMA_DEV_TO_MEM) अणु
 				tr_req[tr_idx].addr = dev_addr;
 				tr_req[tr_idx].icnt0 = tr_cnt0;
 				tr_req[tr_idx].icnt1 = tr_cnt1;
@@ -3089,7 +3090,7 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 				tr_req[tr_idx].dicnt3 = 1;
 				tr_req[tr_idx].ddim1 = tr_cnt0;
 				tr_req[tr_idx].ddim2 = trigger_size;
-			} else {
+			पूर्ण अन्यथा अणु
 				tr_req[tr_idx].addr = sg_addr;
 				tr_req[tr_idx].icnt0 = tr_cnt0;
 				tr_req[tr_idx].icnt1 = tr_cnt1;
@@ -3104,209 +3105,209 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 				tr_req[tr_idx].dicnt2 = tr1_cnt2;
 				tr_req[tr_idx].dicnt3 = 1;
 				tr_req[tr_idx].ddim1 = (-1) * tr_cnt0;
-			}
+			पूर्ण
 			tr_idx++;
-		}
+		पूर्ण
 
 		d->residue += sg_len;
-	}
+	पूर्ण
 
 	cppi5_tr_csf_set(&tr_req[tr_idx - 1].flags,
 			 CPPI5_TR_CSF_SUPR_EVT | CPPI5_TR_CSF_EOP);
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static int udma_configure_statictr(struct udma_chan *uc, struct udma_desc *d,
-				   enum dma_slave_buswidth dev_width,
+अटल पूर्णांक udma_configure_अटलtr(काष्ठा udma_chan *uc, काष्ठा udma_desc *d,
+				   क्रमागत dma_slave_buswidth dev_width,
 				   u16 elcnt)
-{
-	if (uc->config.ep_type != PSIL_EP_PDMA_XY)
-		return 0;
+अणु
+	अगर (uc->config.ep_type != PSIL_EP_PDMA_XY)
+		वापस 0;
 
 	/* Bus width translates to the element size (ES) */
-	switch (dev_width) {
-	case DMA_SLAVE_BUSWIDTH_1_BYTE:
-		d->static_tr.elsize = 0;
-		break;
-	case DMA_SLAVE_BUSWIDTH_2_BYTES:
-		d->static_tr.elsize = 1;
-		break;
-	case DMA_SLAVE_BUSWIDTH_3_BYTES:
-		d->static_tr.elsize = 2;
-		break;
-	case DMA_SLAVE_BUSWIDTH_4_BYTES:
-		d->static_tr.elsize = 3;
-		break;
-	case DMA_SLAVE_BUSWIDTH_8_BYTES:
-		d->static_tr.elsize = 4;
-		break;
-	default: /* not reached */
-		return -EINVAL;
-	}
+	चयन (dev_width) अणु
+	हाल DMA_SLAVE_BUSWIDTH_1_BYTE:
+		d->अटल_tr.elsize = 0;
+		अवरोध;
+	हाल DMA_SLAVE_BUSWIDTH_2_BYTES:
+		d->अटल_tr.elsize = 1;
+		अवरोध;
+	हाल DMA_SLAVE_BUSWIDTH_3_BYTES:
+		d->अटल_tr.elsize = 2;
+		अवरोध;
+	हाल DMA_SLAVE_BUSWIDTH_4_BYTES:
+		d->अटल_tr.elsize = 3;
+		अवरोध;
+	हाल DMA_SLAVE_BUSWIDTH_8_BYTES:
+		d->अटल_tr.elsize = 4;
+		अवरोध;
+	शेष: /* not reached */
+		वापस -EINVAL;
+	पूर्ण
 
-	d->static_tr.elcnt = elcnt;
+	d->अटल_tr.elcnt = elcnt;
 
 	/*
-	 * PDMA must to close the packet when the channel is in packet mode.
-	 * For TR mode when the channel is not cyclic we also need PDMA to close
+	 * PDMA must to बंद the packet when the channel is in packet mode.
+	 * For TR mode when the channel is not cyclic we also need PDMA to बंद
 	 * the packet otherwise the transfer will stall because PDMA holds on
 	 * the data it has received from the peripheral.
 	 */
-	if (uc->config.pkt_mode || !uc->cyclic) {
-		unsigned int div = dev_width * elcnt;
+	अगर (uc->config.pkt_mode || !uc->cyclic) अणु
+		अचिन्हित पूर्णांक भाग = dev_width * elcnt;
 
-		if (uc->cyclic)
-			d->static_tr.bstcnt = d->residue / d->sglen / div;
-		else
-			d->static_tr.bstcnt = d->residue / div;
+		अगर (uc->cyclic)
+			d->अटल_tr.bstcnt = d->residue / d->sglen / भाग;
+		अन्यथा
+			d->अटल_tr.bstcnt = d->residue / भाग;
 
-		if (uc->config.dir == DMA_DEV_TO_MEM &&
-		    d->static_tr.bstcnt > uc->ud->match_data->statictr_z_mask)
-			return -EINVAL;
-	} else {
-		d->static_tr.bstcnt = 0;
-	}
+		अगर (uc->config.dir == DMA_DEV_TO_MEM &&
+		    d->अटल_tr.bstcnt > uc->ud->match_data->अटलtr_z_mask)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		d->अटल_tr.bstcnt = 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct udma_desc *
-udma_prep_slave_sg_pkt(struct udma_chan *uc, struct scatterlist *sgl,
-		       unsigned int sglen, enum dma_transfer_direction dir,
-		       unsigned long tx_flags, void *context)
-{
-	struct scatterlist *sgent;
-	struct cppi5_host_desc_t *h_desc = NULL;
-	struct udma_desc *d;
+अटल काष्ठा udma_desc *
+udma_prep_slave_sg_pkt(काष्ठा udma_chan *uc, काष्ठा scatterlist *sgl,
+		       अचिन्हित पूर्णांक sglen, क्रमागत dma_transfer_direction dir,
+		       अचिन्हित दीर्घ tx_flags, व्योम *context)
+अणु
+	काष्ठा scatterlist *sgent;
+	काष्ठा cppi5_host_desc_t *h_desc = शून्य;
+	काष्ठा udma_desc *d;
 	u32 ring_id;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 	u64 asel;
 
-	d = kzalloc(struct_size(d, hwdesc, sglen), GFP_NOWAIT);
-	if (!d)
-		return NULL;
+	d = kzalloc(काष्ठा_size(d, hwdesc, sglen), GFP_NOWAIT);
+	अगर (!d)
+		वापस शून्य;
 
 	d->sglen = sglen;
 	d->hwdesc_count = sglen;
 
-	if (dir == DMA_DEV_TO_MEM)
+	अगर (dir == DMA_DEV_TO_MEM)
 		ring_id = k3_ringacc_get_ring_id(uc->rflow->r_ring);
-	else
+	अन्यथा
 		ring_id = k3_ringacc_get_ring_id(uc->tchan->tc_ring);
 
-	if (uc->ud->match_data->type == DMA_TYPE_UDMA)
+	अगर (uc->ud->match_data->type == DMA_TYPE_UDMA)
 		asel = 0;
-	else
+	अन्यथा
 		asel = (u64)uc->config.asel << K3_ADDRESS_ASEL_SHIFT;
 
-	for_each_sg(sgl, sgent, sglen, i) {
-		struct udma_hwdesc *hwdesc = &d->hwdesc[i];
+	क्रम_each_sg(sgl, sgent, sglen, i) अणु
+		काष्ठा udma_hwdesc *hwdesc = &d->hwdesc[i];
 		dma_addr_t sg_addr = sg_dma_address(sgent);
-		struct cppi5_host_desc_t *desc;
-		size_t sg_len = sg_dma_len(sgent);
+		काष्ठा cppi5_host_desc_t *desc;
+		माप_प्रकार sg_len = sg_dma_len(sgent);
 
 		hwdesc->cppi5_desc_vaddr = dma_pool_zalloc(uc->hdesc_pool,
 						GFP_NOWAIT,
 						&hwdesc->cppi5_desc_paddr);
-		if (!hwdesc->cppi5_desc_vaddr) {
+		अगर (!hwdesc->cppi5_desc_vaddr) अणु
 			dev_err(uc->ud->dev,
 				"descriptor%d allocation failed\n", i);
 
-			udma_free_hwdesc(uc, d);
-			kfree(d);
-			return NULL;
-		}
+			udma_मुक्त_hwdesc(uc, d);
+			kमुक्त(d);
+			वापस शून्य;
+		पूर्ण
 
 		d->residue += sg_len;
 		hwdesc->cppi5_desc_size = uc->config.hdesc_size;
 		desc = hwdesc->cppi5_desc_vaddr;
 
-		if (i == 0) {
+		अगर (i == 0) अणु
 			cppi5_hdesc_init(desc, 0, 0);
 			/* Flow and Packed ID */
 			cppi5_desc_set_pktids(&desc->hdr, uc->id,
 					      CPPI5_INFO1_DESC_FLOWID_DEFAULT);
 			cppi5_desc_set_retpolicy(&desc->hdr, 0, ring_id);
-		} else {
+		पूर्ण अन्यथा अणु
 			cppi5_hdesc_reset_hbdesc(desc);
 			cppi5_desc_set_retpolicy(&desc->hdr, 0, 0xffff);
-		}
+		पूर्ण
 
 		/* attach the sg buffer to the descriptor */
 		sg_addr |= asel;
 		cppi5_hdesc_attach_buf(desc, sg_addr, sg_len, sg_addr, sg_len);
 
 		/* Attach link as host buffer descriptor */
-		if (h_desc)
+		अगर (h_desc)
 			cppi5_hdesc_link_hbdesc(h_desc,
 						hwdesc->cppi5_desc_paddr | asel);
 
-		if (uc->ud->match_data->type == DMA_TYPE_PKTDMA ||
+		अगर (uc->ud->match_data->type == DMA_TYPE_PKTDMA ||
 		    dir == DMA_MEM_TO_DEV)
 			h_desc = desc;
-	}
+	पूर्ण
 
-	if (d->residue >= SZ_4M) {
+	अगर (d->residue >= SZ_4M) अणु
 		dev_err(uc->ud->dev,
 			"%s: Transfer size %u is over the supported 4M range\n",
 			__func__, d->residue);
-		udma_free_hwdesc(uc, d);
-		kfree(d);
-		return NULL;
-	}
+		udma_मुक्त_hwdesc(uc, d);
+		kमुक्त(d);
+		वापस शून्य;
+	पूर्ण
 
 	h_desc = d->hwdesc[0].cppi5_desc_vaddr;
 	cppi5_hdesc_set_pktlen(h_desc, d->residue);
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static int udma_attach_metadata(struct dma_async_tx_descriptor *desc,
-				void *data, size_t len)
-{
-	struct udma_desc *d = to_udma_desc(desc);
-	struct udma_chan *uc = to_udma_chan(desc->chan);
-	struct cppi5_host_desc_t *h_desc;
+अटल पूर्णांक udma_attach_metadata(काष्ठा dma_async_tx_descriptor *desc,
+				व्योम *data, माप_प्रकार len)
+अणु
+	काष्ठा udma_desc *d = to_udma_desc(desc);
+	काष्ठा udma_chan *uc = to_udma_chan(desc->chan);
+	काष्ठा cppi5_host_desc_t *h_desc;
 	u32 psd_size = len;
 	u32 flags = 0;
 
-	if (!uc->config.pkt_mode || !uc->config.metadata_size)
-		return -ENOTSUPP;
+	अगर (!uc->config.pkt_mode || !uc->config.metadata_size)
+		वापस -ENOTSUPP;
 
-	if (!data || len > uc->config.metadata_size)
-		return -EINVAL;
+	अगर (!data || len > uc->config.metadata_size)
+		वापस -EINVAL;
 
-	if (uc->config.needs_epib && len < CPPI5_INFO0_HDESC_EPIB_SIZE)
-		return -EINVAL;
+	अगर (uc->config.needs_epib && len < CPPI5_INFO0_HDESC_EPIB_SIZE)
+		वापस -EINVAL;
 
 	h_desc = d->hwdesc[0].cppi5_desc_vaddr;
-	if (d->dir == DMA_MEM_TO_DEV)
-		memcpy(h_desc->epib, data, len);
+	अगर (d->dir == DMA_MEM_TO_DEV)
+		स_नकल(h_desc->epib, data, len);
 
-	if (uc->config.needs_epib)
+	अगर (uc->config.needs_epib)
 		psd_size -= CPPI5_INFO0_HDESC_EPIB_SIZE;
 
 	d->metadata = data;
 	d->metadata_size = len;
-	if (uc->config.needs_epib)
+	अगर (uc->config.needs_epib)
 		flags |= CPPI5_INFO0_HDESC_EPIB_PRESENT;
 
 	cppi5_hdesc_update_flags(h_desc, flags);
 	cppi5_hdesc_update_psdata_size(h_desc, psd_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *udma_get_metadata_ptr(struct dma_async_tx_descriptor *desc,
-				   size_t *payload_len, size_t *max_len)
-{
-	struct udma_desc *d = to_udma_desc(desc);
-	struct udma_chan *uc = to_udma_chan(desc->chan);
-	struct cppi5_host_desc_t *h_desc;
+अटल व्योम *udma_get_metadata_ptr(काष्ठा dma_async_tx_descriptor *desc,
+				   माप_प्रकार *payload_len, माप_प्रकार *max_len)
+अणु
+	काष्ठा udma_desc *d = to_udma_desc(desc);
+	काष्ठा udma_chan *uc = to_udma_chan(desc->chan);
+	काष्ठा cppi5_host_desc_t *h_desc;
 
-	if (!uc->config.pkt_mode || !uc->config.metadata_size)
-		return ERR_PTR(-ENOTSUPP);
+	अगर (!uc->config.pkt_mode || !uc->config.metadata_size)
+		वापस ERR_PTR(-ENOTSUPP);
 
 	h_desc = d->hwdesc[0].cppi5_desc_vaddr;
 
@@ -3316,150 +3317,150 @@ static void *udma_get_metadata_ptr(struct dma_async_tx_descriptor *desc,
 		       CPPI5_INFO0_HDESC_EPIB_SIZE : 0;
 	*payload_len += cppi5_hdesc_get_psdata_size(h_desc);
 
-	return h_desc->epib;
-}
+	वापस h_desc->epib;
+पूर्ण
 
-static int udma_set_metadata_len(struct dma_async_tx_descriptor *desc,
-				 size_t payload_len)
-{
-	struct udma_desc *d = to_udma_desc(desc);
-	struct udma_chan *uc = to_udma_chan(desc->chan);
-	struct cppi5_host_desc_t *h_desc;
+अटल पूर्णांक udma_set_metadata_len(काष्ठा dma_async_tx_descriptor *desc,
+				 माप_प्रकार payload_len)
+अणु
+	काष्ठा udma_desc *d = to_udma_desc(desc);
+	काष्ठा udma_chan *uc = to_udma_chan(desc->chan);
+	काष्ठा cppi5_host_desc_t *h_desc;
 	u32 psd_size = payload_len;
 	u32 flags = 0;
 
-	if (!uc->config.pkt_mode || !uc->config.metadata_size)
-		return -ENOTSUPP;
+	अगर (!uc->config.pkt_mode || !uc->config.metadata_size)
+		वापस -ENOTSUPP;
 
-	if (payload_len > uc->config.metadata_size)
-		return -EINVAL;
+	अगर (payload_len > uc->config.metadata_size)
+		वापस -EINVAL;
 
-	if (uc->config.needs_epib && payload_len < CPPI5_INFO0_HDESC_EPIB_SIZE)
-		return -EINVAL;
+	अगर (uc->config.needs_epib && payload_len < CPPI5_INFO0_HDESC_EPIB_SIZE)
+		वापस -EINVAL;
 
 	h_desc = d->hwdesc[0].cppi5_desc_vaddr;
 
-	if (uc->config.needs_epib) {
+	अगर (uc->config.needs_epib) अणु
 		psd_size -= CPPI5_INFO0_HDESC_EPIB_SIZE;
 		flags |= CPPI5_INFO0_HDESC_EPIB_PRESENT;
-	}
+	पूर्ण
 
 	cppi5_hdesc_update_flags(h_desc, flags);
 	cppi5_hdesc_update_psdata_size(h_desc, psd_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dma_descriptor_metadata_ops metadata_ops = {
+अटल काष्ठा dma_descriptor_metadata_ops metadata_ops = अणु
 	.attach = udma_attach_metadata,
 	.get_ptr = udma_get_metadata_ptr,
 	.set_len = udma_set_metadata_len,
-};
+पूर्ण;
 
-static struct dma_async_tx_descriptor *
-udma_prep_slave_sg(struct dma_chan *chan, struct scatterlist *sgl,
-		   unsigned int sglen, enum dma_transfer_direction dir,
-		   unsigned long tx_flags, void *context)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	enum dma_slave_buswidth dev_width;
-	struct udma_desc *d;
+अटल काष्ठा dma_async_tx_descriptor *
+udma_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
+		   अचिन्हित पूर्णांक sglen, क्रमागत dma_transfer_direction dir,
+		   अचिन्हित दीर्घ tx_flags, व्योम *context)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	क्रमागत dma_slave_buswidth dev_width;
+	काष्ठा udma_desc *d;
 	u32 burst;
 
-	if (dir != uc->config.dir &&
-	    (uc->config.dir == DMA_MEM_TO_MEM && !uc->config.tr_trigger_type)) {
+	अगर (dir != uc->config.dir &&
+	    (uc->config.dir == DMA_MEM_TO_MEM && !uc->config.tr_trigger_type)) अणु
 		dev_err(chan->device->dev,
 			"%s: chan%d is for %s, not supporting %s\n",
 			__func__, uc->id,
 			dmaengine_get_direction_text(uc->config.dir),
 			dmaengine_get_direction_text(dir));
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (dir == DMA_DEV_TO_MEM) {
+	अगर (dir == DMA_DEV_TO_MEM) अणु
 		dev_width = uc->cfg.src_addr_width;
 		burst = uc->cfg.src_maxburst;
-	} else if (dir == DMA_MEM_TO_DEV) {
+	पूर्ण अन्यथा अगर (dir == DMA_MEM_TO_DEV) अणु
 		dev_width = uc->cfg.dst_addr_width;
 		burst = uc->cfg.dst_maxburst;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(chan->device->dev, "%s: bad direction?\n", __func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!burst)
+	अगर (!burst)
 		burst = 1;
 
-	if (uc->config.pkt_mode)
+	अगर (uc->config.pkt_mode)
 		d = udma_prep_slave_sg_pkt(uc, sgl, sglen, dir, tx_flags,
 					   context);
-	else if (is_slave_direction(uc->config.dir))
+	अन्यथा अगर (is_slave_direction(uc->config.dir))
 		d = udma_prep_slave_sg_tr(uc, sgl, sglen, dir, tx_flags,
 					  context);
-	else
+	अन्यथा
 		d = udma_prep_slave_sg_triggered_tr(uc, sgl, sglen, dir,
 						    tx_flags, context);
 
-	if (!d)
-		return NULL;
+	अगर (!d)
+		वापस शून्य;
 
 	d->dir = dir;
 	d->desc_idx = 0;
 	d->tr_idx = 0;
 
-	/* static TR for remote PDMA */
-	if (udma_configure_statictr(uc, d, dev_width, burst)) {
+	/* अटल TR क्रम remote PDMA */
+	अगर (udma_configure_अटलtr(uc, d, dev_width, burst)) अणु
 		dev_err(uc->ud->dev,
 			"%s: StaticTR Z is limited to maximum 4095 (%u)\n",
-			__func__, d->static_tr.bstcnt);
+			__func__, d->अटल_tr.bstcnt);
 
-		udma_free_hwdesc(uc, d);
-		kfree(d);
-		return NULL;
-	}
+		udma_मुक्त_hwdesc(uc, d);
+		kमुक्त(d);
+		वापस शून्य;
+	पूर्ण
 
-	if (uc->config.metadata_size)
+	अगर (uc->config.metadata_size)
 		d->vd.tx.metadata_ops = &metadata_ops;
 
-	return vchan_tx_prep(&uc->vc, &d->vd, tx_flags);
-}
+	वापस vchan_tx_prep(&uc->vc, &d->vd, tx_flags);
+पूर्ण
 
-static struct udma_desc *
-udma_prep_dma_cyclic_tr(struct udma_chan *uc, dma_addr_t buf_addr,
-			size_t buf_len, size_t period_len,
-			enum dma_transfer_direction dir, unsigned long flags)
-{
-	struct udma_desc *d;
-	size_t tr_size, period_addr;
-	struct cppi5_tr_type1_t *tr_req;
-	unsigned int periods = buf_len / period_len;
+अटल काष्ठा udma_desc *
+udma_prep_dma_cyclic_tr(काष्ठा udma_chan *uc, dma_addr_t buf_addr,
+			माप_प्रकार buf_len, माप_प्रकार period_len,
+			क्रमागत dma_transfer_direction dir, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा udma_desc *d;
+	माप_प्रकार tr_size, period_addr;
+	काष्ठा cppi5_tr_type1_t *tr_req;
+	अचिन्हित पूर्णांक periods = buf_len / period_len;
 	u16 tr0_cnt0, tr0_cnt1, tr1_cnt0;
-	unsigned int i;
-	int num_tr;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक num_tr;
 
 	num_tr = udma_get_tr_counters(period_len, __ffs(buf_addr), &tr0_cnt0,
 				      &tr0_cnt1, &tr1_cnt0);
-	if (num_tr < 0) {
+	अगर (num_tr < 0) अणु
 		dev_err(uc->ud->dev, "size %zu is not supported\n",
 			period_len);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* Now allocate and setup the descriptor. */
-	tr_size = sizeof(struct cppi5_tr_type1_t);
+	tr_size = माप(काष्ठा cppi5_tr_type1_t);
 	d = udma_alloc_tr_desc(uc, tr_size, periods * num_tr, dir);
-	if (!d)
-		return NULL;
+	अगर (!d)
+		वापस शून्य;
 
 	tr_req = d->hwdesc[0].tr_req_base;
-	if (uc->ud->match_data->type == DMA_TYPE_UDMA)
+	अगर (uc->ud->match_data->type == DMA_TYPE_UDMA)
 		period_addr = buf_addr;
-	else
+	अन्यथा
 		period_addr = buf_addr |
 			((u64)uc->config.asel << K3_ADDRESS_ASEL_SHIFT);
 
-	for (i = 0; i < periods; i++) {
-		int tr_idx = i * num_tr;
+	क्रम (i = 0; i < periods; i++) अणु
+		पूर्णांक tr_idx = i * num_tr;
 
 		cppi5_tr_init(&tr_req[tr_idx].flags, CPPI5_TR_TYPE1, false,
 			      false, CPPI5_TR_EVENT_SIZE_COMPLETION, 0);
@@ -3469,7 +3470,7 @@ udma_prep_dma_cyclic_tr(struct udma_chan *uc, dma_addr_t buf_addr,
 		tr_req[tr_idx].icnt1 = tr0_cnt1;
 		tr_req[tr_idx].dim1 = tr0_cnt0;
 
-		if (num_tr == 2) {
+		अगर (num_tr == 2) अणु
 			cppi5_tr_csf_set(&tr_req[tr_idx].flags,
 					 CPPI5_TR_CSF_SUPR_EVT);
 			tr_idx++;
@@ -3482,65 +3483,65 @@ udma_prep_dma_cyclic_tr(struct udma_chan *uc, dma_addr_t buf_addr,
 			tr_req[tr_idx].icnt0 = tr1_cnt0;
 			tr_req[tr_idx].icnt1 = 1;
 			tr_req[tr_idx].dim1 = tr1_cnt0;
-		}
+		पूर्ण
 
-		if (!(flags & DMA_PREP_INTERRUPT))
+		अगर (!(flags & DMA_PREP_INTERRUPT))
 			cppi5_tr_csf_set(&tr_req[tr_idx].flags,
 					 CPPI5_TR_CSF_SUPR_EVT);
 
 		period_addr += period_len;
-	}
+	पूर्ण
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static struct udma_desc *
-udma_prep_dma_cyclic_pkt(struct udma_chan *uc, dma_addr_t buf_addr,
-			 size_t buf_len, size_t period_len,
-			 enum dma_transfer_direction dir, unsigned long flags)
-{
-	struct udma_desc *d;
+अटल काष्ठा udma_desc *
+udma_prep_dma_cyclic_pkt(काष्ठा udma_chan *uc, dma_addr_t buf_addr,
+			 माप_प्रकार buf_len, माप_प्रकार period_len,
+			 क्रमागत dma_transfer_direction dir, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा udma_desc *d;
 	u32 ring_id;
-	int i;
-	int periods = buf_len / period_len;
+	पूर्णांक i;
+	पूर्णांक periods = buf_len / period_len;
 
-	if (periods > (K3_UDMA_DEFAULT_RING_SIZE - 1))
-		return NULL;
+	अगर (periods > (K3_UDMA_DEFAULT_RING_SIZE - 1))
+		वापस शून्य;
 
-	if (period_len >= SZ_4M)
-		return NULL;
+	अगर (period_len >= SZ_4M)
+		वापस शून्य;
 
-	d = kzalloc(struct_size(d, hwdesc, periods), GFP_NOWAIT);
-	if (!d)
-		return NULL;
+	d = kzalloc(काष्ठा_size(d, hwdesc, periods), GFP_NOWAIT);
+	अगर (!d)
+		वापस शून्य;
 
 	d->hwdesc_count = periods;
 
 	/* TODO: re-check this... */
-	if (dir == DMA_DEV_TO_MEM)
+	अगर (dir == DMA_DEV_TO_MEM)
 		ring_id = k3_ringacc_get_ring_id(uc->rflow->r_ring);
-	else
+	अन्यथा
 		ring_id = k3_ringacc_get_ring_id(uc->tchan->tc_ring);
 
-	if (uc->ud->match_data->type != DMA_TYPE_UDMA)
+	अगर (uc->ud->match_data->type != DMA_TYPE_UDMA)
 		buf_addr |= (u64)uc->config.asel << K3_ADDRESS_ASEL_SHIFT;
 
-	for (i = 0; i < periods; i++) {
-		struct udma_hwdesc *hwdesc = &d->hwdesc[i];
+	क्रम (i = 0; i < periods; i++) अणु
+		काष्ठा udma_hwdesc *hwdesc = &d->hwdesc[i];
 		dma_addr_t period_addr = buf_addr + (period_len * i);
-		struct cppi5_host_desc_t *h_desc;
+		काष्ठा cppi5_host_desc_t *h_desc;
 
 		hwdesc->cppi5_desc_vaddr = dma_pool_zalloc(uc->hdesc_pool,
 						GFP_NOWAIT,
 						&hwdesc->cppi5_desc_paddr);
-		if (!hwdesc->cppi5_desc_vaddr) {
+		अगर (!hwdesc->cppi5_desc_vaddr) अणु
 			dev_err(uc->ud->dev,
 				"descriptor%d allocation failed\n", i);
 
-			udma_free_hwdesc(uc, d);
-			kfree(d);
-			return NULL;
-		}
+			udma_मुक्त_hwdesc(uc, d);
+			kमुक्त(d);
+			वापस शून्य;
+		पूर्ण
 
 		hwdesc->cppi5_desc_size = uc->config.hdesc_size;
 		h_desc = hwdesc->cppi5_desc_vaddr;
@@ -3557,119 +3558,119 @@ udma_prep_dma_cyclic_pkt(struct udma_chan *uc, dma_addr_t buf_addr,
 		cppi5_hdesc_attach_buf(h_desc,
 				       period_addr, period_len,
 				       period_addr, period_len);
-	}
+	पूर्ण
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-udma_prep_dma_cyclic(struct dma_chan *chan, dma_addr_t buf_addr, size_t buf_len,
-		     size_t period_len, enum dma_transfer_direction dir,
-		     unsigned long flags)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	enum dma_slave_buswidth dev_width;
-	struct udma_desc *d;
+अटल काष्ठा dma_async_tx_descriptor *
+udma_prep_dma_cyclic(काष्ठा dma_chan *chan, dma_addr_t buf_addr, माप_प्रकार buf_len,
+		     माप_प्रकार period_len, क्रमागत dma_transfer_direction dir,
+		     अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	क्रमागत dma_slave_buswidth dev_width;
+	काष्ठा udma_desc *d;
 	u32 burst;
 
-	if (dir != uc->config.dir) {
+	अगर (dir != uc->config.dir) अणु
 		dev_err(chan->device->dev,
 			"%s: chan%d is for %s, not supporting %s\n",
 			__func__, uc->id,
 			dmaengine_get_direction_text(uc->config.dir),
 			dmaengine_get_direction_text(dir));
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	uc->cyclic = true;
 
-	if (dir == DMA_DEV_TO_MEM) {
+	अगर (dir == DMA_DEV_TO_MEM) अणु
 		dev_width = uc->cfg.src_addr_width;
 		burst = uc->cfg.src_maxburst;
-	} else if (dir == DMA_MEM_TO_DEV) {
+	पूर्ण अन्यथा अगर (dir == DMA_MEM_TO_DEV) अणु
 		dev_width = uc->cfg.dst_addr_width;
 		burst = uc->cfg.dst_maxburst;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(uc->ud->dev, "%s: bad direction?\n", __func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!burst)
+	अगर (!burst)
 		burst = 1;
 
-	if (uc->config.pkt_mode)
+	अगर (uc->config.pkt_mode)
 		d = udma_prep_dma_cyclic_pkt(uc, buf_addr, buf_len, period_len,
 					     dir, flags);
-	else
+	अन्यथा
 		d = udma_prep_dma_cyclic_tr(uc, buf_addr, buf_len, period_len,
 					    dir, flags);
 
-	if (!d)
-		return NULL;
+	अगर (!d)
+		वापस शून्य;
 
 	d->sglen = buf_len / period_len;
 
 	d->dir = dir;
 	d->residue = buf_len;
 
-	/* static TR for remote PDMA */
-	if (udma_configure_statictr(uc, d, dev_width, burst)) {
+	/* अटल TR क्रम remote PDMA */
+	अगर (udma_configure_अटलtr(uc, d, dev_width, burst)) अणु
 		dev_err(uc->ud->dev,
 			"%s: StaticTR Z is limited to maximum 4095 (%u)\n",
-			__func__, d->static_tr.bstcnt);
+			__func__, d->अटल_tr.bstcnt);
 
-		udma_free_hwdesc(uc, d);
-		kfree(d);
-		return NULL;
-	}
+		udma_मुक्त_hwdesc(uc, d);
+		kमुक्त(d);
+		वापस शून्य;
+	पूर्ण
 
-	if (uc->config.metadata_size)
+	अगर (uc->config.metadata_size)
 		d->vd.tx.metadata_ops = &metadata_ops;
 
-	return vchan_tx_prep(&uc->vc, &d->vd, flags);
-}
+	वापस vchan_tx_prep(&uc->vc, &d->vd, flags);
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-udma_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
-		     size_t len, unsigned long tx_flags)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	struct udma_desc *d;
-	struct cppi5_tr_type15_t *tr_req;
-	int num_tr;
-	size_t tr_size = sizeof(struct cppi5_tr_type15_t);
+अटल काष्ठा dma_async_tx_descriptor *
+udma_prep_dma_स_नकल(काष्ठा dma_chan *chan, dma_addr_t dest, dma_addr_t src,
+		     माप_प्रकार len, अचिन्हित दीर्घ tx_flags)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	काष्ठा udma_desc *d;
+	काष्ठा cppi5_tr_type15_t *tr_req;
+	पूर्णांक num_tr;
+	माप_प्रकार tr_size = माप(काष्ठा cppi5_tr_type15_t);
 	u16 tr0_cnt0, tr0_cnt1, tr1_cnt0;
 
-	if (uc->config.dir != DMA_MEM_TO_MEM) {
+	अगर (uc->config.dir != DMA_MEM_TO_MEM) अणु
 		dev_err(chan->device->dev,
 			"%s: chan%d is for %s, not supporting %s\n",
 			__func__, uc->id,
 			dmaengine_get_direction_text(uc->config.dir),
 			dmaengine_get_direction_text(DMA_MEM_TO_MEM));
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	num_tr = udma_get_tr_counters(len, __ffs(src | dest), &tr0_cnt0,
 				      &tr0_cnt1, &tr1_cnt0);
-	if (num_tr < 0) {
+	अगर (num_tr < 0) अणु
 		dev_err(uc->ud->dev, "size %zu is not supported\n",
 			len);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	d = udma_alloc_tr_desc(uc, tr_size, num_tr, DMA_MEM_TO_MEM);
-	if (!d)
-		return NULL;
+	अगर (!d)
+		वापस शून्य;
 
 	d->dir = DMA_MEM_TO_MEM;
 	d->desc_idx = 0;
 	d->tr_idx = 0;
 	d->residue = len;
 
-	if (uc->ud->match_data->type != DMA_TYPE_UDMA) {
+	अगर (uc->ud->match_data->type != DMA_TYPE_UDMA) अणु
 		src |= (u64)uc->ud->asel << K3_ADDRESS_ASEL_SHIFT;
 		dest |= (u64)uc->ud->asel << K3_ADDRESS_ASEL_SHIFT;
-	}
+	पूर्ण
 
 	tr_req = d->hwdesc[0].tr_req_base;
 
@@ -3691,7 +3692,7 @@ udma_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
 	tr_req[0].dicnt3 = 1;
 	tr_req[0].ddim1 = tr0_cnt0;
 
-	if (num_tr == 2) {
+	अगर (num_tr == 2) अणु
 		cppi5_tr_init(&tr_req[1].flags, CPPI5_TR_TYPE15, false, true,
 			      CPPI5_TR_EVENT_SIZE_COMPLETION, 0);
 		cppi5_tr_csf_set(&tr_req[1].flags, CPPI5_TR_CSF_SUPR_EVT);
@@ -3707,281 +3708,281 @@ udma_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
 		tr_req[1].dicnt1 = 1;
 		tr_req[1].dicnt2 = 1;
 		tr_req[1].dicnt3 = 1;
-	}
+	पूर्ण
 
 	cppi5_tr_csf_set(&tr_req[num_tr - 1].flags,
 			 CPPI5_TR_CSF_SUPR_EVT | CPPI5_TR_CSF_EOP);
 
-	if (uc->config.metadata_size)
+	अगर (uc->config.metadata_size)
 		d->vd.tx.metadata_ops = &metadata_ops;
 
-	return vchan_tx_prep(&uc->vc, &d->vd, tx_flags);
-}
+	वापस vchan_tx_prep(&uc->vc, &d->vd, tx_flags);
+पूर्ण
 
-static void udma_issue_pending(struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	unsigned long flags;
+अटल व्योम udma_issue_pending(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&uc->vc.lock, flags);
 
 	/* If we have something pending and no active descriptor, then */
-	if (vchan_issue_pending(&uc->vc) && !uc->desc) {
+	अगर (vchan_issue_pending(&uc->vc) && !uc->desc) अणु
 		/*
-		 * start a descriptor if the channel is NOT [marked as
-		 * terminating _and_ it is still running (teardown has not
+		 * start a descriptor अगर the channel is NOT [marked as
+		 * terminating _and_ it is still running (tearकरोwn has not
 		 * completed yet)].
 		 */
-		if (!(uc->state == UDMA_CHAN_IS_TERMINATING &&
+		अगर (!(uc->state == UDMA_CHAN_IS_TERMINATING &&
 		      udma_is_chan_running(uc)))
 			udma_start(uc);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&uc->vc.lock, flags);
-}
+पूर्ण
 
-static enum dma_status udma_tx_status(struct dma_chan *chan,
+अटल क्रमागत dma_status udma_tx_status(काष्ठा dma_chan *chan,
 				      dma_cookie_t cookie,
-				      struct dma_tx_state *txstate)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	enum dma_status ret;
-	unsigned long flags;
+				      काष्ठा dma_tx_state *txstate)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	क्रमागत dma_status ret;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&uc->vc.lock, flags);
 
 	ret = dma_cookie_status(chan, cookie, txstate);
 
-	if (!udma_is_chan_running(uc))
+	अगर (!udma_is_chan_running(uc))
 		ret = DMA_COMPLETE;
 
-	if (ret == DMA_IN_PROGRESS && udma_is_chan_paused(uc))
+	अगर (ret == DMA_IN_PROGRESS && udma_is_chan_छोड़ोd(uc))
 		ret = DMA_PAUSED;
 
-	if (ret == DMA_COMPLETE || !txstate)
-		goto out;
+	अगर (ret == DMA_COMPLETE || !txstate)
+		जाओ out;
 
-	if (uc->desc && uc->desc->vd.tx.cookie == cookie) {
+	अगर (uc->desc && uc->desc->vd.tx.cookie == cookie) अणु
 		u32 peer_bcnt = 0;
 		u32 bcnt = 0;
 		u32 residue = uc->desc->residue;
 		u32 delay = 0;
 
-		if (uc->desc->dir == DMA_MEM_TO_DEV) {
-			bcnt = udma_tchanrt_read(uc, UDMA_CHAN_RT_SBCNT_REG);
+		अगर (uc->desc->dir == DMA_MEM_TO_DEV) अणु
+			bcnt = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_SBCNT_REG);
 
-			if (uc->config.ep_type != PSIL_EP_NATIVE) {
-				peer_bcnt = udma_tchanrt_read(uc,
+			अगर (uc->config.ep_type != PSIL_EP_NATIVE) अणु
+				peer_bcnt = udma_tchanrt_पढ़ो(uc,
 						UDMA_CHAN_RT_PEER_BCNT_REG);
 
-				if (bcnt > peer_bcnt)
+				अगर (bcnt > peer_bcnt)
 					delay = bcnt - peer_bcnt;
-			}
-		} else if (uc->desc->dir == DMA_DEV_TO_MEM) {
-			bcnt = udma_rchanrt_read(uc, UDMA_CHAN_RT_BCNT_REG);
+			पूर्ण
+		पूर्ण अन्यथा अगर (uc->desc->dir == DMA_DEV_TO_MEM) अणु
+			bcnt = udma_rchanrt_पढ़ो(uc, UDMA_CHAN_RT_BCNT_REG);
 
-			if (uc->config.ep_type != PSIL_EP_NATIVE) {
-				peer_bcnt = udma_rchanrt_read(uc,
+			अगर (uc->config.ep_type != PSIL_EP_NATIVE) अणु
+				peer_bcnt = udma_rchanrt_पढ़ो(uc,
 						UDMA_CHAN_RT_PEER_BCNT_REG);
 
-				if (peer_bcnt > bcnt)
+				अगर (peer_bcnt > bcnt)
 					delay = peer_bcnt - bcnt;
-			}
-		} else {
-			bcnt = udma_tchanrt_read(uc, UDMA_CHAN_RT_BCNT_REG);
-		}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			bcnt = udma_tchanrt_पढ़ो(uc, UDMA_CHAN_RT_BCNT_REG);
+		पूर्ण
 
 		bcnt -= uc->bcnt;
-		if (bcnt && !(bcnt % uc->desc->residue))
+		अगर (bcnt && !(bcnt % uc->desc->residue))
 			residue = 0;
-		else
+		अन्यथा
 			residue -= bcnt % uc->desc->residue;
 
-		if (!residue && (uc->config.dir == DMA_DEV_TO_MEM || !delay)) {
+		अगर (!residue && (uc->config.dir == DMA_DEV_TO_MEM || !delay)) अणु
 			ret = DMA_COMPLETE;
 			delay = 0;
-		}
+		पूर्ण
 
 		dma_set_residue(txstate, residue);
 		dma_set_in_flight_bytes(txstate, delay);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = DMA_COMPLETE;
-	}
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&uc->vc.lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int udma_pause(struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
+अटल पूर्णांक udma_छोड़ो(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
 
-	/* pause the channel */
-	switch (uc->config.dir) {
-	case DMA_DEV_TO_MEM:
+	/* छोड़ो the channel */
+	चयन (uc->config.dir) अणु
+	हाल DMA_DEV_TO_MEM:
 		udma_rchanrt_update_bits(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
 					 UDMA_PEER_RT_EN_PAUSE,
 					 UDMA_PEER_RT_EN_PAUSE);
-		break;
-	case DMA_MEM_TO_DEV:
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
 		udma_tchanrt_update_bits(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
 					 UDMA_PEER_RT_EN_PAUSE,
 					 UDMA_PEER_RT_EN_PAUSE);
-		break;
-	case DMA_MEM_TO_MEM:
+		अवरोध;
+	हाल DMA_MEM_TO_MEM:
 		udma_tchanrt_update_bits(uc, UDMA_CHAN_RT_CTL_REG,
 					 UDMA_CHAN_RT_CTL_PAUSE,
 					 UDMA_CHAN_RT_CTL_PAUSE);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int udma_resume(struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
+अटल पूर्णांक udma_resume(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
 
 	/* resume the channel */
-	switch (uc->config.dir) {
-	case DMA_DEV_TO_MEM:
+	चयन (uc->config.dir) अणु
+	हाल DMA_DEV_TO_MEM:
 		udma_rchanrt_update_bits(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
 					 UDMA_PEER_RT_EN_PAUSE, 0);
 
-		break;
-	case DMA_MEM_TO_DEV:
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
 		udma_tchanrt_update_bits(uc, UDMA_CHAN_RT_PEER_RT_EN_REG,
 					 UDMA_PEER_RT_EN_PAUSE, 0);
-		break;
-	case DMA_MEM_TO_MEM:
+		अवरोध;
+	हाल DMA_MEM_TO_MEM:
 		udma_tchanrt_update_bits(uc, UDMA_CHAN_RT_CTL_REG,
 					 UDMA_CHAN_RT_CTL_PAUSE, 0);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int udma_terminate_all(struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	unsigned long flags;
+अटल पूर्णांक udma_terminate_all(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&uc->vc.lock, flags);
 
-	if (udma_is_chan_running(uc))
+	अगर (udma_is_chan_running(uc))
 		udma_stop(uc);
 
-	if (uc->desc) {
+	अगर (uc->desc) अणु
 		uc->terminated_desc = uc->desc;
-		uc->desc = NULL;
+		uc->desc = शून्य;
 		uc->terminated_desc->terminated = true;
 		cancel_delayed_work(&uc->tx_drain.work);
-	}
+	पूर्ण
 
-	uc->paused = false;
+	uc->छोड़ोd = false;
 
 	vchan_get_all_descriptors(&uc->vc, &head);
 	spin_unlock_irqrestore(&uc->vc.lock, flags);
-	vchan_dma_desc_free_list(&uc->vc, &head);
+	vchan_dma_desc_मुक्त_list(&uc->vc, &head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void udma_synchronize(struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	unsigned long timeout = msecs_to_jiffies(1000);
+अटल व्योम udma_synchronize(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(1000);
 
 	vchan_synchronize(&uc->vc);
 
-	if (uc->state == UDMA_CHAN_IS_TERMINATING) {
-		timeout = wait_for_completion_timeout(&uc->teardown_completed,
-						      timeout);
-		if (!timeout) {
+	अगर (uc->state == UDMA_CHAN_IS_TERMINATING) अणु
+		समयout = रुको_क्रम_completion_समयout(&uc->tearकरोwn_completed,
+						      समयout);
+		अगर (!समयout) अणु
 			dev_warn(uc->ud->dev, "chan%d teardown timeout!\n",
 				 uc->id);
 			udma_dump_chan_stdata(uc);
 			udma_reset_chan(uc, true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	udma_reset_chan(uc, false);
-	if (udma_is_chan_running(uc))
+	अगर (udma_is_chan_running(uc))
 		dev_warn(uc->ud->dev, "chan%d refused to stop!\n", uc->id);
 
 	cancel_delayed_work_sync(&uc->tx_drain.work);
 	udma_reset_rings(uc);
-}
+पूर्ण
 
-static void udma_desc_pre_callback(struct virt_dma_chan *vc,
-				   struct virt_dma_desc *vd,
-				   struct dmaengine_result *result)
-{
-	struct udma_chan *uc = to_udma_chan(&vc->chan);
-	struct udma_desc *d;
+अटल व्योम udma_desc_pre_callback(काष्ठा virt_dma_chan *vc,
+				   काष्ठा virt_dma_desc *vd,
+				   काष्ठा dmaengine_result *result)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(&vc->chan);
+	काष्ठा udma_desc *d;
 
-	if (!vd)
-		return;
+	अगर (!vd)
+		वापस;
 
 	d = to_udma_desc(&vd->tx);
 
-	if (d->metadata_size)
+	अगर (d->metadata_size)
 		udma_fetch_epib(uc, d);
 
-	/* Provide residue information for the client */
-	if (result) {
-		void *desc_vaddr = udma_curr_cppi5_desc_vaddr(d, d->desc_idx);
+	/* Provide residue inक्रमmation क्रम the client */
+	अगर (result) अणु
+		व्योम *desc_vaddr = udma_curr_cppi5_desc_vaddr(d, d->desc_idx);
 
-		if (cppi5_desc_get_type(desc_vaddr) ==
-		    CPPI5_INFO0_DESC_TYPE_VAL_HOST) {
+		अगर (cppi5_desc_get_type(desc_vaddr) ==
+		    CPPI5_INFO0_DESC_TYPE_VAL_HOST) अणु
 			result->residue = d->residue -
 					  cppi5_hdesc_get_pktlen(desc_vaddr);
-			if (result->residue)
+			अगर (result->residue)
 				result->result = DMA_TRANS_ABORTED;
-			else
+			अन्यथा
 				result->result = DMA_TRANS_NOERROR;
-		} else {
+		पूर्ण अन्यथा अणु
 			result->residue = 0;
 			result->result = DMA_TRANS_NOERROR;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * This tasklet handles the completion of a DMA descriptor by
- * calling its callback and freeing it.
+ * calling its callback and मुक्तing it.
  */
-static void udma_vchan_complete(struct tasklet_struct *t)
-{
-	struct virt_dma_chan *vc = from_tasklet(vc, t, task);
-	struct virt_dma_desc *vd, *_vd;
-	struct dmaengine_desc_callback cb;
+अटल व्योम udma_vchan_complete(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा virt_dma_chan *vc = from_tasklet(vc, t, task);
+	काष्ठा virt_dma_desc *vd, *_vd;
+	काष्ठा dmaengine_desc_callback cb;
 	LIST_HEAD(head);
 
 	spin_lock_irq(&vc->lock);
 	list_splice_tail_init(&vc->desc_completed, &head);
 	vd = vc->cyclic;
-	if (vd) {
-		vc->cyclic = NULL;
+	अगर (vd) अणु
+		vc->cyclic = शून्य;
 		dmaengine_desc_get_callback(&vd->tx, &cb);
-	} else {
-		memset(&cb, 0, sizeof(cb));
-	}
+	पूर्ण अन्यथा अणु
+		स_रखो(&cb, 0, माप(cb));
+	पूर्ण
 	spin_unlock_irq(&vc->lock);
 
-	udma_desc_pre_callback(vc, vd, NULL);
-	dmaengine_desc_callback_invoke(&cb, NULL);
+	udma_desc_pre_callback(vc, vd, शून्य);
+	dmaengine_desc_callback_invoke(&cb, शून्य);
 
-	list_for_each_entry_safe(vd, _vd, &head, node) {
-		struct dmaengine_result result;
+	list_क्रम_each_entry_safe(vd, _vd, &head, node) अणु
+		काष्ठा dmaengine_result result;
 
 		dmaengine_desc_get_callback(&vd->tx, &cb);
 
@@ -3991,154 +3992,154 @@ static void udma_vchan_complete(struct tasklet_struct *t)
 		dmaengine_desc_callback_invoke(&cb, &result);
 
 		vchan_vdesc_fini(vd);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void udma_free_chan_resources(struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	struct udma_dev *ud = to_udma_dev(chan->device);
+अटल व्योम udma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	काष्ठा udma_dev *ud = to_udma_dev(chan->device);
 
 	udma_terminate_all(chan);
-	if (uc->terminated_desc) {
+	अगर (uc->terminated_desc) अणु
 		udma_reset_chan(uc, false);
 		udma_reset_rings(uc);
-	}
+	पूर्ण
 
 	cancel_delayed_work_sync(&uc->tx_drain.work);
 
-	if (uc->irq_num_ring > 0) {
-		free_irq(uc->irq_num_ring, uc);
+	अगर (uc->irq_num_ring > 0) अणु
+		मुक्त_irq(uc->irq_num_ring, uc);
 
 		uc->irq_num_ring = 0;
-	}
-	if (uc->irq_num_udma > 0) {
-		free_irq(uc->irq_num_udma, uc);
+	पूर्ण
+	अगर (uc->irq_num_udma > 0) अणु
+		मुक्त_irq(uc->irq_num_udma, uc);
 
 		uc->irq_num_udma = 0;
-	}
+	पूर्ण
 
 	/* Release PSI-L pairing */
-	if (uc->psil_paired) {
-		navss_psil_unpair(ud, uc->config.src_thread,
-				  uc->config.dst_thread);
+	अगर (uc->psil_paired) अणु
+		navss_psil_unpair(ud, uc->config.src_thपढ़ो,
+				  uc->config.dst_thपढ़ो);
 		uc->psil_paired = false;
-	}
+	पूर्ण
 
-	vchan_free_chan_resources(&uc->vc);
-	tasklet_kill(&uc->vc.task);
+	vchan_मुक्त_chan_resources(&uc->vc);
+	tasklet_समाप्त(&uc->vc.task);
 
-	bcdma_free_bchan_resources(uc);
-	udma_free_tx_resources(uc);
-	udma_free_rx_resources(uc);
+	bcdma_मुक्त_bchan_resources(uc);
+	udma_मुक्त_tx_resources(uc);
+	udma_मुक्त_rx_resources(uc);
 	udma_reset_uchan(uc);
 
-	if (uc->use_dma_pool) {
+	अगर (uc->use_dma_pool) अणु
 		dma_pool_destroy(uc->hdesc_pool);
 		uc->use_dma_pool = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct platform_driver udma_driver;
-static struct platform_driver bcdma_driver;
-static struct platform_driver pktdma_driver;
+अटल काष्ठा platक्रमm_driver udma_driver;
+अटल काष्ठा platक्रमm_driver bcdma_driver;
+अटल काष्ठा platक्रमm_driver pktdma_driver;
 
-struct udma_filter_param {
-	int remote_thread_id;
+काष्ठा udma_filter_param अणु
+	पूर्णांक remote_thपढ़ो_id;
 	u32 atype;
 	u32 asel;
 	u32 tr_trigger_type;
-};
+पूर्ण;
 
-static bool udma_dma_filter_fn(struct dma_chan *chan, void *param)
-{
-	struct udma_chan_config *ucc;
-	struct psil_endpoint_config *ep_config;
-	struct udma_filter_param *filter_param;
-	struct udma_chan *uc;
-	struct udma_dev *ud;
+अटल bool udma_dma_filter_fn(काष्ठा dma_chan *chan, व्योम *param)
+अणु
+	काष्ठा udma_chan_config *ucc;
+	काष्ठा psil_endpoपूर्णांक_config *ep_config;
+	काष्ठा udma_filter_param *filter_param;
+	काष्ठा udma_chan *uc;
+	काष्ठा udma_dev *ud;
 
-	if (chan->device->dev->driver != &udma_driver.driver &&
+	अगर (chan->device->dev->driver != &udma_driver.driver &&
 	    chan->device->dev->driver != &bcdma_driver.driver &&
 	    chan->device->dev->driver != &pktdma_driver.driver)
-		return false;
+		वापस false;
 
 	uc = to_udma_chan(chan);
 	ucc = &uc->config;
 	ud = uc->ud;
 	filter_param = param;
 
-	if (filter_param->atype > 2) {
+	अगर (filter_param->atype > 2) अणु
 		dev_err(ud->dev, "Invalid channel atype: %u\n",
 			filter_param->atype);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (filter_param->asel > 15) {
+	अगर (filter_param->asel > 15) अणु
 		dev_err(ud->dev, "Invalid channel asel: %u\n",
 			filter_param->asel);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	ucc->remote_thread_id = filter_param->remote_thread_id;
+	ucc->remote_thपढ़ो_id = filter_param->remote_thपढ़ो_id;
 	ucc->atype = filter_param->atype;
 	ucc->asel = filter_param->asel;
 	ucc->tr_trigger_type = filter_param->tr_trigger_type;
 
-	if (ucc->tr_trigger_type) {
+	अगर (ucc->tr_trigger_type) अणु
 		ucc->dir = DMA_MEM_TO_MEM;
-		goto triggered_bchan;
-	} else if (ucc->remote_thread_id & K3_PSIL_DST_THREAD_ID_OFFSET) {
+		जाओ triggered_bchan;
+	पूर्ण अन्यथा अगर (ucc->remote_thपढ़ो_id & K3_PSIL_DST_THREAD_ID_OFFSET) अणु
 		ucc->dir = DMA_MEM_TO_DEV;
-	} else {
+	पूर्ण अन्यथा अणु
 		ucc->dir = DMA_DEV_TO_MEM;
-	}
+	पूर्ण
 
-	ep_config = psil_get_ep_config(ucc->remote_thread_id);
-	if (IS_ERR(ep_config)) {
+	ep_config = psil_get_ep_config(ucc->remote_thपढ़ो_id);
+	अगर (IS_ERR(ep_config)) अणु
 		dev_err(ud->dev, "No configuration for psi-l thread 0x%04x\n",
-			ucc->remote_thread_id);
+			ucc->remote_thपढ़ो_id);
 		ucc->dir = DMA_MEM_TO_MEM;
-		ucc->remote_thread_id = -1;
+		ucc->remote_thपढ़ो_id = -1;
 		ucc->atype = 0;
 		ucc->asel = 0;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (ud->match_data->type == DMA_TYPE_BCDMA &&
-	    ep_config->pkt_mode) {
+	अगर (ud->match_data->type == DMA_TYPE_BCDMA &&
+	    ep_config->pkt_mode) अणु
 		dev_err(ud->dev,
 			"Only TR mode is supported (psi-l thread 0x%04x)\n",
-			ucc->remote_thread_id);
+			ucc->remote_thपढ़ो_id);
 		ucc->dir = DMA_MEM_TO_MEM;
-		ucc->remote_thread_id = -1;
+		ucc->remote_thपढ़ो_id = -1;
 		ucc->atype = 0;
 		ucc->asel = 0;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	ucc->pkt_mode = ep_config->pkt_mode;
 	ucc->channel_tpl = ep_config->channel_tpl;
 	ucc->notdpkt = ep_config->notdpkt;
 	ucc->ep_type = ep_config->ep_type;
 
-	if (ud->match_data->type == DMA_TYPE_PKTDMA &&
-	    ep_config->mapped_channel_id >= 0) {
+	अगर (ud->match_data->type == DMA_TYPE_PKTDMA &&
+	    ep_config->mapped_channel_id >= 0) अणु
 		ucc->mapped_channel_id = ep_config->mapped_channel_id;
-		ucc->default_flow_id = ep_config->default_flow_id;
-	} else {
+		ucc->शेष_flow_id = ep_config->शेष_flow_id;
+	पूर्ण अन्यथा अणु
 		ucc->mapped_channel_id = -1;
-		ucc->default_flow_id = -1;
-	}
+		ucc->शेष_flow_id = -1;
+	पूर्ण
 
-	if (ucc->ep_type != PSIL_EP_NATIVE) {
-		const struct udma_match_data *match_data = ud->match_data;
+	अगर (ucc->ep_type != PSIL_EP_NATIVE) अणु
+		स्थिर काष्ठा udma_match_data *match_data = ud->match_data;
 
-		if (match_data->flags & UDMA_FLAG_PDMA_ACC32)
+		अगर (match_data->flags & UDMA_FLAG_PDMA_ACC32)
 			ucc->enable_acc32 = ep_config->pdma_acc32;
-		if (match_data->flags & UDMA_FLAG_PDMA_BURST)
+		अगर (match_data->flags & UDMA_FLAG_PDMA_BURST)
 			ucc->enable_burst = ep_config->pdma_burst;
-	}
+	पूर्ण
 
 	ucc->needs_epib = ep_config->needs_epib;
 	ucc->psd_size = ep_config->psd_size;
@@ -4146,199 +4147,199 @@ static bool udma_dma_filter_fn(struct dma_chan *chan, void *param)
 			(ucc->needs_epib ? CPPI5_INFO0_HDESC_EPIB_SIZE : 0) +
 			ucc->psd_size;
 
-	if (ucc->pkt_mode)
-		ucc->hdesc_size = ALIGN(sizeof(struct cppi5_host_desc_t) +
+	अगर (ucc->pkt_mode)
+		ucc->hdesc_size = ALIGN(माप(काष्ठा cppi5_host_desc_t) +
 				 ucc->metadata_size, ud->desc_align);
 
 	dev_dbg(ud->dev, "chan%d: Remote thread: 0x%04x (%s)\n", uc->id,
-		ucc->remote_thread_id, dmaengine_get_direction_text(ucc->dir));
+		ucc->remote_thपढ़ो_id, dmaengine_get_direction_text(ucc->dir));
 
-	return true;
+	वापस true;
 
 triggered_bchan:
 	dev_dbg(ud->dev, "chan%d: triggered channel (type: %u)\n", uc->id,
 		ucc->tr_trigger_type);
 
-	return true;
+	वापस true;
 
-}
+पूर्ण
 
-static struct dma_chan *udma_of_xlate(struct of_phandle_args *dma_spec,
-				      struct of_dma *ofdma)
-{
-	struct udma_dev *ud = ofdma->of_dma_data;
+अटल काष्ठा dma_chan *udma_of_xlate(काष्ठा of_phandle_args *dma_spec,
+				      काष्ठा of_dma *ofdma)
+अणु
+	काष्ठा udma_dev *ud = ofdma->of_dma_data;
 	dma_cap_mask_t mask = ud->ddev.cap_mask;
-	struct udma_filter_param filter_param;
-	struct dma_chan *chan;
+	काष्ठा udma_filter_param filter_param;
+	काष्ठा dma_chan *chan;
 
-	if (ud->match_data->type == DMA_TYPE_BCDMA) {
-		if (dma_spec->args_count != 3)
-			return NULL;
+	अगर (ud->match_data->type == DMA_TYPE_BCDMA) अणु
+		अगर (dma_spec->args_count != 3)
+			वापस शून्य;
 
 		filter_param.tr_trigger_type = dma_spec->args[0];
-		filter_param.remote_thread_id = dma_spec->args[1];
+		filter_param.remote_thपढ़ो_id = dma_spec->args[1];
 		filter_param.asel = dma_spec->args[2];
 		filter_param.atype = 0;
-	} else {
-		if (dma_spec->args_count != 1 && dma_spec->args_count != 2)
-			return NULL;
+	पूर्ण अन्यथा अणु
+		अगर (dma_spec->args_count != 1 && dma_spec->args_count != 2)
+			वापस शून्य;
 
-		filter_param.remote_thread_id = dma_spec->args[0];
+		filter_param.remote_thपढ़ो_id = dma_spec->args[0];
 		filter_param.tr_trigger_type = 0;
-		if (dma_spec->args_count == 2) {
-			if (ud->match_data->type == DMA_TYPE_UDMA) {
+		अगर (dma_spec->args_count == 2) अणु
+			अगर (ud->match_data->type == DMA_TYPE_UDMA) अणु
 				filter_param.atype = dma_spec->args[1];
 				filter_param.asel = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				filter_param.atype = 0;
 				filter_param.asel = dma_spec->args[1];
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			filter_param.atype = 0;
 			filter_param.asel = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	chan = __dma_request_channel(&mask, udma_dma_filter_fn, &filter_param,
 				     ofdma->of_node);
-	if (!chan) {
+	अगर (!chan) अणु
 		dev_err(ud->dev, "get channel fail in %s.\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
-static struct udma_match_data am654_main_data = {
+अटल काष्ठा udma_match_data am654_मुख्य_data = अणु
 	.type = DMA_TYPE_UDMA,
 	.psil_base = 0x1000,
-	.enable_memcpy_support = true,
-	.statictr_z_mask = GENMASK(11, 0),
-	.burst_size = {
+	.enable_स_नकल_support = true,
+	.अटलtr_z_mask = GENMASK(11, 0),
+	.burst_size = अणु
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES, /* Normal Channels */
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES, /* H Channels */
 		0, /* No UH Channels */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct udma_match_data am654_mcu_data = {
+अटल काष्ठा udma_match_data am654_mcu_data = अणु
 	.type = DMA_TYPE_UDMA,
 	.psil_base = 0x6000,
-	.enable_memcpy_support = false,
-	.statictr_z_mask = GENMASK(11, 0),
-	.burst_size = {
+	.enable_स_नकल_support = false,
+	.अटलtr_z_mask = GENMASK(11, 0),
+	.burst_size = अणु
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES, /* Normal Channels */
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES, /* H Channels */
 		0, /* No UH Channels */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct udma_match_data j721e_main_data = {
+अटल काष्ठा udma_match_data j721e_मुख्य_data = अणु
 	.type = DMA_TYPE_UDMA,
 	.psil_base = 0x1000,
-	.enable_memcpy_support = true,
+	.enable_स_नकल_support = true,
 	.flags = UDMA_FLAGS_J7_CLASS,
-	.statictr_z_mask = GENMASK(23, 0),
-	.burst_size = {
+	.अटलtr_z_mask = GENMASK(23, 0),
+	.burst_size = अणु
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES, /* Normal Channels */
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_256_BYTES, /* H Channels */
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_256_BYTES, /* UH Channels */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct udma_match_data j721e_mcu_data = {
+अटल काष्ठा udma_match_data j721e_mcu_data = अणु
 	.type = DMA_TYPE_UDMA,
 	.psil_base = 0x6000,
-	.enable_memcpy_support = false, /* MEM_TO_MEM is slow via MCU UDMA */
+	.enable_स_नकल_support = false, /* MEM_TO_MEM is slow via MCU UDMA */
 	.flags = UDMA_FLAGS_J7_CLASS,
-	.statictr_z_mask = GENMASK(23, 0),
-	.burst_size = {
+	.अटलtr_z_mask = GENMASK(23, 0),
+	.burst_size = अणु
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES, /* Normal Channels */
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_128_BYTES, /* H Channels */
 		0, /* No UH Channels */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct udma_match_data am64_bcdma_data = {
+अटल काष्ठा udma_match_data am64_bcdma_data = अणु
 	.type = DMA_TYPE_BCDMA,
-	.psil_base = 0x2000, /* for tchan and rchan, not applicable to bchan */
-	.enable_memcpy_support = true, /* Supported via bchan */
+	.psil_base = 0x2000, /* क्रम tchan and rchan, not applicable to bchan */
+	.enable_स_नकल_support = true, /* Supported via bchan */
 	.flags = UDMA_FLAGS_J7_CLASS,
-	.statictr_z_mask = GENMASK(23, 0),
-	.burst_size = {
+	.अटलtr_z_mask = GENMASK(23, 0),
+	.burst_size = अणु
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES, /* Normal Channels */
 		0, /* No H Channels */
 		0, /* No UH Channels */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct udma_match_data am64_pktdma_data = {
+अटल काष्ठा udma_match_data am64_pktdma_data = अणु
 	.type = DMA_TYPE_PKTDMA,
 	.psil_base = 0x1000,
-	.enable_memcpy_support = false, /* PKTDMA does not support MEM_TO_MEM */
+	.enable_स_नकल_support = false, /* PKTDMA करोes not support MEM_TO_MEM */
 	.flags = UDMA_FLAGS_J7_CLASS,
-	.statictr_z_mask = GENMASK(23, 0),
-	.burst_size = {
+	.अटलtr_z_mask = GENMASK(23, 0),
+	.burst_size = अणु
 		TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES, /* Normal Channels */
 		0, /* No H Channels */
 		0, /* No UH Channels */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct of_device_id udma_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id udma_of_match[] = अणु
+	अणु
 		.compatible = "ti,am654-navss-main-udmap",
-		.data = &am654_main_data,
-	},
-	{
+		.data = &am654_मुख्य_data,
+	पूर्ण,
+	अणु
 		.compatible = "ti,am654-navss-mcu-udmap",
 		.data = &am654_mcu_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "ti,j721e-navss-main-udmap",
-		.data = &j721e_main_data,
-	}, {
+		.data = &j721e_मुख्य_data,
+	पूर्ण, अणु
 		.compatible = "ti,j721e-navss-mcu-udmap",
 		.data = &j721e_mcu_data,
-	},
-	{ /* Sentinel */ },
-};
+	पूर्ण,
+	अणु /* Sentinel */ पूर्ण,
+पूर्ण;
 
-static const struct of_device_id bcdma_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id bcdma_of_match[] = अणु
+	अणु
 		.compatible = "ti,am64-dmss-bcdma",
 		.data = &am64_bcdma_data,
-	},
-	{ /* Sentinel */ },
-};
+	पूर्ण,
+	अणु /* Sentinel */ पूर्ण,
+पूर्ण;
 
-static const struct of_device_id pktdma_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id pktdma_of_match[] = अणु
+	अणु
 		.compatible = "ti,am64-dmss-pktdma",
 		.data = &am64_pktdma_data,
-	},
-	{ /* Sentinel */ },
-};
+	पूर्ण,
+	अणु /* Sentinel */ पूर्ण,
+पूर्ण;
 
-static struct udma_soc_data am654_soc_data = {
-	.oes = {
+अटल काष्ठा udma_soc_data am654_soc_data = अणु
+	.oes = अणु
 		.udma_rchan = 0x200,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct udma_soc_data j721e_soc_data = {
-	.oes = {
+अटल काष्ठा udma_soc_data j721e_soc_data = अणु
+	.oes = अणु
 		.udma_rchan = 0x400,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct udma_soc_data j7200_soc_data = {
-	.oes = {
+अटल काष्ठा udma_soc_data j7200_soc_data = अणु
+	.oes = अणु
 		.udma_rchan = 0x80,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct udma_soc_data am64_soc_data = {
-	.oes = {
+अटल काष्ठा udma_soc_data am64_soc_data = अणु
+	.oes = अणु
 		.bcdma_bchan_data = 0x2200,
 		.bcdma_bchan_ring = 0x2400,
 		.bcdma_tchan_data = 0x2800,
@@ -4347,381 +4348,381 @@ static struct udma_soc_data am64_soc_data = {
 		.bcdma_rchan_ring = 0x3000,
 		.pktdma_tchan_flow = 0x1200,
 		.pktdma_rchan_flow = 0x1600,
-	},
+	पूर्ण,
 	.bcdma_trigger_event_offset = 0xc400,
-};
+पूर्ण;
 
-static const struct soc_device_attribute k3_soc_devices[] = {
-	{ .family = "AM65X", .data = &am654_soc_data },
-	{ .family = "J721E", .data = &j721e_soc_data },
-	{ .family = "J7200", .data = &j7200_soc_data },
-	{ .family = "AM64X", .data = &am64_soc_data },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा soc_device_attribute k3_soc_devices[] = अणु
+	अणु .family = "AM65X", .data = &am654_soc_data पूर्ण,
+	अणु .family = "J721E", .data = &j721e_soc_data पूर्ण,
+	अणु .family = "J7200", .data = &j7200_soc_data पूर्ण,
+	अणु .family = "AM64X", .data = &am64_soc_data पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int udma_get_mmrs(struct platform_device *pdev, struct udma_dev *ud)
-{
+अटल पूर्णांक udma_get_mmrs(काष्ठा platक्रमm_device *pdev, काष्ठा udma_dev *ud)
+अणु
 	u32 cap2, cap3, cap4;
-	int i;
+	पूर्णांक i;
 
-	ud->mmrs[MMR_GCFG] = devm_platform_ioremap_resource_byname(pdev, mmr_names[MMR_GCFG]);
-	if (IS_ERR(ud->mmrs[MMR_GCFG]))
-		return PTR_ERR(ud->mmrs[MMR_GCFG]);
+	ud->mmrs[MMR_GCFG] = devm_platक्रमm_ioremap_resource_byname(pdev, mmr_names[MMR_GCFG]);
+	अगर (IS_ERR(ud->mmrs[MMR_GCFG]))
+		वापस PTR_ERR(ud->mmrs[MMR_GCFG]);
 
-	cap2 = udma_read(ud->mmrs[MMR_GCFG], 0x28);
-	cap3 = udma_read(ud->mmrs[MMR_GCFG], 0x2c);
+	cap2 = udma_पढ़ो(ud->mmrs[MMR_GCFG], 0x28);
+	cap3 = udma_पढ़ो(ud->mmrs[MMR_GCFG], 0x2c);
 
-	switch (ud->match_data->type) {
-	case DMA_TYPE_UDMA:
+	चयन (ud->match_data->type) अणु
+	हाल DMA_TYPE_UDMA:
 		ud->rflow_cnt = UDMA_CAP3_RFLOW_CNT(cap3);
 		ud->tchan_cnt = UDMA_CAP2_TCHAN_CNT(cap2);
 		ud->echan_cnt = UDMA_CAP2_ECHAN_CNT(cap2);
 		ud->rchan_cnt = UDMA_CAP2_RCHAN_CNT(cap2);
-		break;
-	case DMA_TYPE_BCDMA:
+		अवरोध;
+	हाल DMA_TYPE_BCDMA:
 		ud->bchan_cnt = BCDMA_CAP2_BCHAN_CNT(cap2);
 		ud->tchan_cnt = BCDMA_CAP2_TCHAN_CNT(cap2);
 		ud->rchan_cnt = BCDMA_CAP2_RCHAN_CNT(cap2);
 		ud->rflow_cnt = ud->rchan_cnt;
-		break;
-	case DMA_TYPE_PKTDMA:
-		cap4 = udma_read(ud->mmrs[MMR_GCFG], 0x30);
+		अवरोध;
+	हाल DMA_TYPE_PKTDMA:
+		cap4 = udma_पढ़ो(ud->mmrs[MMR_GCFG], 0x30);
 		ud->tchan_cnt = UDMA_CAP2_TCHAN_CNT(cap2);
 		ud->rchan_cnt = UDMA_CAP2_RCHAN_CNT(cap2);
 		ud->rflow_cnt = UDMA_CAP3_RFLOW_CNT(cap3);
 		ud->tflow_cnt = PKTDMA_CAP4_TFLOW_CNT(cap4);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 1; i < MMR_LAST; i++) {
-		if (i == MMR_BCHANRT && ud->bchan_cnt == 0)
-			continue;
-		if (i == MMR_TCHANRT && ud->tchan_cnt == 0)
-			continue;
-		if (i == MMR_RCHANRT && ud->rchan_cnt == 0)
-			continue;
+	क्रम (i = 1; i < MMR_LAST; i++) अणु
+		अगर (i == MMR_BCHANRT && ud->bchan_cnt == 0)
+			जारी;
+		अगर (i == MMR_TCHANRT && ud->tchan_cnt == 0)
+			जारी;
+		अगर (i == MMR_RCHANRT && ud->rchan_cnt == 0)
+			जारी;
 
-		ud->mmrs[i] = devm_platform_ioremap_resource_byname(pdev, mmr_names[i]);
-		if (IS_ERR(ud->mmrs[i]))
-			return PTR_ERR(ud->mmrs[i]);
-	}
+		ud->mmrs[i] = devm_platक्रमm_ioremap_resource_byname(pdev, mmr_names[i]);
+		अगर (IS_ERR(ud->mmrs[i]))
+			वापस PTR_ERR(ud->mmrs[i]);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void udma_mark_resource_ranges(struct udma_dev *ud, unsigned long *map,
-				      struct ti_sci_resource_desc *rm_desc,
-				      char *name)
-{
-	bitmap_clear(map, rm_desc->start, rm_desc->num);
-	bitmap_clear(map, rm_desc->start_sec, rm_desc->num_sec);
+अटल व्योम udma_mark_resource_ranges(काष्ठा udma_dev *ud, अचिन्हित दीर्घ *map,
+				      काष्ठा ti_sci_resource_desc *rm_desc,
+				      अक्षर *name)
+अणु
+	biपंचांगap_clear(map, rm_desc->start, rm_desc->num);
+	biपंचांगap_clear(map, rm_desc->start_sec, rm_desc->num_sec);
 	dev_dbg(ud->dev, "ti_sci resource range for %s: %d:%d | %d:%d\n", name,
 		rm_desc->start, rm_desc->num, rm_desc->start_sec,
 		rm_desc->num_sec);
-}
+पूर्ण
 
-static const char * const range_names[] = {
+अटल स्थिर अक्षर * स्थिर range_names[] = अणु
 	[RM_RANGE_BCHAN] = "ti,sci-rm-range-bchan",
 	[RM_RANGE_TCHAN] = "ti,sci-rm-range-tchan",
 	[RM_RANGE_RCHAN] = "ti,sci-rm-range-rchan",
 	[RM_RANGE_RFLOW] = "ti,sci-rm-range-rflow",
 	[RM_RANGE_TFLOW] = "ti,sci-rm-range-tflow",
-};
+पूर्ण;
 
-static int udma_setup_resources(struct udma_dev *ud)
-{
-	int ret, i, j;
-	struct device *dev = ud->dev;
-	struct ti_sci_resource *rm_res, irq_res;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+अटल पूर्णांक udma_setup_resources(काष्ठा udma_dev *ud)
+अणु
+	पूर्णांक ret, i, j;
+	काष्ठा device *dev = ud->dev;
+	काष्ठा ti_sci_resource *rm_res, irq_res;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
 	u32 cap3;
 
 	/* Set up the throughput level start indexes */
-	cap3 = udma_read(ud->mmrs[MMR_GCFG], 0x2c);
-	if (of_device_is_compatible(dev->of_node,
-				    "ti,am654-navss-main-udmap")) {
+	cap3 = udma_पढ़ो(ud->mmrs[MMR_GCFG], 0x2c);
+	अगर (of_device_is_compatible(dev->of_node,
+				    "ti,am654-navss-main-udmap")) अणु
 		ud->tchan_tpl.levels = 2;
 		ud->tchan_tpl.start_idx[0] = 8;
-	} else if (of_device_is_compatible(dev->of_node,
-					   "ti,am654-navss-mcu-udmap")) {
+	पूर्ण अन्यथा अगर (of_device_is_compatible(dev->of_node,
+					   "ti,am654-navss-mcu-udmap")) अणु
 		ud->tchan_tpl.levels = 2;
 		ud->tchan_tpl.start_idx[0] = 2;
-	} else if (UDMA_CAP3_UCHAN_CNT(cap3)) {
+	पूर्ण अन्यथा अगर (UDMA_CAP3_UCHAN_CNT(cap3)) अणु
 		ud->tchan_tpl.levels = 3;
 		ud->tchan_tpl.start_idx[1] = UDMA_CAP3_UCHAN_CNT(cap3);
 		ud->tchan_tpl.start_idx[0] = UDMA_CAP3_HCHAN_CNT(cap3);
-	} else if (UDMA_CAP3_HCHAN_CNT(cap3)) {
+	पूर्ण अन्यथा अगर (UDMA_CAP3_HCHAN_CNT(cap3)) अणु
 		ud->tchan_tpl.levels = 2;
 		ud->tchan_tpl.start_idx[0] = UDMA_CAP3_HCHAN_CNT(cap3);
-	} else {
+	पूर्ण अन्यथा अणु
 		ud->tchan_tpl.levels = 1;
-	}
+	पूर्ण
 
 	ud->rchan_tpl.levels = ud->tchan_tpl.levels;
 	ud->rchan_tpl.start_idx[0] = ud->tchan_tpl.start_idx[0];
 	ud->rchan_tpl.start_idx[1] = ud->tchan_tpl.start_idx[1];
 
-	ud->tchan_map = devm_kmalloc_array(dev, BITS_TO_LONGS(ud->tchan_cnt),
-					   sizeof(unsigned long), GFP_KERNEL);
-	ud->tchans = devm_kcalloc(dev, ud->tchan_cnt, sizeof(*ud->tchans),
+	ud->tchan_map = devm_kदो_स्मृति_array(dev, BITS_TO_LONGS(ud->tchan_cnt),
+					   माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	ud->tchans = devm_kसुस्मृति(dev, ud->tchan_cnt, माप(*ud->tchans),
 				  GFP_KERNEL);
-	ud->rchan_map = devm_kmalloc_array(dev, BITS_TO_LONGS(ud->rchan_cnt),
-					   sizeof(unsigned long), GFP_KERNEL);
-	ud->rchans = devm_kcalloc(dev, ud->rchan_cnt, sizeof(*ud->rchans),
+	ud->rchan_map = devm_kदो_स्मृति_array(dev, BITS_TO_LONGS(ud->rchan_cnt),
+					   माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	ud->rchans = devm_kसुस्मृति(dev, ud->rchan_cnt, माप(*ud->rchans),
 				  GFP_KERNEL);
-	ud->rflow_gp_map = devm_kmalloc_array(dev, BITS_TO_LONGS(ud->rflow_cnt),
-					      sizeof(unsigned long),
+	ud->rflow_gp_map = devm_kदो_स्मृति_array(dev, BITS_TO_LONGS(ud->rflow_cnt),
+					      माप(अचिन्हित दीर्घ),
 					      GFP_KERNEL);
-	ud->rflow_gp_map_allocated = devm_kcalloc(dev,
+	ud->rflow_gp_map_allocated = devm_kसुस्मृति(dev,
 						  BITS_TO_LONGS(ud->rflow_cnt),
-						  sizeof(unsigned long),
+						  माप(अचिन्हित दीर्घ),
 						  GFP_KERNEL);
-	ud->rflow_in_use = devm_kcalloc(dev, BITS_TO_LONGS(ud->rflow_cnt),
-					sizeof(unsigned long),
+	ud->rflow_in_use = devm_kसुस्मृति(dev, BITS_TO_LONGS(ud->rflow_cnt),
+					माप(अचिन्हित दीर्घ),
 					GFP_KERNEL);
-	ud->rflows = devm_kcalloc(dev, ud->rflow_cnt, sizeof(*ud->rflows),
+	ud->rflows = devm_kसुस्मृति(dev, ud->rflow_cnt, माप(*ud->rflows),
 				  GFP_KERNEL);
 
-	if (!ud->tchan_map || !ud->rchan_map || !ud->rflow_gp_map ||
+	अगर (!ud->tchan_map || !ud->rchan_map || !ud->rflow_gp_map ||
 	    !ud->rflow_gp_map_allocated || !ud->tchans || !ud->rchans ||
 	    !ud->rflows || !ud->rflow_in_use)
-		return -ENOMEM;
+		वापस -ENOMEM;
 
 	/*
 	 * RX flows with the same Ids as RX channels are reserved to be used
-	 * as default flows if remote HW can't generate flow_ids. Those
+	 * as शेष flows अगर remote HW can't generate flow_ids. Those
 	 * RX flows can be requested only explicitly by id.
 	 */
-	bitmap_set(ud->rflow_gp_map_allocated, 0, ud->rchan_cnt);
+	biपंचांगap_set(ud->rflow_gp_map_allocated, 0, ud->rchan_cnt);
 
-	/* by default no GP rflows are assigned to Linux */
-	bitmap_set(ud->rflow_gp_map, 0, ud->rflow_cnt);
+	/* by शेष no GP rflows are asचिन्हित to Linux */
+	biपंचांगap_set(ud->rflow_gp_map, 0, ud->rflow_cnt);
 
 	/* Get resource ranges from tisci */
-	for (i = 0; i < RM_RANGE_LAST; i++) {
-		if (i == RM_RANGE_BCHAN || i == RM_RANGE_TFLOW)
-			continue;
+	क्रम (i = 0; i < RM_RANGE_LAST; i++) अणु
+		अगर (i == RM_RANGE_BCHAN || i == RM_RANGE_TFLOW)
+			जारी;
 
 		tisci_rm->rm_ranges[i] =
 			devm_ti_sci_get_of_resource(tisci_rm->tisci, dev,
 						    tisci_rm->tisci_dev_id,
-						    (char *)range_names[i]);
-	}
+						    (अक्षर *)range_names[i]);
+	पूर्ण
 
 	/* tchan ranges */
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_TCHAN];
-	if (IS_ERR(rm_res)) {
-		bitmap_zero(ud->tchan_map, ud->tchan_cnt);
-	} else {
-		bitmap_fill(ud->tchan_map, ud->tchan_cnt);
-		for (i = 0; i < rm_res->sets; i++)
+	अगर (IS_ERR(rm_res)) अणु
+		biपंचांगap_zero(ud->tchan_map, ud->tchan_cnt);
+	पूर्ण अन्यथा अणु
+		biपंचांगap_fill(ud->tchan_map, ud->tchan_cnt);
+		क्रम (i = 0; i < rm_res->sets; i++)
 			udma_mark_resource_ranges(ud, ud->tchan_map,
 						  &rm_res->desc[i], "tchan");
-	}
+	पूर्ण
 	irq_res.sets = rm_res->sets;
 
-	/* rchan and matching default flow ranges */
+	/* rchan and matching शेष flow ranges */
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_RCHAN];
-	if (IS_ERR(rm_res)) {
-		bitmap_zero(ud->rchan_map, ud->rchan_cnt);
-	} else {
-		bitmap_fill(ud->rchan_map, ud->rchan_cnt);
-		for (i = 0; i < rm_res->sets; i++)
+	अगर (IS_ERR(rm_res)) अणु
+		biपंचांगap_zero(ud->rchan_map, ud->rchan_cnt);
+	पूर्ण अन्यथा अणु
+		biपंचांगap_fill(ud->rchan_map, ud->rchan_cnt);
+		क्रम (i = 0; i < rm_res->sets; i++)
 			udma_mark_resource_ranges(ud, ud->rchan_map,
 						  &rm_res->desc[i], "rchan");
-	}
+	पूर्ण
 
 	irq_res.sets += rm_res->sets;
-	irq_res.desc = kcalloc(irq_res.sets, sizeof(*irq_res.desc), GFP_KERNEL);
+	irq_res.desc = kसुस्मृति(irq_res.sets, माप(*irq_res.desc), GFP_KERNEL);
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_TCHAN];
-	for (i = 0; i < rm_res->sets; i++) {
+	क्रम (i = 0; i < rm_res->sets; i++) अणु
 		irq_res.desc[i].start = rm_res->desc[i].start;
 		irq_res.desc[i].num = rm_res->desc[i].num;
 		irq_res.desc[i].start_sec = rm_res->desc[i].start_sec;
 		irq_res.desc[i].num_sec = rm_res->desc[i].num_sec;
-	}
+	पूर्ण
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_RCHAN];
-	for (j = 0; j < rm_res->sets; j++, i++) {
-		if (rm_res->desc[j].num) {
+	क्रम (j = 0; j < rm_res->sets; j++, i++) अणु
+		अगर (rm_res->desc[j].num) अणु
 			irq_res.desc[i].start = rm_res->desc[j].start +
 					ud->soc_data->oes.udma_rchan;
 			irq_res.desc[i].num = rm_res->desc[j].num;
-		}
-		if (rm_res->desc[j].num_sec) {
+		पूर्ण
+		अगर (rm_res->desc[j].num_sec) अणु
 			irq_res.desc[i].start_sec = rm_res->desc[j].start_sec +
 					ud->soc_data->oes.udma_rchan;
 			irq_res.desc[i].num_sec = rm_res->desc[j].num_sec;
-		}
-	}
-	ret = ti_sci_inta_msi_domain_alloc_irqs(ud->dev, &irq_res);
-	kfree(irq_res.desc);
-	if (ret) {
+		पूर्ण
+	पूर्ण
+	ret = ti_sci_पूर्णांकa_msi_करोमुख्य_alloc_irqs(ud->dev, &irq_res);
+	kमुक्त(irq_res.desc);
+	अगर (ret) अणु
 		dev_err(ud->dev, "Failed to allocate MSI interrupts\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* GP rflow ranges */
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_RFLOW];
-	if (IS_ERR(rm_res)) {
-		/* all gp flows are assigned exclusively to Linux */
-		bitmap_clear(ud->rflow_gp_map, ud->rchan_cnt,
+	अगर (IS_ERR(rm_res)) अणु
+		/* all gp flows are asचिन्हित exclusively to Linux */
+		biपंचांगap_clear(ud->rflow_gp_map, ud->rchan_cnt,
 			     ud->rflow_cnt - ud->rchan_cnt);
-	} else {
-		for (i = 0; i < rm_res->sets; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < rm_res->sets; i++)
 			udma_mark_resource_ranges(ud, ud->rflow_gp_map,
 						  &rm_res->desc[i], "gp-rflow");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcdma_setup_resources(struct udma_dev *ud)
-{
-	int ret, i, j;
-	struct device *dev = ud->dev;
-	struct ti_sci_resource *rm_res, irq_res;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
-	const struct udma_oes_offsets *oes = &ud->soc_data->oes;
+अटल पूर्णांक bcdma_setup_resources(काष्ठा udma_dev *ud)
+अणु
+	पूर्णांक ret, i, j;
+	काष्ठा device *dev = ud->dev;
+	काष्ठा ti_sci_resource *rm_res, irq_res;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+	स्थिर काष्ठा udma_oes_offsets *oes = &ud->soc_data->oes;
 	u32 cap;
 
 	/* Set up the throughput level start indexes */
-	cap = udma_read(ud->mmrs[MMR_GCFG], 0x2c);
-	if (BCDMA_CAP3_UBCHAN_CNT(cap)) {
+	cap = udma_पढ़ो(ud->mmrs[MMR_GCFG], 0x2c);
+	अगर (BCDMA_CAP3_UBCHAN_CNT(cap)) अणु
 		ud->bchan_tpl.levels = 3;
 		ud->bchan_tpl.start_idx[1] = BCDMA_CAP3_UBCHAN_CNT(cap);
 		ud->bchan_tpl.start_idx[0] = BCDMA_CAP3_HBCHAN_CNT(cap);
-	} else if (BCDMA_CAP3_HBCHAN_CNT(cap)) {
+	पूर्ण अन्यथा अगर (BCDMA_CAP3_HBCHAN_CNT(cap)) अणु
 		ud->bchan_tpl.levels = 2;
 		ud->bchan_tpl.start_idx[0] = BCDMA_CAP3_HBCHAN_CNT(cap);
-	} else {
+	पूर्ण अन्यथा अणु
 		ud->bchan_tpl.levels = 1;
-	}
+	पूर्ण
 
-	cap = udma_read(ud->mmrs[MMR_GCFG], 0x30);
-	if (BCDMA_CAP4_URCHAN_CNT(cap)) {
+	cap = udma_पढ़ो(ud->mmrs[MMR_GCFG], 0x30);
+	अगर (BCDMA_CAP4_URCHAN_CNT(cap)) अणु
 		ud->rchan_tpl.levels = 3;
 		ud->rchan_tpl.start_idx[1] = BCDMA_CAP4_URCHAN_CNT(cap);
 		ud->rchan_tpl.start_idx[0] = BCDMA_CAP4_HRCHAN_CNT(cap);
-	} else if (BCDMA_CAP4_HRCHAN_CNT(cap)) {
+	पूर्ण अन्यथा अगर (BCDMA_CAP4_HRCHAN_CNT(cap)) अणु
 		ud->rchan_tpl.levels = 2;
 		ud->rchan_tpl.start_idx[0] = BCDMA_CAP4_HRCHAN_CNT(cap);
-	} else {
+	पूर्ण अन्यथा अणु
 		ud->rchan_tpl.levels = 1;
-	}
+	पूर्ण
 
-	if (BCDMA_CAP4_UTCHAN_CNT(cap)) {
+	अगर (BCDMA_CAP4_UTCHAN_CNT(cap)) अणु
 		ud->tchan_tpl.levels = 3;
 		ud->tchan_tpl.start_idx[1] = BCDMA_CAP4_UTCHAN_CNT(cap);
 		ud->tchan_tpl.start_idx[0] = BCDMA_CAP4_HTCHAN_CNT(cap);
-	} else if (BCDMA_CAP4_HTCHAN_CNT(cap)) {
+	पूर्ण अन्यथा अगर (BCDMA_CAP4_HTCHAN_CNT(cap)) अणु
 		ud->tchan_tpl.levels = 2;
 		ud->tchan_tpl.start_idx[0] = BCDMA_CAP4_HTCHAN_CNT(cap);
-	} else {
+	पूर्ण अन्यथा अणु
 		ud->tchan_tpl.levels = 1;
-	}
+	पूर्ण
 
-	ud->bchan_map = devm_kmalloc_array(dev, BITS_TO_LONGS(ud->bchan_cnt),
-					   sizeof(unsigned long), GFP_KERNEL);
-	ud->bchans = devm_kcalloc(dev, ud->bchan_cnt, sizeof(*ud->bchans),
+	ud->bchan_map = devm_kदो_स्मृति_array(dev, BITS_TO_LONGS(ud->bchan_cnt),
+					   माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	ud->bchans = devm_kसुस्मृति(dev, ud->bchan_cnt, माप(*ud->bchans),
 				  GFP_KERNEL);
-	ud->tchan_map = devm_kmalloc_array(dev, BITS_TO_LONGS(ud->tchan_cnt),
-					   sizeof(unsigned long), GFP_KERNEL);
-	ud->tchans = devm_kcalloc(dev, ud->tchan_cnt, sizeof(*ud->tchans),
+	ud->tchan_map = devm_kदो_स्मृति_array(dev, BITS_TO_LONGS(ud->tchan_cnt),
+					   माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	ud->tchans = devm_kसुस्मृति(dev, ud->tchan_cnt, माप(*ud->tchans),
 				  GFP_KERNEL);
-	ud->rchan_map = devm_kmalloc_array(dev, BITS_TO_LONGS(ud->rchan_cnt),
-					   sizeof(unsigned long), GFP_KERNEL);
-	ud->rchans = devm_kcalloc(dev, ud->rchan_cnt, sizeof(*ud->rchans),
+	ud->rchan_map = devm_kदो_स्मृति_array(dev, BITS_TO_LONGS(ud->rchan_cnt),
+					   माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	ud->rchans = devm_kसुस्मृति(dev, ud->rchan_cnt, माप(*ud->rchans),
 				  GFP_KERNEL);
-	/* BCDMA do not really have flows, but the driver expect it */
-	ud->rflow_in_use = devm_kcalloc(dev, BITS_TO_LONGS(ud->rchan_cnt),
-					sizeof(unsigned long),
+	/* BCDMA करो not really have flows, but the driver expect it */
+	ud->rflow_in_use = devm_kसुस्मृति(dev, BITS_TO_LONGS(ud->rchan_cnt),
+					माप(अचिन्हित दीर्घ),
 					GFP_KERNEL);
-	ud->rflows = devm_kcalloc(dev, ud->rchan_cnt, sizeof(*ud->rflows),
+	ud->rflows = devm_kसुस्मृति(dev, ud->rchan_cnt, माप(*ud->rflows),
 				  GFP_KERNEL);
 
-	if (!ud->bchan_map || !ud->tchan_map || !ud->rchan_map ||
+	अगर (!ud->bchan_map || !ud->tchan_map || !ud->rchan_map ||
 	    !ud->rflow_in_use || !ud->bchans || !ud->tchans || !ud->rchans ||
 	    !ud->rflows)
-		return -ENOMEM;
+		वापस -ENOMEM;
 
 	/* Get resource ranges from tisci */
-	for (i = 0; i < RM_RANGE_LAST; i++) {
-		if (i == RM_RANGE_RFLOW || i == RM_RANGE_TFLOW)
-			continue;
-		if (i == RM_RANGE_BCHAN && ud->bchan_cnt == 0)
-			continue;
-		if (i == RM_RANGE_TCHAN && ud->tchan_cnt == 0)
-			continue;
-		if (i == RM_RANGE_RCHAN && ud->rchan_cnt == 0)
-			continue;
+	क्रम (i = 0; i < RM_RANGE_LAST; i++) अणु
+		अगर (i == RM_RANGE_RFLOW || i == RM_RANGE_TFLOW)
+			जारी;
+		अगर (i == RM_RANGE_BCHAN && ud->bchan_cnt == 0)
+			जारी;
+		अगर (i == RM_RANGE_TCHAN && ud->tchan_cnt == 0)
+			जारी;
+		अगर (i == RM_RANGE_RCHAN && ud->rchan_cnt == 0)
+			जारी;
 
 		tisci_rm->rm_ranges[i] =
 			devm_ti_sci_get_of_resource(tisci_rm->tisci, dev,
 						    tisci_rm->tisci_dev_id,
-						    (char *)range_names[i]);
-	}
+						    (अक्षर *)range_names[i]);
+	पूर्ण
 
 	irq_res.sets = 0;
 
 	/* bchan ranges */
-	if (ud->bchan_cnt) {
+	अगर (ud->bchan_cnt) अणु
 		rm_res = tisci_rm->rm_ranges[RM_RANGE_BCHAN];
-		if (IS_ERR(rm_res)) {
-			bitmap_zero(ud->bchan_map, ud->bchan_cnt);
-		} else {
-			bitmap_fill(ud->bchan_map, ud->bchan_cnt);
-			for (i = 0; i < rm_res->sets; i++)
+		अगर (IS_ERR(rm_res)) अणु
+			biपंचांगap_zero(ud->bchan_map, ud->bchan_cnt);
+		पूर्ण अन्यथा अणु
+			biपंचांगap_fill(ud->bchan_map, ud->bchan_cnt);
+			क्रम (i = 0; i < rm_res->sets; i++)
 				udma_mark_resource_ranges(ud, ud->bchan_map,
 							  &rm_res->desc[i],
 							  "bchan");
-		}
+		पूर्ण
 		irq_res.sets += rm_res->sets;
-	}
+	पूर्ण
 
 	/* tchan ranges */
-	if (ud->tchan_cnt) {
+	अगर (ud->tchan_cnt) अणु
 		rm_res = tisci_rm->rm_ranges[RM_RANGE_TCHAN];
-		if (IS_ERR(rm_res)) {
-			bitmap_zero(ud->tchan_map, ud->tchan_cnt);
-		} else {
-			bitmap_fill(ud->tchan_map, ud->tchan_cnt);
-			for (i = 0; i < rm_res->sets; i++)
+		अगर (IS_ERR(rm_res)) अणु
+			biपंचांगap_zero(ud->tchan_map, ud->tchan_cnt);
+		पूर्ण अन्यथा अणु
+			biपंचांगap_fill(ud->tchan_map, ud->tchan_cnt);
+			क्रम (i = 0; i < rm_res->sets; i++)
 				udma_mark_resource_ranges(ud, ud->tchan_map,
 							  &rm_res->desc[i],
 							  "tchan");
-		}
+		पूर्ण
 		irq_res.sets += rm_res->sets * 2;
-	}
+	पूर्ण
 
 	/* rchan ranges */
-	if (ud->rchan_cnt) {
+	अगर (ud->rchan_cnt) अणु
 		rm_res = tisci_rm->rm_ranges[RM_RANGE_RCHAN];
-		if (IS_ERR(rm_res)) {
-			bitmap_zero(ud->rchan_map, ud->rchan_cnt);
-		} else {
-			bitmap_fill(ud->rchan_map, ud->rchan_cnt);
-			for (i = 0; i < rm_res->sets; i++)
+		अगर (IS_ERR(rm_res)) अणु
+			biपंचांगap_zero(ud->rchan_map, ud->rchan_cnt);
+		पूर्ण अन्यथा अणु
+			biपंचांगap_fill(ud->rchan_map, ud->rchan_cnt);
+			क्रम (i = 0; i < rm_res->sets; i++)
 				udma_mark_resource_ranges(ud, ud->rchan_map,
 							  &rm_res->desc[i],
 							  "rchan");
-		}
+		पूर्ण
 		irq_res.sets += rm_res->sets * 2;
-	}
+	पूर्ण
 
-	irq_res.desc = kcalloc(irq_res.sets, sizeof(*irq_res.desc), GFP_KERNEL);
-	if (ud->bchan_cnt) {
+	irq_res.desc = kसुस्मृति(irq_res.sets, माप(*irq_res.desc), GFP_KERNEL);
+	अगर (ud->bchan_cnt) अणु
 		rm_res = tisci_rm->rm_ranges[RM_RANGE_BCHAN];
-		for (i = 0; i < rm_res->sets; i++) {
+		क्रम (i = 0; i < rm_res->sets; i++) अणु
 			irq_res.desc[i].start = rm_res->desc[i].start +
 						oes->bcdma_bchan_ring;
 			irq_res.desc[i].num = rm_res->desc[i].num;
-		}
-	}
-	if (ud->tchan_cnt) {
+		पूर्ण
+	पूर्ण
+	अगर (ud->tchan_cnt) अणु
 		rm_res = tisci_rm->rm_ranges[RM_RANGE_TCHAN];
-		for (j = 0; j < rm_res->sets; j++, i += 2) {
+		क्रम (j = 0; j < rm_res->sets; j++, i += 2) अणु
 			irq_res.desc[i].start = rm_res->desc[j].start +
 						oes->bcdma_tchan_data;
 			irq_res.desc[i].num = rm_res->desc[j].num;
@@ -4729,11 +4730,11 @@ static int bcdma_setup_resources(struct udma_dev *ud)
 			irq_res.desc[i + 1].start = rm_res->desc[j].start +
 						oes->bcdma_tchan_ring;
 			irq_res.desc[i + 1].num = rm_res->desc[j].num;
-		}
-	}
-	if (ud->rchan_cnt) {
+		पूर्ण
+	पूर्ण
+	अगर (ud->rchan_cnt) अणु
 		rm_res = tisci_rm->rm_ranges[RM_RANGE_RCHAN];
-		for (j = 0; j < rm_res->sets; j++, i += 2) {
+		क्रम (j = 0; j < rm_res->sets; j++, i += 2) अणु
 			irq_res.desc[i].start = rm_res->desc[j].start +
 						oes->bcdma_rchan_data;
 			irq_res.desc[i].num = rm_res->desc[j].num;
@@ -4741,260 +4742,260 @@ static int bcdma_setup_resources(struct udma_dev *ud)
 			irq_res.desc[i + 1].start = rm_res->desc[j].start +
 						oes->bcdma_rchan_ring;
 			irq_res.desc[i + 1].num = rm_res->desc[j].num;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ret = ti_sci_inta_msi_domain_alloc_irqs(ud->dev, &irq_res);
-	kfree(irq_res.desc);
-	if (ret) {
+	ret = ti_sci_पूर्णांकa_msi_करोमुख्य_alloc_irqs(ud->dev, &irq_res);
+	kमुक्त(irq_res.desc);
+	अगर (ret) अणु
 		dev_err(ud->dev, "Failed to allocate MSI interrupts\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pktdma_setup_resources(struct udma_dev *ud)
-{
-	int ret, i, j;
-	struct device *dev = ud->dev;
-	struct ti_sci_resource *rm_res, irq_res;
-	struct udma_tisci_rm *tisci_rm = &ud->tisci_rm;
-	const struct udma_oes_offsets *oes = &ud->soc_data->oes;
+अटल पूर्णांक pktdma_setup_resources(काष्ठा udma_dev *ud)
+अणु
+	पूर्णांक ret, i, j;
+	काष्ठा device *dev = ud->dev;
+	काष्ठा ti_sci_resource *rm_res, irq_res;
+	काष्ठा udma_tisci_rm *tisci_rm = &ud->tisci_rm;
+	स्थिर काष्ठा udma_oes_offsets *oes = &ud->soc_data->oes;
 	u32 cap3;
 
 	/* Set up the throughput level start indexes */
-	cap3 = udma_read(ud->mmrs[MMR_GCFG], 0x2c);
-	if (UDMA_CAP3_UCHAN_CNT(cap3)) {
+	cap3 = udma_पढ़ो(ud->mmrs[MMR_GCFG], 0x2c);
+	अगर (UDMA_CAP3_UCHAN_CNT(cap3)) अणु
 		ud->tchan_tpl.levels = 3;
 		ud->tchan_tpl.start_idx[1] = UDMA_CAP3_UCHAN_CNT(cap3);
 		ud->tchan_tpl.start_idx[0] = UDMA_CAP3_HCHAN_CNT(cap3);
-	} else if (UDMA_CAP3_HCHAN_CNT(cap3)) {
+	पूर्ण अन्यथा अगर (UDMA_CAP3_HCHAN_CNT(cap3)) अणु
 		ud->tchan_tpl.levels = 2;
 		ud->tchan_tpl.start_idx[0] = UDMA_CAP3_HCHAN_CNT(cap3);
-	} else {
+	पूर्ण अन्यथा अणु
 		ud->tchan_tpl.levels = 1;
-	}
+	पूर्ण
 
 	ud->rchan_tpl.levels = ud->tchan_tpl.levels;
 	ud->rchan_tpl.start_idx[0] = ud->tchan_tpl.start_idx[0];
 	ud->rchan_tpl.start_idx[1] = ud->tchan_tpl.start_idx[1];
 
-	ud->tchan_map = devm_kmalloc_array(dev, BITS_TO_LONGS(ud->tchan_cnt),
-					   sizeof(unsigned long), GFP_KERNEL);
-	ud->tchans = devm_kcalloc(dev, ud->tchan_cnt, sizeof(*ud->tchans),
+	ud->tchan_map = devm_kदो_स्मृति_array(dev, BITS_TO_LONGS(ud->tchan_cnt),
+					   माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	ud->tchans = devm_kसुस्मृति(dev, ud->tchan_cnt, माप(*ud->tchans),
 				  GFP_KERNEL);
-	ud->rchan_map = devm_kmalloc_array(dev, BITS_TO_LONGS(ud->rchan_cnt),
-					   sizeof(unsigned long), GFP_KERNEL);
-	ud->rchans = devm_kcalloc(dev, ud->rchan_cnt, sizeof(*ud->rchans),
+	ud->rchan_map = devm_kदो_स्मृति_array(dev, BITS_TO_LONGS(ud->rchan_cnt),
+					   माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	ud->rchans = devm_kसुस्मृति(dev, ud->rchan_cnt, माप(*ud->rchans),
 				  GFP_KERNEL);
-	ud->rflow_in_use = devm_kcalloc(dev, BITS_TO_LONGS(ud->rflow_cnt),
-					sizeof(unsigned long),
+	ud->rflow_in_use = devm_kसुस्मृति(dev, BITS_TO_LONGS(ud->rflow_cnt),
+					माप(अचिन्हित दीर्घ),
 					GFP_KERNEL);
-	ud->rflows = devm_kcalloc(dev, ud->rflow_cnt, sizeof(*ud->rflows),
+	ud->rflows = devm_kसुस्मृति(dev, ud->rflow_cnt, माप(*ud->rflows),
 				  GFP_KERNEL);
-	ud->tflow_map = devm_kmalloc_array(dev, BITS_TO_LONGS(ud->tflow_cnt),
-					   sizeof(unsigned long), GFP_KERNEL);
+	ud->tflow_map = devm_kदो_स्मृति_array(dev, BITS_TO_LONGS(ud->tflow_cnt),
+					   माप(अचिन्हित दीर्घ), GFP_KERNEL);
 
-	if (!ud->tchan_map || !ud->rchan_map || !ud->tflow_map || !ud->tchans ||
+	अगर (!ud->tchan_map || !ud->rchan_map || !ud->tflow_map || !ud->tchans ||
 	    !ud->rchans || !ud->rflows || !ud->rflow_in_use)
-		return -ENOMEM;
+		वापस -ENOMEM;
 
 	/* Get resource ranges from tisci */
-	for (i = 0; i < RM_RANGE_LAST; i++) {
-		if (i == RM_RANGE_BCHAN)
-			continue;
+	क्रम (i = 0; i < RM_RANGE_LAST; i++) अणु
+		अगर (i == RM_RANGE_BCHAN)
+			जारी;
 
 		tisci_rm->rm_ranges[i] =
 			devm_ti_sci_get_of_resource(tisci_rm->tisci, dev,
 						    tisci_rm->tisci_dev_id,
-						    (char *)range_names[i]);
-	}
+						    (अक्षर *)range_names[i]);
+	पूर्ण
 
 	/* tchan ranges */
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_TCHAN];
-	if (IS_ERR(rm_res)) {
-		bitmap_zero(ud->tchan_map, ud->tchan_cnt);
-	} else {
-		bitmap_fill(ud->tchan_map, ud->tchan_cnt);
-		for (i = 0; i < rm_res->sets; i++)
+	अगर (IS_ERR(rm_res)) अणु
+		biपंचांगap_zero(ud->tchan_map, ud->tchan_cnt);
+	पूर्ण अन्यथा अणु
+		biपंचांगap_fill(ud->tchan_map, ud->tchan_cnt);
+		क्रम (i = 0; i < rm_res->sets; i++)
 			udma_mark_resource_ranges(ud, ud->tchan_map,
 						  &rm_res->desc[i], "tchan");
-	}
+	पूर्ण
 
 	/* rchan ranges */
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_RCHAN];
-	if (IS_ERR(rm_res)) {
-		bitmap_zero(ud->rchan_map, ud->rchan_cnt);
-	} else {
-		bitmap_fill(ud->rchan_map, ud->rchan_cnt);
-		for (i = 0; i < rm_res->sets; i++)
+	अगर (IS_ERR(rm_res)) अणु
+		biपंचांगap_zero(ud->rchan_map, ud->rchan_cnt);
+	पूर्ण अन्यथा अणु
+		biपंचांगap_fill(ud->rchan_map, ud->rchan_cnt);
+		क्रम (i = 0; i < rm_res->sets; i++)
 			udma_mark_resource_ranges(ud, ud->rchan_map,
 						  &rm_res->desc[i], "rchan");
-	}
+	पूर्ण
 
 	/* rflow ranges */
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_RFLOW];
-	if (IS_ERR(rm_res)) {
-		/* all rflows are assigned exclusively to Linux */
-		bitmap_zero(ud->rflow_in_use, ud->rflow_cnt);
-	} else {
-		bitmap_fill(ud->rflow_in_use, ud->rflow_cnt);
-		for (i = 0; i < rm_res->sets; i++)
+	अगर (IS_ERR(rm_res)) अणु
+		/* all rflows are asचिन्हित exclusively to Linux */
+		biपंचांगap_zero(ud->rflow_in_use, ud->rflow_cnt);
+	पूर्ण अन्यथा अणु
+		biपंचांगap_fill(ud->rflow_in_use, ud->rflow_cnt);
+		क्रम (i = 0; i < rm_res->sets; i++)
 			udma_mark_resource_ranges(ud, ud->rflow_in_use,
 						  &rm_res->desc[i], "rflow");
-	}
+	पूर्ण
 	irq_res.sets = rm_res->sets;
 
 	/* tflow ranges */
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_TFLOW];
-	if (IS_ERR(rm_res)) {
-		/* all tflows are assigned exclusively to Linux */
-		bitmap_zero(ud->tflow_map, ud->tflow_cnt);
-	} else {
-		bitmap_fill(ud->tflow_map, ud->tflow_cnt);
-		for (i = 0; i < rm_res->sets; i++)
+	अगर (IS_ERR(rm_res)) अणु
+		/* all tflows are asचिन्हित exclusively to Linux */
+		biपंचांगap_zero(ud->tflow_map, ud->tflow_cnt);
+	पूर्ण अन्यथा अणु
+		biपंचांगap_fill(ud->tflow_map, ud->tflow_cnt);
+		क्रम (i = 0; i < rm_res->sets; i++)
 			udma_mark_resource_ranges(ud, ud->tflow_map,
 						  &rm_res->desc[i], "tflow");
-	}
+	पूर्ण
 	irq_res.sets += rm_res->sets;
 
-	irq_res.desc = kcalloc(irq_res.sets, sizeof(*irq_res.desc), GFP_KERNEL);
+	irq_res.desc = kसुस्मृति(irq_res.sets, माप(*irq_res.desc), GFP_KERNEL);
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_TFLOW];
-	for (i = 0; i < rm_res->sets; i++) {
+	क्रम (i = 0; i < rm_res->sets; i++) अणु
 		irq_res.desc[i].start = rm_res->desc[i].start +
 					oes->pktdma_tchan_flow;
 		irq_res.desc[i].num = rm_res->desc[i].num;
-	}
+	पूर्ण
 	rm_res = tisci_rm->rm_ranges[RM_RANGE_RFLOW];
-	for (j = 0; j < rm_res->sets; j++, i++) {
+	क्रम (j = 0; j < rm_res->sets; j++, i++) अणु
 		irq_res.desc[i].start = rm_res->desc[j].start +
 					oes->pktdma_rchan_flow;
 		irq_res.desc[i].num = rm_res->desc[j].num;
-	}
-	ret = ti_sci_inta_msi_domain_alloc_irqs(ud->dev, &irq_res);
-	kfree(irq_res.desc);
-	if (ret) {
+	पूर्ण
+	ret = ti_sci_पूर्णांकa_msi_करोमुख्य_alloc_irqs(ud->dev, &irq_res);
+	kमुक्त(irq_res.desc);
+	अगर (ret) अणु
 		dev_err(ud->dev, "Failed to allocate MSI interrupts\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_resources(struct udma_dev *ud)
-{
-	struct device *dev = ud->dev;
-	int ch_count, ret;
+अटल पूर्णांक setup_resources(काष्ठा udma_dev *ud)
+अणु
+	काष्ठा device *dev = ud->dev;
+	पूर्णांक ch_count, ret;
 
-	switch (ud->match_data->type) {
-	case DMA_TYPE_UDMA:
+	चयन (ud->match_data->type) अणु
+	हाल DMA_TYPE_UDMA:
 		ret = udma_setup_resources(ud);
-		break;
-	case DMA_TYPE_BCDMA:
+		अवरोध;
+	हाल DMA_TYPE_BCDMA:
 		ret = bcdma_setup_resources(ud);
-		break;
-	case DMA_TYPE_PKTDMA:
+		अवरोध;
+	हाल DMA_TYPE_PKTDMA:
 		ret = pktdma_setup_resources(ud);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ch_count  = ud->bchan_cnt + ud->tchan_cnt + ud->rchan_cnt;
-	if (ud->bchan_cnt)
-		ch_count -= bitmap_weight(ud->bchan_map, ud->bchan_cnt);
-	ch_count -= bitmap_weight(ud->tchan_map, ud->tchan_cnt);
-	ch_count -= bitmap_weight(ud->rchan_map, ud->rchan_cnt);
-	if (!ch_count)
-		return -ENODEV;
+	अगर (ud->bchan_cnt)
+		ch_count -= biपंचांगap_weight(ud->bchan_map, ud->bchan_cnt);
+	ch_count -= biपंचांगap_weight(ud->tchan_map, ud->tchan_cnt);
+	ch_count -= biपंचांगap_weight(ud->rchan_map, ud->rchan_cnt);
+	अगर (!ch_count)
+		वापस -ENODEV;
 
-	ud->channels = devm_kcalloc(dev, ch_count, sizeof(*ud->channels),
+	ud->channels = devm_kसुस्मृति(dev, ch_count, माप(*ud->channels),
 				    GFP_KERNEL);
-	if (!ud->channels)
-		return -ENOMEM;
+	अगर (!ud->channels)
+		वापस -ENOMEM;
 
-	switch (ud->match_data->type) {
-	case DMA_TYPE_UDMA:
+	चयन (ud->match_data->type) अणु
+	हाल DMA_TYPE_UDMA:
 		dev_info(dev,
 			 "Channels: %d (tchan: %u, rchan: %u, gp-rflow: %u)\n",
 			 ch_count,
-			 ud->tchan_cnt - bitmap_weight(ud->tchan_map,
+			 ud->tchan_cnt - biपंचांगap_weight(ud->tchan_map,
 						       ud->tchan_cnt),
-			 ud->rchan_cnt - bitmap_weight(ud->rchan_map,
+			 ud->rchan_cnt - biपंचांगap_weight(ud->rchan_map,
 						       ud->rchan_cnt),
-			 ud->rflow_cnt - bitmap_weight(ud->rflow_gp_map,
+			 ud->rflow_cnt - biपंचांगap_weight(ud->rflow_gp_map,
 						       ud->rflow_cnt));
-		break;
-	case DMA_TYPE_BCDMA:
+		अवरोध;
+	हाल DMA_TYPE_BCDMA:
 		dev_info(dev,
 			 "Channels: %d (bchan: %u, tchan: %u, rchan: %u)\n",
 			 ch_count,
-			 ud->bchan_cnt - bitmap_weight(ud->bchan_map,
+			 ud->bchan_cnt - biपंचांगap_weight(ud->bchan_map,
 						       ud->bchan_cnt),
-			 ud->tchan_cnt - bitmap_weight(ud->tchan_map,
+			 ud->tchan_cnt - biपंचांगap_weight(ud->tchan_map,
 						       ud->tchan_cnt),
-			 ud->rchan_cnt - bitmap_weight(ud->rchan_map,
+			 ud->rchan_cnt - biपंचांगap_weight(ud->rchan_map,
 						       ud->rchan_cnt));
-		break;
-	case DMA_TYPE_PKTDMA:
+		अवरोध;
+	हाल DMA_TYPE_PKTDMA:
 		dev_info(dev,
 			 "Channels: %d (tchan: %u, rchan: %u)\n",
 			 ch_count,
-			 ud->tchan_cnt - bitmap_weight(ud->tchan_map,
+			 ud->tchan_cnt - biपंचांगap_weight(ud->tchan_map,
 						       ud->tchan_cnt),
-			 ud->rchan_cnt - bitmap_weight(ud->rchan_map,
+			 ud->rchan_cnt - biपंचांगap_weight(ud->rchan_map,
 						       ud->rchan_cnt));
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ch_count;
-}
+	वापस ch_count;
+पूर्ण
 
-static int udma_setup_rx_flush(struct udma_dev *ud)
-{
-	struct udma_rx_flush *rx_flush = &ud->rx_flush;
-	struct cppi5_desc_hdr_t *tr_desc;
-	struct cppi5_tr_type1_t *tr_req;
-	struct cppi5_host_desc_t *desc;
-	struct device *dev = ud->dev;
-	struct udma_hwdesc *hwdesc;
-	size_t tr_size;
+अटल पूर्णांक udma_setup_rx_flush(काष्ठा udma_dev *ud)
+अणु
+	काष्ठा udma_rx_flush *rx_flush = &ud->rx_flush;
+	काष्ठा cppi5_desc_hdr_t *tr_desc;
+	काष्ठा cppi5_tr_type1_t *tr_req;
+	काष्ठा cppi5_host_desc_t *desc;
+	काष्ठा device *dev = ud->dev;
+	काष्ठा udma_hwdesc *hwdesc;
+	माप_प्रकार tr_size;
 
-	/* Allocate 1K buffer for discarded data on RX channel teardown */
+	/* Allocate 1K buffer क्रम discarded data on RX channel tearकरोwn */
 	rx_flush->buffer_size = SZ_1K;
 	rx_flush->buffer_vaddr = devm_kzalloc(dev, rx_flush->buffer_size,
 					      GFP_KERNEL);
-	if (!rx_flush->buffer_vaddr)
-		return -ENOMEM;
+	अगर (!rx_flush->buffer_vaddr)
+		वापस -ENOMEM;
 
 	rx_flush->buffer_paddr = dma_map_single(dev, rx_flush->buffer_vaddr,
 						rx_flush->buffer_size,
 						DMA_TO_DEVICE);
-	if (dma_mapping_error(dev, rx_flush->buffer_paddr))
-		return -ENOMEM;
+	अगर (dma_mapping_error(dev, rx_flush->buffer_paddr))
+		वापस -ENOMEM;
 
-	/* Set up descriptor to be used for TR mode */
+	/* Set up descriptor to be used क्रम TR mode */
 	hwdesc = &rx_flush->hwdescs[0];
-	tr_size = sizeof(struct cppi5_tr_type1_t);
+	tr_size = माप(काष्ठा cppi5_tr_type1_t);
 	hwdesc->cppi5_desc_size = cppi5_trdesc_calc_size(tr_size, 1);
 	hwdesc->cppi5_desc_size = ALIGN(hwdesc->cppi5_desc_size,
 					ud->desc_align);
 
 	hwdesc->cppi5_desc_vaddr = devm_kzalloc(dev, hwdesc->cppi5_desc_size,
 						GFP_KERNEL);
-	if (!hwdesc->cppi5_desc_vaddr)
-		return -ENOMEM;
+	अगर (!hwdesc->cppi5_desc_vaddr)
+		वापस -ENOMEM;
 
 	hwdesc->cppi5_desc_paddr = dma_map_single(dev, hwdesc->cppi5_desc_vaddr,
 						  hwdesc->cppi5_desc_size,
 						  DMA_TO_DEVICE);
-	if (dma_mapping_error(dev, hwdesc->cppi5_desc_paddr))
-		return -ENOMEM;
+	अगर (dma_mapping_error(dev, hwdesc->cppi5_desc_paddr))
+		वापस -ENOMEM;
 
 	/* Start of the TR req records */
 	hwdesc->tr_req_base = hwdesc->cppi5_desc_vaddr + tr_size;
@@ -5015,26 +5016,26 @@ static int udma_setup_rx_flush(struct udma_dev *ud)
 	tr_req->icnt0 = rx_flush->buffer_size;
 	tr_req->icnt1 = 1;
 
-	dma_sync_single_for_device(dev, hwdesc->cppi5_desc_paddr,
+	dma_sync_single_क्रम_device(dev, hwdesc->cppi5_desc_paddr,
 				   hwdesc->cppi5_desc_size, DMA_TO_DEVICE);
 
-	/* Set up descriptor to be used for packet mode */
+	/* Set up descriptor to be used क्रम packet mode */
 	hwdesc = &rx_flush->hwdescs[1];
-	hwdesc->cppi5_desc_size = ALIGN(sizeof(struct cppi5_host_desc_t) +
+	hwdesc->cppi5_desc_size = ALIGN(माप(काष्ठा cppi5_host_desc_t) +
 					CPPI5_INFO0_HDESC_EPIB_SIZE +
 					CPPI5_INFO0_HDESC_PSDATA_MAX_SIZE,
 					ud->desc_align);
 
 	hwdesc->cppi5_desc_vaddr = devm_kzalloc(dev, hwdesc->cppi5_desc_size,
 						GFP_KERNEL);
-	if (!hwdesc->cppi5_desc_vaddr)
-		return -ENOMEM;
+	अगर (!hwdesc->cppi5_desc_vaddr)
+		वापस -ENOMEM;
 
 	hwdesc->cppi5_desc_paddr = dma_map_single(dev, hwdesc->cppi5_desc_vaddr,
 						  hwdesc->cppi5_desc_size,
 						  DMA_TO_DEVICE);
-	if (dma_mapping_error(dev, hwdesc->cppi5_desc_paddr))
-		return -ENOMEM;
+	अगर (dma_mapping_error(dev, hwdesc->cppi5_desc_paddr))
+		वापस -ENOMEM;
 
 	desc = hwdesc->cppi5_desc_vaddr;
 	cppi5_hdesc_init(desc, 0, 0);
@@ -5045,263 +5046,263 @@ static int udma_setup_rx_flush(struct udma_dev *ud)
 			       rx_flush->buffer_paddr, rx_flush->buffer_size,
 			       rx_flush->buffer_paddr, rx_flush->buffer_size);
 
-	dma_sync_single_for_device(dev, hwdesc->cppi5_desc_paddr,
+	dma_sync_single_क्रम_device(dev, hwdesc->cppi5_desc_paddr,
 				   hwdesc->cppi5_desc_size, DMA_TO_DEVICE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static void udma_dbg_summary_show_chan(struct seq_file *s,
-				       struct dma_chan *chan)
-{
-	struct udma_chan *uc = to_udma_chan(chan);
-	struct udma_chan_config *ucc = &uc->config;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल व्योम udma_dbg_summary_show_chan(काष्ठा seq_file *s,
+				       काष्ठा dma_chan *chan)
+अणु
+	काष्ठा udma_chan *uc = to_udma_chan(chan);
+	काष्ठा udma_chan_config *ucc = &uc->config;
 
-	seq_printf(s, " %-13s| %s", dma_chan_name(chan),
+	seq_म_लिखो(s, " %-13s| %s", dma_chan_name(chan),
 		   chan->dbg_client_name ?: "in-use");
-	if (ucc->tr_trigger_type)
-		seq_puts(s, " (triggered, ");
-	else
-		seq_printf(s, " (%s, ",
+	अगर (ucc->tr_trigger_type)
+		seq_माला_दो(s, " (triggered, ");
+	अन्यथा
+		seq_म_लिखो(s, " (%s, ",
 			   dmaengine_get_direction_text(uc->config.dir));
 
-	switch (uc->config.dir) {
-	case DMA_MEM_TO_MEM:
-		if (uc->ud->match_data->type == DMA_TYPE_BCDMA) {
-			seq_printf(s, "bchan%d)\n", uc->bchan->id);
-			return;
-		}
+	चयन (uc->config.dir) अणु
+	हाल DMA_MEM_TO_MEM:
+		अगर (uc->ud->match_data->type == DMA_TYPE_BCDMA) अणु
+			seq_म_लिखो(s, "bchan%d)\n", uc->bchan->id);
+			वापस;
+		पूर्ण
 
-		seq_printf(s, "chan%d pair [0x%04x -> 0x%04x], ", uc->tchan->id,
-			   ucc->src_thread, ucc->dst_thread);
-		break;
-	case DMA_DEV_TO_MEM:
-		seq_printf(s, "rchan%d [0x%04x -> 0x%04x], ", uc->rchan->id,
-			   ucc->src_thread, ucc->dst_thread);
-		if (uc->ud->match_data->type == DMA_TYPE_PKTDMA)
-			seq_printf(s, "rflow%d, ", uc->rflow->id);
-		break;
-	case DMA_MEM_TO_DEV:
-		seq_printf(s, "tchan%d [0x%04x -> 0x%04x], ", uc->tchan->id,
-			   ucc->src_thread, ucc->dst_thread);
-		if (uc->ud->match_data->type == DMA_TYPE_PKTDMA)
-			seq_printf(s, "tflow%d, ", uc->tchan->tflow_id);
-		break;
-	default:
-		seq_printf(s, ")\n");
-		return;
-	}
+		seq_म_लिखो(s, "chan%d pair [0x%04x -> 0x%04x], ", uc->tchan->id,
+			   ucc->src_thपढ़ो, ucc->dst_thपढ़ो);
+		अवरोध;
+	हाल DMA_DEV_TO_MEM:
+		seq_म_लिखो(s, "rchan%d [0x%04x -> 0x%04x], ", uc->rchan->id,
+			   ucc->src_thपढ़ो, ucc->dst_thपढ़ो);
+		अगर (uc->ud->match_data->type == DMA_TYPE_PKTDMA)
+			seq_म_लिखो(s, "rflow%d, ", uc->rflow->id);
+		अवरोध;
+	हाल DMA_MEM_TO_DEV:
+		seq_म_लिखो(s, "tchan%d [0x%04x -> 0x%04x], ", uc->tchan->id,
+			   ucc->src_thपढ़ो, ucc->dst_thपढ़ो);
+		अगर (uc->ud->match_data->type == DMA_TYPE_PKTDMA)
+			seq_म_लिखो(s, "tflow%d, ", uc->tchan->tflow_id);
+		अवरोध;
+	शेष:
+		seq_म_लिखो(s, ")\n");
+		वापस;
+	पूर्ण
 
-	if (ucc->ep_type == PSIL_EP_NATIVE) {
-		seq_printf(s, "PSI-L Native");
-		if (ucc->metadata_size) {
-			seq_printf(s, "[%s", ucc->needs_epib ? " EPIB" : "");
-			if (ucc->psd_size)
-				seq_printf(s, " PSDsize:%u", ucc->psd_size);
-			seq_printf(s, " ]");
-		}
-	} else {
-		seq_printf(s, "PDMA");
-		if (ucc->enable_acc32 || ucc->enable_burst)
-			seq_printf(s, "[%s%s ]",
+	अगर (ucc->ep_type == PSIL_EP_NATIVE) अणु
+		seq_म_लिखो(s, "PSI-L Native");
+		अगर (ucc->metadata_size) अणु
+			seq_म_लिखो(s, "[%s", ucc->needs_epib ? " EPIB" : "");
+			अगर (ucc->psd_size)
+				seq_म_लिखो(s, " PSDsize:%u", ucc->psd_size);
+			seq_म_लिखो(s, " ]");
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		seq_म_लिखो(s, "PDMA");
+		अगर (ucc->enable_acc32 || ucc->enable_burst)
+			seq_म_लिखो(s, "[%s%s ]",
 				   ucc->enable_acc32 ? " ACC32" : "",
 				   ucc->enable_burst ? " BURST" : "");
-	}
+	पूर्ण
 
-	seq_printf(s, ", %s)\n", ucc->pkt_mode ? "Packet mode" : "TR mode");
-}
+	seq_म_लिखो(s, ", %s)\n", ucc->pkt_mode ? "Packet mode" : "TR mode");
+पूर्ण
 
-static void udma_dbg_summary_show(struct seq_file *s,
-				  struct dma_device *dma_dev)
-{
-	struct dma_chan *chan;
+अटल व्योम udma_dbg_summary_show(काष्ठा seq_file *s,
+				  काष्ठा dma_device *dma_dev)
+अणु
+	काष्ठा dma_chan *chan;
 
-	list_for_each_entry(chan, &dma_dev->channels, device_node) {
-		if (chan->client_count)
+	list_क्रम_each_entry(chan, &dma_dev->channels, device_node) अणु
+		अगर (chan->client_count)
 			udma_dbg_summary_show_chan(s, chan);
-	}
-}
-#endif /* CONFIG_DEBUG_FS */
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-static enum dmaengine_alignment udma_get_copy_align(struct udma_dev *ud)
-{
-	const struct udma_match_data *match_data = ud->match_data;
+अटल क्रमागत dmaengine_alignment udma_get_copy_align(काष्ठा udma_dev *ud)
+अणु
+	स्थिर काष्ठा udma_match_data *match_data = ud->match_data;
 	u8 tpl;
 
-	if (!match_data->enable_memcpy_support)
-		return DMAENGINE_ALIGN_8_BYTES;
+	अगर (!match_data->enable_स_नकल_support)
+		वापस DMAENGINE_ALIGN_8_BYTES;
 
-	/* Get the highest TPL level the device supports for memcpy */
-	if (ud->bchan_cnt)
+	/* Get the highest TPL level the device supports क्रम स_नकल */
+	अगर (ud->bchan_cnt)
 		tpl = udma_get_chan_tpl_index(&ud->bchan_tpl, 0);
-	else if (ud->tchan_cnt)
+	अन्यथा अगर (ud->tchan_cnt)
 		tpl = udma_get_chan_tpl_index(&ud->tchan_tpl, 0);
-	else
-		return DMAENGINE_ALIGN_8_BYTES;
+	अन्यथा
+		वापस DMAENGINE_ALIGN_8_BYTES;
 
-	switch (match_data->burst_size[tpl]) {
-	case TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_256_BYTES:
-		return DMAENGINE_ALIGN_256_BYTES;
-	case TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_128_BYTES:
-		return DMAENGINE_ALIGN_128_BYTES;
-	case TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES:
+	चयन (match_data->burst_size[tpl]) अणु
+	हाल TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_256_BYTES:
+		वापस DMAENGINE_ALIGN_256_BYTES;
+	हाल TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_128_BYTES:
+		वापस DMAENGINE_ALIGN_128_BYTES;
+	हाल TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES:
 	fallthrough;
-	default:
-		return DMAENGINE_ALIGN_64_BYTES;
-	}
-}
+	शेष:
+		वापस DMAENGINE_ALIGN_64_BYTES;
+	पूर्ण
+पूर्ण
 
-#define TI_UDMAC_BUSWIDTHS	(BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
+#घोषणा TI_UDMAC_BUSWIDTHS	(BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_3_BYTES) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_4_BYTES) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_8_BYTES))
 
-static int udma_probe(struct platform_device *pdev)
-{
-	struct device_node *navss_node = pdev->dev.parent->of_node;
-	const struct soc_device_attribute *soc;
-	struct device *dev = &pdev->dev;
-	struct udma_dev *ud;
-	const struct of_device_id *match;
-	int i, ret;
-	int ch_count;
+अटल पूर्णांक udma_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *navss_node = pdev->dev.parent->of_node;
+	स्थिर काष्ठा soc_device_attribute *soc;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा udma_dev *ud;
+	स्थिर काष्ठा of_device_id *match;
+	पूर्णांक i, ret;
+	पूर्णांक ch_count;
 
 	ret = dma_coerce_mask_and_coherent(dev, DMA_BIT_MASK(48));
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "failed to set dma mask stuff\n");
 
-	ud = devm_kzalloc(dev, sizeof(*ud), GFP_KERNEL);
-	if (!ud)
-		return -ENOMEM;
+	ud = devm_kzalloc(dev, माप(*ud), GFP_KERNEL);
+	अगर (!ud)
+		वापस -ENOMEM;
 
 	match = of_match_node(udma_of_match, dev->of_node);
-	if (!match)
+	अगर (!match)
 		match = of_match_node(bcdma_of_match, dev->of_node);
-	if (!match) {
+	अगर (!match) अणु
 		match = of_match_node(pktdma_of_match, dev->of_node);
-		if (!match) {
+		अगर (!match) अणु
 			dev_err(dev, "No compatible match found\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 	ud->match_data = match->data;
 
 	soc = soc_device_match(k3_soc_devices);
-	if (!soc) {
+	अगर (!soc) अणु
 		dev_err(dev, "No compatible SoC found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	ud->soc_data = soc->data;
 
 	ret = udma_get_mmrs(pdev, ud);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ud->tisci_rm.tisci = ti_sci_get_by_phandle(dev->of_node, "ti,sci");
-	if (IS_ERR(ud->tisci_rm.tisci))
-		return PTR_ERR(ud->tisci_rm.tisci);
+	अगर (IS_ERR(ud->tisci_rm.tisci))
+		वापस PTR_ERR(ud->tisci_rm.tisci);
 
-	ret = of_property_read_u32(dev->of_node, "ti,sci-dev-id",
+	ret = of_property_पढ़ो_u32(dev->of_node, "ti,sci-dev-id",
 				   &ud->tisci_rm.tisci_dev_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "ti,sci-dev-id read failure %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	pdev->id = ud->tisci_rm.tisci_dev_id;
 
-	ret = of_property_read_u32(navss_node, "ti,sci-dev-id",
+	ret = of_property_पढ़ो_u32(navss_node, "ti,sci-dev-id",
 				   &ud->tisci_rm.tisci_navss_dev_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "NAVSS ti,sci-dev-id read failure %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ud->match_data->type == DMA_TYPE_UDMA) {
-		ret = of_property_read_u32(dev->of_node, "ti,udma-atype",
+	अगर (ud->match_data->type == DMA_TYPE_UDMA) अणु
+		ret = of_property_पढ़ो_u32(dev->of_node, "ti,udma-atype",
 					   &ud->atype);
-		if (!ret && ud->atype > 2) {
+		अगर (!ret && ud->atype > 2) अणु
 			dev_err(dev, "Invalid atype: %u\n", ud->atype);
-			return -EINVAL;
-		}
-	} else {
-		ret = of_property_read_u32(dev->of_node, "ti,asel",
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ret = of_property_पढ़ो_u32(dev->of_node, "ti,asel",
 					   &ud->asel);
-		if (!ret && ud->asel > 15) {
+		अगर (!ret && ud->asel > 15) अणु
 			dev_err(dev, "Invalid asel: %u\n", ud->asel);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	ud->tisci_rm.tisci_udmap_ops = &ud->tisci_rm.tisci->ops.rm_udmap_ops;
 	ud->tisci_rm.tisci_psil_ops = &ud->tisci_rm.tisci->ops.rm_psil_ops;
 
-	if (ud->match_data->type == DMA_TYPE_UDMA) {
+	अगर (ud->match_data->type == DMA_TYPE_UDMA) अणु
 		ud->ringacc = of_k3_ringacc_get_by_phandle(dev->of_node, "ti,ringacc");
-	} else {
-		struct k3_ringacc_init_data ring_init_data;
+	पूर्ण अन्यथा अणु
+		काष्ठा k3_ringacc_init_data ring_init_data;
 
 		ring_init_data.tisci = ud->tisci_rm.tisci;
 		ring_init_data.tisci_dev_id = ud->tisci_rm.tisci_dev_id;
-		if (ud->match_data->type == DMA_TYPE_BCDMA) {
+		अगर (ud->match_data->type == DMA_TYPE_BCDMA) अणु
 			ring_init_data.num_rings = ud->bchan_cnt +
 						   ud->tchan_cnt +
 						   ud->rchan_cnt;
-		} else {
+		पूर्ण अन्यथा अणु
 			ring_init_data.num_rings = ud->rflow_cnt +
 						   ud->tflow_cnt;
-		}
+		पूर्ण
 
 		ud->ringacc = k3_ringacc_dmarings_init(pdev, &ring_init_data);
-	}
+	पूर्ण
 
-	if (IS_ERR(ud->ringacc))
-		return PTR_ERR(ud->ringacc);
+	अगर (IS_ERR(ud->ringacc))
+		वापस PTR_ERR(ud->ringacc);
 
-	dev->msi_domain = of_msi_get_domain(dev, dev->of_node,
+	dev->msi_करोमुख्य = of_msi_get_करोमुख्य(dev, dev->of_node,
 					    DOMAIN_BUS_TI_SCI_INTA_MSI);
-	if (!dev->msi_domain) {
+	अगर (!dev->msi_करोमुख्य) अणु
 		dev_err(dev, "Failed to get MSI domain\n");
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	dma_cap_set(DMA_SLAVE, ud->ddev.cap_mask);
 	/* cyclic operation is not supported via PKTDMA */
-	if (ud->match_data->type != DMA_TYPE_PKTDMA) {
+	अगर (ud->match_data->type != DMA_TYPE_PKTDMA) अणु
 		dma_cap_set(DMA_CYCLIC, ud->ddev.cap_mask);
 		ud->ddev.device_prep_dma_cyclic = udma_prep_dma_cyclic;
-	}
+	पूर्ण
 
 	ud->ddev.device_config = udma_slave_config;
 	ud->ddev.device_prep_slave_sg = udma_prep_slave_sg;
 	ud->ddev.device_issue_pending = udma_issue_pending;
 	ud->ddev.device_tx_status = udma_tx_status;
-	ud->ddev.device_pause = udma_pause;
+	ud->ddev.device_छोड़ो = udma_छोड़ो;
 	ud->ddev.device_resume = udma_resume;
 	ud->ddev.device_terminate_all = udma_terminate_all;
 	ud->ddev.device_synchronize = udma_synchronize;
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	ud->ddev.dbg_summary_show = udma_dbg_summary_show;
-#endif
+#पूर्ण_अगर
 
-	switch (ud->match_data->type) {
-	case DMA_TYPE_UDMA:
+	चयन (ud->match_data->type) अणु
+	हाल DMA_TYPE_UDMA:
 		ud->ddev.device_alloc_chan_resources =
 					udma_alloc_chan_resources;
-		break;
-	case DMA_TYPE_BCDMA:
+		अवरोध;
+	हाल DMA_TYPE_BCDMA:
 		ud->ddev.device_alloc_chan_resources =
 					bcdma_alloc_chan_resources;
 		ud->ddev.device_router_config = bcdma_router_config;
-		break;
-	case DMA_TYPE_PKTDMA:
+		अवरोध;
+	हाल DMA_TYPE_PKTDMA:
 		ud->ddev.device_alloc_chan_resources =
 					pktdma_alloc_chan_resources;
-		break;
-	default:
-		return -EINVAL;
-	}
-	ud->ddev.device_free_chan_resources = udma_free_chan_resources;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	ud->ddev.device_मुक्त_chan_resources = udma_मुक्त_chan_resources;
 
 	ud->ddev.src_addr_widths = TI_UDMAC_BUSWIDTHS;
 	ud->ddev.dst_addr_widths = TI_UDMAC_BUSWIDTHS;
@@ -5309,12 +5310,12 @@ static int udma_probe(struct platform_device *pdev)
 	ud->ddev.residue_granularity = DMA_RESIDUE_GRANULARITY_BURST;
 	ud->ddev.desc_metadata_modes = DESC_METADATA_CLIENT |
 				       DESC_METADATA_ENGINE;
-	if (ud->match_data->enable_memcpy_support &&
-	    !(ud->match_data->type == DMA_TYPE_BCDMA && ud->bchan_cnt == 0)) {
+	अगर (ud->match_data->enable_स_नकल_support &&
+	    !(ud->match_data->type == DMA_TYPE_BCDMA && ud->bchan_cnt == 0)) अणु
 		dma_cap_set(DMA_MEMCPY, ud->ddev.cap_mask);
-		ud->ddev.device_prep_dma_memcpy = udma_prep_dma_memcpy;
+		ud->ddev.device_prep_dma_स_नकल = udma_prep_dma_स_नकल;
 		ud->ddev.directions |= BIT(DMA_MEM_TO_MEM);
-	}
+	पूर्ण
 
 	ud->ddev.dev = dev;
 	ud->dev = dev;
@@ -5324,119 +5325,119 @@ static int udma_probe(struct platform_device *pdev)
 	INIT_LIST_HEAD(&ud->desc_to_purge);
 
 	ch_count = setup_resources(ud);
-	if (ch_count <= 0)
-		return ch_count;
+	अगर (ch_count <= 0)
+		वापस ch_count;
 
 	spin_lock_init(&ud->lock);
 	INIT_WORK(&ud->purge_work, udma_purge_desc_work);
 
 	ud->desc_align = 64;
-	if (ud->desc_align < dma_get_cache_alignment())
+	अगर (ud->desc_align < dma_get_cache_alignment())
 		ud->desc_align = dma_get_cache_alignment();
 
 	ret = udma_setup_rx_flush(ud);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < ud->bchan_cnt; i++) {
-		struct udma_bchan *bchan = &ud->bchans[i];
+	क्रम (i = 0; i < ud->bchan_cnt; i++) अणु
+		काष्ठा udma_bchan *bchan = &ud->bchans[i];
 
 		bchan->id = i;
 		bchan->reg_rt = ud->mmrs[MMR_BCHANRT] + i * 0x1000;
-	}
+	पूर्ण
 
-	for (i = 0; i < ud->tchan_cnt; i++) {
-		struct udma_tchan *tchan = &ud->tchans[i];
+	क्रम (i = 0; i < ud->tchan_cnt; i++) अणु
+		काष्ठा udma_tchan *tchan = &ud->tchans[i];
 
 		tchan->id = i;
 		tchan->reg_rt = ud->mmrs[MMR_TCHANRT] + i * 0x1000;
-	}
+	पूर्ण
 
-	for (i = 0; i < ud->rchan_cnt; i++) {
-		struct udma_rchan *rchan = &ud->rchans[i];
+	क्रम (i = 0; i < ud->rchan_cnt; i++) अणु
+		काष्ठा udma_rchan *rchan = &ud->rchans[i];
 
 		rchan->id = i;
 		rchan->reg_rt = ud->mmrs[MMR_RCHANRT] + i * 0x1000;
-	}
+	पूर्ण
 
-	for (i = 0; i < ud->rflow_cnt; i++) {
-		struct udma_rflow *rflow = &ud->rflows[i];
+	क्रम (i = 0; i < ud->rflow_cnt; i++) अणु
+		काष्ठा udma_rflow *rflow = &ud->rflows[i];
 
 		rflow->id = i;
-	}
+	पूर्ण
 
-	for (i = 0; i < ch_count; i++) {
-		struct udma_chan *uc = &ud->channels[i];
+	क्रम (i = 0; i < ch_count; i++) अणु
+		काष्ठा udma_chan *uc = &ud->channels[i];
 
 		uc->ud = ud;
-		uc->vc.desc_free = udma_desc_free;
+		uc->vc.desc_मुक्त = udma_desc_मुक्त;
 		uc->id = i;
-		uc->bchan = NULL;
-		uc->tchan = NULL;
-		uc->rchan = NULL;
-		uc->config.remote_thread_id = -1;
+		uc->bchan = शून्य;
+		uc->tchan = शून्य;
+		uc->rchan = शून्य;
+		uc->config.remote_thपढ़ो_id = -1;
 		uc->config.mapped_channel_id = -1;
-		uc->config.default_flow_id = -1;
+		uc->config.शेष_flow_id = -1;
 		uc->config.dir = DMA_MEM_TO_MEM;
-		uc->name = devm_kasprintf(dev, GFP_KERNEL, "%s chan%d",
+		uc->name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s chan%d",
 					  dev_name(dev), i);
 
 		vchan_init(&uc->vc, &ud->ddev);
 		/* Use custom vchan completion handling */
 		tasklet_setup(&uc->vc.task, udma_vchan_complete);
-		init_completion(&uc->teardown_completed);
+		init_completion(&uc->tearकरोwn_completed);
 		INIT_DELAYED_WORK(&uc->tx_drain.work, udma_check_tx_completion);
-	}
+	पूर्ण
 
 	/* Configure the copy_align to the maximum burst size the device supports */
 	ud->ddev.copy_align = udma_get_copy_align(ud);
 
-	ret = dma_async_device_register(&ud->ddev);
-	if (ret) {
+	ret = dma_async_device_रेजिस्टर(&ud->ddev);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register slave DMA engine: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, ud);
+	platक्रमm_set_drvdata(pdev, ud);
 
-	ret = of_dma_controller_register(dev->of_node, udma_of_xlate, ud);
-	if (ret) {
+	ret = of_dma_controller_रेजिस्टर(dev->of_node, udma_of_xlate, ud);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register of_dma controller\n");
-		dma_async_device_unregister(&ud->ddev);
-	}
+		dma_async_device_unरेजिस्टर(&ud->ddev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver udma_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver udma_driver = अणु
+	.driver = अणु
 		.name	= "ti-udma",
 		.of_match_table = udma_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe		= udma_probe,
-};
-builtin_platform_driver(udma_driver);
+पूर्ण;
+builtin_platक्रमm_driver(udma_driver);
 
-static struct platform_driver bcdma_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver bcdma_driver = अणु
+	.driver = अणु
 		.name	= "ti-bcdma",
 		.of_match_table = bcdma_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe		= udma_probe,
-};
-builtin_platform_driver(bcdma_driver);
+पूर्ण;
+builtin_platक्रमm_driver(bcdma_driver);
 
-static struct platform_driver pktdma_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver pktdma_driver = अणु
+	.driver = अणु
 		.name	= "ti-pktdma",
 		.of_match_table = pktdma_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe		= udma_probe,
-};
-builtin_platform_driver(pktdma_driver);
+पूर्ण;
+builtin_platक्रमm_driver(pktdma_driver);
 
-/* Private interfaces to UDMA */
-#include "k3-udma-private.c"
+/* Private पूर्णांकerfaces to UDMA */
+#समावेश "k3-udma-private.c"

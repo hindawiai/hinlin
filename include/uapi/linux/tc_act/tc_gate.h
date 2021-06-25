@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /* Copyright 2020 NXP */
 
-#ifndef __LINUX_TC_GATE_H
-#define __LINUX_TC_GATE_H
+#अगर_अघोषित __LINUX_TC_GATE_H
+#घोषणा __LINUX_TC_GATE_H
 
-#include <linux/pkt_cls.h>
+#समावेश <linux/pkt_cls.h>
 
-struct tc_gate {
+काष्ठा tc_gate अणु
 	tc_gen;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_GATE_ENTRY_UNSPEC,
 	TCA_GATE_ENTRY_INDEX,
 	TCA_GATE_ENTRY_GATE,
@@ -18,17 +19,17 @@ enum {
 	TCA_GATE_ENTRY_IPV,
 	TCA_GATE_ENTRY_MAX_OCTETS,
 	__TCA_GATE_ENTRY_MAX,
-};
-#define TCA_GATE_ENTRY_MAX (__TCA_GATE_ENTRY_MAX - 1)
+पूर्ण;
+#घोषणा TCA_GATE_ENTRY_MAX (__TCA_GATE_ENTRY_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_GATE_ONE_ENTRY_UNSPEC,
 	TCA_GATE_ONE_ENTRY,
 	__TCA_GATE_ONE_ENTRY_MAX,
-};
-#define TCA_GATE_ONE_ENTRY_MAX (__TCA_GATE_ONE_ENTRY_MAX - 1)
+पूर्ण;
+#घोषणा TCA_GATE_ONE_ENTRY_MAX (__TCA_GATE_ONE_ENTRY_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_GATE_UNSPEC,
 	TCA_GATE_TM,
 	TCA_GATE_PARMS,
@@ -41,7 +42,7 @@ enum {
 	TCA_GATE_FLAGS,
 	TCA_GATE_CLOCKID,
 	__TCA_GATE_MAX,
-};
-#define TCA_GATE_MAX (__TCA_GATE_MAX - 1)
+पूर्ण;
+#घोषणा TCA_GATE_MAX (__TCA_GATE_MAX - 1)
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * fs/f2fs/hash.c
  *
@@ -7,130 +8,130 @@
  *
  * Portions of this code from linux/fs/ext3/hash.c
  *
- * Copyright (C) 2002 by Theodore Ts'o
+ * Copyright (C) 2002 by Theoकरोre Ts'o
  */
-#include <linux/types.h>
-#include <linux/fs.h>
-#include <linux/f2fs_fs.h>
-#include <linux/pagemap.h>
-#include <linux/unicode.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/f2fs_fs.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/unicode.h>
 
-#include "f2fs.h"
+#समावेश "f2fs.h"
 
 /*
  * Hashing code copied from ext3
  */
-#define DELTA 0x9E3779B9
+#घोषणा DELTA 0x9E3779B9
 
-static void TEA_transform(unsigned int buf[4], unsigned int const in[])
-{
+अटल व्योम TEA_transक्रमm(अचिन्हित पूर्णांक buf[4], अचिन्हित पूर्णांक स्थिर in[])
+अणु
 	__u32 sum = 0;
 	__u32 b0 = buf[0], b1 = buf[1];
 	__u32 a = in[0], b = in[1], c = in[2], d = in[3];
-	int n = 16;
+	पूर्णांक n = 16;
 
-	do {
+	करो अणु
 		sum += DELTA;
 		b0 += ((b1 << 4)+a) ^ (b1+sum) ^ ((b1 >> 5)+b);
 		b1 += ((b0 << 4)+c) ^ (b0+sum) ^ ((b0 >> 5)+d);
-	} while (--n);
+	पूर्ण जबतक (--n);
 
 	buf[0] += b0;
 	buf[1] += b1;
-}
+पूर्ण
 
-static void str2hashbuf(const unsigned char *msg, size_t len,
-				unsigned int *buf, int num)
-{
-	unsigned pad, val;
-	int i;
+अटल व्योम str2hashbuf(स्थिर अचिन्हित अक्षर *msg, माप_प्रकार len,
+				अचिन्हित पूर्णांक *buf, पूर्णांक num)
+अणु
+	अचिन्हित pad, val;
+	पूर्णांक i;
 
 	pad = (__u32)len | ((__u32)len << 8);
 	pad |= pad << 16;
 
 	val = pad;
-	if (len > num * 4)
+	अगर (len > num * 4)
 		len = num * 4;
-	for (i = 0; i < len; i++) {
-		if ((i % 4) == 0)
+	क्रम (i = 0; i < len; i++) अणु
+		अगर ((i % 4) == 0)
 			val = pad;
 		val = msg[i] + (val << 8);
-		if ((i % 4) == 3) {
+		अगर ((i % 4) == 3) अणु
 			*buf++ = val;
 			val = pad;
 			num--;
-		}
-	}
-	if (--num >= 0)
+		पूर्ण
+	पूर्ण
+	अगर (--num >= 0)
 		*buf++ = val;
-	while (--num >= 0)
+	जबतक (--num >= 0)
 		*buf++ = pad;
-}
+पूर्ण
 
-static u32 TEA_hash_name(const u8 *p, size_t len)
-{
+अटल u32 TEA_hash_name(स्थिर u8 *p, माप_प्रकार len)
+अणु
 	__u32 in[8], buf[4];
 
-	/* Initialize the default seed for the hash checksum functions */
+	/* Initialize the शेष seed क्रम the hash checksum functions */
 	buf[0] = 0x67452301;
 	buf[1] = 0xefcdab89;
 	buf[2] = 0x98badcfe;
 	buf[3] = 0x10325476;
 
-	while (1) {
+	जबतक (1) अणु
 		str2hashbuf(p, len, in, 4);
-		TEA_transform(buf, in);
+		TEA_transक्रमm(buf, in);
 		p += 16;
-		if (len <= 16)
-			break;
+		अगर (len <= 16)
+			अवरोध;
 		len -= 16;
-	}
-	return buf[0] & ~F2FS_HASH_COL_BIT;
-}
+	पूर्ण
+	वापस buf[0] & ~F2FS_HASH_COL_BIT;
+पूर्ण
 
 /*
  * Compute @fname->hash.  For all directories, @fname->disk_name must be set.
- * For casefolded directories, @fname->usr_fname must be set, and also
- * @fname->cf_name if the filename is valid Unicode.
+ * For हालfolded directories, @fname->usr_fname must be set, and also
+ * @fname->cf_name अगर the filename is valid Unicode.
  */
-void f2fs_hash_filename(const struct inode *dir, struct f2fs_filename *fname)
-{
-	const u8 *name = fname->disk_name.name;
-	size_t len = fname->disk_name.len;
+व्योम f2fs_hash_filename(स्थिर काष्ठा inode *dir, काष्ठा f2fs_filename *fname)
+अणु
+	स्थिर u8 *name = fname->disk_name.name;
+	माप_प्रकार len = fname->disk_name.len;
 
 	WARN_ON_ONCE(!name);
 
-	if (is_dot_dotdot(name, len)) {
+	अगर (is_करोt_करोtकरोt(name, len)) अणु
 		fname->hash = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#ifdef CONFIG_UNICODE
-	if (IS_CASEFOLDED(dir)) {
+#अगर_घोषित CONFIG_UNICODE
+	अगर (IS_CASEFOLDED(dir)) अणु
 		/*
-		 * If the casefolded name is provided, hash it instead of the
-		 * on-disk name.  If the casefolded name is *not* provided, that
+		 * If the हालfolded name is provided, hash it instead of the
+		 * on-disk name.  If the हालfolded name is *not* provided, that
 		 * should only be because the name wasn't valid Unicode, so fall
 		 * back to treating the name as an opaque byte sequence.  Note
 		 * that to handle encrypted directories, the fallback must use
-		 * usr_fname (plaintext) rather than disk_name (ciphertext).
+		 * usr_fname (plaपूर्णांकext) rather than disk_name (ciphertext).
 		 */
 		WARN_ON_ONCE(!fname->usr_fname->name);
-		if (fname->cf_name.name) {
+		अगर (fname->cf_name.name) अणु
 			name = fname->cf_name.name;
 			len = fname->cf_name.len;
-		} else {
+		पूर्ण अन्यथा अणु
 			name = fname->usr_fname->name;
 			len = fname->usr_fname->len;
-		}
-		if (IS_ENCRYPTED(dir)) {
-			struct qstr tmp = QSTR_INIT(name, len);
+		पूर्ण
+		अगर (IS_ENCRYPTED(dir)) अणु
+			काष्ठा qstr पंचांगp = QSTR_INIT(name, len);
 
 			fname->hash =
-				cpu_to_le32(fscrypt_fname_siphash(dir, &tmp));
-			return;
-		}
-	}
-#endif
+				cpu_to_le32(fscrypt_fname_siphash(dir, &पंचांगp));
+			वापस;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 	fname->hash = cpu_to_le32(TEA_hash_name(name, len));
-}
+पूर्ण

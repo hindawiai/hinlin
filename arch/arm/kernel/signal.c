@@ -1,188 +1,189 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/arch/arm/kernel/signal.c
+ *  linux/arch/arm/kernel/संकेत.c
  *
  *  Copyright (C) 1995-2009 Russell King
  */
-#include <linux/errno.h>
-#include <linux/random.h>
-#include <linux/signal.h>
-#include <linux/personality.h>
-#include <linux/uaccess.h>
-#include <linux/tracehook.h>
-#include <linux/uprobes.h>
-#include <linux/syscalls.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/personality.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/uprobes.h>
+#समावेश <linux/syscalls.h>
 
-#include <asm/elf.h>
-#include <asm/cacheflush.h>
-#include <asm/traps.h>
-#include <asm/unistd.h>
-#include <asm/vfp.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/vfp.h>
 
-#include "signal.h"
+#समावेश "signal.h"
 
-extern const unsigned long sigreturn_codes[17];
+बाह्य स्थिर अचिन्हित दीर्घ sigवापस_codes[17];
 
-static unsigned long signal_return_offset;
+अटल अचिन्हित दीर्घ संकेत_वापस_offset;
 
-#ifdef CONFIG_CRUNCH
-static int preserve_crunch_context(struct crunch_sigframe __user *frame)
-{
-	char kbuf[sizeof(*frame) + 8];
-	struct crunch_sigframe *kframe;
+#अगर_घोषित CONFIG_CRUNCH
+अटल पूर्णांक preserve_crunch_context(काष्ठा crunch_sigframe __user *frame)
+अणु
+	अक्षर kbuf[माप(*frame) + 8];
+	काष्ठा crunch_sigframe *kframe;
 
 	/* the crunch context must be 64 bit aligned */
-	kframe = (struct crunch_sigframe *)((unsigned long)(kbuf + 8) & ~7);
+	kframe = (काष्ठा crunch_sigframe *)((अचिन्हित दीर्घ)(kbuf + 8) & ~7);
 	kframe->magic = CRUNCH_MAGIC;
 	kframe->size = CRUNCH_STORAGE_SIZE;
-	crunch_task_copy(current_thread_info(), &kframe->storage);
-	return __copy_to_user(frame, kframe, sizeof(*frame));
-}
+	crunch_task_copy(current_thपढ़ो_info(), &kframe->storage);
+	वापस __copy_to_user(frame, kframe, माप(*frame));
+पूर्ण
 
-static int restore_crunch_context(char __user **auxp)
-{
-	struct crunch_sigframe __user *frame =
-		(struct crunch_sigframe __user *)*auxp;
-	char kbuf[sizeof(*frame) + 8];
-	struct crunch_sigframe *kframe;
+अटल पूर्णांक restore_crunch_context(अक्षर __user **auxp)
+अणु
+	काष्ठा crunch_sigframe __user *frame =
+		(काष्ठा crunch_sigframe __user *)*auxp;
+	अक्षर kbuf[माप(*frame) + 8];
+	काष्ठा crunch_sigframe *kframe;
 
 	/* the crunch context must be 64 bit aligned */
-	kframe = (struct crunch_sigframe *)((unsigned long)(kbuf + 8) & ~7);
-	if (__copy_from_user(kframe, frame, sizeof(*frame)))
-		return -1;
-	if (kframe->magic != CRUNCH_MAGIC ||
+	kframe = (काष्ठा crunch_sigframe *)((अचिन्हित दीर्घ)(kbuf + 8) & ~7);
+	अगर (__copy_from_user(kframe, frame, माप(*frame)))
+		वापस -1;
+	अगर (kframe->magic != CRUNCH_MAGIC ||
 	    kframe->size != CRUNCH_STORAGE_SIZE)
-		return -1;
+		वापस -1;
 	*auxp += CRUNCH_STORAGE_SIZE;
-	crunch_task_restore(current_thread_info(), &kframe->storage);
-	return 0;
-}
-#endif
+	crunch_task_restore(current_thपढ़ो_info(), &kframe->storage);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_IWMMXT
+#अगर_घोषित CONFIG_IWMMXT
 
-static int preserve_iwmmxt_context(struct iwmmxt_sigframe __user *frame)
-{
-	char kbuf[sizeof(*frame) + 8];
-	struct iwmmxt_sigframe *kframe;
-	int err = 0;
+अटल पूर्णांक preserve_iwmmxt_context(काष्ठा iwmmxt_sigframe __user *frame)
+अणु
+	अक्षर kbuf[माप(*frame) + 8];
+	काष्ठा iwmmxt_sigframe *kframe;
+	पूर्णांक err = 0;
 
 	/* the iWMMXt context must be 64 bit aligned */
-	kframe = (struct iwmmxt_sigframe *)((unsigned long)(kbuf + 8) & ~7);
+	kframe = (काष्ठा iwmmxt_sigframe *)((अचिन्हित दीर्घ)(kbuf + 8) & ~7);
 
-	if (test_thread_flag(TIF_USING_IWMMXT)) {
+	अगर (test_thपढ़ो_flag(TIF_USING_IWMMXT)) अणु
 		kframe->magic = IWMMXT_MAGIC;
 		kframe->size = IWMMXT_STORAGE_SIZE;
-		iwmmxt_task_copy(current_thread_info(), &kframe->storage);
-	} else {
+		iwmmxt_task_copy(current_thपढ़ो_info(), &kframe->storage);
+	पूर्ण अन्यथा अणु
 		/*
 		 * For bug-compatibility with older kernels, some space
-		 * has to be reserved for iWMMXt even if it's not used.
+		 * has to be reserved क्रम iWMMXt even अगर it's not used.
 		 * Set the magic and size appropriately so that properly
 		 * written userspace can skip it reliably:
 		 */
-		*kframe = (struct iwmmxt_sigframe) {
+		*kframe = (काष्ठा iwmmxt_sigframe) अणु
 			.magic = DUMMY_MAGIC,
 			.size  = IWMMXT_STORAGE_SIZE,
-		};
-	}
+		पूर्ण;
+	पूर्ण
 
-	err = __copy_to_user(frame, kframe, sizeof(*kframe));
+	err = __copy_to_user(frame, kframe, माप(*kframe));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int restore_iwmmxt_context(char __user **auxp)
-{
-	struct iwmmxt_sigframe __user *frame =
-		(struct iwmmxt_sigframe __user *)*auxp;
-	char kbuf[sizeof(*frame) + 8];
-	struct iwmmxt_sigframe *kframe;
+अटल पूर्णांक restore_iwmmxt_context(अक्षर __user **auxp)
+अणु
+	काष्ठा iwmmxt_sigframe __user *frame =
+		(काष्ठा iwmmxt_sigframe __user *)*auxp;
+	अक्षर kbuf[माप(*frame) + 8];
+	काष्ठा iwmmxt_sigframe *kframe;
 
 	/* the iWMMXt context must be 64 bit aligned */
-	kframe = (struct iwmmxt_sigframe *)((unsigned long)(kbuf + 8) & ~7);
-	if (__copy_from_user(kframe, frame, sizeof(*frame)))
-		return -1;
+	kframe = (काष्ठा iwmmxt_sigframe *)((अचिन्हित दीर्घ)(kbuf + 8) & ~7);
+	अगर (__copy_from_user(kframe, frame, माप(*frame)))
+		वापस -1;
 
 	/*
-	 * For non-iWMMXt threads: a single iwmmxt_sigframe-sized dummy
-	 * block is discarded for compatibility with setup_sigframe() if
-	 * present, but we don't mandate its presence.  If some other
-	 * magic is here, it's not for us:
+	 * For non-iWMMXt thपढ़ोs: a single iwmmxt_sigframe-sized dummy
+	 * block is discarded क्रम compatibility with setup_sigframe() अगर
+	 * present, but we करोn't mandate its presence.  If some other
+	 * magic is here, it's not क्रम us:
 	 */
-	if (!test_thread_flag(TIF_USING_IWMMXT) &&
+	अगर (!test_thपढ़ो_flag(TIF_USING_IWMMXT) &&
 	    kframe->magic != DUMMY_MAGIC)
-		return 0;
+		वापस 0;
 
-	if (kframe->size != IWMMXT_STORAGE_SIZE)
-		return -1;
+	अगर (kframe->size != IWMMXT_STORAGE_SIZE)
+		वापस -1;
 
-	if (test_thread_flag(TIF_USING_IWMMXT)) {
-		if (kframe->magic != IWMMXT_MAGIC)
-			return -1;
+	अगर (test_thपढ़ो_flag(TIF_USING_IWMMXT)) अणु
+		अगर (kframe->magic != IWMMXT_MAGIC)
+			वापस -1;
 
-		iwmmxt_task_restore(current_thread_info(), &kframe->storage);
-	}
+		iwmmxt_task_restore(current_thपढ़ो_info(), &kframe->storage);
+	पूर्ण
 
 	*auxp += IWMMXT_STORAGE_SIZE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_VFP
+#अगर_घोषित CONFIG_VFP
 
-static int preserve_vfp_context(struct vfp_sigframe __user *frame)
-{
-	struct vfp_sigframe kframe;
-	int err = 0;
+अटल पूर्णांक preserve_vfp_context(काष्ठा vfp_sigframe __user *frame)
+अणु
+	काष्ठा vfp_sigframe kframe;
+	पूर्णांक err = 0;
 
-	memset(&kframe, 0, sizeof(kframe));
+	स_रखो(&kframe, 0, माप(kframe));
 	kframe.magic = VFP_MAGIC;
 	kframe.size = VFP_STORAGE_SIZE;
 
 	err = vfp_preserve_user_clear_hwstate(&kframe.ufp, &kframe.ufp_exc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return __copy_to_user(frame, &kframe, sizeof(kframe));
-}
+	वापस __copy_to_user(frame, &kframe, माप(kframe));
+पूर्ण
 
-static int restore_vfp_context(char __user **auxp)
-{
-	struct vfp_sigframe frame;
-	int err;
+अटल पूर्णांक restore_vfp_context(अक्षर __user **auxp)
+अणु
+	काष्ठा vfp_sigframe frame;
+	पूर्णांक err;
 
-	err = __copy_from_user(&frame, *auxp, sizeof(frame));
-	if (err)
-		return err;
+	err = __copy_from_user(&frame, *auxp, माप(frame));
+	अगर (err)
+		वापस err;
 
-	if (frame.magic != VFP_MAGIC || frame.size != VFP_STORAGE_SIZE)
-		return -EINVAL;
+	अगर (frame.magic != VFP_MAGIC || frame.size != VFP_STORAGE_SIZE)
+		वापस -EINVAL;
 
-	*auxp += sizeof(frame);
-	return vfp_restore_user_hwstate(&frame.ufp, &frame.ufp_exc);
-}
+	*auxp += माप(frame);
+	वापस vfp_restore_user_hwstate(&frame.ufp, &frame.ufp_exc);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
- * Do a signal return; undo the signal stack.  These are aligned to 64-bit.
+ * Do a संकेत वापस; unकरो the संकेत stack.  These are aligned to 64-bit.
  */
 
-static int restore_sigframe(struct pt_regs *regs, struct sigframe __user *sf)
-{
-	struct sigcontext context;
-	char __user *aux;
+अटल पूर्णांक restore_sigframe(काष्ठा pt_regs *regs, काष्ठा sigframe __user *sf)
+अणु
+	काष्ठा sigcontext context;
+	अक्षर __user *aux;
 	sigset_t set;
-	int err;
+	पूर्णांक err;
 
-	err = __copy_from_user(&set, &sf->uc.uc_sigmask, sizeof(set));
-	if (err == 0)
+	err = __copy_from_user(&set, &sf->uc.uc_sigmask, माप(set));
+	अगर (err == 0)
 		set_current_blocked(&set);
 
-	err |= __copy_from_user(&context, &sf->uc.uc_mcontext, sizeof(context));
-	if (err == 0) {
+	err |= __copy_from_user(&context, &sf->uc.uc_mcontext, माप(context));
+	अगर (err == 0) अणु
 		regs->ARM_r0 = context.arm_r0;
 		regs->ARM_r1 = context.arm_r1;
 		regs->ARM_r2 = context.arm_r2;
@@ -200,98 +201,98 @@ static int restore_sigframe(struct pt_regs *regs, struct sigframe __user *sf)
 		regs->ARM_lr = context.arm_lr;
 		regs->ARM_pc = context.arm_pc;
 		regs->ARM_cpsr = context.arm_cpsr;
-	}
+	पूर्ण
 
 	err |= !valid_user_regs(regs);
 
-	aux = (char __user *) sf->uc.uc_regspace;
-#ifdef CONFIG_CRUNCH
-	if (err == 0)
+	aux = (अक्षर __user *) sf->uc.uc_regspace;
+#अगर_घोषित CONFIG_CRUNCH
+	अगर (err == 0)
 		err |= restore_crunch_context(&aux);
-#endif
-#ifdef CONFIG_IWMMXT
-	if (err == 0)
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IWMMXT
+	अगर (err == 0)
 		err |= restore_iwmmxt_context(&aux);
-#endif
-#ifdef CONFIG_VFP
-	if (err == 0)
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_VFP
+	अगर (err == 0)
 		err |= restore_vfp_context(&aux);
-#endif
+#पूर्ण_अगर
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-asmlinkage int sys_sigreturn(struct pt_regs *regs)
-{
-	struct sigframe __user *frame;
+यंत्रlinkage पूर्णांक sys_sigवापस(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा sigframe __user *frame;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
 	/*
-	 * Since we stacked the signal on a 64-bit boundary,
+	 * Since we stacked the संकेत on a 64-bit boundary,
 	 * then 'sp' should be word aligned here.  If it's
 	 * not, then the user is trying to mess with us.
 	 */
-	if (regs->ARM_sp & 7)
-		goto badframe;
+	अगर (regs->ARM_sp & 7)
+		जाओ badframe;
 
-	frame = (struct sigframe __user *)regs->ARM_sp;
+	frame = (काष्ठा sigframe __user *)regs->ARM_sp;
 
-	if (!access_ok(frame, sizeof (*frame)))
-		goto badframe;
+	अगर (!access_ok(frame, माप (*frame)))
+		जाओ badframe;
 
-	if (restore_sigframe(regs, frame))
-		goto badframe;
+	अगर (restore_sigframe(regs, frame))
+		जाओ badframe;
 
-	return regs->ARM_r0;
+	वापस regs->ARM_r0;
 
 badframe:
-	force_sig(SIGSEGV);
-	return 0;
-}
+	क्रमce_sig(संक_अंश);
+	वापस 0;
+पूर्ण
 
-asmlinkage int sys_rt_sigreturn(struct pt_regs *regs)
-{
-	struct rt_sigframe __user *frame;
+यंत्रlinkage पूर्णांक sys_rt_sigवापस(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा rt_sigframe __user *frame;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
 	/*
-	 * Since we stacked the signal on a 64-bit boundary,
+	 * Since we stacked the संकेत on a 64-bit boundary,
 	 * then 'sp' should be word aligned here.  If it's
 	 * not, then the user is trying to mess with us.
 	 */
-	if (regs->ARM_sp & 7)
-		goto badframe;
+	अगर (regs->ARM_sp & 7)
+		जाओ badframe;
 
-	frame = (struct rt_sigframe __user *)regs->ARM_sp;
+	frame = (काष्ठा rt_sigframe __user *)regs->ARM_sp;
 
-	if (!access_ok(frame, sizeof (*frame)))
-		goto badframe;
+	अगर (!access_ok(frame, माप (*frame)))
+		जाओ badframe;
 
-	if (restore_sigframe(regs, &frame->sig))
-		goto badframe;
+	अगर (restore_sigframe(regs, &frame->sig))
+		जाओ badframe;
 
-	if (restore_altstack(&frame->sig.uc.uc_stack))
-		goto badframe;
+	अगर (restore_altstack(&frame->sig.uc.uc_stack))
+		जाओ badframe;
 
-	return regs->ARM_r0;
+	वापस regs->ARM_r0;
 
 badframe:
-	force_sig(SIGSEGV);
-	return 0;
-}
+	क्रमce_sig(संक_अंश);
+	वापस 0;
+पूर्ण
 
-static int
-setup_sigframe(struct sigframe __user *sf, struct pt_regs *regs, sigset_t *set)
-{
-	struct aux_sigframe __user *aux;
-	struct sigcontext context;
-	int err = 0;
+अटल पूर्णांक
+setup_sigframe(काष्ठा sigframe __user *sf, काष्ठा pt_regs *regs, sigset_t *set)
+अणु
+	काष्ठा aux_sigframe __user *aux;
+	काष्ठा sigcontext context;
+	पूर्णांक err = 0;
 
-	context = (struct sigcontext) {
+	context = (काष्ठा sigcontext) अणु
 		.arm_r0        = regs->ARM_r0,
 		.arm_r1        = regs->ARM_r1,
 		.arm_r2        = regs->ARM_r2,
@@ -310,188 +311,188 @@ setup_sigframe(struct sigframe __user *sf, struct pt_regs *regs, sigset_t *set)
 		.arm_pc        = regs->ARM_pc,
 		.arm_cpsr      = regs->ARM_cpsr,
 
-		.trap_no       = current->thread.trap_no,
-		.error_code    = current->thread.error_code,
-		.fault_address = current->thread.address,
+		.trap_no       = current->thपढ़ो.trap_no,
+		.error_code    = current->thपढ़ो.error_code,
+		.fault_address = current->thपढ़ो.address,
 		.oldmask       = set->sig[0],
-	};
+	पूर्ण;
 
-	err |= __copy_to_user(&sf->uc.uc_mcontext, &context, sizeof(context));
+	err |= __copy_to_user(&sf->uc.uc_mcontext, &context, माप(context));
 
-	err |= __copy_to_user(&sf->uc.uc_sigmask, set, sizeof(*set));
+	err |= __copy_to_user(&sf->uc.uc_sigmask, set, माप(*set));
 
-	aux = (struct aux_sigframe __user *) sf->uc.uc_regspace;
-#ifdef CONFIG_CRUNCH
-	if (err == 0)
+	aux = (काष्ठा aux_sigframe __user *) sf->uc.uc_regspace;
+#अगर_घोषित CONFIG_CRUNCH
+	अगर (err == 0)
 		err |= preserve_crunch_context(&aux->crunch);
-#endif
-#ifdef CONFIG_IWMMXT
-	if (err == 0)
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IWMMXT
+	अगर (err == 0)
 		err |= preserve_iwmmxt_context(&aux->iwmmxt);
-#endif
-#ifdef CONFIG_VFP
-	if (err == 0)
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_VFP
+	अगर (err == 0)
 		err |= preserve_vfp_context(&aux->vfp);
-#endif
+#पूर्ण_अगर
 	err |= __put_user(0, &aux->end_magic);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void __user *
-get_sigframe(struct ksignal *ksig, struct pt_regs *regs, int framesize)
-{
-	unsigned long sp = sigsp(regs->ARM_sp, ksig);
-	void __user *frame;
+अटल अंतरभूत व्योम __user *
+get_sigframe(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs, पूर्णांक framesize)
+अणु
+	अचिन्हित दीर्घ sp = sigsp(regs->ARM_sp, ksig);
+	व्योम __user *frame;
 
 	/*
 	 * ATPCS B01 mandates 8-byte alignment
 	 */
-	frame = (void __user *)((sp - framesize) & ~7);
+	frame = (व्योम __user *)((sp - framesize) & ~7);
 
 	/*
-	 * Check that we can actually write to the signal frame.
+	 * Check that we can actually ग_लिखो to the संकेत frame.
 	 */
-	if (!access_ok(frame, framesize))
-		frame = NULL;
+	अगर (!access_ok(frame, framesize))
+		frame = शून्य;
 
-	return frame;
-}
+	वापस frame;
+पूर्ण
 
-static int
-setup_return(struct pt_regs *regs, struct ksignal *ksig,
-	     unsigned long __user *rc, void __user *frame)
-{
-	unsigned long handler = (unsigned long)ksig->ka.sa.sa_handler;
-	unsigned long handler_fdpic_GOT = 0;
-	unsigned long retcode;
-	unsigned int idx, thumb = 0;
-	unsigned long cpsr = regs->ARM_cpsr & ~(PSR_f | PSR_E_BIT);
+अटल पूर्णांक
+setup_वापस(काष्ठा pt_regs *regs, काष्ठा kसंकेत *ksig,
+	     अचिन्हित दीर्घ __user *rc, व्योम __user *frame)
+अणु
+	अचिन्हित दीर्घ handler = (अचिन्हित दीर्घ)ksig->ka.sa.sa_handler;
+	अचिन्हित दीर्घ handler_fdpic_GOT = 0;
+	अचिन्हित दीर्घ retcode;
+	अचिन्हित पूर्णांक idx, thumb = 0;
+	अचिन्हित दीर्घ cpsr = regs->ARM_cpsr & ~(PSR_f | PSR_E_BIT);
 	bool fdpic = IS_ENABLED(CONFIG_BINFMT_ELF_FDPIC) &&
 		     (current->personality & FDPIC_FUNCPTRS);
 
-	if (fdpic) {
-		unsigned long __user *fdpic_func_desc =
-					(unsigned long __user *)handler;
-		if (__get_user(handler, &fdpic_func_desc[0]) ||
+	अगर (fdpic) अणु
+		अचिन्हित दीर्घ __user *fdpic_func_desc =
+					(अचिन्हित दीर्घ __user *)handler;
+		अगर (__get_user(handler, &fdpic_func_desc[0]) ||
 		    __get_user(handler_fdpic_GOT, &fdpic_func_desc[1]))
-			return 1;
-	}
+			वापस 1;
+	पूर्ण
 
 	cpsr |= PSR_ENDSTATE;
 
 	/*
-	 * Maybe we need to deliver a 32-bit signal to a 26-bit task.
+	 * Maybe we need to deliver a 32-bit संकेत to a 26-bit task.
 	 */
-	if (ksig->ka.sa.sa_flags & SA_THIRTYTWO)
+	अगर (ksig->ka.sa.sa_flags & SA_THIRTYTWO)
 		cpsr = (cpsr & ~MODE_MASK) | USR_MODE;
 
-#ifdef CONFIG_ARM_THUMB
-	if (elf_hwcap & HWCAP_THUMB) {
+#अगर_घोषित CONFIG_ARM_THUMB
+	अगर (elf_hwcap & HWCAP_THUMB) अणु
 		/*
-		 * The LSB of the handler determines if we're going to
-		 * be using THUMB or ARM mode for this signal handler.
+		 * The LSB of the handler determines अगर we're going to
+		 * be using THUMB or ARM mode क्रम this संकेत handler.
 		 */
 		thumb = handler & 1;
 
 		/*
 		 * Clear the If-Then Thumb-2 execution state.  ARM spec
 		 * requires this to be all 000s in ARM mode.  Snapdragon
-		 * S4/Krait misbehaves on a Thumb=>ARM signal transition
+		 * S4/Krait misbehaves on a Thumb=>ARM संकेत transition
 		 * without this.
 		 *
-		 * We must do this whenever we are running on a Thumb-2
+		 * We must करो this whenever we are running on a Thumb-2
 		 * capable CPU, which includes ARMv6T2.  However, we elect
-		 * to always do this to simplify the code; this field is
-		 * marked UNK/SBZP for older architectures.
+		 * to always करो this to simplअगरy the code; this field is
+		 * marked UNK/SBZP क्रम older architectures.
 		 */
 		cpsr &= ~PSR_IT_MASK;
 
-		if (thumb) {
+		अगर (thumb) अणु
 			cpsr |= PSR_T_BIT;
-		} else
+		पूर्ण अन्यथा
 			cpsr &= ~PSR_T_BIT;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (ksig->ka.sa.sa_flags & SA_RESTORER) {
-		retcode = (unsigned long)ksig->ka.sa.sa_restorer;
-		if (fdpic) {
+	अगर (ksig->ka.sa.sa_flags & SA_RESTORER) अणु
+		retcode = (अचिन्हित दीर्घ)ksig->ka.sa.sa_restorer;
+		अगर (fdpic) अणु
 			/*
 			 * We need code to load the function descriptor.
-			 * That code follows the standard sigreturn code
-			 * (6 words), and is made of 3 + 2 words for each
+			 * That code follows the standard sigवापस code
+			 * (6 words), and is made of 3 + 2 words क्रम each
 			 * variant. The 4th copied word is the actual FD
 			 * address that the assembly code expects.
 			 */
 			idx = 6 + thumb * 3;
-			if (ksig->ka.sa.sa_flags & SA_SIGINFO)
+			अगर (ksig->ka.sa.sa_flags & SA_SIGINFO)
 				idx += 5;
-			if (__put_user(sigreturn_codes[idx],   rc  ) ||
-			    __put_user(sigreturn_codes[idx+1], rc+1) ||
-			    __put_user(sigreturn_codes[idx+2], rc+2) ||
+			अगर (__put_user(sigवापस_codes[idx],   rc  ) ||
+			    __put_user(sigवापस_codes[idx+1], rc+1) ||
+			    __put_user(sigवापस_codes[idx+2], rc+2) ||
 			    __put_user(retcode,                rc+3))
-				return 1;
-			goto rc_finish;
-		}
-	} else {
+				वापस 1;
+			जाओ rc_finish;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		idx = thumb << 1;
-		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
+		अगर (ksig->ka.sa.sa_flags & SA_SIGINFO)
 			idx += 3;
 
 		/*
-		 * Put the sigreturn code on the stack no matter which return
-		 * mechanism we use in order to remain ABI compliant
+		 * Put the sigवापस code on the stack no matter which वापस
+		 * mechanism we use in order to reमुख्य ABI compliant
 		 */
-		if (__put_user(sigreturn_codes[idx],   rc) ||
-		    __put_user(sigreturn_codes[idx+1], rc+1))
-			return 1;
+		अगर (__put_user(sigवापस_codes[idx],   rc) ||
+		    __put_user(sigवापस_codes[idx+1], rc+1))
+			वापस 1;
 
 rc_finish:
-#ifdef CONFIG_MMU
-		if (cpsr & MODE32_BIT) {
-			struct mm_struct *mm = current->mm;
+#अगर_घोषित CONFIG_MMU
+		अगर (cpsr & MODE32_BIT) अणु
+			काष्ठा mm_काष्ठा *mm = current->mm;
 
 			/*
-			 * 32-bit code can use the signal return page
-			 * except when the MPU has protected the vectors
+			 * 32-bit code can use the संकेत वापस page
+			 * except when the MPU has रक्षित the vectors
 			 * page from PL0
 			 */
-			retcode = mm->context.sigpage + signal_return_offset +
+			retcode = mm->context.sigpage + संकेत_वापस_offset +
 				  (idx << 2) + thumb;
-		} else
-#endif
-		{
+		पूर्ण अन्यथा
+#पूर्ण_अगर
+		अणु
 			/*
-			 * Ensure that the instruction cache sees
-			 * the return code written onto the stack.
+			 * Ensure that the inकाष्ठाion cache sees
+			 * the वापस code written onto the stack.
 			 */
-			flush_icache_range((unsigned long)rc,
-					   (unsigned long)(rc + 3));
+			flush_icache_range((अचिन्हित दीर्घ)rc,
+					   (अचिन्हित दीर्घ)(rc + 3));
 
-			retcode = ((unsigned long)rc) + thumb;
-		}
-	}
+			retcode = ((अचिन्हित दीर्घ)rc) + thumb;
+		पूर्ण
+	पूर्ण
 
 	regs->ARM_r0 = ksig->sig;
-	regs->ARM_sp = (unsigned long)frame;
+	regs->ARM_sp = (अचिन्हित दीर्घ)frame;
 	regs->ARM_lr = retcode;
 	regs->ARM_pc = handler;
-	if (fdpic)
+	अगर (fdpic)
 		regs->ARM_r9 = handler_fdpic_GOT;
 	regs->ARM_cpsr = cpsr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-setup_frame(struct ksignal *ksig, sigset_t *set, struct pt_regs *regs)
-{
-	struct sigframe __user *frame = get_sigframe(ksig, regs, sizeof(*frame));
-	int err = 0;
+अटल पूर्णांक
+setup_frame(काष्ठा kसंकेत *ksig, sigset_t *set, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा sigframe __user *frame = get_sigframe(ksig, regs, माप(*frame));
+	पूर्णांक err = 0;
 
-	if (!frame)
-		return 1;
+	अगर (!frame)
+		वापस 1;
 
 	/*
 	 * Set uc.uc_flags to a value which sc.trap_no would never have.
@@ -499,229 +500,229 @@ setup_frame(struct ksignal *ksig, sigset_t *set, struct pt_regs *regs)
 	err = __put_user(0x5ac3c35a, &frame->uc.uc_flags);
 
 	err |= setup_sigframe(frame, regs, set);
-	if (err == 0)
-		err = setup_return(regs, ksig, frame->retcode, frame);
+	अगर (err == 0)
+		err = setup_वापस(regs, ksig, frame->retcode, frame);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-setup_rt_frame(struct ksignal *ksig, sigset_t *set, struct pt_regs *regs)
-{
-	struct rt_sigframe __user *frame = get_sigframe(ksig, regs, sizeof(*frame));
-	int err = 0;
+अटल पूर्णांक
+setup_rt_frame(काष्ठा kसंकेत *ksig, sigset_t *set, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा rt_sigframe __user *frame = get_sigframe(ksig, regs, माप(*frame));
+	पूर्णांक err = 0;
 
-	if (!frame)
-		return 1;
+	अगर (!frame)
+		वापस 1;
 
 	err |= copy_siginfo_to_user(&frame->info, &ksig->info);
 
 	err |= __put_user(0, &frame->sig.uc.uc_flags);
-	err |= __put_user(NULL, &frame->sig.uc.uc_link);
+	err |= __put_user(शून्य, &frame->sig.uc.uc_link);
 
 	err |= __save_altstack(&frame->sig.uc.uc_stack, regs->ARM_sp);
 	err |= setup_sigframe(&frame->sig, regs, set);
-	if (err == 0)
-		err = setup_return(regs, ksig, frame->sig.retcode, frame);
+	अगर (err == 0)
+		err = setup_वापस(regs, ksig, frame->sig.retcode, frame);
 
-	if (err == 0) {
+	अगर (err == 0) अणु
 		/*
-		 * For realtime signals we must also set the second and third
-		 * arguments for the signal handler.
+		 * For realसमय संकेतs we must also set the second and third
+		 * arguments क्रम the संकेत handler.
 		 *   -- Peter Maydell <pmaydell@chiark.greenend.org.uk> 2000-12-06
 		 */
-		regs->ARM_r1 = (unsigned long)&frame->info;
-		regs->ARM_r2 = (unsigned long)&frame->sig.uc;
-	}
+		regs->ARM_r1 = (अचिन्हित दीर्घ)&frame->info;
+		regs->ARM_r2 = (अचिन्हित दीर्घ)&frame->sig.uc;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * OK, we're invoking a handler
  */	
-static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
-{
+अटल व्योम handle_संकेत(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs)
+अणु
 	sigset_t *oldset = sigmask_to_save();
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Perform fixup for the pre-signal frame.
+	 * Perक्रमm fixup क्रम the pre-संकेत frame.
 	 */
-	rseq_signal_deliver(ksig, regs);
+	rseq_संकेत_deliver(ksig, regs);
 
 	/*
 	 * Set up the stack frame
 	 */
-	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
+	अगर (ksig->ka.sa.sa_flags & SA_SIGINFO)
 		ret = setup_rt_frame(ksig, oldset, regs);
-	else
+	अन्यथा
 		ret = setup_frame(ksig, oldset, regs);
 
 	/*
-	 * Check that the resulting registers are actually sane.
+	 * Check that the resulting रेजिस्टरs are actually sane.
 	 */
 	ret |= !valid_user_regs(regs);
 
-	signal_setup_done(ret, ksig, 0);
-}
+	संकेत_setup_करोne(ret, ksig, 0);
+पूर्ण
 
 /*
  * Note that 'init' is a special process: it doesn't get signals it doesn't
- * want to handle. Thus you cannot kill init even with a SIGKILL even by
+ * want to handle. Thus you cannot समाप्त init even with a SIGKILL even by
  * mistake.
  *
- * Note that we go through the signals twice: once to check the signals that
- * the kernel can handle, and then we build all the user-level signal handling
+ * Note that we go through the संकेतs twice: once to check the संकेतs that
+ * the kernel can handle, and then we build all the user-level संकेत handling
  * stack-frames in one go after that.
  */
-static int do_signal(struct pt_regs *regs, int syscall)
-{
-	unsigned int retval = 0, continue_addr = 0, restart_addr = 0;
-	struct ksignal ksig;
-	int restart = 0;
+अटल पूर्णांक करो_संकेत(काष्ठा pt_regs *regs, पूर्णांक syscall)
+अणु
+	अचिन्हित पूर्णांक retval = 0, जारी_addr = 0, restart_addr = 0;
+	काष्ठा kसंकेत ksig;
+	पूर्णांक restart = 0;
 
 	/*
-	 * If we were from a system call, check for system call restarting...
+	 * If we were from a प्रणाली call, check क्रम प्रणाली call restarting...
 	 */
-	if (syscall) {
-		continue_addr = regs->ARM_pc;
-		restart_addr = continue_addr - (thumb_mode(regs) ? 2 : 4);
+	अगर (syscall) अणु
+		जारी_addr = regs->ARM_pc;
+		restart_addr = जारी_addr - (thumb_mode(regs) ? 2 : 4);
 		retval = regs->ARM_r0;
 
 		/*
-		 * Prepare for system call restart.  We do this here so that a
-		 * debugger will see the already changed PSW.
+		 * Prepare क्रम प्रणाली call restart.  We करो this here so that a
+		 * debugger will see the alपढ़ोy changed PSW.
 		 */
-		switch (retval) {
-		case -ERESTART_RESTARTBLOCK:
+		चयन (retval) अणु
+		हाल -ERESTART_RESTARTBLOCK:
 			restart -= 2;
 			fallthrough;
-		case -ERESTARTNOHAND:
-		case -ERESTARTSYS:
-		case -ERESTARTNOINTR:
+		हाल -ERESTARTNOHAND:
+		हाल -ERESTARTSYS:
+		हाल -ERESTARTNOINTR:
 			restart++;
 			regs->ARM_r0 = regs->ARM_ORIG_r0;
 			regs->ARM_pc = restart_addr;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Get the signal to deliver.  When running under ptrace, at this
-	 * point the debugger may change all our registers ...
+	 * Get the संकेत to deliver.  When running under ptrace, at this
+	 * poपूर्णांक the debugger may change all our रेजिस्टरs ...
 	 */
 	/*
-	 * Depending on the signal settings we may need to revert the
-	 * decision to restart the system call.  But skip this if a
-	 * debugger has chosen to restart at a different PC.
+	 * Depending on the संकेत settings we may need to revert the
+	 * decision to restart the प्रणाली call.  But skip this अगर a
+	 * debugger has chosen to restart at a dअगरferent PC.
 	 */
-	if (get_signal(&ksig)) {
+	अगर (get_संकेत(&ksig)) अणु
 		/* handler */
-		if (unlikely(restart) && regs->ARM_pc == restart_addr) {
-			if (retval == -ERESTARTNOHAND ||
+		अगर (unlikely(restart) && regs->ARM_pc == restart_addr) अणु
+			अगर (retval == -ERESTARTNOHAND ||
 			    retval == -ERESTART_RESTARTBLOCK
 			    || (retval == -ERESTARTSYS
-				&& !(ksig.ka.sa.sa_flags & SA_RESTART))) {
+				&& !(ksig.ka.sa.sa_flags & SA_RESTART))) अणु
 				regs->ARM_r0 = -EINTR;
-				regs->ARM_pc = continue_addr;
-			}
-		}
-		handle_signal(&ksig, regs);
-	} else {
+				regs->ARM_pc = जारी_addr;
+			पूर्ण
+		पूर्ण
+		handle_संकेत(&ksig, regs);
+	पूर्ण अन्यथा अणु
 		/* no handler */
 		restore_saved_sigmask();
-		if (unlikely(restart) && regs->ARM_pc == restart_addr) {
-			regs->ARM_pc = continue_addr;
-			return restart;
-		}
-	}
-	return 0;
-}
+		अगर (unlikely(restart) && regs->ARM_pc == restart_addr) अणु
+			regs->ARM_pc = जारी_addr;
+			वापस restart;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-asmlinkage int
-do_work_pending(struct pt_regs *regs, unsigned int thread_flags, int syscall)
-{
+यंत्रlinkage पूर्णांक
+करो_work_pending(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक thपढ़ो_flags, पूर्णांक syscall)
+अणु
 	/*
 	 * The assembly code enters us with IRQs off, but it hasn't
-	 * informed the tracing code of that for efficiency reasons.
+	 * inक्रमmed the tracing code of that क्रम efficiency reasons.
 	 * Update the trace code with the current status.
 	 */
 	trace_hardirqs_off();
-	do {
-		if (likely(thread_flags & _TIF_NEED_RESCHED)) {
+	करो अणु
+		अगर (likely(thपढ़ो_flags & _TIF_NEED_RESCHED)) अणु
 			schedule();
-		} else {
-			if (unlikely(!user_mode(regs)))
-				return 0;
+		पूर्ण अन्यथा अणु
+			अगर (unlikely(!user_mode(regs)))
+				वापस 0;
 			local_irq_enable();
-			if (thread_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) {
-				int restart = do_signal(regs, syscall);
-				if (unlikely(restart)) {
+			अगर (thपढ़ो_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) अणु
+				पूर्णांक restart = करो_संकेत(regs, syscall);
+				अगर (unlikely(restart)) अणु
 					/*
 					 * Restart without handlers.
 					 * Deal with it without leaving
 					 * the kernel space.
 					 */
-					return restart;
-				}
+					वापस restart;
+				पूर्ण
 				syscall = 0;
-			} else if (thread_flags & _TIF_UPROBE) {
-				uprobe_notify_resume(regs);
-			} else {
-				tracehook_notify_resume(regs);
-				rseq_handle_notify_resume(NULL, regs);
-			}
-		}
+			पूर्ण अन्यथा अगर (thपढ़ो_flags & _TIF_UPROBE) अणु
+				uprobe_notअगरy_resume(regs);
+			पूर्ण अन्यथा अणु
+				tracehook_notअगरy_resume(regs);
+				rseq_handle_notअगरy_resume(शून्य, regs);
+			पूर्ण
+		पूर्ण
 		local_irq_disable();
-		thread_flags = current_thread_info()->flags;
-	} while (thread_flags & _TIF_WORK_MASK);
-	return 0;
-}
+		thपढ़ो_flags = current_thपढ़ो_info()->flags;
+	पूर्ण जबतक (thपढ़ो_flags & _TIF_WORK_MASK);
+	वापस 0;
+पूर्ण
 
-struct page *get_signal_page(void)
-{
-	unsigned long ptr;
-	unsigned offset;
-	struct page *page;
-	void *addr;
+काष्ठा page *get_संकेत_page(व्योम)
+अणु
+	अचिन्हित दीर्घ ptr;
+	अचिन्हित offset;
+	काष्ठा page *page;
+	व्योम *addr;
 
 	page = alloc_pages(GFP_KERNEL, 0);
 
-	if (!page)
-		return NULL;
+	अगर (!page)
+		वापस शून्य;
 
 	addr = page_address(page);
 
 	/* Poison the entire page */
-	memset32(addr, __opcode_to_mem_arm(0xe7fddef1),
-		 PAGE_SIZE / sizeof(u32));
+	स_रखो32(addr, __opcode_to_mem_arm(0xe7fddef1),
+		 PAGE_SIZE / माप(u32));
 
-	/* Give the signal return code some randomness */
-	offset = 0x200 + (get_random_int() & 0x7fc);
-	signal_return_offset = offset;
+	/* Give the संकेत वापस code some अक्रमomness */
+	offset = 0x200 + (get_अक्रमom_पूर्णांक() & 0x7fc);
+	संकेत_वापस_offset = offset;
 
-	/* Copy signal return handlers into the page */
-	memcpy(addr + offset, sigreturn_codes, sizeof(sigreturn_codes));
+	/* Copy संकेत वापस handlers पूर्णांकo the page */
+	स_नकल(addr + offset, sigवापस_codes, माप(sigवापस_codes));
 
-	/* Flush out all instructions in this page */
-	ptr = (unsigned long)addr;
+	/* Flush out all inकाष्ठाions in this page */
+	ptr = (अचिन्हित दीर्घ)addr;
 	flush_icache_range(ptr, ptr + PAGE_SIZE);
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
 /* Defer to generic check */
-asmlinkage void addr_limit_check_failed(void)
-{
-#ifdef CONFIG_MMU
+यंत्रlinkage व्योम addr_limit_check_failed(व्योम)
+अणु
+#अगर_घोषित CONFIG_MMU
 	addr_limit_user_check();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_DEBUG_RSEQ
-asmlinkage void do_rseq_syscall(struct pt_regs *regs)
-{
+#अगर_घोषित CONFIG_DEBUG_RSEQ
+यंत्रlinkage व्योम करो_rseq_syscall(काष्ठा pt_regs *regs)
+अणु
 	rseq_syscall(regs);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

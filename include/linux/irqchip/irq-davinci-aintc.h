@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2019 Texas Instruments
  */
 
-#ifndef _LINUX_IRQ_DAVINCI_AINTC_
-#define _LINUX_IRQ_DAVINCI_AINTC_
+#अगर_अघोषित _LINUX_IRQ_DAVINCI_AINTC_
+#घोषणा _LINUX_IRQ_DAVINCI_AINTC_
 
-#include <linux/ioport.h>
+#समावेश <linux/ioport.h>
 
 /**
- * struct davinci_aintc_config - configuration data for davinci-aintc driver.
+ * काष्ठा davinci_aपूर्णांकc_config - configuration data क्रम davinci-aपूर्णांकc driver.
  *
- * @reg: register range to map
- * @num_irqs: number of HW interrupts supported by the controller
- * @prios: an array of size num_irqs containing priority settings for
- *         each interrupt
+ * @reg: रेजिस्टर range to map
+ * @num_irqs: number of HW पूर्णांकerrupts supported by the controller
+ * @prios: an array of size num_irqs containing priority settings क्रम
+ *         each पूर्णांकerrupt
  */
-struct davinci_aintc_config {
-	struct resource reg;
-	unsigned int num_irqs;
+काष्ठा davinci_aपूर्णांकc_config अणु
+	काष्ठा resource reg;
+	अचिन्हित पूर्णांक num_irqs;
 	u8 *prios;
-};
+पूर्ण;
 
-void davinci_aintc_init(const struct davinci_aintc_config *config);
+व्योम davinci_aपूर्णांकc_init(स्थिर काष्ठा davinci_aपूर्णांकc_config *config);
 
-#endif /* _LINUX_IRQ_DAVINCI_AINTC_ */
+#पूर्ण_अगर /* _LINUX_IRQ_DAVINCI_AINTC_ */

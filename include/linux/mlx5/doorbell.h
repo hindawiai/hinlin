@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013-2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,31 +31,31 @@
  * SOFTWARE.
  */
 
-#ifndef MLX5_DOORBELL_H
-#define MLX5_DOORBELL_H
+#अगर_अघोषित MLX5_DOORBELL_H
+#घोषणा MLX5_DOORBELL_H
 
-#define MLX5_BF_OFFSET	      0x800
-#define MLX5_CQ_DOORBELL      0x20
+#घोषणा MLX5_BF_OFFSET	      0x800
+#घोषणा MLX5_CQ_DOORBELL      0x20
 
-/* Assume that we can just write a 64-bit doorbell atomically.  s390
- * actually doesn't have writeq() but S/390 systems don't even have
+/* Assume that we can just ग_लिखो a 64-bit करोorbell atomically.  s390
+ * actually करोesn't have writeq() but S/390 systems don't even have
  * PCI so we won't worry about it.
  *
- * Note that the write is not atomic on 32-bit systems! In contrast to 64-bit
- * ones, it requires proper locking. mlx5_write64 doesn't do any locking, so use
- * it at your own discretion, protected by some kind of lock on 32 bits.
+ * Note that the ग_लिखो is not atomic on 32-bit प्रणालीs! In contrast to 64-bit
+ * ones, it requires proper locking. mlx5_ग_लिखो64 करोesn't करो any locking, so use
+ * it at your own discretion, रक्षित by some kind of lock on 32 bits.
  *
- * TODO: use write{q,l}_relaxed()
+ * TODO: use ग_लिखोअणुq,lपूर्ण_relaxed()
  */
 
-static inline void mlx5_write64(__be32 val[2], void __iomem *dest)
-{
-#if BITS_PER_LONG == 64
-	__raw_writeq(*(u64 *)val, dest);
-#else
-	__raw_writel((__force u32) val[0], dest);
-	__raw_writel((__force u32) val[1], dest + 4);
-#endif
-}
+अटल अंतरभूत व्योम mlx5_ग_लिखो64(__be32 val[2], व्योम __iomem *dest)
+अणु
+#अगर BITS_PER_LONG == 64
+	__raw_ग_लिखोq(*(u64 *)val, dest);
+#अन्यथा
+	__raw_ग_लिखोl((__क्रमce u32) val[0], dest);
+	__raw_ग_लिखोl((__क्रमce u32) val[1], dest + 4);
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* MLX5_DOORBELL_H */
+#पूर्ण_अगर /* MLX5_DOORBELL_H */

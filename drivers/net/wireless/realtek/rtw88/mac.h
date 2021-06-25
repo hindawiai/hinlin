@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
-#ifndef __RTW_MAC_H__
-#define __RTW_MAC_H__
+#अगर_अघोषित __RTW_MAC_H__
+#घोषणा __RTW_MAC_H__
 
-#define RTW_HW_PORT_NUM		5
-#define cut_version_to_mask(cut) (0x1 << ((cut) + 1))
-#define SDIO_LOCAL_OFFSET	0x10250000
-#define DDMA_POLLING_COUNT	1000
-#define C2H_PKT_BUF		256
-#define REPORT_BUF		128
-#define PHY_STATUS_SIZE		4
-#define ILLEGAL_KEY_GROUP	0xFAAAAA00
+#घोषणा RTW_HW_PORT_NUM		5
+#घोषणा cut_version_to_mask(cut) (0x1 << ((cut) + 1))
+#घोषणा SDIO_LOCAL_OFFSET	0x10250000
+#घोषणा DDMA_POLLING_COUNT	1000
+#घोषणा C2H_PKT_BUF		256
+#घोषणा REPORT_BUF		128
+#घोषणा PHY_STATUS_SIZE		4
+#घोषणा ILLEGAL_KEY_GROUP	0xFAAAAA00
 
 /* HW memory address */
-#define OCPBASE_RXBUF_FW_88XX		0x18680000
-#define OCPBASE_TXBUF_88XX		0x18780000
-#define OCPBASE_ROM_88XX		0x00000000
-#define OCPBASE_IMEM_88XX		0x00030000
-#define OCPBASE_DMEM_88XX		0x00200000
-#define OCPBASE_EMEM_88XX		0x00100000
+#घोषणा OCPBASE_RXBUF_FW_88XX		0x18680000
+#घोषणा OCPBASE_TXBUF_88XX		0x18780000
+#घोषणा OCPBASE_ROM_88XX		0x00000000
+#घोषणा OCPBASE_IMEM_88XX		0x00030000
+#घोषणा OCPBASE_DMEM_88XX		0x00200000
+#घोषणा OCPBASE_EMEM_88XX		0x00100000
 
-#define RSVD_PG_DRV_NUM			16
-#define RSVD_PG_H2C_EXTRAINFO_NUM	24
-#define RSVD_PG_H2C_STATICINFO_NUM	8
-#define RSVD_PG_H2CQ_NUM		8
-#define RSVD_PG_CPU_INSTRUCTION_NUM	0
-#define RSVD_PG_FW_TXBUF_NUM		4
+#घोषणा RSVD_PG_DRV_NUM			16
+#घोषणा RSVD_PG_H2C_EXTRAINFO_NUM	24
+#घोषणा RSVD_PG_H2C_STATICINFO_NUM	8
+#घोषणा RSVD_PG_H2CQ_NUM		8
+#घोषणा RSVD_PG_CPU_INSTRUCTION_NUM	0
+#घोषणा RSVD_PG_FW_TXBUF_NUM		4
 
-void rtw_set_channel_mac(struct rtw_dev *rtwdev, u8 channel, u8 bw,
+व्योम rtw_set_channel_mac(काष्ठा rtw_dev *rtwdev, u8 channel, u8 bw,
 			 u8 primary_ch_idx);
-int rtw_mac_power_on(struct rtw_dev *rtwdev);
-void rtw_mac_power_off(struct rtw_dev *rtwdev);
-int rtw_download_firmware(struct rtw_dev *rtwdev, struct rtw_fw_state *fw);
-int rtw_mac_init(struct rtw_dev *rtwdev);
-void rtw_mac_flush_queues(struct rtw_dev *rtwdev, u32 queues, bool drop);
-int rtw_ddma_to_fw_fifo(struct rtw_dev *rtwdev, u32 ocp_src, u32 size);
+पूर्णांक rtw_mac_घातer_on(काष्ठा rtw_dev *rtwdev);
+व्योम rtw_mac_घातer_off(काष्ठा rtw_dev *rtwdev);
+पूर्णांक rtw_करोwnload_firmware(काष्ठा rtw_dev *rtwdev, काष्ठा rtw_fw_state *fw);
+पूर्णांक rtw_mac_init(काष्ठा rtw_dev *rtwdev);
+व्योम rtw_mac_flush_queues(काष्ठा rtw_dev *rtwdev, u32 queues, bool drop);
+पूर्णांक rtw_ddma_to_fw_fअगरo(काष्ठा rtw_dev *rtwdev, u32 ocp_src, u32 size);
 
-static inline void rtw_mac_flush_all_queues(struct rtw_dev *rtwdev, bool drop)
-{
+अटल अंतरभूत व्योम rtw_mac_flush_all_queues(काष्ठा rtw_dev *rtwdev, bool drop)
+अणु
 	rtw_mac_flush_queues(rtwdev, BIT(rtwdev->hw->queues) - 1, drop);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

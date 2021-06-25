@@ -1,220 +1,221 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * I2C bus driver for Conexant Digicolor SoCs
+ * I2C bus driver क्रम Conexant Digicolor SoCs
  *
  * Author: Baruch Siach <baruch@tkos.co.il>
  *
- * Copyright (C) 2015 Paradox Innovation Ltd.
+ * Copyright (C) 2015 Paraकरोx Innovation Ltd.
  */
 
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define TIMEOUT_MS		100
+#घोषणा TIMEOUT_MS		100
 
-#define II_CONTROL		0x0
-#define II_CONTROL_LOCAL_RESET	BIT(0)
+#घोषणा II_CONTROL		0x0
+#घोषणा II_CONTROL_LOCAL_RESET	BIT(0)
 
-#define II_CLOCKTIME		0x1
+#घोषणा II_CLOCKTIME		0x1
 
-#define II_COMMAND		0x2
-#define II_CMD_START		1
-#define II_CMD_RESTART		2
-#define II_CMD_SEND_ACK		3
-#define II_CMD_GET_ACK		6
-#define II_CMD_GET_NOACK	7
-#define II_CMD_STOP		10
-#define II_COMMAND_GO		BIT(7)
-#define II_COMMAND_COMPLETION_STATUS(r)	(((r) >> 5) & 3)
-#define II_CMD_STATUS_NORMAL	0
-#define II_CMD_STATUS_ACK_GOOD	1
-#define II_CMD_STATUS_ACK_BAD	2
-#define II_CMD_STATUS_ABORT	3
+#घोषणा II_COMMAND		0x2
+#घोषणा II_CMD_START		1
+#घोषणा II_CMD_RESTART		2
+#घोषणा II_CMD_SEND_ACK		3
+#घोषणा II_CMD_GET_ACK		6
+#घोषणा II_CMD_GET_NOACK	7
+#घोषणा II_CMD_STOP		10
+#घोषणा II_COMMAND_GO		BIT(7)
+#घोषणा II_COMMAND_COMPLETION_STATUS(r)	(((r) >> 5) & 3)
+#घोषणा II_CMD_STATUS_NORMAL	0
+#घोषणा II_CMD_STATUS_ACK_GOOD	1
+#घोषणा II_CMD_STATUS_ACK_BAD	2
+#घोषणा II_CMD_STATUS_ABORT	3
 
-#define II_DATA			0x3
-#define II_INTFLAG_CLEAR	0x8
-#define II_INTENABLE		0xa
+#घोषणा II_DATA			0x3
+#घोषणा II_INTFLAG_CLEAR	0x8
+#घोषणा II_INTENABLE		0xa
 
-struct dc_i2c {
-	struct i2c_adapter	adap;
-	struct device		*dev;
-	void __iomem		*regs;
-	struct clk		*clk;
-	unsigned int		frequency;
+काष्ठा dc_i2c अणु
+	काष्ठा i2c_adapter	adap;
+	काष्ठा device		*dev;
+	व्योम __iomem		*regs;
+	काष्ठा clk		*clk;
+	अचिन्हित पूर्णांक		frequency;
 
-	struct i2c_msg		*msg;
-	unsigned int		msgbuf_ptr;
-	int			last;
+	काष्ठा i2c_msg		*msg;
+	अचिन्हित पूर्णांक		msgbuf_ptr;
+	पूर्णांक			last;
 	spinlock_t		lock;
-	struct completion	done;
-	int			state;
-	int			error;
-};
+	काष्ठा completion	करोne;
+	पूर्णांक			state;
+	पूर्णांक			error;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STATE_IDLE,
 	STATE_START,
 	STATE_ADDR,
 	STATE_WRITE,
 	STATE_READ,
 	STATE_STOP,
-};
+पूर्ण;
 
-static void dc_i2c_cmd(struct dc_i2c *i2c, u8 cmd)
-{
-	writeb_relaxed(cmd | II_COMMAND_GO, i2c->regs + II_COMMAND);
-}
+अटल व्योम dc_i2c_cmd(काष्ठा dc_i2c *i2c, u8 cmd)
+अणु
+	ग_लिखोb_relaxed(cmd | II_COMMAND_GO, i2c->regs + II_COMMAND);
+पूर्ण
 
-static u8 dc_i2c_addr_cmd(struct i2c_msg *msg)
-{
+अटल u8 dc_i2c_addr_cmd(काष्ठा i2c_msg *msg)
+अणु
 	u8 addr = (msg->addr & 0x7f) << 1;
 
-	if (msg->flags & I2C_M_RD)
+	अगर (msg->flags & I2C_M_RD)
 		addr |= 1;
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static void dc_i2c_data(struct dc_i2c *i2c, u8 data)
-{
-	writeb_relaxed(data, i2c->regs + II_DATA);
-}
+अटल व्योम dc_i2c_data(काष्ठा dc_i2c *i2c, u8 data)
+अणु
+	ग_लिखोb_relaxed(data, i2c->regs + II_DATA);
+पूर्ण
 
-static void dc_i2c_write_byte(struct dc_i2c *i2c, u8 byte)
-{
+अटल व्योम dc_i2c_ग_लिखो_byte(काष्ठा dc_i2c *i2c, u8 byte)
+अणु
 	dc_i2c_data(i2c, byte);
 	dc_i2c_cmd(i2c, II_CMD_SEND_ACK);
-}
+पूर्ण
 
-static void dc_i2c_write_buf(struct dc_i2c *i2c)
-{
-	dc_i2c_write_byte(i2c, i2c->msg->buf[i2c->msgbuf_ptr++]);
-}
+अटल व्योम dc_i2c_ग_लिखो_buf(काष्ठा dc_i2c *i2c)
+अणु
+	dc_i2c_ग_लिखो_byte(i2c, i2c->msg->buf[i2c->msgbuf_ptr++]);
+पूर्ण
 
-static void dc_i2c_next_read(struct dc_i2c *i2c)
-{
+अटल व्योम dc_i2c_next_पढ़ो(काष्ठा dc_i2c *i2c)
+अणु
 	bool last = (i2c->msgbuf_ptr + 1 == i2c->msg->len);
 
 	dc_i2c_cmd(i2c, last ? II_CMD_GET_NOACK : II_CMD_GET_ACK);
-}
+पूर्ण
 
-static void dc_i2c_stop(struct dc_i2c *i2c)
-{
+अटल व्योम dc_i2c_stop(काष्ठा dc_i2c *i2c)
+अणु
 	i2c->state = STATE_STOP;
-	if (i2c->last)
+	अगर (i2c->last)
 		dc_i2c_cmd(i2c, II_CMD_STOP);
-	else
-		complete(&i2c->done);
-}
+	अन्यथा
+		complete(&i2c->करोne);
+पूर्ण
 
-static u8 dc_i2c_read_byte(struct dc_i2c *i2c)
-{
-	return readb_relaxed(i2c->regs + II_DATA);
-}
+अटल u8 dc_i2c_पढ़ो_byte(काष्ठा dc_i2c *i2c)
+अणु
+	वापस पढ़ोb_relaxed(i2c->regs + II_DATA);
+पूर्ण
 
-static void dc_i2c_read_buf(struct dc_i2c *i2c)
-{
-	i2c->msg->buf[i2c->msgbuf_ptr++] = dc_i2c_read_byte(i2c);
-	dc_i2c_next_read(i2c);
-}
+अटल व्योम dc_i2c_पढ़ो_buf(काष्ठा dc_i2c *i2c)
+अणु
+	i2c->msg->buf[i2c->msgbuf_ptr++] = dc_i2c_पढ़ो_byte(i2c);
+	dc_i2c_next_पढ़ो(i2c);
+पूर्ण
 
-static void dc_i2c_set_irq(struct dc_i2c *i2c, int enable)
-{
-	if (enable)
-		writeb_relaxed(1, i2c->regs + II_INTFLAG_CLEAR);
-	writeb_relaxed(!!enable, i2c->regs + II_INTENABLE);
-}
+अटल व्योम dc_i2c_set_irq(काष्ठा dc_i2c *i2c, पूर्णांक enable)
+अणु
+	अगर (enable)
+		ग_लिखोb_relaxed(1, i2c->regs + II_INTFLAG_CLEAR);
+	ग_लिखोb_relaxed(!!enable, i2c->regs + II_INTENABLE);
+पूर्ण
 
-static int dc_i2c_cmd_status(struct dc_i2c *i2c)
-{
-	u8 cmd = readb_relaxed(i2c->regs + II_COMMAND);
+अटल पूर्णांक dc_i2c_cmd_status(काष्ठा dc_i2c *i2c)
+अणु
+	u8 cmd = पढ़ोb_relaxed(i2c->regs + II_COMMAND);
 
-	return II_COMMAND_COMPLETION_STATUS(cmd);
-}
+	वापस II_COMMAND_COMPLETION_STATUS(cmd);
+पूर्ण
 
-static void dc_i2c_start_msg(struct dc_i2c *i2c, int first)
-{
-	struct i2c_msg *msg = i2c->msg;
+अटल व्योम dc_i2c_start_msg(काष्ठा dc_i2c *i2c, पूर्णांक first)
+अणु
+	काष्ठा i2c_msg *msg = i2c->msg;
 
-	if (!(msg->flags & I2C_M_NOSTART)) {
+	अगर (!(msg->flags & I2C_M_NOSTART)) अणु
 		i2c->state = STATE_START;
 		dc_i2c_cmd(i2c, first ? II_CMD_START : II_CMD_RESTART);
-	} else if (msg->flags & I2C_M_RD) {
+	पूर्ण अन्यथा अगर (msg->flags & I2C_M_RD) अणु
 		i2c->state = STATE_READ;
-		dc_i2c_next_read(i2c);
-	} else {
+		dc_i2c_next_पढ़ो(i2c);
+	पूर्ण अन्यथा अणु
 		i2c->state = STATE_WRITE;
-		dc_i2c_write_buf(i2c);
-	}
-}
+		dc_i2c_ग_लिखो_buf(i2c);
+	पूर्ण
+पूर्ण
 
-static irqreturn_t dc_i2c_irq(int irq, void *dev_id)
-{
-	struct dc_i2c *i2c = dev_id;
-	int cmd_status = dc_i2c_cmd_status(i2c);
+अटल irqवापस_t dc_i2c_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा dc_i2c *i2c = dev_id;
+	पूर्णांक cmd_status = dc_i2c_cmd_status(i2c);
 	u8 addr_cmd;
 
-	writeb_relaxed(1, i2c->regs + II_INTFLAG_CLEAR);
+	ग_लिखोb_relaxed(1, i2c->regs + II_INTFLAG_CLEAR);
 
 	spin_lock(&i2c->lock);
 
-	if (cmd_status == II_CMD_STATUS_ACK_BAD
-	    || cmd_status == II_CMD_STATUS_ABORT) {
+	अगर (cmd_status == II_CMD_STATUS_ACK_BAD
+	    || cmd_status == II_CMD_STATUS_ABORT) अणु
 		i2c->error = -EIO;
-		complete(&i2c->done);
-		goto out;
-	}
+		complete(&i2c->करोne);
+		जाओ out;
+	पूर्ण
 
-	switch (i2c->state) {
-	case STATE_START:
+	चयन (i2c->state) अणु
+	हाल STATE_START:
 		addr_cmd = dc_i2c_addr_cmd(i2c->msg);
-		dc_i2c_write_byte(i2c, addr_cmd);
+		dc_i2c_ग_लिखो_byte(i2c, addr_cmd);
 		i2c->state = STATE_ADDR;
-		break;
-	case STATE_ADDR:
-		if (i2c->msg->flags & I2C_M_RD) {
-			dc_i2c_next_read(i2c);
+		अवरोध;
+	हाल STATE_ADDR:
+		अगर (i2c->msg->flags & I2C_M_RD) अणु
+			dc_i2c_next_पढ़ो(i2c);
 			i2c->state = STATE_READ;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		i2c->state = STATE_WRITE;
 		fallthrough;
-	case STATE_WRITE:
-		if (i2c->msgbuf_ptr < i2c->msg->len)
-			dc_i2c_write_buf(i2c);
-		else
+	हाल STATE_WRITE:
+		अगर (i2c->msgbuf_ptr < i2c->msg->len)
+			dc_i2c_ग_लिखो_buf(i2c);
+		अन्यथा
 			dc_i2c_stop(i2c);
-		break;
-	case STATE_READ:
-		if (i2c->msgbuf_ptr < i2c->msg->len)
-			dc_i2c_read_buf(i2c);
-		else
+		अवरोध;
+	हाल STATE_READ:
+		अगर (i2c->msgbuf_ptr < i2c->msg->len)
+			dc_i2c_पढ़ो_buf(i2c);
+		अन्यथा
 			dc_i2c_stop(i2c);
-		break;
-	case STATE_STOP:
+		अवरोध;
+	हाल STATE_STOP:
 		i2c->state = STATE_IDLE;
-		complete(&i2c->done);
-		break;
-	}
+		complete(&i2c->करोne);
+		अवरोध;
+	पूर्ण
 
 out:
 	spin_unlock(&i2c->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int dc_i2c_xfer_msg(struct dc_i2c *i2c, struct i2c_msg *msg, int first,
-			   int last)
-{
-	unsigned long timeout = msecs_to_jiffies(TIMEOUT_MS);
-	unsigned long flags;
+अटल पूर्णांक dc_i2c_xfer_msg(काष्ठा dc_i2c *i2c, काष्ठा i2c_msg *msg, पूर्णांक first,
+			   पूर्णांक last)
+अणु
+	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(TIMEOUT_MS);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&i2c->lock, flags);
 	i2c->msg = msg;
@@ -222,108 +223,108 @@ static int dc_i2c_xfer_msg(struct dc_i2c *i2c, struct i2c_msg *msg, int first,
 	i2c->last = last;
 	i2c->error = 0;
 
-	reinit_completion(&i2c->done);
+	reinit_completion(&i2c->करोne);
 	dc_i2c_set_irq(i2c, 1);
 	dc_i2c_start_msg(i2c, first);
 	spin_unlock_irqrestore(&i2c->lock, flags);
 
-	timeout = wait_for_completion_timeout(&i2c->done, timeout);
+	समयout = रुको_क्रम_completion_समयout(&i2c->करोne, समयout);
 	dc_i2c_set_irq(i2c, 0);
-	if (timeout == 0) {
+	अगर (समयout == 0) अणु
 		i2c->state = STATE_IDLE;
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	if (i2c->error)
-		return i2c->error;
+	अगर (i2c->error)
+		वापस i2c->error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dc_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
-{
-	struct dc_i2c *i2c = adap->algo_data;
-	int i, ret;
+अटल पूर्णांक dc_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा dc_i2c *i2c = adap->algo_data;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		ret = dc_i2c_xfer_msg(i2c, &msgs[i], i == 0, i == num - 1);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
-static int dc_i2c_init_hw(struct dc_i2c *i2c)
-{
-	unsigned long clk_rate = clk_get_rate(i2c->clk);
-	unsigned int clocktime;
+अटल पूर्णांक dc_i2c_init_hw(काष्ठा dc_i2c *i2c)
+अणु
+	अचिन्हित दीर्घ clk_rate = clk_get_rate(i2c->clk);
+	अचिन्हित पूर्णांक घड़ीसमय;
 
-	writeb_relaxed(II_CONTROL_LOCAL_RESET, i2c->regs + II_CONTROL);
+	ग_लिखोb_relaxed(II_CONTROL_LOCAL_RESET, i2c->regs + II_CONTROL);
 	udelay(100);
-	writeb_relaxed(0, i2c->regs + II_CONTROL);
+	ग_लिखोb_relaxed(0, i2c->regs + II_CONTROL);
 	udelay(100);
 
-	clocktime = DIV_ROUND_UP(clk_rate, 64 * i2c->frequency);
-	if (clocktime < 1 || clocktime > 0xff) {
+	घड़ीसमय = DIV_ROUND_UP(clk_rate, 64 * i2c->frequency);
+	अगर (घड़ीसमय < 1 || घड़ीसमय > 0xff) अणु
 		dev_err(i2c->dev, "can't set bus speed of %u Hz\n",
 			i2c->frequency);
-		return -EINVAL;
-	}
-	writeb_relaxed(clocktime - 1, i2c->regs + II_CLOCKTIME);
+		वापस -EINVAL;
+	पूर्ण
+	ग_लिखोb_relaxed(घड़ीसमय - 1, i2c->regs + II_CLOCKTIME);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 dc_i2c_func(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_NOSTART;
-}
+अटल u32 dc_i2c_func(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_NOSTART;
+पूर्ण
 
-static const struct i2c_algorithm dc_i2c_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm dc_i2c_algorithm = अणु
 	.master_xfer	= dc_i2c_xfer,
 	.functionality	= dc_i2c_func,
-};
+पूर्ण;
 
-static int dc_i2c_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct dc_i2c *i2c;
-	int ret = 0, irq;
+अटल पूर्णांक dc_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा dc_i2c *i2c;
+	पूर्णांक ret = 0, irq;
 
-	i2c = devm_kzalloc(&pdev->dev, sizeof(struct dc_i2c), GFP_KERNEL);
-	if (!i2c)
-		return -ENOMEM;
+	i2c = devm_kzalloc(&pdev->dev, माप(काष्ठा dc_i2c), GFP_KERNEL);
+	अगर (!i2c)
+		वापस -ENOMEM;
 
-	if (of_property_read_u32(pdev->dev.of_node, "clock-frequency",
+	अगर (of_property_पढ़ो_u32(pdev->dev.of_node, "clock-frequency",
 				 &i2c->frequency))
 		i2c->frequency = I2C_MAX_STANDARD_MODE_FREQ;
 
 	i2c->dev = &pdev->dev;
-	platform_set_drvdata(pdev, i2c);
+	platक्रमm_set_drvdata(pdev, i2c);
 
 	spin_lock_init(&i2c->lock);
-	init_completion(&i2c->done);
+	init_completion(&i2c->करोne);
 
-	i2c->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(i2c->clk))
-		return PTR_ERR(i2c->clk);
+	i2c->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(i2c->clk))
+		वापस PTR_ERR(i2c->clk);
 
-	i2c->regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(i2c->regs))
-		return PTR_ERR(i2c->regs);
+	i2c->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(i2c->regs))
+		वापस PTR_ERR(i2c->regs);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	ret = devm_request_irq(&pdev->dev, irq, dc_i2c_irq, 0,
 			       dev_name(&pdev->dev), i2c);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	strlcpy(i2c->adap.name, "Conexant Digicolor I2C adapter",
-		sizeof(i2c->adap.name));
+		माप(i2c->adap.name));
 	i2c->adap.owner = THIS_MODULE;
 	i2c->adap.algo = &dc_i2c_algorithm;
 	i2c->adap.dev.parent = &pdev->dev;
@@ -331,47 +332,47 @@ static int dc_i2c_probe(struct platform_device *pdev)
 	i2c->adap.algo_data = i2c;
 
 	ret = dc_i2c_init_hw(i2c);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(i2c->clk);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = i2c_add_adapter(&i2c->adap);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		clk_disable_unprepare(i2c->clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dc_i2c_remove(struct platform_device *pdev)
-{
-	struct dc_i2c *i2c = platform_get_drvdata(pdev);
+अटल पूर्णांक dc_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dc_i2c *i2c = platक्रमm_get_drvdata(pdev);
 
 	i2c_del_adapter(&i2c->adap);
 	clk_disable_unprepare(i2c->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id dc_i2c_match[] = {
-	{ .compatible = "cnxt,cx92755-i2c" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id dc_i2c_match[] = अणु
+	अणु .compatible = "cnxt,cx92755-i2c" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, dc_i2c_match);
 
-static struct platform_driver dc_i2c_driver = {
+अटल काष्ठा platक्रमm_driver dc_i2c_driver = अणु
 	.probe   = dc_i2c_probe,
-	.remove  = dc_i2c_remove,
-	.driver  = {
+	.हटाओ  = dc_i2c_हटाओ,
+	.driver  = अणु
 		.name  = "digicolor-i2c",
 		.of_match_table = dc_i2c_match,
-	},
-};
-module_platform_driver(dc_i2c_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(dc_i2c_driver);
 
 MODULE_AUTHOR("Baruch Siach <baruch@tkos.co.il>");
 MODULE_DESCRIPTION("Conexant Digicolor I2C master driver");

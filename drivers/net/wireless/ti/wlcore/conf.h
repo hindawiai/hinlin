@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl1271
  *
@@ -7,10 +8,10 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#ifndef __CONF_H__
-#define __CONF_H__
+#अगर_अघोषित __CONF_H__
+#घोषणा __CONF_H__
 
-enum {
+क्रमागत अणु
 	CONF_HW_BIT_RATE_1MBPS   = BIT(0),
 	CONF_HW_BIT_RATE_2MBPS   = BIT(1),
 	CONF_HW_BIT_RATE_5_5MBPS = BIT(2),
@@ -40,9 +41,9 @@ enum {
 	CONF_HW_BIT_RATE_MCS_13  = BIT(26),
 	CONF_HW_BIT_RATE_MCS_14  = BIT(27),
 	CONF_HW_BIT_RATE_MCS_15  = BIT(28),
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CONF_HW_RATE_INDEX_1MBPS      = 0,
 	CONF_HW_RATE_INDEX_2MBPS      = 1,
 	CONF_HW_RATE_INDEX_5_5MBPS    = 2,
@@ -86,37 +87,37 @@ enum {
 	CONF_HW_RATE_INDEX_MCS15_SGI  = 29,
 
 	CONF_HW_RATE_INDEX_MAX        = CONF_HW_RATE_INDEX_MCS7_40MHZ_SGI,
-};
+पूर्ण;
 
-#define CONF_HW_RXTX_RATE_UNSUPPORTED 0xff
+#घोषणा CONF_HW_RXTX_RATE_UNSUPPORTED 0xff
 
-enum {
+क्रमागत अणु
 	CONF_SG_DISABLE = 0,
 	CONF_SG_PROTECTIVE,
 	CONF_SG_OPPORTUNISTIC
-};
+पूर्ण;
 
-#define WLCORE_CONF_SG_PARAMS_MAX 67
-#define WLCORE_CONF_SG_PARAMS_ALL 0xff
+#घोषणा WLCORE_CONF_SG_PARAMS_MAX 67
+#घोषणा WLCORE_CONF_SG_PARAMS_ALL 0xff
 
-struct conf_sg_settings {
+काष्ठा conf_sg_settings अणु
 	u32 params[WLCORE_CONF_SG_PARAMS_MAX];
 	u8 state;
-} __packed;
+पूर्ण __packed;
 
-enum conf_rx_queue_type {
+क्रमागत conf_rx_queue_type अणु
 	CONF_RX_QUEUE_TYPE_LOW_PRIORITY,  /* All except the high priority */
 	CONF_RX_QUEUE_TYPE_HIGH_PRIORITY, /* Management and voice packets */
-};
+पूर्ण;
 
-struct conf_rx_settings {
+काष्ठा conf_rx_settings अणु
 	/*
-	 * The maximum amount of time, in TU, before the
+	 * The maximum amount of समय, in TU, beक्रमe the
 	 * firmware discards the MSDU.
 	 *
 	 * Range: 0 - 0xFFFFFFFF
 	 */
-	u32 rx_msdu_life_time;
+	u32 rx_msdu_lअगरe_समय;
 
 	/*
 	 * Packet detection threshold in the PHY.
@@ -126,23 +127,23 @@ struct conf_rx_settings {
 	u32 packet_detection_threshold;
 
 	/*
-	 * The longest time the STA will wait to receive traffic from the AP
+	 * The दीर्घest समय the STA will रुको to receive traffic from the AP
 	 * after a PS-poll has been transmitted.
 	 *
 	 * Range: 0 - 200000
 	 */
-	u16 ps_poll_timeout;
+	u16 ps_poll_समयout;
 	/*
-	 * The longest time the STA will wait to receive traffic from the AP
+	 * The दीर्घest समय the STA will रुको to receive traffic from the AP
 	 * after a frame has been sent from an UPSD enabled queue.
 	 *
 	 * Range: 0 - 200000
 	 */
-	u16 upsd_timeout;
+	u16 upsd_समयout;
 
 	/*
 	 * The number of octets in an MPDU, below which an RTS/CTS
-	 * handshake is not performed.
+	 * handshake is not perक्रमmed.
 	 *
 	 * Range: 0 - 4096
 	 */
@@ -158,7 +159,7 @@ struct conf_rx_settings {
 	u16 rx_cca_threshold;
 
 	/*
-	 * Occupied Rx mem-blocks number which requires interrupting the host
+	 * Occupied Rx mem-blocks number which requires पूर्णांकerrupting the host
 	 * (0 = no buffering, 0xffff = disabled).
 	 *
 	 * Range: u16
@@ -166,7 +167,7 @@ struct conf_rx_settings {
 	u16 irq_blk_threshold;
 
 	/*
-	 * Rx packets number which requires interrupting the host
+	 * Rx packets number which requires पूर्णांकerrupting the host
 	 * (0 = no buffering).
 	 *
 	 * Range: u16
@@ -174,11 +175,11 @@ struct conf_rx_settings {
 	u16 irq_pkt_threshold;
 
 	/*
-	 * Max time in msec the FW may delay RX-Complete interrupt.
+	 * Max समय in msec the FW may delay RX-Complete पूर्णांकerrupt.
 	 *
 	 * Range: 1 - 100
 	 */
-	u16 irq_timeout;
+	u16 irq_समयout;
 
 	/*
 	 * The RX queue type.
@@ -186,24 +187,24 @@ struct conf_rx_settings {
 	 * Range: RX_QUEUE_TYPE_RX_LOW_PRIORITY, RX_QUEUE_TYPE_RX_HIGH_PRIORITY,
 	 */
 	u8 queue_type;
-} __packed;
+पूर्ण __packed;
 
-#define CONF_TX_MAX_RATE_CLASSES       10
+#घोषणा CONF_TX_MAX_RATE_CLASSES       10
 
-#define CONF_TX_RATE_MASK_UNSPECIFIED  0
-#define CONF_TX_RATE_MASK_BASIC        (CONF_HW_BIT_RATE_1MBPS | \
+#घोषणा CONF_TX_RATE_MASK_UNSPECIFIED  0
+#घोषणा CONF_TX_RATE_MASK_BASIC        (CONF_HW_BIT_RATE_1MBPS | \
 					CONF_HW_BIT_RATE_2MBPS)
-#define CONF_TX_RATE_RETRY_LIMIT       10
+#घोषणा CONF_TX_RATE_RETRY_LIMIT       10
 
-/* basic rates for p2p operations (probe req/resp, etc.) */
-#define CONF_TX_RATE_MASK_BASIC_P2P    CONF_HW_BIT_RATE_6MBPS
+/* basic rates क्रम p2p operations (probe req/resp, etc.) */
+#घोषणा CONF_TX_RATE_MASK_BASIC_P2P    CONF_HW_BIT_RATE_6MBPS
 
 /*
- * Rates supported for data packets when operating as STA/AP. Note the absence
+ * Rates supported क्रम data packets when operating as STA/AP. Note the असलence
  * of the 22Mbps rate. There is a FW limitation on 12 rates so we must drop
  * one. The rate dropped is not mandatory under any operating mode.
  */
-#define CONF_TX_ENABLED_RATES       (CONF_HW_BIT_RATE_1MBPS |    \
+#घोषणा CONF_TX_ENABLED_RATES       (CONF_HW_BIT_RATE_1MBPS |    \
 	CONF_HW_BIT_RATE_2MBPS | CONF_HW_BIT_RATE_5_5MBPS |      \
 	CONF_HW_BIT_RATE_6MBPS | CONF_HW_BIT_RATE_9MBPS |        \
 	CONF_HW_BIT_RATE_11MBPS | CONF_HW_BIT_RATE_12MBPS |      \
@@ -211,61 +212,61 @@ struct conf_rx_settings {
 	CONF_HW_BIT_RATE_36MBPS | CONF_HW_BIT_RATE_48MBPS |      \
 	CONF_HW_BIT_RATE_54MBPS)
 
-#define CONF_TX_CCK_RATES  (CONF_HW_BIT_RATE_1MBPS |		\
+#घोषणा CONF_TX_CCK_RATES  (CONF_HW_BIT_RATE_1MBPS |		\
 	CONF_HW_BIT_RATE_2MBPS | CONF_HW_BIT_RATE_5_5MBPS |	\
 	CONF_HW_BIT_RATE_11MBPS)
 
-#define CONF_TX_OFDM_RATES (CONF_HW_BIT_RATE_6MBPS |             \
+#घोषणा CONF_TX_OFDM_RATES (CONF_HW_BIT_RATE_6MBPS |             \
 	CONF_HW_BIT_RATE_12MBPS | CONF_HW_BIT_RATE_24MBPS |      \
 	CONF_HW_BIT_RATE_36MBPS | CONF_HW_BIT_RATE_48MBPS |      \
 	CONF_HW_BIT_RATE_54MBPS)
 
-#define CONF_TX_MCS_RATES (CONF_HW_BIT_RATE_MCS_0 |              \
+#घोषणा CONF_TX_MCS_RATES (CONF_HW_BIT_RATE_MCS_0 |              \
 	CONF_HW_BIT_RATE_MCS_1 | CONF_HW_BIT_RATE_MCS_2 |        \
 	CONF_HW_BIT_RATE_MCS_3 | CONF_HW_BIT_RATE_MCS_4 |        \
 	CONF_HW_BIT_RATE_MCS_5 | CONF_HW_BIT_RATE_MCS_6 |        \
 	CONF_HW_BIT_RATE_MCS_7)
 
-#define CONF_TX_MIMO_RATES (CONF_HW_BIT_RATE_MCS_8 |             \
+#घोषणा CONF_TX_MIMO_RATES (CONF_HW_BIT_RATE_MCS_8 |             \
 	CONF_HW_BIT_RATE_MCS_9 | CONF_HW_BIT_RATE_MCS_10 |       \
 	CONF_HW_BIT_RATE_MCS_11 | CONF_HW_BIT_RATE_MCS_12 |      \
 	CONF_HW_BIT_RATE_MCS_13 | CONF_HW_BIT_RATE_MCS_14 |      \
 	CONF_HW_BIT_RATE_MCS_15)
 
 /*
- * Default rates for management traffic when operating in AP mode. This
+ * Default rates क्रम management traffic when operating in AP mode. This
  * should be configured according to the basic rate set of the AP
  */
-#define CONF_TX_AP_DEFAULT_MGMT_RATES  (CONF_HW_BIT_RATE_1MBPS | \
+#घोषणा CONF_TX_AP_DEFAULT_MGMT_RATES  (CONF_HW_BIT_RATE_1MBPS | \
 	CONF_HW_BIT_RATE_2MBPS | CONF_HW_BIT_RATE_5_5MBPS)
 
-/* default rates for working as IBSS (11b and OFDM) */
-#define CONF_TX_IBSS_DEFAULT_RATES  (CONF_HW_BIT_RATE_1MBPS |       \
+/* शेष rates क्रम working as IBSS (11b and OFDM) */
+#घोषणा CONF_TX_IBSS_DEFAULT_RATES  (CONF_HW_BIT_RATE_1MBPS |       \
 		CONF_HW_BIT_RATE_2MBPS | CONF_HW_BIT_RATE_5_5MBPS | \
 		CONF_HW_BIT_RATE_11MBPS | CONF_TX_OFDM_RATES);
 
-struct conf_tx_rate_class {
+काष्ठा conf_tx_rate_class अणु
 
 	/*
-	 * The rates enabled for this rate class.
+	 * The rates enabled क्रम this rate class.
 	 *
 	 * Range: CONF_HW_BIT_RATE_* bit mask
 	 */
 	u32 enabled_rates;
 
 	/*
-	 * The dot11 short retry limit used for TX retries.
+	 * The करोt11 लघु retry limit used क्रम TX retries.
 	 *
 	 * Range: u8
 	 */
-	u8 short_retry_limit;
+	u8 लघु_retry_limit;
 
 	/*
-	 * The dot11 long retry limit used for TX retries.
+	 * The करोt11 दीर्घ retry limit used क्रम TX retries.
 	 *
 	 * Range: u8
 	 */
-	u8 long_retry_limit;
+	u8 दीर्घ_retry_limit;
 
 	/*
 	 * Flags controlling the attributes of TX transmission.
@@ -273,47 +274,47 @@ struct conf_tx_rate_class {
 	 * Range: bit 0: Truncate - when set, FW attempts to send a frame stop
 	 *               when the total valid per-rate attempts have
 	 *               been exhausted; otherwise transmissions
-	 *               will continue at the lowest available rate
+	 *               will जारी at the lowest available rate
 	 *               until the appropriate one of the
-	 *               short_retry_limit, long_retry_limit,
-	 *               dot11_max_transmit_msdu_life_time, or
-	 *               max_tx_life_time, is exhausted.
-	 *            1: Preamble Override - indicates if the preamble type
+	 *               लघु_retry_limit, दीर्घ_retry_limit,
+	 *               करोt11_max_transmit_msdu_lअगरe_समय, or
+	 *               max_tx_lअगरe_समय, is exhausted.
+	 *            1: Preamble Override - indicates अगर the preamble type
 	 *               should be used in TX.
 	 *            2: Preamble Type - the type of the preamble to be used by
-	 *               the policy (0 - long preamble, 1 - short preamble.
+	 *               the policy (0 - दीर्घ preamble, 1 - लघु preamble.
 	 */
 	u8 aflags;
-} __packed;
+पूर्ण __packed;
 
-#define CONF_TX_MAX_AC_COUNT 4
+#घोषणा CONF_TX_MAX_AC_COUNT 4
 
-/* Slot number setting to start transmission at PIFS interval */
-#define CONF_TX_AIFS_PIFS 1
-/* Slot number setting to start transmission at DIFS interval normal
+/* Slot number setting to start transmission at PIFS पूर्णांकerval */
+#घोषणा CONF_TX_AIFS_PIFS 1
+/* Slot number setting to start transmission at DIFS पूर्णांकerval normal
  * DCF access */
-#define CONF_TX_AIFS_DIFS 2
+#घोषणा CONF_TX_AIFS_DIFS 2
 
 
-enum conf_tx_ac {
-	CONF_TX_AC_BE = 0,         /* best effort / legacy */
+क्रमागत conf_tx_ac अणु
+	CONF_TX_AC_BE = 0,         /* best efक्रमt / legacy */
 	CONF_TX_AC_BK = 1,         /* background */
 	CONF_TX_AC_VI = 2,         /* video */
 	CONF_TX_AC_VO = 3,         /* voice */
 	CONF_TX_AC_CTS2SELF = 4,   /* fictitious AC, follows AC_VO */
 	CONF_TX_AC_ANY_TID = 0xff
-};
+पूर्ण;
 
-struct conf_tx_ac_category {
+काष्ठा conf_tx_ac_category अणु
 	/*
-	 * The AC class identifier.
+	 * The AC class identअगरier.
 	 *
-	 * Range: enum conf_tx_ac
+	 * Range: क्रमागत conf_tx_ac
 	 */
 	u8 ac;
 
 	/*
-	 * The contention window minimum size (in slots) for the access
+	 * The contention winकरोw minimum size (in slots) क्रम the access
 	 * class.
 	 *
 	 * Range: u8
@@ -321,7 +322,7 @@ struct conf_tx_ac_category {
 	u8 cw_min;
 
 	/*
-	 * The contention window maximum size (in slots) for the access
+	 * The contention winकरोw maximum size (in slots) क्रम the access
 	 * class.
 	 *
 	 * Range: u8
@@ -329,76 +330,76 @@ struct conf_tx_ac_category {
 	u16 cw_max;
 
 	/*
-	 * The AIF value (in slots) for the access class.
+	 * The AIF value (in slots) क्रम the access class.
 	 *
 	 * Range: u8
 	 */
-	u8 aifsn;
+	u8 aअगरsn;
 
 	/*
-	 * The TX Op Limit (in microseconds) for the access class.
+	 * The TX Op Limit (in microseconds) क्रम the access class.
 	 *
 	 * Range: u16
 	 */
 	u16 tx_op_limit;
-} __packed;
+पूर्ण __packed;
 
-#define CONF_TX_MAX_TID_COUNT 8
+#घोषणा CONF_TX_MAX_TID_COUNT 8
 
 /* Allow TX BA on all TIDs but 6,7. These are currently reserved in the FW */
-#define CONF_TX_BA_ENABLED_TID_BITMAP 0x3F
+#घोषणा CONF_TX_BA_ENABLED_TID_BITMAP 0x3F
 
-enum {
+क्रमागत अणु
 	CONF_CHANNEL_TYPE_DCF = 0,   /* DC/LEGACY*/
 	CONF_CHANNEL_TYPE_EDCF = 1,  /* EDCA*/
 	CONF_CHANNEL_TYPE_HCCA = 2,  /* HCCA*/
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CONF_PS_SCHEME_LEGACY = 0,
 	CONF_PS_SCHEME_UPSD_TRIGGER = 1,
 	CONF_PS_SCHEME_LEGACY_PSPOLL = 2,
 	CONF_PS_SCHEME_SAPSD = 3,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CONF_ACK_POLICY_LEGACY = 0,
 	CONF_ACK_POLICY_NO_ACK = 1,
 	CONF_ACK_POLICY_BLOCK = 2,
-};
+पूर्ण;
 
 
-struct conf_tx_tid {
+काष्ठा conf_tx_tid अणु
 	u8 queue_id;
 	u8 channel_type;
 	u8 tsid;
 	u8 ps_scheme;
 	u8 ack_policy;
 	u32 apsd_conf[2];
-} __packed;
+पूर्ण __packed;
 
-struct conf_tx_settings {
+काष्ठा conf_tx_settings अणु
 	/*
-	 * The TX ED value for TELEC Enable/Disable.
+	 * The TX ED value क्रम TELEC Enable/Disable.
 	 *
 	 * Range: 0, 1
 	 */
 	u8 tx_energy_detection;
 
 	/*
-	 * Configuration for rate classes for TX (currently only one
+	 * Configuration क्रम rate classes क्रम TX (currently only one
 	 * rate class supported). Used in non-AP mode.
 	 */
-	struct conf_tx_rate_class sta_rc_conf;
+	काष्ठा conf_tx_rate_class sta_rc_conf;
 
 	/*
-	 * Configuration for access categories for TX rate control.
+	 * Configuration क्रम access categories क्रम TX rate control.
 	 */
 	u8 ac_conf_count;
-	struct conf_tx_ac_category ac_conf[CONF_TX_MAX_AC_COUNT];
+	काष्ठा conf_tx_ac_category ac_conf[CONF_TX_MAX_AC_COUNT];
 
 	/*
-	 * AP-mode - allow this number of TX retries to a station before an
+	 * AP-mode - allow this number of TX retries to a station beक्रमe an
 	 * event is triggered from FW.
 	 * In AP-mode the hlids of unreachable stations are given in the
 	 * "sta_tx_retry_exceeded" member in the event mailbox.
@@ -412,10 +413,10 @@ struct conf_tx_settings {
 	u16 ap_aging_period;
 
 	/*
-	 * Configuration for TID parameters.
+	 * Configuration क्रम TID parameters.
 	 */
 	u8 tid_conf_count;
-	struct conf_tx_tid tid_conf[CONF_TX_MAX_TID_COUNT];
+	काष्ठा conf_tx_tid tid_conf[CONF_TX_MAX_TID_COUNT];
 
 	/*
 	 * The TX fragmentation threshold.
@@ -425,42 +426,42 @@ struct conf_tx_settings {
 	u16 frag_threshold;
 
 	/*
-	 * Max time in msec the FW may delay frame TX-Complete interrupt.
+	 * Max समय in msec the FW may delay frame TX-Complete पूर्णांकerrupt.
 	 *
 	 * Range: u16
 	 */
-	u16 tx_compl_timeout;
+	u16 tx_compl_समयout;
 
 	/*
 	 * Completed TX packet count which requires to issue the TX-Complete
-	 * interrupt.
+	 * पूर्णांकerrupt.
 	 *
 	 * Range: u16
 	 */
 	u16 tx_compl_threshold;
 
 	/*
-	 * The rate used for control messages and scanning on the 2.4GHz band
+	 * The rate used क्रम control messages and scanning on the 2.4GHz band
 	 *
 	 * Range: CONF_HW_BIT_RATE_* bit mask
 	 */
 	u32 basic_rate;
 
 	/*
-	 * The rate used for control messages and scanning on the 5GHz band
+	 * The rate used क्रम control messages and scanning on the 5GHz band
 	 *
 	 * Range: CONF_HW_BIT_RATE_* bit mask
 	 */
 	u32 basic_rate_5;
 
 	/*
-	 * TX retry limits for templates
+	 * TX retry limits क्रम ढाँचाs
 	 */
-	u8 tmpl_short_retry_limit;
-	u8 tmpl_long_retry_limit;
+	u8 पंचांगpl_लघु_retry_limit;
+	u8 पंचांगpl_दीर्घ_retry_limit;
 
-	/* Time in ms for Tx watchdog timer to expire */
-	u32 tx_watchdog_timeout;
+	/* Time in ms क्रम Tx watchकरोg समयr to expire */
+	u32 tx_watchकरोg_समयout;
 
 	/*
 	 * when a slow link has this much packets pending, it becomes a low
@@ -473,25 +474,25 @@ struct conf_tx_settings {
 	 * priority link, scheduling-wise
 	 */
 	u8 fast_link_thold;
-} __packed;
+पूर्ण __packed;
 
-enum {
+क्रमागत अणु
 	CONF_WAKE_UP_EVENT_BEACON    = 0x01, /* Wake on every Beacon*/
 	CONF_WAKE_UP_EVENT_DTIM      = 0x02, /* Wake on every DTIM*/
 	CONF_WAKE_UP_EVENT_N_DTIM    = 0x04, /* Wake every Nth DTIM */
 	CONF_WAKE_UP_EVENT_N_BEACONS = 0x08, /* Wake every Nth beacon */
 	CONF_WAKE_UP_EVENT_BITS_MASK = 0x0F
-};
+पूर्ण;
 
-#define CONF_MAX_BCN_FILT_IE_COUNT 32
+#घोषणा CONF_MAX_BCN_FILT_IE_COUNT 32
 
-#define CONF_BCN_RULE_PASS_ON_CHANGE         BIT(0)
-#define CONF_BCN_RULE_PASS_ON_APPEARANCE     BIT(1)
+#घोषणा CONF_BCN_RULE_PASS_ON_CHANGE         BIT(0)
+#घोषणा CONF_BCN_RULE_PASS_ON_APPEARANCE     BIT(1)
 
-#define CONF_BCN_IE_OUI_LEN    3
-#define CONF_BCN_IE_VER_LEN    2
+#घोषणा CONF_BCN_IE_OUI_LEN    3
+#घोषणा CONF_BCN_IE_VER_LEN    2
 
-struct conf_bcn_filt_rule {
+काष्ठा conf_bcn_filt_rule अणु
 	/*
 	 * IE number to which to associate a rule.
 	 *
@@ -500,49 +501,49 @@ struct conf_bcn_filt_rule {
 	u8 ie;
 
 	/*
-	 * Rule to associate with the specific ie.
+	 * Rule to associate with the specअगरic ie.
 	 *
 	 * Range: CONF_BCN_RULE_PASS_ON_*
 	 */
 	u8 rule;
 
 	/*
-	 * OUI for the vendor specifie IE (221)
+	 * OUI क्रम the venकरोr specअगरie IE (221)
 	 */
 	u8 oui[CONF_BCN_IE_OUI_LEN];
 
 	/*
-	 * Type for the vendor specifie IE (221)
+	 * Type क्रम the venकरोr specअगरie IE (221)
 	 */
 	u8 type;
 
 	/*
-	 * Version for the vendor specifie IE (221)
+	 * Version क्रम the venकरोr specअगरie IE (221)
 	 */
 	u8 version[CONF_BCN_IE_VER_LEN];
-} __packed;
+पूर्ण __packed;
 
-#define CONF_MAX_RSSI_SNR_TRIGGERS 8
+#घोषणा CONF_MAX_RSSI_SNR_TRIGGERS 8
 
-enum {
+क्रमागत अणु
 	CONF_TRIG_METRIC_RSSI_BEACON = 0,
 	CONF_TRIG_METRIC_RSSI_DATA,
 	CONF_TRIG_METRIC_SNR_BEACON,
 	CONF_TRIG_METRIC_SNR_DATA
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CONF_TRIG_EVENT_TYPE_LEVEL = 0,
 	CONF_TRIG_EVENT_TYPE_EDGE
-};
+पूर्ण;
 
-enum {
-	CONF_TRIG_EVENT_DIR_LOW = 0,
-	CONF_TRIG_EVENT_DIR_HIGH,
-	CONF_TRIG_EVENT_DIR_BIDIR
-};
+क्रमागत अणु
+	CONF_TRIG_EVENT_सूची_LOW = 0,
+	CONF_TRIG_EVENT_सूची_HIGH,
+	CONF_TRIG_EVENT_सूची_BIसूची
+पूर्ण;
 
-struct conf_sig_weights {
+काष्ठा conf_sig_weights अणु
 
 	/*
 	 * RSSI from beacons average weight.
@@ -571,19 +572,19 @@ struct conf_sig_weights {
 	 * Range: u8
 	 */
 	u8 snr_pkt_avg_weight;
-} __packed;
+पूर्ण __packed;
 
-enum conf_bcn_filt_mode {
+क्रमागत conf_bcn_filt_mode अणु
 	CONF_BCN_FILT_MODE_DISABLED = 0,
 	CONF_BCN_FILT_MODE_ENABLED = 1
-};
+पूर्ण;
 
-enum conf_bet_mode {
+क्रमागत conf_bet_mode अणु
 	CONF_BET_MODE_DISABLE = 0,
 	CONF_BET_MODE_ENABLE = 1,
-};
+पूर्ण;
 
-struct conf_conn_settings {
+काष्ठा conf_conn_settings अणु
 	/*
 	 * Firmware wakeup conditions configuration. The host may set only
 	 * one bit.
@@ -593,13 +594,13 @@ struct conf_conn_settings {
 	u8 wake_up_event;
 
 	/*
-	 * Listen interval for beacons or Dtims.
+	 * Listen पूर्णांकerval क्रम beacons or Dtims.
 	 *
-	 * Range: 0 for beacon and Dtim wakeup
-	 *        1-10 for x Dtims
-	 *        1-255 for x beacons
+	 * Range: 0 क्रम beacon and Dtim wakeup
+	 *        1-10 क्रम x Dtims
+	 *        1-255 क्रम x beacons
 	 */
-	u8 listen_interval;
+	u8 listen_पूर्णांकerval;
 
 	/*
 	 * Firmware wakeup conditions during suspend
@@ -608,11 +609,11 @@ struct conf_conn_settings {
 	u8 suspend_wake_up_event;
 
 	/*
-	 * Listen interval during suspend.
+	 * Listen पूर्णांकerval during suspend.
 	 * Currently will be in DTIMs (1-10)
 	 *
 	 */
-	u8 suspend_listen_interval;
+	u8 suspend_listen_पूर्णांकerval;
 
 	/*
 	 * Enable or disable the beacon filtering.
@@ -625,10 +626,10 @@ struct conf_conn_settings {
 	 * Configure Beacon filter pass-thru rules.
 	 */
 	u8 bcn_filt_ie_count;
-	struct conf_bcn_filt_rule bcn_filt_ie[CONF_MAX_BCN_FILT_IE_COUNT];
+	काष्ठा conf_bcn_filt_rule bcn_filt_ie[CONF_MAX_BCN_FILT_IE_COUNT];
 
 	/*
-	 * The number of consecutive beacons to lose, before the firmware
+	 * The number of consecutive beacons to lose, beक्रमe the firmware
 	 * becomes out of synch.
 	 *
 	 * Range: u32
@@ -636,49 +637,49 @@ struct conf_conn_settings {
 	u32 synch_fail_thold;
 
 	/*
-	 * After out-of-synch, the number of TU's to wait without a further
-	 * received beacon (or probe response) before issuing the BSS_EVENT_LOSE
+	 * After out-of-synch, the number of TU's to रुको without a further
+	 * received beacon (or probe response) beक्रमe issuing the BSS_EVENT_LOSE
 	 * event.
 	 *
 	 * Range: u32
 	 */
-	u32 bss_lose_timeout;
+	u32 bss_lose_समयout;
 
 	/*
-	 * Beacon receive timeout.
+	 * Beacon receive समयout.
 	 *
 	 * Range: u32
 	 */
-	u32 beacon_rx_timeout;
+	u32 beacon_rx_समयout;
 
 	/*
-	 * Broadcast receive timeout.
+	 * Broadcast receive समयout.
 	 *
 	 * Range: u32
 	 */
-	u32 broadcast_timeout;
+	u32 broadcast_समयout;
 
 	/*
-	 * Enable/disable reception of broadcast packets in power save mode
+	 * Enable/disable reception of broadcast packets in घातer save mode
 	 *
 	 * Range: 1 - enable, 0 - disable
 	 */
 	u8 rx_broadcast_in_ps;
 
 	/*
-	 * Consecutive PS Poll failures before sending event to driver
+	 * Consecutive PS Poll failures beक्रमe sending event to driver
 	 *
 	 * Range: u8
 	 */
 	u8 ps_poll_threshold;
 
 	/*
-	 * Configuration of signal average weights.
+	 * Configuration of संकेत average weights.
 	 */
-	struct conf_sig_weights sig_weights;
+	काष्ठा conf_sig_weights sig_weights;
 
 	/*
-	 * Specifies if beacon early termination procedure is enabled or
+	 * Specअगरies अगर beacon early termination procedure is enabled or
 	 * disabled.
 	 *
 	 * Range: CONF_BET_MODE_*
@@ -686,9 +687,9 @@ struct conf_conn_settings {
 	u8 bet_enable;
 
 	/*
-	 * Specifies the maximum number of consecutive beacons that may be
+	 * Specअगरies the maximum number of consecutive beacons that may be
 	 * early terminated. After this number is reached at least one full
-	 * beacon must be correctly received in FW before beacon ET
+	 * beacon must be correctly received in FW beक्रमe beacon ET
 	 * resumes.
 	 *
 	 * Range 0 - 255
@@ -696,59 +697,59 @@ struct conf_conn_settings {
 	u8 bet_max_consecutive;
 
 	/*
-	 * Specifies the maximum number of times to try PSM entry if it fails
-	 * (if sending the appropriate null-func message fails.)
+	 * Specअगरies the maximum number of बार to try PSM entry अगर it fails
+	 * (अगर sending the appropriate null-func message fails.)
 	 *
 	 * Range 0 - 255
 	 */
 	u8 psm_entry_retries;
 
 	/*
-	 * Specifies the maximum number of times to try PSM exit if it fails
-	 * (if sending the appropriate null-func message fails.)
+	 * Specअगरies the maximum number of बार to try PSM निकास अगर it fails
+	 * (अगर sending the appropriate null-func message fails.)
 	 *
 	 * Range 0 - 255
 	 */
-	u8 psm_exit_retries;
+	u8 psm_निकास_retries;
 
 	/*
-	 * Specifies the maximum number of times to try transmit the PSM entry
-	 * null-func frame for each PSM entry attempt
+	 * Specअगरies the maximum number of बार to try transmit the PSM entry
+	 * null-func frame क्रम each PSM entry attempt
 	 *
 	 * Range 0 - 255
 	 */
 	u8 psm_entry_nullfunc_retries;
 
 	/*
-	 * Specifies the dynamic PS timeout in ms that will be used
+	 * Specअगरies the dynamic PS समयout in ms that will be used
 	 * by the FW when in AUTO_PS mode
 	 */
-	u16 dynamic_ps_timeout;
+	u16 dynamic_ps_समयout;
 
 	/*
-	 * Specifies whether dynamic PS should be disabled and PSM forced.
-	 * This is required for certain WiFi certification tests.
+	 * Specअगरies whether dynamic PS should be disabled and PSM क्रमced.
+	 * This is required क्रम certain WiFi certअगरication tests.
 	 */
-	u8 forced_ps;
+	u8 क्रमced_ps;
 
 	/*
 	 *
-	 * Specifies the interval of the connection keep-alive null-func
+	 * Specअगरies the पूर्णांकerval of the connection keep-alive null-func
 	 * frame in ms.
 	 *
 	 * Range: 1000 - 3600000
 	 */
-	u32 keep_alive_interval;
+	u32 keep_alive_पूर्णांकerval;
 
 	/*
-	 * Maximum listen interval supported by the driver in units of beacons.
+	 * Maximum listen पूर्णांकerval supported by the driver in units of beacons.
 	 *
 	 * Range: u16
 	 */
-	u8 max_listen_interval;
+	u8 max_listen_पूर्णांकerval;
 
 	/*
-	 * Default sleep authorization for a new STA interface. This determines
+	 * Default sleep authorization क्रम a new STA पूर्णांकerface. This determines
 	 * whether we can go to ELP.
 	 */
 	u8 sta_sleep_auth;
@@ -757,136 +758,136 @@ struct conf_conn_settings {
 	 * Default RX BA Activity filter configuration
 	 */
 	u8 suspend_rx_ba_activity;
-} __packed;
+पूर्ण __packed;
 
-enum {
+क्रमागत अणु
 	CONF_REF_CLK_19_2_E,
 	CONF_REF_CLK_26_E,
 	CONF_REF_CLK_38_4_E,
 	CONF_REF_CLK_52_E,
 	CONF_REF_CLK_38_4_M_XTAL,
 	CONF_REF_CLK_26_M_XTAL,
-};
+पूर्ण;
 
-enum single_dual_band_enum {
+क्रमागत single_dual_band_क्रमागत अणु
 	CONF_SINGLE_BAND,
 	CONF_DUAL_BAND
-};
+पूर्ण;
 
-#define CONF_RSSI_AND_PROCESS_COMPENSATION_SIZE 15
-#define CONF_NUMBER_OF_SUB_BANDS_5  7
-#define CONF_NUMBER_OF_RATE_GROUPS  6
-#define CONF_NUMBER_OF_CHANNELS_2_4 14
-#define CONF_NUMBER_OF_CHANNELS_5   35
+#घोषणा CONF_RSSI_AND_PROCESS_COMPENSATION_SIZE 15
+#घोषणा CONF_NUMBER_OF_SUB_BANDS_5  7
+#घोषणा CONF_NUMBER_OF_RATE_GROUPS  6
+#घोषणा CONF_NUMBER_OF_CHANNELS_2_4 14
+#घोषणा CONF_NUMBER_OF_CHANNELS_5   35
 
-struct conf_itrim_settings {
+काष्ठा conf_itrim_settings अणु
 	/* enable dco itrim */
 	u8 enable;
 
-	/* moderation timeout in microsecs from the last TX */
-	u32 timeout;
-} __packed;
+	/* moderation समयout in microsecs from the last TX */
+	u32 समयout;
+पूर्ण __packed;
 
-enum conf_fast_wakeup {
+क्रमागत conf_fast_wakeup अणु
 	CONF_FAST_WAKEUP_ENABLE,
 	CONF_FAST_WAKEUP_DISABLE,
-};
+पूर्ण;
 
-struct conf_pm_config_settings {
+काष्ठा conf_pm_config_settings अणु
 	/*
-	 * Host clock settling time
+	 * Host घड़ी settling समय
 	 *
 	 * Range: 0 - 30000 us
 	 */
-	u32 host_clk_settling_time;
+	u32 host_clk_settling_समय;
 
 	/*
 	 * Host fast wakeup support
 	 *
-	 * Range: enum conf_fast_wakeup
+	 * Range: क्रमागत conf_fast_wakeup
 	 */
 	u8 host_fast_wakeup_support;
-} __packed;
+पूर्ण __packed;
 
-struct conf_roam_trigger_settings {
+काष्ठा conf_roam_trigger_settings अणु
 	/*
-	 * The minimum interval between two trigger events.
+	 * The minimum पूर्णांकerval between two trigger events.
 	 *
 	 * Range: 0 - 60000 ms
 	 */
 	u16 trigger_pacing;
 
 	/*
-	 * The weight for rssi/beacon average calculation
+	 * The weight क्रम rssi/beacon average calculation
 	 *
 	 * Range: 0 - 255
 	 */
 	u8 avg_weight_rssi_beacon;
 
 	/*
-	 * The weight for rssi/data frame average calculation
+	 * The weight क्रम rssi/data frame average calculation
 	 *
 	 * Range: 0 - 255
 	 */
 	u8 avg_weight_rssi_data;
 
 	/*
-	 * The weight for snr/beacon average calculation
+	 * The weight क्रम snr/beacon average calculation
 	 *
 	 * Range: 0 - 255
 	 */
 	u8 avg_weight_snr_beacon;
 
 	/*
-	 * The weight for snr/data frame average calculation
+	 * The weight क्रम snr/data frame average calculation
 	 *
 	 * Range: 0 - 255
 	 */
 	u8 avg_weight_snr_data;
-} __packed;
+पूर्ण __packed;
 
-struct conf_scan_settings {
+काष्ठा conf_scan_settings अणु
 	/*
-	 * The minimum time to wait on each channel for active scans
-	 * This value will be used whenever there's a connected interface.
+	 * The minimum समय to रुको on each channel क्रम active scans
+	 * This value will be used whenever there's a connected पूर्णांकerface.
 	 *
 	 * Range: u32 tu/1000
 	 */
-	u32 min_dwell_time_active;
+	u32 min_dwell_समय_active;
 
 	/*
-	 * The maximum time to wait on each channel for active scans
+	 * The maximum समय to रुको on each channel क्रम active scans
 	 * This value will be currently used whenever there's a
-	 * connected interface. It shouldn't exceed 30000 (~30ms) to avoid
-	 * possible interference of voip traffic going on while scanning.
+	 * connected पूर्णांकerface. It shouldn't exceed 30000 (~30ms) to aव्योम
+	 * possible पूर्णांकerference of voip traffic going on जबतक scanning.
 	 *
 	 * Range: u32 tu/1000
 	 */
-	u32 max_dwell_time_active;
+	u32 max_dwell_समय_active;
 
-	/* The minimum time to wait on each channel for active scans
-	 * when it's possible to have longer scan dwell times.
-	 * Currently this is used whenever we're idle on all interfaces.
-	 * Longer dwell times improve detection of networks within a
+	/* The minimum समय to रुको on each channel क्रम active scans
+	 * when it's possible to have दीर्घer scan dwell बार.
+	 * Currently this is used whenever we're idle on all पूर्णांकerfaces.
+	 * Longer dwell बार improve detection of networks within a
 	 * single scan.
 	 *
 	 * Range: u32 tu/1000
 	 */
-	u32 min_dwell_time_active_long;
+	u32 min_dwell_समय_active_दीर्घ;
 
-	/* The maximum time to wait on each channel for active scans
-	 * when it's possible to have longer scan dwell times.
-	 * See min_dwell_time_active_long
+	/* The maximum समय to रुको on each channel क्रम active scans
+	 * when it's possible to have दीर्घer scan dwell बार.
+	 * See min_dwell_समय_active_दीर्घ
 	 *
 	 * Range: u32 tu/1000
 	 */
-	u32 max_dwell_time_active_long;
+	u32 max_dwell_समय_active_दीर्घ;
 
-	/* time to wait on the channel for passive scans (in TU/1000) */
-	u32 dwell_time_passive;
+	/* समय to रुको on the channel क्रम passive scans (in TU/1000) */
+	u32 dwell_समय_passive;
 
-	/* time to wait on the channel for DFS scans (in TU/1000) */
-	u32 dwell_time_dfs;
+	/* समय to रुको on the channel क्रम DFS scans (in TU/1000) */
+	u32 dwell_समय_dfs;
 
 	/*
 	 * Number of probe requests to transmit on each active scan channel
@@ -896,72 +897,72 @@ struct conf_scan_settings {
 	u16 num_probe_reqs;
 
 	/*
-	 * Scan trigger (split scan) timeout. The FW will split the scan
-	 * operation into slices of the given time and allow the FW to schedule
+	 * Scan trigger (split scan) समयout. The FW will split the scan
+	 * operation पूर्णांकo slices of the given समय and allow the FW to schedule
 	 * other tasks in between.
 	 *
 	 * Range: u32 Microsecs
 	 */
-	u32 split_scan_timeout;
-} __packed;
+	u32 split_scan_समयout;
+पूर्ण __packed;
 
-struct conf_sched_scan_settings {
+काष्ठा conf_sched_scan_settings अणु
 	/*
-	 * The base time to wait on the channel for active scans (in TU/1000).
-	 * The minimum dwell time is calculated according to this:
-	 * min_dwell_time = base + num_of_probes_to_be_sent * delta_per_probe
-	 * The maximum dwell time is calculated according to this:
-	 * max_dwell_time = min_dwell_time + max_dwell_time_delta
+	 * The base समय to रुको on the channel क्रम active scans (in TU/1000).
+	 * The minimum dwell समय is calculated according to this:
+	 * min_dwell_समय = base + num_of_probes_to_be_sent * delta_per_probe
+	 * The maximum dwell समय is calculated according to this:
+	 * max_dwell_समय = min_dwell_समय + max_dwell_समय_delta
 	 */
-	u32 base_dwell_time;
+	u32 base_dwell_समय;
 
-	/* The delta between the min dwell time and max dwell time for
-	 * active scans (in TU/1000s). The max dwell time is used by the FW once
+	/* The delta between the min dwell समय and max dwell समय क्रम
+	 * active scans (in TU/1000s). The max dwell समय is used by the FW once
 	 * traffic is detected on the channel.
 	 */
-	u32 max_dwell_time_delta;
+	u32 max_dwell_समय_delta;
 
-	/* Delta added to min dwell time per each probe in 2.4 GHz (TU/1000) */
-	u32 dwell_time_delta_per_probe;
+	/* Delta added to min dwell समय per each probe in 2.4 GHz (TU/1000) */
+	u32 dwell_समय_delta_per_probe;
 
-	/* Delta added to min dwell time per each probe in 5 GHz (TU/1000) */
-	u32 dwell_time_delta_per_probe_5;
+	/* Delta added to min dwell समय per each probe in 5 GHz (TU/1000) */
+	u32 dwell_समय_delta_per_probe_5;
 
-	/* time to wait on the channel for passive scans (in TU/1000) */
-	u32 dwell_time_passive;
+	/* समय to रुको on the channel क्रम passive scans (in TU/1000) */
+	u32 dwell_समय_passive;
 
-	/* time to wait on the channel for DFS scans (in TU/1000) */
-	u32 dwell_time_dfs;
+	/* समय to रुको on the channel क्रम DFS scans (in TU/1000) */
+	u32 dwell_समय_dfs;
 
 	/* number of probe requests to send on each channel in active scans */
 	u8 num_probe_reqs;
 
-	/* RSSI threshold to be used for filtering */
+	/* RSSI threshold to be used क्रम filtering */
 	s8 rssi_threshold;
 
-	/* SNR threshold to be used for filtering */
+	/* SNR threshold to be used क्रम filtering */
 	s8 snr_threshold;
 
 	/*
-	 * number of short intervals scheduled scan cycles before
-	 * switching to long intervals
+	 * number of लघु पूर्णांकervals scheduled scan cycles beक्रमe
+	 * चयनing to दीर्घ पूर्णांकervals
 	 */
-	u8 num_short_intervals;
+	u8 num_लघु_पूर्णांकervals;
 
-	/* interval between each long scheduled scan cycle (in ms) */
-	u16 long_interval;
-} __packed;
+	/* पूर्णांकerval between each दीर्घ scheduled scan cycle (in ms) */
+	u16 दीर्घ_पूर्णांकerval;
+पूर्ण __packed;
 
-struct conf_ht_setting {
+काष्ठा conf_ht_setting अणु
 	u8 rx_ba_win_size;
 	u8 tx_ba_win_size;
-	u16 inactivity_timeout;
+	u16 inactivity_समयout;
 
-	/* bitmap of enabled TIDs for TX BA sessions */
-	u8 tx_ba_tid_bitmap;
-} __packed;
+	/* biपंचांगap of enabled TIDs क्रम TX BA sessions */
+	u8 tx_ba_tid_biपंचांगap;
+पूर्ण __packed;
 
-struct conf_memory_settings {
+काष्ठा conf_memory_settings अणु
 	/* Number of stations supported in IBSS mode */
 	u8 num_stations;
 
@@ -978,43 +979,43 @@ struct conf_memory_settings {
 	u8 dynamic_memory;
 
 	/*
-	 * Minimum required free tx memory blocks in order to assure optimum
-	 * performance
+	 * Minimum required मुक्त tx memory blocks in order to assure optimum
+	 * perक्रमmance
 	 *
 	 * Range: 0-120
 	 */
 	u8 min_req_tx_blocks;
 
 	/*
-	 * Minimum required free rx memory blocks in order to assure optimum
-	 * performance
+	 * Minimum required मुक्त rx memory blocks in order to assure optimum
+	 * perक्रमmance
 	 *
 	 * Range: 0-120
 	 */
 	u8 min_req_rx_blocks;
 
 	/*
-	 * Minimum number of mem blocks (free+used) guaranteed for TX
+	 * Minimum number of mem blocks (मुक्त+used) guaranteed क्रम TX
 	 *
 	 * Range: 0-120
 	 */
 	u8 tx_min;
-} __packed;
+पूर्ण __packed;
 
-struct conf_fm_coex {
+काष्ठा conf_fm_coex अणु
 	u8 enable;
 	u8 swallow_period;
-	u8 n_divider_fref_set_1;
-	u8 n_divider_fref_set_2;
-	u16 m_divider_fref_set_1;
-	u16 m_divider_fref_set_2;
-	u32 coex_pll_stabilization_time;
-	u16 ldo_stabilization_time;
+	u8 n_भागider_fref_set_1;
+	u8 n_भागider_fref_set_2;
+	u16 m_भागider_fref_set_1;
+	u16 m_भागider_fref_set_2;
+	u32 coex_pll_stabilization_समय;
+	u16 lकरो_stabilization_समय;
 	u8 fm_disturbed_band_margin;
-	u8 swallow_clk_diff;
-} __packed;
+	u8 swallow_clk_dअगरf;
+पूर्ण __packed;
 
-struct conf_rx_streaming_settings {
+काष्ठा conf_rx_streaming_settings अणु
 	/*
 	 * RX Streaming duration (in msec) from last tx/rx
 	 *
@@ -1023,35 +1024,35 @@ struct conf_rx_streaming_settings {
 	u32 duration;
 
 	/*
-	 * Bitmap of tids to be polled during RX streaming.
-	 * (Note: it doesn't look like it really matters)
+	 * Biपंचांगap of tids to be polled during RX streaming.
+	 * (Note: it करोesn't look like it really matters)
 	 *
 	 * Range: 0x1-0xff
 	 */
 	u8 queues;
 
 	/*
-	 * RX Streaming interval.
-	 * (Note:this value is also used as the rx streaming timeout)
+	 * RX Streaming पूर्णांकerval.
+	 * (Note:this value is also used as the rx streaming समयout)
 	 * Range: 0 (disabled), 10 - 100
 	 */
-	u8 interval;
+	u8 पूर्णांकerval;
 
 	/*
 	 * enable rx streaming also when there is no coex activity
 	 */
 	u8 always;
-} __packed;
+पूर्ण __packed;
 
-#define CONF_FWLOG_MIN_MEM_BLOCKS	2
-#define CONF_FWLOG_MAX_MEM_BLOCKS	16
+#घोषणा CONF_FWLOG_MIN_MEM_BLOCKS	2
+#घोषणा CONF_FWLOG_MAX_MEM_BLOCKS	16
 
-struct conf_fwlog {
+काष्ठा conf_fwlog अणु
 	/* Continuous or on-demand */
 	u8 mode;
 
 	/*
-	 * Number of memory blocks dedicated for the FW logger
+	 * Number of memory blocks dedicated क्रम the FW logger
 	 *
 	 * Range: 2-16, or 0 to disable the FW logger
 	 */
@@ -1060,18 +1061,18 @@ struct conf_fwlog {
 	/* Minimum log level threshold */
 	u8 severity;
 
-	/* Include/exclude timestamps from the log messages */
-	u8 timestamp;
+	/* Include/exclude बारtamps from the log messages */
+	u8 बारtamp;
 
-	/* See enum wl1271_fwlogger_output */
+	/* See क्रमागत wl1271_fwlogger_output */
 	u8 output;
 
 	/* Regulates the frequency of log messages */
 	u8 threshold;
-} __packed;
+पूर्ण __packed;
 
-#define ACX_RATE_MGMT_NUM_OF_RATES 13
-struct conf_rate_policy_settings {
+#घोषणा ACX_RATE_MGMT_NUM_OF_RATES 13
+काष्ठा conf_rate_policy_settings अणु
 	u16 rate_retry_score;
 	u16 per_add;
 	u16 per_th1;
@@ -1080,17 +1081,17 @@ struct conf_rate_policy_settings {
 	u8 inverse_curiosity_factor;
 	u8 tx_fail_low_th;
 	u8 tx_fail_high_th;
-	u8 per_alpha_shift;
-	u8 per_add_shift;
-	u8 per_beta1_shift;
-	u8 per_beta2_shift;
+	u8 per_alpha_shअगरt;
+	u8 per_add_shअगरt;
+	u8 per_beta1_shअगरt;
+	u8 per_beta2_shअगरt;
 	u8 rate_check_up;
-	u8 rate_check_down;
+	u8 rate_check_करोwn;
 	u8 rate_retry_policy[ACX_RATE_MGMT_NUM_OF_RATES];
-} __packed;
+पूर्ण __packed;
 
-struct conf_hangover_settings {
-	u32 recover_time;
+काष्ठा conf_hangover_settings अणु
+	u32 recover_समय;
 	u8 hangover_period;
 	u8 dynamic_mode;
 	u8 early_termination_mode;
@@ -1098,59 +1099,59 @@ struct conf_hangover_settings {
 	u8 min_period;
 	u8 increase_delta;
 	u8 decrease_delta;
-	u8 quiet_time;
-	u8 increase_time;
-	u8 window_size;
-} __packed;
+	u8 quiet_समय;
+	u8 increase_समय;
+	u8 winकरोw_size;
+पूर्ण __packed;
 
-struct conf_recovery_settings {
+काष्ठा conf_recovery_settings अणु
 	/* BUG() on fw recovery */
 	u8 bug_on_recovery;
 
-	/* Prevent HW recovery. FW will remain stuck. */
+	/* Prevent HW recovery. FW will reमुख्य stuck. */
 	u8 no_recovery;
-} __packed;
+पूर्ण __packed;
 
 /*
  * The conf version consists of 4 bytes.  The two MSB are the wlcore
- * version, the two LSB are the lower driver's private conf
+ * version, the two LSB are the lower driver's निजी conf
  * version.
  */
-#define WLCORE_CONF_VERSION	(0x0007 << 16)
-#define WLCORE_CONF_MASK	0xffff0000
-#define WLCORE_CONF_SIZE	(sizeof(struct wlcore_conf_header) +	\
-				 sizeof(struct wlcore_conf))
+#घोषणा WLCORE_CONF_VERSION	(0x0007 << 16)
+#घोषणा WLCORE_CONF_MASK	0xffff0000
+#घोषणा WLCORE_CONF_SIZE	(माप(काष्ठा wlcore_conf_header) +	\
+				 माप(काष्ठा wlcore_conf))
 
-struct wlcore_conf_header {
+काष्ठा wlcore_conf_header अणु
 	__le32 magic;
 	__le32 version;
 	__le32 checksum;
-} __packed;
+पूर्ण __packed;
 
-struct wlcore_conf {
-	struct conf_sg_settings sg;
-	struct conf_rx_settings rx;
-	struct conf_tx_settings tx;
-	struct conf_conn_settings conn;
-	struct conf_itrim_settings itrim;
-	struct conf_pm_config_settings pm_config;
-	struct conf_roam_trigger_settings roam_trigger;
-	struct conf_scan_settings scan;
-	struct conf_sched_scan_settings sched_scan;
-	struct conf_ht_setting ht;
-	struct conf_memory_settings mem;
-	struct conf_fm_coex fm_coex;
-	struct conf_rx_streaming_settings rx_streaming;
-	struct conf_fwlog fwlog;
-	struct conf_rate_policy_settings rate;
-	struct conf_hangover_settings hangover;
-	struct conf_recovery_settings recovery;
-} __packed;
+काष्ठा wlcore_conf अणु
+	काष्ठा conf_sg_settings sg;
+	काष्ठा conf_rx_settings rx;
+	काष्ठा conf_tx_settings tx;
+	काष्ठा conf_conn_settings conn;
+	काष्ठा conf_itrim_settings itrim;
+	काष्ठा conf_pm_config_settings pm_config;
+	काष्ठा conf_roam_trigger_settings roam_trigger;
+	काष्ठा conf_scan_settings scan;
+	काष्ठा conf_sched_scan_settings sched_scan;
+	काष्ठा conf_ht_setting ht;
+	काष्ठा conf_memory_settings mem;
+	काष्ठा conf_fm_coex fm_coex;
+	काष्ठा conf_rx_streaming_settings rx_streaming;
+	काष्ठा conf_fwlog fwlog;
+	काष्ठा conf_rate_policy_settings rate;
+	काष्ठा conf_hangover_settings hangover;
+	काष्ठा conf_recovery_settings recovery;
+पूर्ण __packed;
 
-struct wlcore_conf_file {
-	struct wlcore_conf_header header;
-	struct wlcore_conf core;
+काष्ठा wlcore_conf_file अणु
+	काष्ठा wlcore_conf_header header;
+	काष्ठा wlcore_conf core;
 	u8 priv[];
-} __packed;
+पूर्ण __packed;
 
-#endif
+#पूर्ण_अगर

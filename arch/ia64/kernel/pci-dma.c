@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Dynamic DMA mapping support.
  */
 
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/string.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/dmar.h>
-#include <asm/iommu.h>
-#include <linux/dma-mapping.h>
-#include <linux/kernel.h>
-#include <asm/page.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dmar.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/page.h>
 
-int no_iommu __read_mostly;
-#ifdef CONFIG_IOMMU_DEBUG
-int force_iommu __read_mostly = 1;
-#else
-int force_iommu __read_mostly;
-#endif
+पूर्णांक no_iommu __पढ़ो_mostly;
+#अगर_घोषित CONFIG_IOMMU_DEBUG
+पूर्णांक क्रमce_iommu __पढ़ो_mostly = 1;
+#अन्यथा
+पूर्णांक क्रमce_iommu __पढ़ो_mostly;
+#पूर्ण_अगर
 
-static int __init pci_iommu_init(void)
-{
-	if (iommu_detected)
-		intel_iommu_init();
+अटल पूर्णांक __init pci_iommu_init(व्योम)
+अणु
+	अगर (iommu_detected)
+		पूर्णांकel_iommu_init();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Must execute after PCI subsystem */
+/* Must execute after PCI subप्रणाली */
 fs_initcall(pci_iommu_init);

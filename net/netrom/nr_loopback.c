@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright Tomi Manninen OH2BNS (oh2bns@sral.fi)
  */
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/socket.h>
-#include <linux/timer.h>
-#include <net/ax25.h>
-#include <linux/skbuff.h>
-#include <net/netrom.h>
-#include <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/समयr.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/netrom.h>
+#समावेश <linux/init.h>
 
-static void nr_loopback_timer(struct timer_list *);
+अटल व्योम nr_loopback_समयr(काष्ठा समयr_list *);
 
-static struct sk_buff_head loopback_queue;
-static DEFINE_TIMER(loopback_timer, nr_loopback_timer);
+अटल काष्ठा sk_buff_head loopback_queue;
+अटल DEFINE_TIMER(loopback_समयr, nr_loopback_समयr);
 
-void __init nr_loopback_init(void)
-{
+व्योम __init nr_loopback_init(व्योम)
+अणु
 	skb_queue_head_init(&loopback_queue);
-}
+पूर्ण
 
-static inline int nr_loopback_running(void)
-{
-	return timer_pending(&loopback_timer);
-}
+अटल अंतरभूत पूर्णांक nr_loopback_running(व्योम)
+अणु
+	वापस समयr_pending(&loopback_समयr);
+पूर्ण
 
-int nr_loopback_queue(struct sk_buff *skb)
-{
-	struct sk_buff *skbn;
+पूर्णांक nr_loopback_queue(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *skbn;
 
-	if ((skbn = alloc_skb(skb->len, GFP_ATOMIC)) != NULL) {
+	अगर ((skbn = alloc_skb(skb->len, GFP_ATOMIC)) != शून्य) अणु
 		skb_copy_from_linear_data(skb, skb_put(skbn, skb->len), skb->len);
 		skb_reset_transport_header(skbn);
 
 		skb_queue_tail(&loopback_queue, skbn);
 
-		if (!nr_loopback_running())
-			mod_timer(&loopback_timer, jiffies + 10);
-	}
+		अगर (!nr_loopback_running())
+			mod_समयr(&loopback_समयr, jअगरfies + 10);
+	पूर्ण
 
-	kfree_skb(skb);
-	return 1;
-}
+	kमुक्त_skb(skb);
+	वापस 1;
+पूर्ण
 
-static void nr_loopback_timer(struct timer_list *unused)
-{
-	struct sk_buff *skb;
+अटल व्योम nr_loopback_समयr(काष्ठा समयr_list *unused)
+अणु
+	काष्ठा sk_buff *skb;
 	ax25_address *nr_dest;
-	struct net_device *dev;
+	काष्ठा net_device *dev;
 
-	if ((skb = skb_dequeue(&loopback_queue)) != NULL) {
+	अगर ((skb = skb_dequeue(&loopback_queue)) != शून्य) अणु
 		nr_dest = (ax25_address *)(skb->data + 7);
 
 		dev = nr_dev_get(nr_dest);
 
-		if (dev == NULL || nr_rx_frame(skb, dev) == 0)
-			kfree_skb(skb);
+		अगर (dev == शून्य || nr_rx_frame(skb, dev) == 0)
+			kमुक्त_skb(skb);
 
-		if (dev != NULL)
+		अगर (dev != शून्य)
 			dev_put(dev);
 
-		if (!skb_queue_empty(&loopback_queue) && !nr_loopback_running())
-			mod_timer(&loopback_timer, jiffies + 10);
-	}
-}
+		अगर (!skb_queue_empty(&loopback_queue) && !nr_loopback_running())
+			mod_समयr(&loopback_समयr, jअगरfies + 10);
+	पूर्ण
+पूर्ण
 
-void nr_loopback_clear(void)
-{
-	del_timer_sync(&loopback_timer);
+व्योम nr_loopback_clear(व्योम)
+अणु
+	del_समयr_sync(&loopback_समयr);
 	skb_queue_purge(&loopback_queue);
-}
+पूर्ण

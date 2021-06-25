@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /* Copyright (c) 2018-2020 Hisilicon Limited. */
 
-/* This must be outside ifdef _HCLGE_TRACE_H */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM hns3
+/* This must be outside अगरdef _HCLGE_TRACE_H */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM hns3
 
-#if !defined(_HCLGE_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
-#define _HCLGE_TRACE_H_
+#अगर !defined(_HCLGE_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _HCLGE_TRACE_H_
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#define PF_GET_MBX_LEN	(sizeof(struct hclge_mbx_vf_to_pf_cmd) / sizeof(u32))
-#define PF_SEND_MBX_LEN	(sizeof(struct hclge_mbx_pf_to_vf_cmd) / sizeof(u32))
+#घोषणा PF_GET_MBX_LEN	(माप(काष्ठा hclge_mbx_vf_to_pf_cmd) / माप(u32))
+#घोषणा PF_SEND_MBX_LEN	(माप(काष्ठा hclge_mbx_pf_to_vf_cmd) / माप(u32))
 
 TRACE_EVENT(hclge_pf_mbx_get,
 	TP_PROTO(
-		struct hclge_dev *hdev,
-		struct hclge_mbx_vf_to_pf_cmd *req),
+		काष्ठा hclge_dev *hdev,
+		काष्ठा hclge_mbx_vf_to_pf_cmd *req),
 	TP_ARGS(hdev, req),
 
 	TP_STRUCT__entry(
@@ -34,22 +35,22 @@ TRACE_EVENT(hclge_pf_mbx_get,
 		__entry->subcode = req->msg.subcode;
 		__assign_str(pciname, pci_name(hdev->pdev));
 		__assign_str(devname, &hdev->vport[0].nic.kinfo.netdev->name);
-		memcpy(__entry->mbx_data, req,
-		       sizeof(struct hclge_mbx_vf_to_pf_cmd));
+		स_नकल(__entry->mbx_data, req,
+		       माप(काष्ठा hclge_mbx_vf_to_pf_cmd));
 	),
 
-	TP_printk(
+	TP_prपूर्णांकk(
 		"%s %s vfid:%u code:%u subcode:%u data:%s",
 		__get_str(pciname), __get_str(devname), __entry->vfid,
 		__entry->code, __entry->subcode,
-		__print_array(__entry->mbx_data, PF_GET_MBX_LEN, sizeof(u32))
+		__prपूर्णांक_array(__entry->mbx_data, PF_GET_MBX_LEN, माप(u32))
 	)
 );
 
 TRACE_EVENT(hclge_pf_mbx_send,
 	TP_PROTO(
-		struct hclge_dev *hdev,
-		struct hclge_mbx_pf_to_vf_cmd *req),
+		काष्ठा hclge_dev *hdev,
+		काष्ठा hclge_mbx_pf_to_vf_cmd *req),
 	TP_ARGS(hdev, req),
 
 	TP_STRUCT__entry(
@@ -65,23 +66,23 @@ TRACE_EVENT(hclge_pf_mbx_send,
 		__entry->code = req->msg.code;
 		__assign_str(pciname, pci_name(hdev->pdev));
 		__assign_str(devname, &hdev->vport[0].nic.kinfo.netdev->name);
-		memcpy(__entry->mbx_data, req,
-		       sizeof(struct hclge_mbx_pf_to_vf_cmd));
+		स_नकल(__entry->mbx_data, req,
+		       माप(काष्ठा hclge_mbx_pf_to_vf_cmd));
 	),
 
-	TP_printk(
+	TP_prपूर्णांकk(
 		"%s %s vfid:%u code:%u data:%s",
 		__get_str(pciname), __get_str(devname), __entry->vfid,
 		__entry->code,
-		__print_array(__entry->mbx_data, PF_SEND_MBX_LEN, sizeof(u32))
+		__prपूर्णांक_array(__entry->mbx_data, PF_SEND_MBX_LEN, माप(u32))
 	)
 );
 
-#endif /* _HCLGE_TRACE_H_ */
+#पूर्ण_अगर /* _HCLGE_TRACE_H_ */
 
-/* This must be outside ifdef _HCLGE_TRACE_H */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE hclge_trace
-#include <trace/define_trace.h>
+/* This must be outside अगरdef _HCLGE_TRACE_H */
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता hclge_trace
+#समावेश <trace/define_trace.h>

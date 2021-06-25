@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * This header provides IDs for clocks common between several Tegra SoCs
+ * This header provides IDs क्रम घड़ीs common between several Tegra SoCs
  */
-#ifndef _TEGRA_CLK_ID_H
-#define _TEGRA_CLK_ID_H
+#अगर_अघोषित _TEGRA_CLK_ID_H
+#घोषणा _TEGRA_CLK_ID_H
 
-enum clk_id {
-	tegra_clk_actmon,
+क्रमागत clk_id अणु
+	tegra_clk_acपंचांगon,
 	tegra_clk_adx,
 	tegra_clk_adx1,
 	tegra_clk_afi,
@@ -15,7 +16,7 @@ enum clk_id {
 	tegra_clk_apb2ape,
 	tegra_clk_ahbdma,
 	tegra_clk_apbdma,
-	tegra_clk_apbif,
+	tegra_clk_apbअगर,
 	tegra_clk_ape,
 	tegra_clk_audio0,
 	tegra_clk_audio0_2x,
@@ -44,8 +45,8 @@ enum clk_id {
 	tegra_clk_clk72Mhz_8,
 	tegra_clk_clk_m,
 	tegra_clk_osc,
-	tegra_clk_osc_div2,
-	tegra_clk_osc_div4,
+	tegra_clk_osc_भाग2,
+	tegra_clk_osc_भाग4,
 	tegra_clk_cml0,
 	tegra_clk_cml1,
 	tegra_clk_csi,
@@ -78,9 +79,9 @@ enum clk_id {
 	tegra_clk_entropy_8,
 	tegra_clk_epp,
 	tegra_clk_epp_8,
-	tegra_clk_extern1,
-	tegra_clk_extern2,
-	tegra_clk_extern3,
+	tegra_clk_बाह्य1,
+	tegra_clk_बाह्य2,
+	tegra_clk_बाह्य3,
 	tegra_clk_fuse,
 	tegra_clk_fuse_burn,
 	tegra_clk_gpu,
@@ -126,7 +127,7 @@ enum clk_id {
 	tegra_clk_la,
 	tegra_clk_maud,
 	tegra_clk_mipi,
-	tegra_clk_mipibif,
+	tegra_clk_mipibअगर,
 	tegra_clk_mipi_cal,
 	tegra_clk_mpe,
 	tegra_clk_mselect,
@@ -168,7 +169,7 @@ enum clk_id {
 	tegra_clk_pll_p,
 	tegra_clk_pll_p_out1,
 	tegra_clk_pll_p_out2,
-	tegra_clk_pll_p_out2_int,
+	tegra_clk_pll_p_out2_पूर्णांक,
 	tegra_clk_pll_p_out3,
 	tegra_clk_pll_p_out4,
 	tegra_clk_pll_p_out4_cpu,
@@ -234,14 +235,14 @@ enum clk_id {
 	tegra_clk_sor0_out,
 	tegra_clk_sor1,
 	tegra_clk_sor1_out,
-	tegra_clk_spdif,
-	tegra_clk_spdif_2x,
-	tegra_clk_spdif_in,
-	tegra_clk_spdif_in_8,
-	tegra_clk_spdif_in_sync,
-	tegra_clk_spdif_mux,
-	tegra_clk_spdif_out,
-	tegra_clk_timer,
+	tegra_clk_spdअगर,
+	tegra_clk_spdअगर_2x,
+	tegra_clk_spdअगर_in,
+	tegra_clk_spdअगर_in_8,
+	tegra_clk_spdअगर_in_sync,
+	tegra_clk_spdअगर_mux,
+	tegra_clk_spdअगर_out,
+	tegra_clk_समयr,
 	tegra_clk_trace,
 	tegra_clk_tsec,
 	tegra_clk_tsec_8,
@@ -298,7 +299,7 @@ enum clk_id {
 	tegra_clk_xusb_ss,
 	tegra_clk_xusb_ss_src,
 	tegra_clk_xusb_ss_src_8,
-	tegra_clk_xusb_ss_div2,
+	tegra_clk_xusb_ss_भाग2,
 	tegra_clk_xusb_ssp_src,
 	tegra_clk_sclk_mux,
 	tegra_clk_sor_safe,
@@ -320,6 +321,6 @@ enum clk_id {
 	tegra_clk_adsp,
 	tegra_clk_adsp_neon,
 	tegra_clk_max,
-};
+पूर्ण;
 
-#endif	/* _TEGRA_CLK_ID_H */
+#पूर्ण_अगर	/* _TEGRA_CLK_ID_H */

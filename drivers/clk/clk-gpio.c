@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2013 - 2014 Texas Instruments Incorporated - https://www.ti.com
  *
@@ -6,22 +7,22 @@
  *    Jyri Sarha <jsarha@ti.com>
  *    Sergej Sawazki <ce3a@gmx.de>
  *
- * Gpio controlled clock implementation
+ * Gpio controlled घड़ी implementation
  */
 
-#include <linux/clk-provider.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/gpio/consumer.h>
-#include <linux/err.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/of_device.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/err.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_device.h>
 
 /**
- * DOC: basic gpio gated clock which can be enabled and disabled
+ * DOC: basic gpio gated घड़ी which can be enabled and disabled
  *      with gpio output
- * Traits of this clock:
+ * Traits of this घड़ी:
  * prepare - clk_(un)prepare only ensures parent is (un)prepared
  * enable - clk_enable and clk_disable are functional & control gpio
  * rate - inherits rate from parent.  No clk_set_rate support
@@ -29,129 +30,129 @@
  */
 
 /**
- * struct clk_gpio - gpio gated clock
+ * काष्ठा clk_gpio - gpio gated घड़ी
  *
- * @hw:		handle between common and hardware-specific interfaces
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
  * @gpiod:	gpio descriptor
  *
- * Clock with a gpio control for enabling and disabling the parent clock
- * or switching between two parents by asserting or deasserting the gpio.
+ * Clock with a gpio control क्रम enabling and disabling the parent घड़ी
+ * or चयनing between two parents by निश्चितing or deनिश्चितing the gpio.
  *
  * Implements .enable, .disable and .is_enabled or
  * .get_parent, .set_parent and .determine_rate depending on which clk_ops
  * is used.
  */
-struct clk_gpio {
-	struct clk_hw	hw;
-	struct gpio_desc *gpiod;
-};
+काष्ठा clk_gpio अणु
+	काष्ठा clk_hw	hw;
+	काष्ठा gpio_desc *gpiod;
+पूर्ण;
 
-#define to_clk_gpio(_hw) container_of(_hw, struct clk_gpio, hw)
+#घोषणा to_clk_gpio(_hw) container_of(_hw, काष्ठा clk_gpio, hw)
 
-static int clk_gpio_gate_enable(struct clk_hw *hw)
-{
-	struct clk_gpio *clk = to_clk_gpio(hw);
+अटल पूर्णांक clk_gpio_gate_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gpio *clk = to_clk_gpio(hw);
 
 	gpiod_set_value(clk->gpiod, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_gpio_gate_disable(struct clk_hw *hw)
-{
-	struct clk_gpio *clk = to_clk_gpio(hw);
+अटल व्योम clk_gpio_gate_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gpio *clk = to_clk_gpio(hw);
 
 	gpiod_set_value(clk->gpiod, 0);
-}
+पूर्ण
 
-static int clk_gpio_gate_is_enabled(struct clk_hw *hw)
-{
-	struct clk_gpio *clk = to_clk_gpio(hw);
+अटल पूर्णांक clk_gpio_gate_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gpio *clk = to_clk_gpio(hw);
 
-	return gpiod_get_value(clk->gpiod);
-}
+	वापस gpiod_get_value(clk->gpiod);
+पूर्ण
 
-static const struct clk_ops clk_gpio_gate_ops = {
+अटल स्थिर काष्ठा clk_ops clk_gpio_gate_ops = अणु
 	.enable = clk_gpio_gate_enable,
 	.disable = clk_gpio_gate_disable,
 	.is_enabled = clk_gpio_gate_is_enabled,
-};
+पूर्ण;
 
-static int clk_sleeping_gpio_gate_prepare(struct clk_hw *hw)
-{
-	struct clk_gpio *clk = to_clk_gpio(hw);
+अटल पूर्णांक clk_sleeping_gpio_gate_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gpio *clk = to_clk_gpio(hw);
 
 	gpiod_set_value_cansleep(clk->gpiod, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_sleeping_gpio_gate_unprepare(struct clk_hw *hw)
-{
-	struct clk_gpio *clk = to_clk_gpio(hw);
+अटल व्योम clk_sleeping_gpio_gate_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gpio *clk = to_clk_gpio(hw);
 
 	gpiod_set_value_cansleep(clk->gpiod, 0);
-}
+पूर्ण
 
-static int clk_sleeping_gpio_gate_is_prepared(struct clk_hw *hw)
-{
-	struct clk_gpio *clk = to_clk_gpio(hw);
+अटल पूर्णांक clk_sleeping_gpio_gate_is_prepared(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gpio *clk = to_clk_gpio(hw);
 
-	return gpiod_get_value_cansleep(clk->gpiod);
-}
+	वापस gpiod_get_value_cansleep(clk->gpiod);
+पूर्ण
 
-static const struct clk_ops clk_sleeping_gpio_gate_ops = {
+अटल स्थिर काष्ठा clk_ops clk_sleeping_gpio_gate_ops = अणु
 	.prepare = clk_sleeping_gpio_gate_prepare,
 	.unprepare = clk_sleeping_gpio_gate_unprepare,
 	.is_prepared = clk_sleeping_gpio_gate_is_prepared,
-};
+पूर्ण;
 
 /**
- * DOC: basic clock multiplexer which can be controlled with a gpio output
- * Traits of this clock:
+ * DOC: basic घड़ी multiplexer which can be controlled with a gpio output
+ * Traits of this घड़ी:
  * prepare - clk_prepare only ensures that parents are prepared
- * rate - rate is only affected by parent switching.  No clk_set_rate support
+ * rate - rate is only affected by parent चयनing.  No clk_set_rate support
  * parent - parent is adjustable through clk_set_parent
  */
 
-static u8 clk_gpio_mux_get_parent(struct clk_hw *hw)
-{
-	struct clk_gpio *clk = to_clk_gpio(hw);
+अटल u8 clk_gpio_mux_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gpio *clk = to_clk_gpio(hw);
 
-	return gpiod_get_value_cansleep(clk->gpiod);
-}
+	वापस gpiod_get_value_cansleep(clk->gpiod);
+पूर्ण
 
-static int clk_gpio_mux_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_gpio *clk = to_clk_gpio(hw);
+अटल पूर्णांक clk_gpio_mux_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_gpio *clk = to_clk_gpio(hw);
 
 	gpiod_set_value_cansleep(clk->gpiod, index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_gpio_mux_ops = {
+अटल स्थिर काष्ठा clk_ops clk_gpio_mux_ops = अणु
 	.get_parent = clk_gpio_mux_get_parent,
 	.set_parent = clk_gpio_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
-};
+पूर्ण;
 
-static struct clk_hw *clk_register_gpio(struct device *dev, u8 num_parents,
-					struct gpio_desc *gpiod,
-					const struct clk_ops *clk_gpio_ops)
-{
-	struct clk_gpio *clk_gpio;
-	struct clk_hw *hw;
-	struct clk_init_data init = {};
-	int err;
-	const struct clk_parent_data gpio_parent_data[] = {
-		{ .index = 0 },
-		{ .index = 1 },
-	};
+अटल काष्ठा clk_hw *clk_रेजिस्टर_gpio(काष्ठा device *dev, u8 num_parents,
+					काष्ठा gpio_desc *gpiod,
+					स्थिर काष्ठा clk_ops *clk_gpio_ops)
+अणु
+	काष्ठा clk_gpio *clk_gpio;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init = अणुपूर्ण;
+	पूर्णांक err;
+	स्थिर काष्ठा clk_parent_data gpio_parent_data[] = अणु
+		अणु .index = 0 पूर्ण,
+		अणु .index = 1 पूर्ण,
+	पूर्ण;
 
-	clk_gpio = devm_kzalloc(dev, sizeof(*clk_gpio),	GFP_KERNEL);
-	if (!clk_gpio)
-		return ERR_PTR(-ENOMEM);
+	clk_gpio = devm_kzalloc(dev, माप(*clk_gpio),	GFP_KERNEL);
+	अगर (!clk_gpio)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = dev->of_node->name;
 	init.ops = clk_gpio_ops;
@@ -163,87 +164,87 @@ static struct clk_hw *clk_register_gpio(struct device *dev, u8 num_parents,
 	clk_gpio->hw.init = &init;
 
 	hw = &clk_gpio->hw;
-	err = devm_clk_hw_register(dev, hw);
-	if (err)
-		return ERR_PTR(err);
+	err = devm_clk_hw_रेजिस्टर(dev, hw);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static struct clk_hw *clk_hw_register_gpio_gate(struct device *dev,
-						int num_parents,
-						struct gpio_desc *gpiod)
-{
-	const struct clk_ops *ops;
+अटल काष्ठा clk_hw *clk_hw_रेजिस्टर_gpio_gate(काष्ठा device *dev,
+						पूर्णांक num_parents,
+						काष्ठा gpio_desc *gpiod)
+अणु
+	स्थिर काष्ठा clk_ops *ops;
 
-	if (gpiod_cansleep(gpiod))
+	अगर (gpiod_cansleep(gpiod))
 		ops = &clk_sleeping_gpio_gate_ops;
-	else
+	अन्यथा
 		ops = &clk_gpio_gate_ops;
 
-	return clk_register_gpio(dev, num_parents, gpiod, ops);
-}
+	वापस clk_रेजिस्टर_gpio(dev, num_parents, gpiod, ops);
+पूर्ण
 
-static struct clk_hw *clk_hw_register_gpio_mux(struct device *dev,
-					       struct gpio_desc *gpiod)
-{
-	return clk_register_gpio(dev, 2, gpiod, &clk_gpio_mux_ops);
-}
+अटल काष्ठा clk_hw *clk_hw_रेजिस्टर_gpio_mux(काष्ठा device *dev,
+					       काष्ठा gpio_desc *gpiod)
+अणु
+	वापस clk_रेजिस्टर_gpio(dev, 2, gpiod, &clk_gpio_mux_ops);
+पूर्ण
 
-static int gpio_clk_driver_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *node = dev->of_node;
-	const char *gpio_name;
-	unsigned int num_parents;
-	struct gpio_desc *gpiod;
-	struct clk_hw *hw;
+अटल पूर्णांक gpio_clk_driver_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *node = dev->of_node;
+	स्थिर अक्षर *gpio_name;
+	अचिन्हित पूर्णांक num_parents;
+	काष्ठा gpio_desc *gpiod;
+	काष्ठा clk_hw *hw;
 	bool is_mux;
-	int ret;
+	पूर्णांक ret;
 
 	is_mux = of_device_is_compatible(node, "gpio-mux-clock");
 
 	num_parents = of_clk_get_parent_count(node);
-	if (is_mux && num_parents != 2) {
+	अगर (is_mux && num_parents != 2) अणु
 		dev_err(dev, "mux-clock must have 2 parents\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	gpio_name = is_mux ? "select" : "enable";
 	gpiod = devm_gpiod_get(dev, gpio_name, GPIOD_OUT_LOW);
-	if (IS_ERR(gpiod)) {
+	अगर (IS_ERR(gpiod)) अणु
 		ret = PTR_ERR(gpiod);
-		if (ret == -EPROBE_DEFER)
+		अगर (ret == -EPROBE_DEFER)
 			pr_debug("%pOFn: %s: GPIOs not yet available, retry later\n",
 					node, __func__);
-		else
+		अन्यथा
 			pr_err("%pOFn: %s: Can't get '%s' named GPIO property\n",
 					node, __func__,
 					gpio_name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (is_mux)
-		hw = clk_hw_register_gpio_mux(dev, gpiod);
-	else
-		hw = clk_hw_register_gpio_gate(dev, num_parents, gpiod);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	अगर (is_mux)
+		hw = clk_hw_रेजिस्टर_gpio_mux(dev, gpiod);
+	अन्यथा
+		hw = clk_hw_रेजिस्टर_gpio_gate(dev, num_parents, gpiod);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 
-	return devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get, hw);
-}
+	वापस devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get, hw);
+पूर्ण
 
-static const struct of_device_id gpio_clk_match_table[] = {
-	{ .compatible = "gpio-mux-clock" },
-	{ .compatible = "gpio-gate-clock" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id gpio_clk_match_table[] = अणु
+	अणु .compatible = "gpio-mux-clock" पूर्ण,
+	अणु .compatible = "gpio-gate-clock" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver gpio_clk_driver = {
+अटल काष्ठा platक्रमm_driver gpio_clk_driver = अणु
 	.probe		= gpio_clk_driver_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "gpio-clk",
 		.of_match_table = gpio_clk_match_table,
-	},
-};
-builtin_platform_driver(gpio_clk_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(gpio_clk_driver);

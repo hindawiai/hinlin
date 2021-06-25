@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Analog Devices ADAU7118 8 channel PDM-to-I2S/TDM Converter driver
 //
 // Copyright 2019 Analog Devices Inc.
 
-#include <linux/bitfield.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
 
-#include "adau7118.h"
+#समावेश "adau7118.h"
 
-#define ADAU7118_DEC_RATIO_MASK		GENMASK(1, 0)
-#define ADAU7118_DEC_RATIO(x)		FIELD_PREP(ADAU7118_DEC_RATIO_MASK, x)
-#define ADAU7118_CLK_MAP_MASK		GENMASK(7, 4)
-#define ADAU7118_SLOT_WIDTH_MASK	GENMASK(5, 4)
-#define ADAU7118_SLOT_WIDTH(x)		FIELD_PREP(ADAU7118_SLOT_WIDTH_MASK, x)
-#define ADAU7118_TRISTATE_MASK		BIT(6)
-#define ADAU7118_TRISTATE(x)		FIELD_PREP(ADAU7118_TRISTATE_MASK, x)
-#define ADAU7118_DATA_FMT_MASK		GENMASK(3, 1)
-#define ADAU7118_DATA_FMT(x)		FIELD_PREP(ADAU7118_DATA_FMT_MASK, x)
-#define ADAU7118_SAI_MODE_MASK		BIT(0)
-#define ADAU7118_SAI_MODE(x)		FIELD_PREP(ADAU7118_SAI_MODE_MASK, x)
-#define ADAU7118_LRCLK_BCLK_POL_MASK	GENMASK(1, 0)
-#define ADAU7118_LRCLK_BCLK_POL(x) \
+#घोषणा ADAU7118_DEC_RATIO_MASK		GENMASK(1, 0)
+#घोषणा ADAU7118_DEC_RATIO(x)		FIELD_PREP(ADAU7118_DEC_RATIO_MASK, x)
+#घोषणा ADAU7118_CLK_MAP_MASK		GENMASK(7, 4)
+#घोषणा ADAU7118_SLOT_WIDTH_MASK	GENMASK(5, 4)
+#घोषणा ADAU7118_SLOT_WIDTH(x)		FIELD_PREP(ADAU7118_SLOT_WIDTH_MASK, x)
+#घोषणा ADAU7118_TRISTATE_MASK		BIT(6)
+#घोषणा ADAU7118_TRISTATE(x)		FIELD_PREP(ADAU7118_TRISTATE_MASK, x)
+#घोषणा ADAU7118_DATA_FMT_MASK		GENMASK(3, 1)
+#घोषणा ADAU7118_DATA_FMT(x)		FIELD_PREP(ADAU7118_DATA_FMT_MASK, x)
+#घोषणा ADAU7118_SAI_MODE_MASK		BIT(0)
+#घोषणा ADAU7118_SAI_MODE(x)		FIELD_PREP(ADAU7118_SAI_MODE_MASK, x)
+#घोषणा ADAU7118_LRCLK_BCLK_POL_MASK	GENMASK(1, 0)
+#घोषणा ADAU7118_LRCLK_BCLK_POL(x) \
 				FIELD_PREP(ADAU7118_LRCLK_BCLK_POL_MASK, x)
-#define ADAU7118_SPT_SLOT_MASK		GENMASK(7, 4)
-#define ADAU7118_SPT_SLOT(x)		FIELD_PREP(ADAU7118_SPT_SLOT_MASK, x)
-#define ADAU7118_FULL_SOFT_R_MASK	BIT(1)
-#define ADAU7118_FULL_SOFT_R(x)		FIELD_PREP(ADAU7118_FULL_SOFT_R_MASK, x)
+#घोषणा ADAU7118_SPT_SLOT_MASK		GENMASK(7, 4)
+#घोषणा ADAU7118_SPT_SLOT(x)		FIELD_PREP(ADAU7118_SPT_SLOT_MASK, x)
+#घोषणा ADAU7118_FULL_SOFT_R_MASK	BIT(1)
+#घोषणा ADAU7118_FULL_SOFT_R(x)		FIELD_PREP(ADAU7118_FULL_SOFT_R_MASK, x)
 
-struct adau7118_data {
-	struct regmap *map;
-	struct device *dev;
-	struct regulator *iovdd;
-	struct regulator *dvdd;
+काष्ठा adau7118_data अणु
+	काष्ठा regmap *map;
+	काष्ठा device *dev;
+	काष्ठा regulator *iovdd;
+	काष्ठा regulator *dvdd;
 	u32 slot_width;
 	u32 slots;
 	bool hw_mode;
 	bool right_j;
-};
+पूर्ण;
 
 /* Input Enable */
-static const struct snd_kcontrol_new adau7118_dapm_pdm_control[4] = {
+अटल स्थिर काष्ठा snd_kcontrol_new adau7118_dapm_pdm_control[4] = अणु
 	SOC_DAPM_SINGLE("Capture Switch", ADAU7118_REG_ENABLES, 0, 1, 0),
 	SOC_DAPM_SINGLE("Capture Switch", ADAU7118_REG_ENABLES, 1, 1, 0),
 	SOC_DAPM_SINGLE("Capture Switch", ADAU7118_REG_ENABLES, 2, 1, 0),
 	SOC_DAPM_SINGLE("Capture Switch", ADAU7118_REG_ENABLES, 3, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget adau7118_widgets_sw[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget adau7118_widमाला_लो_sw[] = अणु
 	/* Input Enable Switches */
 	SND_SOC_DAPM_SWITCH("PDM0", SND_SOC_NOPM, 0, 0,
 			    &adau7118_dapm_pdm_control[0]),
@@ -63,8 +64,8 @@ static const struct snd_soc_dapm_widget adau7118_widgets_sw[] = {
 			    &adau7118_dapm_pdm_control[3]),
 
 	/* PDM Clocks */
-	SND_SOC_DAPM_SUPPLY("PDM_CLK0", ADAU7118_REG_ENABLES, 4, 0, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("PDM_CLK1", ADAU7118_REG_ENABLES, 5, 0, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("PDM_CLK0", ADAU7118_REG_ENABLES, 4, 0, शून्य, 0),
+	SND_SOC_DAPM_SUPPLY("PDM_CLK1", ADAU7118_REG_ENABLES, 5, 0, शून्य, 0),
 
 	/* Output channels */
 	SND_SOC_DAPM_AIF_OUT("AIF1TX1", "Capture", 0, ADAU7118_REG_SPT_CX(0),
@@ -83,133 +84,133 @@ static const struct snd_soc_dapm_widget adau7118_widgets_sw[] = {
 			     0, 0),
 	SND_SOC_DAPM_AIF_OUT("AIF1TX8", "Capture", 0, ADAU7118_REG_SPT_CX(7),
 			     0, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route adau7118_routes_sw[] = {
-	{ "PDM0", "Capture Switch", "PDM_DAT0" },
-	{ "PDM1", "Capture Switch", "PDM_DAT1" },
-	{ "PDM2", "Capture Switch", "PDM_DAT2" },
-	{ "PDM3", "Capture Switch", "PDM_DAT3" },
-	{ "AIF1TX1", NULL, "PDM0" },
-	{ "AIF1TX2", NULL, "PDM0" },
-	{ "AIF1TX3", NULL, "PDM1" },
-	{ "AIF1TX4", NULL, "PDM1" },
-	{ "AIF1TX5", NULL, "PDM2" },
-	{ "AIF1TX6", NULL, "PDM2" },
-	{ "AIF1TX7", NULL, "PDM3" },
-	{ "AIF1TX8", NULL, "PDM3" },
-	{ "Capture", NULL, "PDM_CLK0" },
-	{ "Capture", NULL, "PDM_CLK1" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route adau7118_routes_sw[] = अणु
+	अणु "PDM0", "Capture Switch", "PDM_DAT0" पूर्ण,
+	अणु "PDM1", "Capture Switch", "PDM_DAT1" पूर्ण,
+	अणु "PDM2", "Capture Switch", "PDM_DAT2" पूर्ण,
+	अणु "PDM3", "Capture Switch", "PDM_DAT3" पूर्ण,
+	अणु "AIF1TX1", शून्य, "PDM0" पूर्ण,
+	अणु "AIF1TX2", शून्य, "PDM0" पूर्ण,
+	अणु "AIF1TX3", शून्य, "PDM1" पूर्ण,
+	अणु "AIF1TX4", शून्य, "PDM1" पूर्ण,
+	अणु "AIF1TX5", शून्य, "PDM2" पूर्ण,
+	अणु "AIF1TX6", शून्य, "PDM2" पूर्ण,
+	अणु "AIF1TX7", शून्य, "PDM3" पूर्ण,
+	अणु "AIF1TX8", शून्य, "PDM3" पूर्ण,
+	अणु "Capture", शून्य, "PDM_CLK0" पूर्ण,
+	अणु "Capture", शून्य, "PDM_CLK1" पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_widget adau7118_widgets_hw[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget adau7118_widमाला_लो_hw[] = अणु
 	SND_SOC_DAPM_AIF_OUT("AIF1TX", "Capture", 0, SND_SOC_NOPM, 0, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route adau7118_routes_hw[] = {
-	{ "AIF1TX", NULL, "PDM_DAT0" },
-	{ "AIF1TX", NULL, "PDM_DAT1" },
-	{ "AIF1TX", NULL, "PDM_DAT2" },
-	{ "AIF1TX", NULL, "PDM_DAT3" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route adau7118_routes_hw[] = अणु
+	अणु "AIF1TX", शून्य, "PDM_DAT0" पूर्ण,
+	अणु "AIF1TX", शून्य, "PDM_DAT1" पूर्ण,
+	अणु "AIF1TX", शून्य, "PDM_DAT2" पूर्ण,
+	अणु "AIF1TX", शून्य, "PDM_DAT3" पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_widget adau7118_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget adau7118_widमाला_लो[] = अणु
 	SND_SOC_DAPM_INPUT("PDM_DAT0"),
 	SND_SOC_DAPM_INPUT("PDM_DAT1"),
 	SND_SOC_DAPM_INPUT("PDM_DAT2"),
 	SND_SOC_DAPM_INPUT("PDM_DAT3"),
-};
+पूर्ण;
 
-static int adau7118_set_channel_map(struct snd_soc_dai *dai,
-				    unsigned int tx_num, unsigned int *tx_slot,
-				    unsigned int rx_num, unsigned int *rx_slot)
-{
-	struct adau7118_data *st =
+अटल पूर्णांक adau7118_set_channel_map(काष्ठा snd_soc_dai *dai,
+				    अचिन्हित पूर्णांक tx_num, अचिन्हित पूर्णांक *tx_slot,
+				    अचिन्हित पूर्णांक rx_num, अचिन्हित पूर्णांक *rx_slot)
+अणु
+	काष्ठा adau7118_data *st =
 		snd_soc_component_get_drvdata(dai->component);
-	int chan, ret;
+	पूर्णांक chan, ret;
 
 	dev_dbg(st->dev, "Set channel map, %d", tx_num);
 
-	for (chan = 0; chan < tx_num; chan++) {
+	क्रम (chan = 0; chan < tx_num; chan++) अणु
 		ret = snd_soc_component_update_bits(dai->component,
 					ADAU7118_REG_SPT_CX(chan),
 					ADAU7118_SPT_SLOT_MASK,
 					ADAU7118_SPT_SLOT(tx_slot[chan]));
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adau7118_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct adau7118_data *st =
+अटल पूर्णांक adau7118_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा adau7118_data *st =
 		snd_soc_component_get_drvdata(dai->component);
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u32 regval;
 
 	dev_dbg(st->dev, "Set format, fmt:%d\n", fmt);
 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		ret = snd_soc_component_update_bits(dai->component,
 						    ADAU7118_REG_SPT_CTRL1,
 						    ADAU7118_DATA_FMT_MASK,
 						    ADAU7118_DATA_FMT(0));
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		ret = snd_soc_component_update_bits(dai->component,
 						    ADAU7118_REG_SPT_CTRL1,
 						    ADAU7118_DATA_FMT_MASK,
 						    ADAU7118_DATA_FMT(1));
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
 		st->right_j = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(st->dev, "Invalid format %d",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
 		regval = ADAU7118_LRCLK_BCLK_POL(0);
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
 		regval = ADAU7118_LRCLK_BCLK_POL(2);
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
 		regval = ADAU7118_LRCLK_BCLK_POL(1);
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
 		regval = ADAU7118_LRCLK_BCLK_POL(3);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(st->dev, "Invalid Inv mask %d",
 			fmt & SND_SOC_DAIFMT_INV_MASK);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = snd_soc_component_update_bits(dai->component,
 					    ADAU7118_REG_SPT_CTRL2,
 					    ADAU7118_LRCLK_BCLK_POL_MASK,
 					    regval);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adau7118_set_tristate(struct snd_soc_dai *dai, int tristate)
-{
-	struct adau7118_data *st =
+अटल पूर्णांक adau7118_set_tristate(काष्ठा snd_soc_dai *dai, पूर्णांक tristate)
+अणु
+	काष्ठा adau7118_data *st =
 		snd_soc_component_get_drvdata(dai->component);
-	int ret;
+	पूर्णांक ret;
 
 	dev_dbg(st->dev, "Set tristate, %d\n", tristate);
 
@@ -217,368 +218,368 @@ static int adau7118_set_tristate(struct snd_soc_dai *dai, int tristate)
 					    ADAU7118_REG_SPT_CTRL1,
 					    ADAU7118_TRISTATE_MASK,
 					    ADAU7118_TRISTATE(tristate));
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adau7118_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
-				 unsigned int rx_mask, int slots,
-				 int slot_width)
-{
-	struct adau7118_data *st =
+अटल पूर्णांक adau7118_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
+				 अचिन्हित पूर्णांक rx_mask, पूर्णांक slots,
+				 पूर्णांक slot_width)
+अणु
+	काष्ठा adau7118_data *st =
 		snd_soc_component_get_drvdata(dai->component);
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u32 regval;
 
 	dev_dbg(st->dev, "Set tdm, slots:%d width:%d\n", slots, slot_width);
 
-	switch (slot_width) {
-	case 32:
+	चयन (slot_width) अणु
+	हाल 32:
 		regval = ADAU7118_SLOT_WIDTH(0);
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		regval = ADAU7118_SLOT_WIDTH(2);
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		regval = ADAU7118_SLOT_WIDTH(1);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(st->dev, "Invalid slot width:%d\n", slot_width);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = snd_soc_component_update_bits(dai->component,
 					    ADAU7118_REG_SPT_CTRL1,
 					    ADAU7118_SLOT_WIDTH_MASK, regval);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	st->slot_width = slot_width;
 	st->slots = slots;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adau7118_hw_params(struct snd_pcm_substream *substream,
-			      struct snd_pcm_hw_params *params,
-			      struct snd_soc_dai *dai)
-{
-	struct adau7118_data *st =
+अटल पूर्णांक adau7118_hw_params(काष्ठा snd_pcm_substream *substream,
+			      काष्ठा snd_pcm_hw_params *params,
+			      काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा adau7118_data *st =
 		snd_soc_component_get_drvdata(dai->component);
 	u32 data_width = params_width(params), slots_width;
-	int ret;
+	पूर्णांक ret;
 	u32 regval;
 
-	if (!st->slots) {
+	अगर (!st->slots) अणु
 		/* set stereo mode */
 		ret = snd_soc_component_update_bits(dai->component,
 						    ADAU7118_REG_SPT_CTRL1,
 						    ADAU7118_SAI_MODE_MASK,
 						    ADAU7118_SAI_MODE(0));
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		slots_width = 32;
-	} else {
+	पूर्ण अन्यथा अणु
 		slots_width = st->slot_width;
-	}
+	पूर्ण
 
-	if (data_width > slots_width) {
+	अगर (data_width > slots_width) अणु
 		dev_err(st->dev, "Invalid data_width:%d, slots_width:%d",
 			data_width, slots_width);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (st->right_j) {
-		switch (slots_width - data_width) {
-		case 8:
+	अगर (st->right_j) अणु
+		चयन (slots_width - data_width) अणु
+		हाल 8:
 			/* delay bclck by 8 */
 			regval = ADAU7118_DATA_FMT(2);
-			break;
-		case 12:
+			अवरोध;
+		हाल 12:
 			/* delay bclck by 12 */
 			regval = ADAU7118_DATA_FMT(3);
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			/* delay bclck by 16 */
 			regval = ADAU7118_DATA_FMT(4);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(st->dev,
 				"Cannot set right_j setting, slot_w:%d, data_w:%d\n",
 					slots_width, data_width);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		ret = snd_soc_component_update_bits(dai->component,
 						    ADAU7118_REG_SPT_CTRL1,
 						    ADAU7118_DATA_FMT_MASK,
 						    regval);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adau7118_set_bias_level(struct snd_soc_component *component,
-				   enum snd_soc_bias_level level)
-{
-	struct adau7118_data *st = snd_soc_component_get_drvdata(component);
-	int ret = 0;
+अटल पूर्णांक adau7118_set_bias_level(काष्ठा snd_soc_component *component,
+				   क्रमागत snd_soc_bias_level level)
+अणु
+	काष्ठा adau7118_data *st = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret = 0;
 
 	dev_dbg(st->dev, "Set bias level %d\n", level);
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-	case SND_SOC_BIAS_PREPARE:
-		break;
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+	हाल SND_SOC_BIAS_PREPARE:
+		अवरोध;
 
-	case SND_SOC_BIAS_STANDBY:
-		if (snd_soc_component_get_bias_level(component) ==
-							SND_SOC_BIAS_OFF) {
-			/* power on */
+	हाल SND_SOC_BIAS_STANDBY:
+		अगर (snd_soc_component_get_bias_level(component) ==
+							SND_SOC_BIAS_OFF) अणु
+			/* घातer on */
 			ret = regulator_enable(st->iovdd);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			/* there's no timing constraints before enabling dvdd */
+			/* there's no timing स्थिरraपूर्णांकs beक्रमe enabling dvdd */
 			ret = regulator_enable(st->dvdd);
-			if (ret) {
+			अगर (ret) अणु
 				regulator_disable(st->iovdd);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
-			if (st->hw_mode)
-				return 0;
+			अगर (st->hw_mode)
+				वापस 0;
 
 			regcache_cache_only(st->map, false);
 			/* sync cache */
 			ret = snd_soc_component_cache_sync(component);
-		}
-		break;
-	case SND_SOC_BIAS_OFF:
-		/* power off */
+		पूर्ण
+		अवरोध;
+	हाल SND_SOC_BIAS_OFF:
+		/* घातer off */
 		ret = regulator_disable(st->dvdd);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = regulator_disable(st->iovdd);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (st->hw_mode)
-			return 0;
+		अगर (st->hw_mode)
+			वापस 0;
 
 		/* cache only */
 		regcache_mark_dirty(st->map);
 		regcache_cache_only(st->map, true);
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adau7118_component_probe(struct snd_soc_component *component)
-{
-	struct adau7118_data *st = snd_soc_component_get_drvdata(component);
-	struct snd_soc_dapm_context *dapm =
+अटल पूर्णांक adau7118_component_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा adau7118_data *st = snd_soc_component_get_drvdata(component);
+	काष्ठा snd_soc_dapm_context *dapm =
 					snd_soc_component_get_dapm(component);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (st->hw_mode) {
-		ret = snd_soc_dapm_new_controls(dapm, adau7118_widgets_hw,
-					ARRAY_SIZE(adau7118_widgets_hw));
-		if (ret)
-			return ret;
+	अगर (st->hw_mode) अणु
+		ret = snd_soc_dapm_new_controls(dapm, adau7118_widमाला_लो_hw,
+					ARRAY_SIZE(adau7118_widमाला_लो_hw));
+		अगर (ret)
+			वापस ret;
 
 		ret = snd_soc_dapm_add_routes(dapm, adau7118_routes_hw,
 					      ARRAY_SIZE(adau7118_routes_hw));
-	} else {
+	पूर्ण अन्यथा अणु
 		snd_soc_component_init_regmap(component, st->map);
-		ret = snd_soc_dapm_new_controls(dapm, adau7118_widgets_sw,
-					ARRAY_SIZE(adau7118_widgets_sw));
-		if (ret)
-			return ret;
+		ret = snd_soc_dapm_new_controls(dapm, adau7118_widमाला_लो_sw,
+					ARRAY_SIZE(adau7118_widमाला_लो_sw));
+		अगर (ret)
+			वापस ret;
 
 		ret = snd_soc_dapm_add_routes(dapm, adau7118_routes_sw,
 					      ARRAY_SIZE(adau7118_routes_sw));
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct snd_soc_dai_ops adau7118_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops adau7118_ops = अणु
 	.hw_params = adau7118_hw_params,
 	.set_channel_map = adau7118_set_channel_map,
 	.set_fmt = adau7118_set_fmt,
 	.set_tdm_slot = adau7118_set_tdm_slot,
 	.set_tristate = adau7118_set_tristate,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver adau7118_dai = {
+अटल काष्ठा snd_soc_dai_driver adau7118_dai = अणु
 	.name = "adau7118-hifi-capture",
-	.capture = {
+	.capture = अणु
 		.stream_name = "Capture",
 		.channels_min = 1,
 		.channels_max = 8,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |
 			SNDRV_PCM_FMTBIT_S20_LE | SNDRV_PCM_FMTBIT_S24_LE |
 			SNDRV_PCM_FMTBIT_S24_3LE,
 		.rates = SNDRV_PCM_RATE_CONTINUOUS,
 		.rate_min = 4000,
 		.rate_max = 192000,
 		.sig_bits = 24,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_component_driver adau7118_component_driver = {
+अटल स्थिर काष्ठा snd_soc_component_driver adau7118_component_driver = अणु
 	.probe			= adau7118_component_probe,
 	.set_bias_level		= adau7118_set_bias_level,
-	.dapm_widgets		= adau7118_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(adau7118_widgets),
-	.use_pmdown_time	= 1,
+	.dapm_widमाला_लो		= adau7118_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(adau7118_widमाला_लो),
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static void adau7118_regulator_disable(void *data)
-{
-	struct adau7118_data *st = data;
-	int ret;
+अटल व्योम adau7118_regulator_disable(व्योम *data)
+अणु
+	काष्ठा adau7118_data *st = data;
+	पूर्णांक ret;
 	/*
-	 * If we fail to disable DVDD, don't bother in trying IOVDD. We
-	 * actually don't want to be left in the situation where DVDD
+	 * If we fail to disable DVDD, करोn't bother in trying IOVDD. We
+	 * actually करोn't want to be left in the situation where DVDD
 	 * is enabled and IOVDD is disabled.
 	 */
 	ret = regulator_disable(st->dvdd);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
 	regulator_disable(st->iovdd);
-}
+पूर्ण
 
-static int adau7118_regulator_setup(struct adau7118_data *st)
-{
+अटल पूर्णांक adau7118_regulator_setup(काष्ठा adau7118_data *st)
+अणु
 	st->iovdd = devm_regulator_get(st->dev, "iovdd");
-	if (IS_ERR(st->iovdd)) {
+	अगर (IS_ERR(st->iovdd)) अणु
 		dev_err(st->dev, "Could not get iovdd: %ld\n",
 			PTR_ERR(st->iovdd));
-		return PTR_ERR(st->iovdd);
-	}
+		वापस PTR_ERR(st->iovdd);
+	पूर्ण
 
 	st->dvdd = devm_regulator_get(st->dev, "dvdd");
-	if (IS_ERR(st->dvdd)) {
+	अगर (IS_ERR(st->dvdd)) अणु
 		dev_err(st->dev, "Could not get dvdd: %ld\n",
 			PTR_ERR(st->dvdd));
-		return PTR_ERR(st->dvdd);
-	}
+		वापस PTR_ERR(st->dvdd);
+	पूर्ण
 	/* just assume the device is in reset */
-	if (!st->hw_mode) {
+	अगर (!st->hw_mode) अणु
 		regcache_mark_dirty(st->map);
 		regcache_cache_only(st->map, true);
-	}
+	पूर्ण
 
-	return devm_add_action_or_reset(st->dev, adau7118_regulator_disable,
+	वापस devm_add_action_or_reset(st->dev, adau7118_regulator_disable,
 					st);
-}
+पूर्ण
 
-static int adau7118_parset_dt(const struct adau7118_data *st)
-{
-	int ret;
+अटल पूर्णांक adau7118_parset_dt(स्थिर काष्ठा adau7118_data *st)
+अणु
+	पूर्णांक ret;
 	u32 dec_ratio = 0;
-	/* 4 inputs */
+	/* 4 inमाला_दो */
 	u32 clk_map[4], regval;
 
-	if (st->hw_mode)
-		return 0;
+	अगर (st->hw_mode)
+		वापस 0;
 
-	ret = device_property_read_u32(st->dev, "adi,decimation-ratio",
+	ret = device_property_पढ़ो_u32(st->dev, "adi,decimation-ratio",
 				       &dec_ratio);
-	if (!ret) {
-		switch (dec_ratio) {
-		case 64:
+	अगर (!ret) अणु
+		चयन (dec_ratio) अणु
+		हाल 64:
 			regval = ADAU7118_DEC_RATIO(0);
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			regval = ADAU7118_DEC_RATIO(1);
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			regval = ADAU7118_DEC_RATIO(2);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(st->dev, "Invalid dec ratio: %u", dec_ratio);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		ret = regmap_update_bits(st->map,
 					 ADAU7118_REG_DEC_RATIO_CLK_MAP,
 					 ADAU7118_DEC_RATIO_MASK, regval);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = device_property_read_u32_array(st->dev, "adi,pdm-clk-map",
+	ret = device_property_पढ़ो_u32_array(st->dev, "adi,pdm-clk-map",
 					     clk_map, ARRAY_SIZE(clk_map));
-	if (!ret) {
-		int pdm;
+	अगर (!ret) अणु
+		पूर्णांक pdm;
 		u32 _clk_map = 0;
 
-		for (pdm = 0; pdm < ARRAY_SIZE(clk_map); pdm++)
+		क्रम (pdm = 0; pdm < ARRAY_SIZE(clk_map); pdm++)
 			_clk_map |= (clk_map[pdm] << (pdm + 4));
 
 		ret = regmap_update_bits(st->map,
 					 ADAU7118_REG_DEC_RATIO_CLK_MAP,
 					 ADAU7118_CLK_MAP_MASK, _clk_map);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int adau7118_probe(struct device *dev, struct regmap *map, bool hw_mode)
-{
-	struct adau7118_data *st;
-	int ret;
+पूर्णांक adau7118_probe(काष्ठा device *dev, काष्ठा regmap *map, bool hw_mode)
+अणु
+	काष्ठा adau7118_data *st;
+	पूर्णांक ret;
 
-	st = devm_kzalloc(dev, sizeof(*st), GFP_KERNEL);
-	if (!st)
-		return -ENOMEM;
+	st = devm_kzalloc(dev, माप(*st), GFP_KERNEL);
+	अगर (!st)
+		वापस -ENOMEM;
 
 	st->dev = dev;
 	st->hw_mode = hw_mode;
 	dev_set_drvdata(dev, st);
 
-	if (!hw_mode) {
+	अगर (!hw_mode) अणु
 		st->map = map;
 		adau7118_dai.ops = &adau7118_ops;
 		/*
-		 * Perform a full soft reset. This will set all register's
+		 * Perक्रमm a full soft reset. This will set all रेजिस्टर's
 		 * with their reset values.
 		 */
 		ret = regmap_update_bits(map, ADAU7118_REG_RESET,
 					 ADAU7118_FULL_SOFT_R_MASK,
 					 ADAU7118_FULL_SOFT_R(1));
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = adau7118_parset_dt(st);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = adau7118_regulator_setup(st);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return devm_snd_soc_register_component(dev,
+	वापस devm_snd_soc_रेजिस्टर_component(dev,
 					       &adau7118_component_driver,
 					       &adau7118_dai, 1);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(adau7118_probe);
 
 MODULE_AUTHOR("Nuno Sa <nuno.sa@analog.com>");

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2017 Intel Corporation
+ * Copyright तऊ 2017 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,115 +23,115 @@
  *
  */
 
-#include "lib_sw_fence.h"
+#समावेश "lib_sw_fence.h"
 
-/* Small library of different fence types useful for writing tests */
+/* Small library of dअगरferent fence types useful क्रम writing tests */
 
-static int __i915_sw_fence_call
-nop_fence_notify(struct i915_sw_fence *fence, enum i915_sw_fence_notify state)
-{
-	return NOTIFY_DONE;
-}
+अटल पूर्णांक __i915_sw_fence_call
+nop_fence_notअगरy(काष्ठा i915_sw_fence *fence, क्रमागत i915_sw_fence_notअगरy state)
+अणु
+	वापस NOTIFY_DONE;
+पूर्ण
 
-void __onstack_fence_init(struct i915_sw_fence *fence,
-			  const char *name,
-			  struct lock_class_key *key)
-{
+व्योम __onstack_fence_init(काष्ठा i915_sw_fence *fence,
+			  स्थिर अक्षर *name,
+			  काष्ठा lock_class_key *key)
+अणु
 	debug_fence_init_onstack(fence);
 
-	__init_waitqueue_head(&fence->wait, name, key);
+	__init_रुकोqueue_head(&fence->रुको, name, key);
 	atomic_set(&fence->pending, 1);
 	fence->error = 0;
-	fence->flags = (unsigned long)nop_fence_notify;
-}
+	fence->flags = (अचिन्हित दीर्घ)nop_fence_notअगरy;
+पूर्ण
 
-void onstack_fence_fini(struct i915_sw_fence *fence)
-{
-	if (!fence->flags)
-		return;
+व्योम onstack_fence_fini(काष्ठा i915_sw_fence *fence)
+अणु
+	अगर (!fence->flags)
+		वापस;
 
 	i915_sw_fence_commit(fence);
 	i915_sw_fence_fini(fence);
-}
+पूर्ण
 
-static void timed_fence_wake(struct timer_list *t)
-{
-	struct timed_fence *tf = from_timer(tf, t, timer);
+अटल व्योम समयd_fence_wake(काष्ठा समयr_list *t)
+अणु
+	काष्ठा समयd_fence *tf = from_समयr(tf, t, समयr);
 
 	i915_sw_fence_commit(&tf->fence);
-}
+पूर्ण
 
-void timed_fence_init(struct timed_fence *tf, unsigned long expires)
-{
+व्योम समयd_fence_init(काष्ठा समयd_fence *tf, अचिन्हित दीर्घ expires)
+अणु
 	onstack_fence_init(&tf->fence);
 
-	timer_setup_on_stack(&tf->timer, timed_fence_wake, 0);
+	समयr_setup_on_stack(&tf->समयr, समयd_fence_wake, 0);
 
-	if (time_after(expires, jiffies))
-		mod_timer(&tf->timer, expires);
-	else
+	अगर (समय_after(expires, jअगरfies))
+		mod_समयr(&tf->समयr, expires);
+	अन्यथा
 		i915_sw_fence_commit(&tf->fence);
-}
+पूर्ण
 
-void timed_fence_fini(struct timed_fence *tf)
-{
-	if (del_timer_sync(&tf->timer))
+व्योम समयd_fence_fini(काष्ठा समयd_fence *tf)
+अणु
+	अगर (del_समयr_sync(&tf->समयr))
 		i915_sw_fence_commit(&tf->fence);
 
-	destroy_timer_on_stack(&tf->timer);
+	destroy_समयr_on_stack(&tf->समयr);
 	i915_sw_fence_fini(&tf->fence);
-}
+पूर्ण
 
-struct heap_fence {
-	struct i915_sw_fence fence;
-	union {
-		struct kref ref;
-		struct rcu_head rcu;
-	};
-};
+काष्ठा heap_fence अणु
+	काष्ठा i915_sw_fence fence;
+	जोड़ अणु
+		काष्ठा kref ref;
+		काष्ठा rcu_head rcu;
+	पूर्ण;
+पूर्ण;
 
-static int __i915_sw_fence_call
-heap_fence_notify(struct i915_sw_fence *fence, enum i915_sw_fence_notify state)
-{
-	struct heap_fence *h = container_of(fence, typeof(*h), fence);
+अटल पूर्णांक __i915_sw_fence_call
+heap_fence_notअगरy(काष्ठा i915_sw_fence *fence, क्रमागत i915_sw_fence_notअगरy state)
+अणु
+	काष्ठा heap_fence *h = container_of(fence, typeof(*h), fence);
 
-	switch (state) {
-	case FENCE_COMPLETE:
-		break;
+	चयन (state) अणु
+	हाल FENCE_COMPLETE:
+		अवरोध;
 
-	case FENCE_FREE:
+	हाल FENCE_FREE:
 		heap_fence_put(&h->fence);
-	}
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-struct i915_sw_fence *heap_fence_create(gfp_t gfp)
-{
-	struct heap_fence *h;
+काष्ठा i915_sw_fence *heap_fence_create(gfp_t gfp)
+अणु
+	काष्ठा heap_fence *h;
 
-	h = kmalloc(sizeof(*h), gfp);
-	if (!h)
-		return NULL;
+	h = kदो_स्मृति(माप(*h), gfp);
+	अगर (!h)
+		वापस शून्य;
 
-	i915_sw_fence_init(&h->fence, heap_fence_notify);
+	i915_sw_fence_init(&h->fence, heap_fence_notअगरy);
 	refcount_set(&h->ref.refcount, 2);
 
-	return &h->fence;
-}
+	वापस &h->fence;
+पूर्ण
 
-static void heap_fence_release(struct kref *ref)
-{
-	struct heap_fence *h = container_of(ref, typeof(*h), ref);
+अटल व्योम heap_fence_release(काष्ठा kref *ref)
+अणु
+	काष्ठा heap_fence *h = container_of(ref, typeof(*h), ref);
 
 	i915_sw_fence_fini(&h->fence);
 
-	kfree_rcu(h, rcu);
-}
+	kमुक्त_rcu(h, rcu);
+पूर्ण
 
-void heap_fence_put(struct i915_sw_fence *fence)
-{
-	struct heap_fence *h = container_of(fence, typeof(*h), fence);
+व्योम heap_fence_put(काष्ठा i915_sw_fence *fence)
+अणु
+	काष्ठा heap_fence *h = container_of(fence, typeof(*h), fence);
 
 	kref_put(&h->ref, heap_fence_release);
-}
+पूर्ण

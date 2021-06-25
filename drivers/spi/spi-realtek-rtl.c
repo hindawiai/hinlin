@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/mod_devicetable.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/spi/spi.h>
 
-struct rtspi {
-	void __iomem *base;
-};
+काष्ठा rtspi अणु
+	व्योम __iomem *base;
+पूर्ण;
 
 /* SPI Flash Configuration Register */
-#define RTL_SPI_SFCR			0x00
-#define RTL_SPI_SFCR_RBO		BIT(28)
-#define RTL_SPI_SFCR_WBO		BIT(27)
+#घोषणा RTL_SPI_SFCR			0x00
+#घोषणा RTL_SPI_SFCR_RBO		BIT(28)
+#घोषणा RTL_SPI_SFCR_WBO		BIT(27)
 
 /* SPI Flash Control and Status Register */
-#define RTL_SPI_SFCSR			0x08
-#define RTL_SPI_SFCSR_CSB0		BIT(31)
-#define RTL_SPI_SFCSR_CSB1		BIT(30)
-#define RTL_SPI_SFCSR_RDY		BIT(27)
-#define RTL_SPI_SFCSR_CS		BIT(24)
-#define RTL_SPI_SFCSR_LEN_MASK		~(0x03 << 28)
-#define RTL_SPI_SFCSR_LEN1		(0x00 << 28)
-#define RTL_SPI_SFCSR_LEN4		(0x03 << 28)
+#घोषणा RTL_SPI_SFCSR			0x08
+#घोषणा RTL_SPI_SFCSR_CSB0		BIT(31)
+#घोषणा RTL_SPI_SFCSR_CSB1		BIT(30)
+#घोषणा RTL_SPI_SFCSR_RDY		BIT(27)
+#घोषणा RTL_SPI_SFCSR_CS		BIT(24)
+#घोषणा RTL_SPI_SFCSR_LEN_MASK		~(0x03 << 28)
+#घोषणा RTL_SPI_SFCSR_LEN1		(0x00 << 28)
+#घोषणा RTL_SPI_SFCSR_LEN4		(0x03 << 28)
 
 /* SPI Flash Data Register */
-#define RTL_SPI_SFDR			0x0c
+#घोषणा RTL_SPI_SFDR			0x0c
 
-#define REG(x)		(rtspi->base + x)
+#घोषणा REG(x)		(rtspi->base + x)
 
 
-static void rt_set_cs(struct spi_device *spi, bool active)
-{
-	struct rtspi *rtspi = spi_controller_get_devdata(spi->controller);
+अटल व्योम rt_set_cs(काष्ठा spi_device *spi, bool active)
+अणु
+	काष्ठा rtspi *rtspi = spi_controller_get_devdata(spi->controller);
 	u32 value;
 
 	/* CS0 bit is active low */
-	value = readl(REG(RTL_SPI_SFCSR));
-	if (active)
+	value = पढ़ोl(REG(RTL_SPI_SFCSR));
+	अगर (active)
 		value |= RTL_SPI_SFCSR_CSB0;
-	else
+	अन्यथा
 		value &= ~RTL_SPI_SFCSR_CSB0;
-	writel(value, REG(RTL_SPI_SFCSR));
-}
+	ग_लिखोl(value, REG(RTL_SPI_SFCSR));
+पूर्ण
 
-static void set_size(struct rtspi *rtspi, int size)
-{
+अटल व्योम set_size(काष्ठा rtspi *rtspi, पूर्णांक size)
+अणु
 	u32 value;
 
-	value = readl(REG(RTL_SPI_SFCSR));
+	value = पढ़ोl(REG(RTL_SPI_SFCSR));
 	value &= RTL_SPI_SFCSR_LEN_MASK;
-	if (size == 4)
+	अगर (size == 4)
 		value |= RTL_SPI_SFCSR_LEN4;
-	else if (size == 1)
+	अन्यथा अगर (size == 1)
 		value |= RTL_SPI_SFCSR_LEN1;
-	writel(value, REG(RTL_SPI_SFCSR));
-}
+	ग_लिखोl(value, REG(RTL_SPI_SFCSR));
+पूर्ण
 
-static inline void wait_ready(struct rtspi *rtspi)
-{
-	while (!(readl(REG(RTL_SPI_SFCSR)) & RTL_SPI_SFCSR_RDY))
+अटल अंतरभूत व्योम रुको_पढ़ोy(काष्ठा rtspi *rtspi)
+अणु
+	जबतक (!(पढ़ोl(REG(RTL_SPI_SFCSR)) & RTL_SPI_SFCSR_RDY))
 		cpu_relax();
-}
-static void send4(struct rtspi *rtspi, const u32 *buf)
-{
-	wait_ready(rtspi);
+पूर्ण
+अटल व्योम send4(काष्ठा rtspi *rtspi, स्थिर u32 *buf)
+अणु
+	रुको_पढ़ोy(rtspi);
 	set_size(rtspi, 4);
-	writel(*buf, REG(RTL_SPI_SFDR));
-}
+	ग_लिखोl(*buf, REG(RTL_SPI_SFDR));
+पूर्ण
 
-static void send1(struct rtspi *rtspi, const u8 *buf)
-{
-	wait_ready(rtspi);
+अटल व्योम send1(काष्ठा rtspi *rtspi, स्थिर u8 *buf)
+अणु
+	रुको_पढ़ोy(rtspi);
 	set_size(rtspi, 1);
-	writel(buf[0] << 24, REG(RTL_SPI_SFDR));
-}
+	ग_लिखोl(buf[0] << 24, REG(RTL_SPI_SFDR));
+पूर्ण
 
-static void rcv4(struct rtspi *rtspi, u32 *buf)
-{
-	wait_ready(rtspi);
+अटल व्योम rcv4(काष्ठा rtspi *rtspi, u32 *buf)
+अणु
+	रुको_पढ़ोy(rtspi);
 	set_size(rtspi, 4);
-	*buf = readl(REG(RTL_SPI_SFDR));
-}
+	*buf = पढ़ोl(REG(RTL_SPI_SFDR));
+पूर्ण
 
-static void rcv1(struct rtspi *rtspi, u8 *buf)
-{
-	wait_ready(rtspi);
+अटल व्योम rcv1(काष्ठा rtspi *rtspi, u8 *buf)
+अणु
+	रुको_पढ़ोy(rtspi);
 	set_size(rtspi, 1);
-	*buf = readl(REG(RTL_SPI_SFDR)) >> 24;
-}
+	*buf = पढ़ोl(REG(RTL_SPI_SFDR)) >> 24;
+पूर्ण
 
-static int transfer_one(struct spi_controller *ctrl, struct spi_device *spi,
-			struct spi_transfer *xfer)
-{
-	struct rtspi *rtspi = spi_controller_get_devdata(ctrl);
-	void *rx_buf;
-	const void *tx_buf;
-	int cnt;
+अटल पूर्णांक transfer_one(काष्ठा spi_controller *ctrl, काष्ठा spi_device *spi,
+			काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा rtspi *rtspi = spi_controller_get_devdata(ctrl);
+	व्योम *rx_buf;
+	स्थिर व्योम *tx_buf;
+	पूर्णांक cnt;
 
 	tx_buf = xfer->tx_buf;
 	rx_buf = xfer->rx_buf;
 	cnt = xfer->len;
-	if (tx_buf) {
-		while (cnt >= 4) {
+	अगर (tx_buf) अणु
+		जबतक (cnt >= 4) अणु
 			send4(rtspi, tx_buf);
 			tx_buf += 4;
 			cnt -= 4;
-		}
-		while (cnt) {
+		पूर्ण
+		जबतक (cnt) अणु
 			send1(rtspi, tx_buf);
 			tx_buf++;
 			cnt--;
-		}
-	} else if (rx_buf) {
-		while (cnt >= 4) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (rx_buf) अणु
+		जबतक (cnt >= 4) अणु
 			rcv4(rtspi, rx_buf);
 			rx_buf += 4;
 			cnt -= 4;
-		}
-		while (cnt) {
+		पूर्ण
+		जबतक (cnt) अणु
 			rcv1(rtspi, rx_buf);
 			rx_buf++;
 			cnt--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spi_finalize_current_transfer(ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void init_hw(struct rtspi *rtspi)
-{
+अटल व्योम init_hw(काष्ठा rtspi *rtspi)
+अणु
 	u32 value;
 
 	/* Turn on big-endian byte ordering */
-	value = readl(REG(RTL_SPI_SFCR));
+	value = पढ़ोl(REG(RTL_SPI_SFCR));
 	value |= RTL_SPI_SFCR_RBO | RTL_SPI_SFCR_WBO;
-	writel(value, REG(RTL_SPI_SFCR));
+	ग_लिखोl(value, REG(RTL_SPI_SFCR));
 
-	value = readl(REG(RTL_SPI_SFCSR));
+	value = पढ़ोl(REG(RTL_SPI_SFCSR));
 	/* Permanently disable CS1, since it's never used */
 	value |= RTL_SPI_SFCSR_CSB1;
-	/* Select CS0 for use */
+	/* Select CS0 क्रम use */
 	value &= RTL_SPI_SFCSR_CS;
-	writel(value, REG(RTL_SPI_SFCSR));
-}
+	ग_लिखोl(value, REG(RTL_SPI_SFCSR));
+पूर्ण
 
-static int realtek_rtl_spi_probe(struct platform_device *pdev)
-{
-	struct spi_controller *ctrl;
-	struct rtspi *rtspi;
-	int err;
+अटल पूर्णांक realtek_rtl_spi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_controller *ctrl;
+	काष्ठा rtspi *rtspi;
+	पूर्णांक err;
 
-	ctrl = devm_spi_alloc_master(&pdev->dev, sizeof(*rtspi));
-	if (!ctrl) {
+	ctrl = devm_spi_alloc_master(&pdev->dev, माप(*rtspi));
+	अगर (!ctrl) अणु
 		dev_err(&pdev->dev, "Error allocating SPI controller\n");
-		return -ENOMEM;
-	}
-	platform_set_drvdata(pdev, ctrl);
+		वापस -ENOMEM;
+	पूर्ण
+	platक्रमm_set_drvdata(pdev, ctrl);
 	rtspi = spi_controller_get_devdata(ctrl);
 
-	rtspi->base = devm_platform_get_and_ioremap_resource(pdev, 0, NULL);
-	if (IS_ERR(rtspi->base)) {
+	rtspi->base = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, शून्य);
+	अगर (IS_ERR(rtspi->base)) अणु
 		dev_err(&pdev->dev, "Could not map SPI register address");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	init_hw(rtspi);
 
@@ -174,35 +175,35 @@ static int realtek_rtl_spi_probe(struct platform_device *pdev)
 	ctrl->set_cs = rt_set_cs;
 	ctrl->transfer_one = transfer_one;
 
-	err = devm_spi_register_controller(&pdev->dev, ctrl);
-	if (err) {
+	err = devm_spi_रेजिस्टर_controller(&pdev->dev, ctrl);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Could not register SPI controller\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct of_device_id realtek_rtl_spi_of_ids[] = {
-	{ .compatible = "realtek,rtl8380-spi" },
-	{ .compatible = "realtek,rtl8382-spi" },
-	{ .compatible = "realtek,rtl8391-spi" },
-	{ .compatible = "realtek,rtl8392-spi" },
-	{ .compatible = "realtek,rtl8393-spi" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id realtek_rtl_spi_of_ids[] = अणु
+	अणु .compatible = "realtek,rtl8380-spi" पूर्ण,
+	अणु .compatible = "realtek,rtl8382-spi" पूर्ण,
+	अणु .compatible = "realtek,rtl8391-spi" पूर्ण,
+	अणु .compatible = "realtek,rtl8392-spi" पूर्ण,
+	अणु .compatible = "realtek,rtl8393-spi" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, realtek_rtl_spi_of_ids);
 
-static struct platform_driver realtek_rtl_spi_driver = {
+अटल काष्ठा platक्रमm_driver realtek_rtl_spi_driver = अणु
 	.probe = realtek_rtl_spi_probe,
-	.driver = {
+	.driver = अणु
 		.name = "realtek-rtl-spi",
 		.of_match_table = realtek_rtl_spi_of_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(realtek_rtl_spi_driver);
+module_platक्रमm_driver(realtek_rtl_spi_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Bert Vermeulen <bert@biot.com>");

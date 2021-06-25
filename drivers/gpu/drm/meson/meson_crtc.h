@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2016 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
@@ -8,13 +9,13 @@
  *     Jasper St. Pierre <jstpierre@mecheye.net>
  */
 
-#ifndef __MESON_CRTC_H
-#define __MESON_CRTC_H
+#अगर_अघोषित __MESON_CRTC_H
+#घोषणा __MESON_CRTC_H
 
-#include "meson_drv.h"
+#समावेश "meson_drv.h"
 
-int meson_crtc_create(struct meson_drm *priv);
+पूर्णांक meson_crtc_create(काष्ठा meson_drm *priv);
 
-void meson_crtc_irq(struct meson_drm *priv);
+व्योम meson_crtc_irq(काष्ठा meson_drm *priv);
 
-#endif /* __MESON_CRTC_H */
+#पूर्ण_अगर /* __MESON_CRTC_H */

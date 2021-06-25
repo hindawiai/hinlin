@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NV50_BAR_H__
-#define __NV50_BAR_H__
-#define nv50_bar(p) container_of((p), struct nv50_bar, base)
-#include "priv.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NV50_BAR_H__
+#घोषणा __NV50_BAR_H__
+#घोषणा nv50_bar(p) container_of((p), काष्ठा nv50_bar, base)
+#समावेश "priv.h"
 
-struct nv50_bar {
-	struct nvkm_bar base;
+काष्ठा nv50_bar अणु
+	काष्ठा nvkm_bar base;
 	u32 pgd_addr;
-	struct nvkm_gpuobj *mem;
-	struct nvkm_gpuobj *pad;
-	struct nvkm_gpuobj *pgd;
-	struct nvkm_vmm *bar1_vmm;
-	struct nvkm_gpuobj *bar1;
-	struct nvkm_vmm *bar2_vmm;
-	struct nvkm_gpuobj *bar2;
-};
+	काष्ठा nvkm_gpuobj *mem;
+	काष्ठा nvkm_gpuobj *pad;
+	काष्ठा nvkm_gpuobj *pgd;
+	काष्ठा nvkm_vmm *bar1_vmm;
+	काष्ठा nvkm_gpuobj *bar1;
+	काष्ठा nvkm_vmm *bar2_vmm;
+	काष्ठा nvkm_gpuobj *bar2;
+पूर्ण;
 
-int nv50_bar_new_(const struct nvkm_bar_func *, struct nvkm_device *, enum nvkm_subdev_type,
-		  int, u32 pgd_addr, struct nvkm_bar **);
-void *nv50_bar_dtor(struct nvkm_bar *);
-int nv50_bar_oneinit(struct nvkm_bar *);
-void nv50_bar_init(struct nvkm_bar *);
-void nv50_bar_bar1_init(struct nvkm_bar *);
-void nv50_bar_bar1_wait(struct nvkm_bar *);
-struct nvkm_vmm *nv50_bar_bar1_vmm(struct nvkm_bar *);
-void nv50_bar_bar2_init(struct nvkm_bar *);
-struct nvkm_vmm *nv50_bar_bar2_vmm(struct nvkm_bar *);
-#endif
+पूर्णांक nv50_bar_new_(स्थिर काष्ठा nvkm_bar_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type,
+		  पूर्णांक, u32 pgd_addr, काष्ठा nvkm_bar **);
+व्योम *nv50_bar_dtor(काष्ठा nvkm_bar *);
+पूर्णांक nv50_bar_oneinit(काष्ठा nvkm_bar *);
+व्योम nv50_bar_init(काष्ठा nvkm_bar *);
+व्योम nv50_bar_bar1_init(काष्ठा nvkm_bar *);
+व्योम nv50_bar_bar1_रुको(काष्ठा nvkm_bar *);
+काष्ठा nvkm_vmm *nv50_bar_bar1_vmm(काष्ठा nvkm_bar *);
+व्योम nv50_bar_bar2_init(काष्ठा nvkm_bar *);
+काष्ठा nvkm_vmm *nv50_bar_bar2_vmm(काष्ठा nvkm_bar *);
+#पूर्ण_अगर

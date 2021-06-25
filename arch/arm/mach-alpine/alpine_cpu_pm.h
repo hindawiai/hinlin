@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Low-level power-management support for Alpine platform.
+ * Low-level घातer-management support क्रम Alpine platक्रमm.
  *
- * Copyright (C) 2015 Annapurna Labs Ltd.
+ * Copyright (C) 2015 Annapurna Lअसल Ltd.
  */
 
-#ifndef __ALPINE_CPU_PM_H__
-#define __ALPINE_CPU_PM_H__
+#अगर_अघोषित __ALPINE_CPU_PM_H__
+#घोषणा __ALPINE_CPU_PM_H__
 
 /* Alpine CPU Power Management Services Initialization */
-void alpine_cpu_pm_init(void);
+व्योम alpine_cpu_pm_init(व्योम);
 
 /* Wake-up a CPU */
-int alpine_cpu_wakeup(unsigned int phys_cpu, uint32_t phys_resume_addr);
+पूर्णांक alpine_cpu_wakeup(अचिन्हित पूर्णांक phys_cpu, uपूर्णांक32_t phys_resume_addr);
 
-#endif /* __ALPINE_CPU_PM_H__ */
+#पूर्ण_अगर /* __ALPINE_CPU_PM_H__ */

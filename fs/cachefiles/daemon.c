@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Daemon interface
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Daemon पूर्णांकerface
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/completion.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <linux/namei.h>
-#include <linux/poll.h>
-#include <linux/mount.h>
-#include <linux/statfs.h>
-#include <linux/ctype.h>
-#include <linux/string.h>
-#include <linux/fs_struct.h>
-#include "internal.h"
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/statfs.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/fs_काष्ठा.h>
+#समावेश "internal.h"
 
-static int cachefiles_daemon_open(struct inode *, struct file *);
-static int cachefiles_daemon_release(struct inode *, struct file *);
-static ssize_t cachefiles_daemon_read(struct file *, char __user *, size_t,
+अटल पूर्णांक cachefiles_daemon_खोलो(काष्ठा inode *, काष्ठा file *);
+अटल पूर्णांक cachefiles_daemon_release(काष्ठा inode *, काष्ठा file *);
+अटल sमाप_प्रकार cachefiles_daemon_पढ़ो(काष्ठा file *, अक्षर __user *, माप_प्रकार,
 				      loff_t *);
-static ssize_t cachefiles_daemon_write(struct file *, const char __user *,
-				       size_t, loff_t *);
-static __poll_t cachefiles_daemon_poll(struct file *,
-					   struct poll_table_struct *);
-static int cachefiles_daemon_frun(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_fcull(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_fstop(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_brun(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_bcull(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_bstop(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_cull(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_debug(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_dir(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_inuse(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_secctx(struct cachefiles_cache *, char *);
-static int cachefiles_daemon_tag(struct cachefiles_cache *, char *);
+अटल sमाप_प्रकार cachefiles_daemon_ग_लिखो(काष्ठा file *, स्थिर अक्षर __user *,
+				       माप_प्रकार, loff_t *);
+अटल __poll_t cachefiles_daemon_poll(काष्ठा file *,
+					   काष्ठा poll_table_काष्ठा *);
+अटल पूर्णांक cachefiles_daemon_frun(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_fcull(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_fstop(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_brun(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_bcull(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_bstop(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_cull(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_debug(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_dir(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_inuse(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_secctx(काष्ठा cachefiles_cache *, अक्षर *);
+अटल पूर्णांक cachefiles_daemon_tag(काष्ठा cachefiles_cache *, अक्षर *);
 
-static unsigned long cachefiles_open;
+अटल अचिन्हित दीर्घ cachefiles_खोलो;
 
-const struct file_operations cachefiles_daemon_fops = {
+स्थिर काष्ठा file_operations cachefiles_daemon_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= cachefiles_daemon_open,
+	.खोलो		= cachefiles_daemon_खोलो,
 	.release	= cachefiles_daemon_release,
-	.read		= cachefiles_daemon_read,
-	.write		= cachefiles_daemon_write,
+	.पढ़ो		= cachefiles_daemon_पढ़ो,
+	.ग_लिखो		= cachefiles_daemon_ग_लिखो,
 	.poll		= cachefiles_daemon_poll,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-struct cachefiles_daemon_cmd {
-	char name[8];
-	int (*handler)(struct cachefiles_cache *cache, char *args);
-};
+काष्ठा cachefiles_daemon_cmd अणु
+	अक्षर name[8];
+	पूर्णांक (*handler)(काष्ठा cachefiles_cache *cache, अक्षर *args);
+पूर्ण;
 
-static const struct cachefiles_daemon_cmd cachefiles_daemon_cmds[] = {
-	{ "bind",	cachefiles_daemon_bind		},
-	{ "brun",	cachefiles_daemon_brun		},
-	{ "bcull",	cachefiles_daemon_bcull		},
-	{ "bstop",	cachefiles_daemon_bstop		},
-	{ "cull",	cachefiles_daemon_cull		},
-	{ "debug",	cachefiles_daemon_debug		},
-	{ "dir",	cachefiles_daemon_dir		},
-	{ "frun",	cachefiles_daemon_frun		},
-	{ "fcull",	cachefiles_daemon_fcull		},
-	{ "fstop",	cachefiles_daemon_fstop		},
-	{ "inuse",	cachefiles_daemon_inuse		},
-	{ "secctx",	cachefiles_daemon_secctx	},
-	{ "tag",	cachefiles_daemon_tag		},
-	{ "",		NULL				}
-};
+अटल स्थिर काष्ठा cachefiles_daemon_cmd cachefiles_daemon_cmds[] = अणु
+	अणु "bind",	cachefiles_daemon_bind		पूर्ण,
+	अणु "brun",	cachefiles_daemon_brun		पूर्ण,
+	अणु "bcull",	cachefiles_daemon_bcull		पूर्ण,
+	अणु "bstop",	cachefiles_daemon_bstop		पूर्ण,
+	अणु "cull",	cachefiles_daemon_cull		पूर्ण,
+	अणु "debug",	cachefiles_daemon_debug		पूर्ण,
+	अणु "dir",	cachefiles_daemon_dir		पूर्ण,
+	अणु "frun",	cachefiles_daemon_frun		पूर्ण,
+	अणु "fcull",	cachefiles_daemon_fcull		पूर्ण,
+	अणु "fstop",	cachefiles_daemon_fstop		पूर्ण,
+	अणु "inuse",	cachefiles_daemon_inuse		पूर्ण,
+	अणु "secctx",	cachefiles_daemon_secctx	पूर्ण,
+	अणु "tag",	cachefiles_daemon_tag		पूर्ण,
+	अणु "",		शून्य				पूर्ण
+पूर्ण;
 
 
 /*
- * do various checks
+ * करो various checks
  */
-static int cachefiles_daemon_open(struct inode *inode, struct file *file)
-{
-	struct cachefiles_cache *cache;
+अटल पूर्णांक cachefiles_daemon_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा cachefiles_cache *cache;
 
 	_enter("");
 
-	/* only the superuser may do this */
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	/* only the superuser may करो this */
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	/* the cachefiles device may only be open once at a time */
-	if (xchg(&cachefiles_open, 1) == 1)
-		return -EBUSY;
+	/* the cachefiles device may only be खोलो once at a समय */
+	अगर (xchg(&cachefiles_खोलो, 1) == 1)
+		वापस -EBUSY;
 
 	/* allocate a cache record */
-	cache = kzalloc(sizeof(struct cachefiles_cache), GFP_KERNEL);
-	if (!cache) {
-		cachefiles_open = 0;
-		return -ENOMEM;
-	}
+	cache = kzalloc(माप(काष्ठा cachefiles_cache), GFP_KERNEL);
+	अगर (!cache) अणु
+		cachefiles_खोलो = 0;
+		वापस -ENOMEM;
+	पूर्ण
 
 	mutex_init(&cache->daemon_mutex);
 	cache->active_nodes = RB_ROOT;
 	rwlock_init(&cache->active_lock);
-	init_waitqueue_head(&cache->daemon_pollwq);
+	init_रुकोqueue_head(&cache->daemon_pollwq);
 
-	/* set default caching limits
-	 * - limit at 1% free space and/or free files
-	 * - cull below 5% free space and/or free files
-	 * - cease culling above 7% free space and/or free files
+	/* set शेष caching limits
+	 * - limit at 1% मुक्त space and/or मुक्त files
+	 * - cull below 5% मुक्त space and/or मुक्त files
+	 * - cease culling above 7% मुक्त space and/or मुक्त files
 	 */
 	cache->frun_percent = 7;
 	cache->fcull_percent = 5;
@@ -118,65 +119,65 @@ static int cachefiles_daemon_open(struct inode *inode, struct file *file)
 	cache->bcull_percent = 5;
 	cache->bstop_percent = 1;
 
-	file->private_data = cache;
+	file->निजी_data = cache;
 	cache->cachefilesd = file;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * release a cache
  */
-static int cachefiles_daemon_release(struct inode *inode, struct file *file)
-{
-	struct cachefiles_cache *cache = file->private_data;
+अटल पूर्णांक cachefiles_daemon_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा cachefiles_cache *cache = file->निजी_data;
 
 	_enter("");
 
 	ASSERT(cache);
 
-	set_bit(CACHEFILES_DEAD, &cache->flags);
+	set_bit(CACHEखाताS_DEAD, &cache->flags);
 
 	cachefiles_daemon_unbind(cache);
 
 	ASSERT(!cache->active_nodes.rb_node);
 
-	/* clean up the control file interface */
-	cache->cachefilesd = NULL;
-	file->private_data = NULL;
-	cachefiles_open = 0;
+	/* clean up the control file पूर्णांकerface */
+	cache->cachefilesd = शून्य;
+	file->निजी_data = शून्य;
+	cachefiles_खोलो = 0;
 
-	kfree(cache);
+	kमुक्त(cache);
 
 	_leave("");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * read the cache state
+ * पढ़ो the cache state
  */
-static ssize_t cachefiles_daemon_read(struct file *file, char __user *_buffer,
-				      size_t buflen, loff_t *pos)
-{
-	struct cachefiles_cache *cache = file->private_data;
-	unsigned long long b_released;
-	unsigned f_released;
-	char buffer[256];
-	int n;
+अटल sमाप_प्रकार cachefiles_daemon_पढ़ो(काष्ठा file *file, अक्षर __user *_buffer,
+				      माप_प्रकार buflen, loff_t *pos)
+अणु
+	काष्ठा cachefiles_cache *cache = file->निजी_data;
+	अचिन्हित दीर्घ दीर्घ b_released;
+	अचिन्हित f_released;
+	अक्षर buffer[256];
+	पूर्णांक n;
 
 	//_enter(",,%zu,", buflen);
 
-	if (!test_bit(CACHEFILES_READY, &cache->flags))
-		return 0;
+	अगर (!test_bit(CACHEखाताS_READY, &cache->flags))
+		वापस 0;
 
 	/* check how much space the cache has */
 	cachefiles_has_space(cache, 0, 0);
 
 	/* summarise */
 	f_released = atomic_xchg(&cache->f_released, 0);
-	b_released = atomic_long_xchg(&cache->b_released, 0);
-	clear_bit(CACHEFILES_STATE_CHANGED, &cache->flags);
+	b_released = atomic_दीर्घ_xchg(&cache->b_released, 0);
+	clear_bit(CACHEखाताS_STATE_CHANGED, &cache->flags);
 
-	n = snprintf(buffer, sizeof(buffer),
+	n = snम_लिखो(buffer, माप(buffer),
 		     "cull=%c"
 		     " frun=%llx"
 		     " fcull=%llx"
@@ -186,393 +187,393 @@ static ssize_t cachefiles_daemon_read(struct file *file, char __user *_buffer,
 		     " bstop=%llx"
 		     " freleased=%x"
 		     " breleased=%llx",
-		     test_bit(CACHEFILES_CULLING, &cache->flags) ? '1' : '0',
-		     (unsigned long long) cache->frun,
-		     (unsigned long long) cache->fcull,
-		     (unsigned long long) cache->fstop,
-		     (unsigned long long) cache->brun,
-		     (unsigned long long) cache->bcull,
-		     (unsigned long long) cache->bstop,
+		     test_bit(CACHEखाताS_CULLING, &cache->flags) ? '1' : '0',
+		     (अचिन्हित दीर्घ दीर्घ) cache->frun,
+		     (अचिन्हित दीर्घ दीर्घ) cache->fcull,
+		     (अचिन्हित दीर्घ दीर्घ) cache->fstop,
+		     (अचिन्हित दीर्घ दीर्घ) cache->brun,
+		     (अचिन्हित दीर्घ दीर्घ) cache->bcull,
+		     (अचिन्हित दीर्घ दीर्घ) cache->bstop,
 		     f_released,
 		     b_released);
 
-	if (n > buflen)
-		return -EMSGSIZE;
+	अगर (n > buflen)
+		वापस -EMSGSIZE;
 
-	if (copy_to_user(_buffer, buffer, n) != 0)
-		return -EFAULT;
+	अगर (copy_to_user(_buffer, buffer, n) != 0)
+		वापस -EFAULT;
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
 /*
  * command the cache
  */
-static ssize_t cachefiles_daemon_write(struct file *file,
-				       const char __user *_data,
-				       size_t datalen,
+अटल sमाप_प्रकार cachefiles_daemon_ग_लिखो(काष्ठा file *file,
+				       स्थिर अक्षर __user *_data,
+				       माप_प्रकार datalen,
 				       loff_t *pos)
-{
-	const struct cachefiles_daemon_cmd *cmd;
-	struct cachefiles_cache *cache = file->private_data;
-	ssize_t ret;
-	char *data, *args, *cp;
+अणु
+	स्थिर काष्ठा cachefiles_daemon_cmd *cmd;
+	काष्ठा cachefiles_cache *cache = file->निजी_data;
+	sमाप_प्रकार ret;
+	अक्षर *data, *args, *cp;
 
 	//_enter(",,%zu,", datalen);
 
 	ASSERT(cache);
 
-	if (test_bit(CACHEFILES_DEAD, &cache->flags))
-		return -EIO;
+	अगर (test_bit(CACHEखाताS_DEAD, &cache->flags))
+		वापस -EIO;
 
-	if (datalen < 0 || datalen > PAGE_SIZE - 1)
-		return -EOPNOTSUPP;
+	अगर (datalen < 0 || datalen > PAGE_SIZE - 1)
+		वापस -EOPNOTSUPP;
 
-	/* drag the command string into the kernel so we can parse it */
+	/* drag the command string पूर्णांकo the kernel so we can parse it */
 	data = memdup_user_nul(_data, datalen);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	ret = -EINVAL;
-	if (memchr(data, '\0', datalen))
-		goto error;
+	अगर (स_प्रथम(data, '\0', datalen))
+		जाओ error;
 
 	/* strip any newline */
-	cp = memchr(data, '\n', datalen);
-	if (cp) {
-		if (cp == data)
-			goto error;
+	cp = स_प्रथम(data, '\n', datalen);
+	अगर (cp) अणु
+		अगर (cp == data)
+			जाओ error;
 
 		*cp = '\0';
-	}
+	पूर्ण
 
 	/* parse the command */
 	ret = -EOPNOTSUPP;
 
-	for (args = data; *args; args++)
-		if (isspace(*args))
-			break;
-	if (*args) {
-		if (args == data)
-			goto error;
+	क्रम (args = data; *args; args++)
+		अगर (है_खाली(*args))
+			अवरोध;
+	अगर (*args) अणु
+		अगर (args == data)
+			जाओ error;
 		*args = '\0';
 		args = skip_spaces(++args);
-	}
+	पूर्ण
 
 	/* run the appropriate command handler */
-	for (cmd = cachefiles_daemon_cmds; cmd->name[0]; cmd++)
-		if (strcmp(cmd->name, data) == 0)
-			goto found_command;
+	क्रम (cmd = cachefiles_daemon_cmds; cmd->name[0]; cmd++)
+		अगर (म_भेद(cmd->name, data) == 0)
+			जाओ found_command;
 
 error:
-	kfree(data);
+	kमुक्त(data);
 	//_leave(" = %zd", ret);
-	return ret;
+	वापस ret;
 
 found_command:
 	mutex_lock(&cache->daemon_mutex);
 
 	ret = -EIO;
-	if (!test_bit(CACHEFILES_DEAD, &cache->flags))
+	अगर (!test_bit(CACHEखाताS_DEAD, &cache->flags))
 		ret = cmd->handler(cache, args);
 
 	mutex_unlock(&cache->daemon_mutex);
 
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = datalen;
-	goto error;
-}
+	जाओ error;
+पूर्ण
 
 /*
- * poll for culling state
+ * poll क्रम culling state
  * - use EPOLLOUT to indicate culling state
  */
-static __poll_t cachefiles_daemon_poll(struct file *file,
-					   struct poll_table_struct *poll)
-{
-	struct cachefiles_cache *cache = file->private_data;
+अटल __poll_t cachefiles_daemon_poll(काष्ठा file *file,
+					   काष्ठा poll_table_काष्ठा *poll)
+अणु
+	काष्ठा cachefiles_cache *cache = file->निजी_data;
 	__poll_t mask;
 
-	poll_wait(file, &cache->daemon_pollwq, poll);
+	poll_रुको(file, &cache->daemon_pollwq, poll);
 	mask = 0;
 
-	if (test_bit(CACHEFILES_STATE_CHANGED, &cache->flags))
+	अगर (test_bit(CACHEखाताS_STATE_CHANGED, &cache->flags))
 		mask |= EPOLLIN;
 
-	if (test_bit(CACHEFILES_CULLING, &cache->flags))
+	अगर (test_bit(CACHEखाताS_CULLING, &cache->flags))
 		mask |= EPOLLOUT;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /*
- * give a range error for cache space constraints
+ * give a range error क्रम cache space स्थिरraपूर्णांकs
  * - can be tail-called
  */
-static int cachefiles_daemon_range_error(struct cachefiles_cache *cache,
-					 char *args)
-{
+अटल पूर्णांक cachefiles_daemon_range_error(काष्ठा cachefiles_cache *cache,
+					 अक्षर *args)
+अणु
 	pr_err("Free space limits must be in range 0%%<=stop<cull<run<100%%\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * set the percentage of files at which to stop culling
  * - command: "frun <N>%"
  */
-static int cachefiles_daemon_frun(struct cachefiles_cache *cache, char *args)
-{
-	unsigned long frun;
+अटल पूर्णांक cachefiles_daemon_frun(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अचिन्हित दीर्घ frun;
 
 	_enter(",%s", args);
 
-	if (!*args)
-		return -EINVAL;
+	अगर (!*args)
+		वापस -EINVAL;
 
-	frun = simple_strtoul(args, &args, 10);
-	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+	frun = simple_म_से_अदीर्घ(args, &args, 10);
+	अगर (args[0] != '%' || args[1] != '\0')
+		वापस -EINVAL;
 
-	if (frun <= cache->fcull_percent || frun >= 100)
-		return cachefiles_daemon_range_error(cache, args);
+	अगर (frun <= cache->fcull_percent || frun >= 100)
+		वापस cachefiles_daemon_range_error(cache, args);
 
 	cache->frun_percent = frun;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * set the percentage of files at which to start culling
  * - command: "fcull <N>%"
  */
-static int cachefiles_daemon_fcull(struct cachefiles_cache *cache, char *args)
-{
-	unsigned long fcull;
+अटल पूर्णांक cachefiles_daemon_fcull(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अचिन्हित दीर्घ fcull;
 
 	_enter(",%s", args);
 
-	if (!*args)
-		return -EINVAL;
+	अगर (!*args)
+		वापस -EINVAL;
 
-	fcull = simple_strtoul(args, &args, 10);
-	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+	fcull = simple_म_से_अदीर्घ(args, &args, 10);
+	अगर (args[0] != '%' || args[1] != '\0')
+		वापस -EINVAL;
 
-	if (fcull <= cache->fstop_percent || fcull >= cache->frun_percent)
-		return cachefiles_daemon_range_error(cache, args);
+	अगर (fcull <= cache->fstop_percent || fcull >= cache->frun_percent)
+		वापस cachefiles_daemon_range_error(cache, args);
 
 	cache->fcull_percent = fcull;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * set the percentage of files at which to stop allocating
  * - command: "fstop <N>%"
  */
-static int cachefiles_daemon_fstop(struct cachefiles_cache *cache, char *args)
-{
-	unsigned long fstop;
+अटल पूर्णांक cachefiles_daemon_fstop(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अचिन्हित दीर्घ fstop;
 
 	_enter(",%s", args);
 
-	if (!*args)
-		return -EINVAL;
+	अगर (!*args)
+		वापस -EINVAL;
 
-	fstop = simple_strtoul(args, &args, 10);
-	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+	fstop = simple_म_से_अदीर्घ(args, &args, 10);
+	अगर (args[0] != '%' || args[1] != '\0')
+		वापस -EINVAL;
 
-	if (fstop < 0 || fstop >= cache->fcull_percent)
-		return cachefiles_daemon_range_error(cache, args);
+	अगर (fstop < 0 || fstop >= cache->fcull_percent)
+		वापस cachefiles_daemon_range_error(cache, args);
 
 	cache->fstop_percent = fstop;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * set the percentage of blocks at which to stop culling
  * - command: "brun <N>%"
  */
-static int cachefiles_daemon_brun(struct cachefiles_cache *cache, char *args)
-{
-	unsigned long brun;
+अटल पूर्णांक cachefiles_daemon_brun(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अचिन्हित दीर्घ brun;
 
 	_enter(",%s", args);
 
-	if (!*args)
-		return -EINVAL;
+	अगर (!*args)
+		वापस -EINVAL;
 
-	brun = simple_strtoul(args, &args, 10);
-	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+	brun = simple_म_से_अदीर्घ(args, &args, 10);
+	अगर (args[0] != '%' || args[1] != '\0')
+		वापस -EINVAL;
 
-	if (brun <= cache->bcull_percent || brun >= 100)
-		return cachefiles_daemon_range_error(cache, args);
+	अगर (brun <= cache->bcull_percent || brun >= 100)
+		वापस cachefiles_daemon_range_error(cache, args);
 
 	cache->brun_percent = brun;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * set the percentage of blocks at which to start culling
  * - command: "bcull <N>%"
  */
-static int cachefiles_daemon_bcull(struct cachefiles_cache *cache, char *args)
-{
-	unsigned long bcull;
+अटल पूर्णांक cachefiles_daemon_bcull(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अचिन्हित दीर्घ bcull;
 
 	_enter(",%s", args);
 
-	if (!*args)
-		return -EINVAL;
+	अगर (!*args)
+		वापस -EINVAL;
 
-	bcull = simple_strtoul(args, &args, 10);
-	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+	bcull = simple_म_से_अदीर्घ(args, &args, 10);
+	अगर (args[0] != '%' || args[1] != '\0')
+		वापस -EINVAL;
 
-	if (bcull <= cache->bstop_percent || bcull >= cache->brun_percent)
-		return cachefiles_daemon_range_error(cache, args);
+	अगर (bcull <= cache->bstop_percent || bcull >= cache->brun_percent)
+		वापस cachefiles_daemon_range_error(cache, args);
 
 	cache->bcull_percent = bcull;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * set the percentage of blocks at which to stop allocating
  * - command: "bstop <N>%"
  */
-static int cachefiles_daemon_bstop(struct cachefiles_cache *cache, char *args)
-{
-	unsigned long bstop;
+अटल पूर्णांक cachefiles_daemon_bstop(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अचिन्हित दीर्घ bstop;
 
 	_enter(",%s", args);
 
-	if (!*args)
-		return -EINVAL;
+	अगर (!*args)
+		वापस -EINVAL;
 
-	bstop = simple_strtoul(args, &args, 10);
-	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+	bstop = simple_म_से_अदीर्घ(args, &args, 10);
+	अगर (args[0] != '%' || args[1] != '\0')
+		वापस -EINVAL;
 
-	if (bstop < 0 || bstop >= cache->bcull_percent)
-		return cachefiles_daemon_range_error(cache, args);
+	अगर (bstop < 0 || bstop >= cache->bcull_percent)
+		वापस cachefiles_daemon_range_error(cache, args);
 
 	cache->bstop_percent = bstop;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * set the cache directory
  * - command: "dir <name>"
  */
-static int cachefiles_daemon_dir(struct cachefiles_cache *cache, char *args)
-{
-	char *dir;
+अटल पूर्णांक cachefiles_daemon_dir(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अक्षर *dir;
 
 	_enter(",%s", args);
 
-	if (!*args) {
+	अगर (!*args) अणु
 		pr_err("Empty directory specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cache->rootdirname) {
+	अगर (cache->rootस_नाम) अणु
 		pr_err("Second cache directory specified\n");
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
 	dir = kstrdup(args, GFP_KERNEL);
-	if (!dir)
-		return -ENOMEM;
+	अगर (!dir)
+		वापस -ENOMEM;
 
-	cache->rootdirname = dir;
-	return 0;
-}
+	cache->rootस_नाम = dir;
+	वापस 0;
+पूर्ण
 
 /*
  * set the cache security context
  * - command: "secctx <ctx>"
  */
-static int cachefiles_daemon_secctx(struct cachefiles_cache *cache, char *args)
-{
-	char *secctx;
+अटल पूर्णांक cachefiles_daemon_secctx(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अक्षर *secctx;
 
 	_enter(",%s", args);
 
-	if (!*args) {
+	अगर (!*args) अणु
 		pr_err("Empty security context specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cache->secctx) {
+	अगर (cache->secctx) अणु
 		pr_err("Second security context specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	secctx = kstrdup(args, GFP_KERNEL);
-	if (!secctx)
-		return -ENOMEM;
+	अगर (!secctx)
+		वापस -ENOMEM;
 
 	cache->secctx = secctx;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * set the cache tag
  * - command: "tag <name>"
  */
-static int cachefiles_daemon_tag(struct cachefiles_cache *cache, char *args)
-{
-	char *tag;
+अटल पूर्णांक cachefiles_daemon_tag(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अक्षर *tag;
 
 	_enter(",%s", args);
 
-	if (!*args) {
+	अगर (!*args) अणु
 		pr_err("Empty tag specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cache->tag)
-		return -EEXIST;
+	अगर (cache->tag)
+		वापस -EEXIST;
 
 	tag = kstrdup(args, GFP_KERNEL);
-	if (!tag)
-		return -ENOMEM;
+	अगर (!tag)
+		वापस -ENOMEM;
 
 	cache->tag = tag;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * request a node in the cache be culled from the current working directory
  * - command: "cull <name>"
  */
-static int cachefiles_daemon_cull(struct cachefiles_cache *cache, char *args)
-{
-	struct path path;
-	const struct cred *saved_cred;
-	int ret;
+अटल पूर्णांक cachefiles_daemon_cull(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	काष्ठा path path;
+	स्थिर काष्ठा cred *saved_cred;
+	पूर्णांक ret;
 
 	_enter(",%s", args);
 
-	if (strchr(args, '/'))
-		goto inval;
+	अगर (म_अक्षर(args, '/'))
+		जाओ inval;
 
-	if (!test_bit(CACHEFILES_READY, &cache->flags)) {
+	अगर (!test_bit(CACHEखाताS_READY, &cache->flags)) अणु
 		pr_err("cull applied to unready cache\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (test_bit(CACHEFILES_DEAD, &cache->flags)) {
+	अगर (test_bit(CACHEखाताS_DEAD, &cache->flags)) अणु
 		pr_err("cull applied to dead cache\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* extract the directory dentry from the cwd */
 	get_fs_pwd(current->fs, &path);
 
-	if (!d_can_lookup(path.dentry))
-		goto notdir;
+	अगर (!d_can_lookup(path.dentry))
+		जाओ notdir;
 
 	cachefiles_begin_secure(cache, &saved_cred);
 	ret = cachefiles_cull(cache, path.dentry, args);
@@ -580,71 +581,71 @@ static int cachefiles_daemon_cull(struct cachefiles_cache *cache, char *args)
 
 	path_put(&path);
 	_leave(" = %d", ret);
-	return ret;
+	वापस ret;
 
 notdir:
 	path_put(&path);
 	pr_err("cull command requires dirfd to be a directory\n");
-	return -ENOTDIR;
+	वापस -ENOTसूची;
 
 inval:
 	pr_err("cull command requires dirfd and filename\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * set debugging mode
  * - command: "debug <mask>"
  */
-static int cachefiles_daemon_debug(struct cachefiles_cache *cache, char *args)
-{
-	unsigned long mask;
+अटल पूर्णांक cachefiles_daemon_debug(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	अचिन्हित दीर्घ mask;
 
 	_enter(",%s", args);
 
-	mask = simple_strtoul(args, &args, 0);
-	if (args[0] != '\0')
-		goto inval;
+	mask = simple_म_से_अदीर्घ(args, &args, 0);
+	अगर (args[0] != '\0')
+		जाओ inval;
 
 	cachefiles_debug = mask;
 	_leave(" = 0");
-	return 0;
+	वापस 0;
 
 inval:
 	pr_err("debug command requires mask\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * find out whether an object in the current working directory is in use or not
  * - command: "inuse <name>"
  */
-static int cachefiles_daemon_inuse(struct cachefiles_cache *cache, char *args)
-{
-	struct path path;
-	const struct cred *saved_cred;
-	int ret;
+अटल पूर्णांक cachefiles_daemon_inuse(काष्ठा cachefiles_cache *cache, अक्षर *args)
+अणु
+	काष्ठा path path;
+	स्थिर काष्ठा cred *saved_cred;
+	पूर्णांक ret;
 
 	//_enter(",%s", args);
 
-	if (strchr(args, '/'))
-		goto inval;
+	अगर (म_अक्षर(args, '/'))
+		जाओ inval;
 
-	if (!test_bit(CACHEFILES_READY, &cache->flags)) {
+	अगर (!test_bit(CACHEखाताS_READY, &cache->flags)) अणु
 		pr_err("inuse applied to unready cache\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (test_bit(CACHEFILES_DEAD, &cache->flags)) {
+	अगर (test_bit(CACHEखाताS_DEAD, &cache->flags)) अणु
 		pr_err("inuse applied to dead cache\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* extract the directory dentry from the cwd */
 	get_fs_pwd(current->fs, &path);
 
-	if (!d_can_lookup(path.dentry))
-		goto notdir;
+	अगर (!d_can_lookup(path.dentry))
+		जाओ notdir;
 
 	cachefiles_begin_secure(cache, &saved_cred);
 	ret = cachefiles_check_in_use(cache, path.dentry, args);
@@ -652,97 +653,97 @@ static int cachefiles_daemon_inuse(struct cachefiles_cache *cache, char *args)
 
 	path_put(&path);
 	//_leave(" = %d", ret);
-	return ret;
+	वापस ret;
 
 notdir:
 	path_put(&path);
 	pr_err("inuse command requires dirfd to be a directory\n");
-	return -ENOTDIR;
+	वापस -ENOTसूची;
 
 inval:
 	pr_err("inuse command requires dirfd and filename\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
- * see if we have space for a number of pages and/or a number of files in the
+ * see अगर we have space क्रम a number of pages and/or a number of files in the
  * cache
  */
-int cachefiles_has_space(struct cachefiles_cache *cache,
-			 unsigned fnr, unsigned bnr)
-{
-	struct kstatfs stats;
-	struct path path = {
+पूर्णांक cachefiles_has_space(काष्ठा cachefiles_cache *cache,
+			 अचिन्हित fnr, अचिन्हित bnr)
+अणु
+	काष्ठा kstatfs stats;
+	काष्ठा path path = अणु
 		.mnt	= cache->mnt,
 		.dentry	= cache->mnt->mnt_root,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
 	//_enter("{%llu,%llu,%llu,%llu,%llu,%llu},%u,%u",
-	//       (unsigned long long) cache->frun,
-	//       (unsigned long long) cache->fcull,
-	//       (unsigned long long) cache->fstop,
-	//       (unsigned long long) cache->brun,
-	//       (unsigned long long) cache->bcull,
-	//       (unsigned long long) cache->bstop,
+	//       (अचिन्हित दीर्घ दीर्घ) cache->frun,
+	//       (अचिन्हित दीर्घ दीर्घ) cache->fcull,
+	//       (अचिन्हित दीर्घ दीर्घ) cache->fstop,
+	//       (अचिन्हित दीर्घ दीर्घ) cache->brun,
+	//       (अचिन्हित दीर्घ दीर्घ) cache->bcull,
+	//       (अचिन्हित दीर्घ दीर्घ) cache->bstop,
 	//       fnr, bnr);
 
 	/* find out how many pages of blockdev are available */
-	memset(&stats, 0, sizeof(stats));
+	स_रखो(&stats, 0, माप(stats));
 
 	ret = vfs_statfs(&path, &stats);
-	if (ret < 0) {
-		if (ret == -EIO)
+	अगर (ret < 0) अणु
+		अगर (ret == -EIO)
 			cachefiles_io_error(cache, "statfs failed");
 		_leave(" = %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	stats.f_bavail >>= cache->bshift;
+	stats.f_bavail >>= cache->bshअगरt;
 
 	//_debug("avail %llu,%llu",
-	//       (unsigned long long) stats.f_ffree,
-	//       (unsigned long long) stats.f_bavail);
+	//       (अचिन्हित दीर्घ दीर्घ) stats.f_fमुक्त,
+	//       (अचिन्हित दीर्घ दीर्घ) stats.f_bavail);
 
-	/* see if there is sufficient space */
-	if (stats.f_ffree > fnr)
-		stats.f_ffree -= fnr;
-	else
-		stats.f_ffree = 0;
+	/* see अगर there is sufficient space */
+	अगर (stats.f_fमुक्त > fnr)
+		stats.f_fमुक्त -= fnr;
+	अन्यथा
+		stats.f_fमुक्त = 0;
 
-	if (stats.f_bavail > bnr)
+	अगर (stats.f_bavail > bnr)
 		stats.f_bavail -= bnr;
-	else
+	अन्यथा
 		stats.f_bavail = 0;
 
 	ret = -ENOBUFS;
-	if (stats.f_ffree < cache->fstop ||
+	अगर (stats.f_fमुक्त < cache->fstop ||
 	    stats.f_bavail < cache->bstop)
-		goto begin_cull;
+		जाओ begin_cull;
 
 	ret = 0;
-	if (stats.f_ffree < cache->fcull ||
+	अगर (stats.f_fमुक्त < cache->fcull ||
 	    stats.f_bavail < cache->bcull)
-		goto begin_cull;
+		जाओ begin_cull;
 
-	if (test_bit(CACHEFILES_CULLING, &cache->flags) &&
-	    stats.f_ffree >= cache->frun &&
+	अगर (test_bit(CACHEखाताS_CULLING, &cache->flags) &&
+	    stats.f_fमुक्त >= cache->frun &&
 	    stats.f_bavail >= cache->brun &&
-	    test_and_clear_bit(CACHEFILES_CULLING, &cache->flags)
-	    ) {
+	    test_and_clear_bit(CACHEखाताS_CULLING, &cache->flags)
+	    ) अणु
 		_debug("cease culling");
 		cachefiles_state_changed(cache);
-	}
+	पूर्ण
 
 	//_leave(" = 0");
-	return 0;
+	वापस 0;
 
 begin_cull:
-	if (!test_and_set_bit(CACHEFILES_CULLING, &cache->flags)) {
+	अगर (!test_and_set_bit(CACHEखाताS_CULLING, &cache->flags)) अणु
 		_debug("### CULL CACHE ###");
 		cachefiles_state_changed(cache);
-	}
+	पूर्ण
 
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण

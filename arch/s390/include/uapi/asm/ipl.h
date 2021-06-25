@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_S390_UAPI_IPL_H
-#define _ASM_S390_UAPI_IPL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_S390_UAPI_IPL_H
+#घोषणा _ASM_S390_UAPI_IPL_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* IPL Parameter List header */
-struct ipl_pl_hdr {
+काष्ठा ipl_pl_hdr अणु
 	__u32 len;
 	__u8  flags;
 	__u8  reserved1[2];
 	__u8  version;
-} __packed;
+पूर्ण __packed;
 
-#define IPL_PL_FLAG_IPLPS	0x80
-#define IPL_PL_FLAG_SIPL	0x40
-#define IPL_PL_FLAG_IPLSR	0x20
+#घोषणा IPL_PL_FLAG_IPLPS	0x80
+#घोषणा IPL_PL_FLAG_SIPL	0x40
+#घोषणा IPL_PL_FLAG_IPLSR	0x20
 
 /* IPL Parameter Block header */
-struct ipl_pb_hdr {
+काष्ठा ipl_pb_hdr अणु
 	__u32 len;
 	__u8  pbt;
-} __packed;
+पूर्ण __packed;
 
 /* IPL Parameter Block types */
-enum ipl_pbt {
+क्रमागत ipl_pbt अणु
 	IPL_PBT_FCP = 0,
 	IPL_PBT_SCP_DATA = 1,
 	IPL_PBT_CCW = 2,
 	IPL_PBT_NVME = 4,
-};
+पूर्ण;
 
 /* IPL Parameter Block 0 with common fields */
-struct ipl_pb0_common {
+काष्ठा ipl_pb0_common अणु
 	__u32 len;
 	__u8  pbt;
 	__u8  flags;
 	__u8  reserved1[2];
 	__u8  loadparm[8];
 	__u8  reserved2[84];
-} __packed;
+पूर्ण __packed;
 
-#define IPL_PB0_FLAG_LOADPARM	0x80
+#घोषणा IPL_PB0_FLAG_LOADPARM	0x80
 
-/* IPL Parameter Block 0 for FCP */
-struct ipl_pb0_fcp {
+/* IPL Parameter Block 0 क्रम FCP */
+काष्ठा ipl_pb0_fcp अणु
 	__u32 len;
 	__u8  pbt;
 	__u8  reserved1[3];
@@ -63,13 +64,13 @@ struct ipl_pb0_fcp {
 	__u32 scp_data_len;
 	__u8  reserved7[260];
 	__u8  scp_data[];
-} __packed;
+पूर्ण __packed;
 
-#define IPL_PB0_FCP_OPT_IPL	0x10
-#define IPL_PB0_FCP_OPT_DUMP	0x20
+#घोषणा IPL_PB0_FCP_OPT_IPL	0x10
+#घोषणा IPL_PB0_FCP_OPT_DUMP	0x20
 
-/* IPL Parameter Block 0 for NVMe */
-struct ipl_pb0_nvme {
+/* IPL Parameter Block 0 क्रम NVMe */
+काष्ठा ipl_pb0_nvme अणु
 	__u32 len;
 	__u8  pbt;
 	__u8  reserved1[3];
@@ -87,13 +88,13 @@ struct ipl_pb0_nvme {
 	__u32 scp_data_len;
 	__u8  reserved7[260];
 	__u8  scp_data[];
-} __packed;
+पूर्ण __packed;
 
-#define IPL_PB0_NVME_OPT_IPL	0x10
-#define IPL_PB0_NVME_OPT_DUMP	0x20
+#घोषणा IPL_PB0_NVME_OPT_IPL	0x10
+#घोषणा IPL_PB0_NVME_OPT_DUMP	0x20
 
-/* IPL Parameter Block 0 for CCW */
-struct ipl_pb0_ccw {
+/* IPL Parameter Block 0 क्रम CCW */
+काष्ठा ipl_pb0_ccw अणु
 	__u32 len;
 	__u8  pbt;
 	__u8  flags;
@@ -109,71 +110,71 @@ struct ipl_pb0_ccw {
 	__u8  nss_name[8];
 	__u8  vm_parm[64];
 	__u8  reserved5[8];
-} __packed;
+पूर्ण __packed;
 
-#define IPL_PB0_CCW_VM_FLAG_NSS		0x80
-#define IPL_PB0_CCW_VM_FLAG_VP		0x40
+#घोषणा IPL_PB0_CCW_VM_FLAG_NSS		0x80
+#घोषणा IPL_PB0_CCW_VM_FLAG_VP		0x40
 
-/* IPL Parameter Block 1 for additional SCP data */
-struct ipl_pb1_scp_data {
+/* IPL Parameter Block 1 क्रम additional SCP data */
+काष्ठा ipl_pb1_scp_data अणु
 	__u32 len;
 	__u8  pbt;
 	__u8  scp_data[];
-} __packed;
+पूर्ण __packed;
 
 /* IPL Report List header */
-struct ipl_rl_hdr {
+काष्ठा ipl_rl_hdr अणु
 	__u32 len;
 	__u8  flags;
 	__u8  reserved1[2];
 	__u8  version;
 	__u8  reserved2[8];
-} __packed;
+पूर्ण __packed;
 
 /* IPL Report Block header */
-struct ipl_rb_hdr {
+काष्ठा ipl_rb_hdr अणु
 	__u32 len;
 	__u8  rbt;
 	__u8  reserved1[11];
-} __packed;
+पूर्ण __packed;
 
 /* IPL Report Block types */
-enum ipl_rbt {
+क्रमागत ipl_rbt अणु
 	IPL_RBT_CERTIFICATES = 1,
 	IPL_RBT_COMPONENTS = 2,
-};
+पूर्ण;
 
-/* IPL Report Block for the certificate list */
-struct ipl_rb_certificate_entry {
+/* IPL Report Block क्रम the certअगरicate list */
+काष्ठा ipl_rb_certअगरicate_entry अणु
 	__u64 addr;
 	__u64 len;
-} __packed;
+पूर्ण __packed;
 
-struct ipl_rb_certificates {
+काष्ठा ipl_rb_certअगरicates अणु
 	__u32 len;
 	__u8  rbt;
 	__u8  reserved1[11];
-	struct ipl_rb_certificate_entry entries[];
-} __packed;
+	काष्ठा ipl_rb_certअगरicate_entry entries[];
+पूर्ण __packed;
 
-/* IPL Report Block for the component list */
-struct ipl_rb_component_entry {
+/* IPL Report Block क्रम the component list */
+काष्ठा ipl_rb_component_entry अणु
 	__u64 addr;
 	__u64 len;
 	__u8  flags;
 	__u8  reserved1[5];
-	__u16 certificate_index;
+	__u16 certअगरicate_index;
 	__u8  reserved2[8];
-};
+पूर्ण;
 
-#define IPL_RB_COMPONENT_FLAG_SIGNED	0x80
-#define IPL_RB_COMPONENT_FLAG_VERIFIED	0x40
+#घोषणा IPL_RB_COMPONENT_FLAG_SIGNED	0x80
+#घोषणा IPL_RB_COMPONENT_FLAG_VERIFIED	0x40
 
-struct ipl_rb_components {
+काष्ठा ipl_rb_components अणु
 	__u32 len;
 	__u8  rbt;
 	__u8  reserved1[11];
-	struct ipl_rb_component_entry entries[];
-} __packed;
+	काष्ठा ipl_rb_component_entry entries[];
+पूर्ण __packed;
 
-#endif
+#पूर्ण_अगर

@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /*
  * Copyright 2016 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,44 +25,44 @@
  *
  */
 
-#include <linux/objtool.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/mem_encrypt.h>
+#समावेश <linux/objtool.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mem_encrypt.h>
 
-#include <asm/hypervisor.h>
+#समावेश <यंत्र/hypervisor.h>
 
-#include "vmwgfx_drv.h"
-#include "vmwgfx_msg.h"
+#समावेश "vmwgfx_drv.h"
+#समावेश "vmwgfx_msg.h"
 
-#define MESSAGE_STATUS_SUCCESS  0x0001
-#define MESSAGE_STATUS_DORECV   0x0002
-#define MESSAGE_STATUS_CPT      0x0010
-#define MESSAGE_STATUS_HB       0x0080
+#घोषणा MESSAGE_STATUS_SUCCESS  0x0001
+#घोषणा MESSAGE_STATUS_DORECV   0x0002
+#घोषणा MESSAGE_STATUS_CPT      0x0010
+#घोषणा MESSAGE_STATUS_HB       0x0080
 
-#define RPCI_PROTOCOL_NUM       0x49435052
-#define GUESTMSG_FLAG_COOKIE    0x80000000
+#घोषणा RPCI_PROTOCOL_NUM       0x49435052
+#घोषणा GUESTMSG_FLAG_COOKIE    0x80000000
 
-#define RETRIES                 3
+#घोषणा RETRIES                 3
 
-#define VMW_HYPERVISOR_MAGIC    0x564D5868
+#घोषणा VMW_HYPERVISOR_MAGIC    0x564D5868
 
-#define VMW_PORT_CMD_MSG        30
-#define VMW_PORT_CMD_HB_MSG     0
-#define VMW_PORT_CMD_OPEN_CHANNEL  (MSG_TYPE_OPEN << 16 | VMW_PORT_CMD_MSG)
-#define VMW_PORT_CMD_CLOSE_CHANNEL (MSG_TYPE_CLOSE << 16 | VMW_PORT_CMD_MSG)
-#define VMW_PORT_CMD_SENDSIZE   (MSG_TYPE_SENDSIZE << 16 | VMW_PORT_CMD_MSG)
-#define VMW_PORT_CMD_RECVSIZE   (MSG_TYPE_RECVSIZE << 16 | VMW_PORT_CMD_MSG)
-#define VMW_PORT_CMD_RECVSTATUS (MSG_TYPE_RECVSTATUS << 16 | VMW_PORT_CMD_MSG)
+#घोषणा VMW_PORT_CMD_MSG        30
+#घोषणा VMW_PORT_CMD_HB_MSG     0
+#घोषणा VMW_PORT_CMD_OPEN_CHANNEL  (MSG_TYPE_OPEN << 16 | VMW_PORT_CMD_MSG)
+#घोषणा VMW_PORT_CMD_CLOSE_CHANNEL (MSG_TYPE_CLOSE << 16 | VMW_PORT_CMD_MSG)
+#घोषणा VMW_PORT_CMD_SENDSIZE   (MSG_TYPE_SENDSIZE << 16 | VMW_PORT_CMD_MSG)
+#घोषणा VMW_PORT_CMD_RECVSIZE   (MSG_TYPE_RECVSIZE << 16 | VMW_PORT_CMD_MSG)
+#घोषणा VMW_PORT_CMD_RECVSTATUS (MSG_TYPE_RECVSTATUS << 16 | VMW_PORT_CMD_MSG)
 
-#define HIGH_WORD(X) ((X & 0xFFFF0000) >> 16)
+#घोषणा HIGH_WORD(X) ((X & 0xFFFF0000) >> 16)
 
-#define MAX_USER_MSG_LENGTH	PAGE_SIZE
+#घोषणा MAX_USER_MSG_LENGTH	PAGE_SIZE
 
-static u32 vmw_msg_enabled = 1;
+अटल u32 vmw_msg_enabled = 1;
 
-enum rpc_msg_type {
+क्रमागत rpc_msg_type अणु
 	MSG_TYPE_OPEN,
 	MSG_TYPE_SENDSIZE,
 	MSG_TYPE_SENDPAYLOAD,
@@ -69,27 +70,27 @@ enum rpc_msg_type {
 	MSG_TYPE_RECVPAYLOAD,
 	MSG_TYPE_RECVSTATUS,
 	MSG_TYPE_CLOSE,
-};
+पूर्ण;
 
-struct rpc_channel {
+काष्ठा rpc_channel अणु
 	u16 channel_id;
 	u32 cookie_high;
 	u32 cookie_low;
-};
+पूर्ण;
 
 
 
 /**
- * vmw_open_channel
+ * vmw_खोलो_channel
  *
  * @channel: RPC channel
  * @protocol:
  *
  * Returns: 0 on success
  */
-static int vmw_open_channel(struct rpc_channel *channel, unsigned int protocol)
-{
-	unsigned long eax, ebx, ecx, edx, si = 0, di = 0;
+अटल पूर्णांक vmw_खोलो_channel(काष्ठा rpc_channel *channel, अचिन्हित पूर्णांक protocol)
+अणु
+	अचिन्हित दीर्घ eax, ebx, ecx, edx, si = 0, di = 0;
 
 	VMW_PORT(VMW_PORT_CMD_OPEN_CHANNEL,
 		(protocol | GUESTMSG_FLAG_COOKIE), si, di,
@@ -97,28 +98,28 @@ static int vmw_open_channel(struct rpc_channel *channel, unsigned int protocol)
 		VMW_HYPERVISOR_MAGIC,
 		eax, ebx, ecx, edx, si, di);
 
-	if ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0)
-		return -EINVAL;
+	अगर ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0)
+		वापस -EINVAL;
 
 	channel->channel_id  = HIGH_WORD(edx);
 	channel->cookie_high = si;
 	channel->cookie_low  = di;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
 /**
- * vmw_close_channel
+ * vmw_बंद_channel
  *
  * @channel: RPC channel
  *
  * Returns: 0 on success
  */
-static int vmw_close_channel(struct rpc_channel *channel)
-{
-	unsigned long eax, ebx, ecx, edx, si, di;
+अटल पूर्णांक vmw_बंद_channel(काष्ठा rpc_channel *channel)
+अणु
+	अचिन्हित दीर्घ eax, ebx, ecx, edx, si, di;
 
 	/* Set up additional parameters */
 	si  = channel->cookie_high;
@@ -130,32 +131,32 @@ static int vmw_close_channel(struct rpc_channel *channel)
 		VMW_HYPERVISOR_MAGIC,
 		eax, ebx, ecx, edx, si, di);
 
-	if ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0)
-		return -EINVAL;
+	अगर ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vmw_port_hb_out - Send the message payload either through the
- * high-bandwidth port if available, or through the backdoor otherwise.
+ * high-bandwidth port अगर available, or through the backकरोor otherwise.
  * @channel: The rpc channel.
- * @msg: NULL-terminated message.
+ * @msg: शून्य-terminated message.
  * @hb: Whether the high-bandwidth port is available.
  *
  * Return: The port status.
  */
-static unsigned long vmw_port_hb_out(struct rpc_channel *channel,
-				     const char *msg, bool hb)
-{
-	unsigned long si, di, eax, ebx, ecx, edx;
-	unsigned long msg_len = strlen(msg);
+अटल अचिन्हित दीर्घ vmw_port_hb_out(काष्ठा rpc_channel *channel,
+				     स्थिर अक्षर *msg, bool hb)
+अणु
+	अचिन्हित दीर्घ si, di, eax, ebx, ecx, edx;
+	अचिन्हित दीर्घ msg_len = म_माप(msg);
 
 	/* HB port can't access encrypted memory. */
-	if (hb && !mem_encrypt_active()) {
-		unsigned long bp = channel->cookie_high;
+	अगर (hb && !mem_encrypt_active()) अणु
+		अचिन्हित दीर्घ bp = channel->cookie_high;
 
-		si = (uintptr_t) msg;
+		si = (uपूर्णांकptr_t) msg;
 		di = channel->cookie_low;
 
 		VMW_PORT_HB_OUT(
@@ -166,16 +167,16 @@ static unsigned long vmw_port_hb_out(struct rpc_channel *channel,
 			VMW_HYPERVISOR_MAGIC, bp,
 			eax, ebx, ecx, edx, si, di);
 
-		return ebx;
-	}
+		वापस ebx;
+	पूर्ण
 
-	/* HB port not available. Send the message 4 bytes at a time. */
+	/* HB port not available. Send the message 4 bytes at a समय. */
 	ecx = MESSAGE_STATUS_SUCCESS << 16;
-	while (msg_len && (HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS)) {
-		unsigned int bytes = min_t(size_t, msg_len, 4);
-		unsigned long word = 0;
+	जबतक (msg_len && (HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS)) अणु
+		अचिन्हित पूर्णांक bytes = min_t(माप_प्रकार, msg_len, 4);
+		अचिन्हित दीर्घ word = 0;
 
-		memcpy(&word, msg, bytes);
+		स_नकल(&word, msg, bytes);
 		msg_len -= bytes;
 		msg += bytes;
 		si = channel->cookie_high;
@@ -186,32 +187,32 @@ static unsigned long vmw_port_hb_out(struct rpc_channel *channel,
 			 channel->channel_id << 16,
 			 VMW_HYPERVISOR_MAGIC,
 			 eax, ebx, ecx, edx, si, di);
-	}
+	पूर्ण
 
-	return ecx;
-}
+	वापस ecx;
+पूर्ण
 
 /**
  * vmw_port_hb_in - Receive the message payload either through the
- * high-bandwidth port if available, or through the backdoor otherwise.
+ * high-bandwidth port अगर available, or through the backकरोor otherwise.
  * @channel: The rpc channel.
- * @reply: Pointer to buffer holding reply.
+ * @reply: Poपूर्णांकer to buffer holding reply.
  * @reply_len: Length of the reply.
  * @hb: Whether the high-bandwidth port is available.
  *
  * Return: The port status.
  */
-static unsigned long vmw_port_hb_in(struct rpc_channel *channel, char *reply,
-				    unsigned long reply_len, bool hb)
-{
-	unsigned long si, di, eax, ebx, ecx, edx;
+अटल अचिन्हित दीर्घ vmw_port_hb_in(काष्ठा rpc_channel *channel, अक्षर *reply,
+				    अचिन्हित दीर्घ reply_len, bool hb)
+अणु
+	अचिन्हित दीर्घ si, di, eax, ebx, ecx, edx;
 
 	/* HB port can't access encrypted memory */
-	if (hb && !mem_encrypt_active()) {
-		unsigned long bp = channel->cookie_low;
+	अगर (hb && !mem_encrypt_active()) अणु
+		अचिन्हित दीर्घ bp = channel->cookie_low;
 
 		si = channel->cookie_high;
-		di = (uintptr_t) reply;
+		di = (uपूर्णांकptr_t) reply;
 
 		VMW_PORT_HB_IN(
 			(MESSAGE_STATUS_SUCCESS << 16) | VMW_PORT_CMD_HB_MSG,
@@ -220,13 +221,13 @@ static unsigned long vmw_port_hb_in(struct rpc_channel *channel, char *reply,
 			VMW_HYPERVISOR_MAGIC, bp,
 			eax, ebx, ecx, edx, si, di);
 
-		return ebx;
-	}
+		वापस ebx;
+	पूर्ण
 
-	/* HB port not available. Retrieve the message 4 bytes at a time. */
+	/* HB port not available. Retrieve the message 4 bytes at a समय. */
 	ecx = MESSAGE_STATUS_SUCCESS << 16;
-	while (reply_len) {
-		unsigned int bytes = min_t(unsigned long, reply_len, 4);
+	जबतक (reply_len) अणु
+		अचिन्हित पूर्णांक bytes = min_t(अचिन्हित दीर्घ, reply_len, 4);
 
 		si = channel->cookie_high;
 		di = channel->cookie_low;
@@ -237,33 +238,33 @@ static unsigned long vmw_port_hb_in(struct rpc_channel *channel, char *reply,
 			 VMW_HYPERVISOR_MAGIC,
 			 eax, ebx, ecx, edx, si, di);
 
-		if ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0)
-			break;
+		अगर ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0)
+			अवरोध;
 
-		memcpy(reply, &ebx, bytes);
+		स_नकल(reply, &ebx, bytes);
 		reply_len -= bytes;
 		reply += bytes;
-	}
+	पूर्ण
 
-	return ecx;
-}
+	वापस ecx;
+पूर्ण
 
 
 /**
  * vmw_send_msg: Sends a message to the host
  *
  * @channel: RPC channel
- * @msg: NULL terminated string
+ * @msg: शून्य terminated string
  *
  * Returns: 0 on success
  */
-static int vmw_send_msg(struct rpc_channel *channel, const char *msg)
-{
-	unsigned long eax, ebx, ecx, edx, si, di;
-	size_t msg_len = strlen(msg);
-	int retries = 0;
+अटल पूर्णांक vmw_send_msg(काष्ठा rpc_channel *channel, स्थिर अक्षर *msg)
+अणु
+	अचिन्हित दीर्घ eax, ebx, ecx, edx, si, di;
+	माप_प्रकार msg_len = म_माप(msg);
+	पूर्णांक retries = 0;
 
-	while (retries < RETRIES) {
+	जबतक (retries < RETRIES) अणु
 		retries++;
 
 		/* Set up additional parameters */
@@ -276,52 +277,52 @@ static int vmw_send_msg(struct rpc_channel *channel, const char *msg)
 			VMW_HYPERVISOR_MAGIC,
 			eax, ebx, ecx, edx, si, di);
 
-		if ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0) {
+		अगर ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0) अणु
 			/* Expected success. Give up. */
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* Send msg */
 		ebx = vmw_port_hb_out(channel, msg,
 				      !!(HIGH_WORD(ecx) & MESSAGE_STATUS_HB));
 
-		if ((HIGH_WORD(ebx) & MESSAGE_STATUS_SUCCESS) != 0) {
-			return 0;
-		} else if ((HIGH_WORD(ebx) & MESSAGE_STATUS_CPT) != 0) {
-			/* A checkpoint occurred. Retry. */
-			continue;
-		} else {
-			break;
-		}
-	}
+		अगर ((HIGH_WORD(ebx) & MESSAGE_STATUS_SUCCESS) != 0) अणु
+			वापस 0;
+		पूर्ण अन्यथा अगर ((HIGH_WORD(ebx) & MESSAGE_STATUS_CPT) != 0) अणु
+			/* A checkpoपूर्णांक occurred. Retry. */
+			जारी;
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 STACK_FRAME_NON_STANDARD(vmw_send_msg);
 
 
 /**
  * vmw_recv_msg: Receives a message from the host
  *
- * Note:  It is the caller's responsibility to call kfree() on msg.
+ * Note:  It is the caller's responsibility to call kमुक्त() on msg.
  *
- * @channel:  channel opened by vmw_open_channel
+ * @channel:  channel खोलोed by vmw_खोलो_channel
  * @msg:  [OUT] message received from the host
  * @msg_len: message length
  */
-static int vmw_recv_msg(struct rpc_channel *channel, void **msg,
-			size_t *msg_len)
-{
-	unsigned long eax, ebx, ecx, edx, si, di;
-	char *reply;
-	size_t reply_len;
-	int retries = 0;
+अटल पूर्णांक vmw_recv_msg(काष्ठा rpc_channel *channel, व्योम **msg,
+			माप_प्रकार *msg_len)
+अणु
+	अचिन्हित दीर्घ eax, ebx, ecx, edx, si, di;
+	अक्षर *reply;
+	माप_प्रकार reply_len;
+	पूर्णांक retries = 0;
 
 
 	*msg_len = 0;
-	*msg = NULL;
+	*msg = शून्य;
 
-	while (retries < RETRIES) {
+	जबतक (retries < RETRIES) अणु
 		retries++;
 
 		/* Set up additional parameters */
@@ -334,36 +335,36 @@ static int vmw_recv_msg(struct rpc_channel *channel, void **msg,
 			VMW_HYPERVISOR_MAGIC,
 			eax, ebx, ecx, edx, si, di);
 
-		if ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0) {
+		अगर ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0) अणु
 			DRM_ERROR("Failed to get reply size for host message.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* No reply available.  This is okay. */
-		if ((HIGH_WORD(ecx) & MESSAGE_STATUS_DORECV) == 0)
-			return 0;
+		अगर ((HIGH_WORD(ecx) & MESSAGE_STATUS_DORECV) == 0)
+			वापस 0;
 
 		reply_len = ebx;
 		reply     = kzalloc(reply_len + 1, GFP_KERNEL);
-		if (!reply) {
+		अगर (!reply) अणु
 			DRM_ERROR("Cannot allocate memory for host message reply.\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 
 		/* Receive buffer */
 		ebx = vmw_port_hb_in(channel, reply, reply_len,
 				     !!(HIGH_WORD(ecx) & MESSAGE_STATUS_HB));
-		if ((HIGH_WORD(ebx) & MESSAGE_STATUS_SUCCESS) == 0) {
-			kfree(reply);
-			reply = NULL;
-			if ((HIGH_WORD(ebx) & MESSAGE_STATUS_CPT) != 0) {
-				/* A checkpoint occurred. Retry. */
-				continue;
-			}
+		अगर ((HIGH_WORD(ebx) & MESSAGE_STATUS_SUCCESS) == 0) अणु
+			kमुक्त(reply);
+			reply = शून्य;
+			अगर ((HIGH_WORD(ebx) & MESSAGE_STATUS_CPT) != 0) अणु
+				/* A checkpoपूर्णांक occurred. Retry. */
+				जारी;
+			पूर्ण
 
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		reply[reply_len] = '\0';
 
@@ -378,224 +379,224 @@ static int vmw_recv_msg(struct rpc_channel *channel, void **msg,
 			VMW_HYPERVISOR_MAGIC,
 			eax, ebx, ecx, edx, si, di);
 
-		if ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0) {
-			kfree(reply);
-			reply = NULL;
-			if ((HIGH_WORD(ecx) & MESSAGE_STATUS_CPT) != 0) {
-				/* A checkpoint occurred. Retry. */
-				continue;
-			}
+		अगर ((HIGH_WORD(ecx) & MESSAGE_STATUS_SUCCESS) == 0) अणु
+			kमुक्त(reply);
+			reply = शून्य;
+			अगर ((HIGH_WORD(ecx) & MESSAGE_STATUS_CPT) != 0) अणु
+				/* A checkpoपूर्णांक occurred. Retry. */
+				जारी;
+			पूर्ण
 
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!reply)
-		return -EINVAL;
+	अगर (!reply)
+		वापस -EINVAL;
 
 	*msg_len = reply_len;
 	*msg     = reply;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 STACK_FRAME_NON_STANDARD(vmw_recv_msg);
 
 
 /**
  * vmw_host_get_guestinfo: Gets a GuestInfo parameter
  *
- * Gets the value of a  GuestInfo.* parameter.  The value returned will be in
+ * Gets the value of a  GuestInfo.* parameter.  The value वापसed will be in
  * a string, and it is up to the caller to post-process.
  *
  * @guest_info_param:  Parameter to get, e.g. GuestInfo.svga.gl3
- * @buffer: if NULL, *reply_len will contain reply size.
- * @length: size of the reply_buf.  Set to size of reply upon return
+ * @buffer: अगर शून्य, *reply_len will contain reply size.
+ * @length: size of the reply_buf.  Set to size of reply upon वापस
  *
  * Returns: 0 on success
  */
-int vmw_host_get_guestinfo(const char *guest_info_param,
-			   char *buffer, size_t *length)
-{
-	struct rpc_channel channel;
-	char *msg, *reply = NULL;
-	size_t reply_len = 0;
+पूर्णांक vmw_host_get_guestinfo(स्थिर अक्षर *guest_info_param,
+			   अक्षर *buffer, माप_प्रकार *length)
+अणु
+	काष्ठा rpc_channel channel;
+	अक्षर *msg, *reply = शून्य;
+	माप_प्रकार reply_len = 0;
 
-	if (!vmw_msg_enabled)
-		return -ENODEV;
+	अगर (!vmw_msg_enabled)
+		वापस -ENODEV;
 
-	if (!guest_info_param || !length)
-		return -EINVAL;
+	अगर (!guest_info_param || !length)
+		वापस -EINVAL;
 
-	msg = kasprintf(GFP_KERNEL, "info-get %s", guest_info_param);
-	if (!msg) {
+	msg = kaप्र_लिखो(GFP_KERNEL, "info-get %s", guest_info_param);
+	अगर (!msg) अणु
 		DRM_ERROR("Cannot allocate memory to get guest info \"%s\".",
 			  guest_info_param);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (vmw_open_channel(&channel, RPCI_PROTOCOL_NUM))
-		goto out_open;
+	अगर (vmw_खोलो_channel(&channel, RPCI_PROTOCOL_NUM))
+		जाओ out_खोलो;
 
-	if (vmw_send_msg(&channel, msg) ||
-	    vmw_recv_msg(&channel, (void *) &reply, &reply_len))
-		goto out_msg;
+	अगर (vmw_send_msg(&channel, msg) ||
+	    vmw_recv_msg(&channel, (व्योम *) &reply, &reply_len))
+		जाओ out_msg;
 
-	vmw_close_channel(&channel);
-	if (buffer && reply && reply_len > 0) {
-		/* Remove reply code, which are the first 2 characters of
+	vmw_बंद_channel(&channel);
+	अगर (buffer && reply && reply_len > 0) अणु
+		/* Remove reply code, which are the first 2 अक्षरacters of
 		 * the reply
 		 */
-		reply_len = max(reply_len - 2, (size_t) 0);
+		reply_len = max(reply_len - 2, (माप_प्रकार) 0);
 		reply_len = min(reply_len, *length);
 
-		if (reply_len > 0)
-			memcpy(buffer, reply + 2, reply_len);
-	}
+		अगर (reply_len > 0)
+			स_नकल(buffer, reply + 2, reply_len);
+	पूर्ण
 
 	*length = reply_len;
 
-	kfree(reply);
-	kfree(msg);
+	kमुक्त(reply);
+	kमुक्त(msg);
 
-	return 0;
+	वापस 0;
 
 out_msg:
-	vmw_close_channel(&channel);
-	kfree(reply);
-out_open:
+	vmw_बंद_channel(&channel);
+	kमुक्त(reply);
+out_खोलो:
 	*length = 0;
-	kfree(msg);
+	kमुक्त(msg);
 	DRM_ERROR("Failed to get guest info \"%s\".", guest_info_param);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 
 
 /**
  * vmw_host_log: Sends a log message to the host
  *
- * @log: NULL terminated string
+ * @log: शून्य terminated string
  *
  * Returns: 0 on success
  */
-int vmw_host_log(const char *log)
-{
-	struct rpc_channel channel;
-	char *msg;
-	int ret = 0;
+पूर्णांक vmw_host_log(स्थिर अक्षर *log)
+अणु
+	काष्ठा rpc_channel channel;
+	अक्षर *msg;
+	पूर्णांक ret = 0;
 
 
-	if (!vmw_msg_enabled)
-		return -ENODEV;
+	अगर (!vmw_msg_enabled)
+		वापस -ENODEV;
 
-	if (!log)
-		return ret;
+	अगर (!log)
+		वापस ret;
 
-	msg = kasprintf(GFP_KERNEL, "log %s", log);
-	if (!msg) {
+	msg = kaप्र_लिखो(GFP_KERNEL, "log %s", log);
+	अगर (!msg) अणु
 		DRM_ERROR("Cannot allocate memory for host log message.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (vmw_open_channel(&channel, RPCI_PROTOCOL_NUM))
-		goto out_open;
+	अगर (vmw_खोलो_channel(&channel, RPCI_PROTOCOL_NUM))
+		जाओ out_खोलो;
 
-	if (vmw_send_msg(&channel, msg))
-		goto out_msg;
+	अगर (vmw_send_msg(&channel, msg))
+		जाओ out_msg;
 
-	vmw_close_channel(&channel);
-	kfree(msg);
+	vmw_बंद_channel(&channel);
+	kमुक्त(msg);
 
-	return 0;
+	वापस 0;
 
 out_msg:
-	vmw_close_channel(&channel);
-out_open:
-	kfree(msg);
+	vmw_बंद_channel(&channel);
+out_खोलो:
+	kमुक्त(msg);
 	DRM_ERROR("Failed to send host log message.\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 
 /**
  * vmw_msg_ioctl: Sends and receveives a message to/from host from/to user-space
  *
  * Sends a message from user-space to host.
- * Can also receive a result from host and return that to user-space.
+ * Can also receive a result from host and वापस that to user-space.
  *
- * @dev: Identifies the drm device.
- * @data: Pointer to the ioctl argument.
- * @file_priv: Identifies the caller.
+ * @dev: Identअगरies the drm device.
+ * @data: Poपूर्णांकer to the ioctl argument.
+ * @file_priv: Identअगरies the caller.
  * Return: Zero on success, negative error code on error.
  */
 
-int vmw_msg_ioctl(struct drm_device *dev, void *data,
-		  struct drm_file *file_priv)
-{
-	struct drm_vmw_msg_arg *arg =
-		(struct drm_vmw_msg_arg *) data;
-	struct rpc_channel channel;
-	char *msg;
-	int length;
+पूर्णांक vmw_msg_ioctl(काष्ठा drm_device *dev, व्योम *data,
+		  काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_vmw_msg_arg *arg =
+		(काष्ठा drm_vmw_msg_arg *) data;
+	काष्ठा rpc_channel channel;
+	अक्षर *msg;
+	पूर्णांक length;
 
-	msg = kmalloc(MAX_USER_MSG_LENGTH, GFP_KERNEL);
-	if (!msg) {
+	msg = kदो_स्मृति(MAX_USER_MSG_LENGTH, GFP_KERNEL);
+	अगर (!msg) अणु
 		DRM_ERROR("Cannot allocate memory for log message.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	length = strncpy_from_user(msg, (void __user *)((unsigned long)arg->send),
+	length = म_नकलन_from_user(msg, (व्योम __user *)((अचिन्हित दीर्घ)arg->send),
 				   MAX_USER_MSG_LENGTH);
-	if (length < 0 || length >= MAX_USER_MSG_LENGTH) {
+	अगर (length < 0 || length >= MAX_USER_MSG_LENGTH) अणु
 		DRM_ERROR("Userspace message access failure.\n");
-		kfree(msg);
-		return -EINVAL;
-	}
+		kमुक्त(msg);
+		वापस -EINVAL;
+	पूर्ण
 
 
-	if (vmw_open_channel(&channel, RPCI_PROTOCOL_NUM)) {
+	अगर (vmw_खोलो_channel(&channel, RPCI_PROTOCOL_NUM)) अणु
 		DRM_ERROR("Failed to open channel.\n");
-		goto out_open;
-	}
+		जाओ out_खोलो;
+	पूर्ण
 
-	if (vmw_send_msg(&channel, msg)) {
+	अगर (vmw_send_msg(&channel, msg)) अणु
 		DRM_ERROR("Failed to send message to host.\n");
-		goto out_msg;
-	}
+		जाओ out_msg;
+	पूर्ण
 
-	if (!arg->send_only) {
-		char *reply = NULL;
-		size_t reply_len = 0;
+	अगर (!arg->send_only) अणु
+		अक्षर *reply = शून्य;
+		माप_प्रकार reply_len = 0;
 
-		if (vmw_recv_msg(&channel, (void *) &reply, &reply_len)) {
+		अगर (vmw_recv_msg(&channel, (व्योम *) &reply, &reply_len)) अणु
 			DRM_ERROR("Failed to receive message from host.\n");
-			goto out_msg;
-		}
-		if (reply && reply_len > 0) {
-			if (copy_to_user((void __user *)((unsigned long)arg->receive),
-							 reply, reply_len)) {
+			जाओ out_msg;
+		पूर्ण
+		अगर (reply && reply_len > 0) अणु
+			अगर (copy_to_user((व्योम __user *)((अचिन्हित दीर्घ)arg->receive),
+							 reply, reply_len)) अणु
 				DRM_ERROR("Failed to copy message to userspace.\n");
-				kfree(reply);
-				goto out_msg;
-			}
+				kमुक्त(reply);
+				जाओ out_msg;
+			पूर्ण
 			arg->receive_len = (__u32)reply_len;
-		}
-		kfree(reply);
-	}
+		पूर्ण
+		kमुक्त(reply);
+	पूर्ण
 
-	vmw_close_channel(&channel);
-	kfree(msg);
+	vmw_बंद_channel(&channel);
+	kमुक्त(msg);
 
-	return 0;
+	वापस 0;
 
 out_msg:
-	vmw_close_channel(&channel);
-out_open:
-	kfree(msg);
+	vmw_बंद_channel(&channel);
+out_खोलो:
+	kमुक्त(msg);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण

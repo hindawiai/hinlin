@@ -1,111 +1,112 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM powerpc
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM घातerpc
 
-#if !defined(_TRACE_POWERPC_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_POWERPC_H
+#अगर !defined(_TRACE_POWERPC_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_POWERPC_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-struct pt_regs;
+काष्ठा pt_regs;
 
-DECLARE_EVENT_CLASS(ppc64_interrupt_class,
+DECLARE_EVENT_CLASS(ppc64_पूर्णांकerrupt_class,
 
-	TP_PROTO(struct pt_regs *regs),
+	TP_PROTO(काष्ठा pt_regs *regs),
 
 	TP_ARGS(regs),
 
 	TP_STRUCT__entry(
-		__field(struct pt_regs *, regs)
+		__field(काष्ठा pt_regs *, regs)
 	),
 
 	TP_fast_assign(
 		__entry->regs = regs;
 	),
 
-	TP_printk("pt_regs=%p", __entry->regs)
+	TP_prपूर्णांकk("pt_regs=%p", __entry->regs)
 );
 
-DEFINE_EVENT(ppc64_interrupt_class, irq_entry,
+DEFINE_EVENT(ppc64_पूर्णांकerrupt_class, irq_entry,
 
-	TP_PROTO(struct pt_regs *regs),
+	TP_PROTO(काष्ठा pt_regs *regs),
 
 	TP_ARGS(regs)
 );
 
-DEFINE_EVENT(ppc64_interrupt_class, irq_exit,
+DEFINE_EVENT(ppc64_पूर्णांकerrupt_class, irq_निकास,
 
-	TP_PROTO(struct pt_regs *regs),
-
-	TP_ARGS(regs)
-);
-
-DEFINE_EVENT(ppc64_interrupt_class, timer_interrupt_entry,
-
-	TP_PROTO(struct pt_regs *regs),
+	TP_PROTO(काष्ठा pt_regs *regs),
 
 	TP_ARGS(regs)
 );
 
-DEFINE_EVENT(ppc64_interrupt_class, timer_interrupt_exit,
+DEFINE_EVENT(ppc64_पूर्णांकerrupt_class, समयr_पूर्णांकerrupt_entry,
 
-	TP_PROTO(struct pt_regs *regs),
-
-	TP_ARGS(regs)
-);
-
-#ifdef CONFIG_PPC_DOORBELL
-DEFINE_EVENT(ppc64_interrupt_class, doorbell_entry,
-
-	TP_PROTO(struct pt_regs *regs),
+	TP_PROTO(काष्ठा pt_regs *regs),
 
 	TP_ARGS(regs)
 );
 
-DEFINE_EVENT(ppc64_interrupt_class, doorbell_exit,
+DEFINE_EVENT(ppc64_पूर्णांकerrupt_class, समयr_पूर्णांकerrupt_निकास,
 
-	TP_PROTO(struct pt_regs *regs),
+	TP_PROTO(काष्ठा pt_regs *regs),
 
 	TP_ARGS(regs)
 );
-#endif
 
-#ifdef CONFIG_PPC_PSERIES
-extern int hcall_tracepoint_regfunc(void);
-extern void hcall_tracepoint_unregfunc(void);
+#अगर_घोषित CONFIG_PPC_DOORBELL
+DEFINE_EVENT(ppc64_पूर्णांकerrupt_class, करोorbell_entry,
+
+	TP_PROTO(काष्ठा pt_regs *regs),
+
+	TP_ARGS(regs)
+);
+
+DEFINE_EVENT(ppc64_पूर्णांकerrupt_class, करोorbell_निकास,
+
+	TP_PROTO(काष्ठा pt_regs *regs),
+
+	TP_ARGS(regs)
+);
+#पूर्ण_अगर
+
+#अगर_घोषित CONFIG_PPC_PSERIES
+बाह्य पूर्णांक hcall_tracepoपूर्णांक_regfunc(व्योम);
+बाह्य व्योम hcall_tracepoपूर्णांक_unregfunc(व्योम);
 
 TRACE_EVENT_FN_COND(hcall_entry,
 
-	TP_PROTO(unsigned long opcode, unsigned long *args),
+	TP_PROTO(अचिन्हित दीर्घ opcode, अचिन्हित दीर्घ *args),
 
 	TP_ARGS(opcode, args),
 
 	TP_CONDITION(cpu_online(raw_smp_processor_id())),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, opcode)
+		__field(अचिन्हित दीर्घ, opcode)
 	),
 
 	TP_fast_assign(
 		__entry->opcode = opcode;
 	),
 
-	TP_printk("opcode=%lu", __entry->opcode),
+	TP_prपूर्णांकk("opcode=%lu", __entry->opcode),
 
-	hcall_tracepoint_regfunc, hcall_tracepoint_unregfunc
+	hcall_tracepoपूर्णांक_regfunc, hcall_tracepoपूर्णांक_unregfunc
 );
 
-TRACE_EVENT_FN_COND(hcall_exit,
+TRACE_EVENT_FN_COND(hcall_निकास,
 
-	TP_PROTO(unsigned long opcode, long retval, unsigned long *retbuf),
+	TP_PROTO(अचिन्हित दीर्घ opcode, दीर्घ retval, अचिन्हित दीर्घ *retbuf),
 
 	TP_ARGS(opcode, retval, retbuf),
 
 	TP_CONDITION(cpu_online(raw_smp_processor_id())),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, opcode)
-		__field(long, retval)
+		__field(अचिन्हित दीर्घ, opcode)
+		__field(दीर्घ, retval)
 	),
 
 	TP_fast_assign(
@@ -113,44 +114,44 @@ TRACE_EVENT_FN_COND(hcall_exit,
 		__entry->retval = retval;
 	),
 
-	TP_printk("opcode=%lu retval=%ld", __entry->opcode, __entry->retval),
+	TP_prपूर्णांकk("opcode=%lu retval=%ld", __entry->opcode, __entry->retval),
 
-	hcall_tracepoint_regfunc, hcall_tracepoint_unregfunc
+	hcall_tracepoपूर्णांक_regfunc, hcall_tracepoपूर्णांक_unregfunc
 );
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_POWERNV
-extern int opal_tracepoint_regfunc(void);
-extern void opal_tracepoint_unregfunc(void);
+#अगर_घोषित CONFIG_PPC_POWERNV
+बाह्य पूर्णांक opal_tracepoपूर्णांक_regfunc(व्योम);
+बाह्य व्योम opal_tracepoपूर्णांक_unregfunc(व्योम);
 
 TRACE_EVENT_FN(opal_entry,
 
-	TP_PROTO(unsigned long opcode, unsigned long *args),
+	TP_PROTO(अचिन्हित दीर्घ opcode, अचिन्हित दीर्घ *args),
 
 	TP_ARGS(opcode, args),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, opcode)
+		__field(अचिन्हित दीर्घ, opcode)
 	),
 
 	TP_fast_assign(
 		__entry->opcode = opcode;
 	),
 
-	TP_printk("opcode=%lu", __entry->opcode),
+	TP_prपूर्णांकk("opcode=%lu", __entry->opcode),
 
-	opal_tracepoint_regfunc, opal_tracepoint_unregfunc
+	opal_tracepoपूर्णांक_regfunc, opal_tracepoपूर्णांक_unregfunc
 );
 
-TRACE_EVENT_FN(opal_exit,
+TRACE_EVENT_FN(opal_निकास,
 
-	TP_PROTO(unsigned long opcode, unsigned long retval),
+	TP_PROTO(अचिन्हित दीर्घ opcode, अचिन्हित दीर्घ retval),
 
 	TP_ARGS(opcode, retval),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, opcode)
-		__field(unsigned long, retval)
+		__field(अचिन्हित दीर्घ, opcode)
+		__field(अचिन्हित दीर्घ, retval)
 	),
 
 	TP_fast_assign(
@@ -158,20 +159,20 @@ TRACE_EVENT_FN(opal_exit,
 		__entry->retval = retval;
 	),
 
-	TP_printk("opcode=%lu retval=%lu", __entry->opcode, __entry->retval),
+	TP_prपूर्णांकk("opcode=%lu retval=%lu", __entry->opcode, __entry->retval),
 
-	opal_tracepoint_regfunc, opal_tracepoint_unregfunc
+	opal_tracepoपूर्णांक_regfunc, opal_tracepoपूर्णांक_unregfunc
 );
-#endif
+#पूर्ण_अगर
 
 TRACE_EVENT(hash_fault,
 
-	    TP_PROTO(unsigned long addr, unsigned long access, unsigned long trap),
+	    TP_PROTO(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ access, अचिन्हित दीर्घ trap),
 	    TP_ARGS(addr, access, trap),
 	    TP_STRUCT__entry(
-		    __field(unsigned long, addr)
-		    __field(unsigned long, access)
-		    __field(unsigned long, trap)
+		    __field(अचिन्हित दीर्घ, addr)
+		    __field(अचिन्हित दीर्घ, access)
+		    __field(अचिन्हित दीर्घ, trap)
 		    ),
 
 	    TP_fast_assign(
@@ -180,25 +181,25 @@ TRACE_EVENT(hash_fault,
 		    __entry->trap = trap;
 		    ),
 
-	    TP_printk("hash fault with addr 0x%lx and access = 0x%lx trap = 0x%lx",
+	    TP_prपूर्णांकk("hash fault with addr 0x%lx and access = 0x%lx trap = 0x%lx",
 		      __entry->addr, __entry->access, __entry->trap)
 );
 
 
 TRACE_EVENT(tlbie,
 
-	TP_PROTO(unsigned long lpid, unsigned long local, unsigned long rb,
-		unsigned long rs, unsigned long ric, unsigned long prs,
-		unsigned long r),
+	TP_PROTO(अचिन्हित दीर्घ lpid, अचिन्हित दीर्घ local, अचिन्हित दीर्घ rb,
+		अचिन्हित दीर्घ rs, अचिन्हित दीर्घ ric, अचिन्हित दीर्घ prs,
+		अचिन्हित दीर्घ r),
 	TP_ARGS(lpid, local, rb, rs, ric, prs, r),
 	TP_STRUCT__entry(
-		__field(unsigned long, lpid)
-		__field(unsigned long, local)
-		__field(unsigned long, rb)
-		__field(unsigned long, rs)
-		__field(unsigned long, ric)
-		__field(unsigned long, prs)
-		__field(unsigned long, r)
+		__field(अचिन्हित दीर्घ, lpid)
+		__field(अचिन्हित दीर्घ, local)
+		__field(अचिन्हित दीर्घ, rb)
+		__field(अचिन्हित दीर्घ, rs)
+		__field(अचिन्हित दीर्घ, ric)
+		__field(अचिन्हित दीर्घ, prs)
+		__field(अचिन्हित दीर्घ, r)
 		),
 
 	TP_fast_assign(
@@ -211,7 +212,7 @@ TRACE_EVENT(tlbie,
 		__entry->r = r;
 		),
 
-	TP_printk("lpid=%ld, local=%ld, rb=0x%lx, rs=0x%lx, ric=0x%lx, "
+	TP_prपूर्णांकk("lpid=%ld, local=%ld, rb=0x%lx, rs=0x%lx, ric=0x%lx, "
 		"prs=0x%lx, r=0x%lx", __entry->lpid, __entry->local,
 		__entry->rb, __entry->rs, __entry->ric, __entry->prs,
 		__entry->r)
@@ -219,25 +220,25 @@ TRACE_EVENT(tlbie,
 
 TRACE_EVENT(tlbia,
 
-	TP_PROTO(unsigned long id),
+	TP_PROTO(अचिन्हित दीर्घ id),
 	TP_ARGS(id),
 	TP_STRUCT__entry(
-		__field(unsigned long, id)
+		__field(अचिन्हित दीर्घ, id)
 		),
 
 	TP_fast_assign(
 		__entry->id = id;
 		),
 
-	TP_printk("ctx.id=0x%lx", __entry->id)
+	TP_prपूर्णांकk("ctx.id=0x%lx", __entry->id)
 );
 
-#endif /* _TRACE_POWERPC_H */
+#पूर्ण_अगर /* _TRACE_POWERPC_H */
 
-#undef TRACE_INCLUDE_PATH
-#undef TRACE_INCLUDE_FILE
+#अघोषित TRACE_INCLUDE_PATH
+#अघोषित TRACE_INCLUDE_खाता
 
-#define TRACE_INCLUDE_PATH asm
-#define TRACE_INCLUDE_FILE trace
+#घोषणा TRACE_INCLUDE_PATH यंत्र
+#घोषणा TRACE_INCLUDE_खाता trace
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

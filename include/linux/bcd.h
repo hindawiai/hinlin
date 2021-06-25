@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _BCD_H
-#define _BCD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _BCD_H
+#घोषणा _BCD_H
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-#define bcd2bin(x)					\
-		(__builtin_constant_p((u8 )(x)) ?	\
-		const_bcd2bin(x) :			\
+#घोषणा bcd2bin(x)					\
+		(__builtin_स्थिरant_p((u8 )(x)) ?	\
+		स्थिर_bcd2bin(x) :			\
 		_bcd2bin(x))
 
-#define bin2bcd(x)					\
-		(__builtin_constant_p((u8 )(x)) ?	\
-		const_bin2bcd(x) :			\
+#घोषणा bin2bcd(x)					\
+		(__builtin_स्थिरant_p((u8 )(x)) ?	\
+		स्थिर_bin2bcd(x) :			\
 		_bin2bcd(x))
 
-#define const_bcd2bin(x)	(((x) & 0x0f) + ((x) >> 4) * 10)
-#define const_bin2bcd(x)	((((x) / 10) << 4) + (x) % 10)
+#घोषणा स्थिर_bcd2bin(x)	(((x) & 0x0f) + ((x) >> 4) * 10)
+#घोषणा स्थिर_bin2bcd(x)	((((x) / 10) << 4) + (x) % 10)
 
-unsigned _bcd2bin(unsigned char val) __attribute_const__;
-unsigned char _bin2bcd(unsigned val) __attribute_const__;
+अचिन्हित _bcd2bin(अचिन्हित अक्षर val) __attribute_स्थिर__;
+अचिन्हित अक्षर _bin2bcd(अचिन्हित val) __attribute_स्थिर__;
 
-#endif /* _BCD_H */
+#पूर्ण_अगर /* _BCD_H */

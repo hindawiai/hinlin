@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/acpi.h>
-#include <linux/bitfield.h>
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/resource.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
 
 /*
  * There are 3 YU GPIO blocks:
@@ -21,141 +22,141 @@
  * gpio[1]: HOST_GPIO32->HOST_GPIO63
  * gpio[2]: HOST_GPIO64->HOST_GPIO69
  */
-#define MLXBF2_GPIO_MAX_PINS_PER_BLOCK 32
+#घोषणा MLXBF2_GPIO_MAX_PINS_PER_BLOCK 32
 
 /*
- * arm_gpio_lock register:
- * bit[31]	lock status: active if set
+ * arm_gpio_lock रेजिस्टर:
+ * bit[31]	lock status: active अगर set
  * bit[15:0]	set lock
- * The lock is enabled only if 0xd42f is written to this field
+ * The lock is enabled only अगर 0xd42f is written to this field
  */
-#define YU_ARM_GPIO_LOCK_ADDR		0x2801088
-#define YU_ARM_GPIO_LOCK_SIZE		0x8
-#define YU_LOCK_ACTIVE_BIT(val)		(val >> 31)
-#define YU_ARM_GPIO_LOCK_ACQUIRE	0xd42f
-#define YU_ARM_GPIO_LOCK_RELEASE	0x0
+#घोषणा YU_ARM_GPIO_LOCK_ADDR		0x2801088
+#घोषणा YU_ARM_GPIO_LOCK_SIZE		0x8
+#घोषणा YU_LOCK_ACTIVE_BIT(val)		(val >> 31)
+#घोषणा YU_ARM_GPIO_LOCK_ACQUIRE	0xd42f
+#घोषणा YU_ARM_GPIO_LOCK_RELEASE	0x0
 
 /*
- * gpio[x] block registers and their offset
+ * gpio[x] block रेजिस्टरs and their offset
  */
-#define YU_GPIO_DATAIN			0x04
-#define YU_GPIO_MODE1			0x08
-#define YU_GPIO_MODE0			0x0c
-#define YU_GPIO_DATASET			0x14
-#define YU_GPIO_DATACLEAR		0x18
-#define YU_GPIO_MODE1_CLEAR		0x50
-#define YU_GPIO_MODE0_SET		0x54
-#define YU_GPIO_MODE0_CLEAR		0x58
+#घोषणा YU_GPIO_DATAIN			0x04
+#घोषणा YU_GPIO_MODE1			0x08
+#घोषणा YU_GPIO_MODE0			0x0c
+#घोषणा YU_GPIO_DATASET			0x14
+#घोषणा YU_GPIO_DATACLEAR		0x18
+#घोषणा YU_GPIO_MODE1_CLEAR		0x50
+#घोषणा YU_GPIO_MODE0_SET		0x54
+#घोषणा YU_GPIO_MODE0_CLEAR		0x58
 
-#ifdef CONFIG_PM
-struct mlxbf2_gpio_context_save_regs {
+#अगर_घोषित CONFIG_PM
+काष्ठा mlxbf2_gpio_context_save_regs अणु
 	u32 gpio_mode0;
 	u32 gpio_mode1;
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-/* BlueField-2 gpio block context structure. */
-struct mlxbf2_gpio_context {
-	struct gpio_chip gc;
+/* BlueField-2 gpio block context काष्ठाure. */
+काष्ठा mlxbf2_gpio_context अणु
+	काष्ठा gpio_chip gc;
 
 	/* YU GPIO blocks address */
-	void __iomem *gpio_io;
+	व्योम __iomem *gpio_io;
 
-#ifdef CONFIG_PM
-	struct mlxbf2_gpio_context_save_regs *csave_regs;
-#endif
-};
+#अगर_घोषित CONFIG_PM
+	काष्ठा mlxbf2_gpio_context_save_regs *csave_regs;
+#पूर्ण_अगर
+पूर्ण;
 
-/* BlueField-2 gpio shared structure. */
-struct mlxbf2_gpio_param {
-	void __iomem *io;
-	struct resource *res;
-	struct mutex *lock;
-};
+/* BlueField-2 gpio shared काष्ठाure. */
+काष्ठा mlxbf2_gpio_param अणु
+	व्योम __iomem *io;
+	काष्ठा resource *res;
+	काष्ठा mutex *lock;
+पूर्ण;
 
-static struct resource yu_arm_gpio_lock_res = {
+अटल काष्ठा resource yu_arm_gpio_lock_res = अणु
 	.start = YU_ARM_GPIO_LOCK_ADDR,
 	.end   = YU_ARM_GPIO_LOCK_ADDR + YU_ARM_GPIO_LOCK_SIZE - 1,
 	.name  = "YU_ARM_GPIO_LOCK",
-};
+पूर्ण;
 
-static DEFINE_MUTEX(yu_arm_gpio_lock_mutex);
+अटल DEFINE_MUTEX(yu_arm_gpio_lock_mutex);
 
-static struct mlxbf2_gpio_param yu_arm_gpio_lock_param = {
+अटल काष्ठा mlxbf2_gpio_param yu_arm_gpio_lock_param = अणु
 	.res = &yu_arm_gpio_lock_res,
 	.lock = &yu_arm_gpio_lock_mutex,
-};
+पूर्ण;
 
 /* Request memory region and map yu_arm_gpio_lock resource */
-static int mlxbf2_gpio_get_lock_res(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	resource_size_t size;
-	int ret = 0;
+अटल पूर्णांक mlxbf2_gpio_get_lock_res(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	resource_माप_प्रकार size;
+	पूर्णांक ret = 0;
 
 	mutex_lock(yu_arm_gpio_lock_param.lock);
 
-	/* Check if the memory map already exists */
-	if (yu_arm_gpio_lock_param.io)
-		goto exit;
+	/* Check अगर the memory map alपढ़ोy exists */
+	अगर (yu_arm_gpio_lock_param.io)
+		जाओ निकास;
 
 	res = yu_arm_gpio_lock_param.res;
 	size = resource_size(res);
 
-	if (!devm_request_mem_region(dev, res->start, size, res->name)) {
+	अगर (!devm_request_mem_region(dev, res->start, size, res->name)) अणु
 		ret = -EFAULT;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	yu_arm_gpio_lock_param.io = devm_ioremap(dev, res->start, size);
-	if (!yu_arm_gpio_lock_param.io)
+	अगर (!yu_arm_gpio_lock_param.io)
 		ret = -ENOMEM;
 
-exit:
+निकास:
 	mutex_unlock(yu_arm_gpio_lock_param.lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Acquire the YU arm_gpio_lock to be able to change the direction
- * mode. If the lock_active bit is already set, return an error.
+ * mode. If the lock_active bit is alपढ़ोy set, वापस an error.
  */
-static int mlxbf2_gpio_lock_acquire(struct mlxbf2_gpio_context *gs)
-{
+अटल पूर्णांक mlxbf2_gpio_lock_acquire(काष्ठा mlxbf2_gpio_context *gs)
+अणु
 	u32 arm_gpio_lock_val;
 
 	mutex_lock(yu_arm_gpio_lock_param.lock);
 	spin_lock(&gs->gc.bgpio_lock);
 
-	arm_gpio_lock_val = readl(yu_arm_gpio_lock_param.io);
+	arm_gpio_lock_val = पढ़ोl(yu_arm_gpio_lock_param.io);
 
 	/*
-	 * When lock active bit[31] is set, ModeX is write enabled
+	 * When lock active bit[31] is set, ModeX is ग_लिखो enabled
 	 */
-	if (YU_LOCK_ACTIVE_BIT(arm_gpio_lock_val)) {
+	अगर (YU_LOCK_ACTIVE_BIT(arm_gpio_lock_val)) अणु
 		spin_unlock(&gs->gc.bgpio_lock);
 		mutex_unlock(yu_arm_gpio_lock_param.lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	writel(YU_ARM_GPIO_LOCK_ACQUIRE, yu_arm_gpio_lock_param.io);
+	ग_लिखोl(YU_ARM_GPIO_LOCK_ACQUIRE, yu_arm_gpio_lock_param.io);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Release the YU arm_gpio_lock after changing the direction mode.
  */
-static void mlxbf2_gpio_lock_release(struct mlxbf2_gpio_context *gs)
+अटल व्योम mlxbf2_gpio_lock_release(काष्ठा mlxbf2_gpio_context *gs)
 	__releases(&gs->gc.bgpio_lock)
 	__releases(yu_arm_gpio_lock_param.lock)
-{
-	writel(YU_ARM_GPIO_LOCK_RELEASE, yu_arm_gpio_lock_param.io);
+अणु
+	ग_लिखोl(YU_ARM_GPIO_LOCK_RELEASE, yu_arm_gpio_lock_param.io);
 	spin_unlock(&gs->gc.bgpio_lock);
 	mutex_unlock(yu_arm_gpio_lock_param.lock);
-}
+पूर्ण
 
 /*
  * mode0 and mode1 are both locked by the gpio_lock field.
@@ -163,99 +164,99 @@ static void mlxbf2_gpio_lock_release(struct mlxbf2_gpio_context *gs)
  * Together, mode0 and mode1 define the gpio Mode dependeing also
  * on Reg_DataOut.
  *
- * {mode1,mode0}:{Reg_DataOut=0,Reg_DataOut=1}->{DataOut=0,DataOut=1}
+ * अणुmode1,mode0पूर्ण:अणुReg_DataOut=0,Reg_DataOut=1पूर्ण->अणुDataOut=0,DataOut=1पूर्ण
  *
- * {0,0}:Reg_DataOut{0,1}->{Z,Z} Input PAD
- * {0,1}:Reg_DataOut{0,1}->{0,1} Full drive Output PAD
- * {1,0}:Reg_DataOut{0,1}->{0,Z} 0-set PAD to low, 1-float
- * {1,1}:Reg_DataOut{0,1}->{Z,1} 0-float, 1-set PAD to high
+ * अणु0,0पूर्ण:Reg_DataOutअणु0,1पूर्ण->अणुZ,Zपूर्ण Input PAD
+ * अणु0,1पूर्ण:Reg_DataOutअणु0,1पूर्ण->अणु0,1पूर्ण Full drive Output PAD
+ * अणु1,0पूर्ण:Reg_DataOutअणु0,1पूर्ण->अणु0,Zपूर्ण 0-set PAD to low, 1-भग्न
+ * अणु1,1पूर्ण:Reg_DataOutअणु0,1पूर्ण->अणुZ,1पूर्ण 0-भग्न, 1-set PAD to high
  */
 
 /*
  * Set input direction:
- * {mode1,mode0} = {0,0}
+ * अणुmode1,mode0पूर्ण = अणु0,0पूर्ण
  */
-static int mlxbf2_gpio_direction_input(struct gpio_chip *chip,
-				       unsigned int offset)
-{
-	struct mlxbf2_gpio_context *gs = gpiochip_get_data(chip);
-	int ret;
+अटल पूर्णांक mlxbf2_gpio_direction_input(काष्ठा gpio_chip *chip,
+				       अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा mlxbf2_gpio_context *gs = gpiochip_get_data(chip);
+	पूर्णांक ret;
 
 	/*
 	 * Although the arm_gpio_lock was set in the probe function, check again
-	 * if it is still enabled to be able to write to the ModeX registers.
+	 * अगर it is still enabled to be able to ग_लिखो to the ModeX रेजिस्टरs.
 	 */
 	ret = mlxbf2_gpio_lock_acquire(gs);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	writel(BIT(offset), gs->gpio_io + YU_GPIO_MODE0_CLEAR);
-	writel(BIT(offset), gs->gpio_io + YU_GPIO_MODE1_CLEAR);
+	ग_लिखोl(BIT(offset), gs->gpio_io + YU_GPIO_MODE0_CLEAR);
+	ग_लिखोl(BIT(offset), gs->gpio_io + YU_GPIO_MODE1_CLEAR);
 
 	mlxbf2_gpio_lock_release(gs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Set output direction:
- * {mode1,mode0} = {0,1}
+ * अणुmode1,mode0पूर्ण = अणु0,1पूर्ण
  */
-static int mlxbf2_gpio_direction_output(struct gpio_chip *chip,
-					unsigned int offset,
-					int value)
-{
-	struct mlxbf2_gpio_context *gs = gpiochip_get_data(chip);
-	int ret = 0;
+अटल पूर्णांक mlxbf2_gpio_direction_output(काष्ठा gpio_chip *chip,
+					अचिन्हित पूर्णांक offset,
+					पूर्णांक value)
+अणु
+	काष्ठा mlxbf2_gpio_context *gs = gpiochip_get_data(chip);
+	पूर्णांक ret = 0;
 
 	/*
 	 * Although the arm_gpio_lock was set in the probe function,
-	 * check again it is still enabled to be able to write to the
-	 * ModeX registers.
+	 * check again it is still enabled to be able to ग_लिखो to the
+	 * ModeX रेजिस्टरs.
 	 */
 	ret = mlxbf2_gpio_lock_acquire(gs);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	writel(BIT(offset), gs->gpio_io + YU_GPIO_MODE1_CLEAR);
-	writel(BIT(offset), gs->gpio_io + YU_GPIO_MODE0_SET);
+	ग_लिखोl(BIT(offset), gs->gpio_io + YU_GPIO_MODE1_CLEAR);
+	ग_लिखोl(BIT(offset), gs->gpio_io + YU_GPIO_MODE0_SET);
 
 	mlxbf2_gpio_lock_release(gs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* BlueField-2 GPIO driver initialization routine. */
-static int
-mlxbf2_gpio_probe(struct platform_device *pdev)
-{
-	struct mlxbf2_gpio_context *gs;
-	struct device *dev = &pdev->dev;
-	struct gpio_chip *gc;
-	struct resource *res;
-	unsigned int npins;
-	int ret;
+अटल पूर्णांक
+mlxbf2_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxbf2_gpio_context *gs;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा gpio_chip *gc;
+	काष्ठा resource *res;
+	अचिन्हित पूर्णांक npins;
+	पूर्णांक ret;
 
-	gs = devm_kzalloc(dev, sizeof(*gs), GFP_KERNEL);
-	if (!gs)
-		return -ENOMEM;
+	gs = devm_kzalloc(dev, माप(*gs), GFP_KERNEL);
+	अगर (!gs)
+		वापस -ENOMEM;
 
 	/* YU GPIO block address */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
 	gs->gpio_io = devm_ioremap(dev, res->start, resource_size(res));
-	if (!gs->gpio_io)
-		return -ENOMEM;
+	अगर (!gs->gpio_io)
+		वापस -ENOMEM;
 
 	ret = mlxbf2_gpio_get_lock_res(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to get yu_arm_gpio_lock resource\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (device_property_read_u32(dev, "npins", &npins))
+	अगर (device_property_पढ़ो_u32(dev, "npins", &npins))
 		npins = MLXBF2_GPIO_MAX_PINS_PER_BLOCK;
 
 	gc = &gs->gc;
@@ -264,8 +265,8 @@ mlxbf2_gpio_probe(struct platform_device *pdev)
 			gs->gpio_io + YU_GPIO_DATAIN,
 			gs->gpio_io + YU_GPIO_DATASET,
 			gs->gpio_io + YU_GPIO_DATACLEAR,
-			NULL,
-			NULL,
+			शून्य,
+			शून्य,
 			0);
 
 	gc->direction_input = mlxbf2_gpio_direction_input;
@@ -273,63 +274,63 @@ mlxbf2_gpio_probe(struct platform_device *pdev)
 	gc->ngpio = npins;
 	gc->owner = THIS_MODULE;
 
-	platform_set_drvdata(pdev, gs);
+	platक्रमm_set_drvdata(pdev, gs);
 
 	ret = devm_gpiochip_add_data(dev, &gs->gc, gs);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed adding memory mapped gpiochip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int mlxbf2_gpio_suspend(struct platform_device *pdev,
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक mlxbf2_gpio_suspend(काष्ठा platक्रमm_device *pdev,
 				pm_message_t state)
-{
-	struct mlxbf2_gpio_context *gs = platform_get_drvdata(pdev);
+अणु
+	काष्ठा mlxbf2_gpio_context *gs = platक्रमm_get_drvdata(pdev);
 
-	gs->csave_regs->gpio_mode0 = readl(gs->gpio_io +
+	gs->csave_regs->gpio_mode0 = पढ़ोl(gs->gpio_io +
 		YU_GPIO_MODE0);
-	gs->csave_regs->gpio_mode1 = readl(gs->gpio_io +
+	gs->csave_regs->gpio_mode1 = पढ़ोl(gs->gpio_io +
 		YU_GPIO_MODE1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf2_gpio_resume(struct platform_device *pdev)
-{
-	struct mlxbf2_gpio_context *gs = platform_get_drvdata(pdev);
+अटल पूर्णांक mlxbf2_gpio_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxbf2_gpio_context *gs = platक्रमm_get_drvdata(pdev);
 
-	writel(gs->csave_regs->gpio_mode0, gs->gpio_io +
+	ग_लिखोl(gs->csave_regs->gpio_mode0, gs->gpio_io +
 		YU_GPIO_MODE0);
-	writel(gs->csave_regs->gpio_mode1, gs->gpio_io +
+	ग_लिखोl(gs->csave_regs->gpio_mode1, gs->gpio_io +
 		YU_GPIO_MODE1);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct acpi_device_id __maybe_unused mlxbf2_gpio_acpi_match[] = {
-	{ "MLNXBF22", 0 },
-	{},
-};
+अटल स्थिर काष्ठा acpi_device_id __maybe_unused mlxbf2_gpio_acpi_match[] = अणु
+	अणु "MLNXBF22", 0 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, mlxbf2_gpio_acpi_match);
 
-static struct platform_driver mlxbf2_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mlxbf2_gpio_driver = अणु
+	.driver = अणु
 		.name = "mlxbf2_gpio",
 		.acpi_match_table = ACPI_PTR(mlxbf2_gpio_acpi_match),
-	},
+	पूर्ण,
 	.probe    = mlxbf2_gpio_probe,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend  = mlxbf2_gpio_suspend,
 	.resume   = mlxbf2_gpio_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-module_platform_driver(mlxbf2_gpio_driver);
+module_platक्रमm_driver(mlxbf2_gpio_driver);
 
 MODULE_DESCRIPTION("Mellanox BlueField-2 GPIO Driver");
 MODULE_AUTHOR("Mellanox Technologies");

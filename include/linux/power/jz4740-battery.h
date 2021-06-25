@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  Copyright (C) 2009, Jiejing Zhang <kzjeef@gmail.com>
  */
 
-#ifndef __JZ4740_BATTERY_H
-#define __JZ4740_BATTERY_H
+#अगर_अघोषित __JZ4740_BATTERY_H
+#घोषणा __JZ4740_BATTERY_H
 
-struct jz_battery_platform_data {
-	struct power_supply_info info;
-	int gpio_charge;	/* GPIO port of Charger state */
-	int gpio_charge_active_low;
-};
+काष्ठा jz_battery_platक्रमm_data अणु
+	काष्ठा घातer_supply_info info;
+	पूर्णांक gpio_अक्षरge;	/* GPIO port of Charger state */
+	पूर्णांक gpio_अक्षरge_active_low;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

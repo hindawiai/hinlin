@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2019 BayLibre, SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
-#ifndef __MESON_VID_PLL_DIV_H
-#define __MESON_VID_PLL_DIV_H
+#अगर_अघोषित __MESON_VID_PLL_DIV_H
+#घोषणा __MESON_VID_PLL_DIV_H
 
-#include <linux/clk-provider.h>
-#include "parm.h"
+#समावेश <linux/clk-provider.h>
+#समावेश "parm.h"
 
-struct meson_vid_pll_div_data {
-	struct parm val;
-	struct parm sel;
-};
+काष्ठा meson_vid_pll_भाग_data अणु
+	काष्ठा parm val;
+	काष्ठा parm sel;
+पूर्ण;
 
-extern const struct clk_ops meson_vid_pll_div_ro_ops;
+बाह्य स्थिर काष्ठा clk_ops meson_vid_pll_भाग_ro_ops;
 
-#endif /* __MESON_VID_PLL_DIV_H */
+#पूर्ण_अगर /* __MESON_VID_PLL_DIV_H */

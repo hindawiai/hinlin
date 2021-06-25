@@ -1,147 +1,148 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 1999 Al Smith
  *
  * Portions derived from work (c) 1995,1996 Christian Vogelgsang.
  * Portions derived from IRIX header files (c) 1988 Silicon Graphics
  */
-#ifndef _EFS_EFS_H_
-#define _EFS_EFS_H_
+#अगर_अघोषित _EFS_EFS_H_
+#घोषणा _EFS_EFS_H_
 
-#ifdef pr_fmt
-#undef pr_fmt
-#endif
+#अगर_घोषित pr_fmt
+#अघोषित pr_fmt
+#पूर्ण_अगर
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/fs.h>
-#include <linux/uaccess.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/uaccess.h>
 
-#define EFS_VERSION "1.0a"
+#घोषणा EFS_VERSION "1.0a"
 
-static const char cprt[] = "EFS: "EFS_VERSION" - (c) 1999 Al Smith <Al.Smith@aeschi.ch.eu.org>";
+अटल स्थिर अक्षर cprt[] = "EFS: "EFS_VERSION" - (c) 1999 Al Smith <Al.Smith@aeschi.ch.eu.org>";
 
 
 /* 1 block is 512 bytes */
-#define	EFS_BLOCKSIZE_BITS	9
-#define	EFS_BLOCKSIZE		(1 << EFS_BLOCKSIZE_BITS)
+#घोषणा	EFS_BLOCKSIZE_BITS	9
+#घोषणा	EFS_BLOCKSIZE		(1 << EFS_BLOCKSIZE_BITS)
 
-typedef	int32_t		efs_block_t;
-typedef uint32_t	efs_ino_t;
+प्रकार	पूर्णांक32_t		efs_block_t;
+प्रकार uपूर्णांक32_t	efs_ino_t;
 
-#define	EFS_DIRECTEXTENTS	12
+#घोषणा	EFS_सूचीECTEXTENTS	12
 
 /*
  * layout of an extent, in memory and on disk. 8 bytes exactly.
  */
-typedef union extent_u {
-	unsigned char raw[8];
-	struct extent_s {
-		unsigned int	ex_magic:8;	/* magic # (zero) */
-		unsigned int	ex_bn:24;	/* basic block */
-		unsigned int	ex_length:8;	/* numblocks in this extent */
-		unsigned int	ex_offset:24;	/* logical offset into file */
-	} cooked;
-} efs_extent;
+प्रकार जोड़ extent_u अणु
+	अचिन्हित अक्षर raw[8];
+	काष्ठा extent_s अणु
+		अचिन्हित पूर्णांक	ex_magic:8;	/* magic # (zero) */
+		अचिन्हित पूर्णांक	ex_bn:24;	/* basic block */
+		अचिन्हित पूर्णांक	ex_length:8;	/* numblocks in this extent */
+		अचिन्हित पूर्णांक	ex_offset:24;	/* logical offset पूर्णांकo file */
+	पूर्ण cooked;
+पूर्ण efs_extent;
 
-typedef struct edevs {
+प्रकार काष्ठा edevs अणु
 	__be16		odev;
 	__be32		ndev;
-} efs_devs;
+पूर्ण efs_devs;
 
 /*
- * extent based filesystem inode as it appears on disk.  The efs inode
- * is exactly 128 bytes long.
+ * extent based fileप्रणाली inode as it appears on disk.  The efs inode
+ * is exactly 128 bytes दीर्घ.
  */
-struct	efs_dinode {
+काष्ठा	efs_dinode अणु
 	__be16		di_mode;	/* mode and type of file */
 	__be16		di_nlink;	/* number of links to file */
 	__be16		di_uid;		/* owner's user id */
 	__be16		di_gid;		/* owner's group id */
 	__be32		di_size;	/* number of bytes in file */
-	__be32		di_atime;	/* time last accessed */
-	__be32		di_mtime;	/* time last modified */
-	__be32		di_ctime;	/* time created */
+	__be32		di_aसमय;	/* समय last accessed */
+	__be32		di_mसमय;	/* समय last modअगरied */
+	__be32		di_स_समय;	/* समय created */
 	__be32		di_gen;		/* generation number */
 	__be16		di_numextents;	/* # of extents */
-	u_char		di_version;	/* version of inode */
-	u_char		di_spare;	/* spare - used by AFS */
-	union di_addr {
-		efs_extent	di_extents[EFS_DIRECTEXTENTS];
-		efs_devs	di_dev;	/* device for IFCHR/IFBLK */
-	} di_u;
-};
+	u_अक्षर		di_version;	/* version of inode */
+	u_अक्षर		di_spare;	/* spare - used by AFS */
+	जोड़ di_addr अणु
+		efs_extent	di_extents[EFS_सूचीECTEXTENTS];
+		efs_devs	di_dev;	/* device क्रम IFCHR/IFBLK */
+	पूर्ण di_u;
+पूर्ण;
 
 /* efs inode storage in memory */
-struct efs_inode_info {
-	int		numextents;
-	int		lastextent;
+काष्ठा efs_inode_info अणु
+	पूर्णांक		numextents;
+	पूर्णांक		lastextent;
 
-	efs_extent	extents[EFS_DIRECTEXTENTS];
-	struct inode	vfs_inode;
-};
+	efs_extent	extents[EFS_सूचीECTEXTENTS];
+	काष्ठा inode	vfs_inode;
+पूर्ण;
 
-#include <linux/efs_fs_sb.h>
+#समावेश <linux/efs_fs_sb.h>
 
-#define EFS_DIRBSIZE_BITS	EFS_BLOCKSIZE_BITS
-#define EFS_DIRBSIZE		(1 << EFS_DIRBSIZE_BITS)
+#घोषणा EFS_सूचीBSIZE_BITS	EFS_BLOCKSIZE_BITS
+#घोषणा EFS_सूचीBSIZE		(1 << EFS_सूचीBSIZE_BITS)
 
-struct efs_dentry {
+काष्ठा efs_dentry अणु
 	__be32		inode;
-	unsigned char	namelen;
-	char		name[3];
-};
+	अचिन्हित अक्षर	namelen;
+	अक्षर		name[3];
+पूर्ण;
 
-#define EFS_DENTSIZE	(sizeof(struct efs_dentry) - 3 + 1)
-#define EFS_MAXNAMELEN  ((1 << (sizeof(char) * 8)) - 1)
+#घोषणा EFS_DENTSIZE	(माप(काष्ठा efs_dentry) - 3 + 1)
+#घोषणा EFS_MAXNAMELEN  ((1 << (माप(अक्षर) * 8)) - 1)
 
-#define EFS_DIRBLK_HEADERSIZE	4
-#define EFS_DIRBLK_MAGIC	0xbeef	/* moo */
+#घोषणा EFS_सूचीBLK_HEADERSIZE	4
+#घोषणा EFS_सूचीBLK_MAGIC	0xbeef	/* moo */
 
-struct efs_dir {
+काष्ठा efs_dir अणु
 	__be16	magic;
-	unsigned char	firstused;
-	unsigned char	slots;
+	अचिन्हित अक्षर	firstused;
+	अचिन्हित अक्षर	slots;
 
-	unsigned char	space[EFS_DIRBSIZE - EFS_DIRBLK_HEADERSIZE];
-};
+	अचिन्हित अक्षर	space[EFS_सूचीBSIZE - EFS_सूचीBLK_HEADERSIZE];
+पूर्ण;
 
-#define EFS_MAXENTS \
-	((EFS_DIRBSIZE - EFS_DIRBLK_HEADERSIZE) / \
-	 (EFS_DENTSIZE + sizeof(char)))
+#घोषणा EFS_MAXENTS \
+	((EFS_सूचीBSIZE - EFS_सूचीBLK_HEADERSIZE) / \
+	 (EFS_DENTSIZE + माप(अक्षर)))
 
-#define EFS_SLOTAT(dir, slot) EFS_REALOFF((dir)->space[slot])
+#घोषणा EFS_SLOTAT(dir, slot) EFS_REALOFF((dir)->space[slot])
 
-#define EFS_REALOFF(offset) ((offset << 1))
+#घोषणा EFS_REALOFF(offset) ((offset << 1))
 
 
-static inline struct efs_inode_info *INODE_INFO(struct inode *inode)
-{
-	return container_of(inode, struct efs_inode_info, vfs_inode);
-}
+अटल अंतरभूत काष्ठा efs_inode_info *INODE_INFO(काष्ठा inode *inode)
+अणु
+	वापस container_of(inode, काष्ठा efs_inode_info, vfs_inode);
+पूर्ण
 
-static inline struct efs_sb_info *SUPER_INFO(struct super_block *sb)
-{
-	return sb->s_fs_info;
-}
+अटल अंतरभूत काष्ठा efs_sb_info *SUPER_INFO(काष्ठा super_block *sb)
+अणु
+	वापस sb->s_fs_info;
+पूर्ण
 
-struct statfs;
-struct fid;
+काष्ठा statfs;
+काष्ठा fid;
 
-extern const struct inode_operations efs_dir_inode_operations;
-extern const struct file_operations efs_dir_operations;
-extern const struct address_space_operations efs_symlink_aops;
+बाह्य स्थिर काष्ठा inode_operations efs_dir_inode_operations;
+बाह्य स्थिर काष्ठा file_operations efs_dir_operations;
+बाह्य स्थिर काष्ठा address_space_operations efs_symlink_aops;
 
-extern struct inode *efs_iget(struct super_block *, unsigned long);
-extern efs_block_t efs_map_block(struct inode *, efs_block_t);
-extern int efs_get_block(struct inode *, sector_t, struct buffer_head *, int);
+बाह्य काष्ठा inode *efs_iget(काष्ठा super_block *, अचिन्हित दीर्घ);
+बाह्य efs_block_t efs_map_block(काष्ठा inode *, efs_block_t);
+बाह्य पूर्णांक efs_get_block(काष्ठा inode *, sector_t, काष्ठा buffer_head *, पूर्णांक);
 
-extern struct dentry *efs_lookup(struct inode *, struct dentry *, unsigned int);
-extern struct dentry *efs_fh_to_dentry(struct super_block *sb, struct fid *fid,
-		int fh_len, int fh_type);
-extern struct dentry *efs_fh_to_parent(struct super_block *sb, struct fid *fid,
-		int fh_len, int fh_type);
-extern struct dentry *efs_get_parent(struct dentry *);
-extern int efs_bmap(struct inode *, int);
+बाह्य काष्ठा dentry *efs_lookup(काष्ठा inode *, काष्ठा dentry *, अचिन्हित पूर्णांक);
+बाह्य काष्ठा dentry *efs_fh_to_dentry(काष्ठा super_block *sb, काष्ठा fid *fid,
+		पूर्णांक fh_len, पूर्णांक fh_type);
+बाह्य काष्ठा dentry *efs_fh_to_parent(काष्ठा super_block *sb, काष्ठा fid *fid,
+		पूर्णांक fh_len, पूर्णांक fh_type);
+बाह्य काष्ठा dentry *efs_get_parent(काष्ठा dentry *);
+बाह्य पूर्णांक efs_bmap(काष्ठा inode *, पूर्णांक);
 
-#endif /* _EFS_EFS_H_ */
+#पूर्ण_अगर /* _EFS_EFS_H_ */

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * ecryptfs_format.c: helper functions for the encrypted key type
+ * ecryptfs_क्रमmat.c: helper functions क्रम the encrypted key type
  *
  * Copyright (C) 2006 International Business Machines Corp.
  * Copyright (C) 2010 Politecnico di Torino, Italy
@@ -12,14 +13,14 @@
  * Roberto Sassu <roberto.sassu@polito.it>
  */
 
-#include <linux/export.h>
-#include <linux/string.h>
-#include "ecryptfs_format.h"
+#समावेश <linux/export.h>
+#समावेश <linux/माला.स>
+#समावेश "ecryptfs_format.h"
 
-u8 *ecryptfs_get_auth_tok_key(struct ecryptfs_auth_tok *auth_tok)
-{
-	return auth_tok->token.password.session_key_encryption_key;
-}
+u8 *ecryptfs_get_auth_tok_key(काष्ठा ecryptfs_auth_tok *auth_tok)
+अणु
+	वापस auth_tok->token.password.session_key_encryption_key;
+पूर्ण
 EXPORT_SYMBOL(ecryptfs_get_auth_tok_key);
 
 /*
@@ -28,33 +29,33 @@ EXPORT_SYMBOL(ecryptfs_get_auth_tok_key);
  * Source code taken from the software 'ecryptfs-utils' version 83.
  *
  */
-void ecryptfs_get_versions(int *major, int *minor, int *file_version)
-{
+व्योम ecryptfs_get_versions(पूर्णांक *major, पूर्णांक *minor, पूर्णांक *file_version)
+अणु
 	*major = ECRYPTFS_VERSION_MAJOR;
 	*minor = ECRYPTFS_VERSION_MINOR;
-	if (file_version)
-		*file_version = ECRYPTFS_SUPPORTED_FILE_VERSION;
-}
+	अगर (file_version)
+		*file_version = ECRYPTFS_SUPPORTED_खाता_VERSION;
+पूर्ण
 EXPORT_SYMBOL(ecryptfs_get_versions);
 
 /*
- * ecryptfs_fill_auth_tok - fill the ecryptfs_auth_tok structure
+ * ecryptfs_fill_auth_tok - fill the ecryptfs_auth_tok काष्ठाure
  *
- * Fill the ecryptfs_auth_tok structure with required ecryptfs data.
+ * Fill the ecryptfs_auth_tok काष्ठाure with required ecryptfs data.
  * The source code is inspired to the original function generate_payload()
  * shipped with the software 'ecryptfs-utils' version 83.
  *
  */
-int ecryptfs_fill_auth_tok(struct ecryptfs_auth_tok *auth_tok,
-			   const char *key_desc)
-{
-	int major, minor;
+पूर्णांक ecryptfs_fill_auth_tok(काष्ठा ecryptfs_auth_tok *auth_tok,
+			   स्थिर अक्षर *key_desc)
+अणु
+	पूर्णांक major, minor;
 
-	ecryptfs_get_versions(&major, &minor, NULL);
-	auth_tok->version = (((uint16_t)(major << 8) & 0xFF00)
-			     | ((uint16_t)minor & 0x00FF));
+	ecryptfs_get_versions(&major, &minor, शून्य);
+	auth_tok->version = (((uपूर्णांक16_t)(major << 8) & 0xFF00)
+			     | ((uपूर्णांक16_t)minor & 0x00FF));
 	auth_tok->token_type = ECRYPTFS_PASSWORD;
-	strncpy((char *)auth_tok->token.password.signature, key_desc,
+	म_नकलन((अक्षर *)auth_tok->token.password.signature, key_desc,
 		ECRYPTFS_PASSWORD_SIG_SIZE);
 	auth_tok->token.password.session_key_encryption_key_bytes =
 		ECRYPTFS_MAX_KEY_BYTES;
@@ -72,6 +73,6 @@ int ecryptfs_fill_auth_tok(struct ecryptfs_auth_tok *auth_tok,
 	/* Default; subject to change by kernel eCryptfs */
 	auth_tok->token.password.hash_algo = PGP_DIGEST_ALGO_SHA512;
 	auth_tok->token.password.flags &= ~(ECRYPTFS_PERSISTENT_PASSWORD);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ecryptfs_fill_auth_tok);

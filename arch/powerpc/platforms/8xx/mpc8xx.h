@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Prototypes, etc. for the Freescale MPC8xx embedded cpu chips
+ * Prototypes, etc. क्रम the Freescale MPC8xx embedded cpu chips
  * May need to be cleaned as the port goes on ...
  *
  * Copyright (C) 2008 Jochen Friedrich <jochen@scram.de>
@@ -8,14 +9,14 @@
  * version 2. This program is licensed "as is" without any warranty of any
  * kind, whether express or implied.
  */
-#ifndef __MPC8xx_H
-#define __MPC8xx_H
+#अगर_अघोषित __MPC8xx_H
+#घोषणा __MPC8xx_H
 
-extern void __noreturn mpc8xx_restart(char *cmd);
-extern void mpc8xx_calibrate_decr(void);
-extern int mpc8xx_set_rtc_time(struct rtc_time *tm);
-extern void mpc8xx_get_rtc_time(struct rtc_time *tm);
-extern void mpc8xx_pics_init(void);
-extern unsigned int mpc8xx_get_irq(void);
+बाह्य व्योम __noवापस mpc8xx_restart(अक्षर *cmd);
+बाह्य व्योम mpc8xx_calibrate_decr(व्योम);
+बाह्य पूर्णांक mpc8xx_set_rtc_समय(काष्ठा rtc_समय *पंचांग);
+बाह्य व्योम mpc8xx_get_rtc_समय(काष्ठा rtc_समय *पंचांग);
+बाह्य व्योम mpc8xx_pics_init(व्योम);
+बाह्य अचिन्हित पूर्णांक mpc8xx_get_irq(व्योम);
 
-#endif /* __MPC8xx_H */
+#पूर्ण_अगर /* __MPC8xx_H */

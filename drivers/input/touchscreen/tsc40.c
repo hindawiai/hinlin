@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TSC-40 serial touchscreen driver. It should be compatible with
  * TSC-10 and 25.
@@ -6,24 +7,24 @@
  * Author: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/input.h>
-#include <linux/serio.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/input.h>
+#समावेश <linux/serपन.स>
 
-#define PACKET_LENGTH  5
-struct tsc_ser {
-	struct input_dev *dev;
-	struct serio *serio;
+#घोषणा PACKET_LENGTH  5
+काष्ठा tsc_ser अणु
+	काष्ठा input_dev *dev;
+	काष्ठा serio *serio;
 	u32 idx;
-	unsigned char data[PACKET_LENGTH];
-	char phys[32];
-};
+	अचिन्हित अक्षर data[PACKET_LENGTH];
+	अक्षर phys[32];
+पूर्ण;
 
-static void tsc_process_data(struct tsc_ser *ptsc)
-{
-	struct input_dev *dev = ptsc->dev;
+अटल व्योम tsc_process_data(काष्ठा tsc_ser *ptsc)
+अणु
+	काष्ठा input_dev *dev = ptsc->dev;
 	u8 *data = ptsc->data;
 	u32 x;
 	u32 y;
@@ -31,139 +32,139 @@ static void tsc_process_data(struct tsc_ser *ptsc)
 	x = ((data[1] & 0x03) << 8) | data[2];
 	y = ((data[3] & 0x03) << 8) | data[4];
 
-	input_report_abs(dev, ABS_X, x);
-	input_report_abs(dev, ABS_Y, y);
+	input_report_असल(dev, ABS_X, x);
+	input_report_असल(dev, ABS_Y, y);
 	input_report_key(dev, BTN_TOUCH, 1);
 
 	input_sync(dev);
-}
+पूर्ण
 
-static irqreturn_t tsc_interrupt(struct serio *serio,
-		unsigned char data, unsigned int flags)
-{
-	struct tsc_ser *ptsc = serio_get_drvdata(serio);
-	struct input_dev *dev = ptsc->dev;
+अटल irqवापस_t tsc_पूर्णांकerrupt(काष्ठा serio *serio,
+		अचिन्हित अक्षर data, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा tsc_ser *ptsc = serio_get_drvdata(serio);
+	काष्ठा input_dev *dev = ptsc->dev;
 
 	ptsc->data[ptsc->idx] = data;
-	switch (ptsc->idx++) {
-	case 0:
-		if (unlikely((data & 0x3e) != 0x10)) {
+	चयन (ptsc->idx++) अणु
+	हाल 0:
+		अगर (unlikely((data & 0x3e) != 0x10)) अणु
 			dev_dbg(&serio->dev,
 				"unsynchronized packet start (0x%02x)\n", data);
 			ptsc->idx = 0;
-		} else if (!(data & 0x01)) {
+		पूर्ण अन्यथा अगर (!(data & 0x01)) अणु
 			input_report_key(dev, BTN_TOUCH, 0);
 			input_sync(dev);
 			ptsc->idx = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 1:
-	case 3:
-		if (unlikely(data & 0xfc)) {
+	हाल 1:
+	हाल 3:
+		अगर (unlikely(data & 0xfc)) अणु
 			dev_dbg(&serio->dev,
 				"unsynchronized data 0x%02x at offset %d\n",
 				data, ptsc->idx - 1);
 			ptsc->idx = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 4:
+	हाल 4:
 		tsc_process_data(ptsc);
 		ptsc->idx = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int tsc_connect(struct serio *serio, struct serio_driver *drv)
-{
-	struct tsc_ser *ptsc;
-	struct input_dev *input_dev;
-	int error;
+अटल पूर्णांक tsc_connect(काष्ठा serio *serio, काष्ठा serio_driver *drv)
+अणु
+	काष्ठा tsc_ser *ptsc;
+	काष्ठा input_dev *input_dev;
+	पूर्णांक error;
 
-	ptsc = kzalloc(sizeof(struct tsc_ser), GFP_KERNEL);
+	ptsc = kzalloc(माप(काष्ठा tsc_ser), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	if (!ptsc || !input_dev) {
+	अगर (!ptsc || !input_dev) अणु
 		error = -ENOMEM;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	ptsc->serio = serio;
 	ptsc->dev = input_dev;
-	snprintf(ptsc->phys, sizeof(ptsc->phys), "%s/input0", serio->phys);
+	snम_लिखो(ptsc->phys, माप(ptsc->phys), "%s/input0", serio->phys);
 
 	input_dev->name = "TSC-10/25/40 Serial TouchScreen";
 	input_dev->phys = ptsc->phys;
 	input_dev->id.bustype = BUS_RS232;
-	input_dev->id.vendor = SERIO_TSC40;
+	input_dev->id.venकरोr = SERIO_TSC40;
 	input_dev->id.product = 40;
 	input_dev->id.version = 0x0001;
 	input_dev->dev.parent = &serio->dev;
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	__set_bit(BTN_TOUCH, input_dev->keybit);
-	input_set_abs_params(ptsc->dev, ABS_X, 0, 0x3ff, 0, 0);
-	input_set_abs_params(ptsc->dev, ABS_Y, 0, 0x3ff, 0, 0);
+	input_set_असल_params(ptsc->dev, ABS_X, 0, 0x3ff, 0, 0);
+	input_set_असल_params(ptsc->dev, ABS_Y, 0, 0x3ff, 0, 0);
 
 	serio_set_drvdata(serio, ptsc);
 
-	error = serio_open(serio, drv);
-	if (error)
-		goto fail2;
+	error = serio_खोलो(serio, drv);
+	अगर (error)
+		जाओ fail2;
 
-	error = input_register_device(ptsc->dev);
-	if (error)
-		goto fail3;
+	error = input_रेजिस्टर_device(ptsc->dev);
+	अगर (error)
+		जाओ fail3;
 
-	return 0;
+	वापस 0;
 
 fail3:
-	serio_close(serio);
+	serio_बंद(serio);
 fail2:
-	serio_set_drvdata(serio, NULL);
+	serio_set_drvdata(serio, शून्य);
 fail1:
-	input_free_device(input_dev);
-	kfree(ptsc);
-	return error;
-}
+	input_मुक्त_device(input_dev);
+	kमुक्त(ptsc);
+	वापस error;
+पूर्ण
 
-static void tsc_disconnect(struct serio *serio)
-{
-	struct tsc_ser *ptsc = serio_get_drvdata(serio);
+अटल व्योम tsc_disconnect(काष्ठा serio *serio)
+अणु
+	काष्ठा tsc_ser *ptsc = serio_get_drvdata(serio);
 
-	serio_close(serio);
+	serio_बंद(serio);
 
-	input_unregister_device(ptsc->dev);
-	kfree(ptsc);
+	input_unरेजिस्टर_device(ptsc->dev);
+	kमुक्त(ptsc);
 
-	serio_set_drvdata(serio, NULL);
-}
+	serio_set_drvdata(serio, शून्य);
+पूर्ण
 
-static const struct serio_device_id tsc_serio_ids[] = {
-	{
+अटल स्थिर काष्ठा serio_device_id tsc_serio_ids[] = अणु
+	अणु
 		.type   = SERIO_RS232,
 		.proto  = SERIO_TSC40,
 		.id     = SERIO_ANY,
 		.extra  = SERIO_ANY,
-	},
-	{ 0 }
-};
+	पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(serio, tsc_serio_ids);
 
-#define DRIVER_DESC    "TSC-10/25/40 serial touchscreen driver"
+#घोषणा DRIVER_DESC    "TSC-10/25/40 serial touchscreen driver"
 
-static struct serio_driver tsc_drv = {
-	.driver	= {
+अटल काष्ठा serio_driver tsc_drv = अणु
+	.driver	= अणु
 		.name   = "tsc40",
-	},
+	पूर्ण,
 	.description    = DRIVER_DESC,
 	.id_table	= tsc_serio_ids,
-	.interrupt      = tsc_interrupt,
+	.पूर्णांकerrupt      = tsc_पूर्णांकerrupt,
 	.connect	= tsc_connect,
 	.disconnect     = tsc_disconnect,
-};
+पूर्ण;
 
 module_serio_driver(tsc_drv);
 

@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * RTC related functions
  */
-#include <linux/platform_device.h>
-#include <linux/mc146818rtc.h>
-#include <linux/acpi.h>
-#include <linux/bcd.h>
-#include <linux/export.h>
-#include <linux/pnp.h>
-#include <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mc146818rtc.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pnp.h>
+#समावेश <linux/of.h>
 
-#include <asm/vsyscall.h>
-#include <asm/x86_init.h>
-#include <asm/time.h>
-#include <asm/intel-mid.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/vsyscall.h>
+#समावेश <यंत्र/x86_init.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/पूर्णांकel-mid.h>
+#समावेश <यंत्र/setup.h>
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 /*
  * This is a special lock that is owned by the CPU and holds the index
- * register we are working with.  It is required for NMI access to the
- * CMOS/RTC registers.  See include/asm-i386/mc146818rtc.h for details.
+ * रेजिस्टर we are working with.  It is required क्रम NMI access to the
+ * CMOS/RTC रेजिस्टरs.  See include/यंत्र-i386/mc146818rtc.h क्रम details.
  */
-volatile unsigned long cmos_lock;
+अस्थिर अचिन्हित दीर्घ cmos_lock;
 EXPORT_SYMBOL(cmos_lock);
-#endif /* CONFIG_X86_32 */
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
-/* For two digit years assume time is always after that */
-#define CMOS_YEARS_OFFS 2000
+/* For two digit years assume समय is always after that */
+#घोषणा CMOS_YEARS_OFFS 2000
 
 DEFINE_SPINLOCK(rtc_lock);
 EXPORT_SYMBOL(rtc_lock);
 
 /*
- * In order to set the CMOS clock precisely, set_rtc_mmss has to be
- * called 500 ms after the second nowtime has started, because when
- * nowtime is written into the registers of the CMOS clock, it will
+ * In order to set the CMOS घड़ी precisely, set_rtc_mmss has to be
+ * called 500 ms after the second nowसमय has started, because when
+ * nowसमय is written पूर्णांकo the रेजिस्टरs of the CMOS घड़ी, it will
  * jump to the next second precisely 500 ms later. Check the Motorola
- * MC146818A or Dallas DS12887 data sheet for details.
+ * MC146818A or Dallas DS12887 data sheet क्रम details.
  */
-int mach_set_rtc_mmss(const struct timespec64 *now)
-{
-	unsigned long long nowtime = now->tv_sec;
-	struct rtc_time tm;
-	int retval = 0;
+पूर्णांक mach_set_rtc_mmss(स्थिर काष्ठा बारpec64 *now)
+अणु
+	अचिन्हित दीर्घ दीर्घ nowसमय = now->tv_sec;
+	काष्ठा rtc_समय पंचांग;
+	पूर्णांक retval = 0;
 
-	rtc_time64_to_tm(nowtime, &tm);
-	if (!rtc_valid_tm(&tm)) {
-		retval = mc146818_set_time(&tm);
-		if (retval)
-			printk(KERN_ERR "%s: RTC write failed with error %d\n",
+	rtc_समय64_to_पंचांग(nowसमय, &पंचांग);
+	अगर (!rtc_valid_पंचांग(&पंचांग)) अणु
+		retval = mc146818_set_समय(&पंचांग);
+		अगर (retval)
+			prपूर्णांकk(KERN_ERR "%s: RTC write failed with error %d\n",
 			       __func__, retval);
-	} else {
-		printk(KERN_ERR
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR
 		       "%s: Invalid RTC value: write of %llx to RTC failed\n",
-			__func__, nowtime);
+			__func__, nowसमय);
 		retval = -EINVAL;
-	}
-	return retval;
-}
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-void mach_get_cmos_time(struct timespec64 *now)
-{
-	unsigned int status, year, mon, day, hour, min, sec, century = 0;
-	unsigned long flags;
+व्योम mach_get_cmos_समय(काष्ठा बारpec64 *now)
+अणु
+	अचिन्हित पूर्णांक status, year, mon, day, hour, min, sec, century = 0;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * If pm_trace abused the RTC as storage, set the timespec to 0,
+	 * If pm_trace abused the RTC as storage, set the बारpec to 0,
 	 * which tells the caller that this RTC value is unusable.
 	 */
-	if (!pm_trace_rtc_valid()) {
+	अगर (!pm_trace_rtc_valid()) अणु
 		now->tv_sec = now->tv_nsec = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&rtc_lock, flags);
 
 	/*
-	 * If UIP is clear, then we have >= 244 microseconds before
-	 * RTC registers will be updated.  Spec sheet says that this
-	 * is the reliable way to read RTC - registers. If UIP is set
-	 * then the register access might be invalid.
+	 * If UIP is clear, then we have >= 244 microseconds beक्रमe
+	 * RTC रेजिस्टरs will be updated.  Spec sheet says that this
+	 * is the reliable way to पढ़ो RTC - रेजिस्टरs. If UIP is set
+	 * then the रेजिस्टर access might be invalid.
 	 */
-	while ((CMOS_READ(RTC_FREQ_SELECT) & RTC_UIP))
+	जबतक ((CMOS_READ(RTC_FREQ_SELECT) & RTC_UIP))
 		cpu_relax();
 
 	sec = CMOS_READ(RTC_SECONDS);
@@ -92,116 +93,116 @@ void mach_get_cmos_time(struct timespec64 *now)
 	mon = CMOS_READ(RTC_MONTH);
 	year = CMOS_READ(RTC_YEAR);
 
-#ifdef CONFIG_ACPI
-	if (acpi_gbl_FADT.header.revision >= FADT2_REVISION_ID &&
+#अगर_घोषित CONFIG_ACPI
+	अगर (acpi_gbl_FADT.header.revision >= FADT2_REVISION_ID &&
 	    acpi_gbl_FADT.century)
 		century = CMOS_READ(acpi_gbl_FADT.century);
-#endif
+#पूर्ण_अगर
 
 	status = CMOS_READ(RTC_CONTROL);
 	WARN_ON_ONCE(RTC_ALWAYS_BCD && (status & RTC_DM_BINARY));
 
 	spin_unlock_irqrestore(&rtc_lock, flags);
 
-	if (RTC_ALWAYS_BCD || !(status & RTC_DM_BINARY)) {
+	अगर (RTC_ALWAYS_BCD || !(status & RTC_DM_BINARY)) अणु
 		sec = bcd2bin(sec);
 		min = bcd2bin(min);
 		hour = bcd2bin(hour);
 		day = bcd2bin(day);
 		mon = bcd2bin(mon);
 		year = bcd2bin(year);
-	}
+	पूर्ण
 
-	if (century) {
+	अगर (century) अणु
 		century = bcd2bin(century);
 		year += century * 100;
-	} else
+	पूर्ण अन्यथा
 		year += CMOS_YEARS_OFFS;
 
-	now->tv_sec = mktime64(year, mon, day, hour, min, sec);
+	now->tv_sec = स_गढ़ो64(year, mon, day, hour, min, sec);
 	now->tv_nsec = 0;
-}
+पूर्ण
 
-/* Routines for accessing the CMOS RAM/RTC. */
-unsigned char rtc_cmos_read(unsigned char addr)
-{
-	unsigned char val;
+/* Routines क्रम accessing the CMOS RAM/RTC. */
+अचिन्हित अक्षर rtc_cmos_पढ़ो(अचिन्हित अक्षर addr)
+अणु
+	अचिन्हित अक्षर val;
 
 	lock_cmos_prefix(addr);
 	outb(addr, RTC_PORT(0));
 	val = inb(RTC_PORT(1));
 	lock_cmos_suffix(addr);
 
-	return val;
-}
-EXPORT_SYMBOL(rtc_cmos_read);
+	वापस val;
+पूर्ण
+EXPORT_SYMBOL(rtc_cmos_पढ़ो);
 
-void rtc_cmos_write(unsigned char val, unsigned char addr)
-{
+व्योम rtc_cmos_ग_लिखो(अचिन्हित अक्षर val, अचिन्हित अक्षर addr)
+अणु
 	lock_cmos_prefix(addr);
 	outb(addr, RTC_PORT(0));
 	outb(val, RTC_PORT(1));
 	lock_cmos_suffix(addr);
-}
-EXPORT_SYMBOL(rtc_cmos_write);
+पूर्ण
+EXPORT_SYMBOL(rtc_cmos_ग_लिखो);
 
-int update_persistent_clock64(struct timespec64 now)
-{
-	return x86_platform.set_wallclock(&now);
-}
+पूर्णांक update_persistent_घड़ी64(काष्ठा बारpec64 now)
+अणु
+	वापस x86_platक्रमm.set_wallघड़ी(&now);
+पूर्ण
 
-/* not static: needed by APM */
-void read_persistent_clock64(struct timespec64 *ts)
-{
-	x86_platform.get_wallclock(ts);
-}
+/* not अटल: needed by APM */
+व्योम पढ़ो_persistent_घड़ी64(काष्ठा बारpec64 *ts)
+अणु
+	x86_platक्रमm.get_wallघड़ी(ts);
+पूर्ण
 
 
-static struct resource rtc_resources[] = {
-	[0] = {
+अटल काष्ठा resource rtc_resources[] = अणु
+	[0] = अणु
 		.start	= RTC_PORT(0),
 		.end	= RTC_PORT(1),
 		.flags	= IORESOURCE_IO,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= RTC_IRQ,
 		.end	= RTC_IRQ,
 		.flags	= IORESOURCE_IRQ,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device rtc_device = {
+अटल काष्ठा platक्रमm_device rtc_device = अणु
 	.name		= "rtc_cmos",
 	.id		= -1,
 	.resource	= rtc_resources,
 	.num_resources	= ARRAY_SIZE(rtc_resources),
-};
+पूर्ण;
 
-static __init int add_rtc_cmos(void)
-{
-#ifdef CONFIG_PNP
-	static const char * const ids[] __initconst =
-	    { "PNP0b00", "PNP0b01", "PNP0b02", };
-	struct pnp_dev *dev;
-	struct pnp_id *id;
-	int i;
+अटल __init पूर्णांक add_rtc_cmos(व्योम)
+अणु
+#अगर_घोषित CONFIG_PNP
+	अटल स्थिर अक्षर * स्थिर ids[] __initस्थिर =
+	    अणु "PNP0b00", "PNP0b01", "PNP0b02", पूर्ण;
+	काष्ठा pnp_dev *dev;
+	काष्ठा pnp_id *id;
+	पूर्णांक i;
 
-	pnp_for_each_dev(dev) {
-		for (id = dev->id; id; id = id->next) {
-			for (i = 0; i < ARRAY_SIZE(ids); i++) {
-				if (compare_pnp_id(id, ids[i]) != 0)
-					return 0;
-			}
-		}
-	}
-#endif
-	if (!x86_platform.legacy.rtc)
-		return -ENODEV;
+	pnp_क्रम_each_dev(dev) अणु
+		क्रम (id = dev->id; id; id = id->next) अणु
+			क्रम (i = 0; i < ARRAY_SIZE(ids); i++) अणु
+				अगर (compare_pnp_id(id, ids[i]) != 0)
+					वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	अगर (!x86_platक्रमm.legacy.rtc)
+		वापस -ENODEV;
 
-	platform_device_register(&rtc_device);
+	platक्रमm_device_रेजिस्टर(&rtc_device);
 	dev_info(&rtc_device.dev,
 		 "registered platform RTC device (no PNP device found)\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(add_rtc_cmos);

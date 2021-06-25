@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * ECB: Electronic CodeBook mode
  *
- * Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2006 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#include <crypto/algapi.h>
-#include <crypto/internal/cipher.h>
-#include <crypto/internal/skcipher.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/पूर्णांकernal/cipher.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-static int crypto_ecb_crypt(struct skcipher_request *req,
-			    struct crypto_cipher *cipher,
-			    void (*fn)(struct crypto_tfm *, u8 *, const u8 *))
-{
-	const unsigned int bsize = crypto_cipher_blocksize(cipher);
-	struct skcipher_walk walk;
-	unsigned int nbytes;
-	int err;
+अटल पूर्णांक crypto_ecb_crypt(काष्ठा skcipher_request *req,
+			    काष्ठा crypto_cipher *cipher,
+			    व्योम (*fn)(काष्ठा crypto_tfm *, u8 *, स्थिर u8 *))
+अणु
+	स्थिर अचिन्हित पूर्णांक bsize = crypto_cipher_blocksize(cipher);
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes;
+	पूर्णांक err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
-	while ((nbytes = walk.nbytes) != 0) {
-		const u8 *src = walk.src.virt.addr;
+	जबतक ((nbytes = walk.nbytes) != 0) अणु
+		स्थिर u8 *src = walk.src.virt.addr;
 		u8 *dst = walk.dst.virt.addr;
 
-		do {
+		करो अणु
 			fn(crypto_cipher_tfm(cipher), dst, src);
 
 			src += bsize;
 			dst += bsize;
-		} while ((nbytes -= bsize) >= bsize);
+		पूर्ण जबतक ((nbytes -= bsize) >= bsize);
 
-		err = skcipher_walk_done(&walk, nbytes);
-	}
+		err = skcipher_walk_करोne(&walk, nbytes);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int crypto_ecb_encrypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct crypto_cipher *cipher = skcipher_cipher_simple(tfm);
+अटल पूर्णांक crypto_ecb_encrypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा crypto_cipher *cipher = skcipher_cipher_simple(tfm);
 
-	return crypto_ecb_crypt(req, cipher,
+	वापस crypto_ecb_crypt(req, cipher,
 				crypto_cipher_alg(cipher)->cia_encrypt);
-}
+पूर्ण
 
-static int crypto_ecb_decrypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct crypto_cipher *cipher = skcipher_cipher_simple(tfm);
+अटल पूर्णांक crypto_ecb_decrypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा crypto_cipher *cipher = skcipher_cipher_simple(tfm);
 
-	return crypto_ecb_crypt(req, cipher,
+	वापस crypto_ecb_crypt(req, cipher,
 				crypto_cipher_alg(cipher)->cia_decrypt);
-}
+पूर्ण
 
-static int crypto_ecb_create(struct crypto_template *tmpl, struct rtattr **tb)
-{
-	struct skcipher_instance *inst;
-	int err;
+अटल पूर्णांक crypto_ecb_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
+अणु
+	काष्ठा skcipher_instance *inst;
+	पूर्णांक err;
 
-	inst = skcipher_alloc_instance_simple(tmpl, tb);
-	if (IS_ERR(inst))
-		return PTR_ERR(inst);
+	inst = skcipher_alloc_instance_simple(पंचांगpl, tb);
+	अगर (IS_ERR(inst))
+		वापस PTR_ERR(inst);
 
-	inst->alg.ivsize = 0; /* ECB mode doesn't take an IV */
+	inst->alg.ivsize = 0; /* ECB mode करोesn't take an IV */
 
 	inst->alg.encrypt = crypto_ecb_encrypt;
 	inst->alg.decrypt = crypto_ecb_decrypt;
 
-	err = skcipher_register_instance(tmpl, inst);
-	if (err)
-		inst->free(inst);
+	err = skcipher_रेजिस्टर_instance(पंचांगpl, inst);
+	अगर (err)
+		inst->मुक्त(inst);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct crypto_template crypto_ecb_tmpl = {
+अटल काष्ठा crypto_ढाँचा crypto_ecb_पंचांगpl = अणु
 	.name = "ecb",
 	.create = crypto_ecb_create,
 	.module = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init crypto_ecb_module_init(void)
-{
-	return crypto_register_template(&crypto_ecb_tmpl);
-}
+अटल पूर्णांक __init crypto_ecb_module_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_ढाँचा(&crypto_ecb_पंचांगpl);
+पूर्ण
 
-static void __exit crypto_ecb_module_exit(void)
-{
-	crypto_unregister_template(&crypto_ecb_tmpl);
-}
+अटल व्योम __निकास crypto_ecb_module_निकास(व्योम)
+अणु
+	crypto_unरेजिस्टर_ढाँचा(&crypto_ecb_पंचांगpl);
+पूर्ण
 
 subsys_initcall(crypto_ecb_module_init);
-module_exit(crypto_ecb_module_exit);
+module_निकास(crypto_ecb_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("ECB block cipher mode of operation");

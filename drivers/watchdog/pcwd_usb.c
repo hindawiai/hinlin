@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *	Berkshire USB-PC Watchdog Card Driver
+ *	Berkshire USB-PC Watchकरोg Card Driver
  *
  *	(c) Copyright 2004-2007 Wim Van Sebroeck <wim@iguana.be>.
  *
@@ -9,90 +10,90 @@
  *	  Alan Cox <alan@lxorguk.ukuu.org.uk>,
  *	  Matt Domsch <Matt_Domsch@dell.com>,
  *	  Rob Radez <rob@osinvestor.com>,
- *	  Greg Kroah-Hartman <greg@kroah.com>
+ *	  Greg Kroah-Harपंचांगan <greg@kroah.com>
  *
  *	Neither Wim Van Sebroeck nor Iguana vzw. admit liability nor
- *	provide warranty for any of this software. This material is
- *	provided "AS-IS" and at no charge.
+ *	provide warranty क्रम any of this software. This material is
+ *	provided "AS-IS" and at no अक्षरge.
  *
- *	Thanks also to Simon Machell at Berkshire Products Inc. for
+ *	Thanks also to Simon Machell at Berkshire Products Inc. क्रम
  *	providing the test hardware. More info is available at
- *	http://www.berkprod.com/ or http://www.pcwatchdog.com/
+ *	http://www.berkprod.com/ or http://www.pcwatchकरोg.com/
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>	/* For module specific items */
-#include <linux/moduleparam.h>	/* For new moduleparam's */
-#include <linux/types.h>	/* For standard types (like size_t) */
-#include <linux/errno.h>	/* For the -ENODEV/... values */
-#include <linux/kernel.h>	/* For printk/panic/... */
-#include <linux/delay.h>	/* For mdelay function */
-#include <linux/miscdevice.h>	/* For struct miscdevice */
-#include <linux/watchdog.h>	/* For the watchdog specific items */
-#include <linux/notifier.h>	/* For notifier support */
-#include <linux/reboot.h>	/* For reboot_notifier stuff */
-#include <linux/init.h>		/* For __init/__exit/... */
-#include <linux/fs.h>		/* For file operations */
-#include <linux/usb.h>		/* For USB functions */
-#include <linux/slab.h>		/* For kmalloc, ... */
-#include <linux/mutex.h>	/* For mutex locking */
-#include <linux/hid.h>		/* For HID_REQ_SET_REPORT & HID_DT_REPORT */
-#include <linux/uaccess.h>	/* For copy_to_user/put_user/... */
+#समावेश <linux/module.h>	/* For module specअगरic items */
+#समावेश <linux/moduleparam.h>	/* For new moduleparam's */
+#समावेश <linux/types.h>	/* For standard types (like माप_प्रकार) */
+#समावेश <linux/त्रुटिसं.स>	/* For the -ENODEV/... values */
+#समावेश <linux/kernel.h>	/* For prपूर्णांकk/panic/... */
+#समावेश <linux/delay.h>	/* For mdelay function */
+#समावेश <linux/miscdevice.h>	/* For काष्ठा miscdevice */
+#समावेश <linux/watchकरोg.h>	/* For the watchकरोg specअगरic items */
+#समावेश <linux/notअगरier.h>	/* For notअगरier support */
+#समावेश <linux/reboot.h>	/* For reboot_notअगरier stuff */
+#समावेश <linux/init.h>		/* For __init/__निकास/... */
+#समावेश <linux/fs.h>		/* For file operations */
+#समावेश <linux/usb.h>		/* For USB functions */
+#समावेश <linux/slab.h>		/* For kदो_स्मृति, ... */
+#समावेश <linux/mutex.h>	/* For mutex locking */
+#समावेश <linux/hid.h>		/* For HID_REQ_SET_REPORT & HID_DT_REPORT */
+#समावेश <linux/uaccess.h>	/* For copy_to_user/put_user/... */
 
 
-/* Module and Version Information */
-#define DRIVER_VERSION "1.02"
-#define DRIVER_AUTHOR "Wim Van Sebroeck <wim@iguana.be>"
-#define DRIVER_DESC "Berkshire USB-PC Watchdog driver"
-#define DRIVER_NAME "pcwd_usb"
+/* Module and Version Inक्रमmation */
+#घोषणा DRIVER_VERSION "1.02"
+#घोषणा DRIVER_AUTHOR "Wim Van Sebroeck <wim@iguana.be>"
+#घोषणा DRIVER_DESC "Berkshire USB-PC Watchdog driver"
+#घोषणा DRIVER_NAME "pcwd_usb"
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-#define WATCHDOG_HEARTBEAT 0	/* default heartbeat =
-						delay-time from dip-switches */
-static int heartbeat = WATCHDOG_HEARTBEAT;
-module_param(heartbeat, int, 0);
+#घोषणा WATCHDOG_HEARTBEAT 0	/* शेष heartbeat =
+						delay-समय from dip-चयनes */
+अटल पूर्णांक heartbeat = WATCHDOG_HEARTBEAT;
+module_param(heartbeat, पूर्णांक, 0);
 MODULE_PARM_DESC(heartbeat, "Watchdog heartbeat in seconds. "
 	"(0<heartbeat<65536 or 0=delay-time from dip-switches, default="
 				__MODULE_STRING(WATCHDOG_HEARTBEAT) ")");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-/* The vendor and product id's for the USB-PC Watchdog card */
-#define USB_PCWD_VENDOR_ID	0x0c98
-#define USB_PCWD_PRODUCT_ID	0x1140
+/* The venकरोr and product id's क्रम the USB-PC Watchकरोg card */
+#घोषणा USB_PCWD_VENDOR_ID	0x0c98
+#घोषणा USB_PCWD_PRODUCT_ID	0x1140
 
 /* table of devices that work with this driver */
-static const struct usb_device_id usb_pcwd_table[] = {
-	{ USB_DEVICE(USB_PCWD_VENDOR_ID, USB_PCWD_PRODUCT_ID) },
-	{ }					/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id usb_pcwd_table[] = अणु
+	अणु USB_DEVICE(USB_PCWD_VENDOR_ID, USB_PCWD_PRODUCT_ID) पूर्ण,
+	अणु पूर्ण					/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, usb_pcwd_table);
 
-/* according to documentation max. time to process a command for the USB
- * watchdog card is 100 or 200 ms, so we give it 250 ms to do it's job */
-#define USB_COMMAND_TIMEOUT	250
+/* according to करोcumentation max. समय to process a command क्रम the USB
+ * watchकरोg card is 100 or 200 ms, so we give it 250 ms to करो it's job */
+#घोषणा USB_COMMAND_TIMEOUT	250
 
-/* Watchdog's internal commands */
-#define CMD_READ_TEMP			0x02	/* Read Temperature;
-							Re-trigger Watchdog */
-#define CMD_TRIGGER			CMD_READ_TEMP
-#define CMD_GET_STATUS			0x04	/* Get Status Information */
-#define CMD_GET_FIRMWARE_VERSION	0x08	/* Get Firmware Version */
-#define CMD_GET_DIP_SWITCH_SETTINGS	0x0c	/* Get Dip Switch Settings */
-#define CMD_READ_WATCHDOG_TIMEOUT	0x18	/* Read Current Watchdog Time */
-#define CMD_WRITE_WATCHDOG_TIMEOUT	0x19	/* Write Current WatchdogTime */
-#define CMD_ENABLE_WATCHDOG		0x30	/* Enable / Disable Watchdog */
-#define CMD_DISABLE_WATCHDOG		CMD_ENABLE_WATCHDOG
+/* Watchकरोg's पूर्णांकernal commands */
+#घोषणा CMD_READ_TEMP			0x02	/* Read Temperature;
+							Re-trigger Watchकरोg */
+#घोषणा CMD_TRIGGER			CMD_READ_TEMP
+#घोषणा CMD_GET_STATUS			0x04	/* Get Status Inक्रमmation */
+#घोषणा CMD_GET_FIRMWARE_VERSION	0x08	/* Get Firmware Version */
+#घोषणा CMD_GET_DIP_SWITCH_SETTINGS	0x0c	/* Get Dip Switch Settings */
+#घोषणा CMD_READ_WATCHDOG_TIMEOUT	0x18	/* Read Current Watchकरोg Time */
+#घोषणा CMD_WRITE_WATCHDOG_TIMEOUT	0x19	/* Write Current WatchकरोgTime */
+#घोषणा CMD_ENABLE_WATCHDOG		0x30	/* Enable / Disable Watchकरोg */
+#घोषणा CMD_DISABLE_WATCHDOG		CMD_ENABLE_WATCHDOG
 
-/* Watchdog's Dip Switch heartbeat values */
-static const int heartbeat_tbl[] = {
+/* Watchकरोg's Dip Switch heartbeat values */
+अटल स्थिर पूर्णांक heartbeat_tbl[] = अणु
 	5,	/* OFF-OFF-OFF	=  5 Sec  */
 	10,	/* OFF-OFF-ON	= 10 Sec  */
 	30,	/* OFF-ON-OFF	= 30 Sec  */
@@ -101,91 +102,91 @@ static const int heartbeat_tbl[] = {
 	600,	/* ON-OFF-ON	= 10 Min  */
 	1800,	/* ON-ON-OFF	= 30 Min  */
 	3600,	/* ON-ON-ON	=  1 hour */
-};
+पूर्ण;
 
-/* We can only use 1 card due to the /dev/watchdog restriction */
-static int cards_found;
+/* We can only use 1 card due to the /dev/watchकरोg restriction */
+अटल पूर्णांक cards_found;
 
-/* some internal variables */
-static unsigned long is_active;
-static char expect_release;
+/* some पूर्णांकernal variables */
+अटल अचिन्हित दीर्घ is_active;
+अटल अक्षर expect_release;
 
-/* Structure to hold all of our device specific stuff */
-struct usb_pcwd_private {
-	/* save off the usb device pointer */
-	struct usb_device	*udev;
-	/* the interface for this device */
-	struct usb_interface	*interface;
+/* Structure to hold all of our device specअगरic stuff */
+काष्ठा usb_pcwd_निजी अणु
+	/* save off the usb device poपूर्णांकer */
+	काष्ठा usb_device	*udev;
+	/* the पूर्णांकerface क्रम this device */
+	काष्ठा usb_पूर्णांकerface	*पूर्णांकerface;
 
-	/* the interface number used for cmd's */
-	unsigned int		interface_number;
+	/* the पूर्णांकerface number used क्रम cmd's */
+	अचिन्हित पूर्णांक		पूर्णांकerface_number;
 
-	/* the buffer to intr data */
-	unsigned char		*intr_buffer;
-	/* the dma address for the intr buffer */
-	dma_addr_t		intr_dma;
-	/* the size of the intr buffer */
-	size_t			intr_size;
-	/* the urb used for the intr pipe */
-	struct urb		*intr_urb;
+	/* the buffer to पूर्णांकr data */
+	अचिन्हित अक्षर		*पूर्णांकr_buffer;
+	/* the dma address क्रम the पूर्णांकr buffer */
+	dma_addr_t		पूर्णांकr_dma;
+	/* the size of the पूर्णांकr buffer */
+	माप_प्रकार			पूर्णांकr_size;
+	/* the urb used क्रम the पूर्णांकr pipe */
+	काष्ठा urb		*पूर्णांकr_urb;
 
 	/* The command that is reported back */
-	unsigned char		cmd_command;
+	अचिन्हित अक्षर		cmd_command;
 	/* The data MSB that is reported back */
-	unsigned char		cmd_data_msb;
+	अचिन्हित अक्षर		cmd_data_msb;
 	/* The data LSB that is reported back */
-	unsigned char		cmd_data_lsb;
-	/* true if we received a report after a command */
+	अचिन्हित अक्षर		cmd_data_lsb;
+	/* true अगर we received a report after a command */
 	atomic_t		cmd_received;
 
 	/* Wether or not the device exists */
-	int			exists;
-	/* locks this structure */
-	struct mutex		mtx;
-};
-static struct usb_pcwd_private *usb_pcwd_device;
+	पूर्णांक			exists;
+	/* locks this काष्ठाure */
+	काष्ठा mutex		mtx;
+पूर्ण;
+अटल काष्ठा usb_pcwd_निजी *usb_pcwd_device;
 
-/* prevent races between open() and disconnect() */
-static DEFINE_MUTEX(disconnect_mutex);
+/* prevent races between खोलो() and disconnect() */
+अटल DEFINE_MUTEX(disconnect_mutex);
 
 /* local function prototypes */
-static int usb_pcwd_probe(struct usb_interface *interface,
-						const struct usb_device_id *id);
-static void usb_pcwd_disconnect(struct usb_interface *interface);
+अटल पूर्णांक usb_pcwd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+						स्थिर काष्ठा usb_device_id *id);
+अटल व्योम usb_pcwd_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface);
 
-/* usb specific object needed to register this driver with the usb subsystem */
-static struct usb_driver usb_pcwd_driver = {
+/* usb specअगरic object needed to रेजिस्टर this driver with the usb subप्रणाली */
+अटल काष्ठा usb_driver usb_pcwd_driver = अणु
 	.name =		DRIVER_NAME,
 	.probe =	usb_pcwd_probe,
 	.disconnect =	usb_pcwd_disconnect,
 	.id_table =	usb_pcwd_table,
-};
+पूर्ण;
 
 
-static void usb_pcwd_intr_done(struct urb *urb)
-{
-	struct usb_pcwd_private *usb_pcwd =
-				(struct usb_pcwd_private *)urb->context;
-	unsigned char *data = usb_pcwd->intr_buffer;
-	struct device *dev = &usb_pcwd->interface->dev;
-	int retval;
+अटल व्योम usb_pcwd_पूर्णांकr_करोne(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_pcwd_निजी *usb_pcwd =
+				(काष्ठा usb_pcwd_निजी *)urb->context;
+	अचिन्हित अक्षर *data = usb_pcwd->पूर्णांकr_buffer;
+	काष्ठा device *dev = &usb_pcwd->पूर्णांकerface->dev;
+	पूर्णांक retval;
 
-	switch (urb->status) {
-	case 0:			/* success */
-		break;
-	case -ECONNRESET:	/* unlink */
-	case -ENOENT:
-	case -ESHUTDOWN:
+	चयन (urb->status) अणु
+	हाल 0:			/* success */
+		अवरोध;
+	हाल -ECONNRESET:	/* unlink */
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
 		/* this urb is terminated, clean up */
 		dev_dbg(dev, "%s - urb shutting down with status: %d",
 			__func__, urb->status);
-		return;
+		वापस;
 	/* -EPIPE:  should clear the halt */
-	default:		/* error */
+	शेष:		/* error */
 		dev_dbg(dev, "%s - nonzero urb status received: %d",
 			__func__, urb->status);
-		goto resubmit;
-	}
+		जाओ resubmit;
+	पूर्ण
 
 	dev_dbg(dev, "received following data cmd=0x%02x msb=0x%02x lsb=0x%02x",
 		data[0], data[1], data[2]);
@@ -194,492 +195,492 @@ static void usb_pcwd_intr_done(struct urb *urb)
 	usb_pcwd->cmd_data_msb = data[1];
 	usb_pcwd->cmd_data_lsb = data[2];
 
-	/* notify anyone waiting that the cmd has finished */
+	/* notअगरy anyone रुकोing that the cmd has finished */
 	atomic_set(&usb_pcwd->cmd_received, 1);
 
 resubmit:
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
-	if (retval)
+	अगर (retval)
 		pr_err("can't resubmit intr, usb_submit_urb failed with result %d\n",
 		       retval);
-}
+पूर्ण
 
-static int usb_pcwd_send_command(struct usb_pcwd_private *usb_pcwd,
-		unsigned char cmd, unsigned char *msb, unsigned char *lsb)
-{
-	int got_response, count;
-	unsigned char *buf;
+अटल पूर्णांक usb_pcwd_send_command(काष्ठा usb_pcwd_निजी *usb_pcwd,
+		अचिन्हित अक्षर cmd, अचिन्हित अक्षर *msb, अचिन्हित अक्षर *lsb)
+अणु
+	पूर्णांक got_response, count;
+	अचिन्हित अक्षर *buf;
 
-	/* We will not send any commands if the USB PCWD device does
+	/* We will not send any commands अगर the USB PCWD device करोes
 	 * not exist */
-	if ((!usb_pcwd) || (!usb_pcwd->exists))
-		return -1;
+	अगर ((!usb_pcwd) || (!usb_pcwd->exists))
+		वापस -1;
 
-	buf = kmalloc(6, GFP_KERNEL);
-	if (buf == NULL)
-		return 0;
+	buf = kदो_स्मृति(6, GFP_KERNEL);
+	अगर (buf == शून्य)
+		वापस 0;
 
-	/* The USB PC Watchdog uses a 6 byte report format.
+	/* The USB PC Watchकरोg uses a 6 byte report क्रमmat.
 	 * The board currently uses only 3 of the six bytes of the report. */
 	buf[0] = cmd;			/* Byte 0 = CMD */
 	buf[1] = *msb;			/* Byte 1 = Data MSB */
 	buf[2] = *lsb;			/* Byte 2 = Data LSB */
 	buf[3] = buf[4] = buf[5] = 0;	/* All other bytes not used */
 
-	dev_dbg(&usb_pcwd->interface->dev,
+	dev_dbg(&usb_pcwd->पूर्णांकerface->dev,
 		"sending following data cmd=0x%02x msb=0x%02x lsb=0x%02x",
 		buf[0], buf[1], buf[2]);
 
 	atomic_set(&usb_pcwd->cmd_received, 0);
 
-	if (usb_control_msg(usb_pcwd->udev, usb_sndctrlpipe(usb_pcwd->udev, 0),
+	अगर (usb_control_msg(usb_pcwd->udev, usb_sndctrlpipe(usb_pcwd->udev, 0),
 			HID_REQ_SET_REPORT, HID_DT_REPORT,
-			0x0200, usb_pcwd->interface_number, buf, 6,
-			USB_COMMAND_TIMEOUT) != 6) {
-		dev_dbg(&usb_pcwd->interface->dev,
+			0x0200, usb_pcwd->पूर्णांकerface_number, buf, 6,
+			USB_COMMAND_TIMEOUT) != 6) अणु
+		dev_dbg(&usb_pcwd->पूर्णांकerface->dev,
 			"usb_pcwd_send_command: error in usb_control_msg for cmd 0x%x 0x%x 0x%x\n",
 			cmd, *msb, *lsb);
-	}
-	/* wait till the usb card processed the command,
-	 * with a max. timeout of USB_COMMAND_TIMEOUT */
+	पूर्ण
+	/* रुको till the usb card processed the command,
+	 * with a max. समयout of USB_COMMAND_TIMEOUT */
 	got_response = 0;
-	for (count = 0; (count < USB_COMMAND_TIMEOUT) && (!got_response);
-								count++) {
+	क्रम (count = 0; (count < USB_COMMAND_TIMEOUT) && (!got_response);
+								count++) अणु
 		mdelay(1);
-		if (atomic_read(&usb_pcwd->cmd_received))
+		अगर (atomic_पढ़ो(&usb_pcwd->cmd_received))
 			got_response = 1;
-	}
+	पूर्ण
 
-	if ((got_response) && (cmd == usb_pcwd->cmd_command)) {
-		/* read back response */
+	अगर ((got_response) && (cmd == usb_pcwd->cmd_command)) अणु
+		/* पढ़ो back response */
 		*msb = usb_pcwd->cmd_data_msb;
 		*lsb = usb_pcwd->cmd_data_lsb;
-	}
+	पूर्ण
 
-	kfree(buf);
+	kमुक्त(buf);
 
-	return got_response;
-}
+	वापस got_response;
+पूर्ण
 
-static int usb_pcwd_start(struct usb_pcwd_private *usb_pcwd)
-{
-	unsigned char msb = 0x00;
-	unsigned char lsb = 0x00;
-	int retval;
+अटल पूर्णांक usb_pcwd_start(काष्ठा usb_pcwd_निजी *usb_pcwd)
+अणु
+	अचिन्हित अक्षर msb = 0x00;
+	अचिन्हित अक्षर lsb = 0x00;
+	पूर्णांक retval;
 
-	/* Enable Watchdog */
+	/* Enable Watchकरोg */
 	retval = usb_pcwd_send_command(usb_pcwd, CMD_ENABLE_WATCHDOG,
 								&msb, &lsb);
 
-	if ((retval == 0) || (lsb == 0)) {
+	अगर ((retval == 0) || (lsb == 0)) अणु
 		pr_err("Card did not acknowledge enable attempt\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb_pcwd_stop(struct usb_pcwd_private *usb_pcwd)
-{
-	unsigned char msb = 0xA5;
-	unsigned char lsb = 0xC3;
-	int retval;
+अटल पूर्णांक usb_pcwd_stop(काष्ठा usb_pcwd_निजी *usb_pcwd)
+अणु
+	अचिन्हित अक्षर msb = 0xA5;
+	अचिन्हित अक्षर lsb = 0xC3;
+	पूर्णांक retval;
 
-	/* Disable Watchdog */
+	/* Disable Watchकरोg */
 	retval = usb_pcwd_send_command(usb_pcwd, CMD_DISABLE_WATCHDOG,
 								&msb, &lsb);
 
-	if ((retval == 0) || (lsb != 0)) {
+	अगर ((retval == 0) || (lsb != 0)) अणु
 		pr_err("Card did not acknowledge disable attempt\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb_pcwd_keepalive(struct usb_pcwd_private *usb_pcwd)
-{
-	unsigned char dummy;
+अटल पूर्णांक usb_pcwd_keepalive(काष्ठा usb_pcwd_निजी *usb_pcwd)
+अणु
+	अचिन्हित अक्षर dummy;
 
-	/* Re-trigger Watchdog */
+	/* Re-trigger Watchकरोg */
 	usb_pcwd_send_command(usb_pcwd, CMD_TRIGGER, &dummy, &dummy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb_pcwd_set_heartbeat(struct usb_pcwd_private *usb_pcwd, int t)
-{
-	unsigned char msb = t / 256;
-	unsigned char lsb = t % 256;
+अटल पूर्णांक usb_pcwd_set_heartbeat(काष्ठा usb_pcwd_निजी *usb_pcwd, पूर्णांक t)
+अणु
+	अचिन्हित अक्षर msb = t / 256;
+	अचिन्हित अक्षर lsb = t % 256;
 
-	if ((t < 0x0001) || (t > 0xFFFF))
-		return -EINVAL;
+	अगर ((t < 0x0001) || (t > 0xFFFF))
+		वापस -EINVAL;
 
-	/* Write new heartbeat to watchdog */
+	/* Write new heartbeat to watchकरोg */
 	usb_pcwd_send_command(usb_pcwd, CMD_WRITE_WATCHDOG_TIMEOUT, &msb, &lsb);
 
 	heartbeat = t;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb_pcwd_get_temperature(struct usb_pcwd_private *usb_pcwd,
-							int *temperature)
-{
-	unsigned char msb, lsb;
+अटल पूर्णांक usb_pcwd_get_temperature(काष्ठा usb_pcwd_निजी *usb_pcwd,
+							पूर्णांक *temperature)
+अणु
+	अचिन्हित अक्षर msb, lsb;
 
 	usb_pcwd_send_command(usb_pcwd, CMD_READ_TEMP, &msb, &lsb);
 
 	/*
 	 * Convert celsius to fahrenheit, since this was
-	 * the decided 'standard' for this return value.
+	 * the decided 'standard' क्रम this वापस value.
 	 */
 	*temperature = (lsb * 9 / 5) + 32;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb_pcwd_get_timeleft(struct usb_pcwd_private *usb_pcwd,
-								int *time_left)
-{
-	unsigned char msb, lsb;
+अटल पूर्णांक usb_pcwd_get_समयleft(काष्ठा usb_pcwd_निजी *usb_pcwd,
+								पूर्णांक *समय_left)
+अणु
+	अचिन्हित अक्षर msb, lsb;
 
-	/* Read the time that's left before rebooting */
-	/* Note: if the board is not yet armed then we will read 0xFFFF */
+	/* Read the समय that's left beक्रमe rebooting */
+	/* Note: अगर the board is not yet armed then we will पढ़ो 0xFFFF */
 	usb_pcwd_send_command(usb_pcwd, CMD_READ_WATCHDOG_TIMEOUT, &msb, &lsb);
 
-	*time_left = (msb << 8) + lsb;
+	*समय_left = (msb << 8) + lsb;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	/dev/watchdog handling
+ *	/dev/watchकरोg handling
  */
 
-static ssize_t usb_pcwd_write(struct file *file, const char __user *data,
-						size_t len, loff_t *ppos)
-{
-	/* See if we got the magic character 'V' and reload the timer */
-	if (len) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार usb_pcwd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+						माप_प्रकार len, loff_t *ppos)
+अणु
+	/* See अगर we got the magic अक्षरacter 'V' and reload the समयr */
+	अगर (len) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
-			/* note: just in case someone wrote the magic character
+			/* note: just in हाल someone wrote the magic अक्षरacter
 			 * five months ago... */
 			expect_release = 0;
 
 			/* scan to see whether or not we got the
-			 * magic character */
-			for (i = 0; i != len; i++) {
-				char c;
-				if (get_user(c, data + i))
-					return -EFAULT;
-				if (c == 'V')
+			 * magic अक्षरacter */
+			क्रम (i = 0; i != len; i++) अणु
+				अक्षर c;
+				अगर (get_user(c, data + i))
+					वापस -EFAULT;
+				अगर (c == 'V')
 					expect_release = 42;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* someone wrote to us, we should reload the timer */
+		/* someone wrote to us, we should reload the समयr */
 		usb_pcwd_keepalive(usb_pcwd_device);
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static long usb_pcwd_ioctl(struct file *file, unsigned int cmd,
-						unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	static const struct watchdog_info ident = {
+अटल दीर्घ usb_pcwd_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+						अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 		.options =		WDIOF_KEEPALIVEPING |
 					WDIOF_SETTIMEOUT |
 					WDIOF_MAGICCLOSE,
 		.firmware_version =	1,
 		.identity =		DRIVER_NAME,
-	};
+	पूर्ण;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		return copy_to_user(argp, &ident, sizeof(ident)) ? -EFAULT : 0;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		वापस copy_to_user(argp, &ident, माप(ident)) ? -EFAULT : 0;
 
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(0, p);
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(0, p);
 
-	case WDIOC_GETTEMP:
-	{
-		int temperature;
+	हाल WDIOC_GETTEMP:
+	अणु
+		पूर्णांक temperature;
 
-		if (usb_pcwd_get_temperature(usb_pcwd_device, &temperature))
-			return -EFAULT;
+		अगर (usb_pcwd_get_temperature(usb_pcwd_device, &temperature))
+			वापस -EFAULT;
 
-		return put_user(temperature, p);
-	}
+		वापस put_user(temperature, p);
+	पूर्ण
 
-	case WDIOC_SETOPTIONS:
-	{
-		int new_options, retval = -EINVAL;
+	हाल WDIOC_SETOPTIONS:
+	अणु
+		पूर्णांक new_options, retval = -EINVAL;
 
-		if (get_user(new_options, p))
-			return -EFAULT;
+		अगर (get_user(new_options, p))
+			वापस -EFAULT;
 
-		if (new_options & WDIOS_DISABLECARD) {
+		अगर (new_options & WDIOS_DISABLECARD) अणु
 			usb_pcwd_stop(usb_pcwd_device);
 			retval = 0;
-		}
+		पूर्ण
 
-		if (new_options & WDIOS_ENABLECARD) {
+		अगर (new_options & WDIOS_ENABLECARD) अणु
 			usb_pcwd_start(usb_pcwd_device);
 			retval = 0;
-		}
+		पूर्ण
 
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	case WDIOC_KEEPALIVE:
+	हाल WDIOC_KEEPALIVE:
 		usb_pcwd_keepalive(usb_pcwd_device);
-		return 0;
+		वापस 0;
 
-	case WDIOC_SETTIMEOUT:
-	{
-		int new_heartbeat;
+	हाल WDIOC_SETTIMEOUT:
+	अणु
+		पूर्णांक new_heartbeat;
 
-		if (get_user(new_heartbeat, p))
-			return -EFAULT;
+		अगर (get_user(new_heartbeat, p))
+			वापस -EFAULT;
 
-		if (usb_pcwd_set_heartbeat(usb_pcwd_device, new_heartbeat))
-			return -EINVAL;
+		अगर (usb_pcwd_set_heartbeat(usb_pcwd_device, new_heartbeat))
+			वापस -EINVAL;
 
 		usb_pcwd_keepalive(usb_pcwd_device);
-	}
+	पूर्ण
 		fallthrough;
 
-	case WDIOC_GETTIMEOUT:
-		return put_user(heartbeat, p);
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(heartbeat, p);
 
-	case WDIOC_GETTIMELEFT:
-	{
-		int time_left;
+	हाल WDIOC_GETTIMELEFT:
+	अणु
+		पूर्णांक समय_left;
 
-		if (usb_pcwd_get_timeleft(usb_pcwd_device, &time_left))
-			return -EFAULT;
+		अगर (usb_pcwd_get_समयleft(usb_pcwd_device, &समय_left))
+			वापस -EFAULT;
 
-		return put_user(time_left, p);
-	}
+		वापस put_user(समय_left, p);
+	पूर्ण
 
-	default:
-		return -ENOTTY;
-	}
-}
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-static int usb_pcwd_open(struct inode *inode, struct file *file)
-{
-	/* /dev/watchdog can only be opened once */
-	if (test_and_set_bit(0, &is_active))
-		return -EBUSY;
+अटल पूर्णांक usb_pcwd_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	/* /dev/watchकरोg can only be खोलोed once */
+	अगर (test_and_set_bit(0, &is_active))
+		वापस -EBUSY;
 
 	/* Activate */
 	usb_pcwd_start(usb_pcwd_device);
 	usb_pcwd_keepalive(usb_pcwd_device);
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int usb_pcwd_release(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक usb_pcwd_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	/*
-	 *      Shut off the timer.
+	 *      Shut off the समयr.
 	 */
-	if (expect_release == 42) {
+	अगर (expect_release == 42) अणु
 		usb_pcwd_stop(usb_pcwd_device);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_crit("Unexpected close, not stopping watchdog!\n");
 		usb_pcwd_keepalive(usb_pcwd_device);
-	}
+	पूर्ण
 	expect_release = 0;
 	clear_bit(0, &is_active);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	/dev/temperature handling
  */
 
-static ssize_t usb_pcwd_temperature_read(struct file *file, char __user *data,
-				size_t len, loff_t *ppos)
-{
-	int temperature;
+अटल sमाप_प्रकार usb_pcwd_temperature_पढ़ो(काष्ठा file *file, अक्षर __user *data,
+				माप_प्रकार len, loff_t *ppos)
+अणु
+	पूर्णांक temperature;
 
-	if (usb_pcwd_get_temperature(usb_pcwd_device, &temperature))
-		return -EFAULT;
+	अगर (usb_pcwd_get_temperature(usb_pcwd_device, &temperature))
+		वापस -EFAULT;
 
-	if (copy_to_user(data, &temperature, 1))
-		return -EFAULT;
+	अगर (copy_to_user(data, &temperature, 1))
+		वापस -EFAULT;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int usb_pcwd_temperature_open(struct inode *inode, struct file *file)
-{
-	return stream_open(inode, file);
-}
+अटल पूर्णांक usb_pcwd_temperature_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int usb_pcwd_temperature_release(struct inode *inode, struct file *file)
-{
-	return 0;
-}
+अटल पूर्णांक usb_pcwd_temperature_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- *	Notify system
+ *	Notअगरy प्रणाली
  */
 
-static int usb_pcwd_notify_sys(struct notifier_block *this, unsigned long code,
-								void *unused)
-{
-	if (code == SYS_DOWN || code == SYS_HALT)
+अटल पूर्णांक usb_pcwd_notअगरy_sys(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code,
+								व्योम *unused)
+अणु
+	अगर (code == SYS_DOWN || code == SYS_HALT)
 		usb_pcwd_stop(usb_pcwd_device);	/* Turn the WDT off */
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /*
  *	Kernel Interfaces
  */
 
-static const struct file_operations usb_pcwd_fops = {
+अटल स्थिर काष्ठा file_operations usb_pcwd_fops = अणु
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
-	.write =	usb_pcwd_write,
+	.ग_लिखो =	usb_pcwd_ग_लिखो,
 	.unlocked_ioctl = usb_pcwd_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-	.open =		usb_pcwd_open,
+	.खोलो =		usb_pcwd_खोलो,
 	.release =	usb_pcwd_release,
-};
+पूर्ण;
 
-static struct miscdevice usb_pcwd_miscdev = {
+अटल काष्ठा miscdevice usb_pcwd_miscdev = अणु
 	.minor =	WATCHDOG_MINOR,
 	.name =		"watchdog",
 	.fops =		&usb_pcwd_fops,
-};
+पूर्ण;
 
-static const struct file_operations usb_pcwd_temperature_fops = {
+अटल स्थिर काष्ठा file_operations usb_pcwd_temperature_fops = अणु
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
-	.read =		usb_pcwd_temperature_read,
-	.open =		usb_pcwd_temperature_open,
+	.पढ़ो =		usb_pcwd_temperature_पढ़ो,
+	.खोलो =		usb_pcwd_temperature_खोलो,
 	.release =	usb_pcwd_temperature_release,
-};
+पूर्ण;
 
-static struct miscdevice usb_pcwd_temperature_miscdev = {
+अटल काष्ठा miscdevice usb_pcwd_temperature_miscdev = अणु
 	.minor =	TEMP_MINOR,
 	.name =		"temperature",
 	.fops =		&usb_pcwd_temperature_fops,
-};
+पूर्ण;
 
-static struct notifier_block usb_pcwd_notifier = {
-	.notifier_call =	usb_pcwd_notify_sys,
-};
+अटल काष्ठा notअगरier_block usb_pcwd_notअगरier = अणु
+	.notअगरier_call =	usb_pcwd_notअगरy_sys,
+पूर्ण;
 
 /**
  *	usb_pcwd_delete
  */
-static inline void usb_pcwd_delete(struct usb_pcwd_private *usb_pcwd)
-{
-	usb_free_urb(usb_pcwd->intr_urb);
-	usb_free_coherent(usb_pcwd->udev, usb_pcwd->intr_size,
-			  usb_pcwd->intr_buffer, usb_pcwd->intr_dma);
-	kfree(usb_pcwd);
-}
+अटल अंतरभूत व्योम usb_pcwd_delete(काष्ठा usb_pcwd_निजी *usb_pcwd)
+अणु
+	usb_मुक्त_urb(usb_pcwd->पूर्णांकr_urb);
+	usb_मुक्त_coherent(usb_pcwd->udev, usb_pcwd->पूर्णांकr_size,
+			  usb_pcwd->पूर्णांकr_buffer, usb_pcwd->पूर्णांकr_dma);
+	kमुक्त(usb_pcwd);
+पूर्ण
 
 /**
  *	usb_pcwd_probe
  *
  *	Called by the usb core when a new device is connected that it thinks
- *	this driver might be interested in.
+ *	this driver might be पूर्णांकerested in.
  */
-static int usb_pcwd_probe(struct usb_interface *interface,
-						const struct usb_device_id *id)
-{
-	struct usb_device *udev = interface_to_usbdev(interface);
-	struct usb_host_interface *iface_desc;
-	struct usb_endpoint_descriptor *endpoint;
-	struct usb_pcwd_private *usb_pcwd = NULL;
-	int pipe;
-	int retval = -ENOMEM;
-	int got_fw_rev;
-	unsigned char fw_rev_major, fw_rev_minor;
-	char fw_ver_str[20];
-	unsigned char option_switches, dummy;
+अटल पूर्णांक usb_pcwd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+						स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
+	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
+	काष्ठा usb_pcwd_निजी *usb_pcwd = शून्य;
+	पूर्णांक pipe;
+	पूर्णांक retval = -ENOMEM;
+	पूर्णांक got_fw_rev;
+	अचिन्हित अक्षर fw_rev_major, fw_rev_minor;
+	अक्षर fw_ver_str[20];
+	अचिन्हित अक्षर option_चयनes, dummy;
 
 	cards_found++;
-	if (cards_found > 1) {
+	अगर (cards_found > 1) अणु
 		pr_err("This driver only supports 1 device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* get the active interface descriptor */
-	iface_desc = interface->cur_altsetting;
+	/* get the active पूर्णांकerface descriptor */
+	अगरace_desc = पूर्णांकerface->cur_altsetting;
 
 	/* check out that we have a HID device */
-	if (!(iface_desc->desc.bInterfaceClass == USB_CLASS_HID)) {
+	अगर (!(अगरace_desc->desc.bInterfaceClass == USB_CLASS_HID)) अणु
 		pr_err("The device isn't a Human Interface Device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (iface_desc->desc.bNumEndpoints < 1)
-		return -ENODEV;
+	अगर (अगरace_desc->desc.bNumEndpoपूर्णांकs < 1)
+		वापस -ENODEV;
 
-	/* check out the endpoint: it has to be Interrupt & IN */
-	endpoint = &iface_desc->endpoint[0].desc;
+	/* check out the endpoपूर्णांक: it has to be Interrupt & IN */
+	endpoपूर्णांक = &अगरace_desc->endpoपूर्णांक[0].desc;
 
-	if (!usb_endpoint_is_int_in(endpoint)) {
-		/* we didn't find a Interrupt endpoint with direction IN */
+	अगर (!usb_endpoपूर्णांक_is_पूर्णांक_in(endpoपूर्णांक)) अणु
+		/* we didn't find a Interrupt endpoपूर्णांक with direction IN */
 		pr_err("Couldn't find an INTR & IN endpoint\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* get a handle to the interrupt data pipe */
-	pipe = usb_rcvintpipe(udev, endpoint->bEndpointAddress);
+	/* get a handle to the पूर्णांकerrupt data pipe */
+	pipe = usb_rcvपूर्णांकpipe(udev, endpoपूर्णांक->bEndpoपूर्णांकAddress);
 
-	/* allocate memory for our device and initialize it */
-	usb_pcwd = kzalloc(sizeof(struct usb_pcwd_private), GFP_KERNEL);
-	if (usb_pcwd == NULL)
-		goto error;
+	/* allocate memory क्रम our device and initialize it */
+	usb_pcwd = kzalloc(माप(काष्ठा usb_pcwd_निजी), GFP_KERNEL);
+	अगर (usb_pcwd == शून्य)
+		जाओ error;
 
 	usb_pcwd_device = usb_pcwd;
 
 	mutex_init(&usb_pcwd->mtx);
 	usb_pcwd->udev = udev;
-	usb_pcwd->interface = interface;
-	usb_pcwd->interface_number = iface_desc->desc.bInterfaceNumber;
-	usb_pcwd->intr_size = (le16_to_cpu(endpoint->wMaxPacketSize) > 8 ?
-				le16_to_cpu(endpoint->wMaxPacketSize) : 8);
+	usb_pcwd->पूर्णांकerface = पूर्णांकerface;
+	usb_pcwd->पूर्णांकerface_number = अगरace_desc->desc.bInterfaceNumber;
+	usb_pcwd->पूर्णांकr_size = (le16_to_cpu(endpoपूर्णांक->wMaxPacketSize) > 8 ?
+				le16_to_cpu(endpoपूर्णांक->wMaxPacketSize) : 8);
 
 	/* set up the memory buffer's */
-	usb_pcwd->intr_buffer = usb_alloc_coherent(udev, usb_pcwd->intr_size,
-					GFP_KERNEL, &usb_pcwd->intr_dma);
-	if (!usb_pcwd->intr_buffer) {
+	usb_pcwd->पूर्णांकr_buffer = usb_alloc_coherent(udev, usb_pcwd->पूर्णांकr_size,
+					GFP_KERNEL, &usb_pcwd->पूर्णांकr_dma);
+	अगर (!usb_pcwd->पूर्णांकr_buffer) अणु
 		pr_err("Out of memory\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* allocate the urb's */
-	usb_pcwd->intr_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!usb_pcwd->intr_urb)
-		goto error;
+	usb_pcwd->पूर्णांकr_urb = usb_alloc_urb(0, GFP_KERNEL);
+	अगर (!usb_pcwd->पूर्णांकr_urb)
+		जाओ error;
 
-	/* initialise the intr urb's */
-	usb_fill_int_urb(usb_pcwd->intr_urb, udev, pipe,
-			usb_pcwd->intr_buffer, usb_pcwd->intr_size,
-			usb_pcwd_intr_done, usb_pcwd, endpoint->bInterval);
-	usb_pcwd->intr_urb->transfer_dma = usb_pcwd->intr_dma;
-	usb_pcwd->intr_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
+	/* initialise the पूर्णांकr urb's */
+	usb_fill_पूर्णांक_urb(usb_pcwd->पूर्णांकr_urb, udev, pipe,
+			usb_pcwd->पूर्णांकr_buffer, usb_pcwd->पूर्णांकr_size,
+			usb_pcwd_पूर्णांकr_करोne, usb_pcwd, endpoपूर्णांक->bInterval);
+	usb_pcwd->पूर्णांकr_urb->transfer_dma = usb_pcwd->पूर्णांकr_dma;
+	usb_pcwd->पूर्णांकr_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	/* register our interrupt URB with the USB system */
-	if (usb_submit_urb(usb_pcwd->intr_urb, GFP_KERNEL)) {
+	/* रेजिस्टर our पूर्णांकerrupt URB with the USB प्रणाली */
+	अगर (usb_submit_urb(usb_pcwd->पूर्णांकr_urb, GFP_KERNEL)) अणु
 		pr_err("Problem registering interrupt URB\n");
 		retval = -EIO; /* failure */
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* The device exists and can be communicated with */
 	usb_pcwd->exists = 1;
@@ -690,105 +691,105 @@ static int usb_pcwd_probe(struct usb_interface *interface,
 	/* Get the Firmware Version */
 	got_fw_rev = usb_pcwd_send_command(usb_pcwd, CMD_GET_FIRMWARE_VERSION,
 						&fw_rev_major, &fw_rev_minor);
-	if (got_fw_rev)
-		sprintf(fw_ver_str, "%u.%02u", fw_rev_major, fw_rev_minor);
-	else
-		sprintf(fw_ver_str, "<card no answer>");
+	अगर (got_fw_rev)
+		प्र_लिखो(fw_ver_str, "%u.%02u", fw_rev_major, fw_rev_minor);
+	अन्यथा
+		प्र_लिखो(fw_ver_str, "<card no answer>");
 
 	pr_info("Found card (Firmware: %s) with temp option\n", fw_ver_str);
 
-	/* Get switch settings */
+	/* Get चयन settings */
 	usb_pcwd_send_command(usb_pcwd, CMD_GET_DIP_SWITCH_SETTINGS, &dummy,
-							&option_switches);
+							&option_चयनes);
 
 	pr_info("Option switches (0x%02x): Temperature Reset Enable=%s, Power On Delay=%s\n",
-		option_switches,
-		((option_switches & 0x10) ? "ON" : "OFF"),
-		((option_switches & 0x08) ? "ON" : "OFF"));
+		option_चयनes,
+		((option_चयनes & 0x10) ? "ON" : "OFF"),
+		((option_चयनes & 0x08) ? "ON" : "OFF"));
 
-	/* If heartbeat = 0 then we use the heartbeat from the dip-switches */
-	if (heartbeat == 0)
-		heartbeat = heartbeat_tbl[(option_switches & 0x07)];
+	/* If heartbeat = 0 then we use the heartbeat from the dip-चयनes */
+	अगर (heartbeat == 0)
+		heartbeat = heartbeat_tbl[(option_चयनes & 0x07)];
 
 	/* Check that the heartbeat value is within it's range ;
-	 * if not reset to the default */
-	if (usb_pcwd_set_heartbeat(usb_pcwd, heartbeat)) {
+	 * अगर not reset to the शेष */
+	अगर (usb_pcwd_set_heartbeat(usb_pcwd, heartbeat)) अणु
 		usb_pcwd_set_heartbeat(usb_pcwd, WATCHDOG_HEARTBEAT);
 		pr_info("heartbeat value must be 0<heartbeat<65536, using %d\n",
 			WATCHDOG_HEARTBEAT);
-	}
+	पूर्ण
 
-	retval = register_reboot_notifier(&usb_pcwd_notifier);
-	if (retval != 0) {
+	retval = रेजिस्टर_reboot_notअगरier(&usb_pcwd_notअगरier);
+	अगर (retval != 0) अणु
 		pr_err("cannot register reboot notifier (err=%d)\n", retval);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	retval = misc_register(&usb_pcwd_temperature_miscdev);
-	if (retval != 0) {
+	retval = misc_रेजिस्टर(&usb_pcwd_temperature_miscdev);
+	अगर (retval != 0) अणु
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       TEMP_MINOR, retval);
-		goto err_out_unregister_reboot;
-	}
+		जाओ err_out_unरेजिस्टर_reboot;
+	पूर्ण
 
-	retval = misc_register(&usb_pcwd_miscdev);
-	if (retval != 0) {
+	retval = misc_रेजिस्टर(&usb_pcwd_miscdev);
+	अगर (retval != 0) अणु
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, retval);
-		goto err_out_misc_deregister;
-	}
+		जाओ err_out_misc_deरेजिस्टर;
+	पूर्ण
 
-	/* we can register the device now, as it is ready */
-	usb_set_intfdata(interface, usb_pcwd);
+	/* we can रेजिस्टर the device now, as it is पढ़ोy */
+	usb_set_पूर्णांकfdata(पूर्णांकerface, usb_pcwd);
 
 	pr_info("initialized. heartbeat=%d sec (nowayout=%d)\n",
 		heartbeat, nowayout);
 
-	return 0;
+	वापस 0;
 
-err_out_misc_deregister:
-	misc_deregister(&usb_pcwd_temperature_miscdev);
-err_out_unregister_reboot:
-	unregister_reboot_notifier(&usb_pcwd_notifier);
+err_out_misc_deरेजिस्टर:
+	misc_deरेजिस्टर(&usb_pcwd_temperature_miscdev);
+err_out_unरेजिस्टर_reboot:
+	unरेजिस्टर_reboot_notअगरier(&usb_pcwd_notअगरier);
 error:
-	if (usb_pcwd)
+	अगर (usb_pcwd)
 		usb_pcwd_delete(usb_pcwd);
-	usb_pcwd_device = NULL;
-	return retval;
-}
+	usb_pcwd_device = शून्य;
+	वापस retval;
+पूर्ण
 
 
 /**
  *	usb_pcwd_disconnect
  *
- *	Called by the usb core when the device is removed from the system.
+ *	Called by the usb core when the device is हटाओd from the प्रणाली.
  *
  *	This routine guarantees that the driver will not submit any more urbs
  *	by clearing dev->udev.
  */
-static void usb_pcwd_disconnect(struct usb_interface *interface)
-{
-	struct usb_pcwd_private *usb_pcwd;
+अटल व्योम usb_pcwd_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा usb_pcwd_निजी *usb_pcwd;
 
-	/* prevent races with open() */
+	/* prevent races with खोलो() */
 	mutex_lock(&disconnect_mutex);
 
-	usb_pcwd = usb_get_intfdata(interface);
-	usb_set_intfdata(interface, NULL);
+	usb_pcwd = usb_get_पूर्णांकfdata(पूर्णांकerface);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
 
 	mutex_lock(&usb_pcwd->mtx);
 
-	/* Stop the timer before we leave */
-	if (!nowayout)
+	/* Stop the समयr beक्रमe we leave */
+	अगर (!nowayout)
 		usb_pcwd_stop(usb_pcwd);
 
 	/* We should now stop communicating with the USB PCWD device */
 	usb_pcwd->exists = 0;
 
-	/* Deregister */
-	misc_deregister(&usb_pcwd_miscdev);
-	misc_deregister(&usb_pcwd_temperature_miscdev);
-	unregister_reboot_notifier(&usb_pcwd_notifier);
+	/* Deरेजिस्टर */
+	misc_deरेजिस्टर(&usb_pcwd_miscdev);
+	misc_deरेजिस्टर(&usb_pcwd_temperature_miscdev);
+	unरेजिस्टर_reboot_notअगरier(&usb_pcwd_notअगरier);
 
 	mutex_unlock(&usb_pcwd->mtx);
 
@@ -800,6 +801,6 @@ static void usb_pcwd_disconnect(struct usb_interface *interface)
 	mutex_unlock(&disconnect_mutex);
 
 	pr_info("USB PC Watchdog disconnected\n");
-}
+पूर्ण
 
 module_usb_driver(usb_pcwd_driver);

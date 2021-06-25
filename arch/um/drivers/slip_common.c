@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <string.h>
-#include "slip_common.h"
-#include <net_user.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <माला.स>
+#समावेश "slip_common.h"
+#समावेश <net_user.h>
 
-int slip_proto_read(int fd, void *buf, int len, struct slip_proto *slip)
-{
-	int i, n, size, start;
+पूर्णांक slip_proto_पढ़ो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा slip_proto *slip)
+अणु
+	पूर्णांक i, n, size, start;
 
-	if(slip->more > 0){
+	अगर(slip->more > 0)अणु
 		i = 0;
-		while(i < slip->more){
+		जबतक(i < slip->more)अणु
 			size = slip_unesc(slip->ibuf[i++], slip->ibuf,
 					  &slip->pos, &slip->esc);
-			if(size){
-				memcpy(buf, slip->ibuf, size);
-				memmove(slip->ibuf, &slip->ibuf[i],
+			अगर(size)अणु
+				स_नकल(buf, slip->ibuf, size);
+				स_हटाओ(slip->ibuf, &slip->ibuf[i],
 					slip->more - i);
 				slip->more = slip->more - i;
-				return size;
-			}
-		}
+				वापस size;
+			पूर्ण
+		पूर्ण
 		slip->more = 0;
-	}
+	पूर्ण
 
-	n = net_read(fd, &slip->ibuf[slip->pos],
-		     sizeof(slip->ibuf) - slip->pos);
-	if(n <= 0)
-		return n;
+	n = net_पढ़ो(fd, &slip->ibuf[slip->pos],
+		     माप(slip->ibuf) - slip->pos);
+	अगर(n <= 0)
+		वापस n;
 
 	start = slip->pos;
-	for(i = 0; i < n; i++){
+	क्रम(i = 0; i < n; i++)अणु
 		size = slip_unesc(slip->ibuf[start + i], slip->ibuf,&slip->pos,
 				  &slip->esc);
-		if(size){
-			memcpy(buf, slip->ibuf, size);
-			memmove(slip->ibuf, &slip->ibuf[start+i+1],
+		अगर(size)अणु
+			स_नकल(buf, slip->ibuf, size);
+			स_हटाओ(slip->ibuf, &slip->ibuf[start+i+1],
 				n - (i + 1));
 			slip->more = n - (i + 1);
-			return size;
-		}
-	}
-	return 0;
-}
+			वापस size;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int slip_proto_write(int fd, void *buf, int len, struct slip_proto *slip)
-{
-	int actual, n;
+पूर्णांक slip_proto_ग_लिखो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा slip_proto *slip)
+अणु
+	पूर्णांक actual, n;
 
 	actual = slip_esc(buf, slip->obuf, len);
-	n = net_write(fd, slip->obuf, actual);
-	if(n < 0)
-		return n;
-	else return len;
-}
+	n = net_ग_लिखो(fd, slip->obuf, actual);
+	अगर(n < 0)
+		वापस n;
+	अन्यथा वापस len;
+पूर्ण

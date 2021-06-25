@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_NS_HASH_H__
-#define __NET_NS_HASH_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_NS_HASH_H__
+#घोषणा __NET_NS_HASH_H__
 
-#include <net/net_namespace.h>
+#समावेश <net/net_namespace.h>
 
-static inline u32 net_hash_mix(const struct net *net)
-{
-	return net->hash_mix;
-}
-#endif
+अटल अंतरभूत u32 net_hash_mix(स्थिर काष्ठा net *net)
+अणु
+	वापस net->hash_mix;
+पूर्ण
+#पूर्ण_अगर

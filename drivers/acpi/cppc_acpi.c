@@ -1,144 +1,145 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * CPPC (Collaborative Processor Performance Control) methods used by CPUfreq drivers.
+ * CPPC (Collaborative Processor Perक्रमmance Control) methods used by CPUfreq drivers.
  *
  * (C) Copyright 2014, 2015 Linaro Ltd.
  * Author: Ashwin Chaugule <ashwin.chaugule@linaro.org>
  *
- * CPPC describes a few methods for controlling CPU performance using
- * information from a per CPU table called CPC. This table is described in
- * the ACPI v5.0+ specification. The table consists of a list of
- * registers which may be memory mapped or hardware registers and also may
- * include some static integer values.
+ * CPPC describes a few methods क्रम controlling CPU perक्रमmance using
+ * inक्रमmation from a per CPU table called CPC. This table is described in
+ * the ACPI v5.0+ specअगरication. The table consists of a list of
+ * रेजिस्टरs which may be memory mapped or hardware रेजिस्टरs and also may
+ * include some अटल पूर्णांकeger values.
  *
- * CPU performance is on an abstract continuous scale as against a discretized
+ * CPU perक्रमmance is on an असलtract continuous scale as against a discretized
  * P-state scale which is tied to CPU frequency only. In brief, the basic
  * operation involves:
  *
- * - OS makes a CPU performance request. (Can provide min and max bounds)
+ * - OS makes a CPU perक्रमmance request. (Can provide min and max bounds)
  *
- * - Platform (such as BMC) is free to optimize request within requested bounds
- *   depending on power/thermal budgets etc.
+ * - Platक्रमm (such as BMC) is मुक्त to optimize request within requested bounds
+ *   depending on घातer/thermal budमाला_लो etc.
  *
- * - Platform conveys its decision back to OS
+ * - Platक्रमm conveys its decision back to OS
  *
- * The communication between OS and platform occurs through another medium
- * called (PCC) Platform Communication Channel. This is a generic mailbox like
- * mechanism which includes doorbell semantics to indicate register updates.
- * See drivers/mailbox/pcc.c for details on PCC.
+ * The communication between OS and platक्रमm occurs through another medium
+ * called (PCC) Platक्रमm Communication Channel. This is a generic mailbox like
+ * mechanism which includes करोorbell semantics to indicate रेजिस्टर updates.
+ * See drivers/mailbox/pcc.c क्रम details on PCC.
  *
  * Finer details about the PCC and CPPC spec are available in the ACPI v5.1 and
- * above specifications.
+ * above specअगरications.
  */
 
-#define pr_fmt(fmt)	"ACPI CPPC: " fmt
+#घोषणा pr_fmt(fmt)	"ACPI CPPC: " fmt
 
-#include <linux/delay.h>
-#include <linux/iopoll.h>
-#include <linux/ktime.h>
-#include <linux/rwsem.h>
-#include <linux/wait.h>
-#include <linux/topology.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/topology.h>
 
-#include <acpi/cppc_acpi.h>
+#समावेश <acpi/cppc_acpi.h>
 
-struct cppc_pcc_data {
-	struct mbox_chan *pcc_channel;
-	void __iomem *pcc_comm_addr;
+काष्ठा cppc_pcc_data अणु
+	काष्ठा mbox_chan *pcc_channel;
+	व्योम __iomem *pcc_comm_addr;
 	bool pcc_channel_acquired;
-	unsigned int deadline_us;
-	unsigned int pcc_mpar, pcc_mrtt, pcc_nominal;
+	अचिन्हित पूर्णांक deadline_us;
+	अचिन्हित पूर्णांक pcc_mpar, pcc_mrtt, pcc_nominal;
 
-	bool pending_pcc_write_cmd;	/* Any pending/batched PCC write cmds? */
-	bool platform_owns_pcc;		/* Ownership of PCC subspace */
-	unsigned int pcc_write_cnt;	/* Running count of PCC write commands */
+	bool pending_pcc_ग_लिखो_cmd;	/* Any pending/batched PCC ग_लिखो cmds? */
+	bool platक्रमm_owns_pcc;		/* Ownership of PCC subspace */
+	अचिन्हित पूर्णांक pcc_ग_लिखो_cnt;	/* Running count of PCC ग_लिखो commands */
 
 	/*
 	 * Lock to provide controlled access to the PCC channel.
 	 *
-	 * For performance critical usecases(currently cppc_set_perf)
-	 *	We need to take read_lock and check if channel belongs to OSPM
-	 * before reading or writing to PCC subspace
-	 *	We need to take write_lock before transferring the channel
-	 * ownership to the platform via a Doorbell
-	 *	This allows us to batch a number of CPPC requests if they happen
-	 * to originate in about the same time
+	 * For perक्रमmance critical useहालs(currently cppc_set_perf)
+	 *	We need to take पढ़ो_lock and check अगर channel beदीर्घs to OSPM
+	 * beक्रमe पढ़ोing or writing to PCC subspace
+	 *	We need to take ग_लिखो_lock beक्रमe transferring the channel
+	 * ownership to the platक्रमm via a Doorbell
+	 *	This allows us to batch a number of CPPC requests अगर they happen
+	 * to originate in about the same समय
 	 *
-	 * For non-performance critical usecases(init)
-	 *	Take write_lock for all purposes which gives exclusive access
+	 * For non-perक्रमmance critical useहालs(init)
+	 *	Take ग_लिखो_lock क्रम all purposes which gives exclusive access
 	 */
-	struct rw_semaphore pcc_lock;
+	काष्ठा rw_semaphore pcc_lock;
 
-	/* Wait queue for CPUs whose requests were batched */
-	wait_queue_head_t pcc_write_wait_q;
-	ktime_t last_cmd_cmpl_time;
-	ktime_t last_mpar_reset;
-	int mpar_count;
-	int refcount;
-};
+	/* Wait queue क्रम CPUs whose requests were batched */
+	रुको_queue_head_t pcc_ग_लिखो_रुको_q;
+	kसमय_प्रकार last_cmd_cmpl_समय;
+	kसमय_प्रकार last_mpar_reset;
+	पूर्णांक mpar_count;
+	पूर्णांक refcount;
+पूर्ण;
 
 /* Array to represent the PCC channel per subspace ID */
-static struct cppc_pcc_data *pcc_data[MAX_PCC_SUBSPACES];
+अटल काष्ठा cppc_pcc_data *pcc_data[MAX_PCC_SUBSPACES];
 /* The cpu_pcc_subspace_idx contains per CPU subspace ID */
-static DEFINE_PER_CPU(int, cpu_pcc_subspace_idx);
+अटल DEFINE_PER_CPU(पूर्णांक, cpu_pcc_subspace_idx);
 
 /*
- * The cpc_desc structure contains the ACPI register details
+ * The cpc_desc काष्ठाure contains the ACPI रेजिस्टर details
  * as described in the per CPU _CPC tables. The details
- * include the type of register (e.g. PCC, System IO, FFH etc.)
- * and destination addresses which lets us READ/WRITE CPU performance
- * information using the appropriate I/O methods.
+ * include the type of रेजिस्टर (e.g. PCC, System IO, FFH etc.)
+ * and destination addresses which lets us READ/WRITE CPU perक्रमmance
+ * inक्रमmation using the appropriate I/O methods.
  */
-static DEFINE_PER_CPU(struct cpc_desc *, cpc_desc_ptr);
+अटल DEFINE_PER_CPU(काष्ठा cpc_desc *, cpc_desc_ptr);
 
 /* pcc mapped address + header size + offset within PCC subspace */
-#define GET_PCC_VADDR(offs, pcc_ss_id) (pcc_data[pcc_ss_id]->pcc_comm_addr + \
+#घोषणा GET_PCC_VADDR(offs, pcc_ss_id) (pcc_data[pcc_ss_id]->pcc_comm_addr + \
 						0x8 + (offs))
 
-/* Check if a CPC register is in PCC */
-#define CPC_IN_PCC(cpc) ((cpc)->type == ACPI_TYPE_BUFFER &&		\
+/* Check अगर a CPC रेजिस्टर is in PCC */
+#घोषणा CPC_IN_PCC(cpc) ((cpc)->type == ACPI_TYPE_BUFFER &&		\
 				(cpc)->cpc_entry.reg.space_id ==	\
 				ACPI_ADR_SPACE_PLATFORM_COMM)
 
-/* Evaluates to True if reg is a NULL register descriptor */
-#define IS_NULL_REG(reg) ((reg)->space_id ==  ACPI_ADR_SPACE_SYSTEM_MEMORY && \
+/* Evaluates to True अगर reg is a शून्य रेजिस्टर descriptor */
+#घोषणा IS_शून्य_REG(reg) ((reg)->space_id ==  ACPI_ADR_SPACE_SYSTEM_MEMORY && \
 				(reg)->address == 0 &&			\
 				(reg)->bit_width == 0 &&		\
 				(reg)->bit_offset == 0 &&		\
 				(reg)->access_width == 0)
 
-/* Evaluates to True if an optional cpc field is supported */
-#define CPC_SUPPORTED(cpc) ((cpc)->type == ACPI_TYPE_INTEGER ?		\
-				!!(cpc)->cpc_entry.int_value :		\
-				!IS_NULL_REG(&(cpc)->cpc_entry.reg))
+/* Evaluates to True अगर an optional cpc field is supported */
+#घोषणा CPC_SUPPORTED(cpc) ((cpc)->type == ACPI_TYPE_INTEGER ?		\
+				!!(cpc)->cpc_entry.पूर्णांक_value :		\
+				!IS_शून्य_REG(&(cpc)->cpc_entry.reg))
 /*
- * Arbitrary Retries in case the remote processor is slow to respond
+ * Arbitrary Retries in हाल the remote processor is slow to respond
  * to PCC commands. Keeping it high enough to cover emulators where
  * the processors run painfully slow.
  */
-#define NUM_RETRIES 500ULL
+#घोषणा NUM_RETRIES 500ULL
 
-#define define_one_cppc_ro(_name)		\
-static struct kobj_attribute _name =		\
-__ATTR(_name, 0444, show_##_name, NULL)
+#घोषणा define_one_cppc_ro(_name)		\
+अटल काष्ठा kobj_attribute _name =		\
+__ATTR(_name, 0444, show_##_name, शून्य)
 
-#define to_cpc_desc(a) container_of(a, struct cpc_desc, kobj)
+#घोषणा to_cpc_desc(a) container_of(a, काष्ठा cpc_desc, kobj)
 
-#define show_cppc_data(access_fn, struct_name, member_name)		\
-	static ssize_t show_##member_name(struct kobject *kobj,		\
-				struct kobj_attribute *attr, char *buf)	\
-	{								\
-		struct cpc_desc *cpc_ptr = to_cpc_desc(kobj);		\
-		struct struct_name st_name = {0};			\
-		int ret;						\
+#घोषणा show_cppc_data(access_fn, काष्ठा_name, member_name)		\
+	अटल sमाप_प्रकार show_##member_name(काष्ठा kobject *kobj,		\
+				काष्ठा kobj_attribute *attr, अक्षर *buf)	\
+	अणु								\
+		काष्ठा cpc_desc *cpc_ptr = to_cpc_desc(kobj);		\
+		काष्ठा काष्ठा_name st_name = अणु0पूर्ण;			\
+		पूर्णांक ret;						\
 									\
 		ret = access_fn(cpc_ptr->cpu_id, &st_name);		\
-		if (ret)						\
-			return ret;					\
+		अगर (ret)						\
+			वापस ret;					\
 									\
-		return scnprintf(buf, PAGE_SIZE, "%llu\n",		\
+		वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n",		\
 				(u64)st_name.member_name);		\
-	}								\
+	पूर्ण								\
 	define_one_cppc_ro(member_name)
 
 show_cppc_data(cppc_get_perf_caps, cppc_perf_caps, highest_perf);
@@ -149,115 +150,115 @@ show_cppc_data(cppc_get_perf_caps, cppc_perf_caps, lowest_freq);
 show_cppc_data(cppc_get_perf_caps, cppc_perf_caps, nominal_freq);
 
 show_cppc_data(cppc_get_perf_ctrs, cppc_perf_fb_ctrs, reference_perf);
-show_cppc_data(cppc_get_perf_ctrs, cppc_perf_fb_ctrs, wraparound_time);
+show_cppc_data(cppc_get_perf_ctrs, cppc_perf_fb_ctrs, wraparound_समय);
 
-static ssize_t show_feedback_ctrs(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	struct cpc_desc *cpc_ptr = to_cpc_desc(kobj);
-	struct cppc_perf_fb_ctrs fb_ctrs = {0};
-	int ret;
+अटल sमाप_प्रकार show_feedback_ctrs(काष्ठा kobject *kobj,
+		काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा cpc_desc *cpc_ptr = to_cpc_desc(kobj);
+	काष्ठा cppc_perf_fb_ctrs fb_ctrs = अणु0पूर्ण;
+	पूर्णांक ret;
 
 	ret = cppc_get_perf_ctrs(cpc_ptr->cpu_id, &fb_ctrs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return scnprintf(buf, PAGE_SIZE, "ref:%llu del:%llu\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "ref:%llu del:%llu\n",
 			fb_ctrs.reference, fb_ctrs.delivered);
-}
+पूर्ण
 define_one_cppc_ro(feedback_ctrs);
 
-static struct attribute *cppc_attrs[] = {
+अटल काष्ठा attribute *cppc_attrs[] = अणु
 	&feedback_ctrs.attr,
 	&reference_perf.attr,
-	&wraparound_time.attr,
+	&wraparound_समय.attr,
 	&highest_perf.attr,
 	&lowest_perf.attr,
 	&lowest_nonlinear_perf.attr,
 	&nominal_perf.attr,
 	&nominal_freq.attr,
 	&lowest_freq.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct kobj_type cppc_ktype = {
+अटल काष्ठा kobj_type cppc_ktype = अणु
 	.sysfs_ops = &kobj_sysfs_ops,
-	.default_attrs = cppc_attrs,
-};
+	.शेष_attrs = cppc_attrs,
+पूर्ण;
 
-static int check_pcc_chan(int pcc_ss_id, bool chk_err_bit)
-{
-	int ret, status;
-	struct cppc_pcc_data *pcc_ss_data = pcc_data[pcc_ss_id];
-	struct acpi_pcct_shared_memory __iomem *generic_comm_base =
+अटल पूर्णांक check_pcc_chan(पूर्णांक pcc_ss_id, bool chk_err_bit)
+अणु
+	पूर्णांक ret, status;
+	काष्ठा cppc_pcc_data *pcc_ss_data = pcc_data[pcc_ss_id];
+	काष्ठा acpi_pcct_shared_memory __iomem *generic_comm_base =
 		pcc_ss_data->pcc_comm_addr;
 
-	if (!pcc_ss_data->platform_owns_pcc)
-		return 0;
+	अगर (!pcc_ss_data->platक्रमm_owns_pcc)
+		वापस 0;
 
 	/*
-	 * Poll PCC status register every 3us(delay_us) for maximum of
-	 * deadline_us(timeout_us) until PCC command complete bit is set(cond)
+	 * Poll PCC status रेजिस्टर every 3us(delay_us) क्रम maximum of
+	 * deadline_us(समयout_us) until PCC command complete bit is set(cond)
 	 */
-	ret = readw_relaxed_poll_timeout(&generic_comm_base->status, status,
+	ret = पढ़ोw_relaxed_poll_समयout(&generic_comm_base->status, status,
 					status & PCC_CMD_COMPLETE_MASK, 3,
 					pcc_ss_data->deadline_us);
 
-	if (likely(!ret)) {
-		pcc_ss_data->platform_owns_pcc = false;
-		if (chk_err_bit && (status & PCC_ERROR_MASK))
+	अगर (likely(!ret)) अणु
+		pcc_ss_data->platक्रमm_owns_pcc = false;
+		अगर (chk_err_bit && (status & PCC_ERROR_MASK))
 			ret = -EIO;
-	}
+	पूर्ण
 
-	if (unlikely(ret))
+	अगर (unlikely(ret))
 		pr_err("PCC check channel failed for ss: %d. ret=%d\n",
 		       pcc_ss_id, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This function transfers the ownership of the PCC to the platform
- * So it must be called while holding write_lock(pcc_lock)
+ * This function transfers the ownership of the PCC to the platक्रमm
+ * So it must be called जबतक holding ग_लिखो_lock(pcc_lock)
  */
-static int send_pcc_cmd(int pcc_ss_id, u16 cmd)
-{
-	int ret = -EIO, i;
-	struct cppc_pcc_data *pcc_ss_data = pcc_data[pcc_ss_id];
-	struct acpi_pcct_shared_memory __iomem *generic_comm_base =
+अटल पूर्णांक send_pcc_cmd(पूर्णांक pcc_ss_id, u16 cmd)
+अणु
+	पूर्णांक ret = -EIO, i;
+	काष्ठा cppc_pcc_data *pcc_ss_data = pcc_data[pcc_ss_id];
+	काष्ठा acpi_pcct_shared_memory __iomem *generic_comm_base =
 		pcc_ss_data->pcc_comm_addr;
-	unsigned int time_delta;
+	अचिन्हित पूर्णांक समय_delta;
 
 	/*
-	 * For CMD_WRITE we know for a fact the caller should have checked
-	 * the channel before writing to PCC space
+	 * For CMD_WRITE we know क्रम a fact the caller should have checked
+	 * the channel beक्रमe writing to PCC space
 	 */
-	if (cmd == CMD_READ) {
+	अगर (cmd == CMD_READ) अणु
 		/*
-		 * If there are pending cpc_writes, then we stole the channel
-		 * before write completion, so first send a WRITE command to
-		 * platform
+		 * If there are pending cpc_ग_लिखोs, then we stole the channel
+		 * beक्रमe ग_लिखो completion, so first send a WRITE command to
+		 * platक्रमm
 		 */
-		if (pcc_ss_data->pending_pcc_write_cmd)
+		अगर (pcc_ss_data->pending_pcc_ग_लिखो_cmd)
 			send_pcc_cmd(pcc_ss_id, CMD_WRITE);
 
 		ret = check_pcc_chan(pcc_ss_id, false);
-		if (ret)
-			goto end;
-	} else /* CMD_WRITE */
-		pcc_ss_data->pending_pcc_write_cmd = FALSE;
+		अगर (ret)
+			जाओ end;
+	पूर्ण अन्यथा /* CMD_WRITE */
+		pcc_ss_data->pending_pcc_ग_लिखो_cmd = FALSE;
 
 	/*
 	 * Handle the Minimum Request Turnaround Time(MRTT)
-	 * "The minimum amount of time that OSPM must wait after the completion
-	 * of a command before issuing the next command, in microseconds"
+	 * "The minimum amount of समय that OSPM must रुको after the completion
+	 * of a command beक्रमe issuing the next command, in microseconds"
 	 */
-	if (pcc_ss_data->pcc_mrtt) {
-		time_delta = ktime_us_delta(ktime_get(),
-					    pcc_ss_data->last_cmd_cmpl_time);
-		if (pcc_ss_data->pcc_mrtt > time_delta)
-			udelay(pcc_ss_data->pcc_mrtt - time_delta);
-	}
+	अगर (pcc_ss_data->pcc_mrtt) अणु
+		समय_delta = kसमय_us_delta(kसमय_get(),
+					    pcc_ss_data->last_cmd_cmpl_समय);
+		अगर (pcc_ss_data->pcc_mrtt > समय_delta)
+			udelay(pcc_ss_data->pcc_mrtt - समय_delta);
+	पूर्ण
 
 	/*
 	 * Handle the non-zero Maximum Periodic Access Rate(MPAR)
@@ -265,383 +266,383 @@ static int send_pcc_cmd(int pcc_ss_id, u16 cmd)
 	 * support, reported in commands per minute. 0 indicates no limitation."
 	 *
 	 * This parameter should be ideally zero or large enough so that it can
-	 * handle maximum number of requests that all the cores in the system can
+	 * handle maximum number of requests that all the cores in the प्रणाली can
 	 * collectively generate. If it is not, we will follow the spec and just
-	 * not send the request to the platform after hitting the MPAR limit in
-	 * any 60s window
+	 * not send the request to the platक्रमm after hitting the MPAR limit in
+	 * any 60s winकरोw
 	 */
-	if (pcc_ss_data->pcc_mpar) {
-		if (pcc_ss_data->mpar_count == 0) {
-			time_delta = ktime_ms_delta(ktime_get(),
+	अगर (pcc_ss_data->pcc_mpar) अणु
+		अगर (pcc_ss_data->mpar_count == 0) अणु
+			समय_delta = kसमय_ms_delta(kसमय_get(),
 						    pcc_ss_data->last_mpar_reset);
-			if ((time_delta < 60 * MSEC_PER_SEC) && pcc_ss_data->last_mpar_reset) {
+			अगर ((समय_delta < 60 * MSEC_PER_SEC) && pcc_ss_data->last_mpar_reset) अणु
 				pr_debug("PCC cmd for subspace %d not sent due to MPAR limit",
 					 pcc_ss_id);
 				ret = -EIO;
-				goto end;
-			}
-			pcc_ss_data->last_mpar_reset = ktime_get();
+				जाओ end;
+			पूर्ण
+			pcc_ss_data->last_mpar_reset = kसमय_get();
 			pcc_ss_data->mpar_count = pcc_ss_data->pcc_mpar;
-		}
+		पूर्ण
 		pcc_ss_data->mpar_count--;
-	}
+	पूर्ण
 
 	/* Write to the shared comm region. */
-	writew_relaxed(cmd, &generic_comm_base->command);
+	ग_लिखोw_relaxed(cmd, &generic_comm_base->command);
 
 	/* Flip CMD COMPLETE bit */
-	writew_relaxed(0, &generic_comm_base->status);
+	ग_लिखोw_relaxed(0, &generic_comm_base->status);
 
-	pcc_ss_data->platform_owns_pcc = true;
+	pcc_ss_data->platक्रमm_owns_pcc = true;
 
-	/* Ring doorbell */
+	/* Ring करोorbell */
 	ret = mbox_send_message(pcc_ss_data->pcc_channel, &cmd);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("Err sending PCC mbox message. ss: %d cmd:%d, ret:%d\n",
 		       pcc_ss_id, cmd, ret);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	/* wait for completion and check for PCC errro bit */
+	/* रुको क्रम completion and check क्रम PCC errro bit */
 	ret = check_pcc_chan(pcc_ss_id, true);
 
-	if (pcc_ss_data->pcc_mrtt)
-		pcc_ss_data->last_cmd_cmpl_time = ktime_get();
+	अगर (pcc_ss_data->pcc_mrtt)
+		pcc_ss_data->last_cmd_cmpl_समय = kसमय_get();
 
-	if (pcc_ss_data->pcc_channel->mbox->txdone_irq)
-		mbox_chan_txdone(pcc_ss_data->pcc_channel, ret);
-	else
-		mbox_client_txdone(pcc_ss_data->pcc_channel, ret);
+	अगर (pcc_ss_data->pcc_channel->mbox->txकरोne_irq)
+		mbox_chan_txकरोne(pcc_ss_data->pcc_channel, ret);
+	अन्यथा
+		mbox_client_txकरोne(pcc_ss_data->pcc_channel, ret);
 
 end:
-	if (cmd == CMD_WRITE) {
-		if (unlikely(ret)) {
-			for_each_possible_cpu(i) {
-				struct cpc_desc *desc = per_cpu(cpc_desc_ptr, i);
+	अगर (cmd == CMD_WRITE) अणु
+		अगर (unlikely(ret)) अणु
+			क्रम_each_possible_cpu(i) अणु
+				काष्ठा cpc_desc *desc = per_cpu(cpc_desc_ptr, i);
 
-				if (!desc)
-					continue;
+				अगर (!desc)
+					जारी;
 
-				if (desc->write_cmd_id == pcc_ss_data->pcc_write_cnt)
-					desc->write_cmd_status = ret;
-			}
-		}
-		pcc_ss_data->pcc_write_cnt++;
-		wake_up_all(&pcc_ss_data->pcc_write_wait_q);
-	}
+				अगर (desc->ग_लिखो_cmd_id == pcc_ss_data->pcc_ग_लिखो_cnt)
+					desc->ग_लिखो_cmd_status = ret;
+			पूर्ण
+		पूर्ण
+		pcc_ss_data->pcc_ग_लिखो_cnt++;
+		wake_up_all(&pcc_ss_data->pcc_ग_लिखो_रुको_q);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cppc_chan_tx_done(struct mbox_client *cl, void *msg, int ret)
-{
-	if (ret < 0)
+अटल व्योम cppc_chan_tx_करोne(काष्ठा mbox_client *cl, व्योम *msg, पूर्णांक ret)
+अणु
+	अगर (ret < 0)
 		pr_debug("TX did not complete: CMD sent:%x, ret:%d\n",
 				*(u16 *)msg, ret);
-	else
+	अन्यथा
 		pr_debug("TX completed. CMD sent:%x, ret:%d\n",
 				*(u16 *)msg, ret);
-}
+पूर्ण
 
-static struct mbox_client cppc_mbox_cl = {
-	.tx_done = cppc_chan_tx_done,
-	.knows_txdone = true,
-};
+अटल काष्ठा mbox_client cppc_mbox_cl = अणु
+	.tx_करोne = cppc_chan_tx_करोne,
+	.knows_txकरोne = true,
+पूर्ण;
 
-static int acpi_get_psd(struct cpc_desc *cpc_ptr, acpi_handle handle)
-{
-	int result = -EFAULT;
+अटल पूर्णांक acpi_get_psd(काष्ठा cpc_desc *cpc_ptr, acpi_handle handle)
+अणु
+	पूर्णांक result = -EFAULT;
 	acpi_status status = AE_OK;
-	struct acpi_buffer buffer = {ACPI_ALLOCATE_BUFFER, NULL};
-	struct acpi_buffer format = {sizeof("NNNNN"), "NNNNN"};
-	struct acpi_buffer state = {0, NULL};
-	union acpi_object  *psd = NULL;
-	struct acpi_psd_package *pdomain;
+	काष्ठा acpi_buffer buffer = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
+	काष्ठा acpi_buffer क्रमmat = अणुमाप("NNNNN"), "NNNNN"पूर्ण;
+	काष्ठा acpi_buffer state = अणु0, शून्यपूर्ण;
+	जोड़ acpi_object  *psd = शून्य;
+	काष्ठा acpi_psd_package *pकरोमुख्य;
 
-	status = acpi_evaluate_object_typed(handle, "_PSD", NULL,
+	status = acpi_evaluate_object_typed(handle, "_PSD", शून्य,
 					    &buffer, ACPI_TYPE_PACKAGE);
-	if (status == AE_NOT_FOUND)	/* _PSD is optional */
-		return 0;
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	अगर (status == AE_NOT_FOUND)	/* _PSD is optional */
+		वापस 0;
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	psd = buffer.pointer;
-	if (!psd || psd->package.count != 1) {
+	psd = buffer.poपूर्णांकer;
+	अगर (!psd || psd->package.count != 1) अणु
 		pr_debug("Invalid _PSD data\n");
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	pdomain = &(cpc_ptr->domain_info);
+	pकरोमुख्य = &(cpc_ptr->करोमुख्य_info);
 
-	state.length = sizeof(struct acpi_psd_package);
-	state.pointer = pdomain;
+	state.length = माप(काष्ठा acpi_psd_package);
+	state.poपूर्णांकer = pकरोमुख्य;
 
 	status = acpi_extract_package(&(psd->package.elements[0]),
-		&format, &state);
-	if (ACPI_FAILURE(status)) {
+		&क्रमmat, &state);
+	अगर (ACPI_FAILURE(status)) अणु
 		pr_debug("Invalid _PSD data for CPU:%d\n", cpc_ptr->cpu_id);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (pdomain->num_entries != ACPI_PSD_REV0_ENTRIES) {
+	अगर (pकरोमुख्य->num_entries != ACPI_PSD_REV0_ENTRIES) अणु
 		pr_debug("Unknown _PSD:num_entries for CPU:%d\n", cpc_ptr->cpu_id);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (pdomain->revision != ACPI_PSD_REV0_REVISION) {
+	अगर (pकरोमुख्य->revision != ACPI_PSD_REV0_REVISION) अणु
 		pr_debug("Unknown _PSD:revision for CPU: %d\n", cpc_ptr->cpu_id);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (pdomain->coord_type != DOMAIN_COORD_TYPE_SW_ALL &&
-	    pdomain->coord_type != DOMAIN_COORD_TYPE_SW_ANY &&
-	    pdomain->coord_type != DOMAIN_COORD_TYPE_HW_ALL) {
+	अगर (pकरोमुख्य->coord_type != DOMAIN_COORD_TYPE_SW_ALL &&
+	    pकरोमुख्य->coord_type != DOMAIN_COORD_TYPE_SW_ANY &&
+	    pकरोमुख्य->coord_type != DOMAIN_COORD_TYPE_HW_ALL) अणु
 		pr_debug("Invalid _PSD:coord_type for CPU:%d\n", cpc_ptr->cpu_id);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	result = 0;
 end:
-	kfree(buffer.pointer);
-	return result;
-}
+	kमुक्त(buffer.poपूर्णांकer);
+	वापस result;
+पूर्ण
 
-bool acpi_cpc_valid(void)
-{
-	struct cpc_desc *cpc_ptr;
-	int cpu;
+bool acpi_cpc_valid(व्योम)
+अणु
+	काष्ठा cpc_desc *cpc_ptr;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		cpc_ptr = per_cpu(cpc_desc_ptr, cpu);
-		if (!cpc_ptr)
-			return false;
-	}
+		अगर (!cpc_ptr)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_cpc_valid);
 
 /**
- * acpi_get_psd_map - Map the CPUs in the freq domain of a given cpu
- * @cpu: Find all CPUs that share a domain with cpu.
- * @cpu_data: Pointer to CPU specific CPPC data including PSD info.
+ * acpi_get_psd_map - Map the CPUs in the freq करोमुख्य of a given cpu
+ * @cpu: Find all CPUs that share a करोमुख्य with cpu.
+ * @cpu_data: Poपूर्णांकer to CPU specअगरic CPPC data including PSD info.
  *
- *	Return: 0 for success or negative value for err.
+ *	Return: 0 क्रम success or negative value क्रम err.
  */
-int acpi_get_psd_map(unsigned int cpu, struct cppc_cpudata *cpu_data)
-{
-	struct cpc_desc *cpc_ptr, *match_cpc_ptr;
-	struct acpi_psd_package *match_pdomain;
-	struct acpi_psd_package *pdomain;
-	int count_target, i;
+पूर्णांक acpi_get_psd_map(अचिन्हित पूर्णांक cpu, काष्ठा cppc_cpudata *cpu_data)
+अणु
+	काष्ठा cpc_desc *cpc_ptr, *match_cpc_ptr;
+	काष्ठा acpi_psd_package *match_pकरोमुख्य;
+	काष्ठा acpi_psd_package *pकरोमुख्य;
+	पूर्णांक count_target, i;
 
 	/*
 	 * Now that we have _PSD data from all CPUs, let's setup P-state
-	 * domain info.
+	 * करोमुख्य info.
 	 */
 	cpc_ptr = per_cpu(cpc_desc_ptr, cpu);
-	if (!cpc_ptr)
-		return -EFAULT;
+	अगर (!cpc_ptr)
+		वापस -EFAULT;
 
-	pdomain = &(cpc_ptr->domain_info);
+	pकरोमुख्य = &(cpc_ptr->करोमुख्य_info);
 	cpumask_set_cpu(cpu, cpu_data->shared_cpu_map);
-	if (pdomain->num_processors <= 1)
-		return 0;
+	अगर (pकरोमुख्य->num_processors <= 1)
+		वापस 0;
 
-	/* Validate the Domain info */
-	count_target = pdomain->num_processors;
-	if (pdomain->coord_type == DOMAIN_COORD_TYPE_SW_ALL)
+	/* Validate the Doमुख्य info */
+	count_target = pकरोमुख्य->num_processors;
+	अगर (pकरोमुख्य->coord_type == DOMAIN_COORD_TYPE_SW_ALL)
 		cpu_data->shared_type = CPUFREQ_SHARED_TYPE_ALL;
-	else if (pdomain->coord_type == DOMAIN_COORD_TYPE_HW_ALL)
+	अन्यथा अगर (pकरोमुख्य->coord_type == DOMAIN_COORD_TYPE_HW_ALL)
 		cpu_data->shared_type = CPUFREQ_SHARED_TYPE_HW;
-	else if (pdomain->coord_type == DOMAIN_COORD_TYPE_SW_ANY)
+	अन्यथा अगर (pकरोमुख्य->coord_type == DOMAIN_COORD_TYPE_SW_ANY)
 		cpu_data->shared_type = CPUFREQ_SHARED_TYPE_ANY;
 
-	for_each_possible_cpu(i) {
-		if (i == cpu)
-			continue;
+	क्रम_each_possible_cpu(i) अणु
+		अगर (i == cpu)
+			जारी;
 
 		match_cpc_ptr = per_cpu(cpc_desc_ptr, i);
-		if (!match_cpc_ptr)
-			goto err_fault;
+		अगर (!match_cpc_ptr)
+			जाओ err_fault;
 
-		match_pdomain = &(match_cpc_ptr->domain_info);
-		if (match_pdomain->domain != pdomain->domain)
-			continue;
+		match_pकरोमुख्य = &(match_cpc_ptr->करोमुख्य_info);
+		अगर (match_pकरोमुख्य->करोमुख्य != pकरोमुख्य->करोमुख्य)
+			जारी;
 
-		/* Here i and cpu are in the same domain */
-		if (match_pdomain->num_processors != count_target)
-			goto err_fault;
+		/* Here i and cpu are in the same करोमुख्य */
+		अगर (match_pकरोमुख्य->num_processors != count_target)
+			जाओ err_fault;
 
-		if (pdomain->coord_type != match_pdomain->coord_type)
-			goto err_fault;
+		अगर (pकरोमुख्य->coord_type != match_pकरोमुख्य->coord_type)
+			जाओ err_fault;
 
 		cpumask_set_cpu(i, cpu_data->shared_cpu_map);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_fault:
-	/* Assume no coordination on any error parsing domain info */
+	/* Assume no coordination on any error parsing करोमुख्य info */
 	cpumask_clear(cpu_data->shared_cpu_map);
 	cpumask_set_cpu(cpu, cpu_data->shared_cpu_map);
 	cpu_data->shared_type = CPUFREQ_SHARED_TYPE_NONE;
 
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_get_psd_map);
 
-static int register_pcc_channel(int pcc_ss_idx)
-{
-	struct acpi_pcct_hw_reduced *cppc_ss;
+अटल पूर्णांक रेजिस्टर_pcc_channel(पूर्णांक pcc_ss_idx)
+अणु
+	काष्ठा acpi_pcct_hw_reduced *cppc_ss;
 	u64 usecs_lat;
 
-	if (pcc_ss_idx >= 0) {
+	अगर (pcc_ss_idx >= 0) अणु
 		pcc_data[pcc_ss_idx]->pcc_channel =
 			pcc_mbox_request_channel(&cppc_mbox_cl,	pcc_ss_idx);
 
-		if (IS_ERR(pcc_data[pcc_ss_idx]->pcc_channel)) {
+		अगर (IS_ERR(pcc_data[pcc_ss_idx]->pcc_channel)) अणु
 			pr_err("Failed to find PCC channel for subspace %d\n",
 			       pcc_ss_idx);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		/*
 		 * The PCC mailbox controller driver should
 		 * have parsed the PCCT (global table of all
-		 * PCC channels) and stored pointers to the
+		 * PCC channels) and stored poपूर्णांकers to the
 		 * subspace communication region in con_priv.
 		 */
 		cppc_ss = (pcc_data[pcc_ss_idx]->pcc_channel)->con_priv;
 
-		if (!cppc_ss) {
+		अगर (!cppc_ss) अणु
 			pr_err("No PCC subspace found for %d CPPC\n",
 			       pcc_ss_idx);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		/*
 		 * cppc_ss->latency is just a Nominal value. In reality
 		 * the remote processor could be much slower to reply.
-		 * So add an arbitrary amount of wait on top of Nominal.
+		 * So add an arbitrary amount of रुको on top of Nominal.
 		 */
 		usecs_lat = NUM_RETRIES * cppc_ss->latency;
 		pcc_data[pcc_ss_idx]->deadline_us = usecs_lat;
-		pcc_data[pcc_ss_idx]->pcc_mrtt = cppc_ss->min_turnaround_time;
+		pcc_data[pcc_ss_idx]->pcc_mrtt = cppc_ss->min_turnaround_समय;
 		pcc_data[pcc_ss_idx]->pcc_mpar = cppc_ss->max_access_rate;
 		pcc_data[pcc_ss_idx]->pcc_nominal = cppc_ss->latency;
 
 		pcc_data[pcc_ss_idx]->pcc_comm_addr =
 			acpi_os_ioremap(cppc_ss->base_address, cppc_ss->length);
-		if (!pcc_data[pcc_ss_idx]->pcc_comm_addr) {
+		अगर (!pcc_data[pcc_ss_idx]->pcc_comm_addr) अणु
 			pr_err("Failed to ioremap PCC comm region mem for %d\n",
 			       pcc_ss_idx);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		/* Set flag so that we don't come here for each CPU. */
+		/* Set flag so that we करोn't come here क्रम each CPU. */
 		pcc_data[pcc_ss_idx]->pcc_channel_acquired = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cpc_ffh_supported() - check if FFH reading supported
+ * cpc_ffh_supported() - check अगर FFH पढ़ोing supported
  *
- * Check if the architecture has support for functional fixed hardware
- * read/write capability.
+ * Check अगर the architecture has support क्रम functional fixed hardware
+ * पढ़ो/ग_लिखो capability.
  *
- * Return: true for supported, false for not supported
+ * Return: true क्रम supported, false क्रम not supported
  */
-bool __weak cpc_ffh_supported(void)
-{
-	return false;
-}
+bool __weak cpc_ffh_supported(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
 /**
- * pcc_data_alloc() - Allocate the pcc_data memory for pcc subspace
+ * pcc_data_alloc() - Allocate the pcc_data memory क्रम pcc subspace
  *
  * Check and allocate the cppc_pcc_data memory.
  * In some processor configurations it is possible that same subspace
  * is shared between multiple CPUs. This is seen especially in CPUs
- * with hardware multi-threading support.
+ * with hardware multi-thपढ़ोing support.
  *
- * Return: 0 for success, errno for failure
+ * Return: 0 क्रम success, त्रुटि_सं क्रम failure
  */
-static int pcc_data_alloc(int pcc_ss_id)
-{
-	if (pcc_ss_id < 0 || pcc_ss_id >= MAX_PCC_SUBSPACES)
-		return -EINVAL;
+अटल पूर्णांक pcc_data_alloc(पूर्णांक pcc_ss_id)
+अणु
+	अगर (pcc_ss_id < 0 || pcc_ss_id >= MAX_PCC_SUBSPACES)
+		वापस -EINVAL;
 
-	if (pcc_data[pcc_ss_id]) {
+	अगर (pcc_data[pcc_ss_id]) अणु
 		pcc_data[pcc_ss_id]->refcount++;
-	} else {
-		pcc_data[pcc_ss_id] = kzalloc(sizeof(struct cppc_pcc_data),
+	पूर्ण अन्यथा अणु
+		pcc_data[pcc_ss_id] = kzalloc(माप(काष्ठा cppc_pcc_data),
 					      GFP_KERNEL);
-		if (!pcc_data[pcc_ss_id])
-			return -ENOMEM;
+		अगर (!pcc_data[pcc_ss_id])
+			वापस -ENOMEM;
 		pcc_data[pcc_ss_id]->refcount++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Check if CPPC revision + num_ent combination is supported */
-static bool is_cppc_supported(int revision, int num_ent)
-{
-	int expected_num_ent;
+/* Check अगर CPPC revision + num_ent combination is supported */
+अटल bool is_cppc_supported(पूर्णांक revision, पूर्णांक num_ent)
+अणु
+	पूर्णांक expected_num_ent;
 
-	switch (revision) {
-	case CPPC_V2_REV:
+	चयन (revision) अणु
+	हाल CPPC_V2_REV:
 		expected_num_ent = CPPC_V2_NUM_ENT;
-		break;
-	case CPPC_V3_REV:
+		अवरोध;
+	हाल CPPC_V3_REV:
 		expected_num_ent = CPPC_V3_NUM_ENT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_debug("Firmware exports unsupported CPPC revision: %d\n",
 			revision);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (expected_num_ent != num_ent) {
+	अगर (expected_num_ent != num_ent) अणु
 		pr_debug("Firmware exports %d entries. Expected: %d for CPPC rev:%d\n",
 			num_ent, expected_num_ent, revision);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * An example CPC table looks like the following.
  *
  *	Name(_CPC, Package()
- *			{
+ *			अणु
  *			17,
  *			NumEntries
  *			1,
  *			// Revision
- *			ResourceTemplate(){Register(PCC, 32, 0, 0x120, 2)},
- *			// Highest Performance
- *			ResourceTemplate(){Register(PCC, 32, 0, 0x124, 2)},
- *			// Nominal Performance
- *			ResourceTemplate(){Register(PCC, 32, 0, 0x128, 2)},
- *			// Lowest Nonlinear Performance
- *			ResourceTemplate(){Register(PCC, 32, 0, 0x12C, 2)},
- *			// Lowest Performance
- *			ResourceTemplate(){Register(PCC, 32, 0, 0x130, 2)},
- *			// Guaranteed Performance Register
- *			ResourceTemplate(){Register(PCC, 32, 0, 0x110, 2)},
- *			// Desired Performance Register
- *			ResourceTemplate(){Register(SystemMemory, 0, 0, 0, 0)},
+ *			ResourceTemplate()अणुRegister(PCC, 32, 0, 0x120, 2)पूर्ण,
+ *			// Highest Perक्रमmance
+ *			ResourceTemplate()अणुRegister(PCC, 32, 0, 0x124, 2)पूर्ण,
+ *			// Nominal Perक्रमmance
+ *			ResourceTemplate()अणुRegister(PCC, 32, 0, 0x128, 2)पूर्ण,
+ *			// Lowest Nonlinear Perक्रमmance
+ *			ResourceTemplate()अणुRegister(PCC, 32, 0, 0x12C, 2)पूर्ण,
+ *			// Lowest Perक्रमmance
+ *			ResourceTemplate()अणुRegister(PCC, 32, 0, 0x130, 2)पूर्ण,
+ *			// Guaranteed Perक्रमmance Register
+ *			ResourceTemplate()अणुRegister(PCC, 32, 0, 0x110, 2)पूर्ण,
+ *			// Desired Perक्रमmance Register
+ *			ResourceTemplate()अणुRegister(SystemMemory, 0, 0, 0, 0)पूर्ण,
  *			..
  *			..
  *			..
  *
- *		}
- * Each Register() encodes how to access that specific register.
+ *		पूर्ण
+ * Each Register() encodes how to access that specअगरic रेजिस्टर.
  * e.g. a sample PCC entry has the following encoding:
  *
  *	Register (
@@ -657,421 +658,421 @@ static bool is_cppc_supported(int revision, int num_ent)
  *		//AccessSize (subspace ID)
  *		0
  *		)
- *	}
+ *	पूर्ण
  */
 
-#ifndef init_freq_invariance_cppc
-static inline void init_freq_invariance_cppc(void) { }
-#endif
+#अगर_अघोषित init_freq_invariance_cppc
+अटल अंतरभूत व्योम init_freq_invariance_cppc(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
 /**
- * acpi_cppc_processor_probe - Search for per CPU _CPC objects.
+ * acpi_cppc_processor_probe - Search क्रम per CPU _CPC objects.
  * @pr: Ptr to acpi_processor containing this CPU's logical ID.
  *
- *	Return: 0 for success or negative value for err.
+ *	Return: 0 क्रम success or negative value क्रम err.
  */
-int acpi_cppc_processor_probe(struct acpi_processor *pr)
-{
-	struct acpi_buffer output = {ACPI_ALLOCATE_BUFFER, NULL};
-	union acpi_object *out_obj, *cpc_obj;
-	struct cpc_desc *cpc_ptr;
-	struct cpc_reg *gas_t;
-	struct device *cpu_dev;
+पूर्णांक acpi_cppc_processor_probe(काष्ठा acpi_processor *pr)
+अणु
+	काष्ठा acpi_buffer output = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
+	जोड़ acpi_object *out_obj, *cpc_obj;
+	काष्ठा cpc_desc *cpc_ptr;
+	काष्ठा cpc_reg *gas_t;
+	काष्ठा device *cpu_dev;
 	acpi_handle handle = pr->handle;
-	unsigned int num_ent, i, cpc_rev;
-	int pcc_subspace_id = -1;
+	अचिन्हित पूर्णांक num_ent, i, cpc_rev;
+	पूर्णांक pcc_subspace_id = -1;
 	acpi_status status;
-	int ret = -EFAULT;
+	पूर्णांक ret = -EFAULT;
 
-	/* Parse the ACPI _CPC table for this CPU. */
-	status = acpi_evaluate_object_typed(handle, "_CPC", NULL, &output,
+	/* Parse the ACPI _CPC table क्रम this CPU. */
+	status = acpi_evaluate_object_typed(handle, "_CPC", शून्य, &output,
 			ACPI_TYPE_PACKAGE);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ret = -ENODEV;
-		goto out_buf_free;
-	}
+		जाओ out_buf_मुक्त;
+	पूर्ण
 
-	out_obj = (union acpi_object *) output.pointer;
+	out_obj = (जोड़ acpi_object *) output.poपूर्णांकer;
 
-	cpc_ptr = kzalloc(sizeof(struct cpc_desc), GFP_KERNEL);
-	if (!cpc_ptr) {
+	cpc_ptr = kzalloc(माप(काष्ठा cpc_desc), GFP_KERNEL);
+	अगर (!cpc_ptr) अणु
 		ret = -ENOMEM;
-		goto out_buf_free;
-	}
+		जाओ out_buf_मुक्त;
+	पूर्ण
 
 	/* First entry is NumEntries. */
 	cpc_obj = &out_obj->package.elements[0];
-	if (cpc_obj->type == ACPI_TYPE_INTEGER)	{
-		num_ent = cpc_obj->integer.value;
-	} else {
+	अगर (cpc_obj->type == ACPI_TYPE_INTEGER)	अणु
+		num_ent = cpc_obj->पूर्णांकeger.value;
+	पूर्ण अन्यथा अणु
 		pr_debug("Unexpected entry type(%d) for NumEntries\n",
 				cpc_obj->type);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	cpc_ptr->num_entries = num_ent;
 
 	/* Second entry should be revision. */
 	cpc_obj = &out_obj->package.elements[1];
-	if (cpc_obj->type == ACPI_TYPE_INTEGER)	{
-		cpc_rev = cpc_obj->integer.value;
-	} else {
+	अगर (cpc_obj->type == ACPI_TYPE_INTEGER)	अणु
+		cpc_rev = cpc_obj->पूर्णांकeger.value;
+	पूर्ण अन्यथा अणु
 		pr_debug("Unexpected entry type(%d) for Revision\n",
 				cpc_obj->type);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	cpc_ptr->version = cpc_rev;
 
-	if (!is_cppc_supported(cpc_rev, num_ent))
-		goto out_free;
+	अगर (!is_cppc_supported(cpc_rev, num_ent))
+		जाओ out_मुक्त;
 
-	/* Iterate through remaining entries in _CPC */
-	for (i = 2; i < num_ent; i++) {
+	/* Iterate through reमुख्यing entries in _CPC */
+	क्रम (i = 2; i < num_ent; i++) अणु
 		cpc_obj = &out_obj->package.elements[i];
 
-		if (cpc_obj->type == ACPI_TYPE_INTEGER)	{
+		अगर (cpc_obj->type == ACPI_TYPE_INTEGER)	अणु
 			cpc_ptr->cpc_regs[i-2].type = ACPI_TYPE_INTEGER;
-			cpc_ptr->cpc_regs[i-2].cpc_entry.int_value = cpc_obj->integer.value;
-		} else if (cpc_obj->type == ACPI_TYPE_BUFFER) {
-			gas_t = (struct cpc_reg *)
-				cpc_obj->buffer.pointer;
+			cpc_ptr->cpc_regs[i-2].cpc_entry.पूर्णांक_value = cpc_obj->पूर्णांकeger.value;
+		पूर्ण अन्यथा अगर (cpc_obj->type == ACPI_TYPE_BUFFER) अणु
+			gas_t = (काष्ठा cpc_reg *)
+				cpc_obj->buffer.poपूर्णांकer;
 
 			/*
 			 * The PCC Subspace index is encoded inside
 			 * the CPC table entries. The same PCC index
-			 * will be used for all the PCC entries,
+			 * will be used क्रम all the PCC entries,
 			 * so extract it only once.
 			 */
-			if (gas_t->space_id == ACPI_ADR_SPACE_PLATFORM_COMM) {
-				if (pcc_subspace_id < 0) {
+			अगर (gas_t->space_id == ACPI_ADR_SPACE_PLATFORM_COMM) अणु
+				अगर (pcc_subspace_id < 0) अणु
 					pcc_subspace_id = gas_t->access_width;
-					if (pcc_data_alloc(pcc_subspace_id))
-						goto out_free;
-				} else if (pcc_subspace_id != gas_t->access_width) {
+					अगर (pcc_data_alloc(pcc_subspace_id))
+						जाओ out_मुक्त;
+				पूर्ण अन्यथा अगर (pcc_subspace_id != gas_t->access_width) अणु
 					pr_debug("Mismatched PCC ids.\n");
-					goto out_free;
-				}
-			} else if (gas_t->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) {
-				if (gas_t->address) {
-					void __iomem *addr;
+					जाओ out_मुक्त;
+				पूर्ण
+			पूर्ण अन्यथा अगर (gas_t->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) अणु
+				अगर (gas_t->address) अणु
+					व्योम __iomem *addr;
 
 					addr = ioremap(gas_t->address, gas_t->bit_width/8);
-					if (!addr)
-						goto out_free;
+					अगर (!addr)
+						जाओ out_मुक्त;
 					cpc_ptr->cpc_regs[i-2].sys_mem_vaddr = addr;
-				}
-			} else {
-				if (gas_t->space_id != ACPI_ADR_SPACE_FIXED_HARDWARE || !cpc_ffh_supported()) {
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (gas_t->space_id != ACPI_ADR_SPACE_FIXED_HARDWARE || !cpc_ffh_supported()) अणु
 					/* Support only PCC ,SYS MEM and FFH type regs */
 					pr_debug("Unsupported register type: %d\n", gas_t->space_id);
-					goto out_free;
-				}
-			}
+					जाओ out_मुक्त;
+				पूर्ण
+			पूर्ण
 
 			cpc_ptr->cpc_regs[i-2].type = ACPI_TYPE_BUFFER;
-			memcpy(&cpc_ptr->cpc_regs[i-2].cpc_entry.reg, gas_t, sizeof(*gas_t));
-		} else {
+			स_नकल(&cpc_ptr->cpc_regs[i-2].cpc_entry.reg, gas_t, माप(*gas_t));
+		पूर्ण अन्यथा अणु
 			pr_debug("Err in entry:%d in CPC table of CPU:%d\n", i, pr->id);
-			goto out_free;
-		}
-	}
+			जाओ out_मुक्त;
+		पूर्ण
+	पूर्ण
 	per_cpu(cpu_pcc_subspace_idx, pr->id) = pcc_subspace_id;
 
 	/*
-	 * Initialize the remaining cpc_regs as unsupported.
-	 * Example: In case FW exposes CPPC v2, the below loop will initialize
+	 * Initialize the reमुख्यing cpc_regs as unsupported.
+	 * Example: In हाल FW exposes CPPC v2, the below loop will initialize
 	 * LOWEST_FREQ and NOMINAL_FREQ regs as unsupported
 	 */
-	for (i = num_ent - 2; i < MAX_CPC_REG_ENT; i++) {
+	क्रम (i = num_ent - 2; i < MAX_CPC_REG_ENT; i++) अणु
 		cpc_ptr->cpc_regs[i].type = ACPI_TYPE_INTEGER;
-		cpc_ptr->cpc_regs[i].cpc_entry.int_value = 0;
-	}
+		cpc_ptr->cpc_regs[i].cpc_entry.पूर्णांक_value = 0;
+	पूर्ण
 
 
 	/* Store CPU Logical ID */
 	cpc_ptr->cpu_id = pr->id;
 
-	/* Parse PSD data for this CPU */
+	/* Parse PSD data क्रम this CPU */
 	ret = acpi_get_psd(cpc_ptr, handle);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	/* Register PCC channel once for all PCC subspace ID. */
-	if (pcc_subspace_id >= 0 && !pcc_data[pcc_subspace_id]->pcc_channel_acquired) {
-		ret = register_pcc_channel(pcc_subspace_id);
-		if (ret)
-			goto out_free;
+	/* Register PCC channel once क्रम all PCC subspace ID. */
+	अगर (pcc_subspace_id >= 0 && !pcc_data[pcc_subspace_id]->pcc_channel_acquired) अणु
+		ret = रेजिस्टर_pcc_channel(pcc_subspace_id);
+		अगर (ret)
+			जाओ out_मुक्त;
 
 		init_rwsem(&pcc_data[pcc_subspace_id]->pcc_lock);
-		init_waitqueue_head(&pcc_data[pcc_subspace_id]->pcc_write_wait_q);
-	}
+		init_रुकोqueue_head(&pcc_data[pcc_subspace_id]->pcc_ग_लिखो_रुको_q);
+	पूर्ण
 
 	/* Everything looks okay */
 	pr_debug("Parsed CPC struct for CPU: %d\n", pr->id);
 
-	/* Add per logical CPU nodes for reading its feedback counters. */
+	/* Add per logical CPU nodes क्रम पढ़ोing its feedback counters. */
 	cpu_dev = get_cpu_device(pr->id);
-	if (!cpu_dev) {
+	अगर (!cpu_dev) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	/* Plug PSD data into this CPU's CPC descriptor. */
+	/* Plug PSD data पूर्णांकo this CPU's CPC descriptor. */
 	per_cpu(cpc_desc_ptr, pr->id) = cpc_ptr;
 
 	ret = kobject_init_and_add(&cpc_ptr->kobj, &cppc_ktype, &cpu_dev->kobj,
 			"acpi_cppc");
-	if (ret) {
-		per_cpu(cpc_desc_ptr, pr->id) = NULL;
+	अगर (ret) अणु
+		per_cpu(cpc_desc_ptr, pr->id) = शून्य;
 		kobject_put(&cpc_ptr->kobj);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	init_freq_invariance_cppc();
 
-	kfree(output.pointer);
-	return 0;
+	kमुक्त(output.poपूर्णांकer);
+	वापस 0;
 
-out_free:
-	/* Free all the mapped sys mem areas for this CPU */
-	for (i = 2; i < cpc_ptr->num_entries; i++) {
-		void __iomem *addr = cpc_ptr->cpc_regs[i-2].sys_mem_vaddr;
+out_मुक्त:
+	/* Free all the mapped sys mem areas क्रम this CPU */
+	क्रम (i = 2; i < cpc_ptr->num_entries; i++) अणु
+		व्योम __iomem *addr = cpc_ptr->cpc_regs[i-2].sys_mem_vaddr;
 
-		if (addr)
+		अगर (addr)
 			iounmap(addr);
-	}
-	kfree(cpc_ptr);
+	पूर्ण
+	kमुक्त(cpc_ptr);
 
-out_buf_free:
-	kfree(output.pointer);
-	return ret;
-}
+out_buf_मुक्त:
+	kमुक्त(output.poपूर्णांकer);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_cppc_processor_probe);
 
 /**
- * acpi_cppc_processor_exit - Cleanup CPC structs.
+ * acpi_cppc_processor_निकास - Cleanup CPC काष्ठाs.
  * @pr: Ptr to acpi_processor containing this CPU's logical ID.
  *
  * Return: Void
  */
-void acpi_cppc_processor_exit(struct acpi_processor *pr)
-{
-	struct cpc_desc *cpc_ptr;
-	unsigned int i;
-	void __iomem *addr;
-	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, pr->id);
+व्योम acpi_cppc_processor_निकास(काष्ठा acpi_processor *pr)
+अणु
+	काष्ठा cpc_desc *cpc_ptr;
+	अचिन्हित पूर्णांक i;
+	व्योम __iomem *addr;
+	पूर्णांक pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, pr->id);
 
-	if (pcc_ss_id >= 0 && pcc_data[pcc_ss_id]) {
-		if (pcc_data[pcc_ss_id]->pcc_channel_acquired) {
+	अगर (pcc_ss_id >= 0 && pcc_data[pcc_ss_id]) अणु
+		अगर (pcc_data[pcc_ss_id]->pcc_channel_acquired) अणु
 			pcc_data[pcc_ss_id]->refcount--;
-			if (!pcc_data[pcc_ss_id]->refcount) {
-				pcc_mbox_free_channel(pcc_data[pcc_ss_id]->pcc_channel);
-				kfree(pcc_data[pcc_ss_id]);
-				pcc_data[pcc_ss_id] = NULL;
-			}
-		}
-	}
+			अगर (!pcc_data[pcc_ss_id]->refcount) अणु
+				pcc_mbox_मुक्त_channel(pcc_data[pcc_ss_id]->pcc_channel);
+				kमुक्त(pcc_data[pcc_ss_id]);
+				pcc_data[pcc_ss_id] = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	cpc_ptr = per_cpu(cpc_desc_ptr, pr->id);
-	if (!cpc_ptr)
-		return;
+	अगर (!cpc_ptr)
+		वापस;
 
-	/* Free all the mapped sys mem areas for this CPU */
-	for (i = 2; i < cpc_ptr->num_entries; i++) {
+	/* Free all the mapped sys mem areas क्रम this CPU */
+	क्रम (i = 2; i < cpc_ptr->num_entries; i++) अणु
 		addr = cpc_ptr->cpc_regs[i-2].sys_mem_vaddr;
-		if (addr)
+		अगर (addr)
 			iounmap(addr);
-	}
+	पूर्ण
 
 	kobject_put(&cpc_ptr->kobj);
-	kfree(cpc_ptr);
-}
-EXPORT_SYMBOL_GPL(acpi_cppc_processor_exit);
+	kमुक्त(cpc_ptr);
+पूर्ण
+EXPORT_SYMBOL_GPL(acpi_cppc_processor_निकास);
 
 /**
- * cpc_read_ffh() - Read FFH register
- * @cpunum:	CPU number to read
- * @reg:	cppc register information
- * @val:	place holder for return value
+ * cpc_पढ़ो_ffh() - Read FFH रेजिस्टर
+ * @cpunum:	CPU number to पढ़ो
+ * @reg:	cppc रेजिस्टर inक्रमmation
+ * @val:	place holder क्रम वापस value
  *
- * Read bit_width bits from a specified address and bit_offset
+ * Read bit_width bits from a specअगरied address and bit_offset
  *
- * Return: 0 for success and error code
+ * Return: 0 क्रम success and error code
  */
-int __weak cpc_read_ffh(int cpunum, struct cpc_reg *reg, u64 *val)
-{
-	return -ENOTSUPP;
-}
+पूर्णांक __weak cpc_पढ़ो_ffh(पूर्णांक cpunum, काष्ठा cpc_reg *reg, u64 *val)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
 /**
- * cpc_write_ffh() - Write FFH register
- * @cpunum:	CPU number to write
- * @reg:	cppc register information
- * @val:	value to write
+ * cpc_ग_लिखो_ffh() - Write FFH रेजिस्टर
+ * @cpunum:	CPU number to ग_लिखो
+ * @reg:	cppc रेजिस्टर inक्रमmation
+ * @val:	value to ग_लिखो
  *
- * Write value of bit_width bits to a specified address and bit_offset
+ * Write value of bit_width bits to a specअगरied address and bit_offset
  *
- * Return: 0 for success and error code
+ * Return: 0 क्रम success and error code
  */
-int __weak cpc_write_ffh(int cpunum, struct cpc_reg *reg, u64 val)
-{
-	return -ENOTSUPP;
-}
+पूर्णांक __weak cpc_ग_लिखो_ffh(पूर्णांक cpunum, काष्ठा cpc_reg *reg, u64 val)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
 /*
- * Since cpc_read and cpc_write are called while holding pcc_lock, it should be
- * as fast as possible. We have already mapped the PCC subspace during init, so
- * we can directly write to it.
+ * Since cpc_पढ़ो and cpc_ग_लिखो are called जबतक holding pcc_lock, it should be
+ * as fast as possible. We have alपढ़ोy mapped the PCC subspace during init, so
+ * we can directly ग_लिखो to it.
  */
 
-static int cpc_read(int cpu, struct cpc_register_resource *reg_res, u64 *val)
-{
-	int ret_val = 0;
-	void __iomem *vaddr = NULL;
-	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
-	struct cpc_reg *reg = &reg_res->cpc_entry.reg;
+अटल पूर्णांक cpc_पढ़ो(पूर्णांक cpu, काष्ठा cpc_रेजिस्टर_resource *reg_res, u64 *val)
+अणु
+	पूर्णांक ret_val = 0;
+	व्योम __iomem *vaddr = शून्य;
+	पूर्णांक pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
+	काष्ठा cpc_reg *reg = &reg_res->cpc_entry.reg;
 
-	if (reg_res->type == ACPI_TYPE_INTEGER) {
-		*val = reg_res->cpc_entry.int_value;
-		return ret_val;
-	}
+	अगर (reg_res->type == ACPI_TYPE_INTEGER) अणु
+		*val = reg_res->cpc_entry.पूर्णांक_value;
+		वापस ret_val;
+	पूर्ण
 
 	*val = 0;
-	if (reg->space_id == ACPI_ADR_SPACE_PLATFORM_COMM && pcc_ss_id >= 0)
+	अगर (reg->space_id == ACPI_ADR_SPACE_PLATFORM_COMM && pcc_ss_id >= 0)
 		vaddr = GET_PCC_VADDR(reg->address, pcc_ss_id);
-	else if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
+	अन्यथा अगर (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
 		vaddr = reg_res->sys_mem_vaddr;
-	else if (reg->space_id == ACPI_ADR_SPACE_FIXED_HARDWARE)
-		return cpc_read_ffh(cpu, reg, val);
-	else
-		return acpi_os_read_memory((acpi_physical_address)reg->address,
+	अन्यथा अगर (reg->space_id == ACPI_ADR_SPACE_FIXED_HARDWARE)
+		वापस cpc_पढ़ो_ffh(cpu, reg, val);
+	अन्यथा
+		वापस acpi_os_पढ़ो_memory((acpi_physical_address)reg->address,
 				val, reg->bit_width);
 
-	switch (reg->bit_width) {
-	case 8:
-		*val = readb_relaxed(vaddr);
-		break;
-	case 16:
-		*val = readw_relaxed(vaddr);
-		break;
-	case 32:
-		*val = readl_relaxed(vaddr);
-		break;
-	case 64:
-		*val = readq_relaxed(vaddr);
-		break;
-	default:
+	चयन (reg->bit_width) अणु
+	हाल 8:
+		*val = पढ़ोb_relaxed(vaddr);
+		अवरोध;
+	हाल 16:
+		*val = पढ़ोw_relaxed(vaddr);
+		अवरोध;
+	हाल 32:
+		*val = पढ़ोl_relaxed(vaddr);
+		अवरोध;
+	हाल 64:
+		*val = पढ़ोq_relaxed(vaddr);
+		अवरोध;
+	शेष:
 		pr_debug("Error: Cannot read %u bit width from PCC for ss: %d\n",
 			 reg->bit_width, pcc_ss_id);
 		ret_val = -EFAULT;
-	}
+	पूर्ण
 
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
-static int cpc_write(int cpu, struct cpc_register_resource *reg_res, u64 val)
-{
-	int ret_val = 0;
-	void __iomem *vaddr = NULL;
-	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
-	struct cpc_reg *reg = &reg_res->cpc_entry.reg;
+अटल पूर्णांक cpc_ग_लिखो(पूर्णांक cpu, काष्ठा cpc_रेजिस्टर_resource *reg_res, u64 val)
+अणु
+	पूर्णांक ret_val = 0;
+	व्योम __iomem *vaddr = शून्य;
+	पूर्णांक pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
+	काष्ठा cpc_reg *reg = &reg_res->cpc_entry.reg;
 
-	if (reg->space_id == ACPI_ADR_SPACE_PLATFORM_COMM && pcc_ss_id >= 0)
+	अगर (reg->space_id == ACPI_ADR_SPACE_PLATFORM_COMM && pcc_ss_id >= 0)
 		vaddr = GET_PCC_VADDR(reg->address, pcc_ss_id);
-	else if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
+	अन्यथा अगर (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
 		vaddr = reg_res->sys_mem_vaddr;
-	else if (reg->space_id == ACPI_ADR_SPACE_FIXED_HARDWARE)
-		return cpc_write_ffh(cpu, reg, val);
-	else
-		return acpi_os_write_memory((acpi_physical_address)reg->address,
+	अन्यथा अगर (reg->space_id == ACPI_ADR_SPACE_FIXED_HARDWARE)
+		वापस cpc_ग_लिखो_ffh(cpu, reg, val);
+	अन्यथा
+		वापस acpi_os_ग_लिखो_memory((acpi_physical_address)reg->address,
 				val, reg->bit_width);
 
-	switch (reg->bit_width) {
-	case 8:
-		writeb_relaxed(val, vaddr);
-		break;
-	case 16:
-		writew_relaxed(val, vaddr);
-		break;
-	case 32:
-		writel_relaxed(val, vaddr);
-		break;
-	case 64:
-		writeq_relaxed(val, vaddr);
-		break;
-	default:
+	चयन (reg->bit_width) अणु
+	हाल 8:
+		ग_लिखोb_relaxed(val, vaddr);
+		अवरोध;
+	हाल 16:
+		ग_लिखोw_relaxed(val, vaddr);
+		अवरोध;
+	हाल 32:
+		ग_लिखोl_relaxed(val, vaddr);
+		अवरोध;
+	हाल 64:
+		ग_लिखोq_relaxed(val, vaddr);
+		अवरोध;
+	शेष:
 		pr_debug("Error: Cannot write %u bit width to PCC for ss: %d\n",
 			 reg->bit_width, pcc_ss_id);
 		ret_val = -EFAULT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- * cppc_get_desired_perf - Get the value of desired performance register.
- * @cpunum: CPU from which to get desired performance.
- * @desired_perf: address of a variable to store the returned desired performance
+ * cppc_get_desired_perf - Get the value of desired perक्रमmance रेजिस्टर.
+ * @cpunum: CPU from which to get desired perक्रमmance.
+ * @desired_perf: address of a variable to store the वापसed desired perक्रमmance
  *
- * Return: 0 for success, -EIO otherwise.
+ * Return: 0 क्रम success, -EIO otherwise.
  */
-int cppc_get_desired_perf(int cpunum, u64 *desired_perf)
-{
-	struct cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpunum);
-	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpunum);
-	struct cpc_register_resource *desired_reg;
-	struct cppc_pcc_data *pcc_ss_data = NULL;
+पूर्णांक cppc_get_desired_perf(पूर्णांक cpunum, u64 *desired_perf)
+अणु
+	काष्ठा cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpunum);
+	पूर्णांक pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpunum);
+	काष्ठा cpc_रेजिस्टर_resource *desired_reg;
+	काष्ठा cppc_pcc_data *pcc_ss_data = शून्य;
 
 	desired_reg = &cpc_desc->cpc_regs[DESIRED_PERF];
 
-	if (CPC_IN_PCC(desired_reg)) {
-		int ret = 0;
+	अगर (CPC_IN_PCC(desired_reg)) अणु
+		पूर्णांक ret = 0;
 
-		if (pcc_ss_id < 0)
-			return -EIO;
+		अगर (pcc_ss_id < 0)
+			वापस -EIO;
 
 		pcc_ss_data = pcc_data[pcc_ss_id];
 
-		down_write(&pcc_ss_data->pcc_lock);
+		करोwn_ग_लिखो(&pcc_ss_data->pcc_lock);
 
-		if (send_pcc_cmd(pcc_ss_id, CMD_READ) >= 0)
-			cpc_read(cpunum, desired_reg, desired_perf);
-		else
+		अगर (send_pcc_cmd(pcc_ss_id, CMD_READ) >= 0)
+			cpc_पढ़ो(cpunum, desired_reg, desired_perf);
+		अन्यथा
 			ret = -EIO;
 
-		up_write(&pcc_ss_data->pcc_lock);
+		up_ग_लिखो(&pcc_ss_data->pcc_lock);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	cpc_read(cpunum, desired_reg, desired_perf);
+	cpc_पढ़ो(cpunum, desired_reg, desired_perf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cppc_get_desired_perf);
 
 /**
- * cppc_get_perf_caps - Get a CPU's performance capabilities.
+ * cppc_get_perf_caps - Get a CPU's perक्रमmance capabilities.
  * @cpunum: CPU from which to get capabilities info.
  * @perf_caps: ptr to cppc_perf_caps. See cppc_acpi.h
  *
- * Return: 0 for success with perf_caps populated else -ERRNO.
+ * Return: 0 क्रम success with perf_caps populated अन्यथा -ERRNO.
  */
-int cppc_get_perf_caps(int cpunum, struct cppc_perf_caps *perf_caps)
-{
-	struct cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpunum);
-	struct cpc_register_resource *highest_reg, *lowest_reg,
+पूर्णांक cppc_get_perf_caps(पूर्णांक cpunum, काष्ठा cppc_perf_caps *perf_caps)
+अणु
+	काष्ठा cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpunum);
+	काष्ठा cpc_रेजिस्टर_resource *highest_reg, *lowest_reg,
 		*lowest_non_linear_reg, *nominal_reg, *guaranteed_reg,
-		*low_freq_reg = NULL, *nom_freq_reg = NULL;
+		*low_freq_reg = शून्य, *nom_freq_reg = शून्य;
 	u64 high, low, guaranteed, nom, min_nonlinear, low_f = 0, nom_f = 0;
-	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpunum);
-	struct cppc_pcc_data *pcc_ss_data = NULL;
-	int ret = 0, regs_in_pcc = 0;
+	पूर्णांक pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpunum);
+	काष्ठा cppc_pcc_data *pcc_ss_data = शून्य;
+	पूर्णांक ret = 0, regs_in_pcc = 0;
 
-	if (!cpc_desc) {
+	अगर (!cpc_desc) अणु
 		pr_debug("No CPC descriptor for CPU:%d\n", cpunum);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	highest_reg = &cpc_desc->cpc_regs[HIGHEST_PERF];
 	lowest_reg = &cpc_desc->cpc_regs[LOWEST_PERF];
@@ -1082,85 +1083,85 @@ int cppc_get_perf_caps(int cpunum, struct cppc_perf_caps *perf_caps)
 	guaranteed_reg = &cpc_desc->cpc_regs[GUARANTEED_PERF];
 
 	/* Are any of the regs PCC ?*/
-	if (CPC_IN_PCC(highest_reg) || CPC_IN_PCC(lowest_reg) ||
+	अगर (CPC_IN_PCC(highest_reg) || CPC_IN_PCC(lowest_reg) ||
 		CPC_IN_PCC(lowest_non_linear_reg) || CPC_IN_PCC(nominal_reg) ||
-		CPC_IN_PCC(low_freq_reg) || CPC_IN_PCC(nom_freq_reg)) {
-		if (pcc_ss_id < 0) {
+		CPC_IN_PCC(low_freq_reg) || CPC_IN_PCC(nom_freq_reg)) अणु
+		अगर (pcc_ss_id < 0) अणु
 			pr_debug("Invalid pcc_ss_id\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		pcc_ss_data = pcc_data[pcc_ss_id];
 		regs_in_pcc = 1;
-		down_write(&pcc_ss_data->pcc_lock);
-		/* Ring doorbell once to update PCC subspace */
-		if (send_pcc_cmd(pcc_ss_id, CMD_READ) < 0) {
+		करोwn_ग_लिखो(&pcc_ss_data->pcc_lock);
+		/* Ring करोorbell once to update PCC subspace */
+		अगर (send_pcc_cmd(pcc_ss_id, CMD_READ) < 0) अणु
 			ret = -EIO;
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	cpc_read(cpunum, highest_reg, &high);
+	cpc_पढ़ो(cpunum, highest_reg, &high);
 	perf_caps->highest_perf = high;
 
-	cpc_read(cpunum, lowest_reg, &low);
+	cpc_पढ़ो(cpunum, lowest_reg, &low);
 	perf_caps->lowest_perf = low;
 
-	cpc_read(cpunum, nominal_reg, &nom);
+	cpc_पढ़ो(cpunum, nominal_reg, &nom);
 	perf_caps->nominal_perf = nom;
 
-	if (guaranteed_reg->type != ACPI_TYPE_BUFFER  ||
-	    IS_NULL_REG(&guaranteed_reg->cpc_entry.reg)) {
+	अगर (guaranteed_reg->type != ACPI_TYPE_BUFFER  ||
+	    IS_शून्य_REG(&guaranteed_reg->cpc_entry.reg)) अणु
 		perf_caps->guaranteed_perf = 0;
-	} else {
-		cpc_read(cpunum, guaranteed_reg, &guaranteed);
+	पूर्ण अन्यथा अणु
+		cpc_पढ़ो(cpunum, guaranteed_reg, &guaranteed);
 		perf_caps->guaranteed_perf = guaranteed;
-	}
+	पूर्ण
 
-	cpc_read(cpunum, lowest_non_linear_reg, &min_nonlinear);
+	cpc_पढ़ो(cpunum, lowest_non_linear_reg, &min_nonlinear);
 	perf_caps->lowest_nonlinear_perf = min_nonlinear;
 
-	if (!high || !low || !nom || !min_nonlinear)
+	अगर (!high || !low || !nom || !min_nonlinear)
 		ret = -EFAULT;
 
-	/* Read optional lowest and nominal frequencies if present */
-	if (CPC_SUPPORTED(low_freq_reg))
-		cpc_read(cpunum, low_freq_reg, &low_f);
+	/* Read optional lowest and nominal frequencies अगर present */
+	अगर (CPC_SUPPORTED(low_freq_reg))
+		cpc_पढ़ो(cpunum, low_freq_reg, &low_f);
 
-	if (CPC_SUPPORTED(nom_freq_reg))
-		cpc_read(cpunum, nom_freq_reg, &nom_f);
+	अगर (CPC_SUPPORTED(nom_freq_reg))
+		cpc_पढ़ो(cpunum, nom_freq_reg, &nom_f);
 
 	perf_caps->lowest_freq = low_f;
 	perf_caps->nominal_freq = nom_f;
 
 
 out_err:
-	if (regs_in_pcc)
-		up_write(&pcc_ss_data->pcc_lock);
-	return ret;
-}
+	अगर (regs_in_pcc)
+		up_ग_लिखो(&pcc_ss_data->pcc_lock);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(cppc_get_perf_caps);
 
 /**
- * cppc_get_perf_ctrs - Read a CPU's performance feedback counters.
- * @cpunum: CPU from which to read counters.
+ * cppc_get_perf_ctrs - Read a CPU's perक्रमmance feedback counters.
+ * @cpunum: CPU from which to पढ़ो counters.
  * @perf_fb_ctrs: ptr to cppc_perf_fb_ctrs. See cppc_acpi.h
  *
- * Return: 0 for success with perf_fb_ctrs populated else -ERRNO.
+ * Return: 0 क्रम success with perf_fb_ctrs populated अन्यथा -ERRNO.
  */
-int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
-{
-	struct cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpunum);
-	struct cpc_register_resource *delivered_reg, *reference_reg,
+पूर्णांक cppc_get_perf_ctrs(पूर्णांक cpunum, काष्ठा cppc_perf_fb_ctrs *perf_fb_ctrs)
+अणु
+	काष्ठा cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpunum);
+	काष्ठा cpc_रेजिस्टर_resource *delivered_reg, *reference_reg,
 		*ref_perf_reg, *ctr_wrap_reg;
-	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpunum);
-	struct cppc_pcc_data *pcc_ss_data = NULL;
-	u64 delivered, reference, ref_perf, ctr_wrap_time;
-	int ret = 0, regs_in_pcc = 0;
+	पूर्णांक pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpunum);
+	काष्ठा cppc_pcc_data *pcc_ss_data = शून्य;
+	u64 delivered, reference, ref_perf, ctr_wrap_समय;
+	पूर्णांक ret = 0, regs_in_pcc = 0;
 
-	if (!cpc_desc) {
+	अगर (!cpc_desc) अणु
 		pr_debug("No CPC descriptor for CPU:%d\n", cpunum);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	delivered_reg = &cpc_desc->cpc_regs[DELIVERED_CTR];
 	reference_reg = &cpc_desc->cpc_regs[REFERENCE_CTR];
@@ -1168,192 +1169,192 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
 	ctr_wrap_reg = &cpc_desc->cpc_regs[CTR_WRAP_TIME];
 
 	/*
-	 * If reference perf register is not supported then we should
+	 * If reference perf रेजिस्टर is not supported then we should
 	 * use the nominal perf value
 	 */
-	if (!CPC_SUPPORTED(ref_perf_reg))
+	अगर (!CPC_SUPPORTED(ref_perf_reg))
 		ref_perf_reg = &cpc_desc->cpc_regs[NOMINAL_PERF];
 
 	/* Are any of the regs PCC ?*/
-	if (CPC_IN_PCC(delivered_reg) || CPC_IN_PCC(reference_reg) ||
-		CPC_IN_PCC(ctr_wrap_reg) || CPC_IN_PCC(ref_perf_reg)) {
-		if (pcc_ss_id < 0) {
+	अगर (CPC_IN_PCC(delivered_reg) || CPC_IN_PCC(reference_reg) ||
+		CPC_IN_PCC(ctr_wrap_reg) || CPC_IN_PCC(ref_perf_reg)) अणु
+		अगर (pcc_ss_id < 0) अणु
 			pr_debug("Invalid pcc_ss_id\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		pcc_ss_data = pcc_data[pcc_ss_id];
-		down_write(&pcc_ss_data->pcc_lock);
+		करोwn_ग_लिखो(&pcc_ss_data->pcc_lock);
 		regs_in_pcc = 1;
-		/* Ring doorbell once to update PCC subspace */
-		if (send_pcc_cmd(pcc_ss_id, CMD_READ) < 0) {
+		/* Ring करोorbell once to update PCC subspace */
+		अगर (send_pcc_cmd(pcc_ss_id, CMD_READ) < 0) अणु
 			ret = -EIO;
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	cpc_read(cpunum, delivered_reg, &delivered);
-	cpc_read(cpunum, reference_reg, &reference);
-	cpc_read(cpunum, ref_perf_reg, &ref_perf);
+	cpc_पढ़ो(cpunum, delivered_reg, &delivered);
+	cpc_पढ़ो(cpunum, reference_reg, &reference);
+	cpc_पढ़ो(cpunum, ref_perf_reg, &ref_perf);
 
 	/*
-	 * Per spec, if ctr_wrap_time optional register is unsupported, then the
-	 * performance counters are assumed to never wrap during the lifetime of
-	 * platform
+	 * Per spec, अगर ctr_wrap_समय optional रेजिस्टर is unsupported, then the
+	 * perक्रमmance counters are assumed to never wrap during the lअगरeसमय of
+	 * platक्रमm
 	 */
-	ctr_wrap_time = (u64)(~((u64)0));
-	if (CPC_SUPPORTED(ctr_wrap_reg))
-		cpc_read(cpunum, ctr_wrap_reg, &ctr_wrap_time);
+	ctr_wrap_समय = (u64)(~((u64)0));
+	अगर (CPC_SUPPORTED(ctr_wrap_reg))
+		cpc_पढ़ो(cpunum, ctr_wrap_reg, &ctr_wrap_समय);
 
-	if (!delivered || !reference ||	!ref_perf) {
+	अगर (!delivered || !reference ||	!ref_perf) अणु
 		ret = -EFAULT;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	perf_fb_ctrs->delivered = delivered;
 	perf_fb_ctrs->reference = reference;
 	perf_fb_ctrs->reference_perf = ref_perf;
-	perf_fb_ctrs->wraparound_time = ctr_wrap_time;
+	perf_fb_ctrs->wraparound_समय = ctr_wrap_समय;
 out_err:
-	if (regs_in_pcc)
-		up_write(&pcc_ss_data->pcc_lock);
-	return ret;
-}
+	अगर (regs_in_pcc)
+		up_ग_लिखो(&pcc_ss_data->pcc_lock);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(cppc_get_perf_ctrs);
 
 /**
- * cppc_set_perf - Set a CPU's performance controls.
- * @cpu: CPU for which to set performance controls.
+ * cppc_set_perf - Set a CPU's perक्रमmance controls.
+ * @cpu: CPU क्रम which to set perक्रमmance controls.
  * @perf_ctrls: ptr to cppc_perf_ctrls. See cppc_acpi.h
  *
- * Return: 0 for success, -ERRNO otherwise.
+ * Return: 0 क्रम success, -ERRNO otherwise.
  */
-int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls)
-{
-	struct cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpu);
-	struct cpc_register_resource *desired_reg;
-	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
-	struct cppc_pcc_data *pcc_ss_data = NULL;
-	int ret = 0;
+पूर्णांक cppc_set_perf(पूर्णांक cpu, काष्ठा cppc_perf_ctrls *perf_ctrls)
+अणु
+	काष्ठा cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpu);
+	काष्ठा cpc_रेजिस्टर_resource *desired_reg;
+	पूर्णांक pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
+	काष्ठा cppc_pcc_data *pcc_ss_data = शून्य;
+	पूर्णांक ret = 0;
 
-	if (!cpc_desc) {
+	अगर (!cpc_desc) अणु
 		pr_debug("No CPC descriptor for CPU:%d\n", cpu);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	desired_reg = &cpc_desc->cpc_regs[DESIRED_PERF];
 
 	/*
-	 * This is Phase-I where we want to write to CPC registers
+	 * This is Phase-I where we want to ग_लिखो to CPC रेजिस्टरs
 	 * -> We want all CPUs to be able to execute this phase in parallel
 	 *
-	 * Since read_lock can be acquired by multiple CPUs simultaneously we
+	 * Since पढ़ो_lock can be acquired by multiple CPUs simultaneously we
 	 * achieve that goal here
 	 */
-	if (CPC_IN_PCC(desired_reg)) {
-		if (pcc_ss_id < 0) {
+	अगर (CPC_IN_PCC(desired_reg)) अणु
+		अगर (pcc_ss_id < 0) अणु
 			pr_debug("Invalid pcc_ss_id\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		pcc_ss_data = pcc_data[pcc_ss_id];
-		down_read(&pcc_ss_data->pcc_lock); /* BEGIN Phase-I */
-		if (pcc_ss_data->platform_owns_pcc) {
+		करोwn_पढ़ो(&pcc_ss_data->pcc_lock); /* BEGIN Phase-I */
+		अगर (pcc_ss_data->platक्रमm_owns_pcc) अणु
 			ret = check_pcc_chan(pcc_ss_id, false);
-			if (ret) {
-				up_read(&pcc_ss_data->pcc_lock);
-				return ret;
-			}
-		}
+			अगर (ret) अणु
+				up_पढ़ो(&pcc_ss_data->pcc_lock);
+				वापस ret;
+			पूर्ण
+		पूर्ण
 		/*
-		 * Update the pending_write to make sure a PCC CMD_READ will not
-		 * arrive and steal the channel during the switch to write lock
+		 * Update the pending_ग_लिखो to make sure a PCC CMD_READ will not
+		 * arrive and steal the channel during the चयन to ग_लिखो lock
 		 */
-		pcc_ss_data->pending_pcc_write_cmd = true;
-		cpc_desc->write_cmd_id = pcc_ss_data->pcc_write_cnt;
-		cpc_desc->write_cmd_status = 0;
-	}
+		pcc_ss_data->pending_pcc_ग_लिखो_cmd = true;
+		cpc_desc->ग_लिखो_cmd_id = pcc_ss_data->pcc_ग_लिखो_cnt;
+		cpc_desc->ग_लिखो_cmd_status = 0;
+	पूर्ण
 
 	/*
 	 * Skip writing MIN/MAX until Linux knows how to come up with
 	 * useful values.
 	 */
-	cpc_write(cpu, desired_reg, perf_ctrls->desired_perf);
+	cpc_ग_लिखो(cpu, desired_reg, perf_ctrls->desired_perf);
 
-	if (CPC_IN_PCC(desired_reg))
-		up_read(&pcc_ss_data->pcc_lock);	/* END Phase-I */
+	अगर (CPC_IN_PCC(desired_reg))
+		up_पढ़ो(&pcc_ss_data->pcc_lock);	/* END Phase-I */
 	/*
-	 * This is Phase-II where we transfer the ownership of PCC to Platform
+	 * This is Phase-II where we transfer the ownership of PCC to Platक्रमm
 	 *
-	 * Short Summary: Basically if we think of a group of cppc_set_perf
-	 * requests that happened in short overlapping interval. The last CPU to
-	 * come out of Phase-I will enter Phase-II and ring the doorbell.
+	 * Short Summary: Basically अगर we think of a group of cppc_set_perf
+	 * requests that happened in लघु overlapping पूर्णांकerval. The last CPU to
+	 * come out of Phase-I will enter Phase-II and ring the करोorbell.
 	 *
-	 * We have the following requirements for Phase-II:
+	 * We have the following requirements क्रम Phase-II:
 	 *     1. We want to execute Phase-II only when there are no CPUs
 	 * currently executing in Phase-I
-	 *     2. Once we start Phase-II we want to avoid all other CPUs from
+	 *     2. Once we start Phase-II we want to aव्योम all other CPUs from
 	 * entering Phase-I.
 	 *     3. We want only one CPU among all those who went through Phase-I
 	 * to run phase-II
 	 *
-	 * If write_trylock fails to get the lock and doesn't transfer the
-	 * PCC ownership to the platform, then one of the following will be TRUE
+	 * If ग_लिखो_trylock fails to get the lock and करोesn't transfer the
+	 * PCC ownership to the platक्रमm, then one of the following will be TRUE
 	 *     1. There is at-least one CPU in Phase-I which will later execute
-	 * write_trylock, so the CPUs in Phase-I will be responsible for
+	 * ग_लिखो_trylock, so the CPUs in Phase-I will be responsible क्रम
 	 * executing the Phase-II.
 	 *     2. Some other CPU has beaten this CPU to successfully execute the
-	 * write_trylock and has already acquired the write_lock. We know for a
-	 * fact it (other CPU acquiring the write_lock) couldn't have happened
-	 * before this CPU's Phase-I as we held the read_lock.
+	 * ग_लिखो_trylock and has alपढ़ोy acquired the ग_लिखो_lock. We know क्रम a
+	 * fact it (other CPU acquiring the ग_लिखो_lock) couldn't have happened
+	 * beक्रमe this CPU's Phase-I as we held the पढ़ो_lock.
 	 *     3. Some other CPU executing pcc CMD_READ has stolen the
-	 * down_write, in which case, send_pcc_cmd will check for pending
-	 * CMD_WRITE commands by checking the pending_pcc_write_cmd.
+	 * करोwn_ग_लिखो, in which हाल, send_pcc_cmd will check क्रम pending
+	 * CMD_WRITE commands by checking the pending_pcc_ग_लिखो_cmd.
 	 * So this CPU can be certain that its request will be delivered
-	 *    So in all cases, this CPU knows that its request will be delivered
-	 * by another CPU and can return
+	 *    So in all हालs, this CPU knows that its request will be delivered
+	 * by another CPU and can वापस
 	 *
-	 * After getting the down_write we still need to check for
-	 * pending_pcc_write_cmd to take care of the following scenario
-	 *    The thread running this code could be scheduled out between
-	 * Phase-I and Phase-II. Before it is scheduled back on, another CPU
-	 * could have delivered the request to Platform by triggering the
-	 * doorbell and transferred the ownership of PCC to platform. So this
-	 * avoids triggering an unnecessary doorbell and more importantly before
-	 * triggering the doorbell it makes sure that the PCC channel ownership
+	 * After getting the करोwn_ग_लिखो we still need to check क्रम
+	 * pending_pcc_ग_लिखो_cmd to take care of the following scenario
+	 *    The thपढ़ो running this code could be scheduled out between
+	 * Phase-I and Phase-II. Beक्रमe it is scheduled back on, another CPU
+	 * could have delivered the request to Platक्रमm by triggering the
+	 * करोorbell and transferred the ownership of PCC to platक्रमm. So this
+	 * aव्योमs triggering an unnecessary करोorbell and more importantly beक्रमe
+	 * triggering the करोorbell it makes sure that the PCC channel ownership
 	 * is still with OSPM.
-	 *   pending_pcc_write_cmd can also be cleared by a different CPU, if
-	 * there was a pcc CMD_READ waiting on down_write and it steals the lock
-	 * before the pcc CMD_WRITE is completed. send_pcc_cmd checks for this
-	 * case during a CMD_READ and if there are pending writes it delivers
-	 * the write command before servicing the read command
+	 *   pending_pcc_ग_लिखो_cmd can also be cleared by a dअगरferent CPU, अगर
+	 * there was a pcc CMD_READ रुकोing on करोwn_ग_लिखो and it steals the lock
+	 * beक्रमe the pcc CMD_WRITE is completed. send_pcc_cmd checks क्रम this
+	 * हाल during a CMD_READ and अगर there are pending ग_लिखोs it delivers
+	 * the ग_लिखो command beक्रमe servicing the पढ़ो command
 	 */
-	if (CPC_IN_PCC(desired_reg)) {
-		if (down_write_trylock(&pcc_ss_data->pcc_lock)) {/* BEGIN Phase-II */
-			/* Update only if there are pending write commands */
-			if (pcc_ss_data->pending_pcc_write_cmd)
+	अगर (CPC_IN_PCC(desired_reg)) अणु
+		अगर (करोwn_ग_लिखो_trylock(&pcc_ss_data->pcc_lock)) अणु/* BEGIN Phase-II */
+			/* Update only अगर there are pending ग_लिखो commands */
+			अगर (pcc_ss_data->pending_pcc_ग_लिखो_cmd)
 				send_pcc_cmd(pcc_ss_id, CMD_WRITE);
-			up_write(&pcc_ss_data->pcc_lock);	/* END Phase-II */
-		} else
-			/* Wait until pcc_write_cnt is updated by send_pcc_cmd */
-			wait_event(pcc_ss_data->pcc_write_wait_q,
-				   cpc_desc->write_cmd_id != pcc_ss_data->pcc_write_cnt);
+			up_ग_लिखो(&pcc_ss_data->pcc_lock);	/* END Phase-II */
+		पूर्ण अन्यथा
+			/* Wait until pcc_ग_लिखो_cnt is updated by send_pcc_cmd */
+			रुको_event(pcc_ss_data->pcc_ग_लिखो_रुको_q,
+				   cpc_desc->ग_लिखो_cmd_id != pcc_ss_data->pcc_ग_लिखो_cnt);
 
-		/* send_pcc_cmd updates the status in case of failure */
-		ret = cpc_desc->write_cmd_status;
-	}
-	return ret;
-}
+		/* send_pcc_cmd updates the status in हाल of failure */
+		ret = cpc_desc->ग_लिखो_cmd_status;
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(cppc_set_perf);
 
 /**
- * cppc_get_transition_latency - returns frequency transition latency in ns
+ * cppc_get_transition_latency - वापसs frequency transition latency in ns
  *
- * ACPI CPPC does not explicitly specify how a platform can specify the
- * transition latency for performance change requests. The closest we have
- * is the timing information from the PCCT tables which provides the info
- * on the number and frequency of PCC commands the platform can handle.
+ * ACPI CPPC करोes not explicitly specअगरy how a platक्रमm can specअगरy the
+ * transition latency क्रम perक्रमmance change requests. The बंदst we have
+ * is the timing inक्रमmation from the PCCT tables which provides the info
+ * on the number and frequency of PCC commands the platक्रमm can handle.
  */
-unsigned int cppc_get_transition_latency(int cpu_num)
-{
+अचिन्हित पूर्णांक cppc_get_transition_latency(पूर्णांक cpu_num)
+अणु
 	/*
 	 * Expected transition latency is based on the PCCT timing values
 	 * Below are definition from ACPI spec:
@@ -1361,34 +1362,34 @@ unsigned int cppc_get_transition_latency(int cpu_num)
 	 * pcc_mpar   - The maximum number of periodic requests that the subspace
 	 *              channel can support, reported in commands per minute. 0
 	 *              indicates no limitation.
-	 * pcc_mrtt   - The minimum amount of time that OSPM must wait after the
-	 *              completion of a command before issuing the next command,
+	 * pcc_mrtt   - The minimum amount of समय that OSPM must रुको after the
+	 *              completion of a command beक्रमe issuing the next command,
 	 *              in microseconds.
 	 */
-	unsigned int latency_ns = 0;
-	struct cpc_desc *cpc_desc;
-	struct cpc_register_resource *desired_reg;
-	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu_num);
-	struct cppc_pcc_data *pcc_ss_data;
+	अचिन्हित पूर्णांक latency_ns = 0;
+	काष्ठा cpc_desc *cpc_desc;
+	काष्ठा cpc_रेजिस्टर_resource *desired_reg;
+	पूर्णांक pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu_num);
+	काष्ठा cppc_pcc_data *pcc_ss_data;
 
 	cpc_desc = per_cpu(cpc_desc_ptr, cpu_num);
-	if (!cpc_desc)
-		return CPUFREQ_ETERNAL;
+	अगर (!cpc_desc)
+		वापस CPUFREQ_ETERNAL;
 
 	desired_reg = &cpc_desc->cpc_regs[DESIRED_PERF];
-	if (!CPC_IN_PCC(desired_reg))
-		return CPUFREQ_ETERNAL;
+	अगर (!CPC_IN_PCC(desired_reg))
+		वापस CPUFREQ_ETERNAL;
 
-	if (pcc_ss_id < 0)
-		return CPUFREQ_ETERNAL;
+	अगर (pcc_ss_id < 0)
+		वापस CPUFREQ_ETERNAL;
 
 	pcc_ss_data = pcc_data[pcc_ss_id];
-	if (pcc_ss_data->pcc_mpar)
+	अगर (pcc_ss_data->pcc_mpar)
 		latency_ns = 60 * (1000 * 1000 * 1000 / pcc_ss_data->pcc_mpar);
 
 	latency_ns = max(latency_ns, pcc_ss_data->pcc_nominal * 1000);
 	latency_ns = max(latency_ns, pcc_ss_data->pcc_mrtt * 1000);
 
-	return latency_ns;
-}
+	वापस latency_ns;
+पूर्ण
 EXPORT_SYMBOL_GPL(cppc_get_transition_latency);

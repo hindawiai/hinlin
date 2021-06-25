@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Driver header for NOON010PC30L camera sensor chip.
+ * Driver header क्रम NOON010PC30L camera sensor chip.
  *
  * Copyright (c) 2010 Samsung Electronics, Co. Ltd
  * Contact: Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
-#ifndef NOON010PC30_H
-#define NOON010PC30_H
+#अगर_अघोषित NOON010PC30_H
+#घोषणा NOON010PC30_H
 
 /**
- * struct noon010pc30_platform_data - platform data
- * @clk_rate: the clock frequency in Hz
+ * काष्ठा noon010pc30_platक्रमm_data - platक्रमm data
+ * @clk_rate: the घड़ी frequency in Hz
  * @gpio_nreset: GPIO driving nRESET pin
  * @gpio_nstby: GPIO driving nSTBY pin
  */
 
-struct noon010pc30_platform_data {
-	unsigned long clk_rate;
-	int gpio_nreset;
-	int gpio_nstby;
-};
+काष्ठा noon010pc30_platक्रमm_data अणु
+	अचिन्हित दीर्घ clk_rate;
+	पूर्णांक gpio_nreset;
+	पूर्णांक gpio_nstby;
+पूर्ण;
 
-#endif /* NOON010PC30_H */
+#पूर्ण_अगर /* NOON010PC30_H */

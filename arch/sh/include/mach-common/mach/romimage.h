@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifdef __ASSEMBLY__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_घोषित __ASSEMBLY__
 
-/* do nothing here by default */
+/* करो nothing here by शेष */
 
-#else /* __ASSEMBLY__ */
+#अन्यथा /* __ASSEMBLY__ */
 
-static inline void mmcif_update_progress(int nr)
-{
-}
+अटल अंतरभूत व्योम mmcअगर_update_progress(पूर्णांक nr)
+अणु
+पूर्ण
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */

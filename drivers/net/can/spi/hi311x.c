@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* CAN bus driver for Holt HI3110 CAN Controller with SPI Interface
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* CAN bus driver क्रम Holt HI3110 CAN Controller with SPI Interface
  *
  * Copyright(C) Timesys Corporation 2016
  *
@@ -8,124 +9,124 @@
  * Copyright 2007 Raymarine UK, Ltd. All Rights Reserved.
  * Copyright 2006 Arcom Control Systems Ltd.
  *
- * Based on CAN bus driver for the CCAN controller written by
+ * Based on CAN bus driver क्रम the CCAN controller written by
  * - Sascha Hauer, Marc Kleine-Budde, Pengutronix
- * - Simon Kallweit, intefo AG
+ * - Simon Kallweit, पूर्णांकefo AG
  * Copyright 2007
  */
 
-#include <linux/can/core.h>
-#include <linux/can/dev.h>
-#include <linux/can/led.h>
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/freezer.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
-#include <linux/uaccess.h>
+#समावेश <linux/can/core.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/can/led.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/uaccess.h>
 
-#define HI3110_MASTER_RESET 0x56
-#define HI3110_READ_CTRL0 0xD2
-#define HI3110_READ_CTRL1 0xD4
-#define HI3110_READ_STATF 0xE2
-#define HI3110_WRITE_CTRL0 0x14
-#define HI3110_WRITE_CTRL1 0x16
-#define HI3110_WRITE_INTE 0x1C
-#define HI3110_WRITE_BTR0 0x18
-#define HI3110_WRITE_BTR1 0x1A
-#define HI3110_READ_BTR0 0xD6
-#define HI3110_READ_BTR1 0xD8
-#define HI3110_READ_INTF 0xDE
-#define HI3110_READ_ERR 0xDC
-#define HI3110_READ_FIFO_WOTIME 0x48
-#define HI3110_WRITE_FIFO 0x12
-#define HI3110_READ_MESSTAT 0xDA
-#define HI3110_READ_REC 0xEA
-#define HI3110_READ_TEC 0xEC
+#घोषणा HI3110_MASTER_RESET 0x56
+#घोषणा HI3110_READ_CTRL0 0xD2
+#घोषणा HI3110_READ_CTRL1 0xD4
+#घोषणा HI3110_READ_STATF 0xE2
+#घोषणा HI3110_WRITE_CTRL0 0x14
+#घोषणा HI3110_WRITE_CTRL1 0x16
+#घोषणा HI3110_WRITE_INTE 0x1C
+#घोषणा HI3110_WRITE_BTR0 0x18
+#घोषणा HI3110_WRITE_BTR1 0x1A
+#घोषणा HI3110_READ_BTR0 0xD6
+#घोषणा HI3110_READ_BTR1 0xD8
+#घोषणा HI3110_READ_INTF 0xDE
+#घोषणा HI3110_READ_ERR 0xDC
+#घोषणा HI3110_READ_FIFO_WOTIME 0x48
+#घोषणा HI3110_WRITE_FIFO 0x12
+#घोषणा HI3110_READ_MESSTAT 0xDA
+#घोषणा HI3110_READ_REC 0xEA
+#घोषणा HI3110_READ_TEC 0xEC
 
-#define HI3110_CTRL0_MODE_MASK (7 << 5)
-#define HI3110_CTRL0_NORMAL_MODE (0 << 5)
-#define HI3110_CTRL0_LOOPBACK_MODE (1 << 5)
-#define HI3110_CTRL0_MONITOR_MODE (2 << 5)
-#define HI3110_CTRL0_SLEEP_MODE (3 << 5)
-#define HI3110_CTRL0_INIT_MODE (4 << 5)
+#घोषणा HI3110_CTRL0_MODE_MASK (7 << 5)
+#घोषणा HI3110_CTRL0_NORMAL_MODE (0 << 5)
+#घोषणा HI3110_CTRL0_LOOPBACK_MODE (1 << 5)
+#घोषणा HI3110_CTRL0_MONITOR_MODE (2 << 5)
+#घोषणा HI3110_CTRL0_SLEEP_MODE (3 << 5)
+#घोषणा HI3110_CTRL0_INIT_MODE (4 << 5)
 
-#define HI3110_CTRL1_TXEN BIT(7)
+#घोषणा HI3110_CTRL1_TXEN BIT(7)
 
-#define HI3110_INT_RXTMP BIT(7)
-#define HI3110_INT_RXFIFO BIT(6)
-#define HI3110_INT_TXCPLT BIT(5)
-#define HI3110_INT_BUSERR BIT(4)
-#define HI3110_INT_MCHG BIT(3)
-#define HI3110_INT_WAKEUP BIT(2)
-#define HI3110_INT_F1MESS BIT(1)
-#define HI3110_INT_F0MESS BIT(0)
+#घोषणा HI3110_INT_RXTMP BIT(7)
+#घोषणा HI3110_INT_RXFIFO BIT(6)
+#घोषणा HI3110_INT_TXCPLT BIT(5)
+#घोषणा HI3110_INT_BUSERR BIT(4)
+#घोषणा HI3110_INT_MCHG BIT(3)
+#घोषणा HI3110_INT_WAKEUP BIT(2)
+#घोषणा HI3110_INT_F1MESS BIT(1)
+#घोषणा HI3110_INT_F0MESS BIT(0)
 
-#define HI3110_ERR_BUSOFF BIT(7)
-#define HI3110_ERR_TXERRP BIT(6)
-#define HI3110_ERR_RXERRP BIT(5)
-#define HI3110_ERR_BITERR BIT(4)
-#define HI3110_ERR_FRMERR BIT(3)
-#define HI3110_ERR_CRCERR BIT(2)
-#define HI3110_ERR_ACKERR BIT(1)
-#define HI3110_ERR_STUFERR BIT(0)
-#define HI3110_ERR_PROTOCOL_MASK (0x1F)
-#define HI3110_ERR_PASSIVE_MASK (0x60)
+#घोषणा HI3110_ERR_BUSOFF BIT(7)
+#घोषणा HI3110_ERR_TXERRP BIT(6)
+#घोषणा HI3110_ERR_RXERRP BIT(5)
+#घोषणा HI3110_ERR_BITERR BIT(4)
+#घोषणा HI3110_ERR_FRMERR BIT(3)
+#घोषणा HI3110_ERR_CRCERR BIT(2)
+#घोषणा HI3110_ERR_ACKERR BIT(1)
+#घोषणा HI3110_ERR_STUFERR BIT(0)
+#घोषणा HI3110_ERR_PROTOCOL_MASK (0x1F)
+#घोषणा HI3110_ERR_PASSIVE_MASK (0x60)
 
-#define HI3110_STAT_RXFMTY BIT(1)
-#define HI3110_STAT_BUSOFF BIT(2)
-#define HI3110_STAT_ERRP BIT(3)
-#define HI3110_STAT_ERRW BIT(4)
-#define HI3110_STAT_TXMTY BIT(7)
+#घोषणा HI3110_STAT_RXFMTY BIT(1)
+#घोषणा HI3110_STAT_BUSOFF BIT(2)
+#घोषणा HI3110_STAT_ERRP BIT(3)
+#घोषणा HI3110_STAT_ERRW BIT(4)
+#घोषणा HI3110_STAT_TXMTY BIT(7)
 
-#define HI3110_BTR0_SJW_SHIFT 6
-#define HI3110_BTR0_BRP_SHIFT 0
+#घोषणा HI3110_BTR0_SJW_SHIFT 6
+#घोषणा HI3110_BTR0_BRP_SHIFT 0
 
-#define HI3110_BTR1_SAMP_3PERBIT (1 << 7)
-#define HI3110_BTR1_SAMP_1PERBIT (0 << 7)
-#define HI3110_BTR1_TSEG2_SHIFT 4
-#define HI3110_BTR1_TSEG1_SHIFT 0
+#घोषणा HI3110_BTR1_SAMP_3PERBIT (1 << 7)
+#घोषणा HI3110_BTR1_SAMP_1PERBIT (0 << 7)
+#घोषणा HI3110_BTR1_TSEG2_SHIFT 4
+#घोषणा HI3110_BTR1_TSEG1_SHIFT 0
 
-#define HI3110_FIFO_WOTIME_TAG_OFF 0
-#define HI3110_FIFO_WOTIME_ID_OFF 1
-#define HI3110_FIFO_WOTIME_DLC_OFF 5
-#define HI3110_FIFO_WOTIME_DAT_OFF 6
+#घोषणा HI3110_FIFO_WOTIME_TAG_OFF 0
+#घोषणा HI3110_FIFO_WOTIME_ID_OFF 1
+#घोषणा HI3110_FIFO_WOTIME_DLC_OFF 5
+#घोषणा HI3110_FIFO_WOTIME_DAT_OFF 6
 
-#define HI3110_FIFO_WOTIME_TAG_IDE BIT(7)
-#define HI3110_FIFO_WOTIME_ID_RTR BIT(0)
+#घोषणा HI3110_FIFO_WOTIME_TAG_IDE BIT(7)
+#घोषणा HI3110_FIFO_WOTIME_ID_RTR BIT(0)
 
-#define HI3110_FIFO_TAG_OFF 0
-#define HI3110_FIFO_ID_OFF 1
-#define HI3110_FIFO_STD_DLC_OFF 3
-#define HI3110_FIFO_STD_DATA_OFF 4
-#define HI3110_FIFO_EXT_DLC_OFF 5
-#define HI3110_FIFO_EXT_DATA_OFF 6
+#घोषणा HI3110_FIFO_TAG_OFF 0
+#घोषणा HI3110_FIFO_ID_OFF 1
+#घोषणा HI3110_FIFO_STD_DLC_OFF 3
+#घोषणा HI3110_FIFO_STD_DATA_OFF 4
+#घोषणा HI3110_FIFO_EXT_DLC_OFF 5
+#घोषणा HI3110_FIFO_EXT_DATA_OFF 6
 
-#define HI3110_CAN_MAX_DATA_LEN 8
-#define HI3110_RX_BUF_LEN 15
-#define HI3110_TX_STD_BUF_LEN 12
-#define HI3110_TX_EXT_BUF_LEN 14
-#define HI3110_CAN_FRAME_MAX_BITS 128
-#define HI3110_EFF_FLAGS 0x18 /* IDE + SRR */
+#घोषणा HI3110_CAN_MAX_DATA_LEN 8
+#घोषणा HI3110_RX_BUF_LEN 15
+#घोषणा HI3110_TX_STD_BUF_LEN 12
+#घोषणा HI3110_TX_EXT_BUF_LEN 14
+#घोषणा HI3110_CAN_FRAME_MAX_BITS 128
+#घोषणा HI3110_EFF_FLAGS 0x18 /* IDE + SRR */
 
-#define HI3110_TX_ECHO_SKB_MAX 1
+#घोषणा HI3110_TX_ECHO_SKB_MAX 1
 
-#define HI3110_OST_DELAY_MS (10)
+#घोषणा HI3110_OST_DELAY_MS (10)
 
-#define DEVICE_NAME "hi3110"
+#घोषणा DEVICE_NAME "hi3110"
 
-static const struct can_bittiming_const hi3110_bittiming_const = {
+अटल स्थिर काष्ठा can_bittiming_स्थिर hi3110_bittiming_स्थिर = अणु
 	.name = DEVICE_NAME,
 	.tseg1_min = 2,
 	.tseg1_max = 16,
@@ -135,136 +136,136 @@ static const struct can_bittiming_const hi3110_bittiming_const = {
 	.brp_min = 1,
 	.brp_max = 64,
 	.brp_inc = 1,
-};
+पूर्ण;
 
-enum hi3110_model {
+क्रमागत hi3110_model अणु
 	CAN_HI3110_HI3110 = 0x3110,
-};
+पूर्ण;
 
-struct hi3110_priv {
-	struct can_priv can;
-	struct net_device *net;
-	struct spi_device *spi;
-	enum hi3110_model model;
+काष्ठा hi3110_priv अणु
+	काष्ठा can_priv can;
+	काष्ठा net_device *net;
+	काष्ठा spi_device *spi;
+	क्रमागत hi3110_model model;
 
-	struct mutex hi3110_lock; /* SPI device lock */
+	काष्ठा mutex hi3110_lock; /* SPI device lock */
 
 	u8 *spi_tx_buf;
 	u8 *spi_rx_buf;
 
-	struct sk_buff *tx_skb;
-	int tx_len;
+	काष्ठा sk_buff *tx_skb;
+	पूर्णांक tx_len;
 
-	struct workqueue_struct *wq;
-	struct work_struct tx_work;
-	struct work_struct restart_work;
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा work_काष्ठा tx_work;
+	काष्ठा work_काष्ठा restart_work;
 
-	int force_quit;
-	int after_suspend;
-#define HI3110_AFTER_SUSPEND_UP 1
-#define HI3110_AFTER_SUSPEND_DOWN 2
-#define HI3110_AFTER_SUSPEND_POWER 4
-#define HI3110_AFTER_SUSPEND_RESTART 8
-	int restart_tx;
-	struct regulator *power;
-	struct regulator *transceiver;
-	struct clk *clk;
-};
+	पूर्णांक क्रमce_quit;
+	पूर्णांक after_suspend;
+#घोषणा HI3110_AFTER_SUSPEND_UP 1
+#घोषणा HI3110_AFTER_SUSPEND_DOWN 2
+#घोषणा HI3110_AFTER_SUSPEND_POWER 4
+#घोषणा HI3110_AFTER_SUSPEND_RESTART 8
+	पूर्णांक restart_tx;
+	काष्ठा regulator *घातer;
+	काष्ठा regulator *transceiver;
+	काष्ठा clk *clk;
+पूर्ण;
 
-static void hi3110_clean(struct net_device *net)
-{
-	struct hi3110_priv *priv = netdev_priv(net);
+अटल व्योम hi3110_clean(काष्ठा net_device *net)
+अणु
+	काष्ठा hi3110_priv *priv = netdev_priv(net);
 
-	if (priv->tx_skb || priv->tx_len)
+	अगर (priv->tx_skb || priv->tx_len)
 		net->stats.tx_errors++;
-	dev_kfree_skb(priv->tx_skb);
-	if (priv->tx_len)
-		can_free_echo_skb(priv->net, 0, NULL);
-	priv->tx_skb = NULL;
+	dev_kमुक्त_skb(priv->tx_skb);
+	अगर (priv->tx_len)
+		can_मुक्त_echo_skb(priv->net, 0, शून्य);
+	priv->tx_skb = शून्य;
 	priv->tx_len = 0;
-}
+पूर्ण
 
-/* Note about handling of error return of hi3110_spi_trans: accessing
- * registers via SPI is not really different conceptually than using
- * normal I/O assembler instructions, although it's much more
+/* Note about handling of error वापस of hi3110_spi_trans: accessing
+ * रेजिस्टरs via SPI is not really dअगरferent conceptually than using
+ * normal I/O assembler inकाष्ठाions, although it's much more
  * complicated from a practical POV. So it's not advisable to always
- * check the return value of this function. Imagine that every
- * read{b,l}, write{b,l} and friends would be bracketed in "if ( < 0)
+ * check the वापस value of this function. Imagine that every
+ * पढ़ोअणुb,lपूर्ण, ग_लिखोअणुb,lपूर्ण and मित्रs would be bracketed in "अगर ( < 0)
  * error();", it would be a great mess (well there are some situation
  * when exception handling C++ like could be useful after all). So we
  * just check that transfers are OK at the beginning of our
- * conversation with the chip and to avoid doing really nasty things
+ * conversation with the chip and to aव्योम करोing really nasty things
  * (like injecting bogus packets in the network stack).
  */
-static int hi3110_spi_trans(struct spi_device *spi, int len)
-{
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
-	struct spi_transfer t = {
+अटल पूर्णांक hi3110_spi_trans(काष्ठा spi_device *spi, पूर्णांक len)
+अणु
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
+	काष्ठा spi_transfer t = अणु
 		.tx_buf = priv->spi_tx_buf,
 		.rx_buf = priv->spi_rx_buf,
 		.len = len,
 		.cs_change = 0,
-	};
-	struct spi_message m;
-	int ret;
+	पूर्ण;
+	काष्ठा spi_message m;
+	पूर्णांक ret;
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
 
 	ret = spi_sync(spi, &m);
 
-	if (ret)
+	अगर (ret)
 		dev_err(&spi->dev, "spi transfer failed: ret = %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u8 hi3110_cmd(struct spi_device *spi, u8 command)
-{
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
+अटल u8 hi3110_cmd(काष्ठा spi_device *spi, u8 command)
+अणु
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
 
 	priv->spi_tx_buf[0] = command;
 	dev_dbg(&spi->dev, "hi3110_cmd: %02X\n", command);
 
-	return hi3110_spi_trans(spi, 1);
-}
+	वापस hi3110_spi_trans(spi, 1);
+पूर्ण
 
-static u8 hi3110_read(struct spi_device *spi, u8 command)
-{
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
+अटल u8 hi3110_पढ़ो(काष्ठा spi_device *spi, u8 command)
+अणु
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
 	u8 val = 0;
 
 	priv->spi_tx_buf[0] = command;
 	hi3110_spi_trans(spi, 2);
 	val = priv->spi_rx_buf[1];
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void hi3110_write(struct spi_device *spi, u8 reg, u8 val)
-{
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
+अटल व्योम hi3110_ग_लिखो(काष्ठा spi_device *spi, u8 reg, u8 val)
+अणु
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
 
 	priv->spi_tx_buf[0] = reg;
 	priv->spi_tx_buf[1] = val;
 	hi3110_spi_trans(spi, 2);
-}
+पूर्ण
 
-static void hi3110_hw_tx_frame(struct spi_device *spi, u8 *buf, int len)
-{
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
+अटल व्योम hi3110_hw_tx_frame(काष्ठा spi_device *spi, u8 *buf, पूर्णांक len)
+अणु
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
 
 	priv->spi_tx_buf[0] = HI3110_WRITE_FIFO;
-	memcpy(priv->spi_tx_buf + 1, buf, len);
+	स_नकल(priv->spi_tx_buf + 1, buf, len);
 	hi3110_spi_trans(spi, len + 1);
-}
+पूर्ण
 
-static void hi3110_hw_tx(struct spi_device *spi, struct can_frame *frame)
-{
+अटल व्योम hi3110_hw_tx(काष्ठा spi_device *spi, काष्ठा can_frame *frame)
+अणु
 	u8 buf[HI3110_TX_EXT_BUF_LEN];
 
 	buf[HI3110_FIFO_TAG_OFF] = 0;
 
-	if (frame->can_id & CAN_EFF_FLAG) {
+	अगर (frame->can_id & CAN_EFF_FLAG) अणु
 		/* Extended frame */
 		buf[HI3110_FIFO_ID_OFF] = (frame->can_id & CAN_EFF_MASK) >> 21;
 		buf[HI3110_FIFO_ID_OFF + 1] =
@@ -279,12 +280,12 @@ static void hi3110_hw_tx(struct spi_device *spi, struct can_frame *frame)
 
 		buf[HI3110_FIFO_EXT_DLC_OFF] = frame->len;
 
-		memcpy(buf + HI3110_FIFO_EXT_DATA_OFF,
+		स_नकल(buf + HI3110_FIFO_EXT_DATA_OFF,
 		       frame->data, frame->len);
 
 		hi3110_hw_tx_frame(spi, buf, HI3110_TX_EXT_BUF_LEN -
 				   (HI3110_CAN_MAX_DATA_LEN - frame->len));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Standard frame */
 		buf[HI3110_FIFO_ID_OFF] =   (frame->can_id & CAN_SFF_MASK) >> 3;
 		buf[HI3110_FIFO_ID_OFF + 1] =
@@ -293,38 +294,38 @@ static void hi3110_hw_tx(struct spi_device *spi, struct can_frame *frame)
 
 		buf[HI3110_FIFO_STD_DLC_OFF] = frame->len;
 
-		memcpy(buf + HI3110_FIFO_STD_DATA_OFF,
+		स_नकल(buf + HI3110_FIFO_STD_DATA_OFF,
 		       frame->data, frame->len);
 
 		hi3110_hw_tx_frame(spi, buf, HI3110_TX_STD_BUF_LEN -
 				   (HI3110_CAN_MAX_DATA_LEN - frame->len));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void hi3110_hw_rx_frame(struct spi_device *spi, u8 *buf)
-{
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
+अटल व्योम hi3110_hw_rx_frame(काष्ठा spi_device *spi, u8 *buf)
+अणु
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
 
 	priv->spi_tx_buf[0] = HI3110_READ_FIFO_WOTIME;
 	hi3110_spi_trans(spi, HI3110_RX_BUF_LEN);
-	memcpy(buf, priv->spi_rx_buf + 1, HI3110_RX_BUF_LEN - 1);
-}
+	स_नकल(buf, priv->spi_rx_buf + 1, HI3110_RX_BUF_LEN - 1);
+पूर्ण
 
-static void hi3110_hw_rx(struct spi_device *spi)
-{
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
-	struct sk_buff *skb;
-	struct can_frame *frame;
+अटल व्योम hi3110_hw_rx(काष्ठा spi_device *spi)
+अणु
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
+	काष्ठा sk_buff *skb;
+	काष्ठा can_frame *frame;
 	u8 buf[HI3110_RX_BUF_LEN - 1];
 
 	skb = alloc_can_skb(priv->net, &frame);
-	if (!skb) {
+	अगर (!skb) अणु
 		priv->net->stats.rx_dropped++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hi3110_hw_rx_frame(spi, buf);
-	if (buf[HI3110_FIFO_WOTIME_TAG_OFF] & HI3110_FIFO_WOTIME_TAG_IDE) {
+	अगर (buf[HI3110_FIFO_WOTIME_TAG_OFF] & HI3110_FIFO_WOTIME_TAG_IDE) अणु
 		/* IDE is recessive (1), indicating extended 29-bit frame */
 		frame->can_id = CAN_EFF_FLAG;
 		frame->can_id |=
@@ -333,20 +334,20 @@ static void hi3110_hw_rx(struct spi_device *spi)
 			((buf[HI3110_FIFO_WOTIME_ID_OFF + 1] & 0x07) << 15) |
 			(buf[HI3110_FIFO_WOTIME_ID_OFF + 2] << 7) |
 			(buf[HI3110_FIFO_WOTIME_ID_OFF + 3] >> 1);
-	} else {
-		/* IDE is dominant (0), frame indicating standard 11-bit */
+	पूर्ण अन्यथा अणु
+		/* IDE is करोminant (0), frame indicating standard 11-bit */
 		frame->can_id =
 			(buf[HI3110_FIFO_WOTIME_ID_OFF] << 3) |
 			((buf[HI3110_FIFO_WOTIME_ID_OFF + 1] & 0xE0) >> 5);
-	}
+	पूर्ण
 
 	/* Data length */
 	frame->len = can_cc_dlc2len(buf[HI3110_FIFO_WOTIME_DLC_OFF] & 0x0F);
 
-	if (buf[HI3110_FIFO_WOTIME_ID_OFF + 3] & HI3110_FIFO_WOTIME_ID_RTR)
+	अगर (buf[HI3110_FIFO_WOTIME_ID_OFF + 3] & HI3110_FIFO_WOTIME_ID_RTR)
 		frame->can_id |= CAN_RTR_FLAG;
-	else
-		memcpy(frame->data, buf + HI3110_FIFO_WOTIME_DAT_OFF,
+	अन्यथा
+		स_नकल(frame->data, buf + HI3110_FIFO_WOTIME_DAT_OFF,
 		       frame->len);
 
 	priv->net->stats.rx_packets++;
@@ -354,111 +355,111 @@ static void hi3110_hw_rx(struct spi_device *spi)
 
 	can_led_event(priv->net, CAN_LED_EVENT_RX);
 
-	netif_rx_ni(skb);
-}
+	netअगर_rx_ni(skb);
+पूर्ण
 
-static void hi3110_hw_sleep(struct spi_device *spi)
-{
-	hi3110_write(spi, HI3110_WRITE_CTRL0, HI3110_CTRL0_SLEEP_MODE);
-}
+अटल व्योम hi3110_hw_sleep(काष्ठा spi_device *spi)
+अणु
+	hi3110_ग_लिखो(spi, HI3110_WRITE_CTRL0, HI3110_CTRL0_SLEEP_MODE);
+पूर्ण
 
-static netdev_tx_t hi3110_hard_start_xmit(struct sk_buff *skb,
-					  struct net_device *net)
-{
-	struct hi3110_priv *priv = netdev_priv(net);
-	struct spi_device *spi = priv->spi;
+अटल netdev_tx_t hi3110_hard_start_xmit(काष्ठा sk_buff *skb,
+					  काष्ठा net_device *net)
+अणु
+	काष्ठा hi3110_priv *priv = netdev_priv(net);
+	काष्ठा spi_device *spi = priv->spi;
 
-	if (priv->tx_skb || priv->tx_len) {
+	अगर (priv->tx_skb || priv->tx_len) अणु
 		dev_err(&spi->dev, "hard_xmit called while tx busy\n");
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (can_dropped_invalid_skb(net, skb))
-		return NETDEV_TX_OK;
+	अगर (can_dropped_invalid_skb(net, skb))
+		वापस NETDEV_TX_OK;
 
-	netif_stop_queue(net);
+	netअगर_stop_queue(net);
 	priv->tx_skb = skb;
 	queue_work(priv->wq, &priv->tx_work);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int hi3110_do_set_mode(struct net_device *net, enum can_mode mode)
-{
-	struct hi3110_priv *priv = netdev_priv(net);
+अटल पूर्णांक hi3110_करो_set_mode(काष्ठा net_device *net, क्रमागत can_mode mode)
+अणु
+	काष्ठा hi3110_priv *priv = netdev_priv(net);
 
-	switch (mode) {
-	case CAN_MODE_START:
+	चयन (mode) अणु
+	हाल CAN_MODE_START:
 		hi3110_clean(net);
 		/* We have to delay work since SPI I/O may sleep */
 		priv->can.state = CAN_STATE_ERROR_ACTIVE;
 		priv->restart_tx = 1;
-		if (priv->can.restart_ms == 0)
+		अगर (priv->can.restart_ms == 0)
 			priv->after_suspend = HI3110_AFTER_SUSPEND_RESTART;
 		queue_work(priv->wq, &priv->restart_work);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hi3110_get_berr_counter(const struct net_device *net,
-				   struct can_berr_counter *bec)
-{
-	struct hi3110_priv *priv = netdev_priv(net);
-	struct spi_device *spi = priv->spi;
+अटल पूर्णांक hi3110_get_berr_counter(स्थिर काष्ठा net_device *net,
+				   काष्ठा can_berr_counter *bec)
+अणु
+	काष्ठा hi3110_priv *priv = netdev_priv(net);
+	काष्ठा spi_device *spi = priv->spi;
 
 	mutex_lock(&priv->hi3110_lock);
-	bec->txerr = hi3110_read(spi, HI3110_READ_TEC);
-	bec->rxerr = hi3110_read(spi, HI3110_READ_REC);
+	bec->txerr = hi3110_पढ़ो(spi, HI3110_READ_TEC);
+	bec->rxerr = hi3110_पढ़ो(spi, HI3110_READ_REC);
 	mutex_unlock(&priv->hi3110_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hi3110_set_normal_mode(struct spi_device *spi)
-{
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
+अटल पूर्णांक hi3110_set_normal_mode(काष्ठा spi_device *spi)
+अणु
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
 	u8 reg = 0;
 
-	hi3110_write(spi, HI3110_WRITE_INTE, HI3110_INT_BUSERR |
+	hi3110_ग_लिखो(spi, HI3110_WRITE_INTE, HI3110_INT_BUSERR |
 		     HI3110_INT_RXFIFO | HI3110_INT_TXCPLT);
 
 	/* Enable TX */
-	hi3110_write(spi, HI3110_WRITE_CTRL1, HI3110_CTRL1_TXEN);
+	hi3110_ग_लिखो(spi, HI3110_WRITE_CTRL1, HI3110_CTRL1_TXEN);
 
-	if (priv->can.ctrlmode & CAN_CTRLMODE_LOOPBACK)
+	अगर (priv->can.ctrlmode & CAN_CTRLMODE_LOOPBACK)
 		reg = HI3110_CTRL0_LOOPBACK_MODE;
-	else if (priv->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
+	अन्यथा अगर (priv->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
 		reg = HI3110_CTRL0_MONITOR_MODE;
-	else
+	अन्यथा
 		reg = HI3110_CTRL0_NORMAL_MODE;
 
-	hi3110_write(spi, HI3110_WRITE_CTRL0, reg);
+	hi3110_ग_लिखो(spi, HI3110_WRITE_CTRL0, reg);
 
-	/* Wait for the device to enter the mode */
+	/* Wait क्रम the device to enter the mode */
 	mdelay(HI3110_OST_DELAY_MS);
-	reg = hi3110_read(spi, HI3110_READ_CTRL0);
-	if ((reg & HI3110_CTRL0_MODE_MASK) != reg)
-		return -EBUSY;
+	reg = hi3110_पढ़ो(spi, HI3110_READ_CTRL0);
+	अगर ((reg & HI3110_CTRL0_MODE_MASK) != reg)
+		वापस -EBUSY;
 
 	priv->can.state = CAN_STATE_ERROR_ACTIVE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hi3110_do_set_bittiming(struct net_device *net)
-{
-	struct hi3110_priv *priv = netdev_priv(net);
-	struct can_bittiming *bt = &priv->can.bittiming;
-	struct spi_device *spi = priv->spi;
+अटल पूर्णांक hi3110_करो_set_bittiming(काष्ठा net_device *net)
+अणु
+	काष्ठा hi3110_priv *priv = netdev_priv(net);
+	काष्ठा can_bittiming *bt = &priv->can.bittiming;
+	काष्ठा spi_device *spi = priv->spi;
 
-	hi3110_write(spi, HI3110_WRITE_BTR0,
+	hi3110_ग_लिखो(spi, HI3110_WRITE_BTR0,
 		     ((bt->sjw - 1) << HI3110_BTR0_SJW_SHIFT) |
 		     ((bt->brp - 1) << HI3110_BTR0_BRP_SHIFT));
 
-	hi3110_write(spi, HI3110_WRITE_BTR1,
+	hi3110_ग_लिखो(spi, HI3110_WRITE_BTR1,
 		     (priv->can.ctrlmode &
 		      CAN_CTRLMODE_3_SAMPLES ?
 		      HI3110_BTR1_SAMP_3PERBIT : HI3110_BTR1_SAMP_1PERBIT) |
@@ -467,47 +468,47 @@ static int hi3110_do_set_bittiming(struct net_device *net)
 		     ((bt->phase_seg2 - 1) << HI3110_BTR1_TSEG2_SHIFT));
 
 	dev_dbg(&spi->dev, "BT: 0x%02x 0x%02x\n",
-		hi3110_read(spi, HI3110_READ_BTR0),
-		hi3110_read(spi, HI3110_READ_BTR1));
+		hi3110_पढ़ो(spi, HI3110_READ_BTR0),
+		hi3110_पढ़ो(spi, HI3110_READ_BTR1));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hi3110_setup(struct net_device *net)
-{
-	hi3110_do_set_bittiming(net);
-	return 0;
-}
+अटल पूर्णांक hi3110_setup(काष्ठा net_device *net)
+अणु
+	hi3110_करो_set_bittiming(net);
+	वापस 0;
+पूर्ण
 
-static int hi3110_hw_reset(struct spi_device *spi)
-{
+अटल पूर्णांक hi3110_hw_reset(काष्ठा spi_device *spi)
+अणु
 	u8 reg;
-	int ret;
+	पूर्णांक ret;
 
-	/* Wait for oscillator startup timer after power up */
+	/* Wait क्रम oscillator startup समयr after घातer up */
 	mdelay(HI3110_OST_DELAY_MS);
 
 	ret = hi3110_cmd(spi, HI3110_MASTER_RESET);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Wait for oscillator startup timer after reset */
+	/* Wait क्रम oscillator startup समयr after reset */
 	mdelay(HI3110_OST_DELAY_MS);
 
-	reg = hi3110_read(spi, HI3110_READ_CTRL0);
-	if ((reg & HI3110_CTRL0_MODE_MASK) != HI3110_CTRL0_INIT_MODE)
-		return -ENODEV;
+	reg = hi3110_पढ़ो(spi, HI3110_READ_CTRL0);
+	अगर ((reg & HI3110_CTRL0_MODE_MASK) != HI3110_CTRL0_INIT_MODE)
+		वापस -ENODEV;
 
 	/* As per the datasheet it appears the error flags are
-	 * not cleared on reset. Explicitly clear them by performing a read
+	 * not cleared on reset. Explicitly clear them by perक्रमming a पढ़ो
 	 */
-	hi3110_read(spi, HI3110_READ_ERR);
+	hi3110_पढ़ो(spi, HI3110_READ_ERR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hi3110_hw_probe(struct spi_device *spi)
-{
+अटल पूर्णांक hi3110_hw_probe(काष्ठा spi_device *spi)
+अणु
 	u8 statf;
 
 	hi3110_hw_reset(spi);
@@ -515,51 +516,51 @@ static int hi3110_hw_probe(struct spi_device *spi)
 	/* Confirm correct operation by checking against reset values
 	 * in datasheet
 	 */
-	statf = hi3110_read(spi, HI3110_READ_STATF);
+	statf = hi3110_पढ़ो(spi, HI3110_READ_STATF);
 
 	dev_dbg(&spi->dev, "statf: %02X\n", statf);
 
-	if (statf != 0x82)
-		return -ENODEV;
+	अगर (statf != 0x82)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hi3110_power_enable(struct regulator *reg, int enable)
-{
-	if (IS_ERR_OR_NULL(reg))
-		return 0;
+अटल पूर्णांक hi3110_घातer_enable(काष्ठा regulator *reg, पूर्णांक enable)
+अणु
+	अगर (IS_ERR_OR_शून्य(reg))
+		वापस 0;
 
-	if (enable)
-		return regulator_enable(reg);
-	else
-		return regulator_disable(reg);
-}
+	अगर (enable)
+		वापस regulator_enable(reg);
+	अन्यथा
+		वापस regulator_disable(reg);
+पूर्ण
 
-static int hi3110_stop(struct net_device *net)
-{
-	struct hi3110_priv *priv = netdev_priv(net);
-	struct spi_device *spi = priv->spi;
+अटल पूर्णांक hi3110_stop(काष्ठा net_device *net)
+अणु
+	काष्ठा hi3110_priv *priv = netdev_priv(net);
+	काष्ठा spi_device *spi = priv->spi;
 
-	close_candev(net);
+	बंद_candev(net);
 
-	priv->force_quit = 1;
-	free_irq(spi->irq, priv);
+	priv->क्रमce_quit = 1;
+	मुक्त_irq(spi->irq, priv);
 	destroy_workqueue(priv->wq);
-	priv->wq = NULL;
+	priv->wq = शून्य;
 
 	mutex_lock(&priv->hi3110_lock);
 
-	/* Disable transmit, interrupts and clear flags */
-	hi3110_write(spi, HI3110_WRITE_CTRL1, 0x0);
-	hi3110_write(spi, HI3110_WRITE_INTE, 0x0);
-	hi3110_read(spi, HI3110_READ_INTF);
+	/* Disable transmit, पूर्णांकerrupts and clear flags */
+	hi3110_ग_लिखो(spi, HI3110_WRITE_CTRL1, 0x0);
+	hi3110_ग_लिखो(spi, HI3110_WRITE_INTE, 0x0);
+	hi3110_पढ़ो(spi, HI3110_READ_INTF);
 
 	hi3110_clean(net);
 
 	hi3110_hw_sleep(spi);
 
-	hi3110_power_enable(priv->transceiver, 0);
+	hi3110_घातer_enable(priv->transceiver, 0);
 
 	priv->can.state = CAN_STATE_STOPPED;
 
@@ -567,312 +568,312 @@ static int hi3110_stop(struct net_device *net)
 
 	can_led_event(net, CAN_LED_EVENT_STOP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hi3110_tx_work_handler(struct work_struct *ws)
-{
-	struct hi3110_priv *priv = container_of(ws, struct hi3110_priv,
+अटल व्योम hi3110_tx_work_handler(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा hi3110_priv *priv = container_of(ws, काष्ठा hi3110_priv,
 						tx_work);
-	struct spi_device *spi = priv->spi;
-	struct net_device *net = priv->net;
-	struct can_frame *frame;
+	काष्ठा spi_device *spi = priv->spi;
+	काष्ठा net_device *net = priv->net;
+	काष्ठा can_frame *frame;
 
 	mutex_lock(&priv->hi3110_lock);
-	if (priv->tx_skb) {
-		if (priv->can.state == CAN_STATE_BUS_OFF) {
+	अगर (priv->tx_skb) अणु
+		अगर (priv->can.state == CAN_STATE_BUS_OFF) अणु
 			hi3110_clean(net);
-		} else {
-			frame = (struct can_frame *)priv->tx_skb->data;
+		पूर्ण अन्यथा अणु
+			frame = (काष्ठा can_frame *)priv->tx_skb->data;
 			hi3110_hw_tx(spi, frame);
 			priv->tx_len = 1 + frame->len;
 			can_put_echo_skb(priv->tx_skb, net, 0, 0);
-			priv->tx_skb = NULL;
-		}
-	}
+			priv->tx_skb = शून्य;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&priv->hi3110_lock);
-}
+पूर्ण
 
-static void hi3110_restart_work_handler(struct work_struct *ws)
-{
-	struct hi3110_priv *priv = container_of(ws, struct hi3110_priv,
+अटल व्योम hi3110_restart_work_handler(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा hi3110_priv *priv = container_of(ws, काष्ठा hi3110_priv,
 						restart_work);
-	struct spi_device *spi = priv->spi;
-	struct net_device *net = priv->net;
+	काष्ठा spi_device *spi = priv->spi;
+	काष्ठा net_device *net = priv->net;
 
 	mutex_lock(&priv->hi3110_lock);
-	if (priv->after_suspend) {
+	अगर (priv->after_suspend) अणु
 		hi3110_hw_reset(spi);
 		hi3110_setup(net);
-		if (priv->after_suspend & HI3110_AFTER_SUSPEND_RESTART) {
+		अगर (priv->after_suspend & HI3110_AFTER_SUSPEND_RESTART) अणु
 			hi3110_set_normal_mode(spi);
-		} else if (priv->after_suspend & HI3110_AFTER_SUSPEND_UP) {
-			netif_device_attach(net);
+		पूर्ण अन्यथा अगर (priv->after_suspend & HI3110_AFTER_SUSPEND_UP) अणु
+			netअगर_device_attach(net);
 			hi3110_clean(net);
 			hi3110_set_normal_mode(spi);
-			netif_wake_queue(net);
-		} else {
+			netअगर_wake_queue(net);
+		पूर्ण अन्यथा अणु
 			hi3110_hw_sleep(spi);
-		}
+		पूर्ण
 		priv->after_suspend = 0;
-		priv->force_quit = 0;
-	}
+		priv->क्रमce_quit = 0;
+	पूर्ण
 
-	if (priv->restart_tx) {
+	अगर (priv->restart_tx) अणु
 		priv->restart_tx = 0;
 		hi3110_hw_reset(spi);
 		hi3110_setup(net);
 		hi3110_clean(net);
 		hi3110_set_normal_mode(spi);
-		netif_wake_queue(net);
-	}
+		netअगर_wake_queue(net);
+	पूर्ण
 	mutex_unlock(&priv->hi3110_lock);
-}
+पूर्ण
 
-static irqreturn_t hi3110_can_ist(int irq, void *dev_id)
-{
-	struct hi3110_priv *priv = dev_id;
-	struct spi_device *spi = priv->spi;
-	struct net_device *net = priv->net;
+अटल irqवापस_t hi3110_can_ist(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा hi3110_priv *priv = dev_id;
+	काष्ठा spi_device *spi = priv->spi;
+	काष्ठा net_device *net = priv->net;
 
 	mutex_lock(&priv->hi3110_lock);
 
-	while (!priv->force_quit) {
-		enum can_state new_state;
-		u8 intf, eflag, statf;
+	जबतक (!priv->क्रमce_quit) अणु
+		क्रमागत can_state new_state;
+		u8 पूर्णांकf, eflag, statf;
 
-		while (!(HI3110_STAT_RXFMTY &
-			 (statf = hi3110_read(spi, HI3110_READ_STATF)))) {
+		जबतक (!(HI3110_STAT_RXFMTY &
+			 (statf = hi3110_पढ़ो(spi, HI3110_READ_STATF)))) अणु
 			hi3110_hw_rx(spi);
-		}
+		पूर्ण
 
-		intf = hi3110_read(spi, HI3110_READ_INTF);
-		eflag = hi3110_read(spi, HI3110_READ_ERR);
+		पूर्णांकf = hi3110_पढ़ो(spi, HI3110_READ_INTF);
+		eflag = hi3110_पढ़ो(spi, HI3110_READ_ERR);
 		/* Update can state */
-		if (eflag & HI3110_ERR_BUSOFF)
+		अगर (eflag & HI3110_ERR_BUSOFF)
 			new_state = CAN_STATE_BUS_OFF;
-		else if (eflag & HI3110_ERR_PASSIVE_MASK)
+		अन्यथा अगर (eflag & HI3110_ERR_PASSIVE_MASK)
 			new_state = CAN_STATE_ERROR_PASSIVE;
-		else if (statf & HI3110_STAT_ERRW)
+		अन्यथा अगर (statf & HI3110_STAT_ERRW)
 			new_state = CAN_STATE_ERROR_WARNING;
-		else
+		अन्यथा
 			new_state = CAN_STATE_ERROR_ACTIVE;
 
-		if (new_state != priv->can.state) {
-			struct can_frame *cf;
-			struct sk_buff *skb;
-			enum can_state rx_state, tx_state;
+		अगर (new_state != priv->can.state) अणु
+			काष्ठा can_frame *cf;
+			काष्ठा sk_buff *skb;
+			क्रमागत can_state rx_state, tx_state;
 			u8 rxerr, txerr;
 
 			skb = alloc_can_err_skb(net, &cf);
-			if (!skb)
-				break;
+			अगर (!skb)
+				अवरोध;
 
-			txerr = hi3110_read(spi, HI3110_READ_TEC);
-			rxerr = hi3110_read(spi, HI3110_READ_REC);
+			txerr = hi3110_पढ़ो(spi, HI3110_READ_TEC);
+			rxerr = hi3110_पढ़ो(spi, HI3110_READ_REC);
 			cf->data[6] = txerr;
 			cf->data[7] = rxerr;
 			tx_state = txerr >= rxerr ? new_state : 0;
 			rx_state = txerr <= rxerr ? new_state : 0;
 			can_change_state(net, cf, tx_state, rx_state);
-			netif_rx_ni(skb);
+			netअगर_rx_ni(skb);
 
-			if (new_state == CAN_STATE_BUS_OFF) {
+			अगर (new_state == CAN_STATE_BUS_OFF) अणु
 				can_bus_off(net);
-				if (priv->can.restart_ms == 0) {
-					priv->force_quit = 1;
+				अगर (priv->can.restart_ms == 0) अणु
+					priv->क्रमce_quit = 1;
 					hi3110_hw_sleep(spi);
-					break;
-				}
-			}
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		/* Update bus errors */
-		if ((intf & HI3110_INT_BUSERR) &&
-		    (priv->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING)) {
-			struct can_frame *cf;
-			struct sk_buff *skb;
+		अगर ((पूर्णांकf & HI3110_INT_BUSERR) &&
+		    (priv->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING)) अणु
+			काष्ठा can_frame *cf;
+			काष्ठा sk_buff *skb;
 
-			/* Check for protocol errors */
-			if (eflag & HI3110_ERR_PROTOCOL_MASK) {
+			/* Check क्रम protocol errors */
+			अगर (eflag & HI3110_ERR_PROTOCOL_MASK) अणु
 				skb = alloc_can_err_skb(net, &cf);
-				if (!skb)
-					break;
+				अगर (!skb)
+					अवरोध;
 
 				cf->can_id |= CAN_ERR_PROT | CAN_ERR_BUSERROR;
 				priv->can.can_stats.bus_error++;
 				priv->net->stats.rx_errors++;
-				if (eflag & HI3110_ERR_BITERR)
+				अगर (eflag & HI3110_ERR_BITERR)
 					cf->data[2] |= CAN_ERR_PROT_BIT;
-				else if (eflag & HI3110_ERR_FRMERR)
+				अन्यथा अगर (eflag & HI3110_ERR_FRMERR)
 					cf->data[2] |= CAN_ERR_PROT_FORM;
-				else if (eflag & HI3110_ERR_STUFERR)
+				अन्यथा अगर (eflag & HI3110_ERR_STUFERR)
 					cf->data[2] |= CAN_ERR_PROT_STUFF;
-				else if (eflag & HI3110_ERR_CRCERR)
+				अन्यथा अगर (eflag & HI3110_ERR_CRCERR)
 					cf->data[3] |= CAN_ERR_PROT_LOC_CRC_SEQ;
-				else if (eflag & HI3110_ERR_ACKERR)
+				अन्यथा अगर (eflag & HI3110_ERR_ACKERR)
 					cf->data[3] |= CAN_ERR_PROT_LOC_ACK;
 
-				cf->data[6] = hi3110_read(spi, HI3110_READ_TEC);
-				cf->data[7] = hi3110_read(spi, HI3110_READ_REC);
+				cf->data[6] = hi3110_पढ़ो(spi, HI3110_READ_TEC);
+				cf->data[7] = hi3110_पढ़ो(spi, HI3110_READ_REC);
 				netdev_dbg(priv->net, "Bus Error\n");
-				netif_rx_ni(skb);
-			}
-		}
+				netअगर_rx_ni(skb);
+			पूर्ण
+		पूर्ण
 
-		if (priv->tx_len && statf & HI3110_STAT_TXMTY) {
+		अगर (priv->tx_len && statf & HI3110_STAT_TXMTY) अणु
 			net->stats.tx_packets++;
 			net->stats.tx_bytes += priv->tx_len - 1;
 			can_led_event(net, CAN_LED_EVENT_TX);
-			if (priv->tx_len) {
-				can_get_echo_skb(net, 0, NULL);
+			अगर (priv->tx_len) अणु
+				can_get_echo_skb(net, 0, शून्य);
 				priv->tx_len = 0;
-			}
-			netif_wake_queue(net);
-		}
+			पूर्ण
+			netअगर_wake_queue(net);
+		पूर्ण
 
-		if (intf == 0)
-			break;
-	}
+		अगर (पूर्णांकf == 0)
+			अवरोध;
+	पूर्ण
 	mutex_unlock(&priv->hi3110_lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int hi3110_open(struct net_device *net)
-{
-	struct hi3110_priv *priv = netdev_priv(net);
-	struct spi_device *spi = priv->spi;
-	unsigned long flags = IRQF_ONESHOT | IRQF_TRIGGER_HIGH;
-	int ret;
+अटल पूर्णांक hi3110_खोलो(काष्ठा net_device *net)
+अणु
+	काष्ठा hi3110_priv *priv = netdev_priv(net);
+	काष्ठा spi_device *spi = priv->spi;
+	अचिन्हित दीर्घ flags = IRQF_ONESHOT | IRQF_TRIGGER_HIGH;
+	पूर्णांक ret;
 
-	ret = open_candev(net);
-	if (ret)
-		return ret;
+	ret = खोलो_candev(net);
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&priv->hi3110_lock);
-	hi3110_power_enable(priv->transceiver, 1);
+	hi3110_घातer_enable(priv->transceiver, 1);
 
-	priv->force_quit = 0;
-	priv->tx_skb = NULL;
+	priv->क्रमce_quit = 0;
+	priv->tx_skb = शून्य;
 	priv->tx_len = 0;
 
-	ret = request_threaded_irq(spi->irq, NULL, hi3110_can_ist,
+	ret = request_thपढ़ोed_irq(spi->irq, शून्य, hi3110_can_ist,
 				   flags, DEVICE_NAME, priv);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&spi->dev, "failed to acquire irq %d\n", spi->irq);
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
 	priv->wq = alloc_workqueue("hi3110_wq", WQ_FREEZABLE | WQ_MEM_RECLAIM,
 				   0);
-	if (!priv->wq) {
+	अगर (!priv->wq) अणु
 		ret = -ENOMEM;
-		goto out_free_irq;
-	}
+		जाओ out_मुक्त_irq;
+	पूर्ण
 	INIT_WORK(&priv->tx_work, hi3110_tx_work_handler);
 	INIT_WORK(&priv->restart_work, hi3110_restart_work_handler);
 
 	ret = hi3110_hw_reset(spi);
-	if (ret)
-		goto out_free_wq;
+	अगर (ret)
+		जाओ out_मुक्त_wq;
 
 	ret = hi3110_setup(net);
-	if (ret)
-		goto out_free_wq;
+	अगर (ret)
+		जाओ out_मुक्त_wq;
 
 	ret = hi3110_set_normal_mode(spi);
-	if (ret)
-		goto out_free_wq;
+	अगर (ret)
+		जाओ out_मुक्त_wq;
 
 	can_led_event(net, CAN_LED_EVENT_OPEN);
-	netif_wake_queue(net);
+	netअगर_wake_queue(net);
 	mutex_unlock(&priv->hi3110_lock);
 
-	return 0;
+	वापस 0;
 
- out_free_wq:
+ out_मुक्त_wq:
 	destroy_workqueue(priv->wq);
- out_free_irq:
-	free_irq(spi->irq, priv);
+ out_मुक्त_irq:
+	मुक्त_irq(spi->irq, priv);
 	hi3110_hw_sleep(spi);
- out_close:
-	hi3110_power_enable(priv->transceiver, 0);
-	close_candev(net);
+ out_बंद:
+	hi3110_घातer_enable(priv->transceiver, 0);
+	बंद_candev(net);
 	mutex_unlock(&priv->hi3110_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct net_device_ops hi3110_netdev_ops = {
-	.ndo_open = hi3110_open,
-	.ndo_stop = hi3110_stop,
-	.ndo_start_xmit = hi3110_hard_start_xmit,
-};
+अटल स्थिर काष्ठा net_device_ops hi3110_netdev_ops = अणु
+	.nकरो_खोलो = hi3110_खोलो,
+	.nकरो_stop = hi3110_stop,
+	.nकरो_start_xmit = hi3110_hard_start_xmit,
+पूर्ण;
 
-static const struct of_device_id hi3110_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id hi3110_of_match[] = अणु
+	अणु
 		.compatible	= "holt,hi3110",
-		.data		= (void *)CAN_HI3110_HI3110,
-	},
-	{ }
-};
+		.data		= (व्योम *)CAN_HI3110_HI3110,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hi3110_of_match);
 
-static const struct spi_device_id hi3110_id_table[] = {
-	{
+अटल स्थिर काष्ठा spi_device_id hi3110_id_table[] = अणु
+	अणु
 		.name		= "hi3110",
-		.driver_data	= (kernel_ulong_t)CAN_HI3110_HI3110,
-	},
-	{ }
-};
+		.driver_data	= (kernel_uदीर्घ_t)CAN_HI3110_HI3110,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, hi3110_id_table);
 
-static int hi3110_can_probe(struct spi_device *spi)
-{
-	const struct of_device_id *of_id = of_match_device(hi3110_of_match,
+अटल पूर्णांक hi3110_can_probe(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा of_device_id *of_id = of_match_device(hi3110_of_match,
 							   &spi->dev);
-	struct net_device *net;
-	struct hi3110_priv *priv;
-	struct clk *clk;
-	int freq, ret;
+	काष्ठा net_device *net;
+	काष्ठा hi3110_priv *priv;
+	काष्ठा clk *clk;
+	पूर्णांक freq, ret;
 
-	clk = devm_clk_get(&spi->dev, NULL);
-	if (IS_ERR(clk)) {
+	clk = devm_clk_get(&spi->dev, शून्य);
+	अगर (IS_ERR(clk)) अणु
 		dev_err(&spi->dev, "no CAN clock source defined\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 	freq = clk_get_rate(clk);
 
 	/* Sanity check */
-	if (freq > 40000000)
-		return -ERANGE;
+	अगर (freq > 40000000)
+		वापस -दुस्फल;
 
 	/* Allocate can/net device */
-	net = alloc_candev(sizeof(struct hi3110_priv), HI3110_TX_ECHO_SKB_MAX);
-	if (!net)
-		return -ENOMEM;
+	net = alloc_candev(माप(काष्ठा hi3110_priv), HI3110_TX_ECHO_SKB_MAX);
+	अगर (!net)
+		वापस -ENOMEM;
 
-	if (!IS_ERR(clk)) {
+	अगर (!IS_ERR(clk)) अणु
 		ret = clk_prepare_enable(clk);
-		if (ret)
-			goto out_free;
-	}
+		अगर (ret)
+			जाओ out_मुक्त;
+	पूर्ण
 
 	net->netdev_ops = &hi3110_netdev_ops;
 	net->flags |= IFF_ECHO;
 
 	priv = netdev_priv(net);
-	priv->can.bittiming_const = &hi3110_bittiming_const;
-	priv->can.do_set_mode = hi3110_do_set_mode;
-	priv->can.do_get_berr_counter = hi3110_get_berr_counter;
-	priv->can.clock.freq = freq / 2;
+	priv->can.bittiming_स्थिर = &hi3110_bittiming_स्थिर;
+	priv->can.करो_set_mode = hi3110_करो_set_mode;
+	priv->can.करो_get_berr_counter = hi3110_get_berr_counter;
+	priv->can.घड़ी.freq = freq / 2;
 	priv->can.ctrlmode_supported = CAN_CTRLMODE_3_SAMPLES |
 		CAN_CTRLMODE_LOOPBACK |
 		CAN_CTRLMODE_LISTENONLY |
 		CAN_CTRLMODE_BERR_REPORTING;
 
-	if (of_id)
-		priv->model = (enum hi3110_model)of_id->data;
-	else
+	अगर (of_id)
+		priv->model = (क्रमागत hi3110_model)of_id->data;
+	अन्यथा
 		priv->model = spi_get_device_id(spi)->driver_data;
 	priv->net = net;
 	priv->clk = clk;
@@ -882,151 +883,151 @@ static int hi3110_can_probe(struct spi_device *spi)
 	/* Configure the SPI bus */
 	spi->bits_per_word = 8;
 	ret = spi_setup(spi);
-	if (ret)
-		goto out_clk;
+	अगर (ret)
+		जाओ out_clk;
 
-	priv->power = devm_regulator_get_optional(&spi->dev, "vdd");
+	priv->घातer = devm_regulator_get_optional(&spi->dev, "vdd");
 	priv->transceiver = devm_regulator_get_optional(&spi->dev, "xceiver");
-	if ((PTR_ERR(priv->power) == -EPROBE_DEFER) ||
-	    (PTR_ERR(priv->transceiver) == -EPROBE_DEFER)) {
+	अगर ((PTR_ERR(priv->घातer) == -EPROBE_DEFER) ||
+	    (PTR_ERR(priv->transceiver) == -EPROBE_DEFER)) अणु
 		ret = -EPROBE_DEFER;
-		goto out_clk;
-	}
+		जाओ out_clk;
+	पूर्ण
 
-	ret = hi3110_power_enable(priv->power, 1);
-	if (ret)
-		goto out_clk;
+	ret = hi3110_घातer_enable(priv->घातer, 1);
+	अगर (ret)
+		जाओ out_clk;
 
 	priv->spi = spi;
 	mutex_init(&priv->hi3110_lock);
 
 	priv->spi_tx_buf = devm_kzalloc(&spi->dev, HI3110_RX_BUF_LEN,
 					GFP_KERNEL);
-	if (!priv->spi_tx_buf) {
+	अगर (!priv->spi_tx_buf) अणु
 		ret = -ENOMEM;
-		goto error_probe;
-	}
+		जाओ error_probe;
+	पूर्ण
 	priv->spi_rx_buf = devm_kzalloc(&spi->dev, HI3110_RX_BUF_LEN,
 					GFP_KERNEL);
 
-	if (!priv->spi_rx_buf) {
+	अगर (!priv->spi_rx_buf) अणु
 		ret = -ENOMEM;
-		goto error_probe;
-	}
+		जाओ error_probe;
+	पूर्ण
 
 	SET_NETDEV_DEV(net, &spi->dev);
 
 	ret = hi3110_hw_probe(spi);
-	if (ret) {
-		if (ret == -ENODEV)
+	अगर (ret) अणु
+		अगर (ret == -ENODEV)
 			dev_err(&spi->dev, "Cannot initialize %x. Wrong wiring?\n",
 				priv->model);
-		goto error_probe;
-	}
+		जाओ error_probe;
+	पूर्ण
 	hi3110_hw_sleep(spi);
 
-	ret = register_candev(net);
-	if (ret)
-		goto error_probe;
+	ret = रेजिस्टर_candev(net);
+	अगर (ret)
+		जाओ error_probe;
 
 	devm_can_led_init(net);
 	netdev_info(net, "%x successfully initialized.\n", priv->model);
 
-	return 0;
+	वापस 0;
 
  error_probe:
-	hi3110_power_enable(priv->power, 0);
+	hi3110_घातer_enable(priv->घातer, 0);
 
  out_clk:
-	if (!IS_ERR(clk))
+	अगर (!IS_ERR(clk))
 		clk_disable_unprepare(clk);
 
- out_free:
-	free_candev(net);
+ out_मुक्त:
+	मुक्त_candev(net);
 
 	dev_err(&spi->dev, "Probe failed, err=%d\n", -ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hi3110_can_remove(struct spi_device *spi)
-{
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
-	struct net_device *net = priv->net;
+अटल पूर्णांक hi3110_can_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
+	काष्ठा net_device *net = priv->net;
 
-	unregister_candev(net);
+	unरेजिस्टर_candev(net);
 
-	hi3110_power_enable(priv->power, 0);
+	hi3110_घातer_enable(priv->घातer, 0);
 
-	if (!IS_ERR(priv->clk))
+	अगर (!IS_ERR(priv->clk))
 		clk_disable_unprepare(priv->clk);
 
-	free_candev(net);
+	मुक्त_candev(net);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused hi3110_can_suspend(struct device *dev)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
-	struct net_device *net = priv->net;
+अटल पूर्णांक __maybe_unused hi3110_can_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
+	काष्ठा net_device *net = priv->net;
 
-	priv->force_quit = 1;
+	priv->क्रमce_quit = 1;
 	disable_irq(spi->irq);
 
-	/* Note: at this point neither IST nor workqueues are running.
-	 * open/stop cannot be called anyway so locking is not needed
+	/* Note: at this poपूर्णांक neither IST nor workqueues are running.
+	 * खोलो/stop cannot be called anyway so locking is not needed
 	 */
-	if (netif_running(net)) {
-		netif_device_detach(net);
+	अगर (netअगर_running(net)) अणु
+		netअगर_device_detach(net);
 
 		hi3110_hw_sleep(spi);
-		hi3110_power_enable(priv->transceiver, 0);
+		hi3110_घातer_enable(priv->transceiver, 0);
 		priv->after_suspend = HI3110_AFTER_SUSPEND_UP;
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->after_suspend = HI3110_AFTER_SUSPEND_DOWN;
-	}
+	पूर्ण
 
-	if (!IS_ERR_OR_NULL(priv->power)) {
-		regulator_disable(priv->power);
+	अगर (!IS_ERR_OR_शून्य(priv->घातer)) अणु
+		regulator_disable(priv->घातer);
 		priv->after_suspend |= HI3110_AFTER_SUSPEND_POWER;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused hi3110_can_resume(struct device *dev)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct hi3110_priv *priv = spi_get_drvdata(spi);
+अटल पूर्णांक __maybe_unused hi3110_can_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा hi3110_priv *priv = spi_get_drvdata(spi);
 
-	if (priv->after_suspend & HI3110_AFTER_SUSPEND_POWER)
-		hi3110_power_enable(priv->power, 1);
+	अगर (priv->after_suspend & HI3110_AFTER_SUSPEND_POWER)
+		hi3110_घातer_enable(priv->घातer, 1);
 
-	if (priv->after_suspend & HI3110_AFTER_SUSPEND_UP) {
-		hi3110_power_enable(priv->transceiver, 1);
+	अगर (priv->after_suspend & HI3110_AFTER_SUSPEND_UP) अणु
+		hi3110_घातer_enable(priv->transceiver, 1);
 		queue_work(priv->wq, &priv->restart_work);
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->after_suspend = 0;
-	}
+	पूर्ण
 
-	priv->force_quit = 0;
+	priv->क्रमce_quit = 0;
 	enable_irq(spi->irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(hi3110_can_pm_ops, hi3110_can_suspend, hi3110_can_resume);
+अटल SIMPLE_DEV_PM_OPS(hi3110_can_pm_ops, hi3110_can_suspend, hi3110_can_resume);
 
-static struct spi_driver hi3110_can_driver = {
-	.driver = {
+अटल काष्ठा spi_driver hi3110_can_driver = अणु
+	.driver = अणु
 		.name = DEVICE_NAME,
 		.of_match_table = hi3110_of_match,
 		.pm = &hi3110_can_pm_ops,
-	},
+	पूर्ण,
 	.id_table = hi3110_id_table,
 	.probe = hi3110_can_probe,
-	.remove = hi3110_can_remove,
-};
+	.हटाओ = hi3110_can_हटाओ,
+पूर्ण;
 
 module_spi_driver(hi3110_can_driver);
 

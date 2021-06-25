@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * OpenRISC asm-offsets.c
+ * OpenRISC यंत्र-offsets.c
  *
  * Linux architectural port borrowing liberally from similar works of
  * others.  All original copyrights apply as per the original source
  * declaration.
  *
- * Modifications for the OpenRISC architecture:
+ * Modअगरications क्रम the OpenRISC architecture:
  * Copyright (C) 2003 Matjaz Breskvar <phoenix@bsemi.com>
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  *
@@ -14,48 +15,48 @@
  * assembly language modules.
  *
  * We use the technique used in the OSF Mach kernel code:
- * generate asm statements containing #defines,
+ * generate यंत्र statements containing #घोषणाs,
  * compile this file to assembler, and then extract the
- * #defines from the assembly-language output.
+ * #घोषणाs from the assembly-language output.
  */
 
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/ptrace.h>
-#include <linux/mman.h>
-#include <linux/mm.h>
-#include <linux/io.h>
-#include <linux/thread_info.h>
-#include <linux/kbuild.h>
-#include <asm/page.h>
-#include <asm/processor.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <linux/kbuild.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/processor.h>
 
-int main(void)
-{
-	/* offsets into the task_struct */
-	DEFINE(TASK_STATE, offsetof(struct task_struct, state));
-	DEFINE(TASK_FLAGS, offsetof(struct task_struct, flags));
-	DEFINE(TASK_PTRACE, offsetof(struct task_struct, ptrace));
-	DEFINE(TASK_THREAD, offsetof(struct task_struct, thread));
-	DEFINE(TASK_MM, offsetof(struct task_struct, mm));
-	DEFINE(TASK_ACTIVE_MM, offsetof(struct task_struct, active_mm));
+पूर्णांक मुख्य(व्योम)
+अणु
+	/* offsets पूर्णांकo the task_काष्ठा */
+	DEFINE(TASK_STATE, दुरत्व(काष्ठा task_काष्ठा, state));
+	DEFINE(TASK_FLAGS, दुरत्व(काष्ठा task_काष्ठा, flags));
+	DEFINE(TASK_PTRACE, दुरत्व(काष्ठा task_काष्ठा, ptrace));
+	DEFINE(TASK_THREAD, दुरत्व(काष्ठा task_काष्ठा, thपढ़ो));
+	DEFINE(TASK_MM, दुरत्व(काष्ठा task_काष्ठा, mm));
+	DEFINE(TASK_ACTIVE_MM, दुरत्व(काष्ठा task_काष्ठा, active_mm));
 
-	/* offsets into thread_info */
-	DEFINE(TI_TASK, offsetof(struct thread_info, task));
-	DEFINE(TI_FLAGS, offsetof(struct thread_info, flags));
-	DEFINE(TI_PREEMPT, offsetof(struct thread_info, preempt_count));
-	DEFINE(TI_KSP, offsetof(struct thread_info, ksp));
+	/* offsets पूर्णांकo thपढ़ो_info */
+	DEFINE(TI_TASK, दुरत्व(काष्ठा thपढ़ो_info, task));
+	DEFINE(TI_FLAGS, दुरत्व(काष्ठा thपढ़ो_info, flags));
+	DEFINE(TI_PREEMPT, दुरत्व(काष्ठा thपढ़ो_info, preempt_count));
+	DEFINE(TI_KSP, दुरत्व(काष्ठा thपढ़ो_info, ksp));
 
-	DEFINE(PT_SIZE, sizeof(struct pt_regs));
+	DEFINE(PT_SIZE, माप(काष्ठा pt_regs));
 
-	/* Interrupt register frame */
+	/* Interrupt रेजिस्टर frame */
 	DEFINE(STACK_FRAME_OVERHEAD, STACK_FRAME_OVERHEAD);
-	DEFINE(INT_FRAME_SIZE, STACK_FRAME_OVERHEAD + sizeof(struct pt_regs));
+	DEFINE(INT_FRAME_SIZE, STACK_FRAME_OVERHEAD + माप(काष्ठा pt_regs));
 
 	DEFINE(NUM_USER_SEGMENTS, TASK_SIZE >> 28);
-	return 0;
-}
+	वापस 0;
+पूर्ण

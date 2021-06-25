@@ -1,83 +1,84 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef NET_COMPAT_H
-#define NET_COMPAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित NET_COMPAT_H
+#घोषणा NET_COMPAT_H
 
 
-struct sock;
+काष्ठा sock;
 
-#include <linux/compat.h>
+#समावेश <linux/compat.h>
 
-struct compat_msghdr {
-	compat_uptr_t	msg_name;	/* void * */
-	compat_int_t	msg_namelen;
-	compat_uptr_t	msg_iov;	/* struct compat_iovec * */
-	compat_size_t	msg_iovlen;
-	compat_uptr_t	msg_control;	/* void * */
-	compat_size_t	msg_controllen;
-	compat_uint_t	msg_flags;
-};
+काष्ठा compat_msghdr अणु
+	compat_uptr_t	msg_name;	/* व्योम * */
+	compat_पूर्णांक_t	msg_namelen;
+	compat_uptr_t	msg_iov;	/* काष्ठा compat_iovec * */
+	compat_माप_प्रकार	msg_iovlen;
+	compat_uptr_t	msg_control;	/* व्योम * */
+	compat_माप_प्रकार	msg_controllen;
+	compat_uपूर्णांक_t	msg_flags;
+पूर्ण;
 
-struct compat_mmsghdr {
-	struct compat_msghdr msg_hdr;
-	compat_uint_t        msg_len;
-};
+काष्ठा compat_mmsghdr अणु
+	काष्ठा compat_msghdr msg_hdr;
+	compat_uपूर्णांक_t        msg_len;
+पूर्ण;
 
-struct compat_cmsghdr {
-	compat_size_t	cmsg_len;
-	compat_int_t	cmsg_level;
-	compat_int_t	cmsg_type;
-};
+काष्ठा compat_cmsghdr अणु
+	compat_माप_प्रकार	cmsg_len;
+	compat_पूर्णांक_t	cmsg_level;
+	compat_पूर्णांक_t	cmsg_type;
+पूर्ण;
 
-struct compat_rtentry {
+काष्ठा compat_rtentry अणु
 	u32		rt_pad1;
-	struct sockaddr rt_dst;         /* target address               */
-	struct sockaddr rt_gateway;     /* gateway addr (RTF_GATEWAY)   */
-	struct sockaddr rt_genmask;     /* target network mask (IP)     */
-	unsigned short	rt_flags;
-	short		rt_pad2;
+	काष्ठा sockaddr rt_dst;         /* target address               */
+	काष्ठा sockaddr rt_gateway;     /* gateway addr (RTF_GATEWAY)   */
+	काष्ठा sockaddr rt_genmask;     /* target network mask (IP)     */
+	अचिन्हित लघु	rt_flags;
+	लघु		rt_pad2;
 	u32		rt_pad3;
-	unsigned char	rt_tos;
-	unsigned char	rt_class;
-	short		rt_pad4;
-	short		rt_metric;      /* +1 for binary compatibility! */
-	compat_uptr_t	rt_dev;         /* forcing the device at add    */
-	u32		rt_mtu;         /* per route MTU/Window         */
-	u32		rt_window;      /* Window clamping              */
-	unsigned short  rt_irtt;        /* Initial RTT                  */
-};
+	अचिन्हित अक्षर	rt_tos;
+	अचिन्हित अक्षर	rt_class;
+	लघु		rt_pad4;
+	लघु		rt_metric;      /* +1 क्रम binary compatibility! */
+	compat_uptr_t	rt_dev;         /* क्रमcing the device at add    */
+	u32		rt_mtu;         /* per route MTU/Winकरोw         */
+	u32		rt_winकरोw;      /* Winकरोw clamping              */
+	अचिन्हित लघु  rt_irtt;        /* Initial RTT                  */
+पूर्ण;
 
-int __get_compat_msghdr(struct msghdr *kmsg, struct compat_msghdr __user *umsg,
-			struct sockaddr __user **save_addr, compat_uptr_t *ptr,
-			compat_size_t *len);
-int get_compat_msghdr(struct msghdr *, struct compat_msghdr __user *,
-		      struct sockaddr __user **, struct iovec **);
-int put_cmsg_compat(struct msghdr*, int, int, int, void *);
+पूर्णांक __get_compat_msghdr(काष्ठा msghdr *kmsg, काष्ठा compat_msghdr __user *umsg,
+			काष्ठा sockaddr __user **save_addr, compat_uptr_t *ptr,
+			compat_माप_प्रकार *len);
+पूर्णांक get_compat_msghdr(काष्ठा msghdr *, काष्ठा compat_msghdr __user *,
+		      काष्ठा sockaddr __user **, काष्ठा iovec **);
+पूर्णांक put_cmsg_compat(काष्ठा msghdr*, पूर्णांक, पूर्णांक, पूर्णांक, व्योम *);
 
-int cmsghdr_from_user_compat_to_kern(struct msghdr *, struct sock *,
-				     unsigned char *, int);
+पूर्णांक cmsghdr_from_user_compat_to_kern(काष्ठा msghdr *, काष्ठा sock *,
+				     अचिन्हित अक्षर *, पूर्णांक);
 
-struct compat_group_req {
-	__u32				 gr_interface;
-	struct __kernel_sockaddr_storage gr_group
+काष्ठा compat_group_req अणु
+	__u32				 gr_पूर्णांकerface;
+	काष्ठा __kernel_sockaddr_storage gr_group
 		__aligned(4);
-} __packed;
+पूर्ण __packed;
 
-struct compat_group_source_req {
-	__u32				 gsr_interface;
-	struct __kernel_sockaddr_storage gsr_group
+काष्ठा compat_group_source_req अणु
+	__u32				 gsr_पूर्णांकerface;
+	काष्ठा __kernel_sockaddr_storage gsr_group
 		__aligned(4);
-	struct __kernel_sockaddr_storage gsr_source
+	काष्ठा __kernel_sockaddr_storage gsr_source
 		__aligned(4);
-} __packed;
+पूर्ण __packed;
 
-struct compat_group_filter {
-	__u32				 gf_interface;
-	struct __kernel_sockaddr_storage gf_group
+काष्ठा compat_group_filter अणु
+	__u32				 gf_पूर्णांकerface;
+	काष्ठा __kernel_sockaddr_storage gf_group
 		__aligned(4);
-	__u32				 gf_fmode;
+	__u32				 gf_भ_शेषe;
 	__u32				 gf_numsrc;
-	struct __kernel_sockaddr_storage gf_slist[1]
+	काष्ठा __kernel_sockaddr_storage gf_slist[1]
 		__aligned(4);
-} __packed;
+पूर्ण __packed;
 
-#endif /* NET_COMPAT_H */
+#पूर्ण_अगर /* NET_COMPAT_H */

@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_USER_RETURN_NOTIFIER_H
-#define _LINUX_USER_RETURN_NOTIFIER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_USER_RETURN_NOTIFIER_H
+#घोषणा _LINUX_USER_RETURN_NOTIFIER_H
 
-#ifdef CONFIG_USER_RETURN_NOTIFIER
+#अगर_घोषित CONFIG_USER_RETURN_NOTIFIER
 
-#include <linux/list.h>
-#include <linux/sched.h>
+#समावेश <linux/list.h>
+#समावेश <linux/sched.h>
 
-struct user_return_notifier {
-	void (*on_user_return)(struct user_return_notifier *urn);
-	struct hlist_node link;
-};
+काष्ठा user_वापस_notअगरier अणु
+	व्योम (*on_user_वापस)(काष्ठा user_वापस_notअगरier *urn);
+	काष्ठा hlist_node link;
+पूर्ण;
 
 
-void user_return_notifier_register(struct user_return_notifier *urn);
-void user_return_notifier_unregister(struct user_return_notifier *urn);
+व्योम user_वापस_notअगरier_रेजिस्टर(काष्ठा user_वापस_notअगरier *urn);
+व्योम user_वापस_notअगरier_unरेजिस्टर(काष्ठा user_वापस_notअगरier *urn);
 
-static inline void propagate_user_return_notify(struct task_struct *prev,
-						struct task_struct *next)
-{
-	if (test_tsk_thread_flag(prev, TIF_USER_RETURN_NOTIFY)) {
-		clear_tsk_thread_flag(prev, TIF_USER_RETURN_NOTIFY);
-		set_tsk_thread_flag(next, TIF_USER_RETURN_NOTIFY);
-	}
-}
+अटल अंतरभूत व्योम propagate_user_वापस_notअगरy(काष्ठा task_काष्ठा *prev,
+						काष्ठा task_काष्ठा *next)
+अणु
+	अगर (test_tsk_thपढ़ो_flag(prev, TIF_USER_RETURN_NOTIFY)) अणु
+		clear_tsk_thपढ़ो_flag(prev, TIF_USER_RETURN_NOTIFY);
+		set_tsk_thपढ़ो_flag(next, TIF_USER_RETURN_NOTIFY);
+	पूर्ण
+पूर्ण
 
-void fire_user_return_notifiers(void);
+व्योम fire_user_वापस_notअगरiers(व्योम);
 
-static inline void clear_user_return_notifier(struct task_struct *p)
-{
-	clear_tsk_thread_flag(p, TIF_USER_RETURN_NOTIFY);
-}
+अटल अंतरभूत व्योम clear_user_वापस_notअगरier(काष्ठा task_काष्ठा *p)
+अणु
+	clear_tsk_thपढ़ो_flag(p, TIF_USER_RETURN_NOTIFY);
+पूर्ण
 
-#else
+#अन्यथा
 
-struct user_return_notifier {};
+काष्ठा user_वापस_notअगरier अणुपूर्ण;
 
-static inline void propagate_user_return_notify(struct task_struct *prev,
-						struct task_struct *next)
-{
-}
+अटल अंतरभूत व्योम propagate_user_वापस_notअगरy(काष्ठा task_काष्ठा *prev,
+						काष्ठा task_काष्ठा *next)
+अणु
+पूर्ण
 
-static inline void fire_user_return_notifiers(void) {}
+अटल अंतरभूत व्योम fire_user_वापस_notअगरiers(व्योम) अणुपूर्ण
 
-static inline void clear_user_return_notifier(struct task_struct *p) {}
+अटल अंतरभूत व्योम clear_user_वापस_notअगरier(काष्ठा task_काष्ठा *p) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

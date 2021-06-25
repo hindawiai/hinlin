@@ -1,450 +1,451 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2008-2018 Intel Corporation
+ * Copyright तऊ 2008-2018 Intel Corporation
  */
 
-#include <linux/sched/mm.h>
-#include <linux/stop_machine.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/stop_machine.h>
 
-#include "display/intel_display_types.h"
-#include "display/intel_overlay.h"
+#समावेश "display/intel_display_types.h"
+#समावेश "display/intel_overlay.h"
 
-#include "gem/i915_gem_context.h"
+#समावेश "gem/i915_gem_context.h"
 
-#include "i915_drv.h"
-#include "i915_gpu_error.h"
-#include "i915_irq.h"
-#include "intel_breadcrumbs.h"
-#include "intel_engine_pm.h"
-#include "intel_gt.h"
-#include "intel_gt_pm.h"
-#include "intel_gt_requests.h"
-#include "intel_reset.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_gpu_error.h"
+#समावेश "i915_irq.h"
+#समावेश "intel_breadcrumbs.h"
+#समावेश "intel_engine_pm.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_gt_pm.h"
+#समावेश "intel_gt_requests.h"
+#समावेश "intel_reset.h"
 
-#include "uc/intel_guc.h"
-#include "uc/intel_guc_submission.h"
+#समावेश "uc/intel_guc.h"
+#समावेश "uc/intel_guc_submission.h"
 
-#define RESET_MAX_RETRIES 3
+#घोषणा RESET_MAX_RETRIES 3
 
-/* XXX How to handle concurrent GGTT updates using tiling registers? */
-#define RESET_UNDER_STOP_MACHINE 0
+/* XXX How to handle concurrent GGTT updates using tiling रेजिस्टरs? */
+#घोषणा RESET_UNDER_STOP_MACHINE 0
 
-static void rmw_set_fw(struct intel_uncore *uncore, i915_reg_t reg, u32 set)
-{
-	intel_uncore_rmw_fw(uncore, reg, 0, set);
-}
+अटल व्योम rmw_set_fw(काष्ठा पूर्णांकel_uncore *uncore, i915_reg_t reg, u32 set)
+अणु
+	पूर्णांकel_uncore_rmw_fw(uncore, reg, 0, set);
+पूर्ण
 
-static void rmw_clear_fw(struct intel_uncore *uncore, i915_reg_t reg, u32 clr)
-{
-	intel_uncore_rmw_fw(uncore, reg, clr, 0);
-}
+अटल व्योम rmw_clear_fw(काष्ठा पूर्णांकel_uncore *uncore, i915_reg_t reg, u32 clr)
+अणु
+	पूर्णांकel_uncore_rmw_fw(uncore, reg, clr, 0);
+पूर्ण
 
-static void skip_context(struct i915_request *rq)
-{
-	struct intel_context *hung_ctx = rq->context;
+अटल व्योम skip_context(काष्ठा i915_request *rq)
+अणु
+	काष्ठा पूर्णांकel_context *hung_ctx = rq->context;
 
-	list_for_each_entry_from_rcu(rq, &hung_ctx->timeline->requests, link) {
-		if (!i915_request_is_active(rq))
-			return;
+	list_क्रम_each_entry_from_rcu(rq, &hung_ctx->समयline->requests, link) अणु
+		अगर (!i915_request_is_active(rq))
+			वापस;
 
-		if (rq->context == hung_ctx) {
+		अगर (rq->context == hung_ctx) अणु
 			i915_request_set_error_once(rq, -EIO);
 			__i915_request_skip(rq);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void client_mark_guilty(struct i915_gem_context *ctx, bool banned)
-{
-	struct drm_i915_file_private *file_priv = ctx->file_priv;
-	unsigned long prev_hang;
-	unsigned int score;
+अटल व्योम client_mark_guilty(काष्ठा i915_gem_context *ctx, bool banned)
+अणु
+	काष्ठा drm_i915_file_निजी *file_priv = ctx->file_priv;
+	अचिन्हित दीर्घ prev_hang;
+	अचिन्हित पूर्णांक score;
 
-	if (IS_ERR_OR_NULL(file_priv))
-		return;
+	अगर (IS_ERR_OR_शून्य(file_priv))
+		वापस;
 
 	score = 0;
-	if (banned)
+	अगर (banned)
 		score = I915_CLIENT_SCORE_CONTEXT_BAN;
 
-	prev_hang = xchg(&file_priv->hang_timestamp, jiffies);
-	if (time_before(jiffies, prev_hang + I915_CLIENT_FAST_HANG_JIFFIES))
+	prev_hang = xchg(&file_priv->hang_बारtamp, jअगरfies);
+	अगर (समय_beक्रमe(jअगरfies, prev_hang + I915_CLIENT_FAST_HANG_JIFFIES))
 		score += I915_CLIENT_SCORE_HANG_FAST;
 
-	if (score) {
+	अगर (score) अणु
 		atomic_add(score, &file_priv->ban_score);
 
 		drm_dbg(&ctx->i915->drm,
 			"client %s: gained %u ban score, now %u\n",
 			ctx->name, score,
-			atomic_read(&file_priv->ban_score));
-	}
-}
+			atomic_पढ़ो(&file_priv->ban_score));
+	पूर्ण
+पूर्ण
 
-static bool mark_guilty(struct i915_request *rq)
-{
-	struct i915_gem_context *ctx;
-	unsigned long prev_hang;
+अटल bool mark_guilty(काष्ठा i915_request *rq)
+अणु
+	काष्ठा i915_gem_context *ctx;
+	अचिन्हित दीर्घ prev_hang;
 	bool banned;
-	int i;
+	पूर्णांक i;
 
-	if (intel_context_is_closed(rq->context)) {
-		intel_context_set_banned(rq->context);
-		return true;
-	}
+	अगर (पूर्णांकel_context_is_बंदd(rq->context)) अणु
+		पूर्णांकel_context_set_banned(rq->context);
+		वापस true;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ctx = rcu_dereference(rq->context->gem_context);
-	if (ctx && !kref_get_unless_zero(&ctx->ref))
-		ctx = NULL;
-	rcu_read_unlock();
-	if (!ctx)
-		return intel_context_is_banned(rq->context);
+	अगर (ctx && !kref_get_unless_zero(&ctx->ref))
+		ctx = शून्य;
+	rcu_पढ़ो_unlock();
+	अगर (!ctx)
+		वापस पूर्णांकel_context_is_banned(rq->context);
 
 	atomic_inc(&ctx->guilty_count);
 
-	/* Cool contexts are too cool to be banned! (Used for reset testing.) */
-	if (!i915_gem_context_is_bannable(ctx)) {
+	/* Cool contexts are too cool to be banned! (Used क्रम reset testing.) */
+	अगर (!i915_gem_context_is_bannable(ctx)) अणु
 		banned = false;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	drm_notice(&ctx->i915->drm,
 		   "%s context reset due to GPU hang\n",
 		   ctx->name);
 
-	/* Record the timestamp for the last N hangs */
-	prev_hang = ctx->hang_timestamp[0];
-	for (i = 0; i < ARRAY_SIZE(ctx->hang_timestamp) - 1; i++)
-		ctx->hang_timestamp[i] = ctx->hang_timestamp[i + 1];
-	ctx->hang_timestamp[i] = jiffies;
+	/* Record the बारtamp क्रम the last N hangs */
+	prev_hang = ctx->hang_बारtamp[0];
+	क्रम (i = 0; i < ARRAY_SIZE(ctx->hang_बारtamp) - 1; i++)
+		ctx->hang_बारtamp[i] = ctx->hang_बारtamp[i + 1];
+	ctx->hang_बारtamp[i] = jअगरfies;
 
-	/* If we have hung N+1 times in rapid succession, we ban the context! */
+	/* If we have hung N+1 बार in rapid succession, we ban the context! */
 	banned = !i915_gem_context_is_recoverable(ctx);
-	if (time_before(jiffies, prev_hang + CONTEXT_FAST_HANG_JIFFIES))
+	अगर (समय_beक्रमe(jअगरfies, prev_hang + CONTEXT_FAST_HANG_JIFFIES))
 		banned = true;
-	if (banned) {
+	अगर (banned) अणु
 		drm_dbg(&ctx->i915->drm, "context %s: guilty %d, banned\n",
-			ctx->name, atomic_read(&ctx->guilty_count));
-		intel_context_set_banned(rq->context);
-	}
+			ctx->name, atomic_पढ़ो(&ctx->guilty_count));
+		पूर्णांकel_context_set_banned(rq->context);
+	पूर्ण
 
 	client_mark_guilty(ctx, banned);
 
 out:
 	i915_gem_context_put(ctx);
-	return banned;
-}
+	वापस banned;
+पूर्ण
 
-static void mark_innocent(struct i915_request *rq)
-{
-	struct i915_gem_context *ctx;
+अटल व्योम mark_innocent(काष्ठा i915_request *rq)
+अणु
+	काष्ठा i915_gem_context *ctx;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ctx = rcu_dereference(rq->context->gem_context);
-	if (ctx)
+	अगर (ctx)
 		atomic_inc(&ctx->active_count);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-void __i915_request_reset(struct i915_request *rq, bool guilty)
-{
+व्योम __i915_request_reset(काष्ठा i915_request *rq, bool guilty)
+अणु
 	RQ_TRACE(rq, "guilty? %s\n", yesno(guilty));
 	GEM_BUG_ON(__i915_request_is_complete(rq));
 
-	rcu_read_lock(); /* protect the GEM context */
-	if (guilty) {
+	rcu_पढ़ो_lock(); /* protect the GEM context */
+	अगर (guilty) अणु
 		i915_request_set_error_once(rq, -EIO);
 		__i915_request_skip(rq);
-		if (mark_guilty(rq))
+		अगर (mark_guilty(rq))
 			skip_context(rq);
-	} else {
+	पूर्ण अन्यथा अणु
 		i915_request_set_error_once(rq, -EAGAIN);
 		mark_innocent(rq);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static bool i915_in_reset(struct pci_dev *pdev)
-{
+अटल bool i915_in_reset(काष्ठा pci_dev *pdev)
+अणु
 	u8 gdrst;
 
-	pci_read_config_byte(pdev, I915_GDRST, &gdrst);
-	return gdrst & GRDOM_RESET_STATUS;
-}
+	pci_पढ़ो_config_byte(pdev, I915_GDRST, &gdrst);
+	वापस gdrst & GRDOM_RESET_STATUS;
+पूर्ण
 
-static int i915_do_reset(struct intel_gt *gt,
-			 intel_engine_mask_t engine_mask,
-			 unsigned int retry)
-{
-	struct pci_dev *pdev = to_pci_dev(gt->i915->drm.dev);
-	int err;
+अटल पूर्णांक i915_करो_reset(काष्ठा पूर्णांकel_gt *gt,
+			 पूर्णांकel_engine_mask_t engine_mask,
+			 अचिन्हित पूर्णांक retry)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(gt->i915->drm.dev);
+	पूर्णांक err;
 
-	/* Assert reset for at least 20 usec, and wait for acknowledgement. */
-	pci_write_config_byte(pdev, I915_GDRST, GRDOM_RESET_ENABLE);
+	/* Assert reset क्रम at least 20 usec, and रुको क्रम acknowledgement. */
+	pci_ग_लिखो_config_byte(pdev, I915_GDRST, GRDOM_RESET_ENABLE);
 	udelay(50);
-	err = wait_for_atomic(i915_in_reset(pdev), 50);
+	err = रुको_क्रम_atomic(i915_in_reset(pdev), 50);
 
 	/* Clear the reset request. */
-	pci_write_config_byte(pdev, I915_GDRST, 0);
+	pci_ग_लिखो_config_byte(pdev, I915_GDRST, 0);
 	udelay(50);
-	if (!err)
-		err = wait_for_atomic(!i915_in_reset(pdev), 50);
+	अगर (!err)
+		err = रुको_क्रम_atomic(!i915_in_reset(pdev), 50);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool g4x_reset_complete(struct pci_dev *pdev)
-{
+अटल bool g4x_reset_complete(काष्ठा pci_dev *pdev)
+अणु
 	u8 gdrst;
 
-	pci_read_config_byte(pdev, I915_GDRST, &gdrst);
-	return (gdrst & GRDOM_RESET_ENABLE) == 0;
-}
+	pci_पढ़ो_config_byte(pdev, I915_GDRST, &gdrst);
+	वापस (gdrst & GRDOM_RESET_ENABLE) == 0;
+पूर्ण
 
-static int g33_do_reset(struct intel_gt *gt,
-			intel_engine_mask_t engine_mask,
-			unsigned int retry)
-{
-	struct pci_dev *pdev = to_pci_dev(gt->i915->drm.dev);
+अटल पूर्णांक g33_करो_reset(काष्ठा पूर्णांकel_gt *gt,
+			पूर्णांकel_engine_mask_t engine_mask,
+			अचिन्हित पूर्णांक retry)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(gt->i915->drm.dev);
 
-	pci_write_config_byte(pdev, I915_GDRST, GRDOM_RESET_ENABLE);
-	return wait_for_atomic(g4x_reset_complete(pdev), 50);
-}
+	pci_ग_लिखो_config_byte(pdev, I915_GDRST, GRDOM_RESET_ENABLE);
+	वापस रुको_क्रम_atomic(g4x_reset_complete(pdev), 50);
+पूर्ण
 
-static int g4x_do_reset(struct intel_gt *gt,
-			intel_engine_mask_t engine_mask,
-			unsigned int retry)
-{
-	struct pci_dev *pdev = to_pci_dev(gt->i915->drm.dev);
-	struct intel_uncore *uncore = gt->uncore;
-	int ret;
+अटल पूर्णांक g4x_करो_reset(काष्ठा पूर्णांकel_gt *gt,
+			पूर्णांकel_engine_mask_t engine_mask,
+			अचिन्हित पूर्णांक retry)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(gt->i915->drm.dev);
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
+	पूर्णांक ret;
 
 	/* WaVcpClkGateDisableForMediaReset:ctg,elk */
 	rmw_set_fw(uncore, VDECCLK_GATE_D, VCP_UNIT_CLOCK_GATE_DISABLE);
-	intel_uncore_posting_read_fw(uncore, VDECCLK_GATE_D);
+	पूर्णांकel_uncore_posting_पढ़ो_fw(uncore, VDECCLK_GATE_D);
 
-	pci_write_config_byte(pdev, I915_GDRST,
+	pci_ग_लिखो_config_byte(pdev, I915_GDRST,
 			      GRDOM_MEDIA | GRDOM_RESET_ENABLE);
-	ret =  wait_for_atomic(g4x_reset_complete(pdev), 50);
-	if (ret) {
+	ret =  रुको_क्रम_atomic(g4x_reset_complete(pdev), 50);
+	अगर (ret) अणु
 		GT_TRACE(gt, "Wait for media reset failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	pci_write_config_byte(pdev, I915_GDRST,
+	pci_ग_लिखो_config_byte(pdev, I915_GDRST,
 			      GRDOM_RENDER | GRDOM_RESET_ENABLE);
-	ret =  wait_for_atomic(g4x_reset_complete(pdev), 50);
-	if (ret) {
+	ret =  रुको_क्रम_atomic(g4x_reset_complete(pdev), 50);
+	अगर (ret) अणु
 		GT_TRACE(gt, "Wait for render reset failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	pci_write_config_byte(pdev, I915_GDRST, 0);
+	pci_ग_लिखो_config_byte(pdev, I915_GDRST, 0);
 
 	rmw_clear_fw(uncore, VDECCLK_GATE_D, VCP_UNIT_CLOCK_GATE_DISABLE);
-	intel_uncore_posting_read_fw(uncore, VDECCLK_GATE_D);
+	पूर्णांकel_uncore_posting_पढ़ो_fw(uncore, VDECCLK_GATE_D);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ilk_do_reset(struct intel_gt *gt, intel_engine_mask_t engine_mask,
-			unsigned int retry)
-{
-	struct intel_uncore *uncore = gt->uncore;
-	int ret;
+अटल पूर्णांक ilk_करो_reset(काष्ठा पूर्णांकel_gt *gt, पूर्णांकel_engine_mask_t engine_mask,
+			अचिन्हित पूर्णांक retry)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
+	पूर्णांक ret;
 
-	intel_uncore_write_fw(uncore, ILK_GDSR,
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, ILK_GDSR,
 			      ILK_GRDOM_RENDER | ILK_GRDOM_RESET_ENABLE);
-	ret = __intel_wait_for_register_fw(uncore, ILK_GDSR,
+	ret = __पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(uncore, ILK_GDSR,
 					   ILK_GRDOM_RESET_ENABLE, 0,
 					   5000, 0,
-					   NULL);
-	if (ret) {
+					   शून्य);
+	अगर (ret) अणु
 		GT_TRACE(gt, "Wait for render reset failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	intel_uncore_write_fw(uncore, ILK_GDSR,
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, ILK_GDSR,
 			      ILK_GRDOM_MEDIA | ILK_GRDOM_RESET_ENABLE);
-	ret = __intel_wait_for_register_fw(uncore, ILK_GDSR,
+	ret = __पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(uncore, ILK_GDSR,
 					   ILK_GRDOM_RESET_ENABLE, 0,
 					   5000, 0,
-					   NULL);
-	if (ret) {
+					   शून्य);
+	अगर (ret) अणु
 		GT_TRACE(gt, "Wait for media reset failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	intel_uncore_write_fw(uncore, ILK_GDSR, 0);
-	intel_uncore_posting_read_fw(uncore, ILK_GDSR);
-	return ret;
-}
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, ILK_GDSR, 0);
+	पूर्णांकel_uncore_posting_पढ़ो_fw(uncore, ILK_GDSR);
+	वापस ret;
+पूर्ण
 
-/* Reset the hardware domains (GENX_GRDOM_*) specified by mask */
-static int gen6_hw_domain_reset(struct intel_gt *gt, u32 hw_domain_mask)
-{
-	struct intel_uncore *uncore = gt->uncore;
-	int err;
+/* Reset the hardware करोमुख्यs (GENX_GRDOM_*) specअगरied by mask */
+अटल पूर्णांक gen6_hw_करोमुख्य_reset(काष्ठा पूर्णांकel_gt *gt, u32 hw_करोमुख्य_mask)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
+	पूर्णांक err;
 
 	/*
-	 * GEN6_GDRST is not in the gt power well, no need to check
-	 * for fifo space for the write or forcewake the chip for
-	 * the read
+	 * GEN6_GDRST is not in the gt घातer well, no need to check
+	 * क्रम fअगरo space क्रम the ग_लिखो or क्रमcewake the chip क्रम
+	 * the पढ़ो
 	 */
-	intel_uncore_write_fw(uncore, GEN6_GDRST, hw_domain_mask);
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, GEN6_GDRST, hw_करोमुख्य_mask);
 
-	/* Wait for the device to ack the reset requests */
-	err = __intel_wait_for_register_fw(uncore,
-					   GEN6_GDRST, hw_domain_mask, 0,
+	/* Wait क्रम the device to ack the reset requests */
+	err = __पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(uncore,
+					   GEN6_GDRST, hw_करोमुख्य_mask, 0,
 					   500, 0,
-					   NULL);
-	if (err)
+					   शून्य);
+	अगर (err)
 		GT_TRACE(gt,
 			 "Wait for 0x%08x engines reset failed\n",
-			 hw_domain_mask);
+			 hw_करोमुख्य_mask);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gen6_reset_engines(struct intel_gt *gt,
-			      intel_engine_mask_t engine_mask,
-			      unsigned int retry)
-{
-	static const u32 hw_engine_mask[] = {
+अटल पूर्णांक gen6_reset_engines(काष्ठा पूर्णांकel_gt *gt,
+			      पूर्णांकel_engine_mask_t engine_mask,
+			      अचिन्हित पूर्णांक retry)
+अणु
+	अटल स्थिर u32 hw_engine_mask[] = अणु
 		[RCS0]  = GEN6_GRDOM_RENDER,
 		[BCS0]  = GEN6_GRDOM_BLT,
 		[VCS0]  = GEN6_GRDOM_MEDIA,
 		[VCS1]  = GEN8_GRDOM_MEDIA2,
 		[VECS0] = GEN6_GRDOM_VECS,
-	};
-	struct intel_engine_cs *engine;
+	पूर्ण;
+	काष्ठा पूर्णांकel_engine_cs *engine;
 	u32 hw_mask;
 
-	if (engine_mask == ALL_ENGINES) {
+	अगर (engine_mask == ALL_ENGINES) अणु
 		hw_mask = GEN6_GRDOM_FULL;
-	} else {
-		intel_engine_mask_t tmp;
+	पूर्ण अन्यथा अणु
+		पूर्णांकel_engine_mask_t पंचांगp;
 
 		hw_mask = 0;
-		for_each_engine_masked(engine, gt, engine_mask, tmp) {
+		क्रम_each_engine_masked(engine, gt, engine_mask, पंचांगp) अणु
 			GEM_BUG_ON(engine->id >= ARRAY_SIZE(hw_engine_mask));
 			hw_mask |= hw_engine_mask[engine->id];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return gen6_hw_domain_reset(gt, hw_mask);
-}
+	वापस gen6_hw_करोमुख्य_reset(gt, hw_mask);
+पूर्ण
 
-static int gen11_lock_sfc(struct intel_engine_cs *engine, u32 *hw_mask)
-{
-	struct intel_uncore *uncore = engine->uncore;
+अटल पूर्णांक gen11_lock_sfc(काष्ठा पूर्णांकel_engine_cs *engine, u32 *hw_mask)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
 	u8 vdbox_sfc_access = engine->gt->info.vdbox_sfc_access;
-	i915_reg_t sfc_forced_lock, sfc_forced_lock_ack;
-	u32 sfc_forced_lock_bit, sfc_forced_lock_ack_bit;
+	i915_reg_t sfc_क्रमced_lock, sfc_क्रमced_lock_ack;
+	u32 sfc_क्रमced_lock_bit, sfc_क्रमced_lock_ack_bit;
 	i915_reg_t sfc_usage;
 	u32 sfc_usage_bit;
 	u32 sfc_reset_bit;
-	int ret;
+	पूर्णांक ret;
 
-	switch (engine->class) {
-	case VIDEO_DECODE_CLASS:
-		if ((BIT(engine->instance) & vdbox_sfc_access) == 0)
-			return 0;
+	चयन (engine->class) अणु
+	हाल VIDEO_DECODE_CLASS:
+		अगर ((BIT(engine->instance) & vdbox_sfc_access) == 0)
+			वापस 0;
 
-		sfc_forced_lock = GEN11_VCS_SFC_FORCED_LOCK(engine);
-		sfc_forced_lock_bit = GEN11_VCS_SFC_FORCED_LOCK_BIT;
+		sfc_क्रमced_lock = GEN11_VCS_SFC_FORCED_LOCK(engine);
+		sfc_क्रमced_lock_bit = GEN11_VCS_SFC_FORCED_LOCK_BIT;
 
-		sfc_forced_lock_ack = GEN11_VCS_SFC_LOCK_STATUS(engine);
-		sfc_forced_lock_ack_bit  = GEN11_VCS_SFC_LOCK_ACK_BIT;
+		sfc_क्रमced_lock_ack = GEN11_VCS_SFC_LOCK_STATUS(engine);
+		sfc_क्रमced_lock_ack_bit  = GEN11_VCS_SFC_LOCK_ACK_BIT;
 
 		sfc_usage = GEN11_VCS_SFC_LOCK_STATUS(engine);
 		sfc_usage_bit = GEN11_VCS_SFC_USAGE_BIT;
 		sfc_reset_bit = GEN11_VCS_SFC_RESET_BIT(engine->instance);
-		break;
+		अवरोध;
 
-	case VIDEO_ENHANCEMENT_CLASS:
-		sfc_forced_lock = GEN11_VECS_SFC_FORCED_LOCK(engine);
-		sfc_forced_lock_bit = GEN11_VECS_SFC_FORCED_LOCK_BIT;
+	हाल VIDEO_ENHANCEMENT_CLASS:
+		sfc_क्रमced_lock = GEN11_VECS_SFC_FORCED_LOCK(engine);
+		sfc_क्रमced_lock_bit = GEN11_VECS_SFC_FORCED_LOCK_BIT;
 
-		sfc_forced_lock_ack = GEN11_VECS_SFC_LOCK_ACK(engine);
-		sfc_forced_lock_ack_bit  = GEN11_VECS_SFC_LOCK_ACK_BIT;
+		sfc_क्रमced_lock_ack = GEN11_VECS_SFC_LOCK_ACK(engine);
+		sfc_क्रमced_lock_ack_bit  = GEN11_VECS_SFC_LOCK_ACK_BIT;
 
 		sfc_usage = GEN11_VECS_SFC_USAGE(engine);
 		sfc_usage_bit = GEN11_VECS_SFC_USAGE_BIT;
 		sfc_reset_bit = GEN11_VECS_SFC_RESET_BIT(engine->instance);
-		break;
+		अवरोध;
 
-	default:
-		return 0;
-	}
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * If the engine is using a SFC, tell the engine that a software reset
-	 * is going to happen. The engine will then try to force lock the SFC.
+	 * is going to happen. The engine will then try to क्रमce lock the SFC.
 	 * If SFC ends up being locked to the engine we want to reset, we have
 	 * to reset it as well (we will unlock it once the reset sequence is
 	 * completed).
 	 */
-	if (!(intel_uncore_read_fw(uncore, sfc_usage) & sfc_usage_bit))
-		return 0;
+	अगर (!(पूर्णांकel_uncore_पढ़ो_fw(uncore, sfc_usage) & sfc_usage_bit))
+		वापस 0;
 
-	rmw_set_fw(uncore, sfc_forced_lock, sfc_forced_lock_bit);
+	rmw_set_fw(uncore, sfc_क्रमced_lock, sfc_क्रमced_lock_bit);
 
-	ret = __intel_wait_for_register_fw(uncore,
-					   sfc_forced_lock_ack,
-					   sfc_forced_lock_ack_bit,
-					   sfc_forced_lock_ack_bit,
-					   1000, 0, NULL);
+	ret = __पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(uncore,
+					   sfc_क्रमced_lock_ack,
+					   sfc_क्रमced_lock_ack_bit,
+					   sfc_क्रमced_lock_ack_bit,
+					   1000, 0, शून्य);
 
-	/* Was the SFC released while we were trying to lock it? */
-	if (!(intel_uncore_read_fw(uncore, sfc_usage) & sfc_usage_bit))
-		return 0;
+	/* Was the SFC released जबतक we were trying to lock it? */
+	अगर (!(पूर्णांकel_uncore_पढ़ो_fw(uncore, sfc_usage) & sfc_usage_bit))
+		वापस 0;
 
-	if (ret) {
+	अगर (ret) अणु
 		ENGINE_TRACE(engine, "Wait for SFC forced lock ack failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	*hw_mask |= sfc_reset_bit;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gen11_unlock_sfc(struct intel_engine_cs *engine)
-{
-	struct intel_uncore *uncore = engine->uncore;
+अटल व्योम gen11_unlock_sfc(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
 	u8 vdbox_sfc_access = engine->gt->info.vdbox_sfc_access;
-	i915_reg_t sfc_forced_lock;
-	u32 sfc_forced_lock_bit;
+	i915_reg_t sfc_क्रमced_lock;
+	u32 sfc_क्रमced_lock_bit;
 
-	switch (engine->class) {
-	case VIDEO_DECODE_CLASS:
-		if ((BIT(engine->instance) & vdbox_sfc_access) == 0)
-			return;
+	चयन (engine->class) अणु
+	हाल VIDEO_DECODE_CLASS:
+		अगर ((BIT(engine->instance) & vdbox_sfc_access) == 0)
+			वापस;
 
-		sfc_forced_lock = GEN11_VCS_SFC_FORCED_LOCK(engine);
-		sfc_forced_lock_bit = GEN11_VCS_SFC_FORCED_LOCK_BIT;
-		break;
+		sfc_क्रमced_lock = GEN11_VCS_SFC_FORCED_LOCK(engine);
+		sfc_क्रमced_lock_bit = GEN11_VCS_SFC_FORCED_LOCK_BIT;
+		अवरोध;
 
-	case VIDEO_ENHANCEMENT_CLASS:
-		sfc_forced_lock = GEN11_VECS_SFC_FORCED_LOCK(engine);
-		sfc_forced_lock_bit = GEN11_VECS_SFC_FORCED_LOCK_BIT;
-		break;
+	हाल VIDEO_ENHANCEMENT_CLASS:
+		sfc_क्रमced_lock = GEN11_VECS_SFC_FORCED_LOCK(engine);
+		sfc_क्रमced_lock_bit = GEN11_VECS_SFC_FORCED_LOCK_BIT;
+		अवरोध;
 
-	default:
-		return;
-	}
+	शेष:
+		वापस;
+	पूर्ण
 
-	rmw_clear_fw(uncore, sfc_forced_lock, sfc_forced_lock_bit);
-}
+	rmw_clear_fw(uncore, sfc_क्रमced_lock, sfc_क्रमced_lock_bit);
+पूर्ण
 
-static int gen11_reset_engines(struct intel_gt *gt,
-			       intel_engine_mask_t engine_mask,
-			       unsigned int retry)
-{
-	static const u32 hw_engine_mask[] = {
+अटल पूर्णांक gen11_reset_engines(काष्ठा पूर्णांकel_gt *gt,
+			       पूर्णांकel_engine_mask_t engine_mask,
+			       अचिन्हित पूर्णांक retry)
+अणु
+	अटल स्थिर u32 hw_engine_mask[] = अणु
 		[RCS0]  = GEN11_GRDOM_RENDER,
 		[BCS0]  = GEN11_GRDOM_BLT,
 		[VCS0]  = GEN11_GRDOM_MEDIA,
@@ -453,55 +454,55 @@ static int gen11_reset_engines(struct intel_gt *gt,
 		[VCS3]  = GEN11_GRDOM_MEDIA4,
 		[VECS0] = GEN11_GRDOM_VECS,
 		[VECS1] = GEN11_GRDOM_VECS2,
-	};
-	struct intel_engine_cs *engine;
-	intel_engine_mask_t tmp;
+	पूर्ण;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	पूर्णांकel_engine_mask_t पंचांगp;
 	u32 hw_mask;
-	int ret;
+	पूर्णांक ret;
 
-	if (engine_mask == ALL_ENGINES) {
+	अगर (engine_mask == ALL_ENGINES) अणु
 		hw_mask = GEN11_GRDOM_FULL;
-	} else {
+	पूर्ण अन्यथा अणु
 		hw_mask = 0;
-		for_each_engine_masked(engine, gt, engine_mask, tmp) {
+		क्रम_each_engine_masked(engine, gt, engine_mask, पंचांगp) अणु
 			GEM_BUG_ON(engine->id >= ARRAY_SIZE(hw_engine_mask));
 			hw_mask |= hw_engine_mask[engine->id];
 			ret = gen11_lock_sfc(engine, &hw_mask);
-			if (ret)
-				goto sfc_unlock;
-		}
-	}
+			अगर (ret)
+				जाओ sfc_unlock;
+		पूर्ण
+	पूर्ण
 
-	ret = gen6_hw_domain_reset(gt, hw_mask);
+	ret = gen6_hw_करोमुख्य_reset(gt, hw_mask);
 
 sfc_unlock:
 	/*
 	 * We unlock the SFC based on the lock status and not the result of
-	 * gen11_lock_sfc to make sure that we clean properly if something
-	 * wrong happened during the lock (e.g. lock acquired after timeout
+	 * gen11_lock_sfc to make sure that we clean properly अगर something
+	 * wrong happened during the lock (e.g. lock acquired after समयout
 	 * expiration).
 	 */
-	if (engine_mask != ALL_ENGINES)
-		for_each_engine_masked(engine, gt, engine_mask, tmp)
+	अगर (engine_mask != ALL_ENGINES)
+		क्रम_each_engine_masked(engine, gt, engine_mask, पंचांगp)
 			gen11_unlock_sfc(engine);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gen8_engine_reset_prepare(struct intel_engine_cs *engine)
-{
-	struct intel_uncore *uncore = engine->uncore;
-	const i915_reg_t reg = RING_RESET_CTL(engine->mmio_base);
+अटल पूर्णांक gen8_engine_reset_prepare(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
+	स्थिर i915_reg_t reg = RING_RESET_CTL(engine->mmio_base);
 	u32 request, mask, ack;
-	int ret;
+	पूर्णांक ret;
 
-	if (I915_SELFTEST_ONLY(should_fail(&engine->reset_timeout, 1)))
-		return -ETIMEDOUT;
+	अगर (I915_SELFTEST_ONLY(should_fail(&engine->reset_समयout, 1)))
+		वापस -ETIMEDOUT;
 
-	ack = intel_uncore_read_fw(uncore, reg);
-	if (ack & RESET_CTL_CAT_ERROR) {
+	ack = पूर्णांकel_uncore_पढ़ो_fw(uncore, reg);
+	अगर (ack & RESET_CTL_CAT_ERROR) अणु
 		/*
-		 * For catastrophic errors, ready-for-reset sequence
+		 * For catastrophic errors, पढ़ोy-क्रम-reset sequence
 		 * needs to be bypassed: HAS#396813
 		 */
 		request = RESET_CTL_CAT_ERROR;
@@ -509,203 +510,203 @@ static int gen8_engine_reset_prepare(struct intel_engine_cs *engine)
 
 		/* Catastrophic errors need to be cleared by HW */
 		ack = 0;
-	} else if (!(ack & RESET_CTL_READY_TO_RESET)) {
+	पूर्ण अन्यथा अगर (!(ack & RESET_CTL_READY_TO_RESET)) अणु
 		request = RESET_CTL_REQUEST_RESET;
 		mask = RESET_CTL_READY_TO_RESET;
 		ack = RESET_CTL_READY_TO_RESET;
-	} else {
-		return 0;
-	}
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
 
-	intel_uncore_write_fw(uncore, reg, _MASKED_BIT_ENABLE(request));
-	ret = __intel_wait_for_register_fw(uncore, reg, mask, ack,
-					   700, 0, NULL);
-	if (ret)
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, reg, _MASKED_BIT_ENABLE(request));
+	ret = __पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(uncore, reg, mask, ack,
+					   700, 0, शून्य);
+	अगर (ret)
 		drm_err(&engine->i915->drm,
 			"%s reset request timed out: {request: %08x, RESET_CTL: %08x}\n",
 			engine->name, request,
-			intel_uncore_read_fw(uncore, reg));
+			पूर्णांकel_uncore_पढ़ो_fw(uncore, reg));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void gen8_engine_reset_cancel(struct intel_engine_cs *engine)
-{
-	intel_uncore_write_fw(engine->uncore,
+अटल व्योम gen8_engine_reset_cancel(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांकel_uncore_ग_लिखो_fw(engine->uncore,
 			      RING_RESET_CTL(engine->mmio_base),
 			      _MASKED_BIT_DISABLE(RESET_CTL_REQUEST_RESET));
-}
+पूर्ण
 
-static int gen8_reset_engines(struct intel_gt *gt,
-			      intel_engine_mask_t engine_mask,
-			      unsigned int retry)
-{
-	struct intel_engine_cs *engine;
-	const bool reset_non_ready = retry >= 1;
-	intel_engine_mask_t tmp;
-	int ret;
+अटल पूर्णांक gen8_reset_engines(काष्ठा पूर्णांकel_gt *gt,
+			      पूर्णांकel_engine_mask_t engine_mask,
+			      अचिन्हित पूर्णांक retry)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	स्थिर bool reset_non_पढ़ोy = retry >= 1;
+	पूर्णांकel_engine_mask_t पंचांगp;
+	पूर्णांक ret;
 
-	for_each_engine_masked(engine, gt, engine_mask, tmp) {
+	क्रम_each_engine_masked(engine, gt, engine_mask, पंचांगp) अणु
 		ret = gen8_engine_reset_prepare(engine);
-		if (ret && !reset_non_ready)
-			goto skip_reset;
+		अगर (ret && !reset_non_पढ़ोy)
+			जाओ skip_reset;
 
 		/*
 		 * If this is not the first failed attempt to prepare,
 		 * we decide to proceed anyway.
 		 *
-		 * By doing so we risk context corruption and with
-		 * some gens (kbl), possible system hang if reset
+		 * By करोing so we risk context corruption and with
+		 * some gens (kbl), possible प्रणाली hang अगर reset
 		 * happens during active bb execution.
 		 *
 		 * We rather take context corruption instead of
 		 * failed reset with a wedged driver/gpu. And
-		 * active bb execution case should be covered by
-		 * stop_engines() we have before the reset.
+		 * active bb execution हाल should be covered by
+		 * stop_engines() we have beक्रमe the reset.
 		 */
-	}
+	पूर्ण
 
-	if (INTEL_GEN(gt->i915) >= 11)
+	अगर (INTEL_GEN(gt->i915) >= 11)
 		ret = gen11_reset_engines(gt, engine_mask, retry);
-	else
+	अन्यथा
 		ret = gen6_reset_engines(gt, engine_mask, retry);
 
 skip_reset:
-	for_each_engine_masked(engine, gt, engine_mask, tmp)
+	क्रम_each_engine_masked(engine, gt, engine_mask, पंचांगp)
 		gen8_engine_reset_cancel(engine);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mock_reset(struct intel_gt *gt,
-		      intel_engine_mask_t mask,
-		      unsigned int retry)
-{
-	return 0;
-}
+अटल पूर्णांक mock_reset(काष्ठा पूर्णांकel_gt *gt,
+		      पूर्णांकel_engine_mask_t mask,
+		      अचिन्हित पूर्णांक retry)
+अणु
+	वापस 0;
+पूर्ण
 
-typedef int (*reset_func)(struct intel_gt *,
-			  intel_engine_mask_t engine_mask,
-			  unsigned int retry);
+प्रकार पूर्णांक (*reset_func)(काष्ठा पूर्णांकel_gt *,
+			  पूर्णांकel_engine_mask_t engine_mask,
+			  अचिन्हित पूर्णांक retry);
 
-static reset_func intel_get_gpu_reset(const struct intel_gt *gt)
-{
-	struct drm_i915_private *i915 = gt->i915;
+अटल reset_func पूर्णांकel_get_gpu_reset(स्थिर काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
 
-	if (is_mock_gt(gt))
-		return mock_reset;
-	else if (INTEL_GEN(i915) >= 8)
-		return gen8_reset_engines;
-	else if (INTEL_GEN(i915) >= 6)
-		return gen6_reset_engines;
-	else if (INTEL_GEN(i915) >= 5)
-		return ilk_do_reset;
-	else if (IS_G4X(i915))
-		return g4x_do_reset;
-	else if (IS_G33(i915) || IS_PINEVIEW(i915))
-		return g33_do_reset;
-	else if (INTEL_GEN(i915) >= 3)
-		return i915_do_reset;
-	else
-		return NULL;
-}
+	अगर (is_mock_gt(gt))
+		वापस mock_reset;
+	अन्यथा अगर (INTEL_GEN(i915) >= 8)
+		वापस gen8_reset_engines;
+	अन्यथा अगर (INTEL_GEN(i915) >= 6)
+		वापस gen6_reset_engines;
+	अन्यथा अगर (INTEL_GEN(i915) >= 5)
+		वापस ilk_करो_reset;
+	अन्यथा अगर (IS_G4X(i915))
+		वापस g4x_करो_reset;
+	अन्यथा अगर (IS_G33(i915) || IS_PINEVIEW(i915))
+		वापस g33_करो_reset;
+	अन्यथा अगर (INTEL_GEN(i915) >= 3)
+		वापस i915_करो_reset;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-int __intel_gt_reset(struct intel_gt *gt, intel_engine_mask_t engine_mask)
-{
-	const int retries = engine_mask == ALL_ENGINES ? RESET_MAX_RETRIES : 1;
+पूर्णांक __पूर्णांकel_gt_reset(काष्ठा पूर्णांकel_gt *gt, पूर्णांकel_engine_mask_t engine_mask)
+अणु
+	स्थिर पूर्णांक retries = engine_mask == ALL_ENGINES ? RESET_MAX_RETRIES : 1;
 	reset_func reset;
-	int ret = -ETIMEDOUT;
-	int retry;
+	पूर्णांक ret = -ETIMEDOUT;
+	पूर्णांक retry;
 
-	reset = intel_get_gpu_reset(gt);
-	if (!reset)
-		return -ENODEV;
+	reset = पूर्णांकel_get_gpu_reset(gt);
+	अगर (!reset)
+		वापस -ENODEV;
 
 	/*
-	 * If the power well sleeps during the reset, the reset
+	 * If the घातer well sleeps during the reset, the reset
 	 * request may be dropped and never completes (causing -EIO).
 	 */
-	intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
-	for (retry = 0; ret == -ETIMEDOUT && retry < retries; retry++) {
+	पूर्णांकel_uncore_क्रमcewake_get(gt->uncore, FORCEWAKE_ALL);
+	क्रम (retry = 0; ret == -ETIMEDOUT && retry < retries; retry++) अणु
 		GT_TRACE(gt, "engine_mask=%x\n", engine_mask);
 		preempt_disable();
 		ret = reset(gt, engine_mask, retry);
 		preempt_enable();
-	}
-	intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
+	पूर्ण
+	पूर्णांकel_uncore_क्रमcewake_put(gt->uncore, FORCEWAKE_ALL);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool intel_has_gpu_reset(const struct intel_gt *gt)
-{
-	if (!gt->i915->params.reset)
-		return NULL;
+bool पूर्णांकel_has_gpu_reset(स्थिर काष्ठा पूर्णांकel_gt *gt)
+अणु
+	अगर (!gt->i915->params.reset)
+		वापस शून्य;
 
-	return intel_get_gpu_reset(gt);
-}
+	वापस पूर्णांकel_get_gpu_reset(gt);
+पूर्ण
 
-bool intel_has_reset_engine(const struct intel_gt *gt)
-{
-	if (gt->i915->params.reset < 2)
-		return false;
+bool पूर्णांकel_has_reset_engine(स्थिर काष्ठा पूर्णांकel_gt *gt)
+अणु
+	अगर (gt->i915->params.reset < 2)
+		वापस false;
 
-	return INTEL_INFO(gt->i915)->has_reset_engine;
-}
+	वापस INTEL_INFO(gt->i915)->has_reset_engine;
+पूर्ण
 
-int intel_reset_guc(struct intel_gt *gt)
-{
-	u32 guc_domain =
+पूर्णांक पूर्णांकel_reset_guc(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	u32 guc_करोमुख्य =
 		INTEL_GEN(gt->i915) >= 11 ? GEN11_GRDOM_GUC : GEN9_GRDOM_GUC;
-	int ret;
+	पूर्णांक ret;
 
 	GEM_BUG_ON(!HAS_GT_UC(gt->i915));
 
-	intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
-	ret = gen6_hw_domain_reset(gt, guc_domain);
-	intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
+	पूर्णांकel_uncore_क्रमcewake_get(gt->uncore, FORCEWAKE_ALL);
+	ret = gen6_hw_करोमुख्य_reset(gt, guc_करोमुख्य);
+	पूर्णांकel_uncore_क्रमcewake_put(gt->uncore, FORCEWAKE_ALL);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Ensure irq handler finishes, and not run again.
- * Also return the active request so that we only search for it once.
+ * Also वापस the active request so that we only search क्रम it once.
  */
-static void reset_prepare_engine(struct intel_engine_cs *engine)
-{
+अटल व्योम reset_prepare_engine(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	/*
 	 * During the reset sequence, we must prevent the engine from
 	 * entering RC6. As the context state is undefined until we restart
-	 * the engine, if it does enter RC6 during the reset, the state
-	 * written to the powercontext is undefined and so we may lose
+	 * the engine, अगर it करोes enter RC6 during the reset, the state
+	 * written to the घातercontext is undefined and so we may lose
 	 * GPU state upon resume, i.e. fail to restart after a reset.
 	 */
-	intel_uncore_forcewake_get(engine->uncore, FORCEWAKE_ALL);
-	if (engine->reset.prepare)
+	पूर्णांकel_uncore_क्रमcewake_get(engine->uncore, FORCEWAKE_ALL);
+	अगर (engine->reset.prepare)
 		engine->reset.prepare(engine);
-}
+पूर्ण
 
-static void revoke_mmaps(struct intel_gt *gt)
-{
-	int i;
+अटल व्योम revoke_mmaps(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < gt->ggtt->num_fences; i++) {
-		struct drm_vma_offset_node *node;
-		struct i915_vma *vma;
+	क्रम (i = 0; i < gt->ggtt->num_fences; i++) अणु
+		काष्ठा drm_vma_offset_node *node;
+		काष्ठा i915_vma *vma;
 		u64 vma_offset;
 
 		vma = READ_ONCE(gt->ggtt->fence_regs[i].vma);
-		if (!vma)
-			continue;
+		अगर (!vma)
+			जारी;
 
-		if (!i915_vma_has_userfault(vma))
-			continue;
+		अगर (!i915_vma_has_userfault(vma))
+			जारी;
 
 		GEM_BUG_ON(vma->fence != &gt->ggtt->fence_regs[i]);
 
-		if (!vma->mmo)
-			continue;
+		अगर (!vma->mmo)
+			जारी;
 
 		node = &vma->mmo->vma_node;
 		vma_offset = vma->ggtt_view.partial.offset << PAGE_SHIFT;
@@ -714,117 +715,117 @@ static void revoke_mmaps(struct intel_gt *gt)
 				    drm_vma_node_offset_addr(node) + vma_offset,
 				    vma->size,
 				    1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static intel_engine_mask_t reset_prepare(struct intel_gt *gt)
-{
-	struct intel_engine_cs *engine;
-	intel_engine_mask_t awake = 0;
-	enum intel_engine_id id;
+अटल पूर्णांकel_engine_mask_t reset_prepare(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	पूर्णांकel_engine_mask_t awake = 0;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	for_each_engine(engine, gt, id) {
-		if (intel_engine_pm_get_if_awake(engine))
+	क्रम_each_engine(engine, gt, id) अणु
+		अगर (पूर्णांकel_engine_pm_get_अगर_awake(engine))
 			awake |= engine->mask;
 		reset_prepare_engine(engine);
-	}
+	पूर्ण
 
-	intel_uc_reset_prepare(&gt->uc);
+	पूर्णांकel_uc_reset_prepare(&gt->uc);
 
-	return awake;
-}
+	वापस awake;
+पूर्ण
 
-static void gt_revoke(struct intel_gt *gt)
-{
+अटल व्योम gt_revoke(काष्ठा पूर्णांकel_gt *gt)
+अणु
 	revoke_mmaps(gt);
-}
+पूर्ण
 
-static int gt_reset(struct intel_gt *gt, intel_engine_mask_t stalled_mask)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	int err;
+अटल पूर्णांक gt_reset(काष्ठा पूर्णांकel_gt *gt, पूर्णांकel_engine_mask_t stalled_mask)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err;
 
 	/*
 	 * Everything depends on having the GTT running, so we need to start
 	 * there.
 	 */
 	err = i915_ggtt_enable_hw(gt->i915);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	local_bh_disable();
-	for_each_engine(engine, gt, id)
-		__intel_engine_reset(engine, stalled_mask & engine->mask);
+	क्रम_each_engine(engine, gt, id)
+		__पूर्णांकel_engine_reset(engine, stalled_mask & engine->mask);
 	local_bh_enable();
 
-	intel_ggtt_restore_fences(gt->ggtt);
+	पूर्णांकel_ggtt_restore_fences(gt->ggtt);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void reset_finish_engine(struct intel_engine_cs *engine)
-{
-	if (engine->reset.finish)
+अटल व्योम reset_finish_engine(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (engine->reset.finish)
 		engine->reset.finish(engine);
-	intel_uncore_forcewake_put(engine->uncore, FORCEWAKE_ALL);
+	पूर्णांकel_uncore_क्रमcewake_put(engine->uncore, FORCEWAKE_ALL);
 
-	intel_engine_signal_breadcrumbs(engine);
-}
+	पूर्णांकel_engine_संकेत_bपढ़ोcrumbs(engine);
+पूर्ण
 
-static void reset_finish(struct intel_gt *gt, intel_engine_mask_t awake)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम reset_finish(काष्ठा पूर्णांकel_gt *gt, पूर्णांकel_engine_mask_t awake)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	for_each_engine(engine, gt, id) {
+	क्रम_each_engine(engine, gt, id) अणु
 		reset_finish_engine(engine);
-		if (awake & engine->mask)
-			intel_engine_pm_put(engine);
-	}
-}
+		अगर (awake & engine->mask)
+			पूर्णांकel_engine_pm_put(engine);
+	पूर्ण
+पूर्ण
 
-static void nop_submit_request(struct i915_request *request)
-{
+अटल व्योम nop_submit_request(काष्ठा i915_request *request)
+अणु
 	RQ_TRACE(request, "-EIO\n");
 
 	request = i915_request_mark_eio(request);
-	if (request) {
+	अगर (request) अणु
 		i915_request_submit(request);
-		intel_engine_signal_breadcrumbs(request->engine);
+		पूर्णांकel_engine_संकेत_bपढ़ोcrumbs(request->engine);
 
 		i915_request_put(request);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __intel_gt_set_wedged(struct intel_gt *gt)
-{
-	struct intel_engine_cs *engine;
-	intel_engine_mask_t awake;
-	enum intel_engine_id id;
+अटल व्योम __पूर्णांकel_gt_set_wedged(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	पूर्णांकel_engine_mask_t awake;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	if (test_bit(I915_WEDGED, &gt->reset.flags))
-		return;
+	अगर (test_bit(I915_WEDGED, &gt->reset.flags))
+		वापस;
 
 	GT_TRACE(gt, "start\n");
 
 	/*
-	 * First, stop submission to hw, but do not yet complete requests by
-	 * rolling the global seqno forward (since this would complete requests
-	 * for which we haven't set the fence error to EIO yet).
+	 * First, stop submission to hw, but करो not yet complete requests by
+	 * rolling the global seqno क्रमward (since this would complete requests
+	 * क्रम which we haven't set the fence error to EIO yet).
 	 */
 	awake = reset_prepare(gt);
 
-	/* Even if the GPU reset fails, it should still stop the engines */
-	if (!INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
-		__intel_gt_reset(gt, ALL_ENGINES);
+	/* Even अगर the GPU reset fails, it should still stop the engines */
+	अगर (!INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
+		__पूर्णांकel_gt_reset(gt, ALL_ENGINES);
 
-	for_each_engine(engine, gt, id)
+	क्रम_each_engine(engine, gt, id)
 		engine->submit_request = nop_submit_request;
 
 	/*
 	 * Make sure no request can slip through without getting completed by
-	 * either this call here to intel_engine_write_global_seqno, or the one
+	 * either this call here to पूर्णांकel_engine_ग_लिखो_global_seqno, or the one
 	 * in nop_submit_request.
 	 */
 	synchronize_rcu_expedited();
@@ -832,177 +833,177 @@ static void __intel_gt_set_wedged(struct intel_gt *gt)
 
 	/* Mark all executing requests as skipped */
 	local_bh_disable();
-	for_each_engine(engine, gt, id)
-		if (engine->reset.cancel)
+	क्रम_each_engine(engine, gt, id)
+		अगर (engine->reset.cancel)
 			engine->reset.cancel(engine);
 	local_bh_enable();
 
 	reset_finish(gt, awake);
 
 	GT_TRACE(gt, "end\n");
-}
+पूर्ण
 
-void intel_gt_set_wedged(struct intel_gt *gt)
-{
-	intel_wakeref_t wakeref;
+व्योम पूर्णांकel_gt_set_wedged(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	पूर्णांकel_wakeref_t wakeref;
 
-	if (test_bit(I915_WEDGED, &gt->reset.flags))
-		return;
+	अगर (test_bit(I915_WEDGED, &gt->reset.flags))
+		वापस;
 
-	wakeref = intel_runtime_pm_get(gt->uncore->rpm);
+	wakeref = पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
 	mutex_lock(&gt->reset.mutex);
 
-	if (GEM_SHOW_DEBUG()) {
-		struct drm_printer p = drm_debug_printer(__func__);
-		struct intel_engine_cs *engine;
-		enum intel_engine_id id;
+	अगर (GEM_SHOW_DEBUG()) अणु
+		काष्ठा drm_prपूर्णांकer p = drm_debug_prपूर्णांकer(__func__);
+		काष्ठा पूर्णांकel_engine_cs *engine;
+		क्रमागत पूर्णांकel_engine_id id;
 
-		drm_printf(&p, "called from %pS\n", (void *)_RET_IP_);
-		for_each_engine(engine, gt, id) {
-			if (intel_engine_is_idle(engine))
-				continue;
+		drm_म_लिखो(&p, "called from %pS\n", (व्योम *)_RET_IP_);
+		क्रम_each_engine(engine, gt, id) अणु
+			अगर (पूर्णांकel_engine_is_idle(engine))
+				जारी;
 
-			intel_engine_dump(engine, &p, "%s\n", engine->name);
-		}
-	}
+			पूर्णांकel_engine_dump(engine, &p, "%s\n", engine->name);
+		पूर्ण
+	पूर्ण
 
-	__intel_gt_set_wedged(gt);
+	__पूर्णांकel_gt_set_wedged(gt);
 
 	mutex_unlock(&gt->reset.mutex);
-	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
-}
+	पूर्णांकel_runसमय_pm_put(gt->uncore->rpm, wakeref);
+पूर्ण
 
-static bool __intel_gt_unset_wedged(struct intel_gt *gt)
-{
-	struct intel_gt_timelines *timelines = &gt->timelines;
-	struct intel_timeline *tl;
+अटल bool __पूर्णांकel_gt_unset_wedged(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_gt_समयlines *समयlines = &gt->समयlines;
+	काष्ठा पूर्णांकel_समयline *tl;
 	bool ok;
 
-	if (!test_bit(I915_WEDGED, &gt->reset.flags))
-		return true;
+	अगर (!test_bit(I915_WEDGED, &gt->reset.flags))
+		वापस true;
 
 	/* Never fully initialised, recovery impossible */
-	if (intel_gt_has_unrecoverable_error(gt))
-		return false;
+	अगर (पूर्णांकel_gt_has_unrecoverable_error(gt))
+		वापस false;
 
 	GT_TRACE(gt, "start\n");
 
 	/*
-	 * Before unwedging, make sure that all pending operations
-	 * are flushed and errored out - we may have requests waiting upon
+	 * Beक्रमe unwedging, make sure that all pending operations
+	 * are flushed and errored out - we may have requests रुकोing upon
 	 * third party fences. We marked all inflight requests as EIO, and
-	 * every execbuf since returned EIO, for consistency we want all
+	 * every execbuf since वापसed EIO, क्रम consistency we want all
 	 * the currently pending requests to also be marked as EIO, which
-	 * is done inside our nop_submit_request - and so we must wait.
+	 * is करोne inside our nop_submit_request - and so we must रुको.
 	 *
 	 * No more can be submitted until we reset the wedged bit.
 	 */
-	spin_lock(&timelines->lock);
-	list_for_each_entry(tl, &timelines->active_list, link) {
-		struct dma_fence *fence;
+	spin_lock(&समयlines->lock);
+	list_क्रम_each_entry(tl, &समयlines->active_list, link) अणु
+		काष्ठा dma_fence *fence;
 
 		fence = i915_active_fence_get(&tl->last_request);
-		if (!fence)
-			continue;
+		अगर (!fence)
+			जारी;
 
-		spin_unlock(&timelines->lock);
+		spin_unlock(&समयlines->lock);
 
 		/*
-		 * All internal dependencies (i915_requests) will have
-		 * been flushed by the set-wedge, but we may be stuck waiting
-		 * for external fences. These should all be capped to 10s
-		 * (I915_FENCE_TIMEOUT) so this wait should not be unbounded
-		 * in the worst case.
+		 * All पूर्णांकernal dependencies (i915_requests) will have
+		 * been flushed by the set-wedge, but we may be stuck रुकोing
+		 * क्रम बाह्यal fences. These should all be capped to 10s
+		 * (I915_FENCE_TIMEOUT) so this रुको should not be unbounded
+		 * in the worst हाल.
 		 */
-		dma_fence_default_wait(fence, false, MAX_SCHEDULE_TIMEOUT);
+		dma_fence_शेष_रुको(fence, false, MAX_SCHEDULE_TIMEOUT);
 		dma_fence_put(fence);
 
 		/* Restart iteration after droping lock */
-		spin_lock(&timelines->lock);
-		tl = list_entry(&timelines->active_list, typeof(*tl), link);
-	}
-	spin_unlock(&timelines->lock);
+		spin_lock(&समयlines->lock);
+		tl = list_entry(&समयlines->active_list, typeof(*tl), link);
+	पूर्ण
+	spin_unlock(&समयlines->lock);
 
-	/* We must reset pending GPU events before restoring our submission */
+	/* We must reset pending GPU events beक्रमe restoring our submission */
 	ok = !HAS_EXECLISTS(gt->i915); /* XXX better agnosticism desired */
-	if (!INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
-		ok = __intel_gt_reset(gt, ALL_ENGINES) == 0;
-	if (!ok) {
+	अगर (!INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
+		ok = __पूर्णांकel_gt_reset(gt, ALL_ENGINES) == 0;
+	अगर (!ok) अणु
 		/*
 		 * Warn CI about the unrecoverable wedged condition.
-		 * Time for a reboot.
+		 * Time क्रम a reboot.
 		 */
-		add_taint_for_CI(gt->i915, TAINT_WARN);
-		return false;
-	}
+		add_taपूर्णांक_क्रम_CI(gt->i915, TAINT_WARN);
+		वापस false;
+	पूर्ण
 
 	/*
-	 * Undo nop_submit_request. We prevent all new i915 requests from
+	 * Unकरो nop_submit_request. We prevent all new i915 requests from
 	 * being queued (by disallowing execbuf whilst wedged) so having
-	 * waited for all active requests above, we know the system is idle
-	 * and do not have to worry about a thread being inside
+	 * रुकोed क्रम all active requests above, we know the प्रणाली is idle
+	 * and करो not have to worry about a thपढ़ो being inside
 	 * engine->submit_request() as we swap over. So unlike installing
-	 * the nop_submit_request on reset, we can do this from normal
-	 * context and do not require stop_machine().
+	 * the nop_submit_request on reset, we can करो this from normal
+	 * context and करो not require stop_machine().
 	 */
-	intel_engines_reset_default_submission(gt);
+	पूर्णांकel_engines_reset_शेष_submission(gt);
 
 	GT_TRACE(gt, "end\n");
 
-	smp_mb__before_atomic(); /* complete takeover before enabling execbuf */
+	smp_mb__beक्रमe_atomic(); /* complete takeover beक्रमe enabling execbuf */
 	clear_bit(I915_WEDGED, &gt->reset.flags);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool intel_gt_unset_wedged(struct intel_gt *gt)
-{
+bool पूर्णांकel_gt_unset_wedged(काष्ठा पूर्णांकel_gt *gt)
+अणु
 	bool result;
 
 	mutex_lock(&gt->reset.mutex);
-	result = __intel_gt_unset_wedged(gt);
+	result = __पूर्णांकel_gt_unset_wedged(gt);
 	mutex_unlock(&gt->reset.mutex);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int do_reset(struct intel_gt *gt, intel_engine_mask_t stalled_mask)
-{
-	int err, i;
+अटल पूर्णांक करो_reset(काष्ठा पूर्णांकel_gt *gt, पूर्णांकel_engine_mask_t stalled_mask)
+अणु
+	पूर्णांक err, i;
 
-	err = __intel_gt_reset(gt, ALL_ENGINES);
-	for (i = 0; err && i < RESET_MAX_RETRIES; i++) {
+	err = __पूर्णांकel_gt_reset(gt, ALL_ENGINES);
+	क्रम (i = 0; err && i < RESET_MAX_RETRIES; i++) अणु
 		msleep(10 * (i + 1));
-		err = __intel_gt_reset(gt, ALL_ENGINES);
-	}
-	if (err)
-		return err;
+		err = __पूर्णांकel_gt_reset(gt, ALL_ENGINES);
+	पूर्ण
+	अगर (err)
+		वापस err;
 
-	return gt_reset(gt, stalled_mask);
-}
+	वापस gt_reset(gt, stalled_mask);
+पूर्ण
 
-static int resume(struct intel_gt *gt)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	int ret;
+अटल पूर्णांक resume(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक ret;
 
-	for_each_engine(engine, gt, id) {
-		ret = intel_engine_resume(engine);
-		if (ret)
-			return ret;
-	}
+	क्रम_each_engine(engine, gt, id) अणु
+		ret = पूर्णांकel_engine_resume(engine);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_gt_reset - reset chip after a hang
- * @gt: #intel_gt to reset
+ * पूर्णांकel_gt_reset - reset chip after a hang
+ * @gt: #पूर्णांकel_gt to reset
  * @stalled_mask: mask of the stalled engines with the guilty requests
- * @reason: user error message for why we are resetting
+ * @reason: user error message क्रम why we are resetting
  *
- * Reset the chip.  Useful if a hang is detected. Marks the device as wedged
+ * Reset the chip.  Useful अगर a hang is detected. Marks the device as wedged
  * on failure.
  *
  * Procedure is fairly simple:
@@ -1010,15 +1011,15 @@ static int resume(struct intel_gt *gt)
  *   - re-init context state
  *   - re-init hardware status page
  *   - re-init ring buffer
- *   - re-init interrupt state
+ *   - re-init पूर्णांकerrupt state
  *   - re-init display
  */
-void intel_gt_reset(struct intel_gt *gt,
-		    intel_engine_mask_t stalled_mask,
-		    const char *reason)
-{
-	intel_engine_mask_t awake;
-	int ret;
+व्योम पूर्णांकel_gt_reset(काष्ठा पूर्णांकel_gt *gt,
+		    पूर्णांकel_engine_mask_t stalled_mask,
+		    स्थिर अक्षर *reason)
+अणु
+	पूर्णांकel_engine_mask_t awake;
+	पूर्णांक ret;
 
 	GT_TRACE(gt, "flags=%lx\n", gt->reset.flags);
 
@@ -1026,7 +1027,7 @@ void intel_gt_reset(struct intel_gt *gt,
 	GEM_BUG_ON(!test_bit(I915_RESET_BACKOFF, &gt->reset.flags));
 
 	/*
-	 * FIXME: Revoking cpu mmap ptes cannot be done from a dma_fence
+	 * FIXME: Revoking cpu mmap ptes cannot be करोne from a dma_fence
 	 * critical section like gpu reset.
 	 */
 	gt_revoke(gt);
@@ -1034,288 +1035,288 @@ void intel_gt_reset(struct intel_gt *gt,
 	mutex_lock(&gt->reset.mutex);
 
 	/* Clear any previous failed attempts at recovery. Time to try again. */
-	if (!__intel_gt_unset_wedged(gt))
-		goto unlock;
+	अगर (!__पूर्णांकel_gt_unset_wedged(gt))
+		जाओ unlock;
 
-	if (reason)
+	अगर (reason)
 		drm_notice(&gt->i915->drm,
 			   "Resetting chip for %s\n", reason);
 	atomic_inc(&gt->i915->gpu_error.reset_count);
 
 	awake = reset_prepare(gt);
 
-	if (!intel_has_gpu_reset(gt)) {
-		if (gt->i915->params.reset)
+	अगर (!पूर्णांकel_has_gpu_reset(gt)) अणु
+		अगर (gt->i915->params.reset)
 			drm_err(&gt->i915->drm, "GPU reset not supported\n");
-		else
+		अन्यथा
 			drm_dbg(&gt->i915->drm, "GPU reset disabled\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
-		intel_runtime_pm_disable_interrupts(gt->i915);
+	अगर (INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
+		पूर्णांकel_runसमय_pm_disable_पूर्णांकerrupts(gt->i915);
 
-	if (do_reset(gt, stalled_mask)) {
+	अगर (करो_reset(gt, stalled_mask)) अणु
 		drm_err(&gt->i915->drm, "Failed to reset chip\n");
-		goto taint;
-	}
+		जाओ taपूर्णांक;
+	पूर्ण
 
-	if (INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
-		intel_runtime_pm_enable_interrupts(gt->i915);
+	अगर (INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
+		पूर्णांकel_runसमय_pm_enable_पूर्णांकerrupts(gt->i915);
 
-	intel_overlay_reset(gt->i915);
+	पूर्णांकel_overlay_reset(gt->i915);
 
 	/*
-	 * Next we need to restore the context, but we don't use those
+	 * Next we need to restore the context, but we करोn't use those
 	 * yet either...
 	 *
-	 * Ring buffer needs to be re-initialized in the KMS case, or if X
-	 * was running at the time of the reset (i.e. we weren't VT
-	 * switched away).
+	 * Ring buffer needs to be re-initialized in the KMS हाल, or अगर X
+	 * was running at the समय of the reset (i.e. we weren't VT
+	 * चयनed away).
 	 */
-	ret = intel_gt_init_hw(gt);
-	if (ret) {
+	ret = पूर्णांकel_gt_init_hw(gt);
+	अगर (ret) अणु
 		drm_err(&gt->i915->drm,
 			"Failed to initialise HW following reset (%d)\n",
 			ret);
-		goto taint;
-	}
+		जाओ taपूर्णांक;
+	पूर्ण
 
 	ret = resume(gt);
-	if (ret)
-		goto taint;
+	अगर (ret)
+		जाओ taपूर्णांक;
 
 finish:
 	reset_finish(gt, awake);
 unlock:
 	mutex_unlock(&gt->reset.mutex);
-	return;
+	वापस;
 
-taint:
+taपूर्णांक:
 	/*
-	 * History tells us that if we cannot reset the GPU now, we
+	 * History tells us that अगर we cannot reset the GPU now, we
 	 * never will. This then impacts everything that is run
 	 * subsequently. On failing the reset, we mark the driver
 	 * as wedged, preventing further execution on the GPU.
-	 * We also want to go one step further and add a taint to the
+	 * We also want to go one step further and add a taपूर्णांक to the
 	 * kernel so that any subsequent faults can be traced back to
-	 * this failure. This is important for CI, where if the
+	 * this failure. This is important क्रम CI, where अगर the
 	 * GPU/driver fails we would like to reboot and restart testing
-	 * rather than continue on into oblivion. For everyone else,
-	 * the system should still plod along, but they have been warned!
+	 * rather than जारी on पूर्णांकo oblivion. For everyone अन्यथा,
+	 * the प्रणाली should still plod aदीर्घ, but they have been warned!
 	 */
-	add_taint_for_CI(gt->i915, TAINT_WARN);
+	add_taपूर्णांक_क्रम_CI(gt->i915, TAINT_WARN);
 error:
-	__intel_gt_set_wedged(gt);
-	goto finish;
-}
+	__पूर्णांकel_gt_set_wedged(gt);
+	जाओ finish;
+पूर्ण
 
-static int intel_gt_reset_engine(struct intel_engine_cs *engine)
-{
-	return __intel_gt_reset(engine->gt, engine->mask);
-}
+अटल पूर्णांक पूर्णांकel_gt_reset_engine(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	वापस __पूर्णांकel_gt_reset(engine->gt, engine->mask);
+पूर्ण
 
-int __intel_engine_reset_bh(struct intel_engine_cs *engine, const char *msg)
-{
-	struct intel_gt *gt = engine->gt;
-	bool uses_guc = intel_engine_in_guc_submission_mode(engine);
-	int ret;
+पूर्णांक __पूर्णांकel_engine_reset_bh(काष्ठा पूर्णांकel_engine_cs *engine, स्थिर अक्षर *msg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = engine->gt;
+	bool uses_guc = पूर्णांकel_engine_in_guc_submission_mode(engine);
+	पूर्णांक ret;
 
 	ENGINE_TRACE(engine, "flags=%lx\n", gt->reset.flags);
 	GEM_BUG_ON(!test_bit(I915_RESET_ENGINE + engine->id, &gt->reset.flags));
 
-	if (!intel_engine_pm_get_if_awake(engine))
-		return 0;
+	अगर (!पूर्णांकel_engine_pm_get_अगर_awake(engine))
+		वापस 0;
 
 	reset_prepare_engine(engine);
 
-	if (msg)
+	अगर (msg)
 		drm_notice(&engine->i915->drm,
 			   "Resetting %s for %s\n", engine->name, msg);
 	atomic_inc(&engine->i915->gpu_error.reset_engine_count[engine->uabi_class]);
 
-	if (!uses_guc)
-		ret = intel_gt_reset_engine(engine);
-	else
-		ret = intel_guc_reset_engine(&engine->gt->uc.guc, engine);
-	if (ret) {
+	अगर (!uses_guc)
+		ret = पूर्णांकel_gt_reset_engine(engine);
+	अन्यथा
+		ret = पूर्णांकel_guc_reset_engine(&engine->gt->uc.guc, engine);
+	अगर (ret) अणु
 		/* If we fail here, we expect to fallback to a global reset */
 		ENGINE_TRACE(engine, "Failed to reset, err: %d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * The request that caused the hang is stuck on elsp, we know the
 	 * active request and can drop it, adjust head to skip the offending
-	 * request to resume executing remaining requests in the queue.
+	 * request to resume executing reमुख्यing requests in the queue.
 	 */
-	__intel_engine_reset(engine, true);
+	__पूर्णांकel_engine_reset(engine, true);
 
 	/*
-	 * The engine and its registers (and workarounds in case of render)
-	 * have been reset to their default values. Follow the init_ring
+	 * The engine and its रेजिस्टरs (and workarounds in हाल of render)
+	 * have been reset to their शेष values. Follow the init_ring
 	 * process to program RING_MODE, HWSP and re-enable submission.
 	 */
-	ret = intel_engine_resume(engine);
+	ret = पूर्णांकel_engine_resume(engine);
 
 out:
-	intel_engine_cancel_stop_cs(engine);
+	पूर्णांकel_engine_cancel_stop_cs(engine);
 	reset_finish_engine(engine);
-	intel_engine_pm_put_async(engine);
-	return ret;
-}
+	पूर्णांकel_engine_pm_put_async(engine);
+	वापस ret;
+पूर्ण
 
 /**
- * intel_engine_reset - reset GPU engine to recover from a hang
+ * पूर्णांकel_engine_reset - reset GPU engine to recover from a hang
  * @engine: engine to reset
- * @msg: reason for GPU reset; or NULL for no drm_notice()
+ * @msg: reason क्रम GPU reset; or शून्य क्रम no drm_notice()
  *
- * Reset a specific GPU engine. Useful if a hang is detected.
+ * Reset a specअगरic GPU engine. Useful अगर a hang is detected.
  * Returns zero on successful reset or otherwise an error code.
  *
  * Procedure is:
- *  - identifies the request that caused the hang and it is dropped
- *  - reset engine (which will force the engine to idle)
+ *  - identअगरies the request that caused the hang and it is dropped
+ *  - reset engine (which will क्रमce the engine to idle)
  *  - re-init/configure engine
  */
-int intel_engine_reset(struct intel_engine_cs *engine, const char *msg)
-{
-	int err;
+पूर्णांक पूर्णांकel_engine_reset(काष्ठा पूर्णांकel_engine_cs *engine, स्थिर अक्षर *msg)
+अणु
+	पूर्णांक err;
 
 	local_bh_disable();
-	err = __intel_engine_reset_bh(engine, msg);
+	err = __पूर्णांकel_engine_reset_bh(engine, msg);
 	local_bh_enable();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void intel_gt_reset_global(struct intel_gt *gt,
+अटल व्योम पूर्णांकel_gt_reset_global(काष्ठा पूर्णांकel_gt *gt,
 				  u32 engine_mask,
-				  const char *reason)
-{
-	struct kobject *kobj = &gt->i915->drm.primary->kdev->kobj;
-	char *error_event[] = { I915_ERROR_UEVENT "=1", NULL };
-	char *reset_event[] = { I915_RESET_UEVENT "=1", NULL };
-	char *reset_done_event[] = { I915_ERROR_UEVENT "=0", NULL };
-	struct intel_wedge_me w;
+				  स्थिर अक्षर *reason)
+अणु
+	काष्ठा kobject *kobj = &gt->i915->drm.primary->kdev->kobj;
+	अक्षर *error_event[] = अणु I915_ERROR_UEVENT "=1", शून्य पूर्ण;
+	अक्षर *reset_event[] = अणु I915_RESET_UEVENT "=1", शून्य पूर्ण;
+	अक्षर *reset_करोne_event[] = अणु I915_ERROR_UEVENT "=0", शून्य पूर्ण;
+	काष्ठा पूर्णांकel_wedge_me w;
 
 	kobject_uevent_env(kobj, KOBJ_CHANGE, error_event);
 
 	GT_TRACE(gt, "resetting chip, engines=%x\n", engine_mask);
 	kobject_uevent_env(kobj, KOBJ_CHANGE, reset_event);
 
-	/* Use a watchdog to ensure that our reset completes */
-	intel_wedge_on_timeout(&w, gt, 5 * HZ) {
-		intel_display_prepare_reset(gt->i915);
+	/* Use a watchकरोg to ensure that our reset completes */
+	पूर्णांकel_wedge_on_समयout(&w, gt, 5 * HZ) अणु
+		पूर्णांकel_display_prepare_reset(gt->i915);
 
 		/* Flush everyone using a resource about to be clobbered */
 		synchronize_srcu_expedited(&gt->reset.backoff_srcu);
 
-		intel_gt_reset(gt, engine_mask, reason);
+		पूर्णांकel_gt_reset(gt, engine_mask, reason);
 
-		intel_display_finish_reset(gt->i915);
-	}
+		पूर्णांकel_display_finish_reset(gt->i915);
+	पूर्ण
 
-	if (!test_bit(I915_WEDGED, &gt->reset.flags))
-		kobject_uevent_env(kobj, KOBJ_CHANGE, reset_done_event);
-}
+	अगर (!test_bit(I915_WEDGED, &gt->reset.flags))
+		kobject_uevent_env(kobj, KOBJ_CHANGE, reset_करोne_event);
+पूर्ण
 
 /**
- * intel_gt_handle_error - handle a gpu error
- * @gt: the intel_gt
+ * पूर्णांकel_gt_handle_error - handle a gpu error
+ * @gt: the पूर्णांकel_gt
  * @engine_mask: mask representing engines that are hung
  * @flags: control flags
- * @fmt: Error message format string
+ * @fmt: Error message क्रमmat string
  *
- * Do some basic checking of register state at error time and
+ * Do some basic checking of रेजिस्टर state at error समय and
  * dump it to the syslog.  Also call i915_capture_error_state() to make
  * sure we get a record and make it available in debugfs.  Fire a uevent
  * so userspace knows something bad happened (should trigger collection
  * of a ring dump etc.).
  */
-void intel_gt_handle_error(struct intel_gt *gt,
-			   intel_engine_mask_t engine_mask,
-			   unsigned long flags,
-			   const char *fmt, ...)
-{
-	struct intel_engine_cs *engine;
-	intel_wakeref_t wakeref;
-	intel_engine_mask_t tmp;
-	char error_msg[80];
-	char *msg = NULL;
+व्योम पूर्णांकel_gt_handle_error(काष्ठा पूर्णांकel_gt *gt,
+			   पूर्णांकel_engine_mask_t engine_mask,
+			   अचिन्हित दीर्घ flags,
+			   स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	पूर्णांकel_wakeref_t wakeref;
+	पूर्णांकel_engine_mask_t पंचांगp;
+	अक्षर error_msg[80];
+	अक्षर *msg = शून्य;
 
-	if (fmt) {
-		va_list args;
+	अगर (fmt) अणु
+		बहु_सूची args;
 
-		va_start(args, fmt);
-		vscnprintf(error_msg, sizeof(error_msg), fmt, args);
-		va_end(args);
+		बहु_शुरू(args, fmt);
+		vscnम_लिखो(error_msg, माप(error_msg), fmt, args);
+		बहु_पूर्ण(args);
 
 		msg = error_msg;
-	}
+	पूर्ण
 
 	/*
-	 * In most cases it's guaranteed that we get here with an RPM
-	 * reference held, for example because there is a pending GPU
-	 * request that won't finish until the reset is done. This
-	 * isn't the case at least when we get here by doing a
+	 * In most हालs it's guaranteed that we get here with an RPM
+	 * reference held, क्रम example because there is a pending GPU
+	 * request that won't finish until the reset is करोne. This
+	 * isn't the हाल at least when we get here by करोing a
 	 * simulated reset via debugfs, so get an RPM reference.
 	 */
-	wakeref = intel_runtime_pm_get(gt->uncore->rpm);
+	wakeref = पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
 
 	engine_mask &= gt->info.engine_mask;
 
-	if (flags & I915_ERROR_CAPTURE) {
+	अगर (flags & I915_ERROR_CAPTURE) अणु
 		i915_capture_error_state(gt, engine_mask);
-		intel_gt_clear_error_registers(gt, engine_mask);
-	}
+		पूर्णांकel_gt_clear_error_रेजिस्टरs(gt, engine_mask);
+	पूर्ण
 
 	/*
-	 * Try engine reset when available. We fall back to full reset if
+	 * Try engine reset when available. We fall back to full reset अगर
 	 * single reset fails.
 	 */
-	if (intel_has_reset_engine(gt) && !intel_gt_is_wedged(gt)) {
+	अगर (पूर्णांकel_has_reset_engine(gt) && !पूर्णांकel_gt_is_wedged(gt)) अणु
 		local_bh_disable();
-		for_each_engine_masked(engine, gt, engine_mask, tmp) {
+		क्रम_each_engine_masked(engine, gt, engine_mask, पंचांगp) अणु
 			BUILD_BUG_ON(I915_RESET_MODESET >= I915_RESET_ENGINE);
-			if (test_and_set_bit(I915_RESET_ENGINE + engine->id,
+			अगर (test_and_set_bit(I915_RESET_ENGINE + engine->id,
 					     &gt->reset.flags))
-				continue;
+				जारी;
 
-			if (__intel_engine_reset_bh(engine, msg) == 0)
+			अगर (__पूर्णांकel_engine_reset_bh(engine, msg) == 0)
 				engine_mask &= ~engine->mask;
 
 			clear_and_wake_up_bit(I915_RESET_ENGINE + engine->id,
 					      &gt->reset.flags);
-		}
+		पूर्ण
 		local_bh_enable();
-	}
+	पूर्ण
 
-	if (!engine_mask)
-		goto out;
+	अगर (!engine_mask)
+		जाओ out;
 
-	/* Full reset needs the mutex, stop any other user trying to do so. */
-	if (test_and_set_bit(I915_RESET_BACKOFF, &gt->reset.flags)) {
-		wait_event(gt->reset.queue,
+	/* Full reset needs the mutex, stop any other user trying to करो so. */
+	अगर (test_and_set_bit(I915_RESET_BACKOFF, &gt->reset.flags)) अणु
+		रुको_event(gt->reset.queue,
 			   !test_bit(I915_RESET_BACKOFF, &gt->reset.flags));
-		goto out; /* piggy-back on the other reset */
-	}
+		जाओ out; /* piggy-back on the other reset */
+	पूर्ण
 
 	/* Make sure i915_reset_trylock() sees the I915_RESET_BACKOFF */
 	synchronize_rcu_expedited();
 
 	/* Prevent any other reset-engine attempt. */
-	for_each_engine(engine, gt, tmp) {
-		while (test_and_set_bit(I915_RESET_ENGINE + engine->id,
+	क्रम_each_engine(engine, gt, पंचांगp) अणु
+		जबतक (test_and_set_bit(I915_RESET_ENGINE + engine->id,
 					&gt->reset.flags))
-			wait_on_bit(&gt->reset.flags,
+			रुको_on_bit(&gt->reset.flags,
 				    I915_RESET_ENGINE + engine->id,
 				    TASK_UNINTERRUPTIBLE);
-	}
+	पूर्ण
 
-	intel_gt_reset_global(gt, engine_mask, msg);
+	पूर्णांकel_gt_reset_global(gt, engine_mask, msg);
 
-	for_each_engine(engine, gt, tmp)
+	क्रम_each_engine(engine, gt, पंचांगp)
 		clear_bit_unlock(I915_RESET_ENGINE + engine->id,
 				 &gt->reset.flags);
 	clear_bit_unlock(I915_RESET_BACKOFF, &gt->reset.flags);
@@ -1323,130 +1324,130 @@ void intel_gt_handle_error(struct intel_gt *gt,
 	wake_up_all(&gt->reset.queue);
 
 out:
-	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
-}
+	पूर्णांकel_runसमय_pm_put(gt->uncore->rpm, wakeref);
+पूर्ण
 
-int intel_gt_reset_trylock(struct intel_gt *gt, int *srcu)
-{
+पूर्णांक पूर्णांकel_gt_reset_trylock(काष्ठा पूर्णांकel_gt *gt, पूर्णांक *srcu)
+अणु
 	might_lock(&gt->reset.backoff_srcu);
 	might_sleep();
 
-	rcu_read_lock();
-	while (test_bit(I915_RESET_BACKOFF, &gt->reset.flags)) {
-		rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	जबतक (test_bit(I915_RESET_BACKOFF, &gt->reset.flags)) अणु
+		rcu_पढ़ो_unlock();
 
-		if (wait_event_interruptible(gt->reset.queue,
+		अगर (रुको_event_पूर्णांकerruptible(gt->reset.queue,
 					     !test_bit(I915_RESET_BACKOFF,
 						       &gt->reset.flags)))
-			return -EINTR;
+			वापस -EINTR;
 
-		rcu_read_lock();
-	}
-	*srcu = srcu_read_lock(&gt->reset.backoff_srcu);
-	rcu_read_unlock();
+		rcu_पढ़ो_lock();
+	पूर्ण
+	*srcu = srcu_पढ़ो_lock(&gt->reset.backoff_srcu);
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void intel_gt_reset_unlock(struct intel_gt *gt, int tag)
+व्योम पूर्णांकel_gt_reset_unlock(काष्ठा पूर्णांकel_gt *gt, पूर्णांक tag)
 __releases(&gt->reset.backoff_srcu)
-{
-	srcu_read_unlock(&gt->reset.backoff_srcu, tag);
-}
+अणु
+	srcu_पढ़ो_unlock(&gt->reset.backoff_srcu, tag);
+पूर्ण
 
-int intel_gt_terminally_wedged(struct intel_gt *gt)
-{
+पूर्णांक पूर्णांकel_gt_terminally_wedged(काष्ठा पूर्णांकel_gt *gt)
+अणु
 	might_sleep();
 
-	if (!intel_gt_is_wedged(gt))
-		return 0;
+	अगर (!पूर्णांकel_gt_is_wedged(gt))
+		वापस 0;
 
-	if (intel_gt_has_unrecoverable_error(gt))
-		return -EIO;
+	अगर (पूर्णांकel_gt_has_unrecoverable_error(gt))
+		वापस -EIO;
 
 	/* Reset still in progress? Maybe we will recover? */
-	if (wait_event_interruptible(gt->reset.queue,
+	अगर (रुको_event_पूर्णांकerruptible(gt->reset.queue,
 				     !test_bit(I915_RESET_BACKOFF,
 					       &gt->reset.flags)))
-		return -EINTR;
+		वापस -EINTR;
 
-	return intel_gt_is_wedged(gt) ? -EIO : 0;
-}
+	वापस पूर्णांकel_gt_is_wedged(gt) ? -EIO : 0;
+पूर्ण
 
-void intel_gt_set_wedged_on_init(struct intel_gt *gt)
-{
+व्योम पूर्णांकel_gt_set_wedged_on_init(काष्ठा पूर्णांकel_gt *gt)
+अणु
 	BUILD_BUG_ON(I915_RESET_ENGINE + I915_NUM_ENGINES >
 		     I915_WEDGED_ON_INIT);
-	intel_gt_set_wedged(gt);
+	पूर्णांकel_gt_set_wedged(gt);
 	set_bit(I915_WEDGED_ON_INIT, &gt->reset.flags);
 
 	/* Wedged on init is non-recoverable */
-	add_taint_for_CI(gt->i915, TAINT_WARN);
-}
+	add_taपूर्णांक_क्रम_CI(gt->i915, TAINT_WARN);
+पूर्ण
 
-void intel_gt_set_wedged_on_fini(struct intel_gt *gt)
-{
-	intel_gt_set_wedged(gt);
+व्योम पूर्णांकel_gt_set_wedged_on_fini(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	पूर्णांकel_gt_set_wedged(gt);
 	set_bit(I915_WEDGED_ON_FINI, &gt->reset.flags);
-	intel_gt_retire_requests(gt); /* cleanup any wedged requests */
-}
+	पूर्णांकel_gt_retire_requests(gt); /* cleanup any wedged requests */
+पूर्ण
 
-void intel_gt_init_reset(struct intel_gt *gt)
-{
-	init_waitqueue_head(&gt->reset.queue);
+व्योम पूर्णांकel_gt_init_reset(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	init_रुकोqueue_head(&gt->reset.queue);
 	mutex_init(&gt->reset.mutex);
-	init_srcu_struct(&gt->reset.backoff_srcu);
+	init_srcu_काष्ठा(&gt->reset.backoff_srcu);
 
 	/*
-	 * While undesirable to wait inside the shrinker, complain anyway.
+	 * While undesirable to रुको inside the shrinker, complain anyway.
 	 *
-	 * If we have to wait during shrinking, we guarantee forward progress
-	 * by forcing the reset. Therefore during the reset we must not
+	 * If we have to रुको during shrinking, we guarantee क्रमward progress
+	 * by क्रमcing the reset. Thereक्रमe during the reset we must not
 	 * re-enter the shrinker. By declaring that we take the reset mutex
-	 * within the shrinker, we forbid ourselves from performing any
+	 * within the shrinker, we क्रमbid ourselves from perक्रमming any
 	 * fs-reclaim or taking related locks during reset.
 	 */
-	i915_gem_shrinker_taints_mutex(gt->i915, &gt->reset.mutex);
+	i915_gem_shrinker_taपूर्णांकs_mutex(gt->i915, &gt->reset.mutex);
 
-	/* no GPU until we are ready! */
+	/* no GPU until we are पढ़ोy! */
 	__set_bit(I915_WEDGED, &gt->reset.flags);
-}
+पूर्ण
 
-void intel_gt_fini_reset(struct intel_gt *gt)
-{
-	cleanup_srcu_struct(&gt->reset.backoff_srcu);
-}
+व्योम पूर्णांकel_gt_fini_reset(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	cleanup_srcu_काष्ठा(&gt->reset.backoff_srcu);
+पूर्ण
 
-static void intel_wedge_me(struct work_struct *work)
-{
-	struct intel_wedge_me *w = container_of(work, typeof(*w), work.work);
+अटल व्योम पूर्णांकel_wedge_me(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा पूर्णांकel_wedge_me *w = container_of(work, typeof(*w), work.work);
 
 	drm_err(&w->gt->i915->drm,
 		"%s timed out, cancelling all in-flight rendering.\n",
 		w->name);
-	intel_gt_set_wedged(w->gt);
-}
+	पूर्णांकel_gt_set_wedged(w->gt);
+पूर्ण
 
-void __intel_init_wedge(struct intel_wedge_me *w,
-			struct intel_gt *gt,
-			long timeout,
-			const char *name)
-{
+व्योम __पूर्णांकel_init_wedge(काष्ठा पूर्णांकel_wedge_me *w,
+			काष्ठा पूर्णांकel_gt *gt,
+			दीर्घ समयout,
+			स्थिर अक्षर *name)
+अणु
 	w->gt = gt;
 	w->name = name;
 
-	INIT_DELAYED_WORK_ONSTACK(&w->work, intel_wedge_me);
-	schedule_delayed_work(&w->work, timeout);
-}
+	INIT_DELAYED_WORK_ONSTACK(&w->work, पूर्णांकel_wedge_me);
+	schedule_delayed_work(&w->work, समयout);
+पूर्ण
 
-void __intel_fini_wedge(struct intel_wedge_me *w)
-{
+व्योम __पूर्णांकel_fini_wedge(काष्ठा पूर्णांकel_wedge_me *w)
+अणु
 	cancel_delayed_work_sync(&w->work);
 	destroy_delayed_work_on_stack(&w->work);
-	w->gt = NULL;
-}
+	w->gt = शून्य;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftest_reset.c"
-#include "selftest_hangcheck.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftest_reset.c"
+#समावेश "selftest_hangcheck.c"
+#पूर्ण_अगर

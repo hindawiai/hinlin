@@ -1,137 +1,138 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2016 Jonathan Cameron <jic23@kernel.org>
  *
- * Based on a mashup of the hrtimer trigger and continuous sampling proposal of
+ * Based on a mashup of the hrसमयr trigger and continuous sampling proposal of
  * Gregor Boirie <gregor.boirie@parrot.com>
  *
  * Note this is still rather experimental and may eat babies.
  *
- * Todo
+ * Toकरो
  * * Protect against connection of devices that 'need' the top half
  *   handler.
- * * Work out how to run top half handlers in this context if it is
- *   safe to do so (timestamp grabbing for example)
+ * * Work out how to run top half handlers in this context अगर it is
+ *   safe to करो so (बारtamp grabbing क्रम example)
  *
- * Tested against a max1363. Used about 33% cpu for the thread and 20%
- * for generic_buffer piping to /dev/null. Watermark set at 64 on a 128
- * element kfifo buffer.
+ * Tested against a max1363. Used about 33% cpu क्रम the thपढ़ो and 20%
+ * क्रम generic_buffer piping to /dev/null. Watermark set at 64 on a 128
+ * element kfअगरo buffer.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/irq_work.h>
-#include <linux/kthread.h>
-#include <linux/freezer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/irq_work.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/sw_trigger.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/sw_trigger.h>
 
-struct iio_loop_info {
-	struct iio_sw_trigger swt;
-	struct task_struct *task;
-};
+काष्ठा iio_loop_info अणु
+	काष्ठा iio_sw_trigger swt;
+	काष्ठा task_काष्ठा *task;
+पूर्ण;
 
-static const struct config_item_type iio_loop_type = {
+अटल स्थिर काष्ठा config_item_type iio_loop_type = अणु
 	.ct_owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int iio_loop_thread(void *data)
-{
-	struct iio_trigger *trig = data;
+अटल पूर्णांक iio_loop_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा iio_trigger *trig = data;
 
-	set_freezable();
+	set_मुक्तzable();
 
-	do {
+	करो अणु
 		iio_trigger_poll_chained(trig);
-	} while (likely(!kthread_freezable_should_stop(NULL)));
+	पूर्ण जबतक (likely(!kthपढ़ो_मुक्तzable_should_stop(शून्य)));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iio_loop_trigger_set_state(struct iio_trigger *trig, bool state)
-{
-	struct iio_loop_info *loop_trig = iio_trigger_get_drvdata(trig);
+अटल पूर्णांक iio_loop_trigger_set_state(काष्ठा iio_trigger *trig, bool state)
+अणु
+	काष्ठा iio_loop_info *loop_trig = iio_trigger_get_drvdata(trig);
 
-	if (state) {
-		loop_trig->task = kthread_run(iio_loop_thread,
+	अगर (state) अणु
+		loop_trig->task = kthपढ़ो_run(iio_loop_thपढ़ो,
 					      trig, trig->name);
-		if (IS_ERR(loop_trig->task)) {
+		अगर (IS_ERR(loop_trig->task)) अणु
 			dev_err(&trig->dev,
 				"failed to create trigger loop thread\n");
-			return PTR_ERR(loop_trig->task);
-		}
-	} else {
-		kthread_stop(loop_trig->task);
-	}
+			वापस PTR_ERR(loop_trig->task);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		kthपढ़ो_stop(loop_trig->task);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct iio_trigger_ops iio_loop_trigger_ops = {
+अटल स्थिर काष्ठा iio_trigger_ops iio_loop_trigger_ops = अणु
 	.set_trigger_state = iio_loop_trigger_set_state,
-};
+पूर्ण;
 
-static struct iio_sw_trigger *iio_trig_loop_probe(const char *name)
-{
-	struct iio_loop_info *trig_info;
-	int ret;
+अटल काष्ठा iio_sw_trigger *iio_trig_loop_probe(स्थिर अक्षर *name)
+अणु
+	काष्ठा iio_loop_info *trig_info;
+	पूर्णांक ret;
 
-	trig_info = kzalloc(sizeof(*trig_info), GFP_KERNEL);
-	if (!trig_info)
-		return ERR_PTR(-ENOMEM);
+	trig_info = kzalloc(माप(*trig_info), GFP_KERNEL);
+	अगर (!trig_info)
+		वापस ERR_PTR(-ENOMEM);
 
-	trig_info->swt.trigger = iio_trigger_alloc(NULL, "%s", name);
-	if (!trig_info->swt.trigger) {
+	trig_info->swt.trigger = iio_trigger_alloc(शून्य, "%s", name);
+	अगर (!trig_info->swt.trigger) अणु
 		ret = -ENOMEM;
-		goto err_free_trig_info;
-	}
+		जाओ err_मुक्त_trig_info;
+	पूर्ण
 
 	iio_trigger_set_drvdata(trig_info->swt.trigger, trig_info);
 	trig_info->swt.trigger->ops = &iio_loop_trigger_ops;
 
-	ret = iio_trigger_register(trig_info->swt.trigger);
-	if (ret)
-		goto err_free_trigger;
+	ret = iio_trigger_रेजिस्टर(trig_info->swt.trigger);
+	अगर (ret)
+		जाओ err_मुक्त_trigger;
 
 	iio_swt_group_init_type_name(&trig_info->swt, name, &iio_loop_type);
 
-	return &trig_info->swt;
+	वापस &trig_info->swt;
 
-err_free_trigger:
-	iio_trigger_free(trig_info->swt.trigger);
-err_free_trig_info:
-	kfree(trig_info);
+err_मुक्त_trigger:
+	iio_trigger_मुक्त(trig_info->swt.trigger);
+err_मुक्त_trig_info:
+	kमुक्त(trig_info);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static int iio_trig_loop_remove(struct iio_sw_trigger *swt)
-{
-	struct iio_loop_info *trig_info;
+अटल पूर्णांक iio_trig_loop_हटाओ(काष्ठा iio_sw_trigger *swt)
+अणु
+	काष्ठा iio_loop_info *trig_info;
 
 	trig_info = iio_trigger_get_drvdata(swt->trigger);
 
-	iio_trigger_unregister(swt->trigger);
-	iio_trigger_free(swt->trigger);
-	kfree(trig_info);
+	iio_trigger_unरेजिस्टर(swt->trigger);
+	iio_trigger_मुक्त(swt->trigger);
+	kमुक्त(trig_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct iio_sw_trigger_ops iio_trig_loop_ops = {
+अटल स्थिर काष्ठा iio_sw_trigger_ops iio_trig_loop_ops = अणु
 	.probe = iio_trig_loop_probe,
-	.remove = iio_trig_loop_remove,
-};
+	.हटाओ = iio_trig_loop_हटाओ,
+पूर्ण;
 
-static struct iio_sw_trigger_type iio_trig_loop = {
+अटल काष्ठा iio_sw_trigger_type iio_trig_loop = अणु
 	.name = "loop",
 	.owner = THIS_MODULE,
 	.ops = &iio_trig_loop_ops,
-};
+पूर्ण;
 
 module_iio_sw_trigger_driver(iio_trig_loop);
 

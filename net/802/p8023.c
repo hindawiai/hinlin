@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	NET3:	802.3 data link hooks used for IPX 802.3
+ *	NET3:	802.3 data link hooks used क्रम IPX 802.3
  *
  *	802.3 isn't really a protocol data link layer. Some old IPX stuff
  *	uses it however. Note that there is only one 802.3 protocol layer
- *	in the system. We don't currently support different protocols
- *	running raw 802.3 on different devices. Thankfully nobody else
- *	has done anything like the old IPX.
+ *	in the प्रणाली. We करोn't currently support dअगरferent protocols
+ *	running raw 802.3 on dअगरferent devices. Thankfully nobody अन्यथा
+ *	has करोne anything like the old IPX.
  */
 
-#include <linux/in.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
+#समावेश <linux/in.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
 
-#include <net/datalink.h>
-#include <net/p8022.h>
+#समावेश <net/datalink.h>
+#समावेश <net/p8022.h>
 
 /*
- *	Place an 802.3 header on a packet. The driver will do the mac
+ *	Place an 802.3 header on a packet. The driver will करो the mac
  *	addresses, we just need to give it the buffer length.
  */
-static int p8023_request(struct datalink_proto *dl,
-			 struct sk_buff *skb, unsigned char *dest_node)
-{
-	struct net_device *dev = skb->dev;
+अटल पूर्णांक p8023_request(काष्ठा datalink_proto *dl,
+			 काष्ठा sk_buff *skb, अचिन्हित अक्षर *dest_node)
+अणु
+	काष्ठा net_device *dev = skb->dev;
 
-	dev_hard_header(skb, dev, ETH_P_802_3, dest_node, NULL, skb->len);
-	return dev_queue_xmit(skb);
-}
+	dev_hard_header(skb, dev, ETH_P_802_3, dest_node, शून्य, skb->len);
+	वापस dev_queue_xmit(skb);
+पूर्ण
 
 /*
  *	Create an 802.3 client. Note there can be only one 802.3 client
  */
-struct datalink_proto *make_8023_client(void)
-{
-	struct datalink_proto *proto = kmalloc(sizeof(*proto), GFP_ATOMIC);
+काष्ठा datalink_proto *make_8023_client(व्योम)
+अणु
+	काष्ठा datalink_proto *proto = kदो_स्मृति(माप(*proto), GFP_ATOMIC);
 
-	if (proto) {
+	अगर (proto) अणु
 		proto->header_length = 0;
 		proto->request	     = p8023_request;
-	}
-	return proto;
-}
+	पूर्ण
+	वापस proto;
+पूर्ण
 
 /*
  *	Destroy the 802.3 client.
  */
-void destroy_8023_client(struct datalink_proto *dl)
-{
-	kfree(dl);
-}
+व्योम destroy_8023_client(काष्ठा datalink_proto *dl)
+अणु
+	kमुक्त(dl);
+पूर्ण
 
 EXPORT_SYMBOL(destroy_8023_client);
 EXPORT_SYMBOL(make_8023_client);

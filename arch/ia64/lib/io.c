@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/module.h>
-#include <linux/types.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
 /*
  * Copy data from IO memory space to "real" memory space.
  * This needs to be optimized.
  */
-void memcpy_fromio(void *to, const volatile void __iomem *from, long count)
-{
-	char *dst = to;
+व्योम स_नकल_fromio(व्योम *to, स्थिर अस्थिर व्योम __iomem *from, दीर्घ count)
+अणु
+	अक्षर *dst = to;
 
-	while (count) {
+	जबतक (count) अणु
 		count--;
-		*dst++ = readb(from++);
-	}
-}
-EXPORT_SYMBOL(memcpy_fromio);
+		*dst++ = पढ़ोb(from++);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(स_नकल_fromio);
 
 /*
  * Copy data from "real" memory space to IO memory space.
  * This needs to be optimized.
  */
-void memcpy_toio(volatile void __iomem *to, const void *from, long count)
-{
-	const char *src = from;
+व्योम स_नकल_toio(अस्थिर व्योम __iomem *to, स्थिर व्योम *from, दीर्घ count)
+अणु
+	स्थिर अक्षर *src = from;
 
-	while (count) {
+	जबतक (count) अणु
 		count--;
-		writeb(*src++, to++);
-	}
-}
-EXPORT_SYMBOL(memcpy_toio);
+		ग_लिखोb(*src++, to++);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(स_नकल_toio);
 
 /*
  * "memset" on IO memory space.
  * This needs to be optimized.
  */
-void memset_io(volatile void __iomem *dst, int c, long count)
-{
-	unsigned char ch = (char)(c & 0xff);
+व्योम स_रखो_io(अस्थिर व्योम __iomem *dst, पूर्णांक c, दीर्घ count)
+अणु
+	अचिन्हित अक्षर ch = (अक्षर)(c & 0xff);
 
-	while (count) {
+	जबतक (count) अणु
 		count--;
-		writeb(ch, dst);
+		ग_लिखोb(ch, dst);
 		dst++;
-	}
-}
-EXPORT_SYMBOL(memset_io);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(स_रखो_io);

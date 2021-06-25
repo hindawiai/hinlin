@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * mac80211 glue code for mac80211 ST-Ericsson CW1200 drivers
+ * mac80211 glue code क्रम mac80211 ST-Ericsson CW1200 drivers
  *
  * Copyright (c) 2010, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
@@ -11,60 +12,60 @@
  * Copyright 2008, Johannes Berg <johannes@sipsolutions.net>
  *
  * Based on:
- * - the islsm (softmac prism54) driver, which is:
+ * - the islsm (sofपंचांगac prism54) driver, which is:
  *   Copyright 2004-2006 Jean-Baptiste Note <jbnote@gmail.com>, et al.
  * - stlc45xx driver
  *   Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
  */
 
-#include <linux/module.h>
-#include <linux/firmware.h>
-#include <linux/etherdevice.h>
-#include <linux/vmalloc.h>
-#include <linux/random.h>
-#include <linux/sched.h>
-#include <net/mac80211.h>
+#समावेश <linux/module.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/sched.h>
+#समावेश <net/mac80211.h>
 
-#include "cw1200.h"
-#include "txrx.h"
-#include "hwbus.h"
-#include "fwio.h"
-#include "hwio.h"
-#include "bh.h"
-#include "sta.h"
-#include "scan.h"
-#include "debug.h"
-#include "pm.h"
+#समावेश "cw1200.h"
+#समावेश "txrx.h"
+#समावेश "hwbus.h"
+#समावेश "fwio.h"
+#समावेश "hwio.h"
+#समावेश "bh.h"
+#समावेश "sta.h"
+#समावेश "scan.h"
+#समावेश "debug.h"
+#समावेश "pm.h"
 
 MODULE_AUTHOR("Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>");
 MODULE_DESCRIPTION("Softmac ST-Ericsson CW1200 common code");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("cw1200_core");
 
-/* Accept MAC address of the form macaddr=0x00,0x80,0xE1,0x30,0x40,0x50 */
-static u8 cw1200_mac_template[ETH_ALEN] = {0x02, 0x80, 0xe1, 0x00, 0x00, 0x00};
-module_param_array_named(macaddr, cw1200_mac_template, byte, NULL, 0444);
+/* Accept MAC address of the क्रमm macaddr=0x00,0x80,0xE1,0x30,0x40,0x50 */
+अटल u8 cw1200_mac_ढाँचा[ETH_ALEN] = अणु0x02, 0x80, 0xe1, 0x00, 0x00, 0x00पूर्ण;
+module_param_array_named(macaddr, cw1200_mac_ढाँचा, byte, शून्य, 0444);
 MODULE_PARM_DESC(macaddr, "Override platform_data MAC address");
 
-static char *cw1200_sdd_path;
-module_param(cw1200_sdd_path, charp, 0644);
+अटल अक्षर *cw1200_sdd_path;
+module_param(cw1200_sdd_path, अक्षरp, 0644);
 MODULE_PARM_DESC(cw1200_sdd_path, "Override platform_data SDD file");
-static int cw1200_refclk;
-module_param(cw1200_refclk, int, 0644);
+अटल पूर्णांक cw1200_refclk;
+module_param(cw1200_refclk, पूर्णांक, 0644);
 MODULE_PARM_DESC(cw1200_refclk, "Override platform_data reference clock");
 
-int cw1200_power_mode = wsm_power_mode_quiescent;
-module_param(cw1200_power_mode, int, 0644);
-MODULE_PARM_DESC(cw1200_power_mode, "WSM power mode.  0 == active, 1 == doze, 2 == quiescent (default)");
+पूर्णांक cw1200_घातer_mode = wsm_घातer_mode_quiescent;
+module_param(cw1200_घातer_mode, पूर्णांक, 0644);
+MODULE_PARM_DESC(cw1200_घातer_mode, "WSM power mode.  0 == active, 1 == doze, 2 == quiescent (default)");
 
-#define RATETAB_ENT(_rate, _rateid, _flags)		\
-	{						\
+#घोषणा RATETAB_ENT(_rate, _rateid, _flags)		\
+	अणु						\
 		.bitrate	= (_rate),		\
 		.hw_value	= (_rateid),		\
 		.flags		= (_flags),		\
-	}
+	पूर्ण
 
-static struct ieee80211_rate cw1200_rates[] = {
+अटल काष्ठा ieee80211_rate cw1200_rates[] = अणु
 	RATETAB_ENT(10,  0,   0),
 	RATETAB_ENT(20,  1,   0),
 	RATETAB_ENT(55,  2,   0),
@@ -77,9 +78,9 @@ static struct ieee80211_rate cw1200_rates[] = {
 	RATETAB_ENT(360, 11, 0),
 	RATETAB_ENT(480, 12, 0),
 	RATETAB_ENT(540, 13, 0),
-};
+पूर्ण;
 
-static struct ieee80211_rate cw1200_mcs_rates[] = {
+अटल काष्ठा ieee80211_rate cw1200_mcs_rates[] = अणु
 	RATETAB_ENT(65,  14, IEEE80211_TX_RC_MCS),
 	RATETAB_ENT(130, 15, IEEE80211_TX_RC_MCS),
 	RATETAB_ENT(195, 16, IEEE80211_TX_RC_MCS),
@@ -88,35 +89,35 @@ static struct ieee80211_rate cw1200_mcs_rates[] = {
 	RATETAB_ENT(520, 19, IEEE80211_TX_RC_MCS),
 	RATETAB_ENT(585, 20, IEEE80211_TX_RC_MCS),
 	RATETAB_ENT(650, 21, IEEE80211_TX_RC_MCS),
-};
+पूर्ण;
 
-#define cw1200_a_rates		(cw1200_rates + 4)
-#define cw1200_a_rates_size	(ARRAY_SIZE(cw1200_rates) - 4)
-#define cw1200_g_rates		(cw1200_rates + 0)
-#define cw1200_g_rates_size	(ARRAY_SIZE(cw1200_rates))
-#define cw1200_n_rates		(cw1200_mcs_rates)
-#define cw1200_n_rates_size	(ARRAY_SIZE(cw1200_mcs_rates))
+#घोषणा cw1200_a_rates		(cw1200_rates + 4)
+#घोषणा cw1200_a_rates_size	(ARRAY_SIZE(cw1200_rates) - 4)
+#घोषणा cw1200_g_rates		(cw1200_rates + 0)
+#घोषणा cw1200_g_rates_size	(ARRAY_SIZE(cw1200_rates))
+#घोषणा cw1200_n_rates		(cw1200_mcs_rates)
+#घोषणा cw1200_n_rates_size	(ARRAY_SIZE(cw1200_mcs_rates))
 
 
-#define CHAN2G(_channel, _freq, _flags) {			\
+#घोषणा CHAN2G(_channel, _freq, _flags) अणु			\
 	.band			= NL80211_BAND_2GHZ,		\
 	.center_freq		= (_freq),			\
 	.hw_value		= (_channel),			\
 	.flags			= (_flags),			\
 	.max_antenna_gain	= 0,				\
-	.max_power		= 30,				\
-}
+	.max_घातer		= 30,				\
+पूर्ण
 
-#define CHAN5G(_channel, _flags) {				\
+#घोषणा CHAN5G(_channel, _flags) अणु				\
 	.band			= NL80211_BAND_5GHZ,		\
 	.center_freq	= 5000 + (5 * (_channel)),		\
 	.hw_value		= (_channel),			\
 	.flags			= (_flags),			\
 	.max_antenna_gain	= 0,				\
-	.max_power		= 30,				\
-}
+	.max_घातer		= 30,				\
+पूर्ण
 
-static struct ieee80211_channel cw1200_2ghz_chantable[] = {
+अटल काष्ठा ieee80211_channel cw1200_2ghz_chantable[] = अणु
 	CHAN2G(1, 2412, 0),
 	CHAN2G(2, 2417, 0),
 	CHAN2G(3, 2422, 0),
@@ -131,9 +132,9 @@ static struct ieee80211_channel cw1200_2ghz_chantable[] = {
 	CHAN2G(12, 2467, 0),
 	CHAN2G(13, 2472, 0),
 	CHAN2G(14, 2484, 0),
-};
+पूर्ण;
 
-static struct ieee80211_channel cw1200_5ghz_chantable[] = {
+अटल काष्ठा ieee80211_channel cw1200_5ghz_chantable[] = अणु
 	CHAN5G(34, 0),		CHAN5G(36, 0),
 	CHAN5G(38, 0),		CHAN5G(40, 0),
 	CHAN5G(42, 0),		CHAN5G(44, 0),
@@ -153,67 +154,67 @@ static struct ieee80211_channel cw1200_5ghz_chantable[] = {
 	CHAN5G(200, 0),		CHAN5G(204, 0),
 	CHAN5G(208, 0),		CHAN5G(212, 0),
 	CHAN5G(216, 0),
-};
+पूर्ण;
 
-static struct ieee80211_supported_band cw1200_band_2ghz = {
+अटल काष्ठा ieee80211_supported_band cw1200_band_2ghz = अणु
 	.channels = cw1200_2ghz_chantable,
 	.n_channels = ARRAY_SIZE(cw1200_2ghz_chantable),
 	.bitrates = cw1200_g_rates,
 	.n_bitrates = cw1200_g_rates_size,
-	.ht_cap = {
+	.ht_cap = अणु
 		.cap = IEEE80211_HT_CAP_GRN_FLD |
 			(1 << IEEE80211_HT_CAP_RX_STBC_SHIFT) |
 			IEEE80211_HT_CAP_MAX_AMSDU,
 		.ht_supported = 1,
 		.ampdu_factor = IEEE80211_HT_MAX_AMPDU_8K,
 		.ampdu_density = IEEE80211_HT_MPDU_DENSITY_NONE,
-		.mcs = {
+		.mcs = अणु
 			.rx_mask[0] = 0xFF,
 			.rx_highest = __cpu_to_le16(0x41),
 			.tx_params = IEEE80211_HT_MCS_TX_DEFINED,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct ieee80211_supported_band cw1200_band_5ghz = {
+अटल काष्ठा ieee80211_supported_band cw1200_band_5ghz = अणु
 	.channels = cw1200_5ghz_chantable,
 	.n_channels = ARRAY_SIZE(cw1200_5ghz_chantable),
 	.bitrates = cw1200_a_rates,
 	.n_bitrates = cw1200_a_rates_size,
-	.ht_cap = {
+	.ht_cap = अणु
 		.cap = IEEE80211_HT_CAP_GRN_FLD |
 			(1 << IEEE80211_HT_CAP_RX_STBC_SHIFT) |
 			IEEE80211_HT_CAP_MAX_AMSDU,
 		.ht_supported = 1,
 		.ampdu_factor = IEEE80211_HT_MAX_AMPDU_8K,
 		.ampdu_density = IEEE80211_HT_MPDU_DENSITY_NONE,
-		.mcs = {
+		.mcs = अणु
 			.rx_mask[0] = 0xFF,
 			.rx_highest = __cpu_to_le16(0x41),
 			.tx_params = IEEE80211_HT_MCS_TX_DEFINED,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const unsigned long cw1200_ttl[] = {
+अटल स्थिर अचिन्हित दीर्घ cw1200_ttl[] = अणु
 	1 * HZ,	/* VO */
 	2 * HZ,	/* VI */
 	5 * HZ, /* BE */
 	10 * HZ	/* BK */
-};
+पूर्ण;
 
-static const struct ieee80211_ops cw1200_ops = {
+अटल स्थिर काष्ठा ieee80211_ops cw1200_ops = अणु
 	.start			= cw1200_start,
 	.stop			= cw1200_stop,
-	.add_interface		= cw1200_add_interface,
-	.remove_interface	= cw1200_remove_interface,
-	.change_interface	= cw1200_change_interface,
+	.add_पूर्णांकerface		= cw1200_add_पूर्णांकerface,
+	.हटाओ_पूर्णांकerface	= cw1200_हटाओ_पूर्णांकerface,
+	.change_पूर्णांकerface	= cw1200_change_पूर्णांकerface,
 	.tx			= cw1200_tx,
 	.hw_scan		= cw1200_hw_scan,
 	.set_tim		= cw1200_set_tim,
-	.sta_notify		= cw1200_sta_notify,
+	.sta_notअगरy		= cw1200_sta_notअगरy,
 	.sta_add		= cw1200_sta_add,
-	.sta_remove		= cw1200_sta_remove,
+	.sta_हटाओ		= cw1200_sta_हटाओ,
 	.set_key		= cw1200_set_key,
 	.set_rts_threshold	= cw1200_set_rts_threshold,
 	.config			= cw1200_config,
@@ -224,41 +225,41 @@ static const struct ieee80211_ops cw1200_ops = {
 	.get_stats		= cw1200_get_stats,
 	.ampdu_action		= cw1200_ampdu_action,
 	.flush			= cw1200_flush,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend		= cw1200_wow_suspend,
 	.resume			= cw1200_wow_resume,
-#endif
+#पूर्ण_अगर
 	/* Intentionally not offloaded:					*/
-	/*.channel_switch	= cw1200_channel_switch,		*/
-	/*.remain_on_channel	= cw1200_remain_on_channel,		*/
-	/*.cancel_remain_on_channel = cw1200_cancel_remain_on_channel,	*/
-};
+	/*.channel_चयन	= cw1200_channel_चयन,		*/
+	/*.reमुख्य_on_channel	= cw1200_reमुख्य_on_channel,		*/
+	/*.cancel_reमुख्य_on_channel = cw1200_cancel_reमुख्य_on_channel,	*/
+पूर्ण;
 
-static int cw1200_ba_rx_tids = -1;
-static int cw1200_ba_tx_tids = -1;
-module_param(cw1200_ba_rx_tids, int, 0644);
-module_param(cw1200_ba_tx_tids, int, 0644);
+अटल पूर्णांक cw1200_ba_rx_tids = -1;
+अटल पूर्णांक cw1200_ba_tx_tids = -1;
+module_param(cw1200_ba_rx_tids, पूर्णांक, 0644);
+module_param(cw1200_ba_tx_tids, पूर्णांक, 0644);
 MODULE_PARM_DESC(cw1200_ba_rx_tids, "Block ACK RX TIDs");
 MODULE_PARM_DESC(cw1200_ba_tx_tids, "Block ACK TX TIDs");
 
-#ifdef CONFIG_PM
-static const struct wiphy_wowlan_support cw1200_wowlan_support = {
-	/* Support only for limited wowlan functionalities */
+#अगर_घोषित CONFIG_PM
+अटल स्थिर काष्ठा wiphy_wowlan_support cw1200_wowlan_support = अणु
+	/* Support only क्रम limited wowlan functionalities */
 	.flags = WIPHY_WOWLAN_ANY | WIPHY_WOWLAN_DISCONNECT,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 
-static struct ieee80211_hw *cw1200_init_common(const u8 *macaddr,
-						const bool have_5ghz)
-{
-	int i, band;
-	struct ieee80211_hw *hw;
-	struct cw1200_common *priv;
+अटल काष्ठा ieee80211_hw *cw1200_init_common(स्थिर u8 *macaddr,
+						स्थिर bool have_5ghz)
+अणु
+	पूर्णांक i, band;
+	काष्ठा ieee80211_hw *hw;
+	काष्ठा cw1200_common *priv;
 
-	hw = ieee80211_alloc_hw(sizeof(struct cw1200_common), &cw1200_ops);
-	if (!hw)
-		return NULL;
+	hw = ieee80211_alloc_hw(माप(काष्ठा cw1200_common), &cw1200_ops);
+	अगर (!hw)
+		वापस शून्य;
 
 	priv = hw->priv;
 	priv->hw = hw;
@@ -266,14 +267,14 @@ static struct ieee80211_hw *cw1200_init_common(const u8 *macaddr,
 	priv->mode = NL80211_IFTYPE_UNSPECIFIED;
 	priv->rates = cw1200_rates; /* TODO: fetch from FW */
 	priv->mcs_rates = cw1200_n_rates;
-	if (cw1200_ba_rx_tids != -1)
+	अगर (cw1200_ba_rx_tids != -1)
 		priv->ba_rx_tid_mask = cw1200_ba_rx_tids;
-	else
-		priv->ba_rx_tid_mask = 0xFF; /* Enable RX BLKACK for all TIDs */
-	if (cw1200_ba_tx_tids != -1)
+	अन्यथा
+		priv->ba_rx_tid_mask = 0xFF; /* Enable RX BLKACK क्रम all TIDs */
+	अगर (cw1200_ba_tx_tids != -1)
 		priv->ba_tx_tid_mask = cw1200_ba_tx_tids;
-	else
-		priv->ba_tx_tid_mask = 0xff; /* Enable TX BLKACK for all TIDs */
+	अन्यथा
+		priv->ba_tx_tid_mask = 0xff; /* Enable TX BLKACK क्रम all TIDs */
 
 	ieee80211_hw_set(hw, NEED_DTIM_BEFORE_ASSOC);
 	ieee80211_hw_set(hw, TX_AMPDU_SETUP_IN_HW);
@@ -284,16 +285,16 @@ static struct ieee80211_hw *cw1200_init_common(const u8 *macaddr,
 	ieee80211_hw_set(hw, SIGNAL_DBM);
 	ieee80211_hw_set(hw, SUPPORTS_PS);
 
-	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
+	hw->wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
 					  BIT(NL80211_IFTYPE_ADHOC) |
 					  BIT(NL80211_IFTYPE_AP) |
 					  BIT(NL80211_IFTYPE_MESH_POINT) |
 					  BIT(NL80211_IFTYPE_P2P_CLIENT) |
 					  BIT(NL80211_IFTYPE_P2P_GO);
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	hw->wiphy->wowlan = &cw1200_wowlan_support;
-#endif
+#पूर्ण_अगर
 
 	hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
 
@@ -306,54 +307,54 @@ static struct ieee80211_hw *cw1200_init_common(const u8 *macaddr,
 	hw->extra_tx_headroom = WSM_TX_EXTRA_HEADROOM +
 		8;  /* TKIP IV */
 
-	hw->sta_data_size = sizeof(struct cw1200_sta_priv);
+	hw->sta_data_size = माप(काष्ठा cw1200_sta_priv);
 
 	hw->wiphy->bands[NL80211_BAND_2GHZ] = &cw1200_band_2ghz;
-	if (have_5ghz)
+	अगर (have_5ghz)
 		hw->wiphy->bands[NL80211_BAND_5GHZ] = &cw1200_band_5ghz;
 
-	/* Channel params have to be cleared before registering wiphy again */
-	for (band = 0; band < NUM_NL80211_BANDS; band++) {
-		struct ieee80211_supported_band *sband = hw->wiphy->bands[band];
-		if (!sband)
-			continue;
-		for (i = 0; i < sband->n_channels; i++) {
+	/* Channel params have to be cleared beक्रमe रेजिस्टरing wiphy again */
+	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
+		काष्ठा ieee80211_supported_band *sband = hw->wiphy->bands[band];
+		अगर (!sband)
+			जारी;
+		क्रम (i = 0; i < sband->n_channels; i++) अणु
 			sband->channels[i].flags = 0;
 			sband->channels[i].max_antenna_gain = 0;
-			sband->channels[i].max_power = 30;
-		}
-	}
+			sband->channels[i].max_घातer = 30;
+		पूर्ण
+	पूर्ण
 
 	hw->wiphy->max_scan_ssids = 2;
 	hw->wiphy->max_scan_ie_len = IEEE80211_MAX_DATA_LEN;
 
-	if (macaddr)
+	अगर (macaddr)
 		SET_IEEE80211_PERM_ADDR(hw, (u8 *)macaddr);
-	else
-		SET_IEEE80211_PERM_ADDR(hw, cw1200_mac_template);
+	अन्यथा
+		SET_IEEE80211_PERM_ADDR(hw, cw1200_mac_ढाँचा);
 
-	/* Fix up mac address if necessary */
-	if (hw->wiphy->perm_addr[3] == 0 &&
+	/* Fix up mac address अगर necessary */
+	अगर (hw->wiphy->perm_addr[3] == 0 &&
 	    hw->wiphy->perm_addr[4] == 0 &&
-	    hw->wiphy->perm_addr[5] == 0) {
-		get_random_bytes(&hw->wiphy->perm_addr[3], 3);
-	}
+	    hw->wiphy->perm_addr[5] == 0) अणु
+		get_अक्रमom_bytes(&hw->wiphy->perm_addr[3], 3);
+	पूर्ण
 
 	mutex_init(&priv->wsm_cmd_mux);
 	mutex_init(&priv->conf_mutex);
-	priv->workqueue = create_singlethread_workqueue("cw1200_wq");
-	if (!priv->workqueue) {
-		ieee80211_free_hw(hw);
-		return NULL;
-	}
+	priv->workqueue = create_singlethपढ़ो_workqueue("cw1200_wq");
+	अगर (!priv->workqueue) अणु
+		ieee80211_मुक्त_hw(hw);
+		वापस शून्य;
+	पूर्ण
 
 	sema_init(&priv->scan.lock, 1);
 	INIT_WORK(&priv->scan.work, cw1200_scan_work);
 	INIT_DELAYED_WORK(&priv->scan.probe_work, cw1200_probe_work);
-	INIT_DELAYED_WORK(&priv->scan.timeout, cw1200_scan_timeout);
+	INIT_DELAYED_WORK(&priv->scan.समयout, cw1200_scan_समयout);
 	INIT_DELAYED_WORK(&priv->clear_recent_scan_work,
 			  cw1200_clear_recent_scan_work);
-	INIT_DELAYED_WORK(&priv->join_timeout, cw1200_join_timeout);
+	INIT_DELAYED_WORK(&priv->join_समयout, cw1200_join_समयout);
 	INIT_WORK(&priv->unjoin_work, cw1200_unjoin_work);
 	INIT_WORK(&priv->join_complete_work, cw1200_join_complete_work);
 	INIT_WORK(&priv->wep_key_work, cw1200_wep_key_work);
@@ -375,86 +376,86 @@ static struct ieee80211_hw *cw1200_init_common(const u8 *macaddr,
 	INIT_WORK(&priv->update_filtering_work, cw1200_update_filtering_work);
 	INIT_WORK(&priv->set_beacon_wakeup_period_work,
 		  cw1200_set_beacon_wakeup_period_work);
-	timer_setup(&priv->mcast_timeout, cw1200_mcast_timeout, 0);
+	समयr_setup(&priv->mcast_समयout, cw1200_mcast_समयout, 0);
 
-	if (cw1200_queue_stats_init(&priv->tx_queue_stats,
+	अगर (cw1200_queue_stats_init(&priv->tx_queue_stats,
 				    CW1200_LINK_ID_MAX,
 				    cw1200_skb_dtor,
-				    priv)) {
+				    priv)) अणु
 		destroy_workqueue(priv->workqueue);
-		ieee80211_free_hw(hw);
-		return NULL;
-	}
+		ieee80211_मुक्त_hw(hw);
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < 4; ++i) {
-		if (cw1200_queue_init(&priv->tx_queue[i],
+	क्रम (i = 0; i < 4; ++i) अणु
+		अगर (cw1200_queue_init(&priv->tx_queue[i],
 				      &priv->tx_queue_stats, i, 16,
-				      cw1200_ttl[i])) {
-			for (; i > 0; i--)
+				      cw1200_ttl[i])) अणु
+			क्रम (; i > 0; i--)
 				cw1200_queue_deinit(&priv->tx_queue[i - 1]);
 			cw1200_queue_stats_deinit(&priv->tx_queue_stats);
 			destroy_workqueue(priv->workqueue);
-			ieee80211_free_hw(hw);
-			return NULL;
-		}
-	}
+			ieee80211_मुक्त_hw(hw);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	init_waitqueue_head(&priv->channel_switch_done);
-	init_waitqueue_head(&priv->wsm_cmd_wq);
-	init_waitqueue_head(&priv->wsm_startup_done);
-	init_waitqueue_head(&priv->ps_mode_switch_done);
+	init_रुकोqueue_head(&priv->channel_चयन_करोne);
+	init_रुकोqueue_head(&priv->wsm_cmd_wq);
+	init_रुकोqueue_head(&priv->wsm_startup_करोne);
+	init_रुकोqueue_head(&priv->ps_mode_चयन_करोne);
 	wsm_buf_init(&priv->wsm_cmd_buf);
 	spin_lock_init(&priv->wsm_cmd.lock);
-	priv->wsm_cmd.done = 1;
+	priv->wsm_cmd.करोne = 1;
 	tx_policy_init(priv);
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static int cw1200_register_common(struct ieee80211_hw *dev)
-{
-	struct cw1200_common *priv = dev->priv;
-	int err;
+अटल पूर्णांक cw1200_रेजिस्टर_common(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा cw1200_common *priv = dev->priv;
+	पूर्णांक err;
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	err = cw1200_pm_init(&priv->pm_state, priv);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Cannot init PM. (%d).\n",
 		       err);
-		return err;
-	}
-#endif
+		वापस err;
+	पूर्ण
+#पूर्ण_अगर
 
-	err = ieee80211_register_hw(dev);
-	if (err) {
+	err = ieee80211_रेजिस्टर_hw(dev);
+	अगर (err) अणु
 		pr_err("Cannot register device (%d).\n",
 		       err);
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 		cw1200_pm_deinit(&priv->pm_state);
-#endif
-		return err;
-	}
+#पूर्ण_अगर
+		वापस err;
+	पूर्ण
 
 	cw1200_debug_init(priv);
 
 	pr_info("Registered as '%s'\n", wiphy_name(dev->wiphy));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cw1200_free_common(struct ieee80211_hw *dev)
-{
-	ieee80211_free_hw(dev);
-}
+अटल व्योम cw1200_मुक्त_common(काष्ठा ieee80211_hw *dev)
+अणु
+	ieee80211_मुक्त_hw(dev);
+पूर्ण
 
-static void cw1200_unregister_common(struct ieee80211_hw *dev)
-{
-	struct cw1200_common *priv = dev->priv;
-	int i;
+अटल व्योम cw1200_unरेजिस्टर_common(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा cw1200_common *priv = dev->priv;
+	पूर्णांक i;
 
-	ieee80211_unregister_hw(dev);
+	ieee80211_unरेजिस्टर_hw(dev);
 
-	del_timer_sync(&priv->mcast_timeout);
-	cw1200_unregister_bh(priv);
+	del_समयr_sync(&priv->mcast_समयout);
+	cw1200_unरेजिस्टर_bh(priv);
 
 	cw1200_debug_release(priv);
 
@@ -463,81 +464,81 @@ static void cw1200_unregister_common(struct ieee80211_hw *dev)
 	wsm_buf_deinit(&priv->wsm_cmd_buf);
 
 	destroy_workqueue(priv->workqueue);
-	priv->workqueue = NULL;
+	priv->workqueue = शून्य;
 
-	if (priv->sdd) {
+	अगर (priv->sdd) अणु
 		release_firmware(priv->sdd);
-		priv->sdd = NULL;
-	}
+		priv->sdd = शून्य;
+	पूर्ण
 
-	for (i = 0; i < 4; ++i)
+	क्रम (i = 0; i < 4; ++i)
 		cw1200_queue_deinit(&priv->tx_queue[i]);
 
 	cw1200_queue_stats_deinit(&priv->tx_queue_stats);
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	cw1200_pm_deinit(&priv->pm_state);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /* Clock is in KHz */
 u32 cw1200_dpll_from_clk(u16 clk_khz)
-{
-	switch (clk_khz) {
-	case 0x32C8: /* 13000 KHz */
-		return 0x1D89D241;
-	case 0x3E80: /* 16000 KHz */
-		return 0x000001E1;
-	case 0x41A0: /* 16800 KHz */
-		return 0x124931C1;
-	case 0x4B00: /* 19200 KHz */
-		return 0x00000191;
-	case 0x5DC0: /* 24000 KHz */
-		return 0x00000141;
-	case 0x6590: /* 26000 KHz */
-		return 0x0EC4F121;
-	case 0x8340: /* 33600 KHz */
-		return 0x092490E1;
-	case 0x9600: /* 38400 KHz */
-		return 0x100010C1;
-	case 0x9C40: /* 40000 KHz */
-		return 0x000000C1;
-	case 0xBB80: /* 48000 KHz */
-		return 0x000000A1;
-	case 0xCB20: /* 52000 KHz */
-		return 0x07627091;
-	default:
+अणु
+	चयन (clk_khz) अणु
+	हाल 0x32C8: /* 13000 KHz */
+		वापस 0x1D89D241;
+	हाल 0x3E80: /* 16000 KHz */
+		वापस 0x000001E1;
+	हाल 0x41A0: /* 16800 KHz */
+		वापस 0x124931C1;
+	हाल 0x4B00: /* 19200 KHz */
+		वापस 0x00000191;
+	हाल 0x5DC0: /* 24000 KHz */
+		वापस 0x00000141;
+	हाल 0x6590: /* 26000 KHz */
+		वापस 0x0EC4F121;
+	हाल 0x8340: /* 33600 KHz */
+		वापस 0x092490E1;
+	हाल 0x9600: /* 38400 KHz */
+		वापस 0x100010C1;
+	हाल 0x9C40: /* 40000 KHz */
+		वापस 0x000000C1;
+	हाल 0xBB80: /* 48000 KHz */
+		वापस 0x000000A1;
+	हाल 0xCB20: /* 52000 KHz */
+		वापस 0x07627091;
+	शेष:
 		pr_err("Unknown Refclk freq (0x%04x), using 26000KHz\n",
 		       clk_khz);
-		return 0x0EC4F121;
-	}
-}
+		वापस 0x0EC4F121;
+	पूर्ण
+पूर्ण
 
-int cw1200_core_probe(const struct hwbus_ops *hwbus_ops,
-		      struct hwbus_priv *hwbus,
-		      struct device *pdev,
-		      struct cw1200_common **core,
-		      int ref_clk, const u8 *macaddr,
-		      const char *sdd_path, bool have_5ghz)
-{
-	int err = -EINVAL;
-	struct ieee80211_hw *dev;
-	struct cw1200_common *priv;
-	struct wsm_operational_mode mode = {
-		.power_mode = cw1200_power_mode,
+पूर्णांक cw1200_core_probe(स्थिर काष्ठा hwbus_ops *hwbus_ops,
+		      काष्ठा hwbus_priv *hwbus,
+		      काष्ठा device *pdev,
+		      काष्ठा cw1200_common **core,
+		      पूर्णांक ref_clk, स्थिर u8 *macaddr,
+		      स्थिर अक्षर *sdd_path, bool have_5ghz)
+अणु
+	पूर्णांक err = -EINVAL;
+	काष्ठा ieee80211_hw *dev;
+	काष्ठा cw1200_common *priv;
+	काष्ठा wsm_operational_mode mode = अणु
+		.घातer_mode = cw1200_घातer_mode,
 		.disable_more_flag_usage = true,
-	};
+	पूर्ण;
 
 	dev = cw1200_init_common(macaddr, have_5ghz);
-	if (!dev)
-		goto err;
+	अगर (!dev)
+		जाओ err;
 
 	priv = dev->priv;
 	priv->hw_refclk = ref_clk;
-	if (cw1200_refclk)
+	अगर (cw1200_refclk)
 		priv->hw_refclk = cw1200_refclk;
 
-	priv->sdd_path = (char *)sdd_path;
-	if (cw1200_sdd_path)
+	priv->sdd_path = (अक्षर *)sdd_path;
+	अगर (cw1200_sdd_path)
 		priv->sdd_path = cw1200_sdd_path;
 
 	priv->hwbus_ops = hwbus_ops;
@@ -545,60 +546,60 @@ int cw1200_core_probe(const struct hwbus_ops *hwbus_ops,
 	priv->pdev = pdev;
 	SET_IEEE80211_DEV(priv->hw, pdev);
 
-	/* Pass struct cw1200_common back up */
+	/* Pass काष्ठा cw1200_common back up */
 	*core = priv;
 
-	err = cw1200_register_bh(priv);
-	if (err)
-		goto err1;
+	err = cw1200_रेजिस्टर_bh(priv);
+	अगर (err)
+		जाओ err1;
 
 	err = cw1200_load_firmware(priv);
-	if (err)
-		goto err2;
+	अगर (err)
+		जाओ err2;
 
-	if (wait_event_interruptible_timeout(priv->wsm_startup_done,
-					     priv->firmware_ready,
-					     3*HZ) <= 0) {
+	अगर (रुको_event_पूर्णांकerruptible_समयout(priv->wsm_startup_करोne,
+					     priv->firmware_पढ़ोy,
+					     3*HZ) <= 0) अणु
 		/* TODO: Need to find how to reset device
 		   in QUEUE mode properly.
 		*/
 		pr_err("Timeout waiting on device startup\n");
 		err = -ETIMEDOUT;
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
-	/* Set low-power mode. */
+	/* Set low-घातer mode. */
 	wsm_set_operational_mode(priv, &mode);
 
 	/* Enable multi-TX confirmation */
 	wsm_use_multi_tx_conf(priv, true);
 
-	err = cw1200_register_common(dev);
-	if (err)
-		goto err2;
+	err = cw1200_रेजिस्टर_common(dev);
+	अगर (err)
+		जाओ err2;
 
-	return err;
+	वापस err;
 
 err2:
-	cw1200_unregister_bh(priv);
+	cw1200_unरेजिस्टर_bh(priv);
 err1:
-	cw1200_free_common(dev);
+	cw1200_मुक्त_common(dev);
 err:
-	*core = NULL;
-	return err;
-}
+	*core = शून्य;
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(cw1200_core_probe);
 
-void cw1200_core_release(struct cw1200_common *self)
-{
-	/* Disable device interrupts */
+व्योम cw1200_core_release(काष्ठा cw1200_common *self)
+अणु
+	/* Disable device पूर्णांकerrupts */
 	self->hwbus_ops->lock(self->hwbus_priv);
 	__cw1200_irq_enable(self, 0);
 	self->hwbus_ops->unlock(self->hwbus_priv);
 
 	/* And then clean up */
-	cw1200_unregister_common(self->hw);
-	cw1200_free_common(self->hw);
-	return;
-}
+	cw1200_unरेजिस्टर_common(self->hw);
+	cw1200_मुक्त_common(self->hw);
+	वापस;
+पूर्ण
 EXPORT_SYMBOL_GPL(cw1200_core_release);

@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2012-2019 ARM Limited (or its affiliates). */
 
-#ifndef __CC_FIPS_H__
-#define __CC_FIPS_H__
+#अगर_अघोषित __CC_FIPS_H__
+#घोषणा __CC_FIPS_H__
 
-#ifdef CONFIG_CRYPTO_FIPS
+#अगर_घोषित CONFIG_CRYPTO_FIPS
 
-enum cc_fips_status {
+क्रमागत cc_fips_status अणु
 	CC_FIPS_SYNC_MODULE_OK = 0x0,
 	CC_FIPS_SYNC_MODULE_ERROR = 0x1,
 	CC_FIPS_SYNC_REE_STATUS = 0x4,
 	CC_FIPS_SYNC_TEE_STATUS = 0x8,
 	CC_FIPS_SYNC_STATUS_RESERVE32B = S32_MAX
-};
+पूर्ण;
 
-int cc_fips_init(struct cc_drvdata *p_drvdata);
-void cc_fips_fini(struct cc_drvdata *drvdata);
-void fips_handler(struct cc_drvdata *drvdata);
-void cc_set_ree_fips_status(struct cc_drvdata *drvdata, bool ok);
-void cc_tee_handle_fips_error(struct cc_drvdata *p_drvdata);
+पूर्णांक cc_fips_init(काष्ठा cc_drvdata *p_drvdata);
+व्योम cc_fips_fini(काष्ठा cc_drvdata *drvdata);
+व्योम fips_handler(काष्ठा cc_drvdata *drvdata);
+व्योम cc_set_ree_fips_status(काष्ठा cc_drvdata *drvdata, bool ok);
+व्योम cc_tee_handle_fips_error(काष्ठा cc_drvdata *p_drvdata);
 
-#else  /* CONFIG_CRYPTO_FIPS */
+#अन्यथा  /* CONFIG_CRYPTO_FIPS */
 
-static inline int cc_fips_init(struct cc_drvdata *p_drvdata)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक cc_fips_init(काष्ठा cc_drvdata *p_drvdata)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void cc_fips_fini(struct cc_drvdata *drvdata) {}
-static inline void cc_set_ree_fips_status(struct cc_drvdata *drvdata,
-					  bool ok) {}
-static inline void fips_handler(struct cc_drvdata *drvdata) {}
-static inline void cc_tee_handle_fips_error(struct cc_drvdata *p_drvdata) {}
+अटल अंतरभूत व्योम cc_fips_fini(काष्ठा cc_drvdata *drvdata) अणुपूर्ण
+अटल अंतरभूत व्योम cc_set_ree_fips_status(काष्ठा cc_drvdata *drvdata,
+					  bool ok) अणुपूर्ण
+अटल अंतरभूत व्योम fips_handler(काष्ठा cc_drvdata *drvdata) अणुपूर्ण
+अटल अंतरभूत व्योम cc_tee_handle_fips_error(काष्ठा cc_drvdata *p_drvdata) अणुपूर्ण
 
-#endif /* CONFIG_CRYPTO_FIPS */
+#पूर्ण_अगर /* CONFIG_CRYPTO_FIPS */
 
-#endif  /*__CC_FIPS_H__*/
+#पूर्ण_अगर  /*__CC_FIPS_H__*/

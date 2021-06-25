@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2011 Freescale Semiconductor, Inc. All Rights Reserved.
  * Copyright 2011 Linaro Ltd.
  */
 
-#include <linux/clk.h>
-#include <linux/clkdev.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/time.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/समय.स>
 
-#include "common.h"
-#include "hardware.h"
+#समावेश "common.h"
+#समावेश "hardware.h"
 
-static void __init imx53_init_early(void)
-{
+अटल व्योम __init imx53_init_early(व्योम)
+अणु
 	mxc_set_cpu_type(MXC_CPU_MX53);
-}
+पूर्ण
 
-static void __init imx53_dt_init(void)
-{
+अटल व्योम __init imx53_dt_init(व्योम)
+अणु
 	imx_src_init();
 	imx5_pmu_init();
 	imx_aips_allow_unprivileged_access("fsl,imx53-aipstz");
-}
+पूर्ण
 
-static void __init imx53_init_late(void)
-{
+अटल व्योम __init imx53_init_late(व्योम)
+अणु
 	imx53_pm_init();
-}
+पूर्ण
 
-static const char * const imx53_dt_board_compat[] __initconst = {
+अटल स्थिर अक्षर * स्थिर imx53_dt_board_compat[] __initस्थिर = अणु
 	"fsl,imx53",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 DT_MACHINE_START(IMX53_DT, "Freescale i.MX53 (Device Tree Support)")
 	.init_early	= imx53_init_early,

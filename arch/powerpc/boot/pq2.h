@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PPC_BOOT_PQ2_H_
-#define _PPC_BOOT_PQ2_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PPC_BOOT_PQ2_H_
+#घोषणा _PPC_BOOT_PQ2_H_
 
-#include "types.h"
+#समावेश "types.h"
 
-int pq2_get_clocks(u32 crystal, u32 *sysfreq, u32 *corefreq,
-                   u32 *timebase, u32 *brgfreq);
-void pq2_set_clocks(u32 sysfreq, u32 corefreq, u32 timebase, u32 brgfreq);
-int pq2_fixup_clocks(u32 crystal);
+पूर्णांक pq2_get_घड़ीs(u32 crystal, u32 *sysfreq, u32 *corefreq,
+                   u32 *समयbase, u32 *brgfreq);
+व्योम pq2_set_घड़ीs(u32 sysfreq, u32 corefreq, u32 समयbase, u32 brgfreq);
+पूर्णांक pq2_fixup_घड़ीs(u32 crystal);
 
-#endif
+#पूर्ण_अगर

@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Original code based Host AP (software wireless LAN access point) driver
- * for Intersil Prism2/2.5/3 - hostap.o module, common routines
+ * Original code based Host AP (software wireless LAN access poपूर्णांक) driver
+ * क्रम Intersil Prism2/2.5/3 - hostap.o module, common routines
  *
  * Copyright (c) 2001-2002, SSH Communications Security Corp and Jouni Malinen
  * <j@w1.fi>
@@ -9,34 +10,34 @@
  * Copyright (c) 2004-2005, Intel Corporation
  */
 
-#include <linux/compiler.h>
-#include <linux/errno.h>
-#include <linux/if_arp.h>
-#include <linux/in6.h>
-#include <linux/gfp.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/proc_fs.h>
-#include <linux/skbuff.h>
-#include <linux/tcp.h>
-#include <linux/types.h>
-#include <linux/wireless.h>
-#include <linux/etherdevice.h>
-#include <linux/uaccess.h>
-#include <linux/ctype.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/types.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/प्रकार.स>
 
-#include <net/lib80211.h>
+#समावेश <net/lib80211.h>
 
-#include "libipw.h"
+#समावेश "libipw.h"
 
-static void libipw_monitor_rx(struct libipw_device *ieee,
-					struct sk_buff *skb,
-					struct libipw_rx_stats *rx_stats)
-{
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+अटल व्योम libipw_monitor_rx(काष्ठा libipw_device *ieee,
+					काष्ठा sk_buff *skb,
+					काष्ठा libipw_rx_stats *rx_stats)
+अणु
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
 	u16 fc = le16_to_cpu(hdr->frame_control);
 
 	skb->dev = ieee->dev;
@@ -44,101 +45,101 @@ static void libipw_monitor_rx(struct libipw_device *ieee,
 	skb_pull(skb, libipw_get_hdrlen(fc));
 	skb->pkt_type = PACKET_OTHERHOST;
 	skb->protocol = htons(ETH_P_80211_RAW);
-	memset(skb->cb, 0, sizeof(skb->cb));
-	netif_rx(skb);
-}
+	स_रखो(skb->cb, 0, माप(skb->cb));
+	netअगर_rx(skb);
+पूर्ण
 
 /* Called only as a tasklet (software IRQ) */
-static struct libipw_frag_entry *libipw_frag_cache_find(struct
+अटल काष्ठा libipw_frag_entry *libipw_frag_cache_find(काष्ठा
 							      libipw_device
 							      *ieee,
-							      unsigned int seq,
-							      unsigned int frag,
+							      अचिन्हित पूर्णांक seq,
+							      अचिन्हित पूर्णांक frag,
 							      u8 * src,
 							      u8 * dst)
-{
-	struct libipw_frag_entry *entry;
-	int i;
+अणु
+	काष्ठा libipw_frag_entry *entry;
+	पूर्णांक i;
 
-	for (i = 0; i < LIBIPW_FRAG_CACHE_LEN; i++) {
+	क्रम (i = 0; i < LIBIPW_FRAG_CACHE_LEN; i++) अणु
 		entry = &ieee->frag_cache[i];
-		if (entry->skb != NULL &&
-		    time_after(jiffies, entry->first_frag_time + 2 * HZ)) {
+		अगर (entry->skb != शून्य &&
+		    समय_after(jअगरfies, entry->first_frag_समय + 2 * HZ)) अणु
 			LIBIPW_DEBUG_FRAG("expiring fragment cache entry "
 					     "seq=%u last_frag=%u\n",
 					     entry->seq, entry->last_frag);
-			dev_kfree_skb_any(entry->skb);
-			entry->skb = NULL;
-		}
+			dev_kमुक्त_skb_any(entry->skb);
+			entry->skb = शून्य;
+		पूर्ण
 
-		if (entry->skb != NULL && entry->seq == seq &&
+		अगर (entry->skb != शून्य && entry->seq == seq &&
 		    (entry->last_frag + 1 == frag || frag == -1) &&
 		    ether_addr_equal(entry->src_addr, src) &&
 		    ether_addr_equal(entry->dst_addr, dst))
-			return entry;
-	}
+			वापस entry;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* Called only as a tasklet (software IRQ) */
-static struct sk_buff *libipw_frag_cache_get(struct libipw_device *ieee,
-						struct libipw_hdr_4addr *hdr)
-{
-	struct sk_buff *skb = NULL;
+अटल काष्ठा sk_buff *libipw_frag_cache_get(काष्ठा libipw_device *ieee,
+						काष्ठा libipw_hdr_4addr *hdr)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
 	u16 sc;
-	unsigned int frag, seq;
-	struct libipw_frag_entry *entry;
+	अचिन्हित पूर्णांक frag, seq;
+	काष्ठा libipw_frag_entry *entry;
 
 	sc = le16_to_cpu(hdr->seq_ctl);
 	frag = WLAN_GET_SEQ_FRAG(sc);
 	seq = WLAN_GET_SEQ_SEQ(sc);
 
-	if (frag == 0) {
+	अगर (frag == 0) अणु
 		/* Reserve enough space to fit maximum frame length */
 		skb = dev_alloc_skb(ieee->dev->mtu +
-				    sizeof(struct libipw_hdr_4addr) +
+				    माप(काष्ठा libipw_hdr_4addr) +
 				    8 /* LLC */  +
 				    2 /* alignment */  +
 				    8 /* WEP */  + ETH_ALEN /* WDS */ );
-		if (skb == NULL)
-			return NULL;
+		अगर (skb == शून्य)
+			वापस शून्य;
 
 		entry = &ieee->frag_cache[ieee->frag_next_idx];
 		ieee->frag_next_idx++;
-		if (ieee->frag_next_idx >= LIBIPW_FRAG_CACHE_LEN)
+		अगर (ieee->frag_next_idx >= LIBIPW_FRAG_CACHE_LEN)
 			ieee->frag_next_idx = 0;
 
-		if (entry->skb != NULL)
-			dev_kfree_skb_any(entry->skb);
+		अगर (entry->skb != शून्य)
+			dev_kमुक्त_skb_any(entry->skb);
 
-		entry->first_frag_time = jiffies;
+		entry->first_frag_समय = jअगरfies;
 		entry->seq = seq;
 		entry->last_frag = frag;
 		entry->skb = skb;
-		memcpy(entry->src_addr, hdr->addr2, ETH_ALEN);
-		memcpy(entry->dst_addr, hdr->addr1, ETH_ALEN);
-	} else {
-		/* received a fragment of a frame for which the head fragment
-		 * should have already been received */
+		स_नकल(entry->src_addr, hdr->addr2, ETH_ALEN);
+		स_नकल(entry->dst_addr, hdr->addr1, ETH_ALEN);
+	पूर्ण अन्यथा अणु
+		/* received a fragment of a frame क्रम which the head fragment
+		 * should have alपढ़ोy been received */
 		entry = libipw_frag_cache_find(ieee, seq, frag, hdr->addr2,
 						  hdr->addr1);
-		if (entry != NULL) {
+		अगर (entry != शून्य) अणु
 			entry->last_frag = frag;
 			skb = entry->skb;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /* Called only as a tasklet (software IRQ) */
-static int libipw_frag_cache_invalidate(struct libipw_device *ieee,
-					   struct libipw_hdr_4addr *hdr)
-{
+अटल पूर्णांक libipw_frag_cache_invalidate(काष्ठा libipw_device *ieee,
+					   काष्ठा libipw_hdr_4addr *hdr)
+अणु
 	u16 sc;
-	unsigned int seq;
-	struct libipw_frag_entry *entry;
+	अचिन्हित पूर्णांक seq;
+	काष्ठा libipw_frag_entry *entry;
 
 	sc = le16_to_cpu(hdr->seq_ctl);
 	seq = WLAN_GET_SEQ_SEQ(sc);
@@ -146,214 +147,214 @@ static int libipw_frag_cache_invalidate(struct libipw_device *ieee,
 	entry = libipw_frag_cache_find(ieee, seq, -1, hdr->addr2,
 					  hdr->addr1);
 
-	if (entry == NULL) {
+	अगर (entry == शून्य) अणु
 		LIBIPW_DEBUG_FRAG("could not invalidate fragment cache "
 				     "entry (seq=%u)\n", seq);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	entry->skb = NULL;
-	return 0;
-}
+	entry->skb = शून्य;
+	वापस 0;
+पूर्ण
 
-#ifdef NOT_YET
-/* libipw_rx_frame_mgtmt
+#अगर_घोषित NOT_YET
+/* libipw_rx_frame_mgपंचांगt
  *
- * Responsible for handling management control frames
+ * Responsible क्रम handling management control frames
  *
  * Called by libipw_rx */
-static int
-libipw_rx_frame_mgmt(struct libipw_device *ieee, struct sk_buff *skb,
-			struct libipw_rx_stats *rx_stats, u16 type,
+अटल पूर्णांक
+libipw_rx_frame_mgmt(काष्ठा libipw_device *ieee, काष्ठा sk_buff *skb,
+			काष्ठा libipw_rx_stats *rx_stats, u16 type,
 			u16 stype)
-{
-	if (ieee->iw_mode == IW_MODE_MASTER) {
-		printk(KERN_DEBUG "%s: Master mode not yet supported.\n",
+अणु
+	अगर (ieee->iw_mode == IW_MODE_MASTER) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: Master mode not yet supported.\n",
 		       ieee->dev->name);
-		return 0;
+		वापस 0;
 /*
-  hostap_update_sta_ps(ieee, (struct hostap_libipw_hdr_4addr *)
+  hostap_update_sta_ps(ieee, (काष्ठा hostap_libipw_hdr_4addr *)
   skb->data);*/
-	}
+	पूर्ण
 
-	if (ieee->hostapd && type == WLAN_FC_TYPE_MGMT) {
-		if (stype == WLAN_FC_STYPE_BEACON &&
-		    ieee->iw_mode == IW_MODE_MASTER) {
-			struct sk_buff *skb2;
+	अगर (ieee->hostapd && type == WLAN_FC_TYPE_MGMT) अणु
+		अगर (stype == WLAN_FC_STYPE_BEACON &&
+		    ieee->iw_mode == IW_MODE_MASTER) अणु
+			काष्ठा sk_buff *skb2;
 			/* Process beacon frames also in kernel driver to
 			 * update STA(AP) table statistics */
 			skb2 = skb_clone(skb, GFP_ATOMIC);
-			if (skb2)
+			अगर (skb2)
 				hostap_rx(skb2->dev, skb2, rx_stats);
-		}
+		पूर्ण
 
-		/* send management frames to the user space daemon for
+		/* send management frames to the user space daemon क्रम
 		 * processing */
 		ieee->apdevstats.rx_packets++;
 		ieee->apdevstats.rx_bytes += skb->len;
 		prism2_rx_80211(ieee->apdev, skb, rx_stats, PRISM2_RX_MGMT);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (ieee->iw_mode == IW_MODE_MASTER) {
-		if (type != WLAN_FC_TYPE_MGMT && type != WLAN_FC_TYPE_CTRL) {
-			printk(KERN_DEBUG "%s: unknown management frame "
+	अगर (ieee->iw_mode == IW_MODE_MASTER) अणु
+		अगर (type != WLAN_FC_TYPE_MGMT && type != WLAN_FC_TYPE_CTRL) अणु
+			prपूर्णांकk(KERN_DEBUG "%s: unknown management frame "
 			       "(type=0x%02x, stype=0x%02x) dropped\n",
 			       skb->dev->name, type, stype);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		hostap_rx(skb->dev, skb, rx_stats);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	printk(KERN_DEBUG "%s: hostap_rx_frame_mgmt: management frame "
+	prपूर्णांकk(KERN_DEBUG "%s: hostap_rx_frame_mgmt: management frame "
 	       "received in non-Host AP mode\n", skb->dev->name);
-	return -1;
-}
-#endif
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 
-/* See IEEE 802.1H for LLC/SNAP encapsulation/decapsulation */
-/* Ethernet-II snap header (RFC1042 for most EtherTypes) */
-static unsigned char libipw_rfc1042_header[] =
-    { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00 };
+/* See IEEE 802.1H क्रम LLC/SNAP encapsulation/decapsulation */
+/* Ethernet-II snap header (RFC1042 क्रम most EtherTypes) */
+अटल अचिन्हित अक्षर libipw_rfc1042_header[] =
+    अणु 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00 पूर्ण;
 
-/* Bridge-Tunnel header (for EtherTypes ETH_P_AARP and ETH_P_IPX) */
-static unsigned char libipw_bridge_tunnel_header[] =
-    { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0xf8 };
-/* No encapsulation header if EtherType < 0x600 (=length) */
+/* Bridge-Tunnel header (क्रम EtherTypes ETH_P_AARP and ETH_P_IPX) */
+अटल अचिन्हित अक्षर libipw_bridge_tunnel_header[] =
+    अणु 0xaa, 0xaa, 0x03, 0x00, 0x00, 0xf8 पूर्ण;
+/* No encapsulation header अगर EtherType < 0x600 (=length) */
 
 /* Called by libipw_rx_frame_decrypt */
-static int libipw_is_eapol_frame(struct libipw_device *ieee,
-				    struct sk_buff *skb)
-{
-	struct net_device *dev = ieee->dev;
+अटल पूर्णांक libipw_is_eapol_frame(काष्ठा libipw_device *ieee,
+				    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = ieee->dev;
 	u16 fc, ethertype;
-	struct libipw_hdr_3addr *hdr;
+	काष्ठा libipw_hdr_3addr *hdr;
 	u8 *pos;
 
-	if (skb->len < 24)
-		return 0;
+	अगर (skb->len < 24)
+		वापस 0;
 
-	hdr = (struct libipw_hdr_3addr *)skb->data;
+	hdr = (काष्ठा libipw_hdr_3addr *)skb->data;
 	fc = le16_to_cpu(hdr->frame_ctl);
 
 	/* check that the frame is unicast frame to us */
-	if ((fc & (IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) ==
+	अगर ((fc & (IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) ==
 	    IEEE80211_FCTL_TODS &&
 	    ether_addr_equal(hdr->addr1, dev->dev_addr) &&
-	    ether_addr_equal(hdr->addr3, dev->dev_addr)) {
+	    ether_addr_equal(hdr->addr3, dev->dev_addr)) अणु
 		/* ToDS frame with own addr BSSID and DA */
-	} else if ((fc & (IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) ==
+	पूर्ण अन्यथा अगर ((fc & (IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) ==
 		   IEEE80211_FCTL_FROMDS &&
-		   ether_addr_equal(hdr->addr1, dev->dev_addr)) {
+		   ether_addr_equal(hdr->addr1, dev->dev_addr)) अणु
 		/* FromDS frame with own addr as DA */
-	} else
-		return 0;
+	पूर्ण अन्यथा
+		वापस 0;
 
-	if (skb->len < 24 + 8)
-		return 0;
+	अगर (skb->len < 24 + 8)
+		वापस 0;
 
-	/* check for port access entity Ethernet type */
+	/* check क्रम port access entity Ethernet type */
 	pos = skb->data + 24;
 	ethertype = (pos[6] << 8) | pos[7];
-	if (ethertype == ETH_P_PAE)
-		return 1;
+	अगर (ethertype == ETH_P_PAE)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Called only as a tasklet (software IRQ), by libipw_rx */
-static int
-libipw_rx_frame_decrypt(struct libipw_device *ieee, struct sk_buff *skb,
-			   struct lib80211_crypt_data *crypt)
-{
-	struct libipw_hdr_3addr *hdr;
-	int res, hdrlen;
+अटल पूर्णांक
+libipw_rx_frame_decrypt(काष्ठा libipw_device *ieee, काष्ठा sk_buff *skb,
+			   काष्ठा lib80211_crypt_data *crypt)
+अणु
+	काष्ठा libipw_hdr_3addr *hdr;
+	पूर्णांक res, hdrlen;
 
-	if (crypt == NULL || crypt->ops->decrypt_mpdu == NULL)
-		return 0;
+	अगर (crypt == शून्य || crypt->ops->decrypt_mpdu == शून्य)
+		वापस 0;
 
-	hdr = (struct libipw_hdr_3addr *)skb->data;
+	hdr = (काष्ठा libipw_hdr_3addr *)skb->data;
 	hdrlen = libipw_get_hdrlen(le16_to_cpu(hdr->frame_ctl));
 
 	atomic_inc(&crypt->refcnt);
 	res = crypt->ops->decrypt_mpdu(skb, hdrlen, crypt->priv);
 	atomic_dec(&crypt->refcnt);
-	if (res < 0) {
+	अगर (res < 0) अणु
 		LIBIPW_DEBUG_DROP("decryption failed (SA=%pM) res=%d\n",
 				     hdr->addr2, res);
-		if (res == -2)
+		अगर (res == -2)
 			LIBIPW_DEBUG_DROP("Decryption failed ICV "
 					     "mismatch (key %d)\n",
 					     skb->data[hdrlen + 3] >> 6);
 		ieee->ieee_stats.rx_discards_undecryptable++;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* Called only as a tasklet (software IRQ), by libipw_rx */
-static int
-libipw_rx_frame_decrypt_msdu(struct libipw_device *ieee,
-				struct sk_buff *skb, int keyidx,
-				struct lib80211_crypt_data *crypt)
-{
-	struct libipw_hdr_3addr *hdr;
-	int res, hdrlen;
+अटल पूर्णांक
+libipw_rx_frame_decrypt_msdu(काष्ठा libipw_device *ieee,
+				काष्ठा sk_buff *skb, पूर्णांक keyidx,
+				काष्ठा lib80211_crypt_data *crypt)
+अणु
+	काष्ठा libipw_hdr_3addr *hdr;
+	पूर्णांक res, hdrlen;
 
-	if (crypt == NULL || crypt->ops->decrypt_msdu == NULL)
-		return 0;
+	अगर (crypt == शून्य || crypt->ops->decrypt_msdu == शून्य)
+		वापस 0;
 
-	hdr = (struct libipw_hdr_3addr *)skb->data;
+	hdr = (काष्ठा libipw_hdr_3addr *)skb->data;
 	hdrlen = libipw_get_hdrlen(le16_to_cpu(hdr->frame_ctl));
 
 	atomic_inc(&crypt->refcnt);
 	res = crypt->ops->decrypt_msdu(skb, keyidx, hdrlen, crypt->priv);
 	atomic_dec(&crypt->refcnt);
-	if (res < 0) {
-		printk(KERN_DEBUG "%s: MSDU decryption/MIC verification failed"
+	अगर (res < 0) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: MSDU decryption/MIC verification failed"
 		       " (SA=%pM keyidx=%d)\n", ieee->dev->name, hdr->addr2,
 		       keyidx);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* All received frames are sent to this function. @skb contains the frame in
- * IEEE 802.11 format, i.e., in the format it was sent over air.
+ * IEEE 802.11 क्रमmat, i.e., in the क्रमmat it was sent over air.
  * This function is called only as a tasklet (software IRQ). */
-int libipw_rx(struct libipw_device *ieee, struct sk_buff *skb,
-		 struct libipw_rx_stats *rx_stats)
-{
-	struct net_device *dev = ieee->dev;
-	struct libipw_hdr_4addr *hdr;
-	size_t hdrlen;
+पूर्णांक libipw_rx(काष्ठा libipw_device *ieee, काष्ठा sk_buff *skb,
+		 काष्ठा libipw_rx_stats *rx_stats)
+अणु
+	काष्ठा net_device *dev = ieee->dev;
+	काष्ठा libipw_hdr_4addr *hdr;
+	माप_प्रकार hdrlen;
 	u16 fc, type, stype, sc;
-	unsigned int frag;
+	अचिन्हित पूर्णांक frag;
 	u8 *payload;
 	u16 ethertype;
-#ifdef NOT_YET
-	struct net_device *wds = NULL;
-	struct sk_buff *skb2 = NULL;
-	struct net_device *wds = NULL;
-	int frame_authorized = 0;
-	int from_assoc_ap = 0;
-	void *sta = NULL;
-#endif
+#अगर_घोषित NOT_YET
+	काष्ठा net_device *wds = शून्य;
+	काष्ठा sk_buff *skb2 = शून्य;
+	काष्ठा net_device *wds = शून्य;
+	पूर्णांक frame_authorized = 0;
+	पूर्णांक from_assoc_ap = 0;
+	व्योम *sta = शून्य;
+#पूर्ण_अगर
 	u8 dst[ETH_ALEN];
 	u8 src[ETH_ALEN];
-	struct lib80211_crypt_data *crypt = NULL;
-	int keyidx = 0;
-	int can_be_decrypted = 0;
+	काष्ठा lib80211_crypt_data *crypt = शून्य;
+	पूर्णांक keyidx = 0;
+	पूर्णांक can_be_decrypted = 0;
 
-	hdr = (struct libipw_hdr_4addr *)skb->data;
-	if (skb->len < 10) {
-		printk(KERN_INFO "%s: SKB length < 10\n", dev->name);
-		goto rx_dropped;
-	}
+	hdr = (काष्ठा libipw_hdr_4addr *)skb->data;
+	अगर (skb->len < 10) अणु
+		prपूर्णांकk(KERN_INFO "%s: SKB length < 10\n", dev->name);
+		जाओ rx_dropped;
+	पूर्ण
 
 	fc = le16_to_cpu(hdr->frame_ctl);
 	type = WLAN_FC_GET_TYPE(fc);
@@ -362,65 +363,65 @@ int libipw_rx(struct libipw_device *ieee, struct sk_buff *skb,
 	frag = WLAN_GET_SEQ_FRAG(sc);
 	hdrlen = libipw_get_hdrlen(fc);
 
-	if (skb->len < hdrlen) {
-		printk(KERN_INFO "%s: invalid SKB length %d\n",
+	अगर (skb->len < hdrlen) अणु
+		prपूर्णांकk(KERN_INFO "%s: invalid SKB length %d\n",
 			dev->name, skb->len);
-		goto rx_dropped;
-	}
+		जाओ rx_dropped;
+	पूर्ण
 
-	/* Put this code here so that we avoid duplicating it in all
+	/* Put this code here so that we aव्योम duplicating it in all
 	 * Rx paths. - Jean II */
-#ifdef CONFIG_WIRELESS_EXT
-#ifdef IW_WIRELESS_SPY		/* defined in iw_handler.h */
+#अगर_घोषित CONFIG_WIRELESS_EXT
+#अगर_घोषित IW_WIRELESS_SPY		/* defined in iw_handler.h */
 	/* If spy monitoring on */
-	if (ieee->spy_data.spy_number > 0) {
-		struct iw_quality wstats;
+	अगर (ieee->spy_data.spy_number > 0) अणु
+		काष्ठा iw_quality wstats;
 
 		wstats.updated = 0;
-		if (rx_stats->mask & LIBIPW_STATMASK_RSSI) {
-			wstats.level = rx_stats->signal;
+		अगर (rx_stats->mask & LIBIPW_STATMASK_RSSI) अणु
+			wstats.level = rx_stats->संकेत;
 			wstats.updated |= IW_QUAL_LEVEL_UPDATED;
-		} else
+		पूर्ण अन्यथा
 			wstats.updated |= IW_QUAL_LEVEL_INVALID;
 
-		if (rx_stats->mask & LIBIPW_STATMASK_NOISE) {
+		अगर (rx_stats->mask & LIBIPW_STATMASK_NOISE) अणु
 			wstats.noise = rx_stats->noise;
 			wstats.updated |= IW_QUAL_NOISE_UPDATED;
-		} else
+		पूर्ण अन्यथा
 			wstats.updated |= IW_QUAL_NOISE_INVALID;
 
-		if (rx_stats->mask & LIBIPW_STATMASK_SIGNAL) {
-			wstats.qual = rx_stats->signal;
+		अगर (rx_stats->mask & LIBIPW_STATMASK_SIGNAL) अणु
+			wstats.qual = rx_stats->संकेत;
 			wstats.updated |= IW_QUAL_QUAL_UPDATED;
-		} else
+		पूर्ण अन्यथा
 			wstats.updated |= IW_QUAL_QUAL_INVALID;
 
 		/* Update spy records */
 		wireless_spy_update(ieee->dev, hdr->addr2, &wstats);
-	}
-#endif				/* IW_WIRELESS_SPY */
-#endif				/* CONFIG_WIRELESS_EXT */
+	पूर्ण
+#पूर्ण_अगर				/* IW_WIRELESS_SPY */
+#पूर्ण_अगर				/* CONFIG_WIRELESS_EXT */
 
-#ifdef NOT_YET
+#अगर_घोषित NOT_YET
 	hostap_update_rx_stats(local->ap, hdr, rx_stats);
-#endif
+#पूर्ण_अगर
 
-	if (ieee->iw_mode == IW_MODE_MONITOR) {
+	अगर (ieee->iw_mode == IW_MODE_MONITOR) अणु
 		dev->stats.rx_packets++;
 		dev->stats.rx_bytes += skb->len;
 		libipw_monitor_rx(ieee, skb, rx_stats);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	can_be_decrypted = (is_multicast_ether_addr(hdr->addr1) ||
 			    is_broadcast_ether_addr(hdr->addr2)) ?
 	    ieee->host_mc_decrypt : ieee->host_decrypt;
 
-	if (can_be_decrypted) {
-		if (skb->len >= hdrlen + 3) {
+	अगर (can_be_decrypted) अणु
+		अगर (skb->len >= hdrlen + 3) अणु
 			/* Top two-bits of byte 3 are the key index */
 			keyidx = skb->data[hdrlen + 3] >> 6;
-		}
+		पूर्ण
 
 		/* ieee->crypt[] is WEP_KEY (4) in length.  Given that keyidx
 		 * is only allowed 2-bits of storage, no value of keyidx can
@@ -428,364 +429,364 @@ int libipw_rx(struct libipw_device *ieee, struct sk_buff *skb,
 		 * being out of range */
 		crypt = ieee->crypt_info.crypt[keyidx];
 
-#ifdef NOT_YET
-		sta = NULL;
+#अगर_घोषित NOT_YET
+		sta = शून्य;
 
-		/* Use station specific key to override default keys if the
+		/* Use station specअगरic key to override शेष keys अगर the
 		 * receiver address is a unicast address ("individual RA"). If
-		 * bcrx_sta_key parameter is set, station specific key is used
-		 * even with broad/multicast targets (this is against IEEE
-		 * 802.11, but makes it easier to use different keys with
-		 * stations that do not support WEP key mapping). */
+		 * bcrx_sta_key parameter is set, station specअगरic key is used
+		 * even with broad/multicast tarमाला_लो (this is against IEEE
+		 * 802.11, but makes it easier to use dअगरferent keys with
+		 * stations that करो not support WEP key mapping). */
 
-		if (is_unicast_ether_addr(hdr->addr1) || local->bcrx_sta_key)
-			(void)hostap_handle_sta_crypto(local, hdr, &crypt,
+		अगर (is_unicast_ether_addr(hdr->addr1) || local->bcrx_sta_key)
+			(व्योम)hostap_handle_sta_crypto(local, hdr, &crypt,
 						       &sta);
-#endif
+#पूर्ण_अगर
 
-		/* allow NULL decrypt to indicate an station specific override
-		 * for default encryption */
-		if (crypt && (crypt->ops == NULL ||
-			      crypt->ops->decrypt_mpdu == NULL))
-			crypt = NULL;
+		/* allow शून्य decrypt to indicate an station specअगरic override
+		 * क्रम शेष encryption */
+		अगर (crypt && (crypt->ops == शून्य ||
+			      crypt->ops->decrypt_mpdu == शून्य))
+			crypt = शून्य;
 
-		if (!crypt && (fc & IEEE80211_FCTL_PROTECTED)) {
+		अगर (!crypt && (fc & IEEE80211_FCTL_PROTECTED)) अणु
 			/* This seems to be triggered by some (multicast?)
 			 * frames from other than current BSS, so just drop the
-			 * frames silently instead of filling system log with
+			 * frames silently instead of filling प्रणाली log with
 			 * these reports. */
 			LIBIPW_DEBUG_DROP("Decryption failed (not set)"
 					     " (SA=%pM)\n", hdr->addr2);
 			ieee->ieee_stats.rx_discards_undecryptable++;
-			goto rx_dropped;
-		}
-	}
-#ifdef NOT_YET
-	if (type != WLAN_FC_TYPE_DATA) {
-		if (type == WLAN_FC_TYPE_MGMT && stype == WLAN_FC_STYPE_AUTH &&
+			जाओ rx_dropped;
+		पूर्ण
+	पूर्ण
+#अगर_घोषित NOT_YET
+	अगर (type != WLAN_FC_TYPE_DATA) अणु
+		अगर (type == WLAN_FC_TYPE_MGMT && stype == WLAN_FC_STYPE_AUTH &&
 		    fc & IEEE80211_FCTL_PROTECTED && ieee->host_decrypt &&
-		    (keyidx = hostap_rx_frame_decrypt(ieee, skb, crypt)) < 0) {
-			printk(KERN_DEBUG "%s: failed to decrypt mgmt::auth "
+		    (keyidx = hostap_rx_frame_decrypt(ieee, skb, crypt)) < 0) अणु
+			prपूर्णांकk(KERN_DEBUG "%s: failed to decrypt mgmt::auth "
 			       "from %pM\n", dev->name, hdr->addr2);
-			/* TODO: could inform hostapd about this so that it
+			/* TODO: could inक्रमm hostapd about this so that it
 			 * could send auth failure report */
-			goto rx_dropped;
-		}
+			जाओ rx_dropped;
+		पूर्ण
 
-		if (libipw_rx_frame_mgmt(ieee, skb, rx_stats, type, stype))
-			goto rx_dropped;
-		else
-			goto rx_exit;
-	}
-#endif
+		अगर (libipw_rx_frame_mgmt(ieee, skb, rx_stats, type, stype))
+			जाओ rx_dropped;
+		अन्यथा
+			जाओ rx_निकास;
+	पूर्ण
+#पूर्ण_अगर
 	/* drop duplicate 802.11 retransmissions (IEEE 802.11 Chap. 9.29) */
-	if (sc == ieee->prev_seq_ctl)
-		goto rx_dropped;
-	else
+	अगर (sc == ieee->prev_seq_ctl)
+		जाओ rx_dropped;
+	अन्यथा
 		ieee->prev_seq_ctl = sc;
 
 	/* Data frame - extract src/dst addresses */
-	if (skb->len < LIBIPW_3ADDR_LEN)
-		goto rx_dropped;
+	अगर (skb->len < LIBIPW_3ADDR_LEN)
+		जाओ rx_dropped;
 
-	switch (fc & (IEEE80211_FCTL_FROMDS | IEEE80211_FCTL_TODS)) {
-	case IEEE80211_FCTL_FROMDS:
-		memcpy(dst, hdr->addr1, ETH_ALEN);
-		memcpy(src, hdr->addr3, ETH_ALEN);
-		break;
-	case IEEE80211_FCTL_TODS:
-		memcpy(dst, hdr->addr3, ETH_ALEN);
-		memcpy(src, hdr->addr2, ETH_ALEN);
-		break;
-	case IEEE80211_FCTL_FROMDS | IEEE80211_FCTL_TODS:
-		if (skb->len < LIBIPW_4ADDR_LEN)
-			goto rx_dropped;
-		memcpy(dst, hdr->addr3, ETH_ALEN);
-		memcpy(src, hdr->addr4, ETH_ALEN);
-		break;
-	default:
-		memcpy(dst, hdr->addr1, ETH_ALEN);
-		memcpy(src, hdr->addr2, ETH_ALEN);
-		break;
-	}
+	चयन (fc & (IEEE80211_FCTL_FROMDS | IEEE80211_FCTL_TODS)) अणु
+	हाल IEEE80211_FCTL_FROMDS:
+		स_नकल(dst, hdr->addr1, ETH_ALEN);
+		स_नकल(src, hdr->addr3, ETH_ALEN);
+		अवरोध;
+	हाल IEEE80211_FCTL_TODS:
+		स_नकल(dst, hdr->addr3, ETH_ALEN);
+		स_नकल(src, hdr->addr2, ETH_ALEN);
+		अवरोध;
+	हाल IEEE80211_FCTL_FROMDS | IEEE80211_FCTL_TODS:
+		अगर (skb->len < LIBIPW_4ADDR_LEN)
+			जाओ rx_dropped;
+		स_नकल(dst, hdr->addr3, ETH_ALEN);
+		स_नकल(src, hdr->addr4, ETH_ALEN);
+		अवरोध;
+	शेष:
+		स_नकल(dst, hdr->addr1, ETH_ALEN);
+		स_नकल(src, hdr->addr2, ETH_ALEN);
+		अवरोध;
+	पूर्ण
 
-#ifdef NOT_YET
-	if (hostap_rx_frame_wds(ieee, hdr, fc, &wds))
-		goto rx_dropped;
-	if (wds) {
+#अगर_घोषित NOT_YET
+	अगर (hostap_rx_frame_wds(ieee, hdr, fc, &wds))
+		जाओ rx_dropped;
+	अगर (wds) अणु
 		skb->dev = dev = wds;
 		stats = hostap_get_stats(dev);
-	}
+	पूर्ण
 
-	if (ieee->iw_mode == IW_MODE_MASTER && !wds &&
+	अगर (ieee->iw_mode == IW_MODE_MASTER && !wds &&
 	    (fc & (IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) ==
 	    IEEE80211_FCTL_FROMDS && ieee->stadev &&
-	    ether_addr_equal(hdr->addr2, ieee->assoc_ap_addr)) {
-		/* Frame from BSSID of the AP for which we are a client */
+	    ether_addr_equal(hdr->addr2, ieee->assoc_ap_addr)) अणु
+		/* Frame from BSSID of the AP क्रम which we are a client */
 		skb->dev = dev = ieee->stadev;
 		stats = hostap_get_stats(dev);
 		from_assoc_ap = 1;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef NOT_YET
-	if ((ieee->iw_mode == IW_MODE_MASTER ||
-	     ieee->iw_mode == IW_MODE_REPEAT) && !from_assoc_ap) {
-		switch (hostap_handle_sta_rx(ieee, dev, skb, rx_stats,
-					     wds != NULL)) {
-		case AP_RX_CONTINUE_NOT_AUTHORIZED:
+#अगर_घोषित NOT_YET
+	अगर ((ieee->iw_mode == IW_MODE_MASTER ||
+	     ieee->iw_mode == IW_MODE_REPEAT) && !from_assoc_ap) अणु
+		चयन (hostap_handle_sta_rx(ieee, dev, skb, rx_stats,
+					     wds != शून्य)) अणु
+		हाल AP_RX_CONTINUE_NOT_AUTHORIZED:
 			frame_authorized = 0;
-			break;
-		case AP_RX_CONTINUE:
+			अवरोध;
+		हाल AP_RX_CONTINUE:
 			frame_authorized = 1;
-			break;
-		case AP_RX_DROP:
-			goto rx_dropped;
-		case AP_RX_EXIT:
-			goto rx_exit;
-		}
-	}
-#endif
+			अवरोध;
+		हाल AP_RX_DROP:
+			जाओ rx_dropped;
+		हाल AP_RX_EXIT:
+			जाओ rx_निकास;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	/* Nullfunc frames may have PS-bit set, so they must be passed to
-	 * hostap_handle_sta_rx() before being dropped here. */
+	 * hostap_handle_sta_rx() beक्रमe being dropped here. */
 
 	stype &= ~IEEE80211_STYPE_QOS_DATA;
 
-	if (stype != IEEE80211_STYPE_DATA &&
+	अगर (stype != IEEE80211_STYPE_DATA &&
 	    stype != IEEE80211_STYPE_DATA_CFACK &&
 	    stype != IEEE80211_STYPE_DATA_CFPOLL &&
-	    stype != IEEE80211_STYPE_DATA_CFACKPOLL) {
-		if (stype != IEEE80211_STYPE_NULLFUNC)
+	    stype != IEEE80211_STYPE_DATA_CFACKPOLL) अणु
+		अगर (stype != IEEE80211_STYPE_शून्यFUNC)
 			LIBIPW_DEBUG_DROP("RX: dropped data frame "
 					     "with no data (type=0x%02x, "
 					     "subtype=0x%02x, len=%d)\n",
 					     type, stype, skb->len);
-		goto rx_dropped;
-	}
+		जाओ rx_dropped;
+	पूर्ण
 
 	/* skb: hdr + (possibly fragmented, possibly encrypted) payload */
 
-	if ((fc & IEEE80211_FCTL_PROTECTED) && can_be_decrypted &&
+	अगर ((fc & IEEE80211_FCTL_PROTECTED) && can_be_decrypted &&
 	    (keyidx = libipw_rx_frame_decrypt(ieee, skb, crypt)) < 0)
-		goto rx_dropped;
+		जाओ rx_dropped;
 
-	hdr = (struct libipw_hdr_4addr *)skb->data;
+	hdr = (काष्ठा libipw_hdr_4addr *)skb->data;
 
-	/* skb: hdr + (possibly fragmented) plaintext payload */
+	/* skb: hdr + (possibly fragmented) plaपूर्णांकext payload */
 	// PR: FIXME: hostap has additional conditions in the "if" below:
 	// ieee->host_decrypt && (fc & IEEE80211_FCTL_PROTECTED) &&
-	if ((frag != 0) || (fc & IEEE80211_FCTL_MOREFRAGS)) {
-		int flen;
-		struct sk_buff *frag_skb = libipw_frag_cache_get(ieee, hdr);
+	अगर ((frag != 0) || (fc & IEEE80211_FCTL_MOREFRAGS)) अणु
+		पूर्णांक flen;
+		काष्ठा sk_buff *frag_skb = libipw_frag_cache_get(ieee, hdr);
 		LIBIPW_DEBUG_FRAG("Rx Fragment received (%u)\n", frag);
 
-		if (!frag_skb) {
+		अगर (!frag_skb) अणु
 			LIBIPW_DEBUG(LIBIPW_DL_RX | LIBIPW_DL_FRAG,
 					"Rx cannot get skb from fragment "
 					"cache (morefrag=%d seq=%u frag=%u)\n",
 					(fc & IEEE80211_FCTL_MOREFRAGS) != 0,
 					WLAN_GET_SEQ_SEQ(sc), frag);
-			goto rx_dropped;
-		}
+			जाओ rx_dropped;
+		पूर्ण
 
 		flen = skb->len;
-		if (frag != 0)
+		अगर (frag != 0)
 			flen -= hdrlen;
 
-		if (frag_skb->tail + flen > frag_skb->end) {
-			printk(KERN_WARNING "%s: host decrypted and "
+		अगर (frag_skb->tail + flen > frag_skb->end) अणु
+			prपूर्णांकk(KERN_WARNING "%s: host decrypted and "
 			       "reassembled frame did not fit skb\n",
 			       dev->name);
 			libipw_frag_cache_invalidate(ieee, hdr);
-			goto rx_dropped;
-		}
+			जाओ rx_dropped;
+		पूर्ण
 
-		if (frag == 0) {
-			/* copy first fragment (including full headers) into
+		अगर (frag == 0) अणु
+			/* copy first fragment (including full headers) पूर्णांकo
 			 * beginning of the fragment cache skb */
 			skb_copy_from_linear_data(skb, skb_put(frag_skb, flen), flen);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* append frame payload to the end of the fragment
 			 * cache skb */
 			skb_copy_from_linear_data_offset(skb, hdrlen,
 				      skb_put(frag_skb, flen), flen);
-		}
-		dev_kfree_skb_any(skb);
-		skb = NULL;
+		पूर्ण
+		dev_kमुक्त_skb_any(skb);
+		skb = शून्य;
 
-		if (fc & IEEE80211_FCTL_MOREFRAGS) {
+		अगर (fc & IEEE80211_FCTL_MOREFRAGS) अणु
 			/* more fragments expected - leave the skb in fragment
-			 * cache for now; it will be delivered to upper layers
+			 * cache क्रम now; it will be delivered to upper layers
 			 * after all fragments have been received */
-			goto rx_exit;
-		}
+			जाओ rx_निकास;
+		पूर्ण
 
 		/* this was the last fragment and the frame will be
-		 * delivered, so remove skb from fragment cache */
+		 * delivered, so हटाओ skb from fragment cache */
 		skb = frag_skb;
-		hdr = (struct libipw_hdr_4addr *)skb->data;
+		hdr = (काष्ठा libipw_hdr_4addr *)skb->data;
 		libipw_frag_cache_invalidate(ieee, hdr);
-	}
+	पूर्ण
 
 	/* skb: hdr + (possible reassembled) full MSDU payload; possibly still
 	 * encrypted/authenticated */
-	if ((fc & IEEE80211_FCTL_PROTECTED) && can_be_decrypted &&
+	अगर ((fc & IEEE80211_FCTL_PROTECTED) && can_be_decrypted &&
 	    libipw_rx_frame_decrypt_msdu(ieee, skb, keyidx, crypt))
-		goto rx_dropped;
+		जाओ rx_dropped;
 
-	hdr = (struct libipw_hdr_4addr *)skb->data;
-	if (crypt && !(fc & IEEE80211_FCTL_PROTECTED) && !ieee->open_wep) {
-		if (		/*ieee->ieee802_1x && */
-			   libipw_is_eapol_frame(ieee, skb)) {
-			/* pass unencrypted EAPOL frames even if encryption is
+	hdr = (काष्ठा libipw_hdr_4addr *)skb->data;
+	अगर (crypt && !(fc & IEEE80211_FCTL_PROTECTED) && !ieee->खोलो_wep) अणु
+		अगर (		/*ieee->ieee802_1x && */
+			   libipw_is_eapol_frame(ieee, skb)) अणु
+			/* pass unencrypted EAPOL frames even अगर encryption is
 			 * configured */
-		} else {
+		पूर्ण अन्यथा अणु
 			LIBIPW_DEBUG_DROP("encryption configured, but RX "
 					     "frame not encrypted (SA=%pM)\n",
 					     hdr->addr2);
-			goto rx_dropped;
-		}
-	}
+			जाओ rx_dropped;
+		पूर्ण
+	पूर्ण
 
-	if (crypt && !(fc & IEEE80211_FCTL_PROTECTED) && !ieee->open_wep &&
-	    !libipw_is_eapol_frame(ieee, skb)) {
+	अगर (crypt && !(fc & IEEE80211_FCTL_PROTECTED) && !ieee->खोलो_wep &&
+	    !libipw_is_eapol_frame(ieee, skb)) अणु
 		LIBIPW_DEBUG_DROP("dropped unencrypted RX data "
 				     "frame from %pM (drop_unencrypted=1)\n",
 				     hdr->addr2);
-		goto rx_dropped;
-	}
+		जाओ rx_dropped;
+	पूर्ण
 
 	/* If the frame was decrypted in hardware, we may need to strip off
 	 * any security data (IV, ICV, etc) that was left behind */
-	if (!can_be_decrypted && (fc & IEEE80211_FCTL_PROTECTED) &&
-	    ieee->host_strip_iv_icv) {
-		int trimlen = 0;
+	अगर (!can_be_decrypted && (fc & IEEE80211_FCTL_PROTECTED) &&
+	    ieee->host_strip_iv_icv) अणु
+		पूर्णांक trimlen = 0;
 
 		/* Top two-bits of byte 3 are the key index */
-		if (skb->len >= hdrlen + 3)
+		अगर (skb->len >= hdrlen + 3)
 			keyidx = skb->data[hdrlen + 3] >> 6;
 
-		/* To strip off any security data which appears before the
-		 * payload, we simply increase hdrlen (as the header gets
+		/* To strip off any security data which appears beक्रमe the
+		 * payload, we simply increase hdrlen (as the header माला_लो
 		 * chopped off immediately below). For the security data which
 		 * appears after the payload, we use skb_trim. */
 
-		switch (ieee->sec.encode_alg[keyidx]) {
-		case SEC_ALG_WEP:
+		चयन (ieee->sec.encode_alg[keyidx]) अणु
+		हाल SEC_ALG_WEP:
 			/* 4 byte IV */
 			hdrlen += 4;
 			/* 4 byte ICV */
 			trimlen = 4;
-			break;
-		case SEC_ALG_TKIP:
+			अवरोध;
+		हाल SEC_ALG_TKIP:
 			/* 4 byte IV, 4 byte ExtIV */
 			hdrlen += 8;
 			/* 8 byte MIC, 4 byte ICV */
 			trimlen = 12;
-			break;
-		case SEC_ALG_CCMP:
+			अवरोध;
+		हाल SEC_ALG_CCMP:
 			/* 8 byte CCMP header */
 			hdrlen += 8;
 			/* 8 byte MIC */
 			trimlen = 8;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (skb->len < trimlen)
-			goto rx_dropped;
+		अगर (skb->len < trimlen)
+			जाओ rx_dropped;
 
 		__skb_trim(skb, skb->len - trimlen);
 
-		if (skb->len < hdrlen)
-			goto rx_dropped;
-	}
+		अगर (skb->len < hdrlen)
+			जाओ rx_dropped;
+	पूर्ण
 
-	/* skb: hdr + (possible reassembled) full plaintext payload */
+	/* skb: hdr + (possible reassembled) full plaपूर्णांकext payload */
 
 	payload = skb->data + hdrlen;
 	ethertype = (payload[6] << 8) | payload[7];
 
-#ifdef NOT_YET
+#अगर_घोषित NOT_YET
 	/* If IEEE 802.1X is used, check whether the port is authorized to send
 	 * the received frame. */
-	if (ieee->ieee802_1x && ieee->iw_mode == IW_MODE_MASTER) {
-		if (ethertype == ETH_P_PAE) {
-			printk(KERN_DEBUG "%s: RX: IEEE 802.1X frame\n",
+	अगर (ieee->ieee802_1x && ieee->iw_mode == IW_MODE_MASTER) अणु
+		अगर (ethertype == ETH_P_PAE) अणु
+			prपूर्णांकk(KERN_DEBUG "%s: RX: IEEE 802.1X frame\n",
 			       dev->name);
-			if (ieee->hostapd && ieee->apdev) {
+			अगर (ieee->hostapd && ieee->apdev) अणु
 				/* Send IEEE 802.1X frames to the user
-				 * space daemon for processing */
+				 * space daemon क्रम processing */
 				prism2_rx_80211(ieee->apdev, skb, rx_stats,
 						PRISM2_RX_MGMT);
 				ieee->apdevstats.rx_packets++;
 				ieee->apdevstats.rx_bytes += skb->len;
-				goto rx_exit;
-			}
-		} else if (!frame_authorized) {
-			printk(KERN_DEBUG "%s: dropped frame from "
+				जाओ rx_निकास;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!frame_authorized) अणु
+			prपूर्णांकk(KERN_DEBUG "%s: dropped frame from "
 			       "unauthorized port (IEEE 802.1X): "
 			       "ethertype=0x%04x\n", dev->name, ethertype);
-			goto rx_dropped;
-		}
-	}
-#endif
+			जाओ rx_dropped;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	/* convert hdr + possible LLC headers into Ethernet header */
-	if (skb->len - hdrlen >= 8 &&
-	    ((memcmp(payload, libipw_rfc1042_header, SNAP_SIZE) == 0 &&
+	/* convert hdr + possible LLC headers पूर्णांकo Ethernet header */
+	अगर (skb->len - hdrlen >= 8 &&
+	    ((स_भेद(payload, libipw_rfc1042_header, SNAP_SIZE) == 0 &&
 	      ethertype != ETH_P_AARP && ethertype != ETH_P_IPX) ||
-	     memcmp(payload, libipw_bridge_tunnel_header, SNAP_SIZE) == 0)) {
-		/* remove RFC1042 or Bridge-Tunnel encapsulation and
+	     स_भेद(payload, libipw_bridge_tunnel_header, SNAP_SIZE) == 0)) अणु
+		/* हटाओ RFC1042 or Bridge-Tunnel encapsulation and
 		 * replace EtherType */
 		skb_pull(skb, hdrlen + SNAP_SIZE);
-		memcpy(skb_push(skb, ETH_ALEN), src, ETH_ALEN);
-		memcpy(skb_push(skb, ETH_ALEN), dst, ETH_ALEN);
-	} else {
+		स_नकल(skb_push(skb, ETH_ALEN), src, ETH_ALEN);
+		स_नकल(skb_push(skb, ETH_ALEN), dst, ETH_ALEN);
+	पूर्ण अन्यथा अणु
 		__be16 len;
 		/* Leave Ethernet header part of hdr and full payload */
 		skb_pull(skb, hdrlen);
 		len = htons(skb->len);
-		memcpy(skb_push(skb, 2), &len, 2);
-		memcpy(skb_push(skb, ETH_ALEN), src, ETH_ALEN);
-		memcpy(skb_push(skb, ETH_ALEN), dst, ETH_ALEN);
-	}
+		स_नकल(skb_push(skb, 2), &len, 2);
+		स_नकल(skb_push(skb, ETH_ALEN), src, ETH_ALEN);
+		स_नकल(skb_push(skb, ETH_ALEN), dst, ETH_ALEN);
+	पूर्ण
 
-#ifdef NOT_YET
-	if (wds && ((fc & (IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) ==
-		    IEEE80211_FCTL_TODS) && skb->len >= ETH_HLEN + ETH_ALEN) {
+#अगर_घोषित NOT_YET
+	अगर (wds && ((fc & (IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) ==
+		    IEEE80211_FCTL_TODS) && skb->len >= ETH_HLEN + ETH_ALEN) अणु
 		/* Non-standard frame: get addr4 from its bogus location after
 		 * the payload */
 		skb_copy_to_linear_data_offset(skb, ETH_ALEN,
 					       skb->data + skb->len - ETH_ALEN,
 					       ETH_ALEN);
 		skb_trim(skb, skb->len - ETH_ALEN);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += skb->len;
 
-#ifdef NOT_YET
-	if (ieee->iw_mode == IW_MODE_MASTER && !wds && ieee->ap->bridge_packets) {
-		if (is_multicast_ether_addr(dst)) {
+#अगर_घोषित NOT_YET
+	अगर (ieee->iw_mode == IW_MODE_MASTER && !wds && ieee->ap->bridge_packets) अणु
+		अगर (is_multicast_ether_addr(dst)) अणु
 			/* copy multicast frame both to the higher layers and
 			 * to the wireless media */
 			ieee->ap->bridged_multicast++;
 			skb2 = skb_clone(skb, GFP_ATOMIC);
-			if (skb2 == NULL)
-				printk(KERN_DEBUG "%s: skb_clone failed for "
+			अगर (skb2 == शून्य)
+				prपूर्णांकk(KERN_DEBUG "%s: skb_clone failed for "
 				       "multicast frame\n", dev->name);
-		} else if (hostap_is_sta_assoc(ieee->ap, dst)) {
+		पूर्ण अन्यथा अगर (hostap_is_sta_assoc(ieee->ap, dst)) अणु
 			/* send frame directly to the associated STA using
 			 * wireless media and not passing to higher layers */
 			ieee->ap->bridged_unicast++;
 			skb2 = skb;
-			skb = NULL;
-		}
-	}
+			skb = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (skb2 != NULL) {
+	अगर (skb2 != शून्य) अणु
 		/* send to wireless media */
 		skb2->dev = dev;
 		skb2->protocol = htons(ETH_P_802_3);
@@ -793,29 +794,29 @@ int libipw_rx(struct libipw_device *ieee, struct sk_buff *skb,
 		skb_reset_network_header(skb2);
 		/* skb2->network_header += ETH_HLEN; */
 		dev_queue_xmit(skb2);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (skb) {
+	अगर (skb) अणु
 		skb->protocol = eth_type_trans(skb, dev);
-		memset(skb->cb, 0, sizeof(skb->cb));
+		स_रखो(skb->cb, 0, माप(skb->cb));
 		skb->ip_summed = CHECKSUM_NONE;	/* 802.11 crc not sufficient */
-		if (netif_rx(skb) == NET_RX_DROP) {
-			/* netif_rx always succeeds, but it might drop
+		अगर (netअगर_rx(skb) == NET_RX_DROP) अणु
+			/* netअगर_rx always succeeds, but it might drop
 			 * the packet.  If it drops the packet, we log that
 			 * in our stats. */
 			LIBIPW_DEBUG_DROP
 			    ("RX: netif_rx dropped the packet\n");
 			dev->stats.rx_dropped++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-      rx_exit:
-#ifdef NOT_YET
-	if (sta)
+      rx_निकास:
+#अगर_घोषित NOT_YET
+	अगर (sta)
 		hostap_handle_sta_release(sta);
-#endif
-	return 1;
+#पूर्ण_अगर
+	वापस 1;
 
       rx_dropped:
 	dev->stats.rx_dropped++;
@@ -823,199 +824,199 @@ int libipw_rx(struct libipw_device *ieee, struct sk_buff *skb,
 	/* Returning 0 indicates to caller that we have not handled the SKB--
 	 * so it is still allocated and can be used again by underlying
 	 * hardware as a DMA target */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Filter out unrelated packets, call libipw_rx[_mgt]
  * This function takes over the skb, it should not be used again after calling
  * this function. */
-void libipw_rx_any(struct libipw_device *ieee,
-		     struct sk_buff *skb, struct libipw_rx_stats *stats)
-{
-	struct libipw_hdr_4addr *hdr;
-	int is_packet_for_us;
+व्योम libipw_rx_any(काष्ठा libipw_device *ieee,
+		     काष्ठा sk_buff *skb, काष्ठा libipw_rx_stats *stats)
+अणु
+	काष्ठा libipw_hdr_4addr *hdr;
+	पूर्णांक is_packet_क्रम_us;
 	u16 fc;
 
-	if (ieee->iw_mode == IW_MODE_MONITOR) {
-		if (!libipw_rx(ieee, skb, stats))
-			dev_kfree_skb_irq(skb);
-		return;
-	}
+	अगर (ieee->iw_mode == IW_MODE_MONITOR) अणु
+		अगर (!libipw_rx(ieee, skb, stats))
+			dev_kमुक्त_skb_irq(skb);
+		वापस;
+	पूर्ण
 
-	if (skb->len < sizeof(struct ieee80211_hdr))
-		goto drop_free;
+	अगर (skb->len < माप(काष्ठा ieee80211_hdr))
+		जाओ drop_मुक्त;
 
-	hdr = (struct libipw_hdr_4addr *)skb->data;
+	hdr = (काष्ठा libipw_hdr_4addr *)skb->data;
 	fc = le16_to_cpu(hdr->frame_ctl);
 
-	if ((fc & IEEE80211_FCTL_VERS) != 0)
-		goto drop_free;
+	अगर ((fc & IEEE80211_FCTL_VERS) != 0)
+		जाओ drop_मुक्त;
 
-	switch (fc & IEEE80211_FCTL_FTYPE) {
-	case IEEE80211_FTYPE_MGMT:
-		if (skb->len < sizeof(struct libipw_hdr_3addr))
-			goto drop_free;
+	चयन (fc & IEEE80211_FCTL_FTYPE) अणु
+	हाल IEEE80211_FTYPE_MGMT:
+		अगर (skb->len < माप(काष्ठा libipw_hdr_3addr))
+			जाओ drop_मुक्त;
 		libipw_rx_mgt(ieee, hdr, stats);
-		dev_kfree_skb_irq(skb);
-		return;
-	case IEEE80211_FTYPE_DATA:
-		break;
-	case IEEE80211_FTYPE_CTL:
-		return;
-	default:
-		return;
-	}
+		dev_kमुक्त_skb_irq(skb);
+		वापस;
+	हाल IEEE80211_FTYPE_DATA:
+		अवरोध;
+	हाल IEEE80211_FTYPE_CTL:
+		वापस;
+	शेष:
+		वापस;
+	पूर्ण
 
-	is_packet_for_us = 0;
-	switch (ieee->iw_mode) {
-	case IW_MODE_ADHOC:
+	is_packet_क्रम_us = 0;
+	चयन (ieee->iw_mode) अणु
+	हाल IW_MODE_ADHOC:
 		/* our BSS and not from/to DS */
-		if (ether_addr_equal(hdr->addr3, ieee->bssid))
-		if ((fc & (IEEE80211_FCTL_TODS+IEEE80211_FCTL_FROMDS)) == 0) {
+		अगर (ether_addr_equal(hdr->addr3, ieee->bssid))
+		अगर ((fc & (IEEE80211_FCTL_TODS+IEEE80211_FCTL_FROMDS)) == 0) अणु
 			/* promisc: get all */
-			if (ieee->dev->flags & IFF_PROMISC)
-				is_packet_for_us = 1;
+			अगर (ieee->dev->flags & IFF_PROMISC)
+				is_packet_क्रम_us = 1;
 			/* to us */
-			else if (ether_addr_equal(hdr->addr1, ieee->dev->dev_addr))
-				is_packet_for_us = 1;
+			अन्यथा अगर (ether_addr_equal(hdr->addr1, ieee->dev->dev_addr))
+				is_packet_क्रम_us = 1;
 			/* mcast */
-			else if (is_multicast_ether_addr(hdr->addr1))
-				is_packet_for_us = 1;
-		}
-		break;
-	case IW_MODE_INFRA:
+			अन्यथा अगर (is_multicast_ether_addr(hdr->addr1))
+				is_packet_क्रम_us = 1;
+		पूर्ण
+		अवरोध;
+	हाल IW_MODE_INFRA:
 		/* our BSS (== from our AP) and from DS */
-		if (ether_addr_equal(hdr->addr2, ieee->bssid))
-		if ((fc & (IEEE80211_FCTL_TODS+IEEE80211_FCTL_FROMDS)) == IEEE80211_FCTL_FROMDS) {
+		अगर (ether_addr_equal(hdr->addr2, ieee->bssid))
+		अगर ((fc & (IEEE80211_FCTL_TODS+IEEE80211_FCTL_FROMDS)) == IEEE80211_FCTL_FROMDS) अणु
 			/* promisc: get all */
-			if (ieee->dev->flags & IFF_PROMISC)
-				is_packet_for_us = 1;
+			अगर (ieee->dev->flags & IFF_PROMISC)
+				is_packet_क्रम_us = 1;
 			/* to us */
-			else if (ether_addr_equal(hdr->addr1, ieee->dev->dev_addr))
-				is_packet_for_us = 1;
+			अन्यथा अगर (ether_addr_equal(hdr->addr1, ieee->dev->dev_addr))
+				is_packet_क्रम_us = 1;
 			/* mcast */
-			else if (is_multicast_ether_addr(hdr->addr1)) {
+			अन्यथा अगर (is_multicast_ether_addr(hdr->addr1)) अणु
 				/* not our own packet bcasted from AP */
-				if (!ether_addr_equal(hdr->addr3, ieee->dev->dev_addr))
-					is_packet_for_us = 1;
-			}
-		}
-		break;
-	default:
+				अगर (!ether_addr_equal(hdr->addr3, ieee->dev->dev_addr))
+					is_packet_क्रम_us = 1;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		/* ? */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (is_packet_for_us)
-		if (!libipw_rx(ieee, skb, stats))
-			dev_kfree_skb_irq(skb);
-	return;
+	अगर (is_packet_क्रम_us)
+		अगर (!libipw_rx(ieee, skb, stats))
+			dev_kमुक्त_skb_irq(skb);
+	वापस;
 
-drop_free:
-	dev_kfree_skb_irq(skb);
+drop_मुक्त:
+	dev_kमुक्त_skb_irq(skb);
 	ieee->dev->stats.rx_dropped++;
-}
+पूर्ण
 
-#define MGMT_FRAME_FIXED_PART_LENGTH		0x24
+#घोषणा MGMT_FRAME_FIXED_PART_LENGTH		0x24
 
-static u8 qos_oui[QOS_OUI_LEN] = { 0x00, 0x50, 0xF2 };
+अटल u8 qos_oui[QOS_OUI_LEN] = अणु 0x00, 0x50, 0xF2 पूर्ण;
 
 /*
-* Make the structure we read from the beacon packet to have
+* Make the काष्ठाure we पढ़ो from the beacon packet to have
 * the right values
 */
-static int libipw_verify_qos_info(struct libipw_qos_information_element
-				     *info_element, int sub_type)
-{
+अटल पूर्णांक libipw_verअगरy_qos_info(काष्ठा libipw_qos_inक्रमmation_element
+				     *info_element, पूर्णांक sub_type)
+अणु
 
-	if (info_element->qui_subtype != sub_type)
-		return -1;
-	if (memcmp(info_element->qui, qos_oui, QOS_OUI_LEN))
-		return -1;
-	if (info_element->qui_type != QOS_OUI_TYPE)
-		return -1;
-	if (info_element->version != QOS_VERSION_1)
-		return -1;
+	अगर (info_element->qui_subtype != sub_type)
+		वापस -1;
+	अगर (स_भेद(info_element->qui, qos_oui, QOS_OUI_LEN))
+		वापस -1;
+	अगर (info_element->qui_type != QOS_OUI_TYPE)
+		वापस -1;
+	अगर (info_element->version != QOS_VERSION_1)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Parse a QoS parameter element
  */
-static int libipw_read_qos_param_element(struct libipw_qos_parameter_info
-					    *element_param, struct libipw_info_element
+अटल पूर्णांक libipw_पढ़ो_qos_param_element(काष्ठा libipw_qos_parameter_info
+					    *element_param, काष्ठा libipw_info_element
 					    *info_element)
-{
-	int ret = 0;
-	u16 size = sizeof(struct libipw_qos_parameter_info) - 2;
+अणु
+	पूर्णांक ret = 0;
+	u16 size = माप(काष्ठा libipw_qos_parameter_info) - 2;
 
-	if ((info_element == NULL) || (element_param == NULL))
-		return -1;
+	अगर ((info_element == शून्य) || (element_param == शून्य))
+		वापस -1;
 
-	if (info_element->id == QOS_ELEMENT_ID && info_element->len == size) {
-		memcpy(element_param->info_element.qui, info_element->data,
+	अगर (info_element->id == QOS_ELEMENT_ID && info_element->len == size) अणु
+		स_नकल(element_param->info_element.qui, info_element->data,
 		       info_element->len);
 		element_param->info_element.elementID = info_element->id;
 		element_param->info_element.length = info_element->len;
-	} else
+	पूर्ण अन्यथा
 		ret = -1;
-	if (ret == 0)
-		ret = libipw_verify_qos_info(&element_param->info_element,
+	अगर (ret == 0)
+		ret = libipw_verअगरy_qos_info(&element_param->info_element,
 						QOS_OUI_PARAM_SUB_TYPE);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Parse a QoS information element
+ * Parse a QoS inक्रमmation element
  */
-static int libipw_read_qos_info_element(struct
-					   libipw_qos_information_element
-					   *element_info, struct libipw_info_element
+अटल पूर्णांक libipw_पढ़ो_qos_info_element(काष्ठा
+					   libipw_qos_inक्रमmation_element
+					   *element_info, काष्ठा libipw_info_element
 					   *info_element)
-{
-	int ret = 0;
-	u16 size = sizeof(struct libipw_qos_information_element) - 2;
+अणु
+	पूर्णांक ret = 0;
+	u16 size = माप(काष्ठा libipw_qos_inक्रमmation_element) - 2;
 
-	if (element_info == NULL)
-		return -1;
-	if (info_element == NULL)
-		return -1;
+	अगर (element_info == शून्य)
+		वापस -1;
+	अगर (info_element == शून्य)
+		वापस -1;
 
-	if ((info_element->id == QOS_ELEMENT_ID) && (info_element->len == size)) {
-		memcpy(element_info->qui, info_element->data,
+	अगर ((info_element->id == QOS_ELEMENT_ID) && (info_element->len == size)) अणु
+		स_नकल(element_info->qui, info_element->data,
 		       info_element->len);
 		element_info->elementID = info_element->id;
 		element_info->length = info_element->len;
-	} else
+	पूर्ण अन्यथा
 		ret = -1;
 
-	if (ret == 0)
-		ret = libipw_verify_qos_info(element_info,
+	अगर (ret == 0)
+		ret = libipw_verअगरy_qos_info(element_info,
 						QOS_OUI_INFO_SUB_TYPE);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Write QoS parameters from the ac parameters.
  */
-static void libipw_qos_convert_ac_to_parameters(struct
+अटल व्योम libipw_qos_convert_ac_to_parameters(काष्ठा
 						  libipw_qos_parameter_info
-						  *param_elm, struct
+						  *param_elm, काष्ठा
 						  libipw_qos_parameters
 						  *qos_param)
-{
-	int i;
-	struct libipw_qos_ac_parameter *ac_params;
+अणु
+	पूर्णांक i;
+	काष्ठा libipw_qos_ac_parameter *ac_params;
 	u32 txop;
 	u8 cw_min;
 	u8 cw_max;
 
-	for (i = 0; i < QOS_QUEUE_NUM; i++) {
+	क्रम (i = 0; i < QOS_QUEUE_NUM; i++) अणु
 		ac_params = &(param_elm->ac_params_record[i]);
 
-		qos_param->aifs[i] = (ac_params->aci_aifsn) & 0x0F;
-		qos_param->aifs[i] -= (qos_param->aifs[i] < 2) ? 0 : 2;
+		qos_param->aअगरs[i] = (ac_params->aci_aअगरsn) & 0x0F;
+		qos_param->aअगरs[i] -= (qos_param->aअगरs[i] < 2) ? 0 : 2;
 
 		cw_min = ac_params->ecw_min_max & 0x0F;
 		qos_param->cw_min[i] = cpu_to_le16((1 << cw_min) - 1);
@@ -1024,59 +1025,59 @@ static void libipw_qos_convert_ac_to_parameters(struct
 		qos_param->cw_max[i] = cpu_to_le16((1 << cw_max) - 1);
 
 		qos_param->flag[i] =
-		    (ac_params->aci_aifsn & 0x10) ? 0x01 : 0x00;
+		    (ac_params->aci_aअगरsn & 0x10) ? 0x01 : 0x00;
 
 		txop = le16_to_cpu(ac_params->tx_op_limit) * 32;
 		qos_param->tx_op_limit[i] = cpu_to_le16(txop);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * we have a generic data element which it may contain QoS information or
- * parameters element. check the information element length to decide
- * which type to read
+ * we have a generic data element which it may contain QoS inक्रमmation or
+ * parameters element. check the inक्रमmation element length to decide
+ * which type to पढ़ो
  */
-static int libipw_parse_qos_info_param_IE(struct libipw_info_element
+अटल पूर्णांक libipw_parse_qos_info_param_IE(काष्ठा libipw_info_element
 					     *info_element,
-					     struct libipw_network *network)
-{
-	int rc = 0;
-	struct libipw_qos_parameters *qos_param = NULL;
-	struct libipw_qos_information_element qos_info_element;
+					     काष्ठा libipw_network *network)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा libipw_qos_parameters *qos_param = शून्य;
+	काष्ठा libipw_qos_inक्रमmation_element qos_info_element;
 
-	rc = libipw_read_qos_info_element(&qos_info_element, info_element);
+	rc = libipw_पढ़ो_qos_info_element(&qos_info_element, info_element);
 
-	if (rc == 0) {
+	अगर (rc == 0) अणु
 		network->qos_data.param_count = qos_info_element.ac_info & 0x0F;
 		network->flags |= NETWORK_HAS_QOS_INFORMATION;
-	} else {
-		struct libipw_qos_parameter_info param_element;
+	पूर्ण अन्यथा अणु
+		काष्ठा libipw_qos_parameter_info param_element;
 
-		rc = libipw_read_qos_param_element(&param_element,
+		rc = libipw_पढ़ो_qos_param_element(&param_element,
 						      info_element);
-		if (rc == 0) {
+		अगर (rc == 0) अणु
 			qos_param = &(network->qos_data.parameters);
 			libipw_qos_convert_ac_to_parameters(&param_element,
 							       qos_param);
 			network->flags |= NETWORK_HAS_QOS_PARAMETERS;
 			network->qos_data.param_count =
 			    param_element.info_element.ac_info & 0x0F;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rc == 0) {
+	अगर (rc == 0) अणु
 		LIBIPW_DEBUG_QOS("QoS is supported\n");
 		network->qos_data.supported = 1;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-#ifdef CONFIG_LIBIPW_DEBUG
-#define MFIE_STRING(x) case WLAN_EID_ ##x: return #x
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
+#घोषणा MFIE_STRING(x) हाल WLAN_EID_ ##x: वापस #x
 
-static const char *get_info_element_string(u16 id)
-{
-	switch (id) {
+अटल स्थिर अक्षर *get_info_element_string(u16 id)
+अणु
+	चयन (id) अणु
 		MFIE_STRING(SSID);
 		MFIE_STRING(SUPP_RATES);
 		MFIE_STRING(FH_PARAMS);
@@ -1102,227 +1103,227 @@ static const char *get_info_element_string(u16 id)
 		MFIE_STRING(EXT_SUPP_RATES);
 		MFIE_STRING(VENDOR_SPECIFIC);
 		MFIE_STRING(QOS_PARAMETER);
-	default:
-		return "UNKNOWN";
-	}
-}
-#endif
+	शेष:
+		वापस "UNKNOWN";
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static int libipw_parse_info_param(struct libipw_info_element
+अटल पूर्णांक libipw_parse_info_param(काष्ठा libipw_info_element
 				      *info_element, u16 length,
-				      struct libipw_network *network)
-{
+				      काष्ठा libipw_network *network)
+अणु
 	u8 i;
-#ifdef CONFIG_LIBIPW_DEBUG
-	char rates_str[64];
-	char *p;
-#endif
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
+	अक्षर rates_str[64];
+	अक्षर *p;
+#पूर्ण_अगर
 
-	while (length >= sizeof(*info_element)) {
-		if (sizeof(*info_element) + info_element->len > length) {
+	जबतक (length >= माप(*info_element)) अणु
+		अगर (माप(*info_element) + info_element->len > length) अणु
 			LIBIPW_DEBUG_MGMT("Info elem: parse failed: "
 					     "info_element->len + 2 > left : "
 					     "info_element->len+2=%zd left=%d, id=%d.\n",
 					     info_element->len +
-					     sizeof(*info_element),
+					     माप(*info_element),
 					     length, info_element->id);
-			/* We stop processing but don't return an error here
-			 * because some misbehaviour APs break this rule. ie.
+			/* We stop processing but करोn't वापस an error here
+			 * because some misbehaviour APs अवरोध this rule. ie.
 			 * Orinoco AP1000. */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (info_element->id) {
-		case WLAN_EID_SSID:
+		चयन (info_element->id) अणु
+		हाल WLAN_EID_SSID:
 			network->ssid_len = min(info_element->len,
 						(u8) IW_ESSID_MAX_SIZE);
-			memcpy(network->ssid, info_element->data,
+			स_नकल(network->ssid, info_element->data,
 			       network->ssid_len);
-			if (network->ssid_len < IW_ESSID_MAX_SIZE)
-				memset(network->ssid + network->ssid_len, 0,
+			अगर (network->ssid_len < IW_ESSID_MAX_SIZE)
+				स_रखो(network->ssid + network->ssid_len, 0,
 				       IW_ESSID_MAX_SIZE - network->ssid_len);
 
 			LIBIPW_DEBUG_MGMT("WLAN_EID_SSID: '%*pE' len=%d.\n",
 					  network->ssid_len, network->ssid,
 					  network->ssid_len);
-			break;
+			अवरोध;
 
-		case WLAN_EID_SUPP_RATES:
-#ifdef CONFIG_LIBIPW_DEBUG
+		हाल WLAN_EID_SUPP_RATES:
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
 			p = rates_str;
-#endif
+#पूर्ण_अगर
 			network->rates_len = min(info_element->len,
 						 MAX_RATES_LENGTH);
-			for (i = 0; i < network->rates_len; i++) {
+			क्रम (i = 0; i < network->rates_len; i++) अणु
 				network->rates[i] = info_element->data[i];
-#ifdef CONFIG_LIBIPW_DEBUG
-				p += scnprintf(p, sizeof(rates_str) -
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
+				p += scnम_लिखो(p, माप(rates_str) -
 					      (p - rates_str), "%02X ",
 					      network->rates[i]);
-#endif
-				if (libipw_is_ofdm_rate
-				    (info_element->data[i])) {
+#पूर्ण_अगर
+				अगर (libipw_is_ofdm_rate
+				    (info_element->data[i])) अणु
 					network->flags |= NETWORK_HAS_OFDM;
-					if (info_element->data[i] &
+					अगर (info_element->data[i] &
 					    LIBIPW_BASIC_RATE_MASK)
 						network->flags &=
 						    ~NETWORK_HAS_CCK;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			LIBIPW_DEBUG_MGMT("WLAN_EID_SUPP_RATES: '%s' (%d)\n",
 					     rates_str, network->rates_len);
-			break;
+			अवरोध;
 
-		case WLAN_EID_EXT_SUPP_RATES:
-#ifdef CONFIG_LIBIPW_DEBUG
+		हाल WLAN_EID_EXT_SUPP_RATES:
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
 			p = rates_str;
-#endif
+#पूर्ण_अगर
 			network->rates_ex_len = min(info_element->len,
 						    MAX_RATES_EX_LENGTH);
-			for (i = 0; i < network->rates_ex_len; i++) {
+			क्रम (i = 0; i < network->rates_ex_len; i++) अणु
 				network->rates_ex[i] = info_element->data[i];
-#ifdef CONFIG_LIBIPW_DEBUG
-				p += scnprintf(p, sizeof(rates_str) -
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
+				p += scnम_लिखो(p, माप(rates_str) -
 					      (p - rates_str), "%02X ",
 					      network->rates_ex[i]);
-#endif
-				if (libipw_is_ofdm_rate
-				    (info_element->data[i])) {
+#पूर्ण_अगर
+				अगर (libipw_is_ofdm_rate
+				    (info_element->data[i])) अणु
 					network->flags |= NETWORK_HAS_OFDM;
-					if (info_element->data[i] &
+					अगर (info_element->data[i] &
 					    LIBIPW_BASIC_RATE_MASK)
 						network->flags &=
 						    ~NETWORK_HAS_CCK;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			LIBIPW_DEBUG_MGMT("WLAN_EID_EXT_SUPP_RATES: '%s' (%d)\n",
 					     rates_str, network->rates_ex_len);
-			break;
+			अवरोध;
 
-		case WLAN_EID_DS_PARAMS:
+		हाल WLAN_EID_DS_PARAMS:
 			LIBIPW_DEBUG_MGMT("WLAN_EID_DS_PARAMS: %d\n",
 					     info_element->data[0]);
 			network->channel = info_element->data[0];
-			break;
+			अवरोध;
 
-		case WLAN_EID_FH_PARAMS:
+		हाल WLAN_EID_FH_PARAMS:
 			LIBIPW_DEBUG_MGMT("WLAN_EID_FH_PARAMS: ignored\n");
-			break;
+			अवरोध;
 
-		case WLAN_EID_CF_PARAMS:
+		हाल WLAN_EID_CF_PARAMS:
 			LIBIPW_DEBUG_MGMT("WLAN_EID_CF_PARAMS: ignored\n");
-			break;
+			अवरोध;
 
-		case WLAN_EID_TIM:
+		हाल WLAN_EID_TIM:
 			network->tim.tim_count = info_element->data[0];
 			network->tim.tim_period = info_element->data[1];
 			LIBIPW_DEBUG_MGMT("WLAN_EID_TIM: partially ignored\n");
-			break;
+			अवरोध;
 
-		case WLAN_EID_ERP_INFO:
+		हाल WLAN_EID_ERP_INFO:
 			network->erp_value = info_element->data[0];
 			network->flags |= NETWORK_HAS_ERP_VALUE;
 			LIBIPW_DEBUG_MGMT("MFIE_TYPE_ERP_SET: %d\n",
 					     network->erp_value);
-			break;
+			अवरोध;
 
-		case WLAN_EID_IBSS_PARAMS:
-			network->atim_window = info_element->data[0];
+		हाल WLAN_EID_IBSS_PARAMS:
+			network->atim_winकरोw = info_element->data[0];
 			LIBIPW_DEBUG_MGMT("WLAN_EID_IBSS_PARAMS: %d\n",
-					     network->atim_window);
-			break;
+					     network->atim_winकरोw);
+			अवरोध;
 
-		case WLAN_EID_CHALLENGE:
+		हाल WLAN_EID_CHALLENGE:
 			LIBIPW_DEBUG_MGMT("WLAN_EID_CHALLENGE: ignored\n");
-			break;
+			अवरोध;
 
-		case WLAN_EID_VENDOR_SPECIFIC:
+		हाल WLAN_EID_VENDOR_SPECIFIC:
 			LIBIPW_DEBUG_MGMT("WLAN_EID_VENDOR_SPECIFIC: %d bytes\n",
 					     info_element->len);
-			if (!libipw_parse_qos_info_param_IE(info_element,
+			अगर (!libipw_parse_qos_info_param_IE(info_element,
 							       network))
-				break;
+				अवरोध;
 
-			if (info_element->len >= 4 &&
+			अगर (info_element->len >= 4 &&
 			    info_element->data[0] == 0x00 &&
 			    info_element->data[1] == 0x50 &&
 			    info_element->data[2] == 0xf2 &&
-			    info_element->data[3] == 0x01) {
+			    info_element->data[3] == 0x01) अणु
 				network->wpa_ie_len = min(info_element->len + 2,
 							  MAX_WPA_IE_LEN);
-				memcpy(network->wpa_ie, info_element,
+				स_नकल(network->wpa_ie, info_element,
 				       network->wpa_ie_len);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case WLAN_EID_RSN:
+		हाल WLAN_EID_RSN:
 			LIBIPW_DEBUG_MGMT("WLAN_EID_RSN: %d bytes\n",
 					     info_element->len);
 			network->rsn_ie_len = min(info_element->len + 2,
 						  MAX_WPA_IE_LEN);
-			memcpy(network->rsn_ie, info_element,
+			स_नकल(network->rsn_ie, info_element,
 			       network->rsn_ie_len);
-			break;
+			अवरोध;
 
-		case WLAN_EID_QOS_PARAMETER:
-			printk(KERN_ERR
+		हाल WLAN_EID_QOS_PARAMETER:
+			prपूर्णांकk(KERN_ERR
 			       "QoS Error need to parse QOS_PARAMETER IE\n");
-			break;
+			अवरोध;
 			/* 802.11h */
-		case WLAN_EID_PWR_CONSTRAINT:
-			network->power_constraint = info_element->data[0];
+		हाल WLAN_EID_PWR_CONSTRAINT:
+			network->घातer_स्थिरraपूर्णांक = info_element->data[0];
 			network->flags |= NETWORK_HAS_POWER_CONSTRAINT;
-			break;
+			अवरोध;
 
-		case WLAN_EID_CHANNEL_SWITCH:
-			network->power_constraint = info_element->data[0];
+		हाल WLAN_EID_CHANNEL_SWITCH:
+			network->घातer_स्थिरraपूर्णांक = info_element->data[0];
 			network->flags |= NETWORK_HAS_CSA;
-			break;
+			अवरोध;
 
-		case WLAN_EID_QUIET:
+		हाल WLAN_EID_QUIET:
 			network->quiet.count = info_element->data[0];
 			network->quiet.period = info_element->data[1];
 			network->quiet.duration = info_element->data[2];
 			network->quiet.offset = info_element->data[3];
 			network->flags |= NETWORK_HAS_QUIET;
-			break;
+			अवरोध;
 
-		case WLAN_EID_IBSS_DFS:
+		हाल WLAN_EID_IBSS_DFS:
 			network->flags |= NETWORK_HAS_IBSS_DFS;
-			break;
+			अवरोध;
 
-		case WLAN_EID_TPC_REPORT:
-			network->tpc_report.transmit_power =
+		हाल WLAN_EID_TPC_REPORT:
+			network->tpc_report.transmit_घातer =
 			    info_element->data[0];
 			network->tpc_report.link_margin = info_element->data[1];
 			network->flags |= NETWORK_HAS_TPC_REPORT;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			LIBIPW_DEBUG_MGMT
 			    ("Unsupported info element: %s (%d)\n",
 			     get_info_element_string(info_element->id),
 			     info_element->id);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		length -= sizeof(*info_element) + info_element->len;
+		length -= माप(*info_element) + info_element->len;
 		info_element =
-		    (struct libipw_info_element *)&info_element->
+		    (काष्ठा libipw_info_element *)&info_element->
 		    data[info_element->len];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int libipw_handle_assoc_resp(struct libipw_device *ieee, struct libipw_assoc_response
-				       *frame, struct libipw_rx_stats *stats)
-{
-	struct libipw_network network_resp = { };
-	struct libipw_network *network = &network_resp;
-	struct net_device *dev = ieee->dev;
+अटल पूर्णांक libipw_handle_assoc_resp(काष्ठा libipw_device *ieee, काष्ठा libipw_assoc_response
+				       *frame, काष्ठा libipw_rx_stats *stats)
+अणु
+	काष्ठा libipw_network network_resp = अणु पूर्ण;
+	काष्ठा libipw_network *network = &network_resp;
+	काष्ठा net_device *dev = ieee->dev;
 
 	network->flags = 0;
 	network->qos_data.active = 0;
@@ -1330,211 +1331,211 @@ static int libipw_handle_assoc_resp(struct libipw_device *ieee, struct libipw_as
 	network->qos_data.param_count = 0;
 	network->qos_data.old_param_count = 0;
 
-	//network->atim_window = le16_to_cpu(frame->aid) & (0x3FFF);
-	network->atim_window = le16_to_cpu(frame->aid);
-	network->listen_interval = le16_to_cpu(frame->status);
-	memcpy(network->bssid, frame->header.addr3, ETH_ALEN);
+	//network->atim_winकरोw = le16_to_cpu(frame->aid) & (0x3FFF);
+	network->atim_winकरोw = le16_to_cpu(frame->aid);
+	network->listen_पूर्णांकerval = le16_to_cpu(frame->status);
+	स_नकल(network->bssid, frame->header.addr3, ETH_ALEN);
 	network->capability = le16_to_cpu(frame->capability);
-	network->last_scanned = jiffies;
+	network->last_scanned = jअगरfies;
 	network->rates_len = network->rates_ex_len = 0;
 	network->last_associate = 0;
 	network->ssid_len = 0;
 	network->erp_value =
 	    (network->capability & WLAN_CAPABILITY_IBSS) ? 0x3 : 0x0;
 
-	if (stats->freq == LIBIPW_52GHZ_BAND) {
-		/* for A band (No DS info) */
+	अगर (stats->freq == LIBIPW_52GHZ_BAND) अणु
+		/* क्रम A band (No DS info) */
 		network->channel = stats->received_channel;
-	} else
+	पूर्ण अन्यथा
 		network->flags |= NETWORK_HAS_CCK;
 
 	network->wpa_ie_len = 0;
 	network->rsn_ie_len = 0;
 
-	if (libipw_parse_info_param
-	    (frame->info_element, stats->len - sizeof(*frame), network))
-		return 1;
+	अगर (libipw_parse_info_param
+	    (frame->info_element, stats->len - माप(*frame), network))
+		वापस 1;
 
 	network->mode = 0;
-	if (stats->freq == LIBIPW_52GHZ_BAND)
+	अगर (stats->freq == LIBIPW_52GHZ_BAND)
 		network->mode = IEEE_A;
-	else {
-		if (network->flags & NETWORK_HAS_OFDM)
+	अन्यथा अणु
+		अगर (network->flags & NETWORK_HAS_OFDM)
 			network->mode |= IEEE_G;
-		if (network->flags & NETWORK_HAS_CCK)
+		अगर (network->flags & NETWORK_HAS_CCK)
 			network->mode |= IEEE_B;
-	}
+	पूर्ण
 
-	memcpy(&network->stats, stats, sizeof(network->stats));
+	स_नकल(&network->stats, stats, माप(network->stats));
 
-	if (ieee->handle_assoc_response != NULL)
+	अगर (ieee->handle_assoc_response != शून्य)
 		ieee->handle_assoc_response(dev, frame, network);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /***************************************************/
 
-static int libipw_network_init(struct libipw_device *ieee, struct libipw_probe_response
+अटल पूर्णांक libipw_network_init(काष्ठा libipw_device *ieee, काष्ठा libipw_probe_response
 					 *beacon,
-					 struct libipw_network *network,
-					 struct libipw_rx_stats *stats)
-{
+					 काष्ठा libipw_network *network,
+					 काष्ठा libipw_rx_stats *stats)
+अणु
 	network->qos_data.active = 0;
 	network->qos_data.supported = 0;
 	network->qos_data.param_count = 0;
 	network->qos_data.old_param_count = 0;
 
 	/* Pull out fixed field data */
-	memcpy(network->bssid, beacon->header.addr3, ETH_ALEN);
+	स_नकल(network->bssid, beacon->header.addr3, ETH_ALEN);
 	network->capability = le16_to_cpu(beacon->capability);
-	network->last_scanned = jiffies;
-	network->time_stamp[0] = le32_to_cpu(beacon->time_stamp[0]);
-	network->time_stamp[1] = le32_to_cpu(beacon->time_stamp[1]);
-	network->beacon_interval = le16_to_cpu(beacon->beacon_interval);
-	/* Where to pull this? beacon->listen_interval; */
-	network->listen_interval = 0x0A;
+	network->last_scanned = jअगरfies;
+	network->समय_stamp[0] = le32_to_cpu(beacon->समय_stamp[0]);
+	network->समय_stamp[1] = le32_to_cpu(beacon->समय_stamp[1]);
+	network->beacon_पूर्णांकerval = le16_to_cpu(beacon->beacon_पूर्णांकerval);
+	/* Where to pull this? beacon->listen_पूर्णांकerval; */
+	network->listen_पूर्णांकerval = 0x0A;
 	network->rates_len = network->rates_ex_len = 0;
 	network->last_associate = 0;
 	network->ssid_len = 0;
 	network->flags = 0;
-	network->atim_window = 0;
+	network->atim_winकरोw = 0;
 	network->erp_value = (network->capability & WLAN_CAPABILITY_IBSS) ?
 	    0x3 : 0x0;
 
-	if (stats->freq == LIBIPW_52GHZ_BAND) {
-		/* for A band (No DS info) */
+	अगर (stats->freq == LIBIPW_52GHZ_BAND) अणु
+		/* क्रम A band (No DS info) */
 		network->channel = stats->received_channel;
-	} else
+	पूर्ण अन्यथा
 		network->flags |= NETWORK_HAS_CCK;
 
 	network->wpa_ie_len = 0;
 	network->rsn_ie_len = 0;
 
-	if (libipw_parse_info_param
-	    (beacon->info_element, stats->len - sizeof(*beacon), network))
-		return 1;
+	अगर (libipw_parse_info_param
+	    (beacon->info_element, stats->len - माप(*beacon), network))
+		वापस 1;
 
 	network->mode = 0;
-	if (stats->freq == LIBIPW_52GHZ_BAND)
+	अगर (stats->freq == LIBIPW_52GHZ_BAND)
 		network->mode = IEEE_A;
-	else {
-		if (network->flags & NETWORK_HAS_OFDM)
+	अन्यथा अणु
+		अगर (network->flags & NETWORK_HAS_OFDM)
 			network->mode |= IEEE_G;
-		if (network->flags & NETWORK_HAS_CCK)
+		अगर (network->flags & NETWORK_HAS_CCK)
 			network->mode |= IEEE_B;
-	}
+	पूर्ण
 
-	if (network->mode == 0) {
+	अगर (network->mode == 0) अणु
 		LIBIPW_DEBUG_SCAN("Filtered out '%*pE (%pM)' network.\n",
 				  network->ssid_len, network->ssid,
 				  network->bssid);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	memcpy(&network->stats, stats, sizeof(network->stats));
+	स_नकल(&network->stats, stats, माप(network->stats));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int is_same_network(struct libipw_network *src,
-				  struct libipw_network *dst)
-{
-	/* A network is only a duplicate if the channel, BSSID, and ESSID
+अटल अंतरभूत पूर्णांक is_same_network(काष्ठा libipw_network *src,
+				  काष्ठा libipw_network *dst)
+अणु
+	/* A network is only a duplicate अगर the channel, BSSID, and ESSID
 	 * all match.  We treat all <hidden> with the same BSSID and channel
 	 * as one network */
-	return ((src->ssid_len == dst->ssid_len) &&
+	वापस ((src->ssid_len == dst->ssid_len) &&
 		(src->channel == dst->channel) &&
 		ether_addr_equal_64bits(src->bssid, dst->bssid) &&
-		!memcmp(src->ssid, dst->ssid, src->ssid_len));
-}
+		!स_भेद(src->ssid, dst->ssid, src->ssid_len));
+पूर्ण
 
-static void update_network(struct libipw_network *dst,
-				  struct libipw_network *src)
-{
-	int qos_active;
+अटल व्योम update_network(काष्ठा libipw_network *dst,
+				  काष्ठा libipw_network *src)
+अणु
+	पूर्णांक qos_active;
 	u8 old_param;
 
-	/* We only update the statistics if they were created by receiving
-	 * the network information on the actual channel the network is on.
+	/* We only update the statistics अगर they were created by receiving
+	 * the network inक्रमmation on the actual channel the network is on.
 	 *
 	 * This keeps beacons received on neighbor channels from bringing
-	 * down the signal level of an AP. */
-	if (dst->channel == src->stats.received_channel)
-		memcpy(&dst->stats, &src->stats,
-		       sizeof(struct libipw_rx_stats));
-	else
+	 * करोwn the संकेत level of an AP. */
+	अगर (dst->channel == src->stats.received_channel)
+		स_नकल(&dst->stats, &src->stats,
+		       माप(काष्ठा libipw_rx_stats));
+	अन्यथा
 		LIBIPW_DEBUG_SCAN("Network %pM info received "
 			"off channel (%d vs. %d)\n", src->bssid,
 			dst->channel, src->stats.received_channel);
 
 	dst->capability = src->capability;
-	memcpy(dst->rates, src->rates, src->rates_len);
+	स_नकल(dst->rates, src->rates, src->rates_len);
 	dst->rates_len = src->rates_len;
-	memcpy(dst->rates_ex, src->rates_ex, src->rates_ex_len);
+	स_नकल(dst->rates_ex, src->rates_ex, src->rates_ex_len);
 	dst->rates_ex_len = src->rates_ex_len;
 
 	dst->mode = src->mode;
 	dst->flags = src->flags;
-	dst->time_stamp[0] = src->time_stamp[0];
-	dst->time_stamp[1] = src->time_stamp[1];
+	dst->समय_stamp[0] = src->समय_stamp[0];
+	dst->समय_stamp[1] = src->समय_stamp[1];
 
-	dst->beacon_interval = src->beacon_interval;
-	dst->listen_interval = src->listen_interval;
-	dst->atim_window = src->atim_window;
+	dst->beacon_पूर्णांकerval = src->beacon_पूर्णांकerval;
+	dst->listen_पूर्णांकerval = src->listen_पूर्णांकerval;
+	dst->atim_winकरोw = src->atim_winकरोw;
 	dst->erp_value = src->erp_value;
 	dst->tim = src->tim;
 
-	memcpy(dst->wpa_ie, src->wpa_ie, src->wpa_ie_len);
+	स_नकल(dst->wpa_ie, src->wpa_ie, src->wpa_ie_len);
 	dst->wpa_ie_len = src->wpa_ie_len;
-	memcpy(dst->rsn_ie, src->rsn_ie, src->rsn_ie_len);
+	स_नकल(dst->rsn_ie, src->rsn_ie, src->rsn_ie_len);
 	dst->rsn_ie_len = src->rsn_ie_len;
 
-	dst->last_scanned = jiffies;
+	dst->last_scanned = jअगरfies;
 	qos_active = src->qos_data.active;
 	old_param = dst->qos_data.old_param_count;
-	if (dst->flags & NETWORK_HAS_QOS_MASK)
-		memcpy(&dst->qos_data, &src->qos_data,
-		       sizeof(struct libipw_qos_data));
-	else {
+	अगर (dst->flags & NETWORK_HAS_QOS_MASK)
+		स_नकल(&dst->qos_data, &src->qos_data,
+		       माप(काष्ठा libipw_qos_data));
+	अन्यथा अणु
 		dst->qos_data.supported = src->qos_data.supported;
 		dst->qos_data.param_count = src->qos_data.param_count;
-	}
+	पूर्ण
 
-	if (dst->qos_data.supported == 1) {
-		if (dst->ssid_len)
+	अगर (dst->qos_data.supported == 1) अणु
+		अगर (dst->ssid_len)
 			LIBIPW_DEBUG_QOS
 			    ("QoS the network %s is QoS supported\n",
 			     dst->ssid);
-		else
+		अन्यथा
 			LIBIPW_DEBUG_QOS
 			    ("QoS the network is QoS supported\n");
-	}
+	पूर्ण
 	dst->qos_data.active = qos_active;
 	dst->qos_data.old_param_count = old_param;
 
 	/* dst->last_associate is not overwritten */
-}
+पूर्ण
 
-static inline int is_beacon(__le16 fc)
-{
-	return (WLAN_FC_GET_STYPE(le16_to_cpu(fc)) == IEEE80211_STYPE_BEACON);
-}
+अटल अंतरभूत पूर्णांक is_beacon(__le16 fc)
+अणु
+	वापस (WLAN_FC_GET_STYPE(le16_to_cpu(fc)) == IEEE80211_STYPE_BEACON);
+पूर्ण
 
-static void libipw_process_probe_response(struct libipw_device
-						    *ieee, struct
+अटल व्योम libipw_process_probe_response(काष्ठा libipw_device
+						    *ieee, काष्ठा
 						    libipw_probe_response
-						    *beacon, struct libipw_rx_stats
+						    *beacon, काष्ठा libipw_rx_stats
 						    *stats)
-{
-	struct net_device *dev = ieee->dev;
-	struct libipw_network network = { };
-	struct libipw_network *target;
-	struct libipw_network *oldest = NULL;
-#ifdef CONFIG_LIBIPW_DEBUG
-	struct libipw_info_element *info_element = beacon->info_element;
-#endif
-	unsigned long flags;
+अणु
+	काष्ठा net_device *dev = ieee->dev;
+	काष्ठा libipw_network network = अणु पूर्ण;
+	काष्ठा libipw_network *target;
+	काष्ठा libipw_network *oldest = शून्य;
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
+	काष्ठा libipw_info_element *info_element = beacon->info_element;
+#पूर्ण_अगर
+	अचिन्हित दीर्घ flags;
 
 	LIBIPW_DEBUG_SCAN("'%*pE' (%pM): %c%c%c%c %c%c%c%c-%c%c%c%c %c%c%c%c\n",
 		     info_element->len, info_element->data,
@@ -1556,193 +1557,193 @@ static void libipw_process_probe_response(struct libipw_device
 		     (beacon->capability & cpu_to_le16(1 << 0x1)) ? '1' : '0',
 		     (beacon->capability & cpu_to_le16(1 << 0x0)) ? '1' : '0');
 
-	if (libipw_network_init(ieee, beacon, &network, stats)) {
+	अगर (libipw_network_init(ieee, beacon, &network, stats)) अणु
 		LIBIPW_DEBUG_SCAN("Dropped '%*pE' (%pM) via %s.\n",
 				  info_element->len, info_element->data,
 				  beacon->header.addr3,
 				  is_beacon(beacon->header.frame_ctl) ?
 				  "BEACON" : "PROBE RESPONSE");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* The network parsed correctly -- so now we scan our known networks
-	 * to see if we can find it in our list.
+	 * to see अगर we can find it in our list.
 	 *
-	 * NOTE:  This search is definitely not optimized.  Once its doing
-	 *        the "right thing" we'll optimize it for efficiency if
+	 * NOTE:  This search is definitely not optimized.  Once its करोing
+	 *        the "right thing" we'll optimize it क्रम efficiency अगर
 	 *        necessary */
 
-	/* Search for this entry in the list and update it if it is
-	 * already there. */
+	/* Search क्रम this entry in the list and update it अगर it is
+	 * alपढ़ोy there. */
 
 	spin_lock_irqsave(&ieee->lock, flags);
 
-	list_for_each_entry(target, &ieee->network_list, list) {
-		if (is_same_network(target, &network))
-			break;
+	list_क्रम_each_entry(target, &ieee->network_list, list) अणु
+		अगर (is_same_network(target, &network))
+			अवरोध;
 
-		if ((oldest == NULL) ||
-		    time_before(target->last_scanned, oldest->last_scanned))
+		अगर ((oldest == शून्य) ||
+		    समय_beक्रमe(target->last_scanned, oldest->last_scanned))
 			oldest = target;
-	}
+	पूर्ण
 
 	/* If we didn't find a match, then get a new network slot to initialize
-	 * with this beacon's information */
-	if (&target->list == &ieee->network_list) {
-		if (list_empty(&ieee->network_free_list)) {
+	 * with this beacon's inक्रमmation */
+	अगर (&target->list == &ieee->network_list) अणु
+		अगर (list_empty(&ieee->network_मुक्त_list)) अणु
 			/* If there are no more slots, expire the oldest */
 			list_del(&oldest->list);
 			target = oldest;
 			LIBIPW_DEBUG_SCAN("Expired '%*pE' (%pM) from network list.\n",
 					  target->ssid_len, target->ssid,
 					  target->bssid);
-		} else {
-			/* Otherwise just pull from the free list */
-			target = list_entry(ieee->network_free_list.next,
-					    struct libipw_network, list);
-			list_del(ieee->network_free_list.next);
-		}
+		पूर्ण अन्यथा अणु
+			/* Otherwise just pull from the मुक्त list */
+			target = list_entry(ieee->network_मुक्त_list.next,
+					    काष्ठा libipw_network, list);
+			list_del(ieee->network_मुक्त_list.next);
+		पूर्ण
 
-#ifdef CONFIG_LIBIPW_DEBUG
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
 		LIBIPW_DEBUG_SCAN("Adding '%*pE' (%pM) via %s.\n",
 				  network.ssid_len, network.ssid,
 				  network.bssid,
 				  is_beacon(beacon->header.frame_ctl) ?
 				  "BEACON" : "PROBE RESPONSE");
-#endif
-		memcpy(target, &network, sizeof(*target));
+#पूर्ण_अगर
+		स_नकल(target, &network, माप(*target));
 		list_add_tail(&target->list, &ieee->network_list);
-	} else {
+	पूर्ण अन्यथा अणु
 		LIBIPW_DEBUG_SCAN("Updating '%*pE' (%pM) via %s.\n",
 				  target->ssid_len, target->ssid,
 				  target->bssid,
 				  is_beacon(beacon->header.frame_ctl) ?
 				  "BEACON" : "PROBE RESPONSE");
 		update_network(target, &network);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ieee->lock, flags);
 
-	if (is_beacon(beacon->header.frame_ctl)) {
-		if (ieee->handle_beacon != NULL)
+	अगर (is_beacon(beacon->header.frame_ctl)) अणु
+		अगर (ieee->handle_beacon != शून्य)
 			ieee->handle_beacon(dev, beacon, target);
-	} else {
-		if (ieee->handle_probe_response != NULL)
+	पूर्ण अन्यथा अणु
+		अगर (ieee->handle_probe_response != शून्य)
 			ieee->handle_probe_response(dev, beacon, target);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void libipw_rx_mgt(struct libipw_device *ieee,
-		      struct libipw_hdr_4addr *header,
-		      struct libipw_rx_stats *stats)
-{
-	switch (WLAN_FC_GET_STYPE(le16_to_cpu(header->frame_ctl))) {
-	case IEEE80211_STYPE_ASSOC_RESP:
+व्योम libipw_rx_mgt(काष्ठा libipw_device *ieee,
+		      काष्ठा libipw_hdr_4addr *header,
+		      काष्ठा libipw_rx_stats *stats)
+अणु
+	चयन (WLAN_FC_GET_STYPE(le16_to_cpu(header->frame_ctl))) अणु
+	हाल IEEE80211_STYPE_ASSOC_RESP:
 		LIBIPW_DEBUG_MGMT("received ASSOCIATION RESPONSE (%d)\n",
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
 		libipw_handle_assoc_resp(ieee,
-					    (struct libipw_assoc_response *)
+					    (काष्ठा libipw_assoc_response *)
 					    header, stats);
-		break;
+		अवरोध;
 
-	case IEEE80211_STYPE_REASSOC_RESP:
+	हाल IEEE80211_STYPE_REASSOC_RESP:
 		LIBIPW_DEBUG_MGMT("received REASSOCIATION RESPONSE (%d)\n",
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
-		break;
+		अवरोध;
 
-	case IEEE80211_STYPE_PROBE_REQ:
+	हाल IEEE80211_STYPE_PROBE_REQ:
 		LIBIPW_DEBUG_MGMT("received auth (%d)\n",
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
 
-		if (ieee->handle_probe_request != NULL)
+		अगर (ieee->handle_probe_request != शून्य)
 			ieee->handle_probe_request(ieee->dev,
-						   (struct
+						   (काष्ठा
 						    libipw_probe_request *)
 						   header, stats);
-		break;
+		अवरोध;
 
-	case IEEE80211_STYPE_PROBE_RESP:
+	हाल IEEE80211_STYPE_PROBE_RESP:
 		LIBIPW_DEBUG_MGMT("received PROBE RESPONSE (%d)\n",
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
 		LIBIPW_DEBUG_SCAN("Probe response\n");
 		libipw_process_probe_response(ieee,
-						 (struct
+						 (काष्ठा
 						  libipw_probe_response *)
 						 header, stats);
-		break;
+		अवरोध;
 
-	case IEEE80211_STYPE_BEACON:
+	हाल IEEE80211_STYPE_BEACON:
 		LIBIPW_DEBUG_MGMT("received BEACON (%d)\n",
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
 		LIBIPW_DEBUG_SCAN("Beacon\n");
 		libipw_process_probe_response(ieee,
-						 (struct
+						 (काष्ठा
 						  libipw_probe_response *)
 						 header, stats);
-		break;
-	case IEEE80211_STYPE_AUTH:
+		अवरोध;
+	हाल IEEE80211_STYPE_AUTH:
 
 		LIBIPW_DEBUG_MGMT("received auth (%d)\n",
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
 
-		if (ieee->handle_auth != NULL)
+		अगर (ieee->handle_auth != शून्य)
 			ieee->handle_auth(ieee->dev,
-					  (struct libipw_auth *)header);
-		break;
+					  (काष्ठा libipw_auth *)header);
+		अवरोध;
 
-	case IEEE80211_STYPE_DISASSOC:
-		if (ieee->handle_disassoc != NULL)
+	हाल IEEE80211_STYPE_DISASSOC:
+		अगर (ieee->handle_disassoc != शून्य)
 			ieee->handle_disassoc(ieee->dev,
-					      (struct libipw_disassoc *)
+					      (काष्ठा libipw_disassoc *)
 					      header);
-		break;
+		अवरोध;
 
-	case IEEE80211_STYPE_ACTION:
+	हाल IEEE80211_STYPE_ACTION:
 		LIBIPW_DEBUG_MGMT("ACTION\n");
-		if (ieee->handle_action)
+		अगर (ieee->handle_action)
 			ieee->handle_action(ieee->dev,
-					    (struct libipw_action *)
+					    (काष्ठा libipw_action *)
 					    header, stats);
-		break;
+		अवरोध;
 
-	case IEEE80211_STYPE_REASSOC_REQ:
+	हाल IEEE80211_STYPE_REASSOC_REQ:
 		LIBIPW_DEBUG_MGMT("received reassoc (%d)\n",
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
 
 		LIBIPW_DEBUG_MGMT("%s: LIBIPW_REASSOC_REQ received\n",
 				     ieee->dev->name);
-		if (ieee->handle_reassoc_request != NULL)
+		अगर (ieee->handle_reassoc_request != शून्य)
 			ieee->handle_reassoc_request(ieee->dev,
-						    (struct libipw_reassoc_request *)
+						    (काष्ठा libipw_reassoc_request *)
 						     header);
-		break;
+		अवरोध;
 
-	case IEEE80211_STYPE_ASSOC_REQ:
+	हाल IEEE80211_STYPE_ASSOC_REQ:
 		LIBIPW_DEBUG_MGMT("received assoc (%d)\n",
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
 
 		LIBIPW_DEBUG_MGMT("%s: LIBIPW_ASSOC_REQ received\n",
 				     ieee->dev->name);
-		if (ieee->handle_assoc_request != NULL)
+		अगर (ieee->handle_assoc_request != शून्य)
 			ieee->handle_assoc_request(ieee->dev);
-		break;
+		अवरोध;
 
-	case IEEE80211_STYPE_DEAUTH:
+	हाल IEEE80211_STYPE_DEAUTH:
 		LIBIPW_DEBUG_MGMT("DEAUTH\n");
-		if (ieee->handle_deauth != NULL)
+		अगर (ieee->handle_deauth != शून्य)
 			ieee->handle_deauth(ieee->dev,
-					    (struct libipw_deauth *)
+					    (काष्ठा libipw_deauth *)
 					    header);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		LIBIPW_DEBUG_MGMT("received UNKNOWN (%d)\n",
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
@@ -1750,9 +1751,9 @@ void libipw_rx_mgt(struct libipw_device *ieee,
 				     ieee->dev->name,
 				     WLAN_FC_GET_STYPE(le16_to_cpu
 						       (header->frame_ctl)));
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 EXPORT_SYMBOL_GPL(libipw_rx_any);
 EXPORT_SYMBOL(libipw_rx_mgt);

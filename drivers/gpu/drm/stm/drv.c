@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2017
  *
@@ -8,38 +9,38 @@
  *          Mickael Reulier <mickael.reulier@st.com>
  */
 
-#include <linux/component.h>
-#include <linux/dma-mapping.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/component.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "ltdc.h"
+#समावेश "ltdc.h"
 
-#define STM_MAX_FB_WIDTH	2048
-#define STM_MAX_FB_HEIGHT	2048 /* same as width to handle orientation */
+#घोषणा STM_MAX_FB_WIDTH	2048
+#घोषणा STM_MAX_FB_HEIGHT	2048 /* same as width to handle orientation */
 
-static const struct drm_mode_config_funcs drv_mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs drv_mode_config_funcs = अणु
 	.fb_create = drm_gem_fb_create,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-};
+पूर्ण;
 
-static int stm_gem_cma_dumb_create(struct drm_file *file,
-				   struct drm_device *dev,
-				   struct drm_mode_create_dumb *args)
-{
-	unsigned int min_pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
+अटल पूर्णांक sपंचांग_gem_cma_dumb_create(काष्ठा drm_file *file,
+				   काष्ठा drm_device *dev,
+				   काष्ठा drm_mode_create_dumb *args)
+अणु
+	अचिन्हित पूर्णांक min_pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
 
 	/*
 	 * in order to optimize data transfer, pitch is aligned on
@@ -48,12 +49,12 @@ static int stm_gem_cma_dumb_create(struct drm_file *file,
 	args->pitch = roundup(min_pitch, 128);
 	args->height = roundup(args->height, 4);
 
-	return drm_gem_cma_dumb_create_internal(file, dev, args);
-}
+	वापस drm_gem_cma_dumb_create_पूर्णांकernal(file, dev, args);
+पूर्ण
 
 DEFINE_DRM_GEM_CMA_FOPS(drv_driver_fops);
 
-static const struct drm_driver drv_driver = {
+अटल स्थिर काष्ठा drm_driver drv_driver = अणु
 	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
 	.name = "stm",
 	.desc = "STMicroelectronics SoC DRM",
@@ -62,29 +63,29 @@ static const struct drm_driver drv_driver = {
 	.minor = 0,
 	.patchlevel = 0,
 	.fops = &drv_driver_fops,
-	DRM_GEM_CMA_DRIVER_OPS_WITH_DUMB_CREATE(stm_gem_cma_dumb_create),
-};
+	DRM_GEM_CMA_DRIVER_OPS_WITH_DUMB_CREATE(sपंचांग_gem_cma_dumb_create),
+पूर्ण;
 
-static int drv_load(struct drm_device *ddev)
-{
-	struct platform_device *pdev = to_platform_device(ddev->dev);
-	struct ltdc_device *ldev;
-	int ret;
+अटल पूर्णांक drv_load(काष्ठा drm_device *ddev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(ddev->dev);
+	काष्ठा ltdc_device *ldev;
+	पूर्णांक ret;
 
 	DRM_DEBUG("%s\n", __func__);
 
-	ldev = devm_kzalloc(ddev->dev, sizeof(*ldev), GFP_KERNEL);
-	if (!ldev)
-		return -ENOMEM;
+	ldev = devm_kzalloc(ddev->dev, माप(*ldev), GFP_KERNEL);
+	अगर (!ldev)
+		वापस -ENOMEM;
 
-	ddev->dev_private = (void *)ldev;
+	ddev->dev_निजी = (व्योम *)ldev;
 
 	ret = drmm_mode_config_init(ddev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * set max width and height as default value.
+	 * set max width and height as शेष value.
 	 * this value would be used to check framebuffer size limitation
 	 * at drm_mode_addfb().
 	 */
@@ -95,148 +96,148 @@ static int drv_load(struct drm_device *ddev)
 	ddev->mode_config.funcs = &drv_mode_config_funcs;
 
 	ret = ltdc_load(ddev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_mode_config_reset(ddev);
 	drm_kms_helper_poll_init(ddev);
 
-	platform_set_drvdata(pdev, ddev);
+	platक्रमm_set_drvdata(pdev, ddev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void drv_unload(struct drm_device *ddev)
-{
+अटल व्योम drv_unload(काष्ठा drm_device *ddev)
+अणु
 	DRM_DEBUG("%s\n", __func__);
 
 	drm_kms_helper_poll_fini(ddev);
 	ltdc_unload(ddev);
-}
+पूर्ण
 
-static __maybe_unused int drv_suspend(struct device *dev)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct ltdc_device *ldev = ddev->dev_private;
-	struct drm_atomic_state *state;
+अटल __maybe_unused पूर्णांक drv_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा ltdc_device *ldev = ddev->dev_निजी;
+	काष्ठा drm_atomic_state *state;
 
 	WARN_ON(ldev->suspend_state);
 
 	state = drm_atomic_helper_suspend(ddev);
-	if (IS_ERR(state))
-		return PTR_ERR(state);
+	अगर (IS_ERR(state))
+		वापस PTR_ERR(state);
 
 	ldev->suspend_state = state;
-	pm_runtime_force_suspend(dev);
+	pm_runसमय_क्रमce_suspend(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused int drv_resume(struct device *dev)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct ltdc_device *ldev = ddev->dev_private;
-	int ret;
+अटल __maybe_unused पूर्णांक drv_resume(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा ltdc_device *ldev = ddev->dev_निजी;
+	पूर्णांक ret;
 
-	if (WARN_ON(!ldev->suspend_state))
-		return -ENOENT;
+	अगर (WARN_ON(!ldev->suspend_state))
+		वापस -ENOENT;
 
-	pm_runtime_force_resume(dev);
+	pm_runसमय_क्रमce_resume(dev);
 	ret = drm_atomic_helper_resume(ddev, ldev->suspend_state);
-	if (ret)
-		pm_runtime_force_suspend(dev);
+	अगर (ret)
+		pm_runसमय_क्रमce_suspend(dev);
 
-	ldev->suspend_state = NULL;
+	ldev->suspend_state = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __maybe_unused int drv_runtime_suspend(struct device *dev)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
+अटल __maybe_unused पूर्णांक drv_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
 
 	DRM_DEBUG_DRIVER("\n");
 	ltdc_suspend(ddev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused int drv_runtime_resume(struct device *dev)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
+अटल __maybe_unused पूर्णांक drv_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
 
 	DRM_DEBUG_DRIVER("\n");
-	return ltdc_resume(ddev);
-}
+	वापस ltdc_resume(ddev);
+पूर्ण
 
-static const struct dev_pm_ops drv_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops drv_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(drv_suspend, drv_resume)
-	SET_RUNTIME_PM_OPS(drv_runtime_suspend,
-			   drv_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(drv_runसमय_suspend,
+			   drv_runसमय_resume, शून्य)
+पूर्ण;
 
-static int stm_drm_platform_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct drm_device *ddev;
-	int ret;
+अटल पूर्णांक sपंचांग_drm_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा drm_device *ddev;
+	पूर्णांक ret;
 
 	DRM_DEBUG("%s\n", __func__);
 
 	dma_set_coherent_mask(dev, DMA_BIT_MASK(32));
 
 	ddev = drm_dev_alloc(&drv_driver, dev);
-	if (IS_ERR(ddev))
-		return PTR_ERR(ddev);
+	अगर (IS_ERR(ddev))
+		वापस PTR_ERR(ddev);
 
 	ret = drv_load(ddev);
-	if (ret)
-		goto err_put;
+	अगर (ret)
+		जाओ err_put;
 
-	ret = drm_dev_register(ddev, 0);
-	if (ret)
-		goto err_put;
+	ret = drm_dev_रेजिस्टर(ddev, 0);
+	अगर (ret)
+		जाओ err_put;
 
 	drm_fbdev_generic_setup(ddev, 16);
 
-	return 0;
+	वापस 0;
 
 err_put:
 	drm_dev_put(ddev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stm_drm_platform_remove(struct platform_device *pdev)
-{
-	struct drm_device *ddev = platform_get_drvdata(pdev);
+अटल पूर्णांक sपंचांग_drm_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा drm_device *ddev = platक्रमm_get_drvdata(pdev);
 
 	DRM_DEBUG("%s\n", __func__);
 
-	drm_dev_unregister(ddev);
+	drm_dev_unरेजिस्टर(ddev);
 	drv_unload(ddev);
 	drm_dev_put(ddev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id drv_dt_ids[] = {
-	{ .compatible = "st,stm32-ltdc"},
-	{ /* end node */ },
-};
+अटल स्थिर काष्ठा of_device_id drv_dt_ids[] = अणु
+	अणु .compatible = "st,stm32-ltdc"पूर्ण,
+	अणु /* end node */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, drv_dt_ids);
 
-static struct platform_driver stm_drm_platform_driver = {
-	.probe = stm_drm_platform_probe,
-	.remove = stm_drm_platform_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांग_drm_platक्रमm_driver = अणु
+	.probe = sपंचांग_drm_platक्रमm_probe,
+	.हटाओ = sपंचांग_drm_platक्रमm_हटाओ,
+	.driver = अणु
 		.name = "stm32-display",
 		.of_match_table = drv_dt_ids,
 		.pm = &drv_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(stm_drm_platform_driver);
+module_platक्रमm_driver(sपंचांग_drm_platक्रमm_driver);
 
 MODULE_AUTHOR("Philippe Cornu <philippe.cornu@st.com>");
 MODULE_AUTHOR("Yannick Fertre <yannick.fertre@st.com>");

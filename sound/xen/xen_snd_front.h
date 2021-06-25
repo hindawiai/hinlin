@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 
 /*
- * Xen para-virtual sound device
+ * Xen para-भव sound device
  *
  * Copyright (C) 2016-2018 EPAM Systems Inc.
  *
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
-#ifndef __XEN_SND_FRONT_H
-#define __XEN_SND_FRONT_H
+#अगर_अघोषित __XEN_SND_FRONT_H
+#घोषणा __XEN_SND_FRONT_H
 
-#include "xen_snd_front_cfg.h"
+#समावेश "xen_snd_front_cfg.h"
 
-struct xen_snd_front_card_info;
-struct xen_snd_front_evtchnl;
-struct xen_snd_front_evtchnl_pair;
-struct xen_front_pgdir_shbuf;
-struct xensnd_query_hw_param;
+काष्ठा xen_snd_front_card_info;
+काष्ठा xen_snd_front_evtchnl;
+काष्ठा xen_snd_front_evtchnl_pair;
+काष्ठा xen_front_pgdir_shbuf;
+काष्ठा xensnd_query_hw_param;
 
-struct xen_snd_front_info {
-	struct xenbus_device *xb_dev;
+काष्ठा xen_snd_front_info अणु
+	काष्ठा xenbus_device *xb_dev;
 
-	struct xen_snd_front_card_info *card_info;
+	काष्ठा xen_snd_front_card_info *card_info;
 
-	int num_evt_pairs;
-	struct xen_snd_front_evtchnl_pair *evt_pairs;
+	पूर्णांक num_evt_pairs;
+	काष्ठा xen_snd_front_evtchnl_pair *evt_pairs;
 
-	struct xen_front_cfg_card cfg;
-};
+	काष्ठा xen_front_cfg_card cfg;
+पूर्ण;
 
-int xen_snd_front_stream_query_hw_param(struct xen_snd_front_evtchnl *evtchnl,
-					struct xensnd_query_hw_param *hw_param_req,
-					struct xensnd_query_hw_param *hw_param_resp);
+पूर्णांक xen_snd_front_stream_query_hw_param(काष्ठा xen_snd_front_evtchnl *evtchnl,
+					काष्ठा xensnd_query_hw_param *hw_param_req,
+					काष्ठा xensnd_query_hw_param *hw_param_resp);
 
-int xen_snd_front_stream_prepare(struct xen_snd_front_evtchnl *evtchnl,
-				 struct xen_front_pgdir_shbuf *shbuf,
-				 u8 format, unsigned int channels,
-				 unsigned int rate, u32 buffer_sz,
+पूर्णांक xen_snd_front_stream_prepare(काष्ठा xen_snd_front_evtchnl *evtchnl,
+				 काष्ठा xen_front_pgdir_shbuf *shbuf,
+				 u8 क्रमmat, अचिन्हित पूर्णांक channels,
+				 अचिन्हित पूर्णांक rate, u32 buffer_sz,
 				 u32 period_sz);
 
-int xen_snd_front_stream_close(struct xen_snd_front_evtchnl *evtchnl);
+पूर्णांक xen_snd_front_stream_बंद(काष्ठा xen_snd_front_evtchnl *evtchnl);
 
-int xen_snd_front_stream_write(struct xen_snd_front_evtchnl *evtchnl,
-			       unsigned long pos, unsigned long count);
+पूर्णांक xen_snd_front_stream_ग_लिखो(काष्ठा xen_snd_front_evtchnl *evtchnl,
+			       अचिन्हित दीर्घ pos, अचिन्हित दीर्घ count);
 
-int xen_snd_front_stream_read(struct xen_snd_front_evtchnl *evtchnl,
-			      unsigned long pos, unsigned long count);
+पूर्णांक xen_snd_front_stream_पढ़ो(काष्ठा xen_snd_front_evtchnl *evtchnl,
+			      अचिन्हित दीर्घ pos, अचिन्हित दीर्घ count);
 
-int xen_snd_front_stream_trigger(struct xen_snd_front_evtchnl *evtchnl,
-				 int type);
+पूर्णांक xen_snd_front_stream_trigger(काष्ठा xen_snd_front_evtchnl *evtchnl,
+				 पूर्णांक type);
 
-#endif /* __XEN_SND_FRONT_H */
+#पूर्ण_अगर /* __XEN_SND_FRONT_H */

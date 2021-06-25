@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * linux/include/asm/timex.h
+ * linux/include/यंत्र/समयx.h
  *
- * sparc architecture timex specifications
+ * sparc architecture समयx specअगरications
  */
-#ifndef _ASMsparc_TIMEX_H
-#define _ASMsparc_TIMEX_H
+#अगर_अघोषित _ASMsparc_TIMEX_H
+#घोषणा _ASMsparc_TIMEX_H
 
-#define CLOCK_TICK_RATE	1193180 /* Underlying HZ */
+#घोषणा CLOCK_TICK_RATE	1193180 /* Underlying HZ */
 
-/* XXX Maybe do something better at some point... -DaveM */
-typedef unsigned long cycles_t;
-#define get_cycles()	(0)
+/* XXX Maybe करो something better at some poपूर्णांक... -DaveM */
+प्रकार अचिन्हित दीर्घ cycles_t;
+#घोषणा get_cycles()	(0)
 
-#endif
+#पूर्ण_अगर

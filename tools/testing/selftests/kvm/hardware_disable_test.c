@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * This test is intended to reproduce a crash that happens when
- * kvm_arch_hardware_disable is called and it attempts to unregister the user
- * return notifiers.
+ * This test is पूर्णांकended to reproduce a crash that happens when
+ * kvm_arch_hardware_disable is called and it attempts to unरेजिस्टर the user
+ * वापस notअगरiers.
  */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <fcntl.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
+#समावेश <fcntl.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <semaphore.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <sys/रुको.h>
 
-#include <test_util.h>
+#समावेश <test_util.h>
 
-#include "kvm_util.h"
+#समावेश "kvm_util.h"
 
-#define VCPU_NUM 4
-#define SLEEPING_THREAD_NUM (1 << 4)
-#define FORK_NUM (1ULL << 9)
-#define DELAY_US_MAX 2000
-#define GUEST_CODE_PIO_PORT 4
+#घोषणा VCPU_NUM 4
+#घोषणा SLEEPING_THREAD_NUM (1 << 4)
+#घोषणा FORK_NUM (1ULL << 9)
+#घोषणा DELAY_US_MAX 2000
+#घोषणा GUEST_CODE_PIO_PORT 4
 
 sem_t *sem;
 
-/* Arguments for the pthreads */
-struct payload {
-	struct kvm_vm *vm;
-	uint32_t index;
-};
+/* Arguments क्रम the pthपढ़ोs */
+काष्ठा payload अणु
+	काष्ठा kvm_vm *vm;
+	uपूर्णांक32_t index;
+पूर्ण;
 
-static void guest_code(void)
-{
-	for (;;)
+अटल व्योम guest_code(व्योम)
+अणु
+	क्रम (;;)
 		;  /* Some busy work */
-	printf("Should not be reached.\n");
-}
+	म_लिखो("Should not be reached.\n");
+पूर्ण
 
-static void *run_vcpu(void *arg)
-{
-	struct payload *payload = (struct payload *)arg;
-	struct kvm_run *state = vcpu_state(payload->vm, payload->index);
+अटल व्योम *run_vcpu(व्योम *arg)
+अणु
+	काष्ठा payload *payload = (काष्ठा payload *)arg;
+	काष्ठा kvm_run *state = vcpu_state(payload->vm, payload->index);
 
 	vcpu_run(payload->vm, payload->index);
 
 	TEST_ASSERT(false, "%s: exited with reason %d: %s\n",
-		    __func__, state->exit_reason,
-		    exit_reason_str(state->exit_reason));
-	pthread_exit(NULL);
-}
+		    __func__, state->निकास_reason,
+		    निकास_reason_str(state->निकास_reason));
+	pthपढ़ो_निकास(शून्य);
+पूर्ण
 
-static void *sleeping_thread(void *arg)
-{
-	int fd;
+अटल व्योम *sleeping_thपढ़ो(व्योम *arg)
+अणु
+	पूर्णांक fd;
 
-	while (true) {
-		fd = open("/dev/null", O_RDWR);
-		close(fd);
-	}
+	जबतक (true) अणु
+		fd = खोलो("/dev/null", O_RDWR);
+		बंद(fd);
+	पूर्ण
 	TEST_ASSERT(false, "%s: exited\n", __func__);
-	pthread_exit(NULL);
-}
+	pthपढ़ो_निकास(शून्य);
+पूर्ण
 
-static inline void check_create_thread(pthread_t *thread, pthread_attr_t *attr,
-				       void *(*f)(void *), void *arg)
-{
-	int r;
+अटल अंतरभूत व्योम check_create_thपढ़ो(pthपढ़ो_t *thपढ़ो, pthपढ़ो_attr_t *attr,
+				       व्योम *(*f)(व्योम *), व्योम *arg)
+अणु
+	पूर्णांक r;
 
-	r = pthread_create(thread, attr, f, arg);
+	r = pthपढ़ो_create(thपढ़ो, attr, f, arg);
 	TEST_ASSERT(r == 0, "%s: failed to create thread", __func__);
-}
+पूर्ण
 
-static inline void check_set_affinity(pthread_t thread, cpu_set_t *cpu_set)
-{
-	int r;
+अटल अंतरभूत व्योम check_set_affinity(pthपढ़ो_t thपढ़ो, cpu_set_t *cpu_set)
+अणु
+	पूर्णांक r;
 
-	r = pthread_setaffinity_np(thread, sizeof(cpu_set_t), cpu_set);
+	r = pthपढ़ो_setaffinity_np(thपढ़ो, माप(cpu_set_t), cpu_set);
 	TEST_ASSERT(r == 0, "%s: failed set affinity", __func__);
-}
+पूर्ण
 
-static inline void check_join(pthread_t thread, void **retval)
-{
-	int r;
+अटल अंतरभूत व्योम check_join(pthपढ़ो_t thपढ़ो, व्योम **retval)
+अणु
+	पूर्णांक r;
 
-	r = pthread_join(thread, retval);
+	r = pthपढ़ो_join(thपढ़ो, retval);
 	TEST_ASSERT(r == 0, "%s: failed to join thread", __func__);
-}
+पूर्ण
 
-static void run_test(uint32_t run)
-{
-	struct kvm_vm *vm;
+अटल व्योम run_test(uपूर्णांक32_t run)
+अणु
+	काष्ठा kvm_vm *vm;
 	cpu_set_t cpu_set;
-	pthread_t threads[VCPU_NUM];
-	pthread_t throw_away;
-	struct payload payloads[VCPU_NUM];
-	void *b;
-	uint32_t i, j;
+	pthपढ़ो_t thपढ़ोs[VCPU_NUM];
+	pthपढ़ो_t throw_away;
+	काष्ठा payload payloads[VCPU_NUM];
+	व्योम *b;
+	uपूर्णांक32_t i, j;
 
 	CPU_ZERO(&cpu_set);
-	for (i = 0; i < VCPU_NUM; i++)
+	क्रम (i = 0; i < VCPU_NUM; i++)
 		CPU_SET(i, &cpu_set);
 
 	vm = vm_create(VM_MODE_DEFAULT, DEFAULT_GUEST_PHY_PAGES, O_RDWR);
@@ -109,87 +110,87 @@ static void run_test(uint32_t run)
 	vm_create_irqchip(vm);
 
 	pr_debug("%s: [%d] start vcpus\n", __func__, run);
-	for (i = 0; i < VCPU_NUM; ++i) {
-		vm_vcpu_add_default(vm, i, guest_code);
+	क्रम (i = 0; i < VCPU_NUM; ++i) अणु
+		vm_vcpu_add_शेष(vm, i, guest_code);
 		payloads[i].vm = vm;
 		payloads[i].index = i;
 
-		check_create_thread(&threads[i], NULL, run_vcpu,
-				    (void *)&payloads[i]);
-		check_set_affinity(threads[i], &cpu_set);
+		check_create_thपढ़ो(&thपढ़ोs[i], शून्य, run_vcpu,
+				    (व्योम *)&payloads[i]);
+		check_set_affinity(thपढ़ोs[i], &cpu_set);
 
-		for (j = 0; j < SLEEPING_THREAD_NUM; ++j) {
-			check_create_thread(&throw_away, NULL, sleeping_thread,
-					    (void *)NULL);
+		क्रम (j = 0; j < SLEEPING_THREAD_NUM; ++j) अणु
+			check_create_thपढ़ो(&throw_away, शून्य, sleeping_thपढ़ो,
+					    (व्योम *)शून्य);
 			check_set_affinity(throw_away, &cpu_set);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	pr_debug("%s: [%d] all threads launched\n", __func__, run);
 	sem_post(sem);
-	for (i = 0; i < VCPU_NUM; ++i)
-		check_join(threads[i], &b);
+	क्रम (i = 0; i < VCPU_NUM; ++i)
+		check_join(thपढ़ोs[i], &b);
 	/* Should not be reached */
 	TEST_ASSERT(false, "%s: [%d] child escaped the ninja\n", __func__, run);
-}
+पूर्ण
 
-void wait_for_child_setup(pid_t pid)
-{
+व्योम रुको_क्रम_child_setup(pid_t pid)
+अणु
 	/*
-	 * Wait for the child to post to the semaphore, but wake up periodically
-	 * to check if the child exited prematurely.
+	 * Wait क्रम the child to post to the semaphore, but wake up periodically
+	 * to check अगर the child निकासed prematurely.
 	 */
-	for (;;) {
-		const struct timespec wait_period = { .tv_sec = 1 };
-		int status;
+	क्रम (;;) अणु
+		स्थिर काष्ठा बारpec रुको_period = अणु .tv_sec = 1 पूर्ण;
+		पूर्णांक status;
 
-		if (!sem_timedwait(sem, &wait_period))
-			return;
+		अगर (!sem_समयdरुको(sem, &रुको_period))
+			वापस;
 
-		/* Child is still running, keep waiting. */
-		if (pid != waitpid(pid, &status, WNOHANG))
-			continue;
+		/* Child is still running, keep रुकोing. */
+		अगर (pid != रुकोpid(pid, &status, WNOHANG))
+			जारी;
 
 		/*
-		 * Child is no longer running, which is not expected.
+		 * Child is no दीर्घer running, which is not expected.
 		 *
-		 * If it exited with a non-zero status, we explicitly forward
-		 * the child's status in case it exited with KSFT_SKIP.
+		 * If it निकासed with a non-zero status, we explicitly क्रमward
+		 * the child's status in हाल it निकासed with KSFT_SKIP.
 		 */
-		if (WIFEXITED(status))
-			exit(WEXITSTATUS(status));
-		else
+		अगर (WIFEXITED(status))
+			निकास(WEXITSTATUS(status));
+		अन्यथा
 			TEST_ASSERT(false, "Child exited unexpectedly");
-	}
-}
+	पूर्ण
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	uint32_t i;
-	int s, r;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	uपूर्णांक32_t i;
+	पूर्णांक s, r;
 	pid_t pid;
 
-	sem = sem_open("vm_sem", O_CREAT | O_EXCL, 0644, 0);
+	sem = sem_खोलो("vm_sem", O_CREAT | O_EXCL, 0644, 0);
 	sem_unlink("vm_sem");
 
-	for (i = 0; i < FORK_NUM; ++i) {
-		pid = fork();
+	क्रम (i = 0; i < FORK_NUM; ++i) अणु
+		pid = विभाजन();
 		TEST_ASSERT(pid >= 0, "%s: unable to fork", __func__);
-		if (pid == 0)
-			run_test(i); /* This function always exits */
+		अगर (pid == 0)
+			run_test(i); /* This function always निकासs */
 
 		pr_debug("%s: [%d] waiting semaphore\n", __func__, i);
-		wait_for_child_setup(pid);
-		r = (rand() % DELAY_US_MAX) + 1;
+		रुको_क्रम_child_setup(pid);
+		r = (अक्रम() % DELAY_US_MAX) + 1;
 		pr_debug("%s: [%d] waiting %dus\n", __func__, i, r);
 		usleep(r);
-		r = waitpid(pid, &s, WNOHANG);
+		r = रुकोpid(pid, &s, WNOHANG);
 		TEST_ASSERT(r != pid,
 			    "%s: [%d] child exited unexpectedly status: [%d]",
 			    __func__, i, s);
 		pr_debug("%s: [%d] killing child\n", __func__, i);
-		kill(pid, SIGKILL);
-	}
+		समाप्त(pid, SIGKILL);
+	पूर्ण
 
 	sem_destroy(sem);
-	exit(0);
-}
+	निकास(0);
+पूर्ण

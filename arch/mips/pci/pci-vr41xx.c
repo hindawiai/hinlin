@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  pci-vr41xx.c, PCI Control Unit routines for the NEC VR4100 series.
+ *  pci-vr41xx.c, PCI Control Unit routines क्रम the NEC VR4100 series.
  *
  *  Copyright (C) 2001-2003 MontaVista Software Inc.
  *    Author: Yoichi Yuasa <source@mvista.com>
@@ -12,298 +13,298 @@
  *  MontaVista Software Inc. <source@mvista.com>
  *  - New creation, NEC VR4122 and VR4131 are supported.
  */
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/types.h>
 
-#include <asm/cpu.h>
-#include <asm/io.h>
-#include <asm/vr41xx/pci.h>
-#include <asm/vr41xx/vr41xx.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/vr41xx/pci.h>
+#समावेश <यंत्र/vr41xx/vr41xx.h>
 
-#include "pci-vr41xx.h"
+#समावेश "pci-vr41xx.h"
 
-extern struct pci_ops vr41xx_pci_ops;
+बाह्य काष्ठा pci_ops vr41xx_pci_ops;
 
-static void __iomem *pciu_base;
+अटल व्योम __iomem *pciu_base;
 
-#define pciu_read(offset)		readl(pciu_base + (offset))
-#define pciu_write(offset, value)	writel((value), pciu_base + (offset))
+#घोषणा pciu_पढ़ो(offset)		पढ़ोl(pciu_base + (offset))
+#घोषणा pciu_ग_लिखो(offset, value)	ग_लिखोl((value), pciu_base + (offset))
 
-static struct pci_master_address_conversion pci_master_memory1 = {
+अटल काष्ठा pci_master_address_conversion pci_master_memory1 = अणु
 	.bus_base_address	= PCI_MASTER_MEM1_BUS_BASE_ADDRESS,
 	.address_mask		= PCI_MASTER_MEM1_ADDRESS_MASK,
 	.pci_base_address	= PCI_MASTER_MEM1_PCI_BASE_ADDRESS,
-};
+पूर्ण;
 
-static struct pci_target_address_conversion pci_target_memory1 = {
+अटल काष्ठा pci_target_address_conversion pci_target_memory1 = अणु
 	.address_mask		= PCI_TARGET_MEM1_ADDRESS_MASK,
 	.bus_base_address	= PCI_TARGET_MEM1_BUS_BASE_ADDRESS,
-};
+पूर्ण;
 
-static struct pci_master_address_conversion pci_master_io = {
+अटल काष्ठा pci_master_address_conversion pci_master_io = अणु
 	.bus_base_address	= PCI_MASTER_IO_BUS_BASE_ADDRESS,
 	.address_mask		= PCI_MASTER_IO_ADDRESS_MASK,
 	.pci_base_address	= PCI_MASTER_IO_PCI_BASE_ADDRESS,
-};
+पूर्ण;
 
-static struct pci_mailbox_address pci_mailbox = {
+अटल काष्ठा pci_mailbox_address pci_mailbox = अणु
 	.base_address		= PCI_MAILBOX_BASE_ADDRESS,
-};
+पूर्ण;
 
-static struct pci_target_address_window pci_target_window1 = {
+अटल काष्ठा pci_target_address_winकरोw pci_target_winकरोw1 = अणु
 	.base_address		= PCI_TARGET_WINDOW1_BASE_ADDRESS,
-};
+पूर्ण;
 
-static struct resource pci_mem_resource = {
+अटल काष्ठा resource pci_mem_resource = अणु
 	.name	= "PCI Memory resources",
 	.start	= PCI_MEM_RESOURCE_START,
 	.end	= PCI_MEM_RESOURCE_END,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct resource pci_io_resource = {
+अटल काष्ठा resource pci_io_resource = अणु
 	.name	= "PCI I/O resources",
 	.start	= PCI_IO_RESOURCE_START,
 	.end	= PCI_IO_RESOURCE_END,
 	.flags	= IORESOURCE_IO,
-};
+पूर्ण;
 
-static struct pci_controller_unit_setup vr41xx_pci_controller_unit_setup = {
+अटल काष्ठा pci_controller_unit_setup vr41xx_pci_controller_unit_setup = अणु
 	.master_memory1				= &pci_master_memory1,
 	.target_memory1				= &pci_target_memory1,
 	.master_io				= &pci_master_io,
 	.exclusive_access			= CANNOT_LOCK_FROM_DEVICE,
-	.wait_time_limit_from_irdy_to_trdy	= 0,
+	.रुको_समय_limit_from_irdy_to_trdy	= 0,
 	.mailbox				= &pci_mailbox,
-	.target_window1				= &pci_target_window1,
-	.master_latency_timer			= 0x80,
+	.target_winकरोw1				= &pci_target_winकरोw1,
+	.master_latency_समयr			= 0x80,
 	.retry_limit				= 0,
 	.arbiter_priority_control		= PCI_ARBITRATION_MODE_FAIR,
 	.take_away_gnt_mode			= PCI_TAKE_AWAY_GNT_DISABLE,
-};
+पूर्ण;
 
-static struct pci_controller vr41xx_pci_controller = {
+अटल काष्ठा pci_controller vr41xx_pci_controller = अणु
 	.pci_ops	= &vr41xx_pci_ops,
 	.mem_resource	= &pci_mem_resource,
 	.io_resource	= &pci_io_resource,
-};
+पूर्ण;
 
-void __init vr41xx_pciu_setup(struct pci_controller_unit_setup *setup)
-{
+व्योम __init vr41xx_pciu_setup(काष्ठा pci_controller_unit_setup *setup)
+अणु
 	vr41xx_pci_controller_unit_setup = *setup;
-}
+पूर्ण
 
-static int __init vr41xx_pciu_init(void)
-{
-	struct pci_controller_unit_setup *setup;
-	struct pci_master_address_conversion *master;
-	struct pci_target_address_conversion *target;
-	struct pci_mailbox_address *mailbox;
-	struct pci_target_address_window *window;
-	unsigned long vtclock, pci_clock_max;
-	uint32_t val;
+अटल पूर्णांक __init vr41xx_pciu_init(व्योम)
+अणु
+	काष्ठा pci_controller_unit_setup *setup;
+	काष्ठा pci_master_address_conversion *master;
+	काष्ठा pci_target_address_conversion *target;
+	काष्ठा pci_mailbox_address *mailbox;
+	काष्ठा pci_target_address_winकरोw *winकरोw;
+	अचिन्हित दीर्घ vtघड़ी, pci_घड़ी_max;
+	uपूर्णांक32_t val;
 
 	setup = &vr41xx_pci_controller_unit_setup;
 
-	if (request_mem_region(PCIU_BASE, PCIU_SIZE, "PCIU") == NULL)
-		return -EBUSY;
+	अगर (request_mem_region(PCIU_BASE, PCIU_SIZE, "PCIU") == शून्य)
+		वापस -EBUSY;
 
 	pciu_base = ioremap(PCIU_BASE, PCIU_SIZE);
-	if (pciu_base == NULL) {
+	अगर (pciu_base == शून्य) अणु
 		release_mem_region(PCIU_BASE, PCIU_SIZE);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Disable PCI interrupt */
-	vr41xx_disable_pciint();
+	/* Disable PCI पूर्णांकerrupt */
+	vr41xx_disable_pciपूर्णांक();
 
 	/* Supply VTClock to PCIU */
-	vr41xx_supply_clock(PCIU_CLOCK);
+	vr41xx_supply_घड़ी(PCIU_CLOCK);
 
-	/* Dummy write, waiting for supply of VTClock. */
-	vr41xx_disable_pciint();
+	/* Dummy ग_लिखो, रुकोing क्रम supply of VTClock. */
+	vr41xx_disable_pciपूर्णांक();
 
-	/* Select PCI clock */
-	if (setup->pci_clock_max != 0)
-		pci_clock_max = setup->pci_clock_max;
-	else
-		pci_clock_max = PCI_CLOCK_MAX;
-	vtclock = vr41xx_get_vtclock_frequency();
-	if (vtclock < pci_clock_max)
-		pciu_write(PCICLKSELREG, EQUAL_VTCLOCK);
-	else if ((vtclock / 2) < pci_clock_max)
-		pciu_write(PCICLKSELREG, HALF_VTCLOCK);
-	else if (current_cpu_data.processor_id >= PRID_VR4131_REV2_1 &&
-		 (vtclock / 3) < pci_clock_max)
-		pciu_write(PCICLKSELREG, ONE_THIRD_VTCLOCK);
-	else if ((vtclock / 4) < pci_clock_max)
-		pciu_write(PCICLKSELREG, QUARTER_VTCLOCK);
-	else {
-		printk(KERN_ERR "PCI Clock is over 33MHz.\n");
+	/* Select PCI घड़ी */
+	अगर (setup->pci_घड़ी_max != 0)
+		pci_घड़ी_max = setup->pci_घड़ी_max;
+	अन्यथा
+		pci_घड़ी_max = PCI_CLOCK_MAX;
+	vtघड़ी = vr41xx_get_vtघड़ी_frequency();
+	अगर (vtघड़ी < pci_घड़ी_max)
+		pciu_ग_लिखो(PCICLKSELREG, EQUAL_VTCLOCK);
+	अन्यथा अगर ((vtघड़ी / 2) < pci_घड़ी_max)
+		pciu_ग_लिखो(PCICLKSELREG, HALF_VTCLOCK);
+	अन्यथा अगर (current_cpu_data.processor_id >= PRID_VR4131_REV2_1 &&
+		 (vtघड़ी / 3) < pci_घड़ी_max)
+		pciu_ग_लिखो(PCICLKSELREG, ONE_THIRD_VTCLOCK);
+	अन्यथा अगर ((vtघड़ी / 4) < pci_घड़ी_max)
+		pciu_ग_लिखो(PCICLKSELREG, QUARTER_VTCLOCK);
+	अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "PCI Clock is over 33MHz.\n");
 		iounmap(pciu_base);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Supply PCI clock by PCI bus */
-	vr41xx_supply_clock(PCI_CLOCK);
+	/* Supply PCI घड़ी by PCI bus */
+	vr41xx_supply_घड़ी(PCI_CLOCK);
 
-	if (setup->master_memory1 != NULL) {
+	अगर (setup->master_memory1 != शून्य) अणु
 		master = setup->master_memory1;
 		val = IBA(master->bus_base_address) |
 		      MASTER_MSK(master->address_mask) |
 		      WINEN |
 		      PCIA(master->pci_base_address);
-		pciu_write(PCIMMAW1REG, val);
-	} else {
-		val = pciu_read(PCIMMAW1REG);
+		pciu_ग_लिखो(PCIMMAW1REG, val);
+	पूर्ण अन्यथा अणु
+		val = pciu_पढ़ो(PCIMMAW1REG);
 		val &= ~WINEN;
-		pciu_write(PCIMMAW1REG, val);
-	}
+		pciu_ग_लिखो(PCIMMAW1REG, val);
+	पूर्ण
 
-	if (setup->master_memory2 != NULL) {
+	अगर (setup->master_memory2 != शून्य) अणु
 		master = setup->master_memory2;
 		val = IBA(master->bus_base_address) |
 		      MASTER_MSK(master->address_mask) |
 		      WINEN |
 		      PCIA(master->pci_base_address);
-		pciu_write(PCIMMAW2REG, val);
-	} else {
-		val = pciu_read(PCIMMAW2REG);
+		pciu_ग_लिखो(PCIMMAW2REG, val);
+	पूर्ण अन्यथा अणु
+		val = pciu_पढ़ो(PCIMMAW2REG);
 		val &= ~WINEN;
-		pciu_write(PCIMMAW2REG, val);
-	}
+		pciu_ग_लिखो(PCIMMAW2REG, val);
+	पूर्ण
 
-	if (setup->target_memory1 != NULL) {
+	अगर (setup->target_memory1 != शून्य) अणु
 		target = setup->target_memory1;
 		val = TARGET_MSK(target->address_mask) |
 		      WINEN |
 		      ITA(target->bus_base_address);
-		pciu_write(PCITAW1REG, val);
-	} else {
-		val = pciu_read(PCITAW1REG);
+		pciu_ग_लिखो(PCITAW1REG, val);
+	पूर्ण अन्यथा अणु
+		val = pciu_पढ़ो(PCITAW1REG);
 		val &= ~WINEN;
-		pciu_write(PCITAW1REG, val);
-	}
+		pciu_ग_लिखो(PCITAW1REG, val);
+	पूर्ण
 
-	if (setup->target_memory2 != NULL) {
+	अगर (setup->target_memory2 != शून्य) अणु
 		target = setup->target_memory2;
 		val = TARGET_MSK(target->address_mask) |
 		      WINEN |
 		      ITA(target->bus_base_address);
-		pciu_write(PCITAW2REG, val);
-	} else {
-		val = pciu_read(PCITAW2REG);
+		pciu_ग_लिखो(PCITAW2REG, val);
+	पूर्ण अन्यथा अणु
+		val = pciu_पढ़ो(PCITAW2REG);
 		val &= ~WINEN;
-		pciu_write(PCITAW2REG, val);
-	}
+		pciu_ग_लिखो(PCITAW2REG, val);
+	पूर्ण
 
-	if (setup->master_io != NULL) {
+	अगर (setup->master_io != शून्य) अणु
 		master = setup->master_io;
 		val = IBA(master->bus_base_address) |
 		      MASTER_MSK(master->address_mask) |
 		      WINEN |
 		      PCIIA(master->pci_base_address);
-		pciu_write(PCIMIOAWREG, val);
-	} else {
-		val = pciu_read(PCIMIOAWREG);
+		pciu_ग_लिखो(PCIMIOAWREG, val);
+	पूर्ण अन्यथा अणु
+		val = pciu_पढ़ो(PCIMIOAWREG);
 		val &= ~WINEN;
-		pciu_write(PCIMIOAWREG, val);
-	}
+		pciu_ग_लिखो(PCIMIOAWREG, val);
+	पूर्ण
 
-	if (setup->exclusive_access == CANNOT_LOCK_FROM_DEVICE)
-		pciu_write(PCIEXACCREG, UNLOCK);
-	else
-		pciu_write(PCIEXACCREG, 0);
+	अगर (setup->exclusive_access == CANNOT_LOCK_FROM_DEVICE)
+		pciu_ग_लिखो(PCIEXACCREG, UNLOCK);
+	अन्यथा
+		pciu_ग_लिखो(PCIEXACCREG, 0);
 
-	if (current_cpu_type() == CPU_VR4122)
-		pciu_write(PCITRDYVREG, TRDYV(setup->wait_time_limit_from_irdy_to_trdy));
+	अगर (current_cpu_type() == CPU_VR4122)
+		pciu_ग_लिखो(PCITRDYVREG, TRDYV(setup->रुको_समय_limit_from_irdy_to_trdy));
 
-	pciu_write(LATTIMEREG, MLTIM(setup->master_latency_timer));
+	pciu_ग_लिखो(LATTIMEREG, MLTIM(setup->master_latency_समयr));
 
-	if (setup->mailbox != NULL) {
+	अगर (setup->mailbox != शून्य) अणु
 		mailbox = setup->mailbox;
 		val = MBADD(mailbox->base_address) | TYPE_32BITSPACE |
 		      MSI_MEMORY | PREF_APPROVAL;
-		pciu_write(MAILBAREG, val);
-	}
+		pciu_ग_लिखो(MAILBAREG, val);
+	पूर्ण
 
-	if (setup->target_window1) {
-		window = setup->target_window1;
-		val = PMBA(window->base_address) | TYPE_32BITSPACE |
+	अगर (setup->target_winकरोw1) अणु
+		winकरोw = setup->target_winकरोw1;
+		val = PMBA(winकरोw->base_address) | TYPE_32BITSPACE |
 		      MSI_MEMORY | PREF_APPROVAL;
-		pciu_write(PCIMBA1REG, val);
-	}
+		pciu_ग_लिखो(PCIMBA1REG, val);
+	पूर्ण
 
-	if (setup->target_window2) {
-		window = setup->target_window2;
-		val = PMBA(window->base_address) | TYPE_32BITSPACE |
+	अगर (setup->target_winकरोw2) अणु
+		winकरोw = setup->target_winकरोw2;
+		val = PMBA(winकरोw->base_address) | TYPE_32BITSPACE |
 		      MSI_MEMORY | PREF_APPROVAL;
-		pciu_write(PCIMBA2REG, val);
-	}
+		pciu_ग_लिखो(PCIMBA2REG, val);
+	पूर्ण
 
-	val = pciu_read(RETVALREG);
+	val = pciu_पढ़ो(RETVALREG);
 	val &= ~RTYVAL_MASK;
 	val |= RTYVAL(setup->retry_limit);
-	pciu_write(RETVALREG, val);
+	pciu_ग_लिखो(RETVALREG, val);
 
-	val = pciu_read(PCIAPCNTREG);
+	val = pciu_पढ़ो(PCIAPCNTREG);
 	val &= ~(TKYGNT | PAPC);
 
-	switch (setup->arbiter_priority_control) {
-	case PCI_ARBITRATION_MODE_ALTERNATE_0:
+	चयन (setup->arbiter_priority_control) अणु
+	हाल PCI_ARBITRATION_MODE_ALTERNATE_0:
 		val |= PAPC_ALTERNATE_0;
-		break;
-	case PCI_ARBITRATION_MODE_ALTERNATE_B:
+		अवरोध;
+	हाल PCI_ARBITRATION_MODE_ALTERNATE_B:
 		val |= PAPC_ALTERNATE_B;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val |= PAPC_FAIR;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (setup->take_away_gnt_mode == PCI_TAKE_AWAY_GNT_ENABLE)
+	अगर (setup->take_away_gnt_mode == PCI_TAKE_AWAY_GNT_ENABLE)
 		val |= TKYGNT_ENABLE;
 
-	pciu_write(PCIAPCNTREG, val);
+	pciu_ग_लिखो(PCIAPCNTREG, val);
 
-	pciu_write(COMMANDREG, PCI_COMMAND_IO | PCI_COMMAND_MEMORY |
+	pciu_ग_लिखो(COMMANDREG, PCI_COMMAND_IO | PCI_COMMAND_MEMORY |
 			       PCI_COMMAND_MASTER | PCI_COMMAND_PARITY |
 			       PCI_COMMAND_SERR);
 
 	/* Clear bus error */
-	pciu_read(BUSERRADREG);
+	pciu_पढ़ो(BUSERRADREG);
 
-	pciu_write(PCIENREG, PCIU_CONFIG_DONE);
+	pciu_ग_लिखो(PCIENREG, PCIU_CONFIG_DONE);
 
-	if (setup->mem_resource != NULL)
+	अगर (setup->mem_resource != शून्य)
 		vr41xx_pci_controller.mem_resource = setup->mem_resource;
 
-	if (setup->io_resource != NULL) {
+	अगर (setup->io_resource != शून्य) अणु
 		vr41xx_pci_controller.io_resource = setup->io_resource;
-	} else {
+	पूर्ण अन्यथा अणु
 		set_io_port_base(IO_PORT_BASE);
 		ioport_resource.start = IO_PORT_RESOURCE_START;
 		ioport_resource.end = IO_PORT_RESOURCE_END;
-	}
+	पूर्ण
 
-	if (setup->master_io) {
-		void __iomem *io_map_base;
-		struct resource *res = vr41xx_pci_controller.io_resource;
+	अगर (setup->master_io) अणु
+		व्योम __iomem *io_map_base;
+		काष्ठा resource *res = vr41xx_pci_controller.io_resource;
 		master = setup->master_io;
 		io_map_base = ioremap(master->bus_base_address,
 				      resource_size(res));
-		if (!io_map_base) {
+		अगर (!io_map_base) अणु
 			iounmap(pciu_base);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
-		vr41xx_pci_controller.io_map_base = (unsigned long)io_map_base;
-	}
+		vr41xx_pci_controller.io_map_base = (अचिन्हित दीर्घ)io_map_base;
+	पूर्ण
 
-	register_pci_controller(&vr41xx_pci_controller);
+	रेजिस्टर_pci_controller(&vr41xx_pci_controller);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 arch_initcall(vr41xx_pciu_init);

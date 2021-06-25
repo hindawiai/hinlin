@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Simple test program that demonstrates a file copy through io_uring. This
  * uses the API exposed by liburing.
  *
  * Copyright (C) 2018-2019 Jens Axboe
  */
-#include <stdio.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
+#समावेश <मानकपन.स>
+#समावेश <fcntl.h>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/ioctl.h>
 
-#include "liburing.h"
+#समावेश "liburing.h"
 
-#define QD	64
-#define BS	(32*1024)
+#घोषणा QD	64
+#घोषणा BS	(32*1024)
 
-static int infd, outfd;
+अटल पूर्णांक infd, outfd;
 
-struct io_data {
-	int read;
+काष्ठा io_data अणु
+	पूर्णांक पढ़ो;
 	off_t first_offset, offset;
-	size_t first_len;
-	struct iovec iov;
-};
+	माप_प्रकार first_len;
+	काष्ठा iovec iov;
+पूर्ण;
 
-static int setup_context(unsigned entries, struct io_uring *ring)
-{
-	int ret;
+अटल पूर्णांक setup_context(अचिन्हित entries, काष्ठा io_uring *ring)
+अणु
+	पूर्णांक ret;
 
 	ret = io_uring_queue_init(entries, ring, 0);
-	if (ret < 0) {
-		fprintf(stderr, "queue_init: %s\n", strerror(-ret));
-		return -1;
-	}
+	अगर (ret < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "queue_init: %s\n", म_त्रुटि(-ret));
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_file_size(int fd, off_t *size)
-{
-	struct stat st;
+अटल पूर्णांक get_file_size(पूर्णांक fd, off_t *size)
+अणु
+	काष्ठा stat st;
 
-	if (fstat(fd, &st) < 0)
-		return -1;
-	if (S_ISREG(st.st_mode)) {
+	अगर (ख_स्थिति(fd, &st) < 0)
+		वापस -1;
+	अगर (S_ISREG(st.st_mode)) अणु
 		*size = st.st_size;
-		return 0;
-	} else if (S_ISBLK(st.st_mode)) {
-		unsigned long long bytes;
+		वापस 0;
+	पूर्ण अन्यथा अगर (S_ISBLK(st.st_mode)) अणु
+		अचिन्हित दीर्घ दीर्घ bytes;
 
-		if (ioctl(fd, BLKGETSIZE64, &bytes) != 0)
-			return -1;
+		अगर (ioctl(fd, BLKGETSIZE64, &bytes) != 0)
+			वापस -1;
 
 		*size = bytes;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void queue_prepped(struct io_uring *ring, struct io_data *data)
-{
-	struct io_uring_sqe *sqe;
+अटल व्योम queue_prepped(काष्ठा io_uring *ring, काष्ठा io_data *data)
+अणु
+	काष्ठा io_uring_sqe *sqe;
 
 	sqe = io_uring_get_sqe(ring);
-	assert(sqe);
+	निश्चित(sqe);
 
-	if (data->read)
-		io_uring_prep_readv(sqe, infd, &data->iov, 1, data->offset);
-	else
-		io_uring_prep_writev(sqe, outfd, &data->iov, 1, data->offset);
+	अगर (data->पढ़ो)
+		io_uring_prep_पढ़ोv(sqe, infd, &data->iov, 1, data->offset);
+	अन्यथा
+		io_uring_prep_ग_लिखोv(sqe, outfd, &data->iov, 1, data->offset);
 
 	io_uring_sqe_set_data(sqe, data);
-}
+पूर्ण
 
-static int queue_read(struct io_uring *ring, off_t size, off_t offset)
-{
-	struct io_uring_sqe *sqe;
-	struct io_data *data;
+अटल पूर्णांक queue_पढ़ो(काष्ठा io_uring *ring, off_t size, off_t offset)
+अणु
+	काष्ठा io_uring_sqe *sqe;
+	काष्ठा io_data *data;
 
-	data = malloc(size + sizeof(*data));
-	if (!data)
-		return 1;
+	data = दो_स्मृति(size + माप(*data));
+	अगर (!data)
+		वापस 1;
 
 	sqe = io_uring_get_sqe(ring);
-	if (!sqe) {
-		free(data);
-		return 1;
-	}
+	अगर (!sqe) अणु
+		मुक्त(data);
+		वापस 1;
+	पूर्ण
 
-	data->read = 1;
+	data->पढ़ो = 1;
 	data->offset = data->first_offset = offset;
 
 	data->iov.iov_base = data + 1;
 	data->iov.iov_len = size;
 	data->first_len = size;
 
-	io_uring_prep_readv(sqe, infd, &data->iov, 1, offset);
+	io_uring_prep_पढ़ोv(sqe, infd, &data->iov, 1, offset);
 	io_uring_sqe_set_data(sqe, data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void queue_write(struct io_uring *ring, struct io_data *data)
-{
-	data->read = 0;
+अटल व्योम queue_ग_लिखो(काष्ठा io_uring *ring, काष्ठा io_data *data)
+अणु
+	data->पढ़ो = 0;
 	data->offset = data->first_offset;
 
 	data->iov.iov_base = data + 1;
@@ -118,143 +119,143 @@ static void queue_write(struct io_uring *ring, struct io_data *data)
 
 	queue_prepped(ring, data);
 	io_uring_submit(ring);
-}
+पूर्ण
 
-static int copy_file(struct io_uring *ring, off_t insize)
-{
-	unsigned long reads, writes;
-	struct io_uring_cqe *cqe;
-	off_t write_left, offset;
-	int ret;
+अटल पूर्णांक copy_file(काष्ठा io_uring *ring, off_t insize)
+अणु
+	अचिन्हित दीर्घ पढ़ोs, ग_लिखोs;
+	काष्ठा io_uring_cqe *cqe;
+	off_t ग_लिखो_left, offset;
+	पूर्णांक ret;
 
-	write_left = insize;
-	writes = reads = offset = 0;
+	ग_लिखो_left = insize;
+	ग_लिखोs = पढ़ोs = offset = 0;
 
-	while (insize || write_left) {
-		unsigned long had_reads;
-		int got_comp;
+	जबतक (insize || ग_लिखो_left) अणु
+		अचिन्हित दीर्घ had_पढ़ोs;
+		पूर्णांक got_comp;
 
 		/*
-		 * Queue up as many reads as we can
+		 * Queue up as many पढ़ोs as we can
 		 */
-		had_reads = reads;
-		while (insize) {
+		had_पढ़ोs = पढ़ोs;
+		जबतक (insize) अणु
 			off_t this_size = insize;
 
-			if (reads + writes >= QD)
-				break;
-			if (this_size > BS)
+			अगर (पढ़ोs + ग_लिखोs >= QD)
+				अवरोध;
+			अगर (this_size > BS)
 				this_size = BS;
-			else if (!this_size)
-				break;
+			अन्यथा अगर (!this_size)
+				अवरोध;
 
-			if (queue_read(ring, this_size, offset))
-				break;
+			अगर (queue_पढ़ो(ring, this_size, offset))
+				अवरोध;
 
 			insize -= this_size;
 			offset += this_size;
-			reads++;
-		}
+			पढ़ोs++;
+		पूर्ण
 
-		if (had_reads != reads) {
+		अगर (had_पढ़ोs != पढ़ोs) अणु
 			ret = io_uring_submit(ring);
-			if (ret < 0) {
-				fprintf(stderr, "io_uring_submit: %s\n", strerror(-ret));
-				break;
-			}
-		}
+			अगर (ret < 0) अणु
+				ख_लिखो(मानक_त्रुटि, "io_uring_submit: %s\n", म_त्रुटि(-ret));
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * Queue is full at this point. Find at least one completion.
+		 * Queue is full at this poपूर्णांक. Find at least one completion.
 		 */
 		got_comp = 0;
-		while (write_left) {
-			struct io_data *data;
+		जबतक (ग_लिखो_left) अणु
+			काष्ठा io_data *data;
 
-			if (!got_comp) {
-				ret = io_uring_wait_cqe(ring, &cqe);
+			अगर (!got_comp) अणु
+				ret = io_uring_रुको_cqe(ring, &cqe);
 				got_comp = 1;
-			} else
+			पूर्ण अन्यथा
 				ret = io_uring_peek_cqe(ring, &cqe);
-			if (ret < 0) {
-				fprintf(stderr, "io_uring_peek_cqe: %s\n",
-							strerror(-ret));
-				return 1;
-			}
-			if (!cqe)
-				break;
+			अगर (ret < 0) अणु
+				ख_लिखो(मानक_त्रुटि, "io_uring_peek_cqe: %s\n",
+							म_त्रुटि(-ret));
+				वापस 1;
+			पूर्ण
+			अगर (!cqe)
+				अवरोध;
 
 			data = io_uring_cqe_get_data(cqe);
-			if (cqe->res < 0) {
-				if (cqe->res == -EAGAIN) {
+			अगर (cqe->res < 0) अणु
+				अगर (cqe->res == -EAGAIN) अणु
 					queue_prepped(ring, data);
 					io_uring_cqe_seen(ring, cqe);
-					continue;
-				}
-				fprintf(stderr, "cqe failed: %s\n",
-						strerror(-cqe->res));
-				return 1;
-			} else if ((size_t) cqe->res != data->iov.iov_len) {
-				/* Short read/write, adjust and requeue */
+					जारी;
+				पूर्ण
+				ख_लिखो(मानक_त्रुटि, "cqe failed: %s\n",
+						म_त्रुटि(-cqe->res));
+				वापस 1;
+			पूर्ण अन्यथा अगर ((माप_प्रकार) cqe->res != data->iov.iov_len) अणु
+				/* Short पढ़ो/ग_लिखो, adjust and requeue */
 				data->iov.iov_base += cqe->res;
 				data->iov.iov_len -= cqe->res;
 				data->offset += cqe->res;
 				queue_prepped(ring, data);
 				io_uring_cqe_seen(ring, cqe);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			/*
-			 * All done. if write, nothing else to do. if read,
-			 * queue up corresponding write.
+			 * All करोne. अगर ग_लिखो, nothing अन्यथा to करो. अगर पढ़ो,
+			 * queue up corresponding ग_लिखो.
 			 */
-			if (data->read) {
-				queue_write(ring, data);
-				write_left -= data->first_len;
-				reads--;
-				writes++;
-			} else {
-				free(data);
-				writes--;
-			}
+			अगर (data->पढ़ो) अणु
+				queue_ग_लिखो(ring, data);
+				ग_लिखो_left -= data->first_len;
+				पढ़ोs--;
+				ग_लिखोs++;
+			पूर्ण अन्यथा अणु
+				मुक्त(data);
+				ग_लिखोs--;
+			पूर्ण
 			io_uring_cqe_seen(ring, cqe);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	struct io_uring ring;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	काष्ठा io_uring ring;
 	off_t insize;
-	int ret;
+	पूर्णांक ret;
 
-	if (argc < 3) {
-		printf("%s: infile outfile\n", argv[0]);
-		return 1;
-	}
+	अगर (argc < 3) अणु
+		म_लिखो("%s: infile outfile\n", argv[0]);
+		वापस 1;
+	पूर्ण
 
-	infd = open(argv[1], O_RDONLY);
-	if (infd < 0) {
-		perror("open infile");
-		return 1;
-	}
-	outfd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (outfd < 0) {
-		perror("open outfile");
-		return 1;
-	}
+	infd = खोलो(argv[1], O_RDONLY);
+	अगर (infd < 0) अणु
+		लिखो_त्रुटि("open infile");
+		वापस 1;
+	पूर्ण
+	outfd = खोलो(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	अगर (outfd < 0) अणु
+		लिखो_त्रुटि("open outfile");
+		वापस 1;
+	पूर्ण
 
-	if (setup_context(QD, &ring))
-		return 1;
-	if (get_file_size(infd, &insize))
-		return 1;
+	अगर (setup_context(QD, &ring))
+		वापस 1;
+	अगर (get_file_size(infd, &insize))
+		वापस 1;
 
 	ret = copy_file(&ring, insize);
 
-	close(infd);
-	close(outfd);
-	io_uring_queue_exit(&ring);
-	return ret;
-}
+	बंद(infd);
+	बंद(outfd);
+	io_uring_queue_निकास(&ring);
+	वापस ret;
+पूर्ण

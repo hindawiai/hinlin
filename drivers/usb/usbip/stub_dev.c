@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
-#include <linux/device.h>
-#include <linux/file.h>
-#include <linux/kthread.h>
-#include <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/file.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/module.h>
 
-#include "usbip_common.h"
-#include "stub.h"
+#समावेश "usbip_common.h"
+#समावेश "stub.h"
 
 /*
- * usbip_status shows the status of usbip-host as long as this driver is bound
+ * usbip_status shows the status of usbip-host as दीर्घ as this driver is bound
  * to the target device.
  */
-static ssize_t usbip_status_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct stub_device *sdev = dev_get_drvdata(dev);
-	int status;
+अटल sमाप_प्रकार usbip_status_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा stub_device *sdev = dev_get_drvdata(dev);
+	पूर्णांक status;
 
-	if (!sdev) {
+	अगर (!sdev) अणु
 		dev_err(dev, "sdev is null\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	spin_lock_irq(&sdev->ud.lock);
 	status = sdev->ud.status;
 	spin_unlock_irq(&sdev->ud.lock);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", status);
-}
-static DEVICE_ATTR_RO(usbip_status);
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", status);
+पूर्ण
+अटल DEVICE_ATTR_RO(usbip_status);
 
 /*
- * usbip_sockfd gets a socket descriptor of an established TCP connection that
- * is used to transfer usbip requests by kernel threads. -1 is a magic number
+ * usbip_sockfd माला_लो a socket descriptor of an established TCP connection that
+ * is used to transfer usbip requests by kernel thपढ़ोs. -1 is a magic number
  * by which usbip connection is finished.
  */
-static ssize_t usbip_sockfd_store(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
-	struct stub_device *sdev = dev_get_drvdata(dev);
-	int sockfd = 0;
-	struct socket *socket;
-	int rv;
-	struct task_struct *tcp_rx = NULL;
-	struct task_struct *tcp_tx = NULL;
+अटल sमाप_प्रकार usbip_sockfd_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा stub_device *sdev = dev_get_drvdata(dev);
+	पूर्णांक sockfd = 0;
+	काष्ठा socket *socket;
+	पूर्णांक rv;
+	काष्ठा task_काष्ठा *tcp_rx = शून्य;
+	काष्ठा task_काष्ठा *tcp_tx = शून्य;
 
-	if (!sdev) {
+	अगर (!sdev) अणु
 		dev_err(dev, "sdev is null\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	rv = sscanf(buf, "%d", &sockfd);
-	if (rv != 1)
-		return -EINVAL;
+	rv = माला_पूछो(buf, "%d", &sockfd);
+	अगर (rv != 1)
+		वापस -EINVAL;
 
-	if (sockfd != -1) {
-		int err;
+	अगर (sockfd != -1) अणु
+		पूर्णांक err;
 
 		dev_info(dev, "stub up\n");
 
 		mutex_lock(&sdev->ud.sysfs_lock);
 		spin_lock_irq(&sdev->ud.lock);
 
-		if (sdev->ud.status != SDEV_ST_AVAILABLE) {
+		अगर (sdev->ud.status != SDEV_ST_AVAILABLE) अणु
 			dev_err(dev, "not ready\n");
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		socket = sockfd_lookup(sockfd, &err);
-		if (!socket) {
+		अगर (!socket) अणु
 			dev_err(dev, "failed to lookup sock");
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		if (socket->type != SOCK_STREAM) {
+		अगर (socket->type != SOCK_STREAM) अणु
 			dev_err(dev, "Expecting SOCK_STREAM - found %d",
 				socket->type);
-			goto sock_err;
-		}
+			जाओ sock_err;
+		पूर्ण
 
-		/* unlock and create threads and get tasks */
+		/* unlock and create thपढ़ोs and get tasks */
 		spin_unlock_irq(&sdev->ud.lock);
-		tcp_rx = kthread_create(stub_rx_loop, &sdev->ud, "stub_rx");
-		if (IS_ERR(tcp_rx)) {
+		tcp_rx = kthपढ़ो_create(stub_rx_loop, &sdev->ud, "stub_rx");
+		अगर (IS_ERR(tcp_rx)) अणु
 			sockfd_put(socket);
-			goto unlock_mutex;
-		}
-		tcp_tx = kthread_create(stub_tx_loop, &sdev->ud, "stub_tx");
-		if (IS_ERR(tcp_tx)) {
-			kthread_stop(tcp_rx);
+			जाओ unlock_mutex;
+		पूर्ण
+		tcp_tx = kthपढ़ो_create(stub_tx_loop, &sdev->ud, "stub_tx");
+		अगर (IS_ERR(tcp_tx)) अणु
+			kthपढ़ो_stop(tcp_rx);
 			sockfd_put(socket);
-			goto unlock_mutex;
-		}
+			जाओ unlock_mutex;
+		पूर्ण
 
-		/* get task structs now */
-		get_task_struct(tcp_rx);
-		get_task_struct(tcp_tx);
+		/* get task काष्ठाs now */
+		get_task_काष्ठा(tcp_rx);
+		get_task_काष्ठा(tcp_tx);
 
 		/* lock and update sdev->ud state */
 		spin_lock_irq(&sdev->ud.lock);
@@ -115,20 +116,20 @@ static ssize_t usbip_sockfd_store(struct device *dev, struct device_attribute *a
 
 		mutex_unlock(&sdev->ud.sysfs_lock);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info(dev, "stub down\n");
 
 		spin_lock_irq(&sdev->ud.lock);
-		if (sdev->ud.status != SDEV_ST_USED)
-			goto err;
+		अगर (sdev->ud.status != SDEV_ST_USED)
+			जाओ err;
 
 		spin_unlock_irq(&sdev->ud.lock);
 
 		usbip_event_add(&sdev->ud, SDEV_EVENT_DOWN);
 		mutex_unlock(&sdev->ud.sysfs_lock);
-	}
+	पूर्ण
 
-	return count;
+	वापस count;
 
 sock_err:
 	sockfd_put(socket);
@@ -136,140 +137,140 @@ err:
 	spin_unlock_irq(&sdev->ud.lock);
 unlock_mutex:
 	mutex_unlock(&sdev->ud.sysfs_lock);
-	return -EINVAL;
-}
-static DEVICE_ATTR_WO(usbip_sockfd);
+	वापस -EINVAL;
+पूर्ण
+अटल DEVICE_ATTR_WO(usbip_sockfd);
 
-static struct attribute *usbip_attrs[] = {
+अटल काष्ठा attribute *usbip_attrs[] = अणु
 	&dev_attr_usbip_status.attr,
 	&dev_attr_usbip_sockfd.attr,
 	&dev_attr_usbip_debug.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(usbip);
 
-static void stub_shutdown_connection(struct usbip_device *ud)
-{
-	struct stub_device *sdev = container_of(ud, struct stub_device, ud);
+अटल व्योम stub_shutकरोwn_connection(काष्ठा usbip_device *ud)
+अणु
+	काष्ठा stub_device *sdev = container_of(ud, काष्ठा stub_device, ud);
 
 	/*
-	 * When removing an exported device, kernel panic sometimes occurred
-	 * and then EIP was sk_wait_data of stub_rx thread. Is this because
-	 * sk_wait_data returned though stub_rx thread was already finished by
+	 * When removing an exported device, kernel panic someबार occurred
+	 * and then EIP was sk_रुको_data of stub_rx thपढ़ो. Is this because
+	 * sk_रुको_data वापसed though stub_rx thपढ़ो was alपढ़ोy finished by
 	 * step 1?
 	 */
-	if (ud->tcp_socket) {
+	अगर (ud->tcp_socket) अणु
 		dev_dbg(&sdev->udev->dev, "shutdown sockfd %d\n", ud->sockfd);
-		kernel_sock_shutdown(ud->tcp_socket, SHUT_RDWR);
-	}
+		kernel_sock_shutकरोwn(ud->tcp_socket, SHUT_RDWR);
+	पूर्ण
 
-	/* 1. stop threads */
-	if (ud->tcp_rx) {
-		kthread_stop_put(ud->tcp_rx);
-		ud->tcp_rx = NULL;
-	}
-	if (ud->tcp_tx) {
-		kthread_stop_put(ud->tcp_tx);
-		ud->tcp_tx = NULL;
-	}
+	/* 1. stop thपढ़ोs */
+	अगर (ud->tcp_rx) अणु
+		kthपढ़ो_stop_put(ud->tcp_rx);
+		ud->tcp_rx = शून्य;
+	पूर्ण
+	अगर (ud->tcp_tx) अणु
+		kthपढ़ो_stop_put(ud->tcp_tx);
+		ud->tcp_tx = शून्य;
+	पूर्ण
 
 	/*
-	 * 2. close the socket
+	 * 2. बंद the socket
 	 *
-	 * tcp_socket is freed after threads are killed so that usbip_xmit does
-	 * not touch NULL socket.
+	 * tcp_socket is मुक्तd after thपढ़ोs are समाप्तed so that usbip_xmit करोes
+	 * not touch शून्य socket.
 	 */
-	if (ud->tcp_socket) {
+	अगर (ud->tcp_socket) अणु
 		sockfd_put(ud->tcp_socket);
-		ud->tcp_socket = NULL;
+		ud->tcp_socket = शून्य;
 		ud->sockfd = -1;
-	}
+	पूर्ण
 
-	/* 3. free used data */
+	/* 3. मुक्त used data */
 	stub_device_cleanup_urbs(sdev);
 
-	/* 4. free stub_unlink */
-	{
-		unsigned long flags;
-		struct stub_unlink *unlink, *tmp;
+	/* 4. मुक्त stub_unlink */
+	अणु
+		अचिन्हित दीर्घ flags;
+		काष्ठा stub_unlink *unlink, *पंचांगp;
 
 		spin_lock_irqsave(&sdev->priv_lock, flags);
-		list_for_each_entry_safe(unlink, tmp, &sdev->unlink_tx, list) {
+		list_क्रम_each_entry_safe(unlink, पंचांगp, &sdev->unlink_tx, list) अणु
 			list_del(&unlink->list);
-			kfree(unlink);
-		}
-		list_for_each_entry_safe(unlink, tmp, &sdev->unlink_free,
-					 list) {
+			kमुक्त(unlink);
+		पूर्ण
+		list_क्रम_each_entry_safe(unlink, पंचांगp, &sdev->unlink_मुक्त,
+					 list) अणु
 			list_del(&unlink->list);
-			kfree(unlink);
-		}
+			kमुक्त(unlink);
+		पूर्ण
 		spin_unlock_irqrestore(&sdev->priv_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void stub_device_reset(struct usbip_device *ud)
-{
-	struct stub_device *sdev = container_of(ud, struct stub_device, ud);
-	struct usb_device *udev = sdev->udev;
-	int ret;
+अटल व्योम stub_device_reset(काष्ठा usbip_device *ud)
+अणु
+	काष्ठा stub_device *sdev = container_of(ud, काष्ठा stub_device, ud);
+	काष्ठा usb_device *udev = sdev->udev;
+	पूर्णांक ret;
 
 	dev_dbg(&udev->dev, "device reset");
 
-	ret = usb_lock_device_for_reset(udev, NULL);
-	if (ret < 0) {
+	ret = usb_lock_device_क्रम_reset(udev, शून्य);
+	अगर (ret < 0) अणु
 		dev_err(&udev->dev, "lock for reset\n");
 		spin_lock_irq(&ud->lock);
 		ud->status = SDEV_ST_ERROR;
 		spin_unlock_irq(&ud->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* try to reset the device */
 	ret = usb_reset_device(udev);
 	usb_unlock_device(udev);
 
 	spin_lock_irq(&ud->lock);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&udev->dev, "device reset\n");
 		ud->status = SDEV_ST_ERROR;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info(&udev->dev, "device reset\n");
 		ud->status = SDEV_ST_AVAILABLE;
-	}
+	पूर्ण
 	spin_unlock_irq(&ud->lock);
-}
+पूर्ण
 
-static void stub_device_unusable(struct usbip_device *ud)
-{
+अटल व्योम stub_device_unusable(काष्ठा usbip_device *ud)
+अणु
 	spin_lock_irq(&ud->lock);
 	ud->status = SDEV_ST_ERROR;
 	spin_unlock_irq(&ud->lock);
-}
+पूर्ण
 
 /**
- * stub_device_alloc - allocate a new stub_device struct
+ * stub_device_alloc - allocate a new stub_device काष्ठा
  * @udev: usb_device of a new device
  *
- * Allocates and initializes a new stub_device struct.
+ * Allocates and initializes a new stub_device काष्ठा.
  */
-static struct stub_device *stub_device_alloc(struct usb_device *udev)
-{
-	struct stub_device *sdev;
-	int busnum = udev->bus->busnum;
-	int devnum = udev->devnum;
+अटल काष्ठा stub_device *stub_device_alloc(काष्ठा usb_device *udev)
+अणु
+	काष्ठा stub_device *sdev;
+	पूर्णांक busnum = udev->bus->busnum;
+	पूर्णांक devnum = udev->devnum;
 
 	dev_dbg(&udev->dev, "allocating stub device");
 
 	/* yes, it's a new device */
-	sdev = kzalloc(sizeof(struct stub_device), GFP_KERNEL);
-	if (!sdev)
-		return NULL;
+	sdev = kzalloc(माप(काष्ठा stub_device), GFP_KERNEL);
+	अगर (!sdev)
+		वापस शून्य;
 
 	sdev->udev = usb_get_dev(udev);
 
 	/*
 	 * devid is defined with devnum when this driver is first allocated.
-	 * devnum may change later if a device is reset. However, devid never
+	 * devnum may change later अगर a device is reset. However, devid never
 	 * changes during a usbip connection.
 	 */
 	sdev->devid		= (busnum << 16) | devnum;
@@ -277,19 +278,19 @@ static struct stub_device *stub_device_alloc(struct usb_device *udev)
 	sdev->ud.status		= SDEV_ST_AVAILABLE;
 	spin_lock_init(&sdev->ud.lock);
 	mutex_init(&sdev->ud.sysfs_lock);
-	sdev->ud.tcp_socket	= NULL;
+	sdev->ud.tcp_socket	= शून्य;
 	sdev->ud.sockfd		= -1;
 
 	INIT_LIST_HEAD(&sdev->priv_init);
 	INIT_LIST_HEAD(&sdev->priv_tx);
-	INIT_LIST_HEAD(&sdev->priv_free);
-	INIT_LIST_HEAD(&sdev->unlink_free);
+	INIT_LIST_HEAD(&sdev->priv_मुक्त);
+	INIT_LIST_HEAD(&sdev->unlink_मुक्त);
 	INIT_LIST_HEAD(&sdev->unlink_tx);
 	spin_lock_init(&sdev->priv_lock);
 
-	init_waitqueue_head(&sdev->tx_waitq);
+	init_रुकोqueue_head(&sdev->tx_रुकोq);
 
-	sdev->ud.eh_ops.shutdown = stub_shutdown_connection;
+	sdev->ud.eh_ops.shutकरोwn = stub_shutकरोwn_connection;
 	sdev->ud.eh_ops.reset    = stub_device_reset;
 	sdev->ud.eh_ops.unusable = stub_device_unusable;
 
@@ -297,75 +298,75 @@ static struct stub_device *stub_device_alloc(struct usb_device *udev)
 
 	dev_dbg(&udev->dev, "register new device\n");
 
-	return sdev;
-}
+	वापस sdev;
+पूर्ण
 
-static void stub_device_free(struct stub_device *sdev)
-{
-	kfree(sdev);
-}
+अटल व्योम stub_device_मुक्त(काष्ठा stub_device *sdev)
+अणु
+	kमुक्त(sdev);
+पूर्ण
 
-static int stub_probe(struct usb_device *udev)
-{
-	struct stub_device *sdev = NULL;
-	const char *udev_busid = dev_name(&udev->dev);
-	struct bus_id_priv *busid_priv;
-	int rc = 0;
-	char save_status;
+अटल पूर्णांक stub_probe(काष्ठा usb_device *udev)
+अणु
+	काष्ठा stub_device *sdev = शून्य;
+	स्थिर अक्षर *udev_busid = dev_name(&udev->dev);
+	काष्ठा bus_id_priv *busid_priv;
+	पूर्णांक rc = 0;
+	अक्षर save_status;
 
 	dev_dbg(&udev->dev, "Enter probe\n");
 
-	/* Not sure if this is our device. Allocate here to avoid
-	 * calling alloc while holding busid_table lock.
+	/* Not sure अगर this is our device. Allocate here to aव्योम
+	 * calling alloc जबतक holding busid_table lock.
 	 */
 	sdev = stub_device_alloc(udev);
-	if (!sdev)
-		return -ENOMEM;
+	अगर (!sdev)
+		वापस -ENOMEM;
 
 	/* check we should claim or not by busid_table */
 	busid_priv = get_busid_priv(udev_busid);
-	if (!busid_priv || (busid_priv->status == STUB_BUSID_REMOV) ||
-	    (busid_priv->status == STUB_BUSID_OTHER)) {
+	अगर (!busid_priv || (busid_priv->status == STUB_BUSID_REMOV) ||
+	    (busid_priv->status == STUB_BUSID_OTHER)) अणु
 		dev_info(&udev->dev,
 			"%s is not in match_busid table... skip!\n",
 			udev_busid);
 
 		/*
-		 * Return value should be ENODEV or ENOXIO to continue trying
+		 * Return value should be ENODEV or ENOXIO to जारी trying
 		 * other matched drivers by the driver core.
 		 * See driver_probe_device() in driver/base/dd.c
 		 */
 		rc = -ENODEV;
-		if (!busid_priv)
-			goto sdev_free;
+		अगर (!busid_priv)
+			जाओ sdev_मुक्त;
 
-		goto call_put_busid_priv;
-	}
+		जाओ call_put_busid_priv;
+	पूर्ण
 
-	if (udev->descriptor.bDeviceClass == USB_CLASS_HUB) {
+	अगर (udev->descriptor.bDeviceClass == USB_CLASS_HUB) अणु
 		dev_dbg(&udev->dev, "%s is a usb hub device... skip!\n",
 			 udev_busid);
 		rc = -ENODEV;
-		goto call_put_busid_priv;
-	}
+		जाओ call_put_busid_priv;
+	पूर्ण
 
-	if (!strcmp(udev->bus->bus_name, "vhci_hcd")) {
+	अगर (!म_भेद(udev->bus->bus_name, "vhci_hcd")) अणु
 		dev_dbg(&udev->dev,
 			"%s is attached on vhci_hcd... skip!\n",
 			udev_busid);
 
 		rc = -ENODEV;
-		goto call_put_busid_priv;
-	}
+		जाओ call_put_busid_priv;
+	पूर्ण
 
 
 	dev_info(&udev->dev,
 		"usbip-host: register new device (bus %u dev %u)\n",
 		udev->bus->busnum, udev->devnum);
 
-	busid_priv->shutdown_busid = 0;
+	busid_priv->shutकरोwn_busid = 0;
 
-	/* set private data to usb_device */
+	/* set निजी data to usb_device */
 	dev_set_drvdata(&udev->dev, sdev);
 
 	busid_priv->sdev = sdev;
@@ -379,152 +380,152 @@ static int stub_probe(struct usb_device *udev)
 
 	/*
 	 * Claim this hub port.
-	 * It doesn't matter what value we pass as owner
-	 * (struct dev_state) as long as it is unique.
+	 * It करोesn't matter what value we pass as owner
+	 * (काष्ठा dev_state) as दीर्घ as it is unique.
 	 */
 	rc = usb_hub_claim_port(udev->parent, udev->portnum,
-			(struct usb_dev_state *) udev);
-	if (rc) {
+			(काष्ठा usb_dev_state *) udev);
+	अगर (rc) अणु
 		dev_dbg(&udev->dev, "unable to claim port\n");
-		goto err_port;
-	}
+		जाओ err_port;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_port:
-	dev_set_drvdata(&udev->dev, NULL);
+	dev_set_drvdata(&udev->dev, शून्य);
 	usb_put_dev(udev);
 
-	/* we already have busid_priv, just lock busid_lock */
+	/* we alपढ़ोy have busid_priv, just lock busid_lock */
 	spin_lock(&busid_priv->busid_lock);
-	busid_priv->sdev = NULL;
+	busid_priv->sdev = शून्य;
 	busid_priv->status = save_status;
 	spin_unlock(&busid_priv->busid_lock);
-	/* lock is released - go to free */
-	goto sdev_free;
+	/* lock is released - go to मुक्त */
+	जाओ sdev_मुक्त;
 
 call_put_busid_priv:
 	/* release the busid_lock */
 	put_busid_priv(busid_priv);
 
-sdev_free:
-	stub_device_free(sdev);
+sdev_मुक्त:
+	stub_device_मुक्त(sdev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void shutdown_busid(struct bus_id_priv *busid_priv)
-{
+अटल व्योम shutकरोwn_busid(काष्ठा bus_id_priv *busid_priv)
+अणु
 	usbip_event_add(&busid_priv->sdev->ud, SDEV_EVENT_REMOVED);
 
-	/* wait for the stop of the event handler */
+	/* रुको क्रम the stop of the event handler */
 	usbip_stop_eh(&busid_priv->sdev->ud);
-}
+पूर्ण
 
 /*
- * called in usb_disconnect() or usb_deregister()
- * but only if actconfig(active configuration) exists
+ * called in usb_disconnect() or usb_deरेजिस्टर()
+ * but only अगर actconfig(active configuration) exists
  */
-static void stub_disconnect(struct usb_device *udev)
-{
-	struct stub_device *sdev;
-	const char *udev_busid = dev_name(&udev->dev);
-	struct bus_id_priv *busid_priv;
-	int rc;
+अटल व्योम stub_disconnect(काष्ठा usb_device *udev)
+अणु
+	काष्ठा stub_device *sdev;
+	स्थिर अक्षर *udev_busid = dev_name(&udev->dev);
+	काष्ठा bus_id_priv *busid_priv;
+	पूर्णांक rc;
 
 	dev_dbg(&udev->dev, "Enter disconnect\n");
 
 	busid_priv = get_busid_priv(udev_busid);
-	if (!busid_priv) {
+	अगर (!busid_priv) अणु
 		BUG();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sdev = dev_get_drvdata(&udev->dev);
 
 	/* get stub_device */
-	if (!sdev) {
+	अगर (!sdev) अणु
 		dev_err(&udev->dev, "could not get device");
 		/* release busid_lock */
 		put_busid_priv(busid_priv);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	dev_set_drvdata(&udev->dev, NULL);
+	dev_set_drvdata(&udev->dev, शून्य);
 
-	/* release busid_lock before call to remove device files */
+	/* release busid_lock beक्रमe call to हटाओ device files */
 	put_busid_priv(busid_priv);
 
 	/*
-	 * NOTE: rx/tx threads are invoked for each usb_device.
+	 * NOTE: rx/tx thपढ़ोs are invoked क्रम each usb_device.
 	 */
 
 	/* release port */
 	rc = usb_hub_release_port(udev->parent, udev->portnum,
-				  (struct usb_dev_state *) udev);
-	if (rc) {
+				  (काष्ठा usb_dev_state *) udev);
+	अगर (rc) अणु
 		dev_dbg(&udev->dev, "unable to release port\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* If usb reset is called from event handler */
-	if (usbip_in_eh(current))
-		return;
+	अगर (usbip_in_eh(current))
+		वापस;
 
-	/* we already have busid_priv, just lock busid_lock */
+	/* we alपढ़ोy have busid_priv, just lock busid_lock */
 	spin_lock(&busid_priv->busid_lock);
-	if (!busid_priv->shutdown_busid)
-		busid_priv->shutdown_busid = 1;
+	अगर (!busid_priv->shutकरोwn_busid)
+		busid_priv->shutकरोwn_busid = 1;
 	/* release busid_lock */
 	spin_unlock(&busid_priv->busid_lock);
 
-	/* shutdown the current connection */
-	shutdown_busid(busid_priv);
+	/* shutकरोwn the current connection */
+	shutकरोwn_busid(busid_priv);
 
 	usb_put_dev(sdev->udev);
 
-	/* we already have busid_priv, just lock busid_lock */
+	/* we alपढ़ोy have busid_priv, just lock busid_lock */
 	spin_lock(&busid_priv->busid_lock);
-	/* free sdev */
-	busid_priv->sdev = NULL;
-	stub_device_free(sdev);
+	/* मुक्त sdev */
+	busid_priv->sdev = शून्य;
+	stub_device_मुक्त(sdev);
 
-	if (busid_priv->status == STUB_BUSID_ALLOC)
+	अगर (busid_priv->status == STUB_BUSID_ALLOC)
 		busid_priv->status = STUB_BUSID_ADDED;
 	/* release busid_lock */
 	spin_unlock(&busid_priv->busid_lock);
-	return;
-}
+	वापस;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
 /* These functions need usb_port_suspend and usb_port_resume,
- * which reside in drivers/usb/core/usb.h. Skip for now. */
+ * which reside in drivers/usb/core/usb.h. Skip क्रम now. */
 
-static int stub_suspend(struct usb_device *udev, pm_message_t message)
-{
+अटल पूर्णांक stub_suspend(काष्ठा usb_device *udev, pm_message_t message)
+अणु
 	dev_dbg(&udev->dev, "stub_suspend\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stub_resume(struct usb_device *udev, pm_message_t message)
-{
+अटल पूर्णांक stub_resume(काष्ठा usb_device *udev, pm_message_t message)
+अणु
 	dev_dbg(&udev->dev, "stub_resume\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif	/* CONFIG_PM */
+#पूर्ण_अगर	/* CONFIG_PM */
 
-struct usb_device_driver stub_driver = {
+काष्ठा usb_device_driver stub_driver = अणु
 	.name		= "usbip-host",
 	.probe		= stub_probe,
 	.disconnect	= stub_disconnect,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend	= stub_suspend,
 	.resume		= stub_resume,
-#endif
-	.supports_autosuspend	=	0,
+#पूर्ण_अगर
+	.supports_स्वतःsuspend	=	0,
 	.dev_groups	= usbip_groups,
-};
+पूर्ण;

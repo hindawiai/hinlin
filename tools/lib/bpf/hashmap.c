@@ -1,241 +1,242 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
- * Generic non-thread safe hash map implementation.
+ * Generic non-thपढ़ो safe hash map implementation.
  *
  * Copyright (c) 2019 Facebook
  */
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <linux/err.h>
-#include "hashmap.h"
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश "hashmap.h"
 
-/* make sure libbpf doesn't use kernel-only integer typedefs */
-#pragma GCC poison u8 u16 u32 u64 s8 s16 s32 s64
+/* make sure libbpf करोesn't use kernel-only पूर्णांकeger प्रकारs */
+#आशय GCC poison u8 u16 u32 u64 s8 s16 s32 s64
 
-/* prevent accidental re-addition of reallocarray() */
-#pragma GCC poison reallocarray
+/* prevent accidental re-addition of पुनः_स्मृतिarray() */
+#आशय GCC poison पुनः_स्मृतिarray
 
 /* start with 4 buckets */
-#define HASHMAP_MIN_CAP_BITS 2
+#घोषणा HASHMAP_MIN_CAP_BITS 2
 
-static void hashmap_add_entry(struct hashmap_entry **pprev,
-			      struct hashmap_entry *entry)
-{
+अटल व्योम hashmap_add_entry(काष्ठा hashmap_entry **pprev,
+			      काष्ठा hashmap_entry *entry)
+अणु
 	entry->next = *pprev;
 	*pprev = entry;
-}
+पूर्ण
 
-static void hashmap_del_entry(struct hashmap_entry **pprev,
-			      struct hashmap_entry *entry)
-{
+अटल व्योम hashmap_del_entry(काष्ठा hashmap_entry **pprev,
+			      काष्ठा hashmap_entry *entry)
+अणु
 	*pprev = entry->next;
-	entry->next = NULL;
-}
+	entry->next = शून्य;
+पूर्ण
 
-void hashmap__init(struct hashmap *map, hashmap_hash_fn hash_fn,
-		   hashmap_equal_fn equal_fn, void *ctx)
-{
+व्योम hashmap__init(काष्ठा hashmap *map, hashmap_hash_fn hash_fn,
+		   hashmap_equal_fn equal_fn, व्योम *ctx)
+अणु
 	map->hash_fn = hash_fn;
 	map->equal_fn = equal_fn;
 	map->ctx = ctx;
 
-	map->buckets = NULL;
+	map->buckets = शून्य;
 	map->cap = 0;
 	map->cap_bits = 0;
 	map->sz = 0;
-}
+पूर्ण
 
-struct hashmap *hashmap__new(hashmap_hash_fn hash_fn,
+काष्ठा hashmap *hashmap__new(hashmap_hash_fn hash_fn,
 			     hashmap_equal_fn equal_fn,
-			     void *ctx)
-{
-	struct hashmap *map = malloc(sizeof(struct hashmap));
+			     व्योम *ctx)
+अणु
+	काष्ठा hashmap *map = दो_स्मृति(माप(काष्ठा hashmap));
 
-	if (!map)
-		return ERR_PTR(-ENOMEM);
+	अगर (!map)
+		वापस ERR_PTR(-ENOMEM);
 	hashmap__init(map, hash_fn, equal_fn, ctx);
-	return map;
-}
+	वापस map;
+पूर्ण
 
-void hashmap__clear(struct hashmap *map)
-{
-	struct hashmap_entry *cur, *tmp;
-	size_t bkt;
+व्योम hashmap__clear(काष्ठा hashmap *map)
+अणु
+	काष्ठा hashmap_entry *cur, *पंचांगp;
+	माप_प्रकार bkt;
 
-	hashmap__for_each_entry_safe(map, cur, tmp, bkt) {
-		free(cur);
-	}
-	free(map->buckets);
-	map->buckets = NULL;
+	hashmap__क्रम_each_entry_safe(map, cur, पंचांगp, bkt) अणु
+		मुक्त(cur);
+	पूर्ण
+	मुक्त(map->buckets);
+	map->buckets = शून्य;
 	map->cap = map->cap_bits = map->sz = 0;
-}
+पूर्ण
 
-void hashmap__free(struct hashmap *map)
-{
-	if (!map)
-		return;
+व्योम hashmap__मुक्त(काष्ठा hashmap *map)
+अणु
+	अगर (!map)
+		वापस;
 
 	hashmap__clear(map);
-	free(map);
-}
+	मुक्त(map);
+पूर्ण
 
-size_t hashmap__size(const struct hashmap *map)
-{
-	return map->sz;
-}
+माप_प्रकार hashmap__size(स्थिर काष्ठा hashmap *map)
+अणु
+	वापस map->sz;
+पूर्ण
 
-size_t hashmap__capacity(const struct hashmap *map)
-{
-	return map->cap;
-}
+माप_प्रकार hashmap__capacity(स्थिर काष्ठा hashmap *map)
+अणु
+	वापस map->cap;
+पूर्ण
 
-static bool hashmap_needs_to_grow(struct hashmap *map)
-{
-	/* grow if empty or more than 75% filled */
-	return (map->cap == 0) || ((map->sz + 1) * 4 / 3 > map->cap);
-}
+अटल bool hashmap_needs_to_grow(काष्ठा hashmap *map)
+अणु
+	/* grow अगर empty or more than 75% filled */
+	वापस (map->cap == 0) || ((map->sz + 1) * 4 / 3 > map->cap);
+पूर्ण
 
-static int hashmap_grow(struct hashmap *map)
-{
-	struct hashmap_entry **new_buckets;
-	struct hashmap_entry *cur, *tmp;
-	size_t new_cap_bits, new_cap;
-	size_t h, bkt;
+अटल पूर्णांक hashmap_grow(काष्ठा hashmap *map)
+अणु
+	काष्ठा hashmap_entry **new_buckets;
+	काष्ठा hashmap_entry *cur, *पंचांगp;
+	माप_प्रकार new_cap_bits, new_cap;
+	माप_प्रकार h, bkt;
 
 	new_cap_bits = map->cap_bits + 1;
-	if (new_cap_bits < HASHMAP_MIN_CAP_BITS)
+	अगर (new_cap_bits < HASHMAP_MIN_CAP_BITS)
 		new_cap_bits = HASHMAP_MIN_CAP_BITS;
 
 	new_cap = 1UL << new_cap_bits;
-	new_buckets = calloc(new_cap, sizeof(new_buckets[0]));
-	if (!new_buckets)
-		return -ENOMEM;
+	new_buckets = सुस्मृति(new_cap, माप(new_buckets[0]));
+	अगर (!new_buckets)
+		वापस -ENOMEM;
 
-	hashmap__for_each_entry_safe(map, cur, tmp, bkt) {
+	hashmap__क्रम_each_entry_safe(map, cur, पंचांगp, bkt) अणु
 		h = hash_bits(map->hash_fn(cur->key, map->ctx), new_cap_bits);
 		hashmap_add_entry(&new_buckets[h], cur);
-	}
+	पूर्ण
 
 	map->cap = new_cap;
 	map->cap_bits = new_cap_bits;
-	free(map->buckets);
+	मुक्त(map->buckets);
 	map->buckets = new_buckets;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool hashmap_find_entry(const struct hashmap *map,
-			       const void *key, size_t hash,
-			       struct hashmap_entry ***pprev,
-			       struct hashmap_entry **entry)
-{
-	struct hashmap_entry *cur, **prev_ptr;
+अटल bool hashmap_find_entry(स्थिर काष्ठा hashmap *map,
+			       स्थिर व्योम *key, माप_प्रकार hash,
+			       काष्ठा hashmap_entry ***pprev,
+			       काष्ठा hashmap_entry **entry)
+अणु
+	काष्ठा hashmap_entry *cur, **prev_ptr;
 
-	if (!map->buckets)
-		return false;
+	अगर (!map->buckets)
+		वापस false;
 
-	for (prev_ptr = &map->buckets[hash], cur = *prev_ptr;
+	क्रम (prev_ptr = &map->buckets[hash], cur = *prev_ptr;
 	     cur;
-	     prev_ptr = &cur->next, cur = cur->next) {
-		if (map->equal_fn(cur->key, key, map->ctx)) {
-			if (pprev)
+	     prev_ptr = &cur->next, cur = cur->next) अणु
+		अगर (map->equal_fn(cur->key, key, map->ctx)) अणु
+			अगर (pprev)
 				*pprev = prev_ptr;
 			*entry = cur;
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int hashmap__insert(struct hashmap *map, const void *key, void *value,
-		    enum hashmap_insert_strategy strategy,
-		    const void **old_key, void **old_value)
-{
-	struct hashmap_entry *entry;
-	size_t h;
-	int err;
+पूर्णांक hashmap__insert(काष्ठा hashmap *map, स्थिर व्योम *key, व्योम *value,
+		    क्रमागत hashmap_insert_strategy strategy,
+		    स्थिर व्योम **old_key, व्योम **old_value)
+अणु
+	काष्ठा hashmap_entry *entry;
+	माप_प्रकार h;
+	पूर्णांक err;
 
-	if (old_key)
-		*old_key = NULL;
-	if (old_value)
-		*old_value = NULL;
+	अगर (old_key)
+		*old_key = शून्य;
+	अगर (old_value)
+		*old_value = शून्य;
 
 	h = hash_bits(map->hash_fn(key, map->ctx), map->cap_bits);
-	if (strategy != HASHMAP_APPEND &&
-	    hashmap_find_entry(map, key, h, NULL, &entry)) {
-		if (old_key)
+	अगर (strategy != HASHMAP_APPEND &&
+	    hashmap_find_entry(map, key, h, शून्य, &entry)) अणु
+		अगर (old_key)
 			*old_key = entry->key;
-		if (old_value)
+		अगर (old_value)
 			*old_value = entry->value;
 
-		if (strategy == HASHMAP_SET || strategy == HASHMAP_UPDATE) {
+		अगर (strategy == HASHMAP_SET || strategy == HASHMAP_UPDATE) अणु
 			entry->key = key;
 			entry->value = value;
-			return 0;
-		} else if (strategy == HASHMAP_ADD) {
-			return -EEXIST;
-		}
-	}
+			वापस 0;
+		पूर्ण अन्यथा अगर (strategy == HASHMAP_ADD) अणु
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
 
-	if (strategy == HASHMAP_UPDATE)
-		return -ENOENT;
+	अगर (strategy == HASHMAP_UPDATE)
+		वापस -ENOENT;
 
-	if (hashmap_needs_to_grow(map)) {
+	अगर (hashmap_needs_to_grow(map)) अणु
 		err = hashmap_grow(map);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		h = hash_bits(map->hash_fn(key, map->ctx), map->cap_bits);
-	}
+	पूर्ण
 
-	entry = malloc(sizeof(struct hashmap_entry));
-	if (!entry)
-		return -ENOMEM;
+	entry = दो_स्मृति(माप(काष्ठा hashmap_entry));
+	अगर (!entry)
+		वापस -ENOMEM;
 
 	entry->key = key;
 	entry->value = value;
 	hashmap_add_entry(&map->buckets[h], entry);
 	map->sz++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool hashmap__find(const struct hashmap *map, const void *key, void **value)
-{
-	struct hashmap_entry *entry;
-	size_t h;
+bool hashmap__find(स्थिर काष्ठा hashmap *map, स्थिर व्योम *key, व्योम **value)
+अणु
+	काष्ठा hashmap_entry *entry;
+	माप_प्रकार h;
 
 	h = hash_bits(map->hash_fn(key, map->ctx), map->cap_bits);
-	if (!hashmap_find_entry(map, key, h, NULL, &entry))
-		return false;
+	अगर (!hashmap_find_entry(map, key, h, शून्य, &entry))
+		वापस false;
 
-	if (value)
+	अगर (value)
 		*value = entry->value;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool hashmap__delete(struct hashmap *map, const void *key,
-		     const void **old_key, void **old_value)
-{
-	struct hashmap_entry **pprev, *entry;
-	size_t h;
+bool hashmap__delete(काष्ठा hashmap *map, स्थिर व्योम *key,
+		     स्थिर व्योम **old_key, व्योम **old_value)
+अणु
+	काष्ठा hashmap_entry **pprev, *entry;
+	माप_प्रकार h;
 
 	h = hash_bits(map->hash_fn(key, map->ctx), map->cap_bits);
-	if (!hashmap_find_entry(map, key, h, &pprev, &entry))
-		return false;
+	अगर (!hashmap_find_entry(map, key, h, &pprev, &entry))
+		वापस false;
 
-	if (old_key)
+	अगर (old_key)
 		*old_key = entry->key;
-	if (old_value)
+	अगर (old_value)
 		*old_value = entry->value;
 
 	hashmap_del_entry(pprev, entry);
-	free(entry);
+	मुक्त(entry);
 	map->sz--;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 

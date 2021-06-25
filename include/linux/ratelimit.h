@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_RATELIMIT_H
-#define _LINUX_RATELIMIT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_RATELIMIT_H
+#घोषणा _LINUX_RATELIMIT_H
 
-#include <linux/ratelimit_types.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
+#समावेश <linux/ratelimit_types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
 
-static inline void ratelimit_state_init(struct ratelimit_state *rs,
-					int interval, int burst)
-{
-	memset(rs, 0, sizeof(*rs));
+अटल अंतरभूत व्योम ratelimit_state_init(काष्ठा ratelimit_state *rs,
+					पूर्णांक पूर्णांकerval, पूर्णांक burst)
+अणु
+	स_रखो(rs, 0, माप(*rs));
 
 	raw_spin_lock_init(&rs->lock);
-	rs->interval	= interval;
+	rs->पूर्णांकerval	= पूर्णांकerval;
 	rs->burst	= burst;
-}
+पूर्ण
 
-static inline void ratelimit_default_init(struct ratelimit_state *rs)
-{
-	return ratelimit_state_init(rs, DEFAULT_RATELIMIT_INTERVAL,
+अटल अंतरभूत व्योम ratelimit_शेष_init(काष्ठा ratelimit_state *rs)
+अणु
+	वापस ratelimit_state_init(rs, DEFAULT_RATELIMIT_INTERVAL,
 					DEFAULT_RATELIMIT_BURST);
-}
+पूर्ण
 
-static inline void ratelimit_state_exit(struct ratelimit_state *rs)
-{
-	if (!(rs->flags & RATELIMIT_MSG_ON_RELEASE))
-		return;
+अटल अंतरभूत व्योम ratelimit_state_निकास(काष्ठा ratelimit_state *rs)
+अणु
+	अगर (!(rs->flags & RATELIMIT_MSG_ON_RELEASE))
+		वापस;
 
-	if (rs->missed) {
+	अगर (rs->missed) अणु
 		pr_warn("%s: %d output lines suppressed due to ratelimiting\n",
 			current->comm, rs->missed);
 		rs->missed = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void
-ratelimit_set_flags(struct ratelimit_state *rs, unsigned long flags)
-{
+अटल अंतरभूत व्योम
+ratelimit_set_flags(काष्ठा ratelimit_state *rs, अचिन्हित दीर्घ flags)
+अणु
 	rs->flags = flags;
-}
+पूर्ण
 
-extern struct ratelimit_state printk_ratelimit_state;
+बाह्य काष्ठा ratelimit_state prपूर्णांकk_ratelimit_state;
 
-#ifdef CONFIG_PRINTK
+#अगर_घोषित CONFIG_PRINTK
 
-#define WARN_ON_RATELIMIT(condition, state)	({		\
+#घोषणा WARN_ON_RATELIMIT(condition, state)	(अणु		\
 	bool __rtn_cond = !!(condition);			\
 	WARN_ON(__rtn_cond && __ratelimit(state));		\
 	__rtn_cond;						\
-})
+पूर्ण)
 
-#define WARN_RATELIMIT(condition, format, ...)			\
-({								\
-	static DEFINE_RATELIMIT_STATE(_rs,			\
+#घोषणा WARN_RATELIMIT(condition, क्रमmat, ...)			\
+(अणु								\
+	अटल DEFINE_RATELIMIT_STATE(_rs,			\
 				      DEFAULT_RATELIMIT_INTERVAL,	\
 				      DEFAULT_RATELIMIT_BURST);	\
-	int rtn = !!(condition);				\
+	पूर्णांक rtn = !!(condition);				\
 								\
-	if (unlikely(rtn && __ratelimit(&_rs)))			\
-		WARN(rtn, format, ##__VA_ARGS__);		\
+	अगर (unlikely(rtn && __ratelimit(&_rs)))			\
+		WARN(rtn, क्रमmat, ##__VA_ARGS__);		\
 								\
 	rtn;							\
-})
+पूर्ण)
 
-#else
+#अन्यथा
 
-#define WARN_ON_RATELIMIT(condition, state)			\
+#घोषणा WARN_ON_RATELIMIT(condition, state)			\
 	WARN_ON(condition)
 
-#define WARN_RATELIMIT(condition, format, ...)			\
-({								\
-	int rtn = WARN(condition, format, ##__VA_ARGS__);	\
+#घोषणा WARN_RATELIMIT(condition, क्रमmat, ...)			\
+(अणु								\
+	पूर्णांक rtn = WARN(condition, क्रमmat, ##__VA_ARGS__);	\
 	rtn;							\
-})
+पूर्ण)
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _LINUX_RATELIMIT_H */
+#पूर्ण_अगर /* _LINUX_RATELIMIT_H */

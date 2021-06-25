@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _IPT_CLUSTERIP_H_target
-#define _IPT_CLUSTERIP_H_target
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _IPT_CLUSTERIP_H_target
+#घोषणा _IPT_CLUSTERIP_H_target
 
-#include <linux/types.h>
-#include <linux/if_ether.h>
+#समावेश <linux/types.h>
+#समावेश <linux/अगर_ether.h>
 
-enum clusterip_hashmode {
+क्रमागत clusterip_hashmode अणु
     CLUSTERIP_HASHMODE_SIP = 0,
     CLUSTERIP_HASHMODE_SIP_SPT,
     CLUSTERIP_HASHMODE_SIP_SPT_DPT,
-};
+पूर्ण;
 
-#define CLUSTERIP_HASHMODE_MAX CLUSTERIP_HASHMODE_SIP_SPT_DPT
+#घोषणा CLUSTERIP_HASHMODE_MAX CLUSTERIP_HASHMODE_SIP_SPT_DPT
 
-#define CLUSTERIP_MAX_NODES 16
+#घोषणा CLUSTERIP_MAX_NODES 16
 
-#define CLUSTERIP_FLAG_NEW 0x00000001
+#घोषणा CLUSTERIP_FLAG_NEW 0x00000001
 
-struct clusterip_config;
+काष्ठा clusterip_config;
 
-struct ipt_clusterip_tgt_info {
+काष्ठा ipt_clusterip_tgt_info अणु
 
 	__u32 flags;
 
-	/* only relevant for new ones */
+	/* only relevant क्रम new ones */
 	__u8 clustermac[ETH_ALEN];
 	__u16 num_total_nodes;
 	__u16 num_local_nodes;
@@ -31,8 +32,8 @@ struct ipt_clusterip_tgt_info {
 	__u32 hash_mode;
 	__u32 hash_initval;
 
-	/* Used internally by the kernel */
-	struct clusterip_config *config;
-};
+	/* Used पूर्णांकernally by the kernel */
+	काष्ठा clusterip_config *config;
+पूर्ण;
 
-#endif /*_IPT_CLUSTERIP_H_target*/
+#पूर्ण_अगर /*_IPT_CLUSTERIP_H_target*/

@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * mpls tunnels	An implementation mpls tunnels using the light weight tunnel
- *		infrastructure
+ *		infraकाष्ठाure
  *
  * Authors:	Roopa Prabhu, <roopa@cumulusnetworks.com>
  */
-#include <linux/types.h>
-#include <linux/skbuff.h>
-#include <linux/net.h>
-#include <linux/module.h>
-#include <linux/mpls.h>
-#include <linux/vmalloc.h>
-#include <net/ip.h>
-#include <net/dst.h>
-#include <net/lwtunnel.h>
-#include <net/netevent.h>
-#include <net/netns/generic.h>
-#include <net/ip6_fib.h>
-#include <net/route.h>
-#include <net/mpls_iptunnel.h>
-#include <linux/mpls_iptunnel.h>
-#include "internal.h"
+#समावेश <linux/types.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/net.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mpls.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <net/ip.h>
+#समावेश <net/dst.h>
+#समावेश <net/lwtunnel.h>
+#समावेश <net/netevent.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/ip6_fib.h>
+#समावेश <net/route.h>
+#समावेश <net/mpls_iptunnel.h>
+#समावेश <linux/mpls_iptunnel.h>
+#समावेश "internal.h"
 
-static const struct nla_policy mpls_iptunnel_policy[MPLS_IPTUNNEL_MAX + 1] = {
-	[MPLS_IPTUNNEL_DST]	= { .len = sizeof(u32) },
-	[MPLS_IPTUNNEL_TTL]	= { .type = NLA_U8 },
-};
+अटल स्थिर काष्ठा nla_policy mpls_iptunnel_policy[MPLS_IPTUNNEL_MAX + 1] = अणु
+	[MPLS_IPTUNNEL_DST]	= अणु .len = माप(u32) पूर्ण,
+	[MPLS_IPTUNNEL_TTL]	= अणु .type = NLA_U8 पूर्ण,
+पूर्ण;
 
-static unsigned int mpls_encap_size(struct mpls_iptunnel_encap *en)
-{
-	/* The size of the layer 2.5 labels to be added for this route */
-	return en->labels * sizeof(struct mpls_shim_hdr);
-}
+अटल अचिन्हित पूर्णांक mpls_encap_size(काष्ठा mpls_iptunnel_encap *en)
+अणु
+	/* The size of the layer 2.5 labels to be added क्रम this route */
+	वापस en->labels * माप(काष्ठा mpls_shim_hdr);
+पूर्ण
 
-static int mpls_xmit(struct sk_buff *skb)
-{
-	struct mpls_iptunnel_encap *tun_encap_info;
-	struct mpls_shim_hdr *hdr;
-	struct net_device *out_dev;
-	unsigned int hh_len;
-	unsigned int new_header_size;
-	unsigned int mtu;
-	struct dst_entry *dst = skb_dst(skb);
-	struct rtable *rt = NULL;
-	struct rt6_info *rt6 = NULL;
-	struct mpls_dev *out_mdev;
-	struct net *net;
-	int err = 0;
+अटल पूर्णांक mpls_xmit(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mpls_iptunnel_encap *tun_encap_info;
+	काष्ठा mpls_shim_hdr *hdr;
+	काष्ठा net_device *out_dev;
+	अचिन्हित पूर्णांक hh_len;
+	अचिन्हित पूर्णांक new_header_size;
+	अचिन्हित पूर्णांक mtu;
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	काष्ठा rtable *rt = शून्य;
+	काष्ठा rt6_info *rt6 = शून्य;
+	काष्ठा mpls_dev *out_mdev;
+	काष्ठा net *net;
+	पूर्णांक err = 0;
 	bool bos;
-	int i;
-	unsigned int ttl;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक ttl;
 
 	/* Find the output device */
 	out_dev = dst->dev;
@@ -57,59 +58,59 @@ static int mpls_xmit(struct sk_buff *skb)
 
 	skb_orphan(skb);
 
-	if (!mpls_output_possible(out_dev) ||
-	    !dst->lwtstate || skb_warn_if_lro(skb))
-		goto drop;
+	अगर (!mpls_output_possible(out_dev) ||
+	    !dst->lwtstate || skb_warn_अगर_lro(skb))
+		जाओ drop;
 
-	skb_forward_csum(skb);
+	skb_क्रमward_csum(skb);
 
 	tun_encap_info = mpls_lwtunnel_encap(dst->lwtstate);
 
 	/* Obtain the ttl using the following set of rules.
 	 *
 	 * LWT ttl propagation setting:
-	 *  - disabled => use default TTL value from LWT
+	 *  - disabled => use शेष TTL value from LWT
 	 *  - enabled  => use TTL value from IPv4/IPv6 header
-	 *  - default  =>
+	 *  - शेष  =>
 	 *   Global ttl propagation setting:
-	 *    - disabled => use default TTL value from global setting
+	 *    - disabled => use शेष TTL value from global setting
 	 *    - enabled => use TTL value from IPv4/IPv6 header
 	 */
-	if (dst->ops->family == AF_INET) {
-		if (tun_encap_info->ttl_propagate == MPLS_TTL_PROP_DISABLED)
-			ttl = tun_encap_info->default_ttl;
-		else if (tun_encap_info->ttl_propagate == MPLS_TTL_PROP_DEFAULT &&
+	अगर (dst->ops->family == AF_INET) अणु
+		अगर (tun_encap_info->ttl_propagate == MPLS_TTL_PROP_DISABLED)
+			ttl = tun_encap_info->शेष_ttl;
+		अन्यथा अगर (tun_encap_info->ttl_propagate == MPLS_TTL_PROP_DEFAULT &&
 			 !net->mpls.ip_ttl_propagate)
-			ttl = net->mpls.default_ttl;
-		else
+			ttl = net->mpls.शेष_ttl;
+		अन्यथा
 			ttl = ip_hdr(skb)->ttl;
-		rt = (struct rtable *)dst;
-	} else if (dst->ops->family == AF_INET6) {
-		if (tun_encap_info->ttl_propagate == MPLS_TTL_PROP_DISABLED)
-			ttl = tun_encap_info->default_ttl;
-		else if (tun_encap_info->ttl_propagate == MPLS_TTL_PROP_DEFAULT &&
+		rt = (काष्ठा rtable *)dst;
+	पूर्ण अन्यथा अगर (dst->ops->family == AF_INET6) अणु
+		अगर (tun_encap_info->ttl_propagate == MPLS_TTL_PROP_DISABLED)
+			ttl = tun_encap_info->शेष_ttl;
+		अन्यथा अगर (tun_encap_info->ttl_propagate == MPLS_TTL_PROP_DEFAULT &&
 			 !net->mpls.ip_ttl_propagate)
-			ttl = net->mpls.default_ttl;
-		else
+			ttl = net->mpls.शेष_ttl;
+		अन्यथा
 			ttl = ipv6_hdr(skb)->hop_limit;
-		rt6 = (struct rt6_info *)dst;
-	} else {
-		goto drop;
-	}
+		rt6 = (काष्ठा rt6_info *)dst;
+	पूर्ण अन्यथा अणु
+		जाओ drop;
+	पूर्ण
 
-	/* Verify the destination can hold the packet */
+	/* Verअगरy the destination can hold the packet */
 	new_header_size = mpls_encap_size(tun_encap_info);
 	mtu = mpls_dev_mtu(out_dev);
-	if (mpls_pkt_too_big(skb, mtu - new_header_size))
-		goto drop;
+	अगर (mpls_pkt_too_big(skb, mtu - new_header_size))
+		जाओ drop;
 
 	hh_len = LL_RESERVED_SPACE(out_dev);
-	if (!out_dev->header_ops)
+	अगर (!out_dev->header_ops)
 		hh_len = 0;
 
-	/* Ensure there is enough space for the headers in the skb */
-	if (skb_cow(skb, hh_len + new_header_size))
-		goto drop;
+	/* Ensure there is enough space क्रम the headers in the skb */
+	अगर (skb_cow(skb, hh_len + new_header_size))
+		जाओ drop;
 
 	skb_set_inner_protocol(skb, skb->protocol);
 	skb_reset_inner_network_header(skb);
@@ -124,180 +125,180 @@ static int mpls_xmit(struct sk_buff *skb)
 	/* Push the new labels */
 	hdr = mpls_hdr(skb);
 	bos = true;
-	for (i = tun_encap_info->labels - 1; i >= 0; i--) {
+	क्रम (i = tun_encap_info->labels - 1; i >= 0; i--) अणु
 		hdr[i] = mpls_entry_encode(tun_encap_info->label[i],
 					   ttl, 0, bos);
 		bos = false;
-	}
+	पूर्ण
 
 	mpls_stats_inc_outucastpkts(out_dev, skb);
 
-	if (rt) {
-		if (rt->rt_gw_family == AF_INET6)
+	अगर (rt) अणु
+		अगर (rt->rt_gw_family == AF_INET6)
 			err = neigh_xmit(NEIGH_ND_TABLE, out_dev, &rt->rt_gw6,
 					 skb);
-		else
+		अन्यथा
 			err = neigh_xmit(NEIGH_ARP_TABLE, out_dev, &rt->rt_gw4,
 					 skb);
-	} else if (rt6) {
-		if (ipv6_addr_v4mapped(&rt6->rt6i_gateway)) {
+	पूर्ण अन्यथा अगर (rt6) अणु
+		अगर (ipv6_addr_v4mapped(&rt6->rt6i_gateway)) अणु
 			/* 6PE (RFC 4798) */
 			err = neigh_xmit(NEIGH_ARP_TABLE, out_dev, &rt6->rt6i_gateway.s6_addr32[3],
 					 skb);
-		} else
+		पूर्ण अन्यथा
 			err = neigh_xmit(NEIGH_ND_TABLE, out_dev, &rt6->rt6i_gateway,
 					 skb);
-	}
-	if (err)
+	पूर्ण
+	अगर (err)
 		net_dbg_ratelimited("%s: packet transmission failed: %d\n",
 				    __func__, err);
 
-	return LWTUNNEL_XMIT_DONE;
+	वापस LWTUNNEL_XMIT_DONE;
 
 drop:
-	out_mdev = out_dev ? mpls_dev_get(out_dev) : NULL;
-	if (out_mdev)
+	out_mdev = out_dev ? mpls_dev_get(out_dev) : शून्य;
+	अगर (out_mdev)
 		MPLS_INC_STATS(out_mdev, tx_errors);
-	kfree_skb(skb);
-	return -EINVAL;
-}
+	kमुक्त_skb(skb);
+	वापस -EINVAL;
+पूर्ण
 
-static int mpls_build_state(struct net *net, struct nlattr *nla,
-			    unsigned int family, const void *cfg,
-			    struct lwtunnel_state **ts,
-			    struct netlink_ext_ack *extack)
-{
-	struct mpls_iptunnel_encap *tun_encap_info;
-	struct nlattr *tb[MPLS_IPTUNNEL_MAX + 1];
-	struct lwtunnel_state *newts;
+अटल पूर्णांक mpls_build_state(काष्ठा net *net, काष्ठा nlattr *nla,
+			    अचिन्हित पूर्णांक family, स्थिर व्योम *cfg,
+			    काष्ठा lwtunnel_state **ts,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा mpls_iptunnel_encap *tun_encap_info;
+	काष्ठा nlattr *tb[MPLS_IPTUNNEL_MAX + 1];
+	काष्ठा lwtunnel_state *newts;
 	u8 n_labels;
-	int ret;
+	पूर्णांक ret;
 
 	ret = nla_parse_nested_deprecated(tb, MPLS_IPTUNNEL_MAX, nla,
 					  mpls_iptunnel_policy, extack);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!tb[MPLS_IPTUNNEL_DST]) {
+	अगर (!tb[MPLS_IPTUNNEL_DST]) अणु
 		NL_SET_ERR_MSG(extack, "MPLS_IPTUNNEL_DST attribute is missing");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* determine number of labels */
-	if (nla_get_labels(tb[MPLS_IPTUNNEL_DST], MAX_NEW_LABELS,
-			   &n_labels, NULL, extack))
-		return -EINVAL;
+	अगर (nla_get_labels(tb[MPLS_IPTUNNEL_DST], MAX_NEW_LABELS,
+			   &n_labels, शून्य, extack))
+		वापस -EINVAL;
 
-	newts = lwtunnel_state_alloc(struct_size(tun_encap_info, label,
+	newts = lwtunnel_state_alloc(काष्ठा_size(tun_encap_info, label,
 						 n_labels));
-	if (!newts)
-		return -ENOMEM;
+	अगर (!newts)
+		वापस -ENOMEM;
 
 	tun_encap_info = mpls_lwtunnel_encap(newts);
 	ret = nla_get_labels(tb[MPLS_IPTUNNEL_DST], n_labels,
 			     &tun_encap_info->labels, tun_encap_info->label,
 			     extack);
-	if (ret)
-		goto errout;
+	अगर (ret)
+		जाओ errout;
 
 	tun_encap_info->ttl_propagate = MPLS_TTL_PROP_DEFAULT;
 
-	if (tb[MPLS_IPTUNNEL_TTL]) {
-		tun_encap_info->default_ttl = nla_get_u8(tb[MPLS_IPTUNNEL_TTL]);
+	अगर (tb[MPLS_IPTUNNEL_TTL]) अणु
+		tun_encap_info->शेष_ttl = nla_get_u8(tb[MPLS_IPTUNNEL_TTL]);
 		/* TTL 0 implies propagate from IP header */
-		tun_encap_info->ttl_propagate = tun_encap_info->default_ttl ?
+		tun_encap_info->ttl_propagate = tun_encap_info->शेष_ttl ?
 			MPLS_TTL_PROP_DISABLED :
 			MPLS_TTL_PROP_ENABLED;
-	}
+	पूर्ण
 
 	newts->type = LWTUNNEL_ENCAP_MPLS;
-	newts->flags |= LWTUNNEL_STATE_XMIT_REDIRECT;
+	newts->flags |= LWTUNNEL_STATE_XMIT_REसूचीECT;
 	newts->headroom = mpls_encap_size(tun_encap_info);
 
 	*ts = newts;
 
-	return 0;
+	वापस 0;
 
 errout:
-	kfree(newts);
-	*ts = NULL;
+	kमुक्त(newts);
+	*ts = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mpls_fill_encap_info(struct sk_buff *skb,
-				struct lwtunnel_state *lwtstate)
-{
-	struct mpls_iptunnel_encap *tun_encap_info;
+अटल पूर्णांक mpls_fill_encap_info(काष्ठा sk_buff *skb,
+				काष्ठा lwtunnel_state *lwtstate)
+अणु
+	काष्ठा mpls_iptunnel_encap *tun_encap_info;
 
 	tun_encap_info = mpls_lwtunnel_encap(lwtstate);
 
-	if (nla_put_labels(skb, MPLS_IPTUNNEL_DST, tun_encap_info->labels,
+	अगर (nla_put_labels(skb, MPLS_IPTUNNEL_DST, tun_encap_info->labels,
 			   tun_encap_info->label))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (tun_encap_info->ttl_propagate != MPLS_TTL_PROP_DEFAULT &&
-	    nla_put_u8(skb, MPLS_IPTUNNEL_TTL, tun_encap_info->default_ttl))
-		goto nla_put_failure;
+	अगर (tun_encap_info->ttl_propagate != MPLS_TTL_PROP_DEFAULT &&
+	    nla_put_u8(skb, MPLS_IPTUNNEL_TTL, tun_encap_info->शेष_ttl))
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int mpls_encap_nlsize(struct lwtunnel_state *lwtstate)
-{
-	struct mpls_iptunnel_encap *tun_encap_info;
-	int nlsize;
+अटल पूर्णांक mpls_encap_nlsize(काष्ठा lwtunnel_state *lwtstate)
+अणु
+	काष्ठा mpls_iptunnel_encap *tun_encap_info;
+	पूर्णांक nlsize;
 
 	tun_encap_info = mpls_lwtunnel_encap(lwtstate);
 
 	nlsize = nla_total_size(tun_encap_info->labels * 4);
 
-	if (tun_encap_info->ttl_propagate != MPLS_TTL_PROP_DEFAULT)
+	अगर (tun_encap_info->ttl_propagate != MPLS_TTL_PROP_DEFAULT)
 		nlsize += nla_total_size(1);
 
-	return nlsize;
-}
+	वापस nlsize;
+पूर्ण
 
-static int mpls_encap_cmp(struct lwtunnel_state *a, struct lwtunnel_state *b)
-{
-	struct mpls_iptunnel_encap *a_hdr = mpls_lwtunnel_encap(a);
-	struct mpls_iptunnel_encap *b_hdr = mpls_lwtunnel_encap(b);
-	int l;
+अटल पूर्णांक mpls_encap_cmp(काष्ठा lwtunnel_state *a, काष्ठा lwtunnel_state *b)
+अणु
+	काष्ठा mpls_iptunnel_encap *a_hdr = mpls_lwtunnel_encap(a);
+	काष्ठा mpls_iptunnel_encap *b_hdr = mpls_lwtunnel_encap(b);
+	पूर्णांक l;
 
-	if (a_hdr->labels != b_hdr->labels ||
+	अगर (a_hdr->labels != b_hdr->labels ||
 	    a_hdr->ttl_propagate != b_hdr->ttl_propagate ||
-	    a_hdr->default_ttl != b_hdr->default_ttl)
-		return 1;
+	    a_hdr->शेष_ttl != b_hdr->शेष_ttl)
+		वापस 1;
 
-	for (l = 0; l < a_hdr->labels; l++)
-		if (a_hdr->label[l] != b_hdr->label[l])
-			return 1;
-	return 0;
-}
+	क्रम (l = 0; l < a_hdr->labels; l++)
+		अगर (a_hdr->label[l] != b_hdr->label[l])
+			वापस 1;
+	वापस 0;
+पूर्ण
 
-static const struct lwtunnel_encap_ops mpls_iptun_ops = {
+अटल स्थिर काष्ठा lwtunnel_encap_ops mpls_iptun_ops = अणु
 	.build_state = mpls_build_state,
 	.xmit = mpls_xmit,
 	.fill_encap = mpls_fill_encap_info,
 	.get_encap_size = mpls_encap_nlsize,
 	.cmp_encap = mpls_encap_cmp,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init mpls_iptunnel_init(void)
-{
-	return lwtunnel_encap_add_ops(&mpls_iptun_ops, LWTUNNEL_ENCAP_MPLS);
-}
+अटल पूर्णांक __init mpls_iptunnel_init(व्योम)
+अणु
+	वापस lwtunnel_encap_add_ops(&mpls_iptun_ops, LWTUNNEL_ENCAP_MPLS);
+पूर्ण
 module_init(mpls_iptunnel_init);
 
-static void __exit mpls_iptunnel_exit(void)
-{
+अटल व्योम __निकास mpls_iptunnel_निकास(व्योम)
+अणु
 	lwtunnel_encap_del_ops(&mpls_iptun_ops, LWTUNNEL_ENCAP_MPLS);
-}
-module_exit(mpls_iptunnel_exit);
+पूर्ण
+module_निकास(mpls_iptunnel_निकास);
 
 MODULE_ALIAS_RTNL_LWT(MPLS);
 MODULE_SOFTDEP("post: mpls_gso");

@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 OR MIT) */
 /*
  * Copyright (c) 2020 BayLibre, SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
-#ifndef _MESON_AIU_FIFO_H
-#define _MESON_AIU_FIFO_H
+#अगर_अघोषित _MESON_AIU_FIFO_H
+#घोषणा _MESON_AIU_FIFO_H
 
-struct snd_pcm_hardware;
-struct snd_soc_component_driver;
-struct snd_soc_dai_driver;
-struct clk;
-struct snd_pcm_ops;
-struct snd_pcm_substream;
-struct snd_soc_dai;
-struct snd_pcm_hw_params;
-struct platform_device;
+काष्ठा snd_pcm_hardware;
+काष्ठा snd_soc_component_driver;
+काष्ठा snd_soc_dai_driver;
+काष्ठा clk;
+काष्ठा snd_pcm_ops;
+काष्ठा snd_pcm_substream;
+काष्ठा snd_soc_dai;
+काष्ठा snd_pcm_hw_params;
+काष्ठा platक्रमm_device;
 
-struct aiu_fifo {
-	struct snd_pcm_hardware *pcm;
-	unsigned int mem_offset;
-	unsigned int fifo_block;
-	struct clk *pclk;
-	int irq;
-};
+काष्ठा aiu_fअगरo अणु
+	काष्ठा snd_pcm_hardware *pcm;
+	अचिन्हित पूर्णांक mem_offset;
+	अचिन्हित पूर्णांक fअगरo_block;
+	काष्ठा clk *pclk;
+	पूर्णांक irq;
+पूर्ण;
 
-int aiu_fifo_dai_probe(struct snd_soc_dai *dai);
-int aiu_fifo_dai_remove(struct snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_dai_probe(काष्ठा snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_dai_हटाओ(काष्ठा snd_soc_dai *dai);
 
-snd_pcm_uframes_t aiu_fifo_pointer(struct snd_soc_component *component,
-				   struct snd_pcm_substream *substream);
+snd_pcm_uframes_t aiu_fअगरo_poपूर्णांकer(काष्ठा snd_soc_component *component,
+				   काष्ठा snd_pcm_substream *substream);
 
-int aiu_fifo_trigger(struct snd_pcm_substream *substream, int cmd,
-		     struct snd_soc_dai *dai);
-int aiu_fifo_prepare(struct snd_pcm_substream *substream,
-		     struct snd_soc_dai *dai);
-int aiu_fifo_hw_params(struct snd_pcm_substream *substream,
-		       struct snd_pcm_hw_params *params,
-		       struct snd_soc_dai *dai);
-int aiu_fifo_hw_free(struct snd_pcm_substream *substream,
-		     struct snd_soc_dai *dai);
-int aiu_fifo_startup(struct snd_pcm_substream *substream,
-		     struct snd_soc_dai *dai);
-void aiu_fifo_shutdown(struct snd_pcm_substream *substream,
-		       struct snd_soc_dai *dai);
-int aiu_fifo_pcm_new(struct snd_soc_pcm_runtime *rtd,
-		     struct snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+		     काष्ठा snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_prepare(काष्ठा snd_pcm_substream *substream,
+		     काष्ठा snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_hw_params(काष्ठा snd_pcm_substream *substream,
+		       काष्ठा snd_pcm_hw_params *params,
+		       काष्ठा snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_hw_मुक्त(काष्ठा snd_pcm_substream *substream,
+		     काष्ठा snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_startup(काष्ठा snd_pcm_substream *substream,
+		     काष्ठा snd_soc_dai *dai);
+व्योम aiu_fअगरo_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+		       काष्ठा snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_pcm_new(काष्ठा snd_soc_pcm_runसमय *rtd,
+		     काष्ठा snd_soc_dai *dai);
 
-#endif /* _MESON_AIU_FIFO_H */
+#पूर्ण_अगर /* _MESON_AIU_FIFO_H */

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cryptographic API.
  *
- * s390 implementation of the AES Cipher Algorithm with protected keys.
+ * s390 implementation of the AES Cipher Algorithm with रक्षित keys.
  *
  * s390 Version:
  *   Copyright IBM Corp. 2017,2020
@@ -10,713 +11,713 @@
  *		Harald Freudenberger <freude@de.ibm.com>
  */
 
-#define KMSG_COMPONENT "paes_s390"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "paes_s390"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <crypto/aes.h>
-#include <crypto/algapi.h>
-#include <linux/bug.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/cpufeature.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/delay.h>
-#include <crypto/internal/skcipher.h>
-#include <crypto/xts.h>
-#include <asm/cpacf.h>
-#include <asm/pkey.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/algapi.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cpufeature.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/delay.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <crypto/xts.h>
+#समावेश <यंत्र/cpacf.h>
+#समावेश <यंत्र/pkey.h>
 
 /*
  * Key blobs smaller/bigger than these defines are rejected
- * by the common code even before the individual setkey function
- * is called. As paes can handle different kinds of key blobs
+ * by the common code even beक्रमe the inभागidual setkey function
+ * is called. As paes can handle dअगरferent kinds of key blobs
  * and padding is also possible, the limits need to be generous.
  */
-#define PAES_MIN_KEYSIZE 16
-#define PAES_MAX_KEYSIZE 320
+#घोषणा PAES_MIN_KEYSIZE 16
+#घोषणा PAES_MAX_KEYSIZE 320
 
-static u8 *ctrblk;
-static DEFINE_MUTEX(ctrblk_lock);
+अटल u8 *ctrblk;
+अटल DEFINE_MUTEX(ctrblk_lock);
 
-static cpacf_mask_t km_functions, kmc_functions, kmctr_functions;
+अटल cpacf_mask_t km_functions, kmc_functions, kmctr_functions;
 
-struct key_blob {
+काष्ठा key_blob अणु
 	/*
 	 * Small keys will be stored in the keybuf. Larger keys are
-	 * stored in extra allocated memory. In both cases does
-	 * key point to the memory where the key is stored.
+	 * stored in extra allocated memory. In both हालs करोes
+	 * key poपूर्णांक to the memory where the key is stored.
 	 * The code distinguishes by checking keylen against
-	 * sizeof(keybuf). See the two following helper functions.
+	 * माप(keybuf). See the two following helper functions.
 	 */
 	u8 *key;
 	u8 keybuf[128];
-	unsigned int keylen;
-};
+	अचिन्हित पूर्णांक keylen;
+पूर्ण;
 
-static inline int _key_to_kb(struct key_blob *kb,
-			     const u8 *key,
-			     unsigned int keylen)
-{
-	struct clearkey_header {
+अटल अंतरभूत पूर्णांक _key_to_kb(काष्ठा key_blob *kb,
+			     स्थिर u8 *key,
+			     अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा clearkey_header अणु
 		u8  type;
 		u8  res0[3];
 		u8  version;
 		u8  res1[3];
 		u32 keytype;
 		u32 len;
-	} __packed * h;
+	पूर्ण __packed * h;
 
-	switch (keylen) {
-	case 16:
-	case 24:
-	case 32:
+	चयन (keylen) अणु
+	हाल 16:
+	हाल 24:
+	हाल 32:
 		/* clear key value, prepare pkey clear key token in keybuf */
-		memset(kb->keybuf, 0, sizeof(kb->keybuf));
-		h = (struct clearkey_header *) kb->keybuf;
+		स_रखो(kb->keybuf, 0, माप(kb->keybuf));
+		h = (काष्ठा clearkey_header *) kb->keybuf;
 		h->version = 0x02; /* TOKVER_CLEAR_KEY */
 		h->keytype = (keylen - 8) >> 3;
 		h->len = keylen;
-		memcpy(kb->keybuf + sizeof(*h), key, keylen);
-		kb->keylen = sizeof(*h) + keylen;
+		स_नकल(kb->keybuf + माप(*h), key, keylen);
+		kb->keylen = माप(*h) + keylen;
 		kb->key = kb->keybuf;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* other key material, let pkey handle this */
-		if (keylen <= sizeof(kb->keybuf))
+		अगर (keylen <= माप(kb->keybuf))
 			kb->key = kb->keybuf;
-		else {
-			kb->key = kmalloc(keylen, GFP_KERNEL);
-			if (!kb->key)
-				return -ENOMEM;
-		}
-		memcpy(kb->key, key, keylen);
+		अन्यथा अणु
+			kb->key = kदो_स्मृति(keylen, GFP_KERNEL);
+			अगर (!kb->key)
+				वापस -ENOMEM;
+		पूर्ण
+		स_नकल(kb->key, key, keylen);
 		kb->keylen = keylen;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void _free_kb_keybuf(struct key_blob *kb)
-{
-	if (kb->key && kb->key != kb->keybuf
-	    && kb->keylen > sizeof(kb->keybuf)) {
-		kfree(kb->key);
-		kb->key = NULL;
-	}
-}
+अटल अंतरभूत व्योम _मुक्त_kb_keybuf(काष्ठा key_blob *kb)
+अणु
+	अगर (kb->key && kb->key != kb->keybuf
+	    && kb->keylen > माप(kb->keybuf)) अणु
+		kमुक्त(kb->key);
+		kb->key = शून्य;
+	पूर्ण
+पूर्ण
 
-struct s390_paes_ctx {
-	struct key_blob kb;
-	struct pkey_protkey pk;
+काष्ठा s390_paes_ctx अणु
+	काष्ठा key_blob kb;
+	काष्ठा pkey_protkey pk;
 	spinlock_t pk_lock;
-	unsigned long fc;
-};
+	अचिन्हित दीर्घ fc;
+पूर्ण;
 
-struct s390_pxts_ctx {
-	struct key_blob kb[2];
-	struct pkey_protkey pk[2];
+काष्ठा s390_pxts_ctx अणु
+	काष्ठा key_blob kb[2];
+	काष्ठा pkey_protkey pk[2];
 	spinlock_t pk_lock;
-	unsigned long fc;
-};
+	अचिन्हित दीर्घ fc;
+पूर्ण;
 
-static inline int __paes_keyblob2pkey(struct key_blob *kb,
-				     struct pkey_protkey *pk)
-{
-	int i, ret;
+अटल अंतरभूत पूर्णांक __paes_keyblob2pkey(काष्ठा key_blob *kb,
+				     काष्ठा pkey_protkey *pk)
+अणु
+	पूर्णांक i, ret;
 
-	/* try three times in case of failure */
-	for (i = 0; i < 3; i++) {
-		if (i > 0 && ret == -EAGAIN && in_task())
-			if (msleep_interruptible(1000))
-				return -EINTR;
+	/* try three बार in हाल of failure */
+	क्रम (i = 0; i < 3; i++) अणु
+		अगर (i > 0 && ret == -EAGAIN && in_task())
+			अगर (msleep_पूर्णांकerruptible(1000))
+				वापस -EINTR;
 		ret = pkey_keyblob2pkey(kb->key, kb->keylen, pk);
-		if (ret == 0)
-			break;
-	}
+		अगर (ret == 0)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int __paes_convert_key(struct s390_paes_ctx *ctx)
-{
-	int ret;
-	struct pkey_protkey pkey;
+अटल अंतरभूत पूर्णांक __paes_convert_key(काष्ठा s390_paes_ctx *ctx)
+अणु
+	पूर्णांक ret;
+	काष्ठा pkey_protkey pkey;
 
 	ret = __paes_keyblob2pkey(&ctx->kb, &pkey);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_bh(&ctx->pk_lock);
-	memcpy(&ctx->pk, &pkey, sizeof(pkey));
+	स_नकल(&ctx->pk, &pkey, माप(pkey));
 	spin_unlock_bh(&ctx->pk_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ecb_paes_init(struct crypto_skcipher *tfm)
-{
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक ecb_paes_init(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	ctx->kb.key = NULL;
+	ctx->kb.key = शून्य;
 	spin_lock_init(&ctx->pk_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ecb_paes_exit(struct crypto_skcipher *tfm)
-{
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल व्योम ecb_paes_निकास(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	_free_kb_keybuf(&ctx->kb);
-}
+	_मुक्त_kb_keybuf(&ctx->kb);
+पूर्ण
 
-static inline int __ecb_paes_set_key(struct s390_paes_ctx *ctx)
-{
-	int rc;
-	unsigned long fc;
+अटल अंतरभूत पूर्णांक __ecb_paes_set_key(काष्ठा s390_paes_ctx *ctx)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ fc;
 
 	rc = __paes_convert_key(ctx);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Pick the correct function code based on the protected key type */
+	/* Pick the correct function code based on the रक्षित key type */
 	fc = (ctx->pk.type == PKEY_KEYTYPE_AES_128) ? CPACF_KM_PAES_128 :
 		(ctx->pk.type == PKEY_KEYTYPE_AES_192) ? CPACF_KM_PAES_192 :
 		(ctx->pk.type == PKEY_KEYTYPE_AES_256) ? CPACF_KM_PAES_256 : 0;
 
-	/* Check if the function code is available */
+	/* Check अगर the function code is available */
 	ctx->fc = (fc && cpacf_test_func(&km_functions, fc)) ? fc : 0;
 
-	return ctx->fc ? 0 : -EINVAL;
-}
+	वापस ctx->fc ? 0 : -EINVAL;
+पूर्ण
 
-static int ecb_paes_set_key(struct crypto_skcipher *tfm, const u8 *in_key,
-			    unsigned int key_len)
-{
-	int rc;
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक ecb_paes_set_key(काष्ठा crypto_skcipher *tfm, स्थिर u8 *in_key,
+			    अचिन्हित पूर्णांक key_len)
+अणु
+	पूर्णांक rc;
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	_free_kb_keybuf(&ctx->kb);
+	_मुक्त_kb_keybuf(&ctx->kb);
 	rc = _key_to_kb(&ctx->kb, in_key, key_len);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return __ecb_paes_set_key(ctx);
-}
+	वापस __ecb_paes_set_key(ctx);
+पूर्ण
 
-static int ecb_paes_crypt(struct skcipher_request *req, unsigned long modifier)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct skcipher_walk walk;
-	unsigned int nbytes, n, k;
-	int ret;
-	struct {
+अटल पूर्णांक ecb_paes_crypt(काष्ठा skcipher_request *req, अचिन्हित दीर्घ modअगरier)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes, n, k;
+	पूर्णांक ret;
+	काष्ठा अणु
 		u8 key[MAXPROTKEYSIZE];
-	} param;
+	पूर्ण param;
 
 	ret = skcipher_walk_virt(&walk, req, false);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_bh(&ctx->pk_lock);
-	memcpy(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
+	स_नकल(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
 	spin_unlock_bh(&ctx->pk_lock);
 
-	while ((nbytes = walk.nbytes) != 0) {
+	जबतक ((nbytes = walk.nbytes) != 0) अणु
 		/* only use complete blocks */
 		n = nbytes & ~(AES_BLOCK_SIZE - 1);
-		k = cpacf_km(ctx->fc | modifier, &param,
+		k = cpacf_km(ctx->fc | modअगरier, &param,
 			     walk.dst.virt.addr, walk.src.virt.addr, n);
-		if (k)
-			ret = skcipher_walk_done(&walk, nbytes - k);
-		if (k < n) {
-			if (__paes_convert_key(ctx))
-				return skcipher_walk_done(&walk, -EIO);
+		अगर (k)
+			ret = skcipher_walk_करोne(&walk, nbytes - k);
+		अगर (k < n) अणु
+			अगर (__paes_convert_key(ctx))
+				वापस skcipher_walk_करोne(&walk, -EIO);
 			spin_lock_bh(&ctx->pk_lock);
-			memcpy(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
+			स_नकल(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
 			spin_unlock_bh(&ctx->pk_lock);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ecb_paes_encrypt(struct skcipher_request *req)
-{
-	return ecb_paes_crypt(req, 0);
-}
+अटल पूर्णांक ecb_paes_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस ecb_paes_crypt(req, 0);
+पूर्ण
 
-static int ecb_paes_decrypt(struct skcipher_request *req)
-{
-	return ecb_paes_crypt(req, CPACF_DECRYPT);
-}
+अटल पूर्णांक ecb_paes_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस ecb_paes_crypt(req, CPACF_DECRYPT);
+पूर्ण
 
-static struct skcipher_alg ecb_paes_alg = {
+अटल काष्ठा skcipher_alg ecb_paes_alg = अणु
 	.base.cra_name		=	"ecb(paes)",
 	.base.cra_driver_name	=	"ecb-paes-s390",
 	.base.cra_priority	=	401,	/* combo: aes + ecb + 1 */
 	.base.cra_blocksize	=	AES_BLOCK_SIZE,
-	.base.cra_ctxsize	=	sizeof(struct s390_paes_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_paes_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.base.cra_list		=	LIST_HEAD_INIT(ecb_paes_alg.base.cra_list),
 	.init			=	ecb_paes_init,
-	.exit			=	ecb_paes_exit,
+	.निकास			=	ecb_paes_निकास,
 	.min_keysize		=	PAES_MIN_KEYSIZE,
 	.max_keysize		=	PAES_MAX_KEYSIZE,
 	.setkey			=	ecb_paes_set_key,
 	.encrypt		=	ecb_paes_encrypt,
 	.decrypt		=	ecb_paes_decrypt,
-};
+पूर्ण;
 
-static int cbc_paes_init(struct crypto_skcipher *tfm)
-{
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक cbc_paes_init(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	ctx->kb.key = NULL;
+	ctx->kb.key = शून्य;
 	spin_lock_init(&ctx->pk_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cbc_paes_exit(struct crypto_skcipher *tfm)
-{
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल व्योम cbc_paes_निकास(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	_free_kb_keybuf(&ctx->kb);
-}
+	_मुक्त_kb_keybuf(&ctx->kb);
+पूर्ण
 
-static inline int __cbc_paes_set_key(struct s390_paes_ctx *ctx)
-{
-	int rc;
-	unsigned long fc;
+अटल अंतरभूत पूर्णांक __cbc_paes_set_key(काष्ठा s390_paes_ctx *ctx)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ fc;
 
 	rc = __paes_convert_key(ctx);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Pick the correct function code based on the protected key type */
+	/* Pick the correct function code based on the रक्षित key type */
 	fc = (ctx->pk.type == PKEY_KEYTYPE_AES_128) ? CPACF_KMC_PAES_128 :
 		(ctx->pk.type == PKEY_KEYTYPE_AES_192) ? CPACF_KMC_PAES_192 :
 		(ctx->pk.type == PKEY_KEYTYPE_AES_256) ? CPACF_KMC_PAES_256 : 0;
 
-	/* Check if the function code is available */
+	/* Check अगर the function code is available */
 	ctx->fc = (fc && cpacf_test_func(&kmc_functions, fc)) ? fc : 0;
 
-	return ctx->fc ? 0 : -EINVAL;
-}
+	वापस ctx->fc ? 0 : -EINVAL;
+पूर्ण
 
-static int cbc_paes_set_key(struct crypto_skcipher *tfm, const u8 *in_key,
-			    unsigned int key_len)
-{
-	int rc;
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक cbc_paes_set_key(काष्ठा crypto_skcipher *tfm, स्थिर u8 *in_key,
+			    अचिन्हित पूर्णांक key_len)
+अणु
+	पूर्णांक rc;
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	_free_kb_keybuf(&ctx->kb);
+	_मुक्त_kb_keybuf(&ctx->kb);
 	rc = _key_to_kb(&ctx->kb, in_key, key_len);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return __cbc_paes_set_key(ctx);
-}
+	वापस __cbc_paes_set_key(ctx);
+पूर्ण
 
-static int cbc_paes_crypt(struct skcipher_request *req, unsigned long modifier)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct skcipher_walk walk;
-	unsigned int nbytes, n, k;
-	int ret;
-	struct {
+अटल पूर्णांक cbc_paes_crypt(काष्ठा skcipher_request *req, अचिन्हित दीर्घ modअगरier)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes, n, k;
+	पूर्णांक ret;
+	काष्ठा अणु
 		u8 iv[AES_BLOCK_SIZE];
 		u8 key[MAXPROTKEYSIZE];
-	} param;
+	पूर्ण param;
 
 	ret = skcipher_walk_virt(&walk, req, false);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memcpy(param.iv, walk.iv, AES_BLOCK_SIZE);
+	स_नकल(param.iv, walk.iv, AES_BLOCK_SIZE);
 	spin_lock_bh(&ctx->pk_lock);
-	memcpy(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
+	स_नकल(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
 	spin_unlock_bh(&ctx->pk_lock);
 
-	while ((nbytes = walk.nbytes) != 0) {
+	जबतक ((nbytes = walk.nbytes) != 0) अणु
 		/* only use complete blocks */
 		n = nbytes & ~(AES_BLOCK_SIZE - 1);
-		k = cpacf_kmc(ctx->fc | modifier, &param,
+		k = cpacf_kmc(ctx->fc | modअगरier, &param,
 			      walk.dst.virt.addr, walk.src.virt.addr, n);
-		if (k) {
-			memcpy(walk.iv, param.iv, AES_BLOCK_SIZE);
-			ret = skcipher_walk_done(&walk, nbytes - k);
-		}
-		if (k < n) {
-			if (__paes_convert_key(ctx))
-				return skcipher_walk_done(&walk, -EIO);
+		अगर (k) अणु
+			स_नकल(walk.iv, param.iv, AES_BLOCK_SIZE);
+			ret = skcipher_walk_करोne(&walk, nbytes - k);
+		पूर्ण
+		अगर (k < n) अणु
+			अगर (__paes_convert_key(ctx))
+				वापस skcipher_walk_करोne(&walk, -EIO);
 			spin_lock_bh(&ctx->pk_lock);
-			memcpy(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
+			स_नकल(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
 			spin_unlock_bh(&ctx->pk_lock);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cbc_paes_encrypt(struct skcipher_request *req)
-{
-	return cbc_paes_crypt(req, 0);
-}
+अटल पूर्णांक cbc_paes_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cbc_paes_crypt(req, 0);
+पूर्ण
 
-static int cbc_paes_decrypt(struct skcipher_request *req)
-{
-	return cbc_paes_crypt(req, CPACF_DECRYPT);
-}
+अटल पूर्णांक cbc_paes_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cbc_paes_crypt(req, CPACF_DECRYPT);
+पूर्ण
 
-static struct skcipher_alg cbc_paes_alg = {
+अटल काष्ठा skcipher_alg cbc_paes_alg = अणु
 	.base.cra_name		=	"cbc(paes)",
 	.base.cra_driver_name	=	"cbc-paes-s390",
 	.base.cra_priority	=	402,	/* ecb-paes-s390 + 1 */
 	.base.cra_blocksize	=	AES_BLOCK_SIZE,
-	.base.cra_ctxsize	=	sizeof(struct s390_paes_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_paes_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.base.cra_list		=	LIST_HEAD_INIT(cbc_paes_alg.base.cra_list),
 	.init			=	cbc_paes_init,
-	.exit			=	cbc_paes_exit,
+	.निकास			=	cbc_paes_निकास,
 	.min_keysize		=	PAES_MIN_KEYSIZE,
 	.max_keysize		=	PAES_MAX_KEYSIZE,
 	.ivsize			=	AES_BLOCK_SIZE,
 	.setkey			=	cbc_paes_set_key,
 	.encrypt		=	cbc_paes_encrypt,
 	.decrypt		=	cbc_paes_decrypt,
-};
+पूर्ण;
 
-static int xts_paes_init(struct crypto_skcipher *tfm)
-{
-	struct s390_pxts_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक xts_paes_init(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा s390_pxts_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	ctx->kb[0].key = NULL;
-	ctx->kb[1].key = NULL;
+	ctx->kb[0].key = शून्य;
+	ctx->kb[1].key = शून्य;
 	spin_lock_init(&ctx->pk_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xts_paes_exit(struct crypto_skcipher *tfm)
-{
-	struct s390_pxts_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल व्योम xts_paes_निकास(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा s390_pxts_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	_free_kb_keybuf(&ctx->kb[0]);
-	_free_kb_keybuf(&ctx->kb[1]);
-}
+	_मुक्त_kb_keybuf(&ctx->kb[0]);
+	_मुक्त_kb_keybuf(&ctx->kb[1]);
+पूर्ण
 
-static inline int __xts_paes_convert_key(struct s390_pxts_ctx *ctx)
-{
-	struct pkey_protkey pkey0, pkey1;
+अटल अंतरभूत पूर्णांक __xts_paes_convert_key(काष्ठा s390_pxts_ctx *ctx)
+अणु
+	काष्ठा pkey_protkey pkey0, pkey1;
 
-	if (__paes_keyblob2pkey(&ctx->kb[0], &pkey0) ||
+	अगर (__paes_keyblob2pkey(&ctx->kb[0], &pkey0) ||
 	    __paes_keyblob2pkey(&ctx->kb[1], &pkey1))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	spin_lock_bh(&ctx->pk_lock);
-	memcpy(&ctx->pk[0], &pkey0, sizeof(pkey0));
-	memcpy(&ctx->pk[1], &pkey1, sizeof(pkey1));
+	स_नकल(&ctx->pk[0], &pkey0, माप(pkey0));
+	स_नकल(&ctx->pk[1], &pkey1, माप(pkey1));
 	spin_unlock_bh(&ctx->pk_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int __xts_paes_set_key(struct s390_pxts_ctx *ctx)
-{
-	unsigned long fc;
+अटल अंतरभूत पूर्णांक __xts_paes_set_key(काष्ठा s390_pxts_ctx *ctx)
+अणु
+	अचिन्हित दीर्घ fc;
 
-	if (__xts_paes_convert_key(ctx))
-		return -EINVAL;
+	अगर (__xts_paes_convert_key(ctx))
+		वापस -EINVAL;
 
-	if (ctx->pk[0].type != ctx->pk[1].type)
-		return -EINVAL;
+	अगर (ctx->pk[0].type != ctx->pk[1].type)
+		वापस -EINVAL;
 
-	/* Pick the correct function code based on the protected key type */
+	/* Pick the correct function code based on the रक्षित key type */
 	fc = (ctx->pk[0].type == PKEY_KEYTYPE_AES_128) ? CPACF_KM_PXTS_128 :
 		(ctx->pk[0].type == PKEY_KEYTYPE_AES_256) ?
 		CPACF_KM_PXTS_256 : 0;
 
-	/* Check if the function code is available */
+	/* Check अगर the function code is available */
 	ctx->fc = (fc && cpacf_test_func(&km_functions, fc)) ? fc : 0;
 
-	return ctx->fc ? 0 : -EINVAL;
-}
+	वापस ctx->fc ? 0 : -EINVAL;
+पूर्ण
 
-static int xts_paes_set_key(struct crypto_skcipher *tfm, const u8 *in_key,
-			    unsigned int xts_key_len)
-{
-	int rc;
-	struct s390_pxts_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक xts_paes_set_key(काष्ठा crypto_skcipher *tfm, स्थिर u8 *in_key,
+			    अचिन्हित पूर्णांक xts_key_len)
+अणु
+	पूर्णांक rc;
+	काष्ठा s390_pxts_ctx *ctx = crypto_skcipher_ctx(tfm);
 	u8 ckey[2 * AES_MAX_KEY_SIZE];
-	unsigned int ckey_len, key_len;
+	अचिन्हित पूर्णांक ckey_len, key_len;
 
-	if (xts_key_len % 2)
-		return -EINVAL;
+	अगर (xts_key_len % 2)
+		वापस -EINVAL;
 
 	key_len = xts_key_len / 2;
 
-	_free_kb_keybuf(&ctx->kb[0]);
-	_free_kb_keybuf(&ctx->kb[1]);
+	_मुक्त_kb_keybuf(&ctx->kb[0]);
+	_मुक्त_kb_keybuf(&ctx->kb[1]);
 	rc = _key_to_kb(&ctx->kb[0], in_key, key_len);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = _key_to_kb(&ctx->kb[1], in_key + key_len, key_len);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = __xts_paes_set_key(ctx);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/*
-	 * xts_check_key verifies the key length is not odd and makes
-	 * sure that the two keys are not the same. This can be done
-	 * on the two protected keys as well
+	 * xts_check_key verअगरies the key length is not odd and makes
+	 * sure that the two keys are not the same. This can be करोne
+	 * on the two रक्षित keys as well
 	 */
 	ckey_len = (ctx->pk[0].type == PKEY_KEYTYPE_AES_128) ?
 		AES_KEYSIZE_128 : AES_KEYSIZE_256;
-	memcpy(ckey, ctx->pk[0].protkey, ckey_len);
-	memcpy(ckey + ckey_len, ctx->pk[1].protkey, ckey_len);
-	return xts_verify_key(tfm, ckey, 2*ckey_len);
-}
+	स_नकल(ckey, ctx->pk[0].protkey, ckey_len);
+	स_नकल(ckey + ckey_len, ctx->pk[1].protkey, ckey_len);
+	वापस xts_verअगरy_key(tfm, ckey, 2*ckey_len);
+पूर्ण
 
-static int xts_paes_crypt(struct skcipher_request *req, unsigned long modifier)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct s390_pxts_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct skcipher_walk walk;
-	unsigned int keylen, offset, nbytes, n, k;
-	int ret;
-	struct {
-		u8 key[MAXPROTKEYSIZE];	/* key + verification pattern */
+अटल पूर्णांक xts_paes_crypt(काष्ठा skcipher_request *req, अचिन्हित दीर्घ modअगरier)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा s390_pxts_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक keylen, offset, nbytes, n, k;
+	पूर्णांक ret;
+	काष्ठा अणु
+		u8 key[MAXPROTKEYSIZE];	/* key + verअगरication pattern */
 		u8 tweak[16];
 		u8 block[16];
 		u8 bit[16];
 		u8 xts[16];
-	} pcc_param;
-	struct {
-		u8 key[MAXPROTKEYSIZE];	/* key + verification pattern */
+	पूर्ण pcc_param;
+	काष्ठा अणु
+		u8 key[MAXPROTKEYSIZE];	/* key + verअगरication pattern */
 		u8 init[16];
-	} xts_param;
+	पूर्ण xts_param;
 
 	ret = skcipher_walk_virt(&walk, req, false);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	keylen = (ctx->pk[0].type == PKEY_KEYTYPE_AES_128) ? 48 : 64;
 	offset = (ctx->pk[0].type == PKEY_KEYTYPE_AES_128) ? 16 : 0;
 
-	memset(&pcc_param, 0, sizeof(pcc_param));
-	memcpy(pcc_param.tweak, walk.iv, sizeof(pcc_param.tweak));
+	स_रखो(&pcc_param, 0, माप(pcc_param));
+	स_नकल(pcc_param.tweak, walk.iv, माप(pcc_param.tweak));
 	spin_lock_bh(&ctx->pk_lock);
-	memcpy(pcc_param.key + offset, ctx->pk[1].protkey, keylen);
-	memcpy(xts_param.key + offset, ctx->pk[0].protkey, keylen);
+	स_नकल(pcc_param.key + offset, ctx->pk[1].protkey, keylen);
+	स_नकल(xts_param.key + offset, ctx->pk[0].protkey, keylen);
 	spin_unlock_bh(&ctx->pk_lock);
 	cpacf_pcc(ctx->fc, pcc_param.key + offset);
-	memcpy(xts_param.init, pcc_param.xts, 16);
+	स_नकल(xts_param.init, pcc_param.xts, 16);
 
-	while ((nbytes = walk.nbytes) != 0) {
+	जबतक ((nbytes = walk.nbytes) != 0) अणु
 		/* only use complete blocks */
 		n = nbytes & ~(AES_BLOCK_SIZE - 1);
-		k = cpacf_km(ctx->fc | modifier, xts_param.key + offset,
+		k = cpacf_km(ctx->fc | modअगरier, xts_param.key + offset,
 			     walk.dst.virt.addr, walk.src.virt.addr, n);
-		if (k)
-			ret = skcipher_walk_done(&walk, nbytes - k);
-		if (k < n) {
-			if (__xts_paes_convert_key(ctx))
-				return skcipher_walk_done(&walk, -EIO);
+		अगर (k)
+			ret = skcipher_walk_करोne(&walk, nbytes - k);
+		अगर (k < n) अणु
+			अगर (__xts_paes_convert_key(ctx))
+				वापस skcipher_walk_करोne(&walk, -EIO);
 			spin_lock_bh(&ctx->pk_lock);
-			memcpy(xts_param.key + offset,
+			स_नकल(xts_param.key + offset,
 			       ctx->pk[0].protkey, keylen);
 			spin_unlock_bh(&ctx->pk_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xts_paes_encrypt(struct skcipher_request *req)
-{
-	return xts_paes_crypt(req, 0);
-}
+अटल पूर्णांक xts_paes_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस xts_paes_crypt(req, 0);
+पूर्ण
 
-static int xts_paes_decrypt(struct skcipher_request *req)
-{
-	return xts_paes_crypt(req, CPACF_DECRYPT);
-}
+अटल पूर्णांक xts_paes_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस xts_paes_crypt(req, CPACF_DECRYPT);
+पूर्ण
 
-static struct skcipher_alg xts_paes_alg = {
+अटल काष्ठा skcipher_alg xts_paes_alg = अणु
 	.base.cra_name		=	"xts(paes)",
 	.base.cra_driver_name	=	"xts-paes-s390",
 	.base.cra_priority	=	402,	/* ecb-paes-s390 + 1 */
 	.base.cra_blocksize	=	AES_BLOCK_SIZE,
-	.base.cra_ctxsize	=	sizeof(struct s390_pxts_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_pxts_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.base.cra_list		=	LIST_HEAD_INIT(xts_paes_alg.base.cra_list),
 	.init			=	xts_paes_init,
-	.exit			=	xts_paes_exit,
+	.निकास			=	xts_paes_निकास,
 	.min_keysize		=	2 * PAES_MIN_KEYSIZE,
 	.max_keysize		=	2 * PAES_MAX_KEYSIZE,
 	.ivsize			=	AES_BLOCK_SIZE,
 	.setkey			=	xts_paes_set_key,
 	.encrypt		=	xts_paes_encrypt,
 	.decrypt		=	xts_paes_decrypt,
-};
+पूर्ण;
 
-static int ctr_paes_init(struct crypto_skcipher *tfm)
-{
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक ctr_paes_init(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	ctx->kb.key = NULL;
+	ctx->kb.key = शून्य;
 	spin_lock_init(&ctx->pk_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ctr_paes_exit(struct crypto_skcipher *tfm)
-{
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल व्योम ctr_paes_निकास(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	_free_kb_keybuf(&ctx->kb);
-}
+	_मुक्त_kb_keybuf(&ctx->kb);
+पूर्ण
 
-static inline int __ctr_paes_set_key(struct s390_paes_ctx *ctx)
-{
-	int rc;
-	unsigned long fc;
+अटल अंतरभूत पूर्णांक __ctr_paes_set_key(काष्ठा s390_paes_ctx *ctx)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ fc;
 
 	rc = __paes_convert_key(ctx);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Pick the correct function code based on the protected key type */
+	/* Pick the correct function code based on the रक्षित key type */
 	fc = (ctx->pk.type == PKEY_KEYTYPE_AES_128) ? CPACF_KMCTR_PAES_128 :
 		(ctx->pk.type == PKEY_KEYTYPE_AES_192) ? CPACF_KMCTR_PAES_192 :
 		(ctx->pk.type == PKEY_KEYTYPE_AES_256) ?
 		CPACF_KMCTR_PAES_256 : 0;
 
-	/* Check if the function code is available */
+	/* Check अगर the function code is available */
 	ctx->fc = (fc && cpacf_test_func(&kmctr_functions, fc)) ? fc : 0;
 
-	return ctx->fc ? 0 : -EINVAL;
-}
+	वापस ctx->fc ? 0 : -EINVAL;
+पूर्ण
 
-static int ctr_paes_set_key(struct crypto_skcipher *tfm, const u8 *in_key,
-			    unsigned int key_len)
-{
-	int rc;
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक ctr_paes_set_key(काष्ठा crypto_skcipher *tfm, स्थिर u8 *in_key,
+			    अचिन्हित पूर्णांक key_len)
+अणु
+	पूर्णांक rc;
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	_free_kb_keybuf(&ctx->kb);
+	_मुक्त_kb_keybuf(&ctx->kb);
 	rc = _key_to_kb(&ctx->kb, in_key, key_len);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return __ctr_paes_set_key(ctx);
-}
+	वापस __ctr_paes_set_key(ctx);
+पूर्ण
 
-static unsigned int __ctrblk_init(u8 *ctrptr, u8 *iv, unsigned int nbytes)
-{
-	unsigned int i, n;
+अटल अचिन्हित पूर्णांक __ctrblk_init(u8 *ctrptr, u8 *iv, अचिन्हित पूर्णांक nbytes)
+अणु
+	अचिन्हित पूर्णांक i, n;
 
 	/* only use complete blocks, max. PAGE_SIZE */
-	memcpy(ctrptr, iv, AES_BLOCK_SIZE);
+	स_नकल(ctrptr, iv, AES_BLOCK_SIZE);
 	n = (nbytes > PAGE_SIZE) ? PAGE_SIZE : nbytes & ~(AES_BLOCK_SIZE - 1);
-	for (i = (n / AES_BLOCK_SIZE) - 1; i > 0; i--) {
-		memcpy(ctrptr + AES_BLOCK_SIZE, ctrptr, AES_BLOCK_SIZE);
+	क्रम (i = (n / AES_BLOCK_SIZE) - 1; i > 0; i--) अणु
+		स_नकल(ctrptr + AES_BLOCK_SIZE, ctrptr, AES_BLOCK_SIZE);
 		crypto_inc(ctrptr + AES_BLOCK_SIZE, AES_BLOCK_SIZE);
 		ctrptr += AES_BLOCK_SIZE;
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-static int ctr_paes_crypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक ctr_paes_crypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा s390_paes_ctx *ctx = crypto_skcipher_ctx(tfm);
 	u8 buf[AES_BLOCK_SIZE], *ctrptr;
-	struct skcipher_walk walk;
-	unsigned int nbytes, n, k;
-	int ret, locked;
-	struct {
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes, n, k;
+	पूर्णांक ret, locked;
+	काष्ठा अणु
 		u8 key[MAXPROTKEYSIZE];
-	} param;
+	पूर्ण param;
 
 	ret = skcipher_walk_virt(&walk, req, false);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_bh(&ctx->pk_lock);
-	memcpy(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
+	स_नकल(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
 	spin_unlock_bh(&ctx->pk_lock);
 
 	locked = mutex_trylock(&ctrblk_lock);
 
-	while ((nbytes = walk.nbytes) >= AES_BLOCK_SIZE) {
+	जबतक ((nbytes = walk.nbytes) >= AES_BLOCK_SIZE) अणु
 		n = AES_BLOCK_SIZE;
-		if (nbytes >= 2*AES_BLOCK_SIZE && locked)
+		अगर (nbytes >= 2*AES_BLOCK_SIZE && locked)
 			n = __ctrblk_init(ctrblk, walk.iv, nbytes);
 		ctrptr = (n > AES_BLOCK_SIZE) ? ctrblk : walk.iv;
 		k = cpacf_kmctr(ctx->fc, &param, walk.dst.virt.addr,
 				walk.src.virt.addr, n, ctrptr);
-		if (k) {
-			if (ctrptr == ctrblk)
-				memcpy(walk.iv, ctrptr + k - AES_BLOCK_SIZE,
+		अगर (k) अणु
+			अगर (ctrptr == ctrblk)
+				स_नकल(walk.iv, ctrptr + k - AES_BLOCK_SIZE,
 				       AES_BLOCK_SIZE);
 			crypto_inc(walk.iv, AES_BLOCK_SIZE);
-			ret = skcipher_walk_done(&walk, nbytes - k);
-		}
-		if (k < n) {
-			if (__paes_convert_key(ctx)) {
-				if (locked)
+			ret = skcipher_walk_करोne(&walk, nbytes - k);
+		पूर्ण
+		अगर (k < n) अणु
+			अगर (__paes_convert_key(ctx)) अणु
+				अगर (locked)
 					mutex_unlock(&ctrblk_lock);
-				return skcipher_walk_done(&walk, -EIO);
-			}
+				वापस skcipher_walk_करोne(&walk, -EIO);
+			पूर्ण
 			spin_lock_bh(&ctx->pk_lock);
-			memcpy(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
+			स_नकल(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
 			spin_unlock_bh(&ctx->pk_lock);
-		}
-	}
-	if (locked)
+		पूर्ण
+	पूर्ण
+	अगर (locked)
 		mutex_unlock(&ctrblk_lock);
 	/*
 	 * final block may be < AES_BLOCK_SIZE, copy only nbytes
 	 */
-	if (nbytes) {
-		while (1) {
-			if (cpacf_kmctr(ctx->fc, &param, buf,
+	अगर (nbytes) अणु
+		जबतक (1) अणु
+			अगर (cpacf_kmctr(ctx->fc, &param, buf,
 					walk.src.virt.addr, AES_BLOCK_SIZE,
 					walk.iv) == AES_BLOCK_SIZE)
-				break;
-			if (__paes_convert_key(ctx))
-				return skcipher_walk_done(&walk, -EIO);
+				अवरोध;
+			अगर (__paes_convert_key(ctx))
+				वापस skcipher_walk_करोne(&walk, -EIO);
 			spin_lock_bh(&ctx->pk_lock);
-			memcpy(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
+			स_नकल(param.key, ctx->pk.protkey, MAXPROTKEYSIZE);
 			spin_unlock_bh(&ctx->pk_lock);
-		}
-		memcpy(walk.dst.virt.addr, buf, nbytes);
+		पूर्ण
+		स_नकल(walk.dst.virt.addr, buf, nbytes);
 		crypto_inc(walk.iv, AES_BLOCK_SIZE);
-		ret = skcipher_walk_done(&walk, nbytes);
-	}
+		ret = skcipher_walk_करोne(&walk, nbytes);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct skcipher_alg ctr_paes_alg = {
+अटल काष्ठा skcipher_alg ctr_paes_alg = अणु
 	.base.cra_name		=	"ctr(paes)",
 	.base.cra_driver_name	=	"ctr-paes-s390",
 	.base.cra_priority	=	402,	/* ecb-paes-s390 + 1 */
 	.base.cra_blocksize	=	1,
-	.base.cra_ctxsize	=	sizeof(struct s390_paes_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_paes_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.base.cra_list		=	LIST_HEAD_INIT(ctr_paes_alg.base.cra_list),
 	.init			=	ctr_paes_init,
-	.exit			=	ctr_paes_exit,
+	.निकास			=	ctr_paes_निकास,
 	.min_keysize		=	PAES_MIN_KEYSIZE,
 	.max_keysize		=	PAES_MAX_KEYSIZE,
 	.ivsize			=	AES_BLOCK_SIZE,
@@ -724,77 +725,77 @@ static struct skcipher_alg ctr_paes_alg = {
 	.encrypt		=	ctr_paes_crypt,
 	.decrypt		=	ctr_paes_crypt,
 	.chunksize		=	AES_BLOCK_SIZE,
-};
+पूर्ण;
 
-static inline void __crypto_unregister_skcipher(struct skcipher_alg *alg)
-{
-	if (!list_empty(&alg->base.cra_list))
-		crypto_unregister_skcipher(alg);
-}
+अटल अंतरभूत व्योम __crypto_unरेजिस्टर_skcipher(काष्ठा skcipher_alg *alg)
+अणु
+	अगर (!list_empty(&alg->base.cra_list))
+		crypto_unरेजिस्टर_skcipher(alg);
+पूर्ण
 
-static void paes_s390_fini(void)
-{
-	__crypto_unregister_skcipher(&ctr_paes_alg);
-	__crypto_unregister_skcipher(&xts_paes_alg);
-	__crypto_unregister_skcipher(&cbc_paes_alg);
-	__crypto_unregister_skcipher(&ecb_paes_alg);
-	if (ctrblk)
-		free_page((unsigned long) ctrblk);
-}
+अटल व्योम paes_s390_fini(व्योम)
+अणु
+	__crypto_unरेजिस्टर_skcipher(&ctr_paes_alg);
+	__crypto_unरेजिस्टर_skcipher(&xts_paes_alg);
+	__crypto_unरेजिस्टर_skcipher(&cbc_paes_alg);
+	__crypto_unरेजिस्टर_skcipher(&ecb_paes_alg);
+	अगर (ctrblk)
+		मुक्त_page((अचिन्हित दीर्घ) ctrblk);
+पूर्ण
 
-static int __init paes_s390_init(void)
-{
-	int ret;
+अटल पूर्णांक __init paes_s390_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	/* Query available functions for KM, KMC and KMCTR */
+	/* Query available functions क्रम KM, KMC and KMCTR */
 	cpacf_query(CPACF_KM, &km_functions);
 	cpacf_query(CPACF_KMC, &kmc_functions);
 	cpacf_query(CPACF_KMCTR, &kmctr_functions);
 
-	if (cpacf_test_func(&km_functions, CPACF_KM_PAES_128) ||
+	अगर (cpacf_test_func(&km_functions, CPACF_KM_PAES_128) ||
 	    cpacf_test_func(&km_functions, CPACF_KM_PAES_192) ||
-	    cpacf_test_func(&km_functions, CPACF_KM_PAES_256)) {
-		ret = crypto_register_skcipher(&ecb_paes_alg);
-		if (ret)
-			goto out_err;
-	}
+	    cpacf_test_func(&km_functions, CPACF_KM_PAES_256)) अणु
+		ret = crypto_रेजिस्टर_skcipher(&ecb_paes_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
 
-	if (cpacf_test_func(&kmc_functions, CPACF_KMC_PAES_128) ||
+	अगर (cpacf_test_func(&kmc_functions, CPACF_KMC_PAES_128) ||
 	    cpacf_test_func(&kmc_functions, CPACF_KMC_PAES_192) ||
-	    cpacf_test_func(&kmc_functions, CPACF_KMC_PAES_256)) {
-		ret = crypto_register_skcipher(&cbc_paes_alg);
-		if (ret)
-			goto out_err;
-	}
+	    cpacf_test_func(&kmc_functions, CPACF_KMC_PAES_256)) अणु
+		ret = crypto_रेजिस्टर_skcipher(&cbc_paes_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
 
-	if (cpacf_test_func(&km_functions, CPACF_KM_PXTS_128) ||
-	    cpacf_test_func(&km_functions, CPACF_KM_PXTS_256)) {
-		ret = crypto_register_skcipher(&xts_paes_alg);
-		if (ret)
-			goto out_err;
-	}
+	अगर (cpacf_test_func(&km_functions, CPACF_KM_PXTS_128) ||
+	    cpacf_test_func(&km_functions, CPACF_KM_PXTS_256)) अणु
+		ret = crypto_रेजिस्टर_skcipher(&xts_paes_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
 
-	if (cpacf_test_func(&kmctr_functions, CPACF_KMCTR_PAES_128) ||
+	अगर (cpacf_test_func(&kmctr_functions, CPACF_KMCTR_PAES_128) ||
 	    cpacf_test_func(&kmctr_functions, CPACF_KMCTR_PAES_192) ||
-	    cpacf_test_func(&kmctr_functions, CPACF_KMCTR_PAES_256)) {
-		ctrblk = (u8 *) __get_free_page(GFP_KERNEL);
-		if (!ctrblk) {
+	    cpacf_test_func(&kmctr_functions, CPACF_KMCTR_PAES_256)) अणु
+		ctrblk = (u8 *) __get_मुक्त_page(GFP_KERNEL);
+		अगर (!ctrblk) अणु
 			ret = -ENOMEM;
-			goto out_err;
-		}
-		ret = crypto_register_skcipher(&ctr_paes_alg);
-		if (ret)
-			goto out_err;
-	}
+			जाओ out_err;
+		पूर्ण
+		ret = crypto_रेजिस्टर_skcipher(&ctr_paes_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out_err:
 	paes_s390_fini();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 module_init(paes_s390_init);
-module_exit(paes_s390_fini);
+module_निकास(paes_s390_fini);
 
 MODULE_ALIAS_CRYPTO("paes");
 

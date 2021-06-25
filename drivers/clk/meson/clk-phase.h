@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2019 BayLibre, SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
-#ifndef __MESON_CLK_PHASE_H
-#define __MESON_CLK_PHASE_H
+#अगर_अघोषित __MESON_CLK_PHASE_H
+#घोषणा __MESON_CLK_PHASE_H
 
-#include <linux/clk-provider.h>
-#include "parm.h"
+#समावेश <linux/clk-provider.h>
+#समावेश "parm.h"
 
-struct meson_clk_phase_data {
-	struct parm ph;
-};
+काष्ठा meson_clk_phase_data अणु
+	काष्ठा parm ph;
+पूर्ण;
 
-struct meson_clk_triphase_data {
-	struct parm ph0;
-	struct parm ph1;
-	struct parm ph2;
-};
+काष्ठा meson_clk_triphase_data अणु
+	काष्ठा parm ph0;
+	काष्ठा parm ph1;
+	काष्ठा parm ph2;
+पूर्ण;
 
-struct meson_sclk_ws_inv_data {
-	struct parm ph;
-	struct parm ws;
-};
+काष्ठा meson_sclk_ws_inv_data अणु
+	काष्ठा parm ph;
+	काष्ठा parm ws;
+पूर्ण;
 
-extern const struct clk_ops meson_clk_phase_ops;
-extern const struct clk_ops meson_clk_triphase_ops;
-extern const struct clk_ops meson_sclk_ws_inv_ops;
+बाह्य स्थिर काष्ठा clk_ops meson_clk_phase_ops;
+बाह्य स्थिर काष्ठा clk_ops meson_clk_triphase_ops;
+बाह्य स्थिर काष्ठा clk_ops meson_sclk_ws_inv_ops;
 
-#endif /* __MESON_CLK_PHASE_H */
+#पूर्ण_अगर /* __MESON_CLK_PHASE_H */

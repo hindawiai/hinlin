@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * alternative runtime patching
+ * alternative runसमय patching
  * inspired by the x86 version
  *
  * Copyright (C) 2014 ARM Ltd.
  */
 
-#define pr_fmt(fmt) "alternatives: " fmt
+#घोषणा pr_fmt(fmt) "alternatives: " fmt
 
-#include <linux/init.h>
-#include <linux/cpu.h>
-#include <asm/cacheflush.h>
-#include <asm/alternative.h>
-#include <asm/cpufeature.h>
-#include <asm/insn.h>
-#include <asm/sections.h>
-#include <linux/stop_machine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpu.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/alternative.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/insn.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <linux/stop_machine.h>
 
-#define __ALT_PTR(a, f)		((void *)&(a)->f + (a)->f)
-#define ALT_ORIG_PTR(a)		__ALT_PTR(a, orig_offset)
-#define ALT_REPL_PTR(a)		__ALT_PTR(a, alt_offset)
+#घोषणा __ALT_PTR(a, f)		((व्योम *)&(a)->f + (a)->f)
+#घोषणा ALT_ORIG_PTR(a)		__ALT_PTR(a, orig_offset)
+#घोषणा ALT_REPL_PTR(a)		__ALT_PTR(a, alt_offset)
 
 /* Volatile, as we may be patching the guts of READ_ONCE() */
-static volatile int all_alternatives_applied;
+अटल अस्थिर पूर्णांक all_alternatives_applied;
 
-static DECLARE_BITMAP(applied_alternatives, ARM64_NCAPS);
+अटल DECLARE_BITMAP(applied_alternatives, ARM64_NCAPS);
 
-struct alt_region {
-	struct alt_instr *begin;
-	struct alt_instr *end;
-};
+काष्ठा alt_region अणु
+	काष्ठा alt_instr *begin;
+	काष्ठा alt_instr *end;
+पूर्ण;
 
 bool alternative_is_applied(u16 cpufeature)
-{
-	if (WARN_ON(cpufeature >= ARM64_NCAPS))
-		return false;
+अणु
+	अगर (WARN_ON(cpufeature >= ARM64_NCAPS))
+		वापस false;
 
-	return test_bit(cpufeature, applied_alternatives);
-}
+	वापस test_bit(cpufeature, applied_alternatives);
+पूर्ण
 
 /*
- * Check if the target PC is within an alternative block.
+ * Check अगर the target PC is within an alternative block.
  */
-static bool branch_insn_requires_update(struct alt_instr *alt, unsigned long pc)
-{
-	unsigned long replptr = (unsigned long)ALT_REPL_PTR(alt);
-	return !(pc >= replptr && pc <= (replptr + alt->alt_len));
-}
+अटल bool branch_insn_requires_update(काष्ठा alt_instr *alt, अचिन्हित दीर्घ pc)
+अणु
+	अचिन्हित दीर्घ replptr = (अचिन्हित दीर्घ)ALT_REPL_PTR(alt);
+	वापस !(pc >= replptr && pc <= (replptr + alt->alt_len));
+पूर्ण
 
-#define align_down(x, a)	((unsigned long)(x) & ~(((unsigned long)(a)) - 1))
+#घोषणा align_करोwn(x, a)	((अचिन्हित दीर्घ)(x) & ~(((अचिन्हित दीर्घ)(a)) - 1))
 
-static u32 get_alt_insn(struct alt_instr *alt, __le32 *insnptr, __le32 *altinsnptr)
-{
+अटल u32 get_alt_insn(काष्ठा alt_instr *alt, __le32 *insnptr, __le32 *altinsnptr)
+अणु
 	u32 insn;
 
 	insn = le32_to_cpu(*altinsnptr);
 
-	if (aarch64_insn_is_branch_imm(insn)) {
+	अगर (aarch64_insn_is_branch_imm(insn)) अणु
 		s32 offset = aarch64_get_branch_offset(insn);
-		unsigned long target;
+		अचिन्हित दीर्घ target;
 
-		target = (unsigned long)altinsnptr + offset;
+		target = (अचिन्हित दीर्घ)altinsnptr + offset;
 
 		/*
 		 * If we're branching inside the alternate sequence,
-		 * do not rewrite the instruction, as it is already
-		 * correct. Otherwise, generate the new instruction.
+		 * करो not reग_लिखो the inकाष्ठाion, as it is alपढ़ोy
+		 * correct. Otherwise, generate the new inकाष्ठाion.
 		 */
-		if (branch_insn_requires_update(alt, target)) {
-			offset = target - (unsigned long)insnptr;
+		अगर (branch_insn_requires_update(alt, target)) अणु
+			offset = target - (अचिन्हित दीर्घ)insnptr;
 			insn = aarch64_set_branch_offset(insn, offset);
-		}
-	} else if (aarch64_insn_is_adrp(insn)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (aarch64_insn_is_adrp(insn)) अणु
 		s32 orig_offset, new_offset;
-		unsigned long target;
+		अचिन्हित दीर्घ target;
 
 		/*
-		 * If we're replacing an adrp instruction, which uses PC-relative
+		 * If we're replacing an adrp inकाष्ठाion, which uses PC-relative
 		 * immediate addressing, adjust the offset to reflect the new
 		 * PC. adrp operates on 4K aligned addresses.
 		 */
 		orig_offset  = aarch64_insn_adrp_get_offset(insn);
-		target = align_down(altinsnptr, SZ_4K) + orig_offset;
-		new_offset = target - align_down(insnptr, SZ_4K);
+		target = align_करोwn(altinsnptr, SZ_4K) + orig_offset;
+		new_offset = target - align_करोwn(insnptr, SZ_4K);
 		insn = aarch64_insn_adrp_set_offset(insn, new_offset);
-	} else if (aarch64_insn_uses_literal(insn)) {
+	पूर्ण अन्यथा अगर (aarch64_insn_uses_literal(insn)) अणु
 		/*
-		 * Disallow patching unhandled instructions using PC relative
+		 * Disallow patching unhandled inकाष्ठाions using PC relative
 		 * literal addresses
 		 */
 		BUG();
-	}
+	पूर्ण
 
-	return insn;
-}
+	वापस insn;
+पूर्ण
 
-static void patch_alternative(struct alt_instr *alt,
-			      __le32 *origptr, __le32 *updptr, int nr_inst)
-{
+अटल व्योम patch_alternative(काष्ठा alt_instr *alt,
+			      __le32 *origptr, __le32 *updptr, पूर्णांक nr_inst)
+अणु
 	__le32 *replptr;
-	int i;
+	पूर्णांक i;
 
 	replptr = ALT_REPL_PTR(alt);
-	for (i = 0; i < nr_inst; i++) {
+	क्रम (i = 0; i < nr_inst; i++) अणु
 		u32 insn;
 
 		insn = get_alt_insn(alt, origptr + i, replptr + i);
 		updptr[i] = cpu_to_le32(insn);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * We provide our own, private D-cache cleaning function so that we don't
- * accidentally call into the cache.S code, which is patched by us at
- * runtime.
+ * We provide our own, निजी D-cache cleaning function so that we करोn't
+ * accidentally call पूर्णांकo the cache.S code, which is patched by us at
+ * runसमय.
  */
-static void clean_dcache_range_nopatch(u64 start, u64 end)
-{
+अटल व्योम clean_dcache_range_nopatch(u64 start, u64 end)
+अणु
 	u64 cur, d_size, ctr_el0;
 
-	ctr_el0 = read_sanitised_ftr_reg(SYS_CTR_EL0);
-	d_size = 4 << cpuid_feature_extract_unsigned_field(ctr_el0,
+	ctr_el0 = पढ़ो_sanitised_ftr_reg(SYS_CTR_EL0);
+	d_size = 4 << cpuid_feature_extract_अचिन्हित_field(ctr_el0,
 							   CTR_DMINLINE_SHIFT);
 	cur = start & ~(d_size - 1);
-	do {
+	करो अणु
 		/*
-		 * We must clean+invalidate to the PoC in order to avoid
+		 * We must clean+invalidate to the PoC in order to aव्योम
 		 * Cortex-A53 errata 826319, 827319, 824069 and 819472
 		 * (this corresponds to ARM64_WORKAROUND_CLEAN_CACHE)
 		 */
-		asm volatile("dc civac, %0" : : "r" (cur) : "memory");
-	} while (cur += d_size, cur < end);
-}
+		यंत्र अस्थिर("dc civac, %0" : : "r" (cur) : "memory");
+	पूर्ण जबतक (cur += d_size, cur < end);
+पूर्ण
 
-static void __nocfi __apply_alternatives(struct alt_region *region, bool is_module,
-				 unsigned long *feature_mask)
-{
-	struct alt_instr *alt;
+अटल व्योम __nocfi __apply_alternatives(काष्ठा alt_region *region, bool is_module,
+				 अचिन्हित दीर्घ *feature_mask)
+अणु
+	काष्ठा alt_instr *alt;
 	__le32 *origptr, *updptr;
 	alternative_cb_t alt_cb;
 
-	for (alt = region->begin; alt < region->end; alt++) {
-		int nr_inst;
+	क्रम (alt = region->begin; alt < region->end; alt++) अणु
+		पूर्णांक nr_inst;
 
-		if (!test_bit(alt->cpufeature, feature_mask))
-			continue;
+		अगर (!test_bit(alt->cpufeature, feature_mask))
+			जारी;
 
 		/* Use ARM64_CB_PATCH as an unconditional patch */
-		if (alt->cpufeature < ARM64_CB_PATCH &&
+		अगर (alt->cpufeature < ARM64_CB_PATCH &&
 		    !cpus_have_cap(alt->cpufeature))
-			continue;
+			जारी;
 
-		if (alt->cpufeature == ARM64_CB_PATCH)
+		अगर (alt->cpufeature == ARM64_CB_PATCH)
 			BUG_ON(alt->alt_len != 0);
-		else
+		अन्यथा
 			BUG_ON(alt->alt_len != alt->orig_len);
 
 		pr_info_once("patching kernel code\n");
@@ -162,102 +163,102 @@ static void __nocfi __apply_alternatives(struct alt_region *region, bool is_modu
 		updptr = is_module ? origptr : lm_alias(origptr);
 		nr_inst = alt->orig_len / AARCH64_INSN_SIZE;
 
-		if (alt->cpufeature < ARM64_CB_PATCH)
+		अगर (alt->cpufeature < ARM64_CB_PATCH)
 			alt_cb = patch_alternative;
-		else
+		अन्यथा
 			alt_cb  = ALT_REPL_PTR(alt);
 
 		alt_cb(alt, origptr, updptr, nr_inst);
 
-		if (!is_module) {
+		अगर (!is_module) अणु
 			clean_dcache_range_nopatch((u64)origptr,
 						   (u64)(origptr + nr_inst));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * The core module code takes care of cache maintenance in
+	 * The core module code takes care of cache मुख्यtenance in
 	 * flush_module_icache().
 	 */
-	if (!is_module) {
+	अगर (!is_module) अणु
 		dsb(ish);
 		__flush_icache_all();
 		isb();
 
 		/* Ignore ARM64_CB bit from feature mask */
-		bitmap_or(applied_alternatives, applied_alternatives,
+		biपंचांगap_or(applied_alternatives, applied_alternatives,
 			  feature_mask, ARM64_NCAPS);
-		bitmap_and(applied_alternatives, applied_alternatives,
+		biपंचांगap_and(applied_alternatives, applied_alternatives,
 			   cpu_hwcaps, ARM64_NCAPS);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * We might be patching the stop_machine state machine, so implement a
  * really simple polling protocol here.
  */
-static int __apply_alternatives_multi_stop(void *unused)
-{
-	struct alt_region region = {
-		.begin	= (struct alt_instr *)__alt_instructions,
-		.end	= (struct alt_instr *)__alt_instructions_end,
-	};
+अटल पूर्णांक __apply_alternatives_multi_stop(व्योम *unused)
+अणु
+	काष्ठा alt_region region = अणु
+		.begin	= (काष्ठा alt_instr *)__alt_inकाष्ठाions,
+		.end	= (काष्ठा alt_instr *)__alt_inकाष्ठाions_end,
+	पूर्ण;
 
-	/* We always have a CPU 0 at this point (__init) */
-	if (smp_processor_id()) {
-		while (!all_alternatives_applied)
+	/* We always have a CPU 0 at this poपूर्णांक (__init) */
+	अगर (smp_processor_id()) अणु
+		जबतक (!all_alternatives_applied)
 			cpu_relax();
 		isb();
-	} else {
-		DECLARE_BITMAP(remaining_capabilities, ARM64_NPATCHABLE);
+	पूर्ण अन्यथा अणु
+		DECLARE_BITMAP(reमुख्यing_capabilities, ARM64_NPATCHABLE);
 
-		bitmap_complement(remaining_capabilities, boot_capabilities,
+		biपंचांगap_complement(reमुख्यing_capabilities, boot_capabilities,
 				  ARM64_NPATCHABLE);
 
 		BUG_ON(all_alternatives_applied);
-		__apply_alternatives(&region, false, remaining_capabilities);
+		__apply_alternatives(&region, false, reमुख्यing_capabilities);
 		/* Barriers provided by the cache flushing */
 		all_alternatives_applied = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init apply_alternatives_all(void)
-{
-	/* better not try code patching on a live SMP system */
-	stop_machine(__apply_alternatives_multi_stop, NULL, cpu_online_mask);
-}
+व्योम __init apply_alternatives_all(व्योम)
+अणु
+	/* better not try code patching on a live SMP प्रणाली */
+	stop_machine(__apply_alternatives_multi_stop, शून्य, cpu_online_mask);
+पूर्ण
 
 /*
  * This is called very early in the boot process (directly after we run
  * a feature detect on the boot CPU). No need to worry about other CPUs
  * here.
  */
-void __init apply_boot_alternatives(void)
-{
-	struct alt_region region = {
-		.begin	= (struct alt_instr *)__alt_instructions,
-		.end	= (struct alt_instr *)__alt_instructions_end,
-	};
+व्योम __init apply_boot_alternatives(व्योम)
+अणु
+	काष्ठा alt_region region = अणु
+		.begin	= (काष्ठा alt_instr *)__alt_inकाष्ठाions,
+		.end	= (काष्ठा alt_instr *)__alt_inकाष्ठाions_end,
+	पूर्ण;
 
 	/* If called on non-boot cpu things could go wrong */
 	WARN_ON(smp_processor_id() != 0);
 
 	__apply_alternatives(&region, false, &boot_capabilities[0]);
-}
+पूर्ण
 
-#ifdef CONFIG_MODULES
-void apply_alternatives_module(void *start, size_t length)
-{
-	struct alt_region region = {
+#अगर_घोषित CONFIG_MODULES
+व्योम apply_alternatives_module(व्योम *start, माप_प्रकार length)
+अणु
+	काष्ठा alt_region region = अणु
 		.begin	= start,
 		.end	= start + length,
-	};
+	पूर्ण;
 	DECLARE_BITMAP(all_capabilities, ARM64_NPATCHABLE);
 
-	bitmap_fill(all_capabilities, ARM64_NPATCHABLE);
+	biपंचांगap_fill(all_capabilities, ARM64_NPATCHABLE);
 
 	__apply_alternatives(&region, true, &all_capabilities[0]);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

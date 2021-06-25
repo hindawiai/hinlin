@@ -1,109 +1,110 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* DVB frontend part of the Linux driver for TwinhanDTV Alpha/MagicBoxII USB2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* DVB frontend part of the Linux driver क्रम TwinhanDTV Alpha/MagicBoxII USB2.0
  * DVB-T receiver.
  *
  * Copyright (C) 2004-5 Patrick Boettcher (patrick.boettcher@posteo.de)
  *
- * Thanks to Twinhan who kindly provided hardware and information.
+ * Thanks to Twinhan who kindly provided hardware and inक्रमmation.
  *
- * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
+ * see Documentation/driver-api/media/drivers/dvb-usb.rst क्रम more inक्रमmation
  */
-#include "vp7045.h"
+#समावेश "vp7045.h"
 
 /* It is a Zarlink MT352 within a Samsung Tuner (DNOS404ZH102A) - 040929 - AAT
  *
  * Programming is hidden inside the firmware, so set_frontend is very easy.
  * Even though there is a Firmware command that one can use to access the demod
- * via its registers. This is used for status information.
+ * via its रेजिस्टरs. This is used क्रम status inक्रमmation.
  */
 
-struct vp7045_fe_state {
-	struct dvb_frontend fe;
-	struct dvb_usb_device *d;
-};
+काष्ठा vp7045_fe_state अणु
+	काष्ठा dvb_frontend fe;
+	काष्ठा dvb_usb_device *d;
+पूर्ण;
 
-static int vp7045_fe_read_status(struct dvb_frontend *fe,
-				 enum fe_status *status)
-{
-	struct vp7045_fe_state *state = fe->demodulator_priv;
-	u8 s0 = vp7045_read_reg(state->d,0x00),
-	   s1 = vp7045_read_reg(state->d,0x01),
-	   s3 = vp7045_read_reg(state->d,0x03);
+अटल पूर्णांक vp7045_fe_पढ़ो_status(काष्ठा dvb_frontend *fe,
+				 क्रमागत fe_status *status)
+अणु
+	काष्ठा vp7045_fe_state *state = fe->demodulator_priv;
+	u8 s0 = vp7045_पढ़ो_reg(state->d,0x00),
+	   s1 = vp7045_पढ़ो_reg(state->d,0x01),
+	   s3 = vp7045_पढ़ो_reg(state->d,0x03);
 
 	*status = 0;
-	if (s0 & (1 << 4))
+	अगर (s0 & (1 << 4))
 		*status |= FE_HAS_CARRIER;
-	if (s0 & (1 << 1))
+	अगर (s0 & (1 << 1))
 		*status |= FE_HAS_VITERBI;
-	if (s0 & (1 << 5))
+	अगर (s0 & (1 << 5))
 		*status |= FE_HAS_LOCK;
-	if (s1 & (1 << 1))
+	अगर (s1 & (1 << 1))
 		*status |= FE_HAS_SYNC;
-	if (s3 & (1 << 6))
+	अगर (s3 & (1 << 6))
 		*status |= FE_HAS_SIGNAL;
 
-	if ((*status & (FE_HAS_CARRIER | FE_HAS_VITERBI | FE_HAS_SYNC)) !=
+	अगर ((*status & (FE_HAS_CARRIER | FE_HAS_VITERBI | FE_HAS_SYNC)) !=
 			(FE_HAS_CARRIER | FE_HAS_VITERBI | FE_HAS_SYNC))
 		*status &= ~FE_HAS_LOCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vp7045_fe_read_ber(struct dvb_frontend* fe, u32 *ber)
-{
-	struct vp7045_fe_state *state = fe->demodulator_priv;
-	*ber = (vp7045_read_reg(state->d, 0x0D) << 16) |
-	       (vp7045_read_reg(state->d, 0x0E) << 8) |
-		vp7045_read_reg(state->d, 0x0F);
-	return 0;
-}
+अटल पूर्णांक vp7045_fe_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32 *ber)
+अणु
+	काष्ठा vp7045_fe_state *state = fe->demodulator_priv;
+	*ber = (vp7045_पढ़ो_reg(state->d, 0x0D) << 16) |
+	       (vp7045_पढ़ो_reg(state->d, 0x0E) << 8) |
+		vp7045_पढ़ो_reg(state->d, 0x0F);
+	वापस 0;
+पूर्ण
 
-static int vp7045_fe_read_unc_blocks(struct dvb_frontend* fe, u32 *unc)
-{
-	struct vp7045_fe_state *state = fe->demodulator_priv;
-	*unc = (vp7045_read_reg(state->d, 0x10) << 8) |
-		    vp7045_read_reg(state->d, 0x11);
-	return 0;
-}
+अटल पूर्णांक vp7045_fe_पढ़ो_unc_blocks(काष्ठा dvb_frontend* fe, u32 *unc)
+अणु
+	काष्ठा vp7045_fe_state *state = fe->demodulator_priv;
+	*unc = (vp7045_पढ़ो_reg(state->d, 0x10) << 8) |
+		    vp7045_पढ़ो_reg(state->d, 0x11);
+	वापस 0;
+पूर्ण
 
-static int vp7045_fe_read_signal_strength(struct dvb_frontend* fe, u16 *strength)
-{
-	struct vp7045_fe_state *state = fe->demodulator_priv;
-	u16 signal = (vp7045_read_reg(state->d, 0x14) << 8) |
-		vp7045_read_reg(state->d, 0x15);
+अटल पूर्णांक vp7045_fe_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16 *strength)
+अणु
+	काष्ठा vp7045_fe_state *state = fe->demodulator_priv;
+	u16 संकेत = (vp7045_पढ़ो_reg(state->d, 0x14) << 8) |
+		vp7045_पढ़ो_reg(state->d, 0x15);
 
-	*strength = ~signal;
-	return 0;
-}
+	*strength = ~संकेत;
+	वापस 0;
+पूर्ण
 
-static int vp7045_fe_read_snr(struct dvb_frontend* fe, u16 *snr)
-{
-	struct vp7045_fe_state *state = fe->demodulator_priv;
-	u8 _snr = vp7045_read_reg(state->d, 0x09);
+अटल पूर्णांक vp7045_fe_पढ़ो_snr(काष्ठा dvb_frontend* fe, u16 *snr)
+अणु
+	काष्ठा vp7045_fe_state *state = fe->demodulator_priv;
+	u8 _snr = vp7045_पढ़ो_reg(state->d, 0x09);
 	*snr = (_snr << 8) | _snr;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vp7045_fe_init(struct dvb_frontend* fe)
-{
-	return 0;
-}
+अटल पूर्णांक vp7045_fe_init(काष्ठा dvb_frontend* fe)
+अणु
+	वापस 0;
+पूर्ण
 
-static int vp7045_fe_sleep(struct dvb_frontend* fe)
-{
-	return 0;
-}
+अटल पूर्णांक vp7045_fe_sleep(काष्ठा dvb_frontend* fe)
+अणु
+	वापस 0;
+पूर्ण
 
-static int vp7045_fe_get_tune_settings(struct dvb_frontend* fe, struct dvb_frontend_tune_settings *tune)
-{
+अटल पूर्णांक vp7045_fe_get_tune_settings(काष्ठा dvb_frontend* fe, काष्ठा dvb_frontend_tune_settings *tune)
+अणु
 	tune->min_delay_ms = 800;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vp7045_fe_set_frontend(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *fep = &fe->dtv_property_cache;
-	struct vp7045_fe_state *state = fe->demodulator_priv;
+अटल पूर्णांक vp7045_fe_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *fep = &fe->dtv_property_cache;
+	काष्ठा vp7045_fe_state *state = fe->demodulator_priv;
 	u8 buf[5];
 	u32 freq = fep->frequency / 1000;
 
@@ -112,51 +113,51 @@ static int vp7045_fe_set_frontend(struct dvb_frontend *fe)
 	buf[2] =  freq        & 0xff;
 	buf[3] = 0;
 
-	switch (fep->bandwidth_hz) {
-	case 8000000:
+	चयन (fep->bandwidth_hz) अणु
+	हाल 8000000:
 		buf[4] = 8;
-		break;
-	case 7000000:
+		अवरोध;
+	हाल 7000000:
 		buf[4] = 7;
-		break;
-	case 6000000:
+		अवरोध;
+	हाल 6000000:
 		buf[4] = 6;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	vp7045_usb_op(state->d,LOCK_TUNER_COMMAND,buf,5,NULL,0,200);
-	return 0;
-}
+	vp7045_usb_op(state->d,LOCK_TUNER_COMMAND,buf,5,शून्य,0,200);
+	वापस 0;
+पूर्ण
 
-static void vp7045_fe_release(struct dvb_frontend* fe)
-{
-	struct vp7045_fe_state *state = fe->demodulator_priv;
-	kfree(state);
-}
+अटल व्योम vp7045_fe_release(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा vp7045_fe_state *state = fe->demodulator_priv;
+	kमुक्त(state);
+पूर्ण
 
-static const struct dvb_frontend_ops vp7045_fe_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops vp7045_fe_ops;
 
-struct dvb_frontend * vp7045_fe_attach(struct dvb_usb_device *d)
-{
-	struct vp7045_fe_state *s = kzalloc(sizeof(struct vp7045_fe_state), GFP_KERNEL);
-	if (s == NULL)
-		goto error;
+काष्ठा dvb_frontend * vp7045_fe_attach(काष्ठा dvb_usb_device *d)
+अणु
+	काष्ठा vp7045_fe_state *s = kzalloc(माप(काष्ठा vp7045_fe_state), GFP_KERNEL);
+	अगर (s == शून्य)
+		जाओ error;
 
 	s->d = d;
-	memcpy(&s->fe.ops, &vp7045_fe_ops, sizeof(struct dvb_frontend_ops));
+	स_नकल(&s->fe.ops, &vp7045_fe_ops, माप(काष्ठा dvb_frontend_ops));
 	s->fe.demodulator_priv = s;
 
-	return &s->fe;
+	वापस &s->fe;
 error:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
-static const struct dvb_frontend_ops vp7045_fe_ops = {
-	.delsys = { SYS_DVBT },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops vp7045_fe_ops = अणु
+	.delsys = अणु SYS_DVBT पूर्ण,
+	.info = अणु
 		.name			= "Twinhan VP7045/46 USB DVB-T",
 		.frequency_min_hz	=  44250 * kHz,
 		.frequency_max_hz	= 867250 * kHz,
@@ -169,7 +170,7 @@ static const struct dvb_frontend_ops vp7045_fe_ops = {
 				FE_CAN_GUARD_INTERVAL_AUTO |
 				FE_CAN_RECOVER |
 				FE_CAN_HIERARCHY_AUTO,
-	},
+	पूर्ण,
 
 	.release = vp7045_fe_release,
 
@@ -179,9 +180,9 @@ static const struct dvb_frontend_ops vp7045_fe_ops = {
 	.set_frontend = vp7045_fe_set_frontend,
 	.get_tune_settings = vp7045_fe_get_tune_settings,
 
-	.read_status = vp7045_fe_read_status,
-	.read_ber = vp7045_fe_read_ber,
-	.read_signal_strength = vp7045_fe_read_signal_strength,
-	.read_snr = vp7045_fe_read_snr,
-	.read_ucblocks = vp7045_fe_read_unc_blocks,
-};
+	.पढ़ो_status = vp7045_fe_पढ़ो_status,
+	.पढ़ो_ber = vp7045_fe_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = vp7045_fe_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = vp7045_fe_पढ़ो_snr,
+	.पढ़ो_ucblocks = vp7045_fe_पढ़ो_unc_blocks,
+पूर्ण;

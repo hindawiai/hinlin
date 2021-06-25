@@ -1,59 +1,60 @@
+<शैली गुरु>
 /*
- * High memory support for Xtensa architecture
+ * High memory support क्रम Xtensa architecture
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file "COPYING" in the main directory of
- * this archive for more details.
+ * Public License.  See the file "COPYING" in the मुख्य directory of
+ * this archive क्रम more details.
  *
  * Copyright (C) 2014 Cadence Design Systems Inc.
  */
 
-#include <linux/export.h>
-#include <linux/highmem.h>
-#include <asm/tlbflush.h>
+#समावेश <linux/export.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <यंत्र/tlbflush.h>
 
-#if DCACHE_WAY_SIZE > PAGE_SIZE
-unsigned int last_pkmap_nr_arr[DCACHE_N_COLORS];
-wait_queue_head_t pkmap_map_wait_arr[DCACHE_N_COLORS];
+#अगर DCACHE_WAY_SIZE > PAGE_SIZE
+अचिन्हित पूर्णांक last_pkmap_nr_arr[DCACHE_N_COLORS];
+रुको_queue_head_t pkmap_map_रुको_arr[DCACHE_N_COLORS];
 
-static void __init kmap_waitqueues_init(void)
-{
-	unsigned int i;
+अटल व्योम __init kmap_रुकोqueues_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(pkmap_map_wait_arr); ++i)
-		init_waitqueue_head(pkmap_map_wait_arr + i);
-}
+	क्रम (i = 0; i < ARRAY_SIZE(pkmap_map_रुको_arr); ++i)
+		init_रुकोqueue_head(pkmap_map_रुको_arr + i);
+पूर्ण
 
-static inline enum fixed_addresses kmap_idx(int type, unsigned long color)
-{
-	int idx = (type + KM_MAX_IDX * smp_processor_id()) * DCACHE_N_COLORS;
+अटल अंतरभूत क्रमागत fixed_addresses kmap_idx(पूर्णांक type, अचिन्हित दीर्घ color)
+अणु
+	पूर्णांक idx = (type + KM_MAX_IDX * smp_processor_id()) * DCACHE_N_COLORS;
 
 	/*
-	 * The fixmap operates top down, so the color offset needs to be
+	 * The fixmap operates top करोwn, so the color offset needs to be
 	 * reverse as well.
 	 */
-	return idx + DCACHE_N_COLORS - 1 - color;
-}
+	वापस idx + DCACHE_N_COLORS - 1 - color;
+पूर्ण
 
-enum fixed_addresses kmap_local_map_idx(int type, unsigned long pfn)
-{
-	return kmap_idx(type, DCACHE_ALIAS(pfn << PAGE_SHIFT));
-}
+क्रमागत fixed_addresses kmap_local_map_idx(पूर्णांक type, अचिन्हित दीर्घ pfn)
+अणु
+	वापस kmap_idx(type, DCACHE_ALIAS(pfn << PAGE_SHIFT));
+पूर्ण
 
-enum fixed_addresses kmap_local_unmap_idx(int type, unsigned long addr)
-{
-	return kmap_idx(type, DCACHE_ALIAS(addr));
-}
+क्रमागत fixed_addresses kmap_local_unmap_idx(पूर्णांक type, अचिन्हित दीर्घ addr)
+अणु
+	वापस kmap_idx(type, DCACHE_ALIAS(addr));
+पूर्ण
 
-#else
-static inline void kmap_waitqueues_init(void) { }
-#endif
+#अन्यथा
+अटल अंतरभूत व्योम kmap_रुकोqueues_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-void __init kmap_init(void)
-{
-	/* Check if this memory layout is broken because PKMAP overlaps
+व्योम __init kmap_init(व्योम)
+अणु
+	/* Check अगर this memory layout is broken because PKMAP overlaps
 	 * page table.
 	 */
 	BUILD_BUG_ON(PKMAP_BASE < TLBTEMP_BASE_1 + TLBTEMP_SIZE);
-	kmap_waitqueues_init();
-}
+	kmap_रुकोqueues_init();
+पूर्ण

@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-1.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-1.0+ */
 /*
- * OHCI HCD (Host Controller Driver) for USB.
+ * OHCI HCD (Host Controller Driver) क्रम USB.
  *
  * (C) Copyright 1999 Roman Weissgaerber <weissg@vienna.at>
- * (C) Copyright 2000-2002 David Brownell <dbrownell@users.sourceforge.net>
+ * (C) Copyright 2000-2002 David Brownell <dbrownell@users.sourceक्रमge.net>
  *
  * This file is licenced under the GPL.
  */
@@ -13,156 +14,156 @@
  * __leXX (normally) or __beXX (given OHCI_BIG_ENDIAN), depending on the
  * host controller implementation.
  */
-typedef __u32 __bitwise __hc32;
-typedef __u16 __bitwise __hc16;
+प्रकार __u32 __bitwise __hc32;
+प्रकार __u16 __bitwise __hc16;
 
 /*
- * OHCI Endpoint Descriptor (ED) ... holds TD queue
+ * OHCI Endpoपूर्णांक Descriptor (ED) ... holds TD queue
  * See OHCI spec, section 4.2
  *
- * This is a "Queue Head" for those transfers, which is why
- * both EHCI and UHCI call similar structures a "QH".
+ * This is a "Queue Head" क्रम those transfers, which is why
+ * both EHCI and UHCI call similar काष्ठाures a "QH".
  */
-struct ed {
-	/* first fields are hardware-specified */
-	__hc32			hwINFO;      /* endpoint config bitmap */
+काष्ठा ed अणु
+	/* first fields are hardware-specअगरied */
+	__hc32			hwINFO;      /* endpoपूर्णांक config biपंचांगap */
 	/* info bits defined by hcd */
-#define ED_DEQUEUE	(1 << 27)
+#घोषणा ED_DEQUEUE	(1 << 27)
 	/* info bits defined by the hardware */
-#define ED_ISO		(1 << 15)
-#define ED_SKIP		(1 << 14)
-#define ED_LOWSPEED	(1 << 13)
-#define ED_OUT		(0x01 << 11)
-#define ED_IN		(0x02 << 11)
+#घोषणा ED_ISO		(1 << 15)
+#घोषणा ED_SKIP		(1 << 14)
+#घोषणा ED_LOWSPEED	(1 << 13)
+#घोषणा ED_OUT		(0x01 << 11)
+#घोषणा ED_IN		(0x02 << 11)
 	__hc32			hwTailP;	/* tail of TD list */
 	__hc32			hwHeadP;	/* head of TD list (hc r/w) */
-#define ED_C		(0x02)			/* toggle carry */
-#define ED_H		(0x01)			/* halted */
+#घोषणा ED_C		(0x02)			/* toggle carry */
+#घोषणा ED_H		(0x01)			/* halted */
 	__hc32			hwNextED;	/* next ED in list */
 
-	/* rest are purely for the driver's use */
+	/* rest are purely क्रम the driver's use */
 	dma_addr_t		dma;		/* addr of ED */
-	struct td		*dummy;		/* next TD to activate */
+	काष्ठा td		*dummy;		/* next TD to activate */
 
 	/* host's view of schedule */
-	struct ed		*ed_next;	/* on schedule or rm_list */
-	struct ed		*ed_prev;	/* for non-interrupt EDs */
-	struct list_head	td_list;	/* "shadow list" of our TDs */
-	struct list_head	in_use_list;
+	काष्ठा ed		*ed_next;	/* on schedule or rm_list */
+	काष्ठा ed		*ed_prev;	/* क्रम non-पूर्णांकerrupt EDs */
+	काष्ठा list_head	td_list;	/* "shadow list" of our TDs */
+	काष्ठा list_head	in_use_list;
 
 	/* create --> IDLE --> OPER --> ... --> IDLE --> destroy
 	 * usually:  OPER --> UNLINK --> (IDLE | OPER) --> ...
 	 */
-	u8			state;		/* ED_{IDLE,UNLINK,OPER} */
-#define ED_IDLE		0x00		/* NOT linked to HC */
-#define ED_UNLINK	0x01		/* being unlinked from hc */
-#define ED_OPER		0x02		/* IS linked to hc */
+	u8			state;		/* ED_अणुIDLE,UNLINK,OPERपूर्ण */
+#घोषणा ED_IDLE		0x00		/* NOT linked to HC */
+#घोषणा ED_UNLINK	0x01		/* being unlinked from hc */
+#घोषणा ED_OPER		0x02		/* IS linked to hc */
 
-	u8			type;		/* PIPE_{BULK,...} */
+	u8			type;		/* PIPE_अणुBULK,...पूर्ण */
 
-	/* periodic scheduling params (for intr and iso) */
+	/* periodic scheduling params (क्रम पूर्णांकr and iso) */
 	u8			branch;
-	u16			interval;
+	u16			पूर्णांकerval;
 	u16			load;
 	u16			last_iso;	/* iso only */
 
 	/* HC may see EDs on rm_list until next frame (frame_no == tick) */
 	u16			tick;
 
-	/* Detect TDs not added to the done queue */
-	unsigned		takeback_wdh_cnt;
-	struct td		*pending_td;
-#define	OKAY_TO_TAKEBACK(ohci, ed)			\
-		((int) (ohci->wdh_cnt - ed->takeback_wdh_cnt) >= 0)
+	/* Detect TDs not added to the करोne queue */
+	अचिन्हित		takeback_wdh_cnt;
+	काष्ठा td		*pending_td;
+#घोषणा	OKAY_TO_TAKEBACK(ohci, ed)			\
+		((पूर्णांक) (ohci->wdh_cnt - ed->takeback_wdh_cnt) >= 0)
 
-} __attribute__ ((aligned(16)));
+पूर्ण __attribute__ ((aligned(16)));
 
-#define ED_MASK	((u32)~0x0f)		/* strip hw status in low addr bits */
+#घोषणा ED_MASK	((u32)~0x0f)		/* strip hw status in low addr bits */
 
 
 /*
  * OHCI Transfer Descriptor (TD) ... one per transfer segment
- * See OHCI spec, sections 4.3.1 (general = control/bulk/interrupt)
+ * See OHCI spec, sections 4.3.1 (general = control/bulk/पूर्णांकerrupt)
  * and 4.3.2 (iso)
  */
-struct td {
-	/* first fields are hardware-specified */
-	__hc32		hwINFO;		/* transfer info bitmask */
+काष्ठा td अणु
+	/* first fields are hardware-specअगरied */
+	__hc32		hwINFO;		/* transfer info biपंचांगask */
 
-	/* hwINFO bits for both general and iso tds: */
-#define TD_CC       0xf0000000			/* condition code */
-#define TD_CC_GET(td_p) ((td_p >>28) & 0x0f)
-//#define TD_CC_SET(td_p, cc) (td_p) = ((td_p) & 0x0fffffff) | (((cc) & 0x0f) << 28)
-#define TD_DI       0x00E00000			/* frames before interrupt */
-#define TD_DI_SET(X) (((X) & 0x07)<< 21)
-	/* these two bits are available for definition/use by HCDs in both
-	 * general and iso tds ... others are available for only one type
+	/* hwINFO bits क्रम both general and iso tds: */
+#घोषणा TD_CC       0xf0000000			/* condition code */
+#घोषणा TD_CC_GET(td_p) ((td_p >>28) & 0x0f)
+//#घोषणा TD_CC_SET(td_p, cc) (td_p) = ((td_p) & 0x0fffffff) | (((cc) & 0x0f) << 28)
+#घोषणा TD_DI       0x00E00000			/* frames beक्रमe पूर्णांकerrupt */
+#घोषणा TD_DI_SET(X) (((X) & 0x07)<< 21)
+	/* these two bits are available क्रम definition/use by HCDs in both
+	 * general and iso tds ... others are available क्रम only one type
 	 */
-#define TD_DONE     0x00020000			/* retired to donelist */
-#define TD_ISO      0x00010000			/* copy of ED_ISO */
+#घोषणा TD_DONE     0x00020000			/* retired to करोnelist */
+#घोषणा TD_ISO      0x00010000			/* copy of ED_ISO */
 
-	/* hwINFO bits for general tds: */
-#define TD_EC       0x0C000000			/* error count */
-#define TD_T        0x03000000			/* data toggle state */
-#define TD_T_DATA0  0x02000000				/* DATA0 */
-#define TD_T_DATA1  0x03000000				/* DATA1 */
-#define TD_T_TOGGLE 0x00000000				/* uses ED_C */
-#define TD_DP       0x00180000			/* direction/pid */
-#define TD_DP_SETUP 0x00000000			/* SETUP pid */
-#define TD_DP_IN    0x00100000				/* IN pid */
-#define TD_DP_OUT   0x00080000				/* OUT pid */
+	/* hwINFO bits क्रम general tds: */
+#घोषणा TD_EC       0x0C000000			/* error count */
+#घोषणा TD_T        0x03000000			/* data toggle state */
+#घोषणा TD_T_DATA0  0x02000000				/* DATA0 */
+#घोषणा TD_T_DATA1  0x03000000				/* DATA1 */
+#घोषणा TD_T_TOGGLE 0x00000000				/* uses ED_C */
+#घोषणा TD_DP       0x00180000			/* direction/pid */
+#घोषणा TD_DP_SETUP 0x00000000			/* SETUP pid */
+#घोषणा TD_DP_IN    0x00100000				/* IN pid */
+#घोषणा TD_DP_OUT   0x00080000				/* OUT pid */
 							/* 0x00180000 rsvd */
-#define TD_R        0x00040000			/* round: short packets OK? */
+#घोषणा TD_R        0x00040000			/* round: लघु packets OK? */
 
-	/* (no hwINFO #defines yet for iso tds) */
+	/* (no hwINFO #घोषणाs yet क्रम iso tds) */
 
-	__hc32		hwCBP;		/* Current Buffer Pointer (or 0) */
-	__hc32		hwNextTD;	/* Next TD Pointer */
-	__hc32		hwBE;		/* Memory Buffer End Pointer */
+	__hc32		hwCBP;		/* Current Buffer Poपूर्णांकer (or 0) */
+	__hc32		hwNextTD;	/* Next TD Poपूर्णांकer */
+	__hc32		hwBE;		/* Memory Buffer End Poपूर्णांकer */
 
-	/* PSW is only for ISO.  Only 1 PSW entry is used, but on
+	/* PSW is only क्रम ISO.  Only 1 PSW entry is used, but on
 	 * big-endian PPC hardware that's the second entry.
 	 */
-#define MAXPSW	2
+#घोषणा MAXPSW	2
 	__hc16		hwPSW [MAXPSW];
 
-	/* rest are purely for the driver's use */
+	/* rest are purely क्रम the driver's use */
 	__u8		index;
-	struct ed	*ed;
-	struct td	*td_hash;	/* dma-->td hashtable */
-	struct td	*next_dl_td;
-	struct urb	*urb;
+	काष्ठा ed	*ed;
+	काष्ठा td	*td_hash;	/* dma-->td hashtable */
+	काष्ठा td	*next_dl_td;
+	काष्ठा urb	*urb;
 
 	dma_addr_t	td_dma;		/* addr of this TD */
-	dma_addr_t	data_dma;	/* addr of data it points to */
+	dma_addr_t	data_dma;	/* addr of data it poपूर्णांकs to */
 
-	struct list_head td_list;	/* "shadow list", TDs on same ED */
-} __attribute__ ((aligned(32)));	/* c/b/i need 16; only iso needs 32 */
+	काष्ठा list_head td_list;	/* "shadow list", TDs on same ED */
+पूर्ण __attribute__ ((aligned(32)));	/* c/b/i need 16; only iso needs 32 */
 
-#define TD_MASK	((u32)~0x1f)		/* strip hw status in low addr bits */
+#घोषणा TD_MASK	((u32)~0x1f)		/* strip hw status in low addr bits */
 
 /*
  * Hardware transfer status codes -- CC from td->hwINFO or td->hwPSW
  */
-#define TD_CC_NOERROR      0x00
-#define TD_CC_CRC          0x01
-#define TD_CC_BITSTUFFING  0x02
-#define TD_CC_DATATOGGLEM  0x03
-#define TD_CC_STALL        0x04
-#define TD_DEVNOTRESP      0x05
-#define TD_PIDCHECKFAIL    0x06
-#define TD_UNEXPECTEDPID   0x07
-#define TD_DATAOVERRUN     0x08
-#define TD_DATAUNDERRUN    0x09
-    /* 0x0A, 0x0B reserved for hardware */
-#define TD_BUFFEROVERRUN   0x0C
-#define TD_BUFFERUNDERRUN  0x0D
-    /* 0x0E, 0x0F reserved for HCD */
-#define TD_NOTACCESSED     0x0F
+#घोषणा TD_CC_NOERROR      0x00
+#घोषणा TD_CC_CRC          0x01
+#घोषणा TD_CC_BITSTUFFING  0x02
+#घोषणा TD_CC_DATATOGGLEM  0x03
+#घोषणा TD_CC_STALL        0x04
+#घोषणा TD_DEVNOTRESP      0x05
+#घोषणा TD_PIDCHECKFAIL    0x06
+#घोषणा TD_UNEXPECTEDPID   0x07
+#घोषणा TD_DATAOVERRUN     0x08
+#घोषणा TD_DATAUNDERRUN    0x09
+    /* 0x0A, 0x0B reserved क्रम hardware */
+#घोषणा TD_BUFFEROVERRUN   0x0C
+#घोषणा TD_BUFFERUNDERRUN  0x0D
+    /* 0x0E, 0x0F reserved क्रम HCD */
+#घोषणा TD_NOTACCESSED     0x0F
 
 
-/* map OHCI TD status codes (CC) to errno values */
-static const int __maybe_unused cc_to_error [16] = {
+/* map OHCI TD status codes (CC) to त्रुटि_सं values */
+अटल स्थिर पूर्णांक __maybe_unused cc_to_error [16] = अणु
 	/* No  Error  */               0,
 	/* CRC Error  */               -EILSEQ,
 	/* Bit Stuff  */               -EPROTO,
@@ -173,348 +174,348 @@ static const int __maybe_unused cc_to_error [16] = {
 	/* UnExpPID   */               -EPROTO,
 	/* DataOver   */               -EOVERFLOW,
 	/* DataUnder  */               -EREMOTEIO,
-	/* (for hw)   */               -EIO,
-	/* (for hw)   */               -EIO,
+	/* (क्रम hw)   */               -EIO,
+	/* (क्रम hw)   */               -EIO,
 	/* BufferOver */               -ECOMM,
 	/* BuffUnder  */               -ENOSR,
-	/* (for HCD)  */               -EALREADY,
-	/* (for HCD)  */               -EALREADY
-};
+	/* (क्रम HCD)  */               -EALREADY,
+	/* (क्रम HCD)  */               -EALREADY
+पूर्ण;
 
 
 /*
  * The HCCA (Host Controller Communications Area) is a 256 byte
- * structure defined section 4.4.1 of the OHCI spec. The HC is
+ * काष्ठाure defined section 4.4.1 of the OHCI spec. The HC is
  * told the base address of it.  It must be 256-byte aligned.
  */
-struct ohci_hcca {
-#define NUM_INTS 32
-	__hc32	int_table [NUM_INTS];	/* periodic schedule */
+काष्ठा ohci_hcca अणु
+#घोषणा NUM_INTS 32
+	__hc32	पूर्णांक_table [NUM_INTS];	/* periodic schedule */
 
 	/*
 	 * OHCI defines u16 frame_no, followed by u16 zero pad.
-	 * Since some processors can't do 16 bit bus accesses,
+	 * Since some processors can't करो 16 bit bus accesses,
 	 * portable access must be a 32 bits wide.
 	 */
 	__hc32	frame_no;		/* current frame number */
-	__hc32	done_head;		/* info returned for an interrupt */
-	u8	reserved_for_hc [116];
-	u8	what [4];		/* spec only identifies 252 bytes :) */
-} __attribute__ ((aligned(256)));
+	__hc32	करोne_head;		/* info वापसed क्रम an पूर्णांकerrupt */
+	u8	reserved_क्रम_hc [116];
+	u8	what [4];		/* spec only identअगरies 252 bytes :) */
+पूर्ण __attribute__ ((aligned(256)));
 
 /*
- * This is the structure of the OHCI controller's memory mapped I/O region.
- * You must use readl() and writel() (in <asm/io.h>) to access these fields!!
+ * This is the काष्ठाure of the OHCI controller's memory mapped I/O region.
+ * You must use पढ़ोl() and ग_लिखोl() (in <यंत्र/पन.स>) to access these fields!!
  * Layout is in section 7 (and appendix B) of the spec.
  */
-struct ohci_regs {
-	/* control and status registers (section 7.1) */
+काष्ठा ohci_regs अणु
+	/* control and status रेजिस्टरs (section 7.1) */
 	__hc32	revision;
 	__hc32	control;
 	__hc32	cmdstatus;
-	__hc32	intrstatus;
-	__hc32	intrenable;
-	__hc32	intrdisable;
+	__hc32	पूर्णांकrstatus;
+	__hc32	पूर्णांकrenable;
+	__hc32	पूर्णांकrdisable;
 
-	/* memory pointers (section 7.2) */
+	/* memory poपूर्णांकers (section 7.2) */
 	__hc32	hcca;
 	__hc32	ed_periodcurrent;
 	__hc32	ed_controlhead;
 	__hc32	ed_controlcurrent;
 	__hc32	ed_bulkhead;
 	__hc32	ed_bulkcurrent;
-	__hc32	donehead;
+	__hc32	करोnehead;
 
 	/* frame counters (section 7.3) */
-	__hc32	fminterval;
-	__hc32	fmremaining;
+	__hc32	fmपूर्णांकerval;
+	__hc32	fmreमुख्यing;
 	__hc32	fmnumber;
 	__hc32	periodicstart;
 	__hc32	lsthresh;
 
 	/* Root hub ports (section 7.4) */
-	struct	ohci_roothub_regs {
+	काष्ठा	ohci_roothub_regs अणु
 		__hc32	a;
 		__hc32	b;
 		__hc32	status;
-#define MAX_ROOT_PORTS	15	/* maximum OHCI root hub ports (RH_A_NDP) */
+#घोषणा MAX_ROOT_PORTS	15	/* maximum OHCI root hub ports (RH_A_NDP) */
 		__hc32	portstatus [MAX_ROOT_PORTS];
-	} roothub;
+	पूर्ण roothub;
 
-	/* and optional "legacy support" registers (appendix B) at 0x0100 */
+	/* and optional "legacy support" रेजिस्टरs (appendix B) at 0x0100 */
 
-} __attribute__ ((aligned(32)));
+पूर्ण __attribute__ ((aligned(32)));
 
 
 /* OHCI CONTROL AND STATUS REGISTER MASKS */
 
 /*
- * HcControl (control) register masks
+ * HcControl (control) रेजिस्टर masks
  */
-#define OHCI_CTRL_CBSR	(3 << 0)	/* control/bulk service ratio */
-#define OHCI_CTRL_PLE	(1 << 2)	/* periodic list enable */
-#define OHCI_CTRL_IE	(1 << 3)	/* isochronous enable */
-#define OHCI_CTRL_CLE	(1 << 4)	/* control list enable */
-#define OHCI_CTRL_BLE	(1 << 5)	/* bulk list enable */
-#define OHCI_CTRL_HCFS	(3 << 6)	/* host controller functional state */
-#define OHCI_CTRL_IR	(1 << 8)	/* interrupt routing */
-#define OHCI_CTRL_RWC	(1 << 9)	/* remote wakeup connected */
-#define OHCI_CTRL_RWE	(1 << 10)	/* remote wakeup enable */
+#घोषणा OHCI_CTRL_CBSR	(3 << 0)	/* control/bulk service ratio */
+#घोषणा OHCI_CTRL_PLE	(1 << 2)	/* periodic list enable */
+#घोषणा OHCI_CTRL_IE	(1 << 3)	/* isochronous enable */
+#घोषणा OHCI_CTRL_CLE	(1 << 4)	/* control list enable */
+#घोषणा OHCI_CTRL_BLE	(1 << 5)	/* bulk list enable */
+#घोषणा OHCI_CTRL_HCFS	(3 << 6)	/* host controller functional state */
+#घोषणा OHCI_CTRL_IR	(1 << 8)	/* पूर्णांकerrupt routing */
+#घोषणा OHCI_CTRL_RWC	(1 << 9)	/* remote wakeup connected */
+#घोषणा OHCI_CTRL_RWE	(1 << 10)	/* remote wakeup enable */
 
-/* pre-shifted values for HCFS */
+/* pre-shअगरted values क्रम HCFS */
 #	define OHCI_USB_RESET	(0 << 6)
 #	define OHCI_USB_RESUME	(1 << 6)
 #	define OHCI_USB_OPER	(2 << 6)
 #	define OHCI_USB_SUSPEND	(3 << 6)
 
 /*
- * HcCommandStatus (cmdstatus) register masks
+ * HcCommandStatus (cmdstatus) रेजिस्टर masks
  */
-#define OHCI_HCR	(1 << 0)	/* host controller reset */
-#define OHCI_CLF	(1 << 1)	/* control list filled */
-#define OHCI_BLF	(1 << 2)	/* bulk list filled */
-#define OHCI_OCR	(1 << 3)	/* ownership change request */
-#define OHCI_SOC	(3 << 16)	/* scheduling overrun count */
+#घोषणा OHCI_HCR	(1 << 0)	/* host controller reset */
+#घोषणा OHCI_CLF	(1 << 1)	/* control list filled */
+#घोषणा OHCI_BLF	(1 << 2)	/* bulk list filled */
+#घोषणा OHCI_OCR	(1 << 3)	/* ownership change request */
+#घोषणा OHCI_SOC	(3 << 16)	/* scheduling overrun count */
 
 /*
- * masks used with interrupt registers:
- * HcInterruptStatus (intrstatus)
- * HcInterruptEnable (intrenable)
- * HcInterruptDisable (intrdisable)
+ * masks used with पूर्णांकerrupt रेजिस्टरs:
+ * HcInterruptStatus (पूर्णांकrstatus)
+ * HcInterruptEnable (पूर्णांकrenable)
+ * HcInterruptDisable (पूर्णांकrdisable)
  */
-#define OHCI_INTR_SO	(1 << 0)	/* scheduling overrun */
-#define OHCI_INTR_WDH	(1 << 1)	/* writeback of done_head */
-#define OHCI_INTR_SF	(1 << 2)	/* start frame */
-#define OHCI_INTR_RD	(1 << 3)	/* resume detect */
-#define OHCI_INTR_UE	(1 << 4)	/* unrecoverable error */
-#define OHCI_INTR_FNO	(1 << 5)	/* frame number overflow */
-#define OHCI_INTR_RHSC	(1 << 6)	/* root hub status change */
-#define OHCI_INTR_OC	(1 << 30)	/* ownership change */
-#define OHCI_INTR_MIE	(1 << 31)	/* master interrupt enable */
+#घोषणा OHCI_INTR_SO	(1 << 0)	/* scheduling overrun */
+#घोषणा OHCI_INTR_WDH	(1 << 1)	/* ग_लिखोback of करोne_head */
+#घोषणा OHCI_INTR_SF	(1 << 2)	/* start frame */
+#घोषणा OHCI_INTR_RD	(1 << 3)	/* resume detect */
+#घोषणा OHCI_INTR_UE	(1 << 4)	/* unrecoverable error */
+#घोषणा OHCI_INTR_FNO	(1 << 5)	/* frame number overflow */
+#घोषणा OHCI_INTR_RHSC	(1 << 6)	/* root hub status change */
+#घोषणा OHCI_INTR_OC	(1 << 30)	/* ownership change */
+#घोषणा OHCI_INTR_MIE	(1 << 31)	/* master पूर्णांकerrupt enable */
 
 
 /* OHCI ROOT HUB REGISTER MASKS */
 
 /* roothub.portstatus [i] bits */
-#define RH_PS_CCS            0x00000001		/* current connect status */
-#define RH_PS_PES            0x00000002		/* port enable status*/
-#define RH_PS_PSS            0x00000004		/* port suspend status */
-#define RH_PS_POCI           0x00000008		/* port over current indicator */
-#define RH_PS_PRS            0x00000010		/* port reset status */
-#define RH_PS_PPS            0x00000100		/* port power status */
-#define RH_PS_LSDA           0x00000200		/* low speed device attached */
-#define RH_PS_CSC            0x00010000		/* connect status change */
-#define RH_PS_PESC           0x00020000		/* port enable status change */
-#define RH_PS_PSSC           0x00040000		/* port suspend status change */
-#define RH_PS_OCIC           0x00080000		/* over current indicator change */
-#define RH_PS_PRSC           0x00100000		/* port reset status change */
+#घोषणा RH_PS_CCS            0x00000001		/* current connect status */
+#घोषणा RH_PS_PES            0x00000002		/* port enable status*/
+#घोषणा RH_PS_PSS            0x00000004		/* port suspend status */
+#घोषणा RH_PS_POCI           0x00000008		/* port over current indicator */
+#घोषणा RH_PS_PRS            0x00000010		/* port reset status */
+#घोषणा RH_PS_PPS            0x00000100		/* port घातer status */
+#घोषणा RH_PS_LSDA           0x00000200		/* low speed device attached */
+#घोषणा RH_PS_CSC            0x00010000		/* connect status change */
+#घोषणा RH_PS_PESC           0x00020000		/* port enable status change */
+#घोषणा RH_PS_PSSC           0x00040000		/* port suspend status change */
+#घोषणा RH_PS_OCIC           0x00080000		/* over current indicator change */
+#घोषणा RH_PS_PRSC           0x00100000		/* port reset status change */
 
 /* roothub.status bits */
-#define RH_HS_LPS	     0x00000001		/* local power status */
-#define RH_HS_OCI	     0x00000002		/* over current indicator */
-#define RH_HS_DRWE	     0x00008000		/* device remote wakeup enable */
-#define RH_HS_LPSC	     0x00010000		/* local power status change */
-#define RH_HS_OCIC	     0x00020000		/* over current indicator change */
-#define RH_HS_CRWE	     0x80000000		/* clear remote wakeup enable */
+#घोषणा RH_HS_LPS	     0x00000001		/* local घातer status */
+#घोषणा RH_HS_OCI	     0x00000002		/* over current indicator */
+#घोषणा RH_HS_DRWE	     0x00008000		/* device remote wakeup enable */
+#घोषणा RH_HS_LPSC	     0x00010000		/* local घातer status change */
+#घोषणा RH_HS_OCIC	     0x00020000		/* over current indicator change */
+#घोषणा RH_HS_CRWE	     0x80000000		/* clear remote wakeup enable */
 
 /* roothub.b masks */
-#define RH_B_DR		0x0000ffff		/* device removable flags */
-#define RH_B_PPCM	0xffff0000		/* port power control mask */
+#घोषणा RH_B_DR		0x0000ffff		/* device removable flags */
+#घोषणा RH_B_PPCM	0xffff0000		/* port घातer control mask */
 
 /* roothub.a masks */
-#define	RH_A_NDP	(0xff << 0)		/* number of downstream ports */
-#define	RH_A_PSM	(1 << 8)		/* power switching mode */
-#define	RH_A_NPS	(1 << 9)		/* no power switching */
-#define	RH_A_DT		(1 << 10)		/* device type (mbz) */
-#define	RH_A_OCPM	(1 << 11)		/* over current protection mode */
-#define	RH_A_NOCP	(1 << 12)		/* no over current protection */
-#define	RH_A_POTPGT	(0xff << 24)		/* power on to power good time */
+#घोषणा	RH_A_NDP	(0xff << 0)		/* number of करोwnstream ports */
+#घोषणा	RH_A_PSM	(1 << 8)		/* घातer चयनing mode */
+#घोषणा	RH_A_NPS	(1 << 9)		/* no घातer चयनing */
+#घोषणा	RH_A_DT		(1 << 10)		/* device type (mbz) */
+#घोषणा	RH_A_OCPM	(1 << 11)		/* over current protection mode */
+#घोषणा	RH_A_NOCP	(1 << 12)		/* no over current protection */
+#घोषणा	RH_A_POTPGT	(0xff << 24)		/* घातer on to घातer good समय */
 
 
-/* hcd-private per-urb state */
-typedef struct urb_priv {
-	struct ed		*ed;
+/* hcd-निजी per-urb state */
+प्रकार काष्ठा urb_priv अणु
+	काष्ठा ed		*ed;
 	u16			length;		// # tds in this request
-	u16			td_cnt;		// tds already serviced
-	struct list_head	pending;
-	struct td		*td[];		// all TDs in this request
+	u16			td_cnt;		// tds alपढ़ोy serviced
+	काष्ठा list_head	pending;
+	काष्ठा td		*td[];		// all TDs in this request
 
-} urb_priv_t;
+पूर्ण urb_priv_t;
 
-#define TD_HASH_SIZE    64    /* power'o'two */
-// sizeof (struct td) ~= 64 == 2^6 ...
-#define TD_HASH_FUNC(td_dma) ((td_dma ^ (td_dma >> 6)) % TD_HASH_SIZE)
+#घोषणा TD_HASH_SIZE    64    /* घातer'o'two */
+// माप (काष्ठा td) ~= 64 == 2^6 ...
+#घोषणा TD_HASH_FUNC(td_dma) ((td_dma ^ (td_dma >> 6)) % TD_HASH_SIZE)
 
 
 /*
  * This is the full ohci controller description
  *
- * Note how the "proper" USB information is just
+ * Note how the "proper" USB inक्रमmation is just
  * a subset of what the full implementation needs. (Linus)
  */
 
-enum ohci_rh_state {
+क्रमागत ohci_rh_state अणु
 	OHCI_RH_HALTED,
 	OHCI_RH_SUSPENDED,
 	OHCI_RH_RUNNING
-};
+पूर्ण;
 
-struct ohci_hcd {
+काष्ठा ohci_hcd अणु
 	spinlock_t		lock;
 
 	/*
 	 * I/O memory used to communicate with the HC (dma-consistent)
 	 */
-	struct ohci_regs __iomem *regs;
+	काष्ठा ohci_regs __iomem *regs;
 
 	/*
-	 * main memory used to communicate with the HC (dma-consistent).
-	 * hcd adds to schedule for a live hc any time, but removals finish
+	 * मुख्य memory used to communicate with the HC (dma-consistent).
+	 * hcd adds to schedule क्रम a live hc any समय, but removals finish
 	 * only at the start of the next frame.
 	 */
-	struct ohci_hcca	*hcca;
+	काष्ठा ohci_hcca	*hcca;
 	dma_addr_t		hcca_dma;
 
-	struct ed		*ed_rm_list;		/* to be removed */
+	काष्ठा ed		*ed_rm_list;		/* to be हटाओd */
 
-	struct ed		*ed_bulktail;		/* last in bulk list */
-	struct ed		*ed_controltail;	/* last in ctrl list */
-	struct ed		*periodic [NUM_INTS];	/* shadow int_table */
+	काष्ठा ed		*ed_bulktail;		/* last in bulk list */
+	काष्ठा ed		*ed_controltail;	/* last in ctrl list */
+	काष्ठा ed		*periodic [NUM_INTS];	/* shaकरोw पूर्णांक_table */
 
-	void (*start_hnp)(struct ohci_hcd *ohci);
+	व्योम (*start_hnp)(काष्ठा ohci_hcd *ohci);
 
 	/*
-	 * memory management for queue data structures
+	 * memory management क्रम queue data काष्ठाures
 	 *
-	 * @td_cache and @ed_cache are %NULL if &usb_hcd.localmem_pool is used.
+	 * @td_cache and @ed_cache are %शून्य अगर &usb_hcd.localmem_pool is used.
 	 */
-	struct dma_pool		*td_cache;
-	struct dma_pool		*ed_cache;
-	struct td		*td_hash [TD_HASH_SIZE];
-	struct td		*dl_start, *dl_end;	/* the done list */
-	struct list_head	pending;
-	struct list_head	eds_in_use;	/* all EDs with at least 1 TD */
+	काष्ठा dma_pool		*td_cache;
+	काष्ठा dma_pool		*ed_cache;
+	काष्ठा td		*td_hash [TD_HASH_SIZE];
+	काष्ठा td		*dl_start, *dl_end;	/* the करोne list */
+	काष्ठा list_head	pending;
+	काष्ठा list_head	eds_in_use;	/* all EDs with at least 1 TD */
 
 	/*
 	 * driver state
 	 */
-	enum ohci_rh_state	rh_state;
-	int			num_ports;
-	int			load [NUM_INTS];
+	क्रमागत ohci_rh_state	rh_state;
+	पूर्णांक			num_ports;
+	पूर्णांक			load [NUM_INTS];
 	u32			hc_control;	/* copy of hc control reg */
-	unsigned long		next_statechange;	/* suspend/resume */
-	u32			fminterval;		/* saved register */
-	unsigned		autostop:1;	/* rh auto stopping/stopped */
-	unsigned		working:1;
-	unsigned		restart_work:1;
+	अचिन्हित दीर्घ		next_statechange;	/* suspend/resume */
+	u32			fmपूर्णांकerval;		/* saved रेजिस्टर */
+	अचिन्हित		स्वतःstop:1;	/* rh स्वतः stopping/stopped */
+	अचिन्हित		working:1;
+	अचिन्हित		restart_work:1;
 
-	unsigned long		flags;		/* for HC bugs */
-#define	OHCI_QUIRK_AMD756	0x01			/* erratum #4 */
-#define	OHCI_QUIRK_SUPERIO	0x02			/* natsemi */
-#define	OHCI_QUIRK_INITRESET	0x04			/* SiS, OPTi, ... */
-#define	OHCI_QUIRK_BE_DESC	0x08			/* BE descriptors */
-#define	OHCI_QUIRK_BE_MMIO	0x10			/* BE registers */
-#define	OHCI_QUIRK_ZFMICRO	0x20			/* Compaq ZFMicro chipset*/
-#define	OHCI_QUIRK_NEC		0x40			/* lost interrupts */
-#define	OHCI_QUIRK_FRAME_NO	0x80			/* no big endian frame_no shift */
-#define	OHCI_QUIRK_HUB_POWER	0x100			/* distrust firmware power/oc setup */
-#define	OHCI_QUIRK_AMD_PLL	0x200			/* AMD PLL quirk*/
-#define	OHCI_QUIRK_AMD_PREFETCH	0x400			/* pre-fetch for ISO transfer */
-#define	OHCI_QUIRK_GLOBAL_SUSPEND	0x800		/* must suspend ports */
-#define	OHCI_QUIRK_QEMU		0x1000			/* relax timing expectations */
+	अचिन्हित दीर्घ		flags;		/* क्रम HC bugs */
+#घोषणा	OHCI_QUIRK_AMD756	0x01			/* erratum #4 */
+#घोषणा	OHCI_QUIRK_SUPERIO	0x02			/* natsemi */
+#घोषणा	OHCI_QUIRK_INITRESET	0x04			/* SiS, OPTi, ... */
+#घोषणा	OHCI_QUIRK_BE_DESC	0x08			/* BE descriptors */
+#घोषणा	OHCI_QUIRK_BE_MMIO	0x10			/* BE रेजिस्टरs */
+#घोषणा	OHCI_QUIRK_ZFMICRO	0x20			/* Compaq ZFMicro chipset*/
+#घोषणा	OHCI_QUIRK_NEC		0x40			/* lost पूर्णांकerrupts */
+#घोषणा	OHCI_QUIRK_FRAME_NO	0x80			/* no big endian frame_no shअगरt */
+#घोषणा	OHCI_QUIRK_HUB_POWER	0x100			/* distrust firmware घातer/oc setup */
+#घोषणा	OHCI_QUIRK_AMD_PLL	0x200			/* AMD PLL quirk*/
+#घोषणा	OHCI_QUIRK_AMD_PREFETCH	0x400			/* pre-fetch क्रम ISO transfer */
+#घोषणा	OHCI_QUIRK_GLOBAL_SUSPEND	0x800		/* must suspend ports */
+#घोषणा	OHCI_QUIRK_QEMU		0x1000			/* relax timing expectations */
 
 	// there are also chip quirks/bugs in init logic
 
-	unsigned		prev_frame_no;
-	unsigned		wdh_cnt, prev_wdh_cnt;
-	u32			prev_donehead;
-	struct timer_list	io_watchdog;
+	अचिन्हित		prev_frame_no;
+	अचिन्हित		wdh_cnt, prev_wdh_cnt;
+	u32			prev_करोnehead;
+	काष्ठा समयr_list	io_watchकरोg;
 
-	struct work_struct	nec_work;	/* Worker for NEC quirk */
+	काष्ठा work_काष्ठा	nec_work;	/* Worker क्रम NEC quirk */
 
-	struct dentry		*debug_dir;
+	काष्ठा dentry		*debug_dir;
 
-	/* platform-specific data -- must come last */
-	unsigned long           priv[] __aligned(sizeof(s64));
+	/* platक्रमm-specअगरic data -- must come last */
+	अचिन्हित दीर्घ           priv[] __aligned(माप(s64));
 
-};
+पूर्ण;
 
-#ifdef CONFIG_USB_PCI
-static inline int quirk_nec(struct ohci_hcd *ohci)
-{
-	return ohci->flags & OHCI_QUIRK_NEC;
-}
-static inline int quirk_zfmicro(struct ohci_hcd *ohci)
-{
-	return ohci->flags & OHCI_QUIRK_ZFMICRO;
-}
-static inline int quirk_amdiso(struct ohci_hcd *ohci)
-{
-	return ohci->flags & OHCI_QUIRK_AMD_PLL;
-}
-static inline int quirk_amdprefetch(struct ohci_hcd *ohci)
-{
-	return ohci->flags & OHCI_QUIRK_AMD_PREFETCH;
-}
-#else
-static inline int quirk_nec(struct ohci_hcd *ohci)
-{
-	return 0;
-}
-static inline int quirk_zfmicro(struct ohci_hcd *ohci)
-{
-	return 0;
-}
-static inline int quirk_amdiso(struct ohci_hcd *ohci)
-{
-	return 0;
-}
-static inline int quirk_amdprefetch(struct ohci_hcd *ohci)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित CONFIG_USB_PCI
+अटल अंतरभूत पूर्णांक quirk_nec(काष्ठा ohci_hcd *ohci)
+अणु
+	वापस ohci->flags & OHCI_QUIRK_NEC;
+पूर्ण
+अटल अंतरभूत पूर्णांक quirk_zfmicro(काष्ठा ohci_hcd *ohci)
+अणु
+	वापस ohci->flags & OHCI_QUIRK_ZFMICRO;
+पूर्ण
+अटल अंतरभूत पूर्णांक quirk_amdiso(काष्ठा ohci_hcd *ohci)
+अणु
+	वापस ohci->flags & OHCI_QUIRK_AMD_PLL;
+पूर्ण
+अटल अंतरभूत पूर्णांक quirk_amdprefetch(काष्ठा ohci_hcd *ohci)
+अणु
+	वापस ohci->flags & OHCI_QUIRK_AMD_PREFETCH;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक quirk_nec(काष्ठा ohci_hcd *ohci)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक quirk_zfmicro(काष्ठा ohci_hcd *ohci)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक quirk_amdiso(काष्ठा ohci_hcd *ohci)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक quirk_amdprefetch(काष्ठा ohci_hcd *ohci)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-/* convert between an hcd pointer and the corresponding ohci_hcd */
-static inline struct ohci_hcd *hcd_to_ohci (struct usb_hcd *hcd)
-{
-	return (struct ohci_hcd *) (hcd->hcd_priv);
-}
-static inline struct usb_hcd *ohci_to_hcd (const struct ohci_hcd *ohci)
-{
-	return container_of ((void *) ohci, struct usb_hcd, hcd_priv);
-}
+/* convert between an hcd poपूर्णांकer and the corresponding ohci_hcd */
+अटल अंतरभूत काष्ठा ohci_hcd *hcd_to_ohci (काष्ठा usb_hcd *hcd)
+अणु
+	वापस (काष्ठा ohci_hcd *) (hcd->hcd_priv);
+पूर्ण
+अटल अंतरभूत काष्ठा usb_hcd *ohci_to_hcd (स्थिर काष्ठा ohci_hcd *ohci)
+अणु
+	वापस container_of ((व्योम *) ohci, काष्ठा usb_hcd, hcd_priv);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-#define ohci_dbg(ohci, fmt, args...) \
+#घोषणा ohci_dbg(ohci, fmt, args...) \
 	dev_dbg (ohci_to_hcd(ohci)->self.controller , fmt , ## args )
-#define ohci_err(ohci, fmt, args...) \
+#घोषणा ohci_err(ohci, fmt, args...) \
 	dev_err (ohci_to_hcd(ohci)->self.controller , fmt , ## args )
-#define ohci_info(ohci, fmt, args...) \
+#घोषणा ohci_info(ohci, fmt, args...) \
 	dev_info (ohci_to_hcd(ohci)->self.controller , fmt , ## args )
-#define ohci_warn(ohci, fmt, args...) \
+#घोषणा ohci_warn(ohci, fmt, args...) \
 	dev_warn (ohci_to_hcd(ohci)->self.controller , fmt , ## args )
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * While most USB host controllers implement their registers and
- * in-memory communication descriptors in little-endian format,
+ * While most USB host controllers implement their रेजिस्टरs and
+ * in-memory communication descriptors in little-endian क्रमmat,
  * a minority (notably the IBM STB04XXX and the Motorola MPC5200
- * processors) implement them in big endian format.
+ * processors) implement them in big endian क्रमmat.
  *
  * In addition some more exotic implementations like the Toshiba
  * Spider (aka SCC) cell southbridge are "mixed" endian, that is,
- * they have a different endianness for registers vs. in-memory
+ * they have a dअगरferent endianness क्रम रेजिस्टरs vs. in-memory
  * descriptors.
  *
- * This attempts to support either format at compile time without a
- * runtime penalty, or both formats with the additional overhead
+ * This attempts to support either क्रमmat at compile समय without a
+ * runसमय penalty, or both क्रमmats with the additional overhead
  * of checking a flag bit.
  *
  * That leads to some tricky Kconfig rules howevber. There are
- * different defaults based on some arch/ppc platforms, though
+ * dअगरferent शेषs based on some arch/ppc platक्रमms, though
  * the basic rules are:
  *
  * Controller type              Kconfig options needed
@@ -525,7 +526,7 @@ static inline struct usb_hcd *ohci_to_hcd (const struct ohci_hcd *ohci)
  *                              CONFIG_USB_OHCI_BIG_ENDIAN_MMIO
  *
  * mixed endian                 CONFIG_USB_OHCI_LITTLE_ENDIAN _and_
- *                              CONFIG_USB_OHCI_BIG_ENDIAN_{MMIO,DESC}
+ *                              CONFIG_USB_OHCI_BIG_ENDIAN_अणुMMIO,DESCपूर्ण
  *
  * (If you have a mixed endian controller, you -must- also define
  * CONFIG_USB_OHCI_LITTLE_ENDIAN or things will not work when building
@@ -533,211 +534,211 @@ static inline struct usb_hcd *ohci_to_hcd (const struct ohci_hcd *ohci)
  * the same kernel image).
  */
 
-#ifdef CONFIG_USB_OHCI_BIG_ENDIAN_DESC
-#ifdef CONFIG_USB_OHCI_LITTLE_ENDIAN
-#define big_endian_desc(ohci)	(ohci->flags & OHCI_QUIRK_BE_DESC)
-#else
-#define big_endian_desc(ohci)	1		/* only big endian */
-#endif
-#else
-#define big_endian_desc(ohci)	0		/* only little endian */
-#endif
+#अगर_घोषित CONFIG_USB_OHCI_BIG_ENDIAN_DESC
+#अगर_घोषित CONFIG_USB_OHCI_LITTLE_ENDIAN
+#घोषणा big_endian_desc(ohci)	(ohci->flags & OHCI_QUIRK_BE_DESC)
+#अन्यथा
+#घोषणा big_endian_desc(ohci)	1		/* only big endian */
+#पूर्ण_अगर
+#अन्यथा
+#घोषणा big_endian_desc(ohci)	0		/* only little endian */
+#पूर्ण_अगर
 
-#ifdef CONFIG_USB_OHCI_BIG_ENDIAN_MMIO
-#ifdef CONFIG_USB_OHCI_LITTLE_ENDIAN
-#define big_endian_mmio(ohci)	(ohci->flags & OHCI_QUIRK_BE_MMIO)
-#else
-#define big_endian_mmio(ohci)	1		/* only big endian */
-#endif
-#else
-#define big_endian_mmio(ohci)	0		/* only little endian */
-#endif
+#अगर_घोषित CONFIG_USB_OHCI_BIG_ENDIAN_MMIO
+#अगर_घोषित CONFIG_USB_OHCI_LITTLE_ENDIAN
+#घोषणा big_endian_mmio(ohci)	(ohci->flags & OHCI_QUIRK_BE_MMIO)
+#अन्यथा
+#घोषणा big_endian_mmio(ohci)	1		/* only big endian */
+#पूर्ण_अगर
+#अन्यथा
+#घोषणा big_endian_mmio(ohci)	0		/* only little endian */
+#पूर्ण_अगर
 
 /*
- * Big-endian read/write functions are arch-specific.
- * Other arches can be added if/when they're needed.
+ * Big-endian पढ़ो/ग_लिखो functions are arch-specअगरic.
+ * Other arches can be added अगर/when they're needed.
  *
  */
-static inline unsigned int _ohci_readl (const struct ohci_hcd *ohci,
+अटल अंतरभूत अचिन्हित पूर्णांक _ohci_पढ़ोl (स्थिर काष्ठा ohci_hcd *ohci,
 					__hc32 __iomem * regs)
-{
-#ifdef CONFIG_USB_OHCI_BIG_ENDIAN_MMIO
-	return big_endian_mmio(ohci) ?
-		readl_be (regs) :
-		readl (regs);
-#else
-	return readl (regs);
-#endif
-}
+अणु
+#अगर_घोषित CONFIG_USB_OHCI_BIG_ENDIAN_MMIO
+	वापस big_endian_mmio(ohci) ?
+		पढ़ोl_be (regs) :
+		पढ़ोl (regs);
+#अन्यथा
+	वापस पढ़ोl (regs);
+#पूर्ण_अगर
+पूर्ण
 
-static inline void _ohci_writel (const struct ohci_hcd *ohci,
-				 const unsigned int val, __hc32 __iomem *regs)
-{
-#ifdef CONFIG_USB_OHCI_BIG_ENDIAN_MMIO
+अटल अंतरभूत व्योम _ohci_ग_लिखोl (स्थिर काष्ठा ohci_hcd *ohci,
+				 स्थिर अचिन्हित पूर्णांक val, __hc32 __iomem *regs)
+अणु
+#अगर_घोषित CONFIG_USB_OHCI_BIG_ENDIAN_MMIO
 	big_endian_mmio(ohci) ?
-		writel_be (val, regs) :
-		writel (val, regs);
-#else
-		writel (val, regs);
-#endif
-}
+		ग_लिखोl_be (val, regs) :
+		ग_लिखोl (val, regs);
+#अन्यथा
+		ग_लिखोl (val, regs);
+#पूर्ण_अगर
+पूर्ण
 
-#define ohci_readl(o,r)		_ohci_readl(o,r)
-#define ohci_writel(o,v,r)	_ohci_writel(o,v,r)
+#घोषणा ohci_पढ़ोl(o,r)		_ohci_पढ़ोl(o,r)
+#घोषणा ohci_ग_लिखोl(o,v,r)	_ohci_ग_लिखोl(o,v,r)
 
 
 /*-------------------------------------------------------------------------*/
 
 /* cpu to ohci */
-static inline __hc16 cpu_to_hc16 (const struct ohci_hcd *ohci, const u16 x)
-{
-	return big_endian_desc(ohci) ?
-		(__force __hc16)cpu_to_be16(x) :
-		(__force __hc16)cpu_to_le16(x);
-}
+अटल अंतरभूत __hc16 cpu_to_hc16 (स्थिर काष्ठा ohci_hcd *ohci, स्थिर u16 x)
+अणु
+	वापस big_endian_desc(ohci) ?
+		(__क्रमce __hc16)cpu_to_be16(x) :
+		(__क्रमce __hc16)cpu_to_le16(x);
+पूर्ण
 
-static inline __hc16 cpu_to_hc16p (const struct ohci_hcd *ohci, const u16 *x)
-{
-	return big_endian_desc(ohci) ?
+अटल अंतरभूत __hc16 cpu_to_hc16p (स्थिर काष्ठा ohci_hcd *ohci, स्थिर u16 *x)
+अणु
+	वापस big_endian_desc(ohci) ?
 		cpu_to_be16p(x) :
 		cpu_to_le16p(x);
-}
+पूर्ण
 
-static inline __hc32 cpu_to_hc32 (const struct ohci_hcd *ohci, const u32 x)
-{
-	return big_endian_desc(ohci) ?
-		(__force __hc32)cpu_to_be32(x) :
-		(__force __hc32)cpu_to_le32(x);
-}
+अटल अंतरभूत __hc32 cpu_to_hc32 (स्थिर काष्ठा ohci_hcd *ohci, स्थिर u32 x)
+अणु
+	वापस big_endian_desc(ohci) ?
+		(__क्रमce __hc32)cpu_to_be32(x) :
+		(__क्रमce __hc32)cpu_to_le32(x);
+पूर्ण
 
-static inline __hc32 cpu_to_hc32p (const struct ohci_hcd *ohci, const u32 *x)
-{
-	return big_endian_desc(ohci) ?
+अटल अंतरभूत __hc32 cpu_to_hc32p (स्थिर काष्ठा ohci_hcd *ohci, स्थिर u32 *x)
+अणु
+	वापस big_endian_desc(ohci) ?
 		cpu_to_be32p(x) :
 		cpu_to_le32p(x);
-}
+पूर्ण
 
 /* ohci to cpu */
-static inline u16 hc16_to_cpu (const struct ohci_hcd *ohci, const __hc16 x)
-{
-	return big_endian_desc(ohci) ?
-		be16_to_cpu((__force __be16)x) :
-		le16_to_cpu((__force __le16)x);
-}
+अटल अंतरभूत u16 hc16_to_cpu (स्थिर काष्ठा ohci_hcd *ohci, स्थिर __hc16 x)
+अणु
+	वापस big_endian_desc(ohci) ?
+		be16_to_cpu((__क्रमce __be16)x) :
+		le16_to_cpu((__क्रमce __le16)x);
+पूर्ण
 
-static inline u16 hc16_to_cpup (const struct ohci_hcd *ohci, const __hc16 *x)
-{
-	return big_endian_desc(ohci) ?
-		be16_to_cpup((__force __be16 *)x) :
-		le16_to_cpup((__force __le16 *)x);
-}
+अटल अंतरभूत u16 hc16_to_cpup (स्थिर काष्ठा ohci_hcd *ohci, स्थिर __hc16 *x)
+अणु
+	वापस big_endian_desc(ohci) ?
+		be16_to_cpup((__क्रमce __be16 *)x) :
+		le16_to_cpup((__क्रमce __le16 *)x);
+पूर्ण
 
-static inline u32 hc32_to_cpu (const struct ohci_hcd *ohci, const __hc32 x)
-{
-	return big_endian_desc(ohci) ?
-		be32_to_cpu((__force __be32)x) :
-		le32_to_cpu((__force __le32)x);
-}
+अटल अंतरभूत u32 hc32_to_cpu (स्थिर काष्ठा ohci_hcd *ohci, स्थिर __hc32 x)
+अणु
+	वापस big_endian_desc(ohci) ?
+		be32_to_cpu((__क्रमce __be32)x) :
+		le32_to_cpu((__क्रमce __le32)x);
+पूर्ण
 
-static inline u32 hc32_to_cpup (const struct ohci_hcd *ohci, const __hc32 *x)
-{
-	return big_endian_desc(ohci) ?
-		be32_to_cpup((__force __be32 *)x) :
-		le32_to_cpup((__force __le32 *)x);
-}
+अटल अंतरभूत u32 hc32_to_cpup (स्थिर काष्ठा ohci_hcd *ohci, स्थिर __hc32 *x)
+अणु
+	वापस big_endian_desc(ohci) ?
+		be32_to_cpup((__क्रमce __be32 *)x) :
+		le32_to_cpup((__क्रमce __le32 *)x);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /*
  * The HCCA frame number is 16 bits, but is accessed as 32 bits since not all
- * hardware handles 16 bit reads.  Depending on the SoC implementation, the
- * frame number can wind up in either bits [31:16] (default) or
+ * hardware handles 16 bit पढ़ोs.  Depending on the SoC implementation, the
+ * frame number can wind up in either bits [31:16] (शेष) or
  * [15:0] (OHCI_QUIRK_FRAME_NO) on big endian hosts.
  *
  * Somewhat similarly, the 16-bit PSW fields in a transfer descriptor are
  * reordered on BE.
  */
 
-static inline u16 ohci_frame_no(const struct ohci_hcd *ohci)
-{
-	u32 tmp;
-	if (big_endian_desc(ohci)) {
-		tmp = be32_to_cpup((__force __be32 *)&ohci->hcca->frame_no);
-		if (!(ohci->flags & OHCI_QUIRK_FRAME_NO))
-			tmp >>= 16;
-	} else
-		tmp = le32_to_cpup((__force __le32 *)&ohci->hcca->frame_no);
+अटल अंतरभूत u16 ohci_frame_no(स्थिर काष्ठा ohci_hcd *ohci)
+अणु
+	u32 पंचांगp;
+	अगर (big_endian_desc(ohci)) अणु
+		पंचांगp = be32_to_cpup((__क्रमce __be32 *)&ohci->hcca->frame_no);
+		अगर (!(ohci->flags & OHCI_QUIRK_FRAME_NO))
+			पंचांगp >>= 16;
+	पूर्ण अन्यथा
+		पंचांगp = le32_to_cpup((__क्रमce __le32 *)&ohci->hcca->frame_no);
 
-	return (u16)tmp;
-}
+	वापस (u16)पंचांगp;
+पूर्ण
 
-static inline __hc16 *ohci_hwPSWp(const struct ohci_hcd *ohci,
-                                 const struct td *td, int index)
-{
-	return (__hc16 *)(big_endian_desc(ohci) ?
+अटल अंतरभूत __hc16 *ohci_hwPSWp(स्थिर काष्ठा ohci_hcd *ohci,
+                                 स्थिर काष्ठा td *td, पूर्णांक index)
+अणु
+	वापस (__hc16 *)(big_endian_desc(ohci) ?
 			&td->hwPSW[index ^ 1] : &td->hwPSW[index]);
-}
+पूर्ण
 
-static inline u16 ohci_hwPSW(const struct ohci_hcd *ohci,
-                               const struct td *td, int index)
-{
-	return hc16_to_cpup(ohci, ohci_hwPSWp(ohci, td, index));
-}
+अटल अंतरभूत u16 ohci_hwPSW(स्थिर काष्ठा ohci_hcd *ohci,
+                               स्थिर काष्ठा td *td, पूर्णांक index)
+अणु
+	वापस hc16_to_cpup(ohci, ohci_hwPSWp(ohci, td, index));
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-#define	FI			0x2edf		/* 12000 bits per frame (-1) */
-#define	FSMP(fi)		(0x7fff & ((6 * ((fi) - 210)) / 7))
-#define	FIT			(1 << 31)
-#define LSTHRESH		0x628		/* lowspeed bit threshold */
+#घोषणा	FI			0x2edf		/* 12000 bits per frame (-1) */
+#घोषणा	FSMP(fi)		(0x7fff & ((6 * ((fi) - 210)) / 7))
+#घोषणा	FIT			(1 << 31)
+#घोषणा LSTHRESH		0x628		/* lowspeed bit threshold */
 
-static inline void periodic_reinit (struct ohci_hcd *ohci)
-{
-	u32	fi = ohci->fminterval & 0x03fff;
-	u32	fit = ohci_readl(ohci, &ohci->regs->fminterval) & FIT;
+अटल अंतरभूत व्योम periodic_reinit (काष्ठा ohci_hcd *ohci)
+अणु
+	u32	fi = ohci->fmपूर्णांकerval & 0x03fff;
+	u32	fit = ohci_पढ़ोl(ohci, &ohci->regs->fmपूर्णांकerval) & FIT;
 
-	ohci_writel (ohci, (fit ^ FIT) | ohci->fminterval,
-						&ohci->regs->fminterval);
-	ohci_writel (ohci, ((9 * fi) / 10) & 0x3fff,
+	ohci_ग_लिखोl (ohci, (fit ^ FIT) | ohci->fmपूर्णांकerval,
+						&ohci->regs->fmपूर्णांकerval);
+	ohci_ग_लिखोl (ohci, ((9 * fi) / 10) & 0x3fff,
 						&ohci->regs->periodicstart);
-}
+पूर्ण
 
-/* AMD-756 (D2 rev) reports corrupt register contents in some cases.
- * The erratum (#4) description is incorrect.  AMD's workaround waits
- * till some bits (mostly reserved) are clear; ok for all revs.
+/* AMD-756 (D2 rev) reports corrupt रेजिस्टर contents in some हालs.
+ * The erratum (#4) description is incorrect.  AMD's workaround रुकोs
+ * till some bits (mostly reserved) are clear; ok क्रम all revs.
  */
-#define read_roothub(hc, register, mask) ({ \
-	u32 temp = ohci_readl (hc, &hc->regs->roothub.register); \
-	if (temp == -1) \
+#घोषणा पढ़ो_roothub(hc, रेजिस्टर, mask) (अणु \
+	u32 temp = ohci_पढ़ोl (hc, &hc->regs->roothub.रेजिस्टर); \
+	अगर (temp == -1) \
 		hc->rh_state = OHCI_RH_HALTED; \
-	else if (hc->flags & OHCI_QUIRK_AMD756) \
-		while (temp & mask) \
-			temp = ohci_readl (hc, &hc->regs->roothub.register); \
-	temp; })
+	अन्यथा अगर (hc->flags & OHCI_QUIRK_AMD756) \
+		जबतक (temp & mask) \
+			temp = ohci_पढ़ोl (hc, &hc->regs->roothub.रेजिस्टर); \
+	temp; पूर्ण)
 
-static inline u32 roothub_a (struct ohci_hcd *hc)
-	{ return read_roothub (hc, a, 0xfc0fe000); }
-static inline u32 roothub_b (struct ohci_hcd *hc)
-	{ return ohci_readl (hc, &hc->regs->roothub.b); }
-static inline u32 roothub_status (struct ohci_hcd *hc)
-	{ return ohci_readl (hc, &hc->regs->roothub.status); }
-static inline u32 roothub_portstatus (struct ohci_hcd *hc, int i)
-	{ return read_roothub (hc, portstatus [i], 0xffe0fce0); }
+अटल अंतरभूत u32 roothub_a (काष्ठा ohci_hcd *hc)
+	अणु वापस पढ़ो_roothub (hc, a, 0xfc0fe000); पूर्ण
+अटल अंतरभूत u32 roothub_b (काष्ठा ohci_hcd *hc)
+	अणु वापस ohci_पढ़ोl (hc, &hc->regs->roothub.b); पूर्ण
+अटल अंतरभूत u32 roothub_status (काष्ठा ohci_hcd *hc)
+	अणु वापस ohci_पढ़ोl (hc, &hc->regs->roothub.status); पूर्ण
+अटल अंतरभूत u32 roothub_portstatus (काष्ठा ohci_hcd *hc, पूर्णांक i)
+	अणु वापस पढ़ो_roothub (hc, portstatus [i], 0xffe0fce0); पूर्ण
 
-/* Declarations of things exported for use by ohci platform drivers */
+/* Declarations of things exported क्रम use by ohci platक्रमm drivers */
 
-struct ohci_driver_overrides {
-	const char	*product_desc;
-	size_t		extra_priv_size;
-	int		(*reset)(struct usb_hcd *hcd);
-};
+काष्ठा ohci_driver_overrides अणु
+	स्थिर अक्षर	*product_desc;
+	माप_प्रकार		extra_priv_size;
+	पूर्णांक		(*reset)(काष्ठा usb_hcd *hcd);
+पूर्ण;
 
-extern void	ohci_init_driver(struct hc_driver *drv,
-				const struct ohci_driver_overrides *over);
-extern int	ohci_restart(struct ohci_hcd *ohci);
-extern int	ohci_setup(struct usb_hcd *hcd);
-extern int	ohci_suspend(struct usb_hcd *hcd, bool do_wakeup);
-extern int	ohci_resume(struct usb_hcd *hcd, bool hibernated);
-extern int	ohci_hub_control(struct usb_hcd	*hcd, u16 typeReq, u16 wValue,
-				 u16 wIndex, char *buf, u16 wLength);
-extern int	ohci_hub_status_data(struct usb_hcd *hcd, char *buf);
+बाह्य व्योम	ohci_init_driver(काष्ठा hc_driver *drv,
+				स्थिर काष्ठा ohci_driver_overrides *over);
+बाह्य पूर्णांक	ohci_restart(काष्ठा ohci_hcd *ohci);
+बाह्य पूर्णांक	ohci_setup(काष्ठा usb_hcd *hcd);
+बाह्य पूर्णांक	ohci_suspend(काष्ठा usb_hcd *hcd, bool करो_wakeup);
+बाह्य पूर्णांक	ohci_resume(काष्ठा usb_hcd *hcd, bool hibernated);
+बाह्य पूर्णांक	ohci_hub_control(काष्ठा usb_hcd	*hcd, u16 typeReq, u16 wValue,
+				 u16 wIndex, अक्षर *buf, u16 wLength);
+बाह्य पूर्णांक	ohci_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf);

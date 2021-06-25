@@ -1,483 +1,484 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * kvm guest debug support
  *
  * Copyright IBM Corp. 2014
  *
- *    Author(s): David Hildenbrand <dahi@linux.vnet.ibm.com>
+ *    Author(s): David Hildenbअक्रम <dahi@linux.vnet.ibm.com>
  */
-#include <linux/kvm_host.h>
-#include <linux/errno.h>
-#include "kvm-s390.h"
-#include "gaccess.h"
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश "kvm-s390.h"
+#समावेश "gaccess.h"
 
 /*
  * Extends the address range given by *start and *stop to include the address
  * range starting with estart and the length len. Takes care of overflowing
- * intervals and tries to minimize the overall interval size.
+ * पूर्णांकervals and tries to minimize the overall पूर्णांकerval size.
  */
-static void extend_address_range(u64 *start, u64 *stop, u64 estart, int len)
-{
+अटल व्योम extend_address_range(u64 *start, u64 *stop, u64 estart, पूर्णांक len)
+अणु
 	u64 estop;
 
-	if (len > 0)
+	अगर (len > 0)
 		len--;
-	else
+	अन्यथा
 		len = 0;
 
 	estop = estart + len;
 
 	/* 0-0 range represents "not set" */
-	if ((*start == 0) && (*stop == 0)) {
+	अगर ((*start == 0) && (*stop == 0)) अणु
 		*start = estart;
 		*stop = estop;
-	} else if (*start <= *stop) {
+	पूर्ण अन्यथा अगर (*start <= *stop) अणु
 		/* increase the existing range */
-		if (estart < *start)
+		अगर (estart < *start)
 			*start = estart;
-		if (estop > *stop)
+		अगर (estop > *stop)
 			*stop = estop;
-	} else {
-		/* "overflowing" interval, whereby *stop > *start */
-		if (estart <= *stop) {
-			if (estop > *stop)
+	पूर्ण अन्यथा अणु
+		/* "overflowing" पूर्णांकerval, whereby *stop > *start */
+		अगर (estart <= *stop) अणु
+			अगर (estop > *stop)
 				*stop = estop;
-		} else if (estop > *start) {
-			if (estart < *start)
+		पूर्ण अन्यथा अगर (estop > *start) अणु
+			अगर (estart < *start)
 				*start = estart;
-		}
+		पूर्ण
 		/* minimize the range */
-		else if ((estop - *stop) < (*start - estart))
+		अन्यथा अगर ((estop - *stop) < (*start - estart))
 			*stop = estop;
-		else
+		अन्यथा
 			*start = estart;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define MAX_INST_SIZE 6
+#घोषणा MAX_INST_SIZE 6
 
-static void enable_all_hw_bp(struct kvm_vcpu *vcpu)
-{
-	unsigned long start, len;
+अटल व्योम enable_all_hw_bp(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित दीर्घ start, len;
 	u64 *cr9 = &vcpu->arch.sie_block->gcr[9];
 	u64 *cr10 = &vcpu->arch.sie_block->gcr[10];
 	u64 *cr11 = &vcpu->arch.sie_block->gcr[11];
-	int i;
+	पूर्णांक i;
 
-	if (vcpu->arch.guestdbg.nr_hw_bp <= 0 ||
-	    vcpu->arch.guestdbg.hw_bp_info == NULL)
-		return;
+	अगर (vcpu->arch.guestdbg.nr_hw_bp <= 0 ||
+	    vcpu->arch.guestdbg.hw_bp_info == शून्य)
+		वापस;
 
 	/*
-	 * If the guest is not interested in branching events, we can safely
+	 * If the guest is not पूर्णांकerested in branching events, we can safely
 	 * limit them to the PER address range.
 	 */
-	if (!(*cr9 & PER_EVENT_BRANCH))
+	अगर (!(*cr9 & PER_EVENT_BRANCH))
 		*cr9 |= PER_CONTROL_BRANCH_ADDRESS;
 	*cr9 |= PER_EVENT_IFETCH | PER_EVENT_BRANCH;
 
-	for (i = 0; i < vcpu->arch.guestdbg.nr_hw_bp; i++) {
+	क्रम (i = 0; i < vcpu->arch.guestdbg.nr_hw_bp; i++) अणु
 		start = vcpu->arch.guestdbg.hw_bp_info[i].addr;
 		len = vcpu->arch.guestdbg.hw_bp_info[i].len;
 
 		/*
-		 * The instruction in front of the desired bp has to
-		 * report instruction-fetching events
+		 * The inकाष्ठाion in front of the desired bp has to
+		 * report inकाष्ठाion-fetching events
 		 */
-		if (start < MAX_INST_SIZE) {
+		अगर (start < MAX_INST_SIZE) अणु
 			len += start;
 			start = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			start -= MAX_INST_SIZE;
 			len += MAX_INST_SIZE;
-		}
+		पूर्ण
 
 		extend_address_range(cr10, cr11, start, len);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void enable_all_hw_wp(struct kvm_vcpu *vcpu)
-{
-	unsigned long start, len;
+अटल व्योम enable_all_hw_wp(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित दीर्घ start, len;
 	u64 *cr9 = &vcpu->arch.sie_block->gcr[9];
 	u64 *cr10 = &vcpu->arch.sie_block->gcr[10];
 	u64 *cr11 = &vcpu->arch.sie_block->gcr[11];
-	int i;
+	पूर्णांक i;
 
-	if (vcpu->arch.guestdbg.nr_hw_wp <= 0 ||
-	    vcpu->arch.guestdbg.hw_wp_info == NULL)
-		return;
+	अगर (vcpu->arch.guestdbg.nr_hw_wp <= 0 ||
+	    vcpu->arch.guestdbg.hw_wp_info == शून्य)
+		वापस;
 
-	/* if host uses storage alternation for special address
+	/* अगर host uses storage alternation क्रम special address
 	 * spaces, enable all events and give all to the guest */
-	if (*cr9 & PER_EVENT_STORE && *cr9 & PER_CONTROL_ALTERATION) {
+	अगर (*cr9 & PER_EVENT_STORE && *cr9 & PER_CONTROL_ALTERATION) अणु
 		*cr9 &= ~PER_CONTROL_ALTERATION;
 		*cr10 = 0;
 		*cr11 = -1UL;
-	} else {
+	पूर्ण अन्यथा अणु
 		*cr9 &= ~PER_CONTROL_ALTERATION;
 		*cr9 |= PER_EVENT_STORE;
 
-		for (i = 0; i < vcpu->arch.guestdbg.nr_hw_wp; i++) {
+		क्रम (i = 0; i < vcpu->arch.guestdbg.nr_hw_wp; i++) अणु
 			start = vcpu->arch.guestdbg.hw_wp_info[i].addr;
 			len = vcpu->arch.guestdbg.hw_wp_info[i].len;
 
 			extend_address_range(cr10, cr11, start, len);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void kvm_s390_backup_guest_per_regs(struct kvm_vcpu *vcpu)
-{
+व्योम kvm_s390_backup_guest_per_regs(काष्ठा kvm_vcpu *vcpu)
+अणु
 	vcpu->arch.guestdbg.cr0 = vcpu->arch.sie_block->gcr[0];
 	vcpu->arch.guestdbg.cr9 = vcpu->arch.sie_block->gcr[9];
 	vcpu->arch.guestdbg.cr10 = vcpu->arch.sie_block->gcr[10];
 	vcpu->arch.guestdbg.cr11 = vcpu->arch.sie_block->gcr[11];
-}
+पूर्ण
 
-void kvm_s390_restore_guest_per_regs(struct kvm_vcpu *vcpu)
-{
+व्योम kvm_s390_restore_guest_per_regs(काष्ठा kvm_vcpu *vcpu)
+अणु
 	vcpu->arch.sie_block->gcr[0] = vcpu->arch.guestdbg.cr0;
 	vcpu->arch.sie_block->gcr[9] = vcpu->arch.guestdbg.cr9;
 	vcpu->arch.sie_block->gcr[10] = vcpu->arch.guestdbg.cr10;
 	vcpu->arch.sie_block->gcr[11] = vcpu->arch.guestdbg.cr11;
-}
+पूर्ण
 
-void kvm_s390_patch_guest_per_regs(struct kvm_vcpu *vcpu)
-{
+व्योम kvm_s390_patch_guest_per_regs(काष्ठा kvm_vcpu *vcpu)
+अणु
 	/*
-	 * TODO: if guest psw has per enabled, otherwise 0s!
+	 * TODO: अगर guest psw has per enabled, otherwise 0s!
 	 * This reduces the amount of reported events.
-	 * Need to intercept all psw changes!
+	 * Need to पूर्णांकercept all psw changes!
 	 */
 
-	if (guestdbg_sstep_enabled(vcpu)) {
-		/* disable timer (clock-comparator) interrupts */
+	अगर (guestdbg_sstep_enabled(vcpu)) अणु
+		/* disable समयr (घड़ी-comparator) पूर्णांकerrupts */
 		vcpu->arch.sie_block->gcr[0] &= ~CR0_CLOCK_COMPARATOR_SUBMASK;
 		vcpu->arch.sie_block->gcr[9] |= PER_EVENT_IFETCH;
 		vcpu->arch.sie_block->gcr[10] = 0;
 		vcpu->arch.sie_block->gcr[11] = -1UL;
-	}
+	पूर्ण
 
-	if (guestdbg_hw_bp_enabled(vcpu)) {
+	अगर (guestdbg_hw_bp_enabled(vcpu)) अणु
 		enable_all_hw_bp(vcpu);
 		enable_all_hw_wp(vcpu);
-	}
+	पूर्ण
 
-	/* TODO: Instruction-fetching-nullification not allowed for now */
-	if (vcpu->arch.sie_block->gcr[9] & PER_EVENT_NULLIFICATION)
-		vcpu->arch.sie_block->gcr[9] &= ~PER_EVENT_NULLIFICATION;
-}
+	/* TODO: Inकाष्ठाion-fetching-nullअगरication not allowed क्रम now */
+	अगर (vcpu->arch.sie_block->gcr[9] & PER_EVENT_शून्यIFICATION)
+		vcpu->arch.sie_block->gcr[9] &= ~PER_EVENT_शून्यIFICATION;
+पूर्ण
 
-#define MAX_WP_SIZE 100
+#घोषणा MAX_WP_SIZE 100
 
-static int __import_wp_info(struct kvm_vcpu *vcpu,
-			    struct kvm_hw_breakpoint *bp_data,
-			    struct kvm_hw_wp_info_arch *wp_info)
-{
-	int ret = 0;
+अटल पूर्णांक __import_wp_info(काष्ठा kvm_vcpu *vcpu,
+			    काष्ठा kvm_hw_अवरोधpoपूर्णांक *bp_data,
+			    काष्ठा kvm_hw_wp_info_arch *wp_info)
+अणु
+	पूर्णांक ret = 0;
 	wp_info->len = bp_data->len;
 	wp_info->addr = bp_data->addr;
 	wp_info->phys_addr = bp_data->phys_addr;
-	wp_info->old_data = NULL;
+	wp_info->old_data = शून्य;
 
-	if (wp_info->len < 0 || wp_info->len > MAX_WP_SIZE)
-		return -EINVAL;
+	अगर (wp_info->len < 0 || wp_info->len > MAX_WP_SIZE)
+		वापस -EINVAL;
 
-	wp_info->old_data = kmalloc(bp_data->len, GFP_KERNEL_ACCOUNT);
-	if (!wp_info->old_data)
-		return -ENOMEM;
+	wp_info->old_data = kदो_स्मृति(bp_data->len, GFP_KERNEL_ACCOUNT);
+	अगर (!wp_info->old_data)
+		वापस -ENOMEM;
 	/* try to backup the original value */
-	ret = read_guest_abs(vcpu, wp_info->phys_addr, wp_info->old_data,
+	ret = पढ़ो_guest_असल(vcpu, wp_info->phys_addr, wp_info->old_data,
 			     wp_info->len);
-	if (ret) {
-		kfree(wp_info->old_data);
-		wp_info->old_data = NULL;
-	}
+	अगर (ret) अणु
+		kमुक्त(wp_info->old_data);
+		wp_info->old_data = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define MAX_BP_COUNT 50
+#घोषणा MAX_BP_COUNT 50
 
-int kvm_s390_import_bp_data(struct kvm_vcpu *vcpu,
-			    struct kvm_guest_debug *dbg)
-{
-	int ret = 0, nr_wp = 0, nr_bp = 0, i;
-	struct kvm_hw_breakpoint *bp_data = NULL;
-	struct kvm_hw_wp_info_arch *wp_info = NULL;
-	struct kvm_hw_bp_info_arch *bp_info = NULL;
+पूर्णांक kvm_s390_import_bp_data(काष्ठा kvm_vcpu *vcpu,
+			    काष्ठा kvm_guest_debug *dbg)
+अणु
+	पूर्णांक ret = 0, nr_wp = 0, nr_bp = 0, i;
+	काष्ठा kvm_hw_अवरोधpoपूर्णांक *bp_data = शून्य;
+	काष्ठा kvm_hw_wp_info_arch *wp_info = शून्य;
+	काष्ठा kvm_hw_bp_info_arch *bp_info = शून्य;
 
-	if (dbg->arch.nr_hw_bp <= 0 || !dbg->arch.hw_bp)
-		return 0;
-	else if (dbg->arch.nr_hw_bp > MAX_BP_COUNT)
-		return -EINVAL;
+	अगर (dbg->arch.nr_hw_bp <= 0 || !dbg->arch.hw_bp)
+		वापस 0;
+	अन्यथा अगर (dbg->arch.nr_hw_bp > MAX_BP_COUNT)
+		वापस -EINVAL;
 
 	bp_data = memdup_user(dbg->arch.hw_bp,
-			      sizeof(*bp_data) * dbg->arch.nr_hw_bp);
-	if (IS_ERR(bp_data))
-		return PTR_ERR(bp_data);
+			      माप(*bp_data) * dbg->arch.nr_hw_bp);
+	अगर (IS_ERR(bp_data))
+		वापस PTR_ERR(bp_data);
 
-	for (i = 0; i < dbg->arch.nr_hw_bp; i++) {
-		switch (bp_data[i].type) {
-		case KVM_HW_WP_WRITE:
+	क्रम (i = 0; i < dbg->arch.nr_hw_bp; i++) अणु
+		चयन (bp_data[i].type) अणु
+		हाल KVM_HW_WP_WRITE:
 			nr_wp++;
-			break;
-		case KVM_HW_BP:
+			अवरोध;
+		हाल KVM_HW_BP:
 			nr_bp++;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (nr_wp > 0) {
-		wp_info = kmalloc_array(nr_wp,
-					sizeof(*wp_info),
+	अगर (nr_wp > 0) अणु
+		wp_info = kदो_स्मृति_array(nr_wp,
+					माप(*wp_info),
 					GFP_KERNEL_ACCOUNT);
-		if (!wp_info) {
+		अगर (!wp_info) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
-	}
-	if (nr_bp > 0) {
-		bp_info = kmalloc_array(nr_bp,
-					sizeof(*bp_info),
+			जाओ error;
+		पूर्ण
+	पूर्ण
+	अगर (nr_bp > 0) अणु
+		bp_info = kदो_स्मृति_array(nr_bp,
+					माप(*bp_info),
 					GFP_KERNEL_ACCOUNT);
-		if (!bp_info) {
+		अगर (!bp_info) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	for (nr_wp = 0, nr_bp = 0, i = 0; i < dbg->arch.nr_hw_bp; i++) {
-		switch (bp_data[i].type) {
-		case KVM_HW_WP_WRITE:
+	क्रम (nr_wp = 0, nr_bp = 0, i = 0; i < dbg->arch.nr_hw_bp; i++) अणु
+		चयन (bp_data[i].type) अणु
+		हाल KVM_HW_WP_WRITE:
 			ret = __import_wp_info(vcpu, &bp_data[i],
 					       &wp_info[nr_wp]);
-			if (ret)
-				goto error;
+			अगर (ret)
+				जाओ error;
 			nr_wp++;
-			break;
-		case KVM_HW_BP:
+			अवरोध;
+		हाल KVM_HW_BP:
 			bp_info[nr_bp].len = bp_data[i].len;
 			bp_info[nr_bp].addr = bp_data[i].addr;
 			nr_bp++;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	vcpu->arch.guestdbg.nr_hw_bp = nr_bp;
 	vcpu->arch.guestdbg.hw_bp_info = bp_info;
 	vcpu->arch.guestdbg.nr_hw_wp = nr_wp;
 	vcpu->arch.guestdbg.hw_wp_info = wp_info;
-	return 0;
+	वापस 0;
 error:
-	kfree(bp_data);
-	kfree(wp_info);
-	kfree(bp_info);
-	return ret;
-}
+	kमुक्त(bp_data);
+	kमुक्त(wp_info);
+	kमुक्त(bp_info);
+	वापस ret;
+पूर्ण
 
-void kvm_s390_clear_bp_data(struct kvm_vcpu *vcpu)
-{
-	int i;
-	struct kvm_hw_wp_info_arch *hw_wp_info = NULL;
+व्योम kvm_s390_clear_bp_data(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक i;
+	काष्ठा kvm_hw_wp_info_arch *hw_wp_info = शून्य;
 
-	for (i = 0; i < vcpu->arch.guestdbg.nr_hw_wp; i++) {
+	क्रम (i = 0; i < vcpu->arch.guestdbg.nr_hw_wp; i++) अणु
 		hw_wp_info = &vcpu->arch.guestdbg.hw_wp_info[i];
-		kfree(hw_wp_info->old_data);
-		hw_wp_info->old_data = NULL;
-	}
-	kfree(vcpu->arch.guestdbg.hw_wp_info);
-	vcpu->arch.guestdbg.hw_wp_info = NULL;
+		kमुक्त(hw_wp_info->old_data);
+		hw_wp_info->old_data = शून्य;
+	पूर्ण
+	kमुक्त(vcpu->arch.guestdbg.hw_wp_info);
+	vcpu->arch.guestdbg.hw_wp_info = शून्य;
 
-	kfree(vcpu->arch.guestdbg.hw_bp_info);
-	vcpu->arch.guestdbg.hw_bp_info = NULL;
+	kमुक्त(vcpu->arch.guestdbg.hw_bp_info);
+	vcpu->arch.guestdbg.hw_bp_info = शून्य;
 
 	vcpu->arch.guestdbg.nr_hw_wp = 0;
 	vcpu->arch.guestdbg.nr_hw_bp = 0;
-}
+पूर्ण
 
-static inline int in_addr_range(u64 addr, u64 a, u64 b)
-{
-	if (a <= b)
-		return (addr >= a) && (addr <= b);
-	else
-		/* "overflowing" interval */
-		return (addr >= a) || (addr <= b);
-}
+अटल अंतरभूत पूर्णांक in_addr_range(u64 addr, u64 a, u64 b)
+अणु
+	अगर (a <= b)
+		वापस (addr >= a) && (addr <= b);
+	अन्यथा
+		/* "overflowing" पूर्णांकerval */
+		वापस (addr >= a) || (addr <= b);
+पूर्ण
 
-#define end_of_range(bp_info) (bp_info->addr + bp_info->len - 1)
+#घोषणा end_of_range(bp_info) (bp_info->addr + bp_info->len - 1)
 
-static struct kvm_hw_bp_info_arch *find_hw_bp(struct kvm_vcpu *vcpu,
-					      unsigned long addr)
-{
-	struct kvm_hw_bp_info_arch *bp_info = vcpu->arch.guestdbg.hw_bp_info;
-	int i;
+अटल काष्ठा kvm_hw_bp_info_arch *find_hw_bp(काष्ठा kvm_vcpu *vcpu,
+					      अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा kvm_hw_bp_info_arch *bp_info = vcpu->arch.guestdbg.hw_bp_info;
+	पूर्णांक i;
 
-	if (vcpu->arch.guestdbg.nr_hw_bp == 0)
-		return NULL;
+	अगर (vcpu->arch.guestdbg.nr_hw_bp == 0)
+		वापस शून्य;
 
-	for (i = 0; i < vcpu->arch.guestdbg.nr_hw_bp; i++) {
+	क्रम (i = 0; i < vcpu->arch.guestdbg.nr_hw_bp; i++) अणु
 		/* addr is directly the start or in the range of a bp */
-		if (addr == bp_info->addr)
-			goto found;
-		if (bp_info->len > 0 &&
+		अगर (addr == bp_info->addr)
+			जाओ found;
+		अगर (bp_info->len > 0 &&
 		    in_addr_range(addr, bp_info->addr, end_of_range(bp_info)))
-			goto found;
+			जाओ found;
 
 		bp_info++;
-	}
+	पूर्ण
 
-	return NULL;
+	वापस शून्य;
 found:
-	return bp_info;
-}
+	वापस bp_info;
+पूर्ण
 
-static struct kvm_hw_wp_info_arch *any_wp_changed(struct kvm_vcpu *vcpu)
-{
-	int i;
-	struct kvm_hw_wp_info_arch *wp_info = NULL;
-	void *temp = NULL;
+अटल काष्ठा kvm_hw_wp_info_arch *any_wp_changed(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक i;
+	काष्ठा kvm_hw_wp_info_arch *wp_info = शून्य;
+	व्योम *temp = शून्य;
 
-	if (vcpu->arch.guestdbg.nr_hw_wp == 0)
-		return NULL;
+	अगर (vcpu->arch.guestdbg.nr_hw_wp == 0)
+		वापस शून्य;
 
-	for (i = 0; i < vcpu->arch.guestdbg.nr_hw_wp; i++) {
+	क्रम (i = 0; i < vcpu->arch.guestdbg.nr_hw_wp; i++) अणु
 		wp_info = &vcpu->arch.guestdbg.hw_wp_info[i];
-		if (!wp_info || !wp_info->old_data || wp_info->len <= 0)
-			continue;
+		अगर (!wp_info || !wp_info->old_data || wp_info->len <= 0)
+			जारी;
 
-		temp = kmalloc(wp_info->len, GFP_KERNEL_ACCOUNT);
-		if (!temp)
-			continue;
+		temp = kदो_स्मृति(wp_info->len, GFP_KERNEL_ACCOUNT);
+		अगर (!temp)
+			जारी;
 
 		/* refetch the wp data and compare it to the old value */
-		if (!read_guest_abs(vcpu, wp_info->phys_addr, temp,
-				    wp_info->len)) {
-			if (memcmp(temp, wp_info->old_data, wp_info->len)) {
-				kfree(temp);
-				return wp_info;
-			}
-		}
-		kfree(temp);
-		temp = NULL;
-	}
+		अगर (!पढ़ो_guest_असल(vcpu, wp_info->phys_addr, temp,
+				    wp_info->len)) अणु
+			अगर (स_भेद(temp, wp_info->old_data, wp_info->len)) अणु
+				kमुक्त(temp);
+				वापस wp_info;
+			पूर्ण
+		पूर्ण
+		kमुक्त(temp);
+		temp = शून्य;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void kvm_s390_prepare_debug_exit(struct kvm_vcpu *vcpu)
-{
-	vcpu->run->exit_reason = KVM_EXIT_DEBUG;
+व्योम kvm_s390_prepare_debug_निकास(काष्ठा kvm_vcpu *vcpu)
+अणु
+	vcpu->run->निकास_reason = KVM_EXIT_DEBUG;
 	vcpu->guest_debug &= ~KVM_GUESTDBG_EXIT_PENDING;
-}
+पूर्ण
 
-#define PER_CODE_MASK		(PER_EVENT_MASK >> 24)
-#define PER_CODE_BRANCH		(PER_EVENT_BRANCH >> 24)
-#define PER_CODE_IFETCH		(PER_EVENT_IFETCH >> 24)
-#define PER_CODE_STORE		(PER_EVENT_STORE >> 24)
-#define PER_CODE_STORE_REAL	(PER_EVENT_STORE_REAL >> 24)
+#घोषणा PER_CODE_MASK		(PER_EVENT_MASK >> 24)
+#घोषणा PER_CODE_BRANCH		(PER_EVENT_BRANCH >> 24)
+#घोषणा PER_CODE_IFETCH		(PER_EVENT_IFETCH >> 24)
+#घोषणा PER_CODE_STORE		(PER_EVENT_STORE >> 24)
+#घोषणा PER_CODE_STORE_REAL	(PER_EVENT_STORE_REAL >> 24)
 
-#define per_bp_event(code) \
+#घोषणा per_bp_event(code) \
 			(code & (PER_CODE_IFETCH | PER_CODE_BRANCH))
-#define per_write_wp_event(code) \
+#घोषणा per_ग_लिखो_wp_event(code) \
 			(code & (PER_CODE_STORE | PER_CODE_STORE_REAL))
 
-static int debug_exit_required(struct kvm_vcpu *vcpu, u8 perc,
-			       unsigned long peraddr)
-{
-	struct kvm_debug_exit_arch *debug_exit = &vcpu->run->debug.arch;
-	struct kvm_hw_wp_info_arch *wp_info = NULL;
-	struct kvm_hw_bp_info_arch *bp_info = NULL;
-	unsigned long addr = vcpu->arch.sie_block->gpsw.addr;
+अटल पूर्णांक debug_निकास_required(काष्ठा kvm_vcpu *vcpu, u8 perc,
+			       अचिन्हित दीर्घ peraddr)
+अणु
+	काष्ठा kvm_debug_निकास_arch *debug_निकास = &vcpu->run->debug.arch;
+	काष्ठा kvm_hw_wp_info_arch *wp_info = शून्य;
+	काष्ठा kvm_hw_bp_info_arch *bp_info = शून्य;
+	अचिन्हित दीर्घ addr = vcpu->arch.sie_block->gpsw.addr;
 
-	if (guestdbg_hw_bp_enabled(vcpu)) {
-		if (per_write_wp_event(perc) &&
-		    vcpu->arch.guestdbg.nr_hw_wp > 0) {
+	अगर (guestdbg_hw_bp_enabled(vcpu)) अणु
+		अगर (per_ग_लिखो_wp_event(perc) &&
+		    vcpu->arch.guestdbg.nr_hw_wp > 0) अणु
 			wp_info = any_wp_changed(vcpu);
-			if (wp_info) {
-				debug_exit->addr = wp_info->addr;
-				debug_exit->type = KVM_HW_WP_WRITE;
-				goto exit_required;
-			}
-		}
-		if (per_bp_event(perc) &&
-			 vcpu->arch.guestdbg.nr_hw_bp > 0) {
+			अगर (wp_info) अणु
+				debug_निकास->addr = wp_info->addr;
+				debug_निकास->type = KVM_HW_WP_WRITE;
+				जाओ निकास_required;
+			पूर्ण
+		पूर्ण
+		अगर (per_bp_event(perc) &&
+			 vcpu->arch.guestdbg.nr_hw_bp > 0) अणु
 			bp_info = find_hw_bp(vcpu, addr);
-			/* remove duplicate events if PC==PER address */
-			if (bp_info && (addr != peraddr)) {
-				debug_exit->addr = addr;
-				debug_exit->type = KVM_HW_BP;
+			/* हटाओ duplicate events अगर PC==PER address */
+			अगर (bp_info && (addr != peraddr)) अणु
+				debug_निकास->addr = addr;
+				debug_निकास->type = KVM_HW_BP;
 				vcpu->arch.guestdbg.last_bp = addr;
-				goto exit_required;
-			}
-			/* breakpoint missed */
+				जाओ निकास_required;
+			पूर्ण
+			/* अवरोधpoपूर्णांक missed */
 			bp_info = find_hw_bp(vcpu, peraddr);
-			if (bp_info && vcpu->arch.guestdbg.last_bp != peraddr) {
-				debug_exit->addr = peraddr;
-				debug_exit->type = KVM_HW_BP;
-				goto exit_required;
-			}
-		}
-	}
-	if (guestdbg_sstep_enabled(vcpu) && per_bp_event(perc)) {
-		debug_exit->addr = addr;
-		debug_exit->type = KVM_SINGLESTEP;
-		goto exit_required;
-	}
+			अगर (bp_info && vcpu->arch.guestdbg.last_bp != peraddr) अणु
+				debug_निकास->addr = peraddr;
+				debug_निकास->type = KVM_HW_BP;
+				जाओ निकास_required;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (guestdbg_sstep_enabled(vcpu) && per_bp_event(perc)) अणु
+		debug_निकास->addr = addr;
+		debug_निकास->type = KVM_SINGLESTEP;
+		जाओ निकास_required;
+	पूर्ण
 
-	return 0;
-exit_required:
-	return 1;
-}
+	वापस 0;
+निकास_required:
+	वापस 1;
+पूर्ण
 
-static int per_fetched_addr(struct kvm_vcpu *vcpu, unsigned long *addr)
-{
+अटल पूर्णांक per_fetched_addr(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ *addr)
+अणु
 	u8 exec_ilen = 0;
 	u16 opcode[3];
-	int rc;
+	पूर्णांक rc;
 
-	if (vcpu->arch.sie_block->icptcode == ICPT_PROGI) {
+	अगर (vcpu->arch.sie_block->icptcode == ICPT_PROGI) अणु
 		/* PER address references the fetched or the execute instr */
 		*addr = vcpu->arch.sie_block->peraddr;
 		/*
-		 * Manually detect if we have an EXECUTE instruction. As
-		 * instructions are always 2 byte aligned we can read the
+		 * Manually detect अगर we have an EXECUTE inकाष्ठाion. As
+		 * inकाष्ठाions are always 2 byte aligned we can पढ़ो the
 		 * first two bytes unconditionally
 		 */
-		rc = read_guest_instr(vcpu, *addr, &opcode, 2);
-		if (rc)
-			return rc;
-		if (opcode[0] >> 8 == 0x44)
+		rc = पढ़ो_guest_instr(vcpu, *addr, &opcode, 2);
+		अगर (rc)
+			वापस rc;
+		अगर (opcode[0] >> 8 == 0x44)
 			exec_ilen = 4;
-		if ((opcode[0] & 0xff0f) == 0xc600)
+		अगर ((opcode[0] & 0xff0f) == 0xc600)
 			exec_ilen = 6;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* instr was suppressed, calculate the responsible instr */
-		*addr = __rewind_psw(vcpu->arch.sie_block->gpsw,
+		*addr = __शुरुआत_psw(vcpu->arch.sie_block->gpsw,
 				     kvm_s390_get_ilen(vcpu));
-		if (vcpu->arch.sie_block->icptstatus & 0x01) {
+		अगर (vcpu->arch.sie_block->icptstatus & 0x01) अणु
 			exec_ilen = (vcpu->arch.sie_block->icptstatus & 0x60) >> 4;
-			if (!exec_ilen)
+			अगर (!exec_ilen)
 				exec_ilen = 4;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (exec_ilen) {
-		/* read the complete EXECUTE instr to detect the fetched addr */
-		rc = read_guest_instr(vcpu, *addr, &opcode, exec_ilen);
-		if (rc)
-			return rc;
-		if (exec_ilen == 6) {
-			/* EXECUTE RELATIVE LONG - RIL-b format */
+	अगर (exec_ilen) अणु
+		/* पढ़ो the complete EXECUTE instr to detect the fetched addr */
+		rc = पढ़ो_guest_instr(vcpu, *addr, &opcode, exec_ilen);
+		अगर (rc)
+			वापस rc;
+		अगर (exec_ilen == 6) अणु
+			/* EXECUTE RELATIVE LONG - RIL-b क्रमmat */
 			s32 rl = *((s32 *) (opcode + 1));
 
-			/* rl is a _signed_ 32 bit value specifying halfwords */
+			/* rl is a _चिन्हित_ 32 bit value specअगरying halfwords */
 			*addr += (u64)(s64) rl * 2;
-		} else {
-			/* EXECUTE - RX-a format */
+		पूर्ण अन्यथा अणु
+			/* EXECUTE - RX-a क्रमmat */
 			u32 base = (opcode[1] & 0xf000) >> 12;
 			u32 disp = opcode[1] & 0x0fff;
 			u32 index = opcode[0] & 0x000f;
@@ -485,142 +486,142 @@ static int per_fetched_addr(struct kvm_vcpu *vcpu, unsigned long *addr)
 			*addr = base ? vcpu->run->s.regs.gprs[base] : 0;
 			*addr += index ? vcpu->run->s.regs.gprs[index] : 0;
 			*addr += disp;
-		}
+		पूर्ण
 		*addr = kvm_s390_logical_to_effective(vcpu, *addr);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define guest_per_enabled(vcpu) \
+#घोषणा guest_per_enabled(vcpu) \
 			     (vcpu->arch.sie_block->gpsw.mask & PSW_MASK_PER)
 
-int kvm_s390_handle_per_ifetch_icpt(struct kvm_vcpu *vcpu)
-{
-	const u64 cr10 = vcpu->arch.sie_block->gcr[10];
-	const u64 cr11 = vcpu->arch.sie_block->gcr[11];
-	const u8 ilen = kvm_s390_get_ilen(vcpu);
-	struct kvm_s390_pgm_info pgm_info = {
+पूर्णांक kvm_s390_handle_per_अगरetch_icpt(काष्ठा kvm_vcpu *vcpu)
+अणु
+	स्थिर u64 cr10 = vcpu->arch.sie_block->gcr[10];
+	स्थिर u64 cr11 = vcpu->arch.sie_block->gcr[11];
+	स्थिर u8 ilen = kvm_s390_get_ilen(vcpu);
+	काष्ठा kvm_s390_pgm_info pgm_info = अणु
 		.code = PGM_PER,
 		.per_code = PER_CODE_IFETCH,
-		.per_address = __rewind_psw(vcpu->arch.sie_block->gpsw, ilen),
-	};
-	unsigned long fetched_addr;
-	int rc;
+		.per_address = __शुरुआत_psw(vcpu->arch.sie_block->gpsw, ilen),
+	पूर्ण;
+	अचिन्हित दीर्घ fetched_addr;
+	पूर्णांक rc;
 
 	/*
-	 * The PSW points to the next instruction, therefore the intercepted
-	 * instruction generated a PER i-fetch event. PER address therefore
-	 * points at the previous PSW address (could be an EXECUTE function).
+	 * The PSW poपूर्णांकs to the next inकाष्ठाion, thereक्रमe the पूर्णांकercepted
+	 * inकाष्ठाion generated a PER i-fetch event. PER address thereक्रमe
+	 * poपूर्णांकs at the previous PSW address (could be an EXECUTE function).
 	 */
-	if (!guestdbg_enabled(vcpu))
-		return kvm_s390_inject_prog_irq(vcpu, &pgm_info);
+	अगर (!guestdbg_enabled(vcpu))
+		वापस kvm_s390_inject_prog_irq(vcpu, &pgm_info);
 
-	if (debug_exit_required(vcpu, pgm_info.per_code, pgm_info.per_address))
+	अगर (debug_निकास_required(vcpu, pgm_info.per_code, pgm_info.per_address))
 		vcpu->guest_debug |= KVM_GUESTDBG_EXIT_PENDING;
 
-	if (!guest_per_enabled(vcpu) ||
+	अगर (!guest_per_enabled(vcpu) ||
 	    !(vcpu->arch.sie_block->gcr[9] & PER_EVENT_IFETCH))
-		return 0;
+		वापस 0;
 
 	rc = per_fetched_addr(vcpu, &fetched_addr);
-	if (rc < 0)
-		return rc;
-	if (rc)
-		/* instruction-fetching exceptions */
-		return kvm_s390_inject_program_int(vcpu, PGM_ADDRESSING);
+	अगर (rc < 0)
+		वापस rc;
+	अगर (rc)
+		/* inकाष्ठाion-fetching exceptions */
+		वापस kvm_s390_inject_program_पूर्णांक(vcpu, PGM_ADDRESSING);
 
-	if (in_addr_range(fetched_addr, cr10, cr11))
-		return kvm_s390_inject_prog_irq(vcpu, &pgm_info);
-	return 0;
-}
+	अगर (in_addr_range(fetched_addr, cr10, cr11))
+		वापस kvm_s390_inject_prog_irq(vcpu, &pgm_info);
+	वापस 0;
+पूर्ण
 
-static int filter_guest_per_event(struct kvm_vcpu *vcpu)
-{
-	const u8 perc = vcpu->arch.sie_block->perc;
+अटल पूर्णांक filter_guest_per_event(काष्ठा kvm_vcpu *vcpu)
+अणु
+	स्थिर u8 perc = vcpu->arch.sie_block->perc;
 	u64 addr = vcpu->arch.sie_block->gpsw.addr;
 	u64 cr9 = vcpu->arch.sie_block->gcr[9];
 	u64 cr10 = vcpu->arch.sie_block->gcr[10];
 	u64 cr11 = vcpu->arch.sie_block->gcr[11];
 	/* filter all events, demanded by the guest */
 	u8 guest_perc = perc & (cr9 >> 24) & PER_CODE_MASK;
-	unsigned long fetched_addr;
-	int rc;
+	अचिन्हित दीर्घ fetched_addr;
+	पूर्णांक rc;
 
-	if (!guest_per_enabled(vcpu))
+	अगर (!guest_per_enabled(vcpu))
 		guest_perc = 0;
 
 	/* filter "successful-branching" events */
-	if (guest_perc & PER_CODE_BRANCH &&
+	अगर (guest_perc & PER_CODE_BRANCH &&
 	    cr9 & PER_CONTROL_BRANCH_ADDRESS &&
 	    !in_addr_range(addr, cr10, cr11))
 		guest_perc &= ~PER_CODE_BRANCH;
 
 	/* filter "instruction-fetching" events */
-	if (guest_perc & PER_CODE_IFETCH) {
+	अगर (guest_perc & PER_CODE_IFETCH) अणु
 		rc = per_fetched_addr(vcpu, &fetched_addr);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 		/*
 		 * Don't inject an irq on exceptions. This would make handling
-		 * on icpt code 8 very complex (as PSW was already rewound).
+		 * on icpt code 8 very complex (as PSW was alपढ़ोy rewound).
 		 */
-		if (rc || !in_addr_range(fetched_addr, cr10, cr11))
+		अगर (rc || !in_addr_range(fetched_addr, cr10, cr11))
 			guest_perc &= ~PER_CODE_IFETCH;
-	}
+	पूर्ण
 
 	/* All other PER events will be given to the guest */
 	/* TODO: Check altered address/address space */
 
 	vcpu->arch.sie_block->perc = guest_perc;
 
-	if (!guest_perc)
+	अगर (!guest_perc)
 		vcpu->arch.sie_block->iprcc &= ~PGM_PER;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define pssec(vcpu) (vcpu->arch.sie_block->gcr[1] & _ASCE_SPACE_SWITCH)
-#define hssec(vcpu) (vcpu->arch.sie_block->gcr[13] & _ASCE_SPACE_SWITCH)
-#define old_ssec(vcpu) ((vcpu->arch.sie_block->tecmc >> 31) & 0x1)
-#define old_as_is_home(vcpu) !(vcpu->arch.sie_block->tecmc & 0xffff)
+#घोषणा pssec(vcpu) (vcpu->arch.sie_block->gcr[1] & _ASCE_SPACE_SWITCH)
+#घोषणा hssec(vcpu) (vcpu->arch.sie_block->gcr[13] & _ASCE_SPACE_SWITCH)
+#घोषणा old_ssec(vcpu) ((vcpu->arch.sie_block->tecmc >> 31) & 0x1)
+#घोषणा old_as_is_home(vcpu) !(vcpu->arch.sie_block->tecmc & 0xffff)
 
-int kvm_s390_handle_per_event(struct kvm_vcpu *vcpu)
-{
-	int rc, new_as;
+पूर्णांक kvm_s390_handle_per_event(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक rc, new_as;
 
-	if (debug_exit_required(vcpu, vcpu->arch.sie_block->perc,
+	अगर (debug_निकास_required(vcpu, vcpu->arch.sie_block->perc,
 				vcpu->arch.sie_block->peraddr))
 		vcpu->guest_debug |= KVM_GUESTDBG_EXIT_PENDING;
 
 	rc = filter_guest_per_event(vcpu);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/*
-	 * Only RP, SAC, SACF, PT, PTI, PR, PC instructions can trigger
-	 * a space-switch event. PER events enforce space-switch events
-	 * for these instructions. So if no PER event for the guest is left,
-	 * we might have to filter the space-switch element out, too.
+	 * Only RP, SAC, SACF, PT, PTI, PR, PC inकाष्ठाions can trigger
+	 * a space-चयन event. PER events enक्रमce space-चयन events
+	 * क्रम these inकाष्ठाions. So अगर no PER event क्रम the guest is left,
+	 * we might have to filter the space-चयन element out, too.
 	 */
-	if (vcpu->arch.sie_block->iprcc == PGM_SPACE_SWITCH) {
+	अगर (vcpu->arch.sie_block->iprcc == PGM_SPACE_SWITCH) अणु
 		vcpu->arch.sie_block->iprcc = 0;
 		new_as = psw_bits(vcpu->arch.sie_block->gpsw).as;
 
 		/*
 		 * If the AS changed from / to home, we had RP, SAC or SACF
-		 * instruction. Check primary and home space-switch-event
+		 * inकाष्ठाion. Check primary and home space-चयन-event
 		 * controls. (theoretically home -> home produced no event)
 		 */
-		if (((new_as == PSW_BITS_AS_HOME) ^ old_as_is_home(vcpu)) &&
+		अगर (((new_as == PSW_BITS_AS_HOME) ^ old_as_is_home(vcpu)) &&
 		    (pssec(vcpu) || hssec(vcpu)))
 			vcpu->arch.sie_block->iprcc = PGM_SPACE_SWITCH;
 
 		/*
-		 * PT, PTI, PR, PC instruction operate on primary AS only. Check
-		 * if the primary-space-switch-event control was or got set.
+		 * PT, PTI, PR, PC inकाष्ठाion operate on primary AS only. Check
+		 * अगर the primary-space-चयन-event control was or got set.
 		 */
-		if (new_as == PSW_BITS_AS_PRIMARY && !old_as_is_home(vcpu) &&
+		अगर (new_as == PSW_BITS_AS_PRIMARY && !old_as_is_home(vcpu) &&
 		    (pssec(vcpu) || old_ssec(vcpu)))
 			vcpu->arch.sie_block->iprcc = PGM_SPACE_SWITCH;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Manuel Jander.
  *
@@ -6,116 +7,116 @@
  *  Vojtech Pavlik
  *  Raymond Ingles
  *
- * Should you need to contact me, the author, you can do so either by
+ * Should you need to contact me, the author, you can करो so either by
  * e-mail - mail your message to <vojtech@suse.cz>, or by paper mail:
- * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Republic
+ * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Reखुला
  *
  * Based 90% on Vojtech Pavlik pcigame driver.
- * Merged and modified by Manuel Jander, for the OpenVortex
+ * Merged and modअगरied by Manuel Jander, क्रम the OpenVortex
  * driver. (email: mjander@embedded.cl).
  */
 
-#include <linux/time.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <sound/core.h>
-#include "au88x0.h"
-#include <linux/gameport.h>
-#include <linux/export.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <sound/core.h>
+#समावेश "au88x0.h"
+#समावेश <linux/gameport.h>
+#समावेश <linux/export.h>
 
-#if IS_REACHABLE(CONFIG_GAMEPORT)
+#अगर IS_REACHABLE(CONFIG_GAMEPORT)
 
-#define VORTEX_GAME_DWAIT	20	/* 20 ms */
+#घोषणा VORTEX_GAME_DWAIT	20	/* 20 ms */
 
-static unsigned char vortex_game_read(struct gameport *gameport)
-{
+अटल अचिन्हित अक्षर vortex_game_पढ़ो(काष्ठा gameport *gameport)
+अणु
 	vortex_t *vortex = gameport_get_port_data(gameport);
-	return hwread(vortex->mmio, VORTEX_GAME_LEGACY);
-}
+	वापस hwपढ़ो(vortex->mmio, VORTEX_GAME_LEGACY);
+पूर्ण
 
-static void vortex_game_trigger(struct gameport *gameport)
-{
+अटल व्योम vortex_game_trigger(काष्ठा gameport *gameport)
+अणु
 	vortex_t *vortex = gameport_get_port_data(gameport);
-	hwwrite(vortex->mmio, VORTEX_GAME_LEGACY, 0xff);
-}
+	hwग_लिखो(vortex->mmio, VORTEX_GAME_LEGACY, 0xff);
+पूर्ण
 
-static int
-vortex_game_cooked_read(struct gameport *gameport, int *axes, int *buttons)
-{
+अटल पूर्णांक
+vortex_game_cooked_पढ़ो(काष्ठा gameport *gameport, पूर्णांक *axes, पूर्णांक *buttons)
+अणु
 	vortex_t *vortex = gameport_get_port_data(gameport);
-	int i;
+	पूर्णांक i;
 
-	*buttons = (~hwread(vortex->mmio, VORTEX_GAME_LEGACY) >> 4) & 0xf;
+	*buttons = (~hwपढ़ो(vortex->mmio, VORTEX_GAME_LEGACY) >> 4) & 0xf;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		axes[i] =
-		    hwread(vortex->mmio, VORTEX_GAME_AXIS + (i * AXIS_SIZE));
-		if (axes[i] == AXIS_RANGE)
+		    hwपढ़ो(vortex->mmio, VORTEX_GAME_AXIS + (i * AXIS_SIZE));
+		अगर (axes[i] == AXIS_RANGE)
 			axes[i] = -1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vortex_game_open(struct gameport *gameport, int mode)
-{
+अटल पूर्णांक vortex_game_खोलो(काष्ठा gameport *gameport, पूर्णांक mode)
+अणु
 	vortex_t *vortex = gameport_get_port_data(gameport);
 
-	switch (mode) {
-	case GAMEPORT_MODE_COOKED:
-		hwwrite(vortex->mmio, VORTEX_CTRL2,
-			hwread(vortex->mmio,
+	चयन (mode) अणु
+	हाल GAMEPORT_MODE_COOKED:
+		hwग_लिखो(vortex->mmio, VORTEX_CTRL2,
+			hwपढ़ो(vortex->mmio,
 			       VORTEX_CTRL2) | CTRL2_GAME_ADCMODE);
 		msleep(VORTEX_GAME_DWAIT);
-		return 0;
-	case GAMEPORT_MODE_RAW:
-		hwwrite(vortex->mmio, VORTEX_CTRL2,
-			hwread(vortex->mmio,
+		वापस 0;
+	हाल GAMEPORT_MODE_RAW:
+		hwग_लिखो(vortex->mmio, VORTEX_CTRL2,
+			hwपढ़ो(vortex->mmio,
 			       VORTEX_CTRL2) & ~CTRL2_GAME_ADCMODE);
-		return 0;
-	default:
-		return -1;
-	}
+		वापस 0;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vortex_gameport_register(vortex_t *vortex)
-{
-	struct gameport *gp;
+अटल पूर्णांक vortex_gameport_रेजिस्टर(vortex_t *vortex)
+अणु
+	काष्ठा gameport *gp;
 
 	vortex->gameport = gp = gameport_allocate_port();
-	if (!gp) {
+	अगर (!gp) अणु
 		dev_err(vortex->card->dev,
 			"cannot allocate memory for gameport\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	gameport_set_name(gp, "AU88x0 Gameport");
 	gameport_set_phys(gp, "pci%s/gameport0", pci_name(vortex->pci_dev));
 	gameport_set_dev_parent(gp, &vortex->pci_dev->dev);
 
-	gp->read = vortex_game_read;
+	gp->पढ़ो = vortex_game_पढ़ो;
 	gp->trigger = vortex_game_trigger;
-	gp->cooked_read = vortex_game_cooked_read;
-	gp->open = vortex_game_open;
+	gp->cooked_पढ़ो = vortex_game_cooked_पढ़ो;
+	gp->खोलो = vortex_game_खोलो;
 
 	gameport_set_port_data(gp, vortex);
 	gp->fuzz = 64;
 
-	gameport_register_port(gp);
+	gameport_रेजिस्टर_port(gp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vortex_gameport_unregister(vortex_t * vortex)
-{
-	if (vortex->gameport) {
-		gameport_unregister_port(vortex->gameport);
-		vortex->gameport = NULL;
-	}
-}
+अटल व्योम vortex_gameport_unरेजिस्टर(vortex_t * vortex)
+अणु
+	अगर (vortex->gameport) अणु
+		gameport_unरेजिस्टर_port(vortex->gameport);
+		vortex->gameport = शून्य;
+	पूर्ण
+पूर्ण
 
-#else
-static inline int vortex_gameport_register(vortex_t * vortex) { return -ENOSYS; }
-static inline void vortex_gameport_unregister(vortex_t * vortex) { }
-#endif
+#अन्यथा
+अटल अंतरभूत पूर्णांक vortex_gameport_रेजिस्टर(vortex_t * vortex) अणु वापस -ENOSYS; पूर्ण
+अटल अंतरभूत व्योम vortex_gameport_unरेजिस्टर(vortex_t * vortex) अणु पूर्ण
+#पूर्ण_अगर

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XTENSA_BYTEORDER_H
-#define _XTENSA_BYTEORDER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XTENSA_BYTEORDER_H
+#घोषणा _XTENSA_BYTEORDER_H
 
-#ifdef __XTENSA_EL__
-#include <linux/byteorder/little_endian.h>
-#elif defined(__XTENSA_EB__)
-#include <linux/byteorder/big_endian.h>
-#else
+#अगर_घोषित __XTENSA_EL__
+#समावेश <linux/byteorder/little_endian.h>
+#या_अगर defined(__XTENSA_EB__)
+#समावेश <linux/byteorder/big_endian.h>
+#अन्यथा
 # error processor byte order undefined!
-#endif
+#पूर्ण_अगर
 
-#endif /* _XTENSA_BYTEORDER_H */
+#पूर्ण_अगर /* _XTENSA_BYTEORDER_H */

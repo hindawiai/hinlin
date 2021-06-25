@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PMAC_H__
-#define __PMAC_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PMAC_H__
+#घोषणा __PMAC_H__
 
-#include <linux/pci.h>
-#include <linux/irq.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/irq.h>
 
 /*
- * Declaration for the various functions exported by the
- * pmac_* files. Mostly for use by pmac_setup
+ * Declaration क्रम the various functions exported by the
+ * pmac_* files. Mostly क्रम use by pmac_setup
  */
 
-struct rtc_time;
+काष्ठा rtc_समय;
 
-extern int pmac_newworld;
+बाह्य पूर्णांक pmac_newworld;
 
-extern long pmac_time_init(void);
-extern time64_t pmac_get_boot_time(void);
-extern void pmac_get_rtc_time(struct rtc_time *);
-extern int pmac_set_rtc_time(struct rtc_time *);
-extern void pmac_read_rtc_time(void);
-extern void pmac_calibrate_decr(void);
-extern void pmac_pci_irq_fixup(struct pci_dev *);
-extern void pmac_pci_init(void);
+बाह्य दीर्घ pmac_समय_init(व्योम);
+बाह्य समय64_t pmac_get_boot_समय(व्योम);
+बाह्य व्योम pmac_get_rtc_समय(काष्ठा rtc_समय *);
+बाह्य पूर्णांक pmac_set_rtc_समय(काष्ठा rtc_समय *);
+बाह्य व्योम pmac_पढ़ो_rtc_समय(व्योम);
+बाह्य व्योम pmac_calibrate_decr(व्योम);
+बाह्य व्योम pmac_pci_irq_fixup(काष्ठा pci_dev *);
+बाह्य व्योम pmac_pci_init(व्योम);
 
-extern void pmac_nvram_update(void);
-extern unsigned char pmac_nvram_read_byte(int addr);
-extern void pmac_nvram_write_byte(int addr, unsigned char val);
-extern void pmac_pcibios_after_init(void);
-extern int of_show_percpuinfo(struct seq_file *m, int i);
+बाह्य व्योम pmac_nvram_update(व्योम);
+बाह्य अचिन्हित अक्षर pmac_nvram_पढ़ो_byte(पूर्णांक addr);
+बाह्य व्योम pmac_nvram_ग_लिखो_byte(पूर्णांक addr, अचिन्हित अक्षर val);
+बाह्य व्योम pmac_pcibios_after_init(व्योम);
+बाह्य पूर्णांक of_show_percpuinfo(काष्ठा seq_file *m, पूर्णांक i);
 
-extern void pmac_setup_pci_dma(void);
-extern void pmac_check_ht_link(void);
+बाह्य व्योम pmac_setup_pci_dma(व्योम);
+बाह्य व्योम pmac_check_ht_link(व्योम);
 
-extern void pmac_setup_smp(void);
-extern int psurge_secondary_virq;
-extern void low_cpu_offline_self(void) __attribute__((noreturn));
+बाह्य व्योम pmac_setup_smp(व्योम);
+बाह्य पूर्णांक psurge_secondary_virq;
+बाह्य व्योम low_cpu_offline_self(व्योम) __attribute__((noवापस));
 
-extern int pmac_nvram_init(void);
-extern void pmac_pic_init(void);
+बाह्य पूर्णांक pmac_nvram_init(व्योम);
+बाह्य व्योम pmac_pic_init(व्योम);
 
-extern struct pci_controller_ops pmac_pci_controller_ops;
+बाह्य काष्ठा pci_controller_ops pmac_pci_controller_ops;
 
-#endif /* __PMAC_H__ */
+#पूर्ण_अगर /* __PMAC_H__ */

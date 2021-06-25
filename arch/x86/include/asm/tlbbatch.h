@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ARCH_X86_TLBBATCH_H
-#define _ARCH_X86_TLBBATCH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ARCH_X86_TLBBATCH_H
+#घोषणा _ARCH_X86_TLBBATCH_H
 
-#include <linux/cpumask.h>
+#समावेश <linux/cpumask.h>
 
-struct arch_tlbflush_unmap_batch {
+काष्ठा arch_tlbflush_unmap_batch अणु
 	/*
-	 * Each bit set is a CPU that potentially has a TLB entry for one of
+	 * Each bit set is a CPU that potentially has a TLB entry क्रम one of
 	 * the PFNs being flushed..
 	 */
-	struct cpumask cpumask;
-};
+	काष्ठा cpumask cpumask;
+पूर्ण;
 
-#endif /* _ARCH_X86_TLBBATCH_H */
+#पूर्ण_अगर /* _ARCH_X86_TLBBATCH_H */

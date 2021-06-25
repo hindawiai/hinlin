@@ -1,356 +1,357 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
-#include "otx2_cpt_common.h"
-#include "otx2_cptpf.h"
-#include "rvu_reg.h"
+#समावेश "otx2_cpt_common.h"
+#समावेश "otx2_cptpf.h"
+#समावेश "rvu_reg.h"
 
 /*
- * CPT PF driver version, It will be incremented by 1 for every feature
+ * CPT PF driver version, It will be incremented by 1 क्रम every feature
  * addition in CPT mailbox messages.
  */
-#define OTX2_CPT_PF_DRV_VERSION 0x1
+#घोषणा OTX2_CPT_PF_DRV_VERSION 0x1
 
-static int forward_to_af(struct otx2_cptpf_dev *cptpf,
-			 struct otx2_cptvf_info *vf,
-			 struct mbox_msghdr *req, int size)
-{
-	struct mbox_msghdr *msg;
-	int ret;
+अटल पूर्णांक क्रमward_to_af(काष्ठा otx2_cptpf_dev *cptpf,
+			 काष्ठा otx2_cptvf_info *vf,
+			 काष्ठा mbox_msghdr *req, पूर्णांक size)
+अणु
+	काष्ठा mbox_msghdr *msg;
+	पूर्णांक ret;
 
 	msg = otx2_mbox_alloc_msg(&cptpf->afpf_mbox, 0, size);
-	if (msg == NULL)
-		return -ENOMEM;
+	अगर (msg == शून्य)
+		वापस -ENOMEM;
 
-	memcpy((uint8_t *)msg + sizeof(struct mbox_msghdr),
-	       (uint8_t *)req + sizeof(struct mbox_msghdr), size);
+	स_नकल((uपूर्णांक8_t *)msg + माप(काष्ठा mbox_msghdr),
+	       (uपूर्णांक8_t *)req + माप(काष्ठा mbox_msghdr), size);
 	msg->id = req->id;
-	msg->pcifunc = req->pcifunc;
+	msg->pcअगरunc = req->pcअगरunc;
 	msg->sig = req->sig;
 	msg->ver = req->ver;
 
 	otx2_mbox_msg_send(&cptpf->afpf_mbox, 0);
-	ret = otx2_mbox_wait_for_rsp(&cptpf->afpf_mbox, 0);
-	if (ret == -EIO) {
+	ret = otx2_mbox_रुको_क्रम_rsp(&cptpf->afpf_mbox, 0);
+	अगर (ret == -EIO) अणु
 		dev_err(&cptpf->pdev->dev, "RVU MBOX timeout.\n");
-		return ret;
-	} else if (ret) {
+		वापस ret;
+	पूर्ण अन्यथा अगर (ret) अणु
 		dev_err(&cptpf->pdev->dev, "RVU MBOX error: %d.\n", ret);
-		return -EFAULT;
-	}
-	return 0;
-}
+		वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int handle_msg_get_caps(struct otx2_cptpf_dev *cptpf,
-			       struct otx2_cptvf_info *vf,
-			       struct mbox_msghdr *req)
-{
-	struct otx2_cpt_caps_rsp *rsp;
+अटल पूर्णांक handle_msg_get_caps(काष्ठा otx2_cptpf_dev *cptpf,
+			       काष्ठा otx2_cptvf_info *vf,
+			       काष्ठा mbox_msghdr *req)
+अणु
+	काष्ठा otx2_cpt_caps_rsp *rsp;
 
-	rsp = (struct otx2_cpt_caps_rsp *)
+	rsp = (काष्ठा otx2_cpt_caps_rsp *)
 	      otx2_mbox_alloc_msg(&cptpf->vfpf_mbox, vf->vf_id,
-				  sizeof(*rsp));
-	if (!rsp)
-		return -ENOMEM;
+				  माप(*rsp));
+	अगर (!rsp)
+		वापस -ENOMEM;
 
 	rsp->hdr.id = MBOX_MSG_GET_CAPS;
 	rsp->hdr.sig = OTX2_MBOX_RSP_SIG;
-	rsp->hdr.pcifunc = req->pcifunc;
+	rsp->hdr.pcअगरunc = req->pcअगरunc;
 	rsp->cpt_pf_drv_version = OTX2_CPT_PF_DRV_VERSION;
 	rsp->cpt_revision = cptpf->pdev->revision;
-	memcpy(&rsp->eng_caps, &cptpf->eng_caps, sizeof(rsp->eng_caps));
+	स_नकल(&rsp->eng_caps, &cptpf->eng_caps, माप(rsp->eng_caps));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int handle_msg_get_eng_grp_num(struct otx2_cptpf_dev *cptpf,
-				      struct otx2_cptvf_info *vf,
-				      struct mbox_msghdr *req)
-{
-	struct otx2_cpt_egrp_num_msg *grp_req;
-	struct otx2_cpt_egrp_num_rsp *rsp;
+अटल पूर्णांक handle_msg_get_eng_grp_num(काष्ठा otx2_cptpf_dev *cptpf,
+				      काष्ठा otx2_cptvf_info *vf,
+				      काष्ठा mbox_msghdr *req)
+अणु
+	काष्ठा otx2_cpt_egrp_num_msg *grp_req;
+	काष्ठा otx2_cpt_egrp_num_rsp *rsp;
 
-	grp_req = (struct otx2_cpt_egrp_num_msg *)req;
-	rsp = (struct otx2_cpt_egrp_num_rsp *)
-	       otx2_mbox_alloc_msg(&cptpf->vfpf_mbox, vf->vf_id, sizeof(*rsp));
-	if (!rsp)
-		return -ENOMEM;
+	grp_req = (काष्ठा otx2_cpt_egrp_num_msg *)req;
+	rsp = (काष्ठा otx2_cpt_egrp_num_rsp *)
+	       otx2_mbox_alloc_msg(&cptpf->vfpf_mbox, vf->vf_id, माप(*rsp));
+	अगर (!rsp)
+		वापस -ENOMEM;
 
 	rsp->hdr.id = MBOX_MSG_GET_ENG_GRP_NUM;
 	rsp->hdr.sig = OTX2_MBOX_RSP_SIG;
-	rsp->hdr.pcifunc = req->pcifunc;
+	rsp->hdr.pcअगरunc = req->pcअगरunc;
 	rsp->eng_type = grp_req->eng_type;
 	rsp->eng_grp_num = otx2_cpt_get_eng_grp(&cptpf->eng_grps,
 						grp_req->eng_type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int handle_msg_kvf_limits(struct otx2_cptpf_dev *cptpf,
-				 struct otx2_cptvf_info *vf,
-				 struct mbox_msghdr *req)
-{
-	struct otx2_cpt_kvf_limits_rsp *rsp;
+अटल पूर्णांक handle_msg_kvf_limits(काष्ठा otx2_cptpf_dev *cptpf,
+				 काष्ठा otx2_cptvf_info *vf,
+				 काष्ठा mbox_msghdr *req)
+अणु
+	काष्ठा otx2_cpt_kvf_limits_rsp *rsp;
 
-	rsp = (struct otx2_cpt_kvf_limits_rsp *)
-	      otx2_mbox_alloc_msg(&cptpf->vfpf_mbox, vf->vf_id, sizeof(*rsp));
-	if (!rsp)
-		return -ENOMEM;
+	rsp = (काष्ठा otx2_cpt_kvf_limits_rsp *)
+	      otx2_mbox_alloc_msg(&cptpf->vfpf_mbox, vf->vf_id, माप(*rsp));
+	अगर (!rsp)
+		वापस -ENOMEM;
 
 	rsp->hdr.id = MBOX_MSG_GET_KVF_LIMITS;
 	rsp->hdr.sig = OTX2_MBOX_RSP_SIG;
-	rsp->hdr.pcifunc = req->pcifunc;
+	rsp->hdr.pcअगरunc = req->pcअगरunc;
 	rsp->kvf_limits = cptpf->kvf_limits;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cptpf_handle_vf_req(struct otx2_cptpf_dev *cptpf,
-			       struct otx2_cptvf_info *vf,
-			       struct mbox_msghdr *req, int size)
-{
-	int err = 0;
+अटल पूर्णांक cptpf_handle_vf_req(काष्ठा otx2_cptpf_dev *cptpf,
+			       काष्ठा otx2_cptvf_info *vf,
+			       काष्ठा mbox_msghdr *req, पूर्णांक size)
+अणु
+	पूर्णांक err = 0;
 
-	/* Check if msg is valid, if not reply with an invalid msg */
-	if (req->sig != OTX2_MBOX_REQ_SIG)
-		goto inval_msg;
+	/* Check अगर msg is valid, अगर not reply with an invalid msg */
+	अगर (req->sig != OTX2_MBOX_REQ_SIG)
+		जाओ inval_msg;
 
-	switch (req->id) {
-	case MBOX_MSG_GET_ENG_GRP_NUM:
+	चयन (req->id) अणु
+	हाल MBOX_MSG_GET_ENG_GRP_NUM:
 		err = handle_msg_get_eng_grp_num(cptpf, vf, req);
-		break;
-	case MBOX_MSG_GET_CAPS:
+		अवरोध;
+	हाल MBOX_MSG_GET_CAPS:
 		err = handle_msg_get_caps(cptpf, vf, req);
-		break;
-	case MBOX_MSG_GET_KVF_LIMITS:
+		अवरोध;
+	हाल MBOX_MSG_GET_KVF_LIMITS:
 		err = handle_msg_kvf_limits(cptpf, vf, req);
-		break;
-	default:
-		err = forward_to_af(cptpf, vf, req, size);
-		break;
-	}
-	return err;
+		अवरोध;
+	शेष:
+		err = क्रमward_to_af(cptpf, vf, req, size);
+		अवरोध;
+	पूर्ण
+	वापस err;
 
 inval_msg:
 	otx2_reply_invalid_msg(&cptpf->vfpf_mbox, vf->vf_id, 0, req->id);
 	otx2_mbox_msg_send(&cptpf->vfpf_mbox, vf->vf_id);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-irqreturn_t otx2_cptpf_vfpf_mbox_intr(int __always_unused irq, void *arg)
-{
-	struct otx2_cptpf_dev *cptpf = arg;
-	struct otx2_cptvf_info *vf;
-	int i, vf_idx;
-	u64 intr;
+irqवापस_t otx2_cptpf_vfpf_mbox_पूर्णांकr(पूर्णांक __always_unused irq, व्योम *arg)
+अणु
+	काष्ठा otx2_cptpf_dev *cptpf = arg;
+	काष्ठा otx2_cptvf_info *vf;
+	पूर्णांक i, vf_idx;
+	u64 पूर्णांकr;
 
 	/*
-	 * Check which VF has raised an interrupt and schedule
+	 * Check which VF has उठाओd an पूर्णांकerrupt and schedule
 	 * corresponding work queue to process the messages
 	 */
-	for (i = 0; i < 2; i++) {
-		/* Read the interrupt bits */
-		intr = otx2_cpt_read64(cptpf->reg_base, BLKADDR_RVUM, 0,
+	क्रम (i = 0; i < 2; i++) अणु
+		/* Read the पूर्णांकerrupt bits */
+		पूर्णांकr = otx2_cpt_पढ़ो64(cptpf->reg_base, BLKADDR_RVUM, 0,
 				       RVU_PF_VFPF_MBOX_INTX(i));
 
-		for (vf_idx = i * 64; vf_idx < cptpf->enabled_vfs; vf_idx++) {
+		क्रम (vf_idx = i * 64; vf_idx < cptpf->enabled_vfs; vf_idx++) अणु
 			vf = &cptpf->vf[vf_idx];
-			if (intr & (1ULL << vf->intr_idx)) {
+			अगर (पूर्णांकr & (1ULL << vf->पूर्णांकr_idx)) अणु
 				queue_work(cptpf->vfpf_mbox_wq,
 					   &vf->vfpf_mbox_work);
-				/* Clear the interrupt */
-				otx2_cpt_write64(cptpf->reg_base, BLKADDR_RVUM,
+				/* Clear the पूर्णांकerrupt */
+				otx2_cpt_ग_लिखो64(cptpf->reg_base, BLKADDR_RVUM,
 						 0, RVU_PF_VFPF_MBOX_INTX(i),
-						 BIT_ULL(vf->intr_idx));
-			}
-		}
-	}
-	return IRQ_HANDLED;
-}
+						 BIT_ULL(vf->पूर्णांकr_idx));
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void otx2_cptpf_vfpf_mbox_handler(struct work_struct *work)
-{
-	struct otx2_cptpf_dev *cptpf;
-	struct otx2_cptvf_info *vf;
-	struct otx2_mbox_dev *mdev;
-	struct mbox_hdr *req_hdr;
-	struct mbox_msghdr *msg;
-	struct otx2_mbox *mbox;
-	int offset, i, err;
+व्योम otx2_cptpf_vfpf_mbox_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा otx2_cptpf_dev *cptpf;
+	काष्ठा otx2_cptvf_info *vf;
+	काष्ठा otx2_mbox_dev *mdev;
+	काष्ठा mbox_hdr *req_hdr;
+	काष्ठा mbox_msghdr *msg;
+	काष्ठा otx2_mbox *mbox;
+	पूर्णांक offset, i, err;
 
-	vf = container_of(work, struct otx2_cptvf_info, vfpf_mbox_work);
+	vf = container_of(work, काष्ठा otx2_cptvf_info, vfpf_mbox_work);
 	cptpf = vf->cptpf;
 	mbox = &cptpf->vfpf_mbox;
 	/* sync with mbox memory region */
 	smp_rmb();
 	mdev = &mbox->dev[vf->vf_id];
 	/* Process received mbox messages */
-	req_hdr = (struct mbox_hdr *)(mdev->mbase + mbox->rx_start);
-	offset = mbox->rx_start + ALIGN(sizeof(*req_hdr), MBOX_MSG_ALIGN);
+	req_hdr = (काष्ठा mbox_hdr *)(mdev->mbase + mbox->rx_start);
+	offset = mbox->rx_start + ALIGN(माप(*req_hdr), MBOX_MSG_ALIGN);
 
-	for (i = 0; i < req_hdr->num_msgs; i++) {
-		msg = (struct mbox_msghdr *)(mdev->mbase + offset);
+	क्रम (i = 0; i < req_hdr->num_msgs; i++) अणु
+		msg = (काष्ठा mbox_msghdr *)(mdev->mbase + offset);
 
 		/* Set which VF sent this message based on mbox IRQ */
-		msg->pcifunc = ((u16)cptpf->pf_id << RVU_PFVF_PF_SHIFT) |
+		msg->pcअगरunc = ((u16)cptpf->pf_id << RVU_PFVF_PF_SHIFT) |
 				((vf->vf_id + 1) & RVU_PFVF_FUNC_MASK);
 
 		err = cptpf_handle_vf_req(cptpf, vf, msg,
 					  msg->next_msgoff - offset);
 		/*
-		 * Behave as the AF, drop the msg if there is
-		 * no memory, timeout handling also goes here
+		 * Behave as the AF, drop the msg अगर there is
+		 * no memory, समयout handling also goes here
 		 */
-		if (err == -ENOMEM || err == -EIO)
-			break;
+		अगर (err == -ENOMEM || err == -EIO)
+			अवरोध;
 		offset = msg->next_msgoff;
-	}
+	पूर्ण
 	/* Send mbox responses to VF */
-	if (mdev->num_msgs)
+	अगर (mdev->num_msgs)
 		otx2_mbox_msg_send(mbox, vf->vf_id);
-}
+पूर्ण
 
-irqreturn_t otx2_cptpf_afpf_mbox_intr(int __always_unused irq, void *arg)
-{
-	struct otx2_cptpf_dev *cptpf = arg;
-	u64 intr;
+irqवापस_t otx2_cptpf_afpf_mbox_पूर्णांकr(पूर्णांक __always_unused irq, व्योम *arg)
+अणु
+	काष्ठा otx2_cptpf_dev *cptpf = arg;
+	u64 पूर्णांकr;
 
-	/* Read the interrupt bits */
-	intr = otx2_cpt_read64(cptpf->reg_base, BLKADDR_RVUM, 0, RVU_PF_INT);
+	/* Read the पूर्णांकerrupt bits */
+	पूर्णांकr = otx2_cpt_पढ़ो64(cptpf->reg_base, BLKADDR_RVUM, 0, RVU_PF_INT);
 
-	if (intr & 0x1ULL) {
+	अगर (पूर्णांकr & 0x1ULL) अणु
 		/* Schedule work queue function to process the MBOX request */
 		queue_work(cptpf->afpf_mbox_wq, &cptpf->afpf_mbox_work);
-		/* Clear and ack the interrupt */
-		otx2_cpt_write64(cptpf->reg_base, BLKADDR_RVUM, 0, RVU_PF_INT,
+		/* Clear and ack the पूर्णांकerrupt */
+		otx2_cpt_ग_लिखो64(cptpf->reg_base, BLKADDR_RVUM, 0, RVU_PF_INT,
 				 0x1ULL);
-	}
-	return IRQ_HANDLED;
-}
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void process_afpf_mbox_msg(struct otx2_cptpf_dev *cptpf,
-				  struct mbox_msghdr *msg)
-{
-	struct device *dev = &cptpf->pdev->dev;
-	struct cpt_rd_wr_reg_msg *rsp_rd_wr;
+अटल व्योम process_afpf_mbox_msg(काष्ठा otx2_cptpf_dev *cptpf,
+				  काष्ठा mbox_msghdr *msg)
+अणु
+	काष्ठा device *dev = &cptpf->pdev->dev;
+	काष्ठा cpt_rd_wr_reg_msg *rsp_rd_wr;
 
-	if (msg->id >= MBOX_MSG_MAX) {
+	अगर (msg->id >= MBOX_MSG_MAX) अणु
 		dev_err(dev, "MBOX msg with unknown ID %d\n", msg->id);
-		return;
-	}
-	if (msg->sig != OTX2_MBOX_RSP_SIG) {
+		वापस;
+	पूर्ण
+	अगर (msg->sig != OTX2_MBOX_RSP_SIG) अणु
 		dev_err(dev, "MBOX msg with wrong signature %x, ID %d\n",
 			msg->sig, msg->id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (msg->id) {
-	case MBOX_MSG_READY:
-		cptpf->pf_id = (msg->pcifunc >> RVU_PFVF_PF_SHIFT) &
+	चयन (msg->id) अणु
+	हाल MBOX_MSG_READY:
+		cptpf->pf_id = (msg->pcअगरunc >> RVU_PFVF_PF_SHIFT) &
 				RVU_PFVF_PF_MASK;
-		break;
-	case MBOX_MSG_CPT_RD_WR_REGISTER:
-		rsp_rd_wr = (struct cpt_rd_wr_reg_msg *)msg;
-		if (msg->rc) {
+		अवरोध;
+	हाल MBOX_MSG_CPT_RD_WR_REGISTER:
+		rsp_rd_wr = (काष्ठा cpt_rd_wr_reg_msg *)msg;
+		अगर (msg->rc) अणु
 			dev_err(dev, "Reg %llx rd/wr(%d) failed %d\n",
-				rsp_rd_wr->reg_offset, rsp_rd_wr->is_write,
+				rsp_rd_wr->reg_offset, rsp_rd_wr->is_ग_लिखो,
 				msg->rc);
-			return;
-		}
-		if (!rsp_rd_wr->is_write)
+			वापस;
+		पूर्ण
+		अगर (!rsp_rd_wr->is_ग_लिखो)
 			*rsp_rd_wr->ret_val = rsp_rd_wr->val;
-		break;
-	case MBOX_MSG_ATTACH_RESOURCES:
-		if (!msg->rc)
+		अवरोध;
+	हाल MBOX_MSG_ATTACH_RESOURCES:
+		अगर (!msg->rc)
 			cptpf->lfs.are_lfs_attached = 1;
-		break;
-	case MBOX_MSG_DETACH_RESOURCES:
-		if (!msg->rc)
+		अवरोध;
+	हाल MBOX_MSG_DETACH_RESOURCES:
+		अगर (!msg->rc)
 			cptpf->lfs.are_lfs_attached = 0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev,
 			"Unsupported msg %d received.\n", msg->id);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void forward_to_vf(struct otx2_cptpf_dev *cptpf, struct mbox_msghdr *msg,
-			  int vf_id, int size)
-{
-	struct otx2_mbox *vfpf_mbox;
-	struct mbox_msghdr *fwd;
+अटल व्योम क्रमward_to_vf(काष्ठा otx2_cptpf_dev *cptpf, काष्ठा mbox_msghdr *msg,
+			  पूर्णांक vf_id, पूर्णांक size)
+अणु
+	काष्ठा otx2_mbox *vfpf_mbox;
+	काष्ठा mbox_msghdr *fwd;
 
-	if (msg->id >= MBOX_MSG_MAX) {
+	अगर (msg->id >= MBOX_MSG_MAX) अणु
 		dev_err(&cptpf->pdev->dev,
 			"MBOX msg with unknown ID %d\n", msg->id);
-		return;
-	}
-	if (msg->sig != OTX2_MBOX_RSP_SIG) {
+		वापस;
+	पूर्ण
+	अगर (msg->sig != OTX2_MBOX_RSP_SIG) अणु
 		dev_err(&cptpf->pdev->dev,
 			"MBOX msg with wrong signature %x, ID %d\n",
 			msg->sig, msg->id);
-		return;
-	}
+		वापस;
+	पूर्ण
 	vfpf_mbox = &cptpf->vfpf_mbox;
 	vf_id--;
-	if (vf_id >= cptpf->enabled_vfs) {
+	अगर (vf_id >= cptpf->enabled_vfs) अणु
 		dev_err(&cptpf->pdev->dev,
 			"MBOX msg to unknown VF: %d >= %d\n",
 			vf_id, cptpf->enabled_vfs);
-		return;
-	}
-	if (msg->id == MBOX_MSG_VF_FLR)
-		return;
+		वापस;
+	पूर्ण
+	अगर (msg->id == MBOX_MSG_VF_FLR)
+		वापस;
 
 	fwd = otx2_mbox_alloc_msg(vfpf_mbox, vf_id, size);
-	if (!fwd) {
+	अगर (!fwd) अणु
 		dev_err(&cptpf->pdev->dev,
 			"Forwarding to VF%d failed.\n", vf_id);
-		return;
-	}
-	memcpy((uint8_t *)fwd + sizeof(struct mbox_msghdr),
-		(uint8_t *)msg + sizeof(struct mbox_msghdr), size);
+		वापस;
+	पूर्ण
+	स_नकल((uपूर्णांक8_t *)fwd + माप(काष्ठा mbox_msghdr),
+		(uपूर्णांक8_t *)msg + माप(काष्ठा mbox_msghdr), size);
 	fwd->id = msg->id;
-	fwd->pcifunc = msg->pcifunc;
+	fwd->pcअगरunc = msg->pcअगरunc;
 	fwd->sig = msg->sig;
 	fwd->ver = msg->ver;
 	fwd->rc = msg->rc;
-}
+पूर्ण
 
 /* Handle mailbox messages received from AF */
-void otx2_cptpf_afpf_mbox_handler(struct work_struct *work)
-{
-	struct otx2_cptpf_dev *cptpf;
-	struct otx2_mbox *afpf_mbox;
-	struct otx2_mbox_dev *mdev;
-	struct mbox_hdr *rsp_hdr;
-	struct mbox_msghdr *msg;
-	int offset, vf_id, i;
+व्योम otx2_cptpf_afpf_mbox_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा otx2_cptpf_dev *cptpf;
+	काष्ठा otx2_mbox *afpf_mbox;
+	काष्ठा otx2_mbox_dev *mdev;
+	काष्ठा mbox_hdr *rsp_hdr;
+	काष्ठा mbox_msghdr *msg;
+	पूर्णांक offset, vf_id, i;
 
-	cptpf = container_of(work, struct otx2_cptpf_dev, afpf_mbox_work);
+	cptpf = container_of(work, काष्ठा otx2_cptpf_dev, afpf_mbox_work);
 	afpf_mbox = &cptpf->afpf_mbox;
 	mdev = &afpf_mbox->dev[0];
-	/* Sync mbox data into memory */
+	/* Sync mbox data पूर्णांकo memory */
 	smp_wmb();
 
-	rsp_hdr = (struct mbox_hdr *)(mdev->mbase + afpf_mbox->rx_start);
-	offset = ALIGN(sizeof(*rsp_hdr), MBOX_MSG_ALIGN);
+	rsp_hdr = (काष्ठा mbox_hdr *)(mdev->mbase + afpf_mbox->rx_start);
+	offset = ALIGN(माप(*rsp_hdr), MBOX_MSG_ALIGN);
 
-	for (i = 0; i < rsp_hdr->num_msgs; i++) {
-		msg = (struct mbox_msghdr *)(mdev->mbase + afpf_mbox->rx_start +
+	क्रम (i = 0; i < rsp_hdr->num_msgs; i++) अणु
+		msg = (काष्ठा mbox_msghdr *)(mdev->mbase + afpf_mbox->rx_start +
 					     offset);
-		vf_id = (msg->pcifunc >> RVU_PFVF_FUNC_SHIFT) &
+		vf_id = (msg->pcअगरunc >> RVU_PFVF_FUNC_SHIFT) &
 			 RVU_PFVF_FUNC_MASK;
-		if (vf_id > 0)
-			forward_to_vf(cptpf, msg, vf_id,
+		अगर (vf_id > 0)
+			क्रमward_to_vf(cptpf, msg, vf_id,
 				      msg->next_msgoff - offset);
-		else
+		अन्यथा
 			process_afpf_mbox_msg(cptpf, msg);
 
 		offset = msg->next_msgoff;
 		mdev->msgs_acked++;
-	}
+	पूर्ण
 	otx2_mbox_reset(afpf_mbox, 0);
-}
+पूर्ण

@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __ISYS_DMA_PUBLIC_H_INCLUDED__
-#define __ISYS_DMA_PUBLIC_H_INCLUDED__
+#अगर_अघोषित __ISYS_DMA_PUBLIC_H_INCLUDED__
+#घोषणा __ISYS_DMA_PUBLIC_H_INCLUDED__
 
-#ifdef ISP2401
+#अगर_घोषित ISP2401
 
-#include "system_local.h"
-#include "type_support.h"
+#समावेश "system_local.h"
+#समावेश "type_support.h"
 
-extern void isys2401_dma_reg_store(
-    const isys2401_dma_ID_t dma_id,
-    const unsigned int	reg,
-    const hrt_data		value);
+बाह्य व्योम isys2401_dma_reg_store(
+    स्थिर isys2401_dma_ID_t dma_id,
+    स्थिर अचिन्हित पूर्णांक	reg,
+    स्थिर hrt_data		value);
 
-extern hrt_data isys2401_dma_reg_load(
-    const isys2401_dma_ID_t dma_id,
-    const unsigned int	reg);
+बाह्य hrt_data isys2401_dma_reg_load(
+    स्थिर isys2401_dma_ID_t dma_id,
+    स्थिर अचिन्हित पूर्णांक	reg);
 
-void isys2401_dma_set_max_burst_size(
-    const isys2401_dma_ID_t dma_id,
-    uint32_t		max_burst_size);
+व्योम isys2401_dma_set_max_burst_size(
+    स्थिर isys2401_dma_ID_t dma_id,
+    uपूर्णांक32_t		max_burst_size);
 
-#endif /* ISP2401 */
+#पूर्ण_अगर /* ISP2401 */
 
-#endif /* __ISYS_DMA_PUBLIC_H_INCLUDED__ */
+#पूर्ण_अगर /* __ISYS_DMA_PUBLIC_H_INCLUDED__ */

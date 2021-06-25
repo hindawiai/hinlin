@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-volatile const char bpf_metadata_a[] SEC(".rodata") = "bar";
-volatile const int bpf_metadata_b SEC(".rodata") = 2;
+अस्थिर स्थिर अक्षर bpf_metadata_a[] SEC(".rodata") = "bar";
+अस्थिर स्थिर पूर्णांक bpf_metadata_b SEC(".rodata") = 2;
 
 SEC("cgroup_skb/egress")
-int prog(struct xdp_md *ctx)
-{
-	return bpf_metadata_b ? 1 : 0;
-}
+पूर्णांक prog(काष्ठा xdp_md *ctx)
+अणु
+	वापस bpf_metadata_b ? 1 : 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2005-2006 Fen Systems Ltd.
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/delay.h>
-#include <linux/notifier.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/in.h>
-#include <linux/ethtool.h>
-#include <linux/topology.h>
-#include <linux/gfp.h>
-#include <linux/aer.h>
-#include <linux/interrupt.h>
-#include "net_driver.h"
-#include <net/gre.h>
-#include <net/udp_tunnel.h>
-#include "efx.h"
-#include "efx_common.h"
-#include "efx_channels.h"
-#include "ef100.h"
-#include "rx_common.h"
-#include "tx_common.h"
-#include "nic.h"
-#include "io.h"
-#include "selftest.h"
-#include "sriov.h"
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/topology.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/aer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश "net_driver.h"
+#समावेश <net/gre.h>
+#समावेश <net/udp_tunnel.h>
+#समावेश "efx.h"
+#समावेश "efx_common.h"
+#समावेश "efx_channels.h"
+#समावेश "ef100.h"
+#समावेश "rx_common.h"
+#समावेश "tx_common.h"
+#समावेश "nic.h"
+#समावेश "io.h"
+#समावेश "selftest.h"
+#समावेश "sriov.h"
 
-#include "mcdi_port_common.h"
-#include "mcdi_pcol.h"
-#include "workarounds.h"
+#समावेश "mcdi_port_common.h"
+#समावेश "mcdi_pcol.h"
+#समावेश "workarounds.h"
 
 /**************************************************************************
  *
@@ -43,54 +44,54 @@
  *
  *************************************************************************/
 
-module_param_named(interrupt_mode, efx_interrupt_mode, uint, 0444);
-MODULE_PARM_DESC(interrupt_mode,
+module_param_named(पूर्णांकerrupt_mode, efx_पूर्णांकerrupt_mode, uपूर्णांक, 0444);
+MODULE_PARM_DESC(पूर्णांकerrupt_mode,
 		 "Interrupt mode (0=>MSIX 1=>MSI 2=>legacy)");
 
-module_param(rss_cpus, uint, 0444);
+module_param(rss_cpus, uपूर्णांक, 0444);
 MODULE_PARM_DESC(rss_cpus, "Number of CPUs to use for Receive-Side Scaling");
 
 /*
- * Use separate channels for TX and RX events
+ * Use separate channels क्रम TX and RX events
  *
- * Set this to 1 to use separate channels for TX and RX. It allows us
- * to control interrupt affinity separately for TX and RX.
+ * Set this to 1 to use separate channels क्रम TX and RX. It allows us
+ * to control पूर्णांकerrupt affinity separately क्रम TX and RX.
  *
- * This is only used in MSI-X interrupt mode
+ * This is only used in MSI-X पूर्णांकerrupt mode
  */
 bool efx_separate_tx_channels;
 module_param(efx_separate_tx_channels, bool, 0444);
 MODULE_PARM_DESC(efx_separate_tx_channels,
 		 "Use separate channels for TX and RX");
 
-/* Initial interrupt moderation settings.  They can be modified after
+/* Initial पूर्णांकerrupt moderation settings.  They can be modअगरied after
  * module load with ethtool.
  *
- * The default for RX should strike a balance between increasing the
+ * The शेष क्रम RX should strike a balance between increasing the
  * round-trip latency and reducing overhead.
  */
-static unsigned int rx_irq_mod_usec = 60;
+अटल अचिन्हित पूर्णांक rx_irq_mod_usec = 60;
 
-/* Initial interrupt moderation settings.  They can be modified after
+/* Initial पूर्णांकerrupt moderation settings.  They can be modअगरied after
  * module load with ethtool.
  *
- * This default is chosen to ensure that a 10G link does not go idle
- * while a TX queue is stopped after it has become full.  A queue is
- * restarted when it drops below half full.  The time this takes (assuming
- * worst case 3 descriptors per packet and 1024 descriptors) is
+ * This शेष is chosen to ensure that a 10G link करोes not go idle
+ * जबतक a TX queue is stopped after it has become full.  A queue is
+ * restarted when it drops below half full.  The समय this takes (assuming
+ * worst हाल 3 descriptors per packet and 1024 descriptors) is
  *   512 / 3 * 1.2 = 205 usec.
  */
-static unsigned int tx_irq_mod_usec = 150;
+अटल अचिन्हित पूर्णांक tx_irq_mod_usec = 150;
 
-static bool phy_flash_cfg;
+अटल bool phy_flash_cfg;
 module_param(phy_flash_cfg, bool, 0644);
 MODULE_PARM_DESC(phy_flash_cfg, "Set PHYs into reflash mode initially");
 
-static unsigned debug = (NETIF_MSG_DRV | NETIF_MSG_PROBE |
+अटल अचिन्हित debug = (NETIF_MSG_DRV | NETIF_MSG_PROBE |
 			 NETIF_MSG_LINK | NETIF_MSG_IFDOWN |
 			 NETIF_MSG_IFUP | NETIF_MSG_RX_ERR |
 			 NETIF_MSG_TX_ERR | NETIF_MSG_HW);
-module_param(debug, uint, 0);
+module_param(debug, uपूर्णांक, 0);
 MODULE_PARM_DESC(debug, "Bitmapped debugging message enable value");
 
 /**************************************************************************
@@ -99,19 +100,19 @@ MODULE_PARM_DESC(debug, "Bitmapped debugging message enable value");
  *
  *************************************************************************/
 
-static void efx_remove_port(struct efx_nic *efx);
-static int efx_xdp_setup_prog(struct efx_nic *efx, struct bpf_prog *prog);
-static int efx_xdp(struct net_device *dev, struct netdev_bpf *xdp);
-static int efx_xdp_xmit(struct net_device *dev, int n, struct xdp_frame **xdpfs,
+अटल व्योम efx_हटाओ_port(काष्ठा efx_nic *efx);
+अटल पूर्णांक efx_xdp_setup_prog(काष्ठा efx_nic *efx, काष्ठा bpf_prog *prog);
+अटल पूर्णांक efx_xdp(काष्ठा net_device *dev, काष्ठा netdev_bpf *xdp);
+अटल पूर्णांक efx_xdp_xmit(काष्ठा net_device *dev, पूर्णांक n, काष्ठा xdp_frame **xdpfs,
 			u32 flags);
 
-#define EFX_ASSERT_RESET_SERIALISED(efx)		\
-	do {						\
-		if ((efx->state == STATE_READY) ||	\
+#घोषणा EFX_ASSERT_RESET_SERIALISED(efx)		\
+	करो अणु						\
+		अगर ((efx->state == STATE_READY) ||	\
 		    (efx->state == STATE_RECOVERY) ||	\
 		    (efx->state == STATE_DISABLED))	\
 			ASSERT_RTNL();			\
-	} while (0)
+	पूर्ण जबतक (0)
 
 /**************************************************************************
  *
@@ -119,33 +120,33 @@ static int efx_xdp_xmit(struct net_device *dev, int n, struct xdp_frame **xdpfs,
  *
  **************************************************************************/
 
-static void efx_fini_port(struct efx_nic *efx);
+अटल व्योम efx_fini_port(काष्ठा efx_nic *efx);
 
-static int efx_probe_port(struct efx_nic *efx)
-{
-	int rc;
+अटल पूर्णांक efx_probe_port(काष्ठा efx_nic *efx)
+अणु
+	पूर्णांक rc;
 
-	netif_dbg(efx, probe, efx->net_dev, "create port\n");
+	netअगर_dbg(efx, probe, efx->net_dev, "create port\n");
 
-	if (phy_flash_cfg)
+	अगर (phy_flash_cfg)
 		efx->phy_mode = PHY_MODE_SPECIAL;
 
 	/* Connect up MAC/PHY operations table */
 	rc = efx->type->probe_port(efx);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/* Initialise MAC address to permanent address */
 	ether_addr_copy(efx->net_dev->dev_addr, efx->net_dev->perm_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int efx_init_port(struct efx_nic *efx)
-{
-	int rc;
+अटल पूर्णांक efx_init_port(काष्ठा efx_nic *efx)
+अणु
+	पूर्णांक rc;
 
-	netif_dbg(efx, drv, efx->net_dev, "init port\n");
+	netअगर_dbg(efx, drv, efx->net_dev, "init port\n");
 
 	mutex_lock(&efx->mac_lock);
 
@@ -153,36 +154,36 @@ static int efx_init_port(struct efx_nic *efx)
 
 	/* Ensure the PHY advertises the correct flow control settings */
 	rc = efx_mcdi_port_reconfigure(efx);
-	if (rc && rc != -EPERM)
-		goto fail;
+	अगर (rc && rc != -EPERM)
+		जाओ fail;
 
 	mutex_unlock(&efx->mac_lock);
-	return 0;
+	वापस 0;
 
 fail:
 	mutex_unlock(&efx->mac_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void efx_fini_port(struct efx_nic *efx)
-{
-	netif_dbg(efx, drv, efx->net_dev, "shut down port\n");
+अटल व्योम efx_fini_port(काष्ठा efx_nic *efx)
+अणु
+	netअगर_dbg(efx, drv, efx->net_dev, "shut down port\n");
 
-	if (!efx->port_initialized)
-		return;
+	अगर (!efx->port_initialized)
+		वापस;
 
 	efx->port_initialized = false;
 
 	efx->link_state.up = false;
 	efx_link_status_changed(efx);
-}
+पूर्ण
 
-static void efx_remove_port(struct efx_nic *efx)
-{
-	netif_dbg(efx, drv, efx->net_dev, "destroying port\n");
+अटल व्योम efx_हटाओ_port(काष्ठा efx_nic *efx)
+अणु
+	netअगर_dbg(efx, drv, efx->net_dev, "destroying port\n");
 
-	efx->type->remove_port(efx);
-}
+	efx->type->हटाओ_port(efx);
+पूर्ण
 
 /**************************************************************************
  *
@@ -190,301 +191,301 @@ static void efx_remove_port(struct efx_nic *efx)
  *
  **************************************************************************/
 
-static LIST_HEAD(efx_primary_list);
-static LIST_HEAD(efx_unassociated_list);
+अटल LIST_HEAD(efx_primary_list);
+अटल LIST_HEAD(efx_unassociated_list);
 
-static bool efx_same_controller(struct efx_nic *left, struct efx_nic *right)
-{
-	return left->type == right->type &&
+अटल bool efx_same_controller(काष्ठा efx_nic *left, काष्ठा efx_nic *right)
+अणु
+	वापस left->type == right->type &&
 		left->vpd_sn && right->vpd_sn &&
-		!strcmp(left->vpd_sn, right->vpd_sn);
-}
+		!म_भेद(left->vpd_sn, right->vpd_sn);
+पूर्ण
 
-static void efx_associate(struct efx_nic *efx)
-{
-	struct efx_nic *other, *next;
+अटल व्योम efx_associate(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_nic *other, *next;
 
-	if (efx->primary == efx) {
-		/* Adding primary function; look for secondaries */
+	अगर (efx->primary == efx) अणु
+		/* Adding primary function; look क्रम secondaries */
 
-		netif_dbg(efx, probe, efx->net_dev, "adding to primary list\n");
+		netअगर_dbg(efx, probe, efx->net_dev, "adding to primary list\n");
 		list_add_tail(&efx->node, &efx_primary_list);
 
-		list_for_each_entry_safe(other, next, &efx_unassociated_list,
-					 node) {
-			if (efx_same_controller(efx, other)) {
+		list_क्रम_each_entry_safe(other, next, &efx_unassociated_list,
+					 node) अणु
+			अगर (efx_same_controller(efx, other)) अणु
 				list_del(&other->node);
-				netif_dbg(other, probe, other->net_dev,
+				netअगर_dbg(other, probe, other->net_dev,
 					  "moving to secondary list of %s %s\n",
 					  pci_name(efx->pci_dev),
 					  efx->net_dev->name);
 				list_add_tail(&other->node,
 					      &efx->secondary_list);
 				other->primary = efx;
-			}
-		}
-	} else {
-		/* Adding secondary function; look for primary */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Adding secondary function; look क्रम primary */
 
-		list_for_each_entry(other, &efx_primary_list, node) {
-			if (efx_same_controller(efx, other)) {
-				netif_dbg(efx, probe, efx->net_dev,
+		list_क्रम_each_entry(other, &efx_primary_list, node) अणु
+			अगर (efx_same_controller(efx, other)) अणु
+				netअगर_dbg(efx, probe, efx->net_dev,
 					  "adding to secondary list of %s %s\n",
 					  pci_name(other->pci_dev),
 					  other->net_dev->name);
 				list_add_tail(&efx->node,
 					      &other->secondary_list);
 				efx->primary = other;
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 
-		netif_dbg(efx, probe, efx->net_dev,
+		netअगर_dbg(efx, probe, efx->net_dev,
 			  "adding to unassociated list\n");
 		list_add_tail(&efx->node, &efx_unassociated_list);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void efx_dissociate(struct efx_nic *efx)
-{
-	struct efx_nic *other, *next;
+अटल व्योम efx_dissociate(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_nic *other, *next;
 
 	list_del(&efx->node);
-	efx->primary = NULL;
+	efx->primary = शून्य;
 
-	list_for_each_entry_safe(other, next, &efx->secondary_list, node) {
+	list_क्रम_each_entry_safe(other, next, &efx->secondary_list, node) अणु
 		list_del(&other->node);
-		netif_dbg(other, probe, other->net_dev,
+		netअगर_dbg(other, probe, other->net_dev,
 			  "moving to unassociated list\n");
 		list_add_tail(&other->node, &efx_unassociated_list);
-		other->primary = NULL;
-	}
-}
+		other->primary = शून्य;
+	पूर्ण
+पूर्ण
 
-static int efx_probe_nic(struct efx_nic *efx)
-{
-	int rc;
+अटल पूर्णांक efx_probe_nic(काष्ठा efx_nic *efx)
+अणु
+	पूर्णांक rc;
 
-	netif_dbg(efx, probe, efx->net_dev, "creating NIC\n");
+	netअगर_dbg(efx, probe, efx->net_dev, "creating NIC\n");
 
-	/* Carry out hardware-type specific initialisation */
+	/* Carry out hardware-type specअगरic initialisation */
 	rc = efx->type->probe(efx);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	do {
-		if (!efx->max_channels || !efx->max_tx_channels) {
-			netif_err(efx, drv, efx->net_dev,
+	करो अणु
+		अगर (!efx->max_channels || !efx->max_tx_channels) अणु
+			netअगर_err(efx, drv, efx->net_dev,
 				  "Insufficient resources to allocate"
 				  " any channels\n");
 			rc = -ENOSPC;
-			goto fail1;
-		}
+			जाओ fail1;
+		पूर्ण
 
 		/* Determine the number of channels and queues by trying
-		 * to hook in MSI-X interrupts.
+		 * to hook in MSI-X पूर्णांकerrupts.
 		 */
-		rc = efx_probe_interrupts(efx);
-		if (rc)
-			goto fail1;
+		rc = efx_probe_पूर्णांकerrupts(efx);
+		अगर (rc)
+			जाओ fail1;
 
 		rc = efx_set_channels(efx);
-		if (rc)
-			goto fail1;
+		अगर (rc)
+			जाओ fail1;
 
 		/* dimension_resources can fail with EAGAIN */
 		rc = efx->type->dimension_resources(efx);
-		if (rc != 0 && rc != -EAGAIN)
-			goto fail2;
+		अगर (rc != 0 && rc != -EAGAIN)
+			जाओ fail2;
 
-		if (rc == -EAGAIN)
+		अगर (rc == -EAGAIN)
 			/* try again with new max_channels */
-			efx_remove_interrupts(efx);
+			efx_हटाओ_पूर्णांकerrupts(efx);
 
-	} while (rc == -EAGAIN);
+	पूर्ण जबतक (rc == -EAGAIN);
 
-	if (efx->n_channels > 1)
+	अगर (efx->n_channels > 1)
 		netdev_rss_key_fill(efx->rss_context.rx_hash_key,
-				    sizeof(efx->rss_context.rx_hash_key));
-	efx_set_default_rx_indir_table(efx, &efx->rss_context);
+				    माप(efx->rss_context.rx_hash_key));
+	efx_set_शेष_rx_indir_table(efx, &efx->rss_context);
 
-	/* Initialise the interrupt moderation settings */
-	efx->irq_mod_step_us = DIV_ROUND_UP(efx->timer_quantum_ns, 1000);
+	/* Initialise the पूर्णांकerrupt moderation settings */
+	efx->irq_mod_step_us = DIV_ROUND_UP(efx->समयr_quantum_ns, 1000);
 	efx_init_irq_moderation(efx, tx_irq_mod_usec, rx_irq_mod_usec, true,
 				true);
 
-	return 0;
+	वापस 0;
 
 fail2:
-	efx_remove_interrupts(efx);
+	efx_हटाओ_पूर्णांकerrupts(efx);
 fail1:
-	efx->type->remove(efx);
-	return rc;
-}
+	efx->type->हटाओ(efx);
+	वापस rc;
+पूर्ण
 
-static void efx_remove_nic(struct efx_nic *efx)
-{
-	netif_dbg(efx, drv, efx->net_dev, "destroying NIC\n");
+अटल व्योम efx_हटाओ_nic(काष्ठा efx_nic *efx)
+अणु
+	netअगर_dbg(efx, drv, efx->net_dev, "destroying NIC\n");
 
-	efx_remove_interrupts(efx);
-	efx->type->remove(efx);
-}
+	efx_हटाओ_पूर्णांकerrupts(efx);
+	efx->type->हटाओ(efx);
+पूर्ण
 
 /**************************************************************************
  *
- * NIC startup/shutdown
+ * NIC startup/shutकरोwn
  *
  *************************************************************************/
 
-static int efx_probe_all(struct efx_nic *efx)
-{
-	int rc;
+अटल पूर्णांक efx_probe_all(काष्ठा efx_nic *efx)
+अणु
+	पूर्णांक rc;
 
 	rc = efx_probe_nic(efx);
-	if (rc) {
-		netif_err(efx, probe, efx->net_dev, "failed to create NIC\n");
-		goto fail1;
-	}
+	अगर (rc) अणु
+		netअगर_err(efx, probe, efx->net_dev, "failed to create NIC\n");
+		जाओ fail1;
+	पूर्ण
 
 	rc = efx_probe_port(efx);
-	if (rc) {
-		netif_err(efx, probe, efx->net_dev, "failed to create port\n");
-		goto fail2;
-	}
+	अगर (rc) अणु
+		netअगर_err(efx, probe, efx->net_dev, "failed to create port\n");
+		जाओ fail2;
+	पूर्ण
 
 	BUILD_BUG_ON(EFX_DEFAULT_DMAQ_SIZE < EFX_RXQ_MIN_ENT);
-	if (WARN_ON(EFX_DEFAULT_DMAQ_SIZE < EFX_TXQ_MIN_ENT(efx))) {
+	अगर (WARN_ON(EFX_DEFAULT_DMAQ_SIZE < EFX_TXQ_MIN_ENT(efx))) अणु
 		rc = -EINVAL;
-		goto fail3;
-	}
+		जाओ fail3;
+	पूर्ण
 
-#ifdef CONFIG_SFC_SRIOV
-	rc = efx->type->vswitching_probe(efx);
-	if (rc) /* not fatal; the PF will still work fine */
-		netif_warn(efx, probe, efx->net_dev,
+#अगर_घोषित CONFIG_SFC_SRIOV
+	rc = efx->type->vचयनing_probe(efx);
+	अगर (rc) /* not fatal; the PF will still work fine */
+		netअगर_warn(efx, probe, efx->net_dev,
 			   "failed to setup vswitching rc=%d;"
 			   " VFs may not function\n", rc);
-#endif
+#पूर्ण_अगर
 
 	rc = efx_probe_filters(efx);
-	if (rc) {
-		netif_err(efx, probe, efx->net_dev,
+	अगर (rc) अणु
+		netअगर_err(efx, probe, efx->net_dev,
 			  "failed to create filter tables\n");
-		goto fail4;
-	}
+		जाओ fail4;
+	पूर्ण
 
 	rc = efx_probe_channels(efx);
-	if (rc)
-		goto fail5;
+	अगर (rc)
+		जाओ fail5;
 
-	return 0;
+	वापस 0;
 
  fail5:
-	efx_remove_filters(efx);
+	efx_हटाओ_filters(efx);
  fail4:
-#ifdef CONFIG_SFC_SRIOV
-	efx->type->vswitching_remove(efx);
-#endif
+#अगर_घोषित CONFIG_SFC_SRIOV
+	efx->type->vचयनing_हटाओ(efx);
+#पूर्ण_अगर
  fail3:
-	efx_remove_port(efx);
+	efx_हटाओ_port(efx);
  fail2:
-	efx_remove_nic(efx);
+	efx_हटाओ_nic(efx);
  fail1:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void efx_remove_all(struct efx_nic *efx)
-{
+अटल व्योम efx_हटाओ_all(काष्ठा efx_nic *efx)
+अणु
 	rtnl_lock();
-	efx_xdp_setup_prog(efx, NULL);
+	efx_xdp_setup_prog(efx, शून्य);
 	rtnl_unlock();
 
-	efx_remove_channels(efx);
-	efx_remove_filters(efx);
-#ifdef CONFIG_SFC_SRIOV
-	efx->type->vswitching_remove(efx);
-#endif
-	efx_remove_port(efx);
-	efx_remove_nic(efx);
-}
+	efx_हटाओ_channels(efx);
+	efx_हटाओ_filters(efx);
+#अगर_घोषित CONFIG_SFC_SRIOV
+	efx->type->vचयनing_हटाओ(efx);
+#पूर्ण_अगर
+	efx_हटाओ_port(efx);
+	efx_हटाओ_nic(efx);
+पूर्ण
 
 /**************************************************************************
  *
  * Interrupt moderation
  *
  **************************************************************************/
-unsigned int efx_usecs_to_ticks(struct efx_nic *efx, unsigned int usecs)
-{
-	if (usecs == 0)
-		return 0;
-	if (usecs * 1000 < efx->timer_quantum_ns)
-		return 1; /* never round down to 0 */
-	return usecs * 1000 / efx->timer_quantum_ns;
-}
+अचिन्हित पूर्णांक efx_usecs_to_ticks(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक usecs)
+अणु
+	अगर (usecs == 0)
+		वापस 0;
+	अगर (usecs * 1000 < efx->समयr_quantum_ns)
+		वापस 1; /* never round करोwn to 0 */
+	वापस usecs * 1000 / efx->समयr_quantum_ns;
+पूर्ण
 
-unsigned int efx_ticks_to_usecs(struct efx_nic *efx, unsigned int ticks)
-{
+अचिन्हित पूर्णांक efx_ticks_to_usecs(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक ticks)
+अणु
 	/* We must round up when converting ticks to microseconds
-	 * because we round down when converting the other way.
+	 * because we round करोwn when converting the other way.
 	 */
-	return DIV_ROUND_UP(ticks * efx->timer_quantum_ns, 1000);
-}
+	वापस DIV_ROUND_UP(ticks * efx->समयr_quantum_ns, 1000);
+पूर्ण
 
-/* Set interrupt moderation parameters */
-int efx_init_irq_moderation(struct efx_nic *efx, unsigned int tx_usecs,
-			    unsigned int rx_usecs, bool rx_adaptive,
+/* Set पूर्णांकerrupt moderation parameters */
+पूर्णांक efx_init_irq_moderation(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक tx_usecs,
+			    अचिन्हित पूर्णांक rx_usecs, bool rx_adaptive,
 			    bool rx_may_override_tx)
-{
-	struct efx_channel *channel;
-	unsigned int timer_max_us;
+अणु
+	काष्ठा efx_channel *channel;
+	अचिन्हित पूर्णांक समयr_max_us;
 
 	EFX_ASSERT_RESET_SERIALISED(efx);
 
-	timer_max_us = efx->timer_max_ns / 1000;
+	समयr_max_us = efx->समयr_max_ns / 1000;
 
-	if (tx_usecs > timer_max_us || rx_usecs > timer_max_us)
-		return -EINVAL;
+	अगर (tx_usecs > समयr_max_us || rx_usecs > समयr_max_us)
+		वापस -EINVAL;
 
-	if (tx_usecs != rx_usecs && efx->tx_channel_offset == 0 &&
-	    !rx_may_override_tx) {
-		netif_err(efx, drv, efx->net_dev, "Channels are shared. "
+	अगर (tx_usecs != rx_usecs && efx->tx_channel_offset == 0 &&
+	    !rx_may_override_tx) अणु
+		netअगर_err(efx, drv, efx->net_dev, "Channels are shared. "
 			  "RX and TX IRQ moderation must be equal\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	efx->irq_rx_adaptive = rx_adaptive;
 	efx->irq_rx_moderation_us = rx_usecs;
-	efx_for_each_channel(channel, efx) {
-		if (efx_channel_has_rx_queue(channel))
+	efx_क्रम_each_channel(channel, efx) अणु
+		अगर (efx_channel_has_rx_queue(channel))
 			channel->irq_moderation_us = rx_usecs;
-		else if (efx_channel_has_tx_queues(channel))
+		अन्यथा अगर (efx_channel_has_tx_queues(channel))
 			channel->irq_moderation_us = tx_usecs;
-		else if (efx_channel_is_xdp_tx(channel))
+		अन्यथा अगर (efx_channel_is_xdp_tx(channel))
 			channel->irq_moderation_us = tx_usecs;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void efx_get_irq_moderation(struct efx_nic *efx, unsigned int *tx_usecs,
-			    unsigned int *rx_usecs, bool *rx_adaptive)
-{
+व्योम efx_get_irq_moderation(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक *tx_usecs,
+			    अचिन्हित पूर्णांक *rx_usecs, bool *rx_adaptive)
+अणु
 	*rx_adaptive = efx->irq_rx_adaptive;
 	*rx_usecs = efx->irq_rx_moderation_us;
 
 	/* If channels are shared between RX and TX, so is IRQ
-	 * moderation.  Otherwise, IRQ moderation is the same for all
+	 * moderation.  Otherwise, IRQ moderation is the same क्रम all
 	 * TX channels and is not adaptive.
 	 */
-	if (efx->tx_channel_offset == 0) {
+	अगर (efx->tx_channel_offset == 0) अणु
 		*tx_usecs = *rx_usecs;
-	} else {
-		struct efx_channel *tx_channel;
+	पूर्ण अन्यथा अणु
+		काष्ठा efx_channel *tx_channel;
 
 		tx_channel = efx->channel[efx->tx_channel_offset];
 		*tx_usecs = tx_channel->irq_moderation_us;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**************************************************************************
  *
@@ -495,218 +496,218 @@ void efx_get_irq_moderation(struct efx_nic *efx, unsigned int *tx_usecs,
 /* Net device ioctl
  * Context: process, rtnl_lock() held.
  */
-static int efx_ioctl(struct net_device *net_dev, struct ifreq *ifr, int cmd)
-{
-	struct efx_nic *efx = netdev_priv(net_dev);
-	struct mii_ioctl_data *data = if_mii(ifr);
+अटल पूर्णांक efx_ioctl(काष्ठा net_device *net_dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(net_dev);
+	काष्ठा mii_ioctl_data *data = अगर_mii(अगरr);
 
-	if (cmd == SIOCSHWTSTAMP)
-		return efx_ptp_set_ts_config(efx, ifr);
-	if (cmd == SIOCGHWTSTAMP)
-		return efx_ptp_get_ts_config(efx, ifr);
+	अगर (cmd == SIOCSHWTSTAMP)
+		वापस efx_ptp_set_ts_config(efx, अगरr);
+	अगर (cmd == SIOCGHWTSTAMP)
+		वापस efx_ptp_get_ts_config(efx, अगरr);
 
-	/* Convert phy_id from older PRTAD/DEVAD format */
-	if ((cmd == SIOCGMIIREG || cmd == SIOCSMIIREG) &&
+	/* Convert phy_id from older PRTAD/DEVAD क्रमmat */
+	अगर ((cmd == SIOCGMIIREG || cmd == SIOCSMIIREG) &&
 	    (data->phy_id & 0xfc00) == 0x0400)
 		data->phy_id ^= MDIO_PHY_ID_C45 | 0x0400;
 
-	return mdio_mii_ioctl(&efx->mdio, data, cmd);
-}
+	वापस mdio_mii_ioctl(&efx->mdio, data, cmd);
+पूर्ण
 
 /**************************************************************************
  *
- * Kernel net device interface
+ * Kernel net device पूर्णांकerface
  *
  *************************************************************************/
 
 /* Context: process, rtnl_lock() held. */
-int efx_net_open(struct net_device *net_dev)
-{
-	struct efx_nic *efx = netdev_priv(net_dev);
-	int rc;
+पूर्णांक efx_net_खोलो(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(net_dev);
+	पूर्णांक rc;
 
-	netif_dbg(efx, ifup, efx->net_dev, "opening device on CPU %d\n",
+	netअगर_dbg(efx, अगरup, efx->net_dev, "opening device on CPU %d\n",
 		  raw_smp_processor_id());
 
 	rc = efx_check_disabled(efx);
-	if (rc)
-		return rc;
-	if (efx->phy_mode & PHY_MODE_SPECIAL)
-		return -EBUSY;
-	if (efx_mcdi_poll_reboot(efx) && efx_reset(efx, RESET_TYPE_ALL))
-		return -EIO;
+	अगर (rc)
+		वापस rc;
+	अगर (efx->phy_mode & PHY_MODE_SPECIAL)
+		वापस -EBUSY;
+	अगर (efx_mcdi_poll_reboot(efx) && efx_reset(efx, RESET_TYPE_ALL))
+		वापस -EIO;
 
-	/* Notify the kernel of the link state polled during driver load,
-	 * before the monitor starts running */
+	/* Notअगरy the kernel of the link state polled during driver load,
+	 * beक्रमe the monitor starts running */
 	efx_link_status_changed(efx);
 
 	efx_start_all(efx);
-	if (efx->state == STATE_DISABLED || efx->reset_pending)
-		netif_device_detach(efx->net_dev);
+	अगर (efx->state == STATE_DISABLED || efx->reset_pending)
+		netअगर_device_detach(efx->net_dev);
 	efx_selftest_async_start(efx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Context: process, rtnl_lock() held.
- * Note that the kernel will ignore our return code; this method
- * should really be a void.
+ * Note that the kernel will ignore our वापस code; this method
+ * should really be a व्योम.
  */
-int efx_net_stop(struct net_device *net_dev)
-{
-	struct efx_nic *efx = netdev_priv(net_dev);
+पूर्णांक efx_net_stop(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(net_dev);
 
-	netif_dbg(efx, ifdown, efx->net_dev, "closing on CPU %d\n",
+	netअगर_dbg(efx, अगरकरोwn, efx->net_dev, "closing on CPU %d\n",
 		  raw_smp_processor_id());
 
 	/* Stop the device and flush all the channels */
 	efx_stop_all(efx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int efx_vlan_rx_add_vid(struct net_device *net_dev, __be16 proto, u16 vid)
-{
-	struct efx_nic *efx = netdev_priv(net_dev);
+अटल पूर्णांक efx_vlan_rx_add_vid(काष्ठा net_device *net_dev, __be16 proto, u16 vid)
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(net_dev);
 
-	if (efx->type->vlan_rx_add_vid)
-		return efx->type->vlan_rx_add_vid(efx, proto, vid);
-	else
-		return -EOPNOTSUPP;
-}
+	अगर (efx->type->vlan_rx_add_vid)
+		वापस efx->type->vlan_rx_add_vid(efx, proto, vid);
+	अन्यथा
+		वापस -EOPNOTSUPP;
+पूर्ण
 
-static int efx_vlan_rx_kill_vid(struct net_device *net_dev, __be16 proto, u16 vid)
-{
-	struct efx_nic *efx = netdev_priv(net_dev);
+अटल पूर्णांक efx_vlan_rx_समाप्त_vid(काष्ठा net_device *net_dev, __be16 proto, u16 vid)
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(net_dev);
 
-	if (efx->type->vlan_rx_kill_vid)
-		return efx->type->vlan_rx_kill_vid(efx, proto, vid);
-	else
-		return -EOPNOTSUPP;
-}
+	अगर (efx->type->vlan_rx_समाप्त_vid)
+		वापस efx->type->vlan_rx_समाप्त_vid(efx, proto, vid);
+	अन्यथा
+		वापस -EOPNOTSUPP;
+पूर्ण
 
-static const struct net_device_ops efx_netdev_ops = {
-	.ndo_open		= efx_net_open,
-	.ndo_stop		= efx_net_stop,
-	.ndo_get_stats64	= efx_net_stats,
-	.ndo_tx_timeout		= efx_watchdog,
-	.ndo_start_xmit		= efx_hard_start_xmit,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_do_ioctl		= efx_ioctl,
-	.ndo_change_mtu		= efx_change_mtu,
-	.ndo_set_mac_address	= efx_set_mac_address,
-	.ndo_set_rx_mode	= efx_set_rx_mode,
-	.ndo_set_features	= efx_set_features,
-	.ndo_features_check	= efx_features_check,
-	.ndo_vlan_rx_add_vid	= efx_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid	= efx_vlan_rx_kill_vid,
-#ifdef CONFIG_SFC_SRIOV
-	.ndo_set_vf_mac		= efx_sriov_set_vf_mac,
-	.ndo_set_vf_vlan	= efx_sriov_set_vf_vlan,
-	.ndo_set_vf_spoofchk	= efx_sriov_set_vf_spoofchk,
-	.ndo_get_vf_config	= efx_sriov_get_vf_config,
-	.ndo_set_vf_link_state  = efx_sriov_set_vf_link_state,
-#endif
-	.ndo_get_phys_port_id   = efx_get_phys_port_id,
-	.ndo_get_phys_port_name	= efx_get_phys_port_name,
-	.ndo_setup_tc		= efx_setup_tc,
-#ifdef CONFIG_RFS_ACCEL
-	.ndo_rx_flow_steer	= efx_filter_rfs,
-#endif
-	.ndo_xdp_xmit		= efx_xdp_xmit,
-	.ndo_bpf		= efx_xdp
-};
+अटल स्थिर काष्ठा net_device_ops efx_netdev_ops = अणु
+	.nकरो_खोलो		= efx_net_खोलो,
+	.nकरो_stop		= efx_net_stop,
+	.nकरो_get_stats64	= efx_net_stats,
+	.nकरो_tx_समयout		= efx_watchकरोg,
+	.nकरो_start_xmit		= efx_hard_start_xmit,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_करो_ioctl		= efx_ioctl,
+	.nकरो_change_mtu		= efx_change_mtu,
+	.nकरो_set_mac_address	= efx_set_mac_address,
+	.nकरो_set_rx_mode	= efx_set_rx_mode,
+	.nकरो_set_features	= efx_set_features,
+	.nकरो_features_check	= efx_features_check,
+	.nकरो_vlan_rx_add_vid	= efx_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid	= efx_vlan_rx_समाप्त_vid,
+#अगर_घोषित CONFIG_SFC_SRIOV
+	.nकरो_set_vf_mac		= efx_sriov_set_vf_mac,
+	.nकरो_set_vf_vlan	= efx_sriov_set_vf_vlan,
+	.nकरो_set_vf_spoofchk	= efx_sriov_set_vf_spoofchk,
+	.nकरो_get_vf_config	= efx_sriov_get_vf_config,
+	.nकरो_set_vf_link_state  = efx_sriov_set_vf_link_state,
+#पूर्ण_अगर
+	.nकरो_get_phys_port_id   = efx_get_phys_port_id,
+	.nकरो_get_phys_port_name	= efx_get_phys_port_name,
+	.nकरो_setup_tc		= efx_setup_tc,
+#अगर_घोषित CONFIG_RFS_ACCEL
+	.nकरो_rx_flow_steer	= efx_filter_rfs,
+#पूर्ण_अगर
+	.nकरो_xdp_xmit		= efx_xdp_xmit,
+	.nकरो_bpf		= efx_xdp
+पूर्ण;
 
-static int efx_xdp_setup_prog(struct efx_nic *efx, struct bpf_prog *prog)
-{
-	struct bpf_prog *old_prog;
+अटल पूर्णांक efx_xdp_setup_prog(काष्ठा efx_nic *efx, काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा bpf_prog *old_prog;
 
-	if (efx->xdp_rxq_info_failed) {
-		netif_err(efx, drv, efx->net_dev,
+	अगर (efx->xdp_rxq_info_failed) अणु
+		netअगर_err(efx, drv, efx->net_dev,
 			  "Unable to bind XDP program due to previous failure of rxq_info\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (prog && efx->net_dev->mtu > efx_xdp_max_mtu(efx)) {
-		netif_err(efx, drv, efx->net_dev,
+	अगर (prog && efx->net_dev->mtu > efx_xdp_max_mtu(efx)) अणु
+		netअगर_err(efx, drv, efx->net_dev,
 			  "Unable to configure XDP with MTU of %d (max: %d)\n",
 			  efx->net_dev->mtu, efx_xdp_max_mtu(efx));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	old_prog = rtnl_dereference(efx->xdp_prog);
-	rcu_assign_pointer(efx->xdp_prog, prog);
+	rcu_assign_poपूर्णांकer(efx->xdp_prog, prog);
 	/* Release the reference that was originally passed by the caller. */
-	if (old_prog)
+	अगर (old_prog)
 		bpf_prog_put(old_prog);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Context: process, rtnl_lock() held. */
-static int efx_xdp(struct net_device *dev, struct netdev_bpf *xdp)
-{
-	struct efx_nic *efx = netdev_priv(dev);
+अटल पूर्णांक efx_xdp(काष्ठा net_device *dev, काष्ठा netdev_bpf *xdp)
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(dev);
 
-	switch (xdp->command) {
-	case XDP_SETUP_PROG:
-		return efx_xdp_setup_prog(efx, xdp->prog);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (xdp->command) अणु
+	हाल XDP_SETUP_PROG:
+		वापस efx_xdp_setup_prog(efx, xdp->prog);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int efx_xdp_xmit(struct net_device *dev, int n, struct xdp_frame **xdpfs,
+अटल पूर्णांक efx_xdp_xmit(काष्ठा net_device *dev, पूर्णांक n, काष्ठा xdp_frame **xdpfs,
 			u32 flags)
-{
-	struct efx_nic *efx = netdev_priv(dev);
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(dev);
 
-	if (!netif_running(dev))
-		return -EINVAL;
+	अगर (!netअगर_running(dev))
+		वापस -EINVAL;
 
-	return efx_xdp_tx_buffers(efx, n, xdpfs, flags & XDP_XMIT_FLUSH);
-}
+	वापस efx_xdp_tx_buffers(efx, n, xdpfs, flags & XDP_XMIT_FLUSH);
+पूर्ण
 
-static void efx_update_name(struct efx_nic *efx)
-{
-	strcpy(efx->name, efx->net_dev->name);
-	efx_mtd_rename(efx);
+अटल व्योम efx_update_name(काष्ठा efx_nic *efx)
+अणु
+	म_नकल(efx->name, efx->net_dev->name);
+	efx_mtd_नाम(efx);
 	efx_set_channel_names(efx);
-}
+पूर्ण
 
-static int efx_netdev_event(struct notifier_block *this,
-			    unsigned long event, void *ptr)
-{
-	struct net_device *net_dev = netdev_notifier_info_to_dev(ptr);
+अटल पूर्णांक efx_netdev_event(काष्ठा notअगरier_block *this,
+			    अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *net_dev = netdev_notअगरier_info_to_dev(ptr);
 
-	if ((net_dev->netdev_ops == &efx_netdev_ops) &&
+	अगर ((net_dev->netdev_ops == &efx_netdev_ops) &&
 	    event == NETDEV_CHANGENAME)
 		efx_update_name(netdev_priv(net_dev));
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block efx_netdev_notifier = {
-	.notifier_call = efx_netdev_event,
-};
+अटल काष्ठा notअगरier_block efx_netdev_notअगरier = अणु
+	.notअगरier_call = efx_netdev_event,
+पूर्ण;
 
-static ssize_t
-show_phy_type(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct efx_nic *efx = dev_get_drvdata(dev);
-	return sprintf(buf, "%d\n", efx->phy_type);
-}
-static DEVICE_ATTR(phy_type, 0444, show_phy_type, NULL);
+अटल sमाप_प्रकार
+show_phy_type(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा efx_nic *efx = dev_get_drvdata(dev);
+	वापस प्र_लिखो(buf, "%d\n", efx->phy_type);
+पूर्ण
+अटल DEVICE_ATTR(phy_type, 0444, show_phy_type, शून्य);
 
-static int efx_register_netdev(struct efx_nic *efx)
-{
-	struct net_device *net_dev = efx->net_dev;
-	struct efx_channel *channel;
-	int rc;
+अटल पूर्णांक efx_रेजिस्टर_netdev(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा net_device *net_dev = efx->net_dev;
+	काष्ठा efx_channel *channel;
+	पूर्णांक rc;
 
-	net_dev->watchdog_timeo = 5 * HZ;
+	net_dev->watchकरोg_समयo = 5 * HZ;
 	net_dev->irq = efx->pci_dev->irq;
 	net_dev->netdev_ops = &efx_netdev_ops;
-	if (efx_nic_rev(efx) >= EFX_REV_HUNT_A0)
+	अगर (efx_nic_rev(efx) >= EFX_REV_HUNT_A0)
 		net_dev->priv_flags |= IFF_UNICAST_FLT;
 	net_dev->ethtool_ops = &efx_ethtool_ops;
 	net_dev->gso_max_segs = EFX_TSO_MAX_SEGS;
@@ -716,76 +717,76 @@ static int efx_register_netdev(struct efx_nic *efx)
 	rtnl_lock();
 
 	/* Enable resets to be scheduled and check whether any were
-	 * already requested.  If so, the NIC is probably hosed so we
-	 * abort.
+	 * alपढ़ोy requested.  If so, the NIC is probably hosed so we
+	 * पात.
 	 */
 	efx->state = STATE_READY;
-	smp_mb(); /* ensure we change state before checking reset_pending */
-	if (efx->reset_pending) {
-		netif_err(efx, probe, efx->net_dev,
+	smp_mb(); /* ensure we change state beक्रमe checking reset_pending */
+	अगर (efx->reset_pending) अणु
+		netअगर_err(efx, probe, efx->net_dev,
 			  "aborting probe due to scheduled reset\n");
 		rc = -EIO;
-		goto fail_locked;
-	}
+		जाओ fail_locked;
+	पूर्ण
 
 	rc = dev_alloc_name(net_dev, net_dev->name);
-	if (rc < 0)
-		goto fail_locked;
+	अगर (rc < 0)
+		जाओ fail_locked;
 	efx_update_name(efx);
 
 	/* Always start with carrier off; PHY events will detect the link */
-	netif_carrier_off(net_dev);
+	netअगर_carrier_off(net_dev);
 
-	rc = register_netdevice(net_dev);
-	if (rc)
-		goto fail_locked;
+	rc = रेजिस्टर_netdevice(net_dev);
+	अगर (rc)
+		जाओ fail_locked;
 
-	efx_for_each_channel(channel, efx) {
-		struct efx_tx_queue *tx_queue;
-		efx_for_each_channel_tx_queue(tx_queue, channel)
+	efx_क्रम_each_channel(channel, efx) अणु
+		काष्ठा efx_tx_queue *tx_queue;
+		efx_क्रम_each_channel_tx_queue(tx_queue, channel)
 			efx_init_tx_queue_core_txq(tx_queue);
-	}
+	पूर्ण
 
 	efx_associate(efx);
 
 	rtnl_unlock();
 
 	rc = device_create_file(&efx->pci_dev->dev, &dev_attr_phy_type);
-	if (rc) {
-		netif_err(efx, drv, efx->net_dev,
+	अगर (rc) अणु
+		netअगर_err(efx, drv, efx->net_dev,
 			  "failed to init net dev attributes\n");
-		goto fail_registered;
-	}
+		जाओ fail_रेजिस्टरed;
+	पूर्ण
 
 	efx_init_mcdi_logging(efx);
 
-	return 0;
+	वापस 0;
 
-fail_registered:
+fail_रेजिस्टरed:
 	rtnl_lock();
 	efx_dissociate(efx);
-	unregister_netdevice(net_dev);
+	unरेजिस्टर_netdevice(net_dev);
 fail_locked:
 	efx->state = STATE_UNINIT;
 	rtnl_unlock();
-	netif_err(efx, drv, efx->net_dev, "could not register net dev\n");
-	return rc;
-}
+	netअगर_err(efx, drv, efx->net_dev, "could not register net dev\n");
+	वापस rc;
+पूर्ण
 
-static void efx_unregister_netdev(struct efx_nic *efx)
-{
-	if (!efx->net_dev)
-		return;
+अटल व्योम efx_unरेजिस्टर_netdev(काष्ठा efx_nic *efx)
+अणु
+	अगर (!efx->net_dev)
+		वापस;
 
 	BUG_ON(netdev_priv(efx->net_dev) != efx);
 
-	if (efx_dev_registered(efx)) {
-		strlcpy(efx->name, pci_name(efx->pci_dev), sizeof(efx->name));
+	अगर (efx_dev_रेजिस्टरed(efx)) अणु
+		strlcpy(efx->name, pci_name(efx->pci_dev), माप(efx->name));
 		efx_fini_mcdi_logging(efx);
-		device_remove_file(&efx->pci_dev->dev, &dev_attr_phy_type);
-		unregister_netdev(efx->net_dev);
-	}
-}
+		device_हटाओ_file(&efx->pci_dev->dev, &dev_attr_phy_type);
+		unरेजिस्टर_netdev(efx->net_dev);
+	पूर्ण
+पूर्ण
 
 /**************************************************************************
  *
@@ -794,29 +795,29 @@ static void efx_unregister_netdev(struct efx_nic *efx)
  **************************************************************************/
 
 /* PCI device ID table */
-static const struct pci_device_id efx_pci_table[] = {
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0803),	/* SFC9020 */
-	 .driver_data = (unsigned long) &siena_a0_nic_type},
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0813),	/* SFL9021 */
-	 .driver_data = (unsigned long) &siena_a0_nic_type},
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0903),  /* SFC9120 PF */
-	 .driver_data = (unsigned long) &efx_hunt_a0_nic_type},
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x1903),  /* SFC9120 VF */
-	 .driver_data = (unsigned long) &efx_hunt_a0_vf_nic_type},
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0923),  /* SFC9140 PF */
-	 .driver_data = (unsigned long) &efx_hunt_a0_nic_type},
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x1923),  /* SFC9140 VF */
-	 .driver_data = (unsigned long) &efx_hunt_a0_vf_nic_type},
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0a03),  /* SFC9220 PF */
-	 .driver_data = (unsigned long) &efx_hunt_a0_nic_type},
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x1a03),  /* SFC9220 VF */
-	 .driver_data = (unsigned long) &efx_hunt_a0_vf_nic_type},
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0b03),  /* SFC9250 PF */
-	 .driver_data = (unsigned long) &efx_hunt_a0_nic_type},
-	{PCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x1b03),  /* SFC9250 VF */
-	 .driver_data = (unsigned long) &efx_hunt_a0_vf_nic_type},
-	{0}			/* end of list */
-};
+अटल स्थिर काष्ठा pci_device_id efx_pci_table[] = अणु
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0803),	/* SFC9020 */
+	 .driver_data = (अचिन्हित दीर्घ) &siena_a0_nic_typeपूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0813),	/* SFL9021 */
+	 .driver_data = (अचिन्हित दीर्घ) &siena_a0_nic_typeपूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0903),  /* SFC9120 PF */
+	 .driver_data = (अचिन्हित दीर्घ) &efx_hunt_a0_nic_typeपूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x1903),  /* SFC9120 VF */
+	 .driver_data = (अचिन्हित दीर्घ) &efx_hunt_a0_vf_nic_typeपूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0923),  /* SFC9140 PF */
+	 .driver_data = (अचिन्हित दीर्घ) &efx_hunt_a0_nic_typeपूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x1923),  /* SFC9140 VF */
+	 .driver_data = (अचिन्हित दीर्घ) &efx_hunt_a0_vf_nic_typeपूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0a03),  /* SFC9220 PF */
+	 .driver_data = (अचिन्हित दीर्घ) &efx_hunt_a0_nic_typeपूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x1a03),  /* SFC9220 VF */
+	 .driver_data = (अचिन्हित दीर्घ) &efx_hunt_a0_vf_nic_typeपूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x0b03),  /* SFC9250 PF */
+	 .driver_data = (अचिन्हित दीर्घ) &efx_hunt_a0_nic_typeपूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_SOLARFLARE, 0x1b03),  /* SFC9250 VF */
+	 .driver_data = (अचिन्हित दीर्घ) &efx_hunt_a0_vf_nic_typeपूर्ण,
+	अणु0पूर्ण			/* end of list */
+पूर्ण;
 
 /**************************************************************************
  *
@@ -824,401 +825,401 @@ static const struct pci_device_id efx_pci_table[] = {
  *
  **************************************************************************/
 
-void efx_update_sw_stats(struct efx_nic *efx, u64 *stats)
-{
+व्योम efx_update_sw_stats(काष्ठा efx_nic *efx, u64 *stats)
+अणु
 	u64 n_rx_nodesc_trunc = 0;
-	struct efx_channel *channel;
+	काष्ठा efx_channel *channel;
 
-	efx_for_each_channel(channel, efx)
+	efx_क्रम_each_channel(channel, efx)
 		n_rx_nodesc_trunc += channel->n_rx_nodesc_trunc;
 	stats[GENERIC_STAT_rx_nodesc_trunc] = n_rx_nodesc_trunc;
-	stats[GENERIC_STAT_rx_noskb_drops] = atomic_read(&efx->n_rx_noskb_drops);
-}
+	stats[GENERIC_STAT_rx_noskb_drops] = atomic_पढ़ो(&efx->n_rx_noskb_drops);
+पूर्ण
 
 /**************************************************************************
  *
- * PCI interface
+ * PCI पूर्णांकerface
  *
  **************************************************************************/
 
-/* Main body of final NIC shutdown code
+/* Main body of final NIC shutकरोwn code
  * This is called only at module unload (or hotplug removal).
  */
-static void efx_pci_remove_main(struct efx_nic *efx)
-{
-	/* Flush reset_work. It can no longer be scheduled since we
+अटल व्योम efx_pci_हटाओ_मुख्य(काष्ठा efx_nic *efx)
+अणु
+	/* Flush reset_work. It can no दीर्घer be scheduled since we
 	 * are not READY.
 	 */
 	BUG_ON(efx->state == STATE_READY);
 	efx_flush_reset_workqueue(efx);
 
-	efx_disable_interrupts(efx);
-	efx_clear_interrupt_affinity(efx);
-	efx_nic_fini_interrupt(efx);
+	efx_disable_पूर्णांकerrupts(efx);
+	efx_clear_पूर्णांकerrupt_affinity(efx);
+	efx_nic_fini_पूर्णांकerrupt(efx);
 	efx_fini_port(efx);
 	efx->type->fini(efx);
 	efx_fini_napi(efx);
-	efx_remove_all(efx);
-}
+	efx_हटाओ_all(efx);
+पूर्ण
 
-/* Final NIC shutdown
+/* Final NIC shutकरोwn
  * This is called only at module unload (or hotplug removal).  A PF can call
  * this on its VFs to ensure they are unbound first.
  */
-static void efx_pci_remove(struct pci_dev *pci_dev)
-{
-	struct efx_nic *efx;
+अटल व्योम efx_pci_हटाओ(काष्ठा pci_dev *pci_dev)
+अणु
+	काष्ठा efx_nic *efx;
 
 	efx = pci_get_drvdata(pci_dev);
-	if (!efx)
-		return;
+	अगर (!efx)
+		वापस;
 
-	/* Mark the NIC as fini, then stop the interface */
+	/* Mark the NIC as fini, then stop the पूर्णांकerface */
 	rtnl_lock();
 	efx_dissociate(efx);
-	dev_close(efx->net_dev);
-	efx_disable_interrupts(efx);
+	dev_बंद(efx->net_dev);
+	efx_disable_पूर्णांकerrupts(efx);
 	efx->state = STATE_UNINIT;
 	rtnl_unlock();
 
-	if (efx->type->sriov_fini)
+	अगर (efx->type->sriov_fini)
 		efx->type->sriov_fini(efx);
 
-	efx_unregister_netdev(efx);
+	efx_unरेजिस्टर_netdev(efx);
 
-	efx_mtd_remove(efx);
+	efx_mtd_हटाओ(efx);
 
-	efx_pci_remove_main(efx);
+	efx_pci_हटाओ_मुख्य(efx);
 
 	efx_fini_io(efx);
-	netif_dbg(efx, drv, efx->net_dev, "shutdown successful\n");
+	netअगर_dbg(efx, drv, efx->net_dev, "shutdown successful\n");
 
-	efx_fini_struct(efx);
-	free_netdev(efx->net_dev);
+	efx_fini_काष्ठा(efx);
+	मुक्त_netdev(efx->net_dev);
 
 	pci_disable_pcie_error_reporting(pci_dev);
-};
+पूर्ण;
 
-/* NIC VPD information
+/* NIC VPD inक्रमmation
  * Called during probe to display the part number of the
  * installed NIC.  VPD is potentially very large but this should
  * always appear within the first 512 bytes.
  */
-#define SFC_VPD_LEN 512
-static void efx_probe_vpd_strings(struct efx_nic *efx)
-{
-	struct pci_dev *dev = efx->pci_dev;
-	char vpd_data[SFC_VPD_LEN];
-	ssize_t vpd_size;
-	int ro_start, ro_size, i, j;
+#घोषणा SFC_VPD_LEN 512
+अटल व्योम efx_probe_vpd_strings(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा pci_dev *dev = efx->pci_dev;
+	अक्षर vpd_data[SFC_VPD_LEN];
+	sमाप_प्रकार vpd_size;
+	पूर्णांक ro_start, ro_size, i, j;
 
 	/* Get the vpd data from the device */
-	vpd_size = pci_read_vpd(dev, 0, sizeof(vpd_data), vpd_data);
-	if (vpd_size <= 0) {
-		netif_err(efx, drv, efx->net_dev, "Unable to read VPD\n");
-		return;
-	}
+	vpd_size = pci_पढ़ो_vpd(dev, 0, माप(vpd_data), vpd_data);
+	अगर (vpd_size <= 0) अणु
+		netअगर_err(efx, drv, efx->net_dev, "Unable to read VPD\n");
+		वापस;
+	पूर्ण
 
 	/* Get the Read only section */
 	ro_start = pci_vpd_find_tag(vpd_data, vpd_size, PCI_VPD_LRDT_RO_DATA);
-	if (ro_start < 0) {
-		netif_err(efx, drv, efx->net_dev, "VPD Read-only not found\n");
-		return;
-	}
+	अगर (ro_start < 0) अणु
+		netअगर_err(efx, drv, efx->net_dev, "VPD Read-only not found\n");
+		वापस;
+	पूर्ण
 
 	ro_size = pci_vpd_lrdt_size(&vpd_data[ro_start]);
 	j = ro_size;
 	i = ro_start + PCI_VPD_LRDT_TAG_SIZE;
-	if (i + j > vpd_size)
+	अगर (i + j > vpd_size)
 		j = vpd_size - i;
 
 	/* Get the Part number */
 	i = pci_vpd_find_info_keyword(vpd_data, i, j, "PN");
-	if (i < 0) {
-		netif_err(efx, drv, efx->net_dev, "Part number not found\n");
-		return;
-	}
+	अगर (i < 0) अणु
+		netअगर_err(efx, drv, efx->net_dev, "Part number not found\n");
+		वापस;
+	पूर्ण
 
 	j = pci_vpd_info_field_size(&vpd_data[i]);
 	i += PCI_VPD_INFO_FLD_HDR_SIZE;
-	if (i + j > vpd_size) {
-		netif_err(efx, drv, efx->net_dev, "Incomplete part number\n");
-		return;
-	}
+	अगर (i + j > vpd_size) अणु
+		netअगर_err(efx, drv, efx->net_dev, "Incomplete part number\n");
+		वापस;
+	पूर्ण
 
-	netif_info(efx, drv, efx->net_dev,
+	netअगर_info(efx, drv, efx->net_dev,
 		   "Part Number : %.*s\n", j, &vpd_data[i]);
 
 	i = ro_start + PCI_VPD_LRDT_TAG_SIZE;
 	j = ro_size;
 	i = pci_vpd_find_info_keyword(vpd_data, i, j, "SN");
-	if (i < 0) {
-		netif_err(efx, drv, efx->net_dev, "Serial number not found\n");
-		return;
-	}
+	अगर (i < 0) अणु
+		netअगर_err(efx, drv, efx->net_dev, "Serial number not found\n");
+		वापस;
+	पूर्ण
 
 	j = pci_vpd_info_field_size(&vpd_data[i]);
 	i += PCI_VPD_INFO_FLD_HDR_SIZE;
-	if (i + j > vpd_size) {
-		netif_err(efx, drv, efx->net_dev, "Incomplete serial number\n");
-		return;
-	}
+	अगर (i + j > vpd_size) अणु
+		netअगर_err(efx, drv, efx->net_dev, "Incomplete serial number\n");
+		वापस;
+	पूर्ण
 
-	efx->vpd_sn = kmalloc(j + 1, GFP_KERNEL);
-	if (!efx->vpd_sn)
-		return;
+	efx->vpd_sn = kदो_स्मृति(j + 1, GFP_KERNEL);
+	अगर (!efx->vpd_sn)
+		वापस;
 
-	snprintf(efx->vpd_sn, j + 1, "%s", &vpd_data[i]);
-}
+	snम_लिखो(efx->vpd_sn, j + 1, "%s", &vpd_data[i]);
+पूर्ण
 
 
 /* Main body of NIC initialisation
  * This is called at module load (or hotplug insertion, theoretically).
  */
-static int efx_pci_probe_main(struct efx_nic *efx)
-{
-	int rc;
+अटल पूर्णांक efx_pci_probe_मुख्य(काष्ठा efx_nic *efx)
+अणु
+	पूर्णांक rc;
 
 	/* Do start-of-day initialisation */
 	rc = efx_probe_all(efx);
-	if (rc)
-		goto fail1;
+	अगर (rc)
+		जाओ fail1;
 
 	efx_init_napi(efx);
 
-	down_write(&efx->filter_sem);
+	करोwn_ग_लिखो(&efx->filter_sem);
 	rc = efx->type->init(efx);
-	up_write(&efx->filter_sem);
-	if (rc) {
-		netif_err(efx, probe, efx->net_dev,
+	up_ग_लिखो(&efx->filter_sem);
+	अगर (rc) अणु
+		netअगर_err(efx, probe, efx->net_dev,
 			  "failed to initialise NIC\n");
-		goto fail3;
-	}
+		जाओ fail3;
+	पूर्ण
 
 	rc = efx_init_port(efx);
-	if (rc) {
-		netif_err(efx, probe, efx->net_dev,
+	अगर (rc) अणु
+		netअगर_err(efx, probe, efx->net_dev,
 			  "failed to initialise port\n");
-		goto fail4;
-	}
+		जाओ fail4;
+	पूर्ण
 
-	rc = efx_nic_init_interrupt(efx);
-	if (rc)
-		goto fail5;
+	rc = efx_nic_init_पूर्णांकerrupt(efx);
+	अगर (rc)
+		जाओ fail5;
 
-	efx_set_interrupt_affinity(efx);
-	rc = efx_enable_interrupts(efx);
-	if (rc)
-		goto fail6;
+	efx_set_पूर्णांकerrupt_affinity(efx);
+	rc = efx_enable_पूर्णांकerrupts(efx);
+	अगर (rc)
+		जाओ fail6;
 
-	return 0;
+	वापस 0;
 
  fail6:
-	efx_clear_interrupt_affinity(efx);
-	efx_nic_fini_interrupt(efx);
+	efx_clear_पूर्णांकerrupt_affinity(efx);
+	efx_nic_fini_पूर्णांकerrupt(efx);
  fail5:
 	efx_fini_port(efx);
  fail4:
 	efx->type->fini(efx);
  fail3:
 	efx_fini_napi(efx);
-	efx_remove_all(efx);
+	efx_हटाओ_all(efx);
  fail1:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int efx_pci_probe_post_io(struct efx_nic *efx)
-{
-	struct net_device *net_dev = efx->net_dev;
-	int rc = efx_pci_probe_main(efx);
+अटल पूर्णांक efx_pci_probe_post_io(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा net_device *net_dev = efx->net_dev;
+	पूर्णांक rc = efx_pci_probe_मुख्य(efx);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (efx->type->sriov_init) {
+	अगर (efx->type->sriov_init) अणु
 		rc = efx->type->sriov_init(efx);
-		if (rc)
-			netif_err(efx, probe, efx->net_dev,
+		अगर (rc)
+			netअगर_err(efx, probe, efx->net_dev,
 				  "SR-IOV can't be enabled rc %d\n", rc);
-	}
+	पूर्ण
 
 	/* Determine netdevice features */
 	net_dev->features |= (efx->type->offload_features | NETIF_F_SG |
 			      NETIF_F_TSO | NETIF_F_RXCSUM | NETIF_F_RXALL);
-	if (efx->type->offload_features & (NETIF_F_IPV6_CSUM | NETIF_F_HW_CSUM))
+	अगर (efx->type->offload_features & (NETIF_F_IPV6_CSUM | NETIF_F_HW_CSUM))
 		net_dev->features |= NETIF_F_TSO6;
 	/* Check whether device supports TSO */
-	if (!efx->type->tso_versions || !efx->type->tso_versions(efx))
+	अगर (!efx->type->tso_versions || !efx->type->tso_versions(efx))
 		net_dev->features &= ~NETIF_F_ALL_TSO;
-	/* Mask for features that also apply to VLAN devices */
+	/* Mask क्रम features that also apply to VLAN devices */
 	net_dev->vlan_features |= (NETIF_F_HW_CSUM | NETIF_F_SG |
 				   NETIF_F_HIGHDMA | NETIF_F_ALL_TSO |
 				   NETIF_F_RXCSUM);
 
 	net_dev->hw_features |= net_dev->features & ~efx->fixed_features;
 
-	/* Disable receiving frames with bad FCS, by default. */
+	/* Disable receiving frames with bad FCS, by शेष. */
 	net_dev->features &= ~NETIF_F_RXALL;
 
-	/* Disable VLAN filtering by default.  It may be enforced if
+	/* Disable VLAN filtering by शेष.  It may be enक्रमced अगर
 	 * the feature is fixed (i.e. VLAN filters are required to
 	 * receive VLAN tagged packets due to vPort restrictions).
 	 */
 	net_dev->features &= ~NETIF_F_HW_VLAN_CTAG_FILTER;
 	net_dev->features |= efx->fixed_features;
 
-	rc = efx_register_netdev(efx);
-	if (!rc)
-		return 0;
+	rc = efx_रेजिस्टर_netdev(efx);
+	अगर (!rc)
+		वापस 0;
 
-	efx_pci_remove_main(efx);
-	return rc;
-}
+	efx_pci_हटाओ_मुख्य(efx);
+	वापस rc;
+पूर्ण
 
 /* NIC initialisation
  *
  * This is called at module load (or hotplug insertion,
  * theoretically).  It sets up PCI mappings, resets the NIC,
- * sets up and registers the network devices with the kernel and hooks
- * the interrupt service routine.  It does not prepare the device for
- * transmission; this is left to the first time one of the network
- * interfaces is brought up (i.e. efx_net_open).
+ * sets up and रेजिस्टरs the network devices with the kernel and hooks
+ * the पूर्णांकerrupt service routine.  It करोes not prepare the device क्रम
+ * transmission; this is left to the first समय one of the network
+ * पूर्णांकerfaces is brought up (i.e. efx_net_खोलो).
  */
-static int efx_pci_probe(struct pci_dev *pci_dev,
-			 const struct pci_device_id *entry)
-{
-	struct net_device *net_dev;
-	struct efx_nic *efx;
-	int rc;
+अटल पूर्णांक efx_pci_probe(काष्ठा pci_dev *pci_dev,
+			 स्थिर काष्ठा pci_device_id *entry)
+अणु
+	काष्ठा net_device *net_dev;
+	काष्ठा efx_nic *efx;
+	पूर्णांक rc;
 
-	/* Allocate and initialise a struct net_device and struct efx_nic */
-	net_dev = alloc_etherdev_mqs(sizeof(*efx), EFX_MAX_CORE_TX_QUEUES,
+	/* Allocate and initialise a काष्ठा net_device and काष्ठा efx_nic */
+	net_dev = alloc_etherdev_mqs(माप(*efx), EFX_MAX_CORE_TX_QUEUES,
 				     EFX_MAX_RX_QUEUES);
-	if (!net_dev)
-		return -ENOMEM;
+	अगर (!net_dev)
+		वापस -ENOMEM;
 	efx = netdev_priv(net_dev);
-	efx->type = (const struct efx_nic_type *) entry->driver_data;
+	efx->type = (स्थिर काष्ठा efx_nic_type *) entry->driver_data;
 	efx->fixed_features |= NETIF_F_HIGHDMA;
 
 	pci_set_drvdata(pci_dev, efx);
 	SET_NETDEV_DEV(net_dev, &pci_dev->dev);
-	rc = efx_init_struct(efx, pci_dev, net_dev);
-	if (rc)
-		goto fail1;
+	rc = efx_init_काष्ठा(efx, pci_dev, net_dev);
+	अगर (rc)
+		जाओ fail1;
 
-	netif_info(efx, probe, efx->net_dev,
+	netअगर_info(efx, probe, efx->net_dev,
 		   "Solarflare NIC detected\n");
 
-	if (!efx->type->is_vf)
+	अगर (!efx->type->is_vf)
 		efx_probe_vpd_strings(efx);
 
 	/* Set up basic I/O (BAR mappings etc) */
 	rc = efx_init_io(efx, efx->type->mem_bar(efx), efx->type->max_dma_mask,
 			 efx->type->mem_map_size(efx));
-	if (rc)
-		goto fail2;
+	अगर (rc)
+		जाओ fail2;
 
 	rc = efx_pci_probe_post_io(efx);
-	if (rc) {
+	अगर (rc) अणु
 		/* On failure, retry once immediately.
-		 * If we aborted probe due to a scheduled reset, dismiss it.
+		 * If we पातed probe due to a scheduled reset, dismiss it.
 		 */
 		efx->reset_pending = 0;
 		rc = efx_pci_probe_post_io(efx);
-		if (rc) {
+		अगर (rc) अणु
 			/* On another failure, retry once more
 			 * after a 50-305ms delay.
 			 */
-			unsigned char r;
+			अचिन्हित अक्षर r;
 
-			get_random_bytes(&r, 1);
-			msleep((unsigned int)r + 50);
+			get_अक्रमom_bytes(&r, 1);
+			msleep((अचिन्हित पूर्णांक)r + 50);
 			efx->reset_pending = 0;
 			rc = efx_pci_probe_post_io(efx);
-		}
-	}
-	if (rc)
-		goto fail3;
+		पूर्ण
+	पूर्ण
+	अगर (rc)
+		जाओ fail3;
 
-	netif_dbg(efx, probe, efx->net_dev, "initialisation successful\n");
+	netअगर_dbg(efx, probe, efx->net_dev, "initialisation successful\n");
 
 	/* Try to create MTDs, but allow this to fail */
 	rtnl_lock();
 	rc = efx_mtd_probe(efx);
 	rtnl_unlock();
-	if (rc && rc != -EPERM)
-		netif_warn(efx, probe, efx->net_dev,
+	अगर (rc && rc != -EPERM)
+		netअगर_warn(efx, probe, efx->net_dev,
 			   "failed to create MTDs (%d)\n", rc);
 
-	(void)pci_enable_pcie_error_reporting(pci_dev);
+	(व्योम)pci_enable_pcie_error_reporting(pci_dev);
 
-	if (efx->type->udp_tnl_push_ports)
+	अगर (efx->type->udp_tnl_push_ports)
 		efx->type->udp_tnl_push_ports(efx);
 
-	return 0;
+	वापस 0;
 
  fail3:
 	efx_fini_io(efx);
  fail2:
-	efx_fini_struct(efx);
+	efx_fini_काष्ठा(efx);
  fail1:
 	WARN_ON(rc > 0);
-	netif_dbg(efx, drv, efx->net_dev, "initialisation failed. rc=%d\n", rc);
-	free_netdev(net_dev);
-	return rc;
-}
+	netअगर_dbg(efx, drv, efx->net_dev, "initialisation failed. rc=%d\n", rc);
+	मुक्त_netdev(net_dev);
+	वापस rc;
+पूर्ण
 
-/* efx_pci_sriov_configure returns the actual number of Virtual Functions
+/* efx_pci_sriov_configure वापसs the actual number of Virtual Functions
  * enabled on success
  */
-#ifdef CONFIG_SFC_SRIOV
-static int efx_pci_sriov_configure(struct pci_dev *dev, int num_vfs)
-{
-	int rc;
-	struct efx_nic *efx = pci_get_drvdata(dev);
+#अगर_घोषित CONFIG_SFC_SRIOV
+अटल पूर्णांक efx_pci_sriov_configure(काष्ठा pci_dev *dev, पूर्णांक num_vfs)
+अणु
+	पूर्णांक rc;
+	काष्ठा efx_nic *efx = pci_get_drvdata(dev);
 
-	if (efx->type->sriov_configure) {
+	अगर (efx->type->sriov_configure) अणु
 		rc = efx->type->sriov_configure(efx, num_vfs);
-		if (rc)
-			return rc;
-		else
-			return num_vfs;
-	} else
-		return -EOPNOTSUPP;
-}
-#endif
+		अगर (rc)
+			वापस rc;
+		अन्यथा
+			वापस num_vfs;
+	पूर्ण अन्यथा
+		वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-static int efx_pm_freeze(struct device *dev)
-{
-	struct efx_nic *efx = dev_get_drvdata(dev);
+अटल पूर्णांक efx_pm_मुक्तze(काष्ठा device *dev)
+अणु
+	काष्ठा efx_nic *efx = dev_get_drvdata(dev);
 
 	rtnl_lock();
 
-	if (efx->state != STATE_DISABLED) {
+	अगर (efx->state != STATE_DISABLED) अणु
 		efx->state = STATE_UNINIT;
 
 		efx_device_detach_sync(efx);
 
 		efx_stop_all(efx);
-		efx_disable_interrupts(efx);
-	}
+		efx_disable_पूर्णांकerrupts(efx);
+	पूर्ण
 
 	rtnl_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int efx_pm_thaw(struct device *dev)
-{
-	int rc;
-	struct efx_nic *efx = dev_get_drvdata(dev);
+अटल पूर्णांक efx_pm_thaw(काष्ठा device *dev)
+अणु
+	पूर्णांक rc;
+	काष्ठा efx_nic *efx = dev_get_drvdata(dev);
 
 	rtnl_lock();
 
-	if (efx->state != STATE_DISABLED) {
-		rc = efx_enable_interrupts(efx);
-		if (rc)
-			goto fail;
+	अगर (efx->state != STATE_DISABLED) अणु
+		rc = efx_enable_पूर्णांकerrupts(efx);
+		अगर (rc)
+			जाओ fail;
 
 		mutex_lock(&efx->mac_lock);
 		efx_mcdi_port_reconfigure(efx);
@@ -1226,164 +1227,164 @@ static int efx_pm_thaw(struct device *dev)
 
 		efx_start_all(efx);
 
-		efx_device_attach_if_not_resetting(efx);
+		efx_device_attach_अगर_not_resetting(efx);
 
 		efx->state = STATE_READY;
 
 		efx->type->resume_wol(efx);
-	}
+	पूर्ण
 
 	rtnl_unlock();
 
-	/* Reschedule any quenched resets scheduled during efx_pm_freeze() */
+	/* Reschedule any quenched resets scheduled during efx_pm_मुक्तze() */
 	efx_queue_reset_work(efx);
 
-	return 0;
+	वापस 0;
 
 fail:
 	rtnl_unlock();
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int efx_pm_poweroff(struct device *dev)
-{
-	struct pci_dev *pci_dev = to_pci_dev(dev);
-	struct efx_nic *efx = pci_get_drvdata(pci_dev);
+अटल पूर्णांक efx_pm_घातeroff(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pci_dev = to_pci_dev(dev);
+	काष्ठा efx_nic *efx = pci_get_drvdata(pci_dev);
 
 	efx->type->fini(efx);
 
 	efx->reset_pending = 0;
 
 	pci_save_state(pci_dev);
-	return pci_set_power_state(pci_dev, PCI_D3hot);
-}
+	वापस pci_set_घातer_state(pci_dev, PCI_D3hot);
+पूर्ण
 
-/* Used for both resume and restore */
-static int efx_pm_resume(struct device *dev)
-{
-	struct pci_dev *pci_dev = to_pci_dev(dev);
-	struct efx_nic *efx = pci_get_drvdata(pci_dev);
-	int rc;
+/* Used क्रम both resume and restore */
+अटल पूर्णांक efx_pm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pci_dev = to_pci_dev(dev);
+	काष्ठा efx_nic *efx = pci_get_drvdata(pci_dev);
+	पूर्णांक rc;
 
-	rc = pci_set_power_state(pci_dev, PCI_D0);
-	if (rc)
-		return rc;
+	rc = pci_set_घातer_state(pci_dev, PCI_D0);
+	अगर (rc)
+		वापस rc;
 	pci_restore_state(pci_dev);
 	rc = pci_enable_device(pci_dev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	pci_set_master(efx->pci_dev);
 	rc = efx->type->reset(efx, RESET_TYPE_ALL);
-	if (rc)
-		return rc;
-	down_write(&efx->filter_sem);
+	अगर (rc)
+		वापस rc;
+	करोwn_ग_लिखो(&efx->filter_sem);
 	rc = efx->type->init(efx);
-	up_write(&efx->filter_sem);
-	if (rc)
-		return rc;
+	up_ग_लिखो(&efx->filter_sem);
+	अगर (rc)
+		वापस rc;
 	rc = efx_pm_thaw(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int efx_pm_suspend(struct device *dev)
-{
-	int rc;
+अटल पूर्णांक efx_pm_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक rc;
 
-	efx_pm_freeze(dev);
-	rc = efx_pm_poweroff(dev);
-	if (rc)
+	efx_pm_मुक्तze(dev);
+	rc = efx_pm_घातeroff(dev);
+	अगर (rc)
 		efx_pm_resume(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct dev_pm_ops efx_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops efx_pm_ops = अणु
 	.suspend	= efx_pm_suspend,
 	.resume		= efx_pm_resume,
-	.freeze		= efx_pm_freeze,
+	.मुक्तze		= efx_pm_मुक्तze,
 	.thaw		= efx_pm_thaw,
-	.poweroff	= efx_pm_poweroff,
+	.घातeroff	= efx_pm_घातeroff,
 	.restore	= efx_pm_resume,
-};
+पूर्ण;
 
-static struct pci_driver efx_pci_driver = {
+अटल काष्ठा pci_driver efx_pci_driver = अणु
 	.name		= KBUILD_MODNAME,
 	.id_table	= efx_pci_table,
 	.probe		= efx_pci_probe,
-	.remove		= efx_pci_remove,
+	.हटाओ		= efx_pci_हटाओ,
 	.driver.pm	= &efx_pm_ops,
 	.err_handler	= &efx_err_handlers,
-#ifdef CONFIG_SFC_SRIOV
+#अगर_घोषित CONFIG_SFC_SRIOV
 	.sriov_configure = efx_pci_sriov_configure,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /**************************************************************************
  *
- * Kernel module interface
+ * Kernel module पूर्णांकerface
  *
  *************************************************************************/
 
-static int __init efx_init_module(void)
-{
-	int rc;
+अटल पूर्णांक __init efx_init_module(व्योम)
+अणु
+	पूर्णांक rc;
 
-	printk(KERN_INFO "Solarflare NET driver\n");
+	prपूर्णांकk(KERN_INFO "Solarflare NET driver\n");
 
-	rc = register_netdevice_notifier(&efx_netdev_notifier);
-	if (rc)
-		goto err_notifier;
+	rc = रेजिस्टर_netdevice_notअगरier(&efx_netdev_notअगरier);
+	अगर (rc)
+		जाओ err_notअगरier;
 
-#ifdef CONFIG_SFC_SRIOV
+#अगर_घोषित CONFIG_SFC_SRIOV
 	rc = efx_init_sriov();
-	if (rc)
-		goto err_sriov;
-#endif
+	अगर (rc)
+		जाओ err_sriov;
+#पूर्ण_अगर
 
 	rc = efx_create_reset_workqueue();
-	if (rc)
-		goto err_reset;
+	अगर (rc)
+		जाओ err_reset;
 
-	rc = pci_register_driver(&efx_pci_driver);
-	if (rc < 0)
-		goto err_pci;
+	rc = pci_रेजिस्टर_driver(&efx_pci_driver);
+	अगर (rc < 0)
+		जाओ err_pci;
 
-	rc = pci_register_driver(&ef100_pci_driver);
-	if (rc < 0)
-		goto err_pci_ef100;
+	rc = pci_रेजिस्टर_driver(&ef100_pci_driver);
+	अगर (rc < 0)
+		जाओ err_pci_ef100;
 
-	return 0;
+	वापस 0;
 
  err_pci_ef100:
-	pci_unregister_driver(&efx_pci_driver);
+	pci_unरेजिस्टर_driver(&efx_pci_driver);
  err_pci:
 	efx_destroy_reset_workqueue();
  err_reset:
-#ifdef CONFIG_SFC_SRIOV
+#अगर_घोषित CONFIG_SFC_SRIOV
 	efx_fini_sriov();
  err_sriov:
-#endif
-	unregister_netdevice_notifier(&efx_netdev_notifier);
- err_notifier:
-	return rc;
-}
+#पूर्ण_अगर
+	unरेजिस्टर_netdevice_notअगरier(&efx_netdev_notअगरier);
+ err_notअगरier:
+	वापस rc;
+पूर्ण
 
-static void __exit efx_exit_module(void)
-{
-	printk(KERN_INFO "Solarflare NET driver unloading\n");
+अटल व्योम __निकास efx_निकास_module(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "Solarflare NET driver unloading\n");
 
-	pci_unregister_driver(&ef100_pci_driver);
-	pci_unregister_driver(&efx_pci_driver);
+	pci_unरेजिस्टर_driver(&ef100_pci_driver);
+	pci_unरेजिस्टर_driver(&efx_pci_driver);
 	efx_destroy_reset_workqueue();
-#ifdef CONFIG_SFC_SRIOV
+#अगर_घोषित CONFIG_SFC_SRIOV
 	efx_fini_sriov();
-#endif
-	unregister_netdevice_notifier(&efx_netdev_notifier);
+#पूर्ण_अगर
+	unरेजिस्टर_netdevice_notअगरier(&efx_netdev_notअगरier);
 
-}
+पूर्ण
 
 module_init(efx_init_module);
-module_exit(efx_exit_module);
+module_निकास(efx_निकास_module);
 
 MODULE_AUTHOR("Solarflare Communications and "
 	      "Michael Brown <mbrown@fensystems.co.uk>");

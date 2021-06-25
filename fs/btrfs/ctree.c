@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2007,2008 Oracle.  All rights reserved.
  */
 
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/rbtree.h>
-#include <linux/mm.h>
-#include "ctree.h"
-#include "disk-io.h"
-#include "transaction.h"
-#include "print-tree.h"
-#include "locking.h"
-#include "volumes.h"
-#include "qgroup.h"
-#include "tree-mod-log.h"
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/mm.h>
+#समावेश "ctree.h"
+#समावेश "disk-io.h"
+#समावेश "transaction.h"
+#समावेश "print-tree.h"
+#समावेश "locking.h"
+#समावेश "volumes.h"
+#समावेश "qgroup.h"
+#समावेश "tree-mod-log.h"
 
-static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, struct btrfs_path *path, int level);
-static int split_leaf(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		      const struct btrfs_key *ins_key, struct btrfs_path *path,
-		      int data_size, int extend);
-static int push_node_left(struct btrfs_trans_handle *trans,
-			  struct extent_buffer *dst,
-			  struct extent_buffer *src, int empty);
-static int balance_node_right(struct btrfs_trans_handle *trans,
-			      struct extent_buffer *dst_buf,
-			      struct extent_buffer *src_buf);
-static void del_ptr(struct btrfs_root *root, struct btrfs_path *path,
-		    int level, int slot);
+अटल पूर्णांक split_node(काष्ठा btrfs_trans_handle *trans, काष्ठा btrfs_root
+		      *root, काष्ठा btrfs_path *path, पूर्णांक level);
+अटल पूर्णांक split_leaf(काष्ठा btrfs_trans_handle *trans, काष्ठा btrfs_root *root,
+		      स्थिर काष्ठा btrfs_key *ins_key, काष्ठा btrfs_path *path,
+		      पूर्णांक data_size, पूर्णांक extend);
+अटल पूर्णांक push_node_left(काष्ठा btrfs_trans_handle *trans,
+			  काष्ठा extent_buffer *dst,
+			  काष्ठा extent_buffer *src, पूर्णांक empty);
+अटल पूर्णांक balance_node_right(काष्ठा btrfs_trans_handle *trans,
+			      काष्ठा extent_buffer *dst_buf,
+			      काष्ठा extent_buffer *src_buf);
+अटल व्योम del_ptr(काष्ठा btrfs_root *root, काष्ठा btrfs_path *path,
+		    पूर्णांक level, पूर्णांक slot);
 
-static const struct btrfs_csums {
+अटल स्थिर काष्ठा btrfs_csums अणु
 	u16		size;
-	const char	name[10];
-	const char	driver[12];
-} btrfs_csums[] = {
-	[BTRFS_CSUM_TYPE_CRC32] = { .size = 4, .name = "crc32c" },
-	[BTRFS_CSUM_TYPE_XXHASH] = { .size = 8, .name = "xxhash64" },
-	[BTRFS_CSUM_TYPE_SHA256] = { .size = 32, .name = "sha256" },
-	[BTRFS_CSUM_TYPE_BLAKE2] = { .size = 32, .name = "blake2b",
-				     .driver = "blake2b-256" },
-};
+	स्थिर अक्षर	name[10];
+	स्थिर अक्षर	driver[12];
+पूर्ण btrfs_csums[] = अणु
+	[BTRFS_CSUM_TYPE_CRC32] = अणु .size = 4, .name = "crc32c" पूर्ण,
+	[BTRFS_CSUM_TYPE_XXHASH] = अणु .size = 8, .name = "xxhash64" पूर्ण,
+	[BTRFS_CSUM_TYPE_SHA256] = अणु .size = 32, .name = "sha256" पूर्ण,
+	[BTRFS_CSUM_TYPE_BLAKE2] = अणु .size = 32, .name = "blake2b",
+				     .driver = "blake2b-256" पूर्ण,
+पूर्ण;
 
-int btrfs_super_csum_size(const struct btrfs_super_block *s)
-{
+पूर्णांक btrfs_super_csum_size(स्थिर काष्ठा btrfs_super_block *s)
+अणु
 	u16 t = btrfs_super_csum_type(s);
 	/*
-	 * csum type is validated at mount time
+	 * csum type is validated at mount समय
 	 */
-	return btrfs_csums[t].size;
-}
+	वापस btrfs_csums[t].size;
+पूर्ण
 
-const char *btrfs_super_csum_name(u16 csum_type)
-{
-	/* csum type is validated at mount time */
-	return btrfs_csums[csum_type].name;
-}
+स्थिर अक्षर *btrfs_super_csum_name(u16 csum_type)
+अणु
+	/* csum type is validated at mount समय */
+	वापस btrfs_csums[csum_type].name;
+पूर्ण
 
 /*
- * Return driver name if defined, otherwise the name that's also a valid driver
+ * Return driver name अगर defined, otherwise the name that's also a valid driver
  * name
  */
-const char *btrfs_super_csum_driver(u16 csum_type)
-{
-	/* csum type is validated at mount time */
-	return btrfs_csums[csum_type].driver[0] ?
+स्थिर अक्षर *btrfs_super_csum_driver(u16 csum_type)
+अणु
+	/* csum type is validated at mount समय */
+	वापस btrfs_csums[csum_type].driver[0] ?
 		btrfs_csums[csum_type].driver :
 		btrfs_csums[csum_type].name;
-}
+पूर्ण
 
-size_t __attribute_const__ btrfs_get_num_csums(void)
-{
-	return ARRAY_SIZE(btrfs_csums);
-}
+माप_प्रकार __attribute_स्थिर__ btrfs_get_num_csums(व्योम)
+अणु
+	वापस ARRAY_SIZE(btrfs_csums);
+पूर्ण
 
-struct btrfs_path *btrfs_alloc_path(void)
-{
-	return kmem_cache_zalloc(btrfs_path_cachep, GFP_NOFS);
-}
+काष्ठा btrfs_path *btrfs_alloc_path(व्योम)
+अणु
+	वापस kmem_cache_zalloc(btrfs_path_cachep, GFP_NOFS);
+पूर्ण
 
 /* this also releases the path */
-void btrfs_free_path(struct btrfs_path *p)
-{
-	if (!p)
-		return;
+व्योम btrfs_मुक्त_path(काष्ठा btrfs_path *p)
+अणु
+	अगर (!p)
+		वापस;
 	btrfs_release_path(p);
-	kmem_cache_free(btrfs_path_cachep, p);
-}
+	kmem_cache_मुक्त(btrfs_path_cachep, p);
+पूर्ण
 
 /*
  * path release drops references on the extent buffers in the path
@@ -94,98 +95,98 @@ void btrfs_free_path(struct btrfs_path *p)
  *
  * It is safe to call this on paths that no locks or extent buffers held.
  */
-noinline void btrfs_release_path(struct btrfs_path *p)
-{
-	int i;
+noअंतरभूत व्योम btrfs_release_path(काष्ठा btrfs_path *p)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BTRFS_MAX_LEVEL; i++) {
+	क्रम (i = 0; i < BTRFS_MAX_LEVEL; i++) अणु
 		p->slots[i] = 0;
-		if (!p->nodes[i])
-			continue;
-		if (p->locks[i]) {
+		अगर (!p->nodes[i])
+			जारी;
+		अगर (p->locks[i]) अणु
 			btrfs_tree_unlock_rw(p->nodes[i], p->locks[i]);
 			p->locks[i] = 0;
-		}
-		free_extent_buffer(p->nodes[i]);
-		p->nodes[i] = NULL;
-	}
-}
+		पूर्ण
+		मुक्त_extent_buffer(p->nodes[i]);
+		p->nodes[i] = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
- * safely gets a reference on the root node of a tree.  A lock
- * is not taken, so a concurrent writer may put a different node
- * at the root of the tree.  See btrfs_lock_root_node for the
+ * safely माला_लो a reference on the root node of a tree.  A lock
+ * is not taken, so a concurrent ग_लिखोr may put a dअगरferent node
+ * at the root of the tree.  See btrfs_lock_root_node क्रम the
  * looping required.
  *
- * The extent buffer returned by this has a reference taken, so
+ * The extent buffer वापसed by this has a reference taken, so
  * it won't disappear.  It may stop being the root of the tree
- * at any time because there are no locks held.
+ * at any समय because there are no locks held.
  */
-struct extent_buffer *btrfs_root_node(struct btrfs_root *root)
-{
-	struct extent_buffer *eb;
+काष्ठा extent_buffer *btrfs_root_node(काष्ठा btrfs_root *root)
+अणु
+	काष्ठा extent_buffer *eb;
 
-	while (1) {
-		rcu_read_lock();
+	जबतक (1) अणु
+		rcu_पढ़ो_lock();
 		eb = rcu_dereference(root->node);
 
 		/*
-		 * RCU really hurts here, we could free up the root node because
-		 * it was COWed but we may not get the new root node yet so do
-		 * the inc_not_zero dance and if it doesn't work then
+		 * RCU really hurts here, we could मुक्त up the root node because
+		 * it was COWed but we may not get the new root node yet so करो
+		 * the inc_not_zero dance and अगर it करोesn't work then
 		 * synchronize_rcu and try again.
 		 */
-		if (atomic_inc_not_zero(&eb->refs)) {
-			rcu_read_unlock();
-			break;
-		}
-		rcu_read_unlock();
+		अगर (atomic_inc_not_zero(&eb->refs)) अणु
+			rcu_पढ़ो_unlock();
+			अवरोध;
+		पूर्ण
+		rcu_पढ़ो_unlock();
 		synchronize_rcu();
-	}
-	return eb;
-}
+	पूर्ण
+	वापस eb;
+पूर्ण
 
 /*
  * Cowonly root (not-shareable trees, everything not subvolume or reloc roots),
  * just get put onto a simple dirty list.  Transaction walks this list to make
  * sure they get properly updated on disk.
  */
-static void add_root_to_dirty_list(struct btrfs_root *root)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
+अटल व्योम add_root_to_dirty_list(काष्ठा btrfs_root *root)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
 
-	if (test_bit(BTRFS_ROOT_DIRTY, &root->state) ||
-	    !test_bit(BTRFS_ROOT_TRACK_DIRTY, &root->state))
-		return;
+	अगर (test_bit(BTRFS_ROOT_सूचीTY, &root->state) ||
+	    !test_bit(BTRFS_ROOT_TRACK_सूचीTY, &root->state))
+		वापस;
 
 	spin_lock(&fs_info->trans_lock);
-	if (!test_and_set_bit(BTRFS_ROOT_DIRTY, &root->state)) {
+	अगर (!test_and_set_bit(BTRFS_ROOT_सूचीTY, &root->state)) अणु
 		/* Want the extent tree to be the last on the list */
-		if (root->root_key.objectid == BTRFS_EXTENT_TREE_OBJECTID)
+		अगर (root->root_key.objectid == BTRFS_EXTENT_TREE_OBJECTID)
 			list_move_tail(&root->dirty_list,
 				       &fs_info->dirty_cowonly_roots);
-		else
+		अन्यथा
 			list_move(&root->dirty_list,
 				  &fs_info->dirty_cowonly_roots);
-	}
+	पूर्ण
 	spin_unlock(&fs_info->trans_lock);
-}
+पूर्ण
 
 /*
- * used by snapshot creation to make a copy of a root for a tree with
- * a given objectid.  The buffer with the new root node is returned in
- * cow_ret, and this func returns zero on success or a negative error code.
+ * used by snapshot creation to make a copy of a root क्रम a tree with
+ * a given objectid.  The buffer with the new root node is वापसed in
+ * cow_ret, and this func वापसs zero on success or a negative error code.
  */
-int btrfs_copy_root(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root,
-		      struct extent_buffer *buf,
-		      struct extent_buffer **cow_ret, u64 new_root_objectid)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *cow;
-	int ret = 0;
-	int level;
-	struct btrfs_disk_key disk_key;
+पूर्णांक btrfs_copy_root(काष्ठा btrfs_trans_handle *trans,
+		      काष्ठा btrfs_root *root,
+		      काष्ठा extent_buffer *buf,
+		      काष्ठा extent_buffer **cow_ret, u64 new_root_objectid)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *cow;
+	पूर्णांक ret = 0;
+	पूर्णांक level;
+	काष्ठा btrfs_disk_key disk_key;
 
 	WARN_ON(test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
 		trans->transid != fs_info->running_transaction->transid);
@@ -193,16 +194,16 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 		trans->transid != root->last_trans);
 
 	level = btrfs_header_level(buf);
-	if (level == 0)
+	अगर (level == 0)
 		btrfs_item_key(buf, &disk_key, 0);
-	else
+	अन्यथा
 		btrfs_node_key(buf, &disk_key, 0);
 
 	cow = btrfs_alloc_tree_block(trans, root, 0, new_root_objectid,
 				     &disk_key, level, buf->start, 0,
 				     BTRFS_NESTING_NEW_ROOT);
-	if (IS_ERR(cow))
-		return PTR_ERR(cow);
+	अगर (IS_ERR(cow))
+		वापस PTR_ERR(cow);
 
 	copy_extent_buffer_full(cow, buf);
 	btrfs_set_header_bytenr(cow, cow->start);
@@ -210,235 +211,235 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 	btrfs_set_header_backref_rev(cow, BTRFS_MIXED_BACKREF_REV);
 	btrfs_clear_header_flag(cow, BTRFS_HEADER_FLAG_WRITTEN |
 				     BTRFS_HEADER_FLAG_RELOC);
-	if (new_root_objectid == BTRFS_TREE_RELOC_OBJECTID)
+	अगर (new_root_objectid == BTRFS_TREE_RELOC_OBJECTID)
 		btrfs_set_header_flag(cow, BTRFS_HEADER_FLAG_RELOC);
-	else
+	अन्यथा
 		btrfs_set_header_owner(cow, new_root_objectid);
 
-	write_extent_buffer_fsid(cow, fs_info->fs_devices->metadata_uuid);
+	ग_लिखो_extent_buffer_fsid(cow, fs_info->fs_devices->metadata_uuid);
 
 	WARN_ON(btrfs_header_generation(buf) > trans->transid);
-	if (new_root_objectid == BTRFS_TREE_RELOC_OBJECTID)
+	अगर (new_root_objectid == BTRFS_TREE_RELOC_OBJECTID)
 		ret = btrfs_inc_ref(trans, root, cow, 1);
-	else
+	अन्यथा
 		ret = btrfs_inc_ref(trans, root, cow, 0);
-	if (ret) {
+	अगर (ret) अणु
 		btrfs_tree_unlock(cow);
-		free_extent_buffer(cow);
-		btrfs_abort_transaction(trans, ret);
-		return ret;
-	}
+		मुक्त_extent_buffer(cow);
+		btrfs_पात_transaction(trans, ret);
+		वापस ret;
+	पूर्ण
 
 	btrfs_mark_buffer_dirty(cow);
 	*cow_ret = cow;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * check if the tree block can be shared by multiple trees
+ * check अगर the tree block can be shared by multiple trees
  */
-int btrfs_block_can_be_shared(struct btrfs_root *root,
-			      struct extent_buffer *buf)
-{
+पूर्णांक btrfs_block_can_be_shared(काष्ठा btrfs_root *root,
+			      काष्ठा extent_buffer *buf)
+अणु
 	/*
 	 * Tree blocks not in shareable trees and tree roots are never shared.
 	 * If a block was allocated after the last snapshot and the block was
 	 * not allocated by tree relocation, we know the block is not shared.
 	 */
-	if (test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
+	अगर (test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
 	    buf != root->node && buf != root->commit_root &&
 	    (btrfs_header_generation(buf) <=
 	     btrfs_root_last_snapshot(&root->root_item) ||
 	     btrfs_header_flag(buf, BTRFS_HEADER_FLAG_RELOC)))
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static noinline int update_ref_for_cow(struct btrfs_trans_handle *trans,
-				       struct btrfs_root *root,
-				       struct extent_buffer *buf,
-				       struct extent_buffer *cow,
-				       int *last_ref)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
+अटल noअंतरभूत पूर्णांक update_ref_क्रम_cow(काष्ठा btrfs_trans_handle *trans,
+				       काष्ठा btrfs_root *root,
+				       काष्ठा extent_buffer *buf,
+				       काष्ठा extent_buffer *cow,
+				       पूर्णांक *last_ref)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
 	u64 refs;
 	u64 owner;
 	u64 flags;
 	u64 new_flags = 0;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * Backrefs update rules:
 	 *
-	 * Always use full backrefs for extent pointers in tree block
+	 * Always use full backrefs क्रम extent poपूर्णांकers in tree block
 	 * allocated by tree relocation.
 	 *
-	 * If a shared tree block is no longer referenced by its owner
+	 * If a shared tree block is no दीर्घer referenced by its owner
 	 * tree (btrfs_header_owner(buf) == root->root_key.objectid),
-	 * use full backrefs for extent pointers in tree block.
+	 * use full backrefs क्रम extent poपूर्णांकers in tree block.
 	 *
 	 * If a tree block is been relocating
 	 * (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID),
-	 * use full backrefs for extent pointers in tree block.
-	 * The reason for this is some operations (such as drop tree)
-	 * are only allowed for blocks use full backrefs.
+	 * use full backrefs क्रम extent poपूर्णांकers in tree block.
+	 * The reason क्रम this is some operations (such as drop tree)
+	 * are only allowed क्रम blocks use full backrefs.
 	 */
 
-	if (btrfs_block_can_be_shared(root, buf)) {
+	अगर (btrfs_block_can_be_shared(root, buf)) अणु
 		ret = btrfs_lookup_extent_info(trans, fs_info, buf->start,
 					       btrfs_header_level(buf), 1,
 					       &refs, &flags);
-		if (ret)
-			return ret;
-		if (refs == 0) {
+		अगर (ret)
+			वापस ret;
+		अगर (refs == 0) अणु
 			ret = -EROFS;
-			btrfs_handle_fs_error(fs_info, ret, NULL);
-			return ret;
-		}
-	} else {
+			btrfs_handle_fs_error(fs_info, ret, शून्य);
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		refs = 1;
-		if (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID ||
+		अगर (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID ||
 		    btrfs_header_backref_rev(buf) < BTRFS_MIXED_BACKREF_REV)
 			flags = BTRFS_BLOCK_FLAG_FULL_BACKREF;
-		else
+		अन्यथा
 			flags = 0;
-	}
+	पूर्ण
 
 	owner = btrfs_header_owner(buf);
 	BUG_ON(owner == BTRFS_TREE_RELOC_OBJECTID &&
 	       !(flags & BTRFS_BLOCK_FLAG_FULL_BACKREF));
 
-	if (refs > 1) {
-		if ((owner == root->root_key.objectid ||
+	अगर (refs > 1) अणु
+		अगर ((owner == root->root_key.objectid ||
 		     root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID) &&
-		    !(flags & BTRFS_BLOCK_FLAG_FULL_BACKREF)) {
+		    !(flags & BTRFS_BLOCK_FLAG_FULL_BACKREF)) अणु
 			ret = btrfs_inc_ref(trans, root, buf, 1);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			if (root->root_key.objectid ==
-			    BTRFS_TREE_RELOC_OBJECTID) {
+			अगर (root->root_key.objectid ==
+			    BTRFS_TREE_RELOC_OBJECTID) अणु
 				ret = btrfs_dec_ref(trans, root, buf, 0);
-				if (ret)
-					return ret;
+				अगर (ret)
+					वापस ret;
 				ret = btrfs_inc_ref(trans, root, cow, 1);
-				if (ret)
-					return ret;
-			}
+				अगर (ret)
+					वापस ret;
+			पूर्ण
 			new_flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
-		} else {
+		पूर्ण अन्यथा अणु
 
-			if (root->root_key.objectid ==
+			अगर (root->root_key.objectid ==
 			    BTRFS_TREE_RELOC_OBJECTID)
 				ret = btrfs_inc_ref(trans, root, cow, 1);
-			else
+			अन्यथा
 				ret = btrfs_inc_ref(trans, root, cow, 0);
-			if (ret)
-				return ret;
-		}
-		if (new_flags != 0) {
-			int level = btrfs_header_level(buf);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+		अगर (new_flags != 0) अणु
+			पूर्णांक level = btrfs_header_level(buf);
 
 			ret = btrfs_set_disk_extent_flags(trans, buf,
 							  new_flags, level, 0);
-			if (ret)
-				return ret;
-		}
-	} else {
-		if (flags & BTRFS_BLOCK_FLAG_FULL_BACKREF) {
-			if (root->root_key.objectid ==
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (flags & BTRFS_BLOCK_FLAG_FULL_BACKREF) अणु
+			अगर (root->root_key.objectid ==
 			    BTRFS_TREE_RELOC_OBJECTID)
 				ret = btrfs_inc_ref(trans, root, cow, 1);
-			else
+			अन्यथा
 				ret = btrfs_inc_ref(trans, root, cow, 0);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			ret = btrfs_dec_ref(trans, root, buf, 1);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 		btrfs_clean_tree_block(buf);
 		*last_ref = 1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct extent_buffer *alloc_tree_block_no_bg_flush(
-					  struct btrfs_trans_handle *trans,
-					  struct btrfs_root *root,
+अटल काष्ठा extent_buffer *alloc_tree_block_no_bg_flush(
+					  काष्ठा btrfs_trans_handle *trans,
+					  काष्ठा btrfs_root *root,
 					  u64 parent_start,
-					  const struct btrfs_disk_key *disk_key,
-					  int level,
-					  u64 hint,
+					  स्थिर काष्ठा btrfs_disk_key *disk_key,
+					  पूर्णांक level,
+					  u64 hपूर्णांक,
 					  u64 empty_size,
-					  enum btrfs_lock_nesting nest)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *ret;
+					  क्रमागत btrfs_lock_nesting nest)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *ret;
 
 	/*
-	 * If we are COWing a node/leaf from the extent, chunk, device or free
-	 * space trees, make sure that we do not finish block group creation of
-	 * pending block groups. We do this to avoid a deadlock.
+	 * If we are COWing a node/leaf from the extent, chunk, device or मुक्त
+	 * space trees, make sure that we करो not finish block group creation of
+	 * pending block groups. We करो this to aव्योम a deadlock.
 	 * COWing can result in allocation of a new chunk, and flushing pending
 	 * block groups (btrfs_create_pending_block_groups()) can be triggered
 	 * when finishing allocation of a new chunk. Creation of a pending block
-	 * group modifies the extent, chunk, device and free space trees,
-	 * therefore we could deadlock with ourselves since we are holding a
+	 * group modअगरies the extent, chunk, device and मुक्त space trees,
+	 * thereक्रमe we could deadlock with ourselves since we are holding a
 	 * lock on an extent buffer that btrfs_create_pending_block_groups() may
 	 * try to COW later.
 	 * For similar reasons, we also need to delay flushing pending block
 	 * groups when splitting a leaf or node, from one of those trees, since
-	 * we are holding a write lock on it and its parent or when inserting a
-	 * new root node for one of those trees.
+	 * we are holding a ग_लिखो lock on it and its parent or when inserting a
+	 * new root node क्रम one of those trees.
 	 */
-	if (root == fs_info->extent_root ||
+	अगर (root == fs_info->extent_root ||
 	    root == fs_info->chunk_root ||
 	    root == fs_info->dev_root ||
-	    root == fs_info->free_space_root)
+	    root == fs_info->मुक्त_space_root)
 		trans->can_flush_pending_bgs = false;
 
 	ret = btrfs_alloc_tree_block(trans, root, parent_start,
 				     root->root_key.objectid, disk_key, level,
-				     hint, empty_size, nest);
+				     hपूर्णांक, empty_size, nest);
 	trans->can_flush_pending_bgs = true;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * does the dirty work in cow of a single block.  The parent block (if
- * supplied) is updated to point to the new cow copy.  The new buffer is marked
- * dirty and returned locked.  If you modify the block it needs to be marked
+ * करोes the dirty work in cow of a single block.  The parent block (अगर
+ * supplied) is updated to poपूर्णांक to the new cow copy.  The new buffer is marked
+ * dirty and वापसed locked.  If you modअगरy the block it needs to be marked
  * dirty again.
  *
- * search_start -- an allocation hint for the new block
+ * search_start -- an allocation hपूर्णांक क्रम the new block
  *
- * empty_size -- a hint that you plan on doing more cow.  This is the size in
- * bytes the allocator should try to find free next to the block it returns.
- * This is just a hint and may be ignored by the allocator.
+ * empty_size -- a hपूर्णांक that you plan on करोing more cow.  This is the size in
+ * bytes the allocator should try to find मुक्त next to the block it वापसs.
+ * This is just a hपूर्णांक and may be ignored by the allocator.
  */
-static noinline int __btrfs_cow_block(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *root,
-			     struct extent_buffer *buf,
-			     struct extent_buffer *parent, int parent_slot,
-			     struct extent_buffer **cow_ret,
+अटल noअंतरभूत पूर्णांक __btrfs_cow_block(काष्ठा btrfs_trans_handle *trans,
+			     काष्ठा btrfs_root *root,
+			     काष्ठा extent_buffer *buf,
+			     काष्ठा extent_buffer *parent, पूर्णांक parent_slot,
+			     काष्ठा extent_buffer **cow_ret,
 			     u64 search_start, u64 empty_size,
-			     enum btrfs_lock_nesting nest)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_disk_key disk_key;
-	struct extent_buffer *cow;
-	int level, ret;
-	int last_ref = 0;
-	int unlock_orig = 0;
+			     क्रमागत btrfs_lock_nesting nest)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_disk_key disk_key;
+	काष्ठा extent_buffer *cow;
+	पूर्णांक level, ret;
+	पूर्णांक last_ref = 0;
+	पूर्णांक unlock_orig = 0;
 	u64 parent_start = 0;
 
-	if (*cow_ret == buf)
+	अगर (*cow_ret == buf)
 		unlock_orig = 1;
 
-	btrfs_assert_tree_locked(buf);
+	btrfs_निश्चित_tree_locked(buf);
 
 	WARN_ON(test_bit(BTRFS_ROOT_SHAREABLE, &root->state) &&
 		trans->transid != fs_info->running_transaction->transid);
@@ -447,18 +448,18 @@ static noinline int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 
 	level = btrfs_header_level(buf);
 
-	if (level == 0)
+	अगर (level == 0)
 		btrfs_item_key(buf, &disk_key, 0);
-	else
+	अन्यथा
 		btrfs_node_key(buf, &disk_key, 0);
 
-	if ((root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID) && parent)
+	अगर ((root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID) && parent)
 		parent_start = parent->start;
 
 	cow = alloc_tree_block_no_bg_flush(trans, root, parent_start, &disk_key,
 					   level, search_start, empty_size, nest);
-	if (IS_ERR(cow))
-		return PTR_ERR(cow);
+	अगर (IS_ERR(cow))
+		वापस PTR_ERR(cow);
 
 	/* cow is set to blocking by btrfs_init_new_buffer */
 
@@ -468,47 +469,47 @@ static noinline int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 	btrfs_set_header_backref_rev(cow, BTRFS_MIXED_BACKREF_REV);
 	btrfs_clear_header_flag(cow, BTRFS_HEADER_FLAG_WRITTEN |
 				     BTRFS_HEADER_FLAG_RELOC);
-	if (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID)
+	अगर (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID)
 		btrfs_set_header_flag(cow, BTRFS_HEADER_FLAG_RELOC);
-	else
+	अन्यथा
 		btrfs_set_header_owner(cow, root->root_key.objectid);
 
-	write_extent_buffer_fsid(cow, fs_info->fs_devices->metadata_uuid);
+	ग_लिखो_extent_buffer_fsid(cow, fs_info->fs_devices->metadata_uuid);
 
-	ret = update_ref_for_cow(trans, root, buf, cow, &last_ref);
-	if (ret) {
+	ret = update_ref_क्रम_cow(trans, root, buf, cow, &last_ref);
+	अगर (ret) अणु
 		btrfs_tree_unlock(cow);
-		free_extent_buffer(cow);
-		btrfs_abort_transaction(trans, ret);
-		return ret;
-	}
+		मुक्त_extent_buffer(cow);
+		btrfs_पात_transaction(trans, ret);
+		वापस ret;
+	पूर्ण
 
-	if (test_bit(BTRFS_ROOT_SHAREABLE, &root->state)) {
+	अगर (test_bit(BTRFS_ROOT_SHAREABLE, &root->state)) अणु
 		ret = btrfs_reloc_cow_block(trans, root, buf, cow);
-		if (ret) {
+		अगर (ret) अणु
 			btrfs_tree_unlock(cow);
-			free_extent_buffer(cow);
-			btrfs_abort_transaction(trans, ret);
-			return ret;
-		}
-	}
+			मुक्त_extent_buffer(cow);
+			btrfs_पात_transaction(trans, ret);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (buf == root->node) {
+	अगर (buf == root->node) अणु
 		WARN_ON(parent && parent != buf);
-		if (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID ||
+		अगर (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID ||
 		    btrfs_header_backref_rev(buf) < BTRFS_MIXED_BACKREF_REV)
 			parent_start = buf->start;
 
 		atomic_inc(&cow->refs);
 		ret = btrfs_tree_mod_log_insert_root(root->node, cow, true);
 		BUG_ON(ret < 0);
-		rcu_assign_pointer(root->node, cow);
+		rcu_assign_poपूर्णांकer(root->node, cow);
 
-		btrfs_free_tree_block(trans, root, buf, parent_start,
+		btrfs_मुक्त_tree_block(trans, root, buf, parent_start,
 				      last_ref);
-		free_extent_buffer(buf);
+		मुक्त_extent_buffer(buf);
 		add_root_to_dirty_list(root);
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(trans->transid != btrfs_header_generation(parent));
 		btrfs_tree_mod_log_insert_key(parent, parent_slot,
 					      BTRFS_MOD_LOG_KEY_REPLACE, GFP_NOFS);
@@ -517,97 +518,97 @@ static noinline int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 		btrfs_set_node_ptr_generation(parent, parent_slot,
 					      trans->transid);
 		btrfs_mark_buffer_dirty(parent);
-		if (last_ref) {
-			ret = btrfs_tree_mod_log_free_eb(buf);
-			if (ret) {
+		अगर (last_ref) अणु
+			ret = btrfs_tree_mod_log_मुक्त_eb(buf);
+			अगर (ret) अणु
 				btrfs_tree_unlock(cow);
-				free_extent_buffer(cow);
-				btrfs_abort_transaction(trans, ret);
-				return ret;
-			}
-		}
-		btrfs_free_tree_block(trans, root, buf, parent_start,
+				मुक्त_extent_buffer(cow);
+				btrfs_पात_transaction(trans, ret);
+				वापस ret;
+			पूर्ण
+		पूर्ण
+		btrfs_मुक्त_tree_block(trans, root, buf, parent_start,
 				      last_ref);
-	}
-	if (unlock_orig)
+	पूर्ण
+	अगर (unlock_orig)
 		btrfs_tree_unlock(buf);
-	free_extent_buffer_stale(buf);
+	मुक्त_extent_buffer_stale(buf);
 	btrfs_mark_buffer_dirty(cow);
 	*cow_ret = cow;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int should_cow_block(struct btrfs_trans_handle *trans,
-				   struct btrfs_root *root,
-				   struct extent_buffer *buf)
-{
-	if (btrfs_is_testing(root->fs_info))
-		return 0;
+अटल अंतरभूत पूर्णांक should_cow_block(काष्ठा btrfs_trans_handle *trans,
+				   काष्ठा btrfs_root *root,
+				   काष्ठा extent_buffer *buf)
+अणु
+	अगर (btrfs_is_testing(root->fs_info))
+		वापस 0;
 
 	/* Ensure we can see the FORCE_COW bit */
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 
 	/*
-	 * We do not need to cow a block if
+	 * We करो not need to cow a block अगर
 	 * 1) this block is not created or changed in this transaction;
-	 * 2) this block does not belong to TREE_RELOC tree;
-	 * 3) the root is not forced COW.
+	 * 2) this block करोes not beदीर्घ to TREE_RELOC tree;
+	 * 3) the root is not क्रमced COW.
 	 *
-	 * What is forced COW:
+	 * What is क्रमced COW:
 	 *    when we create snapshot during committing the transaction,
 	 *    after we've finished copying src root, we must COW the shared
 	 *    block to ensure the metadata consistency.
 	 */
-	if (btrfs_header_generation(buf) == trans->transid &&
+	अगर (btrfs_header_generation(buf) == trans->transid &&
 	    !btrfs_header_flag(buf, BTRFS_HEADER_FLAG_WRITTEN) &&
 	    !(root->root_key.objectid != BTRFS_TREE_RELOC_OBJECTID &&
 	      btrfs_header_flag(buf, BTRFS_HEADER_FLAG_RELOC)) &&
 	    !test_bit(BTRFS_ROOT_FORCE_COW, &root->state))
-		return 0;
-	return 1;
-}
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 /*
- * cows a single block, see __btrfs_cow_block for the real work.
+ * cows a single block, see __btrfs_cow_block क्रम the real work.
  * This version of it has extra checks so that a block isn't COWed more than
- * once per transaction, as long as it hasn't been written yet
+ * once per transaction, as दीर्घ as it hasn't been written yet
  */
-noinline int btrfs_cow_block(struct btrfs_trans_handle *trans,
-		    struct btrfs_root *root, struct extent_buffer *buf,
-		    struct extent_buffer *parent, int parent_slot,
-		    struct extent_buffer **cow_ret,
-		    enum btrfs_lock_nesting nest)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
+noअंतरभूत पूर्णांक btrfs_cow_block(काष्ठा btrfs_trans_handle *trans,
+		    काष्ठा btrfs_root *root, काष्ठा extent_buffer *buf,
+		    काष्ठा extent_buffer *parent, पूर्णांक parent_slot,
+		    काष्ठा extent_buffer **cow_ret,
+		    क्रमागत btrfs_lock_nesting nest)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
 	u64 search_start;
-	int ret;
+	पूर्णांक ret;
 
-	if (test_bit(BTRFS_ROOT_DELETING, &root->state))
+	अगर (test_bit(BTRFS_ROOT_DELETING, &root->state))
 		btrfs_err(fs_info,
 			"COW'ing blocks on a fs root that's being dropped");
 
-	if (trans->transaction != fs_info->running_transaction)
+	अगर (trans->transaction != fs_info->running_transaction)
 		WARN(1, KERN_CRIT "trans %llu running %llu\n",
 		       trans->transid,
 		       fs_info->running_transaction->transid);
 
-	if (trans->transid != fs_info->generation)
+	अगर (trans->transid != fs_info->generation)
 		WARN(1, KERN_CRIT "trans %llu running %llu\n",
 		       trans->transid, fs_info->generation);
 
-	if (!should_cow_block(trans, root, buf)) {
+	अगर (!should_cow_block(trans, root, buf)) अणु
 		trans->dirty = true;
 		*cow_ret = buf;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	search_start = buf->start & ~((u64)SZ_1G - 1);
 
 	/*
-	 * Before CoWing this block for later modification, check if it's
-	 * the subtree root and do the delayed subtree trace if needed.
+	 * Beक्रमe CoWing this block क्रम later modअगरication, check अगर it's
+	 * the subtree root and करो the delayed subtree trace अगर needed.
 	 *
-	 * Also We don't care about the error, as it's handled internally.
+	 * Also We करोn't care about the error, as it's handled पूर्णांकernally.
 	 */
 	btrfs_qgroup_trace_subtree_after_cow(trans, root, buf);
 	ret = __btrfs_cow_block(trans, root, buf, parent,
@@ -615,96 +616,96 @@ noinline int btrfs_cow_block(struct btrfs_trans_handle *trans,
 
 	trace_btrfs_cow_block(root, buf, *cow_ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 ALLOW_ERROR_INJECTION(btrfs_cow_block, ERRNO);
 
 /*
- * helper function for defrag to decide if two blocks pointed to by a
- * node are actually close by
+ * helper function क्रम defrag to decide अगर two blocks poपूर्णांकed to by a
+ * node are actually बंद by
  */
-static int close_blocks(u64 blocknr, u64 other, u32 blocksize)
-{
-	if (blocknr < other && other - (blocknr + blocksize) < 32768)
-		return 1;
-	if (blocknr > other && blocknr - (other + blocksize) < 32768)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक बंद_blocks(u64 blocknr, u64 other, u32 blocksize)
+अणु
+	अगर (blocknr < other && other - (blocknr + blocksize) < 32768)
+		वापस 1;
+	अगर (blocknr > other && blocknr - (other + blocksize) < 32768)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-#ifdef __LITTLE_ENDIAN
+#अगर_घोषित __LITTLE_ENDIAN
 
 /*
  * Compare two keys, on little-endian the disk order is same as CPU order and
- * we can avoid the conversion.
+ * we can aव्योम the conversion.
  */
-static int comp_keys(const struct btrfs_disk_key *disk_key,
-		     const struct btrfs_key *k2)
-{
-	const struct btrfs_key *k1 = (const struct btrfs_key *)disk_key;
+अटल पूर्णांक comp_keys(स्थिर काष्ठा btrfs_disk_key *disk_key,
+		     स्थिर काष्ठा btrfs_key *k2)
+अणु
+	स्थिर काष्ठा btrfs_key *k1 = (स्थिर काष्ठा btrfs_key *)disk_key;
 
-	return btrfs_comp_cpu_keys(k1, k2);
-}
+	वापस btrfs_comp_cpu_keys(k1, k2);
+पूर्ण
 
-#else
+#अन्यथा
 
 /*
- * compare two keys in a memcmp fashion
+ * compare two keys in a स_भेद fashion
  */
-static int comp_keys(const struct btrfs_disk_key *disk,
-		     const struct btrfs_key *k2)
-{
-	struct btrfs_key k1;
+अटल पूर्णांक comp_keys(स्थिर काष्ठा btrfs_disk_key *disk,
+		     स्थिर काष्ठा btrfs_key *k2)
+अणु
+	काष्ठा btrfs_key k1;
 
 	btrfs_disk_key_to_cpu(&k1, disk);
 
-	return btrfs_comp_cpu_keys(&k1, k2);
-}
-#endif
+	वापस btrfs_comp_cpu_keys(&k1, k2);
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * same as comp_keys only with two btrfs_key's
  */
-int __pure btrfs_comp_cpu_keys(const struct btrfs_key *k1, const struct btrfs_key *k2)
-{
-	if (k1->objectid > k2->objectid)
-		return 1;
-	if (k1->objectid < k2->objectid)
-		return -1;
-	if (k1->type > k2->type)
-		return 1;
-	if (k1->type < k2->type)
-		return -1;
-	if (k1->offset > k2->offset)
-		return 1;
-	if (k1->offset < k2->offset)
-		return -1;
-	return 0;
-}
+पूर्णांक __pure btrfs_comp_cpu_keys(स्थिर काष्ठा btrfs_key *k1, स्थिर काष्ठा btrfs_key *k2)
+अणु
+	अगर (k1->objectid > k2->objectid)
+		वापस 1;
+	अगर (k1->objectid < k2->objectid)
+		वापस -1;
+	अगर (k1->type > k2->type)
+		वापस 1;
+	अगर (k1->type < k2->type)
+		वापस -1;
+	अगर (k1->offset > k2->offset)
+		वापस 1;
+	अगर (k1->offset < k2->offset)
+		वापस -1;
+	वापस 0;
+पूर्ण
 
 /*
  * this is used by the defrag code to go through all the
- * leaves pointed to by a node and reallocate them so that
- * disk order is close to key order
+ * leaves poपूर्णांकed to by a node and पुनः_स्मृतिate them so that
+ * disk order is बंद to key order
  */
-int btrfs_realloc_node(struct btrfs_trans_handle *trans,
-		       struct btrfs_root *root, struct extent_buffer *parent,
-		       int start_slot, u64 *last_ret,
-		       struct btrfs_key *progress)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *cur;
+पूर्णांक btrfs_पुनः_स्मृति_node(काष्ठा btrfs_trans_handle *trans,
+		       काष्ठा btrfs_root *root, काष्ठा extent_buffer *parent,
+		       पूर्णांक start_slot, u64 *last_ret,
+		       काष्ठा btrfs_key *progress)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *cur;
 	u64 blocknr;
 	u64 search_start = *last_ret;
 	u64 last_block = 0;
 	u64 other;
 	u32 parent_nritems;
-	int end_slot;
-	int i;
-	int err = 0;
+	पूर्णांक end_slot;
+	पूर्णांक i;
+	पूर्णांक err = 0;
 	u32 blocksize;
-	int progress_passed = 0;
-	struct btrfs_disk_key disk_key;
+	पूर्णांक progress_passed = 0;
+	काष्ठा btrfs_disk_key disk_key;
 
 	WARN_ON(trans->transaction != fs_info->running_transaction);
 	WARN_ON(trans->transid != fs_info->generation);
@@ -713,38 +714,38 @@ int btrfs_realloc_node(struct btrfs_trans_handle *trans,
 	blocksize = fs_info->nodesize;
 	end_slot = parent_nritems - 1;
 
-	if (parent_nritems <= 1)
-		return 0;
+	अगर (parent_nritems <= 1)
+		वापस 0;
 
-	for (i = start_slot; i <= end_slot; i++) {
-		int close = 1;
+	क्रम (i = start_slot; i <= end_slot; i++) अणु
+		पूर्णांक बंद = 1;
 
 		btrfs_node_key(parent, &disk_key, i);
-		if (!progress_passed && comp_keys(&disk_key, progress) < 0)
-			continue;
+		अगर (!progress_passed && comp_keys(&disk_key, progress) < 0)
+			जारी;
 
 		progress_passed = 1;
 		blocknr = btrfs_node_blockptr(parent, i);
-		if (last_block == 0)
+		अगर (last_block == 0)
 			last_block = blocknr;
 
-		if (i > 0) {
+		अगर (i > 0) अणु
 			other = btrfs_node_blockptr(parent, i - 1);
-			close = close_blocks(blocknr, other, blocksize);
-		}
-		if (!close && i < end_slot) {
+			बंद = बंद_blocks(blocknr, other, blocksize);
+		पूर्ण
+		अगर (!बंद && i < end_slot) अणु
 			other = btrfs_node_blockptr(parent, i + 1);
-			close = close_blocks(blocknr, other, blocksize);
-		}
-		if (close) {
+			बंद = बंद_blocks(blocknr, other, blocksize);
+		पूर्ण
+		अगर (बंद) अणु
 			last_block = blocknr;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		cur = btrfs_read_node_slot(parent, i);
-		if (IS_ERR(cur))
-			return PTR_ERR(cur);
-		if (search_start == 0)
+		cur = btrfs_पढ़ो_node_slot(parent, i);
+		अगर (IS_ERR(cur))
+			वापस PTR_ERR(cur);
+		अगर (search_start == 0)
 			search_start = last_block;
 
 		btrfs_tree_lock(cur);
@@ -753,168 +754,168 @@ int btrfs_realloc_node(struct btrfs_trans_handle *trans,
 					min(16 * blocksize,
 					    (end_slot - i) * blocksize),
 					BTRFS_NESTING_COW);
-		if (err) {
+		अगर (err) अणु
 			btrfs_tree_unlock(cur);
-			free_extent_buffer(cur);
-			break;
-		}
+			मुक्त_extent_buffer(cur);
+			अवरोध;
+		पूर्ण
 		search_start = cur->start;
 		last_block = cur->start;
 		*last_ret = search_start;
 		btrfs_tree_unlock(cur);
-		free_extent_buffer(cur);
-	}
-	return err;
-}
+		मुक्त_extent_buffer(cur);
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /*
- * search for key in the extent_buffer.  The items start at offset p,
+ * search क्रम key in the extent_buffer.  The items start at offset p,
  * and they are item_size apart.  There are 'max' items in p.
  *
- * the slot in the array is returned via slot, and it points to
- * the place where you would insert key if it is not found in
+ * the slot in the array is वापसed via slot, and it poपूर्णांकs to
+ * the place where you would insert key अगर it is not found in
  * the array.
  *
- * slot may point to max if the key is bigger than all of the keys
+ * slot may poपूर्णांक to max अगर the key is bigger than all of the keys
  */
-static noinline int generic_bin_search(struct extent_buffer *eb,
-				       unsigned long p, int item_size,
-				       const struct btrfs_key *key,
-				       int max, int *slot)
-{
-	int low = 0;
-	int high = max;
-	int ret;
-	const int key_size = sizeof(struct btrfs_disk_key);
+अटल noअंतरभूत पूर्णांक generic_bin_search(काष्ठा extent_buffer *eb,
+				       अचिन्हित दीर्घ p, पूर्णांक item_size,
+				       स्थिर काष्ठा btrfs_key *key,
+				       पूर्णांक max, पूर्णांक *slot)
+अणु
+	पूर्णांक low = 0;
+	पूर्णांक high = max;
+	पूर्णांक ret;
+	स्थिर पूर्णांक key_size = माप(काष्ठा btrfs_disk_key);
 
-	if (low > high) {
+	अगर (low > high) अणु
 		btrfs_err(eb->fs_info,
 		 "%s: low (%d) > high (%d) eb %llu owner %llu level %d",
 			  __func__, low, high, eb->start,
 			  btrfs_header_owner(eb), btrfs_header_level(eb));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	while (low < high) {
-		unsigned long oip;
-		unsigned long offset;
-		struct btrfs_disk_key *tmp;
-		struct btrfs_disk_key unaligned;
-		int mid;
+	जबतक (low < high) अणु
+		अचिन्हित दीर्घ oip;
+		अचिन्हित दीर्घ offset;
+		काष्ठा btrfs_disk_key *पंचांगp;
+		काष्ठा btrfs_disk_key unaligned;
+		पूर्णांक mid;
 
 		mid = (low + high) / 2;
 		offset = p + mid * item_size;
 		oip = offset_in_page(offset);
 
-		if (oip + key_size <= PAGE_SIZE) {
-			const unsigned long idx = get_eb_page_index(offset);
-			char *kaddr = page_address(eb->pages[idx]);
+		अगर (oip + key_size <= PAGE_SIZE) अणु
+			स्थिर अचिन्हित दीर्घ idx = get_eb_page_index(offset);
+			अक्षर *kaddr = page_address(eb->pages[idx]);
 
 			oip = get_eb_offset_in_page(eb, offset);
-			tmp = (struct btrfs_disk_key *)(kaddr + oip);
-		} else {
-			read_extent_buffer(eb, &unaligned, offset, key_size);
-			tmp = &unaligned;
-		}
+			पंचांगp = (काष्ठा btrfs_disk_key *)(kaddr + oip);
+		पूर्ण अन्यथा अणु
+			पढ़ो_extent_buffer(eb, &unaligned, offset, key_size);
+			पंचांगp = &unaligned;
+		पूर्ण
 
-		ret = comp_keys(tmp, key);
+		ret = comp_keys(पंचांगp, key);
 
-		if (ret < 0)
+		अगर (ret < 0)
 			low = mid + 1;
-		else if (ret > 0)
+		अन्यथा अगर (ret > 0)
 			high = mid;
-		else {
+		अन्यथा अणु
 			*slot = mid;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	*slot = low;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * simple bin_search frontend that does the right thing for
+ * simple bin_search frontend that करोes the right thing क्रम
  * leaves vs nodes
  */
-int btrfs_bin_search(struct extent_buffer *eb, const struct btrfs_key *key,
-		     int *slot)
-{
-	if (btrfs_header_level(eb) == 0)
-		return generic_bin_search(eb,
-					  offsetof(struct btrfs_leaf, items),
-					  sizeof(struct btrfs_item),
+पूर्णांक btrfs_bin_search(काष्ठा extent_buffer *eb, स्थिर काष्ठा btrfs_key *key,
+		     पूर्णांक *slot)
+अणु
+	अगर (btrfs_header_level(eb) == 0)
+		वापस generic_bin_search(eb,
+					  दुरत्व(काष्ठा btrfs_leaf, items),
+					  माप(काष्ठा btrfs_item),
 					  key, btrfs_header_nritems(eb),
 					  slot);
-	else
-		return generic_bin_search(eb,
-					  offsetof(struct btrfs_node, ptrs),
-					  sizeof(struct btrfs_key_ptr),
+	अन्यथा
+		वापस generic_bin_search(eb,
+					  दुरत्व(काष्ठा btrfs_node, ptrs),
+					  माप(काष्ठा btrfs_key_ptr),
 					  key, btrfs_header_nritems(eb),
 					  slot);
-}
+पूर्ण
 
-static void root_add_used(struct btrfs_root *root, u32 size)
-{
+अटल व्योम root_add_used(काष्ठा btrfs_root *root, u32 size)
+अणु
 	spin_lock(&root->accounting_lock);
 	btrfs_set_root_used(&root->root_item,
 			    btrfs_root_used(&root->root_item) + size);
 	spin_unlock(&root->accounting_lock);
-}
+पूर्ण
 
-static void root_sub_used(struct btrfs_root *root, u32 size)
-{
+अटल व्योम root_sub_used(काष्ठा btrfs_root *root, u32 size)
+अणु
 	spin_lock(&root->accounting_lock);
 	btrfs_set_root_used(&root->root_item,
 			    btrfs_root_used(&root->root_item) - size);
 	spin_unlock(&root->accounting_lock);
-}
+पूर्ण
 
-/* given a node and slot number, this reads the blocks it points to.  The
- * extent buffer is returned with a reference taken (but unlocked).
+/* given a node and slot number, this पढ़ोs the blocks it poपूर्णांकs to.  The
+ * extent buffer is वापसed with a reference taken (but unlocked).
  */
-struct extent_buffer *btrfs_read_node_slot(struct extent_buffer *parent,
-					   int slot)
-{
-	int level = btrfs_header_level(parent);
-	struct extent_buffer *eb;
-	struct btrfs_key first_key;
+काष्ठा extent_buffer *btrfs_पढ़ो_node_slot(काष्ठा extent_buffer *parent,
+					   पूर्णांक slot)
+अणु
+	पूर्णांक level = btrfs_header_level(parent);
+	काष्ठा extent_buffer *eb;
+	काष्ठा btrfs_key first_key;
 
-	if (slot < 0 || slot >= btrfs_header_nritems(parent))
-		return ERR_PTR(-ENOENT);
+	अगर (slot < 0 || slot >= btrfs_header_nritems(parent))
+		वापस ERR_PTR(-ENOENT);
 
 	BUG_ON(level == 0);
 
 	btrfs_node_key_to_cpu(parent, &first_key, slot);
-	eb = read_tree_block(parent->fs_info, btrfs_node_blockptr(parent, slot),
+	eb = पढ़ो_tree_block(parent->fs_info, btrfs_node_blockptr(parent, slot),
 			     btrfs_header_owner(parent),
 			     btrfs_node_ptr_generation(parent, slot),
 			     level - 1, &first_key);
-	if (!IS_ERR(eb) && !extent_buffer_uptodate(eb)) {
-		free_extent_buffer(eb);
+	अगर (!IS_ERR(eb) && !extent_buffer_uptodate(eb)) अणु
+		मुक्त_extent_buffer(eb);
 		eb = ERR_PTR(-EIO);
-	}
+	पूर्ण
 
-	return eb;
-}
+	वापस eb;
+पूर्ण
 
 /*
- * node level balancing, used to make sure nodes are in proper order for
- * item deletion.  We balance from the top down, so we have to make sure
+ * node level balancing, used to make sure nodes are in proper order क्रम
+ * item deletion.  We balance from the top करोwn, so we have to make sure
  * that a deletion won't leave an node completely empty later on.
  */
-static noinline int balance_level(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root,
-			 struct btrfs_path *path, int level)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *right = NULL;
-	struct extent_buffer *mid;
-	struct extent_buffer *left = NULL;
-	struct extent_buffer *parent = NULL;
-	int ret = 0;
-	int wret;
-	int pslot;
-	int orig_slot = path->slots[level];
+अटल noअंतरभूत पूर्णांक balance_level(काष्ठा btrfs_trans_handle *trans,
+			 काष्ठा btrfs_root *root,
+			 काष्ठा btrfs_path *path, पूर्णांक level)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *right = शून्य;
+	काष्ठा extent_buffer *mid;
+	काष्ठा extent_buffer *left = शून्य;
+	काष्ठा extent_buffer *parent = शून्य;
+	पूर्णांक ret = 0;
+	पूर्णांक wret;
+	पूर्णांक pslot;
+	पूर्णांक orig_slot = path->slots[level];
 	u64 orig_ptr;
 
 	ASSERT(level > 0);
@@ -926,264 +927,264 @@ static noinline int balance_level(struct btrfs_trans_handle *trans,
 
 	orig_ptr = btrfs_node_blockptr(mid, orig_slot);
 
-	if (level < BTRFS_MAX_LEVEL - 1) {
+	अगर (level < BTRFS_MAX_LEVEL - 1) अणु
 		parent = path->nodes[level + 1];
 		pslot = path->slots[level + 1];
-	}
+	पूर्ण
 
 	/*
-	 * deal with the case where there is only one pointer in the root
+	 * deal with the हाल where there is only one poपूर्णांकer in the root
 	 * by promoting the node below to a root
 	 */
-	if (!parent) {
-		struct extent_buffer *child;
+	अगर (!parent) अणु
+		काष्ठा extent_buffer *child;
 
-		if (btrfs_header_nritems(mid) != 1)
-			return 0;
+		अगर (btrfs_header_nritems(mid) != 1)
+			वापस 0;
 
 		/* promote the child to a root */
-		child = btrfs_read_node_slot(mid, 0);
-		if (IS_ERR(child)) {
+		child = btrfs_पढ़ो_node_slot(mid, 0);
+		अगर (IS_ERR(child)) अणु
 			ret = PTR_ERR(child);
-			btrfs_handle_fs_error(fs_info, ret, NULL);
-			goto enospc;
-		}
+			btrfs_handle_fs_error(fs_info, ret, शून्य);
+			जाओ enospc;
+		पूर्ण
 
 		btrfs_tree_lock(child);
 		ret = btrfs_cow_block(trans, root, child, mid, 0, &child,
 				      BTRFS_NESTING_COW);
-		if (ret) {
+		अगर (ret) अणु
 			btrfs_tree_unlock(child);
-			free_extent_buffer(child);
-			goto enospc;
-		}
+			मुक्त_extent_buffer(child);
+			जाओ enospc;
+		पूर्ण
 
 		ret = btrfs_tree_mod_log_insert_root(root->node, child, true);
 		BUG_ON(ret < 0);
-		rcu_assign_pointer(root->node, child);
+		rcu_assign_poपूर्णांकer(root->node, child);
 
 		add_root_to_dirty_list(root);
 		btrfs_tree_unlock(child);
 
 		path->locks[level] = 0;
-		path->nodes[level] = NULL;
+		path->nodes[level] = शून्य;
 		btrfs_clean_tree_block(mid);
 		btrfs_tree_unlock(mid);
-		/* once for the path */
-		free_extent_buffer(mid);
+		/* once क्रम the path */
+		मुक्त_extent_buffer(mid);
 
 		root_sub_used(root, mid->len);
-		btrfs_free_tree_block(trans, root, mid, 0, 1);
-		/* once for the root ptr */
-		free_extent_buffer_stale(mid);
-		return 0;
-	}
-	if (btrfs_header_nritems(mid) >
+		btrfs_मुक्त_tree_block(trans, root, mid, 0, 1);
+		/* once क्रम the root ptr */
+		मुक्त_extent_buffer_stale(mid);
+		वापस 0;
+	पूर्ण
+	अगर (btrfs_header_nritems(mid) >
 	    BTRFS_NODEPTRS_PER_BLOCK(fs_info) / 4)
-		return 0;
+		वापस 0;
 
-	left = btrfs_read_node_slot(parent, pslot - 1);
-	if (IS_ERR(left))
-		left = NULL;
+	left = btrfs_पढ़ो_node_slot(parent, pslot - 1);
+	अगर (IS_ERR(left))
+		left = शून्य;
 
-	if (left) {
+	अगर (left) अणु
 		__btrfs_tree_lock(left, BTRFS_NESTING_LEFT);
 		wret = btrfs_cow_block(trans, root, left,
 				       parent, pslot - 1, &left,
 				       BTRFS_NESTING_LEFT_COW);
-		if (wret) {
+		अगर (wret) अणु
 			ret = wret;
-			goto enospc;
-		}
-	}
+			जाओ enospc;
+		पूर्ण
+	पूर्ण
 
-	right = btrfs_read_node_slot(parent, pslot + 1);
-	if (IS_ERR(right))
-		right = NULL;
+	right = btrfs_पढ़ो_node_slot(parent, pslot + 1);
+	अगर (IS_ERR(right))
+		right = शून्य;
 
-	if (right) {
+	अगर (right) अणु
 		__btrfs_tree_lock(right, BTRFS_NESTING_RIGHT);
 		wret = btrfs_cow_block(trans, root, right,
 				       parent, pslot + 1, &right,
 				       BTRFS_NESTING_RIGHT_COW);
-		if (wret) {
+		अगर (wret) अणु
 			ret = wret;
-			goto enospc;
-		}
-	}
+			जाओ enospc;
+		पूर्ण
+	पूर्ण
 
 	/* first, try to make some room in the middle buffer */
-	if (left) {
+	अगर (left) अणु
 		orig_slot += btrfs_header_nritems(left);
 		wret = push_node_left(trans, left, mid, 1);
-		if (wret < 0)
+		अगर (wret < 0)
 			ret = wret;
-	}
+	पूर्ण
 
 	/*
-	 * then try to empty the right most buffer into the middle
+	 * then try to empty the right most buffer पूर्णांकo the middle
 	 */
-	if (right) {
+	अगर (right) अणु
 		wret = push_node_left(trans, mid, right, 1);
-		if (wret < 0 && wret != -ENOSPC)
+		अगर (wret < 0 && wret != -ENOSPC)
 			ret = wret;
-		if (btrfs_header_nritems(right) == 0) {
+		अगर (btrfs_header_nritems(right) == 0) अणु
 			btrfs_clean_tree_block(right);
 			btrfs_tree_unlock(right);
 			del_ptr(root, path, level + 1, pslot + 1);
 			root_sub_used(root, right->len);
-			btrfs_free_tree_block(trans, root, right, 0, 1);
-			free_extent_buffer_stale(right);
-			right = NULL;
-		} else {
-			struct btrfs_disk_key right_key;
+			btrfs_मुक्त_tree_block(trans, root, right, 0, 1);
+			मुक्त_extent_buffer_stale(right);
+			right = शून्य;
+		पूर्ण अन्यथा अणु
+			काष्ठा btrfs_disk_key right_key;
 			btrfs_node_key(right, &right_key, 0);
 			ret = btrfs_tree_mod_log_insert_key(parent, pslot + 1,
 					BTRFS_MOD_LOG_KEY_REPLACE, GFP_NOFS);
 			BUG_ON(ret < 0);
 			btrfs_set_node_key(parent, &right_key, pslot + 1);
 			btrfs_mark_buffer_dirty(parent);
-		}
-	}
-	if (btrfs_header_nritems(mid) == 1) {
+		पूर्ण
+	पूर्ण
+	अगर (btrfs_header_nritems(mid) == 1) अणु
 		/*
 		 * we're not allowed to leave a node with one item in the
 		 * tree during a delete.  A deletion from lower in the tree
-		 * could try to delete the only pointer in this node.
+		 * could try to delete the only poपूर्णांकer in this node.
 		 * So, pull some keys from the left.
-		 * There has to be a left pointer at this point because
-		 * otherwise we would have pulled some pointers from the
+		 * There has to be a left poपूर्णांकer at this poपूर्णांक because
+		 * otherwise we would have pulled some poपूर्णांकers from the
 		 * right
 		 */
-		if (!left) {
+		अगर (!left) अणु
 			ret = -EROFS;
-			btrfs_handle_fs_error(fs_info, ret, NULL);
-			goto enospc;
-		}
+			btrfs_handle_fs_error(fs_info, ret, शून्य);
+			जाओ enospc;
+		पूर्ण
 		wret = balance_node_right(trans, mid, left);
-		if (wret < 0) {
+		अगर (wret < 0) अणु
 			ret = wret;
-			goto enospc;
-		}
-		if (wret == 1) {
+			जाओ enospc;
+		पूर्ण
+		अगर (wret == 1) अणु
 			wret = push_node_left(trans, left, mid, 1);
-			if (wret < 0)
+			अगर (wret < 0)
 				ret = wret;
-		}
+		पूर्ण
 		BUG_ON(wret == 1);
-	}
-	if (btrfs_header_nritems(mid) == 0) {
+	पूर्ण
+	अगर (btrfs_header_nritems(mid) == 0) अणु
 		btrfs_clean_tree_block(mid);
 		btrfs_tree_unlock(mid);
 		del_ptr(root, path, level + 1, pslot);
 		root_sub_used(root, mid->len);
-		btrfs_free_tree_block(trans, root, mid, 0, 1);
-		free_extent_buffer_stale(mid);
-		mid = NULL;
-	} else {
+		btrfs_मुक्त_tree_block(trans, root, mid, 0, 1);
+		मुक्त_extent_buffer_stale(mid);
+		mid = शून्य;
+	पूर्ण अन्यथा अणु
 		/* update the parent key to reflect our changes */
-		struct btrfs_disk_key mid_key;
+		काष्ठा btrfs_disk_key mid_key;
 		btrfs_node_key(mid, &mid_key, 0);
 		ret = btrfs_tree_mod_log_insert_key(parent, pslot,
 				BTRFS_MOD_LOG_KEY_REPLACE, GFP_NOFS);
 		BUG_ON(ret < 0);
 		btrfs_set_node_key(parent, &mid_key, pslot);
 		btrfs_mark_buffer_dirty(parent);
-	}
+	पूर्ण
 
 	/* update the path */
-	if (left) {
-		if (btrfs_header_nritems(left) > orig_slot) {
+	अगर (left) अणु
+		अगर (btrfs_header_nritems(left) > orig_slot) अणु
 			atomic_inc(&left->refs);
 			/* left was locked after cow */
 			path->nodes[level] = left;
 			path->slots[level + 1] -= 1;
 			path->slots[level] = orig_slot;
-			if (mid) {
+			अगर (mid) अणु
 				btrfs_tree_unlock(mid);
-				free_extent_buffer(mid);
-			}
-		} else {
+				मुक्त_extent_buffer(mid);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			orig_slot -= btrfs_header_nritems(left);
 			path->slots[level] = orig_slot;
-		}
-	}
-	/* double check we haven't messed things up */
-	if (orig_ptr !=
+		पूर्ण
+	पूर्ण
+	/* द्विगुन check we haven't messed things up */
+	अगर (orig_ptr !=
 	    btrfs_node_blockptr(path->nodes[level], path->slots[level]))
 		BUG();
 enospc:
-	if (right) {
+	अगर (right) अणु
 		btrfs_tree_unlock(right);
-		free_extent_buffer(right);
-	}
-	if (left) {
-		if (path->nodes[level] != left)
+		मुक्त_extent_buffer(right);
+	पूर्ण
+	अगर (left) अणु
+		अगर (path->nodes[level] != left)
 			btrfs_tree_unlock(left);
-		free_extent_buffer(left);
-	}
-	return ret;
-}
+		मुक्त_extent_buffer(left);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-/* Node balancing for insertion.  Here we only split or push nodes around
- * when they are completely full.  This is also done top down, so we
+/* Node balancing क्रम insertion.  Here we only split or push nodes around
+ * when they are completely full.  This is also करोne top करोwn, so we
  * have to be pessimistic.
  */
-static noinline int push_nodes_for_insert(struct btrfs_trans_handle *trans,
-					  struct btrfs_root *root,
-					  struct btrfs_path *path, int level)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *right = NULL;
-	struct extent_buffer *mid;
-	struct extent_buffer *left = NULL;
-	struct extent_buffer *parent = NULL;
-	int ret = 0;
-	int wret;
-	int pslot;
-	int orig_slot = path->slots[level];
+अटल noअंतरभूत पूर्णांक push_nodes_क्रम_insert(काष्ठा btrfs_trans_handle *trans,
+					  काष्ठा btrfs_root *root,
+					  काष्ठा btrfs_path *path, पूर्णांक level)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *right = शून्य;
+	काष्ठा extent_buffer *mid;
+	काष्ठा extent_buffer *left = शून्य;
+	काष्ठा extent_buffer *parent = शून्य;
+	पूर्णांक ret = 0;
+	पूर्णांक wret;
+	पूर्णांक pslot;
+	पूर्णांक orig_slot = path->slots[level];
 
-	if (level == 0)
-		return 1;
+	अगर (level == 0)
+		वापस 1;
 
 	mid = path->nodes[level];
 	WARN_ON(btrfs_header_generation(mid) != trans->transid);
 
-	if (level < BTRFS_MAX_LEVEL - 1) {
+	अगर (level < BTRFS_MAX_LEVEL - 1) अणु
 		parent = path->nodes[level + 1];
 		pslot = path->slots[level + 1];
-	}
+	पूर्ण
 
-	if (!parent)
-		return 1;
+	अगर (!parent)
+		वापस 1;
 
-	left = btrfs_read_node_slot(parent, pslot - 1);
-	if (IS_ERR(left))
-		left = NULL;
+	left = btrfs_पढ़ो_node_slot(parent, pslot - 1);
+	अगर (IS_ERR(left))
+		left = शून्य;
 
 	/* first, try to make some room in the middle buffer */
-	if (left) {
+	अगर (left) अणु
 		u32 left_nr;
 
 		__btrfs_tree_lock(left, BTRFS_NESTING_LEFT);
 
 		left_nr = btrfs_header_nritems(left);
-		if (left_nr >= BTRFS_NODEPTRS_PER_BLOCK(fs_info) - 1) {
+		अगर (left_nr >= BTRFS_NODEPTRS_PER_BLOCK(fs_info) - 1) अणु
 			wret = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = btrfs_cow_block(trans, root, left, parent,
 					      pslot - 1, &left,
 					      BTRFS_NESTING_LEFT_COW);
-			if (ret)
+			अगर (ret)
 				wret = 1;
-			else {
+			अन्यथा अणु
 				wret = push_node_left(trans, left, mid, 0);
-			}
-		}
-		if (wret < 0)
+			पूर्ण
+		पूर्ण
+		अगर (wret < 0)
 			ret = wret;
-		if (wret == 0) {
-			struct btrfs_disk_key disk_key;
+		अगर (wret == 0) अणु
+			काष्ठा btrfs_disk_key disk_key;
 			orig_slot += left_nr;
 			btrfs_node_key(mid, &disk_key, 0);
 			ret = btrfs_tree_mod_log_insert_key(parent, pslot,
@@ -1191,53 +1192,53 @@ static noinline int push_nodes_for_insert(struct btrfs_trans_handle *trans,
 			BUG_ON(ret < 0);
 			btrfs_set_node_key(parent, &disk_key, pslot);
 			btrfs_mark_buffer_dirty(parent);
-			if (btrfs_header_nritems(left) > orig_slot) {
+			अगर (btrfs_header_nritems(left) > orig_slot) अणु
 				path->nodes[level] = left;
 				path->slots[level + 1] -= 1;
 				path->slots[level] = orig_slot;
 				btrfs_tree_unlock(mid);
-				free_extent_buffer(mid);
-			} else {
+				मुक्त_extent_buffer(mid);
+			पूर्ण अन्यथा अणु
 				orig_slot -=
 					btrfs_header_nritems(left);
 				path->slots[level] = orig_slot;
 				btrfs_tree_unlock(left);
-				free_extent_buffer(left);
-			}
-			return 0;
-		}
+				मुक्त_extent_buffer(left);
+			पूर्ण
+			वापस 0;
+		पूर्ण
 		btrfs_tree_unlock(left);
-		free_extent_buffer(left);
-	}
-	right = btrfs_read_node_slot(parent, pslot + 1);
-	if (IS_ERR(right))
-		right = NULL;
+		मुक्त_extent_buffer(left);
+	पूर्ण
+	right = btrfs_पढ़ो_node_slot(parent, pslot + 1);
+	अगर (IS_ERR(right))
+		right = शून्य;
 
 	/*
-	 * then try to empty the right most buffer into the middle
+	 * then try to empty the right most buffer पूर्णांकo the middle
 	 */
-	if (right) {
+	अगर (right) अणु
 		u32 right_nr;
 
 		__btrfs_tree_lock(right, BTRFS_NESTING_RIGHT);
 
 		right_nr = btrfs_header_nritems(right);
-		if (right_nr >= BTRFS_NODEPTRS_PER_BLOCK(fs_info) - 1) {
+		अगर (right_nr >= BTRFS_NODEPTRS_PER_BLOCK(fs_info) - 1) अणु
 			wret = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = btrfs_cow_block(trans, root, right,
 					      parent, pslot + 1,
 					      &right, BTRFS_NESTING_RIGHT_COW);
-			if (ret)
+			अगर (ret)
 				wret = 1;
-			else {
+			अन्यथा अणु
 				wret = balance_node_right(trans, right, mid);
-			}
-		}
-		if (wret < 0)
+			पूर्ण
+		पूर्ण
+		अगर (wret < 0)
 			ret = wret;
-		if (wret == 0) {
-			struct btrfs_disk_key disk_key;
+		अगर (wret == 0) अणु
+			काष्ठा btrfs_disk_key disk_key;
 
 			btrfs_node_key(right, &disk_key, 0);
 			ret = btrfs_tree_mod_log_insert_key(parent, pslot + 1,
@@ -1246,338 +1247,338 @@ static noinline int push_nodes_for_insert(struct btrfs_trans_handle *trans,
 			btrfs_set_node_key(parent, &disk_key, pslot + 1);
 			btrfs_mark_buffer_dirty(parent);
 
-			if (btrfs_header_nritems(mid) <= orig_slot) {
+			अगर (btrfs_header_nritems(mid) <= orig_slot) अणु
 				path->nodes[level] = right;
 				path->slots[level + 1] += 1;
 				path->slots[level] = orig_slot -
 					btrfs_header_nritems(mid);
 				btrfs_tree_unlock(mid);
-				free_extent_buffer(mid);
-			} else {
+				मुक्त_extent_buffer(mid);
+			पूर्ण अन्यथा अणु
 				btrfs_tree_unlock(right);
-				free_extent_buffer(right);
-			}
-			return 0;
-		}
+				मुक्त_extent_buffer(right);
+			पूर्ण
+			वापस 0;
+		पूर्ण
 		btrfs_tree_unlock(right);
-		free_extent_buffer(right);
-	}
-	return 1;
-}
+		मुक्त_extent_buffer(right);
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*
- * readahead one full node of leaves, finding things that are close
+ * पढ़ोahead one full node of leaves, finding things that are बंद
  * to the block in 'slot', and triggering ra on them.
  */
-static void reada_for_search(struct btrfs_fs_info *fs_info,
-			     struct btrfs_path *path,
-			     int level, int slot, u64 objectid)
-{
-	struct extent_buffer *node;
-	struct btrfs_disk_key disk_key;
+अटल व्योम पढ़ोa_क्रम_search(काष्ठा btrfs_fs_info *fs_info,
+			     काष्ठा btrfs_path *path,
+			     पूर्णांक level, पूर्णांक slot, u64 objectid)
+अणु
+	काष्ठा extent_buffer *node;
+	काष्ठा btrfs_disk_key disk_key;
 	u32 nritems;
 	u64 search;
 	u64 target;
-	u64 nread = 0;
-	u64 nread_max;
-	struct extent_buffer *eb;
+	u64 nपढ़ो = 0;
+	u64 nपढ़ो_max;
+	काष्ठा extent_buffer *eb;
 	u32 nr;
 	u32 blocksize;
 	u32 nscan = 0;
 
-	if (level != 1 && path->reada != READA_FORWARD_ALWAYS)
-		return;
+	अगर (level != 1 && path->पढ़ोa != READA_FORWARD_ALWAYS)
+		वापस;
 
-	if (!path->nodes[level])
-		return;
+	अगर (!path->nodes[level])
+		वापस;
 
 	node = path->nodes[level];
 
 	/*
-	 * Since the time between visiting leaves is much shorter than the time
-	 * between visiting nodes, limit read ahead of nodes to 1, to avoid too
-	 * much IO at once (possibly random).
+	 * Since the समय between visiting leaves is much लघुer than the समय
+	 * between visiting nodes, limit पढ़ो ahead of nodes to 1, to aव्योम too
+	 * much IO at once (possibly अक्रमom).
 	 */
-	if (path->reada == READA_FORWARD_ALWAYS) {
-		if (level > 1)
-			nread_max = node->fs_info->nodesize;
-		else
-			nread_max = SZ_128K;
-	} else {
-		nread_max = SZ_64K;
-	}
+	अगर (path->पढ़ोa == READA_FORWARD_ALWAYS) अणु
+		अगर (level > 1)
+			nपढ़ो_max = node->fs_info->nodesize;
+		अन्यथा
+			nपढ़ो_max = SZ_128K;
+	पूर्ण अन्यथा अणु
+		nपढ़ो_max = SZ_64K;
+	पूर्ण
 
 	search = btrfs_node_blockptr(node, slot);
 	blocksize = fs_info->nodesize;
 	eb = find_extent_buffer(fs_info, search);
-	if (eb) {
-		free_extent_buffer(eb);
-		return;
-	}
+	अगर (eb) अणु
+		मुक्त_extent_buffer(eb);
+		वापस;
+	पूर्ण
 
 	target = search;
 
 	nritems = btrfs_header_nritems(node);
 	nr = slot;
 
-	while (1) {
-		if (path->reada == READA_BACK) {
-			if (nr == 0)
-				break;
+	जबतक (1) अणु
+		अगर (path->पढ़ोa == READA_BACK) अणु
+			अगर (nr == 0)
+				अवरोध;
 			nr--;
-		} else if (path->reada == READA_FORWARD ||
-			   path->reada == READA_FORWARD_ALWAYS) {
+		पूर्ण अन्यथा अगर (path->पढ़ोa == READA_FORWARD ||
+			   path->पढ़ोa == READA_FORWARD_ALWAYS) अणु
 			nr++;
-			if (nr >= nritems)
-				break;
-		}
-		if (path->reada == READA_BACK && objectid) {
+			अगर (nr >= nritems)
+				अवरोध;
+		पूर्ण
+		अगर (path->पढ़ोa == READA_BACK && objectid) अणु
 			btrfs_node_key(node, &disk_key, nr);
-			if (btrfs_disk_key_objectid(&disk_key) != objectid)
-				break;
-		}
+			अगर (btrfs_disk_key_objectid(&disk_key) != objectid)
+				अवरोध;
+		पूर्ण
 		search = btrfs_node_blockptr(node, nr);
-		if (path->reada == READA_FORWARD_ALWAYS ||
+		अगर (path->पढ़ोa == READA_FORWARD_ALWAYS ||
 		    (search <= target && target - search <= 65536) ||
-		    (search > target && search - target <= 65536)) {
-			btrfs_readahead_node_child(node, nr);
-			nread += blocksize;
-		}
+		    (search > target && search - target <= 65536)) अणु
+			btrfs_पढ़ोahead_node_child(node, nr);
+			nपढ़ो += blocksize;
+		पूर्ण
 		nscan++;
-		if (nread > nread_max || nscan > 32)
-			break;
-	}
-}
+		अगर (nपढ़ो > nपढ़ो_max || nscan > 32)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static noinline void reada_for_balance(struct btrfs_path *path, int level)
-{
-	struct extent_buffer *parent;
-	int slot;
-	int nritems;
+अटल noअंतरभूत व्योम पढ़ोa_क्रम_balance(काष्ठा btrfs_path *path, पूर्णांक level)
+अणु
+	काष्ठा extent_buffer *parent;
+	पूर्णांक slot;
+	पूर्णांक nritems;
 
 	parent = path->nodes[level + 1];
-	if (!parent)
-		return;
+	अगर (!parent)
+		वापस;
 
 	nritems = btrfs_header_nritems(parent);
 	slot = path->slots[level + 1];
 
-	if (slot > 0)
-		btrfs_readahead_node_child(parent, slot - 1);
-	if (slot + 1 < nritems)
-		btrfs_readahead_node_child(parent, slot + 1);
-}
+	अगर (slot > 0)
+		btrfs_पढ़ोahead_node_child(parent, slot - 1);
+	अगर (slot + 1 < nritems)
+		btrfs_पढ़ोahead_node_child(parent, slot + 1);
+पूर्ण
 
 
 /*
- * when we walk down the tree, it is usually safe to unlock the higher layers
+ * when we walk करोwn the tree, it is usually safe to unlock the higher layers
  * in the tree.  The exceptions are when our path goes through slot 0, because
- * operations on the tree might require changing key pointers higher up in the
+ * operations on the tree might require changing key poपूर्णांकers higher up in the
  * tree.
  *
  * callers might also have set path->keep_locks, which tells this code to keep
- * the lock if the path points to the last slot in the block.  This is part of
+ * the lock अगर the path poपूर्णांकs to the last slot in the block.  This is part of
  * walking through the tree, and selecting the next slot in the higher block.
  *
  * lowest_unlock sets the lowest level in the tree we're allowed to unlock.  so
- * if lowest_unlock is 1, level 0 won't be unlocked
+ * अगर lowest_unlock is 1, level 0 won't be unlocked
  */
-static noinline void unlock_up(struct btrfs_path *path, int level,
-			       int lowest_unlock, int min_write_lock_level,
-			       int *write_lock_level)
-{
-	int i;
-	int skip_level = level;
-	int no_skips = 0;
-	struct extent_buffer *t;
+अटल noअंतरभूत व्योम unlock_up(काष्ठा btrfs_path *path, पूर्णांक level,
+			       पूर्णांक lowest_unlock, पूर्णांक min_ग_लिखो_lock_level,
+			       पूर्णांक *ग_लिखो_lock_level)
+अणु
+	पूर्णांक i;
+	पूर्णांक skip_level = level;
+	पूर्णांक no_skips = 0;
+	काष्ठा extent_buffer *t;
 
-	for (i = level; i < BTRFS_MAX_LEVEL; i++) {
-		if (!path->nodes[i])
-			break;
-		if (!path->locks[i])
-			break;
-		if (!no_skips && path->slots[i] == 0) {
+	क्रम (i = level; i < BTRFS_MAX_LEVEL; i++) अणु
+		अगर (!path->nodes[i])
+			अवरोध;
+		अगर (!path->locks[i])
+			अवरोध;
+		अगर (!no_skips && path->slots[i] == 0) अणु
 			skip_level = i + 1;
-			continue;
-		}
-		if (!no_skips && path->keep_locks) {
+			जारी;
+		पूर्ण
+		अगर (!no_skips && path->keep_locks) अणु
 			u32 nritems;
 			t = path->nodes[i];
 			nritems = btrfs_header_nritems(t);
-			if (nritems < 1 || path->slots[i] >= nritems - 1) {
+			अगर (nritems < 1 || path->slots[i] >= nritems - 1) अणु
 				skip_level = i + 1;
-				continue;
-			}
-		}
-		if (skip_level < i && i >= lowest_unlock)
+				जारी;
+			पूर्ण
+		पूर्ण
+		अगर (skip_level < i && i >= lowest_unlock)
 			no_skips = 1;
 
 		t = path->nodes[i];
-		if (i >= lowest_unlock && i > skip_level) {
+		अगर (i >= lowest_unlock && i > skip_level) अणु
 			btrfs_tree_unlock_rw(t, path->locks[i]);
 			path->locks[i] = 0;
-			if (write_lock_level &&
-			    i > min_write_lock_level &&
-			    i <= *write_lock_level) {
-				*write_lock_level = i - 1;
-			}
-		}
-	}
-}
+			अगर (ग_लिखो_lock_level &&
+			    i > min_ग_लिखो_lock_level &&
+			    i <= *ग_लिखो_lock_level) अणु
+				*ग_लिखो_lock_level = i - 1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * helper function for btrfs_search_slot.  The goal is to find a block
+ * helper function क्रम btrfs_search_slot.  The goal is to find a block
  * in cache without setting the path to blocking.  If we find the block
- * we return zero and the path is unchanged.
+ * we वापस zero and the path is unchanged.
  *
- * If we can't find the block, we set the path blocking and do some
- * reada.  -EAGAIN is returned and the search must be repeated.
+ * If we can't find the block, we set the path blocking and करो some
+ * पढ़ोa.  -EAGAIN is वापसed and the search must be repeated.
  */
-static int
-read_block_for_search(struct btrfs_root *root, struct btrfs_path *p,
-		      struct extent_buffer **eb_ret, int level, int slot,
-		      const struct btrfs_key *key)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
+अटल पूर्णांक
+पढ़ो_block_क्रम_search(काष्ठा btrfs_root *root, काष्ठा btrfs_path *p,
+		      काष्ठा extent_buffer **eb_ret, पूर्णांक level, पूर्णांक slot,
+		      स्थिर काष्ठा btrfs_key *key)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
 	u64 blocknr;
 	u64 gen;
-	struct extent_buffer *tmp;
-	struct btrfs_key first_key;
-	int ret;
-	int parent_level;
+	काष्ठा extent_buffer *पंचांगp;
+	काष्ठा btrfs_key first_key;
+	पूर्णांक ret;
+	पूर्णांक parent_level;
 
 	blocknr = btrfs_node_blockptr(*eb_ret, slot);
 	gen = btrfs_node_ptr_generation(*eb_ret, slot);
 	parent_level = btrfs_header_level(*eb_ret);
 	btrfs_node_key_to_cpu(*eb_ret, &first_key, slot);
 
-	tmp = find_extent_buffer(fs_info, blocknr);
-	if (tmp) {
-		if (p->reada == READA_FORWARD_ALWAYS)
-			reada_for_search(fs_info, p, level, slot, key->objectid);
+	पंचांगp = find_extent_buffer(fs_info, blocknr);
+	अगर (पंचांगp) अणु
+		अगर (p->पढ़ोa == READA_FORWARD_ALWAYS)
+			पढ़ोa_क्रम_search(fs_info, p, level, slot, key->objectid);
 
-		/* first we do an atomic uptodate check */
-		if (btrfs_buffer_uptodate(tmp, gen, 1) > 0) {
+		/* first we करो an atomic uptodate check */
+		अगर (btrfs_buffer_uptodate(पंचांगp, gen, 1) > 0) अणु
 			/*
-			 * Do extra check for first_key, eb can be stale due to
-			 * being cached, read from scrub, or have multiple
+			 * Do extra check क्रम first_key, eb can be stale due to
+			 * being cached, पढ़ो from scrub, or have multiple
 			 * parents (shared tree blocks).
 			 */
-			if (btrfs_verify_level_key(tmp,
-					parent_level - 1, &first_key, gen)) {
-				free_extent_buffer(tmp);
-				return -EUCLEAN;
-			}
-			*eb_ret = tmp;
-			return 0;
-		}
+			अगर (btrfs_verअगरy_level_key(पंचांगp,
+					parent_level - 1, &first_key, gen)) अणु
+				मुक्त_extent_buffer(पंचांगp);
+				वापस -EUCLEAN;
+			पूर्ण
+			*eb_ret = पंचांगp;
+			वापस 0;
+		पूर्ण
 
-		/* now we're allowed to do a blocking uptodate check */
-		ret = btrfs_read_buffer(tmp, gen, parent_level - 1, &first_key);
-		if (!ret) {
-			*eb_ret = tmp;
-			return 0;
-		}
-		free_extent_buffer(tmp);
+		/* now we're allowed to करो a blocking uptodate check */
+		ret = btrfs_पढ़ो_buffer(पंचांगp, gen, parent_level - 1, &first_key);
+		अगर (!ret) अणु
+			*eb_ret = पंचांगp;
+			वापस 0;
+		पूर्ण
+		मुक्त_extent_buffer(पंचांगp);
 		btrfs_release_path(p);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/*
 	 * reduce lock contention at high levels
-	 * of the btree by dropping locks before
-	 * we read.  Don't release the lock on the current
+	 * of the btree by dropping locks beक्रमe
+	 * we पढ़ो.  Don't release the lock on the current
 	 * level because we need to walk this node to figure
-	 * out which blocks to read.
+	 * out which blocks to पढ़ो.
 	 */
 	btrfs_unlock_up_safe(p, level + 1);
 
-	if (p->reada != READA_NONE)
-		reada_for_search(fs_info, p, level, slot, key->objectid);
+	अगर (p->पढ़ोa != READA_NONE)
+		पढ़ोa_क्रम_search(fs_info, p, level, slot, key->objectid);
 
 	ret = -EAGAIN;
-	tmp = read_tree_block(fs_info, blocknr, root->root_key.objectid,
+	पंचांगp = पढ़ो_tree_block(fs_info, blocknr, root->root_key.objectid,
 			      gen, parent_level - 1, &first_key);
-	if (!IS_ERR(tmp)) {
+	अगर (!IS_ERR(पंचांगp)) अणु
 		/*
-		 * If the read above didn't mark this buffer up to date,
+		 * If the पढ़ो above didn't mark this buffer up to date,
 		 * it will never end up being up to date.  Set ret to EIO now
-		 * and give up so that our caller doesn't loop forever
+		 * and give up so that our caller करोesn't loop क्रमever
 		 * on our EAGAINs.
 		 */
-		if (!extent_buffer_uptodate(tmp))
+		अगर (!extent_buffer_uptodate(पंचांगp))
 			ret = -EIO;
-		free_extent_buffer(tmp);
-	} else {
-		ret = PTR_ERR(tmp);
-	}
+		मुक्त_extent_buffer(पंचांगp);
+	पूर्ण अन्यथा अणु
+		ret = PTR_ERR(पंचांगp);
+	पूर्ण
 
 	btrfs_release_path(p);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * helper function for btrfs_search_slot.  This does all of the checks
- * for node-level blocks and does any balancing required based on
+ * helper function क्रम btrfs_search_slot.  This करोes all of the checks
+ * क्रम node-level blocks and करोes any balancing required based on
  * the ins_len.
  *
- * If no extra work was required, zero is returned.  If we had to
- * drop the path, -EAGAIN is returned and btrfs_search_slot must
+ * If no extra work was required, zero is वापसed.  If we had to
+ * drop the path, -EAGAIN is वापसed and btrfs_search_slot must
  * start over
  */
-static int
-setup_nodes_for_search(struct btrfs_trans_handle *trans,
-		       struct btrfs_root *root, struct btrfs_path *p,
-		       struct extent_buffer *b, int level, int ins_len,
-		       int *write_lock_level)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	int ret = 0;
+अटल पूर्णांक
+setup_nodes_क्रम_search(काष्ठा btrfs_trans_handle *trans,
+		       काष्ठा btrfs_root *root, काष्ठा btrfs_path *p,
+		       काष्ठा extent_buffer *b, पूर्णांक level, पूर्णांक ins_len,
+		       पूर्णांक *ग_लिखो_lock_level)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	पूर्णांक ret = 0;
 
-	if ((p->search_for_split || ins_len > 0) && btrfs_header_nritems(b) >=
-	    BTRFS_NODEPTRS_PER_BLOCK(fs_info) - 3) {
+	अगर ((p->search_क्रम_split || ins_len > 0) && btrfs_header_nritems(b) >=
+	    BTRFS_NODEPTRS_PER_BLOCK(fs_info) - 3) अणु
 
-		if (*write_lock_level < level + 1) {
-			*write_lock_level = level + 1;
+		अगर (*ग_लिखो_lock_level < level + 1) अणु
+			*ग_लिखो_lock_level = level + 1;
 			btrfs_release_path(p);
-			return -EAGAIN;
-		}
+			वापस -EAGAIN;
+		पूर्ण
 
-		reada_for_balance(p, level);
+		पढ़ोa_क्रम_balance(p, level);
 		ret = split_node(trans, root, p, level);
 
 		b = p->nodes[level];
-	} else if (ins_len < 0 && btrfs_header_nritems(b) <
-		   BTRFS_NODEPTRS_PER_BLOCK(fs_info) / 2) {
+	पूर्ण अन्यथा अगर (ins_len < 0 && btrfs_header_nritems(b) <
+		   BTRFS_NODEPTRS_PER_BLOCK(fs_info) / 2) अणु
 
-		if (*write_lock_level < level + 1) {
-			*write_lock_level = level + 1;
+		अगर (*ग_लिखो_lock_level < level + 1) अणु
+			*ग_लिखो_lock_level = level + 1;
 			btrfs_release_path(p);
-			return -EAGAIN;
-		}
+			वापस -EAGAIN;
+		पूर्ण
 
-		reada_for_balance(p, level);
+		पढ़ोa_क्रम_balance(p, level);
 		ret = balance_level(trans, root, p, level);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		b = p->nodes[level];
-		if (!b) {
+		अगर (!b) अणु
 			btrfs_release_path(p);
-			return -EAGAIN;
-		}
+			वापस -EAGAIN;
+		पूर्ण
 		BUG_ON(btrfs_header_nritems(b) == 1);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int btrfs_find_item(struct btrfs_root *fs_root, struct btrfs_path *path,
+पूर्णांक btrfs_find_item(काष्ठा btrfs_root *fs_root, काष्ठा btrfs_path *path,
 		u64 iobjectid, u64 ioff, u8 key_type,
-		struct btrfs_key *found_key)
-{
-	int ret;
-	struct btrfs_key key;
-	struct extent_buffer *eb;
+		काष्ठा btrfs_key *found_key)
+अणु
+	पूर्णांक ret;
+	काष्ठा btrfs_key key;
+	काष्ठा extent_buffer *eb;
 
 	ASSERT(path);
 	ASSERT(found_key);
@@ -1586,59 +1587,59 @@ int btrfs_find_item(struct btrfs_root *fs_root, struct btrfs_path *path,
 	key.objectid = iobjectid;
 	key.offset = ioff;
 
-	ret = btrfs_search_slot(NULL, fs_root, &key, path, 0, 0);
-	if (ret < 0)
-		return ret;
+	ret = btrfs_search_slot(शून्य, fs_root, &key, path, 0, 0);
+	अगर (ret < 0)
+		वापस ret;
 
 	eb = path->nodes[0];
-	if (ret && path->slots[0] >= btrfs_header_nritems(eb)) {
+	अगर (ret && path->slots[0] >= btrfs_header_nritems(eb)) अणु
 		ret = btrfs_next_leaf(fs_root, path);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		eb = path->nodes[0];
-	}
+	पूर्ण
 
 	btrfs_item_key_to_cpu(eb, found_key, path->slots[0]);
-	if (found_key->type != key.type ||
+	अगर (found_key->type != key.type ||
 			found_key->objectid != key.objectid)
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct extent_buffer *btrfs_search_slot_get_root(struct btrfs_root *root,
-							struct btrfs_path *p,
-							int write_lock_level)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *b;
-	int root_lock;
-	int level = 0;
+अटल काष्ठा extent_buffer *btrfs_search_slot_get_root(काष्ठा btrfs_root *root,
+							काष्ठा btrfs_path *p,
+							पूर्णांक ग_लिखो_lock_level)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *b;
+	पूर्णांक root_lock;
+	पूर्णांक level = 0;
 
-	/* We try very hard to do read locks on the root */
+	/* We try very hard to करो पढ़ो locks on the root */
 	root_lock = BTRFS_READ_LOCK;
 
-	if (p->search_commit_root) {
+	अगर (p->search_commit_root) अणु
 		/*
-		 * The commit roots are read only so we always do read locks,
-		 * and we always must hold the commit_root_sem when doing
-		 * searches on them, the only exception is send where we don't
-		 * want to block transaction commits for a long time, so
-		 * we need to clone the commit root in order to avoid races
+		 * The commit roots are पढ़ो only so we always करो पढ़ो locks,
+		 * and we always must hold the commit_root_sem when करोing
+		 * searches on them, the only exception is send where we करोn't
+		 * want to block transaction commits क्रम a दीर्घ समय, so
+		 * we need to clone the commit root in order to aव्योम races
 		 * with transaction commits that create a snapshot of one of
 		 * the roots used by a send operation.
 		 */
-		if (p->need_commit_sem) {
-			down_read(&fs_info->commit_root_sem);
+		अगर (p->need_commit_sem) अणु
+			करोwn_पढ़ो(&fs_info->commit_root_sem);
 			b = btrfs_clone_extent_buffer(root->commit_root);
-			up_read(&fs_info->commit_root_sem);
-			if (!b)
-				return ERR_PTR(-ENOMEM);
+			up_पढ़ो(&fs_info->commit_root_sem);
+			अगर (!b)
+				वापस ERR_PTR(-ENOMEM);
 
-		} else {
+		पूर्ण अन्यथा अणु
 			b = root->commit_root;
 			atomic_inc(&b->refs);
-		}
+		पूर्ण
 		level = btrfs_header_level(b);
 		/*
 		 * Ensure that all callers have set skip_locking when
@@ -1646,33 +1647,33 @@ static struct extent_buffer *btrfs_search_slot_get_root(struct btrfs_root *root,
 		 */
 		ASSERT(p->skip_locking == 1);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (p->skip_locking) {
+	अगर (p->skip_locking) अणु
 		b = btrfs_root_node(root);
 		level = btrfs_header_level(b);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * If the level is set to maximum, we can skip trying to get the read
+	 * If the level is set to maximum, we can skip trying to get the पढ़ो
 	 * lock.
 	 */
-	if (write_lock_level < BTRFS_MAX_LEVEL) {
+	अगर (ग_लिखो_lock_level < BTRFS_MAX_LEVEL) अणु
 		/*
-		 * We don't know the level of the root node until we actually
-		 * have it read locked
+		 * We करोn't know the level of the root node until we actually
+		 * have it पढ़ो locked
 		 */
-		b = btrfs_read_lock_root_node(root);
+		b = btrfs_पढ़ो_lock_root_node(root);
 		level = btrfs_header_level(b);
-		if (level > write_lock_level)
-			goto out;
+		अगर (level > ग_लिखो_lock_level)
+			जाओ out;
 
-		/* Whoops, must trade for write lock */
-		btrfs_tree_read_unlock(b);
-		free_extent_buffer(b);
-	}
+		/* Whoops, must trade क्रम ग_लिखो lock */
+		btrfs_tree_पढ़ो_unlock(b);
+		मुक्त_extent_buffer(b);
+	पूर्ण
 
 	b = btrfs_lock_root_node(root);
 	root_lock = BTRFS_WRITE_LOCK;
@@ -1682,155 +1683,155 @@ static struct extent_buffer *btrfs_search_slot_get_root(struct btrfs_root *root,
 
 out:
 	p->nodes[level] = b;
-	if (!p->skip_locking)
+	अगर (!p->skip_locking)
 		p->locks[level] = root_lock;
 	/*
-	 * Callers are responsible for dropping b's references.
+	 * Callers are responsible क्रम dropping b's references.
 	 */
-	return b;
-}
+	वापस b;
+पूर्ण
 
 
 /*
- * btrfs_search_slot - look for a key in a tree and perform necessary
- * modifications to preserve tree invariants.
+ * btrfs_search_slot - look क्रम a key in a tree and perक्रमm necessary
+ * modअगरications to preserve tree invariants.
  *
- * @trans:	Handle of transaction, used when modifying the tree
- * @p:		Holds all btree nodes along the search path
+ * @trans:	Handle of transaction, used when modअगरying the tree
+ * @p:		Holds all btree nodes aदीर्घ the search path
  * @root:	The root node of the tree
- * @key:	The key we are looking for
+ * @key:	The key we are looking क्रम
  * @ins_len:	Indicates purpose of search:
- *              >0  for inserts it's size of item inserted (*)
- *              <0  for deletions
- *               0  for plain searches, not modifying the tree
+ *              >0  क्रम inserts it's size of item inserted (*)
+ *              <0  क्रम deletions
+ *               0  क्रम plain searches, not modअगरying the tree
  *
- *              (*) If size of item inserted doesn't include
- *              sizeof(struct btrfs_item), then p->search_for_extension must
+ *              (*) If size of item inserted करोesn't include
+ *              माप(काष्ठा btrfs_item), then p->search_क्रम_extension must
  *              be set.
- * @cow:	boolean should CoW operations be performed. Must always be 1
- *		when modifying the tree.
+ * @cow:	boolean should CoW operations be perक्रमmed. Must always be 1
+ *		when modअगरying the tree.
  *
- * If @ins_len > 0, nodes and leaves will be split as we walk down the tree.
- * If @ins_len < 0, nodes will be merged as we walk down the tree (if possible)
+ * If @ins_len > 0, nodes and leaves will be split as we walk करोwn the tree.
+ * If @ins_len < 0, nodes will be merged as we walk करोwn the tree (अगर possible)
  *
- * If @key is found, 0 is returned and you can find the item in the leaf level
+ * If @key is found, 0 is वापसed and you can find the item in the leaf level
  * of the path (level 0)
  *
- * If @key isn't found, 1 is returned and the leaf level of the path (level 0)
- * points to the slot where it should be inserted
+ * If @key isn't found, 1 is वापसed and the leaf level of the path (level 0)
+ * poपूर्णांकs to the slot where it should be inserted
  *
- * If an error is encountered while searching the tree a negative error number
- * is returned
+ * If an error is encountered जबतक searching the tree a negative error number
+ * is वापसed
  */
-int btrfs_search_slot(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		      const struct btrfs_key *key, struct btrfs_path *p,
-		      int ins_len, int cow)
-{
-	struct extent_buffer *b;
-	int slot;
-	int ret;
-	int err;
-	int level;
-	int lowest_unlock = 1;
-	/* everything at write_lock_level or lower must be write locked */
-	int write_lock_level = 0;
+पूर्णांक btrfs_search_slot(काष्ठा btrfs_trans_handle *trans, काष्ठा btrfs_root *root,
+		      स्थिर काष्ठा btrfs_key *key, काष्ठा btrfs_path *p,
+		      पूर्णांक ins_len, पूर्णांक cow)
+अणु
+	काष्ठा extent_buffer *b;
+	पूर्णांक slot;
+	पूर्णांक ret;
+	पूर्णांक err;
+	पूर्णांक level;
+	पूर्णांक lowest_unlock = 1;
+	/* everything at ग_लिखो_lock_level or lower must be ग_लिखो locked */
+	पूर्णांक ग_लिखो_lock_level = 0;
 	u8 lowest_level = 0;
-	int min_write_lock_level;
-	int prev_cmp;
+	पूर्णांक min_ग_लिखो_lock_level;
+	पूर्णांक prev_cmp;
 
 	lowest_level = p->lowest_level;
 	WARN_ON(lowest_level && ins_len > 0);
-	WARN_ON(p->nodes[0] != NULL);
+	WARN_ON(p->nodes[0] != शून्य);
 	BUG_ON(!cow && ins_len);
 
-	if (ins_len < 0) {
+	अगर (ins_len < 0) अणु
 		lowest_unlock = 2;
 
 		/* when we are removing items, we might have to go up to level
-		 * two as we update tree pointers  Make sure we keep write
-		 * for those levels as well
+		 * two as we update tree poपूर्णांकers  Make sure we keep ग_लिखो
+		 * क्रम those levels as well
 		 */
-		write_lock_level = 2;
-	} else if (ins_len > 0) {
+		ग_लिखो_lock_level = 2;
+	पूर्ण अन्यथा अगर (ins_len > 0) अणु
 		/*
-		 * for inserting items, make sure we have a write lock on
+		 * क्रम inserting items, make sure we have a ग_लिखो lock on
 		 * level 1 so we can update keys
 		 */
-		write_lock_level = 1;
-	}
+		ग_लिखो_lock_level = 1;
+	पूर्ण
 
-	if (!cow)
-		write_lock_level = -1;
+	अगर (!cow)
+		ग_लिखो_lock_level = -1;
 
-	if (cow && (p->keep_locks || p->lowest_level))
-		write_lock_level = BTRFS_MAX_LEVEL;
+	अगर (cow && (p->keep_locks || p->lowest_level))
+		ग_लिखो_lock_level = BTRFS_MAX_LEVEL;
 
-	min_write_lock_level = write_lock_level;
+	min_ग_लिखो_lock_level = ग_लिखो_lock_level;
 
 again:
 	prev_cmp = -1;
-	b = btrfs_search_slot_get_root(root, p, write_lock_level);
-	if (IS_ERR(b)) {
+	b = btrfs_search_slot_get_root(root, p, ग_लिखो_lock_level);
+	अगर (IS_ERR(b)) अणु
 		ret = PTR_ERR(b);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	while (b) {
-		int dec = 0;
+	जबतक (b) अणु
+		पूर्णांक dec = 0;
 
 		level = btrfs_header_level(b);
 
-		if (cow) {
+		अगर (cow) अणु
 			bool last_level = (level == (BTRFS_MAX_LEVEL - 1));
 
 			/*
-			 * if we don't really need to cow this block
-			 * then we don't want to set the path blocking,
+			 * अगर we करोn't really need to cow this block
+			 * then we करोn't want to set the path blocking,
 			 * so we test it here
 			 */
-			if (!should_cow_block(trans, root, b)) {
+			अगर (!should_cow_block(trans, root, b)) अणु
 				trans->dirty = true;
-				goto cow_done;
-			}
+				जाओ cow_करोne;
+			पूर्ण
 
 			/*
-			 * must have write locks on this node and the
+			 * must have ग_लिखो locks on this node and the
 			 * parent
 			 */
-			if (level > write_lock_level ||
-			    (level + 1 > write_lock_level &&
+			अगर (level > ग_लिखो_lock_level ||
+			    (level + 1 > ग_लिखो_lock_level &&
 			    level + 1 < BTRFS_MAX_LEVEL &&
-			    p->nodes[level + 1])) {
-				write_lock_level = level + 1;
+			    p->nodes[level + 1])) अणु
+				ग_लिखो_lock_level = level + 1;
 				btrfs_release_path(p);
-				goto again;
-			}
+				जाओ again;
+			पूर्ण
 
-			if (last_level)
-				err = btrfs_cow_block(trans, root, b, NULL, 0,
+			अगर (last_level)
+				err = btrfs_cow_block(trans, root, b, शून्य, 0,
 						      &b,
 						      BTRFS_NESTING_COW);
-			else
+			अन्यथा
 				err = btrfs_cow_block(trans, root, b,
 						      p->nodes[level + 1],
 						      p->slots[level + 1], &b,
 						      BTRFS_NESTING_COW);
-			if (err) {
+			अगर (err) अणु
 				ret = err;
-				goto done;
-			}
-		}
-cow_done:
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+cow_करोne:
 		p->nodes[level] = b;
 		/*
-		 * Leave path with blocking locks to avoid massive
-		 * lock context switch, this is made on purpose.
+		 * Leave path with blocking locks to aव्योम massive
+		 * lock context चयन, this is made on purpose.
 		 */
 
 		/*
-		 * we have a lock on b and as long as we aren't changing
-		 * the tree, there is no way to for the items in b to change.
-		 * It is safe to drop the lock on our parent before we
+		 * we have a lock on b and as दीर्घ as we aren't changing
+		 * the tree, there is no way to क्रम the items in b to change.
+		 * It is safe to drop the lock on our parent beक्रमe we
 		 * go through the expensive btree search on b.
 		 *
 		 * If we're inserting or deleting (ins_len != 0), then we might
@@ -1838,365 +1839,365 @@ cow_done:
 		 * So, we can't drop the lock until after we know which slot
 		 * we're operating on.
 		 */
-		if (!ins_len && !p->keep_locks) {
-			int u = level + 1;
+		अगर (!ins_len && !p->keep_locks) अणु
+			पूर्णांक u = level + 1;
 
-			if (u < BTRFS_MAX_LEVEL && p->locks[u]) {
+			अगर (u < BTRFS_MAX_LEVEL && p->locks[u]) अणु
 				btrfs_tree_unlock_rw(p->nodes[u], p->locks[u]);
 				p->locks[u] = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * If btrfs_bin_search returns an exact match (prev_cmp == 0)
+		 * If btrfs_bin_search वापसs an exact match (prev_cmp == 0)
 		 * we can safely assume the target key will always be in slot 0
 		 * on lower levels due to the invariants BTRFS' btree provides,
-		 * namely that a btrfs_key_ptr entry always points to the
+		 * namely that a btrfs_key_ptr entry always poपूर्णांकs to the
 		 * lowest key in the child node, thus we can skip searching
 		 * lower levels
 		 */
-		if (prev_cmp == 0) {
+		अगर (prev_cmp == 0) अणु
 			slot = 0;
 			ret = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = btrfs_bin_search(b, key, &slot);
 			prev_cmp = ret;
-			if (ret < 0)
-				goto done;
-		}
+			अगर (ret < 0)
+				जाओ करोne;
+		पूर्ण
 
-		if (level == 0) {
+		अगर (level == 0) अणु
 			p->slots[level] = slot;
 			/*
-			 * Item key already exists. In this case, if we are
-			 * allowed to insert the item (for example, in dir_item
-			 * case, item key collision is allowed), it will be
+			 * Item key alपढ़ोy exists. In this हाल, अगर we are
+			 * allowed to insert the item (क्रम example, in dir_item
+			 * हाल, item key collision is allowed), it will be
 			 * merged with the original item. Only the item size
 			 * grows, no new btrfs item will be added. If
-			 * search_for_extension is not set, ins_len already
+			 * search_क्रम_extension is not set, ins_len alपढ़ोy
 			 * accounts the size btrfs_item, deduct it here so leaf
 			 * space check will be correct.
 			 */
-			if (ret == 0 && ins_len > 0 && !p->search_for_extension) {
-				ASSERT(ins_len >= sizeof(struct btrfs_item));
-				ins_len -= sizeof(struct btrfs_item);
-			}
-			if (ins_len > 0 &&
-			    btrfs_leaf_free_space(b) < ins_len) {
-				if (write_lock_level < 1) {
-					write_lock_level = 1;
+			अगर (ret == 0 && ins_len > 0 && !p->search_क्रम_extension) अणु
+				ASSERT(ins_len >= माप(काष्ठा btrfs_item));
+				ins_len -= माप(काष्ठा btrfs_item);
+			पूर्ण
+			अगर (ins_len > 0 &&
+			    btrfs_leaf_मुक्त_space(b) < ins_len) अणु
+				अगर (ग_लिखो_lock_level < 1) अणु
+					ग_लिखो_lock_level = 1;
 					btrfs_release_path(p);
-					goto again;
-				}
+					जाओ again;
+				पूर्ण
 
 				err = split_leaf(trans, root, key,
 						 p, ins_len, ret == 0);
 
 				BUG_ON(err > 0);
-				if (err) {
+				अगर (err) अणु
 					ret = err;
-					goto done;
-				}
-			}
-			if (!p->search_for_split)
+					जाओ करोne;
+				पूर्ण
+			पूर्ण
+			अगर (!p->search_क्रम_split)
 				unlock_up(p, level, lowest_unlock,
-					  min_write_lock_level, NULL);
-			goto done;
-		}
-		if (ret && slot > 0) {
+					  min_ग_लिखो_lock_level, शून्य);
+			जाओ करोne;
+		पूर्ण
+		अगर (ret && slot > 0) अणु
 			dec = 1;
 			slot--;
-		}
+		पूर्ण
 		p->slots[level] = slot;
-		err = setup_nodes_for_search(trans, root, p, b, level, ins_len,
-					     &write_lock_level);
-		if (err == -EAGAIN)
-			goto again;
-		if (err) {
+		err = setup_nodes_क्रम_search(trans, root, p, b, level, ins_len,
+					     &ग_लिखो_lock_level);
+		अगर (err == -EAGAIN)
+			जाओ again;
+		अगर (err) अणु
 			ret = err;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		b = p->nodes[level];
 		slot = p->slots[level];
 
 		/*
-		 * Slot 0 is special, if we change the key we have to update
-		 * the parent pointer which means we must have a write lock on
+		 * Slot 0 is special, अगर we change the key we have to update
+		 * the parent poपूर्णांकer which means we must have a ग_लिखो lock on
 		 * the parent
 		 */
-		if (slot == 0 && ins_len && write_lock_level < level + 1) {
-			write_lock_level = level + 1;
+		अगर (slot == 0 && ins_len && ग_लिखो_lock_level < level + 1) अणु
+			ग_लिखो_lock_level = level + 1;
 			btrfs_release_path(p);
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 
-		unlock_up(p, level, lowest_unlock, min_write_lock_level,
-			  &write_lock_level);
+		unlock_up(p, level, lowest_unlock, min_ग_लिखो_lock_level,
+			  &ग_लिखो_lock_level);
 
-		if (level == lowest_level) {
-			if (dec)
+		अगर (level == lowest_level) अणु
+			अगर (dec)
 				p->slots[level]++;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		err = read_block_for_search(root, p, &b, level, slot, key);
-		if (err == -EAGAIN)
-			goto again;
-		if (err) {
+		err = पढ़ो_block_क्रम_search(root, p, &b, level, slot, key);
+		अगर (err == -EAGAIN)
+			जाओ again;
+		अगर (err) अणु
 			ret = err;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (!p->skip_locking) {
+		अगर (!p->skip_locking) अणु
 			level = btrfs_header_level(b);
-			if (level <= write_lock_level) {
+			अगर (level <= ग_लिखो_lock_level) अणु
 				btrfs_tree_lock(b);
 				p->locks[level] = BTRFS_WRITE_LOCK;
-			} else {
-				btrfs_tree_read_lock(b);
+			पूर्ण अन्यथा अणु
+				btrfs_tree_पढ़ो_lock(b);
 				p->locks[level] = BTRFS_READ_LOCK;
-			}
+			पूर्ण
 			p->nodes[level] = b;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ret = 1;
-done:
-	if (ret < 0 && !p->skip_release_on_error)
+करोne:
+	अगर (ret < 0 && !p->skip_release_on_error)
 		btrfs_release_path(p);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 ALLOW_ERROR_INJECTION(btrfs_search_slot, ERRNO);
 
 /*
- * Like btrfs_search_slot, this looks for a key in the given tree. It uses the
+ * Like btrfs_search_slot, this looks क्रम a key in the given tree. It uses the
  * current state of the tree together with the operations recorded in the tree
- * modification log to search for the key in a previous version of this tree, as
- * denoted by the time_seq parameter.
+ * modअगरication log to search क्रम the key in a previous version of this tree, as
+ * denoted by the समय_seq parameter.
  *
- * Naturally, there is no support for insert, delete or cow operations.
+ * Naturally, there is no support क्रम insert, delete or cow operations.
  *
- * The resulting path and return value will be set up as if we called
- * btrfs_search_slot at that point in time with ins_len and cow both set to 0.
+ * The resulting path and वापस value will be set up as अगर we called
+ * btrfs_search_slot at that poपूर्णांक in समय with ins_len and cow both set to 0.
  */
-int btrfs_search_old_slot(struct btrfs_root *root, const struct btrfs_key *key,
-			  struct btrfs_path *p, u64 time_seq)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *b;
-	int slot;
-	int ret;
-	int err;
-	int level;
-	int lowest_unlock = 1;
+पूर्णांक btrfs_search_old_slot(काष्ठा btrfs_root *root, स्थिर काष्ठा btrfs_key *key,
+			  काष्ठा btrfs_path *p, u64 समय_seq)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *b;
+	पूर्णांक slot;
+	पूर्णांक ret;
+	पूर्णांक err;
+	पूर्णांक level;
+	पूर्णांक lowest_unlock = 1;
 	u8 lowest_level = 0;
 
 	lowest_level = p->lowest_level;
-	WARN_ON(p->nodes[0] != NULL);
+	WARN_ON(p->nodes[0] != शून्य);
 
-	if (p->search_commit_root) {
-		BUG_ON(time_seq);
-		return btrfs_search_slot(NULL, root, key, p, 0, 0);
-	}
+	अगर (p->search_commit_root) अणु
+		BUG_ON(समय_seq);
+		वापस btrfs_search_slot(शून्य, root, key, p, 0, 0);
+	पूर्ण
 
 again:
-	b = btrfs_get_old_root(root, time_seq);
-	if (!b) {
+	b = btrfs_get_old_root(root, समय_seq);
+	अगर (!b) अणु
 		ret = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	level = btrfs_header_level(b);
 	p->locks[level] = BTRFS_READ_LOCK;
 
-	while (b) {
-		int dec = 0;
+	जबतक (b) अणु
+		पूर्णांक dec = 0;
 
 		level = btrfs_header_level(b);
 		p->nodes[level] = b;
 
 		/*
-		 * we have a lock on b and as long as we aren't changing
-		 * the tree, there is no way to for the items in b to change.
-		 * It is safe to drop the lock on our parent before we
+		 * we have a lock on b and as दीर्घ as we aren't changing
+		 * the tree, there is no way to क्रम the items in b to change.
+		 * It is safe to drop the lock on our parent beक्रमe we
 		 * go through the expensive btree search on b.
 		 */
 		btrfs_unlock_up_safe(p, level + 1);
 
 		ret = btrfs_bin_search(b, key, &slot);
-		if (ret < 0)
-			goto done;
+		अगर (ret < 0)
+			जाओ करोne;
 
-		if (level == 0) {
+		अगर (level == 0) अणु
 			p->slots[level] = slot;
-			unlock_up(p, level, lowest_unlock, 0, NULL);
-			goto done;
-		}
+			unlock_up(p, level, lowest_unlock, 0, शून्य);
+			जाओ करोne;
+		पूर्ण
 
-		if (ret && slot > 0) {
+		अगर (ret && slot > 0) अणु
 			dec = 1;
 			slot--;
-		}
+		पूर्ण
 		p->slots[level] = slot;
-		unlock_up(p, level, lowest_unlock, 0, NULL);
+		unlock_up(p, level, lowest_unlock, 0, शून्य);
 
-		if (level == lowest_level) {
-			if (dec)
+		अगर (level == lowest_level) अणु
+			अगर (dec)
 				p->slots[level]++;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		err = read_block_for_search(root, p, &b, level, slot, key);
-		if (err == -EAGAIN)
-			goto again;
-		if (err) {
+		err = पढ़ो_block_क्रम_search(root, p, &b, level, slot, key);
+		अगर (err == -EAGAIN)
+			जाओ again;
+		अगर (err) अणु
 			ret = err;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		level = btrfs_header_level(b);
-		btrfs_tree_read_lock(b);
-		b = btrfs_tree_mod_log_rewind(fs_info, p, b, time_seq);
-		if (!b) {
+		btrfs_tree_पढ़ो_lock(b);
+		b = btrfs_tree_mod_log_शुरुआत(fs_info, p, b, समय_seq);
+		अगर (!b) अणु
 			ret = -ENOMEM;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		p->locks[level] = BTRFS_READ_LOCK;
 		p->nodes[level] = b;
-	}
+	पूर्ण
 	ret = 1;
-done:
-	if (ret < 0)
+करोne:
+	अगर (ret < 0)
 		btrfs_release_path(p);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * helper to use instead of search slot if no exact match is needed but
- * instead the next or previous item should be returned.
- * When find_higher is true, the next higher item is returned, the next lower
+ * helper to use instead of search slot अगर no exact match is needed but
+ * instead the next or previous item should be वापसed.
+ * When find_higher is true, the next higher item is वापसed, the next lower
  * otherwise.
- * When return_any and find_higher are both true, and no higher item is found,
- * return the next lower instead.
- * When return_any is true and find_higher is false, and no lower item is found,
- * return the next higher instead.
- * It returns 0 if any item is found, 1 if none is found (tree empty), and
+ * When वापस_any and find_higher are both true, and no higher item is found,
+ * वापस the next lower instead.
+ * When वापस_any is true and find_higher is false, and no lower item is found,
+ * वापस the next higher instead.
+ * It वापसs 0 अगर any item is found, 1 अगर none is found (tree empty), and
  * < 0 on error
  */
-int btrfs_search_slot_for_read(struct btrfs_root *root,
-			       const struct btrfs_key *key,
-			       struct btrfs_path *p, int find_higher,
-			       int return_any)
-{
-	int ret;
-	struct extent_buffer *leaf;
+पूर्णांक btrfs_search_slot_क्रम_पढ़ो(काष्ठा btrfs_root *root,
+			       स्थिर काष्ठा btrfs_key *key,
+			       काष्ठा btrfs_path *p, पूर्णांक find_higher,
+			       पूर्णांक वापस_any)
+अणु
+	पूर्णांक ret;
+	काष्ठा extent_buffer *leaf;
 
 again:
-	ret = btrfs_search_slot(NULL, root, key, p, 0, 0);
-	if (ret <= 0)
-		return ret;
+	ret = btrfs_search_slot(शून्य, root, key, p, 0, 0);
+	अगर (ret <= 0)
+		वापस ret;
 	/*
-	 * a return value of 1 means the path is at the position where the
+	 * a वापस value of 1 means the path is at the position where the
 	 * item should be inserted. Normally this is the next bigger item,
-	 * but in case the previous item is the last in a leaf, path points
-	 * to the first free slot in the previous leaf, i.e. at an invalid
+	 * but in हाल the previous item is the last in a leaf, path poपूर्णांकs
+	 * to the first मुक्त slot in the previous leaf, i.e. at an invalid
 	 * item.
 	 */
 	leaf = p->nodes[0];
 
-	if (find_higher) {
-		if (p->slots[0] >= btrfs_header_nritems(leaf)) {
+	अगर (find_higher) अणु
+		अगर (p->slots[0] >= btrfs_header_nritems(leaf)) अणु
 			ret = btrfs_next_leaf(root, p);
-			if (ret <= 0)
-				return ret;
-			if (!return_any)
-				return 1;
+			अगर (ret <= 0)
+				वापस ret;
+			अगर (!वापस_any)
+				वापस 1;
 			/*
-			 * no higher item found, return the next
+			 * no higher item found, वापस the next
 			 * lower instead
 			 */
-			return_any = 0;
+			वापस_any = 0;
 			find_higher = 0;
 			btrfs_release_path(p);
-			goto again;
-		}
-	} else {
-		if (p->slots[0] == 0) {
+			जाओ again;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (p->slots[0] == 0) अणु
 			ret = btrfs_prev_leaf(root, p);
-			if (ret < 0)
-				return ret;
-			if (!ret) {
+			अगर (ret < 0)
+				वापस ret;
+			अगर (!ret) अणु
 				leaf = p->nodes[0];
-				if (p->slots[0] == btrfs_header_nritems(leaf))
+				अगर (p->slots[0] == btrfs_header_nritems(leaf))
 					p->slots[0]--;
-				return 0;
-			}
-			if (!return_any)
-				return 1;
+				वापस 0;
+			पूर्ण
+			अगर (!वापस_any)
+				वापस 1;
 			/*
-			 * no lower item found, return the next
+			 * no lower item found, वापस the next
 			 * higher instead
 			 */
-			return_any = 0;
+			वापस_any = 0;
 			find_higher = 1;
 			btrfs_release_path(p);
-			goto again;
-		} else {
+			जाओ again;
+		पूर्ण अन्यथा अणु
 			--p->slots[0];
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * adjust the pointers going up the tree, starting at level
- * making sure the right key of each node is points to 'key'.
- * This is used after shifting pointers to the left, so it stops
- * fixing up pointers when a given leaf/node is not in slot 0 of the
+ * adjust the poपूर्णांकers going up the tree, starting at level
+ * making sure the right key of each node is poपूर्णांकs to 'key'.
+ * This is used after shअगरting poपूर्णांकers to the left, so it stops
+ * fixing up poपूर्णांकers when a given leaf/node is not in slot 0 of the
  * higher levels
  *
  */
-static void fixup_low_keys(struct btrfs_path *path,
-			   struct btrfs_disk_key *key, int level)
-{
-	int i;
-	struct extent_buffer *t;
-	int ret;
+अटल व्योम fixup_low_keys(काष्ठा btrfs_path *path,
+			   काष्ठा btrfs_disk_key *key, पूर्णांक level)
+अणु
+	पूर्णांक i;
+	काष्ठा extent_buffer *t;
+	पूर्णांक ret;
 
-	for (i = level; i < BTRFS_MAX_LEVEL; i++) {
-		int tslot = path->slots[i];
+	क्रम (i = level; i < BTRFS_MAX_LEVEL; i++) अणु
+		पूर्णांक tslot = path->slots[i];
 
-		if (!path->nodes[i])
-			break;
+		अगर (!path->nodes[i])
+			अवरोध;
 		t = path->nodes[i];
 		ret = btrfs_tree_mod_log_insert_key(t, tslot,
 				BTRFS_MOD_LOG_KEY_REPLACE, GFP_ATOMIC);
 		BUG_ON(ret < 0);
 		btrfs_set_node_key(t, key, tslot);
 		btrfs_mark_buffer_dirty(path->nodes[i]);
-		if (tslot != 0)
-			break;
-	}
-}
+		अगर (tslot != 0)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * update item key.
  *
  * This function isn't completely safe. It's the caller's responsibility
- * that the new key won't break the order
+ * that the new key won't अवरोध the order
  */
-void btrfs_set_item_key_safe(struct btrfs_fs_info *fs_info,
-			     struct btrfs_path *path,
-			     const struct btrfs_key *new_key)
-{
-	struct btrfs_disk_key disk_key;
-	struct extent_buffer *eb;
-	int slot;
+व्योम btrfs_set_item_key_safe(काष्ठा btrfs_fs_info *fs_info,
+			     काष्ठा btrfs_path *path,
+			     स्थिर काष्ठा btrfs_key *new_key)
+अणु
+	काष्ठा btrfs_disk_key disk_key;
+	काष्ठा extent_buffer *eb;
+	पूर्णांक slot;
 
 	eb = path->nodes[0];
 	slot = path->slots[0];
-	if (slot > 0) {
+	अगर (slot > 0) अणु
 		btrfs_item_key(eb, &disk_key, slot - 1);
-		if (unlikely(comp_keys(&disk_key, new_key) >= 0)) {
+		अगर (unlikely(comp_keys(&disk_key, new_key) >= 0)) अणु
 			btrfs_crit(fs_info,
 		"slot %u key (%llu %u %llu) new key (%llu %u %llu)",
 				   slot, btrfs_disk_key_objectid(&disk_key),
@@ -2204,13 +2205,13 @@ void btrfs_set_item_key_safe(struct btrfs_fs_info *fs_info,
 				   btrfs_disk_key_offset(&disk_key),
 				   new_key->objectid, new_key->type,
 				   new_key->offset);
-			btrfs_print_leaf(eb);
+			btrfs_prपूर्णांक_leaf(eb);
 			BUG();
-		}
-	}
-	if (slot < btrfs_header_nritems(eb) - 1) {
+		पूर्ण
+	पूर्ण
+	अगर (slot < btrfs_header_nritems(eb) - 1) अणु
 		btrfs_item_key(eb, &disk_key, slot + 1);
-		if (unlikely(comp_keys(&disk_key, new_key) <= 0)) {
+		अगर (unlikely(comp_keys(&disk_key, new_key) <= 0)) अणु
 			btrfs_crit(fs_info,
 		"slot %u key (%llu %u %llu) new key (%llu %u %llu)",
 				   slot, btrfs_disk_key_objectid(&disk_key),
@@ -2218,23 +2219,23 @@ void btrfs_set_item_key_safe(struct btrfs_fs_info *fs_info,
 				   btrfs_disk_key_offset(&disk_key),
 				   new_key->objectid, new_key->type,
 				   new_key->offset);
-			btrfs_print_leaf(eb);
+			btrfs_prपूर्णांक_leaf(eb);
 			BUG();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	btrfs_cpu_key_to_disk(&disk_key, new_key);
 	btrfs_set_item_key(eb, &disk_key, slot);
 	btrfs_mark_buffer_dirty(eb);
-	if (slot == 0)
+	अगर (slot == 0)
 		fixup_low_keys(path, &disk_key, 1);
-}
+पूर्ण
 
 /*
  * Check key order of two sibling extent buffers.
  *
- * Return true if something is wrong.
- * Return false if everything is fine.
+ * Return true अगर something is wrong.
+ * Return false अगर everything is fine.
  *
  * Tree-checker only works inside one tree block, thus the following
  * corruption can not be detected by tree-checker:
@@ -2245,59 +2246,59 @@ void btrfs_set_item_key_safe(struct btrfs_fs_info *fs_info,
  *
  * Key f6 in leaf @left itself is valid, but not valid when the next
  * key in leaf @right is 7.
- * This can only be checked at tree block merge time.
+ * This can only be checked at tree block merge समय.
  * And since tree checker has ensured all key order in each tree block
  * is correct, we only need to bother the last key of @left and the first
  * key of @right.
  */
-static bool check_sibling_keys(struct extent_buffer *left,
-			       struct extent_buffer *right)
-{
-	struct btrfs_key left_last;
-	struct btrfs_key right_first;
-	int level = btrfs_header_level(left);
-	int nr_left = btrfs_header_nritems(left);
-	int nr_right = btrfs_header_nritems(right);
+अटल bool check_sibling_keys(काष्ठा extent_buffer *left,
+			       काष्ठा extent_buffer *right)
+अणु
+	काष्ठा btrfs_key left_last;
+	काष्ठा btrfs_key right_first;
+	पूर्णांक level = btrfs_header_level(left);
+	पूर्णांक nr_left = btrfs_header_nritems(left);
+	पूर्णांक nr_right = btrfs_header_nritems(right);
 
 	/* No key to check in one of the tree blocks */
-	if (!nr_left || !nr_right)
-		return false;
+	अगर (!nr_left || !nr_right)
+		वापस false;
 
-	if (level) {
+	अगर (level) अणु
 		btrfs_node_key_to_cpu(left, &left_last, nr_left - 1);
 		btrfs_node_key_to_cpu(right, &right_first, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		btrfs_item_key_to_cpu(left, &left_last, nr_left - 1);
 		btrfs_item_key_to_cpu(right, &right_first, 0);
-	}
+	पूर्ण
 
-	if (btrfs_comp_cpu_keys(&left_last, &right_first) >= 0) {
+	अगर (btrfs_comp_cpu_keys(&left_last, &right_first) >= 0) अणु
 		btrfs_crit(left->fs_info,
 "bad key order, sibling blocks, left last (%llu %u %llu) right first (%llu %u %llu)",
 			   left_last.objectid, left_last.type,
 			   left_last.offset, right_first.objectid,
 			   right_first.type, right_first.offset);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
- * try to push data from one node into the next node left in the
+ * try to push data from one node पूर्णांकo the next node left in the
  * tree.
  *
- * returns 0 if some ptrs were pushed left, < 0 if there was some horrible
- * error, and > 0 if there was no room in the left hand block.
+ * वापसs 0 अगर some ptrs were pushed left, < 0 अगर there was some horrible
+ * error, and > 0 अगर there was no room in the left hand block.
  */
-static int push_node_left(struct btrfs_trans_handle *trans,
-			  struct extent_buffer *dst,
-			  struct extent_buffer *src, int empty)
-{
-	struct btrfs_fs_info *fs_info = trans->fs_info;
-	int push_items = 0;
-	int src_nritems;
-	int dst_nritems;
-	int ret = 0;
+अटल पूर्णांक push_node_left(काष्ठा btrfs_trans_handle *trans,
+			  काष्ठा extent_buffer *dst,
+			  काष्ठा extent_buffer *src, पूर्णांक empty)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
+	पूर्णांक push_items = 0;
+	पूर्णांक src_nritems;
+	पूर्णांक dst_nritems;
+	पूर्णांक ret = 0;
 
 	src_nritems = btrfs_header_nritems(src);
 	dst_nritems = btrfs_header_nritems(dst);
@@ -2305,80 +2306,80 @@ static int push_node_left(struct btrfs_trans_handle *trans,
 	WARN_ON(btrfs_header_generation(src) != trans->transid);
 	WARN_ON(btrfs_header_generation(dst) != trans->transid);
 
-	if (!empty && src_nritems <= 8)
-		return 1;
+	अगर (!empty && src_nritems <= 8)
+		वापस 1;
 
-	if (push_items <= 0)
-		return 1;
+	अगर (push_items <= 0)
+		वापस 1;
 
-	if (empty) {
+	अगर (empty) अणु
 		push_items = min(src_nritems, push_items);
-		if (push_items < src_nritems) {
-			/* leave at least 8 pointers in the node if
+		अगर (push_items < src_nritems) अणु
+			/* leave at least 8 poपूर्णांकers in the node अगर
 			 * we aren't going to empty it
 			 */
-			if (src_nritems - push_items < 8) {
-				if (push_items <= 8)
-					return 1;
+			अगर (src_nritems - push_items < 8) अणु
+				अगर (push_items <= 8)
+					वापस 1;
 				push_items -= 8;
-			}
-		}
-	} else
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा
 		push_items = min(src_nritems - 8, push_items);
 
 	/* dst is the left eb, src is the middle eb */
-	if (check_sibling_keys(dst, src)) {
+	अगर (check_sibling_keys(dst, src)) अणु
 		ret = -EUCLEAN;
-		btrfs_abort_transaction(trans, ret);
-		return ret;
-	}
+		btrfs_पात_transaction(trans, ret);
+		वापस ret;
+	पूर्ण
 	ret = btrfs_tree_mod_log_eb_copy(dst, src, dst_nritems, 0, push_items);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		return ret;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		वापस ret;
+	पूर्ण
 	copy_extent_buffer(dst, src,
 			   btrfs_node_key_ptr_offset(dst_nritems),
 			   btrfs_node_key_ptr_offset(0),
-			   push_items * sizeof(struct btrfs_key_ptr));
+			   push_items * माप(काष्ठा btrfs_key_ptr));
 
-	if (push_items < src_nritems) {
+	अगर (push_items < src_nritems) अणु
 		/*
 		 * Don't call btrfs_tree_mod_log_insert_move() here, key removal
-		 * was already fully logged by btrfs_tree_mod_log_eb_copy() above.
+		 * was alपढ़ोy fully logged by btrfs_tree_mod_log_eb_copy() above.
 		 */
-		memmove_extent_buffer(src, btrfs_node_key_ptr_offset(0),
+		स_हटाओ_extent_buffer(src, btrfs_node_key_ptr_offset(0),
 				      btrfs_node_key_ptr_offset(push_items),
 				      (src_nritems - push_items) *
-				      sizeof(struct btrfs_key_ptr));
-	}
+				      माप(काष्ठा btrfs_key_ptr));
+	पूर्ण
 	btrfs_set_header_nritems(src, src_nritems - push_items);
 	btrfs_set_header_nritems(dst, dst_nritems + push_items);
 	btrfs_mark_buffer_dirty(src);
 	btrfs_mark_buffer_dirty(dst);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * try to push data from one node into the next node right in the
+ * try to push data from one node पूर्णांकo the next node right in the
  * tree.
  *
- * returns 0 if some ptrs were pushed, < 0 if there was some horrible
- * error, and > 0 if there was no room in the right hand block.
+ * वापसs 0 अगर some ptrs were pushed, < 0 अगर there was some horrible
+ * error, and > 0 अगर there was no room in the right hand block.
  *
  * this will  only push up to 1/2 the contents of the left node over
  */
-static int balance_node_right(struct btrfs_trans_handle *trans,
-			      struct extent_buffer *dst,
-			      struct extent_buffer *src)
-{
-	struct btrfs_fs_info *fs_info = trans->fs_info;
-	int push_items = 0;
-	int max_push;
-	int src_nritems;
-	int dst_nritems;
-	int ret = 0;
+अटल पूर्णांक balance_node_right(काष्ठा btrfs_trans_handle *trans,
+			      काष्ठा extent_buffer *dst,
+			      काष्ठा extent_buffer *src)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
+	पूर्णांक push_items = 0;
+	पूर्णांक max_push;
+	पूर्णांक src_nritems;
+	पूर्णांक dst_nritems;
+	पूर्णांक ret = 0;
 
 	WARN_ON(btrfs_header_generation(src) != trans->transid);
 	WARN_ON(btrfs_header_generation(dst) != trans->transid);
@@ -2386,43 +2387,43 @@ static int balance_node_right(struct btrfs_trans_handle *trans,
 	src_nritems = btrfs_header_nritems(src);
 	dst_nritems = btrfs_header_nritems(dst);
 	push_items = BTRFS_NODEPTRS_PER_BLOCK(fs_info) - dst_nritems;
-	if (push_items <= 0)
-		return 1;
+	अगर (push_items <= 0)
+		वापस 1;
 
-	if (src_nritems < 4)
-		return 1;
+	अगर (src_nritems < 4)
+		वापस 1;
 
 	max_push = src_nritems / 2 + 1;
-	/* don't try to empty the node */
-	if (max_push >= src_nritems)
-		return 1;
+	/* करोn't try to empty the node */
+	अगर (max_push >= src_nritems)
+		वापस 1;
 
-	if (max_push < push_items)
+	अगर (max_push < push_items)
 		push_items = max_push;
 
 	/* dst is the right eb, src is the middle eb */
-	if (check_sibling_keys(src, dst)) {
+	अगर (check_sibling_keys(src, dst)) अणु
 		ret = -EUCLEAN;
-		btrfs_abort_transaction(trans, ret);
-		return ret;
-	}
+		btrfs_पात_transaction(trans, ret);
+		वापस ret;
+	पूर्ण
 	ret = btrfs_tree_mod_log_insert_move(dst, push_items, 0, dst_nritems);
 	BUG_ON(ret < 0);
-	memmove_extent_buffer(dst, btrfs_node_key_ptr_offset(push_items),
+	स_हटाओ_extent_buffer(dst, btrfs_node_key_ptr_offset(push_items),
 				      btrfs_node_key_ptr_offset(0),
 				      (dst_nritems) *
-				      sizeof(struct btrfs_key_ptr));
+				      माप(काष्ठा btrfs_key_ptr));
 
 	ret = btrfs_tree_mod_log_eb_copy(dst, src, 0, src_nritems - push_items,
 					 push_items);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		return ret;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		वापस ret;
+	पूर्ण
 	copy_extent_buffer(dst, src,
 			   btrfs_node_key_ptr_offset(0),
 			   btrfs_node_key_ptr_offset(src_nritems - push_items),
-			   push_items * sizeof(struct btrfs_key_ptr));
+			   push_items * माप(काष्ठा btrfs_key_ptr));
 
 	btrfs_set_header_nritems(src, src_nritems - push_items);
 	btrfs_set_header_nritems(dst, dst_nritems + push_items);
@@ -2430,42 +2431,42 @@ static int balance_node_right(struct btrfs_trans_handle *trans,
 	btrfs_mark_buffer_dirty(src);
 	btrfs_mark_buffer_dirty(dst);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * helper function to insert a new root level in the tree.
  * A new node is allocated, and a single item is inserted to
- * point to the existing root
+ * poपूर्णांक to the existing root
  *
- * returns zero on success or < 0 on failure.
+ * वापसs zero on success or < 0 on failure.
  */
-static noinline int insert_new_root(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *root,
-			   struct btrfs_path *path, int level)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
+अटल noअंतरभूत पूर्णांक insert_new_root(काष्ठा btrfs_trans_handle *trans,
+			   काष्ठा btrfs_root *root,
+			   काष्ठा btrfs_path *path, पूर्णांक level)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
 	u64 lower_gen;
-	struct extent_buffer *lower;
-	struct extent_buffer *c;
-	struct extent_buffer *old;
-	struct btrfs_disk_key lower_key;
-	int ret;
+	काष्ठा extent_buffer *lower;
+	काष्ठा extent_buffer *c;
+	काष्ठा extent_buffer *old;
+	काष्ठा btrfs_disk_key lower_key;
+	पूर्णांक ret;
 
 	BUG_ON(path->nodes[level]);
 	BUG_ON(path->nodes[level-1] != root->node);
 
 	lower = path->nodes[level-1];
-	if (level == 1)
+	अगर (level == 1)
 		btrfs_item_key(lower, &lower_key, 0);
-	else
+	अन्यथा
 		btrfs_node_key(lower, &lower_key, 0);
 
 	c = alloc_tree_block_no_bg_flush(trans, root, 0, &lower_key, level,
 					 root->node->start, 0,
 					 BTRFS_NESTING_NEW_ROOT);
-	if (IS_ERR(c))
-		return PTR_ERR(c);
+	अगर (IS_ERR(c))
+		वापस PTR_ERR(c);
 
 	root_add_used(root, fs_info->nodesize);
 
@@ -2482,93 +2483,93 @@ static noinline int insert_new_root(struct btrfs_trans_handle *trans,
 	old = root->node;
 	ret = btrfs_tree_mod_log_insert_root(root->node, c, false);
 	BUG_ON(ret < 0);
-	rcu_assign_pointer(root->node, c);
+	rcu_assign_poपूर्णांकer(root->node, c);
 
 	/* the super has an extra ref to root->node */
-	free_extent_buffer(old);
+	मुक्त_extent_buffer(old);
 
 	add_root_to_dirty_list(root);
 	atomic_inc(&c->refs);
 	path->nodes[level] = c;
 	path->locks[level] = BTRFS_WRITE_LOCK;
 	path->slots[level] = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * worker function to insert a single pointer in a node.
- * the node should have enough room for the pointer already
+ * worker function to insert a single poपूर्णांकer in a node.
+ * the node should have enough room क्रम the poपूर्णांकer alपढ़ोy
  *
  * slot and level indicate where you want the key to go, and
- * blocknr is the block the key points to.
+ * blocknr is the block the key poपूर्णांकs to.
  */
-static void insert_ptr(struct btrfs_trans_handle *trans,
-		       struct btrfs_path *path,
-		       struct btrfs_disk_key *key, u64 bytenr,
-		       int slot, int level)
-{
-	struct extent_buffer *lower;
-	int nritems;
-	int ret;
+अटल व्योम insert_ptr(काष्ठा btrfs_trans_handle *trans,
+		       काष्ठा btrfs_path *path,
+		       काष्ठा btrfs_disk_key *key, u64 bytenr,
+		       पूर्णांक slot, पूर्णांक level)
+अणु
+	काष्ठा extent_buffer *lower;
+	पूर्णांक nritems;
+	पूर्णांक ret;
 
 	BUG_ON(!path->nodes[level]);
-	btrfs_assert_tree_locked(path->nodes[level]);
+	btrfs_निश्चित_tree_locked(path->nodes[level]);
 	lower = path->nodes[level];
 	nritems = btrfs_header_nritems(lower);
 	BUG_ON(slot > nritems);
 	BUG_ON(nritems == BTRFS_NODEPTRS_PER_BLOCK(trans->fs_info));
-	if (slot != nritems) {
-		if (level) {
+	अगर (slot != nritems) अणु
+		अगर (level) अणु
 			ret = btrfs_tree_mod_log_insert_move(lower, slot + 1,
 					slot, nritems - slot);
 			BUG_ON(ret < 0);
-		}
-		memmove_extent_buffer(lower,
+		पूर्ण
+		स_हटाओ_extent_buffer(lower,
 			      btrfs_node_key_ptr_offset(slot + 1),
 			      btrfs_node_key_ptr_offset(slot),
-			      (nritems - slot) * sizeof(struct btrfs_key_ptr));
-	}
-	if (level) {
+			      (nritems - slot) * माप(काष्ठा btrfs_key_ptr));
+	पूर्ण
+	अगर (level) अणु
 		ret = btrfs_tree_mod_log_insert_key(lower, slot,
 					    BTRFS_MOD_LOG_KEY_ADD, GFP_NOFS);
 		BUG_ON(ret < 0);
-	}
+	पूर्ण
 	btrfs_set_node_key(lower, key, slot);
 	btrfs_set_node_blockptr(lower, slot, bytenr);
 	WARN_ON(trans->transid == 0);
 	btrfs_set_node_ptr_generation(lower, slot, trans->transid);
 	btrfs_set_header_nritems(lower, nritems + 1);
 	btrfs_mark_buffer_dirty(lower);
-}
+पूर्ण
 
 /*
- * split the node at the specified level in path in two.
- * The path is corrected to point to the appropriate node after the split
+ * split the node at the specअगरied level in path in two.
+ * The path is corrected to poपूर्णांक to the appropriate node after the split
  *
- * Before splitting this tries to make some room in the node by pushing
- * left and right, if either one works, it returns right away.
+ * Beक्रमe splitting this tries to make some room in the node by pushing
+ * left and right, अगर either one works, it वापसs right away.
  *
- * returns 0 on success and < 0 on failure
+ * वापसs 0 on success and < 0 on failure
  */
-static noinline int split_node(struct btrfs_trans_handle *trans,
-			       struct btrfs_root *root,
-			       struct btrfs_path *path, int level)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *c;
-	struct extent_buffer *split;
-	struct btrfs_disk_key disk_key;
-	int mid;
-	int ret;
+अटल noअंतरभूत पूर्णांक split_node(काष्ठा btrfs_trans_handle *trans,
+			       काष्ठा btrfs_root *root,
+			       काष्ठा btrfs_path *path, पूर्णांक level)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *c;
+	काष्ठा extent_buffer *split;
+	काष्ठा btrfs_disk_key disk_key;
+	पूर्णांक mid;
+	पूर्णांक ret;
 	u32 c_nritems;
 
 	c = path->nodes[level];
 	WARN_ON(btrfs_header_generation(c) != trans->transid);
-	if (c == root->node) {
+	अगर (c == root->node) अणु
 		/*
 		 * trying to split the root, lets make a new one
 		 *
-		 * tree mod log: We don't log_removal old root in
+		 * tree mod log: We करोn't log_removal old root in
 		 * insert_new_root, because that root buffer will be kept as a
 		 * normal node. We are going to log removal of half of the
 		 * elements below with btrfs_tree_mod_log_eb_copy(). We're
@@ -2576,17 +2577,17 @@ static noinline int split_node(struct btrfs_trans_handle *trans,
 		 * race with other tree_mod_log users.
 		 */
 		ret = insert_new_root(trans, root, path, level + 1);
-		if (ret)
-			return ret;
-	} else {
-		ret = push_nodes_for_insert(trans, root, path, level);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		ret = push_nodes_क्रम_insert(trans, root, path, level);
 		c = path->nodes[level];
-		if (!ret && btrfs_header_nritems(c) <
+		अगर (!ret && btrfs_header_nritems(c) <
 		    BTRFS_NODEPTRS_PER_BLOCK(fs_info) - 3)
-			return 0;
-		if (ret < 0)
-			return ret;
-	}
+			वापस 0;
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	c_nritems = btrfs_header_nritems(c);
 	mid = (c_nritems + 1) / 2;
@@ -2594,21 +2595,21 @@ static noinline int split_node(struct btrfs_trans_handle *trans,
 
 	split = alloc_tree_block_no_bg_flush(trans, root, 0, &disk_key, level,
 					     c->start, 0, BTRFS_NESTING_SPLIT);
-	if (IS_ERR(split))
-		return PTR_ERR(split);
+	अगर (IS_ERR(split))
+		वापस PTR_ERR(split);
 
 	root_add_used(root, fs_info->nodesize);
 	ASSERT(btrfs_header_level(c) == level);
 
 	ret = btrfs_tree_mod_log_eb_copy(split, c, 0, mid, c_nritems - mid);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		return ret;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		वापस ret;
+	पूर्ण
 	copy_extent_buffer(split, c,
 			   btrfs_node_key_ptr_offset(0),
 			   btrfs_node_key_ptr_offset(mid),
-			   (c_nritems - mid) * sizeof(struct btrfs_key_ptr));
+			   (c_nritems - mid) * माप(काष्ठा btrfs_key_ptr));
 	btrfs_set_header_nritems(split, c_nritems - mid);
 	btrfs_set_header_nritems(c, mid);
 
@@ -2618,131 +2619,131 @@ static noinline int split_node(struct btrfs_trans_handle *trans,
 	insert_ptr(trans, path, &disk_key, split->start,
 		   path->slots[level + 1] + 1, level + 1);
 
-	if (path->slots[level] >= mid) {
+	अगर (path->slots[level] >= mid) अणु
 		path->slots[level] -= mid;
 		btrfs_tree_unlock(c);
-		free_extent_buffer(c);
+		मुक्त_extent_buffer(c);
 		path->nodes[level] = split;
 		path->slots[level + 1] += 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		btrfs_tree_unlock(split);
-		free_extent_buffer(split);
-	}
-	return 0;
-}
+		मुक्त_extent_buffer(split);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * how many bytes are required to store the items in a leaf.  start
  * and nr indicate which items in the leaf to check.  This totals up the
- * space used both by the item structs and the item data
+ * space used both by the item काष्ठाs and the item data
  */
-static int leaf_space_used(struct extent_buffer *l, int start, int nr)
-{
-	struct btrfs_item *start_item;
-	struct btrfs_item *end_item;
-	int data_len;
-	int nritems = btrfs_header_nritems(l);
-	int end = min(nritems, start + nr) - 1;
+अटल पूर्णांक leaf_space_used(काष्ठा extent_buffer *l, पूर्णांक start, पूर्णांक nr)
+अणु
+	काष्ठा btrfs_item *start_item;
+	काष्ठा btrfs_item *end_item;
+	पूर्णांक data_len;
+	पूर्णांक nritems = btrfs_header_nritems(l);
+	पूर्णांक end = min(nritems, start + nr) - 1;
 
-	if (!nr)
-		return 0;
+	अगर (!nr)
+		वापस 0;
 	start_item = btrfs_item_nr(start);
 	end_item = btrfs_item_nr(end);
 	data_len = btrfs_item_offset(l, start_item) +
 		   btrfs_item_size(l, start_item);
 	data_len = data_len - btrfs_item_offset(l, end_item);
-	data_len += sizeof(struct btrfs_item) * nr;
+	data_len += माप(काष्ठा btrfs_item) * nr;
 	WARN_ON(data_len < 0);
-	return data_len;
-}
+	वापस data_len;
+पूर्ण
 
 /*
  * The space between the end of the leaf items and
  * the start of the leaf data.  IOW, how much room
- * the leaf has left for both items and data
+ * the leaf has left क्रम both items and data
  */
-noinline int btrfs_leaf_free_space(struct extent_buffer *leaf)
-{
-	struct btrfs_fs_info *fs_info = leaf->fs_info;
-	int nritems = btrfs_header_nritems(leaf);
-	int ret;
+noअंतरभूत पूर्णांक btrfs_leaf_मुक्त_space(काष्ठा extent_buffer *leaf)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = leaf->fs_info;
+	पूर्णांक nritems = btrfs_header_nritems(leaf);
+	पूर्णांक ret;
 
 	ret = BTRFS_LEAF_DATA_SIZE(fs_info) - leaf_space_used(leaf, 0, nritems);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		btrfs_crit(fs_info,
 			   "leaf free space ret %d, leaf data size %lu, used %d nritems %d",
 			   ret,
-			   (unsigned long) BTRFS_LEAF_DATA_SIZE(fs_info),
+			   (अचिन्हित दीर्घ) BTRFS_LEAF_DATA_SIZE(fs_info),
 			   leaf_space_used(leaf, 0, nritems), nritems);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  * min slot controls the lowest index we're willing to push to the
  * right.  We'll push up to and including min_slot, but no lower
  */
-static noinline int __push_leaf_right(struct btrfs_path *path,
-				      int data_size, int empty,
-				      struct extent_buffer *right,
-				      int free_space, u32 left_nritems,
+अटल noअंतरभूत पूर्णांक __push_leaf_right(काष्ठा btrfs_path *path,
+				      पूर्णांक data_size, पूर्णांक empty,
+				      काष्ठा extent_buffer *right,
+				      पूर्णांक मुक्त_space, u32 left_nritems,
 				      u32 min_slot)
-{
-	struct btrfs_fs_info *fs_info = right->fs_info;
-	struct extent_buffer *left = path->nodes[0];
-	struct extent_buffer *upper = path->nodes[1];
-	struct btrfs_map_token token;
-	struct btrfs_disk_key disk_key;
-	int slot;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = right->fs_info;
+	काष्ठा extent_buffer *left = path->nodes[0];
+	काष्ठा extent_buffer *upper = path->nodes[1];
+	काष्ठा btrfs_map_token token;
+	काष्ठा btrfs_disk_key disk_key;
+	पूर्णांक slot;
 	u32 i;
-	int push_space = 0;
-	int push_items = 0;
-	struct btrfs_item *item;
+	पूर्णांक push_space = 0;
+	पूर्णांक push_items = 0;
+	काष्ठा btrfs_item *item;
 	u32 nr;
 	u32 right_nritems;
 	u32 data_end;
 	u32 this_item_size;
 
-	if (empty)
+	अगर (empty)
 		nr = 0;
-	else
+	अन्यथा
 		nr = max_t(u32, 1, min_slot);
 
-	if (path->slots[0] >= left_nritems)
+	अगर (path->slots[0] >= left_nritems)
 		push_space += data_size;
 
 	slot = path->slots[1];
 	i = left_nritems - 1;
-	while (i >= nr) {
+	जबतक (i >= nr) अणु
 		item = btrfs_item_nr(i);
 
-		if (!empty && push_items > 0) {
-			if (path->slots[0] > i)
-				break;
-			if (path->slots[0] == i) {
-				int space = btrfs_leaf_free_space(left);
+		अगर (!empty && push_items > 0) अणु
+			अगर (path->slots[0] > i)
+				अवरोध;
+			अगर (path->slots[0] == i) अणु
+				पूर्णांक space = btrfs_leaf_मुक्त_space(left);
 
-				if (space + push_space * 2 > free_space)
-					break;
-			}
-		}
+				अगर (space + push_space * 2 > मुक्त_space)
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (path->slots[0] == i)
+		अगर (path->slots[0] == i)
 			push_space += data_size;
 
 		this_item_size = btrfs_item_size(left, item);
-		if (this_item_size + sizeof(*item) + push_space > free_space)
-			break;
+		अगर (this_item_size + माप(*item) + push_space > मुक्त_space)
+			अवरोध;
 
 		push_items++;
-		push_space += this_item_size + sizeof(*item);
-		if (i == 0)
-			break;
+		push_space += this_item_size + माप(*item);
+		अगर (i == 0)
+			अवरोध;
 		i--;
-	}
+	पूर्ण
 
-	if (push_items == 0)
-		goto out_unlock;
+	अगर (push_items == 0)
+		जाओ out_unlock;
 
 	WARN_ON(!empty && push_items == left_nritems);
 
@@ -2754,7 +2755,7 @@ static noinline int __push_leaf_right(struct btrfs_path *path,
 
 	/* make room in the right data area */
 	data_end = leaf_data_end(right);
-	memmove_extent_buffer(right,
+	स_हटाओ_extent_buffer(right,
 			      BTRFS_LEAF_DATA_OFFSET + data_end - push_space,
 			      BTRFS_LEAF_DATA_OFFSET + data_end,
 			      BTRFS_LEAF_DATA_SIZE(fs_info) - data_end);
@@ -2765,32 +2766,32 @@ static noinline int __push_leaf_right(struct btrfs_path *path,
 		     BTRFS_LEAF_DATA_OFFSET + leaf_data_end(left),
 		     push_space);
 
-	memmove_extent_buffer(right, btrfs_item_nr_offset(push_items),
+	स_हटाओ_extent_buffer(right, btrfs_item_nr_offset(push_items),
 			      btrfs_item_nr_offset(0),
-			      right_nritems * sizeof(struct btrfs_item));
+			      right_nritems * माप(काष्ठा btrfs_item));
 
 	/* copy the items from left to right */
 	copy_extent_buffer(right, left, btrfs_item_nr_offset(0),
 		   btrfs_item_nr_offset(left_nritems - push_items),
-		   push_items * sizeof(struct btrfs_item));
+		   push_items * माप(काष्ठा btrfs_item));
 
-	/* update the item pointers */
+	/* update the item poपूर्णांकers */
 	btrfs_init_map_token(&token, right);
 	right_nritems += push_items;
 	btrfs_set_header_nritems(right, right_nritems);
 	push_space = BTRFS_LEAF_DATA_SIZE(fs_info);
-	for (i = 0; i < right_nritems; i++) {
+	क्रम (i = 0; i < right_nritems; i++) अणु
 		item = btrfs_item_nr(i);
 		push_space -= btrfs_token_item_size(&token, item);
 		btrfs_set_token_item_offset(&token, item, push_space);
-	}
+	पूर्ण
 
 	left_nritems -= push_items;
 	btrfs_set_header_nritems(left, left_nritems);
 
-	if (left_nritems)
+	अगर (left_nritems)
 		btrfs_mark_buffer_dirty(left);
-	else
+	अन्यथा
 		btrfs_clean_tree_block(left);
 
 	btrfs_mark_buffer_dirty(right);
@@ -2799,183 +2800,183 @@ static noinline int __push_leaf_right(struct btrfs_path *path,
 	btrfs_set_node_key(upper, &disk_key, slot + 1);
 	btrfs_mark_buffer_dirty(upper);
 
-	/* then fixup the leaf pointer in the path */
-	if (path->slots[0] >= left_nritems) {
+	/* then fixup the leaf poपूर्णांकer in the path */
+	अगर (path->slots[0] >= left_nritems) अणु
 		path->slots[0] -= left_nritems;
-		if (btrfs_header_nritems(path->nodes[0]) == 0)
+		अगर (btrfs_header_nritems(path->nodes[0]) == 0)
 			btrfs_clean_tree_block(path->nodes[0]);
 		btrfs_tree_unlock(path->nodes[0]);
-		free_extent_buffer(path->nodes[0]);
+		मुक्त_extent_buffer(path->nodes[0]);
 		path->nodes[0] = right;
 		path->slots[1] += 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		btrfs_tree_unlock(right);
-		free_extent_buffer(right);
-	}
-	return 0;
+		मुक्त_extent_buffer(right);
+	पूर्ण
+	वापस 0;
 
 out_unlock:
 	btrfs_tree_unlock(right);
-	free_extent_buffer(right);
-	return 1;
-}
+	मुक्त_extent_buffer(right);
+	वापस 1;
+पूर्ण
 
 /*
- * push some data in the path leaf to the right, trying to free up at
- * least data_size bytes.  returns zero if the push worked, nonzero otherwise
+ * push some data in the path leaf to the right, trying to मुक्त up at
+ * least data_size bytes.  वापसs zero अगर the push worked, nonzero otherwise
  *
- * returns 1 if the push failed because the other node didn't have enough
- * room, 0 if everything worked out and < 0 if there were major errors.
+ * वापसs 1 अगर the push failed because the other node didn't have enough
+ * room, 0 अगर everything worked out and < 0 अगर there were major errors.
  *
  * this will push starting from min_slot to the end of the leaf.  It won't
  * push any slot lower than min_slot
  */
-static int push_leaf_right(struct btrfs_trans_handle *trans, struct btrfs_root
-			   *root, struct btrfs_path *path,
-			   int min_data_size, int data_size,
-			   int empty, u32 min_slot)
-{
-	struct extent_buffer *left = path->nodes[0];
-	struct extent_buffer *right;
-	struct extent_buffer *upper;
-	int slot;
-	int free_space;
+अटल पूर्णांक push_leaf_right(काष्ठा btrfs_trans_handle *trans, काष्ठा btrfs_root
+			   *root, काष्ठा btrfs_path *path,
+			   पूर्णांक min_data_size, पूर्णांक data_size,
+			   पूर्णांक empty, u32 min_slot)
+अणु
+	काष्ठा extent_buffer *left = path->nodes[0];
+	काष्ठा extent_buffer *right;
+	काष्ठा extent_buffer *upper;
+	पूर्णांक slot;
+	पूर्णांक मुक्त_space;
 	u32 left_nritems;
-	int ret;
+	पूर्णांक ret;
 
-	if (!path->nodes[1])
-		return 1;
+	अगर (!path->nodes[1])
+		वापस 1;
 
 	slot = path->slots[1];
 	upper = path->nodes[1];
-	if (slot >= btrfs_header_nritems(upper) - 1)
-		return 1;
+	अगर (slot >= btrfs_header_nritems(upper) - 1)
+		वापस 1;
 
-	btrfs_assert_tree_locked(path->nodes[1]);
+	btrfs_निश्चित_tree_locked(path->nodes[1]);
 
-	right = btrfs_read_node_slot(upper, slot + 1);
+	right = btrfs_पढ़ो_node_slot(upper, slot + 1);
 	/*
-	 * slot + 1 is not valid or we fail to read the right node,
-	 * no big deal, just return.
+	 * slot + 1 is not valid or we fail to पढ़ो the right node,
+	 * no big deal, just वापस.
 	 */
-	if (IS_ERR(right))
-		return 1;
+	अगर (IS_ERR(right))
+		वापस 1;
 
 	__btrfs_tree_lock(right, BTRFS_NESTING_RIGHT);
 
-	free_space = btrfs_leaf_free_space(right);
-	if (free_space < data_size)
-		goto out_unlock;
+	मुक्त_space = btrfs_leaf_मुक्त_space(right);
+	अगर (मुक्त_space < data_size)
+		जाओ out_unlock;
 
-	/* cow and double check */
+	/* cow and द्विगुन check */
 	ret = btrfs_cow_block(trans, root, right, upper,
 			      slot + 1, &right, BTRFS_NESTING_RIGHT_COW);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
-	free_space = btrfs_leaf_free_space(right);
-	if (free_space < data_size)
-		goto out_unlock;
+	मुक्त_space = btrfs_leaf_मुक्त_space(right);
+	अगर (मुक्त_space < data_size)
+		जाओ out_unlock;
 
 	left_nritems = btrfs_header_nritems(left);
-	if (left_nritems == 0)
-		goto out_unlock;
+	अगर (left_nritems == 0)
+		जाओ out_unlock;
 
-	if (check_sibling_keys(left, right)) {
+	अगर (check_sibling_keys(left, right)) अणु
 		ret = -EUCLEAN;
 		btrfs_tree_unlock(right);
-		free_extent_buffer(right);
-		return ret;
-	}
-	if (path->slots[0] == left_nritems && !empty) {
+		मुक्त_extent_buffer(right);
+		वापस ret;
+	पूर्ण
+	अगर (path->slots[0] == left_nritems && !empty) अणु
 		/* Key greater than all keys in the leaf, right neighbor has
-		 * enough room for it and we're not emptying our leaf to delete
-		 * it, therefore use right neighbor to insert the new item and
+		 * enough room क्रम it and we're not emptying our leaf to delete
+		 * it, thereक्रमe use right neighbor to insert the new item and
 		 * no need to touch/dirty our left leaf. */
 		btrfs_tree_unlock(left);
-		free_extent_buffer(left);
+		मुक्त_extent_buffer(left);
 		path->nodes[0] = right;
 		path->slots[0] = 0;
 		path->slots[1]++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return __push_leaf_right(path, min_data_size, empty,
-				right, free_space, left_nritems, min_slot);
+	वापस __push_leaf_right(path, min_data_size, empty,
+				right, मुक्त_space, left_nritems, min_slot);
 out_unlock:
 	btrfs_tree_unlock(right);
-	free_extent_buffer(right);
-	return 1;
-}
+	मुक्त_extent_buffer(right);
+	वापस 1;
+पूर्ण
 
 /*
- * push some data in the path leaf to the left, trying to free up at
- * least data_size bytes.  returns zero if the push worked, nonzero otherwise
+ * push some data in the path leaf to the left, trying to मुक्त up at
+ * least data_size bytes.  वापसs zero अगर the push worked, nonzero otherwise
  *
- * max_slot can put a limit on how far into the leaf we'll push items.  The
- * item at 'max_slot' won't be touched.  Use (u32)-1 to make us do all the
+ * max_slot can put a limit on how far पूर्णांकo the leaf we'll push items.  The
+ * item at 'max_slot' won't be touched.  Use (u32)-1 to make us करो all the
  * items
  */
-static noinline int __push_leaf_left(struct btrfs_path *path, int data_size,
-				     int empty, struct extent_buffer *left,
-				     int free_space, u32 right_nritems,
+अटल noअंतरभूत पूर्णांक __push_leaf_left(काष्ठा btrfs_path *path, पूर्णांक data_size,
+				     पूर्णांक empty, काष्ठा extent_buffer *left,
+				     पूर्णांक मुक्त_space, u32 right_nritems,
 				     u32 max_slot)
-{
-	struct btrfs_fs_info *fs_info = left->fs_info;
-	struct btrfs_disk_key disk_key;
-	struct extent_buffer *right = path->nodes[0];
-	int i;
-	int push_space = 0;
-	int push_items = 0;
-	struct btrfs_item *item;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = left->fs_info;
+	काष्ठा btrfs_disk_key disk_key;
+	काष्ठा extent_buffer *right = path->nodes[0];
+	पूर्णांक i;
+	पूर्णांक push_space = 0;
+	पूर्णांक push_items = 0;
+	काष्ठा btrfs_item *item;
 	u32 old_left_nritems;
 	u32 nr;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u32 this_item_size;
 	u32 old_left_item_size;
-	struct btrfs_map_token token;
+	काष्ठा btrfs_map_token token;
 
-	if (empty)
+	अगर (empty)
 		nr = min(right_nritems, max_slot);
-	else
+	अन्यथा
 		nr = min(right_nritems - 1, max_slot);
 
-	for (i = 0; i < nr; i++) {
+	क्रम (i = 0; i < nr; i++) अणु
 		item = btrfs_item_nr(i);
 
-		if (!empty && push_items > 0) {
-			if (path->slots[0] < i)
-				break;
-			if (path->slots[0] == i) {
-				int space = btrfs_leaf_free_space(right);
+		अगर (!empty && push_items > 0) अणु
+			अगर (path->slots[0] < i)
+				अवरोध;
+			अगर (path->slots[0] == i) अणु
+				पूर्णांक space = btrfs_leaf_मुक्त_space(right);
 
-				if (space + push_space * 2 > free_space)
-					break;
-			}
-		}
+				अगर (space + push_space * 2 > मुक्त_space)
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (path->slots[0] == i)
+		अगर (path->slots[0] == i)
 			push_space += data_size;
 
 		this_item_size = btrfs_item_size(right, item);
-		if (this_item_size + sizeof(*item) + push_space > free_space)
-			break;
+		अगर (this_item_size + माप(*item) + push_space > मुक्त_space)
+			अवरोध;
 
 		push_items++;
-		push_space += this_item_size + sizeof(*item);
-	}
+		push_space += this_item_size + माप(*item);
+	पूर्ण
 
-	if (push_items == 0) {
+	अगर (push_items == 0) अणु
 		ret = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	WARN_ON(!empty && push_items == btrfs_header_nritems(right));
 
 	/* push data from right to left */
 	copy_extent_buffer(left, right,
 			   btrfs_item_nr_offset(btrfs_header_nritems(left)),
 			   btrfs_item_nr_offset(0),
-			   push_items * sizeof(struct btrfs_item));
+			   push_items * माप(काष्ठा btrfs_item));
 
 	push_space = BTRFS_LEAF_DATA_SIZE(fs_info) -
 		     btrfs_item_offset_nr(right, push_items - 1);
@@ -2990,7 +2991,7 @@ static noinline int __push_leaf_left(struct btrfs_path *path, int data_size,
 
 	btrfs_init_map_token(&token, left);
 	old_left_item_size = btrfs_item_offset_nr(left, old_left_nritems - 1);
-	for (i = old_left_nritems; i < old_left_nritems + push_items; i++) {
+	क्रम (i = old_left_nritems; i < old_left_nritems + push_items; i++) अणु
 		u32 ioff;
 
 		item = btrfs_item_nr(i);
@@ -2998,161 +2999,161 @@ static noinline int __push_leaf_left(struct btrfs_path *path, int data_size,
 		ioff = btrfs_token_item_offset(&token, item);
 		btrfs_set_token_item_offset(&token, item,
 		      ioff - (BTRFS_LEAF_DATA_SIZE(fs_info) - old_left_item_size));
-	}
+	पूर्ण
 	btrfs_set_header_nritems(left, old_left_nritems + push_items);
 
 	/* fixup right node */
-	if (push_items > right_nritems)
+	अगर (push_items > right_nritems)
 		WARN(1, KERN_CRIT "push items %d nr %u\n", push_items,
 		       right_nritems);
 
-	if (push_items < right_nritems) {
+	अगर (push_items < right_nritems) अणु
 		push_space = btrfs_item_offset_nr(right, push_items - 1) -
 						  leaf_data_end(right);
-		memmove_extent_buffer(right, BTRFS_LEAF_DATA_OFFSET +
+		स_हटाओ_extent_buffer(right, BTRFS_LEAF_DATA_OFFSET +
 				      BTRFS_LEAF_DATA_SIZE(fs_info) - push_space,
 				      BTRFS_LEAF_DATA_OFFSET +
 				      leaf_data_end(right), push_space);
 
-		memmove_extent_buffer(right, btrfs_item_nr_offset(0),
+		स_हटाओ_extent_buffer(right, btrfs_item_nr_offset(0),
 			      btrfs_item_nr_offset(push_items),
 			     (btrfs_header_nritems(right) - push_items) *
-			     sizeof(struct btrfs_item));
-	}
+			     माप(काष्ठा btrfs_item));
+	पूर्ण
 
 	btrfs_init_map_token(&token, right);
 	right_nritems -= push_items;
 	btrfs_set_header_nritems(right, right_nritems);
 	push_space = BTRFS_LEAF_DATA_SIZE(fs_info);
-	for (i = 0; i < right_nritems; i++) {
+	क्रम (i = 0; i < right_nritems; i++) अणु
 		item = btrfs_item_nr(i);
 
 		push_space = push_space - btrfs_token_item_size(&token, item);
 		btrfs_set_token_item_offset(&token, item, push_space);
-	}
+	पूर्ण
 
 	btrfs_mark_buffer_dirty(left);
-	if (right_nritems)
+	अगर (right_nritems)
 		btrfs_mark_buffer_dirty(right);
-	else
+	अन्यथा
 		btrfs_clean_tree_block(right);
 
 	btrfs_item_key(right, &disk_key, 0);
 	fixup_low_keys(path, &disk_key, 1);
 
-	/* then fixup the leaf pointer in the path */
-	if (path->slots[0] < push_items) {
+	/* then fixup the leaf poपूर्णांकer in the path */
+	अगर (path->slots[0] < push_items) अणु
 		path->slots[0] += old_left_nritems;
 		btrfs_tree_unlock(path->nodes[0]);
-		free_extent_buffer(path->nodes[0]);
+		मुक्त_extent_buffer(path->nodes[0]);
 		path->nodes[0] = left;
 		path->slots[1] -= 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		btrfs_tree_unlock(left);
-		free_extent_buffer(left);
+		मुक्त_extent_buffer(left);
 		path->slots[0] -= push_items;
-	}
+	पूर्ण
 	BUG_ON(path->slots[0] < 0);
-	return ret;
+	वापस ret;
 out:
 	btrfs_tree_unlock(left);
-	free_extent_buffer(left);
-	return ret;
-}
+	मुक्त_extent_buffer(left);
+	वापस ret;
+पूर्ण
 
 /*
- * push some data in the path leaf to the left, trying to free up at
- * least data_size bytes.  returns zero if the push worked, nonzero otherwise
+ * push some data in the path leaf to the left, trying to मुक्त up at
+ * least data_size bytes.  वापसs zero अगर the push worked, nonzero otherwise
  *
- * max_slot can put a limit on how far into the leaf we'll push items.  The
+ * max_slot can put a limit on how far पूर्णांकo the leaf we'll push items.  The
  * item at 'max_slot' won't be touched.  Use (u32)-1 to make us push all the
  * items
  */
-static int push_leaf_left(struct btrfs_trans_handle *trans, struct btrfs_root
-			  *root, struct btrfs_path *path, int min_data_size,
-			  int data_size, int empty, u32 max_slot)
-{
-	struct extent_buffer *right = path->nodes[0];
-	struct extent_buffer *left;
-	int slot;
-	int free_space;
+अटल पूर्णांक push_leaf_left(काष्ठा btrfs_trans_handle *trans, काष्ठा btrfs_root
+			  *root, काष्ठा btrfs_path *path, पूर्णांक min_data_size,
+			  पूर्णांक data_size, पूर्णांक empty, u32 max_slot)
+अणु
+	काष्ठा extent_buffer *right = path->nodes[0];
+	काष्ठा extent_buffer *left;
+	पूर्णांक slot;
+	पूर्णांक मुक्त_space;
 	u32 right_nritems;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	slot = path->slots[1];
-	if (slot == 0)
-		return 1;
-	if (!path->nodes[1])
-		return 1;
+	अगर (slot == 0)
+		वापस 1;
+	अगर (!path->nodes[1])
+		वापस 1;
 
 	right_nritems = btrfs_header_nritems(right);
-	if (right_nritems == 0)
-		return 1;
+	अगर (right_nritems == 0)
+		वापस 1;
 
-	btrfs_assert_tree_locked(path->nodes[1]);
+	btrfs_निश्चित_tree_locked(path->nodes[1]);
 
-	left = btrfs_read_node_slot(path->nodes[1], slot - 1);
+	left = btrfs_पढ़ो_node_slot(path->nodes[1], slot - 1);
 	/*
-	 * slot - 1 is not valid or we fail to read the left node,
-	 * no big deal, just return.
+	 * slot - 1 is not valid or we fail to पढ़ो the left node,
+	 * no big deal, just वापस.
 	 */
-	if (IS_ERR(left))
-		return 1;
+	अगर (IS_ERR(left))
+		वापस 1;
 
 	__btrfs_tree_lock(left, BTRFS_NESTING_LEFT);
 
-	free_space = btrfs_leaf_free_space(left);
-	if (free_space < data_size) {
+	मुक्त_space = btrfs_leaf_मुक्त_space(left);
+	अगर (मुक्त_space < data_size) अणु
 		ret = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* cow and double check */
+	/* cow and द्विगुन check */
 	ret = btrfs_cow_block(trans, root, left,
 			      path->nodes[1], slot - 1, &left,
 			      BTRFS_NESTING_LEFT_COW);
-	if (ret) {
+	अगर (ret) अणु
 		/* we hit -ENOSPC, but it isn't fatal here */
-		if (ret == -ENOSPC)
+		अगर (ret == -ENOSPC)
 			ret = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	free_space = btrfs_leaf_free_space(left);
-	if (free_space < data_size) {
+	मुक्त_space = btrfs_leaf_मुक्त_space(left);
+	अगर (मुक्त_space < data_size) अणु
 		ret = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (check_sibling_keys(left, right)) {
+	अगर (check_sibling_keys(left, right)) अणु
 		ret = -EUCLEAN;
-		goto out;
-	}
-	return __push_leaf_left(path, min_data_size,
-			       empty, left, free_space, right_nritems,
+		जाओ out;
+	पूर्ण
+	वापस __push_leaf_left(path, min_data_size,
+			       empty, left, मुक्त_space, right_nritems,
 			       max_slot);
 out:
 	btrfs_tree_unlock(left);
-	free_extent_buffer(left);
-	return ret;
-}
+	मुक्त_extent_buffer(left);
+	वापस ret;
+पूर्ण
 
 /*
  * split the path's leaf in two, making sure there is at least data_size
- * available for the resulting leaf level of the path.
+ * available क्रम the resulting leaf level of the path.
  */
-static noinline void copy_for_split(struct btrfs_trans_handle *trans,
-				    struct btrfs_path *path,
-				    struct extent_buffer *l,
-				    struct extent_buffer *right,
-				    int slot, int mid, int nritems)
-{
-	struct btrfs_fs_info *fs_info = trans->fs_info;
-	int data_copy_size;
-	int rt_data_off;
-	int i;
-	struct btrfs_disk_key disk_key;
-	struct btrfs_map_token token;
+अटल noअंतरभूत व्योम copy_क्रम_split(काष्ठा btrfs_trans_handle *trans,
+				    काष्ठा btrfs_path *path,
+				    काष्ठा extent_buffer *l,
+				    काष्ठा extent_buffer *right,
+				    पूर्णांक slot, पूर्णांक mid, पूर्णांक nritems)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
+	पूर्णांक data_copy_size;
+	पूर्णांक rt_data_off;
+	पूर्णांक i;
+	काष्ठा btrfs_disk_key disk_key;
+	काष्ठा btrfs_map_token token;
 
 	nritems = nritems - mid;
 	btrfs_set_header_nritems(right, nritems);
@@ -3160,7 +3161,7 @@ static noinline void copy_for_split(struct btrfs_trans_handle *trans,
 
 	copy_extent_buffer(right, l, btrfs_item_nr_offset(0),
 			   btrfs_item_nr_offset(mid),
-			   nritems * sizeof(struct btrfs_item));
+			   nritems * माप(काष्ठा btrfs_item));
 
 	copy_extent_buffer(right, l,
 		     BTRFS_LEAF_DATA_OFFSET + BTRFS_LEAF_DATA_SIZE(fs_info) -
@@ -3170,13 +3171,13 @@ static noinline void copy_for_split(struct btrfs_trans_handle *trans,
 	rt_data_off = BTRFS_LEAF_DATA_SIZE(fs_info) - btrfs_item_end_nr(l, mid);
 
 	btrfs_init_map_token(&token, right);
-	for (i = 0; i < nritems; i++) {
-		struct btrfs_item *item = btrfs_item_nr(i);
+	क्रम (i = 0; i < nritems; i++) अणु
+		काष्ठा btrfs_item *item = btrfs_item_nr(i);
 		u32 ioff;
 
 		ioff = btrfs_token_item_offset(&token, item);
 		btrfs_set_token_item_offset(&token, item, ioff + rt_data_off);
-	}
+	पूर्ण
 
 	btrfs_set_header_nritems(l, mid);
 	btrfs_item_key(right, &disk_key, 0);
@@ -3186,147 +3187,147 @@ static noinline void copy_for_split(struct btrfs_trans_handle *trans,
 	btrfs_mark_buffer_dirty(l);
 	BUG_ON(path->slots[0] != slot);
 
-	if (mid <= slot) {
+	अगर (mid <= slot) अणु
 		btrfs_tree_unlock(path->nodes[0]);
-		free_extent_buffer(path->nodes[0]);
+		मुक्त_extent_buffer(path->nodes[0]);
 		path->nodes[0] = right;
 		path->slots[0] -= mid;
 		path->slots[1] += 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		btrfs_tree_unlock(right);
-		free_extent_buffer(right);
-	}
+		मुक्त_extent_buffer(right);
+	पूर्ण
 
 	BUG_ON(path->slots[0] < 0);
-}
+पूर्ण
 
 /*
- * double splits happen when we need to insert a big item in the middle
- * of a leaf.  A double split can leave us with 3 mostly empty leaves:
+ * द्विगुन splits happen when we need to insert a big item in the middle
+ * of a leaf.  A द्विगुन split can leave us with 3 mostly empty leaves:
  * leaf: [ slots 0 - N] [ our target ] [ N + 1 - total in leaf ]
  *          A                 B                 C
  *
- * We avoid this by trying to push the items on either side of our target
- * into the adjacent leaves.  If all goes well we can avoid the double split
+ * We aव्योम this by trying to push the items on either side of our target
+ * पूर्णांकo the adjacent leaves.  If all goes well we can aव्योम the द्विगुन split
  * completely.
  */
-static noinline int push_for_double_split(struct btrfs_trans_handle *trans,
-					  struct btrfs_root *root,
-					  struct btrfs_path *path,
-					  int data_size)
-{
-	int ret;
-	int progress = 0;
-	int slot;
+अटल noअंतरभूत पूर्णांक push_क्रम_द्विगुन_split(काष्ठा btrfs_trans_handle *trans,
+					  काष्ठा btrfs_root *root,
+					  काष्ठा btrfs_path *path,
+					  पूर्णांक data_size)
+अणु
+	पूर्णांक ret;
+	पूर्णांक progress = 0;
+	पूर्णांक slot;
 	u32 nritems;
-	int space_needed = data_size;
+	पूर्णांक space_needed = data_size;
 
 	slot = path->slots[0];
-	if (slot < btrfs_header_nritems(path->nodes[0]))
-		space_needed -= btrfs_leaf_free_space(path->nodes[0]);
+	अगर (slot < btrfs_header_nritems(path->nodes[0]))
+		space_needed -= btrfs_leaf_मुक्त_space(path->nodes[0]);
 
 	/*
-	 * try to push all the items after our slot into the
+	 * try to push all the items after our slot पूर्णांकo the
 	 * right leaf
 	 */
 	ret = push_leaf_right(trans, root, path, 1, space_needed, 0, slot);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret == 0)
+	अगर (ret == 0)
 		progress++;
 
 	nritems = btrfs_header_nritems(path->nodes[0]);
 	/*
 	 * our goal is to get our slot at the start or end of a leaf.  If
-	 * we've done so we're done
+	 * we've done so we're करोne
 	 */
-	if (path->slots[0] == 0 || path->slots[0] == nritems)
-		return 0;
+	अगर (path->slots[0] == 0 || path->slots[0] == nritems)
+		वापस 0;
 
-	if (btrfs_leaf_free_space(path->nodes[0]) >= data_size)
-		return 0;
+	अगर (btrfs_leaf_मुक्त_space(path->nodes[0]) >= data_size)
+		वापस 0;
 
-	/* try to push all the items before our slot into the next leaf */
+	/* try to push all the items beक्रमe our slot पूर्णांकo the next leaf */
 	slot = path->slots[0];
 	space_needed = data_size;
-	if (slot > 0)
-		space_needed -= btrfs_leaf_free_space(path->nodes[0]);
+	अगर (slot > 0)
+		space_needed -= btrfs_leaf_मुक्त_space(path->nodes[0]);
 	ret = push_leaf_left(trans, root, path, 1, space_needed, 0, slot);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret == 0)
+	अगर (ret == 0)
 		progress++;
 
-	if (progress)
-		return 0;
-	return 1;
-}
+	अगर (progress)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 /*
  * split the path's leaf in two, making sure there is at least data_size
- * available for the resulting leaf level of the path.
+ * available क्रम the resulting leaf level of the path.
  *
- * returns 0 if all went well and < 0 on failure.
+ * वापसs 0 अगर all went well and < 0 on failure.
  */
-static noinline int split_leaf(struct btrfs_trans_handle *trans,
-			       struct btrfs_root *root,
-			       const struct btrfs_key *ins_key,
-			       struct btrfs_path *path, int data_size,
-			       int extend)
-{
-	struct btrfs_disk_key disk_key;
-	struct extent_buffer *l;
+अटल noअंतरभूत पूर्णांक split_leaf(काष्ठा btrfs_trans_handle *trans,
+			       काष्ठा btrfs_root *root,
+			       स्थिर काष्ठा btrfs_key *ins_key,
+			       काष्ठा btrfs_path *path, पूर्णांक data_size,
+			       पूर्णांक extend)
+अणु
+	काष्ठा btrfs_disk_key disk_key;
+	काष्ठा extent_buffer *l;
 	u32 nritems;
-	int mid;
-	int slot;
-	struct extent_buffer *right;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	int ret = 0;
-	int wret;
-	int split;
-	int num_doubles = 0;
-	int tried_avoid_double = 0;
+	पूर्णांक mid;
+	पूर्णांक slot;
+	काष्ठा extent_buffer *right;
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	पूर्णांक ret = 0;
+	पूर्णांक wret;
+	पूर्णांक split;
+	पूर्णांक num_द्विगुनs = 0;
+	पूर्णांक tried_aव्योम_द्विगुन = 0;
 
 	l = path->nodes[0];
 	slot = path->slots[0];
-	if (extend && data_size + btrfs_item_size_nr(l, slot) +
-	    sizeof(struct btrfs_item) > BTRFS_LEAF_DATA_SIZE(fs_info))
-		return -EOVERFLOW;
+	अगर (extend && data_size + btrfs_item_size_nr(l, slot) +
+	    माप(काष्ठा btrfs_item) > BTRFS_LEAF_DATA_SIZE(fs_info))
+		वापस -EOVERFLOW;
 
 	/* first try to make some room by pushing left and right */
-	if (data_size && path->nodes[1]) {
-		int space_needed = data_size;
+	अगर (data_size && path->nodes[1]) अणु
+		पूर्णांक space_needed = data_size;
 
-		if (slot < btrfs_header_nritems(l))
-			space_needed -= btrfs_leaf_free_space(l);
+		अगर (slot < btrfs_header_nritems(l))
+			space_needed -= btrfs_leaf_मुक्त_space(l);
 
 		wret = push_leaf_right(trans, root, path, space_needed,
 				       space_needed, 0, 0);
-		if (wret < 0)
-			return wret;
-		if (wret) {
+		अगर (wret < 0)
+			वापस wret;
+		अगर (wret) अणु
 			space_needed = data_size;
-			if (slot > 0)
-				space_needed -= btrfs_leaf_free_space(l);
+			अगर (slot > 0)
+				space_needed -= btrfs_leaf_मुक्त_space(l);
 			wret = push_leaf_left(trans, root, path, space_needed,
 					      space_needed, 0, (u32)-1);
-			if (wret < 0)
-				return wret;
-		}
+			अगर (wret < 0)
+				वापस wret;
+		पूर्ण
 		l = path->nodes[0];
 
 		/* did the pushes work? */
-		if (btrfs_leaf_free_space(l) >= data_size)
-			return 0;
-	}
+		अगर (btrfs_leaf_मुक्त_space(l) >= data_size)
+			वापस 0;
+	पूर्ण
 
-	if (!path->nodes[1]) {
+	अगर (!path->nodes[1]) अणु
 		ret = insert_new_root(trans, root, path, 1);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 again:
 	split = 1;
 	l = path->nodes[0];
@@ -3334,122 +3335,122 @@ again:
 	nritems = btrfs_header_nritems(l);
 	mid = (nritems + 1) / 2;
 
-	if (mid <= slot) {
-		if (nritems == 1 ||
+	अगर (mid <= slot) अणु
+		अगर (nritems == 1 ||
 		    leaf_space_used(l, mid, nritems - mid) + data_size >
-			BTRFS_LEAF_DATA_SIZE(fs_info)) {
-			if (slot >= nritems) {
+			BTRFS_LEAF_DATA_SIZE(fs_info)) अणु
+			अगर (slot >= nritems) अणु
 				split = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				mid = slot;
-				if (mid != nritems &&
+				अगर (mid != nritems &&
 				    leaf_space_used(l, mid, nritems - mid) +
-				    data_size > BTRFS_LEAF_DATA_SIZE(fs_info)) {
-					if (data_size && !tried_avoid_double)
-						goto push_for_double;
+				    data_size > BTRFS_LEAF_DATA_SIZE(fs_info)) अणु
+					अगर (data_size && !tried_aव्योम_द्विगुन)
+						जाओ push_क्रम_द्विगुन;
 					split = 2;
-				}
-			}
-		}
-	} else {
-		if (leaf_space_used(l, 0, mid) + data_size >
-			BTRFS_LEAF_DATA_SIZE(fs_info)) {
-			if (!extend && data_size && slot == 0) {
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (leaf_space_used(l, 0, mid) + data_size >
+			BTRFS_LEAF_DATA_SIZE(fs_info)) अणु
+			अगर (!extend && data_size && slot == 0) अणु
 				split = 0;
-			} else if ((extend || !data_size) && slot == 0) {
+			पूर्ण अन्यथा अगर ((extend || !data_size) && slot == 0) अणु
 				mid = 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				mid = slot;
-				if (mid != nritems &&
+				अगर (mid != nritems &&
 				    leaf_space_used(l, mid, nritems - mid) +
-				    data_size > BTRFS_LEAF_DATA_SIZE(fs_info)) {
-					if (data_size && !tried_avoid_double)
-						goto push_for_double;
+				    data_size > BTRFS_LEAF_DATA_SIZE(fs_info)) अणु
+					अगर (data_size && !tried_aव्योम_द्विगुन)
+						जाओ push_क्रम_द्विगुन;
 					split = 2;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (split == 0)
+	अगर (split == 0)
 		btrfs_cpu_key_to_disk(&disk_key, ins_key);
-	else
+	अन्यथा
 		btrfs_item_key(l, &disk_key, mid);
 
 	/*
-	 * We have to about BTRFS_NESTING_NEW_ROOT here if we've done a double
+	 * We have to about BTRFS_NESTING_NEW_ROOT here अगर we've करोne a द्विगुन
 	 * split, because we're only allowed to have MAX_LOCKDEP_SUBCLASSES
-	 * subclasses, which is 8 at the time of this patch, and we've maxed it
+	 * subclasses, which is 8 at the समय of this patch, and we've maxed it
 	 * out.  In the future we could add a
-	 * BTRFS_NESTING_SPLIT_THE_SPLITTENING if we need to, but for now just
+	 * BTRFS_NESTING_SPLIT_THE_SPLITTENING अगर we need to, but क्रम now just
 	 * use BTRFS_NESTING_NEW_ROOT.
 	 */
 	right = alloc_tree_block_no_bg_flush(trans, root, 0, &disk_key, 0,
-					     l->start, 0, num_doubles ?
+					     l->start, 0, num_द्विगुनs ?
 					     BTRFS_NESTING_NEW_ROOT :
 					     BTRFS_NESTING_SPLIT);
-	if (IS_ERR(right))
-		return PTR_ERR(right);
+	अगर (IS_ERR(right))
+		वापस PTR_ERR(right);
 
 	root_add_used(root, fs_info->nodesize);
 
-	if (split == 0) {
-		if (mid <= slot) {
+	अगर (split == 0) अणु
+		अगर (mid <= slot) अणु
 			btrfs_set_header_nritems(right, 0);
 			insert_ptr(trans, path, &disk_key,
 				   right->start, path->slots[1] + 1, 1);
 			btrfs_tree_unlock(path->nodes[0]);
-			free_extent_buffer(path->nodes[0]);
+			मुक्त_extent_buffer(path->nodes[0]);
 			path->nodes[0] = right;
 			path->slots[0] = 0;
 			path->slots[1] += 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			btrfs_set_header_nritems(right, 0);
 			insert_ptr(trans, path, &disk_key,
 				   right->start, path->slots[1], 1);
 			btrfs_tree_unlock(path->nodes[0]);
-			free_extent_buffer(path->nodes[0]);
+			मुक्त_extent_buffer(path->nodes[0]);
 			path->nodes[0] = right;
 			path->slots[0] = 0;
-			if (path->slots[1] == 0)
+			अगर (path->slots[1] == 0)
 				fixup_low_keys(path, &disk_key, 1);
-		}
+		पूर्ण
 		/*
-		 * We create a new leaf 'right' for the required ins_len and
-		 * we'll do btrfs_mark_buffer_dirty() on this leaf after copying
+		 * We create a new leaf 'right' क्रम the required ins_len and
+		 * we'll करो btrfs_mark_buffer_dirty() on this leaf after copying
 		 * the content of ins_len to 'right'.
 		 */
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	copy_for_split(trans, path, l, right, slot, mid, nritems);
+	copy_क्रम_split(trans, path, l, right, slot, mid, nritems);
 
-	if (split == 2) {
-		BUG_ON(num_doubles != 0);
-		num_doubles++;
-		goto again;
-	}
+	अगर (split == 2) अणु
+		BUG_ON(num_द्विगुनs != 0);
+		num_द्विगुनs++;
+		जाओ again;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-push_for_double:
-	push_for_double_split(trans, root, path, data_size);
-	tried_avoid_double = 1;
-	if (btrfs_leaf_free_space(path->nodes[0]) >= data_size)
-		return 0;
-	goto again;
-}
+push_क्रम_द्विगुन:
+	push_क्रम_द्विगुन_split(trans, root, path, data_size);
+	tried_aव्योम_द्विगुन = 1;
+	अगर (btrfs_leaf_मुक्त_space(path->nodes[0]) >= data_size)
+		वापस 0;
+	जाओ again;
+पूर्ण
 
-static noinline int setup_leaf_for_split(struct btrfs_trans_handle *trans,
-					 struct btrfs_root *root,
-					 struct btrfs_path *path, int ins_len)
-{
-	struct btrfs_key key;
-	struct extent_buffer *leaf;
-	struct btrfs_file_extent_item *fi;
+अटल noअंतरभूत पूर्णांक setup_leaf_क्रम_split(काष्ठा btrfs_trans_handle *trans,
+					 काष्ठा btrfs_root *root,
+					 काष्ठा btrfs_path *path, पूर्णांक ins_len)
+अणु
+	काष्ठा btrfs_key key;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_file_extent_item *fi;
 	u64 extent_len = 0;
 	u32 item_size;
-	int ret;
+	पूर्णांक ret;
 
 	leaf = path->nodes[0];
 	btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
@@ -3457,91 +3458,91 @@ static noinline int setup_leaf_for_split(struct btrfs_trans_handle *trans,
 	BUG_ON(key.type != BTRFS_EXTENT_DATA_KEY &&
 	       key.type != BTRFS_EXTENT_CSUM_KEY);
 
-	if (btrfs_leaf_free_space(leaf) >= ins_len)
-		return 0;
+	अगर (btrfs_leaf_मुक्त_space(leaf) >= ins_len)
+		वापस 0;
 
 	item_size = btrfs_item_size_nr(leaf, path->slots[0]);
-	if (key.type == BTRFS_EXTENT_DATA_KEY) {
+	अगर (key.type == BTRFS_EXTENT_DATA_KEY) अणु
 		fi = btrfs_item_ptr(leaf, path->slots[0],
-				    struct btrfs_file_extent_item);
+				    काष्ठा btrfs_file_extent_item);
 		extent_len = btrfs_file_extent_num_bytes(leaf, fi);
-	}
+	पूर्ण
 	btrfs_release_path(path);
 
 	path->keep_locks = 1;
-	path->search_for_split = 1;
+	path->search_क्रम_split = 1;
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
-	path->search_for_split = 0;
-	if (ret > 0)
+	path->search_क्रम_split = 0;
+	अगर (ret > 0)
 		ret = -EAGAIN;
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
 	ret = -EAGAIN;
 	leaf = path->nodes[0];
-	/* if our item isn't there, return now */
-	if (item_size != btrfs_item_size_nr(leaf, path->slots[0]))
-		goto err;
+	/* अगर our item isn't there, वापस now */
+	अगर (item_size != btrfs_item_size_nr(leaf, path->slots[0]))
+		जाओ err;
 
-	/* the leaf has  changed, it now has room.  return now */
-	if (btrfs_leaf_free_space(path->nodes[0]) >= ins_len)
-		goto err;
+	/* the leaf has  changed, it now has room.  वापस now */
+	अगर (btrfs_leaf_मुक्त_space(path->nodes[0]) >= ins_len)
+		जाओ err;
 
-	if (key.type == BTRFS_EXTENT_DATA_KEY) {
+	अगर (key.type == BTRFS_EXTENT_DATA_KEY) अणु
 		fi = btrfs_item_ptr(leaf, path->slots[0],
-				    struct btrfs_file_extent_item);
-		if (extent_len != btrfs_file_extent_num_bytes(leaf, fi))
-			goto err;
-	}
+				    काष्ठा btrfs_file_extent_item);
+		अगर (extent_len != btrfs_file_extent_num_bytes(leaf, fi))
+			जाओ err;
+	पूर्ण
 
 	ret = split_leaf(trans, root, &key, path, ins_len, 1);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	path->keep_locks = 0;
 	btrfs_unlock_up_safe(path, 1);
-	return 0;
+	वापस 0;
 err:
 	path->keep_locks = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static noinline int split_item(struct btrfs_path *path,
-			       const struct btrfs_key *new_key,
-			       unsigned long split_offset)
-{
-	struct extent_buffer *leaf;
-	struct btrfs_item *item;
-	struct btrfs_item *new_item;
-	int slot;
-	char *buf;
+अटल noअंतरभूत पूर्णांक split_item(काष्ठा btrfs_path *path,
+			       स्थिर काष्ठा btrfs_key *new_key,
+			       अचिन्हित दीर्घ split_offset)
+अणु
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_item *item;
+	काष्ठा btrfs_item *new_item;
+	पूर्णांक slot;
+	अक्षर *buf;
 	u32 nritems;
 	u32 item_size;
 	u32 orig_offset;
-	struct btrfs_disk_key disk_key;
+	काष्ठा btrfs_disk_key disk_key;
 
 	leaf = path->nodes[0];
-	BUG_ON(btrfs_leaf_free_space(leaf) < sizeof(struct btrfs_item));
+	BUG_ON(btrfs_leaf_मुक्त_space(leaf) < माप(काष्ठा btrfs_item));
 
 	item = btrfs_item_nr(path->slots[0]);
 	orig_offset = btrfs_item_offset(leaf, item);
 	item_size = btrfs_item_size(leaf, item);
 
-	buf = kmalloc(item_size, GFP_NOFS);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(item_size, GFP_NOFS);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	read_extent_buffer(leaf, buf, btrfs_item_ptr_offset(leaf,
+	पढ़ो_extent_buffer(leaf, buf, btrfs_item_ptr_offset(leaf,
 			    path->slots[0]), item_size);
 
 	slot = path->slots[0] + 1;
 	nritems = btrfs_header_nritems(leaf);
-	if (slot != nritems) {
-		/* shift the items */
-		memmove_extent_buffer(leaf, btrfs_item_nr_offset(slot + 1),
+	अगर (slot != nritems) अणु
+		/* shअगरt the items */
+		स_हटाओ_extent_buffer(leaf, btrfs_item_nr_offset(slot + 1),
 				btrfs_item_nr_offset(slot),
-				(nritems - slot) * sizeof(struct btrfs_item));
-	}
+				(nritems - slot) * माप(काष्ठा btrfs_item));
+	पूर्ण
 
 	btrfs_cpu_key_to_disk(&disk_key, new_key);
 	btrfs_set_item_key(leaf, &disk_key, slot);
@@ -3557,52 +3558,52 @@ static noinline int split_item(struct btrfs_path *path,
 
 	btrfs_set_header_nritems(leaf, nritems + 1);
 
-	/* write the data for the start of the original item */
-	write_extent_buffer(leaf, buf,
+	/* ग_लिखो the data क्रम the start of the original item */
+	ग_लिखो_extent_buffer(leaf, buf,
 			    btrfs_item_ptr_offset(leaf, path->slots[0]),
 			    split_offset);
 
-	/* write the data for the new item */
-	write_extent_buffer(leaf, buf + split_offset,
+	/* ग_लिखो the data क्रम the new item */
+	ग_लिखो_extent_buffer(leaf, buf + split_offset,
 			    btrfs_item_ptr_offset(leaf, slot),
 			    item_size - split_offset);
 	btrfs_mark_buffer_dirty(leaf);
 
-	BUG_ON(btrfs_leaf_free_space(leaf) < 0);
-	kfree(buf);
-	return 0;
-}
+	BUG_ON(btrfs_leaf_मुक्त_space(leaf) < 0);
+	kमुक्त(buf);
+	वापस 0;
+पूर्ण
 
 /*
- * This function splits a single item into two items,
+ * This function splits a single item पूर्णांकo two items,
  * giving 'new_key' to the new item and splitting the
  * old one at split_offset (from the start of the item).
  *
  * The path may be released by this operation.  After
- * the split, the path is pointing to the old item.  The
+ * the split, the path is poपूर्णांकing to the old item.  The
  * new item is going to be in the same node as the old one.
  *
  * Note, the item being split must be smaller enough to live alone on
- * a tree block with room for one extra struct btrfs_item
+ * a tree block with room क्रम one extra काष्ठा btrfs_item
  *
  * This allows us to split the item in place, keeping a lock on the
- * leaf the entire time.
+ * leaf the entire समय.
  */
-int btrfs_split_item(struct btrfs_trans_handle *trans,
-		     struct btrfs_root *root,
-		     struct btrfs_path *path,
-		     const struct btrfs_key *new_key,
-		     unsigned long split_offset)
-{
-	int ret;
-	ret = setup_leaf_for_split(trans, root, path,
-				   sizeof(struct btrfs_item));
-	if (ret)
-		return ret;
+पूर्णांक btrfs_split_item(काष्ठा btrfs_trans_handle *trans,
+		     काष्ठा btrfs_root *root,
+		     काष्ठा btrfs_path *path,
+		     स्थिर काष्ठा btrfs_key *new_key,
+		     अचिन्हित दीर्घ split_offset)
+अणु
+	पूर्णांक ret;
+	ret = setup_leaf_क्रम_split(trans, root, path,
+				   माप(काष्ठा btrfs_item));
+	अगर (ret)
+		वापस ret;
 
 	ret = split_item(path, new_key, split_offset);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This function duplicate a item, giving 'new_key' to the new item.
@@ -3610,66 +3611,66 @@ int btrfs_split_item(struct btrfs_trans_handle *trans,
  * is contiguous with the original item.
  *
  * This allows us to split file extent in place, keeping a lock on the
- * leaf the entire time.
+ * leaf the entire समय.
  */
-int btrfs_duplicate_item(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root,
-			 struct btrfs_path *path,
-			 const struct btrfs_key *new_key)
-{
-	struct extent_buffer *leaf;
-	int ret;
+पूर्णांक btrfs_duplicate_item(काष्ठा btrfs_trans_handle *trans,
+			 काष्ठा btrfs_root *root,
+			 काष्ठा btrfs_path *path,
+			 स्थिर काष्ठा btrfs_key *new_key)
+अणु
+	काष्ठा extent_buffer *leaf;
+	पूर्णांक ret;
 	u32 item_size;
 
 	leaf = path->nodes[0];
 	item_size = btrfs_item_size_nr(leaf, path->slots[0]);
-	ret = setup_leaf_for_split(trans, root, path,
-				   item_size + sizeof(struct btrfs_item));
-	if (ret)
-		return ret;
+	ret = setup_leaf_क्रम_split(trans, root, path,
+				   item_size + माप(काष्ठा btrfs_item));
+	अगर (ret)
+		वापस ret;
 
 	path->slots[0]++;
-	setup_items_for_insert(root, path, new_key, &item_size, 1);
+	setup_items_क्रम_insert(root, path, new_key, &item_size, 1);
 	leaf = path->nodes[0];
-	memcpy_extent_buffer(leaf,
+	स_नकल_extent_buffer(leaf,
 			     btrfs_item_ptr_offset(leaf, path->slots[0]),
 			     btrfs_item_ptr_offset(leaf, path->slots[0] - 1),
 			     item_size);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * make the item pointed to by the path smaller.  new_size indicates
- * how small to make it, and from_end tells us if we just chop bytes
- * off the end of the item or if we shift the item to chop bytes off
+ * make the item poपूर्णांकed to by the path smaller.  new_size indicates
+ * how small to make it, and from_end tells us अगर we just chop bytes
+ * off the end of the item or अगर we shअगरt the item to chop bytes off
  * the front.
  */
-void btrfs_truncate_item(struct btrfs_path *path, u32 new_size, int from_end)
-{
-	int slot;
-	struct extent_buffer *leaf;
-	struct btrfs_item *item;
+व्योम btrfs_truncate_item(काष्ठा btrfs_path *path, u32 new_size, पूर्णांक from_end)
+अणु
+	पूर्णांक slot;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_item *item;
 	u32 nritems;
-	unsigned int data_end;
-	unsigned int old_data_start;
-	unsigned int old_size;
-	unsigned int size_diff;
-	int i;
-	struct btrfs_map_token token;
+	अचिन्हित पूर्णांक data_end;
+	अचिन्हित पूर्णांक old_data_start;
+	अचिन्हित पूर्णांक old_size;
+	अचिन्हित पूर्णांक size_dअगरf;
+	पूर्णांक i;
+	काष्ठा btrfs_map_token token;
 
 	leaf = path->nodes[0];
 	slot = path->slots[0];
 
 	old_size = btrfs_item_size_nr(leaf, slot);
-	if (old_size == new_size)
-		return;
+	अगर (old_size == new_size)
+		वापस;
 
 	nritems = btrfs_header_nritems(leaf);
 	data_end = leaf_data_end(leaf);
 
 	old_data_start = btrfs_item_offset_nr(leaf, slot);
 
-	size_diff = old_size - new_size;
+	size_dअगरf = old_size - new_size;
 
 	BUG_ON(slot < 0);
 	BUG_ON(slot >= nritems);
@@ -3677,116 +3678,116 @@ void btrfs_truncate_item(struct btrfs_path *path, u32 new_size, int from_end)
 	/*
 	 * item0..itemN ... dataN.offset..dataN.size .. data0.size
 	 */
-	/* first correct the data pointers */
+	/* first correct the data poपूर्णांकers */
 	btrfs_init_map_token(&token, leaf);
-	for (i = slot; i < nritems; i++) {
+	क्रम (i = slot; i < nritems; i++) अणु
 		u32 ioff;
 		item = btrfs_item_nr(i);
 
 		ioff = btrfs_token_item_offset(&token, item);
-		btrfs_set_token_item_offset(&token, item, ioff + size_diff);
-	}
+		btrfs_set_token_item_offset(&token, item, ioff + size_dअगरf);
+	पूर्ण
 
-	/* shift the data */
-	if (from_end) {
-		memmove_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
-			      data_end + size_diff, BTRFS_LEAF_DATA_OFFSET +
+	/* shअगरt the data */
+	अगर (from_end) अणु
+		स_हटाओ_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
+			      data_end + size_dअगरf, BTRFS_LEAF_DATA_OFFSET +
 			      data_end, old_data_start + new_size - data_end);
-	} else {
-		struct btrfs_disk_key disk_key;
+	पूर्ण अन्यथा अणु
+		काष्ठा btrfs_disk_key disk_key;
 		u64 offset;
 
 		btrfs_item_key(leaf, &disk_key, slot);
 
-		if (btrfs_disk_key_type(&disk_key) == BTRFS_EXTENT_DATA_KEY) {
-			unsigned long ptr;
-			struct btrfs_file_extent_item *fi;
+		अगर (btrfs_disk_key_type(&disk_key) == BTRFS_EXTENT_DATA_KEY) अणु
+			अचिन्हित दीर्घ ptr;
+			काष्ठा btrfs_file_extent_item *fi;
 
 			fi = btrfs_item_ptr(leaf, slot,
-					    struct btrfs_file_extent_item);
-			fi = (struct btrfs_file_extent_item *)(
-			     (unsigned long)fi - size_diff);
+					    काष्ठा btrfs_file_extent_item);
+			fi = (काष्ठा btrfs_file_extent_item *)(
+			     (अचिन्हित दीर्घ)fi - size_dअगरf);
 
-			if (btrfs_file_extent_type(leaf, fi) ==
-			    BTRFS_FILE_EXTENT_INLINE) {
+			अगर (btrfs_file_extent_type(leaf, fi) ==
+			    BTRFS_खाता_EXTENT_INLINE) अणु
 				ptr = btrfs_item_ptr_offset(leaf, slot);
-				memmove_extent_buffer(leaf, ptr,
-				      (unsigned long)fi,
-				      BTRFS_FILE_EXTENT_INLINE_DATA_START);
-			}
-		}
+				स_हटाओ_extent_buffer(leaf, ptr,
+				      (अचिन्हित दीर्घ)fi,
+				      BTRFS_खाता_EXTENT_INLINE_DATA_START);
+			पूर्ण
+		पूर्ण
 
-		memmove_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
-			      data_end + size_diff, BTRFS_LEAF_DATA_OFFSET +
+		स_हटाओ_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
+			      data_end + size_dअगरf, BTRFS_LEAF_DATA_OFFSET +
 			      data_end, old_data_start - data_end);
 
 		offset = btrfs_disk_key_offset(&disk_key);
-		btrfs_set_disk_key_offset(&disk_key, offset + size_diff);
+		btrfs_set_disk_key_offset(&disk_key, offset + size_dअगरf);
 		btrfs_set_item_key(leaf, &disk_key, slot);
-		if (slot == 0)
+		अगर (slot == 0)
 			fixup_low_keys(path, &disk_key, 1);
-	}
+	पूर्ण
 
 	item = btrfs_item_nr(slot);
 	btrfs_set_item_size(leaf, item, new_size);
 	btrfs_mark_buffer_dirty(leaf);
 
-	if (btrfs_leaf_free_space(leaf) < 0) {
-		btrfs_print_leaf(leaf);
+	अगर (btrfs_leaf_मुक्त_space(leaf) < 0) अणु
+		btrfs_prपूर्णांक_leaf(leaf);
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * make the item pointed to by the path bigger, data_size is the added size.
+ * make the item poपूर्णांकed to by the path bigger, data_size is the added size.
  */
-void btrfs_extend_item(struct btrfs_path *path, u32 data_size)
-{
-	int slot;
-	struct extent_buffer *leaf;
-	struct btrfs_item *item;
+व्योम btrfs_extend_item(काष्ठा btrfs_path *path, u32 data_size)
+अणु
+	पूर्णांक slot;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_item *item;
 	u32 nritems;
-	unsigned int data_end;
-	unsigned int old_data;
-	unsigned int old_size;
-	int i;
-	struct btrfs_map_token token;
+	अचिन्हित पूर्णांक data_end;
+	अचिन्हित पूर्णांक old_data;
+	अचिन्हित पूर्णांक old_size;
+	पूर्णांक i;
+	काष्ठा btrfs_map_token token;
 
 	leaf = path->nodes[0];
 
 	nritems = btrfs_header_nritems(leaf);
 	data_end = leaf_data_end(leaf);
 
-	if (btrfs_leaf_free_space(leaf) < data_size) {
-		btrfs_print_leaf(leaf);
+	अगर (btrfs_leaf_मुक्त_space(leaf) < data_size) अणु
+		btrfs_prपूर्णांक_leaf(leaf);
 		BUG();
-	}
+	पूर्ण
 	slot = path->slots[0];
 	old_data = btrfs_item_end_nr(leaf, slot);
 
 	BUG_ON(slot < 0);
-	if (slot >= nritems) {
-		btrfs_print_leaf(leaf);
+	अगर (slot >= nritems) अणु
+		btrfs_prपूर्णांक_leaf(leaf);
 		btrfs_crit(leaf->fs_info, "slot %d too large, nritems %d",
 			   slot, nritems);
 		BUG();
-	}
+	पूर्ण
 
 	/*
 	 * item0..itemN ... dataN.offset..dataN.size .. data0.size
 	 */
-	/* first correct the data pointers */
+	/* first correct the data poपूर्णांकers */
 	btrfs_init_map_token(&token, leaf);
-	for (i = slot; i < nritems; i++) {
+	क्रम (i = slot; i < nritems; i++) अणु
 		u32 ioff;
 		item = btrfs_item_nr(i);
 
 		ioff = btrfs_token_item_offset(&token, item);
 		btrfs_set_token_item_offset(&token, item, ioff - data_size);
-	}
+	पूर्ण
 
-	/* shift the data */
-	memmove_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
+	/* shअगरt the data */
+	स_हटाओ_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
 		      data_end - data_size, BTRFS_LEAF_DATA_OFFSET +
 		      data_end, old_data - data_end);
 
@@ -3796,47 +3797,47 @@ void btrfs_extend_item(struct btrfs_path *path, u32 data_size)
 	btrfs_set_item_size(leaf, item, old_size + data_size);
 	btrfs_mark_buffer_dirty(leaf);
 
-	if (btrfs_leaf_free_space(leaf) < 0) {
-		btrfs_print_leaf(leaf);
+	अगर (btrfs_leaf_मुक्त_space(leaf) < 0) अणु
+		btrfs_prपूर्णांक_leaf(leaf);
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * setup_items_for_insert - Helper called before inserting one or more items
- * to a leaf. Main purpose is to save stack depth by doing the bulk of the work
- * in a function that doesn't call btrfs_search_slot
+ * setup_items_क्रम_insert - Helper called beक्रमe inserting one or more items
+ * to a leaf. Main purpose is to save stack depth by करोing the bulk of the work
+ * in a function that करोesn't call btrfs_search_slot
  *
  * @root:	root we are inserting items to
- * @path:	points to the leaf/slot where we are going to insert new items
- * @cpu_key:	array of keys for items to be inserted
+ * @path:	poपूर्णांकs to the leaf/slot where we are going to insert new items
+ * @cpu_key:	array of keys क्रम items to be inserted
  * @data_size:	size of the body of each item we are going to insert
  * @nr:		size of @cpu_key/@data_size arrays
  */
-void setup_items_for_insert(struct btrfs_root *root, struct btrfs_path *path,
-			    const struct btrfs_key *cpu_key, u32 *data_size,
-			    int nr)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_item *item;
-	int i;
+व्योम setup_items_क्रम_insert(काष्ठा btrfs_root *root, काष्ठा btrfs_path *path,
+			    स्थिर काष्ठा btrfs_key *cpu_key, u32 *data_size,
+			    पूर्णांक nr)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_item *item;
+	पूर्णांक i;
 	u32 nritems;
-	unsigned int data_end;
-	struct btrfs_disk_key disk_key;
-	struct extent_buffer *leaf;
-	int slot;
-	struct btrfs_map_token token;
+	अचिन्हित पूर्णांक data_end;
+	काष्ठा btrfs_disk_key disk_key;
+	काष्ठा extent_buffer *leaf;
+	पूर्णांक slot;
+	काष्ठा btrfs_map_token token;
 	u32 total_size;
 	u32 total_data = 0;
 
-	for (i = 0; i < nr; i++)
+	क्रम (i = 0; i < nr; i++)
 		total_data += data_size[i];
-	total_size = total_data + (nr * sizeof(struct btrfs_item));
+	total_size = total_data + (nr * माप(काष्ठा btrfs_item));
 
-	if (path->slots[0] == 0) {
+	अगर (path->slots[0] == 0) अणु
 		btrfs_cpu_key_to_disk(&disk_key, cpu_key);
 		fixup_low_keys(path, &disk_key, 1);
-	}
+	पूर्ण
 	btrfs_unlock_up_safe(path, 1);
 
 	leaf = path->nodes[0];
@@ -3845,193 +3846,193 @@ void setup_items_for_insert(struct btrfs_root *root, struct btrfs_path *path,
 	nritems = btrfs_header_nritems(leaf);
 	data_end = leaf_data_end(leaf);
 
-	if (btrfs_leaf_free_space(leaf) < total_size) {
-		btrfs_print_leaf(leaf);
+	अगर (btrfs_leaf_मुक्त_space(leaf) < total_size) अणु
+		btrfs_prपूर्णांक_leaf(leaf);
 		btrfs_crit(fs_info, "not enough freespace need %u have %d",
-			   total_size, btrfs_leaf_free_space(leaf));
+			   total_size, btrfs_leaf_मुक्त_space(leaf));
 		BUG();
-	}
+	पूर्ण
 
 	btrfs_init_map_token(&token, leaf);
-	if (slot != nritems) {
-		unsigned int old_data = btrfs_item_end_nr(leaf, slot);
+	अगर (slot != nritems) अणु
+		अचिन्हित पूर्णांक old_data = btrfs_item_end_nr(leaf, slot);
 
-		if (old_data < data_end) {
-			btrfs_print_leaf(leaf);
+		अगर (old_data < data_end) अणु
+			btrfs_prपूर्णांक_leaf(leaf);
 			btrfs_crit(fs_info,
 		"item at slot %d with data offset %u beyond data end of leaf %u",
 				   slot, old_data, data_end);
 			BUG();
-		}
+		पूर्ण
 		/*
 		 * item0..itemN ... dataN.offset..dataN.size .. data0.size
 		 */
-		/* first correct the data pointers */
-		for (i = slot; i < nritems; i++) {
+		/* first correct the data poपूर्णांकers */
+		क्रम (i = slot; i < nritems; i++) अणु
 			u32 ioff;
 
 			item = btrfs_item_nr(i);
 			ioff = btrfs_token_item_offset(&token, item);
 			btrfs_set_token_item_offset(&token, item,
 						    ioff - total_data);
-		}
-		/* shift the items */
-		memmove_extent_buffer(leaf, btrfs_item_nr_offset(slot + nr),
+		पूर्ण
+		/* shअगरt the items */
+		स_हटाओ_extent_buffer(leaf, btrfs_item_nr_offset(slot + nr),
 			      btrfs_item_nr_offset(slot),
-			      (nritems - slot) * sizeof(struct btrfs_item));
+			      (nritems - slot) * माप(काष्ठा btrfs_item));
 
-		/* shift the data */
-		memmove_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
+		/* shअगरt the data */
+		स_हटाओ_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
 			      data_end - total_data, BTRFS_LEAF_DATA_OFFSET +
 			      data_end, old_data - data_end);
 		data_end = old_data;
-	}
+	पूर्ण
 
-	/* setup the item for the new data */
-	for (i = 0; i < nr; i++) {
+	/* setup the item क्रम the new data */
+	क्रम (i = 0; i < nr; i++) अणु
 		btrfs_cpu_key_to_disk(&disk_key, cpu_key + i);
 		btrfs_set_item_key(leaf, &disk_key, slot + i);
 		item = btrfs_item_nr(slot + i);
 		data_end -= data_size[i];
 		btrfs_set_token_item_offset(&token, item, data_end);
 		btrfs_set_token_item_size(&token, item, data_size[i]);
-	}
+	पूर्ण
 
 	btrfs_set_header_nritems(leaf, nritems + nr);
 	btrfs_mark_buffer_dirty(leaf);
 
-	if (btrfs_leaf_free_space(leaf) < 0) {
-		btrfs_print_leaf(leaf);
+	अगर (btrfs_leaf_मुक्त_space(leaf) < 0) अणु
+		btrfs_prपूर्णांक_leaf(leaf);
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Given a key and some data, insert items into the tree.
- * This does all the path init required, making room in the tree if needed.
+ * Given a key and some data, insert items पूर्णांकo the tree.
+ * This करोes all the path init required, making room in the tree अगर needed.
  */
-int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
-			    struct btrfs_root *root,
-			    struct btrfs_path *path,
-			    const struct btrfs_key *cpu_key, u32 *data_size,
-			    int nr)
-{
-	int ret = 0;
-	int slot;
-	int i;
+पूर्णांक btrfs_insert_empty_items(काष्ठा btrfs_trans_handle *trans,
+			    काष्ठा btrfs_root *root,
+			    काष्ठा btrfs_path *path,
+			    स्थिर काष्ठा btrfs_key *cpu_key, u32 *data_size,
+			    पूर्णांक nr)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक slot;
+	पूर्णांक i;
 	u32 total_size = 0;
 	u32 total_data = 0;
 
-	for (i = 0; i < nr; i++)
+	क्रम (i = 0; i < nr; i++)
 		total_data += data_size[i];
 
-	total_size = total_data + (nr * sizeof(struct btrfs_item));
+	total_size = total_data + (nr * माप(काष्ठा btrfs_item));
 	ret = btrfs_search_slot(trans, root, cpu_key, path, total_size, 1);
-	if (ret == 0)
-		return -EEXIST;
-	if (ret < 0)
-		return ret;
+	अगर (ret == 0)
+		वापस -EEXIST;
+	अगर (ret < 0)
+		वापस ret;
 
 	slot = path->slots[0];
 	BUG_ON(slot < 0);
 
-	setup_items_for_insert(root, path, cpu_key, data_size, nr);
-	return 0;
-}
+	setup_items_क्रम_insert(root, path, cpu_key, data_size, nr);
+	वापस 0;
+पूर्ण
 
 /*
- * Given a key and some data, insert an item into the tree.
- * This does all the path init required, making room in the tree if needed.
+ * Given a key and some data, insert an item पूर्णांकo the tree.
+ * This करोes all the path init required, making room in the tree अगर needed.
  */
-int btrfs_insert_item(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		      const struct btrfs_key *cpu_key, void *data,
+पूर्णांक btrfs_insert_item(काष्ठा btrfs_trans_handle *trans, काष्ठा btrfs_root *root,
+		      स्थिर काष्ठा btrfs_key *cpu_key, व्योम *data,
 		      u32 data_size)
-{
-	int ret = 0;
-	struct btrfs_path *path;
-	struct extent_buffer *leaf;
-	unsigned long ptr;
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा btrfs_path *path;
+	काष्ठा extent_buffer *leaf;
+	अचिन्हित दीर्घ ptr;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 	ret = btrfs_insert_empty_item(trans, root, path, cpu_key, data_size);
-	if (!ret) {
+	अगर (!ret) अणु
 		leaf = path->nodes[0];
 		ptr = btrfs_item_ptr_offset(leaf, path->slots[0]);
-		write_extent_buffer(leaf, data, ptr, data_size);
+		ग_लिखो_extent_buffer(leaf, data, ptr, data_size);
 		btrfs_mark_buffer_dirty(leaf);
-	}
-	btrfs_free_path(path);
-	return ret;
-}
+	पूर्ण
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
 /*
- * delete the pointer from a given node.
+ * delete the poपूर्णांकer from a given node.
  *
- * the tree should have been previously balanced so the deletion does not
+ * the tree should have been previously balanced so the deletion करोes not
  * empty a node.
  */
-static void del_ptr(struct btrfs_root *root, struct btrfs_path *path,
-		    int level, int slot)
-{
-	struct extent_buffer *parent = path->nodes[level];
+अटल व्योम del_ptr(काष्ठा btrfs_root *root, काष्ठा btrfs_path *path,
+		    पूर्णांक level, पूर्णांक slot)
+अणु
+	काष्ठा extent_buffer *parent = path->nodes[level];
 	u32 nritems;
-	int ret;
+	पूर्णांक ret;
 
 	nritems = btrfs_header_nritems(parent);
-	if (slot != nritems - 1) {
-		if (level) {
+	अगर (slot != nritems - 1) अणु
+		अगर (level) अणु
 			ret = btrfs_tree_mod_log_insert_move(parent, slot,
 					slot + 1, nritems - slot - 1);
 			BUG_ON(ret < 0);
-		}
-		memmove_extent_buffer(parent,
+		पूर्ण
+		स_हटाओ_extent_buffer(parent,
 			      btrfs_node_key_ptr_offset(slot),
 			      btrfs_node_key_ptr_offset(slot + 1),
-			      sizeof(struct btrfs_key_ptr) *
+			      माप(काष्ठा btrfs_key_ptr) *
 			      (nritems - slot - 1));
-	} else if (level) {
+	पूर्ण अन्यथा अगर (level) अणु
 		ret = btrfs_tree_mod_log_insert_key(parent, slot,
 				BTRFS_MOD_LOG_KEY_REMOVE, GFP_NOFS);
 		BUG_ON(ret < 0);
-	}
+	पूर्ण
 
 	nritems--;
 	btrfs_set_header_nritems(parent, nritems);
-	if (nritems == 0 && parent == root->node) {
+	अगर (nritems == 0 && parent == root->node) अणु
 		BUG_ON(btrfs_header_level(root->node) != 1);
-		/* just turn the root into a leaf and break */
+		/* just turn the root पूर्णांकo a leaf and अवरोध */
 		btrfs_set_header_level(root->node, 0);
-	} else if (slot == 0) {
-		struct btrfs_disk_key disk_key;
+	पूर्ण अन्यथा अगर (slot == 0) अणु
+		काष्ठा btrfs_disk_key disk_key;
 
 		btrfs_node_key(parent, &disk_key, 0);
 		fixup_low_keys(path, &disk_key, level + 1);
-	}
+	पूर्ण
 	btrfs_mark_buffer_dirty(parent);
-}
+पूर्ण
 
 /*
- * a helper function to delete the leaf pointed to by path->slots[1] and
+ * a helper function to delete the leaf poपूर्णांकed to by path->slots[1] and
  * path->nodes[1].
  *
- * This deletes the pointer in path->nodes[1] and frees the leaf
- * block extent.  zero is returned if it all worked out, < 0 otherwise.
+ * This deletes the poपूर्णांकer in path->nodes[1] and मुक्तs the leaf
+ * block extent.  zero is वापसed अगर it all worked out, < 0 otherwise.
  *
- * The path must have already been setup for deleting the leaf, including
+ * The path must have alपढ़ोy been setup क्रम deleting the leaf, including
  * all the proper balancing.  path->nodes[1] must be locked.
  */
-static noinline void btrfs_del_leaf(struct btrfs_trans_handle *trans,
-				    struct btrfs_root *root,
-				    struct btrfs_path *path,
-				    struct extent_buffer *leaf)
-{
+अटल noअंतरभूत व्योम btrfs_del_leaf(काष्ठा btrfs_trans_handle *trans,
+				    काष्ठा btrfs_root *root,
+				    काष्ठा btrfs_path *path,
+				    काष्ठा extent_buffer *leaf)
+अणु
 	WARN_ON(btrfs_header_generation(leaf) != trans->transid);
 	del_ptr(root, path, 1, path->slots[1]);
 
 	/*
-	 * btrfs_free_extent is expensive, we want to make sure we
+	 * btrfs_मुक्त_extent is expensive, we want to make sure we
 	 * aren't holding any locks when we call it
 	 */
 	btrfs_unlock_up_safe(path, 0);
@@ -4039,617 +4040,617 @@ static noinline void btrfs_del_leaf(struct btrfs_trans_handle *trans,
 	root_sub_used(root, leaf->len);
 
 	atomic_inc(&leaf->refs);
-	btrfs_free_tree_block(trans, root, leaf, 0, 1);
-	free_extent_buffer_stale(leaf);
-}
+	btrfs_मुक्त_tree_block(trans, root, leaf, 0, 1);
+	मुक्त_extent_buffer_stale(leaf);
+पूर्ण
 /*
  * delete the item at the leaf level in path.  If that empties
- * the leaf, remove it from the tree
+ * the leaf, हटाओ it from the tree
  */
-int btrfs_del_items(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		    struct btrfs_path *path, int slot, int nr)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *leaf;
-	struct btrfs_item *item;
+पूर्णांक btrfs_del_items(काष्ठा btrfs_trans_handle *trans, काष्ठा btrfs_root *root,
+		    काष्ठा btrfs_path *path, पूर्णांक slot, पूर्णांक nr)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_item *item;
 	u32 last_off;
 	u32 dsize = 0;
-	int ret = 0;
-	int wret;
-	int i;
+	पूर्णांक ret = 0;
+	पूर्णांक wret;
+	पूर्णांक i;
 	u32 nritems;
 
 	leaf = path->nodes[0];
 	last_off = btrfs_item_offset_nr(leaf, slot + nr - 1);
 
-	for (i = 0; i < nr; i++)
+	क्रम (i = 0; i < nr; i++)
 		dsize += btrfs_item_size_nr(leaf, slot + i);
 
 	nritems = btrfs_header_nritems(leaf);
 
-	if (slot + nr != nritems) {
-		int data_end = leaf_data_end(leaf);
-		struct btrfs_map_token token;
+	अगर (slot + nr != nritems) अणु
+		पूर्णांक data_end = leaf_data_end(leaf);
+		काष्ठा btrfs_map_token token;
 
-		memmove_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
+		स_हटाओ_extent_buffer(leaf, BTRFS_LEAF_DATA_OFFSET +
 			      data_end + dsize,
 			      BTRFS_LEAF_DATA_OFFSET + data_end,
 			      last_off - data_end);
 
 		btrfs_init_map_token(&token, leaf);
-		for (i = slot + nr; i < nritems; i++) {
+		क्रम (i = slot + nr; i < nritems; i++) अणु
 			u32 ioff;
 
 			item = btrfs_item_nr(i);
 			ioff = btrfs_token_item_offset(&token, item);
 			btrfs_set_token_item_offset(&token, item, ioff + dsize);
-		}
+		पूर्ण
 
-		memmove_extent_buffer(leaf, btrfs_item_nr_offset(slot),
+		स_हटाओ_extent_buffer(leaf, btrfs_item_nr_offset(slot),
 			      btrfs_item_nr_offset(slot + nr),
-			      sizeof(struct btrfs_item) *
+			      माप(काष्ठा btrfs_item) *
 			      (nritems - slot - nr));
-	}
+	पूर्ण
 	btrfs_set_header_nritems(leaf, nritems - nr);
 	nritems -= nr;
 
-	/* delete the leaf if we've emptied it */
-	if (nritems == 0) {
-		if (leaf == root->node) {
+	/* delete the leaf अगर we've emptied it */
+	अगर (nritems == 0) अणु
+		अगर (leaf == root->node) अणु
 			btrfs_set_header_level(leaf, 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			btrfs_clean_tree_block(leaf);
 			btrfs_del_leaf(trans, root, path, leaf);
-		}
-	} else {
-		int used = leaf_space_used(leaf, 0, nritems);
-		if (slot == 0) {
-			struct btrfs_disk_key disk_key;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		पूर्णांक used = leaf_space_used(leaf, 0, nritems);
+		अगर (slot == 0) अणु
+			काष्ठा btrfs_disk_key disk_key;
 
 			btrfs_item_key(leaf, &disk_key, 0);
 			fixup_low_keys(path, &disk_key, 1);
-		}
+		पूर्ण
 
-		/* delete the leaf if it is mostly empty */
-		if (used < BTRFS_LEAF_DATA_SIZE(fs_info) / 3) {
+		/* delete the leaf अगर it is mostly empty */
+		अगर (used < BTRFS_LEAF_DATA_SIZE(fs_info) / 3) अणु
 			/* push_leaf_left fixes the path.
-			 * make sure the path still points to our leaf
-			 * for possible call to del_ptr below
+			 * make sure the path still poपूर्णांकs to our leaf
+			 * क्रम possible call to del_ptr below
 			 */
 			slot = path->slots[1];
 			atomic_inc(&leaf->refs);
 
 			wret = push_leaf_left(trans, root, path, 1, 1,
 					      1, (u32)-1);
-			if (wret < 0 && wret != -ENOSPC)
+			अगर (wret < 0 && wret != -ENOSPC)
 				ret = wret;
 
-			if (path->nodes[0] == leaf &&
-			    btrfs_header_nritems(leaf)) {
+			अगर (path->nodes[0] == leaf &&
+			    btrfs_header_nritems(leaf)) अणु
 				wret = push_leaf_right(trans, root, path, 1,
 						       1, 1, 0);
-				if (wret < 0 && wret != -ENOSPC)
+				अगर (wret < 0 && wret != -ENOSPC)
 					ret = wret;
-			}
+			पूर्ण
 
-			if (btrfs_header_nritems(leaf) == 0) {
+			अगर (btrfs_header_nritems(leaf) == 0) अणु
 				path->slots[1] = slot;
 				btrfs_del_leaf(trans, root, path, leaf);
-				free_extent_buffer(leaf);
+				मुक्त_extent_buffer(leaf);
 				ret = 0;
-			} else {
-				/* if we're still in the path, make sure
+			पूर्ण अन्यथा अणु
+				/* अगर we're still in the path, make sure
 				 * we're dirty.  Otherwise, one of the
-				 * push_leaf functions must have already
+				 * push_leaf functions must have alपढ़ोy
 				 * dirtied this buffer
 				 */
-				if (path->nodes[0] == leaf)
+				अगर (path->nodes[0] == leaf)
 					btrfs_mark_buffer_dirty(leaf);
-				free_extent_buffer(leaf);
-			}
-		} else {
+				मुक्त_extent_buffer(leaf);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			btrfs_mark_buffer_dirty(leaf);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  * search the tree again to find a leaf with lesser keys
- * returns 0 if it found something or 1 if there are no lesser leaves.
- * returns < 0 on io errors.
+ * वापसs 0 अगर it found something or 1 अगर there are no lesser leaves.
+ * वापसs < 0 on io errors.
  *
  * This may release the path, and so you may lose any locks held at the
- * time you call it.
+ * समय you call it.
  */
-int btrfs_prev_leaf(struct btrfs_root *root, struct btrfs_path *path)
-{
-	struct btrfs_key key;
-	struct btrfs_disk_key found_key;
-	int ret;
+पूर्णांक btrfs_prev_leaf(काष्ठा btrfs_root *root, काष्ठा btrfs_path *path)
+अणु
+	काष्ठा btrfs_key key;
+	काष्ठा btrfs_disk_key found_key;
+	पूर्णांक ret;
 
 	btrfs_item_key_to_cpu(path->nodes[0], &key, 0);
 
-	if (key.offset > 0) {
+	अगर (key.offset > 0) अणु
 		key.offset--;
-	} else if (key.type > 0) {
+	पूर्ण अन्यथा अगर (key.type > 0) अणु
 		key.type--;
 		key.offset = (u64)-1;
-	} else if (key.objectid > 0) {
+	पूर्ण अन्यथा अगर (key.objectid > 0) अणु
 		key.objectid--;
 		key.type = (u8)-1;
 		key.offset = (u64)-1;
-	} else {
-		return 1;
-	}
+	पूर्ण अन्यथा अणु
+		वापस 1;
+	पूर्ण
 
 	btrfs_release_path(path);
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-	if (ret < 0)
-		return ret;
+	ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
+	अगर (ret < 0)
+		वापस ret;
 	btrfs_item_key(path->nodes[0], &found_key, 0);
 	ret = comp_keys(&found_key, &key);
 	/*
 	 * We might have had an item with the previous key in the tree right
-	 * before we released our path. And after we released our path, that
+	 * beक्रमe we released our path. And after we released our path, that
 	 * item might have been pushed to the first slot (0) of the leaf we
 	 * were holding due to a tree balance. Alternatively, an item with the
 	 * previous key can exist as the only element of a leaf (big fat item).
-	 * Therefore account for these 2 cases, so that our callers (like
-	 * btrfs_previous_item) don't miss an existing item with a key matching
+	 * Thereक्रमe account क्रम these 2 हालs, so that our callers (like
+	 * btrfs_previous_item) करोn't miss an existing item with a key matching
 	 * the previous key we computed above.
 	 */
-	if (ret <= 0)
-		return 0;
-	return 1;
-}
+	अगर (ret <= 0)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 /*
- * A helper function to walk down the tree starting at min_key, and looking
- * for nodes or leaves that are have a minimum transaction id.
+ * A helper function to walk करोwn the tree starting at min_key, and looking
+ * क्रम nodes or leaves that are have a minimum transaction id.
  * This is used by the btree defrag code, and tree logging
  *
- * This does not cow, but it does stuff the starting key it finds back
- * into min_key, so you can call btrfs_search_slot with cow=1 on the
+ * This करोes not cow, but it करोes stuff the starting key it finds back
+ * पूर्णांकo min_key, so you can call btrfs_search_slot with cow=1 on the
  * key and get a writable path.
  *
  * This honors path->lowest_level to prevent descent past a given level
  * of the tree.
  *
- * min_trans indicates the oldest transaction that you are interested
+ * min_trans indicates the oldest transaction that you are पूर्णांकerested
  * in walking through.  Any nodes or leaves older than min_trans are
- * skipped over (without reading them).
+ * skipped over (without पढ़ोing them).
  *
- * returns zero if something useful was found, < 0 on error and 1 if there
+ * वापसs zero अगर something useful was found, < 0 on error and 1 अगर there
  * was nothing in the tree that matched the search criteria.
  */
-int btrfs_search_forward(struct btrfs_root *root, struct btrfs_key *min_key,
-			 struct btrfs_path *path,
+पूर्णांक btrfs_search_क्रमward(काष्ठा btrfs_root *root, काष्ठा btrfs_key *min_key,
+			 काष्ठा btrfs_path *path,
 			 u64 min_trans)
-{
-	struct extent_buffer *cur;
-	struct btrfs_key found_key;
-	int slot;
-	int sret;
+अणु
+	काष्ठा extent_buffer *cur;
+	काष्ठा btrfs_key found_key;
+	पूर्णांक slot;
+	पूर्णांक sret;
 	u32 nritems;
-	int level;
-	int ret = 1;
-	int keep_locks = path->keep_locks;
+	पूर्णांक level;
+	पूर्णांक ret = 1;
+	पूर्णांक keep_locks = path->keep_locks;
 
 	path->keep_locks = 1;
 again:
-	cur = btrfs_read_lock_root_node(root);
+	cur = btrfs_पढ़ो_lock_root_node(root);
 	level = btrfs_header_level(cur);
 	WARN_ON(path->nodes[level]);
 	path->nodes[level] = cur;
 	path->locks[level] = BTRFS_READ_LOCK;
 
-	if (btrfs_header_generation(cur) < min_trans) {
+	अगर (btrfs_header_generation(cur) < min_trans) अणु
 		ret = 1;
-		goto out;
-	}
-	while (1) {
+		जाओ out;
+	पूर्ण
+	जबतक (1) अणु
 		nritems = btrfs_header_nritems(cur);
 		level = btrfs_header_level(cur);
 		sret = btrfs_bin_search(cur, min_key, &slot);
-		if (sret < 0) {
+		अगर (sret < 0) अणु
 			ret = sret;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* at the lowest level, we're done, setup the path and exit */
-		if (level == path->lowest_level) {
-			if (slot >= nritems)
-				goto find_next_key;
+		/* at the lowest level, we're करोne, setup the path and निकास */
+		अगर (level == path->lowest_level) अणु
+			अगर (slot >= nritems)
+				जाओ find_next_key;
 			ret = 0;
 			path->slots[level] = slot;
 			btrfs_item_key_to_cpu(cur, &found_key, slot);
-			goto out;
-		}
-		if (sret && slot > 0)
+			जाओ out;
+		पूर्ण
+		अगर (sret && slot > 0)
 			slot--;
 		/*
-		 * check this node pointer against the min_trans parameters.
+		 * check this node poपूर्णांकer against the min_trans parameters.
 		 * If it is too old, skip to the next one.
 		 */
-		while (slot < nritems) {
+		जबतक (slot < nritems) अणु
 			u64 gen;
 
 			gen = btrfs_node_ptr_generation(cur, slot);
-			if (gen < min_trans) {
+			अगर (gen < min_trans) अणु
 				slot++;
-				continue;
-			}
-			break;
-		}
+				जारी;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 find_next_key:
 		/*
-		 * we didn't find a candidate key in this node, walk forward
+		 * we didn't find a candidate key in this node, walk क्रमward
 		 * and find another one
 		 */
-		if (slot >= nritems) {
+		अगर (slot >= nritems) अणु
 			path->slots[level] = slot;
 			sret = btrfs_find_next_key(root, path, min_key, level,
 						  min_trans);
-			if (sret == 0) {
+			अगर (sret == 0) अणु
 				btrfs_release_path(path);
-				goto again;
-			} else {
-				goto out;
-			}
-		}
-		/* save our key for returning back */
+				जाओ again;
+			पूर्ण अन्यथा अणु
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		/* save our key क्रम वापसing back */
 		btrfs_node_key_to_cpu(cur, &found_key, slot);
 		path->slots[level] = slot;
-		if (level == path->lowest_level) {
+		अगर (level == path->lowest_level) अणु
 			ret = 0;
-			goto out;
-		}
-		cur = btrfs_read_node_slot(cur, slot);
-		if (IS_ERR(cur)) {
+			जाओ out;
+		पूर्ण
+		cur = btrfs_पढ़ो_node_slot(cur, slot);
+		अगर (IS_ERR(cur)) अणु
 			ret = PTR_ERR(cur);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		btrfs_tree_read_lock(cur);
+		btrfs_tree_पढ़ो_lock(cur);
 
 		path->locks[level - 1] = BTRFS_READ_LOCK;
 		path->nodes[level - 1] = cur;
-		unlock_up(path, level, 1, 0, NULL);
-	}
+		unlock_up(path, level, 1, 0, शून्य);
+	पूर्ण
 out:
 	path->keep_locks = keep_locks;
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		btrfs_unlock_up_safe(path, path->lowest_level + 1);
-		memcpy(min_key, &found_key, sizeof(found_key));
-	}
-	return ret;
-}
+		स_नकल(min_key, &found_key, माप(found_key));
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
- * this is similar to btrfs_next_leaf, but does not try to preserve
- * and fixup the path.  It looks for and returns the next key in the
+ * this is similar to btrfs_next_leaf, but करोes not try to preserve
+ * and fixup the path.  It looks क्रम and वापसs the next key in the
  * tree based on the current path and the min_trans parameters.
  *
- * 0 is returned if another key is found, < 0 if there are any errors
- * and 1 is returned if there are no higher keys in the tree
+ * 0 is वापसed अगर another key is found, < 0 अगर there are any errors
+ * and 1 is वापसed अगर there are no higher keys in the tree
  *
- * path->keep_locks should be set to 1 on the search made before
+ * path->keep_locks should be set to 1 on the search made beक्रमe
  * calling this function.
  */
-int btrfs_find_next_key(struct btrfs_root *root, struct btrfs_path *path,
-			struct btrfs_key *key, int level, u64 min_trans)
-{
-	int slot;
-	struct extent_buffer *c;
+पूर्णांक btrfs_find_next_key(काष्ठा btrfs_root *root, काष्ठा btrfs_path *path,
+			काष्ठा btrfs_key *key, पूर्णांक level, u64 min_trans)
+अणु
+	पूर्णांक slot;
+	काष्ठा extent_buffer *c;
 
 	WARN_ON(!path->keep_locks && !path->skip_locking);
-	while (level < BTRFS_MAX_LEVEL) {
-		if (!path->nodes[level])
-			return 1;
+	जबतक (level < BTRFS_MAX_LEVEL) अणु
+		अगर (!path->nodes[level])
+			वापस 1;
 
 		slot = path->slots[level] + 1;
 		c = path->nodes[level];
 next:
-		if (slot >= btrfs_header_nritems(c)) {
-			int ret;
-			int orig_lowest;
-			struct btrfs_key cur_key;
-			if (level + 1 >= BTRFS_MAX_LEVEL ||
+		अगर (slot >= btrfs_header_nritems(c)) अणु
+			पूर्णांक ret;
+			पूर्णांक orig_lowest;
+			काष्ठा btrfs_key cur_key;
+			अगर (level + 1 >= BTRFS_MAX_LEVEL ||
 			    !path->nodes[level + 1])
-				return 1;
+				वापस 1;
 
-			if (path->locks[level + 1] || path->skip_locking) {
+			अगर (path->locks[level + 1] || path->skip_locking) अणु
 				level++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			slot = btrfs_header_nritems(c) - 1;
-			if (level == 0)
+			अगर (level == 0)
 				btrfs_item_key_to_cpu(c, &cur_key, slot);
-			else
+			अन्यथा
 				btrfs_node_key_to_cpu(c, &cur_key, slot);
 
 			orig_lowest = path->lowest_level;
 			btrfs_release_path(path);
 			path->lowest_level = level;
-			ret = btrfs_search_slot(NULL, root, &cur_key, path,
+			ret = btrfs_search_slot(शून्य, root, &cur_key, path,
 						0, 0);
 			path->lowest_level = orig_lowest;
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
 			c = path->nodes[level];
 			slot = path->slots[level];
-			if (ret == 0)
+			अगर (ret == 0)
 				slot++;
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
-		if (level == 0)
+		अगर (level == 0)
 			btrfs_item_key_to_cpu(c, key, slot);
-		else {
+		अन्यथा अणु
 			u64 gen = btrfs_node_ptr_generation(c, slot);
 
-			if (gen < min_trans) {
+			अगर (gen < min_trans) अणु
 				slot++;
-				goto next;
-			}
+				जाओ next;
+			पूर्ण
 			btrfs_node_key_to_cpu(c, key, slot);
-		}
-		return 0;
-	}
-	return 1;
-}
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*
  * search the tree again to find a leaf with greater keys
- * returns 0 if it found something or 1 if there are no greater leaves.
- * returns < 0 on io errors.
+ * वापसs 0 अगर it found something or 1 अगर there are no greater leaves.
+ * वापसs < 0 on io errors.
  */
-int btrfs_next_leaf(struct btrfs_root *root, struct btrfs_path *path)
-{
-	return btrfs_next_old_leaf(root, path, 0);
-}
+पूर्णांक btrfs_next_leaf(काष्ठा btrfs_root *root, काष्ठा btrfs_path *path)
+अणु
+	वापस btrfs_next_old_leaf(root, path, 0);
+पूर्ण
 
-int btrfs_next_old_leaf(struct btrfs_root *root, struct btrfs_path *path,
-			u64 time_seq)
-{
-	int slot;
-	int level;
-	struct extent_buffer *c;
-	struct extent_buffer *next;
-	struct btrfs_key key;
+पूर्णांक btrfs_next_old_leaf(काष्ठा btrfs_root *root, काष्ठा btrfs_path *path,
+			u64 समय_seq)
+अणु
+	पूर्णांक slot;
+	पूर्णांक level;
+	काष्ठा extent_buffer *c;
+	काष्ठा extent_buffer *next;
+	काष्ठा btrfs_key key;
 	u32 nritems;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	nritems = btrfs_header_nritems(path->nodes[0]);
-	if (nritems == 0)
-		return 1;
+	अगर (nritems == 0)
+		वापस 1;
 
 	btrfs_item_key_to_cpu(path->nodes[0], &key, nritems - 1);
 again:
 	level = 1;
-	next = NULL;
+	next = शून्य;
 	btrfs_release_path(path);
 
 	path->keep_locks = 1;
 
-	if (time_seq)
-		ret = btrfs_search_old_slot(root, &key, path, time_seq);
-	else
-		ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	अगर (समय_seq)
+		ret = btrfs_search_old_slot(root, &key, path, समय_seq);
+	अन्यथा
+		ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
 	path->keep_locks = 0;
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	nritems = btrfs_header_nritems(path->nodes[0]);
 	/*
 	 * by releasing the path above we dropped all our locks.  A balance
 	 * could have added more items next to the key that used to be
 	 * at the very end of the block.  So, check again here and
-	 * advance the path if there are now more items available.
+	 * advance the path अगर there are now more items available.
 	 */
-	if (nritems > 0 && path->slots[0] < nritems - 1) {
-		if (ret == 0)
+	अगर (nritems > 0 && path->slots[0] < nritems - 1) अणु
+		अगर (ret == 0)
 			path->slots[0]++;
 		ret = 0;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	/*
-	 * So the above check misses one case:
-	 * - after releasing the path above, someone has removed the item that
+	 * So the above check misses one हाल:
+	 * - after releasing the path above, someone has हटाओd the item that
 	 *   used to be at the very end of the block, and balance between leafs
-	 *   gets another one with bigger key.offset to replace it.
+	 *   माला_लो another one with bigger key.offset to replace it.
 	 *
-	 * This one should be returned as well, or we can get leaf corruption
+	 * This one should be वापसed as well, or we can get leaf corruption
 	 * later(esp. in __btrfs_drop_extents()).
 	 *
 	 * And a bit more explanation about this check,
-	 * with ret > 0, the key isn't found, the path points to the slot
+	 * with ret > 0, the key isn't found, the path poपूर्णांकs to the slot
 	 * where it should be inserted, so the path->slots[0] item must be the
 	 * bigger one.
 	 */
-	if (nritems > 0 && ret > 0 && path->slots[0] == nritems - 1) {
+	अगर (nritems > 0 && ret > 0 && path->slots[0] == nritems - 1) अणु
 		ret = 0;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	while (level < BTRFS_MAX_LEVEL) {
-		if (!path->nodes[level]) {
+	जबतक (level < BTRFS_MAX_LEVEL) अणु
+		अगर (!path->nodes[level]) अणु
 			ret = 1;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		slot = path->slots[level] + 1;
 		c = path->nodes[level];
-		if (slot >= btrfs_header_nritems(c)) {
+		अगर (slot >= btrfs_header_nritems(c)) अणु
 			level++;
-			if (level == BTRFS_MAX_LEVEL) {
+			अगर (level == BTRFS_MAX_LEVEL) अणु
 				ret = 1;
-				goto done;
-			}
-			continue;
-		}
+				जाओ करोne;
+			पूर्ण
+			जारी;
+		पूर्ण
 
 
 		/*
 		 * Our current level is where we're going to start from, and to
-		 * make sure lockdep doesn't complain we need to drop our locks
+		 * make sure lockdep करोesn't complain we need to drop our locks
 		 * and nodes from 0 to our current level.
 		 */
-		for (i = 0; i < level; i++) {
-			if (path->locks[level]) {
-				btrfs_tree_read_unlock(path->nodes[i]);
+		क्रम (i = 0; i < level; i++) अणु
+			अगर (path->locks[level]) अणु
+				btrfs_tree_पढ़ो_unlock(path->nodes[i]);
 				path->locks[i] = 0;
-			}
-			free_extent_buffer(path->nodes[i]);
-			path->nodes[i] = NULL;
-		}
+			पूर्ण
+			मुक्त_extent_buffer(path->nodes[i]);
+			path->nodes[i] = शून्य;
+		पूर्ण
 
 		next = c;
-		ret = read_block_for_search(root, path, &next, level,
+		ret = पढ़ो_block_क्रम_search(root, path, &next, level,
 					    slot, &key);
-		if (ret == -EAGAIN)
-			goto again;
+		अगर (ret == -EAGAIN)
+			जाओ again;
 
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			btrfs_release_path(path);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (!path->skip_locking) {
-			ret = btrfs_try_tree_read_lock(next);
-			if (!ret && time_seq) {
+		अगर (!path->skip_locking) अणु
+			ret = btrfs_try_tree_पढ़ो_lock(next);
+			अगर (!ret && समय_seq) अणु
 				/*
-				 * If we don't get the lock, we may be racing
-				 * with push_leaf_left, holding that lock while
-				 * itself waiting for the leaf we've currently
+				 * If we करोn't get the lock, we may be racing
+				 * with push_leaf_left, holding that lock जबतक
+				 * itself रुकोing क्रम the leaf we've currently
 				 * locked. To solve this situation, we give up
 				 * on our lock and cycle.
 				 */
-				free_extent_buffer(next);
+				मुक्त_extent_buffer(next);
 				btrfs_release_path(path);
 				cond_resched();
-				goto again;
-			}
-			if (!ret)
-				btrfs_tree_read_lock(next);
-		}
-		break;
-	}
+				जाओ again;
+			पूर्ण
+			अगर (!ret)
+				btrfs_tree_पढ़ो_lock(next);
+		पूर्ण
+		अवरोध;
+	पूर्ण
 	path->slots[level] = slot;
-	while (1) {
+	जबतक (1) अणु
 		level--;
 		path->nodes[level] = next;
 		path->slots[level] = 0;
-		if (!path->skip_locking)
+		अगर (!path->skip_locking)
 			path->locks[level] = BTRFS_READ_LOCK;
-		if (!level)
-			break;
+		अगर (!level)
+			अवरोध;
 
-		ret = read_block_for_search(root, path, &next, level,
+		ret = पढ़ो_block_क्रम_search(root, path, &next, level,
 					    0, &key);
-		if (ret == -EAGAIN)
-			goto again;
+		अगर (ret == -EAGAIN)
+			जाओ again;
 
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			btrfs_release_path(path);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (!path->skip_locking)
-			btrfs_tree_read_lock(next);
-	}
+		अगर (!path->skip_locking)
+			btrfs_tree_पढ़ो_lock(next);
+	पूर्ण
 	ret = 0;
-done:
-	unlock_up(path, 0, 1, 0, NULL);
+करोne:
+	unlock_up(path, 0, 1, 0, शून्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * this uses btrfs_prev_leaf to walk backwards in the tree, and keeps
- * searching until it gets past min_objectid or finds an item of 'type'
+ * searching until it माला_लो past min_objectid or finds an item of 'type'
  *
- * returns 0 if something is found, 1 if nothing was found and < 0 on error
+ * वापसs 0 अगर something is found, 1 अगर nothing was found and < 0 on error
  */
-int btrfs_previous_item(struct btrfs_root *root,
-			struct btrfs_path *path, u64 min_objectid,
-			int type)
-{
-	struct btrfs_key found_key;
-	struct extent_buffer *leaf;
+पूर्णांक btrfs_previous_item(काष्ठा btrfs_root *root,
+			काष्ठा btrfs_path *path, u64 min_objectid,
+			पूर्णांक type)
+अणु
+	काष्ठा btrfs_key found_key;
+	काष्ठा extent_buffer *leaf;
 	u32 nritems;
-	int ret;
+	पूर्णांक ret;
 
-	while (1) {
-		if (path->slots[0] == 0) {
+	जबतक (1) अणु
+		अगर (path->slots[0] == 0) अणु
 			ret = btrfs_prev_leaf(root, path);
-			if (ret != 0)
-				return ret;
-		} else {
+			अगर (ret != 0)
+				वापस ret;
+		पूर्ण अन्यथा अणु
 			path->slots[0]--;
-		}
+		पूर्ण
 		leaf = path->nodes[0];
 		nritems = btrfs_header_nritems(leaf);
-		if (nritems == 0)
-			return 1;
-		if (path->slots[0] == nritems)
+		अगर (nritems == 0)
+			वापस 1;
+		अगर (path->slots[0] == nritems)
 			path->slots[0]--;
 
 		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
-		if (found_key.objectid < min_objectid)
-			break;
-		if (found_key.type == type)
-			return 0;
-		if (found_key.objectid == min_objectid &&
+		अगर (found_key.objectid < min_objectid)
+			अवरोध;
+		अगर (found_key.type == type)
+			वापस 0;
+		अगर (found_key.objectid == min_objectid &&
 		    found_key.type < type)
-			break;
-	}
-	return 1;
-}
+			अवरोध;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*
  * search in extent tree to find a previous Metadata/Data extent item with
  * min objecitd.
  *
- * returns 0 if something is found, 1 if nothing was found and < 0 on error
+ * वापसs 0 अगर something is found, 1 अगर nothing was found and < 0 on error
  */
-int btrfs_previous_extent_item(struct btrfs_root *root,
-			struct btrfs_path *path, u64 min_objectid)
-{
-	struct btrfs_key found_key;
-	struct extent_buffer *leaf;
+पूर्णांक btrfs_previous_extent_item(काष्ठा btrfs_root *root,
+			काष्ठा btrfs_path *path, u64 min_objectid)
+अणु
+	काष्ठा btrfs_key found_key;
+	काष्ठा extent_buffer *leaf;
 	u32 nritems;
-	int ret;
+	पूर्णांक ret;
 
-	while (1) {
-		if (path->slots[0] == 0) {
+	जबतक (1) अणु
+		अगर (path->slots[0] == 0) अणु
 			ret = btrfs_prev_leaf(root, path);
-			if (ret != 0)
-				return ret;
-		} else {
+			अगर (ret != 0)
+				वापस ret;
+		पूर्ण अन्यथा अणु
 			path->slots[0]--;
-		}
+		पूर्ण
 		leaf = path->nodes[0];
 		nritems = btrfs_header_nritems(leaf);
-		if (nritems == 0)
-			return 1;
-		if (path->slots[0] == nritems)
+		अगर (nritems == 0)
+			वापस 1;
+		अगर (path->slots[0] == nritems)
 			path->slots[0]--;
 
 		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
-		if (found_key.objectid < min_objectid)
-			break;
-		if (found_key.type == BTRFS_EXTENT_ITEM_KEY ||
+		अगर (found_key.objectid < min_objectid)
+			अवरोध;
+		अगर (found_key.type == BTRFS_EXTENT_ITEM_KEY ||
 		    found_key.type == BTRFS_METADATA_ITEM_KEY)
-			return 0;
-		if (found_key.objectid == min_objectid &&
+			वापस 0;
+		अगर (found_key.objectid == min_objectid &&
 		    found_key.type < BTRFS_EXTENT_ITEM_KEY)
-			break;
-	}
-	return 1;
-}
+			अवरोध;
+	पूर्ण
+	वापस 1;
+पूर्ण

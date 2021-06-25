@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c)  2019 Intel Corporation */
 
-#include "igc.h"
-#include "igc_tsn.h"
+#समावेश "igc.h"
+#समावेश "igc_tsn.h"
 
-static bool is_any_launchtime(struct igc_adapter *adapter)
-{
-	int i;
+अटल bool is_any_launchसमय(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct igc_ring *ring = adapter->tx_ring[i];
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा igc_ring *ring = adapter->tx_ring[i];
 
-		if (ring->launchtime_enable)
-			return true;
-	}
+		अगर (ring->launchसमय_enable)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Returns the TSN specific registers to their default values after
+/* Returns the TSN specअगरic रेजिस्टरs to their शेष values after
  * TSN offloading is disabled.
  */
-static int igc_tsn_disable_offload(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल पूर्णांक igc_tsn_disable_offload(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 tqavctrl;
-	int i;
+	पूर्णांक i;
 
-	if (!(adapter->flags & IGC_FLAG_TSN_QBV_ENABLED))
-		return 0;
+	अगर (!(adapter->flags & IGC_FLAG_TSN_QBV_ENABLED))
+		वापस 0;
 
-	adapter->cycle_time = 0;
+	adapter->cycle_समय = 0;
 
 	wr32(IGC_TXPBS, I225_TXPBSIZE_DEFAULT);
 	wr32(IGC_DTXMXPKTSZ, IGC_DTXMXPKTSZ_DEFAULT);
@@ -40,39 +41,39 @@ static int igc_tsn_disable_offload(struct igc_adapter *adapter)
 		      IGC_TQAVCTRL_ENHANCED_QAV);
 	wr32(IGC_TQAVCTRL, tqavctrl);
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct igc_ring *ring = adapter->tx_ring[i];
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा igc_ring *ring = adapter->tx_ring[i];
 
-		ring->start_time = 0;
-		ring->end_time = 0;
-		ring->launchtime_enable = false;
+		ring->start_समय = 0;
+		ring->end_समय = 0;
+		ring->launchसमय_enable = false;
 
 		wr32(IGC_TXQCTL(i), 0);
 		wr32(IGC_STQT(i), 0);
 		wr32(IGC_ENDQT(i), NSEC_PER_SEC);
-	}
+	पूर्ण
 
 	wr32(IGC_QBVCYCLET_S, NSEC_PER_SEC);
 	wr32(IGC_QBVCYCLET, NSEC_PER_SEC);
 
 	adapter->flags &= ~IGC_FLAG_TSN_QBV_ENABLED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_tsn_enable_offload(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल पूर्णांक igc_tsn_enable_offload(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 tqavctrl, baset_l, baset_h;
 	u32 sec, nsec, cycle;
-	ktime_t base_time, systim;
-	int i;
+	kसमय_प्रकार base_समय, systim;
+	पूर्णांक i;
 
-	if (adapter->flags & IGC_FLAG_TSN_QBV_ENABLED)
-		return 0;
+	अगर (adapter->flags & IGC_FLAG_TSN_QBV_ENABLED)
+		वापस 0;
 
-	cycle = adapter->cycle_time;
-	base_time = adapter->base_time;
+	cycle = adapter->cycle_समय;
+	base_समय = adapter->base_समय;
 
 	wr32(IGC_TSAUXC, 0);
 	wr32(IGC_DTXMXPKTSZ, IGC_DTXMXPKTSZ_TSN);
@@ -85,73 +86,73 @@ static int igc_tsn_enable_offload(struct igc_adapter *adapter)
 	wr32(IGC_QBVCYCLET_S, cycle);
 	wr32(IGC_QBVCYCLET, cycle);
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct igc_ring *ring = adapter->tx_ring[i];
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा igc_ring *ring = adapter->tx_ring[i];
 		u32 txqctl = 0;
 
-		wr32(IGC_STQT(i), ring->start_time);
-		wr32(IGC_ENDQT(i), ring->end_time);
+		wr32(IGC_STQT(i), ring->start_समय);
+		wr32(IGC_ENDQT(i), ring->end_समय);
 
-		if (adapter->base_time) {
-			/* If we have a base_time we are in "taprio"
+		अगर (adapter->base_समय) अणु
+			/* If we have a base_समय we are in "taprio"
 			 * mode and we need to be strict about the
-			 * cycles: only transmit a packet if it can be
+			 * cycles: only transmit a packet अगर it can be
 			 * completed during that cycle.
 			 */
 			txqctl |= IGC_TXQCTL_STRICT_CYCLE |
 				IGC_TXQCTL_STRICT_END;
-		}
+		पूर्ण
 
-		if (ring->launchtime_enable)
+		अगर (ring->launchसमय_enable)
 			txqctl |= IGC_TXQCTL_QUEUE_MODE_LAUNCHT;
 
 		wr32(IGC_TXQCTL(i), txqctl);
-	}
+	पूर्ण
 
 	nsec = rd32(IGC_SYSTIML);
 	sec = rd32(IGC_SYSTIMH);
 
-	systim = ktime_set(sec, nsec);
+	systim = kसमय_set(sec, nsec);
 
-	if (ktime_compare(systim, base_time) > 0) {
+	अगर (kसमय_compare(systim, base_समय) > 0) अणु
 		s64 n;
 
-		n = div64_s64(ktime_sub_ns(systim, base_time), cycle);
-		base_time = ktime_add_ns(base_time, (n + 1) * cycle);
-	}
+		n = भाग64_s64(kसमय_sub_ns(systim, base_समय), cycle);
+		base_समय = kसमय_add_ns(base_समय, (n + 1) * cycle);
+	पूर्ण
 
-	baset_h = div_s64_rem(base_time, NSEC_PER_SEC, &baset_l);
+	baset_h = भाग_s64_rem(base_समय, NSEC_PER_SEC, &baset_l);
 
 	wr32(IGC_BASET_H, baset_h);
 	wr32(IGC_BASET_L, baset_l);
 
 	adapter->flags |= IGC_FLAG_TSN_QBV_ENABLED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int igc_tsn_offload_apply(struct igc_adapter *adapter)
-{
-	bool is_any_enabled = adapter->base_time || is_any_launchtime(adapter);
+पूर्णांक igc_tsn_offload_apply(काष्ठा igc_adapter *adapter)
+अणु
+	bool is_any_enabled = adapter->base_समय || is_any_launchसमय(adapter);
 
-	if (!(adapter->flags & IGC_FLAG_TSN_QBV_ENABLED) && !is_any_enabled)
-		return 0;
+	अगर (!(adapter->flags & IGC_FLAG_TSN_QBV_ENABLED) && !is_any_enabled)
+		वापस 0;
 
-	if (!is_any_enabled) {
-		int err = igc_tsn_disable_offload(adapter);
+	अगर (!is_any_enabled) अणु
+		पूर्णांक err = igc_tsn_disable_offload(adapter);
 
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
-		/* The BASET registers aren't cleared when writing
-		 * into them, force a reset if the interface is
+		/* The BASET रेजिस्टरs aren't cleared when writing
+		 * पूर्णांकo them, क्रमce a reset अगर the पूर्णांकerface is
 		 * running.
 		 */
-		if (netif_running(adapter->netdev))
+		अगर (netअगर_running(adapter->netdev))
 			schedule_work(&adapter->reset_task);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return igc_tsn_enable_offload(adapter);
-}
+	वापस igc_tsn_enable_offload(adapter);
+पूर्ण

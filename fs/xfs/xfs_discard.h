@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef XFS_DISCARD_H
-#define XFS_DISCARD_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित XFS_DISCARD_H
+#घोषणा XFS_DISCARD_H 1
 
-struct fstrim_range;
-struct list_head;
+काष्ठा fstrim_range;
+काष्ठा list_head;
 
-extern int	xfs_ioc_trim(struct xfs_mount *, struct fstrim_range __user *);
+बाह्य पूर्णांक	xfs_ioc_trim(काष्ठा xfs_mount *, काष्ठा fstrim_range __user *);
 
-#endif /* XFS_DISCARD_H */
+#पूर्ण_अगर /* XFS_DISCARD_H */

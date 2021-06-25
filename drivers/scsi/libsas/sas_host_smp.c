@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Serial Attached SCSI (SAS) Expander discovery and configuration
  *
  * Copyright (C) 2007 James E.J. Bottomley
  *		<James.Bottomley@HansenPartnership.com>
  */
-#include <linux/scatterlist.h>
-#include <linux/blkdev.h>
-#include <linux/slab.h>
-#include <linux/export.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
 
-#include "sas_internal.h"
+#समावेश "sas_internal.h"
 
-#include <scsi/scsi_transport.h>
-#include <scsi/scsi_transport_sas.h>
-#include "../scsi_sas_internal.h"
+#समावेश <scsi/scsi_transport.h>
+#समावेश <scsi/scsi_transport_sas.h>
+#समावेश "../scsi_sas_internal.h"
 
-static void sas_host_smp_discover(struct sas_ha_struct *sas_ha, u8 *resp_data,
+अटल व्योम sas_host_smp_discover(काष्ठा sas_ha_काष्ठा *sas_ha, u8 *resp_data,
 				  u8 phy_id)
-{
-	struct sas_phy *phy;
-	struct sas_rphy *rphy;
+अणु
+	काष्ठा sas_phy *phy;
+	काष्ठा sas_rphy *rphy;
 
-	if (phy_id >= sas_ha->num_phys) {
+	अगर (phy_id >= sas_ha->num_phys) अणु
 		resp_data[2] = SMP_RESP_NO_PHY;
-		return;
-	}
+		वापस;
+	पूर्ण
 	resp_data[2] = SMP_RESP_FUNC_ACC;
 
 	phy = sas_ha->sas_phy[phy_id]->phy;
 	resp_data[9] = phy_id;
 	resp_data[13] = phy->negotiated_linkrate;
-	memcpy(resp_data + 16, sas_ha->sas_addr, SAS_ADDR_SIZE);
-	memcpy(resp_data + 24, sas_ha->sas_phy[phy_id]->attached_sas_addr,
+	स_नकल(resp_data + 16, sas_ha->sas_addr, SAS_ADDR_SIZE);
+	स_नकल(resp_data + 24, sas_ha->sas_phy[phy_id]->attached_sas_addr,
 	       SAS_ADDR_SIZE);
 	resp_data[40] = (phy->minimum_linkrate << 4) |
 		phy->minimum_linkrate_hw;
 	resp_data[41] = (phy->maximum_linkrate << 4) |
 		phy->maximum_linkrate_hw;
 
-	if (!sas_ha->sas_phy[phy_id]->port ||
+	अगर (!sas_ha->sas_phy[phy_id]->port ||
 	    !sas_ha->sas_phy[phy_id]->port->port_dev)
-		return;
+		वापस;
 
 	rphy = sas_ha->sas_phy[phy_id]->port->port_dev->rphy;
-	resp_data[12] = rphy->identify.device_type << 4;
-	resp_data[14] = rphy->identify.initiator_port_protocols;
-	resp_data[15] = rphy->identify.target_port_protocols;
-}
+	resp_data[12] = rphy->identअगरy.device_type << 4;
+	resp_data[14] = rphy->identअगरy.initiator_port_protocols;
+	resp_data[15] = rphy->identअगरy.target_port_protocols;
+पूर्ण
 
 /**
  * to_sas_gpio_gp_bit - given the gpio frame data find the byte/bit position of 'od'
  * @od: od bit to find
  * @data: incoming bitstream (from frame)
- * @index: requested data register index (from frame)
- * @count: total number of registers in the bitstream (from frame)
- * @bit: bit position of 'od' in the returned byte
+ * @index: requested data रेजिस्टर index (from frame)
+ * @count: total number of रेजिस्टरs in the bitstream (from frame)
+ * @bit: bit position of 'od' in the वापसed byte
  *
- * returns NULL if 'od' is not in 'data'
+ * वापसs शून्य अगर 'od' is not in 'data'
  *
  * From SFF-8485 v0.7:
  * "In GPIO_TX[1], bit 0 of byte 3 contains the first bit (i.e., OD0.0)
@@ -66,178 +67,178 @@ static void sas_host_smp_discover(struct sas_ha_struct *sas_ha, u8 *resp_data,
  *  In GPIO_TX[2], bit 0 of byte 3 contains the 33rd bit (i.e., OD10.2)
  *  and bit 7 of byte 0 contains the 64th bit (i.e., OD21.0)."
  *
- * The general-purpose (raw-bitstream) RX registers have the same layout
+ * The general-purpose (raw-bitstream) RX रेजिस्टरs have the same layout
  * although 'od' is renamed 'id' for 'input data'.
  *
  * SFF-8489 defines the behavior of the LEDs in response to the 'od' values.
  */
-static u8 *to_sas_gpio_gp_bit(unsigned int od, u8 *data, u8 index, u8 count, u8 *bit)
-{
-	unsigned int reg;
+अटल u8 *to_sas_gpio_gp_bit(अचिन्हित पूर्णांक od, u8 *data, u8 index, u8 count, u8 *bit)
+अणु
+	अचिन्हित पूर्णांक reg;
 	u8 byte;
 
-	/* gp registers start at index 1 */
-	if (index == 0)
-		return NULL;
+	/* gp रेजिस्टरs start at index 1 */
+	अगर (index == 0)
+		वापस शून्य;
 
 	index--; /* make index 0-based */
-	if (od < index * 32)
-		return NULL;
+	अगर (od < index * 32)
+		वापस शून्य;
 
 	od -= index * 32;
 	reg = od >> 5;
 
-	if (reg >= count)
-		return NULL;
+	अगर (reg >= count)
+		वापस शून्य;
 
 	od &= (1 << 5) - 1;
 	byte = 3 - (od >> 3);
 	*bit = od & ((1 << 3) - 1);
 
-	return &data[reg * 4 + byte];
-}
+	वापस &data[reg * 4 + byte];
+पूर्ण
 
-int try_test_sas_gpio_gp_bit(unsigned int od, u8 *data, u8 index, u8 count)
-{
+पूर्णांक try_test_sas_gpio_gp_bit(अचिन्हित पूर्णांक od, u8 *data, u8 index, u8 count)
+अणु
 	u8 *byte;
 	u8 bit;
 
 	byte = to_sas_gpio_gp_bit(od, data, index, count, &bit);
-	if (!byte)
-		return -1;
+	अगर (!byte)
+		वापस -1;
 
-	return (*byte >> bit) & 1;
-}
+	वापस (*byte >> bit) & 1;
+पूर्ण
 EXPORT_SYMBOL(try_test_sas_gpio_gp_bit);
 
-static int sas_host_smp_write_gpio(struct sas_ha_struct *sas_ha, u8 *resp_data,
+अटल पूर्णांक sas_host_smp_ग_लिखो_gpio(काष्ठा sas_ha_काष्ठा *sas_ha, u8 *resp_data,
 				   u8 reg_type, u8 reg_index, u8 reg_count,
 				   u8 *req_data)
-{
-	struct sas_internal *i = to_sas_internal(sas_ha->core.shost->transportt);
-	int written;
+अणु
+	काष्ठा sas_पूर्णांकernal *i = to_sas_पूर्णांकernal(sas_ha->core.shost->transportt);
+	पूर्णांक written;
 
-	if (i->dft->lldd_write_gpio == NULL) {
+	अगर (i->dft->lldd_ग_लिखो_gpio == शून्य) अणु
 		resp_data[2] = SMP_RESP_FUNC_UNK;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	written = i->dft->lldd_write_gpio(sas_ha, reg_type, reg_index,
+	written = i->dft->lldd_ग_लिखो_gpio(sas_ha, reg_type, reg_index,
 					  reg_count, req_data);
 
-	if (written < 0) {
+	अगर (written < 0) अणु
 		resp_data[2] = SMP_RESP_FUNC_FAILED;
 		written = 0;
-	} else
+	पूर्ण अन्यथा
 		resp_data[2] = SMP_RESP_FUNC_ACC;
 
-	return written;
-}
+	वापस written;
+पूर्ण
 
-static void sas_report_phy_sata(struct sas_ha_struct *sas_ha, u8 *resp_data,
+अटल व्योम sas_report_phy_sata(काष्ठा sas_ha_काष्ठा *sas_ha, u8 *resp_data,
 				u8 phy_id)
-{
-	struct sas_rphy *rphy;
-	struct dev_to_host_fis *fis;
-	int i;
+अणु
+	काष्ठा sas_rphy *rphy;
+	काष्ठा dev_to_host_fis *fis;
+	पूर्णांक i;
 
-	if (phy_id >= sas_ha->num_phys) {
+	अगर (phy_id >= sas_ha->num_phys) अणु
 		resp_data[2] = SMP_RESP_NO_PHY;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	resp_data[2] = SMP_RESP_PHY_NO_SATA;
 
-	if (!sas_ha->sas_phy[phy_id]->port)
-		return;
+	अगर (!sas_ha->sas_phy[phy_id]->port)
+		वापस;
 
 	rphy = sas_ha->sas_phy[phy_id]->port->port_dev->rphy;
-	fis = (struct dev_to_host_fis *)
+	fis = (काष्ठा dev_to_host_fis *)
 		sas_ha->sas_phy[phy_id]->port->port_dev->frame_rcvd;
-	if (rphy->identify.target_port_protocols != SAS_PROTOCOL_SATA)
-		return;
+	अगर (rphy->identअगरy.target_port_protocols != SAS_PROTOCOL_SATA)
+		वापस;
 
 	resp_data[2] = SMP_RESP_FUNC_ACC;
 	resp_data[9] = phy_id;
-	memcpy(resp_data + 16, sas_ha->sas_phy[phy_id]->attached_sas_addr,
+	स_नकल(resp_data + 16, sas_ha->sas_phy[phy_id]->attached_sas_addr,
 	       SAS_ADDR_SIZE);
 
-	/* check to see if we have a valid d2h fis */
-	if (fis->fis_type != 0x34)
-		return;
+	/* check to see अगर we have a valid d2h fis */
+	अगर (fis->fis_type != 0x34)
+		वापस;
 
-	/* the d2h fis is required by the standard to be in LE format */
-	for (i = 0; i < 20; i += 4) {
+	/* the d2h fis is required by the standard to be in LE क्रमmat */
+	क्रम (i = 0; i < 20; i += 4) अणु
 		u8 *dst = resp_data + 24 + i, *src =
 			&sas_ha->sas_phy[phy_id]->port->port_dev->frame_rcvd[i];
 		dst[0] = src[3];
 		dst[1] = src[2];
 		dst[2] = src[1];
 		dst[3] = src[0];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sas_phy_control(struct sas_ha_struct *sas_ha, u8 phy_id,
-			    u8 phy_op, enum sas_linkrate min,
-			    enum sas_linkrate max, u8 *resp_data)
-{
-	struct sas_internal *i =
-		to_sas_internal(sas_ha->core.shost->transportt);
-	struct sas_phy_linkrates rates;
-	struct asd_sas_phy *asd_phy;
+अटल व्योम sas_phy_control(काष्ठा sas_ha_काष्ठा *sas_ha, u8 phy_id,
+			    u8 phy_op, क्रमागत sas_linkrate min,
+			    क्रमागत sas_linkrate max, u8 *resp_data)
+अणु
+	काष्ठा sas_पूर्णांकernal *i =
+		to_sas_पूर्णांकernal(sas_ha->core.shost->transportt);
+	काष्ठा sas_phy_linkrates rates;
+	काष्ठा asd_sas_phy *asd_phy;
 
-	if (phy_id >= sas_ha->num_phys) {
+	अगर (phy_id >= sas_ha->num_phys) अणु
 		resp_data[2] = SMP_RESP_NO_PHY;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	asd_phy = sas_ha->sas_phy[phy_id];
-	switch (phy_op) {
-	case PHY_FUNC_NOP:
-	case PHY_FUNC_LINK_RESET:
-	case PHY_FUNC_HARD_RESET:
-	case PHY_FUNC_DISABLE:
-	case PHY_FUNC_CLEAR_ERROR_LOG:
-	case PHY_FUNC_CLEAR_AFFIL:
-	case PHY_FUNC_TX_SATA_PS_SIGNAL:
-		break;
+	चयन (phy_op) अणु
+	हाल PHY_FUNC_NOP:
+	हाल PHY_FUNC_LINK_RESET:
+	हाल PHY_FUNC_HARD_RESET:
+	हाल PHY_FUNC_DISABLE:
+	हाल PHY_FUNC_CLEAR_ERROR_LOG:
+	हाल PHY_FUNC_CLEAR_AFFIL:
+	हाल PHY_FUNC_TX_SATA_PS_SIGNAL:
+		अवरोध;
 
-	default:
+	शेष:
 		resp_data[2] = SMP_RESP_PHY_UNK_OP;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rates.minimum_linkrate = min;
 	rates.maximum_linkrate = max;
 
 	/* filter reset requests through libata eh */
-	if (phy_op == PHY_FUNC_LINK_RESET && sas_try_ata_reset(asd_phy) == 0) {
+	अगर (phy_op == PHY_FUNC_LINK_RESET && sas_try_ata_reset(asd_phy) == 0) अणु
 		resp_data[2] = SMP_RESP_FUNC_ACC;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (i->dft->lldd_control_phy(asd_phy, phy_op, &rates))
+	अगर (i->dft->lldd_control_phy(asd_phy, phy_op, &rates))
 		resp_data[2] = SMP_RESP_FUNC_FAILED;
-	else
+	अन्यथा
 		resp_data[2] = SMP_RESP_FUNC_ACC;
-}
+पूर्ण
 
-void sas_smp_host_handler(struct bsg_job *job, struct Scsi_Host *shost)
-{
-	struct sas_ha_struct *sas_ha = SHOST_TO_SAS_HA(shost);
+व्योम sas_smp_host_handler(काष्ठा bsg_job *job, काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा sas_ha_काष्ठा *sas_ha = SHOST_TO_SAS_HA(shost);
 	u8 *req_data, *resp_data;
-	unsigned int reslen = 0;
-	int error = -EINVAL;
+	अचिन्हित पूर्णांक reslen = 0;
+	पूर्णांक error = -EINVAL;
 
-	/* eight is the minimum size for request and response frames */
-	if (job->request_payload.payload_len < 8 ||
+	/* eight is the minimum size क्रम request and response frames */
+	अगर (job->request_payload.payload_len < 8 ||
 	    job->reply_payload.payload_len < 8)
-		goto out;
+		जाओ out;
 
 	error = -ENOMEM;
 	req_data = kzalloc(job->request_payload.payload_len, GFP_KERNEL);
-	if (!req_data)
-		goto out;
+	अगर (!req_data)
+		जाओ out;
 	sg_copy_to_buffer(job->request_payload.sg_list,
 			  job->request_payload.sg_cnt, req_data,
 			  job->request_payload.payload_len);
@@ -246,109 +247,109 @@ void sas_smp_host_handler(struct bsg_job *job, struct Scsi_Host *shost)
 	 * back only the requested length */
 	resp_data = kzalloc(max(job->reply_payload.payload_len, 128U),
 			GFP_KERNEL);
-	if (!resp_data)
-		goto out_free_req;
+	अगर (!resp_data)
+		जाओ out_मुक्त_req;
 
 	error = -EINVAL;
-	if (req_data[0] != SMP_REQUEST)
-		goto out_free_resp;
+	अगर (req_data[0] != SMP_REQUEST)
+		जाओ out_मुक्त_resp;
 
-	/* set up default don't know response */
+	/* set up शेष करोn't know response */
 	resp_data[0] = SMP_RESPONSE;
 	resp_data[1] = req_data[1];
 	resp_data[2] = SMP_RESP_FUNC_UNK;
 
-	switch (req_data[1]) {
-	case SMP_REPORT_GENERAL:
+	चयन (req_data[1]) अणु
+	हाल SMP_REPORT_GENERAL:
 		resp_data[2] = SMP_RESP_FUNC_ACC;
 		resp_data[9] = sas_ha->num_phys;
 		reslen = 32;
-		break;
+		अवरोध;
 
-	case SMP_REPORT_MANUF_INFO:
+	हाल SMP_REPORT_MANUF_INFO:
 		resp_data[2] = SMP_RESP_FUNC_ACC;
-		memcpy(resp_data + 12, shost->hostt->name,
+		स_नकल(resp_data + 12, shost->hostt->name,
 		       SAS_EXPANDER_VENDOR_ID_LEN);
-		memcpy(resp_data + 20, "libsas virt phy",
+		स_नकल(resp_data + 20, "libsas virt phy",
 		       SAS_EXPANDER_PRODUCT_ID_LEN);
 		reslen = 64;
-		break;
+		अवरोध;
 
-	case SMP_READ_GPIO_REG:
+	हाल SMP_READ_GPIO_REG:
 		/* FIXME: need GPIO support in the transport class */
-		break;
+		अवरोध;
 
-	case SMP_DISCOVER:
-		if (job->request_payload.payload_len < 16)
-			goto out_free_resp;
+	हाल SMP_DISCOVER:
+		अगर (job->request_payload.payload_len < 16)
+			जाओ out_मुक्त_resp;
 		sas_host_smp_discover(sas_ha, resp_data, req_data[9]);
 		reslen = 56;
-		break;
+		अवरोध;
 
-	case SMP_REPORT_PHY_ERR_LOG:
+	हाल SMP_REPORT_PHY_ERR_LOG:
 		/* FIXME: could implement this with additional
 		 * libsas callbacks providing the HW supports it */
-		break;
+		अवरोध;
 
-	case SMP_REPORT_PHY_SATA:
-		if (job->request_payload.payload_len < 16)
-			goto out_free_resp;
+	हाल SMP_REPORT_PHY_SATA:
+		अगर (job->request_payload.payload_len < 16)
+			जाओ out_मुक्त_resp;
 		sas_report_phy_sata(sas_ha, resp_data, req_data[9]);
 		reslen = 60;
-		break;
+		अवरोध;
 
-	case SMP_REPORT_ROUTE_INFO:
+	हाल SMP_REPORT_ROUTE_INFO:
 		/* Can't implement; hosts have no routes */
-		break;
+		अवरोध;
 
-	case SMP_WRITE_GPIO_REG: {
+	हाल SMP_WRITE_GPIO_REG: अणु
 		/* SFF-8485 v0.7 */
-		const int base_frame_size = 11;
-		int to_write = req_data[4];
+		स्थिर पूर्णांक base_frame_size = 11;
+		पूर्णांक to_ग_लिखो = req_data[4];
 
-		if (job->request_payload.payload_len <
-				base_frame_size + to_write * 4) {
+		अगर (job->request_payload.payload_len <
+				base_frame_size + to_ग_लिखो * 4) अणु
 			resp_data[2] = SMP_RESP_INV_FRM_LEN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		to_write = sas_host_smp_write_gpio(sas_ha, resp_data, req_data[2],
-						   req_data[3], to_write, &req_data[8]);
+		to_ग_लिखो = sas_host_smp_ग_लिखो_gpio(sas_ha, resp_data, req_data[2],
+						   req_data[3], to_ग_लिखो, &req_data[8]);
 		reslen = 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case SMP_CONF_ROUTE_INFO:
+	हाल SMP_CONF_ROUTE_INFO:
 		/* Can't implement; hosts have no routes */
-		break;
+		अवरोध;
 
-	case SMP_PHY_CONTROL:
-		if (job->request_payload.payload_len < 44)
-			goto out_free_resp;
+	हाल SMP_PHY_CONTROL:
+		अगर (job->request_payload.payload_len < 44)
+			जाओ out_मुक्त_resp;
 		sas_phy_control(sas_ha, req_data[9], req_data[10],
 				req_data[32] >> 4, req_data[33] >> 4,
 				resp_data);
 		reslen = 8;
-		break;
+		अवरोध;
 
-	case SMP_PHY_TEST_FUNCTION:
+	हाल SMP_PHY_TEST_FUNCTION:
 		/* FIXME: should this be implemented? */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* probably a 2.0 function */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	sg_copy_from_buffer(job->reply_payload.sg_list,
 			    job->reply_payload.sg_cnt, resp_data,
 			    job->reply_payload.payload_len);
 
 	error = 0;
-out_free_resp:
-	kfree(resp_data);
-out_free_req:
-	kfree(req_data);
+out_मुक्त_resp:
+	kमुक्त(resp_data);
+out_मुक्त_req:
+	kमुक्त(req_data);
 out:
-	bsg_job_done(job, error, reslen);
-}
+	bsg_job_करोne(job, error, reslen);
+पूर्ण

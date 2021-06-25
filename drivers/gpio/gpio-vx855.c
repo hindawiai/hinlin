@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Linux GPIOlib driver for the VIA VX855 integrated southbridge GPIO
+ * Linux GPIOlib driver क्रम the VIA VX855 पूर्णांकegrated southbridge GPIO
  *
  * Copyright (C) 2009 VIA Technologies, Inc.
  * Copyright (C) 2010 One Laptop per Child
  * Author: Harald Welte <HaraldWelte@viatech.com>
  * All rights reserved.
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/gpio/driver.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/pci.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पन.स>
 
-#define MODULE_NAME "vx855_gpio"
+#घोषणा MODULE_NAME "vx855_gpio"
 
 /* The VX855 south bridge has the following GPIO pins:
  *	GPI 0...13	General Purpose Input
@@ -24,52 +25,52 @@
  *	GPIO 0...14	General Purpose I/O (Open-Drain)
  */
 
-#define NR_VX855_GPI	14
-#define NR_VX855_GPO	13
-#define NR_VX855_GPIO	15
+#घोषणा NR_VX855_GPI	14
+#घोषणा NR_VX855_GPO	13
+#घोषणा NR_VX855_GPIO	15
 
-#define NR_VX855_GPInO	(NR_VX855_GPI + NR_VX855_GPO)
-#define NR_VX855_GP	(NR_VX855_GPI + NR_VX855_GPO + NR_VX855_GPIO)
+#घोषणा NR_VX855_GPInO	(NR_VX855_GPI + NR_VX855_GPO)
+#घोषणा NR_VX855_GP	(NR_VX855_GPI + NR_VX855_GPO + NR_VX855_GPIO)
 
-struct vx855_gpio {
-	struct gpio_chip gpio;
+काष्ठा vx855_gpio अणु
+	काष्ठा gpio_chip gpio;
 	spinlock_t lock;
 	u32 io_gpi;
 	u32 io_gpo;
-};
+पूर्ण;
 
-/* resolve a GPIx into the corresponding bit position */
-static inline u_int32_t gpi_i_bit(int i)
-{
-	if (i < 10)
-		return 1 << i;
-	else
-		return 1 << (i + 14);
-}
+/* resolve a GPIx पूर्णांकo the corresponding bit position */
+अटल अंतरभूत u_पूर्णांक32_t gpi_i_bit(पूर्णांक i)
+अणु
+	अगर (i < 10)
+		वापस 1 << i;
+	अन्यथा
+		वापस 1 << (i + 14);
+पूर्ण
 
-static inline u_int32_t gpo_o_bit(int i)
-{
-	if (i < 11)
-		return 1 << i;
-	else
-		return 1 << (i + 14);
-}
+अटल अंतरभूत u_पूर्णांक32_t gpo_o_bit(पूर्णांक i)
+अणु
+	अगर (i < 11)
+		वापस 1 << i;
+	अन्यथा
+		वापस 1 << (i + 14);
+पूर्ण
 
-static inline u_int32_t gpio_i_bit(int i)
-{
-	if (i < 14)
-		return 1 << (i + 10);
-	else
-		return 1 << (i + 14);
-}
+अटल अंतरभूत u_पूर्णांक32_t gpio_i_bit(पूर्णांक i)
+अणु
+	अगर (i < 14)
+		वापस 1 << (i + 10);
+	अन्यथा
+		वापस 1 << (i + 14);
+पूर्ण
 
-static inline u_int32_t gpio_o_bit(int i)
-{
-	if (i < 14)
-		return 1 << (i + 11);
-	else
-		return 1 << (i + 13);
-}
+अटल अंतरभूत u_पूर्णांक32_t gpio_o_bit(पूर्णांक i)
+अणु
+	अगर (i < 14)
+		वापस 1 << (i + 11);
+	अन्यथा
+		वापस 1 << (i + 13);
+पूर्ण
 
 /* Mapping between numeric GPIO ID and the actual GPIO hardware numbering:
  * 0..13	GPI 0..13
@@ -77,20 +78,20 @@ static inline u_int32_t gpio_o_bit(int i)
  * 27..41	GPIO 0..14
  */
 
-static int vx855gpio_direction_input(struct gpio_chip *gpio,
-				     unsigned int nr)
-{
-	struct vx855_gpio *vg = gpiochip_get_data(gpio);
-	unsigned long flags;
-	u_int32_t reg_out;
+अटल पूर्णांक vx855gpio_direction_input(काष्ठा gpio_chip *gpio,
+				     अचिन्हित पूर्णांक nr)
+अणु
+	काष्ठा vx855_gpio *vg = gpiochip_get_data(gpio);
+	अचिन्हित दीर्घ flags;
+	u_पूर्णांक32_t reg_out;
 
 	/* Real GPI bits are always in input direction */
-	if (nr < NR_VX855_GPI)
-		return 0;
+	अगर (nr < NR_VX855_GPI)
+		वापस 0;
 
 	/* Real GPO bits cannot be put in output direction */
-	if (nr < NR_VX855_GPInO)
-		return -EINVAL;
+	अगर (nr < NR_VX855_GPInO)
+		वापस -EINVAL;
 
 	/* Open Drain GPIO have to be set to one */
 	spin_lock_irqsave(&vg->lock, flags);
@@ -99,101 +100,101 @@ static int vx855gpio_direction_input(struct gpio_chip *gpio,
 	outl(reg_out, vg->io_gpo);
 	spin_unlock_irqrestore(&vg->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vx855gpio_get(struct gpio_chip *gpio, unsigned int nr)
-{
-	struct vx855_gpio *vg = gpiochip_get_data(gpio);
-	u_int32_t reg_in;
-	int ret = 0;
+अटल पूर्णांक vx855gpio_get(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr)
+अणु
+	काष्ठा vx855_gpio *vg = gpiochip_get_data(gpio);
+	u_पूर्णांक32_t reg_in;
+	पूर्णांक ret = 0;
 
-	if (nr < NR_VX855_GPI) {
+	अगर (nr < NR_VX855_GPI) अणु
 		reg_in = inl(vg->io_gpi);
-		if (reg_in & gpi_i_bit(nr))
+		अगर (reg_in & gpi_i_bit(nr))
 			ret = 1;
-	} else if (nr < NR_VX855_GPInO) {
-		/* GPO don't have an input bit, we need to read it
-		 * back from the output register */
+	पूर्ण अन्यथा अगर (nr < NR_VX855_GPInO) अणु
+		/* GPO करोn't have an input bit, we need to पढ़ो it
+		 * back from the output रेजिस्टर */
 		reg_in = inl(vg->io_gpo);
-		if (reg_in & gpo_o_bit(nr - NR_VX855_GPI))
+		अगर (reg_in & gpo_o_bit(nr - NR_VX855_GPI))
 			ret = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		reg_in = inl(vg->io_gpi);
-		if (reg_in & gpio_i_bit(nr - NR_VX855_GPInO))
+		अगर (reg_in & gpio_i_bit(nr - NR_VX855_GPInO))
 			ret = 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vx855gpio_set(struct gpio_chip *gpio, unsigned int nr,
-			  int val)
-{
-	struct vx855_gpio *vg = gpiochip_get_data(gpio);
-	unsigned long flags;
-	u_int32_t reg_out;
+अटल व्योम vx855gpio_set(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr,
+			  पूर्णांक val)
+अणु
+	काष्ठा vx855_gpio *vg = gpiochip_get_data(gpio);
+	अचिन्हित दीर्घ flags;
+	u_पूर्णांक32_t reg_out;
 
-	/* True GPI cannot be switched to output mode */
-	if (nr < NR_VX855_GPI)
-		return;
+	/* True GPI cannot be चयनed to output mode */
+	अगर (nr < NR_VX855_GPI)
+		वापस;
 
 	spin_lock_irqsave(&vg->lock, flags);
 	reg_out = inl(vg->io_gpo);
-	if (nr < NR_VX855_GPInO) {
-		if (val)
+	अगर (nr < NR_VX855_GPInO) अणु
+		अगर (val)
 			reg_out |= gpo_o_bit(nr - NR_VX855_GPI);
-		else
+		अन्यथा
 			reg_out &= ~gpo_o_bit(nr - NR_VX855_GPI);
-	} else {
-		if (val)
+	पूर्ण अन्यथा अणु
+		अगर (val)
 			reg_out |= gpio_o_bit(nr - NR_VX855_GPInO);
-		else
+		अन्यथा
 			reg_out &= ~gpio_o_bit(nr - NR_VX855_GPInO);
-	}
+	पूर्ण
 	outl(reg_out, vg->io_gpo);
 	spin_unlock_irqrestore(&vg->lock, flags);
-}
+पूर्ण
 
-static int vx855gpio_direction_output(struct gpio_chip *gpio,
-				      unsigned int nr, int val)
-{
-	/* True GPI cannot be switched to output mode */
-	if (nr < NR_VX855_GPI)
-		return -EINVAL;
+अटल पूर्णांक vx855gpio_direction_output(काष्ठा gpio_chip *gpio,
+				      अचिन्हित पूर्णांक nr, पूर्णांक val)
+अणु
+	/* True GPI cannot be चयनed to output mode */
+	अगर (nr < NR_VX855_GPI)
+		वापस -EINVAL;
 
-	/* True GPO don't need to be switched to output mode,
-	 * and GPIO are open-drain, i.e. also need no switching,
-	 * so all we do is set the level */
+	/* True GPO करोn't need to be चयनed to output mode,
+	 * and GPIO are खोलो-drain, i.e. also need no चयनing,
+	 * so all we करो is set the level */
 	vx855gpio_set(gpio, nr, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vx855gpio_set_config(struct gpio_chip *gpio, unsigned int nr,
-				unsigned long config)
-{
-	enum pin_config_param param = pinconf_to_config_param(config);
+अटल पूर्णांक vx855gpio_set_config(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr,
+				अचिन्हित दीर्घ config)
+अणु
+	क्रमागत pin_config_param param = pinconf_to_config_param(config);
 
 	/* The GPI cannot be single-ended */
-	if (nr < NR_VX855_GPI)
-		return -EINVAL;
+	अगर (nr < NR_VX855_GPI)
+		वापस -EINVAL;
 
 	/* The GPO's are push-pull */
-	if (nr < NR_VX855_GPInO) {
-		if (param != PIN_CONFIG_DRIVE_PUSH_PULL)
-			return -ENOTSUPP;
-		return 0;
-	}
+	अगर (nr < NR_VX855_GPInO) अणु
+		अगर (param != PIN_CONFIG_DRIVE_PUSH_PULL)
+			वापस -ENOTSUPP;
+		वापस 0;
+	पूर्ण
 
-	/* The GPIO's are open drain */
-	if (param != PIN_CONFIG_DRIVE_OPEN_DRAIN)
-		return -ENOTSUPP;
+	/* The GPIO's are खोलो drain */
+	अगर (param != PIN_CONFIG_DRIVE_OPEN_DRAIN)
+		वापस -ENOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *vx855gpio_names[NR_VX855_GP] = {
+अटल स्थिर अक्षर *vx855gpio_names[NR_VX855_GP] = अणु
 	"VX855_GPI0", "VX855_GPI1", "VX855_GPI2", "VX855_GPI3", "VX855_GPI4",
 	"VX855_GPI5", "VX855_GPI6", "VX855_GPI7", "VX855_GPI8", "VX855_GPI9",
 	"VX855_GPI10", "VX855_GPI11", "VX855_GPI12", "VX855_GPI13",
@@ -204,11 +205,11 @@ static const char *vx855gpio_names[NR_VX855_GP] = {
 	"VX855_GPIO4", "VX855_GPIO5", "VX855_GPIO6", "VX855_GPIO7",
 	"VX855_GPIO8", "VX855_GPIO9", "VX855_GPIO10", "VX855_GPIO11",
 	"VX855_GPIO12", "VX855_GPIO13", "VX855_GPIO14"
-};
+पूर्ण;
 
-static void vx855gpio_gpio_setup(struct vx855_gpio *vg)
-{
-	struct gpio_chip *c = &vg->gpio;
+अटल व्योम vx855gpio_gpio_setup(काष्ठा vx855_gpio *vg)
+अणु
+	काष्ठा gpio_chip *c = &vg->gpio;
 
 	c->label = "VX855 South Bridge";
 	c->owner = THIS_MODULE;
@@ -217,30 +218,30 @@ static void vx855gpio_gpio_setup(struct vx855_gpio *vg)
 	c->get = vx855gpio_get;
 	c->set = vx855gpio_set;
 	c->set_config = vx855gpio_set_config;
-	c->dbg_show = NULL;
+	c->dbg_show = शून्य;
 	c->base = 0;
 	c->ngpio = NR_VX855_GP;
 	c->can_sleep = false;
 	c->names = vx855gpio_names;
-}
+पूर्ण
 
-/* This platform device is ordinarily registered by the vx855 mfd driver */
-static int vx855gpio_probe(struct platform_device *pdev)
-{
-	struct resource *res_gpi;
-	struct resource *res_gpo;
-	struct vx855_gpio *vg;
+/* This platक्रमm device is ordinarily रेजिस्टरed by the vx855 mfd driver */
+अटल पूर्णांक vx855gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res_gpi;
+	काष्ठा resource *res_gpo;
+	काष्ठा vx855_gpio *vg;
 
-	res_gpi = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	res_gpo = platform_get_resource(pdev, IORESOURCE_IO, 1);
-	if (!res_gpi || !res_gpo)
-		return -EBUSY;
+	res_gpi = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	res_gpo = platक्रमm_get_resource(pdev, IORESOURCE_IO, 1);
+	अगर (!res_gpi || !res_gpo)
+		वापस -EBUSY;
 
-	vg = devm_kzalloc(&pdev->dev, sizeof(*vg), GFP_KERNEL);
-	if (!vg)
-		return -ENOMEM;
+	vg = devm_kzalloc(&pdev->dev, माप(*vg), GFP_KERNEL);
+	अगर (!vg)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, vg);
+	platक्रमm_set_drvdata(pdev, vg);
 
 	dev_info(&pdev->dev, "found VX855 GPIO controller\n");
 	vg->io_gpi = res_gpi->start;
@@ -249,35 +250,35 @@ static int vx855gpio_probe(struct platform_device *pdev)
 
 	/*
 	 * A single byte is used to control various GPIO ports on the VX855,
-	 * and in the case of the OLPC XO-1.5, some of those ports are used
-	 * for switches that are interpreted and exposed through ACPI. ACPI
+	 * and in the हाल of the OLPC XO-1.5, some of those ports are used
+	 * क्रम चयनes that are पूर्णांकerpreted and exposed through ACPI. ACPI
 	 * will have reserved the region, so our own reservation will not
-	 * succeed. Ignore and continue.
+	 * succeed. Ignore and जारी.
 	 */
 
-	if (!devm_request_region(&pdev->dev, res_gpi->start,
+	अगर (!devm_request_region(&pdev->dev, res_gpi->start,
 				 resource_size(res_gpi), MODULE_NAME "_gpi"))
 		dev_warn(&pdev->dev,
 			"GPI I/O resource busy, probably claimed by ACPI\n");
 
-	if (!devm_request_region(&pdev->dev, res_gpo->start,
+	अगर (!devm_request_region(&pdev->dev, res_gpo->start,
 				 resource_size(res_gpo), MODULE_NAME "_gpo"))
 		dev_warn(&pdev->dev,
 			"GPO I/O resource busy, probably claimed by ACPI\n");
 
 	vx855gpio_gpio_setup(vg);
 
-	return devm_gpiochip_add_data(&pdev->dev, &vg->gpio, vg);
-}
+	वापस devm_gpiochip_add_data(&pdev->dev, &vg->gpio, vg);
+पूर्ण
 
-static struct platform_driver vx855gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver vx855gpio_driver = अणु
+	.driver = अणु
 		.name	= MODULE_NAME,
-	},
+	पूर्ण,
 	.probe		= vx855gpio_probe,
-};
+पूर्ण;
 
-module_platform_driver(vx855gpio_driver);
+module_platक्रमm_driver(vx855gpio_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Harald Welte <HaraldWelte@viatech.com>");

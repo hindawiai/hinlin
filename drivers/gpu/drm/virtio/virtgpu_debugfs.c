@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2015 Red Hat, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -23,26 +24,26 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <drm/drm_debugfs.h>
-#include <drm/drm_file.h>
+#समावेश <drm/drm_debugfs.h>
+#समावेश <drm/drm_file.h>
 
-#include "virtgpu_drv.h"
+#समावेश "virtgpu_drv.h"
 
-static void virtio_gpu_add_bool(struct seq_file *m, const char *name,
+अटल व्योम virtio_gpu_add_bool(काष्ठा seq_file *m, स्थिर अक्षर *name,
 				bool value)
-{
-	seq_printf(m, "%-16s : %s\n", name, value ? "yes" : "no");
-}
+अणु
+	seq_म_लिखो(m, "%-16s : %s\n", name, value ? "yes" : "no");
+पूर्ण
 
-static void virtio_gpu_add_int(struct seq_file *m, const char *name, int value)
-{
-	seq_printf(m, "%-16s : %d\n", name, value);
-}
+अटल व्योम virtio_gpu_add_पूर्णांक(काष्ठा seq_file *m, स्थिर अक्षर *name, पूर्णांक value)
+अणु
+	seq_म_लिखो(m, "%-16s : %d\n", name, value);
+पूर्ण
 
-static int virtio_gpu_features(struct seq_file *m, void *data)
-{
-	struct drm_info_node *node = (struct drm_info_node *)m->private;
-	struct virtio_gpu_device *vgdev = node->minor->dev->dev_private;
+अटल पूर्णांक virtio_gpu_features(काष्ठा seq_file *m, व्योम *data)
+अणु
+	काष्ठा drm_info_node *node = (काष्ठा drm_info_node *)m->निजी;
+	काष्ठा virtio_gpu_device *vgdev = node->minor->dev->dev_निजी;
 
 	virtio_gpu_add_bool(m, "virgl", vgdev->has_virgl_3d);
 	virtio_gpu_add_bool(m, "edid", vgdev->has_edid);
@@ -52,57 +53,57 @@ static int virtio_gpu_features(struct seq_file *m, void *data)
 			    vgdev->has_resource_assign_uuid);
 
 	virtio_gpu_add_bool(m, "blob resources", vgdev->has_resource_blob);
-	virtio_gpu_add_int(m, "cap sets", vgdev->num_capsets);
-	virtio_gpu_add_int(m, "scanouts", vgdev->num_scanouts);
-	if (vgdev->host_visible_region.len) {
-		seq_printf(m, "%-16s : 0x%lx +0x%lx\n", "host visible region",
-			   (unsigned long)vgdev->host_visible_region.addr,
-			   (unsigned long)vgdev->host_visible_region.len);
-	}
-	return 0;
-}
+	virtio_gpu_add_पूर्णांक(m, "cap sets", vgdev->num_capsets);
+	virtio_gpu_add_पूर्णांक(m, "scanouts", vgdev->num_scanouts);
+	अगर (vgdev->host_visible_region.len) अणु
+		seq_म_लिखो(m, "%-16s : 0x%lx +0x%lx\n", "host visible region",
+			   (अचिन्हित दीर्घ)vgdev->host_visible_region.addr,
+			   (अचिन्हित दीर्घ)vgdev->host_visible_region.len);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-virtio_gpu_debugfs_irq_info(struct seq_file *m, void *data)
-{
-	struct drm_info_node *node = (struct drm_info_node *) m->private;
-	struct virtio_gpu_device *vgdev = node->minor->dev->dev_private;
+अटल पूर्णांक
+virtio_gpu_debugfs_irq_info(काष्ठा seq_file *m, व्योम *data)
+अणु
+	काष्ठा drm_info_node *node = (काष्ठा drm_info_node *) m->निजी;
+	काष्ठा virtio_gpu_device *vgdev = node->minor->dev->dev_निजी;
 
-	seq_printf(m, "fence %llu %lld\n",
-		   (u64)atomic64_read(&vgdev->fence_drv.last_fence_id),
+	seq_म_लिखो(m, "fence %llu %lld\n",
+		   (u64)atomic64_पढ़ो(&vgdev->fence_drv.last_fence_id),
 		   vgdev->fence_drv.current_fence_id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-virtio_gpu_debugfs_host_visible_mm(struct seq_file *m, void *data)
-{
-	struct drm_info_node *node = (struct drm_info_node *)m->private;
-	struct virtio_gpu_device *vgdev = node->minor->dev->dev_private;
-	struct drm_printer p;
+अटल पूर्णांक
+virtio_gpu_debugfs_host_visible_mm(काष्ठा seq_file *m, व्योम *data)
+अणु
+	काष्ठा drm_info_node *node = (काष्ठा drm_info_node *)m->निजी;
+	काष्ठा virtio_gpu_device *vgdev = node->minor->dev->dev_निजी;
+	काष्ठा drm_prपूर्णांकer p;
 
-	if (!vgdev->has_host_visible) {
-		seq_puts(m, "Host allocations not visible to guest\n");
-		return 0;
-	}
+	अगर (!vgdev->has_host_visible) अणु
+		seq_माला_दो(m, "Host allocations not visible to guest\n");
+		वापस 0;
+	पूर्ण
 
-	p = drm_seq_file_printer(m);
-	drm_mm_print(&vgdev->host_visible_mm, &p);
-	return 0;
-}
+	p = drm_seq_file_prपूर्णांकer(m);
+	drm_mm_prपूर्णांक(&vgdev->host_visible_mm, &p);
+	वापस 0;
+पूर्ण
 
-static struct drm_info_list virtio_gpu_debugfs_list[] = {
-	{ "virtio-gpu-features", virtio_gpu_features },
-	{ "virtio-gpu-irq-fence", virtio_gpu_debugfs_irq_info, 0, NULL },
-	{ "virtio-gpu-host-visible-mm", virtio_gpu_debugfs_host_visible_mm },
-};
+अटल काष्ठा drm_info_list virtio_gpu_debugfs_list[] = अणु
+	अणु "virtio-gpu-features", virtio_gpu_features पूर्ण,
+	अणु "virtio-gpu-irq-fence", virtio_gpu_debugfs_irq_info, 0, शून्य पूर्ण,
+	अणु "virtio-gpu-host-visible-mm", virtio_gpu_debugfs_host_visible_mm पूर्ण,
+पूर्ण;
 
-#define VIRTIO_GPU_DEBUGFS_ENTRIES ARRAY_SIZE(virtio_gpu_debugfs_list)
+#घोषणा VIRTIO_GPU_DEBUGFS_ENTRIES ARRAY_SIZE(virtio_gpu_debugfs_list)
 
-void
-virtio_gpu_debugfs_init(struct drm_minor *minor)
-{
+व्योम
+virtio_gpu_debugfs_init(काष्ठा drm_minor *minor)
+अणु
 	drm_debugfs_create_files(virtio_gpu_debugfs_list,
 				 VIRTIO_GPU_DEBUGFS_ENTRIES,
 				 minor->debugfs_root, minor);
-}
+पूर्ण

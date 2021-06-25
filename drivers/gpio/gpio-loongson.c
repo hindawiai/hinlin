@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Loongson-2F/3A/3B GPIO Support
  *
- *  Copyright (c) 2008 Richard Liu,  STMicroelectronics	 <richard.liu@st.com>
+ *  Copyright (c) 2008 Riअक्षरd Liu,  STMicroelectronics	 <riअक्षरd.liu@st.com>
  *  Copyright (c) 2008-2010 Arnaud Patard <apatard@mandriva.com>
  *  Copyright (c) 2013 Hongbing Hu <huhb@lemote.com>
  *  Copyright (c) 2014 Huacai Chen <chenhc@lemote.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/err.h>
-#include <linux/gpio/driver.h>
-#include <linux/platform_device.h>
-#include <linux/bitops.h>
-#include <asm/types.h>
-#include <loongson.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <यंत्र/types.h>
+#समावेश <loongson.h>
 
-#define STLS2F_N_GPIO		4
-#define STLS3A_N_GPIO		16
+#घोषणा STLS2F_N_GPIO		4
+#घोषणा STLS3A_N_GPIO		16
 
-#ifdef CONFIG_CPU_LOONGSON64
-#define LOONGSON_N_GPIO	STLS3A_N_GPIO
-#else
-#define LOONGSON_N_GPIO	STLS2F_N_GPIO
-#endif
+#अगर_घोषित CONFIG_CPU_LOONGSON64
+#घोषणा LOONGSON_N_GPIO	STLS3A_N_GPIO
+#अन्यथा
+#घोषणा LOONGSON_N_GPIO	STLS2F_N_GPIO
+#पूर्ण_अगर
 
 /*
- * Offset into the register where we read lines, we write them from offset 0.
+ * Offset पूर्णांकo the रेजिस्टर where we पढ़ो lines, we ग_लिखो them from offset 0.
  * This offset is the only thing that stand between us and using
  * GPIO_GENERIC.
  */
-#define LOONGSON_GPIO_IN_OFFSET	16
+#घोषणा LOONGSON_GPIO_IN_OFFSET	16
 
-static DEFINE_SPINLOCK(gpio_lock);
+अटल DEFINE_SPINLOCK(gpio_lock);
 
-static int loongson_gpio_get_value(struct gpio_chip *chip, unsigned gpio)
-{
+अटल पूर्णांक loongson_gpio_get_value(काष्ठा gpio_chip *chip, अचिन्हित gpio)
+अणु
 	u32 val;
 
 	spin_lock(&gpio_lock);
 	val = LOONGSON_GPIODATA;
 	spin_unlock(&gpio_lock);
 
-	return !!(val & BIT(gpio + LOONGSON_GPIO_IN_OFFSET));
-}
+	वापस !!(val & BIT(gpio + LOONGSON_GPIO_IN_OFFSET));
+पूर्ण
 
-static void loongson_gpio_set_value(struct gpio_chip *chip,
-		unsigned gpio, int value)
-{
+अटल व्योम loongson_gpio_set_value(काष्ठा gpio_chip *chip,
+		अचिन्हित gpio, पूर्णांक value)
+अणु
 	u32 val;
 
 	spin_lock(&gpio_lock);
 	val = LOONGSON_GPIODATA;
-	if (value)
+	अगर (value)
 		val |= BIT(gpio);
-	else
+	अन्यथा
 		val &= ~BIT(gpio);
 	LOONGSON_GPIODATA = val;
 	spin_unlock(&gpio_lock);
-}
+पूर्ण
 
-static int loongson_gpio_direction_input(struct gpio_chip *chip, unsigned gpio)
-{
+अटल पूर्णांक loongson_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित gpio)
+अणु
 	u32 temp;
 
 	spin_lock(&gpio_lock);
@@ -73,12 +74,12 @@ static int loongson_gpio_direction_input(struct gpio_chip *chip, unsigned gpio)
 	LOONGSON_GPIOIE = temp;
 	spin_unlock(&gpio_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int loongson_gpio_direction_output(struct gpio_chip *chip,
-		unsigned gpio, int level)
-{
+अटल पूर्णांक loongson_gpio_direction_output(काष्ठा gpio_chip *chip,
+		अचिन्हित gpio, पूर्णांक level)
+अणु
 	u32 temp;
 
 	loongson_gpio_set_value(chip, gpio, level);
@@ -88,17 +89,17 @@ static int loongson_gpio_direction_output(struct gpio_chip *chip,
 	LOONGSON_GPIOIE = temp;
 	spin_unlock(&gpio_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int loongson_gpio_probe(struct platform_device *pdev)
-{
-	struct gpio_chip *gc;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक loongson_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gpio_chip *gc;
+	काष्ठा device *dev = &pdev->dev;
 
-	gc = devm_kzalloc(dev, sizeof(*gc), GFP_KERNEL);
-	if (!gc)
-		return -ENOMEM;
+	gc = devm_kzalloc(dev, माप(*gc), GFP_KERNEL);
+	अगर (!gc)
+		वापस -ENOMEM;
 
 	gc->label = "loongson-gpio-chip";
 	gc->base = 0;
@@ -108,28 +109,28 @@ static int loongson_gpio_probe(struct platform_device *pdev)
 	gc->direction_input = loongson_gpio_direction_input;
 	gc->direction_output = loongson_gpio_direction_output;
 
-	return gpiochip_add_data(gc, NULL);
-}
+	वापस gpiochip_add_data(gc, शून्य);
+पूर्ण
 
-static struct platform_driver loongson_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver loongson_gpio_driver = अणु
+	.driver = अणु
 		.name = "loongson-gpio",
-	},
+	पूर्ण,
 	.probe = loongson_gpio_probe,
-};
+पूर्ण;
 
-static int __init loongson_gpio_setup(void)
-{
-	struct platform_device *pdev;
-	int ret;
+अटल पूर्णांक __init loongson_gpio_setup(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&loongson_gpio_driver);
-	if (ret) {
+	ret = platक्रमm_driver_रेजिस्टर(&loongson_gpio_driver);
+	अगर (ret) अणु
 		pr_err("error registering loongson GPIO driver\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pdev = platform_device_register_simple("loongson-gpio", -1, NULL, 0);
-	return PTR_ERR_OR_ZERO(pdev);
-}
+	pdev = platक्रमm_device_रेजिस्टर_simple("loongson-gpio", -1, शून्य, 0);
+	वापस PTR_ERR_OR_ZERO(pdev);
+पूर्ण
 postcore_initcall(loongson_gpio_setup);

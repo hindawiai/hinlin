@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/sysv/namei.c
  *
@@ -13,131 +14,131 @@
  *  Copyright (C) 1997, 1998  Krzysztof G. Baranowski
  */
 
-#include <linux/pagemap.h>
-#include "sysv.h"
+#समावेश <linux/pagemap.h>
+#समावेश "sysv.h"
 
-static int add_nondir(struct dentry *dentry, struct inode *inode)
-{
-	int err = sysv_add_link(dentry, inode);
-	if (!err) {
+अटल पूर्णांक add_nondir(काष्ठा dentry *dentry, काष्ठा inode *inode)
+अणु
+	पूर्णांक err = sysv_add_link(dentry, inode);
+	अगर (!err) अणु
 		d_instantiate(dentry, inode);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	inode_dec_link_count(inode);
 	iput(inode);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct dentry *sysv_lookup(struct inode * dir, struct dentry * dentry, unsigned int flags)
-{
-	struct inode * inode = NULL;
+अटल काष्ठा dentry *sysv_lookup(काष्ठा inode * dir, काष्ठा dentry * dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode * inode = शून्य;
 	ino_t ino;
 
-	if (dentry->d_name.len > SYSV_NAMELEN)
-		return ERR_PTR(-ENAMETOOLONG);
+	अगर (dentry->d_name.len > SYSV_NAMELEN)
+		वापस ERR_PTR(-ENAMETOOLONG);
 	ino = sysv_inode_by_name(dentry);
-	if (ino)
+	अगर (ino)
 		inode = sysv_iget(dir->i_sb, ino);
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-static int sysv_mknod(struct user_namespace *mnt_userns, struct inode *dir,
-		      struct dentry *dentry, umode_t mode, dev_t rdev)
-{
-	struct inode * inode;
-	int err;
+अटल पूर्णांक sysv_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		      काष्ठा dentry *dentry, umode_t mode, dev_t rdev)
+अणु
+	काष्ठा inode * inode;
+	पूर्णांक err;
 
-	if (!old_valid_dev(rdev))
-		return -EINVAL;
+	अगर (!old_valid_dev(rdev))
+		वापस -EINVAL;
 
 	inode = sysv_new_inode(dir, mode);
 	err = PTR_ERR(inode);
 
-	if (!IS_ERR(inode)) {
+	अगर (!IS_ERR(inode)) अणु
 		sysv_set_inode(inode, rdev);
 		mark_inode_dirty(inode);
 		err = add_nondir(dentry, inode);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int sysv_create(struct user_namespace *mnt_userns, struct inode *dir,
-		       struct dentry *dentry, umode_t mode, bool excl)
-{
-	return sysv_mknod(&init_user_ns, dir, dentry, mode, 0);
-}
+अटल पूर्णांक sysv_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		       काष्ठा dentry *dentry, umode_t mode, bool excl)
+अणु
+	वापस sysv_mknod(&init_user_ns, dir, dentry, mode, 0);
+पूर्ण
 
-static int sysv_symlink(struct user_namespace *mnt_userns, struct inode *dir,
-			struct dentry *dentry, const char *symname)
-{
-	int err = -ENAMETOOLONG;
-	int l = strlen(symname)+1;
-	struct inode * inode;
+अटल पूर्णांक sysv_symlink(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+			काष्ठा dentry *dentry, स्थिर अक्षर *symname)
+अणु
+	पूर्णांक err = -ENAMETOOLONG;
+	पूर्णांक l = म_माप(symname)+1;
+	काष्ठा inode * inode;
 
-	if (l > dir->i_sb->s_blocksize)
-		goto out;
+	अगर (l > dir->i_sb->s_blocksize)
+		जाओ out;
 
 	inode = sysv_new_inode(dir, S_IFLNK|0777);
 	err = PTR_ERR(inode);
-	if (IS_ERR(inode))
-		goto out;
+	अगर (IS_ERR(inode))
+		जाओ out;
 	
 	sysv_set_inode(inode, 0);
 	err = page_symlink(inode, symname, l);
-	if (err)
-		goto out_fail;
+	अगर (err)
+		जाओ out_fail;
 
 	mark_inode_dirty(inode);
 	err = add_nondir(dentry, inode);
 out:
-	return err;
+	वापस err;
 
 out_fail:
 	inode_dec_link_count(inode);
 	iput(inode);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static int sysv_link(struct dentry * old_dentry, struct inode * dir, 
-	struct dentry * dentry)
-{
-	struct inode *inode = d_inode(old_dentry);
+अटल पूर्णांक sysv_link(काष्ठा dentry * old_dentry, काष्ठा inode * dir, 
+	काष्ठा dentry * dentry)
+अणु
+	काष्ठा inode *inode = d_inode(old_dentry);
 
-	inode->i_ctime = current_time(inode);
+	inode->i_स_समय = current_समय(inode);
 	inode_inc_link_count(inode);
 	ihold(inode);
 
-	return add_nondir(dentry, inode);
-}
+	वापस add_nondir(dentry, inode);
+पूर्ण
 
-static int sysv_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
-		      struct dentry *dentry, umode_t mode)
-{
-	struct inode * inode;
-	int err;
+अटल पूर्णांक sysv_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		      काष्ठा dentry *dentry, umode_t mode)
+अणु
+	काष्ठा inode * inode;
+	पूर्णांक err;
 
 	inode_inc_link_count(dir);
 
-	inode = sysv_new_inode(dir, S_IFDIR|mode);
+	inode = sysv_new_inode(dir, S_IFसूची|mode);
 	err = PTR_ERR(inode);
-	if (IS_ERR(inode))
-		goto out_dir;
+	अगर (IS_ERR(inode))
+		जाओ out_dir;
 
 	sysv_set_inode(inode, 0);
 
 	inode_inc_link_count(inode);
 
 	err = sysv_make_empty(inode, dir);
-	if (err)
-		goto out_fail;
+	अगर (err)
+		जाओ out_fail;
 
 	err = sysv_add_link(dentry, inode);
-	if (err)
-		goto out_fail;
+	अगर (err)
+		जाओ out_fail;
 
         d_instantiate(dentry, inode);
 out:
-	return err;
+	वापस err;
 
 out_fail:
 	inode_dec_link_count(inode);
@@ -145,134 +146,134 @@ out_fail:
 	iput(inode);
 out_dir:
 	inode_dec_link_count(dir);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static int sysv_unlink(struct inode * dir, struct dentry * dentry)
-{
-	struct inode * inode = d_inode(dentry);
-	struct page * page;
-	struct sysv_dir_entry * de;
-	int err = -ENOENT;
+अटल पूर्णांक sysv_unlink(काष्ठा inode * dir, काष्ठा dentry * dentry)
+अणु
+	काष्ठा inode * inode = d_inode(dentry);
+	काष्ठा page * page;
+	काष्ठा sysv_dir_entry * de;
+	पूर्णांक err = -ENOENT;
 
 	de = sysv_find_entry(dentry, &page);
-	if (!de)
-		goto out;
+	अगर (!de)
+		जाओ out;
 
 	err = sysv_delete_entry (de, page);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	inode->i_ctime = dir->i_ctime;
+	inode->i_स_समय = dir->i_स_समय;
 	inode_dec_link_count(inode);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sysv_rmdir(struct inode * dir, struct dentry * dentry)
-{
-	struct inode *inode = d_inode(dentry);
-	int err = -ENOTEMPTY;
+अटल पूर्णांक sysv_सूची_हटाओ(काष्ठा inode * dir, काष्ठा dentry * dentry)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक err = -ENOTEMPTY;
 
-	if (sysv_empty_dir(inode)) {
+	अगर (sysv_empty_dir(inode)) अणु
 		err = sysv_unlink(dir, dentry);
-		if (!err) {
+		अगर (!err) अणु
 			inode->i_size = 0;
 			inode_dec_link_count(inode);
 			inode_dec_link_count(dir);
-		}
-	}
-	return err;
-}
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /*
- * Anybody can rename anything with this: the permission checks are left to the
+ * Anybody can नाम anything with this: the permission checks are left to the
  * higher-level routines.
  */
-static int sysv_rename(struct user_namespace *mnt_userns, struct inode *old_dir,
-		       struct dentry *old_dentry, struct inode *new_dir,
-		       struct dentry *new_dentry, unsigned int flags)
-{
-	struct inode * old_inode = d_inode(old_dentry);
-	struct inode * new_inode = d_inode(new_dentry);
-	struct page * dir_page = NULL;
-	struct sysv_dir_entry * dir_de = NULL;
-	struct page * old_page;
-	struct sysv_dir_entry * old_de;
-	int err = -ENOENT;
+अटल पूर्णांक sysv_नाम(काष्ठा user_namespace *mnt_userns, काष्ठा inode *old_dir,
+		       काष्ठा dentry *old_dentry, काष्ठा inode *new_dir,
+		       काष्ठा dentry *new_dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode * old_inode = d_inode(old_dentry);
+	काष्ठा inode * new_inode = d_inode(new_dentry);
+	काष्ठा page * dir_page = शून्य;
+	काष्ठा sysv_dir_entry * dir_de = शून्य;
+	काष्ठा page * old_page;
+	काष्ठा sysv_dir_entry * old_de;
+	पूर्णांक err = -ENOENT;
 
-	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+	अगर (flags & ~RENAME_NOREPLACE)
+		वापस -EINVAL;
 
 	old_de = sysv_find_entry(old_dentry, &old_page);
-	if (!old_de)
-		goto out;
+	अगर (!old_de)
+		जाओ out;
 
-	if (S_ISDIR(old_inode->i_mode)) {
+	अगर (S_ISसूची(old_inode->i_mode)) अणु
 		err = -EIO;
-		dir_de = sysv_dotdot(old_inode, &dir_page);
-		if (!dir_de)
-			goto out_old;
-	}
+		dir_de = sysv_करोtकरोt(old_inode, &dir_page);
+		अगर (!dir_de)
+			जाओ out_old;
+	पूर्ण
 
-	if (new_inode) {
-		struct page * new_page;
-		struct sysv_dir_entry * new_de;
+	अगर (new_inode) अणु
+		काष्ठा page * new_page;
+		काष्ठा sysv_dir_entry * new_de;
 
 		err = -ENOTEMPTY;
-		if (dir_de && !sysv_empty_dir(new_inode))
-			goto out_dir;
+		अगर (dir_de && !sysv_empty_dir(new_inode))
+			जाओ out_dir;
 
 		err = -ENOENT;
 		new_de = sysv_find_entry(new_dentry, &new_page);
-		if (!new_de)
-			goto out_dir;
+		अगर (!new_de)
+			जाओ out_dir;
 		sysv_set_link(new_de, new_page, old_inode);
-		new_inode->i_ctime = current_time(new_inode);
-		if (dir_de)
+		new_inode->i_स_समय = current_समय(new_inode);
+		अगर (dir_de)
 			drop_nlink(new_inode);
 		inode_dec_link_count(new_inode);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = sysv_add_link(new_dentry, old_inode);
-		if (err)
-			goto out_dir;
-		if (dir_de)
+		अगर (err)
+			जाओ out_dir;
+		अगर (dir_de)
 			inode_inc_link_count(new_dir);
-	}
+	पूर्ण
 
 	sysv_delete_entry(old_de, old_page);
 	mark_inode_dirty(old_inode);
 
-	if (dir_de) {
+	अगर (dir_de) अणु
 		sysv_set_link(dir_de, dir_page, new_dir);
 		inode_dec_link_count(old_dir);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 out_dir:
-	if (dir_de) {
+	अगर (dir_de) अणु
 		kunmap(dir_page);
 		put_page(dir_page);
-	}
+	पूर्ण
 out_old:
 	kunmap(old_page);
 	put_page(old_page);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * directories can handle most operations...
  */
-const struct inode_operations sysv_dir_inode_operations = {
+स्थिर काष्ठा inode_operations sysv_dir_inode_operations = अणु
 	.create		= sysv_create,
 	.lookup		= sysv_lookup,
 	.link		= sysv_link,
 	.unlink		= sysv_unlink,
 	.symlink	= sysv_symlink,
-	.mkdir		= sysv_mkdir,
-	.rmdir		= sysv_rmdir,
+	.सूची_गढ़ो		= sysv_सूची_गढ़ो,
+	.सूची_हटाओ		= sysv_सूची_हटाओ,
 	.mknod		= sysv_mknod,
-	.rename		= sysv_rename,
+	.नाम		= sysv_नाम,
 	.getattr	= sysv_getattr,
-};
+पूर्ण;

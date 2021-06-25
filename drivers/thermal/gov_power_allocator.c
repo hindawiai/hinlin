@@ -1,752 +1,753 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * A power allocator to manage temperature
+ * A घातer allocator to manage temperature
  *
  * Copyright (C) 2014 ARM Ltd.
  *
  */
 
-#define pr_fmt(fmt) "Power allocator: " fmt
+#घोषणा pr_fmt(fmt) "Power allocator: " fmt
 
-#include <linux/rculist.h>
-#include <linux/slab.h>
-#include <linux/thermal.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/thermal.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/thermal_power_allocator.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/thermal_घातer_allocator.h>
 
-#include "thermal_core.h"
+#समावेश "thermal_core.h"
 
-#define INVALID_TRIP -1
+#घोषणा INVALID_TRIP -1
 
-#define FRAC_BITS 10
-#define int_to_frac(x) ((x) << FRAC_BITS)
-#define frac_to_int(x) ((x) >> FRAC_BITS)
+#घोषणा FRAC_BITS 10
+#घोषणा पूर्णांक_to_frac(x) ((x) << FRAC_BITS)
+#घोषणा frac_to_पूर्णांक(x) ((x) >> FRAC_BITS)
 
 /**
- * mul_frac() - multiply two fixed-point numbers
+ * mul_frac() - multiply two fixed-poपूर्णांक numbers
  * @x:	first multiplicand
  * @y:	second multiplicand
  *
- * Return: the result of multiplying two fixed-point numbers.  The
- * result is also a fixed-point number.
+ * Return: the result of multiplying two fixed-poपूर्णांक numbers.  The
+ * result is also a fixed-poपूर्णांक number.
  */
-static inline s64 mul_frac(s64 x, s64 y)
-{
-	return (x * y) >> FRAC_BITS;
-}
+अटल अंतरभूत s64 mul_frac(s64 x, s64 y)
+अणु
+	वापस (x * y) >> FRAC_BITS;
+पूर्ण
 
 /**
- * div_frac() - divide two fixed-point numbers
- * @x:	the dividend
- * @y:	the divisor
+ * भाग_frac() - भागide two fixed-poपूर्णांक numbers
+ * @x:	the भागidend
+ * @y:	the भागisor
  *
- * Return: the result of dividing two fixed-point numbers.  The
- * result is also a fixed-point number.
+ * Return: the result of भागiding two fixed-poपूर्णांक numbers.  The
+ * result is also a fixed-poपूर्णांक number.
  */
-static inline s64 div_frac(s64 x, s64 y)
-{
-	return div_s64(x << FRAC_BITS, y);
-}
+अटल अंतरभूत s64 भाग_frac(s64 x, s64 y)
+अणु
+	वापस भाग_s64(x << FRAC_BITS, y);
+पूर्ण
 
 /**
- * struct power_allocator_params - parameters for the power allocator governor
- * @allocated_tzp:	whether we have allocated tzp for this thermal zone and
- *			it needs to be freed on unbind
- * @err_integral:	accumulated error in the PID controller.
+ * काष्ठा घातer_allocator_params - parameters क्रम the घातer allocator governor
+ * @allocated_tzp:	whether we have allocated tzp क्रम this thermal zone and
+ *			it needs to be मुक्तd on unbind
+ * @err_पूर्णांकegral:	accumulated error in the PID controller.
  * @prev_err:	error in the previous iteration of the PID controller.
  *		Used to calculate the derivative term.
- * @trip_switch_on:	first passive trip point of the thermal zone.  The
- *			governor switches on when this trip point is crossed.
- *			If the thermal zone only has one passive trip point,
- *			@trip_switch_on should be INVALID_TRIP.
- * @trip_max_desired_temperature:	last passive trip point of the thermal
+ * @trip_चयन_on:	first passive trip poपूर्णांक of the thermal zone.  The
+ *			governor चयनes on when this trip poपूर्णांक is crossed.
+ *			If the thermal zone only has one passive trip poपूर्णांक,
+ *			@trip_चयन_on should be INVALID_TRIP.
+ * @trip_max_desired_temperature:	last passive trip poपूर्णांक of the thermal
  *					zone.  The temperature we are
- *					controlling for.
- * @sustainable_power:	Sustainable power (heat) that this thermal zone can
+ *					controlling क्रम.
+ * @sustainable_घातer:	Sustainable घातer (heat) that this thermal zone can
  *			dissipate
  */
-struct power_allocator_params {
+काष्ठा घातer_allocator_params अणु
 	bool allocated_tzp;
-	s64 err_integral;
+	s64 err_पूर्णांकegral;
 	s32 prev_err;
-	int trip_switch_on;
-	int trip_max_desired_temperature;
-	u32 sustainable_power;
-};
+	पूर्णांक trip_चयन_on;
+	पूर्णांक trip_max_desired_temperature;
+	u32 sustainable_घातer;
+पूर्ण;
 
 /**
- * estimate_sustainable_power() - Estimate the sustainable power of a thermal zone
+ * estimate_sustainable_घातer() - Estimate the sustainable घातer of a thermal zone
  * @tz: thermal zone we are operating in
  *
- * For thermal zones that don't provide a sustainable_power in their
+ * For thermal zones that करोn't provide a sustainable_घातer in their
  * thermal_zone_params, estimate one.  Calculate it using the minimum
- * power of all the cooling devices as that gives a valid value that
- * can give some degree of functionality.  For optimal performance of
- * this governor, provide a sustainable_power in the thermal zone's
+ * घातer of all the cooling devices as that gives a valid value that
+ * can give some degree of functionality.  For optimal perक्रमmance of
+ * this governor, provide a sustainable_घातer in the thermal zone's
  * thermal_zone_params.
  */
-static u32 estimate_sustainable_power(struct thermal_zone_device *tz)
-{
-	u32 sustainable_power = 0;
-	struct thermal_instance *instance;
-	struct power_allocator_params *params = tz->governor_data;
+अटल u32 estimate_sustainable_घातer(काष्ठा thermal_zone_device *tz)
+अणु
+	u32 sustainable_घातer = 0;
+	काष्ठा thermal_instance *instance;
+	काष्ठा घातer_allocator_params *params = tz->governor_data;
 
-	list_for_each_entry(instance, &tz->thermal_instances, tz_node) {
-		struct thermal_cooling_device *cdev = instance->cdev;
-		u32 min_power;
+	list_क्रम_each_entry(instance, &tz->thermal_instances, tz_node) अणु
+		काष्ठा thermal_cooling_device *cdev = instance->cdev;
+		u32 min_घातer;
 
-		if (instance->trip != params->trip_max_desired_temperature)
-			continue;
+		अगर (instance->trip != params->trip_max_desired_temperature)
+			जारी;
 
-		if (!cdev_is_power_actor(cdev))
-			continue;
+		अगर (!cdev_is_घातer_actor(cdev))
+			जारी;
 
-		if (cdev->ops->state2power(cdev, instance->upper, &min_power))
-			continue;
+		अगर (cdev->ops->state2घातer(cdev, instance->upper, &min_घातer))
+			जारी;
 
-		sustainable_power += min_power;
-	}
+		sustainable_घातer += min_घातer;
+	पूर्ण
 
-	return sustainable_power;
-}
+	वापस sustainable_घातer;
+पूर्ण
 
 /**
- * estimate_pid_constants() - Estimate the constants for the PID controller
- * @tz:		thermal zone for which to estimate the constants
- * @sustainable_power:	sustainable power for the thermal zone
- * @trip_switch_on:	trip point number for the switch on temperature
- * @control_temp:	target temperature for the power allocator governor
+ * estimate_pid_स्थिरants() - Estimate the स्थिरants क्रम the PID controller
+ * @tz:		thermal zone क्रम which to estimate the स्थिरants
+ * @sustainable_घातer:	sustainable घातer क्रम the thermal zone
+ * @trip_चयन_on:	trip poपूर्णांक number क्रम the चयन on temperature
+ * @control_temp:	target temperature क्रम the घातer allocator governor
  *
  * This function is used to update the estimation of the PID
- * controller constants in struct thermal_zone_parameters.
+ * controller स्थिरants in काष्ठा thermal_zone_parameters.
  */
-static void estimate_pid_constants(struct thermal_zone_device *tz,
-				   u32 sustainable_power, int trip_switch_on,
-				   int control_temp)
-{
-	int ret;
-	int switch_on_temp;
+अटल व्योम estimate_pid_स्थिरants(काष्ठा thermal_zone_device *tz,
+				   u32 sustainable_घातer, पूर्णांक trip_चयन_on,
+				   पूर्णांक control_temp)
+अणु
+	पूर्णांक ret;
+	पूर्णांक चयन_on_temp;
 	u32 temperature_threshold;
 	s32 k_i;
 
-	ret = tz->ops->get_trip_temp(tz, trip_switch_on, &switch_on_temp);
-	if (ret)
-		switch_on_temp = 0;
+	ret = tz->ops->get_trip_temp(tz, trip_चयन_on, &चयन_on_temp);
+	अगर (ret)
+		चयन_on_temp = 0;
 
-	temperature_threshold = control_temp - switch_on_temp;
+	temperature_threshold = control_temp - चयन_on_temp;
 	/*
-	 * estimate_pid_constants() tries to find appropriate default
-	 * values for thermal zones that don't provide them. If a
-	 * system integrator has configured a thermal zone with two
-	 * passive trip points at the same temperature, that person
-	 * hasn't put any effort to set up the thermal zone properly
+	 * estimate_pid_स्थिरants() tries to find appropriate शेष
+	 * values क्रम thermal zones that करोn't provide them. If a
+	 * प्रणाली पूर्णांकegrator has configured a thermal zone with two
+	 * passive trip poपूर्णांकs at the same temperature, that person
+	 * hasn't put any efक्रमt to set up the thermal zone properly
 	 * so just give up.
 	 */
-	if (!temperature_threshold)
-		return;
+	अगर (!temperature_threshold)
+		वापस;
 
-	tz->tzp->k_po = int_to_frac(sustainable_power) /
+	tz->tzp->k_po = पूर्णांक_to_frac(sustainable_घातer) /
 		temperature_threshold;
 
-	tz->tzp->k_pu = int_to_frac(2 * sustainable_power) /
+	tz->tzp->k_pu = पूर्णांक_to_frac(2 * sustainable_घातer) /
 		temperature_threshold;
 
 	k_i = tz->tzp->k_pu / 10;
 	tz->tzp->k_i = k_i > 0 ? k_i : 1;
 
 	/*
-	 * The default for k_d and integral_cutoff is 0, so we can
+	 * The शेष क्रम k_d and पूर्णांकegral_cutoff is 0, so we can
 	 * leave them as they are.
 	 */
-}
+पूर्ण
 
 /**
- * get_sustainable_power() - Get the right sustainable power
- * @tz:		thermal zone for which to estimate the constants
- * @params:	parameters for the power allocator governor
- * @control_temp:	target temperature for the power allocator governor
+ * get_sustainable_घातer() - Get the right sustainable घातer
+ * @tz:		thermal zone क्रम which to estimate the स्थिरants
+ * @params:	parameters क्रम the घातer allocator governor
+ * @control_temp:	target temperature क्रम the घातer allocator governor
  *
- * This function is used for getting the proper sustainable power value based
- * on variables which might be updated by the user sysfs interface. If that
+ * This function is used क्रम getting the proper sustainable घातer value based
+ * on variables which might be updated by the user sysfs पूर्णांकerface. If that
  * happen the new value is going to be estimated and updated. It is also used
  * after thermal zone binding, where the initial values where set to 0.
  */
-static u32 get_sustainable_power(struct thermal_zone_device *tz,
-				 struct power_allocator_params *params,
-				 int control_temp)
-{
-	u32 sustainable_power;
+अटल u32 get_sustainable_घातer(काष्ठा thermal_zone_device *tz,
+				 काष्ठा घातer_allocator_params *params,
+				 पूर्णांक control_temp)
+अणु
+	u32 sustainable_घातer;
 
-	if (!tz->tzp->sustainable_power)
-		sustainable_power = estimate_sustainable_power(tz);
-	else
-		sustainable_power = tz->tzp->sustainable_power;
+	अगर (!tz->tzp->sustainable_घातer)
+		sustainable_घातer = estimate_sustainable_घातer(tz);
+	अन्यथा
+		sustainable_घातer = tz->tzp->sustainable_घातer;
 
-	/* Check if it's init value 0 or there was update via sysfs */
-	if (sustainable_power != params->sustainable_power) {
-		estimate_pid_constants(tz, sustainable_power,
-				       params->trip_switch_on, control_temp);
+	/* Check अगर it's init value 0 or there was update via sysfs */
+	अगर (sustainable_घातer != params->sustainable_घातer) अणु
+		estimate_pid_स्थिरants(tz, sustainable_घातer,
+				       params->trip_चयन_on, control_temp);
 
 		/* Do the estimation only once and make available in sysfs */
-		tz->tzp->sustainable_power = sustainable_power;
-		params->sustainable_power = sustainable_power;
-	}
+		tz->tzp->sustainable_घातer = sustainable_घातer;
+		params->sustainable_घातer = sustainable_घातer;
+	पूर्ण
 
-	return sustainable_power;
-}
+	वापस sustainable_घातer;
+पूर्ण
 
 /**
  * pid_controller() - PID controller
  * @tz:	thermal zone we are operating in
  * @control_temp:	the target temperature in millicelsius
- * @max_allocatable_power:	maximum allocatable power for this thermal zone
+ * @max_allocatable_घातer:	maximum allocatable घातer क्रम this thermal zone
  *
- * This PID controller increases the available power budget so that the
- * temperature of the thermal zone gets as close as possible to
- * @control_temp and limits the power if it exceeds it.  k_po is the
+ * This PID controller increases the available घातer budget so that the
+ * temperature of the thermal zone माला_लो as बंद as possible to
+ * @control_temp and limits the घातer अगर it exceeds it.  k_po is the
  * proportional term when we are overshooting, k_pu is the
- * proportional term when we are undershooting.  integral_cutoff is a
+ * proportional term when we are undershooting.  पूर्णांकegral_cutoff is a
  * threshold below which we stop accumulating the error.  The
- * accumulated error is only valid if the requested power will make
- * the system warmer.  If the system is mostly idle, there's no point
+ * accumulated error is only valid अगर the requested घातer will make
+ * the प्रणाली warmer.  If the प्रणाली is mostly idle, there's no poपूर्णांक
  * in accumulating positive error.
  *
- * Return: The power budget for the next period.
+ * Return: The घातer budget क्रम the next period.
  */
-static u32 pid_controller(struct thermal_zone_device *tz,
-			  int control_temp,
-			  u32 max_allocatable_power)
-{
-	s64 p, i, d, power_range;
-	s32 err, max_power_frac;
-	u32 sustainable_power;
-	struct power_allocator_params *params = tz->governor_data;
+अटल u32 pid_controller(काष्ठा thermal_zone_device *tz,
+			  पूर्णांक control_temp,
+			  u32 max_allocatable_घातer)
+अणु
+	s64 p, i, d, घातer_range;
+	s32 err, max_घातer_frac;
+	u32 sustainable_घातer;
+	काष्ठा घातer_allocator_params *params = tz->governor_data;
 
-	max_power_frac = int_to_frac(max_allocatable_power);
+	max_घातer_frac = पूर्णांक_to_frac(max_allocatable_घातer);
 
-	sustainable_power = get_sustainable_power(tz, params, control_temp);
+	sustainable_घातer = get_sustainable_घातer(tz, params, control_temp);
 
 	err = control_temp - tz->temperature;
-	err = int_to_frac(err);
+	err = पूर्णांक_to_frac(err);
 
 	/* Calculate the proportional term */
 	p = mul_frac(err < 0 ? tz->tzp->k_po : tz->tzp->k_pu, err);
 
 	/*
-	 * Calculate the integral term
+	 * Calculate the पूर्णांकegral term
 	 *
-	 * if the error is less than cut off allow integration (but
-	 * the integral is limited to max power)
+	 * अगर the error is less than cut off allow पूर्णांकegration (but
+	 * the पूर्णांकegral is limited to max घातer)
 	 */
-	i = mul_frac(tz->tzp->k_i, params->err_integral);
+	i = mul_frac(tz->tzp->k_i, params->err_पूर्णांकegral);
 
-	if (err < int_to_frac(tz->tzp->integral_cutoff)) {
+	अगर (err < पूर्णांक_to_frac(tz->tzp->पूर्णांकegral_cutoff)) अणु
 		s64 i_next = i + mul_frac(tz->tzp->k_i, err);
 
-		if (abs(i_next) < max_power_frac) {
+		अगर (असल(i_next) < max_घातer_frac) अणु
 			i = i_next;
-			params->err_integral += err;
-		}
-	}
+			params->err_पूर्णांकegral += err;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Calculate the derivative term
 	 *
-	 * We do err - prev_err, so with a positive k_d, a decreasing
-	 * error (i.e. driving closer to the line) results in less
-	 * power being applied, slowing down the controller)
+	 * We करो err - prev_err, so with a positive k_d, a decreasing
+	 * error (i.e. driving बंदr to the line) results in less
+	 * घातer being applied, slowing करोwn the controller)
 	 */
 	d = mul_frac(tz->tzp->k_d, err - params->prev_err);
-	d = div_frac(d, jiffies_to_msecs(tz->passive_delay_jiffies));
+	d = भाग_frac(d, jअगरfies_to_msecs(tz->passive_delay_jअगरfies));
 	params->prev_err = err;
 
-	power_range = p + i + d;
+	घातer_range = p + i + d;
 
-	/* feed-forward the known sustainable dissipatable power */
-	power_range = sustainable_power + frac_to_int(power_range);
+	/* feed-क्रमward the known sustainable dissipatable घातer */
+	घातer_range = sustainable_घातer + frac_to_पूर्णांक(घातer_range);
 
-	power_range = clamp(power_range, (s64)0, (s64)max_allocatable_power);
+	घातer_range = clamp(घातer_range, (s64)0, (s64)max_allocatable_घातer);
 
-	trace_thermal_power_allocator_pid(tz, frac_to_int(err),
-					  frac_to_int(params->err_integral),
-					  frac_to_int(p), frac_to_int(i),
-					  frac_to_int(d), power_range);
+	trace_thermal_घातer_allocator_pid(tz, frac_to_पूर्णांक(err),
+					  frac_to_पूर्णांक(params->err_पूर्णांकegral),
+					  frac_to_पूर्णांक(p), frac_to_पूर्णांक(i),
+					  frac_to_पूर्णांक(d), घातer_range);
 
-	return power_range;
-}
+	वापस घातer_range;
+पूर्ण
 
 /**
- * power_actor_set_power() - limit the maximum power a cooling device consumes
- * @cdev:	pointer to &thermal_cooling_device
+ * घातer_actor_set_घातer() - limit the maximum घातer a cooling device consumes
+ * @cdev:	poपूर्णांकer to &thermal_cooling_device
  * @instance:	thermal instance to update
- * @power:	the power in milliwatts
+ * @घातer:	the घातer in milliwatts
  *
- * Set the cooling device to consume at most @power milliwatts. The limit is
- * expected to be a cap at the maximum power consumption.
+ * Set the cooling device to consume at most @घातer milliwatts. The limit is
+ * expected to be a cap at the maximum घातer consumption.
  *
- * Return: 0 on success, -EINVAL if the cooling device does not
- * implement the power actor API or -E* for other failures.
+ * Return: 0 on success, -EINVAL अगर the cooling device करोes not
+ * implement the घातer actor API or -E* क्रम other failures.
  */
-static int
-power_actor_set_power(struct thermal_cooling_device *cdev,
-		      struct thermal_instance *instance, u32 power)
-{
-	unsigned long state;
-	int ret;
+अटल पूर्णांक
+घातer_actor_set_घातer(काष्ठा thermal_cooling_device *cdev,
+		      काष्ठा thermal_instance *instance, u32 घातer)
+अणु
+	अचिन्हित दीर्घ state;
+	पूर्णांक ret;
 
-	ret = cdev->ops->power2state(cdev, power, &state);
-	if (ret)
-		return ret;
+	ret = cdev->ops->घातer2state(cdev, घातer, &state);
+	अगर (ret)
+		वापस ret;
 
 	instance->target = clamp_val(state, instance->lower, instance->upper);
 	mutex_lock(&cdev->lock);
 	__thermal_cdev_update(cdev);
 	mutex_unlock(&cdev->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * divvy_up_power() - divvy the allocated power between the actors
- * @req_power:	each actor's requested power
- * @max_power:	each actor's maximum available power
- * @num_actors:	size of the @req_power, @max_power and @granted_power's array
- * @total_req_power: sum of @req_power
- * @power_range:	total allocated power
- * @granted_power:	output array: each actor's granted power
- * @extra_actor_power:	an appropriately sized array to be used in the
- *			function as temporary storage of the extra power given
+ * भागvy_up_घातer() - भागvy the allocated घातer between the actors
+ * @req_घातer:	each actor's requested घातer
+ * @max_घातer:	each actor's maximum available घातer
+ * @num_actors:	size of the @req_घातer, @max_घातer and @granted_घातer's array
+ * @total_req_घातer: sum of @req_घातer
+ * @घातer_range:	total allocated घातer
+ * @granted_घातer:	output array: each actor's granted घातer
+ * @extra_actor_घातer:	an appropriately sized array to be used in the
+ *			function as temporary storage of the extra घातer given
  *			to the actors
  *
- * This function divides the total allocated power (@power_range)
+ * This function भागides the total allocated घातer (@घातer_range)
  * fairly between the actors.  It first tries to give each actor a
- * share of the @power_range according to how much power it requested
- * compared to the rest of the actors.  For example, if only one actor
- * requests power, then it receives all the @power_range.  If
+ * share of the @घातer_range according to how much घातer it requested
+ * compared to the rest of the actors.  For example, अगर only one actor
+ * requests घातer, then it receives all the @घातer_range.  If
  * three actors each requests 1mW, each receives a third of the
- * @power_range.
+ * @घातer_range.
  *
- * If any actor received more than their maximum power, then that
- * surplus is re-divvied among the actors based on how far they are
+ * If any actor received more than their maximum घातer, then that
+ * surplus is re-भागvied among the actors based on how far they are
  * from their respective maximums.
  *
- * Granted power for each actor is written to @granted_power, which
+ * Granted घातer क्रम each actor is written to @granted_घातer, which
  * should've been allocated by the calling function.
  */
-static void divvy_up_power(u32 *req_power, u32 *max_power, int num_actors,
-			   u32 total_req_power, u32 power_range,
-			   u32 *granted_power, u32 *extra_actor_power)
-{
-	u32 extra_power, capped_extra_power;
-	int i;
+अटल व्योम भागvy_up_घातer(u32 *req_घातer, u32 *max_घातer, पूर्णांक num_actors,
+			   u32 total_req_घातer, u32 घातer_range,
+			   u32 *granted_घातer, u32 *extra_actor_घातer)
+अणु
+	u32 extra_घातer, capped_extra_घातer;
+	पूर्णांक i;
 
 	/*
-	 * Prevent division by 0 if none of the actors request power.
+	 * Prevent भागision by 0 अगर none of the actors request घातer.
 	 */
-	if (!total_req_power)
-		total_req_power = 1;
+	अगर (!total_req_घातer)
+		total_req_घातer = 1;
 
-	capped_extra_power = 0;
-	extra_power = 0;
-	for (i = 0; i < num_actors; i++) {
-		u64 req_range = (u64)req_power[i] * power_range;
+	capped_extra_घातer = 0;
+	extra_घातer = 0;
+	क्रम (i = 0; i < num_actors; i++) अणु
+		u64 req_range = (u64)req_घातer[i] * घातer_range;
 
-		granted_power[i] = DIV_ROUND_CLOSEST_ULL(req_range,
-							 total_req_power);
+		granted_घातer[i] = DIV_ROUND_CLOSEST_ULL(req_range,
+							 total_req_घातer);
 
-		if (granted_power[i] > max_power[i]) {
-			extra_power += granted_power[i] - max_power[i];
-			granted_power[i] = max_power[i];
-		}
+		अगर (granted_घातer[i] > max_घातer[i]) अणु
+			extra_घातer += granted_घातer[i] - max_घातer[i];
+			granted_घातer[i] = max_घातer[i];
+		पूर्ण
 
-		extra_actor_power[i] = max_power[i] - granted_power[i];
-		capped_extra_power += extra_actor_power[i];
-	}
+		extra_actor_घातer[i] = max_घातer[i] - granted_घातer[i];
+		capped_extra_घातer += extra_actor_घातer[i];
+	पूर्ण
 
-	if (!extra_power)
-		return;
+	अगर (!extra_घातer)
+		वापस;
 
 	/*
-	 * Re-divvy the reclaimed extra among actors based on
+	 * Re-भागvy the reclaimed extra among actors based on
 	 * how far they are from the max
 	 */
-	extra_power = min(extra_power, capped_extra_power);
-	if (capped_extra_power > 0)
-		for (i = 0; i < num_actors; i++) {
-			u64 extra_range = (u64)extra_actor_power[i] * extra_power;
-			granted_power[i] += DIV_ROUND_CLOSEST_ULL(extra_range,
-							 capped_extra_power);
-		}
-}
+	extra_घातer = min(extra_घातer, capped_extra_घातer);
+	अगर (capped_extra_घातer > 0)
+		क्रम (i = 0; i < num_actors; i++) अणु
+			u64 extra_range = (u64)extra_actor_घातer[i] * extra_घातer;
+			granted_घातer[i] += DIV_ROUND_CLOSEST_ULL(extra_range,
+							 capped_extra_घातer);
+		पूर्ण
+पूर्ण
 
-static int allocate_power(struct thermal_zone_device *tz,
-			  int control_temp)
-{
-	struct thermal_instance *instance;
-	struct power_allocator_params *params = tz->governor_data;
-	u32 *req_power, *max_power, *granted_power, *extra_actor_power;
-	u32 *weighted_req_power;
-	u32 total_req_power, max_allocatable_power, total_weighted_req_power;
-	u32 total_granted_power, power_range;
-	int i, num_actors, total_weight, ret = 0;
-	int trip_max_desired_temperature = params->trip_max_desired_temperature;
+अटल पूर्णांक allocate_घातer(काष्ठा thermal_zone_device *tz,
+			  पूर्णांक control_temp)
+अणु
+	काष्ठा thermal_instance *instance;
+	काष्ठा घातer_allocator_params *params = tz->governor_data;
+	u32 *req_घातer, *max_घातer, *granted_घातer, *extra_actor_घातer;
+	u32 *weighted_req_घातer;
+	u32 total_req_घातer, max_allocatable_घातer, total_weighted_req_घातer;
+	u32 total_granted_घातer, घातer_range;
+	पूर्णांक i, num_actors, total_weight, ret = 0;
+	पूर्णांक trip_max_desired_temperature = params->trip_max_desired_temperature;
 
 	mutex_lock(&tz->lock);
 
 	num_actors = 0;
 	total_weight = 0;
-	list_for_each_entry(instance, &tz->thermal_instances, tz_node) {
-		if ((instance->trip == trip_max_desired_temperature) &&
-		    cdev_is_power_actor(instance->cdev)) {
+	list_क्रम_each_entry(instance, &tz->thermal_instances, tz_node) अणु
+		अगर ((instance->trip == trip_max_desired_temperature) &&
+		    cdev_is_घातer_actor(instance->cdev)) अणु
 			num_actors++;
 			total_weight += instance->weight;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!num_actors) {
+	अगर (!num_actors) अणु
 		ret = -ENODEV;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	/*
 	 * We need to allocate five arrays of the same size:
-	 * req_power, max_power, granted_power, extra_actor_power and
-	 * weighted_req_power.  They are going to be needed until this
-	 * function returns.  Allocate them all in one go to simplify
+	 * req_घातer, max_घातer, granted_घातer, extra_actor_घातer and
+	 * weighted_req_घातer.  They are going to be needed until this
+	 * function वापसs.  Allocate them all in one go to simplअगरy
 	 * the allocation and deallocation logic.
 	 */
-	BUILD_BUG_ON(sizeof(*req_power) != sizeof(*max_power));
-	BUILD_BUG_ON(sizeof(*req_power) != sizeof(*granted_power));
-	BUILD_BUG_ON(sizeof(*req_power) != sizeof(*extra_actor_power));
-	BUILD_BUG_ON(sizeof(*req_power) != sizeof(*weighted_req_power));
-	req_power = kcalloc(num_actors * 5, sizeof(*req_power), GFP_KERNEL);
-	if (!req_power) {
+	BUILD_BUG_ON(माप(*req_घातer) != माप(*max_घातer));
+	BUILD_BUG_ON(माप(*req_घातer) != माप(*granted_घातer));
+	BUILD_BUG_ON(माप(*req_घातer) != माप(*extra_actor_घातer));
+	BUILD_BUG_ON(माप(*req_घातer) != माप(*weighted_req_घातer));
+	req_घातer = kसुस्मृति(num_actors * 5, माप(*req_घातer), GFP_KERNEL);
+	अगर (!req_घातer) अणु
 		ret = -ENOMEM;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	max_power = &req_power[num_actors];
-	granted_power = &req_power[2 * num_actors];
-	extra_actor_power = &req_power[3 * num_actors];
-	weighted_req_power = &req_power[4 * num_actors];
+	max_घातer = &req_घातer[num_actors];
+	granted_घातer = &req_घातer[2 * num_actors];
+	extra_actor_घातer = &req_घातer[3 * num_actors];
+	weighted_req_घातer = &req_घातer[4 * num_actors];
 
 	i = 0;
-	total_weighted_req_power = 0;
-	total_req_power = 0;
-	max_allocatable_power = 0;
+	total_weighted_req_घातer = 0;
+	total_req_घातer = 0;
+	max_allocatable_घातer = 0;
 
-	list_for_each_entry(instance, &tz->thermal_instances, tz_node) {
-		int weight;
-		struct thermal_cooling_device *cdev = instance->cdev;
+	list_क्रम_each_entry(instance, &tz->thermal_instances, tz_node) अणु
+		पूर्णांक weight;
+		काष्ठा thermal_cooling_device *cdev = instance->cdev;
 
-		if (instance->trip != trip_max_desired_temperature)
-			continue;
+		अगर (instance->trip != trip_max_desired_temperature)
+			जारी;
 
-		if (!cdev_is_power_actor(cdev))
-			continue;
+		अगर (!cdev_is_घातer_actor(cdev))
+			जारी;
 
-		if (cdev->ops->get_requested_power(cdev, &req_power[i]))
-			continue;
+		अगर (cdev->ops->get_requested_घातer(cdev, &req_घातer[i]))
+			जारी;
 
-		if (!total_weight)
+		अगर (!total_weight)
 			weight = 1 << FRAC_BITS;
-		else
+		अन्यथा
 			weight = instance->weight;
 
-		weighted_req_power[i] = frac_to_int(weight * req_power[i]);
+		weighted_req_घातer[i] = frac_to_पूर्णांक(weight * req_घातer[i]);
 
-		if (cdev->ops->state2power(cdev, instance->lower,
-					   &max_power[i]))
-			continue;
+		अगर (cdev->ops->state2घातer(cdev, instance->lower,
+					   &max_घातer[i]))
+			जारी;
 
-		total_req_power += req_power[i];
-		max_allocatable_power += max_power[i];
-		total_weighted_req_power += weighted_req_power[i];
+		total_req_घातer += req_घातer[i];
+		max_allocatable_घातer += max_घातer[i];
+		total_weighted_req_घातer += weighted_req_घातer[i];
 
 		i++;
-	}
+	पूर्ण
 
-	power_range = pid_controller(tz, control_temp, max_allocatable_power);
+	घातer_range = pid_controller(tz, control_temp, max_allocatable_घातer);
 
-	divvy_up_power(weighted_req_power, max_power, num_actors,
-		       total_weighted_req_power, power_range, granted_power,
-		       extra_actor_power);
+	भागvy_up_घातer(weighted_req_घातer, max_घातer, num_actors,
+		       total_weighted_req_घातer, घातer_range, granted_घातer,
+		       extra_actor_घातer);
 
-	total_granted_power = 0;
+	total_granted_घातer = 0;
 	i = 0;
-	list_for_each_entry(instance, &tz->thermal_instances, tz_node) {
-		if (instance->trip != trip_max_desired_temperature)
-			continue;
+	list_क्रम_each_entry(instance, &tz->thermal_instances, tz_node) अणु
+		अगर (instance->trip != trip_max_desired_temperature)
+			जारी;
 
-		if (!cdev_is_power_actor(instance->cdev))
-			continue;
+		अगर (!cdev_is_घातer_actor(instance->cdev))
+			जारी;
 
-		power_actor_set_power(instance->cdev, instance,
-				      granted_power[i]);
-		total_granted_power += granted_power[i];
+		घातer_actor_set_घातer(instance->cdev, instance,
+				      granted_घातer[i]);
+		total_granted_घातer += granted_घातer[i];
 
 		i++;
-	}
+	पूर्ण
 
-	trace_thermal_power_allocator(tz, req_power, total_req_power,
-				      granted_power, total_granted_power,
-				      num_actors, power_range,
-				      max_allocatable_power, tz->temperature,
+	trace_thermal_घातer_allocator(tz, req_घातer, total_req_घातer,
+				      granted_घातer, total_granted_घातer,
+				      num_actors, घातer_range,
+				      max_allocatable_घातer, tz->temperature,
 				      control_temp - tz->temperature);
 
-	kfree(req_power);
+	kमुक्त(req_घातer);
 unlock:
 	mutex_unlock(&tz->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * get_governor_trips() - get the number of the two trip points that are key for this governor
+ * get_governor_trips() - get the number of the two trip poपूर्णांकs that are key क्रम this governor
  * @tz:	thermal zone to operate on
- * @params:	pointer to private data for this governor
+ * @params:	poपूर्णांकer to निजी data क्रम this governor
  *
- * The power allocator governor works optimally with two trips points:
- * a "switch on" trip point and a "maximum desired temperature".  These
- * are defined as the first and last passive trip points.
+ * The घातer allocator governor works optimally with two trips poपूर्णांकs:
+ * a "switch on" trip poपूर्णांक and a "maximum desired temperature".  These
+ * are defined as the first and last passive trip poपूर्णांकs.
  *
- * If there is only one trip point, then that's considered to be the
- * "maximum desired temperature" trip point and the governor is always
- * on.  If there are no passive or active trip points, then the
- * governor won't do anything.  In fact, its throttle function
+ * If there is only one trip poपूर्णांक, then that's considered to be the
+ * "maximum desired temperature" trip poपूर्णांक and the governor is always
+ * on.  If there are no passive or active trip poपूर्णांकs, then the
+ * governor won't करो anything.  In fact, its throttle function
  * won't be called at all.
  */
-static void get_governor_trips(struct thermal_zone_device *tz,
-			       struct power_allocator_params *params)
-{
-	int i, last_active, last_passive;
+अटल व्योम get_governor_trips(काष्ठा thermal_zone_device *tz,
+			       काष्ठा घातer_allocator_params *params)
+अणु
+	पूर्णांक i, last_active, last_passive;
 	bool found_first_passive;
 
 	found_first_passive = false;
 	last_active = INVALID_TRIP;
 	last_passive = INVALID_TRIP;
 
-	for (i = 0; i < tz->trips; i++) {
-		enum thermal_trip_type type;
-		int ret;
+	क्रम (i = 0; i < tz->trips; i++) अणु
+		क्रमागत thermal_trip_type type;
+		पूर्णांक ret;
 
 		ret = tz->ops->get_trip_type(tz, i, &type);
-		if (ret) {
+		अगर (ret) अणु
 			dev_warn(&tz->device,
 				 "Failed to get trip point %d type: %d\n", i,
 				 ret);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (type == THERMAL_TRIP_PASSIVE) {
-			if (!found_first_passive) {
-				params->trip_switch_on = i;
+		अगर (type == THERMAL_TRIP_PASSIVE) अणु
+			अगर (!found_first_passive) अणु
+				params->trip_चयन_on = i;
 				found_first_passive = true;
-			} else  {
+			पूर्ण अन्यथा  अणु
 				last_passive = i;
-			}
-		} else if (type == THERMAL_TRIP_ACTIVE) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (type == THERMAL_TRIP_ACTIVE) अणु
 			last_active = i;
-		} else {
-			break;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (last_passive != INVALID_TRIP) {
+	अगर (last_passive != INVALID_TRIP) अणु
 		params->trip_max_desired_temperature = last_passive;
-	} else if (found_first_passive) {
-		params->trip_max_desired_temperature = params->trip_switch_on;
-		params->trip_switch_on = INVALID_TRIP;
-	} else {
-		params->trip_switch_on = INVALID_TRIP;
+	पूर्ण अन्यथा अगर (found_first_passive) अणु
+		params->trip_max_desired_temperature = params->trip_चयन_on;
+		params->trip_चयन_on = INVALID_TRIP;
+	पूर्ण अन्यथा अणु
+		params->trip_चयन_on = INVALID_TRIP;
 		params->trip_max_desired_temperature = last_active;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void reset_pid_controller(struct power_allocator_params *params)
-{
-	params->err_integral = 0;
+अटल व्योम reset_pid_controller(काष्ठा घातer_allocator_params *params)
+अणु
+	params->err_पूर्णांकegral = 0;
 	params->prev_err = 0;
-}
+पूर्ण
 
-static void allow_maximum_power(struct thermal_zone_device *tz, bool update)
-{
-	struct thermal_instance *instance;
-	struct power_allocator_params *params = tz->governor_data;
-	u32 req_power;
+अटल व्योम allow_maximum_घातer(काष्ठा thermal_zone_device *tz, bool update)
+अणु
+	काष्ठा thermal_instance *instance;
+	काष्ठा घातer_allocator_params *params = tz->governor_data;
+	u32 req_घातer;
 
 	mutex_lock(&tz->lock);
-	list_for_each_entry(instance, &tz->thermal_instances, tz_node) {
-		struct thermal_cooling_device *cdev = instance->cdev;
+	list_क्रम_each_entry(instance, &tz->thermal_instances, tz_node) अणु
+		काष्ठा thermal_cooling_device *cdev = instance->cdev;
 
-		if ((instance->trip != params->trip_max_desired_temperature) ||
-		    (!cdev_is_power_actor(instance->cdev)))
-			continue;
+		अगर ((instance->trip != params->trip_max_desired_temperature) ||
+		    (!cdev_is_घातer_actor(instance->cdev)))
+			जारी;
 
 		instance->target = 0;
 		mutex_lock(&instance->cdev->lock);
 		/*
-		 * Call for updating the cooling devices local stats and avoid
-		 * periods of dozen of seconds when those have not been
-		 * maintained.
+		 * Call क्रम updating the cooling devices local stats and aव्योम
+		 * periods of करोzen of seconds when those have not been
+		 * मुख्यtained.
 		 */
-		cdev->ops->get_requested_power(cdev, &req_power);
+		cdev->ops->get_requested_घातer(cdev, &req_घातer);
 
-		if (update)
+		अगर (update)
 			__thermal_cdev_update(instance->cdev);
 
 		mutex_unlock(&instance->cdev->lock);
-	}
+	पूर्ण
 	mutex_unlock(&tz->lock);
-}
+पूर्ण
 
 /**
- * check_power_actors() - Check all cooling devices and warn when they are
- *			not power actors
+ * check_घातer_actors() - Check all cooling devices and warn when they are
+ *			not घातer actors
  * @tz:		thermal zone to operate on
  *
- * Check all cooling devices in the @tz and warn every time they are missing
- * power actor API. The warning should help to investigate the issue, which
- * could be e.g. lack of Energy Model for a given device.
+ * Check all cooling devices in the @tz and warn every समय they are missing
+ * घातer actor API. The warning should help to investigate the issue, which
+ * could be e.g. lack of Energy Model क्रम a given device.
  *
- * Return: 0 on success, -EINVAL if any cooling device does not implement
- * the power actor API.
+ * Return: 0 on success, -EINVAL अगर any cooling device करोes not implement
+ * the घातer actor API.
  */
-static int check_power_actors(struct thermal_zone_device *tz)
-{
-	struct thermal_instance *instance;
-	int ret = 0;
+अटल पूर्णांक check_घातer_actors(काष्ठा thermal_zone_device *tz)
+अणु
+	काष्ठा thermal_instance *instance;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(instance, &tz->thermal_instances, tz_node) {
-		if (!cdev_is_power_actor(instance->cdev)) {
+	list_क्रम_each_entry(instance, &tz->thermal_instances, tz_node) अणु
+		अगर (!cdev_is_घातer_actor(instance->cdev)) अणु
 			dev_warn(&tz->device, "power_allocator: %s is not a power actor\n",
 				 instance->cdev->type);
 			ret = -EINVAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * power_allocator_bind() - bind the power_allocator governor to a thermal zone
+ * घातer_allocator_bind() - bind the घातer_allocator governor to a thermal zone
  * @tz:	thermal zone to bind it to
  *
  * Initialize the PID controller parameters and bind it to the thermal
  * zone.
  *
- * Return: 0 on success, or -ENOMEM if we ran out of memory, or -EINVAL
+ * Return: 0 on success, or -ENOMEM अगर we ran out of memory, or -EINVAL
  * when there are unsupported cooling devices in the @tz.
  */
-static int power_allocator_bind(struct thermal_zone_device *tz)
-{
-	int ret;
-	struct power_allocator_params *params;
-	int control_temp;
+अटल पूर्णांक घातer_allocator_bind(काष्ठा thermal_zone_device *tz)
+अणु
+	पूर्णांक ret;
+	काष्ठा घातer_allocator_params *params;
+	पूर्णांक control_temp;
 
-	ret = check_power_actors(tz);
-	if (ret)
-		return ret;
+	ret = check_घातer_actors(tz);
+	अगर (ret)
+		वापस ret;
 
-	params = kzalloc(sizeof(*params), GFP_KERNEL);
-	if (!params)
-		return -ENOMEM;
+	params = kzalloc(माप(*params), GFP_KERNEL);
+	अगर (!params)
+		वापस -ENOMEM;
 
-	if (!tz->tzp) {
-		tz->tzp = kzalloc(sizeof(*tz->tzp), GFP_KERNEL);
-		if (!tz->tzp) {
+	अगर (!tz->tzp) अणु
+		tz->tzp = kzalloc(माप(*tz->tzp), GFP_KERNEL);
+		अगर (!tz->tzp) अणु
 			ret = -ENOMEM;
-			goto free_params;
-		}
+			जाओ मुक्त_params;
+		पूर्ण
 
 		params->allocated_tzp = true;
-	}
+	पूर्ण
 
-	if (!tz->tzp->sustainable_power)
+	अगर (!tz->tzp->sustainable_घातer)
 		dev_warn(&tz->device, "power_allocator: sustainable_power will be estimated\n");
 
 	get_governor_trips(tz, params);
 
-	if (tz->trips > 0) {
+	अगर (tz->trips > 0) अणु
 		ret = tz->ops->get_trip_temp(tz,
 					params->trip_max_desired_temperature,
 					&control_temp);
-		if (!ret)
-			estimate_pid_constants(tz, tz->tzp->sustainable_power,
-					       params->trip_switch_on,
+		अगर (!ret)
+			estimate_pid_स्थिरants(tz, tz->tzp->sustainable_घातer,
+					       params->trip_चयन_on,
 					       control_temp);
-	}
+	पूर्ण
 
 	reset_pid_controller(params);
 
 	tz->governor_data = params;
 
-	return 0;
+	वापस 0;
 
-free_params:
-	kfree(params);
+मुक्त_params:
+	kमुक्त(params);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void power_allocator_unbind(struct thermal_zone_device *tz)
-{
-	struct power_allocator_params *params = tz->governor_data;
+अटल व्योम घातer_allocator_unbind(काष्ठा thermal_zone_device *tz)
+अणु
+	काष्ठा घातer_allocator_params *params = tz->governor_data;
 
 	dev_dbg(&tz->device, "Unbinding from thermal zone %d\n", tz->id);
 
-	if (params->allocated_tzp) {
-		kfree(tz->tzp);
-		tz->tzp = NULL;
-	}
+	अगर (params->allocated_tzp) अणु
+		kमुक्त(tz->tzp);
+		tz->tzp = शून्य;
+	पूर्ण
 
-	kfree(tz->governor_data);
-	tz->governor_data = NULL;
-}
+	kमुक्त(tz->governor_data);
+	tz->governor_data = शून्य;
+पूर्ण
 
-static int power_allocator_throttle(struct thermal_zone_device *tz, int trip)
-{
-	int ret;
-	int switch_on_temp, control_temp;
-	struct power_allocator_params *params = tz->governor_data;
+अटल पूर्णांक घातer_allocator_throttle(काष्ठा thermal_zone_device *tz, पूर्णांक trip)
+अणु
+	पूर्णांक ret;
+	पूर्णांक चयन_on_temp, control_temp;
+	काष्ठा घातer_allocator_params *params = tz->governor_data;
 	bool update;
 
 	/*
-	 * We get called for every trip point but we only need to do
+	 * We get called क्रम every trip poपूर्णांक but we only need to करो
 	 * our calculations once
 	 */
-	if (trip != params->trip_max_desired_temperature)
-		return 0;
+	अगर (trip != params->trip_max_desired_temperature)
+		वापस 0;
 
-	ret = tz->ops->get_trip_temp(tz, params->trip_switch_on,
-				     &switch_on_temp);
-	if (!ret && (tz->temperature < switch_on_temp)) {
-		update = (tz->last_temperature >= switch_on_temp);
+	ret = tz->ops->get_trip_temp(tz, params->trip_चयन_on,
+				     &चयन_on_temp);
+	अगर (!ret && (tz->temperature < चयन_on_temp)) अणु
+		update = (tz->last_temperature >= चयन_on_temp);
 		tz->passive = 0;
 		reset_pid_controller(params);
-		allow_maximum_power(tz, update);
-		return 0;
-	}
+		allow_maximum_घातer(tz, update);
+		वापस 0;
+	पूर्ण
 
 	tz->passive = 1;
 
 	ret = tz->ops->get_trip_temp(tz, params->trip_max_desired_temperature,
 				&control_temp);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(&tz->device,
 			 "Failed to get the maximum desired temperature: %d\n",
 			 ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return allocate_power(tz, control_temp);
-}
+	वापस allocate_घातer(tz, control_temp);
+पूर्ण
 
-static struct thermal_governor thermal_gov_power_allocator = {
+अटल काष्ठा thermal_governor thermal_gov_घातer_allocator = अणु
 	.name		= "power_allocator",
-	.bind_to_tz	= power_allocator_bind,
-	.unbind_from_tz	= power_allocator_unbind,
-	.throttle	= power_allocator_throttle,
-};
-THERMAL_GOVERNOR_DECLARE(thermal_gov_power_allocator);
+	.bind_to_tz	= घातer_allocator_bind,
+	.unbind_from_tz	= घातer_allocator_unbind,
+	.throttle	= घातer_allocator_throttle,
+पूर्ण;
+THERMAL_GOVERNOR_DECLARE(thermal_gov_घातer_allocator);

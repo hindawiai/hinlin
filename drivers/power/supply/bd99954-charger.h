@@ -1,143 +1,144 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (C) 2020 ROHM Semiconductors */
-#ifndef BD99954_CHARGER_H
-#define BD99954_CHARGER_H
+#अगर_अघोषित BD99954_CHARGER_H
+#घोषणा BD99954_CHARGER_H
 
-#include <linux/regmap.h>
+#समावेश <linux/regmap.h>
 
-#define BD9995X_MANUFACTURER "Rohm Semiconductor"
-#define BD9995X_IRQ_PIN      "bd9995x_irq"
+#घोषणा BD9995X_MANUFACTURER "Rohm Semiconductor"
+#घोषणा BD9995X_IRQ_PIN      "bd9995x_irq"
 
-#define BD9995X_VSYS_PRECHARGE_OFFSET_MV 200
+#घोषणा BD9995X_VSYS_PRECHARGE_OFFSET_MV 200
 
-#define BD99954_ID            0x346
-#define BD99955_ID            0x221
-#define BD99956_ID            0x331
+#घोषणा BD99954_ID            0x346
+#घोषणा BD99955_ID            0x221
+#घोषणा BD99956_ID            0x331
 
 /* Battery Charger Commands */
-#define    CHARGING_CURRENT   0x14
-#define    CHARGING_VOLTAGE   0x15
-#define    PROTECT_SET        0x3E
-#define    MAP_SET            0x3F
+#घोषणा    CHARGING_CURRENT   0x14
+#घोषणा    CHARGING_VOLTAGE   0x15
+#घोषणा    PROTECT_SET        0x3E
+#घोषणा    MAP_SET            0x3F
 
 /* Extended commands */
-#define    CHGSTM_STATUS       0x100
-#define    VBAT_VSYS_STATUS    0x101
-#define    VBUS_VCC_STATUS     0x102
-#define    CHGOP_STATUS        0x103
-#define    WDT_STATUS          0x104
-#define    CUR_ILIM_VAL        0x105
-#define    SEL_ILIM_VAL        0x106
-#define    IBUS_LIM_SET        0x107
-#define    ICC_LIM_SET         0x108
-#define    IOTG_LIM_SET        0x109
-#define    VIN_CTRL_SET        0x10A
-#define    CHGOP_SET1          0x10B
-#define    CHGOP_SET2          0x10C
-#define    VBUSCLPS_TH_SET     0x10D
-#define    VCCCLPS_TH_SET      0x10E
-#define    CHGWDT_SET          0x10F
-#define    BATTWDT_SET         0x110
-#define    VSYSREG_SET         0x111
-#define    VSYSVAL_THH_SET     0x112
-#define    VSYSVAL_THL_SET     0x113
-#define    ITRICH_SET          0x114
-#define    IPRECH_SET          0x115
-#define    ICHG_SET            0x116
-#define    ITERM_SET           0x117
-#define    VPRECHG_TH_SET      0x118
-#define    VRBOOST_SET         0x119
-#define    VFASTCHG_REG_SET1   0x11A
-#define    VFASTCHG_REG_SET2   0x11B
-#define    VFASTCHG_REG_SET3   0x11C
-#define    VRECHG_SET          0x11D
-#define    VBATOVP_SET         0x11E
-#define    IBATSHORT_SET       0x11F
-#define    PROCHOT_CTRL_SET    0x120
-#define    PROCHOT_ICRIT_SET   0x121
-#define    PROCHOT_INORM_SET   0x122
-#define    PROCHOT_IDCHG_SET   0x123
-#define    PROCHOT_VSYS_SET    0x124
-#define    PMON_IOUT_CTRL_SET  0x125
-#define    PMON_DACIN_VAL      0x126
-#define    IOUT_DACIN_VAL      0x127
-#define    VCC_UCD_SET         0x128
-#define    VCC_UCD_STATUS      0x129
-#define    VCC_IDD_STATUS      0x12A
-#define    VCC_UCD_FCTRL_SET   0x12B
-#define    VCC_UCD_FCTRL_EN    0x12C
-#define    VBUS_UCD_SET        0x130
-#define    VBUS_UCD_STATUS     0x131
-#define    VBUS_IDD_STATUS     0x132
-#define    VBUS_UCD_FCTRL_SET  0x133
-#define    VBUS_UCD_FCTRL_EN   0x134
-#define    CHIP_ID             0x138
-#define    CHIP_REV            0x139
-#define    IC_SET1             0x13A
-#define    IC_SET2             0x13B
-#define    SYSTEM_STATUS       0x13C
-#define    SYSTEM_CTRL_SET     0x13D
-#define    VM_CTRL_SET         0x140
-#define    THERM_WINDOW_SET1   0x141
-#define    THERM_WINDOW_SET2   0x142
-#define    THERM_WINDOW_SET3   0x143
-#define    THERM_WINDOW_SET4   0x144
-#define    THERM_WINDOW_SET5   0x145
-#define    IBATP_TH_SET        0x146
-#define    IBATM_TH_SET        0x147
-#define    VBAT_TH_SET         0x148
-#define    THERM_TH_SET        0x149
-#define    IACP_TH_SET         0x14A
-#define    VACP_TH_SET         0x14B
-#define    VBUS_TH_SET         0x14C
-#define    VCC_TH_SET          0x14D
-#define    VSYS_TH_SET         0x14E
-#define    EXTIADP_TH_SET      0x14F
-#define    IBATP_VAL           0x150
-#define    IBATP_AVE_VAL       0x151
-#define    IBATM_VAL           0x152
-#define    IBATM_AVE_VAL       0x153
-#define    VBAT_VAL            0x154
-#define    VBAT_AVE_VAL        0x155
-#define    THERM_VAL           0x156
-#define    VTH_VAL             0x157
-#define    IACP_VAL            0x158
-#define    IACP_AVE_VAL        0x159
-#define    VACP_VAL            0x15A
-#define    VACP_AVE_VAL        0x15B
-#define    VBUS_VAL            0x15C
-#define    VBUS_AVE_VAL        0x15D
-#define    VCC_VAL             0x15E
-#define    VCC_AVE_VAL         0x15F
-#define    VSYS_VAL            0x160
-#define    VSYS_AVE_VAL        0x161
-#define    EXTIADP_VAL         0x162
-#define    EXTIADP_AVE_VAL     0x163
-#define    VACPCLPS_TH_SET     0x164
-#define    INT0_SET            0x168
-#define    INT1_SET            0x169
-#define    INT2_SET            0x16A
-#define    INT3_SET            0x16B
-#define    INT4_SET            0x16C
-#define    INT5_SET            0x16D
-#define    INT6_SET            0x16E
-#define    INT7_SET            0x16F
-#define    INT0_STATUS         0x170
-#define    INT1_STATUS         0x171
-#define    INT2_STATUS         0x172
-#define    INT3_STATUS         0x173
-#define    INT4_STATUS         0x174
-#define    INT5_STATUS         0x175
-#define    INT6_STATUS         0x176
-#define    INT7_STATUS         0x177
-#define    OTPREG0             0x17A
-#define    OTPREG1             0x17B
-#define    SMBREG              0x17C
-#define    DEBUG_MODE_SET      0x17F
-#define    DEBUG0x14           0x214
-#define    DEBUG0x1A           0x21A
+#घोषणा    CHGSTM_STATUS       0x100
+#घोषणा    VBAT_VSYS_STATUS    0x101
+#घोषणा    VBUS_VCC_STATUS     0x102
+#घोषणा    CHGOP_STATUS        0x103
+#घोषणा    WDT_STATUS          0x104
+#घोषणा    CUR_ILIM_VAL        0x105
+#घोषणा    SEL_ILIM_VAL        0x106
+#घोषणा    IBUS_LIM_SET        0x107
+#घोषणा    ICC_LIM_SET         0x108
+#घोषणा    IOTG_LIM_SET        0x109
+#घोषणा    VIN_CTRL_SET        0x10A
+#घोषणा    CHGOP_SET1          0x10B
+#घोषणा    CHGOP_SET2          0x10C
+#घोषणा    VBUSCLPS_TH_SET     0x10D
+#घोषणा    VCCCLPS_TH_SET      0x10E
+#घोषणा    CHGWDT_SET          0x10F
+#घोषणा    BATTWDT_SET         0x110
+#घोषणा    VSYSREG_SET         0x111
+#घोषणा    VSYSVAL_THH_SET     0x112
+#घोषणा    VSYSVAL_THL_SET     0x113
+#घोषणा    ITRICH_SET          0x114
+#घोषणा    IPRECH_SET          0x115
+#घोषणा    ICHG_SET            0x116
+#घोषणा    ITERM_SET           0x117
+#घोषणा    VPRECHG_TH_SET      0x118
+#घोषणा    VRBOOST_SET         0x119
+#घोषणा    VFASTCHG_REG_SET1   0x11A
+#घोषणा    VFASTCHG_REG_SET2   0x11B
+#घोषणा    VFASTCHG_REG_SET3   0x11C
+#घोषणा    VRECHG_SET          0x11D
+#घोषणा    VBATOVP_SET         0x11E
+#घोषणा    IBATSHORT_SET       0x11F
+#घोषणा    PROCHOT_CTRL_SET    0x120
+#घोषणा    PROCHOT_ICRIT_SET   0x121
+#घोषणा    PROCHOT_INORM_SET   0x122
+#घोषणा    PROCHOT_IDCHG_SET   0x123
+#घोषणा    PROCHOT_VSYS_SET    0x124
+#घोषणा    PMON_IOUT_CTRL_SET  0x125
+#घोषणा    PMON_DACIN_VAL      0x126
+#घोषणा    IOUT_DACIN_VAL      0x127
+#घोषणा    VCC_UCD_SET         0x128
+#घोषणा    VCC_UCD_STATUS      0x129
+#घोषणा    VCC_IDD_STATUS      0x12A
+#घोषणा    VCC_UCD_FCTRL_SET   0x12B
+#घोषणा    VCC_UCD_FCTRL_EN    0x12C
+#घोषणा    VBUS_UCD_SET        0x130
+#घोषणा    VBUS_UCD_STATUS     0x131
+#घोषणा    VBUS_IDD_STATUS     0x132
+#घोषणा    VBUS_UCD_FCTRL_SET  0x133
+#घोषणा    VBUS_UCD_FCTRL_EN   0x134
+#घोषणा    CHIP_ID             0x138
+#घोषणा    CHIP_REV            0x139
+#घोषणा    IC_SET1             0x13A
+#घोषणा    IC_SET2             0x13B
+#घोषणा    SYSTEM_STATUS       0x13C
+#घोषणा    SYSTEM_CTRL_SET     0x13D
+#घोषणा    VM_CTRL_SET         0x140
+#घोषणा    THERM_WINDOW_SET1   0x141
+#घोषणा    THERM_WINDOW_SET2   0x142
+#घोषणा    THERM_WINDOW_SET3   0x143
+#घोषणा    THERM_WINDOW_SET4   0x144
+#घोषणा    THERM_WINDOW_SET5   0x145
+#घोषणा    IBATP_TH_SET        0x146
+#घोषणा    IBATM_TH_SET        0x147
+#घोषणा    VBAT_TH_SET         0x148
+#घोषणा    THERM_TH_SET        0x149
+#घोषणा    IACP_TH_SET         0x14A
+#घोषणा    VACP_TH_SET         0x14B
+#घोषणा    VBUS_TH_SET         0x14C
+#घोषणा    VCC_TH_SET          0x14D
+#घोषणा    VSYS_TH_SET         0x14E
+#घोषणा    EXTIADP_TH_SET      0x14F
+#घोषणा    IBATP_VAL           0x150
+#घोषणा    IBATP_AVE_VAL       0x151
+#घोषणा    IBATM_VAL           0x152
+#घोषणा    IBATM_AVE_VAL       0x153
+#घोषणा    VBAT_VAL            0x154
+#घोषणा    VBAT_AVE_VAL        0x155
+#घोषणा    THERM_VAL           0x156
+#घोषणा    VTH_VAL             0x157
+#घोषणा    IACP_VAL            0x158
+#घोषणा    IACP_AVE_VAL        0x159
+#घोषणा    VACP_VAL            0x15A
+#घोषणा    VACP_AVE_VAL        0x15B
+#घोषणा    VBUS_VAL            0x15C
+#घोषणा    VBUS_AVE_VAL        0x15D
+#घोषणा    VCC_VAL             0x15E
+#घोषणा    VCC_AVE_VAL         0x15F
+#घोषणा    VSYS_VAL            0x160
+#घोषणा    VSYS_AVE_VAL        0x161
+#घोषणा    EXTIADP_VAL         0x162
+#घोषणा    EXTIADP_AVE_VAL     0x163
+#घोषणा    VACPCLPS_TH_SET     0x164
+#घोषणा    INT0_SET            0x168
+#घोषणा    INT1_SET            0x169
+#घोषणा    INT2_SET            0x16A
+#घोषणा    INT3_SET            0x16B
+#घोषणा    INT4_SET            0x16C
+#घोषणा    INT5_SET            0x16D
+#घोषणा    INT6_SET            0x16E
+#घोषणा    INT7_SET            0x16F
+#घोषणा    INT0_STATUS         0x170
+#घोषणा    INT1_STATUS         0x171
+#घोषणा    INT2_STATUS         0x172
+#घोषणा    INT3_STATUS         0x173
+#घोषणा    INT4_STATUS         0x174
+#घोषणा    INT5_STATUS         0x175
+#घोषणा    INT6_STATUS         0x176
+#घोषणा    INT7_STATUS         0x177
+#घोषणा    OTPREG0             0x17A
+#घोषणा    OTPREG1             0x17B
+#घोषणा    SMBREG              0x17C
+#घोषणा    DEBUG_MODE_SET      0x17F
+#घोषणा    DEBUG0x14           0x214
+#घोषणा    DEBUG0x1A           0x21A
 
-enum bd9995x_fields {
+क्रमागत bd9995x_fields अणु
 	F_PREV_CHGSTM_STATE, F_CHGSTM_STATE,
 	F_VBAT_VSYS_STATUS,
 	F_VBUS_VCC_STATUS,
@@ -476,9 +477,9 @@ enum bd9995x_fields {
 	F_DEBUG0x14,
 	F_DEBUG0x1A,
 	F_MAX_FIELDS
-};
+पूर्ण;
 
-static const struct reg_field bd9995x_reg_fields[] = {
+अटल स्थिर काष्ठा reg_field bd9995x_reg_fields[] = अणु
 	    [F_PREV_CHGSTM_STATE] = REG_FIELD(CHGSTM_STATUS, 8, 14),
 	    [F_CHGSTM_STATE] = REG_FIELD(CHGSTM_STATUS, 0, 6),
 	    [F_VBAT_VSYS_STATUS] = REG_FIELD(VBAT_VSYS_STATUS, 0, 15),
@@ -824,79 +825,79 @@ static const struct reg_field bd9995x_reg_fields[] = {
 	    [F_DEBUG_MODE_SET] = REG_FIELD(DEBUG_MODE_SET, 0, 15),
 	    [F_DEBUG0x14] = REG_FIELD(DEBUG0x14, 0, 15),
 	    [F_DEBUG0x1A] = REG_FIELD(DEBUG0x1A, 0, 15),
-};
+पूर्ण;
 
 /* CHGSTM_STATEs */
-#define CHGSTM_SUSPEND 0x00
-#define CHGSTM_TRICKLE_CHARGE 0x01
-#define CHGSTM_PRE_CHARGE 0x02
-#define CHGSTM_FAST_CHARGE 0x03
-#define CHGSTM_TOP_OFF 0x04
-#define CHGSTM_DONE 0x05
-#define CHGSTM_OTG 0x08
-#define CHGSTM_OTG_DONE 0x09
-#define CHGSTM_TEMPERATURE_ERROR_1 0x10
-#define CHGSTM_TEMPERATURE_ERROR_2 0x11
-#define CHGSTM_TEMPERATURE_ERROR_3 0x12
-#define CHGSTM_TEMPERATURE_ERROR_4 0x13
-#define CHGSTM_TEMPERATURE_ERROR_5 0x14
-#define CHGSTM_TEMPERATURE_ERROR_6 0x15
-#define CHGSTM_TEMPERATURE_ERROR_7 0x18
-#define CHGSTM_THERMAL_SHUT_DOWN_1 0x20
-#define CHGSTM_THERMAL_SHUT_DOWN_2 0x21
-#define CHGSTM_THERMAL_SHUT_DOWN_3 0x22
-#define CHGSTM_THERMAL_SHUT_DOWN_4 0x23
-#define CHGSTM_THERMAL_SHUT_DOWN_5 0x24
-#define CHGSTM_THERMAL_SHUT_DOWN_6 0x25
-#define CHGSTM_THERMAL_SHUT_DOWN_7 0x28
-#define CHGSTM_BATTERY_ERROR 0x40
+#घोषणा CHGSTM_SUSPEND 0x00
+#घोषणा CHGSTM_TRICKLE_CHARGE 0x01
+#घोषणा CHGSTM_PRE_CHARGE 0x02
+#घोषणा CHGSTM_FAST_CHARGE 0x03
+#घोषणा CHGSTM_TOP_OFF 0x04
+#घोषणा CHGSTM_DONE 0x05
+#घोषणा CHGSTM_OTG 0x08
+#घोषणा CHGSTM_OTG_DONE 0x09
+#घोषणा CHGSTM_TEMPERATURE_ERROR_1 0x10
+#घोषणा CHGSTM_TEMPERATURE_ERROR_2 0x11
+#घोषणा CHGSTM_TEMPERATURE_ERROR_3 0x12
+#घोषणा CHGSTM_TEMPERATURE_ERROR_4 0x13
+#घोषणा CHGSTM_TEMPERATURE_ERROR_5 0x14
+#घोषणा CHGSTM_TEMPERATURE_ERROR_6 0x15
+#घोषणा CHGSTM_TEMPERATURE_ERROR_7 0x18
+#घोषणा CHGSTM_THERMAL_SHUT_DOWN_1 0x20
+#घोषणा CHGSTM_THERMAL_SHUT_DOWN_2 0x21
+#घोषणा CHGSTM_THERMAL_SHUT_DOWN_3 0x22
+#घोषणा CHGSTM_THERMAL_SHUT_DOWN_4 0x23
+#घोषणा CHGSTM_THERMAL_SHUT_DOWN_5 0x24
+#घोषणा CHGSTM_THERMAL_SHUT_DOWN_6 0x25
+#घोषणा CHGSTM_THERMAL_SHUT_DOWN_7 0x28
+#घोषणा CHGSTM_BATTERY_ERROR 0x40
 
 /* VBAT_VSYS_STATUS */
-#define STATUS_VSYS_OV BIT(15)
-#define STATUS_VSYS_SSD BIT(14)
-#define STATUS_VSYS_SCP BIT(13)
-#define STATUS_VSYS_UVN BIT(12)
-#define STATUS_IBAT_SHORT BIT(6)
-#define STATUS_VBAT_OV BIT(3)
-#define STATUS_DEAD_BAT BIT(0)
+#घोषणा STATUS_VSYS_OV BIT(15)
+#घोषणा STATUS_VSYS_SSD BIT(14)
+#घोषणा STATUS_VSYS_SCP BIT(13)
+#घोषणा STATUS_VSYS_UVN BIT(12)
+#घोषणा STATUS_IBAT_SHORT BIT(6)
+#घोषणा STATUS_VBAT_OV BIT(3)
+#घोषणा STATUS_DEAD_BAT BIT(0)
 
 /* VBUS_VCC_STATUS */
-#define STATUS_VACP_DET BIT(12)
-#define STATUS_VCC_OVP BIT(11)
-#define STATUS_ILIM_VCC_MOD BIT(10)
-#define STATUS_VCC_CLPS BIT(9)
-#define STATUS_VCC_DET BIT(8)
-#define STATUS_VBUS_OVP BIT(3)
-#define STATUS_ILIM_VBUS_MOD BIT(2)
-#define STATUS_VBUS_CLPS BIT(1)
-#define STATUS_VBUS_DET BIT(0)
+#घोषणा STATUS_VACP_DET BIT(12)
+#घोषणा STATUS_VCC_OVP BIT(11)
+#घोषणा STATUS_ILIM_VCC_MOD BIT(10)
+#घोषणा STATUS_VCC_CLPS BIT(9)
+#घोषणा STATUS_VCC_DET BIT(8)
+#घोषणा STATUS_VBUS_OVP BIT(3)
+#घोषणा STATUS_ILIM_VBUS_MOD BIT(2)
+#घोषणा STATUS_VBUS_CLPS BIT(1)
+#घोषणा STATUS_VBUS_DET BIT(0)
 
 /* Interrupt set/status definitions */
 
 /* INT 0 */
-#define INT0_INT7_STATUS BIT(7)
-#define INT0_INT6_STATUS BIT(6)
-#define INT0_INT5_STATUS BIT(5)
-#define INT0_INT4_STATUS BIT(4)
-#define INT0_INT3_STATUS BIT(3)
-#define INT0_INT2_STATUS BIT(2)
-#define INT0_INT1_STATUS BIT(1)
-#define INT0_INT0_STATUS BIT(0)
-#define INT0_ALL 0xff
+#घोषणा INT0_INT7_STATUS BIT(7)
+#घोषणा INT0_INT6_STATUS BIT(6)
+#घोषणा INT0_INT5_STATUS BIT(5)
+#घोषणा INT0_INT4_STATUS BIT(4)
+#घोषणा INT0_INT3_STATUS BIT(3)
+#घोषणा INT0_INT2_STATUS BIT(2)
+#घोषणा INT0_INT1_STATUS BIT(1)
+#घोषणा INT0_INT0_STATUS BIT(0)
+#घोषणा INT0_ALL 0xff
 
 /* INT 1 */
-#define VBUS_RBUV_DET BIT(15)
-#define VBUS_RBUV_RES BIT(14)
-#define VBUS_TH_DET BIT(9)
-#define VBUS_TH_RES BIT(8)
-#define VBUS_IIN_MOD BIT(6)
-#define VBUS_OV_DET BIT(5)
-#define VBUS_OV_RES BIT(4)
-#define VBUS_CLPS_DET BIT(3)
-#define VBUS_CLPS BIT(2)
-#define VBUS_DET BIT(1)
-#define VBUS_RES BIT(0)
-#define INT1_ALL (VBUS_RBUV_DET|\
+#घोषणा VBUS_RBUV_DET BIT(15)
+#घोषणा VBUS_RBUV_RES BIT(14)
+#घोषणा VBUS_TH_DET BIT(9)
+#घोषणा VBUS_TH_RES BIT(8)
+#घोषणा VBUS_IIN_MOD BIT(6)
+#घोषणा VBUS_OV_DET BIT(5)
+#घोषणा VBUS_OV_RES BIT(4)
+#घोषणा VBUS_CLPS_DET BIT(3)
+#घोषणा VBUS_CLPS BIT(2)
+#घोषणा VBUS_DET BIT(1)
+#घोषणा VBUS_RES BIT(0)
+#घोषणा INT1_ALL (VBUS_RBUV_DET|\
 		 VBUS_RBUV_RES|\
 		 VBUS_TH_DET |\
 		 VBUS_TH_RES |\
@@ -909,18 +910,18 @@ static const struct reg_field bd9995x_reg_fields[] = {
 		 VBUS_RES)
 
 /* INT 2 */
-#define VCC_RBUV_DET BIT(15)
-#define VCC_RBUV_RES BIT(14)
-#define VCC_TH_DET BIT(9)
-#define VCC_TH_RES BIT(8)
-#define VCC_IIN_MOD BIT(6)
-#define VCC_OVP_DET BIT(5)
-#define VCC_OVP_RES BIT(4)
-#define VCC_CLPS_DET BIT(3)
-#define VCC_CLPS_RES BIT(2)
-#define VCC_DET BIT(1)
-#define VCC_RES BIT(0)
-#define INT2_ALL (VCC_RBUV_DET |\
+#घोषणा VCC_RBUV_DET BIT(15)
+#घोषणा VCC_RBUV_RES BIT(14)
+#घोषणा VCC_TH_DET BIT(9)
+#घोषणा VCC_TH_RES BIT(8)
+#घोषणा VCC_IIN_MOD BIT(6)
+#घोषणा VCC_OVP_DET BIT(5)
+#घोषणा VCC_OVP_RES BIT(4)
+#घोषणा VCC_CLPS_DET BIT(3)
+#घोषणा VCC_CLPS_RES BIT(2)
+#घोषणा VCC_DET BIT(1)
+#घोषणा VCC_RES BIT(0)
+#घोषणा INT2_ALL (VCC_RBUV_DET |\
 		 VCC_RBUV_RES |\
 		 VCC_TH_DET |\
 		 VCC_TH_RES |\
@@ -932,19 +933,19 @@ static const struct reg_field bd9995x_reg_fields[] = {
 		 VCC_DET |\
 		 VCC_RES)
 /* INT 3 */
-#define TH_DET BIT(15)
-#define TH_RMV BIT(14)
-#define TMP_OUT_DET BIT(11)
-#define TMP_OUT_RES BIT(10)
-#define VBAT_TH_DET BIT(9)
-#define VBAT_TH_RES BIT(8)
-#define IBAT_SHORT_DET BIT(7)
-#define IBAT_SHORT_RES BIT(6)
-#define VBAT_OV_DET BIT(5)
-#define VBAT_OV_RES BIT(4)
-#define BAT_ASSIST_DET BIT(3)
-#define BAT_ASSIST_RES BIT(2)
-#define INT3_ALL (TH_DET |\
+#घोषणा TH_DET BIT(15)
+#घोषणा TH_RMV BIT(14)
+#घोषणा TMP_OUT_DET BIT(11)
+#घोषणा TMP_OUT_RES BIT(10)
+#घोषणा VBAT_TH_DET BIT(9)
+#घोषणा VBAT_TH_RES BIT(8)
+#घोषणा IBAT_SHORT_DET BIT(7)
+#घोषणा IBAT_SHORT_RES BIT(6)
+#घोषणा VBAT_OV_DET BIT(5)
+#घोषणा VBAT_OV_RES BIT(4)
+#घोषणा BAT_ASSIST_DET BIT(3)
+#घोषणा BAT_ASSIST_RES BIT(2)
+#घोषणा INT3_ALL (TH_DET |\
 		 TH_RMV |\
 		 TMP_OUT_DET |\
 		 TMP_OUT_RES |\
@@ -958,15 +959,15 @@ static const struct reg_field bd9995x_reg_fields[] = {
 		 BAT_ASSIST_RES)
 
 /* INT 4 */
-#define VSYS_TH_DET BIT(9)
-#define VSYS_TH_RES BIT(8)
-#define VSYS_OV_DET BIT(5)
-#define VSYS_OV_RES BIT(4)
-#define VSYS_SHT_DET BIT(3)
-#define VSYS_SHT_RES BIT(2)
-#define VSYS_UV_DET BIT(1)
-#define VSYS_UV_RES BIT(0)
-#define INT4_ALL (VSYS_TH_DET |\
+#घोषणा VSYS_TH_DET BIT(9)
+#घोषणा VSYS_TH_RES BIT(8)
+#घोषणा VSYS_OV_DET BIT(5)
+#घोषणा VSYS_OV_RES BIT(4)
+#घोषणा VSYS_SHT_DET BIT(3)
+#घोषणा VSYS_SHT_RES BIT(2)
+#घोषणा VSYS_UV_DET BIT(1)
+#घोषणा VSYS_UV_RES BIT(0)
+#घोषणा INT4_ALL (VSYS_TH_DET |\
 		 VSYS_TH_RES |\
 		 VSYS_OV_DET |\
 		 VSYS_OV_RES |\
@@ -976,20 +977,20 @@ static const struct reg_field bd9995x_reg_fields[] = {
 		 VSYS_UV_RES)
 
 /* INT 5*/
-#define OTP_LOAD_DONE BIT(13)
-#define PWR_ON BIT(12)
-#define EXTIADP_TRNS BIT(11)
-#define EXTIADP_TH_DET BIT(9)
-#define EXIADP_TH_RES BIT(8)
-#define BAT_MNT_DET BIT(7)
-#define BAT_MNT_RES BIT(6)
-#define TSD_DET BIT(5)
-#define TSD_RES BIT(4)
-#define CHGWDT_EXP BIT(3)
-#define THERMWDT_EXP BIT(2)
-#define TMP_TRNS BIT(1)
-#define CHG_TRNS BIT(0)
-#define INT5_ALL (OTP_LOAD_DONE |\
+#घोषणा OTP_LOAD_DONE BIT(13)
+#घोषणा PWR_ON BIT(12)
+#घोषणा EXTIADP_TRNS BIT(11)
+#घोषणा EXTIADP_TH_DET BIT(9)
+#घोषणा EXIADP_TH_RES BIT(8)
+#घोषणा BAT_MNT_DET BIT(7)
+#घोषणा BAT_MNT_RES BIT(6)
+#घोषणा TSD_DET BIT(5)
+#घोषणा TSD_RES BIT(4)
+#घोषणा CHGWDT_EXP BIT(3)
+#घोषणा THERMWDT_EXP BIT(2)
+#घोषणा TMP_TRNS BIT(1)
+#घोषणा CHG_TRNS BIT(0)
+#घोषणा INT5_ALL (OTP_LOAD_DONE |\
 		 PWR_ON |\
 		 EXTIADP_TRNS |\
 		 EXTIADP_TH_DET |\
@@ -1004,17 +1005,17 @@ static const struct reg_field bd9995x_reg_fields[] = {
 		 CHG_TRNS)
 
 /* INT 6*/
-#define VBUS_UCD_PORT_DET BIT(13)
-#define VBUS_UCD_UCHG_DET BIT(12)
-#define VBUS_UCD_URID_RMV BIT(11)
-#define VBUS_UCD_OTG_DET BIT(10)
-#define VBUS_UCD_URID_MOD BIT(8)
-#define VCC_UCD_PORT_DET BIT(5)
-#define VCC_UCD_UCHG_DET BIT(4)
-#define VCC_UCD_URID_RMV BIT(3)
-#define VCC_UCD_OTG_DET BIT(2)
-#define VCC_UCD_URID_MOD BIT(0)
-#define INT6_ALL (VBUS_UCD_PORT_DET |\
+#घोषणा VBUS_UCD_PORT_DET BIT(13)
+#घोषणा VBUS_UCD_UCHG_DET BIT(12)
+#घोषणा VBUS_UCD_URID_RMV BIT(11)
+#घोषणा VBUS_UCD_OTG_DET BIT(10)
+#घोषणा VBUS_UCD_URID_MOD BIT(8)
+#घोषणा VCC_UCD_PORT_DET BIT(5)
+#घोषणा VCC_UCD_UCHG_DET BIT(4)
+#घोषणा VCC_UCD_URID_RMV BIT(3)
+#घोषणा VCC_UCD_OTG_DET BIT(2)
+#घोषणा VCC_UCD_URID_MOD BIT(0)
+#घोषणा INT6_ALL (VBUS_UCD_PORT_DET |\
 		 VBUS_UCD_UCHG_DET |\
 		 VBUS_UCD_URID_RMV |\
 		 VBUS_UCD_OTG_DET |\
@@ -1026,21 +1027,21 @@ static const struct reg_field bd9995x_reg_fields[] = {
 		 VCC_UCD_URID_MOD)
 
 /* INT 7 */
-#define PROCHOT_DET BIT(15)
-#define PROCHOT_RES BIT(14)
-#define VACP_DET BIT(11)
-#define VACP_RES BIT(10)
-#define VACP_TH_DET BIT(9)
-#define VACP_TH_RES BIT(8)
-#define IACP_TH_DET BIT(7)
-#define IACP_THE_RES BIT(6)
-#define THERM_TH_DET BIT(5)
-#define THERM_TH_RES BIT(4)
-#define IBATM_TH_DET BIT(3)
-#define IBATM_TH_RES BIT(2)
-#define IBATP_TH_DET BIT(1)
-#define IBATP_TH_RES BIT(0)
-#define INT7_ALL (PROCHOT_DET |\
+#घोषणा PROCHOT_DET BIT(15)
+#घोषणा PROCHOT_RES BIT(14)
+#घोषणा VACP_DET BIT(11)
+#घोषणा VACP_RES BIT(10)
+#घोषणा VACP_TH_DET BIT(9)
+#घोषणा VACP_TH_RES BIT(8)
+#घोषणा IACP_TH_DET BIT(7)
+#घोषणा IACP_THE_RES BIT(6)
+#घोषणा THERM_TH_DET BIT(5)
+#घोषणा THERM_TH_RES BIT(4)
+#घोषणा IBATM_TH_DET BIT(3)
+#घोषणा IBATM_TH_RES BIT(2)
+#घोषणा IBATP_TH_DET BIT(1)
+#घोषणा IBATP_TH_RES BIT(0)
+#घोषणा INT7_ALL (PROCHOT_DET |\
 		 PROCHOT_RES |\
 		 VACP_DET |\
 		 VACP_RES |\
@@ -1056,20 +1057,20 @@ static const struct reg_field bd9995x_reg_fields[] = {
 		 IBATP_TH_RES)
 
 /* SYSTEM_CTRL_SET*/
-#define MONRST BIT(6)
-#define ALMRST BIT(5)
-#define CHGRST BIT(4)
-#define OTPLD  BIT(1)
-#define ALLRST BIT(0)
+#घोषणा MONRST BIT(6)
+#घोषणा ALMRST BIT(5)
+#घोषणा CHGRST BIT(4)
+#घोषणा OTPLD  BIT(1)
+#घोषणा ALLRST BIT(0)
 
 /* F_BATTEMP */
-#define ROOM		0x0
-#define HOT1		0x1
-#define HOT2		0x2
-#define HOT3		0x3
-#define COLD1		0x4
-#define COLD2		0x5
-#define TEMP_DIS	0x6
-#define BATT_OPEN	0x7
+#घोषणा ROOM		0x0
+#घोषणा HOT1		0x1
+#घोषणा HOT2		0x2
+#घोषणा HOT3		0x3
+#घोषणा COLD1		0x4
+#घोषणा COLD2		0x5
+#घोषणा TEMP_DIS	0x6
+#घोषणा BATT_OPEN	0x7
 
-#endif
+#पूर्ण_अगर

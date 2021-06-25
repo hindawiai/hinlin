@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
 /*
  * Copyright 2020 Google LLC.
  */
 
-#include <test_progs.h>
-#include <cgroup_helpers.h>
-#include <network_helpers.h>
+#समावेश <test_progs.h>
+#समावेश <cgroup_helpers.h>
+#समावेश <network_helpers.h>
 
-#include "progs/cg_storage_multi.h"
+#समावेश "progs/cg_storage_multi.h"
 
-#include "cg_storage_multi_egress_only.skel.h"
-#include "cg_storage_multi_isolated.skel.h"
-#include "cg_storage_multi_shared.skel.h"
+#समावेश "cg_storage_multi_egress_only.skel.h"
+#समावेश "cg_storage_multi_isolated.skel.h"
+#समावेश "cg_storage_multi_shared.skel.h"
 
-#define PARENT_CGROUP "/cgroup_storage"
-#define CHILD_CGROUP "/cgroup_storage/child"
+#घोषणा PARENT_CGROUP "/cgroup_storage"
+#घोषणा CHILD_CGROUP "/cgroup_storage/child"
 
-static int duration;
+अटल पूर्णांक duration;
 
-static bool assert_storage(struct bpf_map *map, const void *key,
-			   struct cgroup_value *expected)
-{
-	struct cgroup_value value;
-	int map_fd;
+अटल bool निश्चित_storage(काष्ठा bpf_map *map, स्थिर व्योम *key,
+			   काष्ठा cgroup_value *expected)
+अणु
+	काष्ठा cgroup_value value;
+	पूर्णांक map_fd;
 
 	map_fd = bpf_map__fd(map);
 
-	if (CHECK(bpf_map_lookup_elem(map_fd, key, &value) < 0,
-		  "map-lookup", "errno %d", errno))
-		return true;
-	if (CHECK(memcmp(&value, expected, sizeof(struct cgroup_value)),
+	अगर (CHECK(bpf_map_lookup_elem(map_fd, key, &value) < 0,
+		  "map-lookup", "errno %d", त्रुटि_सं))
+		वापस true;
+	अगर (CHECK(स_भेद(&value, expected, माप(काष्ठा cgroup_value)),
 		  "assert-storage", "storages differ"))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool assert_storage_noexist(struct bpf_map *map, const void *key)
-{
-	struct cgroup_value value;
-	int map_fd;
+अटल bool निश्चित_storage_noexist(काष्ठा bpf_map *map, स्थिर व्योम *key)
+अणु
+	काष्ठा cgroup_value value;
+	पूर्णांक map_fd;
 
 	map_fd = bpf_map__fd(map);
 
-	if (CHECK(bpf_map_lookup_elem(map_fd, key, &value) == 0,
+	अगर (CHECK(bpf_map_lookup_elem(map_fd, key, &value) == 0,
 		  "map-lookup", "succeeded, expected ENOENT"))
-		return true;
-	if (CHECK(errno != ENOENT,
-		  "map-lookup", "errno %d, expected ENOENT", errno))
-		return true;
+		वापस true;
+	अगर (CHECK(त्रुटि_सं != ENOENT,
+		  "map-lookup", "errno %d, expected ENOENT", त्रुटि_सं))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool connect_send(const char *cgroup_path)
-{
+अटल bool connect_send(स्थिर अक्षर *cgroup_path)
+अणु
 	bool res = true;
-	int server_fd = -1, client_fd = -1;
+	पूर्णांक server_fd = -1, client_fd = -1;
 
-	if (join_cgroup(cgroup_path))
-		goto out_clean;
+	अगर (join_cgroup(cgroup_path))
+		जाओ out_clean;
 
-	server_fd = start_server(AF_INET, SOCK_DGRAM, NULL, 0, 0);
-	if (server_fd < 0)
-		goto out_clean;
+	server_fd = start_server(AF_INET, SOCK_DGRAM, शून्य, 0, 0);
+	अगर (server_fd < 0)
+		जाओ out_clean;
 
 	client_fd = connect_to_fd(server_fd, 0);
-	if (client_fd < 0)
-		goto out_clean;
+	अगर (client_fd < 0)
+		जाओ out_clean;
 
-	if (send(client_fd, "message", strlen("message"), 0) < 0)
-		goto out_clean;
+	अगर (send(client_fd, "message", म_माप("message"), 0) < 0)
+		जाओ out_clean;
 
 	res = false;
 
 out_clean:
-	close(client_fd);
-	close(server_fd);
-	return res;
-}
+	बंद(client_fd);
+	बंद(server_fd);
+	वापस res;
+पूर्ण
 
-static void test_egress_only(int parent_cgroup_fd, int child_cgroup_fd)
-{
-	struct cg_storage_multi_egress_only *obj;
-	struct cgroup_value expected_cgroup_value;
-	struct bpf_cgroup_storage_key key;
-	struct bpf_link *parent_link = NULL, *child_link = NULL;
+अटल व्योम test_egress_only(पूर्णांक parent_cgroup_fd, पूर्णांक child_cgroup_fd)
+अणु
+	काष्ठा cg_storage_multi_egress_only *obj;
+	काष्ठा cgroup_value expected_cgroup_value;
+	काष्ठा bpf_cgroup_storage_key key;
+	काष्ठा bpf_link *parent_link = शून्य, *child_link = शून्य;
 	bool err;
 
 	key.attach_type = BPF_CGROUP_INET_EGRESS;
 
-	obj = cg_storage_multi_egress_only__open_and_load();
-	if (CHECK(!obj, "skel-load", "errno %d", errno))
-		return;
+	obj = cg_storage_multi_egress_only__खोलो_and_load();
+	अगर (CHECK(!obj, "skel-load", "errno %d", त्रुटि_सं))
+		वापस;
 
 	/* Attach to parent cgroup, trigger packet from child.
 	 * Assert that there is only one run and in that run the storage is
 	 * parent cgroup's storage.
-	 * Also assert that child cgroup's storage does not exist
+	 * Also निश्चित that child cgroup's storage करोes not exist
 	 */
 	parent_link = bpf_program__attach_cgroup(obj->progs.egress,
 						 parent_cgroup_fd);
-	if (CHECK(IS_ERR(parent_link), "parent-cg-attach",
+	अगर (CHECK(IS_ERR(parent_link), "parent-cg-attach",
 		  "err %ld", PTR_ERR(parent_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	err = connect_send(CHILD_CGROUP);
-	if (CHECK(err, "first-connect-send", "errno %d", errno))
-		goto close_bpf_object;
-	if (CHECK(obj->bss->invocations != 1,
+	अगर (CHECK(err, "first-connect-send", "errno %d", त्रुटि_सं))
+		जाओ बंद_bpf_object;
+	अगर (CHECK(obj->bss->invocations != 1,
 		  "first-invoke", "invocations=%d", obj->bss->invocations))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.cgroup_inode_id = get_cgroup_id(PARENT_CGROUP);
-	expected_cgroup_value = (struct cgroup_value) { .egress_pkts = 1 };
-	if (assert_storage(obj->maps.cgroup_storage,
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु .egress_pkts = 1 पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.cgroup_inode_id = get_cgroup_id(CHILD_CGROUP);
-	if (assert_storage_noexist(obj->maps.cgroup_storage, &key))
-		goto close_bpf_object;
+	अगर (निश्चित_storage_noexist(obj->maps.cgroup_storage, &key))
+		जाओ बंद_bpf_object;
 
 	/* Attach to parent and child cgroup, trigger packet from child.
 	 * Assert that there are two additional runs, one that run with parent
@@ -126,93 +127,93 @@ static void test_egress_only(int parent_cgroup_fd, int child_cgroup_fd)
 	 */
 	child_link = bpf_program__attach_cgroup(obj->progs.egress,
 						child_cgroup_fd);
-	if (CHECK(IS_ERR(child_link), "child-cg-attach",
+	अगर (CHECK(IS_ERR(child_link), "child-cg-attach",
 		  "err %ld", PTR_ERR(child_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	err = connect_send(CHILD_CGROUP);
-	if (CHECK(err, "second-connect-send", "errno %d", errno))
-		goto close_bpf_object;
-	if (CHECK(obj->bss->invocations != 3,
+	अगर (CHECK(err, "second-connect-send", "errno %d", त्रुटि_सं))
+		जाओ बंद_bpf_object;
+	अगर (CHECK(obj->bss->invocations != 3,
 		  "second-invoke", "invocations=%d", obj->bss->invocations))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.cgroup_inode_id = get_cgroup_id(PARENT_CGROUP);
-	expected_cgroup_value = (struct cgroup_value) { .egress_pkts = 2 };
-	if (assert_storage(obj->maps.cgroup_storage,
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु .egress_pkts = 2 पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.cgroup_inode_id = get_cgroup_id(CHILD_CGROUP);
-	expected_cgroup_value = (struct cgroup_value) { .egress_pkts = 1 };
-	if (assert_storage(obj->maps.cgroup_storage,
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु .egress_pkts = 1 पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 
-close_bpf_object:
-	if (!IS_ERR(parent_link))
+बंद_bpf_object:
+	अगर (!IS_ERR(parent_link))
 		bpf_link__destroy(parent_link);
-	if (!IS_ERR(child_link))
+	अगर (!IS_ERR(child_link))
 		bpf_link__destroy(child_link);
 
 	cg_storage_multi_egress_only__destroy(obj);
-}
+पूर्ण
 
-static void test_isolated(int parent_cgroup_fd, int child_cgroup_fd)
-{
-	struct cg_storage_multi_isolated *obj;
-	struct cgroup_value expected_cgroup_value;
-	struct bpf_cgroup_storage_key key;
-	struct bpf_link *parent_egress1_link = NULL, *parent_egress2_link = NULL;
-	struct bpf_link *child_egress1_link = NULL, *child_egress2_link = NULL;
-	struct bpf_link *parent_ingress_link = NULL, *child_ingress_link = NULL;
+अटल व्योम test_isolated(पूर्णांक parent_cgroup_fd, पूर्णांक child_cgroup_fd)
+अणु
+	काष्ठा cg_storage_multi_isolated *obj;
+	काष्ठा cgroup_value expected_cgroup_value;
+	काष्ठा bpf_cgroup_storage_key key;
+	काष्ठा bpf_link *parent_egress1_link = शून्य, *parent_egress2_link = शून्य;
+	काष्ठा bpf_link *child_egress1_link = शून्य, *child_egress2_link = शून्य;
+	काष्ठा bpf_link *parent_ingress_link = शून्य, *child_ingress_link = शून्य;
 	bool err;
 
-	obj = cg_storage_multi_isolated__open_and_load();
-	if (CHECK(!obj, "skel-load", "errno %d", errno))
-		return;
+	obj = cg_storage_multi_isolated__खोलो_and_load();
+	अगर (CHECK(!obj, "skel-load", "errno %d", त्रुटि_सं))
+		वापस;
 
 	/* Attach to parent cgroup, trigger packet from child.
 	 * Assert that there is three runs, two with parent cgroup egress and
 	 * one with parent cgroup ingress, stored in separate parent storages.
-	 * Also assert that child cgroup's storages does not exist
+	 * Also निश्चित that child cgroup's storages करोes not exist
 	 */
 	parent_egress1_link = bpf_program__attach_cgroup(obj->progs.egress1,
 							 parent_cgroup_fd);
-	if (CHECK(IS_ERR(parent_egress1_link), "parent-egress1-cg-attach",
+	अगर (CHECK(IS_ERR(parent_egress1_link), "parent-egress1-cg-attach",
 		  "err %ld", PTR_ERR(parent_egress1_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	parent_egress2_link = bpf_program__attach_cgroup(obj->progs.egress2,
 							 parent_cgroup_fd);
-	if (CHECK(IS_ERR(parent_egress2_link), "parent-egress2-cg-attach",
+	अगर (CHECK(IS_ERR(parent_egress2_link), "parent-egress2-cg-attach",
 		  "err %ld", PTR_ERR(parent_egress2_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	parent_ingress_link = bpf_program__attach_cgroup(obj->progs.ingress,
 							 parent_cgroup_fd);
-	if (CHECK(IS_ERR(parent_ingress_link), "parent-ingress-cg-attach",
+	अगर (CHECK(IS_ERR(parent_ingress_link), "parent-ingress-cg-attach",
 		  "err %ld", PTR_ERR(parent_ingress_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	err = connect_send(CHILD_CGROUP);
-	if (CHECK(err, "first-connect-send", "errno %d", errno))
-		goto close_bpf_object;
-	if (CHECK(obj->bss->invocations != 3,
+	अगर (CHECK(err, "first-connect-send", "errno %d", त्रुटि_सं))
+		जाओ बंद_bpf_object;
+	अगर (CHECK(obj->bss->invocations != 3,
 		  "first-invoke", "invocations=%d", obj->bss->invocations))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.cgroup_inode_id = get_cgroup_id(PARENT_CGROUP);
 	key.attach_type = BPF_CGROUP_INET_EGRESS;
-	expected_cgroup_value = (struct cgroup_value) { .egress_pkts = 2 };
-	if (assert_storage(obj->maps.cgroup_storage,
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु .egress_pkts = 2 पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.attach_type = BPF_CGROUP_INET_INGRESS;
-	expected_cgroup_value = (struct cgroup_value) { .ingress_pkts = 1 };
-	if (assert_storage(obj->maps.cgroup_storage,
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु .ingress_pkts = 1 पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.cgroup_inode_id = get_cgroup_id(CHILD_CGROUP);
 	key.attach_type = BPF_CGROUP_INET_EGRESS;
-	if (assert_storage_noexist(obj->maps.cgroup_storage, &key))
-		goto close_bpf_object;
+	अगर (निश्चित_storage_noexist(obj->maps.cgroup_storage, &key))
+		जाओ बंद_bpf_object;
 	key.attach_type = BPF_CGROUP_INET_INGRESS;
-	if (assert_storage_noexist(obj->maps.cgroup_storage, &key))
-		goto close_bpf_object;
+	अगर (निश्चित_storage_noexist(obj->maps.cgroup_storage, &key))
+		जाओ बंद_bpf_object;
 
 	/* Attach to parent and child cgroup, trigger packet from child.
 	 * Assert that there is six additional runs, parent cgroup egresses and
@@ -221,116 +222,116 @@ static void test_isolated(int parent_cgroup_fd, int child_cgroup_fd)
 	 */
 	child_egress1_link = bpf_program__attach_cgroup(obj->progs.egress1,
 							child_cgroup_fd);
-	if (CHECK(IS_ERR(child_egress1_link), "child-egress1-cg-attach",
+	अगर (CHECK(IS_ERR(child_egress1_link), "child-egress1-cg-attach",
 		  "err %ld", PTR_ERR(child_egress1_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	child_egress2_link = bpf_program__attach_cgroup(obj->progs.egress2,
 							child_cgroup_fd);
-	if (CHECK(IS_ERR(child_egress2_link), "child-egress2-cg-attach",
+	अगर (CHECK(IS_ERR(child_egress2_link), "child-egress2-cg-attach",
 		  "err %ld", PTR_ERR(child_egress2_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	child_ingress_link = bpf_program__attach_cgroup(obj->progs.ingress,
 							child_cgroup_fd);
-	if (CHECK(IS_ERR(child_ingress_link), "child-ingress-cg-attach",
+	अगर (CHECK(IS_ERR(child_ingress_link), "child-ingress-cg-attach",
 		  "err %ld", PTR_ERR(child_ingress_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	err = connect_send(CHILD_CGROUP);
-	if (CHECK(err, "second-connect-send", "errno %d", errno))
-		goto close_bpf_object;
-	if (CHECK(obj->bss->invocations != 9,
+	अगर (CHECK(err, "second-connect-send", "errno %d", त्रुटि_सं))
+		जाओ बंद_bpf_object;
+	अगर (CHECK(obj->bss->invocations != 9,
 		  "second-invoke", "invocations=%d", obj->bss->invocations))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.cgroup_inode_id = get_cgroup_id(PARENT_CGROUP);
 	key.attach_type = BPF_CGROUP_INET_EGRESS;
-	expected_cgroup_value = (struct cgroup_value) { .egress_pkts = 4 };
-	if (assert_storage(obj->maps.cgroup_storage,
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु .egress_pkts = 4 पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.attach_type = BPF_CGROUP_INET_INGRESS;
-	expected_cgroup_value = (struct cgroup_value) { .ingress_pkts = 2 };
-	if (assert_storage(obj->maps.cgroup_storage,
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु .ingress_pkts = 2 पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.cgroup_inode_id = get_cgroup_id(CHILD_CGROUP);
 	key.attach_type = BPF_CGROUP_INET_EGRESS;
-	expected_cgroup_value = (struct cgroup_value) { .egress_pkts = 2 };
-	if (assert_storage(obj->maps.cgroup_storage,
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु .egress_pkts = 2 पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key.attach_type = BPF_CGROUP_INET_INGRESS;
-	expected_cgroup_value = (struct cgroup_value) { .ingress_pkts = 1 };
-	if (assert_storage(obj->maps.cgroup_storage,
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु .ingress_pkts = 1 पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 
-close_bpf_object:
-	if (!IS_ERR(parent_egress1_link))
+बंद_bpf_object:
+	अगर (!IS_ERR(parent_egress1_link))
 		bpf_link__destroy(parent_egress1_link);
-	if (!IS_ERR(parent_egress2_link))
+	अगर (!IS_ERR(parent_egress2_link))
 		bpf_link__destroy(parent_egress2_link);
-	if (!IS_ERR(parent_ingress_link))
+	अगर (!IS_ERR(parent_ingress_link))
 		bpf_link__destroy(parent_ingress_link);
-	if (!IS_ERR(child_egress1_link))
+	अगर (!IS_ERR(child_egress1_link))
 		bpf_link__destroy(child_egress1_link);
-	if (!IS_ERR(child_egress2_link))
+	अगर (!IS_ERR(child_egress2_link))
 		bpf_link__destroy(child_egress2_link);
-	if (!IS_ERR(child_ingress_link))
+	अगर (!IS_ERR(child_ingress_link))
 		bpf_link__destroy(child_ingress_link);
 
 	cg_storage_multi_isolated__destroy(obj);
-}
+पूर्ण
 
-static void test_shared(int parent_cgroup_fd, int child_cgroup_fd)
-{
-	struct cg_storage_multi_shared *obj;
-	struct cgroup_value expected_cgroup_value;
+अटल व्योम test_shared(पूर्णांक parent_cgroup_fd, पूर्णांक child_cgroup_fd)
+अणु
+	काष्ठा cg_storage_multi_shared *obj;
+	काष्ठा cgroup_value expected_cgroup_value;
 	__u64 key;
-	struct bpf_link *parent_egress1_link = NULL, *parent_egress2_link = NULL;
-	struct bpf_link *child_egress1_link = NULL, *child_egress2_link = NULL;
-	struct bpf_link *parent_ingress_link = NULL, *child_ingress_link = NULL;
+	काष्ठा bpf_link *parent_egress1_link = शून्य, *parent_egress2_link = शून्य;
+	काष्ठा bpf_link *child_egress1_link = शून्य, *child_egress2_link = शून्य;
+	काष्ठा bpf_link *parent_ingress_link = शून्य, *child_ingress_link = शून्य;
 	bool err;
 
-	obj = cg_storage_multi_shared__open_and_load();
-	if (CHECK(!obj, "skel-load", "errno %d", errno))
-		return;
+	obj = cg_storage_multi_shared__खोलो_and_load();
+	अगर (CHECK(!obj, "skel-load", "errno %d", त्रुटि_सं))
+		वापस;
 
 	/* Attach to parent cgroup, trigger packet from child.
 	 * Assert that there is three runs, two with parent cgroup egress and
 	 * one with parent cgroup ingress.
-	 * Also assert that child cgroup's storage does not exist
+	 * Also निश्चित that child cgroup's storage करोes not exist
 	 */
 	parent_egress1_link = bpf_program__attach_cgroup(obj->progs.egress1,
 							 parent_cgroup_fd);
-	if (CHECK(IS_ERR(parent_egress1_link), "parent-egress1-cg-attach",
+	अगर (CHECK(IS_ERR(parent_egress1_link), "parent-egress1-cg-attach",
 		  "err %ld", PTR_ERR(parent_egress1_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	parent_egress2_link = bpf_program__attach_cgroup(obj->progs.egress2,
 							 parent_cgroup_fd);
-	if (CHECK(IS_ERR(parent_egress2_link), "parent-egress2-cg-attach",
+	अगर (CHECK(IS_ERR(parent_egress2_link), "parent-egress2-cg-attach",
 		  "err %ld", PTR_ERR(parent_egress2_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	parent_ingress_link = bpf_program__attach_cgroup(obj->progs.ingress,
 							 parent_cgroup_fd);
-	if (CHECK(IS_ERR(parent_ingress_link), "parent-ingress-cg-attach",
+	अगर (CHECK(IS_ERR(parent_ingress_link), "parent-ingress-cg-attach",
 		  "err %ld", PTR_ERR(parent_ingress_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	err = connect_send(CHILD_CGROUP);
-	if (CHECK(err, "first-connect-send", "errno %d", errno))
-		goto close_bpf_object;
-	if (CHECK(obj->bss->invocations != 3,
+	अगर (CHECK(err, "first-connect-send", "errno %d", त्रुटि_सं))
+		जाओ बंद_bpf_object;
+	अगर (CHECK(obj->bss->invocations != 3,
 		  "first-invoke", "invocations=%d", obj->bss->invocations))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key = get_cgroup_id(PARENT_CGROUP);
-	expected_cgroup_value = (struct cgroup_value) {
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु
 		.egress_pkts = 2,
 		.ingress_pkts = 1,
-	};
-	if (assert_storage(obj->maps.cgroup_storage,
+	पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key = get_cgroup_id(CHILD_CGROUP);
-	if (assert_storage_noexist(obj->maps.cgroup_storage, &key))
-		goto close_bpf_object;
+	अगर (निश्चित_storage_noexist(obj->maps.cgroup_storage, &key))
+		जाओ बंद_bpf_object;
 
 	/* Attach to parent and child cgroup, trigger packet from child.
 	 * Assert that there is six additional runs, parent cgroup egresses and
@@ -338,80 +339,80 @@ static void test_shared(int parent_cgroup_fd, int child_cgroup_fd)
 	 */
 	child_egress1_link = bpf_program__attach_cgroup(obj->progs.egress1,
 							child_cgroup_fd);
-	if (CHECK(IS_ERR(child_egress1_link), "child-egress1-cg-attach",
+	अगर (CHECK(IS_ERR(child_egress1_link), "child-egress1-cg-attach",
 		  "err %ld", PTR_ERR(child_egress1_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	child_egress2_link = bpf_program__attach_cgroup(obj->progs.egress2,
 							child_cgroup_fd);
-	if (CHECK(IS_ERR(child_egress2_link), "child-egress2-cg-attach",
+	अगर (CHECK(IS_ERR(child_egress2_link), "child-egress2-cg-attach",
 		  "err %ld", PTR_ERR(child_egress2_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	child_ingress_link = bpf_program__attach_cgroup(obj->progs.ingress,
 							child_cgroup_fd);
-	if (CHECK(IS_ERR(child_ingress_link), "child-ingress-cg-attach",
+	अगर (CHECK(IS_ERR(child_ingress_link), "child-ingress-cg-attach",
 		  "err %ld", PTR_ERR(child_ingress_link)))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	err = connect_send(CHILD_CGROUP);
-	if (CHECK(err, "second-connect-send", "errno %d", errno))
-		goto close_bpf_object;
-	if (CHECK(obj->bss->invocations != 9,
+	अगर (CHECK(err, "second-connect-send", "errno %d", त्रुटि_सं))
+		जाओ बंद_bpf_object;
+	अगर (CHECK(obj->bss->invocations != 9,
 		  "second-invoke", "invocations=%d", obj->bss->invocations))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key = get_cgroup_id(PARENT_CGROUP);
-	expected_cgroup_value = (struct cgroup_value) {
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु
 		.egress_pkts = 4,
 		.ingress_pkts = 2,
-	};
-	if (assert_storage(obj->maps.cgroup_storage,
+	पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 	key = get_cgroup_id(CHILD_CGROUP);
-	expected_cgroup_value = (struct cgroup_value) {
+	expected_cgroup_value = (काष्ठा cgroup_value) अणु
 		.egress_pkts = 2,
 		.ingress_pkts = 1,
-	};
-	if (assert_storage(obj->maps.cgroup_storage,
+	पूर्ण;
+	अगर (निश्चित_storage(obj->maps.cgroup_storage,
 			   &key, &expected_cgroup_value))
-		goto close_bpf_object;
+		जाओ बंद_bpf_object;
 
-close_bpf_object:
-	if (!IS_ERR(parent_egress1_link))
+बंद_bpf_object:
+	अगर (!IS_ERR(parent_egress1_link))
 		bpf_link__destroy(parent_egress1_link);
-	if (!IS_ERR(parent_egress2_link))
+	अगर (!IS_ERR(parent_egress2_link))
 		bpf_link__destroy(parent_egress2_link);
-	if (!IS_ERR(parent_ingress_link))
+	अगर (!IS_ERR(parent_ingress_link))
 		bpf_link__destroy(parent_ingress_link);
-	if (!IS_ERR(child_egress1_link))
+	अगर (!IS_ERR(child_egress1_link))
 		bpf_link__destroy(child_egress1_link);
-	if (!IS_ERR(child_egress2_link))
+	अगर (!IS_ERR(child_egress2_link))
 		bpf_link__destroy(child_egress2_link);
-	if (!IS_ERR(child_ingress_link))
+	अगर (!IS_ERR(child_ingress_link))
 		bpf_link__destroy(child_ingress_link);
 
 	cg_storage_multi_shared__destroy(obj);
-}
+पूर्ण
 
-void test_cg_storage_multi(void)
-{
-	int parent_cgroup_fd = -1, child_cgroup_fd = -1;
+व्योम test_cg_storage_multi(व्योम)
+अणु
+	पूर्णांक parent_cgroup_fd = -1, child_cgroup_fd = -1;
 
 	parent_cgroup_fd = test__join_cgroup(PARENT_CGROUP);
-	if (CHECK(parent_cgroup_fd < 0, "cg-create-parent", "errno %d", errno))
-		goto close_cgroup_fd;
+	अगर (CHECK(parent_cgroup_fd < 0, "cg-create-parent", "errno %d", त्रुटि_सं))
+		जाओ बंद_cgroup_fd;
 	child_cgroup_fd = create_and_get_cgroup(CHILD_CGROUP);
-	if (CHECK(child_cgroup_fd < 0, "cg-create-child", "errno %d", errno))
-		goto close_cgroup_fd;
+	अगर (CHECK(child_cgroup_fd < 0, "cg-create-child", "errno %d", त्रुटि_सं))
+		जाओ बंद_cgroup_fd;
 
-	if (test__start_subtest("egress_only"))
+	अगर (test__start_subtest("egress_only"))
 		test_egress_only(parent_cgroup_fd, child_cgroup_fd);
 
-	if (test__start_subtest("isolated"))
+	अगर (test__start_subtest("isolated"))
 		test_isolated(parent_cgroup_fd, child_cgroup_fd);
 
-	if (test__start_subtest("shared"))
+	अगर (test__start_subtest("shared"))
 		test_shared(parent_cgroup_fd, child_cgroup_fd);
 
-close_cgroup_fd:
-	close(child_cgroup_fd);
-	close(parent_cgroup_fd);
-}
+बंद_cgroup_fd:
+	बंद(child_cgroup_fd);
+	बंद(parent_cgroup_fd);
+पूर्ण

@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <subcmd/pager.h>
-#include <string.h>
-#include "config.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include "color.h"
-#include <math.h>
-#include <unistd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <subcmd/pager.h>
+#समावेश <माला.स>
+#समावेश "config.h"
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश "color.h"
+#समावेश <गणित.स>
+#समावेश <unistd.h>
 
-int perf_config_colorbool(const char *var, const char *value, int stdout_is_tty)
-{
-	if (value) {
-		if (!strcasecmp(value, "never"))
-			return 0;
-		if (!strcasecmp(value, "always"))
-			return 1;
-		if (!strcasecmp(value, "auto"))
-			goto auto_color;
-	}
+पूर्णांक perf_config_colorbool(स्थिर अक्षर *var, स्थिर अक्षर *value, पूर्णांक मानक_निकास_is_tty)
+अणु
+	अगर (value) अणु
+		अगर (!strहालcmp(value, "never"))
+			वापस 0;
+		अगर (!strहालcmp(value, "always"))
+			वापस 1;
+		अगर (!strहालcmp(value, "auto"))
+			जाओ स्वतः_color;
+	पूर्ण
 
 	/* Missing or explicit false to turn off colorization */
-	if (!perf_config_bool(var, value))
-		return 0;
+	अगर (!perf_config_bool(var, value))
+		वापस 0;
 
-	/* any normal truth value defaults to 'auto' */
- auto_color:
-	if (stdout_is_tty < 0)
-		stdout_is_tty = isatty(1);
-	if (stdout_is_tty || pager_in_use()) {
-		char *term = getenv("TERM");
-		if (term && strcmp(term, "dumb"))
-			return 1;
-	}
-	return 0;
-}
+	/* any normal truth value शेषs to 'auto' */
+ स्वतः_color:
+	अगर (मानक_निकास_is_tty < 0)
+		मानक_निकास_is_tty = isatty(1);
+	अगर (मानक_निकास_is_tty || pager_in_use()) अणु
+		अक्षर *term = दो_पर्या("TERM");
+		अगर (term && म_भेद(term, "dumb"))
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int perf_color_default_config(const char *var, const char *value,
-			      void *cb __maybe_unused)
-{
-	if (!strcmp(var, "color.ui")) {
-		perf_use_color_default = perf_config_colorbool(var, value, -1);
-		return 0;
-	}
+पूर्णांक perf_color_शेष_config(स्थिर अक्षर *var, स्थिर अक्षर *value,
+			      व्योम *cb __maybe_unused)
+अणु
+	अगर (!म_भेद(var, "color.ui")) अणु
+		perf_use_color_शेष = perf_config_colorbool(var, value, -1);
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

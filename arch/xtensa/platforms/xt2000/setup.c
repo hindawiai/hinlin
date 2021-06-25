@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * arch/xtensa/platforms/xt2000/setup.c
+ * arch/xtensa/platक्रमms/xt2000/setup.c
  *
- * Platform specific functions for the XT2000 board.
+ * Platक्रमm specअगरic functions क्रम the XT2000 board.
  *
  * Authors:	Chris Zankel <chris@zankel.net>
  *		Joe Taylor <joe@tensilica.com>
  *
  * Copyright 2001 - 2004 Tensilica Inc.
  */
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/reboot.h>
-#include <linux/kdev_t.h>
-#include <linux/types.h>
-#include <linux/major.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/stringify.h>
-#include <linux/platform_device.h>
-#include <linux/serial.h>
-#include <linux/serial_8250.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/reboot.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/types.h>
+#समावेश <linux/major.h>
+#समावेश <linux/console.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_8250.h>
 
-#include <asm/processor.h>
-#include <asm/platform.h>
-#include <asm/bootparam.h>
-#include <platform/hardware.h>
-#include <platform/serial.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/platक्रमm.h>
+#समावेश <यंत्र/bootparam.h>
+#समावेश <platक्रमm/hardware.h>
+#समावेश <platक्रमm/serial.h>
 
-/* Assumes s points to an 8-chr string.  No checking for NULL. */
+/* Assumes s poपूर्णांकs to an 8-chr string.  No checking क्रम शून्य. */
 
-static void led_print (int f, char *s)
-{
-	unsigned long* led_addr = (unsigned long*) (XT2000_LED_ADDR + 0xE0) + f;
-	int i;
-	for (i = f; i < 8; i++)
-		if ((*led_addr++ = *s++) == 0)
-		    break;
-}
+अटल व्योम led_prपूर्णांक (पूर्णांक f, अक्षर *s)
+अणु
+	अचिन्हित दीर्घ* led_addr = (अचिन्हित दीर्घ*) (XT2000_LED_ADDR + 0xE0) + f;
+	पूर्णांक i;
+	क्रम (i = f; i < 8; i++)
+		अगर ((*led_addr++ = *s++) == 0)
+		    अवरोध;
+पूर्ण
 
-void platform_halt(void)
-{
-	led_print (0, "  HALT  ");
+व्योम platक्रमm_halt(व्योम)
+अणु
+	led_prपूर्णांक (0, "  HALT  ");
 	local_irq_disable();
-	while (1);
-}
+	जबतक (1);
+पूर्ण
 
-void platform_power_off(void)
-{
-	led_print (0, "POWEROFF");
+व्योम platक्रमm_घातer_off(व्योम)
+अणु
+	led_prपूर्णांक (0, "POWEROFF");
 	local_irq_disable();
-	while (1);
-}
+	जबतक (1);
+पूर्ण
 
-void platform_restart(void)
-{
+व्योम platक्रमm_restart(व्योम)
+अणु
 	/* Flush and reset the mmu, simulate a processor reset, and
 	 * jump to the reset vector. */
 	cpu_reset();
-	/* control never gets here */
-}
+	/* control never माला_लो here */
+पूर्ण
 
-void __init platform_setup(char** cmdline)
-{
-	led_print (0, "LINUX   ");
-}
+व्योम __init platक्रमm_setup(अक्षर** cmdline)
+अणु
+	led_prपूर्णांक (0, "LINUX   ");
+पूर्ण
 
 /* early initialization */
 
-void __init platform_init(bp_tag_t *first)
-{
-}
+व्योम __init platक्रमm_init(bp_tag_t *first)
+अणु
+पूर्ण
 
 /* Heartbeat. Let the LED blink. */
 
-void platform_heartbeat(void)
-{
-	static int i=0, t = 0;
+व्योम platक्रमm_heartbeat(व्योम)
+अणु
+	अटल पूर्णांक i=0, t = 0;
 
-	if (--t < 0)
-	{
+	अगर (--t < 0)
+	अणु
 		t = 59;
-		led_print(7, i ? ".": " ");
+		led_prपूर्णांक(7, i ? ".": " ");
 		i ^= 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-//#define RS_TABLE_SIZE 2
+//#घोषणा RS_TABLE_SIZE 2
 
-#define _SERIAL_PORT(_base,_irq)					\
-{									\
+#घोषणा _SERIAL_PORT(_base,_irq)					\
+अणु									\
 	.mapbase	= (_base),					\
-	.membase	= (void*)(_base),				\
+	.membase	= (व्योम*)(_base),				\
 	.irq		= (_irq),					\
 	.uartclk	= DUART16552_XTAL_FREQ,				\
 	.iotype		= UPIO_MEM,					\
 	.flags		= UPF_BOOT_AUTOCONF,				\
-	.regshift	= 2,						\
-}
+	.regshअगरt	= 2,						\
+पूर्ण
 
-static struct plat_serial8250_port xt2000_serial_data[] = {
-#if XCHAL_HAVE_BE
+अटल काष्ठा plat_serial8250_port xt2000_serial_data[] = अणु
+#अगर XCHAL_HAVE_BE
 	_SERIAL_PORT(DUART16552_1_ADDR + 3, DUART16552_1_INTNUM),
 	_SERIAL_PORT(DUART16552_2_ADDR + 3, DUART16552_2_INTNUM),
-#else
+#अन्यथा
 	_SERIAL_PORT(DUART16552_1_ADDR, DUART16552_1_INTNUM),
 	_SERIAL_PORT(DUART16552_2_ADDR, DUART16552_2_INTNUM),
-#endif
-	{ }
-};
+#पूर्ण_अगर
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_device xt2000_serial8250_device = {
+अटल काष्ठा platक्रमm_device xt2000_serial8250_device = अणु
 	.name		= "serial8250",
 	.id		= PLAT8250_DEV_PLATFORM,
-	.dev		= {
-	    .platform_data = xt2000_serial_data,
-	},
-};
+	.dev		= अणु
+	    .platक्रमm_data = xt2000_serial_data,
+	पूर्ण,
+पूर्ण;
 
-static struct resource xt2000_sonic_res[] = {
-	{
+अटल काष्ठा resource xt2000_sonic_res[] = अणु
+	अणु
 		.start = SONIC83934_ADDR,
 		.end   = SONIC83934_ADDR + 0xff,
 		.flags = IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start = SONIC83934_INTNUM,
 		.end = SONIC83934_INTNUM,
 		.flags = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device xt2000_sonic_device = {
+अटल काष्ठा platक्रमm_device xt2000_sonic_device = अणु
 	.name		= "xtsonic",
 	.num_resources	= ARRAY_SIZE(xt2000_sonic_res),
 	.resource		= xt2000_sonic_res,
-};
+पूर्ण;
 
-static int __init xt2000_setup_devinit(void)
-{
-	platform_device_register(&xt2000_serial8250_device);
-	platform_device_register(&xt2000_sonic_device);
+अटल पूर्णांक __init xt2000_setup_devinit(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&xt2000_serial8250_device);
+	platक्रमm_device_रेजिस्टर(&xt2000_sonic_device);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 device_initcall(xt2000_setup_devinit);

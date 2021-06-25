@@ -1,174 +1,175 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __nosy_dump_h__
-#define __nosy_dump_h__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __nosy_dump_h__
+#घोषणा __nosy_dump_h__
 
-#define array_length(array) (sizeof(array) / sizeof(array[0]))
+#घोषणा array_length(array) (माप(array) / माप(array[0]))
 
-#define ACK_NO_ACK   0x0
-#define ACK_DONE(a)  ((a >> 2) == 0)
-#define ACK_BUSY(a)  ((a >> 2) == 1)
-#define ACK_ERROR(a) ((a >> 2) == 3)
+#घोषणा ACK_NO_ACK   0x0
+#घोषणा ACK_DONE(a)  ((a >> 2) == 0)
+#घोषणा ACK_BUSY(a)  ((a >> 2) == 1)
+#घोषणा ACK_ERROR(a) ((a >> 2) == 3)
 
-#include <stdint.h>
+#समावेश <मानक_निवेशt.h>
 
-struct phy_packet {
-	uint32_t timestamp;
-	union {
-		struct {
-			uint32_t zero:24;
-			uint32_t phy_id:6;
-			uint32_t identifier:2;
-		} common, link_on;
+काष्ठा phy_packet अणु
+	uपूर्णांक32_t बारtamp;
+	जोड़ अणु
+		काष्ठा अणु
+			uपूर्णांक32_t zero:24;
+			uपूर्णांक32_t phy_id:6;
+			uपूर्णांक32_t identअगरier:2;
+		पूर्ण common, link_on;
 
-		struct {
-			uint32_t zero:16;
-			uint32_t gap_count:6;
-			uint32_t set_gap_count:1;
-			uint32_t set_root:1;
-			uint32_t root_id:6;
-			uint32_t identifier:2;
-		} phy_config;
+		काष्ठा अणु
+			uपूर्णांक32_t zero:16;
+			uपूर्णांक32_t gap_count:6;
+			uपूर्णांक32_t set_gap_count:1;
+			uपूर्णांक32_t set_root:1;
+			uपूर्णांक32_t root_id:6;
+			uपूर्णांक32_t identअगरier:2;
+		पूर्ण phy_config;
 
-		struct {
-			uint32_t more_packets:1;
-			uint32_t initiated_reset:1;
-			uint32_t port2:2;
-			uint32_t port1:2;
-			uint32_t port0:2;
-			uint32_t power_class:3;
-			uint32_t contender:1;
-			uint32_t phy_delay:2;
-			uint32_t phy_speed:2;
-			uint32_t gap_count:6;
-			uint32_t link_active:1;
-			uint32_t extended:1;
-			uint32_t phy_id:6;
-			uint32_t identifier:2;
-		} self_id;
+		काष्ठा अणु
+			uपूर्णांक32_t more_packets:1;
+			uपूर्णांक32_t initiated_reset:1;
+			uपूर्णांक32_t port2:2;
+			uपूर्णांक32_t port1:2;
+			uपूर्णांक32_t port0:2;
+			uपूर्णांक32_t घातer_class:3;
+			uपूर्णांक32_t contender:1;
+			uपूर्णांक32_t phy_delay:2;
+			uपूर्णांक32_t phy_speed:2;
+			uपूर्णांक32_t gap_count:6;
+			uपूर्णांक32_t link_active:1;
+			uपूर्णांक32_t extended:1;
+			uपूर्णांक32_t phy_id:6;
+			uपूर्णांक32_t identअगरier:2;
+		पूर्ण self_id;
 
-		struct {
-			uint32_t more_packets:1;
-			uint32_t reserved1:1;
-			uint32_t porth:2;
-			uint32_t portg:2;
-			uint32_t portf:2;
-			uint32_t porte:2;
-			uint32_t portd:2;
-			uint32_t portc:2;
-			uint32_t portb:2;
-			uint32_t porta:2;
-			uint32_t reserved0:2;
-			uint32_t sequence:3;
-			uint32_t extended:1;
-			uint32_t phy_id:6;
-			uint32_t identifier:2;
-		} ext_self_id;
-	};
-	uint32_t inverted;
-	uint32_t ack;
-};
+		काष्ठा अणु
+			uपूर्णांक32_t more_packets:1;
+			uपूर्णांक32_t reserved1:1;
+			uपूर्णांक32_t porth:2;
+			uपूर्णांक32_t portg:2;
+			uपूर्णांक32_t portf:2;
+			uपूर्णांक32_t porte:2;
+			uपूर्णांक32_t portd:2;
+			uपूर्णांक32_t portc:2;
+			uपूर्णांक32_t portb:2;
+			uपूर्णांक32_t porta:2;
+			uपूर्णांक32_t reserved0:2;
+			uपूर्णांक32_t sequence:3;
+			uपूर्णांक32_t extended:1;
+			uपूर्णांक32_t phy_id:6;
+			uपूर्णांक32_t identअगरier:2;
+		पूर्ण ext_self_id;
+	पूर्ण;
+	uपूर्णांक32_t inverted;
+	uपूर्णांक32_t ack;
+पूर्ण;
 
-#define TCODE_PHY_PACKET 0x10
+#घोषणा TCODE_PHY_PACKET 0x10
 
-#define PHY_PACKET_CONFIGURATION 0x00
-#define PHY_PACKET_LINK_ON 0x01
-#define PHY_PACKET_SELF_ID 0x02
+#घोषणा PHY_PACKET_CONFIGURATION 0x00
+#घोषणा PHY_PACKET_LINK_ON 0x01
+#घोषणा PHY_PACKET_SELF_ID 0x02
 
-struct link_packet {
-	uint32_t timestamp;
-	union {
-		struct {
-			uint32_t priority:4;
-			uint32_t tcode:4;
-			uint32_t rt:2;
-			uint32_t tlabel:6;
-			uint32_t destination:16;
+काष्ठा link_packet अणु
+	uपूर्णांक32_t बारtamp;
+	जोड़ अणु
+		काष्ठा अणु
+			uपूर्णांक32_t priority:4;
+			uपूर्णांक32_t tcode:4;
+			uपूर्णांक32_t rt:2;
+			uपूर्णांक32_t tlabel:6;
+			uपूर्णांक32_t destination:16;
 
-			uint32_t offset_high:16;
-			uint32_t source:16;
+			uपूर्णांक32_t offset_high:16;
+			uपूर्णांक32_t source:16;
 
-			uint32_t offset_low;
-		} common;
+			uपूर्णांक32_t offset_low;
+		पूर्ण common;
 
-		struct {
-			uint32_t common[3];
-			uint32_t crc;
-		} read_quadlet;
+		काष्ठा अणु
+			uपूर्णांक32_t common[3];
+			uपूर्णांक32_t crc;
+		पूर्ण पढ़ो_quadlet;
 
-		struct {
-			uint32_t common[3];
-			uint32_t data;
-			uint32_t crc;
-		} read_quadlet_response;
+		काष्ठा अणु
+			uपूर्णांक32_t common[3];
+			uपूर्णांक32_t data;
+			uपूर्णांक32_t crc;
+		पूर्ण पढ़ो_quadlet_response;
 
-		struct {
-			uint32_t common[3];
-			uint32_t extended_tcode:16;
-			uint32_t data_length:16;
-			uint32_t crc;
-		} read_block;
+		काष्ठा अणु
+			uपूर्णांक32_t common[3];
+			uपूर्णांक32_t extended_tcode:16;
+			uपूर्णांक32_t data_length:16;
+			uपूर्णांक32_t crc;
+		पूर्ण पढ़ो_block;
 
-		struct {
-			uint32_t common[3];
-			uint32_t extended_tcode:16;
-			uint32_t data_length:16;
-			uint32_t crc;
-			uint32_t data[0];
+		काष्ठा अणु
+			uपूर्णांक32_t common[3];
+			uपूर्णांक32_t extended_tcode:16;
+			uपूर्णांक32_t data_length:16;
+			uपूर्णांक32_t crc;
+			uपूर्णांक32_t data[0];
 			/* crc and ack follows. */
-		} read_block_response;
+		पूर्ण पढ़ो_block_response;
 
-		struct {
-			uint32_t common[3];
-			uint32_t data;
-			uint32_t crc;
-		} write_quadlet;
+		काष्ठा अणु
+			uपूर्णांक32_t common[3];
+			uपूर्णांक32_t data;
+			uपूर्णांक32_t crc;
+		पूर्ण ग_लिखो_quadlet;
 
-		struct {
-			uint32_t common[3];
-			uint32_t extended_tcode:16;
-			uint32_t data_length:16;
-			uint32_t crc;
-			uint32_t data[0];
+		काष्ठा अणु
+			uपूर्णांक32_t common[3];
+			uपूर्णांक32_t extended_tcode:16;
+			uपूर्णांक32_t data_length:16;
+			uपूर्णांक32_t crc;
+			uपूर्णांक32_t data[0];
 			/* crc and ack follows. */
-		} write_block;
+		पूर्ण ग_लिखो_block;
 
-		struct {
-			uint32_t common[3];
-			uint32_t crc;
-		} write_response;
+		काष्ठा अणु
+			uपूर्णांक32_t common[3];
+			uपूर्णांक32_t crc;
+		पूर्ण ग_लिखो_response;
 
-		struct {
-			uint32_t common[3];
-			uint32_t data;
-			uint32_t crc;
-		} cycle_start;
+		काष्ठा अणु
+			uपूर्णांक32_t common[3];
+			uपूर्णांक32_t data;
+			uपूर्णांक32_t crc;
+		पूर्ण cycle_start;
 
-		struct {
-			uint32_t sy:4;
-			uint32_t tcode:4;
-			uint32_t channel:6;
-			uint32_t tag:2;
-			uint32_t data_length:16;
+		काष्ठा अणु
+			uपूर्णांक32_t sy:4;
+			uपूर्णांक32_t tcode:4;
+			uपूर्णांक32_t channel:6;
+			uपूर्णांक32_t tag:2;
+			uपूर्णांक32_t data_length:16;
 
-			uint32_t crc;
-		} iso_data;
-	};
-};
+			uपूर्णांक32_t crc;
+		पूर्ण iso_data;
+	पूर्ण;
+पूर्ण;
 
-struct subaction {
-	uint32_t ack;
-	size_t length;
-	struct list link;
-	struct link_packet packet;
-};
+काष्ठा subaction अणु
+	uपूर्णांक32_t ack;
+	माप_प्रकार length;
+	काष्ठा list link;
+	काष्ठा link_packet packet;
+पूर्ण;
 
-struct link_transaction {
-	int request_node, response_node, tlabel;
-	struct subaction *request, *response;
-	struct list request_list, response_list;
-	struct list link;
-};
+काष्ठा link_transaction अणु
+	पूर्णांक request_node, response_node, tlabel;
+	काष्ठा subaction *request, *response;
+	काष्ठा list request_list, response_list;
+	काष्ठा list link;
+पूर्ण;
 
-int decode_fcp(struct link_transaction *t);
+पूर्णांक decode_fcp(काष्ठा link_transaction *t);
 
-#endif /* __nosy_dump_h__ */
+#पूर्ण_अगर /* __nosy_dump_h__ */

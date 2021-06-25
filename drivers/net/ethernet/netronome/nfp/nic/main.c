@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017 Netronome Systems, Inc. */
 
-#include "../nfpcore/nfp_cpp.h"
-#include "../nfpcore/nfp_nsp.h"
-#include "../nfp_app.h"
-#include "../nfp_main.h"
+#समावेश "../nfpcore/nfp_cpp.h"
+#समावेश "../nfpcore/nfp_nsp.h"
+#समावेश "../nfp_app.h"
+#समावेश "../nfp_main.h"
 
-static int nfp_nic_init(struct nfp_app *app)
-{
-	struct nfp_pf *pf = app->pf;
+अटल पूर्णांक nfp_nic_init(काष्ठा nfp_app *app)
+अणु
+	काष्ठा nfp_pf *pf = app->pf;
 
-	if (pf->eth_tbl && pf->max_data_vnics != pf->eth_tbl->count) {
+	अगर (pf->eth_tbl && pf->max_data_vnics != pf->eth_tbl->count) अणु
 		nfp_err(pf->cpp, "ETH entries don't match vNICs (%d vs %d)\n",
 			pf->max_data_vnics, pf->eth_tbl->count);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfp_nic_sriov_enable(struct nfp_app *app, int num_vfs)
-{
-	return 0;
-}
+अटल पूर्णांक nfp_nic_sriov_enable(काष्ठा nfp_app *app, पूर्णांक num_vfs)
+अणु
+	वापस 0;
+पूर्ण
 
-static void nfp_nic_sriov_disable(struct nfp_app *app)
-{
-}
+अटल व्योम nfp_nic_sriov_disable(काष्ठा nfp_app *app)
+अणु
+पूर्ण
 
-const struct nfp_app_type app_nic = {
+स्थिर काष्ठा nfp_app_type app_nic = अणु
 	.id		= NFP_APP_CORE_NIC,
 	.name		= "nic",
 
@@ -37,4 +38,4 @@ const struct nfp_app_type app_nic = {
 
 	.sriov_enable	= nfp_nic_sriov_enable,
 	.sriov_disable	= nfp_nic_sriov_disable,
-};
+पूर्ण;

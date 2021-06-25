@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,24 +16,24 @@
  * SOFTWARE.
  */
 
-#ifndef _CQ_ENET_DESC_H_
-#define _CQ_ENET_DESC_H_
+#अगर_अघोषित _CQ_ENET_DESC_H_
+#घोषणा _CQ_ENET_DESC_H_
 
-#include "cq_desc.h"
+#समावेश "cq_desc.h"
 
 /* Ethernet completion queue descriptor: 16B */
-struct cq_enet_wq_desc {
+काष्ठा cq_enet_wq_desc अणु
 	__le16 completed_index;
 	__le16 q_number;
 	u8 reserved[11];
 	u8 type_color;
-};
+पूर्ण;
 
-static inline void cq_enet_wq_desc_dec(struct cq_enet_wq_desc *desc,
+अटल अंतरभूत व्योम cq_enet_wq_desc_dec(काष्ठा cq_enet_wq_desc *desc,
 	u8 *type, u8 *color, u16 *q_number, u16 *completed_index)
-{
-	cq_desc_dec((struct cq_desc *)desc, type,
+अणु
+	cq_desc_dec((काष्ठा cq_desc *)desc, type,
 		color, q_number, completed_index);
-}
+पूर्ण
 
-#endif /* _CQ_ENET_DESC_H_ */
+#पूर्ण_अगर /* _CQ_ENET_DESC_H_ */

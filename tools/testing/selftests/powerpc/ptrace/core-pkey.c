@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Ptrace test for Memory Protection Key registers
+ * Ptrace test क्रम Memory Protection Key रेजिस्टरs
  *
  * Copyright (C) 2015 Anshuman Khandual, IBM Corporation.
  * Copyright (C) 2018 IBM Corporation.
  */
-#include <limits.h>
-#include <linux/kernel.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include "ptrace.h"
-#include "child.h"
+#समावेश <सीमा.स>
+#समावेश <linux/kernel.h>
+#समावेश <sys/mman.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/resource.h>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
+#समावेश "ptrace.h"
+#समावेश "child.h"
 
-#ifndef __NR_pkey_alloc
-#define __NR_pkey_alloc		384
-#endif
+#अगर_अघोषित __NR_pkey_alloc
+#घोषणा __NR_pkey_alloc		384
+#पूर्ण_अगर
 
-#ifndef __NR_pkey_free
-#define __NR_pkey_free		385
-#endif
+#अगर_अघोषित __NR_pkey_मुक्त
+#घोषणा __NR_pkey_मुक्त		385
+#पूर्ण_अगर
 
-#ifndef NT_PPC_PKEY
-#define NT_PPC_PKEY		0x110
-#endif
+#अगर_अघोषित NT_PPC_PKEY
+#घोषणा NT_PPC_PKEY		0x110
+#पूर्ण_अगर
 
-#ifndef PKEY_DISABLE_EXECUTE
-#define PKEY_DISABLE_EXECUTE	0x4
-#endif
+#अगर_अघोषित PKEY_DISABLE_EXECUTE
+#घोषणा PKEY_DISABLE_EXECUTE	0x4
+#पूर्ण_अगर
 
-#define AMR_BITS_PER_PKEY 2
-#define PKEY_REG_BITS (sizeof(u64) * 8)
-#define pkeyshift(pkey) (PKEY_REG_BITS - ((pkey + 1) * AMR_BITS_PER_PKEY))
+#घोषणा AMR_BITS_PER_PKEY 2
+#घोषणा PKEY_REG_BITS (माप(u64) * 8)
+#घोषणा pkeyshअगरt(pkey) (PKEY_REG_BITS - ((pkey + 1) * AMR_BITS_PER_PKEY))
 
-#define CORE_FILE_LIMIT	(5 * 1024 * 1024)	/* 5 MB should be enough */
+#घोषणा CORE_खाता_LIMIT	(5 * 1024 * 1024)	/* 5 MB should be enough */
 
-static const char core_pattern_file[] = "/proc/sys/kernel/core_pattern";
+अटल स्थिर अक्षर core_pattern_file[] = "/proc/sys/kernel/core_pattern";
 
-static const char user_write[] = "[User Write (Running)]";
-static const char core_read_running[] = "[Core Read (Running)]";
+अटल स्थिर अक्षर user_ग_लिखो[] = "[User Write (Running)]";
+अटल स्थिर अक्षर core_पढ़ो_running[] = "[Core Read (Running)]";
 
-/* Information shared between the parent and the child. */
-struct shared_info {
-	struct child_sync child_sync;
+/* Inक्रमmation shared between the parent and the child. */
+काष्ठा shared_info अणु
+	काष्ठा child_sync child_sync;
 
-	/* AMR value the parent expects to read in the core file. */
-	unsigned long amr;
+	/* AMR value the parent expects to पढ़ो in the core file. */
+	अचिन्हित दीर्घ amr;
 
-	/* IAMR value the parent expects to read in the core file. */
-	unsigned long iamr;
+	/* IAMR value the parent expects to पढ़ो in the core file. */
+	अचिन्हित दीर्घ iamr;
 
-	/* UAMOR value the parent expects to read in the core file. */
-	unsigned long uamor;
+	/* UAMOR value the parent expects to पढ़ो in the core file. */
+	अचिन्हित दीर्घ uamor;
 
 	/* When the child crashed. */
-	time_t core_time;
-};
+	समय_प्रकार core_समय;
+पूर्ण;
 
-static int sys_pkey_alloc(unsigned long flags, unsigned long init_access_rights)
-{
-	return syscall(__NR_pkey_alloc, flags, init_access_rights);
-}
+अटल पूर्णांक sys_pkey_alloc(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ init_access_rights)
+अणु
+	वापस syscall(__NR_pkey_alloc, flags, init_access_rights);
+पूर्ण
 
-static int sys_pkey_free(int pkey)
-{
-	return syscall(__NR_pkey_free, pkey);
-}
+अटल पूर्णांक sys_pkey_मुक्त(पूर्णांक pkey)
+अणु
+	वापस syscall(__NR_pkey_मुक्त, pkey);
+पूर्ण
 
-static int increase_core_file_limit(void)
-{
-	struct rlimit rlim;
-	int ret;
+अटल पूर्णांक increase_core_file_limit(व्योम)
+अणु
+	काष्ठा rlimit rlim;
+	पूर्णांक ret;
 
 	ret = getrlimit(RLIMIT_CORE, &rlim);
 	FAIL_IF(ret);
 
-	if (rlim.rlim_cur != RLIM_INFINITY && rlim.rlim_cur < CORE_FILE_LIMIT) {
-		rlim.rlim_cur = CORE_FILE_LIMIT;
+	अगर (rlim.rlim_cur != RLIM_अनन्त && rlim.rlim_cur < CORE_खाता_LIMIT) अणु
+		rlim.rlim_cur = CORE_खाता_LIMIT;
 
-		if (rlim.rlim_max != RLIM_INFINITY &&
-		    rlim.rlim_max < CORE_FILE_LIMIT)
-			rlim.rlim_max = CORE_FILE_LIMIT;
+		अगर (rlim.rlim_max != RLIM_अनन्त &&
+		    rlim.rlim_max < CORE_खाता_LIMIT)
+			rlim.rlim_max = CORE_खाता_LIMIT;
 
 		ret = setrlimit(RLIMIT_CORE, &rlim);
 		FAIL_IF(ret);
-	}
+	पूर्ण
 
 	ret = getrlimit(RLIMIT_FSIZE, &rlim);
 	FAIL_IF(ret);
 
-	if (rlim.rlim_cur != RLIM_INFINITY && rlim.rlim_cur < CORE_FILE_LIMIT) {
-		rlim.rlim_cur = CORE_FILE_LIMIT;
+	अगर (rlim.rlim_cur != RLIM_अनन्त && rlim.rlim_cur < CORE_खाता_LIMIT) अणु
+		rlim.rlim_cur = CORE_खाता_LIMIT;
 
-		if (rlim.rlim_max != RLIM_INFINITY &&
-		    rlim.rlim_max < CORE_FILE_LIMIT)
-			rlim.rlim_max = CORE_FILE_LIMIT;
+		अगर (rlim.rlim_max != RLIM_अनन्त &&
+		    rlim.rlim_max < CORE_खाता_LIMIT)
+			rlim.rlim_max = CORE_खाता_LIMIT;
 
 		ret = setrlimit(RLIMIT_FSIZE, &rlim);
 		FAIL_IF(ret);
-	}
+	पूर्ण
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
-static int child(struct shared_info *info)
-{
+अटल पूर्णांक child(काष्ठा shared_info *info)
+अणु
 	bool disable_execute = true;
-	int pkey1, pkey2, pkey3;
-	int *ptr, ret;
+	पूर्णांक pkey1, pkey2, pkey3;
+	पूर्णांक *ptr, ret;
 
-	/* Wait until parent fills out the initial register values. */
-	ret = wait_parent(&info->child_sync);
-	if (ret)
-		return ret;
+	/* Wait until parent fills out the initial रेजिस्टर values. */
+	ret = रुको_parent(&info->child_sync);
+	अगर (ret)
+		वापस ret;
 
 	ret = increase_core_file_limit();
 	FAIL_IF(ret);
 
 	/* Get some pkeys so that we can change their bits in the AMR. */
 	pkey1 = sys_pkey_alloc(0, PKEY_DISABLE_EXECUTE);
-	if (pkey1 < 0) {
+	अगर (pkey1 < 0) अणु
 		pkey1 = sys_pkey_alloc(0, 0);
 		FAIL_IF(pkey1 < 0);
 
 		disable_execute = false;
-	}
+	पूर्ण
 
 	pkey2 = sys_pkey_alloc(0, 0);
 	FAIL_IF(pkey2 < 0);
@@ -136,29 +137,29 @@ static int child(struct shared_info *info)
 	pkey3 = sys_pkey_alloc(0, 0);
 	FAIL_IF(pkey3 < 0);
 
-	info->amr |= 3ul << pkeyshift(pkey1) | 2ul << pkeyshift(pkey2);
+	info->amr |= 3ul << pkeyshअगरt(pkey1) | 2ul << pkeyshअगरt(pkey2);
 
-	if (disable_execute)
-		info->iamr |= 1ul << pkeyshift(pkey1);
-	else
-		info->iamr &= ~(1ul << pkeyshift(pkey1));
+	अगर (disable_execute)
+		info->iamr |= 1ul << pkeyshअगरt(pkey1);
+	अन्यथा
+		info->iamr &= ~(1ul << pkeyshअगरt(pkey1));
 
-	info->iamr &= ~(1ul << pkeyshift(pkey2) | 1ul << pkeyshift(pkey3));
+	info->iamr &= ~(1ul << pkeyshअगरt(pkey2) | 1ul << pkeyshअगरt(pkey3));
 
-	info->uamor |= 3ul << pkeyshift(pkey1) | 3ul << pkeyshift(pkey2);
+	info->uamor |= 3ul << pkeyshअगरt(pkey1) | 3ul << pkeyshअगरt(pkey2);
 
-	printf("%-30s AMR: %016lx pkey1: %d pkey2: %d pkey3: %d\n",
-	       user_write, info->amr, pkey1, pkey2, pkey3);
+	म_लिखो("%-30s AMR: %016lx pkey1: %d pkey2: %d pkey3: %d\n",
+	       user_ग_लिखो, info->amr, pkey1, pkey2, pkey3);
 
 	set_amr(info->amr);
 
 	/*
 	 * We won't use pkey3. This tests whether the kernel restores the UAMOR
-	 * permissions after a key is freed.
+	 * permissions after a key is मुक्तd.
 	 */
-	sys_pkey_free(pkey3);
+	sys_pkey_मुक्त(pkey3);
 
-	info->core_time = time(NULL);
+	info->core_समय = समय(शून्य);
 
 	/* Crash. */
 	ptr = 0;
@@ -167,42 +168,42 @@ static int child(struct shared_info *info)
 	/* Shouldn't get here. */
 	FAIL_IF(true);
 
-	return TEST_FAIL;
-}
+	वापस TEST_FAIL;
+पूर्ण
 
-/* Return file size if filename exists and pass sanity check, or zero if not. */
-static off_t try_core_file(const char *filename, struct shared_info *info,
+/* Return file size अगर filename exists and pass sanity check, or zero अगर not. */
+अटल off_t try_core_file(स्थिर अक्षर *filename, काष्ठा shared_info *info,
 			   pid_t pid)
-{
-	struct stat buf;
-	int ret;
+अणु
+	काष्ठा stat buf;
+	पूर्णांक ret;
 
 	ret = stat(filename, &buf);
-	if (ret == -1)
-		return TEST_FAIL;
+	अगर (ret == -1)
+		वापस TEST_FAIL;
 
 	/* Make sure we're not using a stale core file. */
-	return buf.st_mtime >= info->core_time ? buf.st_size : TEST_FAIL;
-}
+	वापस buf.st_mसमय >= info->core_समय ? buf.st_size : TEST_FAIL;
+पूर्ण
 
-static Elf64_Nhdr *next_note(Elf64_Nhdr *nhdr)
-{
-	return (void *) nhdr + sizeof(*nhdr) +
+अटल Elf64_Nhdr *next_note(Elf64_Nhdr *nhdr)
+अणु
+	वापस (व्योम *) nhdr + माप(*nhdr) +
 		__ALIGN_KERNEL(nhdr->n_namesz, 4) +
 		__ALIGN_KERNEL(nhdr->n_descsz, 4);
-}
+पूर्ण
 
-static int check_core_file(struct shared_info *info, Elf64_Ehdr *ehdr,
+अटल पूर्णांक check_core_file(काष्ठा shared_info *info, Elf64_Ehdr *ehdr,
 			   off_t core_size)
-{
-	unsigned long *regs;
+अणु
+	अचिन्हित दीर्घ *regs;
 	Elf64_Phdr *phdr;
 	Elf64_Nhdr *nhdr;
-	size_t phdr_size;
-	void *p = ehdr, *note;
-	int ret;
+	माप_प्रकार phdr_size;
+	व्योम *p = ehdr, *note;
+	पूर्णांक ret;
 
-	ret = memcmp(ehdr->e_ident, ELFMAG, SELFMAG);
+	ret = स_भेद(ehdr->e_ident, ELFMAG, SELFMAG);
 	FAIL_IF(ret);
 
 	FAIL_IF(ehdr->e_type != ET_CORE);
@@ -213,59 +214,59 @@ static int check_core_file(struct shared_info *info, Elf64_Ehdr *ehdr,
 	 * e_phnum is at most 65535 so calculating the size of the
 	 * program header cannot overflow.
 	 */
-	phdr_size = sizeof(*phdr) * ehdr->e_phnum;
+	phdr_size = माप(*phdr) * ehdr->e_phnum;
 
 	/* Sanity check the program header table location. */
 	FAIL_IF(ehdr->e_phoff + phdr_size < ehdr->e_phoff);
 	FAIL_IF(ehdr->e_phoff + phdr_size > core_size);
 
 	/* Find the PT_NOTE segment. */
-	for (phdr = p + ehdr->e_phoff;
-	     (void *) phdr < p + ehdr->e_phoff + phdr_size;
+	क्रम (phdr = p + ehdr->e_phoff;
+	     (व्योम *) phdr < p + ehdr->e_phoff + phdr_size;
 	     phdr += ehdr->e_phentsize)
-		if (phdr->p_type == PT_NOTE)
-			break;
+		अगर (phdr->p_type == PT_NOTE)
+			अवरोध;
 
-	FAIL_IF((void *) phdr >= p + ehdr->e_phoff + phdr_size);
+	FAIL_IF((व्योम *) phdr >= p + ehdr->e_phoff + phdr_size);
 
 	/* Find the NT_PPC_PKEY note. */
-	for (nhdr = p + phdr->p_offset;
-	     (void *) nhdr < p + phdr->p_offset + phdr->p_filesz;
+	क्रम (nhdr = p + phdr->p_offset;
+	     (व्योम *) nhdr < p + phdr->p_offset + phdr->p_filesz;
 	     nhdr = next_note(nhdr))
-		if (nhdr->n_type == NT_PPC_PKEY)
-			break;
+		अगर (nhdr->n_type == NT_PPC_PKEY)
+			अवरोध;
 
-	FAIL_IF((void *) nhdr >= p + phdr->p_offset + phdr->p_filesz);
+	FAIL_IF((व्योम *) nhdr >= p + phdr->p_offset + phdr->p_filesz);
 	FAIL_IF(nhdr->n_descsz == 0);
 
 	p = nhdr;
-	note = p + sizeof(*nhdr) + __ALIGN_KERNEL(nhdr->n_namesz, 4);
+	note = p + माप(*nhdr) + __ALIGN_KERNEL(nhdr->n_namesz, 4);
 
-	regs = (unsigned long *) note;
+	regs = (अचिन्हित दीर्घ *) note;
 
-	printf("%-30s AMR: %016lx IAMR: %016lx UAMOR: %016lx\n",
-	       core_read_running, regs[0], regs[1], regs[2]);
+	म_लिखो("%-30s AMR: %016lx IAMR: %016lx UAMOR: %016lx\n",
+	       core_पढ़ो_running, regs[0], regs[1], regs[2]);
 
 	FAIL_IF(regs[0] != info->amr);
 	FAIL_IF(regs[1] != info->iamr);
 	FAIL_IF(regs[2] != info->uamor);
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
-static int parent(struct shared_info *info, pid_t pid)
-{
-	char *filenames, *filename[3];
-	int fd, i, ret, status;
-	unsigned long regs[3];
+अटल पूर्णांक parent(काष्ठा shared_info *info, pid_t pid)
+अणु
+	अक्षर *filenames, *filename[3];
+	पूर्णांक fd, i, ret, status;
+	अचिन्हित दीर्घ regs[3];
 	off_t core_size;
-	void *core;
+	व्योम *core;
 
 	/*
-	 * Get the initial values for AMR, IAMR and UAMOR and communicate them
+	 * Get the initial values क्रम AMR, IAMR and UAMOR and communicate them
 	 * to the child.
 	 */
-	ret = ptrace_read_regs(pid, NT_PPC_PKEY, regs, 3);
+	ret = ptrace_पढ़ो_regs(pid, NT_PPC_PKEY, regs, 3);
 	PARENT_SKIP_IF_UNSUPPORTED(ret, &info->child_sync);
 	PARENT_FAIL_IF(ret, &info->child_sync);
 
@@ -277,186 +278,186 @@ static int parent(struct shared_info *info, pid_t pid)
 	ret = prod_child(&info->child_sync);
 	PARENT_FAIL_IF(ret, &info->child_sync);
 
-	ret = wait(&status);
-	if (ret != pid) {
-		printf("Child's exit status not captured\n");
-		return TEST_FAIL;
-	} else if (!WIFSIGNALED(status) || !WCOREDUMP(status)) {
-		printf("Child didn't dump core\n");
-		return TEST_FAIL;
-	}
+	ret = रुको(&status);
+	अगर (ret != pid) अणु
+		म_लिखो("Child's exit status not captured\n");
+		वापस TEST_FAIL;
+	पूर्ण अन्यथा अगर (!WIFSIGNALED(status) || !WCOREDUMP(status)) अणु
+		म_लिखो("Child didn't dump core\n");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	/* Construct array of core file names to try. */
+	/* Conकाष्ठा array of core file names to try. */
 
-	filename[0] = filenames = malloc(PATH_MAX);
-	if (!filenames) {
-		perror("Error allocating memory");
-		return TEST_FAIL;
-	}
+	filename[0] = filenames = दो_स्मृति(PATH_MAX);
+	अगर (!filenames) अणु
+		लिखो_त्रुटि("Error allocating memory");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	ret = snprintf(filename[0], PATH_MAX, "core-pkey.%d", pid);
-	if (ret < 0 || ret >= PATH_MAX) {
+	ret = snम_लिखो(filename[0], PATH_MAX, "core-pkey.%d", pid);
+	अगर (ret < 0 || ret >= PATH_MAX) अणु
 		ret = TEST_FAIL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	filename[1] = filename[0] + ret + 1;
-	ret = snprintf(filename[1], PATH_MAX - ret - 1, "core.%d", pid);
-	if (ret < 0 || ret >= PATH_MAX - ret - 1) {
+	ret = snम_लिखो(filename[1], PATH_MAX - ret - 1, "core.%d", pid);
+	अगर (ret < 0 || ret >= PATH_MAX - ret - 1) अणु
 		ret = TEST_FAIL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	filename[2] = "core";
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		core_size = try_core_file(filename[i], info, pid);
-		if (core_size != TEST_FAIL)
-			break;
-	}
+		अगर (core_size != TEST_FAIL)
+			अवरोध;
+	पूर्ण
 
-	if (i == 3) {
-		printf("Couldn't find core file\n");
+	अगर (i == 3) अणु
+		म_लिखो("Couldn't find core file\n");
 		ret = TEST_FAIL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	fd = open(filename[i], O_RDONLY);
-	if (fd == -1) {
-		perror("Error opening core file");
+	fd = खोलो(filename[i], O_RDONLY);
+	अगर (fd == -1) अणु
+		लिखो_त्रुटि("Error opening core file");
 		ret = TEST_FAIL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	core = mmap(NULL, core_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (core == (void *) -1) {
-		perror("Error mmaping core file");
+	core = mmap(शून्य, core_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	अगर (core == (व्योम *) -1) अणु
+		लिखो_त्रुटि("Error mmaping core file");
 		ret = TEST_FAIL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = check_core_file(info, core, core_size);
 
 	munmap(core, core_size);
-	close(fd);
+	बंद(fd);
 	unlink(filename[i]);
 
  out:
-	free(filenames);
+	मुक्त(filenames);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int write_core_pattern(const char *core_pattern)
-{
-	size_t len = strlen(core_pattern), ret;
-	FILE *f;
+अटल पूर्णांक ग_लिखो_core_pattern(स्थिर अक्षर *core_pattern)
+अणु
+	माप_प्रकार len = म_माप(core_pattern), ret;
+	खाता *f;
 
-	f = fopen(core_pattern_file, "w");
+	f = ख_खोलो(core_pattern_file, "w");
 	SKIP_IF_MSG(!f, "Try with root privileges");
 
-	ret = fwrite(core_pattern, 1, len, f);
-	fclose(f);
-	if (ret != len) {
-		perror("Error writing to core_pattern file");
-		return TEST_FAIL;
-	}
+	ret = ख_डालो(core_pattern, 1, len, f);
+	ख_बंद(f);
+	अगर (ret != len) अणु
+		लिखो_त्रुटि("Error writing to core_pattern file");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
-static int setup_core_pattern(char **core_pattern_, bool *changed_)
-{
-	FILE *f;
-	char *core_pattern;
-	int ret;
+अटल पूर्णांक setup_core_pattern(अक्षर **core_pattern_, bool *changed_)
+अणु
+	खाता *f;
+	अक्षर *core_pattern;
+	पूर्णांक ret;
 
-	core_pattern = malloc(PATH_MAX);
-	if (!core_pattern) {
-		perror("Error allocating memory");
-		return TEST_FAIL;
-	}
+	core_pattern = दो_स्मृति(PATH_MAX);
+	अगर (!core_pattern) अणु
+		लिखो_त्रुटि("Error allocating memory");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	f = fopen(core_pattern_file, "r");
-	if (!f) {
-		perror("Error opening core_pattern file");
+	f = ख_खोलो(core_pattern_file, "r");
+	अगर (!f) अणु
+		लिखो_त्रुटि("Error opening core_pattern file");
 		ret = TEST_FAIL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = fread(core_pattern, 1, PATH_MAX, f);
-	fclose(f);
-	if (!ret) {
-		perror("Error reading core_pattern file");
+	ret = ख_पढ़ो(core_pattern, 1, PATH_MAX, f);
+	ख_बंद(f);
+	अगर (!ret) अणु
+		लिखो_त्रुटि("Error reading core_pattern file");
 		ret = TEST_FAIL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Check whether we can predict the name of the core file. */
-	if (!strcmp(core_pattern, "core") || !strcmp(core_pattern, "core.%p"))
+	अगर (!म_भेद(core_pattern, "core") || !म_भेद(core_pattern, "core.%p"))
 		*changed_ = false;
-	else {
-		ret = write_core_pattern("core-pkey.%p");
-		if (ret)
-			goto out;
+	अन्यथा अणु
+		ret = ग_लिखो_core_pattern("core-pkey.%p");
+		अगर (ret)
+			जाओ out;
 
 		*changed_ = true;
-	}
+	पूर्ण
 
 	*core_pattern_ = core_pattern;
 	ret = TEST_PASS;
 
  out:
-	if (ret)
-		free(core_pattern);
+	अगर (ret)
+		मुक्त(core_pattern);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int core_pkey(void)
-{
-	char *core_pattern;
+अटल पूर्णांक core_pkey(व्योम)
+अणु
+	अक्षर *core_pattern;
 	bool changed_core_pattern;
-	struct shared_info *info;
-	int shm_id;
-	int ret;
+	काष्ठा shared_info *info;
+	पूर्णांक shm_id;
+	पूर्णांक ret;
 	pid_t pid;
 
 	ret = setup_core_pattern(&core_pattern, &changed_core_pattern);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	shm_id = shmget(IPC_PRIVATE, sizeof(*info), 0777 | IPC_CREAT);
-	info = shmat(shm_id, NULL, 0);
+	shm_id = shmget(IPC_PRIVATE, माप(*info), 0777 | IPC_CREAT);
+	info = shmat(shm_id, शून्य, 0);
 
 	ret = init_child_sync(&info->child_sync);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	pid = fork();
-	if (pid < 0) {
-		perror("fork() failed");
+	pid = विभाजन();
+	अगर (pid < 0) अणु
+		लिखो_त्रुटि("fork() failed");
 		ret = TEST_FAIL;
-	} else if (pid == 0)
+	पूर्ण अन्यथा अगर (pid == 0)
 		ret = child(info);
-	else
+	अन्यथा
 		ret = parent(info, pid);
 
 	shmdt(info);
 
-	if (pid) {
+	अगर (pid) अणु
 		destroy_child_sync(&info->child_sync);
-		shmctl(shm_id, IPC_RMID, NULL);
+		shmctl(shm_id, IPC_RMID, शून्य);
 
-		if (changed_core_pattern)
-			write_core_pattern(core_pattern);
-	}
+		अगर (changed_core_pattern)
+			ग_लिखो_core_pattern(core_pattern);
+	पूर्ण
 
-	free(core_pattern);
+	मुक्त(core_pattern);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	return test_harness(core_pkey, "core_pkey");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	वापस test_harness(core_pkey, "core_pkey");
+पूर्ण

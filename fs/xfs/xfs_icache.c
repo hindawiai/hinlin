@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_sb.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_trans.h"
-#include "xfs_trans_priv.h"
-#include "xfs_inode_item.h"
-#include "xfs_quota.h"
-#include "xfs_trace.h"
-#include "xfs_icache.h"
-#include "xfs_bmap_util.h"
-#include "xfs_dquot_item.h"
-#include "xfs_dquot.h"
-#include "xfs_reflink.h"
-#include "xfs_ialloc.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_sb.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_trans_priv.h"
+#समावेश "xfs_inode_item.h"
+#समावेश "xfs_quota.h"
+#समावेश "xfs_trace.h"
+#समावेश "xfs_icache.h"
+#समावेश "xfs_bmap_util.h"
+#समावेश "xfs_dquot_item.h"
+#समावेश "xfs_dquot.h"
+#समावेश "xfs_reflink.h"
+#समावेश "xfs_ialloc.h"
 
-#include <linux/iversion.h>
+#समावेश <linux/iversion.h>
 
 /*
  * Allocate and initialise an xfs_inode.
  */
-struct xfs_inode *
+काष्ठा xfs_inode *
 xfs_inode_alloc(
-	struct xfs_mount	*mp,
+	काष्ठा xfs_mount	*mp,
 	xfs_ino_t		ino)
-{
-	struct xfs_inode	*ip;
+अणु
+	काष्ठा xfs_inode	*ip;
 
 	/*
 	 * XXX: If this didn't occur in transactions, we could drop GFP_NOFAIL
-	 * and return NULL here on ENOMEM.
+	 * and वापस शून्य here on ENOMEM.
 	 */
 	ip = kmem_cache_alloc(xfs_inode_zone, GFP_KERNEL | __GFP_NOFAIL);
 
-	if (inode_init_always(mp->m_super, VFS_I(ip))) {
-		kmem_cache_free(xfs_inode_zone, ip);
-		return NULL;
-	}
+	अगर (inode_init_always(mp->m_super, VFS_I(ip))) अणु
+		kmem_cache_मुक्त(xfs_inode_zone, ip);
+		वापस शून्य;
+	पूर्ण
 
-	/* VFS doesn't initialise i_mode! */
+	/* VFS करोesn't initialise i_mode! */
 	VFS_I(ip)->i_mode = 0;
 
 	XFS_STATS_INC(mp, vn_active);
-	ASSERT(atomic_read(&ip->i_pincount) == 0);
+	ASSERT(atomic_पढ़ो(&ip->i_pincount) == 0);
 	ASSERT(ip->i_ino == 0);
 
 	/* initialise the xfs inode */
 	ip->i_ino = ino;
 	ip->i_mount = mp;
-	memset(&ip->i_imap, 0, sizeof(struct xfs_imap));
-	ip->i_afp = NULL;
-	ip->i_cowfp = NULL;
-	memset(&ip->i_df, 0, sizeof(ip->i_df));
+	स_रखो(&ip->i_imap, 0, माप(काष्ठा xfs_imap));
+	ip->i_afp = शून्य;
+	ip->i_cowfp = शून्य;
+	स_रखो(&ip->i_df, 0, माप(ip->i_df));
 	ip->i_flags = 0;
 	ip->i_delayed_blks = 0;
-	ip->i_diflags2 = mp->m_ino_geo.new_diflags2;
+	ip->i_dअगरlags2 = mp->m_ino_geo.new_dअगरlags2;
 	ip->i_nblocks = 0;
-	ip->i_forkoff = 0;
+	ip->i_विभाजनoff = 0;
 	ip->i_sick = 0;
 	ip->i_checked = 0;
 	INIT_WORK(&ip->i_ioend_work, xfs_end_io);
 	INIT_LIST_HEAD(&ip->i_ioend_list);
 	spin_lock_init(&ip->i_ioend_lock);
 
-	return ip;
-}
+	वापस ip;
+पूर्ण
 
-STATIC void
-xfs_inode_free_callback(
-	struct rcu_head		*head)
-{
-	struct inode		*inode = container_of(head, struct inode, i_rcu);
-	struct xfs_inode	*ip = XFS_I(inode);
+STATIC व्योम
+xfs_inode_मुक्त_callback(
+	काष्ठा rcu_head		*head)
+अणु
+	काष्ठा inode		*inode = container_of(head, काष्ठा inode, i_rcu);
+	काष्ठा xfs_inode	*ip = XFS_I(inode);
 
-	switch (VFS_I(ip)->i_mode & S_IFMT) {
-	case S_IFREG:
-	case S_IFDIR:
-	case S_IFLNK:
-		xfs_idestroy_fork(&ip->i_df);
-		break;
-	}
+	चयन (VFS_I(ip)->i_mode & S_IFMT) अणु
+	हाल S_IFREG:
+	हाल S_IFसूची:
+	हाल S_IFLNK:
+		xfs_idestroy_विभाजन(&ip->i_df);
+		अवरोध;
+	पूर्ण
 
-	if (ip->i_afp) {
-		xfs_idestroy_fork(ip->i_afp);
-		kmem_cache_free(xfs_ifork_zone, ip->i_afp);
-	}
-	if (ip->i_cowfp) {
-		xfs_idestroy_fork(ip->i_cowfp);
-		kmem_cache_free(xfs_ifork_zone, ip->i_cowfp);
-	}
-	if (ip->i_itemp) {
+	अगर (ip->i_afp) अणु
+		xfs_idestroy_विभाजन(ip->i_afp);
+		kmem_cache_मुक्त(xfs_अगरork_zone, ip->i_afp);
+	पूर्ण
+	अगर (ip->i_cowfp) अणु
+		xfs_idestroy_विभाजन(ip->i_cowfp);
+		kmem_cache_मुक्त(xfs_अगरork_zone, ip->i_cowfp);
+	पूर्ण
+	अगर (ip->i_itemp) अणु
 		ASSERT(!test_bit(XFS_LI_IN_AIL,
 				 &ip->i_itemp->ili_item.li_flags));
 		xfs_inode_item_destroy(ip);
-		ip->i_itemp = NULL;
-	}
+		ip->i_itemp = शून्य;
+	पूर्ण
 
-	kmem_cache_free(xfs_inode_zone, ip);
-}
+	kmem_cache_मुक्त(xfs_inode_zone, ip);
+पूर्ण
 
-static void
-__xfs_inode_free(
-	struct xfs_inode	*ip)
-{
-	/* asserts to verify all state is correct here */
-	ASSERT(atomic_read(&ip->i_pincount) == 0);
+अटल व्योम
+__xfs_inode_मुक्त(
+	काष्ठा xfs_inode	*ip)
+अणु
+	/* निश्चितs to verअगरy all state is correct here */
+	ASSERT(atomic_पढ़ो(&ip->i_pincount) == 0);
 	ASSERT(!ip->i_itemp || list_empty(&ip->i_itemp->ili_item.li_bio_list));
 	XFS_STATS_DEC(ip->i_mount, vn_active);
 
-	call_rcu(&VFS_I(ip)->i_rcu, xfs_inode_free_callback);
-}
+	call_rcu(&VFS_I(ip)->i_rcu, xfs_inode_मुक्त_callback);
+पूर्ण
 
-void
-xfs_inode_free(
-	struct xfs_inode	*ip)
-{
-	ASSERT(!xfs_iflags_test(ip, XFS_IFLUSHING));
+व्योम
+xfs_inode_मुक्त(
+	काष्ठा xfs_inode	*ip)
+अणु
+	ASSERT(!xfs_अगरlags_test(ip, XFS_IFLUSHING));
 
 	/*
-	 * Because we use RCU freeing we need to ensure the inode always
+	 * Because we use RCU मुक्तing we need to ensure the inode always
 	 * appears to be reclaimed with an invalid inode number when in the
-	 * free state. The ip->i_flags_lock provides the barrier against lookup
+	 * मुक्त state. The ip->i_flags_lock provides the barrier against lookup
 	 * races.
 	 */
 	spin_lock(&ip->i_flags_lock);
@@ -137,37 +138,37 @@ xfs_inode_free(
 	ip->i_ino = 0;
 	spin_unlock(&ip->i_flags_lock);
 
-	__xfs_inode_free(ip);
-}
+	__xfs_inode_मुक्त(ip);
+पूर्ण
 
 /*
- * Queue background inode reclaim work if there are reclaimable inodes and there
- * isn't reclaim work already scheduled or in progress.
+ * Queue background inode reclaim work अगर there are reclaimable inodes and there
+ * isn't reclaim work alपढ़ोy scheduled or in progress.
  */
-static void
+अटल व्योम
 xfs_reclaim_work_queue(
-	struct xfs_mount        *mp)
-{
+	काष्ठा xfs_mount        *mp)
+अणु
 
-	rcu_read_lock();
-	if (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_RECLAIM_TAG)) {
+	rcu_पढ़ो_lock();
+	अगर (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_RECLAIM_TAG)) अणु
 		queue_delayed_work(mp->m_reclaim_workqueue, &mp->m_reclaim_work,
-			msecs_to_jiffies(xfs_syncd_centisecs / 6 * 10));
-	}
-	rcu_read_unlock();
-}
+			msecs_to_jअगरfies(xfs_syncd_centisecs / 6 * 10));
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void
+अटल व्योम
 xfs_perag_set_reclaim_tag(
-	struct xfs_perag	*pag)
-{
-	struct xfs_mount	*mp = pag->pag_mount;
+	काष्ठा xfs_perag	*pag)
+अणु
+	काष्ठा xfs_mount	*mp = pag->pag_mount;
 
-	lockdep_assert_held(&pag->pag_ici_lock);
-	if (pag->pag_ici_reclaimable++)
-		return;
+	lockdep_निश्चित_held(&pag->pag_ici_lock);
+	अगर (pag->pag_ici_reclaimable++)
+		वापस;
 
-	/* propagate the reclaim tag up into the perag radix tree */
+	/* propagate the reclaim tag up पूर्णांकo the perag radix tree */
 	spin_lock(&mp->m_perag_lock);
 	radix_tree_tag_set(&mp->m_perag_tree, pag->pag_agno,
 			   XFS_ICI_RECLAIM_TAG);
@@ -177,17 +178,17 @@ xfs_perag_set_reclaim_tag(
 	xfs_reclaim_work_queue(mp);
 
 	trace_xfs_perag_set_reclaim(mp, pag->pag_agno, -1, _RET_IP_);
-}
+पूर्ण
 
-static void
+अटल व्योम
 xfs_perag_clear_reclaim_tag(
-	struct xfs_perag	*pag)
-{
-	struct xfs_mount	*mp = pag->pag_mount;
+	काष्ठा xfs_perag	*pag)
+अणु
+	काष्ठा xfs_mount	*mp = pag->pag_mount;
 
-	lockdep_assert_held(&pag->pag_ici_lock);
-	if (--pag->pag_ici_reclaimable)
-		return;
+	lockdep_निश्चित_held(&pag->pag_ici_lock);
+	अगर (--pag->pag_ici_reclaimable)
+		वापस;
 
 	/* clear the reclaim tag from the perag radix tree */
 	spin_lock(&mp->m_perag_lock);
@@ -195,7 +196,7 @@ xfs_perag_clear_reclaim_tag(
 			     XFS_ICI_RECLAIM_TAG);
 	spin_unlock(&mp->m_perag_lock);
 	trace_xfs_perag_clear_reclaim(mp, pag->pag_agno, -1, _RET_IP_);
-}
+पूर्ण
 
 
 /*
@@ -203,12 +204,12 @@ xfs_perag_clear_reclaim_tag(
  * Once we get tag lookups on the radix tree, this inode flag
  * can go away.
  */
-void
+व्योम
 xfs_inode_set_reclaim_tag(
-	struct xfs_inode	*ip)
-{
-	struct xfs_mount	*mp = ip->i_mount;
-	struct xfs_perag	*pag;
+	काष्ठा xfs_inode	*ip)
+अणु
+	काष्ठा xfs_mount	*mp = ip->i_mount;
+	काष्ठा xfs_perag	*pag;
 
 	pag = xfs_perag_get(mp, XFS_INO_TO_AGNO(mp, ip->i_ino));
 	spin_lock(&pag->pag_ici_lock);
@@ -217,57 +218,57 @@ xfs_inode_set_reclaim_tag(
 	radix_tree_tag_set(&pag->pag_ici_root, XFS_INO_TO_AGINO(mp, ip->i_ino),
 			   XFS_ICI_RECLAIM_TAG);
 	xfs_perag_set_reclaim_tag(pag);
-	__xfs_iflags_set(ip, XFS_IRECLAIMABLE);
+	__xfs_अगरlags_set(ip, XFS_IRECLAIMABLE);
 
 	spin_unlock(&ip->i_flags_lock);
 	spin_unlock(&pag->pag_ici_lock);
 	xfs_perag_put(pag);
-}
+पूर्ण
 
-STATIC void
+STATIC व्योम
 xfs_inode_clear_reclaim_tag(
-	struct xfs_perag	*pag,
+	काष्ठा xfs_perag	*pag,
 	xfs_ino_t		ino)
-{
+अणु
 	radix_tree_tag_clear(&pag->pag_ici_root,
 			     XFS_INO_TO_AGINO(pag->pag_mount, ino),
 			     XFS_ICI_RECLAIM_TAG);
 	xfs_perag_clear_reclaim_tag(pag);
-}
+पूर्ण
 
-static void
-xfs_inew_wait(
-	struct xfs_inode	*ip)
-{
-	wait_queue_head_t *wq = bit_waitqueue(&ip->i_flags, __XFS_INEW_BIT);
-	DEFINE_WAIT_BIT(wait, &ip->i_flags, __XFS_INEW_BIT);
+अटल व्योम
+xfs_inew_रुको(
+	काष्ठा xfs_inode	*ip)
+अणु
+	रुको_queue_head_t *wq = bit_रुकोqueue(&ip->i_flags, __XFS_INEW_BIT);
+	DEFINE_WAIT_BIT(रुको, &ip->i_flags, __XFS_INEW_BIT);
 
-	do {
-		prepare_to_wait(wq, &wait.wq_entry, TASK_UNINTERRUPTIBLE);
-		if (!xfs_iflags_test(ip, XFS_INEW))
-			break;
+	करो अणु
+		prepare_to_रुको(wq, &रुको.wq_entry, TASK_UNINTERRUPTIBLE);
+		अगर (!xfs_अगरlags_test(ip, XFS_INEW))
+			अवरोध;
 		schedule();
-	} while (true);
-	finish_wait(wq, &wait.wq_entry);
-}
+	पूर्ण जबतक (true);
+	finish_रुको(wq, &रुको.wq_entry);
+पूर्ण
 
 /*
  * When we recycle a reclaimable inode, we need to re-initialise the VFS inode
- * part of the structure. This is made more complex by the fact we store
- * information about the on-disk values in the VFS inode and so we can't just
- * overwrite the values unconditionally. Hence we save the parameters we
- * need to retain across reinitialisation, and rewrite them into the VFS inode
- * after reinitialisation even if it fails.
+ * part of the काष्ठाure. This is made more complex by the fact we store
+ * inक्रमmation about the on-disk values in the VFS inode and so we can't just
+ * overग_लिखो the values unconditionally. Hence we save the parameters we
+ * need to retain across reinitialisation, and reग_लिखो them पूर्णांकo the VFS inode
+ * after reinitialisation even अगर it fails.
  */
-static int
+अटल पूर्णांक
 xfs_reinit_inode(
-	struct xfs_mount	*mp,
-	struct inode		*inode)
-{
-	int		error;
-	uint32_t	nlink = inode->i_nlink;
-	uint32_t	generation = inode->i_generation;
-	uint64_t	version = inode_peek_iversion(inode);
+	काष्ठा xfs_mount	*mp,
+	काष्ठा inode		*inode)
+अणु
+	पूर्णांक		error;
+	uपूर्णांक32_t	nlink = inode->i_nlink;
+	uपूर्णांक32_t	generation = inode->i_generation;
+	uपूर्णांक64_t	version = inode_peek_iversion(inode);
 	umode_t		mode = inode->i_mode;
 	dev_t		dev = inode->i_rdev;
 	kuid_t		uid = inode->i_uid;
@@ -282,154 +283,154 @@ xfs_reinit_inode(
 	inode->i_rdev = dev;
 	inode->i_uid = uid;
 	inode->i_gid = gid;
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * If we are allocating a new inode, then check what was returned is
- * actually a free, empty inode. If we are not allocating an inode,
- * then check we didn't find a free inode.
+ * If we are allocating a new inode, then check what was वापसed is
+ * actually a मुक्त, empty inode. If we are not allocating an inode,
+ * then check we didn't find a मुक्त inode.
  *
  * Returns:
- *	0		if the inode free state matches the lookup context
- *	-ENOENT		if the inode is free and we are not allocating
- *	-EFSCORRUPTED	if there is any state mismatch at all
+ *	0		अगर the inode मुक्त state matches the lookup context
+ *	-ENOENT		अगर the inode is मुक्त and we are not allocating
+ *	-EFSCORRUPTED	अगर there is any state mismatch at all
  */
-static int
-xfs_iget_check_free_state(
-	struct xfs_inode	*ip,
-	int			flags)
-{
-	if (flags & XFS_IGET_CREATE) {
-		/* should be a free inode */
-		if (VFS_I(ip)->i_mode != 0) {
+अटल पूर्णांक
+xfs_iget_check_मुक्त_state(
+	काष्ठा xfs_inode	*ip,
+	पूर्णांक			flags)
+अणु
+	अगर (flags & XFS_IGET_CREATE) अणु
+		/* should be a मुक्त inode */
+		अगर (VFS_I(ip)->i_mode != 0) अणु
 			xfs_warn(ip->i_mount,
 "Corruption detected! Free inode 0x%llx not marked free! (mode 0x%x)",
 				ip->i_ino, VFS_I(ip)->i_mode);
-			return -EFSCORRUPTED;
-		}
+			वापस -EFSCORRUPTED;
+		पूर्ण
 
-		if (ip->i_nblocks != 0) {
+		अगर (ip->i_nblocks != 0) अणु
 			xfs_warn(ip->i_mount,
 "Corruption detected! Free inode 0x%llx has blocks allocated!",
 				ip->i_ino);
-			return -EFSCORRUPTED;
-		}
-		return 0;
-	}
+			वापस -EFSCORRUPTED;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	/* should be an allocated inode */
-	if (VFS_I(ip)->i_mode == 0)
-		return -ENOENT;
+	अगर (VFS_I(ip)->i_mode == 0)
+		वापस -ENOENT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Check the validity of the inode we just found it the cache
  */
-static int
+अटल पूर्णांक
 xfs_iget_cache_hit(
-	struct xfs_perag	*pag,
-	struct xfs_inode	*ip,
+	काष्ठा xfs_perag	*pag,
+	काष्ठा xfs_inode	*ip,
 	xfs_ino_t		ino,
-	int			flags,
-	int			lock_flags) __releases(RCU)
-{
-	struct inode		*inode = VFS_I(ip);
-	struct xfs_mount	*mp = ip->i_mount;
-	int			error;
+	पूर्णांक			flags,
+	पूर्णांक			lock_flags) __releases(RCU)
+अणु
+	काष्ठा inode		*inode = VFS_I(ip);
+	काष्ठा xfs_mount	*mp = ip->i_mount;
+	पूर्णांक			error;
 
 	/*
-	 * check for re-use of an inode within an RCU grace period due to the
-	 * radix tree nodes not being updated yet. We monitor for this by
-	 * setting the inode number to zero before freeing the inode structure.
-	 * If the inode has been reallocated and set up, then the inode number
-	 * will not match, so check for that, too.
+	 * check क्रम re-use of an inode within an RCU grace period due to the
+	 * radix tree nodes not being updated yet. We monitor क्रम this by
+	 * setting the inode number to zero beक्रमe मुक्तing the inode काष्ठाure.
+	 * If the inode has been पुनः_स्मृतिated and set up, then the inode number
+	 * will not match, so check क्रम that, too.
 	 */
 	spin_lock(&ip->i_flags_lock);
-	if (ip->i_ino != ino) {
+	अगर (ip->i_ino != ino) अणु
 		trace_xfs_iget_skip(ip);
 		XFS_STATS_INC(mp, xs_ig_frecycle);
 		error = -EAGAIN;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
 
 	/*
 	 * If we are racing with another cache hit that is currently
 	 * instantiating this inode or currently recycling it out of
-	 * reclaimabe state, wait for the initialisation to complete
-	 * before continuing.
+	 * reclaimabe state, रुको क्रम the initialisation to complete
+	 * beक्रमe continuing.
 	 *
-	 * XXX(hch): eventually we should do something equivalent to
-	 *	     wait_on_inode to wait for these flags to be cleared
-	 *	     instead of polling for it.
+	 * XXX(hch): eventually we should करो something equivalent to
+	 *	     रुको_on_inode to रुको क्रम these flags to be cleared
+	 *	     instead of polling क्रम it.
 	 */
-	if (ip->i_flags & (XFS_INEW|XFS_IRECLAIM)) {
+	अगर (ip->i_flags & (XFS_INEW|XFS_IRECLAIM)) अणु
 		trace_xfs_iget_skip(ip);
 		XFS_STATS_INC(mp, xs_ig_frecycle);
 		error = -EAGAIN;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
 	/*
-	 * Check the inode free state is valid. This also detects lookup
+	 * Check the inode मुक्त state is valid. This also detects lookup
 	 * racing with unlinks.
 	 */
-	error = xfs_iget_check_free_state(ip, flags);
-	if (error)
-		goto out_error;
+	error = xfs_iget_check_मुक्त_state(ip, flags);
+	अगर (error)
+		जाओ out_error;
 
 	/*
-	 * If IRECLAIMABLE is set, we've torn down the VFS inode already.
-	 * Need to carefully get it back into useable state.
+	 * If IRECLAIMABLE is set, we've torn करोwn the VFS inode alपढ़ोy.
+	 * Need to carefully get it back पूर्णांकo useable state.
 	 */
-	if (ip->i_flags & XFS_IRECLAIMABLE) {
+	अगर (ip->i_flags & XFS_IRECLAIMABLE) अणु
 		trace_xfs_iget_reclaim(ip);
 
-		if (flags & XFS_IGET_INCORE) {
+		अगर (flags & XFS_IGET_INCORE) अणु
 			error = -EAGAIN;
-			goto out_error;
-		}
+			जाओ out_error;
+		पूर्ण
 
 		/*
 		 * We need to set XFS_IRECLAIM to prevent xfs_reclaim_inode
-		 * from stomping over us while we recycle the inode.  We can't
+		 * from stomping over us जबतक we recycle the inode.  We can't
 		 * clear the radix tree reclaimable tag yet as it requires
 		 * pag_ici_lock to be held exclusive.
 		 */
 		ip->i_flags |= XFS_IRECLAIM;
 
 		spin_unlock(&ip->i_flags_lock);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
 		ASSERT(!rwsem_is_locked(&inode->i_rwsem));
 		error = xfs_reinit_inode(mp, inode);
-		if (error) {
+		अगर (error) अणु
 			bool wake;
 			/*
 			 * Re-initializing the inode failed, and we are in deep
 			 * trouble.  Try to re-add it to the reclaim list.
 			 */
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			spin_lock(&ip->i_flags_lock);
-			wake = !!__xfs_iflags_test(ip, XFS_INEW);
+			wake = !!__xfs_अगरlags_test(ip, XFS_INEW);
 			ip->i_flags &= ~(XFS_INEW | XFS_IRECLAIM);
-			if (wake)
+			अगर (wake)
 				wake_up_bit(&ip->i_flags, __XFS_INEW_BIT);
 			ASSERT(ip->i_flags & XFS_IRECLAIMABLE);
 			trace_xfs_iget_reclaim_fail(ip);
-			goto out_error;
-		}
+			जाओ out_error;
+		पूर्ण
 
 		spin_lock(&pag->pag_ici_lock);
 		spin_lock(&ip->i_flags_lock);
 
 		/*
-		 * Clear the per-lifetime state in the inode as we are now
-		 * effectively a new inode and need to return to the initial
-		 * state before reuse occurs.
+		 * Clear the per-lअगरeसमय state in the inode as we are now
+		 * effectively a new inode and need to वापस to the initial
+		 * state beक्रमe reuse occurs.
 		 */
 		ip->i_flags &= ~XFS_IRECLAIM_RESET_FLAGS;
 		ip->i_flags |= XFS_INEW;
@@ -440,562 +441,562 @@ xfs_iget_cache_hit(
 
 		spin_unlock(&ip->i_flags_lock);
 		spin_unlock(&pag->pag_ici_lock);
-	} else {
-		/* If the VFS inode is being torn down, pause and try again. */
-		if (!igrab(inode)) {
+	पूर्ण अन्यथा अणु
+		/* If the VFS inode is being torn करोwn, छोड़ो and try again. */
+		अगर (!igrab(inode)) अणु
 			trace_xfs_iget_skip(ip);
 			error = -EAGAIN;
-			goto out_error;
-		}
+			जाओ out_error;
+		पूर्ण
 
 		/* We've got a live one. */
 		spin_unlock(&ip->i_flags_lock);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 		trace_xfs_iget_hit(ip);
-	}
+	पूर्ण
 
-	if (lock_flags != 0)
+	अगर (lock_flags != 0)
 		xfs_ilock(ip, lock_flags);
 
-	if (!(flags & XFS_IGET_INCORE))
-		xfs_iflags_clear(ip, XFS_ISTALE);
+	अगर (!(flags & XFS_IGET_INCORE))
+		xfs_अगरlags_clear(ip, XFS_ISTALE);
 	XFS_STATS_INC(mp, xs_ig_found);
 
-	return 0;
+	वापस 0;
 
 out_error:
 	spin_unlock(&ip->i_flags_lock);
-	rcu_read_unlock();
-	return error;
-}
+	rcu_पढ़ो_unlock();
+	वापस error;
+पूर्ण
 
 
-static int
+अटल पूर्णांक
 xfs_iget_cache_miss(
-	struct xfs_mount	*mp,
-	struct xfs_perag	*pag,
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_perag	*pag,
 	xfs_trans_t		*tp,
 	xfs_ino_t		ino,
-	struct xfs_inode	**ipp,
-	int			flags,
-	int			lock_flags)
-{
-	struct xfs_inode	*ip;
-	int			error;
+	काष्ठा xfs_inode	**ipp,
+	पूर्णांक			flags,
+	पूर्णांक			lock_flags)
+अणु
+	काष्ठा xfs_inode	*ip;
+	पूर्णांक			error;
 	xfs_agino_t		agino = XFS_INO_TO_AGINO(mp, ino);
-	int			iflags;
+	पूर्णांक			अगरlags;
 
 	ip = xfs_inode_alloc(mp, ino);
-	if (!ip)
-		return -ENOMEM;
+	अगर (!ip)
+		वापस -ENOMEM;
 
 	error = xfs_imap(mp, tp, ip->i_ino, &ip->i_imap, flags);
-	if (error)
-		goto out_destroy;
+	अगर (error)
+		जाओ out_destroy;
 
 	/*
-	 * For version 5 superblocks, if we are initialising a new inode and we
+	 * For version 5 superblocks, अगर we are initialising a new inode and we
 	 * are not utilising the XFS_MOUNT_IKEEP inode cluster mode, we can
-	 * simply build the new inode core with a random generation number.
+	 * simply build the new inode core with a अक्रमom generation number.
 	 *
 	 * For version 4 (and older) superblocks, log recovery is dependent on
 	 * the i_flushiter field being initialised from the current on-disk
-	 * value and hence we must also read the inode off disk even when
+	 * value and hence we must also पढ़ो the inode off disk even when
 	 * initializing new inodes.
 	 */
-	if (xfs_sb_version_has_v3inode(&mp->m_sb) &&
-	    (flags & XFS_IGET_CREATE) && !(mp->m_flags & XFS_MOUNT_IKEEP)) {
-		VFS_I(ip)->i_generation = prandom_u32();
-	} else {
-		struct xfs_buf		*bp;
+	अगर (xfs_sb_version_has_v3inode(&mp->m_sb) &&
+	    (flags & XFS_IGET_CREATE) && !(mp->m_flags & XFS_MOUNT_IKEEP)) अणु
+		VFS_I(ip)->i_generation = pअक्रमom_u32();
+	पूर्ण अन्यथा अणु
+		काष्ठा xfs_buf		*bp;
 
 		error = xfs_imap_to_bp(mp, tp, &ip->i_imap, &bp);
-		if (error)
-			goto out_destroy;
+		अगर (error)
+			जाओ out_destroy;
 
 		error = xfs_inode_from_disk(ip,
 				xfs_buf_offset(bp, ip->i_imap.im_boffset));
-		if (!error)
+		अगर (!error)
 			xfs_buf_set_ref(bp, XFS_INO_REF);
-		xfs_trans_brelse(tp, bp);
+		xfs_trans_brअन्यथा(tp, bp);
 
-		if (error)
-			goto out_destroy;
-	}
+		अगर (error)
+			जाओ out_destroy;
+	पूर्ण
 
 	trace_xfs_iget_miss(ip);
 
 	/*
-	 * Check the inode free state is valid. This also detects lookup
+	 * Check the inode मुक्त state is valid. This also detects lookup
 	 * racing with unlinks.
 	 */
-	error = xfs_iget_check_free_state(ip, flags);
-	if (error)
-		goto out_destroy;
+	error = xfs_iget_check_मुक्त_state(ip, flags);
+	अगर (error)
+		जाओ out_destroy;
 
 	/*
 	 * Preload the radix tree so we can insert safely under the
-	 * write spinlock. Note that we cannot sleep inside the preload
-	 * region. Since we can be called from transaction context, don't
-	 * recurse into the file system.
+	 * ग_लिखो spinlock. Note that we cannot sleep inside the preload
+	 * region. Since we can be called from transaction context, करोn't
+	 * recurse पूर्णांकo the file प्रणाली.
 	 */
-	if (radix_tree_preload(GFP_NOFS)) {
+	अगर (radix_tree_preload(GFP_NOFS)) अणु
 		error = -EAGAIN;
-		goto out_destroy;
-	}
+		जाओ out_destroy;
+	पूर्ण
 
 	/*
 	 * Because the inode hasn't been added to the radix-tree yet it can't
-	 * be found by another thread, so we can do the non-sleeping lock here.
+	 * be found by another thपढ़ो, so we can करो the non-sleeping lock here.
 	 */
-	if (lock_flags) {
-		if (!xfs_ilock_nowait(ip, lock_flags))
+	अगर (lock_flags) अणु
+		अगर (!xfs_ilock_noरुको(ip, lock_flags))
 			BUG();
-	}
+	पूर्ण
 
 	/*
-	 * These values must be set before inserting the inode into the radix
+	 * These values must be set beक्रमe inserting the inode पूर्णांकo the radix
 	 * tree as the moment it is inserted a concurrent lookup (allowed by the
 	 * RCU locking mechanism) can find it and that lookup must see that this
-	 * is an inode currently under construction (i.e. that XFS_INEW is set).
-	 * The ip->i_flags_lock that protects the XFS_INEW flag forms the
+	 * is an inode currently under स्थिरruction (i.e. that XFS_INEW is set).
+	 * The ip->i_flags_lock that protects the XFS_INEW flag क्रमms the
 	 * memory barrier that ensures this detection works correctly at lookup
-	 * time.
+	 * समय.
 	 */
-	iflags = XFS_INEW;
-	if (flags & XFS_IGET_DONTCACHE)
-		d_mark_dontcache(VFS_I(ip));
-	ip->i_udquot = NULL;
-	ip->i_gdquot = NULL;
-	ip->i_pdquot = NULL;
-	xfs_iflags_set(ip, iflags);
+	अगरlags = XFS_INEW;
+	अगर (flags & XFS_IGET_DONTCACHE)
+		d_mark_करोntcache(VFS_I(ip));
+	ip->i_udquot = शून्य;
+	ip->i_gdquot = शून्य;
+	ip->i_pdquot = शून्य;
+	xfs_अगरlags_set(ip, अगरlags);
 
 	/* insert the new inode */
 	spin_lock(&pag->pag_ici_lock);
 	error = radix_tree_insert(&pag->pag_ici_root, agino, ip);
-	if (unlikely(error)) {
+	अगर (unlikely(error)) अणु
 		WARN_ON(error != -EEXIST);
 		XFS_STATS_INC(mp, xs_ig_dup);
 		error = -EAGAIN;
-		goto out_preload_end;
-	}
+		जाओ out_preload_end;
+	पूर्ण
 	spin_unlock(&pag->pag_ici_lock);
 	radix_tree_preload_end();
 
 	*ipp = ip;
-	return 0;
+	वापस 0;
 
 out_preload_end:
 	spin_unlock(&pag->pag_ici_lock);
 	radix_tree_preload_end();
-	if (lock_flags)
+	अगर (lock_flags)
 		xfs_iunlock(ip, lock_flags);
 out_destroy:
 	__destroy_inode(VFS_I(ip));
-	xfs_inode_free(ip);
-	return error;
-}
+	xfs_inode_मुक्त(ip);
+	वापस error;
+पूर्ण
 
 /*
- * Look up an inode by number in the given file system.  The inode is looked up
+ * Look up an inode by number in the given file प्रणाली.  The inode is looked up
  * in the cache held in each AG.  If the inode is found in the cache, initialise
- * the vfs inode if necessary.
+ * the vfs inode अगर necessary.
  *
- * If it is not in core, read it in from the file system's device, add it to the
+ * If it is not in core, पढ़ो it in from the file प्रणाली's device, add it to the
  * cache and initialise the vfs inode.
  *
  * The inode is locked according to the value of the lock_flags parameter.
- * Inode lookup is only done during metadata operations and not as part of the
+ * Inode lookup is only करोne during metadata operations and not as part of the
  * data IO path. Hence we only allow locking of the XFS_ILOCK during lookup.
  */
-int
+पूर्णांक
 xfs_iget(
-	struct xfs_mount	*mp,
-	struct xfs_trans	*tp,
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_trans	*tp,
 	xfs_ino_t		ino,
-	uint			flags,
-	uint			lock_flags,
-	struct xfs_inode	**ipp)
-{
-	struct xfs_inode	*ip;
-	struct xfs_perag	*pag;
+	uपूर्णांक			flags,
+	uपूर्णांक			lock_flags,
+	काष्ठा xfs_inode	**ipp)
+अणु
+	काष्ठा xfs_inode	*ip;
+	काष्ठा xfs_perag	*pag;
 	xfs_agino_t		agino;
-	int			error;
+	पूर्णांक			error;
 
 	ASSERT((lock_flags & (XFS_IOLOCK_EXCL | XFS_IOLOCK_SHARED)) == 0);
 
 	/* reject inode numbers outside existing AGs */
-	if (!ino || XFS_INO_TO_AGNO(mp, ino) >= mp->m_sb.sb_agcount)
-		return -EINVAL;
+	अगर (!ino || XFS_INO_TO_AGNO(mp, ino) >= mp->m_sb.sb_agcount)
+		वापस -EINVAL;
 
 	XFS_STATS_INC(mp, xs_ig_attempts);
 
-	/* get the perag structure and ensure that it's inode capable */
+	/* get the perag काष्ठाure and ensure that it's inode capable */
 	pag = xfs_perag_get(mp, XFS_INO_TO_AGNO(mp, ino));
 	agino = XFS_INO_TO_AGINO(mp, ino);
 
 again:
 	error = 0;
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ip = radix_tree_lookup(&pag->pag_ici_root, agino);
 
-	if (ip) {
+	अगर (ip) अणु
 		error = xfs_iget_cache_hit(pag, ip, ino, flags, lock_flags);
-		if (error)
-			goto out_error_or_again;
-	} else {
-		rcu_read_unlock();
-		if (flags & XFS_IGET_INCORE) {
+		अगर (error)
+			जाओ out_error_or_again;
+	पूर्ण अन्यथा अणु
+		rcu_पढ़ो_unlock();
+		अगर (flags & XFS_IGET_INCORE) अणु
 			error = -ENODATA;
-			goto out_error_or_again;
-		}
+			जाओ out_error_or_again;
+		पूर्ण
 		XFS_STATS_INC(mp, xs_ig_missed);
 
 		error = xfs_iget_cache_miss(mp, pag, tp, ino, &ip,
 							flags, lock_flags);
-		if (error)
-			goto out_error_or_again;
-	}
+		अगर (error)
+			जाओ out_error_or_again;
+	पूर्ण
 	xfs_perag_put(pag);
 
 	*ipp = ip;
 
 	/*
-	 * If we have a real type for an on-disk inode, we can setup the inode
+	 * If we have a real type क्रम an on-disk inode, we can setup the inode
 	 * now.	 If it's a new inode being created, xfs_ialloc will handle it.
 	 */
-	if (xfs_iflags_test(ip, XFS_INEW) && VFS_I(ip)->i_mode != 0)
+	अगर (xfs_अगरlags_test(ip, XFS_INEW) && VFS_I(ip)->i_mode != 0)
 		xfs_setup_existing_inode(ip);
-	return 0;
+	वापस 0;
 
 out_error_or_again:
-	if (!(flags & XFS_IGET_INCORE) && error == -EAGAIN) {
+	अगर (!(flags & XFS_IGET_INCORE) && error == -EAGAIN) अणु
 		delay(1);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 	xfs_perag_put(pag);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * "Is this a cached inode that's also allocated?"
  *
- * Look up an inode by number in the given file system.  If the inode is
- * in cache and isn't in purgatory, return 1 if the inode is allocated
- * and 0 if it is not.  For all other cases (not in cache, being torn
- * down, etc.), return a negative error code.
+ * Look up an inode by number in the given file प्रणाली.  If the inode is
+ * in cache and isn't in purgatory, वापस 1 अगर the inode is allocated
+ * and 0 अगर it is not.  For all other हालs (not in cache, being torn
+ * करोwn, etc.), वापस a negative error code.
  *
- * The caller has to prevent inode allocation and freeing activity,
+ * The caller has to prevent inode allocation and मुक्तing activity,
  * presumably by locking the AGI buffer.   This is to ensure that an
- * inode cannot transition from allocated to freed until the caller is
- * ready to allow that.  If the inode is in an intermediate state (new,
- * reclaimable, or being reclaimed), -EAGAIN will be returned; if the
- * inode is not in the cache, -ENOENT will be returned.  The caller must
+ * inode cannot transition from allocated to मुक्तd until the caller is
+ * पढ़ोy to allow that.  If the inode is in an पूर्णांकermediate state (new,
+ * reclaimable, or being reclaimed), -EAGAIN will be वापसed; अगर the
+ * inode is not in the cache, -ENOENT will be वापसed.  The caller must
  * deal with these scenarios appropriately.
  *
- * This is a specialized use case for the online scrubber; if you're
- * reading this, you probably want xfs_iget.
+ * This is a specialized use हाल क्रम the online scrubber; अगर you're
+ * पढ़ोing this, you probably want xfs_iget.
  */
-int
+पूर्णांक
 xfs_icache_inode_is_allocated(
-	struct xfs_mount	*mp,
-	struct xfs_trans	*tp,
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_trans	*tp,
 	xfs_ino_t		ino,
 	bool			*inuse)
-{
-	struct xfs_inode	*ip;
-	int			error;
+अणु
+	काष्ठा xfs_inode	*ip;
+	पूर्णांक			error;
 
 	error = xfs_iget(mp, tp, ino, XFS_IGET_INCORE, 0, &ip);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	*inuse = !!(VFS_I(ip)->i_mode);
 	xfs_irele(ip);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The inode lookup is done in batches to keep the amount of lock traffic and
+ * The inode lookup is करोne in batches to keep the amount of lock traffic and
  * radix tree lookups to a minimum. The batch size is a trade off between
  * lookup reduction and stack usage. This is in the reclaim path, so we can't
  * be too greedy.
  */
-#define XFS_LOOKUP_BATCH	32
+#घोषणा XFS_LOOKUP_BATCH	32
 
 /*
- * Decide if the given @ip is eligible to be a part of the inode walk, and
- * grab it if so.  Returns true if it's ready to go or false if we should just
+ * Decide अगर the given @ip is eligible to be a part of the inode walk, and
+ * grab it अगर so.  Returns true अगर it's पढ़ोy to go or false अगर we should just
  * ignore it.
  */
 STATIC bool
 xfs_inode_walk_ag_grab(
-	struct xfs_inode	*ip,
-	int			flags)
-{
-	struct inode		*inode = VFS_I(ip);
+	काष्ठा xfs_inode	*ip,
+	पूर्णांक			flags)
+अणु
+	काष्ठा inode		*inode = VFS_I(ip);
 	bool			newinos = !!(flags & XFS_INODE_WALK_INEW_WAIT);
 
-	ASSERT(rcu_read_lock_held());
+	ASSERT(rcu_पढ़ो_lock_held());
 
-	/* Check for stale RCU freed inode */
+	/* Check क्रम stale RCU मुक्तd inode */
 	spin_lock(&ip->i_flags_lock);
-	if (!ip->i_ino)
-		goto out_unlock_noent;
+	अगर (!ip->i_ino)
+		जाओ out_unlock_noent;
 
-	/* avoid new or reclaimable inodes. Leave for reclaim code to flush */
-	if ((!newinos && __xfs_iflags_test(ip, XFS_INEW)) ||
-	    __xfs_iflags_test(ip, XFS_IRECLAIMABLE | XFS_IRECLAIM))
-		goto out_unlock_noent;
+	/* aव्योम new or reclaimable inodes. Leave क्रम reclaim code to flush */
+	अगर ((!newinos && __xfs_अगरlags_test(ip, XFS_INEW)) ||
+	    __xfs_अगरlags_test(ip, XFS_IRECLAIMABLE | XFS_IRECLAIM))
+		जाओ out_unlock_noent;
 	spin_unlock(&ip->i_flags_lock);
 
-	/* nothing to sync during shutdown */
-	if (XFS_FORCED_SHUTDOWN(ip->i_mount))
-		return false;
+	/* nothing to sync during shutकरोwn */
+	अगर (XFS_FORCED_SHUTDOWN(ip->i_mount))
+		वापस false;
 
 	/* If we can't grab the inode, it must on it's way to reclaim. */
-	if (!igrab(inode))
-		return false;
+	अगर (!igrab(inode))
+		वापस false;
 
 	/* inode is valid */
-	return true;
+	वापस true;
 
 out_unlock_noent:
 	spin_unlock(&ip->i_flags_lock);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * For a given per-AG structure @pag, grab, @execute, and rele all incore
+ * For a given per-AG काष्ठाure @pag, grab, @execute, and rele all incore
  * inodes with the given radix tree @tag.
  */
-STATIC int
+STATIC पूर्णांक
 xfs_inode_walk_ag(
-	struct xfs_perag	*pag,
-	int			iter_flags,
-	int			(*execute)(struct xfs_inode *ip, void *args),
-	void			*args,
-	int			tag)
-{
-	struct xfs_mount	*mp = pag->pag_mount;
-	uint32_t		first_index;
-	int			last_error = 0;
-	int			skipped;
-	bool			done;
-	int			nr_found;
+	काष्ठा xfs_perag	*pag,
+	पूर्णांक			iter_flags,
+	पूर्णांक			(*execute)(काष्ठा xfs_inode *ip, व्योम *args),
+	व्योम			*args,
+	पूर्णांक			tag)
+अणु
+	काष्ठा xfs_mount	*mp = pag->pag_mount;
+	uपूर्णांक32_t		first_index;
+	पूर्णांक			last_error = 0;
+	पूर्णांक			skipped;
+	bool			करोne;
+	पूर्णांक			nr_found;
 
 restart:
-	done = false;
+	करोne = false;
 	skipped = 0;
 	first_index = 0;
 	nr_found = 0;
-	do {
-		struct xfs_inode *batch[XFS_LOOKUP_BATCH];
-		int		error = 0;
-		int		i;
+	करो अणु
+		काष्ठा xfs_inode *batch[XFS_LOOKUP_BATCH];
+		पूर्णांक		error = 0;
+		पूर्णांक		i;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 
-		if (tag == XFS_ICI_NO_TAG)
+		अगर (tag == XFS_ICI_NO_TAG)
 			nr_found = radix_tree_gang_lookup(&pag->pag_ici_root,
-					(void **)batch, first_index,
+					(व्योम **)batch, first_index,
 					XFS_LOOKUP_BATCH);
-		else
+		अन्यथा
 			nr_found = radix_tree_gang_lookup_tag(
 					&pag->pag_ici_root,
-					(void **) batch, first_index,
+					(व्योम **) batch, first_index,
 					XFS_LOOKUP_BATCH, tag);
 
-		if (!nr_found) {
-			rcu_read_unlock();
-			break;
-		}
+		अगर (!nr_found) अणु
+			rcu_पढ़ो_unlock();
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * Grab the inodes before we drop the lock. if we found
+		 * Grab the inodes beक्रमe we drop the lock. अगर we found
 		 * nothing, nr == 0 and the loop will be skipped.
 		 */
-		for (i = 0; i < nr_found; i++) {
-			struct xfs_inode *ip = batch[i];
+		क्रम (i = 0; i < nr_found; i++) अणु
+			काष्ठा xfs_inode *ip = batch[i];
 
-			if (done || !xfs_inode_walk_ag_grab(ip, iter_flags))
-				batch[i] = NULL;
+			अगर (करोne || !xfs_inode_walk_ag_grab(ip, iter_flags))
+				batch[i] = शून्य;
 
 			/*
-			 * Update the index for the next lookup. Catch
-			 * overflows into the next AG range which can occur if
+			 * Update the index क्रम the next lookup. Catch
+			 * overflows पूर्णांकo the next AG range which can occur अगर
 			 * we have inodes in the last block of the AG and we
-			 * are currently pointing to the last inode.
+			 * are currently poपूर्णांकing to the last inode.
 			 *
 			 * Because we may see inodes that are from the wrong AG
-			 * due to RCU freeing and reallocation, only update the
-			 * index if it lies in this AG. It was a race that lead
+			 * due to RCU मुक्तing and पुनः_स्मृतिation, only update the
+			 * index अगर it lies in this AG. It was a race that lead
 			 * us to see this inode, so another lookup from the
 			 * same index will not find it again.
 			 */
-			if (XFS_INO_TO_AGNO(mp, ip->i_ino) != pag->pag_agno)
-				continue;
+			अगर (XFS_INO_TO_AGNO(mp, ip->i_ino) != pag->pag_agno)
+				जारी;
 			first_index = XFS_INO_TO_AGINO(mp, ip->i_ino + 1);
-			if (first_index < XFS_INO_TO_AGINO(mp, ip->i_ino))
-				done = true;
-		}
+			अगर (first_index < XFS_INO_TO_AGINO(mp, ip->i_ino))
+				करोne = true;
+		पूर्ण
 
 		/* unlock now we've grabbed the inodes. */
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
-		for (i = 0; i < nr_found; i++) {
-			if (!batch[i])
-				continue;
-			if ((iter_flags & XFS_INODE_WALK_INEW_WAIT) &&
-			    xfs_iflags_test(batch[i], XFS_INEW))
-				xfs_inew_wait(batch[i]);
+		क्रम (i = 0; i < nr_found; i++) अणु
+			अगर (!batch[i])
+				जारी;
+			अगर ((iter_flags & XFS_INODE_WALK_INEW_WAIT) &&
+			    xfs_अगरlags_test(batch[i], XFS_INEW))
+				xfs_inew_रुको(batch[i]);
 			error = execute(batch[i], args);
 			xfs_irele(batch[i]);
-			if (error == -EAGAIN) {
+			अगर (error == -EAGAIN) अणु
 				skipped++;
-				continue;
-			}
-			if (error && last_error != -EFSCORRUPTED)
+				जारी;
+			पूर्ण
+			अगर (error && last_error != -EFSCORRUPTED)
 				last_error = error;
-		}
+		पूर्ण
 
-		/* bail out if the filesystem is corrupted.  */
-		if (error == -EFSCORRUPTED)
-			break;
+		/* bail out अगर the fileप्रणाली is corrupted.  */
+		अगर (error == -EFSCORRUPTED)
+			अवरोध;
 
 		cond_resched();
 
-	} while (nr_found && !done);
+	पूर्ण जबतक (nr_found && !करोne);
 
-	if (skipped) {
+	अगर (skipped) अणु
 		delay(1);
-		goto restart;
-	}
-	return last_error;
-}
+		जाओ restart;
+	पूर्ण
+	वापस last_error;
+पूर्ण
 
-/* Fetch the next (possibly tagged) per-AG structure. */
-static inline struct xfs_perag *
+/* Fetch the next (possibly tagged) per-AG काष्ठाure. */
+अटल अंतरभूत काष्ठा xfs_perag *
 xfs_inode_walk_get_perag(
-	struct xfs_mount	*mp,
+	काष्ठा xfs_mount	*mp,
 	xfs_agnumber_t		agno,
-	int			tag)
-{
-	if (tag == XFS_ICI_NO_TAG)
-		return xfs_perag_get(mp, agno);
-	return xfs_perag_get_tag(mp, agno, tag);
-}
+	पूर्णांक			tag)
+अणु
+	अगर (tag == XFS_ICI_NO_TAG)
+		वापस xfs_perag_get(mp, agno);
+	वापस xfs_perag_get_tag(mp, agno, tag);
+पूर्ण
 
 /*
  * Call the @execute function on all incore inodes matching the radix tree
  * @tag.
  */
-int
+पूर्णांक
 xfs_inode_walk(
-	struct xfs_mount	*mp,
-	int			iter_flags,
-	int			(*execute)(struct xfs_inode *ip, void *args),
-	void			*args,
-	int			tag)
-{
-	struct xfs_perag	*pag;
-	int			error = 0;
-	int			last_error = 0;
+	काष्ठा xfs_mount	*mp,
+	पूर्णांक			iter_flags,
+	पूर्णांक			(*execute)(काष्ठा xfs_inode *ip, व्योम *args),
+	व्योम			*args,
+	पूर्णांक			tag)
+अणु
+	काष्ठा xfs_perag	*pag;
+	पूर्णांक			error = 0;
+	पूर्णांक			last_error = 0;
 	xfs_agnumber_t		ag;
 
 	ag = 0;
-	while ((pag = xfs_inode_walk_get_perag(mp, ag, tag))) {
+	जबतक ((pag = xfs_inode_walk_get_perag(mp, ag, tag))) अणु
 		ag = pag->pag_agno + 1;
 		error = xfs_inode_walk_ag(pag, iter_flags, execute, args, tag);
 		xfs_perag_put(pag);
-		if (error) {
+		अगर (error) अणु
 			last_error = error;
-			if (error == -EFSCORRUPTED)
-				break;
-		}
-	}
-	return last_error;
-}
+			अगर (error == -EFSCORRUPTED)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस last_error;
+पूर्ण
 
 /*
- * Grab the inode for reclaim exclusively.
+ * Grab the inode क्रम reclaim exclusively.
  *
  * We have found this inode via a lookup under RCU, so the inode may have
- * already been freed, or it may be in the process of being recycled by
- * xfs_iget(). In both cases, the inode will have XFS_IRECLAIM set. If the inode
- * has been fully recycled by the time we get the i_flags_lock, XFS_IRECLAIMABLE
- * will not be set. Hence we need to check for both these flag conditions to
- * avoid inodes that are no longer reclaim candidates.
+ * alपढ़ोy been मुक्तd, or it may be in the process of being recycled by
+ * xfs_iget(). In both हालs, the inode will have XFS_IRECLAIM set. If the inode
+ * has been fully recycled by the समय we get the i_flags_lock, XFS_IRECLAIMABLE
+ * will not be set. Hence we need to check क्रम both these flag conditions to
+ * aव्योम inodes that are no दीर्घer reclaim candidates.
  *
- * Note: checking for other state flags here, under the i_flags_lock or not, is
- * racy and should be avoided. Those races should be resolved only after we have
+ * Note: checking क्रम other state flags here, under the i_flags_lock or not, is
+ * racy and should be aव्योमed. Those races should be resolved only after we have
  * ensured that we are able to reclaim this inode and the world can see that we
  * are going to reclaim it.
  *
- * Return true if we grabbed it, false otherwise.
+ * Return true अगर we grabbed it, false otherwise.
  */
-static bool
+अटल bool
 xfs_reclaim_inode_grab(
-	struct xfs_inode	*ip)
-{
-	ASSERT(rcu_read_lock_held());
+	काष्ठा xfs_inode	*ip)
+अणु
+	ASSERT(rcu_पढ़ो_lock_held());
 
 	spin_lock(&ip->i_flags_lock);
-	if (!__xfs_iflags_test(ip, XFS_IRECLAIMABLE) ||
-	    __xfs_iflags_test(ip, XFS_IRECLAIM)) {
+	अगर (!__xfs_अगरlags_test(ip, XFS_IRECLAIMABLE) ||
+	    __xfs_अगरlags_test(ip, XFS_IRECLAIM)) अणु
 		/* not a reclaim candidate. */
 		spin_unlock(&ip->i_flags_lock);
-		return false;
-	}
-	__xfs_iflags_set(ip, XFS_IRECLAIM);
+		वापस false;
+	पूर्ण
+	__xfs_अगरlags_set(ip, XFS_IRECLAIM);
 	spin_unlock(&ip->i_flags_lock);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Inode reclaim is non-blocking, so the default action if progress cannot be
- * made is to "requeue" the inode for reclaim by unlocking it and clearing the
- * XFS_IRECLAIM flag.  If we are in a shutdown state, we don't care about
- * blocking anymore and hence we can wait for the inode to be able to reclaim
+ * Inode reclaim is non-blocking, so the शेष action अगर progress cannot be
+ * made is to "requeue" the inode क्रम reclaim by unlocking it and clearing the
+ * XFS_IRECLAIM flag.  If we are in a shutकरोwn state, we करोn't care about
+ * blocking anymore and hence we can रुको क्रम the inode to be able to reclaim
  * it.
  *
- * We do no IO here - if callers require inodes to be cleaned they must push the
- * AIL first to trigger writeback of dirty inodes.  This enables writeback to be
- * done in the background in a non-blocking manner, and enables memory reclaim
+ * We करो no IO here - अगर callers require inodes to be cleaned they must push the
+ * AIL first to trigger ग_लिखोback of dirty inodes.  This enables ग_लिखोback to be
+ * करोne in the background in a non-blocking manner, and enables memory reclaim
  * to make progress without blocking.
  */
-static void
+अटल व्योम
 xfs_reclaim_inode(
-	struct xfs_inode	*ip,
-	struct xfs_perag	*pag)
-{
-	xfs_ino_t		ino = ip->i_ino; /* for radix_tree_delete */
+	काष्ठा xfs_inode	*ip,
+	काष्ठा xfs_perag	*pag)
+अणु
+	xfs_ino_t		ino = ip->i_ino; /* क्रम radix_tree_delete */
 
-	if (!xfs_ilock_nowait(ip, XFS_ILOCK_EXCL))
-		goto out;
-	if (xfs_iflags_test_and_set(ip, XFS_IFLUSHING))
-		goto out_iunlock;
+	अगर (!xfs_ilock_noरुको(ip, XFS_ILOCK_EXCL))
+		जाओ out;
+	अगर (xfs_अगरlags_test_and_set(ip, XFS_IFLUSHING))
+		जाओ out_iunlock;
 
-	if (XFS_FORCED_SHUTDOWN(ip->i_mount)) {
-		xfs_iunpin_wait(ip);
-		xfs_iflush_abort(ip);
-		goto reclaim;
-	}
-	if (xfs_ipincount(ip))
-		goto out_clear_flush;
-	if (!xfs_inode_clean(ip))
-		goto out_clear_flush;
+	अगर (XFS_FORCED_SHUTDOWN(ip->i_mount)) अणु
+		xfs_iunpin_रुको(ip);
+		xfs_अगरlush_पात(ip);
+		जाओ reclaim;
+	पूर्ण
+	अगर (xfs_ipincount(ip))
+		जाओ out_clear_flush;
+	अगर (!xfs_inode_clean(ip))
+		जाओ out_clear_flush;
 
-	xfs_iflags_clear(ip, XFS_IFLUSHING);
+	xfs_अगरlags_clear(ip, XFS_IFLUSHING);
 reclaim:
 
 	/*
-	 * Because we use RCU freeing we need to ensure the inode always appears
-	 * to be reclaimed with an invalid inode number when in the free state.
-	 * We do this as early as possible under the ILOCK so that
-	 * xfs_iflush_cluster() and xfs_ifree_cluster() can be guaranteed to
-	 * detect races with us here. By doing this, we guarantee that once
-	 * xfs_iflush_cluster() or xfs_ifree_cluster() has locked XFS_ILOCK that
+	 * Because we use RCU मुक्तing we need to ensure the inode always appears
+	 * to be reclaimed with an invalid inode number when in the मुक्त state.
+	 * We करो this as early as possible under the ILOCK so that
+	 * xfs_अगरlush_cluster() and xfs_अगरree_cluster() can be guaranteed to
+	 * detect races with us here. By करोing this, we guarantee that once
+	 * xfs_अगरlush_cluster() or xfs_अगरree_cluster() has locked XFS_ILOCK that
 	 * it will see either a valid inode that will serialise correctly, or it
 	 * will see an invalid inode that it can skip.
 	 */
@@ -1010,357 +1011,357 @@ reclaim:
 	/*
 	 * Remove the inode from the per-AG radix tree.
 	 *
-	 * Because radix_tree_delete won't complain even if the item was never
-	 * added to the tree assert that it's been there before to catch
-	 * problems with the inode life time early on.
+	 * Because radix_tree_delete won't complain even अगर the item was never
+	 * added to the tree निश्चित that it's been there beक्रमe to catch
+	 * problems with the inode lअगरe समय early on.
 	 */
 	spin_lock(&pag->pag_ici_lock);
-	if (!radix_tree_delete(&pag->pag_ici_root,
+	अगर (!radix_tree_delete(&pag->pag_ici_root,
 				XFS_INO_TO_AGINO(ip->i_mount, ino)))
 		ASSERT(0);
 	xfs_perag_clear_reclaim_tag(pag);
 	spin_unlock(&pag->pag_ici_lock);
 
 	/*
-	 * Here we do an (almost) spurious inode lock in order to coordinate
+	 * Here we करो an (almost) spurious inode lock in order to coordinate
 	 * with inode cache radix tree lookups.  This is because the lookup
 	 * can reference the inodes in the cache without taking references.
 	 *
-	 * We make that OK here by ensuring that we wait until the inode is
-	 * unlocked after the lookup before we go ahead and free it.
+	 * We make that OK here by ensuring that we रुको until the inode is
+	 * unlocked after the lookup beक्रमe we go ahead and मुक्त it.
 	 */
 	xfs_ilock(ip, XFS_ILOCK_EXCL);
 	xfs_qm_dqdetach(ip);
 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
 	ASSERT(xfs_inode_clean(ip));
 
-	__xfs_inode_free(ip);
-	return;
+	__xfs_inode_मुक्त(ip);
+	वापस;
 
 out_clear_flush:
-	xfs_iflags_clear(ip, XFS_IFLUSHING);
+	xfs_अगरlags_clear(ip, XFS_IFLUSHING);
 out_iunlock:
 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
 out:
-	xfs_iflags_clear(ip, XFS_IRECLAIM);
-}
+	xfs_अगरlags_clear(ip, XFS_IRECLAIM);
+पूर्ण
 
 /*
- * Walk the AGs and reclaim the inodes in them. Even if the filesystem is
- * corrupted, we still want to try to reclaim all the inodes. If we don't,
- * then a shut down during filesystem unmount reclaim walk leak all the
+ * Walk the AGs and reclaim the inodes in them. Even अगर the fileप्रणाली is
+ * corrupted, we still want to try to reclaim all the inodes. If we करोn't,
+ * then a shut करोwn during fileप्रणाली unmount reclaim walk leak all the
  * unreclaimed inodes.
  *
- * Returns non-zero if any AGs or inodes were skipped in the reclaim pass
+ * Returns non-zero अगर any AGs or inodes were skipped in the reclaim pass
  * so that callers that want to block until all dirty inodes are written back
  * and reclaimed can sanely loop.
  */
-static void
+अटल व्योम
 xfs_reclaim_inodes_ag(
-	struct xfs_mount	*mp,
-	int			*nr_to_scan)
-{
-	struct xfs_perag	*pag;
+	काष्ठा xfs_mount	*mp,
+	पूर्णांक			*nr_to_scan)
+अणु
+	काष्ठा xfs_perag	*pag;
 	xfs_agnumber_t		ag = 0;
 
-	while ((pag = xfs_perag_get_tag(mp, ag, XFS_ICI_RECLAIM_TAG))) {
-		unsigned long	first_index = 0;
-		int		done = 0;
-		int		nr_found = 0;
+	जबतक ((pag = xfs_perag_get_tag(mp, ag, XFS_ICI_RECLAIM_TAG))) अणु
+		अचिन्हित दीर्घ	first_index = 0;
+		पूर्णांक		करोne = 0;
+		पूर्णांक		nr_found = 0;
 
 		ag = pag->pag_agno + 1;
 
 		first_index = READ_ONCE(pag->pag_ici_reclaim_cursor);
-		do {
-			struct xfs_inode *batch[XFS_LOOKUP_BATCH];
-			int	i;
+		करो अणु
+			काष्ठा xfs_inode *batch[XFS_LOOKUP_BATCH];
+			पूर्णांक	i;
 
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			nr_found = radix_tree_gang_lookup_tag(
 					&pag->pag_ici_root,
-					(void **)batch, first_index,
+					(व्योम **)batch, first_index,
 					XFS_LOOKUP_BATCH,
 					XFS_ICI_RECLAIM_TAG);
-			if (!nr_found) {
-				done = 1;
-				rcu_read_unlock();
-				break;
-			}
+			अगर (!nr_found) अणु
+				करोne = 1;
+				rcu_पढ़ो_unlock();
+				अवरोध;
+			पूर्ण
 
 			/*
-			 * Grab the inodes before we drop the lock. if we found
+			 * Grab the inodes beक्रमe we drop the lock. अगर we found
 			 * nothing, nr == 0 and the loop will be skipped.
 			 */
-			for (i = 0; i < nr_found; i++) {
-				struct xfs_inode *ip = batch[i];
+			क्रम (i = 0; i < nr_found; i++) अणु
+				काष्ठा xfs_inode *ip = batch[i];
 
-				if (done || !xfs_reclaim_inode_grab(ip))
-					batch[i] = NULL;
+				अगर (करोne || !xfs_reclaim_inode_grab(ip))
+					batch[i] = शून्य;
 
 				/*
-				 * Update the index for the next lookup. Catch
-				 * overflows into the next AG range which can
-				 * occur if we have inodes in the last block of
-				 * the AG and we are currently pointing to the
+				 * Update the index क्रम the next lookup. Catch
+				 * overflows पूर्णांकo the next AG range which can
+				 * occur अगर we have inodes in the last block of
+				 * the AG and we are currently poपूर्णांकing to the
 				 * last inode.
 				 *
 				 * Because we may see inodes that are from the
-				 * wrong AG due to RCU freeing and
-				 * reallocation, only update the index if it
+				 * wrong AG due to RCU मुक्तing and
+				 * पुनः_स्मृतिation, only update the index अगर it
 				 * lies in this AG. It was a race that lead us
 				 * to see this inode, so another lookup from
 				 * the same index will not find it again.
 				 */
-				if (XFS_INO_TO_AGNO(mp, ip->i_ino) !=
+				अगर (XFS_INO_TO_AGNO(mp, ip->i_ino) !=
 								pag->pag_agno)
-					continue;
+					जारी;
 				first_index = XFS_INO_TO_AGINO(mp, ip->i_ino + 1);
-				if (first_index < XFS_INO_TO_AGINO(mp, ip->i_ino))
-					done = 1;
-			}
+				अगर (first_index < XFS_INO_TO_AGINO(mp, ip->i_ino))
+					करोne = 1;
+			पूर्ण
 
 			/* unlock now we've grabbed the inodes. */
-			rcu_read_unlock();
+			rcu_पढ़ो_unlock();
 
-			for (i = 0; i < nr_found; i++) {
-				if (batch[i])
+			क्रम (i = 0; i < nr_found; i++) अणु
+				अगर (batch[i])
 					xfs_reclaim_inode(batch[i], pag);
-			}
+			पूर्ण
 
 			*nr_to_scan -= XFS_LOOKUP_BATCH;
 			cond_resched();
-		} while (nr_found && !done && *nr_to_scan > 0);
+		पूर्ण जबतक (nr_found && !करोne && *nr_to_scan > 0);
 
-		if (done)
+		अगर (करोne)
 			first_index = 0;
 		WRITE_ONCE(pag->pag_ici_reclaim_cursor, first_index);
 		xfs_perag_put(pag);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
+व्योम
 xfs_reclaim_inodes(
-	struct xfs_mount	*mp)
-{
-	int		nr_to_scan = INT_MAX;
+	काष्ठा xfs_mount	*mp)
+अणु
+	पूर्णांक		nr_to_scan = पूर्णांक_उच्च;
 
-	while (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_RECLAIM_TAG)) {
+	जबतक (radix_tree_tagged(&mp->m_perag_tree, XFS_ICI_RECLAIM_TAG)) अणु
 		xfs_ail_push_all_sync(mp->m_ail);
 		xfs_reclaim_inodes_ag(mp, &nr_to_scan);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * The shrinker infrastructure determines how many inodes we should scan for
- * reclaim. We want as many clean inodes ready to reclaim as possible, so we
- * push the AIL here. We also want to proactively free up memory if we can to
- * minimise the amount of work memory reclaim has to do so we kick the
- * background reclaim if it isn't already scheduled.
+ * The shrinker infraकाष्ठाure determines how many inodes we should scan क्रम
+ * reclaim. We want as many clean inodes पढ़ोy to reclaim as possible, so we
+ * push the AIL here. We also want to proactively मुक्त up memory अगर we can to
+ * minimise the amount of work memory reclaim has to करो so we kick the
+ * background reclaim अगर it isn't alपढ़ोy scheduled.
  */
-long
+दीर्घ
 xfs_reclaim_inodes_nr(
-	struct xfs_mount	*mp,
-	int			nr_to_scan)
-{
+	काष्ठा xfs_mount	*mp,
+	पूर्णांक			nr_to_scan)
+अणु
 	/* kick background reclaimer and push the AIL */
 	xfs_reclaim_work_queue(mp);
 	xfs_ail_push_all(mp->m_ail);
 
 	xfs_reclaim_inodes_ag(mp, &nr_to_scan);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Return the number of reclaimable inodes in the filesystem for
+ * Return the number of reclaimable inodes in the fileप्रणाली क्रम
  * the shrinker to determine how much to reclaim.
  */
-int
+पूर्णांक
 xfs_reclaim_inodes_count(
-	struct xfs_mount	*mp)
-{
-	struct xfs_perag	*pag;
+	काष्ठा xfs_mount	*mp)
+अणु
+	काष्ठा xfs_perag	*pag;
 	xfs_agnumber_t		ag = 0;
-	int			reclaimable = 0;
+	पूर्णांक			reclaimable = 0;
 
-	while ((pag = xfs_perag_get_tag(mp, ag, XFS_ICI_RECLAIM_TAG))) {
+	जबतक ((pag = xfs_perag_get_tag(mp, ag, XFS_ICI_RECLAIM_TAG))) अणु
 		ag = pag->pag_agno + 1;
 		reclaimable += pag->pag_ici_reclaimable;
 		xfs_perag_put(pag);
-	}
-	return reclaimable;
-}
+	पूर्ण
+	वापस reclaimable;
+पूर्ण
 
 STATIC bool
 xfs_inode_match_id(
-	struct xfs_inode	*ip,
-	struct xfs_eofblocks	*eofb)
-{
-	if ((eofb->eof_flags & XFS_EOF_FLAGS_UID) &&
+	काष्ठा xfs_inode	*ip,
+	काष्ठा xfs_eofblocks	*eofb)
+अणु
+	अगर ((eofb->eof_flags & XFS_खातापूर्ण_FLAGS_UID) &&
 	    !uid_eq(VFS_I(ip)->i_uid, eofb->eof_uid))
-		return false;
+		वापस false;
 
-	if ((eofb->eof_flags & XFS_EOF_FLAGS_GID) &&
+	अगर ((eofb->eof_flags & XFS_खातापूर्ण_FLAGS_GID) &&
 	    !gid_eq(VFS_I(ip)->i_gid, eofb->eof_gid))
-		return false;
+		वापस false;
 
-	if ((eofb->eof_flags & XFS_EOF_FLAGS_PRID) &&
+	अगर ((eofb->eof_flags & XFS_खातापूर्ण_FLAGS_PRID) &&
 	    ip->i_projid != eofb->eof_prid)
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * A union-based inode filtering algorithm. Process the inode if any of the
- * criteria match. This is for global/internal scans only.
+ * A जोड़-based inode filtering algorithm. Process the inode अगर any of the
+ * criteria match. This is क्रम global/पूर्णांकernal scans only.
  */
 STATIC bool
-xfs_inode_match_id_union(
-	struct xfs_inode	*ip,
-	struct xfs_eofblocks	*eofb)
-{
-	if ((eofb->eof_flags & XFS_EOF_FLAGS_UID) &&
+xfs_inode_match_id_जोड़(
+	काष्ठा xfs_inode	*ip,
+	काष्ठा xfs_eofblocks	*eofb)
+अणु
+	अगर ((eofb->eof_flags & XFS_खातापूर्ण_FLAGS_UID) &&
 	    uid_eq(VFS_I(ip)->i_uid, eofb->eof_uid))
-		return true;
+		वापस true;
 
-	if ((eofb->eof_flags & XFS_EOF_FLAGS_GID) &&
+	अगर ((eofb->eof_flags & XFS_खातापूर्ण_FLAGS_GID) &&
 	    gid_eq(VFS_I(ip)->i_gid, eofb->eof_gid))
-		return true;
+		वापस true;
 
-	if ((eofb->eof_flags & XFS_EOF_FLAGS_PRID) &&
+	अगर ((eofb->eof_flags & XFS_खातापूर्ण_FLAGS_PRID) &&
 	    ip->i_projid == eofb->eof_prid)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Is this inode @ip eligible for eof/cow block reclamation, given some
- * filtering parameters @eofb?  The inode is eligible if @eofb is null or
- * if the predicate functions match.
+ * Is this inode @ip eligible क्रम eof/cow block reclamation, given some
+ * filtering parameters @eofb?  The inode is eligible अगर @eofb is null or
+ * अगर the predicate functions match.
  */
-static bool
+अटल bool
 xfs_inode_matches_eofb(
-	struct xfs_inode	*ip,
-	struct xfs_eofblocks	*eofb)
-{
+	काष्ठा xfs_inode	*ip,
+	काष्ठा xfs_eofblocks	*eofb)
+अणु
 	bool			match;
 
-	if (!eofb)
-		return true;
+	अगर (!eofb)
+		वापस true;
 
-	if (eofb->eof_flags & XFS_EOF_FLAGS_UNION)
-		match = xfs_inode_match_id_union(ip, eofb);
-	else
+	अगर (eofb->eof_flags & XFS_खातापूर्ण_FLAGS_UNION)
+		match = xfs_inode_match_id_जोड़(ip, eofb);
+	अन्यथा
 		match = xfs_inode_match_id(ip, eofb);
-	if (!match)
-		return false;
+	अगर (!match)
+		वापस false;
 
-	/* skip the inode if the file size is too small */
-	if ((eofb->eof_flags & XFS_EOF_FLAGS_MINFILESIZE) &&
+	/* skip the inode अगर the file size is too small */
+	अगर ((eofb->eof_flags & XFS_खातापूर्ण_FLAGS_MINखाताSIZE) &&
 	    XFS_ISIZE(ip) < eofb->eof_min_file_size)
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * This is a fast pass over the inode cache to try to get reclaim moving on as
- * many inodes as possible in a short period of time. It kicks itself every few
+ * many inodes as possible in a लघु period of समय. It kicks itself every few
  * seconds, as well as being kicked by the inode cache shrinker when memory
  * goes low.
  */
-void
+व्योम
 xfs_reclaim_worker(
-	struct work_struct *work)
-{
-	struct xfs_mount *mp = container_of(to_delayed_work(work),
-					struct xfs_mount, m_reclaim_work);
-	int		nr_to_scan = INT_MAX;
+	काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा xfs_mount *mp = container_of(to_delayed_work(work),
+					काष्ठा xfs_mount, m_reclaim_work);
+	पूर्णांक		nr_to_scan = पूर्णांक_उच्च;
 
 	xfs_reclaim_inodes_ag(mp, &nr_to_scan);
 	xfs_reclaim_work_queue(mp);
-}
+पूर्ण
 
-STATIC int
-xfs_inode_free_eofblocks(
-	struct xfs_inode	*ip,
-	void			*args,
-	unsigned int		*lockflags)
-{
-	struct xfs_eofblocks	*eofb = args;
-	bool			wait;
+STATIC पूर्णांक
+xfs_inode_मुक्त_eofblocks(
+	काष्ठा xfs_inode	*ip,
+	व्योम			*args,
+	अचिन्हित पूर्णांक		*lockflags)
+अणु
+	काष्ठा xfs_eofblocks	*eofb = args;
+	bool			रुको;
 
-	wait = eofb && (eofb->eof_flags & XFS_EOF_FLAGS_SYNC);
+	रुको = eofb && (eofb->eof_flags & XFS_खातापूर्ण_FLAGS_SYNC);
 
-	if (!xfs_iflags_test(ip, XFS_IEOFBLOCKS))
-		return 0;
+	अगर (!xfs_अगरlags_test(ip, XFS_Iखातापूर्णBLOCKS))
+		वापस 0;
 
 	/*
-	 * If the mapping is dirty the operation can block and wait for some
-	 * time. Unless we are waiting, skip it.
+	 * If the mapping is dirty the operation can block and रुको क्रम some
+	 * समय. Unless we are रुकोing, skip it.
 	 */
-	if (!wait && mapping_tagged(VFS_I(ip)->i_mapping, PAGECACHE_TAG_DIRTY))
-		return 0;
+	अगर (!रुको && mapping_tagged(VFS_I(ip)->i_mapping, PAGECACHE_TAG_सूचीTY))
+		वापस 0;
 
-	if (!xfs_inode_matches_eofb(ip, eofb))
-		return 0;
+	अगर (!xfs_inode_matches_eofb(ip, eofb))
+		वापस 0;
 
 	/*
-	 * If the caller is waiting, return -EAGAIN to keep the background
+	 * If the caller is रुकोing, वापस -EAGAIN to keep the background
 	 * scanner moving and revisit the inode in a subsequent pass.
 	 */
-	if (!xfs_ilock_nowait(ip, XFS_IOLOCK_EXCL)) {
-		if (wait)
-			return -EAGAIN;
-		return 0;
-	}
+	अगर (!xfs_ilock_noरुको(ip, XFS_IOLOCK_EXCL)) अणु
+		अगर (रुको)
+			वापस -EAGAIN;
+		वापस 0;
+	पूर्ण
 	*lockflags |= XFS_IOLOCK_EXCL;
 
-	if (xfs_can_free_eofblocks(ip, false))
-		return xfs_free_eofblocks(ip);
+	अगर (xfs_can_मुक्त_eofblocks(ip, false))
+		वापस xfs_मुक्त_eofblocks(ip);
 
-	/* inode could be preallocated or append-only */
-	trace_xfs_inode_free_eofblocks_invalid(ip);
+	/* inode could be pपुनः_स्मृतिated or append-only */
+	trace_xfs_inode_मुक्त_eofblocks_invalid(ip);
 	xfs_inode_clear_eofblocks_tag(ip);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Background scanning to trim preallocated space. This is queued based on the
- * 'speculative_prealloc_lifetime' tunable (5m by default).
+ * Background scanning to trim pपुनः_स्मृतिated space. This is queued based on the
+ * 'speculative_prealloc_lifetime' tunable (5m by शेष).
  */
-static inline void
+अटल अंतरभूत व्योम
 xfs_blockgc_queue(
-	struct xfs_perag	*pag)
-{
-	rcu_read_lock();
-	if (radix_tree_tagged(&pag->pag_ici_root, XFS_ICI_BLOCKGC_TAG))
+	काष्ठा xfs_perag	*pag)
+अणु
+	rcu_पढ़ो_lock();
+	अगर (radix_tree_tagged(&pag->pag_ici_root, XFS_ICI_BLOCKGC_TAG))
 		queue_delayed_work(pag->pag_mount->m_gc_workqueue,
 				   &pag->pag_blockgc_work,
-				   msecs_to_jiffies(xfs_blockgc_secs * 1000));
-	rcu_read_unlock();
-}
+				   msecs_to_jअगरfies(xfs_blockgc_secs * 1000));
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void
-xfs_blockgc_set_iflag(
-	struct xfs_inode	*ip,
-	unsigned long		iflag)
-{
-	struct xfs_mount	*mp = ip->i_mount;
-	struct xfs_perag	*pag;
-	int			tagged;
+अटल व्योम
+xfs_blockgc_set_अगरlag(
+	काष्ठा xfs_inode	*ip,
+	अचिन्हित दीर्घ		अगरlag)
+अणु
+	काष्ठा xfs_mount	*mp = ip->i_mount;
+	काष्ठा xfs_perag	*pag;
+	पूर्णांक			tagged;
 
-	ASSERT((iflag & ~(XFS_IEOFBLOCKS | XFS_ICOWBLOCKS)) == 0);
+	ASSERT((अगरlag & ~(XFS_Iखातापूर्णBLOCKS | XFS_ICOWBLOCKS)) == 0);
 
 	/*
 	 * Don't bother locking the AG and looking up in the radix trees
-	 * if we already know that we have the tag set.
+	 * अगर we alपढ़ोy know that we have the tag set.
 	 */
-	if (ip->i_flags & iflag)
-		return;
+	अगर (ip->i_flags & अगरlag)
+		वापस;
 	spin_lock(&ip->i_flags_lock);
-	ip->i_flags |= iflag;
+	ip->i_flags |= अगरlag;
 	spin_unlock(&ip->i_flags_lock);
 
 	pag = xfs_perag_get(mp, XFS_INO_TO_AGNO(mp, ip->i_ino));
@@ -1370,8 +1371,8 @@ xfs_blockgc_set_iflag(
 	radix_tree_tag_set(&pag->pag_ici_root,
 			   XFS_INO_TO_AGINO(ip->i_mount, ip->i_ino),
 			   XFS_ICI_BLOCKGC_TAG);
-	if (!tagged) {
-		/* propagate the blockgc tag up into the perag radix tree */
+	अगर (!tagged) अणु
+		/* propagate the blockgc tag up पूर्णांकo the perag radix tree */
 		spin_lock(&ip->i_mount->m_perag_lock);
 		radix_tree_tag_set(&ip->i_mount->m_perag_tree,
 				   XFS_INO_TO_AGNO(ip->i_mount, ip->i_ino),
@@ -1383,38 +1384,38 @@ xfs_blockgc_set_iflag(
 
 		trace_xfs_perag_set_blockgc(ip->i_mount, pag->pag_agno, -1,
 				_RET_IP_);
-	}
+	पूर्ण
 
 	spin_unlock(&pag->pag_ici_lock);
 	xfs_perag_put(pag);
-}
+पूर्ण
 
-void
+व्योम
 xfs_inode_set_eofblocks_tag(
 	xfs_inode_t	*ip)
-{
+अणु
 	trace_xfs_inode_set_eofblocks_tag(ip);
-	return xfs_blockgc_set_iflag(ip, XFS_IEOFBLOCKS);
-}
+	वापस xfs_blockgc_set_अगरlag(ip, XFS_Iखातापूर्णBLOCKS);
+पूर्ण
 
-static void
-xfs_blockgc_clear_iflag(
-	struct xfs_inode	*ip,
-	unsigned long		iflag)
-{
-	struct xfs_mount	*mp = ip->i_mount;
-	struct xfs_perag	*pag;
+अटल व्योम
+xfs_blockgc_clear_अगरlag(
+	काष्ठा xfs_inode	*ip,
+	अचिन्हित दीर्घ		अगरlag)
+अणु
+	काष्ठा xfs_mount	*mp = ip->i_mount;
+	काष्ठा xfs_perag	*pag;
 	bool			clear_tag;
 
-	ASSERT((iflag & ~(XFS_IEOFBLOCKS | XFS_ICOWBLOCKS)) == 0);
+	ASSERT((अगरlag & ~(XFS_Iखातापूर्णBLOCKS | XFS_ICOWBLOCKS)) == 0);
 
 	spin_lock(&ip->i_flags_lock);
-	ip->i_flags &= ~iflag;
-	clear_tag = (ip->i_flags & (XFS_IEOFBLOCKS | XFS_ICOWBLOCKS)) == 0;
+	ip->i_flags &= ~अगरlag;
+	clear_tag = (ip->i_flags & (XFS_Iखातापूर्णBLOCKS | XFS_ICOWBLOCKS)) == 0;
 	spin_unlock(&ip->i_flags_lock);
 
-	if (!clear_tag)
-		return;
+	अगर (!clear_tag)
+		वापस;
 
 	pag = xfs_perag_get(mp, XFS_INO_TO_AGNO(mp, ip->i_ino));
 	spin_lock(&pag->pag_ici_lock);
@@ -1422,7 +1423,7 @@ xfs_blockgc_clear_iflag(
 	radix_tree_tag_clear(&pag->pag_ici_root,
 			     XFS_INO_TO_AGINO(ip->i_mount, ip->i_ino),
 			     XFS_ICI_BLOCKGC_TAG);
-	if (!radix_tree_tagged(&pag->pag_ici_root, XFS_ICI_BLOCKGC_TAG)) {
+	अगर (!radix_tree_tagged(&pag->pag_ici_root, XFS_ICI_BLOCKGC_TAG)) अणु
 		/* clear the blockgc tag from the perag radix tree */
 		spin_lock(&ip->i_mount->m_perag_lock);
 		radix_tree_tag_clear(&ip->i_mount->m_perag_tree,
@@ -1431,278 +1432,278 @@ xfs_blockgc_clear_iflag(
 		spin_unlock(&ip->i_mount->m_perag_lock);
 		trace_xfs_perag_clear_blockgc(ip->i_mount, pag->pag_agno, -1,
 				_RET_IP_);
-	}
+	पूर्ण
 
 	spin_unlock(&pag->pag_ici_lock);
 	xfs_perag_put(pag);
-}
+पूर्ण
 
-void
+व्योम
 xfs_inode_clear_eofblocks_tag(
 	xfs_inode_t	*ip)
-{
+अणु
 	trace_xfs_inode_clear_eofblocks_tag(ip);
-	return xfs_blockgc_clear_iflag(ip, XFS_IEOFBLOCKS);
-}
+	वापस xfs_blockgc_clear_अगरlag(ip, XFS_Iखातापूर्णBLOCKS);
+पूर्ण
 
 /*
- * Set ourselves up to free CoW blocks from this file.  If it's already clean
- * then we can bail out quickly, but otherwise we must back off if the file
- * is undergoing some kind of write.
+ * Set ourselves up to मुक्त CoW blocks from this file.  If it's alपढ़ोy clean
+ * then we can bail out quickly, but otherwise we must back off अगर the file
+ * is undergoing some kind of ग_लिखो.
  */
-static bool
-xfs_prep_free_cowblocks(
-	struct xfs_inode	*ip)
-{
+अटल bool
+xfs_prep_मुक्त_cowblocks(
+	काष्ठा xfs_inode	*ip)
+अणु
 	/*
-	 * Just clear the tag if we have an empty cow fork or none at all. It's
+	 * Just clear the tag अगर we have an empty cow विभाजन or none at all. It's
 	 * possible the inode was fully unshared since it was originally tagged.
 	 */
-	if (!xfs_inode_has_cow_data(ip)) {
-		trace_xfs_inode_free_cowblocks_invalid(ip);
+	अगर (!xfs_inode_has_cow_data(ip)) अणु
+		trace_xfs_inode_मुक्त_cowblocks_invalid(ip);
 		xfs_inode_clear_cowblocks_tag(ip);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/*
-	 * If the mapping is dirty or under writeback we cannot touch the
-	 * CoW fork.  Leave it alone if we're in the midst of a directio.
+	 * If the mapping is dirty or under ग_लिखोback we cannot touch the
+	 * CoW विभाजन.  Leave it alone अगर we're in the midst of a directio.
 	 */
-	if ((VFS_I(ip)->i_state & I_DIRTY_PAGES) ||
-	    mapping_tagged(VFS_I(ip)->i_mapping, PAGECACHE_TAG_DIRTY) ||
+	अगर ((VFS_I(ip)->i_state & I_सूचीTY_PAGES) ||
+	    mapping_tagged(VFS_I(ip)->i_mapping, PAGECACHE_TAG_सूचीTY) ||
 	    mapping_tagged(VFS_I(ip)->i_mapping, PAGECACHE_TAG_WRITEBACK) ||
-	    atomic_read(&VFS_I(ip)->i_dio_count))
-		return false;
+	    atomic_पढ़ो(&VFS_I(ip)->i_dio_count))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Automatic CoW Reservation Freeing
  *
- * These functions automatically garbage collect leftover CoW reservations
- * that were made on behalf of a cowextsize hint when we start to run out
- * of quota or when the reservations sit around for too long.  If the file
- * has dirty pages or is undergoing writeback, its CoW reservations will
+ * These functions स्वतःmatically garbage collect leftover CoW reservations
+ * that were made on behalf of a cowextsize hपूर्णांक when we start to run out
+ * of quota or when the reservations sit around क्रम too दीर्घ.  If the file
+ * has dirty pages or is undergoing ग_लिखोback, its CoW reservations will
  * be retained.
  *
  * The actual garbage collection piggybacks off the same code that runs
- * the speculative EOF preallocation garbage collector.
+ * the speculative खातापूर्ण pपुनः_स्मृतिation garbage collector.
  */
-STATIC int
-xfs_inode_free_cowblocks(
-	struct xfs_inode	*ip,
-	void			*args,
-	unsigned int		*lockflags)
-{
-	struct xfs_eofblocks	*eofb = args;
-	bool			wait;
-	int			ret = 0;
+STATIC पूर्णांक
+xfs_inode_मुक्त_cowblocks(
+	काष्ठा xfs_inode	*ip,
+	व्योम			*args,
+	अचिन्हित पूर्णांक		*lockflags)
+अणु
+	काष्ठा xfs_eofblocks	*eofb = args;
+	bool			रुको;
+	पूर्णांक			ret = 0;
 
-	wait = eofb && (eofb->eof_flags & XFS_EOF_FLAGS_SYNC);
+	रुको = eofb && (eofb->eof_flags & XFS_खातापूर्ण_FLAGS_SYNC);
 
-	if (!xfs_iflags_test(ip, XFS_ICOWBLOCKS))
-		return 0;
+	अगर (!xfs_अगरlags_test(ip, XFS_ICOWBLOCKS))
+		वापस 0;
 
-	if (!xfs_prep_free_cowblocks(ip))
-		return 0;
+	अगर (!xfs_prep_मुक्त_cowblocks(ip))
+		वापस 0;
 
-	if (!xfs_inode_matches_eofb(ip, eofb))
-		return 0;
+	अगर (!xfs_inode_matches_eofb(ip, eofb))
+		वापस 0;
 
 	/*
-	 * If the caller is waiting, return -EAGAIN to keep the background
+	 * If the caller is रुकोing, वापस -EAGAIN to keep the background
 	 * scanner moving and revisit the inode in a subsequent pass.
 	 */
-	if (!(*lockflags & XFS_IOLOCK_EXCL) &&
-	    !xfs_ilock_nowait(ip, XFS_IOLOCK_EXCL)) {
-		if (wait)
-			return -EAGAIN;
-		return 0;
-	}
+	अगर (!(*lockflags & XFS_IOLOCK_EXCL) &&
+	    !xfs_ilock_noरुको(ip, XFS_IOLOCK_EXCL)) अणु
+		अगर (रुको)
+			वापस -EAGAIN;
+		वापस 0;
+	पूर्ण
 	*lockflags |= XFS_IOLOCK_EXCL;
 
-	if (!xfs_ilock_nowait(ip, XFS_MMAPLOCK_EXCL)) {
-		if (wait)
-			return -EAGAIN;
-		return 0;
-	}
+	अगर (!xfs_ilock_noरुको(ip, XFS_MMAPLOCK_EXCL)) अणु
+		अगर (रुको)
+			वापस -EAGAIN;
+		वापस 0;
+	पूर्ण
 	*lockflags |= XFS_MMAPLOCK_EXCL;
 
 	/*
-	 * Check again, nobody else should be able to dirty blocks or change
-	 * the reflink iflag now that we have the first two locks held.
+	 * Check again, nobody अन्यथा should be able to dirty blocks or change
+	 * the reflink अगरlag now that we have the first two locks held.
 	 */
-	if (xfs_prep_free_cowblocks(ip))
-		ret = xfs_reflink_cancel_cow_range(ip, 0, NULLFILEOFF, false);
-	return ret;
-}
+	अगर (xfs_prep_मुक्त_cowblocks(ip))
+		ret = xfs_reflink_cancel_cow_range(ip, 0, शून्यखाताOFF, false);
+	वापस ret;
+पूर्ण
 
-void
+व्योम
 xfs_inode_set_cowblocks_tag(
 	xfs_inode_t	*ip)
-{
+अणु
 	trace_xfs_inode_set_cowblocks_tag(ip);
-	return xfs_blockgc_set_iflag(ip, XFS_ICOWBLOCKS);
-}
+	वापस xfs_blockgc_set_अगरlag(ip, XFS_ICOWBLOCKS);
+पूर्ण
 
-void
+व्योम
 xfs_inode_clear_cowblocks_tag(
 	xfs_inode_t	*ip)
-{
+अणु
 	trace_xfs_inode_clear_cowblocks_tag(ip);
-	return xfs_blockgc_clear_iflag(ip, XFS_ICOWBLOCKS);
-}
+	वापस xfs_blockgc_clear_अगरlag(ip, XFS_ICOWBLOCKS);
+पूर्ण
 
-#define for_each_perag_tag(mp, next_agno, pag, tag) \
-	for ((next_agno) = 0, (pag) = xfs_perag_get_tag((mp), 0, (tag)); \
-		(pag) != NULL; \
+#घोषणा क्रम_each_perag_tag(mp, next_agno, pag, tag) \
+	क्रम ((next_agno) = 0, (pag) = xfs_perag_get_tag((mp), 0, (tag)); \
+		(pag) != शून्य; \
 		(next_agno) = (pag)->pag_agno + 1, \
 		xfs_perag_put(pag), \
 		(pag) = xfs_perag_get_tag((mp), (next_agno), (tag)))
 
 
-/* Disable post-EOF and CoW block auto-reclamation. */
-void
+/* Disable post-खातापूर्ण and CoW block स्वतः-reclamation. */
+व्योम
 xfs_blockgc_stop(
-	struct xfs_mount	*mp)
-{
-	struct xfs_perag	*pag;
+	काष्ठा xfs_mount	*mp)
+अणु
+	काष्ठा xfs_perag	*pag;
 	xfs_agnumber_t		agno;
 
-	for_each_perag_tag(mp, agno, pag, XFS_ICI_BLOCKGC_TAG)
+	क्रम_each_perag_tag(mp, agno, pag, XFS_ICI_BLOCKGC_TAG)
 		cancel_delayed_work_sync(&pag->pag_blockgc_work);
-}
+पूर्ण
 
-/* Enable post-EOF and CoW block auto-reclamation. */
-void
+/* Enable post-खातापूर्ण and CoW block स्वतः-reclamation. */
+व्योम
 xfs_blockgc_start(
-	struct xfs_mount	*mp)
-{
-	struct xfs_perag	*pag;
+	काष्ठा xfs_mount	*mp)
+अणु
+	काष्ठा xfs_perag	*pag;
 	xfs_agnumber_t		agno;
 
-	for_each_perag_tag(mp, agno, pag, XFS_ICI_BLOCKGC_TAG)
+	क्रम_each_perag_tag(mp, agno, pag, XFS_ICI_BLOCKGC_TAG)
 		xfs_blockgc_queue(pag);
-}
+पूर्ण
 
-/* Scan one incore inode for block preallocations that we can remove. */
-static int
+/* Scan one incore inode क्रम block pपुनः_स्मृतिations that we can हटाओ. */
+अटल पूर्णांक
 xfs_blockgc_scan_inode(
-	struct xfs_inode	*ip,
-	void			*args)
-{
-	unsigned int		lockflags = 0;
-	int			error;
+	काष्ठा xfs_inode	*ip,
+	व्योम			*args)
+अणु
+	अचिन्हित पूर्णांक		lockflags = 0;
+	पूर्णांक			error;
 
-	error = xfs_inode_free_eofblocks(ip, args, &lockflags);
-	if (error)
-		goto unlock;
+	error = xfs_inode_मुक्त_eofblocks(ip, args, &lockflags);
+	अगर (error)
+		जाओ unlock;
 
-	error = xfs_inode_free_cowblocks(ip, args, &lockflags);
+	error = xfs_inode_मुक्त_cowblocks(ip, args, &lockflags);
 unlock:
-	if (lockflags)
+	अगर (lockflags)
 		xfs_iunlock(ip, lockflags);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-/* Background worker that trims preallocated space. */
-void
+/* Background worker that trims pपुनः_स्मृतिated space. */
+व्योम
 xfs_blockgc_worker(
-	struct work_struct	*work)
-{
-	struct xfs_perag	*pag = container_of(to_delayed_work(work),
-					struct xfs_perag, pag_blockgc_work);
-	struct xfs_mount	*mp = pag->pag_mount;
-	int			error;
+	काष्ठा work_काष्ठा	*work)
+अणु
+	काष्ठा xfs_perag	*pag = container_of(to_delayed_work(work),
+					काष्ठा xfs_perag, pag_blockgc_work);
+	काष्ठा xfs_mount	*mp = pag->pag_mount;
+	पूर्णांक			error;
 
-	if (!sb_start_write_trylock(mp->m_super))
-		return;
-	error = xfs_inode_walk_ag(pag, 0, xfs_blockgc_scan_inode, NULL,
+	अगर (!sb_start_ग_लिखो_trylock(mp->m_super))
+		वापस;
+	error = xfs_inode_walk_ag(pag, 0, xfs_blockgc_scan_inode, शून्य,
 			XFS_ICI_BLOCKGC_TAG);
-	if (error)
+	अगर (error)
 		xfs_info(mp, "AG %u preallocation gc worker failed, err=%d",
 				pag->pag_agno, error);
-	sb_end_write(mp->m_super);
+	sb_end_ग_लिखो(mp->m_super);
 	xfs_blockgc_queue(pag);
-}
+पूर्ण
 
 /*
- * Try to free space in the filesystem by purging eofblocks and cowblocks.
+ * Try to मुक्त space in the fileप्रणाली by purging eofblocks and cowblocks.
  */
-int
-xfs_blockgc_free_space(
-	struct xfs_mount	*mp,
-	struct xfs_eofblocks	*eofb)
-{
-	trace_xfs_blockgc_free_space(mp, eofb, _RET_IP_);
+पूर्णांक
+xfs_blockgc_मुक्त_space(
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_eofblocks	*eofb)
+अणु
+	trace_xfs_blockgc_मुक्त_space(mp, eofb, _RET_IP_);
 
-	return xfs_inode_walk(mp, 0, xfs_blockgc_scan_inode, eofb,
+	वापस xfs_inode_walk(mp, 0, xfs_blockgc_scan_inode, eofb,
 			XFS_ICI_BLOCKGC_TAG);
-}
+पूर्ण
 
 /*
- * Run cow/eofblocks scans on the supplied dquots.  We don't know exactly which
- * quota caused an allocation failure, so we make a best effort by including
- * each quota under low free space conditions (less than 1% free space) in the
+ * Run cow/eofblocks scans on the supplied dquots.  We करोn't know exactly which
+ * quota caused an allocation failure, so we make a best efक्रमt by including
+ * each quota under low मुक्त space conditions (less than 1% मुक्त space) in the
  * scan.
  *
  * Callers must not hold any inode's ILOCK.  If requesting a synchronous scan
- * (XFS_EOF_FLAGS_SYNC), the caller also must not hold any inode's IOLOCK or
+ * (XFS_खातापूर्ण_FLAGS_SYNC), the caller also must not hold any inode's IOLOCK or
  * MMAPLOCK.
  */
-int
-xfs_blockgc_free_dquots(
-	struct xfs_mount	*mp,
-	struct xfs_dquot	*udqp,
-	struct xfs_dquot	*gdqp,
-	struct xfs_dquot	*pdqp,
-	unsigned int		eof_flags)
-{
-	struct xfs_eofblocks	eofb = {0};
-	bool			do_work = false;
+पूर्णांक
+xfs_blockgc_मुक्त_dquots(
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_dquot	*udqp,
+	काष्ठा xfs_dquot	*gdqp,
+	काष्ठा xfs_dquot	*pdqp,
+	अचिन्हित पूर्णांक		eof_flags)
+अणु
+	काष्ठा xfs_eofblocks	eofb = अणु0पूर्ण;
+	bool			करो_work = false;
 
-	if (!udqp && !gdqp && !pdqp)
-		return 0;
+	अगर (!udqp && !gdqp && !pdqp)
+		वापस 0;
 
 	/*
-	 * Run a scan to free blocks using the union filter to cover all
+	 * Run a scan to मुक्त blocks using the जोड़ filter to cover all
 	 * applicable quotas in a single scan.
 	 */
-	eofb.eof_flags = XFS_EOF_FLAGS_UNION | eof_flags;
+	eofb.eof_flags = XFS_खातापूर्ण_FLAGS_UNION | eof_flags;
 
-	if (XFS_IS_UQUOTA_ENFORCED(mp) && udqp && xfs_dquot_lowsp(udqp)) {
+	अगर (XFS_IS_UQUOTA_ENFORCED(mp) && udqp && xfs_dquot_lowsp(udqp)) अणु
 		eofb.eof_uid = make_kuid(mp->m_super->s_user_ns, udqp->q_id);
-		eofb.eof_flags |= XFS_EOF_FLAGS_UID;
-		do_work = true;
-	}
+		eofb.eof_flags |= XFS_खातापूर्ण_FLAGS_UID;
+		करो_work = true;
+	पूर्ण
 
-	if (XFS_IS_UQUOTA_ENFORCED(mp) && gdqp && xfs_dquot_lowsp(gdqp)) {
+	अगर (XFS_IS_UQUOTA_ENFORCED(mp) && gdqp && xfs_dquot_lowsp(gdqp)) अणु
 		eofb.eof_gid = make_kgid(mp->m_super->s_user_ns, gdqp->q_id);
-		eofb.eof_flags |= XFS_EOF_FLAGS_GID;
-		do_work = true;
-	}
+		eofb.eof_flags |= XFS_खातापूर्ण_FLAGS_GID;
+		करो_work = true;
+	पूर्ण
 
-	if (XFS_IS_PQUOTA_ENFORCED(mp) && pdqp && xfs_dquot_lowsp(pdqp)) {
+	अगर (XFS_IS_PQUOTA_ENFORCED(mp) && pdqp && xfs_dquot_lowsp(pdqp)) अणु
 		eofb.eof_prid = pdqp->q_id;
-		eofb.eof_flags |= XFS_EOF_FLAGS_PRID;
-		do_work = true;
-	}
+		eofb.eof_flags |= XFS_खातापूर्ण_FLAGS_PRID;
+		करो_work = true;
+	पूर्ण
 
-	if (!do_work)
-		return 0;
+	अगर (!करो_work)
+		वापस 0;
 
-	return xfs_blockgc_free_space(mp, &eofb);
-}
+	वापस xfs_blockgc_मुक्त_space(mp, &eofb);
+पूर्ण
 
 /* Run cow/eofblocks scans on the quotas attached to the inode. */
-int
-xfs_blockgc_free_quota(
-	struct xfs_inode	*ip,
-	unsigned int		eof_flags)
-{
-	return xfs_blockgc_free_dquots(ip->i_mount,
+पूर्णांक
+xfs_blockgc_मुक्त_quota(
+	काष्ठा xfs_inode	*ip,
+	अचिन्हित पूर्णांक		eof_flags)
+अणु
+	वापस xfs_blockgc_मुक्त_dquots(ip->i_mount,
 			xfs_inode_dquot(ip, XFS_DQTYPE_USER),
 			xfs_inode_dquot(ip, XFS_DQTYPE_GROUP),
 			xfs_inode_dquot(ip, XFS_DQTYPE_PROJ), eof_flags);
-}
+पूर्ण

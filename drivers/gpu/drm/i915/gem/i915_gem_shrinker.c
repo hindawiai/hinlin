@@ -1,91 +1,92 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2008-2015 Intel Corporation
+ * Copyright तऊ 2008-2015 Intel Corporation
  */
 
-#include <linux/oom.h>
-#include <linux/sched/mm.h>
-#include <linux/shmem_fs.h>
-#include <linux/slab.h>
-#include <linux/swap.h>
-#include <linux/pci.h>
-#include <linux/dma-buf.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "gt/intel_gt_requests.h"
+#समावेश "gt/intel_gt_requests.h"
 
-#include "dma_resv_utils.h"
-#include "i915_trace.h"
+#समावेश "dma_resv_utils.h"
+#समावेश "i915_trace.h"
 
-static bool swap_available(void)
-{
-	return get_nr_swap_pages() > 0;
-}
+अटल bool swap_available(व्योम)
+अणु
+	वापस get_nr_swap_pages() > 0;
+पूर्ण
 
-static bool can_release_pages(struct drm_i915_gem_object *obj)
-{
+अटल bool can_release_pages(काष्ठा drm_i915_gem_object *obj)
+अणु
 	/* Consider only shrinkable ojects. */
-	if (!i915_gem_object_is_shrinkable(obj))
-		return false;
+	अगर (!i915_gem_object_is_shrinkable(obj))
+		वापस false;
 
 	/*
-	 * We can only return physical pages to the system if we can either
+	 * We can only वापस physical pages to the प्रणाली अगर we can either
 	 * discard the contents (because the user has marked them as being
-	 * purgeable) or if we can move their contents out to swap.
+	 * purgeable) or अगर we can move their contents out to swap.
 	 */
-	return swap_available() || obj->mm.madv == I915_MADV_DONTNEED;
-}
+	वापस swap_available() || obj->mm.madv == I915_MADV_DONTNEED;
+पूर्ण
 
-static bool unsafe_drop_pages(struct drm_i915_gem_object *obj,
-			      unsigned long shrink)
-{
-	unsigned long flags;
+अटल bool unsafe_drop_pages(काष्ठा drm_i915_gem_object *obj,
+			      अचिन्हित दीर्घ shrink)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	flags = 0;
-	if (shrink & I915_SHRINK_ACTIVE)
+	अगर (shrink & I915_SHRINK_ACTIVE)
 		flags = I915_GEM_OBJECT_UNBIND_ACTIVE;
-	if (!(shrink & I915_SHRINK_BOUND))
+	अगर (!(shrink & I915_SHRINK_BOUND))
 		flags = I915_GEM_OBJECT_UNBIND_TEST;
 
-	if (i915_gem_object_unbind(obj, flags) == 0)
-		return true;
+	अगर (i915_gem_object_unbind(obj, flags) == 0)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void try_to_writeback(struct drm_i915_gem_object *obj,
-			     unsigned int flags)
-{
-	switch (obj->mm.madv) {
-	case I915_MADV_DONTNEED:
+अटल व्योम try_to_ग_लिखोback(काष्ठा drm_i915_gem_object *obj,
+			     अचिन्हित पूर्णांक flags)
+अणु
+	चयन (obj->mm.madv) अणु
+	हाल I915_MADV_DONTNEED:
 		i915_gem_object_truncate(obj);
-	case __I915_MADV_PURGED:
-		return;
-	}
+	हाल __I915_MADV_PURGED:
+		वापस;
+	पूर्ण
 
-	if (flags & I915_SHRINK_WRITEBACK)
-		i915_gem_object_writeback(obj);
-}
+	अगर (flags & I915_SHRINK_WRITEBACK)
+		i915_gem_object_ग_लिखोback(obj);
+पूर्ण
 
 /**
  * i915_gem_shrink - Shrink buffer object caches
- * @ww: i915 gem ww acquire ctx, or NULL
+ * @ww: i915 gem ww acquire ctx, or शून्य
  * @i915: i915 device
  * @target: amount of memory to make available, in pages
- * @nr_scanned: optional output for number of pages scanned (incremental)
- * @shrink: control flags for selecting cache types
+ * @nr_scanned: optional output क्रम number of pages scanned (incremental)
+ * @shrink: control flags क्रम selecting cache types
  *
- * This function is the main interface to the shrinker. It will try to release
- * up to @target pages of main memory backing storage from buffer objects.
- * Selection of the specific caches can be done with @flags. This is e.g. useful
- * when purgeable objects should be removed from caches preferentially.
+ * This function is the मुख्य पूर्णांकerface to the shrinker. It will try to release
+ * up to @target pages of मुख्य memory backing storage from buffer objects.
+ * Selection of the specअगरic caches can be करोne with @flags. This is e.g. useful
+ * when purgeable objects should be हटाओd from caches preferentially.
  *
  * Note that it's not guaranteed that released amount is actually available as
- * free system memory - the pages might still be in-used to due to other reasons
- * (like cpu mmaps) or the mm core has reused them before we could grab them.
- * Therefore code that needs to explicitly shrink buffer objects caches (e.g. to
- * avoid deadlocks in memory reclaim) must fall back to i915_gem_shrink_all().
+ * मुक्त प्रणाली memory - the pages might still be in-used to due to other reasons
+ * (like cpu mmaps) or the mm core has reused them beक्रमe we could grab them.
+ * Thereक्रमe code that needs to explicitly shrink buffer objects caches (e.g. to
+ * aव्योम deadlocks in memory reclaim) must fall back to i915_gem_shrink_all().
  *
  * Also note that any kind of pinning (both per-vma address space pins and
  * backing storage pins at the buffer object level) result in the shrinker code
@@ -94,134 +95,134 @@ static void try_to_writeback(struct drm_i915_gem_object *obj,
  * Returns:
  * The number of pages of backing storage actually released.
  */
-unsigned long
-i915_gem_shrink(struct i915_gem_ww_ctx *ww,
-		struct drm_i915_private *i915,
-		unsigned long target,
-		unsigned long *nr_scanned,
-		unsigned int shrink)
-{
-	const struct {
-		struct list_head *list;
-		unsigned int bit;
-	} phases[] = {
-		{ &i915->mm.purge_list, ~0u },
-		{
+अचिन्हित दीर्घ
+i915_gem_shrink(काष्ठा i915_gem_ww_ctx *ww,
+		काष्ठा drm_i915_निजी *i915,
+		अचिन्हित दीर्घ target,
+		अचिन्हित दीर्घ *nr_scanned,
+		अचिन्हित पूर्णांक shrink)
+अणु
+	स्थिर काष्ठा अणु
+		काष्ठा list_head *list;
+		अचिन्हित पूर्णांक bit;
+	पूर्ण phases[] = अणु
+		अणु &i915->mm.purge_list, ~0u पूर्ण,
+		अणु
 			&i915->mm.shrink_list,
 			I915_SHRINK_BOUND | I915_SHRINK_UNBOUND
-		},
-		{ NULL, 0 },
-	}, *phase;
-	intel_wakeref_t wakeref = 0;
-	unsigned long count = 0;
-	unsigned long scanned = 0;
-	int err;
+		पूर्ण,
+		अणु शून्य, 0 पूर्ण,
+	पूर्ण, *phase;
+	पूर्णांकel_wakeref_t wakeref = 0;
+	अचिन्हित दीर्घ count = 0;
+	अचिन्हित दीर्घ scanned = 0;
+	पूर्णांक err;
 
 	trace_i915_gem_shrink(i915, target, shrink);
 
 	/*
 	 * Unbinding of objects will require HW access; Let us not wake the
-	 * device just to recover a little memory. If absolutely necessary,
-	 * we will force the wake during oom-notifier.
+	 * device just to recover a little memory. If असलolutely necessary,
+	 * we will क्रमce the wake during oom-notअगरier.
 	 */
-	if (shrink & I915_SHRINK_BOUND) {
-		wakeref = intel_runtime_pm_get_if_in_use(&i915->runtime_pm);
-		if (!wakeref)
+	अगर (shrink & I915_SHRINK_BOUND) अणु
+		wakeref = पूर्णांकel_runसमय_pm_get_अगर_in_use(&i915->runसमय_pm);
+		अगर (!wakeref)
 			shrink &= ~I915_SHRINK_BOUND;
-	}
+	पूर्ण
 
 	/*
 	 * When shrinking the active list, we should also consider active
 	 * contexts. Active contexts are pinned until they are retired, and
 	 * so can not be simply unbound to retire and unpin their pages. To
-	 * shrink the contexts, we must wait until the gpu is idle and
-	 * completed its switch to the kernel context. In short, we do
-	 * not have a good mechanism for idling a specific context, but
-	 * what we can do is give them a kick so that we do not keep idle
-	 * contexts around longer than is necessary.
+	 * shrink the contexts, we must रुको until the gpu is idle and
+	 * completed its चयन to the kernel context. In लघु, we करो
+	 * not have a good mechanism क्रम idling a specअगरic context, but
+	 * what we can करो is give them a kick so that we करो not keep idle
+	 * contexts around दीर्घer than is necessary.
 	 */
-	if (shrink & I915_SHRINK_ACTIVE)
+	अगर (shrink & I915_SHRINK_ACTIVE)
 		/* Retire requests to unpin all idle contexts */
-		intel_gt_retire_requests(&i915->gt);
+		पूर्णांकel_gt_retire_requests(&i915->gt);
 
 	/*
-	 * As we may completely rewrite the (un)bound list whilst unbinding
+	 * As we may completely reग_लिखो the (un)bound list whilst unbinding
 	 * (due to retiring requests) we have to strictly process only
-	 * one element of the list at the time, and recheck the list
+	 * one element of the list at the समय, and recheck the list
 	 * on every iteration.
 	 *
 	 * In particular, we must hold a reference whilst removing the
-	 * object as we may end up waiting for and/or retiring the objects.
+	 * object as we may end up रुकोing क्रम and/or retiring the objects.
 	 * This might release the final reference (held by the active list)
-	 * and result in the object being freed from under us. This is
+	 * and result in the object being मुक्तd from under us. This is
 	 * similar to the precautions the eviction code must take whilst
 	 * removing objects.
 	 *
-	 * Also note that although these lists do not hold a reference to
+	 * Also note that although these lists करो not hold a reference to
 	 * the object we can safely grab one here: The final object
-	 * unreferencing and the bound_list are both protected by the
-	 * dev->struct_mutex and so we won't ever be able to observe an
+	 * unreferencing and the bound_list are both रक्षित by the
+	 * dev->काष्ठा_mutex and so we won't ever be able to observe an
 	 * object on the bound_list with a reference count equals 0.
 	 */
-	for (phase = phases; phase->list; phase++) {
-		struct list_head still_in_list;
-		struct drm_i915_gem_object *obj;
-		unsigned long flags;
+	क्रम (phase = phases; phase->list; phase++) अणु
+		काष्ठा list_head still_in_list;
+		काष्ठा drm_i915_gem_object *obj;
+		अचिन्हित दीर्घ flags;
 
-		if ((shrink & phase->bit) == 0)
-			continue;
+		अगर ((shrink & phase->bit) == 0)
+			जारी;
 
 		INIT_LIST_HEAD(&still_in_list);
 
 		/*
 		 * We serialize our access to unreferenced objects through
-		 * the use of the struct_mutex. While the objects are not
-		 * yet freed (due to RCU then a workqueue) we still want
-		 * to be able to shrink their pages, so they remain on
-		 * the unbound/bound list until actually freed.
+		 * the use of the काष्ठा_mutex. While the objects are not
+		 * yet मुक्तd (due to RCU then a workqueue) we still want
+		 * to be able to shrink their pages, so they reमुख्य on
+		 * the unbound/bound list until actually मुक्तd.
 		 */
 		spin_lock_irqsave(&i915->mm.obj_lock, flags);
-		while (count < target &&
+		जबतक (count < target &&
 		       (obj = list_first_entry_or_null(phase->list,
 						       typeof(*obj),
-						       mm.link))) {
+						       mm.link))) अणु
 			list_move_tail(&obj->mm.link, &still_in_list);
 
-			if (shrink & I915_SHRINK_VMAPS &&
-			    !is_vmalloc_addr(obj->mm.mapping))
-				continue;
+			अगर (shrink & I915_SHRINK_VMAPS &&
+			    !is_vदो_स्मृति_addr(obj->mm.mapping))
+				जारी;
 
-			if (!(shrink & I915_SHRINK_ACTIVE) &&
+			अगर (!(shrink & I915_SHRINK_ACTIVE) &&
 			    i915_gem_object_is_framebuffer(obj))
-				continue;
+				जारी;
 
-			if (!can_release_pages(obj))
-				continue;
+			अगर (!can_release_pages(obj))
+				जारी;
 
-			if (!kref_get_unless_zero(&obj->base.refcount))
-				continue;
+			अगर (!kref_get_unless_zero(&obj->base.refcount))
+				जारी;
 
 			spin_unlock_irqrestore(&i915->mm.obj_lock, flags);
 
 			err = 0;
-			if (unsafe_drop_pages(obj, shrink)) {
+			अगर (unsafe_drop_pages(obj, shrink)) अणु
 				/* May arrive from get_pages on another bo */
-				if (!ww) {
-					if (!i915_gem_object_trylock(obj))
-						goto skip;
-				} else {
+				अगर (!ww) अणु
+					अगर (!i915_gem_object_trylock(obj))
+						जाओ skip;
+				पूर्ण अन्यथा अणु
 					err = i915_gem_object_lock(obj, ww);
-					if (err)
-						goto skip;
-				}
+					अगर (err)
+						जाओ skip;
+				पूर्ण
 
-				if (!__i915_gem_object_put_pages(obj)) {
-					try_to_writeback(obj, shrink);
+				अगर (!__i915_gem_object_put_pages(obj)) अणु
+					try_to_ग_लिखोback(obj, shrink);
 					count += obj->base.size >> PAGE_SHIFT;
-				}
-				if (!ww)
+				पूर्ण
+				अगर (!ww)
 					i915_gem_object_unlock(obj);
-			}
+			पूर्ण
 
 			dma_resv_prune(obj->base.resv);
 
@@ -230,214 +231,214 @@ skip:
 			i915_gem_object_put(obj);
 
 			spin_lock_irqsave(&i915->mm.obj_lock, flags);
-			if (err)
-				break;
-		}
+			अगर (err)
+				अवरोध;
+		पूर्ण
 		list_splice_tail(&still_in_list, phase->list);
 		spin_unlock_irqrestore(&i915->mm.obj_lock, flags);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (shrink & I915_SHRINK_BOUND)
-		intel_runtime_pm_put(&i915->runtime_pm, wakeref);
+	अगर (shrink & I915_SHRINK_BOUND)
+		पूर्णांकel_runसमय_pm_put(&i915->runसमय_pm, wakeref);
 
-	if (nr_scanned)
+	अगर (nr_scanned)
 		*nr_scanned += scanned;
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  * i915_gem_shrink_all - Shrink buffer object caches completely
  * @i915: i915 device
  *
  * This is a simple wraper around i915_gem_shrink() to aggressively shrink all
- * caches completely. It also first waits for and retires all outstanding
- * requests to also be able to release backing storage for active objects.
+ * caches completely. It also first रुकोs क्रम and retires all outstanding
+ * requests to also be able to release backing storage क्रम active objects.
  *
- * This should only be used in code to intentionally quiescent the gpu or as a
- * last-ditch effort when memory seems to have run out.
+ * This should only be used in code to पूर्णांकentionally quiescent the gpu or as a
+ * last-ditch efक्रमt when memory seems to have run out.
  *
  * Returns:
  * The number of pages of backing storage actually released.
  */
-unsigned long i915_gem_shrink_all(struct drm_i915_private *i915)
-{
-	intel_wakeref_t wakeref;
-	unsigned long freed = 0;
+अचिन्हित दीर्घ i915_gem_shrink_all(काष्ठा drm_i915_निजी *i915)
+अणु
+	पूर्णांकel_wakeref_t wakeref;
+	अचिन्हित दीर्घ मुक्तd = 0;
 
-	with_intel_runtime_pm(&i915->runtime_pm, wakeref) {
-		freed = i915_gem_shrink(NULL, i915, -1UL, NULL,
+	with_पूर्णांकel_runसमय_pm(&i915->runसमय_pm, wakeref) अणु
+		मुक्तd = i915_gem_shrink(शून्य, i915, -1UL, शून्य,
 					I915_SHRINK_BOUND |
 					I915_SHRINK_UNBOUND);
-	}
+	पूर्ण
 
-	return freed;
-}
+	वापस मुक्तd;
+पूर्ण
 
-static unsigned long
-i915_gem_shrinker_count(struct shrinker *shrinker, struct shrink_control *sc)
-{
-	struct drm_i915_private *i915 =
-		container_of(shrinker, struct drm_i915_private, mm.shrinker);
-	unsigned long num_objects;
-	unsigned long count;
+अटल अचिन्हित दीर्घ
+i915_gem_shrinker_count(काष्ठा shrinker *shrinker, काष्ठा shrink_control *sc)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
+		container_of(shrinker, काष्ठा drm_i915_निजी, mm.shrinker);
+	अचिन्हित दीर्घ num_objects;
+	अचिन्हित दीर्घ count;
 
 	count = READ_ONCE(i915->mm.shrink_memory) >> PAGE_SHIFT;
 	num_objects = READ_ONCE(i915->mm.shrink_count);
 
 	/*
-	 * Update our preferred vmscan batch size for the next pass.
-	 * Our rough guess for an effective batch size is roughly 2
-	 * available GEM objects worth of pages. That is we don't want
-	 * the shrinker to fire, until it is worth the cost of freeing an
+	 * Update our preferred vmscan batch size क्रम the next pass.
+	 * Our rough guess क्रम an effective batch size is roughly 2
+	 * available GEM objects worth of pages. That is we करोn't want
+	 * the shrinker to fire, until it is worth the cost of मुक्तing an
 	 * entire GEM object.
 	 */
-	if (num_objects) {
-		unsigned long avg = 2 * count / num_objects;
+	अगर (num_objects) अणु
+		अचिन्हित दीर्घ avg = 2 * count / num_objects;
 
 		i915->mm.shrinker.batch =
 			max((i915->mm.shrinker.batch + avg) >> 1,
-			    128ul /* default SHRINK_BATCH */);
-	}
+			    128ul /* शेष SHRINK_BATCH */);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static unsigned long
-i915_gem_shrinker_scan(struct shrinker *shrinker, struct shrink_control *sc)
-{
-	struct drm_i915_private *i915 =
-		container_of(shrinker, struct drm_i915_private, mm.shrinker);
-	unsigned long freed;
+अटल अचिन्हित दीर्घ
+i915_gem_shrinker_scan(काष्ठा shrinker *shrinker, काष्ठा shrink_control *sc)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
+		container_of(shrinker, काष्ठा drm_i915_निजी, mm.shrinker);
+	अचिन्हित दीर्घ मुक्तd;
 
 	sc->nr_scanned = 0;
 
-	freed = i915_gem_shrink(NULL, i915,
+	मुक्तd = i915_gem_shrink(शून्य, i915,
 				sc->nr_to_scan,
 				&sc->nr_scanned,
 				I915_SHRINK_BOUND |
 				I915_SHRINK_UNBOUND);
-	if (sc->nr_scanned < sc->nr_to_scan && current_is_kswapd()) {
-		intel_wakeref_t wakeref;
+	अगर (sc->nr_scanned < sc->nr_to_scan && current_is_kswapd()) अणु
+		पूर्णांकel_wakeref_t wakeref;
 
-		with_intel_runtime_pm(&i915->runtime_pm, wakeref) {
-			freed += i915_gem_shrink(NULL, i915,
+		with_पूर्णांकel_runसमय_pm(&i915->runसमय_pm, wakeref) अणु
+			मुक्तd += i915_gem_shrink(शून्य, i915,
 						 sc->nr_to_scan - sc->nr_scanned,
 						 &sc->nr_scanned,
 						 I915_SHRINK_ACTIVE |
 						 I915_SHRINK_BOUND |
 						 I915_SHRINK_UNBOUND |
 						 I915_SHRINK_WRITEBACK);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return sc->nr_scanned ? freed : SHRINK_STOP;
-}
+	वापस sc->nr_scanned ? मुक्तd : SHRINK_STOP;
+पूर्ण
 
-static int
-i915_gem_shrinker_oom(struct notifier_block *nb, unsigned long event, void *ptr)
-{
-	struct drm_i915_private *i915 =
-		container_of(nb, struct drm_i915_private, mm.oom_notifier);
-	struct drm_i915_gem_object *obj;
-	unsigned long unevictable, available, freed_pages;
-	intel_wakeref_t wakeref;
-	unsigned long flags;
+अटल पूर्णांक
+i915_gem_shrinker_oom(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
+		container_of(nb, काष्ठा drm_i915_निजी, mm.oom_notअगरier);
+	काष्ठा drm_i915_gem_object *obj;
+	अचिन्हित दीर्घ unevictable, available, मुक्तd_pages;
+	पूर्णांकel_wakeref_t wakeref;
+	अचिन्हित दीर्घ flags;
 
-	freed_pages = 0;
-	with_intel_runtime_pm(&i915->runtime_pm, wakeref)
-		freed_pages += i915_gem_shrink(NULL, i915, -1UL, NULL,
+	मुक्तd_pages = 0;
+	with_पूर्णांकel_runसमय_pm(&i915->runसमय_pm, wakeref)
+		मुक्तd_pages += i915_gem_shrink(शून्य, i915, -1UL, शून्य,
 					       I915_SHRINK_BOUND |
 					       I915_SHRINK_UNBOUND |
 					       I915_SHRINK_WRITEBACK);
 
 	/* Because we may be allocating inside our own driver, we cannot
-	 * assert that there are no objects with pinned pages that are not
-	 * being pointed to by hardware.
+	 * निश्चित that there are no objects with pinned pages that are not
+	 * being poपूर्णांकed to by hardware.
 	 */
 	available = unevictable = 0;
 	spin_lock_irqsave(&i915->mm.obj_lock, flags);
-	list_for_each_entry(obj, &i915->mm.shrink_list, mm.link) {
-		if (!can_release_pages(obj))
+	list_क्रम_each_entry(obj, &i915->mm.shrink_list, mm.link) अणु
+		अगर (!can_release_pages(obj))
 			unevictable += obj->base.size >> PAGE_SHIFT;
-		else
+		अन्यथा
 			available += obj->base.size >> PAGE_SHIFT;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&i915->mm.obj_lock, flags);
 
-	if (freed_pages || available)
+	अगर (मुक्तd_pages || available)
 		pr_info("Purging GPU memory, %lu pages freed, "
 			"%lu pages still pinned, %lu pages left available.\n",
-			freed_pages, unevictable, available);
+			मुक्तd_pages, unevictable, available);
 
-	*(unsigned long *)ptr += freed_pages;
-	return NOTIFY_DONE;
-}
+	*(अचिन्हित दीर्घ *)ptr += मुक्तd_pages;
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int
-i915_gem_shrinker_vmap(struct notifier_block *nb, unsigned long event, void *ptr)
-{
-	struct drm_i915_private *i915 =
-		container_of(nb, struct drm_i915_private, mm.vmap_notifier);
-	struct i915_vma *vma, *next;
-	unsigned long freed_pages = 0;
-	intel_wakeref_t wakeref;
+अटल पूर्णांक
+i915_gem_shrinker_vmap(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
+		container_of(nb, काष्ठा drm_i915_निजी, mm.vmap_notअगरier);
+	काष्ठा i915_vma *vma, *next;
+	अचिन्हित दीर्घ मुक्तd_pages = 0;
+	पूर्णांकel_wakeref_t wakeref;
 
-	with_intel_runtime_pm(&i915->runtime_pm, wakeref)
-		freed_pages += i915_gem_shrink(NULL, i915, -1UL, NULL,
+	with_पूर्णांकel_runसमय_pm(&i915->runसमय_pm, wakeref)
+		मुक्तd_pages += i915_gem_shrink(शून्य, i915, -1UL, शून्य,
 					       I915_SHRINK_BOUND |
 					       I915_SHRINK_UNBOUND |
 					       I915_SHRINK_VMAPS);
 
 	/* We also want to clear any cached iomaps as they wrap vmap */
 	mutex_lock(&i915->ggtt.vm.mutex);
-	list_for_each_entry_safe(vma, next,
-				 &i915->ggtt.vm.bound_list, vm_link) {
-		unsigned long count = vma->node.size >> PAGE_SHIFT;
+	list_क्रम_each_entry_safe(vma, next,
+				 &i915->ggtt.vm.bound_list, vm_link) अणु
+		अचिन्हित दीर्घ count = vma->node.size >> PAGE_SHIFT;
 
-		if (!vma->iomap || i915_vma_is_active(vma))
-			continue;
+		अगर (!vma->iomap || i915_vma_is_active(vma))
+			जारी;
 
-		if (__i915_vma_unbind(vma) == 0)
-			freed_pages += count;
-	}
+		अगर (__i915_vma_unbind(vma) == 0)
+			मुक्तd_pages += count;
+	पूर्ण
 	mutex_unlock(&i915->ggtt.vm.mutex);
 
-	*(unsigned long *)ptr += freed_pages;
-	return NOTIFY_DONE;
-}
+	*(अचिन्हित दीर्घ *)ptr += मुक्तd_pages;
+	वापस NOTIFY_DONE;
+पूर्ण
 
-void i915_gem_driver_register__shrinker(struct drm_i915_private *i915)
-{
+व्योम i915_gem_driver_रेजिस्टर__shrinker(काष्ठा drm_i915_निजी *i915)
+अणु
 	i915->mm.shrinker.scan_objects = i915_gem_shrinker_scan;
 	i915->mm.shrinker.count_objects = i915_gem_shrinker_count;
 	i915->mm.shrinker.seeks = DEFAULT_SEEKS;
 	i915->mm.shrinker.batch = 4096;
-	drm_WARN_ON(&i915->drm, register_shrinker(&i915->mm.shrinker));
+	drm_WARN_ON(&i915->drm, रेजिस्टर_shrinker(&i915->mm.shrinker));
 
-	i915->mm.oom_notifier.notifier_call = i915_gem_shrinker_oom;
-	drm_WARN_ON(&i915->drm, register_oom_notifier(&i915->mm.oom_notifier));
+	i915->mm.oom_notअगरier.notअगरier_call = i915_gem_shrinker_oom;
+	drm_WARN_ON(&i915->drm, रेजिस्टर_oom_notअगरier(&i915->mm.oom_notअगरier));
 
-	i915->mm.vmap_notifier.notifier_call = i915_gem_shrinker_vmap;
+	i915->mm.vmap_notअगरier.notअगरier_call = i915_gem_shrinker_vmap;
 	drm_WARN_ON(&i915->drm,
-		    register_vmap_purge_notifier(&i915->mm.vmap_notifier));
-}
+		    रेजिस्टर_vmap_purge_notअगरier(&i915->mm.vmap_notअगरier));
+पूर्ण
 
-void i915_gem_driver_unregister__shrinker(struct drm_i915_private *i915)
-{
+व्योम i915_gem_driver_unरेजिस्टर__shrinker(काष्ठा drm_i915_निजी *i915)
+अणु
 	drm_WARN_ON(&i915->drm,
-		    unregister_vmap_purge_notifier(&i915->mm.vmap_notifier));
+		    unरेजिस्टर_vmap_purge_notअगरier(&i915->mm.vmap_notअगरier));
 	drm_WARN_ON(&i915->drm,
-		    unregister_oom_notifier(&i915->mm.oom_notifier));
-	unregister_shrinker(&i915->mm.shrinker);
-}
+		    unरेजिस्टर_oom_notअगरier(&i915->mm.oom_notअगरier));
+	unरेजिस्टर_shrinker(&i915->mm.shrinker);
+पूर्ण
 
-void i915_gem_shrinker_taints_mutex(struct drm_i915_private *i915,
-				    struct mutex *mutex)
-{
-	if (!IS_ENABLED(CONFIG_LOCKDEP))
-		return;
+व्योम i915_gem_shrinker_taपूर्णांकs_mutex(काष्ठा drm_i915_निजी *i915,
+				    काष्ठा mutex *mutex)
+अणु
+	अगर (!IS_ENABLED(CONFIG_LOCKDEP))
+		वापस;
 
 	fs_reclaim_acquire(GFP_KERNEL);
 
@@ -445,68 +446,68 @@ void i915_gem_shrinker_taints_mutex(struct drm_i915_private *i915,
 	mutex_release(&mutex->dep_map, _RET_IP_);
 
 	fs_reclaim_release(GFP_KERNEL);
-}
+पूर्ण
 
-#define obj_to_i915(obj__) to_i915((obj__)->base.dev)
+#घोषणा obj_to_i915(obj__) to_i915((obj__)->base.dev)
 
-void i915_gem_object_make_unshrinkable(struct drm_i915_gem_object *obj)
-{
-	struct drm_i915_private *i915 = obj_to_i915(obj);
-	unsigned long flags;
+व्योम i915_gem_object_make_unshrinkable(काष्ठा drm_i915_gem_object *obj)
+अणु
+	काष्ठा drm_i915_निजी *i915 = obj_to_i915(obj);
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * We can only be called while the pages are pinned or when
+	 * We can only be called जबतक the pages are pinned or when
 	 * the pages are released. If pinned, we should only be called
 	 * from a single caller under controlled conditions; and on release
 	 * only one caller may release us. Neither the two may cross.
 	 */
-	if (atomic_add_unless(&obj->mm.shrink_pin, 1, 0))
-		return;
+	अगर (atomic_add_unless(&obj->mm.shrink_pin, 1, 0))
+		वापस;
 
 	spin_lock_irqsave(&i915->mm.obj_lock, flags);
-	if (!atomic_fetch_inc(&obj->mm.shrink_pin) &&
-	    !list_empty(&obj->mm.link)) {
+	अगर (!atomic_fetch_inc(&obj->mm.shrink_pin) &&
+	    !list_empty(&obj->mm.link)) अणु
 		list_del_init(&obj->mm.link);
 		i915->mm.shrink_count--;
 		i915->mm.shrink_memory -= obj->base.size;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&i915->mm.obj_lock, flags);
-}
+पूर्ण
 
-static void __i915_gem_object_make_shrinkable(struct drm_i915_gem_object *obj,
-					      struct list_head *head)
-{
-	struct drm_i915_private *i915 = obj_to_i915(obj);
-	unsigned long flags;
+अटल व्योम __i915_gem_object_make_shrinkable(काष्ठा drm_i915_gem_object *obj,
+					      काष्ठा list_head *head)
+अणु
+	काष्ठा drm_i915_निजी *i915 = obj_to_i915(obj);
+	अचिन्हित दीर्घ flags;
 
 	GEM_BUG_ON(!i915_gem_object_has_pages(obj));
-	if (!i915_gem_object_is_shrinkable(obj))
-		return;
+	अगर (!i915_gem_object_is_shrinkable(obj))
+		वापस;
 
-	if (atomic_add_unless(&obj->mm.shrink_pin, -1, 1))
-		return;
+	अगर (atomic_add_unless(&obj->mm.shrink_pin, -1, 1))
+		वापस;
 
 	spin_lock_irqsave(&i915->mm.obj_lock, flags);
-	GEM_BUG_ON(!kref_read(&obj->base.refcount));
-	if (atomic_dec_and_test(&obj->mm.shrink_pin)) {
+	GEM_BUG_ON(!kref_पढ़ो(&obj->base.refcount));
+	अगर (atomic_dec_and_test(&obj->mm.shrink_pin)) अणु
 		GEM_BUG_ON(!list_empty(&obj->mm.link));
 
 		list_add_tail(&obj->mm.link, head);
 		i915->mm.shrink_count++;
 		i915->mm.shrink_memory += obj->base.size;
 
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&i915->mm.obj_lock, flags);
-}
+पूर्ण
 
-void i915_gem_object_make_shrinkable(struct drm_i915_gem_object *obj)
-{
+व्योम i915_gem_object_make_shrinkable(काष्ठा drm_i915_gem_object *obj)
+अणु
 	__i915_gem_object_make_shrinkable(obj,
 					  &obj_to_i915(obj)->mm.shrink_list);
-}
+पूर्ण
 
-void i915_gem_object_make_purgeable(struct drm_i915_gem_object *obj)
-{
+व्योम i915_gem_object_make_purgeable(काष्ठा drm_i915_gem_object *obj)
+अणु
 	__i915_gem_object_make_shrinkable(obj,
 					  &obj_to_i915(obj)->mm.purge_list);
-}
+पूर्ण

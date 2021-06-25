@@ -1,102 +1,103 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Coldfire generic GPIO support
  *
  * (C) Copyright 2009, Steven King <sfking@fdwdc.com>
 */
 
-#ifndef coldfire_gpio_h
-#define coldfire_gpio_h
+#अगर_अघोषित coldfire_gpio_h
+#घोषणा coldfire_gpio_h
 
-#include <linux/io.h>
-#include <asm/coldfire.h>
-#include <asm/mcfsim.h>
-#include <asm/mcfgpio.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/coldfire.h>
+#समावेश <यंत्र/mcfsim.h>
+#समावेश <यंत्र/mcfgpपन.स>
 /*
  * The Generic GPIO functions
  *
- * If the gpio is a compile time constant and is one of the Coldfire gpios,
- * use the inline version, otherwise dispatch thru gpiolib.
+ * If the gpio is a compile समय स्थिरant and is one of the Coldfire gpios,
+ * use the अंतरभूत version, otherwise dispatch thru gpiolib.
  */
 
-static inline int gpio_get_value(unsigned gpio)
-{
-	if (__builtin_constant_p(gpio) && gpio < MCFGPIO_PIN_MAX)
-		return mcfgpio_read(__mcfgpio_ppdr(gpio)) & mcfgpio_bit(gpio);
-	else
-		return __gpio_get_value(gpio);
-}
+अटल अंतरभूत पूर्णांक gpio_get_value(अचिन्हित gpio)
+अणु
+	अगर (__builtin_स्थिरant_p(gpio) && gpio < MCFGPIO_PIN_MAX)
+		वापस mcfgpio_पढ़ो(__mcfgpio_ppdr(gpio)) & mcfgpio_bit(gpio);
+	अन्यथा
+		वापस __gpio_get_value(gpio);
+पूर्ण
 
-static inline void gpio_set_value(unsigned gpio, int value)
-{
-	if (__builtin_constant_p(gpio) && gpio < MCFGPIO_PIN_MAX) {
-		if (gpio < MCFGPIO_SCR_START) {
-			unsigned long flags;
+अटल अंतरभूत व्योम gpio_set_value(अचिन्हित gpio, पूर्णांक value)
+अणु
+	अगर (__builtin_स्थिरant_p(gpio) && gpio < MCFGPIO_PIN_MAX) अणु
+		अगर (gpio < MCFGPIO_SCR_START) अणु
+			अचिन्हित दीर्घ flags;
 			MCFGPIO_PORTTYPE data;
 
 			local_irq_save(flags);
-			data = mcfgpio_read(__mcfgpio_podr(gpio));
-			if (value)
+			data = mcfgpio_पढ़ो(__mcfgpio_podr(gpio));
+			अगर (value)
 				data |= mcfgpio_bit(gpio);
-			else
+			अन्यथा
 				data &= ~mcfgpio_bit(gpio);
-			mcfgpio_write(data, __mcfgpio_podr(gpio));
+			mcfgpio_ग_लिखो(data, __mcfgpio_podr(gpio));
 			local_irq_restore(flags);
-		} else {
-			if (value)
-				mcfgpio_write(mcfgpio_bit(gpio),
+		पूर्ण अन्यथा अणु
+			अगर (value)
+				mcfgpio_ग_लिखो(mcfgpio_bit(gpio),
 						MCFGPIO_SETR_PORT(gpio));
-			else
-				mcfgpio_write(~mcfgpio_bit(gpio),
+			अन्यथा
+				mcfgpio_ग_लिखो(~mcfgpio_bit(gpio),
 						MCFGPIO_CLRR_PORT(gpio));
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		__gpio_set_value(gpio, value);
-}
+पूर्ण
 
-static inline int gpio_to_irq(unsigned gpio)
-{
-#if defined(MCFGPIO_IRQ_MIN)
-	if ((gpio >= MCFGPIO_IRQ_MIN) && (gpio < MCFGPIO_IRQ_MAX))
-#else
-	if (gpio < MCFGPIO_IRQ_MAX)
-#endif
-		return gpio + MCFGPIO_IRQ_VECBASE;
-	else
-		return __gpio_to_irq(gpio);
-}
+अटल अंतरभूत पूर्णांक gpio_to_irq(अचिन्हित gpio)
+अणु
+#अगर defined(MCFGPIO_IRQ_MIN)
+	अगर ((gpio >= MCFGPIO_IRQ_MIN) && (gpio < MCFGPIO_IRQ_MAX))
+#अन्यथा
+	अगर (gpio < MCFGPIO_IRQ_MAX)
+#पूर्ण_अगर
+		वापस gpio + MCFGPIO_IRQ_VECBASE;
+	अन्यथा
+		वापस __gpio_to_irq(gpio);
+पूर्ण
 
-static inline int irq_to_gpio(unsigned irq)
-{
-	return (irq >= MCFGPIO_IRQ_VECBASE &&
+अटल अंतरभूत पूर्णांक irq_to_gpio(अचिन्हित irq)
+अणु
+	वापस (irq >= MCFGPIO_IRQ_VECBASE &&
 		irq < (MCFGPIO_IRQ_VECBASE + MCFGPIO_IRQ_MAX)) ?
 		irq - MCFGPIO_IRQ_VECBASE : -ENXIO;
-}
+पूर्ण
 
-static inline int gpio_cansleep(unsigned gpio)
-{
-	return gpio < MCFGPIO_PIN_MAX ? 0 : __gpio_cansleep(gpio);
-}
+अटल अंतरभूत पूर्णांक gpio_cansleep(अचिन्हित gpio)
+अणु
+	वापस gpio < MCFGPIO_PIN_MAX ? 0 : __gpio_cansleep(gpio);
+पूर्ण
 
-#ifndef CONFIG_GPIOLIB
-static inline int gpio_request_one(unsigned gpio, unsigned long flags, const char *label)
-{
-	int err;
+#अगर_अघोषित CONFIG_GPIOLIB
+अटल अंतरभूत पूर्णांक gpio_request_one(अचिन्हित gpio, अचिन्हित दीर्घ flags, स्थिर अक्षर *label)
+अणु
+	पूर्णांक err;
 
 	err = gpio_request(gpio, label);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (flags & GPIOF_DIR_IN)
+	अगर (flags & GPIOF_सूची_IN)
 		err = gpio_direction_input(gpio);
-	else
+	अन्यथा
 		err = gpio_direction_output(gpio,
 			(flags & GPIOF_INIT_HIGH) ? 1 : 0);
 
-	if (err)
-		gpio_free(gpio);
+	अगर (err)
+		gpio_मुक्त(gpio);
 
-	return err;
-}
-#endif /* !CONFIG_GPIOLIB */
-#endif
+	वापस err;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_GPIOLIB */
+#पूर्ण_अगर

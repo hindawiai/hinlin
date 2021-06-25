@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_IPC_H
-#define _UAPI_LINUX_IPC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_IPC_H
+#घोषणा _UAPI_LINUX_IPC_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define IPC_PRIVATE ((__kernel_key_t) 0)  
+#घोषणा IPC_PRIVATE ((__kernel_key_t) 0)  
 
-/* Obsolete, used only for backwards compatibility and libc5 compiles */
-struct ipc_perm
-{
+/* Obsolete, used only क्रम backwards compatibility and libc5 compiles */
+काष्ठा ipc_perm
+अणु
 	__kernel_key_t	key;
 	__kernel_uid_t	uid;
 	__kernel_gid_t	gid;
 	__kernel_uid_t	cuid;
 	__kernel_gid_t	cgid;
 	__kernel_mode_t	mode; 
-	unsigned short	seq;
-};
+	अचिन्हित लघु	seq;
+पूर्ण;
 
 /* Include the definition of ipc64_perm */
-#include <asm/ipcbuf.h>
+#समावेश <यंत्र/ipcbuf.h>
 
 /* resource get request flags */
-#define IPC_CREAT  00001000   /* create if key is nonexistent */
-#define IPC_EXCL   00002000   /* fail if key exists */
-#define IPC_NOWAIT 00004000   /* return error on wait */
+#घोषणा IPC_CREAT  00001000   /* create अगर key is nonexistent */
+#घोषणा IPC_EXCL   00002000   /* fail अगर key exists */
+#घोषणा IPC_NOWAIT 00004000   /* वापस error on रुको */
 
 /* these fields are used by the DIPC package so the kernel as standard
-   should avoid using them if possible */
+   should aव्योम using them अगर possible */
    
-#define IPC_DIPC 00010000  /* make it distributed */
-#define IPC_OWN  00020000  /* this machine is the DIPC owner */
+#घोषणा IPC_DIPC 00010000  /* make it distributed */
+#घोषणा IPC_OWN  00020000  /* this machine is the DIPC owner */
 
 /* 
  * Control commands used with semctl, msgctl and shmctl 
- * see also specific commands in sem.h, msg.h and shm.h
+ * see also specअगरic commands in sem.h, msg.h and shm.h
  */
-#define IPC_RMID 0     /* remove resource */
-#define IPC_SET  1     /* set ipc_perm options */
-#define IPC_STAT 2     /* get ipc_perm options */
-#define IPC_INFO 3     /* see ipcs */
+#घोषणा IPC_RMID 0     /* हटाओ resource */
+#घोषणा IPC_SET  1     /* set ipc_perm options */
+#घोषणा IPC_STAT 2     /* get ipc_perm options */
+#घोषणा IPC_INFO 3     /* see ipcs */
 
 /*
- * Version flags for semctl, msgctl, and shmctl commands
+ * Version flags क्रम semctl, msgctl, and shmctl commands
  * These are passed as bitflags or-ed with the actual command
  */
-#define IPC_OLD 0	/* Old version (no 32-bit UID support on many
+#घोषणा IPC_OLD 0	/* Old version (no 32-bit UID support on many
 			   architectures) */
-#define IPC_64  0x0100  /* New version (support 32-bit UIDs, bigger
+#घोषणा IPC_64  0x0100  /* New version (support 32-bit UIDs, bigger
 			   message sizes, etc. */
 
 /*
- * These are used to wrap system calls.
+ * These are used to wrap प्रणाली calls.
  *
- * See architecture code for ugly details..
+ * See architecture code क्रम ugly details..
  */
-struct ipc_kludge {
-	struct msgbuf __user *msgp;
-	long msgtyp;
-};
+काष्ठा ipc_kludge अणु
+	काष्ठा msgbuf __user *msgp;
+	दीर्घ msgtyp;
+पूर्ण;
 
-#define SEMOP		 1
-#define SEMGET		 2
-#define SEMCTL		 3
-#define SEMTIMEDOP	 4
-#define MSGSND		11
-#define MSGRCV		12
-#define MSGGET		13
-#define MSGCTL		14
-#define SHMAT		21
-#define SHMDT		22
-#define SHMGET		23
-#define SHMCTL		24
+#घोषणा SEMOP		 1
+#घोषणा SEMGET		 2
+#घोषणा SEMCTL		 3
+#घोषणा SEMTIMEDOP	 4
+#घोषणा MSGSND		11
+#घोषणा MSGRCV		12
+#घोषणा MSGGET		13
+#घोषणा MSGCTL		14
+#घोषणा SHMAT		21
+#घोषणा SHMDT		22
+#घोषणा SHMGET		23
+#घोषणा SHMCTL		24
 
-/* Used by the DIPC package, try and avoid reusing it */
-#define DIPC            25
+/* Used by the DIPC package, try and aव्योम reusing it */
+#घोषणा DIPC            25
 
-#define IPCCALL(version,op)	((version)<<16 | (op))
+#घोषणा IPCCALL(version,op)	((version)<<16 | (op))
 
 
-#endif /* _UAPI_LINUX_IPC_H */
+#पूर्ण_अगर /* _UAPI_LINUX_IPC_H */

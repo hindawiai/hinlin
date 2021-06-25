@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
- * This file contains AppArmor policy loading interface function definitions.
+ * This file contains AppArmor policy loading पूर्णांकerface function definitions.
  *
  * Copyright 2013 Canonical Ltd.
  */
 
-#ifndef __APPARMOR_CRYPTO_H
-#define __APPARMOR_CRYPTO_H
+#अगर_अघोषित __APPARMOR_CRYPTO_H
+#घोषणा __APPARMOR_CRYPTO_H
 
-#include "policy.h"
+#समावेश "policy.h"
 
-#ifdef CONFIG_SECURITY_APPARMOR_HASH
-unsigned int aa_hash_size(void);
-char *aa_calc_hash(void *data, size_t len);
-int aa_calc_profile_hash(struct aa_profile *profile, u32 version, void *start,
-			 size_t len);
-#else
-static inline char *aa_calc_hash(void *data, size_t len)
-{
-	return NULL;
-}
-static inline int aa_calc_profile_hash(struct aa_profile *profile, u32 version,
-				       void *start, size_t len)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_SECURITY_APPARMOR_HASH
+अचिन्हित पूर्णांक aa_hash_size(व्योम);
+अक्षर *aa_calc_hash(व्योम *data, माप_प्रकार len);
+पूर्णांक aa_calc_profile_hash(काष्ठा aa_profile *profile, u32 version, व्योम *start,
+			 माप_प्रकार len);
+#अन्यथा
+अटल अंतरभूत अक्षर *aa_calc_hash(व्योम *data, माप_प्रकार len)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत पूर्णांक aa_calc_profile_hash(काष्ठा aa_profile *profile, u32 version,
+				       व्योम *start, माप_प्रकार len)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline unsigned int aa_hash_size(void)
-{
-	return 0;
-}
-#endif
+अटल अंतरभूत अचिन्हित पूर्णांक aa_hash_size(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __APPARMOR_CRYPTO_H */
+#पूर्ण_अगर /* __APPARMOR_CRYPTO_H */

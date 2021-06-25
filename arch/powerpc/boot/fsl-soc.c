@@ -1,54 +1,55 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Freescale SOC support functions
  *
- * Author: Scott Wood <scottwood@freescale.com>
+ * Author: Scott Wood <scottwood@मुक्तscale.com>
  *
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
 
-#include "ops.h"
-#include "types.h"
-#include "fsl-soc.h"
-#include "stdio.h"
+#समावेश "ops.h"
+#समावेश "types.h"
+#समावेश "fsl-soc.h"
+#समावेश "stdio.h"
 
-static u32 prop_buf[MAX_PROP_LEN / 4];
+अटल u32 prop_buf[MAX_PROP_LEN / 4];
 
-u32 *fsl_get_immr(void)
-{
-	void *soc;
-	unsigned long ret = 0;
+u32 *fsl_get_immr(व्योम)
+अणु
+	व्योम *soc;
+	अचिन्हित दीर्घ ret = 0;
 
-	soc = find_node_by_devtype(NULL, "soc");
-	if (soc) {
-		int size;
+	soc = find_node_by_devtype(शून्य, "soc");
+	अगर (soc) अणु
+		पूर्णांक size;
 		u32 naddr;
 
 		size = getprop(soc, "#address-cells", prop_buf, MAX_PROP_LEN);
-		if (size == 4)
+		अगर (size == 4)
 			naddr = prop_buf[0];
-		else
+		अन्यथा
 			naddr = 2;
 
-		if (naddr != 1 && naddr != 2)
-			goto err;
+		अगर (naddr != 1 && naddr != 2)
+			जाओ err;
 
 		size = getprop(soc, "ranges", prop_buf, MAX_PROP_LEN);
 
-		if (size < 12)
-			goto err;
-		if (prop_buf[0] != 0)
-			goto err;
-		if (naddr == 2 && prop_buf[1] != 0)
-			goto err;
+		अगर (size < 12)
+			जाओ err;
+		अगर (prop_buf[0] != 0)
+			जाओ err;
+		अगर (naddr == 2 && prop_buf[1] != 0)
+			जाओ err;
 
-		if (!dt_xlate_addr(soc, prop_buf + naddr, 8, &ret))
+		अगर (!dt_xlate_addr(soc, prop_buf + naddr, 8, &ret))
 			ret = 0;
-	}
+	पूर्ण
 
 err:
-	if (!ret)
-		printf("fsl_get_immr: Failed to find immr base\r\n");
+	अगर (!ret)
+		म_लिखो("fsl_get_immr: Failed to find immr base\r\n");
 
-	return (u32 *)ret;
-}
+	वापस (u32 *)ret;
+पूर्ण

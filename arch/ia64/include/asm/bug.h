@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_BUG_H
-#define _ASM_IA64_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_BUG_H
+#घोषणा _ASM_IA64_BUG_H
 
-#ifdef CONFIG_BUG
-#define ia64_abort()	__builtin_trap()
-#define BUG() do {						\
-	printk("kernel BUG at %s:%d!\n", __FILE__, __LINE__);	\
-	barrier_before_unreachable();				\
-	ia64_abort();						\
-} while (0)
+#अगर_घोषित CONFIG_BUG
+#घोषणा ia64_पात()	__builtin_trap()
+#घोषणा BUG() करो अणु						\
+	prपूर्णांकk("kernel BUG at %s:%d!\n", __खाता__, __LINE__);	\
+	barrier_beक्रमe_unreachable();				\
+	ia64_पात();						\
+पूर्ण जबतक (0)
 
 /* should this BUG be made generic? */
-#define HAVE_ARCH_BUG
-#endif
+#घोषणा HAVE_ARCH_BUG
+#पूर्ण_अगर
 
-#include <asm-generic/bug.h>
+#समावेश <यंत्र-generic/bug.h>
 
-#endif
+#पूर्ण_अगर

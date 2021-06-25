@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef SLAB_H
-#define SLAB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित SLAB_H
+#घोषणा SLAB_H
 
-#include <linux/types.h>
-#include <linux/gfp.h>
+#समावेश <linux/types.h>
+#समावेश <linux/gfp.h>
 
-#define SLAB_HWCACHE_ALIGN 1
-#define SLAB_PANIC 2
-#define SLAB_RECLAIM_ACCOUNT    0x00020000UL            /* Objects are reclaimable */
+#घोषणा SLAB_HWCACHE_ALIGN 1
+#घोषणा SLAB_PANIC 2
+#घोषणा SLAB_RECLAIM_ACCOUNT    0x00020000UL            /* Objects are reclaimable */
 
-void *kmalloc(size_t size, gfp_t);
-void kfree(void *);
+व्योम *kदो_स्मृति(माप_प्रकार size, gfp_t);
+व्योम kमुक्त(व्योम *);
 
-static inline void *kzalloc(size_t size, gfp_t gfp)
-{
-        return kmalloc(size, gfp | __GFP_ZERO);
-}
+अटल अंतरभूत व्योम *kzalloc(माप_प्रकार size, gfp_t gfp)
+अणु
+        वापस kदो_स्मृति(size, gfp | __GFP_ZERO);
+पूर्ण
 
-void *kmem_cache_alloc(struct kmem_cache *cachep, int flags);
-void kmem_cache_free(struct kmem_cache *cachep, void *objp);
+व्योम *kmem_cache_alloc(काष्ठा kmem_cache *cachep, पूर्णांक flags);
+व्योम kmem_cache_मुक्त(काष्ठा kmem_cache *cachep, व्योम *objp);
 
-struct kmem_cache *kmem_cache_create(const char *name, unsigned int size,
-			unsigned int align, unsigned int flags,
-			void (*ctor)(void *));
+काष्ठा kmem_cache *kmem_cache_create(स्थिर अक्षर *name, अचिन्हित पूर्णांक size,
+			अचिन्हित पूर्णांक align, अचिन्हित पूर्णांक flags,
+			व्योम (*ctor)(व्योम *));
 
-#endif		/* SLAB_H */
+#पूर्ण_अगर		/* SLAB_H */

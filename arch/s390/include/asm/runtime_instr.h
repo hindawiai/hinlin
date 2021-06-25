@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _RUNTIME_INSTR_H
-#define _RUNTIME_INSTR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _RUNTIME_INSTR_H
+#घोषणा _RUNTIME_INSTR_H
 
-#include <uapi/asm/runtime_instr.h>
+#समावेश <uapi/यंत्र/runसमय_instr.h>
 
-extern struct runtime_instr_cb runtime_instr_empty_cb;
+बाह्य काष्ठा runसमय_instr_cb runसमय_instr_empty_cb;
 
-static inline void save_ri_cb(struct runtime_instr_cb *cb_prev)
-{
-	if (cb_prev)
-		store_runtime_instr_cb(cb_prev);
-}
+अटल अंतरभूत व्योम save_ri_cb(काष्ठा runसमय_instr_cb *cb_prev)
+अणु
+	अगर (cb_prev)
+		store_runसमय_instr_cb(cb_prev);
+पूर्ण
 
-static inline void restore_ri_cb(struct runtime_instr_cb *cb_next,
-				 struct runtime_instr_cb *cb_prev)
-{
-	if (cb_next)
-		load_runtime_instr_cb(cb_next);
-	else if (cb_prev)
-		load_runtime_instr_cb(&runtime_instr_empty_cb);
-}
+अटल अंतरभूत व्योम restore_ri_cb(काष्ठा runसमय_instr_cb *cb_next,
+				 काष्ठा runसमय_instr_cb *cb_prev)
+अणु
+	अगर (cb_next)
+		load_runसमय_instr_cb(cb_next);
+	अन्यथा अगर (cb_prev)
+		load_runसमय_instr_cb(&runसमय_instr_empty_cb);
+पूर्ण
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-void runtime_instr_release(struct task_struct *tsk);
+व्योम runसमय_instr_release(काष्ठा task_काष्ठा *tsk);
 
-#endif /* _RUNTIME_INSTR_H */
+#पूर्ण_अगर /* _RUNTIME_INSTR_H */

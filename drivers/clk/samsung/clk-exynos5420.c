@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  * Authors: Thomas Abraham <thomas.ab@samsung.com>
  *	    Chander Kashyap <k.chander@samsung.com>
  *
- * Common Clock Framework support for Exynos5420 SoC.
+ * Common Clock Framework support क्रम Exynos5420 SoC.
 */
 
-#include <dt-bindings/clock/exynos5420.h>
-#include <linux/slab.h>
-#include <linux/clk-provider.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/clk.h>
+#समावेश <dt-bindings/घड़ी/exynos5420.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/clk.h>
 
-#include "clk.h"
-#include "clk-cpu.h"
-#include "clk-exynos5-subcmu.h"
+#समावेश "clk.h"
+#समावेश "clk-cpu.h"
+#समावेश "clk-exynos5-subcmu.h"
 
-#define APLL_LOCK		0x0
-#define APLL_CON0		0x100
-#define SRC_CPU			0x200
-#define DIV_CPU0		0x500
-#define DIV_CPU1		0x504
-#define GATE_BUS_CPU		0x700
-#define GATE_SCLK_CPU		0x800
-#define CLKOUT_CMU_CPU		0xa00
-#define SRC_MASK_CPERI		0x4300
-#define GATE_IP_G2D		0x8800
-#define CPLL_LOCK		0x10020
-#define DPLL_LOCK		0x10030
-#define EPLL_LOCK		0x10040
-#define RPLL_LOCK		0x10050
-#define IPLL_LOCK		0x10060
-#define SPLL_LOCK		0x10070
-#define VPLL_LOCK		0x10080
-#define MPLL_LOCK		0x10090
-#define CPLL_CON0		0x10120
-#define DPLL_CON0		0x10128
-#define EPLL_CON0		0x10130
-#define EPLL_CON1		0x10134
-#define EPLL_CON2		0x10138
-#define RPLL_CON0		0x10140
-#define RPLL_CON1		0x10144
-#define RPLL_CON2		0x10148
-#define IPLL_CON0		0x10150
-#define SPLL_CON0		0x10160
-#define VPLL_CON0		0x10170
-#define MPLL_CON0		0x10180
-#define SRC_TOP0		0x10200
-#define SRC_TOP1		0x10204
-#define SRC_TOP2		0x10208
-#define SRC_TOP3		0x1020c
-#define SRC_TOP4		0x10210
-#define SRC_TOP5		0x10214
-#define SRC_TOP6		0x10218
-#define SRC_TOP7		0x1021c
-#define SRC_TOP8		0x10220 /* 5800 specific */
-#define SRC_TOP9		0x10224 /* 5800 specific */
-#define SRC_DISP10		0x1022c
-#define SRC_MAU			0x10240
-#define SRC_FSYS		0x10244
-#define SRC_PERIC0		0x10250
-#define SRC_PERIC1		0x10254
-#define SRC_ISP			0x10270
-#define SRC_CAM			0x10274 /* 5800 specific */
-#define SRC_TOP10		0x10280
-#define SRC_TOP11		0x10284
-#define SRC_TOP12		0x10288
-#define SRC_TOP13		0x1028c /* 5800 specific */
-#define SRC_MASK_TOP0		0x10300
-#define SRC_MASK_TOP1		0x10304
-#define SRC_MASK_TOP2		0x10308
-#define SRC_MASK_TOP7		0x1031c
-#define SRC_MASK_DISP10		0x1032c
-#define SRC_MASK_MAU		0x10334
-#define SRC_MASK_FSYS		0x10340
-#define SRC_MASK_PERIC0		0x10350
-#define SRC_MASK_PERIC1		0x10354
-#define SRC_MASK_ISP		0x10370
-#define DIV_TOP0		0x10500
-#define DIV_TOP1		0x10504
-#define DIV_TOP2		0x10508
-#define DIV_TOP8		0x10520 /* 5800 specific */
-#define DIV_TOP9		0x10524 /* 5800 specific */
-#define DIV_DISP10		0x1052c
-#define DIV_MAU			0x10544
-#define DIV_FSYS0		0x10548
-#define DIV_FSYS1		0x1054c
-#define DIV_FSYS2		0x10550
-#define DIV_PERIC0		0x10558
-#define DIV_PERIC1		0x1055c
-#define DIV_PERIC2		0x10560
-#define DIV_PERIC3		0x10564
-#define DIV_PERIC4		0x10568
-#define DIV_CAM			0x10574 /* 5800 specific */
-#define SCLK_DIV_ISP0		0x10580
-#define SCLK_DIV_ISP1		0x10584
-#define DIV2_RATIO0		0x10590
-#define DIV4_RATIO		0x105a0
-#define GATE_BUS_TOP		0x10700
-#define GATE_BUS_DISP1		0x10728
-#define GATE_BUS_GEN		0x1073c
-#define GATE_BUS_FSYS0		0x10740
-#define GATE_BUS_FSYS2		0x10748
-#define GATE_BUS_PERIC		0x10750
-#define GATE_BUS_PERIC1		0x10754
-#define GATE_BUS_PERIS0		0x10760
-#define GATE_BUS_PERIS1		0x10764
-#define GATE_BUS_NOC		0x10770
-#define GATE_TOP_SCLK_ISP	0x10870
-#define GATE_IP_GSCL0		0x10910
-#define GATE_IP_GSCL1		0x10920
-#define GATE_IP_CAM		0x10924 /* 5800 specific */
-#define GATE_IP_MFC		0x1092c
-#define GATE_IP_DISP1		0x10928
-#define GATE_IP_G3D		0x10930
-#define GATE_IP_GEN		0x10934
-#define GATE_IP_FSYS		0x10944
-#define GATE_IP_PERIC		0x10950
-#define GATE_IP_PERIS		0x10960
-#define GATE_IP_MSCL		0x10970
-#define GATE_TOP_SCLK_GSCL	0x10820
-#define GATE_TOP_SCLK_DISP1	0x10828
-#define GATE_TOP_SCLK_MAU	0x1083c
-#define GATE_TOP_SCLK_FSYS	0x10840
-#define GATE_TOP_SCLK_PERIC	0x10850
-#define TOP_SPARE2		0x10b08
-#define BPLL_LOCK		0x20010
-#define BPLL_CON0		0x20110
-#define SRC_CDREX		0x20200
-#define DIV_CDREX0		0x20500
-#define DIV_CDREX1		0x20504
-#define GATE_BUS_CDREX0		0x20700
-#define GATE_BUS_CDREX1		0x20704
-#define KPLL_LOCK		0x28000
-#define KPLL_CON0		0x28100
-#define SRC_KFC			0x28200
-#define DIV_KFC0		0x28500
+#घोषणा APLL_LOCK		0x0
+#घोषणा APLL_CON0		0x100
+#घोषणा SRC_CPU			0x200
+#घोषणा DIV_CPU0		0x500
+#घोषणा DIV_CPU1		0x504
+#घोषणा GATE_BUS_CPU		0x700
+#घोषणा GATE_SCLK_CPU		0x800
+#घोषणा CLKOUT_CMU_CPU		0xa00
+#घोषणा SRC_MASK_CPERI		0x4300
+#घोषणा GATE_IP_G2D		0x8800
+#घोषणा CPLL_LOCK		0x10020
+#घोषणा DPLL_LOCK		0x10030
+#घोषणा EPLL_LOCK		0x10040
+#घोषणा RPLL_LOCK		0x10050
+#घोषणा IPLL_LOCK		0x10060
+#घोषणा SPLL_LOCK		0x10070
+#घोषणा VPLL_LOCK		0x10080
+#घोषणा MPLL_LOCK		0x10090
+#घोषणा CPLL_CON0		0x10120
+#घोषणा DPLL_CON0		0x10128
+#घोषणा EPLL_CON0		0x10130
+#घोषणा EPLL_CON1		0x10134
+#घोषणा EPLL_CON2		0x10138
+#घोषणा RPLL_CON0		0x10140
+#घोषणा RPLL_CON1		0x10144
+#घोषणा RPLL_CON2		0x10148
+#घोषणा IPLL_CON0		0x10150
+#घोषणा SPLL_CON0		0x10160
+#घोषणा VPLL_CON0		0x10170
+#घोषणा MPLL_CON0		0x10180
+#घोषणा SRC_TOP0		0x10200
+#घोषणा SRC_TOP1		0x10204
+#घोषणा SRC_TOP2		0x10208
+#घोषणा SRC_TOP3		0x1020c
+#घोषणा SRC_TOP4		0x10210
+#घोषणा SRC_TOP5		0x10214
+#घोषणा SRC_TOP6		0x10218
+#घोषणा SRC_TOP7		0x1021c
+#घोषणा SRC_TOP8		0x10220 /* 5800 specअगरic */
+#घोषणा SRC_TOP9		0x10224 /* 5800 specअगरic */
+#घोषणा SRC_DISP10		0x1022c
+#घोषणा SRC_MAU			0x10240
+#घोषणा SRC_FSYS		0x10244
+#घोषणा SRC_PERIC0		0x10250
+#घोषणा SRC_PERIC1		0x10254
+#घोषणा SRC_ISP			0x10270
+#घोषणा SRC_CAM			0x10274 /* 5800 specअगरic */
+#घोषणा SRC_TOP10		0x10280
+#घोषणा SRC_TOP11		0x10284
+#घोषणा SRC_TOP12		0x10288
+#घोषणा SRC_TOP13		0x1028c /* 5800 specअगरic */
+#घोषणा SRC_MASK_TOP0		0x10300
+#घोषणा SRC_MASK_TOP1		0x10304
+#घोषणा SRC_MASK_TOP2		0x10308
+#घोषणा SRC_MASK_TOP7		0x1031c
+#घोषणा SRC_MASK_DISP10		0x1032c
+#घोषणा SRC_MASK_MAU		0x10334
+#घोषणा SRC_MASK_FSYS		0x10340
+#घोषणा SRC_MASK_PERIC0		0x10350
+#घोषणा SRC_MASK_PERIC1		0x10354
+#घोषणा SRC_MASK_ISP		0x10370
+#घोषणा DIV_TOP0		0x10500
+#घोषणा DIV_TOP1		0x10504
+#घोषणा DIV_TOP2		0x10508
+#घोषणा DIV_TOP8		0x10520 /* 5800 specअगरic */
+#घोषणा DIV_TOP9		0x10524 /* 5800 specअगरic */
+#घोषणा DIV_DISP10		0x1052c
+#घोषणा DIV_MAU			0x10544
+#घोषणा DIV_FSYS0		0x10548
+#घोषणा DIV_FSYS1		0x1054c
+#घोषणा DIV_FSYS2		0x10550
+#घोषणा DIV_PERIC0		0x10558
+#घोषणा DIV_PERIC1		0x1055c
+#घोषणा DIV_PERIC2		0x10560
+#घोषणा DIV_PERIC3		0x10564
+#घोषणा DIV_PERIC4		0x10568
+#घोषणा DIV_CAM			0x10574 /* 5800 specअगरic */
+#घोषणा SCLK_DIV_ISP0		0x10580
+#घोषणा SCLK_DIV_ISP1		0x10584
+#घोषणा DIV2_RATIO0		0x10590
+#घोषणा DIV4_RATIO		0x105a0
+#घोषणा GATE_BUS_TOP		0x10700
+#घोषणा GATE_BUS_DISP1		0x10728
+#घोषणा GATE_BUS_GEN		0x1073c
+#घोषणा GATE_BUS_FSYS0		0x10740
+#घोषणा GATE_BUS_FSYS2		0x10748
+#घोषणा GATE_BUS_PERIC		0x10750
+#घोषणा GATE_BUS_PERIC1		0x10754
+#घोषणा GATE_BUS_PERIS0		0x10760
+#घोषणा GATE_BUS_PERIS1		0x10764
+#घोषणा GATE_BUS_NOC		0x10770
+#घोषणा GATE_TOP_SCLK_ISP	0x10870
+#घोषणा GATE_IP_GSCL0		0x10910
+#घोषणा GATE_IP_GSCL1		0x10920
+#घोषणा GATE_IP_CAM		0x10924 /* 5800 specअगरic */
+#घोषणा GATE_IP_MFC		0x1092c
+#घोषणा GATE_IP_DISP1		0x10928
+#घोषणा GATE_IP_G3D		0x10930
+#घोषणा GATE_IP_GEN		0x10934
+#घोषणा GATE_IP_FSYS		0x10944
+#घोषणा GATE_IP_PERIC		0x10950
+#घोषणा GATE_IP_PERIS		0x10960
+#घोषणा GATE_IP_MSCL		0x10970
+#घोषणा GATE_TOP_SCLK_GSCL	0x10820
+#घोषणा GATE_TOP_SCLK_DISP1	0x10828
+#घोषणा GATE_TOP_SCLK_MAU	0x1083c
+#घोषणा GATE_TOP_SCLK_FSYS	0x10840
+#घोषणा GATE_TOP_SCLK_PERIC	0x10850
+#घोषणा TOP_SPARE2		0x10b08
+#घोषणा BPLL_LOCK		0x20010
+#घोषणा BPLL_CON0		0x20110
+#घोषणा SRC_CDREX		0x20200
+#घोषणा DIV_CDREX0		0x20500
+#घोषणा DIV_CDREX1		0x20504
+#घोषणा GATE_BUS_CDREX0		0x20700
+#घोषणा GATE_BUS_CDREX1		0x20704
+#घोषणा KPLL_LOCK		0x28000
+#घोषणा KPLL_CON0		0x28100
+#घोषणा SRC_KFC			0x28200
+#घोषणा DIV_KFC0		0x28500
 
 /* Exynos5x SoC type */
-enum exynos5x_soc {
+क्रमागत exynos5x_soc अणु
 	EXYNOS5420,
 	EXYNOS5800,
-};
+पूर्ण;
 
 /* list of PLLs */
-enum exynos5x_plls {
+क्रमागत exynos5x_plls अणु
 	apll, cpll, dpll, epll, rpll, ipll, spll, vpll, mpll,
 	bpll, kpll,
 	nr_plls			/* number of PLLs */
-};
+पूर्ण;
 
-static void __iomem *reg_base;
-static enum exynos5x_soc exynos5x_soc;
+अटल व्योम __iomem *reg_base;
+अटल क्रमागत exynos5x_soc exynos5x_soc;
 
 /*
- * list of controller registers to be saved and restored during a
+ * list of controller रेजिस्टरs to be saved and restored during a
  * suspend/resume cycle.
  */
-static const unsigned long exynos5x_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ exynos5x_clk_regs[] __initस्थिर = अणु
 	SRC_CPU,
 	DIV_CPU0,
 	DIV_CPU1,
@@ -258,9 +259,9 @@ static const unsigned long exynos5x_clk_regs[] __initconst = {
 	DIV_KFC0,
 	GATE_BUS_CDREX0,
 	GATE_BUS_CDREX1,
-};
+पूर्ण;
 
-static const unsigned long exynos5800_clk_regs[] __initconst = {
+अटल स्थिर अचिन्हित दीर्घ exynos5800_clk_regs[] __initस्थिर = अणु
 	SRC_TOP8,
 	SRC_TOP9,
 	SRC_CAM,
@@ -269,204 +270,204 @@ static const unsigned long exynos5800_clk_regs[] __initconst = {
 	DIV_TOP9,
 	DIV_CAM,
 	GATE_IP_CAM,
-};
+पूर्ण;
 
-static const struct samsung_clk_reg_dump exynos5420_set_clksrc[] = {
-	{ .offset = SRC_MASK_CPERI,		.value = 0xffffffff, },
-	{ .offset = SRC_MASK_TOP0,		.value = 0x11111111, },
-	{ .offset = SRC_MASK_TOP1,		.value = 0x11101111, },
-	{ .offset = SRC_MASK_TOP2,		.value = 0x11111110, },
-	{ .offset = SRC_MASK_TOP7,		.value = 0x00111100, },
-	{ .offset = SRC_MASK_DISP10,		.value = 0x11111110, },
-	{ .offset = SRC_MASK_MAU,		.value = 0x10000000, },
-	{ .offset = SRC_MASK_FSYS,		.value = 0x11111110, },
-	{ .offset = SRC_MASK_PERIC0,		.value = 0x11111110, },
-	{ .offset = SRC_MASK_PERIC1,		.value = 0x11111100, },
-	{ .offset = SRC_MASK_ISP,		.value = 0x11111000, },
-	{ .offset = GATE_BUS_TOP,		.value = 0xffffffff, },
-	{ .offset = GATE_BUS_DISP1,		.value = 0xffffffff, },
-	{ .offset = GATE_IP_PERIC,		.value = 0xffffffff, },
-	{ .offset = GATE_IP_PERIS,		.value = 0xffffffff, },
-};
+अटल स्थिर काष्ठा samsung_clk_reg_dump exynos5420_set_clksrc[] = अणु
+	अणु .offset = SRC_MASK_CPERI,		.value = 0xffffffff, पूर्ण,
+	अणु .offset = SRC_MASK_TOP0,		.value = 0x11111111, पूर्ण,
+	अणु .offset = SRC_MASK_TOP1,		.value = 0x11101111, पूर्ण,
+	अणु .offset = SRC_MASK_TOP2,		.value = 0x11111110, पूर्ण,
+	अणु .offset = SRC_MASK_TOP7,		.value = 0x00111100, पूर्ण,
+	अणु .offset = SRC_MASK_DISP10,		.value = 0x11111110, पूर्ण,
+	अणु .offset = SRC_MASK_MAU,		.value = 0x10000000, पूर्ण,
+	अणु .offset = SRC_MASK_FSYS,		.value = 0x11111110, पूर्ण,
+	अणु .offset = SRC_MASK_PERIC0,		.value = 0x11111110, पूर्ण,
+	अणु .offset = SRC_MASK_PERIC1,		.value = 0x11111100, पूर्ण,
+	अणु .offset = SRC_MASK_ISP,		.value = 0x11111000, पूर्ण,
+	अणु .offset = GATE_BUS_TOP,		.value = 0xffffffff, पूर्ण,
+	अणु .offset = GATE_BUS_DISP1,		.value = 0xffffffff, पूर्ण,
+	अणु .offset = GATE_IP_PERIC,		.value = 0xffffffff, पूर्ण,
+	अणु .offset = GATE_IP_PERIS,		.value = 0xffffffff, पूर्ण,
+पूर्ण;
 
-/* list of all parent clocks */
-PNAME(mout_mspll_cpu_p) = {"mout_sclk_cpll", "mout_sclk_dpll",
-				"mout_sclk_mpll", "mout_sclk_spll"};
-PNAME(mout_cpu_p) = {"mout_apll" , "mout_mspll_cpu"};
-PNAME(mout_kfc_p) = {"mout_kpll" , "mout_mspll_kfc"};
-PNAME(mout_apll_p) = {"fin_pll", "fout_apll"};
-PNAME(mout_bpll_p) = {"fin_pll", "fout_bpll"};
-PNAME(mout_cpll_p) = {"fin_pll", "fout_cpll"};
-PNAME(mout_dpll_p) = {"fin_pll", "fout_dpll"};
-PNAME(mout_epll_p) = {"fin_pll", "fout_epll"};
-PNAME(mout_ipll_p) = {"fin_pll", "fout_ipll"};
-PNAME(mout_kpll_p) = {"fin_pll", "fout_kpll"};
-PNAME(mout_mpll_p) = {"fin_pll", "fout_mpll"};
-PNAME(mout_rpll_p) = {"fin_pll", "fout_rpll"};
-PNAME(mout_spll_p) = {"fin_pll", "fout_spll"};
-PNAME(mout_vpll_p) = {"fin_pll", "fout_vpll"};
+/* list of all parent घड़ीs */
+PNAME(mout_mspll_cpu_p) = अणु"mout_sclk_cpll", "mout_sclk_dpll",
+				"mout_sclk_mpll", "mout_sclk_spll"पूर्ण;
+PNAME(mout_cpu_p) = अणु"mout_apll" , "mout_mspll_cpu"पूर्ण;
+PNAME(mout_kfc_p) = अणु"mout_kpll" , "mout_mspll_kfc"पूर्ण;
+PNAME(mout_apll_p) = अणु"fin_pll", "fout_apll"पूर्ण;
+PNAME(mout_bpll_p) = अणु"fin_pll", "fout_bpll"पूर्ण;
+PNAME(mout_cpll_p) = अणु"fin_pll", "fout_cpll"पूर्ण;
+PNAME(mout_dpll_p) = अणु"fin_pll", "fout_dpll"पूर्ण;
+PNAME(mout_epll_p) = अणु"fin_pll", "fout_epll"पूर्ण;
+PNAME(mout_ipll_p) = अणु"fin_pll", "fout_ipll"पूर्ण;
+PNAME(mout_kpll_p) = अणु"fin_pll", "fout_kpll"पूर्ण;
+PNAME(mout_mpll_p) = अणु"fin_pll", "fout_mpll"पूर्ण;
+PNAME(mout_rpll_p) = अणु"fin_pll", "fout_rpll"पूर्ण;
+PNAME(mout_spll_p) = अणु"fin_pll", "fout_spll"पूर्ण;
+PNAME(mout_vpll_p) = अणु"fin_pll", "fout_vpll"पूर्ण;
 
-PNAME(mout_group1_p) = {"mout_sclk_cpll", "mout_sclk_dpll",
-					"mout_sclk_mpll"};
-PNAME(mout_group2_p) = {"fin_pll", "mout_sclk_cpll",
+PNAME(mout_group1_p) = अणु"mout_sclk_cpll", "mout_sclk_dpll",
+					"mout_sclk_mpll"पूर्ण;
+PNAME(mout_group2_p) = अणु"fin_pll", "mout_sclk_cpll",
 			"mout_sclk_dpll", "mout_sclk_mpll", "mout_sclk_spll",
-			"mout_sclk_ipll", "mout_sclk_epll", "mout_sclk_rpll"};
-PNAME(mout_group3_p) = {"mout_sclk_rpll", "mout_sclk_spll"};
-PNAME(mout_group4_p) = {"mout_sclk_ipll", "mout_sclk_dpll", "mout_sclk_mpll"};
-PNAME(mout_group5_p) = {"mout_sclk_vpll", "mout_sclk_dpll"};
+			"mout_sclk_ipll", "mout_sclk_epll", "mout_sclk_rpll"पूर्ण;
+PNAME(mout_group3_p) = अणु"mout_sclk_rpll", "mout_sclk_spll"पूर्ण;
+PNAME(mout_group4_p) = अणु"mout_sclk_ipll", "mout_sclk_dpll", "mout_sclk_mpll"पूर्ण;
+PNAME(mout_group5_p) = अणु"mout_sclk_vpll", "mout_sclk_dpll"पूर्ण;
 
-PNAME(mout_fimd1_final_p) = {"mout_fimd1", "mout_fimd1_opt"};
-PNAME(mout_sw_aclk66_p)	= {"dout_aclk66", "mout_sclk_spll"};
-PNAME(mout_user_aclk66_peric_p)	= { "fin_pll", "mout_sw_aclk66"};
-PNAME(mout_user_pclk66_gpio_p) = {"mout_sw_aclk66", "ff_sw_aclk66"};
+PNAME(mout_fimd1_final_p) = अणु"mout_fimd1", "mout_fimd1_opt"पूर्ण;
+PNAME(mout_sw_aclk66_p)	= अणु"dout_aclk66", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk66_peric_p)	= अणु "fin_pll", "mout_sw_aclk66"पूर्ण;
+PNAME(mout_user_pclk66_gpio_p) = अणु"mout_sw_aclk66", "ff_sw_aclk66"पूर्ण;
 
-PNAME(mout_sw_aclk200_fsys_p) = {"dout_aclk200_fsys", "mout_sclk_spll"};
-PNAME(mout_sw_pclk200_fsys_p) = {"dout_pclk200_fsys", "mout_sclk_spll"};
-PNAME(mout_user_pclk200_fsys_p)	= {"fin_pll", "mout_sw_pclk200_fsys"};
-PNAME(mout_user_aclk200_fsys_p)	= {"fin_pll", "mout_sw_aclk200_fsys"};
+PNAME(mout_sw_aclk200_fsys_p) = अणु"dout_aclk200_fsys", "mout_sclk_spll"पूर्ण;
+PNAME(mout_sw_pclk200_fsys_p) = अणु"dout_pclk200_fsys", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_pclk200_fsys_p)	= अणु"fin_pll", "mout_sw_pclk200_fsys"पूर्ण;
+PNAME(mout_user_aclk200_fsys_p)	= अणु"fin_pll", "mout_sw_aclk200_fsys"पूर्ण;
 
-PNAME(mout_sw_aclk200_fsys2_p) = {"dout_aclk200_fsys2", "mout_sclk_spll"};
-PNAME(mout_user_aclk200_fsys2_p) = {"fin_pll", "mout_sw_aclk200_fsys2"};
-PNAME(mout_sw_aclk100_noc_p) = {"dout_aclk100_noc", "mout_sclk_spll"};
-PNAME(mout_user_aclk100_noc_p) = {"fin_pll", "mout_sw_aclk100_noc"};
+PNAME(mout_sw_aclk200_fsys2_p) = अणु"dout_aclk200_fsys2", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk200_fsys2_p) = अणु"fin_pll", "mout_sw_aclk200_fsys2"पूर्ण;
+PNAME(mout_sw_aclk100_noc_p) = अणु"dout_aclk100_noc", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk100_noc_p) = अणु"fin_pll", "mout_sw_aclk100_noc"पूर्ण;
 
-PNAME(mout_sw_aclk400_wcore_p) = {"dout_aclk400_wcore", "mout_sclk_spll"};
-PNAME(mout_aclk400_wcore_bpll_p) = {"mout_aclk400_wcore", "sclk_bpll"};
-PNAME(mout_user_aclk400_wcore_p) = {"fin_pll", "mout_sw_aclk400_wcore"};
+PNAME(mout_sw_aclk400_wcore_p) = अणु"dout_aclk400_wcore", "mout_sclk_spll"पूर्ण;
+PNAME(mout_aclk400_wcore_bpll_p) = अणु"mout_aclk400_wcore", "sclk_bpll"पूर्ण;
+PNAME(mout_user_aclk400_wcore_p) = अणु"fin_pll", "mout_sw_aclk400_wcore"पूर्ण;
 
-PNAME(mout_sw_aclk400_isp_p) = {"dout_aclk400_isp", "mout_sclk_spll"};
-PNAME(mout_user_aclk400_isp_p) = {"fin_pll", "mout_sw_aclk400_isp"};
+PNAME(mout_sw_aclk400_isp_p) = अणु"dout_aclk400_isp", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk400_isp_p) = अणु"fin_pll", "mout_sw_aclk400_isp"पूर्ण;
 
-PNAME(mout_sw_aclk333_432_isp0_p) = {"dout_aclk333_432_isp0",
-					"mout_sclk_spll"};
-PNAME(mout_user_aclk333_432_isp0_p) = {"fin_pll", "mout_sw_aclk333_432_isp0"};
+PNAME(mout_sw_aclk333_432_isp0_p) = अणु"dout_aclk333_432_isp0",
+					"mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk333_432_isp0_p) = अणु"fin_pll", "mout_sw_aclk333_432_isp0"पूर्ण;
 
-PNAME(mout_sw_aclk333_432_isp_p) = {"dout_aclk333_432_isp", "mout_sclk_spll"};
-PNAME(mout_user_aclk333_432_isp_p) = {"fin_pll", "mout_sw_aclk333_432_isp"};
+PNAME(mout_sw_aclk333_432_isp_p) = अणु"dout_aclk333_432_isp", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk333_432_isp_p) = अणु"fin_pll", "mout_sw_aclk333_432_isp"पूर्ण;
 
-PNAME(mout_sw_aclk200_p) = {"dout_aclk200", "mout_sclk_spll"};
-PNAME(mout_user_aclk200_disp1_p) = {"fin_pll", "mout_sw_aclk200"};
+PNAME(mout_sw_aclk200_p) = अणु"dout_aclk200", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk200_disp1_p) = अणु"fin_pll", "mout_sw_aclk200"पूर्ण;
 
-PNAME(mout_sw_aclk400_mscl_p) = {"dout_aclk400_mscl", "mout_sclk_spll"};
-PNAME(mout_user_aclk400_mscl_p)	= {"fin_pll", "mout_sw_aclk400_mscl"};
+PNAME(mout_sw_aclk400_mscl_p) = अणु"dout_aclk400_mscl", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk400_mscl_p)	= अणु"fin_pll", "mout_sw_aclk400_mscl"पूर्ण;
 
-PNAME(mout_sw_aclk333_p) = {"dout_aclk333", "mout_sclk_spll"};
-PNAME(mout_user_aclk333_p) = {"fin_pll", "mout_sw_aclk333"};
+PNAME(mout_sw_aclk333_p) = अणु"dout_aclk333", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk333_p) = अणु"fin_pll", "mout_sw_aclk333"पूर्ण;
 
-PNAME(mout_sw_aclk166_p) = {"dout_aclk166", "mout_sclk_spll"};
-PNAME(mout_user_aclk166_p) = {"fin_pll", "mout_sw_aclk166"};
+PNAME(mout_sw_aclk166_p) = अणु"dout_aclk166", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk166_p) = अणु"fin_pll", "mout_sw_aclk166"पूर्ण;
 
-PNAME(mout_sw_aclk266_p) = {"dout_aclk266", "mout_sclk_spll"};
-PNAME(mout_user_aclk266_p) = {"fin_pll", "mout_sw_aclk266"};
-PNAME(mout_user_aclk266_isp_p) = {"fin_pll", "mout_sw_aclk266"};
+PNAME(mout_sw_aclk266_p) = अणु"dout_aclk266", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk266_p) = अणु"fin_pll", "mout_sw_aclk266"पूर्ण;
+PNAME(mout_user_aclk266_isp_p) = अणु"fin_pll", "mout_sw_aclk266"पूर्ण;
 
-PNAME(mout_sw_aclk333_432_gscl_p) = {"dout_aclk333_432_gscl", "mout_sclk_spll"};
-PNAME(mout_user_aclk333_432_gscl_p) = {"fin_pll", "mout_sw_aclk333_432_gscl"};
+PNAME(mout_sw_aclk333_432_gscl_p) = अणु"dout_aclk333_432_gscl", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk333_432_gscl_p) = अणु"fin_pll", "mout_sw_aclk333_432_gscl"पूर्ण;
 
-PNAME(mout_sw_aclk300_gscl_p) = {"dout_aclk300_gscl", "mout_sclk_spll"};
-PNAME(mout_user_aclk300_gscl_p)	= {"fin_pll", "mout_sw_aclk300_gscl"};
+PNAME(mout_sw_aclk300_gscl_p) = अणु"dout_aclk300_gscl", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk300_gscl_p)	= अणु"fin_pll", "mout_sw_aclk300_gscl"पूर्ण;
 
-PNAME(mout_sw_aclk300_disp1_p) = {"dout_aclk300_disp1", "mout_sclk_spll"};
-PNAME(mout_sw_aclk400_disp1_p) = {"dout_aclk400_disp1", "mout_sclk_spll"};
-PNAME(mout_user_aclk300_disp1_p) = {"fin_pll", "mout_sw_aclk300_disp1"};
-PNAME(mout_user_aclk400_disp1_p) = {"fin_pll", "mout_sw_aclk400_disp1"};
+PNAME(mout_sw_aclk300_disp1_p) = अणु"dout_aclk300_disp1", "mout_sclk_spll"पूर्ण;
+PNAME(mout_sw_aclk400_disp1_p) = अणु"dout_aclk400_disp1", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk300_disp1_p) = अणु"fin_pll", "mout_sw_aclk300_disp1"पूर्ण;
+PNAME(mout_user_aclk400_disp1_p) = अणु"fin_pll", "mout_sw_aclk400_disp1"पूर्ण;
 
-PNAME(mout_sw_aclk300_jpeg_p) = {"dout_aclk300_jpeg", "mout_sclk_spll"};
-PNAME(mout_user_aclk300_jpeg_p) = {"fin_pll", "mout_sw_aclk300_jpeg"};
+PNAME(mout_sw_aclk300_jpeg_p) = अणु"dout_aclk300_jpeg", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk300_jpeg_p) = अणु"fin_pll", "mout_sw_aclk300_jpeg"पूर्ण;
 
-PNAME(mout_sw_aclk_g3d_p) = {"dout_aclk_g3d", "mout_sclk_spll"};
-PNAME(mout_user_aclk_g3d_p) = {"fin_pll", "mout_sw_aclk_g3d"};
+PNAME(mout_sw_aclk_g3d_p) = अणु"dout_aclk_g3d", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk_g3d_p) = अणु"fin_pll", "mout_sw_aclk_g3d"पूर्ण;
 
-PNAME(mout_sw_aclk266_g2d_p) = {"dout_aclk266_g2d", "mout_sclk_spll"};
-PNAME(mout_user_aclk266_g2d_p) = {"fin_pll", "mout_sw_aclk266_g2d"};
+PNAME(mout_sw_aclk266_g2d_p) = अणु"dout_aclk266_g2d", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk266_g2d_p) = अणु"fin_pll", "mout_sw_aclk266_g2d"पूर्ण;
 
-PNAME(mout_sw_aclk333_g2d_p) = {"dout_aclk333_g2d", "mout_sclk_spll"};
-PNAME(mout_user_aclk333_g2d_p) = {"fin_pll", "mout_sw_aclk333_g2d"};
+PNAME(mout_sw_aclk333_g2d_p) = अणु"dout_aclk333_g2d", "mout_sclk_spll"पूर्ण;
+PNAME(mout_user_aclk333_g2d_p) = अणु"fin_pll", "mout_sw_aclk333_g2d"पूर्ण;
 
-PNAME(mout_audio0_p) = {"fin_pll", "cdclk0", "mout_sclk_dpll",
+PNAME(mout_audio0_p) = अणु"fin_pll", "cdclk0", "mout_sclk_dpll",
 			"mout_sclk_mpll", "mout_sclk_spll", "mout_sclk_ipll",
-			"mout_sclk_epll", "mout_sclk_rpll"};
-PNAME(mout_audio1_p) = {"fin_pll", "cdclk1", "mout_sclk_dpll",
+			"mout_sclk_epll", "mout_sclk_rpll"पूर्ण;
+PNAME(mout_audio1_p) = अणु"fin_pll", "cdclk1", "mout_sclk_dpll",
 			"mout_sclk_mpll", "mout_sclk_spll", "mout_sclk_ipll",
-			"mout_sclk_epll", "mout_sclk_rpll"};
-PNAME(mout_audio2_p) = {"fin_pll", "cdclk2", "mout_sclk_dpll",
+			"mout_sclk_epll", "mout_sclk_rpll"पूर्ण;
+PNAME(mout_audio2_p) = अणु"fin_pll", "cdclk2", "mout_sclk_dpll",
 			"mout_sclk_mpll", "mout_sclk_spll", "mout_sclk_ipll",
-			"mout_sclk_epll", "mout_sclk_rpll"};
-PNAME(mout_spdif_p) = {"fin_pll", "dout_audio0", "dout_audio1",
+			"mout_sclk_epll", "mout_sclk_rpll"पूर्ण;
+PNAME(mout_spdअगर_p) = अणु"fin_pll", "dout_audio0", "dout_audio1",
 			"dout_audio2", "spdif_extclk", "mout_sclk_ipll",
-			"mout_sclk_epll", "mout_sclk_rpll"};
-PNAME(mout_hdmi_p) = {"dout_hdmi_pixel", "sclk_hdmiphy"};
-PNAME(mout_maudio0_p) = {"fin_pll", "maudio_clk", "mout_sclk_dpll",
+			"mout_sclk_epll", "mout_sclk_rpll"पूर्ण;
+PNAME(mout_hdmi_p) = अणु"dout_hdmi_pixel", "sclk_hdmiphy"पूर्ण;
+PNAME(mout_maudio0_p) = अणु"fin_pll", "maudio_clk", "mout_sclk_dpll",
 			 "mout_sclk_mpll", "mout_sclk_spll", "mout_sclk_ipll",
-			 "mout_sclk_epll", "mout_sclk_rpll"};
-PNAME(mout_mau_epll_clk_p) = {"mout_sclk_epll", "mout_sclk_dpll",
-				"mout_sclk_mpll", "mout_sclk_spll"};
-PNAME(mout_mclk_cdrex_p) = {"mout_bpll", "mout_mx_mspll_ccore"};
+			 "mout_sclk_epll", "mout_sclk_rpll"पूर्ण;
+PNAME(mout_mau_epll_clk_p) = अणु"mout_sclk_epll", "mout_sclk_dpll",
+				"mout_sclk_mpll", "mout_sclk_spll"पूर्ण;
+PNAME(mout_mclk_cdrex_p) = अणु"mout_bpll", "mout_mx_mspll_ccore"पूर्ण;
 
-/* List of parents specific to exynos5800 */
-PNAME(mout_epll2_5800_p)	= { "mout_sclk_epll", "ff_dout_epll2" };
-PNAME(mout_group1_5800_p)	= { "mout_sclk_cpll", "mout_sclk_dpll",
-				"mout_sclk_mpll", "ff_dout_spll2" };
-PNAME(mout_group2_5800_p)	= { "mout_sclk_cpll", "mout_sclk_dpll",
+/* List of parents specअगरic to exynos5800 */
+PNAME(mout_epll2_5800_p)	= अणु "mout_sclk_epll", "ff_dout_epll2" पूर्ण;
+PNAME(mout_group1_5800_p)	= अणु "mout_sclk_cpll", "mout_sclk_dpll",
+				"mout_sclk_mpll", "ff_dout_spll2" पूर्ण;
+PNAME(mout_group2_5800_p)	= अणु "mout_sclk_cpll", "mout_sclk_dpll",
 					"mout_sclk_mpll", "ff_dout_spll2",
-					"mout_epll2", "mout_sclk_ipll" };
-PNAME(mout_group3_5800_p)	= { "mout_sclk_cpll", "mout_sclk_dpll",
+					"mout_epll2", "mout_sclk_ipll" पूर्ण;
+PNAME(mout_group3_5800_p)	= अणु "mout_sclk_cpll", "mout_sclk_dpll",
 					"mout_sclk_mpll", "ff_dout_spll2",
-					"mout_epll2" };
-PNAME(mout_group5_5800_p)	= { "mout_sclk_cpll", "mout_sclk_dpll",
-					"mout_sclk_mpll", "mout_sclk_spll" };
-PNAME(mout_group6_5800_p)	= { "mout_sclk_ipll", "mout_sclk_dpll",
-				"mout_sclk_mpll", "ff_dout_spll2" };
-PNAME(mout_group7_5800_p)	= { "mout_sclk_cpll", "mout_sclk_dpll",
+					"mout_epll2" पूर्ण;
+PNAME(mout_group5_5800_p)	= अणु "mout_sclk_cpll", "mout_sclk_dpll",
+					"mout_sclk_mpll", "mout_sclk_spll" पूर्ण;
+PNAME(mout_group6_5800_p)	= अणु "mout_sclk_ipll", "mout_sclk_dpll",
+				"mout_sclk_mpll", "ff_dout_spll2" पूर्ण;
+PNAME(mout_group7_5800_p)	= अणु "mout_sclk_cpll", "mout_sclk_dpll",
 					"mout_sclk_mpll", "mout_sclk_spll",
-					"mout_epll2", "mout_sclk_ipll" };
-PNAME(mout_mx_mspll_ccore_p)	= {"sclk_bpll", "mout_sclk_dpll",
+					"mout_epll2", "mout_sclk_ipll" पूर्ण;
+PNAME(mout_mx_mspll_ccore_p)	= अणु"sclk_bpll", "mout_sclk_dpll",
 					"mout_sclk_mpll", "ff_dout_spll2",
-					"mout_sclk_spll", "mout_sclk_epll"};
-PNAME(mout_mau_epll_clk_5800_p)	= { "mout_sclk_epll", "mout_sclk_dpll",
+					"mout_sclk_spll", "mout_sclk_epll"पूर्ण;
+PNAME(mout_mau_epll_clk_5800_p)	= अणु "mout_sclk_epll", "mout_sclk_dpll",
 					"mout_sclk_mpll",
-					"ff_dout_spll2" };
-PNAME(mout_group8_5800_p)	= { "dout_aclk432_scaler", "dout_sclk_sw" };
-PNAME(mout_group9_5800_p)	= { "dout_osc_div", "mout_sw_aclk432_scaler" };
-PNAME(mout_group10_5800_p)	= { "dout_aclk432_cam", "dout_sclk_sw" };
-PNAME(mout_group11_5800_p)	= { "dout_osc_div", "mout_sw_aclk432_cam" };
-PNAME(mout_group12_5800_p)	= { "dout_aclkfl1_550_cam", "dout_sclk_sw" };
-PNAME(mout_group13_5800_p)	= { "dout_osc_div", "mout_sw_aclkfl1_550_cam" };
-PNAME(mout_group14_5800_p)	= { "dout_aclk550_cam", "dout_sclk_sw" };
-PNAME(mout_group15_5800_p)	= { "dout_osc_div", "mout_sw_aclk550_cam" };
-PNAME(mout_group16_5800_p)	= { "dout_osc_div", "mout_mau_epll_clk" };
-PNAME(mout_mx_mspll_ccore_phy_p) = { "sclk_bpll", "mout_sclk_dpll",
+					"ff_dout_spll2" पूर्ण;
+PNAME(mout_group8_5800_p)	= अणु "dout_aclk432_scaler", "dout_sclk_sw" पूर्ण;
+PNAME(mout_group9_5800_p)	= अणु "dout_osc_div", "mout_sw_aclk432_scaler" पूर्ण;
+PNAME(mout_group10_5800_p)	= अणु "dout_aclk432_cam", "dout_sclk_sw" पूर्ण;
+PNAME(mout_group11_5800_p)	= अणु "dout_osc_div", "mout_sw_aclk432_cam" पूर्ण;
+PNAME(mout_group12_5800_p)	= अणु "dout_aclkfl1_550_cam", "dout_sclk_sw" पूर्ण;
+PNAME(mout_group13_5800_p)	= अणु "dout_osc_div", "mout_sw_aclkfl1_550_cam" पूर्ण;
+PNAME(mout_group14_5800_p)	= अणु "dout_aclk550_cam", "dout_sclk_sw" पूर्ण;
+PNAME(mout_group15_5800_p)	= अणु "dout_osc_div", "mout_sw_aclk550_cam" पूर्ण;
+PNAME(mout_group16_5800_p)	= अणु "dout_osc_div", "mout_mau_epll_clk" पूर्ण;
+PNAME(mout_mx_mspll_ccore_phy_p) = अणु "sclk_bpll", "mout_sclk_dpll",
 					"mout_sclk_mpll", "ff_dout_spll2",
-					"mout_sclk_spll", "mout_sclk_epll"};
+					"mout_sclk_spll", "mout_sclk_epll"पूर्ण;
 
-/* fixed rate clocks generated outside the soc */
-static struct samsung_fixed_rate_clock
-		exynos5x_fixed_rate_ext_clks[] __initdata = {
-	FRATE(CLK_FIN_PLL, "fin_pll", NULL, 0, 0),
-};
+/* fixed rate घड़ीs generated outside the soc */
+अटल काष्ठा samsung_fixed_rate_घड़ी
+		exynos5x_fixed_rate_ext_clks[] __initdata = अणु
+	FRATE(CLK_FIN_PLL, "fin_pll", शून्य, 0, 0),
+पूर्ण;
 
-/* fixed rate clocks generated inside the soc */
-static const struct samsung_fixed_rate_clock exynos5x_fixed_rate_clks[] __initconst = {
-	FRATE(CLK_SCLK_HDMIPHY, "sclk_hdmiphy", NULL, 0, 24000000),
-	FRATE(0, "sclk_pwi", NULL, 0, 24000000),
-	FRATE(0, "sclk_usbh20", NULL, 0, 48000000),
-	FRATE(0, "mphy_refclk_ixtal24", NULL, 0, 48000000),
-	FRATE(0, "sclk_usbh20_scan_clk", NULL, 0, 480000000),
-};
+/* fixed rate घड़ीs generated inside the soc */
+अटल स्थिर काष्ठा samsung_fixed_rate_घड़ी exynos5x_fixed_rate_clks[] __initस्थिर = अणु
+	FRATE(CLK_SCLK_HDMIPHY, "sclk_hdmiphy", शून्य, 0, 24000000),
+	FRATE(0, "sclk_pwi", शून्य, 0, 24000000),
+	FRATE(0, "sclk_usbh20", शून्य, 0, 48000000),
+	FRATE(0, "mphy_refclk_ixtal24", शून्य, 0, 48000000),
+	FRATE(0, "sclk_usbh20_scan_clk", शून्य, 0, 480000000),
+पूर्ण;
 
-static const struct samsung_fixed_factor_clock
-		exynos5x_fixed_factor_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_fixed_factor_घड़ी
+		exynos5x_fixed_factor_clks[] __initस्थिर = अणु
 	FFACTOR(0, "ff_hsic_12m", "fin_pll", 1, 2, 0),
 	FFACTOR(0, "ff_sw_aclk66", "mout_sw_aclk66", 1, 2, 0),
-};
+पूर्ण;
 
-static const struct samsung_fixed_factor_clock
-		exynos5800_fixed_factor_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_fixed_factor_घड़ी
+		exynos5800_fixed_factor_clks[] __initस्थिर = अणु
 	FFACTOR(0, "ff_dout_epll2", "mout_sclk_epll", 1, 2, 0),
 	FFACTOR(CLK_FF_DOUT_SPLL2, "ff_dout_spll2", "mout_sclk_spll", 1, 2, 0),
-};
+पूर्ण;
 
-static const struct samsung_mux_clock exynos5800_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी exynos5800_mux_clks[] __initस्थिर = अणु
 	MUX(0, "mout_aclk400_isp", mout_group3_5800_p, SRC_TOP0, 0, 3),
 	MUX(0, "mout_aclk400_mscl", mout_group3_5800_p, SRC_TOP0, 4, 3),
 	MUX(0, "mout_aclk400_wcore", mout_group2_5800_p, SRC_TOP0, 16, 3),
@@ -520,9 +521,9 @@ static const struct samsung_mux_clock exynos5800_mux_clks[] __initconst = {
 							SRC_TOP13, 28, 1),
 
 	MUX(0, "mout_fimd1", mout_group2_p, SRC_DISP10, 4, 3),
-};
+पूर्ण;
 
-static const struct samsung_div_clock exynos5800_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी exynos5800_भाग_clks[] __initस्थिर = अणु
 	DIV(CLK_DOUT_ACLK400_WCORE, "dout_aclk400_wcore",
 			"mout_aclk400_wcore", DIV_TOP0, 16, 3),
 	DIV(0, "dout_aclk550_cam", "mout_aclk550_cam",
@@ -536,16 +537,16 @@ static const struct samsung_div_clock exynos5800_div_clks[] __initconst = {
 
 	DIV(0, "dout_osc_div", "fin_pll", DIV_TOP9, 20, 3),
 	DIV(0, "dout_sclk_sw", "sclk_spll", DIV_TOP9, 24, 6),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock exynos5800_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी exynos5800_gate_clks[] __initस्थिर = अणु
 	GATE(CLK_ACLK550_CAM, "aclk550_cam", "mout_user_aclk550_cam",
 				GATE_BUS_TOP, 24, CLK_IS_CRITICAL, 0),
 	GATE(CLK_ACLK432_SCALER, "aclk432_scaler", "mout_user_aclk432_scaler",
 				GATE_BUS_TOP, 27, CLK_IS_CRITICAL, 0),
-};
+पूर्ण;
 
-static const struct samsung_mux_clock exynos5420_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी exynos5420_mux_clks[] __initस्थिर = अणु
 	MUX(0, "sclk_bpll", mout_bpll_p, TOP_SPARE2, 0, 1),
 	MUX(0, "mout_aclk400_wcore_bpll", mout_aclk400_wcore_bpll_p,
 				TOP_SPARE2, 4, 1),
@@ -575,14 +576,14 @@ static const struct samsung_mux_clock exynos5420_mux_clks[] __initconst = {
 	      CLK_SET_RATE_PARENT, 0),
 
 	MUX(0, "mout_fimd1", mout_group3_p, SRC_DISP10, 4, 1),
-};
+पूर्ण;
 
-static const struct samsung_div_clock exynos5420_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी exynos5420_भाग_clks[] __initस्थिर = अणु
 	DIV(CLK_DOUT_ACLK400_WCORE, "dout_aclk400_wcore",
 			"mout_aclk400_wcore_bpll", DIV_TOP0, 16, 3),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock exynos5420_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी exynos5420_gate_clks[] __initस्थिर = अणु
 	GATE(CLK_SECKEY, "seckey", "aclk66_psgen", GATE_BUS_PERIS1, 1, 0, 0),
 	/* Maudio Block */
 	GATE(CLK_MAU_EPLL, "mau_epll", "mout_mau_epll_clk",
@@ -591,9 +592,9 @@ static const struct samsung_gate_clock exynos5420_gate_clks[] __initconst = {
 		GATE_TOP_SCLK_MAU, 0, CLK_SET_RATE_PARENT, 0),
 	GATE(CLK_SCLK_MAUPCM0, "sclk_maupcm0", "dout_maupcm0",
 		GATE_TOP_SCLK_MAU, 1, CLK_SET_RATE_PARENT, 0),
-};
+पूर्ण;
 
-static const struct samsung_mux_clock exynos5x_mux_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_mux_घड़ी exynos5x_mux_clks[] __initस्थिर = अणु
 	MUX(0, "mout_user_pclk66_gpio", mout_user_pclk66_gpio_p,
 			SRC_TOP7, 4, 1),
 	MUX(CLK_MOUT_MSPLL_KFC, "mout_mspll_kfc", mout_mspll_cpu_p,
@@ -755,7 +756,7 @@ static const struct samsung_mux_clock exynos5x_mux_clks[] __initconst = {
 	MUX(0, "mout_uart2", mout_group2_p, SRC_PERIC0, 12, 3),
 	MUX(0, "mout_uart3", mout_group2_p, SRC_PERIC0, 16, 3),
 	MUX(0, "mout_pwm", mout_group2_p, SRC_PERIC0, 24, 3),
-	MUX(0, "mout_spdif", mout_spdif_p, SRC_PERIC0, 28, 3),
+	MUX(0, "mout_spdif", mout_spdअगर_p, SRC_PERIC0, 28, 3),
 	MUX(0, "mout_audio0", mout_audio0_p, SRC_PERIC1, 8, 3),
 	MUX(0, "mout_audio1", mout_audio1_p, SRC_PERIC1, 12, 3),
 	MUX(0, "mout_audio2", mout_audio2_p, SRC_PERIC1, 16, 3),
@@ -769,9 +770,9 @@ static const struct samsung_mux_clock exynos5x_mux_clks[] __initconst = {
 	MUX(0, "mout_spi0_isp", mout_group2_p, SRC_ISP, 12, 3),
 	MUX(0, "mout_spi1_isp", mout_group2_p, SRC_ISP, 16, 3),
 	MUX(0, "mout_isp_sensor", mout_group2_p, SRC_ISP, 28, 3),
-};
+पूर्ण;
 
-static const struct samsung_div_clock exynos5x_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी exynos5x_भाग_clks[] __initस्थिर = अणु
 	DIV(0, "div_arm", "mout_cpu", DIV_CPU0, 0, 3),
 	DIV(0, "sclk_apll", "mout_apll", DIV_CPU0, 24, 3),
 	DIV(0, "armclk2", "div_arm", DIV_CPU0, 28, 3),
@@ -830,12 +831,12 @@ static const struct samsung_div_clock exynos5x_div_clks[] __initconst = {
 
 	/* CDREX Block */
 	/*
-	 * The three clocks below are controlled using the same register and
-	 * bits. They are put into one because there is a need of
-	 * synchronization between the BUS and DREXs (two external memory
-	 * interfaces).
-	 * They are put here to show this HW assumption and for clock
-	 * information summary completeness.
+	 * The three घड़ीs below are controlled using the same रेजिस्टर and
+	 * bits. They are put पूर्णांकo one because there is a need of
+	 * synchronization between the BUS and DREXs (two बाह्यal memory
+	 * पूर्णांकerfaces).
+	 * They are put here to show this HW assumption and क्रम घड़ी
+	 * inक्रमmation summary completeness.
 	 */
 	DIV_F(CLK_DOUT_PCLK_CDREX, "dout_pclk_cdrex", "dout_aclk_cdrex1",
 			DIV_CDREX0, 28, 3, CLK_GET_RATE_NOCACHE, 0),
@@ -922,9 +923,9 @@ static const struct samsung_div_clock exynos5x_div_clks[] __initconst = {
 			CLK_SET_RATE_PARENT, 0),
 	DIV_F(0, "dout_spi1_isp_pre", "dout_spi1_isp", SCLK_DIV_ISP1, 8, 8,
 			CLK_SET_RATE_PARENT, 0),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock exynos5x_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी exynos5x_gate_clks[] __initस्थिर = अणु
 	/* G2D */
 	GATE(CLK_MDMA0, "mdma0", "aclk266_g2d", GATE_IP_G2D, 1, 0, 0),
 	GATE(CLK_SSS, "sss", "aclk266_g2d", GATE_IP_G2D, 2, 0, 0),
@@ -1138,7 +1139,7 @@ static const struct samsung_gate_clock exynos5x_gate_clks[] __initconst = {
 	GATE(CLK_SMMU_MDMA1, "smmu_mdma1", "dout_gen_blk",
 			GATE_IP_GEN, 9, 0, 0),
 
-	/* GATE_IP_GEN doesn't list gates for smmu_jpeg2 and mc */
+	/* GATE_IP_GEN करोesn't list gates क्रम smmu_jpeg2 and mc */
 	GATE(CLK_SMMU_JPEG2, "smmu_jpeg2", "dout_jpg_blk",
 			GATE_BUS_GEN, 28, 0, 0),
 	GATE(CLK_MC, "mc", "aclk66_psgen", GATE_BUS_GEN, 12, 0, 0),
@@ -1212,13 +1213,13 @@ static const struct samsung_gate_clock exynos5x_gate_clks[] __initconst = {
 			GATE_BUS_CDREX1, 28, CLK_IGNORE_UNUSED, 0),
 	GATE(CLK_PCLK_PPMU_DREX0_0, "pclk_ppmu_drex0_0", "dout_pclk_cdrex",
 			GATE_BUS_CDREX1, 29, CLK_IGNORE_UNUSED, 0),
-};
+पूर्ण;
 
-static const struct samsung_div_clock exynos5x_disp_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी exynos5x_disp_भाग_clks[] __initस्थिर = अणु
 	DIV(0, "dout_disp1_blk", "aclk200_disp1", DIV2_RATIO0, 16, 2),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock exynos5x_disp_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी exynos5x_disp_gate_clks[] __initस्थिर = अणु
 	GATE(CLK_FIMD1, "fimd1", "aclk300_disp1", GATE_IP_DISP1, 0, 0, 0),
 	GATE(CLK_DSIM1, "dsim1", "aclk200_disp1", GATE_IP_DISP1, 3, 0, 0),
 	GATE(CLK_DP1, "dp1", "aclk200_disp1", GATE_IP_DISP1, 4, 0, 0),
@@ -1230,64 +1231,64 @@ static const struct samsung_gate_clock exynos5x_disp_gate_clks[] __initconst = {
 			GATE_IP_DISP1, 8, 0, 0),
 	GATE(CLK_SMMU_MIXER, "smmu_mixer", "aclk200_disp1",
 			GATE_IP_DISP1, 9, 0, 0),
-};
+पूर्ण;
 
-static struct exynos5_subcmu_reg_dump exynos5x_disp_suspend_regs[] = {
-	{ GATE_IP_DISP1, 0xffffffff, 0xffffffff }, /* DISP1 gates */
-	{ SRC_TOP5, 0, BIT(0) },	/* MUX mout_user_aclk400_disp1 */
-	{ SRC_TOP5, 0, BIT(24) },	/* MUX mout_user_aclk300_disp1 */
-	{ SRC_TOP3, 0, BIT(8) },	/* MUX mout_user_aclk200_disp1 */
-	{ DIV2_RATIO0, 0, 0x30000 },		/* DIV dout_disp1_blk */
-};
+अटल काष्ठा exynos5_subcmu_reg_dump exynos5x_disp_suspend_regs[] = अणु
+	अणु GATE_IP_DISP1, 0xffffffff, 0xffffffff पूर्ण, /* DISP1 gates */
+	अणु SRC_TOP5, 0, BIT(0) पूर्ण,	/* MUX mout_user_aclk400_disp1 */
+	अणु SRC_TOP5, 0, BIT(24) पूर्ण,	/* MUX mout_user_aclk300_disp1 */
+	अणु SRC_TOP3, 0, BIT(8) पूर्ण,	/* MUX mout_user_aclk200_disp1 */
+	अणु DIV2_RATIO0, 0, 0x30000 पूर्ण,		/* DIV करोut_disp1_blk */
+पूर्ण;
 
-static const struct samsung_div_clock exynos5x_gsc_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी exynos5x_gsc_भाग_clks[] __initस्थिर = अणु
 	DIV(0, "dout_gscl_blk_300", "mout_user_aclk300_gscl",
 			DIV2_RATIO0, 4, 2),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock exynos5x_gsc_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी exynos5x_gsc_gate_clks[] __initस्थिर = अणु
 	GATE(CLK_GSCL0, "gscl0", "aclk300_gscl", GATE_IP_GSCL0, 0, 0, 0),
 	GATE(CLK_GSCL1, "gscl1", "aclk300_gscl", GATE_IP_GSCL0, 1, 0, 0),
 	GATE(CLK_SMMU_GSCL0, "smmu_gscl0", "dout_gscl_blk_300",
 			GATE_IP_GSCL1, 6, 0, 0),
 	GATE(CLK_SMMU_GSCL1, "smmu_gscl1", "dout_gscl_blk_300",
 			GATE_IP_GSCL1, 7, 0, 0),
-};
+पूर्ण;
 
-static struct exynos5_subcmu_reg_dump exynos5x_gsc_suspend_regs[] = {
-	{ GATE_IP_GSCL0, 0x3, 0x3 },	/* GSC gates */
-	{ GATE_IP_GSCL1, 0xc0, 0xc0 },	/* GSC gates */
-	{ SRC_TOP5, 0, BIT(28) },	/* MUX mout_user_aclk300_gscl */
-	{ DIV2_RATIO0, 0, 0x30 },	/* DIV dout_gscl_blk_300 */
-};
+अटल काष्ठा exynos5_subcmu_reg_dump exynos5x_gsc_suspend_regs[] = अणु
+	अणु GATE_IP_GSCL0, 0x3, 0x3 पूर्ण,	/* GSC gates */
+	अणु GATE_IP_GSCL1, 0xc0, 0xc0 पूर्ण,	/* GSC gates */
+	अणु SRC_TOP5, 0, BIT(28) पूर्ण,	/* MUX mout_user_aclk300_gscl */
+	अणु DIV2_RATIO0, 0, 0x30 पूर्ण,	/* DIV करोut_gscl_blk_300 */
+पूर्ण;
 
-static const struct samsung_gate_clock exynos5x_g3d_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी exynos5x_g3d_gate_clks[] __initस्थिर = अणु
 	GATE(CLK_G3D, "g3d", "mout_user_aclk_g3d", GATE_IP_G3D, 9,
 	     CLK_SET_RATE_PARENT, 0),
-};
+पूर्ण;
 
-static struct exynos5_subcmu_reg_dump exynos5x_g3d_suspend_regs[] = {
-	{ GATE_IP_G3D, 0x3ff, 0x3ff },	/* G3D gates */
-	{ SRC_TOP5, 0, BIT(16) },	/* MUX mout_user_aclk_g3d */
-};
+अटल काष्ठा exynos5_subcmu_reg_dump exynos5x_g3d_suspend_regs[] = अणु
+	अणु GATE_IP_G3D, 0x3ff, 0x3ff पूर्ण,	/* G3D gates */
+	अणु SRC_TOP5, 0, BIT(16) पूर्ण,	/* MUX mout_user_aclk_g3d */
+पूर्ण;
 
-static const struct samsung_div_clock exynos5x_mfc_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी exynos5x_mfc_भाग_clks[] __initस्थिर = अणु
 	DIV(0, "dout_mfc_blk", "mout_user_aclk333", DIV4_RATIO, 0, 2),
-};
+पूर्ण;
 
-static const struct samsung_gate_clock exynos5x_mfc_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी exynos5x_mfc_gate_clks[] __initस्थिर = अणु
 	GATE(CLK_MFC, "mfc", "aclk333", GATE_IP_MFC, 0, 0, 0),
 	GATE(CLK_SMMU_MFCL, "smmu_mfcl", "dout_mfc_blk", GATE_IP_MFC, 1, 0, 0),
 	GATE(CLK_SMMU_MFCR, "smmu_mfcr", "dout_mfc_blk", GATE_IP_MFC, 2, 0, 0),
-};
+पूर्ण;
 
-static struct exynos5_subcmu_reg_dump exynos5x_mfc_suspend_regs[] = {
-	{ GATE_IP_MFC, 0xffffffff, 0xffffffff }, /* MFC gates */
-	{ SRC_TOP4, 0, BIT(28) },		/* MUX mout_user_aclk333 */
-	{ DIV4_RATIO, 0, 0x3 },			/* DIV dout_mfc_blk */
-};
+अटल काष्ठा exynos5_subcmu_reg_dump exynos5x_mfc_suspend_regs[] = अणु
+	अणु GATE_IP_MFC, 0xffffffff, 0xffffffff पूर्ण, /* MFC gates */
+	अणु SRC_TOP4, 0, BIT(28) पूर्ण,		/* MUX mout_user_aclk333 */
+	अणु DIV4_RATIO, 0, 0x3 पूर्ण,			/* DIV करोut_mfc_blk */
+पूर्ण;
 
-static const struct samsung_gate_clock exynos5x_mscl_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी exynos5x_mscl_gate_clks[] __initस्थिर = अणु
 	/* MSCL Block */
 	GATE(CLK_MSCL0, "mscl0", "aclk400_mscl", GATE_IP_MSCL, 0, 0, 0),
 	GATE(CLK_MSCL1, "mscl1", "aclk400_mscl", GATE_IP_MSCL, 1, 0, 0),
@@ -1298,105 +1299,105 @@ static const struct samsung_gate_clock exynos5x_mscl_gate_clks[] __initconst = {
 			GATE_IP_MSCL, 9, 0, 0),
 	GATE(CLK_SMMU_MSCL2, "smmu_mscl2", "dout_mscl_blk",
 			GATE_IP_MSCL, 10, 0, 0),
-};
+पूर्ण;
 
-static const struct samsung_div_clock exynos5x_mscl_div_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_भाग_घड़ी exynos5x_mscl_भाग_clks[] __initस्थिर = अणु
 	DIV(0, "dout_mscl_blk", "aclk400_mscl", DIV2_RATIO0, 28, 2),
-};
+पूर्ण;
 
-static struct exynos5_subcmu_reg_dump exynos5x_mscl_suspend_regs[] = {
-	{ GATE_IP_MSCL, 0xffffffff, 0xffffffff }, /* MSCL gates */
-	{ SRC_TOP3, 0, BIT(4) },		/* MUX mout_user_aclk400_mscl */
-	{ DIV2_RATIO0, 0, 0x30000000 },		/* DIV dout_mscl_blk */
-};
+अटल काष्ठा exynos5_subcmu_reg_dump exynos5x_mscl_suspend_regs[] = अणु
+	अणु GATE_IP_MSCL, 0xffffffff, 0xffffffff पूर्ण, /* MSCL gates */
+	अणु SRC_TOP3, 0, BIT(4) पूर्ण,		/* MUX mout_user_aclk400_mscl */
+	अणु DIV2_RATIO0, 0, 0x30000000 पूर्ण,		/* DIV करोut_mscl_blk */
+पूर्ण;
 
-static const struct samsung_gate_clock exynos5800_mau_gate_clks[] __initconst = {
+अटल स्थिर काष्ठा samsung_gate_घड़ी exynos5800_mau_gate_clks[] __initस्थिर = अणु
 	GATE(CLK_MAU_EPLL, "mau_epll", "mout_user_mau_epll",
 			SRC_MASK_TOP7, 20, CLK_SET_RATE_PARENT, 0),
 	GATE(CLK_SCLK_MAUDIO0, "sclk_maudio0", "dout_maudio0",
 		GATE_TOP_SCLK_MAU, 0, CLK_SET_RATE_PARENT, 0),
 	GATE(CLK_SCLK_MAUPCM0, "sclk_maupcm0", "dout_maupcm0",
 		GATE_TOP_SCLK_MAU, 1, CLK_SET_RATE_PARENT, 0),
-};
+पूर्ण;
 
-static struct exynos5_subcmu_reg_dump exynos5800_mau_suspend_regs[] = {
-	{ SRC_TOP9, 0, BIT(8) },	/* MUX mout_user_mau_epll */
-};
+अटल काष्ठा exynos5_subcmu_reg_dump exynos5800_mau_suspend_regs[] = अणु
+	अणु SRC_TOP9, 0, BIT(8) पूर्ण,	/* MUX mout_user_mau_epll */
+पूर्ण;
 
-static const struct exynos5_subcmu_info exynos5x_disp_subcmu = {
-	.div_clks	= exynos5x_disp_div_clks,
-	.nr_div_clks	= ARRAY_SIZE(exynos5x_disp_div_clks),
+अटल स्थिर काष्ठा exynos5_subcmu_info exynos5x_disp_subcmu = अणु
+	.भाग_clks	= exynos5x_disp_भाग_clks,
+	.nr_भाग_clks	= ARRAY_SIZE(exynos5x_disp_भाग_clks),
 	.gate_clks	= exynos5x_disp_gate_clks,
 	.nr_gate_clks	= ARRAY_SIZE(exynos5x_disp_gate_clks),
 	.suspend_regs	= exynos5x_disp_suspend_regs,
 	.nr_suspend_regs = ARRAY_SIZE(exynos5x_disp_suspend_regs),
 	.pd_name	= "DISP",
-};
+पूर्ण;
 
-static const struct exynos5_subcmu_info exynos5x_gsc_subcmu = {
-	.div_clks	= exynos5x_gsc_div_clks,
-	.nr_div_clks	= ARRAY_SIZE(exynos5x_gsc_div_clks),
+अटल स्थिर काष्ठा exynos5_subcmu_info exynos5x_gsc_subcmu = अणु
+	.भाग_clks	= exynos5x_gsc_भाग_clks,
+	.nr_भाग_clks	= ARRAY_SIZE(exynos5x_gsc_भाग_clks),
 	.gate_clks	= exynos5x_gsc_gate_clks,
 	.nr_gate_clks	= ARRAY_SIZE(exynos5x_gsc_gate_clks),
 	.suspend_regs	= exynos5x_gsc_suspend_regs,
 	.nr_suspend_regs = ARRAY_SIZE(exynos5x_gsc_suspend_regs),
 	.pd_name	= "GSC",
-};
+पूर्ण;
 
-static const struct exynos5_subcmu_info exynos5x_g3d_subcmu = {
+अटल स्थिर काष्ठा exynos5_subcmu_info exynos5x_g3d_subcmu = अणु
 	.gate_clks	= exynos5x_g3d_gate_clks,
 	.nr_gate_clks	= ARRAY_SIZE(exynos5x_g3d_gate_clks),
 	.suspend_regs	= exynos5x_g3d_suspend_regs,
 	.nr_suspend_regs = ARRAY_SIZE(exynos5x_g3d_suspend_regs),
 	.pd_name	= "G3D",
-};
+पूर्ण;
 
-static const struct exynos5_subcmu_info exynos5x_mfc_subcmu = {
-	.div_clks	= exynos5x_mfc_div_clks,
-	.nr_div_clks	= ARRAY_SIZE(exynos5x_mfc_div_clks),
+अटल स्थिर काष्ठा exynos5_subcmu_info exynos5x_mfc_subcmu = अणु
+	.भाग_clks	= exynos5x_mfc_भाग_clks,
+	.nr_भाग_clks	= ARRAY_SIZE(exynos5x_mfc_भाग_clks),
 	.gate_clks	= exynos5x_mfc_gate_clks,
 	.nr_gate_clks	= ARRAY_SIZE(exynos5x_mfc_gate_clks),
 	.suspend_regs	= exynos5x_mfc_suspend_regs,
 	.nr_suspend_regs = ARRAY_SIZE(exynos5x_mfc_suspend_regs),
 	.pd_name	= "MFC",
-};
+पूर्ण;
 
-static const struct exynos5_subcmu_info exynos5x_mscl_subcmu = {
-	.div_clks	= exynos5x_mscl_div_clks,
-	.nr_div_clks	= ARRAY_SIZE(exynos5x_mscl_div_clks),
+अटल स्थिर काष्ठा exynos5_subcmu_info exynos5x_mscl_subcmu = अणु
+	.भाग_clks	= exynos5x_mscl_भाग_clks,
+	.nr_भाग_clks	= ARRAY_SIZE(exynos5x_mscl_भाग_clks),
 	.gate_clks	= exynos5x_mscl_gate_clks,
 	.nr_gate_clks	= ARRAY_SIZE(exynos5x_mscl_gate_clks),
 	.suspend_regs	= exynos5x_mscl_suspend_regs,
 	.nr_suspend_regs = ARRAY_SIZE(exynos5x_mscl_suspend_regs),
 	.pd_name	= "MSC",
-};
+पूर्ण;
 
-static const struct exynos5_subcmu_info exynos5800_mau_subcmu = {
+अटल स्थिर काष्ठा exynos5_subcmu_info exynos5800_mau_subcmu = अणु
 	.gate_clks	= exynos5800_mau_gate_clks,
 	.nr_gate_clks	= ARRAY_SIZE(exynos5800_mau_gate_clks),
 	.suspend_regs	= exynos5800_mau_suspend_regs,
 	.nr_suspend_regs = ARRAY_SIZE(exynos5800_mau_suspend_regs),
 	.pd_name	= "MAU",
-};
+पूर्ण;
 
-static const struct exynos5_subcmu_info *exynos5x_subcmus[] = {
+अटल स्थिर काष्ठा exynos5_subcmu_info *exynos5x_subcmus[] = अणु
 	&exynos5x_disp_subcmu,
 	&exynos5x_gsc_subcmu,
 	&exynos5x_g3d_subcmu,
 	&exynos5x_mfc_subcmu,
 	&exynos5x_mscl_subcmu,
-};
+पूर्ण;
 
-static const struct exynos5_subcmu_info *exynos5800_subcmus[] = {
+अटल स्थिर काष्ठा exynos5_subcmu_info *exynos5800_subcmus[] = अणु
 	&exynos5x_disp_subcmu,
 	&exynos5x_gsc_subcmu,
 	&exynos5x_g3d_subcmu,
 	&exynos5x_mfc_subcmu,
 	&exynos5x_mscl_subcmu,
 	&exynos5800_mau_subcmu,
-};
+पूर्ण;
 
-static const struct samsung_pll_rate_table exynos5420_pll2550x_24mhz_tbl[] __initconst = {
+अटल स्थिर काष्ठा samsung_pll_rate_table exynos5420_pll2550x_24mhz_tbl[] __initस्थिर = अणु
 	PLL_35XX_RATE(24 * MHZ, 2000000000, 250, 3, 0),
 	PLL_35XX_RATE(24 * MHZ, 1900000000, 475, 6, 0),
 	PLL_35XX_RATE(24 * MHZ, 1800000000, 225, 3, 0),
@@ -1416,9 +1417,9 @@ static const struct samsung_pll_rate_table exynos5420_pll2550x_24mhz_tbl[] __ini
 	PLL_35XX_RATE(24 * MHZ, 400000000,  200, 3, 2),
 	PLL_35XX_RATE(24 * MHZ, 300000000,  200, 2, 3),
 	PLL_35XX_RATE(24 * MHZ, 200000000,  200, 3, 3),
-};
+पूर्ण;
 
-static const struct samsung_pll_rate_table exynos5422_bpll_rate_table[] = {
+अटल स्थिर काष्ठा samsung_pll_rate_table exynos5422_bpll_rate_table[] = अणु
 	PLL_35XX_RATE(24 * MHZ, 825000000, 275, 4, 1),
 	PLL_35XX_RATE(24 * MHZ, 728000000, 182, 3, 1),
 	PLL_35XX_RATE(24 * MHZ, 633000000, 211, 4, 1),
@@ -1427,9 +1428,9 @@ static const struct samsung_pll_rate_table exynos5422_bpll_rate_table[] = {
 	PLL_35XX_RATE(24 * MHZ, 275000000, 275, 3, 3),
 	PLL_35XX_RATE(24 * MHZ, 206000000, 206, 3, 3),
 	PLL_35XX_RATE(24 * MHZ, 165000000, 110, 2, 3),
-};
+पूर्ण;
 
-static const struct samsung_pll_rate_table exynos5420_epll_24mhz_tbl[] = {
+अटल स्थिर काष्ठा samsung_pll_rate_table exynos5420_epll_24mhz_tbl[] = अणु
 	PLL_36XX_RATE(24 * MHZ, 600000000U, 100, 2, 1, 0),
 	PLL_36XX_RATE(24 * MHZ, 400000000U, 200, 3, 2, 0),
 	PLL_36XX_RATE(24 * MHZ, 393216003U, 197, 3, 2, -25690),
@@ -1445,9 +1446,9 @@ static const struct samsung_pll_rate_table exynos5420_epll_24mhz_tbl[] = {
 	PLL_36XX_RATE(24 * MHZ,  49152000U, 197, 3, 5, -25690),
 	PLL_36XX_RATE(24 * MHZ,  45158401U, 90, 3, 4, 20762),
 	PLL_36XX_RATE(24 * MHZ,  32768001U, 131, 3, 5, 4719),
-};
+पूर्ण;
 
-static const struct samsung_pll_rate_table exynos5420_vpll_24mhz_tbl[] = {
+अटल स्थिर काष्ठा samsung_pll_rate_table exynos5420_vpll_24mhz_tbl[] = अणु
 	PLL_35XX_RATE(24 * MHZ, 600000000U,  200, 2, 2),
 	PLL_35XX_RATE(24 * MHZ, 543000000U,  181, 2, 2),
 	PLL_35XX_RATE(24 * MHZ, 480000000U,  160, 2, 2),
@@ -1456,184 +1457,184 @@ static const struct samsung_pll_rate_table exynos5420_vpll_24mhz_tbl[] = {
 	PLL_35XX_RATE(24 * MHZ, 266000000U,  266, 3, 3),
 	PLL_35XX_RATE(24 * MHZ, 177000000U,  118, 2, 3),
 	PLL_35XX_RATE(24 * MHZ, 100000000U,  200, 3, 4),
-};
+पूर्ण;
 
-static struct samsung_pll_clock exynos5x_plls[nr_plls] __initdata = {
+अटल काष्ठा samsung_pll_घड़ी exynos5x_plls[nr_plls] __initdata = अणु
 	[apll] = PLL(pll_2550, CLK_FOUT_APLL, "fout_apll", "fin_pll", APLL_LOCK,
-		APLL_CON0, NULL),
+		APLL_CON0, शून्य),
 	[cpll] = PLL(pll_2550, CLK_FOUT_CPLL, "fout_cpll", "fin_pll", CPLL_LOCK,
-		CPLL_CON0, NULL),
+		CPLL_CON0, शून्य),
 	[dpll] = PLL(pll_2550, CLK_FOUT_DPLL, "fout_dpll", "fin_pll", DPLL_LOCK,
-		DPLL_CON0, NULL),
+		DPLL_CON0, शून्य),
 	[epll] = PLL(pll_36xx, CLK_FOUT_EPLL, "fout_epll", "fin_pll", EPLL_LOCK,
-		EPLL_CON0, NULL),
+		EPLL_CON0, शून्य),
 	[rpll] = PLL(pll_2650, CLK_FOUT_RPLL, "fout_rpll", "fin_pll", RPLL_LOCK,
-		RPLL_CON0, NULL),
+		RPLL_CON0, शून्य),
 	[ipll] = PLL(pll_2550, CLK_FOUT_IPLL, "fout_ipll", "fin_pll", IPLL_LOCK,
-		IPLL_CON0, NULL),
+		IPLL_CON0, शून्य),
 	[spll] = PLL(pll_2550, CLK_FOUT_SPLL, "fout_spll", "fin_pll", SPLL_LOCK,
-		SPLL_CON0, NULL),
+		SPLL_CON0, शून्य),
 	[vpll] = PLL(pll_2550, CLK_FOUT_VPLL, "fout_vpll", "fin_pll", VPLL_LOCK,
-		VPLL_CON0, NULL),
+		VPLL_CON0, शून्य),
 	[mpll] = PLL(pll_2550, CLK_FOUT_MPLL, "fout_mpll", "fin_pll", MPLL_LOCK,
-		MPLL_CON0, NULL),
+		MPLL_CON0, शून्य),
 	[bpll] = PLL(pll_2550, CLK_FOUT_BPLL, "fout_bpll", "fin_pll", BPLL_LOCK,
-		BPLL_CON0, NULL),
+		BPLL_CON0, शून्य),
 	[kpll] = PLL(pll_2550, CLK_FOUT_KPLL, "fout_kpll", "fin_pll", KPLL_LOCK,
-		KPLL_CON0, NULL),
-};
+		KPLL_CON0, शून्य),
+पूर्ण;
 
-#define E5420_EGL_DIV0(apll, pclk_dbg, atb, cpud)			\
+#घोषणा E5420_EGL_DIV0(apll, pclk_dbg, atb, cpud)			\
 		((((apll) << 24) | ((pclk_dbg) << 20) | ((atb) << 16) |	\
 		 ((cpud) << 4)))
 
-static const struct exynos_cpuclk_cfg_data exynos5420_eglclk_d[] __initconst = {
-	{ 1800000, E5420_EGL_DIV0(3, 7, 7, 4), },
-	{ 1700000, E5420_EGL_DIV0(3, 7, 7, 3), },
-	{ 1600000, E5420_EGL_DIV0(3, 7, 7, 3), },
-	{ 1500000, E5420_EGL_DIV0(3, 7, 7, 3), },
-	{ 1400000, E5420_EGL_DIV0(3, 7, 7, 3), },
-	{ 1300000, E5420_EGL_DIV0(3, 7, 7, 2), },
-	{ 1200000, E5420_EGL_DIV0(3, 7, 7, 2), },
-	{ 1100000, E5420_EGL_DIV0(3, 7, 7, 2), },
-	{ 1000000, E5420_EGL_DIV0(3, 6, 6, 2), },
-	{  900000, E5420_EGL_DIV0(3, 6, 6, 2), },
-	{  800000, E5420_EGL_DIV0(3, 5, 5, 2), },
-	{  700000, E5420_EGL_DIV0(3, 5, 5, 2), },
-	{  600000, E5420_EGL_DIV0(3, 4, 4, 2), },
-	{  500000, E5420_EGL_DIV0(3, 3, 3, 2), },
-	{  400000, E5420_EGL_DIV0(3, 3, 3, 2), },
-	{  300000, E5420_EGL_DIV0(3, 3, 3, 2), },
-	{  200000, E5420_EGL_DIV0(3, 3, 3, 2), },
-	{  0 },
-};
+अटल स्थिर काष्ठा exynos_cpuclk_cfg_data exynos5420_eglclk_d[] __initस्थिर = अणु
+	अणु 1800000, E5420_EGL_DIV0(3, 7, 7, 4), पूर्ण,
+	अणु 1700000, E5420_EGL_DIV0(3, 7, 7, 3), पूर्ण,
+	अणु 1600000, E5420_EGL_DIV0(3, 7, 7, 3), पूर्ण,
+	अणु 1500000, E5420_EGL_DIV0(3, 7, 7, 3), पूर्ण,
+	अणु 1400000, E5420_EGL_DIV0(3, 7, 7, 3), पूर्ण,
+	अणु 1300000, E5420_EGL_DIV0(3, 7, 7, 2), पूर्ण,
+	अणु 1200000, E5420_EGL_DIV0(3, 7, 7, 2), पूर्ण,
+	अणु 1100000, E5420_EGL_DIV0(3, 7, 7, 2), पूर्ण,
+	अणु 1000000, E5420_EGL_DIV0(3, 6, 6, 2), पूर्ण,
+	अणु  900000, E5420_EGL_DIV0(3, 6, 6, 2), पूर्ण,
+	अणु  800000, E5420_EGL_DIV0(3, 5, 5, 2), पूर्ण,
+	अणु  700000, E5420_EGL_DIV0(3, 5, 5, 2), पूर्ण,
+	अणु  600000, E5420_EGL_DIV0(3, 4, 4, 2), पूर्ण,
+	अणु  500000, E5420_EGL_DIV0(3, 3, 3, 2), पूर्ण,
+	अणु  400000, E5420_EGL_DIV0(3, 3, 3, 2), पूर्ण,
+	अणु  300000, E5420_EGL_DIV0(3, 3, 3, 2), पूर्ण,
+	अणु  200000, E5420_EGL_DIV0(3, 3, 3, 2), पूर्ण,
+	अणु  0 पूर्ण,
+पूर्ण;
 
-static const struct exynos_cpuclk_cfg_data exynos5800_eglclk_d[] __initconst = {
-	{ 2000000, E5420_EGL_DIV0(3, 7, 7, 4), },
-	{ 1900000, E5420_EGL_DIV0(3, 7, 7, 4), },
-	{ 1800000, E5420_EGL_DIV0(3, 7, 7, 4), },
-	{ 1700000, E5420_EGL_DIV0(3, 7, 7, 3), },
-	{ 1600000, E5420_EGL_DIV0(3, 7, 7, 3), },
-	{ 1500000, E5420_EGL_DIV0(3, 7, 7, 3), },
-	{ 1400000, E5420_EGL_DIV0(3, 7, 7, 3), },
-	{ 1300000, E5420_EGL_DIV0(3, 7, 7, 2), },
-	{ 1200000, E5420_EGL_DIV0(3, 7, 7, 2), },
-	{ 1100000, E5420_EGL_DIV0(3, 7, 7, 2), },
-	{ 1000000, E5420_EGL_DIV0(3, 7, 6, 2), },
-	{  900000, E5420_EGL_DIV0(3, 7, 6, 2), },
-	{  800000, E5420_EGL_DIV0(3, 7, 5, 2), },
-	{  700000, E5420_EGL_DIV0(3, 7, 5, 2), },
-	{  600000, E5420_EGL_DIV0(3, 7, 4, 2), },
-	{  500000, E5420_EGL_DIV0(3, 7, 3, 2), },
-	{  400000, E5420_EGL_DIV0(3, 7, 3, 2), },
-	{  300000, E5420_EGL_DIV0(3, 7, 3, 2), },
-	{  200000, E5420_EGL_DIV0(3, 7, 3, 2), },
-	{  0 },
-};
+अटल स्थिर काष्ठा exynos_cpuclk_cfg_data exynos5800_eglclk_d[] __initस्थिर = अणु
+	अणु 2000000, E5420_EGL_DIV0(3, 7, 7, 4), पूर्ण,
+	अणु 1900000, E5420_EGL_DIV0(3, 7, 7, 4), पूर्ण,
+	अणु 1800000, E5420_EGL_DIV0(3, 7, 7, 4), पूर्ण,
+	अणु 1700000, E5420_EGL_DIV0(3, 7, 7, 3), पूर्ण,
+	अणु 1600000, E5420_EGL_DIV0(3, 7, 7, 3), पूर्ण,
+	अणु 1500000, E5420_EGL_DIV0(3, 7, 7, 3), पूर्ण,
+	अणु 1400000, E5420_EGL_DIV0(3, 7, 7, 3), पूर्ण,
+	अणु 1300000, E5420_EGL_DIV0(3, 7, 7, 2), पूर्ण,
+	अणु 1200000, E5420_EGL_DIV0(3, 7, 7, 2), पूर्ण,
+	अणु 1100000, E5420_EGL_DIV0(3, 7, 7, 2), पूर्ण,
+	अणु 1000000, E5420_EGL_DIV0(3, 7, 6, 2), पूर्ण,
+	अणु  900000, E5420_EGL_DIV0(3, 7, 6, 2), पूर्ण,
+	अणु  800000, E5420_EGL_DIV0(3, 7, 5, 2), पूर्ण,
+	अणु  700000, E5420_EGL_DIV0(3, 7, 5, 2), पूर्ण,
+	अणु  600000, E5420_EGL_DIV0(3, 7, 4, 2), पूर्ण,
+	अणु  500000, E5420_EGL_DIV0(3, 7, 3, 2), पूर्ण,
+	अणु  400000, E5420_EGL_DIV0(3, 7, 3, 2), पूर्ण,
+	अणु  300000, E5420_EGL_DIV0(3, 7, 3, 2), पूर्ण,
+	अणु  200000, E5420_EGL_DIV0(3, 7, 3, 2), पूर्ण,
+	अणु  0 पूर्ण,
+पूर्ण;
 
-#define E5420_KFC_DIV(kpll, pclk, aclk)					\
+#घोषणा E5420_KFC_DIV(kpll, pclk, aclk)					\
 		((((kpll) << 24) | ((pclk) << 20) | ((aclk) << 4)))
 
-static const struct exynos_cpuclk_cfg_data exynos5420_kfcclk_d[] __initconst = {
-	{ 1400000, E5420_KFC_DIV(3, 5, 3), }, /* for Exynos5800 */
-	{ 1300000, E5420_KFC_DIV(3, 5, 2), },
-	{ 1200000, E5420_KFC_DIV(3, 5, 2), },
-	{ 1100000, E5420_KFC_DIV(3, 5, 2), },
-	{ 1000000, E5420_KFC_DIV(3, 5, 2), },
-	{  900000, E5420_KFC_DIV(3, 5, 2), },
-	{  800000, E5420_KFC_DIV(3, 5, 2), },
-	{  700000, E5420_KFC_DIV(3, 4, 2), },
-	{  600000, E5420_KFC_DIV(3, 4, 2), },
-	{  500000, E5420_KFC_DIV(3, 4, 2), },
-	{  400000, E5420_KFC_DIV(3, 3, 2), },
-	{  300000, E5420_KFC_DIV(3, 3, 2), },
-	{  200000, E5420_KFC_DIV(3, 3, 2), },
-	{  0 },
-};
+अटल स्थिर काष्ठा exynos_cpuclk_cfg_data exynos5420_kfcclk_d[] __initस्थिर = अणु
+	अणु 1400000, E5420_KFC_DIV(3, 5, 3), पूर्ण, /* क्रम Exynos5800 */
+	अणु 1300000, E5420_KFC_DIV(3, 5, 2), पूर्ण,
+	अणु 1200000, E5420_KFC_DIV(3, 5, 2), पूर्ण,
+	अणु 1100000, E5420_KFC_DIV(3, 5, 2), पूर्ण,
+	अणु 1000000, E5420_KFC_DIV(3, 5, 2), पूर्ण,
+	अणु  900000, E5420_KFC_DIV(3, 5, 2), पूर्ण,
+	अणु  800000, E5420_KFC_DIV(3, 5, 2), पूर्ण,
+	अणु  700000, E5420_KFC_DIV(3, 4, 2), पूर्ण,
+	अणु  600000, E5420_KFC_DIV(3, 4, 2), पूर्ण,
+	अणु  500000, E5420_KFC_DIV(3, 4, 2), पूर्ण,
+	अणु  400000, E5420_KFC_DIV(3, 3, 2), पूर्ण,
+	अणु  300000, E5420_KFC_DIV(3, 3, 2), पूर्ण,
+	अणु  200000, E5420_KFC_DIV(3, 3, 2), पूर्ण,
+	अणु  0 पूर्ण,
+पूर्ण;
 
-static const struct of_device_id ext_clk_match[] __initconst = {
-	{ .compatible = "samsung,exynos5420-oscclk", .data = (void *)0, },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id ext_clk_match[] __initस्थिर = अणु
+	अणु .compatible = "samsung,exynos5420-oscclk", .data = (व्योम *)0, पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-/* register exynos5420 clocks */
-static void __init exynos5x_clk_init(struct device_node *np,
-		enum exynos5x_soc soc)
-{
-	struct samsung_clk_provider *ctx;
-	struct clk_hw **hws;
+/* रेजिस्टर exynos5420 घड़ीs */
+अटल व्योम __init exynos5x_clk_init(काष्ठा device_node *np,
+		क्रमागत exynos5x_soc soc)
+अणु
+	काष्ठा samsung_clk_provider *ctx;
+	काष्ठा clk_hw **hws;
 
-	if (np) {
+	अगर (np) अणु
 		reg_base = of_iomap(np, 0);
-		if (!reg_base)
+		अगर (!reg_base)
 			panic("%s: failed to map registers\n", __func__);
-	} else {
+	पूर्ण अन्यथा अणु
 		panic("%s: unable to determine soc\n", __func__);
-	}
+	पूर्ण
 
 	exynos5x_soc = soc;
 
 	ctx = samsung_clk_init(np, reg_base, CLK_NR_CLKS);
 	hws = ctx->clk_data.hws;
 
-	samsung_clk_of_register_fixed_ext(ctx, exynos5x_fixed_rate_ext_clks,
+	samsung_clk_of_रेजिस्टर_fixed_ext(ctx, exynos5x_fixed_rate_ext_clks,
 			ARRAY_SIZE(exynos5x_fixed_rate_ext_clks),
 			ext_clk_match);
 
-	if (_get_rate("fin_pll") == 24 * MHZ) {
+	अगर (_get_rate("fin_pll") == 24 * MHZ) अणु
 		exynos5x_plls[apll].rate_table = exynos5420_pll2550x_24mhz_tbl;
 		exynos5x_plls[epll].rate_table = exynos5420_epll_24mhz_tbl;
 		exynos5x_plls[kpll].rate_table = exynos5420_pll2550x_24mhz_tbl;
 		exynos5x_plls[vpll].rate_table = exynos5420_vpll_24mhz_tbl;
-	}
+	पूर्ण
 
-	if (soc == EXYNOS5420)
+	अगर (soc == EXYNOS5420)
 		exynos5x_plls[bpll].rate_table = exynos5420_pll2550x_24mhz_tbl;
-	else
+	अन्यथा
 		exynos5x_plls[bpll].rate_table = exynos5422_bpll_rate_table;
 
-	samsung_clk_register_pll(ctx, exynos5x_plls, ARRAY_SIZE(exynos5x_plls),
+	samsung_clk_रेजिस्टर_pll(ctx, exynos5x_plls, ARRAY_SIZE(exynos5x_plls),
 					reg_base);
-	samsung_clk_register_fixed_rate(ctx, exynos5x_fixed_rate_clks,
+	samsung_clk_रेजिस्टर_fixed_rate(ctx, exynos5x_fixed_rate_clks,
 			ARRAY_SIZE(exynos5x_fixed_rate_clks));
-	samsung_clk_register_fixed_factor(ctx, exynos5x_fixed_factor_clks,
+	samsung_clk_रेजिस्टर_fixed_factor(ctx, exynos5x_fixed_factor_clks,
 			ARRAY_SIZE(exynos5x_fixed_factor_clks));
-	samsung_clk_register_mux(ctx, exynos5x_mux_clks,
+	samsung_clk_रेजिस्टर_mux(ctx, exynos5x_mux_clks,
 			ARRAY_SIZE(exynos5x_mux_clks));
-	samsung_clk_register_div(ctx, exynos5x_div_clks,
-			ARRAY_SIZE(exynos5x_div_clks));
-	samsung_clk_register_gate(ctx, exynos5x_gate_clks,
+	samsung_clk_रेजिस्टर_भाग(ctx, exynos5x_भाग_clks,
+			ARRAY_SIZE(exynos5x_भाग_clks));
+	samsung_clk_रेजिस्टर_gate(ctx, exynos5x_gate_clks,
 			ARRAY_SIZE(exynos5x_gate_clks));
 
-	if (soc == EXYNOS5420) {
-		samsung_clk_register_mux(ctx, exynos5420_mux_clks,
+	अगर (soc == EXYNOS5420) अणु
+		samsung_clk_रेजिस्टर_mux(ctx, exynos5420_mux_clks,
 				ARRAY_SIZE(exynos5420_mux_clks));
-		samsung_clk_register_div(ctx, exynos5420_div_clks,
-				ARRAY_SIZE(exynos5420_div_clks));
-		samsung_clk_register_gate(ctx, exynos5420_gate_clks,
+		samsung_clk_रेजिस्टर_भाग(ctx, exynos5420_भाग_clks,
+				ARRAY_SIZE(exynos5420_भाग_clks));
+		samsung_clk_रेजिस्टर_gate(ctx, exynos5420_gate_clks,
 				ARRAY_SIZE(exynos5420_gate_clks));
-	} else {
-		samsung_clk_register_fixed_factor(
+	पूर्ण अन्यथा अणु
+		samsung_clk_रेजिस्टर_fixed_factor(
 				ctx, exynos5800_fixed_factor_clks,
 				ARRAY_SIZE(exynos5800_fixed_factor_clks));
-		samsung_clk_register_mux(ctx, exynos5800_mux_clks,
+		samsung_clk_रेजिस्टर_mux(ctx, exynos5800_mux_clks,
 				ARRAY_SIZE(exynos5800_mux_clks));
-		samsung_clk_register_div(ctx, exynos5800_div_clks,
-				ARRAY_SIZE(exynos5800_div_clks));
-		samsung_clk_register_gate(ctx, exynos5800_gate_clks,
+		samsung_clk_रेजिस्टर_भाग(ctx, exynos5800_भाग_clks,
+				ARRAY_SIZE(exynos5800_भाग_clks));
+		samsung_clk_रेजिस्टर_gate(ctx, exynos5800_gate_clks,
 				ARRAY_SIZE(exynos5800_gate_clks));
-	}
+	पूर्ण
 
-	if (soc == EXYNOS5420) {
-		exynos_register_cpu_clock(ctx, CLK_ARM_CLK, "armclk",
+	अगर (soc == EXYNOS5420) अणु
+		exynos_रेजिस्टर_cpu_घड़ी(ctx, CLK_ARM_CLK, "armclk",
 			hws[CLK_MOUT_APLL], hws[CLK_MOUT_MSPLL_CPU], 0x200,
 			exynos5420_eglclk_d, ARRAY_SIZE(exynos5420_eglclk_d), 0);
-	} else {
-		exynos_register_cpu_clock(ctx, CLK_ARM_CLK, "armclk",
+	पूर्ण अन्यथा अणु
+		exynos_रेजिस्टर_cpu_घड़ी(ctx, CLK_ARM_CLK, "armclk",
 			hws[CLK_MOUT_APLL], hws[CLK_MOUT_MSPLL_CPU], 0x200,
 			exynos5800_eglclk_d, ARRAY_SIZE(exynos5800_eglclk_d), 0);
-	}
-	exynos_register_cpu_clock(ctx, CLK_KFC_CLK, "kfcclk",
+	पूर्ण
+	exynos_रेजिस्टर_cpu_घड़ी(ctx, CLK_KFC_CLK, "kfcclk",
 		hws[CLK_MOUT_KPLL], hws[CLK_MOUT_MSPLL_KFC],  0x28200,
 		exynos5420_kfcclk_d, ARRAY_SIZE(exynos5420_kfcclk_d), 0);
 
@@ -1641,21 +1642,21 @@ static void __init exynos5x_clk_init(struct device_node *np,
 		exynos5x_clk_regs, ARRAY_SIZE(exynos5x_clk_regs),
 		exynos5420_set_clksrc, ARRAY_SIZE(exynos5420_set_clksrc));
 
-	if (soc == EXYNOS5800) {
+	अगर (soc == EXYNOS5800) अणु
 		samsung_clk_sleep_init(reg_base, exynos5800_clk_regs,
 				       ARRAY_SIZE(exynos5800_clk_regs));
 
 		exynos5_subcmus_init(ctx, ARRAY_SIZE(exynos5800_subcmus),
 				     exynos5800_subcmus);
-	} else {
+	पूर्ण अन्यथा अणु
 		exynos5_subcmus_init(ctx, ARRAY_SIZE(exynos5x_subcmus),
 				     exynos5x_subcmus);
-	}
+	पूर्ण
 
 	/*
-	 * Keep top part of G3D clock path enabled permanently to ensure
-	 * that the internal busses get their clock regardless of the
-	 * main G3D clock enablement status.
+	 * Keep top part of G3D घड़ी path enabled permanently to ensure
+	 * that the पूर्णांकernal busses get their घड़ी regardless of the
+	 * मुख्य G3D घड़ी enablement status.
 	 */
 	clk_prepare_enable(hws[CLK_MOUT_SW_ACLK_G3D]->clk);
 	/*
@@ -1665,18 +1666,18 @@ static void __init exynos5x_clk_init(struct device_node *np,
 	clk_prepare_enable(hws[CLK_MOUT_BPLL]->clk);
 
 	samsung_clk_of_add_provider(np, ctx);
-}
+पूर्ण
 
-static void __init exynos5420_clk_init(struct device_node *np)
-{
+अटल व्योम __init exynos5420_clk_init(काष्ठा device_node *np)
+अणु
 	exynos5x_clk_init(np, EXYNOS5420);
-}
+पूर्ण
 CLK_OF_DECLARE_DRIVER(exynos5420_clk, "samsung,exynos5420-clock",
 		      exynos5420_clk_init);
 
-static void __init exynos5800_clk_init(struct device_node *np)
-{
+अटल व्योम __init exynos5800_clk_init(काष्ठा device_node *np)
+अणु
 	exynos5x_clk_init(np, EXYNOS5800);
-}
+पूर्ण
 CLK_OF_DECLARE_DRIVER(exynos5800_clk, "samsung,exynos5800-clock",
 		      exynos5800_clk_init);

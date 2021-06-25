@@ -1,99 +1,100 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_STRING_HELPERS_H_
-#define _LINUX_STRING_HELPERS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_STRING_HELPERS_H_
+#घोषणा _LINUX_STRING_HELPERS_H_
 
-#include <linux/ctype.h>
-#include <linux/types.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/types.h>
 
-struct file;
-struct task_struct;
+काष्ठा file;
+काष्ठा task_काष्ठा;
 
 /* Descriptions of the types of units to
- * print in */
-enum string_size_units {
-	STRING_UNITS_10,	/* use powers of 10^3 (standard SI) */
-	STRING_UNITS_2,		/* use binary powers of 2^10 */
-};
+ * prपूर्णांक in */
+क्रमागत string_size_units अणु
+	STRING_UNITS_10,	/* use घातers of 10^3 (standard SI) */
+	STRING_UNITS_2,		/* use binary घातers of 2^10 */
+पूर्ण;
 
-void string_get_size(u64 size, u64 blk_size, enum string_size_units units,
-		     char *buf, int len);
+व्योम string_get_size(u64 size, u64 blk_size, क्रमागत string_size_units units,
+		     अक्षर *buf, पूर्णांक len);
 
-#define UNESCAPE_SPACE		0x01
-#define UNESCAPE_OCTAL		0x02
-#define UNESCAPE_HEX		0x04
-#define UNESCAPE_SPECIAL	0x08
-#define UNESCAPE_ANY		\
+#घोषणा UNESCAPE_SPACE		0x01
+#घोषणा UNESCAPE_OCTAL		0x02
+#घोषणा UNESCAPE_HEX		0x04
+#घोषणा UNESCAPE_SPECIAL	0x08
+#घोषणा UNESCAPE_ANY		\
 	(UNESCAPE_SPACE | UNESCAPE_OCTAL | UNESCAPE_HEX | UNESCAPE_SPECIAL)
 
-int string_unescape(char *src, char *dst, size_t size, unsigned int flags);
+पूर्णांक string_unescape(अक्षर *src, अक्षर *dst, माप_प्रकार size, अचिन्हित पूर्णांक flags);
 
-static inline int string_unescape_inplace(char *buf, unsigned int flags)
-{
-	return string_unescape(buf, buf, 0, flags);
-}
+अटल अंतरभूत पूर्णांक string_unescape_inplace(अक्षर *buf, अचिन्हित पूर्णांक flags)
+अणु
+	वापस string_unescape(buf, buf, 0, flags);
+पूर्ण
 
-static inline int string_unescape_any(char *src, char *dst, size_t size)
-{
-	return string_unescape(src, dst, size, UNESCAPE_ANY);
-}
+अटल अंतरभूत पूर्णांक string_unescape_any(अक्षर *src, अक्षर *dst, माप_प्रकार size)
+अणु
+	वापस string_unescape(src, dst, size, UNESCAPE_ANY);
+पूर्ण
 
-static inline int string_unescape_any_inplace(char *buf)
-{
-	return string_unescape_any(buf, buf, 0);
-}
+अटल अंतरभूत पूर्णांक string_unescape_any_inplace(अक्षर *buf)
+अणु
+	वापस string_unescape_any(buf, buf, 0);
+पूर्ण
 
-#define ESCAPE_SPACE		0x01
-#define ESCAPE_SPECIAL		0x02
-#define ESCAPE_NULL		0x04
-#define ESCAPE_OCTAL		0x08
-#define ESCAPE_ANY		\
-	(ESCAPE_SPACE | ESCAPE_OCTAL | ESCAPE_SPECIAL | ESCAPE_NULL)
-#define ESCAPE_NP		0x10
-#define ESCAPE_ANY_NP		(ESCAPE_ANY | ESCAPE_NP)
-#define ESCAPE_HEX		0x20
+#घोषणा ESCAPE_SPACE		0x01
+#घोषणा ESCAPE_SPECIAL		0x02
+#घोषणा ESCAPE_शून्य		0x04
+#घोषणा ESCAPE_OCTAL		0x08
+#घोषणा ESCAPE_ANY		\
+	(ESCAPE_SPACE | ESCAPE_OCTAL | ESCAPE_SPECIAL | ESCAPE_शून्य)
+#घोषणा ESCAPE_NP		0x10
+#घोषणा ESCAPE_ANY_NP		(ESCAPE_ANY | ESCAPE_NP)
+#घोषणा ESCAPE_HEX		0x20
 
-int string_escape_mem(const char *src, size_t isz, char *dst, size_t osz,
-		unsigned int flags, const char *only);
+पूर्णांक string_escape_mem(स्थिर अक्षर *src, माप_प्रकार isz, अक्षर *dst, माप_प्रकार osz,
+		अचिन्हित पूर्णांक flags, स्थिर अक्षर *only);
 
-int string_escape_mem_ascii(const char *src, size_t isz, char *dst,
-					size_t osz);
+पूर्णांक string_escape_mem_ascii(स्थिर अक्षर *src, माप_प्रकार isz, अक्षर *dst,
+					माप_प्रकार osz);
 
-static inline int string_escape_mem_any_np(const char *src, size_t isz,
-		char *dst, size_t osz, const char *only)
-{
-	return string_escape_mem(src, isz, dst, osz, ESCAPE_ANY_NP, only);
-}
+अटल अंतरभूत पूर्णांक string_escape_mem_any_np(स्थिर अक्षर *src, माप_प्रकार isz,
+		अक्षर *dst, माप_प्रकार osz, स्थिर अक्षर *only)
+अणु
+	वापस string_escape_mem(src, isz, dst, osz, ESCAPE_ANY_NP, only);
+पूर्ण
 
-static inline int string_escape_str(const char *src, char *dst, size_t sz,
-		unsigned int flags, const char *only)
-{
-	return string_escape_mem(src, strlen(src), dst, sz, flags, only);
-}
+अटल अंतरभूत पूर्णांक string_escape_str(स्थिर अक्षर *src, अक्षर *dst, माप_प्रकार sz,
+		अचिन्हित पूर्णांक flags, स्थिर अक्षर *only)
+अणु
+	वापस string_escape_mem(src, म_माप(src), dst, sz, flags, only);
+पूर्ण
 
-static inline int string_escape_str_any_np(const char *src, char *dst,
-		size_t sz, const char *only)
-{
-	return string_escape_str(src, dst, sz, ESCAPE_ANY_NP, only);
-}
+अटल अंतरभूत पूर्णांक string_escape_str_any_np(स्थिर अक्षर *src, अक्षर *dst,
+		माप_प्रकार sz, स्थिर अक्षर *only)
+अणु
+	वापस string_escape_str(src, dst, sz, ESCAPE_ANY_NP, only);
+पूर्ण
 
-static inline void string_upper(char *dst, const char *src)
-{
-	do {
-		*dst++ = toupper(*src);
-	} while (*src++);
-}
+अटल अंतरभूत व्योम string_upper(अक्षर *dst, स्थिर अक्षर *src)
+अणु
+	करो अणु
+		*dst++ = बड़े(*src);
+	पूर्ण जबतक (*src++);
+पूर्ण
 
-static inline void string_lower(char *dst, const char *src)
-{
-	do {
-		*dst++ = tolower(*src);
-	} while (*src++);
-}
+अटल अंतरभूत व्योम string_lower(अक्षर *dst, स्थिर अक्षर *src)
+अणु
+	करो अणु
+		*dst++ = छोटे(*src);
+	पूर्ण जबतक (*src++);
+पूर्ण
 
-char *kstrdup_quotable(const char *src, gfp_t gfp);
-char *kstrdup_quotable_cmdline(struct task_struct *task, gfp_t gfp);
-char *kstrdup_quotable_file(struct file *file, gfp_t gfp);
+अक्षर *kstrdup_quotable(स्थिर अक्षर *src, gfp_t gfp);
+अक्षर *kstrdup_quotable_cmdline(काष्ठा task_काष्ठा *task, gfp_t gfp);
+अक्षर *kstrdup_quotable_file(काष्ठा file *file, gfp_t gfp);
 
-void kfree_strarray(char **array, size_t n);
+व्योम kमुक्त_strarray(अक्षर **array, माप_प्रकार n);
 
-#endif
+#पूर्ण_अगर

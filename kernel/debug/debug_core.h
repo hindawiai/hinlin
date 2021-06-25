@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Created by: Jason Wessel <jason.wessel@windriver.com>
  *
@@ -8,80 +9,80 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef _DEBUG_CORE_H_
-#define _DEBUG_CORE_H_
+#अगर_अघोषित _DEBUG_CORE_H_
+#घोषणा _DEBUG_CORE_H_
 /*
- * These are the private implementation headers between the kernel
+ * These are the निजी implementation headers between the kernel
  * debugger core and the debugger front end code.
  */
 
-/* kernel debug core data structures */
-struct kgdb_state {
-	int			ex_vector;
-	int			signo;
-	int			err_code;
-	int			cpu;
-	int			pass_exception;
-	unsigned long		thr_query;
-	unsigned long		threadid;
-	long			kgdb_usethreadid;
-	struct pt_regs		*linux_regs;
-	atomic_t		*send_ready;
-};
+/* kernel debug core data काष्ठाures */
+काष्ठा kgdb_state अणु
+	पूर्णांक			ex_vector;
+	पूर्णांक			signo;
+	पूर्णांक			err_code;
+	पूर्णांक			cpu;
+	पूर्णांक			pass_exception;
+	अचिन्हित दीर्घ		thr_query;
+	अचिन्हित दीर्घ		thपढ़ोid;
+	दीर्घ			kgdb_usethपढ़ोid;
+	काष्ठा pt_regs		*linux_regs;
+	atomic_t		*send_पढ़ोy;
+पूर्ण;
 
 /* Exception state values */
-#define DCPU_WANT_MASTER 0x1 /* Waiting to become a master kgdb cpu */
-#define DCPU_NEXT_MASTER 0x2 /* Transition from one master cpu to another */
-#define DCPU_IS_SLAVE    0x4 /* Slave cpu enter exception */
-#define DCPU_WANT_BT     0x8 /* Slave cpu should backtrace then clear flag */
+#घोषणा DCPU_WANT_MASTER 0x1 /* Waiting to become a master kgdb cpu */
+#घोषणा DCPU_NEXT_MASTER 0x2 /* Transition from one master cpu to another */
+#घोषणा DCPU_IS_SLAVE    0x4 /* Slave cpu enter exception */
+#घोषणा DCPU_WANT_BT     0x8 /* Slave cpu should backtrace then clear flag */
 
-struct debuggerinfo_struct {
-	void			*debuggerinfo;
-	struct task_struct	*task;
-	int			exception_state;
-	int			ret_state;
-	int			irq_depth;
-	int			enter_kgdb;
+काष्ठा debuggerinfo_काष्ठा अणु
+	व्योम			*debuggerinfo;
+	काष्ठा task_काष्ठा	*task;
+	पूर्णांक			exception_state;
+	पूर्णांक			ret_state;
+	पूर्णांक			irq_depth;
+	पूर्णांक			enter_kgdb;
 	bool			rounding_up;
-};
+पूर्ण;
 
-extern struct debuggerinfo_struct kgdb_info[];
+बाह्य काष्ठा debuggerinfo_काष्ठा kgdb_info[];
 
-/* kernel debug core break point routines */
-extern int dbg_remove_all_break(void);
-extern int dbg_set_sw_break(unsigned long addr);
-extern int dbg_remove_sw_break(unsigned long addr);
-extern int dbg_activate_sw_breakpoints(void);
-extern int dbg_deactivate_sw_breakpoints(void);
+/* kernel debug core अवरोध poपूर्णांक routines */
+बाह्य पूर्णांक dbg_हटाओ_all_अवरोध(व्योम);
+बाह्य पूर्णांक dbg_set_sw_अवरोध(अचिन्हित दीर्घ addr);
+बाह्य पूर्णांक dbg_हटाओ_sw_अवरोध(अचिन्हित दीर्घ addr);
+बाह्य पूर्णांक dbg_activate_sw_अवरोधpoपूर्णांकs(व्योम);
+बाह्य पूर्णांक dbg_deactivate_sw_अवरोधpoपूर्णांकs(व्योम);
 
-/* polled character access to i/o module */
-extern int dbg_io_get_char(void);
+/* polled अक्षरacter access to i/o module */
+बाह्य पूर्णांक dbg_io_get_अक्षर(व्योम);
 
-/* stub return value for switching between the gdbstub and kdb */
-#define DBG_PASS_EVENT -12345
+/* stub वापस value क्रम चयनing between the gdbstub and kdb */
+#घोषणा DBG_PASS_EVENT -12345
 /* Switch from one cpu to another */
-#define DBG_SWITCH_CPU_EVENT -123456
-extern int dbg_switch_cpu;
+#घोषणा DBG_SWITCH_CPU_EVENT -123456
+बाह्य पूर्णांक dbg_चयन_cpu;
 
-/* gdbstub interface functions */
-extern int gdb_serial_stub(struct kgdb_state *ks);
-extern void gdbstub_msg_write(const char *s, int len);
+/* gdbstub पूर्णांकerface functions */
+बाह्य पूर्णांक gdb_serial_stub(काष्ठा kgdb_state *ks);
+बाह्य व्योम gdbstub_msg_ग_लिखो(स्थिर अक्षर *s, पूर्णांक len);
 
-/* gdbstub functions used for kdb <-> gdbstub transition */
-extern int gdbstub_state(struct kgdb_state *ks, char *cmd);
-extern int dbg_kdb_mode;
+/* gdbstub functions used क्रम kdb <-> gdbstub transition */
+बाह्य पूर्णांक gdbstub_state(काष्ठा kgdb_state *ks, अक्षर *cmd);
+बाह्य पूर्णांक dbg_kdb_mode;
 
-#ifdef CONFIG_KGDB_KDB
-extern int kdb_stub(struct kgdb_state *ks);
-extern int kdb_parse(const char *cmdstr);
-extern int kdb_common_init_state(struct kgdb_state *ks);
-extern int kdb_common_deinit_state(void);
-extern void kdb_dump_stack_on_cpu(int cpu);
-#else /* ! CONFIG_KGDB_KDB */
-static inline int kdb_stub(struct kgdb_state *ks)
-{
-	return DBG_PASS_EVENT;
-}
-#endif /* CONFIG_KGDB_KDB */
+#अगर_घोषित CONFIG_KGDB_KDB
+बाह्य पूर्णांक kdb_stub(काष्ठा kgdb_state *ks);
+बाह्य पूर्णांक kdb_parse(स्थिर अक्षर *cmdstr);
+बाह्य पूर्णांक kdb_common_init_state(काष्ठा kgdb_state *ks);
+बाह्य पूर्णांक kdb_common_deinit_state(व्योम);
+बाह्य व्योम kdb_dump_stack_on_cpu(पूर्णांक cpu);
+#अन्यथा /* ! CONFIG_KGDB_KDB */
+अटल अंतरभूत पूर्णांक kdb_stub(काष्ठा kgdb_state *ks)
+अणु
+	वापस DBG_PASS_EVENT;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_KGDB_KDB */
 
-#endif /* _DEBUG_CORE_H_ */
+#पूर्ण_अगर /* _DEBUG_CORE_H_ */

@@ -1,229 +1,230 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _X86_ENCLS_H
-#define _X86_ENCLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _X86_ENCLS_H
+#घोषणा _X86_ENCLS_H
 
-#include <linux/bitops.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/rwsem.h>
-#include <linux/types.h>
-#include <asm/asm.h>
-#include <asm/traps.h>
-#include "sgx.h"
+#समावेश <linux/bitops.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/यंत्र.h>
+#समावेश <यंत्र/traps.h>
+#समावेश "sgx.h"
 
 /**
- * ENCLS_FAULT_FLAG - flag signifying an ENCLS return code is a trapnr
+ * ENCLS_FAULT_FLAG - flag signअगरying an ENCLS वापस code is a trapnr
  *
  * ENCLS has its own (positive value) error codes and also generates
- * ENCLS specific #GP and #PF faults.  And the ENCLS values get munged
- * with system error codes as everything percolates back up the stack.
- * Unfortunately (for us), we need to precisely identify each unique
- * error code, e.g. the action taken if EWB fails varies based on the
+ * ENCLS specअगरic #GP and #PF faults.  And the ENCLS values get munged
+ * with प्रणाली error codes as everything percolates back up the stack.
+ * Unक्रमtunately (क्रम us), we need to precisely identअगरy each unique
+ * error code, e.g. the action taken अगर EWB fails varies based on the
  * type of fault and on the exact SGX error code, i.e. we can't simply
  * convert all faults to -EFAULT.
  *
- * To make all three error types coexist, we set bit 30 to identify an
- * ENCLS fault.  Bit 31 (technically bits N:31) is used to differentiate
- * between positive (faults and SGX error codes) and negative (system
+ * To make all three error types coexist, we set bit 30 to identअगरy an
+ * ENCLS fault.  Bit 31 (technically bits N:31) is used to dअगरferentiate
+ * between positive (faults and SGX error codes) and negative (प्रणाली
  * error codes) values.
  */
-#define ENCLS_FAULT_FLAG 0x40000000
+#घोषणा ENCLS_FAULT_FLAG 0x40000000
 
-/* Retrieve the encoded trapnr from the specified return code. */
-#define ENCLS_TRAPNR(r) ((r) & ~ENCLS_FAULT_FLAG)
+/* Retrieve the encoded trapnr from the specअगरied वापस code. */
+#घोषणा ENCLS_TRAPNR(r) ((r) & ~ENCLS_FAULT_FLAG)
 
 /* Issue a WARN() about an ENCLS function. */
-#define ENCLS_WARN(r, name) {						  \
-	do {								  \
-		int _r = (r);						  \
+#घोषणा ENCLS_WARN(r, name) अणु						  \
+	करो अणु								  \
+		पूर्णांक _r = (r);						  \
 		WARN_ONCE(_r, "%s returned %d (0x%x)\n", (name), _r, _r); \
-	} while (0);							  \
-}
+	पूर्ण जबतक (0);							  \
+पूर्ण
 
 /*
- * encls_faulted() - Check if an ENCLS leaf faulted given an error code
- * @ret:	the return value of an ENCLS leaf function call
+ * encls_faulted() - Check अगर an ENCLS leaf faulted given an error code
+ * @ret:	the वापस value of an ENCLS leaf function call
  *
  * Return:
  * - true:	ENCLS leaf faulted.
  * - false:	Otherwise.
  */
-static inline bool encls_faulted(int ret)
-{
-	return ret & ENCLS_FAULT_FLAG;
-}
+अटल अंतरभूत bool encls_faulted(पूर्णांक ret)
+अणु
+	वापस ret & ENCLS_FAULT_FLAG;
+पूर्ण
 
 /**
- * encls_failed() - Check if an ENCLS function failed
- * @ret:	the return value of an ENCLS function call
+ * encls_failed() - Check अगर an ENCLS function failed
+ * @ret:	the वापस value of an ENCLS function call
  *
- * Check if an ENCLS function failed. This happens when the function causes a
- * fault that is not caused by an EPCM conflict or when the function returns a
+ * Check अगर an ENCLS function failed. This happens when the function causes a
+ * fault that is not caused by an EPCM conflict or when the function वापसs a
  * non-zero value.
  */
-static inline bool encls_failed(int ret)
-{
-	if (encls_faulted(ret))
-		return ENCLS_TRAPNR(ret) != X86_TRAP_PF;
+अटल अंतरभूत bool encls_failed(पूर्णांक ret)
+अणु
+	अगर (encls_faulted(ret))
+		वापस ENCLS_TRAPNR(ret) != X86_TRAP_PF;
 
-	return !!ret;
-}
+	वापस !!ret;
+पूर्ण
 
 /**
- * __encls_ret_N - encode an ENCLS function that returns an error code in EAX
+ * __encls_ret_N - encode an ENCLS function that वापसs an error code in EAX
  * @rax:	function number
- * @inputs:	asm inputs for the function
+ * @inमाला_दो:	यंत्र inमाला_दो क्रम the function
  *
- * Emit assembly for an ENCLS function that returns an error code, e.g. EREMOVE.
- * And because SGX isn't complex enough as it is, function that return an error
- * code also modify flags.
+ * Emit assembly क्रम an ENCLS function that वापसs an error code, e.g. EREMOVE.
+ * And because SGX isn't complex enough as it is, function that वापस an error
+ * code also modअगरy flags.
  *
  * Return:
  *	0 on success,
  *	SGX error code on failure
  */
-#define __encls_ret_N(rax, inputs...)				\
-	({							\
-	int ret;						\
-	asm volatile(						\
+#घोषणा __encls_ret_N(rax, inमाला_दो...)				\
+	(अणु							\
+	पूर्णांक ret;						\
+	यंत्र अस्थिर(						\
 	"1: .byte 0x0f, 0x01, 0xcf;\n\t"			\
 	"2:\n"							\
 	".section .fixup,\"ax\"\n"				\
-	"3: orl $"__stringify(ENCLS_FAULT_FLAG)",%%eax\n"	\
+	"3: orl $"__stringअगरy(ENCLS_FAULT_FLAG)",%%eax\n"	\
 	"   jmp 2b\n"						\
 	".previous\n"						\
 	_ASM_EXTABLE_FAULT(1b, 3b)				\
 	: "=a"(ret)						\
-	: "a"(rax), inputs					\
+	: "a"(rax), inमाला_दो					\
 	: "memory", "cc");					\
 	ret;							\
-	})
+	पूर्ण)
 
-#define __encls_ret_1(rax, rcx)		\
-	({				\
+#घोषणा __encls_ret_1(rax, rcx)		\
+	(अणु				\
 	__encls_ret_N(rax, "c"(rcx));	\
-	})
+	पूर्ण)
 
-#define __encls_ret_2(rax, rbx, rcx)		\
-	({					\
+#घोषणा __encls_ret_2(rax, rbx, rcx)		\
+	(अणु					\
 	__encls_ret_N(rax, "b"(rbx), "c"(rcx));	\
-	})
+	पूर्ण)
 
-#define __encls_ret_3(rax, rbx, rcx, rdx)			\
-	({							\
+#घोषणा __encls_ret_3(rax, rbx, rcx, rdx)			\
+	(अणु							\
 	__encls_ret_N(rax, "b"(rbx), "c"(rcx), "d"(rdx));	\
-	})
+	पूर्ण)
 
 /**
- * __encls_N - encode an ENCLS function that doesn't return an error code
+ * __encls_N - encode an ENCLS function that करोesn't वापस an error code
  * @rax:	function number
  * @rbx_out:	optional output variable
- * @inputs:	asm inputs for the function
+ * @inमाला_दो:	यंत्र inमाला_दो क्रम the function
  *
- * Emit assembly for an ENCLS function that does not return an error code, e.g.
+ * Emit assembly क्रम an ENCLS function that करोes not वापस an error code, e.g.
  * ECREATE.  Leaves without error codes either succeed or fault.  @rbx_out is an
- * optional parameter for use by EDGBRD, which returns the requested value in
+ * optional parameter क्रम use by EDGBRD, which वापसs the requested value in
  * RBX.
  *
  * Return:
  *   0 on success,
  *   trapnr with ENCLS_FAULT_FLAG set on fault
  */
-#define __encls_N(rax, rbx_out, inputs...)			\
-	({							\
-	int ret;						\
-	asm volatile(						\
+#घोषणा __encls_N(rax, rbx_out, inमाला_दो...)			\
+	(अणु							\
+	पूर्णांक ret;						\
+	यंत्र अस्थिर(						\
 	"1: .byte 0x0f, 0x01, 0xcf;\n\t"			\
 	"   xor %%eax,%%eax;\n"					\
 	"2:\n"							\
 	".section .fixup,\"ax\"\n"				\
-	"3: orl $"__stringify(ENCLS_FAULT_FLAG)",%%eax\n"	\
+	"3: orl $"__stringअगरy(ENCLS_FAULT_FLAG)",%%eax\n"	\
 	"   jmp 2b\n"						\
 	".previous\n"						\
 	_ASM_EXTABLE_FAULT(1b, 3b)				\
 	: "=a"(ret), "=b"(rbx_out)				\
-	: "a"(rax), inputs					\
+	: "a"(rax), inमाला_दो					\
 	: "memory");						\
 	ret;							\
-	})
+	पूर्ण)
 
-#define __encls_2(rax, rbx, rcx)				\
-	({							\
-	unsigned long ign_rbx_out;				\
+#घोषणा __encls_2(rax, rbx, rcx)				\
+	(अणु							\
+	अचिन्हित दीर्घ ign_rbx_out;				\
 	__encls_N(rax, ign_rbx_out, "b"(rbx), "c"(rcx));	\
-	})
+	पूर्ण)
 
-#define __encls_1_1(rax, data, rcx)			\
-	({						\
-	unsigned long rbx_out;				\
-	int ret = __encls_N(rax, rbx_out, "c"(rcx));	\
-	if (!ret)					\
+#घोषणा __encls_1_1(rax, data, rcx)			\
+	(अणु						\
+	अचिन्हित दीर्घ rbx_out;				\
+	पूर्णांक ret = __encls_N(rax, rbx_out, "c"(rcx));	\
+	अगर (!ret)					\
 		data = rbx_out;				\
 	ret;						\
-	})
+	पूर्ण)
 
-static inline int __ecreate(struct sgx_pageinfo *pginfo, void *secs)
-{
-	return __encls_2(ECREATE, pginfo, secs);
-}
+अटल अंतरभूत पूर्णांक __ecreate(काष्ठा sgx_pageinfo *pginfo, व्योम *secs)
+अणु
+	वापस __encls_2(ECREATE, pginfo, secs);
+पूर्ण
 
-static inline int __eextend(void *secs, void *addr)
-{
-	return __encls_2(EEXTEND, secs, addr);
-}
+अटल अंतरभूत पूर्णांक __eextend(व्योम *secs, व्योम *addr)
+अणु
+	वापस __encls_2(EEXTEND, secs, addr);
+पूर्ण
 
-static inline int __eadd(struct sgx_pageinfo *pginfo, void *addr)
-{
-	return __encls_2(EADD, pginfo, addr);
-}
+अटल अंतरभूत पूर्णांक __eadd(काष्ठा sgx_pageinfo *pginfo, व्योम *addr)
+अणु
+	वापस __encls_2(EADD, pginfo, addr);
+पूर्ण
 
-static inline int __einit(void *sigstruct, void *token, void *secs)
-{
-	return __encls_ret_3(EINIT, sigstruct, secs, token);
-}
+अटल अंतरभूत पूर्णांक __einit(व्योम *sigकाष्ठा, व्योम *token, व्योम *secs)
+अणु
+	वापस __encls_ret_3(EINIT, sigकाष्ठा, secs, token);
+पूर्ण
 
-static inline int __eremove(void *addr)
-{
-	return __encls_ret_1(EREMOVE, addr);
-}
+अटल अंतरभूत पूर्णांक __eहटाओ(व्योम *addr)
+अणु
+	वापस __encls_ret_1(EREMOVE, addr);
+पूर्ण
 
-static inline int __edbgwr(void *addr, unsigned long *data)
-{
-	return __encls_2(EDGBWR, *data, addr);
-}
+अटल अंतरभूत पूर्णांक __edbgwr(व्योम *addr, अचिन्हित दीर्घ *data)
+अणु
+	वापस __encls_2(EDGBWR, *data, addr);
+पूर्ण
 
-static inline int __edbgrd(void *addr, unsigned long *data)
-{
-	return __encls_1_1(EDGBRD, *data, addr);
-}
+अटल अंतरभूत पूर्णांक __edbgrd(व्योम *addr, अचिन्हित दीर्घ *data)
+अणु
+	वापस __encls_1_1(EDGBRD, *data, addr);
+पूर्ण
 
-static inline int __etrack(void *addr)
-{
-	return __encls_ret_1(ETRACK, addr);
-}
+अटल अंतरभूत पूर्णांक __etrack(व्योम *addr)
+अणु
+	वापस __encls_ret_1(ETRACK, addr);
+पूर्ण
 
-static inline int __eldu(struct sgx_pageinfo *pginfo, void *addr,
-			 void *va)
-{
-	return __encls_ret_3(ELDU, pginfo, addr, va);
-}
+अटल अंतरभूत पूर्णांक __eldu(काष्ठा sgx_pageinfo *pginfo, व्योम *addr,
+			 व्योम *va)
+अणु
+	वापस __encls_ret_3(ELDU, pginfo, addr, va);
+पूर्ण
 
-static inline int __eblock(void *addr)
-{
-	return __encls_ret_1(EBLOCK, addr);
-}
+अटल अंतरभूत पूर्णांक __eblock(व्योम *addr)
+अणु
+	वापस __encls_ret_1(EBLOCK, addr);
+पूर्ण
 
-static inline int __epa(void *addr)
-{
-	unsigned long rbx = SGX_PAGE_TYPE_VA;
+अटल अंतरभूत पूर्णांक __epa(व्योम *addr)
+अणु
+	अचिन्हित दीर्घ rbx = SGX_PAGE_TYPE_VA;
 
-	return __encls_2(EPA, rbx, addr);
-}
+	वापस __encls_2(EPA, rbx, addr);
+पूर्ण
 
-static inline int __ewb(struct sgx_pageinfo *pginfo, void *addr,
-			void *va)
-{
-	return __encls_ret_3(EWB, pginfo, addr, va);
-}
+अटल अंतरभूत पूर्णांक __ewb(काष्ठा sgx_pageinfo *pginfo, व्योम *addr,
+			व्योम *va)
+अणु
+	वापस __encls_ret_3(EWB, pginfo, addr, va);
+पूर्ण
 
-#endif /* _X86_ENCLS_H */
+#पूर्ण_अगर /* _X86_ENCLS_H */

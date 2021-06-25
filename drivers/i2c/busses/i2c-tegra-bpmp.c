@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/i2c/busses/i2c-tegra-bpmp.c
  *
  * Copyright (c) 2016 NVIDIA Corporation.  All rights reserved.
  *
- * Author: Shardar Shariff Md <smohammed@nvidia.com>
+ * Author: Shardar Sharअगरf Md <smohammed@nvidia.com>
  */
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <soc/tegra/bpmp-abi.h>
-#include <soc/tegra/bpmp.h>
+#समावेश <soc/tegra/bpmp-abi.h>
+#समावेश <soc/tegra/bpmp.h>
 
 /*
  * Serialized I2C message header size is 6 bytes and includes address, flags
  * and length
  */
-#define SERIALI2C_HDR_SIZE 6
+#घोषणा SERIALI2C_HDR_SIZE 6
 
-struct tegra_bpmp_i2c {
-	struct i2c_adapter adapter;
-	struct device *dev;
+काष्ठा tegra_bpmp_i2c अणु
+	काष्ठा i2c_adapter adapter;
+	काष्ठा device *dev;
 
-	struct tegra_bpmp *bpmp;
-	unsigned int bus;
-};
+	काष्ठा tegra_bpmp *bpmp;
+	अचिन्हित पूर्णांक bus;
+पूर्ण;
 
 /*
  * Linux flags are translated to BPMP defined I2C flags that are used in BPMP
- * firmware I2C driver to avoid any issues in future if Linux I2C flags are
+ * firmware I2C driver to aव्योम any issues in future अगर Linux I2C flags are
  * changed.
  */
-static void tegra_bpmp_xlate_flags(u16 flags, u16 *out)
-{
-	if (flags & I2C_M_TEN)
+अटल व्योम tegra_bpmp_xlate_flags(u16 flags, u16 *out)
+अणु
+	अगर (flags & I2C_M_TEN)
 		*out |= SERIALI2C_TEN;
 
-	if (flags & I2C_M_RD)
+	अगर (flags & I2C_M_RD)
 		*out |= SERIALI2C_RD;
 
-	if (flags & I2C_M_STOP)
+	अगर (flags & I2C_M_STOP)
 		*out |= SERIALI2C_STOP;
 
-	if (flags & I2C_M_NOSTART)
+	अगर (flags & I2C_M_NOSTART)
 		*out |= SERIALI2C_NOSTART;
 
-	if (flags & I2C_M_REV_DIR_ADDR)
-		*out |= SERIALI2C_REV_DIR_ADDR;
+	अगर (flags & I2C_M_REV_सूची_ADDR)
+		*out |= SERIALI2C_REV_सूची_ADDR;
 
-	if (flags & I2C_M_IGNORE_NAK)
+	अगर (flags & I2C_M_IGNORE_NAK)
 		*out |= SERIALI2C_IGNORE_NAK;
 
-	if (flags & I2C_M_NO_RD_ACK)
+	अगर (flags & I2C_M_NO_RD_ACK)
 		*out |= SERIALI2C_NO_RD_ACK;
 
-	if (flags & I2C_M_RECV_LEN)
+	अगर (flags & I2C_M_RECV_LEN)
 		*out |= SERIALI2C_RECV_LEN;
-}
+पूर्ण
 
 /*
- * The serialized I2C format is simply the following:
- * [addr little-endian][flags little-endian][len little-endian][data if write]
- * [addr little-endian][flags little-endian][len little-endian][data if write]
+ * The serialized I2C क्रमmat is simply the following:
+ * [addr little-endian][flags little-endian][len little-endian][data अगर ग_लिखो]
+ * [addr little-endian][flags little-endian][len little-endian][data अगर ग_लिखो]
  *  ...
  *
  * The flags are translated from Linux kernel representation to seriali2c
  * representation. Any undefined flag being set causes an error.
  *
- * The data is there only for writes. Reads have the data transferred in the
+ * The data is there only क्रम ग_लिखोs. Reads have the data transferred in the
  * other direction, and thus data is not present.
  *
- * See deserialize_i2c documentation for the data format in the other direction.
+ * See deserialize_i2c करोcumentation क्रम the data क्रमmat in the other direction.
  */
-static void tegra_bpmp_serialize_i2c_msg(struct tegra_bpmp_i2c *i2c,
-					struct mrq_i2c_request *request,
-					struct i2c_msg *msgs,
-					unsigned int num)
-{
-	char *buf = request->xfer.data_buf;
-	unsigned int i, j, pos = 0;
+अटल व्योम tegra_bpmp_serialize_i2c_msg(काष्ठा tegra_bpmp_i2c *i2c,
+					काष्ठा mrq_i2c_request *request,
+					काष्ठा i2c_msg *msgs,
+					अचिन्हित पूर्णांक num)
+अणु
+	अक्षर *buf = request->xfer.data_buf;
+	अचिन्हित पूर्णांक i, j, pos = 0;
 
-	for (i = 0; i < num; i++) {
-		struct i2c_msg *msg = &msgs[i];
+	क्रम (i = 0; i < num; i++) अणु
+		काष्ठा i2c_msg *msg = &msgs[i];
 		u16 flags = 0;
 
 		tegra_bpmp_xlate_flags(msg->flags, &flags);
@@ -100,18 +101,18 @@ static void tegra_bpmp_serialize_i2c_msg(struct tegra_bpmp_i2c *i2c,
 		buf[pos++] = msg->len & 0xff;
 		buf[pos++] = (msg->len & 0xff00) >> 8;
 
-		if ((flags & SERIALI2C_RD) == 0) {
-			for (j = 0; j < msg->len; j++)
+		अगर ((flags & SERIALI2C_RD) == 0) अणु
+			क्रम (j = 0; j < msg->len; j++)
 				buf[pos++] = msg->buf[j];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	request->xfer.data_size = pos;
-}
+पूर्ण
 
 /*
- * The data in the BPMP -> CPU direction is composed of sequential blocks for
- * those messages that have I2C_M_RD. So, for example, if you have:
+ * The data in the BPMP -> CPU direction is composed of sequential blocks क्रम
+ * those messages that have I2C_M_RD. So, क्रम example, अगर you have:
  *
  * - !I2C_M_RD, len == 5, data == a0 01 02 03 04
  * - !I2C_M_RD, len == 1, data == a0
@@ -123,223 +124,223 @@ static void tegra_bpmp_serialize_i2c_msg(struct tegra_bpmp_i2c *i2c,
  * would contain 2 bytes that will go to uninitialized buffer 1, and 2 bytes
  * that will go to uninitialized buffer 2.
  */
-static int tegra_bpmp_i2c_deserialize(struct tegra_bpmp_i2c *i2c,
-				      struct mrq_i2c_response *response,
-				      struct i2c_msg *msgs,
-				      unsigned int num)
-{
-	size_t size = response->xfer.data_size, len = 0, pos = 0;
-	char *buf = response->xfer.data_buf;
-	unsigned int i;
+अटल पूर्णांक tegra_bpmp_i2c_deserialize(काष्ठा tegra_bpmp_i2c *i2c,
+				      काष्ठा mrq_i2c_response *response,
+				      काष्ठा i2c_msg *msgs,
+				      अचिन्हित पूर्णांक num)
+अणु
+	माप_प्रकार size = response->xfer.data_size, len = 0, pos = 0;
+	अक्षर *buf = response->xfer.data_buf;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num; i++)
-		if (msgs[i].flags & I2C_M_RD)
+	क्रम (i = 0; i < num; i++)
+		अगर (msgs[i].flags & I2C_M_RD)
 			len += msgs[i].len;
 
-	if (len != size)
-		return -EINVAL;
+	अगर (len != size)
+		वापस -EINVAL;
 
-	for (i = 0; i < num; i++) {
-		if (msgs[i].flags & I2C_M_RD) {
-			memcpy(msgs[i].buf, buf + pos, msgs[i].len);
+	क्रम (i = 0; i < num; i++) अणु
+		अगर (msgs[i].flags & I2C_M_RD) अणु
+			स_नकल(msgs[i].buf, buf + pos, msgs[i].len);
 			pos += msgs[i].len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_bpmp_i2c_msg_len_check(struct i2c_msg *msgs, unsigned int num)
-{
-	size_t tx_len = 0, rx_len = 0;
-	unsigned int i;
+अटल पूर्णांक tegra_bpmp_i2c_msg_len_check(काष्ठा i2c_msg *msgs, अचिन्हित पूर्णांक num)
+अणु
+	माप_प्रकार tx_len = 0, rx_len = 0;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num; i++)
-		if (!(msgs[i].flags & I2C_M_RD))
+	क्रम (i = 0; i < num; i++)
+		अगर (!(msgs[i].flags & I2C_M_RD))
 			tx_len += SERIALI2C_HDR_SIZE + msgs[i].len;
 
-	if (tx_len > TEGRA_I2C_IPC_MAX_IN_BUF_SIZE)
-		return -EINVAL;
+	अगर (tx_len > TEGRA_I2C_IPC_MAX_IN_BUF_SIZE)
+		वापस -EINVAL;
 
-	for (i = 0; i < num; i++)
-		if ((msgs[i].flags & I2C_M_RD))
+	क्रम (i = 0; i < num; i++)
+		अगर ((msgs[i].flags & I2C_M_RD))
 			rx_len += msgs[i].len;
 
-	if (rx_len > TEGRA_I2C_IPC_MAX_OUT_BUF_SIZE)
-		return -EINVAL;
+	अगर (rx_len > TEGRA_I2C_IPC_MAX_OUT_BUF_SIZE)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_bpmp_i2c_msg_xfer(struct tegra_bpmp_i2c *i2c,
-				   struct mrq_i2c_request *request,
-				   struct mrq_i2c_response *response,
+अटल पूर्णांक tegra_bpmp_i2c_msg_xfer(काष्ठा tegra_bpmp_i2c *i2c,
+				   काष्ठा mrq_i2c_request *request,
+				   काष्ठा mrq_i2c_response *response,
 				   bool atomic)
-{
-	struct tegra_bpmp_message msg;
-	int err;
+अणु
+	काष्ठा tegra_bpmp_message msg;
+	पूर्णांक err;
 
 	request->cmd = CMD_I2C_XFER;
 	request->xfer.bus_id = i2c->bus;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.mrq = MRQ_I2C;
 	msg.tx.data = request;
-	msg.tx.size = sizeof(*request);
+	msg.tx.size = माप(*request);
 	msg.rx.data = response;
-	msg.rx.size = sizeof(*response);
+	msg.rx.size = माप(*response);
 
-	if (atomic)
+	अगर (atomic)
 		err = tegra_bpmp_transfer_atomic(i2c->bpmp, &msg);
-	else
+	अन्यथा
 		err = tegra_bpmp_transfer(i2c->bpmp, &msg);
 
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(i2c->dev, "failed to transfer message: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (msg.rx.ret != 0) {
-		if (msg.rx.ret == -BPMP_EAGAIN) {
+	अगर (msg.rx.ret != 0) अणु
+		अगर (msg.rx.ret == -BPMP_EAGAIN) अणु
 			dev_dbg(i2c->dev, "arbitration lost\n");
-			return -EAGAIN;
-		}
+			वापस -EAGAIN;
+		पूर्ण
 
-		if (msg.rx.ret == -BPMP_ETIMEDOUT) {
+		अगर (msg.rx.ret == -BPMP_ETIMEDOUT) अणु
 			dev_dbg(i2c->dev, "timeout\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 
-		if (msg.rx.ret == -BPMP_ENXIO) {
+		अगर (msg.rx.ret == -BPMP_ENXIO) अणु
 			dev_dbg(i2c->dev, "NAK\n");
-			return -ENXIO;
-		}
+			वापस -ENXIO;
+		पूर्ण
 
 		dev_err(i2c->dev, "transaction failed: %d\n", msg.rx.ret);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_bpmp_i2c_xfer_common(struct i2c_adapter *adapter,
-				      struct i2c_msg *msgs, int num,
+अटल पूर्णांक tegra_bpmp_i2c_xfer_common(काष्ठा i2c_adapter *adapter,
+				      काष्ठा i2c_msg *msgs, पूर्णांक num,
 				      bool atomic)
-{
-	struct tegra_bpmp_i2c *i2c = i2c_get_adapdata(adapter);
-	struct mrq_i2c_response response;
-	struct mrq_i2c_request request;
-	int err;
+अणु
+	काष्ठा tegra_bpmp_i2c *i2c = i2c_get_adapdata(adapter);
+	काष्ठा mrq_i2c_response response;
+	काष्ठा mrq_i2c_request request;
+	पूर्णांक err;
 
 	err = tegra_bpmp_i2c_msg_len_check(msgs, num);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(i2c->dev, "unsupported message length\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	memset(&request, 0, sizeof(request));
-	memset(&response, 0, sizeof(response));
+	स_रखो(&request, 0, माप(request));
+	स_रखो(&response, 0, माप(response));
 
 	tegra_bpmp_serialize_i2c_msg(i2c, &request, msgs, num);
 	err = tegra_bpmp_i2c_msg_xfer(i2c, &request, &response, atomic);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(i2c->dev, "failed to transfer message: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = tegra_bpmp_i2c_deserialize(i2c, &response, msgs, num);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(i2c->dev, "failed to deserialize message: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
-static int tegra_bpmp_i2c_xfer(struct i2c_adapter *adapter,
-			       struct i2c_msg *msgs, int num)
-{
-	return tegra_bpmp_i2c_xfer_common(adapter, msgs, num, false);
-}
+अटल पूर्णांक tegra_bpmp_i2c_xfer(काष्ठा i2c_adapter *adapter,
+			       काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	वापस tegra_bpmp_i2c_xfer_common(adapter, msgs, num, false);
+पूर्ण
 
-static int tegra_bpmp_i2c_xfer_atomic(struct i2c_adapter *adapter,
-				      struct i2c_msg *msgs, int num)
-{
-	return tegra_bpmp_i2c_xfer_common(adapter, msgs, num, true);
-}
+अटल पूर्णांक tegra_bpmp_i2c_xfer_atomic(काष्ठा i2c_adapter *adapter,
+				      काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	वापस tegra_bpmp_i2c_xfer_common(adapter, msgs, num, true);
+पूर्ण
 
-static u32 tegra_bpmp_i2c_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_10BIT_ADDR |
+अटल u32 tegra_bpmp_i2c_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_10BIT_ADDR |
 	       I2C_FUNC_PROTOCOL_MANGLING | I2C_FUNC_NOSTART;
-}
+पूर्ण
 
-static const struct i2c_algorithm tegra_bpmp_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm tegra_bpmp_i2c_algo = अणु
 	.master_xfer = tegra_bpmp_i2c_xfer,
 	.master_xfer_atomic = tegra_bpmp_i2c_xfer_atomic,
 	.functionality = tegra_bpmp_i2c_func,
-};
+पूर्ण;
 
-static int tegra_bpmp_i2c_probe(struct platform_device *pdev)
-{
-	struct tegra_bpmp_i2c *i2c;
+अटल पूर्णांक tegra_bpmp_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_bpmp_i2c *i2c;
 	u32 value;
-	int err;
+	पूर्णांक err;
 
-	i2c = devm_kzalloc(&pdev->dev, sizeof(*i2c), GFP_KERNEL);
-	if (!i2c)
-		return -ENOMEM;
+	i2c = devm_kzalloc(&pdev->dev, माप(*i2c), GFP_KERNEL);
+	अगर (!i2c)
+		वापस -ENOMEM;
 
 	i2c->dev = &pdev->dev;
 
 	i2c->bpmp = dev_get_drvdata(pdev->dev.parent);
-	if (!i2c->bpmp)
-		return -ENODEV;
+	अगर (!i2c->bpmp)
+		वापस -ENODEV;
 
-	err = of_property_read_u32(pdev->dev.of_node, "nvidia,bpmp-bus-id",
+	err = of_property_पढ़ो_u32(pdev->dev.of_node, "nvidia,bpmp-bus-id",
 				   &value);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	i2c->bus = value;
 
 	i2c_set_adapdata(&i2c->adapter, i2c);
 	i2c->adapter.owner = THIS_MODULE;
 	strlcpy(i2c->adapter.name, "Tegra BPMP I2C adapter",
-		sizeof(i2c->adapter.name));
+		माप(i2c->adapter.name));
 	i2c->adapter.algo = &tegra_bpmp_i2c_algo;
 	i2c->adapter.dev.parent = &pdev->dev;
 	i2c->adapter.dev.of_node = pdev->dev.of_node;
 
-	platform_set_drvdata(pdev, i2c);
+	platक्रमm_set_drvdata(pdev, i2c);
 
-	return i2c_add_adapter(&i2c->adapter);
-}
+	वापस i2c_add_adapter(&i2c->adapter);
+पूर्ण
 
-static int tegra_bpmp_i2c_remove(struct platform_device *pdev)
-{
-	struct tegra_bpmp_i2c *i2c = platform_get_drvdata(pdev);
+अटल पूर्णांक tegra_bpmp_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_bpmp_i2c *i2c = platक्रमm_get_drvdata(pdev);
 
 	i2c_del_adapter(&i2c->adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id tegra_bpmp_i2c_of_match[] = {
-	{ .compatible = "nvidia,tegra186-bpmp-i2c", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id tegra_bpmp_i2c_of_match[] = अणु
+	अणु .compatible = "nvidia,tegra186-bpmp-i2c", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tegra_bpmp_i2c_of_match);
 
-static struct platform_driver tegra_bpmp_i2c_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tegra_bpmp_i2c_driver = अणु
+	.driver = अणु
 		.name = "tegra-bpmp-i2c",
 		.of_match_table = tegra_bpmp_i2c_of_match,
-	},
+	पूर्ण,
 	.probe = tegra_bpmp_i2c_probe,
-	.remove = tegra_bpmp_i2c_remove,
-};
-module_platform_driver(tegra_bpmp_i2c_driver);
+	.हटाओ = tegra_bpmp_i2c_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(tegra_bpmp_i2c_driver);
 
 MODULE_DESCRIPTION("NVIDIA Tegra BPMP I2C bus controller driver");
 MODULE_AUTHOR("Shardar Shariff Md <smohammed@nvidia.com>");

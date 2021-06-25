@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/hpfs/name.c
  *
@@ -7,108 +8,108 @@
  *  operations with filenames
  */
 
-#include "hpfs_fn.h"
+#समावेश "hpfs_fn.h"
 
-static inline int not_allowed_char(unsigned char c)
-{
-	return c<' ' || c=='"' || c=='*' || c=='/' || c==':' || c=='<' ||
+अटल अंतरभूत पूर्णांक not_allowed_अक्षर(अचिन्हित अक्षर c)
+अणु
+	वापस c<' ' || c=='"' || c=='*' || c=='/' || c==':' || c=='<' ||
 	      c=='>' || c=='?' || c=='\\' || c=='|';
-}
+पूर्ण
 
-static inline int no_dos_char(unsigned char c)
-{	/* Characters that are allowed in HPFS but not in DOS */
-	return c=='+' || c==',' || c==';' || c=='=' || c=='[' || c==']';
-}
+अटल अंतरभूत पूर्णांक no_करोs_अक्षर(अचिन्हित अक्षर c)
+अणु	/* Characters that are allowed in HPFS but not in DOS */
+	वापस c=='+' || c==',' || c==';' || c=='=' || c=='[' || c==']';
+पूर्ण
 
-static inline unsigned char upcase(unsigned char *dir, unsigned char a)
-{
-	if (a<128 || a==255) return a>='a' && a<='z' ? a - 0x20 : a;
-	if (!dir) return a;
-	return dir[a-128];
-}
+अटल अंतरभूत अचिन्हित अक्षर upहाल(अचिन्हित अक्षर *dir, अचिन्हित अक्षर a)
+अणु
+	अगर (a<128 || a==255) वापस a>='a' && a<='z' ? a - 0x20 : a;
+	अगर (!dir) वापस a;
+	वापस dir[a-128];
+पूर्ण
 
-unsigned char hpfs_upcase(unsigned char *dir, unsigned char a)
-{
-	return upcase(dir, a);
-}
+अचिन्हित अक्षर hpfs_upहाल(अचिन्हित अक्षर *dir, अचिन्हित अक्षर a)
+अणु
+	वापस upहाल(dir, a);
+पूर्ण
 
-static inline unsigned char locase(unsigned char *dir, unsigned char a)
-{
-	if (a<128 || a==255) return a>='A' && a<='Z' ? a + 0x20 : a;
-	if (!dir) return a;
-	return dir[a];
-}
+अटल अंतरभूत अचिन्हित अक्षर loहाल(अचिन्हित अक्षर *dir, अचिन्हित अक्षर a)
+अणु
+	अगर (a<128 || a==255) वापस a>='A' && a<='Z' ? a + 0x20 : a;
+	अगर (!dir) वापस a;
+	वापस dir[a];
+पूर्ण
 
-int hpfs_chk_name(const unsigned char *name, unsigned *len)
-{
-	int i;
-	if (*len > 254) return -ENAMETOOLONG;
+पूर्णांक hpfs_chk_name(स्थिर अचिन्हित अक्षर *name, अचिन्हित *len)
+अणु
+	पूर्णांक i;
+	अगर (*len > 254) वापस -ENAMETOOLONG;
 	hpfs_adjust_length(name, len);
-	if (!*len) return -EINVAL;
-	for (i = 0; i < *len; i++) if (not_allowed_char(name[i])) return -EINVAL;
-	if (*len == 1) if (name[0] == '.') return -EINVAL;
-	if (*len == 2) if (name[0] == '.' && name[1] == '.') return -EINVAL;
-	return 0;
-}
+	अगर (!*len) वापस -EINVAL;
+	क्रम (i = 0; i < *len; i++) अगर (not_allowed_अक्षर(name[i])) वापस -EINVAL;
+	अगर (*len == 1) अगर (name[0] == '.') वापस -EINVAL;
+	अगर (*len == 2) अगर (name[0] == '.' && name[1] == '.') वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-unsigned char *hpfs_translate_name(struct super_block *s, unsigned char *from,
-			  unsigned len, int lc, int lng)
-{
-	unsigned char *to;
-	int i;
-	if (hpfs_sb(s)->sb_chk >= 2) if (hpfs_is_name_long(from, len) != lng) {
+अचिन्हित अक्षर *hpfs_translate_name(काष्ठा super_block *s, अचिन्हित अक्षर *from,
+			  अचिन्हित len, पूर्णांक lc, पूर्णांक lng)
+अणु
+	अचिन्हित अक्षर *to;
+	पूर्णांक i;
+	अगर (hpfs_sb(s)->sb_chk >= 2) अगर (hpfs_is_name_दीर्घ(from, len) != lng) अणु
 		pr_err("Long name flag mismatch - name ");
-		for (i = 0; i < len; i++)
+		क्रम (i = 0; i < len; i++)
 			pr_cont("%c", from[i]);
 		pr_cont(" misidentified as %s.\n", lng ? "short" : "long");
 		pr_err("It's nothing serious. It could happen because of bug in OS/2.\nSet checks=normal to disable this message.\n");
-	}
-	if (!lc) return from;
-	if (!(to = kmalloc(len, GFP_KERNEL))) {
+	पूर्ण
+	अगर (!lc) वापस from;
+	अगर (!(to = kदो_स्मृति(len, GFP_KERNEL))) अणु
 		pr_err("can't allocate memory for name conversion buffer\n");
-		return from;
-	}
-	for (i = 0; i < len; i++) to[i] = locase(hpfs_sb(s)->sb_cp_table,from[i]);
-	return to;
-}
+		वापस from;
+	पूर्ण
+	क्रम (i = 0; i < len; i++) to[i] = loहाल(hpfs_sb(s)->sb_cp_table,from[i]);
+	वापस to;
+पूर्ण
 
-int hpfs_compare_names(struct super_block *s,
-		       const unsigned char *n1, unsigned l1,
-		       const unsigned char *n2, unsigned l2, int last)
-{
-	unsigned l = l1 < l2 ? l1 : l2;
-	unsigned i;
-	if (last) return -1;
-	for (i = 0; i < l; i++) {
-		unsigned char c1 = upcase(hpfs_sb(s)->sb_cp_table,n1[i]);
-		unsigned char c2 = upcase(hpfs_sb(s)->sb_cp_table,n2[i]);
-		if (c1 < c2) return -1;
-		if (c1 > c2) return 1;
-	}
-	if (l1 < l2) return -1;
-	if (l1 > l2) return 1;
-	return 0;
-}
+पूर्णांक hpfs_compare_names(काष्ठा super_block *s,
+		       स्थिर अचिन्हित अक्षर *n1, अचिन्हित l1,
+		       स्थिर अचिन्हित अक्षर *n2, अचिन्हित l2, पूर्णांक last)
+अणु
+	अचिन्हित l = l1 < l2 ? l1 : l2;
+	अचिन्हित i;
+	अगर (last) वापस -1;
+	क्रम (i = 0; i < l; i++) अणु
+		अचिन्हित अक्षर c1 = upहाल(hpfs_sb(s)->sb_cp_table,n1[i]);
+		अचिन्हित अक्षर c2 = upहाल(hpfs_sb(s)->sb_cp_table,n2[i]);
+		अगर (c1 < c2) वापस -1;
+		अगर (c1 > c2) वापस 1;
+	पूर्ण
+	अगर (l1 < l2) वापस -1;
+	अगर (l1 > l2) वापस 1;
+	वापस 0;
+पूर्ण
 
-int hpfs_is_name_long(const unsigned char *name, unsigned len)
-{
-	int i,j;
-	for (i = 0; i < len && name[i] != '.'; i++)
-		if (no_dos_char(name[i])) return 1;
-	if (!i || i > 8) return 1;
-	if (i == len) return 0;
-	for (j = i + 1; j < len; j++)
-		if (name[j] == '.' || no_dos_char(name[i])) return 1;
-	return j - i > 4;
-}
+पूर्णांक hpfs_is_name_दीर्घ(स्थिर अचिन्हित अक्षर *name, अचिन्हित len)
+अणु
+	पूर्णांक i,j;
+	क्रम (i = 0; i < len && name[i] != '.'; i++)
+		अगर (no_करोs_अक्षर(name[i])) वापस 1;
+	अगर (!i || i > 8) वापस 1;
+	अगर (i == len) वापस 0;
+	क्रम (j = i + 1; j < len; j++)
+		अगर (name[j] == '.' || no_करोs_अक्षर(name[i])) वापस 1;
+	वापस j - i > 4;
+पूर्ण
 
-/* OS/2 clears dots and spaces at the end of file name, so we have to */
+/* OS/2 clears करोts and spaces at the end of file name, so we have to */
 
-void hpfs_adjust_length(const unsigned char *name, unsigned *len)
-{
-	if (!*len) return;
-	if (*len == 1 && name[0] == '.') return;
-	if (*len == 2 && name[0] == '.' && name[1] == '.') return;
-	while (*len && (name[*len - 1] == '.' || name[*len - 1] == ' '))
+व्योम hpfs_adjust_length(स्थिर अचिन्हित अक्षर *name, अचिन्हित *len)
+अणु
+	अगर (!*len) वापस;
+	अगर (*len == 1 && name[0] == '.') वापस;
+	अगर (*len == 2 && name[0] == '.' && name[1] == '.') वापस;
+	जबतक (*len && (name[*len - 1] == '.' || name[*len - 1] == ' '))
 		(*len)--;
-}
+पूर्ण

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * bdc_ep.h - header for the BDC debug functions
+ * bdc_ep.h - header क्रम the BDC debug functions
  *
  * Copyright (C) 2014 Broadcom Corporation
  *
  * Author: Ashwini Pahuja
  */
-#ifndef __LINUX_BDC_EP_H__
-#define __LINUX_BDC_EP_H__
+#अगर_अघोषित __LINUX_BDC_EP_H__
+#घोषणा __LINUX_BDC_EP_H__
 
-int bdc_init_ep(struct bdc *bdc);
-int bdc_ep_disable(struct bdc_ep *ep);
-int bdc_ep_enable(struct bdc_ep *ep);
-void bdc_free_ep(struct bdc *bdc);
+पूर्णांक bdc_init_ep(काष्ठा bdc *bdc);
+पूर्णांक bdc_ep_disable(काष्ठा bdc_ep *ep);
+पूर्णांक bdc_ep_enable(काष्ठा bdc_ep *ep);
+व्योम bdc_मुक्त_ep(काष्ठा bdc *bdc);
 
-#endif /* __LINUX_BDC_EP_H__ */
+#पूर्ण_अगर /* __LINUX_BDC_EP_H__ */

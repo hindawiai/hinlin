@@ -1,386 +1,387 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * comedidev.h
- * header file for kernel-only structures, variables, and constants
+ * header file क्रम kernel-only काष्ठाures, variables, and स्थिरants
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1997-2000 David A. Schleef <ds@schleef.org>
  */
 
-#ifndef _COMEDIDEV_H
-#define _COMEDIDEV_H
+#अगर_अघोषित _COMEDIDEV_H
+#घोषणा _COMEDIDEV_H
 
-#include <linux/dma-mapping.h>
-#include <linux/mutex.h>
-#include <linux/spinlock_types.h>
-#include <linux/rwsem.h>
-#include <linux/kref.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock_types.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/kref.h>
 
-#include "comedi.h"
+#समावेश "comedi.h"
 
-#define COMEDI_VERSION(a, b, c) (((a) << 16) + ((b) << 8) + (c))
-#define COMEDI_VERSION_CODE COMEDI_VERSION(COMEDI_MAJORVERSION, \
+#घोषणा COMEDI_VERSION(a, b, c) (((a) << 16) + ((b) << 8) + (c))
+#घोषणा COMEDI_VERSION_CODE COMEDI_VERSION(COMEDI_MAJORVERSION, \
 	COMEDI_MINORVERSION, COMEDI_MICROVERSION)
-#define COMEDI_RELEASE VERSION
+#घोषणा COMEDI_RELEASE VERSION
 
-#define COMEDI_NUM_BOARD_MINORS 0x30
+#घोषणा COMEDI_NUM_BOARD_MINORS 0x30
 
 /**
- * struct comedi_subdevice - Working data for a COMEDI subdevice
- * @device: COMEDI device to which this subdevice belongs.  (Initialized by
+ * काष्ठा comedi_subdevice - Working data क्रम a COMEDI subdevice
+ * @device: COMEDI device to which this subdevice beदीर्घs.  (Initialized by
  *	comedi_alloc_subdevices().)
  * @index: Index of this subdevice within device's array of subdevices.
  *	(Initialized by comedi_alloc_subdevices().)
- * @type: Type of subdevice from &enum comedi_subdevice_type.  (Initialized by
+ * @type: Type of subdevice from &क्रमागत comedi_subdevice_type.  (Initialized by
  *	the low-level driver.)
  * @n_chan: Number of channels the subdevice supports.  (Initialized by the
  *	low-level driver.)
  * @subdev_flags: Various "SDF" flags indicating aspects of the subdevice to
  *	the COMEDI core and user application.  (Initialized by the low-level
  *	driver.)
- * @len_chanlist: Maximum length of a channel list if the subdevice supports
+ * @len_chanlist: Maximum length of a channel list अगर the subdevice supports
  *	asynchronous acquisition commands.  (Optionally initialized by the
  *	low-level driver, or changed from 0 to 1 during post-configuration.)
- * @private: Private data pointer which is either set by the low-level driver
+ * @निजी: Private data poपूर्णांकer which is either set by the low-level driver
  *	itself, or by a call to comedi_alloc_spriv() which allocates storage.
- *	In the latter case, the storage is automatically freed after the
- *	low-level driver's "detach" handler is called for the device.
+ *	In the latter हाल, the storage is स्वतःmatically मुक्तd after the
+ *	low-level driver's "detach" handler is called क्रम the device.
  *	(Initialized by the low-level driver.)
- * @async: Pointer to &struct comedi_async id the subdevice supports
+ * @async: Poपूर्णांकer to &काष्ठा comedi_async id the subdevice supports
  *	asynchronous acquisition commands.  (Allocated and initialized during
- *	post-configuration if needed.)
- * @lock: Pointer to a file object that performed a %COMEDI_LOCK ioctl on the
- *	subdevice.  (Initially NULL.)
- * @busy: Pointer to a file object that is performing an asynchronous
- *	acquisition command on the subdevice.  (Initially NULL.)
- * @runflags: Internal flags for use by COMEDI core, mostly indicating whether
+ *	post-configuration अगर needed.)
+ * @lock: Poपूर्णांकer to a file object that perक्रमmed a %COMEDI_LOCK ioctl on the
+ *	subdevice.  (Initially शून्य.)
+ * @busy: Poपूर्णांकer to a file object that is perक्रमming an asynchronous
+ *	acquisition command on the subdevice.  (Initially शून्य.)
+ * @runflags: Internal flags क्रम use by COMEDI core, mostly indicating whether
  *	an asynchronous acquisition command is running.
- * @spin_lock: Generic spin-lock for use by the COMEDI core and the low-level
+ * @spin_lock: Generic spin-lock क्रम use by the COMEDI core and the low-level
  *	driver.  (Initialized by comedi_alloc_subdevices().)
- * @io_bits: Bit-mask indicating the channel directions for a DIO subdevice
+ * @io_bits: Bit-mask indicating the channel directions क्रम a DIO subdevice
  *	with no more than 32 channels.  A '1' at a bit position indicates the
  *	corresponding channel is configured as an output.  (Initialized by the
- *	low-level driver for a DIO subdevice.  Forced to all-outputs during
- *	post-configuration for a digital output subdevice.)
+ *	low-level driver क्रम a DIO subdevice.  Forced to all-outमाला_दो during
+ *	post-configuration क्रम a digital output subdevice.)
  * @maxdata: If non-zero, this is the maximum raw data value of each channel.
- *	If zero, the maximum data value is channel-specific.  (Initialized by
+ *	If zero, the maximum data value is channel-specअगरic.  (Initialized by
  *	the low-level driver.)
- * @maxdata_list: If the maximum data value is channel-specific, this points
+ * @maxdata_list: If the maximum data value is channel-specअगरic, this poपूर्णांकs
  *	to an array of maximum data values indexed by channel index.
  *	(Initialized by the low-level driver.)
- * @range_table: If non-NULL, this points to a COMEDI range table for the
- *	subdevice.  If NULL, the range table is channel-specific.  (Initialized
+ * @range_table: If non-शून्य, this poपूर्णांकs to a COMEDI range table क्रम the
+ *	subdevice.  If शून्य, the range table is channel-specअगरic.  (Initialized
  *	by the low-level driver, will be set to an "invalid" range table during
- *	post-configuration if @range_table and @range_table_list are both
- *	NULL.)
- * @range_table_list: If the COMEDI range table is channel-specific, this
- *	points to an array of pointers to COMEDI range tables indexed by
+ *	post-configuration अगर @range_table and @range_table_list are both
+ *	शून्य.)
+ * @range_table_list: If the COMEDI range table is channel-specअगरic, this
+ *	poपूर्णांकs to an array of poपूर्णांकers to COMEDI range tables indexed by
  *	channel number.  (Initialized by the low-level driver.)
  * @chanlist: Not used.
- * @insn_read: Optional pointer to a handler for the %INSN_READ instruction.
- *	(Initialized by the low-level driver, or set to a default handler
+ * @insn_पढ़ो: Optional poपूर्णांकer to a handler क्रम the %INSN_READ inकाष्ठाion.
+ *	(Initialized by the low-level driver, or set to a शेष handler
  *	during post-configuration.)
- * @insn_write: Optional pointer to a handler for the %INSN_WRITE instruction.
- *	(Initialized by the low-level driver, or set to a default handler
+ * @insn_ग_लिखो: Optional poपूर्णांकer to a handler क्रम the %INSN_WRITE inकाष्ठाion.
+ *	(Initialized by the low-level driver, or set to a शेष handler
  *	during post-configuration.)
- * @insn_bits: Optional pointer to a handler for the %INSN_BITS instruction
- *	for a digital input, digital output or digital input/output subdevice.
- *	(Initialized by the low-level driver, or set to a default handler
+ * @insn_bits: Optional poपूर्णांकer to a handler क्रम the %INSN_BITS inकाष्ठाion
+ *	क्रम a digital input, digital output or digital input/output subdevice.
+ *	(Initialized by the low-level driver, or set to a शेष handler
  *	during post-configuration.)
- * @insn_config: Optional pointer to a handler for the %INSN_CONFIG
- *	instruction.  (Initialized by the low-level driver, or set to a default
+ * @insn_config: Optional poपूर्णांकer to a handler क्रम the %INSN_CONFIG
+ *	inकाष्ठाion.  (Initialized by the low-level driver, or set to a शेष
  *	handler during post-configuration.)
- * @do_cmd: If the subdevice supports asynchronous acquisition commands, this
- *	points to a handler to set it up in hardware.  (Initialized by the
+ * @करो_cmd: If the subdevice supports asynchronous acquisition commands, this
+ *	poपूर्णांकs to a handler to set it up in hardware.  (Initialized by the
  *	low-level driver.)
- * @do_cmdtest: If the subdevice supports asynchronous acquisition commands,
- *	this points to a handler used to check and possibly tweak a prospective
+ * @करो_cmdtest: If the subdevice supports asynchronous acquisition commands,
+ *	this poपूर्णांकs to a handler used to check and possibly tweak a prospective
  *	acquisition command without setting it up in hardware.  (Initialized by
  *	the low-level driver.)
  * @poll: If the subdevice supports asynchronous acquisition commands, this
- *	is an optional pointer to a handler for the %COMEDI_POLL ioctl which
- *	instructs the low-level driver to synchronize buffers.  (Initialized by
- *	the low-level driver if needed.)
+ *	is an optional poपूर्णांकer to a handler क्रम the %COMEDI_POLL ioctl which
+ *	inकाष्ठाs the low-level driver to synchronize buffers.  (Initialized by
+ *	the low-level driver अगर needed.)
  * @cancel: If the subdevice supports asynchronous acquisition commands, this
- *	points to a handler used to terminate a running command.  (Initialized
+ *	poपूर्णांकs to a handler used to terminate a running command.  (Initialized
  *	by the low-level driver.)
  * @buf_change: If the subdevice supports asynchronous acquisition commands,
- *	this is an optional pointer to a handler that is called when the data
- *	buffer for handling asynchronous commands is allocated or reallocated.
- *	(Initialized by the low-level driver if needed.)
+ *	this is an optional poपूर्णांकer to a handler that is called when the data
+ *	buffer क्रम handling asynchronous commands is allocated or पुनः_स्मृतिated.
+ *	(Initialized by the low-level driver अगर needed.)
  * @munge: If the subdevice supports asynchronous acquisition commands and
  *	uses DMA to transfer data from the hardware to the acquisition buffer,
- *	this points to a function used to "munge" the data values from the
- *	hardware into the format expected by COMEDI.  (Initialized by the
- *	low-level driver if needed.)
+ *	this poपूर्णांकs to a function used to "munge" the data values from the
+ *	hardware पूर्णांकo the क्रमmat expected by COMEDI.  (Initialized by the
+ *	low-level driver अगर needed.)
  * @async_dma_dir: If the subdevice supports asynchronous acquisition commands
  *	and uses DMA to transfer data from the hardware to the acquisition
- *	buffer, this sets the DMA direction for the buffer. (initialized to
+ *	buffer, this sets the DMA direction क्रम the buffer. (initialized to
  *	%DMA_NONE by comedi_alloc_subdevices() and changed by the low-level
- *	driver if necessary.)
- * @state: Handy bit-mask indicating the output states for a DIO or digital
+ *	driver अगर necessary.)
+ * @state: Handy bit-mask indicating the output states क्रम a DIO or digital
  *	output subdevice with no more than 32 channels. (Initialized by the
  *	low-level driver.)
  * @class_dev: If the subdevice supports asynchronous acquisition commands,
- *	this points to a sysfs comediX_subdY device where X is the minor device
+ *	this poपूर्णांकs to a sysfs comediX_subdY device where X is the minor device
  *	number of the COMEDI device and Y is the subdevice number.  The minor
- *	device number for the sysfs device is allocated dynamically in the
- *	range 48 to 255.  This is used to allow the COMEDI device to be opened
- *	with a different default read or write subdevice.  (Allocated during
- *	post-configuration if needed.)
+ *	device number क्रम the sysfs device is allocated dynamically in the
+ *	range 48 to 255.  This is used to allow the COMEDI device to be खोलोed
+ *	with a dअगरferent शेष पढ़ो or ग_लिखो subdevice.  (Allocated during
+ *	post-configuration अगर needed.)
  * @minor: If @class_dev is set, this is its dynamically allocated minor
- *	device number.  (Set during post-configuration if necessary.)
- * @readback: Optional pointer to memory allocated by
- *	comedi_alloc_subdev_readback() used to hold the values written to
- *	analog output channels so they can be read back.  The storage is
- *	automatically freed after the low-level driver's "detach" handler is
- *	called for the device.  (Initialized by the low-level driver.)
+ *	device number.  (Set during post-configuration अगर necessary.)
+ * @पढ़ोback: Optional poपूर्णांकer to memory allocated by
+ *	comedi_alloc_subdev_पढ़ोback() used to hold the values written to
+ *	analog output channels so they can be पढ़ो back.  The storage is
+ *	स्वतःmatically मुक्तd after the low-level driver's "detach" handler is
+ *	called क्रम the device.  (Initialized by the low-level driver.)
  *
- * This is the main control structure for a COMEDI subdevice.  If the subdevice
- * supports asynchronous acquisition commands, additional information is stored
- * in the &struct comedi_async pointed to by @async.
+ * This is the मुख्य control काष्ठाure क्रम a COMEDI subdevice.  If the subdevice
+ * supports asynchronous acquisition commands, additional inक्रमmation is stored
+ * in the &काष्ठा comedi_async poपूर्णांकed to by @async.
  *
  * Most of the subdevice is initialized by the low-level driver's "attach" or
  * "auto_attach" handlers but parts of it are initialized by
  * comedi_alloc_subdevices(), and other parts are initialized during
- * post-configuration on return from that handler.
+ * post-configuration on वापस from that handler.
  *
- * A low-level driver that sets @insn_bits for a digital input, digital output,
- * or DIO subdevice may leave @insn_read and @insn_write uninitialized, in
- * which case they will be set to a default handler during post-configuration
- * that uses @insn_bits to emulate the %INSN_READ and %INSN_WRITE instructions.
+ * A low-level driver that sets @insn_bits क्रम a digital input, digital output,
+ * or DIO subdevice may leave @insn_पढ़ो and @insn_ग_लिखो uninitialized, in
+ * which हाल they will be set to a शेष handler during post-configuration
+ * that uses @insn_bits to emulate the %INSN_READ and %INSN_WRITE inकाष्ठाions.
  */
-struct comedi_subdevice {
-	struct comedi_device *device;
-	int index;
-	int type;
-	int n_chan;
-	int subdev_flags;
-	int len_chanlist;	/* maximum length of channel/gain list */
+काष्ठा comedi_subdevice अणु
+	काष्ठा comedi_device *device;
+	पूर्णांक index;
+	पूर्णांक type;
+	पूर्णांक n_chan;
+	पूर्णांक subdev_flags;
+	पूर्णांक len_chanlist;	/* maximum length of channel/gain list */
 
-	void *private;
+	व्योम *निजी;
 
-	struct comedi_async *async;
+	काष्ठा comedi_async *async;
 
-	void *lock;
-	void *busy;
-	unsigned int runflags;
-	spinlock_t spin_lock;	/* generic spin-lock for COMEDI and drivers */
+	व्योम *lock;
+	व्योम *busy;
+	अचिन्हित पूर्णांक runflags;
+	spinlock_t spin_lock;	/* generic spin-lock क्रम COMEDI and drivers */
 
-	unsigned int io_bits;
+	अचिन्हित पूर्णांक io_bits;
 
-	unsigned int maxdata;	/* if maxdata==0, use list */
-	const unsigned int *maxdata_list;	/* list is channel specific */
+	अचिन्हित पूर्णांक maxdata;	/* अगर maxdata==0, use list */
+	स्थिर अचिन्हित पूर्णांक *maxdata_list;	/* list is channel specअगरic */
 
-	const struct comedi_lrange *range_table;
-	const struct comedi_lrange *const *range_table_list;
+	स्थिर काष्ठा comedi_lrange *range_table;
+	स्थिर काष्ठा comedi_lrange *स्थिर *range_table_list;
 
-	unsigned int *chanlist;	/* driver-owned chanlist (not used) */
+	अचिन्हित पूर्णांक *chanlist;	/* driver-owned chanlist (not used) */
 
-	int (*insn_read)(struct comedi_device *dev, struct comedi_subdevice *s,
-			 struct comedi_insn *insn, unsigned int *data);
-	int (*insn_write)(struct comedi_device *dev, struct comedi_subdevice *s,
-			  struct comedi_insn *insn, unsigned int *data);
-	int (*insn_bits)(struct comedi_device *dev, struct comedi_subdevice *s,
-			 struct comedi_insn *insn, unsigned int *data);
-	int (*insn_config)(struct comedi_device *dev,
-			   struct comedi_subdevice *s,
-			   struct comedi_insn *insn,
-			   unsigned int *data);
+	पूर्णांक (*insn_पढ़ो)(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+			 काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data);
+	पूर्णांक (*insn_ग_लिखो)(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+			  काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data);
+	पूर्णांक (*insn_bits)(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+			 काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data);
+	पूर्णांक (*insn_config)(काष्ठा comedi_device *dev,
+			   काष्ठा comedi_subdevice *s,
+			   काष्ठा comedi_insn *insn,
+			   अचिन्हित पूर्णांक *data);
 
-	int (*do_cmd)(struct comedi_device *dev, struct comedi_subdevice *s);
-	int (*do_cmdtest)(struct comedi_device *dev,
-			  struct comedi_subdevice *s,
-			  struct comedi_cmd *cmd);
-	int (*poll)(struct comedi_device *dev, struct comedi_subdevice *s);
-	int (*cancel)(struct comedi_device *dev, struct comedi_subdevice *s);
+	पूर्णांक (*करो_cmd)(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s);
+	पूर्णांक (*करो_cmdtest)(काष्ठा comedi_device *dev,
+			  काष्ठा comedi_subdevice *s,
+			  काष्ठा comedi_cmd *cmd);
+	पूर्णांक (*poll)(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s);
+	पूर्णांक (*cancel)(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s);
 
 	/* called when the buffer changes */
-	int (*buf_change)(struct comedi_device *dev,
-			  struct comedi_subdevice *s);
+	पूर्णांक (*buf_change)(काष्ठा comedi_device *dev,
+			  काष्ठा comedi_subdevice *s);
 
-	void (*munge)(struct comedi_device *dev, struct comedi_subdevice *s,
-		      void *data, unsigned int num_bytes,
-		      unsigned int start_chan_index);
-	enum dma_data_direction async_dma_dir;
+	व्योम (*munge)(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+		      व्योम *data, अचिन्हित पूर्णांक num_bytes,
+		      अचिन्हित पूर्णांक start_chan_index);
+	क्रमागत dma_data_direction async_dma_dir;
 
-	unsigned int state;
+	अचिन्हित पूर्णांक state;
 
-	struct device *class_dev;
-	int minor;
+	काष्ठा device *class_dev;
+	पूर्णांक minor;
 
-	unsigned int *readback;
-};
+	अचिन्हित पूर्णांक *पढ़ोback;
+पूर्ण;
 
 /**
- * struct comedi_buf_page - Describe a page of a COMEDI buffer
+ * काष्ठा comedi_buf_page - Describe a page of a COMEDI buffer
  * @virt_addr: Kernel address of page.
- * @dma_addr: DMA address of page if in DMA coherent memory.
+ * @dma_addr: DMA address of page अगर in DMA coherent memory.
  */
-struct comedi_buf_page {
-	void *virt_addr;
+काष्ठा comedi_buf_page अणु
+	व्योम *virt_addr;
 	dma_addr_t dma_addr;
-};
+पूर्ण;
 
 /**
- * struct comedi_buf_map - Describe pages in a COMEDI buffer
- * @dma_hw_dev: Low-level hardware &struct device pointer copied from the
+ * काष्ठा comedi_buf_map - Describe pages in a COMEDI buffer
+ * @dma_hw_dev: Low-level hardware &काष्ठा device poपूर्णांकer copied from the
  *	COMEDI device's hw_dev member.
- * @page_list: Pointer to array of &struct comedi_buf_page, one for each
+ * @page_list: Poपूर्णांकer to array of &काष्ठा comedi_buf_page, one क्रम each
  *	page in the buffer.
  * @n_pages: Number of pages in the buffer.
  * @dma_dir: DMA direction used to allocate pages of DMA coherent memory,
- *	or %DMA_NONE if pages allocated from regular memory.
- * @refcount: &struct kref reference counter used to free the buffer.
+ *	or %DMA_NONE अगर pages allocated from regular memory.
+ * @refcount: &काष्ठा kref reference counter used to मुक्त the buffer.
  *
- * A COMEDI data buffer is allocated as individual pages, either in
+ * A COMEDI data buffer is allocated as inभागidual pages, either in
  * conventional memory or DMA coherent memory, depending on the attached,
- * low-level hardware device.  (The buffer pages also get mapped into the
+ * low-level hardware device.  (The buffer pages also get mapped पूर्णांकo the
  * kernel's contiguous virtual address space pointed to by the 'prealloc_buf'
- * member of &struct comedi_async.)
+ * member of &काष्ठा comedi_async.)
  *
- * The buffer is normally freed when the COMEDI device is detached from the
- * low-level driver (which may happen due to device removal), but if it happens
- * to be mmapped at the time, the pages cannot be freed until the buffer has
- * been munmapped.  That is what the reference counter is for.  (The virtual
- * address space pointed by 'prealloc_buf' is freed when the COMEDI device is
+ * The buffer is normally मुक्तd when the COMEDI device is detached from the
+ * low-level driver (which may happen due to device removal), but अगर it happens
+ * to be mmapped at the समय, the pages cannot be मुक्तd until the buffer has
+ * been munmapped.  That is what the reference counter is क्रम.  (The भव
+ * address space poपूर्णांकed by 'prealloc_buf' is मुक्तd when the COMEDI device is
  * detached.)
  */
-struct comedi_buf_map {
-	struct device *dma_hw_dev;
-	struct comedi_buf_page *page_list;
-	unsigned int n_pages;
-	enum dma_data_direction dma_dir;
-	struct kref refcount;
-};
+काष्ठा comedi_buf_map अणु
+	काष्ठा device *dma_hw_dev;
+	काष्ठा comedi_buf_page *page_list;
+	अचिन्हित पूर्णांक n_pages;
+	क्रमागत dma_data_direction dma_dir;
+	काष्ठा kref refcount;
+पूर्ण;
 
 /**
- * struct comedi_async - Control data for asynchronous COMEDI commands
- * @prealloc_buf: Kernel virtual address of allocated acquisition buffer.
- * @prealloc_bufsz: Buffer size (in bytes).
+ * काष्ठा comedi_async - Control data क्रम asynchronous COMEDI commands
+ * @pपुनः_स्मृति_buf: Kernel भव address of allocated acquisition buffer.
+ * @pपुनः_स्मृति_bufsz: Buffer size (in bytes).
  * @buf_map: Map of buffer pages.
  * @max_bufsize: Maximum allowed buffer size (in bytes).
- * @buf_write_count: "Write completed" count (in bytes, modulo 2**32).
- * @buf_write_alloc_count: "Allocated for writing" count (in bytes,
+ * @buf_ग_लिखो_count: "Write completed" count (in bytes, modulo 2**32).
+ * @buf_ग_लिखो_alloc_count: "Allocated for writing" count (in bytes,
  *	modulo 2**32).
- * @buf_read_count: "Read completed" count (in bytes, modulo 2**32).
- * @buf_read_alloc_count: "Allocated for reading" count (in bytes,
+ * @buf_पढ़ो_count: "Read completed" count (in bytes, modulo 2**32).
+ * @buf_पढ़ो_alloc_count: "Allocated for reading" count (in bytes,
  *	modulo 2**32).
- * @buf_write_ptr: Buffer position for writer.
- * @buf_read_ptr: Buffer position for reader.
- * @cur_chan: Current position in chanlist for scan (for those drivers that
+ * @buf_ग_लिखो_ptr: Buffer position क्रम ग_लिखोr.
+ * @buf_पढ़ो_ptr: Buffer position क्रम पढ़ोer.
+ * @cur_chan: Current position in chanlist क्रम scan (क्रम those drivers that
  *	use it).
- * @scans_done: The number of scans completed.
- * @scan_progress: Amount received or sent for current scan (in bytes).
- * @munge_chan: Current position in chanlist for "munging".
+ * @scans_करोne: The number of scans completed.
+ * @scan_progress: Amount received or sent क्रम current scan (in bytes).
+ * @munge_chan: Current position in chanlist क्रम "munging".
  * @munge_count: "Munge" count (in bytes, modulo 2**32).
- * @munge_ptr: Buffer position for "munging".
+ * @munge_ptr: Buffer position क्रम "munging".
  * @events: Bit-vector of events that have occurred.
  * @cmd: Details of comedi command in progress.
- * @wait_head: Task wait queue for file reader or writer.
- * @cb_mask: Bit-vector of events that should wake waiting tasks.
- * @inttrig: Software trigger function for command, or NULL.
+ * @रुको_head: Task रुको queue क्रम file पढ़ोer or ग_लिखोr.
+ * @cb_mask: Bit-vector of events that should wake रुकोing tasks.
+ * @पूर्णांकtrig: Software trigger function क्रम command, or शून्य.
  *
  * Note about the ..._count and ..._ptr members:
  *
- * Think of the _Count values being integers of unlimited size, indexing
- * into a buffer of infinite length (though only an advancing portion
- * of the buffer of fixed length prealloc_bufsz is accessible at any
- * time).  Then:
+ * Think of the _Count values being पूर्णांकegers of unlimited size, indexing
+ * पूर्णांकo a buffer of infinite length (though only an advancing portion
+ * of the buffer of fixed length pपुनः_स्मृति_bufsz is accessible at any
+ * समय).  Then:
  *
  *   Buf_Read_Count <= Buf_Read_Alloc_Count <= Munge_Count <=
  *   Buf_Write_Count <= Buf_Write_Alloc_Count <=
- *   (Buf_Read_Count + prealloc_bufsz)
+ *   (Buf_Read_Count + pपुनः_स्मृति_bufsz)
  *
- * (Those aren't the actual members, apart from prealloc_bufsz.) When the
+ * (Those aren't the actual members, apart from pपुनः_स्मृति_bufsz.) When the
  * buffer is reset, those _Count values start at 0 and only increase in value,
- * maintaining the above inequalities until the next time the buffer is
- * reset.  The buffer is divided into the following regions by the inequalities:
+ * मुख्यtaining the above inequalities until the next समय the buffer is
+ * reset.  The buffer is भागided पूर्णांकo the following regions by the inequalities:
  *
  *   [0, Buf_Read_Count):
- *     old region no longer accessible
+ *     old region no दीर्घer accessible
  *
  *   [Buf_Read_Count, Buf_Read_Alloc_Count):
- *     filled and munged region allocated for reading but not yet read
+ *     filled and munged region allocated क्रम पढ़ोing but not yet पढ़ो
  *
  *   [Buf_Read_Alloc_Count, Munge_Count):
- *     filled and munged region not yet allocated for reading
+ *     filled and munged region not yet allocated क्रम पढ़ोing
  *
  *   [Munge_Count, Buf_Write_Count):
  *     filled region not yet munged
  *
  *   [Buf_Write_Count, Buf_Write_Alloc_Count):
- *     unfilled region allocated for writing but not yet written
+ *     unfilled region allocated क्रम writing but not yet written
  *
- *   [Buf_Write_Alloc_Count, Buf_Read_Count + prealloc_bufsz):
- *     unfilled region not yet allocated for writing
+ *   [Buf_Write_Alloc_Count, Buf_Read_Count + pपुनः_स्मृति_bufsz):
+ *     unfilled region not yet allocated क्रम writing
  *
- *   [Buf_Read_Count + prealloc_bufsz, infinity):
+ *   [Buf_Read_Count + pपुनः_स्मृति_bufsz, infinity):
  *     unfilled region not yet accessible
  *
- * Data needs to be written into the buffer before it can be read out,
+ * Data needs to be written पूर्णांकo the buffer beक्रमe it can be पढ़ो out,
  * and may need to be converted (or "munged") between the two
- * operations.  Extra unfilled buffer space may need to allocated for
- * writing (advancing Buf_Write_Alloc_Count) before new data is written.
+ * operations.  Extra unfilled buffer space may need to allocated क्रम
+ * writing (advancing Buf_Write_Alloc_Count) beक्रमe new data is written.
  * After writing new data, the newly filled space needs to be released
  * (advancing Buf_Write_Count).  This also results in the new data being
- * "munged" (advancing Munge_Count).  Before data is read out of the
- * buffer, extra space may need to be allocated for reading (advancing
- * Buf_Read_Alloc_Count).  After the data has been read out, the space
+ * "munged" (advancing Munge_Count).  Beक्रमe data is पढ़ो out of the
+ * buffer, extra space may need to be allocated क्रम पढ़ोing (advancing
+ * Buf_Read_Alloc_Count).  After the data has been पढ़ो out, the space
  * needs to be released (advancing Buf_Read_Count).
  *
- * The actual members, buf_read_count, buf_read_alloc_count,
- * munge_count, buf_write_count, and buf_write_alloc_count take the
+ * The actual members, buf_पढ़ो_count, buf_पढ़ो_alloc_count,
+ * munge_count, buf_ग_लिखो_count, and buf_ग_लिखो_alloc_count take the
  * value of the corresponding capitalized _Count values modulo 2^32
- * (UINT_MAX+1).  Subtracting a "higher" _count value from a "lower"
+ * (अच_पूर्णांक_उच्च+1).  Subtracting a "higher" _count value from a "lower"
  * _count value gives the same answer as subtracting a "higher" _Count
- * value from a lower _Count value because prealloc_bufsz < UINT_MAX+1.
- * The modulo operation is done implicitly.
+ * value from a lower _Count value because pपुनः_स्मृति_bufsz < अच_पूर्णांक_उच्च+1.
+ * The modulo operation is करोne implicitly.
  *
- * The buf_read_ptr, munge_ptr, and buf_write_ptr members take the value
- * of the corresponding capitalized _Count values modulo prealloc_bufsz.
+ * The buf_पढ़ो_ptr, munge_ptr, and buf_ग_लिखो_ptr members take the value
+ * of the corresponding capitalized _Count values modulo pपुनः_स्मृति_bufsz.
  * These correspond to byte indices in the physical buffer.  The modulo
- * operation is done by subtracting prealloc_bufsz when the value
- * exceeds prealloc_bufsz (assuming prealloc_bufsz plus the increment is
- * less than or equal to UINT_MAX).
+ * operation is करोne by subtracting pपुनः_स्मृति_bufsz when the value
+ * exceeds pपुनः_स्मृति_bufsz (assuming pपुनः_स्मृति_bufsz plus the increment is
+ * less than or equal to अच_पूर्णांक_उच्च).
  */
-struct comedi_async {
-	void *prealloc_buf;
-	unsigned int prealloc_bufsz;
-	struct comedi_buf_map *buf_map;
-	unsigned int max_bufsize;
-	unsigned int buf_write_count;
-	unsigned int buf_write_alloc_count;
-	unsigned int buf_read_count;
-	unsigned int buf_read_alloc_count;
-	unsigned int buf_write_ptr;
-	unsigned int buf_read_ptr;
-	unsigned int cur_chan;
-	unsigned int scans_done;
-	unsigned int scan_progress;
-	unsigned int munge_chan;
-	unsigned int munge_count;
-	unsigned int munge_ptr;
-	unsigned int events;
-	struct comedi_cmd cmd;
-	wait_queue_head_t wait_head;
-	unsigned int cb_mask;
-	int (*inttrig)(struct comedi_device *dev, struct comedi_subdevice *s,
-		       unsigned int x);
-};
+काष्ठा comedi_async अणु
+	व्योम *pपुनः_स्मृति_buf;
+	अचिन्हित पूर्णांक pपुनः_स्मृति_bufsz;
+	काष्ठा comedi_buf_map *buf_map;
+	अचिन्हित पूर्णांक max_bufsize;
+	अचिन्हित पूर्णांक buf_ग_लिखो_count;
+	अचिन्हित पूर्णांक buf_ग_लिखो_alloc_count;
+	अचिन्हित पूर्णांक buf_पढ़ो_count;
+	अचिन्हित पूर्णांक buf_पढ़ो_alloc_count;
+	अचिन्हित पूर्णांक buf_ग_लिखो_ptr;
+	अचिन्हित पूर्णांक buf_पढ़ो_ptr;
+	अचिन्हित पूर्णांक cur_chan;
+	अचिन्हित पूर्णांक scans_करोne;
+	अचिन्हित पूर्णांक scan_progress;
+	अचिन्हित पूर्णांक munge_chan;
+	अचिन्हित पूर्णांक munge_count;
+	अचिन्हित पूर्णांक munge_ptr;
+	अचिन्हित पूर्णांक events;
+	काष्ठा comedi_cmd cmd;
+	रुको_queue_head_t रुको_head;
+	अचिन्हित पूर्णांक cb_mask;
+	पूर्णांक (*पूर्णांकtrig)(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+		       अचिन्हित पूर्णांक x);
+पूर्ण;
 
 /**
- * enum comedi_cb - &struct comedi_async callback "events"
+ * क्रमागत comedi_cb - &काष्ठा comedi_async callback "events"
  * @COMEDI_CB_EOS:		end-of-scan
  * @COMEDI_CB_EOA:		end-of-acquisition/output
- * @COMEDI_CB_BLOCK:		data has arrived, wakes up read() / write()
+ * @COMEDI_CB_BLOCK:		data has arrived, wakes up पढ़ो() / ग_लिखो()
  * @COMEDI_CB_EOBUF:		DEPRECATED: end of buffer
  * @COMEDI_CB_ERROR:		card error during acquisition
  * @COMEDI_CB_OVERFLOW:		buffer overflow/underflow
  * @COMEDI_CB_ERROR_MASK:	events that indicate an error has occurred
  * @COMEDI_CB_CANCEL_MASK:	events that will cancel an async command
  */
-enum comedi_cb {
+क्रमागत comedi_cb अणु
 	COMEDI_CB_EOS		= BIT(0),
 	COMEDI_CB_EOA		= BIT(1),
 	COMEDI_CB_BLOCK		= BIT(2),
@@ -390,318 +391,318 @@ enum comedi_cb {
 	/* masks */
 	COMEDI_CB_ERROR_MASK	= (COMEDI_CB_ERROR | COMEDI_CB_OVERFLOW),
 	COMEDI_CB_CANCEL_MASK	= (COMEDI_CB_EOA | COMEDI_CB_ERROR_MASK)
-};
+पूर्ण;
 
 /**
- * struct comedi_driver - COMEDI driver registration
+ * काष्ठा comedi_driver - COMEDI driver registration
  * @driver_name: Name of driver.
  * @module: Owning module.
- * @attach: The optional "attach" handler for manually configured COMEDI
+ * @attach: The optional "attach" handler क्रम manually configured COMEDI
  *	devices.
- * @detach: The "detach" handler for deconfiguring COMEDI devices.
- * @auto_attach: The optional "auto_attach" handler for automatically
+ * @detach: The "detach" handler क्रम deconfiguring COMEDI devices.
+ * @स्वतः_attach: The optional "auto_attach" handler क्रम स्वतःmatically
  *	configured COMEDI devices.
  * @num_names: Optional number of "board names" supported.
- * @board_name: Optional pointer to a pointer to a board name.  The pointer
+ * @board_name: Optional poपूर्णांकer to a poपूर्णांकer to a board name.  The poपूर्णांकer
  *	to a board name is embedded in an element of a driver-defined array
- *	of static, read-only board type information.
+ *	of अटल, पढ़ो-only board type inक्रमmation.
  * @offset: Optional size of each element of the driver-defined array of
- *	static, read-only board type information, i.e. the offset between each
- *	pointer to a board name.
+ *	अटल, पढ़ो-only board type inक्रमmation, i.e. the offset between each
+ *	poपूर्णांकer to a board name.
  *
- * This is used with comedi_driver_register() and comedi_driver_unregister() to
- * register and unregister a low-level COMEDI driver with the COMEDI core.
+ * This is used with comedi_driver_रेजिस्टर() and comedi_driver_unरेजिस्टर() to
+ * रेजिस्टर and unरेजिस्टर a low-level COMEDI driver with the COMEDI core.
  *
- * If @num_names is non-zero, @board_name should be non-NULL, and @offset
- * should be at least sizeof(*board_name).  These are used by the handler for
+ * If @num_names is non-zero, @board_name should be non-शून्य, and @offset
+ * should be at least माप(*board_name).  These are used by the handler क्रम
  * the %COMEDI_DEVCONFIG ioctl to match a hardware device and its driver by
  * board name.  If @num_names is zero, the %COMEDI_DEVCONFIG ioctl matches a
- * hardware device and its driver by driver name.  This is only useful if the
+ * hardware device and its driver by driver name.  This is only useful अगर the
  * @attach handler is set.  If @num_names is non-zero, the driver's @attach
- * handler will be called with the COMEDI device structure's board_ptr member
- * pointing to the matched pointer to a board name within the driver's private
- * array of static, read-only board type information.
+ * handler will be called with the COMEDI device काष्ठाure's board_ptr member
+ * poपूर्णांकing to the matched poपूर्णांकer to a board name within the driver's निजी
+ * array of अटल, पढ़ो-only board type inक्रमmation.
  *
  * The @detach handler has two roles.  If a COMEDI device was successfully
- * configured by the @attach or @auto_attach handler, it is called when the
+ * configured by the @attach or @स्वतः_attach handler, it is called when the
  * device is being deconfigured (by the %COMEDI_DEVCONFIG ioctl, or due to
  * unloading of the driver, or due to device removal).  It is also called when
- * the @attach or @auto_attach handler returns an error.  Therefore, the
- * @attach or @auto_attach handlers can defer clean-up on error until the
- * @detach handler is called.  If the @attach or @auto_attach handlers free
+ * the @attach or @स्वतः_attach handler वापसs an error.  Thereक्रमe, the
+ * @attach or @स्वतः_attach handlers can defer clean-up on error until the
+ * @detach handler is called.  If the @attach or @स्वतः_attach handlers मुक्त
  * any resources themselves, they must prevent the @detach handler from
- * freeing the same resources.  The @detach handler must not assume that all
- * resources requested by the @attach or @auto_attach handler were
+ * मुक्तing the same resources.  The @detach handler must not assume that all
+ * resources requested by the @attach or @स्वतः_attach handler were
  * successfully allocated.
  */
-struct comedi_driver {
-	/* private: */
-	struct comedi_driver *next;	/* Next in list of COMEDI drivers. */
-	/* public: */
-	const char *driver_name;
-	struct module *module;
-	int (*attach)(struct comedi_device *dev, struct comedi_devconfig *it);
-	void (*detach)(struct comedi_device *dev);
-	int (*auto_attach)(struct comedi_device *dev, unsigned long context);
-	unsigned int num_names;
-	const char *const *board_name;
-	int offset;
-};
+काष्ठा comedi_driver अणु
+	/* निजी: */
+	काष्ठा comedi_driver *next;	/* Next in list of COMEDI drivers. */
+	/* खुला: */
+	स्थिर अक्षर *driver_name;
+	काष्ठा module *module;
+	पूर्णांक (*attach)(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it);
+	व्योम (*detach)(काष्ठा comedi_device *dev);
+	पूर्णांक (*स्वतः_attach)(काष्ठा comedi_device *dev, अचिन्हित दीर्घ context);
+	अचिन्हित पूर्णांक num_names;
+	स्थिर अक्षर *स्थिर *board_name;
+	पूर्णांक offset;
+पूर्ण;
 
 /**
- * struct comedi_device - Working data for a COMEDI device
- * @use_count: Number of open file objects.
+ * काष्ठा comedi_device - Working data क्रम a COMEDI device
+ * @use_count: Number of खोलो file objects.
  * @driver: Low-level COMEDI driver attached to this COMEDI device.
- * @pacer: Optional pointer to a dynamically allocated acquisition pacer
- *	control.  It is freed automatically after the COMEDI device is
+ * @pacer: Optional poपूर्णांकer to a dynamically allocated acquisition pacer
+ *	control.  It is मुक्तd स्वतःmatically after the COMEDI device is
  *	detached from the low-level driver.
- * @private: Optional pointer to private data allocated by the low-level
- *	driver.  It is freed automatically after the COMEDI device is
+ * @निजी: Optional poपूर्णांकer to निजी data allocated by the low-level
+ *	driver.  It is मुक्तd स्वतःmatically after the COMEDI device is
  *	detached from the low-level driver.
  * @class_dev: Sysfs comediX device.
- * @minor: Minor device number of COMEDI char device (0-47).
- * @detach_count: Counter incremented every time the COMEDI device is detached.
- *	Used for checking a previous attachment is still valid.
- * @hw_dev: Optional pointer to the low-level hardware &struct device.  It is
- *	required for automatically configured COMEDI devices and optional for
+ * @minor: Minor device number of COMEDI अक्षर device (0-47).
+ * @detach_count: Counter incremented every समय the COMEDI device is detached.
+ *	Used क्रम checking a previous attachment is still valid.
+ * @hw_dev: Optional poपूर्णांकer to the low-level hardware &काष्ठा device.  It is
+ *	required क्रम स्वतःmatically configured COMEDI devices and optional क्रम
  *	COMEDI devices configured by the %COMEDI_DEVCONFIG ioctl, although
- *	the bus-specific COMEDI functions only work if it is set correctly.
- *	It is also passed to dma_alloc_coherent() for COMEDI subdevices that
+ *	the bus-specअगरic COMEDI functions only work अगर it is set correctly.
+ *	It is also passed to dma_alloc_coherent() क्रम COMEDI subdevices that
  *	have their 'async_dma_dir' member set to something other than
  *	%DMA_NONE.
- * @board_name: Pointer to a COMEDI board name or a COMEDI driver name.  When
- *	the low-level driver's "attach" handler is called by the handler for
- *	the %COMEDI_DEVCONFIG ioctl, it either points to a matched board name
- *	string if the 'num_names' member of the &struct comedi_driver is
- *	non-zero, otherwise it points to the low-level driver name string.
- *	When the low-lever driver's "auto_attach" handler is called for an
- *	automatically configured COMEDI device, it points to the low-level
- *	driver name string.  The low-level driver is free to change it in its
- *	"attach" or "auto_attach" handler if it wishes.
- * @board_ptr: Optional pointer to private, read-only board type information in
- *	the low-level driver.  If the 'num_names' member of the &struct
- *	comedi_driver is non-zero, the handler for the %COMEDI_DEVCONFIG ioctl
- *	will point it to a pointer to a matched board name string within the
- *	driver's private array of static, read-only board type information when
- *	calling the driver's "attach" handler.  The low-level driver is free to
+ * @board_name: Poपूर्णांकer to a COMEDI board name or a COMEDI driver name.  When
+ *	the low-level driver's "attach" handler is called by the handler क्रम
+ *	the %COMEDI_DEVCONFIG ioctl, it either poपूर्णांकs to a matched board name
+ *	string अगर the 'num_names' member of the &काष्ठा comedi_driver is
+ *	non-zero, otherwise it poपूर्णांकs to the low-level driver name string.
+ *	When the low-lever driver's "auto_attach" handler is called क्रम an
+ *	स्वतःmatically configured COMEDI device, it poपूर्णांकs to the low-level
+ *	driver name string.  The low-level driver is मुक्त to change it in its
+ *	"attach" or "auto_attach" handler अगर it wishes.
+ * @board_ptr: Optional poपूर्णांकer to निजी, पढ़ो-only board type inक्रमmation in
+ *	the low-level driver.  If the 'num_names' member of the &काष्ठा
+ *	comedi_driver is non-zero, the handler क्रम the %COMEDI_DEVCONFIG ioctl
+ *	will poपूर्णांक it to a poपूर्णांकer to a matched board name string within the
+ *	driver's निजी array of अटल, पढ़ो-only board type inक्रमmation when
+ *	calling the driver's "attach" handler.  The low-level driver is मुक्त to
  *	change it.
  * @attached: Flag indicating that the COMEDI device is attached to a low-level
  *	driver.
  * @ioenabled: Flag used to indicate that a PCI device has been enabled and
  *	its regions requested.
- * @spinlock: Generic spin-lock for use by the low-level driver.
- * @mutex: Generic mutex for use by the COMEDI core module.
- * @attach_lock: &struct rw_semaphore used to guard against the COMEDI device
- *	being detached while an operation is in progress.  The down_write()
- *	operation is only allowed while @mutex is held and is used when
+ * @spinlock: Generic spin-lock क्रम use by the low-level driver.
+ * @mutex: Generic mutex क्रम use by the COMEDI core module.
+ * @attach_lock: &काष्ठा rw_semaphore used to guard against the COMEDI device
+ *	being detached जबतक an operation is in progress.  The करोwn_ग_लिखो()
+ *	operation is only allowed जबतक @mutex is held and is used when
  *	changing @attached and @detach_count and calling the low-level driver's
- *	"detach" handler.  The down_read() operation is generally used without
+ *	"detach" handler.  The करोwn_पढ़ो() operation is generally used without
  *	holding @mutex.
- * @refcount: &struct kref reference counter for freeing COMEDI device.
+ * @refcount: &काष्ठा kref reference counter क्रम मुक्तing COMEDI device.
  * @n_subdevices: Number of COMEDI subdevices allocated by the low-level
- *	driver for this device.
+ *	driver क्रम this device.
  * @subdevices: Dynamically allocated array of COMEDI subdevices.
- * @mmio: Optional pointer to a remapped MMIO region set by the low-level
+ * @mmio: Optional poपूर्णांकer to a remapped MMIO region set by the low-level
  *	driver.
  * @iobase: Optional base of an I/O port region requested by the low-level
  *	driver.
  * @iolen: Length of I/O port region requested at @iobase.
  * @irq: Optional IRQ number requested by the low-level driver.
- * @read_subdev: Optional pointer to a default COMEDI subdevice operated on by
- *	the read() file operation.  Set by the low-level driver.
- * @write_subdev: Optional pointer to a default COMEDI subdevice operated on by
- *	the write() file operation.  Set by the low-level driver.
- * @async_queue: Storage for fasync_helper().
- * @open: Optional pointer to a function set by the low-level driver to be
+ * @पढ़ो_subdev: Optional poपूर्णांकer to a शेष COMEDI subdevice operated on by
+ *	the पढ़ो() file operation.  Set by the low-level driver.
+ * @ग_लिखो_subdev: Optional poपूर्णांकer to a शेष COMEDI subdevice operated on by
+ *	the ग_लिखो() file operation.  Set by the low-level driver.
+ * @async_queue: Storage क्रम fasync_helper().
+ * @खोलो: Optional poपूर्णांकer to a function set by the low-level driver to be
  *	called when @use_count changes from 0 to 1.
- * @close: Optional pointer to a function set by the low-level driver to be
+ * @बंद: Optional poपूर्णांकer to a function set by the low-level driver to be
  *	called when @use_count changed from 1 to 0.
- * @insn_device_config: Optional pointer to a handler for all sub-instructions
+ * @insn_device_config: Optional poपूर्णांकer to a handler क्रम all sub-inकाष्ठाions
  *	except %INSN_DEVICE_CONFIG_GET_ROUTES of the %INSN_DEVICE_CONFIG
- *	instruction.  If this is not initialized by the low-level driver, a
- *	default handler will be set during post-configuration.
- * @get_valid_routes: Optional pointer to a handler for the
- *	%INSN_DEVICE_CONFIG_GET_ROUTES sub-instruction of the
- *	%INSN_DEVICE_CONFIG instruction set.  If this is not initialized by the
- *	low-level driver, a default handler that copies zero routes back to the
+ *	inकाष्ठाion.  If this is not initialized by the low-level driver, a
+ *	शेष handler will be set during post-configuration.
+ * @get_valid_routes: Optional poपूर्णांकer to a handler क्रम the
+ *	%INSN_DEVICE_CONFIG_GET_ROUTES sub-inकाष्ठाion of the
+ *	%INSN_DEVICE_CONFIG inकाष्ठाion set.  If this is not initialized by the
+ *	low-level driver, a शेष handler that copies zero routes back to the
  *	user will be used.
  *
- * This is the main control data structure for a COMEDI device (as far as the
+ * This is the मुख्य control data काष्ठाure क्रम a COMEDI device (as far as the
  * COMEDI core is concerned).  There are two groups of COMEDI devices -
- * "legacy" devices that are configured by the handler for the
- * %COMEDI_DEVCONFIG ioctl, and automatically configured devices resulting
- * from a call to comedi_auto_config() as a result of a bus driver probe in
+ * "legacy" devices that are configured by the handler क्रम the
+ * %COMEDI_DEVCONFIG ioctl, and स्वतःmatically configured devices resulting
+ * from a call to comedi_स्वतः_config() as a result of a bus driver probe in
  * a low-level COMEDI driver.  The "legacy" COMEDI devices are allocated
- * during module initialization if the "comedi_num_legacy_minors" module
+ * during module initialization अगर the "comedi_num_legacy_minors" module
  * parameter is non-zero and use minor device numbers from 0 to
- * comedi_num_legacy_minors minus one.  The automatically configured COMEDI
+ * comedi_num_legacy_minors minus one.  The स्वतःmatically configured COMEDI
  * devices are allocated on demand and use minor device numbers from
  * comedi_num_legacy_minors to 47.
  */
-struct comedi_device {
-	int use_count;
-	struct comedi_driver *driver;
-	struct comedi_8254 *pacer;
-	void *private;
+काष्ठा comedi_device अणु
+	पूर्णांक use_count;
+	काष्ठा comedi_driver *driver;
+	काष्ठा comedi_8254 *pacer;
+	व्योम *निजी;
 
-	struct device *class_dev;
-	int minor;
-	unsigned int detach_count;
-	struct device *hw_dev;
+	काष्ठा device *class_dev;
+	पूर्णांक minor;
+	अचिन्हित पूर्णांक detach_count;
+	काष्ठा device *hw_dev;
 
-	const char *board_name;
-	const void *board_ptr;
-	unsigned int attached:1;
-	unsigned int ioenabled:1;
-	spinlock_t spinlock;	/* generic spin-lock for low-level driver */
-	struct mutex mutex;	/* generic mutex for COMEDI core */
-	struct rw_semaphore attach_lock;
-	struct kref refcount;
+	स्थिर अक्षर *board_name;
+	स्थिर व्योम *board_ptr;
+	अचिन्हित पूर्णांक attached:1;
+	अचिन्हित पूर्णांक ioenabled:1;
+	spinlock_t spinlock;	/* generic spin-lock क्रम low-level driver */
+	काष्ठा mutex mutex;	/* generic mutex क्रम COMEDI core */
+	काष्ठा rw_semaphore attach_lock;
+	काष्ठा kref refcount;
 
-	int n_subdevices;
-	struct comedi_subdevice *subdevices;
+	पूर्णांक n_subdevices;
+	काष्ठा comedi_subdevice *subdevices;
 
 	/* dumb */
-	void __iomem *mmio;
-	unsigned long iobase;
-	unsigned long iolen;
-	unsigned int irq;
+	व्योम __iomem *mmio;
+	अचिन्हित दीर्घ iobase;
+	अचिन्हित दीर्घ iolen;
+	अचिन्हित पूर्णांक irq;
 
-	struct comedi_subdevice *read_subdev;
-	struct comedi_subdevice *write_subdev;
+	काष्ठा comedi_subdevice *पढ़ो_subdev;
+	काष्ठा comedi_subdevice *ग_लिखो_subdev;
 
-	struct fasync_struct *async_queue;
+	काष्ठा fasync_काष्ठा *async_queue;
 
-	int (*open)(struct comedi_device *dev);
-	void (*close)(struct comedi_device *dev);
-	int (*insn_device_config)(struct comedi_device *dev,
-				  struct comedi_insn *insn, unsigned int *data);
-	unsigned int (*get_valid_routes)(struct comedi_device *dev,
-					 unsigned int n_pairs,
-					 unsigned int *pair_data);
-};
+	पूर्णांक (*खोलो)(काष्ठा comedi_device *dev);
+	व्योम (*बंद)(काष्ठा comedi_device *dev);
+	पूर्णांक (*insn_device_config)(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data);
+	अचिन्हित पूर्णांक (*get_valid_routes)(काष्ठा comedi_device *dev,
+					 अचिन्हित पूर्णांक n_pairs,
+					 अचिन्हित पूर्णांक *pair_data);
+पूर्ण;
 
 /*
  * function prototypes
  */
 
-void comedi_event(struct comedi_device *dev, struct comedi_subdevice *s);
+व्योम comedi_event(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s);
 
-struct comedi_device *comedi_dev_get_from_minor(unsigned int minor);
-int comedi_dev_put(struct comedi_device *dev);
+काष्ठा comedi_device *comedi_dev_get_from_minor(अचिन्हित पूर्णांक minor);
+पूर्णांक comedi_dev_put(काष्ठा comedi_device *dev);
 
-bool comedi_is_subdevice_running(struct comedi_subdevice *s);
+bool comedi_is_subdevice_running(काष्ठा comedi_subdevice *s);
 
-void *comedi_alloc_spriv(struct comedi_subdevice *s, size_t size);
-void comedi_set_spriv_auto_free(struct comedi_subdevice *s);
+व्योम *comedi_alloc_spriv(काष्ठा comedi_subdevice *s, माप_प्रकार size);
+व्योम comedi_set_spriv_स्वतः_मुक्त(काष्ठा comedi_subdevice *s);
 
-int comedi_check_chanlist(struct comedi_subdevice *s,
-			  int n,
-			  unsigned int *chanlist);
+पूर्णांक comedi_check_chanlist(काष्ठा comedi_subdevice *s,
+			  पूर्णांक n,
+			  अचिन्हित पूर्णांक *chanlist);
 
 /* range stuff */
 
-#define RANGE(a, b)		{(a) * 1e6, (b) * 1e6, 0}
-#define RANGE_ext(a, b)		{(a) * 1e6, (b) * 1e6, RF_EXTERNAL}
-#define RANGE_mA(a, b)		{(a) * 1e6, (b) * 1e6, UNIT_mA}
-#define RANGE_unitless(a, b)	{(a) * 1e6, (b) * 1e6, 0}
-#define BIP_RANGE(a)		{-(a) * 1e6, (a) * 1e6, 0}
-#define UNI_RANGE(a)		{0, (a) * 1e6, 0}
+#घोषणा RANGE(a, b)		अणु(a) * 1e6, (b) * 1e6, 0पूर्ण
+#घोषणा RANGE_ext(a, b)		अणु(a) * 1e6, (b) * 1e6, RF_EXTERNALपूर्ण
+#घोषणा RANGE_mA(a, b)		अणु(a) * 1e6, (b) * 1e6, UNIT_mAपूर्ण
+#घोषणा RANGE_unitless(a, b)	अणु(a) * 1e6, (b) * 1e6, 0पूर्ण
+#घोषणा BIP_RANGE(a)		अणु-(a) * 1e6, (a) * 1e6, 0पूर्ण
+#घोषणा UNI_RANGE(a)		अणु0, (a) * 1e6, 0पूर्ण
 
-extern const struct comedi_lrange range_bipolar10;
-extern const struct comedi_lrange range_bipolar5;
-extern const struct comedi_lrange range_bipolar2_5;
-extern const struct comedi_lrange range_unipolar10;
-extern const struct comedi_lrange range_unipolar5;
-extern const struct comedi_lrange range_unipolar2_5;
-extern const struct comedi_lrange range_0_20mA;
-extern const struct comedi_lrange range_4_20mA;
-extern const struct comedi_lrange range_0_32mA;
-extern const struct comedi_lrange range_unknown;
+बाह्य स्थिर काष्ठा comedi_lrange range_bipolar10;
+बाह्य स्थिर काष्ठा comedi_lrange range_bipolar5;
+बाह्य स्थिर काष्ठा comedi_lrange range_bipolar2_5;
+बाह्य स्थिर काष्ठा comedi_lrange range_unipolar10;
+बाह्य स्थिर काष्ठा comedi_lrange range_unipolar5;
+बाह्य स्थिर काष्ठा comedi_lrange range_unipolar2_5;
+बाह्य स्थिर काष्ठा comedi_lrange range_0_20mA;
+बाह्य स्थिर काष्ठा comedi_lrange range_4_20mA;
+बाह्य स्थिर काष्ठा comedi_lrange range_0_32mA;
+बाह्य स्थिर काष्ठा comedi_lrange range_unknown;
 
-#define range_digital		range_unipolar5
+#घोषणा range_digital		range_unipolar5
 
 /**
- * struct comedi_lrange - Describes a COMEDI range table
+ * काष्ठा comedi_lrange - Describes a COMEDI range table
  * @length: Number of entries in the range table.
- * @range: Array of &struct comedi_krange, one for each range.
+ * @range: Array of &काष्ठा comedi_krange, one क्रम each range.
  *
  * Each element of @range[] describes the minimum and maximum physical range
  * and the type of units.  Typically, the type of unit is %UNIT_volt
  * (i.e. volts) and the minimum and maximum are in millionths of a volt.
  * There may also be a flag that indicates the minimum and maximum are merely
- * scale factors for an unknown, external reference.
+ * scale factors क्रम an unknown, बाह्यal reference.
  */
-struct comedi_lrange {
-	int length;
-	struct comedi_krange range[];
-};
+काष्ठा comedi_lrange अणु
+	पूर्णांक length;
+	काष्ठा comedi_krange range[];
+पूर्ण;
 
 /**
- * comedi_range_is_bipolar() - Test if subdevice range is bipolar
+ * comedi_range_is_bipolar() - Test अगर subdevice range is bipolar
  * @s: COMEDI subdevice.
  * @range: Index of range within a range table.
  *
  * Tests whether a range is bipolar by checking whether its minimum value
  * is negative.
  *
- * Assumes @range is valid.  Does not work for subdevices using a
- * channel-specific range table list.
+ * Assumes @range is valid.  Does not work क्रम subdevices using a
+ * channel-specअगरic range table list.
  *
  * Return:
- *	%true if the range is bipolar.
- *	%false if the range is unipolar.
+ *	%true अगर the range is bipolar.
+ *	%false अगर the range is unipolar.
  */
-static inline bool comedi_range_is_bipolar(struct comedi_subdevice *s,
-					   unsigned int range)
-{
-	return s->range_table->range[range].min < 0;
-}
+अटल अंतरभूत bool comedi_range_is_bipolar(काष्ठा comedi_subdevice *s,
+					   अचिन्हित पूर्णांक range)
+अणु
+	वापस s->range_table->range[range].min < 0;
+पूर्ण
 
 /**
- * comedi_range_is_unipolar() - Test if subdevice range is unipolar
+ * comedi_range_is_unipolar() - Test अगर subdevice range is unipolar
  * @s: COMEDI subdevice.
  * @range: Index of range within a range table.
  *
  * Tests whether a range is unipolar by checking whether its minimum value
  * is at least 0.
  *
- * Assumes @range is valid.  Does not work for subdevices using a
- * channel-specific range table list.
+ * Assumes @range is valid.  Does not work क्रम subdevices using a
+ * channel-specअगरic range table list.
  *
  * Return:
- *	%true if the range is unipolar.
- *	%false if the range is bipolar.
+ *	%true अगर the range is unipolar.
+ *	%false अगर the range is bipolar.
  */
-static inline bool comedi_range_is_unipolar(struct comedi_subdevice *s,
-					    unsigned int range)
-{
-	return s->range_table->range[range].min >= 0;
-}
+अटल अंतरभूत bool comedi_range_is_unipolar(काष्ठा comedi_subdevice *s,
+					    अचिन्हित पूर्णांक range)
+अणु
+	वापस s->range_table->range[range].min >= 0;
+पूर्ण
 
 /**
- * comedi_range_is_external() - Test if subdevice range is external
+ * comedi_range_is_बाह्यal() - Test अगर subdevice range is बाह्यal
  * @s: COMEDI subdevice.
  * @range: Index of range within a range table.
  *
- * Tests whether a range is externally reference by checking whether its
+ * Tests whether a range is बाह्यally reference by checking whether its
  * %RF_EXTERNAL flag is set.
  *
- * Assumes @range is valid.  Does not work for subdevices using a
- * channel-specific range table list.
+ * Assumes @range is valid.  Does not work क्रम subdevices using a
+ * channel-specअगरic range table list.
  *
  * Return:
- *	%true if the range is external.
- *	%false if the range is internal.
+ *	%true अगर the range is बाह्यal.
+ *	%false अगर the range is पूर्णांकernal.
  */
-static inline bool comedi_range_is_external(struct comedi_subdevice *s,
-					    unsigned int range)
-{
-	return !!(s->range_table->range[range].flags & RF_EXTERNAL);
-}
+अटल अंतरभूत bool comedi_range_is_बाह्यal(काष्ठा comedi_subdevice *s,
+					    अचिन्हित पूर्णांक range)
+अणु
+	वापस !!(s->range_table->range[range].flags & RF_EXTERNAL);
+पूर्ण
 
 /**
- * comedi_chan_range_is_bipolar() - Test if channel-specific range is bipolar
+ * comedi_chan_range_is_bipolar() - Test अगर channel-specअगरic range is bipolar
  * @s: COMEDI subdevice.
  * @chan: The channel number.
  * @range: Index of range within a range table.
@@ -709,22 +710,22 @@ static inline bool comedi_range_is_external(struct comedi_subdevice *s,
  * Tests whether a range is bipolar by checking whether its minimum value
  * is negative.
  *
- * Assumes @chan and @range are valid.  Only works for subdevices with a
- * channel-specific range table list.
+ * Assumes @chan and @range are valid.  Only works क्रम subdevices with a
+ * channel-specअगरic range table list.
  *
  * Return:
- *	%true if the range is bipolar.
- *	%false if the range is unipolar.
+ *	%true अगर the range is bipolar.
+ *	%false अगर the range is unipolar.
  */
-static inline bool comedi_chan_range_is_bipolar(struct comedi_subdevice *s,
-						unsigned int chan,
-						unsigned int range)
-{
-	return s->range_table_list[chan]->range[range].min < 0;
-}
+अटल अंतरभूत bool comedi_chan_range_is_bipolar(काष्ठा comedi_subdevice *s,
+						अचिन्हित पूर्णांक chan,
+						अचिन्हित पूर्णांक range)
+अणु
+	वापस s->range_table_list[chan]->range[range].min < 0;
+पूर्ण
 
 /**
- * comedi_chan_range_is_unipolar() - Test if channel-specific range is unipolar
+ * comedi_chan_range_is_unipolar() - Test अगर channel-specअगरic range is unipolar
  * @s: COMEDI subdevice.
  * @chan: The channel number.
  * @range: Index of range within a range table.
@@ -732,42 +733,42 @@ static inline bool comedi_chan_range_is_bipolar(struct comedi_subdevice *s,
  * Tests whether a range is unipolar by checking whether its minimum value
  * is at least 0.
  *
- * Assumes @chan and @range are valid.  Only works for subdevices with a
- * channel-specific range table list.
+ * Assumes @chan and @range are valid.  Only works क्रम subdevices with a
+ * channel-specअगरic range table list.
  *
  * Return:
- *	%true if the range is unipolar.
- *	%false if the range is bipolar.
+ *	%true अगर the range is unipolar.
+ *	%false अगर the range is bipolar.
  */
-static inline bool comedi_chan_range_is_unipolar(struct comedi_subdevice *s,
-						 unsigned int chan,
-						 unsigned int range)
-{
-	return s->range_table_list[chan]->range[range].min >= 0;
-}
+अटल अंतरभूत bool comedi_chan_range_is_unipolar(काष्ठा comedi_subdevice *s,
+						 अचिन्हित पूर्णांक chan,
+						 अचिन्हित पूर्णांक range)
+अणु
+	वापस s->range_table_list[chan]->range[range].min >= 0;
+पूर्ण
 
 /**
- * comedi_chan_range_is_external() - Test if channel-specific range is external
+ * comedi_chan_range_is_बाह्यal() - Test अगर channel-specअगरic range is बाह्यal
  * @s: COMEDI subdevice.
  * @chan: The channel number.
  * @range: Index of range within a range table.
  *
- * Tests whether a range is externally reference by checking whether its
+ * Tests whether a range is बाह्यally reference by checking whether its
  * %RF_EXTERNAL flag is set.
  *
- * Assumes @chan and @range are valid.  Only works for subdevices with a
- * channel-specific range table list.
+ * Assumes @chan and @range are valid.  Only works क्रम subdevices with a
+ * channel-specअगरic range table list.
  *
  * Return:
- *	%true if the range is bipolar.
- *	%false if the range is unipolar.
+ *	%true अगर the range is bipolar.
+ *	%false अगर the range is unipolar.
  */
-static inline bool comedi_chan_range_is_external(struct comedi_subdevice *s,
-						 unsigned int chan,
-						 unsigned int range)
-{
-	return !!(s->range_table_list[chan]->range[range].flags & RF_EXTERNAL);
-}
+अटल अंतरभूत bool comedi_chan_range_is_बाह्यal(काष्ठा comedi_subdevice *s,
+						 अचिन्हित पूर्णांक chan,
+						 अचिन्हित पूर्णांक range)
+अणु
+	वापस !!(s->range_table_list[chan]->range[range].flags & RF_EXTERNAL);
+पूर्ण
 
 /**
  * comedi_offset_munge() - Convert between offset binary and 2's complement
@@ -775,58 +776,58 @@ static inline bool comedi_chan_range_is_external(struct comedi_subdevice *s,
  * @val: Value to be converted.
  *
  * Toggles the highest bit of a sample value to toggle between offset binary
- * and 2's complement.  Assumes that @s->maxdata is a power of 2 minus 1.
+ * and 2's complement.  Assumes that @s->maxdata is a घातer of 2 minus 1.
  *
  * Return: The converted value.
  */
-static inline unsigned int comedi_offset_munge(struct comedi_subdevice *s,
-					       unsigned int val)
-{
-	return val ^ s->maxdata ^ (s->maxdata >> 1);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक comedi_offset_munge(काष्ठा comedi_subdevice *s,
+					       अचिन्हित पूर्णांक val)
+अणु
+	वापस val ^ s->maxdata ^ (s->maxdata >> 1);
+पूर्ण
 
 /**
  * comedi_bytes_per_sample() - Determine subdevice sample size
  * @s: COMEDI subdevice.
  *
- * The sample size will be 4 (sizeof int) or 2 (sizeof short) depending on
+ * The sample size will be 4 (माप पूर्णांक) or 2 (माप लघु) depending on
  * whether the %SDF_LSAMPL subdevice flag is set or not.
  *
  * Return: The subdevice sample size.
  */
-static inline unsigned int comedi_bytes_per_sample(struct comedi_subdevice *s)
-{
-	return s->subdev_flags & SDF_LSAMPL ? sizeof(int) : sizeof(short);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक comedi_bytes_per_sample(काष्ठा comedi_subdevice *s)
+अणु
+	वापस s->subdev_flags & SDF_LSAMPL ? माप(पूर्णांक) : माप(लघु);
+पूर्ण
 
 /**
- * comedi_sample_shift() - Determine log2 of subdevice sample size
+ * comedi_sample_shअगरt() - Determine log2 of subdevice sample size
  * @s: COMEDI subdevice.
  *
- * The sample size will be 4 (sizeof int) or 2 (sizeof short) depending on
+ * The sample size will be 4 (माप पूर्णांक) or 2 (माप लघु) depending on
  * whether the %SDF_LSAMPL subdevice flag is set or not.  The log2 of the
- * sample size will be 2 or 1 and can be used as the right operand of a
- * bit-shift operator to multiply or divide something by the sample size.
+ * sample size will be 2 or 1 and can be used as the right opeअक्रम of a
+ * bit-shअगरt चालक to multiply or भागide something by the sample size.
  *
  * Return: log2 of the subdevice sample size.
  */
-static inline unsigned int comedi_sample_shift(struct comedi_subdevice *s)
-{
-	return s->subdev_flags & SDF_LSAMPL ? 2 : 1;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक comedi_sample_shअगरt(काष्ठा comedi_subdevice *s)
+अणु
+	वापस s->subdev_flags & SDF_LSAMPL ? 2 : 1;
+पूर्ण
 
 /**
  * comedi_bytes_to_samples() - Convert a number of bytes to a number of samples
  * @s: COMEDI subdevice.
  * @nbytes: Number of bytes
  *
- * Return: The number of bytes divided by the subdevice sample size.
+ * Return: The number of bytes भागided by the subdevice sample size.
  */
-static inline unsigned int comedi_bytes_to_samples(struct comedi_subdevice *s,
-						   unsigned int nbytes)
-{
-	return nbytes >> comedi_sample_shift(s);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक comedi_bytes_to_samples(काष्ठा comedi_subdevice *s,
+						   अचिन्हित पूर्णांक nbytes)
+अणु
+	वापस nbytes >> comedi_sample_shअगरt(s);
+पूर्ण
 
 /**
  * comedi_samples_to_bytes() - Convert a number of samples to a number of bytes
@@ -834,221 +835,221 @@ static inline unsigned int comedi_bytes_to_samples(struct comedi_subdevice *s,
  * @nsamples: Number of samples.
  *
  * Return: The number of samples multiplied by the subdevice sample size.
- * (Does not check for arithmetic overflow.)
+ * (Does not check क्रम arithmetic overflow.)
  */
-static inline unsigned int comedi_samples_to_bytes(struct comedi_subdevice *s,
-						   unsigned int nsamples)
-{
-	return nsamples << comedi_sample_shift(s);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक comedi_samples_to_bytes(काष्ठा comedi_subdevice *s,
+						   अचिन्हित पूर्णांक nsamples)
+अणु
+	वापस nsamples << comedi_sample_shअगरt(s);
+पूर्ण
 
 /**
  * comedi_check_trigger_src() - Trivially validate a comedi_cmd trigger source
- * @src: Pointer to the trigger source to validate.
- * @flags: Bitmask of valid %TRIG_* for the trigger.
+ * @src: Poपूर्णांकer to the trigger source to validate.
+ * @flags: Biपंचांगask of valid %TRIG_* क्रम the trigger.
  *
- * This is used in "step 1" of the do_cmdtest functions of comedi drivers
+ * This is used in "step 1" of the करो_cmdtest functions of comedi drivers
  * to validate the comedi_cmd triggers. The mask of the @src against the
  * @flags allows the userspace comedilib to pass all the comedi_cmd
- * triggers as %TRIG_ANY and get back a bitmask of the valid trigger sources.
+ * triggers as %TRIG_ANY and get back a biपंचांगask of the valid trigger sources.
  *
  * Return:
- *	0 if trigger sources in *@src are all supported.
- *	-EINVAL if any trigger source in *@src is unsupported.
+ *	0 अगर trigger sources in *@src are all supported.
+ *	-EINVAL अगर any trigger source in *@src is unsupported.
  */
-static inline int comedi_check_trigger_src(unsigned int *src,
-					   unsigned int flags)
-{
-	unsigned int orig_src = *src;
+अटल अंतरभूत पूर्णांक comedi_check_trigger_src(अचिन्हित पूर्णांक *src,
+					   अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक orig_src = *src;
 
 	*src = orig_src & flags;
-	if (*src == TRIG_INVALID || *src != orig_src)
-		return -EINVAL;
-	return 0;
-}
+	अगर (*src == TRIG_INVALID || *src != orig_src)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /**
  * comedi_check_trigger_is_unique() - Make sure a trigger source is unique
  * @src: The trigger source to check.
  *
  * Return:
- *	0 if no more than one trigger source is set.
- *	-EINVAL if more than one trigger source is set.
+ *	0 अगर no more than one trigger source is set.
+ *	-EINVAL अगर more than one trigger source is set.
  */
-static inline int comedi_check_trigger_is_unique(unsigned int src)
-{
-	/* this test is true if more than one _src bit is set */
-	if ((src & (src - 1)) != 0)
-		return -EINVAL;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक comedi_check_trigger_is_unique(अचिन्हित पूर्णांक src)
+अणु
+	/* this test is true अगर more than one _src bit is set */
+	अगर ((src & (src - 1)) != 0)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /**
  * comedi_check_trigger_arg_is() - Trivially validate a trigger argument
- * @arg: Pointer to the trigger arg to validate.
+ * @arg: Poपूर्णांकer to the trigger arg to validate.
  * @val: The value the argument should be.
  *
  * Forces *@arg to be @val.
  *
  * Return:
- *	0 if *@arg was already @val.
- *	-EINVAL if *@arg differed from @val.
+ *	0 अगर *@arg was alपढ़ोy @val.
+ *	-EINVAL अगर *@arg dअगरfered from @val.
  */
-static inline int comedi_check_trigger_arg_is(unsigned int *arg,
-					      unsigned int val)
-{
-	if (*arg != val) {
+अटल अंतरभूत पूर्णांक comedi_check_trigger_arg_is(अचिन्हित पूर्णांक *arg,
+					      अचिन्हित पूर्णांक val)
+अणु
+	अगर (*arg != val) अणु
 		*arg = val;
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * comedi_check_trigger_arg_min() - Trivially validate a trigger argument min
- * @arg: Pointer to the trigger arg to validate.
+ * @arg: Poपूर्णांकer to the trigger arg to validate.
  * @val: The minimum value the argument should be.
  *
- * Forces *@arg to be at least @val, setting it to @val if necessary.
+ * Forces *@arg to be at least @val, setting it to @val अगर necessary.
  *
  * Return:
- *	0 if *@arg was already at least @val.
- *	-EINVAL if *@arg was less than @val.
+ *	0 अगर *@arg was alपढ़ोy at least @val.
+ *	-EINVAL अगर *@arg was less than @val.
  */
-static inline int comedi_check_trigger_arg_min(unsigned int *arg,
-					       unsigned int val)
-{
-	if (*arg < val) {
+अटल अंतरभूत पूर्णांक comedi_check_trigger_arg_min(अचिन्हित पूर्णांक *arg,
+					       अचिन्हित पूर्णांक val)
+अणु
+	अगर (*arg < val) अणु
 		*arg = val;
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * comedi_check_trigger_arg_max() - Trivially validate a trigger argument max
- * @arg: Pointer to the trigger arg to validate.
+ * @arg: Poपूर्णांकer to the trigger arg to validate.
  * @val: The maximum value the argument should be.
  *
- * Forces *@arg to be no more than @val, setting it to @val if necessary.
+ * Forces *@arg to be no more than @val, setting it to @val अगर necessary.
  *
  * Return:
- *	0 if*@arg was already no more than @val.
- *	-EINVAL if *@arg was greater than @val.
+ *	0 अगर*@arg was alपढ़ोy no more than @val.
+ *	-EINVAL अगर *@arg was greater than @val.
  */
-static inline int comedi_check_trigger_arg_max(unsigned int *arg,
-					       unsigned int val)
-{
-	if (*arg > val) {
+अटल अंतरभूत पूर्णांक comedi_check_trigger_arg_max(अचिन्हित पूर्णांक *arg,
+					       अचिन्हित पूर्णांक val)
+अणु
+	अगर (*arg > val) अणु
 		*arg = val;
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Must set dev->hw_dev if you wish to dma directly into comedi's buffer.
- * Also useful for retrieving a previously configured hardware device of
- * known bus type.  Set automatically for auto-configured devices.
- * Automatically set to NULL when detaching hardware device.
+ * Must set dev->hw_dev अगर you wish to dma directly पूर्णांकo comedi's buffer.
+ * Also useful क्रम retrieving a previously configured hardware device of
+ * known bus type.  Set स्वतःmatically क्रम स्वतः-configured devices.
+ * Automatically set to शून्य when detaching hardware device.
  */
-int comedi_set_hw_dev(struct comedi_device *dev, struct device *hw_dev);
+पूर्णांक comedi_set_hw_dev(काष्ठा comedi_device *dev, काष्ठा device *hw_dev);
 
 /**
- * comedi_buf_n_bytes_ready - Determine amount of unread data in buffer
+ * comedi_buf_n_bytes_पढ़ोy - Determine amount of unपढ़ो data in buffer
  * @s: COMEDI subdevice.
  *
- * Determines the number of bytes of unread data in the asynchronous
- * acquisition data buffer for a subdevice.  The data in question might not
+ * Determines the number of bytes of unपढ़ो data in the asynchronous
+ * acquisition data buffer क्रम a subdevice.  The data in question might not
  * have been fully "munged" yet.
  *
- * Returns: The amount of unread data in bytes.
+ * Returns: The amount of unपढ़ो data in bytes.
  */
-static inline unsigned int comedi_buf_n_bytes_ready(struct comedi_subdevice *s)
-{
-	return s->async->buf_write_count - s->async->buf_read_count;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक comedi_buf_n_bytes_पढ़ोy(काष्ठा comedi_subdevice *s)
+अणु
+	वापस s->async->buf_ग_लिखो_count - s->async->buf_पढ़ो_count;
+पूर्ण
 
-unsigned int comedi_buf_write_alloc(struct comedi_subdevice *s, unsigned int n);
-unsigned int comedi_buf_write_free(struct comedi_subdevice *s, unsigned int n);
+अचिन्हित पूर्णांक comedi_buf_ग_लिखो_alloc(काष्ठा comedi_subdevice *s, अचिन्हित पूर्णांक n);
+अचिन्हित पूर्णांक comedi_buf_ग_लिखो_मुक्त(काष्ठा comedi_subdevice *s, अचिन्हित पूर्णांक n);
 
-unsigned int comedi_buf_read_n_available(struct comedi_subdevice *s);
-unsigned int comedi_buf_read_alloc(struct comedi_subdevice *s, unsigned int n);
-unsigned int comedi_buf_read_free(struct comedi_subdevice *s, unsigned int n);
+अचिन्हित पूर्णांक comedi_buf_पढ़ो_n_available(काष्ठा comedi_subdevice *s);
+अचिन्हित पूर्णांक comedi_buf_पढ़ो_alloc(काष्ठा comedi_subdevice *s, अचिन्हित पूर्णांक n);
+अचिन्हित पूर्णांक comedi_buf_पढ़ो_मुक्त(काष्ठा comedi_subdevice *s, अचिन्हित पूर्णांक n);
 
-unsigned int comedi_buf_write_samples(struct comedi_subdevice *s,
-				      const void *data, unsigned int nsamples);
-unsigned int comedi_buf_read_samples(struct comedi_subdevice *s,
-				     void *data, unsigned int nsamples);
+अचिन्हित पूर्णांक comedi_buf_ग_लिखो_samples(काष्ठा comedi_subdevice *s,
+				      स्थिर व्योम *data, अचिन्हित पूर्णांक nsamples);
+अचिन्हित पूर्णांक comedi_buf_पढ़ो_samples(काष्ठा comedi_subdevice *s,
+				     व्योम *data, अचिन्हित पूर्णांक nsamples);
 
 /* drivers.c - general comedi driver functions */
 
-#define COMEDI_TIMEOUT_MS	1000
+#घोषणा COMEDI_TIMEOUT_MS	1000
 
-int comedi_timeout(struct comedi_device *dev, struct comedi_subdevice *s,
-		   struct comedi_insn *insn,
-		   int (*cb)(struct comedi_device *dev,
-			     struct comedi_subdevice *s,
-			     struct comedi_insn *insn, unsigned long context),
-		   unsigned long context);
+पूर्णांक comedi_समयout(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+		   काष्ठा comedi_insn *insn,
+		   पूर्णांक (*cb)(काष्ठा comedi_device *dev,
+			     काष्ठा comedi_subdevice *s,
+			     काष्ठा comedi_insn *insn, अचिन्हित दीर्घ context),
+		   अचिन्हित दीर्घ context);
 
-unsigned int comedi_handle_events(struct comedi_device *dev,
-				  struct comedi_subdevice *s);
+अचिन्हित पूर्णांक comedi_handle_events(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s);
 
-int comedi_dio_insn_config(struct comedi_device *dev,
-			   struct comedi_subdevice *s,
-			   struct comedi_insn *insn, unsigned int *data,
-			   unsigned int mask);
-unsigned int comedi_dio_update_state(struct comedi_subdevice *s,
-				     unsigned int *data);
-unsigned int comedi_bytes_per_scan_cmd(struct comedi_subdevice *s,
-				       struct comedi_cmd *cmd);
-unsigned int comedi_bytes_per_scan(struct comedi_subdevice *s);
-unsigned int comedi_nscans_left(struct comedi_subdevice *s,
-				unsigned int nscans);
-unsigned int comedi_nsamples_left(struct comedi_subdevice *s,
-				  unsigned int nsamples);
-void comedi_inc_scan_progress(struct comedi_subdevice *s,
-			      unsigned int num_bytes);
+पूर्णांक comedi_dio_insn_config(काष्ठा comedi_device *dev,
+			   काष्ठा comedi_subdevice *s,
+			   काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data,
+			   अचिन्हित पूर्णांक mask);
+अचिन्हित पूर्णांक comedi_dio_update_state(काष्ठा comedi_subdevice *s,
+				     अचिन्हित पूर्णांक *data);
+अचिन्हित पूर्णांक comedi_bytes_per_scan_cmd(काष्ठा comedi_subdevice *s,
+				       काष्ठा comedi_cmd *cmd);
+अचिन्हित पूर्णांक comedi_bytes_per_scan(काष्ठा comedi_subdevice *s);
+अचिन्हित पूर्णांक comedi_nscans_left(काष्ठा comedi_subdevice *s,
+				अचिन्हित पूर्णांक nscans);
+अचिन्हित पूर्णांक comedi_nsamples_left(काष्ठा comedi_subdevice *s,
+				  अचिन्हित पूर्णांक nsamples);
+व्योम comedi_inc_scan_progress(काष्ठा comedi_subdevice *s,
+			      अचिन्हित पूर्णांक num_bytes);
 
-void *comedi_alloc_devpriv(struct comedi_device *dev, size_t size);
-int comedi_alloc_subdevices(struct comedi_device *dev, int num_subdevices);
-int comedi_alloc_subdev_readback(struct comedi_subdevice *s);
+व्योम *comedi_alloc_devpriv(काष्ठा comedi_device *dev, माप_प्रकार size);
+पूर्णांक comedi_alloc_subdevices(काष्ठा comedi_device *dev, पूर्णांक num_subdevices);
+पूर्णांक comedi_alloc_subdev_पढ़ोback(काष्ठा comedi_subdevice *s);
 
-int comedi_readback_insn_read(struct comedi_device *dev,
-			      struct comedi_subdevice *s,
-			      struct comedi_insn *insn, unsigned int *data);
+पूर्णांक comedi_पढ़ोback_insn_पढ़ो(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s,
+			      काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data);
 
-int comedi_load_firmware(struct comedi_device *dev, struct device *hw_dev,
-			 const char *name,
-			 int (*cb)(struct comedi_device *dev,
-				   const u8 *data, size_t size,
-				   unsigned long context),
-			 unsigned long context);
+पूर्णांक comedi_load_firmware(काष्ठा comedi_device *dev, काष्ठा device *hw_dev,
+			 स्थिर अक्षर *name,
+			 पूर्णांक (*cb)(काष्ठा comedi_device *dev,
+				   स्थिर u8 *data, माप_प्रकार size,
+				   अचिन्हित दीर्घ context),
+			 अचिन्हित दीर्घ context);
 
-int __comedi_request_region(struct comedi_device *dev,
-			    unsigned long start, unsigned long len);
-int comedi_request_region(struct comedi_device *dev,
-			  unsigned long start, unsigned long len);
-void comedi_legacy_detach(struct comedi_device *dev);
+पूर्णांक __comedi_request_region(काष्ठा comedi_device *dev,
+			    अचिन्हित दीर्घ start, अचिन्हित दीर्घ len);
+पूर्णांक comedi_request_region(काष्ठा comedi_device *dev,
+			  अचिन्हित दीर्घ start, अचिन्हित दीर्घ len);
+व्योम comedi_legacy_detach(काष्ठा comedi_device *dev);
 
-int comedi_auto_config(struct device *hardware_device,
-		       struct comedi_driver *driver, unsigned long context);
-void comedi_auto_unconfig(struct device *hardware_device);
+पूर्णांक comedi_स्वतः_config(काष्ठा device *hardware_device,
+		       काष्ठा comedi_driver *driver, अचिन्हित दीर्घ context);
+व्योम comedi_स्वतः_unconfig(काष्ठा device *hardware_device);
 
-int comedi_driver_register(struct comedi_driver *driver);
-void comedi_driver_unregister(struct comedi_driver *driver);
+पूर्णांक comedi_driver_रेजिस्टर(काष्ठा comedi_driver *driver);
+व्योम comedi_driver_unरेजिस्टर(काष्ठा comedi_driver *driver);
 
 /**
- * module_comedi_driver() - Helper macro for registering a comedi driver
- * @__comedi_driver: comedi_driver struct
+ * module_comedi_driver() - Helper macro क्रम रेजिस्टरing a comedi driver
+ * @__comedi_driver: comedi_driver काष्ठा
  *
- * Helper macro for comedi drivers which do not do anything special in module
- * init/exit. This eliminates a lot of boilerplate. Each module may only use
- * this macro once, and calling it replaces module_init() and module_exit().
+ * Helper macro क्रम comedi drivers which करो not करो anything special in module
+ * init/निकास. This eliminates a lot of boilerplate. Each module may only use
+ * this macro once, and calling it replaces module_init() and module_निकास().
  */
-#define module_comedi_driver(__comedi_driver) \
-	module_driver(__comedi_driver, comedi_driver_register, \
-			comedi_driver_unregister)
+#घोषणा module_comedi_driver(__comedi_driver) \
+	module_driver(__comedi_driver, comedi_driver_रेजिस्टर, \
+			comedi_driver_unरेजिस्टर)
 
-#endif /* _COMEDIDEV_H */
+#पूर्ण_अगर /* _COMEDIDEV_H */

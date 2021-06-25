@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PM_TRACE_H
-#define PM_TRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PM_TRACE_H
+#घोषणा PM_TRACE_H
 
-#include <linux/types.h>
-#ifdef CONFIG_PM_TRACE
-#include <asm/pm-trace.h>
+#समावेश <linux/types.h>
+#अगर_घोषित CONFIG_PM_TRACE
+#समावेश <यंत्र/pm-trace.h>
 
-extern int pm_trace_enabled;
-extern bool pm_trace_rtc_abused;
+बाह्य पूर्णांक pm_trace_enabled;
+बाह्य bool pm_trace_rtc_abused;
 
-static inline bool pm_trace_rtc_valid(void)
-{
-	return !pm_trace_rtc_abused;
-}
+अटल अंतरभूत bool pm_trace_rtc_valid(व्योम)
+अणु
+	वापस !pm_trace_rtc_abused;
+पूर्ण
 
-static inline int pm_trace_is_enabled(void)
-{
-       return pm_trace_enabled;
-}
+अटल अंतरभूत पूर्णांक pm_trace_is_enabled(व्योम)
+अणु
+       वापस pm_trace_enabled;
+पूर्ण
 
-struct device;
-extern void set_trace_device(struct device *);
-extern void generate_pm_trace(const void *tracedata, unsigned int user);
-extern int show_trace_dev_match(char *buf, size_t size);
+काष्ठा device;
+बाह्य व्योम set_trace_device(काष्ठा device *);
+बाह्य व्योम generate_pm_trace(स्थिर व्योम *tracedata, अचिन्हित पूर्णांक user);
+बाह्य पूर्णांक show_trace_dev_match(अक्षर *buf, माप_प्रकार size);
 
-#define TRACE_DEVICE(dev) do { \
-	if (pm_trace_enabled) \
+#घोषणा TRACE_DEVICE(dev) करो अणु \
+	अगर (pm_trace_enabled) \
 		set_trace_device(dev); \
-	} while(0)
+	पूर्ण जबतक(0)
 
-#else
+#अन्यथा
 
-static inline bool pm_trace_rtc_valid(void) { return true; }
-static inline int pm_trace_is_enabled(void) { return 0; }
+अटल अंतरभूत bool pm_trace_rtc_valid(व्योम) अणु वापस true; पूर्ण
+अटल अंतरभूत पूर्णांक pm_trace_is_enabled(व्योम) अणु वापस 0; पूर्ण
 
-#define TRACE_DEVICE(dev) do { } while (0)
-#define TRACE_RESUME(dev) do { } while (0)
-#define TRACE_SUSPEND(dev) do { } while (0)
+#घोषणा TRACE_DEVICE(dev) करो अणु पूर्ण जबतक (0)
+#घोषणा TRACE_RESUME(dev) करो अणु पूर्ण जबतक (0)
+#घोषणा TRACE_SUSPEND(dev) करो अणु पूर्ण जबतक (0)
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

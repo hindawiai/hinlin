@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver for Linux.
+ * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
  *
  * Copyright (c) 2016 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,25 +33,25 @@
  * SOFTWARE.
  */
 
-#include <linux/module.h>
-#include <linux/netdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
 
-#include "cxgb4.h"
-#include "sched.h"
+#समावेश "cxgb4.h"
+#समावेश "sched.h"
 
-static int t4_sched_class_fw_cmd(struct port_info *pi,
-				 struct ch_sched_params *p,
-				 enum sched_fw_ops op)
-{
-	struct adapter *adap = pi->adapter;
-	struct sched_table *s = pi->sched_tbl;
-	struct sched_class *e;
-	int err = 0;
+अटल पूर्णांक t4_sched_class_fw_cmd(काष्ठा port_info *pi,
+				 काष्ठा ch_sched_params *p,
+				 क्रमागत sched_fw_ops op)
+अणु
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा sched_table *s = pi->sched_tbl;
+	काष्ठा sched_class *e;
+	पूर्णांक err = 0;
 
 	e = &s->tab[p->u.params.class];
-	switch (op) {
-	case SCHED_FW_OP_ADD:
-	case SCHED_FW_OP_DEL:
+	चयन (op) अणु
+	हाल SCHED_FW_OP_ADD:
+	हाल SCHED_FW_OP_DEL:
 		err = t4_sched_params(adap, p->type,
 				      p->u.params.level, p->u.params.mode,
 				      p->u.params.rateunit,
@@ -59,32 +60,32 @@ static int t4_sched_class_fw_cmd(struct port_info *pi,
 				      p->u.params.minrate, p->u.params.maxrate,
 				      p->u.params.weight, p->u.params.pktsize,
 				      p->u.params.burstsize);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -ENOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int t4_sched_bind_unbind_op(struct port_info *pi, void *arg,
-				   enum sched_bind_type type, bool bind)
-{
-	struct adapter *adap = pi->adapter;
+अटल पूर्णांक t4_sched_bind_unbind_op(काष्ठा port_info *pi, व्योम *arg,
+				   क्रमागत sched_bind_type type, bool bind)
+अणु
+	काष्ठा adapter *adap = pi->adapter;
 	u32 fw_mnem, fw_class, fw_param;
-	unsigned int pf = adap->pf;
-	unsigned int vf = 0;
-	int err = 0;
+	अचिन्हित पूर्णांक pf = adap->pf;
+	अचिन्हित पूर्णांक vf = 0;
+	पूर्णांक err = 0;
 
-	switch (type) {
-	case SCHED_QUEUE: {
-		struct sched_queue_entry *qe;
+	चयन (type) अणु
+	हाल SCHED_QUEUE: अणु
+		काष्ठा sched_queue_entry *qe;
 
-		qe = (struct sched_queue_entry *)arg;
+		qe = (काष्ठा sched_queue_entry *)arg;
 
-		/* Create a template for the FW_PARAMS_CMD mnemonic and
-		 * value (TX Scheduling Class in this case).
+		/* Create a ढाँचा क्रम the FW_PARAMS_CMD mnemonic and
+		 * value (TX Scheduling Class in this हाल).
 		 */
 		fw_mnem = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DMAQ) |
 			   FW_PARAMS_PARAM_X_V(
@@ -97,528 +98,528 @@ static int t4_sched_bind_unbind_op(struct port_info *pi, void *arg,
 
 		err = t4_set_params(adap, adap->mbox, pf, vf, 1,
 				    &fw_param, &fw_class);
-		break;
-	}
-	case SCHED_FLOWC: {
-		struct sched_flowc_entry *fe;
+		अवरोध;
+	पूर्ण
+	हाल SCHED_FLOWC: अणु
+		काष्ठा sched_flowc_entry *fe;
 
-		fe = (struct sched_flowc_entry *)arg;
+		fe = (काष्ठा sched_flowc_entry *)arg;
 
 		fw_class = bind ? fe->param.class : FW_SCHED_CLS_NONE;
 		err = cxgb4_ethofld_send_flowc(adap->port[pi->port_id],
 					       fe->param.tid, fw_class);
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		err = -ENOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void *t4_sched_entry_lookup(struct port_info *pi,
-				   enum sched_bind_type type,
-				   const u32 val)
-{
-	struct sched_table *s = pi->sched_tbl;
-	struct sched_class *e, *end;
-	void *found = NULL;
+अटल व्योम *t4_sched_entry_lookup(काष्ठा port_info *pi,
+				   क्रमागत sched_bind_type type,
+				   स्थिर u32 val)
+अणु
+	काष्ठा sched_table *s = pi->sched_tbl;
+	काष्ठा sched_class *e, *end;
+	व्योम *found = शून्य;
 
-	/* Look for an entry with matching @val */
+	/* Look क्रम an entry with matching @val */
 	end = &s->tab[s->sched_size];
-	for (e = &s->tab[0]; e != end; ++e) {
-		if (e->state == SCHED_STATE_UNUSED ||
+	क्रम (e = &s->tab[0]; e != end; ++e) अणु
+		अगर (e->state == SCHED_STATE_UNUSED ||
 		    e->bind_type != type)
-			continue;
+			जारी;
 
-		switch (type) {
-		case SCHED_QUEUE: {
-			struct sched_queue_entry *qe;
+		चयन (type) अणु
+		हाल SCHED_QUEUE: अणु
+			काष्ठा sched_queue_entry *qe;
 
-			list_for_each_entry(qe, &e->entry_list, list) {
-				if (qe->cntxt_id == val) {
+			list_क्रम_each_entry(qe, &e->entry_list, list) अणु
+				अगर (qe->cntxt_id == val) अणु
 					found = qe;
-					break;
-				}
-			}
-			break;
-		}
-		case SCHED_FLOWC: {
-			struct sched_flowc_entry *fe;
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		हाल SCHED_FLOWC: अणु
+			काष्ठा sched_flowc_entry *fe;
 
-			list_for_each_entry(fe, &e->entry_list, list) {
-				if (fe->param.tid == val) {
+			list_क्रम_each_entry(fe, &e->entry_list, list) अणु
+				अगर (fe->param.tid == val) अणु
 					found = fe;
-					break;
-				}
-			}
-			break;
-		}
-		default:
-			return NULL;
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		शेष:
+			वापस शून्य;
+		पूर्ण
 
-		if (found)
-			break;
-	}
+		अगर (found)
+			अवरोध;
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-struct sched_class *cxgb4_sched_queue_lookup(struct net_device *dev,
-					     struct ch_sched_queue *p)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct sched_queue_entry *qe = NULL;
-	struct adapter *adap = pi->adapter;
-	struct sge_eth_txq *txq;
+काष्ठा sched_class *cxgb4_sched_queue_lookup(काष्ठा net_device *dev,
+					     काष्ठा ch_sched_queue *p)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा sched_queue_entry *qe = शून्य;
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा sge_eth_txq *txq;
 
-	if (p->queue < 0 || p->queue >= pi->nqsets)
-		return NULL;
+	अगर (p->queue < 0 || p->queue >= pi->nqsets)
+		वापस शून्य;
 
 	txq = &adap->sge.ethtxq[pi->first_qset + p->queue];
 	qe = t4_sched_entry_lookup(pi, SCHED_QUEUE, txq->q.cntxt_id);
-	return qe ? &pi->sched_tbl->tab[qe->param.class] : NULL;
-}
+	वापस qe ? &pi->sched_tbl->tab[qe->param.class] : शून्य;
+पूर्ण
 
-static int t4_sched_queue_unbind(struct port_info *pi, struct ch_sched_queue *p)
-{
-	struct sched_queue_entry *qe = NULL;
-	struct adapter *adap = pi->adapter;
-	struct sge_eth_txq *txq;
-	struct sched_class *e;
-	int err = 0;
+अटल पूर्णांक t4_sched_queue_unbind(काष्ठा port_info *pi, काष्ठा ch_sched_queue *p)
+अणु
+	काष्ठा sched_queue_entry *qe = शून्य;
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा sge_eth_txq *txq;
+	काष्ठा sched_class *e;
+	पूर्णांक err = 0;
 
-	if (p->queue < 0 || p->queue >= pi->nqsets)
-		return -ERANGE;
+	अगर (p->queue < 0 || p->queue >= pi->nqsets)
+		वापस -दुस्फल;
 
 	txq = &adap->sge.ethtxq[pi->first_qset + p->queue];
 
 	/* Find the existing entry that the queue is bound to */
 	qe = t4_sched_entry_lookup(pi, SCHED_QUEUE, txq->q.cntxt_id);
-	if (qe) {
-		err = t4_sched_bind_unbind_op(pi, (void *)qe, SCHED_QUEUE,
+	अगर (qe) अणु
+		err = t4_sched_bind_unbind_op(pi, (व्योम *)qe, SCHED_QUEUE,
 					      false);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		e = &pi->sched_tbl->tab[qe->param.class];
 		list_del(&qe->list);
-		kvfree(qe);
-		if (atomic_dec_and_test(&e->refcnt))
-			cxgb4_sched_class_free(adap->port[pi->port_id], e->idx);
-	}
-	return err;
-}
+		kvमुक्त(qe);
+		अगर (atomic_dec_and_test(&e->refcnt))
+			cxgb4_sched_class_मुक्त(adap->port[pi->port_id], e->idx);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int t4_sched_queue_bind(struct port_info *pi, struct ch_sched_queue *p)
-{
-	struct sched_table *s = pi->sched_tbl;
-	struct sched_queue_entry *qe = NULL;
-	struct adapter *adap = pi->adapter;
-	struct sge_eth_txq *txq;
-	struct sched_class *e;
-	unsigned int qid;
-	int err = 0;
+अटल पूर्णांक t4_sched_queue_bind(काष्ठा port_info *pi, काष्ठा ch_sched_queue *p)
+अणु
+	काष्ठा sched_table *s = pi->sched_tbl;
+	काष्ठा sched_queue_entry *qe = शून्य;
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा sge_eth_txq *txq;
+	काष्ठा sched_class *e;
+	अचिन्हित पूर्णांक qid;
+	पूर्णांक err = 0;
 
-	if (p->queue < 0 || p->queue >= pi->nqsets)
-		return -ERANGE;
+	अगर (p->queue < 0 || p->queue >= pi->nqsets)
+		वापस -दुस्फल;
 
-	qe = kvzalloc(sizeof(struct sched_queue_entry), GFP_KERNEL);
-	if (!qe)
-		return -ENOMEM;
+	qe = kvzalloc(माप(काष्ठा sched_queue_entry), GFP_KERNEL);
+	अगर (!qe)
+		वापस -ENOMEM;
 
 	txq = &adap->sge.ethtxq[pi->first_qset + p->queue];
 	qid = txq->q.cntxt_id;
 
 	/* Unbind queue from any existing class */
 	err = t4_sched_queue_unbind(pi, p);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
-	/* Bind queue to specified class */
+	/* Bind queue to specअगरied class */
 	qe->cntxt_id = qid;
-	memcpy(&qe->param, p, sizeof(qe->param));
+	स_नकल(&qe->param, p, माप(qe->param));
 
 	e = &s->tab[qe->param.class];
-	err = t4_sched_bind_unbind_op(pi, (void *)qe, SCHED_QUEUE, true);
-	if (err)
-		goto out_err;
+	err = t4_sched_bind_unbind_op(pi, (व्योम *)qe, SCHED_QUEUE, true);
+	अगर (err)
+		जाओ out_err;
 
 	list_add_tail(&qe->list, &e->entry_list);
 	e->bind_type = SCHED_QUEUE;
 	atomic_inc(&e->refcnt);
-	return err;
+	वापस err;
 
 out_err:
-	kvfree(qe);
-	return err;
-}
+	kvमुक्त(qe);
+	वापस err;
+पूर्ण
 
-static int t4_sched_flowc_unbind(struct port_info *pi, struct ch_sched_flowc *p)
-{
-	struct sched_flowc_entry *fe = NULL;
-	struct adapter *adap = pi->adapter;
-	struct sched_class *e;
-	int err = 0;
+अटल पूर्णांक t4_sched_flowc_unbind(काष्ठा port_info *pi, काष्ठा ch_sched_flowc *p)
+अणु
+	काष्ठा sched_flowc_entry *fe = शून्य;
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा sched_class *e;
+	पूर्णांक err = 0;
 
-	if (p->tid < 0 || p->tid >= adap->tids.neotids)
-		return -ERANGE;
+	अगर (p->tid < 0 || p->tid >= adap->tids.neotids)
+		वापस -दुस्फल;
 
 	/* Find the existing entry that the flowc is bound to */
 	fe = t4_sched_entry_lookup(pi, SCHED_FLOWC, p->tid);
-	if (fe) {
-		err = t4_sched_bind_unbind_op(pi, (void *)fe, SCHED_FLOWC,
+	अगर (fe) अणु
+		err = t4_sched_bind_unbind_op(pi, (व्योम *)fe, SCHED_FLOWC,
 					      false);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		e = &pi->sched_tbl->tab[fe->param.class];
 		list_del(&fe->list);
-		kvfree(fe);
-		if (atomic_dec_and_test(&e->refcnt))
-			cxgb4_sched_class_free(adap->port[pi->port_id], e->idx);
-	}
-	return err;
-}
+		kvमुक्त(fe);
+		अगर (atomic_dec_and_test(&e->refcnt))
+			cxgb4_sched_class_मुक्त(adap->port[pi->port_id], e->idx);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int t4_sched_flowc_bind(struct port_info *pi, struct ch_sched_flowc *p)
-{
-	struct sched_table *s = pi->sched_tbl;
-	struct sched_flowc_entry *fe = NULL;
-	struct adapter *adap = pi->adapter;
-	struct sched_class *e;
-	int err = 0;
+अटल पूर्णांक t4_sched_flowc_bind(काष्ठा port_info *pi, काष्ठा ch_sched_flowc *p)
+अणु
+	काष्ठा sched_table *s = pi->sched_tbl;
+	काष्ठा sched_flowc_entry *fe = शून्य;
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा sched_class *e;
+	पूर्णांक err = 0;
 
-	if (p->tid < 0 || p->tid >= adap->tids.neotids)
-		return -ERANGE;
+	अगर (p->tid < 0 || p->tid >= adap->tids.neotids)
+		वापस -दुस्फल;
 
-	fe = kvzalloc(sizeof(*fe), GFP_KERNEL);
-	if (!fe)
-		return -ENOMEM;
+	fe = kvzalloc(माप(*fe), GFP_KERNEL);
+	अगर (!fe)
+		वापस -ENOMEM;
 
 	/* Unbind flowc from any existing class */
 	err = t4_sched_flowc_unbind(pi, p);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
-	/* Bind flowc to specified class */
-	memcpy(&fe->param, p, sizeof(fe->param));
+	/* Bind flowc to specअगरied class */
+	स_नकल(&fe->param, p, माप(fe->param));
 
 	e = &s->tab[fe->param.class];
-	err = t4_sched_bind_unbind_op(pi, (void *)fe, SCHED_FLOWC, true);
-	if (err)
-		goto out_err;
+	err = t4_sched_bind_unbind_op(pi, (व्योम *)fe, SCHED_FLOWC, true);
+	अगर (err)
+		जाओ out_err;
 
 	list_add_tail(&fe->list, &e->entry_list);
 	e->bind_type = SCHED_FLOWC;
 	atomic_inc(&e->refcnt);
-	return err;
+	वापस err;
 
 out_err:
-	kvfree(fe);
-	return err;
-}
+	kvमुक्त(fe);
+	वापस err;
+पूर्ण
 
-static void t4_sched_class_unbind_all(struct port_info *pi,
-				      struct sched_class *e,
-				      enum sched_bind_type type)
-{
-	if (!e)
-		return;
+अटल व्योम t4_sched_class_unbind_all(काष्ठा port_info *pi,
+				      काष्ठा sched_class *e,
+				      क्रमागत sched_bind_type type)
+अणु
+	अगर (!e)
+		वापस;
 
-	switch (type) {
-	case SCHED_QUEUE: {
-		struct sched_queue_entry *qe;
+	चयन (type) अणु
+	हाल SCHED_QUEUE: अणु
+		काष्ठा sched_queue_entry *qe;
 
-		list_for_each_entry(qe, &e->entry_list, list)
+		list_क्रम_each_entry(qe, &e->entry_list, list)
 			t4_sched_queue_unbind(pi, &qe->param);
-		break;
-	}
-	case SCHED_FLOWC: {
-		struct sched_flowc_entry *fe;
+		अवरोध;
+	पूर्ण
+	हाल SCHED_FLOWC: अणु
+		काष्ठा sched_flowc_entry *fe;
 
-		list_for_each_entry(fe, &e->entry_list, list)
+		list_क्रम_each_entry(fe, &e->entry_list, list)
 			t4_sched_flowc_unbind(pi, &fe->param);
-		break;
-	}
-	default:
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int t4_sched_class_bind_unbind_op(struct port_info *pi, void *arg,
-					 enum sched_bind_type type, bool bind)
-{
-	int err = 0;
+अटल पूर्णांक t4_sched_class_bind_unbind_op(काष्ठा port_info *pi, व्योम *arg,
+					 क्रमागत sched_bind_type type, bool bind)
+अणु
+	पूर्णांक err = 0;
 
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 
-	switch (type) {
-	case SCHED_QUEUE: {
-		struct ch_sched_queue *qe = (struct ch_sched_queue *)arg;
+	चयन (type) अणु
+	हाल SCHED_QUEUE: अणु
+		काष्ठा ch_sched_queue *qe = (काष्ठा ch_sched_queue *)arg;
 
-		if (bind)
+		अगर (bind)
 			err = t4_sched_queue_bind(pi, qe);
-		else
+		अन्यथा
 			err = t4_sched_queue_unbind(pi, qe);
-		break;
-	}
-	case SCHED_FLOWC: {
-		struct ch_sched_flowc *fe = (struct ch_sched_flowc *)arg;
+		अवरोध;
+	पूर्ण
+	हाल SCHED_FLOWC: अणु
+		काष्ठा ch_sched_flowc *fe = (काष्ठा ch_sched_flowc *)arg;
 
-		if (bind)
+		अगर (bind)
 			err = t4_sched_flowc_bind(pi, fe);
-		else
+		अन्यथा
 			err = t4_sched_flowc_unbind(pi, fe);
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		err = -ENOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * cxgb4_sched_class_bind - Bind an entity to a scheduling class
- * @dev: net_device pointer
+ * @dev: net_device poपूर्णांकer
  * @arg: Entity opaque data
  * @type: Entity type (Queue)
  *
  * Binds an entity (queue) to a scheduling class.  If the entity
  * is bound to another class, it will be unbound from the other class
- * and bound to the class specified in @arg.
+ * and bound to the class specअगरied in @arg.
  */
-int cxgb4_sched_class_bind(struct net_device *dev, void *arg,
-			   enum sched_bind_type type)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+पूर्णांक cxgb4_sched_class_bind(काष्ठा net_device *dev, व्योम *arg,
+			   क्रमागत sched_bind_type type)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 	u8 class_id;
 
-	if (!can_sched(dev))
-		return -ENOTSUPP;
+	अगर (!can_sched(dev))
+		वापस -ENOTSUPP;
 
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 
-	switch (type) {
-	case SCHED_QUEUE: {
-		struct ch_sched_queue *qe = (struct ch_sched_queue *)arg;
+	चयन (type) अणु
+	हाल SCHED_QUEUE: अणु
+		काष्ठा ch_sched_queue *qe = (काष्ठा ch_sched_queue *)arg;
 
 		class_id = qe->class;
-		break;
-	}
-	case SCHED_FLOWC: {
-		struct ch_sched_flowc *fe = (struct ch_sched_flowc *)arg;
+		अवरोध;
+	पूर्ण
+	हाल SCHED_FLOWC: अणु
+		काष्ठा ch_sched_flowc *fe = (काष्ठा ch_sched_flowc *)arg;
 
 		class_id = fe->class;
-		break;
-	}
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (!valid_class_id(dev, class_id))
-		return -EINVAL;
+	अगर (!valid_class_id(dev, class_id))
+		वापस -EINVAL;
 
-	if (class_id == SCHED_CLS_NONE)
-		return -ENOTSUPP;
+	अगर (class_id == SCHED_CLS_NONE)
+		वापस -ENOTSUPP;
 
-	return t4_sched_class_bind_unbind_op(pi, arg, type, true);
+	वापस t4_sched_class_bind_unbind_op(pi, arg, type, true);
 
-}
+पूर्ण
 
 /**
  * cxgb4_sched_class_unbind - Unbind an entity from a scheduling class
- * @dev: net_device pointer
+ * @dev: net_device poपूर्णांकer
  * @arg: Entity opaque data
  * @type: Entity type (Queue)
  *
  * Unbinds an entity (queue) from a scheduling class.
  */
-int cxgb4_sched_class_unbind(struct net_device *dev, void *arg,
-			     enum sched_bind_type type)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+पूर्णांक cxgb4_sched_class_unbind(काष्ठा net_device *dev, व्योम *arg,
+			     क्रमागत sched_bind_type type)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 	u8 class_id;
 
-	if (!can_sched(dev))
-		return -ENOTSUPP;
+	अगर (!can_sched(dev))
+		वापस -ENOTSUPP;
 
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 
-	switch (type) {
-	case SCHED_QUEUE: {
-		struct ch_sched_queue *qe = (struct ch_sched_queue *)arg;
+	चयन (type) अणु
+	हाल SCHED_QUEUE: अणु
+		काष्ठा ch_sched_queue *qe = (काष्ठा ch_sched_queue *)arg;
 
 		class_id = qe->class;
-		break;
-	}
-	case SCHED_FLOWC: {
-		struct ch_sched_flowc *fe = (struct ch_sched_flowc *)arg;
+		अवरोध;
+	पूर्ण
+	हाल SCHED_FLOWC: अणु
+		काष्ठा ch_sched_flowc *fe = (काष्ठा ch_sched_flowc *)arg;
 
 		class_id = fe->class;
-		break;
-	}
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (!valid_class_id(dev, class_id))
-		return -EINVAL;
+	अगर (!valid_class_id(dev, class_id))
+		वापस -EINVAL;
 
-	return t4_sched_class_bind_unbind_op(pi, arg, type, false);
-}
+	वापस t4_sched_class_bind_unbind_op(pi, arg, type, false);
+पूर्ण
 
-/* If @p is NULL, fetch any available unused class */
-static struct sched_class *t4_sched_class_lookup(struct port_info *pi,
-						const struct ch_sched_params *p)
-{
-	struct sched_table *s = pi->sched_tbl;
-	struct sched_class *found = NULL;
-	struct sched_class *e, *end;
+/* If @p is शून्य, fetch any available unused class */
+अटल काष्ठा sched_class *t4_sched_class_lookup(काष्ठा port_info *pi,
+						स्थिर काष्ठा ch_sched_params *p)
+अणु
+	काष्ठा sched_table *s = pi->sched_tbl;
+	काष्ठा sched_class *found = शून्य;
+	काष्ठा sched_class *e, *end;
 
-	if (!p) {
+	अगर (!p) अणु
 		/* Get any available unused class */
 		end = &s->tab[s->sched_size];
-		for (e = &s->tab[0]; e != end; ++e) {
-			if (e->state == SCHED_STATE_UNUSED) {
+		क्रम (e = &s->tab[0]; e != end; ++e) अणु
+			अगर (e->state == SCHED_STATE_UNUSED) अणु
 				found = e;
-				break;
-			}
-		}
-	} else {
-		/* Look for a class with matching scheduling parameters */
-		struct ch_sched_params info;
-		struct ch_sched_params tp;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Look क्रम a class with matching scheduling parameters */
+		काष्ठा ch_sched_params info;
+		काष्ठा ch_sched_params tp;
 
-		memcpy(&tp, p, sizeof(tp));
+		स_नकल(&tp, p, माप(tp));
 		/* Don't try to match class parameter */
 		tp.u.params.class = SCHED_CLS_NONE;
 
 		end = &s->tab[s->sched_size];
-		for (e = &s->tab[0]; e != end; ++e) {
-			if (e->state == SCHED_STATE_UNUSED)
-				continue;
+		क्रम (e = &s->tab[0]; e != end; ++e) अणु
+			अगर (e->state == SCHED_STATE_UNUSED)
+				जारी;
 
-			memcpy(&info, &e->info, sizeof(info));
+			स_नकल(&info, &e->info, माप(info));
 			/* Don't try to match class parameter */
 			info.u.params.class = SCHED_CLS_NONE;
 
-			if ((info.type == tp.type) &&
-			    (!memcmp(&info.u.params, &tp.u.params,
-				     sizeof(info.u.params)))) {
+			अगर ((info.type == tp.type) &&
+			    (!स_भेद(&info.u.params, &tp.u.params,
+				     माप(info.u.params)))) अणु
 				found = e;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static struct sched_class *t4_sched_class_alloc(struct port_info *pi,
-						struct ch_sched_params *p)
-{
-	struct sched_class *e = NULL;
+अटल काष्ठा sched_class *t4_sched_class_alloc(काष्ठा port_info *pi,
+						काष्ठा ch_sched_params *p)
+अणु
+	काष्ठा sched_class *e = शून्य;
 	u8 class_id;
-	int err;
+	पूर्णांक err;
 
-	if (!p)
-		return NULL;
+	अगर (!p)
+		वापस शून्य;
 
 	class_id = p->u.params.class;
 
-	/* Only accept search for existing class with matching params
-	 * or allocation of new class with specified params
+	/* Only accept search क्रम existing class with matching params
+	 * or allocation of new class with specअगरied params
 	 */
-	if (class_id != SCHED_CLS_NONE)
-		return NULL;
+	अगर (class_id != SCHED_CLS_NONE)
+		वापस शून्य;
 
-	/* See if there's an exisiting class with same requested sched
+	/* See अगर there's an exisiting class with same requested sched
 	 * params. Classes can only be shared among FLOWC types. For
 	 * other types, always request a new class.
 	 */
-	if (p->u.params.mode == SCHED_CLASS_MODE_FLOW)
+	अगर (p->u.params.mode == SCHED_CLASS_MODE_FLOW)
 		e = t4_sched_class_lookup(pi, p);
 
-	if (!e) {
-		struct ch_sched_params np;
+	अगर (!e) अणु
+		काष्ठा ch_sched_params np;
 
 		/* Fetch any available unused class */
-		e = t4_sched_class_lookup(pi, NULL);
-		if (!e)
-			return NULL;
+		e = t4_sched_class_lookup(pi, शून्य);
+		अगर (!e)
+			वापस शून्य;
 
-		memcpy(&np, p, sizeof(np));
+		स_नकल(&np, p, माप(np));
 		np.u.params.class = e->idx;
 		/* New class */
 		err = t4_sched_class_fw_cmd(pi, &np, SCHED_FW_OP_ADD);
-		if (err)
-			return NULL;
-		memcpy(&e->info, &np, sizeof(e->info));
+		अगर (err)
+			वापस शून्य;
+		स_नकल(&e->info, &np, माप(e->info));
 		atomic_set(&e->refcnt, 0);
 		e->state = SCHED_STATE_ACTIVE;
-	}
+	पूर्ण
 
-	return e;
-}
+	वापस e;
+पूर्ण
 
 /**
  * cxgb4_sched_class_alloc - allocate a scheduling class
- * @dev: net_device pointer
+ * @dev: net_device poपूर्णांकer
  * @p: new scheduling class to create.
  *
- * Returns pointer to the scheduling class created.  If @p is NULL, then
- * it allocates and returns any available unused scheduling class. If a
+ * Returns poपूर्णांकer to the scheduling class created.  If @p is शून्य, then
+ * it allocates and वापसs any available unused scheduling class. If a
  * scheduling class with matching @p is found, then the matching class is
- * returned.
+ * वापसed.
  */
-struct sched_class *cxgb4_sched_class_alloc(struct net_device *dev,
-					    struct ch_sched_params *p)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+काष्ठा sched_class *cxgb4_sched_class_alloc(काष्ठा net_device *dev,
+					    काष्ठा ch_sched_params *p)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 	u8 class_id;
 
-	if (!can_sched(dev))
-		return NULL;
+	अगर (!can_sched(dev))
+		वापस शून्य;
 
 	class_id = p->u.params.class;
-	if (!valid_class_id(dev, class_id))
-		return NULL;
+	अगर (!valid_class_id(dev, class_id))
+		वापस शून्य;
 
-	return t4_sched_class_alloc(pi, p);
-}
+	वापस t4_sched_class_alloc(pi, p);
+पूर्ण
 
 /**
- * cxgb4_sched_class_free - free a scheduling class
- * @dev: net_device pointer
- * @classid: scheduling class id to free
+ * cxgb4_sched_class_मुक्त - मुक्त a scheduling class
+ * @dev: net_device poपूर्णांकer
+ * @classid: scheduling class id to मुक्त
  *
- * Frees a scheduling class if there are no users.
+ * Frees a scheduling class अगर there are no users.
  */
-void cxgb4_sched_class_free(struct net_device *dev, u8 classid)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct sched_table *s = pi->sched_tbl;
-	struct ch_sched_params p;
-	struct sched_class *e;
+व्योम cxgb4_sched_class_मुक्त(काष्ठा net_device *dev, u8 classid)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा sched_table *s = pi->sched_tbl;
+	काष्ठा ch_sched_params p;
+	काष्ठा sched_class *e;
 	u32 speed;
-	int ret;
+	पूर्णांक ret;
 
 	e = &s->tab[classid];
-	if (!atomic_read(&e->refcnt) && e->state != SCHED_STATE_UNUSED) {
+	अगर (!atomic_पढ़ो(&e->refcnt) && e->state != SCHED_STATE_UNUSED) अणु
 		/* Port based rate limiting needs explicit reset back
-		 * to max rate. But, we'll do explicit reset for all
+		 * to max rate. But, we'll करो explicit reset क्रम all
 		 * types, instead of just port based type, to be on
 		 * the safer side.
 		 */
-		memcpy(&p, &e->info, sizeof(p));
+		स_नकल(&p, &e->info, माप(p));
 		/* Always reset mode to 0. Otherwise, FLOWC mode will
 		 * still be enabled even after resetting the traffic
 		 * class.
@@ -627,67 +628,67 @@ void cxgb4_sched_class_free(struct net_device *dev, u8 classid)
 		p.u.params.minrate = 0;
 		p.u.params.pktsize = 0;
 
-		ret = t4_get_link_params(pi, NULL, &speed, NULL);
-		if (!ret)
+		ret = t4_get_link_params(pi, शून्य, &speed, शून्य);
+		अगर (!ret)
 			p.u.params.maxrate = speed * 1000; /* Mbps to Kbps */
-		else
+		अन्यथा
 			p.u.params.maxrate = SCHED_MAX_RATE_KBPS;
 
 		t4_sched_class_fw_cmd(pi, &p, SCHED_FW_OP_DEL);
 
 		e->state = SCHED_STATE_UNUSED;
-		memset(&e->info, 0, sizeof(e->info));
-	}
-}
+		स_रखो(&e->info, 0, माप(e->info));
+	पूर्ण
+पूर्ण
 
-static void t4_sched_class_free(struct net_device *dev, struct sched_class *e)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+अटल व्योम t4_sched_class_मुक्त(काष्ठा net_device *dev, काष्ठा sched_class *e)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 
 	t4_sched_class_unbind_all(pi, e, e->bind_type);
-	cxgb4_sched_class_free(dev, e->idx);
-}
+	cxgb4_sched_class_मुक्त(dev, e->idx);
+पूर्ण
 
-struct sched_table *t4_init_sched(unsigned int sched_size)
-{
-	struct sched_table *s;
-	unsigned int i;
+काष्ठा sched_table *t4_init_sched(अचिन्हित पूर्णांक sched_size)
+अणु
+	काष्ठा sched_table *s;
+	अचिन्हित पूर्णांक i;
 
-	s = kvzalloc(struct_size(s, tab, sched_size), GFP_KERNEL);
-	if (!s)
-		return NULL;
+	s = kvzalloc(काष्ठा_size(s, tab, sched_size), GFP_KERNEL);
+	अगर (!s)
+		वापस शून्य;
 
 	s->sched_size = sched_size;
 
-	for (i = 0; i < s->sched_size; i++) {
-		memset(&s->tab[i], 0, sizeof(struct sched_class));
+	क्रम (i = 0; i < s->sched_size; i++) अणु
+		स_रखो(&s->tab[i], 0, माप(काष्ठा sched_class));
 		s->tab[i].idx = i;
 		s->tab[i].state = SCHED_STATE_UNUSED;
 		INIT_LIST_HEAD(&s->tab[i].entry_list);
 		atomic_set(&s->tab[i].refcnt, 0);
-	}
-	return s;
-}
+	पूर्ण
+	वापस s;
+पूर्ण
 
-void t4_cleanup_sched(struct adapter *adap)
-{
-	struct sched_table *s;
-	unsigned int j, i;
+व्योम t4_cleanup_sched(काष्ठा adapter *adap)
+अणु
+	काष्ठा sched_table *s;
+	अचिन्हित पूर्णांक j, i;
 
-	for_each_port(adap, j) {
-		struct port_info *pi = netdev2pinfo(adap->port[j]);
+	क्रम_each_port(adap, j) अणु
+		काष्ठा port_info *pi = netdev2pinfo(adap->port[j]);
 
 		s = pi->sched_tbl;
-		if (!s)
-			continue;
+		अगर (!s)
+			जारी;
 
-		for (i = 0; i < s->sched_size; i++) {
-			struct sched_class *e;
+		क्रम (i = 0; i < s->sched_size; i++) अणु
+			काष्ठा sched_class *e;
 
 			e = &s->tab[i];
-			if (e->state == SCHED_STATE_ACTIVE)
-				t4_sched_class_free(adap->port[j], e);
-		}
-		kvfree(s);
-	}
-}
+			अगर (e->state == SCHED_STATE_ACTIVE)
+				t4_sched_class_मुक्त(adap->port[j], e);
+		पूर्ण
+		kvमुक्त(s);
+	पूर्ण
+पूर्ण

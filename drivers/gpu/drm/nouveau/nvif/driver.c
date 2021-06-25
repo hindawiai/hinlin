@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,38 +22,38 @@
  *
  * Authors: Ben Skeggs
  */
-#include <nvif/driver.h>
-#include <nvif/client.h>
+#समावेश <nvअगर/driver.h>
+#समावेश <nvअगर/client.h>
 
-static const struct nvif_driver *
-nvif_driver[] = {
-#ifdef __KERNEL__
-	&nvif_driver_nvkm,
-#else
-	&nvif_driver_drm,
-	&nvif_driver_lib,
-	&nvif_driver_null,
-#endif
-	NULL
-};
+अटल स्थिर काष्ठा nvअगर_driver *
+nvअगर_driver[] = अणु
+#अगर_घोषित __KERNEL__
+	&nvअगर_driver_nvkm,
+#अन्यथा
+	&nvअगर_driver_drm,
+	&nvअगर_driver_lib,
+	&nvअगर_driver_null,
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
 
-int
-nvif_driver_init(const char *drv, const char *cfg, const char *dbg,
-		 const char *name, u64 device, struct nvif_client *client)
-{
-	int ret = -EINVAL, i;
+पूर्णांक
+nvअगर_driver_init(स्थिर अक्षर *drv, स्थिर अक्षर *cfg, स्थिर अक्षर *dbg,
+		 स्थिर अक्षर *name, u64 device, काष्ठा nvअगर_client *client)
+अणु
+	पूर्णांक ret = -EINVAL, i;
 
-	for (i = 0; (client->driver = nvif_driver[i]); i++) {
-		if (!drv || !strcmp(client->driver->name, drv)) {
+	क्रम (i = 0; (client->driver = nvअगर_driver[i]); i++) अणु
+		अगर (!drv || !म_भेद(client->driver->name, drv)) अणु
 			ret = client->driver->init(name, device, cfg, dbg,
 						   &client->object.priv);
-			if (ret == 0)
-				break;
+			अगर (ret == 0)
+				अवरोध;
 			client->driver->fini(client->object.priv);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ret == 0)
-		ret = nvif_client_ctor(client, name, device, client);
-	return ret;
-}
+	अगर (ret == 0)
+		ret = nvअगर_client_ctor(client, name, device, client);
+	वापस ret;
+पूर्ण

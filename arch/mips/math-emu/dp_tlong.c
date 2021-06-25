@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* IEEE754 floating point arithmetic
- * double precision: common utilities
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* IEEE754 भग्नing poपूर्णांक arithmetic
+ * द्विगुन precision: common utilities
  */
 /*
- * MIPS floating point support
+ * MIPS भग्नing poपूर्णांक support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
 
-#include "ieee754dp.h"
+#समावेश "ieee754dp.h"
 
-s64 ieee754dp_tlong(union ieee754dp x)
-{
+s64 ieee754dp_tदीर्घ(जोड़ ieee754dp x)
+अणु
 	u64 residue;
-	int round;
-	int sticky;
-	int odd;
+	पूर्णांक round;
+	पूर्णांक sticky;
+	पूर्णांक odd;
 
 	COMPXDP;
 
@@ -23,78 +24,78 @@ s64 ieee754dp_tlong(union ieee754dp x)
 	EXPLODEXDP;
 	FLUSHXDP;
 
-	switch (xc) {
-	case IEEE754_CLASS_SNAN:
-	case IEEE754_CLASS_QNAN:
+	चयन (xc) अणु
+	हाल IEEE754_CLASS_Sन_अंक:
+	हाल IEEE754_CLASS_Qन_अंक:
 		ieee754_setcx(IEEE754_INVALID_OPERATION);
-		return ieee754di_indef();
+		वापस ieee754di_indef();
 
-	case IEEE754_CLASS_INF:
+	हाल IEEE754_CLASS_INF:
 		ieee754_setcx(IEEE754_INVALID_OPERATION);
-		return ieee754di_overflow(xs);
+		वापस ieee754di_overflow(xs);
 
-	case IEEE754_CLASS_ZERO:
-		return 0;
+	हाल IEEE754_CLASS_ZERO:
+		वापस 0;
 
-	case IEEE754_CLASS_DNORM:
-	case IEEE754_CLASS_NORM:
-		break;
-	}
-	if (xe >= 63) {
-		/* look for valid corner case */
-		if (xe == 63 && xs && xm == DP_HIDDEN_BIT)
-			return -0x8000000000000000LL;
-		/* Set invalid. We will only use overflow for floating
-		   point overflow */
+	हाल IEEE754_CLASS_DNORM:
+	हाल IEEE754_CLASS_NORM:
+		अवरोध;
+	पूर्ण
+	अगर (xe >= 63) अणु
+		/* look क्रम valid corner हाल */
+		अगर (xe == 63 && xs && xm == DP_HIDDEN_BIT)
+			वापस -0x8000000000000000LL;
+		/* Set invalid. We will only use overflow क्रम भग्नing
+		   poपूर्णांक overflow */
 		ieee754_setcx(IEEE754_INVALID_OPERATION);
-		return ieee754di_overflow(xs);
-	}
+		वापस ieee754di_overflow(xs);
+	पूर्ण
 	/* oh gawd */
-	if (xe > DP_FBITS) {
+	अगर (xe > DP_FBITS) अणु
 		xm <<= xe - DP_FBITS;
-	} else if (xe < DP_FBITS) {
-		if (xe < -1) {
+	पूर्ण अन्यथा अगर (xe < DP_FBITS) अणु
+		अगर (xe < -1) अणु
 			residue = xm;
 			round = 0;
 			sticky = residue != 0;
 			xm = 0;
-		} else {
-			/* Shifting a u64 64 times does not work,
-			* so we do it in two steps. Be aware that xe
+		पूर्ण अन्यथा अणु
+			/* Shअगरting a u64 64 बार करोes not work,
+			* so we करो it in two steps. Be aware that xe
 			* may be -1 */
 			residue = xm << (xe + 1);
 			residue <<= 63 - DP_FBITS;
 			round = (residue >> 63) != 0;
 			sticky = (residue << 1) != 0;
 			xm >>= DP_FBITS - xe;
-		}
+		पूर्ण
 		odd = (xm & 0x1) != 0x0;
-		switch (ieee754_csr.rm) {
-		case FPU_CSR_RN:
-			if (round && (sticky || odd))
+		चयन (ieee754_csr.rm) अणु
+		हाल FPU_CSR_RN:
+			अगर (round && (sticky || odd))
 				xm++;
-			break;
-		case FPU_CSR_RZ:
-			break;
-		case FPU_CSR_RU:	/* toward +Infinity */
-			if ((round || sticky) && !xs)
+			अवरोध;
+		हाल FPU_CSR_RZ:
+			अवरोध;
+		हाल FPU_CSR_RU:	/* toward +Infinity */
+			अगर ((round || sticky) && !xs)
 				xm++;
-			break;
-		case FPU_CSR_RD:	/* toward -Infinity */
-			if ((round || sticky) && xs)
+			अवरोध;
+		हाल FPU_CSR_RD:	/* toward -Infinity */
+			अगर ((round || sticky) && xs)
 				xm++;
-			break;
-		}
-		if ((xm >> 63) != 0) {
+			अवरोध;
+		पूर्ण
+		अगर ((xm >> 63) != 0) अणु
 			/* This can happen after rounding */
 			ieee754_setcx(IEEE754_INVALID_OPERATION);
-			return ieee754di_overflow(xs);
-		}
-		if (round || sticky)
+			वापस ieee754di_overflow(xs);
+		पूर्ण
+		अगर (round || sticky)
 			ieee754_setcx(IEEE754_INEXACT);
-	}
-	if (xs)
-		return -xm;
-	else
-		return xm;
-}
+	पूर्ण
+	अगर (xs)
+		वापस -xm;
+	अन्यथा
+		वापस xm;
+पूर्ण

@@ -1,124 +1,125 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * v4l2-rect.h - v4l2_rect helper functions
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#ifndef _V4L2_RECT_H_
-#define _V4L2_RECT_H_
+#अगर_अघोषित _V4L2_RECT_H_
+#घोषणा _V4L2_RECT_H_
 
-#include <linux/videodev2.h>
+#समावेश <linux/videodev2.h>
 
 /**
- * v4l2_rect_set_size_to() - copy the width/height values.
+ * v4l2_rect_set_माप_प्रकारo() - copy the width/height values.
  * @r: rect whose width and height fields will be set
  * @size: rect containing the width and height fields you need.
  */
-static inline void v4l2_rect_set_size_to(struct v4l2_rect *r,
-					 const struct v4l2_rect *size)
-{
+अटल अंतरभूत व्योम v4l2_rect_set_माप_प्रकारo(काष्ठा v4l2_rect *r,
+					 स्थिर काष्ठा v4l2_rect *size)
+अणु
 	r->width = size->width;
 	r->height = size->height;
-}
+पूर्ण
 
 /**
  * v4l2_rect_set_min_size() - width and height of r should be >= min_size.
- * @r: rect whose width and height will be modified
+ * @r: rect whose width and height will be modअगरied
  * @min_size: rect containing the minimal width and height
  */
-static inline void v4l2_rect_set_min_size(struct v4l2_rect *r,
-					  const struct v4l2_rect *min_size)
-{
-	if (r->width < min_size->width)
+अटल अंतरभूत व्योम v4l2_rect_set_min_size(काष्ठा v4l2_rect *r,
+					  स्थिर काष्ठा v4l2_rect *min_size)
+अणु
+	अगर (r->width < min_size->width)
 		r->width = min_size->width;
-	if (r->height < min_size->height)
+	अगर (r->height < min_size->height)
 		r->height = min_size->height;
-}
+पूर्ण
 
 /**
  * v4l2_rect_set_max_size() - width and height of r should be <= max_size
- * @r: rect whose width and height will be modified
+ * @r: rect whose width and height will be modअगरied
  * @max_size: rect containing the maximum width and height
  */
-static inline void v4l2_rect_set_max_size(struct v4l2_rect *r,
-					  const struct v4l2_rect *max_size)
-{
-	if (r->width > max_size->width)
+अटल अंतरभूत व्योम v4l2_rect_set_max_size(काष्ठा v4l2_rect *r,
+					  स्थिर काष्ठा v4l2_rect *max_size)
+अणु
+	अगर (r->width > max_size->width)
 		r->width = max_size->width;
-	if (r->height > max_size->height)
+	अगर (r->height > max_size->height)
 		r->height = max_size->height;
-}
+पूर्ण
 
 /**
  * v4l2_rect_map_inside()- r should be inside boundary.
- * @r: rect that will be modified
- * @boundary: rect containing the boundary for @r
+ * @r: rect that will be modअगरied
+ * @boundary: rect containing the boundary क्रम @r
  */
-static inline void v4l2_rect_map_inside(struct v4l2_rect *r,
-					const struct v4l2_rect *boundary)
-{
+अटल अंतरभूत व्योम v4l2_rect_map_inside(काष्ठा v4l2_rect *r,
+					स्थिर काष्ठा v4l2_rect *boundary)
+अणु
 	v4l2_rect_set_max_size(r, boundary);
-	if (r->left < boundary->left)
+	अगर (r->left < boundary->left)
 		r->left = boundary->left;
-	if (r->top < boundary->top)
+	अगर (r->top < boundary->top)
 		r->top = boundary->top;
-	if (r->left + r->width > boundary->left + boundary->width)
+	अगर (r->left + r->width > boundary->left + boundary->width)
 		r->left = boundary->left + boundary->width - r->width;
-	if (r->top + r->height > boundary->top + boundary->height)
+	अगर (r->top + r->height > boundary->top + boundary->height)
 		r->top = boundary->top + boundary->height - r->height;
-}
+पूर्ण
 
 /**
- * v4l2_rect_same_size() - return true if r1 has the same size as r2
+ * v4l2_rect_same_size() - वापस true अगर r1 has the same size as r2
  * @r1: rectangle.
  * @r2: rectangle.
  *
- * Return true if both rectangles have the same size.
+ * Return true अगर both rectangles have the same size.
  */
-static inline bool v4l2_rect_same_size(const struct v4l2_rect *r1,
-				       const struct v4l2_rect *r2)
-{
-	return r1->width == r2->width && r1->height == r2->height;
-}
+अटल अंतरभूत bool v4l2_rect_same_size(स्थिर काष्ठा v4l2_rect *r1,
+				       स्थिर काष्ठा v4l2_rect *r2)
+अणु
+	वापस r1->width == r2->width && r1->height == r2->height;
+पूर्ण
 
 /**
- * v4l2_rect_same_position() - return true if r1 has the same position as r2
+ * v4l2_rect_same_position() - वापस true अगर r1 has the same position as r2
  * @r1: rectangle.
  * @r2: rectangle.
  *
- * Return true if both rectangles have the same position
+ * Return true अगर both rectangles have the same position
  */
-static inline bool v4l2_rect_same_position(const struct v4l2_rect *r1,
-					   const struct v4l2_rect *r2)
-{
-	return r1->top == r2->top && r1->left == r2->left;
-}
+अटल अंतरभूत bool v4l2_rect_same_position(स्थिर काष्ठा v4l2_rect *r1,
+					   स्थिर काष्ठा v4l2_rect *r2)
+अणु
+	वापस r1->top == r2->top && r1->left == r2->left;
+पूर्ण
 
 /**
- * v4l2_rect_equal() - return true if r1 equals r2
+ * v4l2_rect_equal() - वापस true अगर r1 equals r2
  * @r1: rectangle.
  * @r2: rectangle.
  *
- * Return true if both rectangles have the same size and position.
+ * Return true अगर both rectangles have the same size and position.
  */
-static inline bool v4l2_rect_equal(const struct v4l2_rect *r1,
-				   const struct v4l2_rect *r2)
-{
-	return v4l2_rect_same_size(r1, r2) && v4l2_rect_same_position(r1, r2);
-}
+अटल अंतरभूत bool v4l2_rect_equal(स्थिर काष्ठा v4l2_rect *r1,
+				   स्थिर काष्ठा v4l2_rect *r2)
+अणु
+	वापस v4l2_rect_same_size(r1, r2) && v4l2_rect_same_position(r1, r2);
+पूर्ण
 
 /**
- * v4l2_rect_intersect() - calculate the intersection of two rects.
- * @r: intersection of @r1 and @r2.
+ * v4l2_rect_पूर्णांकersect() - calculate the पूर्णांकersection of two rects.
+ * @r: पूर्णांकersection of @r1 and @r2.
  * @r1: rectangle.
  * @r2: rectangle.
  */
-static inline void v4l2_rect_intersect(struct v4l2_rect *r,
-				       const struct v4l2_rect *r1,
-				       const struct v4l2_rect *r2)
-{
-	int right, bottom;
+अटल अंतरभूत व्योम v4l2_rect_पूर्णांकersect(काष्ठा v4l2_rect *r,
+				       स्थिर काष्ठा v4l2_rect *r1,
+				       स्थिर काष्ठा v4l2_rect *r2)
+अणु
+	पूर्णांक right, bottom;
 
 	r->top = max(r1->top, r2->top);
 	r->left = max(r1->left, r2->left);
@@ -126,7 +127,7 @@ static inline void v4l2_rect_intersect(struct v4l2_rect *r,
 	right = min(r1->left + r1->width, r2->left + r2->width);
 	r->height = max(0, bottom - r->top);
 	r->width = max(0, right - r->left);
-}
+पूर्ण
 
 /**
  * v4l2_rect_scale() - scale rect r by to/from
@@ -141,67 +142,67 @@ static inline void v4l2_rect_intersect(struct v4l2_rect *r,
  * it would appear after scaling @from to @to. So the resulting @r will
  * be the scaled rectangle inside @to.
  */
-static inline void v4l2_rect_scale(struct v4l2_rect *r,
-				   const struct v4l2_rect *from,
-				   const struct v4l2_rect *to)
-{
-	if (from->width == 0 || from->height == 0) {
+अटल अंतरभूत व्योम v4l2_rect_scale(काष्ठा v4l2_rect *r,
+				   स्थिर काष्ठा v4l2_rect *from,
+				   स्थिर काष्ठा v4l2_rect *to)
+अणु
+	अगर (from->width == 0 || from->height == 0) अणु
 		r->left = r->top = r->width = r->height = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 	r->left = (((r->left - from->left) * to->width) / from->width) & ~1;
 	r->width = ((r->width * to->width) / from->width) & ~1;
 	r->top = ((r->top - from->top) * to->height) / from->height;
 	r->height = (r->height * to->height) / from->height;
-}
+पूर्ण
 
 /**
- * v4l2_rect_overlap() - do r1 and r2 overlap?
+ * v4l2_rect_overlap() - करो r1 and r2 overlap?
  * @r1: rectangle.
  * @r2: rectangle.
  *
- * Returns true if @r1 and @r2 overlap.
+ * Returns true अगर @r1 and @r2 overlap.
  */
-static inline bool v4l2_rect_overlap(const struct v4l2_rect *r1,
-				     const struct v4l2_rect *r2)
-{
+अटल अंतरभूत bool v4l2_rect_overlap(स्थिर काष्ठा v4l2_rect *r1,
+				     स्थिर काष्ठा v4l2_rect *r2)
+अणु
 	/*
 	 * IF the left side of r1 is to the right of the right side of r2 OR
 	 *    the left side of r2 is to the right of the right side of r1 THEN
-	 * they do not overlap.
+	 * they करो not overlap.
 	 */
-	if (r1->left >= r2->left + r2->width ||
+	अगर (r1->left >= r2->left + r2->width ||
 	    r2->left >= r1->left + r1->width)
-		return false;
+		वापस false;
 	/*
 	 * IF the top side of r1 is below the bottom of r2 OR
 	 *    the top side of r2 is below the bottom of r1 THEN
-	 * they do not overlap.
+	 * they करो not overlap.
 	 */
-	if (r1->top >= r2->top + r2->height ||
+	अगर (r1->top >= r2->top + r2->height ||
 	    r2->top >= r1->top + r1->height)
-		return false;
-	return true;
-}
+		वापस false;
+	वापस true;
+पूर्ण
 
 /**
- * v4l2_rect_enclosed() - is r1 enclosed in r2?
+ * v4l2_rect_enबंदd() - is r1 enबंदd in r2?
  * @r1: rectangle.
  * @r2: rectangle.
  *
- * Returns true if @r1 is enclosed in @r2.
+ * Returns true अगर @r1 is enबंदd in @r2.
  */
-static inline bool v4l2_rect_enclosed(struct v4l2_rect *r1,
-				      struct v4l2_rect *r2)
-{
-	if (r1->left < r2->left || r1->top < r2->top)
-		return false;
-	if (r1->left + r1->width > r2->left + r2->width)
-		return false;
-	if (r1->top + r1->height > r2->top + r2->height)
-		return false;
+अटल अंतरभूत bool v4l2_rect_enबंदd(काष्ठा v4l2_rect *r1,
+				      काष्ठा v4l2_rect *r2)
+अणु
+	अगर (r1->left < r2->left || r1->top < r2->top)
+		वापस false;
+	अगर (r1->left + r1->width > r2->left + r2->width)
+		वापस false;
+	अगर (r1->top + r1->height > r2->top + r2->height)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

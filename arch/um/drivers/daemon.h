@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __DAEMON_H__
-#define __DAEMON_H__
+#अगर_अघोषित __DAEMON_H__
+#घोषणा __DAEMON_H__
 
-#include <net_user.h>
+#समावेश <net_user.h>
 
-#define SWITCH_VERSION 3
+#घोषणा SWITCH_VERSION 3
 
-struct daemon_data {
-	char *sock_type;
-	char *ctl_sock;
-	void *ctl_addr;
-	void *data_addr;
-	void *local_addr;
-	int fd;
-	int control;
-	void *dev;
-};
+काष्ठा daemon_data अणु
+	अक्षर *sock_type;
+	अक्षर *ctl_sock;
+	व्योम *ctl_addr;
+	व्योम *data_addr;
+	व्योम *local_addr;
+	पूर्णांक fd;
+	पूर्णांक control;
+	व्योम *dev;
+पूर्ण;
 
-extern const struct net_user_info daemon_user_info;
+बाह्य स्थिर काष्ठा net_user_info daemon_user_info;
 
-extern int daemon_user_write(int fd, void *buf, int len,
-			     struct daemon_data *pri);
+बाह्य पूर्णांक daemon_user_ग_लिखो(पूर्णांक fd, व्योम *buf, पूर्णांक len,
+			     काष्ठा daemon_data *pri);
 
-#endif
+#पूर्ण_अगर

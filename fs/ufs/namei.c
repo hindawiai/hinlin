@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/ufs/namei.c
  *
@@ -15,7 +16,7 @@
  *
  * Copyright (C) 1992, 1993, 1994, 1995
  * Remy Card (card@masi.ibp.fr)
- * Laboratoire MASI - Institut Blaise Pascal
+ * Laborम_से_पre MASI - Institut Blaise Pascal
  * Universite Pierre et Marie Curie (Paris VI)
  *
  *  from
@@ -24,160 +25,160 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  Big-endian to little-endian byte-swapping/bitmaps by
+ *  Big-endian to little-endian byte-swapping/biपंचांगaps by
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
-#include <linux/time.h>
-#include <linux/fs.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/fs.h>
 
-#include "ufs_fs.h"
-#include "ufs.h"
-#include "util.h"
+#समावेश "ufs_fs.h"
+#समावेश "ufs.h"
+#समावेश "util.h"
 
-static inline int ufs_add_nondir(struct dentry *dentry, struct inode *inode)
-{
-	int err = ufs_add_link(dentry, inode);
-	if (!err) {
+अटल अंतरभूत पूर्णांक ufs_add_nondir(काष्ठा dentry *dentry, काष्ठा inode *inode)
+अणु
+	पूर्णांक err = ufs_add_link(dentry, inode);
+	अगर (!err) अणु
 		d_instantiate_new(dentry, inode);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	inode_dec_link_count(inode);
 	discard_new_inode(inode);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct dentry *ufs_lookup(struct inode * dir, struct dentry *dentry, unsigned int flags)
-{
-	struct inode * inode = NULL;
+अटल काष्ठा dentry *ufs_lookup(काष्ठा inode * dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode * inode = शून्य;
 	ino_t ino;
 	
-	if (dentry->d_name.len > UFS_MAXNAMLEN)
-		return ERR_PTR(-ENAMETOOLONG);
+	अगर (dentry->d_name.len > UFS_MAXNAMLEN)
+		वापस ERR_PTR(-ENAMETOOLONG);
 
 	ino = ufs_inode_by_name(dir, &dentry->d_name);
-	if (ino)
+	अगर (ino)
 		inode = ufs_iget(dir->i_sb, ino);
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
 /*
- * By the time this is called, we already have created
- * the directory cache entry for the new file, but it
+ * By the समय this is called, we alपढ़ोy have created
+ * the directory cache entry क्रम the new file, but it
  * is so far negative - it has no inode.
  *
- * If the create succeeds, we fill in the inode information
+ * If the create succeeds, we fill in the inode inक्रमmation
  * with d_instantiate(). 
  */
-static int ufs_create (struct user_namespace * mnt_userns,
-		struct inode * dir, struct dentry * dentry, umode_t mode,
+अटल पूर्णांक ufs_create (काष्ठा user_namespace * mnt_userns,
+		काष्ठा inode * dir, काष्ठा dentry * dentry, umode_t mode,
 		bool excl)
-{
-	struct inode *inode;
+अणु
+	काष्ठा inode *inode;
 
 	inode = ufs_new_inode(dir, mode);
-	if (IS_ERR(inode))
-		return PTR_ERR(inode);
+	अगर (IS_ERR(inode))
+		वापस PTR_ERR(inode);
 
 	inode->i_op = &ufs_file_inode_operations;
 	inode->i_fop = &ufs_file_operations;
 	inode->i_mapping->a_ops = &ufs_aops;
 	mark_inode_dirty(inode);
-	return ufs_add_nondir(dentry, inode);
-}
+	वापस ufs_add_nondir(dentry, inode);
+पूर्ण
 
-static int ufs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
-		     struct dentry *dentry, umode_t mode, dev_t rdev)
-{
-	struct inode *inode;
-	int err;
+अटल पूर्णांक ufs_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		     काष्ठा dentry *dentry, umode_t mode, dev_t rdev)
+अणु
+	काष्ठा inode *inode;
+	पूर्णांक err;
 
-	if (!old_valid_dev(rdev))
-		return -EINVAL;
+	अगर (!old_valid_dev(rdev))
+		वापस -EINVAL;
 
 	inode = ufs_new_inode(dir, mode);
 	err = PTR_ERR(inode);
-	if (!IS_ERR(inode)) {
+	अगर (!IS_ERR(inode)) अणु
 		init_special_inode(inode, mode, rdev);
 		ufs_set_inode_dev(inode->i_sb, UFS_I(inode), rdev);
 		mark_inode_dirty(inode);
 		err = ufs_add_nondir(dentry, inode);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int ufs_symlink (struct user_namespace * mnt_userns, struct inode * dir,
-	struct dentry * dentry, const char * symname)
-{
-	struct super_block * sb = dir->i_sb;
-	int err;
-	unsigned l = strlen(symname)+1;
-	struct inode * inode;
+अटल पूर्णांक ufs_symlink (काष्ठा user_namespace * mnt_userns, काष्ठा inode * dir,
+	काष्ठा dentry * dentry, स्थिर अक्षर * symname)
+अणु
+	काष्ठा super_block * sb = dir->i_sb;
+	पूर्णांक err;
+	अचिन्हित l = म_माप(symname)+1;
+	काष्ठा inode * inode;
 
-	if (l > sb->s_blocksize)
-		return -ENAMETOOLONG;
+	अगर (l > sb->s_blocksize)
+		वापस -ENAMETOOLONG;
 
 	inode = ufs_new_inode(dir, S_IFLNK | S_IRWXUGO);
 	err = PTR_ERR(inode);
-	if (IS_ERR(inode))
-		return err;
+	अगर (IS_ERR(inode))
+		वापस err;
 
-	if (l > UFS_SB(sb)->s_uspi->s_maxsymlinklen) {
+	अगर (l > UFS_SB(sb)->s_uspi->s_maxsymlinklen) अणु
 		/* slow symlink */
 		inode->i_op = &page_symlink_inode_operations;
 		inode_nohighmem(inode);
 		inode->i_mapping->a_ops = &ufs_aops;
 		err = page_symlink(inode, symname, l);
-		if (err)
-			goto out_fail;
-	} else {
+		अगर (err)
+			जाओ out_fail;
+	पूर्ण अन्यथा अणु
 		/* fast symlink */
 		inode->i_op = &simple_symlink_inode_operations;
-		inode->i_link = (char *)UFS_I(inode)->i_u1.i_symlink;
-		memcpy(inode->i_link, symname, l);
+		inode->i_link = (अक्षर *)UFS_I(inode)->i_u1.i_symlink;
+		स_नकल(inode->i_link, symname, l);
 		inode->i_size = l-1;
-	}
+	पूर्ण
 	mark_inode_dirty(inode);
 
-	return ufs_add_nondir(dentry, inode);
+	वापस ufs_add_nondir(dentry, inode);
 
 out_fail:
 	inode_dec_link_count(inode);
 	discard_new_inode(inode);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ufs_link (struct dentry * old_dentry, struct inode * dir,
-	struct dentry *dentry)
-{
-	struct inode *inode = d_inode(old_dentry);
-	int error;
+अटल पूर्णांक ufs_link (काष्ठा dentry * old_dentry, काष्ठा inode * dir,
+	काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *inode = d_inode(old_dentry);
+	पूर्णांक error;
 
-	inode->i_ctime = current_time(inode);
+	inode->i_स_समय = current_समय(inode);
 	inode_inc_link_count(inode);
 	ihold(inode);
 
 	error = ufs_add_link(dentry, inode);
-	if (error) {
+	अगर (error) अणु
 		inode_dec_link_count(inode);
 		iput(inode);
-	} else
+	पूर्ण अन्यथा
 		d_instantiate(dentry, inode);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int ufs_mkdir(struct user_namespace * mnt_userns, struct inode * dir,
-	struct dentry * dentry, umode_t mode)
-{
-	struct inode * inode;
-	int err;
+अटल पूर्णांक ufs_सूची_गढ़ो(काष्ठा user_namespace * mnt_userns, काष्ठा inode * dir,
+	काष्ठा dentry * dentry, umode_t mode)
+अणु
+	काष्ठा inode * inode;
+	पूर्णांक err;
 
 	inode_inc_link_count(dir);
 
-	inode = ufs_new_inode(dir, S_IFDIR|mode);
+	inode = ufs_new_inode(dir, S_IFसूची|mode);
 	err = PTR_ERR(inode);
-	if (IS_ERR(inode))
-		goto out_dir;
+	अगर (IS_ERR(inode))
+		जाओ out_dir;
 
 	inode->i_op = &ufs_dir_inode_operations;
 	inode->i_fop = &ufs_dir_operations;
@@ -186,15 +187,15 @@ static int ufs_mkdir(struct user_namespace * mnt_userns, struct inode * dir,
 	inode_inc_link_count(inode);
 
 	err = ufs_make_empty(inode, dir);
-	if (err)
-		goto out_fail;
+	अगर (err)
+		जाओ out_fail;
 
 	err = ufs_add_link(dentry, inode);
-	if (err)
-		goto out_fail;
+	अगर (err)
+		जाओ out_fail;
 
 	d_instantiate_new(dentry, inode);
-	return 0;
+	वापस 0;
 
 out_fail:
 	inode_dec_link_count(inode);
@@ -202,139 +203,139 @@ out_fail:
 	discard_new_inode(inode);
 out_dir:
 	inode_dec_link_count(dir);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ufs_unlink(struct inode *dir, struct dentry *dentry)
-{
-	struct inode * inode = d_inode(dentry);
-	struct ufs_dir_entry *de;
-	struct page *page;
-	int err = -ENOENT;
+अटल पूर्णांक ufs_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode * inode = d_inode(dentry);
+	काष्ठा ufs_dir_entry *de;
+	काष्ठा page *page;
+	पूर्णांक err = -ENOENT;
 
 	de = ufs_find_entry(dir, &dentry->d_name, &page);
-	if (!de)
-		goto out;
+	अगर (!de)
+		जाओ out;
 
 	err = ufs_delete_entry(dir, de, page);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	inode->i_ctime = dir->i_ctime;
+	inode->i_स_समय = dir->i_स_समय;
 	inode_dec_link_count(inode);
 	err = 0;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ufs_rmdir (struct inode * dir, struct dentry *dentry)
-{
-	struct inode * inode = d_inode(dentry);
-	int err= -ENOTEMPTY;
+अटल पूर्णांक ufs_सूची_हटाओ (काष्ठा inode * dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode * inode = d_inode(dentry);
+	पूर्णांक err= -ENOTEMPTY;
 
-	if (ufs_empty_dir (inode)) {
+	अगर (ufs_empty_dir (inode)) अणु
 		err = ufs_unlink(dir, dentry);
-		if (!err) {
+		अगर (!err) अणु
 			inode->i_size = 0;
 			inode_dec_link_count(inode);
 			inode_dec_link_count(dir);
-		}
-	}
-	return err;
-}
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int ufs_rename(struct user_namespace *mnt_userns, struct inode *old_dir,
-		      struct dentry *old_dentry, struct inode *new_dir,
-		      struct dentry *new_dentry, unsigned int flags)
-{
-	struct inode *old_inode = d_inode(old_dentry);
-	struct inode *new_inode = d_inode(new_dentry);
-	struct page *dir_page = NULL;
-	struct ufs_dir_entry * dir_de = NULL;
-	struct page *old_page;
-	struct ufs_dir_entry *old_de;
-	int err = -ENOENT;
+अटल पूर्णांक ufs_नाम(काष्ठा user_namespace *mnt_userns, काष्ठा inode *old_dir,
+		      काष्ठा dentry *old_dentry, काष्ठा inode *new_dir,
+		      काष्ठा dentry *new_dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *old_inode = d_inode(old_dentry);
+	काष्ठा inode *new_inode = d_inode(new_dentry);
+	काष्ठा page *dir_page = शून्य;
+	काष्ठा ufs_dir_entry * dir_de = शून्य;
+	काष्ठा page *old_page;
+	काष्ठा ufs_dir_entry *old_de;
+	पूर्णांक err = -ENOENT;
 
-	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+	अगर (flags & ~RENAME_NOREPLACE)
+		वापस -EINVAL;
 
 	old_de = ufs_find_entry(old_dir, &old_dentry->d_name, &old_page);
-	if (!old_de)
-		goto out;
+	अगर (!old_de)
+		जाओ out;
 
-	if (S_ISDIR(old_inode->i_mode)) {
+	अगर (S_ISसूची(old_inode->i_mode)) अणु
 		err = -EIO;
-		dir_de = ufs_dotdot(old_inode, &dir_page);
-		if (!dir_de)
-			goto out_old;
-	}
+		dir_de = ufs_करोtकरोt(old_inode, &dir_page);
+		अगर (!dir_de)
+			जाओ out_old;
+	पूर्ण
 
-	if (new_inode) {
-		struct page *new_page;
-		struct ufs_dir_entry *new_de;
+	अगर (new_inode) अणु
+		काष्ठा page *new_page;
+		काष्ठा ufs_dir_entry *new_de;
 
 		err = -ENOTEMPTY;
-		if (dir_de && !ufs_empty_dir(new_inode))
-			goto out_dir;
+		अगर (dir_de && !ufs_empty_dir(new_inode))
+			जाओ out_dir;
 
 		err = -ENOENT;
 		new_de = ufs_find_entry(new_dir, &new_dentry->d_name, &new_page);
-		if (!new_de)
-			goto out_dir;
+		अगर (!new_de)
+			जाओ out_dir;
 		ufs_set_link(new_dir, new_de, new_page, old_inode, 1);
-		new_inode->i_ctime = current_time(new_inode);
-		if (dir_de)
+		new_inode->i_स_समय = current_समय(new_inode);
+		अगर (dir_de)
 			drop_nlink(new_inode);
 		inode_dec_link_count(new_inode);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = ufs_add_link(new_dentry, old_inode);
-		if (err)
-			goto out_dir;
-		if (dir_de)
+		अगर (err)
+			जाओ out_dir;
+		अगर (dir_de)
 			inode_inc_link_count(new_dir);
-	}
+	पूर्ण
 
 	/*
-	 * Like most other Unix systems, set the ctime for inodes on a
- 	 * rename.
+	 * Like most other Unix प्रणालीs, set the स_समय क्रम inodes on a
+ 	 * नाम.
 	 */
-	old_inode->i_ctime = current_time(old_inode);
+	old_inode->i_स_समय = current_समय(old_inode);
 
 	ufs_delete_entry(old_dir, old_de, old_page);
 	mark_inode_dirty(old_inode);
 
-	if (dir_de) {
-		if (old_dir != new_dir)
+	अगर (dir_de) अणु
+		अगर (old_dir != new_dir)
 			ufs_set_link(old_inode, dir_de, dir_page, new_dir, 0);
-		else {
+		अन्यथा अणु
 			kunmap(dir_page);
 			put_page(dir_page);
-		}
+		पूर्ण
 		inode_dec_link_count(old_dir);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 
 out_dir:
-	if (dir_de) {
+	अगर (dir_de) अणु
 		kunmap(dir_page);
 		put_page(dir_page);
-	}
+	पूर्ण
 out_old:
 	kunmap(old_page);
 	put_page(old_page);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct inode_operations ufs_dir_inode_operations = {
+स्थिर काष्ठा inode_operations ufs_dir_inode_operations = अणु
 	.create		= ufs_create,
 	.lookup		= ufs_lookup,
 	.link		= ufs_link,
 	.unlink		= ufs_unlink,
 	.symlink	= ufs_symlink,
-	.mkdir		= ufs_mkdir,
-	.rmdir		= ufs_rmdir,
+	.सूची_गढ़ो		= ufs_सूची_गढ़ो,
+	.सूची_हटाओ		= ufs_सूची_हटाओ,
 	.mknod		= ufs_mknod,
-	.rename		= ufs_rename,
-};
+	.नाम		= ufs_नाम,
+पूर्ण;

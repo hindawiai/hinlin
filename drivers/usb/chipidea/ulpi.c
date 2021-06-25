@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2016 Linaro Ltd.
  */
 
-#include <linux/device.h>
-#include <linux/usb/chipidea.h>
-#include <linux/ulpi/interface.h>
+#समावेश <linux/device.h>
+#समावेश <linux/usb/chipidea.h>
+#समावेश <linux/ulpi/पूर्णांकerface.h>
 
-#include "ci.h"
+#समावेश "ci.h"
 
-#define ULPI_WAKEUP		BIT(31)
-#define ULPI_RUN		BIT(30)
-#define ULPI_WRITE		BIT(29)
-#define ULPI_SYNC_STATE		BIT(27)
-#define ULPI_ADDR(n)		((n) << 16)
-#define ULPI_DATA(n)		(n)
+#घोषणा ULPI_WAKEUP		BIT(31)
+#घोषणा ULPI_RUN		BIT(30)
+#घोषणा ULPI_WRITE		BIT(29)
+#घोषणा ULPI_SYNC_STATE		BIT(27)
+#घोषणा ULPI_ADDR(n)		((n) << 16)
+#घोषणा ULPI_DATA(n)		(n)
 
-static int ci_ulpi_wait(struct ci_hdrc *ci, u32 mask)
-{
-	unsigned long usec = 10000;
+अटल पूर्णांक ci_ulpi_रुको(काष्ठा ci_hdrc *ci, u32 mask)
+अणु
+	अचिन्हित दीर्घ usec = 10000;
 
-	while (usec--) {
-		if (!hw_read(ci, OP_ULPI_VIEWPORT, mask))
-			return 0;
+	जबतक (usec--) अणु
+		अगर (!hw_पढ़ो(ci, OP_ULPI_VIEWPORT, mask))
+			वापस 0;
 
 		udelay(1);
-	}
+	पूर्ण
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int ci_ulpi_read(struct device *dev, u8 addr)
-{
-	struct ci_hdrc *ci = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक ci_ulpi_पढ़ो(काष्ठा device *dev, u8 addr)
+अणु
+	काष्ठा ci_hdrc *ci = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	hw_write(ci, OP_ULPI_VIEWPORT, 0xffffffff, ULPI_WRITE | ULPI_WAKEUP);
-	ret = ci_ulpi_wait(ci, ULPI_WAKEUP);
-	if (ret)
-		return ret;
+	hw_ग_लिखो(ci, OP_ULPI_VIEWPORT, 0xffffffff, ULPI_WRITE | ULPI_WAKEUP);
+	ret = ci_ulpi_रुको(ci, ULPI_WAKEUP);
+	अगर (ret)
+		वापस ret;
 
-	hw_write(ci, OP_ULPI_VIEWPORT, 0xffffffff, ULPI_RUN | ULPI_ADDR(addr));
-	ret = ci_ulpi_wait(ci, ULPI_RUN);
-	if (ret)
-		return ret;
+	hw_ग_लिखो(ci, OP_ULPI_VIEWPORT, 0xffffffff, ULPI_RUN | ULPI_ADDR(addr));
+	ret = ci_ulpi_रुको(ci, ULPI_RUN);
+	अगर (ret)
+		वापस ret;
 
-	return hw_read(ci, OP_ULPI_VIEWPORT, GENMASK(15, 8)) >> 8;
-}
+	वापस hw_पढ़ो(ci, OP_ULPI_VIEWPORT, GENMASK(15, 8)) >> 8;
+पूर्ण
 
-static int ci_ulpi_write(struct device *dev, u8 addr, u8 val)
-{
-	struct ci_hdrc *ci = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक ci_ulpi_ग_लिखो(काष्ठा device *dev, u8 addr, u8 val)
+अणु
+	काष्ठा ci_hdrc *ci = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	hw_write(ci, OP_ULPI_VIEWPORT, 0xffffffff, ULPI_WRITE | ULPI_WAKEUP);
-	ret = ci_ulpi_wait(ci, ULPI_WAKEUP);
-	if (ret)
-		return ret;
+	hw_ग_लिखो(ci, OP_ULPI_VIEWPORT, 0xffffffff, ULPI_WRITE | ULPI_WAKEUP);
+	ret = ci_ulpi_रुको(ci, ULPI_WAKEUP);
+	अगर (ret)
+		वापस ret;
 
-	hw_write(ci, OP_ULPI_VIEWPORT, 0xffffffff,
+	hw_ग_लिखो(ci, OP_ULPI_VIEWPORT, 0xffffffff,
 		 ULPI_RUN | ULPI_WRITE | ULPI_ADDR(addr) | val);
-	return ci_ulpi_wait(ci, ULPI_RUN);
-}
+	वापस ci_ulpi_रुको(ci, ULPI_RUN);
+पूर्ण
 
-int ci_ulpi_init(struct ci_hdrc *ci)
-{
-	if (ci->platdata->phy_mode != USBPHY_INTERFACE_MODE_ULPI)
-		return 0;
+पूर्णांक ci_ulpi_init(काष्ठा ci_hdrc *ci)
+अणु
+	अगर (ci->platdata->phy_mode != USBPHY_INTERFACE_MODE_ULPI)
+		वापस 0;
 
 	/*
-	 * Set PORTSC correctly so we can read/write ULPI registers for
-	 * identification purposes
+	 * Set PORTSC correctly so we can पढ़ो/ग_लिखो ULPI रेजिस्टरs क्रम
+	 * identअगरication purposes
 	 */
 	hw_phymode_configure(ci);
 
-	ci->ulpi_ops.read = ci_ulpi_read;
-	ci->ulpi_ops.write = ci_ulpi_write;
-	ci->ulpi = ulpi_register_interface(ci->dev, &ci->ulpi_ops);
-	if (IS_ERR(ci->ulpi))
+	ci->ulpi_ops.पढ़ो = ci_ulpi_पढ़ो;
+	ci->ulpi_ops.ग_लिखो = ci_ulpi_ग_लिखो;
+	ci->ulpi = ulpi_रेजिस्टर_पूर्णांकerface(ci->dev, &ci->ulpi_ops);
+	अगर (IS_ERR(ci->ulpi))
 		dev_err(ci->dev, "failed to register ULPI interface");
 
-	return PTR_ERR_OR_ZERO(ci->ulpi);
-}
+	वापस PTR_ERR_OR_ZERO(ci->ulpi);
+पूर्ण
 
-void ci_ulpi_exit(struct ci_hdrc *ci)
-{
-	if (ci->ulpi) {
-		ulpi_unregister_interface(ci->ulpi);
-		ci->ulpi = NULL;
-	}
-}
+व्योम ci_ulpi_निकास(काष्ठा ci_hdrc *ci)
+अणु
+	अगर (ci->ulpi) अणु
+		ulpi_unरेजिस्टर_पूर्णांकerface(ci->ulpi);
+		ci->ulpi = शून्य;
+	पूर्ण
+पूर्ण
 
-int ci_ulpi_resume(struct ci_hdrc *ci)
-{
-	int cnt = 100000;
+पूर्णांक ci_ulpi_resume(काष्ठा ci_hdrc *ci)
+अणु
+	पूर्णांक cnt = 100000;
 
-	if (ci->platdata->phy_mode != USBPHY_INTERFACE_MODE_ULPI)
-		return 0;
+	अगर (ci->platdata->phy_mode != USBPHY_INTERFACE_MODE_ULPI)
+		वापस 0;
 
-	while (cnt-- > 0) {
-		if (hw_read(ci, OP_ULPI_VIEWPORT, ULPI_SYNC_STATE))
-			return 0;
+	जबतक (cnt-- > 0) अणु
+		अगर (hw_पढ़ो(ci, OP_ULPI_VIEWPORT, ULPI_SYNC_STATE))
+			वापस 0;
 		udelay(1);
-	}
+	पूर्ण
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Implementation of the SID table type.
  *
@@ -7,441 +8,441 @@
  *
  * Copyright (C) 2018 Red Hat, Inc.
  */
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/rcupdate.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
-#include <asm/barrier.h>
-#include "flask.h"
-#include "security.h"
-#include "sidtab.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश "flask.h"
+#समावेश "security.h"
+#समावेश "sidtab.h"
 
-struct sidtab_str_cache {
-	struct rcu_head rcu_member;
-	struct list_head lru_member;
-	struct sidtab_entry *parent;
+काष्ठा sidtab_str_cache अणु
+	काष्ठा rcu_head rcu_member;
+	काष्ठा list_head lru_member;
+	काष्ठा sidtab_entry *parent;
 	u32 len;
-	char str[];
-};
+	अक्षर str[];
+पूर्ण;
 
-#define index_to_sid(index) (index + SECINITSID_NUM + 1)
-#define sid_to_index(sid) (sid - (SECINITSID_NUM + 1))
+#घोषणा index_to_sid(index) (index + SECINITSID_NUM + 1)
+#घोषणा sid_to_index(sid) (sid - (SECINITSID_NUM + 1))
 
-int sidtab_init(struct sidtab *s)
-{
+पूर्णांक sidtab_init(काष्ठा sidtab *s)
+अणु
 	u32 i;
 
-	memset(s->roots, 0, sizeof(s->roots));
+	स_रखो(s->roots, 0, माप(s->roots));
 
-	for (i = 0; i < SECINITSID_NUM; i++)
+	क्रम (i = 0; i < SECINITSID_NUM; i++)
 		s->isids[i].set = 0;
 
 	s->frozen = false;
 	s->count = 0;
-	s->convert = NULL;
+	s->convert = शून्य;
 	hash_init(s->context_to_sid);
 
 	spin_lock_init(&s->lock);
 
-#if CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
-	s->cache_free_slots = CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE;
+#अगर CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
+	s->cache_मुक्त_slots = CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE;
 	INIT_LIST_HEAD(&s->cache_lru_list);
 	spin_lock_init(&s->cache_lock);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 context_to_sid(struct sidtab *s, struct context *context, u32 hash)
-{
-	struct sidtab_entry *entry;
+अटल u32 context_to_sid(काष्ठा sidtab *s, काष्ठा context *context, u32 hash)
+अणु
+	काष्ठा sidtab_entry *entry;
 	u32 sid = 0;
 
-	rcu_read_lock();
-	hash_for_each_possible_rcu(s->context_to_sid, entry, list, hash) {
-		if (entry->hash != hash)
-			continue;
-		if (context_cmp(&entry->context, context)) {
+	rcu_पढ़ो_lock();
+	hash_क्रम_each_possible_rcu(s->context_to_sid, entry, list, hash) अणु
+		अगर (entry->hash != hash)
+			जारी;
+		अगर (context_cmp(&entry->context, context)) अणु
 			sid = entry->sid;
-			break;
-		}
-	}
-	rcu_read_unlock();
-	return sid;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस sid;
+पूर्ण
 
-int sidtab_set_initial(struct sidtab *s, u32 sid, struct context *context)
-{
-	struct sidtab_isid_entry *isid;
+पूर्णांक sidtab_set_initial(काष्ठा sidtab *s, u32 sid, काष्ठा context *context)
+अणु
+	काष्ठा sidtab_isid_entry *isid;
 	u32 hash;
-	int rc;
+	पूर्णांक rc;
 
-	if (sid == 0 || sid > SECINITSID_NUM)
-		return -EINVAL;
+	अगर (sid == 0 || sid > SECINITSID_NUM)
+		वापस -EINVAL;
 
 	isid = &s->isids[sid - 1];
 
 	rc = context_cpy(&isid->entry.context, context);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-#if CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
-	isid->entry.cache = NULL;
-#endif
+#अगर CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
+	isid->entry.cache = शून्य;
+#पूर्ण_अगर
 	isid->set = 1;
 
 	hash = context_compute_hash(context);
 
 	/*
 	 * Multiple initial sids may map to the same context. Check that this
-	 * context is not already represented in the context_to_sid hashtable
-	 * to avoid duplicate entries and long linked lists upon hash
+	 * context is not alपढ़ोy represented in the context_to_sid hashtable
+	 * to aव्योम duplicate entries and दीर्घ linked lists upon hash
 	 * collision.
 	 */
-	if (!context_to_sid(s, context, hash)) {
+	अगर (!context_to_sid(s, context, hash)) अणु
 		isid->entry.sid = sid;
 		isid->entry.hash = hash;
 		hash_add(s->context_to_sid, &isid->entry.list, hash);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sidtab_hash_stats(struct sidtab *sidtab, char *page)
-{
-	int i;
-	int chain_len = 0;
-	int slots_used = 0;
-	int entries = 0;
-	int max_chain_len = 0;
-	int cur_bucket = 0;
-	struct sidtab_entry *entry;
+पूर्णांक sidtab_hash_stats(काष्ठा sidtab *sidtab, अक्षर *page)
+अणु
+	पूर्णांक i;
+	पूर्णांक chain_len = 0;
+	पूर्णांक slots_used = 0;
+	पूर्णांक entries = 0;
+	पूर्णांक max_chain_len = 0;
+	पूर्णांक cur_bucket = 0;
+	काष्ठा sidtab_entry *entry;
 
-	rcu_read_lock();
-	hash_for_each_rcu(sidtab->context_to_sid, i, entry, list) {
+	rcu_पढ़ो_lock();
+	hash_क्रम_each_rcu(sidtab->context_to_sid, i, entry, list) अणु
 		entries++;
-		if (i == cur_bucket) {
+		अगर (i == cur_bucket) अणु
 			chain_len++;
-			if (chain_len == 1)
+			अगर (chain_len == 1)
 				slots_used++;
-		} else {
+		पूर्ण अन्यथा अणु
 			cur_bucket = i;
-			if (chain_len > max_chain_len)
+			अगर (chain_len > max_chain_len)
 				max_chain_len = chain_len;
 			chain_len = 0;
-		}
-	}
-	rcu_read_unlock();
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (chain_len > max_chain_len)
+	अगर (chain_len > max_chain_len)
 		max_chain_len = chain_len;
 
-	return scnprintf(page, PAGE_SIZE, "entries: %d\nbuckets used: %d/%d\n"
+	वापस scnम_लिखो(page, PAGE_SIZE, "entries: %d\nbuckets used: %d/%d\n"
 			 "longest chain: %d\n", entries,
 			 slots_used, SIDTAB_HASH_BUCKETS, max_chain_len);
-}
+पूर्ण
 
-static u32 sidtab_level_from_count(u32 count)
-{
+अटल u32 sidtab_level_from_count(u32 count)
+अणु
 	u32 capacity = SIDTAB_LEAF_ENTRIES;
 	u32 level = 0;
 
-	while (count > capacity) {
+	जबतक (count > capacity) अणु
 		capacity <<= SIDTAB_INNER_SHIFT;
 		++level;
-	}
-	return level;
-}
+	पूर्ण
+	वापस level;
+पूर्ण
 
-static int sidtab_alloc_roots(struct sidtab *s, u32 level)
-{
+अटल पूर्णांक sidtab_alloc_roots(काष्ठा sidtab *s, u32 level)
+अणु
 	u32 l;
 
-	if (!s->roots[0].ptr_leaf) {
+	अगर (!s->roots[0].ptr_leaf) अणु
 		s->roots[0].ptr_leaf = kzalloc(SIDTAB_NODE_ALLOC_SIZE,
 					       GFP_ATOMIC);
-		if (!s->roots[0].ptr_leaf)
-			return -ENOMEM;
-	}
-	for (l = 1; l <= level; ++l)
-		if (!s->roots[l].ptr_inner) {
+		अगर (!s->roots[0].ptr_leaf)
+			वापस -ENOMEM;
+	पूर्ण
+	क्रम (l = 1; l <= level; ++l)
+		अगर (!s->roots[l].ptr_inner) अणु
 			s->roots[l].ptr_inner = kzalloc(SIDTAB_NODE_ALLOC_SIZE,
 							GFP_ATOMIC);
-			if (!s->roots[l].ptr_inner)
-				return -ENOMEM;
+			अगर (!s->roots[l].ptr_inner)
+				वापस -ENOMEM;
 			s->roots[l].ptr_inner->entries[0] = s->roots[l - 1];
-		}
-	return 0;
-}
+		पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct sidtab_entry *sidtab_do_lookup(struct sidtab *s, u32 index,
-					     int alloc)
-{
-	union sidtab_entry_inner *entry;
-	u32 level, capacity_shift, leaf_index = index / SIDTAB_LEAF_ENTRIES;
+अटल काष्ठा sidtab_entry *sidtab_करो_lookup(काष्ठा sidtab *s, u32 index,
+					     पूर्णांक alloc)
+अणु
+	जोड़ sidtab_entry_inner *entry;
+	u32 level, capacity_shअगरt, leaf_index = index / SIDTAB_LEAF_ENTRIES;
 
 	/* find the level of the subtree we need */
 	level = sidtab_level_from_count(index + 1);
-	capacity_shift = level * SIDTAB_INNER_SHIFT;
+	capacity_shअगरt = level * SIDTAB_INNER_SHIFT;
 
-	/* allocate roots if needed */
-	if (alloc && sidtab_alloc_roots(s, level) != 0)
-		return NULL;
+	/* allocate roots अगर needed */
+	अगर (alloc && sidtab_alloc_roots(s, level) != 0)
+		वापस शून्य;
 
 	/* lookup inside the subtree */
 	entry = &s->roots[level];
-	while (level != 0) {
-		capacity_shift -= SIDTAB_INNER_SHIFT;
+	जबतक (level != 0) अणु
+		capacity_shअगरt -= SIDTAB_INNER_SHIFT;
 		--level;
 
-		entry = &entry->ptr_inner->entries[leaf_index >> capacity_shift];
-		leaf_index &= ((u32)1 << capacity_shift) - 1;
+		entry = &entry->ptr_inner->entries[leaf_index >> capacity_shअगरt];
+		leaf_index &= ((u32)1 << capacity_shअगरt) - 1;
 
-		if (!entry->ptr_inner) {
-			if (alloc)
+		अगर (!entry->ptr_inner) अणु
+			अगर (alloc)
 				entry->ptr_inner = kzalloc(SIDTAB_NODE_ALLOC_SIZE,
 							   GFP_ATOMIC);
-			if (!entry->ptr_inner)
-				return NULL;
-		}
-	}
-	if (!entry->ptr_leaf) {
-		if (alloc)
+			अगर (!entry->ptr_inner)
+				वापस शून्य;
+		पूर्ण
+	पूर्ण
+	अगर (!entry->ptr_leaf) अणु
+		अगर (alloc)
 			entry->ptr_leaf = kzalloc(SIDTAB_NODE_ALLOC_SIZE,
 						  GFP_ATOMIC);
-		if (!entry->ptr_leaf)
-			return NULL;
-	}
-	return &entry->ptr_leaf->entries[index % SIDTAB_LEAF_ENTRIES];
-}
+		अगर (!entry->ptr_leaf)
+			वापस शून्य;
+	पूर्ण
+	वापस &entry->ptr_leaf->entries[index % SIDTAB_LEAF_ENTRIES];
+पूर्ण
 
-static struct sidtab_entry *sidtab_lookup(struct sidtab *s, u32 index)
-{
-	/* read entries only after reading count */
+अटल काष्ठा sidtab_entry *sidtab_lookup(काष्ठा sidtab *s, u32 index)
+अणु
+	/* पढ़ो entries only after पढ़ोing count */
 	u32 count = smp_load_acquire(&s->count);
 
-	if (index >= count)
-		return NULL;
+	अगर (index >= count)
+		वापस शून्य;
 
-	return sidtab_do_lookup(s, index, 0);
-}
+	वापस sidtab_करो_lookup(s, index, 0);
+पूर्ण
 
-static struct sidtab_entry *sidtab_lookup_initial(struct sidtab *s, u32 sid)
-{
-	return s->isids[sid - 1].set ? &s->isids[sid - 1].entry : NULL;
-}
+अटल काष्ठा sidtab_entry *sidtab_lookup_initial(काष्ठा sidtab *s, u32 sid)
+अणु
+	वापस s->isids[sid - 1].set ? &s->isids[sid - 1].entry : शून्य;
+पूर्ण
 
-static struct sidtab_entry *sidtab_search_core(struct sidtab *s, u32 sid,
-					       int force)
-{
-	if (sid != 0) {
-		struct sidtab_entry *entry;
+अटल काष्ठा sidtab_entry *sidtab_search_core(काष्ठा sidtab *s, u32 sid,
+					       पूर्णांक क्रमce)
+अणु
+	अगर (sid != 0) अणु
+		काष्ठा sidtab_entry *entry;
 
-		if (sid > SECINITSID_NUM)
+		अगर (sid > SECINITSID_NUM)
 			entry = sidtab_lookup(s, sid_to_index(sid));
-		else
+		अन्यथा
 			entry = sidtab_lookup_initial(s, sid);
-		if (entry && (!entry->context.len || force))
-			return entry;
-	}
+		अगर (entry && (!entry->context.len || क्रमce))
+			वापस entry;
+	पूर्ण
 
-	return sidtab_lookup_initial(s, SECINITSID_UNLABELED);
-}
+	वापस sidtab_lookup_initial(s, SECINITSID_UNLABELED);
+पूर्ण
 
-struct sidtab_entry *sidtab_search_entry(struct sidtab *s, u32 sid)
-{
-	return sidtab_search_core(s, sid, 0);
-}
+काष्ठा sidtab_entry *sidtab_search_entry(काष्ठा sidtab *s, u32 sid)
+अणु
+	वापस sidtab_search_core(s, sid, 0);
+पूर्ण
 
-struct sidtab_entry *sidtab_search_entry_force(struct sidtab *s, u32 sid)
-{
-	return sidtab_search_core(s, sid, 1);
-}
+काष्ठा sidtab_entry *sidtab_search_entry_क्रमce(काष्ठा sidtab *s, u32 sid)
+अणु
+	वापस sidtab_search_core(s, sid, 1);
+पूर्ण
 
-int sidtab_context_to_sid(struct sidtab *s, struct context *context,
+पूर्णांक sidtab_context_to_sid(काष्ठा sidtab *s, काष्ठा context *context,
 			  u32 *sid)
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 count, hash = context_compute_hash(context);
-	struct sidtab_convert_params *convert;
-	struct sidtab_entry *dst, *dst_convert;
-	int rc;
+	काष्ठा sidtab_convert_params *convert;
+	काष्ठा sidtab_entry *dst, *dst_convert;
+	पूर्णांक rc;
 
 	*sid = context_to_sid(s, context, hash);
-	if (*sid)
-		return 0;
+	अगर (*sid)
+		वापस 0;
 
-	/* lock-free search failed: lock, re-search, and insert if not found */
+	/* lock-मुक्त search failed: lock, re-search, and insert अगर not found */
 	spin_lock_irqsave(&s->lock, flags);
 
 	rc = 0;
 	*sid = context_to_sid(s, context, hash);
-	if (*sid)
-		goto out_unlock;
+	अगर (*sid)
+		जाओ out_unlock;
 
-	if (unlikely(s->frozen)) {
+	अगर (unlikely(s->frozen)) अणु
 		/*
-		 * This sidtab is now frozen - tell the caller to abort and
+		 * This sidtab is now frozen - tell the caller to पात and
 		 * get the new one.
 		 */
 		rc = -ESTALE;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	count = s->count;
 	convert = s->convert;
 
-	/* bail out if we already reached max entries */
+	/* bail out अगर we alपढ़ोy reached max entries */
 	rc = -EOVERFLOW;
-	if (count >= SIDTAB_MAX)
-		goto out_unlock;
+	अगर (count >= SIDTAB_MAX)
+		जाओ out_unlock;
 
-	/* insert context into new entry */
+	/* insert context पूर्णांकo new entry */
 	rc = -ENOMEM;
-	dst = sidtab_do_lookup(s, count, 1);
-	if (!dst)
-		goto out_unlock;
+	dst = sidtab_करो_lookup(s, count, 1);
+	अगर (!dst)
+		जाओ out_unlock;
 
 	dst->sid = index_to_sid(count);
 	dst->hash = hash;
 
 	rc = context_cpy(&dst->context, context);
-	if (rc)
-		goto out_unlock;
+	अगर (rc)
+		जाओ out_unlock;
 
 	/*
-	 * if we are building a new sidtab, we need to convert the context
+	 * अगर we are building a new sidtab, we need to convert the context
 	 * and insert it there as well
 	 */
-	if (convert) {
+	अगर (convert) अणु
 		rc = -ENOMEM;
-		dst_convert = sidtab_do_lookup(convert->target, count, 1);
-		if (!dst_convert) {
+		dst_convert = sidtab_करो_lookup(convert->target, count, 1);
+		अगर (!dst_convert) अणु
 			context_destroy(&dst->context);
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		rc = convert->func(context, &dst_convert->context,
 				   convert->args);
-		if (rc) {
+		अगर (rc) अणु
 			context_destroy(&dst->context);
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 		dst_convert->sid = index_to_sid(count);
 		dst_convert->hash = context_compute_hash(&dst_convert->context);
 		convert->target->count = count + 1;
 
 		hash_add_rcu(convert->target->context_to_sid,
 			     &dst_convert->list, dst_convert->hash);
-	}
+	पूर्ण
 
-	if (context->len)
+	अगर (context->len)
 		pr_info("SELinux:  Context %s is not valid (left unmapped).\n",
 			context->str);
 
 	*sid = index_to_sid(count);
 
-	/* write entries before updating count */
+	/* ग_लिखो entries beक्रमe updating count */
 	smp_store_release(&s->count, count + 1);
 	hash_add_rcu(s->context_to_sid, &dst->list, dst->hash);
 
 	rc = 0;
 out_unlock:
 	spin_unlock_irqrestore(&s->lock, flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void sidtab_convert_hashtable(struct sidtab *s, u32 count)
-{
-	struct sidtab_entry *entry;
+अटल व्योम sidtab_convert_hashtable(काष्ठा sidtab *s, u32 count)
+अणु
+	काष्ठा sidtab_entry *entry;
 	u32 i;
 
-	for (i = 0; i < count; i++) {
-		entry = sidtab_do_lookup(s, i, 0);
+	क्रम (i = 0; i < count; i++) अणु
+		entry = sidtab_करो_lookup(s, i, 0);
 		entry->sid = index_to_sid(i);
 		entry->hash = context_compute_hash(&entry->context);
 
 		hash_add_rcu(s->context_to_sid, &entry->list, entry->hash);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sidtab_convert_tree(union sidtab_entry_inner *edst,
-			       union sidtab_entry_inner *esrc,
+अटल पूर्णांक sidtab_convert_tree(जोड़ sidtab_entry_inner *edst,
+			       जोड़ sidtab_entry_inner *esrc,
 			       u32 *pos, u32 count, u32 level,
-			       struct sidtab_convert_params *convert)
-{
-	int rc;
+			       काष्ठा sidtab_convert_params *convert)
+अणु
+	पूर्णांक rc;
 	u32 i;
 
-	if (level != 0) {
-		if (!edst->ptr_inner) {
+	अगर (level != 0) अणु
+		अगर (!edst->ptr_inner) अणु
 			edst->ptr_inner = kzalloc(SIDTAB_NODE_ALLOC_SIZE,
 						  GFP_KERNEL);
-			if (!edst->ptr_inner)
-				return -ENOMEM;
-		}
+			अगर (!edst->ptr_inner)
+				वापस -ENOMEM;
+		पूर्ण
 		i = 0;
-		while (i < SIDTAB_INNER_ENTRIES && *pos < count) {
+		जबतक (i < SIDTAB_INNER_ENTRIES && *pos < count) अणु
 			rc = sidtab_convert_tree(&edst->ptr_inner->entries[i],
 						 &esrc->ptr_inner->entries[i],
 						 pos, count, level - 1,
 						 convert);
-			if (rc)
-				return rc;
+			अगर (rc)
+				वापस rc;
 			i++;
-		}
-	} else {
-		if (!edst->ptr_leaf) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!edst->ptr_leaf) अणु
 			edst->ptr_leaf = kzalloc(SIDTAB_NODE_ALLOC_SIZE,
 						 GFP_KERNEL);
-			if (!edst->ptr_leaf)
-				return -ENOMEM;
-		}
+			अगर (!edst->ptr_leaf)
+				वापस -ENOMEM;
+		पूर्ण
 		i = 0;
-		while (i < SIDTAB_LEAF_ENTRIES && *pos < count) {
+		जबतक (i < SIDTAB_LEAF_ENTRIES && *pos < count) अणु
 			rc = convert->func(&esrc->ptr_leaf->entries[i].context,
 					   &edst->ptr_leaf->entries[i].context,
 					   convert->args);
-			if (rc)
-				return rc;
+			अगर (rc)
+				वापस rc;
 			(*pos)++;
 			i++;
-		}
+		पूर्ण
 		cond_resched();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int sidtab_convert(struct sidtab *s, struct sidtab_convert_params *params)
-{
-	unsigned long flags;
+पूर्णांक sidtab_convert(काष्ठा sidtab *s, काष्ठा sidtab_convert_params *params)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 count, level, pos;
-	int rc;
+	पूर्णांक rc;
 
 	spin_lock_irqsave(&s->lock, flags);
 
 	/* concurrent policy loads are not allowed */
-	if (s->convert) {
+	अगर (s->convert) अणु
 		spin_unlock_irqrestore(&s->lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	count = s->count;
 	level = sidtab_level_from_count(count);
 
-	/* allocate last leaf in the new sidtab (to avoid race with
+	/* allocate last leaf in the new sidtab (to aव्योम race with
 	 * live convert)
 	 */
-	rc = sidtab_do_lookup(params->target, count - 1, 1) ? 0 : -ENOMEM;
-	if (rc) {
+	rc = sidtab_करो_lookup(params->target, count - 1, 1) ? 0 : -ENOMEM;
+	अगर (rc) अणु
 		spin_unlock_irqrestore(&s->lock, flags);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* set count in case no new entries are added during conversion */
+	/* set count in हाल no new entries are added during conversion */
 	params->target->count = count;
 
 	/* enable live convert of new entries */
@@ -456,173 +457,173 @@ int sidtab_convert(struct sidtab *s, struct sidtab_convert_params *params)
 	pos = 0;
 	rc = sidtab_convert_tree(&params->target->roots[level],
 				 &s->roots[level], &pos, count, level, params);
-	if (rc) {
+	अगर (rc) अणु
 		/* we need to keep the old table - disable live convert */
 		spin_lock_irqsave(&s->lock, flags);
-		s->convert = NULL;
+		s->convert = शून्य;
 		spin_unlock_irqrestore(&s->lock, flags);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	/*
-	 * The hashtable can also be modified in sidtab_context_to_sid()
+	 * The hashtable can also be modअगरied in sidtab_context_to_sid()
 	 * so we must re-acquire the lock here.
 	 */
 	spin_lock_irqsave(&s->lock, flags);
 	sidtab_convert_hashtable(params->target, count);
 	spin_unlock_irqrestore(&s->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void sidtab_cancel_convert(struct sidtab *s)
-{
-	unsigned long flags;
+व्योम sidtab_cancel_convert(काष्ठा sidtab *s)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/* cancelling policy load - disable live convert of sidtab */
 	spin_lock_irqsave(&s->lock, flags);
-	s->convert = NULL;
+	s->convert = शून्य;
 	spin_unlock_irqrestore(&s->lock, flags);
-}
+पूर्ण
 
-void sidtab_freeze_begin(struct sidtab *s, unsigned long *flags) __acquires(&s->lock)
-{
+व्योम sidtab_मुक्तze_begin(काष्ठा sidtab *s, अचिन्हित दीर्घ *flags) __acquires(&s->lock)
+अणु
 	spin_lock_irqsave(&s->lock, *flags);
 	s->frozen = true;
-	s->convert = NULL;
-}
-void sidtab_freeze_end(struct sidtab *s, unsigned long *flags) __releases(&s->lock)
-{
+	s->convert = शून्य;
+पूर्ण
+व्योम sidtab_मुक्तze_end(काष्ठा sidtab *s, अचिन्हित दीर्घ *flags) __releases(&s->lock)
+अणु
 	spin_unlock_irqrestore(&s->lock, *flags);
-}
+पूर्ण
 
-static void sidtab_destroy_entry(struct sidtab_entry *entry)
-{
+अटल व्योम sidtab_destroy_entry(काष्ठा sidtab_entry *entry)
+अणु
 	context_destroy(&entry->context);
-#if CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
-	kfree(rcu_dereference_raw(entry->cache));
-#endif
-}
+#अगर CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
+	kमुक्त(rcu_dereference_raw(entry->cache));
+#पूर्ण_अगर
+पूर्ण
 
-static void sidtab_destroy_tree(union sidtab_entry_inner entry, u32 level)
-{
+अटल व्योम sidtab_destroy_tree(जोड़ sidtab_entry_inner entry, u32 level)
+अणु
 	u32 i;
 
-	if (level != 0) {
-		struct sidtab_node_inner *node = entry.ptr_inner;
+	अगर (level != 0) अणु
+		काष्ठा sidtab_node_inner *node = entry.ptr_inner;
 
-		if (!node)
-			return;
+		अगर (!node)
+			वापस;
 
-		for (i = 0; i < SIDTAB_INNER_ENTRIES; i++)
+		क्रम (i = 0; i < SIDTAB_INNER_ENTRIES; i++)
 			sidtab_destroy_tree(node->entries[i], level - 1);
-		kfree(node);
-	} else {
-		struct sidtab_node_leaf *node = entry.ptr_leaf;
+		kमुक्त(node);
+	पूर्ण अन्यथा अणु
+		काष्ठा sidtab_node_leaf *node = entry.ptr_leaf;
 
-		if (!node)
-			return;
+		अगर (!node)
+			वापस;
 
-		for (i = 0; i < SIDTAB_LEAF_ENTRIES; i++)
+		क्रम (i = 0; i < SIDTAB_LEAF_ENTRIES; i++)
 			sidtab_destroy_entry(&node->entries[i]);
-		kfree(node);
-	}
-}
+		kमुक्त(node);
+	पूर्ण
+पूर्ण
 
-void sidtab_destroy(struct sidtab *s)
-{
+व्योम sidtab_destroy(काष्ठा sidtab *s)
+अणु
 	u32 i, level;
 
-	for (i = 0; i < SECINITSID_NUM; i++)
-		if (s->isids[i].set)
+	क्रम (i = 0; i < SECINITSID_NUM; i++)
+		अगर (s->isids[i].set)
 			sidtab_destroy_entry(&s->isids[i].entry);
 
 	level = SIDTAB_MAX_LEVEL;
-	while (level && !s->roots[level].ptr_inner)
+	जबतक (level && !s->roots[level].ptr_inner)
 		--level;
 
 	sidtab_destroy_tree(s->roots[level], level);
 	/*
 	 * The context_to_sid hashtable's objects are all shared
-	 * with the isids array and context tree, and so don't need
+	 * with the isids array and context tree, and so करोn't need
 	 * to be cleaned up here.
 	 */
-}
+पूर्ण
 
-#if CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
+#अगर CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
 
-void sidtab_sid2str_put(struct sidtab *s, struct sidtab_entry *entry,
-			const char *str, u32 str_len)
-{
-	struct sidtab_str_cache *cache, *victim = NULL;
-	unsigned long flags;
+व्योम sidtab_sid2str_put(काष्ठा sidtab *s, काष्ठा sidtab_entry *entry,
+			स्थिर अक्षर *str, u32 str_len)
+अणु
+	काष्ठा sidtab_str_cache *cache, *victim = शून्य;
+	अचिन्हित दीर्घ flags;
 
-	/* do not cache invalid contexts */
-	if (entry->context.len)
-		return;
+	/* करो not cache invalid contexts */
+	अगर (entry->context.len)
+		वापस;
 
 	spin_lock_irqsave(&s->cache_lock, flags);
 
-	cache = rcu_dereference_protected(entry->cache,
+	cache = rcu_dereference_रक्षित(entry->cache,
 					  lockdep_is_held(&s->cache_lock));
-	if (cache) {
+	अगर (cache) अणु
 		/* entry in cache - just bump to the head of LRU list */
 		list_move(&cache->lru_member, &s->cache_lru_list);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	cache = kmalloc(sizeof(struct sidtab_str_cache) + str_len, GFP_ATOMIC);
-	if (!cache)
-		goto out_unlock;
+	cache = kदो_स्मृति(माप(काष्ठा sidtab_str_cache) + str_len, GFP_ATOMIC);
+	अगर (!cache)
+		जाओ out_unlock;
 
-	if (s->cache_free_slots == 0) {
-		/* pop a cache entry from the tail and free it */
+	अगर (s->cache_मुक्त_slots == 0) अणु
+		/* pop a cache entry from the tail and मुक्त it */
 		victim = container_of(s->cache_lru_list.prev,
-				      struct sidtab_str_cache, lru_member);
+				      काष्ठा sidtab_str_cache, lru_member);
 		list_del(&victim->lru_member);
-		rcu_assign_pointer(victim->parent->cache, NULL);
-	} else {
-		s->cache_free_slots--;
-	}
+		rcu_assign_poपूर्णांकer(victim->parent->cache, शून्य);
+	पूर्ण अन्यथा अणु
+		s->cache_मुक्त_slots--;
+	पूर्ण
 	cache->parent = entry;
 	cache->len = str_len;
-	memcpy(cache->str, str, str_len);
+	स_नकल(cache->str, str, str_len);
 	list_add(&cache->lru_member, &s->cache_lru_list);
 
-	rcu_assign_pointer(entry->cache, cache);
+	rcu_assign_poपूर्णांकer(entry->cache, cache);
 
 out_unlock:
 	spin_unlock_irqrestore(&s->cache_lock, flags);
-	kfree_rcu(victim, rcu_member);
-}
+	kमुक्त_rcu(victim, rcu_member);
+पूर्ण
 
-int sidtab_sid2str_get(struct sidtab *s, struct sidtab_entry *entry,
-		       char **out, u32 *out_len)
-{
-	struct sidtab_str_cache *cache;
-	int rc = 0;
+पूर्णांक sidtab_sid2str_get(काष्ठा sidtab *s, काष्ठा sidtab_entry *entry,
+		       अक्षर **out, u32 *out_len)
+अणु
+	काष्ठा sidtab_str_cache *cache;
+	पूर्णांक rc = 0;
 
-	if (entry->context.len)
-		return -ENOENT; /* do not cache invalid contexts */
+	अगर (entry->context.len)
+		वापस -ENOENT; /* करो not cache invalid contexts */
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	cache = rcu_dereference(entry->cache);
-	if (!cache) {
+	अगर (!cache) अणु
 		rc = -ENOENT;
-	} else {
+	पूर्ण अन्यथा अणु
 		*out_len = cache->len;
-		if (out) {
+		अगर (out) अणु
 			*out = kmemdup(cache->str, cache->len, GFP_ATOMIC);
-			if (!*out)
+			अगर (!*out)
 				rc = -ENOMEM;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (!rc && out)
+	अगर (!rc && out)
 		sidtab_sid2str_put(s, entry, *out, *out_len);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#endif /* CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0 */
+#पूर्ण_अगर /* CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0 */

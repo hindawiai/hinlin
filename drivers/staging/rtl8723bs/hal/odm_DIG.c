@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#include "odm_precomp.h"
+#समावेश "odm_precomp.h"
 
-#define ADAPTIVITY_VERSION "5.0"
+#घोषणा ADAPTIVITY_VERSION "5.0"
 
-void odm_NHMCounterStatisticsInit(void *pDM_VOID)
-{
-	struct dm_odm_t	*pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_NHMCounterStatisticsInit(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t	*pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
-	/* PHY parameters initialize for n series */
-	rtw_write16(pDM_Odm->Adapter, ODM_REG_NHM_TIMER_11N+2, 0x2710);	/* 0x894[31:16]= 0x2710	Time duration for NHM unit: 4us, 0x2710 =40ms */
-	/* rtw_write16(pDM_Odm->Adapter, ODM_REG_NHM_TIMER_11N+2, 0x4e20);	0x894[31:16]= 0x4e20	Time duration for NHM unit: 4us, 0x4e20 =80ms */
-	rtw_write16(pDM_Odm->Adapter, ODM_REG_NHM_TH9_TH10_11N+2, 0xffff);	/* 0x890[31:16]= 0xffff	th_9, th_10 */
-	/* rtw_write32(pDM_Odm->Adapter, ODM_REG_NHM_TH3_TO_TH0_11N, 0xffffff5c);	0x898 = 0xffffff5c		th_3, th_2, th_1, th_0 */
-	rtw_write32(pDM_Odm->Adapter, ODM_REG_NHM_TH3_TO_TH0_11N, 0xffffff52);	/* 0x898 = 0xffffff52		th_3, th_2, th_1, th_0 */
-	rtw_write32(pDM_Odm->Adapter, ODM_REG_NHM_TH7_TO_TH4_11N, 0xffffffff);	/* 0x89c = 0xffffffff		th_7, th_6, th_5, th_4 */
+	/* PHY parameters initialize क्रम n series */
+	rtw_ग_लिखो16(pDM_Odm->Adapter, ODM_REG_NHM_TIMER_11N+2, 0x2710);	/* 0x894[31:16]= 0x2710	Time duration क्रम NHM unit: 4us, 0x2710 =40ms */
+	/* rtw_ग_लिखो16(pDM_Odm->Adapter, ODM_REG_NHM_TIMER_11N+2, 0x4e20);	0x894[31:16]= 0x4e20	Time duration क्रम NHM unit: 4us, 0x4e20 =80ms */
+	rtw_ग_लिखो16(pDM_Odm->Adapter, ODM_REG_NHM_TH9_TH10_11N+2, 0xffff);	/* 0x890[31:16]= 0xffff	th_9, th_10 */
+	/* rtw_ग_लिखो32(pDM_Odm->Adapter, ODM_REG_NHM_TH3_TO_TH0_11N, 0xffffff5c);	0x898 = 0xffffff5c		th_3, th_2, th_1, th_0 */
+	rtw_ग_लिखो32(pDM_Odm->Adapter, ODM_REG_NHM_TH3_TO_TH0_11N, 0xffffff52);	/* 0x898 = 0xffffff52		th_3, th_2, th_1, th_0 */
+	rtw_ग_लिखो32(pDM_Odm->Adapter, ODM_REG_NHM_TH7_TO_TH4_11N, 0xffffffff);	/* 0x89c = 0xffffffff		th_7, th_6, th_5, th_4 */
 	PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG_FPGA0_IQK_11N, bMaskByte0, 0xff);		/* 0xe28[7:0]= 0xff		th_8 */
 	PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG_NHM_TH9_TH10_11N, BIT10|BIT9|BIT8, 0x7);	/* 0x890[9:8]=3			enable CCX */
-	PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG_OFDM_FA_RSTC_11N, BIT7, 0x1);		/* 0xc0c[7]= 1			max power among all RX ants */
-}
+	PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG_OFDM_FA_RSTC_11N, BIT7, 0x1);		/* 0xc0c[7]= 1			max घातer among all RX ants */
+पूर्ण
 
-void odm_NHMCounterStatistics(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_NHMCounterStatistics(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
 	/*  Get NHM report */
 	odm_GetNHMCounterStatistics(pDM_Odm);
 
 	/*  Reset NHM counter */
 	odm_NHMCounterStatisticsReset(pDM_Odm);
-}
+पूर्ण
 
-void odm_GetNHMCounterStatistics(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_GetNHMCounterStatistics(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 	u32 value32 = 0;
 
 	value32 = PHY_QueryBBReg(pDM_Odm->Adapter, ODM_REG_NHM_CNT_11N, bMaskDWord);
 
 	pDM_Odm->NHM_cnt_0 = (u8)(value32 & bMaskByte0);
-}
+पूर्ण
 
-void odm_NHMCounterStatisticsReset(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_NHMCounterStatisticsReset(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
 	PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG_NHM_TH9_TH10_11N, BIT1, 0);
 	PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG_NHM_TH9_TH10_11N, BIT1, 1);
-}
+पूर्ण
 
-void odm_NHMBBInit(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_NHMBBInit(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
 	pDM_Odm->adaptivity_flag = 0;
 	pDM_Odm->tolerance_cnt = 3;
@@ -64,14 +65,14 @@ void odm_NHMBBInit(void *pDM_VOID)
 	pDM_Odm->NHMLastRxOkcnt = 0;
 	pDM_Odm->NHMCurTxOkcnt = 0;
 	pDM_Odm->NHMCurRxOkcnt = 0;
-}
+पूर्ण
 
 /*  */
-void odm_NHMBB(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_NHMBB(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 	/* u8 test_status; */
-	/* struct false_ALARM_STATISTICS *pFalseAlmCnt = &pDM_Odm->FalseAlmCnt; */
+	/* काष्ठा false_ALARM_STATISTICS *pFalseAlmCnt = &pDM_Odm->FalseAlmCnt; */
 
 	pDM_Odm->NHMCurTxOkcnt =
 		*(pDM_Odm->pNumTxBytesUnicast)-pDM_Odm->NHMLastTxOkcnt;
@@ -94,85 +95,85 @@ void odm_NHMBB(void *pDM_VOID)
 	);
 
 
-	if ((pDM_Odm->NHMCurTxOkcnt) + 1 > (u64)(pDM_Odm->NHMCurRxOkcnt<<2) + 1) { /* Tx > 4*Rx possible for adaptivity test */
-		if (pDM_Odm->NHM_cnt_0 >= 190 || pDM_Odm->adaptivity_flag == true) {
+	अगर ((pDM_Odm->NHMCurTxOkcnt) + 1 > (u64)(pDM_Odm->NHMCurRxOkcnt<<2) + 1) अणु /* Tx > 4*Rx possible क्रम adaptivity test */
+		अगर (pDM_Odm->NHM_cnt_0 >= 190 || pDM_Odm->adaptivity_flag == true) अणु
 			/* Enable EDCCA since it is possible running Adaptivity testing */
 			/* test_status = 1; */
 			pDM_Odm->adaptivity_flag = true;
 			pDM_Odm->tolerance_cnt = 0;
-		} else {
-			if (pDM_Odm->tolerance_cnt < 3)
+		पूर्ण अन्यथा अणु
+			अगर (pDM_Odm->tolerance_cnt < 3)
 				pDM_Odm->tolerance_cnt = pDM_Odm->tolerance_cnt + 1;
-			else
+			अन्यथा
 				pDM_Odm->tolerance_cnt = 4;
 			/* test_status = 5; */
-			if (pDM_Odm->tolerance_cnt > 3) {
+			अगर (pDM_Odm->tolerance_cnt > 3) अणु
 				/* test_status = 3; */
 				pDM_Odm->adaptivity_flag = false;
-			}
-		}
-	} else { /*  TX<RX */
-		if (pDM_Odm->adaptivity_flag == true && pDM_Odm->NHM_cnt_0 <= 200) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु /*  TX<RX */
+		अगर (pDM_Odm->adaptivity_flag == true && pDM_Odm->NHM_cnt_0 <= 200) अणु
 			/* test_status = 2; */
 			pDM_Odm->tolerance_cnt = 0;
-		} else {
-			if (pDM_Odm->tolerance_cnt < 3)
+		पूर्ण अन्यथा अणु
+			अगर (pDM_Odm->tolerance_cnt < 3)
 				pDM_Odm->tolerance_cnt = pDM_Odm->tolerance_cnt + 1;
-			else
+			अन्यथा
 				pDM_Odm->tolerance_cnt = 4;
 			/* test_status = 5; */
-			if (pDM_Odm->tolerance_cnt > 3) {
+			अगर (pDM_Odm->tolerance_cnt > 3) अणु
 				/* test_status = 4; */
 				pDM_Odm->adaptivity_flag = false;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("adaptivity_flag = %d\n ", pDM_Odm->adaptivity_flag));
-}
+पूर्ण
 
-void odm_SearchPwdBLowerBound(void *pDM_VOID, u8 IGI_target)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_SearchPwdBLowerBound(व्योम *pDM_VOID, u8 IGI_target)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 	u32 value32 = 0;
 	u8 cnt, IGI;
 	bool bAdjust = true;
 	s8 TH_L2H_dmc, TH_H2L_dmc;
-	s8 Diff;
+	s8 Dअगरf;
 
 	IGI = 0x50; /*  find H2L, L2H lower bound */
 	ODM_Write_DIG(pDM_Odm, IGI);
 
 
-	Diff = IGI_target-(s8)IGI;
-	TH_L2H_dmc = pDM_Odm->TH_L2H_ini + Diff;
-	if (TH_L2H_dmc > 10)
+	Dअगरf = IGI_target-(s8)IGI;
+	TH_L2H_dmc = pDM_Odm->TH_L2H_ini + Dअगरf;
+	अगर (TH_L2H_dmc > 10)
 		TH_L2H_dmc = 10;
-	TH_H2L_dmc = TH_L2H_dmc - pDM_Odm->TH_EDCCA_HL_diff;
+	TH_H2L_dmc = TH_L2H_dmc - pDM_Odm->TH_EDCCA_HL_dअगरf;
 	PHY_SetBBReg(pDM_Odm->Adapter, rOFDM0_ECCAThreshold, bMaskByte0, (u8)TH_L2H_dmc);
 	PHY_SetBBReg(pDM_Odm->Adapter, rOFDM0_ECCAThreshold, bMaskByte2, (u8)TH_H2L_dmc);
 
 	mdelay(5);
 
-	while (bAdjust) {
-		for (cnt = 0; cnt < 20; cnt++) {
+	जबतक (bAdjust) अणु
+		क्रम (cnt = 0; cnt < 20; cnt++) अणु
 			value32 = PHY_QueryBBReg(pDM_Odm->Adapter, ODM_REG_RPT_11N, bMaskDWord);
 
-			if (value32 & BIT30)
+			अगर (value32 & BIT30)
 				pDM_Odm->txEdcca1 = pDM_Odm->txEdcca1 + 1;
-			else if (value32 & BIT29)
+			अन्यथा अगर (value32 & BIT29)
 				pDM_Odm->txEdcca1 = pDM_Odm->txEdcca1 + 1;
-			else
+			अन्यथा
 				pDM_Odm->txEdcca0 = pDM_Odm->txEdcca0 + 1;
-		}
-		/* DbgPrint("txEdcca1 = %d, txEdcca0 = %d\n", pDM_Odm->txEdcca1, pDM_Odm->txEdcca0); */
+		पूर्ण
+		/* DbgPrपूर्णांक("txEdcca1 = %d, txEdcca0 = %d\n", pDM_Odm->txEdcca1, pDM_Odm->txEdcca0); */
 
-		if (pDM_Odm->txEdcca1 > 5) {
+		अगर (pDM_Odm->txEdcca1 > 5) अणु
 			IGI = IGI-1;
 			TH_L2H_dmc = TH_L2H_dmc + 1;
-			if (TH_L2H_dmc > 10)
+			अगर (TH_L2H_dmc > 10)
 				TH_L2H_dmc = 10;
-			TH_H2L_dmc = TH_L2H_dmc - pDM_Odm->TH_EDCCA_HL_diff;
+			TH_H2L_dmc = TH_L2H_dmc - pDM_Odm->TH_EDCCA_HL_dअगरf;
 			PHY_SetBBReg(pDM_Odm->Adapter, rOFDM0_ECCAThreshold, bMaskByte0, (u8)TH_L2H_dmc);
 			PHY_SetBBReg(pDM_Odm->Adapter, rOFDM0_ECCAThreshold, bMaskByte2, (u8)TH_H2L_dmc);
 
@@ -180,7 +181,7 @@ void odm_SearchPwdBLowerBound(void *pDM_VOID, u8 IGI_target)
 			pDM_Odm->txEdcca1 = 0;
 			pDM_Odm->txEdcca0 = 0;
 
-			if (TH_L2H_dmc == 10) {
+			अगर (TH_L2H_dmc == 10) अणु
 				bAdjust = false;
 				pDM_Odm->TxHangFlg = false;
 				pDM_Odm->txEdcca1 = 0;
@@ -188,8 +189,8 @@ void odm_SearchPwdBLowerBound(void *pDM_VOID, u8 IGI_target)
 				pDM_Odm->H2L_lb = TH_H2L_dmc;
 				pDM_Odm->L2H_lb = TH_L2H_dmc;
 				pDM_Odm->Adaptivity_IGI_upper = IGI;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			bAdjust = false;
 			pDM_Odm->TxHangFlg = false;
 			pDM_Odm->txEdcca1 = 0;
@@ -197,23 +198,23 @@ void odm_SearchPwdBLowerBound(void *pDM_VOID, u8 IGI_target)
 			pDM_Odm->H2L_lb = TH_H2L_dmc;
 			pDM_Odm->L2H_lb = TH_L2H_dmc;
 			pDM_Odm->Adaptivity_IGI_upper = IGI;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("IGI = 0x%x, H2L_lb = 0x%x, L2H_lb = 0x%x\n", IGI, pDM_Odm->H2L_lb, pDM_Odm->L2H_lb));
-}
+पूर्ण
 
-void odm_AdaptivityInit(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_AdaptivityInit(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
-	if (pDM_Odm->Carrier_Sense_enable == false)
+	अगर (pDM_Odm->Carrier_Sense_enable == false)
 		pDM_Odm->TH_L2H_ini = 0xf7; /*  -7 */
-	else
+	अन्यथा
 		pDM_Odm->TH_L2H_ini = 0xa;
 
 	pDM_Odm->AdapEn_RSSI = 20;
-	pDM_Odm->TH_EDCCA_HL_diff = 7;
+	pDM_Odm->TH_EDCCA_HL_dअगरf = 7;
 
 	pDM_Odm->IGI_Base = 0x32;
 	pDM_Odm->IGI_target = 0x1c;
@@ -227,56 +228,56 @@ void odm_AdaptivityInit(void *pDM_VOID)
 	pDM_Odm->Adaptivity_IGI_upper = 0;
 	odm_NHMBBInit(pDM_Odm);
 
-	PHY_SetBBReg(pDM_Odm->Adapter, REG_RD_CTRL, BIT11, 1); /*  stop counting if EDCCA is asserted */
-}
+	PHY_SetBBReg(pDM_Odm->Adapter, REG_RD_CTRL, BIT11, 1); /*  stop counting अगर EDCCA is निश्चितed */
+पूर्ण
 
 
-void odm_Adaptivity(void *pDM_VOID, u8 IGI)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_Adaptivity(व्योम *pDM_VOID, u8 IGI)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 	s8 TH_L2H_dmc, TH_H2L_dmc;
-	s8 Diff, IGI_target;
+	s8 Dअगरf, IGI_target;
 	bool EDCCA_State = false;
 
-	if (!(pDM_Odm->SupportAbility & ODM_BB_ADAPTIVITY)) {
+	अगर (!(pDM_Odm->SupportAbility & ODM_BB_ADAPTIVITY)) अणु
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("Go to odm_DynamicEDCCA()\n"));
-		return;
-	}
+		वापस;
+	पूर्ण
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_Adaptivity() =====>\n"));
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("ForceEDCCA =%d, IGI_Base = 0x%x, TH_L2H_ini = %d, TH_EDCCA_HL_diff = %d, AdapEn_RSSI = %d\n",
-		pDM_Odm->ForceEDCCA, pDM_Odm->IGI_Base, pDM_Odm->TH_L2H_ini, pDM_Odm->TH_EDCCA_HL_diff, pDM_Odm->AdapEn_RSSI));
+		pDM_Odm->ForceEDCCA, pDM_Odm->IGI_Base, pDM_Odm->TH_L2H_ini, pDM_Odm->TH_EDCCA_HL_dअगरf, pDM_Odm->AdapEn_RSSI));
 
-	if (*pDM_Odm->pBandWidth == ODM_BW20M) /* CHANNEL_WIDTH_20 */
+	अगर (*pDM_Odm->pBandWidth == ODM_BW20M) /* CHANNEL_WIDTH_20 */
 		IGI_target = pDM_Odm->IGI_Base;
-	else if (*pDM_Odm->pBandWidth == ODM_BW40M)
+	अन्यथा अगर (*pDM_Odm->pBandWidth == ODM_BW40M)
 		IGI_target = pDM_Odm->IGI_Base + 2;
-	else if (*pDM_Odm->pBandWidth == ODM_BW80M)
+	अन्यथा अगर (*pDM_Odm->pBandWidth == ODM_BW80M)
 		IGI_target = pDM_Odm->IGI_Base + 2;
-	else
+	अन्यथा
 		IGI_target = pDM_Odm->IGI_Base;
 	pDM_Odm->IGI_target = (u8) IGI_target;
 
 	/* Search pwdB lower bound */
-	if (pDM_Odm->TxHangFlg == true) {
+	अगर (pDM_Odm->TxHangFlg == true) अणु
 		PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG_DBG_RPT_11N, bMaskDWord, 0x208);
 		odm_SearchPwdBLowerBound(pDM_Odm, pDM_Odm->IGI_target);
-	}
+	पूर्ण
 
-	if ((!pDM_Odm->bLinked) || (*pDM_Odm->pChannel > 149)) { /*  Band4 doesn't need adaptivity */
+	अगर ((!pDM_Odm->bLinked) || (*pDM_Odm->pChannel > 149)) अणु /*  Band4 करोesn't need adaptivity */
 		PHY_SetBBReg(pDM_Odm->Adapter, rOFDM0_ECCAThreshold, bMaskByte0, 0x7f);
 		PHY_SetBBReg(pDM_Odm->Adapter, rOFDM0_ECCAThreshold, bMaskByte2, 0x7f);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!pDM_Odm->ForceEDCCA) {
-		if (pDM_Odm->RSSI_Min > pDM_Odm->AdapEn_RSSI)
+	अगर (!pDM_Odm->ForceEDCCA) अणु
+		अगर (pDM_Odm->RSSI_Min > pDM_Odm->AdapEn_RSSI)
 			EDCCA_State = true;
-		else if (pDM_Odm->RSSI_Min < (pDM_Odm->AdapEn_RSSI - 5))
+		अन्यथा अगर (pDM_Odm->RSSI_Min < (pDM_Odm->AdapEn_RSSI - 5))
 			EDCCA_State = false;
-	} else
+	पूर्ण अन्यथा
 		EDCCA_State = true;
 
-	if (
+	अगर (
 		pDM_Odm->bLinked &&
 		pDM_Odm->Carrier_Sense_enable == false &&
 		pDM_Odm->NHM_disable == false &&
@@ -297,125 +298,125 @@ void odm_Adaptivity(void *pDM_VOID, u8 IGI)
 		)
 	);
 
-	if (EDCCA_State) {
-		Diff = IGI_target-(s8)IGI;
-		TH_L2H_dmc = pDM_Odm->TH_L2H_ini + Diff;
-		if (TH_L2H_dmc > 10)
+	अगर (EDCCA_State) अणु
+		Dअगरf = IGI_target-(s8)IGI;
+		TH_L2H_dmc = pDM_Odm->TH_L2H_ini + Dअगरf;
+		अगर (TH_L2H_dmc > 10)
 			TH_L2H_dmc = 10;
 
-		TH_H2L_dmc = TH_L2H_dmc - pDM_Odm->TH_EDCCA_HL_diff;
+		TH_H2L_dmc = TH_L2H_dmc - pDM_Odm->TH_EDCCA_HL_dअगरf;
 
 		/* replace lower bound to prevent EDCCA always equal  */
-		if (TH_H2L_dmc < pDM_Odm->H2L_lb)
+		अगर (TH_H2L_dmc < pDM_Odm->H2L_lb)
 			TH_H2L_dmc = pDM_Odm->H2L_lb;
-		if (TH_L2H_dmc < pDM_Odm->L2H_lb)
+		अगर (TH_L2H_dmc < pDM_Odm->L2H_lb)
 			TH_L2H_dmc = pDM_Odm->L2H_lb;
-	} else {
+	पूर्ण अन्यथा अणु
 		TH_L2H_dmc = 0x7f;
 		TH_H2L_dmc = 0x7f;
-	}
+	पूर्ण
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("IGI = 0x%x, TH_L2H_dmc = %d, TH_H2L_dmc = %d\n",
 		IGI, TH_L2H_dmc, TH_H2L_dmc));
 	PHY_SetBBReg(pDM_Odm->Adapter, rOFDM0_ECCAThreshold, bMaskByte0, (u8)TH_L2H_dmc);
 	PHY_SetBBReg(pDM_Odm->Adapter, rOFDM0_ECCAThreshold, bMaskByte2, (u8)TH_H2L_dmc);
-}
+पूर्ण
 
-void ODM_Write_DIG(void *pDM_VOID, u8 CurrentIGI)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
+व्योम ODM_Write_DIG(व्योम *pDM_VOID, u8 CurrentIGI)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
 
-	if (pDM_DigTable->bStopDIG) {
+	अगर (pDM_DigTable->bStopDIG) अणु
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("Stop Writing IGI\n"));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_TRACE, ("ODM_REG(IGI_A, pDM_Odm) = 0x%x, ODM_BIT(IGI, pDM_Odm) = 0x%x\n",
 		ODM_REG(IGI_A, pDM_Odm), ODM_BIT(IGI, pDM_Odm)));
 
-	if (pDM_DigTable->CurIGValue != CurrentIGI) {
+	अगर (pDM_DigTable->CurIGValue != CurrentIGI) अणु
 		/* 1 Check initial gain by upper bound */
-		if (!pDM_DigTable->bPSDInProgress) {
-			if (CurrentIGI > pDM_DigTable->rx_gain_range_max) {
+		अगर (!pDM_DigTable->bPSDInProgress) अणु
+			अगर (CurrentIGI > pDM_DigTable->rx_gain_range_max) अणु
 				ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_TRACE, ("CurrentIGI(0x%02x) is larger than upper bound !!\n", pDM_DigTable->rx_gain_range_max));
 				CurrentIGI = pDM_DigTable->rx_gain_range_max;
-			}
+			पूर्ण
 
-		}
+		पूर्ण
 
 		/* 1 Set IGI value */
 		PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG(IGI_A, pDM_Odm), ODM_BIT(IGI, pDM_Odm), CurrentIGI);
 
-		if (pDM_Odm->RFType > ODM_1T1R)
+		अगर (pDM_Odm->RFType > ODM_1T1R)
 			PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG(IGI_B, pDM_Odm), ODM_BIT(IGI, pDM_Odm), CurrentIGI);
 
 		pDM_DigTable->CurIGValue = CurrentIGI;
-	}
+	पूर्ण
 
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_TRACE, ("CurrentIGI(0x%02x).\n", CurrentIGI));
 
-}
+पूर्ण
 
-void odm_PauseDIG(
-	void *pDM_VOID,
-	enum ODM_Pause_DIG_TYPE PauseType,
+व्योम odm_PauseDIG(
+	व्योम *pDM_VOID,
+	क्रमागत ODM_Pause_DIG_TYPE PauseType,
 	u8 IGIValue
 )
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
-	static bool bPaused;
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
+	अटल bool bPaused;
 
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_PauseDIG() =========>\n"));
 
-	if (
+	अगर (
 		(pDM_Odm->SupportAbility & ODM_BB_ADAPTIVITY) &&
 		pDM_Odm->TxHangFlg == true
-	) {
+	) अणु
 		ODM_RT_TRACE(
 			pDM_Odm,
 			ODM_COMP_DIG,
 			ODM_DBG_LOUD,
 			("odm_PauseDIG(): Dynamic adjust threshold in progress !!\n")
 		);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (
+	अगर (
 		!bPaused && (!(pDM_Odm->SupportAbility & ODM_BB_DIG) ||
 		!(pDM_Odm->SupportAbility & ODM_BB_FA_CNT))
-	){
+	)अणु
 		ODM_RT_TRACE(
 			pDM_Odm,
 			ODM_COMP_DIG,
 			ODM_DBG_LOUD,
 			("odm_PauseDIG(): Return: SupportAbility ODM_BB_DIG or ODM_BB_FA_CNT is disabled\n")
 		);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (PauseType) {
+	चयन (PauseType) अणु
 	/* 1 Pause DIG */
-	case ODM_PAUSE_DIG:
+	हाल ODM_PAUSE_DIG:
 		/* 2 Disable DIG */
 		ODM_CmnInfoUpdate(pDM_Odm, ODM_CMNINFO_ABILITY, pDM_Odm->SupportAbility & (~ODM_BB_DIG));
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_PauseDIG(): Pause DIG !!\n"));
 
 		/* 2 Backup IGI value */
-		if (!bPaused) {
+		अगर (!bPaused) अणु
 			pDM_DigTable->IGIBackup = pDM_DigTable->CurIGValue;
 			bPaused = true;
-		}
+		पूर्ण
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_PauseDIG(): Backup IGI  = 0x%x\n", pDM_DigTable->IGIBackup));
 
 		/* 2 Write new IGI value */
 		ODM_Write_DIG(pDM_Odm, IGIValue);
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_PauseDIG(): Write new IGI = 0x%x\n", IGIValue));
-		break;
+		अवरोध;
 
 	/* 1 Resume DIG */
-	case ODM_RESUME_DIG:
-		if (bPaused) {
+	हाल ODM_RESUME_DIG:
+		अगर (bPaused) अणु
 			/* 2 Write backup IGI value */
 			ODM_Write_DIG(pDM_Odm, pDM_DigTable->IGIBackup);
 			bPaused = false;
@@ -424,50 +425,50 @@ void odm_PauseDIG(
 			/* 2 Enable DIG */
 			ODM_CmnInfoUpdate(pDM_Odm, ODM_CMNINFO_ABILITY, pDM_Odm->SupportAbility | ODM_BB_DIG);
 			ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_PauseDIG(): Resume DIG !!\n"));
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_PauseDIG(): Wrong  type !!\n"));
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-bool odm_DigAbort(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+bool odm_DigAbort(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
 	/* SupportAbility */
-	if (!(pDM_Odm->SupportAbility & ODM_BB_FA_CNT)) {
+	अगर (!(pDM_Odm->SupportAbility & ODM_BB_FA_CNT)) अणु
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Return: SupportAbility ODM_BB_FA_CNT is disabled\n"));
-		return	true;
-	}
+		वापस	true;
+	पूर्ण
 
 	/* SupportAbility */
-	if (!(pDM_Odm->SupportAbility & ODM_BB_DIG)) {
+	अगर (!(pDM_Odm->SupportAbility & ODM_BB_DIG)) अणु
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Return: SupportAbility ODM_BB_DIG is disabled\n"));
-		return	true;
-	}
+		वापस	true;
+	पूर्ण
 
 	/* ScanInProcess */
-	if (*(pDM_Odm->pbScanInProcess)) {
+	अगर (*(pDM_Odm->pbScanInProcess)) अणु
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Return: In Scan Progress\n"));
-		return	true;
-	}
+		वापस	true;
+	पूर्ण
 
-	/* add by Neil Chen to avoid PSD is processing */
-	if (pDM_Odm->bDMInitialGainEnable == false) {
+	/* add by Neil Chen to aव्योम PSD is processing */
+	अगर (pDM_Odm->bDMInitialGainEnable == false) अणु
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Return: PSD is Processing\n"));
-		return	true;
-	}
+		वापस	true;
+	पूर्ण
 
-	return	false;
-}
+	वापस	false;
+पूर्ण
 
-void odm_DIGInit(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
+व्योम odm_DIGInit(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
 
 	pDM_DigTable->bStopDIG = false;
 	pDM_DigTable->bPSDInProgress = false;
@@ -487,7 +488,7 @@ void odm_DIGInit(void *pDM_VOID)
 	pDM_DigTable->bMediaConnect_0 = false;
 	pDM_DigTable->bMediaConnect_1 = false;
 
-	/* To Initialize pDM_Odm->bDMInitialGainEnable == false to avoid DIG error */
+	/* To Initialize pDM_Odm->bDMInitialGainEnable == false to aव्योम DIG error */
 	pDM_Odm->bDMInitialGainEnable = true;
 
 	pDM_DigTable->DIG_Dynamic_MIN_0 = DM_DIG_MIN_NIC;
@@ -499,16 +500,16 @@ void odm_DIGInit(void *pDM_VOID)
 	pDM_DigTable->rx_gain_range_max = DM_DIG_MAX_NIC;
 	pDM_DigTable->rx_gain_range_min = DM_DIG_MIN_NIC;
 
-}
+पूर्ण
 
 
-void odm_DIG(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+व्योम odm_DIG(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
 	/*  Common parameters */
-	struct dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
-	struct false_ALARM_STATISTICS *pFalseAlmCnt = &pDM_Odm->FalseAlmCnt;
+	काष्ठा dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
+	काष्ठा false_ALARM_STATISTICS *pFalseAlmCnt = &pDM_Odm->FalseAlmCnt;
 	bool FirstConnect, FirstDisConnect;
 	u8 DIG_MaxOfMin, DIG_Dynamic_MIN;
 	u8 dm_dig_max, dm_dig_min;
@@ -518,14 +519,14 @@ void odm_DIG(void *pDM_VOID)
 	u8 Adap_IGI_Upper = 0;
 	u32 TxTp = 0, RxTp = 0;
 	bool bDFSBand = false;
-	bool bPerformance = true, bFirstTpTarget = false, bFirstCoverage = false;
+	bool bPerक्रमmance = true, bFirstTpTarget = false, bFirstCoverage = false;
 
-	if (odm_DigAbort(pDM_Odm))
-		return;
+	अगर (odm_DigAbort(pDM_Odm))
+		वापस;
 
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG() ===========================>\n\n"));
 
-	if (pDM_Odm->adaptivity_flag == true)
+	अगर (pDM_Odm->adaptivity_flag == true)
 		Adap_IGI_Upper = pDM_Odm->Adaptivity_IGI_upper;
 
 
@@ -543,48 +544,48 @@ void odm_DIG(void *pDM_VOID)
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Absolutely upper bound = 0x%x, lower bound = 0x%x\n", dm_dig_max, dm_dig_min));
 
 	/* 1 Adjust boundary by RSSI */
-	if (pDM_Odm->bLinked && bPerformance) {
-		/* 2 Modify DIG upper bound */
-		/* 4 Modify DIG upper bound for 92E, 8723A\B, 8821 & 8812 BT */
-		if (pDM_Odm->bBtLimitedDig == 1) {
+	अगर (pDM_Odm->bLinked && bPerक्रमmance) अणु
+		/* 2 Modअगरy DIG upper bound */
+		/* 4 Modअगरy DIG upper bound क्रम 92E, 8723A\B, 8821 & 8812 BT */
+		अगर (pDM_Odm->bBtLimitedDig == 1) अणु
 			offset = 10;
 			ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Coex. case: Force upper bound to RSSI + %d !!!!!!\n", offset));
-		} else
+		पूर्ण अन्यथा
 			offset = 15;
 
-		if ((pDM_Odm->RSSI_Min + offset) > dm_dig_max)
+		अगर ((pDM_Odm->RSSI_Min + offset) > dm_dig_max)
 			pDM_DigTable->rx_gain_range_max = dm_dig_max;
-		else if ((pDM_Odm->RSSI_Min + offset) < dm_dig_min)
+		अन्यथा अगर ((pDM_Odm->RSSI_Min + offset) < dm_dig_min)
 			pDM_DigTable->rx_gain_range_max = dm_dig_min;
-		else
+		अन्यथा
 			pDM_DigTable->rx_gain_range_max = pDM_Odm->RSSI_Min + offset;
 
-		/* 2 Modify DIG lower bound */
-		/* if (pDM_Odm->bOneEntryOnly) */
-		{
-			if (pDM_Odm->RSSI_Min < dm_dig_min)
+		/* 2 Modअगरy DIG lower bound */
+		/* अगर (pDM_Odm->bOneEntryOnly) */
+		अणु
+			अगर (pDM_Odm->RSSI_Min < dm_dig_min)
 				DIG_Dynamic_MIN = dm_dig_min;
-			else if (pDM_Odm->RSSI_Min > DIG_MaxOfMin)
+			अन्यथा अगर (pDM_Odm->RSSI_Min > DIG_MaxOfMin)
 				DIG_Dynamic_MIN = DIG_MaxOfMin;
-			else
+			अन्यथा
 				DIG_Dynamic_MIN = pDM_Odm->RSSI_Min;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pDM_DigTable->rx_gain_range_max = dm_dig_max;
 		DIG_Dynamic_MIN = dm_dig_min;
-	}
+	पूर्ण
 
-	/* 1 Force Lower Bound for AntDiv */
-	if (pDM_Odm->bLinked && !pDM_Odm->bOneEntryOnly) {
-		if (pDM_Odm->SupportAbility & ODM_BB_ANT_DIV) {
-			if (
+	/* 1 Force Lower Bound क्रम AntDiv */
+	अगर (pDM_Odm->bLinked && !pDM_Odm->bOneEntryOnly) अणु
+		अगर (pDM_Odm->SupportAbility & ODM_BB_ANT_DIV) अणु
+			अगर (
 				pDM_Odm->AntDivType == CG_TRX_HW_ANTDIV ||
 				pDM_Odm->AntDivType == CG_TRX_SMART_ANTDIV ||
 				pDM_Odm->AntDivType == S0S1_SW_ANTDIV
-			) {
-				if (pDM_DigTable->AntDiv_RSSI_max > DIG_MaxOfMin)
+			) अणु
+				अगर (pDM_DigTable->AntDiv_RSSI_max > DIG_MaxOfMin)
 					DIG_Dynamic_MIN = DIG_MaxOfMin;
-				else
+				अन्यथा
 					DIG_Dynamic_MIN = (u8) pDM_DigTable->AntDiv_RSSI_max;
 				ODM_RT_TRACE(
 					pDM_Odm,
@@ -604,9 +605,9 @@ void odm_DIG(void *pDM_VOID)
 						pDM_DigTable->AntDiv_RSSI_max
 					)
 				);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	ODM_RT_TRACE(
 		pDM_Odm,
 		ODM_COMP_DIG,
@@ -630,20 +631,20 @@ void odm_DIG(void *pDM_VOID)
 		)
 	);
 
-	/* 1 Modify DIG lower bound, deal with abnormal case */
-	/* 2 Abnormal false alarm case */
-	if (FirstDisConnect) {
+	/* 1 Modअगरy DIG lower bound, deal with abnormal हाल */
+	/* 2 Abnormal false alarm हाल */
+	अगर (FirstDisConnect) अणु
 		pDM_DigTable->rx_gain_range_min = DIG_Dynamic_MIN;
 		pDM_DigTable->ForbiddenIGI = DIG_Dynamic_MIN;
-	} else
+	पूर्ण अन्यथा
 		pDM_DigTable->rx_gain_range_min =
 			odm_ForbiddenIGICheck(pDM_Odm, DIG_Dynamic_MIN, CurrentIGI);
 
-	if (pDM_Odm->bLinked && !FirstConnect) {
-		if (
+	अगर (pDM_Odm->bLinked && !FirstConnect) अणु
+		अगर (
 			(pDM_Odm->PhyDbgInfo.NumQryBeaconPkt < 5) &&
 			pDM_Odm->bsta_state
-		) {
+		) अणु
 			pDM_DigTable->rx_gain_range_min = dm_dig_min;
 			ODM_RT_TRACE(
 				pDM_Odm,
@@ -655,11 +656,11 @@ void odm_DIG(void *pDM_VOID)
 					pDM_DigTable->rx_gain_range_min
 				)
 			);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* 2 Abnormal lower bound case */
-	if (pDM_DigTable->rx_gain_range_min > pDM_DigTable->rx_gain_range_max) {
+	/* 2 Abnormal lower bound हाल */
+	अगर (pDM_DigTable->rx_gain_range_min > pDM_DigTable->rx_gain_range_max) अणु
 		pDM_DigTable->rx_gain_range_min = pDM_DigTable->rx_gain_range_max;
 		ODM_RT_TRACE(
 			pDM_Odm,
@@ -670,15 +671,15 @@ void odm_DIG(void *pDM_VOID)
 				pDM_DigTable->rx_gain_range_min
 			)
 		);
-	}
+	पूर्ण
 
 
 	/* 1 False alarm threshold decision */
-	odm_FAThresholdCheck(pDM_Odm, bDFSBand, bPerformance, RxTp, TxTp, dm_FA_thres);
+	odm_FAThresholdCheck(pDM_Odm, bDFSBand, bPerक्रमmance, RxTp, TxTp, dm_FA_thres);
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): False alarm threshold = %d, %d, %d\n\n", dm_FA_thres[0], dm_FA_thres[1], dm_FA_thres[2]));
 
 	/* 1 Adjust initial gain by false alarm */
-	if (pDM_Odm->bLinked && bPerformance) {
+	अगर (pDM_Odm->bLinked && bPerक्रमmance) अणु
 		/* 2 After link */
 		ODM_RT_TRACE(
 			pDM_Odm,
@@ -687,16 +688,16 @@ void odm_DIG(void *pDM_VOID)
 			("odm_DIG(): Adjust IGI after link\n")
 		);
 
-		if (bFirstTpTarget || (FirstConnect && bPerformance)) {
+		अगर (bFirstTpTarget || (FirstConnect && bPerक्रमmance)) अणु
 			pDM_DigTable->LargeFAHit = 0;
 
-			if (pDM_Odm->RSSI_Min < DIG_MaxOfMin) {
-				if (CurrentIGI < pDM_Odm->RSSI_Min)
+			अगर (pDM_Odm->RSSI_Min < DIG_MaxOfMin) अणु
+				अगर (CurrentIGI < pDM_Odm->RSSI_Min)
 					CurrentIGI = pDM_Odm->RSSI_Min;
-			} else {
-				if (CurrentIGI < DIG_MaxOfMin)
+			पूर्ण अन्यथा अणु
+				अगर (CurrentIGI < DIG_MaxOfMin)
 					CurrentIGI = DIG_MaxOfMin;
-			}
+			पूर्ण
 
 			ODM_RT_TRACE(
 				pDM_Odm,
@@ -708,19 +709,19 @@ void odm_DIG(void *pDM_VOID)
 				)
 			);
 
-		} else {
-			if (pFalseAlmCnt->Cnt_all > dm_FA_thres[2])
+		पूर्ण अन्यथा अणु
+			अगर (pFalseAlmCnt->Cnt_all > dm_FA_thres[2])
 				CurrentIGI = CurrentIGI + 4;
-			else if (pFalseAlmCnt->Cnt_all > dm_FA_thres[1])
+			अन्यथा अगर (pFalseAlmCnt->Cnt_all > dm_FA_thres[1])
 				CurrentIGI = CurrentIGI + 2;
-			else if (pFalseAlmCnt->Cnt_all < dm_FA_thres[0])
+			अन्यथा अगर (pFalseAlmCnt->Cnt_all < dm_FA_thres[0])
 				CurrentIGI = CurrentIGI - 2;
 
-			if (
+			अगर (
 				(pDM_Odm->PhyDbgInfo.NumQryBeaconPkt < 5) &&
 				(pFalseAlmCnt->Cnt_all < DM_DIG_FA_TH1) &&
 				(pDM_Odm->bsta_state)
-			) {
+			) अणु
 				CurrentIGI = pDM_DigTable->rx_gain_range_min;
 				ODM_RT_TRACE(
 					pDM_Odm,
@@ -732,10 +733,10 @@ void odm_DIG(void *pDM_VOID)
 						CurrentIGI
 					)
 				);
-			}
-		}
-	} else {
-		/* 2 Before link */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* 2 Beक्रमe link */
 		ODM_RT_TRACE(
 			pDM_Odm,
 			ODM_COMP_DIG,
@@ -743,7 +744,7 @@ void odm_DIG(void *pDM_VOID)
 			("odm_DIG(): Adjust IGI before link\n")
 		);
 
-		if (FirstDisConnect || bFirstCoverage) {
+		अगर (FirstDisConnect || bFirstCoverage) अणु
 			CurrentIGI = dm_dig_min;
 			ODM_RT_TRACE(
 				pDM_Odm,
@@ -751,21 +752,21 @@ void odm_DIG(void *pDM_VOID)
 				ODM_DBG_LOUD,
 				("odm_DIG(): First disconnect case: IGI does on-shot to lower bound\n")
 			);
-		} else {
-			if (pFalseAlmCnt->Cnt_all > dm_FA_thres[2])
+		पूर्ण अन्यथा अणु
+			अगर (pFalseAlmCnt->Cnt_all > dm_FA_thres[2])
 				CurrentIGI = CurrentIGI + 4;
-			else if (pFalseAlmCnt->Cnt_all > dm_FA_thres[1])
+			अन्यथा अगर (pFalseAlmCnt->Cnt_all > dm_FA_thres[1])
 				CurrentIGI = CurrentIGI + 2;
-			else if (pFalseAlmCnt->Cnt_all < dm_FA_thres[0])
+			अन्यथा अगर (pFalseAlmCnt->Cnt_all < dm_FA_thres[0])
 				CurrentIGI = CurrentIGI - 2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* 1 Check initial gain by upper/lower bound */
-	if (CurrentIGI < pDM_DigTable->rx_gain_range_min)
+	अगर (CurrentIGI < pDM_DigTable->rx_gain_range_min)
 		CurrentIGI = pDM_DigTable->rx_gain_range_min;
 
-	if (CurrentIGI > pDM_DigTable->rx_gain_range_max)
+	अगर (CurrentIGI > pDM_DigTable->rx_gain_range_max)
 		CurrentIGI = pDM_DigTable->rx_gain_range_max;
 
 	ODM_RT_TRACE(
@@ -779,52 +780,52 @@ void odm_DIG(void *pDM_VOID)
 		)
 	);
 
-	/* 1 Force upper bound and lower bound for adaptivity */
-	if (
+	/* 1 Force upper bound and lower bound क्रम adaptivity */
+	अगर (
 		pDM_Odm->SupportAbility & ODM_BB_ADAPTIVITY &&
 		pDM_Odm->adaptivity_flag == true
-	) {
-		if (CurrentIGI > Adap_IGI_Upper)
+	) अणु
+		अगर (CurrentIGI > Adap_IGI_Upper)
 			CurrentIGI = Adap_IGI_Upper;
 
-		if (pDM_Odm->IGI_LowerBound != 0) {
-			if (CurrentIGI < pDM_Odm->IGI_LowerBound)
+		अगर (pDM_Odm->IGI_LowerBound != 0) अणु
+			अगर (CurrentIGI < pDM_Odm->IGI_LowerBound)
 				CurrentIGI = pDM_Odm->IGI_LowerBound;
-		}
+		पूर्ण
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Adaptivity case: Force upper bound to 0x%x !!!!!!\n", Adap_IGI_Upper));
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Adaptivity case: Force lower bound to 0x%x !!!!!!\n\n", pDM_Odm->IGI_LowerBound));
-	}
+	पूर्ण
 
 
 	/* 1 Update status */
-	if (pDM_Odm->bBtHsOperation) {
-		if (pDM_Odm->bLinked) {
-			if (pDM_DigTable->BT30_CurIGI > (CurrentIGI))
+	अगर (pDM_Odm->bBtHsOperation) अणु
+		अगर (pDM_Odm->bLinked) अणु
+			अगर (pDM_DigTable->BT30_CurIGI > (CurrentIGI))
 				ODM_Write_DIG(pDM_Odm, CurrentIGI);
-			else
+			अन्यथा
 				ODM_Write_DIG(pDM_Odm, pDM_DigTable->BT30_CurIGI);
 
 			pDM_DigTable->bMediaConnect_0 = pDM_Odm->bLinked;
 			pDM_DigTable->DIG_Dynamic_MIN_0 = DIG_Dynamic_MIN;
-		} else {
-			if (pDM_Odm->bLinkInProcess)
+		पूर्ण अन्यथा अणु
+			अगर (pDM_Odm->bLinkInProcess)
 				ODM_Write_DIG(pDM_Odm, 0x1c);
-			else if (pDM_Odm->bBtConnectProcess)
+			अन्यथा अगर (pDM_Odm->bBtConnectProcess)
 				ODM_Write_DIG(pDM_Odm, 0x28);
-			else
+			अन्यथा
 				ODM_Write_DIG(pDM_Odm, pDM_DigTable->BT30_CurIGI);/* ODM_Write_DIG(pDM_Odm, pDM_DigTable->CurIGValue); */
-		}
-	} else { /*  BT is not using */
+		पूर्ण
+	पूर्ण अन्यथा अणु /*  BT is not using */
 		ODM_Write_DIG(pDM_Odm, CurrentIGI);/* ODM_Write_DIG(pDM_Odm, pDM_DigTable->CurIGValue); */
 		pDM_DigTable->bMediaConnect_0 = pDM_Odm->bLinked;
 		pDM_DigTable->DIG_Dynamic_MIN_0 = DIG_Dynamic_MIN;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void odm_DIGbyRSSI_LPS(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct false_ALARM_STATISTICS *pFalseAlmCnt = &pDM_Odm->FalseAlmCnt;
+व्योम odm_DIGbyRSSI_LPS(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा false_ALARM_STATISTICS *pFalseAlmCnt = &pDM_Odm->FalseAlmCnt;
 
 	u8 RSSI_Lower = DM_DIG_MIN_NIC;   /* 0x1E or 0x1C */
 	u8 CurrentIGI = pDM_Odm->RSSI_Min;
@@ -840,26 +841,26 @@ void odm_DIGbyRSSI_LPS(void *pDM_VOID)
 
 	/*  Using FW PS mode to make IGI */
 	/* Adjust by  FA in LPS MODE */
-	if (pFalseAlmCnt->Cnt_all > DM_DIG_FA_TH2_LPS)
+	अगर (pFalseAlmCnt->Cnt_all > DM_DIG_FA_TH2_LPS)
 		CurrentIGI = CurrentIGI+4;
-	else if (pFalseAlmCnt->Cnt_all > DM_DIG_FA_TH1_LPS)
+	अन्यथा अगर (pFalseAlmCnt->Cnt_all > DM_DIG_FA_TH1_LPS)
 		CurrentIGI = CurrentIGI+2;
-	else if (pFalseAlmCnt->Cnt_all < DM_DIG_FA_TH0_LPS)
+	अन्यथा अगर (pFalseAlmCnt->Cnt_all < DM_DIG_FA_TH0_LPS)
 		CurrentIGI = CurrentIGI-2;
 
 
 	/* Lower bound checking */
 
 	/* RSSI Lower bound check */
-	if ((pDM_Odm->RSSI_Min-10) > DM_DIG_MIN_NIC)
+	अगर ((pDM_Odm->RSSI_Min-10) > DM_DIG_MIN_NIC)
 		RSSI_Lower = pDM_Odm->RSSI_Min-10;
-	else
+	अन्यथा
 		RSSI_Lower = DM_DIG_MIN_NIC;
 
 	/* Upper and Lower Bound checking */
-	if (CurrentIGI > DM_DIG_MAX_NIC)
+	अगर (CurrentIGI > DM_DIG_MAX_NIC)
 		CurrentIGI = DM_DIG_MAX_NIC;
-	else if (CurrentIGI < RSSI_Lower)
+	अन्यथा अगर (CurrentIGI < RSSI_Lower)
 		CurrentIGI = RSSI_Lower;
 
 
@@ -884,20 +885,20 @@ void odm_DIGbyRSSI_LPS(void *pDM_VOID)
 
 	ODM_Write_DIG(pDM_Odm, CurrentIGI);
 	/* ODM_Write_DIG(pDM_Odm, pDM_DigTable->CurIGValue); */
-}
+पूर्ण
 
 /* 3 ============================================================ */
 /* 3 FASLE ALARM CHECK */
 /* 3 ============================================================ */
 
-void odm_FalseAlarmCounterStatistics(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct false_ALARM_STATISTICS *FalseAlmCnt = &pDM_Odm->FalseAlmCnt;
+व्योम odm_FalseAlarmCounterStatistics(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा false_ALARM_STATISTICS *FalseAlmCnt = &pDM_Odm->FalseAlmCnt;
 	u32 ret_value;
 
-	if (!(pDM_Odm->SupportAbility & ODM_BB_FA_CNT))
-		return;
+	अगर (!(pDM_Odm->SupportAbility & ODM_BB_FA_CNT))
+		वापस;
 
 	/* hold ofdm counter */
 	/* hold page C counter */
@@ -936,7 +937,7 @@ void odm_FalseAlarmCounterStatistics(void *pDM_VOID)
 		FalseAlmCnt->Cnt_Fast_Fsync +
 		FalseAlmCnt->Cnt_SB_Search_fail;
 
-	{
+	अणु
 		/* hold cck counter */
 		PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG_CCK_FA_RST_11N, BIT12, 1);
 		PHY_SetBBReg(pDM_Odm->Adapter, ODM_REG_CCK_FA_RST_11N, BIT14, 1);
@@ -956,7 +957,7 @@ void odm_FalseAlarmCounterStatistics(void *pDM_VOID)
 		);
 		FalseAlmCnt->Cnt_CCK_CCA =
 			((ret_value&0xFF)<<8) | ((ret_value&0xFF00)>>8);
-	}
+	पूर्ण
 
 	FalseAlmCnt->Cnt_all = (
 		FalseAlmCnt->Cnt_Fast_Fsync +
@@ -1050,110 +1051,110 @@ void odm_FalseAlarmCounterStatistics(void *pDM_VOID)
 		ODM_DBG_LOUD,
 		("Total False Alarm =%d\n",	FalseAlmCnt->Cnt_all)
 	);
-}
+पूर्ण
 
 
-void odm_FAThresholdCheck(
-	void *pDM_VOID,
+व्योम odm_FAThresholdCheck(
+	व्योम *pDM_VOID,
 	bool bDFSBand,
-	bool bPerformance,
+	bool bPerक्रमmance,
 	u32 RxTp,
 	u32 TxTp,
 	u32 *dm_FA_thres
 )
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
-	if (pDM_Odm->bLinked && (bPerformance || bDFSBand)) {
+	अगर (pDM_Odm->bLinked && (bPerक्रमmance || bDFSBand)) अणु
 		/*  For NIC */
 		dm_FA_thres[0] = DM_DIG_FA_TH0;
 		dm_FA_thres[1] = DM_DIG_FA_TH1;
 		dm_FA_thres[2] = DM_DIG_FA_TH2;
-	} else {
+	पूर्ण अन्यथा अणु
 		dm_FA_thres[0] = 2000;
 		dm_FA_thres[1] = 4000;
 		dm_FA_thres[2] = 5000;
-	}
-}
+	पूर्ण
+पूर्ण
 
-u8 odm_ForbiddenIGICheck(void *pDM_VOID, u8 DIG_Dynamic_MIN, u8 CurrentIGI)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
-	struct false_ALARM_STATISTICS *pFalseAlmCnt = &pDM_Odm->FalseAlmCnt;
+u8 odm_ForbiddenIGICheck(व्योम *pDM_VOID, u8 DIG_Dynamic_MIN, u8 CurrentIGI)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
+	काष्ठा false_ALARM_STATISTICS *pFalseAlmCnt = &pDM_Odm->FalseAlmCnt;
 	u8 rx_gain_range_min = pDM_DigTable->rx_gain_range_min;
 
-	if (pFalseAlmCnt->Cnt_all > 10000) {
+	अगर (pFalseAlmCnt->Cnt_all > 10000) अणु
 		ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Abnormally false alarm case.\n"));
 
-		if (pDM_DigTable->LargeFAHit != 3)
+		अगर (pDM_DigTable->LargeFAHit != 3)
 			pDM_DigTable->LargeFAHit++;
 
-		/* if (pDM_DigTable->ForbiddenIGI < pDM_DigTable->CurIGValue) */
-		if (pDM_DigTable->ForbiddenIGI < CurrentIGI) {
+		/* अगर (pDM_DigTable->ForbiddenIGI < pDM_DigTable->CurIGValue) */
+		अगर (pDM_DigTable->ForbiddenIGI < CurrentIGI) अणु
 			pDM_DigTable->ForbiddenIGI = CurrentIGI;
 			/* pDM_DigTable->ForbiddenIGI = pDM_DigTable->CurIGValue; */
 			pDM_DigTable->LargeFAHit = 1;
-		}
+		पूर्ण
 
-		if (pDM_DigTable->LargeFAHit >= 3) {
-			if ((pDM_DigTable->ForbiddenIGI + 2) > pDM_DigTable->rx_gain_range_max)
+		अगर (pDM_DigTable->LargeFAHit >= 3) अणु
+			अगर ((pDM_DigTable->ForbiddenIGI + 2) > pDM_DigTable->rx_gain_range_max)
 				rx_gain_range_min = pDM_DigTable->rx_gain_range_max;
-			else
+			अन्यथा
 				rx_gain_range_min = (pDM_DigTable->ForbiddenIGI + 2);
 			pDM_DigTable->Recover_cnt = 1800;
 			ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Abnormally false alarm case: Recover_cnt = %d\n", pDM_DigTable->Recover_cnt));
-		}
-	} else {
-		if (pDM_DigTable->Recover_cnt != 0) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (pDM_DigTable->Recover_cnt != 0) अणु
 			pDM_DigTable->Recover_cnt--;
 			ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Normal Case: Recover_cnt = %d\n", pDM_DigTable->Recover_cnt));
-		} else {
-			if (pDM_DigTable->LargeFAHit < 3) {
-				if ((pDM_DigTable->ForbiddenIGI - 2) < DIG_Dynamic_MIN) { /* DM_DIG_MIN) */
+		पूर्ण अन्यथा अणु
+			अगर (pDM_DigTable->LargeFAHit < 3) अणु
+				अगर ((pDM_DigTable->ForbiddenIGI - 2) < DIG_Dynamic_MIN) अणु /* DM_DIG_MIN) */
 					pDM_DigTable->ForbiddenIGI = DIG_Dynamic_MIN; /* DM_DIG_MIN; */
 					rx_gain_range_min = DIG_Dynamic_MIN; /* DM_DIG_MIN; */
 					ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Normal Case: At Lower Bound\n"));
-				} else {
+				पूर्ण अन्यथा अणु
 					pDM_DigTable->ForbiddenIGI -= 2;
 					rx_gain_range_min = (pDM_DigTable->ForbiddenIGI + 2);
 					ODM_RT_TRACE(pDM_Odm, ODM_COMP_DIG, ODM_DBG_LOUD, ("odm_DIG(): Normal Case: Approach Lower Bound\n"));
-				}
-			} else
+				पूर्ण
+			पूर्ण अन्यथा
 				pDM_DigTable->LargeFAHit = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return rx_gain_range_min;
+	वापस rx_gain_range_min;
 
-}
+पूर्ण
 
 /* 3 ============================================================ */
 /* 3 CCK Packet Detect Threshold */
 /* 3 ============================================================ */
 
-void odm_CCKPacketDetectionThresh(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct false_ALARM_STATISTICS *FalseAlmCnt = &pDM_Odm->FalseAlmCnt;
+व्योम odm_CCKPacketDetectionThresh(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा false_ALARM_STATISTICS *FalseAlmCnt = &pDM_Odm->FalseAlmCnt;
 	u8 CurCCK_CCAThres;
 
 
-	if (
+	अगर (
 		!(pDM_Odm->SupportAbility & ODM_BB_CCK_PD) ||
 		!(pDM_Odm->SupportAbility & ODM_BB_FA_CNT)
-	) {
+	) अणु
 		ODM_RT_TRACE(
 			pDM_Odm,
 			ODM_COMP_CCK_PD,
 			ODM_DBG_LOUD,
 			("odm_CCKPacketDetectionThresh()  return ==========\n")
 		);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (pDM_Odm->ExtLNA)
-		return;
+	अगर (pDM_Odm->ExtLNA)
+		वापस;
 
 	ODM_RT_TRACE(
 		pDM_Odm,
@@ -1162,23 +1163,23 @@ void odm_CCKPacketDetectionThresh(void *pDM_VOID)
 		("odm_CCKPacketDetectionThresh()  ==========>\n")
 	);
 
-	if (pDM_Odm->bLinked) {
-		if (pDM_Odm->RSSI_Min > 25)
+	अगर (pDM_Odm->bLinked) अणु
+		अगर (pDM_Odm->RSSI_Min > 25)
 			CurCCK_CCAThres = 0xcd;
-		else if ((pDM_Odm->RSSI_Min <= 25) && (pDM_Odm->RSSI_Min > 10))
+		अन्यथा अगर ((pDM_Odm->RSSI_Min <= 25) && (pDM_Odm->RSSI_Min > 10))
 			CurCCK_CCAThres = 0x83;
-		else {
-			if (FalseAlmCnt->Cnt_Cck_fail > 1000)
+		अन्यथा अणु
+			अगर (FalseAlmCnt->Cnt_Cck_fail > 1000)
 				CurCCK_CCAThres = 0x83;
-			else
+			अन्यथा
 				CurCCK_CCAThres = 0x40;
-		}
-	} else {
-		if (FalseAlmCnt->Cnt_Cck_fail > 1000)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (FalseAlmCnt->Cnt_Cck_fail > 1000)
 			CurCCK_CCAThres = 0x83;
-		else
+		अन्यथा
 			CurCCK_CCAThres = 0x40;
-	}
+	पूर्ण
 
 	ODM_Write_CCK_CCA_Thres(pDM_Odm, CurCCK_CCAThres);
 
@@ -1191,17 +1192,17 @@ void odm_CCKPacketDetectionThresh(void *pDM_VOID)
 			CurCCK_CCAThres
 		)
 	);
-}
+पूर्ण
 
-void ODM_Write_CCK_CCA_Thres(void *pDM_VOID, u8 CurCCK_CCAThres)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
+व्योम ODM_Write_CCK_CCA_Thres(व्योम *pDM_VOID, u8 CurCCK_CCAThres)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
 
-	/* modify by Guo.Mingzhi 2012-01-03 */
-	if (pDM_DigTable->CurCCK_CCAThres != CurCCK_CCAThres)
-		rtw_write8(pDM_Odm->Adapter, ODM_REG(CCK_CCA, pDM_Odm), CurCCK_CCAThres);
+	/* modअगरy by Guo.Mingzhi 2012-01-03 */
+	अगर (pDM_DigTable->CurCCK_CCAThres != CurCCK_CCAThres)
+		rtw_ग_लिखो8(pDM_Odm->Adapter, ODM_REG(CCK_CCA, pDM_Odm), CurCCK_CCAThres);
 
 	pDM_DigTable->PreCCK_CCAThres = pDM_DigTable->CurCCK_CCAThres;
 	pDM_DigTable->CurCCK_CCAThres = CurCCK_CCAThres;
-}
+पूर्ण

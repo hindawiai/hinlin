@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0+
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/kernel.h>   /* printk() */
-#include <linux/slab.h>     /* kmalloc() */
-#include <linux/fs.h>       /* everything... */
-#include <linux/errno.h>    /* error codes */
-#include <linux/types.h>    /* size_t */
-#include <linux/cdev.h>
-#include <linux/uaccess.h>  /* copy_*_user */
-#include <linux/highmem.h>
-#include <linux/pagemap.h>
-#include "kpc_dma_driver.h"
-#include "uapi.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kernel.h>   /* prपूर्णांकk() */
+#समावेश <linux/slab.h>     /* kदो_स्मृति() */
+#समावेश <linux/fs.h>       /* everything... */
+#समावेश <linux/त्रुटिसं.स>    /* error codes */
+#समावेश <linux/types.h>    /* माप_प्रकार */
+#समावेश <linux/cdev.h>
+#समावेश <linux/uaccess.h>  /* copy_*_user */
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/pagemap.h>
+#समावेश "kpc_dma_driver.h"
+#समावेश "uapi.h"
 
 /**********  Helper Functions  **********/
-static inline
-unsigned int  count_pages(unsigned long iov_base, size_t iov_len)
-{
-	unsigned long first = (iov_base                 & PAGE_MASK) >> PAGE_SHIFT;
-	unsigned long last  = ((iov_base + iov_len - 1) & PAGE_MASK) >> PAGE_SHIFT;
+अटल अंतरभूत
+अचिन्हित पूर्णांक  count_pages(अचिन्हित दीर्घ iov_base, माप_प्रकार iov_len)
+अणु
+	अचिन्हित दीर्घ first = (iov_base                 & PAGE_MASK) >> PAGE_SHIFT;
+	अचिन्हित दीर्घ last  = ((iov_base + iov_len - 1) & PAGE_MASK) >> PAGE_SHIFT;
 
-	return last - first + 1;
-}
+	वापस last - first + 1;
+पूर्ण
 
-static inline
-unsigned int  count_parts_for_sge(struct scatterlist *sg)
-{
-	return DIV_ROUND_UP(sg_dma_len(sg), 0x80000);
-}
+अटल अंतरभूत
+अचिन्हित पूर्णांक  count_parts_क्रम_sge(काष्ठा scatterlist *sg)
+अणु
+	वापस DIV_ROUND_UP(sg_dma_len(sg), 0x80000);
+पूर्ण
 
 /**********  Transfer Helpers  **********/
-static int kpc_dma_transfer(struct dev_private_data *priv,
-			    unsigned long iov_base, size_t iov_len)
-{
-	unsigned int i = 0;
-	int rv = 0, nr_pages = 0;
-	struct kpc_dma_device *ldev;
-	struct aio_cb_data *acd;
-	DECLARE_COMPLETION_ONSTACK(done);
+अटल पूर्णांक kpc_dma_transfer(काष्ठा dev_निजी_data *priv,
+			    अचिन्हित दीर्घ iov_base, माप_प्रकार iov_len)
+अणु
+	अचिन्हित पूर्णांक i = 0;
+	पूर्णांक rv = 0, nr_pages = 0;
+	काष्ठा kpc_dma_device *ldev;
+	काष्ठा aio_cb_data *acd;
+	DECLARE_COMPLETION_ONSTACK(करोne);
 	u32 desc_needed = 0;
-	struct scatterlist *sg;
+	काष्ठा scatterlist *sg;
 	u32 num_descrs_avail;
-	struct kpc_dma_descriptor *desc;
-	unsigned int pcnt;
-	unsigned int p;
+	काष्ठा kpc_dma_descriptor *desc;
+	अचिन्हित पूर्णांक pcnt;
+	अचिन्हित पूर्णांक p;
 	u64 card_addr;
 	u64 dma_addr;
 	u64 user_ctl;
 
 	ldev = priv->ldev;
 
-	acd = kzalloc(sizeof(*acd), GFP_KERNEL);
-	if (!acd) {
+	acd = kzalloc(माप(*acd), GFP_KERNEL);
+	अगर (!acd) अणु
 		dev_err(&priv->ldev->pldev->dev, "Couldn't kmalloc space for the aio data\n");
-		return -ENOMEM;
-	}
-	memset(acd, 0x66, sizeof(struct aio_cb_data));
+		वापस -ENOMEM;
+	पूर्ण
+	स_रखो(acd, 0x66, माप(काष्ठा aio_cb_data));
 
 	acd->priv = priv;
 	acd->ldev = priv->ldev;
-	acd->cpl = &done;
+	acd->cpl = &करोne;
 	acd->flags = 0;
 	acd->len = iov_len;
 	acd->page_count = count_pages(iov_base, iov_len);
 
-	// Allocate an array of page pointers
-	acd->user_pages = kcalloc(acd->page_count, sizeof(struct page *),
+	// Allocate an array of page poपूर्णांकers
+	acd->user_pages = kसुस्मृति(acd->page_count, माप(काष्ठा page *),
 				  GFP_KERNEL);
-	if (!acd->user_pages) {
+	अगर (!acd->user_pages) अणु
 		dev_err(&priv->ldev->pldev->dev, "Couldn't kmalloc space for the page pointers\n");
 		rv = -ENOMEM;
-		goto err_alloc_userpages;
-	}
+		जाओ err_alloc_userpages;
+	पूर्ण
 
-	// Lock the user buffer pages in memory, and hold on to the page pointers (for the sglist)
-	mmap_read_lock(current->mm);      /*  get memory map semaphore */
+	// Lock the user buffer pages in memory, and hold on to the page poपूर्णांकers (क्रम the sglist)
+	mmap_पढ़ो_lock(current->mm);      /*  get memory map semaphore */
 	rv = pin_user_pages(iov_base, acd->page_count, FOLL_TOUCH | FOLL_WRITE,
-			    acd->user_pages, NULL);
-	mmap_read_unlock(current->mm);        /*  release the semaphore */
-	if (rv != acd->page_count) {
+			    acd->user_pages, शून्य);
+	mmap_पढ़ो_unlock(current->mm);        /*  release the semaphore */
+	अगर (rv != acd->page_count) अणु
 		nr_pages = rv;
-		if (rv > 0)
+		अगर (rv > 0)
 			rv = -EFAULT;
 
 		dev_err(&priv->ldev->pldev->dev, "Couldn't pin_user_pages (%d)\n", rv);
-		goto unpin_pages;
-	}
+		जाओ unpin_pages;
+	पूर्ण
 	nr_pages = acd->page_count;
 
 	// Allocate and setup the sg_table (scatterlist entries)
 	rv = sg_alloc_table_from_pages(&acd->sgt, acd->user_pages, acd->page_count,
 				       iov_base & (PAGE_SIZE - 1), iov_len, GFP_KERNEL);
-	if (rv) {
+	अगर (rv) अणु
 		dev_err(&priv->ldev->pldev->dev, "Couldn't alloc sg_table (%d)\n", rv);
-		goto unpin_pages;
-	}
+		जाओ unpin_pages;
+	पूर्ण
 
-	// Setup the DMA mapping for all the sg entries
+	// Setup the DMA mapping क्रम all the sg entries
 	acd->mapped_entry_count = dma_map_sg(&ldev->pldev->dev, acd->sgt.sgl, acd->sgt.nents,
 					     ldev->dir);
-	if (acd->mapped_entry_count <= 0) {
+	अगर (acd->mapped_entry_count <= 0) अणु
 		dev_err(&priv->ldev->pldev->dev, "Couldn't dma_map_sg (%d)\n",
 			acd->mapped_entry_count);
-		goto free_table;
-	}
+		जाओ मुक्त_table;
+	पूर्ण
 
-	// Calculate how many descriptors are actually needed for this transfer.
-	for_each_sg(acd->sgt.sgl, sg, acd->mapped_entry_count, i) {
-		desc_needed += count_parts_for_sge(sg);
-	}
+	// Calculate how many descriptors are actually needed क्रम this transfer.
+	क्रम_each_sg(acd->sgt.sgl, sg, acd->mapped_entry_count, i) अणु
+		desc_needed += count_parts_क्रम_sge(sg);
+	पूर्ण
 
 	lock_engine(ldev);
 
-	// Figoure out how many descriptors are available and return an error if there aren't enough
+	// Figoure out how many descriptors are available and वापस an error अगर there aren't enough
 	num_descrs_avail = count_descriptors_available(ldev);
 	dev_dbg(&priv->ldev->pldev->dev,
 		"    mapped_entry_count = %d    num_descrs_needed = %d    num_descrs_avail = %d\n",
 		acd->mapped_entry_count, desc_needed, num_descrs_avail);
 
-	if (desc_needed >= ldev->desc_pool_cnt) {
+	अगर (desc_needed >= ldev->desc_pool_cnt) अणु
 		dev_warn(&priv->ldev->pldev->dev,
 			 "    mapped_entry_count = %d    num_descrs_needed = %d    num_descrs_avail = %d    TOO MANY to ever complete!\n",
 			 acd->mapped_entry_count, desc_needed, num_descrs_avail);
 		rv = -EAGAIN;
-		goto err_descr_too_many;
-	}
-	if (desc_needed > num_descrs_avail) {
+		जाओ err_descr_too_many;
+	पूर्ण
+	अगर (desc_needed > num_descrs_avail) अणु
 		dev_warn(&priv->ldev->pldev->dev,
 			 "    mapped_entry_count = %d    num_descrs_needed = %d    num_descrs_avail = %d    Too many to complete right now.\n",
 			 acd->mapped_entry_count, desc_needed, num_descrs_avail);
 		rv = -EMSGSIZE;
-		goto err_descr_too_many;
-	}
+		जाओ err_descr_too_many;
+	पूर्ण
 
-	// Loop through all the sg table entries and fill out a descriptor for each one.
+	// Loop through all the sg table entries and fill out a descriptor क्रम each one.
 	desc = ldev->desc_next;
 	card_addr = acd->priv->card_addr;
-	for_each_sg(acd->sgt.sgl, sg, acd->mapped_entry_count, i) {
-		pcnt = count_parts_for_sge(sg);
-		for (p = 0 ; p < pcnt ; p++) {
+	क्रम_each_sg(acd->sgt.sgl, sg, acd->mapped_entry_count, i) अणु
+		pcnt = count_parts_क्रम_sge(sg);
+		क्रम (p = 0 ; p < pcnt ; p++) अणु
 			// Fill out the descriptor
 			BUG_ON(!desc);
 			clear_desc(desc);
-			if (p != pcnt - 1)
+			अगर (p != pcnt - 1)
 				desc->DescByteCount = 0x80000;
-			else
+			अन्यथा
 				desc->DescByteCount = sg_dma_len(sg) - (p * 0x80000);
 
 			desc->DescBufferByteCount = desc->DescByteCount;
 
 			desc->DescControlFlags |= DMA_DESC_CTL_IRQONERR;
-			if (i == 0 && p == 0)
+			अगर (i == 0 && p == 0)
 				desc->DescControlFlags |= DMA_DESC_CTL_SOP;
-			if (i == acd->mapped_entry_count - 1 && p == pcnt - 1)
+			अगर (i == acd->mapped_entry_count - 1 && p == pcnt - 1)
 				desc->DescControlFlags |= DMA_DESC_CTL_EOP | DMA_DESC_CTL_IRQONDONE;
 
 			desc->DescCardAddrLS = (card_addr & 0xFFFFFFFF);
@@ -165,13 +166,13 @@ static int kpc_dma_transfer(struct dev_private_data *priv,
 			desc->DescSystemAddrMS = (dma_addr & 0xFFFFFFFF00000000UL) >> 32;
 
 			user_ctl = acd->priv->user_ctl;
-			if (i == acd->mapped_entry_count - 1 && p == pcnt - 1)
+			अगर (i == acd->mapped_entry_count - 1 && p == pcnt - 1)
 				user_ctl = acd->priv->user_ctl_last;
 
 			desc->DescUserControlLS = (user_ctl & 0x00000000FFFFFFFFUL) >>  0;
 			desc->DescUserControlMS = (user_ctl & 0xFFFFFFFF00000000UL) >> 32;
 
-			if (i == acd->mapped_entry_count - 1 && p == pcnt - 1)
+			अगर (i == acd->mapped_entry_count - 1 && p == pcnt - 1)
 				desc->acd = acd;
 
 			dev_dbg(&priv->ldev->pldev->dev, "  Filled descriptor %p (acd = %p)\n",
@@ -179,46 +180,46 @@ static int kpc_dma_transfer(struct dev_private_data *priv,
 
 			ldev->desc_next = desc->Next;
 			desc = desc->Next;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	// Send the filled descriptors off to the hardware to process!
 	SetEngineSWPtr(ldev, ldev->desc_next);
 
 	unlock_engine(ldev);
 
-	rv = wait_for_completion_interruptible(&done);
+	rv = रुको_क्रम_completion_पूर्णांकerruptible(&करोne);
 	/*
-	 * If the user aborted (rv == -ERESTARTSYS), we're no longer responsible
-	 * for cleaning up the acd
+	 * If the user पातed (rv == -ERESTARTSYS), we're no दीर्घer responsible
+	 * क्रम cleaning up the acd
 	 */
-	if (rv == -ERESTARTSYS)
-		acd->cpl = NULL;
-	if (rv == 0) {
+	अगर (rv == -ERESTARTSYS)
+		acd->cpl = शून्य;
+	अगर (rv == 0) अणु
 		rv = acd->len;
-		kfree(acd);
-	}
-	return rv;
+		kमुक्त(acd);
+	पूर्ण
+	वापस rv;
 
  err_descr_too_many:
 	unlock_engine(ldev);
 	dma_unmap_sg(&ldev->pldev->dev, acd->sgt.sgl, acd->sgt.nents, ldev->dir);
- free_table:
-	sg_free_table(&acd->sgt);
+ मुक्त_table:
+	sg_मुक्त_table(&acd->sgt);
 
  unpin_pages:
-	if (nr_pages > 0)
+	अगर (nr_pages > 0)
 		unpin_user_pages(acd->user_pages, nr_pages);
-	kfree(acd->user_pages);
+	kमुक्त(acd->user_pages);
  err_alloc_userpages:
-	kfree(acd);
+	kमुक्त(acd);
 	dev_dbg(&priv->ldev->pldev->dev, "%s returning with error %d\n", __func__, rv);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-void  transfer_complete_cb(struct aio_cb_data *acd, size_t xfr_count, u32 flags)
-{
-	unsigned int i;
+व्योम  transfer_complete_cb(काष्ठा aio_cb_data *acd, माप_प्रकार xfr_count, u32 flags)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	BUG_ON(!acd);
 	BUG_ON(!acd->user_pages);
@@ -228,136 +229,136 @@ void  transfer_complete_cb(struct aio_cb_data *acd, size_t xfr_count, u32 flags)
 
 	dma_unmap_sg(&acd->ldev->pldev->dev, acd->sgt.sgl, acd->sgt.nents, acd->ldev->dir);
 
-	for (i = 0 ; i < acd->page_count ; i++) {
-		if (!PageReserved(acd->user_pages[i]))
+	क्रम (i = 0 ; i < acd->page_count ; i++) अणु
+		अगर (!PageReserved(acd->user_pages[i]))
 			set_page_dirty_lock(acd->user_pages[i]);
-	}
+	पूर्ण
 
 	unpin_user_pages(acd->user_pages, acd->page_count);
 
-	sg_free_table(&acd->sgt);
+	sg_मुक्त_table(&acd->sgt);
 
-	kfree(acd->user_pages);
+	kमुक्त(acd->user_pages);
 
 	acd->flags = flags;
 
-	if (acd->cpl) {
+	अगर (acd->cpl) अणु
 		complete(acd->cpl);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * There's no completion, so we're responsible for cleaning up
+		 * There's no completion, so we're responsible क्रम cleaning up
 		 * the acd
 		 */
-		kfree(acd);
-	}
-}
+		kमुक्त(acd);
+	पूर्ण
+पूर्ण
 
 /**********  Fileops  **********/
-static
-int  kpc_dma_open(struct inode *inode, struct file *filp)
-{
-	struct dev_private_data *priv;
-	struct kpc_dma_device *ldev = kpc_dma_lookup_device(iminor(inode));
+अटल
+पूर्णांक  kpc_dma_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा dev_निजी_data *priv;
+	काष्ठा kpc_dma_device *ldev = kpc_dma_lookup_device(iminor(inode));
 
-	if (!ldev)
-		return -ENODEV;
+	अगर (!ldev)
+		वापस -ENODEV;
 
-	if (!atomic_dec_and_test(&ldev->open_count)) {
-		atomic_inc(&ldev->open_count);
-		return -EBUSY; /* already open */
-	}
+	अगर (!atomic_dec_and_test(&ldev->खोलो_count)) अणु
+		atomic_inc(&ldev->खोलो_count);
+		वापस -EBUSY; /* alपढ़ोy खोलो */
+	पूर्ण
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->ldev = ldev;
-	filp->private_data = priv;
+	filp->निजी_data = priv;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static
-int  kpc_dma_close(struct inode *inode, struct file *filp)
-{
-	struct kpc_dma_descriptor *cur;
-	struct dev_private_data *priv = (struct dev_private_data *)filp->private_data;
-	struct kpc_dma_device *eng = priv->ldev;
+अटल
+पूर्णांक  kpc_dma_बंद(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा kpc_dma_descriptor *cur;
+	काष्ठा dev_निजी_data *priv = (काष्ठा dev_निजी_data *)filp->निजी_data;
+	काष्ठा kpc_dma_device *eng = priv->ldev;
 
 	lock_engine(eng);
 
 	stop_dma_engine(eng);
 
 	cur = eng->desc_completed->Next;
-	while (cur != eng->desc_next) {
+	जबतक (cur != eng->desc_next) अणु
 		dev_dbg(&eng->pldev->dev, "Aborting descriptor %p (acd = %p)\n", cur, cur->acd);
-		if (cur->DescControlFlags & DMA_DESC_CTL_EOP) {
-			if (cur->acd)
+		अगर (cur->DescControlFlags & DMA_DESC_CTL_EOP) अणु
+			अगर (cur->acd)
 				transfer_complete_cb(cur->acd, 0, ACD_FLAG_ABORT);
-		}
+		पूर्ण
 
 		clear_desc(cur);
 		eng->desc_completed = cur;
 
 		cur = cur->Next;
-	}
+	पूर्ण
 
 	start_dma_engine(eng);
 
 	unlock_engine(eng);
 
-	atomic_inc(&priv->ldev->open_count); /* release the device */
-	kfree(priv);
-	return 0;
-}
+	atomic_inc(&priv->ldev->खोलो_count); /* release the device */
+	kमुक्त(priv);
+	वापस 0;
+पूर्ण
 
-static
-ssize_t  kpc_dma_read(struct file *filp,       char __user *user_buf, size_t count, loff_t *ppos)
-{
-	struct dev_private_data *priv = (struct dev_private_data *)filp->private_data;
+अटल
+sमाप_प्रकार  kpc_dma_पढ़ो(काष्ठा file *filp,       अक्षर __user *user_buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा dev_निजी_data *priv = (काष्ठा dev_निजी_data *)filp->निजी_data;
 
-	if (priv->ldev->dir != DMA_FROM_DEVICE)
-		return -EMEDIUMTYPE;
+	अगर (priv->ldev->dir != DMA_FROM_DEVICE)
+		वापस -EMEDIUMTYPE;
 
-	return kpc_dma_transfer(priv, (unsigned long)user_buf, count);
-}
+	वापस kpc_dma_transfer(priv, (अचिन्हित दीर्घ)user_buf, count);
+पूर्ण
 
-static
-ssize_t  kpc_dma_write(struct file *filp, const char __user *user_buf, size_t count, loff_t *ppos)
-{
-	struct dev_private_data *priv = (struct dev_private_data *)filp->private_data;
+अटल
+sमाप_प्रकार  kpc_dma_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *user_buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा dev_निजी_data *priv = (काष्ठा dev_निजी_data *)filp->निजी_data;
 
-	if (priv->ldev->dir != DMA_TO_DEVICE)
-		return -EMEDIUMTYPE;
+	अगर (priv->ldev->dir != DMA_TO_DEVICE)
+		वापस -EMEDIUMTYPE;
 
-	return kpc_dma_transfer(priv, (unsigned long)user_buf, count);
-}
+	वापस kpc_dma_transfer(priv, (अचिन्हित दीर्घ)user_buf, count);
+पूर्ण
 
-static
-long  kpc_dma_ioctl(struct file *filp, unsigned int ioctl_num, unsigned long ioctl_param)
-{
-	struct dev_private_data *priv = (struct dev_private_data *)filp->private_data;
+अटल
+दीर्घ  kpc_dma_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक ioctl_num, अचिन्हित दीर्घ ioctl_param)
+अणु
+	काष्ठा dev_निजी_data *priv = (काष्ठा dev_निजी_data *)filp->निजी_data;
 
-	switch (ioctl_num) {
-	case KND_IOCTL_SET_CARD_ADDR:
-		priv->card_addr  = ioctl_param; return priv->card_addr;
-	case KND_IOCTL_SET_USER_CTL:
-		priv->user_ctl   = ioctl_param; return priv->user_ctl;
-	case KND_IOCTL_SET_USER_CTL_LAST:
-		priv->user_ctl_last = ioctl_param; return priv->user_ctl_last;
-	case KND_IOCTL_GET_USER_STS:
-		return priv->user_sts;
-	}
+	चयन (ioctl_num) अणु
+	हाल KND_IOCTL_SET_CARD_ADDR:
+		priv->card_addr  = ioctl_param; वापस priv->card_addr;
+	हाल KND_IOCTL_SET_USER_CTL:
+		priv->user_ctl   = ioctl_param; वापस priv->user_ctl;
+	हाल KND_IOCTL_SET_USER_CTL_LAST:
+		priv->user_ctl_last = ioctl_param; वापस priv->user_ctl_last;
+	हाल KND_IOCTL_GET_USER_STS:
+		वापस priv->user_sts;
+	पूर्ण
 
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 
-const struct file_operations  kpc_dma_fops = {
+स्थिर काष्ठा file_operations  kpc_dma_fops = अणु
 	.owner      = THIS_MODULE,
-	.open           = kpc_dma_open,
-	.release        = kpc_dma_close,
-	.read           = kpc_dma_read,
-	.write          = kpc_dma_write,
+	.खोलो           = kpc_dma_खोलो,
+	.release        = kpc_dma_बंद,
+	.पढ़ो           = kpc_dma_पढ़ो,
+	.ग_लिखो          = kpc_dma_ग_लिखो,
 	.unlocked_ioctl = kpc_dma_ioctl,
-};
+पूर्ण;
 

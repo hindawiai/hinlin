@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * FireDTV driver (formerly known as FireSAT)
+ * FireDTV driver (क्रमmerly known as FireSAT)
  *
  * Copyright (C) 2004 Andreas Monitzer <andy@monitzer.com>
  * Copyright (C) 2008 Henrik Kurelid <henrik@kurelid.se>
  */
 
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/types.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/types.h>
 
-#include <media/dmxdev.h>
-#include <media/dvb_demux.h>
-#include <media/dvbdev.h>
-#include <media/dvb_frontend.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvbdev.h>
+#समावेश <media/dvb_frontend.h>
 
-#include "firedtv.h"
+#समावेश "firedtv.h"
 
-static int alloc_channel(struct firedtv *fdtv)
-{
-	int i;
+अटल पूर्णांक alloc_channel(काष्ठा firedtv *fdtv)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 16; i++)
-		if (!__test_and_set_bit(i, &fdtv->channel_active))
-			break;
-	return i;
-}
+	क्रम (i = 0; i < 16; i++)
+		अगर (!__test_and_set_bit(i, &fdtv->channel_active))
+			अवरोध;
+	वापस i;
+पूर्ण
 
-static void collect_channels(struct firedtv *fdtv, int *pidc, u16 pid[])
-{
-	int i, n;
+अटल व्योम collect_channels(काष्ठा firedtv *fdtv, पूर्णांक *pidc, u16 pid[])
+अणु
+	पूर्णांक i, n;
 
-	for (i = 0, n = 0; i < 16; i++)
-		if (test_bit(i, &fdtv->channel_active))
+	क्रम (i = 0, n = 0; i < 16; i++)
+		अगर (test_bit(i, &fdtv->channel_active))
 			pid[n++] = fdtv->channel_pid[i];
 	*pidc = n;
-}
+पूर्ण
 
-static inline void dealloc_channel(struct firedtv *fdtv, int i)
-{
+अटल अंतरभूत व्योम dealloc_channel(काष्ठा firedtv *fdtv, पूर्णांक i)
+अणु
 	__clear_bit(i, &fdtv->channel_active);
-}
+पूर्ण
 
-int fdtv_start_feed(struct dvb_demux_feed *dvbdmxfeed)
-{
-	struct firedtv *fdtv = dvbdmxfeed->demux->priv;
-	int pidc, c, ret;
+पूर्णांक fdtv_start_feed(काष्ठा dvb_demux_feed *dvbdmxfeed)
+अणु
+	काष्ठा firedtv *fdtv = dvbdmxfeed->demux->priv;
+	पूर्णांक pidc, c, ret;
 	u16 pids[16];
 
-	switch (dvbdmxfeed->type) {
-	case DMX_TYPE_TS:
-	case DMX_TYPE_SEC:
-		break;
-	default:
+	चयन (dvbdmxfeed->type) अणु
+	हाल DMX_TYPE_TS:
+	हाल DMX_TYPE_SEC:
+		अवरोध;
+	शेष:
 		dev_err(fdtv->device, "can't start dmx feed: invalid type %u\n",
 			dvbdmxfeed->type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (mutex_lock_interruptible(&fdtv->demux_mutex))
-		return -EINTR;
+	अगर (mutex_lock_पूर्णांकerruptible(&fdtv->demux_mutex))
+		वापस -EINTR;
 
-	if (dvbdmxfeed->type == DMX_TYPE_TS) {
-		switch (dvbdmxfeed->pes_type) {
-		case DMX_PES_VIDEO:
-		case DMX_PES_AUDIO:
-		case DMX_PES_TELETEXT:
-		case DMX_PES_PCR:
-		case DMX_PES_OTHER:
+	अगर (dvbdmxfeed->type == DMX_TYPE_TS) अणु
+		चयन (dvbdmxfeed->pes_type) अणु
+		हाल DMX_PES_VIDEO:
+		हाल DMX_PES_AUDIO:
+		हाल DMX_PES_TELETEXT:
+		हाल DMX_PES_PCR:
+		हाल DMX_PES_OTHER:
 			c = alloc_channel(fdtv);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(fdtv->device,
 				"can't start dmx feed: invalid pes type %u\n",
 				dvbdmxfeed->pes_type);
 			ret = -EINVAL;
-			goto out;
-		}
-	} else {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		c = alloc_channel(fdtv);
-	}
+	पूर्ण
 
-	if (c > 15) {
+	अगर (c > 15) अणु
 		dev_err(fdtv->device, "can't start dmx feed: busy\n");
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	dvbdmxfeed->priv = (typeof(dvbdmxfeed->priv))(unsigned long)c;
+	dvbdmxfeed->priv = (typeof(dvbdmxfeed->priv))(अचिन्हित दीर्घ)c;
 	fdtv->channel_pid[c] = dvbdmxfeed->pid;
 	collect_channels(fdtv, &pidc, pids);
 
-	if (dvbdmxfeed->pid == 8192) {
+	अगर (dvbdmxfeed->pid == 8192) अणु
 		ret = avc_tuner_get_ts(fdtv);
-		if (ret) {
+		अगर (ret) अणु
 			dealloc_channel(fdtv, c);
 			dev_err(fdtv->device, "can't get TS\n");
-			goto out;
-		}
-	} else {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = avc_tuner_set_pids(fdtv, pidc, pids);
-		if (ret) {
+		अगर (ret) अणु
 			dealloc_channel(fdtv, c);
 			dev_err(fdtv->device, "can't set PIDs\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
 	mutex_unlock(&fdtv->demux_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int fdtv_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
-{
-	struct dvb_demux *demux = dvbdmxfeed->demux;
-	struct firedtv *fdtv = demux->priv;
-	int pidc, c, ret;
+पूर्णांक fdtv_stop_feed(काष्ठा dvb_demux_feed *dvbdmxfeed)
+अणु
+	काष्ठा dvb_demux *demux = dvbdmxfeed->demux;
+	काष्ठा firedtv *fdtv = demux->priv;
+	पूर्णांक pidc, c, ret;
 	u16 pids[16];
 
-	if (dvbdmxfeed->type == DMX_TYPE_TS &&
+	अगर (dvbdmxfeed->type == DMX_TYPE_TS &&
 	    !((dvbdmxfeed->ts_type & TS_PACKET) &&
-	      (demux->dmx.frontend->source != DMX_MEMORY_FE))) {
+	      (demux->dmx.frontend->source != DMX_MEMORY_FE))) अणु
 
-		if (dvbdmxfeed->ts_type & TS_DECODER) {
-			if (dvbdmxfeed->pes_type >= DMX_PES_OTHER ||
+		अगर (dvbdmxfeed->ts_type & TS_DECODER) अणु
+			अगर (dvbdmxfeed->pes_type >= DMX_PES_OTHER ||
 			    !demux->pesfilter[dvbdmxfeed->pes_type])
-				return -EINVAL;
+				वापस -EINVAL;
 
 			demux->pids[dvbdmxfeed->pes_type] |= 0x8000;
-			demux->pesfilter[dvbdmxfeed->pes_type] = NULL;
-		}
+			demux->pesfilter[dvbdmxfeed->pes_type] = शून्य;
+		पूर्ण
 
-		if (!(dvbdmxfeed->ts_type & TS_DECODER &&
+		अगर (!(dvbdmxfeed->ts_type & TS_DECODER &&
 		      dvbdmxfeed->pes_type < DMX_PES_OTHER))
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
-	if (mutex_lock_interruptible(&fdtv->demux_mutex))
-		return -EINTR;
+	अगर (mutex_lock_पूर्णांकerruptible(&fdtv->demux_mutex))
+		वापस -EINTR;
 
-	c = (unsigned long)dvbdmxfeed->priv;
+	c = (अचिन्हित दीर्घ)dvbdmxfeed->priv;
 	dealloc_channel(fdtv, c);
 	collect_channels(fdtv, &pidc, pids);
 
@@ -152,19 +153,19 @@ int fdtv_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 
 	mutex_unlock(&fdtv->demux_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-int fdtv_dvb_register(struct firedtv *fdtv, const char *name)
-{
-	int err;
+पूर्णांक fdtv_dvb_रेजिस्टर(काष्ठा firedtv *fdtv, स्थिर अक्षर *name)
+अणु
+	पूर्णांक err;
 
-	err = dvb_register_adapter(&fdtv->adapter, name,
+	err = dvb_रेजिस्टर_adapter(&fdtv->adapter, name,
 				   THIS_MODULE, fdtv->device, adapter_nr);
-	if (err < 0)
-		goto fail_log;
+	अगर (err < 0)
+		जाओ fail_log;
 
 	/*DMX_TS_FILTERING | DMX_SECTION_FILTERING*/
 	fdtv->demux.dmx.capabilities = 0;
@@ -174,71 +175,71 @@ int fdtv_dvb_register(struct firedtv *fdtv, const char *name)
 	fdtv->demux.feednum	= 16;
 	fdtv->demux.start_feed	= fdtv_start_feed;
 	fdtv->demux.stop_feed	= fdtv_stop_feed;
-	fdtv->demux.write_to_decoder = NULL;
+	fdtv->demux.ग_लिखो_to_decoder = शून्य;
 
 	err = dvb_dmx_init(&fdtv->demux);
-	if (err)
-		goto fail_unreg_adapter;
+	अगर (err)
+		जाओ fail_unreg_adapter;
 
 	fdtv->dmxdev.filternum    = 16;
 	fdtv->dmxdev.demux        = &fdtv->demux.dmx;
 	fdtv->dmxdev.capabilities = 0;
 
 	err = dvb_dmxdev_init(&fdtv->dmxdev, &fdtv->adapter);
-	if (err)
-		goto fail_dmx_release;
+	अगर (err)
+		जाओ fail_dmx_release;
 
 	fdtv->frontend.source = DMX_FRONTEND_0;
 
 	err = fdtv->demux.dmx.add_frontend(&fdtv->demux.dmx, &fdtv->frontend);
-	if (err)
-		goto fail_dmxdev_release;
+	अगर (err)
+		जाओ fail_dmxdev_release;
 
 	err = fdtv->demux.dmx.connect_frontend(&fdtv->demux.dmx,
 					       &fdtv->frontend);
-	if (err)
-		goto fail_rem_frontend;
+	अगर (err)
+		जाओ fail_rem_frontend;
 
 	err = dvb_net_init(&fdtv->adapter, &fdtv->dvbnet, &fdtv->demux.dmx);
-	if (err)
-		goto fail_disconnect_frontend;
+	अगर (err)
+		जाओ fail_disconnect_frontend;
 
 	fdtv_frontend_init(fdtv, name);
-	err = dvb_register_frontend(&fdtv->adapter, &fdtv->fe);
-	if (err)
-		goto fail_net_release;
+	err = dvb_रेजिस्टर_frontend(&fdtv->adapter, &fdtv->fe);
+	अगर (err)
+		जाओ fail_net_release;
 
-	err = fdtv_ca_register(fdtv);
-	if (err)
+	err = fdtv_ca_रेजिस्टर(fdtv);
+	अगर (err)
 		dev_info(fdtv->device,
 			 "Conditional Access Module not enabled\n");
-	return 0;
+	वापस 0;
 
 fail_net_release:
 	dvb_net_release(&fdtv->dvbnet);
 fail_disconnect_frontend:
-	fdtv->demux.dmx.close(&fdtv->demux.dmx);
+	fdtv->demux.dmx.बंद(&fdtv->demux.dmx);
 fail_rem_frontend:
-	fdtv->demux.dmx.remove_frontend(&fdtv->demux.dmx, &fdtv->frontend);
+	fdtv->demux.dmx.हटाओ_frontend(&fdtv->demux.dmx, &fdtv->frontend);
 fail_dmxdev_release:
 	dvb_dmxdev_release(&fdtv->dmxdev);
 fail_dmx_release:
 	dvb_dmx_release(&fdtv->demux);
 fail_unreg_adapter:
-	dvb_unregister_adapter(&fdtv->adapter);
+	dvb_unरेजिस्टर_adapter(&fdtv->adapter);
 fail_log:
 	dev_err(fdtv->device, "DVB initialization failed\n");
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void fdtv_dvb_unregister(struct firedtv *fdtv)
-{
+व्योम fdtv_dvb_unरेजिस्टर(काष्ठा firedtv *fdtv)
+अणु
 	fdtv_ca_release(fdtv);
-	dvb_unregister_frontend(&fdtv->fe);
+	dvb_unरेजिस्टर_frontend(&fdtv->fe);
 	dvb_net_release(&fdtv->dvbnet);
-	fdtv->demux.dmx.close(&fdtv->demux.dmx);
-	fdtv->demux.dmx.remove_frontend(&fdtv->demux.dmx, &fdtv->frontend);
+	fdtv->demux.dmx.बंद(&fdtv->demux.dmx);
+	fdtv->demux.dmx.हटाओ_frontend(&fdtv->demux.dmx, &fdtv->frontend);
 	dvb_dmxdev_release(&fdtv->dmxdev);
 	dvb_dmx_release(&fdtv->demux);
-	dvb_unregister_adapter(&fdtv->adapter);
-}
+	dvb_unरेजिस्टर_adapter(&fdtv->adapter);
+पूर्ण

@@ -1,15 +1,16 @@
+<शैली गुरु>
 /* Copyright 2008 - 2016 Freescale Semiconductor, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *	 notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Redistributions in binary क्रमm must reproduce the above copyright
  *	 notice, this list of conditions and the following disclaimer in the
- *	 documentation and/or other materials provided with the distribution.
+ *	 करोcumentation and/or other materials provided with the distribution.
  *     * Neither the name of Freescale Semiconductor nor the
- *	 names of its contributors may be used to endorse or promote products
- *	 derived from this software without specific prior written permission.
+ *	 names of its contributors may be used to enकरोrse or promote products
+ *	 derived from this software without specअगरic prior written permission.
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") as published by the Free Software
@@ -20,7 +21,7 @@
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL Freescale Semiconductor BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -28,26 +29,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bman_test.h"
+#समावेश "bman_test.h"
 
 MODULE_AUTHOR("Geoff Thorpe");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("BMan testing");
 
-static int test_init(void)
-{
-#ifdef CONFIG_FSL_BMAN_TEST_API
-	int loop = 1;
+अटल पूर्णांक test_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_FSL_BMAN_TEST_API
+	पूर्णांक loop = 1;
 
-	while (loop--)
+	जबतक (loop--)
 		bman_test_api();
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void test_exit(void)
-{
-}
+अटल व्योम test_निकास(व्योम)
+अणु
+पूर्ण
 
 module_init(test_init);
-module_exit(test_exit);
+module_निकास(test_निकास);

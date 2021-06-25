@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Industry-pack bus support functions.
  *
@@ -6,331 +7,331 @@
  * Author: Samuel Iglesias Gonsalvez <siglesias@igalia.com>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/idr.h>
-#include <linux/io.h>
-#include <linux/ipack.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ipack.h>
 
-#define to_ipack_dev(device) container_of(device, struct ipack_device, dev)
-#define to_ipack_driver(drv) container_of(drv, struct ipack_driver, driver)
+#घोषणा to_ipack_dev(device) container_of(device, काष्ठा ipack_device, dev)
+#घोषणा to_ipack_driver(drv) container_of(drv, काष्ठा ipack_driver, driver)
 
-static DEFINE_IDA(ipack_ida);
+अटल DEFINE_IDA(ipack_ida);
 
-static void ipack_device_release(struct device *dev)
-{
-	struct ipack_device *device = to_ipack_dev(dev);
-	kfree(device->id);
+अटल व्योम ipack_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा ipack_device *device = to_ipack_dev(dev);
+	kमुक्त(device->id);
 	device->release(device);
-}
+पूर्ण
 
-static inline const struct ipack_device_id *
-ipack_match_one_device(const struct ipack_device_id *id,
-		       const struct ipack_device *device)
-{
-	if ((id->format == IPACK_ANY_FORMAT ||
-				id->format == device->id_format) &&
-	    (id->vendor == IPACK_ANY_ID || id->vendor == device->id_vendor) &&
+अटल अंतरभूत स्थिर काष्ठा ipack_device_id *
+ipack_match_one_device(स्थिर काष्ठा ipack_device_id *id,
+		       स्थिर काष्ठा ipack_device *device)
+अणु
+	अगर ((id->क्रमmat == IPACK_ANY_FORMAT ||
+				id->क्रमmat == device->id_क्रमmat) &&
+	    (id->venकरोr == IPACK_ANY_ID || id->venकरोr == device->id_venकरोr) &&
 	    (id->device == IPACK_ANY_ID || id->device == device->id_device))
-		return id;
-	return NULL;
-}
+		वापस id;
+	वापस शून्य;
+पूर्ण
 
-static const struct ipack_device_id *
-ipack_match_id(const struct ipack_device_id *ids, struct ipack_device *idev)
-{
-	if (ids) {
-		while (ids->vendor || ids->device) {
-			if (ipack_match_one_device(ids, idev))
-				return ids;
+अटल स्थिर काष्ठा ipack_device_id *
+ipack_match_id(स्थिर काष्ठा ipack_device_id *ids, काष्ठा ipack_device *idev)
+अणु
+	अगर (ids) अणु
+		जबतक (ids->venकरोr || ids->device) अणु
+			अगर (ipack_match_one_device(ids, idev))
+				वापस ids;
 			ids++;
-		}
-	}
-	return NULL;
-}
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int ipack_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct ipack_device *idev = to_ipack_dev(dev);
-	struct ipack_driver *idrv = to_ipack_driver(drv);
-	const struct ipack_device_id *found_id;
+अटल पूर्णांक ipack_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा ipack_device *idev = to_ipack_dev(dev);
+	काष्ठा ipack_driver *idrv = to_ipack_driver(drv);
+	स्थिर काष्ठा ipack_device_id *found_id;
 
 	found_id = ipack_match_id(idrv->id_table, idev);
-	return found_id ? 1 : 0;
-}
+	वापस found_id ? 1 : 0;
+पूर्ण
 
-static int ipack_bus_probe(struct device *device)
-{
-	struct ipack_device *dev = to_ipack_dev(device);
-	struct ipack_driver *drv = to_ipack_driver(device->driver);
+अटल पूर्णांक ipack_bus_probe(काष्ठा device *device)
+अणु
+	काष्ठा ipack_device *dev = to_ipack_dev(device);
+	काष्ठा ipack_driver *drv = to_ipack_driver(device->driver);
 
-	return drv->ops->probe(dev);
-}
+	वापस drv->ops->probe(dev);
+पूर्ण
 
-static int ipack_bus_remove(struct device *device)
-{
-	struct ipack_device *dev = to_ipack_dev(device);
-	struct ipack_driver *drv = to_ipack_driver(device->driver);
+अटल पूर्णांक ipack_bus_हटाओ(काष्ठा device *device)
+अणु
+	काष्ठा ipack_device *dev = to_ipack_dev(device);
+	काष्ठा ipack_driver *drv = to_ipack_driver(device->driver);
 
-	if (drv->ops->remove)
-		drv->ops->remove(dev);
+	अगर (drv->ops->हटाओ)
+		drv->ops->हटाओ(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipack_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct ipack_device *idev;
+अटल पूर्णांक ipack_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा ipack_device *idev;
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	idev = to_ipack_dev(dev);
 
-	if (add_uevent_var(env,
-			   "MODALIAS=ipack:f%02Xv%08Xd%08X", idev->id_format,
-			   idev->id_vendor, idev->id_device))
-		return -ENOMEM;
+	अगर (add_uevent_var(env,
+			   "MODALIAS=ipack:f%02Xv%08Xd%08X", idev->id_क्रमmat,
+			   idev->id_venकरोr, idev->id_device))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define ipack_device_attr(field, format_string)				\
-static ssize_t								\
-field##_show(struct device *dev, struct device_attribute *attr,		\
-		char *buf)						\
-{									\
-	struct ipack_device *idev = to_ipack_dev(dev);			\
-	return sprintf(buf, format_string, idev->field);		\
-}
+#घोषणा ipack_device_attr(field, क्रमmat_string)				\
+अटल sमाप_प्रकार								\
+field##_show(काष्ठा device *dev, काष्ठा device_attribute *attr,		\
+		अक्षर *buf)						\
+अणु									\
+	काष्ठा ipack_device *idev = to_ipack_dev(dev);			\
+	वापस प्र_लिखो(buf, क्रमmat_string, idev->field);		\
+पूर्ण
 
-static ssize_t id_show(struct device *dev,
-		       struct device_attribute *attr, char *buf)
-{
-	unsigned int i, c, l, s;
-	struct ipack_device *idev = to_ipack_dev(dev);
+अटल sमाप_प्रकार id_show(काष्ठा device *dev,
+		       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित पूर्णांक i, c, l, s;
+	काष्ठा ipack_device *idev = to_ipack_dev(dev);
 
 
-	switch (idev->id_format) {
-	case IPACK_ID_VERSION_1:
-		l = 0x7; s = 1; break;
-	case IPACK_ID_VERSION_2:
-		l = 0xf; s = 2; break;
-	default:
-		return -EIO;
-	}
+	चयन (idev->id_क्रमmat) अणु
+	हाल IPACK_ID_VERSION_1:
+		l = 0x7; s = 1; अवरोध;
+	हाल IPACK_ID_VERSION_2:
+		l = 0xf; s = 2; अवरोध;
+	शेष:
+		वापस -EIO;
+	पूर्ण
 	c = 0;
-	for (i = 0; i < idev->id_avail; i++) {
-		if (i > 0) {
-			if ((i & l) == 0)
+	क्रम (i = 0; i < idev->id_avail; i++) अणु
+		अगर (i > 0) अणु
+			अगर ((i & l) == 0)
 				buf[c++] = '\n';
-			else if ((i & s) == 0)
+			अन्यथा अगर ((i & s) == 0)
 				buf[c++] = ' ';
-		}
-		sprintf(&buf[c], "%02x", idev->id[i]);
+		पूर्ण
+		प्र_लिखो(&buf[c], "%02x", idev->id[i]);
 		c += 2;
-	}
+	पूर्ण
 	buf[c++] = '\n';
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static ssize_t
-id_vendor_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct ipack_device *idev = to_ipack_dev(dev);
-	switch (idev->id_format) {
-	case IPACK_ID_VERSION_1:
-		return sprintf(buf, "0x%02x\n", idev->id_vendor);
-	case IPACK_ID_VERSION_2:
-		return sprintf(buf, "0x%06x\n", idev->id_vendor);
-	default:
-		return -EIO;
-	}
-}
+अटल sमाप_प्रकार
+id_venकरोr_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ipack_device *idev = to_ipack_dev(dev);
+	चयन (idev->id_क्रमmat) अणु
+	हाल IPACK_ID_VERSION_1:
+		वापस प्र_लिखो(buf, "0x%02x\n", idev->id_venकरोr);
+	हाल IPACK_ID_VERSION_2:
+		वापस प्र_लिखो(buf, "0x%06x\n", idev->id_venकरोr);
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-static ssize_t
-id_device_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct ipack_device *idev = to_ipack_dev(dev);
-	switch (idev->id_format) {
-	case IPACK_ID_VERSION_1:
-		return sprintf(buf, "0x%02x\n", idev->id_device);
-	case IPACK_ID_VERSION_2:
-		return sprintf(buf, "0x%04x\n", idev->id_device);
-	default:
-		return -EIO;
-	}
-}
+अटल sमाप_प्रकार
+id_device_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ipack_device *idev = to_ipack_dev(dev);
+	चयन (idev->id_क्रमmat) अणु
+	हाल IPACK_ID_VERSION_1:
+		वापस प्र_लिखो(buf, "0x%02x\n", idev->id_device);
+	हाल IPACK_ID_VERSION_2:
+		वापस प्र_लिखो(buf, "0x%04x\n", idev->id_device);
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct ipack_device *idev = to_ipack_dev(dev);
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा ipack_device *idev = to_ipack_dev(dev);
 
-	return sprintf(buf, "ipac:f%02Xv%08Xd%08X", idev->id_format,
-		       idev->id_vendor, idev->id_device);
-}
+	वापस प्र_लिखो(buf, "ipac:f%02Xv%08Xd%08X", idev->id_क्रमmat,
+		       idev->id_venकरोr, idev->id_device);
+पूर्ण
 
-ipack_device_attr(id_format, "0x%hhx\n");
+ipack_device_attr(id_क्रमmat, "0x%hhx\n");
 
-static DEVICE_ATTR_RO(id);
-static DEVICE_ATTR_RO(id_device);
-static DEVICE_ATTR_RO(id_format);
-static DEVICE_ATTR_RO(id_vendor);
-static DEVICE_ATTR_RO(modalias);
+अटल DEVICE_ATTR_RO(id);
+अटल DEVICE_ATTR_RO(id_device);
+अटल DEVICE_ATTR_RO(id_क्रमmat);
+अटल DEVICE_ATTR_RO(id_venकरोr);
+अटल DEVICE_ATTR_RO(modalias);
 
-static struct attribute *ipack_attrs[] = {
+अटल काष्ठा attribute *ipack_attrs[] = अणु
 	&dev_attr_id.attr,
 	&dev_attr_id_device.attr,
-	&dev_attr_id_format.attr,
-	&dev_attr_id_vendor.attr,
+	&dev_attr_id_क्रमmat.attr,
+	&dev_attr_id_venकरोr.attr,
 	&dev_attr_modalias.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(ipack);
 
-static struct bus_type ipack_bus_type = {
+अटल काष्ठा bus_type ipack_bus_type = अणु
 	.name      = "ipack",
 	.probe     = ipack_bus_probe,
 	.match     = ipack_bus_match,
-	.remove    = ipack_bus_remove,
+	.हटाओ    = ipack_bus_हटाओ,
 	.dev_groups = ipack_groups,
 	.uevent	   = ipack_uevent,
-};
+पूर्ण;
 
-struct ipack_bus_device *ipack_bus_register(struct device *parent, int slots,
-					    const struct ipack_bus_ops *ops,
-					    struct module *owner)
-{
-	int bus_nr;
-	struct ipack_bus_device *bus;
+काष्ठा ipack_bus_device *ipack_bus_रेजिस्टर(काष्ठा device *parent, पूर्णांक slots,
+					    स्थिर काष्ठा ipack_bus_ops *ops,
+					    काष्ठा module *owner)
+अणु
+	पूर्णांक bus_nr;
+	काष्ठा ipack_bus_device *bus;
 
-	bus = kzalloc(sizeof(*bus), GFP_KERNEL);
-	if (!bus)
-		return NULL;
+	bus = kzalloc(माप(*bus), GFP_KERNEL);
+	अगर (!bus)
+		वापस शून्य;
 
 	bus_nr = ida_simple_get(&ipack_ida, 0, 0, GFP_KERNEL);
-	if (bus_nr < 0) {
-		kfree(bus);
-		return NULL;
-	}
+	अगर (bus_nr < 0) अणु
+		kमुक्त(bus);
+		वापस शून्य;
+	पूर्ण
 
 	bus->bus_nr = bus_nr;
 	bus->parent = parent;
 	bus->slots = slots;
 	bus->ops = ops;
 	bus->owner = owner;
-	return bus;
-}
-EXPORT_SYMBOL_GPL(ipack_bus_register);
+	वापस bus;
+पूर्ण
+EXPORT_SYMBOL_GPL(ipack_bus_रेजिस्टर);
 
-static int ipack_unregister_bus_member(struct device *dev, void *data)
-{
-	struct ipack_device *idev = to_ipack_dev(dev);
-	struct ipack_bus_device *bus = data;
+अटल पूर्णांक ipack_unरेजिस्टर_bus_member(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा ipack_device *idev = to_ipack_dev(dev);
+	काष्ठा ipack_bus_device *bus = data;
 
-	if (idev->bus == bus)
+	अगर (idev->bus == bus)
 		ipack_device_del(idev);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int ipack_bus_unregister(struct ipack_bus_device *bus)
-{
-	bus_for_each_dev(&ipack_bus_type, NULL, bus,
-		ipack_unregister_bus_member);
-	ida_simple_remove(&ipack_ida, bus->bus_nr);
-	kfree(bus);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ipack_bus_unregister);
+पूर्णांक ipack_bus_unरेजिस्टर(काष्ठा ipack_bus_device *bus)
+अणु
+	bus_क्रम_each_dev(&ipack_bus_type, शून्य, bus,
+		ipack_unरेजिस्टर_bus_member);
+	ida_simple_हटाओ(&ipack_ida, bus->bus_nr);
+	kमुक्त(bus);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ipack_bus_unरेजिस्टर);
 
-int ipack_driver_register(struct ipack_driver *edrv, struct module *owner,
-			  const char *name)
-{
-	if (!edrv->ops->probe)
-		return -EINVAL;
+पूर्णांक ipack_driver_रेजिस्टर(काष्ठा ipack_driver *edrv, काष्ठा module *owner,
+			  स्थिर अक्षर *name)
+अणु
+	अगर (!edrv->ops->probe)
+		वापस -EINVAL;
 
 	edrv->driver.owner = owner;
 	edrv->driver.name = name;
 	edrv->driver.bus = &ipack_bus_type;
-	return driver_register(&edrv->driver);
-}
-EXPORT_SYMBOL_GPL(ipack_driver_register);
+	वापस driver_रेजिस्टर(&edrv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(ipack_driver_रेजिस्टर);
 
-void ipack_driver_unregister(struct ipack_driver *edrv)
-{
-	driver_unregister(&edrv->driver);
-}
-EXPORT_SYMBOL_GPL(ipack_driver_unregister);
+व्योम ipack_driver_unरेजिस्टर(काष्ठा ipack_driver *edrv)
+अणु
+	driver_unरेजिस्टर(&edrv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(ipack_driver_unरेजिस्टर);
 
-static u16 ipack_crc_byte(u16 crc, u8 c)
-{
-	int i;
+अटल u16 ipack_crc_byte(u16 crc, u8 c)
+अणु
+	पूर्णांक i;
 
 	crc ^= c << 8;
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		crc = (crc << 1) ^ ((crc & 0x8000) ? 0x1021 : 0);
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
 /*
- * The algorithm in lib/crc-ccitt.c does not seem to apply since it uses the
+ * The algorithm in lib/crc-ccitt.c करोes not seem to apply since it uses the
  * opposite bit ordering.
  */
-static u8 ipack_calc_crc1(struct ipack_device *dev)
-{
+अटल u8 ipack_calc_crc1(काष्ठा ipack_device *dev)
+अणु
 	u8 c;
 	u16 crc;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	crc = 0xffff;
-	for (i = 0; i < dev->id_avail; i++) {
+	क्रम (i = 0; i < dev->id_avail; i++) अणु
 		c = (i != 11) ? dev->id[i] : 0;
 		crc = ipack_crc_byte(crc, c);
-	}
+	पूर्ण
 	crc = ~crc;
-	return crc & 0xff;
-}
+	वापस crc & 0xff;
+पूर्ण
 
-static u16 ipack_calc_crc2(struct ipack_device *dev)
-{
+अटल u16 ipack_calc_crc2(काष्ठा ipack_device *dev)
+अणु
 	u8 c;
 	u16 crc;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	crc = 0xffff;
-	for (i = 0; i < dev->id_avail; i++) {
+	क्रम (i = 0; i < dev->id_avail; i++) अणु
 		c = ((i != 0x18) && (i != 0x19)) ? dev->id[i] : 0;
 		crc = ipack_crc_byte(crc, c);
-	}
+	पूर्ण
 	crc = ~crc;
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-static void ipack_parse_id1(struct ipack_device *dev)
-{
+अटल व्योम ipack_parse_id1(काष्ठा ipack_device *dev)
+अणु
 	u8 *id = dev->id;
 	u8 crc;
 
-	dev->id_vendor = id[4];
+	dev->id_venकरोr = id[4];
 	dev->id_device = id[5];
 	dev->speed_8mhz = 1;
 	dev->speed_32mhz = (id[7] == 'H');
 	crc = ipack_calc_crc1(dev);
 	dev->id_crc_correct = (crc == id[11]);
-	if (!dev->id_crc_correct) {
+	अगर (!dev->id_crc_correct) अणु
 		dev_warn(&dev->dev, "ID CRC invalid found 0x%x, expected 0x%x.\n",
 				id[11], crc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ipack_parse_id2(struct ipack_device *dev)
-{
+अटल व्योम ipack_parse_id2(काष्ठा ipack_device *dev)
+अणु
 	__be16 *id = (__be16 *) dev->id;
 	u16 flags, crc;
 
-	dev->id_vendor = ((be16_to_cpu(id[3]) & 0xff) << 16)
+	dev->id_venकरोr = ((be16_to_cpu(id[3]) & 0xff) << 16)
 			 + be16_to_cpu(id[4]);
 	dev->id_device = be16_to_cpu(id[5]);
 	flags = be16_to_cpu(id[10]);
@@ -338,95 +339,95 @@ static void ipack_parse_id2(struct ipack_device *dev)
 	dev->speed_32mhz = !!(flags & 4);
 	crc = ipack_calc_crc2(dev);
 	dev->id_crc_correct = (crc == be16_to_cpu(id[12]));
-	if (!dev->id_crc_correct) {
+	अगर (!dev->id_crc_correct) अणु
 		dev_warn(&dev->dev, "ID CRC invalid found 0x%x, expected 0x%x.\n",
 				id[11], crc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ipack_device_read_id(struct ipack_device *dev)
-{
+अटल पूर्णांक ipack_device_पढ़ो_id(काष्ठा ipack_device *dev)
+अणु
 	u8 __iomem *idmem;
-	int i;
-	int ret = 0;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	idmem = ioremap(dev->region[IPACK_ID_SPACE].start,
 			dev->region[IPACK_ID_SPACE].size);
-	if (!idmem) {
+	अगर (!idmem) अणु
 		dev_err(&dev->dev, "error mapping memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Determine ID PROM Data Format.  If we find the ids "IPAC" or "IPAH"
-	 * we are dealing with a IndustryPack  format 1 device.  If we detect
-	 * "VITA4 " (16 bit big endian formatted) we are dealing with a
-	 * IndustryPack format 2 device */
-	if ((ioread8(idmem + 1) == 'I') &&
-			(ioread8(idmem + 3) == 'P') &&
-			(ioread8(idmem + 5) == 'A') &&
-			((ioread8(idmem + 7) == 'C') ||
-			 (ioread8(idmem + 7) == 'H'))) {
-		dev->id_format = IPACK_ID_VERSION_1;
-		dev->id_avail = ioread8(idmem + 0x15);
-		if ((dev->id_avail < 0x0c) || (dev->id_avail > 0x40)) {
+	 * we are dealing with a IndustryPack  क्रमmat 1 device.  If we detect
+	 * "VITA4 " (16 bit big endian क्रमmatted) we are dealing with a
+	 * IndustryPack क्रमmat 2 device */
+	अगर ((ioपढ़ो8(idmem + 1) == 'I') &&
+			(ioपढ़ो8(idmem + 3) == 'P') &&
+			(ioपढ़ो8(idmem + 5) == 'A') &&
+			((ioपढ़ो8(idmem + 7) == 'C') ||
+			 (ioपढ़ो8(idmem + 7) == 'H'))) अणु
+		dev->id_क्रमmat = IPACK_ID_VERSION_1;
+		dev->id_avail = ioपढ़ो8(idmem + 0x15);
+		अगर ((dev->id_avail < 0x0c) || (dev->id_avail > 0x40)) अणु
 			dev_warn(&dev->dev, "invalid id size");
 			dev->id_avail = 0x0c;
-		}
-	} else if ((ioread8(idmem + 0) == 'I') &&
-			(ioread8(idmem + 1) == 'V') &&
-			(ioread8(idmem + 2) == 'A') &&
-			(ioread8(idmem + 3) == 'T') &&
-			(ioread8(idmem + 4) == ' ') &&
-			(ioread8(idmem + 5) == '4')) {
-		dev->id_format = IPACK_ID_VERSION_2;
-		dev->id_avail = ioread16be(idmem + 0x16);
-		if ((dev->id_avail < 0x1a) || (dev->id_avail > 0x40)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर ((ioपढ़ो8(idmem + 0) == 'I') &&
+			(ioपढ़ो8(idmem + 1) == 'V') &&
+			(ioपढ़ो8(idmem + 2) == 'A') &&
+			(ioपढ़ो8(idmem + 3) == 'T') &&
+			(ioपढ़ो8(idmem + 4) == ' ') &&
+			(ioपढ़ो8(idmem + 5) == '4')) अणु
+		dev->id_क्रमmat = IPACK_ID_VERSION_2;
+		dev->id_avail = ioपढ़ो16be(idmem + 0x16);
+		अगर ((dev->id_avail < 0x1a) || (dev->id_avail > 0x40)) अणु
 			dev_warn(&dev->dev, "invalid id size");
 			dev->id_avail = 0x1a;
-		}
-	} else {
-		dev->id_format = IPACK_ID_VERSION_INVALID;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dev->id_क्रमmat = IPACK_ID_VERSION_INVALID;
 		dev->id_avail = 0;
-	}
+	पूर्ण
 
-	if (!dev->id_avail) {
+	अगर (!dev->id_avail) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Obtain the amount of memory required to store a copy of the complete
 	 * ID ROM contents */
-	dev->id = kmalloc(dev->id_avail, GFP_KERNEL);
-	if (!dev->id) {
+	dev->id = kदो_स्मृति(dev->id_avail, GFP_KERNEL);
+	अगर (!dev->id) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
-	for (i = 0; i < dev->id_avail; i++) {
-		if (dev->id_format == IPACK_ID_VERSION_1)
-			dev->id[i] = ioread8(idmem + (i << 1) + 1);
-		else
-			dev->id[i] = ioread8(idmem + i);
-	}
+		जाओ out;
+	पूर्ण
+	क्रम (i = 0; i < dev->id_avail; i++) अणु
+		अगर (dev->id_क्रमmat == IPACK_ID_VERSION_1)
+			dev->id[i] = ioपढ़ो8(idmem + (i << 1) + 1);
+		अन्यथा
+			dev->id[i] = ioपढ़ो8(idmem + i);
+	पूर्ण
 
 	/* now we can finally work with the copy */
-	switch (dev->id_format) {
-	case IPACK_ID_VERSION_1:
+	चयन (dev->id_क्रमmat) अणु
+	हाल IPACK_ID_VERSION_1:
 		ipack_parse_id1(dev);
-		break;
-	case IPACK_ID_VERSION_2:
+		अवरोध;
+	हाल IPACK_ID_VERSION_2:
 		ipack_parse_id2(dev);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
 	iounmap(idmem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ipack_device_init(struct ipack_device *dev)
-{
-	int ret;
+पूर्णांक ipack_device_init(काष्ठा ipack_device *dev)
+अणु
+	पूर्णांक ret;
 
 	dev->dev.bus = &ipack_bus_type;
 	dev->dev.release = ipack_device_release;
@@ -435,67 +436,67 @@ int ipack_device_init(struct ipack_device *dev)
 		     "ipack-dev.%u.%u", dev->bus->bus_nr, dev->slot);
 	device_initialize(&dev->dev);
 
-	if (dev->bus->ops->set_clockrate(dev, 8))
+	अगर (dev->bus->ops->set_घड़ीrate(dev, 8))
 		dev_warn(&dev->dev, "failed to switch to 8 MHz operation for reading of device ID.\n");
-	if (dev->bus->ops->reset_timeout(dev))
+	अगर (dev->bus->ops->reset_समयout(dev))
 		dev_warn(&dev->dev, "failed to reset potential timeout.");
 
-	ret = ipack_device_read_id(dev);
-	if (ret < 0) {
+	ret = ipack_device_पढ़ो_id(dev);
+	अगर (ret < 0) अणु
 		dev_err(&dev->dev, "error reading device id section.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* if the device supports 32 MHz operation, use it. */
-	if (dev->speed_32mhz) {
-		ret = dev->bus->ops->set_clockrate(dev, 32);
-		if (ret < 0)
+	/* अगर the device supports 32 MHz operation, use it. */
+	अगर (dev->speed_32mhz) अणु
+		ret = dev->bus->ops->set_घड़ीrate(dev, 32);
+		अगर (ret < 0)
 			dev_err(&dev->dev, "failed to switch to 32 MHz operation.\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipack_device_init);
 
-int ipack_device_add(struct ipack_device *dev)
-{
-	return device_add(&dev->dev);
-}
+पूर्णांक ipack_device_add(काष्ठा ipack_device *dev)
+अणु
+	वापस device_add(&dev->dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipack_device_add);
 
-void ipack_device_del(struct ipack_device *dev)
-{
+व्योम ipack_device_del(काष्ठा ipack_device *dev)
+अणु
 	device_del(&dev->dev);
 	ipack_put_device(dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ipack_device_del);
 
-void ipack_get_device(struct ipack_device *dev)
-{
+व्योम ipack_get_device(काष्ठा ipack_device *dev)
+अणु
 	get_device(&dev->dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ipack_get_device);
 
-void ipack_put_device(struct ipack_device *dev)
-{
+व्योम ipack_put_device(काष्ठा ipack_device *dev)
+अणु
 	put_device(&dev->dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ipack_put_device);
 
-static int __init ipack_init(void)
-{
+अटल पूर्णांक __init ipack_init(व्योम)
+अणु
 	ida_init(&ipack_ida);
-	return bus_register(&ipack_bus_type);
-}
+	वापस bus_रेजिस्टर(&ipack_bus_type);
+पूर्ण
 
-static void __exit ipack_exit(void)
-{
-	bus_unregister(&ipack_bus_type);
+अटल व्योम __निकास ipack_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&ipack_bus_type);
 	ida_destroy(&ipack_ida);
-}
+पूर्ण
 
 module_init(ipack_init);
-module_exit(ipack_exit);
+module_निकास(ipack_निकास);
 
 MODULE_AUTHOR("Samuel Iglesias Gonsalvez <siglesias@igalia.com>");
 MODULE_LICENSE("GPL");

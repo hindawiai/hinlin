@@ -1,3 +1,4 @@
+<शैली गुरु>
 /****************************************************************************
 
    Copyright Echo Digital Audio Corporation (c) 1998 - 2004
@@ -6,49 +7,49 @@
 
    This file is part of Echo Digital Audio's generic driver library.
 
-   Echo Digital Audio's generic driver library is free software;
-   you can redistribute it and/or modify it under the terms of
+   Echo Digital Audio's generic driver library is मुक्त software;
+   you can redistribute it and/or modअगरy it under the terms of
    the GNU General Public License as published by the Free Software
    Foundation.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU General Public License क्रम more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
+   aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston,
    MA  02111-1307, USA.
 
    *************************************************************************
 
- Translation from C++ and adaptation for use in ALSA-Driver
+ Translation from C++ and adaptation क्रम use in ALSA-Driver
  were made by Giuliano Pochini <pochini@shiny.it>
 
 ****************************************************************************/
 
 
-static int set_input_clock(struct echoaudio *chip, u16 clock);
-static int set_professional_spdif(struct echoaudio *chip, char prof);
-static int update_flags(struct echoaudio *chip);
-static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
-			   int gain);
-static int update_vmixer_level(struct echoaudio *chip);
+अटल पूर्णांक set_input_घड़ी(काष्ठा echoaudio *chip, u16 घड़ी);
+अटल पूर्णांक set_professional_spdअगर(काष्ठा echoaudio *chip, अक्षर prof);
+अटल पूर्णांक update_flags(काष्ठा echoaudio *chip);
+अटल पूर्णांक set_vmixer_gain(काष्ठा echoaudio *chip, u16 output, u16 pipe,
+			   पूर्णांक gain);
+अटल पूर्णांक update_vmixer_level(काष्ठा echoaudio *chip);
 
 
-static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
-{
-	int err;
+अटल पूर्णांक init_hw(काष्ठा echoaudio *chip, u16 device_id, u16 subdevice_id)
+अणु
+	पूर्णांक err;
 
-	if (snd_BUG_ON((subdevice_id & 0xfff0) != MIA))
-		return -ENODEV;
+	अगर (snd_BUG_ON((subdevice_id & 0xfff0) != MIA))
+		वापस -ENODEV;
 
-	if ((err = init_dsp_comm_page(chip))) {
+	अगर ((err = init_dsp_comm_page(chip))) अणु
 		dev_err(chip->card->dev,
 			"init_hw - could not initialize DSP comm page\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	chip->device_id = device_id;
 	chip->subdevice_id = subdevice_id;
@@ -57,125 +58,125 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	/* Since this card has no ASIC, mark it as loaded so everything
 	   works OK */
 	chip->asic_loaded = true;
-	if ((subdevice_id & 0x0000f) == MIA_MIDI_REV)
+	अगर ((subdevice_id & 0x0000f) == MIA_MIDI_REV)
 		chip->has_midi = true;
-	chip->input_clock_types = ECHO_CLOCK_BIT_INTERNAL |
+	chip->input_घड़ी_प्रकारypes = ECHO_CLOCK_BIT_INTERNAL |
 		ECHO_CLOCK_BIT_SPDIF;
 
-	if ((err = load_firmware(chip)) < 0)
-		return err;
+	अगर ((err = load_firmware(chip)) < 0)
+		वापस err;
 	chip->bad_board = false;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 
-static int set_mixer_defaults(struct echoaudio *chip)
-{
-	return init_line_levels(chip);
-}
+अटल पूर्णांक set_mixer_शेषs(काष्ठा echoaudio *chip)
+अणु
+	वापस init_line_levels(chip);
+पूर्ण
 
 
 
-static u32 detect_input_clocks(const struct echoaudio *chip)
-{
-	u32 clocks_from_dsp, clock_bits;
+अटल u32 detect_input_घड़ीs(स्थिर काष्ठा echoaudio *chip)
+अणु
+	u32 घड़ीs_from_dsp, घड़ी_bits;
 
-	/* Map the DSP clock detect bits to the generic driver clock
+	/* Map the DSP घड़ी detect bits to the generic driver घड़ी
 	   detect bits */
-	clocks_from_dsp = le32_to_cpu(chip->comm_page->status_clocks);
+	घड़ीs_from_dsp = le32_to_cpu(chip->comm_page->status_घड़ीs);
 
-	clock_bits = ECHO_CLOCK_BIT_INTERNAL;
+	घड़ी_bits = ECHO_CLOCK_BIT_INTERNAL;
 
-	if (clocks_from_dsp & GLDM_CLOCK_DETECT_BIT_SPDIF)
-		clock_bits |= ECHO_CLOCK_BIT_SPDIF;
+	अगर (घड़ीs_from_dsp & GLDM_CLOCK_DETECT_BIT_SPDIF)
+		घड़ी_bits |= ECHO_CLOCK_BIT_SPDIF;
 
-	return clock_bits;
-}
-
-
-
-/* The Mia has no ASIC. Just do nothing */
-static int load_asic(struct echoaudio *chip)
-{
-	return 0;
-}
+	वापस घड़ी_bits;
+पूर्ण
 
 
 
-static int set_sample_rate(struct echoaudio *chip, u32 rate)
-{
+/* The Mia has no ASIC. Just करो nothing */
+अटल पूर्णांक load_asic(काष्ठा echoaudio *chip)
+अणु
+	वापस 0;
+पूर्ण
+
+
+
+अटल पूर्णांक set_sample_rate(काष्ठा echoaudio *chip, u32 rate)
+अणु
 	u32 control_reg;
 
-	switch (rate) {
-	case 96000:
+	चयन (rate) अणु
+	हाल 96000:
 		control_reg = MIA_96000;
-		break;
-	case 88200:
+		अवरोध;
+	हाल 88200:
 		control_reg = MIA_88200;
-		break;
-	case 48000:
+		अवरोध;
+	हाल 48000:
 		control_reg = MIA_48000;
-		break;
-	case 44100:
+		अवरोध;
+	हाल 44100:
 		control_reg = MIA_44100;
-		break;
-	case 32000:
+		अवरोध;
+	हाल 32000:
 		control_reg = MIA_32000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(chip->card->dev,
 			"set_sample_rate: %d invalid!\n", rate);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Override the clock setting if this Mia is set to S/PDIF clock */
-	if (chip->input_clock == ECHO_CLOCK_SPDIF)
+	/* Override the घड़ी setting अगर this Mia is set to S/PDIF घड़ी */
+	अगर (chip->input_घड़ी == ECHO_CLOCK_SPDIF)
 		control_reg |= MIA_SPDIF;
 
-	/* Set the control register if it has changed */
-	if (control_reg != le32_to_cpu(chip->comm_page->control_register)) {
-		if (wait_handshake(chip))
-			return -EIO;
+	/* Set the control रेजिस्टर अगर it has changed */
+	अगर (control_reg != le32_to_cpu(chip->comm_page->control_रेजिस्टर)) अणु
+		अगर (रुको_handshake(chip))
+			वापस -EIO;
 
 		chip->comm_page->sample_rate = cpu_to_le32(rate);	/* ignored by the DSP */
-		chip->comm_page->control_register = cpu_to_le32(control_reg);
+		chip->comm_page->control_रेजिस्टर = cpu_to_le32(control_reg);
 		chip->sample_rate = rate;
 
 		clear_handshake(chip);
-		return send_vector(chip, DSP_VC_UPDATE_CLOCKS);
-	}
-	return 0;
-}
+		वापस send_vector(chip, DSP_VC_UPDATE_CLOCKS);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 
-static int set_input_clock(struct echoaudio *chip, u16 clock)
-{
-	dev_dbg(chip->card->dev, "set_input_clock(%d)\n", clock);
-	if (snd_BUG_ON(clock != ECHO_CLOCK_INTERNAL &&
-		       clock != ECHO_CLOCK_SPDIF))
-		return -EINVAL;
+अटल पूर्णांक set_input_घड़ी(काष्ठा echoaudio *chip, u16 घड़ी)
+अणु
+	dev_dbg(chip->card->dev, "set_input_clock(%d)\n", घड़ी);
+	अगर (snd_BUG_ON(घड़ी != ECHO_CLOCK_INTERNAL &&
+		       घड़ी != ECHO_CLOCK_SPDIF))
+		वापस -EINVAL;
 
-	chip->input_clock = clock;
-	return set_sample_rate(chip, chip->sample_rate);
-}
+	chip->input_घड़ी = घड़ी;
+	वापस set_sample_rate(chip, chip->sample_rate);
+पूर्ण
 
 
 
-/* This function routes the sound from a virtual channel to a real output */
-static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
-			   int gain)
-{
-	int index;
+/* This function routes the sound from a भव channel to a real output */
+अटल पूर्णांक set_vmixer_gain(काष्ठा echoaudio *chip, u16 output, u16 pipe,
+			   पूर्णांक gain)
+अणु
+	पूर्णांक index;
 
-	if (snd_BUG_ON(pipe >= num_pipes_out(chip) ||
+	अगर (snd_BUG_ON(pipe >= num_pipes_out(chip) ||
 		       output >= num_busses_out(chip)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (wait_handshake(chip))
-		return -EIO;
+	अगर (रुको_handshake(chip))
+		वापस -EIO;
 
 	chip->vmixer_gain[output][pipe] = gain;
 	index = output * num_pipes_out(chip) + pipe;
@@ -183,43 +184,43 @@ static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
 
 	dev_dbg(chip->card->dev,
 		"set_vmixer_gain: pipe %d, out %d = %d\n", pipe, output, gain);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
-/* Tell the DSP to read and update virtual mixer levels in comm page. */
-static int update_vmixer_level(struct echoaudio *chip)
-{
-	if (wait_handshake(chip))
-		return -EIO;
+/* Tell the DSP to पढ़ो and update भव mixer levels in comm page. */
+अटल पूर्णांक update_vmixer_level(काष्ठा echoaudio *chip)
+अणु
+	अगर (रुको_handshake(chip))
+		वापस -EIO;
 	clear_handshake(chip);
-	return send_vector(chip, DSP_VC_SET_VMIXER_GAIN);
-}
+	वापस send_vector(chip, DSP_VC_SET_VMIXER_GAIN);
+पूर्ण
 
 
 
-/* Tell the DSP to reread the flags from the comm page */
-static int update_flags(struct echoaudio *chip)
-{
-	if (wait_handshake(chip))
-		return -EIO;
+/* Tell the DSP to reपढ़ो the flags from the comm page */
+अटल पूर्णांक update_flags(काष्ठा echoaudio *chip)
+अणु
+	अगर (रुको_handshake(chip))
+		वापस -EIO;
 	clear_handshake(chip);
-	return send_vector(chip, DSP_VC_UPDATE_FLAGS);
-}
+	वापस send_vector(chip, DSP_VC_UPDATE_FLAGS);
+पूर्ण
 
 
 
-static int set_professional_spdif(struct echoaudio *chip, char prof)
-{
+अटल पूर्णांक set_professional_spdअगर(काष्ठा echoaudio *chip, अक्षर prof)
+अणु
 	dev_dbg(chip->card->dev, "set_professional_spdif %d\n", prof);
-	if (prof)
+	अगर (prof)
 		chip->comm_page->flags |=
 			cpu_to_le32(DSP_FLAG_PROFESSIONAL_SPDIF);
-	else
+	अन्यथा
 		chip->comm_page->flags &=
 			~cpu_to_le32(DSP_FLAG_PROFESSIONAL_SPDIF);
-	chip->professional_spdif = prof;
-	return update_flags(chip);
-}
+	chip->professional_spdअगर = prof;
+	वापस update_flags(chip);
+पूर्ण
 

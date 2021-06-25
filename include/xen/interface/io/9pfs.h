@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * 9pfs.h -- Xen 9PFS transport
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * of this software and associated करोcumentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * rights to use, copy, modअगरy, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,15 +23,15 @@
  * Copyright (C) 2017 Stefano Stabellini <stefano@aporeto.com>
  */
 
-#ifndef __XEN_PUBLIC_IO_9PFS_H__
-#define __XEN_PUBLIC_IO_9PFS_H__
+#अगर_अघोषित __XEN_PUBLIC_IO_9PFS_H__
+#घोषणा __XEN_PUBLIC_IO_9PFS_H__
 
-#include "xen/interface/io/ring.h"
+#समावेश "xen/interface/io/ring.h"
 
 /*
- * See docs/misc/9pfs.markdown in xen.git for the full specification:
- * https://xenbits.xen.org/docs/unstable/misc/9pfs.html
+ * See करोcs/misc/9pfs.markकरोwn in xen.git क्रम the full specअगरication:
+ * https://xenbits.xen.org/करोcs/unstable/misc/9pfs.hपंचांगl
  */
 DEFINE_XEN_FLEX_RING_AND_INTF(xen_9pfs);
 
-#endif
+#पूर्ण_अगर

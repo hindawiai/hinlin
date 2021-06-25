@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#ifndef __MLX5_LAG_MP_H__
-#define __MLX5_LAG_MP_H__
+#अगर_अघोषित __MLX5_LAG_MP_H__
+#घोषणा __MLX5_LAG_MP_H__
 
-#include "lag.h"
-#include "mlx5_core.h"
+#समावेश "lag.h"
+#समावेश "mlx5_core.h"
 
-enum mlx5_lag_port_affinity {
+क्रमागत mlx5_lag_port_affinity अणु
 	MLX5_LAG_NORMAL_AFFINITY,
 	MLX5_LAG_P1_AFFINITY,
 	MLX5_LAG_P2_AFFINITY,
-};
+पूर्ण;
 
-struct lag_mp {
-	struct notifier_block     fib_nb;
-	struct fib_info           *mfi; /* used in tracking fib events */
-	struct workqueue_struct   *wq;
-};
+काष्ठा lag_mp अणु
+	काष्ठा notअगरier_block     fib_nb;
+	काष्ठा fib_info           *mfi; /* used in tracking fib events */
+	काष्ठा workqueue_काष्ठा   *wq;
+पूर्ण;
 
-#ifdef CONFIG_MLX5_ESWITCH
+#अगर_घोषित CONFIG_MLX5_ESWITCH
 
-int mlx5_lag_mp_init(struct mlx5_lag *ldev);
-void mlx5_lag_mp_cleanup(struct mlx5_lag *ldev);
+पूर्णांक mlx5_lag_mp_init(काष्ठा mlx5_lag *ldev);
+व्योम mlx5_lag_mp_cleanup(काष्ठा mlx5_lag *ldev);
 
-#else /* CONFIG_MLX5_ESWITCH */
+#अन्यथा /* CONFIG_MLX5_ESWITCH */
 
-static inline int mlx5_lag_mp_init(struct mlx5_lag *ldev) { return 0; }
-static inline void mlx5_lag_mp_cleanup(struct mlx5_lag *ldev) {}
+अटल अंतरभूत पूर्णांक mlx5_lag_mp_init(काष्ठा mlx5_lag *ldev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम mlx5_lag_mp_cleanup(काष्ठा mlx5_lag *ldev) अणुपूर्ण
 
-#endif /* CONFIG_MLX5_ESWITCH */
-#endif /* __MLX5_LAG_MP_H__ */
+#पूर्ण_अगर /* CONFIG_MLX5_ESWITCH */
+#पूर्ण_अगर /* __MLX5_LAG_MP_H__ */

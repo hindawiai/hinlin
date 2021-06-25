@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-1.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-1.0+
 /*
  * Renesas USB driver
  *
@@ -6,484 +7,484 @@
  * Copyright (C) 2019 Renesas Electronics Corporation
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb/otg.h>
-#include "common.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/otg.h>
+#समावेश "common.h"
 
 /*
- *		struct
+ *		काष्ठा
  */
-struct usbhsg_request {
-	struct usb_request	req;
-	struct usbhs_pkt	pkt;
-};
+काष्ठा usbhsg_request अणु
+	काष्ठा usb_request	req;
+	काष्ठा usbhs_pkt	pkt;
+पूर्ण;
 
-#define EP_NAME_SIZE 8
-struct usbhsg_gpriv;
-struct usbhsg_uep {
-	struct usb_ep		 ep;
-	struct usbhs_pipe	*pipe;
+#घोषणा EP_NAME_SIZE 8
+काष्ठा usbhsg_gpriv;
+काष्ठा usbhsg_uep अणु
+	काष्ठा usb_ep		 ep;
+	काष्ठा usbhs_pipe	*pipe;
 	spinlock_t		lock;	/* protect the pipe */
 
-	char ep_name[EP_NAME_SIZE];
+	अक्षर ep_name[EP_NAME_SIZE];
 
-	struct usbhsg_gpriv *gpriv;
-};
+	काष्ठा usbhsg_gpriv *gpriv;
+पूर्ण;
 
-struct usbhsg_gpriv {
-	struct usb_gadget	 gadget;
-	struct usbhs_mod	 mod;
+काष्ठा usbhsg_gpriv अणु
+	काष्ठा usb_gadget	 gadget;
+	काष्ठा usbhs_mod	 mod;
 
-	struct usbhsg_uep	*uep;
-	int			 uep_size;
+	काष्ठा usbhsg_uep	*uep;
+	पूर्णांक			 uep_size;
 
-	struct usb_gadget_driver	*driver;
-	struct usb_phy		*transceiver;
+	काष्ठा usb_gadget_driver	*driver;
+	काष्ठा usb_phy		*transceiver;
 	bool			 vbus_active;
 
 	u32	status;
-#define USBHSG_STATUS_STARTED		(1 << 0)
-#define USBHSG_STATUS_REGISTERD		(1 << 1)
-#define USBHSG_STATUS_WEDGE		(1 << 2)
-#define USBHSG_STATUS_SELF_POWERED	(1 << 3)
-#define USBHSG_STATUS_SOFT_CONNECT	(1 << 4)
-};
+#घोषणा USBHSG_STATUS_STARTED		(1 << 0)
+#घोषणा USBHSG_STATUS_REGISTERD		(1 << 1)
+#घोषणा USBHSG_STATUS_WEDGE		(1 << 2)
+#घोषणा USBHSG_STATUS_SELF_POWERED	(1 << 3)
+#घोषणा USBHSG_STATUS_SOFT_CONNECT	(1 << 4)
+पूर्ण;
 
-struct usbhsg_recip_handle {
-	char *name;
-	int (*device)(struct usbhs_priv *priv, struct usbhsg_uep *uep,
-		      struct usb_ctrlrequest *ctrl);
-	int (*interface)(struct usbhs_priv *priv, struct usbhsg_uep *uep,
-			 struct usb_ctrlrequest *ctrl);
-	int (*endpoint)(struct usbhs_priv *priv, struct usbhsg_uep *uep,
-			struct usb_ctrlrequest *ctrl);
-};
+काष्ठा usbhsg_recip_handle अणु
+	अक्षर *name;
+	पूर्णांक (*device)(काष्ठा usbhs_priv *priv, काष्ठा usbhsg_uep *uep,
+		      काष्ठा usb_ctrlrequest *ctrl);
+	पूर्णांक (*पूर्णांकerface)(काष्ठा usbhs_priv *priv, काष्ठा usbhsg_uep *uep,
+			 काष्ठा usb_ctrlrequest *ctrl);
+	पूर्णांक (*endpoपूर्णांक)(काष्ठा usbhs_priv *priv, काष्ठा usbhsg_uep *uep,
+			काष्ठा usb_ctrlrequest *ctrl);
+पूर्ण;
 
 /*
  *		macro
  */
-#define usbhsg_priv_to_gpriv(priv)			\
+#घोषणा usbhsg_priv_to_gpriv(priv)			\
 	container_of(					\
 		usbhs_mod_get(priv, USBHS_GADGET),	\
-		struct usbhsg_gpriv, mod)
+		काष्ठा usbhsg_gpriv, mod)
 
-#define __usbhsg_for_each_uep(start, pos, g, i)	\
-	for ((i) = start;					\
+#घोषणा __usbhsg_क्रम_each_uep(start, pos, g, i)	\
+	क्रम ((i) = start;					\
 	     ((i) < (g)->uep_size) && ((pos) = (g)->uep + (i));	\
 	     (i)++)
 
-#define usbhsg_for_each_uep(pos, gpriv, i)	\
-	__usbhsg_for_each_uep(1, pos, gpriv, i)
+#घोषणा usbhsg_क्रम_each_uep(pos, gpriv, i)	\
+	__usbhsg_क्रम_each_uep(1, pos, gpriv, i)
 
-#define usbhsg_for_each_uep_with_dcp(pos, gpriv, i)	\
-	__usbhsg_for_each_uep(0, pos, gpriv, i)
+#घोषणा usbhsg_क्रम_each_uep_with_dcp(pos, gpriv, i)	\
+	__usbhsg_क्रम_each_uep(0, pos, gpriv, i)
 
-#define usbhsg_gadget_to_gpriv(g)\
-	container_of(g, struct usbhsg_gpriv, gadget)
+#घोषणा usbhsg_gadget_to_gpriv(g)\
+	container_of(g, काष्ठा usbhsg_gpriv, gadget)
 
-#define usbhsg_req_to_ureq(r)\
-	container_of(r, struct usbhsg_request, req)
+#घोषणा usbhsg_req_to_ureq(r)\
+	container_of(r, काष्ठा usbhsg_request, req)
 
-#define usbhsg_ep_to_uep(e)		container_of(e, struct usbhsg_uep, ep)
-#define usbhsg_gpriv_to_dev(gp)		usbhs_priv_to_dev((gp)->mod.priv)
-#define usbhsg_gpriv_to_priv(gp)	((gp)->mod.priv)
-#define usbhsg_gpriv_to_dcp(gp)		((gp)->uep)
-#define usbhsg_gpriv_to_nth_uep(gp, i)	((gp)->uep + i)
-#define usbhsg_uep_to_gpriv(u)		((u)->gpriv)
-#define usbhsg_uep_to_pipe(u)		((u)->pipe)
-#define usbhsg_pipe_to_uep(p)		((p)->mod_private)
-#define usbhsg_is_dcp(u)		((u) == usbhsg_gpriv_to_dcp((u)->gpriv))
+#घोषणा usbhsg_ep_to_uep(e)		container_of(e, काष्ठा usbhsg_uep, ep)
+#घोषणा usbhsg_gpriv_to_dev(gp)		usbhs_priv_to_dev((gp)->mod.priv)
+#घोषणा usbhsg_gpriv_to_priv(gp)	((gp)->mod.priv)
+#घोषणा usbhsg_gpriv_to_dcp(gp)		((gp)->uep)
+#घोषणा usbhsg_gpriv_to_nth_uep(gp, i)	((gp)->uep + i)
+#घोषणा usbhsg_uep_to_gpriv(u)		((u)->gpriv)
+#घोषणा usbhsg_uep_to_pipe(u)		((u)->pipe)
+#घोषणा usbhsg_pipe_to_uep(p)		((p)->mod_निजी)
+#घोषणा usbhsg_is_dcp(u)		((u) == usbhsg_gpriv_to_dcp((u)->gpriv))
 
-#define usbhsg_ureq_to_pkt(u)		(&(u)->pkt)
-#define usbhsg_pkt_to_ureq(i)	\
-	container_of(i, struct usbhsg_request, pkt)
+#घोषणा usbhsg_ureq_to_pkt(u)		(&(u)->pkt)
+#घोषणा usbhsg_pkt_to_ureq(i)	\
+	container_of(i, काष्ठा usbhsg_request, pkt)
 
-#define usbhsg_is_not_connected(gp) ((gp)->gadget.speed == USB_SPEED_UNKNOWN)
+#घोषणा usbhsg_is_not_connected(gp) ((gp)->gadget.speed == USB_SPEED_UNKNOWN)
 
 /* status */
-#define usbhsg_status_init(gp)   do {(gp)->status = 0; } while (0)
-#define usbhsg_status_set(gp, b) (gp->status |=  b)
-#define usbhsg_status_clr(gp, b) (gp->status &= ~b)
-#define usbhsg_status_has(gp, b) (gp->status &   b)
+#घोषणा usbhsg_status_init(gp)   करो अणु(gp)->status = 0; पूर्ण जबतक (0)
+#घोषणा usbhsg_status_set(gp, b) (gp->status |=  b)
+#घोषणा usbhsg_status_clr(gp, b) (gp->status &= ~b)
+#घोषणा usbhsg_status_has(gp, b) (gp->status &   b)
 
 /*
  *		queue push/pop
  */
-static void __usbhsg_queue_pop(struct usbhsg_uep *uep,
-			       struct usbhsg_request *ureq,
-			       int status)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
-	struct device *dev = usbhsg_gpriv_to_dev(gpriv);
-	struct usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
+अटल व्योम __usbhsg_queue_pop(काष्ठा usbhsg_uep *uep,
+			       काष्ठा usbhsg_request *ureq,
+			       पूर्णांक status)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
+	काष्ठा device *dev = usbhsg_gpriv_to_dev(gpriv);
+	काष्ठा usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
 
-	if (pipe)
+	अगर (pipe)
 		dev_dbg(dev, "pipe %d : queue pop\n", usbhs_pipe_number(pipe));
 
 	ureq->req.status = status;
 	spin_unlock(usbhs_priv_to_lock(priv));
 	usb_gadget_giveback_request(&uep->ep, &ureq->req);
 	spin_lock(usbhs_priv_to_lock(priv));
-}
+पूर्ण
 
-static void usbhsg_queue_pop(struct usbhsg_uep *uep,
-			     struct usbhsg_request *ureq,
-			     int status)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	struct usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
-	unsigned long flags;
+अटल व्योम usbhsg_queue_pop(काष्ठा usbhsg_uep *uep,
+			     काष्ठा usbhsg_request *ureq,
+			     पूर्णांक status)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	काष्ठा usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
+	अचिन्हित दीर्घ flags;
 
 	usbhs_lock(priv, flags);
 	__usbhsg_queue_pop(uep, ureq, status);
 	usbhs_unlock(priv, flags);
-}
+पूर्ण
 
-static void usbhsg_queue_done(struct usbhs_priv *priv, struct usbhs_pkt *pkt)
-{
-	struct usbhs_pipe *pipe = pkt->pipe;
-	struct usbhsg_uep *uep = usbhsg_pipe_to_uep(pipe);
-	struct usbhsg_request *ureq = usbhsg_pkt_to_ureq(pkt);
-	unsigned long flags;
+अटल व्योम usbhsg_queue_करोne(काष्ठा usbhs_priv *priv, काष्ठा usbhs_pkt *pkt)
+अणु
+	काष्ठा usbhs_pipe *pipe = pkt->pipe;
+	काष्ठा usbhsg_uep *uep = usbhsg_pipe_to_uep(pipe);
+	काष्ठा usbhsg_request *ureq = usbhsg_pkt_to_ureq(pkt);
+	अचिन्हित दीर्घ flags;
 
 	ureq->req.actual = pkt->actual;
 
 	usbhs_lock(priv, flags);
-	if (uep)
+	अगर (uep)
 		__usbhsg_queue_pop(uep, ureq, 0);
 	usbhs_unlock(priv, flags);
-}
+पूर्ण
 
-static void usbhsg_queue_push(struct usbhsg_uep *uep,
-			      struct usbhsg_request *ureq)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	struct device *dev = usbhsg_gpriv_to_dev(gpriv);
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
-	struct usbhs_pkt *pkt = usbhsg_ureq_to_pkt(ureq);
-	struct usb_request *req = &ureq->req;
+अटल व्योम usbhsg_queue_push(काष्ठा usbhsg_uep *uep,
+			      काष्ठा usbhsg_request *ureq)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	काष्ठा device *dev = usbhsg_gpriv_to_dev(gpriv);
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
+	काष्ठा usbhs_pkt *pkt = usbhsg_ureq_to_pkt(ureq);
+	काष्ठा usb_request *req = &ureq->req;
 
 	req->actual = 0;
 	req->status = -EINPROGRESS;
-	usbhs_pkt_push(pipe, pkt, usbhsg_queue_done,
+	usbhs_pkt_push(pipe, pkt, usbhsg_queue_करोne,
 		       req->buf, req->length, req->zero, -1);
 	usbhs_pkt_start(pipe);
 
 	dev_dbg(dev, "pipe %d : queue push (%d)\n",
 		usbhs_pipe_number(pipe),
 		req->length);
-}
+पूर्ण
 
 /*
  *		dma map/unmap
  */
-static int usbhsg_dma_map_ctrl(struct device *dma_dev, struct usbhs_pkt *pkt,
-			       int map)
-{
-	struct usbhsg_request *ureq = usbhsg_pkt_to_ureq(pkt);
-	struct usb_request *req = &ureq->req;
-	struct usbhs_pipe *pipe = pkt->pipe;
-	enum dma_data_direction dir;
-	int ret = 0;
+अटल पूर्णांक usbhsg_dma_map_ctrl(काष्ठा device *dma_dev, काष्ठा usbhs_pkt *pkt,
+			       पूर्णांक map)
+अणु
+	काष्ठा usbhsg_request *ureq = usbhsg_pkt_to_ureq(pkt);
+	काष्ठा usb_request *req = &ureq->req;
+	काष्ठा usbhs_pipe *pipe = pkt->pipe;
+	क्रमागत dma_data_direction dir;
+	पूर्णांक ret = 0;
 
 	dir = usbhs_pipe_is_dir_host(pipe);
 
-	if (map) {
+	अगर (map) अणु
 		/* it can not use scatter/gather */
 		WARN_ON(req->num_sgs);
 
 		ret = usb_gadget_map_request_by_dev(dma_dev, req, dir);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		pkt->dma = req->dma;
-	} else {
+	पूर्ण अन्यथा अणु
 		usb_gadget_unmap_request_by_dev(dma_dev, req, dir);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  *		USB_TYPE_STANDARD / clear feature functions
  */
-static int usbhsg_recip_handler_std_control_done(struct usbhs_priv *priv,
-						 struct usbhsg_uep *uep,
-						 struct usb_ctrlrequest *ctrl)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
-	struct usbhsg_uep *dcp = usbhsg_gpriv_to_dcp(gpriv);
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(dcp);
+अटल पूर्णांक usbhsg_recip_handler_std_control_करोne(काष्ठा usbhs_priv *priv,
+						 काष्ठा usbhsg_uep *uep,
+						 काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+	काष्ठा usbhsg_uep *dcp = usbhsg_gpriv_to_dcp(gpriv);
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(dcp);
 
-	usbhs_dcp_control_transfer_done(pipe);
+	usbhs_dcp_control_transfer_करोne(pipe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhsg_recip_handler_std_clear_endpoint(struct usbhs_priv *priv,
-						   struct usbhsg_uep *uep,
-						   struct usb_ctrlrequest *ctrl)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
+अटल पूर्णांक usbhsg_recip_handler_std_clear_endpoपूर्णांक(काष्ठा usbhs_priv *priv,
+						   काष्ठा usbhsg_uep *uep,
+						   काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
 
-	if (!usbhsg_status_has(gpriv, USBHSG_STATUS_WEDGE)) {
+	अगर (!usbhsg_status_has(gpriv, USBHSG_STATUS_WEDGE)) अणु
 		usbhs_pipe_disable(pipe);
 		usbhs_pipe_sequence_data0(pipe);
 		usbhs_pipe_enable(pipe);
-	}
+	पूर्ण
 
-	usbhsg_recip_handler_std_control_done(priv, uep, ctrl);
+	usbhsg_recip_handler_std_control_करोne(priv, uep, ctrl);
 
 	usbhs_pkt_start(pipe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct usbhsg_recip_handle req_clear_feature = {
+अटल काष्ठा usbhsg_recip_handle req_clear_feature = अणु
 	.name		= "clear feature",
-	.device		= usbhsg_recip_handler_std_control_done,
-	.interface	= usbhsg_recip_handler_std_control_done,
-	.endpoint	= usbhsg_recip_handler_std_clear_endpoint,
-};
+	.device		= usbhsg_recip_handler_std_control_करोne,
+	.पूर्णांकerface	= usbhsg_recip_handler_std_control_करोne,
+	.endpoपूर्णांक	= usbhsg_recip_handler_std_clear_endpoपूर्णांक,
+पूर्ण;
 
 /*
  *		USB_TYPE_STANDARD / set feature functions
  */
-static int usbhsg_recip_handler_std_set_device(struct usbhs_priv *priv,
-						 struct usbhsg_uep *uep,
-						 struct usb_ctrlrequest *ctrl)
-{
-	switch (le16_to_cpu(ctrl->wValue)) {
-	case USB_DEVICE_TEST_MODE:
-		usbhsg_recip_handler_std_control_done(priv, uep, ctrl);
+अटल पूर्णांक usbhsg_recip_handler_std_set_device(काष्ठा usbhs_priv *priv,
+						 काष्ठा usbhsg_uep *uep,
+						 काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	चयन (le16_to_cpu(ctrl->wValue)) अणु
+	हाल USB_DEVICE_TEST_MODE:
+		usbhsg_recip_handler_std_control_करोne(priv, uep, ctrl);
 		udelay(100);
 		usbhs_sys_set_test_mode(priv, le16_to_cpu(ctrl->wIndex) >> 8);
-		break;
-	default:
-		usbhsg_recip_handler_std_control_done(priv, uep, ctrl);
-		break;
-	}
+		अवरोध;
+	शेष:
+		usbhsg_recip_handler_std_control_करोne(priv, uep, ctrl);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhsg_recip_handler_std_set_endpoint(struct usbhs_priv *priv,
-						 struct usbhsg_uep *uep,
-						 struct usb_ctrlrequest *ctrl)
-{
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
+अटल पूर्णांक usbhsg_recip_handler_std_set_endpoपूर्णांक(काष्ठा usbhs_priv *priv,
+						 काष्ठा usbhsg_uep *uep,
+						 काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
 
 	usbhs_pipe_stall(pipe);
 
-	usbhsg_recip_handler_std_control_done(priv, uep, ctrl);
+	usbhsg_recip_handler_std_control_करोne(priv, uep, ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct usbhsg_recip_handle req_set_feature = {
+अटल काष्ठा usbhsg_recip_handle req_set_feature = अणु
 	.name		= "set feature",
 	.device		= usbhsg_recip_handler_std_set_device,
-	.interface	= usbhsg_recip_handler_std_control_done,
-	.endpoint	= usbhsg_recip_handler_std_set_endpoint,
-};
+	.पूर्णांकerface	= usbhsg_recip_handler_std_control_करोne,
+	.endpoपूर्णांक	= usbhsg_recip_handler_std_set_endpoपूर्णांक,
+पूर्ण;
 
 /*
  *		USB_TYPE_STANDARD / get status functions
  */
-static void __usbhsg_recip_send_complete(struct usb_ep *ep,
-					 struct usb_request *req)
-{
-	struct usbhsg_request *ureq = usbhsg_req_to_ureq(req);
+अटल व्योम __usbhsg_recip_send_complete(काष्ठा usb_ep *ep,
+					 काष्ठा usb_request *req)
+अणु
+	काष्ठा usbhsg_request *ureq = usbhsg_req_to_ureq(req);
 
-	/* free allocated recip-buffer/usb_request */
-	kfree(ureq->pkt.buf);
-	usb_ep_free_request(ep, req);
-}
+	/* मुक्त allocated recip-buffer/usb_request */
+	kमुक्त(ureq->pkt.buf);
+	usb_ep_मुक्त_request(ep, req);
+पूर्ण
 
-static void __usbhsg_recip_send_status(struct usbhsg_gpriv *gpriv,
-				       unsigned short status)
-{
-	struct usbhsg_uep *dcp = usbhsg_gpriv_to_dcp(gpriv);
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(dcp);
-	struct device *dev = usbhsg_gpriv_to_dev(gpriv);
-	struct usb_request *req;
+अटल व्योम __usbhsg_recip_send_status(काष्ठा usbhsg_gpriv *gpriv,
+				       अचिन्हित लघु status)
+अणु
+	काष्ठा usbhsg_uep *dcp = usbhsg_gpriv_to_dcp(gpriv);
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(dcp);
+	काष्ठा device *dev = usbhsg_gpriv_to_dev(gpriv);
+	काष्ठा usb_request *req;
 	__le16 *buf;
 
-	/* alloc new usb_request for recip */
+	/* alloc new usb_request क्रम recip */
 	req = usb_ep_alloc_request(&dcp->ep, GFP_ATOMIC);
-	if (!req) {
+	अगर (!req) अणु
 		dev_err(dev, "recip request allocation fail\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* alloc recip data buffer */
-	buf = kmalloc(sizeof(*buf), GFP_ATOMIC);
-	if (!buf) {
-		usb_ep_free_request(&dcp->ep, req);
-		return;
-	}
+	buf = kदो_स्मृति(माप(*buf), GFP_ATOMIC);
+	अगर (!buf) अणु
+		usb_ep_मुक्त_request(&dcp->ep, req);
+		वापस;
+	पूर्ण
 
 	/* recip data is status */
 	*buf = cpu_to_le16(status);
 
-	/* allocated usb_request/buffer will be freed */
+	/* allocated usb_request/buffer will be मुक्तd */
 	req->complete	= __usbhsg_recip_send_complete;
 	req->buf	= buf;
-	req->length	= sizeof(*buf);
+	req->length	= माप(*buf);
 	req->zero	= 0;
 
 	/* push packet */
-	pipe->handler = &usbhs_fifo_pio_push_handler;
+	pipe->handler = &usbhs_fअगरo_pio_push_handler;
 	usbhsg_queue_push(dcp, usbhsg_req_to_ureq(req));
-}
+पूर्ण
 
-static int usbhsg_recip_handler_std_get_device(struct usbhs_priv *priv,
-					       struct usbhsg_uep *uep,
-					       struct usb_ctrlrequest *ctrl)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	unsigned short status = 0;
+अटल पूर्णांक usbhsg_recip_handler_std_get_device(काष्ठा usbhs_priv *priv,
+					       काष्ठा usbhsg_uep *uep,
+					       काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	अचिन्हित लघु status = 0;
 
-	if (usbhsg_status_has(gpriv, USBHSG_STATUS_SELF_POWERED))
+	अगर (usbhsg_status_has(gpriv, USBHSG_STATUS_SELF_POWERED))
 		status = 1 << USB_DEVICE_SELF_POWERED;
 
 	__usbhsg_recip_send_status(gpriv, status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhsg_recip_handler_std_get_interface(struct usbhs_priv *priv,
-						  struct usbhsg_uep *uep,
-						  struct usb_ctrlrequest *ctrl)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	unsigned short status = 0;
+अटल पूर्णांक usbhsg_recip_handler_std_get_पूर्णांकerface(काष्ठा usbhs_priv *priv,
+						  काष्ठा usbhsg_uep *uep,
+						  काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	अचिन्हित लघु status = 0;
 
 	__usbhsg_recip_send_status(gpriv, status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhsg_recip_handler_std_get_endpoint(struct usbhs_priv *priv,
-						 struct usbhsg_uep *uep,
-						 struct usb_ctrlrequest *ctrl)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
-	unsigned short status = 0;
+अटल पूर्णांक usbhsg_recip_handler_std_get_endpoपूर्णांक(काष्ठा usbhs_priv *priv,
+						 काष्ठा usbhsg_uep *uep,
+						 काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
+	अचिन्हित लघु status = 0;
 
-	if (usbhs_pipe_is_stall(pipe))
+	अगर (usbhs_pipe_is_stall(pipe))
 		status = 1 << USB_ENDPOINT_HALT;
 
 	__usbhsg_recip_send_status(gpriv, status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct usbhsg_recip_handle req_get_status = {
+अटल काष्ठा usbhsg_recip_handle req_get_status = अणु
 	.name		= "get status",
 	.device		= usbhsg_recip_handler_std_get_device,
-	.interface	= usbhsg_recip_handler_std_get_interface,
-	.endpoint	= usbhsg_recip_handler_std_get_endpoint,
-};
+	.पूर्णांकerface	= usbhsg_recip_handler_std_get_पूर्णांकerface,
+	.endpoपूर्णांक	= usbhsg_recip_handler_std_get_endpoपूर्णांक,
+पूर्ण;
 
 /*
  *		USB_TYPE handler
  */
-static int usbhsg_recip_run_handle(struct usbhs_priv *priv,
-				   struct usbhsg_recip_handle *handler,
-				   struct usb_ctrlrequest *ctrl)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
-	struct device *dev = usbhsg_gpriv_to_dev(gpriv);
-	struct usbhsg_uep *uep;
-	struct usbhs_pipe *pipe;
-	int recip = ctrl->bRequestType & USB_RECIP_MASK;
-	int nth = le16_to_cpu(ctrl->wIndex) & USB_ENDPOINT_NUMBER_MASK;
-	int ret = 0;
-	int (*func)(struct usbhs_priv *priv, struct usbhsg_uep *uep,
-		    struct usb_ctrlrequest *ctrl);
-	char *msg;
+अटल पूर्णांक usbhsg_recip_run_handle(काष्ठा usbhs_priv *priv,
+				   काष्ठा usbhsg_recip_handle *handler,
+				   काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+	काष्ठा device *dev = usbhsg_gpriv_to_dev(gpriv);
+	काष्ठा usbhsg_uep *uep;
+	काष्ठा usbhs_pipe *pipe;
+	पूर्णांक recip = ctrl->bRequestType & USB_RECIP_MASK;
+	पूर्णांक nth = le16_to_cpu(ctrl->wIndex) & USB_ENDPOINT_NUMBER_MASK;
+	पूर्णांक ret = 0;
+	पूर्णांक (*func)(काष्ठा usbhs_priv *priv, काष्ठा usbhsg_uep *uep,
+		    काष्ठा usb_ctrlrequest *ctrl);
+	अक्षर *msg;
 
 	uep = usbhsg_gpriv_to_nth_uep(gpriv, nth);
 	pipe = usbhsg_uep_to_pipe(uep);
-	if (!pipe) {
+	अगर (!pipe) अणु
 		dev_err(dev, "wrong recip request\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (recip) {
-	case USB_RECIP_DEVICE:
+	चयन (recip) अणु
+	हाल USB_RECIP_DEVICE:
 		msg	= "DEVICE";
 		func	= handler->device;
-		break;
-	case USB_RECIP_INTERFACE:
+		अवरोध;
+	हाल USB_RECIP_INTERFACE:
 		msg	= "INTERFACE";
-		func	= handler->interface;
-		break;
-	case USB_RECIP_ENDPOINT:
+		func	= handler->पूर्णांकerface;
+		अवरोध;
+	हाल USB_RECIP_ENDPOINT:
 		msg	= "ENDPOINT";
-		func	= handler->endpoint;
-		break;
-	default:
+		func	= handler->endpoपूर्णांक;
+		अवरोध;
+	शेष:
 		dev_warn(dev, "unsupported RECIP(%d)\n", recip);
-		func = NULL;
+		func = शून्य;
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	if (func) {
+	अगर (func) अणु
 		dev_dbg(dev, "%s (pipe %d :%s)\n", handler->name, nth, msg);
 		ret = func(priv, uep, ctrl);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  *		irq functions
  *
- * it will be called from usbhs_interrupt
+ * it will be called from usbhs_पूर्णांकerrupt
  */
-static int usbhsg_irq_dev_state(struct usbhs_priv *priv,
-				struct usbhs_irq_state *irq_state)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
-	struct device *dev = usbhsg_gpriv_to_dev(gpriv);
-	int state = usbhs_status_get_device_state(irq_state);
+अटल पूर्णांक usbhsg_irq_dev_state(काष्ठा usbhs_priv *priv,
+				काष्ठा usbhs_irq_state *irq_state)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+	काष्ठा device *dev = usbhsg_gpriv_to_dev(gpriv);
+	पूर्णांक state = usbhs_status_get_device_state(irq_state);
 
 	gpriv->gadget.speed = usbhs_bus_get_speed(priv);
 
 	dev_dbg(dev, "state = %x : speed : %d\n", state, gpriv->gadget.speed);
 
-	if (gpriv->gadget.speed != USB_SPEED_UNKNOWN &&
-	    (state & SUSPENDED_STATE)) {
-		if (gpriv->driver && gpriv->driver->suspend)
+	अगर (gpriv->gadget.speed != USB_SPEED_UNKNOWN &&
+	    (state & SUSPENDED_STATE)) अणु
+		अगर (gpriv->driver && gpriv->driver->suspend)
 			gpriv->driver->suspend(&gpriv->gadget);
 		usb_gadget_set_state(&gpriv->gadget, USB_STATE_SUSPENDED);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhsg_irq_ctrl_stage(struct usbhs_priv *priv,
-				 struct usbhs_irq_state *irq_state)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
-	struct usbhsg_uep *dcp = usbhsg_gpriv_to_dcp(gpriv);
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(dcp);
-	struct device *dev = usbhsg_gpriv_to_dev(gpriv);
-	struct usb_ctrlrequest ctrl;
-	struct usbhsg_recip_handle *recip_handler = NULL;
-	int stage = usbhs_status_get_ctrl_stage(irq_state);
-	int ret = 0;
+अटल पूर्णांक usbhsg_irq_ctrl_stage(काष्ठा usbhs_priv *priv,
+				 काष्ठा usbhs_irq_state *irq_state)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+	काष्ठा usbhsg_uep *dcp = usbhsg_gpriv_to_dcp(gpriv);
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(dcp);
+	काष्ठा device *dev = usbhsg_gpriv_to_dev(gpriv);
+	काष्ठा usb_ctrlrequest ctrl;
+	काष्ठा usbhsg_recip_handle *recip_handler = शून्य;
+	पूर्णांक stage = usbhs_status_get_ctrl_stage(irq_state);
+	पूर्णांक ret = 0;
 
 	dev_dbg(dev, "stage = %d\n", stage);
 
@@ -496,239 +497,239 @@ static int usbhsg_irq_ctrl_stage(struct usbhs_priv *priv,
 	 *      - Fig. "Control Transfer Stage Transitions"
 	 */
 
-	switch (stage) {
-	case READ_DATA_STAGE:
-		pipe->handler = &usbhs_fifo_pio_push_handler;
-		break;
-	case WRITE_DATA_STAGE:
-		pipe->handler = &usbhs_fifo_pio_pop_handler;
-		break;
-	case NODATA_STATUS_STAGE:
+	चयन (stage) अणु
+	हाल READ_DATA_STAGE:
+		pipe->handler = &usbhs_fअगरo_pio_push_handler;
+		अवरोध;
+	हाल WRITE_DATA_STAGE:
+		pipe->handler = &usbhs_fअगरo_pio_pop_handler;
+		अवरोध;
+	हाल NODATA_STATUS_STAGE:
 		pipe->handler = &usbhs_ctrl_stage_end_handler;
-		break;
-	case READ_STATUS_STAGE:
-	case WRITE_STATUS_STAGE:
-		usbhs_dcp_control_transfer_done(pipe);
+		अवरोध;
+	हाल READ_STATUS_STAGE:
+	हाल WRITE_STATUS_STAGE:
+		usbhs_dcp_control_transfer_करोne(pipe);
 		fallthrough;
-	default:
-		return ret;
-	}
+	शेष:
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * get usb request
 	 */
 	usbhs_usbreq_get_val(priv, &ctrl);
 
-	switch (ctrl.bRequestType & USB_TYPE_MASK) {
-	case USB_TYPE_STANDARD:
-		switch (ctrl.bRequest) {
-		case USB_REQ_CLEAR_FEATURE:
+	चयन (ctrl.bRequestType & USB_TYPE_MASK) अणु
+	हाल USB_TYPE_STANDARD:
+		चयन (ctrl.bRequest) अणु
+		हाल USB_REQ_CLEAR_FEATURE:
 			recip_handler = &req_clear_feature;
-			break;
-		case USB_REQ_SET_FEATURE:
+			अवरोध;
+		हाल USB_REQ_SET_FEATURE:
 			recip_handler = &req_set_feature;
-			break;
-		case USB_REQ_GET_STATUS:
+			अवरोध;
+		हाल USB_REQ_GET_STATUS:
 			recip_handler = &req_get_status;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * setup stage / run recip
 	 */
-	if (recip_handler)
+	अगर (recip_handler)
 		ret = usbhsg_recip_run_handle(priv, recip_handler, &ctrl);
-	else
+	अन्यथा
 		ret = gpriv->driver->setup(&gpriv->gadget, &ctrl);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		usbhs_pipe_stall(pipe);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  *
  *		usb_dcp_ops
  *
  */
-static int usbhsg_pipe_disable(struct usbhsg_uep *uep)
-{
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
-	struct usbhs_pkt *pkt;
+अटल पूर्णांक usbhsg_pipe_disable(काष्ठा usbhsg_uep *uep)
+अणु
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
+	काष्ठा usbhs_pkt *pkt;
 
-	while (1) {
-		pkt = usbhs_pkt_pop(pipe, NULL);
-		if (!pkt)
-			break;
+	जबतक (1) अणु
+		pkt = usbhs_pkt_pop(pipe, शून्य);
+		अगर (!pkt)
+			अवरोध;
 
 		usbhsg_queue_pop(uep, usbhsg_pkt_to_ureq(pkt), -ESHUTDOWN);
-	}
+	पूर्ण
 
 	usbhs_pipe_disable(pipe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *
  *		usb_ep_ops
  *
  */
-static int usbhsg_ep_enable(struct usb_ep *ep,
-			 const struct usb_endpoint_descriptor *desc)
-{
-	struct usbhsg_uep *uep   = usbhsg_ep_to_uep(ep);
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	struct usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
-	struct usbhs_pipe *pipe;
-	int ret = -EIO;
-	unsigned long flags;
+अटल पूर्णांक usbhsg_ep_enable(काष्ठा usb_ep *ep,
+			 स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	काष्ठा usbhsg_uep *uep   = usbhsg_ep_to_uep(ep);
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	काष्ठा usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
+	काष्ठा usbhs_pipe *pipe;
+	पूर्णांक ret = -EIO;
+	अचिन्हित दीर्घ flags;
 
 	usbhs_lock(priv, flags);
 
 	/*
-	 * if it already have pipe,
-	 * nothing to do
+	 * अगर it alपढ़ोy have pipe,
+	 * nothing to करो
 	 */
-	if (uep->pipe) {
+	अगर (uep->pipe) अणु
 		usbhs_pipe_clear(uep->pipe);
 		usbhs_pipe_sequence_data0(uep->pipe);
 		ret = 0;
-		goto usbhsg_ep_enable_end;
-	}
+		जाओ usbhsg_ep_enable_end;
+	पूर्ण
 
-	pipe = usbhs_pipe_malloc(priv,
-				 usb_endpoint_type(desc),
-				 usb_endpoint_dir_in(desc));
-	if (pipe) {
+	pipe = usbhs_pipe_दो_स्मृति(priv,
+				 usb_endpoपूर्णांक_type(desc),
+				 usb_endpoपूर्णांक_dir_in(desc));
+	अगर (pipe) अणु
 		uep->pipe		= pipe;
-		pipe->mod_private	= uep;
+		pipe->mod_निजी	= uep;
 
 		/* set epnum / maxp */
 		usbhs_pipe_config_update(pipe, 0,
-					 usb_endpoint_num(desc),
-					 usb_endpoint_maxp(desc));
+					 usb_endpoपूर्णांक_num(desc),
+					 usb_endpoपूर्णांक_maxp(desc));
 
 		/*
-		 * usbhs_fifo_dma_push/pop_handler try to
-		 * use dmaengine if possible.
-		 * It will use pio handler if impossible.
+		 * usbhs_fअगरo_dma_push/pop_handler try to
+		 * use dmaengine अगर possible.
+		 * It will use pio handler अगर impossible.
 		 */
-		if (usb_endpoint_dir_in(desc)) {
-			pipe->handler = &usbhs_fifo_dma_push_handler;
-		} else {
-			pipe->handler = &usbhs_fifo_dma_pop_handler;
+		अगर (usb_endpoपूर्णांक_dir_in(desc)) अणु
+			pipe->handler = &usbhs_fअगरo_dma_push_handler;
+		पूर्ण अन्यथा अणु
+			pipe->handler = &usbhs_fअगरo_dma_pop_handler;
 			usbhs_xxxsts_clear(priv, BRDYSTS,
 					   usbhs_pipe_number(pipe));
-		}
+		पूर्ण
 
 		ret = 0;
-	}
+	पूर्ण
 
 usbhsg_ep_enable_end:
 	usbhs_unlock(priv, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int usbhsg_ep_disable(struct usb_ep *ep)
-{
-	struct usbhsg_uep *uep = usbhsg_ep_to_uep(ep);
-	struct usbhs_pipe *pipe;
-	unsigned long flags;
+अटल पूर्णांक usbhsg_ep_disable(काष्ठा usb_ep *ep)
+अणु
+	काष्ठा usbhsg_uep *uep = usbhsg_ep_to_uep(ep);
+	काष्ठा usbhs_pipe *pipe;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&uep->lock, flags);
 	pipe = usbhsg_uep_to_pipe(uep);
-	if (!pipe)
-		goto out;
+	अगर (!pipe)
+		जाओ out;
 
 	usbhsg_pipe_disable(uep);
-	usbhs_pipe_free(pipe);
+	usbhs_pipe_मुक्त(pipe);
 
-	uep->pipe->mod_private	= NULL;
-	uep->pipe		= NULL;
+	uep->pipe->mod_निजी	= शून्य;
+	uep->pipe		= शून्य;
 
 out:
 	spin_unlock_irqrestore(&uep->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct usb_request *usbhsg_ep_alloc_request(struct usb_ep *ep,
+अटल काष्ठा usb_request *usbhsg_ep_alloc_request(काष्ठा usb_ep *ep,
 						   gfp_t gfp_flags)
-{
-	struct usbhsg_request *ureq;
+अणु
+	काष्ठा usbhsg_request *ureq;
 
-	ureq = kzalloc(sizeof *ureq, gfp_flags);
-	if (!ureq)
-		return NULL;
+	ureq = kzalloc(माप *ureq, gfp_flags);
+	अगर (!ureq)
+		वापस शून्य;
 
 	usbhs_pkt_init(usbhsg_ureq_to_pkt(ureq));
 
-	return &ureq->req;
-}
+	वापस &ureq->req;
+पूर्ण
 
-static void usbhsg_ep_free_request(struct usb_ep *ep,
-				   struct usb_request *req)
-{
-	struct usbhsg_request *ureq = usbhsg_req_to_ureq(req);
+अटल व्योम usbhsg_ep_मुक्त_request(काष्ठा usb_ep *ep,
+				   काष्ठा usb_request *req)
+अणु
+	काष्ठा usbhsg_request *ureq = usbhsg_req_to_ureq(req);
 
 	WARN_ON(!list_empty(&ureq->pkt.node));
-	kfree(ureq);
-}
+	kमुक्त(ureq);
+पूर्ण
 
-static int usbhsg_ep_queue(struct usb_ep *ep, struct usb_request *req,
+अटल पूर्णांक usbhsg_ep_queue(काष्ठा usb_ep *ep, काष्ठा usb_request *req,
 			  gfp_t gfp_flags)
-{
-	struct usbhsg_uep *uep = usbhsg_ep_to_uep(ep);
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	struct usbhsg_request *ureq = usbhsg_req_to_ureq(req);
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
+अणु
+	काष्ठा usbhsg_uep *uep = usbhsg_ep_to_uep(ep);
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	काष्ठा usbhsg_request *ureq = usbhsg_req_to_ureq(req);
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
 
 	/* param check */
-	if (usbhsg_is_not_connected(gpriv)	||
+	अगर (usbhsg_is_not_connected(gpriv)	||
 	    unlikely(!gpriv->driver)		||
 	    unlikely(!pipe))
-		return -ESHUTDOWN;
+		वापस -ESHUTDOWN;
 
 	usbhsg_queue_push(uep, ureq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhsg_ep_dequeue(struct usb_ep *ep, struct usb_request *req)
-{
-	struct usbhsg_uep *uep = usbhsg_ep_to_uep(ep);
-	struct usbhsg_request *ureq = usbhsg_req_to_ureq(req);
-	struct usbhs_pipe *pipe;
-	unsigned long flags;
+अटल पूर्णांक usbhsg_ep_dequeue(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा usbhsg_uep *uep = usbhsg_ep_to_uep(ep);
+	काष्ठा usbhsg_request *ureq = usbhsg_req_to_ureq(req);
+	काष्ठा usbhs_pipe *pipe;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&uep->lock, flags);
 	pipe = usbhsg_uep_to_pipe(uep);
-	if (pipe)
+	अगर (pipe)
 		usbhs_pkt_pop(pipe, usbhsg_ureq_to_pkt(ureq));
 
 	/*
 	 * To dequeue a request, this driver should call the usbhsg_queue_pop()
-	 * even if the pipe is NULL.
+	 * even अगर the pipe is शून्य.
 	 */
 	usbhsg_queue_pop(uep, ureq, -ECONNRESET);
 	spin_unlock_irqrestore(&uep->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __usbhsg_ep_set_halt_wedge(struct usb_ep *ep, int halt, int wedge)
-{
-	struct usbhsg_uep *uep = usbhsg_ep_to_uep(ep);
-	struct usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
-	struct usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
-	struct usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
-	struct device *dev = usbhsg_gpriv_to_dev(gpriv);
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक __usbhsg_ep_set_halt_wedge(काष्ठा usb_ep *ep, पूर्णांक halt, पूर्णांक wedge)
+अणु
+	काष्ठा usbhsg_uep *uep = usbhsg_ep_to_uep(ep);
+	काष्ठा usbhs_pipe *pipe = usbhsg_uep_to_pipe(uep);
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_uep_to_gpriv(uep);
+	काष्ठा usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
+	काष्ठा device *dev = usbhsg_gpriv_to_dev(gpriv);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	dev_dbg(dev, "set halt %d (pipe %d)\n",
 		halt, usbhs_pipe_number(pipe));
@@ -738,121 +739,121 @@ static int __usbhsg_ep_set_halt_wedge(struct usb_ep *ep, int halt, int wedge)
 
 	/*
 	 * According to usb_ep_set_halt()'s description, this function should
-	 * return -EAGAIN if the IN endpoint has any queue or data. Note
-	 * that the usbhs_pipe_is_dir_in() returns false if the pipe is an
-	 * IN endpoint in the gadget mode.
+	 * वापस -EAGAIN अगर the IN endpoपूर्णांक has any queue or data. Note
+	 * that the usbhs_pipe_is_dir_in() वापसs false अगर the pipe is an
+	 * IN endpoपूर्णांक in the gadget mode.
 	 */
-	if (!usbhs_pipe_is_dir_in(pipe) && (__usbhsf_pkt_get(pipe) ||
-	    usbhs_pipe_contains_transmittable_data(pipe))) {
+	अगर (!usbhs_pipe_is_dir_in(pipe) && (__usbhsf_pkt_get(pipe) ||
+	    usbhs_pipe_contains_transmittable_data(pipe))) अणु
 		ret = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (halt)
+	अगर (halt)
 		usbhs_pipe_stall(pipe);
-	else
+	अन्यथा
 		usbhs_pipe_disable(pipe);
 
-	if (halt && wedge)
+	अगर (halt && wedge)
 		usbhsg_status_set(gpriv, USBHSG_STATUS_WEDGE);
-	else
+	अन्यथा
 		usbhsg_status_clr(gpriv, USBHSG_STATUS_WEDGE);
 
 out:
 	usbhs_unlock(priv, flags);
 	/********************  spin unlock ******************/
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int usbhsg_ep_set_halt(struct usb_ep *ep, int value)
-{
-	return __usbhsg_ep_set_halt_wedge(ep, value, 0);
-}
+अटल पूर्णांक usbhsg_ep_set_halt(काष्ठा usb_ep *ep, पूर्णांक value)
+अणु
+	वापस __usbhsg_ep_set_halt_wedge(ep, value, 0);
+पूर्ण
 
-static int usbhsg_ep_set_wedge(struct usb_ep *ep)
-{
-	return __usbhsg_ep_set_halt_wedge(ep, 1, 1);
-}
+अटल पूर्णांक usbhsg_ep_set_wedge(काष्ठा usb_ep *ep)
+अणु
+	वापस __usbhsg_ep_set_halt_wedge(ep, 1, 1);
+पूर्ण
 
-static const struct usb_ep_ops usbhsg_ep_ops = {
+अटल स्थिर काष्ठा usb_ep_ops usbhsg_ep_ops = अणु
 	.enable		= usbhsg_ep_enable,
 	.disable	= usbhsg_ep_disable,
 
 	.alloc_request	= usbhsg_ep_alloc_request,
-	.free_request	= usbhsg_ep_free_request,
+	.मुक्त_request	= usbhsg_ep_मुक्त_request,
 
 	.queue		= usbhsg_ep_queue,
 	.dequeue	= usbhsg_ep_dequeue,
 
 	.set_halt	= usbhsg_ep_set_halt,
 	.set_wedge	= usbhsg_ep_set_wedge,
-};
+पूर्ण;
 
 /*
  *		pullup control
  */
-static int usbhsg_can_pullup(struct usbhs_priv *priv)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+अटल पूर्णांक usbhsg_can_pullup(काष्ठा usbhs_priv *priv)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
 
-	return gpriv->driver &&
+	वापस gpriv->driver &&
 	       usbhsg_status_has(gpriv, USBHSG_STATUS_SOFT_CONNECT);
-}
+पूर्ण
 
-static void usbhsg_update_pullup(struct usbhs_priv *priv)
-{
-	if (usbhsg_can_pullup(priv))
+अटल व्योम usbhsg_update_pullup(काष्ठा usbhs_priv *priv)
+अणु
+	अगर (usbhsg_can_pullup(priv))
 		usbhs_sys_function_pullup(priv, 1);
-	else
+	अन्यथा
 		usbhs_sys_function_pullup(priv, 0);
-}
+पूर्ण
 
 /*
  *		usb module start/end
  */
-static int usbhsg_try_start(struct usbhs_priv *priv, u32 status)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
-	struct usbhsg_uep *dcp = usbhsg_gpriv_to_dcp(gpriv);
-	struct usbhs_mod *mod = usbhs_mod_get_current(priv);
-	struct device *dev = usbhs_priv_to_dev(priv);
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक usbhsg_try_start(काष्ठा usbhs_priv *priv, u32 status)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+	काष्ठा usbhsg_uep *dcp = usbhsg_gpriv_to_dcp(gpriv);
+	काष्ठा usbhs_mod *mod = usbhs_mod_get_current(priv);
+	काष्ठा device *dev = usbhs_priv_to_dev(priv);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	/********************  spin lock ********************/
 	usbhs_lock(priv, flags);
 
 	usbhsg_status_set(gpriv, status);
-	if (!(usbhsg_status_has(gpriv, USBHSG_STATUS_STARTED) &&
+	अगर (!(usbhsg_status_has(gpriv, USBHSG_STATUS_STARTED) &&
 	      usbhsg_status_has(gpriv, USBHSG_STATUS_REGISTERD)))
-		ret = -1; /* not ready */
+		ret = -1; /* not पढ़ोy */
 
 	usbhs_unlock(priv, flags);
 	/********************  spin unlock ********************/
 
-	if (ret < 0)
-		return 0; /* not ready is not error */
+	अगर (ret < 0)
+		वापस 0; /* not पढ़ोy is not error */
 
 	/*
-	 * enable interrupt and systems if ready
+	 * enable पूर्णांकerrupt and प्रणालीs अगर पढ़ोy
 	 */
 	dev_dbg(dev, "start gadget\n");
 
 	/*
 	 * pipe initialize and enable DCP
 	 */
-	usbhs_fifo_init(priv);
+	usbhs_fअगरo_init(priv);
 	usbhs_pipe_init(priv,
 			usbhsg_dma_map_ctrl);
 
 	/* dcp init instead of usbhsg_ep_enable() */
-	dcp->pipe		= usbhs_dcp_malloc(priv);
-	dcp->pipe->mod_private	= dcp;
+	dcp->pipe		= usbhs_dcp_दो_स्मृति(priv);
+	dcp->pipe->mod_निजी	= dcp;
 	usbhs_pipe_config_update(dcp->pipe, 0, 0, 64);
 
 	/*
-	 * system config enble
+	 * प्रणाली config enble
 	 * - HI speed
 	 * - function
 	 * - usb module
@@ -867,40 +868,40 @@ static int usbhsg_try_start(struct usbhs_priv *priv, u32 status)
 	mod->irq_ctrl_stage	= usbhsg_irq_ctrl_stage;
 	usbhs_irq_callback_update(priv, mod);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhsg_try_stop(struct usbhs_priv *priv, u32 status)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
-	struct usbhs_mod *mod = usbhs_mod_get_current(priv);
-	struct usbhsg_uep *uep;
-	struct device *dev = usbhs_priv_to_dev(priv);
-	unsigned long flags;
-	int ret = 0, i;
+अटल पूर्णांक usbhsg_try_stop(काष्ठा usbhs_priv *priv, u32 status)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+	काष्ठा usbhs_mod *mod = usbhs_mod_get_current(priv);
+	काष्ठा usbhsg_uep *uep;
+	काष्ठा device *dev = usbhs_priv_to_dev(priv);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0, i;
 
 	/********************  spin lock ********************/
 	usbhs_lock(priv, flags);
 
 	usbhsg_status_clr(gpriv, status);
-	if (!usbhsg_status_has(gpriv, USBHSG_STATUS_STARTED) &&
+	अगर (!usbhsg_status_has(gpriv, USBHSG_STATUS_STARTED) &&
 	    !usbhsg_status_has(gpriv, USBHSG_STATUS_REGISTERD))
-		ret = -1; /* already done */
+		ret = -1; /* alपढ़ोy करोne */
 
 	usbhs_unlock(priv, flags);
 	/********************  spin unlock ********************/
 
-	if (ret < 0)
-		return 0; /* already done is not error */
+	अगर (ret < 0)
+		वापस 0; /* alपढ़ोy करोne is not error */
 
 	/*
-	 * disable interrupt and systems if 1st try
+	 * disable पूर्णांकerrupt and प्रणालीs अगर 1st try
 	 */
-	usbhs_fifo_quit(priv);
+	usbhs_fअगरo_quit(priv);
 
 	/* disable all irq */
-	mod->irq_dev_state	= NULL;
-	mod->irq_ctrl_stage	= NULL;
+	mod->irq_dev_state	= शून्य;
+	mod->irq_ctrl_stage	= शून्य;
 	usbhs_irq_callback_update(priv, mod);
 
 	gpriv->gadget.speed = USB_SPEED_UNKNOWN;
@@ -910,189 +911,189 @@ static int usbhsg_try_stop(struct usbhs_priv *priv, u32 status)
 	usbhs_sys_function_ctrl(priv, 0);
 
 	/* disable all eps */
-	usbhsg_for_each_uep_with_dcp(uep, gpriv, i)
+	usbhsg_क्रम_each_uep_with_dcp(uep, gpriv, i)
 		usbhsg_ep_disable(&uep->ep);
 
 	dev_dbg(dev, "stop gadget\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * VBUS provided by the PHY
  */
-static int usbhsm_phy_get_vbus(struct platform_device *pdev)
-{
-	struct usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+अटल पूर्णांक usbhsm_phy_get_vbus(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
 
-	return  gpriv->vbus_active;
-}
+	वापस  gpriv->vbus_active;
+पूर्ण
 
-static void usbhs_mod_phy_mode(struct usbhs_priv *priv)
-{
-	struct usbhs_mod_info *info = &priv->mod_info;
+अटल व्योम usbhs_mod_phy_mode(काष्ठा usbhs_priv *priv)
+अणु
+	काष्ठा usbhs_mod_info *info = &priv->mod_info;
 
-	info->irq_vbus = NULL;
+	info->irq_vbus = शून्य;
 	info->get_vbus = usbhsm_phy_get_vbus;
 
-	usbhs_irq_callback_update(priv, NULL);
-}
+	usbhs_irq_callback_update(priv, शून्य);
+पूर्ण
 
 /*
  *
  *		linux usb function
  *
  */
-static int usbhsg_gadget_start(struct usb_gadget *gadget,
-		struct usb_gadget_driver *driver)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
-	struct usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
-	struct device *dev = usbhs_priv_to_dev(priv);
-	int ret;
+अटल पूर्णांक usbhsg_gadget_start(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_gadget_driver *driver)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
+	काष्ठा usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
+	काष्ठा device *dev = usbhs_priv_to_dev(priv);
+	पूर्णांक ret;
 
-	if (!driver		||
+	अगर (!driver		||
 	    !driver->setup	||
 	    driver->max_speed < USB_SPEED_FULL)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* connect to bus through transceiver */
-	if (!IS_ERR_OR_NULL(gpriv->transceiver)) {
+	अगर (!IS_ERR_OR_शून्य(gpriv->transceiver)) अणु
 		ret = otg_set_peripheral(gpriv->transceiver->otg,
 					&gpriv->gadget);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "%s: can't bind to transceiver\n",
 				gpriv->gadget.name);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/* get vbus using phy versions */
 		usbhs_mod_phy_mode(priv);
-	}
+	पूर्ण
 
 	/* first hook up the driver ... */
 	gpriv->driver = driver;
 
-	return usbhsg_try_start(priv, USBHSG_STATUS_REGISTERD);
-}
+	वापस usbhsg_try_start(priv, USBHSG_STATUS_REGISTERD);
+पूर्ण
 
-static int usbhsg_gadget_stop(struct usb_gadget *gadget)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
-	struct usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
+अटल पूर्णांक usbhsg_gadget_stop(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
+	काष्ठा usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
 
 	usbhsg_try_stop(priv, USBHSG_STATUS_REGISTERD);
 
-	if (!IS_ERR_OR_NULL(gpriv->transceiver))
-		otg_set_peripheral(gpriv->transceiver->otg, NULL);
+	अगर (!IS_ERR_OR_शून्य(gpriv->transceiver))
+		otg_set_peripheral(gpriv->transceiver->otg, शून्य);
 
-	gpriv->driver = NULL;
+	gpriv->driver = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *		usb gadget ops
  */
-static int usbhsg_get_frame(struct usb_gadget *gadget)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
-	struct usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
+अटल पूर्णांक usbhsg_get_frame(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
+	काष्ठा usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
 
-	return usbhs_frame_get_num(priv);
-}
+	वापस usbhs_frame_get_num(priv);
+पूर्ण
 
-static int usbhsg_pullup(struct usb_gadget *gadget, int is_on)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
-	struct usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
-	unsigned long flags;
+अटल पूर्णांक usbhsg_pullup(काष्ठा usb_gadget *gadget, पूर्णांक is_on)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
+	काष्ठा usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
+	अचिन्हित दीर्घ flags;
 
 	usbhs_lock(priv, flags);
-	if (is_on)
+	अगर (is_on)
 		usbhsg_status_set(gpriv, USBHSG_STATUS_SOFT_CONNECT);
-	else
+	अन्यथा
 		usbhsg_status_clr(gpriv, USBHSG_STATUS_SOFT_CONNECT);
 	usbhsg_update_pullup(priv);
 	usbhs_unlock(priv, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhsg_set_selfpowered(struct usb_gadget *gadget, int is_self)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
+अटल पूर्णांक usbhsg_set_selfघातered(काष्ठा usb_gadget *gadget, पूर्णांक is_self)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
 
-	if (is_self)
+	अगर (is_self)
 		usbhsg_status_set(gpriv, USBHSG_STATUS_SELF_POWERED);
-	else
+	अन्यथा
 		usbhsg_status_clr(gpriv, USBHSG_STATUS_SELF_POWERED);
 
-	gadget->is_selfpowered = (is_self != 0);
+	gadget->is_selfघातered = (is_self != 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhsg_vbus_session(struct usb_gadget *gadget, int is_active)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
-	struct usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
-	struct platform_device *pdev = usbhs_priv_to_pdev(priv);
+अटल पूर्णांक usbhsg_vbus_session(काष्ठा usb_gadget *gadget, पूर्णांक is_active)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_gadget_to_gpriv(gadget);
+	काष्ठा usbhs_priv *priv = usbhsg_gpriv_to_priv(gpriv);
+	काष्ठा platक्रमm_device *pdev = usbhs_priv_to_pdev(priv);
 
 	gpriv->vbus_active = !!is_active;
 
-	usbhsc_schedule_notify_hotplug(pdev);
+	usbhsc_schedule_notअगरy_hotplug(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct usb_gadget_ops usbhsg_gadget_ops = {
+अटल स्थिर काष्ठा usb_gadget_ops usbhsg_gadget_ops = अणु
 	.get_frame		= usbhsg_get_frame,
-	.set_selfpowered	= usbhsg_set_selfpowered,
+	.set_selfघातered	= usbhsg_set_selfघातered,
 	.udc_start		= usbhsg_gadget_start,
 	.udc_stop		= usbhsg_gadget_stop,
 	.pullup			= usbhsg_pullup,
 	.vbus_session		= usbhsg_vbus_session,
-};
+पूर्ण;
 
-static int usbhsg_start(struct usbhs_priv *priv)
-{
-	return usbhsg_try_start(priv, USBHSG_STATUS_STARTED);
-}
+अटल पूर्णांक usbhsg_start(काष्ठा usbhs_priv *priv)
+अणु
+	वापस usbhsg_try_start(priv, USBHSG_STATUS_STARTED);
+पूर्ण
 
-static int usbhsg_stop(struct usbhs_priv *priv)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+अटल पूर्णांक usbhsg_stop(काष्ठा usbhs_priv *priv)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
 
 	/* cable disconnect */
-	if (gpriv->driver &&
+	अगर (gpriv->driver &&
 	    gpriv->driver->disconnect)
 		gpriv->driver->disconnect(&gpriv->gadget);
 
-	return usbhsg_try_stop(priv, USBHSG_STATUS_STARTED);
-}
+	वापस usbhsg_try_stop(priv, USBHSG_STATUS_STARTED);
+पूर्ण
 
-int usbhs_mod_gadget_probe(struct usbhs_priv *priv)
-{
-	struct usbhsg_gpriv *gpriv;
-	struct usbhsg_uep *uep;
-	struct device *dev = usbhs_priv_to_dev(priv);
-	struct renesas_usbhs_driver_pipe_config *pipe_configs =
+पूर्णांक usbhs_mod_gadget_probe(काष्ठा usbhs_priv *priv)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv;
+	काष्ठा usbhsg_uep *uep;
+	काष्ठा device *dev = usbhs_priv_to_dev(priv);
+	काष्ठा renesas_usbhs_driver_pipe_config *pipe_configs =
 					usbhs_get_dparam(priv, pipe_configs);
-	int pipe_size = usbhs_get_dparam(priv, pipe_size);
-	int i;
-	int ret;
+	पूर्णांक pipe_size = usbhs_get_dparam(priv, pipe_size);
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	gpriv = kzalloc(sizeof(struct usbhsg_gpriv), GFP_KERNEL);
-	if (!gpriv)
-		return -ENOMEM;
+	gpriv = kzalloc(माप(काष्ठा usbhsg_gpriv), GFP_KERNEL);
+	अगर (!gpriv)
+		वापस -ENOMEM;
 
-	uep = kcalloc(pipe_size, sizeof(struct usbhsg_uep), GFP_KERNEL);
-	if (!uep) {
+	uep = kसुस्मृति(pipe_size, माप(काष्ठा usbhsg_uep), GFP_KERNEL);
+	अगर (!uep) अणु
 		ret = -ENOMEM;
-		goto usbhs_mod_gadget_probe_err_gpriv;
-	}
+		जाओ usbhs_mod_gadget_probe_err_gpriv;
+	पूर्ण
 
 	gpriv->transceiver = usb_get_phy(USB_PHY_TYPE_UNDEFINED);
 	dev_info(dev, "%stransceiver found\n",
@@ -1107,9 +1108,9 @@ int usbhs_mod_gadget_probe(struct usbhs_priv *priv)
 	 */
 
 	/*
-	 * register itself
+	 * रेजिस्टर itself
 	 */
-	usbhs_mod_register(priv, &gpriv->mod, USBHS_GADGET);
+	usbhs_mod_रेजिस्टर(priv, &gpriv->mod, USBHS_GADGET);
 
 	/* init gpriv */
 	gpriv->mod.name		= "gadget";
@@ -1126,7 +1127,7 @@ int usbhs_mod_gadget_probe(struct usbhs_priv *priv)
 	gpriv->gadget.name		= "renesas_usbhs_udc";
 	gpriv->gadget.ops		= &usbhsg_gadget_ops;
 	gpriv->gadget.max_speed		= USB_SPEED_HIGH;
-	gpriv->gadget.quirk_avoids_skb_reserve = usbhs_get_dparam(priv,
+	gpriv->gadget.quirk_aव्योमs_skb_reserve = usbhs_get_dparam(priv,
 								has_usb_dmac);
 
 	INIT_LIST_HEAD(&gpriv->gadget.ep_list);
@@ -1134,10 +1135,10 @@ int usbhs_mod_gadget_probe(struct usbhs_priv *priv)
 	/*
 	 * init usb_ep
 	 */
-	usbhsg_for_each_uep_with_dcp(uep, gpriv, i) {
+	usbhsg_क्रम_each_uep_with_dcp(uep, gpriv, i) अणु
 		uep->gpriv	= gpriv;
-		uep->pipe	= NULL;
-		snprintf(uep->ep_name, EP_NAME_SIZE, "ep%d", i);
+		uep->pipe	= शून्य;
+		snम_लिखो(uep->ep_name, EP_NAME_SIZE, "ep%d", i);
 
 		uep->ep.name		= uep->ep_name;
 		uep->ep.ops		= &usbhsg_ep_ops;
@@ -1145,50 +1146,50 @@ int usbhs_mod_gadget_probe(struct usbhs_priv *priv)
 		spin_lock_init(&uep->lock);
 
 		/* init DCP */
-		if (usbhsg_is_dcp(uep)) {
+		अगर (usbhsg_is_dcp(uep)) अणु
 			gpriv->gadget.ep0 = &uep->ep;
 			usb_ep_set_maxpacket_limit(&uep->ep, 64);
 			uep->ep.caps.type_control = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* init normal pipe */
-			if (pipe_configs[i].type == USB_ENDPOINT_XFER_ISOC)
+			अगर (pipe_configs[i].type == USB_ENDPOINT_XFER_ISOC)
 				uep->ep.caps.type_iso = true;
-			if (pipe_configs[i].type == USB_ENDPOINT_XFER_BULK)
+			अगर (pipe_configs[i].type == USB_ENDPOINT_XFER_BULK)
 				uep->ep.caps.type_bulk = true;
-			if (pipe_configs[i].type == USB_ENDPOINT_XFER_INT)
-				uep->ep.caps.type_int = true;
+			अगर (pipe_configs[i].type == USB_ENDPOINT_XFER_INT)
+				uep->ep.caps.type_पूर्णांक = true;
 			usb_ep_set_maxpacket_limit(&uep->ep,
 						   pipe_configs[i].bufsize);
 			list_add_tail(&uep->ep.ep_list, &gpriv->gadget.ep_list);
-		}
+		पूर्ण
 		uep->ep.caps.dir_in = true;
 		uep->ep.caps.dir_out = true;
-	}
+	पूर्ण
 
 	ret = usb_add_gadget_udc(dev, &gpriv->gadget);
-	if (ret)
-		goto err_add_udc;
+	अगर (ret)
+		जाओ err_add_udc;
 
 
 	dev_info(dev, "gadget probed\n");
 
-	return 0;
+	वापस 0;
 
 err_add_udc:
-	kfree(gpriv->uep);
+	kमुक्त(gpriv->uep);
 
 usbhs_mod_gadget_probe_err_gpriv:
-	kfree(gpriv);
+	kमुक्त(gpriv);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void usbhs_mod_gadget_remove(struct usbhs_priv *priv)
-{
-	struct usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
+व्योम usbhs_mod_gadget_हटाओ(काष्ठा usbhs_priv *priv)
+अणु
+	काष्ठा usbhsg_gpriv *gpriv = usbhsg_priv_to_gpriv(priv);
 
 	usb_del_gadget_udc(&gpriv->gadget);
 
-	kfree(gpriv->uep);
-	kfree(gpriv);
-}
+	kमुक्त(gpriv->uep);
+	kमुक्त(gpriv);
+पूर्ण

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_BRIDGE_EBT_LIMIT_H
-#define __LINUX_BRIDGE_EBT_LIMIT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_BRIDGE_EBT_LIMIT_H
+#घोषणा __LINUX_BRIDGE_EBT_LIMIT_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define EBT_LIMIT_MATCH "limit"
+#घोषणा EBT_LIMIT_MATCH "limit"
 
 /* timings are in milliseconds. */
-#define EBT_LIMIT_SCALE 10000
+#घोषणा EBT_LIMIT_SCALE 10000
 
 /* 1/10,000 sec period => max of 10,000/sec.  Min rate is then 429490
    seconds, or one every 59 hours. */
 
-struct ebt_limit_info {
+काष्ठा ebt_limit_info अणु
 	__u32 avg;    /* Average secs between packets * scale */
-	__u32 burst;  /* Period multiplier for upper limit. */
+	__u32 burst;  /* Period multiplier क्रम upper limit. */
 
-	/* Used internally by the kernel */
-	unsigned long prev;
+	/* Used पूर्णांकernally by the kernel */
+	अचिन्हित दीर्घ prev;
 	__u32 credit;
 	__u32 credit_cap, cost;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

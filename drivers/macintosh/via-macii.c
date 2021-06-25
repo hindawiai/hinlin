@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Device driver for the via ADB on (many) Mac II-class machines
+ * Device driver क्रम the via ADB on (many) Mac II-class machines
  *
  * Based on the original ADB keyboard handler Copyright (c) 1997 Alan Cox
  * Also derived from code Copyright (C) 1996 Paul Mackerras.
@@ -8,327 +9,327 @@
  * With various updates provided over the years by Michael Schmitz,
  * Guideo Koerber and others.
  *
- * Rewrite for Unified ADB by Joshua M. Thompson (funaho@jurai.org)
+ * Reग_लिखो क्रम Unअगरied ADB by Joshua M. Thompson (funaho@jurai.org)
  *
- * 1999-08-02 (jmt) - Initial rewrite for Unified ADB.
+ * 1999-08-02 (jmt) - Initial reग_लिखो क्रम Unअगरied ADB.
  * 2000-03-29 Tony Mantler <tonym@mac.linux-m68k.org>
  *            - Big overhaul, should actually work now.
  * 2006-12-31 Finn Thain - Another overhaul.
  *
- * Suggested reading:
- *   Inside Macintosh, ch. 5 ADB Manager
+ * Suggested पढ़ोing:
+ *   Inside Macपूर्णांकosh, ch. 5 ADB Manager
  *   Guide to the Macinstosh Family Hardware, ch. 8 Apple Desktop Bus
  *   Rockwell R6522 VIA datasheet
  *
- * Apple's "ADB Analyzer" bus sniffer is invaluable:
+ * Apple's "ADB Analyzer" bus snअगरfer is invaluable:
  *   ftp://ftp.apple.com/developer/Tool_Chest/Devices_-_Hardware/Apple_Desktop_Bus/
  */
 
-#include <stdarg.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/adb.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <asm/macintosh.h>
-#include <asm/macints.h>
-#include <asm/mac_via.h>
+#समावेश <मानकतर्क.स>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/adb.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <यंत्र/macपूर्णांकosh.h>
+#समावेश <यंत्र/macपूर्णांकs.h>
+#समावेश <यंत्र/mac_via.h>
 
-static volatile unsigned char *via;
+अटल अस्थिर अचिन्हित अक्षर *via;
 
-/* VIA registers - spaced 0x200 bytes apart */
-#define RS		0x200		/* skip between registers */
-#define B		0		/* B-side data */
-#define A		RS		/* A-side data */
-#define DIRB		(2*RS)		/* B-side direction (1=output) */
-#define DIRA		(3*RS)		/* A-side direction (1=output) */
-#define T1CL		(4*RS)		/* Timer 1 ctr/latch (low 8 bits) */
-#define T1CH		(5*RS)		/* Timer 1 counter (high 8 bits) */
-#define T1LL		(6*RS)		/* Timer 1 latch (low 8 bits) */
-#define T1LH		(7*RS)		/* Timer 1 latch (high 8 bits) */
-#define T2CL		(8*RS)		/* Timer 2 ctr/latch (low 8 bits) */
-#define T2CH		(9*RS)		/* Timer 2 counter (high 8 bits) */
-#define SR		(10*RS)		/* Shift register */
-#define ACR		(11*RS)		/* Auxiliary control register */
-#define PCR		(12*RS)		/* Peripheral control register */
-#define IFR		(13*RS)		/* Interrupt flag register */
-#define IER		(14*RS)		/* Interrupt enable register */
-#define ANH		(15*RS)		/* A-side data, no handshake */
+/* VIA रेजिस्टरs - spaced 0x200 bytes apart */
+#घोषणा RS		0x200		/* skip between रेजिस्टरs */
+#घोषणा B		0		/* B-side data */
+#घोषणा A		RS		/* A-side data */
+#घोषणा सूचीB		(2*RS)		/* B-side direction (1=output) */
+#घोषणा सूचीA		(3*RS)		/* A-side direction (1=output) */
+#घोषणा T1CL		(4*RS)		/* Timer 1 ctr/latch (low 8 bits) */
+#घोषणा T1CH		(5*RS)		/* Timer 1 counter (high 8 bits) */
+#घोषणा T1LL		(6*RS)		/* Timer 1 latch (low 8 bits) */
+#घोषणा T1LH		(7*RS)		/* Timer 1 latch (high 8 bits) */
+#घोषणा T2CL		(8*RS)		/* Timer 2 ctr/latch (low 8 bits) */
+#घोषणा T2CH		(9*RS)		/* Timer 2 counter (high 8 bits) */
+#घोषणा SR		(10*RS)		/* Shअगरt रेजिस्टर */
+#घोषणा ACR		(11*RS)		/* Auxiliary control रेजिस्टर */
+#घोषणा PCR		(12*RS)		/* Peripheral control रेजिस्टर */
+#घोषणा IFR		(13*RS)		/* Interrupt flag रेजिस्टर */
+#घोषणा IER		(14*RS)		/* Interrupt enable रेजिस्टर */
+#घोषणा ANH		(15*RS)		/* A-side data, no handshake */
 
-/* Bits in B data register: all active low */
-#define CTLR_IRQ	0x08		/* Controller rcv status (input) */
-#define ST_MASK		0x30		/* mask for selecting ADB state bits */
+/* Bits in B data रेजिस्टर: all active low */
+#घोषणा CTLR_IRQ	0x08		/* Controller rcv status (input) */
+#घोषणा ST_MASK		0x30		/* mask क्रम selecting ADB state bits */
 
 /* Bits in ACR */
-#define SR_CTRL		0x1c		/* Shift register control bits */
-#define SR_EXT		0x0c		/* Shift on external clock */
-#define SR_OUT		0x10		/* Shift out if 1 */
+#घोषणा SR_CTRL		0x1c		/* Shअगरt रेजिस्टर control bits */
+#घोषणा SR_EXT		0x0c		/* Shअगरt on बाह्यal घड़ी */
+#घोषणा SR_OUT		0x10		/* Shअगरt out अगर 1 */
 
 /* Bits in IFR and IER */
-#define IER_SET		0x80		/* set bits in IER */
-#define IER_CLR		0		/* clear bits in IER */
-#define SR_INT		0x04		/* Shift register full/empty */
+#घोषणा IER_SET		0x80		/* set bits in IER */
+#घोषणा IER_CLR		0		/* clear bits in IER */
+#घोषणा SR_INT		0x04		/* Shअगरt रेजिस्टर full/empty */
 
 /* ADB transaction states according to GMHW */
-#define ST_CMD		0x00		/* ADB state: command byte */
-#define ST_EVEN		0x10		/* ADB state: even data byte */
-#define ST_ODD		0x20		/* ADB state: odd data byte */
-#define ST_IDLE		0x30		/* ADB state: idle, nothing to send */
+#घोषणा ST_CMD		0x00		/* ADB state: command byte */
+#घोषणा ST_EVEN		0x10		/* ADB state: even data byte */
+#घोषणा ST_ODD		0x20		/* ADB state: odd data byte */
+#घोषणा ST_IDLE		0x30		/* ADB state: idle, nothing to send */
 
-/* ADB command byte structure */
-#define ADDR_MASK	0xF0
-#define CMD_MASK	0x0F
-#define OP_MASK		0x0C
-#define TALK		0x0C
+/* ADB command byte काष्ठाure */
+#घोषणा ADDR_MASK	0xF0
+#घोषणा CMD_MASK	0x0F
+#घोषणा OP_MASK		0x0C
+#घोषणा TALK		0x0C
 
-static int macii_init_via(void);
-static void macii_start(void);
-static irqreturn_t macii_interrupt(int irq, void *arg);
-static void macii_queue_poll(void);
+अटल पूर्णांक macii_init_via(व्योम);
+अटल व्योम macii_start(व्योम);
+अटल irqवापस_t macii_पूर्णांकerrupt(पूर्णांक irq, व्योम *arg);
+अटल व्योम macii_queue_poll(व्योम);
 
-static int macii_probe(void);
-static int macii_init(void);
-static int macii_send_request(struct adb_request *req, int sync);
-static int macii_write(struct adb_request *req);
-static int macii_autopoll(int devs);
-static void macii_poll(void);
-static int macii_reset_bus(void);
+अटल पूर्णांक macii_probe(व्योम);
+अटल पूर्णांक macii_init(व्योम);
+अटल पूर्णांक macii_send_request(काष्ठा adb_request *req, पूर्णांक sync);
+अटल पूर्णांक macii_ग_लिखो(काष्ठा adb_request *req);
+अटल पूर्णांक macii_स्वतःpoll(पूर्णांक devs);
+अटल व्योम macii_poll(व्योम);
+अटल पूर्णांक macii_reset_bus(व्योम);
 
-struct adb_driver via_macii_driver = {
+काष्ठा adb_driver via_macii_driver = अणु
 	.name         = "Mac II",
 	.probe        = macii_probe,
 	.init         = macii_init,
 	.send_request = macii_send_request,
-	.autopoll     = macii_autopoll,
+	.स्वतःpoll     = macii_स्वतःpoll,
 	.poll         = macii_poll,
 	.reset_bus    = macii_reset_bus,
-};
+पूर्ण;
 
-static enum macii_state {
+अटल क्रमागत macii_state अणु
 	idle,
 	sending,
-	reading,
-} macii_state;
+	पढ़ोing,
+पूर्ण macii_state;
 
-static struct adb_request *current_req; /* first request struct in the queue */
-static struct adb_request *last_req;     /* last request struct in the queue */
-static unsigned char reply_buf[16];        /* storage for autopolled replies */
-static unsigned char *reply_ptr;     /* next byte in reply_buf or req->reply */
-static bool reading_reply;       /* store reply in reply_buf else req->reply */
-static int data_index;      /* index of the next byte to send from req->data */
-static int reply_len; /* number of bytes received in reply_buf or req->reply */
-static int status;          /* VIA's ADB status bits captured upon interrupt */
-static bool bus_timeout;                   /* no data was sent by the device */
-static bool srq_asserted;    /* have to poll for the device that asserted it */
-static u8 last_cmd;              /* the most recent command byte transmitted */
-static u8 last_talk_cmd;    /* the most recent Talk command byte transmitted */
-static u8 last_poll_cmd; /* the most recent Talk R0 command byte transmitted */
-static unsigned int autopoll_devs;  /* bits set are device addresses to poll */
+अटल काष्ठा adb_request *current_req; /* first request काष्ठा in the queue */
+अटल काष्ठा adb_request *last_req;     /* last request काष्ठा in the queue */
+अटल अचिन्हित अक्षर reply_buf[16];        /* storage क्रम स्वतःpolled replies */
+अटल अचिन्हित अक्षर *reply_ptr;     /* next byte in reply_buf or req->reply */
+अटल bool पढ़ोing_reply;       /* store reply in reply_buf अन्यथा req->reply */
+अटल पूर्णांक data_index;      /* index of the next byte to send from req->data */
+अटल पूर्णांक reply_len; /* number of bytes received in reply_buf or req->reply */
+अटल पूर्णांक status;          /* VIA's ADB status bits captured upon पूर्णांकerrupt */
+अटल bool bus_समयout;                   /* no data was sent by the device */
+अटल bool srq_निश्चितed;    /* have to poll क्रम the device that निश्चितed it */
+अटल u8 last_cmd;              /* the most recent command byte transmitted */
+अटल u8 last_talk_cmd;    /* the most recent Talk command byte transmitted */
+अटल u8 last_poll_cmd; /* the most recent Talk R0 command byte transmitted */
+अटल अचिन्हित पूर्णांक स्वतःpoll_devs;  /* bits set are device addresses to poll */
 
-/* Check for MacII style ADB */
-static int macii_probe(void)
-{
-	if (macintosh_config->adb_type != MAC_ADB_II)
-		return -ENODEV;
+/* Check क्रम MacII style ADB */
+अटल पूर्णांक macii_probe(व्योम)
+अणु
+	अगर (macपूर्णांकosh_config->adb_type != MAC_ADB_II)
+		वापस -ENODEV;
 
 	via = via1;
 
 	pr_info("adb: Mac II ADB Driver v1.0 for Unified ADB\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Initialize the driver */
-static int macii_init(void)
-{
-	unsigned long flags;
-	int err;
+अटल पूर्णांक macii_init(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	local_irq_save(flags);
 
 	err = macii_init_via();
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = request_irq(IRQ_MAC_ADB, macii_interrupt, 0, "ADB",
-			  macii_interrupt);
-	if (err)
-		goto out;
+	err = request_irq(IRQ_MAC_ADB, macii_पूर्णांकerrupt, 0, "ADB",
+			  macii_पूर्णांकerrupt);
+	अगर (err)
+		जाओ out;
 
 	macii_state = idle;
 out:
 	local_irq_restore(flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* initialize the hardware */
-static int macii_init_via(void)
-{
-	unsigned char x;
+अटल पूर्णांक macii_init_via(व्योम)
+अणु
+	अचिन्हित अक्षर x;
 
 	/* We want CTLR_IRQ as input and ST_EVEN | ST_ODD as output lines. */
-	via[DIRB] = (via[DIRB] | ST_EVEN | ST_ODD) & ~CTLR_IRQ;
+	via[सूचीB] = (via[सूचीB] | ST_EVEN | ST_ODD) & ~CTLR_IRQ;
 
 	/* Set up state: idle */
 	via[B] |= ST_IDLE;
 
-	/* Shift register on input */
+	/* Shअगरt रेजिस्टर on input */
 	via[ACR] = (via[ACR] & ~SR_CTRL) | SR_EXT;
 
-	/* Wipe any pending data and int */
+	/* Wipe any pending data and पूर्णांक */
 	x = via[SR];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Send an ADB poll (Talk Register 0 command prepended to the request queue) */
-static void macii_queue_poll(void)
-{
-	static struct adb_request req;
-	unsigned char poll_command;
-	unsigned int poll_addr;
+अटल व्योम macii_queue_poll(व्योम)
+अणु
+	अटल काष्ठा adb_request req;
+	अचिन्हित अक्षर poll_command;
+	अचिन्हित पूर्णांक poll_addr;
 
-	/* This only polls devices in the autopoll list, which assumes that
-	 * unprobed devices never assert SRQ. That could happen if a device was
+	/* This only polls devices in the स्वतःpoll list, which assumes that
+	 * unprobed devices never निश्चित SRQ. That could happen अगर a device was
 	 * plugged in after the adb bus scan. Unplugging it again will resolve
 	 * the problem. This behaviour is similar to MacOS.
 	 */
-	if (!autopoll_devs)
-		return;
+	अगर (!स्वतःpoll_devs)
+		वापस;
 
 	/* The device most recently polled may not be the best device to poll
-	 * right now. Some other device(s) may have signalled SRQ (the active
-	 * device won't do that). Or the autopoll list may have been changed.
+	 * right now. Some other device(s) may have संकेतled SRQ (the active
+	 * device won't करो that). Or the स्वतःpoll list may have been changed.
 	 * Try polling the next higher address.
 	 */
 	poll_addr = (last_poll_cmd & ADDR_MASK) >> 4;
-	if ((srq_asserted && last_cmd == last_poll_cmd) ||
-	    !(autopoll_devs & (1 << poll_addr))) {
-		unsigned int higher_devs;
+	अगर ((srq_निश्चितed && last_cmd == last_poll_cmd) ||
+	    !(स्वतःpoll_devs & (1 << poll_addr))) अणु
+		अचिन्हित पूर्णांक higher_devs;
 
-		higher_devs = autopoll_devs & -(1 << (poll_addr + 1));
-		poll_addr = ffs(higher_devs ? higher_devs : autopoll_devs) - 1;
-	}
+		higher_devs = स्वतःpoll_devs & -(1 << (poll_addr + 1));
+		poll_addr = ffs(higher_devs ? higher_devs : स्वतःpoll_devs) - 1;
+	पूर्ण
 
 	/* Send a Talk Register 0 command */
 	poll_command = ADB_READREG(poll_addr, 0);
 
-	/* No need to repeat this Talk command. The transceiver will do that
-	 * as long as it is idle.
+	/* No need to repeat this Talk command. The transceiver will करो that
+	 * as दीर्घ as it is idle.
 	 */
-	if (poll_command == last_cmd)
-		return;
+	अगर (poll_command == last_cmd)
+		वापस;
 
-	adb_request(&req, NULL, ADBREQ_NOSEND, 1, poll_command);
+	adb_request(&req, शून्य, ADBREQ_NOSEND, 1, poll_command);
 
 	req.sent = 0;
 	req.complete = 0;
 	req.reply_len = 0;
 	req.next = current_req;
 
-	if (WARN_ON(current_req)) {
+	अगर (WARN_ON(current_req)) अणु
 		current_req = &req;
-	} else {
+	पूर्ण अन्यथा अणु
 		current_req = &req;
 		last_req = &req;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Send an ADB request; if sync, poll out the reply 'till it's done */
-static int macii_send_request(struct adb_request *req, int sync)
-{
-	int err;
+/* Send an ADB request; अगर sync, poll out the reply 'till it's करोne */
+अटल पूर्णांक macii_send_request(काष्ठा adb_request *req, पूर्णांक sync)
+अणु
+	पूर्णांक err;
 
-	err = macii_write(req);
-	if (err)
-		return err;
+	err = macii_ग_लिखो(req);
+	अगर (err)
+		वापस err;
 
-	if (sync)
-		while (!req->complete)
+	अगर (sync)
+		जबतक (!req->complete)
 			macii_poll();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Send an ADB request (append to request queue) */
-static int macii_write(struct adb_request *req)
-{
-	unsigned long flags;
+अटल पूर्णांक macii_ग_लिखो(काष्ठा adb_request *req)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (req->nbytes < 2 || req->data[0] != ADB_PACKET || req->nbytes > 15) {
+	अगर (req->nbytes < 2 || req->data[0] != ADB_PACKET || req->nbytes > 15) अणु
 		req->complete = 1;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	req->next = NULL;
+	req->next = शून्य;
 	req->sent = 0;
 	req->complete = 0;
 	req->reply_len = 0;
 
 	local_irq_save(flags);
 
-	if (current_req != NULL) {
+	अगर (current_req != शून्य) अणु
 		last_req->next = req;
 		last_req = req;
-	} else {
+	पूर्ण अन्यथा अणु
 		current_req = req;
 		last_req = req;
-		if (macii_state == idle)
+		अगर (macii_state == idle)
 			macii_start();
-	}
+	पूर्ण
 
 	local_irq_restore(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Start auto-polling */
-static int macii_autopoll(int devs)
-{
-	unsigned long flags;
+/* Start स्वतः-polling */
+अटल पूर्णांक macii_स्वतःpoll(पूर्णांक devs)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
 	/* bit 1 == device 1, and so on. */
-	autopoll_devs = (unsigned int)devs & 0xFFFE;
+	स्वतःpoll_devs = (अचिन्हित पूर्णांक)devs & 0xFFFE;
 
-	if (!current_req) {
+	अगर (!current_req) अणु
 		macii_queue_poll();
-		if (current_req && macii_state == idle)
+		अगर (current_req && macii_state == idle)
 			macii_start();
-	}
+	पूर्ण
 
 	local_irq_restore(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Prod the chip without interrupts */
-static void macii_poll(void)
-{
-	macii_interrupt(0, NULL);
-}
+/* Prod the chip without पूर्णांकerrupts */
+अटल व्योम macii_poll(व्योम)
+अणु
+	macii_पूर्णांकerrupt(0, शून्य);
+पूर्ण
 
 /* Reset the bus */
-static int macii_reset_bus(void)
-{
-	struct adb_request req;
+अटल पूर्णांक macii_reset_bus(व्योम)
+अणु
+	काष्ठा adb_request req;
 
 	/* Command = 0, Address = ignored */
-	adb_request(&req, NULL, ADBREQ_NOSEND, 1, ADB_BUSRESET);
+	adb_request(&req, शून्य, ADBREQ_NOSEND, 1, ADB_BUSRESET);
 	macii_send_request(&req, 1);
 
-	/* Don't want any more requests during the Global Reset low time. */
+	/* Don't want any more requests during the Global Reset low समय. */
 	udelay(3000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Start sending ADB packet */
-static void macii_start(void)
-{
-	struct adb_request *req;
+अटल व्योम macii_start(व्योम)
+अणु
+	काष्ठा adb_request *req;
 
 	req = current_req;
 
@@ -347,126 +348,126 @@ static void macii_start(void)
 	macii_state = sending;
 	data_index = 2;
 
-	bus_timeout = false;
-	srq_asserted = false;
-}
+	bus_समयout = false;
+	srq_निश्चितed = false;
+पूर्ण
 
 /*
- * The notorious ADB interrupt handler - does all of the protocol handling.
+ * The notorious ADB पूर्णांकerrupt handler - करोes all of the protocol handling.
  * Relies on the ADB controller sending and receiving data, thereby
- * generating shift register interrupts (SR_INT) for us. This means there has
+ * generating shअगरt रेजिस्टर पूर्णांकerrupts (SR_INT) क्रम us. This means there has
  * to be activity on the ADB bus. The chip will poll to achieve this.
  *
- * The VIA Port B output signalling works as follows. After the ADB transceiver
- * sees a transition on the PB4 and PB5 lines it will crank over the VIA shift
- * register which eventually raises the SR_INT interrupt. The PB4/PB5 outputs
+ * The VIA Port B output संकेतling works as follows. After the ADB transceiver
+ * sees a transition on the PB4 and PB5 lines it will crank over the VIA shअगरt
+ * रेजिस्टर which eventually उठाओs the SR_INT पूर्णांकerrupt. The PB4/PB5 outमाला_दो
  * are toggled with each byte as the ADB transaction progresses.
  *
  * Request with no reply expected (and empty transceiver buffer):
  *     CMD -> IDLE
- * Request with expected reply packet (or with buffered autopoll packet):
+ * Request with expected reply packet (or with buffered स्वतःpoll packet):
  *     CMD -> EVEN -> ODD -> EVEN -> ... -> IDLE
  * Unsolicited packet:
  *     IDLE -> EVEN -> ODD -> EVEN -> ... -> IDLE
  */
-static irqreturn_t macii_interrupt(int irq, void *arg)
-{
-	int x;
-	struct adb_request *req;
-	unsigned long flags;
+अटल irqवापस_t macii_पूर्णांकerrupt(पूर्णांक irq, व्योम *arg)
+अणु
+	पूर्णांक x;
+	काष्ठा adb_request *req;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
-	if (!arg) {
+	अगर (!arg) अणु
 		/* Clear the SR IRQ flag when polling. */
-		if (via[IFR] & SR_INT)
+		अगर (via[IFR] & SR_INT)
 			via[IFR] = SR_INT;
-		else {
+		अन्यथा अणु
 			local_irq_restore(flags);
-			return IRQ_NONE;
-		}
-	}
+			वापस IRQ_NONE;
+		पूर्ण
+	पूर्ण
 
 	status = via[B] & (ST_MASK | CTLR_IRQ);
 
-	switch (macii_state) {
-	case idle:
+	चयन (macii_state) अणु
+	हाल idle:
 		WARN_ON((status & ST_MASK) != ST_IDLE);
 
 		reply_ptr = reply_buf;
-		reading_reply = false;
+		पढ़ोing_reply = false;
 
-		bus_timeout = false;
-		srq_asserted = false;
+		bus_समयout = false;
+		srq_निश्चितed = false;
 
 		x = via[SR];
 
-		if (!(status & CTLR_IRQ)) {
-			/* /CTLR_IRQ asserted in idle state means we must
-			 * read an autopoll reply from the transceiver buffer.
+		अगर (!(status & CTLR_IRQ)) अणु
+			/* /CTLR_IRQ निश्चितed in idle state means we must
+			 * पढ़ो an स्वतःpoll reply from the transceiver buffer.
 			 */
-			macii_state = reading;
+			macii_state = पढ़ोing;
 			*reply_ptr = x;
 			reply_len = 1;
-		} else {
-			/* bus timeout */
+		पूर्ण अन्यथा अणु
+			/* bus समयout */
 			reply_len = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* set ADB state = even for first data byte */
+		/* set ADB state = even क्रम first data byte */
 		via[B] = (via[B] & ~ST_MASK) | ST_EVEN;
-		break;
+		अवरोध;
 
-	case sending:
+	हाल sending:
 		req = current_req;
 
-		if (status == (ST_CMD | CTLR_IRQ)) {
-			/* /CTLR_IRQ de-asserted after the command byte means
-			 * the host can continue with the transaction.
+		अगर (status == (ST_CMD | CTLR_IRQ)) अणु
+			/* /CTLR_IRQ de-निश्चितed after the command byte means
+			 * the host can जारी with the transaction.
 			 */
 
 			/* Store command byte */
 			last_cmd = req->data[1];
-			if ((last_cmd & OP_MASK) == TALK) {
+			अगर ((last_cmd & OP_MASK) == TALK) अणु
 				last_talk_cmd = last_cmd;
-				if ((last_cmd & CMD_MASK) == ADB_READREG(0, 0))
+				अगर ((last_cmd & CMD_MASK) == ADB_READREG(0, 0))
 					last_poll_cmd = last_cmd;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (status == ST_CMD) {
-			/* /CTLR_IRQ asserted after the command byte means we
-			 * must read an autopoll reply. The first byte was
-			 * lost because the shift register was an output.
+		अगर (status == ST_CMD) अणु
+			/* /CTLR_IRQ निश्चितed after the command byte means we
+			 * must पढ़ो an स्वतःpoll reply. The first byte was
+			 * lost because the shअगरt रेजिस्टर was an output.
 			 */
-			macii_state = reading;
+			macii_state = पढ़ोing;
 
-			reading_reply = false;
+			पढ़ोing_reply = false;
 			reply_ptr = reply_buf;
 			*reply_ptr = last_talk_cmd;
 			reply_len = 1;
 
-			/* reset to shift in */
+			/* reset to shअगरt in */
 			via[ACR] &= ~SR_OUT;
 			x = via[SR];
-		} else if (data_index >= req->nbytes) {
+		पूर्ण अन्यथा अगर (data_index >= req->nbytes) अणु
 			req->sent = 1;
 
-			if (req->reply_expected) {
-				macii_state = reading;
+			अगर (req->reply_expected) अणु
+				macii_state = पढ़ोing;
 
-				reading_reply = true;
+				पढ़ोing_reply = true;
 				reply_ptr = req->reply;
 				*reply_ptr = req->data[1];
 				reply_len = 1;
 
 				via[ACR] &= ~SR_OUT;
 				x = via[SR];
-			} else if ((req->data[1] & OP_MASK) == TALK) {
-				macii_state = reading;
+			पूर्ण अन्यथा अगर ((req->data[1] & OP_MASK) == TALK) अणु
+				macii_state = पढ़ोing;
 
-				reading_reply = false;
+				पढ़ोing_reply = false;
 				reply_ptr = reply_buf;
 				*reply_ptr = req->data[1];
 				reply_len = 1;
@@ -476,91 +477,91 @@ static irqreturn_t macii_interrupt(int irq, void *arg)
 
 				req->complete = 1;
 				current_req = req->next;
-				if (req->done)
-					(*req->done)(req);
-			} else {
+				अगर (req->करोne)
+					(*req->करोne)(req);
+			पूर्ण अन्यथा अणु
 				macii_state = idle;
 
 				req->complete = 1;
 				current_req = req->next;
-				if (req->done)
-					(*req->done)(req);
-				break;
-			}
-		} else {
+				अगर (req->करोne)
+					(*req->करोne)(req);
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			via[SR] = req->data[data_index++];
-		}
+		पूर्ण
 
-		if ((via[B] & ST_MASK) == ST_CMD) {
+		अगर ((via[B] & ST_MASK) == ST_CMD) अणु
 			/* just sent the command byte, set to EVEN */
 			via[B] = (via[B] & ~ST_MASK) | ST_EVEN;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* invert state bits, toggle ODD/EVEN */
 			via[B] ^= ST_MASK;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case reading:
+	हाल पढ़ोing:
 		x = via[SR];
 		WARN_ON((status & ST_MASK) == ST_CMD ||
 			(status & ST_MASK) == ST_IDLE);
 
-		if (!(status & CTLR_IRQ)) {
-			if (status == ST_EVEN && reply_len == 1) {
-				bus_timeout = true;
-			} else if (status == ST_ODD && reply_len == 2) {
-				srq_asserted = true;
-			} else {
+		अगर (!(status & CTLR_IRQ)) अणु
+			अगर (status == ST_EVEN && reply_len == 1) अणु
+				bus_समयout = true;
+			पूर्ण अन्यथा अगर (status == ST_ODD && reply_len == 2) अणु
+				srq_निश्चितed = true;
+			पूर्ण अन्यथा अणु
 				macii_state = idle;
 
-				if (bus_timeout)
+				अगर (bus_समयout)
 					reply_len = 0;
 
-				if (reading_reply) {
-					struct adb_request *req = current_req;
+				अगर (पढ़ोing_reply) अणु
+					काष्ठा adb_request *req = current_req;
 
 					req->reply_len = reply_len;
 
 					req->complete = 1;
 					current_req = req->next;
-					if (req->done)
-						(*req->done)(req);
-				} else if (reply_len && autopoll_devs &&
-					   reply_buf[0] == last_poll_cmd) {
+					अगर (req->करोne)
+						(*req->करोne)(req);
+				पूर्ण अन्यथा अगर (reply_len && स्वतःpoll_devs &&
+					   reply_buf[0] == last_poll_cmd) अणु
 					adb_input(reply_buf, reply_len, 1);
-				}
-				break;
-			}
-		}
+				पूर्ण
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (reply_len < ARRAY_SIZE(reply_buf)) {
+		अगर (reply_len < ARRAY_SIZE(reply_buf)) अणु
 			reply_ptr++;
 			*reply_ptr = x;
 			reply_len++;
-		}
+		पूर्ण
 
 		/* invert state bits, toggle ODD/EVEN */
 		via[B] ^= ST_MASK;
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (macii_state == idle) {
-		if (!current_req)
+	अगर (macii_state == idle) अणु
+		अगर (!current_req)
 			macii_queue_poll();
 
-		if (current_req)
+		अगर (current_req)
 			macii_start();
 
-		if (macii_state == idle) {
+		अगर (macii_state == idle) अणु
 			via[ACR] &= ~SR_OUT;
 			x = via[SR];
 			via[B] = (via[B] & ~ST_MASK) | ST_IDLE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	local_irq_restore(flags);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण

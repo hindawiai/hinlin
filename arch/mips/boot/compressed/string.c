@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/mips/boot/compressed/string.c
  *
  * Very small subset of simple string routines
  */
 
-#include <linux/compiler_attributes.h>
-#include <linux/types.h>
+#समावेश <linux/compiler_attributes.h>
+#समावेश <linux/types.h>
 
-void *memcpy(void *dest, const void *src, size_t n)
-{
-	int i;
-	const char *s = src;
-	char *d = dest;
+व्योम *स_नकल(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
+अणु
+	पूर्णांक i;
+	स्थिर अक्षर *s = src;
+	अक्षर *d = dest;
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		d[i] = s[i];
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-void *memset(void *s, int c, size_t n)
-{
-	int i;
-	char *ss = s;
+व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार n)
+अणु
+	पूर्णांक i;
+	अक्षर *ss = s;
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		ss[i] = c;
-	return s;
-}
+	वापस s;
+पूर्ण
 
-void * __weak memmove(void *dest, const void *src, size_t n)
-{
-	unsigned int i;
-	const char *s = src;
-	char *d = dest;
+व्योम * __weak स_हटाओ(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
+अणु
+	अचिन्हित पूर्णांक i;
+	स्थिर अक्षर *s = src;
+	अक्षर *d = dest;
 
-	if ((uintptr_t)dest < (uintptr_t)src) {
-		for (i = 0; i < n; i++)
+	अगर ((uपूर्णांकptr_t)dest < (uपूर्णांकptr_t)src) अणु
+		क्रम (i = 0; i < n; i++)
 			d[i] = s[i];
-	} else {
-		for (i = n; i > 0; i--)
+	पूर्ण अन्यथा अणु
+		क्रम (i = n; i > 0; i--)
 			d[i - 1] = s[i - 1];
-	}
-	return dest;
-}
+	पूर्ण
+	वापस dest;
+पूर्ण

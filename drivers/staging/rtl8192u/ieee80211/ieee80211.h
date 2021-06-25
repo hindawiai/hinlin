@@ -1,85 +1,86 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Merged with mainline ieee80211.h in Aug 2004.  Original ieee802_11
- * remains copyright by the original authors
+ * Merged with मुख्यline ieee80211.h in Aug 2004.  Original ieee802_11
+ * reमुख्यs copyright by the original authors
  *
  * Portions of the merged code are based on Host AP (software wireless
- * LAN access point) driver for Intersil Prism2/2.5/3.
+ * LAN access poपूर्णांक) driver क्रम Intersil Prism2/2.5/3.
  *
  * Copyright (c) 2001-2002, SSH Communications Security Corp and Jouni Malinen
  * <jkmaline@cc.hut.fi>
  * Copyright (c) 2002-2003, Jouni Malinen <jkmaline@cc.hut.fi>
  *
  * Adaption to a generic IEEE 802.11 stack by James Ketrenos
- * <jketreno@linux.intel.com>
+ * <jketreno@linux.पूर्णांकel.com>
  * Copyright (c) 2004, Intel Corporation
  *
- * Modified for Realtek's wi-fi cards by Andrea Merello
+ * Modअगरied क्रम Realtek's wi-fi cards by Andrea Merello
  * <andrea.merello@gmail.com>
  */
-#ifndef IEEE80211_H
-#define IEEE80211_H
-#include <linux/if_ether.h> /* ETH_ALEN */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/sched.h>
-#include <linux/semaphore.h>
-#include <linux/interrupt.h>
+#अगर_अघोषित IEEE80211_H
+#घोषणा IEEE80211_H
+#समावेश <linux/अगर_ether.h> /* ETH_ALEN */
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <linux/delay.h>
-#include <linux/wireless.h>
-#include <linux/ieee80211.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/ieee80211.h>
 
-#include "rtl819x_HT.h"
-#include "rtl819x_BA.h"
-#include "rtl819x_TS.h"
+#समावेश "rtl819x_HT.h"
+#समावेश "rtl819x_BA.h"
+#समावेश "rtl819x_TS.h"
 
 
-#ifndef IW_MODE_MONITOR
-#define IW_MODE_MONITOR 6
-#endif
+#अगर_अघोषित IW_MODE_MONITOR
+#घोषणा IW_MODE_MONITOR 6
+#पूर्ण_अगर
 
-#ifndef IWEVCUSTOM
-#define IWEVCUSTOM 0x8c02
-#endif
+#अगर_अघोषित IWEVCUSTOM
+#घोषणा IWEVCUSTOM 0x8c02
+#पूर्ण_अगर
 
-#define KEY_TYPE_NA		0x0
-#define KEY_TYPE_WEP40		0x1
-#define KEY_TYPE_TKIP		0x2
-#define KEY_TYPE_CCMP		0x4
-#define KEY_TYPE_WEP104		0x5
+#घोषणा KEY_TYPE_NA		0x0
+#घोषणा KEY_TYPE_WEP40		0x1
+#घोषणा KEY_TYPE_TKIP		0x2
+#घोषणा KEY_TYPE_CCMP		0x4
+#घोषणा KEY_TYPE_WEP104		0x5
 
-/* added for rtl819x tx procedure */
-#define MAX_QUEUE_SIZE		0x10
+/* added क्रम rtl819x tx procedure */
+#घोषणा MAX_QUEUE_SIZE		0x10
 
 //
 // 8190 queue mapping
 //
-#define BK_QUEUE                               0
-#define BE_QUEUE                               1
-#define VI_QUEUE                               2
-#define VO_QUEUE                               3
-#define HCCA_QUEUE                             4
-#define TXCMD_QUEUE                            5
-#define MGNT_QUEUE                             6
-#define HIGH_QUEUE                             7
-#define BEACON_QUEUE                           8
+#घोषणा BK_QUEUE                               0
+#घोषणा BE_QUEUE                               1
+#घोषणा VI_QUEUE                               2
+#घोषणा VO_QUEUE                               3
+#घोषणा HCCA_QUEUE                             4
+#घोषणा TXCMD_QUEUE                            5
+#घोषणा MGNT_QUEUE                             6
+#घोषणा HIGH_QUEUE                             7
+#घोषणा BEACON_QUEUE                           8
 
-#define LOW_QUEUE                              BE_QUEUE
-#define NORMAL_QUEUE                           MGNT_QUEUE
+#घोषणा LOW_QUEUE                              BE_QUEUE
+#घोषणा NORMAL_QUEUE                           MGNT_QUEUE
 
-//added by amy for ps
-#define SWRF_TIMEOUT				50
+//added by amy क्रम ps
+#घोषणा SWRF_TIMEOUT				50
 
-//added by amy for LEAP related
-#define IE_CISCO_FLAG_POSITION		0x08	// Flag byte: byte 8, numbered from 0.
-#define SUPPORT_CKIP_MIC			0x08	// bit3
-#define SUPPORT_CKIP_PK			0x10	// bit4
-/* defined for skb cb field */
+//added by amy क्रम LEAP related
+#घोषणा IE_CISCO_FLAG_POSITION		0x08	// Flag byte: byte 8, numbered from 0.
+#घोषणा SUPPORT_CKIP_MIC			0x08	// bit3
+#घोषणा SUPPORT_CKIP_PK			0x10	// bit4
+/* defined क्रम skb cb field */
 /* At most 28 byte */
-struct cb_desc {
+काष्ठा cb_desc अणु
 	/* Tx Desc Related flags (8-9) */
 	u8 bLastIniPkt:1;
 	u8 bCmdOrInit:1;
@@ -135,181 +136,181 @@ struct cb_desc {
 	u8 DrvAggrNum;
 	u16 pkt_size;
 	u8 reserved12;
-};
+पूर्ण;
 
 /*--------------------------Define -------------------------------------------*/
-#define MGN_1M                  0x02
-#define MGN_2M                  0x04
-#define MGN_5_5M                0x0b
-#define MGN_11M                 0x16
+#घोषणा MGN_1M                  0x02
+#घोषणा MGN_2M                  0x04
+#घोषणा MGN_5_5M                0x0b
+#घोषणा MGN_11M                 0x16
 
-#define MGN_6M                  0x0c
-#define MGN_9M                  0x12
-#define MGN_12M                 0x18
-#define MGN_18M                 0x24
-#define MGN_24M                 0x30
-#define MGN_36M                 0x48
-#define MGN_48M                 0x60
-#define MGN_54M                 0x6c
+#घोषणा MGN_6M                  0x0c
+#घोषणा MGN_9M                  0x12
+#घोषणा MGN_12M                 0x18
+#घोषणा MGN_18M                 0x24
+#घोषणा MGN_24M                 0x30
+#घोषणा MGN_36M                 0x48
+#घोषणा MGN_48M                 0x60
+#घोषणा MGN_54M                 0x6c
 
-#define MGN_MCS0                0x80
-#define MGN_MCS1                0x81
-#define MGN_MCS2                0x82
-#define MGN_MCS3                0x83
-#define MGN_MCS4                0x84
-#define MGN_MCS5                0x85
-#define MGN_MCS6                0x86
-#define MGN_MCS7                0x87
-#define MGN_MCS8                0x88
-#define MGN_MCS9                0x89
-#define MGN_MCS10               0x8a
-#define MGN_MCS11               0x8b
-#define MGN_MCS12               0x8c
-#define MGN_MCS13               0x8d
-#define MGN_MCS14               0x8e
-#define MGN_MCS15               0x8f
+#घोषणा MGN_MCS0                0x80
+#घोषणा MGN_MCS1                0x81
+#घोषणा MGN_MCS2                0x82
+#घोषणा MGN_MCS3                0x83
+#घोषणा MGN_MCS4                0x84
+#घोषणा MGN_MCS5                0x85
+#घोषणा MGN_MCS6                0x86
+#घोषणा MGN_MCS7                0x87
+#घोषणा MGN_MCS8                0x88
+#घोषणा MGN_MCS9                0x89
+#घोषणा MGN_MCS10               0x8a
+#घोषणा MGN_MCS11               0x8b
+#घोषणा MGN_MCS12               0x8c
+#घोषणा MGN_MCS13               0x8d
+#घोषणा MGN_MCS14               0x8e
+#घोषणा MGN_MCS15               0x8f
 
-#define aSifsTime ((priv->ieee80211->current_network.mode == IEEE_A ||     \
+#घोषणा aSअगरsTime ((priv->ieee80211->current_network.mode == IEEE_A ||     \
 		    priv->ieee80211->current_network.mode == IEEE_N_24G || \
 		    priv->ieee80211->current_network.mode == IEEE_N_5G) ?  \
 		   16 : 10)
 
-#define MGMT_QUEUE_NUM 5
+#घोषणा MGMT_QUEUE_NUM 5
 
-#define IEEE_CMD_SET_WPA_PARAM			1
-#define	IEEE_CMD_SET_WPA_IE			2
-#define IEEE_CMD_SET_ENCRYPTION			3
-#define IEEE_CMD_MLME				4
+#घोषणा IEEE_CMD_SET_WPA_PARAM			1
+#घोषणा	IEEE_CMD_SET_WPA_IE			2
+#घोषणा IEEE_CMD_SET_ENCRYPTION			3
+#घोषणा IEEE_CMD_MLME				4
 
-#define IEEE_PARAM_WPA_ENABLED			1
-#define IEEE_PARAM_TKIP_COUNTERMEASURES		2
-#define IEEE_PARAM_DROP_UNENCRYPTED		3
-#define IEEE_PARAM_PRIVACY_INVOKED		4
-#define IEEE_PARAM_AUTH_ALGS			5
-#define IEEE_PARAM_IEEE_802_1X			6
+#घोषणा IEEE_PARAM_WPA_ENABLED			1
+#घोषणा IEEE_PARAM_TKIP_COUNTERMEASURES		2
+#घोषणा IEEE_PARAM_DROP_UNENCRYPTED		3
+#घोषणा IEEE_PARAM_PRIVACY_INVOKED		4
+#घोषणा IEEE_PARAM_AUTH_ALGS			5
+#घोषणा IEEE_PARAM_IEEE_802_1X			6
 //It should consistent with the driver_XXX.c
 //   David, 2006.9.26
-#define IEEE_PARAM_WPAX_SELECT			7
-//Added for notify the encryption type selection
+#घोषणा IEEE_PARAM_WPAX_SELECT			7
+//Added क्रम notअगरy the encryption type selection
 //   David, 2006.9.26
-#define IEEE_PROTO_WPA				1
-#define IEEE_PROTO_RSN				2
-//Added for notify the encryption type selection
+#घोषणा IEEE_PROTO_WPA				1
+#घोषणा IEEE_PROTO_RSN				2
+//Added क्रम notअगरy the encryption type selection
 //   David, 2006.9.26
-#define IEEE_WPAX_USEGROUP			0
-#define IEEE_WPAX_WEP40				1
-#define IEEE_WPAX_TKIP				2
-#define IEEE_WPAX_WRAP				3
-#define IEEE_WPAX_CCMP				4
-#define IEEE_WPAX_WEP104			5
+#घोषणा IEEE_WPAX_USEGROUP			0
+#घोषणा IEEE_WPAX_WEP40				1
+#घोषणा IEEE_WPAX_TKIP				2
+#घोषणा IEEE_WPAX_WRAP				3
+#घोषणा IEEE_WPAX_CCMP				4
+#घोषणा IEEE_WPAX_WEP104			5
 
-#define IEEE_KEY_MGMT_IEEE8021X			1
-#define IEEE_KEY_MGMT_PSK			2
+#घोषणा IEEE_KEY_MGMT_IEEE8021X			1
+#घोषणा IEEE_KEY_MGMT_PSK			2
 
-#define IEEE_MLME_STA_DEAUTH			1
-#define IEEE_MLME_STA_DISASSOC			2
-
-
-#define IEEE_CRYPT_ERR_UNKNOWN_ALG		2
-#define IEEE_CRYPT_ERR_UNKNOWN_ADDR		3
-#define IEEE_CRYPT_ERR_CRYPT_INIT_FAILED	4
-#define IEEE_CRYPT_ERR_KEY_SET_FAILED		5
-#define IEEE_CRYPT_ERR_TX_KEY_SET_FAILED	6
-#define IEEE_CRYPT_ERR_CARD_CONF_FAILED		7
+#घोषणा IEEE_MLME_STA_DEAUTH			1
+#घोषणा IEEE_MLME_STA_DISASSOC			2
 
 
-#define	IEEE_CRYPT_ALG_NAME_LEN			16
-
-#define MAX_IE_LEN  0xff
-
-// added for kernel conflict
-#define ieee80211_crypt_deinit_entries	ieee80211_crypt_deinit_entries_rsl
-#define ieee80211_crypt_deinit_handler	ieee80211_crypt_deinit_handler_rsl
-#define ieee80211_crypt_delayed_deinit	ieee80211_crypt_delayed_deinit_rsl
-#define ieee80211_register_crypto_ops	ieee80211_register_crypto_ops_rsl
-#define ieee80211_unregister_crypto_ops ieee80211_unregister_crypto_ops_rsl
-#define ieee80211_get_crypto_ops	ieee80211_get_crypto_ops_rsl
-
-#define ieee80211_ccmp_null		ieee80211_ccmp_null_rsl
-
-#define ieee80211_tkip_null		ieee80211_tkip_null_rsl
-
-#define free_ieee80211			free_ieee80211_rsl
-#define alloc_ieee80211			alloc_ieee80211_rsl
-
-#define ieee80211_rx			ieee80211_rx_rsl
-#define ieee80211_rx_mgt		ieee80211_rx_mgt_rsl
-
-#define ieee80211_get_beacon		ieee80211_get_beacon_rsl
-#define ieee80211_wake_queue		ieee80211_wake_queue_rsl
-#define ieee80211_stop_queue		ieee80211_stop_queue_rsl
-#define ieee80211_reset_queue		ieee80211_reset_queue_rsl
-#define ieee80211_softmac_stop_protocol	ieee80211_softmac_stop_protocol_rsl
-#define ieee80211_softmac_start_protocol ieee80211_softmac_start_protocol_rsl
-#define ieee80211_is_shortslot		ieee80211_is_shortslot_rsl
-#define ieee80211_is_54g		ieee80211_is_54g_rsl
-#define ieee80211_wpa_supplicant_ioctl	ieee80211_wpa_supplicant_ioctl_rsl
-#define ieee80211_ps_tx_ack		ieee80211_ps_tx_ack_rsl
-#define ieee80211_softmac_xmit		ieee80211_softmac_xmit_rsl
-#define ieee80211_stop_send_beacons	ieee80211_stop_send_beacons_rsl
-#define notify_wx_assoc_event		notify_wx_assoc_event_rsl
-#define SendDisassociation		SendDisassociation_rsl
-#define ieee80211_disassociate		ieee80211_disassociate_rsl
-#define ieee80211_start_send_beacons	ieee80211_start_send_beacons_rsl
-#define ieee80211_stop_scan		ieee80211_stop_scan_rsl
-#define ieee80211_send_probe_requests	ieee80211_send_probe_requests_rsl
-#define ieee80211_softmac_scan_syncro	ieee80211_softmac_scan_syncro_rsl
-#define ieee80211_start_scan_syncro	ieee80211_start_scan_syncro_rsl
-
-#define ieee80211_wx_get_essid		ieee80211_wx_get_essid_rsl
-#define ieee80211_wx_set_essid		ieee80211_wx_set_essid_rsl
-#define ieee80211_wx_set_rate		ieee80211_wx_set_rate_rsl
-#define ieee80211_wx_get_rate		ieee80211_wx_get_rate_rsl
-#define ieee80211_wx_set_wap		ieee80211_wx_set_wap_rsl
-#define ieee80211_wx_get_wap		ieee80211_wx_get_wap_rsl
-#define ieee80211_wx_set_mode		ieee80211_wx_set_mode_rsl
-#define ieee80211_wx_get_mode		ieee80211_wx_get_mode_rsl
-#define ieee80211_wx_set_scan		ieee80211_wx_set_scan_rsl
-#define ieee80211_wx_get_freq		ieee80211_wx_get_freq_rsl
-#define ieee80211_wx_set_freq		ieee80211_wx_set_freq_rsl
-#define ieee80211_wx_set_rawtx		ieee80211_wx_set_rawtx_rsl
-#define ieee80211_wx_get_name		ieee80211_wx_get_name_rsl
-#define ieee80211_wx_set_power		ieee80211_wx_set_power_rsl
-#define ieee80211_wx_get_power		ieee80211_wx_get_power_rsl
-#define ieee80211_wlan_frequencies	ieee80211_wlan_frequencies_rsl
-#define ieee80211_wx_set_rts		ieee80211_wx_set_rts_rsl
-#define ieee80211_wx_get_rts		ieee80211_wx_get_rts_rsl
-
-#define ieee80211_txb_free		ieee80211_txb_free_rsl
-
-#define ieee80211_wx_set_gen_ie		ieee80211_wx_set_gen_ie_rsl
-#define ieee80211_wx_get_scan		ieee80211_wx_get_scan_rsl
-#define ieee80211_wx_set_encode		ieee80211_wx_set_encode_rsl
-#define ieee80211_wx_get_encode		ieee80211_wx_get_encode_rsl
-#define ieee80211_wx_set_mlme		ieee80211_wx_set_mlme_rsl
-#define ieee80211_wx_set_auth		ieee80211_wx_set_auth_rsl
-#define ieee80211_wx_set_encode_ext	ieee80211_wx_set_encode_ext_rsl
-#define ieee80211_wx_get_encode_ext	ieee80211_wx_get_encode_ext_rsl
+#घोषणा IEEE_CRYPT_ERR_UNKNOWN_ALG		2
+#घोषणा IEEE_CRYPT_ERR_UNKNOWN_ADDR		3
+#घोषणा IEEE_CRYPT_ERR_CRYPT_INIT_FAILED	4
+#घोषणा IEEE_CRYPT_ERR_KEY_SET_FAILED		5
+#घोषणा IEEE_CRYPT_ERR_TX_KEY_SET_FAILED	6
+#घोषणा IEEE_CRYPT_ERR_CARD_CONF_FAILED		7
 
 
-struct ieee_param {
+#घोषणा	IEEE_CRYPT_ALG_NAME_LEN			16
+
+#घोषणा MAX_IE_LEN  0xff
+
+// added क्रम kernel conflict
+#घोषणा ieee80211_crypt_deinit_entries	ieee80211_crypt_deinit_entries_rsl
+#घोषणा ieee80211_crypt_deinit_handler	ieee80211_crypt_deinit_handler_rsl
+#घोषणा ieee80211_crypt_delayed_deinit	ieee80211_crypt_delayed_deinit_rsl
+#घोषणा ieee80211_रेजिस्टर_crypto_ops	ieee80211_रेजिस्टर_crypto_ops_rsl
+#घोषणा ieee80211_unरेजिस्टर_crypto_ops ieee80211_unरेजिस्टर_crypto_ops_rsl
+#घोषणा ieee80211_get_crypto_ops	ieee80211_get_crypto_ops_rsl
+
+#घोषणा ieee80211_ccmp_null		ieee80211_ccmp_null_rsl
+
+#घोषणा ieee80211_tkip_null		ieee80211_tkip_null_rsl
+
+#घोषणा मुक्त_ieee80211			मुक्त_ieee80211_rsl
+#घोषणा alloc_ieee80211			alloc_ieee80211_rsl
+
+#घोषणा ieee80211_rx			ieee80211_rx_rsl
+#घोषणा ieee80211_rx_mgt		ieee80211_rx_mgt_rsl
+
+#घोषणा ieee80211_get_beacon		ieee80211_get_beacon_rsl
+#घोषणा ieee80211_wake_queue		ieee80211_wake_queue_rsl
+#घोषणा ieee80211_stop_queue		ieee80211_stop_queue_rsl
+#घोषणा ieee80211_reset_queue		ieee80211_reset_queue_rsl
+#घोषणा ieee80211_sofपंचांगac_stop_protocol	ieee80211_sofपंचांगac_stop_protocol_rsl
+#घोषणा ieee80211_sofपंचांगac_start_protocol ieee80211_sofपंचांगac_start_protocol_rsl
+#घोषणा ieee80211_is_लघुslot		ieee80211_is_लघुslot_rsl
+#घोषणा ieee80211_is_54g		ieee80211_is_54g_rsl
+#घोषणा ieee80211_wpa_supplicant_ioctl	ieee80211_wpa_supplicant_ioctl_rsl
+#घोषणा ieee80211_ps_tx_ack		ieee80211_ps_tx_ack_rsl
+#घोषणा ieee80211_sofपंचांगac_xmit		ieee80211_sofपंचांगac_xmit_rsl
+#घोषणा ieee80211_stop_send_beacons	ieee80211_stop_send_beacons_rsl
+#घोषणा notअगरy_wx_assoc_event		notअगरy_wx_assoc_event_rsl
+#घोषणा SendDisassociation		SendDisassociation_rsl
+#घोषणा ieee80211_disassociate		ieee80211_disassociate_rsl
+#घोषणा ieee80211_start_send_beacons	ieee80211_start_send_beacons_rsl
+#घोषणा ieee80211_stop_scan		ieee80211_stop_scan_rsl
+#घोषणा ieee80211_send_probe_requests	ieee80211_send_probe_requests_rsl
+#घोषणा ieee80211_sofपंचांगac_scan_syncro	ieee80211_sofपंचांगac_scan_syncro_rsl
+#घोषणा ieee80211_start_scan_syncro	ieee80211_start_scan_syncro_rsl
+
+#घोषणा ieee80211_wx_get_essid		ieee80211_wx_get_essid_rsl
+#घोषणा ieee80211_wx_set_essid		ieee80211_wx_set_essid_rsl
+#घोषणा ieee80211_wx_set_rate		ieee80211_wx_set_rate_rsl
+#घोषणा ieee80211_wx_get_rate		ieee80211_wx_get_rate_rsl
+#घोषणा ieee80211_wx_set_wap		ieee80211_wx_set_wap_rsl
+#घोषणा ieee80211_wx_get_wap		ieee80211_wx_get_wap_rsl
+#घोषणा ieee80211_wx_set_mode		ieee80211_wx_set_mode_rsl
+#घोषणा ieee80211_wx_get_mode		ieee80211_wx_get_mode_rsl
+#घोषणा ieee80211_wx_set_scan		ieee80211_wx_set_scan_rsl
+#घोषणा ieee80211_wx_get_freq		ieee80211_wx_get_freq_rsl
+#घोषणा ieee80211_wx_set_freq		ieee80211_wx_set_freq_rsl
+#घोषणा ieee80211_wx_set_rawtx		ieee80211_wx_set_rawtx_rsl
+#घोषणा ieee80211_wx_get_name		ieee80211_wx_get_name_rsl
+#घोषणा ieee80211_wx_set_घातer		ieee80211_wx_set_घातer_rsl
+#घोषणा ieee80211_wx_get_घातer		ieee80211_wx_get_घातer_rsl
+#घोषणा ieee80211_wlan_frequencies	ieee80211_wlan_frequencies_rsl
+#घोषणा ieee80211_wx_set_rts		ieee80211_wx_set_rts_rsl
+#घोषणा ieee80211_wx_get_rts		ieee80211_wx_get_rts_rsl
+
+#घोषणा ieee80211_txb_मुक्त		ieee80211_txb_मुक्त_rsl
+
+#घोषणा ieee80211_wx_set_gen_ie		ieee80211_wx_set_gen_ie_rsl
+#घोषणा ieee80211_wx_get_scan		ieee80211_wx_get_scan_rsl
+#घोषणा ieee80211_wx_set_encode		ieee80211_wx_set_encode_rsl
+#घोषणा ieee80211_wx_get_encode		ieee80211_wx_get_encode_rsl
+#घोषणा ieee80211_wx_set_mlme		ieee80211_wx_set_mlme_rsl
+#घोषणा ieee80211_wx_set_auth		ieee80211_wx_set_auth_rsl
+#घोषणा ieee80211_wx_set_encode_ext	ieee80211_wx_set_encode_ext_rsl
+#घोषणा ieee80211_wx_get_encode_ext	ieee80211_wx_get_encode_ext_rsl
+
+
+काष्ठा ieee_param अणु
 	u32 cmd;
 	u8 sta_addr[ETH_ALEN];
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u8 name;
 			u32 value;
-		} wpa_param;
-		struct {
+		पूर्ण wpa_param;
+		काष्ठा अणु
 			u32 len;
 			u8 reserved[32];
 			u8 data[0];
-		} wpa_ie;
-		struct{
-			int command;
-			int reason_code;
-		} mlme;
-		struct {
+		पूर्ण wpa_ie;
+		काष्ठाअणु
+			पूर्णांक command;
+			पूर्णांक reason_code;
+		पूर्ण mlme;
+		काष्ठा अणु
 			u8 alg[IEEE_CRYPT_ALG_NAME_LEN];
 			u8 set_tx;
 			u32 err;
@@ -317,377 +318,377 @@ struct ieee_param {
 			u8 seq[8]; /* sequence counter (set: RX, get: TX) */
 			u16 key_len;
 			u8 key[0];
-		} crypt;
-	} u;
-};
+		पूर्ण crypt;
+	पूर्ण u;
+पूर्ण;
 
 
-// linux under 2.6.9 release may not support it, so modify it for common use
-#define IEEE80211_DATA_LEN		2304
-/* Maximum size for the MA-UNITDATA primitive, 802.11 standard section
+// linux under 2.6.9 release may not support it, so modअगरy it क्रम common use
+#घोषणा IEEE80211_DATA_LEN		2304
+/* Maximum size क्रम the MA-UNITDATA primitive, 802.11 standard section
  *   6.2.1.1.2.
  *
  *   The figure in section 7.1.2 suggests a body size of up to 2312
  *   bytes is allowed, which is a bit confusing, I suspect this
  *   represents the 2304 bytes of real data, plus a possible 8 bytes of
- *   WEP IV and ICV. (this interpretation suggested by Ramiro Barreiro)
+ *   WEP IV and ICV. (this पूर्णांकerpretation suggested by Ramiro Barreiro)
  */
-#define IEEE80211_1ADDR_LEN 10
-#define IEEE80211_2ADDR_LEN 16
-#define IEEE80211_3ADDR_LEN 24
-#define IEEE80211_4ADDR_LEN 30
-#define IEEE80211_FCS_LEN    4
-#define IEEE80211_HLEN                  (IEEE80211_4ADDR_LEN)
-#define IEEE80211_FRAME_LEN             (IEEE80211_DATA_LEN + IEEE80211_HLEN)
-#define IEEE80211_MGMT_HDR_LEN 24
-#define IEEE80211_DATA_HDR3_LEN 24
-#define IEEE80211_DATA_HDR4_LEN 30
+#घोषणा IEEE80211_1ADDR_LEN 10
+#घोषणा IEEE80211_2ADDR_LEN 16
+#घोषणा IEEE80211_3ADDR_LEN 24
+#घोषणा IEEE80211_4ADDR_LEN 30
+#घोषणा IEEE80211_FCS_LEN    4
+#घोषणा IEEE80211_HLEN                  (IEEE80211_4ADDR_LEN)
+#घोषणा IEEE80211_FRAME_LEN             (IEEE80211_DATA_LEN + IEEE80211_HLEN)
+#घोषणा IEEE80211_MGMT_HDR_LEN 24
+#घोषणा IEEE80211_DATA_HDR3_LEN 24
+#घोषणा IEEE80211_DATA_HDR4_LEN 30
 
-#define MIN_FRAG_THRESHOLD     256U
-#define MAX_FRAG_THRESHOLD     2346U
+#घोषणा MIN_FRAG_THRESHOLD     256U
+#घोषणा MAX_FRAG_THRESHOLD     2346U
 
 
-/* Frame control field constants */
-#define IEEE80211_FCTL_VERS		0x0003
-#define IEEE80211_FCTL_FTYPE		0x000c
-#define IEEE80211_FCTL_STYPE		0x00f0
-#define IEEE80211_FCTL_FRAMETYPE	0x00fc
-#define IEEE80211_FCTL_TODS		0x0100
-#define IEEE80211_FCTL_FROMDS		0x0200
-#define IEEE80211_FCTL_DSTODS		0x0300 //added by david
-#define IEEE80211_FCTL_MOREFRAGS	0x0400
-#define IEEE80211_FCTL_RETRY		0x0800
-#define IEEE80211_FCTL_PM		0x1000
-#define IEEE80211_FCTL_MOREDATA		0x2000
-#define IEEE80211_FCTL_WEP		0x4000
-#define IEEE80211_FCTL_ORDER		0x8000
+/* Frame control field स्थिरants */
+#घोषणा IEEE80211_FCTL_VERS		0x0003
+#घोषणा IEEE80211_FCTL_FTYPE		0x000c
+#घोषणा IEEE80211_FCTL_STYPE		0x00f0
+#घोषणा IEEE80211_FCTL_FRAMETYPE	0x00fc
+#घोषणा IEEE80211_FCTL_TODS		0x0100
+#घोषणा IEEE80211_FCTL_FROMDS		0x0200
+#घोषणा IEEE80211_FCTL_DSTODS		0x0300 //added by david
+#घोषणा IEEE80211_FCTL_MOREFRAGS	0x0400
+#घोषणा IEEE80211_FCTL_RETRY		0x0800
+#घोषणा IEEE80211_FCTL_PM		0x1000
+#घोषणा IEEE80211_FCTL_MOREDATA		0x2000
+#घोषणा IEEE80211_FCTL_WEP		0x4000
+#घोषणा IEEE80211_FCTL_ORDER		0x8000
 
-#define IEEE80211_FTYPE_MGMT		0x0000
-#define IEEE80211_FTYPE_CTL		0x0004
-#define IEEE80211_FTYPE_DATA		0x0008
+#घोषणा IEEE80211_FTYPE_MGMT		0x0000
+#घोषणा IEEE80211_FTYPE_CTL		0x0004
+#घोषणा IEEE80211_FTYPE_DATA		0x0008
 
 /* management */
-#define IEEE80211_STYPE_ASSOC_REQ	0x0000
-#define IEEE80211_STYPE_ASSOC_RESP	0x0010
-#define IEEE80211_STYPE_REASSOC_REQ	0x0020
-#define IEEE80211_STYPE_REASSOC_RESP	0x0030
-#define IEEE80211_STYPE_PROBE_REQ	0x0040
-#define IEEE80211_STYPE_PROBE_RESP	0x0050
-#define IEEE80211_STYPE_BEACON		0x0080
-#define IEEE80211_STYPE_ATIM		0x0090
-#define IEEE80211_STYPE_DISASSOC	0x00A0
-#define IEEE80211_STYPE_AUTH		0x00B0
-#define IEEE80211_STYPE_DEAUTH		0x00C0
-#define IEEE80211_STYPE_MANAGE_ACT	0x00D0
+#घोषणा IEEE80211_STYPE_ASSOC_REQ	0x0000
+#घोषणा IEEE80211_STYPE_ASSOC_RESP	0x0010
+#घोषणा IEEE80211_STYPE_REASSOC_REQ	0x0020
+#घोषणा IEEE80211_STYPE_REASSOC_RESP	0x0030
+#घोषणा IEEE80211_STYPE_PROBE_REQ	0x0040
+#घोषणा IEEE80211_STYPE_PROBE_RESP	0x0050
+#घोषणा IEEE80211_STYPE_BEACON		0x0080
+#घोषणा IEEE80211_STYPE_ATIM		0x0090
+#घोषणा IEEE80211_STYPE_DISASSOC	0x00A0
+#घोषणा IEEE80211_STYPE_AUTH		0x00B0
+#घोषणा IEEE80211_STYPE_DEAUTH		0x00C0
+#घोषणा IEEE80211_STYPE_MANAGE_ACT	0x00D0
 
 /* control */
-#define IEEE80211_STYPE_PSPOLL		0x00A0
-#define IEEE80211_STYPE_RTS		0x00B0
-#define IEEE80211_STYPE_CTS		0x00C0
-#define IEEE80211_STYPE_ACK		0x00D0
-#define IEEE80211_STYPE_CFEND		0x00E0
-#define IEEE80211_STYPE_CFENDACK	0x00F0
-#define IEEE80211_STYPE_BLOCKACK	0x0094
+#घोषणा IEEE80211_STYPE_PSPOLL		0x00A0
+#घोषणा IEEE80211_STYPE_RTS		0x00B0
+#घोषणा IEEE80211_STYPE_CTS		0x00C0
+#घोषणा IEEE80211_STYPE_ACK		0x00D0
+#घोषणा IEEE80211_STYPE_CFEND		0x00E0
+#घोषणा IEEE80211_STYPE_CFENDACK	0x00F0
+#घोषणा IEEE80211_STYPE_BLOCKACK	0x0094
 
 /* data */
-#define IEEE80211_STYPE_DATA		0x0000
-#define IEEE80211_STYPE_DATA_CFACK	0x0010
-#define IEEE80211_STYPE_DATA_CFPOLL	0x0020
-#define IEEE80211_STYPE_DATA_CFACKPOLL	0x0030
-#define IEEE80211_STYPE_NULLFUNC	0x0040
-#define IEEE80211_STYPE_CFACK		0x0050
-#define IEEE80211_STYPE_CFPOLL		0x0060
-#define IEEE80211_STYPE_CFACKPOLL	0x0070
-#define IEEE80211_STYPE_QOS_DATA	0x0080 //added for WMM 2006/8/2
-#define IEEE80211_STYPE_QOS_NULL	0x00C0
+#घोषणा IEEE80211_STYPE_DATA		0x0000
+#घोषणा IEEE80211_STYPE_DATA_CFACK	0x0010
+#घोषणा IEEE80211_STYPE_DATA_CFPOLL	0x0020
+#घोषणा IEEE80211_STYPE_DATA_CFACKPOLL	0x0030
+#घोषणा IEEE80211_STYPE_शून्यFUNC	0x0040
+#घोषणा IEEE80211_STYPE_CFACK		0x0050
+#घोषणा IEEE80211_STYPE_CFPOLL		0x0060
+#घोषणा IEEE80211_STYPE_CFACKPOLL	0x0070
+#घोषणा IEEE80211_STYPE_QOS_DATA	0x0080 //added क्रम WMM 2006/8/2
+#घोषणा IEEE80211_STYPE_QOS_शून्य	0x00C0
 
-#define IEEE80211_SCTL_FRAG		0x000F
-#define IEEE80211_SCTL_SEQ		0xFFF0
+#घोषणा IEEE80211_SCTL_FRAG		0x000F
+#घोषणा IEEE80211_SCTL_SEQ		0xFFF0
 
 /* QOS control */
-#define IEEE80211_QCTL_TID              0x000F
+#घोषणा IEEE80211_QCTL_TID              0x000F
 
-#define	FC_QOS_BIT					BIT(7)
-#define IsDataFrame(pdu)			(((pdu[0] & 0x0C) == 0x08) ? true : false)
-#define	IsLegacyDataFrame(pdu)	(IsDataFrame(pdu) && (!(pdu[0] & FC_QOS_BIT)))
+#घोषणा	FC_QOS_BIT					BIT(7)
+#घोषणा IsDataFrame(pdu)			(((pdu[0] & 0x0C) == 0x08) ? true : false)
+#घोषणा	IsLegacyDataFrame(pdu)	(IsDataFrame(pdu) && (!(pdu[0] & FC_QOS_BIT)))
 //added by wb. Is this right?
-#define IsQoSDataFrame(pframe)  ((*(u16 *)pframe & (IEEE80211_STYPE_QOS_DATA | IEEE80211_FTYPE_DATA)) == (IEEE80211_STYPE_QOS_DATA | IEEE80211_FTYPE_DATA))
-#define Frame_Order(pframe)     (*(u16 *)pframe & IEEE80211_FCTL_ORDER)
-#define SN_LESS(a, b)		(((a - b) & 0x800) != 0)
-#define SN_EQUAL(a, b)	(a == b)
-#define MAX_DEV_ADDR_SIZE 8
-typedef enum _ACT_CATEGORY {
+#घोषणा IsQoSDataFrame(pframe)  ((*(u16 *)pframe & (IEEE80211_STYPE_QOS_DATA | IEEE80211_FTYPE_DATA)) == (IEEE80211_STYPE_QOS_DATA | IEEE80211_FTYPE_DATA))
+#घोषणा Frame_Order(pframe)     (*(u16 *)pframe & IEEE80211_FCTL_ORDER)
+#घोषणा SN_LESS(a, b)		(((a - b) & 0x800) != 0)
+#घोषणा SN_EQUAL(a, b)	(a == b)
+#घोषणा MAX_DEV_ADDR_SIZE 8
+प्रकार क्रमागत _ACT_CATEGORY अणु
 	ACT_CAT_QOS = 1,
 	ACT_CAT_DLS = 2,
 	ACT_CAT_BA  = 3,
 	ACT_CAT_HT  = 7,
 	ACT_CAT_WMM = 17,
-} ACT_CATEGORY, *PACT_CATEGORY;
+पूर्ण ACT_CATEGORY, *PACT_CATEGORY;
 
-typedef enum _TS_ACTION {
+प्रकार क्रमागत _TS_ACTION अणु
 	ACT_ADDTSREQ = 0,
 	ACT_ADDTSRSP = 1,
 	ACT_DELTS    = 2,
 	ACT_SCHEDULE = 3,
-} TS_ACTION, *PTS_ACTION;
+पूर्ण TS_ACTION, *PTS_ACTION;
 
-typedef enum _BA_ACTION {
+प्रकार क्रमागत _BA_ACTION अणु
 	ACT_ADDBAREQ = 0,
 	ACT_ADDBARSP = 1,
 	ACT_DELBA    = 2,
-} BA_ACTION, *PBA_ACTION;
+पूर्ण BA_ACTION, *PBA_ACTION;
 
-typedef enum _InitialGainOpType {
+प्रकार क्रमागत _InitialGainOpType अणु
 	IG_Backup = 0,
 	IG_Restore,
 	IG_Max
-} InitialGainOpType;
+पूर्ण InitialGainOpType;
 
 /* debug macros */
-#define CONFIG_IEEE80211_DEBUG
-#ifdef CONFIG_IEEE80211_DEBUG
-extern u32 ieee80211_debug_level;
-#define IEEE80211_DEBUG(level, fmt, args...) \
-do { if (ieee80211_debug_level & (level)) \
-  printk(KERN_DEBUG "ieee80211: " fmt, ## args); } while (0)
+#घोषणा CONFIG_IEEE80211_DEBUG
+#अगर_घोषित CONFIG_IEEE80211_DEBUG
+बाह्य u32 ieee80211_debug_level;
+#घोषणा IEEE80211_DEBUG(level, fmt, args...) \
+करो अणु अगर (ieee80211_debug_level & (level)) \
+  prपूर्णांकk(KERN_DEBUG "ieee80211: " fmt, ## args); पूर्ण जबतक (0)
 //wb added to debug out data buf
-//if you want print DATA buffer related BA, please set ieee80211_debug_level to DATA|BA
-#define IEEE80211_DEBUG_DATA(level, data, datalen)                             \
-	do { if ((ieee80211_debug_level & (level)) == (level))                 \
-		{                                                              \
-			int i;                                                 \
+//अगर you want prपूर्णांक DATA buffer related BA, please set ieee80211_debug_level to DATA|BA
+#घोषणा IEEE80211_DEBUG_DATA(level, data, datalen)                             \
+	करो अणु अगर ((ieee80211_debug_level & (level)) == (level))                 \
+		अणु                                                              \
+			पूर्णांक i;                                                 \
 			u8 *pdata = (u8 *)data;                                \
-			printk(KERN_DEBUG "ieee80211: %s()\n", __func__);      \
-			for (i = 0; i < (int)(datalen); i++) {                 \
-				printk("%2x ", pdata[i]);                      \
-				if ((i + 1) % 16 == 0)                         \
-					printk("\n");                          \
-			}                                                      \
-			printk("\n");                                          \
-		}                                                              \
-	} while (0)
-#else
-#define IEEE80211_DEBUG (level, fmt, args...) do {} while (0)
-#define IEEE80211_DEBUG_DATA (level, data, datalen) do {} while (0)
-#endif	/* CONFIG_IEEE80211_DEBUG */
+			prपूर्णांकk(KERN_DEBUG "ieee80211: %s()\n", __func__);      \
+			क्रम (i = 0; i < (पूर्णांक)(datalen); i++) अणु                 \
+				prपूर्णांकk("%2x ", pdata[i]);                      \
+				अगर ((i + 1) % 16 == 0)                         \
+					prपूर्णांकk("\n");                          \
+			पूर्ण                                                      \
+			prपूर्णांकk("\n");                                          \
+		पूर्ण                                                              \
+	पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा IEEE80211_DEBUG (level, fmt, args...) करो अणुपूर्ण जबतक (0)
+#घोषणा IEEE80211_DEBUG_DATA (level, data, datalen) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर	/* CONFIG_IEEE80211_DEBUG */
 
 /* debug macros not dependent on CONFIG_IEEE80211_DEBUG */
 
 /*
- * To use the debug system;
+ * To use the debug प्रणाली;
  *
- * If you are defining a new debug classification, simply add it to the #define
- * list here in the form of:
+ * If you are defining a new debug classअगरication, simply add it to the #घोषणा
+ * list here in the क्रमm of:
  *
- * #define IEEE80211_DL_xxxx VALUE
+ * #घोषणा IEEE80211_DL_xxxx VALUE
  *
- * shifting value to the left one bit from the previous entry.  xxxx should be
- * the name of the classification (for example, WEP)
+ * shअगरting value to the left one bit from the previous entry.  xxxx should be
+ * the name of the classअगरication (क्रम example, WEP)
  *
- * You then need to either add a IEEE80211_xxxx_DEBUG() macro definition for your
- * classification, or use IEEE80211_DEBUG(IEEE80211_DL_xxxx, ...) whenever you want
- * to send output to that classification.
+ * You then need to either add a IEEE80211_xxxx_DEBUG() macro definition क्रम your
+ * classअगरication, or use IEEE80211_DEBUG(IEEE80211_DL_xxxx, ...) whenever you want
+ * to send output to that classअगरication.
  *
- * To add your debug level to the list of levels seen when you perform
+ * To add your debug level to the list of levels seen when you perक्रमm
  *
  * % cat /proc/net/ipw/debug_level
  *
  * you simply need to add your entry to the ipw_debug_levels array.
  *
- * If you do not see debug_level in /proc/net/ipw then you do not have
+ * If you करो not see debug_level in /proc/net/ipw then you करो not have
  * CONFIG_IEEE80211_DEBUG defined in your kernel configuration
  *
  */
 
-#define IEEE80211_DL_INFO          (1<<0)
-#define IEEE80211_DL_WX            (1<<1)
-#define IEEE80211_DL_SCAN          (1<<2)
-#define IEEE80211_DL_STATE         (1<<3)
-#define IEEE80211_DL_MGMT          (1<<4)
-#define IEEE80211_DL_FRAG          (1<<5)
-#define IEEE80211_DL_EAP           (1<<6)
-#define IEEE80211_DL_DROP          (1<<7)
+#घोषणा IEEE80211_DL_INFO          (1<<0)
+#घोषणा IEEE80211_DL_WX            (1<<1)
+#घोषणा IEEE80211_DL_SCAN          (1<<2)
+#घोषणा IEEE80211_DL_STATE         (1<<3)
+#घोषणा IEEE80211_DL_MGMT          (1<<4)
+#घोषणा IEEE80211_DL_FRAG          (1<<5)
+#घोषणा IEEE80211_DL_EAP           (1<<6)
+#घोषणा IEEE80211_DL_DROP          (1<<7)
 
-#define IEEE80211_DL_TX            (1<<8)
-#define IEEE80211_DL_RX            (1<<9)
+#घोषणा IEEE80211_DL_TX            (1<<8)
+#घोषणा IEEE80211_DL_RX            (1<<9)
 
-#define IEEE80211_DL_HT		   (1<<10)  //HT
-#define IEEE80211_DL_BA		   (1<<11)  //ba
-#define IEEE80211_DL_TS		   (1<<12)  //TS
-#define IEEE80211_DL_QOS           (1<<13)
-#define IEEE80211_DL_REORDER	   (1<<14)
-#define IEEE80211_DL_IOT	   (1<<15)
-#define IEEE80211_DL_IPS	   (1<<16)
-#define IEEE80211_DL_TRACE	   (1<<29)  //trace function, need to user net_ratelimit() together in order not to print too much to the screen
-#define IEEE80211_DL_DATA	   (1<<30)   //use this flag to control whether print data buf out.
-#define IEEE80211_DL_ERR	   (1<<31)   //always open
-#define IEEE80211_ERROR(f, a...) printk(KERN_ERR "ieee80211: " f, ## a)
-#define IEEE80211_WARNING(f, a...) printk(KERN_WARNING "ieee80211: " f, ## a)
-#define IEEE80211_DEBUG_INFO(f, a...)   IEEE80211_DEBUG(IEEE80211_DL_INFO, f, ## a)
+#घोषणा IEEE80211_DL_HT		   (1<<10)  //HT
+#घोषणा IEEE80211_DL_BA		   (1<<11)  //ba
+#घोषणा IEEE80211_DL_TS		   (1<<12)  //TS
+#घोषणा IEEE80211_DL_QOS           (1<<13)
+#घोषणा IEEE80211_DL_REORDER	   (1<<14)
+#घोषणा IEEE80211_DL_IOT	   (1<<15)
+#घोषणा IEEE80211_DL_IPS	   (1<<16)
+#घोषणा IEEE80211_DL_TRACE	   (1<<29)  //trace function, need to user net_ratelimit() together in order not to prपूर्णांक too much to the screen
+#घोषणा IEEE80211_DL_DATA	   (1<<30)   //use this flag to control whether prपूर्णांक data buf out.
+#घोषणा IEEE80211_DL_ERR	   (1<<31)   //always खोलो
+#घोषणा IEEE80211_ERROR(f, a...) prपूर्णांकk(KERN_ERR "ieee80211: " f, ## a)
+#घोषणा IEEE80211_WARNING(f, a...) prपूर्णांकk(KERN_WARNING "ieee80211: " f, ## a)
+#घोषणा IEEE80211_DEBUG_INFO(f, a...)   IEEE80211_DEBUG(IEEE80211_DL_INFO, f, ## a)
 
-#define IEEE80211_DEBUG_WX(f, a...)     IEEE80211_DEBUG(IEEE80211_DL_WX, f, ## a)
-#define IEEE80211_DEBUG_SCAN(f, a...)   IEEE80211_DEBUG(IEEE80211_DL_SCAN, f, ## a)
-#define IEEE80211_DEBUG_STATE(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_STATE, f, ## a)
-#define IEEE80211_DEBUG_MGMT(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_MGMT, f, ## a)
-#define IEEE80211_DEBUG_FRAG(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_FRAG, f, ## a)
-#define IEEE80211_DEBUG_EAP(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_EAP, f, ## a)
-#define IEEE80211_DEBUG_DROP(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_DROP, f, ## a)
-#define IEEE80211_DEBUG_TX(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_TX, f, ## a)
-#define IEEE80211_DEBUG_RX(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_RX, f, ## a)
-#define IEEE80211_DEBUG_QOS(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_QOS, f, ## a)
+#घोषणा IEEE80211_DEBUG_WX(f, a...)     IEEE80211_DEBUG(IEEE80211_DL_WX, f, ## a)
+#घोषणा IEEE80211_DEBUG_SCAN(f, a...)   IEEE80211_DEBUG(IEEE80211_DL_SCAN, f, ## a)
+#घोषणा IEEE80211_DEBUG_STATE(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_STATE, f, ## a)
+#घोषणा IEEE80211_DEBUG_MGMT(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_MGMT, f, ## a)
+#घोषणा IEEE80211_DEBUG_FRAG(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_FRAG, f, ## a)
+#घोषणा IEEE80211_DEBUG_EAP(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_EAP, f, ## a)
+#घोषणा IEEE80211_DEBUG_DROP(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_DROP, f, ## a)
+#घोषणा IEEE80211_DEBUG_TX(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_TX, f, ## a)
+#घोषणा IEEE80211_DEBUG_RX(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_RX, f, ## a)
+#घोषणा IEEE80211_DEBUG_QOS(f, a...)  IEEE80211_DEBUG(IEEE80211_DL_QOS, f, ## a)
 
-#include <linux/if_arp.h> /* ARPHRD_ETHER */
+#समावेश <linux/अगर_arp.h> /* ARPHRD_ETHER */
 
-#ifndef WIRELESS_SPY
-#define WIRELESS_SPY		// enable iwspy support
-#endif
-#include <net/iw_handler.h>	// new driver API
+#अगर_अघोषित WIRELESS_SPY
+#घोषणा WIRELESS_SPY		// enable iwspy support
+#पूर्ण_अगर
+#समावेश <net/iw_handler.h>	// new driver API
 
-#ifndef ETH_P_PAE
-#define ETH_P_PAE 0x888E /* Port Access Entity (IEEE 802.1X) */
-#endif /* ETH_P_PAE */
+#अगर_अघोषित ETH_P_PAE
+#घोषणा ETH_P_PAE 0x888E /* Port Access Entity (IEEE 802.1X) */
+#पूर्ण_अगर /* ETH_P_PAE */
 
-#define ETH_P_PREAUTH 0x88C7 /* IEEE 802.11i pre-authentication */
+#घोषणा ETH_P_PREAUTH 0x88C7 /* IEEE 802.11i pre-authentication */
 
-#ifndef ETH_P_80211_RAW
-#define ETH_P_80211_RAW (ETH_P_ECONET + 1)
-#endif
+#अगर_अघोषित ETH_P_80211_RAW
+#घोषणा ETH_P_80211_RAW (ETH_P_ECONET + 1)
+#पूर्ण_अगर
 
 /* IEEE 802.11 defines */
 
-#define P80211_OUI_LEN 3
+#घोषणा P80211_OUI_LEN 3
 
-struct ieee80211_snap_hdr {
+काष्ठा ieee80211_snap_hdr अणु
 
 	u8    dsap;   /* always 0xAA */
 	u8    ssap;   /* always 0xAA */
 	u8    ctrl;   /* always 0x03 */
 	u8    oui[P80211_OUI_LEN];    /* organizational universal id */
 
-} __packed;
+पूर्ण __packed;
 
-#define SNAP_SIZE sizeof(struct ieee80211_snap_hdr)
+#घोषणा SNAP_SIZE माप(काष्ठा ieee80211_snap_hdr)
 
-#define WLAN_FC_GET_VERS(fc) ((fc) & IEEE80211_FCTL_VERS)
-#define WLAN_FC_GET_TYPE(fc) ((fc) & IEEE80211_FCTL_FTYPE)
-#define WLAN_FC_GET_STYPE(fc) ((fc) & IEEE80211_FCTL_STYPE)
+#घोषणा WLAN_FC_GET_VERS(fc) ((fc) & IEEE80211_FCTL_VERS)
+#घोषणा WLAN_FC_GET_TYPE(fc) ((fc) & IEEE80211_FCTL_FTYPE)
+#घोषणा WLAN_FC_GET_STYPE(fc) ((fc) & IEEE80211_FCTL_STYPE)
 
-#define WLAN_FC_GET_FRAMETYPE(fc) ((fc) & IEEE80211_FCTL_FRAMETYPE)
-#define WLAN_GET_SEQ_FRAG(seq) ((seq) & IEEE80211_SCTL_FRAG)
-#define WLAN_GET_SEQ_SEQ(seq)  (((seq) & IEEE80211_SCTL_SEQ) >> 4)
+#घोषणा WLAN_FC_GET_FRAMETYPE(fc) ((fc) & IEEE80211_FCTL_FRAMETYPE)
+#घोषणा WLAN_GET_SEQ_FRAG(seq) ((seq) & IEEE80211_SCTL_FRAG)
+#घोषणा WLAN_GET_SEQ_SEQ(seq)  (((seq) & IEEE80211_SCTL_SEQ) >> 4)
 
-#define WLAN_CAPABILITY_BSS (1<<0)
-#define WLAN_CAPABILITY_IBSS (1<<1)
-#define WLAN_CAPABILITY_CF_POLLABLE (1<<2)
-#define WLAN_CAPABILITY_CF_POLL_REQUEST (1<<3)
-#define WLAN_CAPABILITY_PRIVACY (1<<4)
-#define WLAN_CAPABILITY_SHORT_PREAMBLE (1<<5)
-#define WLAN_CAPABILITY_PBCC (1<<6)
-#define WLAN_CAPABILITY_CHANNEL_AGILITY (1<<7)
-#define WLAN_CAPABILITY_SPECTRUM_MGMT (1<<8)
-#define WLAN_CAPABILITY_QOS (1<<9)
-#define WLAN_CAPABILITY_SHORT_SLOT (1<<10)
-#define WLAN_CAPABILITY_DSSS_OFDM (1<<13)
+#घोषणा WLAN_CAPABILITY_BSS (1<<0)
+#घोषणा WLAN_CAPABILITY_IBSS (1<<1)
+#घोषणा WLAN_CAPABILITY_CF_POLLABLE (1<<2)
+#घोषणा WLAN_CAPABILITY_CF_POLL_REQUEST (1<<3)
+#घोषणा WLAN_CAPABILITY_PRIVACY (1<<4)
+#घोषणा WLAN_CAPABILITY_SHORT_PREAMBLE (1<<5)
+#घोषणा WLAN_CAPABILITY_PBCC (1<<6)
+#घोषणा WLAN_CAPABILITY_CHANNEL_AGILITY (1<<7)
+#घोषणा WLAN_CAPABILITY_SPECTRUM_MGMT (1<<8)
+#घोषणा WLAN_CAPABILITY_QOS (1<<9)
+#घोषणा WLAN_CAPABILITY_SHORT_SLOT (1<<10)
+#घोषणा WLAN_CAPABILITY_DSSS_OFDM (1<<13)
 
-/* 802.11g ERP information element */
-#define WLAN_ERP_NON_ERP_PRESENT (1<<0)
-#define WLAN_ERP_USE_PROTECTION (1<<1)
-#define WLAN_ERP_BARKER_PREAMBLE (1<<2)
+/* 802.11g ERP inक्रमmation element */
+#घोषणा WLAN_ERP_NON_ERP_PRESENT (1<<0)
+#घोषणा WLAN_ERP_USE_PROTECTION (1<<1)
+#घोषणा WLAN_ERP_BARKER_PREAMBLE (1<<2)
 
-#define IEEE80211_STATMASK_SIGNAL (1<<0)
-#define IEEE80211_STATMASK_RSSI (1<<1)
-#define IEEE80211_STATMASK_NOISE (1<<2)
-#define IEEE80211_STATMASK_RATE (1<<3)
-#define IEEE80211_STATMASK_WEMASK 0x7
+#घोषणा IEEE80211_STATMASK_SIGNAL (1<<0)
+#घोषणा IEEE80211_STATMASK_RSSI (1<<1)
+#घोषणा IEEE80211_STATMASK_NOISE (1<<2)
+#घोषणा IEEE80211_STATMASK_RATE (1<<3)
+#घोषणा IEEE80211_STATMASK_WEMASK 0x7
 
-#define IEEE80211_CCK_MODULATION    (1<<0)
-#define IEEE80211_OFDM_MODULATION   (1<<1)
+#घोषणा IEEE80211_CCK_MODULATION    (1<<0)
+#घोषणा IEEE80211_OFDM_MODULATION   (1<<1)
 
-#define IEEE80211_24GHZ_BAND     (1<<0)
-#define IEEE80211_52GHZ_BAND     (1<<1)
+#घोषणा IEEE80211_24GHZ_BAND     (1<<0)
+#घोषणा IEEE80211_52GHZ_BAND     (1<<1)
 
-#define IEEE80211_CCK_RATE_LEN			4
-#define IEEE80211_CCK_RATE_1MB			0x02
-#define IEEE80211_CCK_RATE_2MB			0x04
-#define IEEE80211_CCK_RATE_5MB			0x0B
-#define IEEE80211_CCK_RATE_11MB			0x16
-#define IEEE80211_OFDM_RATE_LEN			8
-#define IEEE80211_OFDM_RATE_6MB			0x0C
-#define IEEE80211_OFDM_RATE_9MB			0x12
-#define IEEE80211_OFDM_RATE_12MB		0x18
-#define IEEE80211_OFDM_RATE_18MB		0x24
-#define IEEE80211_OFDM_RATE_24MB		0x30
-#define IEEE80211_OFDM_RATE_36MB		0x48
-#define IEEE80211_OFDM_RATE_48MB		0x60
-#define IEEE80211_OFDM_RATE_54MB		0x6C
-#define IEEE80211_BASIC_RATE_MASK		0x80
+#घोषणा IEEE80211_CCK_RATE_LEN			4
+#घोषणा IEEE80211_CCK_RATE_1MB			0x02
+#घोषणा IEEE80211_CCK_RATE_2MB			0x04
+#घोषणा IEEE80211_CCK_RATE_5MB			0x0B
+#घोषणा IEEE80211_CCK_RATE_11MB			0x16
+#घोषणा IEEE80211_OFDM_RATE_LEN			8
+#घोषणा IEEE80211_OFDM_RATE_6MB			0x0C
+#घोषणा IEEE80211_OFDM_RATE_9MB			0x12
+#घोषणा IEEE80211_OFDM_RATE_12MB		0x18
+#घोषणा IEEE80211_OFDM_RATE_18MB		0x24
+#घोषणा IEEE80211_OFDM_RATE_24MB		0x30
+#घोषणा IEEE80211_OFDM_RATE_36MB		0x48
+#घोषणा IEEE80211_OFDM_RATE_48MB		0x60
+#घोषणा IEEE80211_OFDM_RATE_54MB		0x6C
+#घोषणा IEEE80211_BASIC_RATE_MASK		0x80
 
-#define IEEE80211_CCK_RATE_1MB_MASK		(1<<0)
-#define IEEE80211_CCK_RATE_2MB_MASK		(1<<1)
-#define IEEE80211_CCK_RATE_5MB_MASK		(1<<2)
-#define IEEE80211_CCK_RATE_11MB_MASK		(1<<3)
-#define IEEE80211_OFDM_RATE_6MB_MASK		(1<<4)
-#define IEEE80211_OFDM_RATE_9MB_MASK		(1<<5)
-#define IEEE80211_OFDM_RATE_12MB_MASK		(1<<6)
-#define IEEE80211_OFDM_RATE_18MB_MASK		(1<<7)
-#define IEEE80211_OFDM_RATE_24MB_MASK		(1<<8)
-#define IEEE80211_OFDM_RATE_36MB_MASK		(1<<9)
-#define IEEE80211_OFDM_RATE_48MB_MASK		(1<<10)
-#define IEEE80211_OFDM_RATE_54MB_MASK		(1<<11)
+#घोषणा IEEE80211_CCK_RATE_1MB_MASK		(1<<0)
+#घोषणा IEEE80211_CCK_RATE_2MB_MASK		(1<<1)
+#घोषणा IEEE80211_CCK_RATE_5MB_MASK		(1<<2)
+#घोषणा IEEE80211_CCK_RATE_11MB_MASK		(1<<3)
+#घोषणा IEEE80211_OFDM_RATE_6MB_MASK		(1<<4)
+#घोषणा IEEE80211_OFDM_RATE_9MB_MASK		(1<<5)
+#घोषणा IEEE80211_OFDM_RATE_12MB_MASK		(1<<6)
+#घोषणा IEEE80211_OFDM_RATE_18MB_MASK		(1<<7)
+#घोषणा IEEE80211_OFDM_RATE_24MB_MASK		(1<<8)
+#घोषणा IEEE80211_OFDM_RATE_36MB_MASK		(1<<9)
+#घोषणा IEEE80211_OFDM_RATE_48MB_MASK		(1<<10)
+#घोषणा IEEE80211_OFDM_RATE_54MB_MASK		(1<<11)
 
-#define IEEE80211_CCK_RATES_MASK		0x0000000F
-#define IEEE80211_CCK_BASIC_RATES_MASK	(IEEE80211_CCK_RATE_1MB_MASK | \
+#घोषणा IEEE80211_CCK_RATES_MASK		0x0000000F
+#घोषणा IEEE80211_CCK_BASIC_RATES_MASK	(IEEE80211_CCK_RATE_1MB_MASK | \
 	IEEE80211_CCK_RATE_2MB_MASK)
-#define IEEE80211_CCK_DEFAULT_RATES_MASK	(IEEE80211_CCK_BASIC_RATES_MASK | \
+#घोषणा IEEE80211_CCK_DEFAULT_RATES_MASK	(IEEE80211_CCK_BASIC_RATES_MASK | \
 	IEEE80211_CCK_RATE_5MB_MASK | \
 	IEEE80211_CCK_RATE_11MB_MASK)
 
-#define IEEE80211_OFDM_RATES_MASK		0x00000FF0
-#define IEEE80211_OFDM_BASIC_RATES_MASK	(IEEE80211_OFDM_RATE_6MB_MASK | \
+#घोषणा IEEE80211_OFDM_RATES_MASK		0x00000FF0
+#घोषणा IEEE80211_OFDM_BASIC_RATES_MASK	(IEEE80211_OFDM_RATE_6MB_MASK | \
 	IEEE80211_OFDM_RATE_12MB_MASK | \
 	IEEE80211_OFDM_RATE_24MB_MASK)
-#define IEEE80211_OFDM_DEFAULT_RATES_MASK	(IEEE80211_OFDM_BASIC_RATES_MASK | \
+#घोषणा IEEE80211_OFDM_DEFAULT_RATES_MASK	(IEEE80211_OFDM_BASIC_RATES_MASK | \
 	IEEE80211_OFDM_RATE_9MB_MASK  | \
 	IEEE80211_OFDM_RATE_18MB_MASK | \
 	IEEE80211_OFDM_RATE_36MB_MASK | \
 	IEEE80211_OFDM_RATE_48MB_MASK | \
 	IEEE80211_OFDM_RATE_54MB_MASK)
-#define IEEE80211_DEFAULT_RATES_MASK (IEEE80211_OFDM_DEFAULT_RATES_MASK | \
+#घोषणा IEEE80211_DEFAULT_RATES_MASK (IEEE80211_OFDM_DEFAULT_RATES_MASK | \
 				IEEE80211_CCK_DEFAULT_RATES_MASK)
 
-#define IEEE80211_NUM_OFDM_RATES	    8
-#define IEEE80211_NUM_CCK_RATES		    4
-#define IEEE80211_OFDM_SHIFT_MASK_A         4
+#घोषणा IEEE80211_NUM_OFDM_RATES	    8
+#घोषणा IEEE80211_NUM_CCK_RATES		    4
+#घोषणा IEEE80211_OFDM_SHIFT_MASK_A         4
 
 
-/* this is stolen and modified from the madwifi driver*/
-#define IEEE80211_FC0_TYPE_MASK		0x0c
-#define IEEE80211_FC0_TYPE_DATA		0x08
-#define IEEE80211_FC0_SUBTYPE_MASK	0xB0
-#define IEEE80211_FC0_SUBTYPE_QOS	0x80
+/* this is stolen and modअगरied from the madwअगरi driver*/
+#घोषणा IEEE80211_FC0_TYPE_MASK		0x0c
+#घोषणा IEEE80211_FC0_TYPE_DATA		0x08
+#घोषणा IEEE80211_FC0_SUBTYPE_MASK	0xB0
+#घोषणा IEEE80211_FC0_SUBTYPE_QOS	0x80
 
-#define IEEE80211_QOS_HAS_SEQ(fc) \
+#घोषणा IEEE80211_QOS_HAS_SEQ(fc) \
 	(((fc) & (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) == \
 	 (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
 
 /* this is stolen from ipw2200 driver */
-#define IEEE_IBSS_MAC_HASH_SIZE 31
-struct ieee_ibss_seq {
+#घोषणा IEEE_IBSS_MAC_HASH_SIZE 31
+काष्ठा ieee_ibss_seq अणु
 	u8 mac[ETH_ALEN];
 	u16 seq_num[17];
 	u16 frag_num[17];
-	unsigned long packet_time[17];
-	struct list_head list;
-};
+	अचिन्हित दीर्घ packet_समय[17];
+	काष्ठा list_head list;
+पूर्ण;
 
-/* NOTE: This data is for statistical purposes; not all hardware provides this
- *       information for frames received.  Not setting these will not cause
+/* NOTE: This data is क्रम statistical purposes; not all hardware provides this
+ *       inक्रमmation क्रम frames received.  Not setting these will not cause
  *       any adverse affects.
  */
-struct ieee80211_rx_stats {
-	u32 mac_time[2];
+काष्ठा ieee80211_rx_stats अणु
+	u32 mac_समय[2];
 	s8 rssi;
-	u8 signal;
+	u8 संकेत;
 	u8 noise;
 	u16 rate; /* in 100 kbps */
 	u8 received_channel;
@@ -696,35 +697,35 @@ struct ieee80211_rx_stats {
 	u8 freq;
 	u16 len;
 	u64 tsf;
-	u32 beacon_time;
+	u32 beacon_समय;
 	u8 nic_type;
 	u16       Length;
 	//      u8        DataRate;      // In 0.5 Mbps
 	u8        SignalQuality; // in 0-100 index.
-	s32       RecvSignalPower; // Real power in dBm for this packet, no beautification and aggregation.
+	s32       RecvSignalPower; // Real घातer in dBm क्रम this packet, no beautअगरication and aggregation.
 	s8        RxPower; // in dBm Translate from PWdB
 	u8        SignalStrength; // in 0-100 index.
 	u16       bHwError:1;
 	u16       bCRC:1;
 	u16       bICV:1;
 	u16       bShortPreamble:1;
-	u16       Antenna:1;      //for rtl8185
-	u16       Decrypted:1;    //for rtl8185, rtl8187
-	u16       Wakeup:1;       //for rtl8185
-	u16       Reserved0:1;    //for rtl8185
+	u16       Antenna:1;      //क्रम rtl8185
+	u16       Decrypted:1;    //क्रम rtl8185, rtl8187
+	u16       Wakeup:1;       //क्रम rtl8185
+	u16       Reserved0:1;    //क्रम rtl8185
 	u8        AGC;
 	u32       TimeStampLow;
 	u32       TimeStampHigh;
-	bool      bShift;
+	bool      bShअगरt;
 	bool      bIsQosData;             // Added by Annie, 2005-12-22.
 	u8        UserPriority;
 
 	//1!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	//1Attention Please!!!<11n or 8190 specific code should be put below this line>
+	//1Attention Please!!!<11n or 8190 specअगरic code should be put below this line>
 	//1!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	u8        RxDrvInfoSize;
-	u8        RxBufShift;
+	u8        RxBufShअगरt;
 	bool      bIsAMPDU;
 	bool      bFirstMPDU;
 	bool      bContainHTC;
@@ -736,91 +737,91 @@ struct ieee80211_rx_stats {
 	bool      bIsCCK;
 	bool      bPacketToSelf;
 	//added by amy
-	u8        *virtual_address;
+	u8        *भव_address;
 	u16          packetlength;              // Total packet length: Must equal to sum of all FragLength
-	u16          fraglength;                        // FragLength should equal to PacketLength in non-fragment case
-	u16          fragoffset;                        // Data offset for this fragment
+	u16          fraglength;                        // FragLength should equal to PacketLength in non-fragment हाल
+	u16          fragoffset;                        // Data offset क्रम this fragment
 	u16          ntotalfrag;
 	bool		  bisrxaggrsubframe;
-	bool		  bPacketBeacon;	//cosa add for rssi
-	bool		  bToSelfBA;		//cosa add for rssi
-	s8		  cck_adc_pwdb[4];	//cosa add for rx path selection
+	bool		  bPacketBeacon;	//cosa add क्रम rssi
+	bool		  bToSelfBA;		//cosa add क्रम rssi
+	s8		  cck_adc_pwdb[4];	//cosa add क्रम rx path selection
 	u16		  Seq_Num;
 
-};
+पूर्ण;
 
 /* IEEE 802.11 requires that STA supports concurrent reception of at least
  * three fragmented frames. This define can be increased to support more
  * concurrent frames, but it should be noted that each entry can consume about
- * 2 kB of RAM and increasing cache size will slow down frame reassembly.
+ * 2 kB of RAM and increasing cache size will slow करोwn frame reassembly.
  */
-#define IEEE80211_FRAG_CACHE_LEN 4
+#घोषणा IEEE80211_FRAG_CACHE_LEN 4
 
-struct ieee80211_frag_entry {
-	unsigned long first_frag_time;
-	unsigned int seq;
-	unsigned int last_frag;
-	struct sk_buff *skb;
+काष्ठा ieee80211_frag_entry अणु
+	अचिन्हित दीर्घ first_frag_समय;
+	अचिन्हित पूर्णांक seq;
+	अचिन्हित पूर्णांक last_frag;
+	काष्ठा sk_buff *skb;
 	u8 src_addr[ETH_ALEN];
 	u8 dst_addr[ETH_ALEN];
-};
+पूर्ण;
 
-struct ieee80211_stats {
-	unsigned int tx_unicast_frames;
-	unsigned int tx_multicast_frames;
-	unsigned int tx_fragments;
-	unsigned int tx_unicast_octets;
-	unsigned int tx_multicast_octets;
-	unsigned int tx_deferred_transmissions;
-	unsigned int tx_single_retry_frames;
-	unsigned int tx_multiple_retry_frames;
-	unsigned int tx_retry_limit_exceeded;
-	unsigned int tx_discards;
-	unsigned int rx_unicast_frames;
-	unsigned int rx_multicast_frames;
-	unsigned int rx_fragments;
-	unsigned int rx_unicast_octets;
-	unsigned int rx_multicast_octets;
-	unsigned int rx_fcs_errors;
-	unsigned int rx_discards_no_buffer;
-	unsigned int tx_discards_wrong_sa;
-	unsigned int rx_discards_undecryptable;
-	unsigned int rx_message_in_msg_fragments;
-	unsigned int rx_message_in_bad_msg_fragments;
-};
+काष्ठा ieee80211_stats अणु
+	अचिन्हित पूर्णांक tx_unicast_frames;
+	अचिन्हित पूर्णांक tx_multicast_frames;
+	अचिन्हित पूर्णांक tx_fragments;
+	अचिन्हित पूर्णांक tx_unicast_octets;
+	अचिन्हित पूर्णांक tx_multicast_octets;
+	अचिन्हित पूर्णांक tx_deferred_transmissions;
+	अचिन्हित पूर्णांक tx_single_retry_frames;
+	अचिन्हित पूर्णांक tx_multiple_retry_frames;
+	अचिन्हित पूर्णांक tx_retry_limit_exceeded;
+	अचिन्हित पूर्णांक tx_discards;
+	अचिन्हित पूर्णांक rx_unicast_frames;
+	अचिन्हित पूर्णांक rx_multicast_frames;
+	अचिन्हित पूर्णांक rx_fragments;
+	अचिन्हित पूर्णांक rx_unicast_octets;
+	अचिन्हित पूर्णांक rx_multicast_octets;
+	अचिन्हित पूर्णांक rx_fcs_errors;
+	अचिन्हित पूर्णांक rx_discards_no_buffer;
+	अचिन्हित पूर्णांक tx_discards_wrong_sa;
+	अचिन्हित पूर्णांक rx_discards_undecryptable;
+	अचिन्हित पूर्णांक rx_message_in_msg_fragments;
+	अचिन्हित पूर्णांक rx_message_in_bad_msg_fragments;
+पूर्ण;
 
-struct ieee80211_device;
+काष्ठा ieee80211_device;
 
-#include "ieee80211_crypt.h"
+#समावेश "ieee80211_crypt.h"
 
-#define SEC_KEY_1         (1<<0)
-#define SEC_KEY_2         (1<<1)
-#define SEC_KEY_3         (1<<2)
-#define SEC_KEY_4         (1<<3)
-#define SEC_ACTIVE_KEY    (1<<4)
-#define SEC_AUTH_MODE     (1<<5)
-#define SEC_UNICAST_GROUP (1<<6)
-#define SEC_LEVEL         (1<<7)
-#define SEC_ENABLED       (1<<8)
-#define SEC_ENCRYPT       (1<<9)
+#घोषणा SEC_KEY_1         (1<<0)
+#घोषणा SEC_KEY_2         (1<<1)
+#घोषणा SEC_KEY_3         (1<<2)
+#घोषणा SEC_KEY_4         (1<<3)
+#घोषणा SEC_ACTIVE_KEY    (1<<4)
+#घोषणा SEC_AUTH_MODE     (1<<5)
+#घोषणा SEC_UNICAST_GROUP (1<<6)
+#घोषणा SEC_LEVEL         (1<<7)
+#घोषणा SEC_ENABLED       (1<<8)
+#घोषणा SEC_ENCRYPT       (1<<9)
 
-#define SEC_LEVEL_0      0 /* None */
-#define SEC_LEVEL_1      1 /* WEP 40 and 104 bit */
-#define SEC_LEVEL_2      2 /* Level 1 + TKIP */
-#define SEC_LEVEL_2_CKIP 3 /* Level 1 + CKIP */
-#define SEC_LEVEL_3      4 /* Level 2 + CCMP */
+#घोषणा SEC_LEVEL_0      0 /* None */
+#घोषणा SEC_LEVEL_1      1 /* WEP 40 and 104 bit */
+#घोषणा SEC_LEVEL_2      2 /* Level 1 + TKIP */
+#घोषणा SEC_LEVEL_2_CKIP 3 /* Level 1 + CKIP */
+#घोषणा SEC_LEVEL_3      4 /* Level 2 + CCMP */
 
-#define SEC_ALG_NONE            0
-#define SEC_ALG_WEP             1
-#define SEC_ALG_TKIP            2
-#define SEC_ALG_CCMP            3
+#घोषणा SEC_ALG_NONE            0
+#घोषणा SEC_ALG_WEP             1
+#घोषणा SEC_ALG_TKIP            2
+#घोषणा SEC_ALG_CCMP            3
 
-#define WEP_KEYS		4
-#define WEP_KEY_LEN		13
-#define SCM_KEY_LEN             32
-#define SCM_TEMPORAL_KEY_LENGTH 16
+#घोषणा WEP_KEYS		4
+#घोषणा WEP_KEY_LEN		13
+#घोषणा SCM_KEY_LEN             32
+#घोषणा SCM_TEMPORAL_KEY_LENGTH 16
 
-struct ieee80211_security {
+काष्ठा ieee80211_security अणु
 	u16 active_key:2,
 	    enabled:1,
 	    auth_algo:4,
@@ -831,7 +832,7 @@ struct ieee80211_security {
 	u8 keys[WEP_KEYS][SCM_KEY_LEN];
 	u8 level;
 	u16 flags;
-} __packed;
+पूर्ण __packed;
 
 
 /*
@@ -845,8 +846,8 @@ struct ieee80211_security {
  *  Total: 28-2340 bytes
  */
 
-/* Management Frame Information Element Types */
-enum ieee80211_mfie {
+/* Management Frame Inक्रमmation Element Types */
+क्रमागत ieee80211_mfie अणु
 	MFIE_TYPE_SSID = 0,
 	MFIE_TYPE_RATES = 1,
 	MFIE_TYPE_FH_SET = 2,
@@ -877,34 +878,34 @@ enum ieee80211_mfie {
 	 MFIE_TYPE_AIRONET = 133,
 	MFIE_TYPE_GENERIC = 221,
 	MFIE_TYPE_QOS_PARAMETER = 222,
-};
+पूर्ण;
 
-/* Minimal header; can be used for passing 802.11 frames with sufficient
- * information to determine what type of underlying data type is actually
+/* Minimal header; can be used क्रम passing 802.11 frames with sufficient
+ * inक्रमmation to determine what type of underlying data type is actually
  * stored in the data.
  */
-struct rtl_80211_hdr {
+काष्ठा rtl_80211_hdr अणु
 	__le16 frame_ctl;
 	__le16 duration_id;
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-struct rtl_80211_hdr_1addr {
+काष्ठा rtl_80211_hdr_1addr अणु
 	__le16 frame_ctl;
 	__le16 duration_id;
 	u8 addr1[ETH_ALEN];
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-struct rtl_80211_hdr_2addr {
+काष्ठा rtl_80211_hdr_2addr अणु
 	__le16 frame_ctl;
 	__le16 duration_id;
 	u8 addr1[ETH_ALEN];
 	u8 addr2[ETH_ALEN];
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-struct rtl_80211_hdr_3addr {
+काष्ठा rtl_80211_hdr_3addr अणु
 	__le16 frame_ctl;
 	__le16 duration_id;
 	u8 addr1[ETH_ALEN];
@@ -912,9 +913,9 @@ struct rtl_80211_hdr_3addr {
 	u8 addr3[ETH_ALEN];
 	__le16 seq_ctl;
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-struct rtl_80211_hdr_4addr {
+काष्ठा rtl_80211_hdr_4addr अणु
 	__le16 frame_ctl;
 	__le16 duration_id;
 	u8 addr1[ETH_ALEN];
@@ -923,9 +924,9 @@ struct rtl_80211_hdr_4addr {
 	__le16 seq_ctl;
 	u8 addr4[ETH_ALEN];
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-struct rtl_80211_hdr_3addrqos {
+काष्ठा rtl_80211_hdr_3addrqos अणु
 	__le16 frame_ctl;
 	__le16 duration_id;
 	u8 addr1[ETH_ALEN];
@@ -934,9 +935,9 @@ struct rtl_80211_hdr_3addrqos {
 	__le16 seq_ctl;
 	u8 payload[0];
 	__le16 qos_ctl;
-} __packed;
+पूर्ण __packed;
 
-struct rtl_80211_hdr_4addrqos {
+काष्ठा rtl_80211_hdr_4addrqos अणु
 	__le16 frame_ctl;
 	__le16 duration_id;
 	u8 addr1[ETH_ALEN];
@@ -946,74 +947,74 @@ struct rtl_80211_hdr_4addrqos {
 	u8 addr4[ETH_ALEN];
 	u8 payload[0];
 	__le16 qos_ctl;
-} __packed;
+पूर्ण __packed;
 
-struct ieee80211_info_element {
+काष्ठा ieee80211_info_element अणु
 	u8 id;
 	u8 len;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
-struct ieee80211_authentication {
-	struct rtl_80211_hdr_3addr header;
+काष्ठा ieee80211_authentication अणु
+	काष्ठा rtl_80211_hdr_3addr header;
 	__le16 algorithm;
 	__le16 transaction;
 	__le16 status;
 	/*challenge*/
-	struct ieee80211_info_element info_element[];
-} __packed;
+	काष्ठा ieee80211_info_element info_element[];
+पूर्ण __packed;
 
-struct ieee80211_disassoc {
-	struct rtl_80211_hdr_3addr header;
+काष्ठा ieee80211_disassoc अणु
+	काष्ठा rtl_80211_hdr_3addr header;
 	__le16 reason;
-} __packed;
+पूर्ण __packed;
 
-struct ieee80211_probe_request {
-	struct rtl_80211_hdr_3addr header;
+काष्ठा ieee80211_probe_request अणु
+	काष्ठा rtl_80211_hdr_3addr header;
 	/* SSID, supported rates */
-	struct ieee80211_info_element info_element[];
-} __packed;
+	काष्ठा ieee80211_info_element info_element[];
+पूर्ण __packed;
 
-struct ieee80211_probe_response {
-	struct rtl_80211_hdr_3addr header;
-	__le32 time_stamp[2];
-	__le16 beacon_interval;
+काष्ठा ieee80211_probe_response अणु
+	काष्ठा rtl_80211_hdr_3addr header;
+	__le32 समय_stamp[2];
+	__le16 beacon_पूर्णांकerval;
 	__le16 capability;
 	/* SSID, supported rates, FH params, DS params,
-	 * CF params, IBSS params, TIM (if beacon), RSN
+	 * CF params, IBSS params, TIM (अगर beacon), RSN
 	 */
-	struct ieee80211_info_element info_element[];
-} __packed;
+	काष्ठा ieee80211_info_element info_element[];
+पूर्ण __packed;
 
-/* Alias beacon for probe_response */
-#define ieee80211_beacon ieee80211_probe_response
+/* Alias beacon क्रम probe_response */
+#घोषणा ieee80211_beacon ieee80211_probe_response
 
-struct ieee80211_assoc_request_frame {
-	struct rtl_80211_hdr_3addr header;
+काष्ठा ieee80211_assoc_request_frame अणु
+	काष्ठा rtl_80211_hdr_3addr header;
 	__le16 capability;
-	__le16 listen_interval;
+	__le16 listen_पूर्णांकerval;
 	/* SSID, supported rates, RSN */
-	struct ieee80211_info_element info_element[];
-} __packed;
+	काष्ठा ieee80211_info_element info_element[];
+पूर्ण __packed;
 
-struct ieee80211_reassoc_request_frame {
-	struct rtl_80211_hdr_3addr header;
+काष्ठा ieee80211_reassoc_request_frame अणु
+	काष्ठा rtl_80211_hdr_3addr header;
 	__le16 capability;
-	__le16 listen_interval;
+	__le16 listen_पूर्णांकerval;
 	u8 current_ap[ETH_ALEN];
 	/* SSID, supported rates, RSN */
-	struct ieee80211_info_element info_element[];
-} __packed;
+	काष्ठा ieee80211_info_element info_element[];
+पूर्ण __packed;
 
-struct ieee80211_assoc_response_frame {
-	struct rtl_80211_hdr_3addr header;
+काष्ठा ieee80211_assoc_response_frame अणु
+	काष्ठा rtl_80211_hdr_3addr header;
 	__le16 capability;
 	__le16 status;
 	__le16 aid;
-	struct ieee80211_info_element info_element[]; /* supported rates */
-} __packed;
+	काष्ठा ieee80211_info_element info_element[]; /* supported rates */
+पूर्ण __packed;
 
-struct ieee80211_txb {
+काष्ठा ieee80211_txb अणु
 	u8 nr_frags;
 	u8 encrypted;
 	u8 queue_index;
@@ -1021,83 +1022,83 @@ struct ieee80211_txb {
 	u16 reserved;
 	__le16 frag_size;
 	__le16 payload_size;
-	struct sk_buff *fragments[];
-};
+	काष्ठा sk_buff *fragments[];
+पूर्ण;
 
-#define MAX_TX_AGG_COUNT		  16
-struct ieee80211_drv_agg_txb {
+#घोषणा MAX_TX_AGG_COUNT		  16
+काष्ठा ieee80211_drv_agg_txb अणु
 	u8 nr_drv_agg_frames;
-	struct sk_buff *tx_agg_frames[MAX_TX_AGG_COUNT];
-} __packed;
+	काष्ठा sk_buff *tx_agg_frames[MAX_TX_AGG_COUNT];
+पूर्ण __packed;
 
-#define MAX_SUBFRAME_COUNT		  64
-struct ieee80211_rxb {
+#घोषणा MAX_SUBFRAME_COUNT		  64
+काष्ठा ieee80211_rxb अणु
 	u8 nr_subframes;
-	struct sk_buff *subframes[MAX_SUBFRAME_COUNT];
+	काष्ठा sk_buff *subframes[MAX_SUBFRAME_COUNT];
 	u8 dst[ETH_ALEN];
 	u8 src[ETH_ALEN];
-} __packed;
+पूर्ण __packed;
 
-typedef union _frameqos {
-	u16 shortdata;
-	u8  chardata[2];
-	struct {
+प्रकार जोड़ _frameqos अणु
+	u16 लघुdata;
+	u8  अक्षरdata[2];
+	काष्ठा अणु
 		u16 tid:4;
 		u16 eosp:1;
 		u16 ack_policy:2;
 		u16 reserved:1;
 		u16 txop:8;
-	} field;
-} frameqos, *pframeqos;
+	पूर्ण field;
+पूर्ण frameqos, *pframeqos;
 
 /* SWEEP TABLE ENTRIES NUMBER*/
-#define MAX_SWEEP_TAB_ENTRIES		  42
-#define MAX_SWEEP_TAB_ENTRIES_PER_PACKET  7
+#घोषणा MAX_SWEEP_TAB_ENTRIES		  42
+#घोषणा MAX_SWEEP_TAB_ENTRIES_PER_PACKET  7
 /* MAX_RATES_LENGTH needs to be 12.  The spec says 8, and many APs
- * only use 8, and then use extended rates for the remaining supported
+ * only use 8, and then use extended rates क्रम the reमुख्यing supported
  * rates.  Other APs, however, stick all of their supported rates on the
- * main rates information element...
+ * मुख्य rates inक्रमmation element...
  */
-#define MAX_RATES_LENGTH                  ((u8)12)
-#define MAX_RATES_EX_LENGTH               ((u8)16)
-#define MAX_NETWORK_COUNT                  128
+#घोषणा MAX_RATES_LENGTH                  ((u8)12)
+#घोषणा MAX_RATES_EX_LENGTH               ((u8)16)
+#घोषणा MAX_NETWORK_COUNT                  128
 
-#define MAX_CHANNEL_NUMBER                 161
-#define IEEE80211_SOFTMAC_SCAN_TIME	   100
+#घोषणा MAX_CHANNEL_NUMBER                 161
+#घोषणा IEEE80211_SOFTMAC_SCAN_TIME	   100
 //(HZ / 2)
-#define IEEE80211_SOFTMAC_ASSOC_RETRY_TIME (HZ * 2)
+#घोषणा IEEE80211_SOFTMAC_ASSOC_RETRY_TIME (HZ * 2)
 
-#define CRC_LENGTH                 4U
+#घोषणा CRC_LENGTH                 4U
 
-#define MAX_WPA_IE_LEN 64
+#घोषणा MAX_WPA_IE_LEN 64
 
-#define NETWORK_EMPTY_ESSID (1<<0)
-#define NETWORK_HAS_OFDM    (1<<1)
-#define NETWORK_HAS_CCK     (1<<2)
+#घोषणा NETWORK_EMPTY_ESSID (1<<0)
+#घोषणा NETWORK_HAS_OFDM    (1<<1)
+#घोषणा NETWORK_HAS_CCK     (1<<2)
 
-/* QoS structure */
-#define NETWORK_HAS_QOS_PARAMETERS      (1<<3)
-#define NETWORK_HAS_QOS_INFORMATION     (1<<4)
-#define NETWORK_HAS_QOS_MASK            (NETWORK_HAS_QOS_PARAMETERS | \
+/* QoS काष्ठाure */
+#घोषणा NETWORK_HAS_QOS_PARAMETERS      (1<<3)
+#घोषणा NETWORK_HAS_QOS_INFORMATION     (1<<4)
+#घोषणा NETWORK_HAS_QOS_MASK            (NETWORK_HAS_QOS_PARAMETERS | \
 					 NETWORK_HAS_QOS_INFORMATION)
 /* 802.11h */
-#define NETWORK_HAS_POWER_CONSTRAINT    (1<<5)
-#define NETWORK_HAS_CSA                 (1<<6)
-#define NETWORK_HAS_QUIET               (1<<7)
-#define NETWORK_HAS_IBSS_DFS            (1<<8)
-#define NETWORK_HAS_TPC_REPORT          (1<<9)
+#घोषणा NETWORK_HAS_POWER_CONSTRAINT    (1<<5)
+#घोषणा NETWORK_HAS_CSA                 (1<<6)
+#घोषणा NETWORK_HAS_QUIET               (1<<7)
+#घोषणा NETWORK_HAS_IBSS_DFS            (1<<8)
+#घोषणा NETWORK_HAS_TPC_REPORT          (1<<9)
 
-#define NETWORK_HAS_ERP_VALUE           (1<<10)
+#घोषणा NETWORK_HAS_ERP_VALUE           (1<<10)
 
-#define QOS_QUEUE_NUM                   4
-#define QOS_OUI_LEN                     3
-#define QOS_OUI_TYPE                    2
-#define QOS_ELEMENT_ID                  221
-#define QOS_OUI_INFO_SUB_TYPE           0
-#define QOS_OUI_PARAM_SUB_TYPE          1
-#define QOS_VERSION_1                   1
-#define QOS_AIFSN_MIN_VALUE             2
-struct ieee80211_qos_information_element {
+#घोषणा QOS_QUEUE_NUM                   4
+#घोषणा QOS_OUI_LEN                     3
+#घोषणा QOS_OUI_TYPE                    2
+#घोषणा QOS_ELEMENT_ID                  221
+#घोषणा QOS_OUI_INFO_SUB_TYPE           0
+#घोषणा QOS_OUI_PARAM_SUB_TYPE          1
+#घोषणा QOS_VERSION_1                   1
+#घोषणा QOS_AIFSN_MIN_VALUE             2
+काष्ठा ieee80211_qos_inक्रमmation_element अणु
 	u8 elementID;
 	u8 length;
 	u8 qui[QOS_OUI_LEN];
@@ -1105,57 +1106,57 @@ struct ieee80211_qos_information_element {
 	u8 qui_subtype;
 	u8 version;
 	u8 ac_info;
-} __packed;
+पूर्ण __packed;
 
-struct ieee80211_qos_ac_parameter {
-	u8 aci_aifsn;
+काष्ठा ieee80211_qos_ac_parameter अणु
+	u8 aci_aअगरsn;
 	u8 ecw_min_max;
 	__le16 tx_op_limit;
-} __packed;
+पूर्ण __packed;
 
-struct ieee80211_qos_parameter_info {
-	struct ieee80211_qos_information_element info_element;
+काष्ठा ieee80211_qos_parameter_info अणु
+	काष्ठा ieee80211_qos_inक्रमmation_element info_element;
 	u8 reserved;
-	struct ieee80211_qos_ac_parameter ac_params_record[QOS_QUEUE_NUM];
-} __packed;
+	काष्ठा ieee80211_qos_ac_parameter ac_params_record[QOS_QUEUE_NUM];
+पूर्ण __packed;
 
-struct ieee80211_qos_parameters {
+काष्ठा ieee80211_qos_parameters अणु
 	__le16 cw_min[QOS_QUEUE_NUM];
 	__le16 cw_max[QOS_QUEUE_NUM];
-	u8 aifs[QOS_QUEUE_NUM];
+	u8 aअगरs[QOS_QUEUE_NUM];
 	u8 flag[QOS_QUEUE_NUM];
 	__le16 tx_op_limit[QOS_QUEUE_NUM];
-} __packed;
+पूर्ण __packed;
 
-struct ieee80211_qos_data {
-	struct ieee80211_qos_parameters parameters;
-	int active;
-	int supported;
+काष्ठा ieee80211_qos_data अणु
+	काष्ठा ieee80211_qos_parameters parameters;
+	पूर्णांक active;
+	पूर्णांक supported;
 	u8 param_count;
 	u8 old_param_count;
-};
+पूर्ण;
 
-struct ieee80211_tim_parameters {
+काष्ठा ieee80211_tim_parameters अणु
 	u8 tim_count;
 	u8 tim_period;
-} __packed;
+पूर्ण __packed;
 
-//#else
-struct ieee80211_wmm_ts_info {
+//#अन्यथा
+काष्ठा ieee80211_wmm_ts_info अणु
 	u8 ac_dir_tid;
 	u8 ac_up_psb;
 	u8 reserved;
-} __packed;
+पूर्ण __packed;
 
-struct ieee80211_wmm_tspec_elem {
-	struct ieee80211_wmm_ts_info ts_info;
+काष्ठा ieee80211_wmm_tspec_elem अणु
+	काष्ठा ieee80211_wmm_ts_info ts_info;
 	u16 norm_msdu_size;
 	u16 max_msdu_size;
-	u32 min_serv_inter;
-	u32 max_serv_inter;
-	u32 inact_inter;
-	u32 suspen_inter;
-	u32 serv_start_time;
+	u32 min_serv_पूर्णांकer;
+	u32 max_serv_पूर्णांकer;
+	u32 inact_पूर्णांकer;
+	u32 suspen_पूर्णांकer;
+	u32 serv_start_समय;
 	u32 min_data_rate;
 	u32 mean_data_rate;
 	u32 peak_data_rate;
@@ -1163,168 +1164,168 @@ struct ieee80211_wmm_tspec_elem {
 	u32 delay_bound;
 	u32 min_phy_rate;
 	u16 surp_band_allow;
-	u16 medium_time;
-} __packed;
-enum eap_type {
+	u16 medium_समय;
+पूर्ण __packed;
+क्रमागत eap_type अणु
 	EAP_PACKET = 0,
 	EAPOL_START,
 	EAPOL_LOGOFF,
 	EAPOL_KEY,
 	EAPOL_ENCAP_ASF_ALERT
-};
+पूर्ण;
 
-static const char *eap_types[] = {
+अटल स्थिर अक्षर *eap_types[] = अणु
 	[EAP_PACKET]		= "EAP-Packet",
 	[EAPOL_START]		= "EAPOL-Start",
 	[EAPOL_LOGOFF]		= "EAPOL-Logoff",
 	[EAPOL_KEY]		= "EAPOL-Key",
 	[EAPOL_ENCAP_ASF_ALERT]	= "EAPOL-Encap-ASF-Alert"
-};
+पूर्ण;
 
-static inline const char *eap_get_type(int type)
-{
-	return ((u32)type >= ARRAY_SIZE(eap_types)) ? "Unknown" : eap_types[type];
-}
-//added by amy for reorder
-static inline u8 Frame_QoSTID(u8 *buf)
-{
-	struct rtl_80211_hdr_3addr *hdr;
+अटल अंतरभूत स्थिर अक्षर *eap_get_type(पूर्णांक type)
+अणु
+	वापस ((u32)type >= ARRAY_SIZE(eap_types)) ? "Unknown" : eap_types[type];
+पूर्ण
+//added by amy क्रम reorder
+अटल अंतरभूत u8 Frame_QoSTID(u8 *buf)
+अणु
+	काष्ठा rtl_80211_hdr_3addr *hdr;
 	u16 fc;
-	hdr = (struct rtl_80211_hdr_3addr *)buf;
+	hdr = (काष्ठा rtl_80211_hdr_3addr *)buf;
 	fc = le16_to_cpu(hdr->frame_ctl);
-	return (u8)((frameqos *)(buf + (((fc & IEEE80211_FCTL_TODS) && (fc & IEEE80211_FCTL_FROMDS)) ? 30 : 24)))->field.tid;
-}
+	वापस (u8)((frameqos *)(buf + (((fc & IEEE80211_FCTL_TODS) && (fc & IEEE80211_FCTL_FROMDS)) ? 30 : 24)))->field.tid;
+पूर्ण
 
-//added by amy for reorder
+//added by amy क्रम reorder
 
-struct eapol {
+काष्ठा eapol अणु
 	u8 snap[6];
 	u16 ethertype;
 	u8 version;
 	u8 type;
 	u16 length;
-} __packed;
+पूर्ण __packed;
 
-struct ieee80211_softmac_stats {
-	unsigned int rx_ass_ok;
-	unsigned int rx_ass_err;
-	unsigned int rx_probe_rq;
-	unsigned int tx_probe_rs;
-	unsigned int tx_beacons;
-	unsigned int rx_auth_rq;
-	unsigned int rx_auth_rs_ok;
-	unsigned int rx_auth_rs_err;
-	unsigned int tx_auth_rq;
-	unsigned int no_auth_rs;
-	unsigned int no_ass_rs;
-	unsigned int tx_ass_rq;
-	unsigned int rx_ass_rq;
-	unsigned int tx_probe_rq;
-	unsigned int reassoc;
-	unsigned int swtxstop;
-	unsigned int swtxawake;
-	unsigned char CurrentShowTxate;
-	unsigned char last_packet_rate;
-	unsigned int txretrycount;
-};
+काष्ठा ieee80211_sofपंचांगac_stats अणु
+	अचिन्हित पूर्णांक rx_ass_ok;
+	अचिन्हित पूर्णांक rx_ass_err;
+	अचिन्हित पूर्णांक rx_probe_rq;
+	अचिन्हित पूर्णांक tx_probe_rs;
+	अचिन्हित पूर्णांक tx_beacons;
+	अचिन्हित पूर्णांक rx_auth_rq;
+	अचिन्हित पूर्णांक rx_auth_rs_ok;
+	अचिन्हित पूर्णांक rx_auth_rs_err;
+	अचिन्हित पूर्णांक tx_auth_rq;
+	अचिन्हित पूर्णांक no_auth_rs;
+	अचिन्हित पूर्णांक no_ass_rs;
+	अचिन्हित पूर्णांक tx_ass_rq;
+	अचिन्हित पूर्णांक rx_ass_rq;
+	अचिन्हित पूर्णांक tx_probe_rq;
+	अचिन्हित पूर्णांक reassoc;
+	अचिन्हित पूर्णांक swtxstop;
+	अचिन्हित पूर्णांक swtxawake;
+	अचिन्हित अक्षर CurrentShowTxate;
+	अचिन्हित अक्षर last_packet_rate;
+	अचिन्हित पूर्णांक txretrycount;
+पूर्ण;
 
-#define BEACON_PROBE_SSID_ID_POSITION 12
+#घोषणा BEACON_PROBE_SSID_ID_POSITION 12
 
-struct ieee80211_info_element_hdr {
+काष्ठा ieee80211_info_element_hdr अणु
 	u8 id;
 	u8 len;
-} __packed;
+पूर्ण __packed;
 
 /*
  * These are the data types that can make up management packets
  *
 	u16 auth_algorithm;
 	u16 auth_sequence;
-	u16 beacon_interval;
+	u16 beacon_पूर्णांकerval;
 	u16 capability;
 	u8 current_ap[ETH_ALEN];
-	u16 listen_interval;
-	struct {
+	u16 listen_पूर्णांकerval;
+	काष्ठा अणु
 		u16 association_id:14, reserved:2;
-	} __packed;
-	u32 time_stamp[2];
+	पूर्ण __packed;
+	u32 समय_stamp[2];
 	u16 reason;
 	u16 status;
 */
 
-#define IEEE80211_DEFAULT_TX_ESSID "Penguin"
-#define IEEE80211_DEFAULT_BASIC_RATE 2 //1Mbps
+#घोषणा IEEE80211_DEFAULT_TX_ESSID "Penguin"
+#घोषणा IEEE80211_DEFAULT_BASIC_RATE 2 //1Mbps
 
-enum {WMM_all_frame, WMM_two_frame, WMM_four_frame, WMM_six_frame};
-#define MAX_SP_Len  (WMM_all_frame << 4)
-#define IEEE80211_QOS_TID 0x0f
-#define QOS_CTL_NOTCONTAIN_ACK (0x01 << 5)
+क्रमागत अणुWMM_all_frame, WMM_two_frame, WMM_four_frame, WMM_six_frameपूर्ण;
+#घोषणा MAX_SP_Len  (WMM_all_frame << 4)
+#घोषणा IEEE80211_QOS_TID 0x0f
+#घोषणा QOS_CTL_NOTCONTAIN_ACK (0x01 << 5)
 
-#define IEEE80211_DTIM_MBCAST 4
-#define IEEE80211_DTIM_UCAST 2
-#define IEEE80211_DTIM_VALID 1
-#define IEEE80211_DTIM_INVALID 0
+#घोषणा IEEE80211_DTIM_MBCAST 4
+#घोषणा IEEE80211_DTIM_UCAST 2
+#घोषणा IEEE80211_DTIM_VALID 1
+#घोषणा IEEE80211_DTIM_INVALID 0
 
-#define IEEE80211_PS_DISABLED 0
-#define IEEE80211_PS_UNICAST IEEE80211_DTIM_UCAST
-#define IEEE80211_PS_MBCAST IEEE80211_DTIM_MBCAST
+#घोषणा IEEE80211_PS_DISABLED 0
+#घोषणा IEEE80211_PS_UNICAST IEEE80211_DTIM_UCAST
+#घोषणा IEEE80211_PS_MBCAST IEEE80211_DTIM_MBCAST
 
-//added by David for QoS 2006/6/30
-//#define WMM_Hang_8187
-#ifdef WMM_Hang_8187
-#undef WMM_Hang_8187
-#endif
+//added by David क्रम QoS 2006/6/30
+//#घोषणा WMM_Hang_8187
+#अगर_घोषित WMM_Hang_8187
+#अघोषित WMM_Hang_8187
+#पूर्ण_अगर
 
-#define WME_AC_BK   0x00
-#define WME_AC_BE   0x01
-#define WME_AC_VI   0x02
-#define WME_AC_VO   0x03
-#define WME_ACI_MASK 0x03
-#define WME_AIFSN_MASK 0x03
-#define WME_AC_PRAM_LEN 16
+#घोषणा WME_AC_BK   0x00
+#घोषणा WME_AC_BE   0x01
+#घोषणा WME_AC_VI   0x02
+#घोषणा WME_AC_VO   0x03
+#घोषणा WME_ACI_MASK 0x03
+#घोषणा WME_AIFSN_MASK 0x03
+#घोषणा WME_AC_PRAM_LEN 16
 
-#define MAX_RECEIVE_BUFFER_SIZE 9100
+#घोषणा MAX_RECEIVE_BUFFER_SIZE 9100
 
-//UP Mapping to AC, using in MgntQuery_SequenceNumber() and maybe for DSCP
-//#define UP2AC(up)	((up<3) ? ((up==0)?1:0) : (up>>1))
-#define UP2AC(up) (		   \
+//UP Mapping to AC, using in MgntQuery_SequenceNumber() and maybe क्रम DSCP
+//#घोषणा UP2AC(up)	((up<3) ? ((up==0)?1:0) : (up>>1))
+#घोषणा UP2AC(up) (		   \
 	((up) < 1) ? WME_AC_BE : \
 	((up) < 3) ? WME_AC_BK : \
 	((up) < 4) ? WME_AC_BE : \
 	((up) < 6) ? WME_AC_VI : \
 	WME_AC_VO)
-//AC Mapping to UP, using in Tx part for selecting the corresponding TX queue
-#define AC2UP(_ac)	(       \
+//AC Mapping to UP, using in Tx part क्रम selecting the corresponding TX queue
+#घोषणा AC2UP(_ac)	(       \
 	((_ac) == WME_AC_VO) ? 6 : \
 	((_ac) == WME_AC_VI) ? 5 : \
 	((_ac) == WME_AC_BK) ? 1 : \
 	0)
 
-#define	ETHER_ADDR_LEN		6	/* length of an Ethernet address */
-#define ETHERNET_HEADER_SIZE    14      /* length of two Ethernet address plus ether type*/
+#घोषणा	ETHER_ADDR_LEN		6	/* length of an Ethernet address */
+#घोषणा ETHERNET_HEADER_SIZE    14      /* length of two Ethernet address plus ether type*/
 
-struct	ether_header {
+काष्ठा	ether_header अणु
 	u8 ether_dhost[ETHER_ADDR_LEN];
 	u8 ether_shost[ETHER_ADDR_LEN];
 	u16 ether_type;
-} __packed;
+पूर्ण __packed;
 
-#ifndef ETHERTYPE_PAE
-#define	ETHERTYPE_PAE	0x888e		/* EAPOL PAE/802.1x */
-#endif
-#ifndef ETHERTYPE_IP
-#define	ETHERTYPE_IP	0x0800		/* IP protocol */
-#endif
+#अगर_अघोषित ETHERTYPE_PAE
+#घोषणा	ETHERTYPE_PAE	0x888e		/* EAPOL PAE/802.1x */
+#पूर्ण_अगर
+#अगर_अघोषित ETHERTYPE_IP
+#घोषणा	ETHERTYPE_IP	0x0800		/* IP protocol */
+#पूर्ण_अगर
 
-typedef enum _erp_t {
+प्रकार क्रमागत _erp_t अणु
 	ERP_NonERPpresent	= 0x01,
 	ERP_UseProtection	= 0x02,
 	ERP_BarkerPreambleMode = 0x04,
-} erp_t;
+पूर्ण erp_t;
 
 
-struct ieee80211_network {
-	/* These entries are used to identify a unique network */
+काष्ठा ieee80211_network अणु
+	/* These entries are used to identअगरy a unique network */
 	u8 bssid[ETH_ALEN];   /* u16 aligned! */
 	u8 channel;
 
@@ -1332,12 +1333,12 @@ struct ieee80211_network {
 	bool	bMBssidValid;
 	u8	MBssid[ETH_ALEN];    /* u16 aligned! */
 	u8	MBssidMask;
-	/* Ensure null-terminated for any debug msgs */
+	/* Ensure null-terminated क्रम any debug msgs */
 	u8 ssid[IW_ESSID_MAX_SIZE + 1];
 	u8 ssid_len;
-	struct ieee80211_qos_data qos_data;
+	काष्ठा ieee80211_qos_data qos_data;
 
-	//added by amy for LEAP
+	//added by amy क्रम LEAP
 	bool	bWithAironetIE;
 	bool	bCkipSupported;
 	bool	bCcxRmEnable;
@@ -1346,38 +1347,38 @@ struct ieee80211_network {
 	bool	bWithCcxVerNum;
 	u8	BssCcxVerNumber;
 	/* These are network statistics */
-	struct ieee80211_rx_stats stats;
+	काष्ठा ieee80211_rx_stats stats;
 	u16 capability;
 	u8  rates[MAX_RATES_LENGTH];
 	u8  rates_len;
 	u8  rates_ex[MAX_RATES_EX_LENGTH];
 	u8  rates_ex_len;
-	unsigned long last_scanned;
+	अचिन्हित दीर्घ last_scanned;
 	u8  mode;
 	u32 flags;
 	u32 last_associate;
-	u32 time_stamp[2];
-	u16 beacon_interval;
-	u16 listen_interval;
-	u16 atim_window;
+	u32 समय_stamp[2];
+	u16 beacon_पूर्णांकerval;
+	u16 listen_पूर्णांकerval;
+	u16 atim_winकरोw;
 	u8  erp_value;
 	u8  wpa_ie[MAX_WPA_IE_LEN];
-	size_t wpa_ie_len;
+	माप_प्रकार wpa_ie_len;
 	u8  rsn_ie[MAX_WPA_IE_LEN];
-	size_t rsn_ie_len;
+	माप_प्रकार rsn_ie_len;
 
-	struct ieee80211_tim_parameters tim;
+	काष्ठा ieee80211_tim_parameters tim;
 	u8  dtim_period;
 	u8  dtim_data;
-	u32 last_dtim_sta_time[2];
+	u32 last_dtim_sta_समय[2];
 
-	//appeded for QoS
+	//appeded क्रम QoS
 	u8 wmm_info;
-	struct ieee80211_wmm_ac_param wmm_param[4];
+	काष्ठा ieee80211_wmm_ac_param wmm_param[4];
 	u8 QoS_Enable;
-#ifdef THOMAS_TURBO
+#अगर_घोषित THOMAS_TURBO
 	u8 Turbo_Enable;//enable turbo mode, added by thomas
-#endif
+#पूर्ण_अगर
 	u16 CountryIeLen;
 	u8 CountryIeBuf[MAX_IE_LEN];
 	// HT Related, by amy, 2008.04.29
@@ -1391,20 +1392,20 @@ struct ieee80211_network {
 //	u8	berp_info;
 	bool	berp_info_valid;
 	bool buseprotection;
-	//put at the end of the structure.
-	struct list_head list;
-};
+	//put at the end of the काष्ठाure.
+	काष्ठा list_head list;
+पूर्ण;
 
-enum ieee80211_state {
+क्रमागत ieee80211_state अणु
 
 	/* the card is not linked at all */
 	IEEE80211_NOLINK = 0,
 
-	/* IEEE80211_ASSOCIATING* are for BSS client mode
-	 * the driver shall not perform RX filtering unless
+	/* IEEE80211_ASSOCIATING* are क्रम BSS client mode
+	 * the driver shall not perक्रमm RX filtering unless
 	 * the state is LINKED.
-	 * The driver shall just check for the state LINKED and
-	 * defaults to NOLINK for ALL the other states (including
+	 * The driver shall just check क्रम the state LINKED and
+	 * शेषs to NOLINK क्रम ALL the other states (including
 	 * LINKED_SCANNING)
 	 */
 
@@ -1427,94 +1428,94 @@ enum ieee80211_state {
 
 	/* same as LINKED, but the driver shall apply RX filter
 	 * rules as we are in NO_LINK mode. As the card is still
-	 * logically linked, but it is doing a syncro site survey
+	 * logically linked, but it is करोing a syncro site survey
 	 * then it will be back to LINKED state.
 	 */
 	IEEE80211_LINKED_SCANNING,
 
-};
+पूर्ण;
 
-#define DEFAULT_MAX_SCAN_AGE (15 * HZ)
-#define DEFAULT_FTS 2346
+#घोषणा DEFAULT_MAX_SCAN_AGE (15 * HZ)
+#घोषणा DEFAULT_FTS 2346
 
-#define CFG_IEEE80211_RESERVE_FCS (1<<0)
-#define CFG_IEEE80211_COMPUTE_FCS (1<<1)
-#define CFG_IEEE80211_RTS (1<<2)
+#घोषणा CFG_IEEE80211_RESERVE_FCS (1<<0)
+#घोषणा CFG_IEEE80211_COMPUTE_FCS (1<<1)
+#घोषणा CFG_IEEE80211_RTS (1<<2)
 
-#define IEEE80211_24GHZ_MIN_CHANNEL 1
-#define IEEE80211_24GHZ_MAX_CHANNEL 14
-#define IEEE80211_24GHZ_CHANNELS (IEEE80211_24GHZ_MAX_CHANNEL - \
+#घोषणा IEEE80211_24GHZ_MIN_CHANNEL 1
+#घोषणा IEEE80211_24GHZ_MAX_CHANNEL 14
+#घोषणा IEEE80211_24GHZ_CHANNELS (IEEE80211_24GHZ_MAX_CHANNEL - \
 				  IEEE80211_24GHZ_MIN_CHANNEL + 1)
 
-#define IEEE80211_52GHZ_MIN_CHANNEL 34
-#define IEEE80211_52GHZ_MAX_CHANNEL 165
-#define IEEE80211_52GHZ_CHANNELS (IEEE80211_52GHZ_MAX_CHANNEL - \
+#घोषणा IEEE80211_52GHZ_MIN_CHANNEL 34
+#घोषणा IEEE80211_52GHZ_MAX_CHANNEL 165
+#घोषणा IEEE80211_52GHZ_CHANNELS (IEEE80211_52GHZ_MAX_CHANNEL - \
 				  IEEE80211_52GHZ_MIN_CHANNEL + 1)
 
 
 
-struct tx_pending {
-	int frag;
-	struct ieee80211_txb *txb;
-};
+काष्ठा tx_pending अणु
+	पूर्णांक frag;
+	काष्ठा ieee80211_txb *txb;
+पूर्ण;
 
-struct bandwidth_autoswitch {
-	long threshold_20Mhzto40Mhz;
-	long	threshold_40Mhzto20Mhz;
-	bool bforced_tx20Mhz;
-	bool bautoswitch_enable;
-};
+काष्ठा bandwidth_स्वतःचयन अणु
+	दीर्घ threshold_20Mhzto40Mhz;
+	दीर्घ	threshold_40Mhzto20Mhz;
+	bool bक्रमced_tx20Mhz;
+	bool bस्वतःचयन_enable;
+पूर्ण;
 
 
-//added by amy for order
+//added by amy क्रम order
 
-#define REORDER_WIN_SIZE	128
-#define REORDER_ENTRY_NUM	128
-struct rx_reorder_entry {
-	struct list_head	List;
+#घोषणा REORDER_WIN_SIZE	128
+#घोषणा REORDER_ENTRY_NUM	128
+काष्ठा rx_reorder_entry अणु
+	काष्ठा list_head	List;
 	u16			SeqNum;
-	struct ieee80211_rxb *prxb;
-};
-//added by amy for order
-typedef enum _Fsync_State {
+	काष्ठा ieee80211_rxb *prxb;
+पूर्ण;
+//added by amy क्रम order
+प्रकार क्रमागत _Fsync_State अणु
 	Default_Fsync,
 	HW_Fsync,
 	SW_Fsync
-} Fsync_State;
+पूर्ण Fsync_State;
 
 // Power save mode configured.
-typedef	enum _RT_PS_MODE {
+प्रकार	क्रमागत _RT_PS_MODE अणु
 	eActive,	// Active/Continuous access.
-	eMaxPs,		// Max power save mode.
-	eFastPs		// Fast power save mode.
-} RT_PS_MODE;
+	eMaxPs,		// Max घातer save mode.
+	eFastPs		// Fast घातer save mode.
+पूर्ण RT_PS_MODE;
 
-typedef enum _IPS_CALLBACK_FUNCION {
+प्रकार क्रमागत _IPS_CALLBACK_FUNCION अणु
 	IPS_CALLBACK_NONE = 0,
 	IPS_CALLBACK_MGNT_LINK_REQUEST = 1,
 	IPS_CALLBACK_JOIN_REQUEST = 2,
-} IPS_CALLBACK_FUNCION;
+पूर्ण IPS_CALLBACK_FUNCION;
 
-typedef enum _RT_JOIN_ACTION {
+प्रकार क्रमागत _RT_JOIN_ACTION अणु
 	RT_JOIN_INFRA   = 1,
 	RT_JOIN_IBSS  = 2,
 	RT_START_IBSS = 3,
 	RT_NO_ACTION  = 4,
-} RT_JOIN_ACTION;
+पूर्ण RT_JOIN_ACTION;
 
-struct ibss_parms {
+काष्ठा ibss_parms अणु
 	u16   atimWin;
-};
-#define MAX_NUM_RATES	264 // Max num of support rates element: 8,  Max num of ext. support rate: 255. 061122, by rcnjko.
+पूर्ण;
+#घोषणा MAX_NUM_RATES	264 // Max num of support rates element: 8,  Max num of ext. support rate: 255. 061122, by rcnjko.
 
 // RF state.
-typedef	enum _RT_RF_POWER_STATE {
+प्रकार	क्रमागत _RT_RF_POWER_STATE अणु
 	eRfOn,
 	eRfSleep,
 	eRfOff
-} RT_RF_POWER_STATE;
+पूर्ण RT_RF_POWER_STATE;
 
-struct rt_power_save_control {
+काष्ठा rt_घातer_save_control अणु
 
 	//
 	// Inactive Power Save(IPS) : Disable RF when disconnected
@@ -1523,51 +1524,51 @@ struct rt_power_save_control {
 	bool				bIPSModeBackup;
 	bool				bSwRfProcessing;
 	RT_RF_POWER_STATE	eInactivePowerState;
-	struct work_struct	InactivePsWorkItem;
-	struct timer_list	InactivePsTimer;
+	काष्ठा work_काष्ठा	InactivePsWorkItem;
+	काष्ठा समयr_list	InactivePsTimer;
 
-	// Return point for join action
-	IPS_CALLBACK_FUNCION	ReturnPoint;
+	// Return poपूर्णांक क्रम join action
+	IPS_CALLBACK_FUNCION	ReturnPoपूर्णांक;
 
-	// Recored Parameters for rescheduled JoinRequest
+	// Recored Parameters क्रम rescheduled JoinRequest
 	bool				bTmpBssDesc;
-	RT_JOIN_ACTION		tmpJoinAction;
-	struct ieee80211_network tmpBssDesc;
+	RT_JOIN_ACTION		पंचांगpJoinAction;
+	काष्ठा ieee80211_network पंचांगpBssDesc;
 
-	// Recored Parameters for rescheduled MgntLinkRequest
+	// Recored Parameters क्रम rescheduled MgntLinkRequest
 	bool				bTmpScanOnly;
 	bool				bTmpActiveScan;
 	bool				bTmpFilterHiddenAP;
 	bool				bTmpUpdateParms;
-	u8					tmpSsidBuf[33];
-	struct octet_string			tmpSsid2Scan;
+	u8					पंचांगpSsidBuf[33];
+	काष्ठा octet_string			पंचांगpSsid2Scan;
 	bool				bTmpSsid2Scan;
-	u8					tmpNetworkType;
-	u8					tmpChannelNumber;
-	u16					tmpBcnPeriod;
-	u8					tmpDtimPeriod;
-	u16					tmpmCap;
-	struct octet_string			tmpSuppRateSet;
-	u8					tmpSuppRateBuf[MAX_NUM_RATES];
+	u8					पंचांगpNetworkType;
+	u8					पंचांगpChannelNumber;
+	u16					पंचांगpBcnPeriod;
+	u8					पंचांगpDtimPeriod;
+	u16					पंचांगpmCap;
+	काष्ठा octet_string			पंचांगpSuppRateSet;
+	u8					पंचांगpSuppRateBuf[MAX_NUM_RATES];
 	bool				bTmpSuppRate;
-	struct ibss_parms			tmpIbpm;
+	काष्ठा ibss_parms			पंचांगpIbpm;
 	bool				bTmpIbpm;
 
 	//
-	// Leisre Poswer Save : Disable RF if connected but traffic is not busy
+	// Leisre Poswer Save : Disable RF अगर connected but traffic is not busy
 	//
 	bool				bLeisurePs;
 
-};
+पूर्ण;
 
-typedef u32 RT_RF_CHANGE_SOURCE;
-#define RF_CHANGE_BY_SW		BIT(31)
-#define RF_CHANGE_BY_HW		BIT(30)
-#define RF_CHANGE_BY_PS		BIT(29)
-#define RF_CHANGE_BY_IPS	BIT(28)
-#define RF_CHANGE_BY_INIT	0	// Do not change the RFOff reason. Defined by Bruce, 2008-01-17.
+प्रकार u32 RT_RF_CHANGE_SOURCE;
+#घोषणा RF_CHANGE_BY_SW		BIT(31)
+#घोषणा RF_CHANGE_BY_HW		BIT(30)
+#घोषणा RF_CHANGE_BY_PS		BIT(29)
+#घोषणा RF_CHANGE_BY_IPS	BIT(28)
+#घोषणा RF_CHANGE_BY_INIT	0	// Do not change the RFOff reason. Defined by Bruce, 2008-01-17.
 
-typedef enum {
+प्रकार क्रमागत अणु
 	COUNTRY_CODE_FCC = 0,
 	COUNTRY_CODE_IC = 1,
 	COUNTRY_CODE_ETSI = 2,
@@ -1579,10 +1580,10 @@ typedef enum {
 	COUNTRY_CODE_TELEC,
 	COUNTRY_CODE_MIC,
 	COUNTRY_CODE_GLOBAL_DOMAIN
-} country_code_type_t;
+पूर्ण country_code_type_t;
 
-#define RT_MAX_LD_SLOT_NUM	10
-struct rt_link_detect {
+#घोषणा RT_MAX_LD_SLOT_NUM	10
+काष्ठा rt_link_detect अणु
 
 	u32				NumRecvBcnInPeriod;
 	u32				NumRecvDataInPeriod;
@@ -1595,12 +1596,12 @@ struct rt_link_detect {
 	u32				NumTxOkInPeriod;
 	u32				NumRxOkInPeriod;
 	bool				bBusyTraffic;
-};
+पूर्ण;
 
 
-struct ieee80211_device {
-	struct net_device *dev;
-	struct ieee80211_security sec;
+काष्ठा ieee80211_device अणु
+	काष्ठा net_device *dev;
+	काष्ठा ieee80211_security sec;
 
 	//hw security related
 //	u8 hwsec_support; //support?
@@ -1609,371 +1610,371 @@ struct ieee80211_device {
 	bool ieee_up;
 	//added by amy
 	bool bSupportRemoteWakeUp;
-	RT_PS_MODE	dot11PowerSaveMode; // Power save mode configured.
+	RT_PS_MODE	करोt11PowerSaveMode; // Power save mode configured.
 	bool actscanning;
 	bool beinretry;
 	RT_RF_POWER_STATE		eRFPowerState;
 	RT_RF_CHANGE_SOURCE	RfOffReason;
 	bool is_set_key;
-	//11n spec related I wonder if These info structure need to be moved out of ieee80211_device
+	//11n spec related I wonder अगर These info काष्ठाure need to be moved out of ieee80211_device
 
 	//11n HT below
 	PRT_HIGH_THROUGHPUT	pHTInfo;
-	//struct timer_list		SwBwTimer;
+	//काष्ठा समयr_list		SwBwTimer;
 //	spinlock_t chnlop_spinlock;
 	spinlock_t bw_spinlock;
 
 	spinlock_t reorder_spinlock;
-	// for HT operation rate set.  we use this one for HT data rate to separate different descriptors
+	// क्रम HT operation rate set.  we use this one क्रम HT data rate to separate dअगरferent descriptors
 	//the way fill this is the same as in the IE
-	u8	Regdot11HTOperationalRateSet[16];		//use RATR format
-	u8	dot11HTOperationalRateSet[16];		//use RATR format
+	u8	Regकरोt11HTOperationalRateSet[16];		//use RATR क्रमmat
+	u8	करोt11HTOperationalRateSet[16];		//use RATR क्रमmat
 	u8	RegHTSuppRateSet[16];
 	u8				HTCurrentOperaRate;
 	u8				HTHighestOperaRate;
-	//wb added for rate operation mode to firmware
+	//wb added क्रम rate operation mode to firmware
 	u8	bTxDisableRateFallBack;
 	u8	bTxUseDriverAssingedRate;
-	atomic_t	atm_chnlop;
-	atomic_t	atm_swbw;
+	atomic_t	aपंचांग_chnlop;
+	atomic_t	aपंचांग_swbw;
 //	u8	HTHighestOperaRate;
 //	u8	HTCurrentOperaRate;
 
 	// 802.11e and WMM Traffic Stream Info (TX)
-	struct list_head		Tx_TS_Admit_List;
-	struct list_head		Tx_TS_Pending_List;
-	struct list_head		Tx_TS_Unused_List;
-	struct tx_ts_record		TxTsRecord[TOTAL_TS_NUM];
+	काष्ठा list_head		Tx_TS_Admit_List;
+	काष्ठा list_head		Tx_TS_Pending_List;
+	काष्ठा list_head		Tx_TS_Unused_List;
+	काष्ठा tx_ts_record		TxTsRecord[TOTAL_TS_NUM];
 	// 802.11e and WMM Traffic Stream Info (RX)
-	struct list_head		Rx_TS_Admit_List;
-	struct list_head		Rx_TS_Pending_List;
-	struct list_head		Rx_TS_Unused_List;
-	struct rx_ts_record		RxTsRecord[TOTAL_TS_NUM];
-	struct rx_reorder_entry	RxReorderEntry[128];
-	struct list_head		RxReorder_Unused_List;
+	काष्ठा list_head		Rx_TS_Admit_List;
+	काष्ठा list_head		Rx_TS_Pending_List;
+	काष्ठा list_head		Rx_TS_Unused_List;
+	काष्ठा rx_ts_record		RxTsRecord[TOTAL_TS_NUM];
+	काष्ठा rx_reorder_entry	RxReorderEntry[128];
+	काष्ठा list_head		RxReorder_Unused_List;
 	// Qos related. Added by Annie, 2005-11-01.
 //	PSTA_QOS			pStaQos;
-	u8				ForcedPriority;		// Force per-packet priority 1~7. (default: 0, not to force it.)
+	u8				ForcedPriority;		// Force per-packet priority 1~7. (शेष: 0, not to क्रमce it.)
 
 
-	/* Bookkeeping structures */
-	struct net_device_stats stats;
-	struct ieee80211_stats ieee_stats;
-	struct ieee80211_softmac_stats softmac_stats;
+	/* Bookkeeping काष्ठाures */
+	काष्ठा net_device_stats stats;
+	काष्ठा ieee80211_stats ieee_stats;
+	काष्ठा ieee80211_sofपंचांगac_stats sofपंचांगac_stats;
 
 	/* Probe / Beacon management */
-	struct list_head network_free_list;
-	struct list_head network_list;
-	struct ieee80211_network *networks;
-	int scans;
-	int scan_age;
+	काष्ठा list_head network_मुक्त_list;
+	काष्ठा list_head network_list;
+	काष्ठा ieee80211_network *networks;
+	पूर्णांक scans;
+	पूर्णांक scan_age;
 
-	int iw_mode; /* operating mode (IW_MODE_*) */
-	struct iw_spy_data spy_data;
+	पूर्णांक iw_mode; /* operating mode (IW_MODE_*) */
+	काष्ठा iw_spy_data spy_data;
 
 	spinlock_t lock;
 	spinlock_t wpax_suitlist_lock;
 
-	int tx_headroom; /* Set to size of any additional room needed at front
+	पूर्णांक tx_headroom; /* Set to size of any additional room needed at front
 			  * of allocated Tx SKBs
 			  */
 	u32 config;
 
 	/* WEP and other encryption related settings at the device level */
-	int open_wep; /* Set to 1 to allow unencrypted frames */
-	int auth_mode;
-	int reset_on_keychange; /* Set to 1 if the HW needs to be reset on
+	पूर्णांक खोलो_wep; /* Set to 1 to allow unencrypted frames */
+	पूर्णांक auth_mode;
+	पूर्णांक reset_on_keychange; /* Set to 1 अगर the HW needs to be reset on
 				 * WEP key changes
 				 */
 
-	/* If the host performs {en,de}cryption, then set to 1 */
-	int host_encrypt;
-	int host_encrypt_msdu;
-	int host_decrypt;
-	/* host performs multicast decryption */
-	int host_mc_decrypt;
+	/* If the host perक्रमms अणुen,deपूर्णcryption, then set to 1 */
+	पूर्णांक host_encrypt;
+	पूर्णांक host_encrypt_msdu;
+	पूर्णांक host_decrypt;
+	/* host perक्रमms multicast decryption */
+	पूर्णांक host_mc_decrypt;
 
-	/* host should strip IV and ICV from protected frames */
+	/* host should strip IV and ICV from रक्षित frames */
 	/* meaningful only when hardware decryption is being used */
-	int host_strip_iv_icv;
+	पूर्णांक host_strip_iv_icv;
 
-	int host_open_frag;
-	int host_build_iv;
-	int ieee802_1x; /* is IEEE 802.1X used */
+	पूर्णांक host_खोलो_frag;
+	पूर्णांक host_build_iv;
+	पूर्णांक ieee802_1x; /* is IEEE 802.1X used */
 
 	/* WPA data */
 	bool bHalfWirelessN24GMode;
-	int wpa_enabled;
-	int drop_unencrypted;
-	int tkip_countermeasures;
-	int privacy_invoked;
-	size_t wpa_ie_len;
+	पूर्णांक wpa_enabled;
+	पूर्णांक drop_unencrypted;
+	पूर्णांक tkip_countermeasures;
+	पूर्णांक privacy_invoked;
+	माप_प्रकार wpa_ie_len;
 	u8 *wpa_ie;
 	u8 ap_mac_addr[6];
 	u16 pairwise_key_type;
 	u16 group_key_type;
-	struct list_head crypt_deinit_list;
-	struct ieee80211_crypt_data *crypt[WEP_KEYS];
-	int tx_keyidx; /* default TX key index (crypt[tx_keyidx]) */
-	struct timer_list crypt_deinit_timer;
-	int crypt_quiesced;
+	काष्ठा list_head crypt_deinit_list;
+	काष्ठा ieee80211_crypt_data *crypt[WEP_KEYS];
+	पूर्णांक tx_keyidx; /* शेष TX key index (crypt[tx_keyidx]) */
+	काष्ठा समयr_list crypt_deinit_समयr;
+	पूर्णांक crypt_quiesced;
 
-	int bcrx_sta_key; /* use individual keys to override default keys even
+	पूर्णांक bcrx_sta_key; /* use inभागidual keys to override शेष keys even
 			   * with RX of broad/multicast frames
 			   */
 
-	/* Fragmentation structures */
+	/* Fragmentation काष्ठाures */
 	// each streaming contain a entry
-	struct ieee80211_frag_entry frag_cache[17][IEEE80211_FRAG_CACHE_LEN];
-	unsigned int frag_next_idx[17];
+	काष्ठा ieee80211_frag_entry frag_cache[17][IEEE80211_FRAG_CACHE_LEN];
+	अचिन्हित पूर्णांक frag_next_idx[17];
 	u16 fts; /* Fragmentation Threshold */
-#define DEFAULT_RTS_THRESHOLD 2346U
-#define MIN_RTS_THRESHOLD 1
-#define MAX_RTS_THRESHOLD 2346U
+#घोषणा DEFAULT_RTS_THRESHOLD 2346U
+#घोषणा MIN_RTS_THRESHOLD 1
+#घोषणा MAX_RTS_THRESHOLD 2346U
 	u16 rts; /* RTS threshold */
 
 	/* Association info */
 	u8 bssid[ETH_ALEN];
 
-	/* This stores infos for the current network.
+	/* This stores infos क्रम the current network.
 	 * Either the network we are associated in INFRASTRUCTURE
 	 * or the network that we are creating in MASTER mode.
 	 * ad-hoc is a mixture ;-).
-	 * Note that in infrastructure mode, even when not associated,
-	 * fields bssid and essid may be valid (if wpa_set and essid_set
+	 * Note that in infraकाष्ठाure mode, even when not associated,
+	 * fields bssid and essid may be valid (अगर wpa_set and essid_set
 	 * are true) as thy carry the value set by the user via iwconfig
 	 */
-	struct ieee80211_network current_network;
+	काष्ठा ieee80211_network current_network;
 
-	enum ieee80211_state state;
+	क्रमागत ieee80211_state state;
 
-	int short_slot;
-	int reg_mode;
-	int mode;       /* A, B, G */
-	int modulation; /* CCK, OFDM */
-	int freq_band;  /* 2.4Ghz, 5.2Ghz, Mixed */
-	int abg_true;   /* ABG flag              */
+	पूर्णांक लघु_slot;
+	पूर्णांक reg_mode;
+	पूर्णांक mode;       /* A, B, G */
+	पूर्णांक modulation; /* CCK, OFDM */
+	पूर्णांक freq_band;  /* 2.4Ghz, 5.2Ghz, Mixed */
+	पूर्णांक abg_true;   /* ABG flag              */
 
-	/* used for forcing the ibss workqueue to terminate
-	 * without wait for the syncro scan to terminate
+	/* used क्रम क्रमcing the ibss workqueue to terminate
+	 * without रुको क्रम the syncro scan to terminate
 	 */
-	short sync_scan_hurryup;
+	लघु sync_scan_hurryup;
 
-	int perfect_rssi;
-	int worst_rssi;
+	पूर्णांक perfect_rssi;
+	पूर्णांक worst_rssi;
 
 	u16 prev_seq_ctl;       /* used to drop duplicate frames */
 
 	/* map of allowed channels. 0 is dummy */
-	// FIXME: remember to default to a basic channel plan depending of the PHY type
-	void *dot11d_info;
-	bool bGlobalDomain;
-	int rate;       /* current rate */
-	int basic_rate;
-	//FIXME: pleace callback, see if redundant with softmac_features
-	short active_scan;
+	// FIXME: remember to शेष to a basic channel plan depending of the PHY type
+	व्योम *करोt11d_info;
+	bool bGlobalDoमुख्य;
+	पूर्णांक rate;       /* current rate */
+	पूर्णांक basic_rate;
+	//FIXME: pleace callback, see अगर redundant with sofपंचांगac_features
+	लघु active_scan;
 
-	/* this contains flags for selectively enable softmac support */
-	u16 softmac_features;
+	/* this contains flags क्रम selectively enable sofपंचांगac support */
+	u16 sofपंचांगac_features;
 
-	/* if the sequence control field is not filled by HW */
+	/* अगर the sequence control field is not filled by HW */
 	u16 seq_ctrl[5];
 
 	/* association procedure transaction sequence number */
 	u16 associate_seq;
 
-	/* AID for RTXed association responses */
+	/* AID क्रम RTXed association responses */
 	u16 assoc_id;
 
-	/* power save mode related*/
-	short ps;
-	short sta_sleep;
-	int ps_timeout;
-	int ps_period;
-	struct tasklet_struct ps_task;
+	/* घातer save mode related*/
+	लघु ps;
+	लघु sta_sleep;
+	पूर्णांक ps_समयout;
+	पूर्णांक ps_period;
+	काष्ठा tasklet_काष्ठा ps_task;
 	u32 ps_th;
 	u32 ps_tl;
 
-	short raw_tx;
-	/* used if IEEE_SOFTMAC_TX_QUEUE is set */
-	short queue_stop;
-	short scanning;
-	short proto_started;
+	लघु raw_tx;
+	/* used अगर IEEE_SOFTMAC_TX_QUEUE is set */
+	लघु queue_stop;
+	लघु scanning;
+	लघु proto_started;
 
-	struct mutex wx_mutex;
-	struct mutex scan_mutex;
+	काष्ठा mutex wx_mutex;
+	काष्ठा mutex scan_mutex;
 
 	spinlock_t mgmt_tx_lock;
 	spinlock_t beacon_lock;
 
-	short beacon_txing;
+	लघु beacon_txing;
 
-	short wap_set;
-	short ssid_set;
+	लघु wap_set;
+	लघु ssid_set;
 
-	u8  wpax_type_set;    //{added by David, 2006.9.28}
-	u32 wpax_type_notify; //{added by David, 2006.9.26}
+	u8  wpax_type_set;    //अणुadded by David, 2006.9.28पूर्ण
+	u32 wpax_type_notअगरy; //अणुadded by David, 2006.9.26पूर्ण
 
 	/* QoS related flag */
 	s8  init_wmmparam_flag;
 	/* set on initialization */
 	u8  qos_support;
 
-	/* for discarding duplicated packets in IBSS */
-	struct list_head ibss_mac_hash[IEEE_IBSS_MAC_HASH_SIZE];
+	/* क्रम discarding duplicated packets in IBSS */
+	काष्ठा list_head ibss_mac_hash[IEEE_IBSS_MAC_HASH_SIZE];
 
-	/* for discarding duplicated packets in BSS */
+	/* क्रम discarding duplicated packets in BSS */
 	u16 last_rxseq_num[17]; /* rx seq previous per-tid */
 	u16 last_rxfrag_num[17];/* tx frag previous per-tid */
-	unsigned long last_packet_time[17];
+	अचिन्हित दीर्घ last_packet_समय[17];
 
-	/* for PS mode */
-	unsigned long last_rx_ps_time;
+	/* क्रम PS mode */
+	अचिन्हित दीर्घ last_rx_ps_समय;
 
-	/* used if IEEE_SOFTMAC_SINGLE_QUEUE is set */
-	struct sk_buff *mgmt_queue_ring[MGMT_QUEUE_NUM];
-	int mgmt_queue_head;
-	int mgmt_queue_tail;
-//{ added for rtl819x
-#define IEEE80211_QUEUE_LIMIT 128
+	/* used अगर IEEE_SOFTMAC_SINGLE_QUEUE is set */
+	काष्ठा sk_buff *mgmt_queue_ring[MGMT_QUEUE_NUM];
+	पूर्णांक mgmt_queue_head;
+	पूर्णांक mgmt_queue_tail;
+//अणु added क्रम rtl819x
+#घोषणा IEEE80211_QUEUE_LIMIT 128
 	u8 AsocRetryCount;
-	unsigned int hw_header;
-	struct sk_buff_head skb_waitQ[MAX_QUEUE_SIZE];
-	struct sk_buff_head  skb_aggQ[MAX_QUEUE_SIZE];
-	struct sk_buff_head  skb_drv_aggQ[MAX_QUEUE_SIZE];
+	अचिन्हित पूर्णांक hw_header;
+	काष्ठा sk_buff_head skb_रुकोQ[MAX_QUEUE_SIZE];
+	काष्ठा sk_buff_head  skb_aggQ[MAX_QUEUE_SIZE];
+	काष्ठा sk_buff_head  skb_drv_aggQ[MAX_QUEUE_SIZE];
 	u32	sta_edca_param[4];
 	bool aggregation;
 	// Enable/Disable Rx immediate BA capability.
 	bool enable_rx_imm_BA;
 	bool bibsscoordinator;
 
-	//+by amy for DM ,080515
-	//Dynamic Tx power for near/far range enable/Disable  , by amy , 2008-05-15
-	bool	bdynamic_txpower_enable;
+	//+by amy क्रम DM ,080515
+	//Dynamic Tx घातer क्रम near/far range enable/Disable  , by amy , 2008-05-15
+	bool	bdynamic_txघातer_enable;
 
 	bool bCTSToSelfEnable;
 	u8	CTSToSelfTH;
 
-	u32	fsync_time_interval;
-	u32	fsync_rate_bitmap;
+	u32	fsync_समय_पूर्णांकerval;
+	u32	fsync_rate_biपंचांगap;
 	u8	fsync_rssi_threshold;
 	bool	bfsync_enable;
 
-	u8	fsync_multiple_timeinterval;		// FsyncMultipleTimeInterval * FsyncTimeInterval
-	u32	fsync_firstdiff_ratethreshold;		// low threshold
-	u32	fsync_seconddiff_ratethreshold;	 // decrease threshold
+	u8	fsync_multiple_समयपूर्णांकerval;		// FsyncMultipleTimeInterval * FsyncTimeInterval
+	u32	fsync_firstdअगरf_ratethreshold;		// low threshold
+	u32	fsync_seconddअगरf_ratethreshold;	 // decrease threshold
 	Fsync_State			fsync_state;
 	bool		bis_any_nonbepkts;
 	//20Mhz 40Mhz AutoSwitch Threshold
-	struct bandwidth_autoswitch bandwidth_auto_switch;
-	//for txpower tracking
+	काष्ठा bandwidth_स्वतःचयन bandwidth_स्वतः_चयन;
+	//क्रम txघातer tracking
 	bool FwRWRF;
 
-	//added by amy for AP roaming
-	struct rt_link_detect LinkDetectInfo;
-	//added by amy for ps
-	struct rt_power_save_control PowerSaveControl;
-//}
-	/* used if IEEE_SOFTMAC_TX_QUEUE is set */
-	struct  tx_pending tx_pending;
+	//added by amy क्रम AP roaming
+	काष्ठा rt_link_detect LinkDetectInfo;
+	//added by amy क्रम ps
+	काष्ठा rt_घातer_save_control PowerSaveControl;
+//पूर्ण
+	/* used अगर IEEE_SOFTMAC_TX_QUEUE is set */
+	काष्ठा  tx_pending tx_pending;
 
-	/* used if IEEE_SOFTMAC_ASSOCIATE is set */
-	struct timer_list associate_timer;
+	/* used अगर IEEE_SOFTMAC_ASSOCIATE is set */
+	काष्ठा समयr_list associate_समयr;
 
-	/* used if IEEE_SOFTMAC_BEACONS is set */
-	struct timer_list beacon_timer;
-	struct work_struct associate_complete_wq;
-	struct work_struct associate_procedure_wq;
-	struct delayed_work softmac_scan_wq;
-	struct delayed_work associate_retry_wq;
-	 struct delayed_work start_ibss_wq;
-	struct work_struct wx_sync_scan_wq;
-	struct workqueue_struct *wq;
+	/* used अगर IEEE_SOFTMAC_BEACONS is set */
+	काष्ठा समयr_list beacon_समयr;
+	काष्ठा work_काष्ठा associate_complete_wq;
+	काष्ठा work_काष्ठा associate_procedure_wq;
+	काष्ठा delayed_work sofपंचांगac_scan_wq;
+	काष्ठा delayed_work associate_retry_wq;
+	 काष्ठा delayed_work start_ibss_wq;
+	काष्ठा work_काष्ठा wx_sync_scan_wq;
+	काष्ठा workqueue_काष्ठा *wq;
 	// Qos related. Added by Annie, 2005-11-01.
 	//STA_QOS  StaQos;
 
 	//u32 STA_EDCA_PARAM[4];
 	//CHANNEL_ACCESS_SETTING ChannelAccessSetting;
 
-	struct ieee80211_rxb *stats_IndicateArray[REORDER_WIN_SIZE];
+	काष्ठा ieee80211_rxb *stats_IndicateArray[REORDER_WIN_SIZE];
 
 	/* Callback functions */
-	void (*set_security)(struct net_device *dev,
-			     struct ieee80211_security *sec);
+	व्योम (*set_security)(काष्ठा net_device *dev,
+			     काष्ठा ieee80211_security *sec);
 
-	/* Used to TX data frame by using txb structs.
-	 * this is not used if in the softmac_features
+	/* Used to TX data frame by using txb काष्ठाs.
+	 * this is not used अगर in the sofपंचांगac_features
 	 * is set the flag IEEE_SOFTMAC_TX_QUEUE
 	 */
-	int (*hard_start_xmit)(struct ieee80211_txb *txb,
-			       struct net_device *dev);
+	पूर्णांक (*hard_start_xmit)(काष्ठा ieee80211_txb *txb,
+			       काष्ठा net_device *dev);
 
-	int (*reset_port)(struct net_device *dev);
-	int (*is_queue_full)(struct net_device *dev, int pri);
+	पूर्णांक (*reset_port)(काष्ठा net_device *dev);
+	पूर्णांक (*is_queue_full)(काष्ठा net_device *dev, पूर्णांक pri);
 
-	int (*handle_management)(struct net_device *dev,
-				  struct ieee80211_network *network, u16 type);
-	int (*is_qos_active)(struct net_device *dev, struct sk_buff *skb);
+	पूर्णांक (*handle_management)(काष्ठा net_device *dev,
+				  काष्ठा ieee80211_network *network, u16 type);
+	पूर्णांक (*is_qos_active)(काष्ठा net_device *dev, काष्ठा sk_buff *skb);
 
-	/* Softmac-generated frames (management) are TXed via this
-	 * callback if the flag IEEE_SOFTMAC_SINGLE_QUEUE is
-	 * not set. As some cards may have different HW queues that
-	 * one might want to use for data and management frames
+	/* Sofपंचांगac-generated frames (management) are TXed via this
+	 * callback अगर the flag IEEE_SOFTMAC_SINGLE_QUEUE is
+	 * not set. As some cards may have dअगरferent HW queues that
+	 * one might want to use क्रम data and management frames
 	 * the option to have two callbacks might be useful.
 	 * This function can't sleep.
 	 */
-	int (*softmac_hard_start_xmit)(struct sk_buff *skb,
-			       struct net_device *dev);
+	पूर्णांक (*sofपंचांगac_hard_start_xmit)(काष्ठा sk_buff *skb,
+			       काष्ठा net_device *dev);
 
-	/* used instead of hard_start_xmit (not softmac_hard_start_xmit)
-	 * if the IEEE_SOFTMAC_TX_QUEUE feature is used to TX data
+	/* used instead of hard_start_xmit (not sofपंचांगac_hard_start_xmit)
+	 * अगर the IEEE_SOFTMAC_TX_QUEUE feature is used to TX data
 	 * frames. I the option IEEE_SOFTMAC_SINGLE_QUEUE is also set
 	 * then also management frames are sent via this callback.
 	 * This function can't sleep.
 	 */
-	void (*softmac_data_hard_start_xmit)(struct sk_buff *skb,
-			       struct net_device *dev, int rate);
+	व्योम (*sofपंचांगac_data_hard_start_xmit)(काष्ठा sk_buff *skb,
+			       काष्ठा net_device *dev, पूर्णांक rate);
 
-	/* stops the HW queue for DATA frames. Useful to avoid
-	 * waste time to TX data frame when we are reassociating
+	/* stops the HW queue क्रम DATA frames. Useful to aव्योम
+	 * waste समय to TX data frame when we are reassociating
 	 * This function can sleep.
 	 */
-	void (*data_hard_stop)(struct net_device *dev);
+	व्योम (*data_hard_stop)(काष्ठा net_device *dev);
 
 	/* OK this is complementar to data_poll_hard_stop */
-	void (*data_hard_resume)(struct net_device *dev);
+	व्योम (*data_hard_resume)(काष्ठा net_device *dev);
 
 	/* ask to the driver to retune the radio .
 	 * This function can sleep. the driver should ensure
-	 * the radio has been switched before return.
+	 * the radio has been चयनed beक्रमe वापस.
 	 */
-	void (*set_chan)(struct net_device *dev, short ch);
+	व्योम (*set_chan)(काष्ठा net_device *dev, लघु ch);
 
-	/* These are not used if the ieee stack takes care of
+	/* These are not used अगर the ieee stack takes care of
 	 * scanning (IEEE_SOFTMAC_SCAN feature set).
-	 * In this case only the set_chan is used.
+	 * In this हाल only the set_chan is used.
 	 *
 	 * The syncro version is similar to the start_scan but
-	 * does not return until all channels has been scanned.
+	 * करोes not वापस until all channels has been scanned.
 	 * this is called in user context and should sleep,
-	 * it is called in a work_queue when switching to ad-hoc mode
+	 * it is called in a work_queue when चयनing to ad-hoc mode
 	 * or in behalf of iwlist scan when the card is associated
-	 * and root user ask for a scan.
+	 * and root user ask क्रम a scan.
 	 * the function stop_scan should stop both the syncro and
 	 * background scanning and can sleep.
 	 * The function start_scan should initiate the background
 	 * scanning and can't sleep.
 	 */
-	void (*scan_syncro)(struct net_device *dev);
-	void (*start_scan)(struct net_device *dev);
-	void (*stop_scan)(struct net_device *dev);
+	व्योम (*scan_syncro)(काष्ठा net_device *dev);
+	व्योम (*start_scan)(काष्ठा net_device *dev);
+	व्योम (*stop_scan)(काष्ठा net_device *dev);
 
 	/* indicate the driver that the link state is changed
-	 * for example it may indicate the card is associated now.
-	 * Driver might be interested in this to apply RX filter
+	 * क्रम example it may indicate the card is associated now.
+	 * Driver might be पूर्णांकerested in this to apply RX filter
 	 * rules or simply light the LINK led
 	 */
-	void (*link_change)(struct net_device *dev);
+	व्योम (*link_change)(काष्ठा net_device *dev);
 
 	/* these two function indicates to the HW when to start
 	 * and stop to send beacons. This is used when the
@@ -1981,466 +1982,466 @@ struct ieee80211_device {
 	 * stop_send_bacons is NOT guaranteed to be called only
 	 * after start_send_beacons.
 	 */
-	void (*start_send_beacons)(struct net_device *dev, u16 tx_rate);
-	void (*stop_send_beacons)(struct net_device *dev);
+	व्योम (*start_send_beacons)(काष्ठा net_device *dev, u16 tx_rate);
+	व्योम (*stop_send_beacons)(काष्ठा net_device *dev);
 
-	/* power save mode related */
-	void (*sta_wake_up)(struct net_device *dev);
-	void (*ps_request_tx_ack)(struct net_device *dev);
-	void (*enter_sleep_state)(struct net_device *dev, u32 th, u32 tl);
-	short (*ps_is_queue_empty)(struct net_device *dev);
-	int (*handle_beacon)(struct net_device *dev, struct ieee80211_beacon *beacon, struct ieee80211_network *network);
-	int (*handle_assoc_response)(struct net_device *dev, struct ieee80211_assoc_response_frame *resp, struct ieee80211_network *network);
+	/* घातer save mode related */
+	व्योम (*sta_wake_up)(काष्ठा net_device *dev);
+	व्योम (*ps_request_tx_ack)(काष्ठा net_device *dev);
+	व्योम (*enter_sleep_state)(काष्ठा net_device *dev, u32 th, u32 tl);
+	लघु (*ps_is_queue_empty)(काष्ठा net_device *dev);
+	पूर्णांक (*handle_beacon)(काष्ठा net_device *dev, काष्ठा ieee80211_beacon *beacon, काष्ठा ieee80211_network *network);
+	पूर्णांक (*handle_assoc_response)(काष्ठा net_device *dev, काष्ठा ieee80211_assoc_response_frame *resp, काष्ठा ieee80211_network *network);
 
 
 	/* check whether Tx hw resource available */
-	short (*check_nic_enough_desc)(struct net_device *dev, int queue_index);
-	//added by wb for HT related
-//	void (*SwChnlByTimerHandler)(struct net_device *dev, int channel);
-	void (*SetBWModeHandler)(struct net_device *dev, enum ht_channel_width Bandwidth, enum ht_extension_chan_offset Offset);
-//	void (*UpdateHalRATRTableHandler)(struct net_device* dev, u8* pMcsRate);
-	bool (*GetNmodeSupportBySecCfg)(struct net_device *dev);
-	void (*SetWirelessMode)(struct net_device *dev, u8 wireless_mode);
-	bool (*GetHalfNmodeSupportByAPsHandler)(struct net_device *dev);
-	void (*InitialGainHandler)(struct net_device *dev, u8 Operation);
+	लघु (*check_nic_enough_desc)(काष्ठा net_device *dev, पूर्णांक queue_index);
+	//added by wb क्रम HT related
+//	व्योम (*SwChnlByTimerHandler)(काष्ठा net_device *dev, पूर्णांक channel);
+	व्योम (*SetBWModeHandler)(काष्ठा net_device *dev, क्रमागत ht_channel_width Bandwidth, क्रमागत ht_extension_chan_offset Offset);
+//	व्योम (*UpdateHalRATRTableHandler)(काष्ठा net_device* dev, u8* pMcsRate);
+	bool (*GetNmodeSupportBySecCfg)(काष्ठा net_device *dev);
+	व्योम (*SetWirelessMode)(काष्ठा net_device *dev, u8 wireless_mode);
+	bool (*GetHalfNmodeSupportByAPsHandler)(काष्ठा net_device *dev);
+	व्योम (*InitialGainHandler)(काष्ठा net_device *dev, u8 Operation);
 
-	/* This must be the last item so that it points to the data
-	 * allocated beyond this structure by alloc_ieee80211
+	/* This must be the last item so that it poपूर्णांकs to the data
+	 * allocated beyond this काष्ठाure by alloc_ieee80211
 	 */
 	u8 priv[];
-};
+पूर्ण;
 
-#define IEEE_A            (1<<0)
-#define IEEE_B            (1<<1)
-#define IEEE_G            (1<<2)
-#define IEEE_N_24G        (1<<4)
-#define IEEE_N_5G         (1<<5)
-#define IEEE_MODE_MASK    (IEEE_A | IEEE_B | IEEE_G)
+#घोषणा IEEE_A            (1<<0)
+#घोषणा IEEE_B            (1<<1)
+#घोषणा IEEE_G            (1<<2)
+#घोषणा IEEE_N_24G        (1<<4)
+#घोषणा IEEE_N_5G         (1<<5)
+#घोषणा IEEE_MODE_MASK    (IEEE_A | IEEE_B | IEEE_G)
 
 /* Generate a 802.11 header */
 
 /* Uses the channel change callback directly
  * instead of [start/stop] scan callbacks
  */
-#define IEEE_SOFTMAC_SCAN (1<<2)
+#घोषणा IEEE_SOFTMAC_SCAN (1<<2)
 
-/* Perform authentication and association handshake */
-#define IEEE_SOFTMAC_ASSOCIATE (1<<3)
+/* Perक्रमm authentication and association handshake */
+#घोषणा IEEE_SOFTMAC_ASSOCIATE (1<<3)
 
 /* Generate probe requests */
-#define IEEE_SOFTMAC_PROBERQ (1<<4)
+#घोषणा IEEE_SOFTMAC_PROBERQ (1<<4)
 
 /* Generate respones to probe requests */
-#define IEEE_SOFTMAC_PROBERS (1<<5)
+#घोषणा IEEE_SOFTMAC_PROBERS (1<<5)
 
-/* The ieee802.11 stack will manages the netif queue
- * wake/stop for the driver, taking care of 802.11
- * fragmentation. See softmac.c for details.
+/* The ieee802.11 stack will manages the netअगर queue
+ * wake/stop क्रम the driver, taking care of 802.11
+ * fragmentation. See sofपंचांगac.c क्रम details.
  */
-#define IEEE_SOFTMAC_TX_QUEUE (1<<7)
+#घोषणा IEEE_SOFTMAC_TX_QUEUE (1<<7)
 
-/* Uses only the softmac_data_hard_start_xmit
- * even for TX management frames.
+/* Uses only the sofपंचांगac_data_hard_start_xmit
+ * even क्रम TX management frames.
  */
-#define IEEE_SOFTMAC_SINGLE_QUEUE (1<<8)
+#घोषणा IEEE_SOFTMAC_SINGLE_QUEUE (1<<8)
 
 /* Generate beacons.  The stack will enqueue beacons
  * to the card
  */
-#define IEEE_SOFTMAC_BEACONS (1<<6)
+#घोषणा IEEE_SOFTMAC_BEACONS (1<<6)
 
-static inline void *ieee80211_priv(struct net_device *dev)
-{
-	return ((struct ieee80211_device *)netdev_priv(dev))->priv;
-}
+अटल अंतरभूत व्योम *ieee80211_priv(काष्ठा net_device *dev)
+अणु
+	वापस ((काष्ठा ieee80211_device *)netdev_priv(dev))->priv;
+पूर्ण
 
-static inline int ieee80211_is_empty_essid(const char *essid, int essid_len)
-{
-	/* Single white space is for Linksys APs */
-	if (essid_len == 1 && essid[0] == ' ')
-		return 1;
+अटल अंतरभूत पूर्णांक ieee80211_is_empty_essid(स्थिर अक्षर *essid, पूर्णांक essid_len)
+अणु
+	/* Single white space is क्रम Linksys APs */
+	अगर (essid_len == 1 && essid[0] == ' ')
+		वापस 1;
 
-	/* Otherwise, if the entire essid is 0, we assume it is hidden */
-	while (essid_len) {
+	/* Otherwise, अगर the entire essid is 0, we assume it is hidden */
+	जबतक (essid_len) अणु
 		essid_len--;
-		if (essid[essid_len] != '\0')
-			return 0;
-	}
+		अगर (essid[essid_len] != '\0')
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int ieee80211_is_valid_mode(struct ieee80211_device *ieee, int mode)
-{
+अटल अंतरभूत पूर्णांक ieee80211_is_valid_mode(काष्ठा ieee80211_device *ieee, पूर्णांक mode)
+अणु
 	/*
-	 * It is possible for both access points and our device to support
-	 * combinations of modes, so as long as there is one valid combination
-	 * of ap/device supported modes, then return success
+	 * It is possible क्रम both access poपूर्णांकs and our device to support
+	 * combinations of modes, so as दीर्घ as there is one valid combination
+	 * of ap/device supported modes, then वापस success
 	 *
 	 */
-	if ((mode & IEEE_A) &&
+	अगर ((mode & IEEE_A) &&
 	    (ieee->modulation & IEEE80211_OFDM_MODULATION) &&
 	    (ieee->freq_band & IEEE80211_52GHZ_BAND))
-		return 1;
+		वापस 1;
 
-	if ((mode & IEEE_G) &&
+	अगर ((mode & IEEE_G) &&
 	    (ieee->modulation & IEEE80211_OFDM_MODULATION) &&
 	    (ieee->freq_band & IEEE80211_24GHZ_BAND))
-		return 1;
+		वापस 1;
 
-	if ((mode & IEEE_B) &&
+	अगर ((mode & IEEE_B) &&
 	    (ieee->modulation & IEEE80211_CCK_MODULATION) &&
 	    (ieee->freq_band & IEEE80211_24GHZ_BAND))
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int ieee80211_get_hdrlen(u16 fc)
-{
-	int hdrlen = IEEE80211_3ADDR_LEN;
+अटल अंतरभूत पूर्णांक ieee80211_get_hdrlen(u16 fc)
+अणु
+	पूर्णांक hdrlen = IEEE80211_3ADDR_LEN;
 
-	switch (WLAN_FC_GET_TYPE(fc)) {
-	case IEEE80211_FTYPE_DATA:
-		if ((fc & IEEE80211_FCTL_FROMDS) && (fc & IEEE80211_FCTL_TODS))
+	चयन (WLAN_FC_GET_TYPE(fc)) अणु
+	हाल IEEE80211_FTYPE_DATA:
+		अगर ((fc & IEEE80211_FCTL_FROMDS) && (fc & IEEE80211_FCTL_TODS))
 			hdrlen = IEEE80211_4ADDR_LEN; /* Addr4 */
-		if (IEEE80211_QOS_HAS_SEQ(fc))
+		अगर (IEEE80211_QOS_HAS_SEQ(fc))
 			hdrlen += 2; /* QOS ctrl*/
-		break;
-	case IEEE80211_FTYPE_CTL:
-		switch (WLAN_FC_GET_STYPE(fc)) {
-		case IEEE80211_STYPE_CTS:
-		case IEEE80211_STYPE_ACK:
+		अवरोध;
+	हाल IEEE80211_FTYPE_CTL:
+		चयन (WLAN_FC_GET_STYPE(fc)) अणु
+		हाल IEEE80211_STYPE_CTS:
+		हाल IEEE80211_STYPE_ACK:
 			hdrlen = IEEE80211_1ADDR_LEN;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			hdrlen = IEEE80211_2ADDR_LEN;
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return hdrlen;
-}
+	वापस hdrlen;
+पूर्ण
 
-static inline u8 *ieee80211_get_payload(struct rtl_80211_hdr *hdr)
-{
-	switch (ieee80211_get_hdrlen(le16_to_cpu(hdr->frame_ctl))) {
-	case IEEE80211_1ADDR_LEN:
-		return ((struct rtl_80211_hdr_1addr *)hdr)->payload;
-	case IEEE80211_2ADDR_LEN:
-		return ((struct rtl_80211_hdr_2addr *)hdr)->payload;
-	case IEEE80211_3ADDR_LEN:
-		return ((struct rtl_80211_hdr_3addr *)hdr)->payload;
-	case IEEE80211_4ADDR_LEN:
-		return ((struct rtl_80211_hdr_4addr *)hdr)->payload;
-	}
-	return NULL;
-}
+अटल अंतरभूत u8 *ieee80211_get_payload(काष्ठा rtl_80211_hdr *hdr)
+अणु
+	चयन (ieee80211_get_hdrlen(le16_to_cpu(hdr->frame_ctl))) अणु
+	हाल IEEE80211_1ADDR_LEN:
+		वापस ((काष्ठा rtl_80211_hdr_1addr *)hdr)->payload;
+	हाल IEEE80211_2ADDR_LEN:
+		वापस ((काष्ठा rtl_80211_hdr_2addr *)hdr)->payload;
+	हाल IEEE80211_3ADDR_LEN:
+		वापस ((काष्ठा rtl_80211_hdr_3addr *)hdr)->payload;
+	हाल IEEE80211_4ADDR_LEN:
+		वापस ((काष्ठा rtl_80211_hdr_4addr *)hdr)->payload;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static inline int ieee80211_is_ofdm_rate(u8 rate)
-{
-	switch (rate & ~IEEE80211_BASIC_RATE_MASK) {
-	case IEEE80211_OFDM_RATE_6MB:
-	case IEEE80211_OFDM_RATE_9MB:
-	case IEEE80211_OFDM_RATE_12MB:
-	case IEEE80211_OFDM_RATE_18MB:
-	case IEEE80211_OFDM_RATE_24MB:
-	case IEEE80211_OFDM_RATE_36MB:
-	case IEEE80211_OFDM_RATE_48MB:
-	case IEEE80211_OFDM_RATE_54MB:
-		return 1;
-	}
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ieee80211_is_ofdm_rate(u8 rate)
+अणु
+	चयन (rate & ~IEEE80211_BASIC_RATE_MASK) अणु
+	हाल IEEE80211_OFDM_RATE_6MB:
+	हाल IEEE80211_OFDM_RATE_9MB:
+	हाल IEEE80211_OFDM_RATE_12MB:
+	हाल IEEE80211_OFDM_RATE_18MB:
+	हाल IEEE80211_OFDM_RATE_24MB:
+	हाल IEEE80211_OFDM_RATE_36MB:
+	हाल IEEE80211_OFDM_RATE_48MB:
+	हाल IEEE80211_OFDM_RATE_54MB:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int ieee80211_is_cck_rate(u8 rate)
-{
-	switch (rate & ~IEEE80211_BASIC_RATE_MASK) {
-	case IEEE80211_CCK_RATE_1MB:
-	case IEEE80211_CCK_RATE_2MB:
-	case IEEE80211_CCK_RATE_5MB:
-	case IEEE80211_CCK_RATE_11MB:
-		return 1;
-	}
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ieee80211_is_cck_rate(u8 rate)
+अणु
+	चयन (rate & ~IEEE80211_BASIC_RATE_MASK) अणु
+	हाल IEEE80211_CCK_RATE_1MB:
+	हाल IEEE80211_CCK_RATE_2MB:
+	हाल IEEE80211_CCK_RATE_5MB:
+	हाल IEEE80211_CCK_RATE_11MB:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /* ieee80211.c */
-void free_ieee80211(struct net_device *dev);
-struct net_device *alloc_ieee80211(int sizeof_priv);
+व्योम मुक्त_ieee80211(काष्ठा net_device *dev);
+काष्ठा net_device *alloc_ieee80211(पूर्णांक माप_priv);
 
-int ieee80211_set_encryption(struct ieee80211_device *ieee);
+पूर्णांक ieee80211_set_encryption(काष्ठा ieee80211_device *ieee);
 
 /* ieee80211_tx.c */
 
-int ieee80211_encrypt_fragment(struct ieee80211_device *ieee,
-			       struct sk_buff *frag, int hdr_len);
+पूर्णांक ieee80211_encrypt_fragment(काष्ठा ieee80211_device *ieee,
+			       काष्ठा sk_buff *frag, पूर्णांक hdr_len);
 
-int ieee80211_xmit(struct sk_buff *skb, struct net_device *dev);
-void ieee80211_txb_free(struct ieee80211_txb *txb);
+पूर्णांक ieee80211_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
+व्योम ieee80211_txb_मुक्त(काष्ठा ieee80211_txb *txb);
 
 
 /* ieee80211_rx.c */
-int ieee80211_rx(struct ieee80211_device *ieee, struct sk_buff *skb,
-		 struct ieee80211_rx_stats *rx_stats);
-void ieee80211_rx_mgt(struct ieee80211_device *ieee,
-		      struct rtl_80211_hdr_4addr *header,
-		      struct ieee80211_rx_stats *stats);
+पूर्णांक ieee80211_rx(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb,
+		 काष्ठा ieee80211_rx_stats *rx_stats);
+व्योम ieee80211_rx_mgt(काष्ठा ieee80211_device *ieee,
+		      काष्ठा rtl_80211_hdr_4addr *header,
+		      काष्ठा ieee80211_rx_stats *stats);
 
 /* ieee80211_wx.c */
-int ieee80211_wx_get_scan(struct ieee80211_device *ieee,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *key);
-int ieee80211_wx_set_encode(struct ieee80211_device *ieee,
-			    struct iw_request_info *info,
-			    union iwreq_data *wrqu, char *key);
-int ieee80211_wx_get_encode(struct ieee80211_device *ieee,
-			    struct iw_request_info *info,
-			    union iwreq_data *wrqu, char *key);
-int ieee80211_wx_get_encode_ext(struct ieee80211_device *ieee,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra);
-int ieee80211_wx_set_encode_ext(struct ieee80211_device *ieee,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra);
-int ieee80211_wx_set_auth(struct ieee80211_device *ieee,
-			  struct iw_request_info *info,
-			  struct iw_param *data, char *extra);
-int ieee80211_wx_set_mlme(struct ieee80211_device *ieee,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra);
-int ieee80211_wx_set_gen_ie(struct ieee80211_device *ieee, u8 *ie, size_t len);
+पूर्णांक ieee80211_wx_get_scan(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *info,
+			  जोड़ iwreq_data *wrqu, अक्षर *key);
+पूर्णांक ieee80211_wx_set_encode(काष्ठा ieee80211_device *ieee,
+			    काष्ठा iw_request_info *info,
+			    जोड़ iwreq_data *wrqu, अक्षर *key);
+पूर्णांक ieee80211_wx_get_encode(काष्ठा ieee80211_device *ieee,
+			    काष्ठा iw_request_info *info,
+			    जोड़ iwreq_data *wrqu, अक्षर *key);
+पूर्णांक ieee80211_wx_get_encode_ext(काष्ठा ieee80211_device *ieee,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra);
+पूर्णांक ieee80211_wx_set_encode_ext(काष्ठा ieee80211_device *ieee,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra);
+पूर्णांक ieee80211_wx_set_auth(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *info,
+			  काष्ठा iw_param *data, अक्षर *extra);
+पूर्णांक ieee80211_wx_set_mlme(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *info,
+			  जोड़ iwreq_data *wrqu, अक्षर *extra);
+पूर्णांक ieee80211_wx_set_gen_ie(काष्ठा ieee80211_device *ieee, u8 *ie, माप_प्रकार len);
 
-/* ieee80211_softmac.c */
-short ieee80211_is_54g(const struct ieee80211_network *net);
-short ieee80211_is_shortslot(const struct ieee80211_network *net);
-int ieee80211_rx_frame_softmac(struct ieee80211_device *ieee,
-			       struct sk_buff *skb,
-			       struct ieee80211_rx_stats *rx_stats,
+/* ieee80211_sofपंचांगac.c */
+लघु ieee80211_is_54g(स्थिर काष्ठा ieee80211_network *net);
+लघु ieee80211_is_लघुslot(स्थिर काष्ठा ieee80211_network *net);
+पूर्णांक ieee80211_rx_frame_sofपंचांगac(काष्ठा ieee80211_device *ieee,
+			       काष्ठा sk_buff *skb,
+			       काष्ठा ieee80211_rx_stats *rx_stats,
 			       u16 type, u16 stype);
-void ieee80211_softmac_new_net(struct ieee80211_device *ieee,
-			       struct ieee80211_network *net);
+व्योम ieee80211_sofपंचांगac_new_net(काष्ठा ieee80211_device *ieee,
+			       काष्ठा ieee80211_network *net);
 
-void SendDisassociation(struct ieee80211_device *ieee, u8 *asSta, u8 asRsn);
-void ieee80211_softmac_xmit(struct ieee80211_txb *txb,
-			    struct ieee80211_device *ieee);
+व्योम SendDisassociation(काष्ठा ieee80211_device *ieee, u8 *asSta, u8 asRsn);
+व्योम ieee80211_sofपंचांगac_xmit(काष्ठा ieee80211_txb *txb,
+			    काष्ठा ieee80211_device *ieee);
 
-void ieee80211_stop_send_beacons(struct ieee80211_device *ieee);
-void notify_wx_assoc_event(struct ieee80211_device *ieee);
-void ieee80211_softmac_check_all_nets(struct ieee80211_device *ieee);
-void ieee80211_start_bss(struct ieee80211_device *ieee);
-void ieee80211_start_master_bss(struct ieee80211_device *ieee);
-void ieee80211_start_ibss(struct ieee80211_device *ieee);
-void ieee80211_softmac_init(struct ieee80211_device *ieee);
-void ieee80211_softmac_free(struct ieee80211_device *ieee);
-void ieee80211_associate_abort(struct ieee80211_device *ieee);
-void ieee80211_disassociate(struct ieee80211_device *ieee);
-void ieee80211_stop_scan(struct ieee80211_device *ieee);
-void ieee80211_start_scan_syncro(struct ieee80211_device *ieee);
-void ieee80211_check_all_nets(struct ieee80211_device *ieee);
-void ieee80211_start_protocol(struct ieee80211_device *ieee);
-void ieee80211_stop_protocol(struct ieee80211_device *ieee);
-void ieee80211_softmac_start_protocol(struct ieee80211_device *ieee);
-void ieee80211_softmac_stop_protocol(struct ieee80211_device *ieee);
-void ieee80211_reset_queue(struct ieee80211_device *ieee);
-void ieee80211_wake_queue(struct ieee80211_device *ieee);
-void ieee80211_stop_queue(struct ieee80211_device *ieee);
-struct sk_buff *ieee80211_get_beacon(struct ieee80211_device *ieee);
-void ieee80211_start_send_beacons(struct ieee80211_device *ieee);
-void ieee80211_stop_send_beacons(struct ieee80211_device *ieee);
-int ieee80211_wpa_supplicant_ioctl(struct ieee80211_device *ieee,
-				   struct iw_point *p);
-void notify_wx_assoc_event(struct ieee80211_device *ieee);
-void ieee80211_ps_tx_ack(struct ieee80211_device *ieee, short success);
+व्योम ieee80211_stop_send_beacons(काष्ठा ieee80211_device *ieee);
+व्योम notअगरy_wx_assoc_event(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_sofपंचांगac_check_all_nets(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_start_bss(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_start_master_bss(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_start_ibss(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_sofपंचांगac_init(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_sofपंचांगac_मुक्त(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_associate_पात(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_disassociate(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_stop_scan(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_start_scan_syncro(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_check_all_nets(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_start_protocol(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_stop_protocol(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_sofपंचांगac_start_protocol(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_sofपंचांगac_stop_protocol(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_reset_queue(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_wake_queue(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_stop_queue(काष्ठा ieee80211_device *ieee);
+काष्ठा sk_buff *ieee80211_get_beacon(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_start_send_beacons(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_stop_send_beacons(काष्ठा ieee80211_device *ieee);
+पूर्णांक ieee80211_wpa_supplicant_ioctl(काष्ठा ieee80211_device *ieee,
+				   काष्ठा iw_poपूर्णांक *p);
+व्योम notअगरy_wx_assoc_event(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_ps_tx_ack(काष्ठा ieee80211_device *ieee, लघु success);
 
-void softmac_mgmt_xmit(struct sk_buff *skb, struct ieee80211_device *ieee);
+व्योम sofपंचांगac_mgmt_xmit(काष्ठा sk_buff *skb, काष्ठा ieee80211_device *ieee);
 
 /* ieee80211_crypt_ccmp&tkip&wep.c */
-void ieee80211_tkip_null(void);
+व्योम ieee80211_tkip_null(व्योम);
 
-int ieee80211_crypto_init(void);
-void ieee80211_crypto_deinit(void);
-int ieee80211_crypto_tkip_init(void);
-void ieee80211_crypto_tkip_exit(void);
-int ieee80211_crypto_ccmp_init(void);
-void ieee80211_crypto_ccmp_exit(void);
-int ieee80211_crypto_wep_init(void);
-void ieee80211_crypto_wep_exit(void);
+पूर्णांक ieee80211_crypto_init(व्योम);
+व्योम ieee80211_crypto_deinit(व्योम);
+पूर्णांक ieee80211_crypto_tkip_init(व्योम);
+व्योम ieee80211_crypto_tkip_निकास(व्योम);
+पूर्णांक ieee80211_crypto_ccmp_init(व्योम);
+व्योम ieee80211_crypto_ccmp_निकास(व्योम);
+पूर्णांक ieee80211_crypto_wep_init(व्योम);
+व्योम ieee80211_crypto_wep_निकास(व्योम);
 
-/* ieee80211_softmac_wx.c */
+/* ieee80211_sofपंचांगac_wx.c */
 
-int ieee80211_wx_get_wap(struct ieee80211_device *ieee,
-			 struct iw_request_info *info,
-			 union iwreq_data *wrqu, char *ext);
+पूर्णांक ieee80211_wx_get_wap(काष्ठा ieee80211_device *ieee,
+			 काष्ठा iw_request_info *info,
+			 जोड़ iwreq_data *wrqu, अक्षर *ext);
 
-int ieee80211_wx_set_wap(struct ieee80211_device *ieee,
-			 struct iw_request_info *info,
-			 union iwreq_data *awrq,
-			 char *extra);
+पूर्णांक ieee80211_wx_set_wap(काष्ठा ieee80211_device *ieee,
+			 काष्ठा iw_request_info *info,
+			 जोड़ iwreq_data *awrq,
+			 अक्षर *extra);
 
-int ieee80211_wx_get_essid(struct ieee80211_device *ieee,
-			   struct iw_request_info *a,
-			   union iwreq_data *wrqu, char *b);
+पूर्णांक ieee80211_wx_get_essid(काष्ठा ieee80211_device *ieee,
+			   काष्ठा iw_request_info *a,
+			   जोड़ iwreq_data *wrqu, अक्षर *b);
 
-int ieee80211_wx_set_rate(struct ieee80211_device *ieee,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra);
+पूर्णांक ieee80211_wx_set_rate(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *info,
+			  जोड़ iwreq_data *wrqu, अक्षर *extra);
 
-int ieee80211_wx_get_rate(struct ieee80211_device *ieee,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra);
+पूर्णांक ieee80211_wx_get_rate(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *info,
+			  जोड़ iwreq_data *wrqu, अक्षर *extra);
 
-int ieee80211_wx_set_mode(struct ieee80211_device *ieee,
-			  struct iw_request_info *a,
-			  union iwreq_data *wrqu, char *b);
+पूर्णांक ieee80211_wx_set_mode(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *a,
+			  जोड़ iwreq_data *wrqu, अक्षर *b);
 
-int ieee80211_wx_set_scan(struct ieee80211_device *ieee,
-			  struct iw_request_info *a,
-			  union iwreq_data *wrqu, char *b);
+पूर्णांक ieee80211_wx_set_scan(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *a,
+			  जोड़ iwreq_data *wrqu, अक्षर *b);
 
-int ieee80211_wx_set_essid(struct ieee80211_device *ieee,
-			   struct iw_request_info *a,
-			   union iwreq_data *wrqu, char *extra);
+पूर्णांक ieee80211_wx_set_essid(काष्ठा ieee80211_device *ieee,
+			   काष्ठा iw_request_info *a,
+			   जोड़ iwreq_data *wrqu, अक्षर *extra);
 
-int ieee80211_wx_get_mode(struct ieee80211_device *ieee,
-			  struct iw_request_info *a,
-			  union iwreq_data *wrqu, char *b);
+पूर्णांक ieee80211_wx_get_mode(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *a,
+			  जोड़ iwreq_data *wrqu, अक्षर *b);
 
-int ieee80211_wx_set_freq(struct ieee80211_device *ieee,
-			  struct iw_request_info *a,
-			  union iwreq_data *wrqu, char *b);
+पूर्णांक ieee80211_wx_set_freq(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *a,
+			  जोड़ iwreq_data *wrqu, अक्षर *b);
 
-int ieee80211_wx_get_freq(struct ieee80211_device *ieee,
-			  struct iw_request_info *a,
-			  union iwreq_data *wrqu, char *b);
+पूर्णांक ieee80211_wx_get_freq(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *a,
+			  जोड़ iwreq_data *wrqu, अक्षर *b);
 
 /* ieee80211_module.c */
-int ieee80211_debug_init(void);
-void ieee80211_debug_exit(void);
+पूर्णांक ieee80211_debug_init(व्योम);
+व्योम ieee80211_debug_निकास(व्योम);
 
-//extern void ieee80211_wx_sync_scan_wq(struct ieee80211_device *ieee);
-void ieee80211_wx_sync_scan_wq(struct work_struct *work);
+//बाह्य व्योम ieee80211_wx_sync_scan_wq(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_wx_sync_scan_wq(काष्ठा work_काष्ठा *work);
 
 
-int ieee80211_wx_set_rawtx(struct ieee80211_device *ieee,
-			   struct iw_request_info *info,
-			       union iwreq_data *wrqu, char *extra);
+पूर्णांक ieee80211_wx_set_rawtx(काष्ठा ieee80211_device *ieee,
+			   काष्ठा iw_request_info *info,
+			       जोड़ iwreq_data *wrqu, अक्षर *extra);
 
-int ieee80211_wx_get_name(struct ieee80211_device *ieee,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra);
+पूर्णांक ieee80211_wx_get_name(काष्ठा ieee80211_device *ieee,
+			  काष्ठा iw_request_info *info,
+			  जोड़ iwreq_data *wrqu, अक्षर *extra);
 
-int ieee80211_wx_set_power(struct ieee80211_device *ieee,
-			   struct iw_request_info *info,
-			   union iwreq_data *wrqu, char *extra);
+पूर्णांक ieee80211_wx_set_घातer(काष्ठा ieee80211_device *ieee,
+			   काष्ठा iw_request_info *info,
+			   जोड़ iwreq_data *wrqu, अक्षर *extra);
 
-int ieee80211_wx_get_power(struct ieee80211_device *ieee,
-			   struct iw_request_info *info,
-			   union iwreq_data *wrqu, char *extra);
+पूर्णांक ieee80211_wx_get_घातer(काष्ठा ieee80211_device *ieee,
+			   काष्ठा iw_request_info *info,
+			   जोड़ iwreq_data *wrqu, अक्षर *extra);
 
-int ieee80211_wx_set_rts(struct ieee80211_device *ieee,
-			 struct iw_request_info *info,
-			 union iwreq_data *wrqu, char *extra);
+पूर्णांक ieee80211_wx_set_rts(काष्ठा ieee80211_device *ieee,
+			 काष्ठा iw_request_info *info,
+			 जोड़ iwreq_data *wrqu, अक्षर *extra);
 
-int ieee80211_wx_get_rts(struct ieee80211_device *ieee,
-			 struct iw_request_info *info,
-			 union iwreq_data *wrqu, char *extra);
+पूर्णांक ieee80211_wx_get_rts(काष्ठा ieee80211_device *ieee,
+			 काष्ठा iw_request_info *info,
+			 जोड़ iwreq_data *wrqu, अक्षर *extra);
 //HT
-#define MAX_RECEIVE_BUFFER_SIZE 9100  //
-void HTDebugHTCapability(u8 *CapIE, u8 *TitleString);
-void HTDebugHTInfo(u8 *InfoIE, u8 *TitleString);
+#घोषणा MAX_RECEIVE_BUFFER_SIZE 9100  //
+व्योम HTDebugHTCapability(u8 *CapIE, u8 *TitleString);
+व्योम HTDebugHTInfo(u8 *InfoIE, u8 *TitleString);
 
-void HTSetConnectBwMode(struct ieee80211_device *ieee,
-			enum ht_channel_width Bandwidth, enum ht_extension_chan_offset Offset);
-void HTUpdateDefaultSetting(struct ieee80211_device *ieee);
-void HTConstructCapabilityElement(struct ieee80211_device *ieee, u8 *posHTCap,
+व्योम HTSetConnectBwMode(काष्ठा ieee80211_device *ieee,
+			क्रमागत ht_channel_width Bandwidth, क्रमागत ht_extension_chan_offset Offset);
+व्योम HTUpdateDefaultSetting(काष्ठा ieee80211_device *ieee);
+व्योम HTConकाष्ठाCapabilityElement(काष्ठा ieee80211_device *ieee, u8 *posHTCap,
 				  u8 *len, u8 isEncrypt);
-void HTConstructInfoElement(struct ieee80211_device *ieee, u8 *posHTInfo,
+व्योम HTConकाष्ठाInfoElement(काष्ठा ieee80211_device *ieee, u8 *posHTInfo,
 			    u8 *len, u8 isEncrypt);
-void HTConstructRT2RTAggElement(struct ieee80211_device *ieee, u8 *posRT2RTAgg,
+व्योम HTConकाष्ठाRT2RTAggElement(काष्ठा ieee80211_device *ieee, u8 *posRT2RTAgg,
 				u8 *len);
-void HTOnAssocRsp(struct ieee80211_device *ieee);
-void HTInitializeHTInfo(struct ieee80211_device *ieee);
-void HTInitializeBssDesc(PBSS_HT pBssHT);
-void HTResetSelfAndSavePeerSetting(struct ieee80211_device *ieee,
-				   struct ieee80211_network *pNetwork);
-void HTUpdateSelfAndPeerSetting(struct ieee80211_device *ieee,
-				struct ieee80211_network *pNetwork);
-u8 HTGetHighestMCSRate(struct ieee80211_device *ieee,
+व्योम HTOnAssocRsp(काष्ठा ieee80211_device *ieee);
+व्योम HTInitializeHTInfo(काष्ठा ieee80211_device *ieee);
+व्योम HTInitializeBssDesc(PBSS_HT pBssHT);
+व्योम HTResetSelfAndSavePeerSetting(काष्ठा ieee80211_device *ieee,
+				   काष्ठा ieee80211_network *pNetwork);
+व्योम HTUpdateSelfAndPeerSetting(काष्ठा ieee80211_device *ieee,
+				काष्ठा ieee80211_network *pNetwork);
+u8 HTGetHighestMCSRate(काष्ठा ieee80211_device *ieee,
 		       u8 *pMCSRateSet, u8 *pMCSFilter);
-extern u8 MCS_FILTER_ALL[];
-extern u16 MCS_DATA_RATE[2][2][77];
-u8 HTCCheck(struct ieee80211_device *ieee, u8 *pFrame);
-void HTResetIOTSetting(PRT_HIGH_THROUGHPUT pHTInfo);
-bool IsHTHalfNmodeAPs(struct ieee80211_device *ieee);
-u16 TxCountToDataRate(struct ieee80211_device *ieee, u8 nDataRate);
+बाह्य u8 MCS_FILTER_ALL[];
+बाह्य u16 MCS_DATA_RATE[2][2][77];
+u8 HTCCheck(काष्ठा ieee80211_device *ieee, u8 *pFrame);
+व्योम HTResetIOTSetting(PRT_HIGH_THROUGHPUT pHTInfo);
+bool IsHTHalfNmodeAPs(काष्ठा ieee80211_device *ieee);
+u16 TxCountToDataRate(काष्ठा ieee80211_device *ieee, u8 nDataRate);
 //function in BAPROC.c
-int ieee80211_rx_ADDBAReq(struct ieee80211_device *ieee, struct sk_buff *skb);
-int ieee80211_rx_ADDBARsp(struct ieee80211_device *ieee, struct sk_buff *skb);
-int ieee80211_rx_DELBA(struct ieee80211_device *ieee, struct sk_buff *skb);
-void TsInitAddBA(struct ieee80211_device *ieee, struct tx_ts_record *pTS,
-		 u8 Policy, u8 bOverwritePending);
-void TsInitDelBA(struct ieee80211_device *ieee,
-		 struct ts_common_info *pTsCommonInfo, enum tr_select TxRxSelect);
-void BaSetupTimeOut(struct timer_list *t);
-void TxBaInactTimeout(struct timer_list *t);
-void RxBaInactTimeout(struct timer_list *t);
-void ResetBaEntry(struct ba_record *pBA);
+पूर्णांक ieee80211_rx_ADDBAReq(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb);
+पूर्णांक ieee80211_rx_ADDBARsp(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb);
+पूर्णांक ieee80211_rx_DELBA(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb);
+व्योम TsInitAddBA(काष्ठा ieee80211_device *ieee, काष्ठा tx_ts_record *pTS,
+		 u8 Policy, u8 bOverग_लिखोPending);
+व्योम TsInitDelBA(काष्ठा ieee80211_device *ieee,
+		 काष्ठा ts_common_info *pTsCommonInfo, क्रमागत tr_select TxRxSelect);
+व्योम BaSetupTimeOut(काष्ठा समयr_list *t);
+व्योम TxBaInactTimeout(काष्ठा समयr_list *t);
+व्योम RxBaInactTimeout(काष्ठा समयr_list *t);
+व्योम ResetBaEntry(काष्ठा ba_record *pBA);
 //function in TS.c
 bool GetTs(
-	struct ieee80211_device		*ieee,
-	struct ts_common_info           **ppTS,
+	काष्ठा ieee80211_device		*ieee,
+	काष्ठा ts_common_info           **ppTS,
 	u8                              *Addr,
 	u8                              TID,
-	enum tr_select                  TxRxSelect,  //Rx:1, Tx:0
+	क्रमागत tr_select                  TxRxSelect,  //Rx:1, Tx:0
 	bool                            bAddNewTs
 	);
-void TSInitialize(struct ieee80211_device *ieee);
-void TsStartAddBaProcess(struct ieee80211_device *ieee, struct tx_ts_record   *pTxTS);
-void RemovePeerTS(struct ieee80211_device *ieee, u8 *Addr);
-void RemoveAllTS(struct ieee80211_device *ieee);
-void ieee80211_softmac_scan_syncro(struct ieee80211_device *ieee);
+व्योम TSInitialize(काष्ठा ieee80211_device *ieee);
+व्योम TsStartAddBaProcess(काष्ठा ieee80211_device *ieee, काष्ठा tx_ts_record   *pTxTS);
+व्योम RemovePeerTS(काष्ठा ieee80211_device *ieee, u8 *Addr);
+व्योम RemoveAllTS(काष्ठा ieee80211_device *ieee);
+व्योम ieee80211_sofपंचांगac_scan_syncro(काष्ठा ieee80211_device *ieee);
 
-extern const long ieee80211_wlan_frequencies[];
+बाह्य स्थिर दीर्घ ieee80211_wlan_frequencies[];
 
-static inline void ieee80211_increment_scans(struct ieee80211_device *ieee)
-{
+अटल अंतरभूत व्योम ieee80211_increment_scans(काष्ठा ieee80211_device *ieee)
+अणु
 	ieee->scans++;
-}
+पूर्ण
 
-static inline int ieee80211_get_scans(struct ieee80211_device *ieee)
-{
-	return ieee->scans;
-}
+अटल अंतरभूत पूर्णांक ieee80211_get_scans(काष्ठा ieee80211_device *ieee)
+अणु
+	वापस ieee->scans;
+पूर्ण
 
-static inline const char *escape_essid(const char *essid, u8 essid_len)
-{
-	static char escaped[IW_ESSID_MAX_SIZE * 2 + 1];
+अटल अंतरभूत स्थिर अक्षर *escape_essid(स्थिर अक्षर *essid, u8 essid_len)
+अणु
+	अटल अक्षर escaped[IW_ESSID_MAX_SIZE * 2 + 1];
 
-	if (ieee80211_is_empty_essid(essid, essid_len)) {
-		memcpy(escaped, "<hidden>", sizeof("<hidden>"));
-		return escaped;
-	}
+	अगर (ieee80211_is_empty_essid(essid, essid_len)) अणु
+		स_नकल(escaped, "<hidden>", माप("<hidden>"));
+		वापस escaped;
+	पूर्ण
 
-	snprintf(escaped, sizeof(escaped), "%*pE", essid_len, essid);
-	return escaped;
-}
+	snम_लिखो(escaped, माप(escaped), "%*pE", essid_len, essid);
+	वापस escaped;
+पूर्ण
 
 /* For the function is more related to hardware setting, it's better to use the
  * ieee handler to refer to it.
  */
-short check_nic_enough_desc(struct net_device *dev, int queue_index);
-int ieee80211_data_xmit(struct sk_buff *skb, struct net_device *dev);
-int ieee80211_parse_info_param(struct ieee80211_device *ieee,
-			       struct ieee80211_info_element *info_element,
+लघु check_nic_enough_desc(काष्ठा net_device *dev, पूर्णांक queue_index);
+पूर्णांक ieee80211_data_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
+पूर्णांक ieee80211_parse_info_param(काष्ठा ieee80211_device *ieee,
+			       काष्ठा ieee80211_info_element *info_element,
 			       u16 length,
-			       struct ieee80211_network *network,
-			       struct ieee80211_rx_stats *stats);
+			       काष्ठा ieee80211_network *network,
+			       काष्ठा ieee80211_rx_stats *stats);
 
-void ieee80211_indicate_packets(struct ieee80211_device *ieee,
-				struct ieee80211_rxb **prxbIndicateArray,
+व्योम ieee80211_indicate_packets(काष्ठा ieee80211_device *ieee,
+				काष्ठा ieee80211_rxb **prxbIndicateArray,
 				u8 index);
-#define RT_ASOC_RETRY_LIMIT	5
-#endif /* IEEE80211_H */
+#घोषणा RT_ASOC_RETRY_LIMIT	5
+#पूर्ण_अगर /* IEEE80211_H */

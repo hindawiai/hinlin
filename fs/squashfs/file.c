@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed read only filesystem for Linux
+ * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
  *
  * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008
  * Phillip Lougher <phillip@squashfs.org.uk>
@@ -9,120 +10,120 @@
  */
 
 /*
- * This file contains code for handling regular files.  A regular file
+ * This file contains code क्रम handling regular files.  A regular file
  * consists of a sequence of contiguous compressed blocks, and/or a
  * compressed fragment block (tail-end packed block).   The compressed size
  * of each datablock is stored in a block list contained within the
  * file inode (itself stored in one or more compressed metadata blocks).
  *
- * To speed up access to datablocks when reading 'large' files (256 Mbytes or
+ * To speed up access to datablocks when पढ़ोing 'large' files (256 Mbytes or
  * larger), the code implements an index cache that caches the mapping from
  * block index to datablock location on disk.
  *
- * The index cache allows Squashfs to handle large files (up to 1.75 TiB) while
+ * The index cache allows Squashfs to handle large files (up to 1.75 TiB) जबतक
  * retaining a simple and space-efficient block list on disk.  The cache
- * is split into slots, caching up to eight 224 GiB files (128 KiB blocks).
+ * is split पूर्णांकo slots, caching up to eight 224 GiB files (128 KiB blocks).
  * Larger files use multiple slots, with 1.75 TiB files using all 8 slots.
- * The index cache is designed to be memory efficient, and by default uses
+ * The index cache is deचिन्हित to be memory efficient, and by शेष uses
  * 16 KiB.
  */
 
-#include <linux/fs.h>
-#include <linux/vfs.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/pagemap.h>
-#include <linux/mutex.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/mutex.h>
 
-#include "squashfs_fs.h"
-#include "squashfs_fs_sb.h"
-#include "squashfs_fs_i.h"
-#include "squashfs.h"
+#समावेश "squashfs_fs.h"
+#समावेश "squashfs_fs_sb.h"
+#समावेश "squashfs_fs_i.h"
+#समावेश "squashfs.h"
 
 /*
- * Locate cache slot in range [offset, index] for specified inode.  If
- * there's more than one return the slot closest to index.
+ * Locate cache slot in range [offset, index] क्रम specअगरied inode.  If
+ * there's more than one वापस the slot बंदst to index.
  */
-static struct meta_index *locate_meta_index(struct inode *inode, int offset,
-				int index)
-{
-	struct meta_index *meta = NULL;
-	struct squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
-	int i;
+अटल काष्ठा meta_index *locate_meta_index(काष्ठा inode *inode, पूर्णांक offset,
+				पूर्णांक index)
+अणु
+	काष्ठा meta_index *meta = शून्य;
+	काष्ठा squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
+	पूर्णांक i;
 
 	mutex_lock(&msblk->meta_index_mutex);
 
 	TRACE("locate_meta_index: index %d, offset %d\n", index, offset);
 
-	if (msblk->meta_index == NULL)
-		goto not_allocated;
+	अगर (msblk->meta_index == शून्य)
+		जाओ not_allocated;
 
-	for (i = 0; i < SQUASHFS_META_SLOTS; i++) {
-		if (msblk->meta_index[i].inode_number == inode->i_ino &&
+	क्रम (i = 0; i < SQUASHFS_META_SLOTS; i++) अणु
+		अगर (msblk->meta_index[i].inode_number == inode->i_ino &&
 				msblk->meta_index[i].offset >= offset &&
 				msblk->meta_index[i].offset <= index &&
-				msblk->meta_index[i].locked == 0) {
+				msblk->meta_index[i].locked == 0) अणु
 			TRACE("locate_meta_index: entry %d, offset %d\n", i,
 					msblk->meta_index[i].offset);
 			meta = &msblk->meta_index[i];
 			offset = meta->offset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (meta)
+	अगर (meta)
 		meta->locked = 1;
 
 not_allocated:
 	mutex_unlock(&msblk->meta_index_mutex);
 
-	return meta;
-}
+	वापस meta;
+पूर्ण
 
 
 /*
- * Find and initialise an empty cache slot for index offset.
+ * Find and initialise an empty cache slot क्रम index offset.
  */
-static struct meta_index *empty_meta_index(struct inode *inode, int offset,
-				int skip)
-{
-	struct squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
-	struct meta_index *meta = NULL;
-	int i;
+अटल काष्ठा meta_index *empty_meta_index(काष्ठा inode *inode, पूर्णांक offset,
+				पूर्णांक skip)
+अणु
+	काष्ठा squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
+	काष्ठा meta_index *meta = शून्य;
+	पूर्णांक i;
 
 	mutex_lock(&msblk->meta_index_mutex);
 
 	TRACE("empty_meta_index: offset %d, skip %d\n", offset, skip);
 
-	if (msblk->meta_index == NULL) {
+	अगर (msblk->meta_index == शून्य) अणु
 		/*
-		 * First time cache index has been used, allocate and
+		 * First समय cache index has been used, allocate and
 		 * initialise.  The cache index could be allocated at
-		 * mount time but doing it here means it is allocated only
-		 * if a 'large' file is read.
+		 * mount समय but करोing it here means it is allocated only
+		 * अगर a 'large' file is पढ़ो.
 		 */
-		msblk->meta_index = kcalloc(SQUASHFS_META_SLOTS,
-			sizeof(*(msblk->meta_index)), GFP_KERNEL);
-		if (msblk->meta_index == NULL) {
+		msblk->meta_index = kसुस्मृति(SQUASHFS_META_SLOTS,
+			माप(*(msblk->meta_index)), GFP_KERNEL);
+		अगर (msblk->meta_index == शून्य) अणु
 			ERROR("Failed to allocate meta_index\n");
-			goto failed;
-		}
-		for (i = 0; i < SQUASHFS_META_SLOTS; i++) {
+			जाओ failed;
+		पूर्ण
+		क्रम (i = 0; i < SQUASHFS_META_SLOTS; i++) अणु
 			msblk->meta_index[i].inode_number = 0;
 			msblk->meta_index[i].locked = 0;
-		}
+		पूर्ण
 		msblk->next_meta_index = 0;
-	}
+	पूर्ण
 
-	for (i = SQUASHFS_META_SLOTS; i &&
+	क्रम (i = SQUASHFS_META_SLOTS; i &&
 			msblk->meta_index[msblk->next_meta_index].locked; i--)
 		msblk->next_meta_index = (msblk->next_meta_index + 1) %
 			SQUASHFS_META_SLOTS;
 
-	if (i == 0) {
+	अगर (i == 0) अणु
 		TRACE("empty_meta_index: failed!\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	TRACE("empty_meta_index: returned meta entry %d, %p\n",
 			msblk->next_meta_index,
@@ -140,64 +141,64 @@ static struct meta_index *empty_meta_index(struct inode *inode, int offset,
 
 failed:
 	mutex_unlock(&msblk->meta_index_mutex);
-	return meta;
-}
+	वापस meta;
+पूर्ण
 
 
-static void release_meta_index(struct inode *inode, struct meta_index *meta)
-{
-	struct squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
+अटल व्योम release_meta_index(काष्ठा inode *inode, काष्ठा meta_index *meta)
+अणु
+	काष्ठा squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
 	mutex_lock(&msblk->meta_index_mutex);
 	meta->locked = 0;
 	mutex_unlock(&msblk->meta_index_mutex);
-}
+पूर्ण
 
 
 /*
  * Read the next n blocks from the block list, starting from
  * metadata block <start_block, offset>.
  */
-static long long read_indexes(struct super_block *sb, int n,
-				u64 *start_block, int *offset)
-{
-	int err, i;
-	long long block = 0;
-	__le32 *blist = kmalloc(PAGE_SIZE, GFP_KERNEL);
+अटल दीर्घ दीर्घ पढ़ो_indexes(काष्ठा super_block *sb, पूर्णांक n,
+				u64 *start_block, पूर्णांक *offset)
+अणु
+	पूर्णांक err, i;
+	दीर्घ दीर्घ block = 0;
+	__le32 *blist = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
 
-	if (blist == NULL) {
+	अगर (blist == शून्य) अणु
 		ERROR("read_indexes: Failed to allocate block_list\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	while (n) {
-		int blocks = min_t(int, n, PAGE_SIZE >> 2);
+	जबतक (n) अणु
+		पूर्णांक blocks = min_t(पूर्णांक, n, PAGE_SIZE >> 2);
 
-		err = squashfs_read_metadata(sb, blist, start_block,
+		err = squashfs_पढ़ो_metadata(sb, blist, start_block,
 				offset, blocks << 2);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			ERROR("read_indexes: reading block [%llx:%x]\n",
 				*start_block, *offset);
-			goto failure;
-		}
+			जाओ failure;
+		पूर्ण
 
-		for (i = 0; i < blocks; i++) {
-			int size = squashfs_block_size(blist[i]);
-			if (size < 0) {
+		क्रम (i = 0; i < blocks; i++) अणु
+			पूर्णांक size = squashfs_block_size(blist[i]);
+			अगर (size < 0) अणु
 				err = size;
-				goto failure;
-			}
+				जाओ failure;
+			पूर्ण
 			block += SQUASHFS_COMPRESSED_SIZE_BLOCK(size);
-		}
+		पूर्ण
 		n -= blocks;
-	}
+	पूर्ण
 
-	kfree(blist);
-	return block;
+	kमुक्त(blist);
+	वापस block;
 
 failure:
-	kfree(blist);
-	return err;
-}
+	kमुक्त(blist);
+	वापस err;
+पूर्ण
 
 
 /*
@@ -207,49 +208,49 @@ failure:
  * entry[1] maps index x + skip, entry[2] maps index x + 2 * skip, and so on.
  * The larger the file, the greater the skip factor.  The skip factor is
  * limited to the size of the metadata cache (SQUASHFS_CACHED_BLKS) to ensure
- * the number of metadata blocks that need to be read fits into the cache.
+ * the number of metadata blocks that need to be पढ़ो fits पूर्णांकo the cache.
  * If the skip factor is limited in this way then the file will use multiple
  * slots.
  */
-static inline int calculate_skip(u64 blocks)
-{
+अटल अंतरभूत पूर्णांक calculate_skip(u64 blocks)
+अणु
 	u64 skip = blocks / ((SQUASHFS_META_ENTRIES + 1)
 		 * SQUASHFS_META_INDEXES);
-	return min((u64) SQUASHFS_CACHED_BLKS - 1, skip + 1);
-}
+	वापस min((u64) SQUASHFS_CACHED_BLKS - 1, skip + 1);
+पूर्ण
 
 
 /*
- * Search and grow the index cache for the specified inode, returning the
+ * Search and grow the index cache क्रम the specअगरied inode, वापसing the
  * on-disk locations of the datablock and block list metadata block
- * <index_block, index_offset> for index (scaled to nearest cache index).
+ * <index_block, index_offset> क्रम index (scaled to nearest cache index).
  */
-static int fill_meta_index(struct inode *inode, int index,
-		u64 *index_block, int *index_offset, u64 *data_block)
-{
-	struct squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
-	int skip = calculate_skip(i_size_read(inode) >> msblk->block_log);
-	int offset = 0;
-	struct meta_index *meta;
-	struct meta_entry *meta_entry;
+अटल पूर्णांक fill_meta_index(काष्ठा inode *inode, पूर्णांक index,
+		u64 *index_block, पूर्णांक *index_offset, u64 *data_block)
+अणु
+	काष्ठा squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
+	पूर्णांक skip = calculate_skip(i_size_पढ़ो(inode) >> msblk->block_log);
+	पूर्णांक offset = 0;
+	काष्ठा meta_index *meta;
+	काष्ठा meta_entry *meta_entry;
 	u64 cur_index_block = squashfs_i(inode)->block_list_start;
-	int cur_offset = squashfs_i(inode)->offset;
+	पूर्णांक cur_offset = squashfs_i(inode)->offset;
 	u64 cur_data_block = squashfs_i(inode)->start;
-	int err, i;
+	पूर्णांक err, i;
 
 	/*
 	 * Scale index to cache index (cache slot entry)
 	 */
 	index /= SQUASHFS_META_INDEXES * skip;
 
-	while (offset < index) {
+	जबतक (offset < index) अणु
 		meta = locate_meta_index(inode, offset + 1, index);
 
-		if (meta == NULL) {
+		अगर (meta == शून्य) अणु
 			meta = empty_meta_index(inode, offset + 1, skip);
-			if (meta == NULL)
-				goto all_done;
-		} else {
+			अगर (meta == शून्य)
+				जाओ all_करोne;
+		पूर्ण अन्यथा अणु
 			offset = index < meta->offset + meta->entries ? index :
 				meta->offset + meta->entries - 1;
 			meta_entry = &meta->meta_entry[offset - meta->offset];
@@ -263,29 +264,29 @@ static int fill_meta_index(struct inode *inode, int index,
 			TRACE("get_meta_index: index_block 0x%llx, offset 0x%x"
 				" data_block 0x%llx\n", cur_index_block,
 				cur_offset, cur_data_block);
-		}
+		पूर्ण
 
 		/*
-		 * If necessary grow cache slot by reading block list.  Cache
+		 * If necessary grow cache slot by पढ़ोing block list.  Cache
 		 * slot is extended up to index or to the end of the slot, in
-		 * which case further slots will be used.
+		 * which हाल further slots will be used.
 		 */
-		for (i = meta->offset + meta->entries; i <= index &&
-				i < meta->offset + SQUASHFS_META_ENTRIES; i++) {
-			int blocks = skip * SQUASHFS_META_INDEXES;
-			long long res = read_indexes(inode->i_sb, blocks,
+		क्रम (i = meta->offset + meta->entries; i <= index &&
+				i < meta->offset + SQUASHFS_META_ENTRIES; i++) अणु
+			पूर्णांक blocks = skip * SQUASHFS_META_INDEXES;
+			दीर्घ दीर्घ res = पढ़ो_indexes(inode->i_sb, blocks,
 					&cur_index_block, &cur_offset);
 
-			if (res < 0) {
-				if (meta->entries == 0)
+			अगर (res < 0) अणु
+				अगर (meta->entries == 0)
 					/*
-					 * Don't leave an empty slot on read
+					 * Don't leave an empty slot on पढ़ो
 					 * error allocated to this inode...
 					 */
 					meta->inode_number = 0;
 				err = res;
-				goto failed;
-			}
+				जाओ failed;
+			पूर्ण
 
 			cur_data_block += res;
 			meta_entry = &meta->meta_entry[i - meta->offset];
@@ -295,15 +296,15 @@ static int fill_meta_index(struct inode *inode, int index,
 			meta_entry->data_block = cur_data_block;
 			meta->entries++;
 			offset++;
-		}
+		पूर्ण
 
 		TRACE("get_meta_index: meta->offset %d, meta->entries %d\n",
 				meta->offset, meta->entries);
 
 		release_meta_index(inode, meta);
-	}
+	पूर्ण
 
-all_done:
+all_करोne:
 	*index_block = cur_index_block;
 	*index_offset = cur_offset;
 	*data_block = cur_data_block;
@@ -311,190 +312,190 @@ all_done:
 	/*
 	 * Scale cache index (cache slot entry) to index
 	 */
-	return offset * SQUASHFS_META_INDEXES * skip;
+	वापस offset * SQUASHFS_META_INDEXES * skip;
 
 failed:
 	release_meta_index(inode, meta);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /*
  * Get the on-disk location and compressed size of the datablock
- * specified by index.  Fill_meta_index() does most of the work.
+ * specअगरied by index.  Fill_meta_index() करोes most of the work.
  */
-static int read_blocklist(struct inode *inode, int index, u64 *block)
-{
+अटल पूर्णांक पढ़ो_blocklist(काष्ठा inode *inode, पूर्णांक index, u64 *block)
+अणु
 	u64 start;
-	long long blks;
-	int offset;
+	दीर्घ दीर्घ blks;
+	पूर्णांक offset;
 	__le32 size;
-	int res = fill_meta_index(inode, index, &start, &offset, block);
+	पूर्णांक res = fill_meta_index(inode, index, &start, &offset, block);
 
 	TRACE("read_blocklist: res %d, index %d, start 0x%llx, offset"
 		       " 0x%x, block 0x%llx\n", res, index, start, offset,
 			*block);
 
-	if (res < 0)
-		return res;
+	अगर (res < 0)
+		वापस res;
 
 	/*
-	 * res contains the index of the mapping returned by fill_meta_index(),
+	 * res contains the index of the mapping वापसed by fill_meta_index(),
 	 * this will likely be less than the desired index (because the
 	 * meta_index cache works at a higher granularity).  Read any
 	 * extra block indexes needed.
 	 */
-	if (res < index) {
-		blks = read_indexes(inode->i_sb, index - res, &start, &offset);
-		if (blks < 0)
-			return (int) blks;
+	अगर (res < index) अणु
+		blks = पढ़ो_indexes(inode->i_sb, index - res, &start, &offset);
+		अगर (blks < 0)
+			वापस (पूर्णांक) blks;
 		*block += blks;
-	}
+	पूर्ण
 
 	/*
-	 * Read length of block specified by index.
+	 * Read length of block specअगरied by index.
 	 */
-	res = squashfs_read_metadata(inode->i_sb, &size, &start, &offset,
-			sizeof(size));
-	if (res < 0)
-		return res;
-	return squashfs_block_size(size);
-}
+	res = squashfs_पढ़ो_metadata(inode->i_sb, &size, &start, &offset,
+			माप(size));
+	अगर (res < 0)
+		वापस res;
+	वापस squashfs_block_size(size);
+पूर्ण
 
-void squashfs_fill_page(struct page *page, struct squashfs_cache_entry *buffer, int offset, int avail)
-{
-	int copied;
-	void *pageaddr;
+व्योम squashfs_fill_page(काष्ठा page *page, काष्ठा squashfs_cache_entry *buffer, पूर्णांक offset, पूर्णांक avail)
+अणु
+	पूर्णांक copied;
+	व्योम *pageaddr;
 
 	pageaddr = kmap_atomic(page);
 	copied = squashfs_copy_data(pageaddr, buffer, offset, avail);
-	memset(pageaddr + copied, 0, PAGE_SIZE - copied);
+	स_रखो(pageaddr + copied, 0, PAGE_SIZE - copied);
 	kunmap_atomic(pageaddr);
 
 	flush_dcache_page(page);
-	if (copied == avail)
+	अगर (copied == avail)
 		SetPageUptodate(page);
-	else
+	अन्यथा
 		SetPageError(page);
-}
+पूर्ण
 
-/* Copy data into page cache  */
-void squashfs_copy_cache(struct page *page, struct squashfs_cache_entry *buffer,
-	int bytes, int offset)
-{
-	struct inode *inode = page->mapping->host;
-	struct squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
-	int i, mask = (1 << (msblk->block_log - PAGE_SHIFT)) - 1;
-	int start_index = page->index & ~mask, end_index = start_index | mask;
+/* Copy data पूर्णांकo page cache  */
+व्योम squashfs_copy_cache(काष्ठा page *page, काष्ठा squashfs_cache_entry *buffer,
+	पूर्णांक bytes, पूर्णांक offset)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
+	पूर्णांक i, mask = (1 << (msblk->block_log - PAGE_SHIFT)) - 1;
+	पूर्णांक start_index = page->index & ~mask, end_index = start_index | mask;
 
 	/*
-	 * Loop copying datablock into pages.  As the datablock likely covers
-	 * many PAGE_SIZE pages (default block size is 128 KiB) explicitly
-	 * grab the pages from the page cache, except for the page that we've
+	 * Loop copying datablock पूर्णांकo pages.  As the datablock likely covers
+	 * many PAGE_SIZE pages (शेष block size is 128 KiB) explicitly
+	 * grab the pages from the page cache, except क्रम the page that we've
 	 * been called to fill.
 	 */
-	for (i = start_index; i <= end_index && bytes > 0; i++,
-			bytes -= PAGE_SIZE, offset += PAGE_SIZE) {
-		struct page *push_page;
-		int avail = buffer ? min_t(int, bytes, PAGE_SIZE) : 0;
+	क्रम (i = start_index; i <= end_index && bytes > 0; i++,
+			bytes -= PAGE_SIZE, offset += PAGE_SIZE) अणु
+		काष्ठा page *push_page;
+		पूर्णांक avail = buffer ? min_t(पूर्णांक, bytes, PAGE_SIZE) : 0;
 
 		TRACE("bytes %d, i %d, available_bytes %d\n", bytes, i, avail);
 
 		push_page = (i == page->index) ? page :
-			grab_cache_page_nowait(page->mapping, i);
+			grab_cache_page_noरुको(page->mapping, i);
 
-		if (!push_page)
-			continue;
+		अगर (!push_page)
+			जारी;
 
-		if (PageUptodate(push_page))
-			goto skip_page;
+		अगर (PageUptodate(push_page))
+			जाओ skip_page;
 
 		squashfs_fill_page(push_page, buffer, offset, avail);
 skip_page:
 		unlock_page(push_page);
-		if (i != page->index)
+		अगर (i != page->index)
 			put_page(push_page);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Read datablock stored packed inside a fragment (tail-end packed block) */
-static int squashfs_readpage_fragment(struct page *page, int expected)
-{
-	struct inode *inode = page->mapping->host;
-	struct squashfs_cache_entry *buffer = squashfs_get_fragment(inode->i_sb,
+अटल पूर्णांक squashfs_पढ़ोpage_fragment(काष्ठा page *page, पूर्णांक expected)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा squashfs_cache_entry *buffer = squashfs_get_fragment(inode->i_sb,
 		squashfs_i(inode)->fragment_block,
 		squashfs_i(inode)->fragment_size);
-	int res = buffer->error;
+	पूर्णांक res = buffer->error;
 
-	if (res)
+	अगर (res)
 		ERROR("Unable to read page, block %llx, size %x\n",
 			squashfs_i(inode)->fragment_block,
 			squashfs_i(inode)->fragment_size);
-	else
+	अन्यथा
 		squashfs_copy_cache(page, buffer, expected,
 			squashfs_i(inode)->fragment_offset);
 
 	squashfs_cache_put(buffer);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int squashfs_readpage_sparse(struct page *page, int expected)
-{
-	squashfs_copy_cache(page, NULL, expected, 0);
-	return 0;
-}
+अटल पूर्णांक squashfs_पढ़ोpage_sparse(काष्ठा page *page, पूर्णांक expected)
+अणु
+	squashfs_copy_cache(page, शून्य, expected, 0);
+	वापस 0;
+पूर्ण
 
-static int squashfs_readpage(struct file *file, struct page *page)
-{
-	struct inode *inode = page->mapping->host;
-	struct squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
-	int index = page->index >> (msblk->block_log - PAGE_SHIFT);
-	int file_end = i_size_read(inode) >> msblk->block_log;
-	int expected = index == file_end ?
-			(i_size_read(inode) & (msblk->block_size - 1)) :
+अटल पूर्णांक squashfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
+	पूर्णांक index = page->index >> (msblk->block_log - PAGE_SHIFT);
+	पूर्णांक file_end = i_size_पढ़ो(inode) >> msblk->block_log;
+	पूर्णांक expected = index == file_end ?
+			(i_size_पढ़ो(inode) & (msblk->block_size - 1)) :
 			 msblk->block_size;
-	int res;
-	void *pageaddr;
+	पूर्णांक res;
+	व्योम *pageaddr;
 
 	TRACE("Entered squashfs_readpage, page index %lx, start block %llx\n",
 				page->index, squashfs_i(inode)->start);
 
-	if (page->index >= ((i_size_read(inode) + PAGE_SIZE - 1) >>
+	अगर (page->index >= ((i_size_पढ़ो(inode) + PAGE_SIZE - 1) >>
 					PAGE_SHIFT))
-		goto out;
+		जाओ out;
 
-	if (index < file_end || squashfs_i(inode)->fragment_block ==
-					SQUASHFS_INVALID_BLK) {
+	अगर (index < file_end || squashfs_i(inode)->fragment_block ==
+					SQUASHFS_INVALID_BLK) अणु
 		u64 block = 0;
-		int bsize = read_blocklist(inode, index, &block);
-		if (bsize < 0)
-			goto error_out;
+		पूर्णांक bsize = पढ़ो_blocklist(inode, index, &block);
+		अगर (bsize < 0)
+			जाओ error_out;
 
-		if (bsize == 0)
-			res = squashfs_readpage_sparse(page, expected);
-		else
-			res = squashfs_readpage_block(page, block, bsize, expected);
-	} else
-		res = squashfs_readpage_fragment(page, expected);
+		अगर (bsize == 0)
+			res = squashfs_पढ़ोpage_sparse(page, expected);
+		अन्यथा
+			res = squashfs_पढ़ोpage_block(page, block, bsize, expected);
+	पूर्ण अन्यथा
+		res = squashfs_पढ़ोpage_fragment(page, expected);
 
-	if (!res)
-		return 0;
+	अगर (!res)
+		वापस 0;
 
 error_out:
 	SetPageError(page);
 out:
 	pageaddr = kmap_atomic(page);
-	memset(pageaddr, 0, PAGE_SIZE);
+	स_रखो(pageaddr, 0, PAGE_SIZE);
 	kunmap_atomic(pageaddr);
 	flush_dcache_page(page);
-	if (!PageError(page))
+	अगर (!PageError(page))
 		SetPageUptodate(page);
 	unlock_page(page);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-const struct address_space_operations squashfs_aops = {
-	.readpage = squashfs_readpage
-};
+स्थिर काष्ठा address_space_operations squashfs_aops = अणु
+	.पढ़ोpage = squashfs_पढ़ोpage
+पूर्ण;

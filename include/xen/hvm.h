@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Simple wrappers around HVM functions */
-#ifndef XEN_HVM_H__
-#define XEN_HVM_H__
+#अगर_अघोषित XEN_HVM_H__
+#घोषणा XEN_HVM_H__
 
-#include <xen/interface/hvm/params.h>
-#include <asm/xen/hypercall.h>
+#समावेश <xen/पूर्णांकerface/hvm/params.h>
+#समावेश <यंत्र/xen/hypercall.h>
 
-static const char *param_name(int op)
-{
-#define PARAM(x) [HVM_PARAM_##x] = #x
-	static const char *const names[] = {
+अटल स्थिर अक्षर *param_name(पूर्णांक op)
+अणु
+#घोषणा PARAM(x) [HVM_PARAM_##x] = #x
+	अटल स्थिर अक्षर *स्थिर names[] = अणु
 		PARAM(CALLBACK_IRQ),
 		PARAM(STORE_PFN),
 		PARAM(STORE_EVTCHN),
@@ -25,39 +26,39 @@ static const char *param_name(int op)
 		PARAM(VPT_ALIGN),
 		PARAM(CONSOLE_PFN),
 		PARAM(CONSOLE_EVTCHN),
-	};
-#undef PARAM
+	पूर्ण;
+#अघोषित PARAM
 
-	if (op >= ARRAY_SIZE(names))
-		return "unknown";
+	अगर (op >= ARRAY_SIZE(names))
+		वापस "unknown";
 
-	if (!names[op])
-		return "reserved";
+	अगर (!names[op])
+		वापस "reserved";
 
-	return names[op];
-}
-static inline int hvm_get_parameter(int idx, uint64_t *value)
-{
-	struct xen_hvm_param xhv;
-	int r;
+	वापस names[op];
+पूर्ण
+अटल अंतरभूत पूर्णांक hvm_get_parameter(पूर्णांक idx, uपूर्णांक64_t *value)
+अणु
+	काष्ठा xen_hvm_param xhv;
+	पूर्णांक r;
 
-	xhv.domid = DOMID_SELF;
+	xhv.करोmid = DOMID_SELF;
 	xhv.index = idx;
 	r = HYPERVISOR_hvm_op(HVMOP_get_param, &xhv);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		pr_err("Cannot get hvm parameter %s (%d): %d!\n",
 		       param_name(idx), idx, r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	*value = xhv.value;
-	return r;
-}
+	वापस r;
+पूर्ण
 
-#define HVM_CALLBACK_VIA_TYPE_VECTOR 0x2
-#define HVM_CALLBACK_VIA_TYPE_SHIFT 56
-#define HVM_CALLBACK_VECTOR(x) (((uint64_t)HVM_CALLBACK_VIA_TYPE_VECTOR)<<\
+#घोषणा HVM_CALLBACK_VIA_TYPE_VECTOR 0x2
+#घोषणा HVM_CALLBACK_VIA_TYPE_SHIFT 56
+#घोषणा HVM_CALLBACK_VECTOR(x) (((uपूर्णांक64_t)HVM_CALLBACK_VIA_TYPE_VECTOR)<<\
 		HVM_CALLBACK_VIA_TYPE_SHIFT | (x))
 
-void xen_setup_callback_vector(void);
+व्योम xen_setup_callback_vector(व्योम);
 
-#endif /* XEN_HVM_H__ */
+#पूर्ण_अगर /* XEN_HVM_H__ */

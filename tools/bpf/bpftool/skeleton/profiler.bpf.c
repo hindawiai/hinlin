@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 // Copyright (c) 2020 Facebook
-#include <vmlinux.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <vmlinux.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
 /* map of perf event fds, num_cpu * num_metric entries */
-struct {
-	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-	__uint(key_size, sizeof(u32));
-	__uint(value_size, sizeof(int));
-} events SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+	__uपूर्णांक(key_size, माप(u32));
+	__uपूर्णांक(value_size, माप(पूर्णांक));
+पूर्ण events SEC(".maps");
 
-/* readings at fentry */
-struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-	__uint(key_size, sizeof(u32));
-	__uint(value_size, sizeof(struct bpf_perf_event_value));
-} fentry_readings SEC(".maps");
+/* पढ़ोings at fentry */
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uपूर्णांक(key_size, माप(u32));
+	__uपूर्णांक(value_size, माप(काष्ठा bpf_perf_event_value));
+पूर्ण fentry_पढ़ोings SEC(".maps");
 
-/* accumulated readings */
-struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-	__uint(key_size, sizeof(u32));
-	__uint(value_size, sizeof(struct bpf_perf_event_value));
-} accum_readings SEC(".maps");
+/* accumulated पढ़ोings */
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uपूर्णांक(key_size, माप(u32));
+	__uपूर्णांक(value_size, माप(काष्ठा bpf_perf_event_value));
+पूर्ण accum_पढ़ोings SEC(".maps");
 
 /* sample counts, one per cpu */
-struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-	__uint(key_size, sizeof(u32));
-	__uint(value_size, sizeof(u64));
-} counts SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uपूर्णांक(key_size, माप(u32));
+	__uपूर्णांक(value_size, माप(u64));
+पूर्ण counts SEC(".maps");
 
-const volatile __u32 num_cpu = 1;
-const volatile __u32 num_metric = 1;
-#define MAX_NUM_MATRICS 4
+स्थिर अस्थिर __u32 num_cpu = 1;
+स्थिर अस्थिर __u32 num_metric = 1;
+#घोषणा MAX_NUM_MATRICS 4
 
 SEC("fentry/XXX")
-int BPF_PROG(fentry_XXX)
-{
-	struct bpf_perf_event_value *ptrs[MAX_NUM_MATRICS];
+पूर्णांक BPF_PROG(fentry_XXX)
+अणु
+	काष्ठा bpf_perf_event_value *ptrs[MAX_NUM_MATRICS];
 	u32 key = bpf_get_smp_processor_id();
 	u32 i;
 
-	/* look up before reading, to reduce error */
-	for (i = 0; i < num_metric && i < MAX_NUM_MATRICS; i++) {
+	/* look up beक्रमe पढ़ोing, to reduce error */
+	क्रम (i = 0; i < num_metric && i < MAX_NUM_MATRICS; i++) अणु
 		u32 flag = i;
 
-		ptrs[i] = bpf_map_lookup_elem(&fentry_readings, &flag);
-		if (!ptrs[i])
-			return 0;
-	}
+		ptrs[i] = bpf_map_lookup_elem(&fentry_पढ़ोings, &flag);
+		अगर (!ptrs[i])
+			वापस 0;
+	पूर्ण
 
-	for (i = 0; i < num_metric && i < MAX_NUM_MATRICS; i++) {
-		struct bpf_perf_event_value reading;
-		int err;
+	क्रम (i = 0; i < num_metric && i < MAX_NUM_MATRICS; i++) अणु
+		काष्ठा bpf_perf_event_value पढ़ोing;
+		पूर्णांक err;
 
-		err = bpf_perf_event_read_value(&events, key, &reading,
-						sizeof(reading));
-		if (err)
-			return 0;
-		*(ptrs[i]) = reading;
+		err = bpf_perf_event_पढ़ो_value(&events, key, &पढ़ोing,
+						माप(पढ़ोing));
+		अगर (err)
+			वापस 0;
+		*(ptrs[i]) = पढ़ोing;
 		key += num_cpu;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void
-fexit_update_maps(u32 id, struct bpf_perf_event_value *after)
-{
-	struct bpf_perf_event_value *before, diff;
+अटल अंतरभूत व्योम
+fनिकास_update_maps(u32 id, काष्ठा bpf_perf_event_value *after)
+अणु
+	काष्ठा bpf_perf_event_value *beक्रमe, dअगरf;
 
-	before = bpf_map_lookup_elem(&fentry_readings, &id);
-	/* only account samples with a valid fentry_reading */
-	if (before && before->counter) {
-		struct bpf_perf_event_value *accum;
+	beक्रमe = bpf_map_lookup_elem(&fentry_पढ़ोings, &id);
+	/* only account samples with a valid fentry_पढ़ोing */
+	अगर (beक्रमe && beक्रमe->counter) अणु
+		काष्ठा bpf_perf_event_value *accum;
 
-		diff.counter = after->counter - before->counter;
-		diff.enabled = after->enabled - before->enabled;
-		diff.running = after->running - before->running;
+		dअगरf.counter = after->counter - beक्रमe->counter;
+		dअगरf.enabled = after->enabled - beक्रमe->enabled;
+		dअगरf.running = after->running - beक्रमe->running;
 
-		accum = bpf_map_lookup_elem(&accum_readings, &id);
-		if (accum) {
-			accum->counter += diff.counter;
-			accum->enabled += diff.enabled;
-			accum->running += diff.running;
-		}
-	}
-}
+		accum = bpf_map_lookup_elem(&accum_पढ़ोings, &id);
+		अगर (accum) अणु
+			accum->counter += dअगरf.counter;
+			accum->enabled += dअगरf.enabled;
+			accum->running += dअगरf.running;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 SEC("fexit/XXX")
-int BPF_PROG(fexit_XXX)
-{
-	struct bpf_perf_event_value readings[MAX_NUM_MATRICS];
+पूर्णांक BPF_PROG(fनिकास_XXX)
+अणु
+	काष्ठा bpf_perf_event_value पढ़ोings[MAX_NUM_MATRICS];
 	u32 cpu = bpf_get_smp_processor_id();
 	u32 i, zero = 0;
-	int err;
+	पूर्णांक err;
 	u64 *count;
 
-	/* read all events before updating the maps, to reduce error */
-	for (i = 0; i < num_metric && i < MAX_NUM_MATRICS; i++) {
-		err = bpf_perf_event_read_value(&events, cpu + i * num_cpu,
-						readings + i, sizeof(*readings));
-		if (err)
-			return 0;
-	}
+	/* पढ़ो all events beक्रमe updating the maps, to reduce error */
+	क्रम (i = 0; i < num_metric && i < MAX_NUM_MATRICS; i++) अणु
+		err = bpf_perf_event_पढ़ो_value(&events, cpu + i * num_cpu,
+						पढ़ोings + i, माप(*पढ़ोings));
+		अगर (err)
+			वापस 0;
+	पूर्ण
 	count = bpf_map_lookup_elem(&counts, &zero);
-	if (count) {
+	अगर (count) अणु
 		*count += 1;
-		for (i = 0; i < num_metric && i < MAX_NUM_MATRICS; i++)
-			fexit_update_maps(i, &readings[i]);
-	}
-	return 0;
-}
+		क्रम (i = 0; i < num_metric && i < MAX_NUM_MATRICS; i++)
+			fनिकास_update_maps(i, &पढ़ोings[i]);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-char LICENSE[] SEC("license") = "Dual BSD/GPL";
+अक्षर LICENSE[] SEC("license") = "Dual BSD/GPL";

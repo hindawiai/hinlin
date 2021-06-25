@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#ifndef _VMCI_DATAGRAM_H_
-#define _VMCI_DATAGRAM_H_
+#अगर_अघोषित _VMCI_DATAGRAM_H_
+#घोषणा _VMCI_DATAGRAM_H_
 
-#include <linux/types.h>
-#include <linux/list.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
 
-#include "vmci_context.h"
+#समावेश "vmci_context.h"
 
-#define VMCI_MAX_DELAYED_DG_HOST_QUEUE_SIZE 256
+#घोषणा VMCI_MAX_DELAYED_DG_HOST_QUEUE_SIZE 256
 
 /*
- * The struct vmci_datagram_queue_entry is a queue header for the in-kernel VMCI
+ * The काष्ठा vmci_datagram_queue_entry is a queue header क्रम the in-kernel VMCI
  * datagram queues. It is allocated in non-paged memory, as the
- * content is accessed while holding a spinlock. The pending datagram
- * itself may be allocated from paged memory. We shadow the size of
+ * content is accessed जबतक holding a spinlock. The pending datagram
+ * itself may be allocated from paged memory. We shaकरोw the size of
  * the datagram in the non-paged queue entry as this size is used
- * while holding the same spinlock as above.
+ * जबतक holding the same spinlock as above.
  */
-struct vmci_datagram_queue_entry {
-	struct list_head list_item;	/* For queuing. */
-	size_t dg_size;		/* Size of datagram. */
-	struct vmci_datagram *dg;	/* Pending datagram. */
-};
+काष्ठा vmci_datagram_queue_entry अणु
+	काष्ठा list_head list_item;	/* For queuing. */
+	माप_प्रकार dg_size;		/* Size of datagram. */
+	काष्ठा vmci_datagram *dg;	/* Pending datagram. */
+पूर्ण;
 
 /* VMCIDatagramSendRecvInfo */
-struct vmci_datagram_snd_rcv_info {
+काष्ठा vmci_datagram_snd_rcv_info अणु
 	u64 addr;
 	u32 len;
 	s32 result;
-};
+पूर्ण;
 
-/* Datagram API for non-public use. */
-int vmci_datagram_dispatch(u32 context_id, struct vmci_datagram *dg,
+/* Datagram API क्रम non-खुला use. */
+पूर्णांक vmci_datagram_dispatch(u32 context_id, काष्ठा vmci_datagram *dg,
 			   bool from_guest);
-int vmci_datagram_invoke_guest_handler(struct vmci_datagram *dg);
+पूर्णांक vmci_datagram_invoke_guest_handler(काष्ठा vmci_datagram *dg);
 
-#endif /* _VMCI_DATAGRAM_H_ */
+#पूर्ण_अगर /* _VMCI_DATAGRAM_H_ */

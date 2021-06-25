@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <zstd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <zstd.h>
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	ZSTD_CStream	*cstream;
 
 	cstream = ZSTD_createCStream();
-	ZSTD_freeCStream(cstream);
+	ZSTD_मुक्तCStream(cstream);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

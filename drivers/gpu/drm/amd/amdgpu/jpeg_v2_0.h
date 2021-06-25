@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,22 +22,22 @@
  *
  */
 
-#ifndef __JPEG_V2_0_H__
-#define __JPEG_V2_0_H__
+#अगर_अघोषित __JPEG_V2_0_H__
+#घोषणा __JPEG_V2_0_H__
 
-void jpeg_v2_0_dec_ring_insert_start(struct amdgpu_ring *ring);
-void jpeg_v2_0_dec_ring_insert_end(struct amdgpu_ring *ring);
-void jpeg_v2_0_dec_ring_emit_fence(struct amdgpu_ring *ring, u64 addr, u64 seq,
-				unsigned flags);
-void jpeg_v2_0_dec_ring_emit_ib(struct amdgpu_ring *ring, struct amdgpu_job *job,
-				struct amdgpu_ib *ib, uint32_t flags);
-void jpeg_v2_0_dec_ring_emit_reg_wait(struct amdgpu_ring *ring, uint32_t reg,
-				uint32_t val, uint32_t mask);
-void jpeg_v2_0_dec_ring_emit_vm_flush(struct amdgpu_ring *ring,
-				unsigned vmid, uint64_t pd_addr);
-void jpeg_v2_0_dec_ring_emit_wreg(struct amdgpu_ring *ring, uint32_t reg, uint32_t val);
-void jpeg_v2_0_dec_ring_nop(struct amdgpu_ring *ring, uint32_t count);
+व्योम jpeg_v2_0_dec_ring_insert_start(काष्ठा amdgpu_ring *ring);
+व्योम jpeg_v2_0_dec_ring_insert_end(काष्ठा amdgpu_ring *ring);
+व्योम jpeg_v2_0_dec_ring_emit_fence(काष्ठा amdgpu_ring *ring, u64 addr, u64 seq,
+				अचिन्हित flags);
+व्योम jpeg_v2_0_dec_ring_emit_ib(काष्ठा amdgpu_ring *ring, काष्ठा amdgpu_job *job,
+				काष्ठा amdgpu_ib *ib, uपूर्णांक32_t flags);
+व्योम jpeg_v2_0_dec_ring_emit_reg_रुको(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t reg,
+				uपूर्णांक32_t val, uपूर्णांक32_t mask);
+व्योम jpeg_v2_0_dec_ring_emit_vm_flush(काष्ठा amdgpu_ring *ring,
+				अचिन्हित vmid, uपूर्णांक64_t pd_addr);
+व्योम jpeg_v2_0_dec_ring_emit_wreg(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t reg, uपूर्णांक32_t val);
+व्योम jpeg_v2_0_dec_ring_nop(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t count);
 
-extern const struct amdgpu_ip_block_version jpeg_v2_0_ip_block;
+बाह्य स्थिर काष्ठा amdgpu_ip_block_version jpeg_v2_0_ip_block;
 
-#endif /* __JPEG_V2_0_H__ */
+#पूर्ण_अगर /* __JPEG_V2_0_H__ */

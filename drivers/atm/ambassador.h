@@ -1,119 +1,120 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
-  Madge Ambassador ATM Adapter driver.
+  Madge Ambassaकरोr ATM Adapter driver.
   Copyright (C) 1995-1999  Madge Networks Ltd.
 
 */
 
-#ifndef AMBASSADOR_H
-#define AMBASSADOR_H
+#अगर_अघोषित AMBASSADOR_H
+#घोषणा AMBASSADOR_H
 
 
-#ifdef CONFIG_ATM_AMBASSADOR_DEBUG
-#define DEBUG_AMBASSADOR
-#endif
+#अगर_घोषित CONFIG_ATM_AMBASSADOR_DEBUG
+#घोषणा DEBUG_AMBASSADOR
+#पूर्ण_अगर
 
-#define DEV_LABEL                          "amb"
+#घोषणा DEV_LABEL                          "amb"
 
-#ifndef PCI_VENDOR_ID_MADGE
-#define PCI_VENDOR_ID_MADGE                0x10B6
-#endif
-#ifndef PCI_VENDOR_ID_MADGE_AMBASSADOR
-#define PCI_DEVICE_ID_MADGE_AMBASSADOR     0x1001
-#endif
-#ifndef PCI_VENDOR_ID_MADGE_AMBASSADOR_BAD
-#define PCI_DEVICE_ID_MADGE_AMBASSADOR_BAD 0x1002
-#endif
+#अगर_अघोषित PCI_VENDOR_ID_MADGE
+#घोषणा PCI_VENDOR_ID_MADGE                0x10B6
+#पूर्ण_अगर
+#अगर_अघोषित PCI_VENDOR_ID_MADGE_AMBASSADOR
+#घोषणा PCI_DEVICE_ID_MADGE_AMBASSADOR     0x1001
+#पूर्ण_अगर
+#अगर_अघोषित PCI_VENDOR_ID_MADGE_AMBASSADOR_BAD
+#घोषणा PCI_DEVICE_ID_MADGE_AMBASSADOR_BAD 0x1002
+#पूर्ण_अगर
 
 // diagnostic output
 
-#define PRINTK(severity,format,args...) \
-  printk(severity DEV_LABEL ": " format "\n" , ## args)
+#घोषणा PRINTK(severity,क्रमmat,args...) \
+  prपूर्णांकk(severity DEV_LABEL ": " क्रमmat "\n" , ## args)
 
-#ifdef DEBUG_AMBASSADOR
+#अगर_घोषित DEBUG_AMBASSADOR
 
-#define DBG_ERR  0x0001
-#define DBG_WARN 0x0002
-#define DBG_INFO 0x0004
-#define DBG_INIT 0x0008
-#define DBG_LOAD 0x0010
-#define DBG_VCC  0x0020
-#define DBG_QOS  0x0040
-#define DBG_CMD  0x0080
-#define DBG_TX   0x0100
-#define DBG_RX   0x0200
-#define DBG_SKB  0x0400
-#define DBG_POOL 0x0800
-#define DBG_IRQ  0x1000
-#define DBG_FLOW 0x2000
-#define DBG_REGS 0x4000
-#define DBG_DATA 0x8000
-#define DBG_MASK 0xffff
+#घोषणा DBG_ERR  0x0001
+#घोषणा DBG_WARN 0x0002
+#घोषणा DBG_INFO 0x0004
+#घोषणा DBG_INIT 0x0008
+#घोषणा DBG_LOAD 0x0010
+#घोषणा DBG_VCC  0x0020
+#घोषणा DBG_QOS  0x0040
+#घोषणा DBG_CMD  0x0080
+#घोषणा DBG_TX   0x0100
+#घोषणा DBG_RX   0x0200
+#घोषणा DBG_SKB  0x0400
+#घोषणा DBG_POOL 0x0800
+#घोषणा DBG_IRQ  0x1000
+#घोषणा DBG_FLOW 0x2000
+#घोषणा DBG_REGS 0x4000
+#घोषणा DBG_DATA 0x8000
+#घोषणा DBG_MASK 0xffff
 
-/* the ## prevents the annoying double expansion of the macro arguments */
-/* KERN_INFO is used since KERN_DEBUG often does not make it to the console */
-#define PRINTDB(bits,format,args...) \
-  ( (debug & (bits)) ? printk (KERN_INFO DEV_LABEL ": " format , ## args) : 1 )
-#define PRINTDM(bits,format,args...) \
-  ( (debug & (bits)) ? printk (format , ## args) : 1 )
-#define PRINTDE(bits,format,args...) \
-  ( (debug & (bits)) ? printk (format "\n" , ## args) : 1 )
-#define PRINTD(bits,format,args...) \
-  ( (debug & (bits)) ? printk (KERN_INFO DEV_LABEL ": " format "\n" , ## args) : 1 )
+/* the ## prevents the annoying द्विगुन expansion of the macro arguments */
+/* KERN_INFO is used since KERN_DEBUG often करोes not make it to the console */
+#घोषणा PRINTDB(bits,क्रमmat,args...) \
+  ( (debug & (bits)) ? prपूर्णांकk (KERN_INFO DEV_LABEL ": " क्रमmat , ## args) : 1 )
+#घोषणा PRINTDM(bits,क्रमmat,args...) \
+  ( (debug & (bits)) ? prपूर्णांकk (क्रमmat , ## args) : 1 )
+#घोषणा PRINTDE(bits,क्रमmat,args...) \
+  ( (debug & (bits)) ? prपूर्णांकk (क्रमmat "\n" , ## args) : 1 )
+#घोषणा PRINTD(bits,क्रमmat,args...) \
+  ( (debug & (bits)) ? prपूर्णांकk (KERN_INFO DEV_LABEL ": " क्रमmat "\n" , ## args) : 1 )
 
-#else
+#अन्यथा
 
-#define PRINTD(bits,format,args...)
-#define PRINTDB(bits,format,args...)
-#define PRINTDM(bits,format,args...)
-#define PRINTDE(bits,format,args...)
+#घोषणा PRINTD(bits,क्रमmat,args...)
+#घोषणा PRINTDB(bits,क्रमmat,args...)
+#घोषणा PRINTDM(bits,क्रमmat,args...)
+#घोषणा PRINTDE(bits,क्रमmat,args...)
 
-#endif
+#पूर्ण_अगर
 
-#define PRINTDD(bits,format,args...)
-#define PRINTDDB(sec,fmt,args...)
-#define PRINTDDM(sec,fmt,args...)
-#define PRINTDDE(sec,fmt,args...)
+#घोषणा PRINTDD(bits,क्रमmat,args...)
+#घोषणा PRINTDDB(sec,fmt,args...)
+#घोषणा PRINTDDM(sec,fmt,args...)
+#घोषणा PRINTDDE(sec,fmt,args...)
 
 // tunable values (?)
 
-/* MUST be powers of two -- why ? */
-#define COM_Q_ENTRIES        8
-#define TX_Q_ENTRIES        32
-#define RX_Q_ENTRIES        64
+/* MUST be घातers of two -- why ? */
+#घोषणा COM_Q_ENTRIES        8
+#घोषणा TX_Q_ENTRIES        32
+#घोषणा RX_Q_ENTRIES        64
 
 // fixed values
 
 // guessing
-#define AMB_EXTENT         0x80
+#घोषणा AMB_EXTENT         0x80
 
-// Minimum allowed size for an Ambassador queue
-#define MIN_QUEUE_SIZE     2
+// Minimum allowed size क्रम an Ambassaकरोr queue
+#घोषणा MIN_QUEUE_SIZE     2
 
-// Ambassador microcode allows 1 to 4 pools, we use 4 (simpler)
-#define NUM_RX_POOLS	   4
+// Ambassaकरोr microcode allows 1 to 4 pools, we use 4 (simpler)
+#घोषणा NUM_RX_POOLS	   4
 
 // minimum RX buffers required to cope with replenishing delay
-#define MIN_RX_BUFFERS	   1
+#घोषणा MIN_RX_BUFFERS	   1
 
 // minimum PCI latency we will tolerate (32 IS TOO SMALL)
-#define MIN_PCI_LATENCY   64 // 255
+#घोषणा MIN_PCI_LATENCY   64 // 255
 
 // VCs supported by card (VPI always 0)
-#define NUM_VPI_BITS       0
-#define NUM_VCI_BITS      10
-#define NUM_VCS         1024
+#घोषणा NUM_VPI_BITS       0
+#घोषणा NUM_VCI_BITS      10
+#घोषणा NUM_VCS         1024
 
 /* The status field bits defined so far. */
-#define RX_ERR		0x8000 // always present if there is an error (hmm)
-#define CRC_ERR		0x4000 // AAL5 CRC error
-#define LEN_ERR		0x2000 // overlength frame
-#define ABORT_ERR	0x1000 // zero length field in received frame
-#define UNUSED_ERR	0x0800 // buffer returned unused
+#घोषणा RX_ERR		0x8000 // always present अगर there is an error (hmm)
+#घोषणा CRC_ERR		0x4000 // AAL5 CRC error
+#घोषणा LEN_ERR		0x2000 // overlength frame
+#घोषणा ABORT_ERR	0x1000 // zero length field in received frame
+#घोषणा UNUSED_ERR	0x0800 // buffer वापसed unused
 
 // Adaptor commands
 
-#define SRB_OPEN_VC		0
+#घोषणा SRB_OPEN_VC		0
 /* par_0: dwordswap(VC_number) */
 /* par_1: dwordswap(flags<<16) or wordswap(flags)*/ 
 /* flags:		*/
@@ -129,56 +130,56 @@
 
 /* par_2: dwordswap(fp_rate<<16) or wordswap(fp_rate) */
 
-#define	SRB_CLOSE_VC		1
+#घोषणा	SRB_CLOSE_VC		1
 /* par_0: dwordswap(VC_number) */
 
-#define	SRB_GET_BIA		2
-/* returns 		*/
+#घोषणा	SRB_GET_BIA		2
+/* वापसs 		*/
 /* par_0: dwordswap(half BIA) */
 /* par_1: dwordswap(half BIA) */
 
-#define	SRB_GET_SUNI_STATS	3
+#घोषणा	SRB_GET_SUNI_STATS	3
 /* par_0: dwordswap(physical_host_address) */
 
-#define	SRB_SET_BITS_8		4
-#define	SRB_SET_BITS_16		5
-#define	SRB_SET_BITS_32		6
-#define	SRB_CLEAR_BITS_8	7
-#define	SRB_CLEAR_BITS_16	8
-#define	SRB_CLEAR_BITS_32	9
+#घोषणा	SRB_SET_BITS_8		4
+#घोषणा	SRB_SET_BITS_16		5
+#घोषणा	SRB_SET_BITS_32		6
+#घोषणा	SRB_CLEAR_BITS_8	7
+#घोषणा	SRB_CLEAR_BITS_16	8
+#घोषणा	SRB_CLEAR_BITS_32	9
 /* par_0: dwordswap(ATMizer address)	*/
 /* par_1: dwordswap(mask) */
 
-#define	SRB_SET_8		10
-#define	SRB_SET_16		11
-#define	SRB_SET_32		12
+#घोषणा	SRB_SET_8		10
+#घोषणा	SRB_SET_16		11
+#घोषणा	SRB_SET_32		12
 /* par_0: dwordswap(ATMizer address)	*/
 /* par_1: dwordswap(data) */
 
-#define	SRB_GET_32		13
+#घोषणा	SRB_GET_32		13
 /* par_0: dwordswap(ATMizer address)	*/
-/* returns			*/
+/* वापसs			*/
 /* par_1: dwordswap(ATMizer data) */
 
-#define SRB_GET_VERSION		14
-/* returns 		*/
+#घोषणा SRB_GET_VERSION		14
+/* वापसs 		*/
 /* par_0: dwordswap(Major Version) */
 /* par_1: dwordswap(Minor Version) */
 
-#define SRB_FLUSH_BUFFER_Q	15
+#घोषणा SRB_FLUSH_BUFFER_Q	15
 /* Only flags to define which buffer pool; all others must be zero */
 /* par_0: dwordswap(flags<<16) or wordswap(flags)*/ 
 
-#define	SRB_GET_DMA_SPEEDS	16
-/* returns 		*/
+#घोषणा	SRB_GET_DMA_SPEEDS	16
+/* वापसs 		*/
 /* par_0: dwordswap(Read speed (bytes/sec)) */
 /* par_1: dwordswap(Write speed (bytes/sec)) */
 
-#define SRB_MODIFY_VC_RATE	17
+#घोषणा SRB_MODIFY_VC_RATE	17
 /* par_0: dwordswap(VC_number) */
 /* par_1: dwordswap(fp_rate<<16) or wordswap(fp_rate) */
 
-#define SRB_MODIFY_VC_FLAGS	18
+#घोषणा SRB_MODIFY_VC_FLAGS	18
 /* par_0: dwordswap(VC_number) */
 /* par_1: dwordswap(flags<<16) or wordswap(flags)*/ 
 
@@ -193,299 +194,299 @@
 /* RxPool2:	0x0040		*/
 /* RxPool3:	0x0060		*/
 
-#define SRB_RATE_SHIFT          16
-#define SRB_POOL_SHIFT          (SRB_FLAGS_SHIFT+5)
-#define SRB_FLAGS_SHIFT         16
+#घोषणा SRB_RATE_SHIFT          16
+#घोषणा SRB_POOL_SHIFT          (SRB_FLAGS_SHIFT+5)
+#घोषणा SRB_FLAGS_SHIFT         16
 
-#define	SRB_STOP_TASKING	19
-#define	SRB_START_TASKING	20
-#define SRB_SHUT_DOWN		21
-#define MAX_SRB			21
+#घोषणा	SRB_STOP_TASKING	19
+#घोषणा	SRB_START_TASKING	20
+#घोषणा SRB_SHUT_DOWN		21
+#घोषणा MAX_SRB			21
 
-#define SRB_COMPLETE		0xffffffff
+#घोषणा SRB_COMPLETE		0xffffffff
 
-#define TX_FRAME          	0x80000000
+#घोषणा TX_FRAME          	0x80000000
 
-// number of types of SRB MUST be a power of two -- why?
-#define NUM_OF_SRB	32
+// number of types of SRB MUST be a घातer of two -- why?
+#घोषणा NUM_OF_SRB	32
 
-// number of bits of period info for rate
-#define MAX_RATE_BITS	6
+// number of bits of period info क्रम rate
+#घोषणा MAX_RATE_BITS	6
 
-#define TX_UBR          0x0000
-#define TX_UBR_CAPPED   0x0008
-#define TX_ABR          0x0018
-#define TX_FRAME_NOTCAP 0x0000
-#define TX_FRAME_CAPPED 0x8000
+#घोषणा TX_UBR          0x0000
+#घोषणा TX_UBR_CAPPED   0x0008
+#घोषणा TX_ABR          0x0018
+#घोषणा TX_FRAME_NOTCAP 0x0000
+#घोषणा TX_FRAME_CAPPED 0x8000
 
-#define FP_155_RATE	0x24b1
-#define FP_25_RATE	0x1f9d
+#घोषणा FP_155_RATE	0x24b1
+#घोषणा FP_25_RATE	0x1f9d
 
-/* #define VERSION_NUMBER 0x01000000 // initial release */
-/* #define VERSION_NUMBER 0x01010000 // fixed startup probs PLX MB0 not cleared */
-/* #define VERSION_NUMBER 0x01020000 // changed SUNI reset timings; allowed r/w onchip */
+/* #घोषणा VERSION_NUMBER 0x01000000 // initial release */
+/* #घोषणा VERSION_NUMBER 0x01010000 // fixed startup probs PLX MB0 not cleared */
+/* #घोषणा VERSION_NUMBER 0x01020000 // changed SUNI reset timings; allowed r/w onchip */
 
-/* #define VERSION_NUMBER 0x01030000 // clear local doorbell int reg on reset */
-/* #define VERSION_NUMBER 0x01040000 // PLX bug work around version PLUS */
-/* remove race conditions on basic interface */
+/* #घोषणा VERSION_NUMBER 0x01030000 // clear local करोorbell पूर्णांक reg on reset */
+/* #घोषणा VERSION_NUMBER 0x01040000 // PLX bug work around version PLUS */
+/* हटाओ race conditions on basic पूर्णांकerface */
 /* indicate to the host that diagnostics */
-/* have finished; if failed, how and what  */
+/* have finished; अगर failed, how and what  */
 /* failed */
 /* fix host memory test to fix PLX bug */
 /* allow flash upgrade and BIA upgrade directly */
 /*  */
-#define VERSION_NUMBER 0x01050025 /* Jason's first hacked version. */
-/* Change in download algorithm */
+#घोषणा VERSION_NUMBER 0x01050025 /* Jason's first hacked version. */
+/* Change in करोwnload algorithm */
 
-#define DMA_VALID 0xb728e149 /* completely random */
+#घोषणा DMA_VALID 0xb728e149 /* completely अक्रमom */
 
-#define FLASH_BASE 0xa0c00000
-#define FLASH_SIZE 0x00020000			/* 128K */
-#define BIA_BASE (FLASH_BASE+0x0001c000)	/* Flash Sector 7 */
-#define BIA_ADDRESS ((void *)0xa0c1c000)
-#define PLX_BASE 0xe0000000
+#घोषणा FLASH_BASE 0xa0c00000
+#घोषणा FLASH_SIZE 0x00020000			/* 128K */
+#घोषणा BIA_BASE (FLASH_BASE+0x0001c000)	/* Flash Sector 7 */
+#घोषणा BIA_ADDRESS ((व्योम *)0xa0c1c000)
+#घोषणा PLX_BASE 0xe0000000
 
-typedef enum {
+प्रकार क्रमागत अणु
   host_memory_test = 1,
-  read_adapter_memory,
-  write_adapter_memory,
+  पढ़ो_adapter_memory,
+  ग_लिखो_adapter_memory,
   adapter_start,
   get_version_number,
-  interrupt_host,
+  पूर्णांकerrupt_host,
   flash_erase_sector,
-  adap_download_block = 0x20,
+  adap_करोwnload_block = 0x20,
   adap_erase_flash,
   adap_run_in_iram,
-  adap_end_download
-} loader_command;
+  adap_end_करोwnload
+पूर्ण loader_command;
 
-#define BAD_COMMAND                     (-1)
-#define COMMAND_IN_PROGRESS             1
-#define COMMAND_PASSED_TEST             2
-#define COMMAND_FAILED_TEST             3
-#define COMMAND_READ_DATA_OK            4
-#define COMMAND_READ_BAD_ADDRESS        5
-#define COMMAND_WRITE_DATA_OK           6
-#define COMMAND_WRITE_BAD_ADDRESS       7
-#define COMMAND_WRITE_FLASH_FAILURE     8
-#define COMMAND_COMPLETE                9
-#define COMMAND_FLASH_ERASE_FAILURE	10
-#define COMMAND_WRITE_BAD_DATA		11
+#घोषणा BAD_COMMAND                     (-1)
+#घोषणा COMMAND_IN_PROGRESS             1
+#घोषणा COMMAND_PASSED_TEST             2
+#घोषणा COMMAND_FAILED_TEST             3
+#घोषणा COMMAND_READ_DATA_OK            4
+#घोषणा COMMAND_READ_BAD_ADDRESS        5
+#घोषणा COMMAND_WRITE_DATA_OK           6
+#घोषणा COMMAND_WRITE_BAD_ADDRESS       7
+#घोषणा COMMAND_WRITE_FLASH_FAILURE     8
+#घोषणा COMMAND_COMPLETE                9
+#घोषणा COMMAND_FLASH_ERASE_FAILURE	10
+#घोषणा COMMAND_WRITE_BAD_DATA		11
 
-/* bit fields for mailbox[0] return values */
+/* bit fields क्रम mailbox[0] वापस values */
 
-#define GPINT_TST_FAILURE               0x00000001      
-#define SUNI_DATA_PATTERN_FAILURE       0x00000002
-#define SUNI_DATA_BITS_FAILURE          0x00000004
-#define SUNI_UTOPIA_FAILURE             0x00000008
-#define SUNI_FIFO_FAILURE               0x00000010
-#define SRAM_FAILURE                    0x00000020
-#define SELF_TEST_FAILURE               0x0000003f
+#घोषणा GPINT_TST_FAILURE               0x00000001      
+#घोषणा SUNI_DATA_PATTERN_FAILURE       0x00000002
+#घोषणा SUNI_DATA_BITS_FAILURE          0x00000004
+#घोषणा SUNI_UTOPIA_FAILURE             0x00000008
+#घोषणा SUNI_FIFO_FAILURE               0x00000010
+#घोषणा SRAM_FAILURE                    0x00000020
+#घोषणा SELF_TEST_FAILURE               0x0000003f
 
 /* mailbox[1] = 0 in progress, -1 on completion */
 /* mailbox[2] = current test 00 00 test(8 bit) phase(8 bit) */
 /* mailbox[3] = last failure, 00 00 test(8 bit) phase(8 bit) */
-/* mailbox[4],mailbox[5],mailbox[6] random failure values */
+/* mailbox[4],mailbox[5],mailbox[6] अक्रमom failure values */
 
-/* PLX/etc. memory map including command structure */
+/* PLX/etc. memory map including command काष्ठाure */
 
-/* These registers may also be memory mapped in PCI memory */
+/* These रेजिस्टरs may also be memory mapped in PCI memory */
 
-#define UNUSED_LOADER_MAILBOXES 6
+#घोषणा UNUSED_LOADER_MAILBOXES 6
 
-typedef struct {
+प्रकार काष्ठा अणु
   u32 stuff[16];
-  union {
-    struct {
+  जोड़ अणु
+    काष्ठा अणु
       u32 result;
-      u32 ready;
+      u32 पढ़ोy;
       u32 stuff[UNUSED_LOADER_MAILBOXES];
-    } loader;
-    struct {
+    पूर्ण loader;
+    काष्ठा अणु
       u32 cmd_address;
       u32 tx_address;
       u32 rx_address[NUM_RX_POOLS];
       u32 gen_counter;
       u32 spare;
-    } adapter;
-  } mb;
-  u32 doorbell;
-  u32 interrupt;
-  u32 interrupt_control;
+    पूर्ण adapter;
+  पूर्ण mb;
+  u32 करोorbell;
+  u32 पूर्णांकerrupt;
+  u32 पूर्णांकerrupt_control;
   u32 reset_control;
-} amb_mem;
+पूर्ण amb_mem;
 
-/* RESET bit, IRQ (card to host) and doorbell (host to card) enable bits */
-#define AMB_RESET_BITS	   0x40000000
-#define AMB_INTERRUPT_BITS 0x00000300
-#define AMB_DOORBELL_BITS  0x00030000
+/* RESET bit, IRQ (card to host) and करोorbell (host to card) enable bits */
+#घोषणा AMB_RESET_BITS	   0x40000000
+#घोषणा AMB_INTERRUPT_BITS 0x00000300
+#घोषणा AMB_DOORBELL_BITS  0x00030000
 
 /* loader commands */
 
-#define MAX_COMMAND_DATA 13
-#define MAX_TRANSFER_DATA 11
+#घोषणा MAX_COMMAND_DATA 13
+#घोषणा MAX_TRANSFER_DATA 11
 
-typedef struct {
+प्रकार काष्ठा अणु
   __be32 address;
   __be32 count;
   __be32 data[MAX_TRANSFER_DATA];
-} transfer_block;
+पूर्ण transfer_block;
 
-typedef struct {
+प्रकार काष्ठा अणु
   __be32 result;
   __be32 command;
-  union {
+  जोड़ अणु
     transfer_block transfer;
     __be32 version;
     __be32 start;
     __be32 data[MAX_COMMAND_DATA];
-  } payload;
+  पूर्ण payload;
   __be32 valid;
-} loader_block;
+पूर्ण loader_block;
 
 /* command queue */
 
 /* Again all data are BIG ENDIAN */
 
-typedef	struct {
-  union {
-    struct {
+प्रकार	काष्ठा अणु
+  जोड़ अणु
+    काष्ठा अणु
       __be32 vc;
       __be32 flags;
       __be32 rate;
-    } open;
-    struct {
+    पूर्ण खोलो;
+    काष्ठा अणु
       __be32 vc;
       __be32 rate;
-    } modify_rate;
-    struct {
+    पूर्ण modअगरy_rate;
+    काष्ठा अणु
       __be32 vc;
       __be32 flags;
-    } modify_flags;
-    struct {
+    पूर्ण modअगरy_flags;
+    काष्ठा अणु
       __be32 vc;
-    } close;
-    struct {
+    पूर्ण बंद;
+    काष्ठा अणु
       __be32 lower4;
       __be32 upper2;
-    } bia;
-    struct {
+    पूर्ण bia;
+    काष्ठा अणु
       __be32 address;
-    } suni;
-    struct {
+    पूर्ण suni;
+    काष्ठा अणु
       __be32 major;
       __be32 minor;
-    } version;
-    struct {
-      __be32 read;
-      __be32 write;
-    } speed;
-    struct {
+    पूर्ण version;
+    काष्ठा अणु
+      __be32 पढ़ो;
+      __be32 ग_लिखो;
+    पूर्ण speed;
+    काष्ठा अणु
       __be32 flags;
-    } flush;
-    struct {
+    पूर्ण flush;
+    काष्ठा अणु
       __be32 address;
       __be32 data;
-    } memory;
+    पूर्ण memory;
     __be32 par[3];
-  } args;
+  पूर्ण args;
   __be32 request;
-} command;
+पूर्ण command;
 
-/* transmit queues and associated structures */
+/* transmit queues and associated काष्ठाures */
 
-/* The hosts transmit structure. All BIG ENDIAN; host address
+/* The hosts transmit काष्ठाure. All BIG ENDIAN; host address
    restricted to first 1GByte, but address passed to the card must
    have the top MS bit or'ed in. -- check this */
 
 /* TX is described by 1+ tx_frags followed by a tx_frag_end */
 
-typedef struct {
+प्रकार काष्ठा अणु
   __be32 bytes;
   __be32 address;
-} tx_frag;
+पूर्ण tx_frag;
 
-/* apart from handle the fields here are for the adapter to play with
+/* apart from handle the fields here are क्रम the adapter to play with
    and should be set to zero */
 
-typedef struct {
+प्रकार काष्ठा अणु
   u32	handle;
   u16	vc;
   u16	next_descriptor_length;
   u32	next_descriptor;
-#ifdef AMB_NEW_MICROCODE
+#अगर_घोषित AMB_NEW_MICROCODE
   u8    cpcs_uu;
   u8    cpi;
   u16   pad;
-#endif
-} tx_frag_end;
+#पूर्ण_अगर
+पूर्ण tx_frag_end;
 
-typedef struct {
+प्रकार काष्ठा अणु
   tx_frag tx_frag;
   tx_frag_end tx_frag_end;
-  struct sk_buff * skb;
-} tx_simple;
+  काष्ठा sk_buff * skb;
+पूर्ण tx_simple;
 
-#if 0
-typedef union {
+#अगर 0
+प्रकार जोड़ अणु
   tx_frag	fragment;
   tx_frag_end	end_of_list;
-} tx_descr;
-#endif
+पूर्ण tx_descr;
+#पूर्ण_अगर
 
 /* this "points" to the sequence of fragments and trailer */
 
-typedef	struct {
+प्रकार	काष्ठा अणु
   __be16	vc;
   __be16	tx_descr_length;
   __be32	tx_descr_addr;
-} tx_in;
+पूर्ण tx_in;
 
 /* handle is the handle from tx_in */
 
-typedef	struct {
+प्रकार	काष्ठा अणु
   u32 handle;
-} tx_out;
+पूर्ण tx_out;
 
-/* receive frame structure */
+/* receive frame काष्ठाure */
 
-/* All BIG ENDIAN; handle is as passed from host; length is zero for
-   aborted frames, and frames with errors. Header is actually VC
+/* All BIG ENDIAN; handle is as passed from host; length is zero क्रम
+   पातed frames, and frames with errors. Header is actually VC
    number, lec-id is NOT yet supported. */
 
-typedef struct {
+प्रकार काष्ठा अणु
   u32  handle;
   __be16  vc;
   __be16  lec_id; // unused
   __be16  status;
   __be16  length;
-} rx_out;
+पूर्ण rx_out;
 
-/* buffer supply structure */
+/* buffer supply काष्ठाure */
 
-typedef	struct {
+प्रकार	काष्ठा अणु
   u32 handle;
   __be32 host_address;
-} rx_in;
+पूर्ण rx_in;
 
-/* This first structure is the area in host memory where the adapter
-   writes its pointer values. These pointer values are BIG ENDIAN and
-   reside in the same 4MB 'page' as this structure. The host gives the
-   adapter the address of this block by sending a doorbell interrupt
-   to the adapter after downloading the code and setting it going. The
+/* This first काष्ठाure is the area in host memory where the adapter
+   ग_लिखोs its poपूर्णांकer values. These poपूर्णांकer values are BIG ENDIAN and
+   reside in the same 4MB 'page' as this काष्ठाure. The host gives the
+   adapter the address of this block by sending a करोorbell पूर्णांकerrupt
+   to the adapter after करोwnloading the code and setting it going. The
    addresses have the top 10 bits set to 1010000010b -- really?
    
-   The host must initialise these before handing the block to the
+   The host must initialise these beक्रमe handing the block to the
    adapter. */
 
-typedef struct {
+प्रकार काष्ठा अणु
   __be32 command_start;		/* SRB commands completions */
   __be32 command_end;		/* SRB commands completions */
   __be32 tx_start;
   __be32 tx_end;
   __be32 txcom_start;		/* tx completions */
   __be32 txcom_end;		/* tx completions */
-  struct {
+  काष्ठा अणु
     __be32 buffer_start;
     __be32 buffer_end;
     u32 buffer_q_get;
@@ -495,19 +496,19 @@ typedef struct {
     __be32 rx_end;
     u32 rx_ptr;
     __be32 buffer_size;		/* size of host buffer */
-  } rec_struct[NUM_RX_POOLS];
-#ifdef AMB_NEW_MICROCODE
+  पूर्ण rec_काष्ठा[NUM_RX_POOLS];
+#अगर_घोषित AMB_NEW_MICROCODE
   u16 init_flags;
   u16 talk_block_spare;
-#endif
-} adap_talk_block;
+#पूर्ण_अगर
+पूर्ण adap_talk_block;
 
-/* This structure must be kept in line with the vcr image in sarmain.h
+/* This काष्ठाure must be kept in line with the vcr image in sarमुख्य.h
    
-   This is the structure in the host filled in by the adapter by
+   This is the काष्ठाure in the host filled in by the adapter by
    GET_SUNI_STATS */
 
-typedef struct {
+प्रकार काष्ठा अणु
   u8	racp_chcs;
   u8	racp_uhcs;
   u16	spare;
@@ -516,102 +517,102 @@ typedef struct {
   u32	flags;
   u32	dropped_cells;
   u32	dropped_frames;
-} suni_stats;
+पूर्ण suni_stats;
 
-typedef enum {
+प्रकार क्रमागत अणु
   dead
-} amb_flags;
+पूर्ण amb_flags;
 
-#define NEXTQ(current,start,limit) \
+#घोषणा NEXTQ(current,start,limit) \
   ( (current)+1 < (limit) ? (current)+1 : (start) ) 
 
-typedef struct {
+प्रकार काष्ठा अणु
   command * start;
   command * in;
   command * out;
   command * limit;
-} amb_cq_ptrs;
+पूर्ण amb_cq_ptrs;
 
-typedef struct {
+प्रकार काष्ठा अणु
   spinlock_t lock;
-  unsigned int pending;
-  unsigned int high;
-  unsigned int filled;
-  unsigned int maximum; // size - 1 (q implementation)
+  अचिन्हित पूर्णांक pending;
+  अचिन्हित पूर्णांक high;
+  अचिन्हित पूर्णांक filled;
+  अचिन्हित पूर्णांक maximum; // size - 1 (q implementation)
   amb_cq_ptrs ptrs;
-} amb_cq;
+पूर्ण amb_cq;
 
-typedef struct {
+प्रकार काष्ठा अणु
   spinlock_t lock;
-  unsigned int pending;
-  unsigned int high;
-  unsigned int filled;
-  unsigned int maximum; // size - 1 (q implementation)
-  struct {
+  अचिन्हित पूर्णांक pending;
+  अचिन्हित पूर्णांक high;
+  अचिन्हित पूर्णांक filled;
+  अचिन्हित पूर्णांक maximum; // size - 1 (q implementation)
+  काष्ठा अणु
     tx_in * start;
     tx_in * ptr;
     tx_in * limit;
-  } in;
-  struct {
+  पूर्ण in;
+  काष्ठा अणु
     tx_out * start;
     tx_out * ptr;
     tx_out * limit;
-  } out;
-} amb_txq;
+  पूर्ण out;
+पूर्ण amb_txq;
 
-typedef struct {
+प्रकार काष्ठा अणु
   spinlock_t lock;
-  unsigned int pending;
-  unsigned int low;
-  unsigned int emptied;
-  unsigned int maximum; // size - 1 (q implementation)
-  struct {
+  अचिन्हित पूर्णांक pending;
+  अचिन्हित पूर्णांक low;
+  अचिन्हित पूर्णांक emptied;
+  अचिन्हित पूर्णांक maximum; // size - 1 (q implementation)
+  काष्ठा अणु
     rx_in * start;
     rx_in * ptr;
     rx_in * limit;
-  } in;
-  struct {
+  पूर्ण in;
+  काष्ठा अणु
     rx_out * start;
     rx_out * ptr;
     rx_out * limit;
-  } out;
-  unsigned int buffers_wanted;
-  unsigned int buffer_size;
-} amb_rxq;
+  पूर्ण out;
+  अचिन्हित पूर्णांक buffers_wanted;
+  अचिन्हित पूर्णांक buffer_size;
+पूर्ण amb_rxq;
 
-typedef struct {
-  unsigned long tx_ok;
-  struct {
-    unsigned long ok;
-    unsigned long error;
-    unsigned long badcrc;
-    unsigned long toolong;
-    unsigned long aborted;
-    unsigned long unused;
-  } rx;
-} amb_stats;
+प्रकार काष्ठा अणु
+  अचिन्हित दीर्घ tx_ok;
+  काष्ठा अणु
+    अचिन्हित दीर्घ ok;
+    अचिन्हित दीर्घ error;
+    अचिन्हित दीर्घ badcrc;
+    अचिन्हित दीर्घ tooदीर्घ;
+    अचिन्हित दीर्घ पातed;
+    अचिन्हित दीर्घ unused;
+  पूर्ण rx;
+पूर्ण amb_stats;
 
-// a single struct pointed to by atm_vcc->dev_data
+// a single काष्ठा poपूर्णांकed to by aपंचांग_vcc->dev_data
 
-typedef struct {
+प्रकार काष्ठा अणु
   u8               tx_vc_bits:7;
   u8               tx_present:1;
-} amb_tx_info;
+पूर्ण amb_tx_info;
 
-typedef struct {
-  unsigned char    pool;
-} amb_rx_info;
+प्रकार काष्ठा अणु
+  अचिन्हित अक्षर    pool;
+पूर्ण amb_rx_info;
 
-typedef struct {
+प्रकार काष्ठा अणु
   amb_rx_info      rx_info;
   u16              tx_frame_bits;
-  unsigned int     tx_rate;
-  unsigned int     rx_rate;
-} amb_vcc;
+  अचिन्हित पूर्णांक     tx_rate;
+  अचिन्हित पूर्णांक     rx_rate;
+पूर्ण amb_vcc;
 
-struct amb_dev {
+काष्ठा amb_dev अणु
   u8               irq;
-  unsigned long	   flags;
+  अचिन्हित दीर्घ	   flags;
   u32              iobase;
   u32 *            membase;
 
@@ -619,30 +620,30 @@ struct amb_dev {
   amb_txq          txq;
   amb_rxq          rxq[NUM_RX_POOLS];
   
-  struct mutex     vcc_sf;
+  काष्ठा mutex     vcc_sf;
   amb_tx_info      txer[NUM_VCS];
-  struct atm_vcc * rxer[NUM_VCS];
-  unsigned int     tx_avail;
-  unsigned int     rx_avail;
+  काष्ठा aपंचांग_vcc * rxer[NUM_VCS];
+  अचिन्हित पूर्णांक     tx_avail;
+  अचिन्हित पूर्णांक     rx_avail;
   
   amb_stats        stats;
   
-  struct atm_dev * atm_dev;
-  struct pci_dev * pci_dev;
-  struct timer_list housekeeping;
-};
+  काष्ठा aपंचांग_dev * aपंचांग_dev;
+  काष्ठा pci_dev * pci_dev;
+  काष्ठा समयr_list housekeeping;
+पूर्ण;
 
-typedef struct amb_dev amb_dev;
+प्रकार काष्ठा amb_dev amb_dev;
 
-#define AMB_DEV(atm_dev) ((amb_dev *) (atm_dev)->dev_data)
-#define AMB_VCC(atm_vcc) ((amb_vcc *) (atm_vcc)->dev_data)
+#घोषणा AMB_DEV(aपंचांग_dev) ((amb_dev *) (aपंचांग_dev)->dev_data)
+#घोषणा AMB_VCC(aपंचांग_vcc) ((amb_vcc *) (aपंचांग_vcc)->dev_data)
 
 /* rate rounding */
 
-typedef enum {
+प्रकार क्रमागत अणु
   round_up,
-  round_down,
+  round_करोwn,
   round_nearest
-} rounding;
+पूर्ण rounding;
 
-#endif
+#पूर्ण_अगर

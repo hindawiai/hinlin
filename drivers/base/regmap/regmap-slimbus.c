@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2017, Linaro Ltd.
 
-#include <linux/regmap.h>
-#include <linux/slimbus.h>
-#include <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slimbus.h>
+#समावेश <linux/module.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static int regmap_slimbus_write(void *context, const void *data, size_t count)
-{
-	struct slim_device *sdev = context;
+अटल पूर्णांक regmap_slimbus_ग_लिखो(व्योम *context, स्थिर व्योम *data, माप_प्रकार count)
+अणु
+	काष्ठा slim_device *sdev = context;
 
-	return slim_write(sdev, *(u16 *)data, count - 2, (u8 *)data + 2);
-}
+	वापस slim_ग_लिखो(sdev, *(u16 *)data, count - 2, (u8 *)data + 2);
+पूर्ण
 
-static int regmap_slimbus_read(void *context, const void *reg, size_t reg_size,
-			       void *val, size_t val_size)
-{
-	struct slim_device *sdev = context;
+अटल पूर्णांक regmap_slimbus_पढ़ो(व्योम *context, स्थिर व्योम *reg, माप_प्रकार reg_size,
+			       व्योम *val, माप_प्रकार val_size)
+अणु
+	काष्ठा slim_device *sdev = context;
 
-	return slim_read(sdev, *(u16 *)reg, val_size, val);
-}
+	वापस slim_पढ़ो(sdev, *(u16 *)reg, val_size, val);
+पूर्ण
 
-static struct regmap_bus regmap_slimbus_bus = {
-	.write = regmap_slimbus_write,
-	.read = regmap_slimbus_read,
-	.reg_format_endian_default = REGMAP_ENDIAN_LITTLE,
-	.val_format_endian_default = REGMAP_ENDIAN_LITTLE,
-};
+अटल काष्ठा regmap_bus regmap_slimbus_bus = अणु
+	.ग_लिखो = regmap_slimbus_ग_लिखो,
+	.पढ़ो = regmap_slimbus_पढ़ो,
+	.reg_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
+	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
+पूर्ण;
 
-static const struct regmap_bus *regmap_get_slimbus(struct slim_device *slim,
-					const struct regmap_config *config)
-{
-	if (config->val_bits == 8 && config->reg_bits == 16)
-		return &regmap_slimbus_bus;
+अटल स्थिर काष्ठा regmap_bus *regmap_get_slimbus(काष्ठा slim_device *slim,
+					स्थिर काष्ठा regmap_config *config)
+अणु
+	अगर (config->val_bits == 8 && config->reg_bits == 16)
+		वापस &regmap_slimbus_bus;
 
-	return ERR_PTR(-ENOTSUPP);
-}
+	वापस ERR_PTR(-ENOTSUPP);
+पूर्ण
 
-struct regmap *__regmap_init_slimbus(struct slim_device *slimbus,
-				     const struct regmap_config *config,
-				     struct lock_class_key *lock_key,
-				     const char *lock_name)
-{
-	const struct regmap_bus *bus = regmap_get_slimbus(slimbus, config);
+काष्ठा regmap *__regmap_init_slimbus(काष्ठा slim_device *slimbus,
+				     स्थिर काष्ठा regmap_config *config,
+				     काष्ठा lock_class_key *lock_key,
+				     स्थिर अक्षर *lock_name)
+अणु
+	स्थिर काष्ठा regmap_bus *bus = regmap_get_slimbus(slimbus, config);
 
-	if (IS_ERR(bus))
-		return ERR_CAST(bus);
+	अगर (IS_ERR(bus))
+		वापस ERR_CAST(bus);
 
-	return __regmap_init(&slimbus->dev, bus, &slimbus->dev, config,
+	वापस __regmap_init(&slimbus->dev, bus, &slimbus->dev, config,
 			     lock_key, lock_name);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__regmap_init_slimbus);
 
-struct regmap *__devm_regmap_init_slimbus(struct slim_device *slimbus,
-					  const struct regmap_config *config,
-					  struct lock_class_key *lock_key,
-					  const char *lock_name)
-{
-	const struct regmap_bus *bus = regmap_get_slimbus(slimbus, config);
+काष्ठा regmap *__devm_regmap_init_slimbus(काष्ठा slim_device *slimbus,
+					  स्थिर काष्ठा regmap_config *config,
+					  काष्ठा lock_class_key *lock_key,
+					  स्थिर अक्षर *lock_name)
+अणु
+	स्थिर काष्ठा regmap_bus *bus = regmap_get_slimbus(slimbus, config);
 
-	if (IS_ERR(bus))
-		return ERR_CAST(bus);
+	अगर (IS_ERR(bus))
+		वापस ERR_CAST(bus);
 
-	return __devm_regmap_init(&slimbus->dev, bus, &slimbus, config,
+	वापस __devm_regmap_init(&slimbus->dev, bus, &slimbus, config,
 				  lock_key, lock_name);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__devm_regmap_init_slimbus);
 
 MODULE_LICENSE("GPL v2");

@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2011 Marvell International Ltd. All rights reserved.
  * Author: Chao Xie <chao.xie@marvell.com>
  *	   Neil Zhang <zhangwm@marvell.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/uaccess.h>
-#include <linux/device.h>
-#include <linux/proc_fs.h>
-#include <linux/clk.h>
-#include <linux/workqueue.h>
-#include <linux/platform_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/device.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/usb.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/otg.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb/hcd.h>
-#include <linux/platform_data/mv_usb.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/otg.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/platक्रमm_data/mv_usb.h>
 
-#include "phy-mv-usb.h"
+#समावेश "phy-mv-usb.h"
 
-#define	DRIVER_DESC	"Marvell USB OTG transceiver driver"
+#घोषणा	DRIVER_DESC	"Marvell USB OTG transceiver driver"
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-static const char driver_name[] = "mv-otg";
+अटल स्थिर अक्षर driver_name[] = "mv-otg";
 
-static char *state_string[] = {
+अटल अक्षर *state_string[] = अणु
 	"undefined",
 	"b_idle",
 	"b_srp_init",
@@ -47,123 +48,123 @@ static char *state_string[] = {
 	"a_peripheral",
 	"a_wait_vfall",
 	"a_vbus_err"
-};
+पूर्ण;
 
-static int mv_otg_set_vbus(struct usb_otg *otg, bool on)
-{
-	struct mv_otg *mvotg = container_of(otg->usb_phy, struct mv_otg, phy);
-	if (mvotg->pdata->set_vbus == NULL)
-		return -ENODEV;
+अटल पूर्णांक mv_otg_set_vbus(काष्ठा usb_otg *otg, bool on)
+अणु
+	काष्ठा mv_otg *mvotg = container_of(otg->usb_phy, काष्ठा mv_otg, phy);
+	अगर (mvotg->pdata->set_vbus == शून्य)
+		वापस -ENODEV;
 
-	return mvotg->pdata->set_vbus(on);
-}
+	वापस mvotg->pdata->set_vbus(on);
+पूर्ण
 
-static int mv_otg_set_host(struct usb_otg *otg,
-			   struct usb_bus *host)
-{
+अटल पूर्णांक mv_otg_set_host(काष्ठा usb_otg *otg,
+			   काष्ठा usb_bus *host)
+अणु
 	otg->host = host;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv_otg_set_peripheral(struct usb_otg *otg,
-				 struct usb_gadget *gadget)
-{
+अटल पूर्णांक mv_otg_set_peripheral(काष्ठा usb_otg *otg,
+				 काष्ठा usb_gadget *gadget)
+अणु
 	otg->gadget = gadget;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mv_otg_run_state_machine(struct mv_otg *mvotg,
-				     unsigned long delay)
-{
+अटल व्योम mv_otg_run_state_machine(काष्ठा mv_otg *mvotg,
+				     अचिन्हित दीर्घ delay)
+अणु
 	dev_dbg(&mvotg->pdev->dev, "transceiver is updated\n");
-	if (!mvotg->qwork)
-		return;
+	अगर (!mvotg->qwork)
+		वापस;
 
 	queue_delayed_work(mvotg->qwork, &mvotg->work, delay);
-}
+पूर्ण
 
-static void mv_otg_timer_await_bcon(struct timer_list *t)
-{
-	struct mv_otg *mvotg = from_timer(mvotg, t,
-					  otg_ctrl.timer[A_WAIT_BCON_TIMER]);
+अटल व्योम mv_otg_समयr_aरुको_bcon(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mv_otg *mvotg = from_समयr(mvotg, t,
+					  otg_ctrl.समयr[A_WAIT_BCON_TIMER]);
 
-	mvotg->otg_ctrl.a_wait_bcon_timeout = 1;
+	mvotg->otg_ctrl.a_रुको_bcon_समयout = 1;
 
 	dev_info(&mvotg->pdev->dev, "B Device No Response!\n");
 
-	if (spin_trylock(&mvotg->wq_lock)) {
+	अगर (spin_trylock(&mvotg->wq_lock)) अणु
 		mv_otg_run_state_machine(mvotg, 0);
 		spin_unlock(&mvotg->wq_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int mv_otg_cancel_timer(struct mv_otg *mvotg, unsigned int id)
-{
-	struct timer_list *timer;
+अटल पूर्णांक mv_otg_cancel_समयr(काष्ठा mv_otg *mvotg, अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा समयr_list *समयr;
 
-	if (id >= OTG_TIMER_NUM)
-		return -EINVAL;
+	अगर (id >= OTG_TIMER_NUM)
+		वापस -EINVAL;
 
-	timer = &mvotg->otg_ctrl.timer[id];
+	समयr = &mvotg->otg_ctrl.समयr[id];
 
-	if (timer_pending(timer))
-		del_timer(timer);
+	अगर (समयr_pending(समयr))
+		del_समयr(समयr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv_otg_set_timer(struct mv_otg *mvotg, unsigned int id,
-			    unsigned long interval)
-{
-	struct timer_list *timer;
+अटल पूर्णांक mv_otg_set_समयr(काष्ठा mv_otg *mvotg, अचिन्हित पूर्णांक id,
+			    अचिन्हित दीर्घ पूर्णांकerval)
+अणु
+	काष्ठा समयr_list *समयr;
 
-	if (id >= OTG_TIMER_NUM)
-		return -EINVAL;
+	अगर (id >= OTG_TIMER_NUM)
+		वापस -EINVAL;
 
-	timer = &mvotg->otg_ctrl.timer[id];
-	if (timer_pending(timer)) {
+	समयr = &mvotg->otg_ctrl.समयr[id];
+	अगर (समयr_pending(समयr)) अणु
 		dev_err(&mvotg->pdev->dev, "Timer%d is already running\n", id);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	timer->expires = jiffies + interval;
-	add_timer(timer);
+	समयr->expires = jअगरfies + पूर्णांकerval;
+	add_समयr(समयr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv_otg_reset(struct mv_otg *mvotg)
-{
-	u32 tmp;
-	int ret;
+अटल पूर्णांक mv_otg_reset(काष्ठा mv_otg *mvotg)
+अणु
+	u32 पंचांगp;
+	पूर्णांक ret;
 
 	/* Stop the controller */
-	tmp = readl(&mvotg->op_regs->usbcmd);
-	tmp &= ~USBCMD_RUN_STOP;
-	writel(tmp, &mvotg->op_regs->usbcmd);
+	पंचांगp = पढ़ोl(&mvotg->op_regs->usbcmd);
+	पंचांगp &= ~USBCMD_RUN_STOP;
+	ग_लिखोl(पंचांगp, &mvotg->op_regs->usbcmd);
 
-	/* Reset the controller to get default values */
-	writel(USBCMD_CTRL_RESET, &mvotg->op_regs->usbcmd);
+	/* Reset the controller to get शेष values */
+	ग_लिखोl(USBCMD_CTRL_RESET, &mvotg->op_regs->usbcmd);
 
-	ret = readl_poll_timeout_atomic(&mvotg->op_regs->usbcmd, tmp,
-				(tmp & USBCMD_CTRL_RESET), 10, 10000);
-	if (ret < 0) {
+	ret = पढ़ोl_poll_समयout_atomic(&mvotg->op_regs->usbcmd, पंचांगp,
+				(पंचांगp & USBCMD_CTRL_RESET), 10, 10000);
+	अगर (ret < 0) अणु
 		dev_err(&mvotg->pdev->dev,
 			"Wait for RESET completed TIMEOUT\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	writel(0x0, &mvotg->op_regs->usbintr);
-	tmp = readl(&mvotg->op_regs->usbsts);
-	writel(tmp, &mvotg->op_regs->usbsts);
+	ग_लिखोl(0x0, &mvotg->op_regs->usbपूर्णांकr);
+	पंचांगp = पढ़ोl(&mvotg->op_regs->usbsts);
+	ग_लिखोl(पंचांगp, &mvotg->op_regs->usbsts);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mv_otg_init_irq(struct mv_otg *mvotg)
-{
+अटल व्योम mv_otg_init_irq(काष्ठा mv_otg *mvotg)
+अणु
 	u32 otgsc;
 
 	mvotg->irq_en = OTGSC_INTR_A_SESSION_VALID
@@ -171,146 +172,146 @@ static void mv_otg_init_irq(struct mv_otg *mvotg)
 	mvotg->irq_status = OTGSC_INTSTS_A_SESSION_VALID
 	    | OTGSC_INTSTS_A_VBUS_VALID;
 
-	if (mvotg->pdata->vbus == NULL) {
+	अगर (mvotg->pdata->vbus == शून्य) अणु
 		mvotg->irq_en |= OTGSC_INTR_B_SESSION_VALID
 		    | OTGSC_INTR_B_SESSION_END;
 		mvotg->irq_status |= OTGSC_INTSTS_B_SESSION_VALID
 		    | OTGSC_INTSTS_B_SESSION_END;
-	}
+	पूर्ण
 
-	if (mvotg->pdata->id == NULL) {
+	अगर (mvotg->pdata->id == शून्य) अणु
 		mvotg->irq_en |= OTGSC_INTR_USB_ID;
 		mvotg->irq_status |= OTGSC_INTSTS_USB_ID;
-	}
+	पूर्ण
 
-	otgsc = readl(&mvotg->op_regs->otgsc);
+	otgsc = पढ़ोl(&mvotg->op_regs->otgsc);
 	otgsc |= mvotg->irq_en;
-	writel(otgsc, &mvotg->op_regs->otgsc);
-}
+	ग_लिखोl(otgsc, &mvotg->op_regs->otgsc);
+पूर्ण
 
-static void mv_otg_start_host(struct mv_otg *mvotg, int on)
-{
-#ifdef CONFIG_USB
-	struct usb_otg *otg = mvotg->phy.otg;
-	struct usb_hcd *hcd;
+अटल व्योम mv_otg_start_host(काष्ठा mv_otg *mvotg, पूर्णांक on)
+अणु
+#अगर_घोषित CONFIG_USB
+	काष्ठा usb_otg *otg = mvotg->phy.otg;
+	काष्ठा usb_hcd *hcd;
 
-	if (!otg->host)
-		return;
+	अगर (!otg->host)
+		वापस;
 
 	dev_info(&mvotg->pdev->dev, "%s host\n", on ? "start" : "stop");
 
 	hcd = bus_to_hcd(otg->host);
 
-	if (on) {
+	अगर (on) अणु
 		usb_add_hcd(hcd, hcd->irq, IRQF_SHARED);
 		device_wakeup_enable(hcd->self.controller);
-	} else {
-		usb_remove_hcd(hcd);
-	}
-#endif /* CONFIG_USB */
-}
+	पूर्ण अन्यथा अणु
+		usb_हटाओ_hcd(hcd);
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_USB */
+पूर्ण
 
-static void mv_otg_start_periphrals(struct mv_otg *mvotg, int on)
-{
-	struct usb_otg *otg = mvotg->phy.otg;
+अटल व्योम mv_otg_start_periphrals(काष्ठा mv_otg *mvotg, पूर्णांक on)
+अणु
+	काष्ठा usb_otg *otg = mvotg->phy.otg;
 
-	if (!otg->gadget)
-		return;
+	अगर (!otg->gadget)
+		वापस;
 
 	dev_info(mvotg->phy.dev, "gadget %s\n", on ? "on" : "off");
 
-	if (on)
+	अगर (on)
 		usb_gadget_vbus_connect(otg->gadget);
-	else
+	अन्यथा
 		usb_gadget_vbus_disconnect(otg->gadget);
-}
+पूर्ण
 
-static void otg_clock_enable(struct mv_otg *mvotg)
-{
+अटल व्योम otg_घड़ी_enable(काष्ठा mv_otg *mvotg)
+अणु
 	clk_prepare_enable(mvotg->clk);
-}
+पूर्ण
 
-static void otg_clock_disable(struct mv_otg *mvotg)
-{
+अटल व्योम otg_घड़ी_disable(काष्ठा mv_otg *mvotg)
+अणु
 	clk_disable_unprepare(mvotg->clk);
-}
+पूर्ण
 
-static int mv_otg_enable_internal(struct mv_otg *mvotg)
-{
-	int retval = 0;
+अटल पूर्णांक mv_otg_enable_पूर्णांकernal(काष्ठा mv_otg *mvotg)
+अणु
+	पूर्णांक retval = 0;
 
-	if (mvotg->active)
-		return 0;
+	अगर (mvotg->active)
+		वापस 0;
 
 	dev_dbg(&mvotg->pdev->dev, "otg enabled\n");
 
-	otg_clock_enable(mvotg);
-	if (mvotg->pdata->phy_init) {
+	otg_घड़ी_enable(mvotg);
+	अगर (mvotg->pdata->phy_init) अणु
 		retval = mvotg->pdata->phy_init(mvotg->phy_regs);
-		if (retval) {
+		अगर (retval) अणु
 			dev_err(&mvotg->pdev->dev,
 				"init phy error %d\n", retval);
-			otg_clock_disable(mvotg);
-			return retval;
-		}
-	}
+			otg_घड़ी_disable(mvotg);
+			वापस retval;
+		पूर्ण
+	पूर्ण
 	mvotg->active = 1;
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int mv_otg_enable(struct mv_otg *mvotg)
-{
-	if (mvotg->clock_gating)
-		return mv_otg_enable_internal(mvotg);
+अटल पूर्णांक mv_otg_enable(काष्ठा mv_otg *mvotg)
+अणु
+	अगर (mvotg->घड़ी_gating)
+		वापस mv_otg_enable_पूर्णांकernal(mvotg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mv_otg_disable_internal(struct mv_otg *mvotg)
-{
-	if (mvotg->active) {
+अटल व्योम mv_otg_disable_पूर्णांकernal(काष्ठा mv_otg *mvotg)
+अणु
+	अगर (mvotg->active) अणु
 		dev_dbg(&mvotg->pdev->dev, "otg disabled\n");
-		if (mvotg->pdata->phy_deinit)
+		अगर (mvotg->pdata->phy_deinit)
 			mvotg->pdata->phy_deinit(mvotg->phy_regs);
-		otg_clock_disable(mvotg);
+		otg_घड़ी_disable(mvotg);
 		mvotg->active = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mv_otg_disable(struct mv_otg *mvotg)
-{
-	if (mvotg->clock_gating)
-		mv_otg_disable_internal(mvotg);
-}
+अटल व्योम mv_otg_disable(काष्ठा mv_otg *mvotg)
+अणु
+	अगर (mvotg->घड़ी_gating)
+		mv_otg_disable_पूर्णांकernal(mvotg);
+पूर्ण
 
-static void mv_otg_update_inputs(struct mv_otg *mvotg)
-{
-	struct mv_otg_ctrl *otg_ctrl = &mvotg->otg_ctrl;
+अटल व्योम mv_otg_update_inमाला_दो(काष्ठा mv_otg *mvotg)
+अणु
+	काष्ठा mv_otg_ctrl *otg_ctrl = &mvotg->otg_ctrl;
 	u32 otgsc;
 
-	otgsc = readl(&mvotg->op_regs->otgsc);
+	otgsc = पढ़ोl(&mvotg->op_regs->otgsc);
 
-	if (mvotg->pdata->vbus) {
-		if (mvotg->pdata->vbus->poll() == VBUS_HIGH) {
+	अगर (mvotg->pdata->vbus) अणु
+		अगर (mvotg->pdata->vbus->poll() == VBUS_HIGH) अणु
 			otg_ctrl->b_sess_vld = 1;
 			otg_ctrl->b_sess_end = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			otg_ctrl->b_sess_vld = 0;
 			otg_ctrl->b_sess_end = 1;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		otg_ctrl->b_sess_vld = !!(otgsc & OTGSC_STS_B_SESSION_VALID);
 		otg_ctrl->b_sess_end = !!(otgsc & OTGSC_STS_B_SESSION_END);
-	}
+	पूर्ण
 
-	if (mvotg->pdata->id)
+	अगर (mvotg->pdata->id)
 		otg_ctrl->id = !!mvotg->pdata->id->poll();
-	else
+	अन्यथा
 		otg_ctrl->id = !!(otgsc & OTGSC_STS_USB_ID);
 
-	if (mvotg->pdata->otg_force_a_bus_req && !otg_ctrl->id)
+	अगर (mvotg->pdata->otg_क्रमce_a_bus_req && !otg_ctrl->id)
 		otg_ctrl->a_bus_req = 1;
 
 	otg_ctrl->a_sess_vld = !!(otgsc & OTGSC_STS_A_SESSION_VALID);
@@ -322,379 +323,379 @@ static void mv_otg_update_inputs(struct mv_otg *mvotg)
 	dev_dbg(&mvotg->pdev->dev, "b_sess_end %d\n", otg_ctrl->b_sess_end);
 	dev_dbg(&mvotg->pdev->dev, "a_vbus_vld %d\n", otg_ctrl->a_vbus_vld);
 	dev_dbg(&mvotg->pdev->dev, "a_sess_vld %d\n", otg_ctrl->a_sess_vld);
-}
+पूर्ण
 
-static void mv_otg_update_state(struct mv_otg *mvotg)
-{
-	struct mv_otg_ctrl *otg_ctrl = &mvotg->otg_ctrl;
-	int old_state = mvotg->phy.otg->state;
+अटल व्योम mv_otg_update_state(काष्ठा mv_otg *mvotg)
+अणु
+	काष्ठा mv_otg_ctrl *otg_ctrl = &mvotg->otg_ctrl;
+	पूर्णांक old_state = mvotg->phy.otg->state;
 
-	switch (old_state) {
-	case OTG_STATE_UNDEFINED:
+	चयन (old_state) अणु
+	हाल OTG_STATE_UNDEFINED:
 		mvotg->phy.otg->state = OTG_STATE_B_IDLE;
 		fallthrough;
-	case OTG_STATE_B_IDLE:
-		if (otg_ctrl->id == 0)
+	हाल OTG_STATE_B_IDLE:
+		अगर (otg_ctrl->id == 0)
 			mvotg->phy.otg->state = OTG_STATE_A_IDLE;
-		else if (otg_ctrl->b_sess_vld)
+		अन्यथा अगर (otg_ctrl->b_sess_vld)
 			mvotg->phy.otg->state = OTG_STATE_B_PERIPHERAL;
-		break;
-	case OTG_STATE_B_PERIPHERAL:
-		if (!otg_ctrl->b_sess_vld || otg_ctrl->id == 0)
+		अवरोध;
+	हाल OTG_STATE_B_PERIPHERAL:
+		अगर (!otg_ctrl->b_sess_vld || otg_ctrl->id == 0)
 			mvotg->phy.otg->state = OTG_STATE_B_IDLE;
-		break;
-	case OTG_STATE_A_IDLE:
-		if (otg_ctrl->id)
+		अवरोध;
+	हाल OTG_STATE_A_IDLE:
+		अगर (otg_ctrl->id)
 			mvotg->phy.otg->state = OTG_STATE_B_IDLE;
-		else if (!(otg_ctrl->a_bus_drop) &&
+		अन्यथा अगर (!(otg_ctrl->a_bus_drop) &&
 			 (otg_ctrl->a_bus_req || otg_ctrl->a_srp_det))
 			mvotg->phy.otg->state = OTG_STATE_A_WAIT_VRISE;
-		break;
-	case OTG_STATE_A_WAIT_VRISE:
-		if (otg_ctrl->a_vbus_vld)
+		अवरोध;
+	हाल OTG_STATE_A_WAIT_VRISE:
+		अगर (otg_ctrl->a_vbus_vld)
 			mvotg->phy.otg->state = OTG_STATE_A_WAIT_BCON;
-		break;
-	case OTG_STATE_A_WAIT_BCON:
-		if (otg_ctrl->id || otg_ctrl->a_bus_drop
-		    || otg_ctrl->a_wait_bcon_timeout) {
-			mv_otg_cancel_timer(mvotg, A_WAIT_BCON_TIMER);
-			mvotg->otg_ctrl.a_wait_bcon_timeout = 0;
+		अवरोध;
+	हाल OTG_STATE_A_WAIT_BCON:
+		अगर (otg_ctrl->id || otg_ctrl->a_bus_drop
+		    || otg_ctrl->a_रुको_bcon_समयout) अणु
+			mv_otg_cancel_समयr(mvotg, A_WAIT_BCON_TIMER);
+			mvotg->otg_ctrl.a_रुको_bcon_समयout = 0;
 			mvotg->phy.otg->state = OTG_STATE_A_WAIT_VFALL;
 			otg_ctrl->a_bus_req = 0;
-		} else if (!otg_ctrl->a_vbus_vld) {
-			mv_otg_cancel_timer(mvotg, A_WAIT_BCON_TIMER);
-			mvotg->otg_ctrl.a_wait_bcon_timeout = 0;
+		पूर्ण अन्यथा अगर (!otg_ctrl->a_vbus_vld) अणु
+			mv_otg_cancel_समयr(mvotg, A_WAIT_BCON_TIMER);
+			mvotg->otg_ctrl.a_रुको_bcon_समयout = 0;
 			mvotg->phy.otg->state = OTG_STATE_A_VBUS_ERR;
-		} else if (otg_ctrl->b_conn) {
-			mv_otg_cancel_timer(mvotg, A_WAIT_BCON_TIMER);
-			mvotg->otg_ctrl.a_wait_bcon_timeout = 0;
+		पूर्ण अन्यथा अगर (otg_ctrl->b_conn) अणु
+			mv_otg_cancel_समयr(mvotg, A_WAIT_BCON_TIMER);
+			mvotg->otg_ctrl.a_रुको_bcon_समयout = 0;
 			mvotg->phy.otg->state = OTG_STATE_A_HOST;
-		}
-		break;
-	case OTG_STATE_A_HOST:
-		if (otg_ctrl->id || !otg_ctrl->b_conn
+		पूर्ण
+		अवरोध;
+	हाल OTG_STATE_A_HOST:
+		अगर (otg_ctrl->id || !otg_ctrl->b_conn
 		    || otg_ctrl->a_bus_drop)
 			mvotg->phy.otg->state = OTG_STATE_A_WAIT_BCON;
-		else if (!otg_ctrl->a_vbus_vld)
+		अन्यथा अगर (!otg_ctrl->a_vbus_vld)
 			mvotg->phy.otg->state = OTG_STATE_A_VBUS_ERR;
-		break;
-	case OTG_STATE_A_WAIT_VFALL:
-		if (otg_ctrl->id
+		अवरोध;
+	हाल OTG_STATE_A_WAIT_VFALL:
+		अगर (otg_ctrl->id
 		    || (!otg_ctrl->b_conn && otg_ctrl->a_sess_vld)
 		    || otg_ctrl->a_bus_req)
 			mvotg->phy.otg->state = OTG_STATE_A_IDLE;
-		break;
-	case OTG_STATE_A_VBUS_ERR:
-		if (otg_ctrl->id || otg_ctrl->a_clr_err
-		    || otg_ctrl->a_bus_drop) {
+		अवरोध;
+	हाल OTG_STATE_A_VBUS_ERR:
+		अगर (otg_ctrl->id || otg_ctrl->a_clr_err
+		    || otg_ctrl->a_bus_drop) अणु
 			otg_ctrl->a_clr_err = 0;
 			mvotg->phy.otg->state = OTG_STATE_A_WAIT_VFALL;
-		}
-		break;
-	default:
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void mv_otg_work(struct work_struct *work)
-{
-	struct mv_otg *mvotg;
-	struct usb_otg *otg;
-	int old_state;
+अटल व्योम mv_otg_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mv_otg *mvotg;
+	काष्ठा usb_otg *otg;
+	पूर्णांक old_state;
 
-	mvotg = container_of(to_delayed_work(work), struct mv_otg, work);
+	mvotg = container_of(to_delayed_work(work), काष्ठा mv_otg, work);
 
 run:
-	/* work queue is single thread, or we need spin_lock to protect */
+	/* work queue is single thपढ़ो, or we need spin_lock to protect */
 	otg = mvotg->phy.otg;
 	old_state = otg->state;
 
-	if (!mvotg->active)
-		return;
+	अगर (!mvotg->active)
+		वापस;
 
-	mv_otg_update_inputs(mvotg);
+	mv_otg_update_inमाला_दो(mvotg);
 	mv_otg_update_state(mvotg);
 
-	if (old_state != mvotg->phy.otg->state) {
+	अगर (old_state != mvotg->phy.otg->state) अणु
 		dev_info(&mvotg->pdev->dev, "change from state %s to %s\n",
 			 state_string[old_state],
 			 state_string[mvotg->phy.otg->state]);
 
-		switch (mvotg->phy.otg->state) {
-		case OTG_STATE_B_IDLE:
-			otg->default_a = 0;
-			if (old_state == OTG_STATE_B_PERIPHERAL)
+		चयन (mvotg->phy.otg->state) अणु
+		हाल OTG_STATE_B_IDLE:
+			otg->शेष_a = 0;
+			अगर (old_state == OTG_STATE_B_PERIPHERAL)
 				mv_otg_start_periphrals(mvotg, 0);
 			mv_otg_reset(mvotg);
 			mv_otg_disable(mvotg);
 			usb_phy_set_event(&mvotg->phy, USB_EVENT_NONE);
-			break;
-		case OTG_STATE_B_PERIPHERAL:
+			अवरोध;
+		हाल OTG_STATE_B_PERIPHERAL:
 			mv_otg_enable(mvotg);
 			mv_otg_start_periphrals(mvotg, 1);
 			usb_phy_set_event(&mvotg->phy, USB_EVENT_ENUMERATED);
-			break;
-		case OTG_STATE_A_IDLE:
-			otg->default_a = 1;
+			अवरोध;
+		हाल OTG_STATE_A_IDLE:
+			otg->शेष_a = 1;
 			mv_otg_enable(mvotg);
-			if (old_state == OTG_STATE_A_WAIT_VFALL)
+			अगर (old_state == OTG_STATE_A_WAIT_VFALL)
 				mv_otg_start_host(mvotg, 0);
 			mv_otg_reset(mvotg);
-			break;
-		case OTG_STATE_A_WAIT_VRISE:
+			अवरोध;
+		हाल OTG_STATE_A_WAIT_VRISE:
 			mv_otg_set_vbus(otg, 1);
-			break;
-		case OTG_STATE_A_WAIT_BCON:
-			if (old_state != OTG_STATE_A_HOST)
+			अवरोध;
+		हाल OTG_STATE_A_WAIT_BCON:
+			अगर (old_state != OTG_STATE_A_HOST)
 				mv_otg_start_host(mvotg, 1);
-			mv_otg_set_timer(mvotg, A_WAIT_BCON_TIMER,
+			mv_otg_set_समयr(mvotg, A_WAIT_BCON_TIMER,
 					 T_A_WAIT_BCON);
 			/*
 			 * Now, we directly enter A_HOST. So set b_conn = 1
-			 * here. In fact, it need host driver to notify us.
+			 * here. In fact, it need host driver to notअगरy us.
 			 */
 			mvotg->otg_ctrl.b_conn = 1;
-			break;
-		case OTG_STATE_A_HOST:
-			break;
-		case OTG_STATE_A_WAIT_VFALL:
+			अवरोध;
+		हाल OTG_STATE_A_HOST:
+			अवरोध;
+		हाल OTG_STATE_A_WAIT_VFALL:
 			/*
-			 * Now, we has exited A_HOST. So set b_conn = 0
-			 * here. In fact, it need host driver to notify us.
+			 * Now, we has निकासed A_HOST. So set b_conn = 0
+			 * here. In fact, it need host driver to notअगरy us.
 			 */
 			mvotg->otg_ctrl.b_conn = 0;
 			mv_otg_set_vbus(otg, 0);
-			break;
-		case OTG_STATE_A_VBUS_ERR:
-			break;
-		default:
-			break;
-		}
-		goto run;
-	}
-}
+			अवरोध;
+		हाल OTG_STATE_A_VBUS_ERR:
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		जाओ run;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t mv_otg_irq(int irq, void *dev)
-{
-	struct mv_otg *mvotg = dev;
+अटल irqवापस_t mv_otg_irq(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा mv_otg *mvotg = dev;
 	u32 otgsc;
 
-	otgsc = readl(&mvotg->op_regs->otgsc);
-	writel(otgsc, &mvotg->op_regs->otgsc);
+	otgsc = पढ़ोl(&mvotg->op_regs->otgsc);
+	ग_लिखोl(otgsc, &mvotg->op_regs->otgsc);
 
 	/*
-	 * if we have vbus, then the vbus detection for B-device
-	 * will be done by mv_otg_inputs_irq().
+	 * अगर we have vbus, then the vbus detection क्रम B-device
+	 * will be करोne by mv_otg_inमाला_दो_irq().
 	 */
-	if (mvotg->pdata->vbus)
-		if ((otgsc & OTGSC_STS_USB_ID) &&
+	अगर (mvotg->pdata->vbus)
+		अगर ((otgsc & OTGSC_STS_USB_ID) &&
 		    !(otgsc & OTGSC_INTSTS_USB_ID))
-			return IRQ_NONE;
+			वापस IRQ_NONE;
 
-	if ((otgsc & mvotg->irq_status) == 0)
-		return IRQ_NONE;
+	अगर ((otgsc & mvotg->irq_status) == 0)
+		वापस IRQ_NONE;
 
 	mv_otg_run_state_machine(mvotg, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t mv_otg_inputs_irq(int irq, void *dev)
-{
-	struct mv_otg *mvotg = dev;
+अटल irqवापस_t mv_otg_inमाला_दो_irq(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा mv_otg *mvotg = dev;
 
-	/* The clock may disabled at this time */
-	if (!mvotg->active) {
+	/* The घड़ी may disabled at this समय */
+	अगर (!mvotg->active) अणु
 		mv_otg_enable(mvotg);
 		mv_otg_init_irq(mvotg);
-	}
+	पूर्ण
 
 	mv_otg_run_state_machine(mvotg, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static ssize_t
-a_bus_req_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct mv_otg *mvotg = dev_get_drvdata(dev);
-	return scnprintf(buf, PAGE_SIZE, "%d\n",
+अटल sमाप_प्रकार
+a_bus_req_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा mv_otg *mvotg = dev_get_drvdata(dev);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n",
 			 mvotg->otg_ctrl.a_bus_req);
-}
+पूर्ण
 
-static ssize_t
-a_bus_req_store(struct device *dev, struct device_attribute *attr,
-	      const char *buf, size_t count)
-{
-	struct mv_otg *mvotg = dev_get_drvdata(dev);
+अटल sमाप_प्रकार
+a_bus_req_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+	      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा mv_otg *mvotg = dev_get_drvdata(dev);
 
-	if (count > 2)
-		return -1;
+	अगर (count > 2)
+		वापस -1;
 
-	/* We will use this interface to change to A device */
-	if (mvotg->phy.otg->state != OTG_STATE_B_IDLE
+	/* We will use this पूर्णांकerface to change to A device */
+	अगर (mvotg->phy.otg->state != OTG_STATE_B_IDLE
 	    && mvotg->phy.otg->state != OTG_STATE_A_IDLE)
-		return -1;
+		वापस -1;
 
-	/* The clock may disabled and we need to set irq for ID detected */
+	/* The घड़ी may disabled and we need to set irq क्रम ID detected */
 	mv_otg_enable(mvotg);
 	mv_otg_init_irq(mvotg);
 
-	if (buf[0] == '1') {
+	अगर (buf[0] == '1') अणु
 		mvotg->otg_ctrl.a_bus_req = 1;
 		mvotg->otg_ctrl.a_bus_drop = 0;
 		dev_dbg(&mvotg->pdev->dev,
 			"User request: a_bus_req = 1\n");
 
-		if (spin_trylock(&mvotg->wq_lock)) {
+		अगर (spin_trylock(&mvotg->wq_lock)) अणु
 			mv_otg_run_state_machine(mvotg, 0);
 			spin_unlock(&mvotg->wq_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(a_bus_req);
+अटल DEVICE_ATTR_RW(a_bus_req);
 
-static ssize_t
-a_clr_err_store(struct device *dev, struct device_attribute *attr,
-	      const char *buf, size_t count)
-{
-	struct mv_otg *mvotg = dev_get_drvdata(dev);
-	if (!mvotg->phy.otg->default_a)
-		return -1;
+अटल sमाप_प्रकार
+a_clr_err_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+	      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा mv_otg *mvotg = dev_get_drvdata(dev);
+	अगर (!mvotg->phy.otg->शेष_a)
+		वापस -1;
 
-	if (count > 2)
-		return -1;
+	अगर (count > 2)
+		वापस -1;
 
-	if (buf[0] == '1') {
+	अगर (buf[0] == '1') अणु
 		mvotg->otg_ctrl.a_clr_err = 1;
 		dev_dbg(&mvotg->pdev->dev,
 			"User request: a_clr_err = 1\n");
-	}
+	पूर्ण
 
-	if (spin_trylock(&mvotg->wq_lock)) {
+	अगर (spin_trylock(&mvotg->wq_lock)) अणु
 		mv_otg_run_state_machine(mvotg, 0);
 		spin_unlock(&mvotg->wq_lock);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_WO(a_clr_err);
+अटल DEVICE_ATTR_WO(a_clr_err);
 
-static ssize_t
-a_bus_drop_show(struct device *dev, struct device_attribute *attr,
-	       char *buf)
-{
-	struct mv_otg *mvotg = dev_get_drvdata(dev);
-	return scnprintf(buf, PAGE_SIZE, "%d\n",
+अटल sमाप_प्रकार
+a_bus_drop_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+	       अक्षर *buf)
+अणु
+	काष्ठा mv_otg *mvotg = dev_get_drvdata(dev);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n",
 			 mvotg->otg_ctrl.a_bus_drop);
-}
+पूर्ण
 
-static ssize_t
-a_bus_drop_store(struct device *dev, struct device_attribute *attr,
-	       const char *buf, size_t count)
-{
-	struct mv_otg *mvotg = dev_get_drvdata(dev);
-	if (!mvotg->phy.otg->default_a)
-		return -1;
+अटल sमाप_प्रकार
+a_bus_drop_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+	       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा mv_otg *mvotg = dev_get_drvdata(dev);
+	अगर (!mvotg->phy.otg->शेष_a)
+		वापस -1;
 
-	if (count > 2)
-		return -1;
+	अगर (count > 2)
+		वापस -1;
 
-	if (buf[0] == '0') {
+	अगर (buf[0] == '0') अणु
 		mvotg->otg_ctrl.a_bus_drop = 0;
 		dev_dbg(&mvotg->pdev->dev,
 			"User request: a_bus_drop = 0\n");
-	} else if (buf[0] == '1') {
+	पूर्ण अन्यथा अगर (buf[0] == '1') अणु
 		mvotg->otg_ctrl.a_bus_drop = 1;
 		mvotg->otg_ctrl.a_bus_req = 0;
 		dev_dbg(&mvotg->pdev->dev,
 			"User request: a_bus_drop = 1\n");
 		dev_dbg(&mvotg->pdev->dev,
 			"User request: and a_bus_req = 0\n");
-	}
+	पूर्ण
 
-	if (spin_trylock(&mvotg->wq_lock)) {
+	अगर (spin_trylock(&mvotg->wq_lock)) अणु
 		mv_otg_run_state_machine(mvotg, 0);
 		spin_unlock(&mvotg->wq_lock);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(a_bus_drop);
+अटल DEVICE_ATTR_RW(a_bus_drop);
 
-static struct attribute *inputs_attrs[] = {
+अटल काष्ठा attribute *inमाला_दो_attrs[] = अणु
 	&dev_attr_a_bus_req.attr,
 	&dev_attr_a_clr_err.attr,
 	&dev_attr_a_bus_drop.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group inputs_attr_group = {
+अटल स्थिर काष्ठा attribute_group inमाला_दो_attr_group = अणु
 	.name = "inputs",
-	.attrs = inputs_attrs,
-};
+	.attrs = inमाला_दो_attrs,
+पूर्ण;
 
-static const struct attribute_group *mv_otg_groups[] = {
-	&inputs_attr_group,
-	NULL,
-};
+अटल स्थिर काष्ठा attribute_group *mv_otg_groups[] = अणु
+	&inमाला_दो_attr_group,
+	शून्य,
+पूर्ण;
 
-static int mv_otg_remove(struct platform_device *pdev)
-{
-	struct mv_otg *mvotg = platform_get_drvdata(pdev);
+अटल पूर्णांक mv_otg_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mv_otg *mvotg = platक्रमm_get_drvdata(pdev);
 
-	if (mvotg->qwork) {
+	अगर (mvotg->qwork) अणु
 		flush_workqueue(mvotg->qwork);
 		destroy_workqueue(mvotg->qwork);
-	}
+	पूर्ण
 
 	mv_otg_disable(mvotg);
 
-	usb_remove_phy(&mvotg->phy);
+	usb_हटाओ_phy(&mvotg->phy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv_otg_probe(struct platform_device *pdev)
-{
-	struct mv_usb_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	struct mv_otg *mvotg;
-	struct usb_otg *otg;
-	struct resource *r;
-	int retval = 0, i;
+अटल पूर्णांक mv_otg_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mv_usb_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा mv_otg *mvotg;
+	काष्ठा usb_otg *otg;
+	काष्ठा resource *r;
+	पूर्णांक retval = 0, i;
 
-	if (pdata == NULL) {
+	अगर (pdata == शून्य) अणु
 		dev_err(&pdev->dev, "failed to get platform data\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	mvotg = devm_kzalloc(&pdev->dev, sizeof(*mvotg), GFP_KERNEL);
-	if (!mvotg)
-		return -ENOMEM;
+	mvotg = devm_kzalloc(&pdev->dev, माप(*mvotg), GFP_KERNEL);
+	अगर (!mvotg)
+		वापस -ENOMEM;
 
-	otg = devm_kzalloc(&pdev->dev, sizeof(*otg), GFP_KERNEL);
-	if (!otg)
-		return -ENOMEM;
+	otg = devm_kzalloc(&pdev->dev, माप(*otg), GFP_KERNEL);
+	अगर (!otg)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, mvotg);
+	platक्रमm_set_drvdata(pdev, mvotg);
 
 	mvotg->pdev = pdev;
 	mvotg->pdata = pdata;
 
-	mvotg->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(mvotg->clk))
-		return PTR_ERR(mvotg->clk);
+	mvotg->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(mvotg->clk))
+		वापस PTR_ERR(mvotg->clk);
 
-	mvotg->qwork = create_singlethread_workqueue("mv_otg_queue");
-	if (!mvotg->qwork) {
+	mvotg->qwork = create_singlethपढ़ो_workqueue("mv_otg_queue");
+	अगर (!mvotg->qwork) अणु
 		dev_dbg(&pdev->dev, "cannot create workqueue for OTG\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	INIT_DELAYED_WORK(&mvotg->work, mv_otg_work);
 
@@ -710,176 +711,176 @@ static int mv_otg_probe(struct platform_device *pdev)
 	otg->set_peripheral = mv_otg_set_peripheral;
 	otg->set_vbus = mv_otg_set_vbus;
 
-	for (i = 0; i < OTG_TIMER_NUM; i++)
-		timer_setup(&mvotg->otg_ctrl.timer[i],
-			    mv_otg_timer_await_bcon, 0);
+	क्रम (i = 0; i < OTG_TIMER_NUM; i++)
+		समयr_setup(&mvotg->otg_ctrl.समयr[i],
+			    mv_otg_समयr_aरुको_bcon, 0);
 
-	r = platform_get_resource_byname(mvotg->pdev,
+	r = platक्रमm_get_resource_byname(mvotg->pdev,
 					 IORESOURCE_MEM, "phyregs");
-	if (r == NULL) {
+	अगर (r == शून्य) अणु
 		dev_err(&pdev->dev, "no phy I/O memory resource defined\n");
 		retval = -ENODEV;
-		goto err_destroy_workqueue;
-	}
+		जाओ err_destroy_workqueue;
+	पूर्ण
 
 	mvotg->phy_regs = devm_ioremap(&pdev->dev, r->start, resource_size(r));
-	if (mvotg->phy_regs == NULL) {
+	अगर (mvotg->phy_regs == शून्य) अणु
 		dev_err(&pdev->dev, "failed to map phy I/O memory\n");
 		retval = -EFAULT;
-		goto err_destroy_workqueue;
-	}
+		जाओ err_destroy_workqueue;
+	पूर्ण
 
-	r = platform_get_resource_byname(mvotg->pdev,
+	r = platक्रमm_get_resource_byname(mvotg->pdev,
 					 IORESOURCE_MEM, "capregs");
-	if (r == NULL) {
+	अगर (r == शून्य) अणु
 		dev_err(&pdev->dev, "no I/O memory resource defined\n");
 		retval = -ENODEV;
-		goto err_destroy_workqueue;
-	}
+		जाओ err_destroy_workqueue;
+	पूर्ण
 
 	mvotg->cap_regs = devm_ioremap(&pdev->dev, r->start, resource_size(r));
-	if (mvotg->cap_regs == NULL) {
+	अगर (mvotg->cap_regs == शून्य) अणु
 		dev_err(&pdev->dev, "failed to map I/O memory\n");
 		retval = -EFAULT;
-		goto err_destroy_workqueue;
-	}
+		जाओ err_destroy_workqueue;
+	पूर्ण
 
-	/* we will acces controller register, so enable the udc controller */
-	retval = mv_otg_enable_internal(mvotg);
-	if (retval) {
+	/* we will acces controller रेजिस्टर, so enable the udc controller */
+	retval = mv_otg_enable_पूर्णांकernal(mvotg);
+	अगर (retval) अणु
 		dev_err(&pdev->dev, "mv otg enable error %d\n", retval);
-		goto err_destroy_workqueue;
-	}
+		जाओ err_destroy_workqueue;
+	पूर्ण
 
 	mvotg->op_regs =
-		(struct mv_otg_regs __iomem *) ((unsigned long) mvotg->cap_regs
-			+ (readl(mvotg->cap_regs) & CAPLENGTH_MASK));
+		(काष्ठा mv_otg_regs __iomem *) ((अचिन्हित दीर्घ) mvotg->cap_regs
+			+ (पढ़ोl(mvotg->cap_regs) & CAPLENGTH_MASK));
 
-	if (pdata->id) {
-		retval = devm_request_threaded_irq(&pdev->dev, pdata->id->irq,
-						NULL, mv_otg_inputs_irq,
+	अगर (pdata->id) अणु
+		retval = devm_request_thपढ़ोed_irq(&pdev->dev, pdata->id->irq,
+						शून्य, mv_otg_inमाला_दो_irq,
 						IRQF_ONESHOT, "id", mvotg);
-		if (retval) {
+		अगर (retval) अणु
 			dev_info(&pdev->dev,
 				 "Failed to request irq for ID\n");
-			pdata->id = NULL;
-		}
-	}
+			pdata->id = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (pdata->vbus) {
-		mvotg->clock_gating = 1;
-		retval = devm_request_threaded_irq(&pdev->dev, pdata->vbus->irq,
-						NULL, mv_otg_inputs_irq,
+	अगर (pdata->vbus) अणु
+		mvotg->घड़ी_gating = 1;
+		retval = devm_request_thपढ़ोed_irq(&pdev->dev, pdata->vbus->irq,
+						शून्य, mv_otg_inमाला_दो_irq,
 						IRQF_ONESHOT, "vbus", mvotg);
-		if (retval) {
+		अगर (retval) अणु
 			dev_info(&pdev->dev,
 				 "Failed to request irq for VBUS, "
 				 "disable clock gating\n");
-			mvotg->clock_gating = 0;
-			pdata->vbus = NULL;
-		}
-	}
+			mvotg->घड़ी_gating = 0;
+			pdata->vbus = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (pdata->disable_otg_clock_gating)
-		mvotg->clock_gating = 0;
+	अगर (pdata->disable_otg_घड़ी_gating)
+		mvotg->घड़ी_gating = 0;
 
 	mv_otg_reset(mvotg);
 	mv_otg_init_irq(mvotg);
 
-	r = platform_get_resource(mvotg->pdev, IORESOURCE_IRQ, 0);
-	if (r == NULL) {
+	r = platक्रमm_get_resource(mvotg->pdev, IORESOURCE_IRQ, 0);
+	अगर (r == शून्य) अणु
 		dev_err(&pdev->dev, "no IRQ resource defined\n");
 		retval = -ENODEV;
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
 	mvotg->irq = r->start;
-	if (devm_request_irq(&pdev->dev, mvotg->irq, mv_otg_irq, IRQF_SHARED,
-			driver_name, mvotg)) {
+	अगर (devm_request_irq(&pdev->dev, mvotg->irq, mv_otg_irq, IRQF_SHARED,
+			driver_name, mvotg)) अणु
 		dev_err(&pdev->dev, "Request irq %d for OTG failed\n",
 			mvotg->irq);
 		mvotg->irq = 0;
 		retval = -ENODEV;
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
 	retval = usb_add_phy(&mvotg->phy, USB_PHY_TYPE_USB2);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		dev_err(&pdev->dev, "can't register transceiver, %d\n",
 			retval);
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
 	spin_lock_init(&mvotg->wq_lock);
-	if (spin_trylock(&mvotg->wq_lock)) {
+	अगर (spin_trylock(&mvotg->wq_lock)) अणु
 		mv_otg_run_state_machine(mvotg, 2 * HZ);
 		spin_unlock(&mvotg->wq_lock);
-	}
+	पूर्ण
 
 	dev_info(&pdev->dev,
 		 "successful probe OTG device %s clock gating.\n",
-		 mvotg->clock_gating ? "with" : "without");
+		 mvotg->घड़ी_gating ? "with" : "without");
 
-	return 0;
+	वापस 0;
 
 err_disable_clk:
-	mv_otg_disable_internal(mvotg);
+	mv_otg_disable_पूर्णांकernal(mvotg);
 err_destroy_workqueue:
 	flush_workqueue(mvotg->qwork);
 	destroy_workqueue(mvotg->qwork);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int mv_otg_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	struct mv_otg *mvotg = platform_get_drvdata(pdev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक mv_otg_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
+अणु
+	काष्ठा mv_otg *mvotg = platक्रमm_get_drvdata(pdev);
 
-	if (mvotg->phy.otg->state != OTG_STATE_B_IDLE) {
+	अगर (mvotg->phy.otg->state != OTG_STATE_B_IDLE) अणु
 		dev_info(&pdev->dev,
 			 "OTG state is not B_IDLE, it is %d!\n",
 			 mvotg->phy.otg->state);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (!mvotg->clock_gating)
-		mv_otg_disable_internal(mvotg);
+	अगर (!mvotg->घड़ी_gating)
+		mv_otg_disable_पूर्णांकernal(mvotg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv_otg_resume(struct platform_device *pdev)
-{
-	struct mv_otg *mvotg = platform_get_drvdata(pdev);
+अटल पूर्णांक mv_otg_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mv_otg *mvotg = platक्रमm_get_drvdata(pdev);
 	u32 otgsc;
 
-	if (!mvotg->clock_gating) {
-		mv_otg_enable_internal(mvotg);
+	अगर (!mvotg->घड़ी_gating) अणु
+		mv_otg_enable_पूर्णांकernal(mvotg);
 
-		otgsc = readl(&mvotg->op_regs->otgsc);
+		otgsc = पढ़ोl(&mvotg->op_regs->otgsc);
 		otgsc |= mvotg->irq_en;
-		writel(otgsc, &mvotg->op_regs->otgsc);
+		ग_लिखोl(otgsc, &mvotg->op_regs->otgsc);
 
-		if (spin_trylock(&mvotg->wq_lock)) {
+		अगर (spin_trylock(&mvotg->wq_lock)) अणु
 			mv_otg_run_state_machine(mvotg, 0);
 			spin_unlock(&mvotg->wq_lock);
-		}
-	}
-	return 0;
-}
-#endif
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static struct platform_driver mv_otg_driver = {
+अटल काष्ठा platक्रमm_driver mv_otg_driver = अणु
 	.probe = mv_otg_probe,
-	.remove = mv_otg_remove,
-	.driver = {
+	.हटाओ = mv_otg_हटाओ,
+	.driver = अणु
 		   .name = driver_name,
 		   .dev_groups = mv_otg_groups,
-		   },
-#ifdef CONFIG_PM
+		   पूर्ण,
+#अगर_घोषित CONFIG_PM
 	.suspend = mv_otg_suspend,
 	.resume = mv_otg_resume,
-#endif
-};
-module_platform_driver(mv_otg_driver);
+#पूर्ण_अगर
+पूर्ण;
+module_platक्रमm_driver(mv_otg_driver);

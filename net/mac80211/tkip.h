@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2002-2004, Instant802 Networks, Inc.
  */
 
-#ifndef TKIP_H
-#define TKIP_H
+#अगर_अघोषित TKIP_H
+#घोषणा TKIP_H
 
-#include <linux/types.h>
-#include <linux/crypto.h>
-#include "key.h"
+#समावेश <linux/types.h>
+#समावेश <linux/crypto.h>
+#समावेश "key.h"
 
-int ieee80211_tkip_encrypt_data(struct arc4_ctx *ctx,
-				struct ieee80211_key *key,
-				struct sk_buff *skb,
-				u8 *payload, size_t payload_len);
+पूर्णांक ieee80211_tkip_encrypt_data(काष्ठा arc4_ctx *ctx,
+				काष्ठा ieee80211_key *key,
+				काष्ठा sk_buff *skb,
+				u8 *payload, माप_प्रकार payload_len);
 
-enum {
+क्रमागत अणु
 	TKIP_DECRYPT_OK = 0,
 	TKIP_DECRYPT_NO_EXT_IV = -1,
 	TKIP_DECRYPT_INVALID_KEYIDX = -2,
 	TKIP_DECRYPT_REPLAY = -3,
-};
-int ieee80211_tkip_decrypt_data(struct arc4_ctx *ctx,
-				struct ieee80211_key *key,
-				u8 *payload, size_t payload_len, u8 *ta,
-				u8 *ra, int only_iv, int queue,
+पूर्ण;
+पूर्णांक ieee80211_tkip_decrypt_data(काष्ठा arc4_ctx *ctx,
+				काष्ठा ieee80211_key *key,
+				u8 *payload, माप_प्रकार payload_len, u8 *ta,
+				u8 *ra, पूर्णांक only_iv, पूर्णांक queue,
 				u32 *out_iv32, u16 *out_iv16);
 
-#endif /* TKIP_H */
+#पूर्ण_अगर /* TKIP_H */

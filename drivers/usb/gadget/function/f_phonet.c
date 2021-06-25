@@ -1,240 +1,241 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * f_phonet.c -- USB CDC Phonet function
  *
  * Copyright (C) 2007-2008 Nokia Corporation. All rights reserved.
  *
- * Author: Rémi Denis-Courmont
+ * Author: Rथऊmi Denis-Courmont
  */
 
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/device.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
 
-#include <linux/netdevice.h>
-#include <linux/if_ether.h>
-#include <linux/if_phonet.h>
-#include <linux/if_arp.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_phonet.h>
+#समावेश <linux/अगर_arp.h>
 
-#include <linux/usb/ch9.h>
-#include <linux/usb/cdc.h>
-#include <linux/usb/composite.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/cdc.h>
+#समावेश <linux/usb/composite.h>
 
-#include "u_phonet.h"
-#include "u_ether.h"
+#समावेश "u_phonet.h"
+#समावेश "u_ether.h"
 
-#define PN_MEDIA_USB	0x1B
-#define MAXPACKET	512
-#if (PAGE_SIZE % MAXPACKET)
-#error MAXPACKET must divide PAGE_SIZE!
-#endif
+#घोषणा PN_MEDIA_USB	0x1B
+#घोषणा MAXPACKET	512
+#अगर (PAGE_SIZE % MAXPACKET)
+#त्रुटि MAXPACKET must भागide PAGE_SIZE!
+#पूर्ण_अगर
 
 /*-------------------------------------------------------------------------*/
 
-struct phonet_port {
-	struct f_phonet			*usb;
+काष्ठा phonet_port अणु
+	काष्ठा f_phonet			*usb;
 	spinlock_t			lock;
-};
+पूर्ण;
 
-struct f_phonet {
-	struct usb_function		function;
-	struct {
-		struct sk_buff		*skb;
+काष्ठा f_phonet अणु
+	काष्ठा usb_function		function;
+	काष्ठा अणु
+		काष्ठा sk_buff		*skb;
 		spinlock_t		lock;
-	} rx;
-	struct net_device		*dev;
-	struct usb_ep			*in_ep, *out_ep;
+	पूर्ण rx;
+	काष्ठा net_device		*dev;
+	काष्ठा usb_ep			*in_ep, *out_ep;
 
-	struct usb_request		*in_req;
-	struct usb_request		*out_reqv[];
-};
+	काष्ठा usb_request		*in_req;
+	काष्ठा usb_request		*out_reqv[];
+पूर्ण;
 
-static int phonet_rxq_size = 17;
+अटल पूर्णांक phonet_rxq_size = 17;
 
-static inline struct f_phonet *func_to_pn(struct usb_function *f)
-{
-	return container_of(f, struct f_phonet, function);
-}
+अटल अंतरभूत काष्ठा f_phonet *func_to_pn(काष्ठा usb_function *f)
+अणु
+	वापस container_of(f, काष्ठा f_phonet, function);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-#define USB_CDC_SUBCLASS_PHONET	0xfe
-#define USB_CDC_PHONET_TYPE	0xab
+#घोषणा USB_CDC_SUBCLASS_PHONET	0xfe
+#घोषणा USB_CDC_PHONET_TYPE	0xab
 
-static struct usb_interface_descriptor
-pn_control_intf_desc = {
-	.bLength =		sizeof pn_control_intf_desc,
+अटल काष्ठा usb_पूर्णांकerface_descriptor
+pn_control_पूर्णांकf_desc = अणु
+	.bLength =		माप pn_control_पूर्णांकf_desc,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
 	/* .bInterfaceNumber =	DYNAMIC, */
 	.bInterfaceClass =	USB_CLASS_COMM,
 	.bInterfaceSubClass =	USB_CDC_SUBCLASS_PHONET,
-};
+पूर्ण;
 
-static const struct usb_cdc_header_desc
-pn_header_desc = {
-	.bLength =		sizeof pn_header_desc,
+अटल स्थिर काष्ठा usb_cdc_header_desc
+pn_header_desc = अणु
+	.bLength =		माप pn_header_desc,
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_HEADER_TYPE,
 	.bcdCDC =		cpu_to_le16(0x0110),
-};
+पूर्ण;
 
-static const struct usb_cdc_header_desc
-pn_phonet_desc = {
-	.bLength =		sizeof pn_phonet_desc,
+अटल स्थिर काष्ठा usb_cdc_header_desc
+pn_phonet_desc = अणु
+	.bLength =		माप pn_phonet_desc,
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_PHONET_TYPE,
 	.bcdCDC =		cpu_to_le16(0x1505), /* ??? */
-};
+पूर्ण;
 
-static struct usb_cdc_union_desc
-pn_union_desc = {
-	.bLength =		sizeof pn_union_desc,
+अटल काष्ठा usb_cdc_जोड़_desc
+pn_जोड़_desc = अणु
+	.bLength =		माप pn_जोड़_desc,
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_UNION_TYPE,
 
 	/* .bMasterInterface0 =	DYNAMIC, */
 	/* .bSlaveInterface0 =	DYNAMIC, */
-};
+पूर्ण;
 
-static struct usb_interface_descriptor
-pn_data_nop_intf_desc = {
-	.bLength =		sizeof pn_data_nop_intf_desc,
+अटल काष्ठा usb_पूर्णांकerface_descriptor
+pn_data_nop_पूर्णांकf_desc = अणु
+	.bLength =		माप pn_data_nop_पूर्णांकf_desc,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
 	/* .bInterfaceNumber =	DYNAMIC, */
 	.bAlternateSetting =	0,
-	.bNumEndpoints =	0,
+	.bNumEndpoपूर्णांकs =	0,
 	.bInterfaceClass =	USB_CLASS_CDC_DATA,
-};
+पूर्ण;
 
-static struct usb_interface_descriptor
-pn_data_intf_desc = {
-	.bLength =		sizeof pn_data_intf_desc,
+अटल काष्ठा usb_पूर्णांकerface_descriptor
+pn_data_पूर्णांकf_desc = अणु
+	.bLength =		माप pn_data_पूर्णांकf_desc,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
 	/* .bInterfaceNumber =	DYNAMIC, */
 	.bAlternateSetting =	1,
-	.bNumEndpoints =	2,
+	.bNumEndpoपूर्णांकs =	2,
 	.bInterfaceClass =	USB_CLASS_CDC_DATA,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor
-pn_fs_sink_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor
+pn_fs_sink_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor
-pn_hs_sink_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor
+pn_hs_sink_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(MAXPACKET),
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor
-pn_fs_source_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor
+pn_fs_source_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor
-pn_hs_source_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor
+pn_hs_source_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-};
+पूर्ण;
 
-static struct usb_descriptor_header *fs_pn_function[] = {
-	(struct usb_descriptor_header *) &pn_control_intf_desc,
-	(struct usb_descriptor_header *) &pn_header_desc,
-	(struct usb_descriptor_header *) &pn_phonet_desc,
-	(struct usb_descriptor_header *) &pn_union_desc,
-	(struct usb_descriptor_header *) &pn_data_nop_intf_desc,
-	(struct usb_descriptor_header *) &pn_data_intf_desc,
-	(struct usb_descriptor_header *) &pn_fs_sink_desc,
-	(struct usb_descriptor_header *) &pn_fs_source_desc,
-	NULL,
-};
+अटल काष्ठा usb_descriptor_header *fs_pn_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &pn_control_पूर्णांकf_desc,
+	(काष्ठा usb_descriptor_header *) &pn_header_desc,
+	(काष्ठा usb_descriptor_header *) &pn_phonet_desc,
+	(काष्ठा usb_descriptor_header *) &pn_जोड़_desc,
+	(काष्ठा usb_descriptor_header *) &pn_data_nop_पूर्णांकf_desc,
+	(काष्ठा usb_descriptor_header *) &pn_data_पूर्णांकf_desc,
+	(काष्ठा usb_descriptor_header *) &pn_fs_sink_desc,
+	(काष्ठा usb_descriptor_header *) &pn_fs_source_desc,
+	शून्य,
+पूर्ण;
 
-static struct usb_descriptor_header *hs_pn_function[] = {
-	(struct usb_descriptor_header *) &pn_control_intf_desc,
-	(struct usb_descriptor_header *) &pn_header_desc,
-	(struct usb_descriptor_header *) &pn_phonet_desc,
-	(struct usb_descriptor_header *) &pn_union_desc,
-	(struct usb_descriptor_header *) &pn_data_nop_intf_desc,
-	(struct usb_descriptor_header *) &pn_data_intf_desc,
-	(struct usb_descriptor_header *) &pn_hs_sink_desc,
-	(struct usb_descriptor_header *) &pn_hs_source_desc,
-	NULL,
-};
+अटल काष्ठा usb_descriptor_header *hs_pn_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &pn_control_पूर्णांकf_desc,
+	(काष्ठा usb_descriptor_header *) &pn_header_desc,
+	(काष्ठा usb_descriptor_header *) &pn_phonet_desc,
+	(काष्ठा usb_descriptor_header *) &pn_जोड़_desc,
+	(काष्ठा usb_descriptor_header *) &pn_data_nop_पूर्णांकf_desc,
+	(काष्ठा usb_descriptor_header *) &pn_data_पूर्णांकf_desc,
+	(काष्ठा usb_descriptor_header *) &pn_hs_sink_desc,
+	(काष्ठा usb_descriptor_header *) &pn_hs_source_desc,
+	शून्य,
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-static int pn_net_open(struct net_device *dev)
-{
-	netif_wake_queue(dev);
-	return 0;
-}
+अटल पूर्णांक pn_net_खोलो(काष्ठा net_device *dev)
+अणु
+	netअगर_wake_queue(dev);
+	वापस 0;
+पूर्ण
 
-static int pn_net_close(struct net_device *dev)
-{
-	netif_stop_queue(dev);
-	return 0;
-}
+अटल पूर्णांक pn_net_बंद(काष्ठा net_device *dev)
+अणु
+	netअगर_stop_queue(dev);
+	वापस 0;
+पूर्ण
 
-static void pn_tx_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct f_phonet *fp = ep->driver_data;
-	struct net_device *dev = fp->dev;
-	struct sk_buff *skb = req->context;
+अटल व्योम pn_tx_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा f_phonet *fp = ep->driver_data;
+	काष्ठा net_device *dev = fp->dev;
+	काष्ठा sk_buff *skb = req->context;
 
-	switch (req->status) {
-	case 0:
+	चयन (req->status) अणु
+	हाल 0:
 		dev->stats.tx_packets++;
 		dev->stats.tx_bytes += skb->len;
-		break;
+		अवरोध;
 
-	case -ESHUTDOWN: /* disconnected */
-	case -ECONNRESET: /* disabled */
-		dev->stats.tx_aborted_errors++;
+	हाल -ESHUTDOWN: /* disconnected */
+	हाल -ECONNRESET: /* disabled */
+		dev->stats.tx_पातed_errors++;
 		fallthrough;
-	default:
+	शेष:
 		dev->stats.tx_errors++;
-	}
+	पूर्ण
 
-	dev_kfree_skb_any(skb);
-	netif_wake_queue(dev);
-}
+	dev_kमुक्त_skb_any(skb);
+	netअगर_wake_queue(dev);
+पूर्ण
 
-static netdev_tx_t pn_net_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct phonet_port *port = netdev_priv(dev);
-	struct f_phonet *fp;
-	struct usb_request *req;
-	unsigned long flags;
+अटल netdev_tx_t pn_net_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा phonet_port *port = netdev_priv(dev);
+	काष्ठा f_phonet *fp;
+	काष्ठा usb_request *req;
+	अचिन्हित दीर्घ flags;
 
-	if (skb->protocol != htons(ETH_P_PHONET))
-		goto out;
+	अगर (skb->protocol != htons(ETH_P_PHONET))
+		जाओ out;
 
 	spin_lock_irqsave(&port->lock, flags);
 	fp = port->usb;
-	if (unlikely(!fp)) /* race with carrier loss */
-		goto out_unlock;
+	अगर (unlikely(!fp)) /* race with carrier loss */
+		जाओ out_unlock;
 
 	req = fp->in_req;
 	req->buf = skb->data;
@@ -243,30 +244,30 @@ static netdev_tx_t pn_net_xmit(struct sk_buff *skb, struct net_device *dev)
 	req->zero = 1;
 	req->context = skb;
 
-	if (unlikely(usb_ep_queue(fp->in_ep, req, GFP_ATOMIC)))
-		goto out_unlock;
+	अगर (unlikely(usb_ep_queue(fp->in_ep, req, GFP_ATOMIC)))
+		जाओ out_unlock;
 
-	netif_stop_queue(dev);
-	skb = NULL;
+	netअगर_stop_queue(dev);
+	skb = शून्य;
 
 out_unlock:
 	spin_unlock_irqrestore(&port->lock, flags);
 out:
-	if (unlikely(skb)) {
-		dev_kfree_skb(skb);
+	अगर (unlikely(skb)) अणु
+		dev_kमुक्त_skb(skb);
 		dev->stats.tx_dropped++;
-	}
-	return NETDEV_TX_OK;
-}
+	पूर्ण
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static const struct net_device_ops pn_netdev_ops = {
-	.ndo_open	= pn_net_open,
-	.ndo_stop	= pn_net_close,
-	.ndo_start_xmit	= pn_net_xmit,
-};
+अटल स्थिर काष्ठा net_device_ops pn_netdev_ops = अणु
+	.nकरो_खोलो	= pn_net_खोलो,
+	.nकरो_stop	= pn_net_बंद,
+	.nकरो_start_xmit	= pn_net_xmit,
+पूर्ण;
 
-static void pn_net_setup(struct net_device *dev)
-{
+अटल व्योम pn_net_setup(काष्ठा net_device *dev)
+अणु
 	dev->features		= 0;
 	dev->type		= ARPHRD_PHONET;
 	dev->flags		= IFF_POINTOPOINT | IFF_NOARP;
@@ -279,150 +280,150 @@ static void pn_net_setup(struct net_device *dev)
 	dev->tx_queue_len	= 1;
 
 	dev->netdev_ops		= &pn_netdev_ops;
-	dev->needs_free_netdev	= true;
+	dev->needs_मुक्त_netdev	= true;
 	dev->header_ops		= &phonet_header_ops;
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * Queue buffer for data from the host
+ * Queue buffer क्रम data from the host
  */
-static int
-pn_rx_submit(struct f_phonet *fp, struct usb_request *req, gfp_t gfp_flags)
-{
-	struct page *page;
-	int err;
+अटल पूर्णांक
+pn_rx_submit(काष्ठा f_phonet *fp, काष्ठा usb_request *req, gfp_t gfp_flags)
+अणु
+	काष्ठा page *page;
+	पूर्णांक err;
 
 	page = __dev_alloc_page(gfp_flags | __GFP_NOMEMALLOC);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 
 	req->buf = page_address(page);
 	req->length = PAGE_SIZE;
 	req->context = page;
 
 	err = usb_ep_queue(fp->out_ep, req, gfp_flags);
-	if (unlikely(err))
+	अगर (unlikely(err))
 		put_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void pn_rx_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct f_phonet *fp = ep->driver_data;
-	struct net_device *dev = fp->dev;
-	struct page *page = req->context;
-	struct sk_buff *skb;
-	unsigned long flags;
-	int status = req->status;
+अटल व्योम pn_rx_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा f_phonet *fp = ep->driver_data;
+	काष्ठा net_device *dev = fp->dev;
+	काष्ठा page *page = req->context;
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक status = req->status;
 
-	switch (status) {
-	case 0:
+	चयन (status) अणु
+	हाल 0:
 		spin_lock_irqsave(&fp->rx.lock, flags);
 		skb = fp->rx.skb;
-		if (!skb)
+		अगर (!skb)
 			skb = fp->rx.skb = netdev_alloc_skb(dev, 12);
-		if (req->actual < req->length) /* Last fragment */
-			fp->rx.skb = NULL;
+		अगर (req->actual < req->length) /* Last fragment */
+			fp->rx.skb = शून्य;
 		spin_unlock_irqrestore(&fp->rx.lock, flags);
 
-		if (unlikely(!skb))
-			break;
+		अगर (unlikely(!skb))
+			अवरोध;
 
-		if (skb->len == 0) { /* First fragment */
+		अगर (skb->len == 0) अणु /* First fragment */
 			skb->protocol = htons(ETH_P_PHONET);
 			skb_reset_mac_header(skb);
 			/* Can't use pskb_pull() on page in IRQ */
 			skb_put_data(skb, page_address(page), 1);
-		}
+		पूर्ण
 
 		skb_add_rx_frag(skb, skb_shinfo(skb)->nr_frags, page,
 				skb->len <= 1, req->actual, PAGE_SIZE);
-		page = NULL;
+		page = शून्य;
 
-		if (req->actual < req->length) { /* Last fragment */
+		अगर (req->actual < req->length) अणु /* Last fragment */
 			skb->dev = dev;
 			dev->stats.rx_packets++;
 			dev->stats.rx_bytes += skb->len;
 
-			netif_rx(skb);
-		}
-		break;
+			netअगर_rx(skb);
+		पूर्ण
+		अवरोध;
 
-	/* Do not resubmit in these cases: */
-	case -ESHUTDOWN: /* disconnect */
-	case -ECONNABORTED: /* hw reset */
-	case -ECONNRESET: /* dequeued (unlink or netif down) */
-		req = NULL;
-		break;
+	/* Do not resubmit in these हालs: */
+	हाल -ESHUTDOWN: /* disconnect */
+	हाल -ECONNABORTED: /* hw reset */
+	हाल -ECONNRESET: /* dequeued (unlink or netअगर करोwn) */
+		req = शून्य;
+		अवरोध;
 
-	/* Do resubmit in these cases: */
-	case -EOVERFLOW: /* request buffer overflow */
+	/* Do resubmit in these हालs: */
+	हाल -EOVERFLOW: /* request buffer overflow */
 		dev->stats.rx_over_errors++;
 		fallthrough;
-	default:
+	शेष:
 		dev->stats.rx_errors++;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (page)
+	अगर (page)
 		put_page(page);
-	if (req)
+	अगर (req)
 		pn_rx_submit(fp, req, GFP_ATOMIC);
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static void __pn_reset(struct usb_function *f)
-{
-	struct f_phonet *fp = func_to_pn(f);
-	struct net_device *dev = fp->dev;
-	struct phonet_port *port = netdev_priv(dev);
+अटल व्योम __pn_reset(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_phonet *fp = func_to_pn(f);
+	काष्ठा net_device *dev = fp->dev;
+	काष्ठा phonet_port *port = netdev_priv(dev);
 
-	netif_carrier_off(dev);
-	port->usb = NULL;
+	netअगर_carrier_off(dev);
+	port->usb = शून्य;
 
 	usb_ep_disable(fp->out_ep);
 	usb_ep_disable(fp->in_ep);
-	if (fp->rx.skb) {
-		dev_kfree_skb_irq(fp->rx.skb);
-		fp->rx.skb = NULL;
-	}
-}
+	अगर (fp->rx.skb) अणु
+		dev_kमुक्त_skb_irq(fp->rx.skb);
+		fp->rx.skb = शून्य;
+	पूर्ण
+पूर्ण
 
-static int pn_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
-{
-	struct f_phonet *fp = func_to_pn(f);
-	struct usb_gadget *gadget = fp->function.config->cdev->gadget;
+अटल पूर्णांक pn_set_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf, अचिन्हित alt)
+अणु
+	काष्ठा f_phonet *fp = func_to_pn(f);
+	काष्ठा usb_gadget *gadget = fp->function.config->cdev->gadget;
 
-	if (intf == pn_control_intf_desc.bInterfaceNumber)
-		/* control interface, no altsetting */
-		return (alt > 0) ? -EINVAL : 0;
+	अगर (पूर्णांकf == pn_control_पूर्णांकf_desc.bInterfaceNumber)
+		/* control पूर्णांकerface, no altsetting */
+		वापस (alt > 0) ? -EINVAL : 0;
 
-	if (intf == pn_data_intf_desc.bInterfaceNumber) {
-		struct net_device *dev = fp->dev;
-		struct phonet_port *port = netdev_priv(dev);
+	अगर (पूर्णांकf == pn_data_पूर्णांकf_desc.bInterfaceNumber) अणु
+		काष्ठा net_device *dev = fp->dev;
+		काष्ठा phonet_port *port = netdev_priv(dev);
 
-		/* data intf (0: inactive, 1: active) */
-		if (alt > 1)
-			return -EINVAL;
+		/* data पूर्णांकf (0: inactive, 1: active) */
+		अगर (alt > 1)
+			वापस -EINVAL;
 
 		spin_lock(&port->lock);
 
-		if (fp->in_ep->enabled)
+		अगर (fp->in_ep->enabled)
 			__pn_reset(f);
 
-		if (alt == 1) {
-			int i;
+		अगर (alt == 1) अणु
+			पूर्णांक i;
 
-			if (config_ep_by_speed(gadget, f, fp->in_ep) ||
-			    config_ep_by_speed(gadget, f, fp->out_ep)) {
-				fp->in_ep->desc = NULL;
-				fp->out_ep->desc = NULL;
+			अगर (config_ep_by_speed(gadget, f, fp->in_ep) ||
+			    config_ep_by_speed(gadget, f, fp->out_ep)) अणु
+				fp->in_ep->desc = शून्य;
+				fp->out_ep->desc = शून्य;
 				spin_unlock(&port->lock);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			usb_ep_enable(fp->out_ep);
 			usb_ep_enable(fp->in_ep);
 
@@ -430,249 +431,249 @@ static int pn_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 			fp->out_ep->driver_data = fp;
 			fp->in_ep->driver_data = fp;
 
-			netif_carrier_on(dev);
-			for (i = 0; i < phonet_rxq_size; i++)
+			netअगर_carrier_on(dev);
+			क्रम (i = 0; i < phonet_rxq_size; i++)
 				pn_rx_submit(fp, fp->out_reqv[i], GFP_ATOMIC);
-		}
+		पूर्ण
 		spin_unlock(&port->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int pn_get_alt(struct usb_function *f, unsigned intf)
-{
-	struct f_phonet *fp = func_to_pn(f);
+अटल पूर्णांक pn_get_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf)
+अणु
+	काष्ठा f_phonet *fp = func_to_pn(f);
 
-	if (intf == pn_control_intf_desc.bInterfaceNumber)
-		return 0;
+	अगर (पूर्णांकf == pn_control_पूर्णांकf_desc.bInterfaceNumber)
+		वापस 0;
 
-	if (intf == pn_data_intf_desc.bInterfaceNumber) {
-		struct phonet_port *port = netdev_priv(fp->dev);
+	अगर (पूर्णांकf == pn_data_पूर्णांकf_desc.bInterfaceNumber) अणु
+		काष्ठा phonet_port *port = netdev_priv(fp->dev);
 		u8 alt;
 
 		spin_lock(&port->lock);
-		alt = port->usb != NULL;
+		alt = port->usb != शून्य;
 		spin_unlock(&port->lock);
-		return alt;
-	}
+		वापस alt;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void pn_disconnect(struct usb_function *f)
-{
-	struct f_phonet *fp = func_to_pn(f);
-	struct phonet_port *port = netdev_priv(fp->dev);
-	unsigned long flags;
+अटल व्योम pn_disconnect(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_phonet *fp = func_to_pn(f);
+	काष्ठा phonet_port *port = netdev_priv(fp->dev);
+	अचिन्हित दीर्घ flags;
 
-	/* remain disabled until set_alt */
+	/* reमुख्य disabled until set_alt */
 	spin_lock_irqsave(&port->lock, flags);
 	__pn_reset(f);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static int pn_bind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct usb_composite_dev *cdev = c->cdev;
-	struct usb_gadget *gadget = cdev->gadget;
-	struct f_phonet *fp = func_to_pn(f);
-	struct usb_ep *ep;
-	int status, i;
+अटल पूर्णांक pn_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा usb_composite_dev *cdev = c->cdev;
+	काष्ठा usb_gadget *gadget = cdev->gadget;
+	काष्ठा f_phonet *fp = func_to_pn(f);
+	काष्ठा usb_ep *ep;
+	पूर्णांक status, i;
 
-	struct f_phonet_opts *phonet_opts;
+	काष्ठा f_phonet_opts *phonet_opts;
 
-	phonet_opts = container_of(f->fi, struct f_phonet_opts, func_inst);
+	phonet_opts = container_of(f->fi, काष्ठा f_phonet_opts, func_inst);
 
 	/*
 	 * in drivers/usb/gadget/configfs.c:configfs_composite_bind()
-	 * configurations are bound in sequence with list_for_each_entry,
+	 * configurations are bound in sequence with list_क्रम_each_entry,
 	 * in each configuration its functions are bound in sequence
-	 * with list_for_each_entry, so we assume no race condition
+	 * with list_क्रम_each_entry, so we assume no race condition
 	 * with regard to phonet_opts->bound access
 	 */
-	if (!phonet_opts->bound) {
+	अगर (!phonet_opts->bound) अणु
 		gphonet_set_gadget(phonet_opts->net, gadget);
-		status = gphonet_register_netdev(phonet_opts->net);
-		if (status)
-			return status;
+		status = gphonet_रेजिस्टर_netdev(phonet_opts->net);
+		अगर (status)
+			वापस status;
 		phonet_opts->bound = true;
-	}
+	पूर्ण
 
-	/* Reserve interface IDs */
-	status = usb_interface_id(c, f);
-	if (status < 0)
-		goto err;
-	pn_control_intf_desc.bInterfaceNumber = status;
-	pn_union_desc.bMasterInterface0 = status;
+	/* Reserve पूर्णांकerface IDs */
+	status = usb_पूर्णांकerface_id(c, f);
+	अगर (status < 0)
+		जाओ err;
+	pn_control_पूर्णांकf_desc.bInterfaceNumber = status;
+	pn_जोड़_desc.bMasterInterface0 = status;
 
-	status = usb_interface_id(c, f);
-	if (status < 0)
-		goto err;
-	pn_data_nop_intf_desc.bInterfaceNumber = status;
-	pn_data_intf_desc.bInterfaceNumber = status;
-	pn_union_desc.bSlaveInterface0 = status;
+	status = usb_पूर्णांकerface_id(c, f);
+	अगर (status < 0)
+		जाओ err;
+	pn_data_nop_पूर्णांकf_desc.bInterfaceNumber = status;
+	pn_data_पूर्णांकf_desc.bInterfaceNumber = status;
+	pn_जोड़_desc.bSlaveInterface0 = status;
 
-	/* Reserve endpoints */
+	/* Reserve endpoपूर्णांकs */
 	status = -ENODEV;
-	ep = usb_ep_autoconfig(gadget, &pn_fs_sink_desc);
-	if (!ep)
-		goto err;
+	ep = usb_ep_स्वतःconfig(gadget, &pn_fs_sink_desc);
+	अगर (!ep)
+		जाओ err;
 	fp->out_ep = ep;
 
-	ep = usb_ep_autoconfig(gadget, &pn_fs_source_desc);
-	if (!ep)
-		goto err;
+	ep = usb_ep_स्वतःconfig(gadget, &pn_fs_source_desc);
+	अगर (!ep)
+		जाओ err;
 	fp->in_ep = ep;
 
-	pn_hs_sink_desc.bEndpointAddress = pn_fs_sink_desc.bEndpointAddress;
-	pn_hs_source_desc.bEndpointAddress = pn_fs_source_desc.bEndpointAddress;
+	pn_hs_sink_desc.bEndpoपूर्णांकAddress = pn_fs_sink_desc.bEndpoपूर्णांकAddress;
+	pn_hs_source_desc.bEndpoपूर्णांकAddress = pn_fs_source_desc.bEndpoपूर्णांकAddress;
 
 	/* Do not try to bind Phonet twice... */
 	status = usb_assign_descriptors(f, fs_pn_function, hs_pn_function,
-			NULL, NULL);
-	if (status)
-		goto err;
+			शून्य, शून्य);
+	अगर (status)
+		जाओ err;
 
 	/* Incoming USB requests */
 	status = -ENOMEM;
-	for (i = 0; i < phonet_rxq_size; i++) {
-		struct usb_request *req;
+	क्रम (i = 0; i < phonet_rxq_size; i++) अणु
+		काष्ठा usb_request *req;
 
 		req = usb_ep_alloc_request(fp->out_ep, GFP_KERNEL);
-		if (!req)
-			goto err_req;
+		अगर (!req)
+			जाओ err_req;
 
 		req->complete = pn_rx_complete;
 		fp->out_reqv[i] = req;
-	}
+	पूर्ण
 
 	/* Outgoing USB requests */
 	fp->in_req = usb_ep_alloc_request(fp->in_ep, GFP_KERNEL);
-	if (!fp->in_req)
-		goto err_req;
+	अगर (!fp->in_req)
+		जाओ err_req;
 
 	INFO(cdev, "USB CDC Phonet function\n");
 	INFO(cdev, "using %s, OUT %s, IN %s\n", cdev->gadget->name,
 		fp->out_ep->name, fp->in_ep->name);
-	return 0;
+	वापस 0;
 
 err_req:
-	for (i = 0; i < phonet_rxq_size && fp->out_reqv[i]; i++)
-		usb_ep_free_request(fp->out_ep, fp->out_reqv[i]);
-	usb_free_all_descriptors(f);
+	क्रम (i = 0; i < phonet_rxq_size && fp->out_reqv[i]; i++)
+		usb_ep_मुक्त_request(fp->out_ep, fp->out_reqv[i]);
+	usb_मुक्त_all_descriptors(f);
 err:
 	ERROR(cdev, "USB CDC Phonet: cannot autoconfigure\n");
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline struct f_phonet_opts *to_f_phonet_opts(struct config_item *item)
-{
-	return container_of(to_config_group(item), struct f_phonet_opts,
+अटल अंतरभूत काष्ठा f_phonet_opts *to_f_phonet_opts(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item), काष्ठा f_phonet_opts,
 			func_inst.group);
-}
+पूर्ण
 
-static void phonet_attr_release(struct config_item *item)
-{
-	struct f_phonet_opts *opts = to_f_phonet_opts(item);
+अटल व्योम phonet_attr_release(काष्ठा config_item *item)
+अणु
+	काष्ठा f_phonet_opts *opts = to_f_phonet_opts(item);
 
 	usb_put_function_instance(&opts->func_inst);
-}
+पूर्ण
 
-static struct configfs_item_operations phonet_item_ops = {
+अटल काष्ठा configfs_item_operations phonet_item_ops = अणु
 	.release		= phonet_attr_release,
-};
+पूर्ण;
 
-static ssize_t f_phonet_ifname_show(struct config_item *item, char *page)
-{
-	return gether_get_ifname(to_f_phonet_opts(item)->net, page, PAGE_SIZE);
-}
+अटल sमाप_प्रकार f_phonet_अगरname_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस gether_get_अगरname(to_f_phonet_opts(item)->net, page, PAGE_SIZE);
+पूर्ण
 
-CONFIGFS_ATTR_RO(f_phonet_, ifname);
+CONFIGFS_ATTR_RO(f_phonet_, अगरname);
 
-static struct configfs_attribute *phonet_attrs[] = {
-	&f_phonet_attr_ifname,
-	NULL,
-};
+अटल काष्ठा configfs_attribute *phonet_attrs[] = अणु
+	&f_phonet_attr_अगरname,
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type phonet_func_type = {
+अटल स्थिर काष्ठा config_item_type phonet_func_type = अणु
 	.ct_item_ops	= &phonet_item_ops,
 	.ct_attrs	= phonet_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static void phonet_free_inst(struct usb_function_instance *f)
-{
-	struct f_phonet_opts *opts;
+अटल व्योम phonet_मुक्त_inst(काष्ठा usb_function_instance *f)
+अणु
+	काष्ठा f_phonet_opts *opts;
 
-	opts = container_of(f, struct f_phonet_opts, func_inst);
-	if (opts->bound)
+	opts = container_of(f, काष्ठा f_phonet_opts, func_inst);
+	अगर (opts->bound)
 		gphonet_cleanup(opts->net);
-	else
-		free_netdev(opts->net);
-	kfree(opts);
-}
+	अन्यथा
+		मुक्त_netdev(opts->net);
+	kमुक्त(opts);
+पूर्ण
 
-static struct usb_function_instance *phonet_alloc_inst(void)
-{
-	struct f_phonet_opts *opts;
+अटल काष्ठा usb_function_instance *phonet_alloc_inst(व्योम)
+अणु
+	काष्ठा f_phonet_opts *opts;
 
-	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
-	if (!opts)
-		return ERR_PTR(-ENOMEM);
+	opts = kzalloc(माप(*opts), GFP_KERNEL);
+	अगर (!opts)
+		वापस ERR_PTR(-ENOMEM);
 
-	opts->func_inst.free_func_inst = phonet_free_inst;
-	opts->net = gphonet_setup_default();
-	if (IS_ERR(opts->net)) {
-		struct net_device *net = opts->net;
-		kfree(opts);
-		return ERR_CAST(net);
-	}
+	opts->func_inst.मुक्त_func_inst = phonet_मुक्त_inst;
+	opts->net = gphonet_setup_शेष();
+	अगर (IS_ERR(opts->net)) अणु
+		काष्ठा net_device *net = opts->net;
+		kमुक्त(opts);
+		वापस ERR_CAST(net);
+	पूर्ण
 
 	config_group_init_type_name(&opts->func_inst.group, "",
 			&phonet_func_type);
 
-	return &opts->func_inst;
-}
+	वापस &opts->func_inst;
+पूर्ण
 
-static void phonet_free(struct usb_function *f)
-{
-	struct f_phonet *phonet;
+अटल व्योम phonet_मुक्त(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_phonet *phonet;
 
 	phonet = func_to_pn(f);
-	kfree(phonet);
-}
+	kमुक्त(phonet);
+पूर्ण
 
-static void pn_unbind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct f_phonet *fp = func_to_pn(f);
-	int i;
+अटल व्योम pn_unbind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा f_phonet *fp = func_to_pn(f);
+	पूर्णांक i;
 
-	/* We are already disconnected */
-	if (fp->in_req)
-		usb_ep_free_request(fp->in_ep, fp->in_req);
-	for (i = 0; i < phonet_rxq_size; i++)
-		if (fp->out_reqv[i])
-			usb_ep_free_request(fp->out_ep, fp->out_reqv[i]);
+	/* We are alपढ़ोy disconnected */
+	अगर (fp->in_req)
+		usb_ep_मुक्त_request(fp->in_ep, fp->in_req);
+	क्रम (i = 0; i < phonet_rxq_size; i++)
+		अगर (fp->out_reqv[i])
+			usb_ep_मुक्त_request(fp->out_ep, fp->out_reqv[i]);
 
-	usb_free_all_descriptors(f);
-}
+	usb_मुक्त_all_descriptors(f);
+पूर्ण
 
-static struct usb_function *phonet_alloc(struct usb_function_instance *fi)
-{
-	struct f_phonet *fp;
-	struct f_phonet_opts *opts;
-	int size;
+अटल काष्ठा usb_function *phonet_alloc(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा f_phonet *fp;
+	काष्ठा f_phonet_opts *opts;
+	पूर्णांक size;
 
-	size = sizeof(*fp) + (phonet_rxq_size * sizeof(struct usb_request *));
+	size = माप(*fp) + (phonet_rxq_size * माप(काष्ठा usb_request *));
 	fp = kzalloc(size, GFP_KERNEL);
-	if (!fp)
-		return ERR_PTR(-ENOMEM);
+	अगर (!fp)
+		वापस ERR_PTR(-ENOMEM);
 
-	opts = container_of(fi, struct f_phonet_opts, func_inst);
+	opts = container_of(fi, काष्ठा f_phonet_opts, func_inst);
 
 	fp->dev = opts->net;
 	fp->function.name = "phonet";
@@ -681,51 +682,51 @@ static struct usb_function *phonet_alloc(struct usb_function_instance *fi)
 	fp->function.set_alt = pn_set_alt;
 	fp->function.get_alt = pn_get_alt;
 	fp->function.disable = pn_disconnect;
-	fp->function.free_func = phonet_free;
+	fp->function.मुक्त_func = phonet_मुक्त;
 	spin_lock_init(&fp->rx.lock);
 
-	return &fp->function;
-}
+	वापस &fp->function;
+पूर्ण
 
-struct net_device *gphonet_setup_default(void)
-{
-	struct net_device *dev;
-	struct phonet_port *port;
+काष्ठा net_device *gphonet_setup_शेष(व्योम)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा phonet_port *port;
 
 	/* Create net device */
-	dev = alloc_netdev(sizeof(*port), "upnlink%d", NET_NAME_UNKNOWN,
+	dev = alloc_netdev(माप(*port), "upnlink%d", NET_NAME_UNKNOWN,
 			   pn_net_setup);
-	if (!dev)
-		return ERR_PTR(-ENOMEM);
+	अगर (!dev)
+		वापस ERR_PTR(-ENOMEM);
 
 	port = netdev_priv(dev);
 	spin_lock_init(&port->lock);
-	netif_carrier_off(dev);
+	netअगर_carrier_off(dev);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-void gphonet_set_gadget(struct net_device *net, struct usb_gadget *g)
-{
+व्योम gphonet_set_gadget(काष्ठा net_device *net, काष्ठा usb_gadget *g)
+अणु
 	SET_NETDEV_DEV(net, &g->dev);
-}
+पूर्ण
 
-int gphonet_register_netdev(struct net_device *net)
-{
-	int status;
+पूर्णांक gphonet_रेजिस्टर_netdev(काष्ठा net_device *net)
+अणु
+	पूर्णांक status;
 
-	status = register_netdev(net);
-	if (status)
-		free_netdev(net);
+	status = रेजिस्टर_netdev(net);
+	अगर (status)
+		मुक्त_netdev(net);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void gphonet_cleanup(struct net_device *dev)
-{
-	unregister_netdev(dev);
-}
+व्योम gphonet_cleanup(काष्ठा net_device *dev)
+अणु
+	unरेजिस्टर_netdev(dev);
+पूर्ण
 
 DECLARE_USB_FUNCTION_INIT(phonet, phonet_alloc_inst, phonet_alloc);
-MODULE_AUTHOR("Rémi Denis-Courmont");
+MODULE_AUTHOR("Rथऊmi Denis-Courmont");
 MODULE_LICENSE("GPL");

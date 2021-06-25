@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OSS compatible sequencer driver
- * read fifo queue
+ * पढ़ो fअगरo queue
  *
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
-#ifndef __SEQ_OSS_READQ_H
-#define __SEQ_OSS_READQ_H
+#अगर_अघोषित __SEQ_OSS_READQ_H
+#घोषणा __SEQ_OSS_READQ_H
 
-#include "seq_oss_device.h"
+#समावेश "seq_oss_device.h"
 
 
 /*
- * definition of read queue
+ * definition of पढ़ो queue
  */
-struct seq_oss_readq {
-	union evrec *q;
-	int qlen;
-	int maxlen;
-	int head, tail;
-	unsigned long pre_event_timeout;
-	unsigned long input_time;
-	wait_queue_head_t midi_sleep;
+काष्ठा seq_oss_पढ़ोq अणु
+	जोड़ evrec *q;
+	पूर्णांक qlen;
+	पूर्णांक maxlen;
+	पूर्णांक head, tail;
+	अचिन्हित दीर्घ pre_event_समयout;
+	अचिन्हित दीर्घ input_समय;
+	रुको_queue_head_t midi_sleep;
 	spinlock_t lock;
-};
+पूर्ण;
 
-struct seq_oss_readq *snd_seq_oss_readq_new(struct seq_oss_devinfo *dp, int maxlen);
-void snd_seq_oss_readq_delete(struct seq_oss_readq *q);
-void snd_seq_oss_readq_clear(struct seq_oss_readq *readq);
-unsigned int snd_seq_oss_readq_poll(struct seq_oss_readq *readq, struct file *file, poll_table *wait);
-int snd_seq_oss_readq_puts(struct seq_oss_readq *readq, int dev, unsigned char *data, int len);
-int snd_seq_oss_readq_sysex(struct seq_oss_readq *q, int dev,
-			    struct snd_seq_event *ev);
-int snd_seq_oss_readq_put_event(struct seq_oss_readq *readq, union evrec *ev);
-int snd_seq_oss_readq_put_timestamp(struct seq_oss_readq *readq, unsigned long curt, int seq_mode);
-int snd_seq_oss_readq_pick(struct seq_oss_readq *q, union evrec *rec);
-void snd_seq_oss_readq_wait(struct seq_oss_readq *q);
-void snd_seq_oss_readq_free(struct seq_oss_readq *q);
+काष्ठा seq_oss_पढ़ोq *snd_seq_oss_पढ़ोq_new(काष्ठा seq_oss_devinfo *dp, पूर्णांक maxlen);
+व्योम snd_seq_oss_पढ़ोq_delete(काष्ठा seq_oss_पढ़ोq *q);
+व्योम snd_seq_oss_पढ़ोq_clear(काष्ठा seq_oss_पढ़ोq *पढ़ोq);
+अचिन्हित पूर्णांक snd_seq_oss_पढ़ोq_poll(काष्ठा seq_oss_पढ़ोq *पढ़ोq, काष्ठा file *file, poll_table *रुको);
+पूर्णांक snd_seq_oss_पढ़ोq_माला_दो(काष्ठा seq_oss_पढ़ोq *पढ़ोq, पूर्णांक dev, अचिन्हित अक्षर *data, पूर्णांक len);
+पूर्णांक snd_seq_oss_पढ़ोq_sysex(काष्ठा seq_oss_पढ़ोq *q, पूर्णांक dev,
+			    काष्ठा snd_seq_event *ev);
+पूर्णांक snd_seq_oss_पढ़ोq_put_event(काष्ठा seq_oss_पढ़ोq *पढ़ोq, जोड़ evrec *ev);
+पूर्णांक snd_seq_oss_पढ़ोq_put_बारtamp(काष्ठा seq_oss_पढ़ोq *पढ़ोq, अचिन्हित दीर्घ curt, पूर्णांक seq_mode);
+पूर्णांक snd_seq_oss_पढ़ोq_pick(काष्ठा seq_oss_पढ़ोq *q, जोड़ evrec *rec);
+व्योम snd_seq_oss_पढ़ोq_रुको(काष्ठा seq_oss_पढ़ोq *q);
+व्योम snd_seq_oss_पढ़ोq_मुक्त(काष्ठा seq_oss_पढ़ोq *q);
 
-#define snd_seq_oss_readq_lock(q, flags) spin_lock_irqsave(&(q)->lock, flags)
-#define snd_seq_oss_readq_unlock(q, flags) spin_unlock_irqrestore(&(q)->lock, flags)
+#घोषणा snd_seq_oss_पढ़ोq_lock(q, flags) spin_lock_irqsave(&(q)->lock, flags)
+#घोषणा snd_seq_oss_पढ़ोq_unlock(q, flags) spin_unlock_irqrestore(&(q)->lock, flags)
 
-#endif
+#पूर्ण_अगर

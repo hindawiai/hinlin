@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2005-2014 Brocade Communications Systems, Inc.
  * Copyright (c) 2014- QLogic Corporation.
  * All rights reserved
  * www.qlogic.com
  *
- * Linux driver for QLogic BR-series Fibre Channel Host Bus Adapter.
+ * Linux driver क्रम QLogic BR-series Fibre Channel Host Bus Adapter.
  */
 
 /*
- *  bfa_fcs.c BFA FCS main
+ *  bfa_fcs.c BFA FCS मुख्य
  */
 
-#include "bfad_drv.h"
-#include "bfad_im.h"
-#include "bfa_fcs.h"
-#include "bfa_fcbuild.h"
+#समावेश "bfad_drv.h"
+#समावेश "bfad_im.h"
+#समावेश "bfa_fcs.h"
+#समावेश "bfa_fcbuild.h"
 
-BFA_TRC_FILE(FCS, FCS);
+BFA_TRC_खाता(FCS, FCS);
 
 /*
  *  fcs_api BFA FCS API
  */
 
-static void
-bfa_fcs_exit_comp(void *fcs_cbarg)
-{
-	struct bfa_fcs_s      *fcs = fcs_cbarg;
-	struct bfad_s         *bfad = fcs->bfad;
+अटल व्योम
+bfa_fcs_निकास_comp(व्योम *fcs_cbarg)
+अणु
+	काष्ठा bfa_fcs_s      *fcs = fcs_cbarg;
+	काष्ठा bfad_s         *bfad = fcs->bfad;
 
 	complete(&bfad->comp);
-}
+पूर्ण
 
 /*
  * fcs initialization, called once after bfa initialization is complete
  */
-void
-bfa_fcs_init(struct bfa_fcs_s *fcs)
-{
+व्योम
+bfa_fcs_init(काष्ठा bfa_fcs_s *fcs)
+अणु
 	bfa_sm_send_event(&fcs->fabric, BFA_FCS_FABRIC_SM_CREATE);
 	bfa_trc(fcs, 0);
-}
+पूर्ण
 
 /*
  *  fcs_api BFA FCS API
@@ -50,46 +51,46 @@ bfa_fcs_init(struct bfa_fcs_s *fcs)
  * FCS update cfg - reset the pwwn/nwwn of fabric base logical port
  * with values learned during bfa_init firmware GETATTR REQ.
  */
-void
-bfa_fcs_update_cfg(struct bfa_fcs_s *fcs)
-{
-	struct bfa_fcs_fabric_s *fabric = &fcs->fabric;
-	struct bfa_lport_cfg_s *port_cfg = &fabric->bport.port_cfg;
-	struct bfa_ioc_s *ioc = &fabric->fcs->bfa->ioc;
+व्योम
+bfa_fcs_update_cfg(काष्ठा bfa_fcs_s *fcs)
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric = &fcs->fabric;
+	काष्ठा bfa_lport_cfg_s *port_cfg = &fabric->bport.port_cfg;
+	काष्ठा bfa_ioc_s *ioc = &fabric->fcs->bfa->ioc;
 
 	port_cfg->nwwn = ioc->attr->nwwn;
 	port_cfg->pwwn = ioc->attr->pwwn;
-}
+पूर्ण
 
 /*
  * Stop FCS operations.
  */
-void
-bfa_fcs_stop(struct bfa_fcs_s *fcs)
-{
-	bfa_wc_init(&fcs->wc, bfa_fcs_exit_comp, fcs);
+व्योम
+bfa_fcs_stop(काष्ठा bfa_fcs_s *fcs)
+अणु
+	bfa_wc_init(&fcs->wc, bfa_fcs_निकास_comp, fcs);
 	bfa_wc_up(&fcs->wc);
 	bfa_fcs_fabric_modstop(fcs);
-	bfa_wc_wait(&fcs->wc);
-}
+	bfa_wc_रुको(&fcs->wc);
+पूर्ण
 
 /*
  * fcs pbc vport initialization
  */
-void
-bfa_fcs_pbc_vport_init(struct bfa_fcs_s *fcs)
-{
-	int i, npbc_vports;
-	struct bfi_pbc_vport_s pbc_vports[BFI_PBC_MAX_VPORTS];
+व्योम
+bfa_fcs_pbc_vport_init(काष्ठा bfa_fcs_s *fcs)
+अणु
+	पूर्णांक i, npbc_vports;
+	काष्ठा bfi_pbc_vport_s pbc_vports[BFI_PBC_MAX_VPORTS];
 
 	/* Initialize pbc vports */
-	if (!fcs->min_cfg) {
+	अगर (!fcs->min_cfg) अणु
 		npbc_vports =
 			bfa_iocfc_get_pbc_vports(fcs->bfa, pbc_vports);
-		for (i = 0; i < npbc_vports; i++)
+		क्रम (i = 0; i < npbc_vports; i++)
 			bfa_fcb_pbc_vport_create(fcs->bfa->bfad, pbc_vports[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	brief
@@ -98,151 +99,151 @@ bfa_fcs_pbc_vport_init(struct bfa_fcs_s *fcs)
  *	param[in]		fcs		FCS instance
  *	param[in]		driver_info	Driver Details
  *
- *	return None
+ *	वापस None
  */
-void
-bfa_fcs_driver_info_init(struct bfa_fcs_s *fcs,
-			struct bfa_fcs_driver_info_s *driver_info)
-{
+व्योम
+bfa_fcs_driver_info_init(काष्ठा bfa_fcs_s *fcs,
+			काष्ठा bfa_fcs_driver_info_s *driver_info)
+अणु
 
 	fcs->driver_info = *driver_info;
 
 	bfa_fcs_fabric_psymb_init(&fcs->fabric);
 	bfa_fcs_fabric_nsymb_init(&fcs->fabric);
-}
+पूर्ण
 
 /*
  *	brief
- *		FCS instance cleanup and exit.
+ *		FCS instance cleanup and निकास.
  *
  *	param[in]		fcs			FCS instance
- *	return None
+ *	वापस None
  */
-void
-bfa_fcs_exit(struct bfa_fcs_s *fcs)
-{
-	bfa_wc_init(&fcs->wc, bfa_fcs_exit_comp, fcs);
+व्योम
+bfa_fcs_निकास(काष्ठा bfa_fcs_s *fcs)
+अणु
+	bfa_wc_init(&fcs->wc, bfa_fcs_निकास_comp, fcs);
 	bfa_wc_up(&fcs->wc);
 	bfa_trc(fcs, 0);
 	bfa_lps_delete(fcs->fabric.lps);
 	bfa_sm_send_event(&fcs->fabric, BFA_FCS_FABRIC_SM_DELETE);
-	bfa_wc_wait(&fcs->wc);
-}
+	bfa_wc_रुको(&fcs->wc);
+पूर्ण
 
 /*
  * Fabric module implementation.
  */
 
-#define BFA_FCS_FABRIC_RETRY_DELAY	(2000)	/* Milliseconds */
-#define BFA_FCS_FABRIC_CLEANUP_DELAY	(10000)	/* Milliseconds */
+#घोषणा BFA_FCS_FABRIC_RETRY_DELAY	(2000)	/* Milliseconds */
+#घोषणा BFA_FCS_FABRIC_CLEANUP_DELAY	(10000)	/* Milliseconds */
 
-#define bfa_fcs_fabric_set_opertype(__fabric) do {			\
-	if (bfa_fcport_get_topology((__fabric)->fcs->bfa)		\
-				== BFA_PORT_TOPOLOGY_P2P) {		\
-		if (fabric->fab_type == BFA_FCS_FABRIC_SWITCHED)	\
+#घोषणा bfa_fcs_fabric_set_opertype(__fabric) करो अणु			\
+	अगर (bfa_fcport_get_topology((__fabric)->fcs->bfa)		\
+				== BFA_PORT_TOPOLOGY_P2P) अणु		\
+		अगर (fabric->fab_type == BFA_FCS_FABRIC_SWITCHED)	\
 			(__fabric)->oper_type = BFA_PORT_TYPE_NPORT;	\
-		else							\
+		अन्यथा							\
 			(__fabric)->oper_type = BFA_PORT_TYPE_P2P;	\
-	} else								\
+	पूर्ण अन्यथा								\
 		(__fabric)->oper_type = BFA_PORT_TYPE_NLPORT;		\
-} while (0)
+पूर्ण जबतक (0)
 
 /*
- * forward declarations
+ * क्रमward declarations
  */
-static void bfa_fcs_fabric_init(struct bfa_fcs_fabric_s *fabric);
-static void bfa_fcs_fabric_login(struct bfa_fcs_fabric_s *fabric);
-static void bfa_fcs_fabric_notify_online(struct bfa_fcs_fabric_s *fabric);
-static void bfa_fcs_fabric_notify_offline(struct bfa_fcs_fabric_s *fabric);
-static void bfa_fcs_fabric_delay(void *cbarg);
-static void bfa_fcs_fabric_delete(struct bfa_fcs_fabric_s *fabric);
-static void bfa_fcs_fabric_delete_comp(void *cbarg);
-static void bfa_fcs_fabric_stop(struct bfa_fcs_fabric_s *fabric);
-static void bfa_fcs_fabric_stop_comp(void *cbarg);
-static void bfa_fcs_fabric_process_uf(struct bfa_fcs_fabric_s *fabric,
-				      struct fchs_s *fchs, u16 len);
-static void bfa_fcs_fabric_process_flogi(struct bfa_fcs_fabric_s *fabric,
-					 struct fchs_s *fchs, u16 len);
-static void bfa_fcs_fabric_send_flogi_acc(struct bfa_fcs_fabric_s *fabric);
-static void bfa_fcs_fabric_flogiacc_comp(void *fcsarg,
-					 struct bfa_fcxp_s *fcxp, void *cbarg,
+अटल व्योम bfa_fcs_fabric_init(काष्ठा bfa_fcs_fabric_s *fabric);
+अटल व्योम bfa_fcs_fabric_login(काष्ठा bfa_fcs_fabric_s *fabric);
+अटल व्योम bfa_fcs_fabric_notअगरy_online(काष्ठा bfa_fcs_fabric_s *fabric);
+अटल व्योम bfa_fcs_fabric_notअगरy_offline(काष्ठा bfa_fcs_fabric_s *fabric);
+अटल व्योम bfa_fcs_fabric_delay(व्योम *cbarg);
+अटल व्योम bfa_fcs_fabric_delete(काष्ठा bfa_fcs_fabric_s *fabric);
+अटल व्योम bfa_fcs_fabric_delete_comp(व्योम *cbarg);
+अटल व्योम bfa_fcs_fabric_stop(काष्ठा bfa_fcs_fabric_s *fabric);
+अटल व्योम bfa_fcs_fabric_stop_comp(व्योम *cbarg);
+अटल व्योम bfa_fcs_fabric_process_uf(काष्ठा bfa_fcs_fabric_s *fabric,
+				      काष्ठा fchs_s *fchs, u16 len);
+अटल व्योम bfa_fcs_fabric_process_flogi(काष्ठा bfa_fcs_fabric_s *fabric,
+					 काष्ठा fchs_s *fchs, u16 len);
+अटल व्योम bfa_fcs_fabric_send_flogi_acc(काष्ठा bfa_fcs_fabric_s *fabric);
+अटल व्योम bfa_fcs_fabric_flogiacc_comp(व्योम *fcsarg,
+					 काष्ठा bfa_fcxp_s *fcxp, व्योम *cbarg,
 					 bfa_status_t status,
 					 u32 rsp_len,
 					 u32 resid_len,
-					 struct fchs_s *rspfchs);
+					 काष्ठा fchs_s *rspfchs);
 
-static void	bfa_fcs_fabric_sm_uninit(struct bfa_fcs_fabric_s *fabric,
-					 enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_created(struct bfa_fcs_fabric_s *fabric,
-					  enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_linkdown(struct bfa_fcs_fabric_s *fabric,
-					   enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_flogi(struct bfa_fcs_fabric_s *fabric,
-					enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_flogi_retry(struct bfa_fcs_fabric_s *fabric,
-					      enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_auth(struct bfa_fcs_fabric_s *fabric,
-				       enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_nofabric(struct bfa_fcs_fabric_s *fabric,
-					   enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_evfp(struct bfa_fcs_fabric_s *fabric,
-				       enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_evfp_done(struct bfa_fcs_fabric_s *fabric,
-					    enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_isolated(struct bfa_fcs_fabric_s *fabric,
-					   enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_deleting(struct bfa_fcs_fabric_s *fabric,
-					   enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_stopping(struct bfa_fcs_fabric_s *fabric,
-					   enum bfa_fcs_fabric_event event);
-static void	bfa_fcs_fabric_sm_cleanup(struct bfa_fcs_fabric_s *fabric,
-					  enum bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_uninit(काष्ठा bfa_fcs_fabric_s *fabric,
+					 क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_created(काष्ठा bfa_fcs_fabric_s *fabric,
+					  क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_linkकरोwn(काष्ठा bfa_fcs_fabric_s *fabric,
+					   क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_flogi(काष्ठा bfa_fcs_fabric_s *fabric,
+					क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_flogi_retry(काष्ठा bfa_fcs_fabric_s *fabric,
+					      क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_auth(काष्ठा bfa_fcs_fabric_s *fabric,
+				       क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_nofabric(काष्ठा bfa_fcs_fabric_s *fabric,
+					   क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_evfp(काष्ठा bfa_fcs_fabric_s *fabric,
+				       क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_evfp_करोne(काष्ठा bfa_fcs_fabric_s *fabric,
+					    क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_isolated(काष्ठा bfa_fcs_fabric_s *fabric,
+					   क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_deleting(काष्ठा bfa_fcs_fabric_s *fabric,
+					   क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_stopping(काष्ठा bfa_fcs_fabric_s *fabric,
+					   क्रमागत bfa_fcs_fabric_event event);
+अटल व्योम	bfa_fcs_fabric_sm_cleanup(काष्ठा bfa_fcs_fabric_s *fabric,
+					  क्रमागत bfa_fcs_fabric_event event);
 /*
- *   Beginning state before fabric creation.
+ *   Beginning state beक्रमe fabric creation.
  */
-static void
-bfa_fcs_fabric_sm_uninit(struct bfa_fcs_fabric_s *fabric,
-			 enum bfa_fcs_fabric_event event)
-{
+अटल व्योम
+bfa_fcs_fabric_sm_uninit(काष्ठा bfa_fcs_fabric_s *fabric,
+			 क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_CREATE:
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_CREATE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_created);
 		bfa_fcs_fabric_init(fabric);
 		bfa_fcs_lport_init(&fabric->bport, &fabric->bport.port_cfg);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_UP:
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		break;
+	हाल BFA_FCS_FABRIC_SM_LINK_UP:
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *   Beginning state before fabric creation.
+ *   Beginning state beक्रमe fabric creation.
  */
-static void
-bfa_fcs_fabric_sm_created(struct bfa_fcs_fabric_s *fabric,
-			  enum bfa_fcs_fabric_event event)
-{
-	struct bfa_s	*bfa = fabric->fcs->bfa;
+अटल व्योम
+bfa_fcs_fabric_sm_created(काष्ठा bfa_fcs_fabric_s *fabric,
+			  क्रमागत bfa_fcs_fabric_event event)
+अणु
+	काष्ठा bfa_s	*bfa = fabric->fcs->bfa;
 
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_START:
-		if (!bfa_fcport_is_linkup(fabric->fcs->bfa)) {
-			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkdown);
-			break;
-		}
-		if (bfa_fcport_get_topology(bfa) ==
-				BFA_PORT_TOPOLOGY_LOOP) {
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_START:
+		अगर (!bfa_fcport_is_linkup(fabric->fcs->bfa)) अणु
+			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkकरोwn);
+			अवरोध;
+		पूर्ण
+		अगर (bfa_fcport_get_topology(bfa) ==
+				BFA_PORT_TOPOLOGY_LOOP) अणु
 			fabric->fab_type = BFA_FCS_FABRIC_LOOP;
 			fabric->bport.pid = bfa_fcport_get_myalpa(bfa);
 			fabric->bport.pid = bfa_hton3b(fabric->bport.pid);
@@ -250,384 +251,384 @@ bfa_fcs_fabric_sm_created(struct bfa_fcs_fabric_s *fabric,
 					bfa_fcs_fabric_sm_online);
 			bfa_fcs_fabric_set_opertype(fabric);
 			bfa_fcs_lport_online(&fabric->bport);
-		} else {
+		पूर्ण अन्यथा अणु
 			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_flogi);
 			bfa_fcs_fabric_login(fabric);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_UP:
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		break;
+	हाल BFA_FCS_FABRIC_SM_LINK_UP:
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_DELETE:
+	हाल BFA_FCS_FABRIC_SM_DELETE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_deleting);
 		bfa_fcs_fabric_delete(fabric);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *   Link is down, awaiting LINK UP event from port. This is also the
+ *   Link is करोwn, aरुकोing LINK UP event from port. This is also the
  *   first state at fabric creation.
  */
-static void
-bfa_fcs_fabric_sm_linkdown(struct bfa_fcs_fabric_s *fabric,
-			   enum bfa_fcs_fabric_event event)
-{
-	struct bfa_s	*bfa = fabric->fcs->bfa;
+अटल व्योम
+bfa_fcs_fabric_sm_linkकरोwn(काष्ठा bfa_fcs_fabric_s *fabric,
+			   क्रमागत bfa_fcs_fabric_event event)
+अणु
+	काष्ठा bfa_s	*bfa = fabric->fcs->bfa;
 
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_LINK_UP:
-		if (bfa_fcport_get_topology(bfa) != BFA_PORT_TOPOLOGY_LOOP) {
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_LINK_UP:
+		अगर (bfa_fcport_get_topology(bfa) != BFA_PORT_TOPOLOGY_LOOP) अणु
 			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_flogi);
 			bfa_fcs_fabric_login(fabric);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fabric->fab_type = BFA_FCS_FABRIC_LOOP;
 		fabric->bport.pid = bfa_fcport_get_myalpa(bfa);
 		fabric->bport.pid = bfa_hton3b(fabric->bport.pid);
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_online);
 		bfa_fcs_fabric_set_opertype(fabric);
 		bfa_fcs_lport_online(&fabric->bport);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_RETRY_OP:
-	case BFA_FCS_FABRIC_SM_LOOPBACK:
-		break;
+	हाल BFA_FCS_FABRIC_SM_RETRY_OP:
+	हाल BFA_FCS_FABRIC_SM_LOOPBACK:
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_DELETE:
+	हाल BFA_FCS_FABRIC_SM_DELETE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_deleting);
 		bfa_fcs_fabric_delete(fabric);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_STOP:
+	हाल BFA_FCS_FABRIC_SM_STOP:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_cleanup);
 		bfa_fcs_fabric_stop(fabric);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *   FLOGI is in progress, awaiting FLOGI reply.
+ *   FLOGI is in progress, aरुकोing FLOGI reply.
  */
-static void
-bfa_fcs_fabric_sm_flogi(struct bfa_fcs_fabric_s *fabric,
-			enum bfa_fcs_fabric_event event)
-{
+अटल व्योम
+bfa_fcs_fabric_sm_flogi(काष्ठा bfa_fcs_fabric_s *fabric,
+			क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_CONT_OP:
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_CONT_OP:
 
 		bfa_fcport_set_tx_bbcredit(fabric->fcs->bfa,
 					   fabric->bb_credit);
 		fabric->fab_type = BFA_FCS_FABRIC_SWITCHED;
 
-		if (fabric->auth_reqd && fabric->is_auth) {
+		अगर (fabric->auth_reqd && fabric->is_auth) अणु
 			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_auth);
 			bfa_trc(fabric->fcs, event);
-		} else {
+		पूर्ण अन्यथा अणु
 			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_online);
-			bfa_fcs_fabric_notify_online(fabric);
-		}
-		break;
+			bfa_fcs_fabric_notअगरy_online(fabric);
+		पूर्ण
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_RETRY_OP:
+	हाल BFA_FCS_FABRIC_SM_RETRY_OP:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_flogi_retry);
-		bfa_timer_start(fabric->fcs->bfa, &fabric->delay_timer,
+		bfa_समयr_start(fabric->fcs->bfa, &fabric->delay_समयr,
 				bfa_fcs_fabric_delay, fabric,
 				BFA_FCS_FABRIC_RETRY_DELAY);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LOOPBACK:
+	हाल BFA_FCS_FABRIC_SM_LOOPBACK:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_loopback);
 		bfa_sm_send_event(fabric->lps, BFA_LPS_SM_OFFLINE);
 		bfa_fcs_fabric_set_opertype(fabric);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_NO_FABRIC:
+	हाल BFA_FCS_FABRIC_SM_NO_FABRIC:
 		fabric->fab_type = BFA_FCS_FABRIC_N2N;
 		bfa_fcport_set_tx_bbcredit(fabric->fcs->bfa,
 					   fabric->bb_credit);
-		bfa_fcs_fabric_notify_online(fabric);
+		bfa_fcs_fabric_notअगरy_online(fabric);
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_nofabric);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkdown);
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkकरोwn);
 		bfa_sm_send_event(fabric->lps, BFA_LPS_SM_OFFLINE);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_DELETE:
+	हाल BFA_FCS_FABRIC_SM_DELETE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_deleting);
 		bfa_sm_send_event(fabric->lps, BFA_LPS_SM_OFFLINE);
 		bfa_fcs_fabric_delete(fabric);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void
-bfa_fcs_fabric_sm_flogi_retry(struct bfa_fcs_fabric_s *fabric,
-			      enum bfa_fcs_fabric_event event)
-{
+अटल व्योम
+bfa_fcs_fabric_sm_flogi_retry(काष्ठा bfa_fcs_fabric_s *fabric,
+			      क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_DELAYED:
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_DELAYED:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_flogi);
 		bfa_fcs_fabric_login(fabric);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkdown);
-		bfa_timer_stop(&fabric->delay_timer);
-		break;
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkकरोwn);
+		bfa_समयr_stop(&fabric->delay_समयr);
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_DELETE:
+	हाल BFA_FCS_FABRIC_SM_DELETE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_deleting);
-		bfa_timer_stop(&fabric->delay_timer);
+		bfa_समयr_stop(&fabric->delay_समयr);
 		bfa_fcs_fabric_delete(fabric);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *   Authentication is in progress, awaiting authentication results.
+ *   Authentication is in progress, aरुकोing authentication results.
  */
-static void
-bfa_fcs_fabric_sm_auth(struct bfa_fcs_fabric_s *fabric,
-		       enum bfa_fcs_fabric_event event)
-{
+अटल व्योम
+bfa_fcs_fabric_sm_auth(काष्ठा bfa_fcs_fabric_s *fabric,
+		       क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_AUTH_FAILED:
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_AUTH_FAILED:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_auth_failed);
 		bfa_sm_send_event(fabric->lps, BFA_LPS_SM_OFFLINE);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_AUTH_SUCCESS:
+	हाल BFA_FCS_FABRIC_SM_AUTH_SUCCESS:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_online);
-		bfa_fcs_fabric_notify_online(fabric);
-		break;
+		bfa_fcs_fabric_notअगरy_online(fabric);
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_PERF_EVFP:
+	हाल BFA_FCS_FABRIC_SM_PERF_EVFP:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_evfp);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkdown);
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkकरोwn);
 		bfa_sm_send_event(fabric->lps, BFA_LPS_SM_OFFLINE);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_DELETE:
+	हाल BFA_FCS_FABRIC_SM_DELETE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_deleting);
 		bfa_fcs_fabric_delete(fabric);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *   Authentication failed
  */
-void
-bfa_fcs_fabric_sm_auth_failed(struct bfa_fcs_fabric_s *fabric,
-			      enum bfa_fcs_fabric_event event)
-{
+व्योम
+bfa_fcs_fabric_sm_auth_failed(काष्ठा bfa_fcs_fabric_s *fabric,
+			      क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkdown);
-		bfa_fcs_fabric_notify_offline(fabric);
-		break;
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkकरोwn);
+		bfa_fcs_fabric_notअगरy_offline(fabric);
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_DELETE:
+	हाल BFA_FCS_FABRIC_SM_DELETE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_deleting);
 		bfa_fcs_fabric_delete(fabric);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *   Port is in loopback mode.
  */
-void
-bfa_fcs_fabric_sm_loopback(struct bfa_fcs_fabric_s *fabric,
-			   enum bfa_fcs_fabric_event event)
-{
+व्योम
+bfa_fcs_fabric_sm_loopback(काष्ठा bfa_fcs_fabric_s *fabric,
+			   क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkdown);
-		bfa_fcs_fabric_notify_offline(fabric);
-		break;
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkकरोwn);
+		bfa_fcs_fabric_notअगरy_offline(fabric);
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_DELETE:
+	हाल BFA_FCS_FABRIC_SM_DELETE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_deleting);
 		bfa_fcs_fabric_delete(fabric);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *   There is no attached fabric - private loop or NPort-to-NPort topology.
+ *   There is no attached fabric - निजी loop or NPort-to-NPort topology.
  */
-static void
-bfa_fcs_fabric_sm_nofabric(struct bfa_fcs_fabric_s *fabric,
-			   enum bfa_fcs_fabric_event event)
-{
+अटल व्योम
+bfa_fcs_fabric_sm_nofabric(काष्ठा bfa_fcs_fabric_s *fabric,
+			   क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkdown);
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkकरोwn);
 		bfa_sm_send_event(fabric->lps, BFA_LPS_SM_OFFLINE);
-		bfa_fcs_fabric_notify_offline(fabric);
-		break;
+		bfa_fcs_fabric_notअगरy_offline(fabric);
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_DELETE:
+	हाल BFA_FCS_FABRIC_SM_DELETE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_deleting);
 		bfa_fcs_fabric_delete(fabric);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_NO_FABRIC:
+	हाल BFA_FCS_FABRIC_SM_NO_FABRIC:
 		bfa_trc(fabric->fcs, fabric->bb_credit);
 		bfa_fcport_set_tx_bbcredit(fabric->fcs->bfa,
 					   fabric->bb_credit);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_RETRY_OP:
-		break;
+	हाल BFA_FCS_FABRIC_SM_RETRY_OP:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *   Fabric is online - normal operating state.
  */
-void
-bfa_fcs_fabric_sm_online(struct bfa_fcs_fabric_s *fabric,
-			 enum bfa_fcs_fabric_event event)
-{
-	struct bfa_s	*bfa = fabric->fcs->bfa;
+व्योम
+bfa_fcs_fabric_sm_online(काष्ठा bfa_fcs_fabric_s *fabric,
+			 क्रमागत bfa_fcs_fabric_event event)
+अणु
+	काष्ठा bfa_s	*bfa = fabric->fcs->bfa;
 
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkdown);
-		if (bfa_fcport_get_topology(bfa) == BFA_PORT_TOPOLOGY_LOOP) {
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_linkकरोwn);
+		अगर (bfa_fcport_get_topology(bfa) == BFA_PORT_TOPOLOGY_LOOP) अणु
 			bfa_fcs_lport_offline(&fabric->bport);
-		} else {
+		पूर्ण अन्यथा अणु
 			bfa_sm_send_event(fabric->lps, BFA_LPS_SM_OFFLINE);
-			bfa_fcs_fabric_notify_offline(fabric);
-		}
-		break;
+			bfa_fcs_fabric_notअगरy_offline(fabric);
+		पूर्ण
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_DELETE:
+	हाल BFA_FCS_FABRIC_SM_DELETE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_deleting);
 		bfa_fcs_fabric_delete(fabric);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_STOP:
+	हाल BFA_FCS_FABRIC_SM_STOP:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_stopping);
 		bfa_fcs_fabric_stop(fabric);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_AUTH_FAILED:
+	हाल BFA_FCS_FABRIC_SM_AUTH_FAILED:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_auth_failed);
 		bfa_sm_send_event(fabric->lps, BFA_LPS_SM_OFFLINE);
-		break;
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_AUTH_SUCCESS:
-		break;
+	हाल BFA_FCS_FABRIC_SM_AUTH_SUCCESS:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *   Exchanging virtual fabric parameters.
+ *   Exchanging भव fabric parameters.
  */
-static void
-bfa_fcs_fabric_sm_evfp(struct bfa_fcs_fabric_s *fabric,
-		       enum bfa_fcs_fabric_event event)
-{
+अटल व्योम
+bfa_fcs_fabric_sm_evfp(काष्ठा bfa_fcs_fabric_s *fabric,
+		       क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_CONT_OP:
-		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_evfp_done);
-		break;
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_CONT_OP:
+		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_evfp_करोne);
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_ISOLATE:
+	हाल BFA_FCS_FABRIC_SM_ISOLATE:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_isolated);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *   EVFP exchange complete and VFT tagging is enabled.
  */
-static void
-bfa_fcs_fabric_sm_evfp_done(struct bfa_fcs_fabric_s *fabric,
-			    enum bfa_fcs_fabric_event event)
-{
+अटल व्योम
+bfa_fcs_fabric_sm_evfp_करोne(काष्ठा bfa_fcs_fabric_s *fabric,
+			    क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
-}
+पूर्ण
 
 /*
  *   Port is isolated after EVFP exchange due to VF_ID mismatch (N and F).
  */
-static void
-bfa_fcs_fabric_sm_isolated(struct bfa_fcs_fabric_s *fabric,
-			   enum bfa_fcs_fabric_event event)
-{
-	struct bfad_s *bfad = (struct bfad_s *)fabric->fcs->bfad;
-	char	pwwn_ptr[BFA_STRING_32];
+अटल व्योम
+bfa_fcs_fabric_sm_isolated(काष्ठा bfa_fcs_fabric_s *fabric,
+			   क्रमागत bfa_fcs_fabric_event event)
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)fabric->fcs->bfad;
+	अक्षर	pwwn_ptr[BFA_STRING_32];
 
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
@@ -638,125 +639,125 @@ bfa_fcs_fabric_sm_isolated(struct bfa_fcs_fabric_s *fabric,
 		"PWWN: %s Port VF_ID: %04x switch port VF_ID: %04x.",
 		pwwn_ptr, fabric->fcs->port_vfid,
 		fabric->event_arg.swp_vfid);
-}
+पूर्ण
 
 /*
- *   Fabric is being deleted, awaiting vport delete completions.
+ *   Fabric is being deleted, aरुकोing vport delete completions.
  */
-static void
-bfa_fcs_fabric_sm_deleting(struct bfa_fcs_fabric_s *fabric,
-			   enum bfa_fcs_fabric_event event)
-{
+अटल व्योम
+bfa_fcs_fabric_sm_deleting(काष्ठा bfa_fcs_fabric_s *fabric,
+			   क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_DELCOMP:
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_DELCOMP:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_uninit);
-		bfa_wc_down(&fabric->fcs->wc);
-		break;
+		bfa_wc_करोwn(&fabric->fcs->wc);
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_UP:
-		break;
+	हाल BFA_FCS_FABRIC_SM_LINK_UP:
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		bfa_fcs_fabric_notify_offline(fabric);
-		break;
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		bfa_fcs_fabric_notअगरy_offline(fabric);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Fabric is being stopped, awaiting vport stop completions.
+ * Fabric is being stopped, aरुकोing vport stop completions.
  */
-static void
-bfa_fcs_fabric_sm_stopping(struct bfa_fcs_fabric_s *fabric,
-			   enum bfa_fcs_fabric_event event)
-{
-	struct bfa_s	*bfa = fabric->fcs->bfa;
+अटल व्योम
+bfa_fcs_fabric_sm_stopping(काष्ठा bfa_fcs_fabric_s *fabric,
+			   क्रमागत bfa_fcs_fabric_event event)
+अणु
+	काष्ठा bfa_s	*bfa = fabric->fcs->bfa;
 
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_STOPCOMP:
-		if (bfa_fcport_get_topology(bfa) == BFA_PORT_TOPOLOGY_LOOP) {
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_STOPCOMP:
+		अगर (bfa_fcport_get_topology(bfa) == BFA_PORT_TOPOLOGY_LOOP) अणु
 			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_created);
-		} else {
+		पूर्ण अन्यथा अणु
 			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_cleanup);
 			bfa_sm_send_event(fabric->lps, BFA_LPS_SM_LOGOUT);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_UP:
-		break;
+	हाल BFA_FCS_FABRIC_SM_LINK_UP:
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
-		if (bfa_fcport_get_topology(bfa) == BFA_PORT_TOPOLOGY_LOOP)
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
+		अगर (bfa_fcport_get_topology(bfa) == BFA_PORT_TOPOLOGY_LOOP)
 			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_created);
-		else
+		अन्यथा
 			bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_cleanup);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Fabric is being stopped, cleanup without FLOGO
  */
-static void
-bfa_fcs_fabric_sm_cleanup(struct bfa_fcs_fabric_s *fabric,
-			  enum bfa_fcs_fabric_event event)
-{
+अटल व्योम
+bfa_fcs_fabric_sm_cleanup(काष्ठा bfa_fcs_fabric_s *fabric,
+			  क्रमागत bfa_fcs_fabric_event event)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, event);
 
-	switch (event) {
-	case BFA_FCS_FABRIC_SM_STOPCOMP:
-	case BFA_FCS_FABRIC_SM_LOGOCOMP:
+	चयन (event) अणु
+	हाल BFA_FCS_FABRIC_SM_STOPCOMP:
+	हाल BFA_FCS_FABRIC_SM_LOGOCOMP:
 		bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_created);
-		bfa_wc_down(&(fabric->fcs)->wc);
-		break;
+		bfa_wc_करोwn(&(fabric->fcs)->wc);
+		अवरोध;
 
-	case BFA_FCS_FABRIC_SM_LINK_DOWN:
+	हाल BFA_FCS_FABRIC_SM_LINK_DOWN:
 		/*
-		 * Ignore - can get this event if we get notified about IOC down
-		 * before the fabric completion callbk is done.
+		 * Ignore - can get this event अगर we get notअगरied about IOC करोwn
+		 * beक्रमe the fabric completion callbk is करोne.
 		 */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(fabric->fcs, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *  fcs_fabric_private fabric private functions
+ *  fcs_fabric_निजी fabric निजी functions
  */
 
-static void
-bfa_fcs_fabric_init(struct bfa_fcs_fabric_s *fabric)
-{
-	struct bfa_lport_cfg_s *port_cfg = &fabric->bport.port_cfg;
+अटल व्योम
+bfa_fcs_fabric_init(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
+	काष्ठा bfa_lport_cfg_s *port_cfg = &fabric->bport.port_cfg;
 
 	port_cfg->roles = BFA_LPORT_ROLE_FCP_IM;
 	port_cfg->nwwn = fabric->fcs->bfa->ioc.attr->nwwn;
 	port_cfg->pwwn = fabric->fcs->bfa->ioc.attr->pwwn;
-}
+पूर्ण
 
 /*
- * Port Symbolic Name Creation for base port.
+ * Port Symbolic Name Creation क्रम base port.
  */
-void
-bfa_fcs_fabric_psymb_init(struct bfa_fcs_fabric_s *fabric)
-{
-	struct bfa_lport_cfg_s *port_cfg = &fabric->bport.port_cfg;
-	char model[BFA_ADAPTER_MODEL_NAME_LEN] = {0};
-	struct bfa_fcs_driver_info_s *driver_info = &fabric->fcs->driver_info;
+व्योम
+bfa_fcs_fabric_psymb_init(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
+	काष्ठा bfa_lport_cfg_s *port_cfg = &fabric->bport.port_cfg;
+	अक्षर model[BFA_ADAPTER_MODEL_NAME_LEN] = अणु0पूर्ण;
+	काष्ठा bfa_fcs_driver_info_s *driver_info = &fabric->fcs->driver_info;
 
 	bfa_ioc_get_adapter_model(&fabric->fcs->bfa->ioc, model);
 
@@ -781,17 +782,17 @@ bfa_fcs_fabric_psymb_init(struct bfa_fcs_fabric_s *fabric)
 
 	/*
 	 * Host OS Info :
-	 * If OS Patch Info is not there, do not truncate any bytes from the
+	 * If OS Patch Info is not there, करो not truncate any bytes from the
 	 * OS name string and instead copy the entire OS info string (64 bytes).
 	 */
-	if (driver_info->host_os_patch[0] == '\0') {
+	अगर (driver_info->host_os_patch[0] == '\0') अणु
 		strlcat(port_cfg->sym_name.symname,
 			driver_info->host_os_name,
 			BFA_SYMNAME_MAXLEN);
 		strlcat(port_cfg->sym_name.symname,
 			BFA_FCS_PORT_SYMBNAME_SEPARATOR,
 			BFA_SYMNAME_MAXLEN);
-	} else {
+	पूर्ण अन्यथा अणु
 		strlcat(port_cfg->sym_name.symname,
 			driver_info->host_os_name,
 			BFA_SYMNAME_MAXLEN);
@@ -803,21 +804,21 @@ bfa_fcs_fabric_psymb_init(struct bfa_fcs_fabric_s *fabric)
 		strlcat(port_cfg->sym_name.symname,
 			driver_info->host_os_patch,
 			BFA_SYMNAME_MAXLEN);
-	}
+	पूर्ण
 
 	/* null terminate */
 	port_cfg->sym_name.symname[BFA_SYMNAME_MAXLEN - 1] = 0;
-}
+पूर्ण
 
 /*
- * Node Symbolic Name Creation for base port and all vports
+ * Node Symbolic Name Creation क्रम base port and all vports
  */
-void
-bfa_fcs_fabric_nsymb_init(struct bfa_fcs_fabric_s *fabric)
-{
-	struct bfa_lport_cfg_s *port_cfg = &fabric->bport.port_cfg;
-	char model[BFA_ADAPTER_MODEL_NAME_LEN] = {0};
-	struct bfa_fcs_driver_info_s *driver_info = &fabric->fcs->driver_info;
+व्योम
+bfa_fcs_fabric_nsymb_init(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
+	काष्ठा bfa_lport_cfg_s *port_cfg = &fabric->bport.port_cfg;
+	अक्षर model[BFA_ADAPTER_MODEL_NAME_LEN] = अणु0पूर्ण;
+	काष्ठा bfa_fcs_driver_info_s *driver_info = &fabric->fcs->driver_info;
 
 	bfa_ioc_get_adapter_model(&fabric->fcs->bfa->ioc, model);
 
@@ -829,7 +830,7 @@ bfa_fcs_fabric_nsymb_init(struct bfa_fcs_fabric_s *fabric)
 			BFA_SYMNAME_MAXLEN);
 
 	/* Driver Version */
-	strlcat(port_cfg->node_sym_name.symname, (char *)driver_info->version,
+	strlcat(port_cfg->node_sym_name.symname, (अक्षर *)driver_info->version,
 		BFA_SYMNAME_MAXLEN);
 	strlcat(port_cfg->node_sym_name.symname,
 			BFA_FCS_PORT_SYMBNAME_SEPARATOR,
@@ -845,74 +846,74 @@ bfa_fcs_fabric_nsymb_init(struct bfa_fcs_fabric_s *fabric)
 
 	/* null terminate */
 	port_cfg->node_sym_name.symname[BFA_SYMNAME_MAXLEN - 1] = 0;
-}
+पूर्ण
 
 /*
  * bfa lps login completion callback
  */
-void
-bfa_cb_lps_flogi_comp(void *bfad, void *uarg, bfa_status_t status)
-{
-	struct bfa_fcs_fabric_s *fabric = uarg;
+व्योम
+bfa_cb_lps_flogi_comp(व्योम *bfad, व्योम *uarg, bfa_status_t status)
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric = uarg;
 
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_trc(fabric->fcs, status);
 
-	switch (status) {
-	case BFA_STATUS_OK:
+	चयन (status) अणु
+	हाल BFA_STATUS_OK:
 		fabric->stats.flogi_accepts++;
-		break;
+		अवरोध;
 
-	case BFA_STATUS_INVALID_MAC:
-		/* Only for CNA */
+	हाल BFA_STATUS_INVALID_MAC:
+		/* Only क्रम CNA */
 		fabric->stats.flogi_acc_err++;
 		bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_RETRY_OP);
 
-		return;
+		वापस;
 
-	case BFA_STATUS_EPROTOCOL:
-		switch (fabric->lps->ext_status) {
-		case BFA_EPROTO_BAD_ACCEPT:
+	हाल BFA_STATUS_EPROTOCOL:
+		चयन (fabric->lps->ext_status) अणु
+		हाल BFA_EPROTO_BAD_ACCEPT:
 			fabric->stats.flogi_acc_err++;
-			break;
+			अवरोध;
 
-		case BFA_EPROTO_UNKNOWN_RSP:
+		हाल BFA_EPROTO_UNKNOWN_RSP:
 			fabric->stats.flogi_unknown_rsp++;
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
+		शेष:
+			अवरोध;
+		पूर्ण
 		bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_RETRY_OP);
 
-		return;
+		वापस;
 
-	case BFA_STATUS_FABRIC_RJT:
+	हाल BFA_STATUS_FABRIC_RJT:
 		fabric->stats.flogi_rejects++;
 		bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_RETRY_OP);
-		return;
+		वापस;
 
-	default:
+	शेष:
 		fabric->stats.flogi_rsp_err++;
 		bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_RETRY_OP);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fabric->bb_credit = fabric->lps->pr_bbcred;
 	bfa_trc(fabric->fcs, fabric->bb_credit);
 
-	if (!(fabric->lps->brcd_switch))
+	अगर (!(fabric->lps->brcd_चयन))
 		fabric->fabric_name =  fabric->lps->pr_nwwn;
 
 	/*
 	 * Check port type. It should be 1 = F-port.
 	 */
-	if (fabric->lps->fport) {
+	अगर (fabric->lps->fport) अणु
 		fabric->bport.pid = fabric->lps->lp_pid;
 		fabric->is_npiv = fabric->lps->npiv_en;
 		fabric->is_auth = fabric->lps->auth_req;
 		bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_CONT_OP);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Nport-2-Nport direct attached
 		 */
@@ -920,20 +921,20 @@ bfa_cb_lps_flogi_comp(void *bfad, void *uarg, bfa_status_t status)
 			fabric->lps->pr_pwwn;
 		fabric->fab_type = BFA_FCS_FABRIC_N2N;
 		bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_NO_FABRIC);
-	}
+	पूर्ण
 
 	bfa_trc(fabric->fcs, fabric->bport.pid);
 	bfa_trc(fabric->fcs, fabric->is_npiv);
 	bfa_trc(fabric->fcs, fabric->is_auth);
-}
+पूर्ण
 /*
  *		Allocate and send FLOGI.
  */
-static void
-bfa_fcs_fabric_login(struct bfa_fcs_fabric_s *fabric)
-{
-	struct bfa_s		*bfa = fabric->fcs->bfa;
-	struct bfa_lport_cfg_s	*pcfg = &fabric->bport.port_cfg;
+अटल व्योम
+bfa_fcs_fabric_login(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
+	काष्ठा bfa_s		*bfa = fabric->fcs->bfa;
+	काष्ठा bfa_lport_cfg_s	*pcfg = &fabric->bport.port_cfg;
 	u8			alpa = 0;
 
 
@@ -941,13 +942,13 @@ bfa_fcs_fabric_login(struct bfa_fcs_fabric_s *fabric)
 		      pcfg->pwwn, pcfg->nwwn, fabric->auth_reqd);
 
 	fabric->stats.flogi_sent++;
-}
+पूर्ण
 
-static void
-bfa_fcs_fabric_notify_online(struct bfa_fcs_fabric_s *fabric)
-{
-	struct bfa_fcs_vport_s *vport;
-	struct list_head	      *qe, *qen;
+अटल व्योम
+bfa_fcs_fabric_notअगरy_online(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
+	काष्ठा bfa_fcs_vport_s *vport;
+	काष्ठा list_head	      *qe, *qen;
 
 	bfa_trc(fabric->fcs, fabric->fabric_name);
 
@@ -955,169 +956,169 @@ bfa_fcs_fabric_notify_online(struct bfa_fcs_fabric_s *fabric)
 	fabric->stats.fabric_onlines++;
 
 	/*
-	 * notify online event to base and then virtual ports
+	 * notअगरy online event to base and then भव ports
 	 */
 	bfa_fcs_lport_online(&fabric->bport);
 
-	list_for_each_safe(qe, qen, &fabric->vport_q) {
-		vport = (struct bfa_fcs_vport_s *) qe;
+	list_क्रम_each_safe(qe, qen, &fabric->vport_q) अणु
+		vport = (काष्ठा bfa_fcs_vport_s *) qe;
 		bfa_fcs_vport_online(vport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_fcs_fabric_notify_offline(struct bfa_fcs_fabric_s *fabric)
-{
-	struct bfa_fcs_vport_s *vport;
-	struct list_head	      *qe, *qen;
+अटल व्योम
+bfa_fcs_fabric_notअगरy_offline(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
+	काष्ठा bfa_fcs_vport_s *vport;
+	काष्ठा list_head	      *qe, *qen;
 
 	bfa_trc(fabric->fcs, fabric->fabric_name);
 	fabric->stats.fabric_offlines++;
 
 	/*
-	 * notify offline event first to vports and then base port.
+	 * notअगरy offline event first to vports and then base port.
 	 */
-	list_for_each_safe(qe, qen, &fabric->vport_q) {
-		vport = (struct bfa_fcs_vport_s *) qe;
+	list_क्रम_each_safe(qe, qen, &fabric->vport_q) अणु
+		vport = (काष्ठा bfa_fcs_vport_s *) qe;
 		bfa_fcs_vport_offline(vport);
-	}
+	पूर्ण
 
 	bfa_fcs_lport_offline(&fabric->bport);
 
 	fabric->fabric_name = 0;
 	fabric->fabric_ip_addr[0] = 0;
-}
+पूर्ण
 
-static void
-bfa_fcs_fabric_delay(void *cbarg)
-{
-	struct bfa_fcs_fabric_s *fabric = cbarg;
+अटल व्योम
+bfa_fcs_fabric_delay(व्योम *cbarg)
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric = cbarg;
 
 	bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_DELAYED);
-}
+पूर्ण
 
 /*
- * Stop all vports and wait for vport stop completions.
+ * Stop all vports and रुको क्रम vport stop completions.
  */
-static void
-bfa_fcs_fabric_stop(struct bfa_fcs_fabric_s *fabric)
-{
-	struct bfa_fcs_vport_s *vport;
-	struct list_head	*qe, *qen;
+अटल व्योम
+bfa_fcs_fabric_stop(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
+	काष्ठा bfa_fcs_vport_s *vport;
+	काष्ठा list_head	*qe, *qen;
 
 	bfa_wc_init(&fabric->stop_wc, bfa_fcs_fabric_stop_comp, fabric);
 
-	list_for_each_safe(qe, qen, &fabric->vport_q) {
-		vport = (struct bfa_fcs_vport_s *) qe;
+	list_क्रम_each_safe(qe, qen, &fabric->vport_q) अणु
+		vport = (काष्ठा bfa_fcs_vport_s *) qe;
 		bfa_wc_up(&fabric->stop_wc);
 		bfa_fcs_vport_fcs_stop(vport);
-	}
+	पूर्ण
 
 	bfa_wc_up(&fabric->stop_wc);
 	bfa_fcs_lport_stop(&fabric->bport);
-	bfa_wc_wait(&fabric->stop_wc);
-}
+	bfa_wc_रुको(&fabric->stop_wc);
+पूर्ण
 
 /*
- * Delete all vports and wait for vport delete completions.
+ * Delete all vports and रुको क्रम vport delete completions.
  */
-static void
-bfa_fcs_fabric_delete(struct bfa_fcs_fabric_s *fabric)
-{
-	struct bfa_fcs_vport_s *vport;
-	struct list_head	      *qe, *qen;
+अटल व्योम
+bfa_fcs_fabric_delete(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
+	काष्ठा bfa_fcs_vport_s *vport;
+	काष्ठा list_head	      *qe, *qen;
 
-	list_for_each_safe(qe, qen, &fabric->vport_q) {
-		vport = (struct bfa_fcs_vport_s *) qe;
+	list_क्रम_each_safe(qe, qen, &fabric->vport_q) अणु
+		vport = (काष्ठा bfa_fcs_vport_s *) qe;
 		bfa_fcs_vport_fcs_delete(vport);
-	}
+	पूर्ण
 
 	bfa_fcs_lport_delete(&fabric->bport);
-	bfa_wc_wait(&fabric->wc);
-}
+	bfa_wc_रुको(&fabric->wc);
+पूर्ण
 
-static void
-bfa_fcs_fabric_delete_comp(void *cbarg)
-{
-	struct bfa_fcs_fabric_s *fabric = cbarg;
+अटल व्योम
+bfa_fcs_fabric_delete_comp(व्योम *cbarg)
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric = cbarg;
 
 	bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_DELCOMP);
-}
+पूर्ण
 
-static void
-bfa_fcs_fabric_stop_comp(void *cbarg)
-{
-	struct bfa_fcs_fabric_s *fabric = cbarg;
+अटल व्योम
+bfa_fcs_fabric_stop_comp(व्योम *cbarg)
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric = cbarg;
 
 	bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_STOPCOMP);
-}
+पूर्ण
 
 /*
- *  fcs_fabric_public fabric public functions
+ *  fcs_fabric_खुला fabric खुला functions
  */
 
 /*
  * Fabric module stop -- stop FCS actions
  */
-void
-bfa_fcs_fabric_modstop(struct bfa_fcs_s *fcs)
-{
-	struct bfa_fcs_fabric_s *fabric;
+व्योम
+bfa_fcs_fabric_modstop(काष्ठा bfa_fcs_s *fcs)
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric;
 
 	bfa_trc(fcs, 0);
 	fabric = &fcs->fabric;
 	bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_STOP);
-}
+पूर्ण
 
 /*
  * Fabric module start -- kick starts FCS actions
  */
-void
-bfa_fcs_fabric_modstart(struct bfa_fcs_s *fcs)
-{
-	struct bfa_fcs_fabric_s *fabric;
+व्योम
+bfa_fcs_fabric_modstart(काष्ठा bfa_fcs_s *fcs)
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric;
 
 	bfa_trc(fcs, 0);
 	fabric = &fcs->fabric;
 	bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_START);
-}
+पूर्ण
 
 
 /*
- *   Link up notification from BFA physical port module.
+ *   Link up notअगरication from BFA physical port module.
  */
-void
-bfa_fcs_fabric_link_up(struct bfa_fcs_fabric_s *fabric)
-{
+व्योम
+bfa_fcs_fabric_link_up(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_LINK_UP);
-}
+पूर्ण
 
 /*
- *   Link down notification from BFA physical port module.
+ *   Link करोwn notअगरication from BFA physical port module.
  */
-void
-bfa_fcs_fabric_link_down(struct bfa_fcs_fabric_s *fabric)
-{
+व्योम
+bfa_fcs_fabric_link_करोwn(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
 	bfa_trc(fabric->fcs, fabric->bport.port_cfg.pwwn);
 	bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_LINK_DOWN);
-}
+पूर्ण
 
 /*
  *   A child vport is being created in the fabric.
  *
  *   Call from vport module at vport creation. A list of base port and vports
- *   belonging to a fabric is maintained to propagate link events.
+ *   beदीर्घing to a fabric is मुख्यtained to propagate link events.
  *
  *   param[in] fabric - Fabric instance. This can be a base fabric or vf.
  *   param[in] vport  - Vport being created.
  *
- *   @return None (always succeeds)
+ *   @वापस None (always succeeds)
  */
-void
-bfa_fcs_fabric_addvport(struct bfa_fcs_fabric_s *fabric,
-			struct bfa_fcs_vport_s *vport)
-{
+व्योम
+bfa_fcs_fabric_addvport(काष्ठा bfa_fcs_fabric_s *fabric,
+			काष्ठा bfa_fcs_vport_s *vport)
+अणु
 	/*
 	 * - add vport to fabric's vport_q
 	 */
@@ -1126,169 +1127,169 @@ bfa_fcs_fabric_addvport(struct bfa_fcs_fabric_s *fabric,
 	list_add_tail(&vport->qe, &fabric->vport_q);
 	fabric->num_vports++;
 	bfa_wc_up(&fabric->wc);
-}
+पूर्ण
 
 /*
  *   A child vport is being deleted from fabric.
  *
  *   Vport is being deleted.
  */
-void
-bfa_fcs_fabric_delvport(struct bfa_fcs_fabric_s *fabric,
-			struct bfa_fcs_vport_s *vport)
-{
+व्योम
+bfa_fcs_fabric_delvport(काष्ठा bfa_fcs_fabric_s *fabric,
+			काष्ठा bfa_fcs_vport_s *vport)
+अणु
 	list_del(&vport->qe);
 	fabric->num_vports--;
-	bfa_wc_down(&fabric->wc);
-}
+	bfa_wc_करोwn(&fabric->wc);
+पूर्ण
 
 
 /*
- * Lookup for a vport within a fabric given its pwwn
+ * Lookup क्रम a vport within a fabric given its pwwn
  */
-struct bfa_fcs_vport_s *
-bfa_fcs_fabric_vport_lookup(struct bfa_fcs_fabric_s *fabric, wwn_t pwwn)
-{
-	struct bfa_fcs_vport_s *vport;
-	struct list_head	      *qe;
+काष्ठा bfa_fcs_vport_s *
+bfa_fcs_fabric_vport_lookup(काष्ठा bfa_fcs_fabric_s *fabric, wwn_t pwwn)
+अणु
+	काष्ठा bfa_fcs_vport_s *vport;
+	काष्ठा list_head	      *qe;
 
-	list_for_each(qe, &fabric->vport_q) {
-		vport = (struct bfa_fcs_vport_s *) qe;
-		if (bfa_fcs_lport_get_pwwn(&vport->lport) == pwwn)
-			return vport;
-	}
+	list_क्रम_each(qe, &fabric->vport_q) अणु
+		vport = (काष्ठा bfa_fcs_vport_s *) qe;
+		अगर (bfa_fcs_lport_get_pwwn(&vport->lport) == pwwn)
+			वापस vport;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
 /*
- *  Get OUI of the attached switch.
+ *  Get OUI of the attached चयन.
  *
- *  Note : Use of this function should be avoided as much as possible.
- *         This function should be used only if there is any requirement
-*          to check for FOS version below 6.3.
- *         To check if the attached fabric is a brocade fabric, use
- *         bfa_lps_is_brcd_fabric() which works for FOS versions 6.3
+ *  Note : Use of this function should be aव्योमed as much as possible.
+ *         This function should be used only अगर there is any requirement
+*          to check क्रम FOS version below 6.3.
+ *         To check अगर the attached fabric is a brocade fabric, use
+ *         bfa_lps_is_brcd_fabric() which works क्रम FOS versions 6.3
  *         or above only.
  */
 
 u16
-bfa_fcs_fabric_get_switch_oui(struct bfa_fcs_fabric_s *fabric)
-{
+bfa_fcs_fabric_get_चयन_oui(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
 	wwn_t fab_nwwn;
-	u8 *tmp;
+	u8 *पंचांगp;
 	u16 oui;
 
 	fab_nwwn = fabric->lps->pr_nwwn;
 
-	tmp = (u8 *)&fab_nwwn;
-	oui = (tmp[3] << 8) | tmp[4];
+	पंचांगp = (u8 *)&fab_nwwn;
+	oui = (पंचांगp[3] << 8) | पंचांगp[4];
 
-	return oui;
-}
+	वापस oui;
+पूर्ण
 /*
  *		Unsolicited frame receive handling.
  */
-void
-bfa_fcs_fabric_uf_recv(struct bfa_fcs_fabric_s *fabric, struct fchs_s *fchs,
+व्योम
+bfa_fcs_fabric_uf_recv(काष्ठा bfa_fcs_fabric_s *fabric, काष्ठा fchs_s *fchs,
 		       u16 len)
-{
+अणु
 	u32	pid = fchs->d_id;
-	struct bfa_fcs_vport_s *vport;
-	struct list_head	      *qe;
-	struct fc_els_cmd_s *els_cmd = (struct fc_els_cmd_s *) (fchs + 1);
-	struct fc_logi_s *flogi = (struct fc_logi_s *) els_cmd;
+	काष्ठा bfa_fcs_vport_s *vport;
+	काष्ठा list_head	      *qe;
+	काष्ठा fc_els_cmd_s *els_cmd = (काष्ठा fc_els_cmd_s *) (fchs + 1);
+	काष्ठा fc_logi_s *flogi = (काष्ठा fc_logi_s *) els_cmd;
 
 	bfa_trc(fabric->fcs, len);
 	bfa_trc(fabric->fcs, pid);
 
 	/*
-	 * Look for our own FLOGI frames being looped back. This means an
-	 * external loopback cable is in place. Our own FLOGI frames are
-	 * sometimes looped back when switch port gets temporarily bypassed.
+	 * Look क्रम our own FLOGI frames being looped back. This means an
+	 * बाह्यal loopback cable is in place. Our own FLOGI frames are
+	 * someबार looped back when चयन port माला_लो temporarily bypassed.
 	 */
-	if ((pid == bfa_ntoh3b(FC_FABRIC_PORT)) &&
+	अगर ((pid == bfa_ntoh3b(FC_FABRIC_PORT)) &&
 	    (els_cmd->els_code == FC_ELS_FLOGI) &&
-	    (flogi->port_name == bfa_fcs_lport_get_pwwn(&fabric->bport))) {
+	    (flogi->port_name == bfa_fcs_lport_get_pwwn(&fabric->bport))) अणु
 		bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_LOOPBACK);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * FLOGI/EVFP exchanges should be consumed by base fabric.
 	 */
-	if (fchs->d_id == bfa_hton3b(FC_FABRIC_PORT)) {
+	अगर (fchs->d_id == bfa_hton3b(FC_FABRIC_PORT)) अणु
 		bfa_trc(fabric->fcs, pid);
 		bfa_fcs_fabric_process_uf(fabric, fchs, len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (fabric->bport.pid == pid) {
+	अगर (fabric->bport.pid == pid) अणु
 		/*
 		 * All authentication frames should be routed to auth
 		 */
 		bfa_trc(fabric->fcs, els_cmd->els_code);
-		if (els_cmd->els_code == FC_ELS_AUTH) {
+		अगर (els_cmd->els_code == FC_ELS_AUTH) अणु
 			bfa_trc(fabric->fcs, els_cmd->els_code);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		bfa_trc(fabric->fcs, *(u8 *) ((u8 *) fchs));
 		bfa_fcs_lport_uf_recv(&fabric->bport, fchs, len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * look for a matching local port ID
+	 * look क्रम a matching local port ID
 	 */
-	list_for_each(qe, &fabric->vport_q) {
-		vport = (struct bfa_fcs_vport_s *) qe;
-		if (vport->lport.pid == pid) {
+	list_क्रम_each(qe, &fabric->vport_q) अणु
+		vport = (काष्ठा bfa_fcs_vport_s *) qe;
+		अगर (vport->lport.pid == pid) अणु
 			bfa_fcs_lport_uf_recv(&vport->lport, fchs, len);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (!bfa_fcs_fabric_is_switched(fabric))
+	अगर (!bfa_fcs_fabric_is_चयनed(fabric))
 		bfa_fcs_lport_uf_recv(&fabric->bport, fchs, len);
 
 	bfa_trc(fabric->fcs, fchs->type);
-}
+पूर्ण
 
 /*
  *		Unsolicited frames to be processed by fabric.
  */
-static void
-bfa_fcs_fabric_process_uf(struct bfa_fcs_fabric_s *fabric, struct fchs_s *fchs,
+अटल व्योम
+bfa_fcs_fabric_process_uf(काष्ठा bfa_fcs_fabric_s *fabric, काष्ठा fchs_s *fchs,
 			  u16 len)
-{
-	struct fc_els_cmd_s *els_cmd = (struct fc_els_cmd_s *) (fchs + 1);
+अणु
+	काष्ठा fc_els_cmd_s *els_cmd = (काष्ठा fc_els_cmd_s *) (fchs + 1);
 
 	bfa_trc(fabric->fcs, els_cmd->els_code);
 
-	switch (els_cmd->els_code) {
-	case FC_ELS_FLOGI:
+	चयन (els_cmd->els_code) अणु
+	हाल FC_ELS_FLOGI:
 		bfa_fcs_fabric_process_flogi(fabric, fchs, len);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/*
 		 * need to generate a LS_RJT
 		 */
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  *	Process	incoming FLOGI
  */
-static void
-bfa_fcs_fabric_process_flogi(struct bfa_fcs_fabric_s *fabric,
-			struct fchs_s *fchs, u16 len)
-{
-	struct fc_logi_s *flogi = (struct fc_logi_s *) (fchs + 1);
-	struct bfa_fcs_lport_s *bport = &fabric->bport;
+अटल व्योम
+bfa_fcs_fabric_process_flogi(काष्ठा bfa_fcs_fabric_s *fabric,
+			काष्ठा fchs_s *fchs, u16 len)
+अणु
+	काष्ठा fc_logi_s *flogi = (काष्ठा fc_logi_s *) (fchs + 1);
+	काष्ठा bfa_fcs_lport_s *bport = &fabric->bport;
 
 	bfa_trc(fabric->fcs, fchs->s_id);
 
@@ -1296,14 +1297,14 @@ bfa_fcs_fabric_process_flogi(struct bfa_fcs_fabric_s *fabric,
 	/*
 	 * Check port type. It should be 0 = n-port.
 	 */
-	if (flogi->csp.port_type) {
+	अगर (flogi->csp.port_type) अणु
 		/*
-		 * @todo: may need to send a LS_RJT
+		 * @toकरो: may need to send a LS_RJT
 		 */
 		bfa_trc(fabric->fcs, flogi->port_name);
 		fabric->stats.flogi_rejected++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fabric->bb_credit = be16_to_cpu(flogi->csp.bbcred);
 	bport->port_topo.pn2n.rem_port_wwn = flogi->port_name;
@@ -1314,24 +1315,24 @@ bfa_fcs_fabric_process_flogi(struct bfa_fcs_fabric_s *fabric,
 	 */
 	bfa_fcs_fabric_send_flogi_acc(fabric);
 	bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_NO_FABRIC);
-}
+पूर्ण
 
-static void
-bfa_fcs_fabric_send_flogi_acc(struct bfa_fcs_fabric_s *fabric)
-{
-	struct bfa_lport_cfg_s *pcfg = &fabric->bport.port_cfg;
-	struct bfa_fcs_lport_n2n_s *n2n_port = &fabric->bport.port_topo.pn2n;
-	struct bfa_s	  *bfa = fabric->fcs->bfa;
-	struct bfa_fcxp_s *fcxp;
+अटल व्योम
+bfa_fcs_fabric_send_flogi_acc(काष्ठा bfa_fcs_fabric_s *fabric)
+अणु
+	काष्ठा bfa_lport_cfg_s *pcfg = &fabric->bport.port_cfg;
+	काष्ठा bfa_fcs_lport_n2n_s *n2n_port = &fabric->bport.port_topo.pn2n;
+	काष्ठा bfa_s	  *bfa = fabric->fcs->bfa;
+	काष्ठा bfa_fcxp_s *fcxp;
 	u16	reqlen;
-	struct fchs_s	fchs;
+	काष्ठा fchs_s	fchs;
 
 	fcxp = bfa_fcs_fcxp_alloc(fabric->fcs, BFA_FALSE);
 	/*
 	 * Do not expect this failure -- expect remote node to retry
 	 */
-	if (!fcxp)
-		return;
+	अगर (!fcxp)
+		वापस;
 
 	reqlen = fc_flogi_acc_build(&fchs, bfa_fcxp_get_reqbuf(fcxp),
 				    bfa_hton3b(FC_FABRIC_PORT),
@@ -1340,72 +1341,72 @@ bfa_fcs_fabric_send_flogi_acc(struct bfa_fcs_fabric_s *fabric)
 				    bfa_fcport_get_maxfrsize(bfa),
 				    bfa_fcport_get_rx_bbcredit(bfa), 0);
 
-	bfa_fcxp_send(fcxp, NULL, fabric->vf_id, fabric->lps->bfa_tag,
+	bfa_fcxp_send(fcxp, शून्य, fabric->vf_id, fabric->lps->bfa_tag,
 		      BFA_FALSE, FC_CLASS_3,
 		      reqlen, &fchs, bfa_fcs_fabric_flogiacc_comp, fabric,
 		      FC_MAX_PDUSZ, 0);
-}
+पूर्ण
 
 /*
  *   Flogi Acc completion callback.
  */
-static void
-bfa_fcs_fabric_flogiacc_comp(void *fcsarg, struct bfa_fcxp_s *fcxp, void *cbarg,
+अटल व्योम
+bfa_fcs_fabric_flogiacc_comp(व्योम *fcsarg, काष्ठा bfa_fcxp_s *fcxp, व्योम *cbarg,
 			     bfa_status_t status, u32 rsp_len,
-			     u32 resid_len, struct fchs_s *rspfchs)
-{
-	struct bfa_fcs_fabric_s *fabric = cbarg;
+			     u32 resid_len, काष्ठा fchs_s *rspfchs)
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric = cbarg;
 
 	bfa_trc(fabric->fcs, status);
-}
+पूर्ण
 
 
 /*
- * Send AEN notification
+ * Send AEN notअगरication
  */
-static void
-bfa_fcs_fabric_aen_post(struct bfa_fcs_lport_s *port,
-			enum bfa_port_aen_event event)
-{
-	struct bfad_s *bfad = (struct bfad_s *)port->fabric->fcs->bfad;
-	struct bfa_aen_entry_s  *aen_entry;
+अटल व्योम
+bfa_fcs_fabric_aen_post(काष्ठा bfa_fcs_lport_s *port,
+			क्रमागत bfa_port_aen_event event)
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)port->fabric->fcs->bfad;
+	काष्ठा bfa_aen_entry_s  *aen_entry;
 
 	bfad_get_aen_entry(bfad, aen_entry);
-	if (!aen_entry)
-		return;
+	अगर (!aen_entry)
+		वापस;
 
 	aen_entry->aen_data.port.pwwn = bfa_fcs_lport_get_pwwn(port);
 	aen_entry->aen_data.port.fwwn = bfa_fcs_lport_get_fabric_name(port);
 
-	/* Send the AEN notification */
-	bfad_im_post_vendor_event(aen_entry, bfad, ++port->fcs->fcs_aen_seq,
+	/* Send the AEN notअगरication */
+	bfad_im_post_venकरोr_event(aen_entry, bfad, ++port->fcs->fcs_aen_seq,
 				  BFA_AEN_CAT_PORT, event);
-}
+पूर्ण
 
 /*
  *
  * @param[in] fabric - fabric
  * @param[in] wwn_t - new fabric name
  *
- * @return - none
+ * @वापस - none
  */
-void
-bfa_fcs_fabric_set_fabric_name(struct bfa_fcs_fabric_s *fabric,
+व्योम
+bfa_fcs_fabric_set_fabric_name(काष्ठा bfa_fcs_fabric_s *fabric,
 			       wwn_t fabric_name)
-{
-	struct bfad_s *bfad = (struct bfad_s *)fabric->fcs->bfad;
-	char	pwwn_ptr[BFA_STRING_32];
-	char	fwwn_ptr[BFA_STRING_32];
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)fabric->fcs->bfad;
+	अक्षर	pwwn_ptr[BFA_STRING_32];
+	अक्षर	fwwn_ptr[BFA_STRING_32];
 
 	bfa_trc(fabric->fcs, fabric_name);
 
-	if (fabric->fabric_name == 0) {
+	अगर (fabric->fabric_name == 0) अणु
 		/*
-		 * With BRCD switches, we don't get Fabric Name in FLOGI.
-		 * Don't generate a fabric name change event in this case.
+		 * With BRCD चयनes, we करोn't get Fabric Name in FLOGI.
+		 * Don't generate a fabric name change event in this हाल.
 		 */
 		fabric->fabric_name = fabric_name;
-	} else {
+	पूर्ण अन्यथा अणु
 		fabric->fabric_name = fabric_name;
 		wwn2str(pwwn_ptr, bfa_fcs_lport_get_pwwn(&fabric->bport));
 		wwn2str(fwwn_ptr,
@@ -1415,151 +1416,151 @@ bfa_fcs_fabric_set_fabric_name(struct bfa_fcs_fabric_s *fabric,
 			pwwn_ptr, fwwn_ptr);
 		bfa_fcs_fabric_aen_post(&fabric->bport,
 				BFA_PORT_AEN_FABRIC_NAME_CHANGE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bfa_cb_lps_flogo_comp(void *bfad, void *uarg)
-{
-	struct bfa_fcs_fabric_s *fabric = uarg;
+व्योम
+bfa_cb_lps_flogo_comp(व्योम *bfad, व्योम *uarg)
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric = uarg;
 	bfa_sm_send_event(fabric, BFA_FCS_FABRIC_SM_LOGOCOMP);
-}
+पूर्ण
 
 /*
- *	Returns FCS vf structure for a given vf_id.
+ *	Returns FCS vf काष्ठाure क्रम a given vf_id.
  *
  *	param[in]	vf_id - VF_ID
  *
- *	return
- *	If lookup succeeds, retuns fcs vf object, otherwise returns NULL
+ *	वापस
+ *	If lookup succeeds, retuns fcs vf object, otherwise वापसs शून्य
  */
 bfa_fcs_vf_t   *
-bfa_fcs_vf_lookup(struct bfa_fcs_s *fcs, u16 vf_id)
-{
+bfa_fcs_vf_lookup(काष्ठा bfa_fcs_s *fcs, u16 vf_id)
+अणु
 	bfa_trc(fcs, vf_id);
-	if (vf_id == FC_VF_ID_NULL)
-		return &fcs->fabric;
+	अगर (vf_id == FC_VF_ID_शून्य)
+		वापस &fcs->fabric;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  *	Return the list of local logical ports present in the given VF.
  *
- *	@param[in]	vf	vf for which logical ports are returned
- *	@param[out]	lpwwn	returned logical port wwn list
+ *	@param[in]	vf	vf क्रम which logical ports are वापसed
+ *	@param[out]	lpwwn	वापसed logical port wwn list
  *	@param[in,out]	nlports in:size of lpwwn list;
  *				out:total elements present,
- *				actual elements returned is limited by the size
+ *				actual elements वापसed is limited by the size
  */
-void
-bfa_fcs_vf_get_ports(bfa_fcs_vf_t *vf, wwn_t lpwwn[], int *nlports)
-{
-	struct list_head *qe;
-	struct bfa_fcs_vport_s *vport;
-	int	i = 0;
-	struct bfa_fcs_s	*fcs;
+व्योम
+bfa_fcs_vf_get_ports(bfa_fcs_vf_t *vf, wwn_t lpwwn[], पूर्णांक *nlports)
+अणु
+	काष्ठा list_head *qe;
+	काष्ठा bfa_fcs_vport_s *vport;
+	पूर्णांक	i = 0;
+	काष्ठा bfa_fcs_s	*fcs;
 
-	if (vf == NULL || lpwwn == NULL || *nlports == 0)
-		return;
+	अगर (vf == शून्य || lpwwn == शून्य || *nlports == 0)
+		वापस;
 
 	fcs = vf->fcs;
 
 	bfa_trc(fcs, vf->vf_id);
-	bfa_trc(fcs, (uint32_t) *nlports);
+	bfa_trc(fcs, (uपूर्णांक32_t) *nlports);
 
 	lpwwn[i++] = vf->bport.port_cfg.pwwn;
 
-	list_for_each(qe, &vf->vport_q) {
-		if (i >= *nlports)
-			break;
+	list_क्रम_each(qe, &vf->vport_q) अणु
+		अगर (i >= *nlports)
+			अवरोध;
 
-		vport = (struct bfa_fcs_vport_s *) qe;
+		vport = (काष्ठा bfa_fcs_vport_s *) qe;
 		lpwwn[i++] = vport->lport.port_cfg.pwwn;
-	}
+	पूर्ण
 
 	bfa_trc(fcs, i);
 	*nlports = i;
-}
+पूर्ण
 
 /*
  * BFA FCS PPORT ( physical port)
  */
-static void
-bfa_fcs_port_event_handler(void *cbarg, enum bfa_port_linkstate event)
-{
-	struct bfa_fcs_s      *fcs = cbarg;
+अटल व्योम
+bfa_fcs_port_event_handler(व्योम *cbarg, क्रमागत bfa_port_linkstate event)
+अणु
+	काष्ठा bfa_fcs_s      *fcs = cbarg;
 
 	bfa_trc(fcs, event);
 
-	switch (event) {
-	case BFA_PORT_LINKUP:
+	चयन (event) अणु
+	हाल BFA_PORT_LINKUP:
 		bfa_fcs_fabric_link_up(&fcs->fabric);
-		break;
+		अवरोध;
 
-	case BFA_PORT_LINKDOWN:
-		bfa_fcs_fabric_link_down(&fcs->fabric);
-		break;
+	हाल BFA_PORT_LINKDOWN:
+		bfa_fcs_fabric_link_करोwn(&fcs->fabric);
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * BFA FCS UF ( Unsolicited Frames)
  */
 
 /*
- *		BFA callback for unsolicited frame receive handler.
+ *		BFA callback क्रम unsolicited frame receive handler.
  *
- * @param[in]		cbarg		callback arg for receive handler
+ * @param[in]		cbarg		callback arg क्रम receive handler
  * @param[in]		uf		unsolicited frame descriptor
  *
- * @return None
+ * @वापस None
  */
-static void
-bfa_fcs_uf_recv(void *cbarg, struct bfa_uf_s *uf)
-{
-	struct bfa_fcs_s	*fcs = (struct bfa_fcs_s *) cbarg;
-	struct fchs_s	*fchs = bfa_uf_get_frmbuf(uf);
+अटल व्योम
+bfa_fcs_uf_recv(व्योम *cbarg, काष्ठा bfa_uf_s *uf)
+अणु
+	काष्ठा bfa_fcs_s	*fcs = (काष्ठा bfa_fcs_s *) cbarg;
+	काष्ठा fchs_s	*fchs = bfa_uf_get_frmbuf(uf);
 	u16	len = bfa_uf_get_frmlen(uf);
-	struct fc_vft_s *vft;
-	struct bfa_fcs_fabric_s *fabric;
+	काष्ठा fc_vft_s *vft;
+	काष्ठा bfa_fcs_fabric_s *fabric;
 
 	/*
-	 * check for VFT header
+	 * check क्रम VFT header
 	 */
-	if (fchs->routing == FC_RTG_EXT_HDR &&
-	    fchs->cat_info == FC_CAT_VFT_HDR) {
+	अगर (fchs->routing == FC_RTG_EXT_HDR &&
+	    fchs->cat_info == FC_CAT_VFT_HDR) अणु
 		bfa_stats(fcs, uf.tagged);
 		vft = bfa_uf_get_frmbuf(uf);
-		if (fcs->port_vfid == vft->vf_id)
+		अगर (fcs->port_vfid == vft->vf_id)
 			fabric = &fcs->fabric;
-		else
+		अन्यथा
 			fabric = bfa_fcs_vf_lookup(fcs, (u16) vft->vf_id);
 
 		/*
-		 * drop frame if vfid is unknown
+		 * drop frame अगर vfid is unknown
 		 */
-		if (!fabric) {
+		अगर (!fabric) अणु
 			WARN_ON(1);
 			bfa_stats(fcs, uf.vfid_unknown);
-			bfa_uf_free(uf);
-			return;
-		}
+			bfa_uf_मुक्त(uf);
+			वापस;
+		पूर्ण
 
 		/*
 		 * skip vft header
 		 */
-		fchs = (struct fchs_s *) (vft + 1);
-		len -= sizeof(struct fc_vft_s);
+		fchs = (काष्ठा fchs_s *) (vft + 1);
+		len -= माप(काष्ठा fc_vft_s);
 
 		bfa_trc(fcs, vft->vf_id);
-	} else {
+	पूर्ण अन्यथा अणु
 		bfa_stats(fcs, uf.untagged);
 		fabric = &fcs->fabric;
-	}
+	पूर्ण
 
 	bfa_trc(fcs, ((u32 *) fchs)[0]);
 	bfa_trc(fcs, ((u32 *) fchs)[1]);
@@ -1570,17 +1571,17 @@ bfa_fcs_uf_recv(void *cbarg, struct bfa_uf_s *uf)
 	bfa_trc(fcs, len);
 
 	bfa_fcs_fabric_uf_recv(fabric, fchs, len);
-	bfa_uf_free(uf);
-}
+	bfa_uf_मुक्त(uf);
+पूर्ण
 
 /*
- * fcs attach -- called once to initialize data structures at driver attach time
+ * fcs attach -- called once to initialize data काष्ठाures at driver attach समय
  */
-void
-bfa_fcs_attach(struct bfa_fcs_s *fcs, struct bfa_s *bfa, struct bfad_s *bfad,
+व्योम
+bfa_fcs_attach(काष्ठा bfa_fcs_s *fcs, काष्ठा bfa_s *bfa, काष्ठा bfad_s *bfad,
 	       bfa_boolean_t min_cfg)
-{
-	struct bfa_fcs_fabric_s *fabric = &fcs->fabric;
+अणु
+	काष्ठा bfa_fcs_fabric_s *fabric = &fcs->fabric;
 
 	fcs->bfa = bfa;
 	fcs->bfad = bfad;
@@ -1590,10 +1591,10 @@ bfa_fcs_attach(struct bfa_fcs_s *fcs, struct bfa_s *bfa, struct bfad_s *bfad,
 	bfa->fcs = BFA_TRUE;
 	fcbuild_init();
 
-	bfa_fcport_event_register(fcs->bfa, bfa_fcs_port_event_handler, fcs);
-	bfa_uf_recv_register(fcs->bfa, bfa_fcs_uf_recv, fcs);
+	bfa_fcport_event_रेजिस्टर(fcs->bfa, bfa_fcs_port_event_handler, fcs);
+	bfa_uf_recv_रेजिस्टर(fcs->bfa, bfa_fcs_uf_recv, fcs);
 
-	memset(fabric, 0, sizeof(struct bfa_fcs_fabric_s));
+	स_रखो(fabric, 0, माप(काष्ठा bfa_fcs_fabric_s));
 
 	/*
 	 * Initialize base fabric.
@@ -1612,5 +1613,5 @@ bfa_fcs_attach(struct bfa_fcs_s *fcs, struct bfa_s *bfa, struct bfad_s *bfad,
 	bfa_wc_up(&fabric->wc); /* For the base port */
 
 	bfa_sm_set_state(fabric, bfa_fcs_fabric_sm_uninit);
-	bfa_fcs_lport_attach(&fabric->bport, fabric->fcs, FC_VF_ID_NULL, NULL);
-}
+	bfa_fcs_lport_attach(&fabric->bport, fabric->fcs, FC_VF_ID_शून्य, शून्य);
+पूर्ण

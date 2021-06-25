@@ -1,213 +1,214 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SH_CLOCK_H
-#define __SH_CLOCK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SH_CLOCK_H
+#घोषणा __SH_CLOCK_H
 
-#include <linux/list.h>
-#include <linux/seq_file.h>
-#include <linux/cpufreq.h>
-#include <linux/types.h>
-#include <linux/kref.h>
-#include <linux/clk.h>
-#include <linux/err.h>
+#समावेश <linux/list.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
 
-struct clk;
+काष्ठा clk;
 
-struct clk_mapping {
+काष्ठा clk_mapping अणु
 	phys_addr_t		phys;
-	void __iomem		*base;
-	unsigned long		len;
-	struct kref		ref;
-};
+	व्योम __iomem		*base;
+	अचिन्हित दीर्घ		len;
+	काष्ठा kref		ref;
+पूर्ण;
 
-struct sh_clk_ops {
-#ifdef CONFIG_SH_CLK_CPG_LEGACY
-	void (*init)(struct clk *clk);
-#endif
-	int (*enable)(struct clk *clk);
-	void (*disable)(struct clk *clk);
-	unsigned long (*recalc)(struct clk *clk);
-	int (*set_rate)(struct clk *clk, unsigned long rate);
-	int (*set_parent)(struct clk *clk, struct clk *parent);
-	long (*round_rate)(struct clk *clk, unsigned long rate);
-};
+काष्ठा sh_clk_ops अणु
+#अगर_घोषित CONFIG_SH_CLK_CPG_LEGACY
+	व्योम (*init)(काष्ठा clk *clk);
+#पूर्ण_अगर
+	पूर्णांक (*enable)(काष्ठा clk *clk);
+	व्योम (*disable)(काष्ठा clk *clk);
+	अचिन्हित दीर्घ (*recalc)(काष्ठा clk *clk);
+	पूर्णांक (*set_rate)(काष्ठा clk *clk, अचिन्हित दीर्घ rate);
+	पूर्णांक (*set_parent)(काष्ठा clk *clk, काष्ठा clk *parent);
+	दीर्घ (*round_rate)(काष्ठा clk *clk, अचिन्हित दीर्घ rate);
+पूर्ण;
 
-#define SH_CLK_DIV_MSK(div)	((1 << (div)) - 1)
-#define SH_CLK_DIV4_MSK		SH_CLK_DIV_MSK(4)
-#define SH_CLK_DIV6_MSK		SH_CLK_DIV_MSK(6)
+#घोषणा SH_CLK_DIV_MSK(भाग)	((1 << (भाग)) - 1)
+#घोषणा SH_CLK_DIV4_MSK		SH_CLK_DIV_MSK(4)
+#घोषणा SH_CLK_DIV6_MSK		SH_CLK_DIV_MSK(6)
 
-struct clk {
-	struct list_head	node;
-	struct clk		*parent;
-	struct clk		**parent_table;	/* list of parents to */
-	unsigned short		parent_num;	/* choose between */
-	unsigned char		src_shift;	/* source clock field in the */
-	unsigned char		src_width;	/* configuration register */
-	struct sh_clk_ops	*ops;
+काष्ठा clk अणु
+	काष्ठा list_head	node;
+	काष्ठा clk		*parent;
+	काष्ठा clk		**parent_table;	/* list of parents to */
+	अचिन्हित लघु		parent_num;	/* choose between */
+	अचिन्हित अक्षर		src_shअगरt;	/* source घड़ी field in the */
+	अचिन्हित अक्षर		src_width;	/* configuration रेजिस्टर */
+	काष्ठा sh_clk_ops	*ops;
 
-	struct list_head	children;
-	struct list_head	sibling;	/* node for children */
+	काष्ठा list_head	children;
+	काष्ठा list_head	sibling;	/* node क्रम children */
 
-	int			usecount;
+	पूर्णांक			usecount;
 
-	unsigned long		rate;
-	unsigned long		flags;
+	अचिन्हित दीर्घ		rate;
+	अचिन्हित दीर्घ		flags;
 
-	void __iomem		*enable_reg;
-	void __iomem		*status_reg;
-	unsigned int		enable_bit;
-	void __iomem		*mapped_reg;
+	व्योम __iomem		*enable_reg;
+	व्योम __iomem		*status_reg;
+	अचिन्हित पूर्णांक		enable_bit;
+	व्योम __iomem		*mapped_reg;
 
-	unsigned int		div_mask;
-	unsigned long		arch_flags;
-	void			*priv;
-	struct clk_mapping	*mapping;
-	struct cpufreq_frequency_table *freq_table;
-	unsigned int		nr_freqs;
-};
+	अचिन्हित पूर्णांक		भाग_mask;
+	अचिन्हित दीर्घ		arch_flags;
+	व्योम			*priv;
+	काष्ठा clk_mapping	*mapping;
+	काष्ठा cpufreq_frequency_table *freq_table;
+	अचिन्हित पूर्णांक		nr_freqs;
+पूर्ण;
 
-#define CLK_ENABLE_ON_INIT	BIT(0)
+#घोषणा CLK_ENABLE_ON_INIT	BIT(0)
 
-#define CLK_ENABLE_REG_32BIT	BIT(1)	/* default access size */
-#define CLK_ENABLE_REG_16BIT	BIT(2)
-#define CLK_ENABLE_REG_8BIT	BIT(3)
+#घोषणा CLK_ENABLE_REG_32BIT	BIT(1)	/* शेष access size */
+#घोषणा CLK_ENABLE_REG_16BIT	BIT(2)
+#घोषणा CLK_ENABLE_REG_8BIT	BIT(3)
 
-#define CLK_MASK_DIV_ON_DISABLE	BIT(4)
+#घोषणा CLK_MASK_DIV_ON_DISABLE	BIT(4)
 
-#define CLK_ENABLE_REG_MASK	(CLK_ENABLE_REG_32BIT | \
+#घोषणा CLK_ENABLE_REG_MASK	(CLK_ENABLE_REG_32BIT | \
 				 CLK_ENABLE_REG_16BIT | \
 				 CLK_ENABLE_REG_8BIT)
 
 /* drivers/sh/clk.c */
-unsigned long followparent_recalc(struct clk *);
-void recalculate_root_clocks(void);
-void propagate_rate(struct clk *);
-int clk_reparent(struct clk *child, struct clk *parent);
-int clk_register(struct clk *);
-void clk_unregister(struct clk *);
-void clk_enable_init_clocks(void);
+अचिन्हित दीर्घ followparent_recalc(काष्ठा clk *);
+व्योम recalculate_root_घड़ीs(व्योम);
+व्योम propagate_rate(काष्ठा clk *);
+पूर्णांक clk_reparent(काष्ठा clk *child, काष्ठा clk *parent);
+पूर्णांक clk_रेजिस्टर(काष्ठा clk *);
+व्योम clk_unरेजिस्टर(काष्ठा clk *);
+व्योम clk_enable_init_घड़ीs(व्योम);
 
-struct clk_div_mult_table {
-	unsigned int *divisors;
-	unsigned int nr_divisors;
-	unsigned int *multipliers;
-	unsigned int nr_multipliers;
-};
+काष्ठा clk_भाग_mult_table अणु
+	अचिन्हित पूर्णांक *भागisors;
+	अचिन्हित पूर्णांक nr_भागisors;
+	अचिन्हित पूर्णांक *multipliers;
+	अचिन्हित पूर्णांक nr_multipliers;
+पूर्ण;
 
-struct cpufreq_frequency_table;
-void clk_rate_table_build(struct clk *clk,
-			  struct cpufreq_frequency_table *freq_table,
-			  int nr_freqs,
-			  struct clk_div_mult_table *src_table,
-			  unsigned long *bitmap);
+काष्ठा cpufreq_frequency_table;
+व्योम clk_rate_table_build(काष्ठा clk *clk,
+			  काष्ठा cpufreq_frequency_table *freq_table,
+			  पूर्णांक nr_freqs,
+			  काष्ठा clk_भाग_mult_table *src_table,
+			  अचिन्हित दीर्घ *biपंचांगap);
 
-long clk_rate_table_round(struct clk *clk,
-			  struct cpufreq_frequency_table *freq_table,
-			  unsigned long rate);
+दीर्घ clk_rate_table_round(काष्ठा clk *clk,
+			  काष्ठा cpufreq_frequency_table *freq_table,
+			  अचिन्हित दीर्घ rate);
 
-int clk_rate_table_find(struct clk *clk,
-			struct cpufreq_frequency_table *freq_table,
-			unsigned long rate);
+पूर्णांक clk_rate_table_find(काष्ठा clk *clk,
+			काष्ठा cpufreq_frequency_table *freq_table,
+			अचिन्हित दीर्घ rate);
 
-long clk_rate_div_range_round(struct clk *clk, unsigned int div_min,
-			      unsigned int div_max, unsigned long rate);
+दीर्घ clk_rate_भाग_range_round(काष्ठा clk *clk, अचिन्हित पूर्णांक भाग_min,
+			      अचिन्हित पूर्णांक भाग_max, अचिन्हित दीर्घ rate);
 
-long clk_rate_mult_range_round(struct clk *clk, unsigned int mult_min,
-			       unsigned int mult_max, unsigned long rate);
+दीर्घ clk_rate_mult_range_round(काष्ठा clk *clk, अचिन्हित पूर्णांक mult_min,
+			       अचिन्हित पूर्णांक mult_max, अचिन्हित दीर्घ rate);
 
-#define SH_CLK_MSTP(_parent, _enable_reg, _enable_bit, _status_reg, _flags) \
-{									\
+#घोषणा SH_CLK_MSTP(_parent, _enable_reg, _enable_bit, _status_reg, _flags) \
+अणु									\
 	.parent		= _parent,					\
-	.enable_reg	= (void __iomem *)_enable_reg,			\
+	.enable_reg	= (व्योम __iomem *)_enable_reg,			\
 	.enable_bit	= _enable_bit,					\
 	.status_reg	= _status_reg,					\
 	.flags		= _flags,					\
-}
+पूर्ण
 
-#define SH_CLK_MSTP32(_p, _r, _b, _f)				\
+#घोषणा SH_CLK_MSTP32(_p, _r, _b, _f)				\
 	SH_CLK_MSTP(_p, _r, _b, 0, _f | CLK_ENABLE_REG_32BIT)
 
-#define SH_CLK_MSTP32_STS(_p, _r, _b, _s, _f)			\
+#घोषणा SH_CLK_MSTP32_STS(_p, _r, _b, _s, _f)			\
 	SH_CLK_MSTP(_p, _r, _b, _s, _f | CLK_ENABLE_REG_32BIT)
 
-#define SH_CLK_MSTP16(_p, _r, _b, _f)				\
+#घोषणा SH_CLK_MSTP16(_p, _r, _b, _f)				\
 	SH_CLK_MSTP(_p, _r, _b, 0, _f | CLK_ENABLE_REG_16BIT)
 
-#define SH_CLK_MSTP8(_p, _r, _b, _f)				\
+#घोषणा SH_CLK_MSTP8(_p, _r, _b, _f)				\
 	SH_CLK_MSTP(_p, _r, _b, 0, _f | CLK_ENABLE_REG_8BIT)
 
-int sh_clk_mstp_register(struct clk *clks, int nr);
+पूर्णांक sh_clk_mstp_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr);
 
 /*
  * MSTP registration never really cared about access size, despite the
  * original enable/disable pairs assuming a 32-bit access. Clocks are
- * responsible for defining their access sizes either directly or via the
- * clock definition wrappers.
+ * responsible क्रम defining their access sizes either directly or via the
+ * घड़ी definition wrappers.
  */
-static inline int __deprecated sh_clk_mstp32_register(struct clk *clks, int nr)
-{
-	return sh_clk_mstp_register(clks, nr);
-}
+अटल अंतरभूत पूर्णांक __deprecated sh_clk_mstp32_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr)
+अणु
+	वापस sh_clk_mstp_रेजिस्टर(clks, nr);
+पूर्ण
 
-#define SH_CLK_DIV4(_parent, _reg, _shift, _div_bitmap, _flags)	\
-{								\
+#घोषणा SH_CLK_DIV4(_parent, _reg, _shअगरt, _भाग_biपंचांगap, _flags)	\
+अणु								\
 	.parent = _parent,					\
-	.enable_reg = (void __iomem *)_reg,			\
-	.enable_bit = _shift,					\
-	.arch_flags = _div_bitmap,				\
-	.div_mask = SH_CLK_DIV4_MSK,				\
+	.enable_reg = (व्योम __iomem *)_reg,			\
+	.enable_bit = _shअगरt,					\
+	.arch_flags = _भाग_biपंचांगap,				\
+	.भाग_mask = SH_CLK_DIV4_MSK,				\
 	.flags = _flags,					\
-}
+पूर्ण
 
-struct clk_div_table {
-	struct clk_div_mult_table *div_mult_table;
-	void (*kick)(struct clk *clk);
-};
+काष्ठा clk_भाग_प्रकारable अणु
+	काष्ठा clk_भाग_mult_table *भाग_mult_table;
+	व्योम (*kick)(काष्ठा clk *clk);
+पूर्ण;
 
-#define clk_div4_table clk_div_table
+#घोषणा clk_भाग4_table clk_भाग_प्रकारable
 
-int sh_clk_div4_register(struct clk *clks, int nr,
-			 struct clk_div4_table *table);
-int sh_clk_div4_enable_register(struct clk *clks, int nr,
-			 struct clk_div4_table *table);
-int sh_clk_div4_reparent_register(struct clk *clks, int nr,
-			 struct clk_div4_table *table);
+पूर्णांक sh_clk_भाग4_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr,
+			 काष्ठा clk_भाग4_table *table);
+पूर्णांक sh_clk_भाग4_enable_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr,
+			 काष्ठा clk_भाग4_table *table);
+पूर्णांक sh_clk_भाग4_reparent_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr,
+			 काष्ठा clk_भाग4_table *table);
 
-#define SH_CLK_DIV6_EXT(_reg, _flags, _parents,			\
-			_num_parents, _src_shift, _src_width)	\
-{								\
-	.enable_reg = (void __iomem *)_reg,			\
+#घोषणा SH_CLK_DIV6_EXT(_reg, _flags, _parents,			\
+			_num_parents, _src_shअगरt, _src_width)	\
+अणु								\
+	.enable_reg = (व्योम __iomem *)_reg,			\
 	.enable_bit = 0, /* unused */				\
 	.flags = _flags | CLK_MASK_DIV_ON_DISABLE,		\
-	.div_mask = SH_CLK_DIV6_MSK,				\
+	.भाग_mask = SH_CLK_DIV6_MSK,				\
 	.parent_table = _parents,				\
 	.parent_num = _num_parents,				\
-	.src_shift = _src_shift,				\
+	.src_shअगरt = _src_shअगरt,				\
 	.src_width = _src_width,				\
-}
+पूर्ण
 
-#define SH_CLK_DIV6(_parent, _reg, _flags)			\
-{								\
+#घोषणा SH_CLK_DIV6(_parent, _reg, _flags)			\
+अणु								\
 	.parent		= _parent,				\
-	.enable_reg	= (void __iomem *)_reg,			\
+	.enable_reg	= (व्योम __iomem *)_reg,			\
 	.enable_bit	= 0,	/* unused */			\
-	.div_mask	= SH_CLK_DIV6_MSK,			\
+	.भाग_mask	= SH_CLK_DIV6_MSK,			\
 	.flags		= _flags | CLK_MASK_DIV_ON_DISABLE,	\
-}
+पूर्ण
 
-int sh_clk_div6_register(struct clk *clks, int nr);
-int sh_clk_div6_reparent_register(struct clk *clks, int nr);
+पूर्णांक sh_clk_भाग6_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr);
+पूर्णांक sh_clk_भाग6_reparent_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr);
 
-#define CLKDEV_CON_ID(_id, _clk) { .con_id = _id, .clk = _clk }
-#define CLKDEV_DEV_ID(_id, _clk) { .dev_id = _id, .clk = _clk }
-#define CLKDEV_ICK_ID(_cid, _did, _clk) { .con_id = _cid, .dev_id = _did, .clk = _clk }
+#घोषणा CLKDEV_CON_ID(_id, _clk) अणु .con_id = _id, .clk = _clk पूर्ण
+#घोषणा CLKDEV_DEV_ID(_id, _clk) अणु .dev_id = _id, .clk = _clk पूर्ण
+#घोषणा CLKDEV_ICK_ID(_cid, _did, _clk) अणु .con_id = _cid, .dev_id = _did, .clk = _clk पूर्ण
 
-/* .enable_reg will be updated to .mapping on sh_clk_fsidiv_register() */
-#define SH_CLK_FSIDIV(_reg, _parent)		\
-{						\
-	.enable_reg = (void __iomem *)_reg,	\
+/* .enable_reg will be updated to .mapping on sh_clk_fsiभाग_रेजिस्टर() */
+#घोषणा SH_CLK_FSIDIV(_reg, _parent)		\
+अणु						\
+	.enable_reg = (व्योम __iomem *)_reg,	\
 	.parent		= _parent,		\
-}
+पूर्ण
 
-int sh_clk_fsidiv_register(struct clk *clks, int nr);
+पूर्णांक sh_clk_fsiभाग_रेजिस्टर(काष्ठा clk *clks, पूर्णांक nr);
 
-#endif /* __SH_CLOCK_H */
+#पूर्ण_अगर /* __SH_CLOCK_H */

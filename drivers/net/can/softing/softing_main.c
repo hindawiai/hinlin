@@ -1,622 +1,623 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008-2010
  *
  * - Kurt Van Dijck, EIA Electronics
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <asm/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <यंत्र/पन.स>
 
-#include "softing.h"
+#समावेश "softing.h"
 
-#define TX_ECHO_SKB_MAX (((TXMAX+1)/2)-1)
+#घोषणा TX_ECHO_SKB_MAX (((TXMAX+1)/2)-1)
 
 /*
- * test is a specific CAN netdev
+ * test is a specअगरic CAN netdev
  * is online (ie. up 'n running, not sleeping, not busoff
  */
-static inline int canif_is_active(struct net_device *netdev)
-{
-	struct can_priv *can = netdev_priv(netdev);
+अटल अंतरभूत पूर्णांक canअगर_is_active(काष्ठा net_device *netdev)
+अणु
+	काष्ठा can_priv *can = netdev_priv(netdev);
 
-	if (!netif_running(netdev))
-		return 0;
-	return (can->state <= CAN_STATE_ERROR_PASSIVE);
-}
+	अगर (!netअगर_running(netdev))
+		वापस 0;
+	वापस (can->state <= CAN_STATE_ERROR_PASSIVE);
+पूर्ण
 
 /* reset DPRAM */
-static inline void softing_set_reset_dpram(struct softing *card)
-{
-	if (card->pdat->generation >= 2) {
+अटल अंतरभूत व्योम softing_set_reset_dpram(काष्ठा softing *card)
+अणु
+	अगर (card->pdat->generation >= 2) अणु
 		spin_lock_bh(&card->spin);
-		iowrite8(ioread8(&card->dpram[DPRAM_V2_RESET]) & ~1,
+		ioग_लिखो8(ioपढ़ो8(&card->dpram[DPRAM_V2_RESET]) & ~1,
 				&card->dpram[DPRAM_V2_RESET]);
 		spin_unlock_bh(&card->spin);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void softing_clr_reset_dpram(struct softing *card)
-{
-	if (card->pdat->generation >= 2) {
+अटल अंतरभूत व्योम softing_clr_reset_dpram(काष्ठा softing *card)
+अणु
+	अगर (card->pdat->generation >= 2) अणु
 		spin_lock_bh(&card->spin);
-		iowrite8(ioread8(&card->dpram[DPRAM_V2_RESET]) | 1,
+		ioग_लिखो8(ioपढ़ो8(&card->dpram[DPRAM_V2_RESET]) | 1,
 				&card->dpram[DPRAM_V2_RESET]);
 		spin_unlock_bh(&card->spin);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* trigger the tx queue-ing */
-static netdev_tx_t softing_netdev_start_xmit(struct sk_buff *skb,
-		struct net_device *dev)
-{
-	struct softing_priv *priv = netdev_priv(dev);
-	struct softing *card = priv->card;
-	int ret;
-	uint8_t *ptr;
-	uint8_t fifo_wr, fifo_rd;
-	struct can_frame *cf = (struct can_frame *)skb->data;
-	uint8_t buf[DPRAM_TX_SIZE];
+अटल netdev_tx_t softing_netdev_start_xmit(काष्ठा sk_buff *skb,
+		काष्ठा net_device *dev)
+अणु
+	काष्ठा softing_priv *priv = netdev_priv(dev);
+	काष्ठा softing *card = priv->card;
+	पूर्णांक ret;
+	uपूर्णांक8_t *ptr;
+	uपूर्णांक8_t fअगरo_wr, fअगरo_rd;
+	काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
+	uपूर्णांक8_t buf[DPRAM_TX_SIZE];
 
-	if (can_dropped_invalid_skb(dev, skb))
-		return NETDEV_TX_OK;
+	अगर (can_dropped_invalid_skb(dev, skb))
+		वापस NETDEV_TX_OK;
 
 	spin_lock(&card->spin);
 
 	ret = NETDEV_TX_BUSY;
-	if (!card->fw.up ||
+	अगर (!card->fw.up ||
 			(card->tx.pending >= TXMAX) ||
 			(priv->tx.pending >= TX_ECHO_SKB_MAX))
-		goto xmit_done;
-	fifo_wr = ioread8(&card->dpram[DPRAM_TX_WR]);
-	fifo_rd = ioread8(&card->dpram[DPRAM_TX_RD]);
-	if (fifo_wr == fifo_rd)
-		/* fifo full */
-		goto xmit_done;
-	memset(buf, 0, sizeof(buf));
+		जाओ xmit_करोne;
+	fअगरo_wr = ioपढ़ो8(&card->dpram[DPRAM_TX_WR]);
+	fअगरo_rd = ioपढ़ो8(&card->dpram[DPRAM_TX_RD]);
+	अगर (fअगरo_wr == fअगरo_rd)
+		/* fअगरo full */
+		जाओ xmit_करोne;
+	स_रखो(buf, 0, माप(buf));
 	ptr = buf;
 	*ptr = CMD_TX;
-	if (cf->can_id & CAN_RTR_FLAG)
+	अगर (cf->can_id & CAN_RTR_FLAG)
 		*ptr |= CMD_RTR;
-	if (cf->can_id & CAN_EFF_FLAG)
+	अगर (cf->can_id & CAN_EFF_FLAG)
 		*ptr |= CMD_XTD;
-	if (priv->index)
+	अगर (priv->index)
 		*ptr |= CMD_BUS2;
 	++ptr;
 	*ptr++ = cf->len;
 	*ptr++ = (cf->can_id >> 0);
 	*ptr++ = (cf->can_id >> 8);
-	if (cf->can_id & CAN_EFF_FLAG) {
+	अगर (cf->can_id & CAN_EFF_FLAG) अणु
 		*ptr++ = (cf->can_id >> 16);
 		*ptr++ = (cf->can_id >> 24);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* increment 1, not 2 as you might think */
 		ptr += 1;
-	}
-	if (!(cf->can_id & CAN_RTR_FLAG))
-		memcpy(ptr, &cf->data[0], cf->len);
-	memcpy_toio(&card->dpram[DPRAM_TX + DPRAM_TX_SIZE * fifo_wr],
+	पूर्ण
+	अगर (!(cf->can_id & CAN_RTR_FLAG))
+		स_नकल(ptr, &cf->data[0], cf->len);
+	स_नकल_toio(&card->dpram[DPRAM_TX + DPRAM_TX_SIZE * fअगरo_wr],
 			buf, DPRAM_TX_SIZE);
-	if (++fifo_wr >= DPRAM_TX_CNT)
-		fifo_wr = 0;
-	iowrite8(fifo_wr, &card->dpram[DPRAM_TX_WR]);
+	अगर (++fअगरo_wr >= DPRAM_TX_CNT)
+		fअगरo_wr = 0;
+	ioग_लिखो8(fअगरo_wr, &card->dpram[DPRAM_TX_WR]);
 	card->tx.last_bus = priv->index;
 	++card->tx.pending;
 	++priv->tx.pending;
 	can_put_echo_skb(skb, dev, priv->tx.echo_put, 0);
 	++priv->tx.echo_put;
-	if (priv->tx.echo_put >= TX_ECHO_SKB_MAX)
+	अगर (priv->tx.echo_put >= TX_ECHO_SKB_MAX)
 		priv->tx.echo_put = 0;
-	/* can_put_echo_skb() saves the skb, safe to return TX_OK */
+	/* can_put_echo_skb() saves the skb, safe to वापस TX_OK */
 	ret = NETDEV_TX_OK;
-xmit_done:
+xmit_करोne:
 	spin_unlock(&card->spin);
-	if (card->tx.pending >= TXMAX) {
-		int j;
-		for (j = 0; j < ARRAY_SIZE(card->net); ++j) {
-			if (card->net[j])
-				netif_stop_queue(card->net[j]);
-		}
-	}
-	if (ret != NETDEV_TX_OK)
-		netif_stop_queue(dev);
+	अगर (card->tx.pending >= TXMAX) अणु
+		पूर्णांक j;
+		क्रम (j = 0; j < ARRAY_SIZE(card->net); ++j) अणु
+			अगर (card->net[j])
+				netअगर_stop_queue(card->net[j]);
+		पूर्ण
+	पूर्ण
+	अगर (ret != NETDEV_TX_OK)
+		netअगर_stop_queue(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * shortcut for skb delivery
+ * लघुcut क्रम skb delivery
  */
-int softing_netdev_rx(struct net_device *netdev, const struct can_frame *msg,
-		ktime_t ktime)
-{
-	struct sk_buff *skb;
-	struct can_frame *cf;
+पूर्णांक softing_netdev_rx(काष्ठा net_device *netdev, स्थिर काष्ठा can_frame *msg,
+		kसमय_प्रकार kसमय)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा can_frame *cf;
 
 	skb = alloc_can_skb(netdev, &cf);
-	if (!skb)
-		return -ENOMEM;
-	memcpy(cf, msg, sizeof(*msg));
-	skb->tstamp = ktime;
-	return netif_rx(skb);
-}
+	अगर (!skb)
+		वापस -ENOMEM;
+	स_नकल(cf, msg, माप(*msg));
+	skb->tstamp = kसमय;
+	वापस netअगर_rx(skb);
+पूर्ण
 
 /*
  * softing_handle_1
  * pop 1 entry from the DPRAM queue, and process
  */
-static int softing_handle_1(struct softing *card)
-{
-	struct net_device *netdev;
-	struct softing_priv *priv;
-	ktime_t ktime;
-	struct can_frame msg;
-	int cnt = 0, lost_msg;
-	uint8_t fifo_rd, fifo_wr, cmd;
-	uint8_t *ptr;
-	uint32_t tmp_u32;
-	uint8_t buf[DPRAM_RX_SIZE];
+अटल पूर्णांक softing_handle_1(काष्ठा softing *card)
+अणु
+	काष्ठा net_device *netdev;
+	काष्ठा softing_priv *priv;
+	kसमय_प्रकार kसमय;
+	काष्ठा can_frame msg;
+	पूर्णांक cnt = 0, lost_msg;
+	uपूर्णांक8_t fअगरo_rd, fअगरo_wr, cmd;
+	uपूर्णांक8_t *ptr;
+	uपूर्णांक32_t पंचांगp_u32;
+	uपूर्णांक8_t buf[DPRAM_RX_SIZE];
 
-	memset(&msg, 0, sizeof(msg));
-	/* test for lost msgs */
-	lost_msg = ioread8(&card->dpram[DPRAM_RX_LOST]);
-	if (lost_msg) {
-		int j;
+	स_रखो(&msg, 0, माप(msg));
+	/* test क्रम lost msgs */
+	lost_msg = ioपढ़ो8(&card->dpram[DPRAM_RX_LOST]);
+	अगर (lost_msg) अणु
+		पूर्णांक j;
 		/* reset condition */
-		iowrite8(0, &card->dpram[DPRAM_RX_LOST]);
+		ioग_लिखो8(0, &card->dpram[DPRAM_RX_LOST]);
 		/* prepare msg */
 		msg.can_id = CAN_ERR_FLAG | CAN_ERR_CRTL;
 		msg.len = CAN_ERR_DLC;
 		msg.data[1] = CAN_ERR_CRTL_RX_OVERFLOW;
 		/*
-		 * service to all buses, we don't know which it was applicable
+		 * service to all buses, we करोn't know which it was applicable
 		 * but only service buses that are online
 		 */
-		for (j = 0; j < ARRAY_SIZE(card->net); ++j) {
+		क्रम (j = 0; j < ARRAY_SIZE(card->net); ++j) अणु
 			netdev = card->net[j];
-			if (!netdev)
-				continue;
-			if (!canif_is_active(netdev))
+			अगर (!netdev)
+				जारी;
+			अगर (!canअगर_is_active(netdev))
 				/* a dead bus has no overflows */
-				continue;
+				जारी;
 			++netdev->stats.rx_over_errors;
 			softing_netdev_rx(netdev, &msg, 0);
-		}
-		/* prepare for other use */
-		memset(&msg, 0, sizeof(msg));
+		पूर्ण
+		/* prepare क्रम other use */
+		स_रखो(&msg, 0, माप(msg));
 		++cnt;
-	}
+	पूर्ण
 
-	fifo_rd = ioread8(&card->dpram[DPRAM_RX_RD]);
-	fifo_wr = ioread8(&card->dpram[DPRAM_RX_WR]);
+	fअगरo_rd = ioपढ़ो8(&card->dpram[DPRAM_RX_RD]);
+	fअगरo_wr = ioपढ़ो8(&card->dpram[DPRAM_RX_WR]);
 
-	if (++fifo_rd >= DPRAM_RX_CNT)
-		fifo_rd = 0;
-	if (fifo_wr == fifo_rd)
-		return cnt;
+	अगर (++fअगरo_rd >= DPRAM_RX_CNT)
+		fअगरo_rd = 0;
+	अगर (fअगरo_wr == fअगरo_rd)
+		वापस cnt;
 
-	memcpy_fromio(buf, &card->dpram[DPRAM_RX + DPRAM_RX_SIZE*fifo_rd],
+	स_नकल_fromio(buf, &card->dpram[DPRAM_RX + DPRAM_RX_SIZE*fअगरo_rd],
 			DPRAM_RX_SIZE);
 	mb();
 	/* trigger dual port RAM */
-	iowrite8(fifo_rd, &card->dpram[DPRAM_RX_RD]);
+	ioग_लिखो8(fअगरo_rd, &card->dpram[DPRAM_RX_RD]);
 
 	ptr = buf;
 	cmd = *ptr++;
-	if (cmd == 0xff)
+	अगर (cmd == 0xff)
 		/* not quite useful, probably the card has got out */
-		return 0;
+		वापस 0;
 	netdev = card->net[0];
-	if (cmd & CMD_BUS2)
+	अगर (cmd & CMD_BUS2)
 		netdev = card->net[1];
 	priv = netdev_priv(netdev);
 
-	if (cmd & CMD_ERR) {
-		uint8_t can_state, state;
+	अगर (cmd & CMD_ERR) अणु
+		uपूर्णांक8_t can_state, state;
 
 		state = *ptr++;
 
 		msg.can_id = CAN_ERR_FLAG;
 		msg.len = CAN_ERR_DLC;
 
-		if (state & SF_MASK_BUSOFF) {
+		अगर (state & SF_MASK_BUSOFF) अणु
 			can_state = CAN_STATE_BUS_OFF;
 			msg.can_id |= CAN_ERR_BUSOFF;
 			state = STATE_BUSOFF;
-		} else if (state & SF_MASK_EPASSIVE) {
+		पूर्ण अन्यथा अगर (state & SF_MASK_EPASSIVE) अणु
 			can_state = CAN_STATE_ERROR_PASSIVE;
 			msg.can_id |= CAN_ERR_CRTL;
 			msg.data[1] = CAN_ERR_CRTL_TX_PASSIVE;
 			state = STATE_EPASSIVE;
-		} else {
+		पूर्ण अन्यथा अणु
 			can_state = CAN_STATE_ERROR_ACTIVE;
 			msg.can_id |= CAN_ERR_CRTL;
 			state = STATE_EACTIVE;
-		}
+		पूर्ण
 		/* update DPRAM */
-		iowrite8(state, &card->dpram[priv->index ?
+		ioग_लिखो8(state, &card->dpram[priv->index ?
 				DPRAM_INFO_BUSSTATE2 : DPRAM_INFO_BUSSTATE]);
-		/* timestamp */
-		tmp_u32 = le32_to_cpup((void *)ptr);
+		/* बारtamp */
+		पंचांगp_u32 = le32_to_cpup((व्योम *)ptr);
 		ptr += 4;
-		ktime = softing_raw2ktime(card, tmp_u32);
+		kसमय = softing_raw2kसमय(card, पंचांगp_u32);
 
 		++netdev->stats.rx_errors;
-		/* update internal status */
-		if (can_state != priv->can.state) {
+		/* update पूर्णांकernal status */
+		अगर (can_state != priv->can.state) अणु
 			priv->can.state = can_state;
-			if (can_state == CAN_STATE_ERROR_PASSIVE)
+			अगर (can_state == CAN_STATE_ERROR_PASSIVE)
 				++priv->can.can_stats.error_passive;
-			else if (can_state == CAN_STATE_BUS_OFF) {
-				/* this calls can_close_cleanup() */
+			अन्यथा अगर (can_state == CAN_STATE_BUS_OFF) अणु
+				/* this calls can_बंद_cleanup() */
 				++priv->can.can_stats.bus_off;
 				can_bus_off(netdev);
-				netif_stop_queue(netdev);
-			}
+				netअगर_stop_queue(netdev);
+			पूर्ण
 			/* trigger socketcan */
-			softing_netdev_rx(netdev, &msg, ktime);
-		}
+			softing_netdev_rx(netdev, &msg, kसमय);
+		पूर्ण
 
-	} else {
-		if (cmd & CMD_RTR)
+	पूर्ण अन्यथा अणु
+		अगर (cmd & CMD_RTR)
 			msg.can_id |= CAN_RTR_FLAG;
 		msg.len = can_cc_dlc2len(*ptr++);
-		if (cmd & CMD_XTD) {
+		अगर (cmd & CMD_XTD) अणु
 			msg.can_id |= CAN_EFF_FLAG;
-			msg.can_id |= le32_to_cpup((void *)ptr);
+			msg.can_id |= le32_to_cpup((व्योम *)ptr);
 			ptr += 4;
-		} else {
-			msg.can_id |= le16_to_cpup((void *)ptr);
+		पूर्ण अन्यथा अणु
+			msg.can_id |= le16_to_cpup((व्योम *)ptr);
 			ptr += 2;
-		}
-		/* timestamp */
-		tmp_u32 = le32_to_cpup((void *)ptr);
+		पूर्ण
+		/* बारtamp */
+		पंचांगp_u32 = le32_to_cpup((व्योम *)ptr);
 		ptr += 4;
-		ktime = softing_raw2ktime(card, tmp_u32);
-		if (!(msg.can_id & CAN_RTR_FLAG))
-			memcpy(&msg.data[0], ptr, 8);
+		kसमय = softing_raw2kसमय(card, पंचांगp_u32);
+		अगर (!(msg.can_id & CAN_RTR_FLAG))
+			स_नकल(&msg.data[0], ptr, 8);
 		ptr += 8;
 		/* update socket */
-		if (cmd & CMD_ACK) {
+		अगर (cmd & CMD_ACK) अणु
 			/* acknowledge, was tx msg */
-			struct sk_buff *skb;
+			काष्ठा sk_buff *skb;
 			skb = priv->can.echo_skb[priv->tx.echo_get];
-			if (skb)
-				skb->tstamp = ktime;
-			can_get_echo_skb(netdev, priv->tx.echo_get, NULL);
+			अगर (skb)
+				skb->tstamp = kसमय;
+			can_get_echo_skb(netdev, priv->tx.echo_get, शून्य);
 			++priv->tx.echo_get;
-			if (priv->tx.echo_get >= TX_ECHO_SKB_MAX)
+			अगर (priv->tx.echo_get >= TX_ECHO_SKB_MAX)
 				priv->tx.echo_get = 0;
-			if (priv->tx.pending)
+			अगर (priv->tx.pending)
 				--priv->tx.pending;
-			if (card->tx.pending)
+			अगर (card->tx.pending)
 				--card->tx.pending;
 			++netdev->stats.tx_packets;
-			if (!(msg.can_id & CAN_RTR_FLAG))
+			अगर (!(msg.can_id & CAN_RTR_FLAG))
 				netdev->stats.tx_bytes += msg.len;
-		} else {
-			int ret;
+		पूर्ण अन्यथा अणु
+			पूर्णांक ret;
 
-			ret = softing_netdev_rx(netdev, &msg, ktime);
-			if (ret == NET_RX_SUCCESS) {
+			ret = softing_netdev_rx(netdev, &msg, kसमय);
+			अगर (ret == NET_RX_SUCCESS) अणु
 				++netdev->stats.rx_packets;
-				if (!(msg.can_id & CAN_RTR_FLAG))
+				अगर (!(msg.can_id & CAN_RTR_FLAG))
 					netdev->stats.rx_bytes += msg.len;
-			} else {
+			पूर्ण अन्यथा अणु
 				++netdev->stats.rx_dropped;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	++cnt;
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
 /*
- * real interrupt handler
+ * real पूर्णांकerrupt handler
  */
-static irqreturn_t softing_irq_thread(int irq, void *dev_id)
-{
-	struct softing *card = (struct softing *)dev_id;
-	struct net_device *netdev;
-	struct softing_priv *priv;
-	int j, offset, work_done;
+अटल irqवापस_t softing_irq_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा softing *card = (काष्ठा softing *)dev_id;
+	काष्ठा net_device *netdev;
+	काष्ठा softing_priv *priv;
+	पूर्णांक j, offset, work_करोne;
 
-	work_done = 0;
+	work_करोne = 0;
 	spin_lock_bh(&card->spin);
-	while (softing_handle_1(card) > 0) {
+	जबतक (softing_handle_1(card) > 0) अणु
 		++card->irq.svc_count;
-		++work_done;
-	}
+		++work_करोne;
+	पूर्ण
 	spin_unlock_bh(&card->spin);
 	/* resume tx queue's */
 	offset = card->tx.last_bus;
-	for (j = 0; j < ARRAY_SIZE(card->net); ++j) {
-		if (card->tx.pending >= TXMAX)
-			break;
+	क्रम (j = 0; j < ARRAY_SIZE(card->net); ++j) अणु
+		अगर (card->tx.pending >= TXMAX)
+			अवरोध;
 		netdev = card->net[(j + offset + 1) % card->pdat->nbus];
-		if (!netdev)
-			continue;
+		अगर (!netdev)
+			जारी;
 		priv = netdev_priv(netdev);
-		if (!canif_is_active(netdev))
+		अगर (!canअगर_is_active(netdev))
 			/* it makes no sense to wake dead buses */
-			continue;
-		if (priv->tx.pending >= TX_ECHO_SKB_MAX)
-			continue;
-		++work_done;
-		netif_wake_queue(netdev);
-	}
-	return work_done ? IRQ_HANDLED : IRQ_NONE;
-}
+			जारी;
+		अगर (priv->tx.pending >= TX_ECHO_SKB_MAX)
+			जारी;
+		++work_करोne;
+		netअगर_wake_queue(netdev);
+	पूर्ण
+	वापस work_करोne ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
 /*
- * interrupt routines:
+ * पूर्णांकerrupt routines:
  * schedule the 'real interrupt handler'
  */
-static irqreturn_t softing_irq_v2(int irq, void *dev_id)
-{
-	struct softing *card = (struct softing *)dev_id;
-	uint8_t ir;
+अटल irqवापस_t softing_irq_v2(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा softing *card = (काष्ठा softing *)dev_id;
+	uपूर्णांक8_t ir;
 
-	ir = ioread8(&card->dpram[DPRAM_V2_IRQ_TOHOST]);
-	iowrite8(0, &card->dpram[DPRAM_V2_IRQ_TOHOST]);
-	return (1 == ir) ? IRQ_WAKE_THREAD : IRQ_NONE;
-}
+	ir = ioपढ़ो8(&card->dpram[DPRAM_V2_IRQ_TOHOST]);
+	ioग_लिखो8(0, &card->dpram[DPRAM_V2_IRQ_TOHOST]);
+	वापस (1 == ir) ? IRQ_WAKE_THREAD : IRQ_NONE;
+पूर्ण
 
-static irqreturn_t softing_irq_v1(int irq, void *dev_id)
-{
-	struct softing *card = (struct softing *)dev_id;
-	uint8_t ir;
+अटल irqवापस_t softing_irq_v1(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा softing *card = (काष्ठा softing *)dev_id;
+	uपूर्णांक8_t ir;
 
-	ir = ioread8(&card->dpram[DPRAM_IRQ_TOHOST]);
-	iowrite8(0, &card->dpram[DPRAM_IRQ_TOHOST]);
-	return ir ? IRQ_WAKE_THREAD : IRQ_NONE;
-}
+	ir = ioपढ़ो8(&card->dpram[DPRAM_IRQ_TOHOST]);
+	ioग_लिखो8(0, &card->dpram[DPRAM_IRQ_TOHOST]);
+	वापस ir ? IRQ_WAKE_THREAD : IRQ_NONE;
+पूर्ण
 
 /*
- * netdev/candev interoperability
+ * netdev/candev पूर्णांकeroperability
  */
-static int softing_netdev_open(struct net_device *ndev)
-{
-	int ret;
+अटल पूर्णांक softing_netdev_खोलो(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक ret;
 
-	/* check or determine and set bittime */
-	ret = open_candev(ndev);
-	if (ret)
-		return ret;
+	/* check or determine and set bitसमय */
+	ret = खोलो_candev(ndev);
+	अगर (ret)
+		वापस ret;
 
 	ret = softing_startstop(ndev, 1);
-	if (ret < 0)
-		close_candev(ndev);
+	अगर (ret < 0)
+		बंद_candev(ndev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int softing_netdev_stop(struct net_device *ndev)
-{
-	int ret;
+अटल पूर्णांक softing_netdev_stop(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक ret;
 
-	netif_stop_queue(ndev);
+	netअगर_stop_queue(ndev);
 
-	/* softing cycle does close_candev() */
+	/* softing cycle करोes बंद_candev() */
 	ret = softing_startstop(ndev, 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int softing_candev_set_mode(struct net_device *ndev, enum can_mode mode)
-{
-	int ret;
+अटल पूर्णांक softing_candev_set_mode(काष्ठा net_device *ndev, क्रमागत can_mode mode)
+अणु
+	पूर्णांक ret;
 
-	switch (mode) {
-	case CAN_MODE_START:
-		/* softing_startstop does close_candev() */
+	चयन (mode) अणु
+	हाल CAN_MODE_START:
+		/* softing_startstop करोes बंद_candev() */
 		ret = softing_startstop(ndev, 1);
-		return ret;
-	case CAN_MODE_STOP:
-	case CAN_MODE_SLEEP:
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+		वापस ret;
+	हाल CAN_MODE_STOP:
+	हाल CAN_MODE_SLEEP:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Softing device management helpers
  */
-int softing_enable_irq(struct softing *card, int enable)
-{
-	int ret;
+पूर्णांक softing_enable_irq(काष्ठा softing *card, पूर्णांक enable)
+अणु
+	पूर्णांक ret;
 
-	if (!card->irq.nr) {
-		return 0;
-	} else if (card->irq.requested && !enable) {
-		free_irq(card->irq.nr, card);
+	अगर (!card->irq.nr) अणु
+		वापस 0;
+	पूर्ण अन्यथा अगर (card->irq.requested && !enable) अणु
+		मुक्त_irq(card->irq.nr, card);
 		card->irq.requested = 0;
-	} else if (!card->irq.requested && enable) {
-		ret = request_threaded_irq(card->irq.nr,
+	पूर्ण अन्यथा अगर (!card->irq.requested && enable) अणु
+		ret = request_thपढ़ोed_irq(card->irq.nr,
 				(card->pdat->generation >= 2) ?
 					softing_irq_v2 : softing_irq_v1,
-				softing_irq_thread, IRQF_SHARED,
+				softing_irq_thपढ़ो, IRQF_SHARED,
 				dev_name(&card->pdev->dev), card);
-		if (ret) {
+		अगर (ret) अणु
 			dev_alert(&card->pdev->dev,
 					"request_threaded_irq(%u) failed\n",
 					card->irq.nr);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		card->irq.requested = 1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void softing_card_shutdown(struct softing *card)
-{
-	int fw_up = 0;
+अटल व्योम softing_card_shutकरोwn(काष्ठा softing *card)
+अणु
+	पूर्णांक fw_up = 0;
 
-	if (mutex_lock_interruptible(&card->fw.lock)) {
-		/* return -ERESTARTSYS */;
-	}
+	अगर (mutex_lock_पूर्णांकerruptible(&card->fw.lock)) अणु
+		/* वापस -ERESTARTSYS */;
+	पूर्ण
 	fw_up = card->fw.up;
 	card->fw.up = 0;
 
-	if (card->irq.requested && card->irq.nr) {
-		free_irq(card->irq.nr, card);
+	अगर (card->irq.requested && card->irq.nr) अणु
+		मुक्त_irq(card->irq.nr, card);
 		card->irq.requested = 0;
-	}
-	if (fw_up) {
-		if (card->pdat->enable_irq)
+	पूर्ण
+	अगर (fw_up) अणु
+		अगर (card->pdat->enable_irq)
 			card->pdat->enable_irq(card->pdev, 0);
 		softing_set_reset_dpram(card);
-		if (card->pdat->reset)
+		अगर (card->pdat->reset)
 			card->pdat->reset(card->pdev, 1);
-	}
+	पूर्ण
 	mutex_unlock(&card->fw.lock);
-}
+पूर्ण
 
-static int softing_card_boot(struct softing *card)
-{
-	int ret, j;
-	static const uint8_t stream[] = {
-		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, };
-	unsigned char back[sizeof(stream)];
+अटल पूर्णांक softing_card_boot(काष्ठा softing *card)
+अणु
+	पूर्णांक ret, j;
+	अटल स्थिर uपूर्णांक8_t stream[] = अणु
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, पूर्ण;
+	अचिन्हित अक्षर back[माप(stream)];
 
-	if (mutex_lock_interruptible(&card->fw.lock))
-		return -ERESTARTSYS;
-	if (card->fw.up) {
+	अगर (mutex_lock_पूर्णांकerruptible(&card->fw.lock))
+		वापस -ERESTARTSYS;
+	अगर (card->fw.up) अणु
 		mutex_unlock(&card->fw.lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/* reset board */
-	if (card->pdat->enable_irq)
+	अगर (card->pdat->enable_irq)
 		card->pdat->enable_irq(card->pdev, 1);
 	/* boot card */
 	softing_set_reset_dpram(card);
-	if (card->pdat->reset)
+	अगर (card->pdat->reset)
 		card->pdat->reset(card->pdev, 1);
-	for (j = 0; (j + sizeof(stream)) < card->dpram_size;
-			j += sizeof(stream)) {
+	क्रम (j = 0; (j + माप(stream)) < card->dpram_size;
+			j += माप(stream)) अणु
 
-		memcpy_toio(&card->dpram[j], stream, sizeof(stream));
+		स_नकल_toio(&card->dpram[j], stream, माप(stream));
 		/* flush IO cache */
 		mb();
-		memcpy_fromio(back, &card->dpram[j], sizeof(stream));
+		स_नकल_fromio(back, &card->dpram[j], माप(stream));
 
-		if (!memcmp(back, stream, sizeof(stream)))
-			continue;
+		अगर (!स_भेद(back, stream, माप(stream)))
+			जारी;
 		/* memory is not equal */
 		dev_alert(&card->pdev->dev, "dpram failed at 0x%04x\n", j);
 		ret = -EIO;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 	wmb();
 	/* load boot firmware */
 	ret = softing_load_fw(card->pdat->boot.fw, card, card->dpram,
 				card->dpram_size,
 				card->pdat->boot.offs - card->pdat->boot.addr);
-	if (ret < 0)
-		goto failed;
+	अगर (ret < 0)
+		जाओ failed;
 	/* load loader firmware */
 	ret = softing_load_fw(card->pdat->load.fw, card, card->dpram,
 				card->dpram_size,
 				card->pdat->load.offs - card->pdat->load.addr);
-	if (ret < 0)
-		goto failed;
+	अगर (ret < 0)
+		जाओ failed;
 
-	if (card->pdat->reset)
+	अगर (card->pdat->reset)
 		card->pdat->reset(card->pdev, 0);
 	softing_clr_reset_dpram(card);
 	ret = softing_bootloader_command(card, 0, "card boot");
-	if (ret < 0)
-		goto failed;
+	अगर (ret < 0)
+		जाओ failed;
 	ret = softing_load_app_fw(card->pdat->app.fw, card);
-	if (ret < 0)
-		goto failed;
+	अगर (ret < 0)
+		जाओ failed;
 
-	ret = softing_chip_poweron(card);
-	if (ret < 0)
-		goto failed;
+	ret = softing_chip_घातeron(card);
+	अगर (ret < 0)
+		जाओ failed;
 
 	card->fw.up = 1;
 	mutex_unlock(&card->fw.lock);
-	return 0;
+	वापस 0;
 failed:
 	card->fw.up = 0;
-	if (card->pdat->enable_irq)
+	अगर (card->pdat->enable_irq)
 		card->pdat->enable_irq(card->pdev, 0);
 	softing_set_reset_dpram(card);
-	if (card->pdat->reset)
+	अगर (card->pdat->reset)
 		card->pdat->reset(card->pdev, 1);
 	mutex_unlock(&card->fw.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * netdev sysfs
  */
-static ssize_t show_chip(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct net_device *ndev = to_net_dev(dev);
-	struct softing_priv *priv = netdev2softing(ndev);
+अटल sमाप_प्रकार show_chip(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(dev);
+	काष्ठा softing_priv *priv = netdev2softing(ndev);
 
-	return sprintf(buf, "%i\n", priv->chip);
-}
+	वापस प्र_लिखो(buf, "%i\n", priv->chip);
+पूर्ण
 
-static ssize_t show_output(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct net_device *ndev = to_net_dev(dev);
-	struct softing_priv *priv = netdev2softing(ndev);
+अटल sमाप_प्रकार show_output(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(dev);
+	काष्ठा softing_priv *priv = netdev2softing(ndev);
 
-	return sprintf(buf, "0x%02x\n", priv->output);
-}
+	वापस प्र_लिखो(buf, "0x%02x\n", priv->output);
+पूर्ण
 
-static ssize_t store_output(struct device *dev, struct device_attribute *attr,
-		const char *buf, size_t count)
-{
-	struct net_device *ndev = to_net_dev(dev);
-	struct softing_priv *priv = netdev2softing(ndev);
-	struct softing *card = priv->card;
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार store_output(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(dev);
+	काष्ठा softing_priv *priv = netdev2softing(ndev);
+	काष्ठा softing *card = priv->card;
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 0, &val);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 0, &val);
+	अगर (ret < 0)
+		वापस ret;
 	val &= 0xFF;
 
-	ret = mutex_lock_interruptible(&card->fw.lock);
-	if (ret)
-		return -ERESTARTSYS;
-	if (netif_running(ndev)) {
+	ret = mutex_lock_पूर्णांकerruptible(&card->fw.lock);
+	अगर (ret)
+		वापस -ERESTARTSYS;
+	अगर (netअगर_running(ndev)) अणु
 		mutex_unlock(&card->fw.lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	priv->output = val;
 	mutex_unlock(&card->fw.lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const DEVICE_ATTR(chip, 0444, show_chip, NULL);
-static const DEVICE_ATTR(output, 0644, show_output, store_output);
+अटल स्थिर DEVICE_ATTR(chip, 0444, show_chip, शून्य);
+अटल स्थिर DEVICE_ATTR(output, 0644, show_output, store_output);
 
-static const struct attribute *const netdev_sysfs_attrs[] = {
+अटल स्थिर काष्ठा attribute *स्थिर netdev_sysfs_attrs[] = अणु
 	&dev_attr_chip.attr,
 	&dev_attr_output.attr,
-	NULL,
-};
-static const struct attribute_group netdev_sysfs_group = {
-	.name = NULL,
-	.attrs = (struct attribute **)netdev_sysfs_attrs,
-};
+	शून्य,
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group netdev_sysfs_group = अणु
+	.name = शून्य,
+	.attrs = (काष्ठा attribute **)netdev_sysfs_attrs,
+पूर्ण;
 
-static const struct net_device_ops softing_netdev_ops = {
-	.ndo_open = softing_netdev_open,
-	.ndo_stop = softing_netdev_stop,
-	.ndo_start_xmit	= softing_netdev_start_xmit,
-	.ndo_change_mtu = can_change_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops softing_netdev_ops = अणु
+	.nकरो_खोलो = softing_netdev_खोलो,
+	.nकरो_stop = softing_netdev_stop,
+	.nकरो_start_xmit	= softing_netdev_start_xmit,
+	.nकरो_change_mtu = can_change_mtu,
+पूर्ण;
 
-static const struct can_bittiming_const softing_btr_const = {
+अटल स्थिर काष्ठा can_bittiming_स्थिर softing_btr_स्थिर = अणु
 	.name = "softing",
 	.tseg1_min = 1,
 	.tseg1_max = 16,
@@ -626,82 +627,82 @@ static const struct can_bittiming_const softing_btr_const = {
 	.brp_min = 1,
 	.brp_max = 32, /* overruled */
 	.brp_inc = 1,
-};
+पूर्ण;
 
 
-static struct net_device *softing_netdev_create(struct softing *card,
-						uint16_t chip_id)
-{
-	struct net_device *netdev;
-	struct softing_priv *priv;
+अटल काष्ठा net_device *softing_netdev_create(काष्ठा softing *card,
+						uपूर्णांक16_t chip_id)
+अणु
+	काष्ठा net_device *netdev;
+	काष्ठा softing_priv *priv;
 
-	netdev = alloc_candev(sizeof(*priv), TX_ECHO_SKB_MAX);
-	if (!netdev) {
+	netdev = alloc_candev(माप(*priv), TX_ECHO_SKB_MAX);
+	अगर (!netdev) अणु
 		dev_alert(&card->pdev->dev, "alloc_candev failed\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	priv = netdev_priv(netdev);
 	priv->netdev = netdev;
 	priv->card = card;
-	memcpy(&priv->btr_const, &softing_btr_const, sizeof(priv->btr_const));
-	priv->btr_const.brp_max = card->pdat->max_brp;
-	priv->btr_const.sjw_max = card->pdat->max_sjw;
-	priv->can.bittiming_const = &priv->btr_const;
-	priv->can.clock.freq = 8000000;
+	स_नकल(&priv->btr_स्थिर, &softing_btr_स्थिर, माप(priv->btr_स्थिर));
+	priv->btr_स्थिर.brp_max = card->pdat->max_brp;
+	priv->btr_स्थिर.sjw_max = card->pdat->max_sjw;
+	priv->can.bittiming_स्थिर = &priv->btr_स्थिर;
+	priv->can.घड़ी.freq = 8000000;
 	priv->chip = chip_id;
-	priv->output = softing_default_output(netdev);
+	priv->output = softing_शेष_output(netdev);
 	SET_NETDEV_DEV(netdev, &card->pdev->dev);
 
 	netdev->flags |= IFF_ECHO;
 	netdev->netdev_ops = &softing_netdev_ops;
-	priv->can.do_set_mode = softing_candev_set_mode;
+	priv->can.करो_set_mode = softing_candev_set_mode;
 	priv->can.ctrlmode_supported = CAN_CTRLMODE_3_SAMPLES;
 
-	return netdev;
-}
+	वापस netdev;
+पूर्ण
 
-static int softing_netdev_register(struct net_device *netdev)
-{
-	int ret;
+अटल पूर्णांक softing_netdev_रेजिस्टर(काष्ठा net_device *netdev)
+अणु
+	पूर्णांक ret;
 
-	ret = register_candev(netdev);
-	if (ret) {
+	ret = रेजिस्टर_candev(netdev);
+	अगर (ret) अणु
 		dev_alert(&netdev->dev, "register failed\n");
-		return ret;
-	}
-	if (sysfs_create_group(&netdev->dev.kobj, &netdev_sysfs_group) < 0)
+		वापस ret;
+	पूर्ण
+	अगर (sysfs_create_group(&netdev->dev.kobj, &netdev_sysfs_group) < 0)
 		netdev_alert(netdev, "sysfs group failed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void softing_netdev_cleanup(struct net_device *netdev)
-{
-	sysfs_remove_group(&netdev->dev.kobj, &netdev_sysfs_group);
-	unregister_candev(netdev);
-	free_candev(netdev);
-}
+अटल व्योम softing_netdev_cleanup(काष्ठा net_device *netdev)
+अणु
+	sysfs_हटाओ_group(&netdev->dev.kobj, &netdev_sysfs_group);
+	unरेजिस्टर_candev(netdev);
+	मुक्त_candev(netdev);
+पूर्ण
 
 /*
- * sysfs for Platform device
+ * sysfs क्रम Platक्रमm device
  */
-#define DEV_ATTR_RO(name, member) \
-static ssize_t show_##name(struct device *dev, \
-		struct device_attribute *attr, char *buf) \
-{ \
-	struct softing *card = dev_get_drvdata(dev); \
-	return sprintf(buf, "%u\n", card->member); \
-} \
-static DEVICE_ATTR(name, 0444, show_##name, NULL)
+#घोषणा DEV_ATTR_RO(name, member) \
+अटल sमाप_प्रकार show_##name(काष्ठा device *dev, \
+		काष्ठा device_attribute *attr, अक्षर *buf) \
+अणु \
+	काष्ठा softing *card = dev_get_drvdata(dev); \
+	वापस प्र_लिखो(buf, "%u\n", card->member); \
+पूर्ण \
+अटल DEVICE_ATTR(name, 0444, show_##name, शून्य)
 
-#define DEV_ATTR_RO_STR(name, member) \
-static ssize_t show_##name(struct device *dev, \
-		struct device_attribute *attr, char *buf) \
-{ \
-	struct softing *card = dev_get_drvdata(dev); \
-	return sprintf(buf, "%s\n", card->member); \
-} \
-static DEVICE_ATTR(name, 0444, show_##name, NULL)
+#घोषणा DEV_ATTR_RO_STR(name, member) \
+अटल sमाप_प्रकार show_##name(काष्ठा device *dev, \
+		काष्ठा device_attribute *attr, अक्षर *buf) \
+अणु \
+	काष्ठा softing *card = dev_get_drvdata(dev); \
+	वापस प्र_लिखो(buf, "%s\n", card->member); \
+पूर्ण \
+अटल DEVICE_ATTR(name, 0444, show_##name, शून्य)
 
 DEV_ATTR_RO(serial, id.serial);
 DEV_ATTR_RO_STR(firmware, pdat->app.fw);
@@ -710,154 +711,154 @@ DEV_ATTR_RO_STR(hardware, pdat->name);
 DEV_ATTR_RO(hardware_version, id.hw_version);
 DEV_ATTR_RO(license, id.license);
 
-static struct attribute *softing_pdev_attrs[] = {
+अटल काष्ठा attribute *softing_pdev_attrs[] = अणु
 	&dev_attr_serial.attr,
 	&dev_attr_firmware.attr,
 	&dev_attr_firmware_version.attr,
 	&dev_attr_hardware.attr,
 	&dev_attr_hardware_version.attr,
 	&dev_attr_license.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group softing_pdev_group = {
-	.name = NULL,
+अटल स्थिर काष्ठा attribute_group softing_pdev_group = अणु
+	.name = शून्य,
 	.attrs = softing_pdev_attrs,
-};
+पूर्ण;
 
 /*
- * platform driver
+ * platक्रमm driver
  */
-static int softing_pdev_remove(struct platform_device *pdev)
-{
-	struct softing *card = platform_get_drvdata(pdev);
-	int j;
+अटल पूर्णांक softing_pdev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा softing *card = platक्रमm_get_drvdata(pdev);
+	पूर्णांक j;
 
 	/* first, disable card*/
-	softing_card_shutdown(card);
+	softing_card_shutकरोwn(card);
 
-	for (j = 0; j < ARRAY_SIZE(card->net); ++j) {
-		if (!card->net[j])
-			continue;
+	क्रम (j = 0; j < ARRAY_SIZE(card->net); ++j) अणु
+		अगर (!card->net[j])
+			जारी;
 		softing_netdev_cleanup(card->net[j]);
-		card->net[j] = NULL;
-	}
-	sysfs_remove_group(&pdev->dev.kobj, &softing_pdev_group);
+		card->net[j] = शून्य;
+	पूर्ण
+	sysfs_हटाओ_group(&pdev->dev.kobj, &softing_pdev_group);
 
 	iounmap(card->dpram);
-	kfree(card);
-	return 0;
-}
+	kमुक्त(card);
+	वापस 0;
+पूर्ण
 
-static int softing_pdev_probe(struct platform_device *pdev)
-{
-	const struct softing_platform_data *pdat = dev_get_platdata(&pdev->dev);
-	struct softing *card;
-	struct net_device *netdev;
-	struct softing_priv *priv;
-	struct resource *pres;
-	int ret;
-	int j;
+अटल पूर्णांक softing_pdev_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा softing_platक्रमm_data *pdat = dev_get_platdata(&pdev->dev);
+	काष्ठा softing *card;
+	काष्ठा net_device *netdev;
+	काष्ठा softing_priv *priv;
+	काष्ठा resource *pres;
+	पूर्णांक ret;
+	पूर्णांक j;
 
-	if (!pdat) {
+	अगर (!pdat) अणु
 		dev_warn(&pdev->dev, "no platform data\n");
-		return -EINVAL;
-	}
-	if (pdat->nbus > ARRAY_SIZE(card->net)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (pdat->nbus > ARRAY_SIZE(card->net)) अणु
 		dev_warn(&pdev->dev, "%u nets??\n", pdat->nbus);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	card = kzalloc(sizeof(*card), GFP_KERNEL);
-	if (!card)
-		return -ENOMEM;
+	card = kzalloc(माप(*card), GFP_KERNEL);
+	अगर (!card)
+		वापस -ENOMEM;
 	card->pdat = pdat;
 	card->pdev = pdev;
-	platform_set_drvdata(pdev, card);
+	platक्रमm_set_drvdata(pdev, card);
 	mutex_init(&card->fw.lock);
 	spin_lock_init(&card->spin);
 
 	ret = -EINVAL;
-	pres = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!pres)
-		goto platform_resource_failed;
+	pres = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!pres)
+		जाओ platक्रमm_resource_failed;
 	card->dpram_phys = pres->start;
 	card->dpram_size = resource_size(pres);
 	card->dpram = ioremap(card->dpram_phys, card->dpram_size);
-	if (!card->dpram) {
+	अगर (!card->dpram) अणु
 		dev_alert(&card->pdev->dev, "dpram ioremap failed\n");
-		goto ioremap_failed;
-	}
+		जाओ ioremap_failed;
+	पूर्ण
 
-	pres = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (pres)
+	pres = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (pres)
 		card->irq.nr = pres->start;
 
 	/* reset card */
 	ret = softing_card_boot(card);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_alert(&pdev->dev, "failed to boot\n");
-		goto boot_failed;
-	}
+		जाओ boot_failed;
+	पूर्ण
 
 	/* only now, the chip's are known */
 	card->id.freq = card->pdat->freq;
 
 	ret = sysfs_create_group(&pdev->dev.kobj, &softing_pdev_group);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_alert(&card->pdev->dev, "sysfs failed\n");
-		goto sysfs_failed;
-	}
+		जाओ sysfs_failed;
+	पूर्ण
 
-	for (j = 0; j < ARRAY_SIZE(card->net); ++j) {
+	क्रम (j = 0; j < ARRAY_SIZE(card->net); ++j) अणु
 		card->net[j] = netdev =
 			softing_netdev_create(card, card->id.chip[j]);
-		if (!netdev) {
+		अगर (!netdev) अणु
 			dev_alert(&pdev->dev, "failed to make can[%i]", j);
 			ret = -ENOMEM;
-			goto netdev_failed;
-		}
+			जाओ netdev_failed;
+		पूर्ण
 		netdev->dev_id = j;
 		priv = netdev_priv(card->net[j]);
 		priv->index = j;
-		ret = softing_netdev_register(netdev);
-		if (ret) {
-			free_candev(netdev);
-			card->net[j] = NULL;
+		ret = softing_netdev_रेजिस्टर(netdev);
+		अगर (ret) अणु
+			मुक्त_candev(netdev);
+			card->net[j] = शून्य;
 			dev_alert(&card->pdev->dev,
 					"failed to register can[%i]\n", j);
-			goto netdev_failed;
-		}
-	}
+			जाओ netdev_failed;
+		पूर्ण
+	पूर्ण
 	dev_info(&card->pdev->dev, "%s ready.\n", card->pdat->name);
-	return 0;
+	वापस 0;
 
 netdev_failed:
-	for (j = 0; j < ARRAY_SIZE(card->net); ++j) {
-		if (!card->net[j])
-			continue;
+	क्रम (j = 0; j < ARRAY_SIZE(card->net); ++j) अणु
+		अगर (!card->net[j])
+			जारी;
 		softing_netdev_cleanup(card->net[j]);
-	}
-	sysfs_remove_group(&pdev->dev.kobj, &softing_pdev_group);
+	पूर्ण
+	sysfs_हटाओ_group(&pdev->dev.kobj, &softing_pdev_group);
 sysfs_failed:
-	softing_card_shutdown(card);
+	softing_card_shutकरोwn(card);
 boot_failed:
 	iounmap(card->dpram);
 ioremap_failed:
-platform_resource_failed:
-	kfree(card);
-	return ret;
-}
+platक्रमm_resource_failed:
+	kमुक्त(card);
+	वापस ret;
+पूर्ण
 
-static struct platform_driver softing_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver softing_driver = अणु
+	.driver = अणु
 		.name = "softing",
-	},
+	पूर्ण,
 	.probe = softing_pdev_probe,
-	.remove = softing_pdev_remove,
-};
+	.हटाओ = softing_pdev_हटाओ,
+पूर्ण;
 
-module_platform_driver(softing_driver);
+module_platक्रमm_driver(softing_driver);
 
 MODULE_ALIAS("platform:softing");
 MODULE_DESCRIPTION("Softing DPRAM CAN driver");

@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /************************************************************************
  * Copyright 2003 Digi International (www.digi.com)
  *
  * Copyright (C) 2004 IBM Corporation. All rights reserved.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * Scott H Kilau <Scott_Kilau@digi.com>
  * Wendy Xiong   <wendyx@us.ibm.com>
  *
  *
  ***********************************************************************/
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
 
-#include "jsm.h"
+#समावेश "jsm.h"
 
 MODULE_AUTHOR("Digi International, https://www.digi.com");
 MODULE_DESCRIPTION("Driver for the Digi International Neo and Classic PCI based product line");
 MODULE_LICENSE("GPL");
 
-#define JSM_DRIVER_NAME "jsm"
-#define NR_PORTS	32
-#define JSM_MINOR_START	0
+#घोषणा JSM_DRIVER_NAME "jsm"
+#घोषणा NR_PORTS	32
+#घोषणा JSM_MINOR_START	0
 
-struct uart_driver jsm_uart_driver = {
+काष्ठा uart_driver jsm_uart_driver = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= JSM_DRIVER_NAME,
 	.dev_name	= "ttyn",
 	.major		= 0,
 	.minor		= JSM_MINOR_START,
 	.nr		= NR_PORTS,
-};
+पूर्ण;
 
-static pci_ers_result_t jsm_io_error_detected(struct pci_dev *pdev,
+अटल pci_ers_result_t jsm_io_error_detected(काष्ठा pci_dev *pdev,
 					pci_channel_state_t state);
-static pci_ers_result_t jsm_io_slot_reset(struct pci_dev *pdev);
-static void jsm_io_resume(struct pci_dev *pdev);
+अटल pci_ers_result_t jsm_io_slot_reset(काष्ठा pci_dev *pdev);
+अटल व्योम jsm_io_resume(काष्ठा pci_dev *pdev);
 
-static const struct pci_error_handlers jsm_err_handler = {
+अटल स्थिर काष्ठा pci_error_handlers jsm_err_handler = अणु
 	.error_detected = jsm_io_error_detected,
 	.slot_reset = jsm_io_slot_reset,
 	.resume = jsm_io_resume,
-};
+पूर्ण;
 
-int jsm_debug;
-module_param(jsm_debug, int, 0);
+पूर्णांक jsm_debug;
+module_param(jsm_debug, पूर्णांक, 0);
 MODULE_PARM_DESC(jsm_debug, "Driver debugging level");
 
-static int jsm_probe_one(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	int rc = 0;
-	struct jsm_board *brd;
-	static int adapter_count;
+अटल पूर्णांक jsm_probe_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा jsm_board *brd;
+	अटल पूर्णांक adapter_count;
 
 	rc = pci_enable_device(pdev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Device enable FAILED\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rc = pci_request_regions(pdev, JSM_DRIVER_NAME);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "pci_request_region FAILED\n");
-		goto out_disable_device;
-	}
+		जाओ out_disable_device;
+	पूर्ण
 
-	brd = kzalloc(sizeof(*brd), GFP_KERNEL);
-	if (!brd) {
+	brd = kzalloc(माप(*brd), GFP_KERNEL);
+	अगर (!brd) अणु
 		rc = -ENOMEM;
-		goto out_release_regions;
-	}
+		जाओ out_release_regions;
+	पूर्ण
 
-	/* store the info for the board we've found */
+	/* store the info क्रम the board we've found */
 	brd->boardnum = adapter_count++;
 	brd->pci_dev = pdev;
 
-	switch (pdev->device) {
-	case PCI_DEVICE_ID_NEO_2DB9:
-	case PCI_DEVICE_ID_NEO_2DB9PRI:
-	case PCI_DEVICE_ID_NEO_2RJ45:
-	case PCI_DEVICE_ID_NEO_2RJ45PRI:
-	case PCI_DEVICE_ID_NEO_2_422_485:
+	चयन (pdev->device) अणु
+	हाल PCI_DEVICE_ID_NEO_2DB9:
+	हाल PCI_DEVICE_ID_NEO_2DB9PRI:
+	हाल PCI_DEVICE_ID_NEO_2RJ45:
+	हाल PCI_DEVICE_ID_NEO_2RJ45PRI:
+	हाल PCI_DEVICE_ID_NEO_2_422_485:
 		brd->maxports = 2;
-		break;
+		अवरोध;
 
-	case PCI_DEVICE_ID_CLASSIC_4:
-	case PCI_DEVICE_ID_CLASSIC_4_422:
-	case PCI_DEVICE_ID_NEO_4:
-	case PCIE_DEVICE_ID_NEO_4:
-	case PCIE_DEVICE_ID_NEO_4RJ45:
-	case PCIE_DEVICE_ID_NEO_4_IBM:
+	हाल PCI_DEVICE_ID_CLASSIC_4:
+	हाल PCI_DEVICE_ID_CLASSIC_4_422:
+	हाल PCI_DEVICE_ID_NEO_4:
+	हाल PCIE_DEVICE_ID_NEO_4:
+	हाल PCIE_DEVICE_ID_NEO_4RJ45:
+	हाल PCIE_DEVICE_ID_NEO_4_IBM:
 		brd->maxports = 4;
-		break;
+		अवरोध;
 
-	case PCI_DEVICE_ID_CLASSIC_8:
-	case PCI_DEVICE_ID_CLASSIC_8_422:
-	case PCI_DEVICE_ID_DIGI_NEO_8:
-	case PCIE_DEVICE_ID_NEO_8:
-	case PCIE_DEVICE_ID_NEO_8RJ45:
+	हाल PCI_DEVICE_ID_CLASSIC_8:
+	हाल PCI_DEVICE_ID_CLASSIC_8_422:
+	हाल PCI_DEVICE_ID_DIGI_NEO_8:
+	हाल PCIE_DEVICE_ID_NEO_8:
+	हाल PCIE_DEVICE_ID_NEO_8RJ45:
 		brd->maxports = 8;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		brd->maxports = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	spin_lock_init(&brd->bd_intr_lock);
+	spin_lock_init(&brd->bd_पूर्णांकr_lock);
 
 	/* store which revision we have */
 	brd->rev = pdev->revision;
 
 	brd->irq = pdev->irq;
 
-	switch (pdev->device) {
-	case PCI_DEVICE_ID_CLASSIC_4:
-	case PCI_DEVICE_ID_CLASSIC_4_422:
-	case PCI_DEVICE_ID_CLASSIC_8:
-	case PCI_DEVICE_ID_CLASSIC_8_422:
+	चयन (pdev->device) अणु
+	हाल PCI_DEVICE_ID_CLASSIC_4:
+	हाल PCI_DEVICE_ID_CLASSIC_4_422:
+	हाल PCI_DEVICE_ID_CLASSIC_8:
+	हाल PCI_DEVICE_ID_CLASSIC_8_422:
 
 		jsm_dbg(INIT, &brd->pci_dev,
 			"jsm_found_board - Classic adapter\n");
@@ -137,51 +138,51 @@ static int jsm_probe_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 		brd->membase = pci_resource_start(pdev, 4);
 		brd->membase_end = pci_resource_end(pdev, 4);
 
-		if (brd->membase & 0x1)
+		अगर (brd->membase & 0x1)
 			brd->membase &= ~0x3;
-		else
+		अन्यथा
 			brd->membase &= ~0xF;
 
 		brd->iobase = pci_resource_start(pdev, 1);
 		brd->iobase_end = pci_resource_end(pdev, 1);
-		brd->iobase = ((unsigned int)(brd->iobase)) & 0xFFFE;
+		brd->iobase = ((अचिन्हित पूर्णांक)(brd->iobase)) & 0xFFFE;
 
-		/* Assign the board_ops struct */
+		/* Assign the board_ops काष्ठा */
 		brd->bd_ops = &jsm_cls_ops;
 
 		brd->bd_uart_offset = 0x8;
-		brd->bd_dividend = 921600;
+		brd->bd_भागidend = 921600;
 
 		brd->re_map_membase = ioremap(brd->membase,
 						pci_resource_len(pdev, 4));
-		if (!brd->re_map_membase) {
+		अगर (!brd->re_map_membase) अणु
 			dev_err(&pdev->dev,
 				"Card has no PCI Memory resources, failing board.\n");
 			rc = -ENOMEM;
-			goto out_kfree_brd;
-		}
+			जाओ out_kमुक्त_brd;
+		पूर्ण
 
 		/*
 		 * Enable Local Interrupt 1			(0x1),
 		 * Local Interrupt 1 Polarity Active high	(0x2),
-		 * Enable PCI interrupt				(0x43)
+		 * Enable PCI पूर्णांकerrupt				(0x43)
 		 */
 		outb(0x43, brd->iobase + 0x4c);
 
-		break;
+		अवरोध;
 
-	case PCI_DEVICE_ID_NEO_2DB9:
-	case PCI_DEVICE_ID_NEO_2DB9PRI:
-	case PCI_DEVICE_ID_NEO_2RJ45:
-	case PCI_DEVICE_ID_NEO_2RJ45PRI:
-	case PCI_DEVICE_ID_NEO_2_422_485:
-	case PCI_DEVICE_ID_NEO_4:
-	case PCIE_DEVICE_ID_NEO_4:
-	case PCIE_DEVICE_ID_NEO_4RJ45:
-	case PCIE_DEVICE_ID_NEO_4_IBM:
-	case PCI_DEVICE_ID_DIGI_NEO_8:
-	case PCIE_DEVICE_ID_NEO_8:
-	case PCIE_DEVICE_ID_NEO_8RJ45:
+	हाल PCI_DEVICE_ID_NEO_2DB9:
+	हाल PCI_DEVICE_ID_NEO_2DB9PRI:
+	हाल PCI_DEVICE_ID_NEO_2RJ45:
+	हाल PCI_DEVICE_ID_NEO_2RJ45PRI:
+	हाल PCI_DEVICE_ID_NEO_2_422_485:
+	हाल PCI_DEVICE_ID_NEO_4:
+	हाल PCIE_DEVICE_ID_NEO_4:
+	हाल PCIE_DEVICE_ID_NEO_4RJ45:
+	हाल PCIE_DEVICE_ID_NEO_4_IBM:
+	हाल PCI_DEVICE_ID_DIGI_NEO_8:
+	हाल PCIE_DEVICE_ID_NEO_8:
+	हाल PCIE_DEVICE_ID_NEO_8RJ45:
 
 		jsm_dbg(INIT, &brd->pci_dev, "jsm_found_board - NEO adapter\n");
 
@@ -189,194 +190,194 @@ static int jsm_probe_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 		brd->membase	= pci_resource_start(pdev, 0);
 		brd->membase_end = pci_resource_end(pdev, 0);
 
-		if (brd->membase & 1)
+		अगर (brd->membase & 1)
 			brd->membase &= ~0x3;
-		else
+		अन्यथा
 			brd->membase &= ~0xF;
 
-		/* Assign the board_ops struct */
+		/* Assign the board_ops काष्ठा */
 		brd->bd_ops = &jsm_neo_ops;
 
 		brd->bd_uart_offset = 0x200;
-		brd->bd_dividend = 921600;
+		brd->bd_भागidend = 921600;
 
 		brd->re_map_membase = ioremap(brd->membase,
 						pci_resource_len(pdev, 0));
-		if (!brd->re_map_membase) {
+		अगर (!brd->re_map_membase) अणु
 			dev_err(&pdev->dev,
 				"Card has no PCI Memory resources, failing board.\n");
 			rc = -ENOMEM;
-			goto out_kfree_brd;
-		}
+			जाओ out_kमुक्त_brd;
+		पूर्ण
 
-		break;
-	default:
-		return -ENXIO;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENXIO;
+	पूर्ण
 
-	rc = request_irq(brd->irq, brd->bd_ops->intr, IRQF_SHARED, "JSM", brd);
-	if (rc) {
+	rc = request_irq(brd->irq, brd->bd_ops->पूर्णांकr, IRQF_SHARED, "JSM", brd);
+	अगर (rc) अणु
 		dev_warn(&pdev->dev, "Failed to hook IRQ %d\n", brd->irq);
-		goto out_iounmap;
-	}
+		जाओ out_iounmap;
+	पूर्ण
 
 	rc = jsm_tty_init(brd);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(&pdev->dev, "Can't init tty devices (%d)\n", rc);
 		rc = -ENXIO;
-		goto out_free_irq;
-	}
+		जाओ out_मुक्त_irq;
+	पूर्ण
 
 	rc = jsm_uart_port_init(brd);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		/* XXX: leaking all resources from jsm_tty_init here! */
 		dev_err(&pdev->dev, "Can't init uart port (%d)\n", rc);
 		rc = -ENXIO;
-		goto out_free_irq;
-	}
+		जाओ out_मुक्त_irq;
+	पूर्ण
 
-	/* Log the information about the board */
+	/* Log the inक्रमmation about the board */
 	dev_info(&pdev->dev, "board %d: Digi Classic/Neo (rev %d), irq %d\n",
 			adapter_count, brd->rev, brd->irq);
 
 	pci_set_drvdata(pdev, brd);
 	pci_save_state(pdev);
 
-	return 0;
- out_free_irq:
-	jsm_remove_uart_port(brd);
-	free_irq(brd->irq, brd);
+	वापस 0;
+ out_मुक्त_irq:
+	jsm_हटाओ_uart_port(brd);
+	मुक्त_irq(brd->irq, brd);
  out_iounmap:
 	iounmap(brd->re_map_membase);
- out_kfree_brd:
-	kfree(brd);
+ out_kमुक्त_brd:
+	kमुक्त(brd);
  out_release_regions:
 	pci_release_regions(pdev);
  out_disable_device:
 	pci_disable_device(pdev);
  out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void jsm_remove_one(struct pci_dev *pdev)
-{
-	struct jsm_board *brd = pci_get_drvdata(pdev);
-	int i = 0;
+अटल व्योम jsm_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा jsm_board *brd = pci_get_drvdata(pdev);
+	पूर्णांक i = 0;
 
-	switch (pdev->device) {
-	case PCI_DEVICE_ID_CLASSIC_4:
-	case PCI_DEVICE_ID_CLASSIC_4_422:
-	case PCI_DEVICE_ID_CLASSIC_8:
-	case PCI_DEVICE_ID_CLASSIC_8_422:
-		/* Tell card not to interrupt anymore. */
+	चयन (pdev->device) अणु
+	हाल PCI_DEVICE_ID_CLASSIC_4:
+	हाल PCI_DEVICE_ID_CLASSIC_4_422:
+	हाल PCI_DEVICE_ID_CLASSIC_8:
+	हाल PCI_DEVICE_ID_CLASSIC_8_422:
+		/* Tell card not to पूर्णांकerrupt anymore. */
 		outb(0x0, brd->iobase + 0x4c);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	jsm_remove_uart_port(brd);
+	jsm_हटाओ_uart_port(brd);
 
-	free_irq(brd->irq, brd);
+	मुक्त_irq(brd->irq, brd);
 	iounmap(brd->re_map_membase);
 
-	/* Free all allocated channels structs */
-	for (i = 0; i < brd->maxports; i++) {
-		if (brd->channels[i]) {
-			kfree(brd->channels[i]->ch_rqueue);
-			kfree(brd->channels[i]->ch_equeue);
-			kfree(brd->channels[i]);
-		}
-	}
+	/* Free all allocated channels काष्ठाs */
+	क्रम (i = 0; i < brd->maxports; i++) अणु
+		अगर (brd->channels[i]) अणु
+			kमुक्त(brd->channels[i]->ch_rqueue);
+			kमुक्त(brd->channels[i]->ch_equeue);
+			kमुक्त(brd->channels[i]);
+		पूर्ण
+	पूर्ण
 
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-	kfree(brd);
-}
+	kमुक्त(brd);
+पूर्ण
 
-static const struct pci_device_id jsm_pci_tbl[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2DB9), 0, 0, 0 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2DB9PRI), 0, 0, 1 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2RJ45), 0, 0, 2 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2RJ45PRI), 0, 0, 3 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_4_IBM), 0, 0, 4 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_DIGI_NEO_8), 0, 0, 5 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_4), 0, 0, 6 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_1_422), 0, 0, 7 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_1_422_485), 0, 0, 8 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2_422_485), 0, 0, 9 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_8), 0, 0, 10 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_4), 0, 0, 11 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_4RJ45), 0, 0, 12 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_8RJ45), 0, 0, 13 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_CLASSIC_4), 0, 0, 14 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_CLASSIC_4_422), 0, 0, 15 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_CLASSIC_8), 0, 0, 16 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_CLASSIC_8_422), 0, 0, 17 },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id jsm_pci_tbl[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2DB9), 0, 0, 0 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2DB9PRI), 0, 0, 1 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2RJ45), 0, 0, 2 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2RJ45PRI), 0, 0, 3 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_4_IBM), 0, 0, 4 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_DIGI_NEO_8), 0, 0, 5 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_4), 0, 0, 6 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_1_422), 0, 0, 7 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_1_422_485), 0, 0, 8 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_NEO_2_422_485), 0, 0, 9 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_8), 0, 0, 10 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_4), 0, 0, 11 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_4RJ45), 0, 0, 12 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCIE_DEVICE_ID_NEO_8RJ45), 0, 0, 13 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_CLASSIC_4), 0, 0, 14 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_CLASSIC_4_422), 0, 0, 15 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_CLASSIC_8), 0, 0, 16 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DIGI, PCI_DEVICE_ID_CLASSIC_8_422), 0, 0, 17 पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, jsm_pci_tbl);
 
-static struct pci_driver jsm_driver = {
+अटल काष्ठा pci_driver jsm_driver = अणु
 	.name		= JSM_DRIVER_NAME,
 	.id_table	= jsm_pci_tbl,
 	.probe		= jsm_probe_one,
-	.remove		= jsm_remove_one,
+	.हटाओ		= jsm_हटाओ_one,
 	.err_handler    = &jsm_err_handler,
-};
+पूर्ण;
 
-static pci_ers_result_t jsm_io_error_detected(struct pci_dev *pdev,
+अटल pci_ers_result_t jsm_io_error_detected(काष्ठा pci_dev *pdev,
 					pci_channel_state_t state)
-{
-	struct jsm_board *brd = pci_get_drvdata(pdev);
+अणु
+	काष्ठा jsm_board *brd = pci_get_drvdata(pdev);
 
-	jsm_remove_uart_port(brd);
+	jsm_हटाओ_uart_port(brd);
 
-	return PCI_ERS_RESULT_NEED_RESET;
-}
+	वापस PCI_ERS_RESULT_NEED_RESET;
+पूर्ण
 
-static pci_ers_result_t jsm_io_slot_reset(struct pci_dev *pdev)
-{
-	int rc;
+अटल pci_ers_result_t jsm_io_slot_reset(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक rc;
 
 	rc = pci_enable_device(pdev);
 
-	if (rc)
-		return PCI_ERS_RESULT_DISCONNECT;
+	अगर (rc)
+		वापस PCI_ERS_RESULT_DISCONNECT;
 
 	pci_set_master(pdev);
 
-	return PCI_ERS_RESULT_RECOVERED;
-}
+	वापस PCI_ERS_RESULT_RECOVERED;
+पूर्ण
 
-static void jsm_io_resume(struct pci_dev *pdev)
-{
-	struct jsm_board *brd = pci_get_drvdata(pdev);
+अटल व्योम jsm_io_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा jsm_board *brd = pci_get_drvdata(pdev);
 
 	pci_restore_state(pdev);
 	pci_save_state(pdev);
 
 	jsm_uart_port_init(brd);
-}
+पूर्ण
 
-static int __init jsm_init_module(void)
-{
-	int rc;
+अटल पूर्णांक __init jsm_init_module(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = uart_register_driver(&jsm_uart_driver);
-	if (!rc) {
-		rc = pci_register_driver(&jsm_driver);
-		if (rc)
-			uart_unregister_driver(&jsm_uart_driver);
-	}
-	return rc;
-}
+	rc = uart_रेजिस्टर_driver(&jsm_uart_driver);
+	अगर (!rc) अणु
+		rc = pci_रेजिस्टर_driver(&jsm_driver);
+		अगर (rc)
+			uart_unरेजिस्टर_driver(&jsm_uart_driver);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void __exit jsm_exit_module(void)
-{
-	pci_unregister_driver(&jsm_driver);
-	uart_unregister_driver(&jsm_uart_driver);
-}
+अटल व्योम __निकास jsm_निकास_module(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&jsm_driver);
+	uart_unरेजिस्टर_driver(&jsm_uart_driver);
+पूर्ण
 
 module_init(jsm_init_module);
-module_exit(jsm_exit_module);
+module_निकास(jsm_निकास_module);

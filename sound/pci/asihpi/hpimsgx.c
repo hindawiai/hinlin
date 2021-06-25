@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
 
     AudioScience HPI driver
@@ -9,397 +10,397 @@ Extended Message Function With Response Caching
 
 (C) Copyright AudioScience Inc. 2002
 *****************************************************************************/
-#define SOURCEFILE_NAME "hpimsgx.c"
-#include "hpi_internal.h"
-#include "hpi_version.h"
-#include "hpimsginit.h"
-#include "hpicmn.h"
-#include "hpimsgx.h"
-#include "hpidebug.h"
+#घोषणा SOURCEखाता_NAME "hpimsgx.c"
+#समावेश "hpi_internal.h"
+#समावेश "hpi_version.h"
+#समावेश "hpimsginit.h"
+#समावेश "hpicmn.h"
+#समावेश "hpimsgx.h"
+#समावेश "hpidebug.h"
 
-static const struct pci_device_id asihpi_pci_tbl[] = {
-#include "hpipcida.h"
-};
+अटल स्थिर काष्ठा pci_device_id asihpi_pci_tbl[] = अणु
+#समावेश "hpipcida.h"
+पूर्ण;
 
-static struct hpios_spinlock msgx_lock;
+अटल काष्ठा hpios_spinlock msgx_lock;
 
-static hpi_handler_func *hpi_entry_points[HPI_MAX_ADAPTERS];
-static int logging_enabled = 1;
+अटल hpi_handler_func *hpi_entry_poपूर्णांकs[HPI_MAX_ADAPTERS];
+अटल पूर्णांक logging_enabled = 1;
 
-static hpi_handler_func *hpi_lookup_entry_point_function(const struct hpi_pci
+अटल hpi_handler_func *hpi_lookup_entry_poपूर्णांक_function(स्थिर काष्ठा hpi_pci
 	*pci_info)
-{
+अणु
 
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; asihpi_pci_tbl[i].vendor != 0; i++) {
-		if (asihpi_pci_tbl[i].vendor != PCI_ANY_ID
-			&& asihpi_pci_tbl[i].vendor !=
-			pci_info->pci_dev->vendor)
-			continue;
-		if (asihpi_pci_tbl[i].device != PCI_ANY_ID
+	क्रम (i = 0; asihpi_pci_tbl[i].venकरोr != 0; i++) अणु
+		अगर (asihpi_pci_tbl[i].venकरोr != PCI_ANY_ID
+			&& asihpi_pci_tbl[i].venकरोr !=
+			pci_info->pci_dev->venकरोr)
+			जारी;
+		अगर (asihpi_pci_tbl[i].device != PCI_ANY_ID
 			&& asihpi_pci_tbl[i].device !=
 			pci_info->pci_dev->device)
-			continue;
-		if (asihpi_pci_tbl[i].subvendor != PCI_ANY_ID
-			&& asihpi_pci_tbl[i].subvendor !=
-			pci_info->pci_dev->subsystem_vendor)
-			continue;
-		if (asihpi_pci_tbl[i].subdevice != PCI_ANY_ID
+			जारी;
+		अगर (asihpi_pci_tbl[i].subvenकरोr != PCI_ANY_ID
+			&& asihpi_pci_tbl[i].subvenकरोr !=
+			pci_info->pci_dev->subप्रणाली_venकरोr)
+			जारी;
+		अगर (asihpi_pci_tbl[i].subdevice != PCI_ANY_ID
 			&& asihpi_pci_tbl[i].subdevice !=
-			pci_info->pci_dev->subsystem_device)
-			continue;
+			pci_info->pci_dev->subप्रणाली_device)
+			जारी;
 
 		/* HPI_DEBUG_LOG(DEBUG, " %x,%lx\n", i,
 		   asihpi_pci_tbl[i].driver_data); */
-		return (hpi_handler_func *) asihpi_pci_tbl[i].driver_data;
-	}
+		वापस (hpi_handler_func *) asihpi_pci_tbl[i].driver_data;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline void hw_entry_point(struct hpi_message *phm,
-	struct hpi_response *phr)
-{
-	if ((phm->adapter_index < HPI_MAX_ADAPTERS)
-		&& hpi_entry_points[phm->adapter_index])
-		hpi_entry_points[phm->adapter_index] (phm, phr);
-	else
+अटल अंतरभूत व्योम hw_entry_poपूर्णांक(काष्ठा hpi_message *phm,
+	काष्ठा hpi_response *phr)
+अणु
+	अगर ((phm->adapter_index < HPI_MAX_ADAPTERS)
+		&& hpi_entry_poपूर्णांकs[phm->adapter_index])
+		hpi_entry_poपूर्णांकs[phm->adapter_index] (phm, phr);
+	अन्यथा
 		hpi_init_response(phr, phm->object, phm->function,
 			HPI_ERROR_PROCESSING_MESSAGE);
-}
+पूर्ण
 
-static void adapter_open(struct hpi_message *phm, struct hpi_response *phr);
-static void adapter_close(struct hpi_message *phm, struct hpi_response *phr);
+अटल व्योम adapter_खोलो(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr);
+अटल व्योम adapter_बंद(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr);
 
-static void mixer_open(struct hpi_message *phm, struct hpi_response *phr);
-static void mixer_close(struct hpi_message *phm, struct hpi_response *phr);
+अटल व्योम mixer_खोलो(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr);
+अटल व्योम mixer_बंद(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr);
 
-static void outstream_open(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner);
-static void outstream_close(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner);
-static void instream_open(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner);
-static void instream_close(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner);
+अटल व्योम outstream_खोलो(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner);
+अटल व्योम outstream_बंद(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner);
+अटल व्योम instream_खोलो(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner);
+अटल व्योम instream_बंद(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner);
 
-static void HPIMSGX__reset(u16 adapter_index);
+अटल व्योम HPIMSGX__reset(u16 adapter_index);
 
-static u16 HPIMSGX__init(struct hpi_message *phm, struct hpi_response *phr);
-static void HPIMSGX__cleanup(u16 adapter_index, void *h_owner);
+अटल u16 HPIMSGX__init(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr);
+अटल व्योम HPIMSGX__cleanup(u16 adapter_index, व्योम *h_owner);
 
-#ifndef DISABLE_PRAGMA_PACK1
-#pragma pack(push, 1)
-#endif
+#अगर_अघोषित DISABLE_PRAGMA_PACK1
+#आशय pack(push, 1)
+#पूर्ण_अगर
 
-struct hpi_subsys_response {
-	struct hpi_response_header h;
-	struct hpi_subsys_res s;
-};
+काष्ठा hpi_subsys_response अणु
+	काष्ठा hpi_response_header h;
+	काष्ठा hpi_subsys_res s;
+पूर्ण;
 
-struct hpi_adapter_response {
-	struct hpi_response_header h;
-	struct hpi_adapter_res a;
-};
+काष्ठा hpi_adapter_response अणु
+	काष्ठा hpi_response_header h;
+	काष्ठा hpi_adapter_res a;
+पूर्ण;
 
-struct hpi_mixer_response {
-	struct hpi_response_header h;
-	struct hpi_mixer_res m;
-};
+काष्ठा hpi_mixer_response अणु
+	काष्ठा hpi_response_header h;
+	काष्ठा hpi_mixer_res m;
+पूर्ण;
 
-struct hpi_stream_response {
-	struct hpi_response_header h;
-	struct hpi_stream_res d;
-};
+काष्ठा hpi_stream_response अणु
+	काष्ठा hpi_response_header h;
+	काष्ठा hpi_stream_res d;
+पूर्ण;
 
-struct adapter_info {
+काष्ठा adapter_info अणु
 	u16 type;
 	u16 num_instreams;
 	u16 num_outstreams;
-};
+पूर्ण;
 
-struct asi_open_state {
-	int open_flag;
-	void *h_owner;
-};
+काष्ठा asi_खोलो_state अणु
+	पूर्णांक खोलो_flag;
+	व्योम *h_owner;
+पूर्ण;
 
-#ifndef DISABLE_PRAGMA_PACK1
-#pragma pack(pop)
-#endif
+#अगर_अघोषित DISABLE_PRAGMA_PACK1
+#आशय pack(pop)
+#पूर्ण_अगर
 
 /* Globals */
-static struct hpi_adapter_response rESP_HPI_ADAPTER_OPEN[HPI_MAX_ADAPTERS];
+अटल काष्ठा hpi_adapter_response rESP_HPI_ADAPTER_OPEN[HPI_MAX_ADAPTERS];
 
-static struct hpi_stream_response
+अटल काष्ठा hpi_stream_response
 	rESP_HPI_OSTREAM_OPEN[HPI_MAX_ADAPTERS][HPI_MAX_STREAMS];
 
-static struct hpi_stream_response
+अटल काष्ठा hpi_stream_response
 	rESP_HPI_ISTREAM_OPEN[HPI_MAX_ADAPTERS][HPI_MAX_STREAMS];
 
-static struct hpi_mixer_response rESP_HPI_MIXER_OPEN[HPI_MAX_ADAPTERS];
+अटल काष्ठा hpi_mixer_response rESP_HPI_MIXER_OPEN[HPI_MAX_ADAPTERS];
 
-static struct adapter_info aDAPTER_INFO[HPI_MAX_ADAPTERS];
+अटल काष्ठा adapter_info aDAPTER_INFO[HPI_MAX_ADAPTERS];
 
-/* use these to keep track of opens from user mode apps/DLLs */
-static struct asi_open_state
-	outstream_user_open[HPI_MAX_ADAPTERS][HPI_MAX_STREAMS];
+/* use these to keep track of खोलोs from user mode apps/DLLs */
+अटल काष्ठा asi_खोलो_state
+	outstream_user_खोलो[HPI_MAX_ADAPTERS][HPI_MAX_STREAMS];
 
-static struct asi_open_state
-	instream_user_open[HPI_MAX_ADAPTERS][HPI_MAX_STREAMS];
+अटल काष्ठा asi_खोलो_state
+	instream_user_खोलो[HPI_MAX_ADAPTERS][HPI_MAX_STREAMS];
 
-static void subsys_message(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner)
-{
-	if (phm->adapter_index != HPI_ADAPTER_INDEX_INVALID)
+अटल व्योम subsys_message(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner)
+अणु
+	अगर (phm->adapter_index != HPI_ADAPTER_INDEX_INVALID)
 		HPI_DEBUG_LOG(WARNING,
 			"suspicious adapter index %d in subsys message 0x%x.\n",
 			phm->adapter_index, phm->function);
 
-	switch (phm->function) {
-	case HPI_SUBSYS_GET_VERSION:
+	चयन (phm->function) अणु
+	हाल HPI_SUBSYS_GET_VERSION:
 		hpi_init_response(phr, HPI_OBJ_SUBSYSTEM,
 			HPI_SUBSYS_GET_VERSION, 0);
-		phr->u.s.version = HPI_VER >> 8;	/* return major.minor */
-		phr->u.s.data = HPI_VER;	/* return major.minor.release */
-		break;
-	case HPI_SUBSYS_OPEN:
-		/*do not propagate the message down the chain */
+		phr->u.s.version = HPI_VER >> 8;	/* वापस major.minor */
+		phr->u.s.data = HPI_VER;	/* वापस major.minor.release */
+		अवरोध;
+	हाल HPI_SUBSYS_OPEN:
+		/*करो not propagate the message करोwn the chain */
 		hpi_init_response(phr, HPI_OBJ_SUBSYSTEM, HPI_SUBSYS_OPEN, 0);
-		break;
-	case HPI_SUBSYS_CLOSE:
-		/*do not propagate the message down the chain */
+		अवरोध;
+	हाल HPI_SUBSYS_CLOSE:
+		/*करो not propagate the message करोwn the chain */
 		hpi_init_response(phr, HPI_OBJ_SUBSYSTEM, HPI_SUBSYS_CLOSE,
 			0);
 		HPIMSGX__cleanup(HPIMSGX_ALLADAPTERS, h_owner);
-		break;
-	case HPI_SUBSYS_DRIVER_LOAD:
-		/* Initialize this module's internal state */
+		अवरोध;
+	हाल HPI_SUBSYS_DRIVER_LOAD:
+		/* Initialize this module's पूर्णांकernal state */
 		hpios_msgxlock_init(&msgx_lock);
-		memset(&hpi_entry_points, 0, sizeof(hpi_entry_points));
+		स_रखो(&hpi_entry_poपूर्णांकs, 0, माप(hpi_entry_poपूर्णांकs));
 		/* Init subsys_findadapters response to no-adapters */
 		HPIMSGX__reset(HPIMSGX_ALLADAPTERS);
 		hpi_init_response(phr, HPI_OBJ_SUBSYSTEM,
 			HPI_SUBSYS_DRIVER_LOAD, 0);
-		/* individual HPIs dont implement driver load */
+		/* inभागidual HPIs करोnt implement driver load */
 		HPI_COMMON(phm, phr);
-		break;
-	case HPI_SUBSYS_DRIVER_UNLOAD:
+		अवरोध;
+	हाल HPI_SUBSYS_DRIVER_UNLOAD:
 		HPI_COMMON(phm, phr);
 		HPIMSGX__cleanup(HPIMSGX_ALLADAPTERS, h_owner);
 		hpi_init_response(phr, HPI_OBJ_SUBSYSTEM,
 			HPI_SUBSYS_DRIVER_UNLOAD, 0);
-		return;
+		वापस;
 
-	case HPI_SUBSYS_GET_NUM_ADAPTERS:
-	case HPI_SUBSYS_GET_ADAPTER:
+	हाल HPI_SUBSYS_GET_NUM_ADAPTERS:
+	हाल HPI_SUBSYS_GET_ADAPTER:
 		HPI_COMMON(phm, phr);
-		break;
+		अवरोध;
 
-	case HPI_SUBSYS_CREATE_ADAPTER:
+	हाल HPI_SUBSYS_CREATE_ADAPTER:
 		HPIMSGX__init(phm, phr);
-		break;
+		अवरोध;
 
-	default:
-		/* Must explicitly handle every subsys message in this switch */
+	शेष:
+		/* Must explicitly handle every subsys message in this चयन */
 		hpi_init_response(phr, HPI_OBJ_SUBSYSTEM, phm->function,
 			HPI_ERROR_INVALID_FUNC);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void adapter_message(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner)
-{
-	switch (phm->function) {
-	case HPI_ADAPTER_OPEN:
-		adapter_open(phm, phr);
-		break;
-	case HPI_ADAPTER_CLOSE:
-		adapter_close(phm, phr);
-		break;
-	case HPI_ADAPTER_DELETE:
+अटल व्योम adapter_message(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner)
+अणु
+	चयन (phm->function) अणु
+	हाल HPI_ADAPTER_OPEN:
+		adapter_खोलो(phm, phr);
+		अवरोध;
+	हाल HPI_ADAPTER_CLOSE:
+		adapter_बंद(phm, phr);
+		अवरोध;
+	हाल HPI_ADAPTER_DELETE:
 		HPIMSGX__cleanup(phm->adapter_index, h_owner);
-		{
-			struct hpi_message hm;
-			struct hpi_response hr;
+		अणु
+			काष्ठा hpi_message hm;
+			काष्ठा hpi_response hr;
 			hpi_init_message_response(&hm, &hr, HPI_OBJ_ADAPTER,
 				HPI_ADAPTER_CLOSE);
 			hm.adapter_index = phm->adapter_index;
-			hw_entry_point(&hm, &hr);
-		}
-		hw_entry_point(phm, phr);
-		break;
+			hw_entry_poपूर्णांक(&hm, &hr);
+		पूर्ण
+		hw_entry_poपूर्णांक(phm, phr);
+		अवरोध;
 
-	default:
-		hw_entry_point(phm, phr);
-		break;
-	}
-}
+	शेष:
+		hw_entry_poपूर्णांक(phm, phr);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void mixer_message(struct hpi_message *phm, struct hpi_response *phr)
-{
-	switch (phm->function) {
-	case HPI_MIXER_OPEN:
-		mixer_open(phm, phr);
-		break;
-	case HPI_MIXER_CLOSE:
-		mixer_close(phm, phr);
-		break;
-	default:
-		hw_entry_point(phm, phr);
-		break;
-	}
-}
+अटल व्योम mixer_message(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
+	चयन (phm->function) अणु
+	हाल HPI_MIXER_OPEN:
+		mixer_खोलो(phm, phr);
+		अवरोध;
+	हाल HPI_MIXER_CLOSE:
+		mixer_बंद(phm, phr);
+		अवरोध;
+	शेष:
+		hw_entry_poपूर्णांक(phm, phr);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void outstream_message(struct hpi_message *phm,
-	struct hpi_response *phr, void *h_owner)
-{
-	if (phm->obj_index >= aDAPTER_INFO[phm->adapter_index].num_outstreams) {
+अटल व्योम outstream_message(काष्ठा hpi_message *phm,
+	काष्ठा hpi_response *phr, व्योम *h_owner)
+अणु
+	अगर (phm->obj_index >= aDAPTER_INFO[phm->adapter_index].num_outstreams) अणु
 		hpi_init_response(phr, HPI_OBJ_OSTREAM, phm->function,
 			HPI_ERROR_INVALID_OBJ_INDEX);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (phm->function) {
-	case HPI_OSTREAM_OPEN:
-		outstream_open(phm, phr, h_owner);
-		break;
-	case HPI_OSTREAM_CLOSE:
-		outstream_close(phm, phr, h_owner);
-		break;
-	default:
-		hw_entry_point(phm, phr);
-		break;
-	}
-}
+	चयन (phm->function) अणु
+	हाल HPI_OSTREAM_OPEN:
+		outstream_खोलो(phm, phr, h_owner);
+		अवरोध;
+	हाल HPI_OSTREAM_CLOSE:
+		outstream_बंद(phm, phr, h_owner);
+		अवरोध;
+	शेष:
+		hw_entry_poपूर्णांक(phm, phr);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void instream_message(struct hpi_message *phm,
-	struct hpi_response *phr, void *h_owner)
-{
-	if (phm->obj_index >= aDAPTER_INFO[phm->adapter_index].num_instreams) {
+अटल व्योम instream_message(काष्ठा hpi_message *phm,
+	काष्ठा hpi_response *phr, व्योम *h_owner)
+अणु
+	अगर (phm->obj_index >= aDAPTER_INFO[phm->adapter_index].num_instreams) अणु
 		hpi_init_response(phr, HPI_OBJ_ISTREAM, phm->function,
 			HPI_ERROR_INVALID_OBJ_INDEX);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (phm->function) {
-	case HPI_ISTREAM_OPEN:
-		instream_open(phm, phr, h_owner);
-		break;
-	case HPI_ISTREAM_CLOSE:
-		instream_close(phm, phr, h_owner);
-		break;
-	default:
-		hw_entry_point(phm, phr);
-		break;
-	}
-}
+	चयन (phm->function) अणु
+	हाल HPI_ISTREAM_OPEN:
+		instream_खोलो(phm, phr, h_owner);
+		अवरोध;
+	हाल HPI_ISTREAM_CLOSE:
+		instream_बंद(phm, phr, h_owner);
+		अवरोध;
+	शेष:
+		hw_entry_poपूर्णांक(phm, phr);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* NOTE: HPI_Message() must be defined in the driver as a wrapper for
- * HPI_MessageEx so that functions in hpifunc.c compile.
+/* NOTE: HPI_Message() must be defined in the driver as a wrapper क्रम
+ * HPI_MessageEx so that functions in hpअगरunc.c compile.
  */
-void hpi_send_recv_ex(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner)
-{
+व्योम hpi_send_recv_ex(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner)
+अणु
 
-	if (logging_enabled)
+	अगर (logging_enabled)
 		HPI_DEBUG_MESSAGE(DEBUG, phm);
 
-	if (phm->type != HPI_TYPE_REQUEST) {
+	अगर (phm->type != HPI_TYPE_REQUEST) अणु
 		hpi_init_response(phr, phm->object, phm->function,
 			HPI_ERROR_INVALID_TYPE);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (phm->adapter_index >= HPI_MAX_ADAPTERS
-		&& phm->adapter_index != HPIMSGX_ALLADAPTERS) {
+	अगर (phm->adapter_index >= HPI_MAX_ADAPTERS
+		&& phm->adapter_index != HPIMSGX_ALLADAPTERS) अणु
 		hpi_init_response(phr, phm->object, phm->function,
 			HPI_ERROR_BAD_ADAPTER_NUMBER);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (phm->object) {
-	case HPI_OBJ_SUBSYSTEM:
+	चयन (phm->object) अणु
+	हाल HPI_OBJ_SUBSYSTEM:
 		subsys_message(phm, phr, h_owner);
-		break;
+		अवरोध;
 
-	case HPI_OBJ_ADAPTER:
+	हाल HPI_OBJ_ADAPTER:
 		adapter_message(phm, phr, h_owner);
-		break;
+		अवरोध;
 
-	case HPI_OBJ_MIXER:
+	हाल HPI_OBJ_MIXER:
 		mixer_message(phm, phr);
-		break;
+		अवरोध;
 
-	case HPI_OBJ_OSTREAM:
+	हाल HPI_OBJ_OSTREAM:
 		outstream_message(phm, phr, h_owner);
-		break;
+		अवरोध;
 
-	case HPI_OBJ_ISTREAM:
+	हाल HPI_OBJ_ISTREAM:
 		instream_message(phm, phr, h_owner);
-		break;
+		अवरोध;
 
-	default:
-		hw_entry_point(phm, phr);
-		break;
-	}
+	शेष:
+		hw_entry_poपूर्णांक(phm, phr);
+		अवरोध;
+	पूर्ण
 
-	if (logging_enabled)
+	अगर (logging_enabled)
 		HPI_DEBUG_RESPONSE(phr);
 
-	if (phr->error >= HPI_ERROR_DSP_COMMUNICATION) {
+	अगर (phr->error >= HPI_ERROR_DSP_COMMUNICATION) अणु
 		hpi_debug_level_set(HPI_DEBUG_LEVEL_ERROR);
 		logging_enabled = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void adapter_open(struct hpi_message *phm, struct hpi_response *phr)
-{
+अटल व्योम adapter_खोलो(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
 	HPI_DEBUG_LOG(VERBOSE, "adapter_open\n");
-	memcpy(phr, &rESP_HPI_ADAPTER_OPEN[phm->adapter_index],
-		sizeof(rESP_HPI_ADAPTER_OPEN[0]));
-}
+	स_नकल(phr, &rESP_HPI_ADAPTER_OPEN[phm->adapter_index],
+		माप(rESP_HPI_ADAPTER_OPEN[0]));
+पूर्ण
 
-static void adapter_close(struct hpi_message *phm, struct hpi_response *phr)
-{
+अटल व्योम adapter_बंद(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
 	HPI_DEBUG_LOG(VERBOSE, "adapter_close\n");
 	hpi_init_response(phr, HPI_OBJ_ADAPTER, HPI_ADAPTER_CLOSE, 0);
-}
+पूर्ण
 
-static void mixer_open(struct hpi_message *phm, struct hpi_response *phr)
-{
-	memcpy(phr, &rESP_HPI_MIXER_OPEN[phm->adapter_index],
-		sizeof(rESP_HPI_MIXER_OPEN[0]));
-}
+अटल व्योम mixer_खोलो(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
+	स_नकल(phr, &rESP_HPI_MIXER_OPEN[phm->adapter_index],
+		माप(rESP_HPI_MIXER_OPEN[0]));
+पूर्ण
 
-static void mixer_close(struct hpi_message *phm, struct hpi_response *phr)
-{
+अटल व्योम mixer_बंद(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
 	hpi_init_response(phr, HPI_OBJ_MIXER, HPI_MIXER_CLOSE, 0);
-}
+पूर्ण
 
-static void instream_open(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner)
-{
+अटल व्योम instream_खोलो(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner)
+अणु
 
-	struct hpi_message hm;
-	struct hpi_response hr;
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
 
 	hpi_init_response(phr, HPI_OBJ_ISTREAM, HPI_ISTREAM_OPEN, 0);
 
 	hpios_msgxlock_lock(&msgx_lock);
 
-	if (instream_user_open[phm->adapter_index][phm->obj_index].open_flag)
+	अगर (instream_user_खोलो[phm->adapter_index][phm->obj_index].खोलो_flag)
 		phr->error = HPI_ERROR_OBJ_ALREADY_OPEN;
-	else if (rESP_HPI_ISTREAM_OPEN[phm->adapter_index]
+	अन्यथा अगर (rESP_HPI_ISTREAM_OPEN[phm->adapter_index]
 		[phm->obj_index].h.error)
-		memcpy(phr,
+		स_नकल(phr,
 			&rESP_HPI_ISTREAM_OPEN[phm->adapter_index][phm->
 				obj_index],
-			sizeof(rESP_HPI_ISTREAM_OPEN[0][0]));
-	else {
-		instream_user_open[phm->adapter_index][phm->
-			obj_index].open_flag = 1;
+			माप(rESP_HPI_ISTREAM_OPEN[0][0]));
+	अन्यथा अणु
+		instream_user_खोलो[phm->adapter_index][phm->
+			obj_index].खोलो_flag = 1;
 		hpios_msgxlock_unlock(&msgx_lock);
 
 		/* issue a reset */
@@ -407,96 +408,96 @@ static void instream_open(struct hpi_message *phm, struct hpi_response *phr,
 			HPI_ISTREAM_RESET);
 		hm.adapter_index = phm->adapter_index;
 		hm.obj_index = phm->obj_index;
-		hw_entry_point(&hm, &hr);
+		hw_entry_poपूर्णांक(&hm, &hr);
 
 		hpios_msgxlock_lock(&msgx_lock);
-		if (hr.error) {
-			instream_user_open[phm->adapter_index][phm->
-				obj_index].open_flag = 0;
+		अगर (hr.error) अणु
+			instream_user_खोलो[phm->adapter_index][phm->
+				obj_index].खोलो_flag = 0;
 			phr->error = hr.error;
-		} else {
-			instream_user_open[phm->adapter_index][phm->
-				obj_index].open_flag = 1;
-			instream_user_open[phm->adapter_index][phm->
+		पूर्ण अन्यथा अणु
+			instream_user_खोलो[phm->adapter_index][phm->
+				obj_index].खोलो_flag = 1;
+			instream_user_खोलो[phm->adapter_index][phm->
 				obj_index].h_owner = h_owner;
-			memcpy(phr,
+			स_नकल(phr,
 				&rESP_HPI_ISTREAM_OPEN[phm->adapter_index]
 				[phm->obj_index],
-				sizeof(rESP_HPI_ISTREAM_OPEN[0][0]));
-		}
-	}
+				माप(rESP_HPI_ISTREAM_OPEN[0][0]));
+		पूर्ण
+	पूर्ण
 	hpios_msgxlock_unlock(&msgx_lock);
-}
+पूर्ण
 
-static void instream_close(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner)
-{
+अटल व्योम instream_बंद(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner)
+अणु
 
-	struct hpi_message hm;
-	struct hpi_response hr;
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
 
 	hpi_init_response(phr, HPI_OBJ_ISTREAM, HPI_ISTREAM_CLOSE, 0);
 
 	hpios_msgxlock_lock(&msgx_lock);
-	if (h_owner ==
-		instream_user_open[phm->adapter_index][phm->
-			obj_index].h_owner) {
+	अगर (h_owner ==
+		instream_user_खोलो[phm->adapter_index][phm->
+			obj_index].h_owner) अणु
 		/* HPI_DEBUG_LOG(INFO,"closing adapter %d "
 		   "instream %d owned by %p\n",
 		   phm->wAdapterIndex, phm->wObjIndex, hOwner); */
-		instream_user_open[phm->adapter_index][phm->
-			obj_index].h_owner = NULL;
+		instream_user_खोलो[phm->adapter_index][phm->
+			obj_index].h_owner = शून्य;
 		hpios_msgxlock_unlock(&msgx_lock);
 		/* issue a reset */
 		hpi_init_message_response(&hm, &hr, HPI_OBJ_ISTREAM,
 			HPI_ISTREAM_RESET);
 		hm.adapter_index = phm->adapter_index;
 		hm.obj_index = phm->obj_index;
-		hw_entry_point(&hm, &hr);
+		hw_entry_poपूर्णांक(&hm, &hr);
 		hpios_msgxlock_lock(&msgx_lock);
-		if (hr.error) {
-			instream_user_open[phm->adapter_index][phm->
+		अगर (hr.error) अणु
+			instream_user_खोलो[phm->adapter_index][phm->
 				obj_index].h_owner = h_owner;
 			phr->error = hr.error;
-		} else {
-			instream_user_open[phm->adapter_index][phm->
-				obj_index].open_flag = 0;
-			instream_user_open[phm->adapter_index][phm->
-				obj_index].h_owner = NULL;
-		}
-	} else {
+		पूर्ण अन्यथा अणु
+			instream_user_खोलो[phm->adapter_index][phm->
+				obj_index].खोलो_flag = 0;
+			instream_user_खोलो[phm->adapter_index][phm->
+				obj_index].h_owner = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		HPI_DEBUG_LOG(WARNING,
 			"%p trying to close %d instream %d owned by %p\n",
 			h_owner, phm->adapter_index, phm->obj_index,
-			instream_user_open[phm->adapter_index][phm->
+			instream_user_खोलो[phm->adapter_index][phm->
 				obj_index].h_owner);
 		phr->error = HPI_ERROR_OBJ_NOT_OPEN;
-	}
+	पूर्ण
 	hpios_msgxlock_unlock(&msgx_lock);
-}
+पूर्ण
 
-static void outstream_open(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner)
-{
+अटल व्योम outstream_खोलो(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner)
+अणु
 
-	struct hpi_message hm;
-	struct hpi_response hr;
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
 
 	hpi_init_response(phr, HPI_OBJ_OSTREAM, HPI_OSTREAM_OPEN, 0);
 
 	hpios_msgxlock_lock(&msgx_lock);
 
-	if (outstream_user_open[phm->adapter_index][phm->obj_index].open_flag)
+	अगर (outstream_user_खोलो[phm->adapter_index][phm->obj_index].खोलो_flag)
 		phr->error = HPI_ERROR_OBJ_ALREADY_OPEN;
-	else if (rESP_HPI_OSTREAM_OPEN[phm->adapter_index]
+	अन्यथा अगर (rESP_HPI_OSTREAM_OPEN[phm->adapter_index]
 		[phm->obj_index].h.error)
-		memcpy(phr,
+		स_नकल(phr,
 			&rESP_HPI_OSTREAM_OPEN[phm->adapter_index][phm->
 				obj_index],
-			sizeof(rESP_HPI_OSTREAM_OPEN[0][0]));
-	else {
-		outstream_user_open[phm->adapter_index][phm->
-			obj_index].open_flag = 1;
+			माप(rESP_HPI_OSTREAM_OPEN[0][0]));
+	अन्यथा अणु
+		outstream_user_खोलो[phm->adapter_index][phm->
+			obj_index].खोलो_flag = 1;
 		hpios_msgxlock_unlock(&msgx_lock);
 
 		/* issue a reset */
@@ -504,79 +505,79 @@ static void outstream_open(struct hpi_message *phm, struct hpi_response *phr,
 			HPI_OSTREAM_RESET);
 		hm.adapter_index = phm->adapter_index;
 		hm.obj_index = phm->obj_index;
-		hw_entry_point(&hm, &hr);
+		hw_entry_poपूर्णांक(&hm, &hr);
 
 		hpios_msgxlock_lock(&msgx_lock);
-		if (hr.error) {
-			outstream_user_open[phm->adapter_index][phm->
-				obj_index].open_flag = 0;
+		अगर (hr.error) अणु
+			outstream_user_खोलो[phm->adapter_index][phm->
+				obj_index].खोलो_flag = 0;
 			phr->error = hr.error;
-		} else {
-			outstream_user_open[phm->adapter_index][phm->
-				obj_index].open_flag = 1;
-			outstream_user_open[phm->adapter_index][phm->
+		पूर्ण अन्यथा अणु
+			outstream_user_खोलो[phm->adapter_index][phm->
+				obj_index].खोलो_flag = 1;
+			outstream_user_खोलो[phm->adapter_index][phm->
 				obj_index].h_owner = h_owner;
-			memcpy(phr,
+			स_नकल(phr,
 				&rESP_HPI_OSTREAM_OPEN[phm->adapter_index]
 				[phm->obj_index],
-				sizeof(rESP_HPI_OSTREAM_OPEN[0][0]));
-		}
-	}
+				माप(rESP_HPI_OSTREAM_OPEN[0][0]));
+		पूर्ण
+	पूर्ण
 	hpios_msgxlock_unlock(&msgx_lock);
-}
+पूर्ण
 
-static void outstream_close(struct hpi_message *phm, struct hpi_response *phr,
-	void *h_owner)
-{
+अटल व्योम outstream_बंद(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	व्योम *h_owner)
+अणु
 
-	struct hpi_message hm;
-	struct hpi_response hr;
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
 
 	hpi_init_response(phr, HPI_OBJ_OSTREAM, HPI_OSTREAM_CLOSE, 0);
 
 	hpios_msgxlock_lock(&msgx_lock);
 
-	if (h_owner ==
-		outstream_user_open[phm->adapter_index][phm->
-			obj_index].h_owner) {
+	अगर (h_owner ==
+		outstream_user_खोलो[phm->adapter_index][phm->
+			obj_index].h_owner) अणु
 		/* HPI_DEBUG_LOG(INFO,"closing adapter %d "
 		   "outstream %d owned by %p\n",
 		   phm->wAdapterIndex, phm->wObjIndex, hOwner); */
-		outstream_user_open[phm->adapter_index][phm->
-			obj_index].h_owner = NULL;
+		outstream_user_खोलो[phm->adapter_index][phm->
+			obj_index].h_owner = शून्य;
 		hpios_msgxlock_unlock(&msgx_lock);
 		/* issue a reset */
 		hpi_init_message_response(&hm, &hr, HPI_OBJ_OSTREAM,
 			HPI_OSTREAM_RESET);
 		hm.adapter_index = phm->adapter_index;
 		hm.obj_index = phm->obj_index;
-		hw_entry_point(&hm, &hr);
+		hw_entry_poपूर्णांक(&hm, &hr);
 		hpios_msgxlock_lock(&msgx_lock);
-		if (hr.error) {
-			outstream_user_open[phm->adapter_index][phm->
+		अगर (hr.error) अणु
+			outstream_user_खोलो[phm->adapter_index][phm->
 				obj_index].h_owner = h_owner;
 			phr->error = hr.error;
-		} else {
-			outstream_user_open[phm->adapter_index][phm->
-				obj_index].open_flag = 0;
-			outstream_user_open[phm->adapter_index][phm->
-				obj_index].h_owner = NULL;
-		}
-	} else {
+		पूर्ण अन्यथा अणु
+			outstream_user_खोलो[phm->adapter_index][phm->
+				obj_index].खोलो_flag = 0;
+			outstream_user_खोलो[phm->adapter_index][phm->
+				obj_index].h_owner = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		HPI_DEBUG_LOG(WARNING,
 			"%p trying to close %d outstream %d owned by %p\n",
 			h_owner, phm->adapter_index, phm->obj_index,
-			outstream_user_open[phm->adapter_index][phm->
+			outstream_user_खोलो[phm->adapter_index][phm->
 				obj_index].h_owner);
 		phr->error = HPI_ERROR_OBJ_NOT_OPEN;
-	}
+	पूर्ण
 	hpios_msgxlock_unlock(&msgx_lock);
-}
+पूर्ण
 
-static u16 adapter_prepare(u16 adapter)
-{
-	struct hpi_message hm;
-	struct hpi_response hr;
+अटल u16 adapter_prepare(u16 adapter)
+अणु
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
 
 	/* Open the adapter and streams */
 	u16 i;
@@ -585,170 +586,170 @@ static u16 adapter_prepare(u16 adapter)
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_ADAPTER,
 		HPI_ADAPTER_OPEN);
 	hm.adapter_index = adapter;
-	hw_entry_point(&hm, &hr);
-	memcpy(&rESP_HPI_ADAPTER_OPEN[adapter], &hr,
-		sizeof(rESP_HPI_ADAPTER_OPEN[0]));
-	if (hr.error)
-		return hr.error;
+	hw_entry_poपूर्णांक(&hm, &hr);
+	स_नकल(&rESP_HPI_ADAPTER_OPEN[adapter], &hr,
+		माप(rESP_HPI_ADAPTER_OPEN[0]));
+	अगर (hr.error)
+		वापस hr.error;
 
 	/* call to HPI_ADAPTER_GET_INFO */
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_ADAPTER,
 		HPI_ADAPTER_GET_INFO);
 	hm.adapter_index = adapter;
-	hw_entry_point(&hm, &hr);
-	if (hr.error)
-		return hr.error;
+	hw_entry_poपूर्णांक(&hm, &hr);
+	अगर (hr.error)
+		वापस hr.error;
 
 	aDAPTER_INFO[adapter].num_outstreams = hr.u.ax.info.num_outstreams;
 	aDAPTER_INFO[adapter].num_instreams = hr.u.ax.info.num_instreams;
 	aDAPTER_INFO[adapter].type = hr.u.ax.info.adapter_type;
 
 	/* call to HPI_OSTREAM_OPEN */
-	for (i = 0; i < aDAPTER_INFO[adapter].num_outstreams; i++) {
+	क्रम (i = 0; i < aDAPTER_INFO[adapter].num_outstreams; i++) अणु
 		hpi_init_message_response(&hm, &hr, HPI_OBJ_OSTREAM,
 			HPI_OSTREAM_OPEN);
 		hm.adapter_index = adapter;
 		hm.obj_index = i;
-		hw_entry_point(&hm, &hr);
-		memcpy(&rESP_HPI_OSTREAM_OPEN[adapter][i], &hr,
-			sizeof(rESP_HPI_OSTREAM_OPEN[0][0]));
-		outstream_user_open[adapter][i].open_flag = 0;
-		outstream_user_open[adapter][i].h_owner = NULL;
-	}
+		hw_entry_poपूर्णांक(&hm, &hr);
+		स_नकल(&rESP_HPI_OSTREAM_OPEN[adapter][i], &hr,
+			माप(rESP_HPI_OSTREAM_OPEN[0][0]));
+		outstream_user_खोलो[adapter][i].खोलो_flag = 0;
+		outstream_user_खोलो[adapter][i].h_owner = शून्य;
+	पूर्ण
 
 	/* call to HPI_ISTREAM_OPEN */
-	for (i = 0; i < aDAPTER_INFO[adapter].num_instreams; i++) {
+	क्रम (i = 0; i < aDAPTER_INFO[adapter].num_instreams; i++) अणु
 		hpi_init_message_response(&hm, &hr, HPI_OBJ_ISTREAM,
 			HPI_ISTREAM_OPEN);
 		hm.adapter_index = adapter;
 		hm.obj_index = i;
-		hw_entry_point(&hm, &hr);
-		memcpy(&rESP_HPI_ISTREAM_OPEN[adapter][i], &hr,
-			sizeof(rESP_HPI_ISTREAM_OPEN[0][0]));
-		instream_user_open[adapter][i].open_flag = 0;
-		instream_user_open[adapter][i].h_owner = NULL;
-	}
+		hw_entry_poपूर्णांक(&hm, &hr);
+		स_नकल(&rESP_HPI_ISTREAM_OPEN[adapter][i], &hr,
+			माप(rESP_HPI_ISTREAM_OPEN[0][0]));
+		instream_user_खोलो[adapter][i].खोलो_flag = 0;
+		instream_user_खोलो[adapter][i].h_owner = शून्य;
+	पूर्ण
 
 	/* call to HPI_MIXER_OPEN */
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_MIXER, HPI_MIXER_OPEN);
 	hm.adapter_index = adapter;
-	hw_entry_point(&hm, &hr);
-	memcpy(&rESP_HPI_MIXER_OPEN[adapter], &hr,
-		sizeof(rESP_HPI_MIXER_OPEN[0]));
+	hw_entry_poपूर्णांक(&hm, &hr);
+	स_नकल(&rESP_HPI_MIXER_OPEN[adapter], &hr,
+		माप(rESP_HPI_MIXER_OPEN[0]));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void HPIMSGX__reset(u16 adapter_index)
-{
-	int i;
+अटल व्योम HPIMSGX__reset(u16 adapter_index)
+अणु
+	पूर्णांक i;
 	u16 adapter;
-	struct hpi_response hr;
+	काष्ठा hpi_response hr;
 
-	if (adapter_index == HPIMSGX_ALLADAPTERS) {
-		for (adapter = 0; adapter < HPI_MAX_ADAPTERS; adapter++) {
+	अगर (adapter_index == HPIMSGX_ALLADAPTERS) अणु
+		क्रम (adapter = 0; adapter < HPI_MAX_ADAPTERS; adapter++) अणु
 
 			hpi_init_response(&hr, HPI_OBJ_ADAPTER,
 				HPI_ADAPTER_OPEN, HPI_ERROR_BAD_ADAPTER);
-			memcpy(&rESP_HPI_ADAPTER_OPEN[adapter], &hr,
-				sizeof(rESP_HPI_ADAPTER_OPEN[adapter]));
+			स_नकल(&rESP_HPI_ADAPTER_OPEN[adapter], &hr,
+				माप(rESP_HPI_ADAPTER_OPEN[adapter]));
 
 			hpi_init_response(&hr, HPI_OBJ_MIXER, HPI_MIXER_OPEN,
 				HPI_ERROR_INVALID_OBJ);
-			memcpy(&rESP_HPI_MIXER_OPEN[adapter], &hr,
-				sizeof(rESP_HPI_MIXER_OPEN[adapter]));
+			स_नकल(&rESP_HPI_MIXER_OPEN[adapter], &hr,
+				माप(rESP_HPI_MIXER_OPEN[adapter]));
 
-			for (i = 0; i < HPI_MAX_STREAMS; i++) {
+			क्रम (i = 0; i < HPI_MAX_STREAMS; i++) अणु
 				hpi_init_response(&hr, HPI_OBJ_OSTREAM,
 					HPI_OSTREAM_OPEN,
 					HPI_ERROR_INVALID_OBJ);
-				memcpy(&rESP_HPI_OSTREAM_OPEN[adapter][i],
+				स_नकल(&rESP_HPI_OSTREAM_OPEN[adapter][i],
 					&hr,
-					sizeof(rESP_HPI_OSTREAM_OPEN[adapter]
+					माप(rESP_HPI_OSTREAM_OPEN[adapter]
 						[i]));
 				hpi_init_response(&hr, HPI_OBJ_ISTREAM,
 					HPI_ISTREAM_OPEN,
 					HPI_ERROR_INVALID_OBJ);
-				memcpy(&rESP_HPI_ISTREAM_OPEN[adapter][i],
+				स_नकल(&rESP_HPI_ISTREAM_OPEN[adapter][i],
 					&hr,
-					sizeof(rESP_HPI_ISTREAM_OPEN[adapter]
+					माप(rESP_HPI_ISTREAM_OPEN[adapter]
 						[i]));
-			}
-		}
-	} else if (adapter_index < HPI_MAX_ADAPTERS) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (adapter_index < HPI_MAX_ADAPTERS) अणु
 		rESP_HPI_ADAPTER_OPEN[adapter_index].h.error =
 			HPI_ERROR_BAD_ADAPTER;
 		rESP_HPI_MIXER_OPEN[adapter_index].h.error =
 			HPI_ERROR_INVALID_OBJ;
-		for (i = 0; i < HPI_MAX_STREAMS; i++) {
+		क्रम (i = 0; i < HPI_MAX_STREAMS; i++) अणु
 			rESP_HPI_OSTREAM_OPEN[adapter_index][i].h.error =
 				HPI_ERROR_INVALID_OBJ;
 			rESP_HPI_ISTREAM_OPEN[adapter_index][i].h.error =
 				HPI_ERROR_INVALID_OBJ;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static u16 HPIMSGX__init(struct hpi_message *phm,
-	/* HPI_SUBSYS_CREATE_ADAPTER structure with */
-	/* resource list or NULL=find all */
-	struct hpi_response *phr
+अटल u16 HPIMSGX__init(काष्ठा hpi_message *phm,
+	/* HPI_SUBSYS_CREATE_ADAPTER काष्ठाure with */
+	/* resource list or शून्य=find all */
+	काष्ठा hpi_response *phr
 	/* response from HPI_ADAPTER_GET_INFO */
 	)
-{
-	hpi_handler_func *entry_point_func;
-	struct hpi_response hr;
+अणु
+	hpi_handler_func *entry_poपूर्णांक_func;
+	काष्ठा hpi_response hr;
 
 	/* Init response here so we can pass in previous adapter list */
 	hpi_init_response(&hr, phm->object, phm->function,
 		HPI_ERROR_INVALID_OBJ);
 
-	entry_point_func =
-		hpi_lookup_entry_point_function(phm->u.s.resource.r.pci);
+	entry_poपूर्णांक_func =
+		hpi_lookup_entry_poपूर्णांक_function(phm->u.s.resource.r.pci);
 
-	if (entry_point_func) {
+	अगर (entry_poपूर्णांक_func) अणु
 		HPI_DEBUG_MESSAGE(DEBUG, phm);
-		entry_point_func(phm, &hr);
-	} else {
+		entry_poपूर्णांक_func(phm, &hr);
+	पूर्ण अन्यथा अणु
 		phr->error = HPI_ERROR_PROCESSING_MESSAGE;
-		return phr->error;
-	}
-	if (hr.error == 0) {
+		वापस phr->error;
+	पूर्ण
+	अगर (hr.error == 0) अणु
 		/* the adapter was created successfully
-		   save the mapping for future use */
-		hpi_entry_points[hr.u.s.adapter_index] = entry_point_func;
-		/* prepare adapter (pre-open streams etc.) */
+		   save the mapping क्रम future use */
+		hpi_entry_poपूर्णांकs[hr.u.s.adapter_index] = entry_poपूर्णांक_func;
+		/* prepare adapter (pre-खोलो streams etc.) */
 		HPI_DEBUG_LOG(DEBUG,
 			"HPI_SUBSYS_CREATE_ADAPTER successful,"
 			" preparing adapter\n");
 		adapter_prepare(hr.u.s.adapter_index);
-	}
-	memcpy(phr, &hr, hr.size);
-	return phr->error;
-}
+	पूर्ण
+	स_नकल(phr, &hr, hr.size);
+	वापस phr->error;
+पूर्ण
 
-static void HPIMSGX__cleanup(u16 adapter_index, void *h_owner)
-{
-	int i, adapter, adapter_limit;
+अटल व्योम HPIMSGX__cleanup(u16 adapter_index, व्योम *h_owner)
+अणु
+	पूर्णांक i, adapter, adapter_limit;
 
-	if (!h_owner)
-		return;
+	अगर (!h_owner)
+		वापस;
 
-	if (adapter_index == HPIMSGX_ALLADAPTERS) {
+	अगर (adapter_index == HPIMSGX_ALLADAPTERS) अणु
 		adapter = 0;
 		adapter_limit = HPI_MAX_ADAPTERS;
-	} else {
+	पूर्ण अन्यथा अणु
 		adapter = adapter_index;
 		adapter_limit = adapter + 1;
-	}
+	पूर्ण
 
-	for (; adapter < adapter_limit; adapter++) {
-		/*      printk(KERN_INFO "Cleanup adapter #%d\n",wAdapter); */
-		for (i = 0; i < HPI_MAX_STREAMS; i++) {
-			if (h_owner ==
-				outstream_user_open[adapter][i].h_owner) {
-				struct hpi_message hm;
-				struct hpi_response hr;
+	क्रम (; adapter < adapter_limit; adapter++) अणु
+		/*      prपूर्णांकk(KERN_INFO "Cleanup adapter #%d\n",wAdapter); */
+		क्रम (i = 0; i < HPI_MAX_STREAMS; i++) अणु
+			अगर (h_owner ==
+				outstream_user_खोलो[adapter][i].h_owner) अणु
+				काष्ठा hpi_message hm;
+				काष्ठा hpi_response hr;
 
 				HPI_DEBUG_LOG(DEBUG,
 					"Close adapter %d ostream %d\n",
@@ -758,21 +759,21 @@ static void HPIMSGX__cleanup(u16 adapter_index, void *h_owner)
 					HPI_OBJ_OSTREAM, HPI_OSTREAM_RESET);
 				hm.adapter_index = (u16)adapter;
 				hm.obj_index = (u16)i;
-				hw_entry_point(&hm, &hr);
+				hw_entry_poपूर्णांक(&hm, &hr);
 
 				hm.function = HPI_OSTREAM_HOSTBUFFER_FREE;
-				hw_entry_point(&hm, &hr);
+				hw_entry_poपूर्णांक(&hm, &hr);
 
 				hm.function = HPI_OSTREAM_GROUP_RESET;
-				hw_entry_point(&hm, &hr);
+				hw_entry_poपूर्णांक(&hm, &hr);
 
-				outstream_user_open[adapter][i].open_flag = 0;
-				outstream_user_open[adapter][i].h_owner =
-					NULL;
-			}
-			if (h_owner == instream_user_open[adapter][i].h_owner) {
-				struct hpi_message hm;
-				struct hpi_response hr;
+				outstream_user_खोलो[adapter][i].खोलो_flag = 0;
+				outstream_user_खोलो[adapter][i].h_owner =
+					शून्य;
+			पूर्ण
+			अगर (h_owner == instream_user_खोलो[adapter][i].h_owner) अणु
+				काष्ठा hpi_message hm;
+				काष्ठा hpi_response hr;
 
 				HPI_DEBUG_LOG(DEBUG,
 					"Close adapter %d istream %d\n",
@@ -782,17 +783,17 @@ static void HPIMSGX__cleanup(u16 adapter_index, void *h_owner)
 					HPI_OBJ_ISTREAM, HPI_ISTREAM_RESET);
 				hm.adapter_index = (u16)adapter;
 				hm.obj_index = (u16)i;
-				hw_entry_point(&hm, &hr);
+				hw_entry_poपूर्णांक(&hm, &hr);
 
 				hm.function = HPI_ISTREAM_HOSTBUFFER_FREE;
-				hw_entry_point(&hm, &hr);
+				hw_entry_poपूर्णांक(&hm, &hr);
 
 				hm.function = HPI_ISTREAM_GROUP_RESET;
-				hw_entry_point(&hm, &hr);
+				hw_entry_poपूर्णांक(&hm, &hr);
 
-				instream_user_open[adapter][i].open_flag = 0;
-				instream_user_open[adapter][i].h_owner = NULL;
-			}
-		}
-	}
-}
+				instream_user_खोलो[adapter][i].खोलो_flag = 0;
+				instream_user_खोलो[adapter][i].h_owner = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण

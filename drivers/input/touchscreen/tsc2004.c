@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * TSC2004 touchscreen driver
  *
@@ -6,72 +7,72 @@
  * Copyright (C) 2015 EMAC Inc.
  */
 
-#include <linux/module.h>
-#include <linux/input.h>
-#include <linux/of.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include "tsc200x-core.h"
+#समावेश <linux/module.h>
+#समावेश <linux/input.h>
+#समावेश <linux/of.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश "tsc200x-core.h"
 
-static const struct input_id tsc2004_input_id = {
+अटल स्थिर काष्ठा input_id tsc2004_input_id = अणु
 	.bustype = BUS_I2C,
 	.product = 2004,
-};
+पूर्ण;
 
-static int tsc2004_cmd(struct device *dev, u8 cmd)
-{
+अटल पूर्णांक tsc2004_cmd(काष्ठा device *dev, u8 cmd)
+अणु
 	u8 tx = TSC200X_CMD | TSC200X_CMD_12BIT | cmd;
 	s32 data;
-	struct i2c_client *i2c = to_i2c_client(dev);
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
 
-	data = i2c_smbus_write_byte(i2c, tx);
-	if (data < 0) {
+	data = i2c_smbus_ग_लिखो_byte(i2c, tx);
+	अगर (data < 0) अणु
 		dev_err(dev, "%s: failed, command: %x i2c error: %d\n",
 			__func__, cmd, data);
-		return data;
-	}
+		वापस data;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tsc2004_probe(struct i2c_client *i2c,
-			 const struct i2c_device_id *id)
+अटल पूर्णांक tsc2004_probe(काष्ठा i2c_client *i2c,
+			 स्थिर काष्ठा i2c_device_id *id)
 
-{
-	return tsc200x_probe(&i2c->dev, i2c->irq, &tsc2004_input_id,
+अणु
+	वापस tsc200x_probe(&i2c->dev, i2c->irq, &tsc2004_input_id,
 			     devm_regmap_init_i2c(i2c, &tsc200x_regmap_config),
 			     tsc2004_cmd);
-}
+पूर्ण
 
-static int tsc2004_remove(struct i2c_client *i2c)
-{
-	return tsc200x_remove(&i2c->dev);
-}
+अटल पूर्णांक tsc2004_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	वापस tsc200x_हटाओ(&i2c->dev);
+पूर्ण
 
-static const struct i2c_device_id tsc2004_idtable[] = {
-	{ "tsc2004", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id tsc2004_idtable[] = अणु
+	अणु "tsc2004", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, tsc2004_idtable);
 
-#ifdef CONFIG_OF
-static const struct of_device_id tsc2004_of_match[] = {
-	{ .compatible = "ti,tsc2004" },
-	{ /* sentinel */ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id tsc2004_of_match[] = अणु
+	अणु .compatible = "ti,tsc2004" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tsc2004_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver tsc2004_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver tsc2004_driver = अणु
+	.driver = अणु
 		.name   = "tsc2004",
 		.of_match_table = of_match_ptr(tsc2004_of_match),
 		.pm     = &tsc200x_pm_ops,
-	},
+	पूर्ण,
 	.id_table       = tsc2004_idtable,
 	.probe          = tsc2004_probe,
-	.remove         = tsc2004_remove,
-};
+	.हटाओ         = tsc2004_हटाओ,
+पूर्ण;
 module_i2c_driver(tsc2004_driver);
 
 MODULE_AUTHOR("Michael Welling <mwelling@ieee.org>");

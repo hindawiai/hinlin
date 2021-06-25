@@ -1,14 +1,15 @@
+<शैली गुरु>
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 Vmware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,163 +25,163 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
-#ifndef _TTM_TT_H_
-#define _TTM_TT_H_
+#अगर_अघोषित _TTM_TT_H_
+#घोषणा _TTM_TT_H_
 
-#include <linux/types.h>
-#include <drm/ttm/ttm_caching.h>
+#समावेश <linux/types.h>
+#समावेश <drm/tपंचांग/tपंचांग_caching.h>
 
-struct ttm_bo_device;
-struct ttm_tt;
-struct ttm_resource;
-struct ttm_buffer_object;
-struct ttm_operation_ctx;
+काष्ठा tपंचांग_bo_device;
+काष्ठा tपंचांग_tt;
+काष्ठा tपंचांग_resource;
+काष्ठा tपंचांग_buffer_object;
+काष्ठा tपंचांग_operation_ctx;
 
-#define TTM_PAGE_FLAG_SWAPPED         (1 << 4)
-#define TTM_PAGE_FLAG_ZERO_ALLOC      (1 << 6)
-#define TTM_PAGE_FLAG_SG              (1 << 8)
-#define TTM_PAGE_FLAG_NO_RETRY	      (1 << 9)
+#घोषणा TTM_PAGE_FLAG_SWAPPED         (1 << 4)
+#घोषणा TTM_PAGE_FLAG_ZERO_ALLOC      (1 << 6)
+#घोषणा TTM_PAGE_FLAG_SG              (1 << 8)
+#घोषणा TTM_PAGE_FLAG_NO_RETRY	      (1 << 9)
 
-#define TTM_PAGE_FLAG_PRIV_POPULATED  (1 << 31)
+#घोषणा TTM_PAGE_FLAG_PRIV_POPULATED  (1 << 31)
 
 /**
- * struct ttm_tt
+ * काष्ठा tपंचांग_tt
  *
  * @pages: Array of pages backing the data.
  * @page_flags: see TTM_PAGE_FLAG_*
  * @num_pages: Number of pages in the page array.
- * @sg: for SG objects via dma-buf
+ * @sg: क्रम SG objects via dma-buf
  * @dma_address: The DMA (bus) addresses of the pages
- * @swap_storage: Pointer to shmem struct file for swap storage.
+ * @swap_storage: Poपूर्णांकer to shmem काष्ठा file क्रम swap storage.
  * @pages_list: used by some page allocation backend
  * @caching: The current caching state of the pages.
  *
- * This is a structure holding the pages, caching- and aperture binding
- * status for a buffer object that isn't backed by fixed (VRAM / AGP)
+ * This is a काष्ठाure holding the pages, caching- and aperture binding
+ * status क्रम a buffer object that isn't backed by fixed (VRAM / AGP)
  * memory.
  */
-struct ttm_tt {
-	struct page **pages;
-	uint32_t page_flags;
-	uint32_t num_pages;
-	struct sg_table *sg;
+काष्ठा tपंचांग_tt अणु
+	काष्ठा page **pages;
+	uपूर्णांक32_t page_flags;
+	uपूर्णांक32_t num_pages;
+	काष्ठा sg_table *sg;
 	dma_addr_t *dma_address;
-	struct file *swap_storage;
-	enum ttm_caching caching;
-};
+	काष्ठा file *swap_storage;
+	क्रमागत tपंचांग_caching caching;
+पूर्ण;
 
-static inline bool ttm_tt_is_populated(struct ttm_tt *tt)
-{
-	return tt->page_flags & TTM_PAGE_FLAG_PRIV_POPULATED;
-}
+अटल अंतरभूत bool tपंचांग_tt_is_populated(काष्ठा tपंचांग_tt *tt)
+अणु
+	वापस tt->page_flags & TTM_PAGE_FLAG_PRIV_POPULATED;
+पूर्ण
 
 /**
- * ttm_tt_create
+ * tपंचांग_tt_create
  *
- * @bo: pointer to a struct ttm_buffer_object
- * @zero_alloc: true if allocated pages needs to be zeroed
+ * @bo: poपूर्णांकer to a काष्ठा tपंचांग_buffer_object
+ * @zero_alloc: true अगर allocated pages needs to be zeroed
  *
- * Make sure we have a TTM structure allocated for the given BO.
+ * Make sure we have a TTM काष्ठाure allocated क्रम the given BO.
  * No pages are actually allocated.
  */
-int ttm_tt_create(struct ttm_buffer_object *bo, bool zero_alloc);
+पूर्णांक tपंचांग_tt_create(काष्ठा tपंचांग_buffer_object *bo, bool zero_alloc);
 
 /**
- * ttm_tt_init
+ * tपंचांग_tt_init
  *
- * @ttm: The struct ttm_tt.
- * @bo: The buffer object we create the ttm for.
- * @page_flags: Page flags as identified by TTM_PAGE_FLAG_XX flags.
+ * @tपंचांग: The काष्ठा tपंचांग_tt.
+ * @bo: The buffer object we create the tपंचांग क्रम.
+ * @page_flags: Page flags as identअगरied by TTM_PAGE_FLAG_XX flags.
  * @caching: the desired caching state of the pages
  *
- * Create a struct ttm_tt to back data with system memory pages.
+ * Create a काष्ठा tपंचांग_tt to back data with प्रणाली memory pages.
  * No pages are actually allocated.
  * Returns:
- * NULL: Out of memory.
+ * शून्य: Out of memory.
  */
-int ttm_tt_init(struct ttm_tt *ttm, struct ttm_buffer_object *bo,
-		uint32_t page_flags, enum ttm_caching caching);
-int ttm_sg_tt_init(struct ttm_tt *ttm_dma, struct ttm_buffer_object *bo,
-		   uint32_t page_flags, enum ttm_caching caching);
+पूर्णांक tपंचांग_tt_init(काष्ठा tपंचांग_tt *tपंचांग, काष्ठा tपंचांग_buffer_object *bo,
+		uपूर्णांक32_t page_flags, क्रमागत tपंचांग_caching caching);
+पूर्णांक tपंचांग_sg_tt_init(काष्ठा tपंचांग_tt *tपंचांग_dma, काष्ठा tपंचांग_buffer_object *bo,
+		   uपूर्णांक32_t page_flags, क्रमागत tपंचांग_caching caching);
 
 /**
- * ttm_tt_fini
+ * tपंचांग_tt_fini
  *
- * @ttm: the ttm_tt structure.
+ * @tपंचांग: the tपंचांग_tt काष्ठाure.
  *
- * Free memory of ttm_tt structure
+ * Free memory of tपंचांग_tt काष्ठाure
  */
-void ttm_tt_fini(struct ttm_tt *ttm);
+व्योम tपंचांग_tt_fini(काष्ठा tपंचांग_tt *tपंचांग);
 
 /**
- * ttm_ttm_destroy:
+ * tपंचांग_tपंचांग_destroy:
  *
- * @ttm: The struct ttm_tt.
+ * @tपंचांग: The काष्ठा tपंचांग_tt.
  *
- * Unbind, unpopulate and destroy common struct ttm_tt.
+ * Unbind, unpopulate and destroy common काष्ठा tपंचांग_tt.
  */
-void ttm_tt_destroy(struct ttm_device *bdev, struct ttm_tt *ttm);
+व्योम tपंचांग_tt_destroy(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग);
 
 /**
- * ttm_tt_destroy_common:
+ * tपंचांग_tt_destroy_common:
  *
  * Called from driver to destroy common path.
  */
-void ttm_tt_destroy_common(struct ttm_device *bdev, struct ttm_tt *ttm);
+व्योम tपंचांग_tt_destroy_common(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग);
 
 /**
- * ttm_tt_swapin:
+ * tपंचांग_tt_swapin:
  *
- * @ttm: The struct ttm_tt.
+ * @tपंचांग: The काष्ठा tपंचांग_tt.
  *
- * Swap in a previously swap out ttm_tt.
+ * Swap in a previously swap out tपंचांग_tt.
  */
-int ttm_tt_swapin(struct ttm_tt *ttm);
-int ttm_tt_swapout(struct ttm_device *bdev, struct ttm_tt *ttm,
+पूर्णांक tपंचांग_tt_swapin(काष्ठा tपंचांग_tt *tपंचांग);
+पूर्णांक tपंचांग_tt_swapout(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग,
 		   gfp_t gfp_flags);
 
 /**
- * ttm_tt_populate - allocate pages for a ttm
+ * tपंचांग_tt_populate - allocate pages क्रम a tपंचांग
  *
- * @ttm: Pointer to the ttm_tt structure
+ * @tपंचांग: Poपूर्णांकer to the tपंचांग_tt काष्ठाure
  *
- * Calls the driver method to allocate pages for a ttm
+ * Calls the driver method to allocate pages क्रम a tपंचांग
  */
-int ttm_tt_populate(struct ttm_device *bdev, struct ttm_tt *ttm, struct ttm_operation_ctx *ctx);
+पूर्णांक tपंचांग_tt_populate(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग, काष्ठा tपंचांग_operation_ctx *ctx);
 
 /**
- * ttm_tt_unpopulate - free pages from a ttm
+ * tपंचांग_tt_unpopulate - मुक्त pages from a tपंचांग
  *
- * @ttm: Pointer to the ttm_tt structure
+ * @tपंचांग: Poपूर्णांकer to the tपंचांग_tt काष्ठाure
  *
- * Calls the driver method to free all pages from a ttm
+ * Calls the driver method to मुक्त all pages from a tपंचांग
  */
-void ttm_tt_unpopulate(struct ttm_device *bdev, struct ttm_tt *ttm);
+व्योम tपंचांग_tt_unpopulate(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग);
 
-void ttm_tt_mgr_init(unsigned long num_pages, unsigned long num_dma32_pages);
+व्योम tपंचांग_tt_mgr_init(अचिन्हित दीर्घ num_pages, अचिन्हित दीर्घ num_dma32_pages);
 
-#if IS_ENABLED(CONFIG_AGP)
-#include <linux/agp_backend.h>
+#अगर IS_ENABLED(CONFIG_AGP)
+#समावेश <linux/agp_backend.h>
 
 /**
- * ttm_agp_tt_create
+ * tपंचांग_agp_tt_create
  *
- * @bo: Buffer object we allocate the ttm for.
+ * @bo: Buffer object we allocate the tपंचांग क्रम.
  * @bridge: The agp bridge this device is sitting on.
- * @page_flags: Page flags as identified by TTM_PAGE_FLAG_XX flags.
+ * @page_flags: Page flags as identअगरied by TTM_PAGE_FLAG_XX flags.
  *
  *
  * Create a TTM backend that uses the indicated AGP bridge as an aperture
- * for TT memory. This function uses the linux agpgart interface to
- * bind and unbind memory backing a ttm_tt.
+ * क्रम TT memory. This function uses the linux agpgart पूर्णांकerface to
+ * bind and unbind memory backing a tपंचांग_tt.
  */
-struct ttm_tt *ttm_agp_tt_create(struct ttm_buffer_object *bo,
-				 struct agp_bridge_data *bridge,
-				 uint32_t page_flags);
-int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_resource *bo_mem);
-void ttm_agp_unbind(struct ttm_tt *ttm);
-void ttm_agp_destroy(struct ttm_tt *ttm);
-bool ttm_agp_is_bound(struct ttm_tt *ttm);
-#endif
+काष्ठा tपंचांग_tt *tपंचांग_agp_tt_create(काष्ठा tपंचांग_buffer_object *bo,
+				 काष्ठा agp_bridge_data *bridge,
+				 uपूर्णांक32_t page_flags);
+पूर्णांक tपंचांग_agp_bind(काष्ठा tपंचांग_tt *tपंचांग, काष्ठा tपंचांग_resource *bo_mem);
+व्योम tपंचांग_agp_unbind(काष्ठा tपंचांग_tt *tपंचांग);
+व्योम tपंचांग_agp_destroy(काष्ठा tपंचांग_tt *tपंचांग);
+bool tपंचांग_agp_is_bound(काष्ठा tपंचांग_tt *tपंचांग);
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

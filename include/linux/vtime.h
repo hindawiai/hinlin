@@ -1,162 +1,163 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_KERNEL_VTIME_H
-#define _LINUX_KERNEL_VTIME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_KERNEL_VTIME_H
+#घोषणा _LINUX_KERNEL_VTIME_H
 
-#include <linux/context_tracking_state.h>
-#include <linux/sched.h>
+#समावेश <linux/context_tracking_state.h>
+#समावेश <linux/sched.h>
 
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-#include <asm/vtime.h>
-#endif
-
-/*
- * Common vtime APIs
- */
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING
-extern void vtime_account_kernel(struct task_struct *tsk);
-extern void vtime_account_idle(struct task_struct *tsk);
-#endif /* !CONFIG_VIRT_CPU_ACCOUNTING */
-
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
-extern void arch_vtime_task_switch(struct task_struct *tsk);
-extern void vtime_user_enter(struct task_struct *tsk);
-extern void vtime_user_exit(struct task_struct *tsk);
-extern void vtime_guest_enter(struct task_struct *tsk);
-extern void vtime_guest_exit(struct task_struct *tsk);
-extern void vtime_init_idle(struct task_struct *tsk, int cpu);
-#else /* !CONFIG_VIRT_CPU_ACCOUNTING_GEN  */
-static inline void vtime_user_enter(struct task_struct *tsk) { }
-static inline void vtime_user_exit(struct task_struct *tsk) { }
-static inline void vtime_guest_enter(struct task_struct *tsk) { }
-static inline void vtime_guest_exit(struct task_struct *tsk) { }
-static inline void vtime_init_idle(struct task_struct *tsk, int cpu) { }
-#endif
-
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-extern void vtime_account_irq(struct task_struct *tsk, unsigned int offset);
-extern void vtime_account_softirq(struct task_struct *tsk);
-extern void vtime_account_hardirq(struct task_struct *tsk);
-extern void vtime_flush(struct task_struct *tsk);
-#else /* !CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
-static inline void vtime_account_irq(struct task_struct *tsk, unsigned int offset) { }
-static inline void vtime_account_softirq(struct task_struct *tsk) { }
-static inline void vtime_account_hardirq(struct task_struct *tsk) { }
-static inline void vtime_flush(struct task_struct *tsk) { }
-#endif
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+#समावेश <यंत्र/vसमय.स>
+#पूर्ण_अगर
 
 /*
- * vtime_accounting_enabled_this_cpu() definitions/declarations
+ * Common vसमय APIs
  */
-#if defined(CONFIG_VIRT_CPU_ACCOUNTING_NATIVE)
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING
+बाह्य व्योम vसमय_account_kernel(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम vसमय_account_idle(काष्ठा task_काष्ठा *tsk);
+#पूर्ण_अगर /* !CONFIG_VIRT_CPU_ACCOUNTING */
 
-static inline bool vtime_accounting_enabled_this_cpu(void) { return true; }
-extern void vtime_task_switch(struct task_struct *prev);
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_GEN
+बाह्य व्योम arch_vसमय_प्रकारask_चयन(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम vसमय_user_enter(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम vसमय_user_निकास(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम vसमय_guest_enter(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम vसमय_guest_निकास(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम vसमय_init_idle(काष्ठा task_काष्ठा *tsk, पूर्णांक cpu);
+#अन्यथा /* !CONFIG_VIRT_CPU_ACCOUNTING_GEN  */
+अटल अंतरभूत व्योम vसमय_user_enter(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम vसमय_user_निकास(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम vसमय_guest_enter(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम vसमय_guest_निकास(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम vसमय_init_idle(काष्ठा task_काष्ठा *tsk, पूर्णांक cpu) अणु पूर्ण
+#पूर्ण_अगर
 
-static __always_inline void vtime_account_guest_enter(void)
-{
-	vtime_account_kernel(current);
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+बाह्य व्योम vसमय_account_irq(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक offset);
+बाह्य व्योम vसमय_account_softirq(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम vसमय_account_hardirq(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम vसमय_flush(काष्ठा task_काष्ठा *tsk);
+#अन्यथा /* !CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
+अटल अंतरभूत व्योम vसमय_account_irq(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक offset) अणु पूर्ण
+अटल अंतरभूत व्योम vसमय_account_softirq(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम vसमय_account_hardirq(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम vसमय_flush(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+#पूर्ण_अगर
+
+/*
+ * vसमय_accounting_enabled_this_cpu() definitions/declarations
+ */
+#अगर defined(CONFIG_VIRT_CPU_ACCOUNTING_NATIVE)
+
+अटल अंतरभूत bool vसमय_accounting_enabled_this_cpu(व्योम) अणु वापस true; पूर्ण
+बाह्य व्योम vसमय_प्रकारask_चयन(काष्ठा task_काष्ठा *prev);
+
+अटल __always_अंतरभूत व्योम vसमय_account_guest_enter(व्योम)
+अणु
+	vसमय_account_kernel(current);
 	current->flags |= PF_VCPU;
-}
+पूर्ण
 
-static __always_inline void vtime_account_guest_exit(void)
-{
-	vtime_account_kernel(current);
+अटल __always_अंतरभूत व्योम vसमय_account_guest_निकास(व्योम)
+अणु
+	vसमय_account_kernel(current);
 	current->flags &= ~PF_VCPU;
-}
+पूर्ण
 
-#elif defined(CONFIG_VIRT_CPU_ACCOUNTING_GEN)
+#या_अगर defined(CONFIG_VIRT_CPU_ACCOUNTING_GEN)
 
 /*
- * Checks if vtime is enabled on some CPU. Cputime readers want to be careful
- * in that case and compute the tickless cputime.
- * For now vtime state is tied to context tracking. We might want to decouple
- * those later if necessary.
+ * Checks अगर vसमय is enabled on some CPU. Cpuसमय पढ़ोers want to be careful
+ * in that हाल and compute the tickless cpuसमय.
+ * For now vसमय state is tied to context tracking. We might want to decouple
+ * those later अगर necessary.
  */
-static inline bool vtime_accounting_enabled(void)
-{
-	return context_tracking_enabled();
-}
+अटल अंतरभूत bool vसमय_accounting_enabled(व्योम)
+अणु
+	वापस context_tracking_enabled();
+पूर्ण
 
-static inline bool vtime_accounting_enabled_cpu(int cpu)
-{
-	return context_tracking_enabled_cpu(cpu);
-}
+अटल अंतरभूत bool vसमय_accounting_enabled_cpu(पूर्णांक cpu)
+अणु
+	वापस context_tracking_enabled_cpu(cpu);
+पूर्ण
 
-static inline bool vtime_accounting_enabled_this_cpu(void)
-{
-	return context_tracking_enabled_this_cpu();
-}
+अटल अंतरभूत bool vसमय_accounting_enabled_this_cpu(व्योम)
+अणु
+	वापस context_tracking_enabled_this_cpu();
+पूर्ण
 
-extern void vtime_task_switch_generic(struct task_struct *prev);
+बाह्य व्योम vसमय_प्रकारask_चयन_generic(काष्ठा task_काष्ठा *prev);
 
-static inline void vtime_task_switch(struct task_struct *prev)
-{
-	if (vtime_accounting_enabled_this_cpu())
-		vtime_task_switch_generic(prev);
-}
+अटल अंतरभूत व्योम vसमय_प्रकारask_चयन(काष्ठा task_काष्ठा *prev)
+अणु
+	अगर (vसमय_accounting_enabled_this_cpu())
+		vसमय_प्रकारask_चयन_generic(prev);
+पूर्ण
 
-static __always_inline void vtime_account_guest_enter(void)
-{
-	if (vtime_accounting_enabled_this_cpu())
-		vtime_guest_enter(current);
-	else
+अटल __always_अंतरभूत व्योम vसमय_account_guest_enter(व्योम)
+अणु
+	अगर (vसमय_accounting_enabled_this_cpu())
+		vसमय_guest_enter(current);
+	अन्यथा
 		current->flags |= PF_VCPU;
-}
+पूर्ण
 
-static __always_inline void vtime_account_guest_exit(void)
-{
-	if (vtime_accounting_enabled_this_cpu())
-		vtime_guest_exit(current);
-	else
+अटल __always_अंतरभूत व्योम vसमय_account_guest_निकास(व्योम)
+अणु
+	अगर (vसमय_accounting_enabled_this_cpu())
+		vसमय_guest_निकास(current);
+	अन्यथा
 		current->flags &= ~PF_VCPU;
-}
+पूर्ण
 
-#else /* !CONFIG_VIRT_CPU_ACCOUNTING */
+#अन्यथा /* !CONFIG_VIRT_CPU_ACCOUNTING */
 
-static inline bool vtime_accounting_enabled_this_cpu(void) { return false; }
-static inline void vtime_task_switch(struct task_struct *prev) { }
+अटल अंतरभूत bool vसमय_accounting_enabled_this_cpu(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम vसमय_प्रकारask_चयन(काष्ठा task_काष्ठा *prev) अणु पूर्ण
 
-static __always_inline void vtime_account_guest_enter(void)
-{
+अटल __always_अंतरभूत व्योम vसमय_account_guest_enter(व्योम)
+अणु
 	current->flags |= PF_VCPU;
-}
+पूर्ण
 
-static __always_inline void vtime_account_guest_exit(void)
-{
+अटल __always_अंतरभूत व्योम vसमय_account_guest_निकास(व्योम)
+अणु
 	current->flags &= ~PF_VCPU;
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 
-#ifdef CONFIG_IRQ_TIME_ACCOUNTING
-extern void irqtime_account_irq(struct task_struct *tsk, unsigned int offset);
-#else
-static inline void irqtime_account_irq(struct task_struct *tsk, unsigned int offset) { }
-#endif
+#अगर_घोषित CONFIG_IRQ_TIME_ACCOUNTING
+बाह्य व्योम irqसमय_account_irq(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक offset);
+#अन्यथा
+अटल अंतरभूत व्योम irqसमय_account_irq(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक offset) अणु पूर्ण
+#पूर्ण_अगर
 
-static inline void account_softirq_enter(struct task_struct *tsk)
-{
-	vtime_account_irq(tsk, SOFTIRQ_OFFSET);
-	irqtime_account_irq(tsk, SOFTIRQ_OFFSET);
-}
+अटल अंतरभूत व्योम account_softirq_enter(काष्ठा task_काष्ठा *tsk)
+अणु
+	vसमय_account_irq(tsk, SOFTIRQ_OFFSET);
+	irqसमय_account_irq(tsk, SOFTIRQ_OFFSET);
+पूर्ण
 
-static inline void account_softirq_exit(struct task_struct *tsk)
-{
-	vtime_account_softirq(tsk);
-	irqtime_account_irq(tsk, 0);
-}
+अटल अंतरभूत व्योम account_softirq_निकास(काष्ठा task_काष्ठा *tsk)
+अणु
+	vसमय_account_softirq(tsk);
+	irqसमय_account_irq(tsk, 0);
+पूर्ण
 
-static inline void account_hardirq_enter(struct task_struct *tsk)
-{
-	vtime_account_irq(tsk, HARDIRQ_OFFSET);
-	irqtime_account_irq(tsk, HARDIRQ_OFFSET);
-}
+अटल अंतरभूत व्योम account_hardirq_enter(काष्ठा task_काष्ठा *tsk)
+अणु
+	vसमय_account_irq(tsk, HARसूचीQ_OFFSET);
+	irqसमय_account_irq(tsk, HARसूचीQ_OFFSET);
+पूर्ण
 
-static inline void account_hardirq_exit(struct task_struct *tsk)
-{
-	vtime_account_hardirq(tsk);
-	irqtime_account_irq(tsk, 0);
-}
+अटल अंतरभूत व्योम account_hardirq_निकास(काष्ठा task_काष्ठा *tsk)
+अणु
+	vसमय_account_hardirq(tsk);
+	irqसमय_account_irq(tsk, 0);
+पूर्ण
 
-#endif /* _LINUX_KERNEL_VTIME_H */
+#पूर्ण_अगर /* _LINUX_KERNEL_VTIME_H */

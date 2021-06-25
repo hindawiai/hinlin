@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Based on arch/arm/include/asm/cmpxchg.h
+ * Based on arch/arm/include/यंत्र/cmpxchg.h
  *
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_CMPXCHG_H
-#define __ASM_CMPXCHG_H
+#अगर_अघोषित __ASM_CMPXCHG_H
+#घोषणा __ASM_CMPXCHG_H
 
-#include <linux/build_bug.h>
-#include <linux/compiler.h>
+#समावेश <linux/build_bug.h>
+#समावेश <linux/compiler.h>
 
-#include <asm/barrier.h>
-#include <asm/lse.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/lse.h>
 
 /*
- * We need separate acquire parameters for ll/sc and lse, since the full
- * barrier case is generated as release+dmb for the former and
- * acquire+release for the latter.
+ * We need separate acquire parameters क्रम ll/sc and lse, since the full
+ * barrier हाल is generated as release+dmb क्रम the क्रमmer and
+ * acquire+release क्रम the latter.
  */
-#define __XCHG_CASE(w, sfx, name, sz, mb, nop_lse, acq, acq_lse, rel, cl)	\
-static inline u##sz __xchg_case_##name##sz(u##sz x, volatile void *ptr)		\
-{										\
+#घोषणा __XCHG_CASE(w, sfx, name, sz, mb, nop_lse, acq, acq_lse, rel, cl)	\
+अटल अंतरभूत u##sz __xchg_हाल_##name##sz(u##sz x, अस्थिर व्योम *ptr)		\
+अणु										\
 	u##sz ret;								\
-	unsigned long tmp;							\
+	अचिन्हित दीर्घ पंचांगp;							\
 										\
-	asm volatile(ARM64_LSE_ATOMIC_INSN(					\
+	यंत्र अस्थिर(ARM64_LSE_ATOMIC_INSN(					\
 	/* LL/SC */								\
 	"	prfm	pstl1strm, %2\n"					\
 	"1:	ld" #acq "xr" #sfx "\t%" #w "0, %2\n"				\
@@ -35,12 +36,12 @@ static inline u##sz __xchg_case_##name##sz(u##sz x, volatile void *ptr)		\
 	"	swp" #acq_lse #rel #sfx "\t%" #w "3, %" #w "0, %2\n"		\
 		__nops(3)							\
 	"	" #nop_lse)							\
-	: "=&r" (ret), "=&r" (tmp), "+Q" (*(u##sz *)ptr)			\
+	: "=&r" (ret), "=&r" (पंचांगp), "+Q" (*(u##sz *)ptr)			\
 	: "r" (x)								\
 	: cl);									\
 										\
-	return ret;								\
-}
+	वापस ret;								\
+पूर्ण
 
 __XCHG_CASE(w, b,     ,  8,        ,    ,  ,  ,  ,         )
 __XCHG_CASE(w, h,     , 16,        ,    ,  ,  ,  ,         )
@@ -59,58 +60,58 @@ __XCHG_CASE(w, h,  mb_, 16, dmb ish, nop,  , a, l, "memory")
 __XCHG_CASE(w,  ,  mb_, 32, dmb ish, nop,  , a, l, "memory")
 __XCHG_CASE( ,  ,  mb_, 64, dmb ish, nop,  , a, l, "memory")
 
-#undef __XCHG_CASE
+#अघोषित __XCHG_CASE
 
-#define __XCHG_GEN(sfx)							\
-static __always_inline  unsigned long __xchg##sfx(unsigned long x,	\
-					volatile void *ptr,		\
-					int size)			\
-{									\
-	switch (size) {							\
-	case 1:								\
-		return __xchg_case##sfx##_8(x, ptr);			\
-	case 2:								\
-		return __xchg_case##sfx##_16(x, ptr);			\
-	case 4:								\
-		return __xchg_case##sfx##_32(x, ptr);			\
-	case 8:								\
-		return __xchg_case##sfx##_64(x, ptr);			\
-	default:							\
+#घोषणा __XCHG_GEN(sfx)							\
+अटल __always_अंतरभूत  अचिन्हित दीर्घ __xchg##sfx(अचिन्हित दीर्घ x,	\
+					अस्थिर व्योम *ptr,		\
+					पूर्णांक size)			\
+अणु									\
+	चयन (size) अणु							\
+	हाल 1:								\
+		वापस __xchg_हाल##sfx##_8(x, ptr);			\
+	हाल 2:								\
+		वापस __xchg_हाल##sfx##_16(x, ptr);			\
+	हाल 4:								\
+		वापस __xchg_हाल##sfx##_32(x, ptr);			\
+	हाल 8:								\
+		वापस __xchg_हाल##sfx##_64(x, ptr);			\
+	शेष:							\
 		BUILD_BUG();						\
-	}								\
+	पूर्ण								\
 									\
 	unreachable();							\
-}
+पूर्ण
 
 __XCHG_GEN()
 __XCHG_GEN(_acq)
 __XCHG_GEN(_rel)
 __XCHG_GEN(_mb)
 
-#undef __XCHG_GEN
+#अघोषित __XCHG_GEN
 
-#define __xchg_wrapper(sfx, ptr, x)					\
-({									\
+#घोषणा __xchg_wrapper(sfx, ptr, x)					\
+(अणु									\
 	__typeof__(*(ptr)) __ret;					\
 	__ret = (__typeof__(*(ptr)))					\
-		__xchg##sfx((unsigned long)(x), (ptr), sizeof(*(ptr))); \
+		__xchg##sfx((अचिन्हित दीर्घ)(x), (ptr), माप(*(ptr))); \
 	__ret;								\
-})
+पूर्ण)
 
 /* xchg */
-#define arch_xchg_relaxed(...)	__xchg_wrapper(    , __VA_ARGS__)
-#define arch_xchg_acquire(...)	__xchg_wrapper(_acq, __VA_ARGS__)
-#define arch_xchg_release(...)	__xchg_wrapper(_rel, __VA_ARGS__)
-#define arch_xchg(...)		__xchg_wrapper( _mb, __VA_ARGS__)
+#घोषणा arch_xchg_relaxed(...)	__xchg_wrapper(    , __VA_ARGS__)
+#घोषणा arch_xchg_acquire(...)	__xchg_wrapper(_acq, __VA_ARGS__)
+#घोषणा arch_xchg_release(...)	__xchg_wrapper(_rel, __VA_ARGS__)
+#घोषणा arch_xchg(...)		__xchg_wrapper( _mb, __VA_ARGS__)
 
-#define __CMPXCHG_CASE(name, sz)			\
-static inline u##sz __cmpxchg_case_##name##sz(volatile void *ptr,	\
+#घोषणा __CMPXCHG_CASE(name, sz)			\
+अटल अंतरभूत u##sz __cmpxchg_हाल_##name##sz(अस्थिर व्योम *ptr,	\
 					      u##sz old,		\
 					      u##sz new)		\
-{									\
-	return __lse_ll_sc_body(_cmpxchg_case_##name##sz,		\
+अणु									\
+	वापस __lse_ll_sc_body(_cmpxchg_हाल_##name##sz,		\
 				ptr, old, new);				\
-}
+पूर्ण
 
 __CMPXCHG_CASE(    ,  8)
 __CMPXCHG_CASE(    , 16)
@@ -129,113 +130,113 @@ __CMPXCHG_CASE(mb_, 16)
 __CMPXCHG_CASE(mb_, 32)
 __CMPXCHG_CASE(mb_, 64)
 
-#undef __CMPXCHG_CASE
+#अघोषित __CMPXCHG_CASE
 
-#define __CMPXCHG_DBL(name)						\
-static inline long __cmpxchg_double##name(unsigned long old1,		\
-					 unsigned long old2,		\
-					 unsigned long new1,		\
-					 unsigned long new2,		\
-					 volatile void *ptr)		\
-{									\
-	return __lse_ll_sc_body(_cmpxchg_double##name, 			\
+#घोषणा __CMPXCHG_DBL(name)						\
+अटल अंतरभूत दीर्घ __cmpxchg_द्विगुन##name(अचिन्हित दीर्घ old1,		\
+					 अचिन्हित दीर्घ old2,		\
+					 अचिन्हित दीर्घ new1,		\
+					 अचिन्हित दीर्घ new2,		\
+					 अस्थिर व्योम *ptr)		\
+अणु									\
+	वापस __lse_ll_sc_body(_cmpxchg_द्विगुन##name, 			\
 				old1, old2, new1, new2, ptr);		\
-}
+पूर्ण
 
 __CMPXCHG_DBL(   )
 __CMPXCHG_DBL(_mb)
 
-#undef __CMPXCHG_DBL
+#अघोषित __CMPXCHG_DBL
 
-#define __CMPXCHG_GEN(sfx)						\
-static __always_inline unsigned long __cmpxchg##sfx(volatile void *ptr,	\
-					   unsigned long old,		\
-					   unsigned long new,		\
-					   int size)			\
-{									\
-	switch (size) {							\
-	case 1:								\
-		return __cmpxchg_case##sfx##_8(ptr, old, new);		\
-	case 2:								\
-		return __cmpxchg_case##sfx##_16(ptr, old, new);		\
-	case 4:								\
-		return __cmpxchg_case##sfx##_32(ptr, old, new);		\
-	case 8:								\
-		return __cmpxchg_case##sfx##_64(ptr, old, new);		\
-	default:							\
+#घोषणा __CMPXCHG_GEN(sfx)						\
+अटल __always_अंतरभूत अचिन्हित दीर्घ __cmpxchg##sfx(अस्थिर व्योम *ptr,	\
+					   अचिन्हित दीर्घ old,		\
+					   अचिन्हित दीर्घ new,		\
+					   पूर्णांक size)			\
+अणु									\
+	चयन (size) अणु							\
+	हाल 1:								\
+		वापस __cmpxchg_हाल##sfx##_8(ptr, old, new);		\
+	हाल 2:								\
+		वापस __cmpxchg_हाल##sfx##_16(ptr, old, new);		\
+	हाल 4:								\
+		वापस __cmpxchg_हाल##sfx##_32(ptr, old, new);		\
+	हाल 8:								\
+		वापस __cmpxchg_हाल##sfx##_64(ptr, old, new);		\
+	शेष:							\
 		BUILD_BUG();						\
-	}								\
+	पूर्ण								\
 									\
 	unreachable();							\
-}
+पूर्ण
 
 __CMPXCHG_GEN()
 __CMPXCHG_GEN(_acq)
 __CMPXCHG_GEN(_rel)
 __CMPXCHG_GEN(_mb)
 
-#undef __CMPXCHG_GEN
+#अघोषित __CMPXCHG_GEN
 
-#define __cmpxchg_wrapper(sfx, ptr, o, n)				\
-({									\
+#घोषणा __cmpxchg_wrapper(sfx, ptr, o, n)				\
+(अणु									\
 	__typeof__(*(ptr)) __ret;					\
 	__ret = (__typeof__(*(ptr)))					\
-		__cmpxchg##sfx((ptr), (unsigned long)(o),		\
-				(unsigned long)(n), sizeof(*(ptr)));	\
+		__cmpxchg##sfx((ptr), (अचिन्हित दीर्घ)(o),		\
+				(अचिन्हित दीर्घ)(n), माप(*(ptr)));	\
 	__ret;								\
-})
+पूर्ण)
 
 /* cmpxchg */
-#define arch_cmpxchg_relaxed(...)	__cmpxchg_wrapper(    , __VA_ARGS__)
-#define arch_cmpxchg_acquire(...)	__cmpxchg_wrapper(_acq, __VA_ARGS__)
-#define arch_cmpxchg_release(...)	__cmpxchg_wrapper(_rel, __VA_ARGS__)
-#define arch_cmpxchg(...)		__cmpxchg_wrapper( _mb, __VA_ARGS__)
-#define arch_cmpxchg_local		arch_cmpxchg_relaxed
+#घोषणा arch_cmpxchg_relaxed(...)	__cmpxchg_wrapper(    , __VA_ARGS__)
+#घोषणा arch_cmpxchg_acquire(...)	__cmpxchg_wrapper(_acq, __VA_ARGS__)
+#घोषणा arch_cmpxchg_release(...)	__cmpxchg_wrapper(_rel, __VA_ARGS__)
+#घोषणा arch_cmpxchg(...)		__cmpxchg_wrapper( _mb, __VA_ARGS__)
+#घोषणा arch_cmpxchg_local		arch_cmpxchg_relaxed
 
 /* cmpxchg64 */
-#define arch_cmpxchg64_relaxed		arch_cmpxchg_relaxed
-#define arch_cmpxchg64_acquire		arch_cmpxchg_acquire
-#define arch_cmpxchg64_release		arch_cmpxchg_release
-#define arch_cmpxchg64			arch_cmpxchg
-#define arch_cmpxchg64_local		arch_cmpxchg_local
+#घोषणा arch_cmpxchg64_relaxed		arch_cmpxchg_relaxed
+#घोषणा arch_cmpxchg64_acquire		arch_cmpxchg_acquire
+#घोषणा arch_cmpxchg64_release		arch_cmpxchg_release
+#घोषणा arch_cmpxchg64			arch_cmpxchg
+#घोषणा arch_cmpxchg64_local		arch_cmpxchg_local
 
-/* cmpxchg_double */
-#define system_has_cmpxchg_double()     1
+/* cmpxchg_द्विगुन */
+#घोषणा प्रणाली_has_cmpxchg_द्विगुन()     1
 
-#define __cmpxchg_double_check(ptr1, ptr2)					\
-({										\
-	if (sizeof(*(ptr1)) != 8)						\
+#घोषणा __cmpxchg_द्विगुन_check(ptr1, ptr2)					\
+(अणु										\
+	अगर (माप(*(ptr1)) != 8)						\
 		BUILD_BUG();							\
-	VM_BUG_ON((unsigned long *)(ptr2) - (unsigned long *)(ptr1) != 1);	\
-})
+	VM_BUG_ON((अचिन्हित दीर्घ *)(ptr2) - (अचिन्हित दीर्घ *)(ptr1) != 1);	\
+पूर्ण)
 
-#define arch_cmpxchg_double(ptr1, ptr2, o1, o2, n1, n2)				\
-({										\
-	int __ret;								\
-	__cmpxchg_double_check(ptr1, ptr2);					\
-	__ret = !__cmpxchg_double_mb((unsigned long)(o1), (unsigned long)(o2),	\
-				     (unsigned long)(n1), (unsigned long)(n2),	\
+#घोषणा arch_cmpxchg_द्विगुन(ptr1, ptr2, o1, o2, n1, n2)				\
+(अणु										\
+	पूर्णांक __ret;								\
+	__cmpxchg_द्विगुन_check(ptr1, ptr2);					\
+	__ret = !__cmpxchg_द्विगुन_mb((अचिन्हित दीर्घ)(o1), (अचिन्हित दीर्घ)(o2),	\
+				     (अचिन्हित दीर्घ)(n1), (अचिन्हित दीर्घ)(n2),	\
 				     ptr1);					\
 	__ret;									\
-})
+पूर्ण)
 
-#define arch_cmpxchg_double_local(ptr1, ptr2, o1, o2, n1, n2)			\
-({										\
-	int __ret;								\
-	__cmpxchg_double_check(ptr1, ptr2);					\
-	__ret = !__cmpxchg_double((unsigned long)(o1), (unsigned long)(o2),	\
-				  (unsigned long)(n1), (unsigned long)(n2),	\
+#घोषणा arch_cmpxchg_द्विगुन_local(ptr1, ptr2, o1, o2, n1, n2)			\
+(अणु										\
+	पूर्णांक __ret;								\
+	__cmpxchg_द्विगुन_check(ptr1, ptr2);					\
+	__ret = !__cmpxchg_द्विगुन((अचिन्हित दीर्घ)(o1), (अचिन्हित दीर्घ)(o2),	\
+				  (अचिन्हित दीर्घ)(n1), (अचिन्हित दीर्घ)(n2),	\
 				  ptr1);					\
 	__ret;									\
-})
+पूर्ण)
 
-#define __CMPWAIT_CASE(w, sfx, sz)					\
-static inline void __cmpwait_case_##sz(volatile void *ptr,		\
-				       unsigned long val)		\
-{									\
-	unsigned long tmp;						\
+#घोषणा __CMPWAIT_CASE(w, sfx, sz)					\
+अटल अंतरभूत व्योम __cmpरुको_हाल_##sz(अस्थिर व्योम *ptr,		\
+				       अचिन्हित दीर्घ val)		\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
 									\
-	asm volatile(							\
+	यंत्र अस्थिर(							\
 	"	sevl\n"							\
 	"	wfe\n"							\
 	"	ldxr" #sfx "\t%" #w "[tmp], %[v]\n"			\
@@ -243,43 +244,43 @@ static inline void __cmpwait_case_##sz(volatile void *ptr,		\
 	"	cbnz	%" #w "[tmp], 1f\n"				\
 	"	wfe\n"							\
 	"1:"								\
-	: [tmp] "=&r" (tmp), [v] "+Q" (*(unsigned long *)ptr)		\
+	: [पंचांगp] "=&r" (पंचांगp), [v] "+Q" (*(अचिन्हित दीर्घ *)ptr)		\
 	: [val] "r" (val));						\
-}
+पूर्ण
 
 __CMPWAIT_CASE(w, b, 8);
 __CMPWAIT_CASE(w, h, 16);
 __CMPWAIT_CASE(w,  , 32);
 __CMPWAIT_CASE( ,  , 64);
 
-#undef __CMPWAIT_CASE
+#अघोषित __CMPWAIT_CASE
 
-#define __CMPWAIT_GEN(sfx)						\
-static __always_inline void __cmpwait##sfx(volatile void *ptr,		\
-				  unsigned long val,			\
-				  int size)				\
-{									\
-	switch (size) {							\
-	case 1:								\
-		return __cmpwait_case##sfx##_8(ptr, (u8)val);		\
-	case 2:								\
-		return __cmpwait_case##sfx##_16(ptr, (u16)val);		\
-	case 4:								\
-		return __cmpwait_case##sfx##_32(ptr, val);		\
-	case 8:								\
-		return __cmpwait_case##sfx##_64(ptr, val);		\
-	default:							\
+#घोषणा __CMPWAIT_GEN(sfx)						\
+अटल __always_अंतरभूत व्योम __cmpरुको##sfx(अस्थिर व्योम *ptr,		\
+				  अचिन्हित दीर्घ val,			\
+				  पूर्णांक size)				\
+अणु									\
+	चयन (size) अणु							\
+	हाल 1:								\
+		वापस __cmpरुको_हाल##sfx##_8(ptr, (u8)val);		\
+	हाल 2:								\
+		वापस __cmpरुको_हाल##sfx##_16(ptr, (u16)val);		\
+	हाल 4:								\
+		वापस __cmpरुको_हाल##sfx##_32(ptr, val);		\
+	हाल 8:								\
+		वापस __cmpरुको_हाल##sfx##_64(ptr, val);		\
+	शेष:							\
 		BUILD_BUG();						\
-	}								\
+	पूर्ण								\
 									\
 	unreachable();							\
-}
+पूर्ण
 
 __CMPWAIT_GEN()
 
-#undef __CMPWAIT_GEN
+#अघोषित __CMPWAIT_GEN
 
-#define __cmpwait_relaxed(ptr, val) \
-	__cmpwait((ptr), (unsigned long)(val), sizeof(*(ptr)))
+#घोषणा __cmpरुको_relaxed(ptr, val) \
+	__cmpरुको((ptr), (अचिन्हित दीर्घ)(val), माप(*(ptr)))
 
-#endif	/* __ASM_CMPXCHG_H */
+#पूर्ण_अगर	/* __ASM_CMPXCHG_H */

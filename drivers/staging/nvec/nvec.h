@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * NVEC: NVIDIA compliant embedded controller interface
+ * NVEC: NVIDIA compliant embedded controller पूर्णांकerface
  *
  * Copyright (C) 2011 The AC100 Kernel Team <ac100@lists.launchpad.net>
  *
- * Authors:  Pierre-Hugues Husson <phhusson@free.fr>
+ * Authors:  Pierre-Hugues Husson <phhusson@मुक्त.fr>
  *           Ilya Petrov <ilya.muromec@gmail.com>
  *           Marc Dietrich <marvin24@gmx.de>
  *           Julian Andres Klode <jak@jak-linux.org>
  */
 
-#ifndef __LINUX_MFD_NVEC
-#define __LINUX_MFD_NVEC
+#अगर_अघोषित __LINUX_MFD_NVEC
+#घोषणा __LINUX_MFD_NVEC
 
-#include <linux/atomic.h>
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/notifier.h>
-#include <linux/reset.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
 
-/* NVEC_POOL_SIZE - Size of the pool in &struct nvec_msg */
-#define NVEC_POOL_SIZE	64
+/* NVEC_POOL_SIZE - Size of the pool in &काष्ठा nvec_msg */
+#घोषणा NVEC_POOL_SIZE	64
 
 /*
- * NVEC_MSG_SIZE - Maximum size of the data field of &struct nvec_msg.
+ * NVEC_MSG_SIZE - Maximum size of the data field of &काष्ठा nvec_msg.
  *
  * A message must store up to a SMBus block operation which consists of
  * one command byte, one count byte, and up to 32 payload bytes = 34
  * byte.
  */
-#define NVEC_MSG_SIZE	34
+#घोषणा NVEC_MSG_SIZE	34
 
 /**
- * enum nvec_event_size - The size of an event message
+ * क्रमागत nvec_event_size - The size of an event message
  * @NVEC_2BYTES: The message has one command byte and one data byte
  * @NVEC_3BYTES: The message has one command byte and two data bytes
  * @NVEC_VAR_SIZE: The message has one command byte, one count byte, and has
@@ -46,15 +47,15 @@
  * Events can be fixed or variable sized. This is useless on other message
  * types, which are always variable sized.
  */
-enum nvec_event_size {
+क्रमागत nvec_event_size अणु
 	NVEC_2BYTES,
 	NVEC_3BYTES,
 	NVEC_VAR_SIZE,
-};
+पूर्ण;
 
 /**
- * enum nvec_msg_type - The type of a message
- * @NVEC_SYS: A system request/response
+ * क्रमागत nvec_msg_type - The type of a message
+ * @NVEC_SYS: A प्रणाली request/response
  * @NVEC_BAT: A battery request/response
  * @NVEC_KBD: A keyboard request/response
  * @NVEC_PS2: A mouse request/response
@@ -65,7 +66,7 @@ enum nvec_event_size {
  * Events can be fixed or variable sized. This is useless on other message
  * types, which are always variable sized.
  */
-enum nvec_msg_type {
+क्रमागत nvec_msg_type अणु
 	NVEC_SYS = 1,
 	NVEC_BAT,
 	NVEC_GPIO,
@@ -76,104 +77,104 @@ enum nvec_msg_type {
 	NVEC_OEM0 = 0x0d,
 	NVEC_KB_EVT = 0x80,
 	NVEC_PS2_EVT,
-};
+पूर्ण;
 
 /**
- * struct nvec_msg - A buffer for a single message
- * @node: Messages are part of various lists in a &struct nvec_chip
+ * काष्ठा nvec_msg - A buffer क्रम a single message
+ * @node: Messages are part of various lists in a &काष्ठा nvec_chip
  * @data: The data of the message
  * @size: For TX messages, the number of bytes used in @data
- * @pos:  For RX messages, the current position to write to. For TX messages,
- *        the position to read from.
- * @used: Used for the message pool to mark a message as free/allocated.
+ * @pos:  For RX messages, the current position to ग_लिखो to. For TX messages,
+ *        the position to पढ़ो from.
+ * @used: Used क्रम the message pool to mark a message as मुक्त/allocated.
  *
- * This structure is used to hold outgoing and incoming messages. Outgoing
- * messages have a different format than incoming messages, and that is not
- * documented yet.
+ * This काष्ठाure is used to hold outgoing and incoming messages. Outgoing
+ * messages have a dअगरferent क्रमmat than incoming messages, and that is not
+ * करोcumented yet.
  */
-struct nvec_msg {
-	struct list_head node;
-	unsigned char data[NVEC_MSG_SIZE];
-	unsigned short size;
-	unsigned short pos;
+काष्ठा nvec_msg अणु
+	काष्ठा list_head node;
+	अचिन्हित अक्षर data[NVEC_MSG_SIZE];
+	अचिन्हित लघु size;
+	अचिन्हित लघु pos;
 	atomic_t used;
-};
+पूर्ण;
 
 /**
- * struct nvec_chip - A single connection to an NVIDIA Embedded controller
+ * काष्ठा nvec_chip - A single connection to an NVIDIA Embedded controller
  * @dev: The device
- * @gpio: The same as for &struct nvec_platform_data
+ * @gpio: The same as क्रम &काष्ठा nvec_platक्रमm_data
  * @irq: The IRQ of the I2C device
  * @i2c_addr: The address of the I2C slave
  * @base: The base of the memory mapped region of the I2C device
- * @i2c_clk: The clock of the I2C device
+ * @i2c_clk: The घड़ी of the I2C device
  * @rst: The reset of the I2C device
- * @notifier_list: Notifiers to be called on received messages, see
- *                 nvec_register_notifier()
+ * @notअगरier_list: Notअगरiers to be called on received messages, see
+ *                 nvec_रेजिस्टर_notअगरier()
  * @rx_data: Received messages that have to be processed
- * @tx_data: Messages waiting to be sent to the controller
- * @nvec_status_notifier: Internal notifier (see nvec_status_notifier())
- * @rx_work: A work structure for the RX worker nvec_dispatch()
- * @tx_work: A work structure for the TX worker nvec_request_master()
+ * @tx_data: Messages रुकोing to be sent to the controller
+ * @nvec_status_notअगरier: Internal notअगरier (see nvec_status_notअगरier())
+ * @rx_work: A work काष्ठाure क्रम the RX worker nvec_dispatch()
+ * @tx_work: A work काष्ठाure क्रम the TX worker nvec_request_master()
  * @wq: The work queue in which @rx_work and @tx_work are executed
- * @rx: The message currently being retrieved or %NULL
- * @msg_pool: A pool of messages for allocation
+ * @rx: The message currently being retrieved or %शून्य
+ * @msg_pool: A pool of messages क्रम allocation
  * @tx: The message currently being transferred
- * @tx_scratch: Used for building pseudo messages
+ * @tx_scratch: Used क्रम building pseuकरो messages
  * @ec_transfer: A completion that will be completed once a message has been
  *               received (see nvec_rx_completed())
- * @tx_lock: Spinlock for modifications on @tx_data
- * @rx_lock: Spinlock for modifications on @rx_data
- * @sync_write_mutex: A mutex for nvec_write_sync()
- * @sync_write: A completion to signal that a synchronous message is complete
- * @sync_write_pending: The first two bytes of the request (type and subtype)
+ * @tx_lock: Spinlock क्रम modअगरications on @tx_data
+ * @rx_lock: Spinlock क्रम modअगरications on @rx_data
+ * @sync_ग_लिखो_mutex: A mutex क्रम nvec_ग_लिखो_sync()
+ * @sync_ग_लिखो: A completion to संकेत that a synchronous message is complete
+ * @sync_ग_लिखो_pending: The first two bytes of the request (type and subtype)
  * @last_sync_msg: The last synchronous message.
- * @state: State of our finite state machine used in nvec_interrupt()
+ * @state: State of our finite state machine used in nvec_पूर्णांकerrupt()
  */
-struct nvec_chip {
-	struct device *dev;
-	struct gpio_desc *gpiod;
-	int irq;
+काष्ठा nvec_chip अणु
+	काष्ठा device *dev;
+	काष्ठा gpio_desc *gpiod;
+	पूर्णांक irq;
 	u32 i2c_addr;
-	void __iomem *base;
-	struct clk *i2c_clk;
-	struct reset_control *rst;
-	struct atomic_notifier_head notifier_list;
-	struct list_head rx_data, tx_data;
-	struct notifier_block nvec_status_notifier;
-	struct work_struct rx_work, tx_work;
-	struct workqueue_struct *wq;
-	struct nvec_msg msg_pool[NVEC_POOL_SIZE];
-	struct nvec_msg *rx;
+	व्योम __iomem *base;
+	काष्ठा clk *i2c_clk;
+	काष्ठा reset_control *rst;
+	काष्ठा atomic_notअगरier_head notअगरier_list;
+	काष्ठा list_head rx_data, tx_data;
+	काष्ठा notअगरier_block nvec_status_notअगरier;
+	काष्ठा work_काष्ठा rx_work, tx_work;
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा nvec_msg msg_pool[NVEC_POOL_SIZE];
+	काष्ठा nvec_msg *rx;
 
-	struct nvec_msg *tx;
-	struct nvec_msg tx_scratch;
-	struct completion ec_transfer;
+	काष्ठा nvec_msg *tx;
+	काष्ठा nvec_msg tx_scratch;
+	काष्ठा completion ec_transfer;
 
 	spinlock_t tx_lock, rx_lock;
 
-	/* sync write stuff */
-	struct mutex sync_write_mutex;
-	struct completion sync_write;
-	u16 sync_write_pending;
-	struct nvec_msg *last_sync_msg;
+	/* sync ग_लिखो stuff */
+	काष्ठा mutex sync_ग_लिखो_mutex;
+	काष्ठा completion sync_ग_लिखो;
+	u16 sync_ग_लिखो_pending;
+	काष्ठा nvec_msg *last_sync_msg;
 
-	int state;
-};
+	पूर्णांक state;
+पूर्ण;
 
-int nvec_write_async(struct nvec_chip *nvec, const unsigned char *data,
-		     short size);
+पूर्णांक nvec_ग_लिखो_async(काष्ठा nvec_chip *nvec, स्थिर अचिन्हित अक्षर *data,
+		     लघु size);
 
-int nvec_write_sync(struct nvec_chip *nvec,
-		    const unsigned char *data, short size,
-		    struct nvec_msg **msg);
+पूर्णांक nvec_ग_लिखो_sync(काष्ठा nvec_chip *nvec,
+		    स्थिर अचिन्हित अक्षर *data, लघु size,
+		    काष्ठा nvec_msg **msg);
 
-int nvec_register_notifier(struct nvec_chip *nvec,
-			   struct notifier_block *nb,
-			   unsigned int events);
+पूर्णांक nvec_रेजिस्टर_notअगरier(काष्ठा nvec_chip *nvec,
+			   काष्ठा notअगरier_block *nb,
+			   अचिन्हित पूर्णांक events);
 
-int nvec_unregister_notifier(struct nvec_chip *dev, struct notifier_block *nb);
+पूर्णांक nvec_unरेजिस्टर_notअगरier(काष्ठा nvec_chip *dev, काष्ठा notअगरier_block *nb);
 
-void nvec_msg_free(struct nvec_chip *nvec, struct nvec_msg *msg);
+व्योम nvec_msg_मुक्त(काष्ठा nvec_chip *nvec, काष्ठा nvec_msg *msg);
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* pci.c: UltraSparc PCI controller support.
  *
  * Copyright (C) 1997, 1998, 1999 David S. Miller (davem@redhat.com)
@@ -6,53 +7,53 @@
  * Copyright (C) 1999 Jakub Jelinek   (jj@ultra.linux.cz)
  *
  * OF tree based PCI bus probing taken from the PowerPC port
- * with minor modifications, see there for credits.
+ * with minor modअगरications, see there क्रम credits.
  */
 
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/capability.h>
-#include <linux/errno.h>
-#include <linux/pci.h>
-#include <linux/msi.h>
-#include <linux/irq.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pgtable.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pgtable.h>
 
-#include <linux/uaccess.h>
-#include <asm/irq.h>
-#include <asm/prom.h>
-#include <asm/apb.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/apb.h>
 
-#include "pci_impl.h"
-#include "kernel.h"
+#समावेश "pci_impl.h"
+#समावेश "kernel.h"
 
-/* List of all PCI controllers found in the system. */
-struct pci_pbm_info *pci_pbm_root = NULL;
+/* List of all PCI controllers found in the प्रणाली. */
+काष्ठा pci_pbm_info *pci_pbm_root = शून्य;
 
-/* Each PBM found gets a unique index. */
-int pci_num_pbms = 0;
+/* Each PBM found माला_लो a unique index. */
+पूर्णांक pci_num_pbms = 0;
 
-volatile int pci_poke_in_progress;
-volatile int pci_poke_cpu = -1;
-volatile int pci_poke_faulted;
+अस्थिर पूर्णांक pci_poke_in_progress;
+अस्थिर पूर्णांक pci_poke_cpu = -1;
+अस्थिर पूर्णांक pci_poke_faulted;
 
-static DEFINE_SPINLOCK(pci_poke_lock);
+अटल DEFINE_SPINLOCK(pci_poke_lock);
 
-void pci_config_read8(u8 *addr, u8 *ret)
-{
-	unsigned long flags;
+व्योम pci_config_पढ़ो8(u8 *addr, u8 *ret)
+अणु
+	अचिन्हित दीर्घ flags;
 	u8 byte;
 
 	spin_lock_irqsave(&pci_poke_lock, flags);
 	pci_poke_cpu = smp_processor_id();
 	pci_poke_in_progress = 1;
 	pci_poke_faulted = 0;
-	__asm__ __volatile__("membar #Sync\n\t"
+	__यंत्र__ __अस्थिर__("membar #Sync\n\t"
 			     "lduba [%1] %2, %0\n\t"
 			     "membar #Sync"
 			     : "=r" (byte)
@@ -60,21 +61,21 @@ void pci_config_read8(u8 *addr, u8 *ret)
 			     : "memory");
 	pci_poke_in_progress = 0;
 	pci_poke_cpu = -1;
-	if (!pci_poke_faulted)
+	अगर (!pci_poke_faulted)
 		*ret = byte;
 	spin_unlock_irqrestore(&pci_poke_lock, flags);
-}
+पूर्ण
 
-void pci_config_read16(u16 *addr, u16 *ret)
-{
-	unsigned long flags;
+व्योम pci_config_पढ़ो16(u16 *addr, u16 *ret)
+अणु
+	अचिन्हित दीर्घ flags;
 	u16 word;
 
 	spin_lock_irqsave(&pci_poke_lock, flags);
 	pci_poke_cpu = smp_processor_id();
 	pci_poke_in_progress = 1;
 	pci_poke_faulted = 0;
-	__asm__ __volatile__("membar #Sync\n\t"
+	__यंत्र__ __अस्थिर__("membar #Sync\n\t"
 			     "lduha [%1] %2, %0\n\t"
 			     "membar #Sync"
 			     : "=r" (word)
@@ -82,21 +83,21 @@ void pci_config_read16(u16 *addr, u16 *ret)
 			     : "memory");
 	pci_poke_in_progress = 0;
 	pci_poke_cpu = -1;
-	if (!pci_poke_faulted)
+	अगर (!pci_poke_faulted)
 		*ret = word;
 	spin_unlock_irqrestore(&pci_poke_lock, flags);
-}
+पूर्ण
 
-void pci_config_read32(u32 *addr, u32 *ret)
-{
-	unsigned long flags;
+व्योम pci_config_पढ़ो32(u32 *addr, u32 *ret)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 dword;
 
 	spin_lock_irqsave(&pci_poke_lock, flags);
 	pci_poke_cpu = smp_processor_id();
 	pci_poke_in_progress = 1;
 	pci_poke_faulted = 0;
-	__asm__ __volatile__("membar #Sync\n\t"
+	__यंत्र__ __अस्थिर__("membar #Sync\n\t"
 			     "lduwa [%1] %2, %0\n\t"
 			     "membar #Sync"
 			     : "=r" (dword)
@@ -104,174 +105,174 @@ void pci_config_read32(u32 *addr, u32 *ret)
 			     : "memory");
 	pci_poke_in_progress = 0;
 	pci_poke_cpu = -1;
-	if (!pci_poke_faulted)
+	अगर (!pci_poke_faulted)
 		*ret = dword;
 	spin_unlock_irqrestore(&pci_poke_lock, flags);
-}
+पूर्ण
 
-void pci_config_write8(u8 *addr, u8 val)
-{
-	unsigned long flags;
+व्योम pci_config_ग_लिखो8(u8 *addr, u8 val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pci_poke_lock, flags);
 	pci_poke_cpu = smp_processor_id();
 	pci_poke_in_progress = 1;
 	pci_poke_faulted = 0;
-	__asm__ __volatile__("membar #Sync\n\t"
+	__यंत्र__ __अस्थिर__("membar #Sync\n\t"
 			     "stba %0, [%1] %2\n\t"
 			     "membar #Sync"
-			     : /* no outputs */
+			     : /* no outमाला_दो */
 			     : "r" (val), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
 	pci_poke_in_progress = 0;
 	pci_poke_cpu = -1;
 	spin_unlock_irqrestore(&pci_poke_lock, flags);
-}
+पूर्ण
 
-void pci_config_write16(u16 *addr, u16 val)
-{
-	unsigned long flags;
+व्योम pci_config_ग_लिखो16(u16 *addr, u16 val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pci_poke_lock, flags);
 	pci_poke_cpu = smp_processor_id();
 	pci_poke_in_progress = 1;
 	pci_poke_faulted = 0;
-	__asm__ __volatile__("membar #Sync\n\t"
+	__यंत्र__ __अस्थिर__("membar #Sync\n\t"
 			     "stha %0, [%1] %2\n\t"
 			     "membar #Sync"
-			     : /* no outputs */
+			     : /* no outमाला_दो */
 			     : "r" (val), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
 	pci_poke_in_progress = 0;
 	pci_poke_cpu = -1;
 	spin_unlock_irqrestore(&pci_poke_lock, flags);
-}
+पूर्ण
 
-void pci_config_write32(u32 *addr, u32 val)
-{
-	unsigned long flags;
+व्योम pci_config_ग_लिखो32(u32 *addr, u32 val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pci_poke_lock, flags);
 	pci_poke_cpu = smp_processor_id();
 	pci_poke_in_progress = 1;
 	pci_poke_faulted = 0;
-	__asm__ __volatile__("membar #Sync\n\t"
+	__यंत्र__ __अस्थिर__("membar #Sync\n\t"
 			     "stwa %0, [%1] %2\n\t"
 			     "membar #Sync"
-			     : /* no outputs */
+			     : /* no outमाला_दो */
 			     : "r" (val), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
 	pci_poke_in_progress = 0;
 	pci_poke_cpu = -1;
 	spin_unlock_irqrestore(&pci_poke_lock, flags);
-}
+पूर्ण
 
-static int ofpci_verbose;
+अटल पूर्णांक ofpci_verbose;
 
-static int __init ofpci_debug(char *str)
-{
-	int val = 0;
+अटल पूर्णांक __init ofpci_debug(अक्षर *str)
+अणु
+	पूर्णांक val = 0;
 
 	get_option(&str, &val);
-	if (val)
+	अगर (val)
 		ofpci_verbose = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("ofpci_debug=", ofpci_debug);
 
-static unsigned long pci_parse_of_flags(u32 addr0)
-{
-	unsigned long flags = 0;
+अटल अचिन्हित दीर्घ pci_parse_of_flags(u32 addr0)
+अणु
+	अचिन्हित दीर्घ flags = 0;
 
-	if (addr0 & 0x02000000) {
+	अगर (addr0 & 0x02000000) अणु
 		flags = IORESOURCE_MEM | PCI_BASE_ADDRESS_SPACE_MEMORY;
 		flags |= (addr0 >> 28) & PCI_BASE_ADDRESS_MEM_TYPE_1M;
-		if (addr0 & 0x01000000)
+		अगर (addr0 & 0x01000000)
 			flags |= IORESOURCE_MEM_64
 				 | PCI_BASE_ADDRESS_MEM_TYPE_64;
-		if (addr0 & 0x40000000)
+		अगर (addr0 & 0x40000000)
 			flags |= IORESOURCE_PREFETCH
 				 | PCI_BASE_ADDRESS_MEM_PREFETCH;
-	} else if (addr0 & 0x01000000)
+	पूर्ण अन्यथा अगर (addr0 & 0x01000000)
 		flags = IORESOURCE_IO | PCI_BASE_ADDRESS_SPACE_IO;
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-/* The of_device layer has translated all of the assigned-address properties
- * into physical address resources, we only have to figure out the register
+/* The of_device layer has translated all of the asचिन्हित-address properties
+ * पूर्णांकo physical address resources, we only have to figure out the रेजिस्टर
  * mapping.
  */
-static void pci_parse_of_addrs(struct platform_device *op,
-			       struct device_node *node,
-			       struct pci_dev *dev)
-{
-	struct resource *op_res;
-	const u32 *addrs;
-	int proplen;
+अटल व्योम pci_parse_of_addrs(काष्ठा platक्रमm_device *op,
+			       काष्ठा device_node *node,
+			       काष्ठा pci_dev *dev)
+अणु
+	काष्ठा resource *op_res;
+	स्थिर u32 *addrs;
+	पूर्णांक proplen;
 
 	addrs = of_get_property(node, "assigned-addresses", &proplen);
-	if (!addrs)
-		return;
-	if (ofpci_verbose)
+	अगर (!addrs)
+		वापस;
+	अगर (ofpci_verbose)
 		pci_info(dev, "    parse addresses (%d bytes) @ %p\n",
 			 proplen, addrs);
 	op_res = &op->resource[0];
-	for (; proplen >= 20; proplen -= 20, addrs += 5, op_res++) {
-		struct resource *res;
-		unsigned long flags;
-		int i;
+	क्रम (; proplen >= 20; proplen -= 20, addrs += 5, op_res++) अणु
+		काष्ठा resource *res;
+		अचिन्हित दीर्घ flags;
+		पूर्णांक i;
 
 		flags = pci_parse_of_flags(addrs[0]);
-		if (!flags)
-			continue;
+		अगर (!flags)
+			जारी;
 		i = addrs[0] & 0xff;
-		if (ofpci_verbose)
+		अगर (ofpci_verbose)
 			pci_info(dev, "  start: %llx, end: %llx, i: %x\n",
 				 op_res->start, op_res->end, i);
 
-		if (PCI_BASE_ADDRESS_0 <= i && i <= PCI_BASE_ADDRESS_5) {
+		अगर (PCI_BASE_ADDRESS_0 <= i && i <= PCI_BASE_ADDRESS_5) अणु
 			res = &dev->resource[(i - PCI_BASE_ADDRESS_0) >> 2];
-		} else if (i == dev->rom_base_reg) {
+		पूर्ण अन्यथा अगर (i == dev->rom_base_reg) अणु
 			res = &dev->resource[PCI_ROM_RESOURCE];
 			flags |= IORESOURCE_READONLY | IORESOURCE_SIZEALIGN;
-		} else {
+		पूर्ण अन्यथा अणु
 			pci_err(dev, "bad cfg reg num 0x%x\n", i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		res->start = op_res->start;
 		res->end = op_res->end;
 		res->flags = flags;
 		res->name = pci_name(dev);
 
 		pci_info(dev, "reg 0x%x: %pR\n", i, res);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pci_init_dev_archdata(struct dev_archdata *sd, void *iommu,
-				  void *stc, void *host_controller,
-				  struct platform_device  *op,
-				  int numa_node)
-{
+अटल व्योम pci_init_dev_archdata(काष्ठा dev_archdata *sd, व्योम *iommu,
+				  व्योम *stc, व्योम *host_controller,
+				  काष्ठा platक्रमm_device  *op,
+				  पूर्णांक numa_node)
+अणु
 	sd->iommu = iommu;
 	sd->stc = stc;
 	sd->host_controller = host_controller;
 	sd->op = op;
 	sd->numa_node = numa_node;
-}
+पूर्ण
 
-static struct pci_dev *of_create_pci_dev(struct pci_pbm_info *pbm,
-					 struct device_node *node,
-					 struct pci_bus *bus, int devfn)
-{
-	struct dev_archdata *sd;
-	struct platform_device *op;
-	struct pci_dev *dev;
+अटल काष्ठा pci_dev *of_create_pci_dev(काष्ठा pci_pbm_info *pbm,
+					 काष्ठा device_node *node,
+					 काष्ठा pci_bus *bus, पूर्णांक devfn)
+अणु
+	काष्ठा dev_archdata *sd;
+	काष्ठा platक्रमm_device *op;
+	काष्ठा pci_dev *dev;
 	u32 class;
 
 	dev = pci_alloc_dev(bus);
-	if (!dev)
-		return NULL;
+	अगर (!dev)
+		वापस शून्य;
 
 	op = of_find_device_by_node(node);
 	sd = &dev->dev.archdata;
@@ -282,10 +283,10 @@ static struct pci_dev *of_create_pci_dev(struct pci_pbm_info *pbm,
 	sd->stc = &pbm->stc;
 	sd->numa_node = pbm->numa_node;
 
-	if (of_node_name_eq(node, "ebus"))
+	अगर (of_node_name_eq(node, "ebus"))
 		of_propagate_archdata(op);
 
-	if (ofpci_verbose)
+	अगर (ofpci_verbose)
 		pci_info(bus,"    create device, devfn: %x, type: %s\n",
 			 devfn, of_node_get_device_type(node));
 
@@ -294,103 +295,103 @@ static struct pci_dev *of_create_pci_dev(struct pci_pbm_info *pbm,
 	dev->dev.bus = &pci_bus_type;
 	dev->dev.of_node = of_node_get(node);
 	dev->devfn = devfn;
-	dev->multifunction = 0;		/* maybe a lie? */
+	dev->multअगरunction = 0;		/* maybe a lie? */
 	set_pcie_port_type(dev);
 
 	pci_dev_assign_slot(dev);
-	dev->vendor = of_getintprop_default(node, "vendor-id", 0xffff);
-	dev->device = of_getintprop_default(node, "device-id", 0xffff);
-	dev->subsystem_vendor =
-		of_getintprop_default(node, "subsystem-vendor-id", 0);
-	dev->subsystem_device =
-		of_getintprop_default(node, "subsystem-id", 0);
+	dev->venकरोr = of_getपूर्णांकprop_शेष(node, "vendor-id", 0xffff);
+	dev->device = of_getपूर्णांकprop_शेष(node, "device-id", 0xffff);
+	dev->subप्रणाली_venकरोr =
+		of_getपूर्णांकprop_शेष(node, "subsystem-vendor-id", 0);
+	dev->subप्रणाली_device =
+		of_getपूर्णांकprop_शेष(node, "subsystem-id", 0);
 
 	dev->cfg_size = pci_cfg_space_size(dev);
 
 	/* We can't actually use the firmware value, we have
-	 * to read what is in the register right now.  One
-	 * reason is that in the case of IDE interfaces the
-	 * firmware can sample the value before the the IDE
-	 * interface is programmed into native mode.
+	 * to पढ़ो what is in the रेजिस्टर right now.  One
+	 * reason is that in the हाल of IDE पूर्णांकerfaces the
+	 * firmware can sample the value beक्रमe the the IDE
+	 * पूर्णांकerface is programmed पूर्णांकo native mode.
 	 */
-	pci_read_config_dword(dev, PCI_CLASS_REVISION, &class);
+	pci_पढ़ो_config_dword(dev, PCI_CLASS_REVISION, &class);
 	dev->class = class >> 8;
 	dev->revision = class & 0xff;
 
-	dev_set_name(&dev->dev, "%04x:%02x:%02x.%d", pci_domain_nr(bus),
+	dev_set_name(&dev->dev, "%04x:%02x:%02x.%d", pci_करोमुख्य_nr(bus),
 		dev->bus->number, PCI_SLOT(devfn), PCI_FUNC(devfn));
 
 	/* I have seen IDE devices which will not respond to
-	 * the bmdma simplex check reads if bus mastering is
+	 * the bmdma simplex check पढ़ोs अगर bus mastering is
 	 * disabled.
 	 */
-	if ((dev->class >> 8) == PCI_CLASS_STORAGE_IDE)
+	अगर ((dev->class >> 8) == PCI_CLASS_STORAGE_IDE)
 		pci_set_master(dev);
 
-	dev->current_state = PCI_UNKNOWN;	/* unknown power state */
+	dev->current_state = PCI_UNKNOWN;	/* unknown घातer state */
 	dev->error_state = pci_channel_io_normal;
 	dev->dma_mask = 0xffffffff;
 
-	if (of_node_name_eq(node, "pci")) {
+	अगर (of_node_name_eq(node, "pci")) अणु
 		/* a PCI-PCI bridge */
 		dev->hdr_type = PCI_HEADER_TYPE_BRIDGE;
 		dev->rom_base_reg = PCI_ROM_ADDRESS1;
-	} else if (of_node_is_type(node, "cardbus")) {
+	पूर्ण अन्यथा अगर (of_node_is_type(node, "cardbus")) अणु
 		dev->hdr_type = PCI_HEADER_TYPE_CARDBUS;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev->hdr_type = PCI_HEADER_TYPE_NORMAL;
 		dev->rom_base_reg = PCI_ROM_ADDRESS;
 
 		dev->irq = sd->op->archdata.irqs[0];
-		if (dev->irq == 0xffffffff)
+		अगर (dev->irq == 0xffffffff)
 			dev->irq = PCI_IRQ_NONE;
-	}
+	पूर्ण
 
 	pci_info(dev, "[%04x:%04x] type %02x class %#08x\n",
-		 dev->vendor, dev->device, dev->hdr_type, dev->class);
+		 dev->venकरोr, dev->device, dev->hdr_type, dev->class);
 
 	pci_parse_of_addrs(sd->op, node, dev);
 
-	if (ofpci_verbose)
+	अगर (ofpci_verbose)
 		pci_info(dev, "    adding to system ...\n");
 
 	pci_device_add(dev, bus);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static void apb_calc_first_last(u8 map, u32 *first_p, u32 *last_p)
-{
+अटल व्योम apb_calc_first_last(u8 map, u32 *first_p, u32 *last_p)
+अणु
 	u32 idx, first, last;
 
 	first = 8;
 	last = 0;
-	for (idx = 0; idx < 8; idx++) {
-		if ((map & (1 << idx)) != 0) {
-			if (first > idx)
+	क्रम (idx = 0; idx < 8; idx++) अणु
+		अगर ((map & (1 << idx)) != 0) अणु
+			अगर (first > idx)
 				first = idx;
-			if (last < idx)
+			अगर (last < idx)
 				last = idx;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*first_p = first;
 	*last_p = last;
-}
+पूर्ण
 
-/* Cook up fake bus resources for SUNW,simba PCI bridges which lack
+/* Cook up fake bus resources क्रम SUNW,simba PCI bridges which lack
  * a proper 'ranges' property.
  */
-static void apb_fake_ranges(struct pci_dev *dev,
-			    struct pci_bus *bus,
-			    struct pci_pbm_info *pbm)
-{
-	struct pci_bus_region region;
-	struct resource *res;
+अटल व्योम apb_fake_ranges(काष्ठा pci_dev *dev,
+			    काष्ठा pci_bus *bus,
+			    काष्ठा pci_pbm_info *pbm)
+अणु
+	काष्ठा pci_bus_region region;
+	काष्ठा resource *res;
 	u32 first, last;
 	u8 map;
 
-	pci_read_config_byte(dev, APB_IO_ADDRESS_MAP, &map);
+	pci_पढ़ो_config_byte(dev, APB_IO_ADDRESS_MAP, &map);
 	apb_calc_first_last(map, &first, &last);
 	res = bus->resource[0];
 	res->flags = IORESOURCE_IO;
@@ -398,91 +399,91 @@ static void apb_fake_ranges(struct pci_dev *dev,
 	region.end = (last << 21) + ((1 << 21) - 1);
 	pcibios_bus_to_resource(dev->bus, res, &region);
 
-	pci_read_config_byte(dev, APB_MEM_ADDRESS_MAP, &map);
+	pci_पढ़ो_config_byte(dev, APB_MEM_ADDRESS_MAP, &map);
 	apb_calc_first_last(map, &first, &last);
 	res = bus->resource[1];
 	res->flags = IORESOURCE_MEM;
 	region.start = (first << 29);
 	region.end = (last << 29) + ((1 << 29) - 1);
 	pcibios_bus_to_resource(dev->bus, res, &region);
-}
+पूर्ण
 
-static void pci_of_scan_bus(struct pci_pbm_info *pbm,
-			    struct device_node *node,
-			    struct pci_bus *bus);
+अटल व्योम pci_of_scan_bus(काष्ठा pci_pbm_info *pbm,
+			    काष्ठा device_node *node,
+			    काष्ठा pci_bus *bus);
 
-#define GET_64BIT(prop, i)	((((u64) (prop)[(i)]) << 32) | (prop)[(i)+1])
+#घोषणा GET_64BIT(prop, i)	((((u64) (prop)[(i)]) << 32) | (prop)[(i)+1])
 
-static void of_scan_pci_bridge(struct pci_pbm_info *pbm,
-			       struct device_node *node,
-			       struct pci_dev *dev)
-{
-	struct pci_bus *bus;
-	const u32 *busrange, *ranges;
-	int len, i, simba;
-	struct pci_bus_region region;
-	struct resource *res;
-	unsigned int flags;
+अटल व्योम of_scan_pci_bridge(काष्ठा pci_pbm_info *pbm,
+			       काष्ठा device_node *node,
+			       काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_bus *bus;
+	स्थिर u32 *busrange, *ranges;
+	पूर्णांक len, i, simba;
+	काष्ठा pci_bus_region region;
+	काष्ठा resource *res;
+	अचिन्हित पूर्णांक flags;
 	u64 size;
 
-	if (ofpci_verbose)
+	अगर (ofpci_verbose)
 		pci_info(dev, "of_scan_pci_bridge(%pOF)\n", node);
 
 	/* parse bus-range property */
 	busrange = of_get_property(node, "bus-range", &len);
-	if (busrange == NULL || len != 8) {
+	अगर (busrange == शून्य || len != 8) अणु
 		pci_info(dev, "Can't get bus-range for PCI-PCI bridge %pOF\n",
 		       node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ofpci_verbose)
+	अगर (ofpci_verbose)
 		pci_info(dev, "    Bridge bus range [%u --> %u]\n",
 			 busrange[0], busrange[1]);
 
 	ranges = of_get_property(node, "ranges", &len);
 	simba = 0;
-	if (ranges == NULL) {
-		const char *model = of_get_property(node, "model", NULL);
-		if (model && !strcmp(model, "SUNW,simba"))
+	अगर (ranges == शून्य) अणु
+		स्थिर अक्षर *model = of_get_property(node, "model", शून्य);
+		अगर (model && !म_भेद(model, "SUNW,simba"))
 			simba = 1;
-	}
+	पूर्ण
 
 	bus = pci_add_new_bus(dev->bus, dev, busrange[0]);
-	if (!bus) {
+	अगर (!bus) अणु
 		pci_err(dev, "Failed to create pci bus for %pOF\n",
 			node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bus->primary = dev->bus->number;
 	pci_bus_insert_busn_res(bus, busrange[0], busrange[1]);
 	bus->bridge_ctl = 0;
 
-	if (ofpci_verbose)
+	अगर (ofpci_verbose)
 		pci_info(dev, "    Bridge ranges[%p] simba[%d]\n",
 			 ranges, simba);
 
-	/* parse ranges property, or cook one up by hand for Simba */
+	/* parse ranges property, or cook one up by hand क्रम Simba */
 	/* PCI #address-cells == 3 and #size-cells == 2 always */
 	res = &dev->resource[PCI_BRIDGE_RESOURCES];
-	for (i = 0; i < PCI_NUM_RESOURCES - PCI_BRIDGE_RESOURCES; ++i) {
+	क्रम (i = 0; i < PCI_NUM_RESOURCES - PCI_BRIDGE_RESOURCES; ++i) अणु
 		res->flags = 0;
 		bus->resource[i] = res;
 		++res;
-	}
-	if (simba) {
+	पूर्ण
+	अगर (simba) अणु
 		apb_fake_ranges(dev, bus, pbm);
-		goto after_ranges;
-	} else if (ranges == NULL) {
-		pci_read_bridge_bases(bus);
-		goto after_ranges;
-	}
+		जाओ after_ranges;
+	पूर्ण अन्यथा अगर (ranges == शून्य) अणु
+		pci_पढ़ो_bridge_bases(bus);
+		जाओ after_ranges;
+	पूर्ण
 	i = 1;
-	for (; len >= 32; len -= 32, ranges += 8) {
+	क्रम (; len >= 32; len -= 32, ranges += 8) अणु
 		u64 start;
 
-		if (ofpci_verbose)
+		अगर (ofpci_verbose)
 			pci_info(dev, "    RAW Range[%08x:%08x:%08x:%08x:%08x:%08x:"
 				 "%08x:%08x]\n",
 				 ranges[0], ranges[1], ranges[2], ranges[3],
@@ -490,145 +491,145 @@ static void of_scan_pci_bridge(struct pci_pbm_info *pbm,
 
 		flags = pci_parse_of_flags(ranges[0]);
 		size = GET_64BIT(ranges, 6);
-		if (flags == 0 || size == 0)
-			continue;
+		अगर (flags == 0 || size == 0)
+			जारी;
 
-		/* On PCI-Express systems, PCI bridges that have no devices downstream
+		/* On PCI-Express प्रणालीs, PCI bridges that have no devices करोwnstream
 		 * have a bogus size value where the first 32-bit cell is 0xffffffff.
 		 * This results in a bogus range where start + size overflows.
 		 *
 		 * Just skip these otherwise the kernel will complain when the resource
 		 * tries to be claimed.
 		 */
-		if (size >> 32 == 0xffffffff)
-			continue;
+		अगर (size >> 32 == 0xffffffff)
+			जारी;
 
-		if (flags & IORESOURCE_IO) {
+		अगर (flags & IORESOURCE_IO) अणु
 			res = bus->resource[0];
-			if (res->flags) {
+			अगर (res->flags) अणु
 				pci_err(dev, "ignoring extra I/O range"
 					" for bridge %pOF\n", node);
-				continue;
-			}
-		} else {
-			if (i >= PCI_NUM_RESOURCES - PCI_BRIDGE_RESOURCES) {
+				जारी;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (i >= PCI_NUM_RESOURCES - PCI_BRIDGE_RESOURCES) अणु
 				pci_err(dev, "too many memory ranges"
 					" for bridge %pOF\n", node);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			res = bus->resource[i];
 			++i;
-		}
+		पूर्ण
 
 		res->flags = flags;
 		region.start = start = GET_64BIT(ranges, 1);
 		region.end = region.start + size - 1;
 
-		if (ofpci_verbose)
+		अगर (ofpci_verbose)
 			pci_info(dev, "      Using flags[%08x] start[%016llx] size[%016llx]\n",
 				 flags, start, size);
 
 		pcibios_bus_to_resource(dev->bus, res, &region);
-	}
+	पूर्ण
 after_ranges:
-	sprintf(bus->name, "PCI Bus %04x:%02x", pci_domain_nr(bus),
+	प्र_लिखो(bus->name, "PCI Bus %04x:%02x", pci_करोमुख्य_nr(bus),
 		bus->number);
-	if (ofpci_verbose)
+	अगर (ofpci_verbose)
 		pci_info(dev, "    bus name: %s\n", bus->name);
 
 	pci_of_scan_bus(pbm, node, bus);
-}
+पूर्ण
 
-static void pci_of_scan_bus(struct pci_pbm_info *pbm,
-			    struct device_node *node,
-			    struct pci_bus *bus)
-{
-	struct device_node *child;
-	const u32 *reg;
-	int reglen, devfn, prev_devfn;
-	struct pci_dev *dev;
+अटल व्योम pci_of_scan_bus(काष्ठा pci_pbm_info *pbm,
+			    काष्ठा device_node *node,
+			    काष्ठा pci_bus *bus)
+अणु
+	काष्ठा device_node *child;
+	स्थिर u32 *reg;
+	पूर्णांक reglen, devfn, prev_devfn;
+	काष्ठा pci_dev *dev;
 
-	if (ofpci_verbose)
+	अगर (ofpci_verbose)
 		pci_info(bus, "scan_bus[%pOF] bus no %d\n",
 			 node, bus->number);
 
 	prev_devfn = -1;
-	for_each_child_of_node(node, child) {
-		if (ofpci_verbose)
+	क्रम_each_child_of_node(node, child) अणु
+		अगर (ofpci_verbose)
 			pci_info(bus, "  * %pOF\n", child);
 		reg = of_get_property(child, "reg", &reglen);
-		if (reg == NULL || reglen < 20)
-			continue;
+		अगर (reg == शून्य || reglen < 20)
+			जारी;
 
 		devfn = (reg[0] >> 8) & 0xff;
 
-		/* This is a workaround for some device trees
+		/* This is a workaround क्रम some device trees
 		 * which list PCI devices twice.  On the V100
-		 * for example, device number 3 is listed twice.
+		 * क्रम example, device number 3 is listed twice.
 		 * Once as "pm" and once again as "lomp".
 		 */
-		if (devfn == prev_devfn)
-			continue;
+		अगर (devfn == prev_devfn)
+			जारी;
 		prev_devfn = devfn;
 
-		/* create a new pci_dev for this device */
+		/* create a new pci_dev क्रम this device */
 		dev = of_create_pci_dev(pbm, child, bus, devfn);
-		if (!dev)
-			continue;
-		if (ofpci_verbose)
+		अगर (!dev)
+			जारी;
+		अगर (ofpci_verbose)
 			pci_info(dev, "dev header type: %x\n", dev->hdr_type);
 
-		if (pci_is_bridge(dev))
+		अगर (pci_is_bridge(dev))
 			of_scan_pci_bridge(pbm, child, dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ssize_t
-show_pciobppath_attr(struct device * dev, struct device_attribute * attr, char * buf)
-{
-	struct pci_dev *pdev;
-	struct device_node *dp;
+अटल sमाप_प्रकार
+show_pciobppath_attr(काष्ठा device * dev, काष्ठा device_attribute * attr, अक्षर * buf)
+अणु
+	काष्ठा pci_dev *pdev;
+	काष्ठा device_node *dp;
 
 	pdev = to_pci_dev(dev);
 	dp = pdev->dev.of_node;
 
-	return scnprintf(buf, PAGE_SIZE, "%pOF\n", dp);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%pOF\n", dp);
+पूर्ण
 
-static DEVICE_ATTR(obppath, S_IRUSR | S_IRGRP | S_IROTH, show_pciobppath_attr, NULL);
+अटल DEVICE_ATTR(obppath, S_IRUSR | S_IRGRP | S_IROTH, show_pciobppath_attr, शून्य);
 
-static void pci_bus_register_of_sysfs(struct pci_bus *bus)
-{
-	struct pci_dev *dev;
-	struct pci_bus *child_bus;
-	int err;
+अटल व्योम pci_bus_रेजिस्टर_of_sysfs(काष्ठा pci_bus *bus)
+अणु
+	काष्ठा pci_dev *dev;
+	काष्ठा pci_bus *child_bus;
+	पूर्णांक err;
 
-	list_for_each_entry(dev, &bus->devices, bus_list) {
-		/* we don't really care if we can create this file or
+	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
+		/* we करोn't really care अगर we can create this file or
 		 * not, but we need to assign the result of the call
 		 * or the world will fall under alien invasion and
-		 * everybody will be frozen on a spaceship ready to be
+		 * everybody will be frozen on a spaceship पढ़ोy to be
 		 * eaten on alpha centauri by some green and jelly
 		 * humanoid.
 		 */
 		err = sysfs_create_file(&dev->dev.kobj, &dev_attr_obppath.attr);
-		(void) err;
-	}
-	list_for_each_entry(child_bus, &bus->children, node)
-		pci_bus_register_of_sysfs(child_bus);
-}
+		(व्योम) err;
+	पूर्ण
+	list_क्रम_each_entry(child_bus, &bus->children, node)
+		pci_bus_रेजिस्टर_of_sysfs(child_bus);
+पूर्ण
 
-static void pci_claim_legacy_resources(struct pci_dev *dev)
-{
-	struct pci_bus_region region;
-	struct resource *p, *root, *conflict;
+अटल व्योम pci_claim_legacy_resources(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_bus_region region;
+	काष्ठा resource *p, *root, *conflict;
 
-	if ((dev->class >> 8) != PCI_CLASS_DISPLAY_VGA)
-		return;
+	अगर ((dev->class >> 8) != PCI_CLASS_DISPLAY_VGA)
+		वापस;
 
-	p = kzalloc(sizeof(*p), GFP_KERNEL);
-	if (!p)
-		return;
+	p = kzalloc(माप(*p), GFP_KERNEL);
+	अगर (!p)
+		वापस;
 
 	p->name = "Video RAM area";
 	p->flags = IORESOURCE_MEM | IORESOURCE_BUSY;
@@ -638,67 +639,67 @@ static void pci_claim_legacy_resources(struct pci_dev *dev)
 	pcibios_bus_to_resource(dev->bus, p, &region);
 
 	root = pci_find_parent_resource(dev, p);
-	if (!root) {
+	अगर (!root) अणु
 		pci_info(dev, "can't claim VGA legacy %pR: no compatible bridge window\n", p);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	conflict = request_resource_conflict(root, p);
-	if (conflict) {
+	अगर (conflict) अणु
 		pci_info(dev, "can't claim VGA legacy %pR: address conflict with %s %pR\n",
 			 p, conflict->name, conflict);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	pci_info(dev, "VGA legacy framebuffer %pR\n", p);
-	return;
+	वापस;
 
 err:
-	kfree(p);
-}
+	kमुक्त(p);
+पूर्ण
 
-static void pci_claim_bus_resources(struct pci_bus *bus)
-{
-	struct pci_bus *child_bus;
-	struct pci_dev *dev;
+अटल व्योम pci_claim_bus_resources(काष्ठा pci_bus *bus)
+अणु
+	काष्ठा pci_bus *child_bus;
+	काष्ठा pci_dev *dev;
 
-	list_for_each_entry(dev, &bus->devices, bus_list) {
-		int i;
+	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < PCI_NUM_RESOURCES; i++) {
-			struct resource *r = &dev->resource[i];
+		क्रम (i = 0; i < PCI_NUM_RESOURCES; i++) अणु
+			काष्ठा resource *r = &dev->resource[i];
 
-			if (r->parent || !r->start || !r->flags)
-				continue;
+			अगर (r->parent || !r->start || !r->flags)
+				जारी;
 
-			if (ofpci_verbose)
+			अगर (ofpci_verbose)
 				pci_info(dev, "Claiming Resource %d: %pR\n",
 					 i, r);
 
 			pci_claim_resource(dev, i);
-		}
+		पूर्ण
 
 		pci_claim_legacy_resources(dev);
-	}
+	पूर्ण
 
-	list_for_each_entry(child_bus, &bus->children, node)
+	list_क्रम_each_entry(child_bus, &bus->children, node)
 		pci_claim_bus_resources(child_bus);
-}
+पूर्ण
 
-struct pci_bus *pci_scan_one_pbm(struct pci_pbm_info *pbm,
-				 struct device *parent)
-{
+काष्ठा pci_bus *pci_scan_one_pbm(काष्ठा pci_pbm_info *pbm,
+				 काष्ठा device *parent)
+अणु
 	LIST_HEAD(resources);
-	struct device_node *node = pbm->op->dev.of_node;
-	struct pci_bus *bus;
+	काष्ठा device_node *node = pbm->op->dev.of_node;
+	काष्ठा pci_bus *bus;
 
-	printk("PCI: Scanning PBM %pOF\n", node);
+	prपूर्णांकk("PCI: Scanning PBM %pOF\n", node);
 
 	pci_add_resource_offset(&resources, &pbm->io_space,
 				pbm->io_offset);
 	pci_add_resource_offset(&resources, &pbm->mem_space,
 				pbm->mem_offset);
-	if (pbm->mem64_space.flags)
+	अगर (pbm->mem64_space.flags)
 		pci_add_resource_offset(&resources, &pbm->mem64_space,
 					pbm->mem64_offset);
 	pbm->busn.start = pbm->pci_first_busno;
@@ -707,190 +708,190 @@ struct pci_bus *pci_scan_one_pbm(struct pci_pbm_info *pbm,
 	pci_add_resource(&resources, &pbm->busn);
 	bus = pci_create_root_bus(parent, pbm->pci_first_busno, pbm->pci_ops,
 				  pbm, &resources);
-	if (!bus) {
-		printk(KERN_ERR "Failed to create bus for %pOF\n", node);
-		pci_free_resource_list(&resources);
-		return NULL;
-	}
+	अगर (!bus) अणु
+		prपूर्णांकk(KERN_ERR "Failed to create bus for %pOF\n", node);
+		pci_मुक्त_resource_list(&resources);
+		वापस शून्य;
+	पूर्ण
 
 	pci_of_scan_bus(pbm, node, bus);
-	pci_bus_register_of_sysfs(bus);
+	pci_bus_रेजिस्टर_of_sysfs(bus);
 
 	pci_claim_bus_resources(bus);
 
 	pci_bus_add_devices(bus);
-	return bus;
-}
+	वापस bus;
+पूर्ण
 
-int pcibios_enable_device(struct pci_dev *dev, int mask)
-{
+पूर्णांक pcibios_enable_device(काष्ठा pci_dev *dev, पूर्णांक mask)
+अणु
 	u16 cmd, oldcmd;
-	int i;
+	पूर्णांक i;
 
-	pci_read_config_word(dev, PCI_COMMAND, &cmd);
+	pci_पढ़ो_config_word(dev, PCI_COMMAND, &cmd);
 	oldcmd = cmd;
 
-	for (i = 0; i < PCI_NUM_RESOURCES; i++) {
-		struct resource *res = &dev->resource[i];
+	क्रम (i = 0; i < PCI_NUM_RESOURCES; i++) अणु
+		काष्ठा resource *res = &dev->resource[i];
 
 		/* Only set up the requested stuff */
-		if (!(mask & (1<<i)))
-			continue;
+		अगर (!(mask & (1<<i)))
+			जारी;
 
-		if (res->flags & IORESOURCE_IO)
+		अगर (res->flags & IORESOURCE_IO)
 			cmd |= PCI_COMMAND_IO;
-		if (res->flags & IORESOURCE_MEM)
+		अगर (res->flags & IORESOURCE_MEM)
 			cmd |= PCI_COMMAND_MEMORY;
-	}
+	पूर्ण
 
-	if (cmd != oldcmd) {
+	अगर (cmd != oldcmd) अणु
 		pci_info(dev, "enabling device (%04x -> %04x)\n", oldcmd, cmd);
-		pci_write_config_word(dev, PCI_COMMAND, cmd);
-	}
-	return 0;
-}
+		pci_ग_लिखो_config_word(dev, PCI_COMMAND, cmd);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Platform support for /proc/bus/pci/X/Y mmap()s. */
+/* Platक्रमm support क्रम /proc/bus/pci/X/Y mmap()s. */
 
 /* If the user uses a host-bridge as the PCI device, he may use
- * this to perform a raw mmap() of the I/O or MEM space behind
+ * this to perक्रमm a raw mmap() of the I/O or MEM space behind
  * that controller.
  *
- * This can be useful for execution of x86 PCI bios initialization code
- * on a PCI card, like the xfree86 int10 stuff does.
+ * This can be useful क्रम execution of x86 PCI bios initialization code
+ * on a PCI card, like the xमुक्त86 पूर्णांक10 stuff करोes.
  */
-static int __pci_mmap_make_offset_bus(struct pci_dev *pdev, struct vm_area_struct *vma,
-				      enum pci_mmap_state mmap_state)
-{
-	struct pci_pbm_info *pbm = pdev->dev.archdata.host_controller;
-	unsigned long space_size, user_offset, user_size;
+अटल पूर्णांक __pci_mmap_make_offset_bus(काष्ठा pci_dev *pdev, काष्ठा vm_area_काष्ठा *vma,
+				      क्रमागत pci_mmap_state mmap_state)
+अणु
+	काष्ठा pci_pbm_info *pbm = pdev->dev.archdata.host_controller;
+	अचिन्हित दीर्घ space_size, user_offset, user_size;
 
-	if (mmap_state == pci_mmap_io) {
+	अगर (mmap_state == pci_mmap_io) अणु
 		space_size = resource_size(&pbm->io_space);
-	} else {
+	पूर्ण अन्यथा अणु
 		space_size = resource_size(&pbm->mem_space);
-	}
+	पूर्ण
 
 	/* Make sure the request is in range. */
 	user_offset = vma->vm_pgoff << PAGE_SHIFT;
 	user_size = vma->vm_end - vma->vm_start;
 
-	if (user_offset >= space_size ||
+	अगर (user_offset >= space_size ||
 	    (user_offset + user_size) > space_size)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (mmap_state == pci_mmap_io) {
+	अगर (mmap_state == pci_mmap_io) अणु
 		vma->vm_pgoff = (pbm->io_space.start +
 				 user_offset) >> PAGE_SHIFT;
-	} else {
+	पूर्ण अन्यथा अणु
 		vma->vm_pgoff = (pbm->mem_space.start +
 				 user_offset) >> PAGE_SHIFT;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Adjust vm_pgoff of VMA such that it is the physical page offset
- * corresponding to the 32-bit pci bus offset for DEV requested by the user.
+ * corresponding to the 32-bit pci bus offset क्रम DEV requested by the user.
  *
- * Basically, the user finds the base address for his device which he wishes
- * to mmap.  They read the 32-bit value from the config space base register,
- * add whatever PAGE_SIZE multiple offset they wish, and feed this into the
- * offset parameter of mmap on /proc/bus/pci/XXX for that device.
+ * Basically, the user finds the base address क्रम his device which he wishes
+ * to mmap.  They पढ़ो the 32-bit value from the config space base रेजिस्टर,
+ * add whatever PAGE_SIZE multiple offset they wish, and feed this पूर्णांकo the
+ * offset parameter of mmap on /proc/bus/pci/XXX क्रम that device.
  *
  * Returns negative error code on failure, zero on success.
  */
-static int __pci_mmap_make_offset(struct pci_dev *pdev,
-				  struct vm_area_struct *vma,
-				  enum pci_mmap_state mmap_state)
-{
-	unsigned long user_paddr, user_size;
-	int i, err;
+अटल पूर्णांक __pci_mmap_make_offset(काष्ठा pci_dev *pdev,
+				  काष्ठा vm_area_काष्ठा *vma,
+				  क्रमागत pci_mmap_state mmap_state)
+अणु
+	अचिन्हित दीर्घ user_paddr, user_size;
+	पूर्णांक i, err;
 
 	/* First compute the physical address in vma->vm_pgoff,
 	 * making sure the user offset is within range in the
 	 * appropriate PCI space.
 	 */
 	err = __pci_mmap_make_offset_bus(pdev, vma, mmap_state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* If this is a mapping on a host bridge, any address
 	 * is OK.
 	 */
-	if ((pdev->class >> 8) == PCI_CLASS_BRIDGE_HOST)
-		return err;
+	अगर ((pdev->class >> 8) == PCI_CLASS_BRIDGE_HOST)
+		वापस err;
 
-	/* Otherwise make sure it's in the range for one of the
+	/* Otherwise make sure it's in the range क्रम one of the
 	 * device's resources.
 	 */
 	user_paddr = vma->vm_pgoff << PAGE_SHIFT;
 	user_size = vma->vm_end - vma->vm_start;
 
-	for (i = 0; i <= PCI_ROM_RESOURCE; i++) {
-		struct resource *rp = &pdev->resource[i];
-		resource_size_t aligned_end;
+	क्रम (i = 0; i <= PCI_ROM_RESOURCE; i++) अणु
+		काष्ठा resource *rp = &pdev->resource[i];
+		resource_माप_प्रकार aligned_end;
 
 		/* Active? */
-		if (!rp->flags)
-			continue;
+		अगर (!rp->flags)
+			जारी;
 
 		/* Same type? */
-		if (i == PCI_ROM_RESOURCE) {
-			if (mmap_state != pci_mmap_mem)
-				continue;
-		} else {
-			if ((mmap_state == pci_mmap_io &&
+		अगर (i == PCI_ROM_RESOURCE) अणु
+			अगर (mmap_state != pci_mmap_mem)
+				जारी;
+		पूर्ण अन्यथा अणु
+			अगर ((mmap_state == pci_mmap_io &&
 			     (rp->flags & IORESOURCE_IO) == 0) ||
 			    (mmap_state == pci_mmap_mem &&
 			     (rp->flags & IORESOURCE_MEM) == 0))
-				continue;
-		}
+				जारी;
+		पूर्ण
 
 		/* Align the resource end to the next page address.
-		 * PAGE_SIZE intentionally added instead of (PAGE_SIZE - 1),
+		 * PAGE_SIZE पूर्णांकentionally added instead of (PAGE_SIZE - 1),
 		 * because actually we need the address of the next byte
 		 * after rp->end.
 		 */
 		aligned_end = (rp->end + PAGE_SIZE) & PAGE_MASK;
 
-		if ((rp->start <= user_paddr) &&
+		अगर ((rp->start <= user_paddr) &&
 		    (user_paddr + user_size) <= aligned_end)
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	if (i > PCI_ROM_RESOURCE)
-		return -EINVAL;
+	अगर (i > PCI_ROM_RESOURCE)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set vm_page_prot of VMA, as appropriate for this architecture, for a pci
+/* Set vm_page_prot of VMA, as appropriate क्रम this architecture, क्रम a pci
  * device mapping.
  */
-static void __pci_mmap_set_pgprot(struct pci_dev *dev, struct vm_area_struct *vma,
-					     enum pci_mmap_state mmap_state)
-{
-	/* Our io_remap_pfn_range takes care of this, do nothing.  */
-}
+अटल व्योम __pci_mmap_set_pgprot(काष्ठा pci_dev *dev, काष्ठा vm_area_काष्ठा *vma,
+					     क्रमागत pci_mmap_state mmap_state)
+अणु
+	/* Our io_remap_pfn_range takes care of this, करो nothing.  */
+पूर्ण
 
-/* Perform the actual remap of the pages for a PCI device mapping, as appropriate
- * for this architecture.  The region in the process to map is described by vm_start
+/* Perक्रमm the actual remap of the pages क्रम a PCI device mapping, as appropriate
+ * क्रम this architecture.  The region in the process to map is described by vm_start
  * and vm_end members of VMA, the base physical address is found in vm_pgoff.
- * The pci device structure is provided so that architectures may make mapping
+ * The pci device काष्ठाure is provided so that architectures may make mapping
  * decisions on a per-device or per-bus basis.
  *
  * Returns a negative error code on failure, zero on success.
  */
-int pci_mmap_page_range(struct pci_dev *dev, int bar,
-			struct vm_area_struct *vma,
-			enum pci_mmap_state mmap_state, int write_combine)
-{
-	int ret;
+पूर्णांक pci_mmap_page_range(काष्ठा pci_dev *dev, पूर्णांक bar,
+			काष्ठा vm_area_काष्ठा *vma,
+			क्रमागत pci_mmap_state mmap_state, पूर्णांक ग_लिखो_combine)
+अणु
+	पूर्णांक ret;
 
 	ret = __pci_mmap_make_offset(dev, vma, mmap_state);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	__pci_mmap_set_pgprot(dev, vma, mmap_state);
 
@@ -899,254 +900,254 @@ int pci_mmap_page_range(struct pci_dev *dev, int bar,
 				 vma->vm_pgoff,
 				 vma->vm_end - vma->vm_start,
 				 vma->vm_page_prot);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_NUMA
-int pcibus_to_node(struct pci_bus *pbus)
-{
-	struct pci_pbm_info *pbm = pbus->sysdata;
+#अगर_घोषित CONFIG_NUMA
+पूर्णांक pcibus_to_node(काष्ठा pci_bus *pbus)
+अणु
+	काष्ठा pci_pbm_info *pbm = pbus->sysdata;
 
-	return pbm->numa_node;
-}
+	वापस pbm->numa_node;
+पूर्ण
 EXPORT_SYMBOL(pcibus_to_node);
-#endif
+#पूर्ण_अगर
 
-/* Return the domain number for this pci bus */
+/* Return the करोमुख्य number क्रम this pci bus */
 
-int pci_domain_nr(struct pci_bus *pbus)
-{
-	struct pci_pbm_info *pbm = pbus->sysdata;
-	int ret;
+पूर्णांक pci_करोमुख्य_nr(काष्ठा pci_bus *pbus)
+अणु
+	काष्ठा pci_pbm_info *pbm = pbus->sysdata;
+	पूर्णांक ret;
 
-	if (!pbm) {
+	अगर (!pbm) अणु
 		ret = -ENXIO;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = pbm->index;
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(pci_domain_nr);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(pci_करोमुख्य_nr);
 
-#ifdef CONFIG_PCI_MSI
-int arch_setup_msi_irq(struct pci_dev *pdev, struct msi_desc *desc)
-{
-	struct pci_pbm_info *pbm = pdev->dev.archdata.host_controller;
-	unsigned int irq;
+#अगर_घोषित CONFIG_PCI_MSI
+पूर्णांक arch_setup_msi_irq(काष्ठा pci_dev *pdev, काष्ठा msi_desc *desc)
+अणु
+	काष्ठा pci_pbm_info *pbm = pdev->dev.archdata.host_controller;
+	अचिन्हित पूर्णांक irq;
 
-	if (!pbm->setup_msi_irq)
-		return -EINVAL;
+	अगर (!pbm->setup_msi_irq)
+		वापस -EINVAL;
 
-	return pbm->setup_msi_irq(&irq, pdev, desc);
-}
+	वापस pbm->setup_msi_irq(&irq, pdev, desc);
+पूर्ण
 
-void arch_teardown_msi_irq(unsigned int irq)
-{
-	struct msi_desc *entry = irq_get_msi_desc(irq);
-	struct pci_dev *pdev = msi_desc_to_pci_dev(entry);
-	struct pci_pbm_info *pbm = pdev->dev.archdata.host_controller;
+व्योम arch_tearकरोwn_msi_irq(अचिन्हित पूर्णांक irq)
+अणु
+	काष्ठा msi_desc *entry = irq_get_msi_desc(irq);
+	काष्ठा pci_dev *pdev = msi_desc_to_pci_dev(entry);
+	काष्ठा pci_pbm_info *pbm = pdev->dev.archdata.host_controller;
 
-	if (pbm->teardown_msi_irq)
-		pbm->teardown_msi_irq(irq, pdev);
-}
-#endif /* !(CONFIG_PCI_MSI) */
+	अगर (pbm->tearकरोwn_msi_irq)
+		pbm->tearकरोwn_msi_irq(irq, pdev);
+पूर्ण
+#पूर्ण_अगर /* !(CONFIG_PCI_MSI) */
 
-/* ALI sound chips generate 31-bits of DMA, a special register
+/* ALI sound chips generate 31-bits of DMA, a special रेजिस्टर
  * determines what bit 31 is emitted as.
  */
-int ali_sound_dma_hack(struct device *dev, u64 device_mask)
-{
-	struct iommu *iommu = dev->archdata.iommu;
-	struct pci_dev *ali_isa_bridge;
+पूर्णांक ali_sound_dma_hack(काष्ठा device *dev, u64 device_mask)
+अणु
+	काष्ठा iommu *iommu = dev->archdata.iommu;
+	काष्ठा pci_dev *ali_isa_bridge;
 	u8 val;
 
-	if (!dev_is_pci(dev))
-		return 0;
+	अगर (!dev_is_pci(dev))
+		वापस 0;
 
-	if (to_pci_dev(dev)->vendor != PCI_VENDOR_ID_AL ||
+	अगर (to_pci_dev(dev)->venकरोr != PCI_VENDOR_ID_AL ||
 	    to_pci_dev(dev)->device != PCI_DEVICE_ID_AL_M5451 ||
 	    device_mask != 0x7fffffff)
-		return 0;
+		वापस 0;
 
 	ali_isa_bridge = pci_get_device(PCI_VENDOR_ID_AL,
 					 PCI_DEVICE_ID_AL_M1533,
-					 NULL);
+					 शून्य);
 
-	pci_read_config_byte(ali_isa_bridge, 0x7e, &val);
-	if (iommu->dma_addr_mask & 0x80000000)
+	pci_पढ़ो_config_byte(ali_isa_bridge, 0x7e, &val);
+	अगर (iommu->dma_addr_mask & 0x80000000)
 		val |= 0x01;
-	else
+	अन्यथा
 		val &= ~0x01;
-	pci_write_config_byte(ali_isa_bridge, 0x7e, val);
+	pci_ग_लिखो_config_byte(ali_isa_bridge, 0x7e, val);
 	pci_dev_put(ali_isa_bridge);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void pci_resource_to_user(const struct pci_dev *pdev, int bar,
-			  const struct resource *rp, resource_size_t *start,
-			  resource_size_t *end)
-{
-	struct pci_bus_region region;
+व्योम pci_resource_to_user(स्थिर काष्ठा pci_dev *pdev, पूर्णांक bar,
+			  स्थिर काष्ठा resource *rp, resource_माप_प्रकार *start,
+			  resource_माप_प्रकार *end)
+अणु
+	काष्ठा pci_bus_region region;
 
 	/*
 	 * "User" addresses are shown in /sys/devices/pci.../.../resource
-	 * and /proc/bus/pci/devices and used as mmap offsets for
+	 * and /proc/bus/pci/devices and used as mmap offsets क्रम
 	 * /proc/bus/pci/BB/DD.F files (see proc_bus_pci_mmap()).
 	 *
 	 * On sparc, these are PCI bus addresses, i.e., raw BAR values.
 	 */
-	pcibios_resource_to_bus(pdev->bus, &region, (struct resource *) rp);
+	pcibios_resource_to_bus(pdev->bus, &region, (काष्ठा resource *) rp);
 	*start = region.start;
 	*end = region.end;
-}
+पूर्ण
 
-void pcibios_set_master(struct pci_dev *dev)
-{
+व्योम pcibios_set_master(काष्ठा pci_dev *dev)
+अणु
 	/* No special bus mastering setup handling */
-}
+पूर्ण
 
-#ifdef CONFIG_PCI_IOV
-int pcibios_add_device(struct pci_dev *dev)
-{
-	struct pci_dev *pdev;
+#अगर_घोषित CONFIG_PCI_IOV
+पूर्णांक pcibios_add_device(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_dev *pdev;
 
-	/* Add sriov arch specific initialization here.
+	/* Add sriov arch specअगरic initialization here.
 	 * Copy dev_archdata from PF to VF
 	 */
-	if (dev->is_virtfn) {
-		struct dev_archdata *psd;
+	अगर (dev->is_virtfn) अणु
+		काष्ठा dev_archdata *psd;
 
 		pdev = dev->physfn;
 		psd = &pdev->dev.archdata;
 		pci_init_dev_archdata(&dev->dev.archdata, psd->iommu,
-				      psd->stc, psd->host_controller, NULL,
+				      psd->stc, psd->host_controller, शून्य,
 				      psd->numa_node);
-	}
-	return 0;
-}
-#endif /* CONFIG_PCI_IOV */
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_IOV */
 
-static int __init pcibios_init(void)
-{
+अटल पूर्णांक __init pcibios_init(व्योम)
+अणु
 	pci_dfl_cache_line_size = 64 >> 2;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(pcibios_init);
 
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 
-#define SLOT_NAME_SIZE  11  /* Max decimal digits + null in u32 */
+#घोषणा SLOT_NAME_SIZE  11  /* Max decimal digits + null in u32 */
 
-static void pcie_bus_slot_names(struct pci_bus *pbus)
-{
-	struct pci_dev *pdev;
-	struct pci_bus *bus;
+अटल व्योम pcie_bus_slot_names(काष्ठा pci_bus *pbus)
+अणु
+	काष्ठा pci_dev *pdev;
+	काष्ठा pci_bus *bus;
 
-	list_for_each_entry(pdev, &pbus->devices, bus_list) {
-		char name[SLOT_NAME_SIZE];
-		struct pci_slot *pci_slot;
-		const u32 *slot_num;
-		int len;
+	list_क्रम_each_entry(pdev, &pbus->devices, bus_list) अणु
+		अक्षर name[SLOT_NAME_SIZE];
+		काष्ठा pci_slot *pci_slot;
+		स्थिर u32 *slot_num;
+		पूर्णांक len;
 
 		slot_num = of_get_property(pdev->dev.of_node,
 					   "physical-slot#", &len);
 
-		if (slot_num == NULL || len != 4)
-			continue;
+		अगर (slot_num == शून्य || len != 4)
+			जारी;
 
-		snprintf(name, sizeof(name), "%u", slot_num[0]);
-		pci_slot = pci_create_slot(pbus, slot_num[0], name, NULL);
+		snम_लिखो(name, माप(name), "%u", slot_num[0]);
+		pci_slot = pci_create_slot(pbus, slot_num[0], name, शून्य);
 
-		if (IS_ERR(pci_slot))
+		अगर (IS_ERR(pci_slot))
 			pr_err("PCI: pci_create_slot returned %ld.\n",
 			       PTR_ERR(pci_slot));
-	}
+	पूर्ण
 
-	list_for_each_entry(bus, &pbus->children, node)
+	list_क्रम_each_entry(bus, &pbus->children, node)
 		pcie_bus_slot_names(bus);
-}
+पूर्ण
 
-static void pci_bus_slot_names(struct device_node *node, struct pci_bus *bus)
-{
-	const struct pci_slot_names {
+अटल व्योम pci_bus_slot_names(काष्ठा device_node *node, काष्ठा pci_bus *bus)
+अणु
+	स्थिर काष्ठा pci_slot_names अणु
 		u32	slot_mask;
-		char	names[0];
-	} *prop;
-	const char *sp;
-	int len, i;
+		अक्षर	names[0];
+	पूर्ण *prop;
+	स्थिर अक्षर *sp;
+	पूर्णांक len, i;
 	u32 mask;
 
 	prop = of_get_property(node, "slot-names", &len);
-	if (!prop)
-		return;
+	अगर (!prop)
+		वापस;
 
 	mask = prop->slot_mask;
 	sp = prop->names;
 
-	if (ofpci_verbose)
+	अगर (ofpci_verbose)
 		pci_info(bus, "Making slots for [%pOF] mask[0x%02x]\n",
 			 node, mask);
 
 	i = 0;
-	while (mask) {
-		struct pci_slot *pci_slot;
+	जबतक (mask) अणु
+		काष्ठा pci_slot *pci_slot;
 		u32 this_bit = 1 << i;
 
-		if (!(mask & this_bit)) {
+		अगर (!(mask & this_bit)) अणु
 			i++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (ofpci_verbose)
+		अगर (ofpci_verbose)
 			pci_info(bus, "Making slot [%s]\n", sp);
 
-		pci_slot = pci_create_slot(bus, i, sp, NULL);
-		if (IS_ERR(pci_slot))
+		pci_slot = pci_create_slot(bus, i, sp, शून्य);
+		अगर (IS_ERR(pci_slot))
 			pci_err(bus, "pci_create_slot returned %ld\n",
 				PTR_ERR(pci_slot));
 
-		sp += strlen(sp) + 1;
+		sp += म_माप(sp) + 1;
 		mask &= ~this_bit;
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init of_pci_slot_init(void)
-{
-	struct pci_bus *pbus = NULL;
+अटल पूर्णांक __init of_pci_slot_init(व्योम)
+अणु
+	काष्ठा pci_bus *pbus = शून्य;
 
-	while ((pbus = pci_find_next_bus(pbus)) != NULL) {
-		struct device_node *node;
-		struct pci_dev *pdev;
+	जबतक ((pbus = pci_find_next_bus(pbus)) != शून्य) अणु
+		काष्ठा device_node *node;
+		काष्ठा pci_dev *pdev;
 
-		pdev = list_first_entry(&pbus->devices, struct pci_dev,
+		pdev = list_first_entry(&pbus->devices, काष्ठा pci_dev,
 					bus_list);
 
-		if (pdev && pci_is_pcie(pdev)) {
+		अगर (pdev && pci_is_pcie(pdev)) अणु
 			pcie_bus_slot_names(pbus);
-		} else {
+		पूर्ण अन्यथा अणु
 
-			if (pbus->self) {
+			अगर (pbus->self) अणु
 
 				/* PCI->PCI bridge */
 				node = pbus->self->dev.of_node;
 
-			} else {
-				struct pci_pbm_info *pbm = pbus->sysdata;
+			पूर्ण अन्यथा अणु
+				काष्ठा pci_pbm_info *pbm = pbus->sysdata;
 
 				/* Host PCI controller */
 				node = pbm->op->dev.of_node;
-			}
+			पूर्ण
 
 			pci_bus_slot_names(node, pbus);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(of_pci_slot_init);
-#endif
+#पूर्ण_अगर

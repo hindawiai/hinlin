@@ -1,80 +1,81 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_FIFO_H__
-#define __NVKM_FIFO_H__
-#include <core/engine.h>
-#include <core/object.h>
-#include <core/event.h>
-struct nvkm_fault_data;
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_FIFO_H__
+#घोषणा __NVKM_FIFO_H__
+#समावेश <core/engine.h>
+#समावेश <core/object.h>
+#समावेश <core/event.h>
+काष्ठा nvkm_fault_data;
 
-#define NVKM_FIFO_CHID_NR 4096
-#define NVKM_FIFO_ENGN_NR 16
+#घोषणा NVKM_FIFO_CHID_NR 4096
+#घोषणा NVKM_FIFO_ENGN_NR 16
 
-struct nvkm_fifo_engn {
-	struct nvkm_object *object;
-	int refcount;
-	int usecount;
-};
+काष्ठा nvkm_fअगरo_engn अणु
+	काष्ठा nvkm_object *object;
+	पूर्णांक refcount;
+	पूर्णांक usecount;
+पूर्ण;
 
-struct nvkm_fifo_chan {
-	const struct nvkm_fifo_chan_func *func;
-	struct nvkm_fifo *fifo;
+काष्ठा nvkm_fअगरo_chan अणु
+	स्थिर काष्ठा nvkm_fअगरo_chan_func *func;
+	काष्ठा nvkm_fअगरo *fअगरo;
 	u32 engm;
-	struct nvkm_object object;
+	काष्ठा nvkm_object object;
 
-	struct list_head head;
+	काष्ठा list_head head;
 	u16 chid;
-	struct nvkm_gpuobj *inst;
-	struct nvkm_gpuobj *push;
-	struct nvkm_vmm *vmm;
-	void __iomem *user;
+	काष्ठा nvkm_gpuobj *inst;
+	काष्ठा nvkm_gpuobj *push;
+	काष्ठा nvkm_vmm *vmm;
+	व्योम __iomem *user;
 	u64 addr;
 	u32 size;
 
-	struct nvkm_fifo_engn engn[NVKM_FIFO_ENGN_NR];
-};
+	काष्ठा nvkm_fअगरo_engn engn[NVKM_FIFO_ENGN_NR];
+पूर्ण;
 
-struct nvkm_fifo {
-	const struct nvkm_fifo_func *func;
-	struct nvkm_engine engine;
+काष्ठा nvkm_fअगरo अणु
+	स्थिर काष्ठा nvkm_fअगरo_func *func;
+	काष्ठा nvkm_engine engine;
 
 	DECLARE_BITMAP(mask, NVKM_FIFO_CHID_NR);
-	int nr;
-	struct list_head chan;
+	पूर्णांक nr;
+	काष्ठा list_head chan;
 	spinlock_t lock;
-	struct mutex mutex;
+	काष्ठा mutex mutex;
 
-	struct nvkm_event uevent; /* async user trigger */
-	struct nvkm_event cevent; /* channel creation event */
-	struct nvkm_event kevent; /* channel killed */
-};
+	काष्ठा nvkm_event uevent; /* async user trigger */
+	काष्ठा nvkm_event cevent; /* channel creation event */
+	काष्ठा nvkm_event kevent; /* channel समाप्तed */
+पूर्ण;
 
-void nvkm_fifo_fault(struct nvkm_fifo *, struct nvkm_fault_data *);
-void nvkm_fifo_pause(struct nvkm_fifo *, unsigned long *);
-void nvkm_fifo_start(struct nvkm_fifo *, unsigned long *);
+व्योम nvkm_fअगरo_fault(काष्ठा nvkm_fअगरo *, काष्ठा nvkm_fault_data *);
+व्योम nvkm_fअगरo_छोड़ो(काष्ठा nvkm_fअगरo *, अचिन्हित दीर्घ *);
+व्योम nvkm_fअगरo_start(काष्ठा nvkm_fअगरo *, अचिन्हित दीर्घ *);
 
-void nvkm_fifo_chan_put(struct nvkm_fifo *, unsigned long flags,
-			struct nvkm_fifo_chan **);
-struct nvkm_fifo_chan *
-nvkm_fifo_chan_inst(struct nvkm_fifo *, u64 inst, unsigned long *flags);
-struct nvkm_fifo_chan *
-nvkm_fifo_chan_chid(struct nvkm_fifo *, int chid, unsigned long *flags);
+व्योम nvkm_fअगरo_chan_put(काष्ठा nvkm_fअगरo *, अचिन्हित दीर्घ flags,
+			काष्ठा nvkm_fअगरo_chan **);
+काष्ठा nvkm_fअगरo_chan *
+nvkm_fअगरo_chan_inst(काष्ठा nvkm_fअगरo *, u64 inst, अचिन्हित दीर्घ *flags);
+काष्ठा nvkm_fअगरo_chan *
+nvkm_fअगरo_chan_chid(काष्ठा nvkm_fअगरo *, पूर्णांक chid, अचिन्हित दीर्घ *flags);
 
-int nv04_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int nv10_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int nv17_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int nv40_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int nv50_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int g84_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gf100_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gk104_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gk110_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gk208_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gk20a_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gm107_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gm200_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gm20b_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gp100_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gp10b_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int gv100_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-int tu102_fifo_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fifo **);
-#endif
+पूर्णांक nv04_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक nv10_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक nv17_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक nv40_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक nv50_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक g84_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gf100_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gk104_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gk110_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gk208_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gk20a_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gm107_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gm200_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gm20b_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gp100_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gp10b_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक gv100_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+पूर्णांक tu102_fअगरo_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fअगरo **);
+#पूर्ण_अगर

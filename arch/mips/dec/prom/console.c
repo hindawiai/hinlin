@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	DECstation PROM-based early console support.
  *
  *	Copyright (C) 2004, 2007  Maciej W. Rozycki
  */
-#include <linux/console.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
+#समावेश <linux/console.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
 
-#include <asm/dec/prom.h>
+#समावेश <यंत्र/dec/prom.h>
 
-static void __init prom_console_write(struct console *con, const char *s,
-				      unsigned int c)
-{
-	char buf[81];
-	unsigned int chunk = sizeof(buf) - 1;
+अटल व्योम __init prom_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s,
+				      अचिन्हित पूर्णांक c)
+अणु
+	अक्षर buf[81];
+	अचिन्हित पूर्णांक chunk = माप(buf) - 1;
 
-	while (c > 0) {
-		if (chunk > c)
+	जबतक (c > 0) अणु
+		अगर (chunk > c)
 			chunk = c;
-		memcpy(buf, s, chunk);
+		स_नकल(buf, s, chunk);
 		buf[chunk] = '\0';
-		prom_printf("%s", buf);
+		prom_म_लिखो("%s", buf);
 		s += chunk;
 		c -= chunk;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct console promcons __initdata = {
+अटल काष्ठा console promcons __initdata = अणु
 	.name	= "prom",
-	.write	= prom_console_write,
+	.ग_लिखो	= prom_console_ग_लिखो,
 	.flags	= CON_BOOT | CON_PRINTBUFFER,
 	.index	= -1,
-};
+पूर्ण;
 
-void __init register_prom_console(void)
-{
-	register_console(&promcons);
-}
+व्योम __init रेजिस्टर_prom_console(व्योम)
+अणु
+	रेजिस्टर_console(&promcons);
+पूर्ण

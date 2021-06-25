@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *	Marvell PATA driver.
  *
@@ -9,107 +10,107 @@
  *	(c) 2006 Red Hat
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <scsi/scsi_host.h>
-#include <linux/libata.h>
-#include <linux/ata.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <linux/libata.h>
+#समावेश <linux/ata.h>
 
-#define DRV_NAME	"pata_marvell"
-#define DRV_VERSION	"0.1.6"
+#घोषणा DRV_NAME	"pata_marvell"
+#घोषणा DRV_VERSION	"0.1.6"
 
 /**
- *	marvell_pata_active	-	check if PATA is active
+ *	marvell_pata_active	-	check अगर PATA is active
  *	@pdev: PCI device
  *
- *	Returns 1 if the PATA port may be active. We know how to check this
- *	for the 6145 but not the other devices
+ *	Returns 1 अगर the PATA port may be active. We know how to check this
+ *	क्रम the 6145 but not the other devices
  */
 
-static int marvell_pata_active(struct pci_dev *pdev)
-{
-	int i;
+अटल पूर्णांक marvell_pata_active(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक i;
 	u32 devices;
-	void __iomem *barp;
+	व्योम __iomem *barp;
 
-	/* We don't yet know how to do this for other devices */
-	if (pdev->device != 0x6145)
-		return 1;
+	/* We करोn't yet know how to करो this क्रम other devices */
+	अगर (pdev->device != 0x6145)
+		वापस 1;
 
 	barp = pci_iomap(pdev, 5, 0x10);
-	if (barp == NULL)
-		return -ENOMEM;
+	अगर (barp == शून्य)
+		वापस -ENOMEM;
 
-	printk("BAR5:");
-	for(i = 0; i <= 0x0F; i++)
-		printk("%02X:%02X ", i, ioread8(barp + i));
-	printk("\n");
+	prपूर्णांकk("BAR5:");
+	क्रम(i = 0; i <= 0x0F; i++)
+		prपूर्णांकk("%02X:%02X ", i, ioपढ़ो8(barp + i));
+	prपूर्णांकk("\n");
 
-	devices = ioread32(barp + 0x0C);
+	devices = ioपढ़ो32(barp + 0x0C);
 	pci_iounmap(pdev, barp);
 
-	if (devices & 0x10)
-		return 1;
-	return 0;
-}
+	अगर (devices & 0x10)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /**
  *	marvell_pre_reset	-	probe begin
  *	@link: link
- *	@deadline: deadline jiffies for the operation
+ *	@deadline: deadline jअगरfies क्रम the operation
  *
- *	Perform the PATA port setup we need.
+ *	Perक्रमm the PATA port setup we need.
  */
 
-static int marvell_pre_reset(struct ata_link *link, unsigned long deadline)
-{
-	struct ata_port *ap = link->ap;
-	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+अटल पूर्णांक marvell_pre_reset(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
 
-	if (pdev->device == 0x6145 && ap->port_no == 0 &&
+	अगर (pdev->device == 0x6145 && ap->port_no == 0 &&
 		!marvell_pata_active(pdev))	/* PATA enable ? */
-			return -ENOENT;
+			वापस -ENOENT;
 
-	return ata_sff_prereset(link, deadline);
-}
+	वापस ata_sff_prereset(link, deadline);
+पूर्ण
 
-static int marvell_cable_detect(struct ata_port *ap)
-{
+अटल पूर्णांक marvell_cable_detect(काष्ठा ata_port *ap)
+अणु
 	/* Cable type */
-	switch(ap->port_no)
-	{
-	case 0:
-		if (ioread8(ap->ioaddr.bmdma_addr + 1) & 1)
-			return ATA_CBL_PATA40;
-		return ATA_CBL_PATA80;
-	case 1: /* Legacy SATA port */
-		return ATA_CBL_SATA;
-	}
+	चयन(ap->port_no)
+	अणु
+	हाल 0:
+		अगर (ioपढ़ो8(ap->ioaddr.bmdma_addr + 1) & 1)
+			वापस ATA_CBL_PATA40;
+		वापस ATA_CBL_PATA80;
+	हाल 1: /* Legacy SATA port */
+		वापस ATA_CBL_SATA;
+	पूर्ण
 
 	BUG();
-	return 0;	/* Our BUG macro needs the right markup */
-}
+	वापस 0;	/* Our BUG macro needs the right markup */
+पूर्ण
 
-/* No PIO or DMA methods needed for this device */
+/* No PIO or DMA methods needed क्रम this device */
 
-static struct scsi_host_template marvell_sht = {
+अटल काष्ठा scsi_host_ढाँचा marvell_sht = अणु
 	ATA_BMDMA_SHT(DRV_NAME),
-};
+पूर्ण;
 
-static struct ata_port_operations marvell_ops = {
+अटल काष्ठा ata_port_operations marvell_ops = अणु
 	.inherits		= &ata_bmdma_port_ops,
 	.cable_detect		= marvell_cable_detect,
 	.prereset		= marvell_pre_reset,
-};
+पूर्ण;
 
 
 /**
  *	marvell_init_one - Register Marvell ATA PCI device with kernel services
- *	@pdev: PCI device to register
+ *	@pdev: PCI device to रेजिस्टर
  *	@id: PCI device ID
  *
  *	Called from kernel PCI layer.
@@ -121,9 +122,9 @@ static struct ata_port_operations marvell_ops = {
  *	Zero on success, or -ERRNO value.
  */
 
-static int marvell_init_one (struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	static const struct ata_port_info info = {
+अटल पूर्णांक marvell_init_one (काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	अटल स्थिर काष्ठा ata_port_info info = अणु
 		.flags		= ATA_FLAG_SLAVE_POSS,
 
 		.pio_mask	= ATA_PIO4,
@@ -131,8 +132,8 @@ static int marvell_init_one (struct pci_dev *pdev, const struct pci_device_id *i
 		.udma_mask 	= ATA_UDMA5,
 
 		.port_ops	= &marvell_ops,
-	};
-	static const struct ata_port_info info_sata = {
+	पूर्ण;
+	अटल स्थिर काष्ठा ata_port_info info_sata = अणु
 		/* Slave possible as its magically mapped not real */
 		.flags		= ATA_FLAG_SLAVE_POSS,
 
@@ -141,42 +142,42 @@ static int marvell_init_one (struct pci_dev *pdev, const struct pci_device_id *i
 		.udma_mask 	= ATA_UDMA6,
 
 		.port_ops	= &marvell_ops,
-	};
-	const struct ata_port_info *ppi[] = { &info, &info_sata };
+	पूर्ण;
+	स्थिर काष्ठा ata_port_info *ppi[] = अणु &info, &info_sata पूर्ण;
 
-	if (pdev->device == 0x6101)
+	अगर (pdev->device == 0x6101)
 		ppi[1] = &ata_dummy_port_info;
 
-#if IS_ENABLED(CONFIG_SATA_AHCI)
-	if (!marvell_pata_active(pdev)) {
-		printk(KERN_INFO DRV_NAME ": PATA port not active, deferring to AHCI driver.\n");
-		return -ENODEV;
-	}
-#endif
-	return ata_pci_bmdma_init_one(pdev, ppi, &marvell_sht, NULL, 0);
-}
+#अगर IS_ENABLED(CONFIG_SATA_AHCI)
+	अगर (!marvell_pata_active(pdev)) अणु
+		prपूर्णांकk(KERN_INFO DRV_NAME ": PATA port not active, deferring to AHCI driver.\n");
+		वापस -ENODEV;
+	पूर्ण
+#पूर्ण_अगर
+	वापस ata_pci_bmdma_init_one(pdev, ppi, &marvell_sht, शून्य, 0);
+पूर्ण
 
-static const struct pci_device_id marvell_pci_tbl[] = {
-	{ PCI_DEVICE(0x11AB, 0x6101), },
-	{ PCI_DEVICE(0x11AB, 0x6121), },
-	{ PCI_DEVICE(0x11AB, 0x6123), },
-	{ PCI_DEVICE(0x11AB, 0x6145), },
-	{ PCI_DEVICE(0x1B4B, 0x91A0), },
-	{ PCI_DEVICE(0x1B4B, 0x91A4), },
+अटल स्थिर काष्ठा pci_device_id marvell_pci_tbl[] = अणु
+	अणु PCI_DEVICE(0x11AB, 0x6101), पूर्ण,
+	अणु PCI_DEVICE(0x11AB, 0x6121), पूर्ण,
+	अणु PCI_DEVICE(0x11AB, 0x6123), पूर्ण,
+	अणु PCI_DEVICE(0x11AB, 0x6145), पूर्ण,
+	अणु PCI_DEVICE(0x1B4B, 0x91A0), पूर्ण,
+	अणु PCI_DEVICE(0x1B4B, 0x91A4), पूर्ण,
 
-	{ }	/* terminate list */
-};
+	अणु पूर्ण	/* terminate list */
+पूर्ण;
 
-static struct pci_driver marvell_pci_driver = {
+अटल काष्ठा pci_driver marvell_pci_driver = अणु
 	.name			= DRV_NAME,
 	.id_table		= marvell_pci_tbl,
 	.probe			= marvell_init_one,
-	.remove			= ata_pci_remove_one,
-#ifdef CONFIG_PM_SLEEP
+	.हटाओ			= ata_pci_हटाओ_one,
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend		= ata_pci_device_suspend,
 	.resume			= ata_pci_device_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_pci_driver(marvell_pci_driver);
 

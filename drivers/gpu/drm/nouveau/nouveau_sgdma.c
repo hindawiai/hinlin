@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: MIT
-#include <linux/pagemap.h>
-#include <linux/slab.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
+#समावेश <linux/pagemap.h>
+#समावेश <linux/slab.h>
 
-#include "nouveau_drv.h"
-#include "nouveau_mem.h"
-#include "nouveau_ttm.h"
-#include "nouveau_bo.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_mem.h"
+#समावेश "nouveau_ttm.h"
+#समावेश "nouveau_bo.h"
 
-struct nouveau_sgdma_be {
+काष्ठा nouveau_sgdma_be अणु
 	/* this has to be the first field so populate/unpopulated in
 	 * nouve_bo.c works properly, otherwise have to move them here
 	 */
-	struct ttm_tt ttm;
-	struct nouveau_mem *mem;
-};
+	काष्ठा tपंचांग_tt tपंचांग;
+	काष्ठा nouveau_mem *mem;
+पूर्ण;
 
-void
-nouveau_sgdma_destroy(struct ttm_device *bdev, struct ttm_tt *ttm)
-{
-	struct nouveau_sgdma_be *nvbe = (struct nouveau_sgdma_be *)ttm;
+व्योम
+nouveau_sgdma_destroy(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	काष्ठा nouveau_sgdma_be *nvbe = (काष्ठा nouveau_sgdma_be *)tपंचांग;
 
-	if (ttm) {
-		nouveau_sgdma_unbind(bdev, ttm);
-		ttm_tt_destroy_common(bdev, ttm);
-		ttm_tt_fini(&nvbe->ttm);
-		kfree(nvbe);
-	}
-}
+	अगर (tपंचांग) अणु
+		nouveau_sgdma_unbind(bdev, tपंचांग);
+		tपंचांग_tt_destroy_common(bdev, tपंचांग);
+		tपंचांग_tt_fini(&nvbe->tपंचांग);
+		kमुक्त(nvbe);
+	पूर्ण
+पूर्ण
 
-int
-nouveau_sgdma_bind(struct ttm_device *bdev, struct ttm_tt *ttm, struct ttm_resource *reg)
-{
-	struct nouveau_sgdma_be *nvbe = (struct nouveau_sgdma_be *)ttm;
-	struct nouveau_drm *drm = nouveau_bdev(bdev);
-	struct nouveau_mem *mem = nouveau_mem(reg);
-	int ret;
+पूर्णांक
+nouveau_sgdma_bind(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग, काष्ठा tपंचांग_resource *reg)
+अणु
+	काष्ठा nouveau_sgdma_be *nvbe = (काष्ठा nouveau_sgdma_be *)tपंचांग;
+	काष्ठा nouveau_drm *drm = nouveau_bdev(bdev);
+	काष्ठा nouveau_mem *mem = nouveau_mem(reg);
+	पूर्णांक ret;
 
-	if (nvbe->mem)
-		return 0;
+	अगर (nvbe->mem)
+		वापस 0;
 
-	ret = nouveau_mem_host(reg, &nvbe->ttm);
-	if (ret)
-		return ret;
+	ret = nouveau_mem_host(reg, &nvbe->tपंचांग);
+	अगर (ret)
+		वापस ret;
 
-	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA) {
+	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA) अणु
 		ret = nouveau_mem_map(mem, &mem->cli->vmm.vmm, &mem->vma[0]);
-		if (ret) {
+		अगर (ret) अणु
 			nouveau_mem_fini(mem);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	nvbe->mem = mem;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-nouveau_sgdma_unbind(struct ttm_device *bdev, struct ttm_tt *ttm)
-{
-	struct nouveau_sgdma_be *nvbe = (struct nouveau_sgdma_be *)ttm;
-	if (nvbe->mem) {
+व्योम
+nouveau_sgdma_unbind(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	काष्ठा nouveau_sgdma_be *nvbe = (काष्ठा nouveau_sgdma_be *)tपंचांग;
+	अगर (nvbe->mem) अणु
 		nouveau_mem_fini(nvbe->mem);
-		nvbe->mem = NULL;
-	}
-}
+		nvbe->mem = शून्य;
+	पूर्ण
+पूर्ण
 
-struct ttm_tt *
-nouveau_sgdma_create_ttm(struct ttm_buffer_object *bo, uint32_t page_flags)
-{
-	struct nouveau_drm *drm = nouveau_bdev(bo->bdev);
-	struct nouveau_bo *nvbo = nouveau_bo(bo);
-	struct nouveau_sgdma_be *nvbe;
-	enum ttm_caching caching;
+काष्ठा tपंचांग_tt *
+nouveau_sgdma_create_tपंचांग(काष्ठा tपंचांग_buffer_object *bo, uपूर्णांक32_t page_flags)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_bdev(bo->bdev);
+	काष्ठा nouveau_bo *nvbo = nouveau_bo(bo);
+	काष्ठा nouveau_sgdma_be *nvbe;
+	क्रमागत tपंचांग_caching caching;
 
-	if (nvbo->force_coherent)
-		caching = ttm_uncached;
-	else if (drm->agp.bridge)
-		caching = ttm_write_combined;
-	else
-		caching = ttm_cached;
+	अगर (nvbo->क्रमce_coherent)
+		caching = tपंचांग_uncached;
+	अन्यथा अगर (drm->agp.bridge)
+		caching = tपंचांग_ग_लिखो_combined;
+	अन्यथा
+		caching = tपंचांग_cached;
 
-	nvbe = kzalloc(sizeof(*nvbe), GFP_KERNEL);
-	if (!nvbe)
-		return NULL;
+	nvbe = kzalloc(माप(*nvbe), GFP_KERNEL);
+	अगर (!nvbe)
+		वापस शून्य;
 
-	if (ttm_sg_tt_init(&nvbe->ttm, bo, page_flags, caching)) {
-		kfree(nvbe);
-		return NULL;
-	}
-	return &nvbe->ttm;
-}
+	अगर (tपंचांग_sg_tt_init(&nvbe->tपंचांग, bo, page_flags, caching)) अणु
+		kमुक्त(nvbe);
+		वापस शून्य;
+	पूर्ण
+	वापस &nvbe->tपंचांग;
+पूर्ण

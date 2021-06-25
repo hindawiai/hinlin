@@ -1,229 +1,230 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
-#include <crypto/aes.h>
-#include <crypto/authenc.h>
-#include <crypto/cryptd.h>
-#include <crypto/des.h>
-#include <crypto/internal/aead.h>
-#include <crypto/sha1.h>
-#include <crypto/sha2.h>
-#include <crypto/xts.h>
-#include <crypto/gcm.h>
-#include <crypto/scatterwalk.h>
-#include <linux/rtnetlink.h>
-#include <linux/sort.h>
-#include <linux/module.h>
-#include "otx2_cptvf.h"
-#include "otx2_cptvf_algs.h"
-#include "otx2_cpt_reqmgr.h"
+#समावेश <crypto/aes.h>
+#समावेश <crypto/authenc.h>
+#समावेश <crypto/cryptd.h>
+#समावेश <crypto/des.h>
+#समावेश <crypto/पूर्णांकernal/aead.h>
+#समावेश <crypto/sha1.h>
+#समावेश <crypto/sha2.h>
+#समावेश <crypto/xts.h>
+#समावेश <crypto/gcm.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/module.h>
+#समावेश "otx2_cptvf.h"
+#समावेश "otx2_cptvf_algs.h"
+#समावेश "otx2_cpt_reqmgr.h"
 
 /* Size of salt in AES GCM mode */
-#define AES_GCM_SALT_SIZE 4
+#घोषणा AES_GCM_SALT_SIZE 4
 /* Size of IV in AES GCM mode */
-#define AES_GCM_IV_SIZE 8
+#घोषणा AES_GCM_IV_SIZE 8
 /* Size of ICV (Integrity Check Value) in AES GCM mode */
-#define AES_GCM_ICV_SIZE 16
+#घोषणा AES_GCM_ICV_SIZE 16
 /* Offset of IV in AES GCM mode */
-#define AES_GCM_IV_OFFSET 8
-#define CONTROL_WORD_LEN 8
-#define KEY2_OFFSET 48
-#define DMA_MODE_FLAG(dma_mode) \
+#घोषणा AES_GCM_IV_OFFSET 8
+#घोषणा CONTROL_WORD_LEN 8
+#घोषणा KEY2_OFFSET 48
+#घोषणा DMA_MODE_FLAG(dma_mode) \
 	(((dma_mode) == OTX2_CPT_DMA_MODE_SG) ? (1 << 7) : 0)
 
 /* Truncated SHA digest size */
-#define SHA1_TRUNC_DIGEST_SIZE 12
-#define SHA256_TRUNC_DIGEST_SIZE 16
-#define SHA384_TRUNC_DIGEST_SIZE 24
-#define SHA512_TRUNC_DIGEST_SIZE 32
+#घोषणा SHA1_TRUNC_DIGEST_SIZE 12
+#घोषणा SHA256_TRUNC_DIGEST_SIZE 16
+#घोषणा SHA384_TRUNC_DIGEST_SIZE 24
+#घोषणा SHA512_TRUNC_DIGEST_SIZE 32
 
-static DEFINE_MUTEX(mutex);
-static int is_crypto_registered;
+अटल DEFINE_MUTEX(mutex);
+अटल पूर्णांक is_crypto_रेजिस्टरed;
 
-struct cpt_device_desc {
-	struct pci_dev *dev;
-	int num_queues;
-};
+काष्ठा cpt_device_desc अणु
+	काष्ठा pci_dev *dev;
+	पूर्णांक num_queues;
+पूर्ण;
 
-struct cpt_device_table {
+काष्ठा cpt_device_table अणु
 	atomic_t count;
-	struct cpt_device_desc desc[OTX2_CPT_MAX_LFS_NUM];
-};
+	काष्ठा cpt_device_desc desc[OTX2_CPT_MAX_LFS_NUM];
+पूर्ण;
 
-static struct cpt_device_table se_devices = {
+अटल काष्ठा cpt_device_table se_devices = अणु
 	.count = ATOMIC_INIT(0)
-};
+पूर्ण;
 
-static inline int get_se_device(struct pci_dev **pdev, int *cpu_num)
-{
-	int count;
+अटल अंतरभूत पूर्णांक get_se_device(काष्ठा pci_dev **pdev, पूर्णांक *cpu_num)
+अणु
+	पूर्णांक count;
 
-	count = atomic_read(&se_devices.count);
-	if (count < 1)
-		return -ENODEV;
+	count = atomic_पढ़ो(&se_devices.count);
+	अगर (count < 1)
+		वापस -ENODEV;
 
 	*cpu_num = get_cpu();
 	/*
-	 * On OcteonTX2 platform CPT instruction queue is bound to each
+	 * On OcteonTX2 platक्रमm CPT inकाष्ठाion queue is bound to each
 	 * local function LF, in turn LFs can be attached to PF
-	 * or VF therefore we always use first device. We get maximum
-	 * performance if one CPT queue is available for each cpu
+	 * or VF thereक्रमe we always use first device. We get maximum
+	 * perक्रमmance अगर one CPT queue is available क्रम each cpu
 	 * otherwise CPT queues need to be shared between cpus.
 	 */
-	if (*cpu_num >= se_devices.desc[0].num_queues)
+	अगर (*cpu_num >= se_devices.desc[0].num_queues)
 		*cpu_num %= se_devices.desc[0].num_queues;
 	*pdev = se_devices.desc[0].dev;
 
 	put_cpu();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int validate_hmac_cipher_null(struct otx2_cpt_req_info *cpt_req)
-{
-	struct otx2_cpt_req_ctx *rctx;
-	struct aead_request *req;
-	struct crypto_aead *tfm;
+अटल अंतरभूत पूर्णांक validate_hmac_cipher_null(काष्ठा otx2_cpt_req_info *cpt_req)
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx;
+	काष्ठा aead_request *req;
+	काष्ठा crypto_aead *tfm;
 
-	req = container_of(cpt_req->areq, struct aead_request, base);
+	req = container_of(cpt_req->areq, काष्ठा aead_request, base);
 	tfm = crypto_aead_reqtfm(req);
 	rctx = aead_request_ctx(req);
-	if (memcmp(rctx->fctx.hmac.s.hmac_calc,
+	अगर (स_भेद(rctx->fctx.hmac.s.hmac_calc,
 		   rctx->fctx.hmac.s.hmac_recv,
 		   crypto_aead_authsize(tfm)) != 0)
-		return -EBADMSG;
+		वापस -EBADMSG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void otx2_cpt_aead_callback(int status, void *arg1, void *arg2)
-{
-	struct otx2_cpt_inst_info *inst_info = arg2;
-	struct crypto_async_request *areq = arg1;
-	struct otx2_cpt_req_info *cpt_req;
-	struct pci_dev *pdev;
+अटल व्योम otx2_cpt_aead_callback(पूर्णांक status, व्योम *arg1, व्योम *arg2)
+अणु
+	काष्ठा otx2_cpt_inst_info *inst_info = arg2;
+	काष्ठा crypto_async_request *areq = arg1;
+	काष्ठा otx2_cpt_req_info *cpt_req;
+	काष्ठा pci_dev *pdev;
 
-	if (inst_info) {
+	अगर (inst_info) अणु
 		cpt_req = inst_info->req;
-		if (!status) {
+		अगर (!status) अणु
 			/*
-			 * When selected cipher is NULL we need to manually
-			 * verify whether calculated hmac value matches
+			 * When selected cipher is शून्य we need to manually
+			 * verअगरy whether calculated hmac value matches
 			 * received hmac value
 			 */
-			if (cpt_req->req_type ==
-			    OTX2_CPT_AEAD_ENC_DEC_NULL_REQ &&
+			अगर (cpt_req->req_type ==
+			    OTX2_CPT_AEAD_ENC_DEC_शून्य_REQ &&
 			    !cpt_req->is_enc)
 				status = validate_hmac_cipher_null(cpt_req);
-		}
+		पूर्ण
 		pdev = inst_info->pdev;
 		otx2_cpt_info_destroy(pdev, inst_info);
-	}
-	if (areq)
+	पूर्ण
+	अगर (areq)
 		areq->complete(areq, status);
-}
+पूर्ण
 
-static void output_iv_copyback(struct crypto_async_request *areq)
-{
-	struct otx2_cpt_req_info *req_info;
-	struct otx2_cpt_req_ctx *rctx;
-	struct skcipher_request *sreq;
-	struct crypto_skcipher *stfm;
-	struct otx2_cpt_enc_ctx *ctx;
+अटल व्योम output_iv_copyback(काष्ठा crypto_async_request *areq)
+अणु
+	काष्ठा otx2_cpt_req_info *req_info;
+	काष्ठा otx2_cpt_req_ctx *rctx;
+	काष्ठा skcipher_request *sreq;
+	काष्ठा crypto_skcipher *stfm;
+	काष्ठा otx2_cpt_enc_ctx *ctx;
 	u32 start, ivsize;
 
-	sreq = container_of(areq, struct skcipher_request, base);
+	sreq = container_of(areq, काष्ठा skcipher_request, base);
 	stfm = crypto_skcipher_reqtfm(sreq);
 	ctx = crypto_skcipher_ctx(stfm);
-	if (ctx->cipher_type == OTX2_CPT_AES_CBC ||
-	    ctx->cipher_type == OTX2_CPT_DES3_CBC) {
+	अगर (ctx->cipher_type == OTX2_CPT_AES_CBC ||
+	    ctx->cipher_type == OTX2_CPT_DES3_CBC) अणु
 		rctx = skcipher_request_ctx(sreq);
 		req_info = &rctx->cpt_req;
 		ivsize = crypto_skcipher_ivsize(stfm);
 		start = sreq->cryptlen - ivsize;
 
-		if (req_info->is_enc) {
+		अगर (req_info->is_enc) अणु
 			scatterwalk_map_and_copy(sreq->iv, sreq->dst, start,
 						 ivsize, 0);
-		} else {
-			if (sreq->src != sreq->dst) {
+		पूर्ण अन्यथा अणु
+			अगर (sreq->src != sreq->dst) अणु
 				scatterwalk_map_and_copy(sreq->iv, sreq->src,
 							 start, ivsize, 0);
-			} else {
-				memcpy(sreq->iv, req_info->iv_out, ivsize);
-				kfree(req_info->iv_out);
-			}
-		}
-	}
-}
+			पूर्ण अन्यथा अणु
+				स_नकल(sreq->iv, req_info->iv_out, ivsize);
+				kमुक्त(req_info->iv_out);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void otx2_cpt_skcipher_callback(int status, void *arg1, void *arg2)
-{
-	struct otx2_cpt_inst_info *inst_info = arg2;
-	struct crypto_async_request *areq = arg1;
-	struct pci_dev *pdev;
+अटल व्योम otx2_cpt_skcipher_callback(पूर्णांक status, व्योम *arg1, व्योम *arg2)
+अणु
+	काष्ठा otx2_cpt_inst_info *inst_info = arg2;
+	काष्ठा crypto_async_request *areq = arg1;
+	काष्ठा pci_dev *pdev;
 
-	if (areq) {
-		if (!status)
+	अगर (areq) अणु
+		अगर (!status)
 			output_iv_copyback(areq);
-		if (inst_info) {
+		अगर (inst_info) अणु
 			pdev = inst_info->pdev;
 			otx2_cpt_info_destroy(pdev, inst_info);
-		}
+		पूर्ण
 		areq->complete(areq, status);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void update_input_data(struct otx2_cpt_req_info *req_info,
-				     struct scatterlist *inp_sg,
+अटल अंतरभूत व्योम update_input_data(काष्ठा otx2_cpt_req_info *req_info,
+				     काष्ठा scatterlist *inp_sg,
 				     u32 nbytes, u32 *argcnt)
-{
+अणु
 	req_info->req.dlen += nbytes;
 
-	while (nbytes) {
+	जबतक (nbytes) अणु
 		u32 len = (nbytes < inp_sg->length) ? nbytes : inp_sg->length;
 		u8 *ptr = sg_virt(inp_sg);
 
-		req_info->in[*argcnt].vptr = (void *)ptr;
+		req_info->in[*argcnt].vptr = (व्योम *)ptr;
 		req_info->in[*argcnt].size = len;
 		nbytes -= len;
 		++(*argcnt);
 		inp_sg = sg_next(inp_sg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void update_output_data(struct otx2_cpt_req_info *req_info,
-				      struct scatterlist *outp_sg,
+अटल अंतरभूत व्योम update_output_data(काष्ठा otx2_cpt_req_info *req_info,
+				      काष्ठा scatterlist *outp_sg,
 				      u32 offset, u32 nbytes, u32 *argcnt)
-{
+अणु
 	u32 len, sg_len;
 	u8 *ptr;
 
 	req_info->rlen += nbytes;
 
-	while (nbytes) {
+	जबतक (nbytes) अणु
 		sg_len = outp_sg->length - offset;
 		len = (nbytes < sg_len) ? nbytes : sg_len;
 		ptr = sg_virt(outp_sg);
 
-		req_info->out[*argcnt].vptr = (void *) (ptr + offset);
+		req_info->out[*argcnt].vptr = (व्योम *) (ptr + offset);
 		req_info->out[*argcnt].size = len;
 		nbytes -= len;
 		++(*argcnt);
 		offset = 0;
 		outp_sg = sg_next(outp_sg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int create_ctx_hdr(struct skcipher_request *req, u32 enc,
+अटल अंतरभूत पूर्णांक create_ctx_hdr(काष्ठा skcipher_request *req, u32 enc,
 				 u32 *argcnt)
-{
-	struct crypto_skcipher *stfm = crypto_skcipher_reqtfm(req);
-	struct otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
-	struct otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(stfm);
-	struct otx2_cpt_req_info *req_info = &rctx->cpt_req;
-	struct otx2_cpt_fc_ctx *fctx = &rctx->fctx;
-	int ivsize = crypto_skcipher_ivsize(stfm);
+अणु
+	काष्ठा crypto_skcipher *stfm = crypto_skcipher_reqtfm(req);
+	काष्ठा otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
+	काष्ठा otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(stfm);
+	काष्ठा otx2_cpt_req_info *req_info = &rctx->cpt_req;
+	काष्ठा otx2_cpt_fc_ctx *fctx = &rctx->fctx;
+	पूर्णांक ivsize = crypto_skcipher_ivsize(stfm);
 	u32 start = req->cryptlen - ivsize;
 	gfp_t flags;
 
@@ -234,21 +235,21 @@ static inline int create_ctx_hdr(struct skcipher_request *req, u32 enc,
 
 	req_info->req.opcode.s.major = OTX2_CPT_MAJOR_OP_FC |
 				DMA_MODE_FLAG(OTX2_CPT_DMA_MODE_SG);
-	if (enc) {
+	अगर (enc) अणु
 		req_info->req.opcode.s.minor = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		req_info->req.opcode.s.minor = 3;
-		if ((ctx->cipher_type == OTX2_CPT_AES_CBC ||
+		अगर ((ctx->cipher_type == OTX2_CPT_AES_CBC ||
 		    ctx->cipher_type == OTX2_CPT_DES3_CBC) &&
-		    req->src == req->dst) {
-			req_info->iv_out = kmalloc(ivsize, flags);
-			if (!req_info->iv_out)
-				return -ENOMEM;
+		    req->src == req->dst) अणु
+			req_info->iv_out = kदो_स्मृति(ivsize, flags);
+			अगर (!req_info->iv_out)
+				वापस -ENOMEM;
 
 			scatterwalk_map_and_copy(req_info->iv_out, req->src,
 						 start, ivsize, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* Encryption data length */
 	req_info->req.param1 = req->cryptlen;
 	/* Authentication data length */
@@ -258,17 +259,17 @@ static inline int create_ctx_hdr(struct skcipher_request *req, u32 enc,
 	fctx->enc.enc_ctrl.e.aes_key = ctx->key_type;
 	fctx->enc.enc_ctrl.e.iv_source = OTX2_CPT_FROM_CPTR;
 
-	if (ctx->cipher_type == OTX2_CPT_AES_XTS)
-		memcpy(fctx->enc.encr_key, ctx->enc_key, ctx->key_len * 2);
-	else
-		memcpy(fctx->enc.encr_key, ctx->enc_key, ctx->key_len);
+	अगर (ctx->cipher_type == OTX2_CPT_AES_XTS)
+		स_नकल(fctx->enc.encr_key, ctx->enc_key, ctx->key_len * 2);
+	अन्यथा
+		स_नकल(fctx->enc.encr_key, ctx->enc_key, ctx->key_len);
 
-	memcpy(fctx->enc.encr_iv, req->iv, crypto_skcipher_ivsize(stfm));
+	स_नकल(fctx->enc.encr_iv, req->iv, crypto_skcipher_ivsize(stfm));
 
 	cpu_to_be64s(&fctx->enc.enc_ctrl.u);
 
 	/*
-	 * Storing  Packet Data Information in offset
+	 * Storing  Packet Data Inक्रमmation in offset
 	 * Control Word First 8 bytes
 	 */
 	req_info->in[*argcnt].vptr = (u8 *)&rctx->ctrl_word;
@@ -277,59 +278,59 @@ static inline int create_ctx_hdr(struct skcipher_request *req, u32 enc,
 	++(*argcnt);
 
 	req_info->in[*argcnt].vptr = (u8 *)fctx;
-	req_info->in[*argcnt].size = sizeof(struct otx2_cpt_fc_ctx);
-	req_info->req.dlen += sizeof(struct otx2_cpt_fc_ctx);
+	req_info->in[*argcnt].size = माप(काष्ठा otx2_cpt_fc_ctx);
+	req_info->req.dlen += माप(काष्ठा otx2_cpt_fc_ctx);
 
 	++(*argcnt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int create_input_list(struct skcipher_request *req, u32 enc,
+अटल अंतरभूत पूर्णांक create_input_list(काष्ठा skcipher_request *req, u32 enc,
 				    u32 enc_iv_len)
-{
-	struct otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
-	struct otx2_cpt_req_info *req_info = &rctx->cpt_req;
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
+	काष्ठा otx2_cpt_req_info *req_info = &rctx->cpt_req;
 	u32 argcnt =  0;
-	int ret;
+	पूर्णांक ret;
 
 	ret = create_ctx_hdr(req, enc, &argcnt);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	update_input_data(req_info, req->src, req->cryptlen, &argcnt);
 	req_info->in_cnt = argcnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void create_output_list(struct skcipher_request *req,
+अटल अंतरभूत व्योम create_output_list(काष्ठा skcipher_request *req,
 				      u32 enc_iv_len)
-{
-	struct otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
-	struct otx2_cpt_req_info *req_info = &rctx->cpt_req;
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
+	काष्ठा otx2_cpt_req_info *req_info = &rctx->cpt_req;
 	u32 argcnt = 0;
 
 	/*
 	 * OUTPUT Buffer Processing
 	 * AES encryption/decryption output would be
-	 * received in the following format
+	 * received in the following क्रमmat
 	 *
 	 * ------IV--------|------ENCRYPTED/DECRYPTED DATA-----|
 	 * [ 16 Bytes/     [   Request Enc/Dec/ DATA Len AES CBC ]
 	 */
 	update_output_data(req_info, req->dst, 0, req->cryptlen, &argcnt);
 	req_info->out_cnt = argcnt;
-}
+पूर्ण
 
-static int skcipher_do_fallback(struct skcipher_request *req, bool is_enc)
-{
-	struct crypto_skcipher *stfm = crypto_skcipher_reqtfm(req);
-	struct otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
-	struct otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(stfm);
-	int ret;
+अटल पूर्णांक skcipher_करो_fallback(काष्ठा skcipher_request *req, bool is_enc)
+अणु
+	काष्ठा crypto_skcipher *stfm = crypto_skcipher_reqtfm(req);
+	काष्ठा otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
+	काष्ठा otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(stfm);
+	पूर्णांक ret;
 
-	if (ctx->fbk_cipher) {
+	अगर (ctx->fbk_cipher) अणु
 		skcipher_request_set_tfm(&rctx->sk_fbk_req, ctx->fbk_cipher);
 		skcipher_request_set_callback(&rctx->sk_fbk_req,
 					      req->base.flags,
@@ -339,43 +340,43 @@ static int skcipher_do_fallback(struct skcipher_request *req, bool is_enc)
 					   req->dst, req->cryptlen, req->iv);
 		ret = is_enc ? crypto_skcipher_encrypt(&rctx->sk_fbk_req) :
 			       crypto_skcipher_decrypt(&rctx->sk_fbk_req);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static inline int cpt_enc_dec(struct skcipher_request *req, u32 enc)
-{
-	struct crypto_skcipher *stfm = crypto_skcipher_reqtfm(req);
-	struct otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
-	struct otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(stfm);
-	struct otx2_cpt_req_info *req_info = &rctx->cpt_req;
+अटल अंतरभूत पूर्णांक cpt_enc_dec(काष्ठा skcipher_request *req, u32 enc)
+अणु
+	काष्ठा crypto_skcipher *stfm = crypto_skcipher_reqtfm(req);
+	काष्ठा otx2_cpt_req_ctx *rctx = skcipher_request_ctx(req);
+	काष्ठा otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(stfm);
+	काष्ठा otx2_cpt_req_info *req_info = &rctx->cpt_req;
 	u32 enc_iv_len = crypto_skcipher_ivsize(stfm);
-	struct pci_dev *pdev;
-	int status, cpu_num;
+	काष्ठा pci_dev *pdev;
+	पूर्णांक status, cpu_num;
 
-	if (req->cryptlen == 0)
-		return 0;
+	अगर (req->cryptlen == 0)
+		वापस 0;
 
-	if (!IS_ALIGNED(req->cryptlen, ctx->enc_align_len))
-		return -EINVAL;
+	अगर (!IS_ALIGNED(req->cryptlen, ctx->enc_align_len))
+		वापस -EINVAL;
 
-	if (req->cryptlen > OTX2_CPT_MAX_REQ_SIZE)
-		return skcipher_do_fallback(req, enc);
+	अगर (req->cryptlen > OTX2_CPT_MAX_REQ_SIZE)
+		वापस skcipher_करो_fallback(req, enc);
 
 	/* Clear control words */
 	rctx->ctrl_word.flags = 0;
 	rctx->fctx.enc.enc_ctrl.u = 0;
 
 	status = create_input_list(req, enc, enc_iv_len);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 	create_output_list(req, enc_iv_len);
 
 	status = get_se_device(&pdev, &cpu_num);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	req_info->callback = otx2_cpt_skcipher_callback;
 	req_info->areq = &req->base;
@@ -385,473 +386,473 @@ static inline int cpt_enc_dec(struct skcipher_request *req, u32 enc)
 	req_info->ctrl.s.grp = otx2_cpt_get_kcrypto_eng_grp_num(pdev);
 
 	/*
-	 * We perform an asynchronous send and once
+	 * We perक्रमm an asynchronous send and once
 	 * the request is completed the driver would
-	 * intimate through registered call back functions
+	 * पूर्णांकimate through रेजिस्टरed call back functions
 	 */
-	status = otx2_cpt_do_request(pdev, req_info, cpu_num);
+	status = otx2_cpt_करो_request(pdev, req_info, cpu_num);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int otx2_cpt_skcipher_encrypt(struct skcipher_request *req)
-{
-	return cpt_enc_dec(req, true);
-}
+अटल पूर्णांक otx2_cpt_skcipher_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cpt_enc_dec(req, true);
+पूर्ण
 
-static int otx2_cpt_skcipher_decrypt(struct skcipher_request *req)
-{
-	return cpt_enc_dec(req, false);
-}
+अटल पूर्णांक otx2_cpt_skcipher_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cpt_enc_dec(req, false);
+पूर्ण
 
-static int otx2_cpt_skcipher_xts_setkey(struct crypto_skcipher *tfm,
-				       const u8 *key, u32 keylen)
-{
-	struct otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
-	const u8 *key2 = key + (keylen / 2);
-	const u8 *key1 = key;
-	int ret;
+अटल पूर्णांक otx2_cpt_skcipher_xts_setkey(काष्ठा crypto_skcipher *tfm,
+				       स्थिर u8 *key, u32 keylen)
+अणु
+	काष्ठा otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
+	स्थिर u8 *key2 = key + (keylen / 2);
+	स्थिर u8 *key1 = key;
+	पूर्णांक ret;
 
 	ret = xts_check_key(crypto_skcipher_tfm(tfm), key, keylen);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ctx->key_len = keylen;
 	ctx->enc_align_len = 1;
-	memcpy(ctx->enc_key, key1, keylen / 2);
-	memcpy(ctx->enc_key + KEY2_OFFSET, key2, keylen / 2);
+	स_नकल(ctx->enc_key, key1, keylen / 2);
+	स_नकल(ctx->enc_key + KEY2_OFFSET, key2, keylen / 2);
 	ctx->cipher_type = OTX2_CPT_AES_XTS;
-	switch (ctx->key_len) {
-	case 2 * AES_KEYSIZE_128:
+	चयन (ctx->key_len) अणु
+	हाल 2 * AES_KEYSIZE_128:
 		ctx->key_type = OTX2_CPT_AES_128_BIT;
-		break;
-	case 2 * AES_KEYSIZE_192:
+		अवरोध;
+	हाल 2 * AES_KEYSIZE_192:
 		ctx->key_type = OTX2_CPT_AES_192_BIT;
-		break;
-	case 2 * AES_KEYSIZE_256:
+		अवरोध;
+	हाल 2 * AES_KEYSIZE_256:
 		ctx->key_type = OTX2_CPT_AES_256_BIT;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return crypto_skcipher_setkey(ctx->fbk_cipher, key, keylen);
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस crypto_skcipher_setkey(ctx->fbk_cipher, key, keylen);
+पूर्ण
 
-static int cpt_des_setkey(struct crypto_skcipher *tfm, const u8 *key,
+अटल पूर्णांक cpt_des_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
 			  u32 keylen, u8 cipher_type)
-{
-	struct otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
+अणु
+	काष्ठा otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	if (keylen != DES3_EDE_KEY_SIZE)
-		return -EINVAL;
+	अगर (keylen != DES3_EDE_KEY_SIZE)
+		वापस -EINVAL;
 
 	ctx->key_len = keylen;
 	ctx->cipher_type = cipher_type;
 	ctx->enc_align_len = 8;
 
-	memcpy(ctx->enc_key, key, keylen);
+	स_नकल(ctx->enc_key, key, keylen);
 
-	return crypto_skcipher_setkey(ctx->fbk_cipher, key, keylen);
-}
+	वापस crypto_skcipher_setkey(ctx->fbk_cipher, key, keylen);
+पूर्ण
 
-static int cpt_aes_setkey(struct crypto_skcipher *tfm, const u8 *key,
+अटल पूर्णांक cpt_aes_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
 			  u32 keylen, u8 cipher_type)
-{
-	struct otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
+अणु
+	काष्ठा otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	switch (keylen) {
-	case AES_KEYSIZE_128:
+	चयन (keylen) अणु
+	हाल AES_KEYSIZE_128:
 		ctx->key_type = OTX2_CPT_AES_128_BIT;
-		break;
-	case AES_KEYSIZE_192:
+		अवरोध;
+	हाल AES_KEYSIZE_192:
 		ctx->key_type = OTX2_CPT_AES_192_BIT;
-		break;
-	case AES_KEYSIZE_256:
+		अवरोध;
+	हाल AES_KEYSIZE_256:
 		ctx->key_type = OTX2_CPT_AES_256_BIT;
-		break;
-	default:
-		return -EINVAL;
-	}
-	if (cipher_type == OTX2_CPT_AES_CBC || cipher_type == OTX2_CPT_AES_ECB)
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर (cipher_type == OTX2_CPT_AES_CBC || cipher_type == OTX2_CPT_AES_ECB)
 		ctx->enc_align_len = 16;
-	else
+	अन्यथा
 		ctx->enc_align_len = 1;
 
 	ctx->key_len = keylen;
 	ctx->cipher_type = cipher_type;
 
-	memcpy(ctx->enc_key, key, keylen);
+	स_नकल(ctx->enc_key, key, keylen);
 
-	return crypto_skcipher_setkey(ctx->fbk_cipher, key, keylen);
-}
+	वापस crypto_skcipher_setkey(ctx->fbk_cipher, key, keylen);
+पूर्ण
 
-static int otx2_cpt_skcipher_cbc_aes_setkey(struct crypto_skcipher *tfm,
-					    const u8 *key, u32 keylen)
-{
-	return cpt_aes_setkey(tfm, key, keylen, OTX2_CPT_AES_CBC);
-}
+अटल पूर्णांक otx2_cpt_skcipher_cbc_aes_setkey(काष्ठा crypto_skcipher *tfm,
+					    स्थिर u8 *key, u32 keylen)
+अणु
+	वापस cpt_aes_setkey(tfm, key, keylen, OTX2_CPT_AES_CBC);
+पूर्ण
 
-static int otx2_cpt_skcipher_ecb_aes_setkey(struct crypto_skcipher *tfm,
-					    const u8 *key, u32 keylen)
-{
-	return cpt_aes_setkey(tfm, key, keylen, OTX2_CPT_AES_ECB);
-}
+अटल पूर्णांक otx2_cpt_skcipher_ecb_aes_setkey(काष्ठा crypto_skcipher *tfm,
+					    स्थिर u8 *key, u32 keylen)
+अणु
+	वापस cpt_aes_setkey(tfm, key, keylen, OTX2_CPT_AES_ECB);
+पूर्ण
 
-static int otx2_cpt_skcipher_cbc_des3_setkey(struct crypto_skcipher *tfm,
-					     const u8 *key, u32 keylen)
-{
-	return cpt_des_setkey(tfm, key, keylen, OTX2_CPT_DES3_CBC);
-}
+अटल पूर्णांक otx2_cpt_skcipher_cbc_des3_setkey(काष्ठा crypto_skcipher *tfm,
+					     स्थिर u8 *key, u32 keylen)
+अणु
+	वापस cpt_des_setkey(tfm, key, keylen, OTX2_CPT_DES3_CBC);
+पूर्ण
 
-static int otx2_cpt_skcipher_ecb_des3_setkey(struct crypto_skcipher *tfm,
-					     const u8 *key, u32 keylen)
-{
-	return cpt_des_setkey(tfm, key, keylen, OTX2_CPT_DES3_ECB);
-}
+अटल पूर्णांक otx2_cpt_skcipher_ecb_des3_setkey(काष्ठा crypto_skcipher *tfm,
+					     स्थिर u8 *key, u32 keylen)
+अणु
+	वापस cpt_des_setkey(tfm, key, keylen, OTX2_CPT_DES3_ECB);
+पूर्ण
 
-static int cpt_skcipher_fallback_init(struct otx2_cpt_enc_ctx *ctx,
-				      struct crypto_alg *alg)
-{
-	if (alg->cra_flags & CRYPTO_ALG_NEED_FALLBACK) {
+अटल पूर्णांक cpt_skcipher_fallback_init(काष्ठा otx2_cpt_enc_ctx *ctx,
+				      काष्ठा crypto_alg *alg)
+अणु
+	अगर (alg->cra_flags & CRYPTO_ALG_NEED_FALLBACK) अणु
 		ctx->fbk_cipher =
 				crypto_alloc_skcipher(alg->cra_name, 0,
 						      CRYPTO_ALG_ASYNC |
 						      CRYPTO_ALG_NEED_FALLBACK);
-		if (IS_ERR(ctx->fbk_cipher)) {
+		अगर (IS_ERR(ctx->fbk_cipher)) अणु
 			pr_err("%s() failed to allocate fallback for %s\n",
 				__func__, alg->cra_name);
-			return PTR_ERR(ctx->fbk_cipher);
-		}
-	}
-	return 0;
-}
+			वापस PTR_ERR(ctx->fbk_cipher);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int otx2_cpt_enc_dec_init(struct crypto_skcipher *stfm)
-{
-	struct otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(stfm);
-	struct crypto_tfm *tfm = crypto_skcipher_tfm(stfm);
-	struct crypto_alg *alg = tfm->__crt_alg;
+अटल पूर्णांक otx2_cpt_enc_dec_init(काष्ठा crypto_skcipher *stfm)
+अणु
+	काष्ठा otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(stfm);
+	काष्ठा crypto_tfm *tfm = crypto_skcipher_tfm(stfm);
+	काष्ठा crypto_alg *alg = tfm->__crt_alg;
 
-	memset(ctx, 0, sizeof(*ctx));
+	स_रखो(ctx, 0, माप(*ctx));
 	/*
-	 * Additional memory for skcipher_request is
+	 * Additional memory क्रम skcipher_request is
 	 * allocated since the cryptd daemon uses
-	 * this memory for request_ctx information
+	 * this memory क्रम request_ctx inक्रमmation
 	 */
-	crypto_skcipher_set_reqsize(stfm, sizeof(struct otx2_cpt_req_ctx) +
-					sizeof(struct skcipher_request));
+	crypto_skcipher_set_reqsize(stfm, माप(काष्ठा otx2_cpt_req_ctx) +
+					माप(काष्ठा skcipher_request));
 
-	return cpt_skcipher_fallback_init(ctx, alg);
-}
+	वापस cpt_skcipher_fallback_init(ctx, alg);
+पूर्ण
 
-static void otx2_cpt_skcipher_exit(struct crypto_skcipher *tfm)
-{
-	struct otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल व्योम otx2_cpt_skcipher_निकास(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा otx2_cpt_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	if (ctx->fbk_cipher) {
-		crypto_free_skcipher(ctx->fbk_cipher);
-		ctx->fbk_cipher = NULL;
-	}
-}
+	अगर (ctx->fbk_cipher) अणु
+		crypto_मुक्त_skcipher(ctx->fbk_cipher);
+		ctx->fbk_cipher = शून्य;
+	पूर्ण
+पूर्ण
 
-static int cpt_aead_fallback_init(struct otx2_cpt_aead_ctx *ctx,
-				  struct crypto_alg *alg)
-{
-	if (alg->cra_flags & CRYPTO_ALG_NEED_FALLBACK) {
+अटल पूर्णांक cpt_aead_fallback_init(काष्ठा otx2_cpt_aead_ctx *ctx,
+				  काष्ठा crypto_alg *alg)
+अणु
+	अगर (alg->cra_flags & CRYPTO_ALG_NEED_FALLBACK) अणु
 		ctx->fbk_cipher =
 			    crypto_alloc_aead(alg->cra_name, 0,
 					      CRYPTO_ALG_ASYNC |
 					      CRYPTO_ALG_NEED_FALLBACK);
-		if (IS_ERR(ctx->fbk_cipher)) {
+		अगर (IS_ERR(ctx->fbk_cipher)) अणु
 			pr_err("%s() failed to allocate fallback for %s\n",
 				__func__, alg->cra_name);
-			return PTR_ERR(ctx->fbk_cipher);
-		}
-	}
-	return 0;
-}
+			वापस PTR_ERR(ctx->fbk_cipher);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int cpt_aead_init(struct crypto_aead *atfm, u8 cipher_type, u8 mac_type)
-{
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(atfm);
-	struct crypto_tfm *tfm = crypto_aead_tfm(atfm);
-	struct crypto_alg *alg = tfm->__crt_alg;
+अटल पूर्णांक cpt_aead_init(काष्ठा crypto_aead *atfm, u8 cipher_type, u8 mac_type)
+अणु
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(atfm);
+	काष्ठा crypto_tfm *tfm = crypto_aead_tfm(atfm);
+	काष्ठा crypto_alg *alg = tfm->__crt_alg;
 
 	ctx->cipher_type = cipher_type;
 	ctx->mac_type = mac_type;
 
 	/*
-	 * When selected cipher is NULL we use HMAC opcode instead of
-	 * FLEXICRYPTO opcode therefore we don't need to use HASH algorithms
-	 * for calculating ipad and opad
+	 * When selected cipher is शून्य we use HMAC opcode instead of
+	 * FLEXICRYPTO opcode thereक्रमe we करोn't need to use HASH algorithms
+	 * क्रम calculating ipad and opad
 	 */
-	if (ctx->cipher_type != OTX2_CPT_CIPHER_NULL) {
-		switch (ctx->mac_type) {
-		case OTX2_CPT_SHA1:
+	अगर (ctx->cipher_type != OTX2_CPT_CIPHER_शून्य) अणु
+		चयन (ctx->mac_type) अणु
+		हाल OTX2_CPT_SHA1:
 			ctx->hashalg = crypto_alloc_shash("sha1", 0,
 							  CRYPTO_ALG_ASYNC);
-			if (IS_ERR(ctx->hashalg))
-				return PTR_ERR(ctx->hashalg);
-			break;
+			अगर (IS_ERR(ctx->hashalg))
+				वापस PTR_ERR(ctx->hashalg);
+			अवरोध;
 
-		case OTX2_CPT_SHA256:
+		हाल OTX2_CPT_SHA256:
 			ctx->hashalg = crypto_alloc_shash("sha256", 0,
 							  CRYPTO_ALG_ASYNC);
-			if (IS_ERR(ctx->hashalg))
-				return PTR_ERR(ctx->hashalg);
-			break;
+			अगर (IS_ERR(ctx->hashalg))
+				वापस PTR_ERR(ctx->hashalg);
+			अवरोध;
 
-		case OTX2_CPT_SHA384:
+		हाल OTX2_CPT_SHA384:
 			ctx->hashalg = crypto_alloc_shash("sha384", 0,
 							  CRYPTO_ALG_ASYNC);
-			if (IS_ERR(ctx->hashalg))
-				return PTR_ERR(ctx->hashalg);
-			break;
+			अगर (IS_ERR(ctx->hashalg))
+				वापस PTR_ERR(ctx->hashalg);
+			अवरोध;
 
-		case OTX2_CPT_SHA512:
+		हाल OTX2_CPT_SHA512:
 			ctx->hashalg = crypto_alloc_shash("sha512", 0,
 							  CRYPTO_ALG_ASYNC);
-			if (IS_ERR(ctx->hashalg))
-				return PTR_ERR(ctx->hashalg);
-			break;
-		}
-	}
-	switch (ctx->cipher_type) {
-	case OTX2_CPT_AES_CBC:
-	case OTX2_CPT_AES_ECB:
+			अगर (IS_ERR(ctx->hashalg))
+				वापस PTR_ERR(ctx->hashalg);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	चयन (ctx->cipher_type) अणु
+	हाल OTX2_CPT_AES_CBC:
+	हाल OTX2_CPT_AES_ECB:
 		ctx->enc_align_len = 16;
-		break;
-	case OTX2_CPT_DES3_CBC:
-	case OTX2_CPT_DES3_ECB:
+		अवरोध;
+	हाल OTX2_CPT_DES3_CBC:
+	हाल OTX2_CPT_DES3_ECB:
 		ctx->enc_align_len = 8;
-		break;
-	case OTX2_CPT_AES_GCM:
-	case OTX2_CPT_CIPHER_NULL:
+		अवरोध;
+	हाल OTX2_CPT_AES_GCM:
+	हाल OTX2_CPT_CIPHER_शून्य:
 		ctx->enc_align_len = 1;
-		break;
-	}
-	crypto_aead_set_reqsize(atfm, sizeof(struct otx2_cpt_req_ctx));
+		अवरोध;
+	पूर्ण
+	crypto_aead_set_reqsize(atfm, माप(काष्ठा otx2_cpt_req_ctx));
 
-	return cpt_aead_fallback_init(ctx, alg);
-}
+	वापस cpt_aead_fallback_init(ctx, alg);
+पूर्ण
 
-static int otx2_cpt_aead_cbc_aes_sha1_init(struct crypto_aead *tfm)
-{
-	return cpt_aead_init(tfm, OTX2_CPT_AES_CBC, OTX2_CPT_SHA1);
-}
+अटल पूर्णांक otx2_cpt_aead_cbc_aes_sha1_init(काष्ठा crypto_aead *tfm)
+अणु
+	वापस cpt_aead_init(tfm, OTX2_CPT_AES_CBC, OTX2_CPT_SHA1);
+पूर्ण
 
-static int otx2_cpt_aead_cbc_aes_sha256_init(struct crypto_aead *tfm)
-{
-	return cpt_aead_init(tfm, OTX2_CPT_AES_CBC, OTX2_CPT_SHA256);
-}
+अटल पूर्णांक otx2_cpt_aead_cbc_aes_sha256_init(काष्ठा crypto_aead *tfm)
+अणु
+	वापस cpt_aead_init(tfm, OTX2_CPT_AES_CBC, OTX2_CPT_SHA256);
+पूर्ण
 
-static int otx2_cpt_aead_cbc_aes_sha384_init(struct crypto_aead *tfm)
-{
-	return cpt_aead_init(tfm, OTX2_CPT_AES_CBC, OTX2_CPT_SHA384);
-}
+अटल पूर्णांक otx2_cpt_aead_cbc_aes_sha384_init(काष्ठा crypto_aead *tfm)
+अणु
+	वापस cpt_aead_init(tfm, OTX2_CPT_AES_CBC, OTX2_CPT_SHA384);
+पूर्ण
 
-static int otx2_cpt_aead_cbc_aes_sha512_init(struct crypto_aead *tfm)
-{
-	return cpt_aead_init(tfm, OTX2_CPT_AES_CBC, OTX2_CPT_SHA512);
-}
+अटल पूर्णांक otx2_cpt_aead_cbc_aes_sha512_init(काष्ठा crypto_aead *tfm)
+अणु
+	वापस cpt_aead_init(tfm, OTX2_CPT_AES_CBC, OTX2_CPT_SHA512);
+पूर्ण
 
-static int otx2_cpt_aead_ecb_null_sha1_init(struct crypto_aead *tfm)
-{
-	return cpt_aead_init(tfm, OTX2_CPT_CIPHER_NULL, OTX2_CPT_SHA1);
-}
+अटल पूर्णांक otx2_cpt_aead_ecb_null_sha1_init(काष्ठा crypto_aead *tfm)
+अणु
+	वापस cpt_aead_init(tfm, OTX2_CPT_CIPHER_शून्य, OTX2_CPT_SHA1);
+पूर्ण
 
-static int otx2_cpt_aead_ecb_null_sha256_init(struct crypto_aead *tfm)
-{
-	return cpt_aead_init(tfm, OTX2_CPT_CIPHER_NULL, OTX2_CPT_SHA256);
-}
+अटल पूर्णांक otx2_cpt_aead_ecb_null_sha256_init(काष्ठा crypto_aead *tfm)
+अणु
+	वापस cpt_aead_init(tfm, OTX2_CPT_CIPHER_शून्य, OTX2_CPT_SHA256);
+पूर्ण
 
-static int otx2_cpt_aead_ecb_null_sha384_init(struct crypto_aead *tfm)
-{
-	return cpt_aead_init(tfm, OTX2_CPT_CIPHER_NULL, OTX2_CPT_SHA384);
-}
+अटल पूर्णांक otx2_cpt_aead_ecb_null_sha384_init(काष्ठा crypto_aead *tfm)
+अणु
+	वापस cpt_aead_init(tfm, OTX2_CPT_CIPHER_शून्य, OTX2_CPT_SHA384);
+पूर्ण
 
-static int otx2_cpt_aead_ecb_null_sha512_init(struct crypto_aead *tfm)
-{
-	return cpt_aead_init(tfm, OTX2_CPT_CIPHER_NULL, OTX2_CPT_SHA512);
-}
+अटल पूर्णांक otx2_cpt_aead_ecb_null_sha512_init(काष्ठा crypto_aead *tfm)
+अणु
+	वापस cpt_aead_init(tfm, OTX2_CPT_CIPHER_शून्य, OTX2_CPT_SHA512);
+पूर्ण
 
-static int otx2_cpt_aead_gcm_aes_init(struct crypto_aead *tfm)
-{
-	return cpt_aead_init(tfm, OTX2_CPT_AES_GCM, OTX2_CPT_MAC_NULL);
-}
+अटल पूर्णांक otx2_cpt_aead_gcm_aes_init(काष्ठा crypto_aead *tfm)
+अणु
+	वापस cpt_aead_init(tfm, OTX2_CPT_AES_GCM, OTX2_CPT_MAC_शून्य);
+पूर्ण
 
-static void otx2_cpt_aead_exit(struct crypto_aead *tfm)
-{
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
+अटल व्योम otx2_cpt_aead_निकास(काष्ठा crypto_aead *tfm)
+अणु
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
 
-	kfree(ctx->ipad);
-	kfree(ctx->opad);
-	if (ctx->hashalg)
-		crypto_free_shash(ctx->hashalg);
-	kfree(ctx->sdesc);
+	kमुक्त(ctx->ipad);
+	kमुक्त(ctx->opad);
+	अगर (ctx->hashalg)
+		crypto_मुक्त_shash(ctx->hashalg);
+	kमुक्त(ctx->sdesc);
 
-	if (ctx->fbk_cipher) {
-		crypto_free_aead(ctx->fbk_cipher);
-		ctx->fbk_cipher = NULL;
-	}
-}
+	अगर (ctx->fbk_cipher) अणु
+		crypto_मुक्त_aead(ctx->fbk_cipher);
+		ctx->fbk_cipher = शून्य;
+	पूर्ण
+पूर्ण
 
-static int otx2_cpt_aead_gcm_set_authsize(struct crypto_aead *tfm,
-					  unsigned int authsize)
-{
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
+अटल पूर्णांक otx2_cpt_aead_gcm_set_authsize(काष्ठा crypto_aead *tfm,
+					  अचिन्हित पूर्णांक authsize)
+अणु
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
 
-	if (crypto_rfc4106_check_authsize(authsize))
-		return -EINVAL;
+	अगर (crypto_rfc4106_check_authsize(authsize))
+		वापस -EINVAL;
 
 	tfm->authsize = authsize;
-	/* Set authsize for fallback case */
-	if (ctx->fbk_cipher)
+	/* Set authsize क्रम fallback हाल */
+	अगर (ctx->fbk_cipher)
 		ctx->fbk_cipher->authsize = authsize;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int otx2_cpt_aead_set_authsize(struct crypto_aead *tfm,
-				      unsigned int authsize)
-{
+अटल पूर्णांक otx2_cpt_aead_set_authsize(काष्ठा crypto_aead *tfm,
+				      अचिन्हित पूर्णांक authsize)
+अणु
 	tfm->authsize = authsize;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int otx2_cpt_aead_null_set_authsize(struct crypto_aead *tfm,
-					   unsigned int authsize)
-{
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
+अटल पूर्णांक otx2_cpt_aead_null_set_authsize(काष्ठा crypto_aead *tfm,
+					   अचिन्हित पूर्णांक authsize)
+अणु
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
 
 	ctx->is_trunc_hmac = true;
 	tfm->authsize = authsize;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct otx2_cpt_sdesc *alloc_sdesc(struct crypto_shash *alg)
-{
-	struct otx2_cpt_sdesc *sdesc;
-	int size;
+अटल काष्ठा otx2_cpt_sdesc *alloc_sdesc(काष्ठा crypto_shash *alg)
+अणु
+	काष्ठा otx2_cpt_sdesc *sdesc;
+	पूर्णांक size;
 
-	size = sizeof(struct shash_desc) + crypto_shash_descsize(alg);
-	sdesc = kmalloc(size, GFP_KERNEL);
-	if (!sdesc)
-		return NULL;
+	size = माप(काष्ठा shash_desc) + crypto_shash_descsize(alg);
+	sdesc = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!sdesc)
+		वापस शून्य;
 
 	sdesc->shash.tfm = alg;
 
-	return sdesc;
-}
+	वापस sdesc;
+पूर्ण
 
-static inline void swap_data32(void *buf, u32 len)
-{
+अटल अंतरभूत व्योम swap_data32(व्योम *buf, u32 len)
+अणु
 	cpu_to_be32_array(buf, buf, len / 4);
-}
+पूर्ण
 
-static inline void swap_data64(void *buf, u32 len)
-{
+अटल अंतरभूत व्योम swap_data64(व्योम *buf, u32 len)
+अणु
 	u64 *src = buf;
-	int i = 0;
+	पूर्णांक i = 0;
 
-	for (i = 0 ; i < len / 8; i++, src++)
+	क्रम (i = 0 ; i < len / 8; i++, src++)
 		cpu_to_be64s(src);
-}
+पूर्ण
 
-static int copy_pad(u8 mac_type, u8 *out_pad, u8 *in_pad)
-{
-	struct sha512_state *sha512;
-	struct sha256_state *sha256;
-	struct sha1_state *sha1;
+अटल पूर्णांक copy_pad(u8 mac_type, u8 *out_pad, u8 *in_pad)
+अणु
+	काष्ठा sha512_state *sha512;
+	काष्ठा sha256_state *sha256;
+	काष्ठा sha1_state *sha1;
 
-	switch (mac_type) {
-	case OTX2_CPT_SHA1:
-		sha1 = (struct sha1_state *) in_pad;
+	चयन (mac_type) अणु
+	हाल OTX2_CPT_SHA1:
+		sha1 = (काष्ठा sha1_state *) in_pad;
 		swap_data32(sha1->state, SHA1_DIGEST_SIZE);
-		memcpy(out_pad, &sha1->state, SHA1_DIGEST_SIZE);
-		break;
+		स_नकल(out_pad, &sha1->state, SHA1_DIGEST_SIZE);
+		अवरोध;
 
-	case OTX2_CPT_SHA256:
-		sha256 = (struct sha256_state *) in_pad;
+	हाल OTX2_CPT_SHA256:
+		sha256 = (काष्ठा sha256_state *) in_pad;
 		swap_data32(sha256->state, SHA256_DIGEST_SIZE);
-		memcpy(out_pad, &sha256->state, SHA256_DIGEST_SIZE);
-		break;
+		स_नकल(out_pad, &sha256->state, SHA256_DIGEST_SIZE);
+		अवरोध;
 
-	case OTX2_CPT_SHA384:
-	case OTX2_CPT_SHA512:
-		sha512 = (struct sha512_state *) in_pad;
+	हाल OTX2_CPT_SHA384:
+	हाल OTX2_CPT_SHA512:
+		sha512 = (काष्ठा sha512_state *) in_pad;
 		swap_data64(sha512->state, SHA512_DIGEST_SIZE);
-		memcpy(out_pad, &sha512->state, SHA512_DIGEST_SIZE);
-		break;
+		स_नकल(out_pad, &sha512->state, SHA512_DIGEST_SIZE);
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aead_hmac_init(struct crypto_aead *cipher)
-{
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(cipher);
-	int state_size = crypto_shash_statesize(ctx->hashalg);
-	int ds = crypto_shash_digestsize(ctx->hashalg);
-	int bs = crypto_shash_blocksize(ctx->hashalg);
-	int authkeylen = ctx->auth_key_len;
-	u8 *ipad = NULL, *opad = NULL;
-	int ret = 0, icount = 0;
+अटल पूर्णांक aead_hmac_init(काष्ठा crypto_aead *cipher)
+अणु
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(cipher);
+	पूर्णांक state_size = crypto_shash_statesize(ctx->hashalg);
+	पूर्णांक ds = crypto_shash_digestsize(ctx->hashalg);
+	पूर्णांक bs = crypto_shash_blocksize(ctx->hashalg);
+	पूर्णांक authkeylen = ctx->auth_key_len;
+	u8 *ipad = शून्य, *opad = शून्य;
+	पूर्णांक ret = 0, icount = 0;
 
 	ctx->sdesc = alloc_sdesc(ctx->hashalg);
-	if (!ctx->sdesc)
-		return -ENOMEM;
+	अगर (!ctx->sdesc)
+		वापस -ENOMEM;
 
 	ctx->ipad = kzalloc(bs, GFP_KERNEL);
-	if (!ctx->ipad) {
+	अगर (!ctx->ipad) अणु
 		ret = -ENOMEM;
-		goto calc_fail;
-	}
+		जाओ calc_fail;
+	पूर्ण
 
 	ctx->opad = kzalloc(bs, GFP_KERNEL);
-	if (!ctx->opad) {
+	अगर (!ctx->opad) अणु
 		ret = -ENOMEM;
-		goto calc_fail;
-	}
+		जाओ calc_fail;
+	पूर्ण
 
 	ipad = kzalloc(state_size, GFP_KERNEL);
-	if (!ipad) {
+	अगर (!ipad) अणु
 		ret = -ENOMEM;
-		goto calc_fail;
-	}
+		जाओ calc_fail;
+	पूर्ण
 
 	opad = kzalloc(state_size, GFP_KERNEL);
-	if (!opad) {
+	अगर (!opad) अणु
 		ret = -ENOMEM;
-		goto calc_fail;
-	}
+		जाओ calc_fail;
+	पूर्ण
 
-	if (authkeylen > bs) {
+	अगर (authkeylen > bs) अणु
 		ret = crypto_shash_digest(&ctx->sdesc->shash, ctx->key,
 					  authkeylen, ipad);
-		if (ret)
-			goto calc_fail;
+		अगर (ret)
+			जाओ calc_fail;
 
 		authkeylen = ds;
-	} else {
-		memcpy(ipad, ctx->key, authkeylen);
-	}
+	पूर्ण अन्यथा अणु
+		स_नकल(ipad, ctx->key, authkeylen);
+	पूर्ण
 
-	memset(ipad + authkeylen, 0, bs - authkeylen);
-	memcpy(opad, ipad, bs);
+	स_रखो(ipad + authkeylen, 0, bs - authkeylen);
+	स_नकल(opad, ipad, bs);
 
-	for (icount = 0; icount < bs; icount++) {
+	क्रम (icount = 0; icount < bs; icount++) अणु
 		ipad[icount] ^= 0x36;
 		opad[icount] ^= 0x5c;
-	}
+	पूर्ण
 
 	/*
 	 * Partial Hash calculated from the software
-	 * algorithm is retrieved for IPAD & OPAD
+	 * algorithm is retrieved क्रम IPAD & OPAD
 	 */
 
 	/* IPAD Calculation */
@@ -859,228 +860,228 @@ static int aead_hmac_init(struct crypto_aead *cipher)
 	crypto_shash_update(&ctx->sdesc->shash, ipad, bs);
 	crypto_shash_export(&ctx->sdesc->shash, ipad);
 	ret = copy_pad(ctx->mac_type, ctx->ipad, ipad);
-	if (ret)
-		goto calc_fail;
+	अगर (ret)
+		जाओ calc_fail;
 
 	/* OPAD Calculation */
 	crypto_shash_init(&ctx->sdesc->shash);
 	crypto_shash_update(&ctx->sdesc->shash, opad, bs);
 	crypto_shash_export(&ctx->sdesc->shash, opad);
 	ret = copy_pad(ctx->mac_type, ctx->opad, opad);
-	if (ret)
-		goto calc_fail;
+	अगर (ret)
+		जाओ calc_fail;
 
-	kfree(ipad);
-	kfree(opad);
+	kमुक्त(ipad);
+	kमुक्त(opad);
 
-	return 0;
+	वापस 0;
 
 calc_fail:
-	kfree(ctx->ipad);
-	ctx->ipad = NULL;
-	kfree(ctx->opad);
-	ctx->opad = NULL;
-	kfree(ipad);
-	kfree(opad);
-	kfree(ctx->sdesc);
-	ctx->sdesc = NULL;
+	kमुक्त(ctx->ipad);
+	ctx->ipad = शून्य;
+	kमुक्त(ctx->opad);
+	ctx->opad = शून्य;
+	kमुक्त(ipad);
+	kमुक्त(opad);
+	kमुक्त(ctx->sdesc);
+	ctx->sdesc = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int otx2_cpt_aead_cbc_aes_sha_setkey(struct crypto_aead *cipher,
-					    const unsigned char *key,
-					    unsigned int keylen)
-{
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(cipher);
-	struct crypto_authenc_key_param *param;
-	int enckeylen = 0, authkeylen = 0;
-	struct rtattr *rta = (void *)key;
-	int status;
+अटल पूर्णांक otx2_cpt_aead_cbc_aes_sha_setkey(काष्ठा crypto_aead *cipher,
+					    स्थिर अचिन्हित अक्षर *key,
+					    अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(cipher);
+	काष्ठा crypto_authenc_key_param *param;
+	पूर्णांक enckeylen = 0, authkeylen = 0;
+	काष्ठा rtattr *rta = (व्योम *)key;
+	पूर्णांक status;
 
-	if (!RTA_OK(rta, keylen))
-		return -EINVAL;
+	अगर (!RTA_OK(rta, keylen))
+		वापस -EINVAL;
 
-	if (rta->rta_type != CRYPTO_AUTHENC_KEYA_PARAM)
-		return -EINVAL;
+	अगर (rta->rta_type != CRYPTO_AUTHENC_KEYA_PARAM)
+		वापस -EINVAL;
 
-	if (RTA_PAYLOAD(rta) < sizeof(*param))
-		return -EINVAL;
+	अगर (RTA_PAYLOAD(rta) < माप(*param))
+		वापस -EINVAL;
 
 	param = RTA_DATA(rta);
 	enckeylen = be32_to_cpu(param->enckeylen);
 	key += RTA_ALIGN(rta->rta_len);
 	keylen -= RTA_ALIGN(rta->rta_len);
-	if (keylen < enckeylen)
-		return -EINVAL;
+	अगर (keylen < enckeylen)
+		वापस -EINVAL;
 
-	if (keylen > OTX2_CPT_MAX_KEY_SIZE)
-		return -EINVAL;
+	अगर (keylen > OTX2_CPT_MAX_KEY_SIZE)
+		वापस -EINVAL;
 
 	authkeylen = keylen - enckeylen;
-	memcpy(ctx->key, key, keylen);
+	स_नकल(ctx->key, key, keylen);
 
-	switch (enckeylen) {
-	case AES_KEYSIZE_128:
+	चयन (enckeylen) अणु
+	हाल AES_KEYSIZE_128:
 		ctx->key_type = OTX2_CPT_AES_128_BIT;
-		break;
-	case AES_KEYSIZE_192:
+		अवरोध;
+	हाल AES_KEYSIZE_192:
 		ctx->key_type = OTX2_CPT_AES_192_BIT;
-		break;
-	case AES_KEYSIZE_256:
+		अवरोध;
+	हाल AES_KEYSIZE_256:
 		ctx->key_type = OTX2_CPT_AES_256_BIT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Invalid key length */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ctx->enc_key_len = enckeylen;
 	ctx->auth_key_len = authkeylen;
 
 	status = aead_hmac_init(cipher);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int otx2_cpt_aead_ecb_null_sha_setkey(struct crypto_aead *cipher,
-					     const unsigned char *key,
-					     unsigned int keylen)
-{
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(cipher);
-	struct crypto_authenc_key_param *param;
-	struct rtattr *rta = (void *)key;
-	int enckeylen = 0;
+अटल पूर्णांक otx2_cpt_aead_ecb_null_sha_setkey(काष्ठा crypto_aead *cipher,
+					     स्थिर अचिन्हित अक्षर *key,
+					     अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(cipher);
+	काष्ठा crypto_authenc_key_param *param;
+	काष्ठा rtattr *rta = (व्योम *)key;
+	पूर्णांक enckeylen = 0;
 
-	if (!RTA_OK(rta, keylen))
-		return -EINVAL;
+	अगर (!RTA_OK(rta, keylen))
+		वापस -EINVAL;
 
-	if (rta->rta_type != CRYPTO_AUTHENC_KEYA_PARAM)
-		return -EINVAL;
+	अगर (rta->rta_type != CRYPTO_AUTHENC_KEYA_PARAM)
+		वापस -EINVAL;
 
-	if (RTA_PAYLOAD(rta) < sizeof(*param))
-		return -EINVAL;
+	अगर (RTA_PAYLOAD(rta) < माप(*param))
+		वापस -EINVAL;
 
 	param = RTA_DATA(rta);
 	enckeylen = be32_to_cpu(param->enckeylen);
 	key += RTA_ALIGN(rta->rta_len);
 	keylen -= RTA_ALIGN(rta->rta_len);
-	if (enckeylen != 0)
-		return -EINVAL;
+	अगर (enckeylen != 0)
+		वापस -EINVAL;
 
-	if (keylen > OTX2_CPT_MAX_KEY_SIZE)
-		return -EINVAL;
+	अगर (keylen > OTX2_CPT_MAX_KEY_SIZE)
+		वापस -EINVAL;
 
-	memcpy(ctx->key, key, keylen);
+	स_नकल(ctx->key, key, keylen);
 	ctx->enc_key_len = enckeylen;
 	ctx->auth_key_len = keylen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int otx2_cpt_aead_gcm_aes_setkey(struct crypto_aead *cipher,
-					const unsigned char *key,
-					unsigned int keylen)
-{
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(cipher);
+अटल पूर्णांक otx2_cpt_aead_gcm_aes_setkey(काष्ठा crypto_aead *cipher,
+					स्थिर अचिन्हित अक्षर *key,
+					अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(cipher);
 
 	/*
 	 * For aes gcm we expect to get encryption key (16, 24, 32 bytes)
 	 * and salt (4 bytes)
 	 */
-	switch (keylen) {
-	case AES_KEYSIZE_128 + AES_GCM_SALT_SIZE:
+	चयन (keylen) अणु
+	हाल AES_KEYSIZE_128 + AES_GCM_SALT_SIZE:
 		ctx->key_type = OTX2_CPT_AES_128_BIT;
 		ctx->enc_key_len = AES_KEYSIZE_128;
-		break;
-	case AES_KEYSIZE_192 + AES_GCM_SALT_SIZE:
+		अवरोध;
+	हाल AES_KEYSIZE_192 + AES_GCM_SALT_SIZE:
 		ctx->key_type = OTX2_CPT_AES_192_BIT;
 		ctx->enc_key_len = AES_KEYSIZE_192;
-		break;
-	case AES_KEYSIZE_256 + AES_GCM_SALT_SIZE:
+		अवरोध;
+	हाल AES_KEYSIZE_256 + AES_GCM_SALT_SIZE:
 		ctx->key_type = OTX2_CPT_AES_256_BIT;
 		ctx->enc_key_len = AES_KEYSIZE_256;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Invalid key and salt length */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Store encryption key and salt */
-	memcpy(ctx->key, key, keylen);
+	स_नकल(ctx->key, key, keylen);
 
-	return crypto_aead_setkey(ctx->fbk_cipher, key, keylen);
-}
+	वापस crypto_aead_setkey(ctx->fbk_cipher, key, keylen);
+पूर्ण
 
-static inline int create_aead_ctx_hdr(struct aead_request *req, u32 enc,
+अटल अंतरभूत पूर्णांक create_aead_ctx_hdr(काष्ठा aead_request *req, u32 enc,
 				      u32 *argcnt)
-{
-	struct otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
-	struct otx2_cpt_req_info *req_info = &rctx->cpt_req;
-	struct otx2_cpt_fc_ctx *fctx = &rctx->fctx;
-	int mac_len = crypto_aead_authsize(tfm);
-	int ds;
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
+	काष्ठा otx2_cpt_req_info *req_info = &rctx->cpt_req;
+	काष्ठा otx2_cpt_fc_ctx *fctx = &rctx->fctx;
+	पूर्णांक mac_len = crypto_aead_authsize(tfm);
+	पूर्णांक ds;
 
 	rctx->ctrl_word.e.enc_data_offset = req->assoclen;
 
-	switch (ctx->cipher_type) {
-	case OTX2_CPT_AES_CBC:
-		if (req->assoclen > 248 || !IS_ALIGNED(req->assoclen, 8))
-			return -EINVAL;
+	चयन (ctx->cipher_type) अणु
+	हाल OTX2_CPT_AES_CBC:
+		अगर (req->assoclen > 248 || !IS_ALIGNED(req->assoclen, 8))
+			वापस -EINVAL;
 
 		fctx->enc.enc_ctrl.e.iv_source = OTX2_CPT_FROM_CPTR;
 		/* Copy encryption key to context */
-		memcpy(fctx->enc.encr_key, ctx->key + ctx->auth_key_len,
+		स_नकल(fctx->enc.encr_key, ctx->key + ctx->auth_key_len,
 		       ctx->enc_key_len);
 		/* Copy IV to context */
-		memcpy(fctx->enc.encr_iv, req->iv, crypto_aead_ivsize(tfm));
+		स_नकल(fctx->enc.encr_iv, req->iv, crypto_aead_ivsize(tfm));
 
 		ds = crypto_shash_digestsize(ctx->hashalg);
-		if (ctx->mac_type == OTX2_CPT_SHA384)
+		अगर (ctx->mac_type == OTX2_CPT_SHA384)
 			ds = SHA512_DIGEST_SIZE;
-		if (ctx->ipad)
-			memcpy(fctx->hmac.e.ipad, ctx->ipad, ds);
-		if (ctx->opad)
-			memcpy(fctx->hmac.e.opad, ctx->opad, ds);
-		break;
+		अगर (ctx->ipad)
+			स_नकल(fctx->hmac.e.ipad, ctx->ipad, ds);
+		अगर (ctx->opad)
+			स_नकल(fctx->hmac.e.opad, ctx->opad, ds);
+		अवरोध;
 
-	case OTX2_CPT_AES_GCM:
-		if (crypto_ipsec_check_assoclen(req->assoclen))
-			return -EINVAL;
+	हाल OTX2_CPT_AES_GCM:
+		अगर (crypto_ipsec_check_assoclen(req->assoclen))
+			वापस -EINVAL;
 
 		fctx->enc.enc_ctrl.e.iv_source = OTX2_CPT_FROM_DPTR;
 		/* Copy encryption key to context */
-		memcpy(fctx->enc.encr_key, ctx->key, ctx->enc_key_len);
+		स_नकल(fctx->enc.encr_key, ctx->key, ctx->enc_key_len);
 		/* Copy salt to context */
-		memcpy(fctx->enc.encr_iv, ctx->key + ctx->enc_key_len,
+		स_नकल(fctx->enc.encr_iv, ctx->key + ctx->enc_key_len,
 		       AES_GCM_SALT_SIZE);
 
 		rctx->ctrl_word.e.iv_offset = req->assoclen - AES_GCM_IV_OFFSET;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* Unknown cipher type */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	cpu_to_be64s(&rctx->ctrl_word.flags);
 
 	req_info->ctrl.s.dma_mode = OTX2_CPT_DMA_MODE_SG;
 	req_info->ctrl.s.se_req = 1;
 	req_info->req.opcode.s.major = OTX2_CPT_MAJOR_OP_FC |
 				 DMA_MODE_FLAG(OTX2_CPT_DMA_MODE_SG);
-	if (enc) {
+	अगर (enc) अणु
 		req_info->req.opcode.s.minor = 2;
 		req_info->req.param1 = req->cryptlen;
 		req_info->req.param2 = req->cryptlen + req->assoclen;
-	} else {
+	पूर्ण अन्यथा अणु
 		req_info->req.opcode.s.minor = 3;
 		req_info->req.param1 = req->cryptlen - mac_len;
 		req_info->req.param2 = req->cryptlen + req->assoclen - mac_len;
-	}
+	पूर्ण
 
 	fctx->enc.enc_ctrl.e.enc_cipher = ctx->cipher_type;
 	fctx->enc.enc_ctrl.e.aes_key = ctx->key_type;
@@ -1089,7 +1090,7 @@ static inline int create_aead_ctx_hdr(struct aead_request *req, u32 enc,
 	cpu_to_be64s(&fctx->enc.enc_ctrl.u);
 
 	/*
-	 * Storing Packet Data Information in offset
+	 * Storing Packet Data Inक्रमmation in offset
 	 * Control Word First 8 bytes
 	 */
 	req_info->in[*argcnt].vptr = (u8 *)&rctx->ctrl_word;
@@ -1098,20 +1099,20 @@ static inline int create_aead_ctx_hdr(struct aead_request *req, u32 enc,
 	++(*argcnt);
 
 	req_info->in[*argcnt].vptr = (u8 *)fctx;
-	req_info->in[*argcnt].size = sizeof(struct otx2_cpt_fc_ctx);
-	req_info->req.dlen += sizeof(struct otx2_cpt_fc_ctx);
+	req_info->in[*argcnt].size = माप(काष्ठा otx2_cpt_fc_ctx);
+	req_info->req.dlen += माप(काष्ठा otx2_cpt_fc_ctx);
 	++(*argcnt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void create_hmac_ctx_hdr(struct aead_request *req, u32 *argcnt,
+अटल अंतरभूत व्योम create_hmac_ctx_hdr(काष्ठा aead_request *req, u32 *argcnt,
 				      u32 enc)
-{
-	struct otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
-	struct otx2_cpt_req_info *req_info = &rctx->cpt_req;
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
+	काष्ठा otx2_cpt_req_info *req_info = &rctx->cpt_req;
 
 	req_info->ctrl.s.dma_mode = OTX2_CPT_DMA_MODE_SG;
 	req_info->ctrl.s.se_req = 1;
@@ -1128,146 +1129,146 @@ static inline void create_hmac_ctx_hdr(struct aead_request *req, u32 *argcnt,
 	req_info->in[*argcnt].size = round_up(ctx->auth_key_len, 8);
 	req_info->req.dlen += round_up(ctx->auth_key_len, 8);
 	++(*argcnt);
-}
+पूर्ण
 
-static inline int create_aead_input_list(struct aead_request *req, u32 enc)
-{
-	struct otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
-	struct otx2_cpt_req_info *req_info = &rctx->cpt_req;
+अटल अंतरभूत पूर्णांक create_aead_input_list(काष्ठा aead_request *req, u32 enc)
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
+	काष्ठा otx2_cpt_req_info *req_info = &rctx->cpt_req;
 	u32 inputlen =  req->cryptlen + req->assoclen;
 	u32 status, argcnt = 0;
 
 	status = create_aead_ctx_hdr(req, enc, &argcnt);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 	update_input_data(req_info, req->src, inputlen, &argcnt);
 	req_info->in_cnt = argcnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void create_aead_output_list(struct aead_request *req, u32 enc,
+अटल अंतरभूत व्योम create_aead_output_list(काष्ठा aead_request *req, u32 enc,
 					   u32 mac_len)
-{
-	struct otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
-	struct otx2_cpt_req_info *req_info =  &rctx->cpt_req;
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
+	काष्ठा otx2_cpt_req_info *req_info =  &rctx->cpt_req;
 	u32 argcnt = 0, outputlen = 0;
 
-	if (enc)
+	अगर (enc)
 		outputlen = req->cryptlen +  req->assoclen + mac_len;
-	else
+	अन्यथा
 		outputlen = req->cryptlen + req->assoclen - mac_len;
 
 	update_output_data(req_info, req->dst, 0, outputlen, &argcnt);
 	req_info->out_cnt = argcnt;
-}
+पूर्ण
 
-static inline void create_aead_null_input_list(struct aead_request *req,
+अटल अंतरभूत व्योम create_aead_null_input_list(काष्ठा aead_request *req,
 					       u32 enc, u32 mac_len)
-{
-	struct otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
-	struct otx2_cpt_req_info *req_info = &rctx->cpt_req;
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
+	काष्ठा otx2_cpt_req_info *req_info = &rctx->cpt_req;
 	u32 inputlen, argcnt = 0;
 
-	if (enc)
+	अगर (enc)
 		inputlen =  req->cryptlen + req->assoclen;
-	else
+	अन्यथा
 		inputlen =  req->cryptlen + req->assoclen - mac_len;
 
 	create_hmac_ctx_hdr(req, &argcnt, enc);
 	update_input_data(req_info, req->src, inputlen, &argcnt);
 	req_info->in_cnt = argcnt;
-}
+पूर्ण
 
-static inline int create_aead_null_output_list(struct aead_request *req,
+अटल अंतरभूत पूर्णांक create_aead_null_output_list(काष्ठा aead_request *req,
 					       u32 enc, u32 mac_len)
-{
-	struct otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
-	struct otx2_cpt_req_info *req_info =  &rctx->cpt_req;
-	struct scatterlist *dst;
-	u8 *ptr = NULL;
-	int argcnt = 0, status, offset;
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
+	काष्ठा otx2_cpt_req_info *req_info =  &rctx->cpt_req;
+	काष्ठा scatterlist *dst;
+	u8 *ptr = शून्य;
+	पूर्णांक argcnt = 0, status, offset;
 	u32 inputlen;
 
-	if (enc)
+	अगर (enc)
 		inputlen =  req->cryptlen + req->assoclen;
-	else
+	अन्यथा
 		inputlen =  req->cryptlen + req->assoclen - mac_len;
 
 	/*
-	 * If source and destination are different
+	 * If source and destination are dअगरferent
 	 * then copy payload to destination
 	 */
-	if (req->src != req->dst) {
+	अगर (req->src != req->dst) अणु
 
-		ptr = kmalloc(inputlen, (req_info->areq->flags &
+		ptr = kदो_स्मृति(inputlen, (req_info->areq->flags &
 					 CRYPTO_TFM_REQ_MAY_SLEEP) ?
 					 GFP_KERNEL : GFP_ATOMIC);
-		if (!ptr)
-			return -ENOMEM;
+		अगर (!ptr)
+			वापस -ENOMEM;
 
 		status = sg_copy_to_buffer(req->src, sg_nents(req->src), ptr,
 					   inputlen);
-		if (status != inputlen) {
+		अगर (status != inputlen) अणु
 			status = -EINVAL;
-			goto error_free;
-		}
+			जाओ error_मुक्त;
+		पूर्ण
 		status = sg_copy_from_buffer(req->dst, sg_nents(req->dst), ptr,
 					     inputlen);
-		if (status != inputlen) {
+		अगर (status != inputlen) अणु
 			status = -EINVAL;
-			goto error_free;
-		}
-		kfree(ptr);
-	}
+			जाओ error_मुक्त;
+		पूर्ण
+		kमुक्त(ptr);
+	पूर्ण
 
-	if (enc) {
+	अगर (enc) अणु
 		/*
 		 * In an encryption scenario hmac needs
 		 * to be appended after payload
 		 */
 		dst = req->dst;
 		offset = inputlen;
-		while (offset >= dst->length) {
+		जबतक (offset >= dst->length) अणु
 			offset -= dst->length;
 			dst = sg_next(dst);
-			if (!dst)
-				return -ENOENT;
-		}
+			अगर (!dst)
+				वापस -ENOENT;
+		पूर्ण
 
 		update_output_data(req_info, dst, offset, mac_len, &argcnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * In a decryption scenario calculated hmac for received
+		 * In a decryption scenario calculated hmac क्रम received
 		 * payload needs to be compare with hmac received
 		 */
 		status = sg_copy_buffer(req->src, sg_nents(req->src),
 					rctx->fctx.hmac.s.hmac_recv, mac_len,
 					inputlen, true);
-		if (status != mac_len)
-			return -EINVAL;
+		अगर (status != mac_len)
+			वापस -EINVAL;
 
 		req_info->out[argcnt].vptr = rctx->fctx.hmac.s.hmac_calc;
 		req_info->out[argcnt].size = mac_len;
 		argcnt++;
-	}
+	पूर्ण
 
 	req_info->out_cnt = argcnt;
-	return 0;
+	वापस 0;
 
-error_free:
-	kfree(ptr);
-	return status;
-}
+error_मुक्त:
+	kमुक्त(ptr);
+	वापस status;
+पूर्ण
 
-static int aead_do_fallback(struct aead_request *req, bool is_enc)
-{
-	struct otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
-	struct crypto_aead *aead = crypto_aead_reqtfm(req);
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(aead);
-	int ret;
+अटल पूर्णांक aead_करो_fallback(काष्ठा aead_request *req, bool is_enc)
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
+	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(aead);
+	पूर्णांक ret;
 
-	if (ctx->fbk_cipher) {
+	अगर (ctx->fbk_cipher) अणु
 		/* Store the cipher tfm and then use the fallback tfm */
 		aead_request_set_tfm(&rctx->fbk_req, ctx->fbk_cipher);
 		aead_request_set_callback(&rctx->fbk_req, req->base.flags,
@@ -1276,21 +1277,21 @@ static int aead_do_fallback(struct aead_request *req, bool is_enc)
 				       req->dst, req->cryptlen, req->iv);
 		ret = is_enc ? crypto_aead_encrypt(&rctx->fbk_req) :
 			       crypto_aead_decrypt(&rctx->fbk_req);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cpt_aead_enc_dec(struct aead_request *req, u8 reg_type, u8 enc)
-{
-	struct otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
-	struct otx2_cpt_req_info *req_info = &rctx->cpt_req;
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	struct otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
-	struct pci_dev *pdev;
-	int status, cpu_num;
+अटल पूर्णांक cpt_aead_enc_dec(काष्ठा aead_request *req, u8 reg_type, u8 enc)
+अणु
+	काष्ठा otx2_cpt_req_ctx *rctx = aead_request_ctx(req);
+	काष्ठा otx2_cpt_req_info *req_info = &rctx->cpt_req;
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	काष्ठा otx2_cpt_aead_ctx *ctx = crypto_aead_ctx(tfm);
+	काष्ठा pci_dev *pdev;
+	पूर्णांक status, cpu_num;
 
 	/* Clear control words */
 	rctx->ctrl_word.flags = 0;
@@ -1302,457 +1303,457 @@ static int cpt_aead_enc_dec(struct aead_request *req, u8 reg_type, u8 enc)
 	req_info->is_enc = enc;
 	req_info->is_trunc_hmac = false;
 
-	switch (reg_type) {
-	case OTX2_CPT_AEAD_ENC_DEC_REQ:
+	चयन (reg_type) अणु
+	हाल OTX2_CPT_AEAD_ENC_DEC_REQ:
 		status = create_aead_input_list(req, enc);
-		if (status)
-			return status;
+		अगर (status)
+			वापस status;
 		create_aead_output_list(req, enc, crypto_aead_authsize(tfm));
-		break;
+		अवरोध;
 
-	case OTX2_CPT_AEAD_ENC_DEC_NULL_REQ:
+	हाल OTX2_CPT_AEAD_ENC_DEC_शून्य_REQ:
 		create_aead_null_input_list(req, enc,
 					    crypto_aead_authsize(tfm));
 		status = create_aead_null_output_list(req, enc,
 						crypto_aead_authsize(tfm));
-		if (status)
-			return status;
-		break;
+		अगर (status)
+			वापस status;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
-	if (!IS_ALIGNED(req_info->req.param1, ctx->enc_align_len))
-		return -EINVAL;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!IS_ALIGNED(req_info->req.param1, ctx->enc_align_len))
+		वापस -EINVAL;
 
-	if (!req_info->req.param2 ||
+	अगर (!req_info->req.param2 ||
 	    (req_info->req.param1 > OTX2_CPT_MAX_REQ_SIZE) ||
 	    (req_info->req.param2 > OTX2_CPT_MAX_REQ_SIZE))
-		return aead_do_fallback(req, enc);
+		वापस aead_करो_fallback(req, enc);
 
 	status = get_se_device(&pdev, &cpu_num);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	req_info->ctrl.s.grp = otx2_cpt_get_kcrypto_eng_grp_num(pdev);
 
 	/*
-	 * We perform an asynchronous send and once
+	 * We perक्रमm an asynchronous send and once
 	 * the request is completed the driver would
-	 * intimate through registered call back functions
+	 * पूर्णांकimate through रेजिस्टरed call back functions
 	 */
-	return otx2_cpt_do_request(pdev, req_info, cpu_num);
-}
+	वापस otx2_cpt_करो_request(pdev, req_info, cpu_num);
+पूर्ण
 
-static int otx2_cpt_aead_encrypt(struct aead_request *req)
-{
-	return cpt_aead_enc_dec(req, OTX2_CPT_AEAD_ENC_DEC_REQ, true);
-}
+अटल पूर्णांक otx2_cpt_aead_encrypt(काष्ठा aead_request *req)
+अणु
+	वापस cpt_aead_enc_dec(req, OTX2_CPT_AEAD_ENC_DEC_REQ, true);
+पूर्ण
 
-static int otx2_cpt_aead_decrypt(struct aead_request *req)
-{
-	return cpt_aead_enc_dec(req, OTX2_CPT_AEAD_ENC_DEC_REQ, false);
-}
+अटल पूर्णांक otx2_cpt_aead_decrypt(काष्ठा aead_request *req)
+अणु
+	वापस cpt_aead_enc_dec(req, OTX2_CPT_AEAD_ENC_DEC_REQ, false);
+पूर्ण
 
-static int otx2_cpt_aead_null_encrypt(struct aead_request *req)
-{
-	return cpt_aead_enc_dec(req, OTX2_CPT_AEAD_ENC_DEC_NULL_REQ, true);
-}
+अटल पूर्णांक otx2_cpt_aead_null_encrypt(काष्ठा aead_request *req)
+अणु
+	वापस cpt_aead_enc_dec(req, OTX2_CPT_AEAD_ENC_DEC_शून्य_REQ, true);
+पूर्ण
 
-static int otx2_cpt_aead_null_decrypt(struct aead_request *req)
-{
-	return cpt_aead_enc_dec(req, OTX2_CPT_AEAD_ENC_DEC_NULL_REQ, false);
-}
+अटल पूर्णांक otx2_cpt_aead_null_decrypt(काष्ठा aead_request *req)
+अणु
+	वापस cpt_aead_enc_dec(req, OTX2_CPT_AEAD_ENC_DEC_शून्य_REQ, false);
+पूर्ण
 
-static struct skcipher_alg otx2_cpt_skciphers[] = { {
+अटल काष्ठा skcipher_alg otx2_cpt_skciphers[] = अणु अणु
 	.base.cra_name = "xts(aes)",
 	.base.cra_driver_name = "cpt_xts_aes",
 	.base.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
 	.base.cra_blocksize = AES_BLOCK_SIZE,
-	.base.cra_ctxsize = sizeof(struct otx2_cpt_enc_ctx),
+	.base.cra_ctxsize = माप(काष्ठा otx2_cpt_enc_ctx),
 	.base.cra_alignmask = 7,
 	.base.cra_priority = 4001,
 	.base.cra_module = THIS_MODULE,
 
 	.init = otx2_cpt_enc_dec_init,
-	.exit = otx2_cpt_skcipher_exit,
+	.निकास = otx2_cpt_skcipher_निकास,
 	.ivsize = AES_BLOCK_SIZE,
 	.min_keysize = 2 * AES_MIN_KEY_SIZE,
 	.max_keysize = 2 * AES_MAX_KEY_SIZE,
 	.setkey = otx2_cpt_skcipher_xts_setkey,
 	.encrypt = otx2_cpt_skcipher_encrypt,
 	.decrypt = otx2_cpt_skcipher_decrypt,
-}, {
+पूर्ण, अणु
 	.base.cra_name = "cbc(aes)",
 	.base.cra_driver_name = "cpt_cbc_aes",
 	.base.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
 	.base.cra_blocksize = AES_BLOCK_SIZE,
-	.base.cra_ctxsize = sizeof(struct otx2_cpt_enc_ctx),
+	.base.cra_ctxsize = माप(काष्ठा otx2_cpt_enc_ctx),
 	.base.cra_alignmask = 7,
 	.base.cra_priority = 4001,
 	.base.cra_module = THIS_MODULE,
 
 	.init = otx2_cpt_enc_dec_init,
-	.exit = otx2_cpt_skcipher_exit,
+	.निकास = otx2_cpt_skcipher_निकास,
 	.ivsize = AES_BLOCK_SIZE,
 	.min_keysize = AES_MIN_KEY_SIZE,
 	.max_keysize = AES_MAX_KEY_SIZE,
 	.setkey = otx2_cpt_skcipher_cbc_aes_setkey,
 	.encrypt = otx2_cpt_skcipher_encrypt,
 	.decrypt = otx2_cpt_skcipher_decrypt,
-}, {
+पूर्ण, अणु
 	.base.cra_name = "ecb(aes)",
 	.base.cra_driver_name = "cpt_ecb_aes",
 	.base.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
 	.base.cra_blocksize = AES_BLOCK_SIZE,
-	.base.cra_ctxsize = sizeof(struct otx2_cpt_enc_ctx),
+	.base.cra_ctxsize = माप(काष्ठा otx2_cpt_enc_ctx),
 	.base.cra_alignmask = 7,
 	.base.cra_priority = 4001,
 	.base.cra_module = THIS_MODULE,
 
 	.init = otx2_cpt_enc_dec_init,
-	.exit = otx2_cpt_skcipher_exit,
+	.निकास = otx2_cpt_skcipher_निकास,
 	.ivsize = 0,
 	.min_keysize = AES_MIN_KEY_SIZE,
 	.max_keysize = AES_MAX_KEY_SIZE,
 	.setkey = otx2_cpt_skcipher_ecb_aes_setkey,
 	.encrypt = otx2_cpt_skcipher_encrypt,
 	.decrypt = otx2_cpt_skcipher_decrypt,
-}, {
+पूर्ण, अणु
 	.base.cra_name = "cbc(des3_ede)",
 	.base.cra_driver_name = "cpt_cbc_des3_ede",
 	.base.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
 	.base.cra_blocksize = DES3_EDE_BLOCK_SIZE,
-	.base.cra_ctxsize = sizeof(struct otx2_cpt_enc_ctx),
+	.base.cra_ctxsize = माप(काष्ठा otx2_cpt_enc_ctx),
 	.base.cra_alignmask = 7,
 	.base.cra_priority = 4001,
 	.base.cra_module = THIS_MODULE,
 
 	.init = otx2_cpt_enc_dec_init,
-	.exit = otx2_cpt_skcipher_exit,
+	.निकास = otx2_cpt_skcipher_निकास,
 	.min_keysize = DES3_EDE_KEY_SIZE,
 	.max_keysize = DES3_EDE_KEY_SIZE,
 	.ivsize = DES_BLOCK_SIZE,
 	.setkey = otx2_cpt_skcipher_cbc_des3_setkey,
 	.encrypt = otx2_cpt_skcipher_encrypt,
 	.decrypt = otx2_cpt_skcipher_decrypt,
-}, {
+पूर्ण, अणु
 	.base.cra_name = "ecb(des3_ede)",
 	.base.cra_driver_name = "cpt_ecb_des3_ede",
 	.base.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
 	.base.cra_blocksize = DES3_EDE_BLOCK_SIZE,
-	.base.cra_ctxsize = sizeof(struct otx2_cpt_enc_ctx),
+	.base.cra_ctxsize = माप(काष्ठा otx2_cpt_enc_ctx),
 	.base.cra_alignmask = 7,
 	.base.cra_priority = 4001,
 	.base.cra_module = THIS_MODULE,
 
 	.init = otx2_cpt_enc_dec_init,
-	.exit = otx2_cpt_skcipher_exit,
+	.निकास = otx2_cpt_skcipher_निकास,
 	.min_keysize = DES3_EDE_KEY_SIZE,
 	.max_keysize = DES3_EDE_KEY_SIZE,
 	.ivsize = 0,
 	.setkey = otx2_cpt_skcipher_ecb_des3_setkey,
 	.encrypt = otx2_cpt_skcipher_encrypt,
 	.decrypt = otx2_cpt_skcipher_decrypt,
-} };
+पूर्ण पूर्ण;
 
-static struct aead_alg otx2_cpt_aeads[] = { {
-	.base = {
+अटल काष्ठा aead_alg otx2_cpt_aeads[] = अणु अणु
+	.base = अणु
 		.cra_name = "authenc(hmac(sha1),cbc(aes))",
 		.cra_driver_name = "cpt_hmac_sha1_cbc_aes",
 		.cra_blocksize = AES_BLOCK_SIZE,
 		.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
-		.cra_ctxsize = sizeof(struct otx2_cpt_aead_ctx),
+		.cra_ctxsize = माप(काष्ठा otx2_cpt_aead_ctx),
 		.cra_priority = 4001,
 		.cra_alignmask = 0,
 		.cra_module = THIS_MODULE,
-	},
+	पूर्ण,
 	.init = otx2_cpt_aead_cbc_aes_sha1_init,
-	.exit = otx2_cpt_aead_exit,
+	.निकास = otx2_cpt_aead_निकास,
 	.setkey = otx2_cpt_aead_cbc_aes_sha_setkey,
 	.setauthsize = otx2_cpt_aead_set_authsize,
 	.encrypt = otx2_cpt_aead_encrypt,
 	.decrypt = otx2_cpt_aead_decrypt,
 	.ivsize = AES_BLOCK_SIZE,
 	.maxauthsize = SHA1_DIGEST_SIZE,
-}, {
-	.base = {
+पूर्ण, अणु
+	.base = अणु
 		.cra_name = "authenc(hmac(sha256),cbc(aes))",
 		.cra_driver_name = "cpt_hmac_sha256_cbc_aes",
 		.cra_blocksize = AES_BLOCK_SIZE,
 		.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
-		.cra_ctxsize = sizeof(struct otx2_cpt_aead_ctx),
+		.cra_ctxsize = माप(काष्ठा otx2_cpt_aead_ctx),
 		.cra_priority = 4001,
 		.cra_alignmask = 0,
 		.cra_module = THIS_MODULE,
-	},
+	पूर्ण,
 	.init = otx2_cpt_aead_cbc_aes_sha256_init,
-	.exit = otx2_cpt_aead_exit,
+	.निकास = otx2_cpt_aead_निकास,
 	.setkey = otx2_cpt_aead_cbc_aes_sha_setkey,
 	.setauthsize = otx2_cpt_aead_set_authsize,
 	.encrypt = otx2_cpt_aead_encrypt,
 	.decrypt = otx2_cpt_aead_decrypt,
 	.ivsize = AES_BLOCK_SIZE,
 	.maxauthsize = SHA256_DIGEST_SIZE,
-}, {
-	.base = {
+पूर्ण, अणु
+	.base = अणु
 		.cra_name = "authenc(hmac(sha384),cbc(aes))",
 		.cra_driver_name = "cpt_hmac_sha384_cbc_aes",
 		.cra_blocksize = AES_BLOCK_SIZE,
 		.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
-		.cra_ctxsize = sizeof(struct otx2_cpt_aead_ctx),
+		.cra_ctxsize = माप(काष्ठा otx2_cpt_aead_ctx),
 		.cra_priority = 4001,
 		.cra_alignmask = 0,
 		.cra_module = THIS_MODULE,
-	},
+	पूर्ण,
 	.init = otx2_cpt_aead_cbc_aes_sha384_init,
-	.exit = otx2_cpt_aead_exit,
+	.निकास = otx2_cpt_aead_निकास,
 	.setkey = otx2_cpt_aead_cbc_aes_sha_setkey,
 	.setauthsize = otx2_cpt_aead_set_authsize,
 	.encrypt = otx2_cpt_aead_encrypt,
 	.decrypt = otx2_cpt_aead_decrypt,
 	.ivsize = AES_BLOCK_SIZE,
 	.maxauthsize = SHA384_DIGEST_SIZE,
-}, {
-	.base = {
+पूर्ण, अणु
+	.base = अणु
 		.cra_name = "authenc(hmac(sha512),cbc(aes))",
 		.cra_driver_name = "cpt_hmac_sha512_cbc_aes",
 		.cra_blocksize = AES_BLOCK_SIZE,
 		.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
-		.cra_ctxsize = sizeof(struct otx2_cpt_aead_ctx),
+		.cra_ctxsize = माप(काष्ठा otx2_cpt_aead_ctx),
 		.cra_priority = 4001,
 		.cra_alignmask = 0,
 		.cra_module = THIS_MODULE,
-	},
+	पूर्ण,
 	.init = otx2_cpt_aead_cbc_aes_sha512_init,
-	.exit = otx2_cpt_aead_exit,
+	.निकास = otx2_cpt_aead_निकास,
 	.setkey = otx2_cpt_aead_cbc_aes_sha_setkey,
 	.setauthsize = otx2_cpt_aead_set_authsize,
 	.encrypt = otx2_cpt_aead_encrypt,
 	.decrypt = otx2_cpt_aead_decrypt,
 	.ivsize = AES_BLOCK_SIZE,
 	.maxauthsize = SHA512_DIGEST_SIZE,
-}, {
-	.base = {
+पूर्ण, अणु
+	.base = अणु
 		.cra_name = "authenc(hmac(sha1),ecb(cipher_null))",
 		.cra_driver_name = "cpt_hmac_sha1_ecb_null",
 		.cra_blocksize = 1,
 		.cra_flags = CRYPTO_ALG_ASYNC,
-		.cra_ctxsize = sizeof(struct otx2_cpt_aead_ctx),
+		.cra_ctxsize = माप(काष्ठा otx2_cpt_aead_ctx),
 		.cra_priority = 4001,
 		.cra_alignmask = 0,
 		.cra_module = THIS_MODULE,
-	},
+	पूर्ण,
 	.init = otx2_cpt_aead_ecb_null_sha1_init,
-	.exit = otx2_cpt_aead_exit,
+	.निकास = otx2_cpt_aead_निकास,
 	.setkey = otx2_cpt_aead_ecb_null_sha_setkey,
 	.setauthsize = otx2_cpt_aead_null_set_authsize,
 	.encrypt = otx2_cpt_aead_null_encrypt,
 	.decrypt = otx2_cpt_aead_null_decrypt,
 	.ivsize = 0,
 	.maxauthsize = SHA1_DIGEST_SIZE,
-}, {
-	.base = {
+पूर्ण, अणु
+	.base = अणु
 		.cra_name = "authenc(hmac(sha256),ecb(cipher_null))",
 		.cra_driver_name = "cpt_hmac_sha256_ecb_null",
 		.cra_blocksize = 1,
 		.cra_flags = CRYPTO_ALG_ASYNC,
-		.cra_ctxsize = sizeof(struct otx2_cpt_aead_ctx),
+		.cra_ctxsize = माप(काष्ठा otx2_cpt_aead_ctx),
 		.cra_priority = 4001,
 		.cra_alignmask = 0,
 		.cra_module = THIS_MODULE,
-	},
+	पूर्ण,
 	.init = otx2_cpt_aead_ecb_null_sha256_init,
-	.exit = otx2_cpt_aead_exit,
+	.निकास = otx2_cpt_aead_निकास,
 	.setkey = otx2_cpt_aead_ecb_null_sha_setkey,
 	.setauthsize = otx2_cpt_aead_null_set_authsize,
 	.encrypt = otx2_cpt_aead_null_encrypt,
 	.decrypt = otx2_cpt_aead_null_decrypt,
 	.ivsize = 0,
 	.maxauthsize = SHA256_DIGEST_SIZE,
-}, {
-	.base = {
+पूर्ण, अणु
+	.base = अणु
 		.cra_name = "authenc(hmac(sha384),ecb(cipher_null))",
 		.cra_driver_name = "cpt_hmac_sha384_ecb_null",
 		.cra_blocksize = 1,
 		.cra_flags = CRYPTO_ALG_ASYNC,
-		.cra_ctxsize = sizeof(struct otx2_cpt_aead_ctx),
+		.cra_ctxsize = माप(काष्ठा otx2_cpt_aead_ctx),
 		.cra_priority = 4001,
 		.cra_alignmask = 0,
 		.cra_module = THIS_MODULE,
-	},
+	पूर्ण,
 	.init = otx2_cpt_aead_ecb_null_sha384_init,
-	.exit = otx2_cpt_aead_exit,
+	.निकास = otx2_cpt_aead_निकास,
 	.setkey = otx2_cpt_aead_ecb_null_sha_setkey,
 	.setauthsize = otx2_cpt_aead_null_set_authsize,
 	.encrypt = otx2_cpt_aead_null_encrypt,
 	.decrypt = otx2_cpt_aead_null_decrypt,
 	.ivsize = 0,
 	.maxauthsize = SHA384_DIGEST_SIZE,
-}, {
-	.base = {
+पूर्ण, अणु
+	.base = अणु
 		.cra_name = "authenc(hmac(sha512),ecb(cipher_null))",
 		.cra_driver_name = "cpt_hmac_sha512_ecb_null",
 		.cra_blocksize = 1,
 		.cra_flags = CRYPTO_ALG_ASYNC,
-		.cra_ctxsize = sizeof(struct otx2_cpt_aead_ctx),
+		.cra_ctxsize = माप(काष्ठा otx2_cpt_aead_ctx),
 		.cra_priority = 4001,
 		.cra_alignmask = 0,
 		.cra_module = THIS_MODULE,
-	},
+	पूर्ण,
 	.init = otx2_cpt_aead_ecb_null_sha512_init,
-	.exit = otx2_cpt_aead_exit,
+	.निकास = otx2_cpt_aead_निकास,
 	.setkey = otx2_cpt_aead_ecb_null_sha_setkey,
 	.setauthsize = otx2_cpt_aead_null_set_authsize,
 	.encrypt = otx2_cpt_aead_null_encrypt,
 	.decrypt = otx2_cpt_aead_null_decrypt,
 	.ivsize = 0,
 	.maxauthsize = SHA512_DIGEST_SIZE,
-}, {
-	.base = {
+पूर्ण, अणु
+	.base = अणु
 		.cra_name = "rfc4106(gcm(aes))",
 		.cra_driver_name = "cpt_rfc4106_gcm_aes",
 		.cra_blocksize = 1,
 		.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
-		.cra_ctxsize = sizeof(struct otx2_cpt_aead_ctx),
+		.cra_ctxsize = माप(काष्ठा otx2_cpt_aead_ctx),
 		.cra_priority = 4001,
 		.cra_alignmask = 0,
 		.cra_module = THIS_MODULE,
-	},
+	पूर्ण,
 	.init = otx2_cpt_aead_gcm_aes_init,
-	.exit = otx2_cpt_aead_exit,
+	.निकास = otx2_cpt_aead_निकास,
 	.setkey = otx2_cpt_aead_gcm_aes_setkey,
 	.setauthsize = otx2_cpt_aead_gcm_set_authsize,
 	.encrypt = otx2_cpt_aead_encrypt,
 	.decrypt = otx2_cpt_aead_decrypt,
 	.ivsize = AES_GCM_IV_SIZE,
 	.maxauthsize = AES_GCM_ICV_SIZE,
-} };
+पूर्ण पूर्ण;
 
-static inline int cpt_register_algs(void)
-{
-	int i, err = 0;
+अटल अंतरभूत पूर्णांक cpt_रेजिस्टर_algs(व्योम)
+अणु
+	पूर्णांक i, err = 0;
 
-	if (!IS_ENABLED(CONFIG_DM_CRYPT)) {
-		for (i = 0; i < ARRAY_SIZE(otx2_cpt_skciphers); i++)
+	अगर (!IS_ENABLED(CONFIG_DM_CRYPT)) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(otx2_cpt_skciphers); i++)
 			otx2_cpt_skciphers[i].base.cra_flags &=
 							~CRYPTO_ALG_DEAD;
 
-		err = crypto_register_skciphers(otx2_cpt_skciphers,
+		err = crypto_रेजिस्टर_skciphers(otx2_cpt_skciphers,
 						ARRAY_SIZE(otx2_cpt_skciphers));
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(otx2_cpt_aeads); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(otx2_cpt_aeads); i++)
 		otx2_cpt_aeads[i].base.cra_flags &= ~CRYPTO_ALG_DEAD;
 
-	err = crypto_register_aeads(otx2_cpt_aeads,
+	err = crypto_रेजिस्टर_aeads(otx2_cpt_aeads,
 				    ARRAY_SIZE(otx2_cpt_aeads));
-	if (err) {
-		crypto_unregister_skciphers(otx2_cpt_skciphers,
+	अगर (err) अणु
+		crypto_unरेजिस्टर_skciphers(otx2_cpt_skciphers,
 					    ARRAY_SIZE(otx2_cpt_skciphers));
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void cpt_unregister_algs(void)
-{
-	crypto_unregister_skciphers(otx2_cpt_skciphers,
+अटल अंतरभूत व्योम cpt_unरेजिस्टर_algs(व्योम)
+अणु
+	crypto_unरेजिस्टर_skciphers(otx2_cpt_skciphers,
 				    ARRAY_SIZE(otx2_cpt_skciphers));
-	crypto_unregister_aeads(otx2_cpt_aeads, ARRAY_SIZE(otx2_cpt_aeads));
-}
+	crypto_unरेजिस्टर_aeads(otx2_cpt_aeads, ARRAY_SIZE(otx2_cpt_aeads));
+पूर्ण
 
-static int compare_func(const void *lptr, const void *rptr)
-{
-	const struct cpt_device_desc *ldesc = (struct cpt_device_desc *) lptr;
-	const struct cpt_device_desc *rdesc = (struct cpt_device_desc *) rptr;
+अटल पूर्णांक compare_func(स्थिर व्योम *lptr, स्थिर व्योम *rptr)
+अणु
+	स्थिर काष्ठा cpt_device_desc *ldesc = (काष्ठा cpt_device_desc *) lptr;
+	स्थिर काष्ठा cpt_device_desc *rdesc = (काष्ठा cpt_device_desc *) rptr;
 
-	if (ldesc->dev->devfn < rdesc->dev->devfn)
-		return -1;
-	if (ldesc->dev->devfn > rdesc->dev->devfn)
-		return 1;
-	return 0;
-}
+	अगर (ldesc->dev->devfn < rdesc->dev->devfn)
+		वापस -1;
+	अगर (ldesc->dev->devfn > rdesc->dev->devfn)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static void swap_func(void *lptr, void *rptr, int size)
-{
-	struct cpt_device_desc *ldesc = lptr;
-	struct cpt_device_desc *rdesc = rptr;
-	struct cpt_device_desc desc;
+अटल व्योम swap_func(व्योम *lptr, व्योम *rptr, पूर्णांक size)
+अणु
+	काष्ठा cpt_device_desc *ldesc = lptr;
+	काष्ठा cpt_device_desc *rdesc = rptr;
+	काष्ठा cpt_device_desc desc;
 
 	desc = *ldesc;
 	*ldesc = *rdesc;
 	*rdesc = desc;
-}
+पूर्ण
 
-int otx2_cpt_crypto_init(struct pci_dev *pdev, struct module *mod,
-			 int num_queues, int num_devices)
-{
-	int ret = 0;
-	int count;
+पूर्णांक otx2_cpt_crypto_init(काष्ठा pci_dev *pdev, काष्ठा module *mod,
+			 पूर्णांक num_queues, पूर्णांक num_devices)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक count;
 
 	mutex_lock(&mutex);
-	count = atomic_read(&se_devices.count);
-	if (count >= OTX2_CPT_MAX_LFS_NUM) {
+	count = atomic_पढ़ो(&se_devices.count);
+	अगर (count >= OTX2_CPT_MAX_LFS_NUM) अणु
 		dev_err(&pdev->dev, "No space to add a new device\n");
 		ret = -ENOSPC;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 	se_devices.desc[count].num_queues = num_queues;
 	se_devices.desc[count++].dev = pdev;
 	atomic_inc(&se_devices.count);
 
-	if (atomic_read(&se_devices.count) == num_devices &&
-	    is_crypto_registered == false) {
-		if (cpt_register_algs()) {
+	अगर (atomic_पढ़ो(&se_devices.count) == num_devices &&
+	    is_crypto_रेजिस्टरed == false) अणु
+		अगर (cpt_रेजिस्टर_algs()) अणु
 			dev_err(&pdev->dev,
 				"Error in registering crypto algorithms\n");
 			ret =  -EINVAL;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 		try_module_get(mod);
-		is_crypto_registered = true;
-	}
-	sort(se_devices.desc, count, sizeof(struct cpt_device_desc),
+		is_crypto_रेजिस्टरed = true;
+	पूर्ण
+	sort(se_devices.desc, count, माप(काष्ठा cpt_device_desc),
 	     compare_func, swap_func);
 
 unlock:
 	mutex_unlock(&mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void otx2_cpt_crypto_exit(struct pci_dev *pdev, struct module *mod)
-{
-	struct cpt_device_table *dev_tbl;
+व्योम otx2_cpt_crypto_निकास(काष्ठा pci_dev *pdev, काष्ठा module *mod)
+अणु
+	काष्ठा cpt_device_table *dev_tbl;
 	bool dev_found = false;
-	int i, j, count;
+	पूर्णांक i, j, count;
 
 	mutex_lock(&mutex);
 
 	dev_tbl = &se_devices;
-	count = atomic_read(&dev_tbl->count);
-	for (i = 0; i < count; i++) {
-		if (pdev == dev_tbl->desc[i].dev) {
-			for (j = i; j < count-1; j++)
+	count = atomic_पढ़ो(&dev_tbl->count);
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (pdev == dev_tbl->desc[i].dev) अणु
+			क्रम (j = i; j < count-1; j++)
 				dev_tbl->desc[j] = dev_tbl->desc[j+1];
 			dev_found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!dev_found) {
+	अगर (!dev_found) अणु
 		dev_err(&pdev->dev, "%s device not found\n", __func__);
-		goto unlock;
-	}
-	if (atomic_dec_and_test(&se_devices.count)) {
-		cpt_unregister_algs();
+		जाओ unlock;
+	पूर्ण
+	अगर (atomic_dec_and_test(&se_devices.count)) अणु
+		cpt_unरेजिस्टर_algs();
 		module_put(mod);
-		is_crypto_registered = false;
-	}
+		is_crypto_रेजिस्टरed = false;
+	पूर्ण
 
 unlock:
 	mutex_unlock(&mutex);
-}
+पूर्ण

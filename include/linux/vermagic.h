@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_VERMAGIC_H
-#define _LINUX_VERMAGIC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_VERMAGIC_H
+#घोषणा _LINUX_VERMAGIC_H
 
-#ifndef INCLUDE_VERMAGIC
-#error "This header can be included from kernel/module.c or *.mod.c only"
-#endif
+#अगर_अघोषित INCLUDE_VERMAGIC
+#त्रुटि "This header can be included from kernel/module.c or *.mod.c only"
+#पूर्ण_अगर
 
-#include <generated/utsrelease.h>
-#include <asm/vermagic.h>
+#समावेश <generated/utsrelease.h>
+#समावेश <यंत्र/vermagic.h>
 
-/* Simply sanity version stamp for modules. */
-#ifdef CONFIG_SMP
-#define MODULE_VERMAGIC_SMP "SMP "
-#else
-#define MODULE_VERMAGIC_SMP ""
-#endif
-#ifdef CONFIG_PREEMPT
-#define MODULE_VERMAGIC_PREEMPT "preempt "
-#elif defined(CONFIG_PREEMPT_RT)
-#define MODULE_VERMAGIC_PREEMPT "preempt_rt "
-#else
-#define MODULE_VERMAGIC_PREEMPT ""
-#endif
-#ifdef CONFIG_MODULE_UNLOAD
-#define MODULE_VERMAGIC_MODULE_UNLOAD "mod_unload "
-#else
-#define MODULE_VERMAGIC_MODULE_UNLOAD ""
-#endif
-#ifdef CONFIG_MODVERSIONS
-#define MODULE_VERMAGIC_MODVERSIONS "modversions "
-#else
-#define MODULE_VERMAGIC_MODVERSIONS ""
-#endif
-#ifdef RANDSTRUCT_PLUGIN
-#include <generated/randomize_layout_hash.h>
-#define MODULE_RANDSTRUCT_PLUGIN "RANDSTRUCT_PLUGIN_" RANDSTRUCT_HASHED_SEED
-#else
-#define MODULE_RANDSTRUCT_PLUGIN
-#endif
+/* Simply sanity version stamp क्रम modules. */
+#अगर_घोषित CONFIG_SMP
+#घोषणा MODULE_VERMAGIC_SMP "SMP "
+#अन्यथा
+#घोषणा MODULE_VERMAGIC_SMP ""
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PREEMPT
+#घोषणा MODULE_VERMAGIC_PREEMPT "preempt "
+#या_अगर defined(CONFIG_PREEMPT_RT)
+#घोषणा MODULE_VERMAGIC_PREEMPT "preempt_rt "
+#अन्यथा
+#घोषणा MODULE_VERMAGIC_PREEMPT ""
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MODULE_UNLOAD
+#घोषणा MODULE_VERMAGIC_MODULE_UNLOAD "mod_unload "
+#अन्यथा
+#घोषणा MODULE_VERMAGIC_MODULE_UNLOAD ""
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MODVERSIONS
+#घोषणा MODULE_VERMAGIC_MODVERSIONS "modversions "
+#अन्यथा
+#घोषणा MODULE_VERMAGIC_MODVERSIONS ""
+#पूर्ण_अगर
+#अगर_घोषित RANDSTRUCT_PLUGIN
+#समावेश <generated/अक्रमomize_layout_hash.h>
+#घोषणा MODULE_RANDSTRUCT_PLUGIN "RANDSTRUCT_PLUGIN_" RANDSTRUCT_HASHED_SEED
+#अन्यथा
+#घोषणा MODULE_RANDSTRUCT_PLUGIN
+#पूर्ण_अगर
 
-#define VERMAGIC_STRING 						\
+#घोषणा VERMAGIC_STRING 						\
 	UTS_RELEASE " "							\
 	MODULE_VERMAGIC_SMP MODULE_VERMAGIC_PREEMPT 			\
 	MODULE_VERMAGIC_MODULE_UNLOAD MODULE_VERMAGIC_MODVERSIONS	\
 	MODULE_ARCH_VERMAGIC						\
 	MODULE_RANDSTRUCT_PLUGIN
 
-#endif /* _LINUX_VERMAGIC_H */
+#पूर्ण_अगर /* _LINUX_VERMAGIC_H */

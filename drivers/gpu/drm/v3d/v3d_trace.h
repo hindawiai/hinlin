@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* Copyright (C) 2015-2018 Broadcom */
 
-#if !defined(_V3D_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
-#define _V3D_TRACE_H_
+#अगर !defined(_V3D_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _V3D_TRACE_H_
 
-#include <linux/stringify.h>
-#include <linux/types.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/types.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM v3d
-#define TRACE_INCLUDE_FILE v3d_trace
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM v3d
+#घोषणा TRACE_INCLUDE_खाता v3d_trace
 
 TRACE_EVENT(v3d_submit_cl_ioctl,
-	    TP_PROTO(struct drm_device *dev, u32 ct1qba, u32 ct1qea),
+	    TP_PROTO(काष्ठा drm_device *dev, u32 ct1qba, u32 ct1qea),
 	    TP_ARGS(dev, ct1qba, ct1qea),
 
 	    TP_STRUCT__entry(
@@ -28,15 +29,15 @@ TRACE_EVENT(v3d_submit_cl_ioctl,
 			   __entry->ct1qea = ct1qea;
 			   ),
 
-	    TP_printk("dev=%u, RCL 0x%08x..0x%08x",
+	    TP_prपूर्णांकk("dev=%u, RCL 0x%08x..0x%08x",
 		      __entry->dev,
 		      __entry->ct1qba,
 		      __entry->ct1qea)
 );
 
 TRACE_EVENT(v3d_submit_cl,
-	    TP_PROTO(struct drm_device *dev, bool is_render,
-		     uint64_t seqno,
+	    TP_PROTO(काष्ठा drm_device *dev, bool is_render,
+		     uपूर्णांक64_t seqno,
 		     u32 ctnqba, u32 ctnqea),
 	    TP_ARGS(dev, is_render, seqno, ctnqba, ctnqea),
 
@@ -56,7 +57,7 @@ TRACE_EVENT(v3d_submit_cl,
 			   __entry->ctnqea = ctnqea;
 			   ),
 
-	    TP_printk("dev=%u, %s, seqno=%llu, 0x%08x..0x%08x",
+	    TP_prपूर्णांकk("dev=%u, %s, seqno=%llu, 0x%08x..0x%08x",
 		      __entry->dev,
 		      __entry->is_render ? "RCL" : "BCL",
 		      __entry->seqno,
@@ -65,8 +66,8 @@ TRACE_EVENT(v3d_submit_cl,
 );
 
 TRACE_EVENT(v3d_bcl_irq,
-	    TP_PROTO(struct drm_device *dev,
-		     uint64_t seqno),
+	    TP_PROTO(काष्ठा drm_device *dev,
+		     uपूर्णांक64_t seqno),
 	    TP_ARGS(dev, seqno),
 
 	    TP_STRUCT__entry(
@@ -79,14 +80,14 @@ TRACE_EVENT(v3d_bcl_irq,
 			   __entry->seqno = seqno;
 			   ),
 
-	    TP_printk("dev=%u, seqno=%llu",
+	    TP_prपूर्णांकk("dev=%u, seqno=%llu",
 		      __entry->dev,
 		      __entry->seqno)
 );
 
 TRACE_EVENT(v3d_rcl_irq,
-	    TP_PROTO(struct drm_device *dev,
-		     uint64_t seqno),
+	    TP_PROTO(काष्ठा drm_device *dev,
+		     uपूर्णांक64_t seqno),
 	    TP_ARGS(dev, seqno),
 
 	    TP_STRUCT__entry(
@@ -99,14 +100,14 @@ TRACE_EVENT(v3d_rcl_irq,
 			   __entry->seqno = seqno;
 			   ),
 
-	    TP_printk("dev=%u, seqno=%llu",
+	    TP_prपूर्णांकk("dev=%u, seqno=%llu",
 		      __entry->dev,
 		      __entry->seqno)
 );
 
 TRACE_EVENT(v3d_tfu_irq,
-	    TP_PROTO(struct drm_device *dev,
-		     uint64_t seqno),
+	    TP_PROTO(काष्ठा drm_device *dev,
+		     uपूर्णांक64_t seqno),
 	    TP_ARGS(dev, seqno),
 
 	    TP_STRUCT__entry(
@@ -119,14 +120,14 @@ TRACE_EVENT(v3d_tfu_irq,
 			   __entry->seqno = seqno;
 			   ),
 
-	    TP_printk("dev=%u, seqno=%llu",
+	    TP_prपूर्णांकk("dev=%u, seqno=%llu",
 		      __entry->dev,
 		      __entry->seqno)
 );
 
 TRACE_EVENT(v3d_csd_irq,
-	    TP_PROTO(struct drm_device *dev,
-		     uint64_t seqno),
+	    TP_PROTO(काष्ठा drm_device *dev,
+		     uपूर्णांक64_t seqno),
 	    TP_ARGS(dev, seqno),
 
 	    TP_STRUCT__entry(
@@ -139,13 +140,13 @@ TRACE_EVENT(v3d_csd_irq,
 			   __entry->seqno = seqno;
 			   ),
 
-	    TP_printk("dev=%u, seqno=%llu",
+	    TP_prपूर्णांकk("dev=%u, seqno=%llu",
 		      __entry->dev,
 		      __entry->seqno)
 );
 
 TRACE_EVENT(v3d_submit_tfu_ioctl,
-	    TP_PROTO(struct drm_device *dev, u32 iia),
+	    TP_PROTO(काष्ठा drm_device *dev, u32 iia),
 	    TP_ARGS(dev, iia),
 
 	    TP_STRUCT__entry(
@@ -158,14 +159,14 @@ TRACE_EVENT(v3d_submit_tfu_ioctl,
 			   __entry->iia = iia;
 			   ),
 
-	    TP_printk("dev=%u, IIA 0x%08x",
+	    TP_prपूर्णांकk("dev=%u, IIA 0x%08x",
 		      __entry->dev,
 		      __entry->iia)
 );
 
 TRACE_EVENT(v3d_submit_tfu,
-	    TP_PROTO(struct drm_device *dev,
-		     uint64_t seqno),
+	    TP_PROTO(काष्ठा drm_device *dev,
+		     uपूर्णांक64_t seqno),
 	    TP_ARGS(dev, seqno),
 
 	    TP_STRUCT__entry(
@@ -178,13 +179,13 @@ TRACE_EVENT(v3d_submit_tfu,
 			   __entry->seqno = seqno;
 			   ),
 
-	    TP_printk("dev=%u, seqno=%llu",
+	    TP_prपूर्णांकk("dev=%u, seqno=%llu",
 		      __entry->dev,
 		      __entry->seqno)
 );
 
 TRACE_EVENT(v3d_submit_csd_ioctl,
-	    TP_PROTO(struct drm_device *dev, u32 cfg5, u32 cfg6),
+	    TP_PROTO(काष्ठा drm_device *dev, u32 cfg5, u32 cfg6),
 	    TP_ARGS(dev, cfg5, cfg6),
 
 	    TP_STRUCT__entry(
@@ -199,15 +200,15 @@ TRACE_EVENT(v3d_submit_csd_ioctl,
 			   __entry->cfg6 = cfg6;
 			   ),
 
-	    TP_printk("dev=%u, CFG5 0x%08x, CFG6 0x%08x",
+	    TP_prपूर्णांकk("dev=%u, CFG5 0x%08x, CFG6 0x%08x",
 		      __entry->dev,
 		      __entry->cfg5,
 		      __entry->cfg6)
 );
 
 TRACE_EVENT(v3d_submit_csd,
-	    TP_PROTO(struct drm_device *dev,
-		     uint64_t seqno),
+	    TP_PROTO(काष्ठा drm_device *dev,
+		     uपूर्णांक64_t seqno),
 	    TP_ARGS(dev, seqno),
 
 	    TP_STRUCT__entry(
@@ -220,13 +221,13 @@ TRACE_EVENT(v3d_submit_csd,
 			   __entry->seqno = seqno;
 			   ),
 
-	    TP_printk("dev=%u, seqno=%llu",
+	    TP_prपूर्णांकk("dev=%u, seqno=%llu",
 		      __entry->dev,
 		      __entry->seqno)
 );
 
 TRACE_EVENT(v3d_cache_clean_begin,
-	    TP_PROTO(struct drm_device *dev),
+	    TP_PROTO(काष्ठा drm_device *dev),
 	    TP_ARGS(dev),
 
 	    TP_STRUCT__entry(
@@ -237,12 +238,12 @@ TRACE_EVENT(v3d_cache_clean_begin,
 			   __entry->dev = dev->primary->index;
 			   ),
 
-	    TP_printk("dev=%u",
+	    TP_prपूर्णांकk("dev=%u",
 		      __entry->dev)
 );
 
 TRACE_EVENT(v3d_cache_clean_end,
-	    TP_PROTO(struct drm_device *dev),
+	    TP_PROTO(काष्ठा drm_device *dev),
 	    TP_ARGS(dev),
 
 	    TP_STRUCT__entry(
@@ -253,12 +254,12 @@ TRACE_EVENT(v3d_cache_clean_end,
 			   __entry->dev = dev->primary->index;
 			   ),
 
-	    TP_printk("dev=%u",
+	    TP_prपूर्णांकk("dev=%u",
 		      __entry->dev)
 );
 
 TRACE_EVENT(v3d_reset_begin,
-	    TP_PROTO(struct drm_device *dev),
+	    TP_PROTO(काष्ठा drm_device *dev),
 	    TP_ARGS(dev),
 
 	    TP_STRUCT__entry(
@@ -269,12 +270,12 @@ TRACE_EVENT(v3d_reset_begin,
 			   __entry->dev = dev->primary->index;
 			   ),
 
-	    TP_printk("dev=%u",
+	    TP_prपूर्णांकk("dev=%u",
 		      __entry->dev)
 );
 
 TRACE_EVENT(v3d_reset_end,
-	    TP_PROTO(struct drm_device *dev),
+	    TP_PROTO(काष्ठा drm_device *dev),
 	    TP_ARGS(dev),
 
 	    TP_STRUCT__entry(
@@ -285,13 +286,13 @@ TRACE_EVENT(v3d_reset_end,
 			   __entry->dev = dev->primary->index;
 			   ),
 
-	    TP_printk("dev=%u",
+	    TP_prपूर्णांकk("dev=%u",
 		      __entry->dev)
 );
 
-#endif /* _V3D_TRACE_H_ */
+#पूर्ण_अगर /* _V3D_TRACE_H_ */
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#समावेश <trace/define_trace.h>

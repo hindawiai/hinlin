@@ -1,14 +1,15 @@
+<शैली गुरु>
 /******************************************************************************
  * vcpu.h
  *
  * VCPU initialisation, query, and hotplug.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * of this software and associated करोcumentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * rights to use, copy, modअगरy, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,200 +25,200 @@
  * Copyright (c) 2005, Keir Fraser <keir@xensource.com>
  */
 
-#ifndef __XEN_PUBLIC_VCPU_H__
-#define __XEN_PUBLIC_VCPU_H__
+#अगर_अघोषित __XEN_PUBLIC_VCPU_H__
+#घोषणा __XEN_PUBLIC_VCPU_H__
 
 /*
- * Prototype for this hypercall is:
- *	int vcpu_op(int cmd, int vcpuid, void *extra_args)
+ * Prototype क्रम this hypercall is:
+ *	पूर्णांक vcpu_op(पूर्णांक cmd, पूर्णांक vcpuid, व्योम *extra_args)
  * @cmd		   == VCPUOP_??? (VCPU operation).
  * @vcpuid	   == VCPU to operate on.
- * @extra_args == Operation-specific extra arguments (NULL if none).
+ * @extra_args == Operation-specअगरic extra arguments (शून्य अगर none).
  */
 
 /*
  * Initialise a VCPU. Each VCPU can be initialised only once. A
  * newly-initialised VCPU will not run until it is brought up by VCPUOP_up.
  *
- * @extra_arg == pointer to vcpu_guest_context structure containing initial
- *				 state for the VCPU.
+ * @extra_arg == poपूर्णांकer to vcpu_guest_context काष्ठाure containing initial
+ *				 state क्रम the VCPU.
  */
-#define VCPUOP_initialise			 0
+#घोषणा VCPUOP_initialise			 0
 
 /*
  * Bring up a VCPU. This makes the VCPU runnable. This operation will fail
- * if the VCPU has not been initialised (VCPUOP_initialise).
+ * अगर the VCPU has not been initialised (VCPUOP_initialise).
  */
-#define VCPUOP_up					 1
+#घोषणा VCPUOP_up					 1
 
 /*
- * Bring down a VCPU (i.e., make it non-runnable).
+ * Bring करोwn a VCPU (i.e., make it non-runnable).
  * There are a few caveats that callers should observe:
- *	1. This operation may return, and VCPU_is_up may return false, before the
+ *	1. This operation may वापस, and VCPU_is_up may वापस false, beक्रमe the
  *	   VCPU stops running (i.e., the command is asynchronous). It is a good
- *	   idea to ensure that the VCPU has entered a non-critical loop before
- *	   bringing it down. Alternatively, this operation is guaranteed
- *	   synchronous if invoked by the VCPU itself.
+ *	   idea to ensure that the VCPU has entered a non-critical loop beक्रमe
+ *	   bringing it करोwn. Alternatively, this operation is guaranteed
+ *	   synchronous अगर invoked by the VCPU itself.
  *	2. After a VCPU is initialised, there is currently no way to drop all its
- *	   references to domain memory. Even a VCPU that is down still holds
- *	   memory references via its pagetable base pointer and GDT. It is good
- *	   practise to move a VCPU onto an 'idle' or default page table, LDT and
- *	   GDT before bringing it down.
+ *	   references to करोमुख्य memory. Even a VCPU that is करोwn still holds
+ *	   memory references via its pagetable base poपूर्णांकer and GDT. It is good
+ *	   practise to move a VCPU onto an 'idle' or शेष page table, LDT and
+ *	   GDT beक्रमe bringing it करोwn.
  */
-#define VCPUOP_down					 2
+#घोषणा VCPUOP_करोwn					 2
 
-/* Returns 1 if the given VCPU is up. */
-#define VCPUOP_is_up				 3
+/* Returns 1 अगर the given VCPU is up. */
+#घोषणा VCPUOP_is_up				 3
 
 /*
- * Return information about the state and running time of a VCPU.
- * @extra_arg == pointer to vcpu_runstate_info structure.
+ * Return inक्रमmation about the state and running समय of a VCPU.
+ * @extra_arg == poपूर्णांकer to vcpu_runstate_info काष्ठाure.
  */
-#define VCPUOP_get_runstate_info	 4
-struct vcpu_runstate_info {
+#घोषणा VCPUOP_get_runstate_info	 4
+काष्ठा vcpu_runstate_info अणु
 	/* VCPU's current state (RUNSTATE_*). */
-	int		 state;
-	/* When was current state entered (system time, ns)? */
-	uint64_t state_entry_time;
+	पूर्णांक		 state;
+	/* When was current state entered (प्रणाली समय, ns)? */
+	uपूर्णांक64_t state_entry_समय;
 	/*
-	 * Update indicator set in state_entry_time:
+	 * Update indicator set in state_entry_समय:
 	 * When activated via VMASST_TYPE_runstate_update_flag, set during
 	 * updates in guest memory mapped copy of vcpu_runstate_info.
 	 */
-#define XEN_RUNSTATE_UPDATE	(1ULL << 63)
+#घोषणा XEN_RUNSTATE_UPDATE	(1ULL << 63)
 	/*
-	 * Time spent in each RUNSTATE_* (ns). The sum of these times is
-	 * guaranteed not to drift from system time.
+	 * Time spent in each RUNSTATE_* (ns). The sum of these बार is
+	 * guaranteed not to drअगरt from प्रणाली समय.
 	 */
-	uint64_t time[4];
-};
+	uपूर्णांक64_t समय[4];
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(vcpu_runstate_info);
 
 /* VCPU is currently running on a physical CPU. */
-#define RUNSTATE_running  0
+#घोषणा RUNSTATE_running  0
 
 /* VCPU is runnable, but not currently scheduled on any physical CPU. */
-#define RUNSTATE_runnable 1
+#घोषणा RUNSTATE_runnable 1
 
-/* VCPU is blocked (a.k.a. idle). It is therefore not runnable. */
-#define RUNSTATE_blocked  2
+/* VCPU is blocked (a.k.a. idle). It is thereक्रमe not runnable. */
+#घोषणा RUNSTATE_blocked  2
 
 /*
  * VCPU is not runnable, but it is not blocked.
- * This is a 'catch all' state for things like hotplug and pauses by the
- * system administrator (or for critical sections in the hypervisor).
- * RUNSTATE_blocked dominates this state (it is the preferred state).
+ * This is a 'catch all' state क्रम things like hotplug and छोड़ोs by the
+ * प्रणाली administrator (or क्रम critical sections in the hypervisor).
+ * RUNSTATE_blocked करोminates this state (it is the preferred state).
  */
-#define RUNSTATE_offline  3
+#घोषणा RUNSTATE_offline  3
 
 /*
  * Register a shared memory area from which the guest may obtain its own
- * runstate information without needing to execute a hypercall.
+ * runstate inक्रमmation without needing to execute a hypercall.
  * Notes:
- *	1. The registered address may be virtual or physical, depending on the
- *	   platform. The virtual address should be registered on x86 systems.
- *	2. Only one shared area may be registered per VCPU. The shared area is
- *	   updated by the hypervisor each time the VCPU is scheduled. Thus
+ *	1. The रेजिस्टरed address may be भव or physical, depending on the
+ *	   platक्रमm. The भव address should be रेजिस्टरed on x86 प्रणालीs.
+ *	2. Only one shared area may be रेजिस्टरed per VCPU. The shared area is
+ *	   updated by the hypervisor each समय the VCPU is scheduled. Thus
  *	   runstate.state will always be RUNSTATE_running and
- *	   runstate.state_entry_time will indicate the system time at which the
+ *	   runstate.state_entry_समय will indicate the प्रणाली समय at which the
  *	   VCPU was last scheduled to run.
- * @extra_arg == pointer to vcpu_register_runstate_memory_area structure.
+ * @extra_arg == poपूर्णांकer to vcpu_रेजिस्टर_runstate_memory_area काष्ठाure.
  */
-#define VCPUOP_register_runstate_memory_area 5
-struct vcpu_register_runstate_memory_area {
-		union {
+#घोषणा VCPUOP_रेजिस्टर_runstate_memory_area 5
+काष्ठा vcpu_रेजिस्टर_runstate_memory_area अणु
+		जोड़ अणु
 				GUEST_HANDLE(vcpu_runstate_info) h;
-				struct vcpu_runstate_info *v;
-				uint64_t p;
-		} addr;
-};
+				काष्ठा vcpu_runstate_info *v;
+				uपूर्णांक64_t p;
+		पूर्ण addr;
+पूर्ण;
 
 /*
- * Set or stop a VCPU's periodic timer. Every VCPU has one periodic timer
+ * Set or stop a VCPU's periodic समयr. Every VCPU has one periodic समयr
  * which can be set via these commands. Periods smaller than one millisecond
  * may not be supported.
  */
-#define VCPUOP_set_periodic_timer	 6 /* arg == vcpu_set_periodic_timer_t */
-#define VCPUOP_stop_periodic_timer	 7 /* arg == NULL */
-struct vcpu_set_periodic_timer {
-		uint64_t period_ns;
-};
-DEFINE_GUEST_HANDLE_STRUCT(vcpu_set_periodic_timer);
+#घोषणा VCPUOP_set_periodic_समयr	 6 /* arg == vcpu_set_periodic_समयr_t */
+#घोषणा VCPUOP_stop_periodic_समयr	 7 /* arg == शून्य */
+काष्ठा vcpu_set_periodic_समयr अणु
+		uपूर्णांक64_t period_ns;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(vcpu_set_periodic_समयr);
 
 /*
- * Set or stop a VCPU's single-shot timer. Every VCPU has one single-shot
- * timer which can be set via these commands.
+ * Set or stop a VCPU's single-shot समयr. Every VCPU has one single-shot
+ * समयr which can be set via these commands.
  */
-#define VCPUOP_set_singleshot_timer	 8 /* arg == vcpu_set_singleshot_timer_t */
-#define VCPUOP_stop_singleshot_timer 9 /* arg == NULL */
-struct vcpu_set_singleshot_timer {
-		uint64_t timeout_abs_ns;
-		uint32_t flags;			   /* VCPU_SSHOTTMR_??? */
-};
-DEFINE_GUEST_HANDLE_STRUCT(vcpu_set_singleshot_timer);
+#घोषणा VCPUOP_set_singleshot_समयr	 8 /* arg == vcpu_set_singleshot_समयr_t */
+#घोषणा VCPUOP_stop_singleshot_समयr 9 /* arg == शून्य */
+काष्ठा vcpu_set_singleshot_समयr अणु
+		uपूर्णांक64_t समयout_असल_ns;
+		uपूर्णांक32_t flags;			   /* VCPU_SSHOTTMR_??? */
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(vcpu_set_singleshot_समयr);
 
-/* Flags to VCPUOP_set_singleshot_timer. */
- /* Require the timeout to be in the future (return -ETIME if it's passed). */
-#define _VCPU_SSHOTTMR_future (0)
-#define VCPU_SSHOTTMR_future  (1U << _VCPU_SSHOTTMR_future)
+/* Flags to VCPUOP_set_singleshot_समयr. */
+ /* Require the समयout to be in the future (वापस -ETIME अगर it's passed). */
+#घोषणा _VCPU_SSHOTTMR_future (0)
+#घोषणा VCPU_SSHOTTMR_future  (1U << _VCPU_SSHOTTMR_future)
 
 /*
- * Register a memory location in the guest address space for the
- * vcpu_info structure.  This allows the guest to place the vcpu_info
- * structure in a convenient place, such as in a per-cpu data area.
- * The pointer need not be page aligned, but the structure must not
+ * Register a memory location in the guest address space क्रम the
+ * vcpu_info काष्ठाure.  This allows the guest to place the vcpu_info
+ * काष्ठाure in a convenient place, such as in a per-cpu data area.
+ * The poपूर्णांकer need not be page aligned, but the काष्ठाure must not
  * cross a page boundary.
  */
-#define VCPUOP_register_vcpu_info   10  /* arg == struct vcpu_info */
-struct vcpu_register_vcpu_info {
-    uint64_t mfn;    /* mfn of page to place vcpu_info */
-    uint32_t offset; /* offset within page */
-    uint32_t rsvd;   /* unused */
-};
-DEFINE_GUEST_HANDLE_STRUCT(vcpu_register_vcpu_info);
+#घोषणा VCPUOP_रेजिस्टर_vcpu_info   10  /* arg == काष्ठा vcpu_info */
+काष्ठा vcpu_रेजिस्टर_vcpu_info अणु
+    uपूर्णांक64_t mfn;    /* mfn of page to place vcpu_info */
+    uपूर्णांक32_t offset; /* offset within page */
+    uपूर्णांक32_t rsvd;   /* unused */
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(vcpu_रेजिस्टर_vcpu_info);
 
-/* Send an NMI to the specified VCPU. @extra_arg == NULL. */
-#define VCPUOP_send_nmi             11
+/* Send an NMI to the specअगरied VCPU. @extra_arg == शून्य. */
+#घोषणा VCPUOP_send_nmi             11
 
 /*
- * Get the physical ID information for a pinned vcpu's underlying physical
- * processor.  The physical ID informmation is architecture-specific.
+ * Get the physical ID inक्रमmation क्रम a pinned vcpu's underlying physical
+ * processor.  The physical ID inक्रमmmation is architecture-specअगरic.
  * On x86: id[31:0]=apic_id, id[63:32]=acpi_id.
- * This command returns -EINVAL if it is not a valid operation for this VCPU.
+ * This command वापसs -EINVAL अगर it is not a valid operation क्रम this VCPU.
  */
-#define VCPUOP_get_physid           12 /* arg == vcpu_get_physid_t */
-struct vcpu_get_physid {
-	uint64_t phys_id;
-};
+#घोषणा VCPUOP_get_physid           12 /* arg == vcpu_get_physid_t */
+काष्ठा vcpu_get_physid अणु
+	uपूर्णांक64_t phys_id;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(vcpu_get_physid);
-#define xen_vcpu_physid_to_x86_apicid(physid) ((uint32_t)(physid))
-#define xen_vcpu_physid_to_x86_acpiid(physid) ((uint32_t)((physid) >> 32))
+#घोषणा xen_vcpu_physid_to_x86_apicid(physid) ((uपूर्णांक32_t)(physid))
+#घोषणा xen_vcpu_physid_to_x86_acpiid(physid) ((uपूर्णांक32_t)((physid) >> 32))
 
 /*
- * Register a memory location to get a secondary copy of the vcpu time
+ * Register a memory location to get a secondary copy of the vcpu समय
  * parameters.  The master copy still exists as part of the vcpu shared
  * memory area, and this secondary copy is updated whenever the master copy
- * is updated (and using the same versioning scheme for synchronisation).
+ * is updated (and using the same versioning scheme क्रम synchronisation).
  *
- * The intent is that this copy may be mapped (RO) into userspace so
- * that usermode can compute system time using the time info and the
- * tsc.  Usermode will see an array of vcpu_time_info structures, one
- * for each vcpu, and choose the right one by an existing mechanism
+ * The पूर्णांकent is that this copy may be mapped (RO) पूर्णांकo userspace so
+ * that usermode can compute प्रणाली समय using the समय info and the
+ * tsc.  Usermode will see an array of vcpu_समय_info काष्ठाures, one
+ * क्रम each vcpu, and choose the right one by an existing mechanism
  * which allows it to get the current vcpu number (such as via a
  * segment limit).  It can then apply the normal algorithm to compute
- * system time from the tsc.
+ * प्रणाली समय from the tsc.
  *
- * @extra_arg == pointer to vcpu_register_time_info_memory_area structure.
+ * @extra_arg == poपूर्णांकer to vcpu_रेजिस्टर_समय_info_memory_area काष्ठाure.
  */
-#define VCPUOP_register_vcpu_time_memory_area   13
-DEFINE_GUEST_HANDLE_STRUCT(vcpu_time_info);
-struct vcpu_register_time_memory_area {
-	union {
-		GUEST_HANDLE(vcpu_time_info) h;
-		struct pvclock_vcpu_time_info *v;
-		uint64_t p;
-	} addr;
-};
-DEFINE_GUEST_HANDLE_STRUCT(vcpu_register_time_memory_area);
+#घोषणा VCPUOP_रेजिस्टर_vcpu_समय_memory_area   13
+DEFINE_GUEST_HANDLE_STRUCT(vcpu_समय_info);
+काष्ठा vcpu_रेजिस्टर_समय_memory_area अणु
+	जोड़ अणु
+		GUEST_HANDLE(vcpu_समय_info) h;
+		काष्ठा pvघड़ी_vcpu_समय_info *v;
+		uपूर्णांक64_t p;
+	पूर्ण addr;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(vcpu_रेजिस्टर_समय_memory_area);
 
-#endif /* __XEN_PUBLIC_VCPU_H__ */
+#पूर्ण_अगर /* __XEN_PUBLIC_VCPU_H__ */

@@ -1,638 +1,639 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * sysfs.h - definitions for the device driver filesystem
+ * sysfs.h - definitions क्रम the device driver fileप्रणाली
  *
  * Copyright (c) 2001,2002 Patrick Mochel
  * Copyright (c) 2004 Silicon Graphics, Inc.
  * Copyright (c) 2007 SUSE Linux Products GmbH
  * Copyright (c) 2007 Tejun Heo <teheo@suse.de>
  *
- * Please see Documentation/filesystems/sysfs.rst for more information.
+ * Please see Documentation/fileप्रणालीs/sysfs.rst क्रम more inक्रमmation.
  */
 
-#ifndef _SYSFS_H_
-#define _SYSFS_H_
+#अगर_अघोषित _SYSFS_H_
+#घोषणा _SYSFS_H_
 
-#include <linux/kernfs.h>
-#include <linux/compiler.h>
-#include <linux/errno.h>
-#include <linux/list.h>
-#include <linux/lockdep.h>
-#include <linux/kobject_ns.h>
-#include <linux/stat.h>
-#include <linux/atomic.h>
+#समावेश <linux/kernfs.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/list.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/kobject_ns.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/atomic.h>
 
-struct kobject;
-struct module;
-struct bin_attribute;
-enum kobj_ns_type;
+काष्ठा kobject;
+काष्ठा module;
+काष्ठा bin_attribute;
+क्रमागत kobj_ns_type;
 
-struct attribute {
-	const char		*name;
+काष्ठा attribute अणु
+	स्थिर अक्षर		*name;
 	umode_t			mode;
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 	bool			ignore_lockdep:1;
-	struct lock_class_key	*key;
-	struct lock_class_key	skey;
-#endif
-};
+	काष्ठा lock_class_key	*key;
+	काष्ठा lock_class_key	skey;
+#पूर्ण_अगर
+पूर्ण;
 
 /**
  *	sysfs_attr_init - initialize a dynamically allocated sysfs attribute
- *	@attr: struct attribute to initialize
+ *	@attr: काष्ठा attribute to initialize
  *
- *	Initialize a dynamically allocated struct attribute so we can
- *	make lockdep happy.  This is a new requirement for attributes
+ *	Initialize a dynamically allocated काष्ठा attribute so we can
+ *	make lockdep happy.  This is a new requirement क्रम attributes
  *	and initially this is only needed when lockdep is enabled.
  *	Lockdep gives a nice error when your attribute is added to
- *	sysfs if you don't have this.
+ *	sysfs अगर you करोn't have this.
  */
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-#define sysfs_attr_init(attr)				\
-do {							\
-	static struct lock_class_key __key;		\
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+#घोषणा sysfs_attr_init(attr)				\
+करो अणु							\
+	अटल काष्ठा lock_class_key __key;		\
 							\
 	(attr)->key = &__key;				\
-} while (0)
-#else
-#define sysfs_attr_init(attr) do {} while (0)
-#endif
+पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा sysfs_attr_init(attr) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /**
- * struct attribute_group - data structure used to declare an attribute group.
+ * काष्ठा attribute_group - data काष्ठाure used to declare an attribute group.
  * @name:	Optional: Attribute group name
- *		If specified, the attribute group will be created in
+ *		If specअगरied, the attribute group will be created in
  *		a new subdirectory with this name.
- * @is_visible:	Optional: Function to return permissions associated with an
- *		attribute of the group. Will be called repeatedly for each
- *		non-binary attribute in the group. Only read/write
+ * @is_visible:	Optional: Function to वापस permissions associated with an
+ *		attribute of the group. Will be called repeatedly क्रम each
+ *		non-binary attribute in the group. Only पढ़ो/ग_लिखो
  *		permissions as well as SYSFS_PREALLOC are accepted. Must
- *		return 0 if an attribute is not visible. The returned value
- *		will replace static permissions defined in struct attribute.
+ *		वापस 0 अगर an attribute is not visible. The वापसed value
+ *		will replace अटल permissions defined in काष्ठा attribute.
  * @is_bin_visible:
- *		Optional: Function to return permissions associated with a
+ *		Optional: Function to वापस permissions associated with a
  *		binary attribute of the group. Will be called repeatedly
- *		for each binary attribute in the group. Only read/write
+ *		क्रम each binary attribute in the group. Only पढ़ो/ग_लिखो
  *		permissions as well as SYSFS_PREALLOC are accepted. Must
- *		return 0 if a binary attribute is not visible. The returned
- *		value will replace static permissions defined in
- *		struct bin_attribute.
- * @attrs:	Pointer to NULL terminated list of attributes.
- * @bin_attrs:	Pointer to NULL terminated list of binary attributes.
+ *		वापस 0 अगर a binary attribute is not visible. The वापसed
+ *		value will replace अटल permissions defined in
+ *		काष्ठा bin_attribute.
+ * @attrs:	Poपूर्णांकer to शून्य terminated list of attributes.
+ * @bin_attrs:	Poपूर्णांकer to शून्य terminated list of binary attributes.
  *		Either attrs or bin_attrs or both must be provided.
  */
-struct attribute_group {
-	const char		*name;
-	umode_t			(*is_visible)(struct kobject *,
-					      struct attribute *, int);
-	umode_t			(*is_bin_visible)(struct kobject *,
-						  struct bin_attribute *, int);
-	struct attribute	**attrs;
-	struct bin_attribute	**bin_attrs;
-};
+काष्ठा attribute_group अणु
+	स्थिर अक्षर		*name;
+	umode_t			(*is_visible)(काष्ठा kobject *,
+					      काष्ठा attribute *, पूर्णांक);
+	umode_t			(*is_bin_visible)(काष्ठा kobject *,
+						  काष्ठा bin_attribute *, पूर्णांक);
+	काष्ठा attribute	**attrs;
+	काष्ठा bin_attribute	**bin_attrs;
+पूर्ण;
 
 /*
  * Use these macros to make defining attributes easier.
- * See include/linux/device.h for examples..
+ * See include/linux/device.h क्रम examples..
  */
 
-#define SYSFS_PREALLOC 010000
+#घोषणा SYSFS_PREALLOC 010000
 
-#define __ATTR(_name, _mode, _show, _store) {				\
-	.attr = {.name = __stringify(_name),				\
-		 .mode = VERIFY_OCTAL_PERMISSIONS(_mode) },		\
+#घोषणा __ATTR(_name, _mode, _show, _store) अणु				\
+	.attr = अणु.name = __stringअगरy(_name),				\
+		 .mode = VERIFY_OCTAL_PERMISSIONS(_mode) पूर्ण,		\
 	.show	= _show,						\
 	.store	= _store,						\
-}
+पूर्ण
 
-#define __ATTR_PREALLOC(_name, _mode, _show, _store) {			\
-	.attr = {.name = __stringify(_name),				\
-		 .mode = SYSFS_PREALLOC | VERIFY_OCTAL_PERMISSIONS(_mode) },\
+#घोषणा __ATTR_PREALLOC(_name, _mode, _show, _store) अणु			\
+	.attr = अणु.name = __stringअगरy(_name),				\
+		 .mode = SYSFS_PREALLOC | VERIFY_OCTAL_PERMISSIONS(_mode) पूर्ण,\
 	.show	= _show,						\
 	.store	= _store,						\
-}
+पूर्ण
 
-#define __ATTR_RO(_name) {						\
-	.attr	= { .name = __stringify(_name), .mode = 0444 },		\
+#घोषणा __ATTR_RO(_name) अणु						\
+	.attr	= अणु .name = __stringअगरy(_name), .mode = 0444 पूर्ण,		\
 	.show	= _name##_show,						\
-}
+पूर्ण
 
-#define __ATTR_RO_MODE(_name, _mode) {					\
-	.attr	= { .name = __stringify(_name),				\
-		    .mode = VERIFY_OCTAL_PERMISSIONS(_mode) },		\
+#घोषणा __ATTR_RO_MODE(_name, _mode) अणु					\
+	.attr	= अणु .name = __stringअगरy(_name),				\
+		    .mode = VERIFY_OCTAL_PERMISSIONS(_mode) पूर्ण,		\
 	.show	= _name##_show,						\
-}
+पूर्ण
 
-#define __ATTR_RW_MODE(_name, _mode) {					\
-	.attr	= { .name = __stringify(_name),				\
-		    .mode = VERIFY_OCTAL_PERMISSIONS(_mode) },		\
+#घोषणा __ATTR_RW_MODE(_name, _mode) अणु					\
+	.attr	= अणु .name = __stringअगरy(_name),				\
+		    .mode = VERIFY_OCTAL_PERMISSIONS(_mode) पूर्ण,		\
 	.show	= _name##_show,						\
 	.store	= _name##_store,					\
-}
+पूर्ण
 
-#define __ATTR_WO(_name) {						\
-	.attr	= { .name = __stringify(_name), .mode = 0200 },		\
+#घोषणा __ATTR_WO(_name) अणु						\
+	.attr	= अणु .name = __stringअगरy(_name), .mode = 0200 पूर्ण,		\
 	.store	= _name##_store,					\
-}
+पूर्ण
 
-#define __ATTR_RW(_name) __ATTR(_name, 0644, _name##_show, _name##_store)
+#घोषणा __ATTR_RW(_name) __ATTR(_name, 0644, _name##_show, _name##_store)
 
-#define __ATTR_NULL { .attr = { .name = NULL } }
+#घोषणा __ATTR_शून्य अणु .attr = अणु .name = शून्य पूर्ण पूर्ण
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-#define __ATTR_IGNORE_LOCKDEP(_name, _mode, _show, _store) {	\
-	.attr = {.name = __stringify(_name), .mode = _mode,	\
-			.ignore_lockdep = true },		\
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+#घोषणा __ATTR_IGNORE_LOCKDEP(_name, _mode, _show, _store) अणु	\
+	.attr = अणु.name = __stringअगरy(_name), .mode = _mode,	\
+			.ignore_lockdep = true पूर्ण,		\
 	.show		= _show,				\
 	.store		= _store,				\
-}
-#else
-#define __ATTR_IGNORE_LOCKDEP	__ATTR
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा __ATTR_IGNORE_LOCKDEP	__ATTR
+#पूर्ण_अगर
 
-#define __ATTRIBUTE_GROUPS(_name)				\
-static const struct attribute_group *_name##_groups[] = {	\
+#घोषणा __ATTRIBUTE_GROUPS(_name)				\
+अटल स्थिर काष्ठा attribute_group *_name##_groups[] = अणु	\
 	&_name##_group,						\
-	NULL,							\
-}
+	शून्य,							\
+पूर्ण
 
-#define ATTRIBUTE_GROUPS(_name)					\
-static const struct attribute_group _name##_group = {		\
+#घोषणा ATTRIBUTE_GROUPS(_name)					\
+अटल स्थिर काष्ठा attribute_group _name##_group = अणु		\
 	.attrs = _name##_attrs,					\
-};								\
+पूर्ण;								\
 __ATTRIBUTE_GROUPS(_name)
 
-struct file;
-struct vm_area_struct;
-struct address_space;
+काष्ठा file;
+काष्ठा vm_area_काष्ठा;
+काष्ठा address_space;
 
-struct bin_attribute {
-	struct attribute	attr;
-	size_t			size;
-	void			*private;
-	struct address_space	*mapping;
-	ssize_t (*read)(struct file *, struct kobject *, struct bin_attribute *,
-			char *, loff_t, size_t);
-	ssize_t (*write)(struct file *, struct kobject *, struct bin_attribute *,
-			 char *, loff_t, size_t);
-	int (*mmap)(struct file *, struct kobject *, struct bin_attribute *attr,
-		    struct vm_area_struct *vma);
-};
+काष्ठा bin_attribute अणु
+	काष्ठा attribute	attr;
+	माप_प्रकार			size;
+	व्योम			*निजी;
+	काष्ठा address_space	*mapping;
+	sमाप_प्रकार (*पढ़ो)(काष्ठा file *, काष्ठा kobject *, काष्ठा bin_attribute *,
+			अक्षर *, loff_t, माप_प्रकार);
+	sमाप_प्रकार (*ग_लिखो)(काष्ठा file *, काष्ठा kobject *, काष्ठा bin_attribute *,
+			 अक्षर *, loff_t, माप_प्रकार);
+	पूर्णांक (*mmap)(काष्ठा file *, काष्ठा kobject *, काष्ठा bin_attribute *attr,
+		    काष्ठा vm_area_काष्ठा *vma);
+पूर्ण;
 
 /**
  *	sysfs_bin_attr_init - initialize a dynamically allocated bin_attribute
- *	@attr: struct bin_attribute to initialize
+ *	@attr: काष्ठा bin_attribute to initialize
  *
- *	Initialize a dynamically allocated struct bin_attribute so we
- *	can make lockdep happy.  This is a new requirement for
+ *	Initialize a dynamically allocated काष्ठा bin_attribute so we
+ *	can make lockdep happy.  This is a new requirement क्रम
  *	attributes and initially this is only needed when lockdep is
  *	enabled.  Lockdep gives a nice error when your attribute is
- *	added to sysfs if you don't have this.
+ *	added to sysfs अगर you करोn't have this.
  */
-#define sysfs_bin_attr_init(bin_attr) sysfs_attr_init(&(bin_attr)->attr)
+#घोषणा sysfs_bin_attr_init(bin_attr) sysfs_attr_init(&(bin_attr)->attr)
 
-/* macros to create static binary attributes easier */
-#define __BIN_ATTR(_name, _mode, _read, _write, _size) {		\
-	.attr = { .name = __stringify(_name), .mode = _mode },		\
-	.read	= _read,						\
-	.write	= _write,						\
+/* macros to create अटल binary attributes easier */
+#घोषणा __BIN_ATTR(_name, _mode, _पढ़ो, _ग_लिखो, _size) अणु		\
+	.attr = अणु .name = __stringअगरy(_name), .mode = _mode पूर्ण,		\
+	.पढ़ो	= _पढ़ो,						\
+	.ग_लिखो	= _ग_लिखो,						\
 	.size	= _size,						\
-}
+पूर्ण
 
-#define __BIN_ATTR_RO(_name, _size) {					\
-	.attr	= { .name = __stringify(_name), .mode = 0444 },		\
-	.read	= _name##_read,						\
+#घोषणा __BIN_ATTR_RO(_name, _size) अणु					\
+	.attr	= अणु .name = __stringअगरy(_name), .mode = 0444 पूर्ण,		\
+	.पढ़ो	= _name##_पढ़ो,						\
 	.size	= _size,						\
-}
+पूर्ण
 
-#define __BIN_ATTR_WO(_name, _size) {					\
-	.attr	= { .name = __stringify(_name), .mode = 0200 },		\
-	.write	= _name##_write,					\
+#घोषणा __BIN_ATTR_WO(_name, _size) अणु					\
+	.attr	= अणु .name = __stringअगरy(_name), .mode = 0200 पूर्ण,		\
+	.ग_लिखो	= _name##_ग_लिखो,					\
 	.size	= _size,						\
-}
+पूर्ण
 
-#define __BIN_ATTR_RW(_name, _size)					\
-	__BIN_ATTR(_name, 0644, _name##_read, _name##_write, _size)
+#घोषणा __BIN_ATTR_RW(_name, _size)					\
+	__BIN_ATTR(_name, 0644, _name##_पढ़ो, _name##_ग_लिखो, _size)
 
-#define __BIN_ATTR_NULL __ATTR_NULL
+#घोषणा __BIN_ATTR_शून्य __ATTR_शून्य
 
-#define BIN_ATTR(_name, _mode, _read, _write, _size)			\
-struct bin_attribute bin_attr_##_name = __BIN_ATTR(_name, _mode, _read,	\
-					_write, _size)
+#घोषणा BIN_ATTR(_name, _mode, _पढ़ो, _ग_लिखो, _size)			\
+काष्ठा bin_attribute bin_attr_##_name = __BIN_ATTR(_name, _mode, _पढ़ो,	\
+					_ग_लिखो, _size)
 
-#define BIN_ATTR_RO(_name, _size)					\
-struct bin_attribute bin_attr_##_name = __BIN_ATTR_RO(_name, _size)
+#घोषणा BIN_ATTR_RO(_name, _size)					\
+काष्ठा bin_attribute bin_attr_##_name = __BIN_ATTR_RO(_name, _size)
 
-#define BIN_ATTR_WO(_name, _size)					\
-struct bin_attribute bin_attr_##_name = __BIN_ATTR_WO(_name, _size)
+#घोषणा BIN_ATTR_WO(_name, _size)					\
+काष्ठा bin_attribute bin_attr_##_name = __BIN_ATTR_WO(_name, _size)
 
-#define BIN_ATTR_RW(_name, _size)					\
-struct bin_attribute bin_attr_##_name = __BIN_ATTR_RW(_name, _size)
+#घोषणा BIN_ATTR_RW(_name, _size)					\
+काष्ठा bin_attribute bin_attr_##_name = __BIN_ATTR_RW(_name, _size)
 
-struct sysfs_ops {
-	ssize_t	(*show)(struct kobject *, struct attribute *, char *);
-	ssize_t	(*store)(struct kobject *, struct attribute *, const char *, size_t);
-};
+काष्ठा sysfs_ops अणु
+	sमाप_प्रकार	(*show)(काष्ठा kobject *, काष्ठा attribute *, अक्षर *);
+	sमाप_प्रकार	(*store)(काष्ठा kobject *, काष्ठा attribute *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 
-int __must_check sysfs_create_dir_ns(struct kobject *kobj, const void *ns);
-void sysfs_remove_dir(struct kobject *kobj);
-int __must_check sysfs_rename_dir_ns(struct kobject *kobj, const char *new_name,
-				     const void *new_ns);
-int __must_check sysfs_move_dir_ns(struct kobject *kobj,
-				   struct kobject *new_parent_kobj,
-				   const void *new_ns);
-int __must_check sysfs_create_mount_point(struct kobject *parent_kobj,
-					  const char *name);
-void sysfs_remove_mount_point(struct kobject *parent_kobj,
-			      const char *name);
+पूर्णांक __must_check sysfs_create_dir_ns(काष्ठा kobject *kobj, स्थिर व्योम *ns);
+व्योम sysfs_हटाओ_dir(काष्ठा kobject *kobj);
+पूर्णांक __must_check sysfs_नाम_dir_ns(काष्ठा kobject *kobj, स्थिर अक्षर *new_name,
+				     स्थिर व्योम *new_ns);
+पूर्णांक __must_check sysfs_move_dir_ns(काष्ठा kobject *kobj,
+				   काष्ठा kobject *new_parent_kobj,
+				   स्थिर व्योम *new_ns);
+पूर्णांक __must_check sysfs_create_mount_poपूर्णांक(काष्ठा kobject *parent_kobj,
+					  स्थिर अक्षर *name);
+व्योम sysfs_हटाओ_mount_poपूर्णांक(काष्ठा kobject *parent_kobj,
+			      स्थिर अक्षर *name);
 
-int __must_check sysfs_create_file_ns(struct kobject *kobj,
-				      const struct attribute *attr,
-				      const void *ns);
-int __must_check sysfs_create_files(struct kobject *kobj,
-				   const struct attribute * const *attr);
-int __must_check sysfs_chmod_file(struct kobject *kobj,
-				  const struct attribute *attr, umode_t mode);
-struct kernfs_node *sysfs_break_active_protection(struct kobject *kobj,
-						  const struct attribute *attr);
-void sysfs_unbreak_active_protection(struct kernfs_node *kn);
-void sysfs_remove_file_ns(struct kobject *kobj, const struct attribute *attr,
-			  const void *ns);
-bool sysfs_remove_file_self(struct kobject *kobj, const struct attribute *attr);
-void sysfs_remove_files(struct kobject *kobj, const struct attribute * const *attr);
+पूर्णांक __must_check sysfs_create_file_ns(काष्ठा kobject *kobj,
+				      स्थिर काष्ठा attribute *attr,
+				      स्थिर व्योम *ns);
+पूर्णांक __must_check sysfs_create_files(काष्ठा kobject *kobj,
+				   स्थिर काष्ठा attribute * स्थिर *attr);
+पूर्णांक __must_check sysfs_chmod_file(काष्ठा kobject *kobj,
+				  स्थिर काष्ठा attribute *attr, umode_t mode);
+काष्ठा kernfs_node *sysfs_अवरोध_active_protection(काष्ठा kobject *kobj,
+						  स्थिर काष्ठा attribute *attr);
+व्योम sysfs_unअवरोध_active_protection(काष्ठा kernfs_node *kn);
+व्योम sysfs_हटाओ_file_ns(काष्ठा kobject *kobj, स्थिर काष्ठा attribute *attr,
+			  स्थिर व्योम *ns);
+bool sysfs_हटाओ_file_self(काष्ठा kobject *kobj, स्थिर काष्ठा attribute *attr);
+व्योम sysfs_हटाओ_files(काष्ठा kobject *kobj, स्थिर काष्ठा attribute * स्थिर *attr);
 
-int __must_check sysfs_create_bin_file(struct kobject *kobj,
-				       const struct bin_attribute *attr);
-void sysfs_remove_bin_file(struct kobject *kobj,
-			   const struct bin_attribute *attr);
+पूर्णांक __must_check sysfs_create_bin_file(काष्ठा kobject *kobj,
+				       स्थिर काष्ठा bin_attribute *attr);
+व्योम sysfs_हटाओ_bin_file(काष्ठा kobject *kobj,
+			   स्थिर काष्ठा bin_attribute *attr);
 
-int __must_check sysfs_create_link(struct kobject *kobj, struct kobject *target,
-				   const char *name);
-int __must_check sysfs_create_link_nowarn(struct kobject *kobj,
-					  struct kobject *target,
-					  const char *name);
-void sysfs_remove_link(struct kobject *kobj, const char *name);
+पूर्णांक __must_check sysfs_create_link(काष्ठा kobject *kobj, काष्ठा kobject *target,
+				   स्थिर अक्षर *name);
+पूर्णांक __must_check sysfs_create_link_nowarn(काष्ठा kobject *kobj,
+					  काष्ठा kobject *target,
+					  स्थिर अक्षर *name);
+व्योम sysfs_हटाओ_link(काष्ठा kobject *kobj, स्थिर अक्षर *name);
 
-int sysfs_rename_link_ns(struct kobject *kobj, struct kobject *target,
-			 const char *old_name, const char *new_name,
-			 const void *new_ns);
+पूर्णांक sysfs_नाम_link_ns(काष्ठा kobject *kobj, काष्ठा kobject *target,
+			 स्थिर अक्षर *old_name, स्थिर अक्षर *new_name,
+			 स्थिर व्योम *new_ns);
 
-void sysfs_delete_link(struct kobject *dir, struct kobject *targ,
-			const char *name);
+व्योम sysfs_delete_link(काष्ठा kobject *dir, काष्ठा kobject *targ,
+			स्थिर अक्षर *name);
 
-int __must_check sysfs_create_group(struct kobject *kobj,
-				    const struct attribute_group *grp);
-int __must_check sysfs_create_groups(struct kobject *kobj,
-				     const struct attribute_group **groups);
-int __must_check sysfs_update_groups(struct kobject *kobj,
-				     const struct attribute_group **groups);
-int sysfs_update_group(struct kobject *kobj,
-		       const struct attribute_group *grp);
-void sysfs_remove_group(struct kobject *kobj,
-			const struct attribute_group *grp);
-void sysfs_remove_groups(struct kobject *kobj,
-			 const struct attribute_group **groups);
-int sysfs_add_file_to_group(struct kobject *kobj,
-			const struct attribute *attr, const char *group);
-void sysfs_remove_file_from_group(struct kobject *kobj,
-			const struct attribute *attr, const char *group);
-int sysfs_merge_group(struct kobject *kobj,
-		       const struct attribute_group *grp);
-void sysfs_unmerge_group(struct kobject *kobj,
-		       const struct attribute_group *grp);
-int sysfs_add_link_to_group(struct kobject *kobj, const char *group_name,
-			    struct kobject *target, const char *link_name);
-void sysfs_remove_link_from_group(struct kobject *kobj, const char *group_name,
-				  const char *link_name);
-int compat_only_sysfs_link_entry_to_kobj(struct kobject *kobj,
-					 struct kobject *target_kobj,
-					 const char *target_name,
-					 const char *symlink_name);
+पूर्णांक __must_check sysfs_create_group(काष्ठा kobject *kobj,
+				    स्थिर काष्ठा attribute_group *grp);
+पूर्णांक __must_check sysfs_create_groups(काष्ठा kobject *kobj,
+				     स्थिर काष्ठा attribute_group **groups);
+पूर्णांक __must_check sysfs_update_groups(काष्ठा kobject *kobj,
+				     स्थिर काष्ठा attribute_group **groups);
+पूर्णांक sysfs_update_group(काष्ठा kobject *kobj,
+		       स्थिर काष्ठा attribute_group *grp);
+व्योम sysfs_हटाओ_group(काष्ठा kobject *kobj,
+			स्थिर काष्ठा attribute_group *grp);
+व्योम sysfs_हटाओ_groups(काष्ठा kobject *kobj,
+			 स्थिर काष्ठा attribute_group **groups);
+पूर्णांक sysfs_add_file_to_group(काष्ठा kobject *kobj,
+			स्थिर काष्ठा attribute *attr, स्थिर अक्षर *group);
+व्योम sysfs_हटाओ_file_from_group(काष्ठा kobject *kobj,
+			स्थिर काष्ठा attribute *attr, स्थिर अक्षर *group);
+पूर्णांक sysfs_merge_group(काष्ठा kobject *kobj,
+		       स्थिर काष्ठा attribute_group *grp);
+व्योम sysfs_unmerge_group(काष्ठा kobject *kobj,
+		       स्थिर काष्ठा attribute_group *grp);
+पूर्णांक sysfs_add_link_to_group(काष्ठा kobject *kobj, स्थिर अक्षर *group_name,
+			    काष्ठा kobject *target, स्थिर अक्षर *link_name);
+व्योम sysfs_हटाओ_link_from_group(काष्ठा kobject *kobj, स्थिर अक्षर *group_name,
+				  स्थिर अक्षर *link_name);
+पूर्णांक compat_only_sysfs_link_entry_to_kobj(काष्ठा kobject *kobj,
+					 काष्ठा kobject *target_kobj,
+					 स्थिर अक्षर *target_name,
+					 स्थिर अक्षर *symlink_name);
 
-void sysfs_notify(struct kobject *kobj, const char *dir, const char *attr);
+व्योम sysfs_notअगरy(काष्ठा kobject *kobj, स्थिर अक्षर *dir, स्थिर अक्षर *attr);
 
-int __must_check sysfs_init(void);
+पूर्णांक __must_check sysfs_init(व्योम);
 
-static inline void sysfs_enable_ns(struct kernfs_node *kn)
-{
-	return kernfs_enable_ns(kn);
-}
+अटल अंतरभूत व्योम sysfs_enable_ns(काष्ठा kernfs_node *kn)
+अणु
+	वापस kernfs_enable_ns(kn);
+पूर्ण
 
-int sysfs_file_change_owner(struct kobject *kobj, const char *name, kuid_t kuid,
+पूर्णांक sysfs_file_change_owner(काष्ठा kobject *kobj, स्थिर अक्षर *name, kuid_t kuid,
 			    kgid_t kgid);
-int sysfs_change_owner(struct kobject *kobj, kuid_t kuid, kgid_t kgid);
-int sysfs_link_change_owner(struct kobject *kobj, struct kobject *targ,
-			    const char *name, kuid_t kuid, kgid_t kgid);
-int sysfs_groups_change_owner(struct kobject *kobj,
-			      const struct attribute_group **groups,
+पूर्णांक sysfs_change_owner(काष्ठा kobject *kobj, kuid_t kuid, kgid_t kgid);
+पूर्णांक sysfs_link_change_owner(काष्ठा kobject *kobj, काष्ठा kobject *targ,
+			    स्थिर अक्षर *name, kuid_t kuid, kgid_t kgid);
+पूर्णांक sysfs_groups_change_owner(काष्ठा kobject *kobj,
+			      स्थिर काष्ठा attribute_group **groups,
 			      kuid_t kuid, kgid_t kgid);
-int sysfs_group_change_owner(struct kobject *kobj,
-			     const struct attribute_group *groups, kuid_t kuid,
+पूर्णांक sysfs_group_change_owner(काष्ठा kobject *kobj,
+			     स्थिर काष्ठा attribute_group *groups, kuid_t kuid,
 			     kgid_t kgid);
-__printf(2, 3)
-int sysfs_emit(char *buf, const char *fmt, ...);
-__printf(3, 4)
-int sysfs_emit_at(char *buf, int at, const char *fmt, ...);
+__म_लिखो(2, 3)
+पूर्णांक sysfs_emit(अक्षर *buf, स्थिर अक्षर *fmt, ...);
+__म_लिखो(3, 4)
+पूर्णांक sysfs_emit_at(अक्षर *buf, पूर्णांक at, स्थिर अक्षर *fmt, ...);
 
-#else /* CONFIG_SYSFS */
+#अन्यथा /* CONFIG_SYSFS */
 
-static inline int sysfs_create_dir_ns(struct kobject *kobj, const void *ns)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_create_dir_ns(काष्ठा kobject *kobj, स्थिर व्योम *ns)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_remove_dir(struct kobject *kobj)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_dir(काष्ठा kobject *kobj)
+अणु
+पूर्ण
 
-static inline int sysfs_rename_dir_ns(struct kobject *kobj,
-				      const char *new_name, const void *new_ns)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_नाम_dir_ns(काष्ठा kobject *kobj,
+				      स्थिर अक्षर *new_name, स्थिर व्योम *new_ns)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_move_dir_ns(struct kobject *kobj,
-				    struct kobject *new_parent_kobj,
-				    const void *new_ns)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_move_dir_ns(काष्ठा kobject *kobj,
+				    काष्ठा kobject *new_parent_kobj,
+				    स्थिर व्योम *new_ns)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_create_mount_point(struct kobject *parent_kobj,
-					   const char *name)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_create_mount_poपूर्णांक(काष्ठा kobject *parent_kobj,
+					   स्थिर अक्षर *name)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_remove_mount_point(struct kobject *parent_kobj,
-					    const char *name)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_mount_poपूर्णांक(काष्ठा kobject *parent_kobj,
+					    स्थिर अक्षर *name)
+अणु
+पूर्ण
 
-static inline int sysfs_create_file_ns(struct kobject *kobj,
-				       const struct attribute *attr,
-				       const void *ns)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_create_file_ns(काष्ठा kobject *kobj,
+				       स्थिर काष्ठा attribute *attr,
+				       स्थिर व्योम *ns)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_create_files(struct kobject *kobj,
-				    const struct attribute * const *attr)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_create_files(काष्ठा kobject *kobj,
+				    स्थिर काष्ठा attribute * स्थिर *attr)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_chmod_file(struct kobject *kobj,
-				   const struct attribute *attr, umode_t mode)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_chmod_file(काष्ठा kobject *kobj,
+				   स्थिर काष्ठा attribute *attr, umode_t mode)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct kernfs_node *
-sysfs_break_active_protection(struct kobject *kobj,
-			      const struct attribute *attr)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा kernfs_node *
+sysfs_अवरोध_active_protection(काष्ठा kobject *kobj,
+			      स्थिर काष्ठा attribute *attr)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void sysfs_unbreak_active_protection(struct kernfs_node *kn)
-{
-}
+अटल अंतरभूत व्योम sysfs_unअवरोध_active_protection(काष्ठा kernfs_node *kn)
+अणु
+पूर्ण
 
-static inline void sysfs_remove_file_ns(struct kobject *kobj,
-					const struct attribute *attr,
-					const void *ns)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_file_ns(काष्ठा kobject *kobj,
+					स्थिर काष्ठा attribute *attr,
+					स्थिर व्योम *ns)
+अणु
+पूर्ण
 
-static inline bool sysfs_remove_file_self(struct kobject *kobj,
-					  const struct attribute *attr)
-{
-	return false;
-}
+अटल अंतरभूत bool sysfs_हटाओ_file_self(काष्ठा kobject *kobj,
+					  स्थिर काष्ठा attribute *attr)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void sysfs_remove_files(struct kobject *kobj,
-				     const struct attribute * const *attr)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_files(काष्ठा kobject *kobj,
+				     स्थिर काष्ठा attribute * स्थिर *attr)
+अणु
+पूर्ण
 
-static inline int sysfs_create_bin_file(struct kobject *kobj,
-					const struct bin_attribute *attr)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_create_bin_file(काष्ठा kobject *kobj,
+					स्थिर काष्ठा bin_attribute *attr)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_remove_bin_file(struct kobject *kobj,
-					 const struct bin_attribute *attr)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_bin_file(काष्ठा kobject *kobj,
+					 स्थिर काष्ठा bin_attribute *attr)
+अणु
+पूर्ण
 
-static inline int sysfs_create_link(struct kobject *kobj,
-				    struct kobject *target, const char *name)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_create_link(काष्ठा kobject *kobj,
+				    काष्ठा kobject *target, स्थिर अक्षर *name)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_create_link_nowarn(struct kobject *kobj,
-					   struct kobject *target,
-					   const char *name)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_create_link_nowarn(काष्ठा kobject *kobj,
+					   काष्ठा kobject *target,
+					   स्थिर अक्षर *name)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_remove_link(struct kobject *kobj, const char *name)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_link(काष्ठा kobject *kobj, स्थिर अक्षर *name)
+अणु
+पूर्ण
 
-static inline int sysfs_rename_link_ns(struct kobject *k, struct kobject *t,
-				       const char *old_name,
-				       const char *new_name, const void *ns)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_नाम_link_ns(काष्ठा kobject *k, काष्ठा kobject *t,
+				       स्थिर अक्षर *old_name,
+				       स्थिर अक्षर *new_name, स्थिर व्योम *ns)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_delete_link(struct kobject *k, struct kobject *t,
-				     const char *name)
-{
-}
+अटल अंतरभूत व्योम sysfs_delete_link(काष्ठा kobject *k, काष्ठा kobject *t,
+				     स्थिर अक्षर *name)
+अणु
+पूर्ण
 
-static inline int sysfs_create_group(struct kobject *kobj,
-				     const struct attribute_group *grp)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_create_group(काष्ठा kobject *kobj,
+				     स्थिर काष्ठा attribute_group *grp)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_create_groups(struct kobject *kobj,
-				      const struct attribute_group **groups)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_create_groups(काष्ठा kobject *kobj,
+				      स्थिर काष्ठा attribute_group **groups)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_update_groups(struct kobject *kobj,
-				      const struct attribute_group **groups)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_update_groups(काष्ठा kobject *kobj,
+				      स्थिर काष्ठा attribute_group **groups)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_update_group(struct kobject *kobj,
-				const struct attribute_group *grp)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_update_group(काष्ठा kobject *kobj,
+				स्थिर काष्ठा attribute_group *grp)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_remove_group(struct kobject *kobj,
-				      const struct attribute_group *grp)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_group(काष्ठा kobject *kobj,
+				      स्थिर काष्ठा attribute_group *grp)
+अणु
+पूर्ण
 
-static inline void sysfs_remove_groups(struct kobject *kobj,
-				       const struct attribute_group **groups)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_groups(काष्ठा kobject *kobj,
+				       स्थिर काष्ठा attribute_group **groups)
+अणु
+पूर्ण
 
-static inline int sysfs_add_file_to_group(struct kobject *kobj,
-		const struct attribute *attr, const char *group)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_add_file_to_group(काष्ठा kobject *kobj,
+		स्थिर काष्ठा attribute *attr, स्थिर अक्षर *group)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_remove_file_from_group(struct kobject *kobj,
-		const struct attribute *attr, const char *group)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_file_from_group(काष्ठा kobject *kobj,
+		स्थिर काष्ठा attribute *attr, स्थिर अक्षर *group)
+अणु
+पूर्ण
 
-static inline int sysfs_merge_group(struct kobject *kobj,
-		       const struct attribute_group *grp)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_merge_group(काष्ठा kobject *kobj,
+		       स्थिर काष्ठा attribute_group *grp)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_unmerge_group(struct kobject *kobj,
-		       const struct attribute_group *grp)
-{
-}
+अटल अंतरभूत व्योम sysfs_unmerge_group(काष्ठा kobject *kobj,
+		       स्थिर काष्ठा attribute_group *grp)
+अणु
+पूर्ण
 
-static inline int sysfs_add_link_to_group(struct kobject *kobj,
-		const char *group_name, struct kobject *target,
-		const char *link_name)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_add_link_to_group(काष्ठा kobject *kobj,
+		स्थिर अक्षर *group_name, काष्ठा kobject *target,
+		स्थिर अक्षर *link_name)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_remove_link_from_group(struct kobject *kobj,
-		const char *group_name, const char *link_name)
-{
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_link_from_group(काष्ठा kobject *kobj,
+		स्थिर अक्षर *group_name, स्थिर अक्षर *link_name)
+अणु
+पूर्ण
 
-static inline int compat_only_sysfs_link_entry_to_kobj(struct kobject *kobj,
-						       struct kobject *target_kobj,
-						       const char *target_name,
-						       const char *symlink_name)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक compat_only_sysfs_link_entry_to_kobj(काष्ठा kobject *kobj,
+						       काष्ठा kobject *target_kobj,
+						       स्थिर अक्षर *target_name,
+						       स्थिर अक्षर *symlink_name)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_notify(struct kobject *kobj, const char *dir,
-				const char *attr)
-{
-}
+अटल अंतरभूत व्योम sysfs_notअगरy(काष्ठा kobject *kobj, स्थिर अक्षर *dir,
+				स्थिर अक्षर *attr)
+अणु
+पूर्ण
 
-static inline int __must_check sysfs_init(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __must_check sysfs_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sysfs_enable_ns(struct kernfs_node *kn)
-{
-}
+अटल अंतरभूत व्योम sysfs_enable_ns(काष्ठा kernfs_node *kn)
+अणु
+पूर्ण
 
-static inline int sysfs_file_change_owner(struct kobject *kobj,
-					  const char *name, kuid_t kuid,
+अटल अंतरभूत पूर्णांक sysfs_file_change_owner(काष्ठा kobject *kobj,
+					  स्थिर अक्षर *name, kuid_t kuid,
 					  kgid_t kgid)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_link_change_owner(struct kobject *kobj,
-					  struct kobject *targ,
-					  const char *name, kuid_t kuid,
+अटल अंतरभूत पूर्णांक sysfs_link_change_owner(काष्ठा kobject *kobj,
+					  काष्ठा kobject *targ,
+					  स्थिर अक्षर *name, kuid_t kuid,
 					  kgid_t kgid)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_change_owner(struct kobject *kobj, kuid_t kuid, kgid_t kgid)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sysfs_change_owner(काष्ठा kobject *kobj, kuid_t kuid, kgid_t kgid)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_groups_change_owner(struct kobject *kobj,
-			  const struct attribute_group **groups,
+अटल अंतरभूत पूर्णांक sysfs_groups_change_owner(काष्ठा kobject *kobj,
+			  स्थिर काष्ठा attribute_group **groups,
 			  kuid_t kuid, kgid_t kgid)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sysfs_group_change_owner(struct kobject *kobj,
-					   const struct attribute_group *groups,
+अटल अंतरभूत पूर्णांक sysfs_group_change_owner(काष्ठा kobject *kobj,
+					   स्थिर काष्ठा attribute_group *groups,
 					   kuid_t kuid, kgid_t kgid)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-__printf(2, 3)
-static inline int sysfs_emit(char *buf, const char *fmt, ...)
-{
-	return 0;
-}
+__म_लिखो(2, 3)
+अटल अंतरभूत पूर्णांक sysfs_emit(अक्षर *buf, स्थिर अक्षर *fmt, ...)
+अणु
+	वापस 0;
+पूर्ण
 
-__printf(3, 4)
-static inline int sysfs_emit_at(char *buf, int at, const char *fmt, ...)
-{
-	return 0;
-}
-#endif /* CONFIG_SYSFS */
+__म_लिखो(3, 4)
+अटल अंतरभूत पूर्णांक sysfs_emit_at(अक्षर *buf, पूर्णांक at, स्थिर अक्षर *fmt, ...)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SYSFS */
 
-static inline int __must_check sysfs_create_file(struct kobject *kobj,
-						 const struct attribute *attr)
-{
-	return sysfs_create_file_ns(kobj, attr, NULL);
-}
+अटल अंतरभूत पूर्णांक __must_check sysfs_create_file(काष्ठा kobject *kobj,
+						 स्थिर काष्ठा attribute *attr)
+अणु
+	वापस sysfs_create_file_ns(kobj, attr, शून्य);
+पूर्ण
 
-static inline void sysfs_remove_file(struct kobject *kobj,
-				     const struct attribute *attr)
-{
-	sysfs_remove_file_ns(kobj, attr, NULL);
-}
+अटल अंतरभूत व्योम sysfs_हटाओ_file(काष्ठा kobject *kobj,
+				     स्थिर काष्ठा attribute *attr)
+अणु
+	sysfs_हटाओ_file_ns(kobj, attr, शून्य);
+पूर्ण
 
-static inline int sysfs_rename_link(struct kobject *kobj, struct kobject *target,
-				    const char *old_name, const char *new_name)
-{
-	return sysfs_rename_link_ns(kobj, target, old_name, new_name, NULL);
-}
+अटल अंतरभूत पूर्णांक sysfs_नाम_link(काष्ठा kobject *kobj, काष्ठा kobject *target,
+				    स्थिर अक्षर *old_name, स्थिर अक्षर *new_name)
+अणु
+	वापस sysfs_नाम_link_ns(kobj, target, old_name, new_name, शून्य);
+पूर्ण
 
-static inline void sysfs_notify_dirent(struct kernfs_node *kn)
-{
-	kernfs_notify(kn);
-}
+अटल अंतरभूत व्योम sysfs_notअगरy_dirent(काष्ठा kernfs_node *kn)
+अणु
+	kernfs_notअगरy(kn);
+पूर्ण
 
-static inline struct kernfs_node *sysfs_get_dirent(struct kernfs_node *parent,
-						   const char *name)
-{
-	return kernfs_find_and_get(parent, name);
-}
+अटल अंतरभूत काष्ठा kernfs_node *sysfs_get_dirent(काष्ठा kernfs_node *parent,
+						   स्थिर अक्षर *name)
+अणु
+	वापस kernfs_find_and_get(parent, name);
+पूर्ण
 
-static inline struct kernfs_node *sysfs_get(struct kernfs_node *kn)
-{
+अटल अंतरभूत काष्ठा kernfs_node *sysfs_get(काष्ठा kernfs_node *kn)
+अणु
 	kernfs_get(kn);
-	return kn;
-}
+	वापस kn;
+पूर्ण
 
-static inline void sysfs_put(struct kernfs_node *kn)
-{
+अटल अंतरभूत व्योम sysfs_put(काष्ठा kernfs_node *kn)
+अणु
 	kernfs_put(kn);
-}
+पूर्ण
 
-#endif /* _SYSFS_H_ */
+#पूर्ण_अगर /* _SYSFS_H_ */

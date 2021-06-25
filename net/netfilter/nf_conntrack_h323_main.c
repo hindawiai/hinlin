@@ -1,208 +1,209 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * H.323 connection tracking helper
  *
- * Copyright (c) 2006 Jing Min Zhao <zhaojingmin@users.sourceforge.net>
+ * Copyright (c) 2006 Jing Min Zhao <zhaojingmin@users.sourceक्रमge.net>
  * Copyright (c) 2006-2012 Patrick McHardy <kaber@trash.net>
  *
  * Based on the 'brute force' H.323 connection tracking module by
  * Jozsef Kadlecsik <kadlec@netfilter.org>
  *
- * For more information, please see http://nath323.sourceforge.net/
+ * For more inक्रमmation, please see http://nath323.sourceक्रमge.net/
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/ctype.h>
-#include <linux/inet.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/slab.h>
-#include <linux/udp.h>
-#include <linux/tcp.h>
-#include <linux/skbuff.h>
-#include <net/route.h>
-#include <net/ip6_route.h>
-#include <linux/netfilter_ipv6.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/inet.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/route.h>
+#समावेश <net/ip6_route.h>
+#समावेश <linux/netfilter_ipv6.h>
 
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack_tuple.h>
-#include <net/netfilter/nf_conntrack_expect.h>
-#include <net/netfilter/nf_conntrack_ecache.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <net/netfilter/nf_conntrack_zones.h>
-#include <linux/netfilter/nf_conntrack_h323.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack_tuple.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
+#समावेश <net/netfilter/nf_conntrack_ecache.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <net/netfilter/nf_conntrack_zones.h>
+#समावेश <linux/netfilter/nf_conntrack_h323.h>
 
 /* Parameters */
-static unsigned int default_rrq_ttl __read_mostly = 300;
-module_param(default_rrq_ttl, uint, 0600);
-MODULE_PARM_DESC(default_rrq_ttl, "use this TTL if it's missing in RRQ");
+अटल अचिन्हित पूर्णांक शेष_rrq_ttl __पढ़ो_mostly = 300;
+module_param(शेष_rrq_ttl, uपूर्णांक, 0600);
+MODULE_PARM_DESC(शेष_rrq_ttl, "use this TTL if it's missing in RRQ");
 
-static int gkrouted_only __read_mostly = 1;
-module_param(gkrouted_only, int, 0600);
+अटल पूर्णांक gkrouted_only __पढ़ो_mostly = 1;
+module_param(gkrouted_only, पूर्णांक, 0600);
 MODULE_PARM_DESC(gkrouted_only, "only accept calls from gatekeeper");
 
-static bool callforward_filter __read_mostly = true;
-module_param(callforward_filter, bool, 0600);
-MODULE_PARM_DESC(callforward_filter, "only create call forwarding expectations "
+अटल bool callक्रमward_filter __पढ़ो_mostly = true;
+module_param(callक्रमward_filter, bool, 0600);
+MODULE_PARM_DESC(callक्रमward_filter, "only create call forwarding expectations "
 				     "if both endpoints are on different sides "
 				     "(determined by routing information)");
 
-/* Hooks for NAT */
-int (*set_h245_addr_hook) (struct sk_buff *skb, unsigned int protoff,
-			   unsigned char **data, int dataoff,
+/* Hooks क्रम NAT */
+पूर्णांक (*set_h245_addr_hook) (काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+			   अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			   H245_TransportAddress *taddr,
-			   union nf_inet_addr *addr, __be16 port)
-			   __read_mostly;
-int (*set_h225_addr_hook) (struct sk_buff *skb, unsigned int protoff,
-			   unsigned char **data, int dataoff,
+			   जोड़ nf_inet_addr *addr, __be16 port)
+			   __पढ़ो_mostly;
+पूर्णांक (*set_h225_addr_hook) (काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+			   अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			   TransportAddress *taddr,
-			   union nf_inet_addr *addr, __be16 port)
-			   __read_mostly;
-int (*set_sig_addr_hook) (struct sk_buff *skb,
-			  struct nf_conn *ct,
-			  enum ip_conntrack_info ctinfo,
-			  unsigned int protoff, unsigned char **data,
-			  TransportAddress *taddr, int count) __read_mostly;
-int (*set_ras_addr_hook) (struct sk_buff *skb,
-			  struct nf_conn *ct,
-			  enum ip_conntrack_info ctinfo,
-			  unsigned int protoff, unsigned char **data,
-			  TransportAddress *taddr, int count) __read_mostly;
-int (*nat_rtp_rtcp_hook) (struct sk_buff *skb,
-			  struct nf_conn *ct,
-			  enum ip_conntrack_info ctinfo,
-			  unsigned int protoff,
-			  unsigned char **data, int dataoff,
+			   जोड़ nf_inet_addr *addr, __be16 port)
+			   __पढ़ो_mostly;
+पूर्णांक (*set_sig_addr_hook) (काष्ठा sk_buff *skb,
+			  काष्ठा nf_conn *ct,
+			  क्रमागत ip_conntrack_info ctinfo,
+			  अचिन्हित पूर्णांक protoff, अचिन्हित अक्षर **data,
+			  TransportAddress *taddr, पूर्णांक count) __पढ़ो_mostly;
+पूर्णांक (*set_ras_addr_hook) (काष्ठा sk_buff *skb,
+			  काष्ठा nf_conn *ct,
+			  क्रमागत ip_conntrack_info ctinfo,
+			  अचिन्हित पूर्णांक protoff, अचिन्हित अक्षर **data,
+			  TransportAddress *taddr, पूर्णांक count) __पढ़ो_mostly;
+पूर्णांक (*nat_rtp_rtcp_hook) (काष्ठा sk_buff *skb,
+			  काष्ठा nf_conn *ct,
+			  क्रमागत ip_conntrack_info ctinfo,
+			  अचिन्हित पूर्णांक protoff,
+			  अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			  H245_TransportAddress *taddr,
 			  __be16 port, __be16 rtp_port,
-			  struct nf_conntrack_expect *rtp_exp,
-			  struct nf_conntrack_expect *rtcp_exp) __read_mostly;
-int (*nat_t120_hook) (struct sk_buff *skb,
-		      struct nf_conn *ct,
-		      enum ip_conntrack_info ctinfo,
-		      unsigned int protoff,
-		      unsigned char **data, int dataoff,
+			  काष्ठा nf_conntrack_expect *rtp_exp,
+			  काष्ठा nf_conntrack_expect *rtcp_exp) __पढ़ो_mostly;
+पूर्णांक (*nat_t120_hook) (काष्ठा sk_buff *skb,
+		      काष्ठा nf_conn *ct,
+		      क्रमागत ip_conntrack_info ctinfo,
+		      अचिन्हित पूर्णांक protoff,
+		      अचिन्हित अक्षर **data, पूर्णांक dataoff,
 		      H245_TransportAddress *taddr, __be16 port,
-		      struct nf_conntrack_expect *exp) __read_mostly;
-int (*nat_h245_hook) (struct sk_buff *skb,
-		      struct nf_conn *ct,
-		      enum ip_conntrack_info ctinfo,
-		      unsigned int protoff,
-		      unsigned char **data, int dataoff,
+		      काष्ठा nf_conntrack_expect *exp) __पढ़ो_mostly;
+पूर्णांक (*nat_h245_hook) (काष्ठा sk_buff *skb,
+		      काष्ठा nf_conn *ct,
+		      क्रमागत ip_conntrack_info ctinfo,
+		      अचिन्हित पूर्णांक protoff,
+		      अचिन्हित अक्षर **data, पूर्णांक dataoff,
 		      TransportAddress *taddr, __be16 port,
-		      struct nf_conntrack_expect *exp) __read_mostly;
-int (*nat_callforwarding_hook) (struct sk_buff *skb,
-				struct nf_conn *ct,
-				enum ip_conntrack_info ctinfo,
-				unsigned int protoff,
-				unsigned char **data, int dataoff,
+		      काष्ठा nf_conntrack_expect *exp) __पढ़ो_mostly;
+पूर्णांक (*nat_callक्रमwarding_hook) (काष्ठा sk_buff *skb,
+				काष्ठा nf_conn *ct,
+				क्रमागत ip_conntrack_info ctinfo,
+				अचिन्हित पूर्णांक protoff,
+				अचिन्हित अक्षर **data, पूर्णांक dataoff,
 				TransportAddress *taddr, __be16 port,
-				struct nf_conntrack_expect *exp) __read_mostly;
-int (*nat_q931_hook) (struct sk_buff *skb,
-		      struct nf_conn *ct,
-		      enum ip_conntrack_info ctinfo,
-		      unsigned int protoff,
-		      unsigned char **data, TransportAddress *taddr, int idx,
-		      __be16 port, struct nf_conntrack_expect *exp)
-		      __read_mostly;
+				काष्ठा nf_conntrack_expect *exp) __पढ़ो_mostly;
+पूर्णांक (*nat_q931_hook) (काष्ठा sk_buff *skb,
+		      काष्ठा nf_conn *ct,
+		      क्रमागत ip_conntrack_info ctinfo,
+		      अचिन्हित पूर्णांक protoff,
+		      अचिन्हित अक्षर **data, TransportAddress *taddr, पूर्णांक idx,
+		      __be16 port, काष्ठा nf_conntrack_expect *exp)
+		      __पढ़ो_mostly;
 
-static DEFINE_SPINLOCK(nf_h323_lock);
-static char *h323_buffer;
+अटल DEFINE_SPINLOCK(nf_h323_lock);
+अटल अक्षर *h323_buffer;
 
-static struct nf_conntrack_helper nf_conntrack_helper_h245;
-static struct nf_conntrack_helper nf_conntrack_helper_q931[];
-static struct nf_conntrack_helper nf_conntrack_helper_ras[];
+अटल काष्ठा nf_conntrack_helper nf_conntrack_helper_h245;
+अटल काष्ठा nf_conntrack_helper nf_conntrack_helper_q931[];
+अटल काष्ठा nf_conntrack_helper nf_conntrack_helper_ras[];
 
-static int get_tpkt_data(struct sk_buff *skb, unsigned int protoff,
-			 struct nf_conn *ct, enum ip_conntrack_info ctinfo,
-			 unsigned char **data, int *datalen, int *dataoff)
-{
-	struct nf_ct_h323_master *info = nfct_help_data(ct);
-	int dir = CTINFO2DIR(ctinfo);
-	const struct tcphdr *th;
-	struct tcphdr _tcph;
-	int tcpdatalen;
-	int tcpdataoff;
-	unsigned char *tpkt;
-	int tpktlen;
-	int tpktoff;
+अटल पूर्णांक get_tpkt_data(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+			 काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo,
+			 अचिन्हित अक्षर **data, पूर्णांक *datalen, पूर्णांक *dataoff)
+अणु
+	काष्ठा nf_ct_h323_master *info = nfct_help_data(ct);
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	स्थिर काष्ठा tcphdr *th;
+	काष्ठा tcphdr _tcph;
+	पूर्णांक tcpdatalen;
+	पूर्णांक tcpdataoff;
+	अचिन्हित अक्षर *tpkt;
+	पूर्णांक tpktlen;
+	पूर्णांक tpktoff;
 
 	/* Get TCP header */
-	th = skb_header_pointer(skb, protoff, sizeof(_tcph), &_tcph);
-	if (th == NULL)
-		return 0;
+	th = skb_header_poपूर्णांकer(skb, protoff, माप(_tcph), &_tcph);
+	अगर (th == शून्य)
+		वापस 0;
 
 	/* Get TCP data offset */
-	tcpdataoff = protoff + th->doff * 4;
+	tcpdataoff = protoff + th->करोff * 4;
 
 	/* Get TCP data length */
 	tcpdatalen = skb->len - tcpdataoff;
-	if (tcpdatalen <= 0)	/* No TCP data */
-		goto clear_out;
+	अगर (tcpdatalen <= 0)	/* No TCP data */
+		जाओ clear_out;
 
-	if (*data == NULL) {	/* first TPKT */
-		/* Get first TPKT pointer */
-		tpkt = skb_header_pointer(skb, tcpdataoff, tcpdatalen,
+	अगर (*data == शून्य) अणु	/* first TPKT */
+		/* Get first TPKT poपूर्णांकer */
+		tpkt = skb_header_poपूर्णांकer(skb, tcpdataoff, tcpdatalen,
 					  h323_buffer);
-		if (!tpkt)
-			goto clear_out;
+		अगर (!tpkt)
+			जाओ clear_out;
 
-		/* Validate TPKT identifier */
-		if (tcpdatalen < 4 || tpkt[0] != 0x03 || tpkt[1] != 0) {
-			/* Netmeeting sends TPKT header and data separately */
-			if (info->tpkt_len[dir] > 0) {
+		/* Validate TPKT identअगरier */
+		अगर (tcpdatalen < 4 || tpkt[0] != 0x03 || tpkt[1] != 0) अणु
+			/* Neपंचांगeeting sends TPKT header and data separately */
+			अगर (info->tpkt_len[dir] > 0) अणु
 				pr_debug("nf_ct_h323: previous packet "
 					 "indicated separate TPKT data of %hu "
 					 "bytes\n", info->tpkt_len[dir]);
-				if (info->tpkt_len[dir] <= tcpdatalen) {
+				अगर (info->tpkt_len[dir] <= tcpdatalen) अणु
 					/* Yes, there was a TPKT header
 					 * received */
 					*data = tpkt;
 					*datalen = info->tpkt_len[dir];
 					*dataoff = 0;
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
 				/* Fragmented TPKT */
 				pr_debug("nf_ct_h323: fragmented TPKT\n");
-				goto clear_out;
-			}
+				जाओ clear_out;
+			पूर्ण
 
 			/* It is not even a TPKT */
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		tpktoff = 0;
-	} else {		/* Next TPKT */
+	पूर्ण अन्यथा अणु		/* Next TPKT */
 		tpktoff = *dataoff + *datalen;
 		tcpdatalen -= tpktoff;
-		if (tcpdatalen <= 4)	/* No more TPKT */
-			goto clear_out;
+		अगर (tcpdatalen <= 4)	/* No more TPKT */
+			जाओ clear_out;
 		tpkt = *data + *datalen;
 
-		/* Validate TPKT identifier */
-		if (tpkt[0] != 0x03 || tpkt[1] != 0)
-			goto clear_out;
-	}
+		/* Validate TPKT identअगरier */
+		अगर (tpkt[0] != 0x03 || tpkt[1] != 0)
+			जाओ clear_out;
+	पूर्ण
 
 	/* Validate TPKT length */
 	tpktlen = tpkt[2] * 256 + tpkt[3];
-	if (tpktlen < 4)
-		goto clear_out;
-	if (tpktlen > tcpdatalen) {
-		if (tcpdatalen == 4) {	/* Separate TPKT header */
-			/* Netmeeting sends TPKT header and data separately */
+	अगर (tpktlen < 4)
+		जाओ clear_out;
+	अगर (tpktlen > tcpdatalen) अणु
+		अगर (tcpdatalen == 4) अणु	/* Separate TPKT header */
+			/* Neपंचांगeeting sends TPKT header and data separately */
 			pr_debug("nf_ct_h323: separate TPKT header indicates "
 				 "there will be TPKT data of %hu bytes\n",
 				 tpktlen - 4);
 			info->tpkt_len[dir] = tpktlen - 4;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		pr_debug("nf_ct_h323: incomplete TPKT (fragmented?)\n");
-		goto clear_out;
-	}
+		जाओ clear_out;
+	पूर्ण
 
 	/* This is the encapsulated data */
 	*data = tpkt + 4;
@@ -212,231 +213,231 @@ static int get_tpkt_data(struct sk_buff *skb, unsigned int protoff,
       out:
 	/* Clear TPKT length */
 	info->tpkt_len[dir] = 0;
-	return 1;
+	वापस 1;
 
       clear_out:
 	info->tpkt_len[dir] = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_h245_addr(struct nf_conn *ct, const unsigned char *data,
+अटल पूर्णांक get_h245_addr(काष्ठा nf_conn *ct, स्थिर अचिन्हित अक्षर *data,
 			 H245_TransportAddress *taddr,
-			 union nf_inet_addr *addr, __be16 *port)
-{
-	const unsigned char *p;
-	int len;
+			 जोड़ nf_inet_addr *addr, __be16 *port)
+अणु
+	स्थिर अचिन्हित अक्षर *p;
+	पूर्णांक len;
 
-	if (taddr->choice != eH245_TransportAddress_unicastAddress)
-		return 0;
+	अगर (taddr->choice != eH245_TransportAddress_unicastAddress)
+		वापस 0;
 
-	switch (taddr->unicastAddress.choice) {
-	case eUnicastAddress_iPAddress:
-		if (nf_ct_l3num(ct) != AF_INET)
-			return 0;
+	चयन (taddr->unicastAddress.choice) अणु
+	हाल eUnicastAddress_iPAddress:
+		अगर (nf_ct_l3num(ct) != AF_INET)
+			वापस 0;
 		p = data + taddr->unicastAddress.iPAddress.network;
 		len = 4;
-		break;
-	case eUnicastAddress_iP6Address:
-		if (nf_ct_l3num(ct) != AF_INET6)
-			return 0;
+		अवरोध;
+	हाल eUnicastAddress_iP6Address:
+		अगर (nf_ct_l3num(ct) != AF_INET6)
+			वापस 0;
 		p = data + taddr->unicastAddress.iP6Address.network;
 		len = 16;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	memcpy(addr, p, len);
-	memset((void *)addr + len, 0, sizeof(*addr) - len);
-	memcpy(port, p + len, sizeof(__be16));
+	स_नकल(addr, p, len);
+	स_रखो((व्योम *)addr + len, 0, माप(*addr) - len);
+	स_नकल(port, p + len, माप(__be16));
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int expect_rtp_rtcp(struct sk_buff *skb, struct nf_conn *ct,
-			   enum ip_conntrack_info ctinfo,
-			   unsigned int protoff,
-			   unsigned char **data, int dataoff,
+अटल पूर्णांक expect_rtp_rtcp(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			   क्रमागत ip_conntrack_info ctinfo,
+			   अचिन्हित पूर्णांक protoff,
+			   अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			   H245_TransportAddress *taddr)
-{
-	int dir = CTINFO2DIR(ctinfo);
-	int ret = 0;
+अणु
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret = 0;
 	__be16 port;
 	__be16 rtp_port, rtcp_port;
-	union nf_inet_addr addr;
-	struct nf_conntrack_expect *rtp_exp;
-	struct nf_conntrack_expect *rtcp_exp;
+	जोड़ nf_inet_addr addr;
+	काष्ठा nf_conntrack_expect *rtp_exp;
+	काष्ठा nf_conntrack_expect *rtcp_exp;
 	typeof(nat_rtp_rtcp_hook) nat_rtp_rtcp;
 
 	/* Read RTP or RTCP address */
-	if (!get_h245_addr(ct, *data, taddr, &addr, &port) ||
-	    memcmp(&addr, &ct->tuplehash[dir].tuple.src.u3, sizeof(addr)) ||
+	अगर (!get_h245_addr(ct, *data, taddr, &addr, &port) ||
+	    स_भेद(&addr, &ct->tuplehash[dir].tuple.src.u3, माप(addr)) ||
 	    port == 0)
-		return 0;
+		वापस 0;
 
 	/* RTP port is even */
 	rtp_port = port & ~htons(1);
 	rtcp_port = port | htons(1);
 
-	/* Create expect for RTP */
-	if ((rtp_exp = nf_ct_expect_alloc(ct)) == NULL)
-		return -1;
+	/* Create expect क्रम RTP */
+	अगर ((rtp_exp = nf_ct_expect_alloc(ct)) == शून्य)
+		वापस -1;
 	nf_ct_expect_init(rtp_exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  &ct->tuplehash[!dir].tuple.src.u3,
 			  &ct->tuplehash[!dir].tuple.dst.u3,
-			  IPPROTO_UDP, NULL, &rtp_port);
+			  IPPROTO_UDP, शून्य, &rtp_port);
 
-	/* Create expect for RTCP */
-	if ((rtcp_exp = nf_ct_expect_alloc(ct)) == NULL) {
+	/* Create expect क्रम RTCP */
+	अगर ((rtcp_exp = nf_ct_expect_alloc(ct)) == शून्य) अणु
 		nf_ct_expect_put(rtp_exp);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	nf_ct_expect_init(rtcp_exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  &ct->tuplehash[!dir].tuple.src.u3,
 			  &ct->tuplehash[!dir].tuple.dst.u3,
-			  IPPROTO_UDP, NULL, &rtcp_port);
+			  IPPROTO_UDP, शून्य, &rtcp_port);
 
-	if (memcmp(&ct->tuplehash[dir].tuple.src.u3,
+	अगर (स_भेद(&ct->tuplehash[dir].tuple.src.u3,
 		   &ct->tuplehash[!dir].tuple.dst.u3,
-		   sizeof(ct->tuplehash[dir].tuple.src.u3)) &&
+		   माप(ct->tuplehash[dir].tuple.src.u3)) &&
 		   (nat_rtp_rtcp = rcu_dereference(nat_rtp_rtcp_hook)) &&
 		   nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-		   ct->status & IPS_NAT_MASK) {
+		   ct->status & IPS_NAT_MASK) अणु
 		/* NAT needed */
 		ret = nat_rtp_rtcp(skb, ct, ctinfo, protoff, data, dataoff,
 				   taddr, port, rtp_port, rtp_exp, rtcp_exp);
-	} else {		/* Conntrack only */
-		if (nf_ct_expect_related(rtp_exp, 0) == 0) {
-			if (nf_ct_expect_related(rtcp_exp, 0) == 0) {
+	पूर्ण अन्यथा अणु		/* Conntrack only */
+		अगर (nf_ct_expect_related(rtp_exp, 0) == 0) अणु
+			अगर (nf_ct_expect_related(rtcp_exp, 0) == 0) अणु
 				pr_debug("nf_ct_h323: expect RTP ");
 				nf_ct_dump_tuple(&rtp_exp->tuple);
 				pr_debug("nf_ct_h323: expect RTCP ");
 				nf_ct_dump_tuple(&rtcp_exp->tuple);
-			} else {
+			पूर्ण अन्यथा अणु
 				nf_ct_unexpect_related(rtp_exp);
 				ret = -1;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			ret = -1;
-	}
+	पूर्ण
 
 	nf_ct_expect_put(rtp_exp);
 	nf_ct_expect_put(rtcp_exp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int expect_t120(struct sk_buff *skb,
-		       struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, int dataoff,
+अटल पूर्णांक expect_t120(काष्ठा sk_buff *skb,
+		       काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, पूर्णांक dataoff,
 		       H245_TransportAddress *taddr)
-{
-	int dir = CTINFO2DIR(ctinfo);
-	int ret = 0;
+अणु
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret = 0;
 	__be16 port;
-	union nf_inet_addr addr;
-	struct nf_conntrack_expect *exp;
+	जोड़ nf_inet_addr addr;
+	काष्ठा nf_conntrack_expect *exp;
 	typeof(nat_t120_hook) nat_t120;
 
 	/* Read T.120 address */
-	if (!get_h245_addr(ct, *data, taddr, &addr, &port) ||
-	    memcmp(&addr, &ct->tuplehash[dir].tuple.src.u3, sizeof(addr)) ||
+	अगर (!get_h245_addr(ct, *data, taddr, &addr, &port) ||
+	    स_भेद(&addr, &ct->tuplehash[dir].tuple.src.u3, माप(addr)) ||
 	    port == 0)
-		return 0;
+		वापस 0;
 
-	/* Create expect for T.120 connections */
-	if ((exp = nf_ct_expect_alloc(ct)) == NULL)
-		return -1;
+	/* Create expect क्रम T.120 connections */
+	अगर ((exp = nf_ct_expect_alloc(ct)) == शून्य)
+		वापस -1;
 	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  &ct->tuplehash[!dir].tuple.src.u3,
 			  &ct->tuplehash[!dir].tuple.dst.u3,
-			  IPPROTO_TCP, NULL, &port);
+			  IPPROTO_TCP, शून्य, &port);
 	exp->flags = NF_CT_EXPECT_PERMANENT;	/* Accept multiple channels */
 
-	if (memcmp(&ct->tuplehash[dir].tuple.src.u3,
+	अगर (स_भेद(&ct->tuplehash[dir].tuple.src.u3,
 		   &ct->tuplehash[!dir].tuple.dst.u3,
-		   sizeof(ct->tuplehash[dir].tuple.src.u3)) &&
+		   माप(ct->tuplehash[dir].tuple.src.u3)) &&
 	    (nat_t120 = rcu_dereference(nat_t120_hook)) &&
 	    nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {
+	    ct->status & IPS_NAT_MASK) अणु
 		/* NAT needed */
 		ret = nat_t120(skb, ct, ctinfo, protoff, data, dataoff, taddr,
 			       port, exp);
-	} else {		/* Conntrack only */
-		if (nf_ct_expect_related(exp, 0) == 0) {
+	पूर्ण अन्यथा अणु		/* Conntrack only */
+		अगर (nf_ct_expect_related(exp, 0) == 0) अणु
 			pr_debug("nf_ct_h323: expect T.120 ");
 			nf_ct_dump_tuple(&exp->tuple);
-		} else
+		पूर्ण अन्यथा
 			ret = -1;
-	}
+	पूर्ण
 
 	nf_ct_expect_put(exp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int process_h245_channel(struct sk_buff *skb,
-				struct nf_conn *ct,
-				enum ip_conntrack_info ctinfo,
-				unsigned int protoff,
-				unsigned char **data, int dataoff,
+अटल पूर्णांक process_h245_channel(काष्ठा sk_buff *skb,
+				काष्ठा nf_conn *ct,
+				क्रमागत ip_conntrack_info ctinfo,
+				अचिन्हित पूर्णांक protoff,
+				अचिन्हित अक्षर **data, पूर्णांक dataoff,
 				H2250LogicalChannelParameters *channel)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	if (channel->options & eH2250LogicalChannelParameters_mediaChannel) {
+	अगर (channel->options & eH2250LogicalChannelParameters_mediaChannel) अणु
 		/* RTP */
 		ret = expect_rtp_rtcp(skb, ct, ctinfo, protoff, data, dataoff,
 				      &channel->mediaChannel);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if (channel->
-	    options & eH2250LogicalChannelParameters_mediaControlChannel) {
+	अगर (channel->
+	    options & eH2250LogicalChannelParameters_mediaControlChannel) अणु
 		/* RTCP */
 		ret = expect_rtp_rtcp(skb, ct, ctinfo, protoff, data, dataoff,
 				      &channel->mediaControlChannel);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_olc(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, int dataoff,
+अटल पूर्णांक process_olc(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, पूर्णांक dataoff,
 		       OpenLogicalChannel *olc)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	pr_debug("nf_ct_h323: OpenLogicalChannel\n");
 
-	if (olc->forwardLogicalChannelParameters.multiplexParameters.choice ==
-	    eOpenLogicalChannel_forwardLogicalChannelParameters_multiplexParameters_h2250LogicalChannelParameters)
-	{
+	अगर (olc->क्रमwardLogicalChannelParameters.multiplexParameters.choice ==
+	    eOpenLogicalChannel_क्रमwardLogicalChannelParameters_multiplexParameters_h2250LogicalChannelParameters)
+	अणु
 		ret = process_h245_channel(skb, ct, ctinfo,
 					   protoff, data, dataoff,
 					   &olc->
-					   forwardLogicalChannelParameters.
+					   क्रमwardLogicalChannelParameters.
 					   multiplexParameters.
 					   h2250LogicalChannelParameters);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if ((olc->options &
+	अगर ((olc->options &
 	     eOpenLogicalChannel_reverseLogicalChannelParameters) &&
 	    (olc->reverseLogicalChannelParameters.options &
 	     eOpenLogicalChannel_reverseLogicalChannelParameters_multiplexParameters)
 	    && (olc->reverseLogicalChannelParameters.multiplexParameters.
 		choice ==
 		eOpenLogicalChannel_reverseLogicalChannelParameters_multiplexParameters_h2250LogicalChannelParameters))
-	{
+	अणु
 		ret =
 		    process_h245_channel(skb, ct, ctinfo,
 					 protoff, data, dataoff,
@@ -444,429 +445,429 @@ static int process_olc(struct sk_buff *skb, struct nf_conn *ct,
 					 reverseLogicalChannelParameters.
 					 multiplexParameters.
 					 h2250LogicalChannelParameters);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if ((olc->options & eOpenLogicalChannel_separateStack) &&
-	    olc->forwardLogicalChannelParameters.dataType.choice ==
+	अगर ((olc->options & eOpenLogicalChannel_separateStack) &&
+	    olc->क्रमwardLogicalChannelParameters.dataType.choice ==
 	    eDataType_data &&
-	    olc->forwardLogicalChannelParameters.dataType.data.application.
+	    olc->क्रमwardLogicalChannelParameters.dataType.data.application.
 	    choice == eDataApplicationCapability_application_t120 &&
-	    olc->forwardLogicalChannelParameters.dataType.data.application.
+	    olc->क्रमwardLogicalChannelParameters.dataType.data.application.
 	    t120.choice == eDataProtocolCapability_separateLANStack &&
 	    olc->separateStack.networkAddress.choice ==
-	    eNetworkAccessParameters_networkAddress_localAreaAddress) {
+	    eNetworkAccessParameters_networkAddress_localAreaAddress) अणु
 		ret = expect_t120(skb, ct, ctinfo, protoff, data, dataoff,
 				  &olc->separateStack.networkAddress.
 				  localAreaAddress);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_olca(struct sk_buff *skb, struct nf_conn *ct,
-			enum ip_conntrack_info ctinfo,
-			unsigned int protoff, unsigned char **data, int dataoff,
+अटल पूर्णांक process_olca(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			क्रमागत ip_conntrack_info ctinfo,
+			अचिन्हित पूर्णांक protoff, अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			OpenLogicalChannelAck *olca)
-{
+अणु
 	H2250LogicalChannelAckParameters *ack;
-	int ret;
+	पूर्णांक ret;
 
 	pr_debug("nf_ct_h323: OpenLogicalChannelAck\n");
 
-	if ((olca->options &
+	अगर ((olca->options &
 	     eOpenLogicalChannelAck_reverseLogicalChannelParameters) &&
 	    (olca->reverseLogicalChannelParameters.options &
 	     eOpenLogicalChannelAck_reverseLogicalChannelParameters_multiplexParameters)
 	    && (olca->reverseLogicalChannelParameters.multiplexParameters.
 		choice ==
 		eOpenLogicalChannelAck_reverseLogicalChannelParameters_multiplexParameters_h2250LogicalChannelParameters))
-	{
+	अणु
 		ret = process_h245_channel(skb, ct, ctinfo,
 					   protoff, data, dataoff,
 					   &olca->
 					   reverseLogicalChannelParameters.
 					   multiplexParameters.
 					   h2250LogicalChannelParameters);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if ((olca->options &
-	     eOpenLogicalChannelAck_forwardMultiplexAckParameters) &&
-	    (olca->forwardMultiplexAckParameters.choice ==
-	     eOpenLogicalChannelAck_forwardMultiplexAckParameters_h2250LogicalChannelAckParameters))
-	{
-		ack = &olca->forwardMultiplexAckParameters.
+	अगर ((olca->options &
+	     eOpenLogicalChannelAck_क्रमwardMultiplexAckParameters) &&
+	    (olca->क्रमwardMultiplexAckParameters.choice ==
+	     eOpenLogicalChannelAck_क्रमwardMultiplexAckParameters_h2250LogicalChannelAckParameters))
+	अणु
+		ack = &olca->क्रमwardMultiplexAckParameters.
 		    h2250LogicalChannelAckParameters;
-		if (ack->options &
-		    eH2250LogicalChannelAckParameters_mediaChannel) {
+		अगर (ack->options &
+		    eH2250LogicalChannelAckParameters_mediaChannel) अणु
 			/* RTP */
 			ret = expect_rtp_rtcp(skb, ct, ctinfo,
 					      protoff, data, dataoff,
 					      &ack->mediaChannel);
-			if (ret < 0)
-				return -1;
-		}
+			अगर (ret < 0)
+				वापस -1;
+		पूर्ण
 
-		if (ack->options &
-		    eH2250LogicalChannelAckParameters_mediaControlChannel) {
+		अगर (ack->options &
+		    eH2250LogicalChannelAckParameters_mediaControlChannel) अणु
 			/* RTCP */
 			ret = expect_rtp_rtcp(skb, ct, ctinfo,
 					      protoff, data, dataoff,
 					      &ack->mediaControlChannel);
-			if (ret < 0)
-				return -1;
-		}
-	}
+			अगर (ret < 0)
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if ((olca->options & eOpenLogicalChannelAck_separateStack) &&
+	अगर ((olca->options & eOpenLogicalChannelAck_separateStack) &&
 		olca->separateStack.networkAddress.choice ==
-		eNetworkAccessParameters_networkAddress_localAreaAddress) {
+		eNetworkAccessParameters_networkAddress_localAreaAddress) अणु
 		ret = expect_t120(skb, ct, ctinfo, protoff, data, dataoff,
 				  &olca->separateStack.networkAddress.
 				  localAreaAddress);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_h245(struct sk_buff *skb, struct nf_conn *ct,
-			enum ip_conntrack_info ctinfo,
-			unsigned int protoff, unsigned char **data, int dataoff,
-			MultimediaSystemControlMessage *mscm)
-{
-	switch (mscm->choice) {
-	case eMultimediaSystemControlMessage_request:
-		if (mscm->request.choice ==
-		    eRequestMessage_openLogicalChannel) {
-			return process_olc(skb, ct, ctinfo,
+अटल पूर्णांक process_h245(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			क्रमागत ip_conntrack_info ctinfo,
+			अचिन्हित पूर्णांक protoff, अचिन्हित अक्षर **data, पूर्णांक dataoff,
+			MulसमयdiaSystemControlMessage *mscm)
+अणु
+	चयन (mscm->choice) अणु
+	हाल eMulसमयdiaSystemControlMessage_request:
+		अगर (mscm->request.choice ==
+		    eRequestMessage_खोलोLogicalChannel) अणु
+			वापस process_olc(skb, ct, ctinfo,
 					   protoff, data, dataoff,
-					   &mscm->request.openLogicalChannel);
-		}
+					   &mscm->request.खोलोLogicalChannel);
+		पूर्ण
 		pr_debug("nf_ct_h323: H.245 Request %d\n",
 			 mscm->request.choice);
-		break;
-	case eMultimediaSystemControlMessage_response:
-		if (mscm->response.choice ==
-		    eResponseMessage_openLogicalChannelAck) {
-			return process_olca(skb, ct, ctinfo,
+		अवरोध;
+	हाल eMulसमयdiaSystemControlMessage_response:
+		अगर (mscm->response.choice ==
+		    eResponseMessage_खोलोLogicalChannelAck) अणु
+			वापस process_olca(skb, ct, ctinfo,
 					    protoff, data, dataoff,
 					    &mscm->response.
-					    openLogicalChannelAck);
-		}
+					    खोलोLogicalChannelAck);
+		पूर्ण
 		pr_debug("nf_ct_h323: H.245 Response %d\n",
 			 mscm->response.choice);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_debug("nf_ct_h323: H.245 signal %d\n", mscm->choice);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int h245_help(struct sk_buff *skb, unsigned int protoff,
-		     struct nf_conn *ct, enum ip_conntrack_info ctinfo)
-{
-	static MultimediaSystemControlMessage mscm;
-	unsigned char *data = NULL;
-	int datalen;
-	int dataoff;
-	int ret;
+अटल पूर्णांक h245_help(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+		     काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo)
+अणु
+	अटल MulसमयdiaSystemControlMessage mscm;
+	अचिन्हित अक्षर *data = शून्य;
+	पूर्णांक datalen;
+	पूर्णांक dataoff;
+	पूर्णांक ret;
 
 	/* Until there's been traffic both ways, don't look in packets. */
-	if (ctinfo != IP_CT_ESTABLISHED && ctinfo != IP_CT_ESTABLISHED_REPLY)
-		return NF_ACCEPT;
+	अगर (ctinfo != IP_CT_ESTABLISHED && ctinfo != IP_CT_ESTABLISHED_REPLY)
+		वापस NF_ACCEPT;
 
 	pr_debug("nf_ct_h245: skblen = %u\n", skb->len);
 
 	spin_lock_bh(&nf_h323_lock);
 
 	/* Process each TPKT */
-	while (get_tpkt_data(skb, protoff, ct, ctinfo,
-			     &data, &datalen, &dataoff)) {
+	जबतक (get_tpkt_data(skb, protoff, ct, ctinfo,
+			     &data, &datalen, &dataoff)) अणु
 		pr_debug("nf_ct_h245: TPKT len=%d ", datalen);
-		nf_ct_dump_tuple(&ct->tuplehash[CTINFO2DIR(ctinfo)].tuple);
+		nf_ct_dump_tuple(&ct->tuplehash[CTINFO2सूची(ctinfo)].tuple);
 
-		/* Decode H.245 signal */
-		ret = DecodeMultimediaSystemControlMessage(data, datalen,
+		/* Decode H.245 संकेत */
+		ret = DecodeMulसमयdiaSystemControlMessage(data, datalen,
 							   &mscm);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_debug("nf_ct_h245: decoding error: %s\n",
 				 ret == H323_ERROR_BOUND ?
 				 "out of bound" : "out of range");
-			/* We don't drop when decoding error */
-			break;
-		}
+			/* We करोn't drop when decoding error */
+			अवरोध;
+		पूर्ण
 
-		/* Process H.245 signal */
-		if (process_h245(skb, ct, ctinfo, protoff,
+		/* Process H.245 संकेत */
+		अगर (process_h245(skb, ct, ctinfo, protoff,
 				 &data, dataoff, &mscm) < 0)
-			goto drop;
-	}
+			जाओ drop;
+	पूर्ण
 
 	spin_unlock_bh(&nf_h323_lock);
-	return NF_ACCEPT;
+	वापस NF_ACCEPT;
 
       drop:
 	spin_unlock_bh(&nf_h323_lock);
 	nf_ct_helper_log(skb, ct, "cannot process H.245 message");
-	return NF_DROP;
-}
+	वापस NF_DROP;
+पूर्ण
 
-static const struct nf_conntrack_expect_policy h245_exp_policy = {
+अटल स्थिर काष्ठा nf_conntrack_expect_policy h245_exp_policy = अणु
 	.max_expected	= H323_RTP_CHANNEL_MAX * 4 + 2 /* T.120 */,
-	.timeout	= 240,
-};
+	.समयout	= 240,
+पूर्ण;
 
-static struct nf_conntrack_helper nf_conntrack_helper_h245 __read_mostly = {
+अटल काष्ठा nf_conntrack_helper nf_conntrack_helper_h245 __पढ़ो_mostly = अणु
 	.name			= "H.245",
 	.me			= THIS_MODULE,
 	.tuple.src.l3num	= AF_UNSPEC,
 	.tuple.dst.protonum	= IPPROTO_UDP,
 	.help			= h245_help,
 	.expect_policy		= &h245_exp_policy,
-};
+पूर्ण;
 
-int get_h225_addr(struct nf_conn *ct, unsigned char *data,
+पूर्णांक get_h225_addr(काष्ठा nf_conn *ct, अचिन्हित अक्षर *data,
 		  TransportAddress *taddr,
-		  union nf_inet_addr *addr, __be16 *port)
-{
-	const unsigned char *p;
-	int len;
+		  जोड़ nf_inet_addr *addr, __be16 *port)
+अणु
+	स्थिर अचिन्हित अक्षर *p;
+	पूर्णांक len;
 
-	switch (taddr->choice) {
-	case eTransportAddress_ipAddress:
-		if (nf_ct_l3num(ct) != AF_INET)
-			return 0;
+	चयन (taddr->choice) अणु
+	हाल eTransportAddress_ipAddress:
+		अगर (nf_ct_l3num(ct) != AF_INET)
+			वापस 0;
 		p = data + taddr->ipAddress.ip;
 		len = 4;
-		break;
-	case eTransportAddress_ip6Address:
-		if (nf_ct_l3num(ct) != AF_INET6)
-			return 0;
+		अवरोध;
+	हाल eTransportAddress_ip6Address:
+		अगर (nf_ct_l3num(ct) != AF_INET6)
+			वापस 0;
 		p = data + taddr->ip6Address.ip;
 		len = 16;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	memcpy(addr, p, len);
-	memset((void *)addr + len, 0, sizeof(*addr) - len);
-	memcpy(port, p + len, sizeof(__be16));
+	स_नकल(addr, p, len);
+	स_रखो((व्योम *)addr + len, 0, माप(*addr) - len);
+	स_नकल(port, p + len, माप(__be16));
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int expect_h245(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff, unsigned char **data, int dataoff,
+अटल पूर्णांक expect_h245(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff, अचिन्हित अक्षर **data, पूर्णांक dataoff,
 		       TransportAddress *taddr)
-{
-	int dir = CTINFO2DIR(ctinfo);
-	int ret = 0;
+अणु
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret = 0;
 	__be16 port;
-	union nf_inet_addr addr;
-	struct nf_conntrack_expect *exp;
+	जोड़ nf_inet_addr addr;
+	काष्ठा nf_conntrack_expect *exp;
 	typeof(nat_h245_hook) nat_h245;
 
 	/* Read h245Address */
-	if (!get_h225_addr(ct, *data, taddr, &addr, &port) ||
-	    memcmp(&addr, &ct->tuplehash[dir].tuple.src.u3, sizeof(addr)) ||
+	अगर (!get_h225_addr(ct, *data, taddr, &addr, &port) ||
+	    स_भेद(&addr, &ct->tuplehash[dir].tuple.src.u3, माप(addr)) ||
 	    port == 0)
-		return 0;
+		वापस 0;
 
-	/* Create expect for h245 connection */
-	if ((exp = nf_ct_expect_alloc(ct)) == NULL)
-		return -1;
+	/* Create expect क्रम h245 connection */
+	अगर ((exp = nf_ct_expect_alloc(ct)) == शून्य)
+		वापस -1;
 	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  &ct->tuplehash[!dir].tuple.src.u3,
 			  &ct->tuplehash[!dir].tuple.dst.u3,
-			  IPPROTO_TCP, NULL, &port);
+			  IPPROTO_TCP, शून्य, &port);
 	exp->helper = &nf_conntrack_helper_h245;
 
-	if (memcmp(&ct->tuplehash[dir].tuple.src.u3,
+	अगर (स_भेद(&ct->tuplehash[dir].tuple.src.u3,
 		   &ct->tuplehash[!dir].tuple.dst.u3,
-		   sizeof(ct->tuplehash[dir].tuple.src.u3)) &&
+		   माप(ct->tuplehash[dir].tuple.src.u3)) &&
 	    (nat_h245 = rcu_dereference(nat_h245_hook)) &&
 	    nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {
+	    ct->status & IPS_NAT_MASK) अणु
 		/* NAT needed */
 		ret = nat_h245(skb, ct, ctinfo, protoff, data, dataoff, taddr,
 			       port, exp);
-	} else {		/* Conntrack only */
-		if (nf_ct_expect_related(exp, 0) == 0) {
+	पूर्ण अन्यथा अणु		/* Conntrack only */
+		अगर (nf_ct_expect_related(exp, 0) == 0) अणु
 			pr_debug("nf_ct_q931: expect H.245 ");
 			nf_ct_dump_tuple(&exp->tuple);
-		} else
+		पूर्ण अन्यथा
 			ret = -1;
-	}
+	पूर्ण
 
 	nf_ct_expect_put(exp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* If the calling party is on the same side of the forward-to party,
- * we don't need to track the second call
+/* If the calling party is on the same side of the क्रमward-to party,
+ * we करोn't need to track the second call
  */
-static int callforward_do_filter(struct net *net,
-				 const union nf_inet_addr *src,
-				 const union nf_inet_addr *dst,
-				 u_int8_t family)
-{
-	int ret = 0;
+अटल पूर्णांक callक्रमward_करो_filter(काष्ठा net *net,
+				 स्थिर जोड़ nf_inet_addr *src,
+				 स्थिर जोड़ nf_inet_addr *dst,
+				 u_पूर्णांक8_t family)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (family) {
-	case AF_INET: {
-		struct flowi4 fl1, fl2;
-		struct rtable *rt1, *rt2;
+	चयन (family) अणु
+	हाल AF_INET: अणु
+		काष्ठा flowi4 fl1, fl2;
+		काष्ठा rtable *rt1, *rt2;
 
-		memset(&fl1, 0, sizeof(fl1));
+		स_रखो(&fl1, 0, माप(fl1));
 		fl1.daddr = src->ip;
 
-		memset(&fl2, 0, sizeof(fl2));
+		स_रखो(&fl2, 0, माप(fl2));
 		fl2.daddr = dst->ip;
-		if (!nf_ip_route(net, (struct dst_entry **)&rt1,
-				 flowi4_to_flowi(&fl1), false)) {
-			if (!nf_ip_route(net, (struct dst_entry **)&rt2,
-					 flowi4_to_flowi(&fl2), false)) {
-				if (rt_nexthop(rt1, fl1.daddr) ==
+		अगर (!nf_ip_route(net, (काष्ठा dst_entry **)&rt1,
+				 flowi4_to_flowi(&fl1), false)) अणु
+			अगर (!nf_ip_route(net, (काष्ठा dst_entry **)&rt2,
+					 flowi4_to_flowi(&fl2), false)) अणु
+				अगर (rt_nexthop(rt1, fl1.daddr) ==
 				    rt_nexthop(rt2, fl2.daddr) &&
 				    rt1->dst.dev  == rt2->dst.dev)
 					ret = 1;
 				dst_release(&rt2->dst);
-			}
+			पूर्ण
 			dst_release(&rt1->dst);
-		}
-		break;
-	}
-#if IS_ENABLED(CONFIG_IPV6)
-	case AF_INET6: {
-		struct rt6_info *rt1, *rt2;
-		struct flowi6 fl1, fl2;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+#अगर IS_ENABLED(CONFIG_IPV6)
+	हाल AF_INET6: अणु
+		काष्ठा rt6_info *rt1, *rt2;
+		काष्ठा flowi6 fl1, fl2;
 
-		memset(&fl1, 0, sizeof(fl1));
+		स_रखो(&fl1, 0, माप(fl1));
 		fl1.daddr = src->in6;
 
-		memset(&fl2, 0, sizeof(fl2));
+		स_रखो(&fl2, 0, माप(fl2));
 		fl2.daddr = dst->in6;
-		if (!nf_ip6_route(net, (struct dst_entry **)&rt1,
-				  flowi6_to_flowi(&fl1), false)) {
-			if (!nf_ip6_route(net, (struct dst_entry **)&rt2,
-					  flowi6_to_flowi(&fl2), false)) {
-				if (ipv6_addr_equal(rt6_nexthop(rt1, &fl1.daddr),
+		अगर (!nf_ip6_route(net, (काष्ठा dst_entry **)&rt1,
+				  flowi6_to_flowi(&fl1), false)) अणु
+			अगर (!nf_ip6_route(net, (काष्ठा dst_entry **)&rt2,
+					  flowi6_to_flowi(&fl2), false)) अणु
+				अगर (ipv6_addr_equal(rt6_nexthop(rt1, &fl1.daddr),
 						    rt6_nexthop(rt2, &fl2.daddr)) &&
 				    rt1->dst.dev == rt2->dst.dev)
 					ret = 1;
 				dst_release(&rt2->dst);
-			}
+			पूर्ण
 			dst_release(&rt1->dst);
-		}
-		break;
-	}
-#endif
-	}
-	return ret;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+#पूर्ण_अगर
+	पूर्ण
+	वापस ret;
 
-}
+पूर्ण
 
-static int expect_callforwarding(struct sk_buff *skb,
-				 struct nf_conn *ct,
-				 enum ip_conntrack_info ctinfo,
-				 unsigned int protoff,
-				 unsigned char **data, int dataoff,
+अटल पूर्णांक expect_callक्रमwarding(काष्ठा sk_buff *skb,
+				 काष्ठा nf_conn *ct,
+				 क्रमागत ip_conntrack_info ctinfo,
+				 अचिन्हित पूर्णांक protoff,
+				 अचिन्हित अक्षर **data, पूर्णांक dataoff,
 				 TransportAddress *taddr)
-{
-	int dir = CTINFO2DIR(ctinfo);
-	int ret = 0;
+अणु
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret = 0;
 	__be16 port;
-	union nf_inet_addr addr;
-	struct nf_conntrack_expect *exp;
-	struct net *net = nf_ct_net(ct);
-	typeof(nat_callforwarding_hook) nat_callforwarding;
+	जोड़ nf_inet_addr addr;
+	काष्ठा nf_conntrack_expect *exp;
+	काष्ठा net *net = nf_ct_net(ct);
+	typeof(nat_callक्रमwarding_hook) nat_callक्रमwarding;
 
 	/* Read alternativeAddress */
-	if (!get_h225_addr(ct, *data, taddr, &addr, &port) || port == 0)
-		return 0;
+	अगर (!get_h225_addr(ct, *data, taddr, &addr, &port) || port == 0)
+		वापस 0;
 
-	/* If the calling party is on the same side of the forward-to party,
-	 * we don't need to track the second call
+	/* If the calling party is on the same side of the क्रमward-to party,
+	 * we करोn't need to track the second call
 	 */
-	if (callforward_filter &&
-	    callforward_do_filter(net, &addr, &ct->tuplehash[!dir].tuple.src.u3,
-				  nf_ct_l3num(ct))) {
+	अगर (callक्रमward_filter &&
+	    callक्रमward_करो_filter(net, &addr, &ct->tuplehash[!dir].tuple.src.u3,
+				  nf_ct_l3num(ct))) अणु
 		pr_debug("nf_ct_q931: Call Forwarding not tracked\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Create expect for the second call leg */
-	if ((exp = nf_ct_expect_alloc(ct)) == NULL)
-		return -1;
+	/* Create expect क्रम the second call leg */
+	अगर ((exp = nf_ct_expect_alloc(ct)) == शून्य)
+		वापस -1;
 	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  &ct->tuplehash[!dir].tuple.src.u3, &addr,
-			  IPPROTO_TCP, NULL, &port);
+			  IPPROTO_TCP, शून्य, &port);
 	exp->helper = nf_conntrack_helper_q931;
 
-	if (memcmp(&ct->tuplehash[dir].tuple.src.u3,
+	अगर (स_भेद(&ct->tuplehash[dir].tuple.src.u3,
 		   &ct->tuplehash[!dir].tuple.dst.u3,
-		   sizeof(ct->tuplehash[dir].tuple.src.u3)) &&
-	    (nat_callforwarding = rcu_dereference(nat_callforwarding_hook)) &&
+		   माप(ct->tuplehash[dir].tuple.src.u3)) &&
+	    (nat_callक्रमwarding = rcu_dereference(nat_callक्रमwarding_hook)) &&
 	    nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {
+	    ct->status & IPS_NAT_MASK) अणु
 		/* Need NAT */
-		ret = nat_callforwarding(skb, ct, ctinfo,
+		ret = nat_callक्रमwarding(skb, ct, ctinfo,
 					 protoff, data, dataoff,
 					 taddr, port, exp);
-	} else {		/* Conntrack only */
-		if (nf_ct_expect_related(exp, 0) == 0) {
+	पूर्ण अन्यथा अणु		/* Conntrack only */
+		अगर (nf_ct_expect_related(exp, 0) == 0) अणु
 			pr_debug("nf_ct_q931: expect Call Forwarding ");
 			nf_ct_dump_tuple(&exp->tuple);
-		} else
+		पूर्ण अन्यथा
 			ret = -1;
-	}
+	पूर्ण
 
 	nf_ct_expect_put(exp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int process_setup(struct sk_buff *skb, struct nf_conn *ct,
-			 enum ip_conntrack_info ctinfo,
-			 unsigned int protoff,
-			 unsigned char **data, int dataoff,
+अटल पूर्णांक process_setup(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			 क्रमागत ip_conntrack_info ctinfo,
+			 अचिन्हित पूर्णांक protoff,
+			 अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			 Setup_UUIE *setup)
-{
-	int dir = CTINFO2DIR(ctinfo);
-	int ret;
-	int i;
+अणु
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret;
+	पूर्णांक i;
 	__be16 port;
-	union nf_inet_addr addr;
+	जोड़ nf_inet_addr addr;
 	typeof(set_h225_addr_hook) set_h225_addr;
 
 	pr_debug("nf_ct_q931: Setup\n");
 
-	if (setup->options & eSetup_UUIE_h245Address) {
+	अगर (setup->options & eSetup_UUIE_h245Address) अणु
 		ret = expect_h245(skb, ct, ctinfo, protoff, data, dataoff,
 				  &setup->h245Address);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
 	set_h225_addr = rcu_dereference(set_h225_addr_hook);
-	if ((setup->options & eSetup_UUIE_destCallSignalAddress) &&
+	अगर ((setup->options & eSetup_UUIE_destCallSignalAddress) &&
 	    (set_h225_addr) && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
 	    ct->status & IPS_NAT_MASK &&
 	    get_h225_addr(ct, *data, &setup->destCallSignalAddress,
 			  &addr, &port) &&
-	    memcmp(&addr, &ct->tuplehash[!dir].tuple.src.u3, sizeof(addr))) {
+	    स_भेद(&addr, &ct->tuplehash[!dir].tuple.src.u3, माप(addr))) अणु
 		pr_debug("nf_ct_q931: set destCallSignalAddress %pI6:%hu->%pI6:%hu\n",
 			 &addr, ntohs(port), &ct->tuplehash[!dir].tuple.src.u3,
 			 ntohs(ct->tuplehash[!dir].tuple.src.u.tcp.port));
@@ -874,16 +875,16 @@ static int process_setup(struct sk_buff *skb, struct nf_conn *ct,
 				    &setup->destCallSignalAddress,
 				    &ct->tuplehash[!dir].tuple.src.u3,
 				    ct->tuplehash[!dir].tuple.src.u.tcp.port);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if ((setup->options & eSetup_UUIE_sourceCallSignalAddress) &&
+	अगर ((setup->options & eSetup_UUIE_sourceCallSignalAddress) &&
 	    (set_h225_addr) && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
 	    ct->status & IPS_NAT_MASK &&
 	    get_h225_addr(ct, *data, &setup->sourceCallSignalAddress,
 			  &addr, &port) &&
-	    memcmp(&addr, &ct->tuplehash[!dir].tuple.dst.u3, sizeof(addr))) {
+	    स_भेद(&addr, &ct->tuplehash[!dir].tuple.dst.u3, माप(addr))) अणु
 		pr_debug("nf_ct_q931: set sourceCallSignalAddress %pI6:%hu->%pI6:%hu\n",
 			 &addr, ntohs(port), &ct->tuplehash[!dir].tuple.dst.u3,
 			 ntohs(ct->tuplehash[!dir].tuple.dst.u.tcp.port));
@@ -891,302 +892,302 @@ static int process_setup(struct sk_buff *skb, struct nf_conn *ct,
 				    &setup->sourceCallSignalAddress,
 				    &ct->tuplehash[!dir].tuple.dst.u3,
 				    ct->tuplehash[!dir].tuple.dst.u.tcp.port);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if (setup->options & eSetup_UUIE_fastStart) {
-		for (i = 0; i < setup->fastStart.count; i++) {
+	अगर (setup->options & eSetup_UUIE_fastStart) अणु
+		क्रम (i = 0; i < setup->fastStart.count; i++) अणु
 			ret = process_olc(skb, ct, ctinfo,
 					  protoff, data, dataoff,
 					  &setup->fastStart.item[i]);
-			if (ret < 0)
-				return -1;
-		}
-	}
+			अगर (ret < 0)
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_callproceeding(struct sk_buff *skb,
-				  struct nf_conn *ct,
-				  enum ip_conntrack_info ctinfo,
-				  unsigned int protoff,
-				  unsigned char **data, int dataoff,
+अटल पूर्णांक process_callproceeding(काष्ठा sk_buff *skb,
+				  काष्ठा nf_conn *ct,
+				  क्रमागत ip_conntrack_info ctinfo,
+				  अचिन्हित पूर्णांक protoff,
+				  अचिन्हित अक्षर **data, पूर्णांक dataoff,
 				  CallProceeding_UUIE *callproc)
-{
-	int ret;
-	int i;
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	pr_debug("nf_ct_q931: CallProceeding\n");
 
-	if (callproc->options & eCallProceeding_UUIE_h245Address) {
+	अगर (callproc->options & eCallProceeding_UUIE_h245Address) अणु
 		ret = expect_h245(skb, ct, ctinfo, protoff, data, dataoff,
 				  &callproc->h245Address);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if (callproc->options & eCallProceeding_UUIE_fastStart) {
-		for (i = 0; i < callproc->fastStart.count; i++) {
+	अगर (callproc->options & eCallProceeding_UUIE_fastStart) अणु
+		क्रम (i = 0; i < callproc->fastStart.count; i++) अणु
 			ret = process_olc(skb, ct, ctinfo,
 					  protoff, data, dataoff,
 					  &callproc->fastStart.item[i]);
-			if (ret < 0)
-				return -1;
-		}
-	}
+			अगर (ret < 0)
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_connect(struct sk_buff *skb, struct nf_conn *ct,
-			   enum ip_conntrack_info ctinfo,
-			   unsigned int protoff,
-			   unsigned char **data, int dataoff,
+अटल पूर्णांक process_connect(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			   क्रमागत ip_conntrack_info ctinfo,
+			   अचिन्हित पूर्णांक protoff,
+			   अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			   Connect_UUIE *connect)
-{
-	int ret;
-	int i;
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	pr_debug("nf_ct_q931: Connect\n");
 
-	if (connect->options & eConnect_UUIE_h245Address) {
+	अगर (connect->options & eConnect_UUIE_h245Address) अणु
 		ret = expect_h245(skb, ct, ctinfo, protoff, data, dataoff,
 				  &connect->h245Address);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if (connect->options & eConnect_UUIE_fastStart) {
-		for (i = 0; i < connect->fastStart.count; i++) {
+	अगर (connect->options & eConnect_UUIE_fastStart) अणु
+		क्रम (i = 0; i < connect->fastStart.count; i++) अणु
 			ret = process_olc(skb, ct, ctinfo,
 					  protoff, data, dataoff,
 					  &connect->fastStart.item[i]);
-			if (ret < 0)
-				return -1;
-		}
-	}
+			अगर (ret < 0)
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_alerting(struct sk_buff *skb, struct nf_conn *ct,
-			    enum ip_conntrack_info ctinfo,
-			    unsigned int protoff,
-			    unsigned char **data, int dataoff,
+अटल पूर्णांक process_alerting(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			    क्रमागत ip_conntrack_info ctinfo,
+			    अचिन्हित पूर्णांक protoff,
+			    अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			    Alerting_UUIE *alert)
-{
-	int ret;
-	int i;
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	pr_debug("nf_ct_q931: Alerting\n");
 
-	if (alert->options & eAlerting_UUIE_h245Address) {
+	अगर (alert->options & eAlerting_UUIE_h245Address) अणु
 		ret = expect_h245(skb, ct, ctinfo, protoff, data, dataoff,
 				  &alert->h245Address);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if (alert->options & eAlerting_UUIE_fastStart) {
-		for (i = 0; i < alert->fastStart.count; i++) {
+	अगर (alert->options & eAlerting_UUIE_fastStart) अणु
+		क्रम (i = 0; i < alert->fastStart.count; i++) अणु
 			ret = process_olc(skb, ct, ctinfo,
 					  protoff, data, dataoff,
 					  &alert->fastStart.item[i]);
-			if (ret < 0)
-				return -1;
-		}
-	}
+			अगर (ret < 0)
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_facility(struct sk_buff *skb, struct nf_conn *ct,
-			    enum ip_conntrack_info ctinfo,
-			    unsigned int protoff,
-			    unsigned char **data, int dataoff,
+अटल पूर्णांक process_facility(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			    क्रमागत ip_conntrack_info ctinfo,
+			    अचिन्हित पूर्णांक protoff,
+			    अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			    Facility_UUIE *facility)
-{
-	int ret;
-	int i;
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	pr_debug("nf_ct_q931: Facility\n");
 
-	if (facility->reason.choice == eFacilityReason_callForwarded) {
-		if (facility->options & eFacility_UUIE_alternativeAddress)
-			return expect_callforwarding(skb, ct, ctinfo,
+	अगर (facility->reason.choice == eFacilityReason_callForwarded) अणु
+		अगर (facility->options & eFacility_UUIE_alternativeAddress)
+			वापस expect_callक्रमwarding(skb, ct, ctinfo,
 						     protoff, data, dataoff,
 						     &facility->
 						     alternativeAddress);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (facility->options & eFacility_UUIE_h245Address) {
+	अगर (facility->options & eFacility_UUIE_h245Address) अणु
 		ret = expect_h245(skb, ct, ctinfo, protoff, data, dataoff,
 				  &facility->h245Address);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if (facility->options & eFacility_UUIE_fastStart) {
-		for (i = 0; i < facility->fastStart.count; i++) {
+	अगर (facility->options & eFacility_UUIE_fastStart) अणु
+		क्रम (i = 0; i < facility->fastStart.count; i++) अणु
 			ret = process_olc(skb, ct, ctinfo,
 					  protoff, data, dataoff,
 					  &facility->fastStart.item[i]);
-			if (ret < 0)
-				return -1;
-		}
-	}
+			अगर (ret < 0)
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_progress(struct sk_buff *skb, struct nf_conn *ct,
-			    enum ip_conntrack_info ctinfo,
-			    unsigned int protoff,
-			    unsigned char **data, int dataoff,
+अटल पूर्णांक process_progress(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			    क्रमागत ip_conntrack_info ctinfo,
+			    अचिन्हित पूर्णांक protoff,
+			    अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			    Progress_UUIE *progress)
-{
-	int ret;
-	int i;
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	pr_debug("nf_ct_q931: Progress\n");
 
-	if (progress->options & eProgress_UUIE_h245Address) {
+	अगर (progress->options & eProgress_UUIE_h245Address) अणु
 		ret = expect_h245(skb, ct, ctinfo, protoff, data, dataoff,
 				  &progress->h245Address);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if (progress->options & eProgress_UUIE_fastStart) {
-		for (i = 0; i < progress->fastStart.count; i++) {
+	अगर (progress->options & eProgress_UUIE_fastStart) अणु
+		क्रम (i = 0; i < progress->fastStart.count; i++) अणु
 			ret = process_olc(skb, ct, ctinfo,
 					  protoff, data, dataoff,
 					  &progress->fastStart.item[i]);
-			if (ret < 0)
-				return -1;
-		}
-	}
+			अगर (ret < 0)
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_q931(struct sk_buff *skb, struct nf_conn *ct,
-			enum ip_conntrack_info ctinfo,
-			unsigned int protoff, unsigned char **data, int dataoff,
+अटल पूर्णांक process_q931(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			क्रमागत ip_conntrack_info ctinfo,
+			अचिन्हित पूर्णांक protoff, अचिन्हित अक्षर **data, पूर्णांक dataoff,
 			Q931 *q931)
-{
+अणु
 	H323_UU_PDU *pdu = &q931->UUIE.h323_uu_pdu;
-	int i;
-	int ret = 0;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	switch (pdu->h323_message_body.choice) {
-	case eH323_UU_PDU_h323_message_body_setup:
+	चयन (pdu->h323_message_body.choice) अणु
+	हाल eH323_UU_PDU_h323_message_body_setup:
 		ret = process_setup(skb, ct, ctinfo, protoff, data, dataoff,
 				    &pdu->h323_message_body.setup);
-		break;
-	case eH323_UU_PDU_h323_message_body_callProceeding:
+		अवरोध;
+	हाल eH323_UU_PDU_h323_message_body_callProceeding:
 		ret = process_callproceeding(skb, ct, ctinfo,
 					     protoff, data, dataoff,
 					     &pdu->h323_message_body.
 					     callProceeding);
-		break;
-	case eH323_UU_PDU_h323_message_body_connect:
+		अवरोध;
+	हाल eH323_UU_PDU_h323_message_body_connect:
 		ret = process_connect(skb, ct, ctinfo, protoff, data, dataoff,
 				      &pdu->h323_message_body.connect);
-		break;
-	case eH323_UU_PDU_h323_message_body_alerting:
+		अवरोध;
+	हाल eH323_UU_PDU_h323_message_body_alerting:
 		ret = process_alerting(skb, ct, ctinfo, protoff, data, dataoff,
 				       &pdu->h323_message_body.alerting);
-		break;
-	case eH323_UU_PDU_h323_message_body_facility:
+		अवरोध;
+	हाल eH323_UU_PDU_h323_message_body_facility:
 		ret = process_facility(skb, ct, ctinfo, protoff, data, dataoff,
 				       &pdu->h323_message_body.facility);
-		break;
-	case eH323_UU_PDU_h323_message_body_progress:
+		अवरोध;
+	हाल eH323_UU_PDU_h323_message_body_progress:
 		ret = process_progress(skb, ct, ctinfo, protoff, data, dataoff,
 				       &pdu->h323_message_body.progress);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_debug("nf_ct_q931: Q.931 signal %d\n",
 			 pdu->h323_message_body.choice);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret < 0)
-		return -1;
+	अगर (ret < 0)
+		वापस -1;
 
-	if (pdu->options & eH323_UU_PDU_h245Control) {
-		for (i = 0; i < pdu->h245Control.count; i++) {
+	अगर (pdu->options & eH323_UU_PDU_h245Control) अणु
+		क्रम (i = 0; i < pdu->h245Control.count; i++) अणु
 			ret = process_h245(skb, ct, ctinfo,
 					   protoff, data, dataoff,
 					   &pdu->h245Control.item[i]);
-			if (ret < 0)
-				return -1;
-		}
-	}
+			अगर (ret < 0)
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int q931_help(struct sk_buff *skb, unsigned int protoff,
-		     struct nf_conn *ct, enum ip_conntrack_info ctinfo)
-{
-	static Q931 q931;
-	unsigned char *data = NULL;
-	int datalen;
-	int dataoff;
-	int ret;
+अटल पूर्णांक q931_help(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+		     काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo)
+अणु
+	अटल Q931 q931;
+	अचिन्हित अक्षर *data = शून्य;
+	पूर्णांक datalen;
+	पूर्णांक dataoff;
+	पूर्णांक ret;
 
 	/* Until there's been traffic both ways, don't look in packets. */
-	if (ctinfo != IP_CT_ESTABLISHED && ctinfo != IP_CT_ESTABLISHED_REPLY)
-		return NF_ACCEPT;
+	अगर (ctinfo != IP_CT_ESTABLISHED && ctinfo != IP_CT_ESTABLISHED_REPLY)
+		वापस NF_ACCEPT;
 
 	pr_debug("nf_ct_q931: skblen = %u\n", skb->len);
 
 	spin_lock_bh(&nf_h323_lock);
 
 	/* Process each TPKT */
-	while (get_tpkt_data(skb, protoff, ct, ctinfo,
-			     &data, &datalen, &dataoff)) {
+	जबतक (get_tpkt_data(skb, protoff, ct, ctinfo,
+			     &data, &datalen, &dataoff)) अणु
 		pr_debug("nf_ct_q931: TPKT len=%d ", datalen);
-		nf_ct_dump_tuple(&ct->tuplehash[CTINFO2DIR(ctinfo)].tuple);
+		nf_ct_dump_tuple(&ct->tuplehash[CTINFO2सूची(ctinfo)].tuple);
 
-		/* Decode Q.931 signal */
+		/* Decode Q.931 संकेत */
 		ret = DecodeQ931(data, datalen, &q931);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_debug("nf_ct_q931: decoding error: %s\n",
 				 ret == H323_ERROR_BOUND ?
 				 "out of bound" : "out of range");
-			/* We don't drop when decoding error */
-			break;
-		}
+			/* We करोn't drop when decoding error */
+			अवरोध;
+		पूर्ण
 
-		/* Process Q.931 signal */
-		if (process_q931(skb, ct, ctinfo, protoff,
+		/* Process Q.931 संकेत */
+		अगर (process_q931(skb, ct, ctinfo, protoff,
 				 &data, dataoff, &q931) < 0)
-			goto drop;
-	}
+			जाओ drop;
+	पूर्ण
 
 	spin_unlock_bh(&nf_h323_lock);
-	return NF_ACCEPT;
+	वापस NF_ACCEPT;
 
       drop:
 	spin_unlock_bh(&nf_h323_lock);
 	nf_ct_helper_log(skb, ct, "cannot process Q.931 message");
-	return NF_DROP;
-}
+	वापस NF_DROP;
+पूर्ण
 
-static const struct nf_conntrack_expect_policy q931_exp_policy = {
+अटल स्थिर काष्ठा nf_conntrack_expect_policy q931_exp_policy = अणु
 	/* T.120 and H.245 */
 	.max_expected		= H323_RTP_CHANNEL_MAX * 4 + 4,
-	.timeout		= 240,
-};
+	.समयout		= 240,
+पूर्ण;
 
-static struct nf_conntrack_helper nf_conntrack_helper_q931[] __read_mostly = {
-	{
+अटल काष्ठा nf_conntrack_helper nf_conntrack_helper_q931[] __पढ़ो_mostly = अणु
+	अणु
 		.name			= "Q.931",
 		.me			= THIS_MODULE,
 		.tuple.src.l3num	= AF_INET,
@@ -1194,8 +1195,8 @@ static struct nf_conntrack_helper nf_conntrack_helper_q931[] __read_mostly = {
 		.tuple.dst.protonum	= IPPROTO_TCP,
 		.help			= q931_help,
 		.expect_policy		= &q931_exp_policy,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "Q.931",
 		.me			= THIS_MODULE,
 		.tuple.src.l3num	= AF_INET6,
@@ -1203,171 +1204,171 @@ static struct nf_conntrack_helper nf_conntrack_helper_q931[] __read_mostly = {
 		.tuple.dst.protonum	= IPPROTO_TCP,
 		.help			= q931_help,
 		.expect_policy		= &q931_exp_policy,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static unsigned char *get_udp_data(struct sk_buff *skb, unsigned int protoff,
-				   int *datalen)
-{
-	const struct udphdr *uh;
-	struct udphdr _uh;
-	int dataoff;
+अटल अचिन्हित अक्षर *get_udp_data(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+				   पूर्णांक *datalen)
+अणु
+	स्थिर काष्ठा udphdr *uh;
+	काष्ठा udphdr _uh;
+	पूर्णांक dataoff;
 
-	uh = skb_header_pointer(skb, protoff, sizeof(_uh), &_uh);
-	if (uh == NULL)
-		return NULL;
-	dataoff = protoff + sizeof(_uh);
-	if (dataoff >= skb->len)
-		return NULL;
+	uh = skb_header_poपूर्णांकer(skb, protoff, माप(_uh), &_uh);
+	अगर (uh == शून्य)
+		वापस शून्य;
+	dataoff = protoff + माप(_uh);
+	अगर (dataoff >= skb->len)
+		वापस शून्य;
 	*datalen = skb->len - dataoff;
-	return skb_header_pointer(skb, dataoff, *datalen, h323_buffer);
-}
+	वापस skb_header_poपूर्णांकer(skb, dataoff, *datalen, h323_buffer);
+पूर्ण
 
-static struct nf_conntrack_expect *find_expect(struct nf_conn *ct,
-					       union nf_inet_addr *addr,
+अटल काष्ठा nf_conntrack_expect *find_expect(काष्ठा nf_conn *ct,
+					       जोड़ nf_inet_addr *addr,
 					       __be16 port)
-{
-	struct net *net = nf_ct_net(ct);
-	struct nf_conntrack_expect *exp;
-	struct nf_conntrack_tuple tuple;
+अणु
+	काष्ठा net *net = nf_ct_net(ct);
+	काष्ठा nf_conntrack_expect *exp;
+	काष्ठा nf_conntrack_tuple tuple;
 
-	memset(&tuple.src.u3, 0, sizeof(tuple.src.u3));
+	स_रखो(&tuple.src.u3, 0, माप(tuple.src.u3));
 	tuple.src.u.tcp.port = 0;
-	memcpy(&tuple.dst.u3, addr, sizeof(tuple.dst.u3));
+	स_नकल(&tuple.dst.u3, addr, माप(tuple.dst.u3));
 	tuple.dst.u.tcp.port = port;
 	tuple.dst.protonum = IPPROTO_TCP;
 
 	exp = __nf_ct_expect_find(net, nf_ct_zone(ct), &tuple);
-	if (exp && exp->master == ct)
-		return exp;
-	return NULL;
-}
+	अगर (exp && exp->master == ct)
+		वापस exp;
+	वापस शून्य;
+पूर्ण
 
-static int expect_q931(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff, unsigned char **data,
-		       TransportAddress *taddr, int count)
-{
-	struct nf_ct_h323_master *info = nfct_help_data(ct);
-	int dir = CTINFO2DIR(ctinfo);
-	int ret = 0;
-	int i;
+अटल पूर्णांक expect_q931(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff, अचिन्हित अक्षर **data,
+		       TransportAddress *taddr, पूर्णांक count)
+अणु
+	काष्ठा nf_ct_h323_master *info = nfct_help_data(ct);
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 	__be16 port;
-	union nf_inet_addr addr;
-	struct nf_conntrack_expect *exp;
+	जोड़ nf_inet_addr addr;
+	काष्ठा nf_conntrack_expect *exp;
 	typeof(nat_q931_hook) nat_q931;
 
-	/* Look for the first related address */
-	for (i = 0; i < count; i++) {
-		if (get_h225_addr(ct, *data, &taddr[i], &addr, &port) &&
-		    memcmp(&addr, &ct->tuplehash[dir].tuple.src.u3,
-			   sizeof(addr)) == 0 && port != 0)
-			break;
-	}
+	/* Look क्रम the first related address */
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (get_h225_addr(ct, *data, &taddr[i], &addr, &port) &&
+		    स_भेद(&addr, &ct->tuplehash[dir].tuple.src.u3,
+			   माप(addr)) == 0 && port != 0)
+			अवरोध;
+	पूर्ण
 
-	if (i >= count)		/* Not found */
-		return 0;
+	अगर (i >= count)		/* Not found */
+		वापस 0;
 
-	/* Create expect for Q.931 */
-	if ((exp = nf_ct_expect_alloc(ct)) == NULL)
-		return -1;
+	/* Create expect क्रम Q.931 */
+	अगर ((exp = nf_ct_expect_alloc(ct)) == शून्य)
+		वापस -1;
 	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  gkrouted_only ? /* only accept calls from GK? */
-				&ct->tuplehash[!dir].tuple.src.u3 : NULL,
+				&ct->tuplehash[!dir].tuple.src.u3 : शून्य,
 			  &ct->tuplehash[!dir].tuple.dst.u3,
-			  IPPROTO_TCP, NULL, &port);
+			  IPPROTO_TCP, शून्य, &port);
 	exp->helper = nf_conntrack_helper_q931;
 	exp->flags = NF_CT_EXPECT_PERMANENT;	/* Accept multiple calls */
 
 	nat_q931 = rcu_dereference(nat_q931_hook);
-	if (nat_q931 && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {	/* Need NAT */
+	अगर (nat_q931 && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
+	    ct->status & IPS_NAT_MASK) अणु	/* Need NAT */
 		ret = nat_q931(skb, ct, ctinfo, protoff, data,
 			       taddr, i, port, exp);
-	} else {		/* Conntrack only */
-		if (nf_ct_expect_related(exp, 0) == 0) {
+	पूर्ण अन्यथा अणु		/* Conntrack only */
+		अगर (nf_ct_expect_related(exp, 0) == 0) अणु
 			pr_debug("nf_ct_ras: expect Q.931 ");
 			nf_ct_dump_tuple(&exp->tuple);
 
-			/* Save port for looking up expect in processing RCF */
+			/* Save port क्रम looking up expect in processing RCF */
 			info->sig_port[dir] = port;
-		} else
+		पूर्ण अन्यथा
 			ret = -1;
-	}
+	पूर्ण
 
 	nf_ct_expect_put(exp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int process_grq(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, GatekeeperRequest *grq)
-{
+अटल पूर्णांक process_grq(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, GatekeeperRequest *grq)
+अणु
 	typeof(set_ras_addr_hook) set_ras_addr;
 
 	pr_debug("nf_ct_ras: GRQ\n");
 
 	set_ras_addr = rcu_dereference(set_ras_addr_hook);
-	if (set_ras_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
+	अगर (set_ras_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
 	    ct->status & IPS_NAT_MASK)	/* NATed */
-		return set_ras_addr(skb, ct, ctinfo, protoff, data,
+		वापस set_ras_addr(skb, ct, ctinfo, protoff, data,
 				    &grq->rasAddress, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_gcf(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, GatekeeperConfirm *gcf)
-{
-	int dir = CTINFO2DIR(ctinfo);
-	int ret = 0;
+अटल पूर्णांक process_gcf(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, GatekeeperConfirm *gcf)
+अणु
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret = 0;
 	__be16 port;
-	union nf_inet_addr addr;
-	struct nf_conntrack_expect *exp;
+	जोड़ nf_inet_addr addr;
+	काष्ठा nf_conntrack_expect *exp;
 
 	pr_debug("nf_ct_ras: GCF\n");
 
-	if (!get_h225_addr(ct, *data, &gcf->rasAddress, &addr, &port))
-		return 0;
+	अगर (!get_h225_addr(ct, *data, &gcf->rasAddress, &addr, &port))
+		वापस 0;
 
 	/* Registration port is the same as discovery port */
-	if (!memcmp(&addr, &ct->tuplehash[dir].tuple.src.u3, sizeof(addr)) &&
+	अगर (!स_भेद(&addr, &ct->tuplehash[dir].tuple.src.u3, माप(addr)) &&
 	    port == ct->tuplehash[dir].tuple.src.u.udp.port)
-		return 0;
+		वापस 0;
 
-	/* Avoid RAS expectation loops. A GCF is never expected. */
-	if (test_bit(IPS_EXPECTED_BIT, &ct->status))
-		return 0;
+	/* Aव्योम RAS expectation loops. A GCF is never expected. */
+	अगर (test_bit(IPS_EXPECTED_BIT, &ct->status))
+		वापस 0;
 
 	/* Need new expect */
-	if ((exp = nf_ct_expect_alloc(ct)) == NULL)
-		return -1;
+	अगर ((exp = nf_ct_expect_alloc(ct)) == शून्य)
+		वापस -1;
 	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  &ct->tuplehash[!dir].tuple.src.u3, &addr,
-			  IPPROTO_UDP, NULL, &port);
+			  IPPROTO_UDP, शून्य, &port);
 	exp->helper = nf_conntrack_helper_ras;
 
-	if (nf_ct_expect_related(exp, 0) == 0) {
+	अगर (nf_ct_expect_related(exp, 0) == 0) अणु
 		pr_debug("nf_ct_ras: expect RAS ");
 		nf_ct_dump_tuple(&exp->tuple);
-	} else
+	पूर्ण अन्यथा
 		ret = -1;
 
 	nf_ct_expect_put(exp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int process_rrq(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, RegistrationRequest *rrq)
-{
-	struct nf_ct_h323_master *info = nfct_help_data(ct);
-	int ret;
+अटल पूर्णांक process_rrq(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, RegistrationRequest *rrq)
+अणु
+	काष्ठा nf_ct_h323_master *info = nfct_help_data(ct);
+	पूर्णांक ret;
 	typeof(set_ras_addr_hook) set_ras_addr;
 
 	pr_debug("nf_ct_ras: RRQ\n");
@@ -1375,344 +1376,344 @@ static int process_rrq(struct sk_buff *skb, struct nf_conn *ct,
 	ret = expect_q931(skb, ct, ctinfo, protoff, data,
 			  rrq->callSignalAddress.item,
 			  rrq->callSignalAddress.count);
-	if (ret < 0)
-		return -1;
+	अगर (ret < 0)
+		वापस -1;
 
 	set_ras_addr = rcu_dereference(set_ras_addr_hook);
-	if (set_ras_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {
+	अगर (set_ras_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
+	    ct->status & IPS_NAT_MASK) अणु
 		ret = set_ras_addr(skb, ct, ctinfo, protoff, data,
 				   rrq->rasAddress.item,
 				   rrq->rasAddress.count);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if (rrq->options & eRegistrationRequest_timeToLive) {
-		pr_debug("nf_ct_ras: RRQ TTL = %u seconds\n", rrq->timeToLive);
-		info->timeout = rrq->timeToLive;
-	} else
-		info->timeout = default_rrq_ttl;
+	अगर (rrq->options & eRegistrationRequest_समयToLive) अणु
+		pr_debug("nf_ct_ras: RRQ TTL = %u seconds\n", rrq->समयToLive);
+		info->समयout = rrq->समयToLive;
+	पूर्ण अन्यथा
+		info->समयout = शेष_rrq_ttl;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_rcf(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, RegistrationConfirm *rcf)
-{
-	struct nf_ct_h323_master *info = nfct_help_data(ct);
-	int dir = CTINFO2DIR(ctinfo);
-	int ret;
-	struct nf_conntrack_expect *exp;
+अटल पूर्णांक process_rcf(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, RegistrationConfirm *rcf)
+अणु
+	काष्ठा nf_ct_h323_master *info = nfct_help_data(ct);
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret;
+	काष्ठा nf_conntrack_expect *exp;
 	typeof(set_sig_addr_hook) set_sig_addr;
 
 	pr_debug("nf_ct_ras: RCF\n");
 
 	set_sig_addr = rcu_dereference(set_sig_addr_hook);
-	if (set_sig_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {
+	अगर (set_sig_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
+	    ct->status & IPS_NAT_MASK) अणु
 		ret = set_sig_addr(skb, ct, ctinfo, protoff, data,
 					rcf->callSignalAddress.item,
 					rcf->callSignalAddress.count);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	if (rcf->options & eRegistrationConfirm_timeToLive) {
-		pr_debug("nf_ct_ras: RCF TTL = %u seconds\n", rcf->timeToLive);
-		info->timeout = rcf->timeToLive;
-	}
+	अगर (rcf->options & eRegistrationConfirm_समयToLive) अणु
+		pr_debug("nf_ct_ras: RCF TTL = %u seconds\n", rcf->समयToLive);
+		info->समयout = rcf->समयToLive;
+	पूर्ण
 
-	if (info->timeout > 0) {
+	अगर (info->समयout > 0) अणु
 		pr_debug("nf_ct_ras: set RAS connection timeout to "
-			 "%u seconds\n", info->timeout);
-		nf_ct_refresh(ct, skb, info->timeout * HZ);
+			 "%u seconds\n", info->समयout);
+		nf_ct_refresh(ct, skb, info->समयout * HZ);
 
-		/* Set expect timeout */
+		/* Set expect समयout */
 		spin_lock_bh(&nf_conntrack_expect_lock);
 		exp = find_expect(ct, &ct->tuplehash[dir].tuple.dst.u3,
 				  info->sig_port[!dir]);
-		if (exp) {
+		अगर (exp) अणु
 			pr_debug("nf_ct_ras: set Q.931 expect "
 				 "timeout to %u seconds for",
-				 info->timeout);
+				 info->समयout);
 			nf_ct_dump_tuple(&exp->tuple);
-			mod_timer_pending(&exp->timeout,
-					  jiffies + info->timeout * HZ);
-		}
+			mod_समयr_pending(&exp->समयout,
+					  jअगरfies + info->समयout * HZ);
+		पूर्ण
 		spin_unlock_bh(&nf_conntrack_expect_lock);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_urq(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, UnregistrationRequest *urq)
-{
-	struct nf_ct_h323_master *info = nfct_help_data(ct);
-	int dir = CTINFO2DIR(ctinfo);
-	int ret;
+अटल पूर्णांक process_urq(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, UnregistrationRequest *urq)
+अणु
+	काष्ठा nf_ct_h323_master *info = nfct_help_data(ct);
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret;
 	typeof(set_sig_addr_hook) set_sig_addr;
 
 	pr_debug("nf_ct_ras: URQ\n");
 
 	set_sig_addr = rcu_dereference(set_sig_addr_hook);
-	if (set_sig_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {
+	अगर (set_sig_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
+	    ct->status & IPS_NAT_MASK) अणु
 		ret = set_sig_addr(skb, ct, ctinfo, protoff, data,
 				   urq->callSignalAddress.item,
 				   urq->callSignalAddress.count);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
 	/* Clear old expect */
-	nf_ct_remove_expectations(ct);
+	nf_ct_हटाओ_expectations(ct);
 	info->sig_port[dir] = 0;
 	info->sig_port[!dir] = 0;
 
-	/* Give it 30 seconds for UCF or URJ */
+	/* Give it 30 seconds क्रम UCF or URJ */
 	nf_ct_refresh(ct, skb, 30 * HZ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_arq(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, AdmissionRequest *arq)
-{
-	const struct nf_ct_h323_master *info = nfct_help_data(ct);
-	int dir = CTINFO2DIR(ctinfo);
+अटल पूर्णांक process_arq(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, AdmissionRequest *arq)
+अणु
+	स्थिर काष्ठा nf_ct_h323_master *info = nfct_help_data(ct);
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
 	__be16 port;
-	union nf_inet_addr addr;
+	जोड़ nf_inet_addr addr;
 	typeof(set_h225_addr_hook) set_h225_addr;
 
 	pr_debug("nf_ct_ras: ARQ\n");
 
 	set_h225_addr = rcu_dereference(set_h225_addr_hook);
-	if ((arq->options & eAdmissionRequest_destCallSignalAddress) &&
+	अगर ((arq->options & eAdmissionRequest_destCallSignalAddress) &&
 	    get_h225_addr(ct, *data, &arq->destCallSignalAddress,
 			  &addr, &port) &&
-	    !memcmp(&addr, &ct->tuplehash[dir].tuple.src.u3, sizeof(addr)) &&
+	    !स_भेद(&addr, &ct->tuplehash[dir].tuple.src.u3, माप(addr)) &&
 	    port == info->sig_port[dir] &&
 	    nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    set_h225_addr && ct->status & IPS_NAT_MASK) {
+	    set_h225_addr && ct->status & IPS_NAT_MASK) अणु
 		/* Answering ARQ */
-		return set_h225_addr(skb, protoff, data, 0,
+		वापस set_h225_addr(skb, protoff, data, 0,
 				     &arq->destCallSignalAddress,
 				     &ct->tuplehash[!dir].tuple.dst.u3,
 				     info->sig_port[!dir]);
-	}
+	पूर्ण
 
-	if ((arq->options & eAdmissionRequest_srcCallSignalAddress) &&
+	अगर ((arq->options & eAdmissionRequest_srcCallSignalAddress) &&
 	    get_h225_addr(ct, *data, &arq->srcCallSignalAddress,
 			  &addr, &port) &&
-	    !memcmp(&addr, &ct->tuplehash[dir].tuple.src.u3, sizeof(addr)) &&
+	    !स_भेद(&addr, &ct->tuplehash[dir].tuple.src.u3, माप(addr)) &&
 	    set_h225_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {
+	    ct->status & IPS_NAT_MASK) अणु
 		/* Calling ARQ */
-		return set_h225_addr(skb, protoff, data, 0,
+		वापस set_h225_addr(skb, protoff, data, 0,
 				     &arq->srcCallSignalAddress,
 				     &ct->tuplehash[!dir].tuple.dst.u3,
 				     port);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_acf(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, AdmissionConfirm *acf)
-{
-	int dir = CTINFO2DIR(ctinfo);
-	int ret = 0;
+अटल पूर्णांक process_acf(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, AdmissionConfirm *acf)
+अणु
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret = 0;
 	__be16 port;
-	union nf_inet_addr addr;
-	struct nf_conntrack_expect *exp;
+	जोड़ nf_inet_addr addr;
+	काष्ठा nf_conntrack_expect *exp;
 	typeof(set_sig_addr_hook) set_sig_addr;
 
 	pr_debug("nf_ct_ras: ACF\n");
 
-	if (!get_h225_addr(ct, *data, &acf->destCallSignalAddress,
+	अगर (!get_h225_addr(ct, *data, &acf->destCallSignalAddress,
 			   &addr, &port))
-		return 0;
+		वापस 0;
 
-	if (!memcmp(&addr, &ct->tuplehash[dir].tuple.dst.u3, sizeof(addr))) {
+	अगर (!स_भेद(&addr, &ct->tuplehash[dir].tuple.dst.u3, माप(addr))) अणु
 		/* Answering ACF */
 		set_sig_addr = rcu_dereference(set_sig_addr_hook);
-		if (set_sig_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
+		अगर (set_sig_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
 		    ct->status & IPS_NAT_MASK)
-			return set_sig_addr(skb, ct, ctinfo, protoff, data,
+			वापस set_sig_addr(skb, ct, ctinfo, protoff, data,
 					    &acf->destCallSignalAddress, 1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Need new expect */
-	if ((exp = nf_ct_expect_alloc(ct)) == NULL)
-		return -1;
+	अगर ((exp = nf_ct_expect_alloc(ct)) == शून्य)
+		वापस -1;
 	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  &ct->tuplehash[!dir].tuple.src.u3, &addr,
-			  IPPROTO_TCP, NULL, &port);
+			  IPPROTO_TCP, शून्य, &port);
 	exp->flags = NF_CT_EXPECT_PERMANENT;
 	exp->helper = nf_conntrack_helper_q931;
 
-	if (nf_ct_expect_related(exp, 0) == 0) {
+	अगर (nf_ct_expect_related(exp, 0) == 0) अणु
 		pr_debug("nf_ct_ras: expect Q.931 ");
 		nf_ct_dump_tuple(&exp->tuple);
-	} else
+	पूर्ण अन्यथा
 		ret = -1;
 
 	nf_ct_expect_put(exp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int process_lrq(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, LocationRequest *lrq)
-{
+अटल पूर्णांक process_lrq(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, LocationRequest *lrq)
+अणु
 	typeof(set_ras_addr_hook) set_ras_addr;
 
 	pr_debug("nf_ct_ras: LRQ\n");
 
 	set_ras_addr = rcu_dereference(set_ras_addr_hook);
-	if (set_ras_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
+	अगर (set_ras_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
 	    ct->status & IPS_NAT_MASK)
-		return set_ras_addr(skb, ct, ctinfo, protoff, data,
+		वापस set_ras_addr(skb, ct, ctinfo, protoff, data,
 				    &lrq->replyAddress, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_lcf(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, LocationConfirm *lcf)
-{
-	int dir = CTINFO2DIR(ctinfo);
-	int ret = 0;
+अटल पूर्णांक process_lcf(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, LocationConfirm *lcf)
+अणु
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	पूर्णांक ret = 0;
 	__be16 port;
-	union nf_inet_addr addr;
-	struct nf_conntrack_expect *exp;
+	जोड़ nf_inet_addr addr;
+	काष्ठा nf_conntrack_expect *exp;
 
 	pr_debug("nf_ct_ras: LCF\n");
 
-	if (!get_h225_addr(ct, *data, &lcf->callSignalAddress,
+	अगर (!get_h225_addr(ct, *data, &lcf->callSignalAddress,
 			   &addr, &port))
-		return 0;
+		वापस 0;
 
-	/* Need new expect for call signal */
-	if ((exp = nf_ct_expect_alloc(ct)) == NULL)
-		return -1;
+	/* Need new expect क्रम call संकेत */
+	अगर ((exp = nf_ct_expect_alloc(ct)) == शून्य)
+		वापस -1;
 	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  &ct->tuplehash[!dir].tuple.src.u3, &addr,
-			  IPPROTO_TCP, NULL, &port);
+			  IPPROTO_TCP, शून्य, &port);
 	exp->flags = NF_CT_EXPECT_PERMANENT;
 	exp->helper = nf_conntrack_helper_q931;
 
-	if (nf_ct_expect_related(exp, 0) == 0) {
+	अगर (nf_ct_expect_related(exp, 0) == 0) अणु
 		pr_debug("nf_ct_ras: expect Q.931 ");
 		nf_ct_dump_tuple(&exp->tuple);
-	} else
+	पूर्ण अन्यथा
 		ret = -1;
 
 	nf_ct_expect_put(exp);
 
 	/* Ignore rasAddress */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int process_irr(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, InfoRequestResponse *irr)
-{
-	int ret;
+अटल पूर्णांक process_irr(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, InfoRequestResponse *irr)
+अणु
+	पूर्णांक ret;
 	typeof(set_ras_addr_hook) set_ras_addr;
 	typeof(set_sig_addr_hook) set_sig_addr;
 
 	pr_debug("nf_ct_ras: IRR\n");
 
 	set_ras_addr = rcu_dereference(set_ras_addr_hook);
-	if (set_ras_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {
+	अगर (set_ras_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
+	    ct->status & IPS_NAT_MASK) अणु
 		ret = set_ras_addr(skb, ct, ctinfo, protoff, data,
 				   &irr->rasAddress, 1);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
 	set_sig_addr = rcu_dereference(set_sig_addr_hook);
-	if (set_sig_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
-	    ct->status & IPS_NAT_MASK) {
+	अगर (set_sig_addr && nf_ct_l3num(ct) == NFPROTO_IPV4 &&
+	    ct->status & IPS_NAT_MASK) अणु
 		ret = set_sig_addr(skb, ct, ctinfo, protoff, data,
 					irr->callSignalAddress.item,
 					irr->callSignalAddress.count);
-		if (ret < 0)
-			return -1;
-	}
+		अगर (ret < 0)
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_ras(struct sk_buff *skb, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       unsigned int protoff,
-		       unsigned char **data, RasMessage *ras)
-{
-	switch (ras->choice) {
-	case eRasMessage_gatekeeperRequest:
-		return process_grq(skb, ct, ctinfo, protoff, data,
+अटल पूर्णांक process_ras(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       अचिन्हित पूर्णांक protoff,
+		       अचिन्हित अक्षर **data, RasMessage *ras)
+अणु
+	चयन (ras->choice) अणु
+	हाल eRasMessage_gatekeeperRequest:
+		वापस process_grq(skb, ct, ctinfo, protoff, data,
 				   &ras->gatekeeperRequest);
-	case eRasMessage_gatekeeperConfirm:
-		return process_gcf(skb, ct, ctinfo, protoff, data,
+	हाल eRasMessage_gatekeeperConfirm:
+		वापस process_gcf(skb, ct, ctinfo, protoff, data,
 				   &ras->gatekeeperConfirm);
-	case eRasMessage_registrationRequest:
-		return process_rrq(skb, ct, ctinfo, protoff, data,
+	हाल eRasMessage_registrationRequest:
+		वापस process_rrq(skb, ct, ctinfo, protoff, data,
 				   &ras->registrationRequest);
-	case eRasMessage_registrationConfirm:
-		return process_rcf(skb, ct, ctinfo, protoff, data,
+	हाल eRasMessage_registrationConfirm:
+		वापस process_rcf(skb, ct, ctinfo, protoff, data,
 				   &ras->registrationConfirm);
-	case eRasMessage_unregistrationRequest:
-		return process_urq(skb, ct, ctinfo, protoff, data,
+	हाल eRasMessage_unregistrationRequest:
+		वापस process_urq(skb, ct, ctinfo, protoff, data,
 				   &ras->unregistrationRequest);
-	case eRasMessage_admissionRequest:
-		return process_arq(skb, ct, ctinfo, protoff, data,
+	हाल eRasMessage_admissionRequest:
+		वापस process_arq(skb, ct, ctinfo, protoff, data,
 				   &ras->admissionRequest);
-	case eRasMessage_admissionConfirm:
-		return process_acf(skb, ct, ctinfo, protoff, data,
+	हाल eRasMessage_admissionConfirm:
+		वापस process_acf(skb, ct, ctinfo, protoff, data,
 				   &ras->admissionConfirm);
-	case eRasMessage_locationRequest:
-		return process_lrq(skb, ct, ctinfo, protoff, data,
+	हाल eRasMessage_locationRequest:
+		वापस process_lrq(skb, ct, ctinfo, protoff, data,
 				   &ras->locationRequest);
-	case eRasMessage_locationConfirm:
-		return process_lcf(skb, ct, ctinfo, protoff, data,
+	हाल eRasMessage_locationConfirm:
+		वापस process_lcf(skb, ct, ctinfo, protoff, data,
 				   &ras->locationConfirm);
-	case eRasMessage_infoRequestResponse:
-		return process_irr(skb, ct, ctinfo, protoff, data,
+	हाल eRasMessage_infoRequestResponse:
+		वापस process_irr(skb, ct, ctinfo, protoff, data,
 				   &ras->infoRequestResponse);
-	default:
+	शेष:
 		pr_debug("nf_ct_ras: RAS message %d\n", ras->choice);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ras_help(struct sk_buff *skb, unsigned int protoff,
-		    struct nf_conn *ct, enum ip_conntrack_info ctinfo)
-{
-	static RasMessage ras;
-	unsigned char *data;
-	int datalen = 0;
-	int ret;
+अटल पूर्णांक ras_help(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+		    काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo)
+अणु
+	अटल RasMessage ras;
+	अचिन्हित अक्षर *data;
+	पूर्णांक datalen = 0;
+	पूर्णांक ret;
 
 	pr_debug("nf_ct_ras: skblen = %u\n", skb->len);
 
@@ -1720,41 +1721,41 @@ static int ras_help(struct sk_buff *skb, unsigned int protoff,
 
 	/* Get UDP data */
 	data = get_udp_data(skb, protoff, &datalen);
-	if (data == NULL)
-		goto accept;
+	अगर (data == शून्य)
+		जाओ accept;
 	pr_debug("nf_ct_ras: RAS message len=%d ", datalen);
-	nf_ct_dump_tuple(&ct->tuplehash[CTINFO2DIR(ctinfo)].tuple);
+	nf_ct_dump_tuple(&ct->tuplehash[CTINFO2सूची(ctinfo)].tuple);
 
 	/* Decode RAS message */
 	ret = DecodeRasMessage(data, datalen, &ras);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_debug("nf_ct_ras: decoding error: %s\n",
 			 ret == H323_ERROR_BOUND ?
 			 "out of bound" : "out of range");
-		goto accept;
-	}
+		जाओ accept;
+	पूर्ण
 
 	/* Process RAS message */
-	if (process_ras(skb, ct, ctinfo, protoff, &data, &ras) < 0)
-		goto drop;
+	अगर (process_ras(skb, ct, ctinfo, protoff, &data, &ras) < 0)
+		जाओ drop;
 
       accept:
 	spin_unlock_bh(&nf_h323_lock);
-	return NF_ACCEPT;
+	वापस NF_ACCEPT;
 
       drop:
 	spin_unlock_bh(&nf_h323_lock);
 	nf_ct_helper_log(skb, ct, "cannot process RAS message");
-	return NF_DROP;
-}
+	वापस NF_DROP;
+पूर्ण
 
-static const struct nf_conntrack_expect_policy ras_exp_policy = {
+अटल स्थिर काष्ठा nf_conntrack_expect_policy ras_exp_policy = अणु
 	.max_expected		= 32,
-	.timeout		= 240,
-};
+	.समयout		= 240,
+पूर्ण;
 
-static struct nf_conntrack_helper nf_conntrack_helper_ras[] __read_mostly = {
-	{
+अटल काष्ठा nf_conntrack_helper nf_conntrack_helper_ras[] __पढ़ो_mostly = अणु
+	अणु
 		.name			= "RAS",
 		.me			= THIS_MODULE,
 		.tuple.src.l3num	= AF_INET,
@@ -1762,8 +1763,8 @@ static struct nf_conntrack_helper nf_conntrack_helper_ras[] __read_mostly = {
 		.tuple.dst.protonum	= IPPROTO_UDP,
 		.help			= ras_help,
 		.expect_policy		= &ras_exp_policy,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "RAS",
 		.me			= THIS_MODULE,
 		.tuple.src.l3num	= AF_INET6,
@@ -1771,71 +1772,71 @@ static struct nf_conntrack_helper nf_conntrack_helper_ras[] __read_mostly = {
 		.tuple.dst.protonum	= IPPROTO_UDP,
 		.help			= ras_help,
 		.expect_policy		= &ras_exp_policy,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init h323_helper_init(void)
-{
-	int ret;
+अटल पूर्णांक __init h323_helper_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = nf_conntrack_helper_register(&nf_conntrack_helper_h245);
-	if (ret < 0)
-		return ret;
-	ret = nf_conntrack_helpers_register(nf_conntrack_helper_q931,
+	ret = nf_conntrack_helper_रेजिस्टर(&nf_conntrack_helper_h245);
+	अगर (ret < 0)
+		वापस ret;
+	ret = nf_conntrack_helpers_रेजिस्टर(nf_conntrack_helper_q931,
 					ARRAY_SIZE(nf_conntrack_helper_q931));
-	if (ret < 0)
-		goto err1;
-	ret = nf_conntrack_helpers_register(nf_conntrack_helper_ras,
+	अगर (ret < 0)
+		जाओ err1;
+	ret = nf_conntrack_helpers_रेजिस्टर(nf_conntrack_helper_ras,
 					ARRAY_SIZE(nf_conntrack_helper_ras));
-	if (ret < 0)
-		goto err2;
+	अगर (ret < 0)
+		जाओ err2;
 
-	return 0;
+	वापस 0;
 err2:
-	nf_conntrack_helpers_unregister(nf_conntrack_helper_q931,
+	nf_conntrack_helpers_unरेजिस्टर(nf_conntrack_helper_q931,
 					ARRAY_SIZE(nf_conntrack_helper_q931));
 err1:
-	nf_conntrack_helper_unregister(&nf_conntrack_helper_h245);
-	return ret;
-}
+	nf_conntrack_helper_unरेजिस्टर(&nf_conntrack_helper_h245);
+	वापस ret;
+पूर्ण
 
-static void __exit h323_helper_exit(void)
-{
-	nf_conntrack_helpers_unregister(nf_conntrack_helper_ras,
+अटल व्योम __निकास h323_helper_निकास(व्योम)
+अणु
+	nf_conntrack_helpers_unरेजिस्टर(nf_conntrack_helper_ras,
 					ARRAY_SIZE(nf_conntrack_helper_ras));
-	nf_conntrack_helpers_unregister(nf_conntrack_helper_q931,
+	nf_conntrack_helpers_unरेजिस्टर(nf_conntrack_helper_q931,
 					ARRAY_SIZE(nf_conntrack_helper_q931));
-	nf_conntrack_helper_unregister(&nf_conntrack_helper_h245);
-}
+	nf_conntrack_helper_unरेजिस्टर(&nf_conntrack_helper_h245);
+पूर्ण
 
-static void __exit nf_conntrack_h323_fini(void)
-{
-	h323_helper_exit();
-	kfree(h323_buffer);
+अटल व्योम __निकास nf_conntrack_h323_fini(व्योम)
+अणु
+	h323_helper_निकास();
+	kमुक्त(h323_buffer);
 	pr_debug("nf_ct_h323: fini\n");
-}
+पूर्ण
 
-static int __init nf_conntrack_h323_init(void)
-{
-	int ret;
+अटल पूर्णांक __init nf_conntrack_h323_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	NF_CT_HELPER_BUILD_BUG_ON(sizeof(struct nf_ct_h323_master));
+	NF_CT_HELPER_BUILD_BUG_ON(माप(काष्ठा nf_ct_h323_master));
 
-	h323_buffer = kmalloc(65536, GFP_KERNEL);
-	if (!h323_buffer)
-		return -ENOMEM;
+	h323_buffer = kदो_स्मृति(65536, GFP_KERNEL);
+	अगर (!h323_buffer)
+		वापस -ENOMEM;
 	ret = h323_helper_init();
-	if (ret < 0)
-		goto err1;
+	अगर (ret < 0)
+		जाओ err1;
 	pr_debug("nf_ct_h323: init success\n");
-	return 0;
+	वापस 0;
 err1:
-	kfree(h323_buffer);
-	return ret;
-}
+	kमुक्त(h323_buffer);
+	वापस ret;
+पूर्ण
 
 module_init(nf_conntrack_h323_init);
-module_exit(nf_conntrack_h323_fini);
+module_निकास(nf_conntrack_h323_fini);
 
 EXPORT_SYMBOL_GPL(get_h225_addr);
 EXPORT_SYMBOL_GPL(set_h245_addr_hook);
@@ -1845,7 +1846,7 @@ EXPORT_SYMBOL_GPL(set_ras_addr_hook);
 EXPORT_SYMBOL_GPL(nat_rtp_rtcp_hook);
 EXPORT_SYMBOL_GPL(nat_t120_hook);
 EXPORT_SYMBOL_GPL(nat_h245_hook);
-EXPORT_SYMBOL_GPL(nat_callforwarding_hook);
+EXPORT_SYMBOL_GPL(nat_callक्रमwarding_hook);
 EXPORT_SYMBOL_GPL(nat_q931_hook);
 
 MODULE_AUTHOR("Jing Min Zhao <zhaojingmin@users.sourceforge.net>");

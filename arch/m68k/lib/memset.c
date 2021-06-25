@@ -1,43 +1,44 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/string.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
 
-void *memset(void *s, int c, size_t count)
-{
-	void *xs = s;
-	size_t temp;
+व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार count)
+अणु
+	व्योम *xs = s;
+	माप_प्रकार temp;
 
-	if (!count)
-		return xs;
+	अगर (!count)
+		वापस xs;
 	c &= 0xff;
 	c |= c << 8;
 	c |= c << 16;
-	if ((long)s & 1) {
-		char *cs = s;
+	अगर ((दीर्घ)s & 1) अणु
+		अक्षर *cs = s;
 		*cs++ = c;
 		s = cs;
 		count--;
-	}
-	if (count > 2 && (long)s & 2) {
-		short *ss = s;
+	पूर्ण
+	अगर (count > 2 && (दीर्घ)s & 2) अणु
+		लघु *ss = s;
 		*ss++ = c;
 		s = ss;
 		count -= 2;
-	}
+	पूर्ण
 	temp = count >> 2;
-	if (temp) {
-		long *ls = s;
-#if defined(CONFIG_M68000) || defined(CONFIG_COLDFIRE)
-		for (; temp; temp--)
+	अगर (temp) अणु
+		दीर्घ *ls = s;
+#अगर defined(CONFIG_M68000) || defined(CONFIG_COLDFIRE)
+		क्रम (; temp; temp--)
 			*ls++ = c;
-#else
-		size_t temp1;
-		asm volatile (
+#अन्यथा
+		माप_प्रकार temp1;
+		यंत्र अस्थिर (
 			"	movel %1,%2\n"
 			"	andw  #7,%2\n"
 			"	lsrl  #3,%1\n"
@@ -57,18 +58,18 @@ void *memset(void *s, int c, size_t count)
 			"	jpl   1b"
 			: "=a" (ls), "=d" (temp), "=&d" (temp1)
 			: "d" (c), "0" (ls), "1" (temp));
-#endif
+#पूर्ण_अगर
 		s = ls;
-	}
-	if (count & 2) {
-		short *ss = s;
+	पूर्ण
+	अगर (count & 2) अणु
+		लघु *ss = s;
 		*ss++ = c;
 		s = ss;
-	}
-	if (count & 1) {
-		char *cs = s;
+	पूर्ण
+	अगर (count & 1) अणु
+		अक्षर *cs = s;
 		*cs = c;
-	}
-	return xs;
-}
-EXPORT_SYMBOL(memset);
+	पूर्ण
+	वापस xs;
+पूर्ण
+EXPORT_SYMBOL(स_रखो);

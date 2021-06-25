@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef DMA_RESV_UTILS_H
-#define DMA_RESV_UTILS_H
+#अगर_अघोषित DMA_RESV_UTILS_H
+#घोषणा DMA_RESV_UTILS_H
 
-struct dma_resv;
+काष्ठा dma_resv;
 
-void dma_resv_prune(struct dma_resv *resv);
+व्योम dma_resv_prune(काष्ठा dma_resv *resv);
 
-#endif /* DMA_RESV_UTILS_H */
+#पूर्ण_अगर /* DMA_RESV_UTILS_H */

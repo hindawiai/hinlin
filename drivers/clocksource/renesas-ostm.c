@@ -1,211 +1,212 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Renesas Timer Support - OSTM
  *
  * Copyright (C) 2017 Renesas Electronics America, Inc.
- * Copyright (C) 2017 Chris Brandt
+ * Copyright (C) 2017 Chris Bअक्रमt
  */
 
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/sched_clock.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/slab.h>
 
-#include "timer-of.h"
+#समावेश "timer-of.h"
 
 /*
  * The OSTM contains independent channels.
- * The first OSTM channel probed will be set up as a free running
- * clocksource. Additionally we will use this clocksource for the system
- * schedule timer sched_clock().
+ * The first OSTM channel probed will be set up as a मुक्त running
+ * घड़ीsource. Additionally we will use this घड़ीsource क्रम the प्रणाली
+ * schedule समयr sched_घड़ी().
  *
- * The second (or more) channel probed will be set up as an interrupt
- * driven clock event.
+ * The second (or more) channel probed will be set up as an पूर्णांकerrupt
+ * driven घड़ी event.
  */
 
-static void __iomem *system_clock;	/* For sched_clock() */
+अटल व्योम __iomem *प्रणाली_घड़ी;	/* For sched_घड़ी() */
 
 /* OSTM REGISTERS */
-#define	OSTM_CMP		0x000	/* RW,32 */
-#define	OSTM_CNT		0x004	/* R,32 */
-#define	OSTM_TE			0x010	/* R,8 */
-#define	OSTM_TS			0x014	/* W,8 */
-#define	OSTM_TT			0x018	/* W,8 */
-#define	OSTM_CTL		0x020	/* RW,8 */
+#घोषणा	OSTM_CMP		0x000	/* RW,32 */
+#घोषणा	OSTM_CNT		0x004	/* R,32 */
+#घोषणा	OSTM_TE			0x010	/* R,8 */
+#घोषणा	OSTM_TS			0x014	/* W,8 */
+#घोषणा	OSTM_TT			0x018	/* W,8 */
+#घोषणा	OSTM_CTL		0x020	/* RW,8 */
 
-#define	TE			0x01
-#define	TS			0x01
-#define	TT			0x01
-#define	CTL_PERIODIC		0x00
-#define	CTL_ONESHOT		0x02
-#define	CTL_FREERUN		0x02
+#घोषणा	TE			0x01
+#घोषणा	TS			0x01
+#घोषणा	TT			0x01
+#घोषणा	CTL_PERIODIC		0x00
+#घोषणा	CTL_ONESHOT		0x02
+#घोषणा	CTL_FREERUN		0x02
 
-static void ostm_timer_stop(struct timer_of *to)
-{
-	if (readb(timer_of_base(to) + OSTM_TE) & TE) {
-		writeb(TT, timer_of_base(to) + OSTM_TT);
+अटल व्योम osपंचांग_समयr_stop(काष्ठा समयr_of *to)
+अणु
+	अगर (पढ़ोb(समयr_of_base(to) + OSTM_TE) & TE) अणु
+		ग_लिखोb(TT, समयr_of_base(to) + OSTM_TT);
 
 		/*
-		 * Read back the register simply to confirm the write operation
-		 * has completed since I/O writes can sometimes get queued by
+		 * Read back the रेजिस्टर simply to confirm the ग_लिखो operation
+		 * has completed since I/O ग_लिखोs can someबार get queued by
 		 * the bus architecture.
 		 */
-		while (readb(timer_of_base(to) + OSTM_TE) & TE)
+		जबतक (पढ़ोb(समयr_of_base(to) + OSTM_TE) & TE)
 			;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init ostm_init_clksrc(struct timer_of *to)
-{
-	ostm_timer_stop(to);
+अटल पूर्णांक __init osपंचांग_init_clksrc(काष्ठा समयr_of *to)
+अणु
+	osपंचांग_समयr_stop(to);
 
-	writel(0, timer_of_base(to) + OSTM_CMP);
-	writeb(CTL_FREERUN, timer_of_base(to) + OSTM_CTL);
-	writeb(TS, timer_of_base(to) + OSTM_TS);
+	ग_लिखोl(0, समयr_of_base(to) + OSTM_CMP);
+	ग_लिखोb(CTL_FREERUN, समयr_of_base(to) + OSTM_CTL);
+	ग_लिखोb(TS, समयr_of_base(to) + OSTM_TS);
 
-	return clocksource_mmio_init(timer_of_base(to) + OSTM_CNT,
-				     to->np->full_name, timer_of_rate(to), 300,
-				     32, clocksource_mmio_readl_up);
-}
+	वापस घड़ीsource_mmio_init(समयr_of_base(to) + OSTM_CNT,
+				     to->np->full_name, समयr_of_rate(to), 300,
+				     32, घड़ीsource_mmio_पढ़ोl_up);
+पूर्ण
 
-static u64 notrace ostm_read_sched_clock(void)
-{
-	return readl(system_clock);
-}
+अटल u64 notrace osपंचांग_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	वापस पढ़ोl(प्रणाली_घड़ी);
+पूर्ण
 
-static void __init ostm_init_sched_clock(struct timer_of *to)
-{
-	system_clock = timer_of_base(to) + OSTM_CNT;
-	sched_clock_register(ostm_read_sched_clock, 32, timer_of_rate(to));
-}
+अटल व्योम __init osपंचांग_init_sched_घड़ी(काष्ठा समयr_of *to)
+अणु
+	प्रणाली_घड़ी = समयr_of_base(to) + OSTM_CNT;
+	sched_घड़ी_रेजिस्टर(osपंचांग_पढ़ो_sched_घड़ी, 32, समयr_of_rate(to));
+पूर्ण
 
-static int ostm_clock_event_next(unsigned long delta,
-				 struct clock_event_device *ced)
-{
-	struct timer_of *to = to_timer_of(ced);
+अटल पूर्णांक osपंचांग_घड़ी_event_next(अचिन्हित दीर्घ delta,
+				 काष्ठा घड़ी_event_device *ced)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(ced);
 
-	ostm_timer_stop(to);
+	osपंचांग_समयr_stop(to);
 
-	writel(delta, timer_of_base(to) + OSTM_CMP);
-	writeb(CTL_ONESHOT, timer_of_base(to) + OSTM_CTL);
-	writeb(TS, timer_of_base(to) + OSTM_TS);
+	ग_लिखोl(delta, समयr_of_base(to) + OSTM_CMP);
+	ग_लिखोb(CTL_ONESHOT, समयr_of_base(to) + OSTM_CTL);
+	ग_लिखोb(TS, समयr_of_base(to) + OSTM_TS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ostm_shutdown(struct clock_event_device *ced)
-{
-	struct timer_of *to = to_timer_of(ced);
+अटल पूर्णांक osपंचांग_shutकरोwn(काष्ठा घड़ी_event_device *ced)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(ced);
 
-	ostm_timer_stop(to);
+	osपंचांग_समयr_stop(to);
 
-	return 0;
-}
-static int ostm_set_periodic(struct clock_event_device *ced)
-{
-	struct timer_of *to = to_timer_of(ced);
+	वापस 0;
+पूर्ण
+अटल पूर्णांक osपंचांग_set_periodic(काष्ठा घड़ी_event_device *ced)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(ced);
 
-	if (clockevent_state_oneshot(ced) || clockevent_state_periodic(ced))
-		ostm_timer_stop(to);
+	अगर (घड़ीevent_state_oneshot(ced) || घड़ीevent_state_periodic(ced))
+		osपंचांग_समयr_stop(to);
 
-	writel(timer_of_period(to) - 1, timer_of_base(to) + OSTM_CMP);
-	writeb(CTL_PERIODIC, timer_of_base(to) + OSTM_CTL);
-	writeb(TS, timer_of_base(to) + OSTM_TS);
+	ग_लिखोl(समयr_of_period(to) - 1, समयr_of_base(to) + OSTM_CMP);
+	ग_लिखोb(CTL_PERIODIC, समयr_of_base(to) + OSTM_CTL);
+	ग_लिखोb(TS, समयr_of_base(to) + OSTM_TS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ostm_set_oneshot(struct clock_event_device *ced)
-{
-	struct timer_of *to = to_timer_of(ced);
+अटल पूर्णांक osपंचांग_set_oneshot(काष्ठा घड़ी_event_device *ced)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(ced);
 
-	ostm_timer_stop(to);
+	osपंचांग_समयr_stop(to);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t ostm_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *ced = dev_id;
+अटल irqवापस_t osपंचांग_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *ced = dev_id;
 
-	if (clockevent_state_oneshot(ced))
-		ostm_timer_stop(to_timer_of(ced));
+	अगर (घड़ीevent_state_oneshot(ced))
+		osपंचांग_समयr_stop(to_समयr_of(ced));
 
-	/* notify clockevent layer */
-	if (ced->event_handler)
+	/* notअगरy घड़ीevent layer */
+	अगर (ced->event_handler)
 		ced->event_handler(ced);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init ostm_init_clkevt(struct timer_of *to)
-{
-	struct clock_event_device *ced = &to->clkevt;
+अटल पूर्णांक __init osपंचांग_init_clkevt(काष्ठा समयr_of *to)
+अणु
+	काष्ठा घड़ी_event_device *ced = &to->clkevt;
 
 	ced->features = CLOCK_EVT_FEAT_ONESHOT | CLOCK_EVT_FEAT_PERIODIC;
-	ced->set_state_shutdown = ostm_shutdown;
-	ced->set_state_periodic = ostm_set_periodic;
-	ced->set_state_oneshot = ostm_set_oneshot;
-	ced->set_next_event = ostm_clock_event_next;
-	ced->shift = 32;
+	ced->set_state_shutकरोwn = osपंचांग_shutकरोwn;
+	ced->set_state_periodic = osपंचांग_set_periodic;
+	ced->set_state_oneshot = osपंचांग_set_oneshot;
+	ced->set_next_event = osपंचांग_घड़ी_event_next;
+	ced->shअगरt = 32;
 	ced->rating = 300;
 	ced->cpumask = cpumask_of(0);
-	clockevents_config_and_register(ced, timer_of_rate(to), 0xf,
+	घड़ीevents_config_and_रेजिस्टर(ced, समयr_of_rate(to), 0xf,
 					0xffffffff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init ostm_init(struct device_node *np)
-{
-	struct timer_of *to;
-	int ret;
+अटल पूर्णांक __init osपंचांग_init(काष्ठा device_node *np)
+अणु
+	काष्ठा समयr_of *to;
+	पूर्णांक ret;
 
-	to = kzalloc(sizeof(*to), GFP_KERNEL);
-	if (!to)
-		return -ENOMEM;
+	to = kzalloc(माप(*to), GFP_KERNEL);
+	अगर (!to)
+		वापस -ENOMEM;
 
 	to->flags = TIMER_OF_BASE | TIMER_OF_CLOCK;
-	if (system_clock) {
+	अगर (प्रणाली_घड़ी) अणु
 		/*
-		 * clock sources don't use interrupts, clock events do
+		 * घड़ी sources करोn't use पूर्णांकerrupts, घड़ी events करो
 		 */
 		to->flags |= TIMER_OF_IRQ;
 		to->of_irq.flags = IRQF_TIMER | IRQF_IRQPOLL;
-		to->of_irq.handler = ostm_timer_interrupt;
-	}
+		to->of_irq.handler = osपंचांग_समयr_पूर्णांकerrupt;
+	पूर्ण
 
-	ret = timer_of_init(np, to);
-	if (ret)
-		goto err_free;
+	ret = समयr_of_init(np, to);
+	अगर (ret)
+		जाओ err_मुक्त;
 
 	/*
-	 * First probed device will be used as system clocksource. Any
-	 * additional devices will be used as clock events.
+	 * First probed device will be used as प्रणाली घड़ीsource. Any
+	 * additional devices will be used as घड़ी events.
 	 */
-	if (!system_clock) {
-		ret = ostm_init_clksrc(to);
-		if (ret)
-			goto err_cleanup;
+	अगर (!प्रणाली_घड़ी) अणु
+		ret = osपंचांग_init_clksrc(to);
+		अगर (ret)
+			जाओ err_cleanup;
 
-		ostm_init_sched_clock(to);
+		osपंचांग_init_sched_घड़ी(to);
 		pr_info("%pOF: used for clocksource\n", np);
-	} else {
-		ret = ostm_init_clkevt(to);
-		if (ret)
-			goto err_cleanup;
+	पूर्ण अन्यथा अणु
+		ret = osपंचांग_init_clkevt(to);
+		अगर (ret)
+			जाओ err_cleanup;
 
 		pr_info("%pOF: used for clock events\n", np);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_cleanup:
-	timer_of_cleanup(to);
-err_free:
-	kfree(to);
-	return ret;
-}
+	समयr_of_cleanup(to);
+err_मुक्त:
+	kमुक्त(to);
+	वापस ret;
+पूर्ण
 
-TIMER_OF_DECLARE(ostm, "renesas,ostm", ostm_init);
+TIMER_OF_DECLARE(osपंचांग, "renesas,ostm", osपंचांग_init);

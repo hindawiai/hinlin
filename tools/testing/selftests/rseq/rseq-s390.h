@@ -1,169 +1,170 @@
-/* SPDX-License-Identifier: LGPL-2.1 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: LGPL-2.1 OR MIT */
 
 /*
- * RSEQ_SIG uses the trap4 instruction. As Linux does not make use of the
- * access-register mode nor the linkage stack this instruction will always
+ * RSEQ_SIG uses the trap4 inकाष्ठाion. As Linux करोes not make use of the
+ * access-रेजिस्टर mode nor the linkage stack this inकाष्ठाion will always
  * cause a special-operation exception (the trap-enabled bit in the DUCT
- * is and will stay 0). The instruction pattern is
+ * is and will stay 0). The inकाष्ठाion pattern is
  *	b2 ff 0f ff	trap4	4095(%r0)
  */
-#define RSEQ_SIG	0xB2FF0FFF
+#घोषणा RSEQ_SIG	0xB2FF0FFF
 
-#define rseq_smp_mb()	__asm__ __volatile__ ("bcr 15,0" ::: "memory")
-#define rseq_smp_rmb()	rseq_smp_mb()
-#define rseq_smp_wmb()	rseq_smp_mb()
+#घोषणा rseq_smp_mb()	__यंत्र__ __अस्थिर__ ("bcr 15,0" ::: "memory")
+#घोषणा rseq_smp_rmb()	rseq_smp_mb()
+#घोषणा rseq_smp_wmb()	rseq_smp_mb()
 
-#define rseq_smp_load_acquire(p)					\
-__extension__ ({							\
+#घोषणा rseq_smp_load_acquire(p)					\
+__extension__ (अणु							\
 	__typeof(*p) ____p1 = RSEQ_READ_ONCE(*p);			\
 	rseq_barrier();							\
 	____p1;								\
-})
+पूर्ण)
 
-#define rseq_smp_acquire__after_ctrl_dep()	rseq_smp_rmb()
+#घोषणा rseq_smp_acquire__after_ctrl_dep()	rseq_smp_rmb()
 
-#define rseq_smp_store_release(p, v)					\
-do {									\
+#घोषणा rseq_smp_store_release(p, v)					\
+करो अणु									\
 	rseq_barrier();							\
 	RSEQ_WRITE_ONCE(*p, v);						\
-} while (0)
+पूर्ण जबतक (0)
 
-#ifdef RSEQ_SKIP_FASTPATH
-#include "rseq-skip.h"
-#else /* !RSEQ_SKIP_FASTPATH */
+#अगर_घोषित RSEQ_SKIP_FASTPATH
+#समावेश "rseq-skip.h"
+#अन्यथा /* !RSEQ_SKIP_FASTPATH */
 
-#ifdef __s390x__
+#अगर_घोषित __s390x__
 
-#define LONG_L			"lg"
-#define LONG_S			"stg"
-#define LONG_LT_R		"ltgr"
-#define LONG_CMP		"cg"
-#define LONG_CMP_R		"cgr"
-#define LONG_ADDI		"aghi"
-#define LONG_ADD_R		"agr"
+#घोषणा LONG_L			"lg"
+#घोषणा LONG_S			"stg"
+#घोषणा LONG_LT_R		"ltgr"
+#घोषणा LONG_CMP		"cg"
+#घोषणा LONG_CMP_R		"cgr"
+#घोषणा LONG_ADDI		"aghi"
+#घोषणा LONG_ADD_R		"agr"
 
-#define __RSEQ_ASM_DEFINE_TABLE(label, version, flags,			\
-				start_ip, post_commit_offset, abort_ip)	\
+#घोषणा __RSEQ_ASM_DEFINE_TABLE(label, version, flags,			\
+				start_ip, post_commit_offset, पात_ip)	\
 		".pushsection __rseq_cs, \"aw\"\n\t"			\
 		".balign 32\n\t"					\
 		__rseq_str(label) ":\n\t"				\
 		".long " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
-		".quad " __rseq_str(start_ip) ", " __rseq_str(post_commit_offset) ", " __rseq_str(abort_ip) "\n\t" \
+		".quad " __rseq_str(start_ip) ", " __rseq_str(post_commit_offset) ", " __rseq_str(पात_ip) "\n\t" \
 		".popsection\n\t"					\
 		".pushsection __rseq_cs_ptr_array, \"aw\"\n\t"		\
 		".quad " __rseq_str(label) "b\n\t"			\
 		".popsection\n\t"
 
 /*
- * Exit points of a rseq critical section consist of all instructions outside
+ * Exit poपूर्णांकs of a rseq critical section consist of all inकाष्ठाions outside
  * of the critical section where a critical section can either branch to or
- * reach through the normal course of its execution. The abort IP and the
- * post-commit IP are already part of the __rseq_cs section and should not be
- * explicitly defined as additional exit points. Knowing all exit points is
+ * reach through the normal course of its execution. The पात IP and the
+ * post-commit IP are alपढ़ोy part of the __rseq_cs section and should not be
+ * explicitly defined as additional निकास poपूर्णांकs. Knowing all निकास poपूर्णांकs is
  * useful to assist debuggers stepping over the critical section.
  */
-#define RSEQ_ASM_DEFINE_EXIT_POINT(start_ip, exit_ip)			\
+#घोषणा RSEQ_ASM_DEFINE_EXIT_POINT(start_ip, निकास_ip)			\
 		".pushsection __rseq_exit_point_array, \"aw\"\n\t"	\
-		".quad " __rseq_str(start_ip) ", " __rseq_str(exit_ip) "\n\t" \
+		".quad " __rseq_str(start_ip) ", " __rseq_str(निकास_ip) "\n\t" \
 		".popsection\n\t"
 
-#elif __s390__
+#या_अगर __s390__
 
-#define __RSEQ_ASM_DEFINE_TABLE(label, version, flags,			\
-				start_ip, post_commit_offset, abort_ip)	\
+#घोषणा __RSEQ_ASM_DEFINE_TABLE(label, version, flags,			\
+				start_ip, post_commit_offset, पात_ip)	\
 		".pushsection __rseq_cs, \"aw\"\n\t"			\
 		".balign 32\n\t"					\
 		__rseq_str(label) ":\n\t"				\
 		".long " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
-		".long 0x0, " __rseq_str(start_ip) ", 0x0, " __rseq_str(post_commit_offset) ", 0x0, " __rseq_str(abort_ip) "\n\t" \
+		".long 0x0, " __rseq_str(start_ip) ", 0x0, " __rseq_str(post_commit_offset) ", 0x0, " __rseq_str(पात_ip) "\n\t" \
 		".popsection\n\t"					\
 		".pushsection __rseq_cs_ptr_array, \"aw\"\n\t"		\
 		".long 0x0, " __rseq_str(label) "b\n\t"			\
 		".popsection\n\t"
 
 /*
- * Exit points of a rseq critical section consist of all instructions outside
+ * Exit poपूर्णांकs of a rseq critical section consist of all inकाष्ठाions outside
  * of the critical section where a critical section can either branch to or
- * reach through the normal course of its execution. The abort IP and the
- * post-commit IP are already part of the __rseq_cs section and should not be
- * explicitly defined as additional exit points. Knowing all exit points is
+ * reach through the normal course of its execution. The पात IP and the
+ * post-commit IP are alपढ़ोy part of the __rseq_cs section and should not be
+ * explicitly defined as additional निकास poपूर्णांकs. Knowing all निकास poपूर्णांकs is
  * useful to assist debuggers stepping over the critical section.
  */
-#define RSEQ_ASM_DEFINE_EXIT_POINT(start_ip, exit_ip)			\
+#घोषणा RSEQ_ASM_DEFINE_EXIT_POINT(start_ip, निकास_ip)			\
 		".pushsection __rseq_exit_point_array, \"aw\"\n\t"	\
-		".long 0x0, " __rseq_str(start_ip) ", 0x0, " __rseq_str(exit_ip) "\n\t" \
+		".long 0x0, " __rseq_str(start_ip) ", 0x0, " __rseq_str(निकास_ip) "\n\t" \
 		".popsection\n\t"
 
-#define LONG_L			"l"
-#define LONG_S			"st"
-#define LONG_LT_R		"ltr"
-#define LONG_CMP		"c"
-#define LONG_CMP_R		"cr"
-#define LONG_ADDI		"ahi"
-#define LONG_ADD_R		"ar"
+#घोषणा LONG_L			"l"
+#घोषणा LONG_S			"st"
+#घोषणा LONG_LT_R		"ltr"
+#घोषणा LONG_CMP		"c"
+#घोषणा LONG_CMP_R		"cr"
+#घोषणा LONG_ADDI		"ahi"
+#घोषणा LONG_ADD_R		"ar"
 
-#endif
+#पूर्ण_अगर
 
-#define RSEQ_ASM_DEFINE_TABLE(label, start_ip, post_commit_ip, abort_ip) \
+#घोषणा RSEQ_ASM_DEFINE_TABLE(label, start_ip, post_commit_ip, पात_ip) \
 	__RSEQ_ASM_DEFINE_TABLE(label, 0x0, 0x0, start_ip,		\
-				(post_commit_ip - start_ip), abort_ip)
+				(post_commit_ip - start_ip), पात_ip)
 
-#define RSEQ_ASM_STORE_RSEQ_CS(label, cs_label, rseq_cs)		\
+#घोषणा RSEQ_ASM_STORE_RSEQ_CS(label, cs_label, rseq_cs)		\
 		RSEQ_INJECT_ASM(1)					\
 		"larl %%r0, " __rseq_str(cs_label) "\n\t"		\
 		LONG_S " %%r0, %[" __rseq_str(rseq_cs) "]\n\t"		\
 		__rseq_str(label) ":\n\t"
 
-#define RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, label)		\
+#घोषणा RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, label)		\
 		RSEQ_INJECT_ASM(2)					\
 		"c %[" __rseq_str(cpu_id) "], %[" __rseq_str(current_cpu_id) "]\n\t" \
 		"jnz " __rseq_str(label) "\n\t"
 
-#define RSEQ_ASM_DEFINE_ABORT(label, teardown, abort_label)		\
+#घोषणा RSEQ_ASM_DEFINE_ABORT(label, tearकरोwn, पात_label)		\
 		".pushsection __rseq_failure, \"ax\"\n\t"		\
 		".long " __rseq_str(RSEQ_SIG) "\n\t"			\
 		__rseq_str(label) ":\n\t"				\
-		teardown						\
-		"jg %l[" __rseq_str(abort_label) "]\n\t"		\
+		tearकरोwn						\
+		"jg %l[" __rseq_str(पात_label) "]\n\t"		\
 		".popsection\n\t"
 
-#define RSEQ_ASM_DEFINE_CMPFAIL(label, teardown, cmpfail_label)		\
+#घोषणा RSEQ_ASM_DEFINE_CMPFAIL(label, tearकरोwn, cmpfail_label)		\
 		".pushsection __rseq_failure, \"ax\"\n\t"		\
 		__rseq_str(label) ":\n\t"				\
-		teardown						\
+		tearकरोwn						\
 		"jg %l[" __rseq_str(cmpfail_label) "]\n\t"		\
 		".popsection\n\t"
 
-static inline __attribute__((always_inline))
-int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
-{
+अटल अंतरभूत __attribute__((always_अंतरभूत))
+पूर्णांक rseq_cmpeqv_storev(पूर्णांकptr_t *v, पूर्णांकptr_t expect, पूर्णांकptr_t newv, पूर्णांक cpu)
+अणु
 	RSEQ_INJECT_C(9)
 
-	__asm__ __volatile__ goto (
-		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+	__यंत्र__ __अस्थिर__ जाओ (
+		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, पात */
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[cmpfail])
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error1])
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error2])
-#endif
-		/* Start rseq by storing table entry pointer into rseq_cs. */
+#पूर्ण_अगर
+		/* Start rseq by storing table entry poपूर्णांकer पूर्णांकo rseq_cs. */
 		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
 		RSEQ_INJECT_ASM(3)
 		LONG_CMP " %[expect], %[v]\n\t"
 		"jnz %l[cmpfail]\n\t"
 		RSEQ_INJECT_ASM(4)
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
 		LONG_CMP " %[expect], %[v]\n\t"
 		"jnz %l[error2]\n\t"
-#endif
+#पूर्ण_अगर
 		/* final store */
 		LONG_S " %[newv], %[v]\n\t"
 		"2:\n\t"
 		RSEQ_INJECT_ASM(5)
-		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
-		: /* gcc asm goto does not allow outputs */
+		RSEQ_ASM_DEFINE_ABORT(4, "", पात)
+		: /* gcc यंत्र जाओ करोes not allow outमाला_दो */
 		: [cpu_id]		"r" (cpu),
 		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
 		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
@@ -173,43 +174,43 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
 		  RSEQ_INJECT_INPUT
 		: "memory", "cc", "r0"
 		  RSEQ_INJECT_CLOBBER
-		: abort, cmpfail
-#ifdef RSEQ_COMPARE_TWICE
+		: पात, cmpfail
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		  , error1, error2
-#endif
+#पूर्ण_अगर
 	);
-	return 0;
-abort:
+	वापस 0;
+पात:
 	RSEQ_INJECT_FAILED
-	return -1;
+	वापस -1;
 cmpfail:
-	return 1;
-#ifdef RSEQ_COMPARE_TWICE
+	वापस 1;
+#अगर_घोषित RSEQ_COMPARE_TWICE
 error1:
 	rseq_bug("cpu_id comparison failed");
 error2:
 	rseq_bug("expected value comparison failed");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Compare @v against @expectnot. When it does _not_ match, load @v
- * into @load, and store the content of *@v + voffp into @v.
+ * Compare @v against @expectnot. When it करोes _not_ match, load @v
+ * पूर्णांकo @load, and store the content of *@v + voffp पूर्णांकo @v.
  */
-static inline __attribute__((always_inline))
-int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
-			       off_t voffp, intptr_t *load, int cpu)
-{
+अटल अंतरभूत __attribute__((always_अंतरभूत))
+पूर्णांक rseq_cmpnev_storeoffp_load(पूर्णांकptr_t *v, पूर्णांकptr_t expectnot,
+			       off_t voffp, पूर्णांकptr_t *load, पूर्णांक cpu)
+अणु
 	RSEQ_INJECT_C(9)
 
-	__asm__ __volatile__ goto (
-		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+	__यंत्र__ __अस्थिर__ जाओ (
+		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, पात */
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[cmpfail])
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error1])
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error2])
-#endif
-		/* Start rseq by storing table entry pointer into rseq_cs. */
+#पूर्ण_अगर
+		/* Start rseq by storing table entry poपूर्णांकer पूर्णांकo rseq_cs. */
 		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
 		RSEQ_INJECT_ASM(3)
@@ -217,12 +218,12 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
 		LONG_CMP_R " %%r1, %[expectnot]\n\t"
 		"je %l[cmpfail]\n\t"
 		RSEQ_INJECT_ASM(4)
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
 		LONG_L " %%r1, %[v]\n\t"
 		LONG_CMP_R " %%r1, %[expectnot]\n\t"
 		"je %l[error2]\n\t"
-#endif
+#पूर्ण_अगर
 		LONG_S " %%r1, %[load]\n\t"
 		LONG_ADD_R " %%r1, %[voffp]\n\t"
 		LONG_L " %%r1, 0(%%r1)\n\t"
@@ -230,8 +231,8 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
 		LONG_S " %%r1, %[v]\n\t"
 		"2:\n\t"
 		RSEQ_INJECT_ASM(5)
-		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
-		: /* gcc asm goto does not allow outputs */
+		RSEQ_ASM_DEFINE_ABORT(4, "", पात)
+		: /* gcc यंत्र जाओ करोes not allow outमाला_दो */
 		: [cpu_id]		"r" (cpu),
 		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
 		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
@@ -243,50 +244,50 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
 		  RSEQ_INJECT_INPUT
 		: "memory", "cc", "r0", "r1"
 		  RSEQ_INJECT_CLOBBER
-		: abort, cmpfail
-#ifdef RSEQ_COMPARE_TWICE
+		: पात, cmpfail
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		  , error1, error2
-#endif
+#पूर्ण_अगर
 	);
-	return 0;
-abort:
+	वापस 0;
+पात:
 	RSEQ_INJECT_FAILED
-	return -1;
+	वापस -1;
 cmpfail:
-	return 1;
-#ifdef RSEQ_COMPARE_TWICE
+	वापस 1;
+#अगर_घोषित RSEQ_COMPARE_TWICE
 error1:
 	rseq_bug("cpu_id comparison failed");
 error2:
 	rseq_bug("expected value comparison failed");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline __attribute__((always_inline))
-int rseq_addv(intptr_t *v, intptr_t count, int cpu)
-{
+अटल अंतरभूत __attribute__((always_अंतरभूत))
+पूर्णांक rseq_addv(पूर्णांकptr_t *v, पूर्णांकptr_t count, पूर्णांक cpu)
+अणु
 	RSEQ_INJECT_C(9)
 
-	__asm__ __volatile__ goto (
-		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
-#ifdef RSEQ_COMPARE_TWICE
+	__यंत्र__ __अस्थिर__ जाओ (
+		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, पात */
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error1])
-#endif
-		/* Start rseq by storing table entry pointer into rseq_cs. */
+#पूर्ण_अगर
+		/* Start rseq by storing table entry poपूर्णांकer पूर्णांकo rseq_cs. */
 		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
 		RSEQ_INJECT_ASM(3)
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
-#endif
+#पूर्ण_अगर
 		LONG_L " %%r0, %[v]\n\t"
 		LONG_ADD_R " %%r0, %[count]\n\t"
 		/* final store */
 		LONG_S " %%r0, %[v]\n\t"
 		"2:\n\t"
 		RSEQ_INJECT_ASM(4)
-		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
-		: /* gcc asm goto does not allow outputs */
+		RSEQ_ASM_DEFINE_ABORT(4, "", पात)
+		: /* gcc यंत्र जाओ करोes not allow outमाला_दो */
 		: [cpu_id]		"r" (cpu),
 		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
 		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
@@ -296,47 +297,47 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
 		  RSEQ_INJECT_INPUT
 		: "memory", "cc", "r0"
 		  RSEQ_INJECT_CLOBBER
-		: abort
-#ifdef RSEQ_COMPARE_TWICE
+		: पात
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		  , error1
-#endif
+#पूर्ण_अगर
 	);
-	return 0;
-abort:
+	वापस 0;
+पात:
 	RSEQ_INJECT_FAILED
-	return -1;
-#ifdef RSEQ_COMPARE_TWICE
+	वापस -1;
+#अगर_घोषित RSEQ_COMPARE_TWICE
 error1:
 	rseq_bug("cpu_id comparison failed");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline __attribute__((always_inline))
-int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
-				 intptr_t *v2, intptr_t newv2,
-				 intptr_t newv, int cpu)
-{
+अटल अंतरभूत __attribute__((always_अंतरभूत))
+पूर्णांक rseq_cmpeqv_trystorev_storev(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
+				 पूर्णांकptr_t *v2, पूर्णांकptr_t newv2,
+				 पूर्णांकptr_t newv, पूर्णांक cpu)
+अणु
 	RSEQ_INJECT_C(9)
 
-	__asm__ __volatile__ goto (
-		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+	__यंत्र__ __अस्थिर__ जाओ (
+		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, पात */
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[cmpfail])
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error1])
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error2])
-#endif
-		/* Start rseq by storing table entry pointer into rseq_cs. */
+#पूर्ण_अगर
+		/* Start rseq by storing table entry poपूर्णांकer पूर्णांकo rseq_cs. */
 		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
 		RSEQ_INJECT_ASM(3)
 		LONG_CMP " %[expect], %[v]\n\t"
 		"jnz %l[cmpfail]\n\t"
 		RSEQ_INJECT_ASM(4)
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
 		LONG_CMP " %[expect], %[v]\n\t"
 		"jnz %l[error2]\n\t"
-#endif
+#पूर्ण_अगर
 		/* try store */
 		LONG_S " %[newv2], %[v2]\n\t"
 		RSEQ_INJECT_ASM(5)
@@ -344,8 +345,8 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
 		LONG_S " %[newv], %[v]\n\t"
 		"2:\n\t"
 		RSEQ_INJECT_ASM(6)
-		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
-		: /* gcc asm goto does not allow outputs */
+		RSEQ_ASM_DEFINE_ABORT(4, "", पात)
+		: /* gcc यंत्र जाओ करोes not allow outमाला_दो */
 		: [cpu_id]		"r" (cpu),
 		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
 		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
@@ -359,50 +360,50 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
 		  RSEQ_INJECT_INPUT
 		: "memory", "cc", "r0"
 		  RSEQ_INJECT_CLOBBER
-		: abort, cmpfail
-#ifdef RSEQ_COMPARE_TWICE
+		: पात, cmpfail
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		  , error1, error2
-#endif
+#पूर्ण_अगर
 	);
-	return 0;
-abort:
+	वापस 0;
+पात:
 	RSEQ_INJECT_FAILED
-	return -1;
+	वापस -1;
 cmpfail:
-	return 1;
-#ifdef RSEQ_COMPARE_TWICE
+	वापस 1;
+#अगर_घोषित RSEQ_COMPARE_TWICE
 error1:
 	rseq_bug("cpu_id comparison failed");
 error2:
 	rseq_bug("expected value comparison failed");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /* s390 is TSO. */
-static inline __attribute__((always_inline))
-int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
-					 intptr_t *v2, intptr_t newv2,
-					 intptr_t newv, int cpu)
-{
-	return rseq_cmpeqv_trystorev_storev(v, expect, v2, newv2, newv, cpu);
-}
+अटल अंतरभूत __attribute__((always_अंतरभूत))
+पूर्णांक rseq_cmpeqv_trystorev_storev_release(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
+					 पूर्णांकptr_t *v2, पूर्णांकptr_t newv2,
+					 पूर्णांकptr_t newv, पूर्णांक cpu)
+अणु
+	वापस rseq_cmpeqv_trystorev_storev(v, expect, v2, newv2, newv, cpu);
+पूर्ण
 
-static inline __attribute__((always_inline))
-int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
-			      intptr_t *v2, intptr_t expect2,
-			      intptr_t newv, int cpu)
-{
+अटल अंतरभूत __attribute__((always_अंतरभूत))
+पूर्णांक rseq_cmpeqv_cmpeqv_storev(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
+			      पूर्णांकptr_t *v2, पूर्णांकptr_t expect2,
+			      पूर्णांकptr_t newv, पूर्णांक cpu)
+अणु
 	RSEQ_INJECT_C(9)
 
-	__asm__ __volatile__ goto (
-		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+	__यंत्र__ __अस्थिर__ जाओ (
+		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, पात */
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[cmpfail])
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error1])
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error2])
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error3])
-#endif
-		/* Start rseq by storing table entry pointer into rseq_cs. */
+#पूर्ण_अगर
+		/* Start rseq by storing table entry poपूर्णांकer पूर्णांकo rseq_cs. */
 		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
 		RSEQ_INJECT_ASM(3)
@@ -412,19 +413,19 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
 		LONG_CMP " %[expect2], %[v2]\n\t"
 		"jnz %l[cmpfail]\n\t"
 		RSEQ_INJECT_ASM(5)
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
 		LONG_CMP " %[expect], %[v]\n\t"
 		"jnz %l[error2]\n\t"
 		LONG_CMP " %[expect2], %[v2]\n\t"
 		"jnz %l[error3]\n\t"
-#endif
+#पूर्ण_अगर
 		/* final store */
 		LONG_S " %[newv], %[v]\n\t"
 		"2:\n\t"
 		RSEQ_INJECT_ASM(6)
-		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
-		: /* gcc asm goto does not allow outputs */
+		RSEQ_ASM_DEFINE_ABORT(4, "", पात)
+		: /* gcc यंत्र जाओ करोes not allow outमाला_दो */
 		: [cpu_id]		"r" (cpu),
 		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
 		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
@@ -438,59 +439,59 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
 		  RSEQ_INJECT_INPUT
 		: "memory", "cc", "r0"
 		  RSEQ_INJECT_CLOBBER
-		: abort, cmpfail
-#ifdef RSEQ_COMPARE_TWICE
+		: पात, cmpfail
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		  , error1, error2, error3
-#endif
+#पूर्ण_अगर
 	);
-	return 0;
-abort:
+	वापस 0;
+पात:
 	RSEQ_INJECT_FAILED
-	return -1;
+	वापस -1;
 cmpfail:
-	return 1;
-#ifdef RSEQ_COMPARE_TWICE
+	वापस 1;
+#अगर_घोषित RSEQ_COMPARE_TWICE
 error1:
 	rseq_bug("cpu_id comparison failed");
 error2:
 	rseq_bug("1st expected value comparison failed");
 error3:
 	rseq_bug("2nd expected value comparison failed");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline __attribute__((always_inline))
-int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
-				 void *dst, void *src, size_t len,
-				 intptr_t newv, int cpu)
-{
-	uint64_t rseq_scratch[3];
+अटल अंतरभूत __attribute__((always_अंतरभूत))
+पूर्णांक rseq_cmpeqv_tryस_नकल_storev(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
+				 व्योम *dst, व्योम *src, माप_प्रकार len,
+				 पूर्णांकptr_t newv, पूर्णांक cpu)
+अणु
+	uपूर्णांक64_t rseq_scratch[3];
 
 	RSEQ_INJECT_C(9)
 
-	__asm__ __volatile__ goto (
-		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+	__यंत्र__ __अस्थिर__ जाओ (
+		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, पात */
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[cmpfail])
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error1])
 		RSEQ_ASM_DEFINE_EXIT_POINT(1f, %l[error2])
-#endif
+#पूर्ण_अगर
 		LONG_S " %[src], %[rseq_scratch0]\n\t"
 		LONG_S " %[dst], %[rseq_scratch1]\n\t"
 		LONG_S " %[len], %[rseq_scratch2]\n\t"
-		/* Start rseq by storing table entry pointer into rseq_cs. */
+		/* Start rseq by storing table entry poपूर्णांकer पूर्णांकo rseq_cs. */
 		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
 		RSEQ_INJECT_ASM(3)
 		LONG_CMP " %[expect], %[v]\n\t"
 		"jnz 5f\n\t"
 		RSEQ_INJECT_ASM(4)
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 6f)
 		LONG_CMP " %[expect], %[v]\n\t"
 		"jnz 7f\n\t"
-#endif
-		/* try memcpy */
+#पूर्ण_अगर
+		/* try स_नकल */
 		LONG_LT_R " %[len], %[len]\n\t"
 		"jz 333f\n\t"
 		"222:\n\t"
@@ -506,7 +507,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
 		LONG_S " %[newv], %[v]\n\t"
 		"2:\n\t"
 		RSEQ_INJECT_ASM(6)
-		/* teardown */
+		/* tearकरोwn */
 		LONG_L " %[len], %[rseq_scratch2]\n\t"
 		LONG_L " %[dst], %[rseq_scratch1]\n\t"
 		LONG_L " %[src], %[rseq_scratch0]\n\t"
@@ -514,13 +515,13 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
 			LONG_L " %[len], %[rseq_scratch2]\n\t"
 			LONG_L " %[dst], %[rseq_scratch1]\n\t"
 			LONG_L " %[src], %[rseq_scratch0]\n\t",
-			abort)
+			पात)
 		RSEQ_ASM_DEFINE_CMPFAIL(5,
 			LONG_L " %[len], %[rseq_scratch2]\n\t"
 			LONG_L " %[dst], %[rseq_scratch1]\n\t"
 			LONG_L " %[src], %[rseq_scratch0]\n\t",
 			cmpfail)
-#ifdef RSEQ_COMPARE_TWICE
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		RSEQ_ASM_DEFINE_CMPFAIL(6,
 			LONG_L " %[len], %[rseq_scratch2]\n\t"
 			LONG_L " %[dst], %[rseq_scratch1]\n\t"
@@ -531,8 +532,8 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
 			LONG_L " %[dst], %[rseq_scratch1]\n\t"
 			LONG_L " %[src], %[rseq_scratch0]\n\t",
 			error2)
-#endif
-		: /* gcc asm goto does not allow outputs */
+#पूर्ण_अगर
+		: /* gcc यंत्र जाओ करोes not allow outमाला_दो */
 		: [cpu_id]		"r" (cpu),
 		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
 		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
@@ -540,7 +541,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
 		  [v]			"m" (*v),
 		  [expect]		"r" (expect),
 		  [newv]		"r" (newv),
-		  /* try memcpy input */
+		  /* try स_नकल input */
 		  [dst]			"r" (dst),
 		  [src]			"r" (src),
 		  [len]			"r" (len),
@@ -550,32 +551,32 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
 		  RSEQ_INJECT_INPUT
 		: "memory", "cc", "r0"
 		  RSEQ_INJECT_CLOBBER
-		: abort, cmpfail
-#ifdef RSEQ_COMPARE_TWICE
+		: पात, cmpfail
+#अगर_घोषित RSEQ_COMPARE_TWICE
 		  , error1, error2
-#endif
+#पूर्ण_अगर
 	);
-	return 0;
-abort:
+	वापस 0;
+पात:
 	RSEQ_INJECT_FAILED
-	return -1;
+	वापस -1;
 cmpfail:
-	return 1;
-#ifdef RSEQ_COMPARE_TWICE
+	वापस 1;
+#अगर_घोषित RSEQ_COMPARE_TWICE
 error1:
 	rseq_bug("cpu_id comparison failed");
 error2:
 	rseq_bug("expected value comparison failed");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /* s390 is TSO. */
-static inline __attribute__((always_inline))
-int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
-					 void *dst, void *src, size_t len,
-					 intptr_t newv, int cpu)
-{
-	return rseq_cmpeqv_trymemcpy_storev(v, expect, dst, src, len,
+अटल अंतरभूत __attribute__((always_अंतरभूत))
+पूर्णांक rseq_cmpeqv_tryस_नकल_storev_release(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
+					 व्योम *dst, व्योम *src, माप_प्रकार len,
+					 पूर्णांकptr_t newv, पूर्णांक cpu)
+अणु
+	वापस rseq_cmpeqv_tryस_नकल_storev(v, expect, dst, src, len,
 					    newv, cpu);
-}
-#endif /* !RSEQ_SKIP_FASTPATH */
+पूर्ण
+#पूर्ण_अगर /* !RSEQ_SKIP_FASTPATH */

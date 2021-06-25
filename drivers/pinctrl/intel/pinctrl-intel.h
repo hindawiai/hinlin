@@ -1,93 +1,94 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Core pinctrl/GPIO driver for Intel GPIO controllers
+ * Core pinctrl/GPIO driver क्रम Intel GPIO controllers
  *
  * Copyright (C) 2015, Intel Corporation
- * Authors: Mathias Nyman <mathias.nyman@linux.intel.com>
- *          Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Authors: Mathias Nyman <mathias.nyman@linux.पूर्णांकel.com>
+ *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#ifndef PINCTRL_INTEL_H
-#define PINCTRL_INTEL_H
+#अगर_अघोषित PINCTRL_INTEL_H
+#घोषणा PINCTRL_INTEL_H
 
-#include <linux/bits.h>
-#include <linux/compiler_types.h>
-#include <linux/gpio/driver.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/pm.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/spinlock_types.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/compiler_types.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/spinlock_types.h>
 
-struct platform_device;
-struct device;
+काष्ठा platक्रमm_device;
+काष्ठा device;
 
 /**
- * struct intel_pingroup - Description about group of pins
+ * काष्ठा पूर्णांकel_pingroup - Description about group of pins
  * @name: Name of the groups
  * @pins: All pins in this group
  * @npins: Number of pins in this groups
- * @mode: Native mode in which the group is muxed out @pins. Used if @modes
- *        is %NULL.
- * @modes: If not %NULL this will hold mode for each pin in @pins
+ * @mode: Native mode in which the group is muxed out @pins. Used अगर @modes
+ *        is %शून्य.
+ * @modes: If not %शून्य this will hold mode क्रम each pin in @pins
  */
-struct intel_pingroup {
-	const char *name;
-	const unsigned int *pins;
-	size_t npins;
-	unsigned short mode;
-	const unsigned int *modes;
-};
+काष्ठा पूर्णांकel_pingroup अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित पूर्णांक *pins;
+	माप_प्रकार npins;
+	अचिन्हित लघु mode;
+	स्थिर अचिन्हित पूर्णांक *modes;
+पूर्ण;
 
 /**
- * struct intel_function - Description about a function
+ * काष्ठा पूर्णांकel_function - Description about a function
  * @name: Name of the function
- * @groups: An array of groups for this function
+ * @groups: An array of groups क्रम this function
  * @ngroups: Number of groups in @groups
  */
-struct intel_function {
-	const char *name;
-	const char * const *groups;
-	size_t ngroups;
-};
+काष्ठा पूर्णांकel_function अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *groups;
+	माप_प्रकार ngroups;
+पूर्ण;
 
 /**
- * struct intel_padgroup - Hardware pad group information
- * @reg_num: GPI_IS register number
+ * काष्ठा पूर्णांकel_padgroup - Hardware pad group inक्रमmation
+ * @reg_num: GPI_IS रेजिस्टर number
  * @base: Starting pin of this group
  * @size: Size of this group (maximum is 32).
  * @gpio_base: Starting GPIO base of this group
- * @padown_num: PAD_OWN register number (assigned by the core driver)
+ * @paकरोwn_num: PAD_OWN रेजिस्टर number (asचिन्हित by the core driver)
  *
- * If pad groups of a community are not the same size, use this structure
- * to specify them.
+ * If pad groups of a community are not the same size, use this काष्ठाure
+ * to specअगरy them.
  */
-struct intel_padgroup {
-	unsigned int reg_num;
-	unsigned int base;
-	unsigned int size;
-	int gpio_base;
-	unsigned int padown_num;
-};
+काष्ठा पूर्णांकel_padgroup अणु
+	अचिन्हित पूर्णांक reg_num;
+	अचिन्हित पूर्णांक base;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक gpio_base;
+	अचिन्हित पूर्णांक paकरोwn_num;
+पूर्ण;
 
 /**
- * enum - Special treatment for GPIO base in pad group
+ * क्रमागत - Special treaपंचांगent क्रम GPIO base in pad group
  *
- * @INTEL_GPIO_BASE_ZERO:	force GPIO base to be 0
+ * @INTEL_GPIO_BASE_ZERO:	क्रमce GPIO base to be 0
  * @INTEL_GPIO_BASE_NOMAP:	no GPIO mapping should be created
  * @INTEL_GPIO_BASE_MATCH:	matches with starting pin number
  */
-enum {
+क्रमागत अणु
 	INTEL_GPIO_BASE_ZERO	= -2,
 	INTEL_GPIO_BASE_NOMAP	= -1,
 	INTEL_GPIO_BASE_MATCH	= 0,
-};
+पूर्ण;
 
 /**
- * struct intel_community - Intel pin community description
- * @barno: MMIO BAR number where registers for this community reside
- * @padown_offset: Register offset of PAD_OWN register from @regs. If %0
- *                 then there is no support for owner.
+ * काष्ठा पूर्णांकel_community - Intel pin community description
+ * @barno: MMIO BAR number where रेजिस्टरs क्रम this community reside
+ * @paकरोwn_offset: Register offset of PAD_OWN रेजिस्टर from @regs. If %0
+ *                 then there is no support क्रम owner.
  * @padcfglock_offset: Register offset of PADCFGLOCK from @regs. If %0 then
  *                     locking is not supported.
  * @hostown_offset: Register offset of HOSTSW_OWN from @regs. If %0 then it
@@ -99,85 +100,85 @@ enum {
  * @pin_base: Starting pin of pins in this community
  * @npins: Number of pins in this community
  * @gpp_size: Maximum number of pads in each group, such as PADCFGLOCK,
- *            HOSTSW_OWN, GPI_IS, GPI_IE. Used when @gpps is %NULL.
- * @gpp_num_padown_regs: Number of pad registers each pad group consumes at
- *			 minimum. Use %0 if the number of registers can be
+ *            HOSTSW_OWN, GPI_IS, GPI_IE. Used when @gpps is %शून्य.
+ * @gpp_num_paकरोwn_regs: Number of pad रेजिस्टरs each pad group consumes at
+ *			 minimum. Use %0 अगर the number of रेजिस्टरs can be
  *			 determined by the size of the group.
- * @gpps: Pad groups if the controller has variable size pad groups
+ * @gpps: Pad groups अगर the controller has variable size pad groups
  * @ngpps: Number of pad groups in this community
  * @pad_map: Optional non-linear mapping of the pads
  * @nirqs: Optional total number of IRQs this community can generate
- * @acpi_space_id: Optional address space ID for ACPI OpRegion handler
- * @regs: Community specific common registers (reserved for core driver)
- * @pad_regs: Community specific pad registers (reserved for core driver)
+ * @acpi_space_id: Optional address space ID क्रम ACPI OpRegion handler
+ * @regs: Community specअगरic common रेजिस्टरs (reserved क्रम core driver)
+ * @pad_regs: Community specअगरic pad रेजिस्टरs (reserved क्रम core driver)
  *
  * In some of Intel GPIO host controllers this driver supports each pad group
- * is of equal size (except the last one). In that case the driver can just
+ * is of equal size (except the last one). In that हाल the driver can just
  * fill in @gpp_size field and let the core driver to handle the rest. If
  * the controller has pad groups of variable size the client driver can
  * pass custom @gpps and @ngpps instead.
  */
-struct intel_community {
-	unsigned int barno;
-	unsigned int padown_offset;
-	unsigned int padcfglock_offset;
-	unsigned int hostown_offset;
-	unsigned int is_offset;
-	unsigned int ie_offset;
-	unsigned int features;
-	unsigned int pin_base;
-	size_t npins;
-	unsigned int gpp_size;
-	unsigned int gpp_num_padown_regs;
-	const struct intel_padgroup *gpps;
-	size_t ngpps;
-	const unsigned int *pad_map;
-	unsigned short nirqs;
-	unsigned short acpi_space_id;
+काष्ठा पूर्णांकel_community अणु
+	अचिन्हित पूर्णांक barno;
+	अचिन्हित पूर्णांक paकरोwn_offset;
+	अचिन्हित पूर्णांक padcfglock_offset;
+	अचिन्हित पूर्णांक hostown_offset;
+	अचिन्हित पूर्णांक is_offset;
+	अचिन्हित पूर्णांक ie_offset;
+	अचिन्हित पूर्णांक features;
+	अचिन्हित पूर्णांक pin_base;
+	माप_प्रकार npins;
+	अचिन्हित पूर्णांक gpp_size;
+	अचिन्हित पूर्णांक gpp_num_paकरोwn_regs;
+	स्थिर काष्ठा पूर्णांकel_padgroup *gpps;
+	माप_प्रकार ngpps;
+	स्थिर अचिन्हित पूर्णांक *pad_map;
+	अचिन्हित लघु nirqs;
+	अचिन्हित लघु acpi_space_id;
 
-	/* Reserved for the core driver */
-	void __iomem *regs;
-	void __iomem *pad_regs;
-};
+	/* Reserved क्रम the core driver */
+	व्योम __iomem *regs;
+	व्योम __iomem *pad_regs;
+पूर्ण;
 
 /* Additional features supported by the hardware */
-#define PINCTRL_FEATURE_DEBOUNCE	BIT(0)
-#define PINCTRL_FEATURE_1K_PD		BIT(1)
-#define PINCTRL_FEATURE_GPIO_HW_INFO	BIT(2)
-#define PINCTRL_FEATURE_PWM		BIT(3)
-#define PINCTRL_FEATURE_BLINK		BIT(4)
-#define PINCTRL_FEATURE_EXP		BIT(5)
+#घोषणा PINCTRL_FEATURE_DEBOUNCE	BIT(0)
+#घोषणा PINCTRL_FEATURE_1K_PD		BIT(1)
+#घोषणा PINCTRL_FEATURE_GPIO_HW_INFO	BIT(2)
+#घोषणा PINCTRL_FEATURE_PWM		BIT(3)
+#घोषणा PINCTRL_FEATURE_BLINK		BIT(4)
+#घोषणा PINCTRL_FEATURE_EXP		BIT(5)
 
 /**
  * PIN_GROUP - Declare a pin group
  * @n: Name of the group
  * @p: An array of pins this group consists
  * @m: Mode which the pins are put when this group is active. Can be either
- *     a single integer or an array of integers in which case mode is per
+ *     a single पूर्णांकeger or an array of पूर्णांकegers in which हाल mode is per
  *     pin.
  */
-#define PIN_GROUP(n, p, m)					\
-	{							\
+#घोषणा PIN_GROUP(n, p, m)					\
+	अणु							\
 		.name = (n),					\
 		.pins = (p),					\
 		.npins = ARRAY_SIZE((p)),			\
 		.mode = __builtin_choose_expr(			\
-			__builtin_constant_p((m)), (m), 0),	\
+			__builtin_स्थिरant_p((m)), (m), 0),	\
 		.modes = __builtin_choose_expr(			\
-			__builtin_constant_p((m)), NULL, (m)),	\
-	}
+			__builtin_स्थिरant_p((m)), शून्य, (m)),	\
+	पूर्ण
 
-#define FUNCTION(n, g)				\
-	{					\
+#घोषणा FUNCTION(n, g)				\
+	अणु					\
 		.name = (n),			\
 		.groups = (g),			\
 		.ngroups = ARRAY_SIZE((g)),	\
-	}
+	पूर्ण
 
 /**
- * struct intel_pinctrl_soc_data - Intel pin controller per-SoC configuration
- * @uid: ACPI _UID for the probe driver use if needed
- * @pins: Array if pins this pinctrl controls
+ * काष्ठा पूर्णांकel_pinctrl_soc_data - Intel pin controller per-SoC configuration
+ * @uid: ACPI _UID क्रम the probe driver use अगर needed
+ * @pins: Array अगर pins this pinctrl controls
  * @npins: Number of pins in the array
  * @groups: Array of pin groups
  * @ngroups: Number of groups in the array
@@ -186,76 +187,76 @@ struct intel_community {
  * @communities: Array of communities this pinctrl handles
  * @ncommunities: Number of communities in the array
  *
- * The @communities is used as a template by the core driver. It will make
- * copy of all communities and fill in rest of the information.
+ * The @communities is used as a ढाँचा by the core driver. It will make
+ * copy of all communities and fill in rest of the inक्रमmation.
  */
-struct intel_pinctrl_soc_data {
-	const char *uid;
-	const struct pinctrl_pin_desc *pins;
-	size_t npins;
-	const struct intel_pingroup *groups;
-	size_t ngroups;
-	const struct intel_function *functions;
-	size_t nfunctions;
-	const struct intel_community *communities;
-	size_t ncommunities;
-};
+काष्ठा पूर्णांकel_pinctrl_soc_data अणु
+	स्थिर अक्षर *uid;
+	स्थिर काष्ठा pinctrl_pin_desc *pins;
+	माप_प्रकार npins;
+	स्थिर काष्ठा पूर्णांकel_pingroup *groups;
+	माप_प्रकार ngroups;
+	स्थिर काष्ठा पूर्णांकel_function *functions;
+	माप_प्रकार nfunctions;
+	स्थिर काष्ठा पूर्णांकel_community *communities;
+	माप_प्रकार ncommunities;
+पूर्ण;
 
-const struct intel_pinctrl_soc_data *intel_pinctrl_get_soc_data(struct platform_device *pdev);
+स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *पूर्णांकel_pinctrl_get_soc_data(काष्ठा platक्रमm_device *pdev);
 
-struct intel_pad_context;
-struct intel_community_context;
+काष्ठा पूर्णांकel_pad_context;
+काष्ठा पूर्णांकel_community_context;
 
 /**
- * struct intel_pinctrl_context - context to be saved during suspend-resume
+ * काष्ठा पूर्णांकel_pinctrl_context - context to be saved during suspend-resume
  * @pads: Opaque context per pad (driver dependent)
  * @communities: Opaque context per community (driver dependent)
  */
-struct intel_pinctrl_context {
-	struct intel_pad_context *pads;
-	struct intel_community_context *communities;
-};
+काष्ठा पूर्णांकel_pinctrl_context अणु
+	काष्ठा पूर्णांकel_pad_context *pads;
+	काष्ठा पूर्णांकel_community_context *communities;
+पूर्ण;
 
 /**
- * struct intel_pinctrl - Intel pinctrl private structure
- * @dev: Pointer to the device structure
- * @lock: Lock to serialize register access
+ * काष्ठा पूर्णांकel_pinctrl - Intel pinctrl निजी काष्ठाure
+ * @dev: Poपूर्णांकer to the device काष्ठाure
+ * @lock: Lock to serialize रेजिस्टर access
  * @pctldesc: Pin controller description
- * @pctldev: Pointer to the pin controller device
+ * @pctldev: Poपूर्णांकer to the pin controller device
  * @chip: GPIO chip in this pin controller
  * @irqchip: IRQ chip in this pin controller
- * @soc: SoC/PCH specific pin configuration data
+ * @soc: SoC/PCH specअगरic pin configuration data
  * @communities: All communities in this pin controller
  * @ncommunities: Number of communities in this pin controller
- * @context: Configuration saved over system sleep
+ * @context: Configuration saved over प्रणाली sleep
  * @irq: pinctrl/GPIO chip irq number
  */
-struct intel_pinctrl {
-	struct device *dev;
+काष्ठा पूर्णांकel_pinctrl अणु
+	काष्ठा device *dev;
 	raw_spinlock_t lock;
-	struct pinctrl_desc pctldesc;
-	struct pinctrl_dev *pctldev;
-	struct gpio_chip chip;
-	struct irq_chip irqchip;
-	const struct intel_pinctrl_soc_data *soc;
-	struct intel_community *communities;
-	size_t ncommunities;
-	struct intel_pinctrl_context context;
-	int irq;
-};
+	काष्ठा pinctrl_desc pctldesc;
+	काष्ठा pinctrl_dev *pctldev;
+	काष्ठा gpio_chip chip;
+	काष्ठा irq_chip irqchip;
+	स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *soc;
+	काष्ठा पूर्णांकel_community *communities;
+	माप_प्रकार ncommunities;
+	काष्ठा पूर्णांकel_pinctrl_context context;
+	पूर्णांक irq;
+पूर्ण;
 
-int intel_pinctrl_probe_by_hid(struct platform_device *pdev);
-int intel_pinctrl_probe_by_uid(struct platform_device *pdev);
+पूर्णांक पूर्णांकel_pinctrl_probe_by_hid(काष्ठा platक्रमm_device *pdev);
+पूर्णांक पूर्णांकel_pinctrl_probe_by_uid(काष्ठा platक्रमm_device *pdev);
 
-#ifdef CONFIG_PM_SLEEP
-int intel_pinctrl_suspend_noirq(struct device *dev);
-int intel_pinctrl_resume_noirq(struct device *dev);
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+पूर्णांक पूर्णांकel_pinctrl_suspend_noirq(काष्ठा device *dev);
+पूर्णांक पूर्णांकel_pinctrl_resume_noirq(काष्ठा device *dev);
+#पूर्ण_अगर
 
-#define INTEL_PINCTRL_PM_OPS(_name)					\
-const struct dev_pm_ops _name = {					\
-	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(intel_pinctrl_suspend_noirq,	\
-				      intel_pinctrl_resume_noirq)	\
-}
+#घोषणा INTEL_PINCTRL_PM_OPS(_name)					\
+स्थिर काष्ठा dev_pm_ops _name = अणु					\
+	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(पूर्णांकel_pinctrl_suspend_noirq,	\
+				      पूर्णांकel_pinctrl_resume_noirq)	\
+पूर्ण
 
-#endif /* PINCTRL_INTEL_H */
+#पूर्ण_अगर /* PINCTRL_INTEL_H */

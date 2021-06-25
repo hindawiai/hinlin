@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SUSPEND_H
-#define __ASM_SUSPEND_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SUSPEND_H
+#घोषणा __ASM_SUSPEND_H
 
-#define NR_CTX_REGS 13
-#define NR_CALLEE_SAVED_REGS 12
+#घोषणा NR_CTX_REGS 13
+#घोषणा NR_CALLEE_SAVED_REGS 12
 
 /*
- * struct cpu_suspend_ctx must be 16-byte aligned since it is allocated on
+ * काष्ठा cpu_suspend_ctx must be 16-byte aligned since it is allocated on
  * the stack, which must be 16-byte aligned on v8
  */
-struct cpu_suspend_ctx {
+काष्ठा cpu_suspend_ctx अणु
 	/*
-	 * This struct must be kept in sync with
-	 * cpu_do_{suspend/resume} in mm/proc.S
+	 * This काष्ठा must be kept in sync with
+	 * cpu_करो_अणुsuspend/resumeपूर्ण in mm/proc.S
 	 */
 	u64 ctx_regs[NR_CTX_REGS];
 	u64 sp;
-} __aligned(16);
+पूर्ण __aligned(16);
 
 /*
  * Memory to save the cpu state is allocated on the stack by
  * __cpu_suspend_enter()'s caller, and populated by __cpu_suspend_enter().
  * This data must survive until cpu_resume() is called.
  *
- * This struct desribes the size and the layout of the saved cpu state.
+ * This काष्ठा desribes the size and the layout of the saved cpu state.
  * The layout of the callee_saved_regs is defined by the implementation
- * of __cpu_suspend_enter(), and cpu_resume(). This struct must be passed
+ * of __cpu_suspend_enter(), and cpu_resume(). This काष्ठा must be passed
  * in by the caller as __cpu_suspend_enter()'s stack-frame is gone once it
- * returns, and the data would be subsequently corrupted by the call to the
+ * वापसs, and the data would be subsequently corrupted by the call to the
  * finisher.
  */
-struct sleep_stack_data {
-	struct cpu_suspend_ctx	system_regs;
-	unsigned long		callee_saved_regs[NR_CALLEE_SAVED_REGS];
-};
+काष्ठा sleep_stack_data अणु
+	काष्ठा cpu_suspend_ctx	प्रणाली_regs;
+	अचिन्हित दीर्घ		callee_saved_regs[NR_CALLEE_SAVED_REGS];
+पूर्ण;
 
-extern unsigned long *sleep_save_stash;
+बाह्य अचिन्हित दीर्घ *sleep_save_stash;
 
-extern int cpu_suspend(unsigned long arg, int (*fn)(unsigned long));
-extern void cpu_resume(void);
-int __cpu_suspend_enter(struct sleep_stack_data *state);
-void __cpu_suspend_exit(void);
-void _cpu_resume(void);
+बाह्य पूर्णांक cpu_suspend(अचिन्हित दीर्घ arg, पूर्णांक (*fn)(अचिन्हित दीर्घ));
+बाह्य व्योम cpu_resume(व्योम);
+पूर्णांक __cpu_suspend_enter(काष्ठा sleep_stack_data *state);
+व्योम __cpu_suspend_निकास(व्योम);
+व्योम _cpu_resume(व्योम);
 
-int swsusp_arch_suspend(void);
-int swsusp_arch_resume(void);
-int arch_hibernation_header_save(void *addr, unsigned int max_size);
-int arch_hibernation_header_restore(void *addr);
+पूर्णांक swsusp_arch_suspend(व्योम);
+पूर्णांक swsusp_arch_resume(व्योम);
+पूर्णांक arch_hibernation_header_save(व्योम *addr, अचिन्हित पूर्णांक max_size);
+पूर्णांक arch_hibernation_header_restore(व्योम *addr);
 
 /* Used to resume on the CPU we hibernated on */
-int hibernate_resume_nonboot_cpu_disable(void);
+पूर्णांक hibernate_resume_nonboot_cpu_disable(व्योम);
 
-#endif
+#पूर्ण_अगर

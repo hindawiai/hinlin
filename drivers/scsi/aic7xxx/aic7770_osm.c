@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
- * Linux driver attachment glue for aic7770 based controllers.
+ * Linux driver attachment glue क्रम aic7770 based controllers.
  *
  * Copyright (c) 2000-2003 Adaptec Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    without modअगरication.
+ * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement for further
+ *    including a substantially similar Disclaimer requirement क्रम further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    of any contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -39,118 +40,118 @@
  * $Id: //depot/aic7xxx/linux/drivers/scsi/aic7xxx/aic7770_osm.c#14 $
  */
 
-#include "aic7xxx_osm.h"
+#समावेश "aic7xxx_osm.h"
 
-#include <linux/device.h>
-#include <linux/eisa.h>
+#समावेश <linux/device.h>
+#समावेश <linux/eisa.h>
 
-int
-aic7770_map_registers(struct ahc_softc *ahc, u_int port)
-{
+पूर्णांक
+aic7770_map_रेजिस्टरs(काष्ठा ahc_softc *ahc, u_पूर्णांक port)
+अणु
 	/*
-	 * Lock out other contenders for our i/o space.
+	 * Lock out other contenders क्रम our i/o space.
 	 */
-	if (!request_region(port, AHC_EISA_IOSIZE, "aic7xxx"))
-		return (ENOMEM);
+	अगर (!request_region(port, AHC_EISA_IOSIZE, "aic7xxx"))
+		वापस (ENOMEM);
 	ahc->tag = BUS_SPACE_PIO;
 	ahc->bsh.ioport = port;
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
-int
-aic7770_map_int(struct ahc_softc *ahc, u_int irq)
-{
-	int error;
-	int shared;
+पूर्णांक
+aic7770_map_पूर्णांक(काष्ठा ahc_softc *ahc, u_पूर्णांक irq)
+अणु
+	पूर्णांक error;
+	पूर्णांक shared;
 
 	shared = 0;
-	if ((ahc->flags & AHC_EDGE_INTERRUPT) == 0)
+	अगर ((ahc->flags & AHC_EDGE_INTERRUPT) == 0)
 		shared = IRQF_SHARED;
 
 	error = request_irq(irq, ahc_linux_isr, shared, "aic7xxx", ahc);
-	if (error == 0)
-		ahc->platform_data->irq = irq;
+	अगर (error == 0)
+		ahc->platक्रमm_data->irq = irq;
 	
-	return (-error);
-}
+	वापस (-error);
+पूर्ण
 
-static int
-aic7770_probe(struct device *dev)
-{
-	struct eisa_device *edev = to_eisa_device(dev);
-	u_int eisaBase = edev->base_addr+AHC_EISA_SLOT_OFFSET;
-	struct	ahc_softc *ahc;
-	char	buf[80];
-	char   *name;
-	int	error;
+अटल पूर्णांक
+aic7770_probe(काष्ठा device *dev)
+अणु
+	काष्ठा eisa_device *edev = to_eisa_device(dev);
+	u_पूर्णांक eisaBase = edev->base_addr+AHC_EISA_SLOT_OFFSET;
+	काष्ठा	ahc_softc *ahc;
+	अक्षर	buf[80];
+	अक्षर   *name;
+	पूर्णांक	error;
 
-	sprintf(buf, "ahc_eisa:%d", eisaBase >> 12);
+	प्र_लिखो(buf, "ahc_eisa:%d", eisaBase >> 12);
 	name = kstrdup(buf, GFP_ATOMIC);
-	if (name == NULL)
-		return (ENOMEM);
-	ahc = ahc_alloc(&aic7xxx_driver_template, name);
-	if (ahc == NULL)
-		return (ENOMEM);
+	अगर (name == शून्य)
+		वापस (ENOMEM);
+	ahc = ahc_alloc(&aic7xxx_driver_ढाँचा, name);
+	अगर (ahc == शून्य)
+		वापस (ENOMEM);
 	ahc->dev = dev;
 	error = aic7770_config(ahc, aic7770_ident_table + edev->id.driver_data,
 			       eisaBase);
-	if (error != 0) {
+	अगर (error != 0) अणु
 		ahc->bsh.ioport = 0;
-		ahc_free(ahc);
-		return (error);
-	}
+		ahc_मुक्त(ahc);
+		वापस (error);
+	पूर्ण
 
  	dev_set_drvdata(dev, ahc);
 
-	error = ahc_linux_register_host(ahc, &aic7xxx_driver_template);
-	return (error);
-}
+	error = ahc_linux_रेजिस्टर_host(ahc, &aic7xxx_driver_ढाँचा);
+	वापस (error);
+पूर्ण
 
-static int
-aic7770_remove(struct device *dev)
-{
-	struct ahc_softc *ahc = dev_get_drvdata(dev);
-	u_long s;
+अटल पूर्णांक
+aic7770_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा ahc_softc *ahc = dev_get_drvdata(dev);
+	u_दीर्घ s;
 
-	if (ahc->platform_data && ahc->platform_data->host)
-			scsi_remove_host(ahc->platform_data->host);
+	अगर (ahc->platक्रमm_data && ahc->platक्रमm_data->host)
+			scsi_हटाओ_host(ahc->platक्रमm_data->host);
 
 	ahc_lock(ahc, &s);
-	ahc_intr_enable(ahc, FALSE);
+	ahc_पूर्णांकr_enable(ahc, FALSE);
 	ahc_unlock(ahc, &s);
 
-	ahc_free(ahc);
-	return 0;
-}
+	ahc_मुक्त(ahc);
+	वापस 0;
+पूर्ण
  
-static struct eisa_device_id aic7770_ids[] = {
-	{ "ADP7771", 0 }, /* AHA 274x */
-	{ "ADP7756", 1 }, /* AHA 284x BIOS enabled */
-	{ "ADP7757", 2 }, /* AHA 284x BIOS disabled */
-	{ "ADP7782", 3 }, /* AHA 274x Olivetti OEM */
-	{ "ADP7783", 4 }, /* AHA 274x Olivetti OEM (Differential) */
-	{ "ADP7770", 5 }, /* AIC7770 generic */
-	{ "" }
-};
+अटल काष्ठा eisa_device_id aic7770_ids[] = अणु
+	अणु "ADP7771", 0 पूर्ण, /* AHA 274x */
+	अणु "ADP7756", 1 पूर्ण, /* AHA 284x BIOS enabled */
+	अणु "ADP7757", 2 पूर्ण, /* AHA 284x BIOS disabled */
+	अणु "ADP7782", 3 पूर्ण, /* AHA 274x Olivetti OEM */
+	अणु "ADP7783", 4 पूर्ण, /* AHA 274x Olivetti OEM (Dअगरferential) */
+	अणु "ADP7770", 5 पूर्ण, /* AIC7770 generic */
+	अणु "" पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(eisa, aic7770_ids);
 
-static struct eisa_driver aic7770_driver = {
+अटल काष्ठा eisa_driver aic7770_driver = अणु
 	.id_table	= aic7770_ids,
-	.driver = {
+	.driver = अणु
 		.name   = "aic7xxx",
 		.probe  = aic7770_probe,
-		.remove = aic7770_remove,
-	}
-};
+		.हटाओ = aic7770_हटाओ,
+	पूर्ण
+पूर्ण;
   
-int
-ahc_linux_eisa_init(void)
-{
-	return eisa_driver_register(&aic7770_driver);
-}
+पूर्णांक
+ahc_linux_eisa_init(व्योम)
+अणु
+	वापस eisa_driver_रेजिस्टर(&aic7770_driver);
+पूर्ण
   
-void
-ahc_linux_eisa_exit(void)
-{
-	eisa_driver_unregister(&aic7770_driver);
-}
+व्योम
+ahc_linux_eisa_निकास(व्योम)
+अणु
+	eisa_driver_unरेजिस्टर(&aic7770_driver);
+पूर्ण

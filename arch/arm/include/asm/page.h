@@ -1,168 +1,169 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/include/asm/page.h
+ *  arch/arm/include/यंत्र/page.h
  *
  *  Copyright (C) 1995-2003 Russell King
  */
-#ifndef _ASMARM_PAGE_H
-#define _ASMARM_PAGE_H
+#अगर_अघोषित _ASMARM_PAGE_H
+#घोषणा _ASMARM_PAGE_H
 
 /* PAGE_SHIFT determines the page size */
-#define PAGE_SHIFT		12
-#define PAGE_SIZE		(_AC(1,UL) << PAGE_SHIFT)
-#define PAGE_MASK		(~((1 << PAGE_SHIFT) - 1))
+#घोषणा PAGE_SHIFT		12
+#घोषणा PAGE_SIZE		(_AC(1,UL) << PAGE_SHIFT)
+#घोषणा PAGE_MASK		(~((1 << PAGE_SHIFT) - 1))
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#ifndef CONFIG_MMU
+#अगर_अघोषित CONFIG_MMU
 
-#include <asm/page-nommu.h>
+#समावेश <यंत्र/page-nommu.h>
 
-#else
+#अन्यथा
 
-#include <asm/glue.h>
+#समावेश <यंत्र/glue.h>
 
 /*
  *	User Space Model
  *	================
  *
- *	This section selects the correct set of functions for dealing with
- *	page-based copying and clearing for user space for the particular
- *	processor(s) we're building for.
+ *	This section selects the correct set of functions क्रम dealing with
+ *	page-based copying and clearing क्रम user space क्रम the particular
+ *	processor(s) we're building क्रम.
  *
  *	We have the following to choose from:
- *	  v4wt		- ARMv4 with writethrough cache, without minicache
- *	  v4wb		- ARMv4 with writeback cache, without minicache
+ *	  v4wt		- ARMv4 with ग_लिखोthrough cache, without minicache
+ *	  v4wb		- ARMv4 with ग_लिखोback cache, without minicache
  *	  v4_mc		- ARMv4 with minicache
  *	  xscale	- Xscale
  *	  xsc3		- XScalev3
  */
-#undef _USER
-#undef MULTI_USER
+#अघोषित _USER
+#अघोषित MULTI_USER
 
-#ifdef CONFIG_CPU_COPY_V4WT
-# ifdef _USER
+#अगर_घोषित CONFIG_CPU_COPY_V4WT
+# अगरdef _USER
 #  define MULTI_USER 1
-# else
+# अन्यथा
 #  define _USER v4wt
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_COPY_V4WB
-# ifdef _USER
+#अगर_घोषित CONFIG_CPU_COPY_V4WB
+# अगरdef _USER
 #  define MULTI_USER 1
-# else
+# अन्यथा
 #  define _USER v4wb
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_COPY_FEROCEON
-# ifdef _USER
+#अगर_घोषित CONFIG_CPU_COPY_FEROCEON
+# अगरdef _USER
 #  define MULTI_USER 1
-# else
+# अन्यथा
 #  define _USER feroceon
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_COPY_FA
-# ifdef _USER
+#अगर_घोषित CONFIG_CPU_COPY_FA
+# अगरdef _USER
 #  define MULTI_USER 1
-# else
+# अन्यथा
 #  define _USER fa
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_SA1100
-# ifdef _USER
+#अगर_घोषित CONFIG_CPU_SA1100
+# अगरdef _USER
 #  define MULTI_USER 1
-# else
+# अन्यथा
 #  define _USER v4_mc
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_XSCALE
-# ifdef _USER
+#अगर_घोषित CONFIG_CPU_XSCALE
+# अगरdef _USER
 #  define MULTI_USER 1
-# else
+# अन्यथा
 #  define _USER xscale_mc
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_XSC3
-# ifdef _USER
+#अगर_घोषित CONFIG_CPU_XSC3
+# अगरdef _USER
 #  define MULTI_USER 1
-# else
+# अन्यथा
 #  define _USER xsc3_mc
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_COPY_V6
+#अगर_घोषित CONFIG_CPU_COPY_V6
 # define MULTI_USER 1
-#endif
+#पूर्ण_अगर
 
-#if !defined(_USER) && !defined(MULTI_USER)
-#error Unknown user operations model
-#endif
+#अगर !defined(_USER) && !defined(MULTI_USER)
+#त्रुटि Unknown user operations model
+#पूर्ण_अगर
 
-struct page;
-struct vm_area_struct;
+काष्ठा page;
+काष्ठा vm_area_काष्ठा;
 
-struct cpu_user_fns {
-	void (*cpu_clear_user_highpage)(struct page *page, unsigned long vaddr);
-	void (*cpu_copy_user_highpage)(struct page *to, struct page *from,
-			unsigned long vaddr, struct vm_area_struct *vma);
-};
+काष्ठा cpu_user_fns अणु
+	व्योम (*cpu_clear_user_highpage)(काष्ठा page *page, अचिन्हित दीर्घ vaddr);
+	व्योम (*cpu_copy_user_highpage)(काष्ठा page *to, काष्ठा page *from,
+			अचिन्हित दीर्घ vaddr, काष्ठा vm_area_काष्ठा *vma);
+पूर्ण;
 
-#ifdef MULTI_USER
-extern struct cpu_user_fns cpu_user;
+#अगर_घोषित MULTI_USER
+बाह्य काष्ठा cpu_user_fns cpu_user;
 
-#define __cpu_clear_user_highpage	cpu_user.cpu_clear_user_highpage
-#define __cpu_copy_user_highpage	cpu_user.cpu_copy_user_highpage
+#घोषणा __cpu_clear_user_highpage	cpu_user.cpu_clear_user_highpage
+#घोषणा __cpu_copy_user_highpage	cpu_user.cpu_copy_user_highpage
 
-#else
+#अन्यथा
 
-#define __cpu_clear_user_highpage	__glue(_USER,_clear_user_highpage)
-#define __cpu_copy_user_highpage	__glue(_USER,_copy_user_highpage)
+#घोषणा __cpu_clear_user_highpage	__glue(_USER,_clear_user_highpage)
+#घोषणा __cpu_copy_user_highpage	__glue(_USER,_copy_user_highpage)
 
-extern void __cpu_clear_user_highpage(struct page *page, unsigned long vaddr);
-extern void __cpu_copy_user_highpage(struct page *to, struct page *from,
-			unsigned long vaddr, struct vm_area_struct *vma);
-#endif
+बाह्य व्योम __cpu_clear_user_highpage(काष्ठा page *page, अचिन्हित दीर्घ vaddr);
+बाह्य व्योम __cpu_copy_user_highpage(काष्ठा page *to, काष्ठा page *from,
+			अचिन्हित दीर्घ vaddr, काष्ठा vm_area_काष्ठा *vma);
+#पूर्ण_अगर
 
-#define clear_user_highpage(page,vaddr)		\
+#घोषणा clear_user_highpage(page,vaddr)		\
 	 __cpu_clear_user_highpage(page, vaddr)
 
-#define __HAVE_ARCH_COPY_USER_HIGHPAGE
-#define copy_user_highpage(to,from,vaddr,vma)	\
+#घोषणा __HAVE_ARCH_COPY_USER_HIGHPAGE
+#घोषणा copy_user_highpage(to,from,vaddr,vma)	\
 	__cpu_copy_user_highpage(to, from, vaddr, vma)
 
-#define clear_page(page)	memset((void *)(page), 0, PAGE_SIZE)
-extern void copy_page(void *to, const void *from);
+#घोषणा clear_page(page)	स_रखो((व्योम *)(page), 0, PAGE_SIZE)
+बाह्य व्योम copy_page(व्योम *to, स्थिर व्योम *from);
 
-#ifdef CONFIG_KUSER_HELPERS
-#define __HAVE_ARCH_GATE_AREA 1
-#endif
+#अगर_घोषित CONFIG_KUSER_HELPERS
+#घोषणा __HAVE_ARCH_GATE_AREA 1
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARM_LPAE
-#include <asm/pgtable-3level-types.h>
-#else
-#include <asm/pgtable-2level-types.h>
-#endif
+#अगर_घोषित CONFIG_ARM_LPAE
+#समावेश <यंत्र/pgtable-3level-types.h>
+#अन्यथा
+#समावेश <यंत्र/pgtable-2level-types.h>
+#पूर्ण_अगर
 
-#endif /* CONFIG_MMU */
+#पूर्ण_अगर /* CONFIG_MMU */
 
-typedef struct page *pgtable_t;
+प्रकार काष्ठा page *pgtable_t;
 
-#ifdef CONFIG_HAVE_ARCH_PFN_VALID
-extern int pfn_valid(unsigned long);
-#endif
+#अगर_घोषित CONFIG_HAVE_ARCH_PFN_VALID
+बाह्य पूर्णांक pfn_valid(अचिन्हित दीर्घ);
+#पूर्ण_अगर
 
-#include <asm/memory.h>
+#समावेश <यंत्र/memory.h>
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#define VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_TSK_EXEC
+#घोषणा VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_TSK_EXEC
 
-#include <asm-generic/getorder.h>
+#समावेश <यंत्र-generic/getorder.h>
 
-#endif
+#पूर्ण_अगर

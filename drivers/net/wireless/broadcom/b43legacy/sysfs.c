@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
   Broadcom B43legacy wireless driver
@@ -10,217 +11,217 @@
 
 */
 
-#include "sysfs.h"
-#include "b43legacy.h"
-#include "main.h"
-#include "phy.h"
-#include "radio.h"
+#समावेश "sysfs.h"
+#समावेश "b43legacy.h"
+#समावेश "main.h"
+#समावेश "phy.h"
+#समावेश "radio.h"
 
-#include <linux/capability.h>
-
-
-#define GENERIC_FILESIZE	64
+#समावेश <linux/capability.h>
 
 
-static int get_integer(const char *buf, size_t count)
-{
-	char tmp[10 + 1] = { 0 };
-	int ret = -EINVAL, res;
+#घोषणा GENERIC_खाताSIZE	64
 
-	if (count == 0)
-		goto out;
-	count = min_t(size_t, count, 10);
-	memcpy(tmp, buf, count);
-	ret = kstrtoint(tmp, 10, &res);
-	if (!ret)
-		return res;
+
+अटल पूर्णांक get_पूर्णांकeger(स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अक्षर पंचांगp[10 + 1] = अणु 0 पूर्ण;
+	पूर्णांक ret = -EINVAL, res;
+
+	अगर (count == 0)
+		जाओ out;
+	count = min_t(माप_प्रकार, count, 10);
+	स_नकल(पंचांगp, buf, count);
+	ret = kstrtoपूर्णांक(पंचांगp, 10, &res);
+	अगर (!ret)
+		वापस res;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int get_boolean(const char *buf, size_t count)
-{
-	if (count != 0) {
-		if (buf[0] == '1')
-			return 1;
-		if (buf[0] == '0')
-			return 0;
-		if (count >= 4 && memcmp(buf, "true", 4) == 0)
-			return 1;
-		if (count >= 5 && memcmp(buf, "false", 5) == 0)
-			return 0;
-		if (count >= 3 && memcmp(buf, "yes", 3) == 0)
-			return 1;
-		if (count >= 2 && memcmp(buf, "no", 2) == 0)
-			return 0;
-		if (count >= 2 && memcmp(buf, "on", 2) == 0)
-			return 1;
-		if (count >= 3 && memcmp(buf, "off", 3) == 0)
-			return 0;
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक get_boolean(स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अगर (count != 0) अणु
+		अगर (buf[0] == '1')
+			वापस 1;
+		अगर (buf[0] == '0')
+			वापस 0;
+		अगर (count >= 4 && स_भेद(buf, "true", 4) == 0)
+			वापस 1;
+		अगर (count >= 5 && स_भेद(buf, "false", 5) == 0)
+			वापस 0;
+		अगर (count >= 3 && स_भेद(buf, "yes", 3) == 0)
+			वापस 1;
+		अगर (count >= 2 && स_भेद(buf, "no", 2) == 0)
+			वापस 0;
+		अगर (count >= 2 && स_भेद(buf, "on", 2) == 0)
+			वापस 1;
+		अगर (count >= 3 && स_भेद(buf, "off", 3) == 0)
+			वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t b43legacy_attr_interfmode_show(struct device *dev,
-					      struct device_attribute *attr,
-					      char *buf)
-{
-	struct b43legacy_wldev *wldev = dev_to_b43legacy_wldev(dev);
-	ssize_t count = 0;
+अटल sमाप_प्रकार b43legacy_attr_पूर्णांकerभ_शेषe_show(काष्ठा device *dev,
+					      काष्ठा device_attribute *attr,
+					      अक्षर *buf)
+अणु
+	काष्ठा b43legacy_wldev *wldev = dev_to_b43legacy_wldev(dev);
+	sमाप_प्रकार count = 0;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
 	mutex_lock(&wldev->wl->mutex);
 
-	switch (wldev->phy.interfmode) {
-	case B43legacy_INTERFMODE_NONE:
-		count = snprintf(buf, PAGE_SIZE, "0 (No Interference"
+	चयन (wldev->phy.पूर्णांकerभ_शेषe) अणु
+	हाल B43legacy_INTERFMODE_NONE:
+		count = snम_लिखो(buf, PAGE_SIZE, "0 (No Interference"
 				 " Mitigation)\n");
-		break;
-	case B43legacy_INTERFMODE_NONWLAN:
-		count = snprintf(buf, PAGE_SIZE, "1 (Non-WLAN Interference"
+		अवरोध;
+	हाल B43legacy_INTERFMODE_NONWLAN:
+		count = snम_लिखो(buf, PAGE_SIZE, "1 (Non-WLAN Interference"
 				 " Mitigation)\n");
-		break;
-	case B43legacy_INTERFMODE_MANUALWLAN:
-		count = snprintf(buf, PAGE_SIZE, "2 (WLAN Interference"
+		अवरोध;
+	हाल B43legacy_INTERFMODE_MANUALWLAN:
+		count = snम_लिखो(buf, PAGE_SIZE, "2 (WLAN Interference"
 				 " Mitigation)\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		B43legacy_WARN_ON(1);
-	}
+	पूर्ण
 
 	mutex_unlock(&wldev->wl->mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t b43legacy_attr_interfmode_store(struct device *dev,
-					       struct device_attribute *attr,
-					       const char *buf, size_t count)
-{
-	struct b43legacy_wldev *wldev = dev_to_b43legacy_wldev(dev);
-	unsigned long flags;
-	int err;
-	int mode;
+अटल sमाप_प्रकार b43legacy_attr_पूर्णांकerभ_शेषe_store(काष्ठा device *dev,
+					       काष्ठा device_attribute *attr,
+					       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा b43legacy_wldev *wldev = dev_to_b43legacy_wldev(dev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
+	पूर्णांक mode;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	mode = get_integer(buf, count);
-	switch (mode) {
-	case 0:
+	mode = get_पूर्णांकeger(buf, count);
+	चयन (mode) अणु
+	हाल 0:
 		mode = B43legacy_INTERFMODE_NONE;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		mode = B43legacy_INTERFMODE_NONWLAN;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		mode = B43legacy_INTERFMODE_MANUALWLAN;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		mode = B43legacy_INTERFMODE_AUTOWLAN;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&wldev->wl->mutex);
 	spin_lock_irqsave(&wldev->wl->irq_lock, flags);
 
-	err = b43legacy_radio_set_interference_mitigation(wldev, mode);
-	if (err)
+	err = b43legacy_radio_set_पूर्णांकerference_mitigation(wldev, mode);
+	अगर (err)
 		b43legacyerr(wldev->wl, "Interference Mitigation not "
 		       "supported by device\n");
 	spin_unlock_irqrestore(&wldev->wl->irq_lock, flags);
 	mutex_unlock(&wldev->wl->mutex);
 
-	return err ? err : count;
-}
+	वापस err ? err : count;
+पूर्ण
 
-static DEVICE_ATTR(interference, 0644,
-		   b43legacy_attr_interfmode_show,
-		   b43legacy_attr_interfmode_store);
+अटल DEVICE_ATTR(पूर्णांकerference, 0644,
+		   b43legacy_attr_पूर्णांकerभ_शेषe_show,
+		   b43legacy_attr_पूर्णांकerभ_शेषe_store);
 
-static ssize_t b43legacy_attr_preamble_show(struct device *dev,
-					    struct device_attribute *attr,
-					    char *buf)
-{
-	struct b43legacy_wldev *wldev = dev_to_b43legacy_wldev(dev);
-	ssize_t count;
+अटल sमाप_प्रकार b43legacy_attr_preamble_show(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    अक्षर *buf)
+अणु
+	काष्ठा b43legacy_wldev *wldev = dev_to_b43legacy_wldev(dev);
+	sमाप_प्रकार count;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
 	mutex_lock(&wldev->wl->mutex);
 
-	if (wldev->short_preamble)
-		count = snprintf(buf, PAGE_SIZE, "1 (Short Preamble"
+	अगर (wldev->लघु_preamble)
+		count = snम_लिखो(buf, PAGE_SIZE, "1 (Short Preamble"
 				 " enabled)\n");
-	else
-		count = snprintf(buf, PAGE_SIZE, "0 (Short Preamble"
+	अन्यथा
+		count = snम_लिखो(buf, PAGE_SIZE, "0 (Short Preamble"
 				 " disabled)\n");
 
 	mutex_unlock(&wldev->wl->mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t b43legacy_attr_preamble_store(struct device *dev,
-					     struct device_attribute *attr,
-					     const char *buf, size_t count)
-{
-	struct b43legacy_wldev *wldev = dev_to_b43legacy_wldev(dev);
-	unsigned long flags;
-	int value;
+अटल sमाप_प्रकार b43legacy_attr_preamble_store(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा b43legacy_wldev *wldev = dev_to_b43legacy_wldev(dev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक value;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
 	value = get_boolean(buf, count);
-	if (value < 0)
-		return value;
+	अगर (value < 0)
+		वापस value;
 	mutex_lock(&wldev->wl->mutex);
 	spin_lock_irqsave(&wldev->wl->irq_lock, flags);
 
-	wldev->short_preamble = !!value;
+	wldev->लघु_preamble = !!value;
 
 	spin_unlock_irqrestore(&wldev->wl->irq_lock, flags);
 	mutex_unlock(&wldev->wl->mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(shortpreamble, 0644,
+अटल DEVICE_ATTR(लघुpreamble, 0644,
 		   b43legacy_attr_preamble_show,
 		   b43legacy_attr_preamble_store);
 
-int b43legacy_sysfs_register(struct b43legacy_wldev *wldev)
-{
-	struct device *dev = wldev->dev->dev;
-	int err;
+पूर्णांक b43legacy_sysfs_रेजिस्टर(काष्ठा b43legacy_wldev *wldev)
+अणु
+	काष्ठा device *dev = wldev->dev->dev;
+	पूर्णांक err;
 
 	B43legacy_WARN_ON(b43legacy_status(wldev) !=
 			  B43legacy_STAT_INITIALIZED);
 
-	err = device_create_file(dev, &dev_attr_interference);
-	if (err)
-		goto out;
-	err = device_create_file(dev, &dev_attr_shortpreamble);
-	if (err)
-		goto err_remove_interfmode;
+	err = device_create_file(dev, &dev_attr_पूर्णांकerference);
+	अगर (err)
+		जाओ out;
+	err = device_create_file(dev, &dev_attr_लघुpreamble);
+	अगर (err)
+		जाओ err_हटाओ_पूर्णांकerभ_शेषe;
 
 out:
-	return err;
-err_remove_interfmode:
-	device_remove_file(dev, &dev_attr_interference);
-	goto out;
-}
+	वापस err;
+err_हटाओ_पूर्णांकerभ_शेषe:
+	device_हटाओ_file(dev, &dev_attr_पूर्णांकerference);
+	जाओ out;
+पूर्ण
 
-void b43legacy_sysfs_unregister(struct b43legacy_wldev *wldev)
-{
-	struct device *dev = wldev->dev->dev;
+व्योम b43legacy_sysfs_unरेजिस्टर(काष्ठा b43legacy_wldev *wldev)
+अणु
+	काष्ठा device *dev = wldev->dev->dev;
 
-	device_remove_file(dev, &dev_attr_shortpreamble);
-	device_remove_file(dev, &dev_attr_interference);
-}
+	device_हटाओ_file(dev, &dev_attr_लघुpreamble);
+	device_हटाओ_file(dev, &dev_attr_पूर्णांकerference);
+पूर्ण

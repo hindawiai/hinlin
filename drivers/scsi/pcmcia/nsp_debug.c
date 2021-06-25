@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*========================================================================
-    Debug routines for nsp_cs
+    Debug routines क्रम nsp_cs
       By: YOKOTA Hiroshi <yokota@netlab.is.tsukuba.ac.jp>
 
     This software may be used and distributed according to the terms of
@@ -11,9 +12,9 @@
 /*
  * Show the command data of a command
  */
-static const char unknown[] = "UNKNOWN";
+अटल स्थिर अक्षर unknown[] = "UNKNOWN";
 
-static const char * group_0_commands[] = {
+अटल स्थिर अक्षर * group_0_commands[] = अणु
 /* 00-03 */ "Test Unit Ready", "Rezero Unit", unknown, "Request Sense",
 /* 04-07 */ "Format Unit", "Read Block Limits", unknown, "Reassign Blocks",
 /* 08-0d */ "Read (6)", unknown, "Write (6)", "Seek (6)", unknown, unknown,
@@ -22,10 +23,10 @@ static const char * group_0_commands[] = {
 /* 17-1b */ "Release", "Copy", "Erase", "Mode Sense", "Start/Stop Unit",
 /* 1c-1d */ "Receive Diagnostic", "Send Diagnostic", 
 /* 1e-1f */ "Prevent/Allow Medium Removal", unknown,
-};
+पूर्ण;
 
 
-static const char *group_1_commands[] = {
+अटल स्थिर अक्षर *group_1_commands[] = अणु
 /* 20-22 */  unknown, unknown, unknown,
 /* 23-28 */ unknown, unknown, "Read Capacity", unknown, unknown, "Read (10)",
 /* 29-2d */ unknown, "Write (10)", "Seek (10)", unknown, unknown,
@@ -34,120 +35,120 @@ static const char *group_1_commands[] = {
 /* 35-37 */ "Synchronize Cache","Lock/Unlock Cache", "Read Defect Data",
 /* 38-3c */ "Medium Scan", "Compare","Copy Verify", "Write Buffer", "Read Buffer",
 /* 3d-3f */ "Update Block", "Read Long",  "Write Long",
-};
+पूर्ण;
 
 
-static const char *group_2_commands[] = {
+अटल स्थिर अक्षर *group_2_commands[] = अणु
 /* 40-41 */ "Change Definition", "Write Same", 
 /* 42-48 */ "Read Sub-Ch(cd)", "Read TOC", "Read Header(cd)", "Play Audio(cd)", unknown, "Play Audio MSF(cd)", "Play Audio Track/Index(cd)", 
 /* 49-4f */ "Play Track Relative(10)(cd)", unknown, "Pause/Resume(cd)", "Log Select", "Log Sense", unknown, unknown,
 /* 50-55 */ unknown, unknown, unknown, unknown, unknown, "Mode Select (10)",
 /* 56-5b */ unknown, unknown, unknown, unknown, "Mode Sense (10)", unknown,
 /* 5c-5f */ unknown, unknown, unknown,
-};
+पूर्ण;
 
-#define group(opcode) (((opcode) >> 5) & 7)
+#घोषणा group(opcode) (((opcode) >> 5) & 7)
 
-#define RESERVED_GROUP  0
-#define VENDOR_GROUP    1
-#define NOTEXT_GROUP    2
+#घोषणा RESERVED_GROUP  0
+#घोषणा VENDOR_GROUP    1
+#घोषणा NOTEXT_GROUP    2
 
-static const char **commands[] = {
+अटल स्थिर अक्षर **commands[] = अणु
     group_0_commands, group_1_commands, group_2_commands, 
-    (const char **) RESERVED_GROUP, (const char **) RESERVED_GROUP, 
-    (const char **) NOTEXT_GROUP, (const char **) VENDOR_GROUP, 
-    (const char **) VENDOR_GROUP
-};
+    (स्थिर अक्षर **) RESERVED_GROUP, (स्थिर अक्षर **) RESERVED_GROUP, 
+    (स्थिर अक्षर **) NOTEXT_GROUP, (स्थिर अक्षर **) VENDOR_GROUP, 
+    (स्थिर अक्षर **) VENDOR_GROUP
+पूर्ण;
 
-static const char reserved[] = "RESERVED";
-static const char vendor[] = "VENDOR SPECIFIC";
+अटल स्थिर अक्षर reserved[] = "RESERVED";
+अटल स्थिर अक्षर venकरोr[] = "VENDOR SPECIFIC";
 
-static void print_opcodek(unsigned char opcode)
-{
-	const char **table = commands[ group(opcode) ];
+अटल व्योम prपूर्णांक_opcodek(अचिन्हित अक्षर opcode)
+अणु
+	स्थिर अक्षर **table = commands[ group(opcode) ];
 
-	switch ((unsigned long) table) {
-	case RESERVED_GROUP:
-		printk("%s[%02x] ", reserved, opcode); 
-		break;
-	case NOTEXT_GROUP:
-		printk("%s(notext)[%02x] ", unknown, opcode); 
-		break;
-	case VENDOR_GROUP:
-		printk("%s[%02x] ", vendor, opcode); 
-		break;
-	default:
-		if (table[opcode & 0x1f] != unknown)
-			printk("%s[%02x] ", table[opcode & 0x1f], opcode);
-		else
-			printk("%s[%02x] ", unknown, opcode);
-		break;
-	}
-}
+	चयन ((अचिन्हित दीर्घ) table) अणु
+	हाल RESERVED_GROUP:
+		prपूर्णांकk("%s[%02x] ", reserved, opcode); 
+		अवरोध;
+	हाल NOTEXT_GROUP:
+		prपूर्णांकk("%s(notext)[%02x] ", unknown, opcode); 
+		अवरोध;
+	हाल VENDOR_GROUP:
+		prपूर्णांकk("%s[%02x] ", venकरोr, opcode); 
+		अवरोध;
+	शेष:
+		अगर (table[opcode & 0x1f] != unknown)
+			prपूर्णांकk("%s[%02x] ", table[opcode & 0x1f], opcode);
+		अन्यथा
+			prपूर्णांकk("%s[%02x] ", unknown, opcode);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void print_commandk (unsigned char *command)
-{
-	int i, s;
-	printk(KERN_DEBUG);
-	print_opcodek(command[0]);
-	/*printk(KERN_DEBUG "%s ", __func__);*/
-	if ((command[0] >> 5) == 6 ||
-	    (command[0] >> 5) == 7 ) {
-		s = 12; /* vender specific */
-	} else {
+अटल व्योम prपूर्णांक_commandk (अचिन्हित अक्षर *command)
+अणु
+	पूर्णांक i, s;
+	prपूर्णांकk(KERN_DEBUG);
+	prपूर्णांक_opcodek(command[0]);
+	/*prपूर्णांकk(KERN_DEBUG "%s ", __func__);*/
+	अगर ((command[0] >> 5) == 6 ||
+	    (command[0] >> 5) == 7 ) अणु
+		s = 12; /* vender specअगरic */
+	पूर्ण अन्यथा अणु
 		s = COMMAND_SIZE(command[0]);
-	}
-	for ( i = 1; i < s; ++i) {
-		printk("%02x ", command[i]);
-	}
+	पूर्ण
+	क्रम ( i = 1; i < s; ++i) अणु
+		prपूर्णांकk("%02x ", command[i]);
+	पूर्ण
 
-	switch (s) {
-	case 6:
-		printk("LBA=%d len=%d",
-		       (((unsigned int)command[1] & 0x0f) << 16) |
-		       ( (unsigned int)command[2]         <<  8) |
-		       ( (unsigned int)command[3]              ),
-		       (unsigned int)command[4]
+	चयन (s) अणु
+	हाल 6:
+		prपूर्णांकk("LBA=%d len=%d",
+		       (((अचिन्हित पूर्णांक)command[1] & 0x0f) << 16) |
+		       ( (अचिन्हित पूर्णांक)command[2]         <<  8) |
+		       ( (अचिन्हित पूर्णांक)command[3]              ),
+		       (अचिन्हित पूर्णांक)command[4]
 			);
-		break;
-	case 10:
-		printk("LBA=%d len=%d",
-		       ((unsigned int)command[2] << 24) |
-		       ((unsigned int)command[3] << 16) |
-		       ((unsigned int)command[4] <<  8) |
-		       ((unsigned int)command[5]      ),
-		       ((unsigned int)command[7] <<  8) |
-		       ((unsigned int)command[8]      )
+		अवरोध;
+	हाल 10:
+		prपूर्णांकk("LBA=%d len=%d",
+		       ((अचिन्हित पूर्णांक)command[2] << 24) |
+		       ((अचिन्हित पूर्णांक)command[3] << 16) |
+		       ((अचिन्हित पूर्णांक)command[4] <<  8) |
+		       ((अचिन्हित पूर्णांक)command[5]      ),
+		       ((अचिन्हित पूर्णांक)command[7] <<  8) |
+		       ((अचिन्हित पूर्णांक)command[8]      )
 		       );
-		break;
-	case 12:
-		printk("LBA=%d len=%d",
-		       ((unsigned int)command[2] << 24) |
-		       ((unsigned int)command[3] << 16) |
-		       ((unsigned int)command[4] <<  8) |
-		       ((unsigned int)command[5]      ),
-		       ((unsigned int)command[6] << 24) |
-		       ((unsigned int)command[7] << 16) |
-		       ((unsigned int)command[8] <<  8) |
-		       ((unsigned int)command[9]      )
+		अवरोध;
+	हाल 12:
+		prपूर्णांकk("LBA=%d len=%d",
+		       ((अचिन्हित पूर्णांक)command[2] << 24) |
+		       ((अचिन्हित पूर्णांक)command[3] << 16) |
+		       ((अचिन्हित पूर्णांक)command[4] <<  8) |
+		       ((अचिन्हित पूर्णांक)command[5]      ),
+		       ((अचिन्हित पूर्णांक)command[6] << 24) |
+		       ((अचिन्हित पूर्णांक)command[7] << 16) |
+		       ((अचिन्हित पूर्णांक)command[8] <<  8) |
+		       ((अचिन्हित पूर्णांक)command[9]      )
 		       );
-		break;
-	default:
-		break;
-	}
-	printk("\n");
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	prपूर्णांकk("\n");
+पूर्ण
 
-static void show_command(struct scsi_cmnd *SCpnt)
-{
-	print_commandk(SCpnt->cmnd);
-}
+अटल व्योम show_command(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	prपूर्णांक_commandk(SCpnt->cmnd);
+पूर्ण
 
-static void show_phase(struct scsi_cmnd *SCpnt)
-{
-	int i = SCpnt->SCp.phase;
+अटल व्योम show_phase(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	पूर्णांक i = SCpnt->SCp.phase;
 
-	char *ph[] = {
+	अक्षर *ph[] = अणु
 		"PH_UNDETERMINED",
 		"PH_ARBSTART",
 		"PH_SELSTART",
@@ -159,57 +160,57 @@ static void show_phase(struct scsi_cmnd *SCpnt)
 		"PH_MSG_OUT",
 		"PH_DISCONNECT",
 		"PH_RESELECT"
-	};
+	पूर्ण;
 
-	if ( i < PH_UNDETERMINED || i > PH_RESELECT ) {
-		printk(KERN_DEBUG "scsi phase: unknown(%d)\n", i);
-		return;
-	}
+	अगर ( i < PH_UNDETERMINED || i > PH_RESELECT ) अणु
+		prपूर्णांकk(KERN_DEBUG "scsi phase: unknown(%d)\n", i);
+		वापस;
+	पूर्ण
 
-	printk(KERN_DEBUG "scsi phase: %s\n", ph[i]);
+	prपूर्णांकk(KERN_DEBUG "scsi phase: %s\n", ph[i]);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void show_busphase(unsigned char stat)
-{
-	switch(stat) {
-	case BUSPHASE_COMMAND:
-		printk(KERN_DEBUG "BUSPHASE_COMMAND\n");
-		break;
-	case BUSPHASE_MESSAGE_IN:
-		printk(KERN_DEBUG "BUSPHASE_MESSAGE_IN\n");
-		break;
-	case BUSPHASE_MESSAGE_OUT:
-		printk(KERN_DEBUG "BUSPHASE_MESSAGE_OUT\n");
-		break;
-	case BUSPHASE_DATA_IN:
-		printk(KERN_DEBUG "BUSPHASE_DATA_IN\n");
-		break;
-	case BUSPHASE_DATA_OUT:
-		printk(KERN_DEBUG "BUSPHASE_DATA_OUT\n");
-		break;
-	case BUSPHASE_STATUS:
-		printk(KERN_DEBUG "BUSPHASE_STATUS\n");
-		break;
-	case BUSPHASE_SELECT:
-		printk(KERN_DEBUG "BUSPHASE_SELECT\n");
-		break;
-	default:
-		printk(KERN_DEBUG "BUSPHASE_other\n");
-		break;
-	}
-}
+अटल व्योम show_busphase(अचिन्हित अक्षर stat)
+अणु
+	चयन(stat) अणु
+	हाल BUSPHASE_COMMAND:
+		prपूर्णांकk(KERN_DEBUG "BUSPHASE_COMMAND\n");
+		अवरोध;
+	हाल BUSPHASE_MESSAGE_IN:
+		prपूर्णांकk(KERN_DEBUG "BUSPHASE_MESSAGE_IN\n");
+		अवरोध;
+	हाल BUSPHASE_MESSAGE_OUT:
+		prपूर्णांकk(KERN_DEBUG "BUSPHASE_MESSAGE_OUT\n");
+		अवरोध;
+	हाल BUSPHASE_DATA_IN:
+		prपूर्णांकk(KERN_DEBUG "BUSPHASE_DATA_IN\n");
+		अवरोध;
+	हाल BUSPHASE_DATA_OUT:
+		prपूर्णांकk(KERN_DEBUG "BUSPHASE_DATA_OUT\n");
+		अवरोध;
+	हाल BUSPHASE_STATUS:
+		prपूर्णांकk(KERN_DEBUG "BUSPHASE_STATUS\n");
+		अवरोध;
+	हाल BUSPHASE_SELECT:
+		prपूर्णांकk(KERN_DEBUG "BUSPHASE_SELECT\n");
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_DEBUG "BUSPHASE_other\n");
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void show_message(nsp_hw_data *data)
-{
-	int i;
+अटल व्योम show_message(nsp_hw_data *data)
+अणु
+	पूर्णांक i;
 
-	printk(KERN_DEBUG "msg:");
-	for(i=0; i < data->MsgLen; i++) {
-		printk(" %02x", data->MsgBuffer[i]);
-	}
-	printk("\n");
-}
+	prपूर्णांकk(KERN_DEBUG "msg:");
+	क्रम(i=0; i < data->MsgLen; i++) अणु
+		prपूर्णांकk(" %02x", data->MsgBuffer[i]);
+	पूर्ण
+	prपूर्णांकk("\n");
+पूर्ण
 
 /* end */

@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Free Electrons
  * Copyright (C) 2015 NextThing Co
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#ifndef _SUN4I_CRTC_H_
-#define _SUN4I_CRTC_H_
+#अगर_अघोषित _SUN4I_CRTC_H_
+#घोषणा _SUN4I_CRTC_H_
 
-struct sun4i_crtc {
-	struct drm_crtc			crtc;
-	struct drm_pending_vblank_event	*event;
+काष्ठा sun4i_crtc अणु
+	काष्ठा drm_crtc			crtc;
+	काष्ठा drm_pending_vblank_event	*event;
 
-	struct sunxi_engine		*engine;
-	struct sun4i_tcon		*tcon;
-};
+	काष्ठा sunxi_engine		*engine;
+	काष्ठा sun4i_tcon		*tcon;
+पूर्ण;
 
-static inline struct sun4i_crtc *drm_crtc_to_sun4i_crtc(struct drm_crtc *crtc)
-{
-	return container_of(crtc, struct sun4i_crtc, crtc);
-}
+अटल अंतरभूत काष्ठा sun4i_crtc *drm_crtc_to_sun4i_crtc(काष्ठा drm_crtc *crtc)
+अणु
+	वापस container_of(crtc, काष्ठा sun4i_crtc, crtc);
+पूर्ण
 
-struct sun4i_crtc *sun4i_crtc_init(struct drm_device *drm,
-				   struct sunxi_engine *engine,
-				   struct sun4i_tcon *tcon);
+काष्ठा sun4i_crtc *sun4i_crtc_init(काष्ठा drm_device *drm,
+				   काष्ठा sunxi_engine *engine,
+				   काष्ठा sun4i_tcon *tcon);
 
-#endif /* _SUN4I_CRTC_H_ */
+#पूर्ण_अगर /* _SUN4I_CRTC_H_ */

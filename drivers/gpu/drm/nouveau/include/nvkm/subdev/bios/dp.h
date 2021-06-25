@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVBIOS_DP_H__
-#define __NVBIOS_DP_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVBIOS_DP_H__
+#घोषणा __NVBIOS_DP_H__
 
 u16
-nvbios_dp_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
+nvbios_dp_table(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
 
-struct nvbios_dpout {
+काष्ठा nvbios_dpout अणु
 	u16 type;
 	u16 mask;
 	u8  flags;
 	u32 script[5];
 	u32 lnkcmp;
-};
+पूर्ण;
 
-u16 nvbios_dpout_parse(struct nvkm_bios *, u8 idx,
+u16 nvbios_dpout_parse(काष्ठा nvkm_bios *, u8 idx,
 		       u8 *ver, u8 *hdr, u8 *cnt, u8 *len,
-		       struct nvbios_dpout *);
-u16 nvbios_dpout_match(struct nvkm_bios *, u16 type, u16 mask,
+		       काष्ठा nvbios_dpout *);
+u16 nvbios_dpout_match(काष्ठा nvkm_bios *, u16 type, u16 mask,
 		       u8 *ver, u8 *hdr, u8 *cnt, u8 *len,
-		       struct nvbios_dpout *);
+		       काष्ठा nvbios_dpout *);
 
-struct nvbios_dpcfg {
+काष्ठा nvbios_dpcfg अणु
 	u8 pc;
 	u8 dc;
 	u8 pe;
 	u8 tx_pu;
-};
+पूर्ण;
 
 u16
-nvbios_dpcfg_parse(struct nvkm_bios *, u16 outp, u8 idx,
-		   u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_dpcfg *);
+nvbios_dpcfg_parse(काष्ठा nvkm_bios *, u16 outp, u8 idx,
+		   u8 *ver, u8 *hdr, u8 *cnt, u8 *len, काष्ठा nvbios_dpcfg *);
 u16
-nvbios_dpcfg_match(struct nvkm_bios *, u16 outp, u8 pc, u8 vs, u8 pe,
-		   u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_dpcfg *);
-#endif
+nvbios_dpcfg_match(काष्ठा nvkm_bios *, u16 outp, u8 pc, u8 vs, u8 pe,
+		   u8 *ver, u8 *hdr, u8 *cnt, u8 *len, काष्ठा nvbios_dpcfg *);
+#पूर्ण_अगर

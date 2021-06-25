@@ -1,347 +1,348 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2013-2016, The Linux Foundation. All rights reserved.
  */
 
 /* Qualcomm Technologies, Inc. EMAC Ethernet Controller MAC layer support
  */
 
-#include <linux/tcp.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/crc32.h>
-#include <linux/if_vlan.h>
-#include <linux/jiffies.h>
-#include <linux/phy.h>
-#include <linux/of.h>
-#include <net/ip6_checksum.h>
-#include "emac.h"
-#include "emac-sgmii.h"
+#समावेश <linux/tcp.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/of.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश "emac.h"
+#समावेश "emac-sgmii.h"
 
 /* EMAC_MAC_CTRL */
-#define SINGLE_PAUSE_MODE       	0x10000000
-#define DEBUG_MODE                      0x08000000
-#define BROAD_EN                        0x04000000
-#define MULTI_ALL                       0x02000000
-#define RX_CHKSUM_EN                    0x01000000
-#define HUGE                            0x00800000
-#define SPEED(x)			(((x) & 0x3) << 20)
-#define SPEED_MASK			SPEED(0x3)
-#define SIMR                            0x00080000
-#define TPAUSE                          0x00010000
-#define PROM_MODE                       0x00008000
-#define VLAN_STRIP                      0x00004000
-#define PRLEN_BMSK                      0x00003c00
-#define PRLEN_SHFT                      10
-#define HUGEN                           0x00000200
-#define FLCHK                           0x00000100
-#define PCRCE                           0x00000080
-#define CRCE                            0x00000040
-#define FULLD                           0x00000020
-#define MAC_LP_EN                       0x00000010
-#define RXFC                            0x00000008
-#define TXFC                            0x00000004
-#define RXEN                            0x00000002
-#define TXEN                            0x00000001
+#घोषणा SINGLE_PAUSE_MODE       	0x10000000
+#घोषणा DEBUG_MODE                      0x08000000
+#घोषणा BROAD_EN                        0x04000000
+#घोषणा MULTI_ALL                       0x02000000
+#घोषणा RX_CHKSUM_EN                    0x01000000
+#घोषणा HUGE                            0x00800000
+#घोषणा SPEED(x)			(((x) & 0x3) << 20)
+#घोषणा SPEED_MASK			SPEED(0x3)
+#घोषणा SIMR                            0x00080000
+#घोषणा TPAUSE                          0x00010000
+#घोषणा PROM_MODE                       0x00008000
+#घोषणा VLAN_STRIP                      0x00004000
+#घोषणा PRLEN_BMSK                      0x00003c00
+#घोषणा PRLEN_SHFT                      10
+#घोषणा HUGEN                           0x00000200
+#घोषणा FLCHK                           0x00000100
+#घोषणा PCRCE                           0x00000080
+#घोषणा CRCE                            0x00000040
+#घोषणा FULLD                           0x00000020
+#घोषणा MAC_LP_EN                       0x00000010
+#घोषणा RXFC                            0x00000008
+#घोषणा TXFC                            0x00000004
+#घोषणा RXEN                            0x00000002
+#घोषणा TXEN                            0x00000001
 
 /* EMAC_DESC_CTRL_3 */
-#define RFD_RING_SIZE_BMSK                                       0xfff
+#घोषणा RFD_RING_SIZE_BMSK                                       0xfff
 
 /* EMAC_DESC_CTRL_4 */
-#define RX_BUFFER_SIZE_BMSK                                     0xffff
+#घोषणा RX_BUFFER_SIZE_BMSK                                     0xffff
 
 /* EMAC_DESC_CTRL_6 */
-#define RRD_RING_SIZE_BMSK                                       0xfff
+#घोषणा RRD_RING_SIZE_BMSK                                       0xfff
 
 /* EMAC_DESC_CTRL_9 */
-#define TPD_RING_SIZE_BMSK                                      0xffff
+#घोषणा TPD_RING_SIZE_BMSK                                      0xffff
 
 /* EMAC_TXQ_CTRL_0 */
-#define NUM_TXF_BURST_PREF_BMSK                             0xffff0000
-#define NUM_TXF_BURST_PREF_SHFT                                     16
-#define LS_8023_SP                                                0x80
-#define TXQ_MODE                                                  0x40
-#define TXQ_EN                                                    0x20
-#define IP_OP_SP                                                  0x10
-#define NUM_TPD_BURST_PREF_BMSK                                    0xf
-#define NUM_TPD_BURST_PREF_SHFT                                      0
+#घोषणा NUM_TXF_BURST_PREF_BMSK                             0xffff0000
+#घोषणा NUM_TXF_BURST_PREF_SHFT                                     16
+#घोषणा LS_8023_SP                                                0x80
+#घोषणा TXQ_MODE                                                  0x40
+#घोषणा TXQ_EN                                                    0x20
+#घोषणा IP_OP_SP                                                  0x10
+#घोषणा NUM_TPD_BURST_PREF_BMSK                                    0xf
+#घोषणा NUM_TPD_BURST_PREF_SHFT                                      0
 
 /* EMAC_TXQ_CTRL_1 */
-#define JUMBO_TASK_OFFLOAD_THRESHOLD_BMSK                        0x7ff
+#घोषणा JUMBO_TASK_OFFLOAD_THRESHOLD_BMSK                        0x7ff
 
 /* EMAC_TXQ_CTRL_2 */
-#define TXF_HWM_BMSK                                         0xfff0000
-#define TXF_LWM_BMSK                                             0xfff
+#घोषणा TXF_HWM_BMSK                                         0xfff0000
+#घोषणा TXF_LWM_BMSK                                             0xfff
 
 /* EMAC_RXQ_CTRL_0 */
-#define RXQ_EN                                                 BIT(31)
-#define CUT_THRU_EN                                            BIT(30)
-#define RSS_HASH_EN                                            BIT(29)
-#define NUM_RFD_BURST_PREF_BMSK                              0x3f00000
-#define NUM_RFD_BURST_PREF_SHFT                                     20
-#define IDT_TABLE_SIZE_BMSK                                    0x1ff00
-#define IDT_TABLE_SIZE_SHFT                                          8
-#define SP_IPV6                                                   0x80
+#घोषणा RXQ_EN                                                 BIT(31)
+#घोषणा CUT_THRU_EN                                            BIT(30)
+#घोषणा RSS_HASH_EN                                            BIT(29)
+#घोषणा NUM_RFD_BURST_PREF_BMSK                              0x3f00000
+#घोषणा NUM_RFD_BURST_PREF_SHFT                                     20
+#घोषणा IDT_TABLE_SIZE_BMSK                                    0x1ff00
+#घोषणा IDT_TABLE_SIZE_SHFT                                          8
+#घोषणा SP_IPV6                                                   0x80
 
 /* EMAC_RXQ_CTRL_1 */
-#define JUMBO_1KAH_BMSK                                         0xf000
-#define JUMBO_1KAH_SHFT                                             12
-#define RFD_PREF_LOW_TH                                           0x10
-#define RFD_PREF_LOW_THRESHOLD_BMSK                              0xfc0
-#define RFD_PREF_LOW_THRESHOLD_SHFT                                  6
-#define RFD_PREF_UP_TH                                            0x10
-#define RFD_PREF_UP_THRESHOLD_BMSK                                0x3f
-#define RFD_PREF_UP_THRESHOLD_SHFT                                   0
+#घोषणा JUMBO_1KAH_BMSK                                         0xf000
+#घोषणा JUMBO_1KAH_SHFT                                             12
+#घोषणा RFD_PREF_LOW_TH                                           0x10
+#घोषणा RFD_PREF_LOW_THRESHOLD_BMSK                              0xfc0
+#घोषणा RFD_PREF_LOW_THRESHOLD_SHFT                                  6
+#घोषणा RFD_PREF_UP_TH                                            0x10
+#घोषणा RFD_PREF_UP_THRESHOLD_BMSK                                0x3f
+#घोषणा RFD_PREF_UP_THRESHOLD_SHFT                                   0
 
 /* EMAC_RXQ_CTRL_2 */
-#define RXF_DOF_THRESFHOLD                                       0x1a0
-#define RXF_DOF_THRESHOLD_BMSK                               0xfff0000
-#define RXF_DOF_THRESHOLD_SHFT                                      16
-#define RXF_UOF_THRESFHOLD                                        0xbe
-#define RXF_UOF_THRESHOLD_BMSK                                   0xfff
-#define RXF_UOF_THRESHOLD_SHFT                                       0
+#घोषणा RXF_DOF_THRESFHOLD                                       0x1a0
+#घोषणा RXF_DOF_THRESHOLD_BMSK                               0xfff0000
+#घोषणा RXF_DOF_THRESHOLD_SHFT                                      16
+#घोषणा RXF_UOF_THRESFHOLD                                        0xbe
+#घोषणा RXF_UOF_THRESHOLD_BMSK                                   0xfff
+#घोषणा RXF_UOF_THRESHOLD_SHFT                                       0
 
 /* EMAC_RXQ_CTRL_3 */
-#define RXD_TIMER_BMSK                                      0xffff0000
-#define RXD_THRESHOLD_BMSK                                       0xfff
-#define RXD_THRESHOLD_SHFT                                           0
+#घोषणा RXD_TIMER_BMSK                                      0xffff0000
+#घोषणा RXD_THRESHOLD_BMSK                                       0xfff
+#घोषणा RXD_THRESHOLD_SHFT                                           0
 
 /* EMAC_DMA_CTRL */
-#define DMAW_DLY_CNT_BMSK                                      0xf0000
-#define DMAW_DLY_CNT_SHFT                                           16
-#define DMAR_DLY_CNT_BMSK                                       0xf800
-#define DMAR_DLY_CNT_SHFT                                           11
-#define DMAR_REQ_PRI                                             0x400
-#define REGWRBLEN_BMSK                                           0x380
-#define REGWRBLEN_SHFT                                               7
-#define REGRDBLEN_BMSK                                            0x70
-#define REGRDBLEN_SHFT                                               4
-#define OUT_ORDER_MODE                                             0x4
-#define ENH_ORDER_MODE                                             0x2
-#define IN_ORDER_MODE                                              0x1
+#घोषणा DMAW_DLY_CNT_BMSK                                      0xf0000
+#घोषणा DMAW_DLY_CNT_SHFT                                           16
+#घोषणा DMAR_DLY_CNT_BMSK                                       0xf800
+#घोषणा DMAR_DLY_CNT_SHFT                                           11
+#घोषणा DMAR_REQ_PRI                                             0x400
+#घोषणा REGWRBLEN_BMSK                                           0x380
+#घोषणा REGWRBLEN_SHFT                                               7
+#घोषणा REGRDBLEN_BMSK                                            0x70
+#घोषणा REGRDBLEN_SHFT                                               4
+#घोषणा OUT_ORDER_MODE                                             0x4
+#घोषणा ENH_ORDER_MODE                                             0x2
+#घोषणा IN_ORDER_MODE                                              0x1
 
 /* EMAC_MAILBOX_13 */
-#define RFD3_PROC_IDX_BMSK                                   0xfff0000
-#define RFD3_PROC_IDX_SHFT                                          16
-#define RFD3_PROD_IDX_BMSK                                       0xfff
-#define RFD3_PROD_IDX_SHFT                                           0
+#घोषणा RFD3_PROC_IDX_BMSK                                   0xfff0000
+#घोषणा RFD3_PROC_IDX_SHFT                                          16
+#घोषणा RFD3_PROD_IDX_BMSK                                       0xfff
+#घोषणा RFD3_PROD_IDX_SHFT                                           0
 
 /* EMAC_MAILBOX_2 */
-#define NTPD_CONS_IDX_BMSK                                  0xffff0000
-#define NTPD_CONS_IDX_SHFT                                          16
+#घोषणा NTPD_CONS_IDX_BMSK                                  0xffff0000
+#घोषणा NTPD_CONS_IDX_SHFT                                          16
 
 /* EMAC_MAILBOX_3 */
-#define RFD0_CONS_IDX_BMSK                                       0xfff
-#define RFD0_CONS_IDX_SHFT                                           0
+#घोषणा RFD0_CONS_IDX_BMSK                                       0xfff
+#घोषणा RFD0_CONS_IDX_SHFT                                           0
 
 /* EMAC_MAILBOX_11 */
-#define H3TPD_PROD_IDX_BMSK                                 0xffff0000
-#define H3TPD_PROD_IDX_SHFT                                         16
+#घोषणा H3TPD_PROD_IDX_BMSK                                 0xffff0000
+#घोषणा H3TPD_PROD_IDX_SHFT                                         16
 
 /* EMAC_AXI_MAST_CTRL */
-#define DATA_BYTE_SWAP                                             0x8
-#define MAX_BOUND                                                  0x2
-#define MAX_BTYPE                                                  0x1
+#घोषणा DATA_BYTE_SWAP                                             0x8
+#घोषणा MAX_BOUND                                                  0x2
+#घोषणा MAX_BTYPE                                                  0x1
 
 /* EMAC_MAILBOX_12 */
-#define H3TPD_CONS_IDX_BMSK                                 0xffff0000
-#define H3TPD_CONS_IDX_SHFT                                         16
+#घोषणा H3TPD_CONS_IDX_BMSK                                 0xffff0000
+#घोषणा H3TPD_CONS_IDX_SHFT                                         16
 
 /* EMAC_MAILBOX_9 */
-#define H2TPD_PROD_IDX_BMSK                                     0xffff
-#define H2TPD_PROD_IDX_SHFT                                          0
+#घोषणा H2TPD_PROD_IDX_BMSK                                     0xffff
+#घोषणा H2TPD_PROD_IDX_SHFT                                          0
 
 /* EMAC_MAILBOX_10 */
-#define H1TPD_CONS_IDX_BMSK                                 0xffff0000
-#define H1TPD_CONS_IDX_SHFT                                         16
-#define H2TPD_CONS_IDX_BMSK                                     0xffff
-#define H2TPD_CONS_IDX_SHFT                                          0
+#घोषणा H1TPD_CONS_IDX_BMSK                                 0xffff0000
+#घोषणा H1TPD_CONS_IDX_SHFT                                         16
+#घोषणा H2TPD_CONS_IDX_BMSK                                     0xffff
+#घोषणा H2TPD_CONS_IDX_SHFT                                          0
 
 /* EMAC_ATHR_HEADER_CTRL */
-#define HEADER_CNT_EN                                              0x2
-#define HEADER_ENABLE                                              0x1
+#घोषणा HEADER_CNT_EN                                              0x2
+#घोषणा HEADER_ENABLE                                              0x1
 
 /* EMAC_MAILBOX_0 */
-#define RFD0_PROC_IDX_BMSK                                   0xfff0000
-#define RFD0_PROC_IDX_SHFT                                          16
-#define RFD0_PROD_IDX_BMSK                                       0xfff
-#define RFD0_PROD_IDX_SHFT                                           0
+#घोषणा RFD0_PROC_IDX_BMSK                                   0xfff0000
+#घोषणा RFD0_PROC_IDX_SHFT                                          16
+#घोषणा RFD0_PROD_IDX_BMSK                                       0xfff
+#घोषणा RFD0_PROD_IDX_SHFT                                           0
 
 /* EMAC_MAILBOX_5 */
-#define RFD1_PROC_IDX_BMSK                                   0xfff0000
-#define RFD1_PROC_IDX_SHFT                                          16
-#define RFD1_PROD_IDX_BMSK                                       0xfff
-#define RFD1_PROD_IDX_SHFT                                           0
+#घोषणा RFD1_PROC_IDX_BMSK                                   0xfff0000
+#घोषणा RFD1_PROC_IDX_SHFT                                          16
+#घोषणा RFD1_PROD_IDX_BMSK                                       0xfff
+#घोषणा RFD1_PROD_IDX_SHFT                                           0
 
 /* EMAC_MISC_CTRL */
-#define RX_UNCPL_INT_EN                                            0x1
+#घोषणा RX_UNCPL_INT_EN                                            0x1
 
 /* EMAC_MAILBOX_7 */
-#define RFD2_CONS_IDX_BMSK                                   0xfff0000
-#define RFD2_CONS_IDX_SHFT                                          16
-#define RFD1_CONS_IDX_BMSK                                       0xfff
-#define RFD1_CONS_IDX_SHFT                                           0
+#घोषणा RFD2_CONS_IDX_BMSK                                   0xfff0000
+#घोषणा RFD2_CONS_IDX_SHFT                                          16
+#घोषणा RFD1_CONS_IDX_BMSK                                       0xfff
+#घोषणा RFD1_CONS_IDX_SHFT                                           0
 
 /* EMAC_MAILBOX_8 */
-#define RFD3_CONS_IDX_BMSK                                       0xfff
-#define RFD3_CONS_IDX_SHFT                                           0
+#घोषणा RFD3_CONS_IDX_BMSK                                       0xfff
+#घोषणा RFD3_CONS_IDX_SHFT                                           0
 
 /* EMAC_MAILBOX_15 */
-#define NTPD_PROD_IDX_BMSK                                      0xffff
-#define NTPD_PROD_IDX_SHFT                                           0
+#घोषणा NTPD_PROD_IDX_BMSK                                      0xffff
+#घोषणा NTPD_PROD_IDX_SHFT                                           0
 
 /* EMAC_MAILBOX_16 */
-#define H1TPD_PROD_IDX_BMSK                                     0xffff
-#define H1TPD_PROD_IDX_SHFT                                          0
+#घोषणा H1TPD_PROD_IDX_BMSK                                     0xffff
+#घोषणा H1TPD_PROD_IDX_SHFT                                          0
 
-#define RXQ0_RSS_HSTYP_IPV6_TCP_EN                                0x20
-#define RXQ0_RSS_HSTYP_IPV6_EN                                    0x10
-#define RXQ0_RSS_HSTYP_IPV4_TCP_EN                                 0x8
-#define RXQ0_RSS_HSTYP_IPV4_EN                                     0x4
+#घोषणा RXQ0_RSS_HSTYP_IPV6_TCP_EN                                0x20
+#घोषणा RXQ0_RSS_HSTYP_IPV6_EN                                    0x10
+#घोषणा RXQ0_RSS_HSTYP_IPV4_TCP_EN                                 0x8
+#घोषणा RXQ0_RSS_HSTYP_IPV4_EN                                     0x4
 
 /* EMAC_EMAC_WRAPPER_TX_TS_INX */
-#define EMAC_WRAPPER_TX_TS_EMPTY                               BIT(31)
-#define EMAC_WRAPPER_TX_TS_INX_BMSK                             0xffff
+#घोषणा EMAC_WRAPPER_TX_TS_EMPTY                               BIT(31)
+#घोषणा EMAC_WRAPPER_TX_TS_INX_BMSK                             0xffff
 
-struct emac_skb_cb {
+काष्ठा emac_skb_cb अणु
 	u32           tpd_idx;
-	unsigned long jiffies;
-};
+	अचिन्हित दीर्घ jअगरfies;
+पूर्ण;
 
-#define EMAC_SKB_CB(skb)	((struct emac_skb_cb *)(skb)->cb)
-#define EMAC_RSS_IDT_SIZE	256
-#define JUMBO_1KAH		0x4
-#define RXD_TH			0x100
-#define EMAC_TPD_LAST_FRAGMENT	0x80000000
-#define EMAC_TPD_TSTAMP_SAVE	0x80000000
+#घोषणा EMAC_SKB_CB(skb)	((काष्ठा emac_skb_cb *)(skb)->cb)
+#घोषणा EMAC_RSS_IDT_SIZE	256
+#घोषणा JUMBO_1KAH		0x4
+#घोषणा RXD_TH			0x100
+#घोषणा EMAC_TPD_LAST_FRAGMENT	0x80000000
+#घोषणा EMAC_TPD_TSTAMP_SAVE	0x80000000
 
 /* EMAC Errors in emac_rrd.word[3] */
-#define EMAC_RRD_L4F		BIT(14)
-#define EMAC_RRD_IPF		BIT(15)
-#define EMAC_RRD_CRC		BIT(21)
-#define EMAC_RRD_FAE		BIT(22)
-#define EMAC_RRD_TRN		BIT(23)
-#define EMAC_RRD_RNT		BIT(24)
-#define EMAC_RRD_INC		BIT(25)
-#define EMAC_RRD_FOV		BIT(29)
-#define EMAC_RRD_LEN		BIT(30)
+#घोषणा EMAC_RRD_L4F		BIT(14)
+#घोषणा EMAC_RRD_IPF		BIT(15)
+#घोषणा EMAC_RRD_CRC		BIT(21)
+#घोषणा EMAC_RRD_FAE		BIT(22)
+#घोषणा EMAC_RRD_TRN		BIT(23)
+#घोषणा EMAC_RRD_RNT		BIT(24)
+#घोषणा EMAC_RRD_INC		BIT(25)
+#घोषणा EMAC_RRD_FOV		BIT(29)
+#घोषणा EMAC_RRD_LEN		BIT(30)
 
 /* Error bits that will result in a received frame being discarded */
-#define EMAC_RRD_ERROR (EMAC_RRD_IPF | EMAC_RRD_CRC | EMAC_RRD_FAE | \
+#घोषणा EMAC_RRD_ERROR (EMAC_RRD_IPF | EMAC_RRD_CRC | EMAC_RRD_FAE | \
 			EMAC_RRD_TRN | EMAC_RRD_RNT | EMAC_RRD_INC | \
 			EMAC_RRD_FOV | EMAC_RRD_LEN)
-#define EMAC_RRD_STATS_DW_IDX 3
+#घोषणा EMAC_RRD_STATS_DW_IDX 3
 
-#define EMAC_RRD(RXQ, SIZE, IDX)	((RXQ)->rrd.v_addr + (SIZE * (IDX)))
-#define EMAC_RFD(RXQ, SIZE, IDX)	((RXQ)->rfd.v_addr + (SIZE * (IDX)))
-#define EMAC_TPD(TXQ, SIZE, IDX)	((TXQ)->tpd.v_addr + (SIZE * (IDX)))
+#घोषणा EMAC_RRD(RXQ, SIZE, IDX)	((RXQ)->rrd.v_addr + (SIZE * (IDX)))
+#घोषणा EMAC_RFD(RXQ, SIZE, IDX)	((RXQ)->rfd.v_addr + (SIZE * (IDX)))
+#घोषणा EMAC_TPD(TXQ, SIZE, IDX)	((TXQ)->tpd.v_addr + (SIZE * (IDX)))
 
-#define GET_RFD_BUFFER(RXQ, IDX)	(&((RXQ)->rfd.rfbuff[(IDX)]))
-#define GET_TPD_BUFFER(RTQ, IDX)	(&((RTQ)->tpd.tpbuff[(IDX)]))
+#घोषणा GET_RFD_BUFFER(RXQ, IDX)	(&((RXQ)->rfd.rfbuff[(IDX)]))
+#घोषणा GET_TPD_BUFFER(RTQ, IDX)	(&((RTQ)->tpd.tpbuff[(IDX)]))
 
-#define EMAC_TX_POLL_HWTXTSTAMP_THRESHOLD	8
+#घोषणा EMAC_TX_POLL_HWTXTSTAMP_THRESHOLD	8
 
-#define ISR_RX_PKT      (\
+#घोषणा ISR_RX_PKT      (\
 	RX_PKT_INT0     |\
 	RX_PKT_INT1     |\
 	RX_PKT_INT2     |\
 	RX_PKT_INT3)
 
-void emac_mac_multicast_addr_set(struct emac_adapter *adpt, u8 *addr)
-{
+व्योम emac_mac_multicast_addr_set(काष्ठा emac_adapter *adpt, u8 *addr)
+अणु
 	u32 crc32, bit, reg, mta;
 
 	/* Calculate the CRC of the MAC address */
 	crc32 = ether_crc(ETH_ALEN, addr);
 
-	/* The HASH Table is an array of 2 32-bit registers. It is
+	/* The HASH Table is an array of 2 32-bit रेजिस्टरs. It is
 	 * treated like an array of 64 bits (BitArray[hash_value]).
 	 * Use the upper 6 bits of the above CRC as the hash value.
 	 */
 	reg = (crc32 >> 31) & 0x1;
 	bit = (crc32 >> 26) & 0x1F;
 
-	mta = readl(adpt->base + EMAC_HASH_TAB_REG0 + (reg << 2));
+	mta = पढ़ोl(adpt->base + EMAC_HASH_TAB_REG0 + (reg << 2));
 	mta |= BIT(bit);
-	writel(mta, adpt->base + EMAC_HASH_TAB_REG0 + (reg << 2));
-}
+	ग_लिखोl(mta, adpt->base + EMAC_HASH_TAB_REG0 + (reg << 2));
+पूर्ण
 
-void emac_mac_multicast_addr_clear(struct emac_adapter *adpt)
-{
-	writel(0, adpt->base + EMAC_HASH_TAB_REG0);
-	writel(0, adpt->base + EMAC_HASH_TAB_REG1);
-}
+व्योम emac_mac_multicast_addr_clear(काष्ठा emac_adapter *adpt)
+अणु
+	ग_लिखोl(0, adpt->base + EMAC_HASH_TAB_REG0);
+	ग_लिखोl(0, adpt->base + EMAC_HASH_TAB_REG1);
+पूर्ण
 
-/* definitions for RSS */
-#define EMAC_RSS_KEY(_i, _type) \
-		(EMAC_RSS_KEY0 + ((_i) * sizeof(_type)))
-#define EMAC_RSS_TBL(_i, _type) \
-		(EMAC_IDT_TABLE0 + ((_i) * sizeof(_type)))
+/* definitions क्रम RSS */
+#घोषणा EMAC_RSS_KEY(_i, _type) \
+		(EMAC_RSS_KEY0 + ((_i) * माप(_type)))
+#घोषणा EMAC_RSS_TBL(_i, _type) \
+		(EMAC_IDT_TABLE0 + ((_i) * माप(_type)))
 
 /* Config MAC modes */
-void emac_mac_mode_config(struct emac_adapter *adpt)
-{
-	struct net_device *netdev = adpt->netdev;
+व्योम emac_mac_mode_config(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा net_device *netdev = adpt->netdev;
 	u32 mac;
 
-	mac = readl(adpt->base + EMAC_MAC_CTRL);
+	mac = पढ़ोl(adpt->base + EMAC_MAC_CTRL);
 	mac &= ~(VLAN_STRIP | PROM_MODE | MULTI_ALL | MAC_LP_EN);
 
-	if (netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
+	अगर (netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
 		mac |= VLAN_STRIP;
 
-	if (netdev->flags & IFF_PROMISC)
+	अगर (netdev->flags & IFF_PROMISC)
 		mac |= PROM_MODE;
 
-	if (netdev->flags & IFF_ALLMULTI)
+	अगर (netdev->flags & IFF_ALLMULTI)
 		mac |= MULTI_ALL;
 
-	writel(mac, adpt->base + EMAC_MAC_CTRL);
-}
+	ग_लिखोl(mac, adpt->base + EMAC_MAC_CTRL);
+पूर्ण
 
 /* Config descriptor rings */
-static void emac_mac_dma_rings_config(struct emac_adapter *adpt)
-{
+अटल व्योम emac_mac_dma_rings_config(काष्ठा emac_adapter *adpt)
+अणु
 	/* TPD (Transmit Packet Descriptor) */
-	writel(upper_32_bits(adpt->tx_q.tpd.dma_addr),
+	ग_लिखोl(upper_32_bits(adpt->tx_q.tpd.dma_addr),
 	       adpt->base + EMAC_DESC_CTRL_1);
 
-	writel(lower_32_bits(adpt->tx_q.tpd.dma_addr),
+	ग_लिखोl(lower_32_bits(adpt->tx_q.tpd.dma_addr),
 	       adpt->base + EMAC_DESC_CTRL_8);
 
-	writel(adpt->tx_q.tpd.count & TPD_RING_SIZE_BMSK,
+	ग_लिखोl(adpt->tx_q.tpd.count & TPD_RING_SIZE_BMSK,
 	       adpt->base + EMAC_DESC_CTRL_9);
 
 	/* RFD (Receive Free Descriptor) & RRD (Receive Return Descriptor) */
-	writel(upper_32_bits(adpt->rx_q.rfd.dma_addr),
+	ग_लिखोl(upper_32_bits(adpt->rx_q.rfd.dma_addr),
 	       adpt->base + EMAC_DESC_CTRL_0);
 
-	writel(lower_32_bits(adpt->rx_q.rfd.dma_addr),
+	ग_लिखोl(lower_32_bits(adpt->rx_q.rfd.dma_addr),
 	       adpt->base + EMAC_DESC_CTRL_2);
-	writel(lower_32_bits(adpt->rx_q.rrd.dma_addr),
+	ग_लिखोl(lower_32_bits(adpt->rx_q.rrd.dma_addr),
 	       adpt->base + EMAC_DESC_CTRL_5);
 
-	writel(adpt->rx_q.rfd.count & RFD_RING_SIZE_BMSK,
+	ग_लिखोl(adpt->rx_q.rfd.count & RFD_RING_SIZE_BMSK,
 	       adpt->base + EMAC_DESC_CTRL_3);
-	writel(adpt->rx_q.rrd.count & RRD_RING_SIZE_BMSK,
+	ग_लिखोl(adpt->rx_q.rrd.count & RRD_RING_SIZE_BMSK,
 	       adpt->base + EMAC_DESC_CTRL_6);
 
-	writel(adpt->rxbuf_size & RX_BUFFER_SIZE_BMSK,
+	ग_लिखोl(adpt->rxbuf_size & RX_BUFFER_SIZE_BMSK,
 	       adpt->base + EMAC_DESC_CTRL_4);
 
-	writel(0, adpt->base + EMAC_DESC_CTRL_11);
+	ग_लिखोl(0, adpt->base + EMAC_DESC_CTRL_11);
 
 	/* Load all of the base addresses above and ensure that triggering HW to
-	 * read ring pointers is flushed
+	 * पढ़ो ring poपूर्णांकers is flushed
 	 */
-	writel(1, adpt->base + EMAC_INTER_SRAM_PART9);
-}
+	ग_लिखोl(1, adpt->base + EMAC_INTER_SRAM_PART9);
+पूर्ण
 
 /* Config transmit parameters */
-static void emac_mac_tx_config(struct emac_adapter *adpt)
-{
+अटल व्योम emac_mac_tx_config(काष्ठा emac_adapter *adpt)
+अणु
 	u32 val;
 
-	writel((EMAC_MAX_TX_OFFLOAD_THRESH >> 3) &
+	ग_लिखोl((EMAC_MAX_TX_OFFLOAD_THRESH >> 3) &
 	       JUMBO_TASK_OFFLOAD_THRESHOLD_BMSK, adpt->base + EMAC_TXQ_CTRL_1);
 
 	val = (adpt->tpd_burst << NUM_TPD_BURST_PREF_SHFT) &
@@ -351,60 +352,60 @@ static void emac_mac_tx_config(struct emac_adapter *adpt)
 	val |= (0x0100 << NUM_TXF_BURST_PREF_SHFT) &
 		NUM_TXF_BURST_PREF_BMSK;
 
-	writel(val, adpt->base + EMAC_TXQ_CTRL_0);
+	ग_लिखोl(val, adpt->base + EMAC_TXQ_CTRL_0);
 	emac_reg_update32(adpt->base + EMAC_TXQ_CTRL_2,
 			  (TXF_HWM_BMSK | TXF_LWM_BMSK), 0);
-}
+पूर्ण
 
 /* Config receive parameters */
-static void emac_mac_rx_config(struct emac_adapter *adpt)
-{
+अटल व्योम emac_mac_rx_config(काष्ठा emac_adapter *adpt)
+अणु
 	u32 val;
 
 	val = (adpt->rfd_burst << NUM_RFD_BURST_PREF_SHFT) &
 	       NUM_RFD_BURST_PREF_BMSK;
 	val |= (SP_IPV6 | CUT_THRU_EN);
 
-	writel(val, adpt->base + EMAC_RXQ_CTRL_0);
+	ग_लिखोl(val, adpt->base + EMAC_RXQ_CTRL_0);
 
-	val = readl(adpt->base + EMAC_RXQ_CTRL_1);
+	val = पढ़ोl(adpt->base + EMAC_RXQ_CTRL_1);
 	val &= ~(JUMBO_1KAH_BMSK | RFD_PREF_LOW_THRESHOLD_BMSK |
 		 RFD_PREF_UP_THRESHOLD_BMSK);
 	val |= (JUMBO_1KAH << JUMBO_1KAH_SHFT) |
 		(RFD_PREF_LOW_TH << RFD_PREF_LOW_THRESHOLD_SHFT) |
 		(RFD_PREF_UP_TH  << RFD_PREF_UP_THRESHOLD_SHFT);
-	writel(val, adpt->base + EMAC_RXQ_CTRL_1);
+	ग_लिखोl(val, adpt->base + EMAC_RXQ_CTRL_1);
 
-	val = readl(adpt->base + EMAC_RXQ_CTRL_2);
+	val = पढ़ोl(adpt->base + EMAC_RXQ_CTRL_2);
 	val &= ~(RXF_DOF_THRESHOLD_BMSK | RXF_UOF_THRESHOLD_BMSK);
 	val |= (RXF_DOF_THRESFHOLD  << RXF_DOF_THRESHOLD_SHFT) |
 		(RXF_UOF_THRESFHOLD << RXF_UOF_THRESHOLD_SHFT);
-	writel(val, adpt->base + EMAC_RXQ_CTRL_2);
+	ग_लिखोl(val, adpt->base + EMAC_RXQ_CTRL_2);
 
-	val = readl(adpt->base + EMAC_RXQ_CTRL_3);
+	val = पढ़ोl(adpt->base + EMAC_RXQ_CTRL_3);
 	val &= ~(RXD_TIMER_BMSK | RXD_THRESHOLD_BMSK);
 	val |= RXD_TH << RXD_THRESHOLD_SHFT;
-	writel(val, adpt->base + EMAC_RXQ_CTRL_3);
-}
+	ग_लिखोl(val, adpt->base + EMAC_RXQ_CTRL_3);
+पूर्ण
 
 /* Config dma */
-static void emac_mac_dma_config(struct emac_adapter *adpt)
-{
+अटल व्योम emac_mac_dma_config(काष्ठा emac_adapter *adpt)
+अणु
 	u32 dma_ctrl = DMAR_REQ_PRI;
 
-	switch (adpt->dma_order) {
-	case emac_dma_ord_in:
+	चयन (adpt->dma_order) अणु
+	हाल emac_dma_ord_in:
 		dma_ctrl |= IN_ORDER_MODE;
-		break;
-	case emac_dma_ord_enh:
+		अवरोध;
+	हाल emac_dma_ord_enh:
 		dma_ctrl |= ENH_ORDER_MODE;
-		break;
-	case emac_dma_ord_out:
+		अवरोध;
+	हाल emac_dma_ord_out:
 		dma_ctrl |= OUT_ORDER_MODE;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	dma_ctrl |= (((u32)adpt->dmar_block) << REGRDBLEN_SHFT) &
 						REGRDBLEN_BMSK;
@@ -416,32 +417,32 @@ static void emac_mac_dma_config(struct emac_adapter *adpt)
 						DMAW_DLY_CNT_BMSK;
 
 	/* config DMA and ensure that configuration is flushed to HW */
-	writel(dma_ctrl, adpt->base + EMAC_DMA_CTRL);
-}
+	ग_लिखोl(dma_ctrl, adpt->base + EMAC_DMA_CTRL);
+पूर्ण
 
 /* set MAC address */
-static void emac_set_mac_address(struct emac_adapter *adpt, u8 *addr)
-{
+अटल व्योम emac_set_mac_address(काष्ठा emac_adapter *adpt, u8 *addr)
+अणु
 	u32 sta;
 
-	/* for example: 00-A0-C6-11-22-33
+	/* क्रम example: 00-A0-C6-11-22-33
 	 * 0<-->C6112233, 1<-->00A0.
 	 */
 
 	/* low 32bit word */
 	sta = (((u32)addr[2]) << 24) | (((u32)addr[3]) << 16) |
 	      (((u32)addr[4]) << 8)  | (((u32)addr[5]));
-	writel(sta, adpt->base + EMAC_MAC_STA_ADDR0);
+	ग_लिखोl(sta, adpt->base + EMAC_MAC_STA_ADDR0);
 
 	/* hight 32bit word */
 	sta = (((u32)addr[0]) << 8) | (u32)addr[1];
-	writel(sta, adpt->base + EMAC_MAC_STA_ADDR1);
-}
+	ग_लिखोl(sta, adpt->base + EMAC_MAC_STA_ADDR1);
+पूर्ण
 
-static void emac_mac_config(struct emac_adapter *adpt)
-{
-	struct net_device *netdev = adpt->netdev;
-	unsigned int max_frame;
+अटल व्योम emac_mac_config(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा net_device *netdev = adpt->netdev;
+	अचिन्हित पूर्णांक max_frame;
 	u32 val;
 
 	emac_set_mac_address(adpt, netdev->dev_addr);
@@ -452,35 +453,35 @@ static void emac_mac_config(struct emac_adapter *adpt)
 
 	emac_mac_dma_rings_config(adpt);
 
-	writel(netdev->mtu + ETH_HLEN + VLAN_HLEN + ETH_FCS_LEN,
+	ग_लिखोl(netdev->mtu + ETH_HLEN + VLAN_HLEN + ETH_FCS_LEN,
 	       adpt->base + EMAC_MAX_FRAM_LEN_CTRL);
 
 	emac_mac_tx_config(adpt);
 	emac_mac_rx_config(adpt);
 	emac_mac_dma_config(adpt);
 
-	val = readl(adpt->base + EMAC_AXI_MAST_CTRL);
+	val = पढ़ोl(adpt->base + EMAC_AXI_MAST_CTRL);
 	val &= ~(DATA_BYTE_SWAP | MAX_BOUND);
 	val |= MAX_BTYPE;
-	writel(val, adpt->base + EMAC_AXI_MAST_CTRL);
-	writel(0, adpt->base + EMAC_CLK_GATE_CTRL);
-	writel(RX_UNCPL_INT_EN, adpt->base + EMAC_MISC_CTRL);
-}
+	ग_लिखोl(val, adpt->base + EMAC_AXI_MAST_CTRL);
+	ग_लिखोl(0, adpt->base + EMAC_CLK_GATE_CTRL);
+	ग_लिखोl(RX_UNCPL_INT_EN, adpt->base + EMAC_MISC_CTRL);
+पूर्ण
 
-void emac_mac_reset(struct emac_adapter *adpt)
-{
+व्योम emac_mac_reset(काष्ठा emac_adapter *adpt)
+अणु
 	emac_mac_stop(adpt);
 
 	emac_reg_update32(adpt->base + EMAC_DMA_MAS_CTRL, 0, SOFT_RST);
 	usleep_range(100, 150); /* reset may take up to 100usec */
 
-	/* interrupt clear-on-read */
+	/* पूर्णांकerrupt clear-on-पढ़ो */
 	emac_reg_update32(adpt->base + EMAC_DMA_MAS_CTRL, 0, INT_RD_CLR_EN);
-}
+पूर्ण
 
-static void emac_mac_start(struct emac_adapter *adpt)
-{
-	struct phy_device *phydev = adpt->phydev;
+अटल व्योम emac_mac_start(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा phy_device *phydev = adpt->phydev;
 	u32 mac, csr1;
 
 	/* enable tx queue */
@@ -490,38 +491,38 @@ static void emac_mac_start(struct emac_adapter *adpt)
 	emac_reg_update32(adpt->base + EMAC_RXQ_CTRL_0, 0, RXQ_EN);
 
 	/* enable mac control */
-	mac = readl(adpt->base + EMAC_MAC_CTRL);
-	csr1 = readl(adpt->csr + EMAC_EMAC_WRAPPER_CSR1);
+	mac = पढ़ोl(adpt->base + EMAC_MAC_CTRL);
+	csr1 = पढ़ोl(adpt->csr + EMAC_EMAC_WRAPPER_CSR1);
 
 	mac |= TXEN | RXEN;     /* enable RX/TX */
 
-	/* Configure MAC flow control. If set to automatic, then match
-	 * whatever the PHY does. Otherwise, enable or disable it, depending
+	/* Configure MAC flow control. If set to स्वतःmatic, then match
+	 * whatever the PHY करोes. Otherwise, enable or disable it, depending
 	 * on what the user configured via ethtool.
 	 */
 	mac &= ~(RXFC | TXFC);
 
-	if (adpt->automatic) {
-		/* If it's set to automatic, then update our local values */
-		adpt->rx_flow_control = phydev->pause;
-		adpt->tx_flow_control = phydev->pause != phydev->asym_pause;
-	}
+	अगर (adpt->स्वतःmatic) अणु
+		/* If it's set to स्वतःmatic, then update our local values */
+		adpt->rx_flow_control = phydev->छोड़ो;
+		adpt->tx_flow_control = phydev->छोड़ो != phydev->asym_छोड़ो;
+	पूर्ण
 	mac |= adpt->rx_flow_control ? RXFC : 0;
 	mac |= adpt->tx_flow_control ? TXFC : 0;
 
 	/* setup link speed */
 	mac &= ~SPEED_MASK;
-	if (phydev->speed == SPEED_1000) {
+	अगर (phydev->speed == SPEED_1000) अणु
 		mac |= SPEED(2);
 		csr1 |= FREQ_MODE;
-	} else {
+	पूर्ण अन्यथा अणु
 		mac |= SPEED(1);
 		csr1 &= ~FREQ_MODE;
-	}
+	पूर्ण
 
-	if (phydev->duplex == DUPLEX_FULL)
+	अगर (phydev->duplex == DUPLEX_FULL)
 		mac |= FULLD;
-	else
+	अन्यथा
 		mac &= ~FULLD;
 
 	/* other parameters */
@@ -533,155 +534,155 @@ static void emac_mac_start(struct emac_adapter *adpt)
 	mac &= ~(HUGEN | VLAN_STRIP | TPAUSE | SIMR | HUGE | MULTI_ALL |
 		 DEBUG_MODE | SINGLE_PAUSE_MODE);
 
-	/* Enable single-pause-frame mode if requested.
+	/* Enable single-छोड़ो-frame mode अगर requested.
 	 *
-	 * If enabled, the EMAC will send a single pause frame when the RX
+	 * If enabled, the EMAC will send a single छोड़ो frame when the RX
 	 * queue is full.  This normally leads to packet loss because
-	 * the pause frame disables the remote MAC only for 33ms (the quanta),
-	 * and then the remote MAC continues sending packets even though
+	 * the छोड़ो frame disables the remote MAC only क्रम 33ms (the quanta),
+	 * and then the remote MAC जारीs sending packets even though
 	 * the RX queue is still full.
 	 *
-	 * If disabled, the EMAC sends a pause frame every 31ms until the RX
-	 * queue is no longer full.  Normally, this is the preferred
-	 * method of operation.  However, when the system is hung (e.g.
-	 * cores are halted), the EMAC interrupt handler is never called
+	 * If disabled, the EMAC sends a छोड़ो frame every 31ms until the RX
+	 * queue is no दीर्घer full.  Normally, this is the preferred
+	 * method of operation.  However, when the प्रणाली is hung (e.g.
+	 * cores are halted), the EMAC पूर्णांकerrupt handler is never called
 	 * and so the RX queue fills up quickly and stays full.  The resuling
-	 * non-stop "flood" of pause frames sometimes has the effect of
-	 * disabling nearby switches.  In some cases, other nearby switches
-	 * are also affected, shutting down the entire network.
+	 * non-stop "flood" of छोड़ो frames someबार has the effect of
+	 * disabling nearby चयनes.  In some हालs, other nearby चयनes
+	 * are also affected, shutting करोwn the entire network.
 	 *
-	 * The user can enable or disable single-pause-frame mode
+	 * The user can enable or disable single-छोड़ो-frame mode
 	 * via ethtool.
 	 */
-	mac |= adpt->single_pause_mode ? SINGLE_PAUSE_MODE : 0;
+	mac |= adpt->single_छोड़ो_mode ? SINGLE_PAUSE_MODE : 0;
 
-	writel_relaxed(csr1, adpt->csr + EMAC_EMAC_WRAPPER_CSR1);
+	ग_लिखोl_relaxed(csr1, adpt->csr + EMAC_EMAC_WRAPPER_CSR1);
 
-	writel_relaxed(mac, adpt->base + EMAC_MAC_CTRL);
+	ग_लिखोl_relaxed(mac, adpt->base + EMAC_MAC_CTRL);
 
-	/* enable interrupt read clear, low power sleep mode and
+	/* enable पूर्णांकerrupt पढ़ो clear, low घातer sleep mode and
 	 * the irq moderators
 	 */
 
-	writel_relaxed(adpt->irq_mod, adpt->base + EMAC_IRQ_MOD_TIM_INIT);
-	writel_relaxed(INT_RD_CLR_EN | LPW_MODE | IRQ_MODERATOR_EN |
+	ग_लिखोl_relaxed(adpt->irq_mod, adpt->base + EMAC_IRQ_MOD_TIM_INIT);
+	ग_लिखोl_relaxed(INT_RD_CLR_EN | LPW_MODE | IRQ_MODERATOR_EN |
 			IRQ_MODERATOR2_EN, adpt->base + EMAC_DMA_MAS_CTRL);
 
 	emac_mac_mode_config(adpt);
 
 	emac_reg_update32(adpt->base + EMAC_ATHR_HEADER_CTRL,
 			  (HEADER_ENABLE | HEADER_CNT_EN), 0);
-}
+पूर्ण
 
-void emac_mac_stop(struct emac_adapter *adpt)
-{
+व्योम emac_mac_stop(काष्ठा emac_adapter *adpt)
+अणु
 	emac_reg_update32(adpt->base + EMAC_RXQ_CTRL_0, RXQ_EN, 0);
 	emac_reg_update32(adpt->base + EMAC_TXQ_CTRL_0, TXQ_EN, 0);
 	emac_reg_update32(adpt->base + EMAC_MAC_CTRL, TXEN | RXEN, 0);
 	usleep_range(1000, 1050); /* stopping mac may take upto 1msec */
-}
+पूर्ण
 
 /* Free all descriptors of given transmit queue */
-static void emac_tx_q_descs_free(struct emac_adapter *adpt)
-{
-	struct emac_tx_queue *tx_q = &adpt->tx_q;
-	unsigned int i;
-	size_t size;
+अटल व्योम emac_tx_q_descs_मुक्त(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा emac_tx_queue *tx_q = &adpt->tx_q;
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार size;
 
-	/* ring already cleared, nothing to do */
-	if (!tx_q->tpd.tpbuff)
-		return;
+	/* ring alपढ़ोy cleared, nothing to करो */
+	अगर (!tx_q->tpd.tpbuff)
+		वापस;
 
-	for (i = 0; i < tx_q->tpd.count; i++) {
-		struct emac_buffer *tpbuf = GET_TPD_BUFFER(tx_q, i);
+	क्रम (i = 0; i < tx_q->tpd.count; i++) अणु
+		काष्ठा emac_buffer *tpbuf = GET_TPD_BUFFER(tx_q, i);
 
-		if (tpbuf->dma_addr) {
+		अगर (tpbuf->dma_addr) अणु
 			dma_unmap_single(adpt->netdev->dev.parent,
 					 tpbuf->dma_addr, tpbuf->length,
 					 DMA_TO_DEVICE);
 			tpbuf->dma_addr = 0;
-		}
-		if (tpbuf->skb) {
-			dev_kfree_skb_any(tpbuf->skb);
-			tpbuf->skb = NULL;
-		}
-	}
+		पूर्ण
+		अगर (tpbuf->skb) अणु
+			dev_kमुक्त_skb_any(tpbuf->skb);
+			tpbuf->skb = शून्य;
+		पूर्ण
+	पूर्ण
 
-	size = sizeof(struct emac_buffer) * tx_q->tpd.count;
-	memset(tx_q->tpd.tpbuff, 0, size);
+	size = माप(काष्ठा emac_buffer) * tx_q->tpd.count;
+	स_रखो(tx_q->tpd.tpbuff, 0, size);
 
 	/* clear the descriptor ring */
-	memset(tx_q->tpd.v_addr, 0, tx_q->tpd.size);
+	स_रखो(tx_q->tpd.v_addr, 0, tx_q->tpd.size);
 
 	tx_q->tpd.consume_idx = 0;
 	tx_q->tpd.produce_idx = 0;
-}
+पूर्ण
 
 /* Free all descriptors of given receive queue */
-static void emac_rx_q_free_descs(struct emac_adapter *adpt)
-{
-	struct device *dev = adpt->netdev->dev.parent;
-	struct emac_rx_queue *rx_q = &adpt->rx_q;
-	unsigned int i;
-	size_t size;
+अटल व्योम emac_rx_q_मुक्त_descs(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा device *dev = adpt->netdev->dev.parent;
+	काष्ठा emac_rx_queue *rx_q = &adpt->rx_q;
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार size;
 
-	/* ring already cleared, nothing to do */
-	if (!rx_q->rfd.rfbuff)
-		return;
+	/* ring alपढ़ोy cleared, nothing to करो */
+	अगर (!rx_q->rfd.rfbuff)
+		वापस;
 
-	for (i = 0; i < rx_q->rfd.count; i++) {
-		struct emac_buffer *rfbuf = GET_RFD_BUFFER(rx_q, i);
+	क्रम (i = 0; i < rx_q->rfd.count; i++) अणु
+		काष्ठा emac_buffer *rfbuf = GET_RFD_BUFFER(rx_q, i);
 
-		if (rfbuf->dma_addr) {
+		अगर (rfbuf->dma_addr) अणु
 			dma_unmap_single(dev, rfbuf->dma_addr, rfbuf->length,
 					 DMA_FROM_DEVICE);
 			rfbuf->dma_addr = 0;
-		}
-		if (rfbuf->skb) {
-			dev_kfree_skb(rfbuf->skb);
-			rfbuf->skb = NULL;
-		}
-	}
+		पूर्ण
+		अगर (rfbuf->skb) अणु
+			dev_kमुक्त_skb(rfbuf->skb);
+			rfbuf->skb = शून्य;
+		पूर्ण
+	पूर्ण
 
-	size =  sizeof(struct emac_buffer) * rx_q->rfd.count;
-	memset(rx_q->rfd.rfbuff, 0, size);
+	size =  माप(काष्ठा emac_buffer) * rx_q->rfd.count;
+	स_रखो(rx_q->rfd.rfbuff, 0, size);
 
 	/* clear the descriptor rings */
-	memset(rx_q->rrd.v_addr, 0, rx_q->rrd.size);
+	स_रखो(rx_q->rrd.v_addr, 0, rx_q->rrd.size);
 	rx_q->rrd.produce_idx = 0;
 	rx_q->rrd.consume_idx = 0;
 
-	memset(rx_q->rfd.v_addr, 0, rx_q->rfd.size);
+	स_रखो(rx_q->rfd.v_addr, 0, rx_q->rfd.size);
 	rx_q->rfd.produce_idx = 0;
 	rx_q->rfd.consume_idx = 0;
-}
+पूर्ण
 
 /* Free all buffers associated with given transmit queue */
-static void emac_tx_q_bufs_free(struct emac_adapter *adpt)
-{
-	struct emac_tx_queue *tx_q = &adpt->tx_q;
+अटल व्योम emac_tx_q_bufs_मुक्त(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा emac_tx_queue *tx_q = &adpt->tx_q;
 
-	emac_tx_q_descs_free(adpt);
+	emac_tx_q_descs_मुक्त(adpt);
 
-	kfree(tx_q->tpd.tpbuff);
-	tx_q->tpd.tpbuff = NULL;
-	tx_q->tpd.v_addr = NULL;
+	kमुक्त(tx_q->tpd.tpbuff);
+	tx_q->tpd.tpbuff = शून्य;
+	tx_q->tpd.v_addr = शून्य;
 	tx_q->tpd.dma_addr = 0;
 	tx_q->tpd.size = 0;
-}
+पूर्ण
 
-/* Allocate TX descriptor ring for the given transmit queue */
-static int emac_tx_q_desc_alloc(struct emac_adapter *adpt,
-				struct emac_tx_queue *tx_q)
-{
-	struct emac_ring_header *ring_header = &adpt->ring_header;
-	int node = dev_to_node(adpt->netdev->dev.parent);
-	size_t size;
+/* Allocate TX descriptor ring क्रम the given transmit queue */
+अटल पूर्णांक emac_tx_q_desc_alloc(काष्ठा emac_adapter *adpt,
+				काष्ठा emac_tx_queue *tx_q)
+अणु
+	काष्ठा emac_ring_header *ring_header = &adpt->ring_header;
+	पूर्णांक node = dev_to_node(adpt->netdev->dev.parent);
+	माप_प्रकार size;
 
-	size = sizeof(struct emac_buffer) * tx_q->tpd.count;
+	size = माप(काष्ठा emac_buffer) * tx_q->tpd.count;
 	tx_q->tpd.tpbuff = kzalloc_node(size, GFP_KERNEL, node);
-	if (!tx_q->tpd.tpbuff)
-		return -ENOMEM;
+	अगर (!tx_q->tpd.tpbuff)
+		वापस -ENOMEM;
 
 	tx_q->tpd.size = tx_q->tpd.count * (adpt->tpd_size * 4);
 	tx_q->tpd.dma_addr = ring_header->dma_addr + ring_header->used;
@@ -690,40 +691,40 @@ static int emac_tx_q_desc_alloc(struct emac_adapter *adpt,
 	tx_q->tpd.produce_idx = 0;
 	tx_q->tpd.consume_idx = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Free all buffers associated with given transmit queue */
-static void emac_rx_q_bufs_free(struct emac_adapter *adpt)
-{
-	struct emac_rx_queue *rx_q = &adpt->rx_q;
+अटल व्योम emac_rx_q_bufs_मुक्त(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा emac_rx_queue *rx_q = &adpt->rx_q;
 
-	emac_rx_q_free_descs(adpt);
+	emac_rx_q_मुक्त_descs(adpt);
 
-	kfree(rx_q->rfd.rfbuff);
-	rx_q->rfd.rfbuff   = NULL;
+	kमुक्त(rx_q->rfd.rfbuff);
+	rx_q->rfd.rfbuff   = शून्य;
 
-	rx_q->rfd.v_addr   = NULL;
+	rx_q->rfd.v_addr   = शून्य;
 	rx_q->rfd.dma_addr = 0;
 	rx_q->rfd.size     = 0;
 
-	rx_q->rrd.v_addr   = NULL;
+	rx_q->rrd.v_addr   = शून्य;
 	rx_q->rrd.dma_addr = 0;
 	rx_q->rrd.size     = 0;
-}
+पूर्ण
 
-/* Allocate RX descriptor rings for the given receive queue */
-static int emac_rx_descs_alloc(struct emac_adapter *adpt)
-{
-	struct emac_ring_header *ring_header = &adpt->ring_header;
-	int node = dev_to_node(adpt->netdev->dev.parent);
-	struct emac_rx_queue *rx_q = &adpt->rx_q;
-	size_t size;
+/* Allocate RX descriptor rings क्रम the given receive queue */
+अटल पूर्णांक emac_rx_descs_alloc(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा emac_ring_header *ring_header = &adpt->ring_header;
+	पूर्णांक node = dev_to_node(adpt->netdev->dev.parent);
+	काष्ठा emac_rx_queue *rx_q = &adpt->rx_q;
+	माप_प्रकार size;
 
-	size = sizeof(struct emac_buffer) * rx_q->rfd.count;
+	size = माप(काष्ठा emac_buffer) * rx_q->rfd.count;
 	rx_q->rfd.rfbuff = kzalloc_node(size, GFP_KERNEL, node);
-	if (!rx_q->rfd.rfbuff)
-		return -ENOMEM;
+	अगर (!rx_q->rfd.rfbuff)
+		वापस -ENOMEM;
 
 	rx_q->rrd.size = rx_q->rrd.count * (adpt->rrd_size * 4);
 	rx_q->rfd.size = rx_q->rfd.count * (adpt->rfd_size * 4);
@@ -742,24 +743,24 @@ static int emac_rx_descs_alloc(struct emac_adapter *adpt)
 	rx_q->rfd.produce_idx = 0;
 	rx_q->rfd.consume_idx = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Allocate all TX and RX descriptor rings */
-int emac_mac_rx_tx_rings_alloc_all(struct emac_adapter *adpt)
-{
-	struct emac_ring_header *ring_header = &adpt->ring_header;
-	struct device *dev = adpt->netdev->dev.parent;
-	unsigned int num_tx_descs = adpt->tx_desc_cnt;
-	unsigned int num_rx_descs = adpt->rx_desc_cnt;
-	int ret;
+पूर्णांक emac_mac_rx_tx_rings_alloc_all(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा emac_ring_header *ring_header = &adpt->ring_header;
+	काष्ठा device *dev = adpt->netdev->dev.parent;
+	अचिन्हित पूर्णांक num_tx_descs = adpt->tx_desc_cnt;
+	अचिन्हित पूर्णांक num_rx_descs = adpt->rx_desc_cnt;
+	पूर्णांक ret;
 
 	adpt->tx_q.tpd.count = adpt->tx_desc_cnt;
 
 	adpt->rx_q.rrd.count = adpt->rx_desc_cnt;
 	adpt->rx_q.rfd.count = adpt->rx_desc_cnt;
 
-	/* Ring DMA buffer. Each ring may need up to 8 bytes for alignment,
+	/* Ring DMA buffer. Each ring may need up to 8 bytes क्रम alignment,
 	 * hence the additional padding bytes are allocated.
 	 */
 	ring_header->size = num_tx_descs * (adpt->tpd_size * 4) +
@@ -771,114 +772,114 @@ int emac_mac_rx_tx_rings_alloc_all(struct emac_adapter *adpt)
 	ring_header->v_addr = dma_alloc_coherent(dev, ring_header->size,
 						 &ring_header->dma_addr,
 						 GFP_KERNEL);
-	if (!ring_header->v_addr)
-		return -ENOMEM;
+	अगर (!ring_header->v_addr)
+		वापस -ENOMEM;
 
 	ring_header->used = ALIGN(ring_header->dma_addr, 8) -
 							ring_header->dma_addr;
 
 	ret = emac_tx_q_desc_alloc(adpt, &adpt->tx_q);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(adpt->netdev, "error: Tx Queue alloc failed\n");
-		goto err_alloc_tx;
-	}
+		जाओ err_alloc_tx;
+	पूर्ण
 
 	ret = emac_rx_descs_alloc(adpt);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(adpt->netdev, "error: Rx Queue alloc failed\n");
-		goto err_alloc_rx;
-	}
+		जाओ err_alloc_rx;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_alloc_rx:
-	emac_tx_q_bufs_free(adpt);
+	emac_tx_q_bufs_मुक्त(adpt);
 err_alloc_tx:
-	dma_free_coherent(dev, ring_header->size,
+	dma_मुक्त_coherent(dev, ring_header->size,
 			  ring_header->v_addr, ring_header->dma_addr);
 
-	ring_header->v_addr   = NULL;
+	ring_header->v_addr   = शून्य;
 	ring_header->dma_addr = 0;
 	ring_header->size     = 0;
 	ring_header->used     = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Free all TX and RX descriptor rings */
-void emac_mac_rx_tx_rings_free_all(struct emac_adapter *adpt)
-{
-	struct emac_ring_header *ring_header = &adpt->ring_header;
-	struct device *dev = adpt->netdev->dev.parent;
+व्योम emac_mac_rx_tx_rings_मुक्त_all(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा emac_ring_header *ring_header = &adpt->ring_header;
+	काष्ठा device *dev = adpt->netdev->dev.parent;
 
-	emac_tx_q_bufs_free(adpt);
-	emac_rx_q_bufs_free(adpt);
+	emac_tx_q_bufs_मुक्त(adpt);
+	emac_rx_q_bufs_मुक्त(adpt);
 
-	dma_free_coherent(dev, ring_header->size,
+	dma_मुक्त_coherent(dev, ring_header->size,
 			  ring_header->v_addr, ring_header->dma_addr);
 
-	ring_header->v_addr   = NULL;
+	ring_header->v_addr   = शून्य;
 	ring_header->dma_addr = 0;
 	ring_header->size     = 0;
 	ring_header->used     = 0;
-}
+पूर्ण
 
 /* Initialize descriptor rings */
-static void emac_mac_rx_tx_ring_reset_all(struct emac_adapter *adpt)
-{
-	unsigned int i;
+अटल व्योम emac_mac_rx_tx_ring_reset_all(काष्ठा emac_adapter *adpt)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	adpt->tx_q.tpd.produce_idx = 0;
 	adpt->tx_q.tpd.consume_idx = 0;
-	for (i = 0; i < adpt->tx_q.tpd.count; i++)
+	क्रम (i = 0; i < adpt->tx_q.tpd.count; i++)
 		adpt->tx_q.tpd.tpbuff[i].dma_addr = 0;
 
 	adpt->rx_q.rrd.produce_idx = 0;
 	adpt->rx_q.rrd.consume_idx = 0;
 	adpt->rx_q.rfd.produce_idx = 0;
 	adpt->rx_q.rfd.consume_idx = 0;
-	for (i = 0; i < adpt->rx_q.rfd.count; i++)
+	क्रम (i = 0; i < adpt->rx_q.rfd.count; i++)
 		adpt->rx_q.rfd.rfbuff[i].dma_addr = 0;
-}
+पूर्ण
 
-/* Produce new receive free descriptor */
-static void emac_mac_rx_rfd_create(struct emac_adapter *adpt,
-				   struct emac_rx_queue *rx_q,
+/* Produce new receive मुक्त descriptor */
+अटल व्योम emac_mac_rx_rfd_create(काष्ठा emac_adapter *adpt,
+				   काष्ठा emac_rx_queue *rx_q,
 				   dma_addr_t addr)
-{
+अणु
 	u32 *hw_rfd = EMAC_RFD(rx_q, adpt->rfd_size, rx_q->rfd.produce_idx);
 
 	*(hw_rfd++) = lower_32_bits(addr);
 	*hw_rfd = upper_32_bits(addr);
 
-	if (++rx_q->rfd.produce_idx == rx_q->rfd.count)
+	अगर (++rx_q->rfd.produce_idx == rx_q->rfd.count)
 		rx_q->rfd.produce_idx = 0;
-}
+पूर्ण
 
-/* Fill up receive queue's RFD with preallocated receive buffers */
-static void emac_mac_rx_descs_refill(struct emac_adapter *adpt,
-				    struct emac_rx_queue *rx_q)
-{
-	struct emac_buffer *curr_rxbuf;
-	struct emac_buffer *next_rxbuf;
-	unsigned int count = 0;
+/* Fill up receive queue's RFD with pपुनः_स्मृतिated receive buffers */
+अटल व्योम emac_mac_rx_descs_refill(काष्ठा emac_adapter *adpt,
+				    काष्ठा emac_rx_queue *rx_q)
+अणु
+	काष्ठा emac_buffer *curr_rxbuf;
+	काष्ठा emac_buffer *next_rxbuf;
+	अचिन्हित पूर्णांक count = 0;
 	u32 next_produce_idx;
 
 	next_produce_idx = rx_q->rfd.produce_idx + 1;
-	if (next_produce_idx == rx_q->rfd.count)
+	अगर (next_produce_idx == rx_q->rfd.count)
 		next_produce_idx = 0;
 
 	curr_rxbuf = GET_RFD_BUFFER(rx_q, rx_q->rfd.produce_idx);
 	next_rxbuf = GET_RFD_BUFFER(rx_q, next_produce_idx);
 
 	/* this always has a blank rx_buffer*/
-	while (!next_rxbuf->dma_addr) {
-		struct sk_buff *skb;
-		int ret;
+	जबतक (!next_rxbuf->dma_addr) अणु
+		काष्ठा sk_buff *skb;
+		पूर्णांक ret;
 
 		skb = netdev_alloc_skb_ip_align(adpt->netdev, adpt->rxbuf_size);
-		if (!skb)
-			break;
+		अगर (!skb)
+			अवरोध;
 
 		curr_rxbuf->dma_addr =
 			dma_map_single(adpt->netdev->dev.parent, skb->data,
@@ -886,52 +887,52 @@ static void emac_mac_rx_descs_refill(struct emac_adapter *adpt,
 
 		ret = dma_mapping_error(adpt->netdev->dev.parent,
 					curr_rxbuf->dma_addr);
-		if (ret) {
-			dev_kfree_skb(skb);
-			break;
-		}
+		अगर (ret) अणु
+			dev_kमुक्त_skb(skb);
+			अवरोध;
+		पूर्ण
 		curr_rxbuf->skb = skb;
 		curr_rxbuf->length = adpt->rxbuf_size;
 
 		emac_mac_rx_rfd_create(adpt, rx_q, curr_rxbuf->dma_addr);
 		next_produce_idx = rx_q->rfd.produce_idx + 1;
-		if (next_produce_idx == rx_q->rfd.count)
+		अगर (next_produce_idx == rx_q->rfd.count)
 			next_produce_idx = 0;
 
 		curr_rxbuf = GET_RFD_BUFFER(rx_q, rx_q->rfd.produce_idx);
 		next_rxbuf = GET_RFD_BUFFER(rx_q, next_produce_idx);
 		count++;
-	}
+	पूर्ण
 
-	if (count) {
-		u32 prod_idx = (rx_q->rfd.produce_idx << rx_q->produce_shift) &
+	अगर (count) अणु
+		u32 prod_idx = (rx_q->rfd.produce_idx << rx_q->produce_shअगरt) &
 				rx_q->produce_mask;
 		emac_reg_update32(adpt->base + rx_q->produce_reg,
 				  rx_q->produce_mask, prod_idx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void emac_adjust_link(struct net_device *netdev)
-{
-	struct emac_adapter *adpt = netdev_priv(netdev);
-	struct phy_device *phydev = netdev->phydev;
+अटल व्योम emac_adjust_link(काष्ठा net_device *netdev)
+अणु
+	काष्ठा emac_adapter *adpt = netdev_priv(netdev);
+	काष्ठा phy_device *phydev = netdev->phydev;
 
-	if (phydev->link) {
+	अगर (phydev->link) अणु
 		emac_mac_start(adpt);
 		emac_sgmii_link_change(adpt, true);
-	} else {
+	पूर्ण अन्यथा अणु
 		emac_sgmii_link_change(adpt, false);
 		emac_mac_stop(adpt);
-	}
+	पूर्ण
 
-	phy_print_status(phydev);
-}
+	phy_prपूर्णांक_status(phydev);
+पूर्ण
 
-/* Bringup the interface/HW */
-int emac_mac_up(struct emac_adapter *adpt)
-{
-	struct net_device *netdev = adpt->netdev;
-	int ret;
+/* Bringup the पूर्णांकerface/HW */
+पूर्णांक emac_mac_up(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा net_device *netdev = adpt->netdev;
+	पूर्णांक ret;
 
 	emac_mac_rx_tx_ring_reset_all(adpt);
 	emac_mac_config(adpt);
@@ -940,63 +941,63 @@ int emac_mac_up(struct emac_adapter *adpt)
 	adpt->phydev->irq = PHY_POLL;
 	ret = phy_connect_direct(netdev, adpt->phydev, emac_adjust_link,
 				 PHY_INTERFACE_MODE_SGMII);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(adpt->netdev, "could not connect phy\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	phy_attached_print(adpt->phydev, NULL);
+	phy_attached_prपूर्णांक(adpt->phydev, शून्य);
 
 	/* enable mac irq */
-	writel((u32)~DIS_INT, adpt->base + EMAC_INT_STATUS);
-	writel(adpt->irq.mask, adpt->base + EMAC_INT_MASK);
+	ग_लिखोl((u32)~DIS_INT, adpt->base + EMAC_INT_STATUS);
+	ग_लिखोl(adpt->irq.mask, adpt->base + EMAC_INT_MASK);
 
 	phy_start(adpt->phydev);
 
 	napi_enable(&adpt->rx_q.napi);
-	netif_start_queue(netdev);
+	netअगर_start_queue(netdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Bring down the interface/HW */
-void emac_mac_down(struct emac_adapter *adpt)
-{
-	struct net_device *netdev = adpt->netdev;
+/* Bring करोwn the पूर्णांकerface/HW */
+व्योम emac_mac_करोwn(काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा net_device *netdev = adpt->netdev;
 
-	netif_stop_queue(netdev);
+	netअगर_stop_queue(netdev);
 	napi_disable(&adpt->rx_q.napi);
 
 	phy_stop(adpt->phydev);
 
-	/* Interrupts must be disabled before the PHY is disconnected, to
-	 * avoid a race condition where adjust_link is null when we get
-	 * an interrupt.
+	/* Interrupts must be disabled beक्रमe the PHY is disconnected, to
+	 * aव्योम a race condition where adjust_link is null when we get
+	 * an पूर्णांकerrupt.
 	 */
-	writel(DIS_INT, adpt->base + EMAC_INT_STATUS);
-	writel(0, adpt->base + EMAC_INT_MASK);
+	ग_लिखोl(DIS_INT, adpt->base + EMAC_INT_STATUS);
+	ग_लिखोl(0, adpt->base + EMAC_INT_MASK);
 	synchronize_irq(adpt->irq.irq);
 
 	phy_disconnect(adpt->phydev);
 
 	emac_mac_reset(adpt);
 
-	emac_tx_q_descs_free(adpt);
+	emac_tx_q_descs_मुक्त(adpt);
 	netdev_reset_queue(adpt->netdev);
-	emac_rx_q_free_descs(adpt);
-}
+	emac_rx_q_मुक्त_descs(adpt);
+पूर्ण
 
 /* Consume next received packet descriptor */
-static bool emac_rx_process_rrd(struct emac_adapter *adpt,
-				struct emac_rx_queue *rx_q,
-				struct emac_rrd *rrd)
-{
+अटल bool emac_rx_process_rrd(काष्ठा emac_adapter *adpt,
+				काष्ठा emac_rx_queue *rx_q,
+				काष्ठा emac_rrd *rrd)
+अणु
 	u32 *hw_rrd = EMAC_RRD(rx_q, adpt->rrd_size, rx_q->rrd.consume_idx);
 
 	rrd->word[3] = *(hw_rrd + 3);
 
-	if (!RRD_UPDT(rrd))
-		return false;
+	अगर (!RRD_UPDT(rrd))
+		वापस false;
 
 	rrd->word[4] = 0;
 	rrd->word[5] = 0;
@@ -1005,111 +1006,111 @@ static bool emac_rx_process_rrd(struct emac_adapter *adpt,
 	rrd->word[1] = *(hw_rrd++);
 	rrd->word[2] = *(hw_rrd++);
 
-	if (unlikely(RRD_NOR(rrd) != 1)) {
+	अगर (unlikely(RRD_NOR(rrd) != 1)) अणु
 		netdev_err(adpt->netdev,
 			   "error: multi-RFD not support yet! nor:%lu\n",
 			   RRD_NOR(rrd));
-	}
+	पूर्ण
 
 	/* mark rrd as processed */
 	RRD_UPDT_SET(rrd, 0);
 	*hw_rrd = rrd->word[3];
 
-	if (++rx_q->rrd.consume_idx == rx_q->rrd.count)
+	अगर (++rx_q->rrd.consume_idx == rx_q->rrd.count)
 		rx_q->rrd.consume_idx = 0;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* Produce new transmit descriptor */
-static void emac_tx_tpd_create(struct emac_adapter *adpt,
-			       struct emac_tx_queue *tx_q, struct emac_tpd *tpd)
-{
+अटल व्योम emac_tx_tpd_create(काष्ठा emac_adapter *adpt,
+			       काष्ठा emac_tx_queue *tx_q, काष्ठा emac_tpd *tpd)
+अणु
 	u32 *hw_tpd;
 
 	tx_q->tpd.last_produce_idx = tx_q->tpd.produce_idx;
 	hw_tpd = EMAC_TPD(tx_q, adpt->tpd_size, tx_q->tpd.produce_idx);
 
-	if (++tx_q->tpd.produce_idx == tx_q->tpd.count)
+	अगर (++tx_q->tpd.produce_idx == tx_q->tpd.count)
 		tx_q->tpd.produce_idx = 0;
 
 	*(hw_tpd++) = tpd->word[0];
 	*(hw_tpd++) = tpd->word[1];
 	*(hw_tpd++) = tpd->word[2];
 	*hw_tpd = tpd->word[3];
-}
+पूर्ण
 
-/* Mark the last transmit descriptor as such (for the transmit packet) */
-static void emac_tx_tpd_mark_last(struct emac_adapter *adpt,
-				  struct emac_tx_queue *tx_q)
-{
+/* Mark the last transmit descriptor as such (क्रम the transmit packet) */
+अटल व्योम emac_tx_tpd_mark_last(काष्ठा emac_adapter *adpt,
+				  काष्ठा emac_tx_queue *tx_q)
+अणु
 	u32 *hw_tpd =
 		EMAC_TPD(tx_q, adpt->tpd_size, tx_q->tpd.last_produce_idx);
-	u32 tmp_tpd;
+	u32 पंचांगp_tpd;
 
-	tmp_tpd = *(hw_tpd + 1);
-	tmp_tpd |= EMAC_TPD_LAST_FRAGMENT;
-	*(hw_tpd + 1) = tmp_tpd;
-}
+	पंचांगp_tpd = *(hw_tpd + 1);
+	पंचांगp_tpd |= EMAC_TPD_LAST_FRAGMENT;
+	*(hw_tpd + 1) = पंचांगp_tpd;
+पूर्ण
 
-static void emac_rx_rfd_clean(struct emac_rx_queue *rx_q, struct emac_rrd *rrd)
-{
-	struct emac_buffer *rfbuf = rx_q->rfd.rfbuff;
+अटल व्योम emac_rx_rfd_clean(काष्ठा emac_rx_queue *rx_q, काष्ठा emac_rrd *rrd)
+अणु
+	काष्ठा emac_buffer *rfbuf = rx_q->rfd.rfbuff;
 	u32 consume_idx = RRD_SI(rrd);
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < RRD_NOR(rrd); i++) {
-		rfbuf[consume_idx].skb = NULL;
-		if (++consume_idx == rx_q->rfd.count)
+	क्रम (i = 0; i < RRD_NOR(rrd); i++) अणु
+		rfbuf[consume_idx].skb = शून्य;
+		अगर (++consume_idx == rx_q->rfd.count)
 			consume_idx = 0;
-	}
+	पूर्ण
 
 	rx_q->rfd.consume_idx = consume_idx;
 	rx_q->rfd.process_idx = consume_idx;
-}
+पूर्ण
 
 /* Push the received skb to upper layers */
-static void emac_receive_skb(struct emac_rx_queue *rx_q,
-			     struct sk_buff *skb,
+अटल व्योम emac_receive_skb(काष्ठा emac_rx_queue *rx_q,
+			     काष्ठा sk_buff *skb,
 			     u16 vlan_tag, bool vlan_flag)
-{
-	if (vlan_flag) {
+अणु
+	अगर (vlan_flag) अणु
 		u16 vlan;
 
 		EMAC_TAG_TO_VLAN(vlan_tag, vlan);
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan);
-	}
+	पूर्ण
 
 	napi_gro_receive(&rx_q->napi, skb);
-}
+पूर्ण
 
 /* Process receive event */
-void emac_mac_rx_process(struct emac_adapter *adpt, struct emac_rx_queue *rx_q,
-			 int *num_pkts, int max_pkts)
-{
+व्योम emac_mac_rx_process(काष्ठा emac_adapter *adpt, काष्ठा emac_rx_queue *rx_q,
+			 पूर्णांक *num_pkts, पूर्णांक max_pkts)
+अणु
 	u32 proc_idx, hw_consume_idx, num_consume_pkts;
-	struct net_device *netdev  = adpt->netdev;
-	struct emac_buffer *rfbuf;
-	unsigned int count = 0;
-	struct emac_rrd rrd;
-	struct sk_buff *skb;
+	काष्ठा net_device *netdev  = adpt->netdev;
+	काष्ठा emac_buffer *rfbuf;
+	अचिन्हित पूर्णांक count = 0;
+	काष्ठा emac_rrd rrd;
+	काष्ठा sk_buff *skb;
 	u32 reg;
 
-	reg = readl_relaxed(adpt->base + rx_q->consume_reg);
+	reg = पढ़ोl_relaxed(adpt->base + rx_q->consume_reg);
 
-	hw_consume_idx = (reg & rx_q->consume_mask) >> rx_q->consume_shift;
+	hw_consume_idx = (reg & rx_q->consume_mask) >> rx_q->consume_shअगरt;
 	num_consume_pkts = (hw_consume_idx >= rx_q->rrd.consume_idx) ?
 		(hw_consume_idx -  rx_q->rrd.consume_idx) :
 		(hw_consume_idx + rx_q->rrd.count - rx_q->rrd.consume_idx);
 
-	do {
-		if (!num_consume_pkts)
-			break;
+	करो अणु
+		अगर (!num_consume_pkts)
+			अवरोध;
 
-		if (!emac_rx_process_rrd(adpt, rx_q, &rrd))
-			break;
+		अगर (!emac_rx_process_rrd(adpt, rx_q, &rrd))
+			अवरोध;
 
-		if (likely(RRD_NOR(&rrd) == 1)) {
+		अगर (likely(RRD_NOR(&rrd) == 1)) अणु
 			/* good receive */
 			rfbuf = GET_RFD_BUFFER(rx_q, RRD_SI(&rrd));
 			dma_unmap_single(adpt->netdev->dev.parent,
@@ -1117,11 +1118,11 @@ void emac_mac_rx_process(struct emac_adapter *adpt, struct emac_rx_queue *rx_q,
 					 DMA_FROM_DEVICE);
 			rfbuf->dma_addr = 0;
 			skb = rfbuf->skb;
-		} else {
+		पूर्ण अन्यथा अणु
 			netdev_err(adpt->netdev,
 				   "error: multi-RFD not support yet!\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		emac_rx_rfd_clean(rx_q, &rrd);
 		num_consume_pkts--;
 		count++;
@@ -1130,96 +1131,96 @@ void emac_mac_rx_process(struct emac_adapter *adpt, struct emac_rx_queue *rx_q,
 		 * with DF set are marked as error), drop packets based on the
 		 * error mask rather than the summary bit (ignoring L4F errors)
 		 */
-		if (rrd.word[EMAC_RRD_STATS_DW_IDX] & EMAC_RRD_ERROR) {
-			netif_dbg(adpt, rx_status, adpt->netdev,
+		अगर (rrd.word[EMAC_RRD_STATS_DW_IDX] & EMAC_RRD_ERROR) अणु
+			netअगर_dbg(adpt, rx_status, adpt->netdev,
 				  "Drop error packet[RRD: 0x%x:0x%x:0x%x:0x%x]\n",
 				  rrd.word[0], rrd.word[1],
 				  rrd.word[2], rrd.word[3]);
 
-			dev_kfree_skb(skb);
-			continue;
-		}
+			dev_kमुक्त_skb(skb);
+			जारी;
+		पूर्ण
 
 		skb_put(skb, RRD_PKT_SIZE(&rrd) - ETH_FCS_LEN);
 		skb->dev = netdev;
 		skb->protocol = eth_type_trans(skb, skb->dev);
-		if (netdev->features & NETIF_F_RXCSUM)
+		अगर (netdev->features & NETIF_F_RXCSUM)
 			skb->ip_summed = RRD_L4F(&rrd) ?
 					  CHECKSUM_NONE : CHECKSUM_UNNECESSARY;
-		else
-			skb_checksum_none_assert(skb);
+		अन्यथा
+			skb_checksum_none_निश्चित(skb);
 
 		emac_receive_skb(rx_q, skb, (u16)RRD_CVALN_TAG(&rrd),
 				 (bool)RRD_CVTAG(&rrd));
 
 		(*num_pkts)++;
-	} while (*num_pkts < max_pkts);
+	पूर्ण जबतक (*num_pkts < max_pkts);
 
-	if (count) {
+	अगर (count) अणु
 		proc_idx = (rx_q->rfd.process_idx << rx_q->process_shft) &
 				rx_q->process_mask;
 		emac_reg_update32(adpt->base + rx_q->process_reg,
 				  rx_q->process_mask, proc_idx);
 		emac_mac_rx_descs_refill(adpt, rx_q);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* get the number of free transmit descriptors */
-static unsigned int emac_tpd_num_free_descs(struct emac_tx_queue *tx_q)
-{
+/* get the number of मुक्त transmit descriptors */
+अटल अचिन्हित पूर्णांक emac_tpd_num_मुक्त_descs(काष्ठा emac_tx_queue *tx_q)
+अणु
 	u32 produce_idx = tx_q->tpd.produce_idx;
 	u32 consume_idx = tx_q->tpd.consume_idx;
 
-	return (consume_idx > produce_idx) ?
+	वापस (consume_idx > produce_idx) ?
 		(consume_idx - produce_idx - 1) :
 		(tx_q->tpd.count + consume_idx - produce_idx - 1);
-}
+पूर्ण
 
 /* Process transmit event */
-void emac_mac_tx_process(struct emac_adapter *adpt, struct emac_tx_queue *tx_q)
-{
-	u32 reg = readl_relaxed(adpt->base + tx_q->consume_reg);
+व्योम emac_mac_tx_process(काष्ठा emac_adapter *adpt, काष्ठा emac_tx_queue *tx_q)
+अणु
+	u32 reg = पढ़ोl_relaxed(adpt->base + tx_q->consume_reg);
 	u32 hw_consume_idx, pkts_compl = 0, bytes_compl = 0;
-	struct emac_buffer *tpbuf;
+	काष्ठा emac_buffer *tpbuf;
 
-	hw_consume_idx = (reg & tx_q->consume_mask) >> tx_q->consume_shift;
+	hw_consume_idx = (reg & tx_q->consume_mask) >> tx_q->consume_shअगरt;
 
-	while (tx_q->tpd.consume_idx != hw_consume_idx) {
+	जबतक (tx_q->tpd.consume_idx != hw_consume_idx) अणु
 		tpbuf = GET_TPD_BUFFER(tx_q, tx_q->tpd.consume_idx);
-		if (tpbuf->dma_addr) {
+		अगर (tpbuf->dma_addr) अणु
 			dma_unmap_page(adpt->netdev->dev.parent,
 				       tpbuf->dma_addr, tpbuf->length,
 				       DMA_TO_DEVICE);
 			tpbuf->dma_addr = 0;
-		}
+		पूर्ण
 
-		if (tpbuf->skb) {
+		अगर (tpbuf->skb) अणु
 			pkts_compl++;
 			bytes_compl += tpbuf->skb->len;
 			dev_consume_skb_irq(tpbuf->skb);
-			tpbuf->skb = NULL;
-		}
+			tpbuf->skb = शून्य;
+		पूर्ण
 
-		if (++tx_q->tpd.consume_idx == tx_q->tpd.count)
+		अगर (++tx_q->tpd.consume_idx == tx_q->tpd.count)
 			tx_q->tpd.consume_idx = 0;
-	}
+	पूर्ण
 
 	netdev_completed_queue(adpt->netdev, pkts_compl, bytes_compl);
 
-	if (netif_queue_stopped(adpt->netdev))
-		if (emac_tpd_num_free_descs(tx_q) > (MAX_SKB_FRAGS + 1))
-			netif_wake_queue(adpt->netdev);
-}
+	अगर (netअगर_queue_stopped(adpt->netdev))
+		अगर (emac_tpd_num_मुक्त_descs(tx_q) > (MAX_SKB_FRAGS + 1))
+			netअगर_wake_queue(adpt->netdev);
+पूर्ण
 
-/* Initialize all queue data structures */
-void emac_mac_rx_tx_ring_init_all(struct platform_device *pdev,
-				  struct emac_adapter *adpt)
-{
+/* Initialize all queue data काष्ठाures */
+व्योम emac_mac_rx_tx_ring_init_all(काष्ठा platक्रमm_device *pdev,
+				  काष्ठा emac_adapter *adpt)
+अणु
 	adpt->rx_q.netdev = adpt->netdev;
 
 	adpt->rx_q.produce_reg  = EMAC_MAILBOX_0;
 	adpt->rx_q.produce_mask = RFD0_PROD_IDX_BMSK;
-	adpt->rx_q.produce_shift = RFD0_PROD_IDX_SHFT;
+	adpt->rx_q.produce_shअगरt = RFD0_PROD_IDX_SHFT;
 
 	adpt->rx_q.process_reg  = EMAC_MAILBOX_0;
 	adpt->rx_q.process_mask = RFD0_PROC_IDX_BMSK;
@@ -1227,66 +1228,66 @@ void emac_mac_rx_tx_ring_init_all(struct platform_device *pdev,
 
 	adpt->rx_q.consume_reg  = EMAC_MAILBOX_3;
 	adpt->rx_q.consume_mask = RFD0_CONS_IDX_BMSK;
-	adpt->rx_q.consume_shift = RFD0_CONS_IDX_SHFT;
+	adpt->rx_q.consume_shअगरt = RFD0_CONS_IDX_SHFT;
 
 	adpt->rx_q.irq          = &adpt->irq;
-	adpt->rx_q.intr         = adpt->irq.mask & ISR_RX_PKT;
+	adpt->rx_q.पूर्णांकr         = adpt->irq.mask & ISR_RX_PKT;
 
 	adpt->tx_q.produce_reg  = EMAC_MAILBOX_15;
 	adpt->tx_q.produce_mask = NTPD_PROD_IDX_BMSK;
-	adpt->tx_q.produce_shift = NTPD_PROD_IDX_SHFT;
+	adpt->tx_q.produce_shअगरt = NTPD_PROD_IDX_SHFT;
 
 	adpt->tx_q.consume_reg  = EMAC_MAILBOX_2;
 	adpt->tx_q.consume_mask = NTPD_CONS_IDX_BMSK;
-	adpt->tx_q.consume_shift = NTPD_CONS_IDX_SHFT;
-}
+	adpt->tx_q.consume_shअगरt = NTPD_CONS_IDX_SHFT;
+पूर्ण
 
-/* Fill up transmit descriptors with TSO and Checksum offload information */
-static int emac_tso_csum(struct emac_adapter *adpt,
-			 struct emac_tx_queue *tx_q,
-			 struct sk_buff *skb,
-			 struct emac_tpd *tpd)
-{
-	unsigned int hdr_len;
-	int ret;
+/* Fill up transmit descriptors with TSO and Checksum offload inक्रमmation */
+अटल पूर्णांक emac_tso_csum(काष्ठा emac_adapter *adpt,
+			 काष्ठा emac_tx_queue *tx_q,
+			 काष्ठा sk_buff *skb,
+			 काष्ठा emac_tpd *tpd)
+अणु
+	अचिन्हित पूर्णांक hdr_len;
+	पूर्णांक ret;
 
-	if (skb_is_gso(skb)) {
-		if (skb_header_cloned(skb)) {
+	अगर (skb_is_gso(skb)) अणु
+		अगर (skb_header_cloned(skb)) अणु
 			ret = pskb_expand_head(skb, 0, 0, GFP_ATOMIC);
-			if (unlikely(ret))
-				return ret;
-		}
+			अगर (unlikely(ret))
+				वापस ret;
+		पूर्ण
 
-		if (skb->protocol == htons(ETH_P_IP)) {
-			u32 pkt_len = ((unsigned char *)ip_hdr(skb) - skb->data)
+		अगर (skb->protocol == htons(ETH_P_IP)) अणु
+			u32 pkt_len = ((अचिन्हित अक्षर *)ip_hdr(skb) - skb->data)
 				       + ntohs(ip_hdr(skb)->tot_len);
-			if (skb->len > pkt_len)
+			अगर (skb->len > pkt_len)
 				pskb_trim(skb, pkt_len);
-		}
+		पूर्ण
 
 		hdr_len = skb_transport_offset(skb) + tcp_hdrlen(skb);
-		if (unlikely(skb->len == hdr_len)) {
-			/* we only need to do csum */
-			netif_warn(adpt, tx_err, adpt->netdev,
+		अगर (unlikely(skb->len == hdr_len)) अणु
+			/* we only need to करो csum */
+			netअगर_warn(adpt, tx_err, adpt->netdev,
 				   "tso not needed for packet with 0 data\n");
-			goto do_csum;
-		}
+			जाओ करो_csum;
+		पूर्ण
 
-		if (skb_shinfo(skb)->gso_type & SKB_GSO_TCPV4) {
+		अगर (skb_shinfo(skb)->gso_type & SKB_GSO_TCPV4) अणु
 			ip_hdr(skb)->check = 0;
 			tcp_hdr(skb)->check =
 				~csum_tcpudp_magic(ip_hdr(skb)->saddr,
 						   ip_hdr(skb)->daddr,
 						   0, IPPROTO_TCP, 0);
 			TPD_IPV4_SET(tpd, 1);
-		}
+		पूर्ण
 
-		if (skb_shinfo(skb)->gso_type & SKB_GSO_TCPV6) {
+		अगर (skb_shinfo(skb)->gso_type & SKB_GSO_TCPV6) अणु
 			/* ipv6 tso need an extra tpd */
-			struct emac_tpd extra_tpd;
+			काष्ठा emac_tpd extra_tpd;
 
-			memset(tpd, 0, sizeof(*tpd));
-			memset(&extra_tpd, 0, sizeof(extra_tpd));
+			स_रखो(tpd, 0, माप(*tpd));
+			स_रखो(&extra_tpd, 0, माप(extra_tpd));
 
 			tcp_v6_gso_csum_prep(skb);
 
@@ -1295,50 +1296,50 @@ static int emac_tso_csum(struct emac_adapter *adpt,
 			TPD_LSOV_SET(&extra_tpd, 1);
 			emac_tx_tpd_create(adpt, tx_q, &extra_tpd);
 			TPD_LSOV_SET(tpd, 1);
-		}
+		पूर्ण
 
 		TPD_LSO_SET(tpd, 1);
 		TPD_TCPHDR_OFFSET_SET(tpd, skb_transport_offset(skb));
 		TPD_MSS_SET(tpd, skb_shinfo(skb)->gso_size);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-do_csum:
-	if (likely(skb->ip_summed == CHECKSUM_PARTIAL)) {
-		unsigned int css, cso;
+करो_csum:
+	अगर (likely(skb->ip_summed == CHECKSUM_PARTIAL)) अणु
+		अचिन्हित पूर्णांक css, cso;
 
 		cso = skb_transport_offset(skb);
-		if (unlikely(cso & 0x1)) {
+		अगर (unlikely(cso & 0x1)) अणु
 			netdev_err(adpt->netdev,
 				   "error: payload offset should be even\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		css = cso + skb->csum_offset;
 
 		TPD_PAYLOAD_OFFSET_SET(tpd, cso >> 1);
 		TPD_CXSUM_OFFSET_SET(tpd, css >> 1);
 		TPD_CSX_SET(tpd, 1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Fill up transmit descriptors */
-static void emac_tx_fill_tpd(struct emac_adapter *adpt,
-			     struct emac_tx_queue *tx_q, struct sk_buff *skb,
-			     struct emac_tpd *tpd)
-{
-	unsigned int nr_frags = skb_shinfo(skb)->nr_frags;
-	unsigned int first = tx_q->tpd.produce_idx;
-	unsigned int len = skb_headlen(skb);
-	struct emac_buffer *tpbuf = NULL;
-	unsigned int mapped_len = 0;
-	unsigned int i;
-	int count = 0;
-	int ret;
+अटल व्योम emac_tx_fill_tpd(काष्ठा emac_adapter *adpt,
+			     काष्ठा emac_tx_queue *tx_q, काष्ठा sk_buff *skb,
+			     काष्ठा emac_tpd *tpd)
+अणु
+	अचिन्हित पूर्णांक nr_frags = skb_shinfo(skb)->nr_frags;
+	अचिन्हित पूर्णांक first = tx_q->tpd.produce_idx;
+	अचिन्हित पूर्णांक len = skb_headlen(skb);
+	काष्ठा emac_buffer *tpbuf = शून्य;
+	अचिन्हित पूर्णांक mapped_len = 0;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक count = 0;
+	पूर्णांक ret;
 
-	/* if Large Segment Offload is (in TCP Segmentation Offload struct) */
-	if (TPD_LSO(tpd)) {
+	/* अगर Large Segment Offload is (in TCP Segmentation Offload काष्ठा) */
+	अगर (TPD_LSO(tpd)) अणु
 		mapped_len = skb_transport_offset(skb) + tcp_hdrlen(skb);
 
 		tpbuf = GET_TPD_BUFFER(tx_q, tx_q->tpd.produce_idx);
@@ -1350,17 +1351,17 @@ static void emac_tx_fill_tpd(struct emac_adapter *adpt,
 					       DMA_TO_DEVICE);
 		ret = dma_mapping_error(adpt->netdev->dev.parent,
 					tpbuf->dma_addr);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
 		TPD_BUFFER_ADDR_L_SET(tpd, lower_32_bits(tpbuf->dma_addr));
 		TPD_BUFFER_ADDR_H_SET(tpd, upper_32_bits(tpbuf->dma_addr));
 		TPD_BUF_LEN_SET(tpd, tpbuf->length);
 		emac_tx_tpd_create(adpt, tx_q, tpd);
 		count++;
-	}
+	पूर्ण
 
-	if (mapped_len < len) {
+	अगर (mapped_len < len) अणु
 		tpbuf = GET_TPD_BUFFER(tx_q, tx_q->tpd.produce_idx);
 		tpbuf->length = len - mapped_len;
 		tpbuf->dma_addr = dma_map_page(adpt->netdev->dev.parent,
@@ -1371,17 +1372,17 @@ static void emac_tx_fill_tpd(struct emac_adapter *adpt,
 					       tpbuf->length, DMA_TO_DEVICE);
 		ret = dma_mapping_error(adpt->netdev->dev.parent,
 					tpbuf->dma_addr);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
 		TPD_BUFFER_ADDR_L_SET(tpd, lower_32_bits(tpbuf->dma_addr));
 		TPD_BUFFER_ADDR_H_SET(tpd, upper_32_bits(tpbuf->dma_addr));
 		TPD_BUF_LEN_SET(tpd, tpbuf->length);
 		emac_tx_tpd_create(adpt, tx_q, tpd);
 		count++;
-	}
+	पूर्ण
 
-	for (i = 0; i < nr_frags; i++) {
+	क्रम (i = 0; i < nr_frags; i++) अणु
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 		tpbuf = GET_TPD_BUFFER(tx_q, tx_q->tpd.produce_idx);
@@ -1391,70 +1392,70 @@ static void emac_tx_fill_tpd(struct emac_adapter *adpt,
 						   DMA_TO_DEVICE);
 		ret = dma_mapping_error(adpt->netdev->dev.parent,
 					tpbuf->dma_addr);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
 		TPD_BUFFER_ADDR_L_SET(tpd, lower_32_bits(tpbuf->dma_addr));
 		TPD_BUFFER_ADDR_H_SET(tpd, upper_32_bits(tpbuf->dma_addr));
 		TPD_BUF_LEN_SET(tpd, tpbuf->length);
 		emac_tx_tpd_create(adpt, tx_q, tpd);
 		count++;
-	}
+	पूर्ण
 
 	/* The last tpd */
 	wmb();
 	emac_tx_tpd_mark_last(adpt, tx_q);
 
 	/* The last buffer info contain the skb address,
-	 * so it will be freed after unmap
+	 * so it will be मुक्तd after unmap
 	 */
 	tpbuf->skb = skb;
 
-	return;
+	वापस;
 
 error:
-	/* One of the memory mappings failed, so undo everything */
+	/* One of the memory mappings failed, so unकरो everything */
 	tx_q->tpd.produce_idx = first;
 
-	while (count--) {
+	जबतक (count--) अणु
 		tpbuf = GET_TPD_BUFFER(tx_q, first);
 		dma_unmap_page(adpt->netdev->dev.parent, tpbuf->dma_addr,
 			       tpbuf->length, DMA_TO_DEVICE);
 		tpbuf->dma_addr = 0;
 		tpbuf->length = 0;
 
-		if (++first == tx_q->tpd.count)
+		अगर (++first == tx_q->tpd.count)
 			first = 0;
-	}
+	पूर्ण
 
-	dev_kfree_skb(skb);
-}
+	dev_kमुक्त_skb(skb);
+पूर्ण
 
-/* Transmit the packet using specified transmit queue */
-netdev_tx_t emac_mac_tx_buf_send(struct emac_adapter *adpt,
-				 struct emac_tx_queue *tx_q,
-				 struct sk_buff *skb)
-{
-	struct emac_tpd tpd;
+/* Transmit the packet using specअगरied transmit queue */
+netdev_tx_t emac_mac_tx_buf_send(काष्ठा emac_adapter *adpt,
+				 काष्ठा emac_tx_queue *tx_q,
+				 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा emac_tpd tpd;
 	u32 prod_idx;
-	int len;
+	पूर्णांक len;
 
-	memset(&tpd, 0, sizeof(tpd));
+	स_रखो(&tpd, 0, माप(tpd));
 
-	if (emac_tso_csum(adpt, tx_q, skb, &tpd) != 0) {
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+	अगर (emac_tso_csum(adpt, tx_q, skb, &tpd) != 0) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	if (skb_vlan_tag_present(skb)) {
+	अगर (skb_vlan_tag_present(skb)) अणु
 		u16 tag;
 
 		EMAC_VLAN_TO_TAG(skb_vlan_tag_get(skb), tag);
 		TPD_CVLAN_TAG_SET(&tpd, tag);
 		TPD_INSTC_SET(&tpd, 1);
-	}
+	पूर्ण
 
-	if (skb_network_offset(skb) != ETH_HLEN)
+	अगर (skb_network_offset(skb) != ETH_HLEN)
 		TPD_TYP_SET(&tpd, 1);
 
 	len = skb->len;
@@ -1462,19 +1463,19 @@ netdev_tx_t emac_mac_tx_buf_send(struct emac_adapter *adpt,
 
 	netdev_sent_queue(adpt->netdev, len);
 
-	/* Make sure the are enough free descriptors to hold one
-	 * maximum-sized SKB.  We need one desc for each fragment,
-	 * one for the checksum (emac_tso_csum), one for TSO, and
-	 * and one for the SKB header.
+	/* Make sure the are enough मुक्त descriptors to hold one
+	 * maximum-sized SKB.  We need one desc क्रम each fragment,
+	 * one क्रम the checksum (emac_tso_csum), one क्रम TSO, and
+	 * and one क्रम the SKB header.
 	 */
-	if (emac_tpd_num_free_descs(tx_q) < (MAX_SKB_FRAGS + 3))
-		netif_stop_queue(adpt->netdev);
+	अगर (emac_tpd_num_मुक्त_descs(tx_q) < (MAX_SKB_FRAGS + 3))
+		netअगर_stop_queue(adpt->netdev);
 
 	/* update produce idx */
-	prod_idx = (tx_q->tpd.produce_idx << tx_q->produce_shift) &
+	prod_idx = (tx_q->tpd.produce_idx << tx_q->produce_shअगरt) &
 		    tx_q->produce_mask;
 	emac_reg_update32(adpt->base + tx_q->produce_reg,
 			  tx_q->produce_mask, prod_idx);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण

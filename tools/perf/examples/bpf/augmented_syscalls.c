@@ -1,168 +1,169 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Augment syscalls with the contents of the pointer arguments.
+ * Augment syscalls with the contents of the poपूर्णांकer arguments.
  *
  * Test it with:
  *
  * perf trace -e tools/perf/examples/bpf/augmented_syscalls.c cat /etc/passwd > /dev/null
  *
- * It'll catch some openat syscalls related to the dynamic linked and
- * the last one should be the one for '/etc/passwd'.
+ * It'll catch some खोलोat syscalls related to the dynamic linked and
+ * the last one should be the one क्रम '/etc/passwd'.
  *
- * This matches what is marshalled into the raw_syscall:sys_enter payload
- * expected by the 'perf trace' beautifiers, and can be used by them, that will
- * check if perf_sample->raw_data is more than what is expected for each
- * syscalls:sys_{enter,exit}_SYSCALL tracepoint, uing the extra data as the
- * contents of pointer arguments.
+ * This matches what is marshalled पूर्णांकo the raw_syscall:sys_enter payload
+ * expected by the 'perf trace' beautअगरiers, and can be used by them, that will
+ * check अगर perf_sample->raw_data is more than what is expected क्रम each
+ * syscalls:sys_अणुenter,निकासपूर्ण_SYSCALL tracepoपूर्णांक, uing the extra data as the
+ * contents of poपूर्णांकer arguments.
  */
 
-#include <stdio.h>
-#include <linux/socket.h>
+#समावेश <मानकपन.स>
+#समावेश <linux/socket.h>
 
 /* bpf-output associated map */
-bpf_map(__augmented_syscalls__, PERF_EVENT_ARRAY, int, u32, __NR_CPUS__);
+bpf_map(__augmented_syscalls__, PERF_EVENT_ARRAY, पूर्णांक, u32, __NR_CPUS__);
 
-struct syscall_exit_args {
-	unsigned long long common_tp_fields;
-	long		   syscall_nr;
-	long		   ret;
-};
+काष्ठा syscall_निकास_args अणु
+	अचिन्हित दीर्घ दीर्घ common_tp_fields;
+	दीर्घ		   syscall_nr;
+	दीर्घ		   ret;
+पूर्ण;
 
-struct augmented_filename {
-	unsigned int	size;
-	int		reserved;
-	char		value[256];
-};
+काष्ठा augmented_filename अणु
+	अचिन्हित पूर्णांक	size;
+	पूर्णांक		reserved;
+	अक्षर		value[256];
+पूर्ण;
 
-#define augmented_filename_syscall(syscall)							\
-struct augmented_enter_##syscall##_args {			 				\
-	struct syscall_enter_##syscall##_args	args;				 		\
-	struct augmented_filename		filename;				 	\
-};												\
-int syscall_enter(syscall)(struct syscall_enter_##syscall##_args *args)				\
-{												\
-	struct augmented_enter_##syscall##_args augmented_args = { .filename.reserved = 0, }; 	\
-	unsigned int len = sizeof(augmented_args);						\
-	probe_read(&augmented_args.args, sizeof(augmented_args.args), args);			\
-	augmented_args.filename.size = probe_read_str(&augmented_args.filename.value, 		\
-						      sizeof(augmented_args.filename.value), 	\
+#घोषणा augmented_filename_syscall(syscall)							\
+काष्ठा augmented_enter_##syscall##_args अणु			 				\
+	काष्ठा syscall_enter_##syscall##_args	args;				 		\
+	काष्ठा augmented_filename		filename;				 	\
+पूर्ण;												\
+पूर्णांक syscall_enter(syscall)(काष्ठा syscall_enter_##syscall##_args *args)				\
+अणु												\
+	काष्ठा augmented_enter_##syscall##_args augmented_args = अणु .filename.reserved = 0, पूर्ण; 	\
+	अचिन्हित पूर्णांक len = माप(augmented_args);						\
+	probe_पढ़ो(&augmented_args.args, माप(augmented_args.args), args);			\
+	augmented_args.filename.size = probe_पढ़ो_str(&augmented_args.filename.value, 		\
+						      माप(augmented_args.filename.value), 	\
 						      args->filename_ptr); 			\
-	if (augmented_args.filename.size < sizeof(augmented_args.filename.value)) {		\
-		len -= sizeof(augmented_args.filename.value) - augmented_args.filename.size;	\
-		len &= sizeof(augmented_args.filename.value) - 1;				\
-	}											\
-	/* If perf_event_output fails, return non-zero so that it gets recorded unaugmented */	\
-	return perf_event_output(args, &__augmented_syscalls__, BPF_F_CURRENT_CPU, 		\
+	अगर (augmented_args.filename.size < माप(augmented_args.filename.value)) अणु		\
+		len -= माप(augmented_args.filename.value) - augmented_args.filename.size;	\
+		len &= माप(augmented_args.filename.value) - 1;				\
+	पूर्ण											\
+	/* If perf_event_output fails, वापस non-zero so that it माला_लो recorded unaugmented */	\
+	वापस perf_event_output(args, &__augmented_syscalls__, BPF_F_CURRENT_CPU, 		\
 				 &augmented_args, len);						\
-}												\
-int syscall_exit(syscall)(struct syscall_exit_args *args)					\
-{												\
-       return 1; /* 0 as soon as we start copying data returned by the kernel, e.g. 'read' */	\
-}
+पूर्ण												\
+पूर्णांक syscall_निकास(syscall)(काष्ठा syscall_निकास_args *args)					\
+अणु												\
+       वापस 1; /* 0 as soon as we start copying data वापसed by the kernel, e.g. 'read' */	\
+पूर्ण
 
-struct syscall_enter_openat_args {
-	unsigned long long common_tp_fields;
-	long		   syscall_nr;
-	long		   dfd;
-	char		   *filename_ptr;
-	long		   flags;
-	long		   mode;
-};
+काष्ठा syscall_enter_खोलोat_args अणु
+	अचिन्हित दीर्घ दीर्घ common_tp_fields;
+	दीर्घ		   syscall_nr;
+	दीर्घ		   dfd;
+	अक्षर		   *filename_ptr;
+	दीर्घ		   flags;
+	दीर्घ		   mode;
+पूर्ण;
 
-augmented_filename_syscall(openat);
+augmented_filename_syscall(खोलोat);
 
-struct syscall_enter_open_args {
-	unsigned long long common_tp_fields;
-	long		   syscall_nr;
-	char		   *filename_ptr;
-	long		   flags;
-	long		   mode;
-};
+काष्ठा syscall_enter_खोलो_args अणु
+	अचिन्हित दीर्घ दीर्घ common_tp_fields;
+	दीर्घ		   syscall_nr;
+	अक्षर		   *filename_ptr;
+	दीर्घ		   flags;
+	दीर्घ		   mode;
+पूर्ण;
 
-augmented_filename_syscall(open);
+augmented_filename_syscall(खोलो);
 
-struct syscall_enter_inotify_add_watch_args {
-	unsigned long long common_tp_fields;
-	long		   syscall_nr;
-	long		   fd;
-	char		   *filename_ptr;
-	long		   mask;
-};
+काष्ठा syscall_enter_inotअगरy_add_watch_args अणु
+	अचिन्हित दीर्घ दीर्घ common_tp_fields;
+	दीर्घ		   syscall_nr;
+	दीर्घ		   fd;
+	अक्षर		   *filename_ptr;
+	दीर्घ		   mask;
+पूर्ण;
 
-augmented_filename_syscall(inotify_add_watch);
+augmented_filename_syscall(inotअगरy_add_watch);
 
-struct statbuf;
+काष्ठा statbuf;
 
-struct syscall_enter_newstat_args {
-	unsigned long long common_tp_fields;
-	long		   syscall_nr;
-	char		   *filename_ptr;
-	struct stat	   *statbuf;
-};
+काष्ठा syscall_enter_newstat_args अणु
+	अचिन्हित दीर्घ दीर्घ common_tp_fields;
+	दीर्घ		   syscall_nr;
+	अक्षर		   *filename_ptr;
+	काष्ठा stat	   *statbuf;
+पूर्ण;
 
 augmented_filename_syscall(newstat);
 
-#ifndef _K_SS_MAXSIZE
-#define _K_SS_MAXSIZE 128
-#endif
+#अगर_अघोषित _K_SS_MAXSIZE
+#घोषणा _K_SS_MAXSIZE 128
+#पूर्ण_अगर
 
-#define augmented_sockaddr_syscall(syscall)						\
-struct augmented_enter_##syscall##_args {			 				\
-	struct syscall_enter_##syscall##_args	args;				 		\
-	struct sockaddr_storage			addr;						\
-};												\
-int syscall_enter(syscall)(struct syscall_enter_##syscall##_args *args)				\
-{												\
-	struct augmented_enter_##syscall##_args augmented_args;				 	\
-	unsigned long addrlen = sizeof(augmented_args.addr);					\
-	probe_read(&augmented_args.args, sizeof(augmented_args.args), args);			\
+#घोषणा augmented_sockaddr_syscall(syscall)						\
+काष्ठा augmented_enter_##syscall##_args अणु			 				\
+	काष्ठा syscall_enter_##syscall##_args	args;				 		\
+	काष्ठा sockaddr_storage			addr;						\
+पूर्ण;												\
+पूर्णांक syscall_enter(syscall)(काष्ठा syscall_enter_##syscall##_args *args)				\
+अणु												\
+	काष्ठा augmented_enter_##syscall##_args augmented_args;				 	\
+	अचिन्हित दीर्घ addrlen = माप(augmented_args.addr);					\
+	probe_पढ़ो(&augmented_args.args, माप(augmented_args.args), args);			\
 /* FIXME_CLANG_OPTIMIZATION_THAT_ACCESSES_USER_CONTROLLED_ADDRLEN_DESPITE_THIS_CHECK */		\
-/*	if (addrlen > augmented_args.args.addrlen)				     */		\
+/*	अगर (addrlen > augmented_args.args.addrlen)				     */		\
 /*		addrlen = augmented_args.args.addrlen;				     */		\
 /*										     */		\
-	probe_read(&augmented_args.addr, addrlen, args->addr_ptr); 				\
-	/* If perf_event_output fails, return non-zero so that it gets recorded unaugmented */	\
-	return perf_event_output(args, &__augmented_syscalls__, BPF_F_CURRENT_CPU, 		\
+	probe_पढ़ो(&augmented_args.addr, addrlen, args->addr_ptr); 				\
+	/* If perf_event_output fails, वापस non-zero so that it माला_लो recorded unaugmented */	\
+	वापस perf_event_output(args, &__augmented_syscalls__, BPF_F_CURRENT_CPU, 		\
 				 &augmented_args, 						\
-				sizeof(augmented_args) - sizeof(augmented_args.addr) + addrlen);\
-}												\
-int syscall_exit(syscall)(struct syscall_exit_args *args)					\
-{												\
-       return 1; /* 0 as soon as we start copying data returned by the kernel, e.g. 'read' */	\
-}
+				माप(augmented_args) - माप(augmented_args.addr) + addrlen);\
+पूर्ण												\
+पूर्णांक syscall_निकास(syscall)(काष्ठा syscall_निकास_args *args)					\
+अणु												\
+       वापस 1; /* 0 as soon as we start copying data वापसed by the kernel, e.g. 'read' */	\
+पूर्ण
 
-struct sockaddr;
+काष्ठा sockaddr;
 
-struct syscall_enter_bind_args {
-	unsigned long long common_tp_fields;
-	long		   syscall_nr;
-	long		   fd;
-	struct sockaddr	   *addr_ptr;
-	unsigned long	   addrlen;
-};
+काष्ठा syscall_enter_bind_args अणु
+	अचिन्हित दीर्घ दीर्घ common_tp_fields;
+	दीर्घ		   syscall_nr;
+	दीर्घ		   fd;
+	काष्ठा sockaddr	   *addr_ptr;
+	अचिन्हित दीर्घ	   addrlen;
+पूर्ण;
 
 augmented_sockaddr_syscall(bind);
 
-struct syscall_enter_connect_args {
-	unsigned long long common_tp_fields;
-	long		   syscall_nr;
-	long		   fd;
-	struct sockaddr	   *addr_ptr;
-	unsigned long	   addrlen;
-};
+काष्ठा syscall_enter_connect_args अणु
+	अचिन्हित दीर्घ दीर्घ common_tp_fields;
+	दीर्घ		   syscall_nr;
+	दीर्घ		   fd;
+	काष्ठा sockaddr	   *addr_ptr;
+	अचिन्हित दीर्घ	   addrlen;
+पूर्ण;
 
 augmented_sockaddr_syscall(connect);
 
-struct syscall_enter_sendto_args {
-	unsigned long long common_tp_fields;
-	long		   syscall_nr;
-	long		   fd;
-	void		   *buff;
-	long		   len;
-	unsigned long	   flags;
-	struct sockaddr	   *addr_ptr;
-	long		   addr_len;
-};
+काष्ठा syscall_enter_sendto_args अणु
+	अचिन्हित दीर्घ दीर्घ common_tp_fields;
+	दीर्घ		   syscall_nr;
+	दीर्घ		   fd;
+	व्योम		   *buff;
+	दीर्घ		   len;
+	अचिन्हित दीर्घ	   flags;
+	काष्ठा sockaddr	   *addr_ptr;
+	दीर्घ		   addr_len;
+पूर्ण;
 
 augmented_sockaddr_syscall(sendto);
 

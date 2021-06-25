@@ -1,110 +1,111 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  * This file handles the architecture independent parts of process handling..
  */
 
-#include <linux/compat.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/ptrace.h>
-#include <linux/sched.h>
-#include <linux/sched/task.h>
-#include <linux/sched/task_stack.h>
-#include <linux/signal.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/संकेत.स>
 
-#include "kernel.h"
+#समावेश "kernel.h"
 
-asmlinkage long sparc_fork(struct pt_regs *regs)
-{
-	unsigned long orig_i1 = regs->u_regs[UREG_I1];
-	long ret;
-	struct kernel_clone_args args = {
-		.exit_signal	= SIGCHLD,
-		/* Reuse the parent's stack for the child. */
+यंत्रlinkage दीर्घ sparc_विभाजन(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ orig_i1 = regs->u_regs[UREG_I1];
+	दीर्घ ret;
+	काष्ठा kernel_clone_args args = अणु
+		.निकास_संकेत	= SIGCHLD,
+		/* Reuse the parent's stack क्रम the child. */
 		.stack		= regs->u_regs[UREG_FP],
-	};
+	पूर्ण;
 
 	ret = kernel_clone(&args);
 
-	/* If we get an error and potentially restart the system
-	 * call, we're screwed because copy_thread() clobbered
-	 * the parent's %o1.  So detect that case and restore it
+	/* If we get an error and potentially restart the प्रणाली
+	 * call, we're screwed because copy_thपढ़ो() clobbered
+	 * the parent's %o1.  So detect that हाल and restore it
 	 * here.
 	 */
-	if ((unsigned long)ret >= -ERESTART_RESTARTBLOCK)
+	अगर ((अचिन्हित दीर्घ)ret >= -ERESTART_RESTARTBLOCK)
 		regs->u_regs[UREG_I1] = orig_i1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-asmlinkage long sparc_vfork(struct pt_regs *regs)
-{
-	unsigned long orig_i1 = regs->u_regs[UREG_I1];
-	long ret;
+यंत्रlinkage दीर्घ sparc_vविभाजन(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ orig_i1 = regs->u_regs[UREG_I1];
+	दीर्घ ret;
 
-	struct kernel_clone_args args = {
+	काष्ठा kernel_clone_args args = अणु
 		.flags		= CLONE_VFORK | CLONE_VM,
-		.exit_signal	= SIGCHLD,
-		/* Reuse the parent's stack for the child. */
+		.निकास_संकेत	= SIGCHLD,
+		/* Reuse the parent's stack क्रम the child. */
 		.stack		= regs->u_regs[UREG_FP],
-	};
+	पूर्ण;
 
 	ret = kernel_clone(&args);
 
-	/* If we get an error and potentially restart the system
-	 * call, we're screwed because copy_thread() clobbered
-	 * the parent's %o1.  So detect that case and restore it
+	/* If we get an error and potentially restart the प्रणाली
+	 * call, we're screwed because copy_thपढ़ो() clobbered
+	 * the parent's %o1.  So detect that हाल and restore it
 	 * here.
 	 */
-	if ((unsigned long)ret >= -ERESTART_RESTARTBLOCK)
+	अगर ((अचिन्हित दीर्घ)ret >= -ERESTART_RESTARTBLOCK)
 		regs->u_regs[UREG_I1] = orig_i1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-asmlinkage long sparc_clone(struct pt_regs *regs)
-{
-	unsigned long orig_i1 = regs->u_regs[UREG_I1];
-	unsigned int flags = lower_32_bits(regs->u_regs[UREG_I0]);
-	long ret;
+यंत्रlinkage दीर्घ sparc_clone(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ orig_i1 = regs->u_regs[UREG_I1];
+	अचिन्हित पूर्णांक flags = lower_32_bits(regs->u_regs[UREG_I0]);
+	दीर्घ ret;
 
-	struct kernel_clone_args args = {
+	काष्ठा kernel_clone_args args = अणु
 		.flags		= (flags & ~CSIGNAL),
-		.exit_signal	= (flags & CSIGNAL),
+		.निकास_संकेत	= (flags & CSIGNAL),
 		.tls		= regs->u_regs[UREG_I3],
-	};
+	पूर्ण;
 
-#ifdef CONFIG_COMPAT
-	if (test_thread_flag(TIF_32BIT)) {
+#अगर_घोषित CONFIG_COMPAT
+	अगर (test_thपढ़ो_flag(TIF_32BIT)) अणु
 		args.pidfd	= compat_ptr(regs->u_regs[UREG_I2]);
 		args.child_tid	= compat_ptr(regs->u_regs[UREG_I4]);
 		args.parent_tid	= compat_ptr(regs->u_regs[UREG_I2]);
-	} else
-#endif
-	{
-		args.pidfd	= (int __user *)regs->u_regs[UREG_I2];
-		args.child_tid	= (int __user *)regs->u_regs[UREG_I4];
-		args.parent_tid	= (int __user *)regs->u_regs[UREG_I2];
-	}
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
+		args.pidfd	= (पूर्णांक __user *)regs->u_regs[UREG_I2];
+		args.child_tid	= (पूर्णांक __user *)regs->u_regs[UREG_I4];
+		args.parent_tid	= (पूर्णांक __user *)regs->u_regs[UREG_I2];
+	पूर्ण
 
-	/* Did userspace give setup a separate stack for the child or are we
+	/* Did userspace give setup a separate stack क्रम the child or are we
 	 * reusing the parent's?
 	 */
-	if (regs->u_regs[UREG_I1])
+	अगर (regs->u_regs[UREG_I1])
 		args.stack = regs->u_regs[UREG_I1];
-	else
+	अन्यथा
 		args.stack = regs->u_regs[UREG_FP];
 
 	ret = kernel_clone(&args);
 
-	/* If we get an error and potentially restart the system
-	 * call, we're screwed because copy_thread() clobbered
-	 * the parent's %o1.  So detect that case and restore it
+	/* If we get an error and potentially restart the प्रणाली
+	 * call, we're screwed because copy_thपढ़ो() clobbered
+	 * the parent's %o1.  So detect that हाल and restore it
 	 * here.
 	 */
-	if ((unsigned long)ret >= -ERESTART_RESTARTBLOCK)
+	अगर ((अचिन्हित दीर्घ)ret >= -ERESTART_RESTARTBLOCK)
 		regs->u_regs[UREG_I1] = orig_i1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

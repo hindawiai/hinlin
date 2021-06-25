@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * STM32 Low-Power Timer Trigger driver
  *
@@ -6,109 +7,109 @@
  *
  * Author: Fabrice Gasnier <fabrice.gasnier@st.com>.
  *
- * Inspired by Benjamin Gaignard's stm32-timer-trigger driver
+ * Inspired by Benjamin Gaignard's sपंचांग32-समयr-trigger driver
  */
 
-#include <linux/iio/timer/stm32-lptim-trigger.h>
-#include <linux/mfd/stm32-lptimer.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/iio/समयr/sपंचांग32-lptim-trigger.h>
+#समावेश <linux/mfd/sपंचांग32-lpसमयr.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
 /* List Low-Power Timer triggers */
-static const char * const stm32_lptim_triggers[] = {
+अटल स्थिर अक्षर * स्थिर sपंचांग32_lptim_triggers[] = अणु
 	LPTIM1_OUT,
 	LPTIM2_OUT,
 	LPTIM3_OUT,
-};
+पूर्ण;
 
-struct stm32_lptim_trigger {
-	struct device *dev;
-	const char *trg;
-};
+काष्ठा sपंचांग32_lptim_trigger अणु
+	काष्ठा device *dev;
+	स्थिर अक्षर *trg;
+पूर्ण;
 
-static int stm32_lptim_validate_device(struct iio_trigger *trig,
-				       struct iio_dev *indio_dev)
-{
-	if (indio_dev->modes & INDIO_HARDWARE_TRIGGERED)
-		return 0;
+अटल पूर्णांक sपंचांग32_lptim_validate_device(काष्ठा iio_trigger *trig,
+				       काष्ठा iio_dev *indio_dev)
+अणु
+	अगर (indio_dev->modes & INDIO_HARDWARE_TRIGGERED)
+		वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_trigger_ops stm32_lptim_trigger_ops = {
-	.validate_device = stm32_lptim_validate_device,
-};
+अटल स्थिर काष्ठा iio_trigger_ops sपंचांग32_lptim_trigger_ops = अणु
+	.validate_device = sपंचांग32_lptim_validate_device,
+पूर्ण;
 
 /**
- * is_stm32_lptim_trigger
+ * is_sपंचांग32_lptim_trigger
  * @trig: trigger to be checked
  *
- * return true if the trigger is a valid STM32 IIO Low-Power Timer Trigger
- * either return false
+ * वापस true अगर the trigger is a valid STM32 IIO Low-Power Timer Trigger
+ * either वापस false
  */
-bool is_stm32_lptim_trigger(struct iio_trigger *trig)
-{
-	return (trig->ops == &stm32_lptim_trigger_ops);
-}
-EXPORT_SYMBOL(is_stm32_lptim_trigger);
+bool is_sपंचांग32_lptim_trigger(काष्ठा iio_trigger *trig)
+अणु
+	वापस (trig->ops == &sपंचांग32_lptim_trigger_ops);
+पूर्ण
+EXPORT_SYMBOL(is_sपंचांग32_lptim_trigger);
 
-static int stm32_lptim_setup_trig(struct stm32_lptim_trigger *priv)
-{
-	struct iio_trigger *trig;
+अटल पूर्णांक sपंचांग32_lptim_setup_trig(काष्ठा sपंचांग32_lptim_trigger *priv)
+अणु
+	काष्ठा iio_trigger *trig;
 
 	trig = devm_iio_trigger_alloc(priv->dev, "%s", priv->trg);
-	if  (!trig)
-		return -ENOMEM;
+	अगर  (!trig)
+		वापस -ENOMEM;
 
 	trig->dev.parent = priv->dev->parent;
-	trig->ops = &stm32_lptim_trigger_ops;
+	trig->ops = &sपंचांग32_lptim_trigger_ops;
 	iio_trigger_set_drvdata(trig, priv);
 
-	return devm_iio_trigger_register(priv->dev, trig);
-}
+	वापस devm_iio_trigger_रेजिस्टर(priv->dev, trig);
+पूर्ण
 
-static int stm32_lptim_trigger_probe(struct platform_device *pdev)
-{
-	struct stm32_lptim_trigger *priv;
+अटल पूर्णांक sपंचांग32_lptim_trigger_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sपंचांग32_lptim_trigger *priv;
 	u32 index;
-	int ret;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	if (of_property_read_u32(pdev->dev.of_node, "reg", &index))
-		return -EINVAL;
+	अगर (of_property_पढ़ो_u32(pdev->dev.of_node, "reg", &index))
+		वापस -EINVAL;
 
-	if (index >= ARRAY_SIZE(stm32_lptim_triggers))
-		return -EINVAL;
+	अगर (index >= ARRAY_SIZE(sपंचांग32_lptim_triggers))
+		वापस -EINVAL;
 
 	priv->dev = &pdev->dev;
-	priv->trg = stm32_lptim_triggers[index];
+	priv->trg = sपंचांग32_lptim_triggers[index];
 
-	ret = stm32_lptim_setup_trig(priv);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_lptim_setup_trig(priv);
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id stm32_lptim_trig_of_match[] = {
-	{ .compatible = "st,stm32-lptimer-trigger", },
-	{},
-};
-MODULE_DEVICE_TABLE(of, stm32_lptim_trig_of_match);
+अटल स्थिर काष्ठा of_device_id sपंचांग32_lptim_trig_of_match[] = अणु
+	अणु .compatible = "st,stm32-lptimer-trigger", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, sपंचांग32_lptim_trig_of_match);
 
-static struct platform_driver stm32_lptim_trigger_driver = {
-	.probe = stm32_lptim_trigger_probe,
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांग32_lptim_trigger_driver = अणु
+	.probe = sपंचांग32_lptim_trigger_probe,
+	.driver = अणु
 		.name = "stm32-lptimer-trigger",
-		.of_match_table = stm32_lptim_trig_of_match,
-	},
-};
-module_platform_driver(stm32_lptim_trigger_driver);
+		.of_match_table = sपंचांग32_lptim_trig_of_match,
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sपंचांग32_lptim_trigger_driver);
 
 MODULE_AUTHOR("Fabrice Gasnier <fabrice.gasnier@st.com>");
 MODULE_ALIAS("platform:stm32-lptimer-trigger");

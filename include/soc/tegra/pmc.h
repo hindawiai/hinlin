@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2010 Google, Inc
  * Copyright (c) 2014 NVIDIA Corporation
@@ -7,66 +8,66 @@
  *	Colin Cross <ccross@google.com>
  */
 
-#ifndef __SOC_TEGRA_PMC_H__
-#define __SOC_TEGRA_PMC_H__
+#अगर_अघोषित __SOC_TEGRA_PMC_H__
+#घोषणा __SOC_TEGRA_PMC_H__
 
-#include <linux/reboot.h>
+#समावेश <linux/reboot.h>
 
-#include <soc/tegra/pm.h>
+#समावेश <soc/tegra/pm.h>
 
-struct clk;
-struct reset_control;
+काष्ठा clk;
+काष्ठा reset_control;
 
-bool tegra_pmc_cpu_is_powered(unsigned int cpuid);
-int tegra_pmc_cpu_power_on(unsigned int cpuid);
-int tegra_pmc_cpu_remove_clamping(unsigned int cpuid);
+bool tegra_pmc_cpu_is_घातered(अचिन्हित पूर्णांक cpuid);
+पूर्णांक tegra_pmc_cpu_घातer_on(अचिन्हित पूर्णांक cpuid);
+पूर्णांक tegra_pmc_cpu_हटाओ_clamping(अचिन्हित पूर्णांक cpuid);
 
 /*
- * powergate and I/O rail APIs
+ * घातergate and I/O rail APIs
  */
 
-#define TEGRA_POWERGATE_CPU	0
-#define TEGRA_POWERGATE_3D	1
-#define TEGRA_POWERGATE_VENC	2
-#define TEGRA_POWERGATE_PCIE	3
-#define TEGRA_POWERGATE_VDEC	4
-#define TEGRA_POWERGATE_L2	5
-#define TEGRA_POWERGATE_MPE	6
-#define TEGRA_POWERGATE_HEG	7
-#define TEGRA_POWERGATE_SATA	8
-#define TEGRA_POWERGATE_CPU1	9
-#define TEGRA_POWERGATE_CPU2	10
-#define TEGRA_POWERGATE_CPU3	11
-#define TEGRA_POWERGATE_CELP	12
-#define TEGRA_POWERGATE_3D1	13
-#define TEGRA_POWERGATE_CPU0	14
-#define TEGRA_POWERGATE_C0NC	15
-#define TEGRA_POWERGATE_C1NC	16
-#define TEGRA_POWERGATE_SOR	17
-#define TEGRA_POWERGATE_DIS	18
-#define TEGRA_POWERGATE_DISB	19
-#define TEGRA_POWERGATE_XUSBA	20
-#define TEGRA_POWERGATE_XUSBB	21
-#define TEGRA_POWERGATE_XUSBC	22
-#define TEGRA_POWERGATE_VIC	23
-#define TEGRA_POWERGATE_IRAM	24
-#define TEGRA_POWERGATE_NVDEC	25
-#define TEGRA_POWERGATE_NVJPG	26
-#define TEGRA_POWERGATE_AUD	27
-#define TEGRA_POWERGATE_DFD	28
-#define TEGRA_POWERGATE_VE2	29
-#define TEGRA_POWERGATE_MAX	TEGRA_POWERGATE_VE2
+#घोषणा TEGRA_POWERGATE_CPU	0
+#घोषणा TEGRA_POWERGATE_3D	1
+#घोषणा TEGRA_POWERGATE_VENC	2
+#घोषणा TEGRA_POWERGATE_PCIE	3
+#घोषणा TEGRA_POWERGATE_VDEC	4
+#घोषणा TEGRA_POWERGATE_L2	5
+#घोषणा TEGRA_POWERGATE_MPE	6
+#घोषणा TEGRA_POWERGATE_HEG	7
+#घोषणा TEGRA_POWERGATE_SATA	8
+#घोषणा TEGRA_POWERGATE_CPU1	9
+#घोषणा TEGRA_POWERGATE_CPU2	10
+#घोषणा TEGRA_POWERGATE_CPU3	11
+#घोषणा TEGRA_POWERGATE_CELP	12
+#घोषणा TEGRA_POWERGATE_3D1	13
+#घोषणा TEGRA_POWERGATE_CPU0	14
+#घोषणा TEGRA_POWERGATE_C0NC	15
+#घोषणा TEGRA_POWERGATE_C1NC	16
+#घोषणा TEGRA_POWERGATE_SOR	17
+#घोषणा TEGRA_POWERGATE_DIS	18
+#घोषणा TEGRA_POWERGATE_DISB	19
+#घोषणा TEGRA_POWERGATE_XUSBA	20
+#घोषणा TEGRA_POWERGATE_XUSBB	21
+#घोषणा TEGRA_POWERGATE_XUSBC	22
+#घोषणा TEGRA_POWERGATE_VIC	23
+#घोषणा TEGRA_POWERGATE_IRAM	24
+#घोषणा TEGRA_POWERGATE_NVDEC	25
+#घोषणा TEGRA_POWERGATE_NVJPG	26
+#घोषणा TEGRA_POWERGATE_AUD	27
+#घोषणा TEGRA_POWERGATE_DFD	28
+#घोषणा TEGRA_POWERGATE_VE2	29
+#घोषणा TEGRA_POWERGATE_MAX	TEGRA_POWERGATE_VE2
 
-#define TEGRA_POWERGATE_3D0	TEGRA_POWERGATE_3D
+#घोषणा TEGRA_POWERGATE_3D0	TEGRA_POWERGATE_3D
 
 /**
- * enum tegra_io_pad - I/O pad group identifier
+ * क्रमागत tegra_io_pad - I/O pad group identअगरier
  *
- * I/O pins on Tegra SoCs are grouped into so-called I/O pads. Each such pad
- * can be used to control the common voltage signal level and power state of
+ * I/O pins on Tegra SoCs are grouped पूर्णांकo so-called I/O pads. Each such pad
+ * can be used to control the common voltage संकेत level and घातer state of
  * the pins of the given pad.
  */
-enum tegra_io_pad {
+क्रमागत tegra_io_pad अणु
 	TEGRA_IO_PAD_AUDIO,
 	TEGRA_IO_PAD_AUDIO_HV,
 	TEGRA_IO_PAD_BB,
@@ -108,7 +109,7 @@ enum tegra_io_pad {
 	TEGRA_IO_PAD_HV,
 	TEGRA_IO_PAD_LVDS,
 	TEGRA_IO_PAD_MIPI_BIAS,
-	TEGRA_IO_PAD_NAND,
+	TEGRA_IO_PAD_न_अंकD,
 	TEGRA_IO_PAD_PEX_BIAS,
 	TEGRA_IO_PAD_PEX_CLK_BIAS,
 	TEGRA_IO_PAD_PEX_CLK1,
@@ -146,96 +147,96 @@ enum tegra_io_pad {
 	TEGRA_IO_PAD_USB3,
 	TEGRA_IO_PAD_USB_BIAS,
 	TEGRA_IO_PAD_AO_HV,
-};
+पूर्ण;
 
-/* deprecated, use TEGRA_IO_PAD_{HDMI,LVDS} instead */
-#define TEGRA_IO_RAIL_HDMI	TEGRA_IO_PAD_HDMI
-#define TEGRA_IO_RAIL_LVDS	TEGRA_IO_PAD_LVDS
+/* deprecated, use TEGRA_IO_PAD_अणुHDMI,LVDSपूर्ण instead */
+#घोषणा TEGRA_IO_RAIL_HDMI	TEGRA_IO_PAD_HDMI
+#घोषणा TEGRA_IO_RAIL_LVDS	TEGRA_IO_PAD_LVDS
 
-#ifdef CONFIG_SOC_TEGRA_PMC
-int tegra_powergate_power_on(unsigned int id);
-int tegra_powergate_power_off(unsigned int id);
-int tegra_powergate_remove_clamping(unsigned int id);
+#अगर_घोषित CONFIG_SOC_TEGRA_PMC
+पूर्णांक tegra_घातergate_घातer_on(अचिन्हित पूर्णांक id);
+पूर्णांक tegra_घातergate_घातer_off(अचिन्हित पूर्णांक id);
+पूर्णांक tegra_घातergate_हटाओ_clamping(अचिन्हित पूर्णांक id);
 
-/* Must be called with clk disabled, and returns with clk enabled */
-int tegra_powergate_sequence_power_up(unsigned int id, struct clk *clk,
-				      struct reset_control *rst);
+/* Must be called with clk disabled, and वापसs with clk enabled */
+पूर्णांक tegra_घातergate_sequence_घातer_up(अचिन्हित पूर्णांक id, काष्ठा clk *clk,
+				      काष्ठा reset_control *rst);
 
-int tegra_io_pad_power_enable(enum tegra_io_pad id);
-int tegra_io_pad_power_disable(enum tegra_io_pad id);
+पूर्णांक tegra_io_pad_घातer_enable(क्रमागत tegra_io_pad id);
+पूर्णांक tegra_io_pad_घातer_disable(क्रमागत tegra_io_pad id);
 
-/* deprecated, use tegra_io_pad_power_{enable,disable}() instead */
-int tegra_io_rail_power_on(unsigned int id);
-int tegra_io_rail_power_off(unsigned int id);
+/* deprecated, use tegra_io_pad_घातer_अणुenable,disableपूर्ण() instead */
+पूर्णांक tegra_io_rail_घातer_on(अचिन्हित पूर्णांक id);
+पूर्णांक tegra_io_rail_घातer_off(अचिन्हित पूर्णांक id);
 
-void tegra_pmc_set_suspend_mode(enum tegra_suspend_mode mode);
-void tegra_pmc_enter_suspend_mode(enum tegra_suspend_mode mode);
+व्योम tegra_pmc_set_suspend_mode(क्रमागत tegra_suspend_mode mode);
+व्योम tegra_pmc_enter_suspend_mode(क्रमागत tegra_suspend_mode mode);
 
-#else
-static inline int tegra_powergate_power_on(unsigned int id)
-{
-	return -ENOSYS;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक tegra_घातergate_घातer_on(अचिन्हित पूर्णांक id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int tegra_powergate_power_off(unsigned int id)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक tegra_घातergate_घातer_off(अचिन्हित पूर्णांक id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int tegra_powergate_remove_clamping(unsigned int id)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक tegra_घातergate_हटाओ_clamping(अचिन्हित पूर्णांक id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int tegra_powergate_sequence_power_up(unsigned int id,
-						    struct clk *clk,
-						    struct reset_control *rst)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक tegra_घातergate_sequence_घातer_up(अचिन्हित पूर्णांक id,
+						    काष्ठा clk *clk,
+						    काष्ठा reset_control *rst)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int tegra_io_pad_power_enable(enum tegra_io_pad id)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक tegra_io_pad_घातer_enable(क्रमागत tegra_io_pad id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int tegra_io_pad_power_disable(enum tegra_io_pad id)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक tegra_io_pad_घातer_disable(क्रमागत tegra_io_pad id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int tegra_io_pad_get_voltage(enum tegra_io_pad id)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक tegra_io_pad_get_voltage(क्रमागत tegra_io_pad id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int tegra_io_rail_power_on(unsigned int id)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक tegra_io_rail_घातer_on(अचिन्हित पूर्णांक id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int tegra_io_rail_power_off(unsigned int id)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक tegra_io_rail_घातer_off(अचिन्हित पूर्णांक id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline void tegra_pmc_set_suspend_mode(enum tegra_suspend_mode mode)
-{
-}
+अटल अंतरभूत व्योम tegra_pmc_set_suspend_mode(क्रमागत tegra_suspend_mode mode)
+अणु
+पूर्ण
 
-static inline void tegra_pmc_enter_suspend_mode(enum tegra_suspend_mode mode)
-{
-}
+अटल अंतरभूत व्योम tegra_pmc_enter_suspend_mode(क्रमागत tegra_suspend_mode mode)
+अणु
+पूर्ण
 
-#endif /* CONFIG_SOC_TEGRA_PMC */
+#पूर्ण_अगर /* CONFIG_SOC_TEGRA_PMC */
 
-#if defined(CONFIG_SOC_TEGRA_PMC) && defined(CONFIG_PM_SLEEP)
-enum tegra_suspend_mode tegra_pmc_get_suspend_mode(void);
-#else
-static inline enum tegra_suspend_mode tegra_pmc_get_suspend_mode(void)
-{
-	return TEGRA_SUSPEND_NONE;
-}
-#endif
+#अगर defined(CONFIG_SOC_TEGRA_PMC) && defined(CONFIG_PM_SLEEP)
+क्रमागत tegra_suspend_mode tegra_pmc_get_suspend_mode(व्योम);
+#अन्यथा
+अटल अंतरभूत क्रमागत tegra_suspend_mode tegra_pmc_get_suspend_mode(व्योम)
+अणु
+	वापस TEGRA_SUSPEND_NONE;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __SOC_TEGRA_PMC_H__ */
+#पूर्ण_अगर /* __SOC_TEGRA_PMC_H__ */

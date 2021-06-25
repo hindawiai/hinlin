@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright 2019 Google LLC.
  */
 
-#ifndef __LINUX_RPMSG_MTK_RPMSG_H
-#define __LINUX_RPMSG_MTK_RPMSG_H
+#अगर_अघोषित __LINUX_RPMSG_MTK_RPMSG_H
+#घोषणा __LINUX_RPMSG_MTK_RPMSG_H
 
-#include <linux/platform_device.h>
-#include <linux/remoteproc.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/remoteproc.h>
 
-typedef void (*ipi_handler_t)(void *data, unsigned int len, void *priv);
+प्रकार व्योम (*ipi_handler_t)(व्योम *data, अचिन्हित पूर्णांक len, व्योम *priv);
 
 /*
- * struct mtk_rpmsg_info - IPI functions tied to the rpmsg device.
- * @register_ipi: register IPI handler for an IPI id.
- * @unregister_ipi: unregister IPI handler for a registered IPI id.
- * @send_ipi: send IPI to an IPI id. wait is the timeout (in msecs) to wait
- *            until response, or 0 if there's no timeout.
- * @ns_ipi_id: the IPI id used for name service, or -1 if name service isn't
+ * काष्ठा mtk_rpmsg_info - IPI functions tied to the rpmsg device.
+ * @रेजिस्टर_ipi: रेजिस्टर IPI handler क्रम an IPI id.
+ * @unरेजिस्टर_ipi: unरेजिस्टर IPI handler क्रम a रेजिस्टरed IPI id.
+ * @send_ipi: send IPI to an IPI id. रुको is the समयout (in msecs) to रुको
+ *            until response, or 0 अगर there's no समयout.
+ * @ns_ipi_id: the IPI id used क्रम name service, or -1 अगर name service isn't
  *             supported.
  */
-struct mtk_rpmsg_info {
-	int (*register_ipi)(struct platform_device *pdev, u32 id,
-			    ipi_handler_t handler, void *priv);
-	void (*unregister_ipi)(struct platform_device *pdev, u32 id);
-	int (*send_ipi)(struct platform_device *pdev, u32 id,
-			void *buf, unsigned int len, unsigned int wait);
-	int ns_ipi_id;
-};
+काष्ठा mtk_rpmsg_info अणु
+	पूर्णांक (*रेजिस्टर_ipi)(काष्ठा platक्रमm_device *pdev, u32 id,
+			    ipi_handler_t handler, व्योम *priv);
+	व्योम (*unरेजिस्टर_ipi)(काष्ठा platक्रमm_device *pdev, u32 id);
+	पूर्णांक (*send_ipi)(काष्ठा platक्रमm_device *pdev, u32 id,
+			व्योम *buf, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक रुको);
+	पूर्णांक ns_ipi_id;
+पूर्ण;
 
-struct rproc_subdev *
-mtk_rpmsg_create_rproc_subdev(struct platform_device *pdev,
-			      struct mtk_rpmsg_info *info);
+काष्ठा rproc_subdev *
+mtk_rpmsg_create_rproc_subdev(काष्ठा platक्रमm_device *pdev,
+			      काष्ठा mtk_rpmsg_info *info);
 
-void mtk_rpmsg_destroy_rproc_subdev(struct rproc_subdev *subdev);
+व्योम mtk_rpmsg_destroy_rproc_subdev(काष्ठा rproc_subdev *subdev);
 
-#endif
+#पूर्ण_अगर

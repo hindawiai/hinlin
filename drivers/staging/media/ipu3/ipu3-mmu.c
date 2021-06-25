@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018 Intel Corporation.
  * Copyright 2018 Google LLC.
  *
- * Author: Tuukka Toivonen <tuukka.toivonen@intel.com>
- * Author: Sakari Ailus <sakari.ailus@linux.intel.com>
- * Author: Samu Onkalo <samu.onkalo@intel.com>
+ * Author: Tuukka Toivonen <tuukka.toivonen@पूर्णांकel.com>
+ * Author: Sakari Ailus <sakari.ailus@linux.पूर्णांकel.com>
+ * Author: Samu Onkalo <samu.onkalo@पूर्णांकel.com>
  * Author: Tomasz Figa <tfiga@chromium.org>
  *
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/iopoll.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <asm/set_memory.h>
+#समावेश <यंत्र/set_memory.h>
 
-#include "ipu3-mmu.h"
+#समावेश "ipu3-mmu.h"
 
-#define IPU3_PT_BITS		10
-#define IPU3_PT_PTES		(1UL << IPU3_PT_BITS)
-#define IPU3_PT_SIZE		(IPU3_PT_PTES << 2)
-#define IPU3_PT_ORDER		(IPU3_PT_SIZE >> PAGE_SHIFT)
+#घोषणा IPU3_PT_BITS		10
+#घोषणा IPU3_PT_PTES		(1UL << IPU3_PT_BITS)
+#घोषणा IPU3_PT_SIZE		(IPU3_PT_PTES << 2)
+#घोषणा IPU3_PT_ORDER		(IPU3_PT_SIZE >> PAGE_SHIFT)
 
-#define IPU3_ADDR2PTE(addr)	((addr) >> IPU3_PAGE_SHIFT)
-#define IPU3_PTE2ADDR(pte)	((phys_addr_t)(pte) << IPU3_PAGE_SHIFT)
+#घोषणा IPU3_ADDR2PTE(addr)	((addr) >> IPU3_PAGE_SHIFT)
+#घोषणा IPU3_PTE2ADDR(pte)	((phys_addr_t)(pte) << IPU3_PAGE_SHIFT)
 
-#define IPU3_L2PT_SHIFT		IPU3_PT_BITS
-#define IPU3_L2PT_MASK		((1UL << IPU3_L2PT_SHIFT) - 1)
+#घोषणा IPU3_L2PT_SHIFT		IPU3_PT_BITS
+#घोषणा IPU3_L2PT_MASK		((1UL << IPU3_L2PT_SHIFT) - 1)
 
-#define IPU3_L1PT_SHIFT		IPU3_PT_BITS
-#define IPU3_L1PT_MASK		((1UL << IPU3_L1PT_SHIFT) - 1)
+#घोषणा IPU3_L1PT_SHIFT		IPU3_PT_BITS
+#घोषणा IPU3_L1PT_MASK		((1UL << IPU3_L1PT_SHIFT) - 1)
 
-#define IPU3_MMU_ADDRESS_BITS	(IPU3_PAGE_SHIFT + \
+#घोषणा IPU3_MMU_ADDRESS_BITS	(IPU3_PAGE_SHIFT + \
 				 IPU3_L2PT_SHIFT + \
 				 IPU3_L1PT_SHIFT)
 
-#define IMGU_REG_BASE		0x4000
-#define REG_TLB_INVALIDATE	(IMGU_REG_BASE + 0x300)
-#define TLB_INVALIDATE		1
-#define REG_L1_PHYS		(IMGU_REG_BASE + 0x304) /* 27-bit pfn */
-#define REG_GP_HALT		(IMGU_REG_BASE + 0x5dc)
-#define REG_GP_HALTED		(IMGU_REG_BASE + 0x5e0)
+#घोषणा IMGU_REG_BASE		0x4000
+#घोषणा REG_TLB_INVALIDATE	(IMGU_REG_BASE + 0x300)
+#घोषणा TLB_INVALIDATE		1
+#घोषणा REG_L1_PHYS		(IMGU_REG_BASE + 0x304) /* 27-bit pfn */
+#घोषणा REG_GP_HALT		(IMGU_REG_BASE + 0x5dc)
+#घोषणा REG_GP_HALTED		(IMGU_REG_BASE + 0x5e0)
 
-struct imgu_mmu {
-	struct device *dev;
-	void __iomem *base;
+काष्ठा imgu_mmu अणु
+	काष्ठा device *dev;
+	व्योम __iomem *base;
 	/* protect access to l2pts, l1pt */
 	spinlock_t lock;
 
-	void *dummy_page;
+	व्योम *dummy_page;
 	u32 dummy_page_pteval;
 
 	u32 *dummy_l2pt;
@@ -60,130 +61,130 @@ struct imgu_mmu {
 	u32 **l2pts;
 	u32 *l1pt;
 
-	struct imgu_mmu_info geometry;
-};
+	काष्ठा imgu_mmu_info geometry;
+पूर्ण;
 
-static inline struct imgu_mmu *to_imgu_mmu(struct imgu_mmu_info *info)
-{
-	return container_of(info, struct imgu_mmu, geometry);
-}
+अटल अंतरभूत काष्ठा imgu_mmu *to_imgu_mmu(काष्ठा imgu_mmu_info *info)
+अणु
+	वापस container_of(info, काष्ठा imgu_mmu, geometry);
+पूर्ण
 
 /**
  * imgu_mmu_tlb_invalidate - invalidate translation look-aside buffer
- * @mmu: MMU to perform the invalidate operation on
+ * @mmu: MMU to perक्रमm the invalidate operation on
  *
  * This function invalidates the whole TLB. Must be called when the hardware
- * is powered on.
+ * is घातered on.
  */
-static void imgu_mmu_tlb_invalidate(struct imgu_mmu *mmu)
-{
-	writel(TLB_INVALIDATE, mmu->base + REG_TLB_INVALIDATE);
-}
+अटल व्योम imgu_mmu_tlb_invalidate(काष्ठा imgu_mmu *mmu)
+अणु
+	ग_लिखोl(TLB_INVALIDATE, mmu->base + REG_TLB_INVALIDATE);
+पूर्ण
 
-static void call_if_imgu_is_powered(struct imgu_mmu *mmu,
-				    void (*func)(struct imgu_mmu *mmu))
-{
-	if (!pm_runtime_get_if_in_use(mmu->dev))
-		return;
+अटल व्योम call_अगर_imgu_is_घातered(काष्ठा imgu_mmu *mmu,
+				    व्योम (*func)(काष्ठा imgu_mmu *mmu))
+अणु
+	अगर (!pm_runसमय_get_अगर_in_use(mmu->dev))
+		वापस;
 
 	func(mmu);
-	pm_runtime_put(mmu->dev);
-}
+	pm_runसमय_put(mmu->dev);
+पूर्ण
 
 /**
  * imgu_mmu_set_halt - set CIO gate halt bit
  * @mmu: MMU to set the CIO gate bit in.
  * @halt: Desired state of the gate bit.
  *
- * This function sets the CIO gate bit that controls whether external memory
- * accesses are allowed. Must be called when the hardware is powered on.
+ * This function sets the CIO gate bit that controls whether बाह्यal memory
+ * accesses are allowed. Must be called when the hardware is घातered on.
  */
-static void imgu_mmu_set_halt(struct imgu_mmu *mmu, bool halt)
-{
-	int ret;
+अटल व्योम imgu_mmu_set_halt(काष्ठा imgu_mmu *mmu, bool halt)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	writel(halt, mmu->base + REG_GP_HALT);
-	ret = readl_poll_timeout(mmu->base + REG_GP_HALTED,
+	ग_लिखोl(halt, mmu->base + REG_GP_HALT);
+	ret = पढ़ोl_poll_समयout(mmu->base + REG_GP_HALTED,
 				 val, (val & 1) == halt, 1000, 100000);
 
-	if (ret)
+	अगर (ret)
 		dev_err(mmu->dev, "failed to %s CIO gate halt\n",
 			halt ? "set" : "clear");
-}
+पूर्ण
 
 /**
  * imgu_mmu_alloc_page_table - allocate a pre-filled page table
- * @pteval: Value to initialize for page table entries with.
+ * @pteval: Value to initialize क्रम page table entries with.
  *
- * Return: Pointer to allocated page table or NULL on failure.
+ * Return: Poपूर्णांकer to allocated page table or शून्य on failure.
  */
-static u32 *imgu_mmu_alloc_page_table(u32 pteval)
-{
+अटल u32 *imgu_mmu_alloc_page_table(u32 pteval)
+अणु
 	u32 *pt;
-	int pte;
+	पूर्णांक pte;
 
-	pt = (u32 *)__get_free_page(GFP_KERNEL);
-	if (!pt)
-		return NULL;
+	pt = (u32 *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!pt)
+		वापस शून्य;
 
-	for (pte = 0; pte < IPU3_PT_PTES; pte++)
+	क्रम (pte = 0; pte < IPU3_PT_PTES; pte++)
 		pt[pte] = pteval;
 
-	set_memory_uc((unsigned long)pt, IPU3_PT_ORDER);
+	set_memory_uc((अचिन्हित दीर्घ)pt, IPU3_PT_ORDER);
 
-	return pt;
-}
+	वापस pt;
+पूर्ण
 
 /**
- * imgu_mmu_free_page_table - free page table
- * @pt: Page table to free.
+ * imgu_mmu_मुक्त_page_table - मुक्त page table
+ * @pt: Page table to मुक्त.
  */
-static void imgu_mmu_free_page_table(u32 *pt)
-{
-	set_memory_wb((unsigned long)pt, IPU3_PT_ORDER);
-	free_page((unsigned long)pt);
-}
+अटल व्योम imgu_mmu_मुक्त_page_table(u32 *pt)
+अणु
+	set_memory_wb((अचिन्हित दीर्घ)pt, IPU3_PT_ORDER);
+	मुक्त_page((अचिन्हित दीर्घ)pt);
+पूर्ण
 
 /**
- * address_to_pte_idx - split IOVA into L1 and L2 page table indices
+ * address_to_pte_idx - split IOVA पूर्णांकo L1 and L2 page table indices
  * @iova: IOVA to split.
- * @l1pt_idx: Output for the L1 page table index.
- * @l2pt_idx: Output for the L2 page index.
+ * @l1pt_idx: Output क्रम the L1 page table index.
+ * @l2pt_idx: Output क्रम the L2 page index.
  */
-static inline void address_to_pte_idx(unsigned long iova, u32 *l1pt_idx,
+अटल अंतरभूत व्योम address_to_pte_idx(अचिन्हित दीर्घ iova, u32 *l1pt_idx,
 				      u32 *l2pt_idx)
-{
+अणु
 	iova >>= IPU3_PAGE_SHIFT;
 
-	if (l2pt_idx)
+	अगर (l2pt_idx)
 		*l2pt_idx = iova & IPU3_L2PT_MASK;
 
 	iova >>= IPU3_L2PT_SHIFT;
 
-	if (l1pt_idx)
+	अगर (l1pt_idx)
 		*l1pt_idx = iova & IPU3_L1PT_MASK;
-}
+पूर्ण
 
-static u32 *imgu_mmu_get_l2pt(struct imgu_mmu *mmu, u32 l1pt_idx)
-{
-	unsigned long flags;
+अटल u32 *imgu_mmu_get_l2pt(काष्ठा imgu_mmu *mmu, u32 l1pt_idx)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 *l2pt, *new_l2pt;
 	u32 pteval;
 
 	spin_lock_irqsave(&mmu->lock, flags);
 
 	l2pt = mmu->l2pts[l1pt_idx];
-	if (l2pt) {
+	अगर (l2pt) अणु
 		spin_unlock_irqrestore(&mmu->lock, flags);
-		return l2pt;
-	}
+		वापस l2pt;
+	पूर्ण
 
 	spin_unlock_irqrestore(&mmu->lock, flags);
 
 	new_l2pt = imgu_mmu_alloc_page_table(mmu->dummy_page_pteval);
-	if (!new_l2pt)
-		return NULL;
+	अगर (!new_l2pt)
+		वापस शून्य;
 
 	spin_lock_irqsave(&mmu->lock, flags);
 
@@ -191,11 +192,11 @@ static u32 *imgu_mmu_get_l2pt(struct imgu_mmu *mmu, u32 l1pt_idx)
 		new_l2pt, l1pt_idx);
 
 	l2pt = mmu->l2pts[l1pt_idx];
-	if (l2pt) {
+	अगर (l2pt) अणु
 		spin_unlock_irqrestore(&mmu->lock, flags);
-		imgu_mmu_free_page_table(new_l2pt);
-		return l2pt;
-	}
+		imgu_mmu_मुक्त_page_table(new_l2pt);
+		वापस l2pt;
+	पूर्ण
 
 	l2pt = new_l2pt;
 	mmu->l2pts[l1pt_idx] = new_l2pt;
@@ -204,194 +205,194 @@ static u32 *imgu_mmu_get_l2pt(struct imgu_mmu *mmu, u32 l1pt_idx)
 	mmu->l1pt[l1pt_idx] = pteval;
 
 	spin_unlock_irqrestore(&mmu->lock, flags);
-	return l2pt;
-}
+	वापस l2pt;
+पूर्ण
 
-static int __imgu_mmu_map(struct imgu_mmu *mmu, unsigned long iova,
+अटल पूर्णांक __imgu_mmu_map(काष्ठा imgu_mmu *mmu, अचिन्हित दीर्घ iova,
 			  phys_addr_t paddr)
-{
+अणु
 	u32 l1pt_idx, l2pt_idx;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 *l2pt;
 
-	if (!mmu)
-		return -ENODEV;
+	अगर (!mmu)
+		वापस -ENODEV;
 
 	address_to_pte_idx(iova, &l1pt_idx, &l2pt_idx);
 
 	l2pt = imgu_mmu_get_l2pt(mmu, l1pt_idx);
-	if (!l2pt)
-		return -ENOMEM;
+	अगर (!l2pt)
+		वापस -ENOMEM;
 
 	spin_lock_irqsave(&mmu->lock, flags);
 
-	if (l2pt[l2pt_idx] != mmu->dummy_page_pteval) {
+	अगर (l2pt[l2pt_idx] != mmu->dummy_page_pteval) अणु
 		spin_unlock_irqrestore(&mmu->lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	l2pt[l2pt_idx] = IPU3_ADDR2PTE(paddr);
 
 	spin_unlock_irqrestore(&mmu->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * imgu_mmu_map - map a buffer to a physical address
  *
  * @info: MMU mappable range
- * @iova: the virtual address
+ * @iova: the भव address
  * @paddr: the physical address
  * @size: length of the mappable area
  *
  * The function has been adapted from iommu_map() in
  * drivers/iommu/iommu.c .
  */
-int imgu_mmu_map(struct imgu_mmu_info *info, unsigned long iova,
-		 phys_addr_t paddr, size_t size)
-{
-	struct imgu_mmu *mmu = to_imgu_mmu(info);
-	int ret = 0;
+पूर्णांक imgu_mmu_map(काष्ठा imgu_mmu_info *info, अचिन्हित दीर्घ iova,
+		 phys_addr_t paddr, माप_प्रकार size)
+अणु
+	काष्ठा imgu_mmu *mmu = to_imgu_mmu(info);
+	पूर्णांक ret = 0;
 
 	/*
-	 * both the virtual address and the physical one, as well as
+	 * both the भव address and the physical one, as well as
 	 * the size of the mapping, must be aligned (at least) to the
 	 * size of the smallest page supported by the hardware
 	 */
-	if (!IS_ALIGNED(iova | paddr | size, IPU3_PAGE_SIZE)) {
+	अगर (!IS_ALIGNED(iova | paddr | size, IPU3_PAGE_SIZE)) अणु
 		dev_err(mmu->dev, "unaligned: iova 0x%lx pa %pa size 0x%zx\n",
 			iova, &paddr, size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(mmu->dev, "map: iova 0x%lx pa %pa size 0x%zx\n",
 		iova, &paddr, size);
 
-	while (size) {
+	जबतक (size) अणु
 		dev_dbg(mmu->dev, "mapping: iova 0x%lx pa %pa\n", iova, &paddr);
 
 		ret = __imgu_mmu_map(mmu, iova, paddr);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		iova += IPU3_PAGE_SIZE;
 		paddr += IPU3_PAGE_SIZE;
 		size -= IPU3_PAGE_SIZE;
-	}
+	पूर्ण
 
-	call_if_imgu_is_powered(mmu, imgu_mmu_tlb_invalidate);
+	call_अगर_imgu_is_घातered(mmu, imgu_mmu_tlb_invalidate);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * imgu_mmu_map_sg - Map a scatterlist
  *
  * @info: MMU mappable range
- * @iova: the virtual address
+ * @iova: the भव address
  * @sg: the scatterlist to map
  * @nents: number of entries in the scatterlist
  *
- * The function has been adapted from default_iommu_map_sg() in
+ * The function has been adapted from शेष_iommu_map_sg() in
  * drivers/iommu/iommu.c .
  */
-size_t imgu_mmu_map_sg(struct imgu_mmu_info *info, unsigned long iova,
-		       struct scatterlist *sg, unsigned int nents)
-{
-	struct imgu_mmu *mmu = to_imgu_mmu(info);
-	struct scatterlist *s;
-	size_t s_length, mapped = 0;
-	unsigned int i;
-	int ret;
+माप_प्रकार imgu_mmu_map_sg(काष्ठा imgu_mmu_info *info, अचिन्हित दीर्घ iova,
+		       काष्ठा scatterlist *sg, अचिन्हित पूर्णांक nents)
+अणु
+	काष्ठा imgu_mmu *mmu = to_imgu_mmu(info);
+	काष्ठा scatterlist *s;
+	माप_प्रकार s_length, mapped = 0;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	for_each_sg(sg, s, nents, i) {
+	क्रम_each_sg(sg, s, nents, i) अणु
 		phys_addr_t phys = page_to_phys(sg_page(s)) + s->offset;
 
 		s_length = s->length;
 
-		if (!IS_ALIGNED(s->offset, IPU3_PAGE_SIZE))
-			goto out_err;
+		अगर (!IS_ALIGNED(s->offset, IPU3_PAGE_SIZE))
+			जाओ out_err;
 
 		/* must be IPU3_PAGE_SIZE aligned to be mapped singlely */
-		if (i == nents - 1 && !IS_ALIGNED(s->length, IPU3_PAGE_SIZE))
+		अगर (i == nents - 1 && !IS_ALIGNED(s->length, IPU3_PAGE_SIZE))
 			s_length = PAGE_ALIGN(s->length);
 
 		ret = imgu_mmu_map(info, iova + mapped, phys, s_length);
-		if (ret)
-			goto out_err;
+		अगर (ret)
+			जाओ out_err;
 
 		mapped += s_length;
-	}
+	पूर्ण
 
-	call_if_imgu_is_powered(mmu, imgu_mmu_tlb_invalidate);
+	call_अगर_imgu_is_घातered(mmu, imgu_mmu_tlb_invalidate);
 
-	return mapped;
+	वापस mapped;
 
 out_err:
-	/* undo mappings already done */
+	/* unकरो mappings alपढ़ोy करोne */
 	imgu_mmu_unmap(info, iova, mapped);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static size_t __imgu_mmu_unmap(struct imgu_mmu *mmu,
-			       unsigned long iova, size_t size)
-{
+अटल माप_प्रकार __imgu_mmu_unmap(काष्ठा imgu_mmu *mmu,
+			       अचिन्हित दीर्घ iova, माप_प्रकार size)
+अणु
 	u32 l1pt_idx, l2pt_idx;
-	unsigned long flags;
-	size_t unmap = size;
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार unmap = size;
 	u32 *l2pt;
 
-	if (!mmu)
-		return 0;
+	अगर (!mmu)
+		वापस 0;
 
 	address_to_pte_idx(iova, &l1pt_idx, &l2pt_idx);
 
 	spin_lock_irqsave(&mmu->lock, flags);
 
 	l2pt = mmu->l2pts[l1pt_idx];
-	if (!l2pt) {
+	अगर (!l2pt) अणु
 		spin_unlock_irqrestore(&mmu->lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (l2pt[l2pt_idx] == mmu->dummy_page_pteval)
+	अगर (l2pt[l2pt_idx] == mmu->dummy_page_pteval)
 		unmap = 0;
 
 	l2pt[l2pt_idx] = mmu->dummy_page_pteval;
 
 	spin_unlock_irqrestore(&mmu->lock, flags);
 
-	return unmap;
-}
+	वापस unmap;
+पूर्ण
 
 /**
  * imgu_mmu_unmap - Unmap a buffer
  *
  * @info: MMU mappable range
- * @iova: the virtual address
+ * @iova: the भव address
  * @size: the length of the buffer
  *
  * The function has been adapted from iommu_unmap() in
  * drivers/iommu/iommu.c .
  */
-size_t imgu_mmu_unmap(struct imgu_mmu_info *info, unsigned long iova,
-		      size_t size)
-{
-	struct imgu_mmu *mmu = to_imgu_mmu(info);
-	size_t unmapped_page, unmapped = 0;
+माप_प्रकार imgu_mmu_unmap(काष्ठा imgu_mmu_info *info, अचिन्हित दीर्घ iova,
+		      माप_प्रकार size)
+अणु
+	काष्ठा imgu_mmu *mmu = to_imgu_mmu(info);
+	माप_प्रकार unmapped_page, unmapped = 0;
 
 	/*
-	 * The virtual address, as well as the size of the mapping, must be
+	 * The भव address, as well as the size of the mapping, must be
 	 * aligned (at least) to the size of the smallest page supported
 	 * by the hardware
 	 */
-	if (!IS_ALIGNED(iova | size, IPU3_PAGE_SIZE)) {
+	अगर (!IS_ALIGNED(iova | size, IPU3_PAGE_SIZE)) अणु
 		dev_err(mmu->dev, "unaligned: iova 0x%lx size 0x%zx\n",
 			iova, size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(mmu->dev, "unmap this: iova 0x%lx size 0x%zx\n", iova, size);
 
@@ -399,139 +400,139 @@ size_t imgu_mmu_unmap(struct imgu_mmu_info *info, unsigned long iova,
 	 * Keep iterating until we either unmap 'size' bytes (or more)
 	 * or we hit an area that isn't mapped.
 	 */
-	while (unmapped < size) {
+	जबतक (unmapped < size) अणु
 		unmapped_page = __imgu_mmu_unmap(mmu, iova, IPU3_PAGE_SIZE);
-		if (!unmapped_page)
-			break;
+		अगर (!unmapped_page)
+			अवरोध;
 
 		dev_dbg(mmu->dev, "unmapped: iova 0x%lx size 0x%zx\n",
 			iova, unmapped_page);
 
 		iova += unmapped_page;
 		unmapped += unmapped_page;
-	}
+	पूर्ण
 
-	call_if_imgu_is_powered(mmu, imgu_mmu_tlb_invalidate);
+	call_अगर_imgu_is_घातered(mmu, imgu_mmu_tlb_invalidate);
 
-	return unmapped;
-}
+	वापस unmapped;
+पूर्ण
 
 /**
  * imgu_mmu_init() - initialize IPU3 MMU block
  *
- * @parent:	struct device parent
- * @base:	IOMEM base of hardware registers.
+ * @parent:	काष्ठा device parent
+ * @base:	IOMEM base of hardware रेजिस्टरs.
  *
- * Return: Pointer to IPU3 MMU private data pointer or ERR_PTR() on error.
+ * Return: Poपूर्णांकer to IPU3 MMU निजी data poपूर्णांकer or ERR_PTR() on error.
  */
-struct imgu_mmu_info *imgu_mmu_init(struct device *parent, void __iomem *base)
-{
-	struct imgu_mmu *mmu;
+काष्ठा imgu_mmu_info *imgu_mmu_init(काष्ठा device *parent, व्योम __iomem *base)
+अणु
+	काष्ठा imgu_mmu *mmu;
 	u32 pteval;
 
-	mmu = kzalloc(sizeof(*mmu), GFP_KERNEL);
-	if (!mmu)
-		return ERR_PTR(-ENOMEM);
+	mmu = kzalloc(माप(*mmu), GFP_KERNEL);
+	अगर (!mmu)
+		वापस ERR_PTR(-ENOMEM);
 
 	mmu->dev = parent;
 	mmu->base = base;
 	spin_lock_init(&mmu->lock);
 
-	/* Disallow external memory access when having no valid page tables. */
+	/* Disallow बाह्यal memory access when having no valid page tables. */
 	imgu_mmu_set_halt(mmu, true);
 
 	/*
-	 * The MMU does not have a "valid" bit, so we have to use a dummy
-	 * page for invalid entries.
+	 * The MMU करोes not have a "valid" bit, so we have to use a dummy
+	 * page क्रम invalid entries.
 	 */
-	mmu->dummy_page = (void *)__get_free_page(GFP_KERNEL);
-	if (!mmu->dummy_page)
-		goto fail_group;
+	mmu->dummy_page = (व्योम *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!mmu->dummy_page)
+		जाओ fail_group;
 	pteval = IPU3_ADDR2PTE(virt_to_phys(mmu->dummy_page));
 	mmu->dummy_page_pteval = pteval;
 
 	/*
-	 * Allocate a dummy L2 page table with all entries pointing to
+	 * Allocate a dummy L2 page table with all entries poपूर्णांकing to
 	 * the dummy page.
 	 */
 	mmu->dummy_l2pt = imgu_mmu_alloc_page_table(pteval);
-	if (!mmu->dummy_l2pt)
-		goto fail_dummy_page;
+	अगर (!mmu->dummy_l2pt)
+		जाओ fail_dummy_page;
 	pteval = IPU3_ADDR2PTE(virt_to_phys(mmu->dummy_l2pt));
 	mmu->dummy_l2pt_pteval = pteval;
 
 	/*
-	 * Allocate the array of L2PT CPU pointers, initialized to zero,
+	 * Allocate the array of L2PT CPU poपूर्णांकers, initialized to zero,
 	 * which means the dummy L2PT allocated above.
 	 */
-	mmu->l2pts = vzalloc(IPU3_PT_PTES * sizeof(*mmu->l2pts));
-	if (!mmu->l2pts)
-		goto fail_l2pt;
+	mmu->l2pts = vzalloc(IPU3_PT_PTES * माप(*mmu->l2pts));
+	अगर (!mmu->l2pts)
+		जाओ fail_l2pt;
 
 	/* Allocate the L1 page table. */
 	mmu->l1pt = imgu_mmu_alloc_page_table(mmu->dummy_l2pt_pteval);
-	if (!mmu->l1pt)
-		goto fail_l2pts;
+	अगर (!mmu->l1pt)
+		जाओ fail_l2pts;
 
 	pteval = IPU3_ADDR2PTE(virt_to_phys(mmu->l1pt));
-	writel(pteval, mmu->base + REG_L1_PHYS);
+	ग_लिखोl(pteval, mmu->base + REG_L1_PHYS);
 	imgu_mmu_tlb_invalidate(mmu);
 	imgu_mmu_set_halt(mmu, false);
 
 	mmu->geometry.aperture_start = 0;
 	mmu->geometry.aperture_end = DMA_BIT_MASK(IPU3_MMU_ADDRESS_BITS);
 
-	return &mmu->geometry;
+	वापस &mmu->geometry;
 
 fail_l2pts:
-	vfree(mmu->l2pts);
+	vमुक्त(mmu->l2pts);
 fail_l2pt:
-	imgu_mmu_free_page_table(mmu->dummy_l2pt);
+	imgu_mmu_मुक्त_page_table(mmu->dummy_l2pt);
 fail_dummy_page:
-	free_page((unsigned long)mmu->dummy_page);
+	मुक्त_page((अचिन्हित दीर्घ)mmu->dummy_page);
 fail_group:
-	kfree(mmu);
+	kमुक्त(mmu);
 
-	return ERR_PTR(-ENOMEM);
-}
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
 /**
- * imgu_mmu_exit() - clean up IPU3 MMU block
+ * imgu_mmu_निकास() - clean up IPU3 MMU block
  *
  * @info: MMU mappable range
  */
-void imgu_mmu_exit(struct imgu_mmu_info *info)
-{
-	struct imgu_mmu *mmu = to_imgu_mmu(info);
+व्योम imgu_mmu_निकास(काष्ठा imgu_mmu_info *info)
+अणु
+	काष्ठा imgu_mmu *mmu = to_imgu_mmu(info);
 
-	/* We are going to free our page tables, no more memory access. */
+	/* We are going to मुक्त our page tables, no more memory access. */
 	imgu_mmu_set_halt(mmu, true);
 	imgu_mmu_tlb_invalidate(mmu);
 
-	imgu_mmu_free_page_table(mmu->l1pt);
-	vfree(mmu->l2pts);
-	imgu_mmu_free_page_table(mmu->dummy_l2pt);
-	free_page((unsigned long)mmu->dummy_page);
-	kfree(mmu);
-}
+	imgu_mmu_मुक्त_page_table(mmu->l1pt);
+	vमुक्त(mmu->l2pts);
+	imgu_mmu_मुक्त_page_table(mmu->dummy_l2pt);
+	मुक्त_page((अचिन्हित दीर्घ)mmu->dummy_page);
+	kमुक्त(mmu);
+पूर्ण
 
-void imgu_mmu_suspend(struct imgu_mmu_info *info)
-{
-	struct imgu_mmu *mmu = to_imgu_mmu(info);
+व्योम imgu_mmu_suspend(काष्ठा imgu_mmu_info *info)
+अणु
+	काष्ठा imgu_mmu *mmu = to_imgu_mmu(info);
 
 	imgu_mmu_set_halt(mmu, true);
-}
+पूर्ण
 
-void imgu_mmu_resume(struct imgu_mmu_info *info)
-{
-	struct imgu_mmu *mmu = to_imgu_mmu(info);
+व्योम imgu_mmu_resume(काष्ठा imgu_mmu_info *info)
+अणु
+	काष्ठा imgu_mmu *mmu = to_imgu_mmu(info);
 	u32 pteval;
 
 	imgu_mmu_set_halt(mmu, true);
 
 	pteval = IPU3_ADDR2PTE(virt_to_phys(mmu->l1pt));
-	writel(pteval, mmu->base + REG_L1_PHYS);
+	ग_लिखोl(pteval, mmu->base + REG_L1_PHYS);
 
 	imgu_mmu_tlb_invalidate(mmu);
 	imgu_mmu_set_halt(mmu, false);
-}
+पूर्ण

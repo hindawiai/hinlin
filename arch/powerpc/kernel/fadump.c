@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Firmware Assisted dump: A robust mechanism to get reliable kernel crash
- * dump with assistance from firmware. This approach does not use kexec,
- * instead firmware assists in booting the kdump kernel while preserving
+ * dump with assistance from firmware. This approach करोes not use kexec,
+ * instead firmware assists in booting the kdump kernel जबतक preserving
  * memory contents. The most of the code implementation has been adapted
  * from phyp assisted dump implementation written by Linas Vepstas and
  * Manish Ahuja
@@ -11,255 +12,255 @@
  * Author: Mahesh Salgaonkar <mahesh@linux.vnet.ibm.com>
  */
 
-#undef DEBUG
-#define pr_fmt(fmt) "fadump: " fmt
+#अघोषित DEBUG
+#घोषणा pr_fmt(fmt) "fadump: " fmt
 
-#include <linux/string.h>
-#include <linux/memblock.h>
-#include <linux/delay.h>
-#include <linux/seq_file.h>
-#include <linux/crash_dump.h>
-#include <linux/kobject.h>
-#include <linux/sysfs.h>
-#include <linux/slab.h>
-#include <linux/cma.h>
-#include <linux/hugetlb.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/memblock.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/crash_dump.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cma.h>
+#समावेश <linux/hugetlb.h>
 
-#include <asm/debugfs.h>
-#include <asm/page.h>
-#include <asm/prom.h>
-#include <asm/fadump.h>
-#include <asm/fadump-internal.h>
-#include <asm/setup.h>
-#include <asm/interrupt.h>
+#समावेश <यंत्र/debugfs.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/fadump.h>
+#समावेश <यंत्र/fadump-पूर्णांकernal.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/पूर्णांकerrupt.h>
 
 /*
  * The CPU who acquired the lock to trigger the fadump crash should
- * wait for other CPUs to enter.
+ * रुको क्रम other CPUs to enter.
  *
- * The timeout is in milliseconds.
+ * The समयout is in milliseconds.
  */
-#define CRASH_TIMEOUT		500
+#घोषणा CRASH_TIMEOUT		500
 
-static struct fw_dump fw_dump;
+अटल काष्ठा fw_dump fw_dump;
 
-static void __init fadump_reserve_crash_area(u64 base);
+अटल व्योम __init fadump_reserve_crash_area(u64 base);
 
-#ifndef CONFIG_PRESERVE_FA_DUMP
+#अगर_अघोषित CONFIG_PRESERVE_FA_DUMP
 
-static struct kobject *fadump_kobj;
+अटल काष्ठा kobject *fadump_kobj;
 
-static atomic_t cpus_in_fadump;
-static DEFINE_MUTEX(fadump_mutex);
+अटल atomic_t cpus_in_fadump;
+अटल DEFINE_MUTEX(fadump_mutex);
 
-static struct fadump_mrange_info crash_mrange_info = { "crash", NULL, 0, 0, 0, false };
+अटल काष्ठा fadump_mrange_info crash_mrange_info = अणु "crash", शून्य, 0, 0, 0, false पूर्ण;
 
-#define RESERVED_RNGS_SZ	16384 /* 16K - 128 entries */
-#define RESERVED_RNGS_CNT	(RESERVED_RNGS_SZ / \
-				 sizeof(struct fadump_memory_range))
-static struct fadump_memory_range rngs[RESERVED_RNGS_CNT];
-static struct fadump_mrange_info
-reserved_mrange_info = { "reserved", rngs, RESERVED_RNGS_SZ, 0, RESERVED_RNGS_CNT, true };
+#घोषणा RESERVED_RNGS_SZ	16384 /* 16K - 128 entries */
+#घोषणा RESERVED_RNGS_CNT	(RESERVED_RNGS_SZ / \
+				 माप(काष्ठा fadump_memory_range))
+अटल काष्ठा fadump_memory_range rngs[RESERVED_RNGS_CNT];
+अटल काष्ठा fadump_mrange_info
+reserved_mrange_info = अणु "reserved", rngs, RESERVED_RNGS_SZ, 0, RESERVED_RNGS_CNT, true पूर्ण;
 
-static void __init early_init_dt_scan_reserved_ranges(unsigned long node);
+अटल व्योम __init early_init_dt_scan_reserved_ranges(अचिन्हित दीर्घ node);
 
-#ifdef CONFIG_CMA
-static struct cma *fadump_cma;
+#अगर_घोषित CONFIG_CMA
+अटल काष्ठा cma *fadump_cma;
 
 /*
  * fadump_cma_init() - Initialize CMA area from a fadump reserved memory
  *
  * This function initializes CMA area from fadump reserved memory.
- * The total size of fadump reserved memory covers for boot memory size
+ * The total size of fadump reserved memory covers क्रम boot memory size
  * + cpu data size + hpte size and metadata.
- * Initialize only the area equivalent to boot memory size for CMA use.
+ * Initialize only the area equivalent to boot memory size क्रम CMA use.
  * The reamining portion of fadump reserved memory will be not given
- * to CMA and pages for thoes will stay reserved. boot memory size is
+ * to CMA and pages क्रम thoes will stay reserved. boot memory size is
  * aligned per CMA requirement to satisy cma_init_reserved_mem() call.
- * But for some reason even if it fails we still have the memory reservation
- * with us and we can still continue doing fadump.
+ * But क्रम some reason even अगर it fails we still have the memory reservation
+ * with us and we can still जारी करोing fadump.
  */
-static int __init fadump_cma_init(void)
-{
-	unsigned long long base, size;
-	int rc;
+अटल पूर्णांक __init fadump_cma_init(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ base, size;
+	पूर्णांक rc;
 
-	if (!fw_dump.fadump_enabled)
-		return 0;
+	अगर (!fw_dump.fadump_enabled)
+		वापस 0;
 
 	/*
-	 * Do not use CMA if user has provided fadump=nocma kernel parameter.
-	 * Return 1 to continue with fadump old behaviour.
+	 * Do not use CMA अगर user has provided fadump=nocma kernel parameter.
+	 * Return 1 to जारी with fadump old behaviour.
 	 */
-	if (fw_dump.nocma)
-		return 1;
+	अगर (fw_dump.nocma)
+		वापस 1;
 
 	base = fw_dump.reserve_dump_area_start;
 	size = fw_dump.boot_memory_size;
 
-	if (!size)
-		return 0;
+	अगर (!size)
+		वापस 0;
 
 	rc = cma_init_reserved_mem(base, size, 0, "fadump_cma", &fadump_cma);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("Failed to init cma area for firmware-assisted dump,%d\n", rc);
 		/*
 		 * Though the CMA init has failed we still have memory
 		 * reservation with us. The reserved memory will be
-		 * blocked from production system usage.  Hence return 1,
-		 * so that we can continue with fadump.
+		 * blocked from production प्रणाली usage.  Hence वापस 1,
+		 * so that we can जारी with fadump.
 		 */
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/*
-	 * So we now have successfully initialized cma area for fadump.
+	 * So we now have successfully initialized cma area क्रम fadump.
 	 */
 	pr_info("Initialized 0x%lx bytes cma area at %ldMB from 0x%lx "
 		"bytes of memory reserved for firmware-assisted dump\n",
 		cma_get_size(fadump_cma),
-		(unsigned long)cma_get_base(fadump_cma) >> 20,
+		(अचिन्हित दीर्घ)cma_get_base(fadump_cma) >> 20,
 		fw_dump.reserve_dump_area_size);
-	return 1;
-}
-#else
-static int __init fadump_cma_init(void) { return 1; }
-#endif /* CONFIG_CMA */
+	वापस 1;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक __init fadump_cma_init(व्योम) अणु वापस 1; पूर्ण
+#पूर्ण_अगर /* CONFIG_CMA */
 
 /* Scan the Firmware Assisted dump configuration details. */
-int __init early_init_dt_scan_fw_dump(unsigned long node, const char *uname,
-				      int depth, void *data)
-{
-	if (depth == 0) {
+पूर्णांक __init early_init_dt_scan_fw_dump(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+				      पूर्णांक depth, व्योम *data)
+अणु
+	अगर (depth == 0) अणु
 		early_init_dt_scan_reserved_ranges(node);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (depth != 1)
-		return 0;
+	अगर (depth != 1)
+		वापस 0;
 
-	if (strcmp(uname, "rtas") == 0) {
+	अगर (म_भेद(uname, "rtas") == 0) अणु
 		rtas_fadump_dt_scan(&fw_dump, node);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (strcmp(uname, "ibm,opal") == 0) {
+	अगर (म_भेद(uname, "ibm,opal") == 0) अणु
 		opal_fadump_dt_scan(&fw_dump, node);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * If fadump is registered, check if the memory provided
+ * If fadump is रेजिस्टरed, check अगर the memory provided
  * falls within boot memory area and reserved memory area.
  */
-int is_fadump_memory_area(u64 addr, unsigned long size)
-{
+पूर्णांक is_fadump_memory_area(u64 addr, अचिन्हित दीर्घ size)
+अणु
 	u64 d_start, d_end;
 
-	if (!fw_dump.dump_registered)
-		return 0;
+	अगर (!fw_dump.dump_रेजिस्टरed)
+		वापस 0;
 
-	if (!size)
-		return 0;
+	अगर (!size)
+		वापस 0;
 
 	d_start = fw_dump.reserve_dump_area_start;
 	d_end = d_start + fw_dump.reserve_dump_area_size;
-	if (((addr + size) > d_start) && (addr <= d_end))
-		return 1;
+	अगर (((addr + size) > d_start) && (addr <= d_end))
+		वापस 1;
 
-	return (addr <= fw_dump.boot_mem_top);
-}
+	वापस (addr <= fw_dump.boot_mem_top);
+पूर्ण
 
-int should_fadump_crash(void)
-{
-	if (!fw_dump.dump_registered || !fw_dump.fadumphdr_addr)
-		return 0;
-	return 1;
-}
+पूर्णांक should_fadump_crash(व्योम)
+अणु
+	अगर (!fw_dump.dump_रेजिस्टरed || !fw_dump.fadumphdr_addr)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-int is_fadump_active(void)
-{
-	return fw_dump.dump_active;
-}
+पूर्णांक is_fadump_active(व्योम)
+अणु
+	वापस fw_dump.dump_active;
+पूर्ण
 
 /*
- * Returns true, if there are no holes in memory area between d_start to d_end,
+ * Returns true, अगर there are no holes in memory area between d_start to d_end,
  * false otherwise.
  */
-static bool is_fadump_mem_area_contiguous(u64 d_start, u64 d_end)
-{
+अटल bool is_fadump_mem_area_contiguous(u64 d_start, u64 d_end)
+अणु
 	phys_addr_t reg_start, reg_end;
 	bool ret = false;
 	u64 i, start, end;
 
-	for_each_mem_range(i, &reg_start, &reg_end) {
+	क्रम_each_mem_range(i, &reg_start, &reg_end) अणु
 		start = max_t(u64, d_start, reg_start);
 		end = min_t(u64, d_end, reg_end);
-		if (d_start < end) {
+		अगर (d_start < end) अणु
 			/* Memory hole from d_start to start */
-			if (start > d_start)
-				break;
+			अगर (start > d_start)
+				अवरोध;
 
-			if (end == d_end) {
+			अगर (end == d_end) अणु
 				ret = true;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			d_start = end + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Returns true, if there are no holes in boot memory area,
+ * Returns true, अगर there are no holes in boot memory area,
  * false otherwise.
  */
-bool is_fadump_boot_mem_contiguous(void)
-{
-	unsigned long d_start, d_end;
+bool is_fadump_boot_mem_contiguous(व्योम)
+अणु
+	अचिन्हित दीर्घ d_start, d_end;
 	bool ret = false;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < fw_dump.boot_mem_regs_cnt; i++) {
+	क्रम (i = 0; i < fw_dump.boot_mem_regs_cnt; i++) अणु
 		d_start = fw_dump.boot_mem_addr[i];
 		d_end   = d_start + fw_dump.boot_mem_sz[i];
 
 		ret = is_fadump_mem_area_contiguous(d_start, d_end);
-		if (!ret)
-			break;
-	}
+		अगर (!ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Returns true, if there are no holes in reserved memory area,
+ * Returns true, अगर there are no holes in reserved memory area,
  * false otherwise.
  */
-bool is_fadump_reserved_mem_contiguous(void)
-{
+bool is_fadump_reserved_mem_contiguous(व्योम)
+अणु
 	u64 d_start, d_end;
 
 	d_start	= fw_dump.reserve_dump_area_start;
 	d_end	= d_start + fw_dump.reserve_dump_area_size;
-	return is_fadump_mem_area_contiguous(d_start, d_end);
-}
+	वापस is_fadump_mem_area_contiguous(d_start, d_end);
+पूर्ण
 
-/* Print firmware assisted dump configurations for debugging purpose. */
-static void fadump_show_config(void)
-{
-	int i;
+/* Prपूर्णांक firmware assisted dump configurations क्रम debugging purpose. */
+अटल व्योम fadump_show_config(व्योम)
+अणु
+	पूर्णांक i;
 
 	pr_debug("Support for firmware-assisted dump (fadump): %s\n",
 			(fw_dump.fadump_supported ? "present" : "no support"));
 
-	if (!fw_dump.fadump_supported)
-		return;
+	अगर (!fw_dump.fadump_supported)
+		वापस;
 
 	pr_debug("Fadump enabled    : %s\n",
 				(fw_dump.fadump_enabled ? "yes" : "no"));
@@ -271,161 +272,161 @@ static void fadump_show_config(void)
 	pr_debug("    Boot memory size   : %lx\n", fw_dump.boot_memory_size);
 	pr_debug("    Boot memory top    : %llx\n", fw_dump.boot_mem_top);
 	pr_debug("Boot memory regions cnt: %llx\n", fw_dump.boot_mem_regs_cnt);
-	for (i = 0; i < fw_dump.boot_mem_regs_cnt; i++) {
+	क्रम (i = 0; i < fw_dump.boot_mem_regs_cnt; i++) अणु
 		pr_debug("[%03d] base = %llx, size = %llx\n", i,
 			 fw_dump.boot_mem_addr[i], fw_dump.boot_mem_sz[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * fadump_calculate_reserve_size(): reserve variable boot area 5% of System RAM
  *
  * Function to find the largest memory size we need to reserve during early
- * boot process. This will be the size of the memory that is required for a
+ * boot process. This will be the size of the memory that is required क्रम a
  * kernel to boot successfully.
  *
  * This function has been taken from phyp-assisted dump feature implementation.
  *
- * returns larger of 256MB or 5% rounded down to multiples of 256MB.
+ * वापसs larger of 256MB or 5% rounded करोwn to multiples of 256MB.
  *
  * TODO: Come up with better approach to find out more accurate memory size
- * that is required for a kernel to boot successfully.
+ * that is required क्रम a kernel to boot successfully.
  *
  */
-static __init u64 fadump_calculate_reserve_size(void)
-{
-	u64 base, size, bootmem_min;
-	int ret;
+अटल __init u64 fadump_calculate_reserve_size(व्योम)
+अणु
+	u64 base, size, booपंचांगem_min;
+	पूर्णांक ret;
 
-	if (fw_dump.reserve_bootvar)
+	अगर (fw_dump.reserve_bootvar)
 		pr_warn("'fadump_reserve_mem=' parameter is deprecated in favor of 'crashkernel=' parameter.\n");
 
 	/*
-	 * Check if the size is specified through crashkernel= cmdline
+	 * Check अगर the size is specअगरied through crashkernel= cmdline
 	 * option. If yes, then use that but ignore base as fadump reserves
 	 * memory at a predefined offset.
 	 */
 	ret = parse_crashkernel(boot_command_line, memblock_phys_mem_size(),
 				&size, &base);
-	if (ret == 0 && size > 0) {
-		unsigned long max_size;
+	अगर (ret == 0 && size > 0) अणु
+		अचिन्हित दीर्घ max_size;
 
-		if (fw_dump.reserve_bootvar)
+		अगर (fw_dump.reserve_bootvar)
 			pr_info("Using 'crashkernel=' parameter for memory reservation.\n");
 
-		fw_dump.reserve_bootvar = (unsigned long)size;
+		fw_dump.reserve_bootvar = (अचिन्हित दीर्घ)size;
 
 		/*
-		 * Adjust if the boot memory size specified is above
+		 * Adjust अगर the boot memory size specअगरied is above
 		 * the upper limit.
 		 */
 		max_size = memblock_phys_mem_size() / MAX_BOOT_MEM_RATIO;
-		if (fw_dump.reserve_bootvar > max_size) {
+		अगर (fw_dump.reserve_bootvar > max_size) अणु
 			fw_dump.reserve_bootvar = max_size;
 			pr_info("Adjusted boot memory size to %luMB\n",
 				(fw_dump.reserve_bootvar >> 20));
-		}
+		पूर्ण
 
-		return fw_dump.reserve_bootvar;
-	} else if (fw_dump.reserve_bootvar) {
+		वापस fw_dump.reserve_bootvar;
+	पूर्ण अन्यथा अगर (fw_dump.reserve_bootvar) अणु
 		/*
 		 * 'fadump_reserve_mem=' is being used to reserve memory
-		 * for firmware-assisted dump.
+		 * क्रम firmware-assisted dump.
 		 */
-		return fw_dump.reserve_bootvar;
-	}
+		वापस fw_dump.reserve_bootvar;
+	पूर्ण
 
-	/* divide by 20 to get 5% of value */
+	/* भागide by 20 to get 5% of value */
 	size = memblock_phys_mem_size() / 20;
 
-	/* round it down in multiples of 256 */
+	/* round it करोwn in multiples of 256 */
 	size = size & ~0x0FFFFFFFUL;
 
-	/* Truncate to memory_limit. We don't want to over reserve the memory.*/
-	if (memory_limit && size > memory_limit)
+	/* Truncate to memory_limit. We करोn't want to over reserve the memory.*/
+	अगर (memory_limit && size > memory_limit)
 		size = memory_limit;
 
-	bootmem_min = fw_dump.ops->fadump_get_bootmem_min();
-	return (size > bootmem_min ? size : bootmem_min);
-}
+	booपंचांगem_min = fw_dump.ops->fadump_get_booपंचांगem_min();
+	वापस (size > booपंचांगem_min ? size : booपंचांगem_min);
+पूर्ण
 
 /*
- * Calculate the total memory size required to be reserved for
+ * Calculate the total memory size required to be reserved क्रम
  * firmware-assisted dump registration.
  */
-static unsigned long get_fadump_area_size(void)
-{
-	unsigned long size = 0;
+अटल अचिन्हित दीर्घ get_fadump_area_size(व्योम)
+अणु
+	अचिन्हित दीर्घ size = 0;
 
 	size += fw_dump.cpu_state_data_size;
 	size += fw_dump.hpte_region_size;
 	size += fw_dump.boot_memory_size;
-	size += sizeof(struct fadump_crash_info_header);
-	size += sizeof(struct elfhdr); /* ELF core header.*/
-	size += sizeof(struct elf_phdr); /* place holder for cpu notes */
-	/* Program headers for crash memory regions. */
-	size += sizeof(struct elf_phdr) * (memblock_num_regions(memory) + 2);
+	size += माप(काष्ठा fadump_crash_info_header);
+	size += माप(काष्ठा elfhdr); /* ELF core header.*/
+	size += माप(काष्ठा elf_phdr); /* place holder क्रम cpu notes */
+	/* Program headers क्रम crash memory regions. */
+	size += माप(काष्ठा elf_phdr) * (memblock_num_regions(memory) + 2);
 
 	size = PAGE_ALIGN(size);
 
-	/* This is to hold kernel metadata on platforms that support it */
+	/* This is to hold kernel metadata on platक्रमms that support it */
 	size += (fw_dump.ops->fadump_get_metadata_size ?
 		 fw_dump.ops->fadump_get_metadata_size() : 0);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int __init add_boot_mem_region(unsigned long rstart,
-				      unsigned long rsize)
-{
-	int i = fw_dump.boot_mem_regs_cnt++;
+अटल पूर्णांक __init add_boot_mem_region(अचिन्हित दीर्घ rstart,
+				      अचिन्हित दीर्घ rsize)
+अणु
+	पूर्णांक i = fw_dump.boot_mem_regs_cnt++;
 
-	if (fw_dump.boot_mem_regs_cnt > FADUMP_MAX_MEM_REGS) {
+	अगर (fw_dump.boot_mem_regs_cnt > FADUMP_MAX_MEM_REGS) अणु
 		fw_dump.boot_mem_regs_cnt = FADUMP_MAX_MEM_REGS;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	pr_debug("Added boot memory range[%d] [%#016lx-%#016lx)\n",
 		 i, rstart, (rstart + rsize));
 	fw_dump.boot_mem_addr[i] = rstart;
 	fw_dump.boot_mem_sz[i] = rsize;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Firmware usually has a hard limit on the data it can copy per region.
- * Honour that by splitting a memory range into multiple regions.
+ * Honour that by splitting a memory range पूर्णांकo multiple regions.
  */
-static int __init add_boot_mem_regions(unsigned long mstart,
-				       unsigned long msize)
-{
-	unsigned long rstart, rsize, max_size;
-	int ret = 1;
+अटल पूर्णांक __init add_boot_mem_regions(अचिन्हित दीर्घ mstart,
+				       अचिन्हित दीर्घ msize)
+अणु
+	अचिन्हित दीर्घ rstart, rsize, max_size;
+	पूर्णांक ret = 1;
 
 	rstart = mstart;
 	max_size = fw_dump.max_copy_size ? fw_dump.max_copy_size : msize;
-	while (msize) {
-		if (msize > max_size)
+	जबतक (msize) अणु
+		अगर (msize > max_size)
 			rsize = max_size;
-		else
+		अन्यथा
 			rsize = msize;
 
 		ret = add_boot_mem_region(rstart, rsize);
-		if (!ret)
-			break;
+		अगर (!ret)
+			अवरोध;
 
 		msize -= rsize;
 		rstart += rsize;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init fadump_get_boot_mem_regions(void)
-{
-	unsigned long size, cur_size, hole_size, last_end;
-	unsigned long mem_size = fw_dump.boot_memory_size;
+अटल पूर्णांक __init fadump_get_boot_mem_regions(व्योम)
+अणु
+	अचिन्हित दीर्घ size, cur_size, hole_size, last_end;
+	अचिन्हित दीर्घ mem_size = fw_dump.boot_memory_size;
 	phys_addr_t reg_start, reg_end;
-	int ret = 1;
+	पूर्णांक ret = 1;
 	u64 i;
 
 	fw_dump.boot_mem_regs_cnt = 0;
@@ -433,646 +434,646 @@ static int __init fadump_get_boot_mem_regions(void)
 	last_end = 0;
 	hole_size = 0;
 	cur_size = 0;
-	for_each_mem_range(i, &reg_start, &reg_end) {
+	क्रम_each_mem_range(i, &reg_start, &reg_end) अणु
 		size = reg_end - reg_start;
 		hole_size += (reg_start - last_end);
 
-		if ((cur_size + size) >= mem_size) {
+		अगर ((cur_size + size) >= mem_size) अणु
 			size = (mem_size - cur_size);
 			ret = add_boot_mem_regions(reg_start, size);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mem_size -= size;
 		cur_size += size;
 		ret = add_boot_mem_regions(reg_start, size);
-		if (!ret)
-			break;
+		अगर (!ret)
+			अवरोध;
 
 		last_end = reg_end;
-	}
+	पूर्ण
 	fw_dump.boot_mem_top = PAGE_ALIGN(fw_dump.boot_memory_size + hole_size);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Returns true, if the given range overlaps with reserved memory ranges
+ * Returns true, अगर the given range overlaps with reserved memory ranges
  * starting at idx. Also, updates idx to index of overlapping memory range
  * with the given memory range.
  * False, otherwise.
  */
-static bool overlaps_reserved_ranges(u64 base, u64 end, int *idx)
-{
+अटल bool overlaps_reserved_ranges(u64 base, u64 end, पूर्णांक *idx)
+अणु
 	bool ret = false;
-	int i;
+	पूर्णांक i;
 
-	for (i = *idx; i < reserved_mrange_info.mem_range_cnt; i++) {
+	क्रम (i = *idx; i < reserved_mrange_info.mem_range_cnt; i++) अणु
 		u64 rbase = reserved_mrange_info.mem_ranges[i].base;
 		u64 rend = rbase + reserved_mrange_info.mem_ranges[i].size;
 
-		if (end <= rbase)
-			break;
+		अगर (end <= rbase)
+			अवरोध;
 
-		if ((end > rbase) &&  (base < rend)) {
+		अगर ((end > rbase) &&  (base < rend)) अणु
 			*idx = i;
 			ret = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Locate a suitable memory area to reserve memory for FADump. While at it,
- * lookup reserved-ranges & avoid overlap with them, as they are used by F/W.
+ * Locate a suitable memory area to reserve memory क्रम FADump. While at it,
+ * lookup reserved-ranges & aव्योम overlap with them, as they are used by F/W.
  */
-static u64 __init fadump_locate_reserve_mem(u64 base, u64 size)
-{
-	struct fadump_memory_range *mrngs;
+अटल u64 __init fadump_locate_reserve_mem(u64 base, u64 size)
+अणु
+	काष्ठा fadump_memory_range *mrngs;
 	phys_addr_t mstart, mend;
-	int idx = 0;
+	पूर्णांक idx = 0;
 	u64 i, ret = 0;
 
 	mrngs = reserved_mrange_info.mem_ranges;
-	for_each_free_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE,
-				&mstart, &mend, NULL) {
+	क्रम_each_मुक्त_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE,
+				&mstart, &mend, शून्य) अणु
 		pr_debug("%llu) mstart: %llx, mend: %llx, base: %llx\n",
 			 i, mstart, mend, base);
 
-		if (mstart > base)
+		अगर (mstart > base)
 			base = PAGE_ALIGN(mstart);
 
-		while ((mend > base) && ((mend - base) >= size)) {
-			if (!overlaps_reserved_ranges(base, base+size, &idx)) {
+		जबतक ((mend > base) && ((mend - base) >= size)) अणु
+			अगर (!overlaps_reserved_ranges(base, base+size, &idx)) अणु
 				ret = base;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			base = mrngs[idx].base + mrngs[idx].size;
 			base = PAGE_ALIGN(base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int __init fadump_reserve_mem(void)
-{
-	u64 base, size, mem_boundary, bootmem_min;
-	int ret = 1;
+पूर्णांक __init fadump_reserve_mem(व्योम)
+अणु
+	u64 base, size, mem_boundary, booपंचांगem_min;
+	पूर्णांक ret = 1;
 
-	if (!fw_dump.fadump_enabled)
-		return 0;
+	अगर (!fw_dump.fadump_enabled)
+		वापस 0;
 
-	if (!fw_dump.fadump_supported) {
+	अगर (!fw_dump.fadump_supported) अणु
 		pr_info("Firmware-Assisted Dump is not supported on this hardware\n");
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 
 	/*
 	 * Initialize boot memory size
-	 * If dump is active then we have already calculated the size during
+	 * If dump is active then we have alपढ़ोy calculated the size during
 	 * first kernel.
 	 */
-	if (!fw_dump.dump_active) {
+	अगर (!fw_dump.dump_active) अणु
 		fw_dump.boot_memory_size =
 			PAGE_ALIGN(fadump_calculate_reserve_size());
-#ifdef CONFIG_CMA
-		if (!fw_dump.nocma) {
+#अगर_घोषित CONFIG_CMA
+		अगर (!fw_dump.nocma) अणु
 			fw_dump.boot_memory_size =
 				ALIGN(fw_dump.boot_memory_size,
 				      FADUMP_CMA_ALIGNMENT);
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 
-		bootmem_min = fw_dump.ops->fadump_get_bootmem_min();
-		if (fw_dump.boot_memory_size < bootmem_min) {
+		booपंचांगem_min = fw_dump.ops->fadump_get_booपंचांगem_min();
+		अगर (fw_dump.boot_memory_size < booपंचांगem_min) अणु
 			pr_err("Can't enable fadump with boot memory size (0x%lx) less than 0x%llx\n",
-			       fw_dump.boot_memory_size, bootmem_min);
-			goto error_out;
-		}
+			       fw_dump.boot_memory_size, booपंचांगem_min);
+			जाओ error_out;
+		पूर्ण
 
-		if (!fadump_get_boot_mem_regions()) {
+		अगर (!fadump_get_boot_mem_regions()) अणु
 			pr_err("Too many holes in boot memory area to enable fadump\n");
-			goto error_out;
-		}
-	}
+			जाओ error_out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Calculate the memory boundary.
 	 * If memory_limit is less than actual memory boundary then reserve
-	 * the memory for fadump beyond the memory_limit and adjust the
+	 * the memory क्रम fadump beyond the memory_limit and adjust the
 	 * memory_limit accordingly, so that the running kernel can run with
-	 * specified memory_limit.
+	 * specअगरied memory_limit.
 	 */
-	if (memory_limit && memory_limit < memblock_end_of_DRAM()) {
+	अगर (memory_limit && memory_limit < memblock_end_of_DRAM()) अणु
 		size = get_fadump_area_size();
-		if ((memory_limit + size) < memblock_end_of_DRAM())
+		अगर ((memory_limit + size) < memblock_end_of_DRAM())
 			memory_limit += size;
-		else
+		अन्यथा
 			memory_limit = memblock_end_of_DRAM();
-		printk(KERN_INFO "Adjusted memory_limit for firmware-assisted"
+		prपूर्णांकk(KERN_INFO "Adjusted memory_limit for firmware-assisted"
 				" dump, now %#016llx\n", memory_limit);
-	}
-	if (memory_limit)
+	पूर्ण
+	अगर (memory_limit)
 		mem_boundary = memory_limit;
-	else
+	अन्यथा
 		mem_boundary = memblock_end_of_DRAM();
 
 	base = fw_dump.boot_mem_top;
 	size = get_fadump_area_size();
 	fw_dump.reserve_dump_area_size = size;
-	if (fw_dump.dump_active) {
+	अगर (fw_dump.dump_active) अणु
 		pr_info("Firmware-assisted dump is active.\n");
 
-#ifdef CONFIG_HUGETLB_PAGE
+#अगर_घोषित CONFIG_HUGETLB_PAGE
 		/*
-		 * FADump capture kernel doesn't care much about hugepages.
-		 * In fact, handling hugepages in capture kernel is asking for
+		 * FADump capture kernel करोesn't care much about hugepages.
+		 * In fact, handling hugepages in capture kernel is asking क्रम
 		 * trouble. So, disable HugeTLB support when fadump is active.
 		 */
 		hugetlb_disabled = true;
-#endif
+#पूर्ण_अगर
 		/*
 		 * If last boot has crashed then reserve all the memory
-		 * above boot memory size so that we don't touch it until
+		 * above boot memory size so that we करोn't touch it until
 		 * dump is written to disk by userspace tool. This memory
-		 * can be released for general use by invalidating fadump.
+		 * can be released क्रम general use by invalidating fadump.
 		 */
 		fadump_reserve_crash_area(base);
 
 		pr_debug("fadumphdr_addr = %#016lx\n", fw_dump.fadumphdr_addr);
 		pr_debug("Reserve dump area start address: 0x%lx\n",
 			 fw_dump.reserve_dump_area_start);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Reserve memory at an offset closer to bottom of the RAM to
-		 * minimize the impact of memory hot-remove operation.
+		 * Reserve memory at an offset बंदr to bottom of the RAM to
+		 * minimize the impact of memory hot-हटाओ operation.
 		 */
 		base = fadump_locate_reserve_mem(base, size);
 
-		if (!base || (base + size > mem_boundary)) {
+		अगर (!base || (base + size > mem_boundary)) अणु
 			pr_err("Failed to find memory chunk for reservation!\n");
-			goto error_out;
-		}
+			जाओ error_out;
+		पूर्ण
 		fw_dump.reserve_dump_area_start = base;
 
 		/*
-		 * Calculate the kernel metadata address and register it with
-		 * f/w if the platform supports.
+		 * Calculate the kernel metadata address and रेजिस्टर it with
+		 * f/w अगर the platक्रमm supports.
 		 */
-		if (fw_dump.ops->fadump_setup_metadata &&
+		अगर (fw_dump.ops->fadump_setup_metadata &&
 		    (fw_dump.ops->fadump_setup_metadata(&fw_dump) < 0))
-			goto error_out;
+			जाओ error_out;
 
-		if (memblock_reserve(base, size)) {
+		अगर (memblock_reserve(base, size)) अणु
 			pr_err("Failed to reserve memory!\n");
-			goto error_out;
-		}
+			जाओ error_out;
+		पूर्ण
 
 		pr_info("Reserved %lldMB of memory at %#016llx (System RAM: %lldMB)\n",
 			(size >> 20), base, (memblock_phys_mem_size() >> 20));
 
 		ret = fadump_cma_init();
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 error_out:
 	fw_dump.fadump_enabled = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Look for fadump= cmdline option. */
-static int __init early_fadump_param(char *p)
-{
-	if (!p)
-		return 1;
+/* Look क्रम fadump= cmdline option. */
+अटल पूर्णांक __init early_fadump_param(अक्षर *p)
+अणु
+	अगर (!p)
+		वापस 1;
 
-	if (strncmp(p, "on", 2) == 0)
+	अगर (म_भेदन(p, "on", 2) == 0)
 		fw_dump.fadump_enabled = 1;
-	else if (strncmp(p, "off", 3) == 0)
+	अन्यथा अगर (म_भेदन(p, "off", 3) == 0)
 		fw_dump.fadump_enabled = 0;
-	else if (strncmp(p, "nocma", 5) == 0) {
+	अन्यथा अगर (म_भेदन(p, "nocma", 5) == 0) अणु
 		fw_dump.fadump_enabled = 1;
 		fw_dump.nocma = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("fadump", early_fadump_param);
 
 /*
- * Look for fadump_reserve_mem= cmdline option
+ * Look क्रम fadump_reserve_mem= cmdline option
  * TODO: Remove references to 'fadump_reserve_mem=' parameter,
  *       the sooner 'crashkernel=' parameter is accustomed to.
  */
-static int __init early_fadump_reserve_mem(char *p)
-{
-	if (p)
+अटल पूर्णांक __init early_fadump_reserve_mem(अक्षर *p)
+अणु
+	अगर (p)
 		fw_dump.reserve_bootvar = memparse(p, &p);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("fadump_reserve_mem", early_fadump_reserve_mem);
 
-void crash_fadump(struct pt_regs *regs, const char *str)
-{
-	unsigned int msecs;
-	struct fadump_crash_info_header *fdh = NULL;
-	int old_cpu, this_cpu;
+व्योम crash_fadump(काष्ठा pt_regs *regs, स्थिर अक्षर *str)
+अणु
+	अचिन्हित पूर्णांक msecs;
+	काष्ठा fadump_crash_info_header *fdh = शून्य;
+	पूर्णांक old_cpu, this_cpu;
 	/* Do not include first CPU */
-	unsigned int ncpus = num_online_cpus() - 1;
+	अचिन्हित पूर्णांक ncpus = num_online_cpus() - 1;
 
-	if (!should_fadump_crash())
-		return;
+	अगर (!should_fadump_crash())
+		वापस;
 
 	/*
 	 * old_cpu == -1 means this is the first CPU which has come here,
 	 * go ahead and trigger fadump.
 	 *
-	 * old_cpu != -1 means some other CPU has already on it's way
+	 * old_cpu != -1 means some other CPU has alपढ़ोy on it's way
 	 * to trigger fadump, just keep looping here.
 	 */
 	this_cpu = smp_processor_id();
 	old_cpu = cmpxchg(&crashing_cpu, -1, this_cpu);
 
-	if (old_cpu != -1) {
+	अगर (old_cpu != -1) अणु
 		atomic_inc(&cpus_in_fadump);
 
 		/*
-		 * We can't loop here indefinitely. Wait as long as fadump
-		 * is in force. If we race with fadump un-registration this
-		 * loop will break and then we go down to normal panic path
-		 * and reboot. If fadump is in force the first crashing
+		 * We can't loop here indefinitely. Wait as दीर्घ as fadump
+		 * is in क्रमce. If we race with fadump un-registration this
+		 * loop will अवरोध and then we go करोwn to normal panic path
+		 * and reboot. If fadump is in क्रमce the first crashing
 		 * cpu will definitely trigger fadump.
 		 */
-		while (fw_dump.dump_registered)
+		जबतक (fw_dump.dump_रेजिस्टरed)
 			cpu_relax();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fdh = __va(fw_dump.fadumphdr_addr);
 	fdh->crashing_cpu = crashing_cpu;
 	crash_save_vmcoreinfo();
 
-	if (regs)
+	अगर (regs)
 		fdh->regs = *regs;
-	else
+	अन्यथा
 		ppc_save_regs(&fdh->regs);
 
 	fdh->online_mask = *cpu_online_mask;
 
 	/*
-	 * If we came in via system reset, wait a while for the secondary
+	 * If we came in via प्रणाली reset, रुको a जबतक क्रम the secondary
 	 * CPUs to enter.
 	 */
-	if (TRAP(&(fdh->regs)) == INTERRUPT_SYSTEM_RESET) {
+	अगर (TRAP(&(fdh->regs)) == INTERRUPT_SYSTEM_RESET) अणु
 		msecs = CRASH_TIMEOUT;
-		while ((atomic_read(&cpus_in_fadump) < ncpus) && (--msecs > 0))
+		जबतक ((atomic_पढ़ो(&cpus_in_fadump) < ncpus) && (--msecs > 0))
 			mdelay(1);
-	}
+	पूर्ण
 
 	fw_dump.ops->fadump_trigger(fdh, str);
-}
+पूर्ण
 
-u32 *fadump_regs_to_elf_notes(u32 *buf, struct pt_regs *regs)
-{
-	struct elf_prstatus prstatus;
+u32 *fadump_regs_to_elf_notes(u32 *buf, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा elf_prstatus prstatus;
 
-	memset(&prstatus, 0, sizeof(prstatus));
+	स_रखो(&prstatus, 0, माप(prstatus));
 	/*
-	 * FIXME: How do i get PID? Do I really need it?
+	 * FIXME: How करो i get PID? Do I really need it?
 	 * prstatus.pr_pid = ????
 	 */
 	elf_core_copy_kernel_regs(&prstatus.pr_reg, regs);
 	buf = append_elf_note(buf, CRASH_CORE_NOTE_NAME, NT_PRSTATUS,
-			      &prstatus, sizeof(prstatus));
-	return buf;
-}
+			      &prstatus, माप(prstatus));
+	वापस buf;
+पूर्ण
 
-void fadump_update_elfcore_header(char *bufp)
-{
-	struct elf_phdr *phdr;
+व्योम fadump_update_elfcore_header(अक्षर *bufp)
+अणु
+	काष्ठा elf_phdr *phdr;
 
-	bufp += sizeof(struct elfhdr);
+	bufp += माप(काष्ठा elfhdr);
 
-	/* First note is a place holder for cpu notes info. */
-	phdr = (struct elf_phdr *)bufp;
+	/* First note is a place holder क्रम cpu notes info. */
+	phdr = (काष्ठा elf_phdr *)bufp;
 
-	if (phdr->p_type == PT_NOTE) {
+	अगर (phdr->p_type == PT_NOTE) अणु
 		phdr->p_paddr	= __pa(fw_dump.cpu_notes_buf_vaddr);
 		phdr->p_offset	= phdr->p_paddr;
 		phdr->p_filesz	= fw_dump.cpu_notes_buf_size;
 		phdr->p_memsz = fw_dump.cpu_notes_buf_size;
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
-static void *fadump_alloc_buffer(unsigned long size)
-{
-	unsigned long count, i;
-	struct page *page;
-	void *vaddr;
+अटल व्योम *fadump_alloc_buffer(अचिन्हित दीर्घ size)
+अणु
+	अचिन्हित दीर्घ count, i;
+	काष्ठा page *page;
+	व्योम *vaddr;
 
 	vaddr = alloc_pages_exact(size, GFP_KERNEL | __GFP_ZERO);
-	if (!vaddr)
-		return NULL;
+	अगर (!vaddr)
+		वापस शून्य;
 
 	count = PAGE_ALIGN(size) / PAGE_SIZE;
 	page = virt_to_page(vaddr);
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		mark_page_reserved(page + i);
-	return vaddr;
-}
+	वापस vaddr;
+पूर्ण
 
-static void fadump_free_buffer(unsigned long vaddr, unsigned long size)
-{
-	free_reserved_area((void *)vaddr, (void *)(vaddr + size), -1, NULL);
-}
+अटल व्योम fadump_मुक्त_buffer(अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ size)
+अणु
+	मुक्त_reserved_area((व्योम *)vaddr, (व्योम *)(vaddr + size), -1, शून्य);
+पूर्ण
 
 s32 fadump_setup_cpu_notes_buf(u32 num_cpus)
-{
+अणु
 	/* Allocate buffer to hold cpu crash notes. */
-	fw_dump.cpu_notes_buf_size = num_cpus * sizeof(note_buf_t);
+	fw_dump.cpu_notes_buf_size = num_cpus * माप(note_buf_t);
 	fw_dump.cpu_notes_buf_size = PAGE_ALIGN(fw_dump.cpu_notes_buf_size);
 	fw_dump.cpu_notes_buf_vaddr =
-		(unsigned long)fadump_alloc_buffer(fw_dump.cpu_notes_buf_size);
-	if (!fw_dump.cpu_notes_buf_vaddr) {
+		(अचिन्हित दीर्घ)fadump_alloc_buffer(fw_dump.cpu_notes_buf_size);
+	अगर (!fw_dump.cpu_notes_buf_vaddr) अणु
 		pr_err("Failed to allocate %ld bytes for CPU notes buffer\n",
 		       fw_dump.cpu_notes_buf_size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pr_debug("Allocated buffer for cpu notes of size %ld at 0x%lx\n",
 		 fw_dump.cpu_notes_buf_size,
 		 fw_dump.cpu_notes_buf_vaddr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void fadump_free_cpu_notes_buf(void)
-{
-	if (!fw_dump.cpu_notes_buf_vaddr)
-		return;
+व्योम fadump_मुक्त_cpu_notes_buf(व्योम)
+अणु
+	अगर (!fw_dump.cpu_notes_buf_vaddr)
+		वापस;
 
-	fadump_free_buffer(fw_dump.cpu_notes_buf_vaddr,
+	fadump_मुक्त_buffer(fw_dump.cpu_notes_buf_vaddr,
 			   fw_dump.cpu_notes_buf_size);
 	fw_dump.cpu_notes_buf_vaddr = 0;
 	fw_dump.cpu_notes_buf_size = 0;
-}
+पूर्ण
 
-static void fadump_free_mem_ranges(struct fadump_mrange_info *mrange_info)
-{
-	if (mrange_info->is_static) {
+अटल व्योम fadump_मुक्त_mem_ranges(काष्ठा fadump_mrange_info *mrange_info)
+अणु
+	अगर (mrange_info->is_अटल) अणु
 		mrange_info->mem_range_cnt = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	kfree(mrange_info->mem_ranges);
-	memset((void *)((u64)mrange_info + RNG_NAME_SZ), 0,
-	       (sizeof(struct fadump_mrange_info) - RNG_NAME_SZ));
-}
+	kमुक्त(mrange_info->mem_ranges);
+	स_रखो((व्योम *)((u64)mrange_info + RNG_NAME_SZ), 0,
+	       (माप(काष्ठा fadump_mrange_info) - RNG_NAME_SZ));
+पूर्ण
 
 /*
- * Allocate or reallocate mem_ranges array in incremental units
+ * Allocate or पुनः_स्मृतिate mem_ranges array in incremental units
  * of PAGE_SIZE.
  */
-static int fadump_alloc_mem_ranges(struct fadump_mrange_info *mrange_info)
-{
-	struct fadump_memory_range *new_array;
+अटल पूर्णांक fadump_alloc_mem_ranges(काष्ठा fadump_mrange_info *mrange_info)
+अणु
+	काष्ठा fadump_memory_range *new_array;
 	u64 new_size;
 
 	new_size = mrange_info->mem_ranges_sz + PAGE_SIZE;
 	pr_debug("Allocating %llu bytes of memory for %s memory ranges\n",
 		 new_size, mrange_info->name);
 
-	new_array = krealloc(mrange_info->mem_ranges, new_size, GFP_KERNEL);
-	if (new_array == NULL) {
+	new_array = kपुनः_स्मृति(mrange_info->mem_ranges, new_size, GFP_KERNEL);
+	अगर (new_array == शून्य) अणु
 		pr_err("Insufficient memory for setting up %s memory ranges\n",
 		       mrange_info->name);
-		fadump_free_mem_ranges(mrange_info);
-		return -ENOMEM;
-	}
+		fadump_मुक्त_mem_ranges(mrange_info);
+		वापस -ENOMEM;
+	पूर्ण
 
 	mrange_info->mem_ranges = new_array;
 	mrange_info->mem_ranges_sz = new_size;
 	mrange_info->max_mem_ranges = (new_size /
-				       sizeof(struct fadump_memory_range));
-	return 0;
-}
+				       माप(काष्ठा fadump_memory_range));
+	वापस 0;
+पूर्ण
 
-static inline int fadump_add_mem_range(struct fadump_mrange_info *mrange_info,
+अटल अंतरभूत पूर्णांक fadump_add_mem_range(काष्ठा fadump_mrange_info *mrange_info,
 				       u64 base, u64 end)
-{
-	struct fadump_memory_range *mem_ranges = mrange_info->mem_ranges;
+अणु
+	काष्ठा fadump_memory_range *mem_ranges = mrange_info->mem_ranges;
 	bool is_adjacent = false;
 	u64 start, size;
 
-	if (base == end)
-		return 0;
+	अगर (base == end)
+		वापस 0;
 
 	/*
-	 * Fold adjacent memory ranges to bring down the memory ranges/
+	 * Fold adjacent memory ranges to bring करोwn the memory ranges/
 	 * PT_LOAD segments count.
 	 */
-	if (mrange_info->mem_range_cnt) {
+	अगर (mrange_info->mem_range_cnt) अणु
 		start = mem_ranges[mrange_info->mem_range_cnt - 1].base;
 		size  = mem_ranges[mrange_info->mem_range_cnt - 1].size;
 
-		if ((start + size) == base)
+		अगर ((start + size) == base)
 			is_adjacent = true;
-	}
-	if (!is_adjacent) {
+	पूर्ण
+	अगर (!is_adjacent) अणु
 		/* resize the array on reaching the limit */
-		if (mrange_info->mem_range_cnt == mrange_info->max_mem_ranges) {
-			int ret;
+		अगर (mrange_info->mem_range_cnt == mrange_info->max_mem_ranges) अणु
+			पूर्णांक ret;
 
-			if (mrange_info->is_static) {
+			अगर (mrange_info->is_अटल) अणु
 				pr_err("Reached array size limit for %s memory ranges\n",
 				       mrange_info->name);
-				return -ENOSPC;
-			}
+				वापस -ENOSPC;
+			पूर्ण
 
 			ret = fadump_alloc_mem_ranges(mrange_info);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			/* Update to the new resized array */
 			mem_ranges = mrange_info->mem_ranges;
-		}
+		पूर्ण
 
 		start = base;
 		mem_ranges[mrange_info->mem_range_cnt].base = start;
 		mrange_info->mem_range_cnt++;
-	}
+	पूर्ण
 
 	mem_ranges[mrange_info->mem_range_cnt - 1].size = (end - start);
 	pr_debug("%s_memory_range[%d] [%#016llx-%#016llx], %#llx bytes\n",
 		 mrange_info->name, (mrange_info->mem_range_cnt - 1),
 		 start, end - 1, (end - start));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fadump_exclude_reserved_area(u64 start, u64 end)
-{
+अटल पूर्णांक fadump_exclude_reserved_area(u64 start, u64 end)
+अणु
 	u64 ra_start, ra_end;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	ra_start = fw_dump.reserve_dump_area_start;
 	ra_end = ra_start + fw_dump.reserve_dump_area_size;
 
-	if ((ra_start < end) && (ra_end > start)) {
-		if ((start < ra_start) && (end > ra_end)) {
+	अगर ((ra_start < end) && (ra_end > start)) अणु
+		अगर ((start < ra_start) && (end > ra_end)) अणु
 			ret = fadump_add_mem_range(&crash_mrange_info,
 						   start, ra_start);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			ret = fadump_add_mem_range(&crash_mrange_info,
 						   ra_end, end);
-		} else if (start < ra_start) {
+		पूर्ण अन्यथा अगर (start < ra_start) अणु
 			ret = fadump_add_mem_range(&crash_mrange_info,
 						   start, ra_start);
-		} else if (ra_end < end) {
+		पूर्ण अन्यथा अगर (ra_end < end) अणु
 			ret = fadump_add_mem_range(&crash_mrange_info,
 						   ra_end, end);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		ret = fadump_add_mem_range(&crash_mrange_info, start, end);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fadump_init_elfcore_header(char *bufp)
-{
-	struct elfhdr *elf;
+अटल पूर्णांक fadump_init_elfcore_header(अक्षर *bufp)
+अणु
+	काष्ठा elfhdr *elf;
 
-	elf = (struct elfhdr *) bufp;
-	bufp += sizeof(struct elfhdr);
-	memcpy(elf->e_ident, ELFMAG, SELFMAG);
+	elf = (काष्ठा elfhdr *) bufp;
+	bufp += माप(काष्ठा elfhdr);
+	स_नकल(elf->e_ident, ELFMAG, SELFMAG);
 	elf->e_ident[EI_CLASS] = ELF_CLASS;
 	elf->e_ident[EI_DATA] = ELF_DATA;
 	elf->e_ident[EI_VERSION] = EV_CURRENT;
 	elf->e_ident[EI_OSABI] = ELF_OSABI;
-	memset(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
+	स_रखो(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
 	elf->e_type = ET_CORE;
 	elf->e_machine = ELF_ARCH;
 	elf->e_version = EV_CURRENT;
 	elf->e_entry = 0;
-	elf->e_phoff = sizeof(struct elfhdr);
+	elf->e_phoff = माप(काष्ठा elfhdr);
 	elf->e_shoff = 0;
-#if defined(_CALL_ELF)
+#अगर defined(_CALL_ELF)
 	elf->e_flags = _CALL_ELF;
-#else
+#अन्यथा
 	elf->e_flags = 0;
-#endif
-	elf->e_ehsize = sizeof(struct elfhdr);
-	elf->e_phentsize = sizeof(struct elf_phdr);
+#पूर्ण_अगर
+	elf->e_ehsize = माप(काष्ठा elfhdr);
+	elf->e_phentsize = माप(काष्ठा elf_phdr);
 	elf->e_phnum = 0;
 	elf->e_shentsize = 0;
 	elf->e_shnum = 0;
 	elf->e_shstrndx = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Traverse through memblock structure and setup crash memory ranges. These
+ * Traverse through memblock काष्ठाure and setup crash memory ranges. These
  * ranges will be used create PT_LOAD program headers in elfcore header.
  */
-static int fadump_setup_crash_memory_ranges(void)
-{
+अटल पूर्णांक fadump_setup_crash_memory_ranges(व्योम)
+अणु
 	u64 i, start, end;
-	int ret;
+	पूर्णांक ret;
 
 	pr_debug("Setup crash memory ranges.\n");
 	crash_mrange_info.mem_range_cnt = 0;
 
 	/*
-	 * Boot memory region(s) registered with firmware are moved to
-	 * different location at the time of crash. Create separate program
-	 * header(s) for this memory chunk(s) with the correct offset.
+	 * Boot memory region(s) रेजिस्टरed with firmware are moved to
+	 * dअगरferent location at the समय of crash. Create separate program
+	 * header(s) क्रम this memory chunk(s) with the correct offset.
 	 */
-	for (i = 0; i < fw_dump.boot_mem_regs_cnt; i++) {
+	क्रम (i = 0; i < fw_dump.boot_mem_regs_cnt; i++) अणु
 		start = fw_dump.boot_mem_addr[i];
 		end = start + fw_dump.boot_mem_sz[i];
 		ret = fadump_add_mem_range(&crash_mrange_info, start, end);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	for_each_mem_range(i, &start, &end) {
+	क्रम_each_mem_range(i, &start, &end) अणु
 		/*
-		 * skip the memory chunk that is already added
+		 * skip the memory chunk that is alपढ़ोy added
 		 * (0 through boot_memory_top).
 		 */
-		if (start < fw_dump.boot_mem_top) {
-			if (end > fw_dump.boot_mem_top)
+		अगर (start < fw_dump.boot_mem_top) अणु
+			अगर (end > fw_dump.boot_mem_top)
 				start = fw_dump.boot_mem_top;
-			else
-				continue;
-		}
+			अन्यथा
+				जारी;
+		पूर्ण
 
 		/* add this range excluding the reserved dump area. */
 		ret = fadump_exclude_reserved_area(start, end);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * If the given physical address falls within the boot memory region then
- * return the relocated address that points to the dump region reserved
- * for saving initial boot memory contents.
+ * वापस the relocated address that poपूर्णांकs to the dump region reserved
+ * क्रम saving initial boot memory contents.
  */
-static inline unsigned long fadump_relocate(unsigned long paddr)
-{
-	unsigned long raddr, rstart, rend, rlast, hole_size;
-	int i;
+अटल अंतरभूत अचिन्हित दीर्घ fadump_relocate(अचिन्हित दीर्घ paddr)
+अणु
+	अचिन्हित दीर्घ raddr, rstart, rend, rlast, hole_size;
+	पूर्णांक i;
 
 	hole_size = 0;
 	rlast = 0;
 	raddr = paddr;
-	for (i = 0; i < fw_dump.boot_mem_regs_cnt; i++) {
+	क्रम (i = 0; i < fw_dump.boot_mem_regs_cnt; i++) अणु
 		rstart = fw_dump.boot_mem_addr[i];
 		rend = rstart + fw_dump.boot_mem_sz[i];
 		hole_size += (rstart - rlast);
 
-		if (paddr >= rstart && paddr < rend) {
+		अगर (paddr >= rstart && paddr < rend) अणु
 			raddr += fw_dump.boot_mem_dest_addr - hole_size;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rlast = rend;
-	}
+	पूर्ण
 
 	pr_debug("vmcoreinfo: paddr = 0x%lx, raddr = 0x%lx\n", paddr, raddr);
-	return raddr;
-}
+	वापस raddr;
+पूर्ण
 
-static int fadump_create_elfcore_headers(char *bufp)
-{
-	unsigned long long raddr, offset;
-	struct elf_phdr *phdr;
-	struct elfhdr *elf;
-	int i, j;
+अटल पूर्णांक fadump_create_elfcore_headers(अक्षर *bufp)
+अणु
+	अचिन्हित दीर्घ दीर्घ raddr, offset;
+	काष्ठा elf_phdr *phdr;
+	काष्ठा elfhdr *elf;
+	पूर्णांक i, j;
 
 	fadump_init_elfcore_header(bufp);
-	elf = (struct elfhdr *)bufp;
-	bufp += sizeof(struct elfhdr);
+	elf = (काष्ठा elfhdr *)bufp;
+	bufp += माप(काष्ठा elfhdr);
 
 	/*
-	 * setup ELF PT_NOTE, place holder for cpu notes info. The notes info
+	 * setup ELF PT_NOTE, place holder क्रम cpu notes info. The notes info
 	 * will be populated during second kernel boot after crash. Hence
 	 * this PT_NOTE will always be the first elf note.
 	 *
 	 * NOTE: Any new ELF note addition should be placed after this note.
 	 */
-	phdr = (struct elf_phdr *)bufp;
-	bufp += sizeof(struct elf_phdr);
+	phdr = (काष्ठा elf_phdr *)bufp;
+	bufp += माप(काष्ठा elf_phdr);
 	phdr->p_type = PT_NOTE;
 	phdr->p_flags = 0;
 	phdr->p_vaddr = 0;
@@ -1085,9 +1086,9 @@ static int fadump_create_elfcore_headers(char *bufp)
 
 	(elf->e_phnum)++;
 
-	/* setup ELF PT_NOTE for vmcoreinfo */
-	phdr = (struct elf_phdr *)bufp;
-	bufp += sizeof(struct elf_phdr);
+	/* setup ELF PT_NOTE क्रम vmcoreinfo */
+	phdr = (काष्ठा elf_phdr *)bufp;
+	bufp += माप(काष्ठा elf_phdr);
 	phdr->p_type	= PT_NOTE;
 	phdr->p_flags	= 0;
 	phdr->p_vaddr	= 0;
@@ -1104,80 +1105,80 @@ static int fadump_create_elfcore_headers(char *bufp)
 	j = 0;
 	offset = 0;
 	raddr = fw_dump.boot_mem_addr[0];
-	for (i = 0; i < crash_mrange_info.mem_range_cnt; i++) {
+	क्रम (i = 0; i < crash_mrange_info.mem_range_cnt; i++) अणु
 		u64 mbase, msize;
 
 		mbase = crash_mrange_info.mem_ranges[i].base;
 		msize = crash_mrange_info.mem_ranges[i].size;
-		if (!msize)
-			continue;
+		अगर (!msize)
+			जारी;
 
-		phdr = (struct elf_phdr *)bufp;
-		bufp += sizeof(struct elf_phdr);
+		phdr = (काष्ठा elf_phdr *)bufp;
+		bufp += माप(काष्ठा elf_phdr);
 		phdr->p_type	= PT_LOAD;
 		phdr->p_flags	= PF_R|PF_W|PF_X;
 		phdr->p_offset	= mbase;
 
-		if (mbase == raddr) {
+		अगर (mbase == raddr) अणु
 			/*
 			 * The entire real memory region will be moved by
-			 * firmware to the specified destination_address.
+			 * firmware to the specअगरied destination_address.
 			 * Hence set the correct offset.
 			 */
 			phdr->p_offset = fw_dump.boot_mem_dest_addr + offset;
-			if (j < (fw_dump.boot_mem_regs_cnt - 1)) {
+			अगर (j < (fw_dump.boot_mem_regs_cnt - 1)) अणु
 				offset += fw_dump.boot_mem_sz[j];
 				raddr = fw_dump.boot_mem_addr[++j];
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		phdr->p_paddr = mbase;
-		phdr->p_vaddr = (unsigned long)__va(mbase);
+		phdr->p_vaddr = (अचिन्हित दीर्घ)__va(mbase);
 		phdr->p_filesz = msize;
 		phdr->p_memsz = msize;
 		phdr->p_align = 0;
 
 		/* Increment number of program headers. */
 		(elf->e_phnum)++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static unsigned long init_fadump_header(unsigned long addr)
-{
-	struct fadump_crash_info_header *fdh;
+अटल अचिन्हित दीर्घ init_fadump_header(अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा fadump_crash_info_header *fdh;
 
-	if (!addr)
-		return 0;
+	अगर (!addr)
+		वापस 0;
 
 	fdh = __va(addr);
-	addr += sizeof(struct fadump_crash_info_header);
+	addr += माप(काष्ठा fadump_crash_info_header);
 
-	memset(fdh, 0, sizeof(struct fadump_crash_info_header));
+	स_रखो(fdh, 0, माप(काष्ठा fadump_crash_info_header));
 	fdh->magic_number = FADUMP_CRASH_INFO_MAGIC;
 	fdh->elfcorehdr_addr = addr;
 	/* We will set the crashing cpu id in crash_fadump() during crash. */
 	fdh->crashing_cpu = FADUMP_CPU_UNKNOWN;
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static int register_fadump(void)
-{
-	unsigned long addr;
-	void *vaddr;
-	int ret;
+अटल पूर्णांक रेजिस्टर_fadump(व्योम)
+अणु
+	अचिन्हित दीर्घ addr;
+	व्योम *vaddr;
+	पूर्णांक ret;
 
 	/*
-	 * If no memory is reserved then we can not register for firmware-
+	 * If no memory is reserved then we can not रेजिस्टर क्रम firmware-
 	 * assisted dump.
 	 */
-	if (!fw_dump.reserve_dump_area_size)
-		return -ENODEV;
+	अगर (!fw_dump.reserve_dump_area_size)
+		वापस -ENODEV;
 
 	ret = fadump_setup_crash_memory_ranges();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	addr = fw_dump.fadumphdr_addr;
 
@@ -1188,519 +1189,519 @@ static int register_fadump(void)
 	pr_debug("Creating ELF core headers at %#016lx\n", addr);
 	fadump_create_elfcore_headers(vaddr);
 
-	/* register the future kernel dump with firmware. */
+	/* रेजिस्टर the future kernel dump with firmware. */
 	pr_debug("Registering for firmware-assisted kernel dump...\n");
-	return fw_dump.ops->fadump_register(&fw_dump);
-}
+	वापस fw_dump.ops->fadump_रेजिस्टर(&fw_dump);
+पूर्ण
 
-void fadump_cleanup(void)
-{
-	if (!fw_dump.fadump_supported)
-		return;
+व्योम fadump_cleanup(व्योम)
+अणु
+	अगर (!fw_dump.fadump_supported)
+		वापस;
 
-	/* Invalidate the registration only if dump is active. */
-	if (fw_dump.dump_active) {
+	/* Invalidate the registration only अगर dump is active. */
+	अगर (fw_dump.dump_active) अणु
 		pr_debug("Invalidating firmware-assisted dump registration\n");
 		fw_dump.ops->fadump_invalidate(&fw_dump);
-	} else if (fw_dump.dump_registered) {
-		/* Un-register Firmware-assisted dump if it was registered. */
-		fw_dump.ops->fadump_unregister(&fw_dump);
-		fadump_free_mem_ranges(&crash_mrange_info);
-	}
+	पूर्ण अन्यथा अगर (fw_dump.dump_रेजिस्टरed) अणु
+		/* Un-रेजिस्टर Firmware-assisted dump अगर it was रेजिस्टरed. */
+		fw_dump.ops->fadump_unरेजिस्टर(&fw_dump);
+		fadump_मुक्त_mem_ranges(&crash_mrange_info);
+	पूर्ण
 
-	if (fw_dump.ops->fadump_cleanup)
+	अगर (fw_dump.ops->fadump_cleanup)
 		fw_dump.ops->fadump_cleanup(&fw_dump);
-}
+पूर्ण
 
-static void fadump_free_reserved_memory(unsigned long start_pfn,
-					unsigned long end_pfn)
-{
-	unsigned long pfn;
-	unsigned long time_limit = jiffies + HZ;
+अटल व्योम fadump_मुक्त_reserved_memory(अचिन्हित दीर्घ start_pfn,
+					अचिन्हित दीर्घ end_pfn)
+अणु
+	अचिन्हित दीर्घ pfn;
+	अचिन्हित दीर्घ समय_limit = jअगरfies + HZ;
 
 	pr_info("freeing reserved memory (0x%llx - 0x%llx)\n",
 		PFN_PHYS(start_pfn), PFN_PHYS(end_pfn));
 
-	for (pfn = start_pfn; pfn < end_pfn; pfn++) {
-		free_reserved_page(pfn_to_page(pfn));
+	क्रम (pfn = start_pfn; pfn < end_pfn; pfn++) अणु
+		मुक्त_reserved_page(pfn_to_page(pfn));
 
-		if (time_after(jiffies, time_limit)) {
+		अगर (समय_after(jअगरfies, समय_limit)) अणु
 			cond_resched();
-			time_limit = jiffies + HZ;
-		}
-	}
-}
+			समय_limit = jअगरfies + HZ;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Skip memory holes and free memory that was actually reserved.
+ * Skip memory holes and मुक्त memory that was actually reserved.
  */
-static void fadump_release_reserved_area(u64 start, u64 end)
-{
-	unsigned long reg_spfn, reg_epfn;
+अटल व्योम fadump_release_reserved_area(u64 start, u64 end)
+अणु
+	अचिन्हित दीर्घ reg_spfn, reg_epfn;
 	u64 tstart, tend, spfn, epfn;
-	int i;
+	पूर्णांक i;
 
 	spfn = PHYS_PFN(start);
 	epfn = PHYS_PFN(end);
 
-	for_each_mem_pfn_range(i, MAX_NUMNODES, &reg_spfn, &reg_epfn, NULL) {
+	क्रम_each_mem_pfn_range(i, MAX_NUMNODES, &reg_spfn, &reg_epfn, शून्य) अणु
 		tstart = max_t(u64, spfn, reg_spfn);
 		tend   = min_t(u64, epfn, reg_epfn);
 
-		if (tstart < tend) {
-			fadump_free_reserved_memory(tstart, tend);
+		अगर (tstart < tend) अणु
+			fadump_मुक्त_reserved_memory(tstart, tend);
 
-			if (tend == epfn)
-				break;
+			अगर (tend == epfn)
+				अवरोध;
 
 			spfn = tend;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Sort the mem ranges in-place and merge adjacent ranges
  * to minimize the memory ranges count.
  */
-static void sort_and_merge_mem_ranges(struct fadump_mrange_info *mrange_info)
-{
-	struct fadump_memory_range *mem_ranges;
-	struct fadump_memory_range tmp_range;
+अटल व्योम sort_and_merge_mem_ranges(काष्ठा fadump_mrange_info *mrange_info)
+अणु
+	काष्ठा fadump_memory_range *mem_ranges;
+	काष्ठा fadump_memory_range पंचांगp_range;
 	u64 base, size;
-	int i, j, idx;
+	पूर्णांक i, j, idx;
 
-	if (!reserved_mrange_info.mem_range_cnt)
-		return;
+	अगर (!reserved_mrange_info.mem_range_cnt)
+		वापस;
 
 	/* Sort the memory ranges */
 	mem_ranges = mrange_info->mem_ranges;
-	for (i = 0; i < mrange_info->mem_range_cnt; i++) {
+	क्रम (i = 0; i < mrange_info->mem_range_cnt; i++) अणु
 		idx = i;
-		for (j = (i + 1); j < mrange_info->mem_range_cnt; j++) {
-			if (mem_ranges[idx].base > mem_ranges[j].base)
+		क्रम (j = (i + 1); j < mrange_info->mem_range_cnt; j++) अणु
+			अगर (mem_ranges[idx].base > mem_ranges[j].base)
 				idx = j;
-		}
-		if (idx != i) {
-			tmp_range = mem_ranges[idx];
+		पूर्ण
+		अगर (idx != i) अणु
+			पंचांगp_range = mem_ranges[idx];
 			mem_ranges[idx] = mem_ranges[i];
-			mem_ranges[i] = tmp_range;
-		}
-	}
+			mem_ranges[i] = पंचांगp_range;
+		पूर्ण
+	पूर्ण
 
 	/* Merge adjacent reserved ranges */
 	idx = 0;
-	for (i = 1; i < mrange_info->mem_range_cnt; i++) {
+	क्रम (i = 1; i < mrange_info->mem_range_cnt; i++) अणु
 		base = mem_ranges[i-1].base;
 		size = mem_ranges[i-1].size;
-		if (mem_ranges[i].base == (base + size))
+		अगर (mem_ranges[i].base == (base + size))
 			mem_ranges[idx].size += mem_ranges[i].size;
-		else {
+		अन्यथा अणु
 			idx++;
-			if (i == idx)
-				continue;
+			अगर (i == idx)
+				जारी;
 
 			mem_ranges[idx] = mem_ranges[i];
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mrange_info->mem_range_cnt = idx + 1;
-}
+पूर्ण
 
 /*
- * Scan reserved-ranges to consider them while reserving/releasing
- * memory for FADump.
+ * Scan reserved-ranges to consider them जबतक reserving/releasing
+ * memory क्रम FADump.
  */
-static void __init early_init_dt_scan_reserved_ranges(unsigned long node)
-{
-	const __be32 *prop;
-	int len, ret = -1;
-	unsigned long i;
+अटल व्योम __init early_init_dt_scan_reserved_ranges(अचिन्हित दीर्घ node)
+अणु
+	स्थिर __be32 *prop;
+	पूर्णांक len, ret = -1;
+	अचिन्हित दीर्घ i;
 
-	/* reserved-ranges already scanned */
-	if (reserved_mrange_info.mem_range_cnt != 0)
-		return;
+	/* reserved-ranges alपढ़ोy scanned */
+	अगर (reserved_mrange_info.mem_range_cnt != 0)
+		वापस;
 
 	prop = of_get_flat_dt_prop(node, "reserved-ranges", &len);
-	if (!prop)
-		return;
+	अगर (!prop)
+		वापस;
 
 	/*
 	 * Each reserved range is an (address,size) pair, 2 cells each,
 	 * totalling 4 cells per range.
 	 */
-	for (i = 0; i < len / (sizeof(*prop) * 4); i++) {
+	क्रम (i = 0; i < len / (माप(*prop) * 4); i++) अणु
 		u64 base, size;
 
-		base = of_read_number(prop + (i * 4) + 0, 2);
-		size = of_read_number(prop + (i * 4) + 2, 2);
+		base = of_पढ़ो_number(prop + (i * 4) + 0, 2);
+		size = of_पढ़ो_number(prop + (i * 4) + 2, 2);
 
-		if (size) {
+		अगर (size) अणु
 			ret = fadump_add_mem_range(&reserved_mrange_info,
 						   base, base + size);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				pr_warn("some reserved ranges are ignored!\n");
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Compact reserved ranges */
 	sort_and_merge_mem_ranges(&reserved_mrange_info);
-}
+पूर्ण
 
 /*
  * Release the memory that was reserved during early boot to preserve the
  * crash'ed kernel's memory contents except reserved dump area (permanent
  * reservation) and reserved ranges used by F/W. The released memory will
- * be available for general use.
+ * be available क्रम general use.
  */
-static void fadump_release_memory(u64 begin, u64 end)
-{
+अटल व्योम fadump_release_memory(u64 begin, u64 end)
+अणु
 	u64 ra_start, ra_end, tstart;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	ra_start = fw_dump.reserve_dump_area_start;
 	ra_end = ra_start + fw_dump.reserve_dump_area_size;
 
 	/*
-	 * If reserved ranges array limit is hit, overwrite the last reserved
+	 * If reserved ranges array limit is hit, overग_लिखो the last reserved
 	 * memory range with reserved dump area to ensure it is excluded from
-	 * the memory being released (reused for next FADump registration).
+	 * the memory being released (reused क्रम next FADump registration).
 	 */
-	if (reserved_mrange_info.mem_range_cnt ==
+	अगर (reserved_mrange_info.mem_range_cnt ==
 	    reserved_mrange_info.max_mem_ranges)
 		reserved_mrange_info.mem_range_cnt--;
 
 	ret = fadump_add_mem_range(&reserved_mrange_info, ra_start, ra_end);
-	if (ret != 0)
-		return;
+	अगर (ret != 0)
+		वापस;
 
 	/* Get the reserved ranges list in order first. */
 	sort_and_merge_mem_ranges(&reserved_mrange_info);
 
-	/* Exclude reserved ranges and release remaining memory */
+	/* Exclude reserved ranges and release reमुख्यing memory */
 	tstart = begin;
-	for (i = 0; i < reserved_mrange_info.mem_range_cnt; i++) {
+	क्रम (i = 0; i < reserved_mrange_info.mem_range_cnt; i++) अणु
 		ra_start = reserved_mrange_info.mem_ranges[i].base;
 		ra_end = ra_start + reserved_mrange_info.mem_ranges[i].size;
 
-		if (tstart >= ra_end)
-			continue;
+		अगर (tstart >= ra_end)
+			जारी;
 
-		if (tstart < ra_start)
+		अगर (tstart < ra_start)
 			fadump_release_reserved_area(tstart, ra_start);
 		tstart = ra_end;
-	}
+	पूर्ण
 
-	if (tstart < end)
+	अगर (tstart < end)
 		fadump_release_reserved_area(tstart, end);
-}
+पूर्ण
 
-static void fadump_invalidate_release_mem(void)
-{
+अटल व्योम fadump_invalidate_release_mem(व्योम)
+अणु
 	mutex_lock(&fadump_mutex);
-	if (!fw_dump.dump_active) {
+	अगर (!fw_dump.dump_active) अणु
 		mutex_unlock(&fadump_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fadump_cleanup();
 	mutex_unlock(&fadump_mutex);
 
 	fadump_release_memory(fw_dump.boot_mem_top, memblock_end_of_DRAM());
-	fadump_free_cpu_notes_buf();
+	fadump_मुक्त_cpu_notes_buf();
 
 	/*
 	 * Setup kernel metadata and initialize the kernel dump
-	 * memory structure for FADump re-registration.
+	 * memory काष्ठाure क्रम FADump re-registration.
 	 */
-	if (fw_dump.ops->fadump_setup_metadata &&
+	अगर (fw_dump.ops->fadump_setup_metadata &&
 	    (fw_dump.ops->fadump_setup_metadata(&fw_dump) < 0))
 		pr_warn("Failed to setup kernel metadata!\n");
-	fw_dump.ops->fadump_init_mem_struct(&fw_dump);
-}
+	fw_dump.ops->fadump_init_mem_काष्ठा(&fw_dump);
+पूर्ण
 
-static ssize_t release_mem_store(struct kobject *kobj,
-				 struct kobj_attribute *attr,
-				 const char *buf, size_t count)
-{
-	int input = -1;
+अटल sमाप_प्रकार release_mem_store(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक input = -1;
 
-	if (!fw_dump.dump_active)
-		return -EPERM;
+	अगर (!fw_dump.dump_active)
+		वापस -EPERM;
 
-	if (kstrtoint(buf, 0, &input))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 0, &input))
+		वापस -EINVAL;
 
-	if (input == 1) {
+	अगर (input == 1) अणु
 		/*
 		 * Take away the '/proc/vmcore'. We are releasing the dump
 		 * memory, hence it will not be valid anymore.
 		 */
-#ifdef CONFIG_PROC_VMCORE
+#अगर_घोषित CONFIG_PROC_VMCORE
 		vmcore_cleanup();
-#endif
+#पूर्ण_अगर
 		fadump_invalidate_release_mem();
 
-	} else
-		return -EINVAL;
-	return count;
-}
+	पूर्ण अन्यथा
+		वापस -EINVAL;
+	वापस count;
+पूर्ण
 
 /* Release the reserved memory and disable the FADump */
-static void unregister_fadump(void)
-{
+अटल व्योम unरेजिस्टर_fadump(व्योम)
+अणु
 	fadump_cleanup();
 	fadump_release_memory(fw_dump.reserve_dump_area_start,
 			      fw_dump.reserve_dump_area_size);
 	fw_dump.fadump_enabled = 0;
 	kobject_put(fadump_kobj);
-}
+पूर्ण
 
-static ssize_t enabled_show(struct kobject *kobj,
-			    struct kobj_attribute *attr,
-			    char *buf)
-{
-	return sprintf(buf, "%d\n", fw_dump.fadump_enabled);
-}
+अटल sमाप_प्रकार enabled_show(काष्ठा kobject *kobj,
+			    काष्ठा kobj_attribute *attr,
+			    अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", fw_dump.fadump_enabled);
+पूर्ण
 
-static ssize_t mem_reserved_show(struct kobject *kobj,
-				 struct kobj_attribute *attr,
-				 char *buf)
-{
-	return sprintf(buf, "%ld\n", fw_dump.reserve_dump_area_size);
-}
+अटल sमाप_प्रकार mem_reserved_show(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *attr,
+				 अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%ld\n", fw_dump.reserve_dump_area_size);
+पूर्ण
 
-static ssize_t registered_show(struct kobject *kobj,
-			       struct kobj_attribute *attr,
-			       char *buf)
-{
-	return sprintf(buf, "%d\n", fw_dump.dump_registered);
-}
+अटल sमाप_प्रकार रेजिस्टरed_show(काष्ठा kobject *kobj,
+			       काष्ठा kobj_attribute *attr,
+			       अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", fw_dump.dump_रेजिस्टरed);
+पूर्ण
 
-static ssize_t registered_store(struct kobject *kobj,
-				struct kobj_attribute *attr,
-				const char *buf, size_t count)
-{
-	int ret = 0;
-	int input = -1;
+अटल sमाप_प्रकार रेजिस्टरed_store(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक input = -1;
 
-	if (!fw_dump.fadump_enabled || fw_dump.dump_active)
-		return -EPERM;
+	अगर (!fw_dump.fadump_enabled || fw_dump.dump_active)
+		वापस -EPERM;
 
-	if (kstrtoint(buf, 0, &input))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 0, &input))
+		वापस -EINVAL;
 
 	mutex_lock(&fadump_mutex);
 
-	switch (input) {
-	case 0:
-		if (fw_dump.dump_registered == 0) {
-			goto unlock_out;
-		}
+	चयन (input) अणु
+	हाल 0:
+		अगर (fw_dump.dump_रेजिस्टरed == 0) अणु
+			जाओ unlock_out;
+		पूर्ण
 
-		/* Un-register Firmware-assisted dump */
+		/* Un-रेजिस्टर Firmware-assisted dump */
 		pr_debug("Un-register firmware-assisted dump\n");
-		fw_dump.ops->fadump_unregister(&fw_dump);
-		break;
-	case 1:
-		if (fw_dump.dump_registered == 1) {
-			/* Un-register Firmware-assisted dump */
-			fw_dump.ops->fadump_unregister(&fw_dump);
-		}
+		fw_dump.ops->fadump_unरेजिस्टर(&fw_dump);
+		अवरोध;
+	हाल 1:
+		अगर (fw_dump.dump_रेजिस्टरed == 1) अणु
+			/* Un-रेजिस्टर Firmware-assisted dump */
+			fw_dump.ops->fadump_unरेजिस्टर(&fw_dump);
+		पूर्ण
 		/* Register Firmware-assisted dump */
-		ret = register_fadump();
-		break;
-	default:
+		ret = रेजिस्टर_fadump();
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 unlock_out:
 	mutex_unlock(&fadump_mutex);
-	return ret < 0 ? ret : count;
-}
+	वापस ret < 0 ? ret : count;
+पूर्ण
 
-static int fadump_region_show(struct seq_file *m, void *private)
-{
-	if (!fw_dump.fadump_enabled)
-		return 0;
+अटल पूर्णांक fadump_region_show(काष्ठा seq_file *m, व्योम *निजी)
+अणु
+	अगर (!fw_dump.fadump_enabled)
+		वापस 0;
 
 	mutex_lock(&fadump_mutex);
 	fw_dump.ops->fadump_region_show(&fw_dump, m);
 	mutex_unlock(&fadump_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct kobj_attribute release_attr = __ATTR_WO(release_mem);
-static struct kobj_attribute enable_attr = __ATTR_RO(enabled);
-static struct kobj_attribute register_attr = __ATTR_RW(registered);
-static struct kobj_attribute mem_reserved_attr = __ATTR_RO(mem_reserved);
+अटल काष्ठा kobj_attribute release_attr = __ATTR_WO(release_mem);
+अटल काष्ठा kobj_attribute enable_attr = __ATTR_RO(enabled);
+अटल काष्ठा kobj_attribute रेजिस्टर_attr = __ATTR_RW(रेजिस्टरed);
+अटल काष्ठा kobj_attribute mem_reserved_attr = __ATTR_RO(mem_reserved);
 
-static struct attribute *fadump_attrs[] = {
+अटल काष्ठा attribute *fadump_attrs[] = अणु
 	&enable_attr.attr,
-	&register_attr.attr,
+	&रेजिस्टर_attr.attr,
 	&mem_reserved_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 ATTRIBUTE_GROUPS(fadump);
 
 DEFINE_SHOW_ATTRIBUTE(fadump_region);
 
-static void fadump_init_files(void)
-{
-	int rc = 0;
+अटल व्योम fadump_init_files(व्योम)
+अणु
+	पूर्णांक rc = 0;
 
 	fadump_kobj = kobject_create_and_add("fadump", kernel_kobj);
-	if (!fadump_kobj) {
+	अगर (!fadump_kobj) अणु
 		pr_err("failed to create fadump kobject\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	debugfs_create_file("fadump_region", 0444, powerpc_debugfs_root, NULL,
+	debugfs_create_file("fadump_region", 0444, घातerpc_debugfs_root, शून्य,
 			    &fadump_region_fops);
 
-	if (fw_dump.dump_active) {
+	अगर (fw_dump.dump_active) अणु
 		rc = sysfs_create_file(fadump_kobj, &release_attr.attr);
-		if (rc)
+		अगर (rc)
 			pr_err("unable to create release_mem sysfs file (%d)\n",
 			       rc);
-	}
+	पूर्ण
 
 	rc = sysfs_create_groups(fadump_kobj, fadump_groups);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("sysfs group creation failed (%d), unregistering FADump",
 		       rc);
-		unregister_fadump();
-		return;
-	}
+		unरेजिस्टर_fadump();
+		वापस;
+	पूर्ण
 
 	/*
 	 * The FADump sysfs are moved from kernel_kobj to fadump_kobj need to
-	 * create symlink at old location to maintain backward compatibility.
+	 * create symlink at old location to मुख्यtain backward compatibility.
 	 *
 	 *      - fadump_enabled -> fadump/enabled
-	 *      - fadump_registered -> fadump/registered
+	 *      - fadump_रेजिस्टरed -> fadump/रेजिस्टरed
 	 *      - fadump_release_mem -> fadump/release_mem
 	 */
 	rc = compat_only_sysfs_link_entry_to_kobj(kernel_kobj, fadump_kobj,
 						  "enabled", "fadump_enabled");
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("unable to create fadump_enabled symlink (%d)", rc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rc = compat_only_sysfs_link_entry_to_kobj(kernel_kobj, fadump_kobj,
 						  "registered",
 						  "fadump_registered");
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("unable to create fadump_registered symlink (%d)", rc);
-		sysfs_remove_link(kernel_kobj, "fadump_enabled");
-		return;
-	}
+		sysfs_हटाओ_link(kernel_kobj, "fadump_enabled");
+		वापस;
+	पूर्ण
 
-	if (fw_dump.dump_active) {
+	अगर (fw_dump.dump_active) अणु
 		rc = compat_only_sysfs_link_entry_to_kobj(kernel_kobj,
 							  fadump_kobj,
 							  "release_mem",
 							  "fadump_release_mem");
-		if (rc)
+		अगर (rc)
 			pr_err("unable to create fadump_release_mem symlink (%d)",
 			       rc);
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
 /*
- * Prepare for firmware-assisted dump.
+ * Prepare क्रम firmware-assisted dump.
  */
-int __init setup_fadump(void)
-{
-	if (!fw_dump.fadump_supported)
-		return 0;
+पूर्णांक __init setup_fadump(व्योम)
+अणु
+	अगर (!fw_dump.fadump_supported)
+		वापस 0;
 
 	fadump_init_files();
 	fadump_show_config();
 
-	if (!fw_dump.fadump_enabled)
-		return 1;
+	अगर (!fw_dump.fadump_enabled)
+		वापस 1;
 
 	/*
-	 * If dump data is available then see if it is valid and prepare for
+	 * If dump data is available then see अगर it is valid and prepare क्रम
 	 * saving it to the disk.
 	 */
-	if (fw_dump.dump_active) {
+	अगर (fw_dump.dump_active) अणु
 		/*
-		 * if dump process fails then invalidate the registration
-		 * and release memory before proceeding for re-registration.
+		 * अगर dump process fails then invalidate the registration
+		 * and release memory beक्रमe proceeding क्रम re-registration.
 		 */
-		if (fw_dump.ops->fadump_process(&fw_dump) < 0)
+		अगर (fw_dump.ops->fadump_process(&fw_dump) < 0)
 			fadump_invalidate_release_mem();
-	}
-	/* Initialize the kernel dump memory structure for FAD registration. */
-	else if (fw_dump.reserve_dump_area_size)
-		fw_dump.ops->fadump_init_mem_struct(&fw_dump);
+	पूर्ण
+	/* Initialize the kernel dump memory काष्ठाure क्रम FAD registration. */
+	अन्यथा अगर (fw_dump.reserve_dump_area_size)
+		fw_dump.ops->fadump_init_mem_काष्ठा(&fw_dump);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 subsys_initcall(setup_fadump);
-#else /* !CONFIG_PRESERVE_FA_DUMP */
+#अन्यथा /* !CONFIG_PRESERVE_FA_DUMP */
 
 /* Scan the Firmware Assisted dump configuration details. */
-int __init early_init_dt_scan_fw_dump(unsigned long node, const char *uname,
-				      int depth, void *data)
-{
-	if ((depth != 1) || (strcmp(uname, "ibm,opal") != 0))
-		return 0;
+पूर्णांक __init early_init_dt_scan_fw_dump(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+				      पूर्णांक depth, व्योम *data)
+अणु
+	अगर ((depth != 1) || (म_भेद(uname, "ibm,opal") != 0))
+		वापस 0;
 
 	opal_fadump_dt_scan(&fw_dump, node);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * When dump is active but PRESERVE_FA_DUMP is enabled on the kernel,
  * preserve crash data. The subsequent memory preserving kernel boot
  * is likely to process this crash data.
  */
-int __init fadump_reserve_mem(void)
-{
-	if (fw_dump.dump_active) {
+पूर्णांक __init fadump_reserve_mem(व्योम)
+अणु
+	अगर (fw_dump.dump_active) अणु
 		/*
 		 * If last boot has crashed then reserve all the memory
 		 * above boot memory to preserve crash data.
 		 */
 		pr_info("Preserving crash data for processing in next boot.\n");
 		fadump_reserve_crash_area(fw_dump.boot_mem_top);
-	} else
+	पूर्ण अन्यथा
 		pr_debug("FADump-aware kernel..\n");
 
-	return 1;
-}
-#endif /* CONFIG_PRESERVE_FA_DUMP */
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PRESERVE_FA_DUMP */
 
 /* Preserve everything above the base address */
-static void __init fadump_reserve_crash_area(u64 base)
-{
+अटल व्योम __init fadump_reserve_crash_area(u64 base)
+अणु
 	u64 i, mstart, mend, msize;
 
-	for_each_mem_range(i, &mstart, &mend) {
+	क्रम_each_mem_range(i, &mstart, &mend) अणु
 		msize  = mend - mstart;
 
-		if ((mstart + msize) < base)
-			continue;
+		अगर ((mstart + msize) < base)
+			जारी;
 
-		if (mstart < base) {
+		अगर (mstart < base) अणु
 			msize -= (base - mstart);
 			mstart = base;
-		}
+		पूर्ण
 
 		pr_info("Reserving %lluMB of memory at %#016llx for preserving crash data",
 			(msize >> 20), mstart);
 		memblock_reserve(mstart, msize);
-	}
-}
+	पूर्ण
+पूर्ण
 
-unsigned long __init arch_reserved_kernel_pages(void)
-{
-	return memblock_reserved_size() / PAGE_SIZE;
-}
+अचिन्हित दीर्घ __init arch_reserved_kernel_pages(व्योम)
+अणु
+	वापस memblock_reserved_size() / PAGE_SIZE;
+पूर्ण

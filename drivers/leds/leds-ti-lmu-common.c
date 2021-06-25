@@ -1,149 +1,150 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright 2015 Texas Instruments
 // Copyright 2018 Sebastian Reichel
 // Copyright 2018 Pavel Machek <pavel@ucw.cz>
 // TI LMU LED common framework, based on previous work from
 // Milo Kim <milo.kim@ti.com>
 
-#include <linux/bitops.h>
-#include <linux/err.h>
-#include <linux/of_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of_device.h>
 
-#include <linux/leds-ti-lmu-common.h>
+#समावेश <linux/leds-ti-lmu-common.h>
 
-static const unsigned int ramp_table[16] = {2048, 262000, 524000, 1049000,
+अटल स्थिर अचिन्हित पूर्णांक ramp_table[16] = अणु2048, 262000, 524000, 1049000,
 				2090000, 4194000, 8389000, 16780000, 33550000,
 				41940000, 50330000, 58720000, 67110000,
-				83880000, 100660000, 117440000};
+				83880000, 100660000, 117440000पूर्ण;
 
-static int ti_lmu_common_update_brightness(struct ti_lmu_bank *lmu_bank,
-					   int brightness)
-{
-	struct regmap *regmap = lmu_bank->regmap;
+अटल पूर्णांक ti_lmu_common_update_brightness(काष्ठा ti_lmu_bank *lmu_bank,
+					   पूर्णांक brightness)
+अणु
+	काष्ठा regmap *regmap = lmu_bank->regmap;
 	u8 reg, val;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Brightness register update
+	 * Brightness रेजिस्टर update
 	 *
-	 * 11 bit dimming: update LSB bits and write MSB byte.
-	 *		   MSB brightness should be shifted.
-	 *  8 bit dimming: write MSB byte.
+	 * 11 bit dimming: update LSB bits and ग_लिखो MSB byte.
+	 *		   MSB brightness should be shअगरted.
+	 *  8 bit dimming: ग_लिखो MSB byte.
 	 */
-	if (lmu_bank->max_brightness == MAX_BRIGHTNESS_11BIT) {
+	अगर (lmu_bank->max_brightness == MAX_BRIGHTNESS_11BIT) अणु
 		reg = lmu_bank->lsb_brightness_reg;
 		ret = regmap_update_bits(regmap, reg,
 					 LMU_11BIT_LSB_MASK,
 					 brightness);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		val = brightness >> LMU_11BIT_MSB_SHIFT;
-	} else {
+	पूर्ण अन्यथा अणु
 		val = brightness;
-	}
+	पूर्ण
 
 	reg = lmu_bank->msb_brightness_reg;
 
-	return regmap_write(regmap, reg, val);
-}
+	वापस regmap_ग_लिखो(regmap, reg, val);
+पूर्ण
 
-int ti_lmu_common_set_brightness(struct ti_lmu_bank *lmu_bank, int brightness)
-{
-	return ti_lmu_common_update_brightness(lmu_bank, brightness);
-}
+पूर्णांक ti_lmu_common_set_brightness(काष्ठा ti_lmu_bank *lmu_bank, पूर्णांक brightness)
+अणु
+	वापस ti_lmu_common_update_brightness(lmu_bank, brightness);
+पूर्ण
 EXPORT_SYMBOL(ti_lmu_common_set_brightness);
 
-static unsigned int ti_lmu_common_convert_ramp_to_index(unsigned int usec)
-{
-	int size = ARRAY_SIZE(ramp_table);
-	int i;
+अटल अचिन्हित पूर्णांक ti_lmu_common_convert_ramp_to_index(अचिन्हित पूर्णांक usec)
+अणु
+	पूर्णांक size = ARRAY_SIZE(ramp_table);
+	पूर्णांक i;
 
-	if (usec <= ramp_table[0])
-		return 0;
+	अगर (usec <= ramp_table[0])
+		वापस 0;
 
-	if (usec > ramp_table[size - 1])
-		return size - 1;
+	अगर (usec > ramp_table[size - 1])
+		वापस size - 1;
 
-	for (i = 1; i < size; i++) {
-		if (usec == ramp_table[i])
-			return i;
+	क्रम (i = 1; i < size; i++) अणु
+		अगर (usec == ramp_table[i])
+			वापस i;
 
 		/* Find an approximate index by looking up the table */
-		if (usec > ramp_table[i - 1] && usec < ramp_table[i]) {
-			if (usec - ramp_table[i - 1] < ramp_table[i] - usec)
-				return i - 1;
-			else
-				return i;
-		}
-	}
+		अगर (usec > ramp_table[i - 1] && usec < ramp_table[i]) अणु
+			अगर (usec - ramp_table[i - 1] < ramp_table[i] - usec)
+				वापस i - 1;
+			अन्यथा
+				वापस i;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ti_lmu_common_set_ramp(struct ti_lmu_bank *lmu_bank)
-{
-	struct regmap *regmap = lmu_bank->regmap;
-	u8 ramp, ramp_up, ramp_down;
+पूर्णांक ti_lmu_common_set_ramp(काष्ठा ti_lmu_bank *lmu_bank)
+अणु
+	काष्ठा regmap *regmap = lmu_bank->regmap;
+	u8 ramp, ramp_up, ramp_करोwn;
 
-	if (lmu_bank->ramp_up_usec == 0 && lmu_bank->ramp_down_usec == 0) {
+	अगर (lmu_bank->ramp_up_usec == 0 && lmu_bank->ramp_करोwn_usec == 0) अणु
 		ramp_up = 0;
-		ramp_down = 0;
-	} else {
+		ramp_करोwn = 0;
+	पूर्ण अन्यथा अणु
 		ramp_up = ti_lmu_common_convert_ramp_to_index(lmu_bank->ramp_up_usec);
-		ramp_down = ti_lmu_common_convert_ramp_to_index(lmu_bank->ramp_down_usec);
-	}
+		ramp_करोwn = ti_lmu_common_convert_ramp_to_index(lmu_bank->ramp_करोwn_usec);
+	पूर्ण
 
-	ramp = (ramp_up << 4) | ramp_down;
+	ramp = (ramp_up << 4) | ramp_करोwn;
 
-	return regmap_write(regmap, lmu_bank->runtime_ramp_reg, ramp);
+	वापस regmap_ग_लिखो(regmap, lmu_bank->runसमय_ramp_reg, ramp);
 
-}
+पूर्ण
 EXPORT_SYMBOL(ti_lmu_common_set_ramp);
 
-int ti_lmu_common_get_ramp_params(struct device *dev,
-				  struct fwnode_handle *child,
-				  struct ti_lmu_bank *lmu_data)
-{
-	int ret;
+पूर्णांक ti_lmu_common_get_ramp_params(काष्ठा device *dev,
+				  काष्ठा fwnode_handle *child,
+				  काष्ठा ti_lmu_bank *lmu_data)
+अणु
+	पूर्णांक ret;
 
-	ret = fwnode_property_read_u32(child, "ramp-up-us",
+	ret = fwnode_property_पढ़ो_u32(child, "ramp-up-us",
 				 &lmu_data->ramp_up_usec);
-	if (ret)
+	अगर (ret)
 		dev_warn(dev, "ramp-up-us property missing\n");
 
 
-	ret = fwnode_property_read_u32(child, "ramp-down-us",
-				 &lmu_data->ramp_down_usec);
-	if (ret)
+	ret = fwnode_property_पढ़ो_u32(child, "ramp-down-us",
+				 &lmu_data->ramp_करोwn_usec);
+	अगर (ret)
 		dev_warn(dev, "ramp-down-us property missing\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ti_lmu_common_get_ramp_params);
 
-int ti_lmu_common_get_brt_res(struct device *dev, struct fwnode_handle *child,
-				  struct ti_lmu_bank *lmu_data)
-{
-	int ret;
+पूर्णांक ti_lmu_common_get_brt_res(काष्ठा device *dev, काष्ठा fwnode_handle *child,
+				  काष्ठा ti_lmu_bank *lmu_data)
+अणु
+	पूर्णांक ret;
 
-	ret = device_property_read_u32(dev, "ti,brightness-resolution",
+	ret = device_property_पढ़ो_u32(dev, "ti,brightness-resolution",
 				       &lmu_data->max_brightness);
-	if (ret)
-		ret = fwnode_property_read_u32(child,
+	अगर (ret)
+		ret = fwnode_property_पढ़ो_u32(child,
 					       "ti,brightness-resolution",
 					       &lmu_data->max_brightness);
-	if (lmu_data->max_brightness <= 0) {
+	अगर (lmu_data->max_brightness <= 0) अणु
 		lmu_data->max_brightness = MAX_BRIGHTNESS_8BIT;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (lmu_data->max_brightness > MAX_BRIGHTNESS_11BIT)
+	अगर (lmu_data->max_brightness > MAX_BRIGHTNESS_11BIT)
 			lmu_data->max_brightness = MAX_BRIGHTNESS_11BIT;
 
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ti_lmu_common_get_brt_res);
 
 MODULE_DESCRIPTION("TI LMU common LED framework");

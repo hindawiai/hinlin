@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#include "i915_selftest.h"
-#include "selftest_engine.h"
+#समावेश "i915_selftest.h"
+#समावेश "selftest_engine.h"
 
-int intel_engine_live_selftests(struct drm_i915_private *i915)
-{
-	static int (* const tests[])(struct intel_gt *) = {
+पूर्णांक पूर्णांकel_engine_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल पूर्णांक (* स्थिर tests[])(काष्ठा पूर्णांकel_gt *) = अणु
 		live_engine_pm_selftests,
-		NULL,
-	};
-	struct intel_gt *gt = &i915->gt;
+		शून्य,
+	पूर्ण;
+	काष्ठा पूर्णांकel_gt *gt = &i915->gt;
 	typeof(*tests) *fn;
 
-	for (fn = tests; *fn; fn++) {
-		int err;
+	क्रम (fn = tests; *fn; fn++) अणु
+		पूर्णांक err;
 
 		err = (*fn)(gt);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

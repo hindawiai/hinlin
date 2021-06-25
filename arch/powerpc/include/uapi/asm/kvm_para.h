@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License, version 2, as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, 51 Franklin Street, Fअगरth Floor, Boston, MA  02110-1301, USA.
  *
  * Copyright IBM Corp. 2008
  *
- * Authors: Hollis Blanchard <hollisb@us.ibm.com>
+ * Authors: Hollis Blanअक्षरd <hollisb@us.ibm.com>
  */
 
-#ifndef _UAPI__POWERPC_KVM_PARA_H__
-#define _UAPI__POWERPC_KVM_PARA_H__
+#अगर_अघोषित _UAPI__POWERPC_KVM_PARA_H__
+#घोषणा _UAPI__POWERPC_KVM_PARA_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * Additions to this struct must only occur at the end, and should be
+ * Additions to this काष्ठा must only occur at the end, and should be
  * accompanied by a KVM_MAGIC_FEAT flag to advertise that they are present
- * (albeit not necessarily relevant to the current target hardware platform).
+ * (albeit not necessarily relevant to the current target hardware platक्रमm).
  *
  * Struct fields are always 32 or 64 bit aligned, depending on them being 32
  * or 64 bit wide respectively.
  *
  * See Documentation/virt/kvm/ppc-pv.rst
  */
-struct kvm_vcpu_arch_shared {
+काष्ठा kvm_vcpu_arch_shared अणु
 	__u64 scratch1;
 	__u64 scratch2;
 	__u64 scratch3;
-	__u64 critical;		/* Guest may not get interrupts if == r1 */
+	__u64 critical;		/* Guest may not get पूर्णांकerrupts अगर == r1 */
 	__u64 sprg0;
 	__u64 sprg1;
 	__u64 sprg2;
@@ -47,7 +48,7 @@ struct kvm_vcpu_arch_shared {
 	__u64 dar;		/* dear on BookE */
 	__u64 msr;
 	__u32 dsisr;
-	__u32 int_pending;	/* Tells the guest if we have an interrupt */
+	__u32 पूर्णांक_pending;	/* Tells the guest अगर we have an पूर्णांकerrupt */
 	__u32 sr[16];
 	__u32 mas0;
 	__u32 mas1;
@@ -59,40 +60,40 @@ struct kvm_vcpu_arch_shared {
 	__u32 pir;
 
 	/*
-	 * SPRG4-7 are user-readable, so we can only keep these consistent
-	 * between the shared area and the real registers when there's an
-	 * intervening exit to KVM.  This also applies to SPRG3 on some
+	 * SPRG4-7 are user-पढ़ोable, so we can only keep these consistent
+	 * between the shared area and the real रेजिस्टरs when there's an
+	 * पूर्णांकervening निकास to KVM.  This also applies to SPRG3 on some
 	 * chips.
 	 *
-	 * This suffices for access by guest userspace, since in PR-mode
-	 * KVM, an exit must occur when changing the guest's MSR[PR].
-	 * If the guest kernel writes to SPRG3-7 via the shared area, it
-	 * must also use the shared area for reading while in kernel space.
+	 * This suffices क्रम access by guest userspace, since in PR-mode
+	 * KVM, an निकास must occur when changing the guest's MSR[PR].
+	 * If the guest kernel ग_लिखोs to SPRG3-7 via the shared area, it
+	 * must also use the shared area क्रम पढ़ोing जबतक in kernel space.
 	 */
 	__u64 sprg4;
 	__u64 sprg5;
 	__u64 sprg6;
 	__u64 sprg7;
-};
+पूर्ण;
 
-#define KVM_SC_MAGIC_R0		0x4b564d21 /* "KVM!" */
+#घोषणा KVM_SC_MAGIC_R0		0x4b564d21 /* "KVM!" */
 
-#define KVM_HCALL_TOKEN(num)     _EV_HCALL_TOKEN(EV_KVM_VENDOR_ID, num)
+#घोषणा KVM_HCALL_TOKEN(num)     _EV_HCALL_TOKEN(EV_KVM_VENDOR_ID, num)
 
-#include <asm/epapr_hcalls.h>
+#समावेश <यंत्र/epapr_hcalls.h>
 
-#define KVM_FEATURE_MAGIC_PAGE	1
+#घोषणा KVM_FEATURE_MAGIC_PAGE	1
 
 /* Magic page flags from host to guest */
 
-#define KVM_MAGIC_FEAT_SR		(1 << 0)
+#घोषणा KVM_MAGIC_FEAT_SR		(1 << 0)
 
 /* MASn, ESR, PIR, and high SPRGs */
-#define KVM_MAGIC_FEAT_MAS0_TO_SPRG7	(1 << 1)
+#घोषणा KVM_MAGIC_FEAT_MAS0_TO_SPRG7	(1 << 1)
 
 /* Magic page flags from guest to host */
 
-#define MAGIC_PAGE_FLAG_NOT_MAPPED_NX	(1 << 0)
+#घोषणा MAGIC_PAGE_FLAG_NOT_MAPPED_NX	(1 << 0)
 
 
-#endif /* _UAPI__POWERPC_KVM_PARA_H__ */
+#पूर्ण_अगर /* _UAPI__POWERPC_KVM_PARA_H__ */

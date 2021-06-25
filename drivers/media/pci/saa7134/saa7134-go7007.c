@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2005-2006 Micronas USA Inc.
  */
 
-#include "saa7134.h"
-#include "saa7134-reg.h"
+#समावेश "saa7134.h"
+#समावेश "saa7134-reg.h"
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/time.h>
-#include <linux/mm.h>
-#include <linux/usb.h>
-#include <linux/i2c.h>
-#include <asm/byteorder.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-subdev.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/i2c.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-subdev.h>
 
-#include "go7007-priv.h"
+#समावेश "go7007-priv.h"
 
-/*#define GO7007_HPI_DEBUG*/
+/*#घोषणा GO7007_HPI_DEBUG*/
 
-enum hpi_address {
+क्रमागत hpi_address अणु
 	HPI_ADDR_VIDEO_BUFFER = 0xe4,
 	HPI_ADDR_INIT_BUFFER = 0xea,
 	HPI_ADDR_INTR_RET_VALUE = 0xee,
@@ -34,9 +35,9 @@ enum hpi_address {
 	HPI_ADDR_INTR_STATUS = 0xf4,
 	HPI_ADDR_INTR_WR_PARAM = 0xf6,
 	HPI_ADDR_INTR_WR_INDEX = 0xf8,
-};
+पूर्ण;
 
-enum gpio_command {
+क्रमागत gpio_command अणु
 	GPIO_COMMAND_RESET = 0x00, /* 000b */
 	GPIO_COMMAND_REQ1  = 0x04, /* 001b */
 	GPIO_COMMAND_WRITE = 0x20, /* 010b */
@@ -45,23 +46,23 @@ enum gpio_command {
 	GPIO_COMMAND_VIDEO = 0x84, /* 101b */
 	GPIO_COMMAND_IDLE  = 0xA0, /* 110b */
 	GPIO_COMMAND_ADDR  = 0xA4, /* 111b */
-};
+पूर्ण;
 
-struct saa7134_go7007 {
-	struct v4l2_subdev sd;
-	struct saa7134_dev *dev;
+काष्ठा saa7134_go7007 अणु
+	काष्ठा v4l2_subdev sd;
+	काष्ठा saa7134_dev *dev;
 	u8 *top;
 	u8 *bottom;
 	dma_addr_t top_dma;
 	dma_addr_t bottom_dma;
-};
+पूर्ण;
 
-static inline struct saa7134_go7007 *to_state(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct saa7134_go7007, sd);
-}
+अटल अंतरभूत काष्ठा saa7134_go7007 *to_state(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा saa7134_go7007, sd);
+पूर्ण
 
-static const struct go7007_board_info board_voyager = {
+अटल स्थिर काष्ठा go7007_board_info board_voyager = अणु
 	.flags		 = 0,
 	.sensor_flags	 = GO7007_SENSOR_656 |
 				GO7007_SENSOR_VALID_ENABLE |
@@ -70,228 +71,228 @@ static const struct go7007_board_info board_voyager = {
 	.audio_flags	= GO7007_AUDIO_I2S_MODE_1 |
 				GO7007_AUDIO_WORD_16,
 	.audio_rate	 = 48000,
-	.audio_bclk_div	 = 8,
-	.audio_main_div	 = 2,
+	.audio_bclk_भाग	 = 8,
+	.audio_मुख्य_भाग	 = 2,
 	.hpi_buffer_cap  = 7,
-	.num_inputs	 = 1,
-	.inputs		 = {
-		{
+	.num_inमाला_दो	 = 1,
+	.inमाला_दो		 = अणु
+		अणु
 			.name		= "SAA7134",
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-/********************* Driver for GPIO HPI interface *********************/
+/********************* Driver क्रम GPIO HPI पूर्णांकerface *********************/
 
-static int gpio_write(struct saa7134_dev *dev, u8 addr, u16 data)
-{
-	saa_writeb(SAA7134_GPIO_GPMODE0, 0xff);
+अटल पूर्णांक gpio_ग_लिखो(काष्ठा saa7134_dev *dev, u8 addr, u16 data)
+अणु
+	saa_ग_लिखोb(SAA7134_GPIO_GPMODE0, 0xff);
 
 	/* Write HPI address */
-	saa_writeb(SAA7134_GPIO_GPSTATUS0, addr);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_ADDR);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS0, addr);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_ADDR);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
 
 	/* Write low byte */
-	saa_writeb(SAA7134_GPIO_GPSTATUS0, data & 0xff);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_WRITE);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS0, data & 0xff);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_WRITE);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
 
 	/* Write high byte */
-	saa_writeb(SAA7134_GPIO_GPSTATUS0, data >> 8);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_WRITE);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS0, data >> 8);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_WRITE);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_read(struct saa7134_dev *dev, u8 addr, u16 *data)
-{
-	saa_writeb(SAA7134_GPIO_GPMODE0, 0xff);
+अटल पूर्णांक gpio_पढ़ो(काष्ठा saa7134_dev *dev, u8 addr, u16 *data)
+अणु
+	saa_ग_लिखोb(SAA7134_GPIO_GPMODE0, 0xff);
 
 	/* Write HPI address */
-	saa_writeb(SAA7134_GPIO_GPSTATUS0, addr);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_ADDR);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS0, addr);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_ADDR);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
 
-	saa_writeb(SAA7134_GPIO_GPMODE0, 0x00);
+	saa_ग_लिखोb(SAA7134_GPIO_GPMODE0, 0x00);
 
 	/* Read low byte */
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_READ);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_READ);
 	saa_clearb(SAA7134_GPIO_GPMODE3, SAA7134_GPIO_GPRESCAN);
 	saa_setb(SAA7134_GPIO_GPMODE3, SAA7134_GPIO_GPRESCAN);
-	*data = saa_readb(SAA7134_GPIO_GPSTATUS0);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
+	*data = saa_पढ़ोb(SAA7134_GPIO_GPSTATUS0);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
 
 	/* Read high byte */
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_READ);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_READ);
 	saa_clearb(SAA7134_GPIO_GPMODE3, SAA7134_GPIO_GPRESCAN);
 	saa_setb(SAA7134_GPIO_GPMODE3, SAA7134_GPIO_GPRESCAN);
-	*data |= saa_readb(SAA7134_GPIO_GPSTATUS0) << 8;
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
+	*data |= saa_पढ़ोb(SAA7134_GPIO_GPSTATUS0) << 8;
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa7134_go7007_interface_reset(struct go7007 *go)
-{
-	struct saa7134_go7007 *saa = go->hpi_context;
-	struct saa7134_dev *dev = saa->dev;
-	u16 intr_val, intr_data;
-	int count = 20;
+अटल पूर्णांक saa7134_go7007_पूर्णांकerface_reset(काष्ठा go7007 *go)
+अणु
+	काष्ठा saa7134_go7007 *saa = go->hpi_context;
+	काष्ठा saa7134_dev *dev = saa->dev;
+	u16 पूर्णांकr_val, पूर्णांकr_data;
+	पूर्णांक count = 20;
 
-	saa_clearb(SAA7134_TS_PARALLEL, 0x80); /* Disable TS interface */
-	saa_writeb(SAA7134_GPIO_GPMODE2, 0xa4);
-	saa_writeb(SAA7134_GPIO_GPMODE0, 0xff);
+	saa_clearb(SAA7134_TS_PARALLEL, 0x80); /* Disable TS पूर्णांकerface */
+	saa_ग_लिखोb(SAA7134_GPIO_GPMODE2, 0xa4);
+	saa_ग_लिखोb(SAA7134_GPIO_GPMODE0, 0xff);
 
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ1);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_RESET);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ1);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_RESET);
 	msleep(1);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ1);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ2);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ1);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ2);
 	msleep(10);
 
 	saa_clearb(SAA7134_GPIO_GPMODE3, SAA7134_GPIO_GPRESCAN);
 	saa_setb(SAA7134_GPIO_GPMODE3, SAA7134_GPIO_GPRESCAN);
 
-	saa_readb(SAA7134_GPIO_GPSTATUS2);
-	/*pr_debug("status is %s\n", saa_readb(SAA7134_GPIO_GPSTATUS2) & 0x40 ? "OK" : "not OK"); */
+	saa_पढ़ोb(SAA7134_GPIO_GPSTATUS2);
+	/*pr_debug("status is %s\n", saa_पढ़ोb(SAA7134_GPIO_GPSTATUS2) & 0x40 ? "OK" : "not OK"); */
 
 	/* enter command mode...(?) */
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ1);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ2);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ1);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_REQ2);
 
-	do {
+	करो अणु
 		saa_clearb(SAA7134_GPIO_GPMODE3, SAA7134_GPIO_GPRESCAN);
 		saa_setb(SAA7134_GPIO_GPMODE3, SAA7134_GPIO_GPRESCAN);
-		saa_readb(SAA7134_GPIO_GPSTATUS2);
-		/*pr_info("gpio is %08x\n", saa_readl(SAA7134_GPIO_GPSTATUS0 >> 2)); */
-	} while (--count > 0);
+		saa_पढ़ोb(SAA7134_GPIO_GPSTATUS2);
+		/*pr_info("gpio is %08x\n", saa_पढ़ोl(SAA7134_GPIO_GPSTATUS0 >> 2)); */
+	पूर्ण जबतक (--count > 0);
 
-	/* Wait for an interrupt to indicate successful hardware reset */
-	if (go7007_read_interrupt(go, &intr_val, &intr_data) < 0 ||
-			(intr_val & ~0x1) != 0x55aa) {
+	/* Wait क्रम an पूर्णांकerrupt to indicate successful hardware reset */
+	अगर (go7007_पढ़ो_पूर्णांकerrupt(go, &पूर्णांकr_val, &पूर्णांकr_data) < 0 ||
+			(पूर्णांकr_val & ~0x1) != 0x55aa) अणु
 		pr_err("saa7134-go7007: unable to reset the GO7007\n");
-		return -1;
-	}
-	return 0;
-}
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int saa7134_go7007_write_interrupt(struct go7007 *go, int addr, int data)
-{
-	struct saa7134_go7007 *saa = go->hpi_context;
-	struct saa7134_dev *dev = saa->dev;
-	int i;
+अटल पूर्णांक saa7134_go7007_ग_लिखो_पूर्णांकerrupt(काष्ठा go7007 *go, पूर्णांक addr, पूर्णांक data)
+अणु
+	काष्ठा saa7134_go7007 *saa = go->hpi_context;
+	काष्ठा saa7134_dev *dev = saa->dev;
+	पूर्णांक i;
 	u16 status_reg;
 
-#ifdef GO7007_HPI_DEBUG
+#अगर_घोषित GO7007_HPI_DEBUG
 	pr_debug("saa7134-go7007: WriteInterrupt: %04x %04x\n", addr, data);
-#endif
+#पूर्ण_अगर
 
-	for (i = 0; i < 100; ++i) {
-		gpio_read(dev, HPI_ADDR_INTR_STATUS, &status_reg);
-		if (!(status_reg & 0x0010))
-			break;
+	क्रम (i = 0; i < 100; ++i) अणु
+		gpio_पढ़ो(dev, HPI_ADDR_INTR_STATUS, &status_reg);
+		अगर (!(status_reg & 0x0010))
+			अवरोध;
 		msleep(10);
-	}
-	if (i == 100) {
+	पूर्ण
+	अगर (i == 100) अणु
 		pr_err("saa7134-go7007: device is hung, status reg = 0x%04x\n",
 			status_reg);
-		return -1;
-	}
-	gpio_write(dev, HPI_ADDR_INTR_WR_PARAM, data);
-	gpio_write(dev, HPI_ADDR_INTR_WR_INDEX, addr);
+		वापस -1;
+	पूर्ण
+	gpio_ग_लिखो(dev, HPI_ADDR_INTR_WR_PARAM, data);
+	gpio_ग_लिखो(dev, HPI_ADDR_INTR_WR_INDEX, addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa7134_go7007_read_interrupt(struct go7007 *go)
-{
-	struct saa7134_go7007 *saa = go->hpi_context;
-	struct saa7134_dev *dev = saa->dev;
+अटल पूर्णांक saa7134_go7007_पढ़ो_पूर्णांकerrupt(काष्ठा go7007 *go)
+अणु
+	काष्ठा saa7134_go7007 *saa = go->hpi_context;
+	काष्ठा saa7134_dev *dev = saa->dev;
 
-	/* XXX we need to wait if there is no interrupt available */
-	go->interrupt_available = 1;
-	gpio_read(dev, HPI_ADDR_INTR_RET_VALUE, &go->interrupt_value);
-	gpio_read(dev, HPI_ADDR_INTR_RET_DATA, &go->interrupt_data);
-#ifdef GO7007_HPI_DEBUG
+	/* XXX we need to रुको अगर there is no पूर्णांकerrupt available */
+	go->पूर्णांकerrupt_available = 1;
+	gpio_पढ़ो(dev, HPI_ADDR_INTR_RET_VALUE, &go->पूर्णांकerrupt_value);
+	gpio_पढ़ो(dev, HPI_ADDR_INTR_RET_DATA, &go->पूर्णांकerrupt_data);
+#अगर_घोषित GO7007_HPI_DEBUG
 	pr_debug("saa7134-go7007: ReadInterrupt: %04x %04x\n",
-			go->interrupt_value, go->interrupt_data);
-#endif
-	return 0;
-}
+			go->पूर्णांकerrupt_value, go->पूर्णांकerrupt_data);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void saa7134_go7007_irq_ts_done(struct saa7134_dev *dev,
-						unsigned long status)
-{
-	struct go7007 *go = video_get_drvdata(dev->empress_dev);
-	struct saa7134_go7007 *saa = go->hpi_context;
+अटल व्योम saa7134_go7007_irq_ts_करोne(काष्ठा saa7134_dev *dev,
+						अचिन्हित दीर्घ status)
+अणु
+	काष्ठा go7007 *go = video_get_drvdata(dev->empress_dev);
+	काष्ठा saa7134_go7007 *saa = go->hpi_context;
 
-	if (!vb2_is_streaming(&go->vidq))
-		return;
-	if (0 != (status & 0x000f0000))
+	अगर (!vb2_is_streaming(&go->vidq))
+		वापस;
+	अगर (0 != (status & 0x000f0000))
 		pr_debug("saa7134-go7007: irq: lost %ld\n",
 				(status >> 16) & 0x0f);
-	if (status & 0x100000) {
-		dma_sync_single_for_cpu(&dev->pci->dev,
+	अगर (status & 0x100000) अणु
+		dma_sync_single_क्रम_cpu(&dev->pci->dev,
 					saa->bottom_dma, PAGE_SIZE, DMA_FROM_DEVICE);
 		go7007_parse_video_stream(go, saa->bottom, PAGE_SIZE);
-		saa_writel(SAA7134_RS_BA2(5), saa->bottom_dma);
-	} else {
-		dma_sync_single_for_cpu(&dev->pci->dev,
+		saa_ग_लिखोl(SAA7134_RS_BA2(5), saa->bottom_dma);
+	पूर्ण अन्यथा अणु
+		dma_sync_single_क्रम_cpu(&dev->pci->dev,
 					saa->top_dma, PAGE_SIZE, DMA_FROM_DEVICE);
 		go7007_parse_video_stream(go, saa->top, PAGE_SIZE);
-		saa_writel(SAA7134_RS_BA1(5), saa->top_dma);
-	}
-}
+		saa_ग_लिखोl(SAA7134_RS_BA1(5), saa->top_dma);
+	पूर्ण
+पूर्ण
 
-static int saa7134_go7007_stream_start(struct go7007 *go)
-{
-	struct saa7134_go7007 *saa = go->hpi_context;
-	struct saa7134_dev *dev = saa->dev;
+अटल पूर्णांक saa7134_go7007_stream_start(काष्ठा go7007 *go)
+अणु
+	काष्ठा saa7134_go7007 *saa = go->hpi_context;
+	काष्ठा saa7134_dev *dev = saa->dev;
 
 	saa->top_dma = dma_map_page(&dev->pci->dev, virt_to_page(saa->top),
 			0, PAGE_SIZE, DMA_FROM_DEVICE);
-	if (dma_mapping_error(&dev->pci->dev, saa->top_dma))
-		return -ENOMEM;
+	अगर (dma_mapping_error(&dev->pci->dev, saa->top_dma))
+		वापस -ENOMEM;
 	saa->bottom_dma = dma_map_page(&dev->pci->dev,
 			virt_to_page(saa->bottom),
 			0, PAGE_SIZE, DMA_FROM_DEVICE);
-	if (dma_mapping_error(&dev->pci->dev, saa->bottom_dma)) {
+	अगर (dma_mapping_error(&dev->pci->dev, saa->bottom_dma)) अणु
 		dma_unmap_page(&dev->pci->dev, saa->top_dma, PAGE_SIZE,
 				DMA_FROM_DEVICE);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	saa_writel(SAA7134_VIDEO_PORT_CTRL0 >> 2, 0xA300B000);
-	saa_writel(SAA7134_VIDEO_PORT_CTRL4 >> 2, 0x40000200);
+	saa_ग_लिखोl(SAA7134_VIDEO_PORT_CTRL0 >> 2, 0xA300B000);
+	saa_ग_लिखोl(SAA7134_VIDEO_PORT_CTRL4 >> 2, 0x40000200);
 
-	/* Set HPI interface for video */
-	saa_writeb(SAA7134_GPIO_GPMODE0, 0xff);
-	saa_writeb(SAA7134_GPIO_GPSTATUS0, HPI_ADDR_VIDEO_BUFFER);
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_ADDR);
-	saa_writeb(SAA7134_GPIO_GPMODE0, 0x00);
+	/* Set HPI पूर्णांकerface क्रम video */
+	saa_ग_लिखोb(SAA7134_GPIO_GPMODE0, 0xff);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS0, HPI_ADDR_VIDEO_BUFFER);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_ADDR);
+	saa_ग_लिखोb(SAA7134_GPIO_GPMODE0, 0x00);
 
-	/* Enable TS interface */
-	saa_writeb(SAA7134_TS_PARALLEL, 0xe6);
+	/* Enable TS पूर्णांकerface */
+	saa_ग_लिखोb(SAA7134_TS_PARALLEL, 0xe6);
 
-	/* Reset TS interface */
+	/* Reset TS पूर्णांकerface */
 	saa_setb(SAA7134_TS_SERIAL1, 0x01);
 	saa_clearb(SAA7134_TS_SERIAL1, 0x01);
 
 	/* Set up transfer block size */
-	saa_writeb(SAA7134_TS_PARALLEL_SERIAL, 128 - 1);
-	saa_writeb(SAA7134_TS_DMA0, ((PAGE_SIZE >> 7) - 1) & 0xff);
-	saa_writeb(SAA7134_TS_DMA1, (PAGE_SIZE >> 15) & 0xff);
-	saa_writeb(SAA7134_TS_DMA2, (PAGE_SIZE >> 31) & 0x3f);
+	saa_ग_लिखोb(SAA7134_TS_PARALLEL_SERIAL, 128 - 1);
+	saa_ग_लिखोb(SAA7134_TS_DMA0, ((PAGE_SIZE >> 7) - 1) & 0xff);
+	saa_ग_लिखोb(SAA7134_TS_DMA1, (PAGE_SIZE >> 15) & 0xff);
+	saa_ग_लिखोb(SAA7134_TS_DMA2, (PAGE_SIZE >> 31) & 0x3f);
 
 	/* Enable video streaming mode */
-	saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_VIDEO);
+	saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_VIDEO);
 
-	saa_writel(SAA7134_RS_BA1(5), saa->top_dma);
-	saa_writel(SAA7134_RS_BA2(5), saa->bottom_dma);
-	saa_writel(SAA7134_RS_PITCH(5), 128);
-	saa_writel(SAA7134_RS_CONTROL(5), SAA7134_RS_CONTROL_BURST_MAX);
+	saa_ग_लिखोl(SAA7134_RS_BA1(5), saa->top_dma);
+	saa_ग_लिखोl(SAA7134_RS_BA2(5), saa->bottom_dma);
+	saa_ग_लिखोl(SAA7134_RS_PITCH(5), 128);
+	saa_ग_लिखोl(SAA7134_RS_CONTROL(5), SAA7134_RS_CONTROL_BURST_MAX);
 
 	/* Enable TS FIFO */
 	saa_setl(SAA7134_MAIN_CTRL, SAA7134_MAIN_CTRL_TE5);
@@ -300,28 +301,28 @@ static int saa7134_go7007_stream_start(struct go7007 *go)
 	saa_setl(SAA7134_IRQ1,
 			SAA7134_IRQ1_INTE_RA2_1 | SAA7134_IRQ1_INTE_RA2_0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa7134_go7007_stream_stop(struct go7007 *go)
-{
-	struct saa7134_go7007 *saa = go->hpi_context;
-	struct saa7134_dev *dev;
+अटल पूर्णांक saa7134_go7007_stream_stop(काष्ठा go7007 *go)
+अणु
+	काष्ठा saa7134_go7007 *saa = go->hpi_context;
+	काष्ठा saa7134_dev *dev;
 
-	if (!saa)
-		return -EINVAL;
+	अगर (!saa)
+		वापस -EINVAL;
 	dev = saa->dev;
-	if (!dev)
-		return -EINVAL;
+	अगर (!dev)
+		वापस -EINVAL;
 
-	/* Shut down TS FIFO */
+	/* Shut करोwn TS FIFO */
 	saa_clearl(SAA7134_MAIN_CTRL, SAA7134_MAIN_CTRL_TE5);
 
 	/* Disable DMA IRQ */
 	saa_clearl(SAA7134_IRQ1,
 			SAA7134_IRQ1_INTE_RA2_1 | SAA7134_IRQ1_INTE_RA2_0);
 
-	/* Disable TS interface */
+	/* Disable TS पूर्णांकerface */
 	saa_clearb(SAA7134_TS_PARALLEL, 0x80);
 
 	dma_unmap_page(&dev->pci->dev, saa->top_dma, PAGE_SIZE,
@@ -329,196 +330,196 @@ static int saa7134_go7007_stream_stop(struct go7007 *go)
 	dma_unmap_page(&dev->pci->dev, saa->bottom_dma, PAGE_SIZE,
 			DMA_FROM_DEVICE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa7134_go7007_send_firmware(struct go7007 *go, u8 *data, int len)
-{
-	struct saa7134_go7007 *saa = go->hpi_context;
-	struct saa7134_dev *dev = saa->dev;
+अटल पूर्णांक saa7134_go7007_send_firmware(काष्ठा go7007 *go, u8 *data, पूर्णांक len)
+अणु
+	काष्ठा saa7134_go7007 *saa = go->hpi_context;
+	काष्ठा saa7134_dev *dev = saa->dev;
 	u16 status_reg;
-	int i;
+	पूर्णांक i;
 
-#ifdef GO7007_HPI_DEBUG
+#अगर_घोषित GO7007_HPI_DEBUG
 	pr_debug("saa7134-go7007: DownloadBuffer sending %d bytes\n", len);
-#endif
+#पूर्ण_अगर
 
-	while (len > 0) {
+	जबतक (len > 0) अणु
 		i = len > 64 ? 64 : len;
-		saa_writeb(SAA7134_GPIO_GPMODE0, 0xff);
-		saa_writeb(SAA7134_GPIO_GPSTATUS0, HPI_ADDR_INIT_BUFFER);
-		saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_ADDR);
-		saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
-		while (i-- > 0) {
-			saa_writeb(SAA7134_GPIO_GPSTATUS0, *data);
-			saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_WRITE);
-			saa_writeb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
+		saa_ग_लिखोb(SAA7134_GPIO_GPMODE0, 0xff);
+		saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS0, HPI_ADDR_INIT_BUFFER);
+		saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_ADDR);
+		saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
+		जबतक (i-- > 0) अणु
+			saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS0, *data);
+			saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_WRITE);
+			saa_ग_लिखोb(SAA7134_GPIO_GPSTATUS2, GPIO_COMMAND_IDLE);
 			++data;
 			--len;
-		}
-		for (i = 0; i < 100; ++i) {
-			gpio_read(dev, HPI_ADDR_INTR_STATUS, &status_reg);
-			if (!(status_reg & 0x0002))
-				break;
-		}
-		if (i == 100) {
+		पूर्ण
+		क्रम (i = 0; i < 100; ++i) अणु
+			gpio_पढ़ो(dev, HPI_ADDR_INTR_STATUS, &status_reg);
+			अगर (!(status_reg & 0x0002))
+				अवरोध;
+		पूर्ण
+		अगर (i == 100) अणु
 			pr_err("saa7134-go7007: device is hung, status reg = 0x%04x\n",
 			       status_reg);
-			return -1;
-		}
-	}
-	return 0;
-}
+			वापस -1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct go7007_hpi_ops saa7134_go7007_hpi_ops = {
-	.interface_reset	= saa7134_go7007_interface_reset,
-	.write_interrupt	= saa7134_go7007_write_interrupt,
-	.read_interrupt		= saa7134_go7007_read_interrupt,
+अटल स्थिर काष्ठा go7007_hpi_ops saa7134_go7007_hpi_ops = अणु
+	.पूर्णांकerface_reset	= saa7134_go7007_पूर्णांकerface_reset,
+	.ग_लिखो_पूर्णांकerrupt	= saa7134_go7007_ग_लिखो_पूर्णांकerrupt,
+	.पढ़ो_पूर्णांकerrupt		= saa7134_go7007_पढ़ो_पूर्णांकerrupt,
 	.stream_start		= saa7134_go7007_stream_start,
 	.stream_stop		= saa7134_go7007_stream_stop,
 	.send_firmware		= saa7134_go7007_send_firmware,
-};
+पूर्ण;
 MODULE_FIRMWARE("go7007/go7007tv.bin");
 
 /* --------------------------------------------------------------------------*/
 
-static int saa7134_go7007_s_std(struct v4l2_subdev *sd, v4l2_std_id norm)
-{
-#if 0
-	struct saa7134_go7007 *saa = to_state(sd);
-	struct saa7134_dev *dev = saa->dev;
+अटल पूर्णांक saa7134_go7007_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id norm)
+अणु
+#अगर 0
+	काष्ठा saa7134_go7007 *saa = to_state(sd);
+	काष्ठा saa7134_dev *dev = saa->dev;
 
-	return saa7134_s_std_internal(dev, NULL, norm);
-#else
-	return 0;
-#endif
-}
+	वापस saa7134_s_std_पूर्णांकernal(dev, शून्य, norm);
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-static const struct v4l2_subdev_video_ops saa7134_go7007_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops saa7134_go7007_video_ops = अणु
 	.s_std = saa7134_go7007_s_std,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops saa7134_go7007_sd_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops saa7134_go7007_sd_ops = अणु
 	.video = &saa7134_go7007_video_ops,
-};
+पूर्ण;
 
 /* --------------------------------------------------------------------------*/
 
 
-/********************* Add/remove functions *********************/
+/********************* Add/हटाओ functions *********************/
 
-static int saa7134_go7007_init(struct saa7134_dev *dev)
-{
-	struct go7007 *go;
-	struct saa7134_go7007 *saa;
-	struct v4l2_subdev *sd;
+अटल पूर्णांक saa7134_go7007_init(काष्ठा saa7134_dev *dev)
+अणु
+	काष्ठा go7007 *go;
+	काष्ठा saa7134_go7007 *saa;
+	काष्ठा v4l2_subdev *sd;
 
 	pr_debug("saa7134-go7007: probing new SAA713X board\n");
 
 	go = go7007_alloc(&board_voyager, &dev->pci->dev);
-	if (go == NULL)
-		return -ENOMEM;
+	अगर (go == शून्य)
+		वापस -ENOMEM;
 
-	saa = kzalloc(sizeof(struct saa7134_go7007), GFP_KERNEL);
-	if (saa == NULL) {
-		kfree(go);
-		return -ENOMEM;
-	}
+	saa = kzalloc(माप(काष्ठा saa7134_go7007), GFP_KERNEL);
+	अगर (saa == शून्य) अणु
+		kमुक्त(go);
+		वापस -ENOMEM;
+	पूर्ण
 
 	go->board_id = GO7007_BOARDID_PCI_VOYAGER;
-	snprintf(go->bus_info, sizeof(go->bus_info), "PCI:%s", pci_name(dev->pci));
-	strscpy(go->name, saa7134_boards[dev->board].name, sizeof(go->name));
+	snम_लिखो(go->bus_info, माप(go->bus_info), "PCI:%s", pci_name(dev->pci));
+	strscpy(go->name, saa7134_boards[dev->board].name, माप(go->name));
 	go->hpi_ops = &saa7134_go7007_hpi_ops;
 	go->hpi_context = saa;
 	saa->dev = dev;
 
-	/* Init the subdevice interface */
+	/* Init the subdevice पूर्णांकerface */
 	sd = &saa->sd;
 	v4l2_subdev_init(sd, &saa7134_go7007_sd_ops);
 	v4l2_set_subdevdata(sd, saa);
-	strscpy(sd->name, "saa7134-go7007", sizeof(sd->name));
+	strscpy(sd->name, "saa7134-go7007", माप(sd->name));
 
-	/* Allocate a couple pages for receiving the compressed stream */
+	/* Allocate a couple pages क्रम receiving the compressed stream */
 	saa->top = (u8 *)get_zeroed_page(GFP_KERNEL);
-	if (!saa->top)
-		goto allocfail;
+	अगर (!saa->top)
+		जाओ allocfail;
 	saa->bottom = (u8 *)get_zeroed_page(GFP_KERNEL);
-	if (!saa->bottom)
-		goto allocfail;
+	अगर (!saa->bottom)
+		जाओ allocfail;
 
 	/* Boot the GO7007 */
-	if (go7007_boot_encoder(go, go->board_info->flags &
+	अगर (go7007_boot_encoder(go, go->board_info->flags &
 					GO7007_BOARD_USE_ONBOARD_I2C) < 0)
-		goto allocfail;
+		जाओ allocfail;
 
-	/* Do any final GO7007 initialization, then register the
-	 * V4L2 and ALSA interfaces */
-	if (go7007_register_encoder(go, go->board_info->num_i2c_devs) < 0)
-		goto allocfail;
+	/* Do any final GO7007 initialization, then रेजिस्टर the
+	 * V4L2 and ALSA पूर्णांकerfaces */
+	अगर (go7007_रेजिस्टर_encoder(go, go->board_info->num_i2c_devs) < 0)
+		जाओ allocfail;
 
-	/* Register the subdevice interface with the go7007 device */
-	if (v4l2_device_register_subdev(&go->v4l2_dev, sd) < 0)
+	/* Register the subdevice पूर्णांकerface with the go7007 device */
+	अगर (v4l2_device_रेजिस्टर_subdev(&go->v4l2_dev, sd) < 0)
 		pr_info("saa7134-go7007: register subdev failed\n");
 
 	dev->empress_dev = &go->vdev;
 
 	go->status = STATUS_ONLINE;
-	return 0;
+	वापस 0;
 
 allocfail:
-	if (saa->top)
-		free_page((unsigned long)saa->top);
-	if (saa->bottom)
-		free_page((unsigned long)saa->bottom);
-	kfree(saa);
-	kfree(go);
-	return -ENOMEM;
-}
+	अगर (saa->top)
+		मुक्त_page((अचिन्हित दीर्घ)saa->top);
+	अगर (saa->bottom)
+		मुक्त_page((अचिन्हित दीर्घ)saa->bottom);
+	kमुक्त(saa);
+	kमुक्त(go);
+	वापस -ENOMEM;
+पूर्ण
 
-static int saa7134_go7007_fini(struct saa7134_dev *dev)
-{
-	struct go7007 *go;
-	struct saa7134_go7007 *saa;
+अटल पूर्णांक saa7134_go7007_fini(काष्ठा saa7134_dev *dev)
+अणु
+	काष्ठा go7007 *go;
+	काष्ठा saa7134_go7007 *saa;
 
-	if (NULL == dev->empress_dev)
-		return 0;
+	अगर (शून्य == dev->empress_dev)
+		वापस 0;
 
 	go = video_get_drvdata(dev->empress_dev);
-	if (go->audio_enabled)
-		go7007_snd_remove(go);
+	अगर (go->audio_enabled)
+		go7007_snd_हटाओ(go);
 
 	saa = go->hpi_context;
 	go->status = STATUS_SHUTDOWN;
-	free_page((unsigned long)saa->top);
-	free_page((unsigned long)saa->bottom);
-	v4l2_device_unregister_subdev(&saa->sd);
-	kfree(saa);
-	vb2_video_unregister_device(&go->vdev);
+	मुक्त_page((अचिन्हित दीर्घ)saa->top);
+	मुक्त_page((अचिन्हित दीर्घ)saa->bottom);
+	v4l2_device_unरेजिस्टर_subdev(&saa->sd);
+	kमुक्त(saa);
+	vb2_video_unरेजिस्टर_device(&go->vdev);
 
 	v4l2_device_put(&go->v4l2_dev);
-	dev->empress_dev = NULL;
+	dev->empress_dev = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct saa7134_mpeg_ops saa7134_go7007_ops = {
+अटल काष्ठा saa7134_mpeg_ops saa7134_go7007_ops = अणु
 	.type          = SAA7134_MPEG_GO7007,
 	.init          = saa7134_go7007_init,
 	.fini          = saa7134_go7007_fini,
-	.irq_ts_done   = saa7134_go7007_irq_ts_done,
-};
+	.irq_ts_करोne   = saa7134_go7007_irq_ts_करोne,
+पूर्ण;
 
-static int __init saa7134_go7007_mod_init(void)
-{
-	return saa7134_ts_register(&saa7134_go7007_ops);
-}
+अटल पूर्णांक __init saa7134_go7007_mod_init(व्योम)
+अणु
+	वापस saa7134_ts_रेजिस्टर(&saa7134_go7007_ops);
+पूर्ण
 
-static void __exit saa7134_go7007_mod_cleanup(void)
-{
-	saa7134_ts_unregister(&saa7134_go7007_ops);
-}
+अटल व्योम __निकास saa7134_go7007_mod_cleanup(व्योम)
+अणु
+	saa7134_ts_unरेजिस्टर(&saa7134_go7007_ops);
+पूर्ण
 
 module_init(saa7134_go7007_mod_init);
-module_exit(saa7134_go7007_mod_cleanup);
+module_निकास(saa7134_go7007_mod_cleanup);
 
 MODULE_LICENSE("GPL v2");

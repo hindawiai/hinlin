@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _MCF_PGTABLE_H
-#define _MCF_PGTABLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _MCF_PGTABLE_H
+#घोषणा _MCF_PGTABLE_H
 
-#include <asm/mcfmmu.h>
-#include <asm/page.h>
+#समावेश <यंत्र/mcfmmu.h>
+#समावेश <यंत्र/page.h>
 
 /*
- * MMUDR bits, in proper place. We write these directly into the MMUDR
+ * MMUDR bits, in proper place. We ग_लिखो these directly पूर्णांकo the MMUDR
  * after masking from the pte.
  */
-#define CF_PAGE_LOCKED		MMUDR_LK	/* 0x00000002 */
-#define CF_PAGE_EXEC		MMUDR_X		/* 0x00000004 */
-#define CF_PAGE_WRITABLE	MMUDR_W		/* 0x00000008 */
-#define CF_PAGE_READABLE	MMUDR_R		/* 0x00000010 */
-#define CF_PAGE_SYSTEM		MMUDR_SP	/* 0x00000020 */
-#define CF_PAGE_COPYBACK	MMUDR_CM_CCB	/* 0x00000040 */
-#define CF_PAGE_NOCACHE		MMUDR_CM_NCP	/* 0x00000080 */
+#घोषणा CF_PAGE_LOCKED		MMUDR_LK	/* 0x00000002 */
+#घोषणा CF_PAGE_EXEC		MMUDR_X		/* 0x00000004 */
+#घोषणा CF_PAGE_WRITABLE	MMUDR_W		/* 0x00000008 */
+#घोषणा CF_PAGE_READABLE	MMUDR_R		/* 0x00000010 */
+#घोषणा CF_PAGE_SYSTEM		MMUDR_SP	/* 0x00000020 */
+#घोषणा CF_PAGE_COPYBACK	MMUDR_CM_CCB	/* 0x00000040 */
+#घोषणा CF_PAGE_NOCACHE		MMUDR_CM_NCP	/* 0x00000080 */
 
-#define CF_CACHEMASK		(~MMUDR_CM_CCB)
-#define CF_PAGE_MMUDR_MASK	0x000000fe
+#घोषणा CF_CACHEMASK		(~MMUDR_CM_CCB)
+#घोषणा CF_PAGE_MMUDR_MASK	0x000000fe
 
-#define _PAGE_NOCACHE030	CF_PAGE_NOCACHE
+#घोषणा _PAGE_NOCACHE030	CF_PAGE_NOCACHE
 
 /*
- * MMUTR bits, need shifting down.
+ * MMUTR bits, need shअगरting करोwn.
  */
-#define CF_PAGE_MMUTR_MASK	0x00000c00
-#define CF_PAGE_MMUTR_SHIFT	10
+#घोषणा CF_PAGE_MMUTR_MASK	0x00000c00
+#घोषणा CF_PAGE_MMUTR_SHIFT	10
 
-#define CF_PAGE_VALID		(MMUTR_V << CF_PAGE_MMUTR_SHIFT)
-#define CF_PAGE_SHARED		(MMUTR_SG << CF_PAGE_MMUTR_SHIFT)
+#घोषणा CF_PAGE_VALID		(MMUTR_V << CF_PAGE_MMUTR_SHIFT)
+#घोषणा CF_PAGE_SHARED		(MMUTR_SG << CF_PAGE_MMUTR_SHIFT)
 
 /*
- * Fake bits, not implemented in CF, will get masked out before
+ * Fake bits, not implemented in CF, will get masked out beक्रमe
  * hitting hardware.
  */
-#define CF_PAGE_DIRTY		0x00000001
-#define CF_PAGE_ACCESSED	0x00001000
+#घोषणा CF_PAGE_सूचीTY		0x00000001
+#घोषणा CF_PAGE_ACCESSED	0x00001000
 
-#define _PAGE_CACHE040		0x020   /* 68040 cache mode, cachable, copyback */
-#define _PAGE_NOCACHE_S		0x040   /* 68040 no-cache mode, serialized */
-#define _PAGE_NOCACHE		0x060   /* 68040 cache mode, non-serialized */
-#define _PAGE_CACHE040W		0x000   /* 68040 cache mode, cachable, write-through */
-#define _DESCTYPE_MASK		0x003
-#define _CACHEMASK040		(~0x060)
-#define _PAGE_GLOBAL040		0x400   /* 68040 global bit, used for kva descs */
+#घोषणा _PAGE_CACHE040		0x020   /* 68040 cache mode, cachable, copyback */
+#घोषणा _PAGE_NOCACHE_S		0x040   /* 68040 no-cache mode, serialized */
+#घोषणा _PAGE_NOCACHE		0x060   /* 68040 cache mode, non-serialized */
+#घोषणा _PAGE_CACHE040W		0x000   /* 68040 cache mode, cachable, ग_लिखो-through */
+#घोषणा _DESCTYPE_MASK		0x003
+#घोषणा _CACHEMASK040		(~0x060)
+#घोषणा _PAGE_GLOBAL040		0x400   /* 68040 global bit, used क्रम kva descs */
 
 /*
  * Externally used page protection values.
  */
-#define _PAGE_PRESENT	(CF_PAGE_VALID)
-#define _PAGE_ACCESSED	(CF_PAGE_ACCESSED)
-#define _PAGE_DIRTY	(CF_PAGE_DIRTY)
-#define _PAGE_READWRITE (CF_PAGE_READABLE \
+#घोषणा _PAGE_PRESENT	(CF_PAGE_VALID)
+#घोषणा _PAGE_ACCESSED	(CF_PAGE_ACCESSED)
+#घोषणा _PAGE_सूचीTY	(CF_PAGE_सूचीTY)
+#घोषणा _PAGE_READWRITE (CF_PAGE_READABLE \
 				| CF_PAGE_WRITABLE \
 				| CF_PAGE_SYSTEM \
 				| CF_PAGE_SHARED)
@@ -60,20 +61,20 @@
 /*
  * Compound page protection values.
  */
-#define PAGE_NONE	__pgprot(CF_PAGE_VALID \
+#घोषणा PAGE_NONE	__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED)
 
-#define PAGE_SHARED     __pgprot(CF_PAGE_VALID \
+#घोषणा PAGE_SHARED     __pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_SHARED)
 
-#define PAGE_INIT	__pgprot(CF_PAGE_VALID \
+#घोषणा PAGE_INIT	__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_READABLE \
 				 | CF_PAGE_WRITABLE \
 				 | CF_PAGE_EXEC \
 				 | CF_PAGE_SYSTEM)
 
-#define PAGE_KERNEL	__pgprot(CF_PAGE_VALID \
+#घोषणा PAGE_KERNEL	__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_READABLE \
 				 | CF_PAGE_WRITABLE \
@@ -81,249 +82,249 @@
 				 | CF_PAGE_SYSTEM \
 				 | CF_PAGE_SHARED)
 
-#define PAGE_COPY	__pgprot(CF_PAGE_VALID \
+#घोषणा PAGE_COPY	__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_READABLE \
-				 | CF_PAGE_DIRTY)
+				 | CF_PAGE_सूचीTY)
 
 /*
- * Page protections for initialising protection_map. See mm/mmap.c
- * for use. In general, the bit positions are xwr, and P-items are
- * private, the S-items are shared.
+ * Page protections क्रम initialising protection_map. See mm/mmap.c
+ * क्रम use. In general, the bit positions are xwr, and P-items are
+ * निजी, the S-items are shared.
  */
-#define __P000		PAGE_NONE
-#define __P001		__pgprot(CF_PAGE_VALID \
+#घोषणा __P000		PAGE_NONE
+#घोषणा __P001		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_READABLE)
-#define __P010		__pgprot(CF_PAGE_VALID \
+#घोषणा __P010		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_WRITABLE)
-#define __P011		__pgprot(CF_PAGE_VALID \
+#घोषणा __P011		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_READABLE \
 				 | CF_PAGE_WRITABLE)
-#define __P100		__pgprot(CF_PAGE_VALID \
+#घोषणा __P100		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_EXEC)
-#define __P101		__pgprot(CF_PAGE_VALID \
+#घोषणा __P101		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_READABLE \
 				 | CF_PAGE_EXEC)
-#define __P110		__pgprot(CF_PAGE_VALID \
+#घोषणा __P110		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_WRITABLE \
 				 | CF_PAGE_EXEC)
-#define __P111		__pgprot(CF_PAGE_VALID \
+#घोषणा __P111		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_READABLE \
 				 | CF_PAGE_WRITABLE \
 				 | CF_PAGE_EXEC)
 
-#define __S000		PAGE_NONE
-#define __S001		__pgprot(CF_PAGE_VALID \
+#घोषणा __S000		PAGE_NONE
+#घोषणा __S001		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_READABLE)
-#define __S010		PAGE_SHARED
-#define __S011		__pgprot(CF_PAGE_VALID \
+#घोषणा __S010		PAGE_SHARED
+#घोषणा __S011		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_SHARED \
 				 | CF_PAGE_READABLE)
-#define __S100		__pgprot(CF_PAGE_VALID \
+#घोषणा __S100		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_EXEC)
-#define __S101		__pgprot(CF_PAGE_VALID \
+#घोषणा __S101		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_READABLE \
 				 | CF_PAGE_EXEC)
-#define __S110		__pgprot(CF_PAGE_VALID \
+#घोषणा __S110		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_SHARED \
 				 | CF_PAGE_EXEC)
-#define __S111		__pgprot(CF_PAGE_VALID \
+#घोषणा __S111		__pgprot(CF_PAGE_VALID \
 				 | CF_PAGE_ACCESSED \
 				 | CF_PAGE_SHARED \
 				 | CF_PAGE_READABLE \
 				 | CF_PAGE_EXEC)
 
-#define PTE_MASK	PAGE_MASK
-#define CF_PAGE_CHG_MASK (PTE_MASK | CF_PAGE_ACCESSED | CF_PAGE_DIRTY)
+#घोषणा PTE_MASK	PAGE_MASK
+#घोषणा CF_PAGE_CHG_MASK (PTE_MASK | CF_PAGE_ACCESSED | CF_PAGE_सूचीTY)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
 /*
  * Conversion functions: convert a page and protection to a page entry,
  * and a page entry and page directory to the page they refer to.
  */
-#define mk_pte(page, pgprot) pfn_pte(page_to_pfn(page), (pgprot))
+#घोषणा mk_pte(page, pgprot) pfn_pte(page_to_pfn(page), (pgprot))
 
-static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
-{
+अटल अंतरभूत pte_t pte_modअगरy(pte_t pte, pgprot_t newprot)
+अणु
 	pte_val(pte) = (pte_val(pte) & CF_PAGE_CHG_MASK) | pgprot_val(newprot);
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-#define pmd_set(pmdp, ptep) do {} while (0)
+#घोषणा pmd_set(pmdp, ptep) करो अणुपूर्ण जबतक (0)
 
-static inline void pgd_set(pgd_t *pgdp, pmd_t *pmdp)
-{
+अटल अंतरभूत व्योम pgd_set(pgd_t *pgdp, pmd_t *pmdp)
+अणु
 	pgd_val(*pgdp) = virt_to_phys(pmdp);
-}
+पूर्ण
 
-#define __pte_page(pte)	((unsigned long) (pte_val(pte) & PAGE_MASK))
-#define pmd_page_vaddr(pmd)	((unsigned long) (pmd_val(pmd)))
+#घोषणा __pte_page(pte)	((अचिन्हित दीर्घ) (pte_val(pte) & PAGE_MASK))
+#घोषणा pmd_page_vaddr(pmd)	((अचिन्हित दीर्घ) (pmd_val(pmd)))
 
-static inline int pte_none(pte_t pte)
-{
-	return !pte_val(pte);
-}
+अटल अंतरभूत पूर्णांक pte_none(pte_t pte)
+अणु
+	वापस !pte_val(pte);
+पूर्ण
 
-static inline int pte_present(pte_t pte)
-{
-	return pte_val(pte) & CF_PAGE_VALID;
-}
+अटल अंतरभूत पूर्णांक pte_present(pte_t pte)
+अणु
+	वापस pte_val(pte) & CF_PAGE_VALID;
+पूर्ण
 
-static inline void pte_clear(struct mm_struct *mm, unsigned long addr,
+अटल अंतरभूत व्योम pte_clear(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 	pte_t *ptep)
-{
+अणु
 	pte_val(*ptep) = 0;
-}
+पूर्ण
 
-#define pte_pagenr(pte)	((__pte_page(pte) - PAGE_OFFSET) >> PAGE_SHIFT)
-#define pte_page(pte)	virt_to_page(__pte_page(pte))
+#घोषणा pte_pagenr(pte)	((__pte_page(pte) - PAGE_OFFSET) >> PAGE_SHIFT)
+#घोषणा pte_page(pte)	virt_to_page(__pte_page(pte))
 
-static inline int pmd_none2(pmd_t *pmd) { return !pmd_val(*pmd); }
-#define pmd_none(pmd) pmd_none2(&(pmd))
-static inline int pmd_bad2(pmd_t *pmd) { return 0; }
-#define pmd_bad(pmd) pmd_bad2(&(pmd))
-#define pmd_present(pmd) (!pmd_none2(&(pmd)))
-static inline void pmd_clear(pmd_t *pmdp) { pmd_val(*pmdp) = 0; }
+अटल अंतरभूत पूर्णांक pmd_none2(pmd_t *pmd) अणु वापस !pmd_val(*pmd); पूर्ण
+#घोषणा pmd_none(pmd) pmd_none2(&(pmd))
+अटल अंतरभूत पूर्णांक pmd_bad2(pmd_t *pmd) अणु वापस 0; पूर्ण
+#घोषणा pmd_bad(pmd) pmd_bad2(&(pmd))
+#घोषणा pmd_present(pmd) (!pmd_none2(&(pmd)))
+अटल अंतरभूत व्योम pmd_clear(pmd_t *pmdp) अणु pmd_val(*pmdp) = 0; पूर्ण
 
-#define pte_ERROR(e) \
-	printk(KERN_ERR "%s:%d: bad pte %08lx.\n",	\
-	__FILE__, __LINE__, pte_val(e))
-#define pgd_ERROR(e) \
-	printk(KERN_ERR "%s:%d: bad pgd %08lx.\n",	\
-	__FILE__, __LINE__, pgd_val(e))
+#घोषणा pte_ERROR(e) \
+	prपूर्णांकk(KERN_ERR "%s:%d: bad pte %08lx.\n",	\
+	__खाता__, __LINE__, pte_val(e))
+#घोषणा pgd_ERROR(e) \
+	prपूर्णांकk(KERN_ERR "%s:%d: bad pgd %08lx.\n",	\
+	__खाता__, __LINE__, pgd_val(e))
 
 /*
- * The following only work if pte_present() is true.
- * Undefined behaviour if not...
- * [we have the full set here even if they don't change from m68k]
+ * The following only work अगर pte_present() is true.
+ * Undefined behaviour अगर not...
+ * [we have the full set here even अगर they करोn't change from m68k]
  */
-static inline int pte_read(pte_t pte)
-{
-	return pte_val(pte) & CF_PAGE_READABLE;
-}
+अटल अंतरभूत पूर्णांक pte_पढ़ो(pte_t pte)
+अणु
+	वापस pte_val(pte) & CF_PAGE_READABLE;
+पूर्ण
 
-static inline int pte_write(pte_t pte)
-{
-	return pte_val(pte) & CF_PAGE_WRITABLE;
-}
+अटल अंतरभूत पूर्णांक pte_ग_लिखो(pte_t pte)
+अणु
+	वापस pte_val(pte) & CF_PAGE_WRITABLE;
+पूर्ण
 
-static inline int pte_exec(pte_t pte)
-{
-	return pte_val(pte) & CF_PAGE_EXEC;
-}
+अटल अंतरभूत पूर्णांक pte_exec(pte_t pte)
+अणु
+	वापस pte_val(pte) & CF_PAGE_EXEC;
+पूर्ण
 
-static inline int pte_dirty(pte_t pte)
-{
-	return pte_val(pte) & CF_PAGE_DIRTY;
-}
+अटल अंतरभूत पूर्णांक pte_dirty(pte_t pte)
+अणु
+	वापस pte_val(pte) & CF_PAGE_सूचीTY;
+पूर्ण
 
-static inline int pte_young(pte_t pte)
-{
-	return pte_val(pte) & CF_PAGE_ACCESSED;
-}
+अटल अंतरभूत पूर्णांक pte_young(pte_t pte)
+अणु
+	वापस pte_val(pte) & CF_PAGE_ACCESSED;
+पूर्ण
 
-static inline pte_t pte_wrprotect(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_wrprotect(pte_t pte)
+अणु
 	pte_val(pte) &= ~CF_PAGE_WRITABLE;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_rdprotect(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_rdprotect(pte_t pte)
+अणु
 	pte_val(pte) &= ~CF_PAGE_READABLE;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_exprotect(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_exprotect(pte_t pte)
+अणु
 	pte_val(pte) &= ~CF_PAGE_EXEC;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkclean(pte_t pte)
-{
-	pte_val(pte) &= ~CF_PAGE_DIRTY;
-	return pte;
-}
+अटल अंतरभूत pte_t pte_mkclean(pte_t pte)
+अणु
+	pte_val(pte) &= ~CF_PAGE_सूचीTY;
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkold(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mkold(pte_t pte)
+अणु
 	pte_val(pte) &= ~CF_PAGE_ACCESSED;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkwrite(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mkग_लिखो(pte_t pte)
+अणु
 	pte_val(pte) |= CF_PAGE_WRITABLE;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkread(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mkपढ़ो(pte_t pte)
+अणु
 	pte_val(pte) |= CF_PAGE_READABLE;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkexec(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mkexec(pte_t pte)
+अणु
 	pte_val(pte) |= CF_PAGE_EXEC;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkdirty(pte_t pte)
-{
-	pte_val(pte) |= CF_PAGE_DIRTY;
-	return pte;
-}
+अटल अंतरभूत pte_t pte_सूची_गढ़ोty(pte_t pte)
+अणु
+	pte_val(pte) |= CF_PAGE_सूचीTY;
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkyoung(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mkyoung(pte_t pte)
+अणु
 	pte_val(pte) |= CF_PAGE_ACCESSED;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mknocache(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mknocache(pte_t pte)
+अणु
 	pte_val(pte) |= 0x80 | (pte_val(pte) & ~0x40);
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkcache(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mkcache(pte_t pte)
+अणु
 	pte_val(pte) &= ~CF_PAGE_NOCACHE;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-#define swapper_pg_dir kernel_pg_dir
-extern pgd_t kernel_pg_dir[PTRS_PER_PGD];
+#घोषणा swapper_pg_dir kernel_pg_dir
+बाह्य pgd_t kernel_pg_dir[PTRS_PER_PGD];
 
 /*
  * Encode and de-code a swap entry (must be !pte_none(e) && !pte_present(e))
  */
-#define __swp_type(x)		((x).val & 0xFF)
-#define __swp_offset(x)		((x).val >> 11)
-#define __swp_entry(typ, off)	((swp_entry_t) { (typ) | \
-					(off << 11) })
-#define __pte_to_swp_entry(pte)	((swp_entry_t) { pte_val(pte) })
-#define __swp_entry_to_pte(x)	(__pte((x).val))
+#घोषणा __swp_type(x)		((x).val & 0xFF)
+#घोषणा __swp_offset(x)		((x).val >> 11)
+#घोषणा __swp_entry(typ, off)	((swp_entry_t) अणु (typ) | \
+					(off << 11) पूर्ण)
+#घोषणा __pte_to_swp_entry(pte)	((swp_entry_t) अणु pte_val(pte) पूर्ण)
+#घोषणा __swp_entry_to_pte(x)	(__pte((x).val))
 
-#define pmd_page(pmd)		(pfn_to_page(pmd_val(pmd) >> PAGE_SHIFT))
+#घोषणा pmd_page(pmd)		(pfn_to_page(pmd_val(pmd) >> PAGE_SHIFT))
 
-#define pfn_pte(pfn, prot)	__pte(((pfn) << PAGE_SHIFT) | pgprot_val(prot))
-#define pte_pfn(pte)		(pte_val(pte) >> PAGE_SHIFT)
+#घोषणा pfn_pte(pfn, prot)	__pte(((pfn) << PAGE_SHIFT) | pgprot_val(prot))
+#घोषणा pte_pfn(pte)		(pte_val(pte) >> PAGE_SHIFT)
 
-#endif	/* !__ASSEMBLY__ */
-#endif	/* _MCF_PGTABLE_H */
+#पूर्ण_अगर	/* !__ASSEMBLY__ */
+#पूर्ण_अगर	/* _MCF_PGTABLE_H */

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2013 Xilinx Inc.
  * Copyright (C) 2012 National Instruments
  */
 
-#ifndef __LINUX_CLK_ZYNQ_H_
-#define __LINUX_CLK_ZYNQ_H_
+#अगर_अघोषित __LINUX_CLK_ZYNQ_H_
+#घोषणा __LINUX_CLK_ZYNQ_H_
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-void zynq_clock_init(void);
+व्योम zynq_घड़ी_init(व्योम);
 
-struct clk *clk_register_zynq_pll(const char *name, const char *parent,
-		void __iomem *pll_ctrl, void __iomem *pll_status, u8 lock_index,
+काष्ठा clk *clk_रेजिस्टर_zynq_pll(स्थिर अक्षर *name, स्थिर अक्षर *parent,
+		व्योम __iomem *pll_ctrl, व्योम __iomem *pll_status, u8 lock_index,
 		spinlock_t *lock);
-#endif
+#पूर्ण_अगर

@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include <linux/kernel.h>
-#include "tests.h"
-#include "map.h"
-#include "maps.h"
-#include "dso.h"
-#include "debug.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश <linux/kernel.h>
+#समावेश "tests.h"
+#समावेश "map.h"
+#समावेश "maps.h"
+#समावेश "dso.h"
+#समावेश "debug.h"
 
-struct map_def {
-	const char *name;
+काष्ठा map_def अणु
+	स्थिर अक्षर *name;
 	u64 start;
 	u64 end;
-};
+पूर्ण;
 
-static int check_maps(struct map_def *merged, unsigned int size, struct maps *maps)
-{
-	struct map *map;
-	unsigned int i = 0;
+अटल पूर्णांक check_maps(काष्ठा map_def *merged, अचिन्हित पूर्णांक size, काष्ठा maps *maps)
+अणु
+	काष्ठा map *map;
+	अचिन्हित पूर्णांक i = 0;
 
-	maps__for_each_entry(maps, map) {
-		if (i > 0)
+	maps__क्रम_each_entry(maps, map) अणु
+		अगर (i > 0)
 			TEST_ASSERT_VAL("less maps expected", (map && i < size) || (!map && i == size));
 
 		TEST_ASSERT_VAL("wrong map start",  map->start == merged[i].start);
 		TEST_ASSERT_VAL("wrong map end",    map->end == merged[i].end);
-		TEST_ASSERT_VAL("wrong map name",  !strcmp(map->dso->name, merged[i].name));
-		TEST_ASSERT_VAL("wrong map refcnt", refcount_read(&map->refcnt) == 1);
+		TEST_ASSERT_VAL("wrong map name",  !म_भेद(map->dso->name, merged[i].name));
+		TEST_ASSERT_VAL("wrong map refcnt", refcount_पढ़ो(&map->refcnt) == 1);
 
 		i++;
-	}
+	पूर्ण
 
-	return TEST_OK;
-}
+	वापस TEST_OK;
+पूर्ण
 
-int test__maps__merge_in(struct test *t __maybe_unused, int subtest __maybe_unused)
-{
-	struct maps maps;
-	unsigned int i;
-	struct map_def bpf_progs[] = {
-		{ "bpf_prog_1", 200, 300 },
-		{ "bpf_prog_2", 500, 600 },
-		{ "bpf_prog_3", 800, 900 },
-	};
-	struct map_def merged12[] = {
-		{ "kcore1",     100,  200 },
-		{ "bpf_prog_1", 200,  300 },
-		{ "kcore1",     300,  500 },
-		{ "bpf_prog_2", 500,  600 },
-		{ "kcore1",     600,  800 },
-		{ "bpf_prog_3", 800,  900 },
-		{ "kcore1",     900, 1000 },
-	};
-	struct map_def merged3[] = {
-		{ "kcore1",      100,  200 },
-		{ "bpf_prog_1",  200,  300 },
-		{ "kcore1",      300,  500 },
-		{ "bpf_prog_2",  500,  600 },
-		{ "kcore1",      600,  800 },
-		{ "bpf_prog_3",  800,  900 },
-		{ "kcore1",      900, 1000 },
-		{ "kcore3",     1000, 1100 },
-	};
-	struct map *map_kcore1, *map_kcore2, *map_kcore3;
-	int ret;
+पूर्णांक test__maps__merge_in(काष्ठा test *t __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	काष्ठा maps maps;
+	अचिन्हित पूर्णांक i;
+	काष्ठा map_def bpf_progs[] = अणु
+		अणु "bpf_prog_1", 200, 300 पूर्ण,
+		अणु "bpf_prog_2", 500, 600 पूर्ण,
+		अणु "bpf_prog_3", 800, 900 पूर्ण,
+	पूर्ण;
+	काष्ठा map_def merged12[] = अणु
+		अणु "kcore1",     100,  200 पूर्ण,
+		अणु "bpf_prog_1", 200,  300 पूर्ण,
+		अणु "kcore1",     300,  500 पूर्ण,
+		अणु "bpf_prog_2", 500,  600 पूर्ण,
+		अणु "kcore1",     600,  800 पूर्ण,
+		अणु "bpf_prog_3", 800,  900 पूर्ण,
+		अणु "kcore1",     900, 1000 पूर्ण,
+	पूर्ण;
+	काष्ठा map_def merged3[] = अणु
+		अणु "kcore1",      100,  200 पूर्ण,
+		अणु "bpf_prog_1",  200,  300 पूर्ण,
+		अणु "kcore1",      300,  500 पूर्ण,
+		अणु "bpf_prog_2",  500,  600 पूर्ण,
+		अणु "kcore1",      600,  800 पूर्ण,
+		अणु "bpf_prog_3",  800,  900 पूर्ण,
+		अणु "kcore1",      900, 1000 पूर्ण,
+		अणु "kcore3",     1000, 1100 पूर्ण,
+	पूर्ण;
+	काष्ठा map *map_kcore1, *map_kcore2, *map_kcore3;
+	पूर्णांक ret;
 
-	maps__init(&maps, NULL);
+	maps__init(&maps, शून्य);
 
-	for (i = 0; i < ARRAY_SIZE(bpf_progs); i++) {
-		struct map *map;
+	क्रम (i = 0; i < ARRAY_SIZE(bpf_progs); i++) अणु
+		काष्ठा map *map;
 
 		map = dso__new_map(bpf_progs[i].name);
 		TEST_ASSERT_VAL("failed to create map", map);
@@ -76,7 +77,7 @@ int test__maps__merge_in(struct test *t __maybe_unused, int subtest __maybe_unus
 		map->end   = bpf_progs[i].end;
 		maps__insert(&maps, map);
 		map__put(map);
-	}
+	पूर्ण
 
 	map_kcore1 = dso__new_map("kcore1");
 	TEST_ASSERT_VAL("failed to create map", map_kcore1);
@@ -116,5 +117,5 @@ int test__maps__merge_in(struct test *t __maybe_unused, int subtest __maybe_unus
 
 	ret = check_maps(merged3, ARRAY_SIZE(merged3), &maps);
 	TEST_ASSERT_VAL("merge check failed", !ret);
-	return TEST_OK;
-}
+	वापस TEST_OK;
+पूर्ण

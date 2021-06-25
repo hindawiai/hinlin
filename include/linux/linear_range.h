@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2020 ROHM Semiconductors */
 
-#ifndef LINEAR_RANGE_H
-#define LINEAR_RANGE_H
+#अगर_अघोषित LINEAR_RANGE_H
+#घोषणा LINEAR_RANGE_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /**
- * struct linear_range - table of selector - value pairs
+ * काष्ठा linear_range - table of selector - value pairs
  *
- * Define a lookup-table for range of values. Intended to help when looking
- * for a register value matching certaing physical measure (like voltage).
- * Usable when increment of one in register always results a constant increment
+ * Define a lookup-table क्रम range of values. Intended to help when looking
+ * क्रम a रेजिस्टर value matching certaing physical measure (like voltage).
+ * Usable when increment of one in रेजिस्टर always results a स्थिरant increment
  * of the physical measure (like voltage).
  *
  * @min:  Lowest value in range
- * @min_sel: Lowest selector for range
- * @max_sel: Highest selector for range
+ * @min_sel: Lowest selector क्रम range
+ * @max_sel: Highest selector क्रम range
  * @step: Value step size
  */
-struct linear_range {
-	unsigned int min;
-	unsigned int min_sel;
-	unsigned int max_sel;
-	unsigned int step;
-};
+काष्ठा linear_range अणु
+	अचिन्हित पूर्णांक min;
+	अचिन्हित पूर्णांक min_sel;
+	अचिन्हित पूर्णांक max_sel;
+	अचिन्हित पूर्णांक step;
+पूर्ण;
 
-unsigned int linear_range_values_in_range(const struct linear_range *r);
-unsigned int linear_range_values_in_range_array(const struct linear_range *r,
-						int ranges);
-unsigned int linear_range_get_max_value(const struct linear_range *r);
+अचिन्हित पूर्णांक linear_range_values_in_range(स्थिर काष्ठा linear_range *r);
+अचिन्हित पूर्णांक linear_range_values_in_range_array(स्थिर काष्ठा linear_range *r,
+						पूर्णांक ranges);
+अचिन्हित पूर्णांक linear_range_get_max_value(स्थिर काष्ठा linear_range *r);
 
-int linear_range_get_value(const struct linear_range *r, unsigned int selector,
-			   unsigned int *val);
-int linear_range_get_value_array(const struct linear_range *r, int ranges,
-				 unsigned int selector, unsigned int *val);
-int linear_range_get_selector_low(const struct linear_range *r,
-				  unsigned int val, unsigned int *selector,
+पूर्णांक linear_range_get_value(स्थिर काष्ठा linear_range *r, अचिन्हित पूर्णांक selector,
+			   अचिन्हित पूर्णांक *val);
+पूर्णांक linear_range_get_value_array(स्थिर काष्ठा linear_range *r, पूर्णांक ranges,
+				 अचिन्हित पूर्णांक selector, अचिन्हित पूर्णांक *val);
+पूर्णांक linear_range_get_selector_low(स्थिर काष्ठा linear_range *r,
+				  अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक *selector,
 				  bool *found);
-int linear_range_get_selector_high(const struct linear_range *r,
-				   unsigned int val, unsigned int *selector,
+पूर्णांक linear_range_get_selector_high(स्थिर काष्ठा linear_range *r,
+				   अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक *selector,
 				   bool *found);
-int linear_range_get_selector_low_array(const struct linear_range *r,
-					int ranges, unsigned int val,
-					unsigned int *selector, bool *found);
+पूर्णांक linear_range_get_selector_low_array(स्थिर काष्ठा linear_range *r,
+					पूर्णांक ranges, अचिन्हित पूर्णांक val,
+					अचिन्हित पूर्णांक *selector, bool *found);
 
-#endif
+#पूर्ण_अगर

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __SPARC_POLL_H
-#define __SPARC_POLL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __SPARC_POLL_H
+#घोषणा __SPARC_POLL_H
 
-#define POLLWRNORM	POLLOUT
-#define POLLWRBAND	256
-#define POLLMSG		512
-#define POLLREMOVE	1024
-#define POLLRDHUP       2048
+#घोषणा POLLWRNORM	POLLOUT
+#घोषणा POLLWRBAND	256
+#घोषणा POLLMSG		512
+#घोषणा POLLREMOVE	1024
+#घोषणा POLLRDHUP       2048
 
-#include <asm-generic/poll.h>
+#समावेश <यंत्र-generic/poll.h>
 
-#endif
+#पूर्ण_अगर

@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /**
  * ipoctal.c
  *
- * driver for the GE IP-OCTAL boards
+ * driver क्रम the GE IP-OCTAL boards
  *
  * Copyright (C) 2009-2012 CERN (www.cern.ch)
  * Author: Nicolas Serafini, EIC2 SA
  * Author: Samuel Iglesias Gonsalvez <siglesias@igalia.com>
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#include <linux/tty.h>
-#include <linux/serial.h>
-#include <linux/tty_flip.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/ipack.h>
-#include "ipoctal.h"
-#include "scc2698.h"
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ipack.h>
+#समावेश "ipoctal.h"
+#समावेश "scc2698.h"
 
-#define IP_OCTAL_ID_SPACE_VECTOR    0x41
-#define IP_OCTAL_NB_BLOCKS          4
+#घोषणा IP_OCTAL_ID_SPACE_VECTOR    0x41
+#घोषणा IP_OCTAL_NB_BLOCKS          4
 
-static const struct tty_operations ipoctal_fops;
+अटल स्थिर काष्ठा tty_operations ipoctal_fops;
 
-struct ipoctal_channel {
-	struct ipoctal_stats		stats;
-	unsigned int			nb_bytes;
-	wait_queue_head_t		queue;
+काष्ठा ipoctal_channel अणु
+	काष्ठा ipoctal_stats		stats;
+	अचिन्हित पूर्णांक			nb_bytes;
+	रुको_queue_head_t		queue;
 	spinlock_t			lock;
-	unsigned int			pointer_read;
-	unsigned int			pointer_write;
-	struct tty_port			tty_port;
-	union scc2698_channel __iomem	*regs;
-	union scc2698_block __iomem	*block_regs;
-	unsigned int			board_id;
+	अचिन्हित पूर्णांक			poपूर्णांकer_पढ़ो;
+	अचिन्हित पूर्णांक			poपूर्णांकer_ग_लिखो;
+	काष्ठा tty_port			tty_port;
+	जोड़ scc2698_channel __iomem	*regs;
+	जोड़ scc2698_block __iomem	*block_regs;
+	अचिन्हित पूर्णांक			board_id;
 	u8				isr_rx_rdy_mask;
 	u8				isr_tx_rdy_mask;
-	unsigned int			rx_enable;
-};
+	अचिन्हित पूर्णांक			rx_enable;
+पूर्ण;
 
-struct ipoctal {
-	struct ipack_device		*dev;
-	unsigned int			board_id;
-	struct ipoctal_channel		channel[NR_CHANNELS];
-	struct tty_driver		*tty_drv;
+काष्ठा ipoctal अणु
+	काष्ठा ipack_device		*dev;
+	अचिन्हित पूर्णांक			board_id;
+	काष्ठा ipoctal_channel		channel[NR_CHANNELS];
+	काष्ठा tty_driver		*tty_drv;
 	u8 __iomem			*mem8_space;
-	u8 __iomem			*int_space;
-};
+	u8 __iomem			*पूर्णांक_space;
+पूर्ण;
 
-static inline struct ipoctal *chan_to_ipoctal(struct ipoctal_channel *chan,
-					      unsigned int index)
-{
-	return container_of(chan, struct ipoctal, channel[index]);
-}
+अटल अंतरभूत काष्ठा ipoctal *chan_to_ipoctal(काष्ठा ipoctal_channel *chan,
+					      अचिन्हित पूर्णांक index)
+अणु
+	वापस container_of(chan, काष्ठा ipoctal, channel[index]);
+पूर्ण
 
-static void ipoctal_reset_channel(struct ipoctal_channel *channel)
-{
-	iowrite8(CR_DISABLE_RX | CR_DISABLE_TX, &channel->regs->w.cr);
+अटल व्योम ipoctal_reset_channel(काष्ठा ipoctal_channel *channel)
+अणु
+	ioग_लिखो8(CR_DISABLE_RX | CR_DISABLE_TX, &channel->regs->w.cr);
 	channel->rx_enable = 0;
-	iowrite8(CR_CMD_RESET_RX, &channel->regs->w.cr);
-	iowrite8(CR_CMD_RESET_TX, &channel->regs->w.cr);
-	iowrite8(CR_CMD_RESET_ERR_STATUS, &channel->regs->w.cr);
-	iowrite8(CR_CMD_RESET_MR, &channel->regs->w.cr);
-}
+	ioग_लिखो8(CR_CMD_RESET_RX, &channel->regs->w.cr);
+	ioग_लिखो8(CR_CMD_RESET_TX, &channel->regs->w.cr);
+	ioग_लिखो8(CR_CMD_RESET_ERR_STATUS, &channel->regs->w.cr);
+	ioग_लिखो8(CR_CMD_RESET_MR, &channel->regs->w.cr);
+पूर्ण
 
-static int ipoctal_port_activate(struct tty_port *port, struct tty_struct *tty)
-{
-	struct ipoctal_channel *channel;
+अटल पूर्णांक ipoctal_port_activate(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ipoctal_channel *channel;
 
 	channel = dev_get_drvdata(tty->dev);
 
@@ -78,59 +79,59 @@ static int ipoctal_port_activate(struct tty_port *port, struct tty_struct *tty)
 	 * Enable RX. TX will be enabled when
 	 * there is something to send
 	 */
-	iowrite8(CR_ENABLE_RX, &channel->regs->w.cr);
+	ioग_लिखो8(CR_ENABLE_RX, &channel->regs->w.cr);
 	channel->rx_enable = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipoctal_open(struct tty_struct *tty, struct file *file)
-{
-	struct ipoctal_channel *channel = dev_get_drvdata(tty->dev);
-	struct ipoctal *ipoctal = chan_to_ipoctal(channel, tty->index);
-	int err;
+अटल पूर्णांक ipoctal_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file)
+अणु
+	काष्ठा ipoctal_channel *channel = dev_get_drvdata(tty->dev);
+	काष्ठा ipoctal *ipoctal = chan_to_ipoctal(channel, tty->index);
+	पूर्णांक err;
 
 	tty->driver_data = channel;
 
-	if (!ipack_get_carrier(ipoctal->dev))
-		return -EBUSY;
+	अगर (!ipack_get_carrier(ipoctal->dev))
+		वापस -EBUSY;
 
-	err = tty_port_open(&channel->tty_port, tty, file);
-	if (err)
+	err = tty_port_खोलो(&channel->tty_port, tty, file);
+	अगर (err)
 		ipack_put_carrier(ipoctal->dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ipoctal_reset_stats(struct ipoctal_stats *stats)
-{
+अटल व्योम ipoctal_reset_stats(काष्ठा ipoctal_stats *stats)
+अणु
 	stats->tx = 0;
 	stats->rx = 0;
-	stats->rcv_break = 0;
+	stats->rcv_अवरोध = 0;
 	stats->framing_err = 0;
 	stats->overrun_err = 0;
 	stats->parity_err = 0;
-}
+पूर्ण
 
-static void ipoctal_free_channel(struct ipoctal_channel *channel)
-{
+अटल व्योम ipoctal_मुक्त_channel(काष्ठा ipoctal_channel *channel)
+अणु
 	ipoctal_reset_stats(&channel->stats);
-	channel->pointer_read = 0;
-	channel->pointer_write = 0;
+	channel->poपूर्णांकer_पढ़ो = 0;
+	channel->poपूर्णांकer_ग_लिखो = 0;
 	channel->nb_bytes = 0;
-}
+पूर्ण
 
-static void ipoctal_close(struct tty_struct *tty, struct file *filp)
-{
-	struct ipoctal_channel *channel = tty->driver_data;
+अटल व्योम ipoctal_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
+अणु
+	काष्ठा ipoctal_channel *channel = tty->driver_data;
 
-	tty_port_close(&channel->tty_port, tty, filp);
-	ipoctal_free_channel(channel);
-}
+	tty_port_बंद(&channel->tty_port, tty, filp);
+	ipoctal_मुक्त_channel(channel);
+पूर्ण
 
-static int ipoctal_get_icount(struct tty_struct *tty,
-			      struct serial_icounter_struct *icount)
-{
-	struct ipoctal_channel *channel = tty->driver_data;
+अटल पूर्णांक ipoctal_get_icount(काष्ठा tty_काष्ठा *tty,
+			      काष्ठा serial_icounter_काष्ठा *icount)
+अणु
+	काष्ठा ipoctal_channel *channel = tty->driver_data;
 
 	icount->cts = 0;
 	icount->dsr = 0;
@@ -140,224 +141,224 @@ static int ipoctal_get_icount(struct tty_struct *tty,
 	icount->tx = channel->stats.tx;
 	icount->frame = channel->stats.framing_err;
 	icount->parity = channel->stats.parity_err;
-	icount->brk = channel->stats.rcv_break;
-	return 0;
-}
+	icount->brk = channel->stats.rcv_अवरोध;
+	वापस 0;
+पूर्ण
 
-static void ipoctal_irq_rx(struct ipoctal_channel *channel, u8 sr)
-{
-	struct tty_port *port = &channel->tty_port;
-	unsigned char value;
-	unsigned char flag;
+अटल व्योम ipoctal_irq_rx(काष्ठा ipoctal_channel *channel, u8 sr)
+अणु
+	काष्ठा tty_port *port = &channel->tty_port;
+	अचिन्हित अक्षर value;
+	अचिन्हित अक्षर flag;
 	u8 isr;
 
-	do {
-		value = ioread8(&channel->regs->r.rhr);
+	करो अणु
+		value = ioपढ़ो8(&channel->regs->r.rhr);
 		flag = TTY_NORMAL;
 		/* Error: count statistics */
-		if (sr & SR_ERROR) {
-			iowrite8(CR_CMD_RESET_ERR_STATUS, &channel->regs->w.cr);
+		अगर (sr & SR_ERROR) अणु
+			ioग_लिखो8(CR_CMD_RESET_ERR_STATUS, &channel->regs->w.cr);
 
-			if (sr & SR_OVERRUN_ERROR) {
+			अगर (sr & SR_OVERRUN_ERROR) अणु
 				channel->stats.overrun_err++;
-				/* Overrun doesn't affect the current character*/
-				tty_insert_flip_char(port, 0, TTY_OVERRUN);
-			}
-			if (sr & SR_PARITY_ERROR) {
+				/* Overrun करोesn't affect the current अक्षरacter*/
+				tty_insert_flip_अक्षर(port, 0, TTY_OVERRUN);
+			पूर्ण
+			अगर (sr & SR_PARITY_ERROR) अणु
 				channel->stats.parity_err++;
 				flag = TTY_PARITY;
-			}
-			if (sr & SR_FRAMING_ERROR) {
+			पूर्ण
+			अगर (sr & SR_FRAMING_ERROR) अणु
 				channel->stats.framing_err++;
 				flag = TTY_FRAME;
-			}
-			if (sr & SR_RECEIVED_BREAK) {
-				channel->stats.rcv_break++;
+			पूर्ण
+			अगर (sr & SR_RECEIVED_BREAK) अणु
+				channel->stats.rcv_अवरोध++;
 				flag = TTY_BREAK;
-			}
-		}
-		tty_insert_flip_char(port, value, flag);
+			पूर्ण
+		पूर्ण
+		tty_insert_flip_अक्षर(port, value, flag);
 
-		/* Check if there are more characters in RX FIFO
-		 * If there are more, the isr register for this channel
+		/* Check अगर there are more अक्षरacters in RX FIFO
+		 * If there are more, the isr रेजिस्टर क्रम this channel
 		 * has enabled the RxRDY|FFULL bit.
 		 */
-		isr = ioread8(&channel->block_regs->r.isr);
-		sr = ioread8(&channel->regs->r.sr);
-	} while (isr & channel->isr_rx_rdy_mask);
+		isr = ioपढ़ो8(&channel->block_regs->r.isr);
+		sr = ioपढ़ो8(&channel->regs->r.sr);
+	पूर्ण जबतक (isr & channel->isr_rx_rdy_mask);
 
 	tty_flip_buffer_push(port);
-}
+पूर्ण
 
-static void ipoctal_irq_tx(struct ipoctal_channel *channel)
-{
-	unsigned char value;
-	unsigned int *pointer_write = &channel->pointer_write;
+अटल व्योम ipoctal_irq_tx(काष्ठा ipoctal_channel *channel)
+अणु
+	अचिन्हित अक्षर value;
+	अचिन्हित पूर्णांक *poपूर्णांकer_ग_लिखो = &channel->poपूर्णांकer_ग_लिखो;
 
-	if (channel->nb_bytes == 0)
-		return;
+	अगर (channel->nb_bytes == 0)
+		वापस;
 
 	spin_lock(&channel->lock);
-	value = channel->tty_port.xmit_buf[*pointer_write];
-	iowrite8(value, &channel->regs->w.thr);
+	value = channel->tty_port.xmit_buf[*poपूर्णांकer_ग_लिखो];
+	ioग_लिखो8(value, &channel->regs->w.thr);
 	channel->stats.tx++;
-	(*pointer_write)++;
-	*pointer_write = *pointer_write % PAGE_SIZE;
+	(*poपूर्णांकer_ग_लिखो)++;
+	*poपूर्णांकer_ग_लिखो = *poपूर्णांकer_ग_लिखो % PAGE_SIZE;
 	channel->nb_bytes--;
 	spin_unlock(&channel->lock);
-}
+पूर्ण
 
-static void ipoctal_irq_channel(struct ipoctal_channel *channel)
-{
+अटल व्योम ipoctal_irq_channel(काष्ठा ipoctal_channel *channel)
+अणु
 	u8 isr, sr;
 
-	/* The HW is organized in pair of channels.  See which register we need
-	 * to read from */
-	isr = ioread8(&channel->block_regs->r.isr);
-	sr = ioread8(&channel->regs->r.sr);
+	/* The HW is organized in pair of channels.  See which रेजिस्टर we need
+	 * to पढ़ो from */
+	isr = ioपढ़ो8(&channel->block_regs->r.isr);
+	sr = ioपढ़ो8(&channel->regs->r.sr);
 
-	if (isr & (IMR_DELTA_BREAK_A | IMR_DELTA_BREAK_B))
-		iowrite8(CR_CMD_RESET_BREAK_CHANGE, &channel->regs->w.cr);
+	अगर (isr & (IMR_DELTA_BREAK_A | IMR_DELTA_BREAK_B))
+		ioग_लिखो8(CR_CMD_RESET_BREAK_CHANGE, &channel->regs->w.cr);
 
-	if ((sr & SR_TX_EMPTY) && (channel->nb_bytes == 0)) {
-		iowrite8(CR_DISABLE_TX, &channel->regs->w.cr);
-		/* In case of RS-485, change from TX to RX when finishing TX.
+	अगर ((sr & SR_TX_EMPTY) && (channel->nb_bytes == 0)) अणु
+		ioग_लिखो8(CR_DISABLE_TX, &channel->regs->w.cr);
+		/* In हाल of RS-485, change from TX to RX when finishing TX.
 		 * Half-duplex. */
-		if (channel->board_id == IPACK1_DEVICE_ID_SBS_OCTAL_485) {
-			iowrite8(CR_CMD_NEGATE_RTSN, &channel->regs->w.cr);
-			iowrite8(CR_ENABLE_RX, &channel->regs->w.cr);
+		अगर (channel->board_id == IPACK1_DEVICE_ID_SBS_OCTAL_485) अणु
+			ioग_लिखो8(CR_CMD_NEGATE_RTSN, &channel->regs->w.cr);
+			ioग_लिखो8(CR_ENABLE_RX, &channel->regs->w.cr);
 			channel->rx_enable = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* RX data */
-	if ((isr & channel->isr_rx_rdy_mask) && (sr & SR_RX_READY))
+	अगर ((isr & channel->isr_rx_rdy_mask) && (sr & SR_RX_READY))
 		ipoctal_irq_rx(channel, sr);
 
-	/* TX of each character */
-	if ((isr & channel->isr_tx_rdy_mask) && (sr & SR_TX_READY))
+	/* TX of each अक्षरacter */
+	अगर ((isr & channel->isr_tx_rdy_mask) && (sr & SR_TX_READY))
 		ipoctal_irq_tx(channel);
-}
+पूर्ण
 
-static irqreturn_t ipoctal_irq_handler(void *arg)
-{
-	unsigned int i;
-	struct ipoctal *ipoctal = (struct ipoctal *) arg;
+अटल irqवापस_t ipoctal_irq_handler(व्योम *arg)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा ipoctal *ipoctal = (काष्ठा ipoctal *) arg;
 
-	/* Clear the IPack device interrupt */
-	readw(ipoctal->int_space + ACK_INT_REQ0);
-	readw(ipoctal->int_space + ACK_INT_REQ1);
+	/* Clear the IPack device पूर्णांकerrupt */
+	पढ़ोw(ipoctal->पूर्णांक_space + ACK_INT_REQ0);
+	पढ़ोw(ipoctal->पूर्णांक_space + ACK_INT_REQ1);
 
 	/* Check all channels */
-	for (i = 0; i < NR_CHANNELS; i++)
+	क्रम (i = 0; i < NR_CHANNELS; i++)
 		ipoctal_irq_channel(&ipoctal->channel[i]);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct tty_port_operations ipoctal_tty_port_ops = {
-	.dtr_rts = NULL,
+अटल स्थिर काष्ठा tty_port_operations ipoctal_tty_port_ops = अणु
+	.dtr_rts = शून्य,
 	.activate = ipoctal_port_activate,
-};
+पूर्ण;
 
-static int ipoctal_inst_slot(struct ipoctal *ipoctal, unsigned int bus_nr,
-			     unsigned int slot)
-{
-	int res;
-	int i;
-	struct tty_driver *tty;
-	char name[20];
-	struct ipoctal_channel *channel;
-	struct ipack_region *region;
-	void __iomem *addr;
-	union scc2698_channel __iomem *chan_regs;
-	union scc2698_block __iomem *block_regs;
+अटल पूर्णांक ipoctal_inst_slot(काष्ठा ipoctal *ipoctal, अचिन्हित पूर्णांक bus_nr,
+			     अचिन्हित पूर्णांक slot)
+अणु
+	पूर्णांक res;
+	पूर्णांक i;
+	काष्ठा tty_driver *tty;
+	अक्षर name[20];
+	काष्ठा ipoctal_channel *channel;
+	काष्ठा ipack_region *region;
+	व्योम __iomem *addr;
+	जोड़ scc2698_channel __iomem *chan_regs;
+	जोड़ scc2698_block __iomem *block_regs;
 
 	ipoctal->board_id = ipoctal->dev->id_device;
 
 	region = &ipoctal->dev->region[IPACK_IO_SPACE];
 	addr = devm_ioremap(&ipoctal->dev->dev,
 				    region->start, region->size);
-	if (!addr) {
+	अगर (!addr) अणु
 		dev_err(&ipoctal->dev->dev,
 			"Unable to map slot [%d:%d] IO space!\n",
 			bus_nr, slot);
-		return -EADDRNOTAVAIL;
-	}
-	/* Save the virtual address to access the registers easily */
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
+	/* Save the भव address to access the रेजिस्टरs easily */
 	chan_regs =
-		(union scc2698_channel __iomem *) addr;
+		(जोड़ scc2698_channel __iomem *) addr;
 	block_regs =
-		(union scc2698_block __iomem *) addr;
+		(जोड़ scc2698_block __iomem *) addr;
 
 	region = &ipoctal->dev->region[IPACK_INT_SPACE];
-	ipoctal->int_space =
+	ipoctal->पूर्णांक_space =
 		devm_ioremap(&ipoctal->dev->dev,
 				     region->start, region->size);
-	if (!ipoctal->int_space) {
+	अगर (!ipoctal->पूर्णांक_space) अणु
 		dev_err(&ipoctal->dev->dev,
 			"Unable to map slot [%d:%d] INT space!\n",
 			bus_nr, slot);
-		return -EADDRNOTAVAIL;
-	}
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 
 	region = &ipoctal->dev->region[IPACK_MEM8_SPACE];
 	ipoctal->mem8_space =
 		devm_ioremap(&ipoctal->dev->dev,
 				     region->start, 0x8000);
-	if (!ipoctal->mem8_space) {
+	अगर (!ipoctal->mem8_space) अणु
 		dev_err(&ipoctal->dev->dev,
 			"Unable to map slot [%d:%d] MEM8 space!\n",
 			bus_nr, slot);
-		return -EADDRNOTAVAIL;
-	}
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 
 
-	/* Disable RX and TX before touching anything */
-	for (i = 0; i < NR_CHANNELS ; i++) {
-		struct ipoctal_channel *channel = &ipoctal->channel[i];
+	/* Disable RX and TX beक्रमe touching anything */
+	क्रम (i = 0; i < NR_CHANNELS ; i++) अणु
+		काष्ठा ipoctal_channel *channel = &ipoctal->channel[i];
 		channel->regs = chan_regs + i;
 		channel->block_regs = block_regs + (i >> 1);
 		channel->board_id = ipoctal->board_id;
-		if (i & 1) {
+		अगर (i & 1) अणु
 			channel->isr_tx_rdy_mask = ISR_TxRDY_B;
 			channel->isr_rx_rdy_mask = ISR_RxRDY_FFULL_B;
-		} else {
+		पूर्ण अन्यथा अणु
 			channel->isr_tx_rdy_mask = ISR_TxRDY_A;
 			channel->isr_rx_rdy_mask = ISR_RxRDY_FFULL_A;
-		}
+		पूर्ण
 
 		ipoctal_reset_channel(channel);
-		iowrite8(MR1_CHRL_8_BITS | MR1_ERROR_CHAR | MR1_RxINT_RxRDY,
+		ioग_लिखो8(MR1_CHRL_8_BITS | MR1_ERROR_CHAR | MR1_RxINT_RxRDY,
 			 &channel->regs->w.mr); /* mr1 */
-		iowrite8(0, &channel->regs->w.mr); /* mr2 */
-		iowrite8(TX_CLK_9600  | RX_CLK_9600, &channel->regs->w.csr);
-	}
+		ioग_लिखो8(0, &channel->regs->w.mr); /* mr2 */
+		ioग_लिखो8(TX_CLK_9600  | RX_CLK_9600, &channel->regs->w.csr);
+	पूर्ण
 
-	for (i = 0; i < IP_OCTAL_NB_BLOCKS; i++) {
-		iowrite8(ACR_BRG_SET2, &block_regs[i].w.acr);
-		iowrite8(OPCR_MPP_OUTPUT | OPCR_MPOa_RTSN | OPCR_MPOb_RTSN,
+	क्रम (i = 0; i < IP_OCTAL_NB_BLOCKS; i++) अणु
+		ioग_लिखो8(ACR_BRG_SET2, &block_regs[i].w.acr);
+		ioग_लिखो8(OPCR_MPP_OUTPUT | OPCR_MPOa_RTSN | OPCR_MPOb_RTSN,
 			 &block_regs[i].w.opcr);
-		iowrite8(IMR_TxRDY_A | IMR_RxRDY_FFULL_A | IMR_DELTA_BREAK_A |
+		ioग_लिखो8(IMR_TxRDY_A | IMR_RxRDY_FFULL_A | IMR_DELTA_BREAK_A |
 			 IMR_TxRDY_B | IMR_RxRDY_FFULL_B | IMR_DELTA_BREAK_B,
 			 &block_regs[i].w.imr);
-	}
+	पूर्ण
 
-	/* Dummy write */
-	iowrite8(1, ipoctal->mem8_space + 1);
+	/* Dummy ग_लिखो */
+	ioग_लिखो8(1, ipoctal->mem8_space + 1);
 
 	/* Register the TTY device */
 
 	/* Each IP-OCTAL channel is a TTY port */
 	tty = alloc_tty_driver(NR_CHANNELS);
 
-	if (!tty)
-		return -ENOMEM;
+	अगर (!tty)
+		वापस -ENOMEM;
 
-	/* Fill struct tty_driver with ipoctal data */
+	/* Fill काष्ठा tty_driver with ipoctal data */
 	tty->owner = THIS_MODULE;
 	tty->driver_name = KBUILD_MODNAME;
-	sprintf(name, KBUILD_MODNAME ".%d.%d.", bus_nr, slot);
+	प्र_लिखो(name, KBUILD_MODNAME ".%d.%d.", bus_nr, slot);
 	tty->name = name;
 	tty->major = 0;
 
@@ -371,18 +372,18 @@ static int ipoctal_inst_slot(struct ipoctal *ipoctal, unsigned int bus_nr,
 	tty->init_termios.c_ospeed = 9600;
 
 	tty_set_operations(tty, &ipoctal_fops);
-	res = tty_register_driver(tty);
-	if (res) {
+	res = tty_रेजिस्टर_driver(tty);
+	अगर (res) अणु
 		dev_err(&ipoctal->dev->dev, "Can't register tty driver.\n");
 		put_tty_driver(tty);
-		return res;
-	}
+		वापस res;
+	पूर्ण
 
-	/* Save struct tty_driver for use it when uninstalling the device */
+	/* Save काष्ठा tty_driver क्रम use it when uninstalling the device */
 	ipoctal->tty_drv = tty;
 
-	for (i = 0; i < NR_CHANNELS; i++) {
-		struct device *tty_dev;
+	क्रम (i = 0; i < NR_CHANNELS; i++) अणु
+		काष्ठा device *tty_dev;
 
 		channel = &ipoctal->channel[i];
 		tty_port_init(&channel->tty_port);
@@ -392,356 +393,356 @@ static int ipoctal_inst_slot(struct ipoctal *ipoctal, unsigned int bus_nr,
 		ipoctal_reset_stats(&channel->stats);
 		channel->nb_bytes = 0;
 		spin_lock_init(&channel->lock);
-		channel->pointer_read = 0;
-		channel->pointer_write = 0;
-		tty_dev = tty_port_register_device(&channel->tty_port, tty, i, NULL);
-		if (IS_ERR(tty_dev)) {
+		channel->poपूर्णांकer_पढ़ो = 0;
+		channel->poपूर्णांकer_ग_लिखो = 0;
+		tty_dev = tty_port_रेजिस्टर_device(&channel->tty_port, tty, i, शून्य);
+		अगर (IS_ERR(tty_dev)) अणु
 			dev_err(&ipoctal->dev->dev, "Failed to register tty device.\n");
 			tty_port_destroy(&channel->tty_port);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		dev_set_drvdata(tty_dev, channel);
-	}
+	पूर्ण
 
 	/*
-	 * IP-OCTAL has different addresses to copy its IRQ vector.
+	 * IP-OCTAL has dअगरferent addresses to copy its IRQ vector.
 	 * Depending of the carrier these addresses are accesible or not.
 	 * More info in the datasheet.
 	 */
 	ipoctal->dev->bus->ops->request_irq(ipoctal->dev,
 				       ipoctal_irq_handler, ipoctal);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int ipoctal_copy_write_buffer(struct ipoctal_channel *channel,
-					    const unsigned char *buf,
-					    int count)
-{
-	unsigned long flags;
-	int i;
-	unsigned int *pointer_read = &channel->pointer_read;
+अटल अंतरभूत पूर्णांक ipoctal_copy_ग_लिखो_buffer(काष्ठा ipoctal_channel *channel,
+					    स्थिर अचिन्हित अक्षर *buf,
+					    पूर्णांक count)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक *poपूर्णांकer_पढ़ो = &channel->poपूर्णांकer_पढ़ो;
 
-	/* Copy the bytes from the user buffer to the internal one */
-	for (i = 0; i < count; i++) {
-		if (i <= (PAGE_SIZE - channel->nb_bytes)) {
+	/* Copy the bytes from the user buffer to the पूर्णांकernal one */
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (i <= (PAGE_SIZE - channel->nb_bytes)) अणु
 			spin_lock_irqsave(&channel->lock, flags);
-			channel->tty_port.xmit_buf[*pointer_read] = buf[i];
-			*pointer_read = (*pointer_read + 1) % PAGE_SIZE;
+			channel->tty_port.xmit_buf[*poपूर्णांकer_पढ़ो] = buf[i];
+			*poपूर्णांकer_पढ़ो = (*poपूर्णांकer_पढ़ो + 1) % PAGE_SIZE;
 			channel->nb_bytes++;
 			spin_unlock_irqrestore(&channel->lock, flags);
-		} else {
-			break;
-		}
-	}
-	return i;
-}
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस i;
+पूर्ण
 
-static int ipoctal_write_tty(struct tty_struct *tty,
-			     const unsigned char *buf, int count)
-{
-	struct ipoctal_channel *channel = tty->driver_data;
-	unsigned int char_copied;
+अटल पूर्णांक ipoctal_ग_लिखो_tty(काष्ठा tty_काष्ठा *tty,
+			     स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	काष्ठा ipoctal_channel *channel = tty->driver_data;
+	अचिन्हित पूर्णांक अक्षर_copied;
 
-	char_copied = ipoctal_copy_write_buffer(channel, buf, count);
+	अक्षर_copied = ipoctal_copy_ग_लिखो_buffer(channel, buf, count);
 
-	/* As the IP-OCTAL 485 only supports half duplex, do it manually */
-	if (channel->board_id == IPACK1_DEVICE_ID_SBS_OCTAL_485) {
-		iowrite8(CR_DISABLE_RX, &channel->regs->w.cr);
+	/* As the IP-OCTAL 485 only supports half duplex, करो it manually */
+	अगर (channel->board_id == IPACK1_DEVICE_ID_SBS_OCTAL_485) अणु
+		ioग_लिखो8(CR_DISABLE_RX, &channel->regs->w.cr);
 		channel->rx_enable = 0;
-		iowrite8(CR_CMD_ASSERT_RTSN, &channel->regs->w.cr);
-	}
+		ioग_लिखो8(CR_CMD_ASSERT_RTSN, &channel->regs->w.cr);
+	पूर्ण
 
 	/*
-	 * Send a packet and then disable TX to avoid failure after several send
+	 * Send a packet and then disable TX to aव्योम failure after several send
 	 * operations
 	 */
-	iowrite8(CR_ENABLE_TX, &channel->regs->w.cr);
-	return char_copied;
-}
+	ioग_लिखो8(CR_ENABLE_TX, &channel->regs->w.cr);
+	वापस अक्षर_copied;
+पूर्ण
 
-static int ipoctal_write_room(struct tty_struct *tty)
-{
-	struct ipoctal_channel *channel = tty->driver_data;
+अटल पूर्णांक ipoctal_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ipoctal_channel *channel = tty->driver_data;
 
-	return PAGE_SIZE - channel->nb_bytes;
-}
+	वापस PAGE_SIZE - channel->nb_bytes;
+पूर्ण
 
-static int ipoctal_chars_in_buffer(struct tty_struct *tty)
-{
-	struct ipoctal_channel *channel = tty->driver_data;
+अटल पूर्णांक ipoctal_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ipoctal_channel *channel = tty->driver_data;
 
-	return channel->nb_bytes;
-}
+	वापस channel->nb_bytes;
+पूर्ण
 
-static void ipoctal_set_termios(struct tty_struct *tty,
-				struct ktermios *old_termios)
-{
-	unsigned int cflag;
-	unsigned char mr1 = 0;
-	unsigned char mr2 = 0;
-	unsigned char csr = 0;
-	struct ipoctal_channel *channel = tty->driver_data;
+अटल व्योम ipoctal_set_termios(काष्ठा tty_काष्ठा *tty,
+				काष्ठा ktermios *old_termios)
+अणु
+	अचिन्हित पूर्णांक cflag;
+	अचिन्हित अक्षर mr1 = 0;
+	अचिन्हित अक्षर mr2 = 0;
+	अचिन्हित अक्षर csr = 0;
+	काष्ठा ipoctal_channel *channel = tty->driver_data;
 	speed_t baud;
 
 	cflag = tty->termios.c_cflag;
 
-	/* Disable and reset everything before change the setup */
+	/* Disable and reset everything beक्रमe change the setup */
 	ipoctal_reset_channel(channel);
 
-	/* Set Bits per chars */
-	switch (cflag & CSIZE) {
-	case CS6:
+	/* Set Bits per अक्षरs */
+	चयन (cflag & CSIZE) अणु
+	हाल CS6:
 		mr1 |= MR1_CHRL_6_BITS;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		mr1 |= MR1_CHRL_7_BITS;
-		break;
-	case CS8:
-	default:
+		अवरोध;
+	हाल CS8:
+	शेष:
 		mr1 |= MR1_CHRL_8_BITS;
-		/* By default, select CS8 */
+		/* By शेष, select CS8 */
 		tty->termios.c_cflag = (cflag & ~CSIZE) | CS8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Set Parity */
-	if (cflag & PARENB)
-		if (cflag & PARODD)
+	अगर (cflag & PARENB)
+		अगर (cflag & PARODD)
 			mr1 |= MR1_PARITY_ON | MR1_PARITY_ODD;
-		else
+		अन्यथा
 			mr1 |= MR1_PARITY_ON | MR1_PARITY_EVEN;
-	else
+	अन्यथा
 		mr1 |= MR1_PARITY_OFF;
 
 	/* Mark or space parity is not supported */
 	tty->termios.c_cflag &= ~CMSPAR;
 
 	/* Set stop bits */
-	if (cflag & CSTOPB)
+	अगर (cflag & CSTOPB)
 		mr2 |= MR2_STOP_BITS_LENGTH_2;
-	else
+	अन्यथा
 		mr2 |= MR2_STOP_BITS_LENGTH_1;
 
 	/* Set the flow control */
-	switch (channel->board_id) {
-	case IPACK1_DEVICE_ID_SBS_OCTAL_232:
-		if (cflag & CRTSCTS) {
+	चयन (channel->board_id) अणु
+	हाल IPACK1_DEVICE_ID_SBS_OCTAL_232:
+		अगर (cflag & CRTSCTS) अणु
 			mr1 |= MR1_RxRTS_CONTROL_ON;
 			mr2 |= MR2_TxRTS_CONTROL_OFF | MR2_CTS_ENABLE_TX_ON;
-		} else {
+		पूर्ण अन्यथा अणु
 			mr1 |= MR1_RxRTS_CONTROL_OFF;
 			mr2 |= MR2_TxRTS_CONTROL_OFF | MR2_CTS_ENABLE_TX_OFF;
-		}
-		break;
-	case IPACK1_DEVICE_ID_SBS_OCTAL_422:
+		पूर्ण
+		अवरोध;
+	हाल IPACK1_DEVICE_ID_SBS_OCTAL_422:
 		mr1 |= MR1_RxRTS_CONTROL_OFF;
 		mr2 |= MR2_TxRTS_CONTROL_OFF | MR2_CTS_ENABLE_TX_OFF;
-		break;
-	case IPACK1_DEVICE_ID_SBS_OCTAL_485:
+		अवरोध;
+	हाल IPACK1_DEVICE_ID_SBS_OCTAL_485:
 		mr1 |= MR1_RxRTS_CONTROL_OFF;
 		mr2 |= MR2_TxRTS_CONTROL_ON | MR2_CTS_ENABLE_TX_OFF;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	baud = tty_get_baud_rate(tty);
 	tty_termios_encode_baud_rate(&tty->termios, baud, baud);
 
 	/* Set baud rate */
-	switch (baud) {
-	case 75:
+	चयन (baud) अणु
+	हाल 75:
 		csr |= TX_CLK_75 | RX_CLK_75;
-		break;
-	case 110:
+		अवरोध;
+	हाल 110:
 		csr |= TX_CLK_110 | RX_CLK_110;
-		break;
-	case 150:
+		अवरोध;
+	हाल 150:
 		csr |= TX_CLK_150 | RX_CLK_150;
-		break;
-	case 300:
+		अवरोध;
+	हाल 300:
 		csr |= TX_CLK_300 | RX_CLK_300;
-		break;
-	case 600:
+		अवरोध;
+	हाल 600:
 		csr |= TX_CLK_600 | RX_CLK_600;
-		break;
-	case 1200:
+		अवरोध;
+	हाल 1200:
 		csr |= TX_CLK_1200 | RX_CLK_1200;
-		break;
-	case 1800:
+		अवरोध;
+	हाल 1800:
 		csr |= TX_CLK_1800 | RX_CLK_1800;
-		break;
-	case 2000:
+		अवरोध;
+	हाल 2000:
 		csr |= TX_CLK_2000 | RX_CLK_2000;
-		break;
-	case 2400:
+		अवरोध;
+	हाल 2400:
 		csr |= TX_CLK_2400 | RX_CLK_2400;
-		break;
-	case 4800:
+		अवरोध;
+	हाल 4800:
 		csr |= TX_CLK_4800  | RX_CLK_4800;
-		break;
-	case 9600:
+		अवरोध;
+	हाल 9600:
 		csr |= TX_CLK_9600  | RX_CLK_9600;
-		break;
-	case 19200:
+		अवरोध;
+	हाल 19200:
 		csr |= TX_CLK_19200 | RX_CLK_19200;
-		break;
-	case 38400:
-	default:
+		अवरोध;
+	हाल 38400:
+	शेष:
 		csr |= TX_CLK_38400 | RX_CLK_38400;
-		/* In case of default, we establish 38400 bps */
+		/* In हाल of शेष, we establish 38400 bps */
 		tty_termios_encode_baud_rate(&tty->termios, 38400, 38400);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mr1 |= MR1_ERROR_CHAR;
 	mr1 |= MR1_RxINT_RxRDY;
 
-	/* Write the control registers */
-	iowrite8(mr1, &channel->regs->w.mr);
-	iowrite8(mr2, &channel->regs->w.mr);
-	iowrite8(csr, &channel->regs->w.csr);
+	/* Write the control रेजिस्टरs */
+	ioग_लिखो8(mr1, &channel->regs->w.mr);
+	ioग_लिखो8(mr2, &channel->regs->w.mr);
+	ioग_लिखो8(csr, &channel->regs->w.csr);
 
-	/* Enable again the RX, if it was before */
-	if (channel->rx_enable)
-		iowrite8(CR_ENABLE_RX, &channel->regs->w.cr);
-}
+	/* Enable again the RX, अगर it was beक्रमe */
+	अगर (channel->rx_enable)
+		ioग_लिखो8(CR_ENABLE_RX, &channel->regs->w.cr);
+पूर्ण
 
-static void ipoctal_hangup(struct tty_struct *tty)
-{
-	unsigned long flags;
-	struct ipoctal_channel *channel = tty->driver_data;
+अटल व्योम ipoctal_hangup(काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा ipoctal_channel *channel = tty->driver_data;
 
-	if (channel == NULL)
-		return;
+	अगर (channel == शून्य)
+		वापस;
 
 	spin_lock_irqsave(&channel->lock, flags);
 	channel->nb_bytes = 0;
-	channel->pointer_read = 0;
-	channel->pointer_write = 0;
+	channel->poपूर्णांकer_पढ़ो = 0;
+	channel->poपूर्णांकer_ग_लिखो = 0;
 	spin_unlock_irqrestore(&channel->lock, flags);
 
 	tty_port_hangup(&channel->tty_port);
 
 	ipoctal_reset_channel(channel);
 	tty_port_set_initialized(&channel->tty_port, 0);
-	wake_up_interruptible(&channel->tty_port.open_wait);
-}
+	wake_up_पूर्णांकerruptible(&channel->tty_port.खोलो_रुको);
+पूर्ण
 
-static void ipoctal_shutdown(struct tty_struct *tty)
-{
-	struct ipoctal_channel *channel = tty->driver_data;
+अटल व्योम ipoctal_shutकरोwn(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ipoctal_channel *channel = tty->driver_data;
 
-	if (channel == NULL)
-		return;
+	अगर (channel == शून्य)
+		वापस;
 
 	ipoctal_reset_channel(channel);
 	tty_port_set_initialized(&channel->tty_port, 0);
-}
+पूर्ण
 
-static void ipoctal_cleanup(struct tty_struct *tty)
-{
-	struct ipoctal_channel *channel = tty->driver_data;
-	struct ipoctal *ipoctal = chan_to_ipoctal(channel, tty->index);
+अटल व्योम ipoctal_cleanup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ipoctal_channel *channel = tty->driver_data;
+	काष्ठा ipoctal *ipoctal = chan_to_ipoctal(channel, tty->index);
 
 	/* release the carrier driver */
 	ipack_put_carrier(ipoctal->dev);
-}
+पूर्ण
 
-static const struct tty_operations ipoctal_fops = {
-	.ioctl =		NULL,
-	.open =			ipoctal_open,
-	.close =		ipoctal_close,
-	.write =		ipoctal_write_tty,
+अटल स्थिर काष्ठा tty_operations ipoctal_fops = अणु
+	.ioctl =		शून्य,
+	.खोलो =			ipoctal_खोलो,
+	.बंद =		ipoctal_बंद,
+	.ग_लिखो =		ipoctal_ग_लिखो_tty,
 	.set_termios =		ipoctal_set_termios,
-	.write_room =		ipoctal_write_room,
-	.chars_in_buffer =	ipoctal_chars_in_buffer,
+	.ग_लिखो_room =		ipoctal_ग_लिखो_room,
+	.अक्षरs_in_buffer =	ipoctal_अक्षरs_in_buffer,
 	.get_icount =		ipoctal_get_icount,
 	.hangup =		ipoctal_hangup,
-	.shutdown =		ipoctal_shutdown,
+	.shutकरोwn =		ipoctal_shutकरोwn,
 	.cleanup =              ipoctal_cleanup,
-};
+पूर्ण;
 
-static int ipoctal_probe(struct ipack_device *dev)
-{
-	int res;
-	struct ipoctal *ipoctal;
+अटल पूर्णांक ipoctal_probe(काष्ठा ipack_device *dev)
+अणु
+	पूर्णांक res;
+	काष्ठा ipoctal *ipoctal;
 
-	ipoctal = kzalloc(sizeof(struct ipoctal), GFP_KERNEL);
-	if (ipoctal == NULL)
-		return -ENOMEM;
+	ipoctal = kzalloc(माप(काष्ठा ipoctal), GFP_KERNEL);
+	अगर (ipoctal == शून्य)
+		वापस -ENOMEM;
 
 	ipoctal->dev = dev;
 	res = ipoctal_inst_slot(ipoctal, dev->bus->bus_nr, dev->slot);
-	if (res)
-		goto out_uninst;
+	अगर (res)
+		जाओ out_uninst;
 
 	dev_set_drvdata(&dev->dev, ipoctal);
-	return 0;
+	वापस 0;
 
 out_uninst:
-	kfree(ipoctal);
-	return res;
-}
+	kमुक्त(ipoctal);
+	वापस res;
+पूर्ण
 
-static void __ipoctal_remove(struct ipoctal *ipoctal)
-{
-	int i;
+अटल व्योम __ipoctal_हटाओ(काष्ठा ipoctal *ipoctal)
+अणु
+	पूर्णांक i;
 
-	ipoctal->dev->bus->ops->free_irq(ipoctal->dev);
+	ipoctal->dev->bus->ops->मुक्त_irq(ipoctal->dev);
 
-	for (i = 0; i < NR_CHANNELS; i++) {
-		struct ipoctal_channel *channel = &ipoctal->channel[i];
-		tty_unregister_device(ipoctal->tty_drv, i);
-		tty_port_free_xmit_buf(&channel->tty_port);
+	क्रम (i = 0; i < NR_CHANNELS; i++) अणु
+		काष्ठा ipoctal_channel *channel = &ipoctal->channel[i];
+		tty_unरेजिस्टर_device(ipoctal->tty_drv, i);
+		tty_port_मुक्त_xmit_buf(&channel->tty_port);
 		tty_port_destroy(&channel->tty_port);
-	}
+	पूर्ण
 
-	tty_unregister_driver(ipoctal->tty_drv);
+	tty_unरेजिस्टर_driver(ipoctal->tty_drv);
 	put_tty_driver(ipoctal->tty_drv);
-	kfree(ipoctal);
-}
+	kमुक्त(ipoctal);
+पूर्ण
 
-static void ipoctal_remove(struct ipack_device *idev)
-{
-	__ipoctal_remove(dev_get_drvdata(&idev->dev));
-}
+अटल व्योम ipoctal_हटाओ(काष्ठा ipack_device *idev)
+अणु
+	__ipoctal_हटाओ(dev_get_drvdata(&idev->dev));
+पूर्ण
 
-static DEFINE_IPACK_DEVICE_TABLE(ipoctal_ids) = {
-	{ IPACK_DEVICE(IPACK_ID_VERSION_1, IPACK1_VENDOR_ID_SBS,
-			IPACK1_DEVICE_ID_SBS_OCTAL_232) },
-	{ IPACK_DEVICE(IPACK_ID_VERSION_1, IPACK1_VENDOR_ID_SBS,
-			IPACK1_DEVICE_ID_SBS_OCTAL_422) },
-	{ IPACK_DEVICE(IPACK_ID_VERSION_1, IPACK1_VENDOR_ID_SBS,
-			IPACK1_DEVICE_ID_SBS_OCTAL_485) },
-	{ 0, },
-};
+अटल DEFINE_IPACK_DEVICE_TABLE(ipoctal_ids) = अणु
+	अणु IPACK_DEVICE(IPACK_ID_VERSION_1, IPACK1_VENDOR_ID_SBS,
+			IPACK1_DEVICE_ID_SBS_OCTAL_232) पूर्ण,
+	अणु IPACK_DEVICE(IPACK_ID_VERSION_1, IPACK1_VENDOR_ID_SBS,
+			IPACK1_DEVICE_ID_SBS_OCTAL_422) पूर्ण,
+	अणु IPACK_DEVICE(IPACK_ID_VERSION_1, IPACK1_VENDOR_ID_SBS,
+			IPACK1_DEVICE_ID_SBS_OCTAL_485) पूर्ण,
+	अणु 0, पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(ipack, ipoctal_ids);
 
-static const struct ipack_driver_ops ipoctal_drv_ops = {
+अटल स्थिर काष्ठा ipack_driver_ops ipoctal_drv_ops = अणु
 	.probe  = ipoctal_probe,
-	.remove = ipoctal_remove,
-};
+	.हटाओ = ipoctal_हटाओ,
+पूर्ण;
 
-static struct ipack_driver driver = {
+अटल काष्ठा ipack_driver driver = अणु
 	.ops      = &ipoctal_drv_ops,
 	.id_table = ipoctal_ids,
-};
+पूर्ण;
 
-static int __init ipoctal_init(void)
-{
-	return ipack_driver_register(&driver, THIS_MODULE, KBUILD_MODNAME);
-}
+अटल पूर्णांक __init ipoctal_init(व्योम)
+अणु
+	वापस ipack_driver_रेजिस्टर(&driver, THIS_MODULE, KBUILD_MODNAME);
+पूर्ण
 
-static void __exit ipoctal_exit(void)
-{
-	ipack_driver_unregister(&driver);
-}
+अटल व्योम __निकास ipoctal_निकास(व्योम)
+अणु
+	ipack_driver_unरेजिस्टर(&driver);
+पूर्ण
 
 MODULE_DESCRIPTION("IP-Octal 232, 422 and 485 device driver");
 MODULE_LICENSE("GPL");
 
 module_init(ipoctal_init);
-module_exit(ipoctal_exit);
+module_निकास(ipoctal_निकास);

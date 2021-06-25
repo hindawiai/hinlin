@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * rcar_du_encoder.c  --  R-Car Display Unit Encoder
  *
  * Copyright (C) 2013-2014 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
 
-#include <linux/export.h>
-#include <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
 
-#include <drm/drm_bridge.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_modeset_helper_vtables.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_modeset_helper_vtables.h>
+#समावेश <drm/drm_panel.h>
 
-#include "rcar_du_drv.h"
-#include "rcar_du_encoder.h"
-#include "rcar_du_kms.h"
-#include "rcar_lvds.h"
+#समावेश "rcar_du_drv.h"
+#समावेश "rcar_du_encoder.h"
+#समावेश "rcar_du_kms.h"
+#समावेश "rcar_lvds.h"
 
 /* -----------------------------------------------------------------------------
  * Encoder
  */
 
-static unsigned int rcar_du_encoder_count_ports(struct device_node *node)
-{
-	struct device_node *ports;
-	struct device_node *port;
-	unsigned int num_ports = 0;
+अटल अचिन्हित पूर्णांक rcar_du_encoder_count_ports(काष्ठा device_node *node)
+अणु
+	काष्ठा device_node *ports;
+	काष्ठा device_node *port;
+	अचिन्हित पूर्णांक num_ports = 0;
 
 	ports = of_get_child_by_name(node, "ports");
-	if (!ports)
+	अगर (!ports)
 		ports = of_node_get(node);
 
-	for_each_child_of_node(ports, port) {
-		if (of_node_name_eq(port, "port"))
+	क्रम_each_child_of_node(ports, port) अणु
+		अगर (of_node_name_eq(port, "port"))
 			num_ports++;
-	}
+	पूर्ण
 
 	of_node_put(ports);
 
-	return num_ports;
-}
+	वापस num_ports;
+पूर्ण
 
-static const struct drm_encoder_funcs rcar_du_encoder_funcs = {
-};
+अटल स्थिर काष्ठा drm_encoder_funcs rcar_du_encoder_funcs = अणु
+पूर्ण;
 
-int rcar_du_encoder_init(struct rcar_du_device *rcdu,
-			 enum rcar_du_output output,
-			 struct device_node *enc_node)
-{
-	struct rcar_du_encoder *renc;
-	struct drm_bridge *bridge;
+पूर्णांक rcar_du_encoder_init(काष्ठा rcar_du_device *rcdu,
+			 क्रमागत rcar_du_output output,
+			 काष्ठा device_node *enc_node)
+अणु
+	काष्ठा rcar_du_encoder *renc;
+	काष्ठा drm_bridge *bridge;
 
 	/*
-	 * Locate the DRM bridge from the DT node. For the DPAD outputs, if the
+	 * Locate the DRM bridge from the DT node. For the DPAD outमाला_दो, अगर the
 	 * DT node has a single port, assume that it describes a panel and
 	 * create a panel bridge.
 	 */
-	if ((output == RCAR_DU_OUTPUT_DPAD0 ||
+	अगर ((output == RCAR_DU_OUTPUT_DPAD0 ||
 	     output == RCAR_DU_OUTPUT_DPAD1) &&
-	    rcar_du_encoder_count_ports(enc_node) == 1) {
-		struct drm_panel *panel = of_drm_find_panel(enc_node);
+	    rcar_du_encoder_count_ports(enc_node) == 1) अणु
+		काष्ठा drm_panel *panel = of_drm_find_panel(enc_node);
 
-		if (IS_ERR(panel))
-			return PTR_ERR(panel);
+		अगर (IS_ERR(panel))
+			वापस PTR_ERR(panel);
 
 		bridge = devm_drm_panel_bridge_add_typed(rcdu->dev, panel,
 							 DRM_MODE_CONNECTOR_DPI);
-		if (IS_ERR(bridge))
-			return PTR_ERR(bridge);
-	} else {
+		अगर (IS_ERR(bridge))
+			वापस PTR_ERR(bridge);
+	पूर्ण अन्यथा अणु
 		bridge = of_drm_find_bridge(enc_node);
-		if (!bridge)
-			return -EPROBE_DEFER;
+		अगर (!bridge)
+			वापस -EPROBE_DEFER;
 
-		if (output == RCAR_DU_OUTPUT_LVDS0 ||
+		अगर (output == RCAR_DU_OUTPUT_LVDS0 ||
 		    output == RCAR_DU_OUTPUT_LVDS1)
 			rcdu->lvds[output - RCAR_DU_OUTPUT_LVDS0] = bridge;
-	}
+	पूर्ण
 
 	/*
-	 * Create and initialize the encoder. On Gen3 skip the LVDS1 output if
-	 * the LVDS1 encoder is used as a companion for LVDS0 in dual-link
+	 * Create and initialize the encoder. On Gen3 skip the LVDS1 output अगर
+	 * the LVDS1 encoder is used as a companion क्रम LVDS0 in dual-link
 	 * mode.
 	 */
-	if (rcdu->info->gen >= 3 && output == RCAR_DU_OUTPUT_LVDS1) {
-		if (rcar_lvds_dual_link(bridge))
-			return -ENOLINK;
-	}
+	अगर (rcdu->info->gen >= 3 && output == RCAR_DU_OUTPUT_LVDS1) अणु
+		अगर (rcar_lvds_dual_link(bridge))
+			वापस -ENOLINK;
+	पूर्ण
 
 	dev_dbg(rcdu->dev, "initializing encoder %pOF for output %u\n",
 		enc_node, output);
 
-	renc = drmm_encoder_alloc(&rcdu->ddev, struct rcar_du_encoder, base,
+	renc = drmm_encoder_alloc(&rcdu->ddev, काष्ठा rcar_du_encoder, base,
 				  &rcar_du_encoder_funcs, DRM_MODE_ENCODER_NONE,
-				  NULL);
-	if (!renc)
-		return -ENOMEM;
+				  शून्य);
+	अगर (!renc)
+		वापस -ENOMEM;
 
 	renc->output = output;
 
@@ -107,5 +108,5 @@ int rcar_du_encoder_init(struct rcar_du_device *rcdu,
 	 * Attach the bridge to the encoder. The bridge will create the
 	 * connector.
 	 */
-	return drm_bridge_attach(&renc->base, bridge, NULL, 0);
-}
+	वापस drm_bridge_attach(&renc->base, bridge, शून्य, 0);
+पूर्ण

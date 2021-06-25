@@ -1,720 +1,721 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Swap block device support for MTDs
- * Turns an MTD device into a swap device with block wear leveling
+ * Swap block device support क्रम MTDs
+ * Turns an MTD device पूर्णांकo a swap device with block wear leveling
  *
- * Copyright © 2007,2011 Nokia Corporation. All rights reserved.
+ * Copyright तऊ 2007,2011 Nokia Corporation. All rights reserved.
  *
  * Authors: Jarkko Lavinen <jarkko.lavinen@nokia.com>
  *
- * Based on Richard Purdie's earlier implementation in 2007. Background
+ * Based on Riअक्षरd Purdie's earlier implementation in 2007. Background
  * support and lock-less operation written by Adrian Hunter.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/blktrans.h>
-#include <linux/rbtree.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/genhd.h>
-#include <linux/swap.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/device.h>
-#include <linux/math64.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/blktrans.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/device.h>
+#समावेश <linux/math64.h>
 
-#define MTDSWAP_PREFIX "mtdswap"
+#घोषणा MTDSWAP_PREFIX "mtdswap"
 
 /*
- * The number of free eraseblocks when GC should stop
+ * The number of मुक्त eraseblocks when GC should stop
  */
-#define CLEAN_BLOCK_THRESHOLD	20
+#घोषणा CLEAN_BLOCK_THRESHOLD	20
 
 /*
- * Number of free eraseblocks below which GC can also collect low frag
+ * Number of मुक्त eraseblocks below which GC can also collect low frag
  * blocks.
  */
-#define LOW_FRAG_GC_THRESHOLD	5
+#घोषणा LOW_FRAG_GC_THRESHOLD	5
 
 /*
- * Wear level cost amortization. We want to do wear leveling on the background
+ * Wear level cost amortization. We want to करो wear leveling on the background
  * without disturbing gc too much. This is made by defining max GC frequency.
  * Frequency value 6 means 1/6 of the GC passes will pick an erase block based
- * on the biggest wear difference rather than the biggest dirtiness.
+ * on the biggest wear dअगरference rather than the biggest dirtiness.
  *
  * The lower freq2 should be chosen so that it makes sure the maximum erase
- * difference will decrease even if a malicious application is deliberately
- * trying to make erase differences large.
+ * dअगरference will decrease even अगर a malicious application is deliberately
+ * trying to make erase dअगरferences large.
  */
-#define MAX_ERASE_DIFF		4000
-#define COLLECT_NONDIRTY_BASE	MAX_ERASE_DIFF
-#define COLLECT_NONDIRTY_FREQ1	6
-#define COLLECT_NONDIRTY_FREQ2	4
+#घोषणा MAX_ERASE_DIFF		4000
+#घोषणा COLLECT_NONसूचीTY_BASE	MAX_ERASE_DIFF
+#घोषणा COLLECT_NONसूचीTY_FREQ1	6
+#घोषणा COLLECT_NONसूचीTY_FREQ2	4
 
-#define PAGE_UNDEF		UINT_MAX
-#define BLOCK_UNDEF		UINT_MAX
-#define BLOCK_ERROR		(UINT_MAX - 1)
-#define BLOCK_MAX		(UINT_MAX - 2)
+#घोषणा PAGE_UNDEF		अच_पूर्णांक_उच्च
+#घोषणा BLOCK_UNDEF		अच_पूर्णांक_उच्च
+#घोषणा BLOCK_ERROR		(अच_पूर्णांक_उच्च - 1)
+#घोषणा BLOCK_MAX		(अच_पूर्णांक_उच्च - 2)
 
-#define EBLOCK_BAD		(1 << 0)
-#define EBLOCK_NOMAGIC		(1 << 1)
-#define EBLOCK_BITFLIP		(1 << 2)
-#define EBLOCK_FAILED		(1 << 3)
-#define EBLOCK_READERR		(1 << 4)
-#define EBLOCK_IDX_SHIFT	5
+#घोषणा EBLOCK_BAD		(1 << 0)
+#घोषणा EBLOCK_NOMAGIC		(1 << 1)
+#घोषणा EBLOCK_BITFLIP		(1 << 2)
+#घोषणा EBLOCK_FAILED		(1 << 3)
+#घोषणा EBLOCK_READERR		(1 << 4)
+#घोषणा EBLOCK_IDX_SHIFT	5
 
-struct swap_eb {
-	struct rb_node rb;
-	struct rb_root *root;
+काष्ठा swap_eb अणु
+	काष्ठा rb_node rb;
+	काष्ठा rb_root *root;
 
-	unsigned int flags;
-	unsigned int active_count;
-	unsigned int erase_count;
-	unsigned int pad;		/* speeds up pointer decrement */
-};
+	अचिन्हित पूर्णांक flags;
+	अचिन्हित पूर्णांक active_count;
+	अचिन्हित पूर्णांक erase_count;
+	अचिन्हित पूर्णांक pad;		/* speeds up poपूर्णांकer decrement */
+पूर्ण;
 
-#define MTDSWAP_ECNT_MIN(rbroot) (rb_entry(rb_first(rbroot), struct swap_eb, \
+#घोषणा MTDSWAP_ECNT_MIN(rbroot) (rb_entry(rb_first(rbroot), काष्ठा swap_eb, \
 				rb)->erase_count)
-#define MTDSWAP_ECNT_MAX(rbroot) (rb_entry(rb_last(rbroot), struct swap_eb, \
+#घोषणा MTDSWAP_ECNT_MAX(rbroot) (rb_entry(rb_last(rbroot), काष्ठा swap_eb, \
 				rb)->erase_count)
 
-struct mtdswap_tree {
-	struct rb_root root;
-	unsigned int count;
-};
+काष्ठा mtdswap_tree अणु
+	काष्ठा rb_root root;
+	अचिन्हित पूर्णांक count;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTDSWAP_CLEAN,
 	MTDSWAP_USED,
 	MTDSWAP_LOWFRAG,
 	MTDSWAP_HIFRAG,
-	MTDSWAP_DIRTY,
+	MTDSWAP_सूचीTY,
 	MTDSWAP_BITFLIP,
 	MTDSWAP_FAILING,
 	MTDSWAP_TREE_CNT,
-};
+पूर्ण;
 
-struct mtdswap_dev {
-	struct mtd_blktrans_dev *mbd_dev;
-	struct mtd_info *mtd;
-	struct device *dev;
+काष्ठा mtdswap_dev अणु
+	काष्ठा mtd_blktrans_dev *mbd_dev;
+	काष्ठा mtd_info *mtd;
+	काष्ठा device *dev;
 
-	unsigned int *page_data;
-	unsigned int *revmap;
+	अचिन्हित पूर्णांक *page_data;
+	अचिन्हित पूर्णांक *revmap;
 
-	unsigned int eblks;
-	unsigned int spare_eblks;
-	unsigned int pages_per_eblk;
-	unsigned int max_erase_count;
-	struct swap_eb *eb_data;
+	अचिन्हित पूर्णांक eblks;
+	अचिन्हित पूर्णांक spare_eblks;
+	अचिन्हित पूर्णांक pages_per_eblk;
+	अचिन्हित पूर्णांक max_erase_count;
+	काष्ठा swap_eb *eb_data;
 
-	struct mtdswap_tree trees[MTDSWAP_TREE_CNT];
+	काष्ठा mtdswap_tree trees[MTDSWAP_TREE_CNT];
 
-	unsigned long long sect_read_count;
-	unsigned long long sect_write_count;
-	unsigned long long mtd_write_count;
-	unsigned long long mtd_read_count;
-	unsigned long long discard_count;
-	unsigned long long discard_page_count;
+	अचिन्हित दीर्घ दीर्घ sect_पढ़ो_count;
+	अचिन्हित दीर्घ दीर्घ sect_ग_लिखो_count;
+	अचिन्हित दीर्घ दीर्घ mtd_ग_लिखो_count;
+	अचिन्हित दीर्घ दीर्घ mtd_पढ़ो_count;
+	अचिन्हित दीर्घ दीर्घ discard_count;
+	अचिन्हित दीर्घ दीर्घ discard_page_count;
 
-	unsigned int curr_write_pos;
-	struct swap_eb *curr_write;
+	अचिन्हित पूर्णांक curr_ग_लिखो_pos;
+	काष्ठा swap_eb *curr_ग_लिखो;
 
-	char *page_buf;
-	char *oob_buf;
-};
+	अक्षर *page_buf;
+	अक्षर *oob_buf;
+पूर्ण;
 
-struct mtdswap_oobdata {
+काष्ठा mtdswap_oobdata अणु
 	__le16 magic;
 	__le32 count;
-} __packed;
+पूर्ण __packed;
 
-#define MTDSWAP_MAGIC_CLEAN	0x2095
-#define MTDSWAP_MAGIC_DIRTY	(MTDSWAP_MAGIC_CLEAN + 1)
-#define MTDSWAP_TYPE_CLEAN	0
-#define MTDSWAP_TYPE_DIRTY	1
-#define MTDSWAP_OOBSIZE		sizeof(struct mtdswap_oobdata)
+#घोषणा MTDSWAP_MAGIC_CLEAN	0x2095
+#घोषणा MTDSWAP_MAGIC_सूचीTY	(MTDSWAP_MAGIC_CLEAN + 1)
+#घोषणा MTDSWAP_TYPE_CLEAN	0
+#घोषणा MTDSWAP_TYPE_सूचीTY	1
+#घोषणा MTDSWAP_OOBSIZE		माप(काष्ठा mtdswap_oobdata)
 
-#define MTDSWAP_ERASE_RETRIES	3 /* Before marking erase block bad */
-#define MTDSWAP_IO_RETRIES	3
+#घोषणा MTDSWAP_ERASE_RETRIES	3 /* Beक्रमe marking erase block bad */
+#घोषणा MTDSWAP_IO_RETRIES	3
 
-enum {
+क्रमागत अणु
 	MTDSWAP_SCANNED_CLEAN,
-	MTDSWAP_SCANNED_DIRTY,
+	MTDSWAP_SCANNED_सूचीTY,
 	MTDSWAP_SCANNED_BITFLIP,
 	MTDSWAP_SCANNED_BAD,
-};
+पूर्ण;
 
 /*
- * In the worst case mtdswap_writesect() has allocated the last clean
+ * In the worst हाल mtdswap_ग_लिखोsect() has allocated the last clean
  * page from the current block and is then pre-empted by the GC
- * thread. The thread can consume a full erase block when moving a
+ * thपढ़ो. The thपढ़ो can consume a full erase block when moving a
  * block.
  */
-#define MIN_SPARE_EBLOCKS	2
-#define MIN_ERASE_BLOCKS	(MIN_SPARE_EBLOCKS + 1)
+#घोषणा MIN_SPARE_EBLOCKS	2
+#घोषणा MIN_ERASE_BLOCKS	(MIN_SPARE_EBLOCKS + 1)
 
-#define TREE_ROOT(d, name) (&d->trees[MTDSWAP_ ## name].root)
-#define TREE_EMPTY(d, name) (TREE_ROOT(d, name)->rb_node == NULL)
-#define TREE_NONEMPTY(d, name) (!TREE_EMPTY(d, name))
-#define TREE_COUNT(d, name) (d->trees[MTDSWAP_ ## name].count)
+#घोषणा TREE_ROOT(d, name) (&d->trees[MTDSWAP_ ## name].root)
+#घोषणा TREE_EMPTY(d, name) (TREE_ROOT(d, name)->rb_node == शून्य)
+#घोषणा TREE_NONEMPTY(d, name) (!TREE_EMPTY(d, name))
+#घोषणा TREE_COUNT(d, name) (d->trees[MTDSWAP_ ## name].count)
 
-#define MTDSWAP_MBD_TO_MTDSWAP(dev) ((struct mtdswap_dev *)dev->priv)
+#घोषणा MTDSWAP_MBD_TO_MTDSWAP(dev) ((काष्ठा mtdswap_dev *)dev->priv)
 
-static char partitions[128] = "";
-module_param_string(partitions, partitions, sizeof(partitions), 0444);
+अटल अक्षर partitions[128] = "";
+module_param_string(partitions, partitions, माप(partitions), 0444);
 MODULE_PARM_DESC(partitions, "MTD partition numbers to use as swap "
 		"partitions=\"1,3,5\"");
 
-static unsigned int spare_eblocks = 10;
-module_param(spare_eblocks, uint, 0444);
+अटल अचिन्हित पूर्णांक spare_eblocks = 10;
+module_param(spare_eblocks, uपूर्णांक, 0444);
 MODULE_PARM_DESC(spare_eblocks, "Percentage of spare erase blocks for "
 		"garbage collection (default 10%)");
 
-static bool header; /* false */
+अटल bool header; /* false */
 module_param(header, bool, 0444);
 MODULE_PARM_DESC(header,
 		"Include builtin swap header (default 0, without header)");
 
-static int mtdswap_gc(struct mtdswap_dev *d, unsigned int background);
+अटल पूर्णांक mtdswap_gc(काष्ठा mtdswap_dev *d, अचिन्हित पूर्णांक background);
 
-static loff_t mtdswap_eb_offset(struct mtdswap_dev *d, struct swap_eb *eb)
-{
-	return (loff_t)(eb - d->eb_data) * d->mtd->erasesize;
-}
+अटल loff_t mtdswap_eb_offset(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb)
+अणु
+	वापस (loff_t)(eb - d->eb_data) * d->mtd->erasesize;
+पूर्ण
 
-static void mtdswap_eb_detach(struct mtdswap_dev *d, struct swap_eb *eb)
-{
-	unsigned int oldidx;
-	struct mtdswap_tree *tp;
+अटल व्योम mtdswap_eb_detach(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb)
+अणु
+	अचिन्हित पूर्णांक oldidx;
+	काष्ठा mtdswap_tree *tp;
 
-	if (eb->root) {
-		tp = container_of(eb->root, struct mtdswap_tree, root);
+	अगर (eb->root) अणु
+		tp = container_of(eb->root, काष्ठा mtdswap_tree, root);
 		oldidx = tp - &d->trees[0];
 
 		d->trees[oldidx].count--;
 		rb_erase(&eb->rb, eb->root);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __mtdswap_rb_add(struct rb_root *root, struct swap_eb *eb)
-{
-	struct rb_node **p, *parent = NULL;
-	struct swap_eb *cur;
+अटल व्योम __mtdswap_rb_add(काष्ठा rb_root *root, काष्ठा swap_eb *eb)
+अणु
+	काष्ठा rb_node **p, *parent = शून्य;
+	काष्ठा swap_eb *cur;
 
 	p = &root->rb_node;
-	while (*p) {
+	जबतक (*p) अणु
 		parent = *p;
-		cur = rb_entry(parent, struct swap_eb, rb);
-		if (eb->erase_count > cur->erase_count)
+		cur = rb_entry(parent, काष्ठा swap_eb, rb);
+		अगर (eb->erase_count > cur->erase_count)
 			p = &(*p)->rb_right;
-		else
+		अन्यथा
 			p = &(*p)->rb_left;
-	}
+	पूर्ण
 
 	rb_link_node(&eb->rb, parent, p);
 	rb_insert_color(&eb->rb, root);
-}
+पूर्ण
 
-static void mtdswap_rb_add(struct mtdswap_dev *d, struct swap_eb *eb, int idx)
-{
-	struct rb_root *root;
+अटल व्योम mtdswap_rb_add(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb, पूर्णांक idx)
+अणु
+	काष्ठा rb_root *root;
 
-	if (eb->root == &d->trees[idx].root)
-		return;
+	अगर (eb->root == &d->trees[idx].root)
+		वापस;
 
 	mtdswap_eb_detach(d, eb);
 	root = &d->trees[idx].root;
 	__mtdswap_rb_add(root, eb);
 	eb->root = root;
 	d->trees[idx].count++;
-}
+पूर्ण
 
-static struct rb_node *mtdswap_rb_index(struct rb_root *root, unsigned int idx)
-{
-	struct rb_node *p;
-	unsigned int i;
+अटल काष्ठा rb_node *mtdswap_rb_index(काष्ठा rb_root *root, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा rb_node *p;
+	अचिन्हित पूर्णांक i;
 
 	p = rb_first(root);
 	i = 0;
-	while (i < idx && p) {
+	जबतक (i < idx && p) अणु
 		p = rb_next(p);
 		i++;
-	}
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static int mtdswap_handle_badblock(struct mtdswap_dev *d, struct swap_eb *eb)
-{
-	int ret;
+अटल पूर्णांक mtdswap_handle_badblock(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb)
+अणु
+	पूर्णांक ret;
 	loff_t offset;
 
 	d->spare_eblks--;
 	eb->flags |= EBLOCK_BAD;
 	mtdswap_eb_detach(d, eb);
-	eb->root = NULL;
+	eb->root = शून्य;
 
 	/* badblocks not supported */
-	if (!mtd_can_have_bb(d->mtd))
-		return 1;
+	अगर (!mtd_can_have_bb(d->mtd))
+		वापस 1;
 
 	offset = mtdswap_eb_offset(d, eb);
 	dev_warn(d->dev, "Marking bad block at %08llx\n", offset);
 	ret = mtd_block_markbad(d->mtd, offset);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(d->dev, "Mark block bad failed for block at %08llx "
 			"error %d\n", offset, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 1;
+	वापस 1;
 
-}
+पूर्ण
 
-static int mtdswap_handle_write_error(struct mtdswap_dev *d, struct swap_eb *eb)
-{
-	unsigned int marked = eb->flags & EBLOCK_FAILED;
-	struct swap_eb *curr_write = d->curr_write;
+अटल पूर्णांक mtdswap_handle_ग_लिखो_error(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb)
+अणु
+	अचिन्हित पूर्णांक marked = eb->flags & EBLOCK_FAILED;
+	काष्ठा swap_eb *curr_ग_लिखो = d->curr_ग_लिखो;
 
 	eb->flags |= EBLOCK_FAILED;
-	if (curr_write == eb) {
-		d->curr_write = NULL;
+	अगर (curr_ग_लिखो == eb) अणु
+		d->curr_ग_लिखो = शून्य;
 
-		if (!marked && d->curr_write_pos != 0) {
+		अगर (!marked && d->curr_ग_लिखो_pos != 0) अणु
 			mtdswap_rb_add(d, eb, MTDSWAP_FAILING);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return mtdswap_handle_badblock(d, eb);
-}
+	वापस mtdswap_handle_badblock(d, eb);
+पूर्ण
 
-static int mtdswap_read_oob(struct mtdswap_dev *d, loff_t from,
-			struct mtd_oob_ops *ops)
-{
-	int ret = mtd_read_oob(d->mtd, from, ops);
+अटल पूर्णांक mtdswap_पढ़ो_oob(काष्ठा mtdswap_dev *d, loff_t from,
+			काष्ठा mtd_oob_ops *ops)
+अणु
+	पूर्णांक ret = mtd_पढ़ो_oob(d->mtd, from, ops);
 
-	if (mtd_is_bitflip(ret))
-		return ret;
+	अगर (mtd_is_bitflip(ret))
+		वापस ret;
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(d->dev, "Read OOB failed %d for block at %08llx\n",
 			ret, from);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ops->oobretlen < ops->ooblen) {
+	अगर (ops->oobretlen < ops->ooblen) अणु
 		dev_warn(d->dev, "Read OOB return short read (%zd bytes not "
 			"%zd) for block at %08llx\n",
 			ops->oobretlen, ops->ooblen, from);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdswap_read_markers(struct mtdswap_dev *d, struct swap_eb *eb)
-{
-	struct mtdswap_oobdata *data, *data2;
-	int ret;
+अटल पूर्णांक mtdswap_पढ़ो_markers(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb)
+अणु
+	काष्ठा mtdswap_oobdata *data, *data2;
+	पूर्णांक ret;
 	loff_t offset;
-	struct mtd_oob_ops ops;
+	काष्ठा mtd_oob_ops ops;
 
 	offset = mtdswap_eb_offset(d, eb);
 
-	/* Check first if the block is bad. */
-	if (mtd_can_have_bb(d->mtd) && mtd_block_isbad(d->mtd, offset))
-		return MTDSWAP_SCANNED_BAD;
+	/* Check first अगर the block is bad. */
+	अगर (mtd_can_have_bb(d->mtd) && mtd_block_isbad(d->mtd, offset))
+		वापस MTDSWAP_SCANNED_BAD;
 
 	ops.ooblen = 2 * d->mtd->oobavail;
 	ops.oobbuf = d->oob_buf;
 	ops.ooboffs = 0;
-	ops.datbuf = NULL;
+	ops.datbuf = शून्य;
 	ops.mode = MTD_OPS_AUTO_OOB;
 
-	ret = mtdswap_read_oob(d, offset, &ops);
+	ret = mtdswap_पढ़ो_oob(d, offset, &ops);
 
-	if (ret && !mtd_is_bitflip(ret))
-		return ret;
+	अगर (ret && !mtd_is_bitflip(ret))
+		वापस ret;
 
-	data = (struct mtdswap_oobdata *)d->oob_buf;
-	data2 = (struct mtdswap_oobdata *)
+	data = (काष्ठा mtdswap_oobdata *)d->oob_buf;
+	data2 = (काष्ठा mtdswap_oobdata *)
 		(d->oob_buf + d->mtd->oobavail);
 
-	if (le16_to_cpu(data->magic) == MTDSWAP_MAGIC_CLEAN) {
+	अगर (le16_to_cpu(data->magic) == MTDSWAP_MAGIC_CLEAN) अणु
 		eb->erase_count = le32_to_cpu(data->count);
-		if (mtd_is_bitflip(ret))
+		अगर (mtd_is_bitflip(ret))
 			ret = MTDSWAP_SCANNED_BITFLIP;
-		else {
-			if (le16_to_cpu(data2->magic) == MTDSWAP_MAGIC_DIRTY)
-				ret = MTDSWAP_SCANNED_DIRTY;
-			else
+		अन्यथा अणु
+			अगर (le16_to_cpu(data2->magic) == MTDSWAP_MAGIC_सूचीTY)
+				ret = MTDSWAP_SCANNED_सूचीTY;
+			अन्यथा
 				ret = MTDSWAP_SCANNED_CLEAN;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		eb->flags |= EBLOCK_NOMAGIC;
-		ret = MTDSWAP_SCANNED_DIRTY;
-	}
+		ret = MTDSWAP_SCANNED_सूचीTY;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtdswap_write_marker(struct mtdswap_dev *d, struct swap_eb *eb,
+अटल पूर्णांक mtdswap_ग_लिखो_marker(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb,
 				u16 marker)
-{
-	struct mtdswap_oobdata n;
-	int ret;
+अणु
+	काष्ठा mtdswap_oobdata n;
+	पूर्णांक ret;
 	loff_t offset;
-	struct mtd_oob_ops ops;
+	काष्ठा mtd_oob_ops ops;
 
 	ops.ooboffs = 0;
-	ops.oobbuf = (uint8_t *)&n;
+	ops.oobbuf = (uपूर्णांक8_t *)&n;
 	ops.mode = MTD_OPS_AUTO_OOB;
-	ops.datbuf = NULL;
+	ops.datbuf = शून्य;
 
-	if (marker == MTDSWAP_TYPE_CLEAN) {
+	अगर (marker == MTDSWAP_TYPE_CLEAN) अणु
 		n.magic = cpu_to_le16(MTDSWAP_MAGIC_CLEAN);
 		n.count = cpu_to_le32(eb->erase_count);
 		ops.ooblen = MTDSWAP_OOBSIZE;
 		offset = mtdswap_eb_offset(d, eb);
-	} else {
-		n.magic = cpu_to_le16(MTDSWAP_MAGIC_DIRTY);
-		ops.ooblen = sizeof(n.magic);
-		offset = mtdswap_eb_offset(d, eb) + d->mtd->writesize;
-	}
+	पूर्ण अन्यथा अणु
+		n.magic = cpu_to_le16(MTDSWAP_MAGIC_सूचीTY);
+		ops.ooblen = माप(n.magic);
+		offset = mtdswap_eb_offset(d, eb) + d->mtd->ग_लिखोsize;
+	पूर्ण
 
-	ret = mtd_write_oob(d->mtd, offset, &ops);
+	ret = mtd_ग_लिखो_oob(d->mtd, offset, &ops);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(d->dev, "Write OOB failed for block at %08llx "
 			"error %d\n", offset, ret);
-		if (ret == -EIO || mtd_is_eccerr(ret))
-			mtdswap_handle_write_error(d, eb);
-		return ret;
-	}
+		अगर (ret == -EIO || mtd_is_eccerr(ret))
+			mtdswap_handle_ग_लिखो_error(d, eb);
+		वापस ret;
+	पूर्ण
 
-	if (ops.oobretlen != ops.ooblen) {
+	अगर (ops.oobretlen != ops.ooblen) अणु
 		dev_warn(d->dev, "Short OOB write for block at %08llx: "
 			"%zd not %zd\n",
 			offset, ops.oobretlen, ops.ooblen);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Are there any erase blocks without MAGIC_CLEAN header, presumably
- * because power was cut off after erase but before header write? We
+ * because घातer was cut off after erase but beक्रमe header ग_लिखो? We
  * need to guestimate the erase count.
  */
-static void mtdswap_check_counts(struct mtdswap_dev *d)
-{
-	struct rb_root hist_root = RB_ROOT;
-	struct rb_node *medrb;
-	struct swap_eb *eb;
-	unsigned int i, cnt, median;
+अटल व्योम mtdswap_check_counts(काष्ठा mtdswap_dev *d)
+अणु
+	काष्ठा rb_root hist_root = RB_ROOT;
+	काष्ठा rb_node *medrb;
+	काष्ठा swap_eb *eb;
+	अचिन्हित पूर्णांक i, cnt, median;
 
 	cnt = 0;
-	for (i = 0; i < d->eblks; i++) {
+	क्रम (i = 0; i < d->eblks; i++) अणु
 		eb = d->eb_data + i;
 
-		if (eb->flags & (EBLOCK_NOMAGIC | EBLOCK_BAD | EBLOCK_READERR))
-			continue;
+		अगर (eb->flags & (EBLOCK_NOMAGIC | EBLOCK_BAD | EBLOCK_READERR))
+			जारी;
 
 		__mtdswap_rb_add(&hist_root, eb);
 		cnt++;
-	}
+	पूर्ण
 
-	if (cnt == 0)
-		return;
+	अगर (cnt == 0)
+		वापस;
 
 	medrb = mtdswap_rb_index(&hist_root, cnt / 2);
-	median = rb_entry(medrb, struct swap_eb, rb)->erase_count;
+	median = rb_entry(medrb, काष्ठा swap_eb, rb)->erase_count;
 
 	d->max_erase_count = MTDSWAP_ECNT_MAX(&hist_root);
 
-	for (i = 0; i < d->eblks; i++) {
+	क्रम (i = 0; i < d->eblks; i++) अणु
 		eb = d->eb_data + i;
 
-		if (eb->flags & (EBLOCK_NOMAGIC | EBLOCK_READERR))
+		अगर (eb->flags & (EBLOCK_NOMAGIC | EBLOCK_READERR))
 			eb->erase_count = median;
 
-		if (eb->flags & (EBLOCK_NOMAGIC | EBLOCK_BAD | EBLOCK_READERR))
-			continue;
+		अगर (eb->flags & (EBLOCK_NOMAGIC | EBLOCK_BAD | EBLOCK_READERR))
+			जारी;
 
 		rb_erase(&eb->rb, &hist_root);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mtdswap_scan_eblks(struct mtdswap_dev *d)
-{
-	int status;
-	unsigned int i, idx;
-	struct swap_eb *eb;
+अटल व्योम mtdswap_scan_eblks(काष्ठा mtdswap_dev *d)
+अणु
+	पूर्णांक status;
+	अचिन्हित पूर्णांक i, idx;
+	काष्ठा swap_eb *eb;
 
-	for (i = 0; i < d->eblks; i++) {
+	क्रम (i = 0; i < d->eblks; i++) अणु
 		eb = d->eb_data + i;
 
-		status = mtdswap_read_markers(d, eb);
-		if (status < 0)
+		status = mtdswap_पढ़ो_markers(d, eb);
+		अगर (status < 0)
 			eb->flags |= EBLOCK_READERR;
-		else if (status == MTDSWAP_SCANNED_BAD) {
+		अन्यथा अगर (status == MTDSWAP_SCANNED_BAD) अणु
 			eb->flags |= EBLOCK_BAD;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (status) {
-		case MTDSWAP_SCANNED_CLEAN:
+		चयन (status) अणु
+		हाल MTDSWAP_SCANNED_CLEAN:
 			idx = MTDSWAP_CLEAN;
-			break;
-		case MTDSWAP_SCANNED_DIRTY:
-		case MTDSWAP_SCANNED_BITFLIP:
-			idx = MTDSWAP_DIRTY;
-			break;
-		default:
+			अवरोध;
+		हाल MTDSWAP_SCANNED_सूचीTY:
+		हाल MTDSWAP_SCANNED_BITFLIP:
+			idx = MTDSWAP_सूचीTY;
+			अवरोध;
+		शेष:
 			idx = MTDSWAP_FAILING;
-		}
+		पूर्ण
 
 		eb->flags |= (idx << EBLOCK_IDX_SHIFT);
-	}
+	पूर्ण
 
 	mtdswap_check_counts(d);
 
-	for (i = 0; i < d->eblks; i++) {
+	क्रम (i = 0; i < d->eblks; i++) अणु
 		eb = d->eb_data + i;
 
-		if (eb->flags & EBLOCK_BAD)
-			continue;
+		अगर (eb->flags & EBLOCK_BAD)
+			जारी;
 
 		idx = eb->flags >> EBLOCK_IDX_SHIFT;
 		mtdswap_rb_add(d, eb, idx);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Place eblk into a tree corresponding to its number of active blocks
+ * Place eblk पूर्णांकo a tree corresponding to its number of active blocks
  * it contains.
  */
-static void mtdswap_store_eb(struct mtdswap_dev *d, struct swap_eb *eb)
-{
-	unsigned int weight = eb->active_count;
-	unsigned int maxweight = d->pages_per_eblk;
+अटल व्योम mtdswap_store_eb(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb)
+अणु
+	अचिन्हित पूर्णांक weight = eb->active_count;
+	अचिन्हित पूर्णांक maxweight = d->pages_per_eblk;
 
-	if (eb == d->curr_write)
-		return;
+	अगर (eb == d->curr_ग_लिखो)
+		वापस;
 
-	if (eb->flags & EBLOCK_BITFLIP)
+	अगर (eb->flags & EBLOCK_BITFLIP)
 		mtdswap_rb_add(d, eb, MTDSWAP_BITFLIP);
-	else if (eb->flags & (EBLOCK_READERR | EBLOCK_FAILED))
+	अन्यथा अगर (eb->flags & (EBLOCK_READERR | EBLOCK_FAILED))
 		mtdswap_rb_add(d, eb, MTDSWAP_FAILING);
-	if (weight == maxweight)
+	अगर (weight == maxweight)
 		mtdswap_rb_add(d, eb, MTDSWAP_USED);
-	else if (weight == 0)
-		mtdswap_rb_add(d, eb, MTDSWAP_DIRTY);
-	else if (weight > (maxweight/2))
+	अन्यथा अगर (weight == 0)
+		mtdswap_rb_add(d, eb, MTDSWAP_सूचीTY);
+	अन्यथा अगर (weight > (maxweight/2))
 		mtdswap_rb_add(d, eb, MTDSWAP_LOWFRAG);
-	else
+	अन्यथा
 		mtdswap_rb_add(d, eb, MTDSWAP_HIFRAG);
-}
+पूर्ण
 
-static int mtdswap_erase_block(struct mtdswap_dev *d, struct swap_eb *eb)
-{
-	struct mtd_info *mtd = d->mtd;
-	struct erase_info erase;
-	unsigned int retries = 0;
-	int ret;
+अटल पूर्णांक mtdswap_erase_block(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb)
+अणु
+	काष्ठा mtd_info *mtd = d->mtd;
+	काष्ठा erase_info erase;
+	अचिन्हित पूर्णांक retries = 0;
+	पूर्णांक ret;
 
 	eb->erase_count++;
-	if (eb->erase_count > d->max_erase_count)
+	अगर (eb->erase_count > d->max_erase_count)
 		d->max_erase_count = eb->erase_count;
 
 retry:
-	memset(&erase, 0, sizeof(struct erase_info));
+	स_रखो(&erase, 0, माप(काष्ठा erase_info));
 	erase.addr	= mtdswap_eb_offset(d, eb);
 	erase.len	= mtd->erasesize;
 
 	ret = mtd_erase(mtd, &erase);
-	if (ret) {
-		if (retries++ < MTDSWAP_ERASE_RETRIES) {
+	अगर (ret) अणु
+		अगर (retries++ < MTDSWAP_ERASE_RETRIES) अणु
 			dev_warn(d->dev,
 				"erase of erase block %#llx on %s failed",
 				erase.addr, mtd->name);
 			yield();
-			goto retry;
-		}
+			जाओ retry;
+		पूर्ण
 
 		dev_err(d->dev, "Cannot erase erase block %#llx on %s\n",
 			erase.addr, mtd->name);
 
 		mtdswap_handle_badblock(d, eb);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdswap_map_free_block(struct mtdswap_dev *d, unsigned int page,
-				unsigned int *block)
-{
-	int ret;
-	struct swap_eb *old_eb = d->curr_write;
-	struct rb_root *clean_root;
-	struct swap_eb *eb;
+अटल पूर्णांक mtdswap_map_मुक्त_block(काष्ठा mtdswap_dev *d, अचिन्हित पूर्णांक page,
+				अचिन्हित पूर्णांक *block)
+अणु
+	पूर्णांक ret;
+	काष्ठा swap_eb *old_eb = d->curr_ग_लिखो;
+	काष्ठा rb_root *clean_root;
+	काष्ठा swap_eb *eb;
 
-	if (old_eb == NULL || d->curr_write_pos >= d->pages_per_eblk) {
-		do {
-			if (TREE_EMPTY(d, CLEAN))
-				return -ENOSPC;
+	अगर (old_eb == शून्य || d->curr_ग_लिखो_pos >= d->pages_per_eblk) अणु
+		करो अणु
+			अगर (TREE_EMPTY(d, CLEAN))
+				वापस -ENOSPC;
 
 			clean_root = TREE_ROOT(d, CLEAN);
-			eb = rb_entry(rb_first(clean_root), struct swap_eb, rb);
+			eb = rb_entry(rb_first(clean_root), काष्ठा swap_eb, rb);
 			rb_erase(&eb->rb, clean_root);
-			eb->root = NULL;
+			eb->root = शून्य;
 			TREE_COUNT(d, CLEAN)--;
 
-			ret = mtdswap_write_marker(d, eb, MTDSWAP_TYPE_DIRTY);
-		} while (ret == -EIO || mtd_is_eccerr(ret));
+			ret = mtdswap_ग_लिखो_marker(d, eb, MTDSWAP_TYPE_सूचीTY);
+		पूर्ण जबतक (ret == -EIO || mtd_is_eccerr(ret));
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		d->curr_write_pos = 0;
-		d->curr_write = eb;
-		if (old_eb)
+		d->curr_ग_लिखो_pos = 0;
+		d->curr_ग_लिखो = eb;
+		अगर (old_eb)
 			mtdswap_store_eb(d, old_eb);
-	}
+	पूर्ण
 
-	*block = (d->curr_write - d->eb_data) * d->pages_per_eblk +
-		d->curr_write_pos;
+	*block = (d->curr_ग_लिखो - d->eb_data) * d->pages_per_eblk +
+		d->curr_ग_लिखो_pos;
 
-	d->curr_write->active_count++;
+	d->curr_ग_लिखो->active_count++;
 	d->revmap[*block] = page;
-	d->curr_write_pos++;
+	d->curr_ग_लिखो_pos++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int mtdswap_free_page_cnt(struct mtdswap_dev *d)
-{
-	return TREE_COUNT(d, CLEAN) * d->pages_per_eblk +
-		d->pages_per_eblk - d->curr_write_pos;
-}
+अटल अचिन्हित पूर्णांक mtdswap_मुक्त_page_cnt(काष्ठा mtdswap_dev *d)
+अणु
+	वापस TREE_COUNT(d, CLEAN) * d->pages_per_eblk +
+		d->pages_per_eblk - d->curr_ग_लिखो_pos;
+पूर्ण
 
-static unsigned int mtdswap_enough_free_pages(struct mtdswap_dev *d)
-{
-	return mtdswap_free_page_cnt(d) > d->pages_per_eblk;
-}
+अटल अचिन्हित पूर्णांक mtdswap_enough_मुक्त_pages(काष्ठा mtdswap_dev *d)
+अणु
+	वापस mtdswap_मुक्त_page_cnt(d) > d->pages_per_eblk;
+पूर्ण
 
-static int mtdswap_write_block(struct mtdswap_dev *d, char *buf,
-			unsigned int page, unsigned int *bp, int gc_context)
-{
-	struct mtd_info *mtd = d->mtd;
-	struct swap_eb *eb;
-	size_t retlen;
-	loff_t writepos;
-	int ret;
+अटल पूर्णांक mtdswap_ग_लिखो_block(काष्ठा mtdswap_dev *d, अक्षर *buf,
+			अचिन्हित पूर्णांक page, अचिन्हित पूर्णांक *bp, पूर्णांक gc_context)
+अणु
+	काष्ठा mtd_info *mtd = d->mtd;
+	काष्ठा swap_eb *eb;
+	माप_प्रकार retlen;
+	loff_t ग_लिखोpos;
+	पूर्णांक ret;
 
 retry:
-	if (!gc_context)
-		while (!mtdswap_enough_free_pages(d))
-			if (mtdswap_gc(d, 0) > 0)
-				return -ENOSPC;
+	अगर (!gc_context)
+		जबतक (!mtdswap_enough_मुक्त_pages(d))
+			अगर (mtdswap_gc(d, 0) > 0)
+				वापस -ENOSPC;
 
-	ret = mtdswap_map_free_block(d, page, bp);
+	ret = mtdswap_map_मुक्त_block(d, page, bp);
 	eb = d->eb_data + (*bp / d->pages_per_eblk);
 
-	if (ret == -EIO || mtd_is_eccerr(ret)) {
-		d->curr_write = NULL;
+	अगर (ret == -EIO || mtd_is_eccerr(ret)) अणु
+		d->curr_ग_लिखो = शून्य;
 		eb->active_count--;
 		d->revmap[*bp] = PAGE_UNDEF;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	writepos = (loff_t)*bp << PAGE_SHIFT;
-	ret =  mtd_write(mtd, writepos, PAGE_SIZE, &retlen, buf);
-	if (ret == -EIO || mtd_is_eccerr(ret)) {
-		d->curr_write_pos--;
+	ग_लिखोpos = (loff_t)*bp << PAGE_SHIFT;
+	ret =  mtd_ग_लिखो(mtd, ग_लिखोpos, PAGE_SIZE, &retlen, buf);
+	अगर (ret == -EIO || mtd_is_eccerr(ret)) अणु
+		d->curr_ग_लिखो_pos--;
 		eb->active_count--;
 		d->revmap[*bp] = PAGE_UNDEF;
-		mtdswap_handle_write_error(d, eb);
-		goto retry;
-	}
+		mtdswap_handle_ग_लिखो_error(d, eb);
+		जाओ retry;
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(d->dev, "Write to MTD device failed: %d (%zd written)",
 			ret, retlen);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (retlen != PAGE_SIZE) {
+	अगर (retlen != PAGE_SIZE) अणु
 		dev_err(d->dev, "Short write to MTD device: %zd written",
 			retlen);
 		ret = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 err:
-	d->curr_write_pos--;
+	d->curr_ग_लिखो_pos--;
 	eb->active_count--;
 	d->revmap[*bp] = PAGE_UNDEF;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtdswap_move_block(struct mtdswap_dev *d, unsigned int oldblock,
-		unsigned int *newblock)
-{
-	struct mtd_info *mtd = d->mtd;
-	struct swap_eb *eb, *oldeb;
-	int ret;
-	size_t retlen;
-	unsigned int page, retries;
-	loff_t readpos;
+अटल पूर्णांक mtdswap_move_block(काष्ठा mtdswap_dev *d, अचिन्हित पूर्णांक oldblock,
+		अचिन्हित पूर्णांक *newblock)
+अणु
+	काष्ठा mtd_info *mtd = d->mtd;
+	काष्ठा swap_eb *eb, *oldeb;
+	पूर्णांक ret;
+	माप_प्रकार retlen;
+	अचिन्हित पूर्णांक page, retries;
+	loff_t पढ़ोpos;
 
 	page = d->revmap[oldblock];
-	readpos = (loff_t) oldblock << PAGE_SHIFT;
+	पढ़ोpos = (loff_t) oldblock << PAGE_SHIFT;
 	retries = 0;
 
 retry:
-	ret = mtd_read(mtd, readpos, PAGE_SIZE, &retlen, d->page_buf);
+	ret = mtd_पढ़ो(mtd, पढ़ोpos, PAGE_SIZE, &retlen, d->page_buf);
 
-	if (ret < 0 && !mtd_is_bitflip(ret)) {
+	अगर (ret < 0 && !mtd_is_bitflip(ret)) अणु
 		oldeb = d->eb_data + oldblock / d->pages_per_eblk;
 		oldeb->flags |= EBLOCK_READERR;
 
 		dev_err(d->dev, "Read Error: %d (block %u)\n", ret,
 			oldblock);
 		retries++;
-		if (retries < MTDSWAP_IO_RETRIES)
-			goto retry;
+		अगर (retries < MTDSWAP_IO_RETRIES)
+			जाओ retry;
 
-		goto read_error;
-	}
+		जाओ पढ़ो_error;
+	पूर्ण
 
-	if (retlen != PAGE_SIZE) {
+	अगर (retlen != PAGE_SIZE) अणु
 		dev_err(d->dev, "Short read: %zd (block %u)\n", retlen,
 		       oldblock);
 		ret = -EIO;
-		goto read_error;
-	}
+		जाओ पढ़ो_error;
+	पूर्ण
 
-	ret = mtdswap_write_block(d, d->page_buf, page, newblock, 1);
-	if (ret < 0) {
+	ret = mtdswap_ग_लिखो_block(d, d->page_buf, page, newblock, 1);
+	अगर (ret < 0) अणु
 		d->page_data[page] = BLOCK_ERROR;
 		dev_err(d->dev, "Write error: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	eb = d->eb_data + *newblock / d->pages_per_eblk;
 	d->page_data[page] = *newblock;
@@ -722,558 +723,558 @@ retry:
 	eb = d->eb_data + oldblock / d->pages_per_eblk;
 	eb->active_count--;
 
-	return 0;
+	वापस 0;
 
-read_error:
+पढ़ो_error:
 	d->page_data[page] = BLOCK_ERROR;
 	d->revmap[oldblock] = PAGE_UNDEF;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtdswap_gc_eblock(struct mtdswap_dev *d, struct swap_eb *eb)
-{
-	unsigned int i, block, eblk_base, newblock;
-	int ret, errcode;
+अटल पूर्णांक mtdswap_gc_eblock(काष्ठा mtdswap_dev *d, काष्ठा swap_eb *eb)
+अणु
+	अचिन्हित पूर्णांक i, block, eblk_base, newblock;
+	पूर्णांक ret, errcode;
 
 	errcode = 0;
 	eblk_base = (eb - d->eb_data) * d->pages_per_eblk;
 
-	for (i = 0; i < d->pages_per_eblk; i++) {
-		if (d->spare_eblks < MIN_SPARE_EBLOCKS)
-			return -ENOSPC;
+	क्रम (i = 0; i < d->pages_per_eblk; i++) अणु
+		अगर (d->spare_eblks < MIN_SPARE_EBLOCKS)
+			वापस -ENOSPC;
 
 		block = eblk_base + i;
-		if (d->revmap[block] == PAGE_UNDEF)
-			continue;
+		अगर (d->revmap[block] == PAGE_UNDEF)
+			जारी;
 
 		ret = mtdswap_move_block(d, block, &newblock);
-		if (ret < 0 && !errcode)
+		अगर (ret < 0 && !errcode)
 			errcode = ret;
-	}
+	पूर्ण
 
-	return errcode;
-}
+	वापस errcode;
+पूर्ण
 
-static int __mtdswap_choose_gc_tree(struct mtdswap_dev *d)
-{
-	int idx, stopat;
+अटल पूर्णांक __mtdswap_choose_gc_tree(काष्ठा mtdswap_dev *d)
+अणु
+	पूर्णांक idx, stopat;
 
-	if (TREE_COUNT(d, CLEAN) < LOW_FRAG_GC_THRESHOLD)
+	अगर (TREE_COUNT(d, CLEAN) < LOW_FRAG_GC_THRESHOLD)
 		stopat = MTDSWAP_LOWFRAG;
-	else
+	अन्यथा
 		stopat = MTDSWAP_HIFRAG;
 
-	for (idx = MTDSWAP_BITFLIP; idx >= stopat; idx--)
-		if (d->trees[idx].root.rb_node != NULL)
-			return idx;
+	क्रम (idx = MTDSWAP_BITFLIP; idx >= stopat; idx--)
+		अगर (d->trees[idx].root.rb_node != शून्य)
+			वापस idx;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int mtdswap_wlfreq(unsigned int maxdiff)
-{
-	unsigned int h, x, y, dist, base;
+अटल पूर्णांक mtdswap_wlfreq(अचिन्हित पूर्णांक maxdअगरf)
+अणु
+	अचिन्हित पूर्णांक h, x, y, dist, base;
 
 	/*
-	 * Calculate linear ramp down from f1 to f2 when maxdiff goes from
-	 * MAX_ERASE_DIFF to MAX_ERASE_DIFF + COLLECT_NONDIRTY_BASE.  Similar
-	 * to triangle with height f1 - f1 and width COLLECT_NONDIRTY_BASE.
+	 * Calculate linear ramp करोwn from f1 to f2 when maxdअगरf goes from
+	 * MAX_ERASE_DIFF to MAX_ERASE_DIFF + COLLECT_NONसूचीTY_BASE.  Similar
+	 * to triangle with height f1 - f1 and width COLLECT_NONसूचीTY_BASE.
 	 */
 
-	dist = maxdiff - MAX_ERASE_DIFF;
-	if (dist > COLLECT_NONDIRTY_BASE)
-		dist = COLLECT_NONDIRTY_BASE;
+	dist = maxdअगरf - MAX_ERASE_DIFF;
+	अगर (dist > COLLECT_NONसूचीTY_BASE)
+		dist = COLLECT_NONसूचीTY_BASE;
 
 	/*
 	 * Modelling the slop as right angular triangle with base
-	 * COLLECT_NONDIRTY_BASE and height freq1 - freq2. The ratio y/x is
+	 * COLLECT_NONसूचीTY_BASE and height freq1 - freq2. The ratio y/x is
 	 * equal to the ratio h/base.
 	 */
-	h = COLLECT_NONDIRTY_FREQ1 - COLLECT_NONDIRTY_FREQ2;
-	base = COLLECT_NONDIRTY_BASE;
+	h = COLLECT_NONसूचीTY_FREQ1 - COLLECT_NONसूचीTY_FREQ2;
+	base = COLLECT_NONसूचीTY_BASE;
 
 	x = dist - base;
 	y = (x * h + base / 2) / base;
 
-	return COLLECT_NONDIRTY_FREQ2 + y;
-}
+	वापस COLLECT_NONसूचीTY_FREQ2 + y;
+पूर्ण
 
-static int mtdswap_choose_wl_tree(struct mtdswap_dev *d)
-{
-	static unsigned int pick_cnt;
-	unsigned int i, idx = -1, wear, max;
-	struct rb_root *root;
+अटल पूर्णांक mtdswap_choose_wl_tree(काष्ठा mtdswap_dev *d)
+अणु
+	अटल अचिन्हित पूर्णांक pick_cnt;
+	अचिन्हित पूर्णांक i, idx = -1, wear, max;
+	काष्ठा rb_root *root;
 
 	max = 0;
-	for (i = 0; i <= MTDSWAP_DIRTY; i++) {
+	क्रम (i = 0; i <= MTDSWAP_सूचीTY; i++) अणु
 		root = &d->trees[i].root;
-		if (root->rb_node == NULL)
-			continue;
+		अगर (root->rb_node == शून्य)
+			जारी;
 
 		wear = d->max_erase_count - MTDSWAP_ECNT_MIN(root);
-		if (wear > max) {
+		अगर (wear > max) अणु
 			max = wear;
 			idx = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (max > MAX_ERASE_DIFF && pick_cnt >= mtdswap_wlfreq(max) - 1) {
+	अगर (max > MAX_ERASE_DIFF && pick_cnt >= mtdswap_wlfreq(max) - 1) अणु
 		pick_cnt = 0;
-		return idx;
-	}
+		वापस idx;
+	पूर्ण
 
 	pick_cnt++;
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int mtdswap_choose_gc_tree(struct mtdswap_dev *d,
-				unsigned int background)
-{
-	int idx;
+अटल पूर्णांक mtdswap_choose_gc_tree(काष्ठा mtdswap_dev *d,
+				अचिन्हित पूर्णांक background)
+अणु
+	पूर्णांक idx;
 
-	if (TREE_NONEMPTY(d, FAILING) &&
-		(background || (TREE_EMPTY(d, CLEAN) && TREE_EMPTY(d, DIRTY))))
-		return MTDSWAP_FAILING;
+	अगर (TREE_NONEMPTY(d, FAILING) &&
+		(background || (TREE_EMPTY(d, CLEAN) && TREE_EMPTY(d, सूचीTY))))
+		वापस MTDSWAP_FAILING;
 
 	idx = mtdswap_choose_wl_tree(d);
-	if (idx >= MTDSWAP_CLEAN)
-		return idx;
+	अगर (idx >= MTDSWAP_CLEAN)
+		वापस idx;
 
-	return __mtdswap_choose_gc_tree(d);
-}
+	वापस __mtdswap_choose_gc_tree(d);
+पूर्ण
 
-static struct swap_eb *mtdswap_pick_gc_eblk(struct mtdswap_dev *d,
-					unsigned int background)
-{
-	struct rb_root *rp = NULL;
-	struct swap_eb *eb = NULL;
-	int idx;
+अटल काष्ठा swap_eb *mtdswap_pick_gc_eblk(काष्ठा mtdswap_dev *d,
+					अचिन्हित पूर्णांक background)
+अणु
+	काष्ठा rb_root *rp = शून्य;
+	काष्ठा swap_eb *eb = शून्य;
+	पूर्णांक idx;
 
-	if (background && TREE_COUNT(d, CLEAN) > CLEAN_BLOCK_THRESHOLD &&
-		TREE_EMPTY(d, DIRTY) && TREE_EMPTY(d, FAILING))
-		return NULL;
+	अगर (background && TREE_COUNT(d, CLEAN) > CLEAN_BLOCK_THRESHOLD &&
+		TREE_EMPTY(d, सूचीTY) && TREE_EMPTY(d, FAILING))
+		वापस शून्य;
 
 	idx = mtdswap_choose_gc_tree(d, background);
-	if (idx < 0)
-		return NULL;
+	अगर (idx < 0)
+		वापस शून्य;
 
 	rp = &d->trees[idx].root;
-	eb = rb_entry(rb_first(rp), struct swap_eb, rb);
+	eb = rb_entry(rb_first(rp), काष्ठा swap_eb, rb);
 
 	rb_erase(&eb->rb, rp);
-	eb->root = NULL;
+	eb->root = शून्य;
 	d->trees[idx].count--;
-	return eb;
-}
+	वापस eb;
+पूर्ण
 
-static unsigned int mtdswap_test_patt(unsigned int i)
-{
-	return i % 2 ? 0x55555555 : 0xAAAAAAAA;
-}
+अटल अचिन्हित पूर्णांक mtdswap_test_patt(अचिन्हित पूर्णांक i)
+अणु
+	वापस i % 2 ? 0x55555555 : 0xAAAAAAAA;
+पूर्ण
 
-static unsigned int mtdswap_eblk_passes(struct mtdswap_dev *d,
-					struct swap_eb *eb)
-{
-	struct mtd_info *mtd = d->mtd;
-	unsigned int test, i, j, patt, mtd_pages;
+अटल अचिन्हित पूर्णांक mtdswap_eblk_passes(काष्ठा mtdswap_dev *d,
+					काष्ठा swap_eb *eb)
+अणु
+	काष्ठा mtd_info *mtd = d->mtd;
+	अचिन्हित पूर्णांक test, i, j, patt, mtd_pages;
 	loff_t base, pos;
-	unsigned int *p1 = (unsigned int *)d->page_buf;
-	unsigned char *p2 = (unsigned char *)d->oob_buf;
-	struct mtd_oob_ops ops;
-	int ret;
+	अचिन्हित पूर्णांक *p1 = (अचिन्हित पूर्णांक *)d->page_buf;
+	अचिन्हित अक्षर *p2 = (अचिन्हित अक्षर *)d->oob_buf;
+	काष्ठा mtd_oob_ops ops;
+	पूर्णांक ret;
 
 	ops.mode = MTD_OPS_AUTO_OOB;
-	ops.len = mtd->writesize;
+	ops.len = mtd->ग_लिखोsize;
 	ops.ooblen = mtd->oobavail;
 	ops.ooboffs = 0;
 	ops.datbuf = d->page_buf;
 	ops.oobbuf = d->oob_buf;
 	base = mtdswap_eb_offset(d, eb);
-	mtd_pages = d->pages_per_eblk * PAGE_SIZE / mtd->writesize;
+	mtd_pages = d->pages_per_eblk * PAGE_SIZE / mtd->ग_लिखोsize;
 
-	for (test = 0; test < 2; test++) {
+	क्रम (test = 0; test < 2; test++) अणु
 		pos = base;
-		for (i = 0; i < mtd_pages; i++) {
+		क्रम (i = 0; i < mtd_pages; i++) अणु
 			patt = mtdswap_test_patt(test + i);
-			memset(d->page_buf, patt, mtd->writesize);
-			memset(d->oob_buf, patt, mtd->oobavail);
-			ret = mtd_write_oob(mtd, pos, &ops);
-			if (ret)
-				goto error;
+			स_रखो(d->page_buf, patt, mtd->ग_लिखोsize);
+			स_रखो(d->oob_buf, patt, mtd->oobavail);
+			ret = mtd_ग_लिखो_oob(mtd, pos, &ops);
+			अगर (ret)
+				जाओ error;
 
-			pos += mtd->writesize;
-		}
+			pos += mtd->ग_लिखोsize;
+		पूर्ण
 
 		pos = base;
-		for (i = 0; i < mtd_pages; i++) {
-			ret = mtd_read_oob(mtd, pos, &ops);
-			if (ret)
-				goto error;
+		क्रम (i = 0; i < mtd_pages; i++) अणु
+			ret = mtd_पढ़ो_oob(mtd, pos, &ops);
+			अगर (ret)
+				जाओ error;
 
 			patt = mtdswap_test_patt(test + i);
-			for (j = 0; j < mtd->writesize/sizeof(int); j++)
-				if (p1[j] != patt)
-					goto error;
+			क्रम (j = 0; j < mtd->ग_लिखोsize/माप(पूर्णांक); j++)
+				अगर (p1[j] != patt)
+					जाओ error;
 
-			for (j = 0; j < mtd->oobavail; j++)
-				if (p2[j] != (unsigned char)patt)
-					goto error;
+			क्रम (j = 0; j < mtd->oobavail; j++)
+				अगर (p2[j] != (अचिन्हित अक्षर)patt)
+					जाओ error;
 
-			pos += mtd->writesize;
-		}
+			pos += mtd->ग_लिखोsize;
+		पूर्ण
 
 		ret = mtdswap_erase_block(d, eb);
-		if (ret)
-			goto error;
-	}
+		अगर (ret)
+			जाओ error;
+	पूर्ण
 
 	eb->flags &= ~EBLOCK_READERR;
-	return 1;
+	वापस 1;
 
 error:
 	mtdswap_handle_badblock(d, eb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdswap_gc(struct mtdswap_dev *d, unsigned int background)
-{
-	struct swap_eb *eb;
-	int ret;
+अटल पूर्णांक mtdswap_gc(काष्ठा mtdswap_dev *d, अचिन्हित पूर्णांक background)
+अणु
+	काष्ठा swap_eb *eb;
+	पूर्णांक ret;
 
-	if (d->spare_eblks < MIN_SPARE_EBLOCKS)
-		return 1;
+	अगर (d->spare_eblks < MIN_SPARE_EBLOCKS)
+		वापस 1;
 
 	eb = mtdswap_pick_gc_eblk(d, background);
-	if (!eb)
-		return 1;
+	अगर (!eb)
+		वापस 1;
 
 	ret = mtdswap_gc_eblock(d, eb);
-	if (ret == -ENOSPC)
-		return 1;
+	अगर (ret == -ENOSPC)
+		वापस 1;
 
-	if (eb->flags & EBLOCK_FAILED) {
+	अगर (eb->flags & EBLOCK_FAILED) अणु
 		mtdswap_handle_badblock(d, eb);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	eb->flags &= ~EBLOCK_BITFLIP;
 	ret = mtdswap_erase_block(d, eb);
-	if ((eb->flags & EBLOCK_READERR) &&
+	अगर ((eb->flags & EBLOCK_READERR) &&
 		(ret || !mtdswap_eblk_passes(d, eb)))
-		return 0;
+		वापस 0;
 
-	if (ret == 0)
-		ret = mtdswap_write_marker(d, eb, MTDSWAP_TYPE_CLEAN);
+	अगर (ret == 0)
+		ret = mtdswap_ग_लिखो_marker(d, eb, MTDSWAP_TYPE_CLEAN);
 
-	if (ret == 0)
+	अगर (ret == 0)
 		mtdswap_rb_add(d, eb, MTDSWAP_CLEAN);
-	else if (ret != -EIO && !mtd_is_eccerr(ret))
-		mtdswap_rb_add(d, eb, MTDSWAP_DIRTY);
+	अन्यथा अगर (ret != -EIO && !mtd_is_eccerr(ret))
+		mtdswap_rb_add(d, eb, MTDSWAP_सूचीTY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtdswap_background(struct mtd_blktrans_dev *dev)
-{
-	struct mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
-	int ret;
+अटल व्योम mtdswap_background(काष्ठा mtd_blktrans_dev *dev)
+अणु
+	काष्ठा mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
+	पूर्णांक ret;
 
-	while (1) {
+	जबतक (1) अणु
 		ret = mtdswap_gc(d, 1);
-		if (ret || mtd_blktrans_cease_background(dev))
-			return;
-	}
-}
+		अगर (ret || mtd_blktrans_cease_background(dev))
+			वापस;
+	पूर्ण
+पूर्ण
 
-static void mtdswap_cleanup(struct mtdswap_dev *d)
-{
-	vfree(d->eb_data);
-	vfree(d->revmap);
-	vfree(d->page_data);
-	kfree(d->oob_buf);
-	kfree(d->page_buf);
-}
+अटल व्योम mtdswap_cleanup(काष्ठा mtdswap_dev *d)
+अणु
+	vमुक्त(d->eb_data);
+	vमुक्त(d->revmap);
+	vमुक्त(d->page_data);
+	kमुक्त(d->oob_buf);
+	kमुक्त(d->page_buf);
+पूर्ण
 
-static int mtdswap_flush(struct mtd_blktrans_dev *dev)
-{
-	struct mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
+अटल पूर्णांक mtdswap_flush(काष्ठा mtd_blktrans_dev *dev)
+अणु
+	काष्ठा mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
 
 	mtd_sync(d->mtd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int mtdswap_badblocks(struct mtd_info *mtd, uint64_t size)
-{
+अटल अचिन्हित पूर्णांक mtdswap_badblocks(काष्ठा mtd_info *mtd, uपूर्णांक64_t size)
+अणु
 	loff_t offset;
-	unsigned int badcnt;
+	अचिन्हित पूर्णांक badcnt;
 
 	badcnt = 0;
 
-	if (mtd_can_have_bb(mtd))
-		for (offset = 0; offset < size; offset += mtd->erasesize)
-			if (mtd_block_isbad(mtd, offset))
+	अगर (mtd_can_have_bb(mtd))
+		क्रम (offset = 0; offset < size; offset += mtd->erasesize)
+			अगर (mtd_block_isbad(mtd, offset))
 				badcnt++;
 
-	return badcnt;
-}
+	वापस badcnt;
+पूर्ण
 
-static int mtdswap_writesect(struct mtd_blktrans_dev *dev,
-			unsigned long page, char *buf)
-{
-	struct mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
-	unsigned int newblock, mapped;
-	struct swap_eb *eb;
-	int ret;
+अटल पूर्णांक mtdswap_ग_लिखोsect(काष्ठा mtd_blktrans_dev *dev,
+			अचिन्हित दीर्घ page, अक्षर *buf)
+अणु
+	काष्ठा mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
+	अचिन्हित पूर्णांक newblock, mapped;
+	काष्ठा swap_eb *eb;
+	पूर्णांक ret;
 
-	d->sect_write_count++;
+	d->sect_ग_लिखो_count++;
 
-	if (d->spare_eblks < MIN_SPARE_EBLOCKS)
-		return -ENOSPC;
+	अगर (d->spare_eblks < MIN_SPARE_EBLOCKS)
+		वापस -ENOSPC;
 
-	if (header) {
-		/* Ignore writes to the header page */
-		if (unlikely(page == 0))
-			return 0;
+	अगर (header) अणु
+		/* Ignore ग_लिखोs to the header page */
+		अगर (unlikely(page == 0))
+			वापस 0;
 
 		page--;
-	}
+	पूर्ण
 
 	mapped = d->page_data[page];
-	if (mapped <= BLOCK_MAX) {
+	अगर (mapped <= BLOCK_MAX) अणु
 		eb = d->eb_data + (mapped / d->pages_per_eblk);
 		eb->active_count--;
 		mtdswap_store_eb(d, eb);
 		d->page_data[page] = BLOCK_UNDEF;
 		d->revmap[mapped] = PAGE_UNDEF;
-	}
+	पूर्ण
 
-	ret = mtdswap_write_block(d, buf, page, &newblock, 0);
-	d->mtd_write_count++;
+	ret = mtdswap_ग_लिखो_block(d, buf, page, &newblock, 0);
+	d->mtd_ग_लिखो_count++;
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	d->page_data[page] = newblock;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Provide a dummy swap header for the kernel */
-static int mtdswap_auto_header(struct mtdswap_dev *d, char *buf)
-{
-	union swap_header *hd = (union swap_header *)(buf);
+/* Provide a dummy swap header क्रम the kernel */
+अटल पूर्णांक mtdswap_स्वतः_header(काष्ठा mtdswap_dev *d, अक्षर *buf)
+अणु
+	जोड़ swap_header *hd = (जोड़ swap_header *)(buf);
 
-	memset(buf, 0, PAGE_SIZE - 10);
+	स_रखो(buf, 0, PAGE_SIZE - 10);
 
 	hd->info.version = 1;
 	hd->info.last_page = d->mbd_dev->size - 1;
 	hd->info.nr_badpages = 0;
 
-	memcpy(buf + PAGE_SIZE - 10, "SWAPSPACE2", 10);
+	स_नकल(buf + PAGE_SIZE - 10, "SWAPSPACE2", 10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdswap_readsect(struct mtd_blktrans_dev *dev,
-			unsigned long page, char *buf)
-{
-	struct mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
-	struct mtd_info *mtd = d->mtd;
-	unsigned int realblock, retries;
-	loff_t readpos;
-	struct swap_eb *eb;
-	size_t retlen;
-	int ret;
+अटल पूर्णांक mtdswap_पढ़ोsect(काष्ठा mtd_blktrans_dev *dev,
+			अचिन्हित दीर्घ page, अक्षर *buf)
+अणु
+	काष्ठा mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
+	काष्ठा mtd_info *mtd = d->mtd;
+	अचिन्हित पूर्णांक realblock, retries;
+	loff_t पढ़ोpos;
+	काष्ठा swap_eb *eb;
+	माप_प्रकार retlen;
+	पूर्णांक ret;
 
-	d->sect_read_count++;
+	d->sect_पढ़ो_count++;
 
-	if (header) {
-		if (unlikely(page == 0))
-			return mtdswap_auto_header(d, buf);
+	अगर (header) अणु
+		अगर (unlikely(page == 0))
+			वापस mtdswap_स्वतः_header(d, buf);
 
 		page--;
-	}
+	पूर्ण
 
 	realblock = d->page_data[page];
-	if (realblock > BLOCK_MAX) {
-		memset(buf, 0x0, PAGE_SIZE);
-		if (realblock == BLOCK_UNDEF)
-			return 0;
-		else
-			return -EIO;
-	}
+	अगर (realblock > BLOCK_MAX) अणु
+		स_रखो(buf, 0x0, PAGE_SIZE);
+		अगर (realblock == BLOCK_UNDEF)
+			वापस 0;
+		अन्यथा
+			वापस -EIO;
+	पूर्ण
 
 	eb = d->eb_data + (realblock / d->pages_per_eblk);
 	BUG_ON(d->revmap[realblock] == PAGE_UNDEF);
 
-	readpos = (loff_t)realblock << PAGE_SHIFT;
+	पढ़ोpos = (loff_t)realblock << PAGE_SHIFT;
 	retries = 0;
 
 retry:
-	ret = mtd_read(mtd, readpos, PAGE_SIZE, &retlen, buf);
+	ret = mtd_पढ़ो(mtd, पढ़ोpos, PAGE_SIZE, &retlen, buf);
 
-	d->mtd_read_count++;
-	if (mtd_is_bitflip(ret)) {
+	d->mtd_पढ़ो_count++;
+	अगर (mtd_is_bitflip(ret)) अणु
 		eb->flags |= EBLOCK_BITFLIP;
 		mtdswap_rb_add(d, eb, MTDSWAP_BITFLIP);
 		ret = 0;
-	}
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(d->dev, "Read error %d\n", ret);
 		eb->flags |= EBLOCK_READERR;
 		mtdswap_rb_add(d, eb, MTDSWAP_FAILING);
 		retries++;
-		if (retries < MTDSWAP_IO_RETRIES)
-			goto retry;
+		अगर (retries < MTDSWAP_IO_RETRIES)
+			जाओ retry;
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (retlen != PAGE_SIZE) {
+	अगर (retlen != PAGE_SIZE) अणु
 		dev_err(d->dev, "Short read %zd\n", retlen);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdswap_discard(struct mtd_blktrans_dev *dev, unsigned long first,
-			unsigned nr_pages)
-{
-	struct mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
-	unsigned long page;
-	struct swap_eb *eb;
-	unsigned int mapped;
+अटल पूर्णांक mtdswap_discard(काष्ठा mtd_blktrans_dev *dev, अचिन्हित दीर्घ first,
+			अचिन्हित nr_pages)
+अणु
+	काष्ठा mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
+	अचिन्हित दीर्घ page;
+	काष्ठा swap_eb *eb;
+	अचिन्हित पूर्णांक mapped;
 
 	d->discard_count++;
 
-	for (page = first; page < first + nr_pages; page++) {
+	क्रम (page = first; page < first + nr_pages; page++) अणु
 		mapped = d->page_data[page];
-		if (mapped <= BLOCK_MAX) {
+		अगर (mapped <= BLOCK_MAX) अणु
 			eb = d->eb_data + (mapped / d->pages_per_eblk);
 			eb->active_count--;
 			mtdswap_store_eb(d, eb);
 			d->page_data[page] = BLOCK_UNDEF;
 			d->revmap[mapped] = PAGE_UNDEF;
 			d->discard_page_count++;
-		} else if (mapped == BLOCK_ERROR) {
+		पूर्ण अन्यथा अगर (mapped == BLOCK_ERROR) अणु
 			d->page_data[page] = BLOCK_UNDEF;
 			d->discard_page_count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdswap_show(struct seq_file *s, void *data)
-{
-	struct mtdswap_dev *d = (struct mtdswap_dev *) s->private;
-	unsigned long sum;
-	unsigned int count[MTDSWAP_TREE_CNT];
-	unsigned int min[MTDSWAP_TREE_CNT];
-	unsigned int max[MTDSWAP_TREE_CNT];
-	unsigned int i, cw = 0, cwp = 0, cwecount = 0, bb_cnt, mapped, pages;
-	uint64_t use_size;
-	static const char * const name[] = {
+अटल पूर्णांक mtdswap_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा mtdswap_dev *d = (काष्ठा mtdswap_dev *) s->निजी;
+	अचिन्हित दीर्घ sum;
+	अचिन्हित पूर्णांक count[MTDSWAP_TREE_CNT];
+	अचिन्हित पूर्णांक min[MTDSWAP_TREE_CNT];
+	अचिन्हित पूर्णांक max[MTDSWAP_TREE_CNT];
+	अचिन्हित पूर्णांक i, cw = 0, cwp = 0, cwecount = 0, bb_cnt, mapped, pages;
+	uपूर्णांक64_t use_size;
+	अटल स्थिर अक्षर * स्थिर name[] = अणु
 		"clean", "used", "low", "high", "dirty", "bitflip", "failing"
-	};
+	पूर्ण;
 
 	mutex_lock(&d->mbd_dev->lock);
 
-	for (i = 0; i < MTDSWAP_TREE_CNT; i++) {
-		struct rb_root *root = &d->trees[i].root;
+	क्रम (i = 0; i < MTDSWAP_TREE_CNT; i++) अणु
+		काष्ठा rb_root *root = &d->trees[i].root;
 
-		if (root->rb_node) {
+		अगर (root->rb_node) अणु
 			count[i] = d->trees[i].count;
 			min[i] = MTDSWAP_ECNT_MIN(root);
 			max[i] = MTDSWAP_ECNT_MAX(root);
-		} else
+		पूर्ण अन्यथा
 			count[i] = 0;
-	}
+	पूर्ण
 
-	if (d->curr_write) {
+	अगर (d->curr_ग_लिखो) अणु
 		cw = 1;
-		cwp = d->curr_write_pos;
-		cwecount = d->curr_write->erase_count;
-	}
+		cwp = d->curr_ग_लिखो_pos;
+		cwecount = d->curr_ग_लिखो->erase_count;
+	पूर्ण
 
 	sum = 0;
-	for (i = 0; i < d->eblks; i++)
+	क्रम (i = 0; i < d->eblks; i++)
 		sum += d->eb_data[i].erase_count;
 
-	use_size = (uint64_t)d->eblks * d->mtd->erasesize;
+	use_size = (uपूर्णांक64_t)d->eblks * d->mtd->erasesize;
 	bb_cnt = mtdswap_badblocks(d->mtd, use_size);
 
 	mapped = 0;
 	pages = d->mbd_dev->size;
-	for (i = 0; i < pages; i++)
-		if (d->page_data[i] != BLOCK_UNDEF)
+	क्रम (i = 0; i < pages; i++)
+		अगर (d->page_data[i] != BLOCK_UNDEF)
 			mapped++;
 
 	mutex_unlock(&d->mbd_dev->lock);
 
-	for (i = 0; i < MTDSWAP_TREE_CNT; i++) {
-		if (!count[i])
-			continue;
+	क्रम (i = 0; i < MTDSWAP_TREE_CNT; i++) अणु
+		अगर (!count[i])
+			जारी;
 
-		if (min[i] != max[i])
-			seq_printf(s, "%s:\t%5d erase blocks, erased min %d, "
+		अगर (min[i] != max[i])
+			seq_म_लिखो(s, "%s:\t%5d erase blocks, erased min %d, "
 				"max %d times\n",
 				name[i], count[i], min[i], max[i]);
-		else
-			seq_printf(s, "%s:\t%5d erase blocks, all erased %d "
+		अन्यथा
+			seq_म_लिखो(s, "%s:\t%5d erase blocks, all erased %d "
 				"times\n", name[i], count[i], min[i]);
-	}
+	पूर्ण
 
-	if (bb_cnt)
-		seq_printf(s, "bad:\t%5u erase blocks\n", bb_cnt);
+	अगर (bb_cnt)
+		seq_म_लिखो(s, "bad:\t%5u erase blocks\n", bb_cnt);
 
-	if (cw)
-		seq_printf(s, "current erase block: %u pages used, %u free, "
+	अगर (cw)
+		seq_म_लिखो(s, "current erase block: %u pages used, %u free, "
 			"erased %u times\n",
 			cwp, d->pages_per_eblk - cwp, cwecount);
 
-	seq_printf(s, "total erasures: %lu\n", sum);
+	seq_म_लिखो(s, "total erasures: %lu\n", sum);
 
-	seq_puts(s, "\n");
+	seq_माला_दो(s, "\n");
 
-	seq_printf(s, "mtdswap_readsect count: %llu\n", d->sect_read_count);
-	seq_printf(s, "mtdswap_writesect count: %llu\n", d->sect_write_count);
-	seq_printf(s, "mtdswap_discard count: %llu\n", d->discard_count);
-	seq_printf(s, "mtd read count: %llu\n", d->mtd_read_count);
-	seq_printf(s, "mtd write count: %llu\n", d->mtd_write_count);
-	seq_printf(s, "discarded pages count: %llu\n", d->discard_page_count);
+	seq_म_लिखो(s, "mtdswap_readsect count: %llu\n", d->sect_पढ़ो_count);
+	seq_म_लिखो(s, "mtdswap_writesect count: %llu\n", d->sect_ग_लिखो_count);
+	seq_म_लिखो(s, "mtdswap_discard count: %llu\n", d->discard_count);
+	seq_म_लिखो(s, "mtd read count: %llu\n", d->mtd_पढ़ो_count);
+	seq_म_लिखो(s, "mtd write count: %llu\n", d->mtd_ग_लिखो_count);
+	seq_म_लिखो(s, "discarded pages count: %llu\n", d->discard_page_count);
 
-	seq_puts(s, "\n");
-	seq_printf(s, "total pages: %u\n", pages);
-	seq_printf(s, "pages mapped: %u\n", mapped);
+	seq_माला_दो(s, "\n");
+	seq_म_लिखो(s, "total pages: %u\n", pages);
+	seq_म_लिखो(s, "pages mapped: %u\n", mapped);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(mtdswap);
 
-static int mtdswap_add_debugfs(struct mtdswap_dev *d)
-{
-	struct dentry *root = d->mtd->dbg.dfs_dir;
+अटल पूर्णांक mtdswap_add_debugfs(काष्ठा mtdswap_dev *d)
+अणु
+	काष्ठा dentry *root = d->mtd->dbg.dfs_dir;
 
-	if (!IS_ENABLED(CONFIG_DEBUG_FS))
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_DEBUG_FS))
+		वापस 0;
 
-	if (IS_ERR_OR_NULL(root))
-		return -1;
+	अगर (IS_ERR_OR_शून्य(root))
+		वापस -1;
 
 	debugfs_create_file("mtdswap_stats", S_IRUSR, root, d, &mtdswap_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdswap_init(struct mtdswap_dev *d, unsigned int eblocks,
-			unsigned int spare_cnt)
-{
-	struct mtd_info *mtd = d->mbd_dev->mtd;
-	unsigned int i, eblk_bytes, pages, blocks;
-	int ret = -ENOMEM;
+अटल पूर्णांक mtdswap_init(काष्ठा mtdswap_dev *d, अचिन्हित पूर्णांक eblocks,
+			अचिन्हित पूर्णांक spare_cnt)
+अणु
+	काष्ठा mtd_info *mtd = d->mbd_dev->mtd;
+	अचिन्हित पूर्णांक i, eblk_bytes, pages, blocks;
+	पूर्णांक ret = -ENOMEM;
 
 	d->mtd = mtd;
 	d->eblks = eblocks;
@@ -1283,146 +1284,146 @@ static int mtdswap_init(struct mtdswap_dev *d, unsigned int eblocks,
 	pages = d->mbd_dev->size;
 	blocks = eblocks * d->pages_per_eblk;
 
-	for (i = 0; i < MTDSWAP_TREE_CNT; i++)
+	क्रम (i = 0; i < MTDSWAP_TREE_CNT; i++)
 		d->trees[i].root = RB_ROOT;
 
-	d->page_data = vmalloc(array_size(pages, sizeof(int)));
-	if (!d->page_data)
-		goto page_data_fail;
+	d->page_data = vदो_स्मृति(array_size(pages, माप(पूर्णांक)));
+	अगर (!d->page_data)
+		जाओ page_data_fail;
 
-	d->revmap = vmalloc(array_size(blocks, sizeof(int)));
-	if (!d->revmap)
-		goto revmap_fail;
+	d->revmap = vदो_स्मृति(array_size(blocks, माप(पूर्णांक)));
+	अगर (!d->revmap)
+		जाओ revmap_fail;
 
-	eblk_bytes = sizeof(struct swap_eb)*d->eblks;
+	eblk_bytes = माप(काष्ठा swap_eb)*d->eblks;
 	d->eb_data = vzalloc(eblk_bytes);
-	if (!d->eb_data)
-		goto eb_data_fail;
+	अगर (!d->eb_data)
+		जाओ eb_data_fail;
 
-	for (i = 0; i < pages; i++)
+	क्रम (i = 0; i < pages; i++)
 		d->page_data[i] = BLOCK_UNDEF;
 
-	for (i = 0; i < blocks; i++)
+	क्रम (i = 0; i < blocks; i++)
 		d->revmap[i] = PAGE_UNDEF;
 
-	d->page_buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!d->page_buf)
-		goto page_buf_fail;
+	d->page_buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!d->page_buf)
+		जाओ page_buf_fail;
 
-	d->oob_buf = kmalloc_array(2, mtd->oobavail, GFP_KERNEL);
-	if (!d->oob_buf)
-		goto oob_buf_fail;
+	d->oob_buf = kदो_स्मृति_array(2, mtd->oobavail, GFP_KERNEL);
+	अगर (!d->oob_buf)
+		जाओ oob_buf_fail;
 
 	mtdswap_scan_eblks(d);
 
-	return 0;
+	वापस 0;
 
 oob_buf_fail:
-	kfree(d->page_buf);
+	kमुक्त(d->page_buf);
 page_buf_fail:
-	vfree(d->eb_data);
+	vमुक्त(d->eb_data);
 eb_data_fail:
-	vfree(d->revmap);
+	vमुक्त(d->revmap);
 revmap_fail:
-	vfree(d->page_data);
+	vमुक्त(d->page_data);
 page_data_fail:
-	printk(KERN_ERR "%s: init failed (%d)\n", MTDSWAP_PREFIX, ret);
-	return ret;
-}
+	prपूर्णांकk(KERN_ERR "%s: init failed (%d)\n", MTDSWAP_PREFIX, ret);
+	वापस ret;
+पूर्ण
 
-static void mtdswap_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
-{
-	struct mtdswap_dev *d;
-	struct mtd_blktrans_dev *mbd_dev;
-	char *parts;
-	char *this_opt;
-	unsigned long part;
-	unsigned int eblocks, eavailable, bad_blocks, spare_cnt;
-	uint64_t swap_size, use_size, size_limit;
-	int ret;
+अटल व्योम mtdswap_add_mtd(काष्ठा mtd_blktrans_ops *tr, काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा mtdswap_dev *d;
+	काष्ठा mtd_blktrans_dev *mbd_dev;
+	अक्षर *parts;
+	अक्षर *this_opt;
+	अचिन्हित दीर्घ part;
+	अचिन्हित पूर्णांक eblocks, eavailable, bad_blocks, spare_cnt;
+	uपूर्णांक64_t swap_size, use_size, size_limit;
+	पूर्णांक ret;
 
 	parts = &partitions[0];
-	if (!*parts)
-		return;
+	अगर (!*parts)
+		वापस;
 
-	while ((this_opt = strsep(&parts, ",")) != NULL) {
-		if (kstrtoul(this_opt, 0, &part) < 0)
-			return;
+	जबतक ((this_opt = strsep(&parts, ",")) != शून्य) अणु
+		अगर (kम_से_अदीर्घ(this_opt, 0, &part) < 0)
+			वापस;
 
-		if (mtd->index == part)
-			break;
-	}
+		अगर (mtd->index == part)
+			अवरोध;
+	पूर्ण
 
-	if (mtd->index != part)
-		return;
+	अगर (mtd->index != part)
+		वापस;
 
-	if (mtd->erasesize < PAGE_SIZE || mtd->erasesize % PAGE_SIZE) {
-		printk(KERN_ERR "%s: Erase size %u not multiple of PAGE_SIZE "
+	अगर (mtd->erasesize < PAGE_SIZE || mtd->erasesize % PAGE_SIZE) अणु
+		prपूर्णांकk(KERN_ERR "%s: Erase size %u not multiple of PAGE_SIZE "
 			"%lu\n", MTDSWAP_PREFIX, mtd->erasesize, PAGE_SIZE);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (PAGE_SIZE % mtd->writesize || mtd->writesize > PAGE_SIZE) {
-		printk(KERN_ERR "%s: PAGE_SIZE %lu not multiple of write size"
-			" %u\n", MTDSWAP_PREFIX, PAGE_SIZE, mtd->writesize);
-		return;
-	}
+	अगर (PAGE_SIZE % mtd->ग_लिखोsize || mtd->ग_लिखोsize > PAGE_SIZE) अणु
+		prपूर्णांकk(KERN_ERR "%s: PAGE_SIZE %lu not multiple of write size"
+			" %u\n", MTDSWAP_PREFIX, PAGE_SIZE, mtd->ग_लिखोsize);
+		वापस;
+	पूर्ण
 
-	if (!mtd->oobsize || mtd->oobavail < MTDSWAP_OOBSIZE) {
-		printk(KERN_ERR "%s: Not enough free bytes in OOB, "
+	अगर (!mtd->oobsize || mtd->oobavail < MTDSWAP_OOBSIZE) अणु
+		prपूर्णांकk(KERN_ERR "%s: Not enough free bytes in OOB, "
 			"%d available, %zu needed.\n",
 			MTDSWAP_PREFIX, mtd->oobavail, MTDSWAP_OOBSIZE);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (spare_eblocks > 100)
+	अगर (spare_eblocks > 100)
 		spare_eblocks = 100;
 
 	use_size = mtd->size;
-	size_limit = (uint64_t) BLOCK_MAX * PAGE_SIZE;
+	size_limit = (uपूर्णांक64_t) BLOCK_MAX * PAGE_SIZE;
 
-	if (mtd->size > size_limit) {
-		printk(KERN_WARNING "%s: Device too large. Limiting size to "
+	अगर (mtd->size > size_limit) अणु
+		prपूर्णांकk(KERN_WARNING "%s: Device too large. Limiting size to "
 			"%llu bytes\n", MTDSWAP_PREFIX, size_limit);
 		use_size = size_limit;
-	}
+	पूर्ण
 
-	eblocks = mtd_div_by_eb(use_size, mtd);
-	use_size = (uint64_t)eblocks * mtd->erasesize;
+	eblocks = mtd_भाग_by_eb(use_size, mtd);
+	use_size = (uपूर्णांक64_t)eblocks * mtd->erasesize;
 	bad_blocks = mtdswap_badblocks(mtd, use_size);
 	eavailable = eblocks - bad_blocks;
 
-	if (eavailable < MIN_ERASE_BLOCKS) {
-		printk(KERN_ERR "%s: Not enough erase blocks. %u available, "
+	अगर (eavailable < MIN_ERASE_BLOCKS) अणु
+		prपूर्णांकk(KERN_ERR "%s: Not enough erase blocks. %u available, "
 			"%d needed\n", MTDSWAP_PREFIX, eavailable,
 			MIN_ERASE_BLOCKS);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	spare_cnt = div_u64((uint64_t)eavailable * spare_eblocks, 100);
+	spare_cnt = भाग_u64((uपूर्णांक64_t)eavailable * spare_eblocks, 100);
 
-	if (spare_cnt < MIN_SPARE_EBLOCKS)
+	अगर (spare_cnt < MIN_SPARE_EBLOCKS)
 		spare_cnt = MIN_SPARE_EBLOCKS;
 
-	if (spare_cnt > eavailable - 1)
+	अगर (spare_cnt > eavailable - 1)
 		spare_cnt = eavailable - 1;
 
-	swap_size = (uint64_t)(eavailable - spare_cnt) * mtd->erasesize +
+	swap_size = (uपूर्णांक64_t)(eavailable - spare_cnt) * mtd->erasesize +
 		(header ? PAGE_SIZE : 0);
 
-	printk(KERN_INFO "%s: Enabling MTD swap on device %lu, size %llu KB, "
+	prपूर्णांकk(KERN_INFO "%s: Enabling MTD swap on device %lu, size %llu KB, "
 		"%u spare, %u bad blocks\n",
 		MTDSWAP_PREFIX, part, swap_size / 1024, spare_cnt, bad_blocks);
 
-	d = kzalloc(sizeof(struct mtdswap_dev), GFP_KERNEL);
-	if (!d)
-		return;
+	d = kzalloc(माप(काष्ठा mtdswap_dev), GFP_KERNEL);
+	अगर (!d)
+		वापस;
 
-	mbd_dev = kzalloc(sizeof(struct mtd_blktrans_dev), GFP_KERNEL);
-	if (!mbd_dev) {
-		kfree(d);
-		return;
-	}
+	mbd_dev = kzalloc(माप(काष्ठा mtd_blktrans_dev), GFP_KERNEL);
+	अगर (!mbd_dev) अणु
+		kमुक्त(d);
+		वापस;
+	पूर्ण
 
 	d->mbd_dev = mbd_dev;
 	mbd_dev->priv = d;
@@ -1432,22 +1433,22 @@ static void mtdswap_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
 	mbd_dev->size = swap_size >> PAGE_SHIFT;
 	mbd_dev->tr = tr;
 
-	if (!(mtd->flags & MTD_WRITEABLE))
-		mbd_dev->readonly = 1;
+	अगर (!(mtd->flags & MTD_WRITEABLE))
+		mbd_dev->पढ़ोonly = 1;
 
-	if (mtdswap_init(d, eblocks, spare_cnt) < 0)
-		goto init_failed;
+	अगर (mtdswap_init(d, eblocks, spare_cnt) < 0)
+		जाओ init_failed;
 
-	if (add_mtd_blktrans_dev(mbd_dev) < 0)
-		goto cleanup;
+	अगर (add_mtd_blktrans_dev(mbd_dev) < 0)
+		जाओ cleanup;
 
 	d->dev = disk_to_dev(mbd_dev->disk);
 
 	ret = mtdswap_add_debugfs(d);
-	if (ret < 0)
-		goto debugfs_failed;
+	अगर (ret < 0)
+		जाओ debugfs_failed;
 
-	return;
+	वापस;
 
 debugfs_failed:
 	del_mtd_blktrans_dev(mbd_dev);
@@ -1456,33 +1457,33 @@ cleanup:
 	mtdswap_cleanup(d);
 
 init_failed:
-	kfree(mbd_dev);
-	kfree(d);
-}
+	kमुक्त(mbd_dev);
+	kमुक्त(d);
+पूर्ण
 
-static void mtdswap_remove_dev(struct mtd_blktrans_dev *dev)
-{
-	struct mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
+अटल व्योम mtdswap_हटाओ_dev(काष्ठा mtd_blktrans_dev *dev)
+अणु
+	काष्ठा mtdswap_dev *d = MTDSWAP_MBD_TO_MTDSWAP(dev);
 
 	del_mtd_blktrans_dev(dev);
 	mtdswap_cleanup(d);
-	kfree(d);
-}
+	kमुक्त(d);
+पूर्ण
 
-static struct mtd_blktrans_ops mtdswap_ops = {
+अटल काष्ठा mtd_blktrans_ops mtdswap_ops = अणु
 	.name		= "mtdswap",
 	.major		= 0,
 	.part_bits	= 0,
 	.blksize	= PAGE_SIZE,
 	.flush		= mtdswap_flush,
-	.readsect	= mtdswap_readsect,
-	.writesect	= mtdswap_writesect,
+	.पढ़ोsect	= mtdswap_पढ़ोsect,
+	.ग_लिखोsect	= mtdswap_ग_लिखोsect,
 	.discard	= mtdswap_discard,
 	.background	= mtdswap_background,
 	.add_mtd	= mtdswap_add_mtd,
-	.remove_dev	= mtdswap_remove_dev,
+	.हटाओ_dev	= mtdswap_हटाओ_dev,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
 module_mtd_blktrans(mtdswap_ops);
 

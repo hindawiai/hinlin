@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_LIBGCC_H
-#define __ASM_LIBGCC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_LIBGCC_H
+#घोषणा __ASM_LIBGCC_H
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-typedef int word_type __attribute__ ((mode (__word__)));
+प्रकार पूर्णांक word_type __attribute__ ((mode (__word__)));
 
-#ifdef __BIG_ENDIAN
-struct DWstruct {
-	int high, low;
-};
+#अगर_घोषित __BIG_ENDIAN
+काष्ठा DWकाष्ठा अणु
+	पूर्णांक high, low;
+पूर्ण;
 
-struct TWstruct {
-	long long high, low;
-};
-#elif defined(__LITTLE_ENDIAN)
-struct DWstruct {
-	int low, high;
-};
+काष्ठा TWकाष्ठा अणु
+	दीर्घ दीर्घ high, low;
+पूर्ण;
+#या_अगर defined(__LITTLE_ENDIAN)
+काष्ठा DWकाष्ठा अणु
+	पूर्णांक low, high;
+पूर्ण;
 
-struct TWstruct {
-	long long low, high;
-};
-#else
-#error I feel sick.
-#endif
+काष्ठा TWकाष्ठा अणु
+	दीर्घ दीर्घ low, high;
+पूर्ण;
+#अन्यथा
+#त्रुटि I feel sick.
+#पूर्ण_अगर
 
-typedef union {
-	struct DWstruct s;
-	long long ll;
-} DWunion;
+प्रकार जोड़ अणु
+	काष्ठा DWकाष्ठा s;
+	दीर्घ दीर्घ ll;
+पूर्ण DWजोड़;
 
-#if defined(CONFIG_64BIT) && defined(CONFIG_CPU_MIPSR6)
-typedef int ti_type __attribute__((mode(TI)));
+#अगर defined(CONFIG_64BIT) && defined(CONFIG_CPU_MIPSR6)
+प्रकार पूर्णांक ti_type __attribute__((mode(TI)));
 
-typedef union {
-	struct TWstruct s;
+प्रकार जोड़ अणु
+	काष्ठा TWकाष्ठा s;
 	ti_type ti;
-} TWunion;
-#endif
+पूर्ण TWजोड़;
+#पूर्ण_अगर
 
-#endif /* __ASM_LIBGCC_H */
+#पूर्ण_अगर /* __ASM_LIBGCC_H */

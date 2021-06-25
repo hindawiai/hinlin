@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,25 +21,25 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "gf100.h"
-#include "ctxgf100.h"
+#समावेश "gf100.h"
+#समावेश "ctxgf100.h"
 
-#include <subdev/acr.h>
+#समावेश <subdev/acr.h>
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-#include <nvfw/flcn.h>
+#समावेश <nvfw/flcn.h>
 
-static const struct nvkm_acr_lsf_func
-gp10b_gr_gpccs_acr = {
+अटल स्थिर काष्ठा nvkm_acr_lsf_func
+gp10b_gr_gpccs_acr = अणु
 	.flags = NVKM_ACR_LSF_FORCE_PRIV_LOAD,
-	.bld_size = sizeof(struct flcn_bl_dmem_desc),
-	.bld_write = gm20b_gr_acr_bld_write,
+	.bld_size = माप(काष्ठा flcn_bl_dmem_desc),
+	.bld_ग_लिखो = gm20b_gr_acr_bld_ग_लिखो,
 	.bld_patch = gm20b_gr_acr_bld_patch,
-};
+पूर्ण;
 
-static const struct gf100_gr_func
-gp10b_gr = {
+अटल स्थिर काष्ठा gf100_gr_func
+gp10b_gr = अणु
 	.oneinit_tiles = gm200_gr_oneinit_tiles,
 	.oneinit_sm_id = gm200_gr_oneinit_sm_id,
 	.init = gf100_gr_init,
@@ -62,16 +63,16 @@ gp10b_gr = {
 	.ppc_nr = 1,
 	.grctx = &gp100_grctx,
 	.zbc = &gp100_gr_zbc,
-	.sclass = {
-		{ -1, -1, FERMI_TWOD_A },
-		{ -1, -1, KEPLER_INLINE_TO_MEMORY_B },
-		{ -1, -1, PASCAL_A, &gf100_fermi },
-		{ -1, -1, PASCAL_COMPUTE_A },
-		{}
-	}
-};
+	.sclass = अणु
+		अणु -1, -1, FERMI_TWOD_A पूर्ण,
+		अणु -1, -1, KEPLER_INLINE_TO_MEMORY_B पूर्ण,
+		अणु -1, -1, PASCAL_A, &gf100_fermi पूर्ण,
+		अणु -1, -1, PASCAL_COMPUTE_A पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_ARCH_TEGRA_186_SOC)
+#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_186_SOC)
 MODULE_FIRMWARE("nvidia/gp10b/gr/fecs_bl.bin");
 MODULE_FIRMWARE("nvidia/gp10b/gr/fecs_inst.bin");
 MODULE_FIRMWARE("nvidia/gp10b/gr/fecs_data.bin");
@@ -84,17 +85,17 @@ MODULE_FIRMWARE("nvidia/gp10b/gr/sw_ctx.bin");
 MODULE_FIRMWARE("nvidia/gp10b/gr/sw_nonctx.bin");
 MODULE_FIRMWARE("nvidia/gp10b/gr/sw_bundle_init.bin");
 MODULE_FIRMWARE("nvidia/gp10b/gr/sw_method_init.bin");
-#endif
+#पूर्ण_अगर
 
-static const struct gf100_gr_fwif
-gp10b_gr_fwif[] = {
-	{  0, gm200_gr_load, &gp10b_gr, &gm20b_gr_fecs_acr, &gp10b_gr_gpccs_acr },
-	{ -1, gm200_gr_nofw },
-	{}
-};
+अटल स्थिर काष्ठा gf100_gr_fwअगर
+gp10b_gr_fwअगर[] = अणु
+	अणु  0, gm200_gr_load, &gp10b_gr, &gm20b_gr_fecs_acr, &gp10b_gr_gpccs_acr पूर्ण,
+	अणु -1, gm200_gr_nofw पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gp10b_gr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
-{
-	return gf100_gr_new_(gp10b_gr_fwif, device, type, inst, pgr);
-}
+पूर्णांक
+gp10b_gr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
+अणु
+	वापस gf100_gr_new_(gp10b_gr_fwअगर, device, type, inst, pgr);
+पूर्ण

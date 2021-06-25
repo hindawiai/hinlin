@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * pmc.h
  * Copyright (C) 2004  David Gibson, IBM Corporation
  */
-#ifndef _POWERPC_PMC_H
-#define _POWERPC_PMC_H
-#ifdef __KERNEL__
+#अगर_अघोषित _POWERPC_PMC_H
+#घोषणा _POWERPC_PMC_H
+#अगर_घोषित __KERNEL__
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
-typedef void (*perf_irq_t)(struct pt_regs *);
-extern perf_irq_t perf_irq;
+प्रकार व्योम (*perf_irq_t)(काष्ठा pt_regs *);
+बाह्य perf_irq_t perf_irq;
 
-int reserve_pmc_hardware(perf_irq_t new_perf_irq);
-void release_pmc_hardware(void);
-void ppc_enable_pmcs(void);
+पूर्णांक reserve_pmc_hardware(perf_irq_t new_perf_irq);
+व्योम release_pmc_hardware(व्योम);
+व्योम ppc_enable_pmcs(व्योम);
 
-#ifdef CONFIG_PPC_BOOK3S_64
-#include <asm/lppaca.h>
-#include <asm/firmware.h>
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+#समावेश <यंत्र/lppaca.h>
+#समावेश <यंत्र/firmware.h>
 
-static inline void ppc_set_pmu_inuse(int inuse)
-{
-#if defined(CONFIG_PPC_PSERIES) || defined(CONFIG_KVM_BOOK3S_HV_POSSIBLE)
-	if (firmware_has_feature(FW_FEATURE_LPAR)) {
-#ifdef CONFIG_PPC_PSERIES
+अटल अंतरभूत व्योम ppc_set_pmu_inuse(पूर्णांक inuse)
+अणु
+#अगर defined(CONFIG_PPC_PSERIES) || defined(CONFIG_KVM_BOOK3S_HV_POSSIBLE)
+	अगर (firmware_has_feature(FW_FEATURE_LPAR)) अणु
+#अगर_घोषित CONFIG_PPC_PSERIES
 		get_lppaca()->pmcregs_in_use = inuse;
-#endif
-	}
-#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+#पूर्ण_अगर
+	पूर्ण
+#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
 	get_paca()->pmcregs_in_use = inuse;
-#endif
-#endif
-}
+#पूर्ण_अगर
+#पूर्ण_अगर
+पूर्ण
 
-extern void power4_enable_pmcs(void);
+बाह्य व्योम घातer4_enable_pmcs(व्योम);
 
-#else /* CONFIG_PPC64 */
+#अन्यथा /* CONFIG_PPC64 */
 
-static inline void ppc_set_pmu_inuse(int inuse) { }
+अटल अंतरभूत व्योम ppc_set_pmu_inuse(पूर्णांक inuse) अणु पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __KERNEL__ */
-#endif /* _POWERPC_PMC_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _POWERPC_PMC_H */

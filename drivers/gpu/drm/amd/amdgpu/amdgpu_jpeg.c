@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -24,197 +25,197 @@
  *
  */
 
-#include "amdgpu.h"
-#include "amdgpu_jpeg.h"
-#include "amdgpu_pm.h"
-#include "soc15d.h"
-#include "soc15_common.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_jpeg.h"
+#समावेश "amdgpu_pm.h"
+#समावेश "soc15d.h"
+#समावेश "soc15_common.h"
 
-#define JPEG_IDLE_TIMEOUT	msecs_to_jiffies(1000)
+#घोषणा JPEG_IDLE_TIMEOUT	msecs_to_jअगरfies(1000)
 
-static void amdgpu_jpeg_idle_work_handler(struct work_struct *work);
+अटल व्योम amdgpu_jpeg_idle_work_handler(काष्ठा work_काष्ठा *work);
 
-int amdgpu_jpeg_sw_init(struct amdgpu_device *adev)
-{
+पूर्णांक amdgpu_jpeg_sw_init(काष्ठा amdgpu_device *adev)
+अणु
 	INIT_DELAYED_WORK(&adev->jpeg.idle_work, amdgpu_jpeg_idle_work_handler);
 	mutex_init(&adev->jpeg.jpeg_pg_lock);
 	atomic_set(&adev->jpeg.total_submission_cnt, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int amdgpu_jpeg_sw_fini(struct amdgpu_device *adev)
-{
-	int i;
+पूर्णांक amdgpu_jpeg_sw_fini(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
 	cancel_delayed_work_sync(&adev->jpeg.idle_work);
 
-	for (i = 0; i < adev->jpeg.num_jpeg_inst; ++i) {
-		if (adev->jpeg.harvest_config & (1 << i))
-			continue;
+	क्रम (i = 0; i < adev->jpeg.num_jpeg_inst; ++i) अणु
+		अगर (adev->jpeg.harvest_config & (1 << i))
+			जारी;
 
 		amdgpu_ring_fini(&adev->jpeg.inst[i].ring_dec);
-	}
+	पूर्ण
 
 	mutex_destroy(&adev->jpeg.jpeg_pg_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int amdgpu_jpeg_suspend(struct amdgpu_device *adev)
-{
+पूर्णांक amdgpu_jpeg_suspend(काष्ठा amdgpu_device *adev)
+अणु
 	cancel_delayed_work_sync(&adev->jpeg.idle_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int amdgpu_jpeg_resume(struct amdgpu_device *adev)
-{
-	return 0;
-}
+पूर्णांक amdgpu_jpeg_resume(काष्ठा amdgpu_device *adev)
+अणु
+	वापस 0;
+पूर्ण
 
-static void amdgpu_jpeg_idle_work_handler(struct work_struct *work)
-{
-	struct amdgpu_device *adev =
-		container_of(work, struct amdgpu_device, jpeg.idle_work.work);
-	unsigned int fences = 0;
-	unsigned int i;
+अटल व्योम amdgpu_jpeg_idle_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा amdgpu_device *adev =
+		container_of(work, काष्ठा amdgpu_device, jpeg.idle_work.work);
+	अचिन्हित पूर्णांक fences = 0;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < adev->jpeg.num_jpeg_inst; ++i) {
-		if (adev->jpeg.harvest_config & (1 << i))
-			continue;
+	क्रम (i = 0; i < adev->jpeg.num_jpeg_inst; ++i) अणु
+		अगर (adev->jpeg.harvest_config & (1 << i))
+			जारी;
 
 		fences += amdgpu_fence_count_emitted(&adev->jpeg.inst[i].ring_dec);
-	}
+	पूर्ण
 
-	if (!fences && !atomic_read(&adev->jpeg.total_submission_cnt))
-		amdgpu_device_ip_set_powergating_state(adev, AMD_IP_BLOCK_TYPE_JPEG,
+	अगर (!fences && !atomic_पढ़ो(&adev->jpeg.total_submission_cnt))
+		amdgpu_device_ip_set_घातergating_state(adev, AMD_IP_BLOCK_TYPE_JPEG,
 						       AMD_PG_STATE_GATE);
-	else
+	अन्यथा
 		schedule_delayed_work(&adev->jpeg.idle_work, JPEG_IDLE_TIMEOUT);
-}
+पूर्ण
 
-void amdgpu_jpeg_ring_begin_use(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+व्योम amdgpu_jpeg_ring_begin_use(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
 	atomic_inc(&adev->jpeg.total_submission_cnt);
 	cancel_delayed_work_sync(&adev->jpeg.idle_work);
 
 	mutex_lock(&adev->jpeg.jpeg_pg_lock);
-	amdgpu_device_ip_set_powergating_state(adev, AMD_IP_BLOCK_TYPE_JPEG,
+	amdgpu_device_ip_set_घातergating_state(adev, AMD_IP_BLOCK_TYPE_JPEG,
 						       AMD_PG_STATE_UNGATE);
 	mutex_unlock(&adev->jpeg.jpeg_pg_lock);
-}
+पूर्ण
 
-void amdgpu_jpeg_ring_end_use(struct amdgpu_ring *ring)
-{
+व्योम amdgpu_jpeg_ring_end_use(काष्ठा amdgpu_ring *ring)
+अणु
 	atomic_dec(&ring->adev->jpeg.total_submission_cnt);
 	schedule_delayed_work(&ring->adev->jpeg.idle_work, JPEG_IDLE_TIMEOUT);
-}
+पूर्ण
 
-int amdgpu_jpeg_dec_ring_test_ring(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
-	uint32_t tmp = 0;
-	unsigned i;
-	int r;
+पूर्णांक amdgpu_jpeg_dec_ring_test_ring(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	uपूर्णांक32_t पंचांगp = 0;
+	अचिन्हित i;
+	पूर्णांक r;
 
-	WREG32(adev->jpeg.inst[ring->me].external.jpeg_pitch, 0xCAFEDEAD);
+	WREG32(adev->jpeg.inst[ring->me].बाह्यal.jpeg_pitch, 0xCAFEDEAD);
 	r = amdgpu_ring_alloc(ring, 3);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	amdgpu_ring_write(ring, PACKET0(adev->jpeg.internal.jpeg_pitch, 0));
-	amdgpu_ring_write(ring, 0xDEADBEEF);
+	amdgpu_ring_ग_लिखो(ring, PACKET0(adev->jpeg.पूर्णांकernal.jpeg_pitch, 0));
+	amdgpu_ring_ग_लिखो(ring, 0xDEADBEEF);
 	amdgpu_ring_commit(ring);
 
-	for (i = 0; i < adev->usec_timeout; i++) {
-		tmp = RREG32(adev->jpeg.inst[ring->me].external.jpeg_pitch);
-		if (tmp == 0xDEADBEEF)
-			break;
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		पंचांगp = RREG32(adev->jpeg.inst[ring->me].बाह्यal.jpeg_pitch);
+		अगर (पंचांगp == 0xDEADBEEF)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	if (i >= adev->usec_timeout)
+	अगर (i >= adev->usec_समयout)
 		r = -ETIMEDOUT;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int amdgpu_jpeg_dec_set_reg(struct amdgpu_ring *ring, uint32_t handle,
-		struct dma_fence **fence)
-{
-	struct amdgpu_device *adev = ring->adev;
-	struct amdgpu_job *job;
-	struct amdgpu_ib *ib;
-	struct dma_fence *f = NULL;
-	const unsigned ib_size_dw = 16;
-	int i, r;
+अटल पूर्णांक amdgpu_jpeg_dec_set_reg(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t handle,
+		काष्ठा dma_fence **fence)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	काष्ठा amdgpu_job *job;
+	काष्ठा amdgpu_ib *ib;
+	काष्ठा dma_fence *f = शून्य;
+	स्थिर अचिन्हित ib_size_dw = 16;
+	पूर्णांक i, r;
 
 	r = amdgpu_job_alloc_with_ib(ring->adev, ib_size_dw * 4,
-					AMDGPU_IB_POOL_DIRECT, &job);
-	if (r)
-		return r;
+					AMDGPU_IB_POOL_सूचीECT, &job);
+	अगर (r)
+		वापस r;
 
 	ib = &job->ibs[0];
 
-	ib->ptr[0] = PACKETJ(adev->jpeg.internal.jpeg_pitch, 0, 0, PACKETJ_TYPE0);
+	ib->ptr[0] = PACKETJ(adev->jpeg.पूर्णांकernal.jpeg_pitch, 0, 0, PACKETJ_TYPE0);
 	ib->ptr[1] = 0xDEADBEEF;
-	for (i = 2; i < 16; i += 2) {
+	क्रम (i = 2; i < 16; i += 2) अणु
 		ib->ptr[i] = PACKETJ(0, 0, 0, PACKETJ_TYPE6);
 		ib->ptr[i+1] = 0;
-	}
+	पूर्ण
 	ib->length_dw = 16;
 
 	r = amdgpu_job_submit_direct(job, ring, &f);
-	if (r)
-		goto err;
+	अगर (r)
+		जाओ err;
 
-	if (fence)
+	अगर (fence)
 		*fence = dma_fence_get(f);
 	dma_fence_put(f);
 
-	return 0;
+	वापस 0;
 
 err:
-	amdgpu_job_free(job);
-	return r;
-}
+	amdgpu_job_मुक्त(job);
+	वापस r;
+पूर्ण
 
-int amdgpu_jpeg_dec_ring_test_ib(struct amdgpu_ring *ring, long timeout)
-{
-	struct amdgpu_device *adev = ring->adev;
-	uint32_t tmp = 0;
-	unsigned i;
-	struct dma_fence *fence = NULL;
-	long r = 0;
+पूर्णांक amdgpu_jpeg_dec_ring_test_ib(काष्ठा amdgpu_ring *ring, दीर्घ समयout)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	uपूर्णांक32_t पंचांगp = 0;
+	अचिन्हित i;
+	काष्ठा dma_fence *fence = शून्य;
+	दीर्घ r = 0;
 
 	r = amdgpu_jpeg_dec_set_reg(ring, 1, &fence);
-	if (r)
-		goto error;
+	अगर (r)
+		जाओ error;
 
-	r = dma_fence_wait_timeout(fence, false, timeout);
-	if (r == 0) {
+	r = dma_fence_रुको_समयout(fence, false, समयout);
+	अगर (r == 0) अणु
 		r = -ETIMEDOUT;
-		goto error;
-	} else if (r < 0) {
-		goto error;
-	} else {
+		जाओ error;
+	पूर्ण अन्यथा अगर (r < 0) अणु
+		जाओ error;
+	पूर्ण अन्यथा अणु
 		r = 0;
-	}
+	पूर्ण
 
-	for (i = 0; i < adev->usec_timeout; i++) {
-		tmp = RREG32(adev->jpeg.inst[ring->me].external.jpeg_pitch);
-		if (tmp == 0xDEADBEEF)
-			break;
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		पंचांगp = RREG32(adev->jpeg.inst[ring->me].बाह्यal.jpeg_pitch);
+		अगर (पंचांगp == 0xDEADBEEF)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	if (i >= adev->usec_timeout)
+	अगर (i >= adev->usec_समयout)
 		r = -ETIMEDOUT;
 
 	dma_fence_put(fence);
 error:
-	return r;
-}
+	वापस r;
+पूर्ण

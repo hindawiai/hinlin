@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * An RTC driver for Allwinner A31/A23
+ * An RTC driver क्रम Allwinner A31/A23
  *
  * Copyright (c) 2014, Chen-Yu Tsai <wens@csie.org>
  *
  * based on rtc-sunxi.c
  *
- * An RTC driver for Allwinner A10/A20
+ * An RTC driver क्रम Allwinner A10/A20
  *
  * Copyright (c) 2013, Carlo Caione <carlo.caione@gmail.com>
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/rtc.h>
-#include <linux/slab.h>
-#include <linux/types.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
 
-/* Control register */
-#define SUN6I_LOSC_CTRL				0x0000
-#define SUN6I_LOSC_CTRL_KEY			(0x16aa << 16)
-#define SUN6I_LOSC_CTRL_AUTO_SWT_BYPASS		BIT(15)
-#define SUN6I_LOSC_CTRL_ALM_DHMS_ACC		BIT(9)
-#define SUN6I_LOSC_CTRL_RTC_HMS_ACC		BIT(8)
-#define SUN6I_LOSC_CTRL_RTC_YMD_ACC		BIT(7)
-#define SUN6I_LOSC_CTRL_EXT_LOSC_EN		BIT(4)
-#define SUN6I_LOSC_CTRL_EXT_OSC			BIT(0)
-#define SUN6I_LOSC_CTRL_ACC_MASK		GENMASK(9, 7)
+/* Control रेजिस्टर */
+#घोषणा SUN6I_LOSC_CTRL				0x0000
+#घोषणा SUN6I_LOSC_CTRL_KEY			(0x16aa << 16)
+#घोषणा SUN6I_LOSC_CTRL_AUTO_SWT_BYPASS		BIT(15)
+#घोषणा SUN6I_LOSC_CTRL_ALM_DHMS_ACC		BIT(9)
+#घोषणा SUN6I_LOSC_CTRL_RTC_HMS_ACC		BIT(8)
+#घोषणा SUN6I_LOSC_CTRL_RTC_YMD_ACC		BIT(7)
+#घोषणा SUN6I_LOSC_CTRL_EXT_LOSC_EN		BIT(4)
+#घोषणा SUN6I_LOSC_CTRL_EXT_OSC			BIT(0)
+#घोषणा SUN6I_LOSC_CTRL_ACC_MASK		GENMASK(9, 7)
 
-#define SUN6I_LOSC_CLK_PRESCAL			0x0008
+#घोषणा SUN6I_LOSC_CLK_PRESCAL			0x0008
 
 /* RTC */
-#define SUN6I_RTC_YMD				0x0010
-#define SUN6I_RTC_HMS				0x0014
+#घोषणा SUN6I_RTC_YMD				0x0010
+#घोषणा SUN6I_RTC_HMS				0x0014
 
 /* Alarm 0 (counter) */
-#define SUN6I_ALRM_COUNTER			0x0020
-#define SUN6I_ALRM_CUR_VAL			0x0024
-#define SUN6I_ALRM_EN				0x0028
-#define SUN6I_ALRM_EN_CNT_EN			BIT(0)
-#define SUN6I_ALRM_IRQ_EN			0x002c
-#define SUN6I_ALRM_IRQ_EN_CNT_IRQ_EN		BIT(0)
-#define SUN6I_ALRM_IRQ_STA			0x0030
-#define SUN6I_ALRM_IRQ_STA_CNT_IRQ_PEND		BIT(0)
+#घोषणा SUN6I_ALRM_COUNTER			0x0020
+#घोषणा SUN6I_ALRM_CUR_VAL			0x0024
+#घोषणा SUN6I_ALRM_EN				0x0028
+#घोषणा SUN6I_ALRM_EN_CNT_EN			BIT(0)
+#घोषणा SUN6I_ALRM_IRQ_EN			0x002c
+#घोषणा SUN6I_ALRM_IRQ_EN_CNT_IRQ_EN		BIT(0)
+#घोषणा SUN6I_ALRM_IRQ_STA			0x0030
+#घोषणा SUN6I_ALRM_IRQ_STA_CNT_IRQ_PEND		BIT(0)
 
-/* Alarm 1 (wall clock) */
-#define SUN6I_ALRM1_EN				0x0044
-#define SUN6I_ALRM1_IRQ_EN			0x0048
-#define SUN6I_ALRM1_IRQ_STA			0x004c
-#define SUN6I_ALRM1_IRQ_STA_WEEK_IRQ_PEND	BIT(0)
+/* Alarm 1 (wall घड़ी) */
+#घोषणा SUN6I_ALRM1_EN				0x0044
+#घोषणा SUN6I_ALRM1_IRQ_EN			0x0048
+#घोषणा SUN6I_ALRM1_IRQ_STA			0x004c
+#घोषणा SUN6I_ALRM1_IRQ_STA_WEEK_IRQ_PEND	BIT(0)
 
 /* Alarm config */
-#define SUN6I_ALARM_CONFIG			0x0050
-#define SUN6I_ALARM_CONFIG_WAKEUP		BIT(0)
+#घोषणा SUN6I_ALARM_CONFIG			0x0050
+#घोषणा SUN6I_ALARM_CONFIG_WAKEUP		BIT(0)
 
-#define SUN6I_LOSC_OUT_GATING			0x0060
-#define SUN6I_LOSC_OUT_GATING_EN_OFFSET		0
+#घोषणा SUN6I_LOSC_OUT_GATING			0x0060
+#घोषणा SUN6I_LOSC_OUT_GATING_EN_OFFSET		0
 
 /*
  * Get date values
  */
-#define SUN6I_DATE_GET_DAY_VALUE(x)		((x)  & 0x0000001f)
-#define SUN6I_DATE_GET_MON_VALUE(x)		(((x) & 0x00000f00) >> 8)
-#define SUN6I_DATE_GET_YEAR_VALUE(x)		(((x) & 0x003f0000) >> 16)
-#define SUN6I_LEAP_GET_VALUE(x)			(((x) & 0x00400000) >> 22)
+#घोषणा SUN6I_DATE_GET_DAY_VALUE(x)		((x)  & 0x0000001f)
+#घोषणा SUN6I_DATE_GET_MON_VALUE(x)		(((x) & 0x00000f00) >> 8)
+#घोषणा SUN6I_DATE_GET_YEAR_VALUE(x)		(((x) & 0x003f0000) >> 16)
+#घोषणा SUN6I_LEAP_GET_VALUE(x)			(((x) & 0x00400000) >> 22)
 
 /*
- * Get time values
+ * Get समय values
  */
-#define SUN6I_TIME_GET_SEC_VALUE(x)		((x)  & 0x0000003f)
-#define SUN6I_TIME_GET_MIN_VALUE(x)		(((x) & 0x00003f00) >> 8)
-#define SUN6I_TIME_GET_HOUR_VALUE(x)		(((x) & 0x001f0000) >> 16)
+#घोषणा SUN6I_TIME_GET_SEC_VALUE(x)		((x)  & 0x0000003f)
+#घोषणा SUN6I_TIME_GET_MIN_VALUE(x)		(((x) & 0x00003f00) >> 8)
+#घोषणा SUN6I_TIME_GET_HOUR_VALUE(x)		(((x) & 0x001f0000) >> 16)
 
 /*
  * Set date values
  */
-#define SUN6I_DATE_SET_DAY_VALUE(x)		((x)       & 0x0000001f)
-#define SUN6I_DATE_SET_MON_VALUE(x)		((x) <<  8 & 0x00000f00)
-#define SUN6I_DATE_SET_YEAR_VALUE(x)		((x) << 16 & 0x003f0000)
-#define SUN6I_LEAP_SET_VALUE(x)			((x) << 22 & 0x00400000)
+#घोषणा SUN6I_DATE_SET_DAY_VALUE(x)		((x)       & 0x0000001f)
+#घोषणा SUN6I_DATE_SET_MON_VALUE(x)		((x) <<  8 & 0x00000f00)
+#घोषणा SUN6I_DATE_SET_YEAR_VALUE(x)		((x) << 16 & 0x003f0000)
+#घोषणा SUN6I_LEAP_SET_VALUE(x)			((x) << 22 & 0x00400000)
 
 /*
- * Set time values
+ * Set समय values
  */
-#define SUN6I_TIME_SET_SEC_VALUE(x)		((x)       & 0x0000003f)
-#define SUN6I_TIME_SET_MIN_VALUE(x)		((x) <<  8 & 0x00003f00)
-#define SUN6I_TIME_SET_HOUR_VALUE(x)		((x) << 16 & 0x001f0000)
+#घोषणा SUN6I_TIME_SET_SEC_VALUE(x)		((x)       & 0x0000003f)
+#घोषणा SUN6I_TIME_SET_MIN_VALUE(x)		((x) <<  8 & 0x00003f00)
+#घोषणा SUN6I_TIME_SET_HOUR_VALUE(x)		((x) << 16 & 0x001f0000)
 
 /*
  * The year parameter passed to the driver is usually an offset relative to
@@ -107,658 +108,658 @@
  * The year range is 1970 - 2033. This range is selected to match Allwinner's
  * driver, even though it is somewhat limited.
  */
-#define SUN6I_YEAR_MIN				1970
-#define SUN6I_YEAR_OFF				(SUN6I_YEAR_MIN - 1900)
+#घोषणा SUN6I_YEAR_MIN				1970
+#घोषणा SUN6I_YEAR_OFF				(SUN6I_YEAR_MIN - 1900)
 
 /*
- * There are other differences between models, including:
+ * There are other dअगरferences between models, including:
  *
  *   - number of GPIO pins that can be configured to hold a certain level
- *   - crypto-key related registers (H5, H6)
+ *   - crypto-key related रेजिस्टरs (H5, H6)
  *   - boot process related (super standby, secondary processor entry address)
- *     registers (R40, H6)
- *   - SYS power domain controls (R40)
+ *     रेजिस्टरs (R40, H6)
+ *   - SYS घातer करोमुख्य controls (R40)
  *   - DCXO controls (H6)
  *   - RC oscillator calibration (H6)
  *
  * These functions are not covered by this driver.
  */
-struct sun6i_rtc_clk_data {
-	unsigned long rc_osc_rate;
-	unsigned int fixed_prescaler : 16;
-	unsigned int has_prescaler : 1;
-	unsigned int has_out_clk : 1;
-	unsigned int export_iosc : 1;
-	unsigned int has_losc_en : 1;
-	unsigned int has_auto_swt : 1;
-};
+काष्ठा sun6i_rtc_clk_data अणु
+	अचिन्हित दीर्घ rc_osc_rate;
+	अचिन्हित पूर्णांक fixed_prescaler : 16;
+	अचिन्हित पूर्णांक has_prescaler : 1;
+	अचिन्हित पूर्णांक has_out_clk : 1;
+	अचिन्हित पूर्णांक export_iosc : 1;
+	अचिन्हित पूर्णांक has_losc_en : 1;
+	अचिन्हित पूर्णांक has_स्वतः_swt : 1;
+पूर्ण;
 
-struct sun6i_rtc_dev {
-	struct rtc_device *rtc;
-	const struct sun6i_rtc_clk_data *data;
-	void __iomem *base;
-	int irq;
-	unsigned long alarm;
+काष्ठा sun6i_rtc_dev अणु
+	काष्ठा rtc_device *rtc;
+	स्थिर काष्ठा sun6i_rtc_clk_data *data;
+	व्योम __iomem *base;
+	पूर्णांक irq;
+	अचिन्हित दीर्घ alarm;
 
-	struct clk_hw hw;
-	struct clk_hw *int_osc;
-	struct clk *losc;
-	struct clk *ext_losc;
+	काष्ठा clk_hw hw;
+	काष्ठा clk_hw *पूर्णांक_osc;
+	काष्ठा clk *losc;
+	काष्ठा clk *ext_losc;
 
 	spinlock_t lock;
-};
+पूर्ण;
 
-static struct sun6i_rtc_dev *sun6i_rtc;
+अटल काष्ठा sun6i_rtc_dev *sun6i_rtc;
 
-static unsigned long sun6i_rtc_osc_recalc_rate(struct clk_hw *hw,
-					       unsigned long parent_rate)
-{
-	struct sun6i_rtc_dev *rtc = container_of(hw, struct sun6i_rtc_dev, hw);
+अटल अचिन्हित दीर्घ sun6i_rtc_osc_recalc_rate(काष्ठा clk_hw *hw,
+					       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा sun6i_rtc_dev *rtc = container_of(hw, काष्ठा sun6i_rtc_dev, hw);
 	u32 val = 0;
 
-	val = readl(rtc->base + SUN6I_LOSC_CTRL);
-	if (val & SUN6I_LOSC_CTRL_EXT_OSC)
-		return parent_rate;
+	val = पढ़ोl(rtc->base + SUN6I_LOSC_CTRL);
+	अगर (val & SUN6I_LOSC_CTRL_EXT_OSC)
+		वापस parent_rate;
 
-	if (rtc->data->fixed_prescaler)
+	अगर (rtc->data->fixed_prescaler)
 		parent_rate /= rtc->data->fixed_prescaler;
 
-	if (rtc->data->has_prescaler) {
-		val = readl(rtc->base + SUN6I_LOSC_CLK_PRESCAL);
+	अगर (rtc->data->has_prescaler) अणु
+		val = पढ़ोl(rtc->base + SUN6I_LOSC_CLK_PRESCAL);
 		val &= GENMASK(4, 0);
-	}
+	पूर्ण
 
-	return parent_rate / (val + 1);
-}
+	वापस parent_rate / (val + 1);
+पूर्ण
 
-static u8 sun6i_rtc_osc_get_parent(struct clk_hw *hw)
-{
-	struct sun6i_rtc_dev *rtc = container_of(hw, struct sun6i_rtc_dev, hw);
+अटल u8 sun6i_rtc_osc_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा sun6i_rtc_dev *rtc = container_of(hw, काष्ठा sun6i_rtc_dev, hw);
 
-	return readl(rtc->base + SUN6I_LOSC_CTRL) & SUN6I_LOSC_CTRL_EXT_OSC;
-}
+	वापस पढ़ोl(rtc->base + SUN6I_LOSC_CTRL) & SUN6I_LOSC_CTRL_EXT_OSC;
+पूर्ण
 
-static int sun6i_rtc_osc_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct sun6i_rtc_dev *rtc = container_of(hw, struct sun6i_rtc_dev, hw);
-	unsigned long flags;
+अटल पूर्णांक sun6i_rtc_osc_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा sun6i_rtc_dev *rtc = container_of(hw, काष्ठा sun6i_rtc_dev, hw);
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
-	if (index > 1)
-		return -EINVAL;
+	अगर (index > 1)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&rtc->lock, flags);
-	val = readl(rtc->base + SUN6I_LOSC_CTRL);
+	val = पढ़ोl(rtc->base + SUN6I_LOSC_CTRL);
 	val &= ~SUN6I_LOSC_CTRL_EXT_OSC;
 	val |= SUN6I_LOSC_CTRL_KEY;
 	val |= index ? SUN6I_LOSC_CTRL_EXT_OSC : 0;
-	if (rtc->data->has_losc_en) {
+	अगर (rtc->data->has_losc_en) अणु
 		val &= ~SUN6I_LOSC_CTRL_EXT_LOSC_EN;
 		val |= index ? SUN6I_LOSC_CTRL_EXT_LOSC_EN : 0;
-	}
-	writel(val, rtc->base + SUN6I_LOSC_CTRL);
+	पूर्ण
+	ग_लिखोl(val, rtc->base + SUN6I_LOSC_CTRL);
 	spin_unlock_irqrestore(&rtc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops sun6i_rtc_osc_ops = {
+अटल स्थिर काष्ठा clk_ops sun6i_rtc_osc_ops = अणु
 	.recalc_rate	= sun6i_rtc_osc_recalc_rate,
 
 	.get_parent	= sun6i_rtc_osc_get_parent,
 	.set_parent	= sun6i_rtc_osc_set_parent,
-};
+पूर्ण;
 
-static void __init sun6i_rtc_clk_init(struct device_node *node,
-				      const struct sun6i_rtc_clk_data *data)
-{
-	struct clk_hw_onecell_data *clk_data;
-	struct sun6i_rtc_dev *rtc;
-	struct clk_init_data init = {
+अटल व्योम __init sun6i_rtc_clk_init(काष्ठा device_node *node,
+				      स्थिर काष्ठा sun6i_rtc_clk_data *data)
+अणु
+	काष्ठा clk_hw_onecell_data *clk_data;
+	काष्ठा sun6i_rtc_dev *rtc;
+	काष्ठा clk_init_data init = अणु
 		.ops		= &sun6i_rtc_osc_ops,
 		.name		= "losc",
-	};
-	const char *iosc_name = "rtc-int-osc";
-	const char *clkout_name = "osc32k-out";
-	const char *parents[2];
+	पूर्ण;
+	स्थिर अक्षर *iosc_name = "rtc-int-osc";
+	स्थिर अक्षर *clkout_name = "osc32k-out";
+	स्थिर अक्षर *parents[2];
 	u32 reg;
 
-	rtc = kzalloc(sizeof(*rtc), GFP_KERNEL);
-	if (!rtc)
-		return;
+	rtc = kzalloc(माप(*rtc), GFP_KERNEL);
+	अगर (!rtc)
+		वापस;
 
 	rtc->data = data;
-	clk_data = kzalloc(struct_size(clk_data, hws, 3), GFP_KERNEL);
-	if (!clk_data) {
-		kfree(rtc);
-		return;
-	}
+	clk_data = kzalloc(काष्ठा_size(clk_data, hws, 3), GFP_KERNEL);
+	अगर (!clk_data) अणु
+		kमुक्त(rtc);
+		वापस;
+	पूर्ण
 
 	spin_lock_init(&rtc->lock);
 
 	rtc->base = of_io_request_and_map(node, 0, of_node_full_name(node));
-	if (IS_ERR(rtc->base)) {
+	अगर (IS_ERR(rtc->base)) अणु
 		pr_crit("Can't map RTC registers");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	reg = SUN6I_LOSC_CTRL_KEY;
-	if (rtc->data->has_auto_swt) {
-		/* Bypass auto-switch to int osc, on ext losc failure */
+	अगर (rtc->data->has_स्वतः_swt) अणु
+		/* Bypass स्वतः-चयन to पूर्णांक osc, on ext losc failure */
 		reg |= SUN6I_LOSC_CTRL_AUTO_SWT_BYPASS;
-		writel(reg, rtc->base + SUN6I_LOSC_CTRL);
-	}
+		ग_लिखोl(reg, rtc->base + SUN6I_LOSC_CTRL);
+	पूर्ण
 
-	/* Switch to the external, more precise, oscillator, if present */
-	if (of_get_property(node, "clocks", NULL)) {
+	/* Switch to the बाह्यal, more precise, oscillator, अगर present */
+	अगर (of_get_property(node, "clocks", शून्य)) अणु
 		reg |= SUN6I_LOSC_CTRL_EXT_OSC;
-		if (rtc->data->has_losc_en)
+		अगर (rtc->data->has_losc_en)
 			reg |= SUN6I_LOSC_CTRL_EXT_LOSC_EN;
-	}
-	writel(reg, rtc->base + SUN6I_LOSC_CTRL);
+	पूर्ण
+	ग_लिखोl(reg, rtc->base + SUN6I_LOSC_CTRL);
 
 	/* Yes, I know, this is ugly. */
 	sun6i_rtc = rtc;
 
-	/* Only read IOSC name from device tree if it is exported */
-	if (rtc->data->export_iosc)
-		of_property_read_string_index(node, "clock-output-names", 2,
+	/* Only पढ़ो IOSC name from device tree अगर it is exported */
+	अगर (rtc->data->export_iosc)
+		of_property_पढ़ो_string_index(node, "clock-output-names", 2,
 					      &iosc_name);
 
-	rtc->int_osc = clk_hw_register_fixed_rate_with_accuracy(NULL,
+	rtc->पूर्णांक_osc = clk_hw_रेजिस्टर_fixed_rate_with_accuracy(शून्य,
 								iosc_name,
-								NULL, 0,
+								शून्य, 0,
 								rtc->data->rc_osc_rate,
 								300000000);
-	if (IS_ERR(rtc->int_osc)) {
+	अगर (IS_ERR(rtc->पूर्णांक_osc)) अणु
 		pr_crit("Couldn't register the internal oscillator\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	parents[0] = clk_hw_get_name(rtc->int_osc);
-	/* If there is no external oscillator, this will be NULL and ... */
+	parents[0] = clk_hw_get_name(rtc->पूर्णांक_osc);
+	/* If there is no बाह्यal oscillator, this will be शून्य and ... */
 	parents[1] = of_clk_get_parent_name(node, 0);
 
 	rtc->hw.init = &init;
 
 	init.parent_names = parents;
-	/* ... number of clock parents will be 1. */
+	/* ... number of घड़ी parents will be 1. */
 	init.num_parents = of_clk_get_parent_count(node) + 1;
-	of_property_read_string_index(node, "clock-output-names", 0,
+	of_property_पढ़ो_string_index(node, "clock-output-names", 0,
 				      &init.name);
 
-	rtc->losc = clk_register(NULL, &rtc->hw);
-	if (IS_ERR(rtc->losc)) {
+	rtc->losc = clk_रेजिस्टर(शून्य, &rtc->hw);
+	अगर (IS_ERR(rtc->losc)) अणु
 		pr_crit("Couldn't register the LOSC clock\n");
-		goto err_register;
-	}
+		जाओ err_रेजिस्टर;
+	पूर्ण
 
-	of_property_read_string_index(node, "clock-output-names", 1,
+	of_property_पढ़ो_string_index(node, "clock-output-names", 1,
 				      &clkout_name);
-	rtc->ext_losc = clk_register_gate(NULL, clkout_name, init.name,
+	rtc->ext_losc = clk_रेजिस्टर_gate(शून्य, clkout_name, init.name,
 					  0, rtc->base + SUN6I_LOSC_OUT_GATING,
 					  SUN6I_LOSC_OUT_GATING_EN_OFFSET, 0,
 					  &rtc->lock);
-	if (IS_ERR(rtc->ext_losc)) {
+	अगर (IS_ERR(rtc->ext_losc)) अणु
 		pr_crit("Couldn't register the LOSC external gate\n");
-		goto err_register;
-	}
+		जाओ err_रेजिस्टर;
+	पूर्ण
 
 	clk_data->num = 2;
 	clk_data->hws[0] = &rtc->hw;
 	clk_data->hws[1] = __clk_get_hw(rtc->ext_losc);
-	if (rtc->data->export_iosc) {
-		clk_data->hws[2] = rtc->int_osc;
+	अगर (rtc->data->export_iosc) अणु
+		clk_data->hws[2] = rtc->पूर्णांक_osc;
 		clk_data->num = 3;
-	}
+	पूर्ण
 	of_clk_add_hw_provider(node, of_clk_hw_onecell_get, clk_data);
-	return;
+	वापस;
 
-err_register:
-	clk_hw_unregister_fixed_rate(rtc->int_osc);
+err_रेजिस्टर:
+	clk_hw_unरेजिस्टर_fixed_rate(rtc->पूर्णांक_osc);
 err:
-	kfree(clk_data);
-}
+	kमुक्त(clk_data);
+पूर्ण
 
-static const struct sun6i_rtc_clk_data sun6i_a31_rtc_data = {
+अटल स्थिर काष्ठा sun6i_rtc_clk_data sun6i_a31_rtc_data = अणु
 	.rc_osc_rate = 667000, /* datasheet says 600 ~ 700 KHz */
 	.has_prescaler = 1,
-};
+पूर्ण;
 
-static void __init sun6i_a31_rtc_clk_init(struct device_node *node)
-{
+अटल व्योम __init sun6i_a31_rtc_clk_init(काष्ठा device_node *node)
+अणु
 	sun6i_rtc_clk_init(node, &sun6i_a31_rtc_data);
-}
+पूर्ण
 CLK_OF_DECLARE_DRIVER(sun6i_a31_rtc_clk, "allwinner,sun6i-a31-rtc",
 		      sun6i_a31_rtc_clk_init);
 
-static const struct sun6i_rtc_clk_data sun8i_a23_rtc_data = {
+अटल स्थिर काष्ठा sun6i_rtc_clk_data sun8i_a23_rtc_data = अणु
 	.rc_osc_rate = 667000, /* datasheet says 600 ~ 700 KHz */
 	.has_prescaler = 1,
 	.has_out_clk = 1,
-};
+पूर्ण;
 
-static void __init sun8i_a23_rtc_clk_init(struct device_node *node)
-{
+अटल व्योम __init sun8i_a23_rtc_clk_init(काष्ठा device_node *node)
+अणु
 	sun6i_rtc_clk_init(node, &sun8i_a23_rtc_data);
-}
+पूर्ण
 CLK_OF_DECLARE_DRIVER(sun8i_a23_rtc_clk, "allwinner,sun8i-a23-rtc",
 		      sun8i_a23_rtc_clk_init);
 
-static const struct sun6i_rtc_clk_data sun8i_h3_rtc_data = {
+अटल स्थिर काष्ठा sun6i_rtc_clk_data sun8i_h3_rtc_data = अणु
 	.rc_osc_rate = 16000000,
 	.fixed_prescaler = 32,
 	.has_prescaler = 1,
 	.has_out_clk = 1,
 	.export_iosc = 1,
-};
+पूर्ण;
 
-static void __init sun8i_h3_rtc_clk_init(struct device_node *node)
-{
+अटल व्योम __init sun8i_h3_rtc_clk_init(काष्ठा device_node *node)
+अणु
 	sun6i_rtc_clk_init(node, &sun8i_h3_rtc_data);
-}
+पूर्ण
 CLK_OF_DECLARE_DRIVER(sun8i_h3_rtc_clk, "allwinner,sun8i-h3-rtc",
 		      sun8i_h3_rtc_clk_init);
-/* As far as we are concerned, clocks for H5 are the same as H3 */
+/* As far as we are concerned, घड़ीs क्रम H5 are the same as H3 */
 CLK_OF_DECLARE_DRIVER(sun50i_h5_rtc_clk, "allwinner,sun50i-h5-rtc",
 		      sun8i_h3_rtc_clk_init);
 
-static const struct sun6i_rtc_clk_data sun50i_h6_rtc_data = {
+अटल स्थिर काष्ठा sun6i_rtc_clk_data sun50i_h6_rtc_data = अणु
 	.rc_osc_rate = 16000000,
 	.fixed_prescaler = 32,
 	.has_prescaler = 1,
 	.has_out_clk = 1,
 	.export_iosc = 1,
 	.has_losc_en = 1,
-	.has_auto_swt = 1,
-};
+	.has_स्वतः_swt = 1,
+पूर्ण;
 
-static void __init sun50i_h6_rtc_clk_init(struct device_node *node)
-{
+अटल व्योम __init sun50i_h6_rtc_clk_init(काष्ठा device_node *node)
+अणु
 	sun6i_rtc_clk_init(node, &sun50i_h6_rtc_data);
-}
+पूर्ण
 CLK_OF_DECLARE_DRIVER(sun50i_h6_rtc_clk, "allwinner,sun50i-h6-rtc",
 		      sun50i_h6_rtc_clk_init);
 
 /*
  * The R40 user manual is self-conflicting on whether the prescaler is
- * fixed or configurable. The clock diagram shows it as fixed, but there
- * is also a configurable divider in the RTC block.
+ * fixed or configurable. The घड़ी diagram shows it as fixed, but there
+ * is also a configurable भागider in the RTC block.
  */
-static const struct sun6i_rtc_clk_data sun8i_r40_rtc_data = {
+अटल स्थिर काष्ठा sun6i_rtc_clk_data sun8i_r40_rtc_data = अणु
 	.rc_osc_rate = 16000000,
 	.fixed_prescaler = 512,
-};
-static void __init sun8i_r40_rtc_clk_init(struct device_node *node)
-{
+पूर्ण;
+अटल व्योम __init sun8i_r40_rtc_clk_init(काष्ठा device_node *node)
+अणु
 	sun6i_rtc_clk_init(node, &sun8i_r40_rtc_data);
-}
+पूर्ण
 CLK_OF_DECLARE_DRIVER(sun8i_r40_rtc_clk, "allwinner,sun8i-r40-rtc",
 		      sun8i_r40_rtc_clk_init);
 
-static const struct sun6i_rtc_clk_data sun8i_v3_rtc_data = {
+अटल स्थिर काष्ठा sun6i_rtc_clk_data sun8i_v3_rtc_data = अणु
 	.rc_osc_rate = 32000,
 	.has_out_clk = 1,
-};
+पूर्ण;
 
-static void __init sun8i_v3_rtc_clk_init(struct device_node *node)
-{
+अटल व्योम __init sun8i_v3_rtc_clk_init(काष्ठा device_node *node)
+अणु
 	sun6i_rtc_clk_init(node, &sun8i_v3_rtc_data);
-}
+पूर्ण
 CLK_OF_DECLARE_DRIVER(sun8i_v3_rtc_clk, "allwinner,sun8i-v3-rtc",
 		      sun8i_v3_rtc_clk_init);
 
-static irqreturn_t sun6i_rtc_alarmirq(int irq, void *id)
-{
-	struct sun6i_rtc_dev *chip = (struct sun6i_rtc_dev *) id;
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t sun6i_rtc_alarmirq(पूर्णांक irq, व्योम *id)
+अणु
+	काष्ठा sun6i_rtc_dev *chip = (काष्ठा sun6i_rtc_dev *) id;
+	irqवापस_t ret = IRQ_NONE;
 	u32 val;
 
 	spin_lock(&chip->lock);
-	val = readl(chip->base + SUN6I_ALRM_IRQ_STA);
+	val = पढ़ोl(chip->base + SUN6I_ALRM_IRQ_STA);
 
-	if (val & SUN6I_ALRM_IRQ_STA_CNT_IRQ_PEND) {
+	अगर (val & SUN6I_ALRM_IRQ_STA_CNT_IRQ_PEND) अणु
 		val |= SUN6I_ALRM_IRQ_STA_CNT_IRQ_PEND;
-		writel(val, chip->base + SUN6I_ALRM_IRQ_STA);
+		ग_लिखोl(val, chip->base + SUN6I_ALRM_IRQ_STA);
 
 		rtc_update_irq(chip->rtc, 1, RTC_AF | RTC_IRQF);
 
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 	spin_unlock(&chip->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sun6i_rtc_setaie(int to, struct sun6i_rtc_dev *chip)
-{
+अटल व्योम sun6i_rtc_setaie(पूर्णांक to, काष्ठा sun6i_rtc_dev *chip)
+अणु
 	u32 alrm_val = 0;
 	u32 alrm_irq_val = 0;
 	u32 alrm_wake_val = 0;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (to) {
+	अगर (to) अणु
 		alrm_val = SUN6I_ALRM_EN_CNT_EN;
 		alrm_irq_val = SUN6I_ALRM_IRQ_EN_CNT_IRQ_EN;
 		alrm_wake_val = SUN6I_ALARM_CONFIG_WAKEUP;
-	} else {
-		writel(SUN6I_ALRM_IRQ_STA_CNT_IRQ_PEND,
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(SUN6I_ALRM_IRQ_STA_CNT_IRQ_PEND,
 		       chip->base + SUN6I_ALRM_IRQ_STA);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&chip->lock, flags);
-	writel(alrm_val, chip->base + SUN6I_ALRM_EN);
-	writel(alrm_irq_val, chip->base + SUN6I_ALRM_IRQ_EN);
-	writel(alrm_wake_val, chip->base + SUN6I_ALARM_CONFIG);
+	ग_लिखोl(alrm_val, chip->base + SUN6I_ALRM_EN);
+	ग_लिखोl(alrm_irq_val, chip->base + SUN6I_ALRM_IRQ_EN);
+	ग_लिखोl(alrm_wake_val, chip->base + SUN6I_ALARM_CONFIG);
 	spin_unlock_irqrestore(&chip->lock, flags);
-}
+पूर्ण
 
-static int sun6i_rtc_gettime(struct device *dev, struct rtc_time *rtc_tm)
-{
-	struct sun6i_rtc_dev *chip = dev_get_drvdata(dev);
-	u32 date, time;
+अटल पूर्णांक sun6i_rtc_समय_लो(काष्ठा device *dev, काष्ठा rtc_समय *rtc_पंचांग)
+अणु
+	काष्ठा sun6i_rtc_dev *chip = dev_get_drvdata(dev);
+	u32 date, समय;
 
 	/*
-	 * read again in case it changes
+	 * पढ़ो again in हाल it changes
 	 */
-	do {
-		date = readl(chip->base + SUN6I_RTC_YMD);
-		time = readl(chip->base + SUN6I_RTC_HMS);
-	} while ((date != readl(chip->base + SUN6I_RTC_YMD)) ||
-		 (time != readl(chip->base + SUN6I_RTC_HMS)));
+	करो अणु
+		date = पढ़ोl(chip->base + SUN6I_RTC_YMD);
+		समय = पढ़ोl(chip->base + SUN6I_RTC_HMS);
+	पूर्ण जबतक ((date != पढ़ोl(chip->base + SUN6I_RTC_YMD)) ||
+		 (समय != पढ़ोl(chip->base + SUN6I_RTC_HMS)));
 
-	rtc_tm->tm_sec  = SUN6I_TIME_GET_SEC_VALUE(time);
-	rtc_tm->tm_min  = SUN6I_TIME_GET_MIN_VALUE(time);
-	rtc_tm->tm_hour = SUN6I_TIME_GET_HOUR_VALUE(time);
+	rtc_पंचांग->पंचांग_sec  = SUN6I_TIME_GET_SEC_VALUE(समय);
+	rtc_पंचांग->पंचांग_min  = SUN6I_TIME_GET_MIN_VALUE(समय);
+	rtc_पंचांग->पंचांग_hour = SUN6I_TIME_GET_HOUR_VALUE(समय);
 
-	rtc_tm->tm_mday = SUN6I_DATE_GET_DAY_VALUE(date);
-	rtc_tm->tm_mon  = SUN6I_DATE_GET_MON_VALUE(date);
-	rtc_tm->tm_year = SUN6I_DATE_GET_YEAR_VALUE(date);
+	rtc_पंचांग->पंचांग_mday = SUN6I_DATE_GET_DAY_VALUE(date);
+	rtc_पंचांग->पंचांग_mon  = SUN6I_DATE_GET_MON_VALUE(date);
+	rtc_पंचांग->पंचांग_year = SUN6I_DATE_GET_YEAR_VALUE(date);
 
-	rtc_tm->tm_mon  -= 1;
+	rtc_पंचांग->पंचांग_mon  -= 1;
 
 	/*
-	 * switch from (data_year->min)-relative offset to
+	 * चयन from (data_year->min)-relative offset to
 	 * a (1900)-relative one
 	 */
-	rtc_tm->tm_year += SUN6I_YEAR_OFF;
+	rtc_पंचांग->पंचांग_year += SUN6I_YEAR_OFF;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun6i_rtc_getalarm(struct device *dev, struct rtc_wkalrm *wkalrm)
-{
-	struct sun6i_rtc_dev *chip = dev_get_drvdata(dev);
-	unsigned long flags;
+अटल पूर्णांक sun6i_rtc_getalarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *wkalrm)
+अणु
+	काष्ठा sun6i_rtc_dev *chip = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 	u32 alrm_st;
 	u32 alrm_en;
 
 	spin_lock_irqsave(&chip->lock, flags);
-	alrm_en = readl(chip->base + SUN6I_ALRM_IRQ_EN);
-	alrm_st = readl(chip->base + SUN6I_ALRM_IRQ_STA);
+	alrm_en = पढ़ोl(chip->base + SUN6I_ALRM_IRQ_EN);
+	alrm_st = पढ़ोl(chip->base + SUN6I_ALRM_IRQ_STA);
 	spin_unlock_irqrestore(&chip->lock, flags);
 
 	wkalrm->enabled = !!(alrm_en & SUN6I_ALRM_EN_CNT_EN);
 	wkalrm->pending = !!(alrm_st & SUN6I_ALRM_EN_CNT_EN);
-	rtc_time64_to_tm(chip->alarm, &wkalrm->time);
+	rtc_समय64_to_पंचांग(chip->alarm, &wkalrm->समय);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun6i_rtc_setalarm(struct device *dev, struct rtc_wkalrm *wkalrm)
-{
-	struct sun6i_rtc_dev *chip = dev_get_drvdata(dev);
-	struct rtc_time *alrm_tm = &wkalrm->time;
-	struct rtc_time tm_now;
-	unsigned long time_now = 0;
-	unsigned long time_set = 0;
-	unsigned long time_gap = 0;
-	int ret = 0;
+अटल पूर्णांक sun6i_rtc_setalarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *wkalrm)
+अणु
+	काष्ठा sun6i_rtc_dev *chip = dev_get_drvdata(dev);
+	काष्ठा rtc_समय *alrm_पंचांग = &wkalrm->समय;
+	काष्ठा rtc_समय पंचांग_now;
+	अचिन्हित दीर्घ समय_now = 0;
+	अचिन्हित दीर्घ समय_set = 0;
+	अचिन्हित दीर्घ समय_gap = 0;
+	पूर्णांक ret = 0;
 
-	ret = sun6i_rtc_gettime(dev, &tm_now);
-	if (ret < 0) {
+	ret = sun6i_rtc_समय_लो(dev, &पंचांग_now);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Error in getting time\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	time_set = rtc_tm_to_time64(alrm_tm);
-	time_now = rtc_tm_to_time64(&tm_now);
-	if (time_set <= time_now) {
+	समय_set = rtc_पंचांग_to_समय64(alrm_पंचांग);
+	समय_now = rtc_पंचांग_to_समय64(&पंचांग_now);
+	अगर (समय_set <= समय_now) अणु
 		dev_err(dev, "Date to set in the past\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	time_gap = time_set - time_now;
+	समय_gap = समय_set - समय_now;
 
-	if (time_gap > U32_MAX) {
+	अगर (समय_gap > U32_MAX) अणु
 		dev_err(dev, "Date too far in the future\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sun6i_rtc_setaie(0, chip);
-	writel(0, chip->base + SUN6I_ALRM_COUNTER);
+	ग_लिखोl(0, chip->base + SUN6I_ALRM_COUNTER);
 	usleep_range(100, 300);
 
-	writel(time_gap, chip->base + SUN6I_ALRM_COUNTER);
-	chip->alarm = time_set;
+	ग_लिखोl(समय_gap, chip->base + SUN6I_ALRM_COUNTER);
+	chip->alarm = समय_set;
 
 	sun6i_rtc_setaie(wkalrm->enabled, chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun6i_rtc_wait(struct sun6i_rtc_dev *chip, int offset,
-			  unsigned int mask, unsigned int ms_timeout)
-{
-	const unsigned long timeout = jiffies + msecs_to_jiffies(ms_timeout);
+अटल पूर्णांक sun6i_rtc_रुको(काष्ठा sun6i_rtc_dev *chip, पूर्णांक offset,
+			  अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक ms_समयout)
+अणु
+	स्थिर अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(ms_समयout);
 	u32 reg;
 
-	do {
-		reg = readl(chip->base + offset);
+	करो अणु
+		reg = पढ़ोl(chip->base + offset);
 		reg &= mask;
 
-		if (!reg)
-			return 0;
+		अगर (!reg)
+			वापस 0;
 
-	} while (time_before(jiffies, timeout));
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int sun6i_rtc_settime(struct device *dev, struct rtc_time *rtc_tm)
-{
-	struct sun6i_rtc_dev *chip = dev_get_drvdata(dev);
+अटल पूर्णांक sun6i_rtc_समय_रखो(काष्ठा device *dev, काष्ठा rtc_समय *rtc_पंचांग)
+अणु
+	काष्ठा sun6i_rtc_dev *chip = dev_get_drvdata(dev);
 	u32 date = 0;
-	u32 time = 0;
+	u32 समय = 0;
 
-	rtc_tm->tm_year -= SUN6I_YEAR_OFF;
-	rtc_tm->tm_mon += 1;
+	rtc_पंचांग->पंचांग_year -= SUN6I_YEAR_OFF;
+	rtc_पंचांग->पंचांग_mon += 1;
 
-	date = SUN6I_DATE_SET_DAY_VALUE(rtc_tm->tm_mday) |
-		SUN6I_DATE_SET_MON_VALUE(rtc_tm->tm_mon)  |
-		SUN6I_DATE_SET_YEAR_VALUE(rtc_tm->tm_year);
+	date = SUN6I_DATE_SET_DAY_VALUE(rtc_पंचांग->पंचांग_mday) |
+		SUN6I_DATE_SET_MON_VALUE(rtc_पंचांग->पंचांग_mon)  |
+		SUN6I_DATE_SET_YEAR_VALUE(rtc_पंचांग->पंचांग_year);
 
-	if (is_leap_year(rtc_tm->tm_year + SUN6I_YEAR_MIN))
+	अगर (is_leap_year(rtc_पंचांग->पंचांग_year + SUN6I_YEAR_MIN))
 		date |= SUN6I_LEAP_SET_VALUE(1);
 
-	time = SUN6I_TIME_SET_SEC_VALUE(rtc_tm->tm_sec)  |
-		SUN6I_TIME_SET_MIN_VALUE(rtc_tm->tm_min)  |
-		SUN6I_TIME_SET_HOUR_VALUE(rtc_tm->tm_hour);
+	समय = SUN6I_TIME_SET_SEC_VALUE(rtc_पंचांग->पंचांग_sec)  |
+		SUN6I_TIME_SET_MIN_VALUE(rtc_पंचांग->पंचांग_min)  |
+		SUN6I_TIME_SET_HOUR_VALUE(rtc_पंचांग->पंचांग_hour);
 
-	/* Check whether registers are writable */
-	if (sun6i_rtc_wait(chip, SUN6I_LOSC_CTRL,
-			   SUN6I_LOSC_CTRL_ACC_MASK, 50)) {
+	/* Check whether रेजिस्टरs are writable */
+	अगर (sun6i_rtc_रुको(chip, SUN6I_LOSC_CTRL,
+			   SUN6I_LOSC_CTRL_ACC_MASK, 50)) अणु
 		dev_err(dev, "rtc is still busy.\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	writel(time, chip->base + SUN6I_RTC_HMS);
+	ग_लिखोl(समय, chip->base + SUN6I_RTC_HMS);
 
 	/*
-	 * After writing the RTC HH-MM-SS register, the
+	 * After writing the RTC HH-MM-SS रेजिस्टर, the
 	 * SUN6I_LOSC_CTRL_RTC_HMS_ACC bit is set and it will not
 	 * be cleared until the real writing operation is finished
 	 */
 
-	if (sun6i_rtc_wait(chip, SUN6I_LOSC_CTRL,
-			   SUN6I_LOSC_CTRL_RTC_HMS_ACC, 50)) {
+	अगर (sun6i_rtc_रुको(chip, SUN6I_LOSC_CTRL,
+			   SUN6I_LOSC_CTRL_RTC_HMS_ACC, 50)) अणु
 		dev_err(dev, "Failed to set rtc time.\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	writel(date, chip->base + SUN6I_RTC_YMD);
+	ग_लिखोl(date, chip->base + SUN6I_RTC_YMD);
 
 	/*
-	 * After writing the RTC YY-MM-DD register, the
+	 * After writing the RTC YY-MM-DD रेजिस्टर, the
 	 * SUN6I_LOSC_CTRL_RTC_YMD_ACC bit is set and it will not
 	 * be cleared until the real writing operation is finished
 	 */
 
-	if (sun6i_rtc_wait(chip, SUN6I_LOSC_CTRL,
-			   SUN6I_LOSC_CTRL_RTC_YMD_ACC, 50)) {
+	अगर (sun6i_rtc_रुको(chip, SUN6I_LOSC_CTRL,
+			   SUN6I_LOSC_CTRL_RTC_YMD_ACC, 50)) अणु
 		dev_err(dev, "Failed to set rtc time.\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun6i_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	struct sun6i_rtc_dev *chip = dev_get_drvdata(dev);
+अटल पूर्णांक sun6i_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा sun6i_rtc_dev *chip = dev_get_drvdata(dev);
 
-	if (!enabled)
+	अगर (!enabled)
 		sun6i_rtc_setaie(enabled, chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops sun6i_rtc_ops = {
-	.read_time		= sun6i_rtc_gettime,
-	.set_time		= sun6i_rtc_settime,
-	.read_alarm		= sun6i_rtc_getalarm,
+अटल स्थिर काष्ठा rtc_class_ops sun6i_rtc_ops = अणु
+	.पढ़ो_समय		= sun6i_rtc_समय_लो,
+	.set_समय		= sun6i_rtc_समय_रखो,
+	.पढ़ो_alarm		= sun6i_rtc_getalarm,
 	.set_alarm		= sun6i_rtc_setalarm,
 	.alarm_irq_enable	= sun6i_rtc_alarm_irq_enable
-};
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 /* Enable IRQ wake on suspend, to wake up from RTC. */
-static int sun6i_rtc_suspend(struct device *dev)
-{
-	struct sun6i_rtc_dev *chip = dev_get_drvdata(dev);
+अटल पूर्णांक sun6i_rtc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sun6i_rtc_dev *chip = dev_get_drvdata(dev);
 
-	if (device_may_wakeup(dev))
+	अगर (device_may_wakeup(dev))
 		enable_irq_wake(chip->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Disable IRQ wake on resume. */
-static int sun6i_rtc_resume(struct device *dev)
-{
-	struct sun6i_rtc_dev *chip = dev_get_drvdata(dev);
+अटल पूर्णांक sun6i_rtc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sun6i_rtc_dev *chip = dev_get_drvdata(dev);
 
-	if (device_may_wakeup(dev))
+	अगर (device_may_wakeup(dev))
 		disable_irq_wake(chip->irq);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(sun6i_rtc_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(sun6i_rtc_pm_ops,
 	sun6i_rtc_suspend, sun6i_rtc_resume);
 
-static int sun6i_rtc_probe(struct platform_device *pdev)
-{
-	struct sun6i_rtc_dev *chip = sun6i_rtc;
-	int ret;
+अटल पूर्णांक sun6i_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sun6i_rtc_dev *chip = sun6i_rtc;
+	पूर्णांक ret;
 
-	if (!chip)
-		return -ENODEV;
+	अगर (!chip)
+		वापस -ENODEV;
 
-	platform_set_drvdata(pdev, chip);
+	platक्रमm_set_drvdata(pdev, chip);
 
-	chip->irq = platform_get_irq(pdev, 0);
-	if (chip->irq < 0)
-		return chip->irq;
+	chip->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (chip->irq < 0)
+		वापस chip->irq;
 
 	ret = devm_request_irq(&pdev->dev, chip->irq, sun6i_rtc_alarmirq,
 			       0, dev_name(&pdev->dev), chip);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Could not request IRQ\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* clear the alarm counter value */
-	writel(0, chip->base + SUN6I_ALRM_COUNTER);
+	ग_लिखोl(0, chip->base + SUN6I_ALRM_COUNTER);
 
 	/* disable counter alarm */
-	writel(0, chip->base + SUN6I_ALRM_EN);
+	ग_लिखोl(0, chip->base + SUN6I_ALRM_EN);
 
-	/* disable counter alarm interrupt */
-	writel(0, chip->base + SUN6I_ALRM_IRQ_EN);
+	/* disable counter alarm पूर्णांकerrupt */
+	ग_लिखोl(0, chip->base + SUN6I_ALRM_IRQ_EN);
 
 	/* disable week alarm */
-	writel(0, chip->base + SUN6I_ALRM1_EN);
+	ग_लिखोl(0, chip->base + SUN6I_ALRM1_EN);
 
-	/* disable week alarm interrupt */
-	writel(0, chip->base + SUN6I_ALRM1_IRQ_EN);
+	/* disable week alarm पूर्णांकerrupt */
+	ग_लिखोl(0, chip->base + SUN6I_ALRM1_IRQ_EN);
 
-	/* clear counter alarm pending interrupts */
-	writel(SUN6I_ALRM_IRQ_STA_CNT_IRQ_PEND,
+	/* clear counter alarm pending पूर्णांकerrupts */
+	ग_लिखोl(SUN6I_ALRM_IRQ_STA_CNT_IRQ_PEND,
 	       chip->base + SUN6I_ALRM_IRQ_STA);
 
-	/* clear week alarm pending interrupts */
-	writel(SUN6I_ALRM1_IRQ_STA_WEEK_IRQ_PEND,
+	/* clear week alarm pending पूर्णांकerrupts */
+	ग_लिखोl(SUN6I_ALRM1_IRQ_STA_WEEK_IRQ_PEND,
 	       chip->base + SUN6I_ALRM1_IRQ_STA);
 
 	/* disable alarm wakeup */
-	writel(0, chip->base + SUN6I_ALARM_CONFIG);
+	ग_लिखोl(0, chip->base + SUN6I_ALARM_CONFIG);
 
 	clk_prepare_enable(chip->losc);
 
 	device_init_wakeup(&pdev->dev, 1);
 
 	chip->rtc = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(chip->rtc))
-		return PTR_ERR(chip->rtc);
+	अगर (IS_ERR(chip->rtc))
+		वापस PTR_ERR(chip->rtc);
 
 	chip->rtc->ops = &sun6i_rtc_ops;
 	chip->rtc->range_max = 2019686399LL; /* 2033-12-31 23:59:59 */
 
-	ret = devm_rtc_register_device(chip->rtc);
-	if (ret)
-		return ret;
+	ret = devm_rtc_रेजिस्टर_device(chip->rtc);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(&pdev->dev, "RTC enabled\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * As far as RTC functionality goes, all models are the same. The
- * datasheets claim that different models have different number of
- * registers available for non-volatile storage, but experiments show
- * that all SoCs have 16 registers available for this purpose.
+ * datasheets claim that dअगरferent models have dअगरferent number of
+ * रेजिस्टरs available क्रम non-अस्थिर storage, but experiments show
+ * that all SoCs have 16 रेजिस्टरs available क्रम this purpose.
  */
-static const struct of_device_id sun6i_rtc_dt_ids[] = {
-	{ .compatible = "allwinner,sun6i-a31-rtc" },
-	{ .compatible = "allwinner,sun8i-a23-rtc" },
-	{ .compatible = "allwinner,sun8i-h3-rtc" },
-	{ .compatible = "allwinner,sun8i-r40-rtc" },
-	{ .compatible = "allwinner,sun8i-v3-rtc" },
-	{ .compatible = "allwinner,sun50i-h5-rtc" },
-	{ .compatible = "allwinner,sun50i-h6-rtc" },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id sun6i_rtc_dt_ids[] = अणु
+	अणु .compatible = "allwinner,sun6i-a31-rtc" पूर्ण,
+	अणु .compatible = "allwinner,sun8i-a23-rtc" पूर्ण,
+	अणु .compatible = "allwinner,sun8i-h3-rtc" पूर्ण,
+	अणु .compatible = "allwinner,sun8i-r40-rtc" पूर्ण,
+	अणु .compatible = "allwinner,sun8i-v3-rtc" पूर्ण,
+	अणु .compatible = "allwinner,sun50i-h5-rtc" पूर्ण,
+	अणु .compatible = "allwinner,sun50i-h6-rtc" पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sun6i_rtc_dt_ids);
 
-static struct platform_driver sun6i_rtc_driver = {
+अटल काष्ठा platक्रमm_driver sun6i_rtc_driver = अणु
 	.probe		= sun6i_rtc_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= "sun6i-rtc",
 		.of_match_table = sun6i_rtc_dt_ids,
 		.pm = &sun6i_rtc_pm_ops,
-	},
-};
-builtin_platform_driver(sun6i_rtc_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(sun6i_rtc_driver);

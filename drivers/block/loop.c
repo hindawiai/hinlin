@@ -1,26 +1,27 @@
+<शैली गुरु>
 /*
  *  linux/drivers/block/loop.c
  *
- *  Written by Theodore Ts'o, 3/29/93
+ *  Written by Theoकरोre Ts'o, 3/29/93
  *
- * Copyright 1993 by Theodore Ts'o.  Redistribution of this file is
+ * Copyright 1993 by Theoकरोre Ts'o.  Redistribution of this file is
  * permitted under the GNU General Public License.
  *
  * DES encryption plus some minor changes by Werner Almesberger, 30-MAY-1993
  * more DES encryption plus IDEA encryption by Nicholas J. Leon, June 20, 1996
  *
- * Modularized and updated for 1.1.16 kernel - Mitch Dsouza 28th May 1994
- * Adapted for 1.3.59 kernel - Andries Brouwer, 1 Feb 1996
+ * Modularized and updated क्रम 1.1.16 kernel - Mitch Dsouza 28th May 1994
+ * Adapted क्रम 1.3.59 kernel - Andries Brouwer, 1 Feb 1996
  *
- * Fixed do_loop_request() re-entrancy - Vincent.Renardias@waw.com Mar 20, 1997
+ * Fixed करो_loop_request() re-entrancy - Vincent.Renardias@waw.com Mar 20, 1997
  *
- * Added devfs support - Richard Gooch <rgooch@atnf.csiro.au> 16-Jan-1998
+ * Added devfs support - Riअक्षरd Gooch <rgooch@atnf.csiro.au> 16-Jan-1998
  *
  * Handle sparse backing files correctly - Kenn Humborg, Jun 28, 1998
  *
  * Loadable modules and other fixes by AK, 1998
  *
- * Make real block number available to downstream transfer functions, enables
+ * Make real block number available to करोwnstream transfer functions, enables
  * CBC (and relatives) mode encryption requiring unique IVs per data block.
  * Reed H. Petty, rhp@draper.net
  *
@@ -29,18 +30,18 @@
  *
  * Maximum number of loop devices when compiled-in now selectable by passing
  * max_loop=<1-255> to the kernel on boot.
- * Erik I. Bolsø, <eriki@himolde.no>, Oct 31, 1999
+ * Erik I. Bolsथच, <eriki@himolde.no>, Oct 31, 1999
  *
- * Completely rewrite request handling to be make_request_fn style and
- * non blocking, pushing work to a helper thread. Lots of fixes from
+ * Completely reग_लिखो request handling to be make_request_fn style and
+ * non blocking, pushing work to a helper thपढ़ो. Lots of fixes from
  * Al Viro too.
  * Jens Axboe <axboe@suse.de>, Nov 2000
  *
  * Support up to 256 loop devices
  * Heinz Mauelshagen <mge@sistina.com>, Feb 2002
  *
- * Support for falling back on the write file operation when the address space
- * operations write_begin is not available on the backing filesystem.
+ * Support क्रम falling back on the ग_लिखो file operation when the address space
+ * operations ग_लिखो_begin is not available on the backing fileप्रणाली.
  * Anton Altaparmakov, 16 Feb 2005
  *
  * Still To Fix:
@@ -49,349 +50,349 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/sched.h>
-#include <linux/fs.h>
-#include <linux/pagemap.h>
-#include <linux/file.h>
-#include <linux/stat.h>
-#include <linux/errno.h>
-#include <linux/major.h>
-#include <linux/wait.h>
-#include <linux/blkdev.h>
-#include <linux/blkpg.h>
-#include <linux/init.h>
-#include <linux/swap.h>
-#include <linux/slab.h>
-#include <linux/compat.h>
-#include <linux/suspend.h>
-#include <linux/freezer.h>
-#include <linux/mutex.h>
-#include <linux/writeback.h>
-#include <linux/completion.h>
-#include <linux/highmem.h>
-#include <linux/kthread.h>
-#include <linux/splice.h>
-#include <linux/sysfs.h>
-#include <linux/miscdevice.h>
-#include <linux/falloc.h>
-#include <linux/uio.h>
-#include <linux/ioprio.h>
-#include <linux/blk-cgroup.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/file.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/major.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/blkpg.h>
+#समावेश <linux/init.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/splice.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/fभाग.स>
+#समावेश <linux/uपन.स>
+#समावेश <linux/ioprपन.स>
+#समावेश <linux/blk-cgroup.h>
 
-#include "loop.h"
+#समावेश "loop.h"
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-static DEFINE_IDR(loop_index_idr);
-static DEFINE_MUTEX(loop_ctl_mutex);
+अटल DEFINE_IDR(loop_index_idr);
+अटल DEFINE_MUTEX(loop_ctl_mutex);
 
-static int max_part;
-static int part_shift;
+अटल पूर्णांक max_part;
+अटल पूर्णांक part_shअगरt;
 
-static int transfer_xor(struct loop_device *lo, int cmd,
-			struct page *raw_page, unsigned raw_off,
-			struct page *loop_page, unsigned loop_off,
-			int size, sector_t real_block)
-{
-	char *raw_buf = kmap_atomic(raw_page) + raw_off;
-	char *loop_buf = kmap_atomic(loop_page) + loop_off;
-	char *in, *out, *key;
-	int i, keysize;
+अटल पूर्णांक transfer_xor(काष्ठा loop_device *lo, पूर्णांक cmd,
+			काष्ठा page *raw_page, अचिन्हित raw_off,
+			काष्ठा page *loop_page, अचिन्हित loop_off,
+			पूर्णांक size, sector_t real_block)
+अणु
+	अक्षर *raw_buf = kmap_atomic(raw_page) + raw_off;
+	अक्षर *loop_buf = kmap_atomic(loop_page) + loop_off;
+	अक्षर *in, *out, *key;
+	पूर्णांक i, keysize;
 
-	if (cmd == READ) {
+	अगर (cmd == READ) अणु
 		in = raw_buf;
 		out = loop_buf;
-	} else {
+	पूर्ण अन्यथा अणु
 		in = loop_buf;
 		out = raw_buf;
-	}
+	पूर्ण
 
 	key = lo->lo_encrypt_key;
 	keysize = lo->lo_encrypt_key_size;
-	for (i = 0; i < size; i++)
+	क्रम (i = 0; i < size; i++)
 		*out++ = *in++ ^ key[(i & 511) % keysize];
 
 	kunmap_atomic(loop_buf);
 	kunmap_atomic(raw_buf);
 	cond_resched();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xor_init(struct loop_device *lo, const struct loop_info64 *info)
-{
-	if (unlikely(info->lo_encrypt_key_size <= 0))
-		return -EINVAL;
-	return 0;
-}
+अटल पूर्णांक xor_init(काष्ठा loop_device *lo, स्थिर काष्ठा loop_info64 *info)
+अणु
+	अगर (unlikely(info->lo_encrypt_key_size <= 0))
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static struct loop_func_table none_funcs = {
+अटल काष्ठा loop_func_table none_funcs = अणु
 	.number = LO_CRYPT_NONE,
-}; 
+पूर्ण; 
 
-static struct loop_func_table xor_funcs = {
+अटल काष्ठा loop_func_table xor_funcs = अणु
 	.number = LO_CRYPT_XOR,
 	.transfer = transfer_xor,
 	.init = xor_init
-}; 
+पूर्ण; 
 
 /* xfer_funcs[0] is special - its release function is never called */
-static struct loop_func_table *xfer_funcs[MAX_LO_CRYPT] = {
+अटल काष्ठा loop_func_table *xfer_funcs[MAX_LO_CRYPT] = अणु
 	&none_funcs,
 	&xor_funcs
-};
+पूर्ण;
 
-static loff_t get_size(loff_t offset, loff_t sizelimit, struct file *file)
-{
+अटल loff_t get_size(loff_t offset, loff_t sizelimit, काष्ठा file *file)
+अणु
 	loff_t loopsize;
 
 	/* Compute loopsize in bytes */
-	loopsize = i_size_read(file->f_mapping->host);
-	if (offset > 0)
+	loopsize = i_size_पढ़ो(file->f_mapping->host);
+	अगर (offset > 0)
 		loopsize -= offset;
 	/* offset is beyond i_size, weird but possible */
-	if (loopsize < 0)
-		return 0;
+	अगर (loopsize < 0)
+		वापस 0;
 
-	if (sizelimit > 0 && sizelimit < loopsize)
+	अगर (sizelimit > 0 && sizelimit < loopsize)
 		loopsize = sizelimit;
 	/*
-	 * Unfortunately, if we want to do I/O on the device,
-	 * the number of 512-byte sectors has to fit into a sector_t.
+	 * Unक्रमtunately, अगर we want to करो I/O on the device,
+	 * the number of 512-byte sectors has to fit पूर्णांकo a sector_t.
 	 */
-	return loopsize >> 9;
-}
+	वापस loopsize >> 9;
+पूर्ण
 
-static loff_t get_loop_size(struct loop_device *lo, struct file *file)
-{
-	return get_size(lo->lo_offset, lo->lo_sizelimit, file);
-}
+अटल loff_t get_loop_size(काष्ठा loop_device *lo, काष्ठा file *file)
+अणु
+	वापस get_size(lo->lo_offset, lo->lo_sizelimit, file);
+पूर्ण
 
-static void __loop_update_dio(struct loop_device *lo, bool dio)
-{
-	struct file *file = lo->lo_backing_file;
-	struct address_space *mapping = file->f_mapping;
-	struct inode *inode = mapping->host;
-	unsigned short sb_bsize = 0;
-	unsigned dio_align = 0;
+अटल व्योम __loop_update_dio(काष्ठा loop_device *lo, bool dio)
+अणु
+	काष्ठा file *file = lo->lo_backing_file;
+	काष्ठा address_space *mapping = file->f_mapping;
+	काष्ठा inode *inode = mapping->host;
+	अचिन्हित लघु sb_bsize = 0;
+	अचिन्हित dio_align = 0;
 	bool use_dio;
 
-	if (inode->i_sb->s_bdev) {
+	अगर (inode->i_sb->s_bdev) अणु
 		sb_bsize = bdev_logical_block_size(inode->i_sb->s_bdev);
 		dio_align = sb_bsize - 1;
-	}
+	पूर्ण
 
 	/*
-	 * We support direct I/O only if lo_offset is aligned with the
+	 * We support direct I/O only अगर lo_offset is aligned with the
 	 * logical I/O size of backing device, and the logical block
 	 * size of loop is bigger than the backing device's and the loop
-	 * needn't transform transfer.
+	 * needn't transक्रमm transfer.
 	 *
 	 * TODO: the above condition may be loosed in the future, and
-	 * direct I/O may be switched runtime at that time because most
+	 * direct I/O may be चयनed runसमय at that समय because most
 	 * of requests in sane applications should be PAGE_SIZE aligned
 	 */
-	if (dio) {
-		if (queue_logical_block_size(lo->lo_queue) >= sb_bsize &&
+	अगर (dio) अणु
+		अगर (queue_logical_block_size(lo->lo_queue) >= sb_bsize &&
 				!(lo->lo_offset & dio_align) &&
 				mapping->a_ops->direct_IO &&
 				!lo->transfer)
 			use_dio = true;
-		else
+		अन्यथा
 			use_dio = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		use_dio = false;
-	}
+	पूर्ण
 
-	if (lo->use_dio == use_dio)
-		return;
+	अगर (lo->use_dio == use_dio)
+		वापस;
 
-	/* flush dirty pages before changing direct IO */
+	/* flush dirty pages beक्रमe changing direct IO */
 	vfs_fsync(file, 0);
 
 	/*
-	 * The flag of LO_FLAGS_DIRECT_IO is handled similarly with
+	 * The flag of LO_FLAGS_सूचीECT_IO is handled similarly with
 	 * LO_FLAGS_READ_ONLY, both are set from kernel, and losetup
 	 * will get updated by ioctl(LOOP_GET_STATUS)
 	 */
-	if (lo->lo_state == Lo_bound)
-		blk_mq_freeze_queue(lo->lo_queue);
+	अगर (lo->lo_state == Lo_bound)
+		blk_mq_मुक्तze_queue(lo->lo_queue);
 	lo->use_dio = use_dio;
-	if (use_dio) {
+	अगर (use_dio) अणु
 		blk_queue_flag_clear(QUEUE_FLAG_NOMERGES, lo->lo_queue);
-		lo->lo_flags |= LO_FLAGS_DIRECT_IO;
-	} else {
+		lo->lo_flags |= LO_FLAGS_सूचीECT_IO;
+	पूर्ण अन्यथा अणु
 		blk_queue_flag_set(QUEUE_FLAG_NOMERGES, lo->lo_queue);
-		lo->lo_flags &= ~LO_FLAGS_DIRECT_IO;
-	}
-	if (lo->lo_state == Lo_bound)
-		blk_mq_unfreeze_queue(lo->lo_queue);
-}
+		lo->lo_flags &= ~LO_FLAGS_सूचीECT_IO;
+	पूर्ण
+	अगर (lo->lo_state == Lo_bound)
+		blk_mq_unमुक्तze_queue(lo->lo_queue);
+पूर्ण
 
 /**
  * loop_validate_block_size() - validates the passed in block size
  * @bsize: size to validate
  */
-static int
-loop_validate_block_size(unsigned short bsize)
-{
-	if (bsize < 512 || bsize > PAGE_SIZE || !is_power_of_2(bsize))
-		return -EINVAL;
+अटल पूर्णांक
+loop_validate_block_size(अचिन्हित लघु bsize)
+अणु
+	अगर (bsize < 512 || bsize > PAGE_SIZE || !is_घातer_of_2(bsize))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * loop_set_size() - sets device size and notifies userspace
- * @lo: struct loop_device to set the size for
+ * loop_set_size() - sets device size and notअगरies userspace
+ * @lo: काष्ठा loop_device to set the size क्रम
  * @size: new size of the loop device
  *
- * Callers must validate that the size passed into this function fits into
+ * Callers must validate that the size passed पूर्णांकo this function fits पूर्णांकo
  * a sector_t, eg using loop_validate_size()
  */
-static void loop_set_size(struct loop_device *lo, loff_t size)
-{
-	if (!set_capacity_and_notify(lo->lo_disk, size))
+अटल व्योम loop_set_size(काष्ठा loop_device *lo, loff_t size)
+अणु
+	अगर (!set_capacity_and_notअगरy(lo->lo_disk, size))
 		kobject_uevent(&disk_to_dev(lo->lo_disk)->kobj, KOBJ_CHANGE);
-}
+पूर्ण
 
-static inline int
-lo_do_transfer(struct loop_device *lo, int cmd,
-	       struct page *rpage, unsigned roffs,
-	       struct page *lpage, unsigned loffs,
-	       int size, sector_t rblock)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक
+lo_करो_transfer(काष्ठा loop_device *lo, पूर्णांक cmd,
+	       काष्ठा page *rpage, अचिन्हित roffs,
+	       काष्ठा page *lpage, अचिन्हित loffs,
+	       पूर्णांक size, sector_t rblock)
+अणु
+	पूर्णांक ret;
 
 	ret = lo->transfer(lo, cmd, rpage, roffs, lpage, loffs, size, rblock);
-	if (likely(!ret))
-		return 0;
+	अगर (likely(!ret))
+		वापस 0;
 
-	printk_ratelimited(KERN_ERR
+	prपूर्णांकk_ratelimited(KERN_ERR
 		"loop: Transfer error at byte offset %llu, length %i.\n",
-		(unsigned long long)rblock << 9, size);
-	return ret;
-}
+		(अचिन्हित दीर्घ दीर्घ)rblock << 9, size);
+	वापस ret;
+पूर्ण
 
-static int lo_write_bvec(struct file *file, struct bio_vec *bvec, loff_t *ppos)
-{
-	struct iov_iter i;
-	ssize_t bw;
+अटल पूर्णांक lo_ग_लिखो_bvec(काष्ठा file *file, काष्ठा bio_vec *bvec, loff_t *ppos)
+अणु
+	काष्ठा iov_iter i;
+	sमाप_प्रकार bw;
 
 	iov_iter_bvec(&i, WRITE, bvec, 1, bvec->bv_len);
 
-	file_start_write(file);
-	bw = vfs_iter_write(file, &i, ppos, 0);
-	file_end_write(file);
+	file_start_ग_लिखो(file);
+	bw = vfs_iter_ग_लिखो(file, &i, ppos, 0);
+	file_end_ग_लिखो(file);
 
-	if (likely(bw ==  bvec->bv_len))
-		return 0;
+	अगर (likely(bw ==  bvec->bv_len))
+		वापस 0;
 
-	printk_ratelimited(KERN_ERR
+	prपूर्णांकk_ratelimited(KERN_ERR
 		"loop: Write error at byte offset %llu, length %i.\n",
-		(unsigned long long)*ppos, bvec->bv_len);
-	if (bw >= 0)
+		(अचिन्हित दीर्घ दीर्घ)*ppos, bvec->bv_len);
+	अगर (bw >= 0)
 		bw = -EIO;
-	return bw;
-}
+	वापस bw;
+पूर्ण
 
-static int lo_write_simple(struct loop_device *lo, struct request *rq,
+अटल पूर्णांक lo_ग_लिखो_simple(काष्ठा loop_device *lo, काष्ठा request *rq,
 		loff_t pos)
-{
-	struct bio_vec bvec;
-	struct req_iterator iter;
-	int ret = 0;
+अणु
+	काष्ठा bio_vec bvec;
+	काष्ठा req_iterator iter;
+	पूर्णांक ret = 0;
 
-	rq_for_each_segment(bvec, rq, iter) {
-		ret = lo_write_bvec(lo->lo_backing_file, &bvec, &pos);
-		if (ret < 0)
-			break;
+	rq_क्रम_each_segment(bvec, rq, iter) अणु
+		ret = lo_ग_लिखो_bvec(lo->lo_backing_file, &bvec, &pos);
+		अगर (ret < 0)
+			अवरोध;
 		cond_resched();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This is the slow, transforming version that needs to double buffer the
- * data as it cannot do the transformations in place without having direct
+ * This is the slow, transक्रमming version that needs to द्विगुन buffer the
+ * data as it cannot करो the transक्रमmations in place without having direct
  * access to the destination pages of the backing file.
  */
-static int lo_write_transfer(struct loop_device *lo, struct request *rq,
+अटल पूर्णांक lo_ग_लिखो_transfer(काष्ठा loop_device *lo, काष्ठा request *rq,
 		loff_t pos)
-{
-	struct bio_vec bvec, b;
-	struct req_iterator iter;
-	struct page *page;
-	int ret = 0;
+अणु
+	काष्ठा bio_vec bvec, b;
+	काष्ठा req_iterator iter;
+	काष्ठा page *page;
+	पूर्णांक ret = 0;
 
 	page = alloc_page(GFP_NOIO);
-	if (unlikely(!page))
-		return -ENOMEM;
+	अगर (unlikely(!page))
+		वापस -ENOMEM;
 
-	rq_for_each_segment(bvec, rq, iter) {
-		ret = lo_do_transfer(lo, WRITE, page, 0, bvec.bv_page,
+	rq_क्रम_each_segment(bvec, rq, iter) अणु
+		ret = lo_करो_transfer(lo, WRITE, page, 0, bvec.bv_page,
 			bvec.bv_offset, bvec.bv_len, pos >> 9);
-		if (unlikely(ret))
-			break;
+		अगर (unlikely(ret))
+			अवरोध;
 
 		b.bv_page = page;
 		b.bv_offset = 0;
 		b.bv_len = bvec.bv_len;
-		ret = lo_write_bvec(lo->lo_backing_file, &b, &pos);
-		if (ret < 0)
-			break;
-	}
+		ret = lo_ग_लिखो_bvec(lo->lo_backing_file, &b, &pos);
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
 
-	__free_page(page);
-	return ret;
-}
+	__मुक्त_page(page);
+	वापस ret;
+पूर्ण
 
-static int lo_read_simple(struct loop_device *lo, struct request *rq,
+अटल पूर्णांक lo_पढ़ो_simple(काष्ठा loop_device *lo, काष्ठा request *rq,
 		loff_t pos)
-{
-	struct bio_vec bvec;
-	struct req_iterator iter;
-	struct iov_iter i;
-	ssize_t len;
+अणु
+	काष्ठा bio_vec bvec;
+	काष्ठा req_iterator iter;
+	काष्ठा iov_iter i;
+	sमाप_प्रकार len;
 
-	rq_for_each_segment(bvec, rq, iter) {
+	rq_क्रम_each_segment(bvec, rq, iter) अणु
 		iov_iter_bvec(&i, READ, &bvec, 1, bvec.bv_len);
-		len = vfs_iter_read(lo->lo_backing_file, &i, &pos, 0);
-		if (len < 0)
-			return len;
+		len = vfs_iter_पढ़ो(lo->lo_backing_file, &i, &pos, 0);
+		अगर (len < 0)
+			वापस len;
 
 		flush_dcache_page(bvec.bv_page);
 
-		if (len != bvec.bv_len) {
-			struct bio *bio;
+		अगर (len != bvec.bv_len) अणु
+			काष्ठा bio *bio;
 
-			__rq_for_each_bio(bio, rq)
+			__rq_क्रम_each_bio(bio, rq)
 				zero_fill_bio(bio);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		cond_resched();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lo_read_transfer(struct loop_device *lo, struct request *rq,
+अटल पूर्णांक lo_पढ़ो_transfer(काष्ठा loop_device *lo, काष्ठा request *rq,
 		loff_t pos)
-{
-	struct bio_vec bvec, b;
-	struct req_iterator iter;
-	struct iov_iter i;
-	struct page *page;
-	ssize_t len;
-	int ret = 0;
+अणु
+	काष्ठा bio_vec bvec, b;
+	काष्ठा req_iterator iter;
+	काष्ठा iov_iter i;
+	काष्ठा page *page;
+	sमाप_प्रकार len;
+	पूर्णांक ret = 0;
 
 	page = alloc_page(GFP_NOIO);
-	if (unlikely(!page))
-		return -ENOMEM;
+	अगर (unlikely(!page))
+		वापस -ENOMEM;
 
-	rq_for_each_segment(bvec, rq, iter) {
+	rq_क्रम_each_segment(bvec, rq, iter) अणु
 		loff_t offset = pos;
 
 		b.bv_page = page;
@@ -399,174 +400,174 @@ static int lo_read_transfer(struct loop_device *lo, struct request *rq,
 		b.bv_len = bvec.bv_len;
 
 		iov_iter_bvec(&i, READ, &b, 1, b.bv_len);
-		len = vfs_iter_read(lo->lo_backing_file, &i, &pos, 0);
-		if (len < 0) {
+		len = vfs_iter_पढ़ो(lo->lo_backing_file, &i, &pos, 0);
+		अगर (len < 0) अणु
 			ret = len;
-			goto out_free_page;
-		}
+			जाओ out_मुक्त_page;
+		पूर्ण
 
-		ret = lo_do_transfer(lo, READ, page, 0, bvec.bv_page,
+		ret = lo_करो_transfer(lo, READ, page, 0, bvec.bv_page,
 			bvec.bv_offset, len, offset >> 9);
-		if (ret)
-			goto out_free_page;
+		अगर (ret)
+			जाओ out_मुक्त_page;
 
 		flush_dcache_page(bvec.bv_page);
 
-		if (len != bvec.bv_len) {
-			struct bio *bio;
+		अगर (len != bvec.bv_len) अणु
+			काष्ठा bio *bio;
 
-			__rq_for_each_bio(bio, rq)
+			__rq_क्रम_each_bio(bio, rq)
 				zero_fill_bio(bio);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
-out_free_page:
-	__free_page(page);
-	return ret;
-}
+out_मुक्त_page:
+	__मुक्त_page(page);
+	वापस ret;
+पूर्ण
 
-static int lo_fallocate(struct loop_device *lo, struct request *rq, loff_t pos,
-			int mode)
-{
+अटल पूर्णांक lo_fallocate(काष्ठा loop_device *lo, काष्ठा request *rq, loff_t pos,
+			पूर्णांक mode)
+अणु
 	/*
 	 * We use fallocate to manipulate the space mappings used by the image
-	 * a.k.a. discard/zerorange. However we do not support this if
+	 * a.k.a. discard/zerorange. However we करो not support this अगर
 	 * encryption is enabled, because it may give an attacker useful
-	 * information.
+	 * inक्रमmation.
 	 */
-	struct file *file = lo->lo_backing_file;
-	struct request_queue *q = lo->lo_queue;
-	int ret;
+	काष्ठा file *file = lo->lo_backing_file;
+	काष्ठा request_queue *q = lo->lo_queue;
+	पूर्णांक ret;
 
 	mode |= FALLOC_FL_KEEP_SIZE;
 
-	if (!blk_queue_discard(q)) {
+	अगर (!blk_queue_discard(q)) अणु
 		ret = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = file->f_op->fallocate(file, mode, pos, blk_rq_bytes(rq));
-	if (unlikely(ret && ret != -EINVAL && ret != -EOPNOTSUPP))
+	अगर (unlikely(ret && ret != -EINVAL && ret != -EOPNOTSUPP))
 		ret = -EIO;
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lo_req_flush(struct loop_device *lo, struct request *rq)
-{
-	struct file *file = lo->lo_backing_file;
-	int ret = vfs_fsync(file, 0);
-	if (unlikely(ret && ret != -EINVAL))
+अटल पूर्णांक lo_req_flush(काष्ठा loop_device *lo, काष्ठा request *rq)
+अणु
+	काष्ठा file *file = lo->lo_backing_file;
+	पूर्णांक ret = vfs_fsync(file, 0);
+	अगर (unlikely(ret && ret != -EINVAL))
 		ret = -EIO;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void lo_complete_rq(struct request *rq)
-{
-	struct loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
+अटल व्योम lo_complete_rq(काष्ठा request *rq)
+अणु
+	काष्ठा loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
 	blk_status_t ret = BLK_STS_OK;
 
-	if (!cmd->use_aio || cmd->ret < 0 || cmd->ret == blk_rq_bytes(rq) ||
-	    req_op(rq) != REQ_OP_READ) {
-		if (cmd->ret < 0)
-			ret = errno_to_blk_status(cmd->ret);
-		goto end_io;
-	}
+	अगर (!cmd->use_aio || cmd->ret < 0 || cmd->ret == blk_rq_bytes(rq) ||
+	    req_op(rq) != REQ_OP_READ) अणु
+		अगर (cmd->ret < 0)
+			ret = त्रुटि_सं_to_blk_status(cmd->ret);
+		जाओ end_io;
+	पूर्ण
 
 	/*
-	 * Short READ - if we got some data, advance our request and
+	 * Short READ - अगर we got some data, advance our request and
 	 * retry it. If we got no data, end the rest with EIO.
 	 */
-	if (cmd->ret) {
+	अगर (cmd->ret) अणु
 		blk_update_request(rq, BLK_STS_OK, cmd->ret);
 		cmd->ret = 0;
 		blk_mq_requeue_request(rq, true);
-	} else {
-		if (cmd->use_aio) {
-			struct bio *bio = rq->bio;
+	पूर्ण अन्यथा अणु
+		अगर (cmd->use_aio) अणु
+			काष्ठा bio *bio = rq->bio;
 
-			while (bio) {
+			जबतक (bio) अणु
 				zero_fill_bio(bio);
 				bio = bio->bi_next;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		ret = BLK_STS_IOERR;
 end_io:
 		blk_mq_end_request(rq, ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void lo_rw_aio_do_completion(struct loop_cmd *cmd)
-{
-	struct request *rq = blk_mq_rq_from_pdu(cmd);
+अटल व्योम lo_rw_aio_करो_completion(काष्ठा loop_cmd *cmd)
+अणु
+	काष्ठा request *rq = blk_mq_rq_from_pdu(cmd);
 
-	if (!atomic_dec_and_test(&cmd->ref))
-		return;
-	kfree(cmd->bvec);
-	cmd->bvec = NULL;
-	if (likely(!blk_should_fake_timeout(rq->q)))
+	अगर (!atomic_dec_and_test(&cmd->ref))
+		वापस;
+	kमुक्त(cmd->bvec);
+	cmd->bvec = शून्य;
+	अगर (likely(!blk_should_fake_समयout(rq->q)))
 		blk_mq_complete_request(rq);
-}
+पूर्ण
 
-static void lo_rw_aio_complete(struct kiocb *iocb, long ret, long ret2)
-{
-	struct loop_cmd *cmd = container_of(iocb, struct loop_cmd, iocb);
+अटल व्योम lo_rw_aio_complete(काष्ठा kiocb *iocb, दीर्घ ret, दीर्घ ret2)
+अणु
+	काष्ठा loop_cmd *cmd = container_of(iocb, काष्ठा loop_cmd, iocb);
 
-	if (cmd->css)
+	अगर (cmd->css)
 		css_put(cmd->css);
 	cmd->ret = ret;
-	lo_rw_aio_do_completion(cmd);
-}
+	lo_rw_aio_करो_completion(cmd);
+पूर्ण
 
-static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+अटल पूर्णांक lo_rw_aio(काष्ठा loop_device *lo, काष्ठा loop_cmd *cmd,
 		     loff_t pos, bool rw)
-{
-	struct iov_iter iter;
-	struct req_iterator rq_iter;
-	struct bio_vec *bvec;
-	struct request *rq = blk_mq_rq_from_pdu(cmd);
-	struct bio *bio = rq->bio;
-	struct file *file = lo->lo_backing_file;
-	struct bio_vec tmp;
-	unsigned int offset;
-	int nr_bvec = 0;
-	int ret;
+अणु
+	काष्ठा iov_iter iter;
+	काष्ठा req_iterator rq_iter;
+	काष्ठा bio_vec *bvec;
+	काष्ठा request *rq = blk_mq_rq_from_pdu(cmd);
+	काष्ठा bio *bio = rq->bio;
+	काष्ठा file *file = lo->lo_backing_file;
+	काष्ठा bio_vec पंचांगp;
+	अचिन्हित पूर्णांक offset;
+	पूर्णांक nr_bvec = 0;
+	पूर्णांक ret;
 
-	rq_for_each_bvec(tmp, rq, rq_iter)
+	rq_क्रम_each_bvec(पंचांगp, rq, rq_iter)
 		nr_bvec++;
 
-	if (rq->bio != rq->biotail) {
+	अगर (rq->bio != rq->biotail) अणु
 
-		bvec = kmalloc_array(nr_bvec, sizeof(struct bio_vec),
+		bvec = kदो_स्मृति_array(nr_bvec, माप(काष्ठा bio_vec),
 				     GFP_NOIO);
-		if (!bvec)
-			return -EIO;
+		अगर (!bvec)
+			वापस -EIO;
 		cmd->bvec = bvec;
 
 		/*
 		 * The bios of the request may be started from the middle of
 		 * the 'bvec' because of bio splitting, so we can't directly
-		 * copy bio->bi_iov_vec to new bvec. The rq_for_each_bvec
-		 * API will take care of all details for us.
+		 * copy bio->bi_iov_vec to new bvec. The rq_क्रम_each_bvec
+		 * API will take care of all details क्रम us.
 		 */
-		rq_for_each_bvec(tmp, rq, rq_iter) {
-			*bvec = tmp;
+		rq_क्रम_each_bvec(पंचांगp, rq, rq_iter) अणु
+			*bvec = पंचांगp;
 			bvec++;
-		}
+		पूर्ण
 		bvec = cmd->bvec;
 		offset = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Same here, this bio may be started from the middle of the
 		 * 'bvec' because of bio splitting, so offset from the bvec
 		 * must be passed to iov iterator
 		 */
-		offset = bio->bi_iter.bi_bvec_done;
+		offset = bio->bi_iter.bi_bvec_करोne;
 		bvec = __bvec_iter_bvec(bio->bi_io_vec, bio->bi_iter);
-	}
+	पूर्ण
 	atomic_set(&cmd->ref, 2);
 
 	iov_iter_bvec(&iter, rw, bvec, nr_bvec, blk_rq_bytes(rq));
@@ -575,174 +576,174 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
 	cmd->iocb.ki_pos = pos;
 	cmd->iocb.ki_filp = file;
 	cmd->iocb.ki_complete = lo_rw_aio_complete;
-	cmd->iocb.ki_flags = IOCB_DIRECT;
+	cmd->iocb.ki_flags = IOCB_सूचीECT;
 	cmd->iocb.ki_ioprio = IOPRIO_PRIO_VALUE(IOPRIO_CLASS_NONE, 0);
-	if (cmd->css)
-		kthread_associate_blkcg(cmd->css);
+	अगर (cmd->css)
+		kthपढ़ो_associate_blkcg(cmd->css);
 
-	if (rw == WRITE)
-		ret = call_write_iter(file, &cmd->iocb, &iter);
-	else
-		ret = call_read_iter(file, &cmd->iocb, &iter);
+	अगर (rw == WRITE)
+		ret = call_ग_लिखो_iter(file, &cmd->iocb, &iter);
+	अन्यथा
+		ret = call_पढ़ो_iter(file, &cmd->iocb, &iter);
 
-	lo_rw_aio_do_completion(cmd);
-	kthread_associate_blkcg(NULL);
+	lo_rw_aio_करो_completion(cmd);
+	kthपढ़ो_associate_blkcg(शून्य);
 
-	if (ret != -EIOCBQUEUED)
+	अगर (ret != -EIOCBQUEUED)
 		cmd->iocb.ki_complete(&cmd->iocb, ret, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_req_filebacked(struct loop_device *lo, struct request *rq)
-{
-	struct loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
+अटल पूर्णांक करो_req_filebacked(काष्ठा loop_device *lo, काष्ठा request *rq)
+अणु
+	काष्ठा loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
 	loff_t pos = ((loff_t) blk_rq_pos(rq) << 9) + lo->lo_offset;
 
 	/*
-	 * lo_write_simple and lo_read_simple should have been covered
+	 * lo_ग_लिखो_simple and lo_पढ़ो_simple should have been covered
 	 * by io submit style function like lo_rw_aio(), one blocker
-	 * is that lo_read_simple() need to call flush_dcache_page after
+	 * is that lo_पढ़ो_simple() need to call flush_dcache_page after
 	 * the page is written from kernel, and it isn't easy to handle
 	 * this in io submit style function which submits all segments
-	 * of the req at one time. And direct read IO doesn't need to
+	 * of the req at one समय. And direct पढ़ो IO करोesn't need to
 	 * run flush_dcache_page().
 	 */
-	switch (req_op(rq)) {
-	case REQ_OP_FLUSH:
-		return lo_req_flush(lo, rq);
-	case REQ_OP_WRITE_ZEROES:
+	चयन (req_op(rq)) अणु
+	हाल REQ_OP_FLUSH:
+		वापस lo_req_flush(lo, rq);
+	हाल REQ_OP_WRITE_ZEROES:
 		/*
-		 * If the caller doesn't want deallocation, call zeroout to
-		 * write zeroes the range.  Otherwise, punch them out.
+		 * If the caller करोesn't want deallocation, call zeroout to
+		 * ग_लिखो zeroes the range.  Otherwise, punch them out.
 		 */
-		return lo_fallocate(lo, rq, pos,
+		वापस lo_fallocate(lo, rq, pos,
 			(rq->cmd_flags & REQ_NOUNMAP) ?
 				FALLOC_FL_ZERO_RANGE :
 				FALLOC_FL_PUNCH_HOLE);
-	case REQ_OP_DISCARD:
-		return lo_fallocate(lo, rq, pos, FALLOC_FL_PUNCH_HOLE);
-	case REQ_OP_WRITE:
-		if (lo->transfer)
-			return lo_write_transfer(lo, rq, pos);
-		else if (cmd->use_aio)
-			return lo_rw_aio(lo, cmd, pos, WRITE);
-		else
-			return lo_write_simple(lo, rq, pos);
-	case REQ_OP_READ:
-		if (lo->transfer)
-			return lo_read_transfer(lo, rq, pos);
-		else if (cmd->use_aio)
-			return lo_rw_aio(lo, cmd, pos, READ);
-		else
-			return lo_read_simple(lo, rq, pos);
-	default:
+	हाल REQ_OP_DISCARD:
+		वापस lo_fallocate(lo, rq, pos, FALLOC_FL_PUNCH_HOLE);
+	हाल REQ_OP_WRITE:
+		अगर (lo->transfer)
+			वापस lo_ग_लिखो_transfer(lo, rq, pos);
+		अन्यथा अगर (cmd->use_aio)
+			वापस lo_rw_aio(lo, cmd, pos, WRITE);
+		अन्यथा
+			वापस lo_ग_लिखो_simple(lo, rq, pos);
+	हाल REQ_OP_READ:
+		अगर (lo->transfer)
+			वापस lo_पढ़ो_transfer(lo, rq, pos);
+		अन्यथा अगर (cmd->use_aio)
+			वापस lo_rw_aio(lo, cmd, pos, READ);
+		अन्यथा
+			वापस lo_पढ़ो_simple(lo, rq, pos);
+	शेष:
 		WARN_ON_ONCE(1);
-		return -EIO;
-	}
-}
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-static inline void loop_update_dio(struct loop_device *lo)
-{
-	__loop_update_dio(lo, (lo->lo_backing_file->f_flags & O_DIRECT) |
+अटल अंतरभूत व्योम loop_update_dio(काष्ठा loop_device *lo)
+अणु
+	__loop_update_dio(lo, (lo->lo_backing_file->f_flags & O_सूचीECT) |
 				lo->use_dio);
-}
+पूर्ण
 
-static void loop_reread_partitions(struct loop_device *lo,
-				   struct block_device *bdev)
-{
-	int rc;
+अटल व्योम loop_reपढ़ो_partitions(काष्ठा loop_device *lo,
+				   काष्ठा block_device *bdev)
+अणु
+	पूर्णांक rc;
 
 	mutex_lock(&bdev->bd_mutex);
 	rc = bdev_disk_changed(bdev, false);
 	mutex_unlock(&bdev->bd_mutex);
-	if (rc)
+	अगर (rc)
 		pr_warn("%s: partition scan of loop%d (%s) failed (rc=%d)\n",
 			__func__, lo->lo_number, lo->lo_file_name, rc);
-}
+पूर्ण
 
-static inline int is_loop_device(struct file *file)
-{
-	struct inode *i = file->f_mapping->host;
+अटल अंतरभूत पूर्णांक is_loop_device(काष्ठा file *file)
+अणु
+	काष्ठा inode *i = file->f_mapping->host;
 
-	return i && S_ISBLK(i->i_mode) && imajor(i) == LOOP_MAJOR;
-}
+	वापस i && S_ISBLK(i->i_mode) && imajor(i) == LOOP_MAJOR;
+पूर्ण
 
-static int loop_validate_file(struct file *file, struct block_device *bdev)
-{
-	struct inode	*inode = file->f_mapping->host;
-	struct file	*f = file;
+अटल पूर्णांक loop_validate_file(काष्ठा file *file, काष्ठा block_device *bdev)
+अणु
+	काष्ठा inode	*inode = file->f_mapping->host;
+	काष्ठा file	*f = file;
 
-	/* Avoid recursion */
-	while (is_loop_device(f)) {
-		struct loop_device *l;
+	/* Aव्योम recursion */
+	जबतक (is_loop_device(f)) अणु
+		काष्ठा loop_device *l;
 
-		if (f->f_mapping->host->i_rdev == bdev->bd_dev)
-			return -EBADF;
+		अगर (f->f_mapping->host->i_rdev == bdev->bd_dev)
+			वापस -EBADF;
 
-		l = I_BDEV(f->f_mapping->host)->bd_disk->private_data;
-		if (l->lo_state != Lo_bound) {
-			return -EINVAL;
-		}
+		l = I_BDEV(f->f_mapping->host)->bd_disk->निजी_data;
+		अगर (l->lo_state != Lo_bound) अणु
+			वापस -EINVAL;
+		पूर्ण
 		f = l->lo_backing_file;
-	}
-	if (!S_ISREG(inode->i_mode) && !S_ISBLK(inode->i_mode))
-		return -EINVAL;
-	return 0;
-}
+	पूर्ण
+	अगर (!S_ISREG(inode->i_mode) && !S_ISBLK(inode->i_mode))
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /*
- * loop_change_fd switched the backing store of a loopback device to
- * a new file. This is useful for operating system installers to free up
- * the original file and in High Availability environments to switch to
- * an alternative location for the content in case of server meltdown.
- * This can only work if the loop device is used read-only, and if the
+ * loop_change_fd चयनed the backing store of a loopback device to
+ * a new file. This is useful क्रम operating प्रणाली installers to मुक्त up
+ * the original file and in High Availability environments to चयन to
+ * an alternative location क्रम the content in हाल of server meltकरोwn.
+ * This can only work अगर the loop device is used पढ़ो-only, and अगर the
  * new backing store is the same size and type as the old backing store.
  */
-static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
-			  unsigned int arg)
-{
-	struct file	*file = NULL, *old_file;
-	int		error;
+अटल पूर्णांक loop_change_fd(काष्ठा loop_device *lo, काष्ठा block_device *bdev,
+			  अचिन्हित पूर्णांक arg)
+अणु
+	काष्ठा file	*file = शून्य, *old_file;
+	पूर्णांक		error;
 	bool		partscan;
 
-	error = mutex_lock_killable(&lo->lo_mutex);
-	if (error)
-		return error;
+	error = mutex_lock_समाप्तable(&lo->lo_mutex);
+	अगर (error)
+		वापस error;
 	error = -ENXIO;
-	if (lo->lo_state != Lo_bound)
-		goto out_err;
+	अगर (lo->lo_state != Lo_bound)
+		जाओ out_err;
 
-	/* the loop device has to be read-only */
+	/* the loop device has to be पढ़ो-only */
 	error = -EINVAL;
-	if (!(lo->lo_flags & LO_FLAGS_READ_ONLY))
-		goto out_err;
+	अगर (!(lo->lo_flags & LO_FLAGS_READ_ONLY))
+		जाओ out_err;
 
 	error = -EBADF;
 	file = fget(arg);
-	if (!file)
-		goto out_err;
+	अगर (!file)
+		जाओ out_err;
 
 	error = loop_validate_file(file, bdev);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
 	old_file = lo->lo_backing_file;
 
 	error = -EINVAL;
 
 	/* size of the new backing store needs to be the same */
-	if (get_loop_size(lo, file) != get_loop_size(lo, old_file))
-		goto out_err;
+	अगर (get_loop_size(lo, file) != get_loop_size(lo, old_file))
+		जाओ out_err;
 
-	/* and ... switch */
-	blk_mq_freeze_queue(lo->lo_queue);
+	/* and ... चयन */
+	blk_mq_मुक्तze_queue(lo->lo_queue);
 	mapping_set_gfp_mask(old_file->f_mapping, lo->old_gfp_mask);
 	lo->lo_backing_file = file;
 	lo->old_gfp_mask = mapping_gfp_mask(file->f_mapping);
 	mapping_set_gfp_mask(file->f_mapping,
 			     lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
 	loop_update_dio(lo);
-	blk_mq_unfreeze_queue(lo->lo_queue);
+	blk_mq_unमुक्तze_queue(lo->lo_queue);
 	partscan = lo->lo_flags & LO_FLAGS_PARTSCAN;
 	mutex_unlock(&lo->lo_mutex);
 	/*
@@ -751,300 +752,300 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
 	 * dependency.
 	 */
 	fput(old_file);
-	if (partscan)
-		loop_reread_partitions(lo, bdev);
-	return 0;
+	अगर (partscan)
+		loop_reपढ़ो_partitions(lo, bdev);
+	वापस 0;
 
 out_err:
 	mutex_unlock(&lo->lo_mutex);
-	if (file)
+	अगर (file)
 		fput(file);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /* loop sysfs attributes */
 
-static ssize_t loop_attr_show(struct device *dev, char *page,
-			      ssize_t (*callback)(struct loop_device *, char *))
-{
-	struct gendisk *disk = dev_to_disk(dev);
-	struct loop_device *lo = disk->private_data;
+अटल sमाप_प्रकार loop_attr_show(काष्ठा device *dev, अक्षर *page,
+			      sमाप_प्रकार (*callback)(काष्ठा loop_device *, अक्षर *))
+अणु
+	काष्ठा gendisk *disk = dev_to_disk(dev);
+	काष्ठा loop_device *lo = disk->निजी_data;
 
-	return callback(lo, page);
-}
+	वापस callback(lo, page);
+पूर्ण
 
-#define LOOP_ATTR_RO(_name)						\
-static ssize_t loop_attr_##_name##_show(struct loop_device *, char *);	\
-static ssize_t loop_attr_do_show_##_name(struct device *d,		\
-				struct device_attribute *attr, char *b)	\
-{									\
-	return loop_attr_show(d, b, loop_attr_##_name##_show);		\
-}									\
-static struct device_attribute loop_attr_##_name =			\
-	__ATTR(_name, 0444, loop_attr_do_show_##_name, NULL);
+#घोषणा LOOP_ATTR_RO(_name)						\
+अटल sमाप_प्रकार loop_attr_##_name##_show(काष्ठा loop_device *, अक्षर *);	\
+अटल sमाप_प्रकार loop_attr_करो_show_##_name(काष्ठा device *d,		\
+				काष्ठा device_attribute *attr, अक्षर *b)	\
+अणु									\
+	वापस loop_attr_show(d, b, loop_attr_##_name##_show);		\
+पूर्ण									\
+अटल काष्ठा device_attribute loop_attr_##_name =			\
+	__ATTR(_name, 0444, loop_attr_करो_show_##_name, शून्य);
 
-static ssize_t loop_attr_backing_file_show(struct loop_device *lo, char *buf)
-{
-	ssize_t ret;
-	char *p = NULL;
+अटल sमाप_प्रकार loop_attr_backing_file_show(काष्ठा loop_device *lo, अक्षर *buf)
+अणु
+	sमाप_प्रकार ret;
+	अक्षर *p = शून्य;
 
 	spin_lock_irq(&lo->lo_lock);
-	if (lo->lo_backing_file)
+	अगर (lo->lo_backing_file)
 		p = file_path(lo->lo_backing_file, buf, PAGE_SIZE - 1);
 	spin_unlock_irq(&lo->lo_lock);
 
-	if (IS_ERR_OR_NULL(p))
+	अगर (IS_ERR_OR_शून्य(p))
 		ret = PTR_ERR(p);
-	else {
-		ret = strlen(p);
-		memmove(buf, p, ret);
+	अन्यथा अणु
+		ret = म_माप(p);
+		स_हटाओ(buf, p, ret);
 		buf[ret++] = '\n';
 		buf[ret] = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t loop_attr_offset_show(struct loop_device *lo, char *buf)
-{
-	return sprintf(buf, "%llu\n", (unsigned long long)lo->lo_offset);
-}
+अटल sमाप_प्रकार loop_attr_offset_show(काष्ठा loop_device *lo, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n", (अचिन्हित दीर्घ दीर्घ)lo->lo_offset);
+पूर्ण
 
-static ssize_t loop_attr_sizelimit_show(struct loop_device *lo, char *buf)
-{
-	return sprintf(buf, "%llu\n", (unsigned long long)lo->lo_sizelimit);
-}
+अटल sमाप_प्रकार loop_attr_sizelimit_show(काष्ठा loop_device *lo, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n", (अचिन्हित दीर्घ दीर्घ)lo->lo_sizelimit);
+पूर्ण
 
-static ssize_t loop_attr_autoclear_show(struct loop_device *lo, char *buf)
-{
-	int autoclear = (lo->lo_flags & LO_FLAGS_AUTOCLEAR);
+अटल sमाप_प्रकार loop_attr_स्वतःclear_show(काष्ठा loop_device *lo, अक्षर *buf)
+अणु
+	पूर्णांक स्वतःclear = (lo->lo_flags & LO_FLAGS_AUTOCLEAR);
 
-	return sprintf(buf, "%s\n", autoclear ? "1" : "0");
-}
+	वापस प्र_लिखो(buf, "%s\n", स्वतःclear ? "1" : "0");
+पूर्ण
 
-static ssize_t loop_attr_partscan_show(struct loop_device *lo, char *buf)
-{
-	int partscan = (lo->lo_flags & LO_FLAGS_PARTSCAN);
+अटल sमाप_प्रकार loop_attr_partscan_show(काष्ठा loop_device *lo, अक्षर *buf)
+अणु
+	पूर्णांक partscan = (lo->lo_flags & LO_FLAGS_PARTSCAN);
 
-	return sprintf(buf, "%s\n", partscan ? "1" : "0");
-}
+	वापस प्र_लिखो(buf, "%s\n", partscan ? "1" : "0");
+पूर्ण
 
-static ssize_t loop_attr_dio_show(struct loop_device *lo, char *buf)
-{
-	int dio = (lo->lo_flags & LO_FLAGS_DIRECT_IO);
+अटल sमाप_प्रकार loop_attr_dio_show(काष्ठा loop_device *lo, अक्षर *buf)
+अणु
+	पूर्णांक dio = (lo->lo_flags & LO_FLAGS_सूचीECT_IO);
 
-	return sprintf(buf, "%s\n", dio ? "1" : "0");
-}
+	वापस प्र_लिखो(buf, "%s\n", dio ? "1" : "0");
+पूर्ण
 
 LOOP_ATTR_RO(backing_file);
 LOOP_ATTR_RO(offset);
 LOOP_ATTR_RO(sizelimit);
-LOOP_ATTR_RO(autoclear);
+LOOP_ATTR_RO(स्वतःclear);
 LOOP_ATTR_RO(partscan);
 LOOP_ATTR_RO(dio);
 
-static struct attribute *loop_attrs[] = {
+अटल काष्ठा attribute *loop_attrs[] = अणु
 	&loop_attr_backing_file.attr,
 	&loop_attr_offset.attr,
 	&loop_attr_sizelimit.attr,
-	&loop_attr_autoclear.attr,
+	&loop_attr_स्वतःclear.attr,
 	&loop_attr_partscan.attr,
 	&loop_attr_dio.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group loop_attribute_group = {
+अटल काष्ठा attribute_group loop_attribute_group = अणु
 	.name = "loop",
 	.attrs= loop_attrs,
-};
+पूर्ण;
 
-static void loop_sysfs_init(struct loop_device *lo)
-{
+अटल व्योम loop_sysfs_init(काष्ठा loop_device *lo)
+अणु
 	lo->sysfs_inited = !sysfs_create_group(&disk_to_dev(lo->lo_disk)->kobj,
 						&loop_attribute_group);
-}
+पूर्ण
 
-static void loop_sysfs_exit(struct loop_device *lo)
-{
-	if (lo->sysfs_inited)
-		sysfs_remove_group(&disk_to_dev(lo->lo_disk)->kobj,
+अटल व्योम loop_sysfs_निकास(काष्ठा loop_device *lo)
+अणु
+	अगर (lo->sysfs_inited)
+		sysfs_हटाओ_group(&disk_to_dev(lo->lo_disk)->kobj,
 				   &loop_attribute_group);
-}
+पूर्ण
 
-static void loop_config_discard(struct loop_device *lo)
-{
-	struct file *file = lo->lo_backing_file;
-	struct inode *inode = file->f_mapping->host;
-	struct request_queue *q = lo->lo_queue;
+अटल व्योम loop_config_discard(काष्ठा loop_device *lo)
+अणु
+	काष्ठा file *file = lo->lo_backing_file;
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा request_queue *q = lo->lo_queue;
 	u32 granularity, max_discard_sectors;
 
 	/*
 	 * If the backing device is a block device, mirror its zeroing
 	 * capability. Set the discard sectors to the block device's zeroing
 	 * capabilities because loop discards result in blkdev_issue_zeroout(),
-	 * not blkdev_issue_discard(). This maintains consistent behavior with
-	 * file-backed loop devices: discarded regions read back as zero.
+	 * not blkdev_issue_discard(). This मुख्यtains consistent behavior with
+	 * file-backed loop devices: discarded regions पढ़ो back as zero.
 	 */
-	if (S_ISBLK(inode->i_mode) && !lo->lo_encrypt_key_size) {
-		struct request_queue *backingq = bdev_get_queue(I_BDEV(inode));
+	अगर (S_ISBLK(inode->i_mode) && !lo->lo_encrypt_key_size) अणु
+		काष्ठा request_queue *backingq = bdev_get_queue(I_BDEV(inode));
 
-		max_discard_sectors = backingq->limits.max_write_zeroes_sectors;
+		max_discard_sectors = backingq->limits.max_ग_लिखो_zeroes_sectors;
 		granularity = backingq->limits.discard_granularity ?:
 			queue_physical_block_size(backingq);
 
 	/*
-	 * We use punch hole to reclaim the free space used by the
-	 * image a.k.a. discard. However we do not support discard if
+	 * We use punch hole to reclaim the मुक्त space used by the
+	 * image a.k.a. discard. However we करो not support discard अगर
 	 * encryption is enabled, because it may give an attacker
-	 * useful information.
+	 * useful inक्रमmation.
 	 */
-	} else if (!file->f_op->fallocate || lo->lo_encrypt_key_size) {
+	पूर्ण अन्यथा अगर (!file->f_op->fallocate || lo->lo_encrypt_key_size) अणु
 		max_discard_sectors = 0;
 		granularity = 0;
 
-	} else {
-		max_discard_sectors = UINT_MAX >> 9;
+	पूर्ण अन्यथा अणु
+		max_discard_sectors = अच_पूर्णांक_उच्च >> 9;
 		granularity = inode->i_sb->s_blocksize;
-	}
+	पूर्ण
 
-	if (max_discard_sectors) {
+	अगर (max_discard_sectors) अणु
 		q->limits.discard_granularity = granularity;
 		blk_queue_max_discard_sectors(q, max_discard_sectors);
-		blk_queue_max_write_zeroes_sectors(q, max_discard_sectors);
+		blk_queue_max_ग_लिखो_zeroes_sectors(q, max_discard_sectors);
 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
-	} else {
+	पूर्ण अन्यथा अणु
 		q->limits.discard_granularity = 0;
 		blk_queue_max_discard_sectors(q, 0);
-		blk_queue_max_write_zeroes_sectors(q, 0);
+		blk_queue_max_ग_लिखो_zeroes_sectors(q, 0);
 		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
-	}
+	पूर्ण
 	q->limits.discard_alignment = 0;
-}
+पूर्ण
 
-static void loop_unprepare_queue(struct loop_device *lo)
-{
-	kthread_flush_worker(&lo->worker);
-	kthread_stop(lo->worker_task);
-}
+अटल व्योम loop_unprepare_queue(काष्ठा loop_device *lo)
+अणु
+	kthपढ़ो_flush_worker(&lo->worker);
+	kthपढ़ो_stop(lo->worker_task);
+पूर्ण
 
-static int loop_kthread_worker_fn(void *worker_ptr)
-{
+अटल पूर्णांक loop_kthपढ़ो_worker_fn(व्योम *worker_ptr)
+अणु
 	current->flags |= PF_LOCAL_THROTTLE | PF_MEMALLOC_NOIO;
-	return kthread_worker_fn(worker_ptr);
-}
+	वापस kthपढ़ो_worker_fn(worker_ptr);
+पूर्ण
 
-static int loop_prepare_queue(struct loop_device *lo)
-{
-	kthread_init_worker(&lo->worker);
-	lo->worker_task = kthread_run(loop_kthread_worker_fn,
+अटल पूर्णांक loop_prepare_queue(काष्ठा loop_device *lo)
+अणु
+	kthपढ़ो_init_worker(&lo->worker);
+	lo->worker_task = kthपढ़ो_run(loop_kthपढ़ो_worker_fn,
 			&lo->worker, "loop%d", lo->lo_number);
-	if (IS_ERR(lo->worker_task))
-		return -ENOMEM;
+	अगर (IS_ERR(lo->worker_task))
+		वापस -ENOMEM;
 	set_user_nice(lo->worker_task, MIN_NICE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void loop_update_rotational(struct loop_device *lo)
-{
-	struct file *file = lo->lo_backing_file;
-	struct inode *file_inode = file->f_mapping->host;
-	struct block_device *file_bdev = file_inode->i_sb->s_bdev;
-	struct request_queue *q = lo->lo_queue;
+अटल व्योम loop_update_rotational(काष्ठा loop_device *lo)
+अणु
+	काष्ठा file *file = lo->lo_backing_file;
+	काष्ठा inode *file_inode = file->f_mapping->host;
+	काष्ठा block_device *file_bdev = file_inode->i_sb->s_bdev;
+	काष्ठा request_queue *q = lo->lo_queue;
 	bool nonrot = true;
 
-	/* not all filesystems (e.g. tmpfs) have a sb->s_bdev */
-	if (file_bdev)
+	/* not all fileप्रणालीs (e.g. पंचांगpfs) have a sb->s_bdev */
+	अगर (file_bdev)
 		nonrot = blk_queue_nonrot(bdev_get_queue(file_bdev));
 
-	if (nonrot)
+	अगर (nonrot)
 		blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
-	else
+	अन्यथा
 		blk_queue_flag_clear(QUEUE_FLAG_NONROT, q);
-}
+पूर्ण
 
-static int
-loop_release_xfer(struct loop_device *lo)
-{
-	int err = 0;
-	struct loop_func_table *xfer = lo->lo_encryption;
+अटल पूर्णांक
+loop_release_xfer(काष्ठा loop_device *lo)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा loop_func_table *xfer = lo->lo_encryption;
 
-	if (xfer) {
-		if (xfer->release)
+	अगर (xfer) अणु
+		अगर (xfer->release)
 			err = xfer->release(lo);
-		lo->transfer = NULL;
-		lo->lo_encryption = NULL;
+		lo->transfer = शून्य;
+		lo->lo_encryption = शून्य;
 		module_put(xfer->owner);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int
-loop_init_xfer(struct loop_device *lo, struct loop_func_table *xfer,
-	       const struct loop_info64 *i)
-{
-	int err = 0;
+अटल पूर्णांक
+loop_init_xfer(काष्ठा loop_device *lo, काष्ठा loop_func_table *xfer,
+	       स्थिर काष्ठा loop_info64 *i)
+अणु
+	पूर्णांक err = 0;
 
-	if (xfer) {
-		struct module *owner = xfer->owner;
+	अगर (xfer) अणु
+		काष्ठा module *owner = xfer->owner;
 
-		if (!try_module_get(owner))
-			return -EINVAL;
-		if (xfer->init)
+		अगर (!try_module_get(owner))
+			वापस -EINVAL;
+		अगर (xfer->init)
 			err = xfer->init(lo, i);
-		if (err)
+		अगर (err)
 			module_put(owner);
-		else
+		अन्यथा
 			lo->lo_encryption = xfer;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /**
  * loop_set_status_from_info - configure device from loop_info
- * @lo: struct loop_device to configure
- * @info: struct loop_info64 to configure the device with
+ * @lo: काष्ठा loop_device to configure
+ * @info: काष्ठा loop_info64 to configure the device with
  *
  * Configures the loop device parameters according to the passed
  * in loop_info64 configuration.
  */
-static int
-loop_set_status_from_info(struct loop_device *lo,
-			  const struct loop_info64 *info)
-{
-	int err;
-	struct loop_func_table *xfer;
+अटल पूर्णांक
+loop_set_status_from_info(काष्ठा loop_device *lo,
+			  स्थिर काष्ठा loop_info64 *info)
+अणु
+	पूर्णांक err;
+	काष्ठा loop_func_table *xfer;
 	kuid_t uid = current_uid();
 
-	if ((unsigned int) info->lo_encrypt_key_size > LO_KEY_SIZE)
-		return -EINVAL;
+	अगर ((अचिन्हित पूर्णांक) info->lo_encrypt_key_size > LO_KEY_SIZE)
+		वापस -EINVAL;
 
 	err = loop_release_xfer(lo);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (info->lo_encrypt_type) {
-		unsigned int type = info->lo_encrypt_type;
+	अगर (info->lo_encrypt_type) अणु
+		अचिन्हित पूर्णांक type = info->lo_encrypt_type;
 
-		if (type >= MAX_LO_CRYPT)
-			return -EINVAL;
+		अगर (type >= MAX_LO_CRYPT)
+			वापस -EINVAL;
 		xfer = xfer_funcs[type];
-		if (xfer == NULL)
-			return -EINVAL;
-	} else
-		xfer = NULL;
+		अगर (xfer == शून्य)
+			वापस -EINVAL;
+	पूर्ण अन्यथा
+		xfer = शून्य;
 
 	err = loop_init_xfer(lo, xfer, info);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	lo->lo_offset = info->lo_offset;
 	lo->lo_sizelimit = info->lo_sizelimit;
-	memcpy(lo->lo_file_name, info->lo_file_name, LO_NAME_SIZE);
-	memcpy(lo->lo_crypt_name, info->lo_crypt_name, LO_NAME_SIZE);
+	स_नकल(lo->lo_file_name, info->lo_file_name, LO_NAME_SIZE);
+	स_नकल(lo->lo_crypt_name, info->lo_crypt_name, LO_NAME_SIZE);
 	lo->lo_file_name[LO_NAME_SIZE-1] = 0;
 	lo->lo_crypt_name[LO_NAME_SIZE-1] = 0;
 
-	if (!xfer)
+	अगर (!xfer)
 		xfer = &none_funcs;
 	lo->transfer = xfer->transfer;
 	lo->ioctl = xfer->ioctl;
@@ -1054,100 +1055,100 @@ loop_set_status_from_info(struct loop_device *lo,
 	lo->lo_encrypt_key_size = info->lo_encrypt_key_size;
 	lo->lo_init[0] = info->lo_init[0];
 	lo->lo_init[1] = info->lo_init[1];
-	if (info->lo_encrypt_key_size) {
-		memcpy(lo->lo_encrypt_key, info->lo_encrypt_key,
+	अगर (info->lo_encrypt_key_size) अणु
+		स_नकल(lo->lo_encrypt_key, info->lo_encrypt_key,
 		       info->lo_encrypt_key_size);
 		lo->lo_key_owner = uid;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int loop_configure(struct loop_device *lo, fmode_t mode,
-			  struct block_device *bdev,
-			  const struct loop_config *config)
-{
-	struct file	*file;
-	struct inode	*inode;
-	struct address_space *mapping;
-	int		error;
+अटल पूर्णांक loop_configure(काष्ठा loop_device *lo, भ_शेषe_t mode,
+			  काष्ठा block_device *bdev,
+			  स्थिर काष्ठा loop_config *config)
+अणु
+	काष्ठा file	*file;
+	काष्ठा inode	*inode;
+	काष्ठा address_space *mapping;
+	पूर्णांक		error;
 	loff_t		size;
 	bool		partscan;
-	unsigned short  bsize;
+	अचिन्हित लघु  bsize;
 
-	/* This is safe, since we have a reference from open(). */
+	/* This is safe, since we have a reference from खोलो(). */
 	__module_get(THIS_MODULE);
 
 	error = -EBADF;
 	file = fget(config->fd);
-	if (!file)
-		goto out;
+	अगर (!file)
+		जाओ out;
 
 	/*
-	 * If we don't hold exclusive handle for the device, upgrade to it
-	 * here to avoid changing device under exclusive owner.
+	 * If we करोn't hold exclusive handle क्रम the device, upgrade to it
+	 * here to aव्योम changing device under exclusive owner.
 	 */
-	if (!(mode & FMODE_EXCL)) {
+	अगर (!(mode & FMODE_EXCL)) अणु
 		error = bd_prepare_to_claim(bdev, loop_configure);
-		if (error)
-			goto out_putf;
-	}
+		अगर (error)
+			जाओ out_putf;
+	पूर्ण
 
-	error = mutex_lock_killable(&lo->lo_mutex);
-	if (error)
-		goto out_bdev;
+	error = mutex_lock_समाप्तable(&lo->lo_mutex);
+	अगर (error)
+		जाओ out_bdev;
 
 	error = -EBUSY;
-	if (lo->lo_state != Lo_unbound)
-		goto out_unlock;
+	अगर (lo->lo_state != Lo_unbound)
+		जाओ out_unlock;
 
 	error = loop_validate_file(file, bdev);
-	if (error)
-		goto out_unlock;
+	अगर (error)
+		जाओ out_unlock;
 
 	mapping = file->f_mapping;
 	inode = mapping->host;
 
-	if ((config->info.lo_flags & ~LOOP_CONFIGURE_SETTABLE_FLAGS) != 0) {
+	अगर ((config->info.lo_flags & ~LOOP_CONFIGURE_SETTABLE_FLAGS) != 0) अणु
 		error = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (config->block_size) {
+	अगर (config->block_size) अणु
 		error = loop_validate_block_size(config->block_size);
-		if (error)
-			goto out_unlock;
-	}
+		अगर (error)
+			जाओ out_unlock;
+	पूर्ण
 
 	error = loop_set_status_from_info(lo, &config->info);
-	if (error)
-		goto out_unlock;
+	अगर (error)
+		जाओ out_unlock;
 
-	if (!(file->f_mode & FMODE_WRITE) || !(mode & FMODE_WRITE) ||
-	    !file->f_op->write_iter)
+	अगर (!(file->f_mode & FMODE_WRITE) || !(mode & FMODE_WRITE) ||
+	    !file->f_op->ग_लिखो_iter)
 		lo->lo_flags |= LO_FLAGS_READ_ONLY;
 
 	error = loop_prepare_queue(lo);
-	if (error)
-		goto out_unlock;
+	अगर (error)
+		जाओ out_unlock;
 
 	set_disk_ro(lo->lo_disk, (lo->lo_flags & LO_FLAGS_READ_ONLY) != 0);
 
-	lo->use_dio = lo->lo_flags & LO_FLAGS_DIRECT_IO;
+	lo->use_dio = lo->lo_flags & LO_FLAGS_सूचीECT_IO;
 	lo->lo_device = bdev;
 	lo->lo_backing_file = file;
 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
 
-	if (!(lo->lo_flags & LO_FLAGS_READ_ONLY) && file->f_op->fsync)
-		blk_queue_write_cache(lo->lo_queue, true, false);
+	अगर (!(lo->lo_flags & LO_FLAGS_READ_ONLY) && file->f_op->fsync)
+		blk_queue_ग_लिखो_cache(lo->lo_queue, true, false);
 
-	if (config->block_size)
+	अगर (config->block_size)
 		bsize = config->block_size;
-	else if ((lo->lo_backing_file->f_flags & O_DIRECT) && inode->i_sb->s_bdev)
-		/* In case of direct I/O, match underlying block size */
+	अन्यथा अगर ((lo->lo_backing_file->f_flags & O_सूचीECT) && inode->i_sb->s_bdev)
+		/* In हाल of direct I/O, match underlying block size */
 		bsize = bdev_logical_block_size(inode->i_sb->s_bdev);
-	else
+	अन्यथा
 		bsize = 512;
 
 	blk_queue_logical_block_size(lo->lo_queue, bsize);
@@ -1162,135 +1163,135 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
 	loop_set_size(lo, size);
 
 	lo->lo_state = Lo_bound;
-	if (part_shift)
+	अगर (part_shअगरt)
 		lo->lo_flags |= LO_FLAGS_PARTSCAN;
 	partscan = lo->lo_flags & LO_FLAGS_PARTSCAN;
-	if (partscan)
+	अगर (partscan)
 		lo->lo_disk->flags &= ~GENHD_FL_NO_PART_SCAN;
 
-	/* Grab the block_device to prevent its destruction after we
+	/* Grab the block_device to prevent its deकाष्ठाion after we
 	 * put /dev/loopXX inode. Later in __loop_clr_fd() we bdput(bdev).
 	 */
 	bdgrab(bdev);
 	mutex_unlock(&lo->lo_mutex);
-	if (partscan)
-		loop_reread_partitions(lo, bdev);
-	if (!(mode & FMODE_EXCL))
-		bd_abort_claiming(bdev, loop_configure);
-	return 0;
+	अगर (partscan)
+		loop_reपढ़ो_partitions(lo, bdev);
+	अगर (!(mode & FMODE_EXCL))
+		bd_पात_claiming(bdev, loop_configure);
+	वापस 0;
 
 out_unlock:
 	mutex_unlock(&lo->lo_mutex);
 out_bdev:
-	if (!(mode & FMODE_EXCL))
-		bd_abort_claiming(bdev, loop_configure);
+	अगर (!(mode & FMODE_EXCL))
+		bd_पात_claiming(bdev, loop_configure);
 out_putf:
 	fput(file);
 out:
-	/* This is safe: open() is still holding a reference. */
+	/* This is safe: खोलो() is still holding a reference. */
 	module_put(THIS_MODULE);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int __loop_clr_fd(struct loop_device *lo, bool release)
-{
-	struct file *filp = NULL;
+अटल पूर्णांक __loop_clr_fd(काष्ठा loop_device *lo, bool release)
+अणु
+	काष्ठा file *filp = शून्य;
 	gfp_t gfp = lo->old_gfp_mask;
-	struct block_device *bdev = lo->lo_device;
-	int err = 0;
+	काष्ठा block_device *bdev = lo->lo_device;
+	पूर्णांक err = 0;
 	bool partscan = false;
-	int lo_number;
+	पूर्णांक lo_number;
 
 	mutex_lock(&lo->lo_mutex);
-	if (WARN_ON_ONCE(lo->lo_state != Lo_rundown)) {
+	अगर (WARN_ON_ONCE(lo->lo_state != Lo_runकरोwn)) अणु
 		err = -ENXIO;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	filp = lo->lo_backing_file;
-	if (filp == NULL) {
+	अगर (filp == शून्य) अणु
 		err = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (test_bit(QUEUE_FLAG_WC, &lo->lo_queue->queue_flags))
-		blk_queue_write_cache(lo->lo_queue, false, false);
+	अगर (test_bit(QUEUE_FLAG_WC, &lo->lo_queue->queue_flags))
+		blk_queue_ग_लिखो_cache(lo->lo_queue, false, false);
 
-	/* freeze request queue during the transition */
-	blk_mq_freeze_queue(lo->lo_queue);
+	/* मुक्तze request queue during the transition */
+	blk_mq_मुक्तze_queue(lo->lo_queue);
 
 	spin_lock_irq(&lo->lo_lock);
-	lo->lo_backing_file = NULL;
+	lo->lo_backing_file = शून्य;
 	spin_unlock_irq(&lo->lo_lock);
 
 	loop_release_xfer(lo);
-	lo->transfer = NULL;
-	lo->ioctl = NULL;
-	lo->lo_device = NULL;
-	lo->lo_encryption = NULL;
+	lo->transfer = शून्य;
+	lo->ioctl = शून्य;
+	lo->lo_device = शून्य;
+	lo->lo_encryption = शून्य;
 	lo->lo_offset = 0;
 	lo->lo_sizelimit = 0;
 	lo->lo_encrypt_key_size = 0;
-	memset(lo->lo_encrypt_key, 0, LO_KEY_SIZE);
-	memset(lo->lo_crypt_name, 0, LO_NAME_SIZE);
-	memset(lo->lo_file_name, 0, LO_NAME_SIZE);
+	स_रखो(lo->lo_encrypt_key, 0, LO_KEY_SIZE);
+	स_रखो(lo->lo_crypt_name, 0, LO_NAME_SIZE);
+	स_रखो(lo->lo_file_name, 0, LO_NAME_SIZE);
 	blk_queue_logical_block_size(lo->lo_queue, 512);
 	blk_queue_physical_block_size(lo->lo_queue, 512);
 	blk_queue_io_min(lo->lo_queue, 512);
-	if (bdev) {
+	अगर (bdev) अणु
 		bdput(bdev);
 		invalidate_bdev(bdev);
 		bdev->bd_inode->i_mapping->wb_err = 0;
-	}
+	पूर्ण
 	set_capacity(lo->lo_disk, 0);
-	loop_sysfs_exit(lo);
-	if (bdev) {
+	loop_sysfs_निकास(lo);
+	अगर (bdev) अणु
 		/* let user-space know about this change */
 		kobject_uevent(&disk_to_dev(bdev->bd_disk)->kobj, KOBJ_CHANGE);
-	}
+	पूर्ण
 	mapping_set_gfp_mask(filp->f_mapping, gfp);
-	/* This is safe: open() is still holding a reference. */
+	/* This is safe: खोलो() is still holding a reference. */
 	module_put(THIS_MODULE);
-	blk_mq_unfreeze_queue(lo->lo_queue);
+	blk_mq_unमुक्तze_queue(lo->lo_queue);
 
 	partscan = lo->lo_flags & LO_FLAGS_PARTSCAN && bdev;
 	lo_number = lo->lo_number;
 	loop_unprepare_queue(lo);
 out_unlock:
 	mutex_unlock(&lo->lo_mutex);
-	if (partscan) {
+	अगर (partscan) अणु
 		/*
-		 * bd_mutex has been held already in release path, so don't
-		 * acquire it if this function is called in such case.
+		 * bd_mutex has been held alपढ़ोy in release path, so करोn't
+		 * acquire it अगर this function is called in such हाल.
 		 *
-		 * If the reread partition isn't from release path, lo_refcnt
+		 * If the reपढ़ो partition isn't from release path, lo_refcnt
 		 * must be at least one and it can only become zero when the
 		 * current holder is released.
 		 */
-		if (!release)
+		अगर (!release)
 			mutex_lock(&bdev->bd_mutex);
 		err = bdev_disk_changed(bdev, false);
-		if (!release)
+		अगर (!release)
 			mutex_unlock(&bdev->bd_mutex);
-		if (err)
+		अगर (err)
 			pr_warn("%s: partition scan of loop%d failed (rc=%d)\n",
 				__func__, lo_number, err);
-		/* Device is gone, no point in returning error */
+		/* Device is gone, no poपूर्णांक in वापसing error */
 		err = 0;
-	}
+	पूर्ण
 
 	/*
 	 * lo->lo_state is set to Lo_unbound here after above partscan has
 	 * finished.
 	 *
-	 * There cannot be anybody else entering __loop_clr_fd() as
-	 * lo->lo_backing_file is already cleared and Lo_rundown state
+	 * There cannot be anybody अन्यथा entering __loop_clr_fd() as
+	 * lo->lo_backing_file is alपढ़ोy cleared and Lo_runकरोwn state
 	 * protects us from all the other places trying to change the 'lo'
 	 * device.
 	 */
 	mutex_lock(&lo->lo_mutex);
 	lo->lo_flags = 0;
-	if (!part_shift)
+	अगर (!part_shअगरt)
 		lo->lo_disk->flags |= GENHD_FL_NO_PART_SCAN;
 	lo->lo_state = Lo_unbound;
 	mutex_unlock(&lo->lo_mutex);
@@ -1298,93 +1299,93 @@ out_unlock:
 	/*
 	 * Need not hold lo_mutex to fput backing file. Calling fput holding
 	 * lo_mutex triggers a circular lock dependency possibility warning as
-	 * fput can take bd_mutex which is usually taken before lo_mutex.
+	 * fput can take bd_mutex which is usually taken beक्रमe lo_mutex.
 	 */
-	if (filp)
+	अगर (filp)
 		fput(filp);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int loop_clr_fd(struct loop_device *lo)
-{
-	int err;
+अटल पूर्णांक loop_clr_fd(काष्ठा loop_device *lo)
+अणु
+	पूर्णांक err;
 
-	err = mutex_lock_killable(&lo->lo_mutex);
-	if (err)
-		return err;
-	if (lo->lo_state != Lo_bound) {
+	err = mutex_lock_समाप्तable(&lo->lo_mutex);
+	अगर (err)
+		वापस err;
+	अगर (lo->lo_state != Lo_bound) अणु
 		mutex_unlock(&lo->lo_mutex);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	/*
-	 * If we've explicitly asked to tear down the loop device,
-	 * and it has an elevated reference count, set it for auto-teardown when
+	 * If we've explicitly asked to tear करोwn the loop device,
+	 * and it has an elevated reference count, set it क्रम स्वतः-tearकरोwn when
 	 * the last reference goes away. This stops $!~#$@ udev from
-	 * preventing teardown because it decided that it needs to run blkid on
-	 * the loopback device whenever they appear. xfstests is notorious for
+	 * preventing tearकरोwn because it decided that it needs to run blkid on
+	 * the loopback device whenever they appear. xfstests is notorious क्रम
 	 * failing tests because blkid via udev races with a losetup
-	 * <dev>/do something like mkfs/losetup -d <dev> causing the losetup -d
+	 * <dev>/करो something like mkfs/losetup -d <dev> causing the losetup -d
 	 * command to fail with EBUSY.
 	 */
-	if (atomic_read(&lo->lo_refcnt) > 1) {
+	अगर (atomic_पढ़ो(&lo->lo_refcnt) > 1) अणु
 		lo->lo_flags |= LO_FLAGS_AUTOCLEAR;
 		mutex_unlock(&lo->lo_mutex);
-		return 0;
-	}
-	lo->lo_state = Lo_rundown;
+		वापस 0;
+	पूर्ण
+	lo->lo_state = Lo_runकरोwn;
 	mutex_unlock(&lo->lo_mutex);
 
-	return __loop_clr_fd(lo, false);
-}
+	वापस __loop_clr_fd(lo, false);
+पूर्ण
 
-static int
-loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
-{
-	int err;
-	struct block_device *bdev;
+अटल पूर्णांक
+loop_set_status(काष्ठा loop_device *lo, स्थिर काष्ठा loop_info64 *info)
+अणु
+	पूर्णांक err;
+	काष्ठा block_device *bdev;
 	kuid_t uid = current_uid();
-	int prev_lo_flags;
+	पूर्णांक prev_lo_flags;
 	bool partscan = false;
 	bool size_changed = false;
 
-	err = mutex_lock_killable(&lo->lo_mutex);
-	if (err)
-		return err;
-	if (lo->lo_encrypt_key_size &&
+	err = mutex_lock_समाप्तable(&lo->lo_mutex);
+	अगर (err)
+		वापस err;
+	अगर (lo->lo_encrypt_key_size &&
 	    !uid_eq(lo->lo_key_owner, uid) &&
-	    !capable(CAP_SYS_ADMIN)) {
+	    !capable(CAP_SYS_ADMIN)) अणु
 		err = -EPERM;
-		goto out_unlock;
-	}
-	if (lo->lo_state != Lo_bound) {
+		जाओ out_unlock;
+	पूर्ण
+	अगर (lo->lo_state != Lo_bound) अणु
 		err = -ENXIO;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (lo->lo_offset != info->lo_offset ||
-	    lo->lo_sizelimit != info->lo_sizelimit) {
+	अगर (lo->lo_offset != info->lo_offset ||
+	    lo->lo_sizelimit != info->lo_sizelimit) अणु
 		size_changed = true;
 		sync_blockdev(lo->lo_device);
 		invalidate_bdev(lo->lo_device);
-	}
+	पूर्ण
 
 	/* I/O need to be drained during transfer transition */
-	blk_mq_freeze_queue(lo->lo_queue);
+	blk_mq_मुक्तze_queue(lo->lo_queue);
 
-	if (size_changed && lo->lo_device->bd_inode->i_mapping->nrpages) {
+	अगर (size_changed && lo->lo_device->bd_inode->i_mapping->nrpages) अणु
 		/* If any pages were dirtied after invalidate_bdev(), try again */
 		err = -EAGAIN;
 		pr_warn("%s: loop%d (%s) has still dirty pages (nrpages=%lu)\n",
 			__func__, lo->lo_number, lo->lo_file_name,
 			lo->lo_device->bd_inode->i_mapping->nrpages);
-		goto out_unfreeze;
-	}
+		जाओ out_unमुक्तze;
+	पूर्ण
 
 	prev_lo_flags = lo->lo_flags;
 
 	err = loop_set_status_from_info(lo, info);
-	if (err)
-		goto out_unfreeze;
+	अगर (err)
+		जाओ out_unमुक्तze;
 
 	/* Mask out flags that can't be set using LOOP_SET_STATUS. */
 	lo->lo_flags &= LOOP_SET_STATUS_SETTABLE_FLAGS;
@@ -1393,82 +1394,82 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 	/* For flags that can't be cleared, use previous values too */
 	lo->lo_flags |= prev_lo_flags & ~LOOP_SET_STATUS_CLEARABLE_FLAGS;
 
-	if (size_changed) {
+	अगर (size_changed) अणु
 		loff_t new_size = get_size(lo->lo_offset, lo->lo_sizelimit,
 					   lo->lo_backing_file);
 		loop_set_size(lo, new_size);
-	}
+	पूर्ण
 
 	loop_config_discard(lo);
 
-	/* update dio if lo_offset or transfer is changed */
+	/* update dio अगर lo_offset or transfer is changed */
 	__loop_update_dio(lo, lo->use_dio);
 
-out_unfreeze:
-	blk_mq_unfreeze_queue(lo->lo_queue);
+out_unमुक्तze:
+	blk_mq_unमुक्तze_queue(lo->lo_queue);
 
-	if (!err && (lo->lo_flags & LO_FLAGS_PARTSCAN) &&
-	     !(prev_lo_flags & LO_FLAGS_PARTSCAN)) {
+	अगर (!err && (lo->lo_flags & LO_FLAGS_PARTSCAN) &&
+	     !(prev_lo_flags & LO_FLAGS_PARTSCAN)) अणु
 		lo->lo_disk->flags &= ~GENHD_FL_NO_PART_SCAN;
 		bdev = lo->lo_device;
 		partscan = true;
-	}
+	पूर्ण
 out_unlock:
 	mutex_unlock(&lo->lo_mutex);
-	if (partscan)
-		loop_reread_partitions(lo, bdev);
+	अगर (partscan)
+		loop_reपढ़ो_partitions(lo, bdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-loop_get_status(struct loop_device *lo, struct loop_info64 *info)
-{
-	struct path path;
-	struct kstat stat;
-	int ret;
+अटल पूर्णांक
+loop_get_status(काष्ठा loop_device *lo, काष्ठा loop_info64 *info)
+अणु
+	काष्ठा path path;
+	काष्ठा kstat stat;
+	पूर्णांक ret;
 
-	ret = mutex_lock_killable(&lo->lo_mutex);
-	if (ret)
-		return ret;
-	if (lo->lo_state != Lo_bound) {
+	ret = mutex_lock_समाप्तable(&lo->lo_mutex);
+	अगर (ret)
+		वापस ret;
+	अगर (lo->lo_state != Lo_bound) अणु
 		mutex_unlock(&lo->lo_mutex);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 	info->lo_number = lo->lo_number;
 	info->lo_offset = lo->lo_offset;
 	info->lo_sizelimit = lo->lo_sizelimit;
 	info->lo_flags = lo->lo_flags;
-	memcpy(info->lo_file_name, lo->lo_file_name, LO_NAME_SIZE);
-	memcpy(info->lo_crypt_name, lo->lo_crypt_name, LO_NAME_SIZE);
+	स_नकल(info->lo_file_name, lo->lo_file_name, LO_NAME_SIZE);
+	स_नकल(info->lo_crypt_name, lo->lo_crypt_name, LO_NAME_SIZE);
 	info->lo_encrypt_type =
 		lo->lo_encryption ? lo->lo_encryption->number : 0;
-	if (lo->lo_encrypt_key_size && capable(CAP_SYS_ADMIN)) {
+	अगर (lo->lo_encrypt_key_size && capable(CAP_SYS_ADMIN)) अणु
 		info->lo_encrypt_key_size = lo->lo_encrypt_key_size;
-		memcpy(info->lo_encrypt_key, lo->lo_encrypt_key,
+		स_नकल(info->lo_encrypt_key, lo->lo_encrypt_key,
 		       lo->lo_encrypt_key_size);
-	}
+	पूर्ण
 
-	/* Drop lo_mutex while we call into the filesystem. */
+	/* Drop lo_mutex जबतक we call पूर्णांकo the fileप्रणाली. */
 	path = lo->lo_backing_file->f_path;
 	path_get(&path);
 	mutex_unlock(&lo->lo_mutex);
 	ret = vfs_getattr(&path, &stat, STATX_INO, AT_STATX_SYNC_AS_STAT);
-	if (!ret) {
+	अगर (!ret) अणु
 		info->lo_device = huge_encode_dev(stat.dev);
 		info->lo_inode = stat.ino;
 		info->lo_rdevice = huge_encode_dev(stat.rdev);
-	}
+	पूर्ण
 	path_put(&path);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-loop_info64_from_old(const struct loop_info *info, struct loop_info64 *info64)
-{
-	memset(info64, 0, sizeof(*info64));
+अटल व्योम
+loop_info64_from_old(स्थिर काष्ठा loop_info *info, काष्ठा loop_info64 *info64)
+अणु
+	स_रखो(info64, 0, माप(*info64));
 	info64->lo_number = info->lo_number;
 	info64->lo_device = info->lo_device;
 	info64->lo_inode = info->lo_inode;
@@ -1480,17 +1481,17 @@ loop_info64_from_old(const struct loop_info *info, struct loop_info64 *info64)
 	info64->lo_flags = info->lo_flags;
 	info64->lo_init[0] = info->lo_init[0];
 	info64->lo_init[1] = info->lo_init[1];
-	if (info->lo_encrypt_type == LO_CRYPT_CRYPTOAPI)
-		memcpy(info64->lo_crypt_name, info->lo_name, LO_NAME_SIZE);
-	else
-		memcpy(info64->lo_file_name, info->lo_name, LO_NAME_SIZE);
-	memcpy(info64->lo_encrypt_key, info->lo_encrypt_key, LO_KEY_SIZE);
-}
+	अगर (info->lo_encrypt_type == LO_CRYPT_CRYPTOAPI)
+		स_नकल(info64->lo_crypt_name, info->lo_name, LO_NAME_SIZE);
+	अन्यथा
+		स_नकल(info64->lo_file_name, info->lo_name, LO_NAME_SIZE);
+	स_नकल(info64->lo_encrypt_key, info->lo_encrypt_key, LO_KEY_SIZE);
+पूर्ण
 
-static int
-loop_info64_to_old(const struct loop_info64 *info64, struct loop_info *info)
-{
-	memset(info, 0, sizeof(*info));
+अटल पूर्णांक
+loop_info64_to_old(स्थिर काष्ठा loop_info64 *info64, काष्ठा loop_info *info)
+अणु
+	स_रखो(info, 0, माप(*info));
 	info->lo_number = info64->lo_number;
 	info->lo_device = info64->lo_device;
 	info->lo_inode = info64->lo_inode;
@@ -1501,258 +1502,258 @@ loop_info64_to_old(const struct loop_info64 *info64, struct loop_info *info)
 	info->lo_flags = info64->lo_flags;
 	info->lo_init[0] = info64->lo_init[0];
 	info->lo_init[1] = info64->lo_init[1];
-	if (info->lo_encrypt_type == LO_CRYPT_CRYPTOAPI)
-		memcpy(info->lo_name, info64->lo_crypt_name, LO_NAME_SIZE);
-	else
-		memcpy(info->lo_name, info64->lo_file_name, LO_NAME_SIZE);
-	memcpy(info->lo_encrypt_key, info64->lo_encrypt_key, LO_KEY_SIZE);
+	अगर (info->lo_encrypt_type == LO_CRYPT_CRYPTOAPI)
+		स_नकल(info->lo_name, info64->lo_crypt_name, LO_NAME_SIZE);
+	अन्यथा
+		स_नकल(info->lo_name, info64->lo_file_name, LO_NAME_SIZE);
+	स_नकल(info->lo_encrypt_key, info64->lo_encrypt_key, LO_KEY_SIZE);
 
-	/* error in case values were truncated */
-	if (info->lo_device != info64->lo_device ||
+	/* error in हाल values were truncated */
+	अगर (info->lo_device != info64->lo_device ||
 	    info->lo_rdevice != info64->lo_rdevice ||
 	    info->lo_inode != info64->lo_inode ||
 	    info->lo_offset != info64->lo_offset)
-		return -EOVERFLOW;
+		वापस -EOVERFLOW;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-loop_set_status_old(struct loop_device *lo, const struct loop_info __user *arg)
-{
-	struct loop_info info;
-	struct loop_info64 info64;
+अटल पूर्णांक
+loop_set_status_old(काष्ठा loop_device *lo, स्थिर काष्ठा loop_info __user *arg)
+अणु
+	काष्ठा loop_info info;
+	काष्ठा loop_info64 info64;
 
-	if (copy_from_user(&info, arg, sizeof (struct loop_info)))
-		return -EFAULT;
+	अगर (copy_from_user(&info, arg, माप (काष्ठा loop_info)))
+		वापस -EFAULT;
 	loop_info64_from_old(&info, &info64);
-	return loop_set_status(lo, &info64);
-}
+	वापस loop_set_status(lo, &info64);
+पूर्ण
 
-static int
-loop_set_status64(struct loop_device *lo, const struct loop_info64 __user *arg)
-{
-	struct loop_info64 info64;
+अटल पूर्णांक
+loop_set_status64(काष्ठा loop_device *lo, स्थिर काष्ठा loop_info64 __user *arg)
+अणु
+	काष्ठा loop_info64 info64;
 
-	if (copy_from_user(&info64, arg, sizeof (struct loop_info64)))
-		return -EFAULT;
-	return loop_set_status(lo, &info64);
-}
+	अगर (copy_from_user(&info64, arg, माप (काष्ठा loop_info64)))
+		वापस -EFAULT;
+	वापस loop_set_status(lo, &info64);
+पूर्ण
 
-static int
-loop_get_status_old(struct loop_device *lo, struct loop_info __user *arg) {
-	struct loop_info info;
-	struct loop_info64 info64;
-	int err;
+अटल पूर्णांक
+loop_get_status_old(काष्ठा loop_device *lo, काष्ठा loop_info __user *arg) अणु
+	काष्ठा loop_info info;
+	काष्ठा loop_info64 info64;
+	पूर्णांक err;
 
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 	err = loop_get_status(lo, &info64);
-	if (!err)
+	अगर (!err)
 		err = loop_info64_to_old(&info64, &info);
-	if (!err && copy_to_user(arg, &info, sizeof(info)))
+	अगर (!err && copy_to_user(arg, &info, माप(info)))
 		err = -EFAULT;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-loop_get_status64(struct loop_device *lo, struct loop_info64 __user *arg) {
-	struct loop_info64 info64;
-	int err;
+अटल पूर्णांक
+loop_get_status64(काष्ठा loop_device *lo, काष्ठा loop_info64 __user *arg) अणु
+	काष्ठा loop_info64 info64;
+	पूर्णांक err;
 
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 	err = loop_get_status(lo, &info64);
-	if (!err && copy_to_user(arg, &info64, sizeof(info64)))
+	अगर (!err && copy_to_user(arg, &info64, माप(info64)))
 		err = -EFAULT;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int loop_set_capacity(struct loop_device *lo)
-{
+अटल पूर्णांक loop_set_capacity(काष्ठा loop_device *lo)
+अणु
 	loff_t size;
 
-	if (unlikely(lo->lo_state != Lo_bound))
-		return -ENXIO;
+	अगर (unlikely(lo->lo_state != Lo_bound))
+		वापस -ENXIO;
 
 	size = get_loop_size(lo, lo->lo_backing_file);
 	loop_set_size(lo, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int loop_set_dio(struct loop_device *lo, unsigned long arg)
-{
-	int error = -ENXIO;
-	if (lo->lo_state != Lo_bound)
-		goto out;
+अटल पूर्णांक loop_set_dio(काष्ठा loop_device *lo, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक error = -ENXIO;
+	अगर (lo->lo_state != Lo_bound)
+		जाओ out;
 
 	__loop_update_dio(lo, !!arg);
-	if (lo->use_dio == !!arg)
-		return 0;
+	अगर (lo->use_dio == !!arg)
+		वापस 0;
 	error = -EINVAL;
  out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int loop_set_block_size(struct loop_device *lo, unsigned long arg)
-{
-	int err = 0;
+अटल पूर्णांक loop_set_block_size(काष्ठा loop_device *lo, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक err = 0;
 
-	if (lo->lo_state != Lo_bound)
-		return -ENXIO;
+	अगर (lo->lo_state != Lo_bound)
+		वापस -ENXIO;
 
 	err = loop_validate_block_size(arg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (lo->lo_queue->limits.logical_block_size == arg)
-		return 0;
+	अगर (lo->lo_queue->limits.logical_block_size == arg)
+		वापस 0;
 
 	sync_blockdev(lo->lo_device);
 	invalidate_bdev(lo->lo_device);
 
-	blk_mq_freeze_queue(lo->lo_queue);
+	blk_mq_मुक्तze_queue(lo->lo_queue);
 
 	/* invalidate_bdev should have truncated all the pages */
-	if (lo->lo_device->bd_inode->i_mapping->nrpages) {
+	अगर (lo->lo_device->bd_inode->i_mapping->nrpages) अणु
 		err = -EAGAIN;
 		pr_warn("%s: loop%d (%s) has still dirty pages (nrpages=%lu)\n",
 			__func__, lo->lo_number, lo->lo_file_name,
 			lo->lo_device->bd_inode->i_mapping->nrpages);
-		goto out_unfreeze;
-	}
+		जाओ out_unमुक्तze;
+	पूर्ण
 
 	blk_queue_logical_block_size(lo->lo_queue, arg);
 	blk_queue_physical_block_size(lo->lo_queue, arg);
 	blk_queue_io_min(lo->lo_queue, arg);
 	loop_update_dio(lo);
-out_unfreeze:
-	blk_mq_unfreeze_queue(lo->lo_queue);
+out_unमुक्तze:
+	blk_mq_unमुक्तze_queue(lo->lo_queue);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int lo_simple_ioctl(struct loop_device *lo, unsigned int cmd,
-			   unsigned long arg)
-{
-	int err;
+अटल पूर्णांक lo_simple_ioctl(काष्ठा loop_device *lo, अचिन्हित पूर्णांक cmd,
+			   अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक err;
 
-	err = mutex_lock_killable(&lo->lo_mutex);
-	if (err)
-		return err;
-	switch (cmd) {
-	case LOOP_SET_CAPACITY:
+	err = mutex_lock_समाप्तable(&lo->lo_mutex);
+	अगर (err)
+		वापस err;
+	चयन (cmd) अणु
+	हाल LOOP_SET_CAPACITY:
 		err = loop_set_capacity(lo);
-		break;
-	case LOOP_SET_DIRECT_IO:
+		अवरोध;
+	हाल LOOP_SET_सूचीECT_IO:
 		err = loop_set_dio(lo, arg);
-		break;
-	case LOOP_SET_BLOCK_SIZE:
+		अवरोध;
+	हाल LOOP_SET_BLOCK_SIZE:
 		err = loop_set_block_size(lo, arg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = lo->ioctl ? lo->ioctl(lo, cmd, arg) : -EINVAL;
-	}
+	पूर्ण
 	mutex_unlock(&lo->lo_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int lo_ioctl(struct block_device *bdev, fmode_t mode,
-	unsigned int cmd, unsigned long arg)
-{
-	struct loop_device *lo = bdev->bd_disk->private_data;
-	void __user *argp = (void __user *) arg;
-	int err;
+अटल पूर्णांक lo_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+	अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा loop_device *lo = bdev->bd_disk->निजी_data;
+	व्योम __user *argp = (व्योम __user *) arg;
+	पूर्णांक err;
 
-	switch (cmd) {
-	case LOOP_SET_FD: {
+	चयन (cmd) अणु
+	हाल LOOP_SET_FD: अणु
 		/*
-		 * Legacy case - pass in a zeroed out struct loop_config with
+		 * Legacy हाल - pass in a zeroed out काष्ठा loop_config with
 		 * only the file descriptor set , which corresponds with the
-		 * default parameters we'd have used otherwise.
+		 * शेष parameters we'd have used otherwise.
 		 */
-		struct loop_config config;
+		काष्ठा loop_config config;
 
-		memset(&config, 0, sizeof(config));
+		स_रखो(&config, 0, माप(config));
 		config.fd = arg;
 
-		return loop_configure(lo, mode, bdev, &config);
-	}
-	case LOOP_CONFIGURE: {
-		struct loop_config config;
+		वापस loop_configure(lo, mode, bdev, &config);
+	पूर्ण
+	हाल LOOP_CONFIGURE: अणु
+		काष्ठा loop_config config;
 
-		if (copy_from_user(&config, argp, sizeof(config)))
-			return -EFAULT;
+		अगर (copy_from_user(&config, argp, माप(config)))
+			वापस -EFAULT;
 
-		return loop_configure(lo, mode, bdev, &config);
-	}
-	case LOOP_CHANGE_FD:
-		return loop_change_fd(lo, bdev, arg);
-	case LOOP_CLR_FD:
-		return loop_clr_fd(lo);
-	case LOOP_SET_STATUS:
+		वापस loop_configure(lo, mode, bdev, &config);
+	पूर्ण
+	हाल LOOP_CHANGE_FD:
+		वापस loop_change_fd(lo, bdev, arg);
+	हाल LOOP_CLR_FD:
+		वापस loop_clr_fd(lo);
+	हाल LOOP_SET_STATUS:
 		err = -EPERM;
-		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN)) {
+		अगर ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN)) अणु
 			err = loop_set_status_old(lo, argp);
-		}
-		break;
-	case LOOP_GET_STATUS:
-		return loop_get_status_old(lo, argp);
-	case LOOP_SET_STATUS64:
+		पूर्ण
+		अवरोध;
+	हाल LOOP_GET_STATUS:
+		वापस loop_get_status_old(lo, argp);
+	हाल LOOP_SET_STATUS64:
 		err = -EPERM;
-		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN)) {
+		अगर ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN)) अणु
 			err = loop_set_status64(lo, argp);
-		}
-		break;
-	case LOOP_GET_STATUS64:
-		return loop_get_status64(lo, argp);
-	case LOOP_SET_CAPACITY:
-	case LOOP_SET_DIRECT_IO:
-	case LOOP_SET_BLOCK_SIZE:
-		if (!(mode & FMODE_WRITE) && !capable(CAP_SYS_ADMIN))
-			return -EPERM;
+		पूर्ण
+		अवरोध;
+	हाल LOOP_GET_STATUS64:
+		वापस loop_get_status64(lo, argp);
+	हाल LOOP_SET_CAPACITY:
+	हाल LOOP_SET_सूचीECT_IO:
+	हाल LOOP_SET_BLOCK_SIZE:
+		अगर (!(mode & FMODE_WRITE) && !capable(CAP_SYS_ADMIN))
+			वापस -EPERM;
 		fallthrough;
-	default:
+	शेष:
 		err = lo_simple_ioctl(lo, cmd, arg);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-struct compat_loop_info {
-	compat_int_t	lo_number;      /* ioctl r/o */
+#अगर_घोषित CONFIG_COMPAT
+काष्ठा compat_loop_info अणु
+	compat_पूर्णांक_t	lo_number;      /* ioctl r/o */
 	compat_dev_t	lo_device;      /* ioctl r/o */
-	compat_ulong_t	lo_inode;       /* ioctl r/o */
+	compat_uदीर्घ_t	lo_inode;       /* ioctl r/o */
 	compat_dev_t	lo_rdevice;     /* ioctl r/o */
-	compat_int_t	lo_offset;
-	compat_int_t	lo_encrypt_type;
-	compat_int_t	lo_encrypt_key_size;    /* ioctl w/o */
-	compat_int_t	lo_flags;       /* ioctl r/o */
-	char		lo_name[LO_NAME_SIZE];
-	unsigned char	lo_encrypt_key[LO_KEY_SIZE]; /* ioctl w/o */
-	compat_ulong_t	lo_init[2];
-	char		reserved[4];
-};
+	compat_पूर्णांक_t	lo_offset;
+	compat_पूर्णांक_t	lo_encrypt_type;
+	compat_पूर्णांक_t	lo_encrypt_key_size;    /* ioctl w/o */
+	compat_पूर्णांक_t	lo_flags;       /* ioctl r/o */
+	अक्षर		lo_name[LO_NAME_SIZE];
+	अचिन्हित अक्षर	lo_encrypt_key[LO_KEY_SIZE]; /* ioctl w/o */
+	compat_uदीर्घ_t	lo_init[2];
+	अक्षर		reserved[4];
+पूर्ण;
 
 /*
- * Transfer 32-bit compatibility structure in userspace to 64-bit loop info
- * - noinlined to reduce stack space usage in main part of driver
+ * Transfer 32-bit compatibility काष्ठाure in userspace to 64-bit loop info
+ * - noअंतरभूतd to reduce stack space usage in मुख्य part of driver
  */
-static noinline int
-loop_info64_from_compat(const struct compat_loop_info __user *arg,
-			struct loop_info64 *info64)
-{
-	struct compat_loop_info info;
+अटल noअंतरभूत पूर्णांक
+loop_info64_from_compat(स्थिर काष्ठा compat_loop_info __user *arg,
+			काष्ठा loop_info64 *info64)
+अणु
+	काष्ठा compat_loop_info info;
 
-	if (copy_from_user(&info, arg, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_from_user(&info, arg, माप(info)))
+		वापस -EFAULT;
 
-	memset(info64, 0, sizeof(*info64));
+	स_रखो(info64, 0, माप(*info64));
 	info64->lo_number = info.lo_number;
 	info64->lo_device = info.lo_device;
 	info64->lo_inode = info.lo_inode;
@@ -1764,25 +1765,25 @@ loop_info64_from_compat(const struct compat_loop_info __user *arg,
 	info64->lo_flags = info.lo_flags;
 	info64->lo_init[0] = info.lo_init[0];
 	info64->lo_init[1] = info.lo_init[1];
-	if (info.lo_encrypt_type == LO_CRYPT_CRYPTOAPI)
-		memcpy(info64->lo_crypt_name, info.lo_name, LO_NAME_SIZE);
-	else
-		memcpy(info64->lo_file_name, info.lo_name, LO_NAME_SIZE);
-	memcpy(info64->lo_encrypt_key, info.lo_encrypt_key, LO_KEY_SIZE);
-	return 0;
-}
+	अगर (info.lo_encrypt_type == LO_CRYPT_CRYPTOAPI)
+		स_नकल(info64->lo_crypt_name, info.lo_name, LO_NAME_SIZE);
+	अन्यथा
+		स_नकल(info64->lo_file_name, info.lo_name, LO_NAME_SIZE);
+	स_नकल(info64->lo_encrypt_key, info.lo_encrypt_key, LO_KEY_SIZE);
+	वापस 0;
+पूर्ण
 
 /*
- * Transfer 64-bit loop info to 32-bit compatibility structure in userspace
- * - noinlined to reduce stack space usage in main part of driver
+ * Transfer 64-bit loop info to 32-bit compatibility काष्ठाure in userspace
+ * - noअंतरभूतd to reduce stack space usage in मुख्य part of driver
  */
-static noinline int
-loop_info64_to_compat(const struct loop_info64 *info64,
-		      struct compat_loop_info __user *arg)
-{
-	struct compat_loop_info info;
+अटल noअंतरभूत पूर्णांक
+loop_info64_to_compat(स्थिर काष्ठा loop_info64 *info64,
+		      काष्ठा compat_loop_info __user *arg)
+अणु
+	काष्ठा compat_loop_info info;
 
-	memset(&info, 0, sizeof(info));
+	स_रखो(&info, 0, माप(info));
 	info.lo_number = info64->lo_number;
 	info.lo_device = info64->lo_device;
 	info.lo_inode = info64->lo_inode;
@@ -1793,304 +1794,304 @@ loop_info64_to_compat(const struct loop_info64 *info64,
 	info.lo_flags = info64->lo_flags;
 	info.lo_init[0] = info64->lo_init[0];
 	info.lo_init[1] = info64->lo_init[1];
-	if (info.lo_encrypt_type == LO_CRYPT_CRYPTOAPI)
-		memcpy(info.lo_name, info64->lo_crypt_name, LO_NAME_SIZE);
-	else
-		memcpy(info.lo_name, info64->lo_file_name, LO_NAME_SIZE);
-	memcpy(info.lo_encrypt_key, info64->lo_encrypt_key, LO_KEY_SIZE);
+	अगर (info.lo_encrypt_type == LO_CRYPT_CRYPTOAPI)
+		स_नकल(info.lo_name, info64->lo_crypt_name, LO_NAME_SIZE);
+	अन्यथा
+		स_नकल(info.lo_name, info64->lo_file_name, LO_NAME_SIZE);
+	स_नकल(info.lo_encrypt_key, info64->lo_encrypt_key, LO_KEY_SIZE);
 
-	/* error in case values were truncated */
-	if (info.lo_device != info64->lo_device ||
+	/* error in हाल values were truncated */
+	अगर (info.lo_device != info64->lo_device ||
 	    info.lo_rdevice != info64->lo_rdevice ||
 	    info.lo_inode != info64->lo_inode ||
 	    info.lo_offset != info64->lo_offset ||
 	    info.lo_init[0] != info64->lo_init[0] ||
 	    info.lo_init[1] != info64->lo_init[1])
-		return -EOVERFLOW;
+		वापस -EOVERFLOW;
 
-	if (copy_to_user(arg, &info, sizeof(info)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(arg, &info, माप(info)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int
-loop_set_status_compat(struct loop_device *lo,
-		       const struct compat_loop_info __user *arg)
-{
-	struct loop_info64 info64;
-	int ret;
+अटल पूर्णांक
+loop_set_status_compat(काष्ठा loop_device *lo,
+		       स्थिर काष्ठा compat_loop_info __user *arg)
+अणु
+	काष्ठा loop_info64 info64;
+	पूर्णांक ret;
 
 	ret = loop_info64_from_compat(arg, &info64);
-	if (ret < 0)
-		return ret;
-	return loop_set_status(lo, &info64);
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस loop_set_status(lo, &info64);
+पूर्ण
 
-static int
-loop_get_status_compat(struct loop_device *lo,
-		       struct compat_loop_info __user *arg)
-{
-	struct loop_info64 info64;
-	int err;
+अटल पूर्णांक
+loop_get_status_compat(काष्ठा loop_device *lo,
+		       काष्ठा compat_loop_info __user *arg)
+अणु
+	काष्ठा loop_info64 info64;
+	पूर्णांक err;
 
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 	err = loop_get_status(lo, &info64);
-	if (!err)
+	अगर (!err)
 		err = loop_info64_to_compat(&info64, arg);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int lo_compat_ioctl(struct block_device *bdev, fmode_t mode,
-			   unsigned int cmd, unsigned long arg)
-{
-	struct loop_device *lo = bdev->bd_disk->private_data;
-	int err;
+अटल पूर्णांक lo_compat_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+			   अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा loop_device *lo = bdev->bd_disk->निजी_data;
+	पूर्णांक err;
 
-	switch(cmd) {
-	case LOOP_SET_STATUS:
+	चयन(cmd) अणु
+	हाल LOOP_SET_STATUS:
 		err = loop_set_status_compat(lo,
-			     (const struct compat_loop_info __user *)arg);
-		break;
-	case LOOP_GET_STATUS:
+			     (स्थिर काष्ठा compat_loop_info __user *)arg);
+		अवरोध;
+	हाल LOOP_GET_STATUS:
 		err = loop_get_status_compat(lo,
-				     (struct compat_loop_info __user *)arg);
-		break;
-	case LOOP_SET_CAPACITY:
-	case LOOP_CLR_FD:
-	case LOOP_GET_STATUS64:
-	case LOOP_SET_STATUS64:
-	case LOOP_CONFIGURE:
-		arg = (unsigned long) compat_ptr(arg);
+				     (काष्ठा compat_loop_info __user *)arg);
+		अवरोध;
+	हाल LOOP_SET_CAPACITY:
+	हाल LOOP_CLR_FD:
+	हाल LOOP_GET_STATUS64:
+	हाल LOOP_SET_STATUS64:
+	हाल LOOP_CONFIGURE:
+		arg = (अचिन्हित दीर्घ) compat_ptr(arg);
 		fallthrough;
-	case LOOP_SET_FD:
-	case LOOP_CHANGE_FD:
-	case LOOP_SET_BLOCK_SIZE:
-	case LOOP_SET_DIRECT_IO:
+	हाल LOOP_SET_FD:
+	हाल LOOP_CHANGE_FD:
+	हाल LOOP_SET_BLOCK_SIZE:
+	हाल LOOP_SET_सूचीECT_IO:
 		err = lo_ioctl(bdev, mode, cmd, arg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -ENOIOCTLCMD;
-		break;
-	}
-	return err;
-}
-#endif
+		अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
+#पूर्ण_अगर
 
-static int lo_open(struct block_device *bdev, fmode_t mode)
-{
-	struct loop_device *lo = bdev->bd_disk->private_data;
-	int err;
+अटल पूर्णांक lo_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
+	काष्ठा loop_device *lo = bdev->bd_disk->निजी_data;
+	पूर्णांक err;
 
-	err = mutex_lock_killable(&lo->lo_mutex);
-	if (err)
-		return err;
-	if (lo->lo_state == Lo_deleting)
+	err = mutex_lock_समाप्तable(&lo->lo_mutex);
+	अगर (err)
+		वापस err;
+	अगर (lo->lo_state == Lo_deleting)
 		err = -ENXIO;
-	else
+	अन्यथा
 		atomic_inc(&lo->lo_refcnt);
 	mutex_unlock(&lo->lo_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void lo_release(struct gendisk *disk, fmode_t mode)
-{
-	struct loop_device *lo = disk->private_data;
+अटल व्योम lo_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
+अणु
+	काष्ठा loop_device *lo = disk->निजी_data;
 
 	mutex_lock(&lo->lo_mutex);
-	if (atomic_dec_return(&lo->lo_refcnt))
-		goto out_unlock;
+	अगर (atomic_dec_वापस(&lo->lo_refcnt))
+		जाओ out_unlock;
 
-	if (lo->lo_flags & LO_FLAGS_AUTOCLEAR) {
-		if (lo->lo_state != Lo_bound)
-			goto out_unlock;
-		lo->lo_state = Lo_rundown;
+	अगर (lo->lo_flags & LO_FLAGS_AUTOCLEAR) अणु
+		अगर (lo->lo_state != Lo_bound)
+			जाओ out_unlock;
+		lo->lo_state = Lo_runकरोwn;
 		mutex_unlock(&lo->lo_mutex);
 		/*
-		 * In autoclear mode, stop the loop thread
-		 * and remove configuration after last close.
+		 * In स्वतःclear mode, stop the loop thपढ़ो
+		 * and हटाओ configuration after last बंद.
 		 */
 		__loop_clr_fd(lo, true);
-		return;
-	} else if (lo->lo_state == Lo_bound) {
+		वापस;
+	पूर्ण अन्यथा अगर (lo->lo_state == Lo_bound) अणु
 		/*
-		 * Otherwise keep thread (if running) and config,
-		 * but flush possible ongoing bios in thread.
+		 * Otherwise keep thपढ़ो (अगर running) and config,
+		 * but flush possible ongoing bios in thपढ़ो.
 		 */
-		blk_mq_freeze_queue(lo->lo_queue);
-		blk_mq_unfreeze_queue(lo->lo_queue);
-	}
+		blk_mq_मुक्तze_queue(lo->lo_queue);
+		blk_mq_unमुक्तze_queue(lo->lo_queue);
+	पूर्ण
 
 out_unlock:
 	mutex_unlock(&lo->lo_mutex);
-}
+पूर्ण
 
-static const struct block_device_operations lo_fops = {
+अटल स्थिर काष्ठा block_device_operations lo_fops = अणु
 	.owner =	THIS_MODULE,
-	.open =		lo_open,
+	.खोलो =		lo_खोलो,
 	.release =	lo_release,
 	.ioctl =	lo_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl =	lo_compat_ioctl,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * And now the modules code and kernel interface.
+ * And now the modules code and kernel पूर्णांकerface.
  */
-static int max_loop;
-module_param(max_loop, int, 0444);
+अटल पूर्णांक max_loop;
+module_param(max_loop, पूर्णांक, 0444);
 MODULE_PARM_DESC(max_loop, "Maximum number of loop devices");
-module_param(max_part, int, 0444);
+module_param(max_part, पूर्णांक, 0444);
 MODULE_PARM_DESC(max_part, "Maximum number of partitions per loop device");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_BLOCKDEV_MAJOR(LOOP_MAJOR);
 
-int loop_register_transfer(struct loop_func_table *funcs)
-{
-	unsigned int n = funcs->number;
+पूर्णांक loop_रेजिस्टर_transfer(काष्ठा loop_func_table *funcs)
+अणु
+	अचिन्हित पूर्णांक n = funcs->number;
 
-	if (n >= MAX_LO_CRYPT || xfer_funcs[n])
-		return -EINVAL;
+	अगर (n >= MAX_LO_CRYPT || xfer_funcs[n])
+		वापस -EINVAL;
 	xfer_funcs[n] = funcs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int unregister_transfer_cb(int id, void *ptr, void *data)
-{
-	struct loop_device *lo = ptr;
-	struct loop_func_table *xfer = data;
+अटल पूर्णांक unरेजिस्टर_transfer_cb(पूर्णांक id, व्योम *ptr, व्योम *data)
+अणु
+	काष्ठा loop_device *lo = ptr;
+	काष्ठा loop_func_table *xfer = data;
 
 	mutex_lock(&lo->lo_mutex);
-	if (lo->lo_encryption == xfer)
+	अगर (lo->lo_encryption == xfer)
 		loop_release_xfer(lo);
 	mutex_unlock(&lo->lo_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int loop_unregister_transfer(int number)
-{
-	unsigned int n = number;
-	struct loop_func_table *xfer;
+पूर्णांक loop_unरेजिस्टर_transfer(पूर्णांक number)
+अणु
+	अचिन्हित पूर्णांक n = number;
+	काष्ठा loop_func_table *xfer;
 
-	if (n == 0 || n >= MAX_LO_CRYPT || (xfer = xfer_funcs[n]) == NULL)
-		return -EINVAL;
+	अगर (n == 0 || n >= MAX_LO_CRYPT || (xfer = xfer_funcs[n]) == शून्य)
+		वापस -EINVAL;
 
-	xfer_funcs[n] = NULL;
-	idr_for_each(&loop_index_idr, &unregister_transfer_cb, xfer);
-	return 0;
-}
+	xfer_funcs[n] = शून्य;
+	idr_क्रम_each(&loop_index_idr, &unरेजिस्टर_transfer_cb, xfer);
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(loop_register_transfer);
-EXPORT_SYMBOL(loop_unregister_transfer);
+EXPORT_SYMBOL(loop_रेजिस्टर_transfer);
+EXPORT_SYMBOL(loop_unरेजिस्टर_transfer);
 
-static blk_status_t loop_queue_rq(struct blk_mq_hw_ctx *hctx,
-		const struct blk_mq_queue_data *bd)
-{
-	struct request *rq = bd->rq;
-	struct loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
-	struct loop_device *lo = rq->q->queuedata;
+अटल blk_status_t loop_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
+		स्थिर काष्ठा blk_mq_queue_data *bd)
+अणु
+	काष्ठा request *rq = bd->rq;
+	काष्ठा loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
+	काष्ठा loop_device *lo = rq->q->queuedata;
 
 	blk_mq_start_request(rq);
 
-	if (lo->lo_state != Lo_bound)
-		return BLK_STS_IOERR;
+	अगर (lo->lo_state != Lo_bound)
+		वापस BLK_STS_IOERR;
 
-	switch (req_op(rq)) {
-	case REQ_OP_FLUSH:
-	case REQ_OP_DISCARD:
-	case REQ_OP_WRITE_ZEROES:
+	चयन (req_op(rq)) अणु
+	हाल REQ_OP_FLUSH:
+	हाल REQ_OP_DISCARD:
+	हाल REQ_OP_WRITE_ZEROES:
 		cmd->use_aio = false;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		cmd->use_aio = lo->use_dio;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* always use the first bio's css */
-#ifdef CONFIG_BLK_CGROUP
-	if (cmd->use_aio && rq->bio && rq->bio->bi_blkg) {
+#अगर_घोषित CONFIG_BLK_CGROUP
+	अगर (cmd->use_aio && rq->bio && rq->bio->bi_blkg) अणु
 		cmd->css = &bio_blkcg(rq->bio)->css;
 		css_get(cmd->css);
-	} else
-#endif
-		cmd->css = NULL;
-	kthread_queue_work(&lo->worker, &cmd->work);
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+		cmd->css = शून्य;
+	kthपढ़ो_queue_work(&lo->worker, &cmd->work);
 
-	return BLK_STS_OK;
-}
+	वापस BLK_STS_OK;
+पूर्ण
 
-static void loop_handle_cmd(struct loop_cmd *cmd)
-{
-	struct request *rq = blk_mq_rq_from_pdu(cmd);
-	const bool write = op_is_write(req_op(rq));
-	struct loop_device *lo = rq->q->queuedata;
-	int ret = 0;
+अटल व्योम loop_handle_cmd(काष्ठा loop_cmd *cmd)
+अणु
+	काष्ठा request *rq = blk_mq_rq_from_pdu(cmd);
+	स्थिर bool ग_लिखो = op_is_ग_लिखो(req_op(rq));
+	काष्ठा loop_device *lo = rq->q->queuedata;
+	पूर्णांक ret = 0;
 
-	if (write && (lo->lo_flags & LO_FLAGS_READ_ONLY)) {
+	अगर (ग_लिखो && (lo->lo_flags & LO_FLAGS_READ_ONLY)) अणु
 		ret = -EIO;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	ret = do_req_filebacked(lo, rq);
+	ret = करो_req_filebacked(lo, rq);
  failed:
 	/* complete non-aio request */
-	if (!cmd->use_aio || ret) {
-		if (ret == -EOPNOTSUPP)
+	अगर (!cmd->use_aio || ret) अणु
+		अगर (ret == -EOPNOTSUPP)
 			cmd->ret = ret;
-		else
+		अन्यथा
 			cmd->ret = ret ? -EIO : 0;
-		if (likely(!blk_should_fake_timeout(rq->q)))
+		अगर (likely(!blk_should_fake_समयout(rq->q)))
 			blk_mq_complete_request(rq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void loop_queue_work(struct kthread_work *work)
-{
-	struct loop_cmd *cmd =
-		container_of(work, struct loop_cmd, work);
+अटल व्योम loop_queue_work(काष्ठा kthपढ़ो_work *work)
+अणु
+	काष्ठा loop_cmd *cmd =
+		container_of(work, काष्ठा loop_cmd, work);
 
 	loop_handle_cmd(cmd);
-}
+पूर्ण
 
-static int loop_init_request(struct blk_mq_tag_set *set, struct request *rq,
-		unsigned int hctx_idx, unsigned int numa_node)
-{
-	struct loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
+अटल पूर्णांक loop_init_request(काष्ठा blk_mq_tag_set *set, काष्ठा request *rq,
+		अचिन्हित पूर्णांक hctx_idx, अचिन्हित पूर्णांक numa_node)
+अणु
+	काष्ठा loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
 
-	kthread_init_work(&cmd->work, loop_queue_work);
-	return 0;
-}
+	kthपढ़ो_init_work(&cmd->work, loop_queue_work);
+	वापस 0;
+पूर्ण
 
-static const struct blk_mq_ops loop_mq_ops = {
+अटल स्थिर काष्ठा blk_mq_ops loop_mq_ops = अणु
 	.queue_rq       = loop_queue_rq,
 	.init_request	= loop_init_request,
 	.complete	= lo_complete_rq,
-};
+पूर्ण;
 
-static int loop_add(struct loop_device **l, int i)
-{
-	struct loop_device *lo;
-	struct gendisk *disk;
-	int err;
+अटल पूर्णांक loop_add(काष्ठा loop_device **l, पूर्णांक i)
+अणु
+	काष्ठा loop_device *lo;
+	काष्ठा gendisk *disk;
+	पूर्णांक err;
 
 	err = -ENOMEM;
-	lo = kzalloc(sizeof(*lo), GFP_KERNEL);
-	if (!lo)
-		goto out;
+	lo = kzalloc(माप(*lo), GFP_KERNEL);
+	अगर (!lo)
+		जाओ out;
 
 	lo->lo_state = Lo_unbound;
 
-	/* allocate id, if @id >= 0, we're requesting that specific id */
-	if (i >= 0) {
+	/* allocate id, अगर @id >= 0, we're requesting that specअगरic id */
+	अगर (i >= 0) अणु
 		err = idr_alloc(&loop_index_idr, lo, i, i + 1, GFP_KERNEL);
-		if (err == -ENOSPC)
+		अगर (err == -ENOSPC)
 			err = -EEXIST;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = idr_alloc(&loop_index_idr, lo, 0, 0, GFP_KERNEL);
-	}
-	if (err < 0)
-		goto out_free_dev;
+	पूर्ण
+	अगर (err < 0)
+		जाओ out_मुक्त_dev;
 	i = err;
 
 	err = -ENOMEM;
@@ -2098,55 +2099,55 @@ static int loop_add(struct loop_device **l, int i)
 	lo->tag_set.nr_hw_queues = 1;
 	lo->tag_set.queue_depth = 128;
 	lo->tag_set.numa_node = NUMA_NO_NODE;
-	lo->tag_set.cmd_size = sizeof(struct loop_cmd);
+	lo->tag_set.cmd_size = माप(काष्ठा loop_cmd);
 	lo->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_STACKING;
 	lo->tag_set.driver_data = lo;
 
 	err = blk_mq_alloc_tag_set(&lo->tag_set);
-	if (err)
-		goto out_free_idr;
+	अगर (err)
+		जाओ out_मुक्त_idr;
 
 	lo->lo_queue = blk_mq_init_queue(&lo->tag_set);
-	if (IS_ERR(lo->lo_queue)) {
+	अगर (IS_ERR(lo->lo_queue)) अणु
 		err = PTR_ERR(lo->lo_queue);
-		goto out_cleanup_tags;
-	}
+		जाओ out_cleanup_tags;
+	पूर्ण
 	lo->lo_queue->queuedata = lo;
 
 	blk_queue_max_hw_sectors(lo->lo_queue, BLK_DEF_MAX_SECTORS);
 
 	/*
-	 * By default, we do buffer IO, so it doesn't make sense to enable
+	 * By शेष, we करो buffer IO, so it करोesn't make sense to enable
 	 * merge because the I/O submitted to backing file is handled page by
-	 * page. For directio mode, merge does help to dispatch bigger request
+	 * page. For directio mode, merge करोes help to dispatch bigger request
 	 * to underlayer disk. We will enable merge once directio is enabled.
 	 */
 	blk_queue_flag_set(QUEUE_FLAG_NOMERGES, lo->lo_queue);
 
 	err = -ENOMEM;
-	disk = lo->lo_disk = alloc_disk(1 << part_shift);
-	if (!disk)
-		goto out_free_queue;
+	disk = lo->lo_disk = alloc_disk(1 << part_shअगरt);
+	अगर (!disk)
+		जाओ out_मुक्त_queue;
 
 	/*
-	 * Disable partition scanning by default. The in-kernel partition
-	 * scanning can be requested individually per-device during its
-	 * setup. Userspace can always add and remove partitions from all
+	 * Disable partition scanning by शेष. The in-kernel partition
+	 * scanning can be requested inभागidually per-device during its
+	 * setup. Userspace can always add and हटाओ partitions from all
 	 * devices. The needed partition minors are allocated from the
-	 * extended minor space, the main loop device numbers will continue
+	 * extended minor space, the मुख्य loop device numbers will जारी
 	 * to match the loop minors, regardless of the number of partitions
 	 * used.
 	 *
-	 * If max_part is given, partition scanning is globally enabled for
-	 * all loop devices. The minors for the main loop devices will be
+	 * If max_part is given, partition scanning is globally enabled क्रम
+	 * all loop devices. The minors क्रम the मुख्य loop devices will be
 	 * multiples of max_part.
 	 *
-	 * Note: Global-for-all-devices, set-only-at-init, read-only module
+	 * Note: Global-क्रम-all-devices, set-only-at-init, पढ़ो-only module
 	 * parameteters like 'max_loop' and 'max_part' make things needlessly
-	 * complicated, are too static, inflexible and may surprise
-	 * userspace tools. Parameters like this in general should be avoided.
+	 * complicated, are too अटल, inflexible and may surprise
+	 * userspace tools. Parameters like this in general should be aव्योमed.
 	 */
-	if (!part_shift)
+	अगर (!part_shअगरt)
 		disk->flags |= GENHD_FL_NO_PART_SCAN;
 	disk->flags |= GENHD_FL_EXT_DEVT;
 	atomic_set(&lo->lo_refcnt, 0);
@@ -2154,259 +2155,259 @@ static int loop_add(struct loop_device **l, int i)
 	lo->lo_number		= i;
 	spin_lock_init(&lo->lo_lock);
 	disk->major		= LOOP_MAJOR;
-	disk->first_minor	= i << part_shift;
+	disk->first_minor	= i << part_shअगरt;
 	disk->fops		= &lo_fops;
-	disk->private_data	= lo;
+	disk->निजी_data	= lo;
 	disk->queue		= lo->lo_queue;
-	sprintf(disk->disk_name, "loop%d", i);
+	प्र_लिखो(disk->disk_name, "loop%d", i);
 	add_disk(disk);
 	*l = lo;
-	return lo->lo_number;
+	वापस lo->lo_number;
 
-out_free_queue:
+out_मुक्त_queue:
 	blk_cleanup_queue(lo->lo_queue);
 out_cleanup_tags:
-	blk_mq_free_tag_set(&lo->tag_set);
-out_free_idr:
-	idr_remove(&loop_index_idr, i);
-out_free_dev:
-	kfree(lo);
+	blk_mq_मुक्त_tag_set(&lo->tag_set);
+out_मुक्त_idr:
+	idr_हटाओ(&loop_index_idr, i);
+out_मुक्त_dev:
+	kमुक्त(lo);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void loop_remove(struct loop_device *lo)
-{
+अटल व्योम loop_हटाओ(काष्ठा loop_device *lo)
+अणु
 	del_gendisk(lo->lo_disk);
 	blk_cleanup_queue(lo->lo_queue);
-	blk_mq_free_tag_set(&lo->tag_set);
+	blk_mq_मुक्त_tag_set(&lo->tag_set);
 	put_disk(lo->lo_disk);
 	mutex_destroy(&lo->lo_mutex);
-	kfree(lo);
-}
+	kमुक्त(lo);
+पूर्ण
 
-static int find_free_cb(int id, void *ptr, void *data)
-{
-	struct loop_device *lo = ptr;
-	struct loop_device **l = data;
+अटल पूर्णांक find_मुक्त_cb(पूर्णांक id, व्योम *ptr, व्योम *data)
+अणु
+	काष्ठा loop_device *lo = ptr;
+	काष्ठा loop_device **l = data;
 
-	if (lo->lo_state == Lo_unbound) {
+	अगर (lo->lo_state == Lo_unbound) अणु
 		*l = lo;
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int loop_lookup(struct loop_device **l, int i)
-{
-	struct loop_device *lo;
-	int ret = -ENODEV;
+अटल पूर्णांक loop_lookup(काष्ठा loop_device **l, पूर्णांक i)
+अणु
+	काष्ठा loop_device *lo;
+	पूर्णांक ret = -ENODEV;
 
-	if (i < 0) {
-		int err;
+	अगर (i < 0) अणु
+		पूर्णांक err;
 
-		err = idr_for_each(&loop_index_idr, &find_free_cb, &lo);
-		if (err == 1) {
+		err = idr_क्रम_each(&loop_index_idr, &find_मुक्त_cb, &lo);
+		अगर (err == 1) अणु
 			*l = lo;
 			ret = lo->lo_number;
-		}
-		goto out;
-	}
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	/* lookup and return a specific i */
+	/* lookup and वापस a specअगरic i */
 	lo = idr_find(&loop_index_idr, i);
-	if (lo) {
+	अगर (lo) अणु
 		*l = lo;
 		ret = lo->lo_number;
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void loop_probe(dev_t dev)
-{
-	int idx = MINOR(dev) >> part_shift;
-	struct loop_device *lo;
+अटल व्योम loop_probe(dev_t dev)
+अणु
+	पूर्णांक idx = MINOR(dev) >> part_shअगरt;
+	काष्ठा loop_device *lo;
 
-	if (max_loop && idx >= max_loop)
-		return;
+	अगर (max_loop && idx >= max_loop)
+		वापस;
 
 	mutex_lock(&loop_ctl_mutex);
-	if (loop_lookup(&lo, idx) < 0)
+	अगर (loop_lookup(&lo, idx) < 0)
 		loop_add(&lo, idx);
 	mutex_unlock(&loop_ctl_mutex);
-}
+पूर्ण
 
-static long loop_control_ioctl(struct file *file, unsigned int cmd,
-			       unsigned long parm)
-{
-	struct loop_device *lo;
-	int ret;
+अटल दीर्घ loop_control_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			       अचिन्हित दीर्घ parm)
+अणु
+	काष्ठा loop_device *lo;
+	पूर्णांक ret;
 
-	ret = mutex_lock_killable(&loop_ctl_mutex);
-	if (ret)
-		return ret;
+	ret = mutex_lock_समाप्तable(&loop_ctl_mutex);
+	अगर (ret)
+		वापस ret;
 
 	ret = -ENOSYS;
-	switch (cmd) {
-	case LOOP_CTL_ADD:
+	चयन (cmd) अणु
+	हाल LOOP_CTL_ADD:
 		ret = loop_lookup(&lo, parm);
-		if (ret >= 0) {
+		अगर (ret >= 0) अणु
 			ret = -EEXIST;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ret = loop_add(&lo, parm);
-		break;
-	case LOOP_CTL_REMOVE:
+		अवरोध;
+	हाल LOOP_CTL_REMOVE:
 		ret = loop_lookup(&lo, parm);
-		if (ret < 0)
-			break;
-		ret = mutex_lock_killable(&lo->lo_mutex);
-		if (ret)
-			break;
-		if (lo->lo_state != Lo_unbound) {
+		अगर (ret < 0)
+			अवरोध;
+		ret = mutex_lock_समाप्तable(&lo->lo_mutex);
+		अगर (ret)
+			अवरोध;
+		अगर (lo->lo_state != Lo_unbound) अणु
 			ret = -EBUSY;
 			mutex_unlock(&lo->lo_mutex);
-			break;
-		}
-		if (atomic_read(&lo->lo_refcnt) > 0) {
+			अवरोध;
+		पूर्ण
+		अगर (atomic_पढ़ो(&lo->lo_refcnt) > 0) अणु
 			ret = -EBUSY;
 			mutex_unlock(&lo->lo_mutex);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		lo->lo_state = Lo_deleting;
 		mutex_unlock(&lo->lo_mutex);
-		idr_remove(&loop_index_idr, lo->lo_number);
-		loop_remove(lo);
-		break;
-	case LOOP_CTL_GET_FREE:
+		idr_हटाओ(&loop_index_idr, lo->lo_number);
+		loop_हटाओ(lo);
+		अवरोध;
+	हाल LOOP_CTL_GET_FREE:
 		ret = loop_lookup(&lo, -1);
-		if (ret >= 0)
-			break;
+		अगर (ret >= 0)
+			अवरोध;
 		ret = loop_add(&lo, -1);
-	}
+	पूर्ण
 	mutex_unlock(&loop_ctl_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations loop_ctl_fops = {
-	.open		= nonseekable_open,
+अटल स्थिर काष्ठा file_operations loop_ctl_fops = अणु
+	.खोलो		= nonseekable_खोलो,
 	.unlocked_ioctl	= loop_control_ioctl,
 	.compat_ioctl	= loop_control_ioctl,
 	.owner		= THIS_MODULE,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static struct miscdevice loop_misc = {
+अटल काष्ठा miscdevice loop_misc = अणु
 	.minor		= LOOP_CTRL_MINOR,
 	.name		= "loop-control",
 	.fops		= &loop_ctl_fops,
-};
+पूर्ण;
 
 MODULE_ALIAS_MISCDEV(LOOP_CTRL_MINOR);
 MODULE_ALIAS("devname:loop-control");
 
-static int __init loop_init(void)
-{
-	int i, nr;
-	struct loop_device *lo;
-	int err;
+अटल पूर्णांक __init loop_init(व्योम)
+अणु
+	पूर्णांक i, nr;
+	काष्ठा loop_device *lo;
+	पूर्णांक err;
 
-	part_shift = 0;
-	if (max_part > 0) {
-		part_shift = fls(max_part);
+	part_shअगरt = 0;
+	अगर (max_part > 0) अणु
+		part_shअगरt = fls(max_part);
 
 		/*
-		 * Adjust max_part according to part_shift as it is exported
+		 * Adjust max_part according to part_shअगरt as it is exported
 		 * to user space so that user can decide correct minor number
-		 * if [s]he want to create more devices.
+		 * अगर [s]he want to create more devices.
 		 *
 		 * Note that -1 is required because partition 0 is reserved
-		 * for the whole disk.
+		 * क्रम the whole disk.
 		 */
-		max_part = (1UL << part_shift) - 1;
-	}
+		max_part = (1UL << part_shअगरt) - 1;
+	पूर्ण
 
-	if ((1UL << part_shift) > DISK_MAX_PARTS) {
+	अगर ((1UL << part_shअगरt) > DISK_MAX_PARTS) अणु
 		err = -EINVAL;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	if (max_loop > 1UL << (MINORBITS - part_shift)) {
+	अगर (max_loop > 1UL << (MINORBITS - part_shअगरt)) अणु
 		err = -EINVAL;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	/*
-	 * If max_loop is specified, create that many devices upfront.
-	 * This also becomes a hard limit. If max_loop is not specified,
+	 * If max_loop is specअगरied, create that many devices upfront.
+	 * This also becomes a hard limit. If max_loop is not specअगरied,
 	 * create CONFIG_BLK_DEV_LOOP_MIN_COUNT loop devices at module
-	 * init time. Loop devices can be requested on-demand with the
-	 * /dev/loop-control interface, or be instantiated by accessing
+	 * init समय. Loop devices can be requested on-demand with the
+	 * /dev/loop-control पूर्णांकerface, or be instantiated by accessing
 	 * a 'dead' device node.
 	 */
-	if (max_loop)
+	अगर (max_loop)
 		nr = max_loop;
-	else
+	अन्यथा
 		nr = CONFIG_BLK_DEV_LOOP_MIN_COUNT;
 
-	err = misc_register(&loop_misc);
-	if (err < 0)
-		goto err_out;
+	err = misc_रेजिस्टर(&loop_misc);
+	अगर (err < 0)
+		जाओ err_out;
 
 
-	if (__register_blkdev(LOOP_MAJOR, "loop", loop_probe)) {
+	अगर (__रेजिस्टर_blkdev(LOOP_MAJOR, "loop", loop_probe)) अणु
 		err = -EIO;
-		goto misc_out;
-	}
+		जाओ misc_out;
+	पूर्ण
 
 	/* pre-create number of devices given by config or max_loop */
 	mutex_lock(&loop_ctl_mutex);
-	for (i = 0; i < nr; i++)
+	क्रम (i = 0; i < nr; i++)
 		loop_add(&lo, i);
 	mutex_unlock(&loop_ctl_mutex);
 
-	printk(KERN_INFO "loop: module loaded\n");
-	return 0;
+	prपूर्णांकk(KERN_INFO "loop: module loaded\n");
+	वापस 0;
 
 misc_out:
-	misc_deregister(&loop_misc);
+	misc_deरेजिस्टर(&loop_misc);
 err_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int loop_exit_cb(int id, void *ptr, void *data)
-{
-	struct loop_device *lo = ptr;
+अटल पूर्णांक loop_निकास_cb(पूर्णांक id, व्योम *ptr, व्योम *data)
+अणु
+	काष्ठा loop_device *lo = ptr;
 
-	loop_remove(lo);
-	return 0;
-}
+	loop_हटाओ(lo);
+	वापस 0;
+पूर्ण
 
-static void __exit loop_exit(void)
-{
+अटल व्योम __निकास loop_निकास(व्योम)
+अणु
 	mutex_lock(&loop_ctl_mutex);
 
-	idr_for_each(&loop_index_idr, &loop_exit_cb, NULL);
+	idr_क्रम_each(&loop_index_idr, &loop_निकास_cb, शून्य);
 	idr_destroy(&loop_index_idr);
 
-	unregister_blkdev(LOOP_MAJOR, "loop");
+	unरेजिस्टर_blkdev(LOOP_MAJOR, "loop");
 
-	misc_deregister(&loop_misc);
+	misc_deरेजिस्टर(&loop_misc);
 
 	mutex_unlock(&loop_ctl_mutex);
-}
+पूर्ण
 
 module_init(loop_init);
-module_exit(loop_exit);
+module_निकास(loop_निकास);
 
-#ifndef MODULE
-static int __init max_loop_setup(char *str)
-{
-	max_loop = simple_strtol(str, NULL, 0);
-	return 1;
-}
+#अगर_अघोषित MODULE
+अटल पूर्णांक __init max_loop_setup(अक्षर *str)
+अणु
+	max_loop = simple_म_से_दीर्घ(str, शून्य, 0);
+	वापस 1;
+पूर्ण
 
 __setup("max_loop=", max_loop_setup);
-#endif
+#पूर्ण_अगर

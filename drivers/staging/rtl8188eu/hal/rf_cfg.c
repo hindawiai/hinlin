@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#include "odm_precomp.h"
+#समावेश "odm_precomp.h"
 
-#include <phy.h>
+#समावेश <phy.h>
 
-static bool check_condition(struct adapter *adapt, const u32  condition)
-{
-	struct odm_dm_struct *odm = &adapt->HalData->odmpriv;
+अटल bool check_condition(काष्ठा adapter *adapt, स्थिर u32  condition)
+अणु
+	काष्ठा odm_dm_काष्ठा *odm = &adapt->HalData->odmpriv;
 	u32 _board = odm->BoardType;
-	u32 _platform = odm->SupportPlatform;
-	u32 _interface = odm->SupportInterface;
+	u32 _platक्रमm = odm->SupportPlatक्रमm;
+	u32 _पूर्णांकerface = odm->SupportInterface;
 	u32 cond;
 
-	if (condition == 0xCDCDCDCD)
-		return true;
+	अगर (condition == 0xCDCDCDCD)
+		वापस true;
 
 	cond = condition & 0x000000FF;
-	if ((_board == cond) && cond != 0x00)
-		return false;
+	अगर ((_board == cond) && cond != 0x00)
+		वापस false;
 
 	cond = condition & 0x0000FF00;
 	cond >>= 8;
-	if ((_interface & cond) == 0 && cond != 0x07)
-		return false;
+	अगर ((_पूर्णांकerface & cond) == 0 && cond != 0x07)
+		वापस false;
 
 	cond = condition & 0x00FF0000;
 	cond >>= 16;
-	if ((_platform & cond) == 0 && cond != 0x0F)
-		return false;
-	return true;
-}
+	अगर ((_platक्रमm & cond) == 0 && cond != 0x0F)
+		वापस false;
+	वापस true;
+पूर्ण
 
 /* RadioA_1T.TXT */
 
-static u32 Array_RadioA_1T_8188E[] = {
+अटल u32 Array_RadioA_1T_8188E[] = अणु
 		0x000, 0x00030000,
 		0x008, 0x00084000,
 		0x018, 0x00000407,
@@ -138,99 +139,99 @@ static u32 Array_RadioA_1T_8188E[] = {
 		0x01E, 0x00000001,
 		0x01F, 0x00080000,
 		0x000, 0x00033E60,
-};
+पूर्ण;
 
-#define READ_NEXT_PAIR(v1, v2, i)	\
-do {								\
+#घोषणा READ_NEXT_PAIR(v1, v2, i)	\
+करो अणु								\
 	i += 2; v1 = array[i];			\
 	v2 = array[i + 1];				\
-} while (0)
+पूर्ण जबतक (0)
 
-#define RFREG_OFFSET_MASK 0xfffff
-#define B3WIREADDREAALENGTH 0x400
-#define B3WIREDATALENGTH 0x800
-#define BRFSI_RFENV 0x10
+#घोषणा RFREG_OFFSET_MASK 0xfffff
+#घोषणा B3WIREADDREAALENGTH 0x400
+#घोषणा B3WIREDATALENGTH 0x800
+#घोषणा BRFSI_RFENV 0x10
 
-static void rtl_rfreg_delay(struct adapter *adapt, enum rf_radio_path rfpath, u32 addr, u32 mask, u32 data)
-{
-	if (addr == 0xfe) {
+अटल व्योम rtl_rfreg_delay(काष्ठा adapter *adapt, क्रमागत rf_radio_path rfpath, u32 addr, u32 mask, u32 data)
+अणु
+	अगर (addr == 0xfe) अणु
 		mdelay(50);
-	} else if (addr == 0xfd) {
+	पूर्ण अन्यथा अगर (addr == 0xfd) अणु
 		mdelay(5);
-	} else if (addr == 0xfc) {
+	पूर्ण अन्यथा अगर (addr == 0xfc) अणु
 		mdelay(1);
-	} else if (addr == 0xfb) {
+	पूर्ण अन्यथा अगर (addr == 0xfb) अणु
 		udelay(50);
-	} else if (addr == 0xfa) {
+	पूर्ण अन्यथा अगर (addr == 0xfa) अणु
 		udelay(5);
-	} else if (addr == 0xf9) {
+	पूर्ण अन्यथा अगर (addr == 0xf9) अणु
 		udelay(1);
-	} else {
+	पूर्ण अन्यथा अणु
 		phy_set_rf_reg(adapt, rfpath, addr, mask, data);
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtl8188e_config_rf_reg(struct adapter *adapt, u32 addr, u32 data)
-{
+अटल व्योम rtl8188e_config_rf_reg(काष्ठा adapter *adapt, u32 addr, u32 data)
+अणु
 	u32 content = 0x1000; /*RF Content: radio_a_txt*/
-	u32 maskforphyset = content & 0xE000;
+	u32 maskक्रमphyset = content & 0xE000;
 
-	rtl_rfreg_delay(adapt, RF_PATH_A, addr | maskforphyset,
+	rtl_rfreg_delay(adapt, RF_PATH_A, addr | maskक्रमphyset,
 			RFREG_OFFSET_MASK,
 			data);
-}
+पूर्ण
 
-static bool rtl88e_phy_config_rf_with_headerfile(struct adapter *adapt)
-{
+अटल bool rtl88e_phy_config_rf_with_headerfile(काष्ठा adapter *adapt)
+अणु
 	u32 i;
 	u32 array_len = ARRAY_SIZE(Array_RadioA_1T_8188E);
 	u32 *array = Array_RadioA_1T_8188E;
 
-	for (i = 0; i < array_len; i += 2) {
+	क्रम (i = 0; i < array_len; i += 2) अणु
 		u32 v1 = array[i];
 		u32 v2 = array[i + 1];
 
-		if (v1 < 0xCDCDCDCD) {
+		अगर (v1 < 0xCDCDCDCD) अणु
 			rtl8188e_config_rf_reg(adapt, v1, v2);
-			continue;
-		} else {
-			if (!check_condition(adapt, array[i])) {
+			जारी;
+		पूर्ण अन्यथा अणु
+			अगर (!check_condition(adapt, array[i])) अणु
 				READ_NEXT_PAIR(v1, v2, i);
-				while (v2 != 0xDEAD && v2 != 0xCDEF &&
+				जबतक (v2 != 0xDEAD && v2 != 0xCDEF &&
 				       v2 != 0xCDCD && i < array_len - 2)
 					READ_NEXT_PAIR(v1, v2, i);
 				i -= 2;
-			} else {
+			पूर्ण अन्यथा अणु
 				READ_NEXT_PAIR(v1, v2, i);
-				while (v2 != 0xDEAD && v2 != 0xCDEF &&
-				       v2 != 0xCDCD && i < array_len - 2) {
+				जबतक (v2 != 0xDEAD && v2 != 0xCDEF &&
+				       v2 != 0xCDCD && i < array_len - 2) अणु
 					rtl8188e_config_rf_reg(adapt, v1, v2);
 					READ_NEXT_PAIR(v1, v2, i);
-				}
+				पूर्ण
 
-				while (v2 != 0xDEAD && i < array_len - 2)
+				जबतक (v2 != 0xDEAD && i < array_len - 2)
 					READ_NEXT_PAIR(v1, v2, i);
-			}
-		}
-	}
-	return true;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
-bool rtl88eu_phy_rf_config(struct adapter *adapt)
-{
-	struct hal_data_8188e *hal_data = adapt->HalData;
+bool rtl88eu_phy_rf_config(काष्ठा adapter *adapt)
+अणु
+	काष्ठा hal_data_8188e *hal_data = adapt->HalData;
 	u32 u4val = 0;
 	bool rtstatus;
-	struct bb_reg_def *pphyreg;
+	काष्ठा bb_reg_def *pphyreg;
 
 	pphyreg = &hal_data->PHYRegDef[RF90_PATH_A];
-	u4val = phy_query_bb_reg(adapt, pphyreg->rfintfs, BRFSI_RFENV);
+	u4val = phy_query_bb_reg(adapt, pphyreg->rfपूर्णांकfs, BRFSI_RFENV);
 
-	phy_set_bb_reg(adapt, pphyreg->rfintfe, BRFSI_RFENV << 16, 0x1);
+	phy_set_bb_reg(adapt, pphyreg->rfपूर्णांकfe, BRFSI_RFENV << 16, 0x1);
 	udelay(1);
 
-	phy_set_bb_reg(adapt, pphyreg->rfintfo, BRFSI_RFENV, 0x1);
+	phy_set_bb_reg(adapt, pphyreg->rfपूर्णांकfo, BRFSI_RFENV, 0x1);
 	udelay(1);
 
 	phy_set_bb_reg(adapt, pphyreg->rfHSSIPara2, B3WIREADDREAALENGTH, 0x0);
@@ -241,7 +242,7 @@ bool rtl88eu_phy_rf_config(struct adapter *adapt)
 
 	rtstatus = rtl88e_phy_config_rf_with_headerfile(adapt);
 
-	phy_set_bb_reg(adapt, pphyreg->rfintfs, BRFSI_RFENV, u4val);
+	phy_set_bb_reg(adapt, pphyreg->rfपूर्णांकfs, BRFSI_RFENV, u4val);
 
-	return rtstatus;
-}
+	वापस rtstatus;
+पूर्ण

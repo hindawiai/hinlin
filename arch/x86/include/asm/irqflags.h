@@ -1,152 +1,153 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _X86_IRQFLAGS_H_
-#define _X86_IRQFLAGS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _X86_IRQFLAGS_H_
+#घोषणा _X86_IRQFLAGS_H_
 
-#include <asm/processor-flags.h>
+#समावेश <यंत्र/processor-flags.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/nospec-branch.h>
+#समावेश <यंत्र/nospec-branch.h>
 
 /* Provide __cpuidle; we can't safely include <linux/cpu.h> */
-#define __cpuidle __section(".cpuidle.text")
+#घोषणा __cpuidle __section(".cpuidle.text")
 
 /*
  * Interrupt control:
  */
 
-/* Declaration required for gcc < 4.9 to prevent -Werror=missing-prototypes */
-extern inline unsigned long native_save_fl(void);
-extern __always_inline unsigned long native_save_fl(void)
-{
-	unsigned long flags;
+/* Declaration required क्रम gcc < 4.9 to prevent -Werror=missing-prototypes */
+बाह्य अंतरभूत अचिन्हित दीर्घ native_save_fl(व्योम);
+बाह्य __always_अंतरभूत अचिन्हित दीर्घ native_save_fl(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * "=rm" is safe here, because "pop" adjusts the stack before
+	 * "=rm" is safe here, because "pop" adjusts the stack beक्रमe
 	 * it evaluates its effective address -- this is part of the
-	 * documented behavior of the "pop" instruction.
+	 * करोcumented behavior of the "pop" inकाष्ठाion.
 	 */
-	asm volatile("# __raw_save_flags\n\t"
+	यंत्र अस्थिर("# __raw_save_flags\n\t"
 		     "pushf ; pop %0"
 		     : "=rm" (flags)
 		     : /* no input */
 		     : "memory");
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static __always_inline void native_irq_disable(void)
-{
-	asm volatile("cli": : :"memory");
-}
+अटल __always_अंतरभूत व्योम native_irq_disable(व्योम)
+अणु
+	यंत्र अस्थिर("cli": : :"memory");
+पूर्ण
 
-static __always_inline void native_irq_enable(void)
-{
-	asm volatile("sti": : :"memory");
-}
+अटल __always_अंतरभूत व्योम native_irq_enable(व्योम)
+अणु
+	यंत्र अस्थिर("sti": : :"memory");
+पूर्ण
 
-static inline __cpuidle void native_safe_halt(void)
-{
+अटल अंतरभूत __cpuidle व्योम native_safe_halt(व्योम)
+अणु
 	mds_idle_clear_cpu_buffers();
-	asm volatile("sti; hlt": : :"memory");
-}
+	यंत्र अस्थिर("sti; hlt": : :"memory");
+पूर्ण
 
-static inline __cpuidle void native_halt(void)
-{
+अटल अंतरभूत __cpuidle व्योम native_halt(व्योम)
+अणु
 	mds_idle_clear_cpu_buffers();
-	asm volatile("hlt": : :"memory");
-}
+	यंत्र अस्थिर("hlt": : :"memory");
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_PARAVIRT_XXL
-#include <asm/paravirt.h>
-#else
-#ifndef __ASSEMBLY__
-#include <linux/types.h>
+#अगर_घोषित CONFIG_PARAVIRT_XXL
+#समावेश <यंत्र/paravirt.h>
+#अन्यथा
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <linux/types.h>
 
-static __always_inline unsigned long arch_local_save_flags(void)
-{
-	return native_save_fl();
-}
+अटल __always_अंतरभूत अचिन्हित दीर्घ arch_local_save_flags(व्योम)
+अणु
+	वापस native_save_fl();
+पूर्ण
 
-static __always_inline void arch_local_irq_disable(void)
-{
+अटल __always_अंतरभूत व्योम arch_local_irq_disable(व्योम)
+अणु
 	native_irq_disable();
-}
+पूर्ण
 
-static __always_inline void arch_local_irq_enable(void)
-{
+अटल __always_अंतरभूत व्योम arch_local_irq_enable(व्योम)
+अणु
 	native_irq_enable();
-}
+पूर्ण
 
 /*
- * Used in the idle loop; sti takes one instruction cycle
+ * Used in the idle loop; sti takes one inकाष्ठाion cycle
  * to complete:
  */
-static inline __cpuidle void arch_safe_halt(void)
-{
+अटल अंतरभूत __cpuidle व्योम arch_safe_halt(व्योम)
+अणु
 	native_safe_halt();
-}
+पूर्ण
 
 /*
- * Used when interrupts are already enabled or to
- * shutdown the processor:
+ * Used when पूर्णांकerrupts are alपढ़ोy enabled or to
+ * shutकरोwn the processor:
  */
-static inline __cpuidle void halt(void)
-{
+अटल अंतरभूत __cpuidle व्योम halt(व्योम)
+अणु
 	native_halt();
-}
+पूर्ण
 
 /*
  * For spinlocks, etc:
  */
-static __always_inline unsigned long arch_local_irq_save(void)
-{
-	unsigned long flags = arch_local_save_flags();
+अटल __always_अंतरभूत अचिन्हित दीर्घ arch_local_irq_save(व्योम)
+अणु
+	अचिन्हित दीर्घ flags = arch_local_save_flags();
 	arch_local_irq_disable();
-	return flags;
-}
-#else
+	वापस flags;
+पूर्ण
+#अन्यथा
 
-#ifdef CONFIG_X86_64
-#ifdef CONFIG_DEBUG_ENTRY
-#define SAVE_FLAGS		pushfq; popq %rax
-#endif
+#अगर_घोषित CONFIG_X86_64
+#अगर_घोषित CONFIG_DEBUG_ENTRY
+#घोषणा SAVE_FLAGS		pushfq; popq %rax
+#पूर्ण_अगर
 
-#define INTERRUPT_RETURN	jmp native_iret
+#घोषणा INTERRUPT_RETURN	jmp native_iret
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
-#endif /* CONFIG_PARAVIRT_XXL */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* CONFIG_PARAVIRT_XXL */
 
-#ifndef __ASSEMBLY__
-static __always_inline int arch_irqs_disabled_flags(unsigned long flags)
-{
-	return !(flags & X86_EFLAGS_IF);
-}
+#अगर_अघोषित __ASSEMBLY__
+अटल __always_अंतरभूत पूर्णांक arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
+अणु
+	वापस !(flags & X86_EFLAGS_IF);
+पूर्ण
 
-static __always_inline int arch_irqs_disabled(void)
-{
-	unsigned long flags = arch_local_save_flags();
+अटल __always_अंतरभूत पूर्णांक arch_irqs_disabled(व्योम)
+अणु
+	अचिन्हित दीर्घ flags = arch_local_save_flags();
 
-	return arch_irqs_disabled_flags(flags);
-}
+	वापस arch_irqs_disabled_flags(flags);
+पूर्ण
 
-static __always_inline void arch_local_irq_restore(unsigned long flags)
-{
-	if (!arch_irqs_disabled_flags(flags))
+अटल __always_अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
+अणु
+	अगर (!arch_irqs_disabled_flags(flags))
 		arch_local_irq_enable();
-}
-#else
-#ifdef CONFIG_X86_64
-#ifdef CONFIG_XEN_PV
-#define SWAPGS	ALTERNATIVE "swapgs", "", X86_FEATURE_XENPV
-#else
-#define SWAPGS	swapgs
-#endif
-#endif
-#endif /* !__ASSEMBLY__ */
+पूर्ण
+#अन्यथा
+#अगर_घोषित CONFIG_X86_64
+#अगर_घोषित CONFIG_XEN_PV
+#घोषणा SWAPGS	ALTERNATIVE "swapgs", "", X86_FEATURE_XENPV
+#अन्यथा
+#घोषणा SWAPGS	swapgs
+#पूर्ण_अगर
+#पूर्ण_अगर
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

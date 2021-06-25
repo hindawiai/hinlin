@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014, Fuzhou Rockchip Electronics Co., Ltd
  * Author: Tony Xie <tony.xie@rock-chips.com>
  */
 
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/regmap.h>
-#include <linux/suspend.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regulator/machine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regulator/machine.h>
 
-#include <asm/cacheflush.h>
-#include <asm/tlbflush.h>
-#include <asm/suspend.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/suspend.h>
 
-#include "pm.h"
+#समावेश "pm.h"
 
-/* These enum are option of low power mode */
-enum {
+/* These क्रमागत are option of low घातer mode */
+क्रमागत अणु
 	ROCKCHIP_ARM_OFF_LOGIC_NORMAL = 0,
 	ROCKCHIP_ARM_OFF_LOGIC_DEEP = 1,
-};
+पूर्ण;
 
-struct rockchip_pm_data {
-	const struct platform_suspend_ops *ops;
-	int (*init)(struct device_node *np);
-};
+काष्ठा rockchip_pm_data अणु
+	स्थिर काष्ठा platक्रमm_suspend_ops *ops;
+	पूर्णांक (*init)(काष्ठा device_node *np);
+पूर्ण;
 
-static void __iomem *rk3288_bootram_base;
-static phys_addr_t rk3288_bootram_phy;
+अटल व्योम __iomem *rk3288_bootram_base;
+अटल phys_addr_t rk3288_bootram_phy;
 
-static struct regmap *pmu_regmap;
-static struct regmap *sgrf_regmap;
-static struct regmap *grf_regmap;
+अटल काष्ठा regmap *pmu_regmap;
+अटल काष्ठा regmap *sgrf_regmap;
+अटल काष्ठा regmap *grf_regmap;
 
-static u32 rk3288_pmu_pwr_mode_con;
-static u32 rk3288_sgrf_soc_con0;
-static u32 rk3288_sgrf_cpu_con0;
+अटल u32 rk3288_pmu_pwr_mode_con;
+अटल u32 rk3288_sgrf_soc_con0;
+अटल u32 rk3288_sgrf_cpu_con0;
 
-static inline u32 rk3288_l2_config(void)
-{
+अटल अंतरभूत u32 rk3288_l2_config(व्योम)
+अणु
 	u32 l2ctlr;
 
-	asm("mrc p15, 1, %0, c9, c0, 2" : "=r" (l2ctlr));
-	return l2ctlr;
-}
+	यंत्र("mrc p15, 1, %0, c9, c0, 2" : "=r" (l2ctlr));
+	वापस l2ctlr;
+पूर्ण
 
-static void __init rk3288_config_bootdata(void)
-{
+अटल व्योम __init rk3288_config_bootdata(व्योम)
+अणु
 	rkpm_bootdata_cpusp = rk3288_bootram_phy + (SZ_4K - 8);
 	rkpm_bootdata_cpu_code = __pa_symbol(cpu_resume);
 
 	rkpm_bootdata_l2ctlr_f  = 1;
 	rkpm_bootdata_l2ctlr = rk3288_l2_config();
-}
+पूर्ण
 
-#define GRF_UOC0_CON0			0x320
-#define GRF_UOC1_CON0			0x334
-#define GRF_UOC2_CON0			0x348
-#define GRF_SIDDQ			BIT(13)
+#घोषणा GRF_UOC0_CON0			0x320
+#घोषणा GRF_UOC1_CON0			0x334
+#घोषणा GRF_UOC2_CON0			0x348
+#घोषणा GRF_SIDDQ			BIT(13)
 
-static bool rk3288_slp_disable_osc(void)
-{
-	static const u32 reg_offset[] = { GRF_UOC0_CON0, GRF_UOC1_CON0,
-					  GRF_UOC2_CON0 };
+अटल bool rk3288_slp_disable_osc(व्योम)
+अणु
+	अटल स्थिर u32 reg_offset[] = अणु GRF_UOC0_CON0, GRF_UOC1_CON0,
+					  GRF_UOC2_CON0 पूर्ण;
 	u32 reg, i;
 
 	/*
-	 * if any usb phy is still on(GRF_SIDDQ==0), that means we need the
-	 * function of usb wakeup, so do not switch to 32khz, since the usb phy
-	 * clk does not connect to 32khz osc
+	 * अगर any usb phy is still on(GRF_SIDDQ==0), that means we need the
+	 * function of usb wakeup, so करो not चयन to 32khz, since the usb phy
+	 * clk करोes not connect to 32khz osc
 	 */
-	for (i = 0; i < ARRAY_SIZE(reg_offset); i++) {
-		regmap_read(grf_regmap, reg_offset[i], &reg);
-		if (!(reg & GRF_SIDDQ))
-			return false;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(reg_offset); i++) अणु
+		regmap_पढ़ो(grf_regmap, reg_offset[i], &reg);
+		अगर (!(reg & GRF_SIDDQ))
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void rk3288_slp_mode_set(int level)
-{
+अटल व्योम rk3288_slp_mode_set(पूर्णांक level)
+अणु
 	u32 mode_set, mode_set1;
 	bool osc_disable = rk3288_slp_disable_osc();
 
-	regmap_read(sgrf_regmap, RK3288_SGRF_CPU_CON0, &rk3288_sgrf_cpu_con0);
-	regmap_read(sgrf_regmap, RK3288_SGRF_SOC_CON0, &rk3288_sgrf_soc_con0);
+	regmap_पढ़ो(sgrf_regmap, RK3288_SGRF_CPU_CON0, &rk3288_sgrf_cpu_con0);
+	regmap_पढ़ो(sgrf_regmap, RK3288_SGRF_SOC_CON0, &rk3288_sgrf_soc_con0);
 
-	regmap_read(pmu_regmap, RK3288_PMU_PWRMODE_CON,
+	regmap_पढ़ो(pmu_regmap, RK3288_PMU_PWRMODE_CON,
 		    &rk3288_pmu_pwr_mode_con);
 
 	/*
-	 * SGRF_FAST_BOOT_EN - system to boot from FAST_BOOT_ADDR
+	 * SGRF_FAST_BOOT_EN - प्रणाली to boot from FAST_BOOT_ADDR
 	 * PCLK_WDT_GATE - disable WDT during suspend.
 	 */
-	regmap_write(sgrf_regmap, RK3288_SGRF_SOC_CON0,
+	regmap_ग_लिखो(sgrf_regmap, RK3288_SGRF_SOC_CON0,
 		     SGRF_PCLK_WDT_GATE | SGRF_FAST_BOOT_EN
 		     | SGRF_PCLK_WDT_GATE_WRITE | SGRF_FAST_BOOT_EN_WRITE);
 
 	/*
-	 * The dapswjdp can not auto reset before resume, that cause it may
-	 * access some illegal address during resume. Let's disable it before
+	 * The dapswjdp can not स्वतः reset beक्रमe resume, that cause it may
+	 * access some illegal address during resume. Let's disable it beक्रमe
 	 * suspend, and the MASKROM will enable it back.
 	 */
-	regmap_write(sgrf_regmap, RK3288_SGRF_CPU_CON0, SGRF_DAPDEVICEEN_WRITE);
+	regmap_ग_लिखो(sgrf_regmap, RK3288_SGRF_CPU_CON0, SGRF_DAPDEVICEEN_WRITE);
 
-	/* booting address of resuming system is from this register value */
-	regmap_write(sgrf_regmap, RK3288_SGRF_FAST_BOOT_ADDR,
+	/* booting address of resuming प्रणाली is from this रेजिस्टर value */
+	regmap_ग_लिखो(sgrf_regmap, RK3288_SGRF_FAST_BOOT_ADDR,
 		     rk3288_bootram_phy);
 
 	mode_set = BIT(PMU_GLOBAL_INT_DISABLE) | BIT(PMU_L2FLUSH_EN) |
@@ -122,81 +123,81 @@ static void rk3288_slp_mode_set(int level)
 
 	mode_set1 = BIT(PMU_CLR_CORE) | BIT(PMU_CLR_CPUP);
 
-	if (level == ROCKCHIP_ARM_OFF_LOGIC_DEEP) {
+	अगर (level == ROCKCHIP_ARM_OFF_LOGIC_DEEP) अणु
 		/* arm off, logic deep sleep */
 		mode_set |= BIT(PMU_BUS_PD_EN) | BIT(PMU_PMU_USE_LF) |
 			    BIT(PMU_DDR1IO_RET_EN) | BIT(PMU_DDR0IO_RET_EN) |
 			    BIT(PMU_ALIVE_USE_LF) | BIT(PMU_PLL_PD_EN);
 
-		if (osc_disable)
+		अगर (osc_disable)
 			mode_set |= BIT(PMU_OSC_24M_DIS);
 
 		mode_set1 |= BIT(PMU_CLR_ALIVE) | BIT(PMU_CLR_BUS) |
 			     BIT(PMU_CLR_PERI) | BIT(PMU_CLR_DMA);
 
-		regmap_write(pmu_regmap, RK3288_PMU_WAKEUP_CFG1,
+		regmap_ग_लिखो(pmu_regmap, RK3288_PMU_WAKEUP_CFG1,
 			     PMU_ARMINT_WAKEUP_EN);
 
 		/*
 		 * In deep suspend we use PMU_PMU_USE_LF to let the rk3288
-		 * switch its main clock supply to the alternative 32kHz
-		 * source. Therefore set 30ms on a 32kHz clock for pmic
-		 * stabilization. Similar 30ms on 24MHz for the other
+		 * चयन its मुख्य घड़ी supply to the alternative 32kHz
+		 * source. Thereक्रमe set 30ms on a 32kHz घड़ी क्रम pmic
+		 * stabilization. Similar 30ms on 24MHz क्रम the other
 		 * mode below.
 		 */
-		regmap_write(pmu_regmap, RK3288_PMU_STABL_CNT, 32 * 30);
+		regmap_ग_लिखो(pmu_regmap, RK3288_PMU_STABL_CNT, 32 * 30);
 
-		/* only wait for stabilization, if we turned the osc off */
-		regmap_write(pmu_regmap, RK3288_PMU_OSC_CNT,
+		/* only रुको क्रम stabilization, अगर we turned the osc off */
+		regmap_ग_लिखो(pmu_regmap, RK3288_PMU_OSC_CNT,
 					 osc_disable ? 32 * 30 : 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * arm off, logic normal
-		 * if pmu_clk_core_src_gate_en is not set,
+		 * अगर pmu_clk_core_src_gate_en is not set,
 		 * wakeup will be error
 		 */
 		mode_set |= BIT(PMU_CLK_CORE_SRC_GATE_EN);
 
-		regmap_write(pmu_regmap, RK3288_PMU_WAKEUP_CFG1,
+		regmap_ग_लिखो(pmu_regmap, RK3288_PMU_WAKEUP_CFG1,
 			     PMU_ARMINT_WAKEUP_EN | PMU_GPIOINT_WAKEUP_EN);
 
-		/* 30ms on a 24MHz clock for pmic stabilization */
-		regmap_write(pmu_regmap, RK3288_PMU_STABL_CNT, 24000 * 30);
+		/* 30ms on a 24MHz घड़ी क्रम pmic stabilization */
+		regmap_ग_लिखो(pmu_regmap, RK3288_PMU_STABL_CNT, 24000 * 30);
 
-		/* oscillator is still running, so no need to wait */
-		regmap_write(pmu_regmap, RK3288_PMU_OSC_CNT, 0);
-	}
+		/* oscillator is still running, so no need to रुको */
+		regmap_ग_लिखो(pmu_regmap, RK3288_PMU_OSC_CNT, 0);
+	पूर्ण
 
-	regmap_write(pmu_regmap, RK3288_PMU_PWRMODE_CON, mode_set);
-	regmap_write(pmu_regmap, RK3288_PMU_PWRMODE_CON1, mode_set1);
-}
+	regmap_ग_लिखो(pmu_regmap, RK3288_PMU_PWRMODE_CON, mode_set);
+	regmap_ग_लिखो(pmu_regmap, RK3288_PMU_PWRMODE_CON1, mode_set1);
+पूर्ण
 
-static void rk3288_slp_mode_set_resume(void)
-{
-	regmap_write(sgrf_regmap, RK3288_SGRF_CPU_CON0,
+अटल व्योम rk3288_slp_mode_set_resume(व्योम)
+अणु
+	regmap_ग_लिखो(sgrf_regmap, RK3288_SGRF_CPU_CON0,
 		     rk3288_sgrf_cpu_con0 | SGRF_DAPDEVICEEN_WRITE);
 
-	regmap_write(pmu_regmap, RK3288_PMU_PWRMODE_CON,
+	regmap_ग_लिखो(pmu_regmap, RK3288_PMU_PWRMODE_CON,
 		     rk3288_pmu_pwr_mode_con);
 
-	regmap_write(sgrf_regmap, RK3288_SGRF_SOC_CON0,
+	regmap_ग_लिखो(sgrf_regmap, RK3288_SGRF_SOC_CON0,
 		     rk3288_sgrf_soc_con0 | SGRF_PCLK_WDT_GATE_WRITE
 		     | SGRF_FAST_BOOT_EN_WRITE);
-}
+पूर्ण
 
-static int rockchip_lpmode_enter(unsigned long arg)
-{
+अटल पूर्णांक rockchip_lpmode_enter(अचिन्हित दीर्घ arg)
+अणु
 	flush_cache_all();
 
-	cpu_do_idle();
+	cpu_करो_idle();
 
 	pr_err("%s: Failed to suspend\n", __func__);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int rk3288_suspend_enter(suspend_state_t state)
-{
+अटल पूर्णांक rk3288_suspend_enter(suspend_state_t state)
+अणु
 	local_fiq_disable();
 
 	rk3288_slp_mode_set(ROCKCHIP_ARM_OFF_LOGIC_NORMAL);
@@ -207,66 +208,66 @@ static int rk3288_suspend_enter(suspend_state_t state)
 
 	local_fiq_enable();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rk3288_suspend_prepare(void)
-{
-	return regulator_suspend_prepare(PM_SUSPEND_MEM);
-}
+अटल पूर्णांक rk3288_suspend_prepare(व्योम)
+अणु
+	वापस regulator_suspend_prepare(PM_SUSPEND_MEM);
+पूर्ण
 
-static void rk3288_suspend_finish(void)
-{
-	if (regulator_suspend_finish())
+अटल व्योम rk3288_suspend_finish(व्योम)
+अणु
+	अगर (regulator_suspend_finish())
 		pr_err("%s: Suspend finish failed\n", __func__);
-}
+पूर्ण
 
-static int __init rk3288_suspend_init(struct device_node *np)
-{
-	struct device_node *sram_np;
-	struct resource res;
-	int ret;
+अटल पूर्णांक __init rk3288_suspend_init(काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *sram_np;
+	काष्ठा resource res;
+	पूर्णांक ret;
 
 	pmu_regmap = syscon_node_to_regmap(np);
-	if (IS_ERR(pmu_regmap)) {
+	अगर (IS_ERR(pmu_regmap)) अणु
 		pr_err("%s: could not find pmu regmap\n", __func__);
-		return PTR_ERR(pmu_regmap);
-	}
+		वापस PTR_ERR(pmu_regmap);
+	पूर्ण
 
 	sgrf_regmap = syscon_regmap_lookup_by_compatible(
 				"rockchip,rk3288-sgrf");
-	if (IS_ERR(sgrf_regmap)) {
+	अगर (IS_ERR(sgrf_regmap)) अणु
 		pr_err("%s: could not find sgrf regmap\n", __func__);
-		return PTR_ERR(sgrf_regmap);
-	}
+		वापस PTR_ERR(sgrf_regmap);
+	पूर्ण
 
 	grf_regmap = syscon_regmap_lookup_by_compatible(
 				"rockchip,rk3288-grf");
-	if (IS_ERR(grf_regmap)) {
+	अगर (IS_ERR(grf_regmap)) अणु
 		pr_err("%s: could not find grf regmap\n", __func__);
-		return PTR_ERR(grf_regmap);
-	}
+		वापस PTR_ERR(grf_regmap);
+	पूर्ण
 
-	sram_np = of_find_compatible_node(NULL, NULL,
+	sram_np = of_find_compatible_node(शून्य, शून्य,
 					  "rockchip,rk3288-pmu-sram");
-	if (!sram_np) {
+	अगर (!sram_np) अणु
 		pr_err("%s: could not find bootram dt node\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	rk3288_bootram_base = of_iomap(sram_np, 0);
-	if (!rk3288_bootram_base) {
+	अगर (!rk3288_bootram_base) अणु
 		pr_err("%s: could not map bootram base\n", __func__);
 		of_node_put(sram_np);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = of_address_to_resource(sram_np, 0, &res);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: could not get bootram phy addr\n", __func__);
 		of_node_put(sram_np);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	rk3288_bootram_phy = res.start;
 
 	of_node_put(sram_np);
@@ -274,55 +275,55 @@ static int __init rk3288_suspend_init(struct device_node *np)
 	rk3288_config_bootdata();
 
 	/* copy resume code and data to bootsram */
-	memcpy(rk3288_bootram_base, rockchip_slp_cpu_resume,
+	स_नकल(rk3288_bootram_base, rockchip_slp_cpu_resume,
 	       rk3288_bootram_sz);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_suspend_ops rk3288_suspend_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops rk3288_suspend_ops = अणु
 	.enter   = rk3288_suspend_enter,
 	.valid   = suspend_valid_only_mem,
 	.prepare = rk3288_suspend_prepare,
 	.finish  = rk3288_suspend_finish,
-};
+पूर्ण;
 
-static const struct rockchip_pm_data rk3288_pm_data __initconst = {
+अटल स्थिर काष्ठा rockchip_pm_data rk3288_pm_data __initस्थिर = अणु
 	.ops = &rk3288_suspend_ops,
 	.init = rk3288_suspend_init,
-};
+पूर्ण;
 
-static const struct of_device_id rockchip_pmu_of_device_ids[] __initconst = {
-	{
+अटल स्थिर काष्ठा of_device_id rockchip_pmu_of_device_ids[] __initस्थिर = अणु
+	अणु
 		.compatible = "rockchip,rk3288-pmu",
 		.data = &rk3288_pm_data,
-	},
-	{ /* sentinel */ },
-};
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-void __init rockchip_suspend_init(void)
-{
-	const struct rockchip_pm_data *pm_data;
-	const struct of_device_id *match;
-	struct device_node *np;
-	int ret;
+व्योम __init rockchip_suspend_init(व्योम)
+अणु
+	स्थिर काष्ठा rockchip_pm_data *pm_data;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device_node *np;
+	पूर्णांक ret;
 
-	np = of_find_matching_node_and_match(NULL, rockchip_pmu_of_device_ids,
+	np = of_find_matching_node_and_match(शून्य, rockchip_pmu_of_device_ids,
 					     &match);
-	if (!match) {
+	अगर (!match) अणु
 		pr_err("Failed to find PMU node\n");
-		return;
-	}
-	pm_data = (struct rockchip_pm_data *) match->data;
+		वापस;
+	पूर्ण
+	pm_data = (काष्ठा rockchip_pm_data *) match->data;
 
-	if (pm_data->init) {
+	अगर (pm_data->init) अणु
 		ret = pm_data->init(np);
 
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("%s: matches init error %d\n", __func__, ret);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	suspend_set_ops(pm_data->ops);
-}
+पूर्ण

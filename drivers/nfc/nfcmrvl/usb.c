@@ -1,137 +1,138 @@
+<शैली गुरु>
 /*
- * Marvell NFC-over-USB driver: USB interface related functions
+ * Marvell NFC-over-USB driver: USB पूर्णांकerface related functions
  *
  * Copyright (C) 2014, Marvell International Ltd.
  *
  * This software file (the "File") is distributed by Marvell International
  * Ltd. under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modify this File in
+ * (the "License").  You may use, redistribute and/or modअगरy this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available on the worldwide web at
  * http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
- * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  **/
 
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/nfc.h>
-#include <net/nfc/nci.h>
-#include <net/nfc/nci_core.h>
-#include "nfcmrvl.h"
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/nfc.h>
+#समावेश <net/nfc/nci.h>
+#समावेश <net/nfc/nci_core.h>
+#समावेश "nfcmrvl.h"
 
-static struct usb_device_id nfcmrvl_table[] = {
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1286, 0x2046,
-					USB_CLASS_VENDOR_SPEC, 4, 1) },
-	{ }	/* Terminating entry */
-};
+अटल काष्ठा usb_device_id nfcmrvl_table[] = अणु
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1286, 0x2046,
+					USB_CLASS_VENDOR_SPEC, 4, 1) पूर्ण,
+	अणु पूर्ण	/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, nfcmrvl_table);
 
-#define NFCMRVL_USB_BULK_RUNNING	1
-#define NFCMRVL_USB_SUSPENDING		2
+#घोषणा NFCMRVL_USB_BULK_RUNNING	1
+#घोषणा NFCMRVL_USB_SUSPENDING		2
 
-struct nfcmrvl_usb_drv_data {
-	struct usb_device *udev;
-	struct usb_interface *intf;
-	unsigned long flags;
-	struct work_struct waker;
-	struct usb_anchor tx_anchor;
-	struct usb_anchor bulk_anchor;
-	struct usb_anchor deferred;
-	int tx_in_flight;
+काष्ठा nfcmrvl_usb_drv_data अणु
+	काष्ठा usb_device *udev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	अचिन्हित दीर्घ flags;
+	काष्ठा work_काष्ठा waker;
+	काष्ठा usb_anchor tx_anchor;
+	काष्ठा usb_anchor bulk_anchor;
+	काष्ठा usb_anchor deferred;
+	पूर्णांक tx_in_flight;
 	/* protects tx_in_flight */
 	spinlock_t txlock;
-	struct usb_endpoint_descriptor *bulk_tx_ep;
-	struct usb_endpoint_descriptor *bulk_rx_ep;
-	int suspend_count;
-	struct nfcmrvl_private *priv;
-};
+	काष्ठा usb_endpoपूर्णांक_descriptor *bulk_tx_ep;
+	काष्ठा usb_endpoपूर्णांक_descriptor *bulk_rx_ep;
+	पूर्णांक suspend_count;
+	काष्ठा nfcmrvl_निजी *priv;
+पूर्ण;
 
-static int nfcmrvl_inc_tx(struct nfcmrvl_usb_drv_data *drv_data)
-{
-	unsigned long flags;
-	int rv;
+अटल पूर्णांक nfcmrvl_inc_tx(काष्ठा nfcmrvl_usb_drv_data *drv_data)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rv;
 
 	spin_lock_irqsave(&drv_data->txlock, flags);
 	rv = test_bit(NFCMRVL_USB_SUSPENDING, &drv_data->flags);
-	if (!rv)
+	अगर (!rv)
 		drv_data->tx_in_flight++;
 	spin_unlock_irqrestore(&drv_data->txlock, flags);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static void nfcmrvl_bulk_complete(struct urb *urb)
-{
-	struct nfcmrvl_usb_drv_data *drv_data = urb->context;
-	struct sk_buff *skb;
-	int err;
+अटल व्योम nfcmrvl_bulk_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा nfcmrvl_usb_drv_data *drv_data = urb->context;
+	काष्ठा sk_buff *skb;
+	पूर्णांक err;
 
 	dev_dbg(&drv_data->udev->dev, "urb %p status %d count %d\n",
 		urb, urb->status, urb->actual_length);
 
-	if (!test_bit(NFCMRVL_NCI_RUNNING, &drv_data->flags))
-		return;
+	अगर (!test_bit(NFCMRVL_NCI_RUNNING, &drv_data->flags))
+		वापस;
 
-	if (!urb->status) {
+	अगर (!urb->status) अणु
 		skb = nci_skb_alloc(drv_data->priv->ndev, urb->actual_length,
 				    GFP_ATOMIC);
-		if (!skb) {
+		अगर (!skb) अणु
 			nfc_err(&drv_data->udev->dev, "failed to alloc mem\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			skb_put_data(skb, urb->transfer_buffer,
 				     urb->actual_length);
-			if (nfcmrvl_nci_recv_frame(drv_data->priv, skb) < 0)
+			अगर (nfcmrvl_nci_recv_frame(drv_data->priv, skb) < 0)
 				nfc_err(&drv_data->udev->dev,
 					"corrupted Rx packet\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!test_bit(NFCMRVL_USB_BULK_RUNNING, &drv_data->flags))
-		return;
+	अगर (!test_bit(NFCMRVL_USB_BULK_RUNNING, &drv_data->flags))
+		वापस;
 
 	usb_anchor_urb(urb, &drv_data->bulk_anchor);
 	usb_mark_last_busy(drv_data->udev);
 
 	err = usb_submit_urb(urb, GFP_ATOMIC);
-	if (err) {
-		/* -EPERM: urb is being killed;
+	अगर (err) अणु
+		/* -EPERM: urb is being समाप्तed;
 		 * -ENODEV: device got disconnected
 		 */
-		if (err != -EPERM && err != -ENODEV)
+		अगर (err != -EPERM && err != -ENODEV)
 			nfc_err(&drv_data->udev->dev,
 				"urb %p failed to resubmit (%d)\n", urb, -err);
 		usb_unanchor_urb(urb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-nfcmrvl_submit_bulk_urb(struct nfcmrvl_usb_drv_data *drv_data, gfp_t mem_flags)
-{
-	struct urb *urb;
-	unsigned char *buf;
-	unsigned int pipe;
-	int err, size = NFCMRVL_NCI_MAX_EVENT_SIZE;
+अटल पूर्णांक
+nfcmrvl_submit_bulk_urb(काष्ठा nfcmrvl_usb_drv_data *drv_data, gfp_t mem_flags)
+अणु
+	काष्ठा urb *urb;
+	अचिन्हित अक्षर *buf;
+	अचिन्हित पूर्णांक pipe;
+	पूर्णांक err, size = NFCMRVL_NCI_MAX_EVENT_SIZE;
 
-	if (!drv_data->bulk_rx_ep)
-		return -ENODEV;
+	अगर (!drv_data->bulk_rx_ep)
+		वापस -ENODEV;
 
 	urb = usb_alloc_urb(0, mem_flags);
-	if (!urb)
-		return -ENOMEM;
+	अगर (!urb)
+		वापस -ENOMEM;
 
-	buf = kmalloc(size, mem_flags);
-	if (!buf) {
-		usb_free_urb(urb);
-		return -ENOMEM;
-	}
+	buf = kदो_स्मृति(size, mem_flags);
+	अगर (!buf) अणु
+		usb_मुक्त_urb(urb);
+		वापस -ENOMEM;
+	पूर्ण
 
 	pipe = usb_rcvbulkpipe(drv_data->udev,
-			       drv_data->bulk_rx_ep->bEndpointAddress);
+			       drv_data->bulk_rx_ep->bEndpoपूर्णांकAddress);
 
 	usb_fill_bulk_urb(urb, drv_data->udev, pipe, buf, size,
 			  nfcmrvl_bulk_complete, drv_data);
@@ -142,25 +143,25 @@ nfcmrvl_submit_bulk_urb(struct nfcmrvl_usb_drv_data *drv_data, gfp_t mem_flags)
 	usb_anchor_urb(urb, &drv_data->bulk_anchor);
 
 	err = usb_submit_urb(urb, mem_flags);
-	if (err) {
-		if (err != -EPERM && err != -ENODEV)
+	अगर (err) अणु
+		अगर (err != -EPERM && err != -ENODEV)
 			nfc_err(&drv_data->udev->dev,
 				"urb %p submission failed (%d)\n", urb, -err);
 		usb_unanchor_urb(urb);
-	}
+	पूर्ण
 
-	usb_free_urb(urb);
+	usb_मुक्त_urb(urb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void nfcmrvl_tx_complete(struct urb *urb)
-{
-	struct sk_buff *skb = urb->context;
-	struct nci_dev *ndev = (struct nci_dev *)skb->dev;
-	struct nfcmrvl_private *priv = nci_get_drvdata(ndev);
-	struct nfcmrvl_usb_drv_data *drv_data = priv->drv_data;
-	unsigned long flags;
+अटल व्योम nfcmrvl_tx_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा sk_buff *skb = urb->context;
+	काष्ठा nci_dev *ndev = (काष्ठा nci_dev *)skb->dev;
+	काष्ठा nfcmrvl_निजी *priv = nci_get_drvdata(ndev);
+	काष्ठा nfcmrvl_usb_drv_data *drv_data = priv->drv_data;
+	अचिन्हित दीर्घ flags;
 
 	nfc_info(priv->dev, "urb %p status %d count %d\n",
 		 urb, urb->status, urb->actual_length);
@@ -169,171 +170,171 @@ static void nfcmrvl_tx_complete(struct urb *urb)
 	drv_data->tx_in_flight--;
 	spin_unlock_irqrestore(&drv_data->txlock, flags);
 
-	kfree(urb->setup_packet);
-	kfree_skb(skb);
-}
+	kमुक्त(urb->setup_packet);
+	kमुक्त_skb(skb);
+पूर्ण
 
-static int nfcmrvl_usb_nci_open(struct nfcmrvl_private *priv)
-{
-	struct nfcmrvl_usb_drv_data *drv_data = priv->drv_data;
-	int err;
+अटल पूर्णांक nfcmrvl_usb_nci_खोलो(काष्ठा nfcmrvl_निजी *priv)
+अणु
+	काष्ठा nfcmrvl_usb_drv_data *drv_data = priv->drv_data;
+	पूर्णांक err;
 
-	err = usb_autopm_get_interface(drv_data->intf);
-	if (err)
-		return err;
+	err = usb_स्वतःpm_get_पूर्णांकerface(drv_data->पूर्णांकf);
+	अगर (err)
+		वापस err;
 
-	drv_data->intf->needs_remote_wakeup = 1;
+	drv_data->पूर्णांकf->needs_remote_wakeup = 1;
 
 	err = nfcmrvl_submit_bulk_urb(drv_data, GFP_KERNEL);
-	if (err)
-		goto failed;
+	अगर (err)
+		जाओ failed;
 
 	set_bit(NFCMRVL_USB_BULK_RUNNING, &drv_data->flags);
 	nfcmrvl_submit_bulk_urb(drv_data, GFP_KERNEL);
 
-	usb_autopm_put_interface(drv_data->intf);
-	return 0;
+	usb_स्वतःpm_put_पूर्णांकerface(drv_data->पूर्णांकf);
+	वापस 0;
 
 failed:
-	usb_autopm_put_interface(drv_data->intf);
-	return err;
-}
+	usb_स्वतःpm_put_पूर्णांकerface(drv_data->पूर्णांकf);
+	वापस err;
+पूर्ण
 
-static void nfcmrvl_usb_stop_traffic(struct nfcmrvl_usb_drv_data *drv_data)
-{
-	usb_kill_anchored_urbs(&drv_data->bulk_anchor);
-}
+अटल व्योम nfcmrvl_usb_stop_traffic(काष्ठा nfcmrvl_usb_drv_data *drv_data)
+अणु
+	usb_समाप्त_anchored_urbs(&drv_data->bulk_anchor);
+पूर्ण
 
-static int nfcmrvl_usb_nci_close(struct nfcmrvl_private *priv)
-{
-	struct nfcmrvl_usb_drv_data *drv_data = priv->drv_data;
-	int err;
+अटल पूर्णांक nfcmrvl_usb_nci_बंद(काष्ठा nfcmrvl_निजी *priv)
+अणु
+	काष्ठा nfcmrvl_usb_drv_data *drv_data = priv->drv_data;
+	पूर्णांक err;
 
 	cancel_work_sync(&drv_data->waker);
 
 	clear_bit(NFCMRVL_USB_BULK_RUNNING, &drv_data->flags);
 
 	nfcmrvl_usb_stop_traffic(drv_data);
-	usb_kill_anchored_urbs(&drv_data->tx_anchor);
-	err = usb_autopm_get_interface(drv_data->intf);
-	if (err)
-		goto failed;
+	usb_समाप्त_anchored_urbs(&drv_data->tx_anchor);
+	err = usb_स्वतःpm_get_पूर्णांकerface(drv_data->पूर्णांकf);
+	अगर (err)
+		जाओ failed;
 
-	drv_data->intf->needs_remote_wakeup = 0;
-	usb_autopm_put_interface(drv_data->intf);
+	drv_data->पूर्णांकf->needs_remote_wakeup = 0;
+	usb_स्वतःpm_put_पूर्णांकerface(drv_data->पूर्णांकf);
 
 failed:
 	usb_scuttle_anchored_urbs(&drv_data->deferred);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfcmrvl_usb_nci_send(struct nfcmrvl_private *priv,
-				struct sk_buff *skb)
-{
-	struct nfcmrvl_usb_drv_data *drv_data = priv->drv_data;
-	struct urb *urb;
-	unsigned int pipe;
-	int err;
+अटल पूर्णांक nfcmrvl_usb_nci_send(काष्ठा nfcmrvl_निजी *priv,
+				काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfcmrvl_usb_drv_data *drv_data = priv->drv_data;
+	काष्ठा urb *urb;
+	अचिन्हित पूर्णांक pipe;
+	पूर्णांक err;
 
-	if (!drv_data->bulk_tx_ep)
-		return -ENODEV;
+	अगर (!drv_data->bulk_tx_ep)
+		वापस -ENODEV;
 
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	if (!urb)
-		return -ENOMEM;
+	अगर (!urb)
+		वापस -ENOMEM;
 
 	pipe = usb_sndbulkpipe(drv_data->udev,
-				drv_data->bulk_tx_ep->bEndpointAddress);
+				drv_data->bulk_tx_ep->bEndpoपूर्णांकAddress);
 
 	usb_fill_bulk_urb(urb, drv_data->udev, pipe, skb->data, skb->len,
 			  nfcmrvl_tx_complete, skb);
 
 	err = nfcmrvl_inc_tx(drv_data);
-	if (err) {
+	अगर (err) अणु
 		usb_anchor_urb(urb, &drv_data->deferred);
 		schedule_work(&drv_data->waker);
 		err = 0;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	usb_anchor_urb(urb, &drv_data->tx_anchor);
 
 	err = usb_submit_urb(urb, GFP_ATOMIC);
-	if (err) {
-		if (err != -EPERM && err != -ENODEV)
+	अगर (err) अणु
+		अगर (err != -EPERM && err != -ENODEV)
 			nfc_err(&drv_data->udev->dev,
 				"urb %p submission failed (%d)\n", urb, -err);
-		kfree(urb->setup_packet);
+		kमुक्त(urb->setup_packet);
 		usb_unanchor_urb(urb);
-	} else {
+	पूर्ण अन्यथा अणु
 		usb_mark_last_busy(drv_data->udev);
-	}
+	पूर्ण
 
-done:
-	usb_free_urb(urb);
-	return err;
-}
+करोne:
+	usb_मुक्त_urb(urb);
+	वापस err;
+पूर्ण
 
-static struct nfcmrvl_if_ops usb_ops = {
-	.nci_open = nfcmrvl_usb_nci_open,
-	.nci_close = nfcmrvl_usb_nci_close,
+अटल काष्ठा nfcmrvl_अगर_ops usb_ops = अणु
+	.nci_खोलो = nfcmrvl_usb_nci_खोलो,
+	.nci_बंद = nfcmrvl_usb_nci_बंद,
 	.nci_send = nfcmrvl_usb_nci_send,
-};
+पूर्ण;
 
-static void nfcmrvl_waker(struct work_struct *work)
-{
-	struct nfcmrvl_usb_drv_data *drv_data =
-			container_of(work, struct nfcmrvl_usb_drv_data, waker);
-	int err;
+अटल व्योम nfcmrvl_waker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nfcmrvl_usb_drv_data *drv_data =
+			container_of(work, काष्ठा nfcmrvl_usb_drv_data, waker);
+	पूर्णांक err;
 
-	err = usb_autopm_get_interface(drv_data->intf);
-	if (err)
-		return;
+	err = usb_स्वतःpm_get_पूर्णांकerface(drv_data->पूर्णांकf);
+	अगर (err)
+		वापस;
 
-	usb_autopm_put_interface(drv_data->intf);
-}
+	usb_स्वतःpm_put_पूर्णांकerface(drv_data->पूर्णांकf);
+पूर्ण
 
-static int nfcmrvl_probe(struct usb_interface *intf,
-			 const struct usb_device_id *id)
-{
-	struct usb_endpoint_descriptor *ep_desc;
-	struct nfcmrvl_usb_drv_data *drv_data;
-	struct nfcmrvl_private *priv;
-	int i;
-	struct usb_device *udev = interface_to_usbdev(intf);
-	struct nfcmrvl_platform_data config;
+अटल पूर्णांक nfcmrvl_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			 स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep_desc;
+	काष्ठा nfcmrvl_usb_drv_data *drv_data;
+	काष्ठा nfcmrvl_निजी *priv;
+	पूर्णांक i;
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा nfcmrvl_platक्रमm_data config;
 
-	/* No configuration for USB */
-	memset(&config, 0, sizeof(config));
+	/* No configuration क्रम USB */
+	स_रखो(&config, 0, माप(config));
 	config.reset_n_io = -EINVAL;
 
-	nfc_info(&udev->dev, "intf %p id %p\n", intf, id);
+	nfc_info(&udev->dev, "intf %p id %p\n", पूर्णांकf, id);
 
-	drv_data = devm_kzalloc(&intf->dev, sizeof(*drv_data), GFP_KERNEL);
-	if (!drv_data)
-		return -ENOMEM;
+	drv_data = devm_kzalloc(&पूर्णांकf->dev, माप(*drv_data), GFP_KERNEL);
+	अगर (!drv_data)
+		वापस -ENOMEM;
 
-	for (i = 0; i < intf->cur_altsetting->desc.bNumEndpoints; i++) {
-		ep_desc = &intf->cur_altsetting->endpoint[i].desc;
+	क्रम (i = 0; i < पूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs; i++) अणु
+		ep_desc = &पूर्णांकf->cur_altsetting->endpoपूर्णांक[i].desc;
 
-		if (!drv_data->bulk_tx_ep &&
-		    usb_endpoint_is_bulk_out(ep_desc)) {
+		अगर (!drv_data->bulk_tx_ep &&
+		    usb_endpoपूर्णांक_is_bulk_out(ep_desc)) अणु
 			drv_data->bulk_tx_ep = ep_desc;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!drv_data->bulk_rx_ep &&
-		    usb_endpoint_is_bulk_in(ep_desc)) {
+		अगर (!drv_data->bulk_rx_ep &&
+		    usb_endpoपूर्णांक_is_bulk_in(ep_desc)) अणु
 			drv_data->bulk_rx_ep = ep_desc;
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 
-	if (!drv_data->bulk_tx_ep || !drv_data->bulk_rx_ep)
-		return -ENODEV;
+	अगर (!drv_data->bulk_tx_ep || !drv_data->bulk_rx_ep)
+		वापस -ENODEV;
 
 	drv_data->udev = udev;
-	drv_data->intf = intf;
+	drv_data->पूर्णांकf = पूर्णांकf;
 
 	INIT_WORK(&drv_data->waker, nfcmrvl_waker);
 	spin_lock_init(&drv_data->txlock);
@@ -342,129 +343,129 @@ static int nfcmrvl_probe(struct usb_interface *intf,
 	init_usb_anchor(&drv_data->bulk_anchor);
 	init_usb_anchor(&drv_data->deferred);
 
-	priv = nfcmrvl_nci_register_dev(NFCMRVL_PHY_USB, drv_data, &usb_ops,
-					&intf->dev, &config);
-	if (IS_ERR(priv))
-		return PTR_ERR(priv);
+	priv = nfcmrvl_nci_रेजिस्टर_dev(NFCMRVL_PHY_USB, drv_data, &usb_ops,
+					&पूर्णांकf->dev, &config);
+	अगर (IS_ERR(priv))
+		वापस PTR_ERR(priv);
 
 	drv_data->priv = priv;
 	drv_data->priv->support_fw_dnld = false;
 
-	usb_set_intfdata(intf, drv_data);
+	usb_set_पूर्णांकfdata(पूर्णांकf, drv_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nfcmrvl_disconnect(struct usb_interface *intf)
-{
-	struct nfcmrvl_usb_drv_data *drv_data = usb_get_intfdata(intf);
+अटल व्योम nfcmrvl_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा nfcmrvl_usb_drv_data *drv_data = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	if (!drv_data)
-		return;
+	अगर (!drv_data)
+		वापस;
 
-	nfc_info(&drv_data->udev->dev, "intf %p\n", intf);
+	nfc_info(&drv_data->udev->dev, "intf %p\n", पूर्णांकf);
 
-	nfcmrvl_nci_unregister_dev(drv_data->priv);
+	nfcmrvl_nci_unरेजिस्टर_dev(drv_data->priv);
 
-	usb_set_intfdata(drv_data->intf, NULL);
-}
+	usb_set_पूर्णांकfdata(drv_data->पूर्णांकf, शून्य);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int nfcmrvl_suspend(struct usb_interface *intf, pm_message_t message)
-{
-	struct nfcmrvl_usb_drv_data *drv_data = usb_get_intfdata(intf);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक nfcmrvl_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
+अणु
+	काष्ठा nfcmrvl_usb_drv_data *drv_data = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	nfc_info(&drv_data->udev->dev, "intf %p\n", intf);
+	nfc_info(&drv_data->udev->dev, "intf %p\n", पूर्णांकf);
 
-	if (drv_data->suspend_count++)
-		return 0;
+	अगर (drv_data->suspend_count++)
+		वापस 0;
 
 	spin_lock_irq(&drv_data->txlock);
-	if (!(PMSG_IS_AUTO(message) && drv_data->tx_in_flight)) {
+	अगर (!(PMSG_IS_AUTO(message) && drv_data->tx_in_flight)) अणु
 		set_bit(NFCMRVL_USB_SUSPENDING, &drv_data->flags);
 		spin_unlock_irq(&drv_data->txlock);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irq(&drv_data->txlock);
 		drv_data->suspend_count--;
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	nfcmrvl_usb_stop_traffic(drv_data);
-	usb_kill_anchored_urbs(&drv_data->tx_anchor);
+	usb_समाप्त_anchored_urbs(&drv_data->tx_anchor);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nfcmrvl_play_deferred(struct nfcmrvl_usb_drv_data *drv_data)
-{
-	struct urb *urb;
-	int err;
+अटल व्योम nfcmrvl_play_deferred(काष्ठा nfcmrvl_usb_drv_data *drv_data)
+अणु
+	काष्ठा urb *urb;
+	पूर्णांक err;
 
-	while ((urb = usb_get_from_anchor(&drv_data->deferred))) {
+	जबतक ((urb = usb_get_from_anchor(&drv_data->deferred))) अणु
 		err = usb_submit_urb(urb, GFP_ATOMIC);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		drv_data->tx_in_flight++;
-	}
+	पूर्ण
 	usb_scuttle_anchored_urbs(&drv_data->deferred);
-}
+पूर्ण
 
-static int nfcmrvl_resume(struct usb_interface *intf)
-{
-	struct nfcmrvl_usb_drv_data *drv_data = usb_get_intfdata(intf);
-	int err = 0;
+अटल पूर्णांक nfcmrvl_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा nfcmrvl_usb_drv_data *drv_data = usb_get_पूर्णांकfdata(पूर्णांकf);
+	पूर्णांक err = 0;
 
-	nfc_info(&drv_data->udev->dev, "intf %p\n", intf);
+	nfc_info(&drv_data->udev->dev, "intf %p\n", पूर्णांकf);
 
-	if (--drv_data->suspend_count)
-		return 0;
+	अगर (--drv_data->suspend_count)
+		वापस 0;
 
-	if (!test_bit(NFCMRVL_NCI_RUNNING, &drv_data->flags))
-		goto done;
+	अगर (!test_bit(NFCMRVL_NCI_RUNNING, &drv_data->flags))
+		जाओ करोne;
 
-	if (test_bit(NFCMRVL_USB_BULK_RUNNING, &drv_data->flags)) {
+	अगर (test_bit(NFCMRVL_USB_BULK_RUNNING, &drv_data->flags)) अणु
 		err = nfcmrvl_submit_bulk_urb(drv_data, GFP_NOIO);
-		if (err) {
+		अगर (err) अणु
 			clear_bit(NFCMRVL_USB_BULK_RUNNING, &drv_data->flags);
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
 		nfcmrvl_submit_bulk_urb(drv_data, GFP_NOIO);
-	}
+	पूर्ण
 
 	spin_lock_irq(&drv_data->txlock);
 	nfcmrvl_play_deferred(drv_data);
 	clear_bit(NFCMRVL_USB_SUSPENDING, &drv_data->flags);
 	spin_unlock_irq(&drv_data->txlock);
 
-	return 0;
+	वापस 0;
 
 failed:
 	usb_scuttle_anchored_urbs(&drv_data->deferred);
-done:
+करोne:
 	spin_lock_irq(&drv_data->txlock);
 	clear_bit(NFCMRVL_USB_SUSPENDING, &drv_data->flags);
 	spin_unlock_irq(&drv_data->txlock);
 
-	return err;
-}
-#endif
+	वापस err;
+पूर्ण
+#पूर्ण_अगर
 
-static struct usb_driver nfcmrvl_usb_driver = {
+अटल काष्ठा usb_driver nfcmrvl_usb_driver = अणु
 	.name		= "nfcmrvl",
 	.probe		= nfcmrvl_probe,
 	.disconnect	= nfcmrvl_disconnect,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend	= nfcmrvl_suspend,
 	.resume		= nfcmrvl_resume,
 	.reset_resume	= nfcmrvl_resume,
-#endif
+#पूर्ण_अगर
 	.id_table	= nfcmrvl_table,
-	.supports_autosuspend = 1,
+	.supports_स्वतःsuspend = 1,
 	.disable_hub_initiated_lpm = 1,
 	.soft_unbind = 1,
-};
+पूर्ण;
 module_usb_driver(nfcmrvl_usb_driver);
 
 MODULE_AUTHOR("Marvell International Ltd.");

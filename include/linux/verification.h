@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* Signature verification
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* Signature verअगरication
  *
  * Copyright (C) 2014 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _LINUX_VERIFICATION_H
-#define _LINUX_VERIFICATION_H
+#अगर_अघोषित _LINUX_VERIFICATION_H
+#घोषणा _LINUX_VERIFICATION_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
  * Indicate that both builtin trusted keys and secondary trusted keys
  * should be used.
  */
-#define VERIFY_USE_SECONDARY_KEYRING ((struct key *)1UL)
-#define VERIFY_USE_PLATFORM_KEYRING  ((struct key *)2UL)
+#घोषणा VERIFY_USE_SECONDARY_KEYRING ((काष्ठा key *)1UL)
+#घोषणा VERIFY_USE_PLATFORM_KEYRING  ((काष्ठा key *)2UL)
 
 /*
  * The use to which an asymmetric key is being put.
  */
-enum key_being_used_for {
+क्रमागत key_being_used_क्रम अणु
 	VERIFYING_MODULE_SIGNATURE,
 	VERIFYING_FIRMWARE_SIGNATURE,
 	VERIFYING_KEXEC_PE_SIGNATURE,
@@ -28,37 +29,37 @@ enum key_being_used_for {
 	VERIFYING_KEY_SELF_SIGNATURE,
 	VERIFYING_UNSPECIFIED_SIGNATURE,
 	NR__KEY_BEING_USED_FOR
-};
-extern const char *const key_being_used_for[NR__KEY_BEING_USED_FOR];
+पूर्ण;
+बाह्य स्थिर अक्षर *स्थिर key_being_used_क्रम[NR__KEY_BEING_USED_FOR];
 
-#ifdef CONFIG_SYSTEM_DATA_VERIFICATION
+#अगर_घोषित CONFIG_SYSTEM_DATA_VERIFICATION
 
-struct key;
-struct pkcs7_message;
+काष्ठा key;
+काष्ठा pkcs7_message;
 
-extern int verify_pkcs7_signature(const void *data, size_t len,
-				  const void *raw_pkcs7, size_t pkcs7_len,
-				  struct key *trusted_keys,
-				  enum key_being_used_for usage,
-				  int (*view_content)(void *ctx,
-						      const void *data, size_t len,
-						      size_t asn1hdrlen),
-				  void *ctx);
-extern int verify_pkcs7_message_sig(const void *data, size_t len,
-				    struct pkcs7_message *pkcs7,
-				    struct key *trusted_keys,
-				    enum key_being_used_for usage,
-				    int (*view_content)(void *ctx,
-							const void *data,
-							size_t len,
-							size_t asn1hdrlen),
-				    void *ctx);
+बाह्य पूर्णांक verअगरy_pkcs7_signature(स्थिर व्योम *data, माप_प्रकार len,
+				  स्थिर व्योम *raw_pkcs7, माप_प्रकार pkcs7_len,
+				  काष्ठा key *trusted_keys,
+				  क्रमागत key_being_used_क्रम usage,
+				  पूर्णांक (*view_content)(व्योम *ctx,
+						      स्थिर व्योम *data, माप_प्रकार len,
+						      माप_प्रकार asn1hdrlen),
+				  व्योम *ctx);
+बाह्य पूर्णांक verअगरy_pkcs7_message_sig(स्थिर व्योम *data, माप_प्रकार len,
+				    काष्ठा pkcs7_message *pkcs7,
+				    काष्ठा key *trusted_keys,
+				    क्रमागत key_being_used_क्रम usage,
+				    पूर्णांक (*view_content)(व्योम *ctx,
+							स्थिर व्योम *data,
+							माप_प्रकार len,
+							माप_प्रकार asn1hdrlen),
+				    व्योम *ctx);
 
-#ifdef CONFIG_SIGNED_PE_FILE_VERIFICATION
-extern int verify_pefile_signature(const void *pebuf, unsigned pelen,
-				   struct key *trusted_keys,
-				   enum key_being_used_for usage);
-#endif
+#अगर_घोषित CONFIG_SIGNED_PE_खाता_VERIFICATION
+बाह्य पूर्णांक verअगरy_pefile_signature(स्थिर व्योम *pebuf, अचिन्हित pelen,
+				   काष्ठा key *trusted_keys,
+				   क्रमागत key_being_used_क्रम usage);
+#पूर्ण_अगर
 
-#endif /* CONFIG_SYSTEM_DATA_VERIFICATION */
-#endif /* _LINUX_VERIFY_PEFILE_H */
+#पूर्ण_अगर /* CONFIG_SYSTEM_DATA_VERIFICATION */
+#पूर्ण_अगर /* _LINUX_VERIFY_PEखाता_H */

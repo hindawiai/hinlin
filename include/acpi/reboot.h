@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ACPI_REBOOT_H
-#define __ACPI_REBOOT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ACPI_REBOOT_H
+#घोषणा __ACPI_REBOOT_H
 
-#ifdef CONFIG_ACPI
-extern void acpi_reboot(void);
-#else
-static inline void acpi_reboot(void) { }
-#endif
+#अगर_घोषित CONFIG_ACPI
+बाह्य व्योम acpi_reboot(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम acpi_reboot(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 

@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_SPINLOCK_H
-#define __ASM_SPINLOCK_H
+#अगर_अघोषित __ASM_SPINLOCK_H
+#घोषणा __ASM_SPINLOCK_H
 
-#include <asm/qspinlock.h>
-#include <asm/qrwlock.h>
+#समावेश <यंत्र/qspinlock.h>
+#समावेश <यंत्र/qrwlock.h>
 
 /* See include/linux/spinlock.h */
-#define smp_mb__after_spinlock()	smp_mb()
+#घोषणा smp_mb__after_spinlock()	smp_mb()
 
 /*
- * Changing this will break osq_lock() thanks to the call inside
+ * Changing this will अवरोध osq_lock() thanks to the call inside
  * smp_cond_load_relaxed().
  *
  * See:
  * https://lore.kernel.org/lkml/20200110100612.GC2827@hirez.programming.kicks-ass.net
  */
-#define vcpu_is_preempted vcpu_is_preempted
-static inline bool vcpu_is_preempted(int cpu)
-{
-	return false;
-}
+#घोषणा vcpu_is_preempted vcpu_is_preempted
+अटल अंतरभूत bool vcpu_is_preempted(पूर्णांक cpu)
+अणु
+	वापस false;
+पूर्ण
 
-#endif /* __ASM_SPINLOCK_H */
+#पूर्ण_अगर /* __ASM_SPINLOCK_H */

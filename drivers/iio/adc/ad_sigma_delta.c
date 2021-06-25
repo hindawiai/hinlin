@@ -1,487 +1,488 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Support code for Analog Devices Sigma-Delta ADCs
+ * Support code क्रम Analog Devices Sigma-Delta ADCs
  *
  * Copyright 2012 Analog Devices Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#include <linux/interrupt.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
-#include <linux/err.h>
-#include <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/adc/ad_sigma_delta.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/adc/ad_sigma_delta.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
 
-#define AD_SD_COMM_CHAN_MASK	0x3
+#घोषणा AD_SD_COMM_CHAN_MASK	0x3
 
-#define AD_SD_REG_COMM		0x00
-#define AD_SD_REG_DATA		0x03
+#घोषणा AD_SD_REG_COMM		0x00
+#घोषणा AD_SD_REG_DATA		0x03
 
 /**
- * ad_sd_set_comm() - Set communications register
+ * ad_sd_set_comm() - Set communications रेजिस्टर
  *
  * @sigma_delta: The sigma delta device
- * @comm: New value for the communications register
+ * @comm: New value क्रम the communications रेजिस्टर
  */
-void ad_sd_set_comm(struct ad_sigma_delta *sigma_delta, uint8_t comm)
-{
-	/* Some variants use the lower two bits of the communications register
+व्योम ad_sd_set_comm(काष्ठा ad_sigma_delta *sigma_delta, uपूर्णांक8_t comm)
+अणु
+	/* Some variants use the lower two bits of the communications रेजिस्टर
 	 * to select the channel */
 	sigma_delta->comm = comm & AD_SD_COMM_CHAN_MASK;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ad_sd_set_comm);
 
 /**
- * ad_sd_write_reg() - Write a register
+ * ad_sd_ग_लिखो_reg() - Write a रेजिस्टर
  *
  * @sigma_delta: The sigma delta device
- * @reg: Address of the register
- * @size: Size of the register (0-3)
- * @val: Value to write to the register
+ * @reg: Address of the रेजिस्टर
+ * @size: Size of the रेजिस्टर (0-3)
+ * @val: Value to ग_लिखो to the रेजिस्टर
  *
  * Returns 0 on success, an error code otherwise.
  **/
-int ad_sd_write_reg(struct ad_sigma_delta *sigma_delta, unsigned int reg,
-	unsigned int size, unsigned int val)
-{
-	uint8_t *data = sigma_delta->tx_buf;
-	struct spi_transfer t = {
+पूर्णांक ad_sd_ग_लिखो_reg(काष्ठा ad_sigma_delta *sigma_delta, अचिन्हित पूर्णांक reg,
+	अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक val)
+अणु
+	uपूर्णांक8_t *data = sigma_delta->tx_buf;
+	काष्ठा spi_transfer t = अणु
 		.tx_buf		= data,
 		.len		= size + 1,
-		.cs_change	= sigma_delta->keep_cs_asserted,
-	};
-	struct spi_message m;
-	int ret;
+		.cs_change	= sigma_delta->keep_cs_निश्चितed,
+	पूर्ण;
+	काष्ठा spi_message m;
+	पूर्णांक ret;
 
-	data[0] = (reg << sigma_delta->info->addr_shift) | sigma_delta->comm;
+	data[0] = (reg << sigma_delta->info->addr_shअगरt) | sigma_delta->comm;
 
-	switch (size) {
-	case 3:
+	चयन (size) अणु
+	हाल 3:
 		put_unaligned_be24(val, &data[1]);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		put_unaligned_be16(val, &data[1]);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		data[1] = val;
-		break;
-	case 0:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल 0:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
 
-	if (sigma_delta->bus_locked)
+	अगर (sigma_delta->bus_locked)
 		ret = spi_sync_locked(sigma_delta->spi, &m);
-	else
+	अन्यथा
 		ret = spi_sync(sigma_delta->spi, &m);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(ad_sd_write_reg);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(ad_sd_ग_लिखो_reg);
 
-static int ad_sd_read_reg_raw(struct ad_sigma_delta *sigma_delta,
-	unsigned int reg, unsigned int size, uint8_t *val)
-{
-	uint8_t *data = sigma_delta->tx_buf;
-	int ret;
-	struct spi_transfer t[] = {
-		{
+अटल पूर्णांक ad_sd_पढ़ो_reg_raw(काष्ठा ad_sigma_delta *sigma_delta,
+	अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक size, uपूर्णांक8_t *val)
+अणु
+	uपूर्णांक8_t *data = sigma_delta->tx_buf;
+	पूर्णांक ret;
+	काष्ठा spi_transfer t[] = अणु
+		अणु
 			.tx_buf = data,
 			.len = 1,
-		}, {
+		पूर्ण, अणु
 			.rx_buf = val,
 			.len = size,
 			.cs_change = sigma_delta->bus_locked,
-		},
-	};
-	struct spi_message m;
+		पूर्ण,
+	पूर्ण;
+	काष्ठा spi_message m;
 
 	spi_message_init(&m);
 
-	if (sigma_delta->info->has_registers) {
-		data[0] = reg << sigma_delta->info->addr_shift;
-		data[0] |= sigma_delta->info->read_mask;
+	अगर (sigma_delta->info->has_रेजिस्टरs) अणु
+		data[0] = reg << sigma_delta->info->addr_shअगरt;
+		data[0] |= sigma_delta->info->पढ़ो_mask;
 		data[0] |= sigma_delta->comm;
 		spi_message_add_tail(&t[0], &m);
-	}
+	पूर्ण
 	spi_message_add_tail(&t[1], &m);
 
-	if (sigma_delta->bus_locked)
+	अगर (sigma_delta->bus_locked)
 		ret = spi_sync_locked(sigma_delta->spi, &m);
-	else
+	अन्यथा
 		ret = spi_sync(sigma_delta->spi, &m);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ad_sd_read_reg() - Read a register
+ * ad_sd_पढ़ो_reg() - Read a रेजिस्टर
  *
  * @sigma_delta: The sigma delta device
- * @reg: Address of the register
- * @size: Size of the register (1-4)
+ * @reg: Address of the रेजिस्टर
+ * @size: Size of the रेजिस्टर (1-4)
  * @val: Read value
  *
  * Returns 0 on success, an error code otherwise.
  **/
-int ad_sd_read_reg(struct ad_sigma_delta *sigma_delta,
-	unsigned int reg, unsigned int size, unsigned int *val)
-{
-	int ret;
+पूर्णांक ad_sd_पढ़ो_reg(काष्ठा ad_sigma_delta *sigma_delta,
+	अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक *val)
+अणु
+	पूर्णांक ret;
 
-	ret = ad_sd_read_reg_raw(sigma_delta, reg, size, sigma_delta->rx_buf);
-	if (ret < 0)
-		goto out;
+	ret = ad_sd_पढ़ो_reg_raw(sigma_delta, reg, size, sigma_delta->rx_buf);
+	अगर (ret < 0)
+		जाओ out;
 
-	switch (size) {
-	case 4:
+	चयन (size) अणु
+	हाल 4:
 		*val = get_unaligned_be32(sigma_delta->rx_buf);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		*val = get_unaligned_be24(sigma_delta->rx_buf);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*val = get_unaligned_be16(sigma_delta->rx_buf);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		*val = sigma_delta->rx_buf[0];
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
-	return ret;
-}
-EXPORT_SYMBOL_GPL(ad_sd_read_reg);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(ad_sd_पढ़ो_reg);
 
 /**
- * ad_sd_reset() - Reset the serial interface
+ * ad_sd_reset() - Reset the serial पूर्णांकerface
  *
  * @sigma_delta: The sigma delta device
  * @reset_length: Number of SCLKs with DIN = 1
  *
  * Returns 0 on success, an error code otherwise.
  **/
-int ad_sd_reset(struct ad_sigma_delta *sigma_delta,
-	unsigned int reset_length)
-{
-	uint8_t *buf;
-	unsigned int size;
-	int ret;
+पूर्णांक ad_sd_reset(काष्ठा ad_sigma_delta *sigma_delta,
+	अचिन्हित पूर्णांक reset_length)
+अणु
+	uपूर्णांक8_t *buf;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक ret;
 
 	size = DIV_ROUND_UP(reset_length, 8);
-	buf = kcalloc(size, sizeof(*buf), GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kसुस्मृति(size, माप(*buf), GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	memset(buf, 0xff, size);
-	ret = spi_write(sigma_delta->spi, buf, size);
-	kfree(buf);
+	स_रखो(buf, 0xff, size);
+	ret = spi_ग_लिखो(sigma_delta->spi, buf, size);
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ad_sd_reset);
 
-int ad_sd_calibrate(struct ad_sigma_delta *sigma_delta,
-	unsigned int mode, unsigned int channel)
-{
-	int ret;
-	unsigned long timeout;
+पूर्णांक ad_sd_calibrate(काष्ठा ad_sigma_delta *sigma_delta,
+	अचिन्हित पूर्णांक mode, अचिन्हित पूर्णांक channel)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ समयout;
 
 	ret = ad_sigma_delta_set_channel(sigma_delta, channel);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spi_bus_lock(sigma_delta->spi->master);
 	sigma_delta->bus_locked = true;
-	sigma_delta->keep_cs_asserted = true;
+	sigma_delta->keep_cs_निश्चितed = true;
 	reinit_completion(&sigma_delta->completion);
 
 	ret = ad_sigma_delta_set_mode(sigma_delta, mode);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	sigma_delta->irq_dis = false;
 	enable_irq(sigma_delta->spi->irq);
-	timeout = wait_for_completion_timeout(&sigma_delta->completion, 2 * HZ);
-	if (timeout == 0) {
+	समयout = रुको_क्रम_completion_समयout(&sigma_delta->completion, 2 * HZ);
+	अगर (समयout == 0) अणु
 		sigma_delta->irq_dis = true;
 		disable_irq_nosync(sigma_delta->spi->irq);
 		ret = -EIO;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
+	पूर्ण
 out:
-	sigma_delta->keep_cs_asserted = false;
+	sigma_delta->keep_cs_निश्चितed = false;
 	ad_sigma_delta_set_mode(sigma_delta, AD_SD_MODE_IDLE);
 	sigma_delta->bus_locked = false;
 	spi_bus_unlock(sigma_delta->spi->master);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ad_sd_calibrate);
 
 /**
- * ad_sd_calibrate_all() - Performs channel calibration
+ * ad_sd_calibrate_all() - Perक्रमms channel calibration
  * @sigma_delta: The sigma delta device
- * @cb: Array of channels and calibration type to perform
+ * @cb: Array of channels and calibration type to perक्रमm
  * @n: Number of items in cb
  *
  * Returns 0 on success, an error code otherwise.
  **/
-int ad_sd_calibrate_all(struct ad_sigma_delta *sigma_delta,
-	const struct ad_sd_calib_data *cb, unsigned int n)
-{
-	unsigned int i;
-	int ret;
+पूर्णांक ad_sd_calibrate_all(काष्ठा ad_sigma_delta *sigma_delta,
+	स्थिर काष्ठा ad_sd_calib_data *cb, अचिन्हित पूर्णांक n)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < n; i++) {
+	क्रम (i = 0; i < n; i++) अणु
 		ret = ad_sd_calibrate(sigma_delta, cb[i].mode, cb[i].channel);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ad_sd_calibrate_all);
 
 /**
- * ad_sigma_delta_single_conversion() - Performs a single data conversion
+ * ad_sigma_delta_single_conversion() - Perक्रमms a single data conversion
  * @indio_dev: The IIO device
- * @chan: The conversion is done for this channel
- * @val: Pointer to the location where to store the read value
+ * @chan: The conversion is करोne क्रम this channel
+ * @val: Poपूर्णांकer to the location where to store the पढ़ो value
  *
  * Returns: 0 on success, an error value otherwise.
  */
-int ad_sigma_delta_single_conversion(struct iio_dev *indio_dev,
-	const struct iio_chan_spec *chan, int *val)
-{
-	struct ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
-	unsigned int sample, raw_sample;
-	unsigned int data_reg;
-	int ret = 0;
+पूर्णांक ad_sigma_delta_single_conversion(काष्ठा iio_dev *indio_dev,
+	स्थिर काष्ठा iio_chan_spec *chan, पूर्णांक *val)
+अणु
+	काष्ठा ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
+	अचिन्हित पूर्णांक sample, raw_sample;
+	अचिन्हित पूर्णांक data_reg;
+	पूर्णांक ret = 0;
 
-	if (iio_buffer_enabled(indio_dev))
-		return -EBUSY;
+	अगर (iio_buffer_enabled(indio_dev))
+		वापस -EBUSY;
 
 	mutex_lock(&indio_dev->mlock);
 	ad_sigma_delta_set_channel(sigma_delta, chan->address);
 
 	spi_bus_lock(sigma_delta->spi->master);
 	sigma_delta->bus_locked = true;
-	sigma_delta->keep_cs_asserted = true;
+	sigma_delta->keep_cs_निश्चितed = true;
 	reinit_completion(&sigma_delta->completion);
 
 	ad_sigma_delta_set_mode(sigma_delta, AD_SD_MODE_SINGLE);
 
 	sigma_delta->irq_dis = false;
 	enable_irq(sigma_delta->spi->irq);
-	ret = wait_for_completion_interruptible_timeout(
+	ret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(
 			&sigma_delta->completion, HZ);
 
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = -EIO;
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (sigma_delta->info->data_reg != 0)
+	अगर (sigma_delta->info->data_reg != 0)
 		data_reg = sigma_delta->info->data_reg;
-	else
+	अन्यथा
 		data_reg = AD_SD_REG_DATA;
 
-	ret = ad_sd_read_reg(sigma_delta, data_reg,
-		DIV_ROUND_UP(chan->scan_type.realbits + chan->scan_type.shift, 8),
+	ret = ad_sd_पढ़ो_reg(sigma_delta, data_reg,
+		DIV_ROUND_UP(chan->scan_type.realbits + chan->scan_type.shअगरt, 8),
 		&raw_sample);
 
 out:
-	if (!sigma_delta->irq_dis) {
+	अगर (!sigma_delta->irq_dis) अणु
 		disable_irq_nosync(sigma_delta->spi->irq);
 		sigma_delta->irq_dis = true;
-	}
+	पूर्ण
 
-	sigma_delta->keep_cs_asserted = false;
+	sigma_delta->keep_cs_निश्चितed = false;
 	ad_sigma_delta_set_mode(sigma_delta, AD_SD_MODE_IDLE);
 	sigma_delta->bus_locked = false;
 	spi_bus_unlock(sigma_delta->spi->master);
 	mutex_unlock(&indio_dev->mlock);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	sample = raw_sample >> chan->scan_type.shift;
+	sample = raw_sample >> chan->scan_type.shअगरt;
 	sample &= (1 << chan->scan_type.realbits) - 1;
 	*val = sample;
 
 	ret = ad_sigma_delta_postprocess_sample(sigma_delta, raw_sample);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return IIO_VAL_INT;
-}
+	वापस IIO_VAL_INT;
+पूर्ण
 EXPORT_SYMBOL_GPL(ad_sigma_delta_single_conversion);
 
-static int ad_sd_buffer_postenable(struct iio_dev *indio_dev)
-{
-	struct ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
-	unsigned int channel;
-	int ret;
+अटल पूर्णांक ad_sd_buffer_postenable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
+	अचिन्हित पूर्णांक channel;
+	पूर्णांक ret;
 
 	channel = find_first_bit(indio_dev->active_scan_mask,
 				 indio_dev->masklength);
 	ret = ad_sigma_delta_set_channel(sigma_delta,
 		indio_dev->channels[channel].address);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spi_bus_lock(sigma_delta->spi->master);
 	sigma_delta->bus_locked = true;
-	sigma_delta->keep_cs_asserted = true;
+	sigma_delta->keep_cs_निश्चितed = true;
 
 	ret = ad_sigma_delta_set_mode(sigma_delta, AD_SD_MODE_CONTINUOUS);
-	if (ret)
-		goto err_unlock;
+	अगर (ret)
+		जाओ err_unlock;
 
 	sigma_delta->irq_dis = false;
 	enable_irq(sigma_delta->spi->irq);
 
-	return 0;
+	वापस 0;
 
 err_unlock:
 	spi_bus_unlock(sigma_delta->spi->master);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad_sd_buffer_postdisable(struct iio_dev *indio_dev)
-{
-	struct ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
+अटल पूर्णांक ad_sd_buffer_postdisable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
 
 	reinit_completion(&sigma_delta->completion);
-	wait_for_completion_timeout(&sigma_delta->completion, HZ);
+	रुको_क्रम_completion_समयout(&sigma_delta->completion, HZ);
 
-	if (!sigma_delta->irq_dis) {
+	अगर (!sigma_delta->irq_dis) अणु
 		disable_irq_nosync(sigma_delta->spi->irq);
 		sigma_delta->irq_dis = true;
-	}
+	पूर्ण
 
-	sigma_delta->keep_cs_asserted = false;
+	sigma_delta->keep_cs_निश्चितed = false;
 	ad_sigma_delta_set_mode(sigma_delta, AD_SD_MODE_IDLE);
 
 	sigma_delta->bus_locked = false;
-	return spi_bus_unlock(sigma_delta->spi->master);
-}
+	वापस spi_bus_unlock(sigma_delta->spi->master);
+पूर्ण
 
-static irqreturn_t ad_sd_trigger_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
-	uint8_t *data = sigma_delta->rx_buf;
-	unsigned int reg_size;
-	unsigned int data_reg;
+अटल irqवापस_t ad_sd_trigger_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
+	uपूर्णांक8_t *data = sigma_delta->rx_buf;
+	अचिन्हित पूर्णांक reg_size;
+	अचिन्हित पूर्णांक data_reg;
 
 	reg_size = indio_dev->channels[0].scan_type.realbits +
-			indio_dev->channels[0].scan_type.shift;
+			indio_dev->channels[0].scan_type.shअगरt;
 	reg_size = DIV_ROUND_UP(reg_size, 8);
 
-	if (sigma_delta->info->data_reg != 0)
+	अगर (sigma_delta->info->data_reg != 0)
 		data_reg = sigma_delta->info->data_reg;
-	else
+	अन्यथा
 		data_reg = AD_SD_REG_DATA;
 
-	switch (reg_size) {
-	case 4:
-	case 2:
-	case 1:
-		ad_sd_read_reg_raw(sigma_delta, data_reg, reg_size, &data[0]);
-		break;
-	case 3:
+	चयन (reg_size) अणु
+	हाल 4:
+	हाल 2:
+	हाल 1:
+		ad_sd_पढ़ो_reg_raw(sigma_delta, data_reg, reg_size, &data[0]);
+		अवरोध;
+	हाल 3:
 		/* We store 24 bit samples in a 32 bit word. Keep the upper
 		 * byte set to zero. */
-		ad_sd_read_reg_raw(sigma_delta, data_reg, reg_size, &data[1]);
-		break;
-	}
+		ad_sd_पढ़ो_reg_raw(sigma_delta, data_reg, reg_size, &data[1]);
+		अवरोध;
+	पूर्ण
 
-	iio_push_to_buffers_with_timestamp(indio_dev, data, pf->timestamp);
+	iio_push_to_buffers_with_बारtamp(indio_dev, data, pf->बारtamp);
 
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 	sigma_delta->irq_dis = false;
 	enable_irq(sigma_delta->spi->irq);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct iio_buffer_setup_ops ad_sd_buffer_setup_ops = {
+अटल स्थिर काष्ठा iio_buffer_setup_ops ad_sd_buffer_setup_ops = अणु
 	.postenable = &ad_sd_buffer_postenable,
 	.postdisable = &ad_sd_buffer_postdisable,
 	.validate_scan_mask = &iio_validate_scan_mask_onehot,
-};
+पूर्ण;
 
-static irqreturn_t ad_sd_data_rdy_trig_poll(int irq, void *private)
-{
-	struct ad_sigma_delta *sigma_delta = private;
+अटल irqवापस_t ad_sd_data_rdy_trig_poll(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा ad_sigma_delta *sigma_delta = निजी;
 
 	complete(&sigma_delta->completion);
 	disable_irq_nosync(irq);
 	sigma_delta->irq_dis = true;
 	iio_trigger_poll(sigma_delta->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * ad_sd_validate_trigger() - validate_trigger callback for ad_sigma_delta devices
+ * ad_sd_validate_trigger() - validate_trigger callback क्रम ad_sigma_delta devices
  * @indio_dev: The IIO device
  * @trig: The new trigger
  *
- * Returns: 0 if the 'trig' matches the trigger registered by the ad_sigma_delta
+ * Returns: 0 अगर the 'trig' matches the trigger रेजिस्टरed by the ad_sigma_delta
  * device, -EINVAL otherwise.
  */
-int ad_sd_validate_trigger(struct iio_dev *indio_dev, struct iio_trigger *trig)
-{
-	struct ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
+पूर्णांक ad_sd_validate_trigger(काष्ठा iio_dev *indio_dev, काष्ठा iio_trigger *trig)
+अणु
+	काष्ठा ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
 
-	if (sigma_delta->trig != trig)
-		return -EINVAL;
+	अगर (sigma_delta->trig != trig)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ad_sd_validate_trigger);
 
-static const struct iio_trigger_ops ad_sd_trigger_ops = {
-};
+अटल स्थिर काष्ठा iio_trigger_ops ad_sd_trigger_ops = अणु
+पूर्ण;
 
-static int ad_sd_probe_trigger(struct iio_dev *indio_dev)
-{
-	struct ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
-	int ret;
+अटल पूर्णांक ad_sd_probe_trigger(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
+	पूर्णांक ret;
 
 	sigma_delta->trig = iio_trigger_alloc(&sigma_delta->spi->dev,
 					      "%s-dev%d", indio_dev->name,
 					      indio_dev->id);
-	if (sigma_delta->trig == NULL) {
+	अगर (sigma_delta->trig == शून्य) अणु
 		ret = -ENOMEM;
-		goto error_ret;
-	}
+		जाओ error_ret;
+	पूर्ण
 	sigma_delta->trig->ops = &ad_sd_trigger_ops;
 	init_completion(&sigma_delta->completion);
 
@@ -491,90 +492,90 @@ static int ad_sd_probe_trigger(struct iio_dev *indio_dev)
 			  sigma_delta->info->irq_flags | IRQF_NO_AUTOEN,
 			  indio_dev->name,
 			  sigma_delta);
-	if (ret)
-		goto error_free_trig;
+	अगर (ret)
+		जाओ error_मुक्त_trig;
 
 	iio_trigger_set_drvdata(sigma_delta->trig, sigma_delta);
 
-	ret = iio_trigger_register(sigma_delta->trig);
-	if (ret)
-		goto error_free_irq;
+	ret = iio_trigger_रेजिस्टर(sigma_delta->trig);
+	अगर (ret)
+		जाओ error_मुक्त_irq;
 
-	/* select default trigger */
+	/* select शेष trigger */
 	indio_dev->trig = iio_trigger_get(sigma_delta->trig);
 
-	return 0;
+	वापस 0;
 
-error_free_irq:
-	free_irq(sigma_delta->spi->irq, sigma_delta);
-error_free_trig:
-	iio_trigger_free(sigma_delta->trig);
+error_मुक्त_irq:
+	मुक्त_irq(sigma_delta->spi->irq, sigma_delta);
+error_मुक्त_trig:
+	iio_trigger_मुक्त(sigma_delta->trig);
 error_ret:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ad_sd_remove_trigger(struct iio_dev *indio_dev)
-{
-	struct ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
+अटल व्योम ad_sd_हटाओ_trigger(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ad_sigma_delta *sigma_delta = iio_device_get_drvdata(indio_dev);
 
-	iio_trigger_unregister(sigma_delta->trig);
-	free_irq(sigma_delta->spi->irq, sigma_delta);
-	iio_trigger_free(sigma_delta->trig);
-}
+	iio_trigger_unरेजिस्टर(sigma_delta->trig);
+	मुक्त_irq(sigma_delta->spi->irq, sigma_delta);
+	iio_trigger_मुक्त(sigma_delta->trig);
+पूर्ण
 
 /**
  * ad_sd_setup_buffer_and_trigger() -
  * @indio_dev: The IIO device
  */
-int ad_sd_setup_buffer_and_trigger(struct iio_dev *indio_dev)
-{
-	int ret;
+पूर्णांक ad_sd_setup_buffer_and_trigger(काष्ठा iio_dev *indio_dev)
+अणु
+	पूर्णांक ret;
 
-	ret = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_time,
+	ret = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_समय,
 			&ad_sd_trigger_handler, &ad_sd_buffer_setup_ops);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ad_sd_probe_trigger(indio_dev);
-	if (ret) {
+	अगर (ret) अणु
 		iio_triggered_buffer_cleanup(indio_dev);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ad_sd_setup_buffer_and_trigger);
 
 /**
  * ad_sd_cleanup_buffer_and_trigger() -
  * @indio_dev: The IIO device
  */
-void ad_sd_cleanup_buffer_and_trigger(struct iio_dev *indio_dev)
-{
-	ad_sd_remove_trigger(indio_dev);
+व्योम ad_sd_cleanup_buffer_and_trigger(काष्ठा iio_dev *indio_dev)
+अणु
+	ad_sd_हटाओ_trigger(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ad_sd_cleanup_buffer_and_trigger);
 
 /**
- * ad_sd_init() - Initializes a ad_sigma_delta struct
+ * ad_sd_init() - Initializes a ad_sigma_delta काष्ठा
  * @sigma_delta: The ad_sigma_delta device
- * @indio_dev: The IIO device which the Sigma Delta device is used for
- * @spi: The SPI device for the ad_sigma_delta device
- * @info: Device specific callbacks and options
+ * @indio_dev: The IIO device which the Sigma Delta device is used क्रम
+ * @spi: The SPI device क्रम the ad_sigma_delta device
+ * @info: Device specअगरic callbacks and options
  *
- * This function needs to be called before any other operations are performed on
- * the ad_sigma_delta struct.
+ * This function needs to be called beक्रमe any other operations are perक्रमmed on
+ * the ad_sigma_delta काष्ठा.
  */
-int ad_sd_init(struct ad_sigma_delta *sigma_delta, struct iio_dev *indio_dev,
-	struct spi_device *spi, const struct ad_sigma_delta_info *info)
-{
+पूर्णांक ad_sd_init(काष्ठा ad_sigma_delta *sigma_delta, काष्ठा iio_dev *indio_dev,
+	काष्ठा spi_device *spi, स्थिर काष्ठा ad_sigma_delta_info *info)
+अणु
 	sigma_delta->spi = spi;
 	sigma_delta->info = info;
 	iio_device_set_drvdata(indio_dev, sigma_delta);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ad_sd_init);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");

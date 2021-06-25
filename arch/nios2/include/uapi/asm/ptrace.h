@@ -1,84 +1,85 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 2010 Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2004 Microtronix Datacom Ltd
  *
- * based on m68k asm/processor.h
+ * based on m68k यंत्र/processor.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#ifndef _UAPI_ASM_NIOS2_PTRACE_H
-#define _UAPI_ASM_NIOS2_PTRACE_H
+#अगर_अघोषित _UAPI_ASM_NIOS2_PTRACE_H
+#घोषणा _UAPI_ASM_NIOS2_PTRACE_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * Register numbers used by 'ptrace' system call interface.
+ * Register numbers used by 'ptrace' प्रणाली call पूर्णांकerface.
  */
 
-/* GP registers */
-#define PTR_R0		0
-#define PTR_R1		1
-#define PTR_R2		2
-#define PTR_R3		3
-#define PTR_R4		4
-#define PTR_R5		5
-#define PTR_R6		6
-#define PTR_R7		7
-#define PTR_R8		8
-#define PTR_R9		9
-#define PTR_R10		10
-#define PTR_R11		11
-#define PTR_R12		12
-#define PTR_R13		13
-#define PTR_R14		14
-#define PTR_R15		15
-#define PTR_R16		16
-#define PTR_R17		17
-#define PTR_R18		18
-#define PTR_R19		19
-#define PTR_R20		20
-#define PTR_R21		21
-#define PTR_R22		22
-#define PTR_R23		23
-#define PTR_R24		24
-#define PTR_R25		25
-#define PTR_GP		26
-#define PTR_SP		27
-#define PTR_FP		28
-#define PTR_EA		29
-#define PTR_BA		30
-#define PTR_RA		31
-/* Control registers */
-#define PTR_PC		32
-#define PTR_STATUS	33
-#define PTR_ESTATUS	34
-#define PTR_BSTATUS	35
-#define PTR_IENABLE	36
-#define PTR_IPENDING	37
-#define PTR_CPUID	38
-#define PTR_CTL6	39
-#define PTR_EXCEPTION	40
-#define PTR_PTEADDR	41
-#define PTR_TLBACC	42
-#define PTR_TLBMISC	43
-#define PTR_ECCINJ	44
-#define PTR_BADADDR	45
-#define PTR_CONFIG	46
-#define PTR_MPUBASE	47
-#define PTR_MPUACC	48
+/* GP रेजिस्टरs */
+#घोषणा PTR_R0		0
+#घोषणा PTR_R1		1
+#घोषणा PTR_R2		2
+#घोषणा PTR_R3		3
+#घोषणा PTR_R4		4
+#घोषणा PTR_R5		5
+#घोषणा PTR_R6		6
+#घोषणा PTR_R7		7
+#घोषणा PTR_R8		8
+#घोषणा PTR_R9		9
+#घोषणा PTR_R10		10
+#घोषणा PTR_R11		11
+#घोषणा PTR_R12		12
+#घोषणा PTR_R13		13
+#घोषणा PTR_R14		14
+#घोषणा PTR_R15		15
+#घोषणा PTR_R16		16
+#घोषणा PTR_R17		17
+#घोषणा PTR_R18		18
+#घोषणा PTR_R19		19
+#घोषणा PTR_R20		20
+#घोषणा PTR_R21		21
+#घोषणा PTR_R22		22
+#घोषणा PTR_R23		23
+#घोषणा PTR_R24		24
+#घोषणा PTR_R25		25
+#घोषणा PTR_GP		26
+#घोषणा PTR_SP		27
+#घोषणा PTR_FP		28
+#घोषणा PTR_EA		29
+#घोषणा PTR_BA		30
+#घोषणा PTR_RA		31
+/* Control रेजिस्टरs */
+#घोषणा PTR_PC		32
+#घोषणा PTR_STATUS	33
+#घोषणा PTR_ESTATUS	34
+#घोषणा PTR_BSTATUS	35
+#घोषणा PTR_IENABLE	36
+#घोषणा PTR_IPENDING	37
+#घोषणा PTR_CPUID	38
+#घोषणा PTR_CTL6	39
+#घोषणा PTR_EXCEPTION	40
+#घोषणा PTR_PTEADDR	41
+#घोषणा PTR_TLBACC	42
+#घोषणा PTR_TLBMISC	43
+#घोषणा PTR_ECCINJ	44
+#घोषणा PTR_BADADDR	45
+#घोषणा PTR_CONFIG	46
+#घोषणा PTR_MPUBASE	47
+#घोषणा PTR_MPUACC	48
 
-#define NUM_PTRACE_REG (PTR_MPUACC + 1)
+#घोषणा NUM_PTRACE_REG (PTR_MPUACC + 1)
 
-/* User structures for general purpose registers.  */
-struct user_pt_regs {
+/* User काष्ठाures क्रम general purpose रेजिस्टरs.  */
+काष्ठा user_pt_regs अणु
 	__u32		regs[49];
-};
+पूर्ण;
 
-#endif /* __ASSEMBLY__ */
-#endif /* _UAPI_ASM_NIOS2_PTRACE_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* _UAPI_ASM_NIOS2_PTRACE_H */

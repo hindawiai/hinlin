@@ -1,187 +1,188 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_ARM_IRQFLAGS_H
-#define __ASM_ARM_IRQFLAGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_ARM_IRQFLAGS_H
+#घोषणा __ASM_ARM_IRQFLAGS_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
 /*
- * CPU interrupt mask handling.
+ * CPU पूर्णांकerrupt mask handling.
  */
-#ifdef CONFIG_CPU_V7M
-#define IRQMASK_REG_NAME_R "primask"
-#define IRQMASK_REG_NAME_W "primask"
-#define IRQMASK_I_BIT	1
-#else
-#define IRQMASK_REG_NAME_R "cpsr"
-#define IRQMASK_REG_NAME_W "cpsr_c"
-#define IRQMASK_I_BIT	PSR_I_BIT
-#endif
+#अगर_घोषित CONFIG_CPU_V7M
+#घोषणा IRQMASK_REG_NAME_R "primask"
+#घोषणा IRQMASK_REG_NAME_W "primask"
+#घोषणा IRQMASK_I_BIT	1
+#अन्यथा
+#घोषणा IRQMASK_REG_NAME_R "cpsr"
+#घोषणा IRQMASK_REG_NAME_W "cpsr_c"
+#घोषणा IRQMASK_I_BIT	PSR_I_BIT
+#पूर्ण_अगर
 
-#if __LINUX_ARM_ARCH__ >= 6
+#अगर __LINUX_ARM_ARCH__ >= 6
 
-#define arch_local_irq_save arch_local_irq_save
-static inline unsigned long arch_local_irq_save(void)
-{
-	unsigned long flags;
+#घोषणा arch_local_irq_save arch_local_irq_save
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_irq_save(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"	mrs	%0, " IRQMASK_REG_NAME_R "	@ arch_local_irq_save\n"
 		"	cpsid	i"
 		: "=r" (flags) : : "memory", "cc");
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-#define arch_local_irq_enable arch_local_irq_enable
-static inline void arch_local_irq_enable(void)
-{
-	asm volatile(
+#घोषणा arch_local_irq_enable arch_local_irq_enable
+अटल अंतरभूत व्योम arch_local_irq_enable(व्योम)
+अणु
+	यंत्र अस्थिर(
 		"	cpsie i			@ arch_local_irq_enable"
 		:
 		:
 		: "memory", "cc");
-}
+पूर्ण
 
-#define arch_local_irq_disable arch_local_irq_disable
-static inline void arch_local_irq_disable(void)
-{
-	asm volatile(
+#घोषणा arch_local_irq_disable arch_local_irq_disable
+अटल अंतरभूत व्योम arch_local_irq_disable(व्योम)
+अणु
+	यंत्र अस्थिर(
 		"	cpsid i			@ arch_local_irq_disable"
 		:
 		:
 		: "memory", "cc");
-}
+पूर्ण
 
-#define local_fiq_enable()  __asm__("cpsie f	@ __stf" : : : "memory", "cc")
-#define local_fiq_disable() __asm__("cpsid f	@ __clf" : : : "memory", "cc")
+#घोषणा local_fiq_enable()  __यंत्र__("cpsie f	@ __stf" : : : "memory", "cc")
+#घोषणा local_fiq_disable() __यंत्र__("cpsid f	@ __clf" : : : "memory", "cc")
 
-#ifndef CONFIG_CPU_V7M
-#define local_abt_enable()  __asm__("cpsie a	@ __sta" : : : "memory", "cc")
-#define local_abt_disable() __asm__("cpsid a	@ __cla" : : : "memory", "cc")
-#else
-#define local_abt_enable()	do { } while (0)
-#define local_abt_disable()	do { } while (0)
-#endif
-#else
+#अगर_अघोषित CONFIG_CPU_V7M
+#घोषणा local_abt_enable()  __यंत्र__("cpsie a	@ __sta" : : : "memory", "cc")
+#घोषणा local_abt_disable() __यंत्र__("cpsid a	@ __cla" : : : "memory", "cc")
+#अन्यथा
+#घोषणा local_abt_enable()	करो अणु पूर्ण जबतक (0)
+#घोषणा local_abt_disable()	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
+#अन्यथा
 
 /*
- * Save the current interrupt enable state & disable IRQs
+ * Save the current पूर्णांकerrupt enable state & disable IRQs
  */
-#define arch_local_irq_save arch_local_irq_save
-static inline unsigned long arch_local_irq_save(void)
-{
-	unsigned long flags, temp;
+#घोषणा arch_local_irq_save arch_local_irq_save
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_irq_save(व्योम)
+अणु
+	अचिन्हित दीर्घ flags, temp;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"	mrs	%0, cpsr	@ arch_local_irq_save\n"
 		"	orr	%1, %0, #128\n"
 		"	msr	cpsr_c, %1"
 		: "=r" (flags), "=r" (temp)
 		:
 		: "memory", "cc");
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 /*
  * Enable IRQs
  */
-#define arch_local_irq_enable arch_local_irq_enable
-static inline void arch_local_irq_enable(void)
-{
-	unsigned long temp;
-	asm volatile(
+#घोषणा arch_local_irq_enable arch_local_irq_enable
+अटल अंतरभूत व्योम arch_local_irq_enable(व्योम)
+अणु
+	अचिन्हित दीर्घ temp;
+	यंत्र अस्थिर(
 		"	mrs	%0, cpsr	@ arch_local_irq_enable\n"
 		"	bic	%0, %0, #128\n"
 		"	msr	cpsr_c, %0"
 		: "=r" (temp)
 		:
 		: "memory", "cc");
-}
+पूर्ण
 
 /*
  * Disable IRQs
  */
-#define arch_local_irq_disable arch_local_irq_disable
-static inline void arch_local_irq_disable(void)
-{
-	unsigned long temp;
-	asm volatile(
+#घोषणा arch_local_irq_disable arch_local_irq_disable
+अटल अंतरभूत व्योम arch_local_irq_disable(व्योम)
+अणु
+	अचिन्हित दीर्घ temp;
+	यंत्र अस्थिर(
 		"	mrs	%0, cpsr	@ arch_local_irq_disable\n"
 		"	orr	%0, %0, #128\n"
 		"	msr	cpsr_c, %0"
 		: "=r" (temp)
 		:
 		: "memory", "cc");
-}
+पूर्ण
 
 /*
  * Enable FIQs
  */
-#define local_fiq_enable()					\
-	({							\
-		unsigned long temp;				\
-	__asm__ __volatile__(					\
+#घोषणा local_fiq_enable()					\
+	(अणु							\
+		अचिन्हित दीर्घ temp;				\
+	__यंत्र__ __अस्थिर__(					\
 	"mrs	%0, cpsr		@ stf\n"		\
 "	bic	%0, %0, #64\n"					\
 "	msr	cpsr_c, %0"					\
 	: "=r" (temp)						\
 	:							\
 	: "memory", "cc");					\
-	})
+	पूर्ण)
 
 /*
  * Disable FIQs
  */
-#define local_fiq_disable()					\
-	({							\
-		unsigned long temp;				\
-	__asm__ __volatile__(					\
+#घोषणा local_fiq_disable()					\
+	(अणु							\
+		अचिन्हित दीर्घ temp;				\
+	__यंत्र__ __अस्थिर__(					\
 	"mrs	%0, cpsr		@ clf\n"		\
 "	orr	%0, %0, #64\n"					\
 "	msr	cpsr_c, %0"					\
 	: "=r" (temp)						\
 	:							\
 	: "memory", "cc");					\
-	})
+	पूर्ण)
 
-#define local_abt_enable()	do { } while (0)
-#define local_abt_disable()	do { } while (0)
-#endif
+#घोषणा local_abt_enable()	करो अणु पूर्ण जबतक (0)
+#घोषणा local_abt_disable()	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
- * Save the current interrupt enable state.
+ * Save the current पूर्णांकerrupt enable state.
  */
-#define arch_local_save_flags arch_local_save_flags
-static inline unsigned long arch_local_save_flags(void)
-{
-	unsigned long flags;
-	asm volatile(
+#घोषणा arch_local_save_flags arch_local_save_flags
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_save_flags(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	यंत्र अस्थिर(
 		"	mrs	%0, " IRQMASK_REG_NAME_R "	@ local_save_flags"
 		: "=r" (flags) : : "memory", "cc");
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 /*
  * restore saved IRQ & FIQ state
  */
-#define arch_local_irq_restore arch_local_irq_restore
-static inline void arch_local_irq_restore(unsigned long flags)
-{
-	asm volatile(
+#घोषणा arch_local_irq_restore arch_local_irq_restore
+अटल अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
+अणु
+	यंत्र अस्थिर(
 		"	msr	" IRQMASK_REG_NAME_W ", %0	@ local_irq_restore"
 		:
 		: "r" (flags)
 		: "memory", "cc");
-}
+पूर्ण
 
-#define arch_irqs_disabled_flags arch_irqs_disabled_flags
-static inline int arch_irqs_disabled_flags(unsigned long flags)
-{
-	return flags & IRQMASK_I_BIT;
-}
+#घोषणा arch_irqs_disabled_flags arch_irqs_disabled_flags
+अटल अंतरभूत पूर्णांक arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
+अणु
+	वापस flags & IRQMASK_I_BIT;
+पूर्ण
 
-#include <asm-generic/irqflags.h>
+#समावेश <यंत्र-generic/irqflags.h>
 
-#endif /* ifdef __KERNEL__ */
-#endif /* ifndef __ASM_ARM_IRQFLAGS_H */
+#पूर्ण_अगर /* अगरdef __KERNEL__ */
+#पूर्ण_अगर /* अगरndef __ASM_ARM_IRQFLAGS_H */

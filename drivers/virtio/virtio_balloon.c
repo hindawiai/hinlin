@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Virtio balloon implementation, inspired by Dor Laor and Marcelo
  * Tosatti's implementations.
@@ -6,83 +7,83 @@
  *  Copyright 2008 Rusty Russell IBM Corporation
  */
 
-#include <linux/virtio.h>
-#include <linux/virtio_balloon.h>
-#include <linux/swap.h>
-#include <linux/workqueue.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/balloon_compaction.h>
-#include <linux/oom.h>
-#include <linux/wait.h>
-#include <linux/mm.h>
-#include <linux/mount.h>
-#include <linux/magic.h>
-#include <linux/pseudo_fs.h>
-#include <linux/page_reporting.h>
+#समावेश <linux/virtपन.स>
+#समावेश <linux/virtio_balloon.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/balloon_compaction.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/pseuकरो_fs.h>
+#समावेश <linux/page_reporting.h>
 
 /*
- * Balloon device works in 4K page units.  So each page is pointed to by
+ * Balloon device works in 4K page units.  So each page is poपूर्णांकed to by
  * multiple balloon pages.  All memory counters in this driver are in balloon
  * page units.
  */
-#define VIRTIO_BALLOON_PAGES_PER_PAGE (unsigned)(PAGE_SIZE >> VIRTIO_BALLOON_PFN_SHIFT)
-#define VIRTIO_BALLOON_ARRAY_PFNS_MAX 256
-/* Maximum number of (4k) pages to deflate on OOM notifications. */
-#define VIRTIO_BALLOON_OOM_NR_PAGES 256
-#define VIRTIO_BALLOON_OOM_NOTIFY_PRIORITY 80
+#घोषणा VIRTIO_BALLOON_PAGES_PER_PAGE (अचिन्हित)(PAGE_SIZE >> VIRTIO_BALLOON_PFN_SHIFT)
+#घोषणा VIRTIO_BALLOON_ARRAY_PFNS_MAX 256
+/* Maximum number of (4k) pages to deflate on OOM notअगरications. */
+#घोषणा VIRTIO_BALLOON_OOM_NR_PAGES 256
+#घोषणा VIRTIO_BALLOON_OOM_NOTIFY_PRIORITY 80
 
-#define VIRTIO_BALLOON_FREE_PAGE_ALLOC_FLAG (__GFP_NORETRY | __GFP_NOWARN | \
+#घोषणा VIRTIO_BALLOON_FREE_PAGE_ALLOC_FLAG (__GFP_NORETRY | __GFP_NOWARN | \
 					     __GFP_NOMEMALLOC)
-/* The order of free page blocks to report to host */
-#define VIRTIO_BALLOON_HINT_BLOCK_ORDER (MAX_ORDER - 1)
-/* The size of a free page block in bytes */
-#define VIRTIO_BALLOON_HINT_BLOCK_BYTES \
+/* The order of मुक्त page blocks to report to host */
+#घोषणा VIRTIO_BALLOON_HINT_BLOCK_ORDER (MAX_ORDER - 1)
+/* The size of a मुक्त page block in bytes */
+#घोषणा VIRTIO_BALLOON_HINT_BLOCK_BYTES \
 	(1 << (VIRTIO_BALLOON_HINT_BLOCK_ORDER + PAGE_SHIFT))
-#define VIRTIO_BALLOON_HINT_BLOCK_PAGES (1 << VIRTIO_BALLOON_HINT_BLOCK_ORDER)
+#घोषणा VIRTIO_BALLOON_HINT_BLOCK_PAGES (1 << VIRTIO_BALLOON_HINT_BLOCK_ORDER)
 
-#ifdef CONFIG_BALLOON_COMPACTION
-static struct vfsmount *balloon_mnt;
-#endif
+#अगर_घोषित CONFIG_BALLOON_COMPACTION
+अटल काष्ठा vfsmount *balloon_mnt;
+#पूर्ण_अगर
 
-enum virtio_balloon_vq {
+क्रमागत virtio_balloon_vq अणु
 	VIRTIO_BALLOON_VQ_INFLATE,
 	VIRTIO_BALLOON_VQ_DEFLATE,
 	VIRTIO_BALLOON_VQ_STATS,
 	VIRTIO_BALLOON_VQ_FREE_PAGE,
 	VIRTIO_BALLOON_VQ_REPORTING,
 	VIRTIO_BALLOON_VQ_MAX
-};
+पूर्ण;
 
-enum virtio_balloon_config_read {
+क्रमागत virtio_balloon_config_पढ़ो अणु
 	VIRTIO_BALLOON_CONFIG_READ_CMD_ID = 0,
-};
+पूर्ण;
 
-struct virtio_balloon {
-	struct virtio_device *vdev;
-	struct virtqueue *inflate_vq, *deflate_vq, *stats_vq, *free_page_vq;
+काष्ठा virtio_balloon अणु
+	काष्ठा virtio_device *vdev;
+	काष्ठा virtqueue *inflate_vq, *deflate_vq, *stats_vq, *मुक्त_page_vq;
 
-	/* Balloon's own wq for cpu-intensive work items */
-	struct workqueue_struct *balloon_wq;
-	/* The free page reporting work item submitted to the balloon wq */
-	struct work_struct report_free_page_work;
+	/* Balloon's own wq क्रम cpu-पूर्णांकensive work items */
+	काष्ठा workqueue_काष्ठा *balloon_wq;
+	/* The मुक्त page reporting work item submitted to the balloon wq */
+	काष्ठा work_काष्ठा report_मुक्त_page_work;
 
-	/* The balloon servicing is delegated to a freezable workqueue. */
-	struct work_struct update_balloon_stats_work;
-	struct work_struct update_balloon_size_work;
+	/* The balloon servicing is delegated to a मुक्तzable workqueue. */
+	काष्ठा work_काष्ठा update_balloon_stats_work;
+	काष्ठा work_काष्ठा update_balloon_size_work;
 
 	/* Prevent updating balloon when it is being canceled. */
 	spinlock_t stop_update_lock;
 	bool stop_update;
-	/* Bitmap to indicate if reading the related config fields are needed */
-	unsigned long config_read_bitmap;
+	/* Biपंचांगap to indicate अगर पढ़ोing the related config fields are needed */
+	अचिन्हित दीर्घ config_पढ़ो_biपंचांगap;
 
-	/* The list of allocated free pages, waiting to be given back to mm */
-	struct list_head free_page_list;
-	spinlock_t free_page_list_lock;
-	/* The number of free page blocks on the above list */
-	unsigned long num_free_page_blocks;
+	/* The list of allocated मुक्त pages, रुकोing to be given back to mm */
+	काष्ठा list_head मुक्त_page_list;
+	spinlock_t मुक्त_page_list_lock;
+	/* The number of मुक्त page blocks on the above list */
+	अचिन्हित दीर्घ num_मुक्त_page_blocks;
 	/*
 	 * The cmd id received from host.
 	 * Read it via virtio_balloon_cmd_id_received to get the latest value
@@ -94,260 +95,260 @@ struct virtio_balloon {
 	/* Buffer to store the stop sign */
 	__virtio32 cmd_id_stop;
 
-	/* Waiting for host to ack the pages we released. */
-	wait_queue_head_t acked;
+	/* Waiting क्रम host to ack the pages we released. */
+	रुको_queue_head_t acked;
 
 	/* Number of balloon pages we've told the Host we're not using. */
-	unsigned int num_pages;
+	अचिन्हित पूर्णांक num_pages;
 	/*
 	 * The pages we've told the Host we're not using are enqueued
 	 * at vb_dev_info->pages list.
 	 * Each page on this list adds VIRTIO_BALLOON_PAGES_PER_PAGE
 	 * to num_pages above.
 	 */
-	struct balloon_dev_info vb_dev_info;
+	काष्ठा balloon_dev_info vb_dev_info;
 
-	/* Synchronize access/update to this struct virtio_balloon elements */
-	struct mutex balloon_lock;
+	/* Synchronize access/update to this काष्ठा virtio_balloon elements */
+	काष्ठा mutex balloon_lock;
 
 	/* The array of pfns we tell the Host about. */
-	unsigned int num_pfns;
+	अचिन्हित पूर्णांक num_pfns;
 	__virtio32 pfns[VIRTIO_BALLOON_ARRAY_PFNS_MAX];
 
 	/* Memory statistics */
-	struct virtio_balloon_stat stats[VIRTIO_BALLOON_S_NR];
+	काष्ठा virtio_balloon_stat stats[VIRTIO_BALLOON_S_NR];
 
-	/* Shrinker to return free pages - VIRTIO_BALLOON_F_FREE_PAGE_HINT */
-	struct shrinker shrinker;
+	/* Shrinker to वापस मुक्त pages - VIRTIO_BALLOON_F_FREE_PAGE_HINT */
+	काष्ठा shrinker shrinker;
 
-	/* OOM notifier to deflate on OOM - VIRTIO_BALLOON_F_DEFLATE_ON_OOM */
-	struct notifier_block oom_nb;
+	/* OOM notअगरier to deflate on OOM - VIRTIO_BALLOON_F_DEFLATE_ON_OOM */
+	काष्ठा notअगरier_block oom_nb;
 
 	/* Free page reporting device */
-	struct virtqueue *reporting_vq;
-	struct page_reporting_dev_info pr_dev_info;
-};
+	काष्ठा virtqueue *reporting_vq;
+	काष्ठा page_reporting_dev_info pr_dev_info;
+पूर्ण;
 
-static const struct virtio_device_id id_table[] = {
-	{ VIRTIO_ID_BALLOON, VIRTIO_DEV_ANY_ID },
-	{ 0 },
-};
+अटल स्थिर काष्ठा virtio_device_id id_table[] = अणु
+	अणु VIRTIO_ID_BALLOON, VIRTIO_DEV_ANY_ID पूर्ण,
+	अणु 0 पूर्ण,
+पूर्ण;
 
-static u32 page_to_balloon_pfn(struct page *page)
-{
-	unsigned long pfn = page_to_pfn(page);
+अटल u32 page_to_balloon_pfn(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ pfn = page_to_pfn(page);
 
 	BUILD_BUG_ON(PAGE_SHIFT < VIRTIO_BALLOON_PFN_SHIFT);
 	/* Convert pfn from Linux page size to balloon page size. */
-	return pfn * VIRTIO_BALLOON_PAGES_PER_PAGE;
-}
+	वापस pfn * VIRTIO_BALLOON_PAGES_PER_PAGE;
+पूर्ण
 
-static void balloon_ack(struct virtqueue *vq)
-{
-	struct virtio_balloon *vb = vq->vdev->priv;
+अटल व्योम balloon_ack(काष्ठा virtqueue *vq)
+अणु
+	काष्ठा virtio_balloon *vb = vq->vdev->priv;
 
 	wake_up(&vb->acked);
-}
+पूर्ण
 
-static void tell_host(struct virtio_balloon *vb, struct virtqueue *vq)
-{
-	struct scatterlist sg;
-	unsigned int len;
+अटल व्योम tell_host(काष्ठा virtio_balloon *vb, काष्ठा virtqueue *vq)
+अणु
+	काष्ठा scatterlist sg;
+	अचिन्हित पूर्णांक len;
 
-	sg_init_one(&sg, vb->pfns, sizeof(vb->pfns[0]) * vb->num_pfns);
+	sg_init_one(&sg, vb->pfns, माप(vb->pfns[0]) * vb->num_pfns);
 
 	/* We should always be able to add one buffer to an empty queue. */
 	virtqueue_add_outbuf(vq, &sg, 1, vb, GFP_KERNEL);
 	virtqueue_kick(vq);
 
-	/* When host has read buffer, this completes via balloon_ack */
-	wait_event(vb->acked, virtqueue_get_buf(vq, &len));
+	/* When host has पढ़ो buffer, this completes via balloon_ack */
+	रुको_event(vb->acked, virtqueue_get_buf(vq, &len));
 
-}
+पूर्ण
 
-static int virtballoon_free_page_report(struct page_reporting_dev_info *pr_dev_info,
-				   struct scatterlist *sg, unsigned int nents)
-{
-	struct virtio_balloon *vb =
-		container_of(pr_dev_info, struct virtio_balloon, pr_dev_info);
-	struct virtqueue *vq = vb->reporting_vq;
-	unsigned int unused, err;
+अटल पूर्णांक virtballoon_मुक्त_page_report(काष्ठा page_reporting_dev_info *pr_dev_info,
+				   काष्ठा scatterlist *sg, अचिन्हित पूर्णांक nents)
+अणु
+	काष्ठा virtio_balloon *vb =
+		container_of(pr_dev_info, काष्ठा virtio_balloon, pr_dev_info);
+	काष्ठा virtqueue *vq = vb->reporting_vq;
+	अचिन्हित पूर्णांक unused, err;
 
 	/* We should always be able to add these buffers to an empty queue. */
 	err = virtqueue_add_inbuf(vq, sg, nents, vb, GFP_NOWAIT | __GFP_NOWARN);
 
 	/*
-	 * In the extremely unlikely case that something has occurred and we
+	 * In the extremely unlikely हाल that something has occurred and we
 	 * are able to trigger an error we will simply display a warning
-	 * and exit without actually processing the pages.
+	 * and निकास without actually processing the pages.
 	 */
-	if (WARN_ON_ONCE(err))
-		return err;
+	अगर (WARN_ON_ONCE(err))
+		वापस err;
 
 	virtqueue_kick(vq);
 
-	/* When host has read buffer, this completes via balloon_ack */
-	wait_event(vb->acked, virtqueue_get_buf(vq, &unused));
+	/* When host has पढ़ो buffer, this completes via balloon_ack */
+	रुको_event(vb->acked, virtqueue_get_buf(vq, &unused));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_page_pfns(struct virtio_balloon *vb,
-			  __virtio32 pfns[], struct page *page)
-{
-	unsigned int i;
+अटल व्योम set_page_pfns(काष्ठा virtio_balloon *vb,
+			  __virtio32 pfns[], काष्ठा page *page)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	BUILD_BUG_ON(VIRTIO_BALLOON_PAGES_PER_PAGE > VIRTIO_BALLOON_ARRAY_PFNS_MAX);
 
 	/*
-	 * Set balloon pfns pointing at this page.
-	 * Note that the first pfn points at start of the page.
+	 * Set balloon pfns poपूर्णांकing at this page.
+	 * Note that the first pfn poपूर्णांकs at start of the page.
 	 */
-	for (i = 0; i < VIRTIO_BALLOON_PAGES_PER_PAGE; i++)
+	क्रम (i = 0; i < VIRTIO_BALLOON_PAGES_PER_PAGE; i++)
 		pfns[i] = cpu_to_virtio32(vb->vdev,
 					  page_to_balloon_pfn(page) + i);
-}
+पूर्ण
 
-static unsigned fill_balloon(struct virtio_balloon *vb, size_t num)
-{
-	unsigned num_allocated_pages;
-	unsigned num_pfns;
-	struct page *page;
+अटल अचिन्हित fill_balloon(काष्ठा virtio_balloon *vb, माप_प्रकार num)
+अणु
+	अचिन्हित num_allocated_pages;
+	अचिन्हित num_pfns;
+	काष्ठा page *page;
 	LIST_HEAD(pages);
 
-	/* We can only do one array worth at a time. */
+	/* We can only करो one array worth at a समय. */
 	num = min(num, ARRAY_SIZE(vb->pfns));
 
-	for (num_pfns = 0; num_pfns < num;
-	     num_pfns += VIRTIO_BALLOON_PAGES_PER_PAGE) {
-		struct page *page = balloon_page_alloc();
+	क्रम (num_pfns = 0; num_pfns < num;
+	     num_pfns += VIRTIO_BALLOON_PAGES_PER_PAGE) अणु
+		काष्ठा page *page = balloon_page_alloc();
 
-		if (!page) {
+		अगर (!page) अणु
 			dev_info_ratelimited(&vb->vdev->dev,
 					     "Out of puff! Can't get %u pages\n",
 					     VIRTIO_BALLOON_PAGES_PER_PAGE);
-			/* Sleep for at least 1/5 of a second before retry. */
+			/* Sleep क्रम at least 1/5 of a second beक्रमe retry. */
 			msleep(200);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		balloon_page_push(&pages, page);
-	}
+	पूर्ण
 
 	mutex_lock(&vb->balloon_lock);
 
 	vb->num_pfns = 0;
 
-	while ((page = balloon_page_pop(&pages))) {
+	जबतक ((page = balloon_page_pop(&pages))) अणु
 		balloon_page_enqueue(&vb->vb_dev_info, page);
 
 		set_page_pfns(vb, vb->pfns + vb->num_pfns, page);
 		vb->num_pages += VIRTIO_BALLOON_PAGES_PER_PAGE;
-		if (!virtio_has_feature(vb->vdev,
+		अगर (!virtio_has_feature(vb->vdev,
 					VIRTIO_BALLOON_F_DEFLATE_ON_OOM))
 			adjust_managed_page_count(page, -1);
 		vb->num_pfns += VIRTIO_BALLOON_PAGES_PER_PAGE;
-	}
+	पूर्ण
 
 	num_allocated_pages = vb->num_pfns;
 	/* Did we get any? */
-	if (vb->num_pfns != 0)
+	अगर (vb->num_pfns != 0)
 		tell_host(vb, vb->inflate_vq);
 	mutex_unlock(&vb->balloon_lock);
 
-	return num_allocated_pages;
-}
+	वापस num_allocated_pages;
+पूर्ण
 
-static void release_pages_balloon(struct virtio_balloon *vb,
-				 struct list_head *pages)
-{
-	struct page *page, *next;
+अटल व्योम release_pages_balloon(काष्ठा virtio_balloon *vb,
+				 काष्ठा list_head *pages)
+अणु
+	काष्ठा page *page, *next;
 
-	list_for_each_entry_safe(page, next, pages, lru) {
-		if (!virtio_has_feature(vb->vdev,
+	list_क्रम_each_entry_safe(page, next, pages, lru) अणु
+		अगर (!virtio_has_feature(vb->vdev,
 					VIRTIO_BALLOON_F_DEFLATE_ON_OOM))
 			adjust_managed_page_count(page, 1);
 		list_del(&page->lru);
 		put_page(page); /* balloon reference */
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned leak_balloon(struct virtio_balloon *vb, size_t num)
-{
-	unsigned num_freed_pages;
-	struct page *page;
-	struct balloon_dev_info *vb_dev_info = &vb->vb_dev_info;
+अटल अचिन्हित leak_balloon(काष्ठा virtio_balloon *vb, माप_प्रकार num)
+अणु
+	अचिन्हित num_मुक्तd_pages;
+	काष्ठा page *page;
+	काष्ठा balloon_dev_info *vb_dev_info = &vb->vb_dev_info;
 	LIST_HEAD(pages);
 
-	/* We can only do one array worth at a time. */
+	/* We can only करो one array worth at a समय. */
 	num = min(num, ARRAY_SIZE(vb->pfns));
 
 	mutex_lock(&vb->balloon_lock);
 	/* We can't release more pages than taken */
-	num = min(num, (size_t)vb->num_pages);
-	for (vb->num_pfns = 0; vb->num_pfns < num;
-	     vb->num_pfns += VIRTIO_BALLOON_PAGES_PER_PAGE) {
+	num = min(num, (माप_प्रकार)vb->num_pages);
+	क्रम (vb->num_pfns = 0; vb->num_pfns < num;
+	     vb->num_pfns += VIRTIO_BALLOON_PAGES_PER_PAGE) अणु
 		page = balloon_page_dequeue(vb_dev_info);
-		if (!page)
-			break;
+		अगर (!page)
+			अवरोध;
 		set_page_pfns(vb, vb->pfns + vb->num_pfns, page);
 		list_add(&page->lru, &pages);
 		vb->num_pages -= VIRTIO_BALLOON_PAGES_PER_PAGE;
-	}
+	पूर्ण
 
-	num_freed_pages = vb->num_pfns;
+	num_मुक्तd_pages = vb->num_pfns;
 	/*
-	 * Note that if
+	 * Note that अगर
 	 * virtio_has_feature(vdev, VIRTIO_BALLOON_F_MUST_TELL_HOST);
-	 * is true, we *have* to do it in this order
+	 * is true, we *have* to करो it in this order
 	 */
-	if (vb->num_pfns != 0)
+	अगर (vb->num_pfns != 0)
 		tell_host(vb, vb->deflate_vq);
 	release_pages_balloon(vb, &pages);
 	mutex_unlock(&vb->balloon_lock);
-	return num_freed_pages;
-}
+	वापस num_मुक्तd_pages;
+पूर्ण
 
-static inline void update_stat(struct virtio_balloon *vb, int idx,
+अटल अंतरभूत व्योम update_stat(काष्ठा virtio_balloon *vb, पूर्णांक idx,
 			       u16 tag, u64 val)
-{
+अणु
 	BUG_ON(idx >= VIRTIO_BALLOON_S_NR);
 	vb->stats[idx].tag = cpu_to_virtio16(vb->vdev, tag);
 	vb->stats[idx].val = cpu_to_virtio64(vb->vdev, val);
-}
+पूर्ण
 
-#define pages_to_bytes(x) ((u64)(x) << PAGE_SHIFT)
+#घोषणा pages_to_bytes(x) ((u64)(x) << PAGE_SHIFT)
 
-static unsigned int update_balloon_stats(struct virtio_balloon *vb)
-{
-	unsigned long events[NR_VM_EVENT_ITEMS];
-	struct sysinfo i;
-	unsigned int idx = 0;
-	long available;
-	unsigned long caches;
+अटल अचिन्हित पूर्णांक update_balloon_stats(काष्ठा virtio_balloon *vb)
+अणु
+	अचिन्हित दीर्घ events[NR_VM_EVENT_ITEMS];
+	काष्ठा sysinfo i;
+	अचिन्हित पूर्णांक idx = 0;
+	दीर्घ available;
+	अचिन्हित दीर्घ caches;
 
 	all_vm_events(events);
 	si_meminfo(&i);
 
 	available = si_mem_available();
-	caches = global_node_page_state(NR_FILE_PAGES);
+	caches = global_node_page_state(NR_खाता_PAGES);
 
-#ifdef CONFIG_VM_EVENT_COUNTERS
+#अगर_घोषित CONFIG_VM_EVENT_COUNTERS
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_SWAP_IN,
 				pages_to_bytes(events[PSWPIN]));
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_SWAP_OUT,
 				pages_to_bytes(events[PSWPOUT]));
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_MAJFLT, events[PGMAJFAULT]);
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_MINFLT, events[PGFAULT]);
-#ifdef CONFIG_HUGETLB_PAGE
+#अगर_घोषित CONFIG_HUGETLB_PAGE
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_HTLB_PGALLOC,
 		    events[HTLB_BUDDY_PGALLOC]);
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_HTLB_PGFAIL,
 		    events[HTLB_BUDDY_PGALLOC_FAIL]);
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_MEMFREE,
-				pages_to_bytes(i.freeram));
+				pages_to_bytes(i.मुक्तram));
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_MEMTOT,
 				pages_to_bytes(i.totalram));
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_AVAIL,
@@ -355,431 +356,431 @@ static unsigned int update_balloon_stats(struct virtio_balloon *vb)
 	update_stat(vb, idx++, VIRTIO_BALLOON_S_CACHES,
 				pages_to_bytes(caches));
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
 /*
  * While most virtqueues communicate guest-initiated requests to the hypervisor,
  * the stats queue operates in reverse.  The driver initializes the virtqueue
- * with a single buffer.  From that point forward, all conversations consist of
+ * with a single buffer.  From that poपूर्णांक क्रमward, all conversations consist of
  * a hypervisor request (a call to this function) which directs us to refill
  * the virtqueue with a fresh stats buffer.  Since stats collection can sleep,
- * we delegate the job to a freezable workqueue that will do the actual work via
+ * we delegate the job to a मुक्तzable workqueue that will करो the actual work via
  * stats_handle_request().
  */
-static void stats_request(struct virtqueue *vq)
-{
-	struct virtio_balloon *vb = vq->vdev->priv;
+अटल व्योम stats_request(काष्ठा virtqueue *vq)
+अणु
+	काष्ठा virtio_balloon *vb = vq->vdev->priv;
 
 	spin_lock(&vb->stop_update_lock);
-	if (!vb->stop_update)
-		queue_work(system_freezable_wq, &vb->update_balloon_stats_work);
+	अगर (!vb->stop_update)
+		queue_work(प्रणाली_मुक्तzable_wq, &vb->update_balloon_stats_work);
 	spin_unlock(&vb->stop_update_lock);
-}
+पूर्ण
 
-static void stats_handle_request(struct virtio_balloon *vb)
-{
-	struct virtqueue *vq;
-	struct scatterlist sg;
-	unsigned int len, num_stats;
+अटल व्योम stats_handle_request(काष्ठा virtio_balloon *vb)
+अणु
+	काष्ठा virtqueue *vq;
+	काष्ठा scatterlist sg;
+	अचिन्हित पूर्णांक len, num_stats;
 
 	num_stats = update_balloon_stats(vb);
 
 	vq = vb->stats_vq;
-	if (!virtqueue_get_buf(vq, &len))
-		return;
-	sg_init_one(&sg, vb->stats, sizeof(vb->stats[0]) * num_stats);
+	अगर (!virtqueue_get_buf(vq, &len))
+		वापस;
+	sg_init_one(&sg, vb->stats, माप(vb->stats[0]) * num_stats);
 	virtqueue_add_outbuf(vq, &sg, 1, vb, GFP_KERNEL);
 	virtqueue_kick(vq);
-}
+पूर्ण
 
-static inline s64 towards_target(struct virtio_balloon *vb)
-{
+अटल अंतरभूत s64 towards_target(काष्ठा virtio_balloon *vb)
+अणु
 	s64 target;
 	u32 num_pages;
 
 	/* Legacy balloon config space is LE, unlike all other devices. */
-	virtio_cread_le(vb->vdev, struct virtio_balloon_config, num_pages,
+	virtio_cपढ़ो_le(vb->vdev, काष्ठा virtio_balloon_config, num_pages,
 			&num_pages);
 
 	target = num_pages;
-	return target - vb->num_pages;
-}
+	वापस target - vb->num_pages;
+पूर्ण
 
-/* Gives back @num_to_return blocks of free pages to mm. */
-static unsigned long return_free_pages_to_mm(struct virtio_balloon *vb,
-					     unsigned long num_to_return)
-{
-	struct page *page;
-	unsigned long num_returned;
+/* Gives back @num_to_वापस blocks of मुक्त pages to mm. */
+अटल अचिन्हित दीर्घ वापस_मुक्त_pages_to_mm(काष्ठा virtio_balloon *vb,
+					     अचिन्हित दीर्घ num_to_वापस)
+अणु
+	काष्ठा page *page;
+	अचिन्हित दीर्घ num_वापसed;
 
-	spin_lock_irq(&vb->free_page_list_lock);
-	for (num_returned = 0; num_returned < num_to_return; num_returned++) {
-		page = balloon_page_pop(&vb->free_page_list);
-		if (!page)
-			break;
-		free_pages((unsigned long)page_address(page),
+	spin_lock_irq(&vb->मुक्त_page_list_lock);
+	क्रम (num_वापसed = 0; num_वापसed < num_to_वापस; num_वापसed++) अणु
+		page = balloon_page_pop(&vb->मुक्त_page_list);
+		अगर (!page)
+			अवरोध;
+		मुक्त_pages((अचिन्हित दीर्घ)page_address(page),
 			   VIRTIO_BALLOON_HINT_BLOCK_ORDER);
-	}
-	vb->num_free_page_blocks -= num_returned;
-	spin_unlock_irq(&vb->free_page_list_lock);
+	पूर्ण
+	vb->num_मुक्त_page_blocks -= num_वापसed;
+	spin_unlock_irq(&vb->मुक्त_page_list_lock);
 
-	return num_returned;
-}
+	वापस num_वापसed;
+पूर्ण
 
-static void virtio_balloon_queue_free_page_work(struct virtio_balloon *vb)
-{
-	if (!virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
-		return;
+अटल व्योम virtio_balloon_queue_मुक्त_page_work(काष्ठा virtio_balloon *vb)
+अणु
+	अगर (!virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
+		वापस;
 
-	/* No need to queue the work if the bit was already set. */
-	if (test_and_set_bit(VIRTIO_BALLOON_CONFIG_READ_CMD_ID,
-			     &vb->config_read_bitmap))
-		return;
+	/* No need to queue the work अगर the bit was alपढ़ोy set. */
+	अगर (test_and_set_bit(VIRTIO_BALLOON_CONFIG_READ_CMD_ID,
+			     &vb->config_पढ़ो_biपंचांगap))
+		वापस;
 
-	queue_work(vb->balloon_wq, &vb->report_free_page_work);
-}
+	queue_work(vb->balloon_wq, &vb->report_मुक्त_page_work);
+पूर्ण
 
-static void virtballoon_changed(struct virtio_device *vdev)
-{
-	struct virtio_balloon *vb = vdev->priv;
-	unsigned long flags;
+अटल व्योम virtballoon_changed(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_balloon *vb = vdev->priv;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vb->stop_update_lock, flags);
-	if (!vb->stop_update) {
-		queue_work(system_freezable_wq,
+	अगर (!vb->stop_update) अणु
+		queue_work(प्रणाली_मुक्तzable_wq,
 			   &vb->update_balloon_size_work);
-		virtio_balloon_queue_free_page_work(vb);
-	}
+		virtio_balloon_queue_मुक्त_page_work(vb);
+	पूर्ण
 	spin_unlock_irqrestore(&vb->stop_update_lock, flags);
-}
+पूर्ण
 
-static void update_balloon_size(struct virtio_balloon *vb)
-{
+अटल व्योम update_balloon_size(काष्ठा virtio_balloon *vb)
+अणु
 	u32 actual = vb->num_pages;
 
 	/* Legacy balloon config space is LE, unlike all other devices. */
-	virtio_cwrite_le(vb->vdev, struct virtio_balloon_config, actual,
+	virtio_cग_लिखो_le(vb->vdev, काष्ठा virtio_balloon_config, actual,
 			 &actual);
-}
+पूर्ण
 
-static void update_balloon_stats_func(struct work_struct *work)
-{
-	struct virtio_balloon *vb;
+अटल व्योम update_balloon_stats_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा virtio_balloon *vb;
 
-	vb = container_of(work, struct virtio_balloon,
+	vb = container_of(work, काष्ठा virtio_balloon,
 			  update_balloon_stats_work);
 	stats_handle_request(vb);
-}
+पूर्ण
 
-static void update_balloon_size_func(struct work_struct *work)
-{
-	struct virtio_balloon *vb;
-	s64 diff;
+अटल व्योम update_balloon_size_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा virtio_balloon *vb;
+	s64 dअगरf;
 
-	vb = container_of(work, struct virtio_balloon,
+	vb = container_of(work, काष्ठा virtio_balloon,
 			  update_balloon_size_work);
-	diff = towards_target(vb);
+	dअगरf = towards_target(vb);
 
-	if (!diff)
-		return;
+	अगर (!dअगरf)
+		वापस;
 
-	if (diff > 0)
-		diff -= fill_balloon(vb, diff);
-	else
-		diff += leak_balloon(vb, -diff);
+	अगर (dअगरf > 0)
+		dअगरf -= fill_balloon(vb, dअगरf);
+	अन्यथा
+		dअगरf += leak_balloon(vb, -dअगरf);
 	update_balloon_size(vb);
 
-	if (diff)
-		queue_work(system_freezable_wq, work);
-}
+	अगर (dअगरf)
+		queue_work(प्रणाली_मुक्तzable_wq, work);
+पूर्ण
 
-static int init_vqs(struct virtio_balloon *vb)
-{
-	struct virtqueue *vqs[VIRTIO_BALLOON_VQ_MAX];
+अटल पूर्णांक init_vqs(काष्ठा virtio_balloon *vb)
+अणु
+	काष्ठा virtqueue *vqs[VIRTIO_BALLOON_VQ_MAX];
 	vq_callback_t *callbacks[VIRTIO_BALLOON_VQ_MAX];
-	const char *names[VIRTIO_BALLOON_VQ_MAX];
-	int err;
+	स्थिर अक्षर *names[VIRTIO_BALLOON_VQ_MAX];
+	पूर्णांक err;
 
 	/*
 	 * Inflateq and deflateq are used unconditionally. The names[]
-	 * will be NULL if the related feature is not enabled, which will
-	 * cause no allocation for the corresponding virtqueue in find_vqs.
+	 * will be शून्य अगर the related feature is not enabled, which will
+	 * cause no allocation क्रम the corresponding virtqueue in find_vqs.
 	 */
 	callbacks[VIRTIO_BALLOON_VQ_INFLATE] = balloon_ack;
 	names[VIRTIO_BALLOON_VQ_INFLATE] = "inflate";
 	callbacks[VIRTIO_BALLOON_VQ_DEFLATE] = balloon_ack;
 	names[VIRTIO_BALLOON_VQ_DEFLATE] = "deflate";
-	callbacks[VIRTIO_BALLOON_VQ_STATS] = NULL;
-	names[VIRTIO_BALLOON_VQ_STATS] = NULL;
-	callbacks[VIRTIO_BALLOON_VQ_FREE_PAGE] = NULL;
-	names[VIRTIO_BALLOON_VQ_FREE_PAGE] = NULL;
-	names[VIRTIO_BALLOON_VQ_REPORTING] = NULL;
+	callbacks[VIRTIO_BALLOON_VQ_STATS] = शून्य;
+	names[VIRTIO_BALLOON_VQ_STATS] = शून्य;
+	callbacks[VIRTIO_BALLOON_VQ_FREE_PAGE] = शून्य;
+	names[VIRTIO_BALLOON_VQ_FREE_PAGE] = शून्य;
+	names[VIRTIO_BALLOON_VQ_REPORTING] = शून्य;
 
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_STATS_VQ)) {
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_STATS_VQ)) अणु
 		names[VIRTIO_BALLOON_VQ_STATS] = "stats";
 		callbacks[VIRTIO_BALLOON_VQ_STATS] = stats_request;
-	}
+	पूर्ण
 
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT)) {
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT)) अणु
 		names[VIRTIO_BALLOON_VQ_FREE_PAGE] = "free_page_vq";
-		callbacks[VIRTIO_BALLOON_VQ_FREE_PAGE] = NULL;
-	}
+		callbacks[VIRTIO_BALLOON_VQ_FREE_PAGE] = शून्य;
+	पूर्ण
 
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_REPORTING)) {
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_REPORTING)) अणु
 		names[VIRTIO_BALLOON_VQ_REPORTING] = "reporting_vq";
 		callbacks[VIRTIO_BALLOON_VQ_REPORTING] = balloon_ack;
-	}
+	पूर्ण
 
 	err = vb->vdev->config->find_vqs(vb->vdev, VIRTIO_BALLOON_VQ_MAX,
-					 vqs, callbacks, names, NULL, NULL);
-	if (err)
-		return err;
+					 vqs, callbacks, names, शून्य, शून्य);
+	अगर (err)
+		वापस err;
 
 	vb->inflate_vq = vqs[VIRTIO_BALLOON_VQ_INFLATE];
 	vb->deflate_vq = vqs[VIRTIO_BALLOON_VQ_DEFLATE];
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_STATS_VQ)) {
-		struct scatterlist sg;
-		unsigned int num_stats;
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_STATS_VQ)) अणु
+		काष्ठा scatterlist sg;
+		अचिन्हित पूर्णांक num_stats;
 		vb->stats_vq = vqs[VIRTIO_BALLOON_VQ_STATS];
 
 		/*
 		 * Prime this virtqueue with one buffer so the hypervisor can
-		 * use it to signal us later (it can't be broken yet!).
+		 * use it to संकेत us later (it can't be broken yet!).
 		 */
 		num_stats = update_balloon_stats(vb);
 
-		sg_init_one(&sg, vb->stats, sizeof(vb->stats[0]) * num_stats);
+		sg_init_one(&sg, vb->stats, माप(vb->stats[0]) * num_stats);
 		err = virtqueue_add_outbuf(vb->stats_vq, &sg, 1, vb,
 					   GFP_KERNEL);
-		if (err) {
+		अगर (err) अणु
 			dev_warn(&vb->vdev->dev, "%s: add stat_vq failed\n",
 				 __func__);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		virtqueue_kick(vb->stats_vq);
-	}
+	पूर्ण
 
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
-		vb->free_page_vq = vqs[VIRTIO_BALLOON_VQ_FREE_PAGE];
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
+		vb->मुक्त_page_vq = vqs[VIRTIO_BALLOON_VQ_FREE_PAGE];
 
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_REPORTING))
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_REPORTING))
 		vb->reporting_vq = vqs[VIRTIO_BALLOON_VQ_REPORTING];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 virtio_balloon_cmd_id_received(struct virtio_balloon *vb)
-{
-	if (test_and_clear_bit(VIRTIO_BALLOON_CONFIG_READ_CMD_ID,
-			       &vb->config_read_bitmap)) {
+अटल u32 virtio_balloon_cmd_id_received(काष्ठा virtio_balloon *vb)
+अणु
+	अगर (test_and_clear_bit(VIRTIO_BALLOON_CONFIG_READ_CMD_ID,
+			       &vb->config_पढ़ो_biपंचांगap)) अणु
 		/* Legacy balloon config space is LE, unlike all other devices. */
-		virtio_cread_le(vb->vdev, struct virtio_balloon_config,
-				free_page_hint_cmd_id,
+		virtio_cपढ़ो_le(vb->vdev, काष्ठा virtio_balloon_config,
+				मुक्त_page_hपूर्णांक_cmd_id,
 				&vb->cmd_id_received_cache);
-	}
+	पूर्ण
 
-	return vb->cmd_id_received_cache;
-}
+	वापस vb->cmd_id_received_cache;
+पूर्ण
 
-static int send_cmd_id_start(struct virtio_balloon *vb)
-{
-	struct scatterlist sg;
-	struct virtqueue *vq = vb->free_page_vq;
-	int err, unused;
+अटल पूर्णांक send_cmd_id_start(काष्ठा virtio_balloon *vb)
+अणु
+	काष्ठा scatterlist sg;
+	काष्ठा virtqueue *vq = vb->मुक्त_page_vq;
+	पूर्णांक err, unused;
 
 	/* Detach all the used buffers from the vq */
-	while (virtqueue_get_buf(vq, &unused))
+	जबतक (virtqueue_get_buf(vq, &unused))
 		;
 
 	vb->cmd_id_active = cpu_to_virtio32(vb->vdev,
 					virtio_balloon_cmd_id_received(vb));
-	sg_init_one(&sg, &vb->cmd_id_active, sizeof(vb->cmd_id_active));
+	sg_init_one(&sg, &vb->cmd_id_active, माप(vb->cmd_id_active));
 	err = virtqueue_add_outbuf(vq, &sg, 1, &vb->cmd_id_active, GFP_KERNEL);
-	if (!err)
+	अगर (!err)
 		virtqueue_kick(vq);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int send_cmd_id_stop(struct virtio_balloon *vb)
-{
-	struct scatterlist sg;
-	struct virtqueue *vq = vb->free_page_vq;
-	int err, unused;
+अटल पूर्णांक send_cmd_id_stop(काष्ठा virtio_balloon *vb)
+अणु
+	काष्ठा scatterlist sg;
+	काष्ठा virtqueue *vq = vb->मुक्त_page_vq;
+	पूर्णांक err, unused;
 
 	/* Detach all the used buffers from the vq */
-	while (virtqueue_get_buf(vq, &unused))
+	जबतक (virtqueue_get_buf(vq, &unused))
 		;
 
-	sg_init_one(&sg, &vb->cmd_id_stop, sizeof(vb->cmd_id_stop));
+	sg_init_one(&sg, &vb->cmd_id_stop, माप(vb->cmd_id_stop));
 	err = virtqueue_add_outbuf(vq, &sg, 1, &vb->cmd_id_stop, GFP_KERNEL);
-	if (!err)
+	अगर (!err)
 		virtqueue_kick(vq);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int get_free_page_and_send(struct virtio_balloon *vb)
-{
-	struct virtqueue *vq = vb->free_page_vq;
-	struct page *page;
-	struct scatterlist sg;
-	int err, unused;
-	void *p;
+अटल पूर्णांक get_मुक्त_page_and_send(काष्ठा virtio_balloon *vb)
+अणु
+	काष्ठा virtqueue *vq = vb->मुक्त_page_vq;
+	काष्ठा page *page;
+	काष्ठा scatterlist sg;
+	पूर्णांक err, unused;
+	व्योम *p;
 
 	/* Detach all the used buffers from the vq */
-	while (virtqueue_get_buf(vq, &unused))
+	जबतक (virtqueue_get_buf(vq, &unused))
 		;
 
 	page = alloc_pages(VIRTIO_BALLOON_FREE_PAGE_ALLOC_FLAG,
 			   VIRTIO_BALLOON_HINT_BLOCK_ORDER);
 	/*
-	 * When the allocation returns NULL, it indicates that we have got all
-	 * the possible free pages, so return -EINTR to stop.
+	 * When the allocation वापसs शून्य, it indicates that we have got all
+	 * the possible मुक्त pages, so वापस -EINTR to stop.
 	 */
-	if (!page)
-		return -EINTR;
+	अगर (!page)
+		वापस -EINTR;
 
 	p = page_address(page);
 	sg_init_one(&sg, p, VIRTIO_BALLOON_HINT_BLOCK_BYTES);
-	/* There is always 1 entry reserved for the cmd id to use. */
-	if (vq->num_free > 1) {
+	/* There is always 1 entry reserved क्रम the cmd id to use. */
+	अगर (vq->num_मुक्त > 1) अणु
 		err = virtqueue_add_inbuf(vq, &sg, 1, p, GFP_KERNEL);
-		if (unlikely(err)) {
-			free_pages((unsigned long)p,
+		अगर (unlikely(err)) अणु
+			मुक्त_pages((अचिन्हित दीर्घ)p,
 				   VIRTIO_BALLOON_HINT_BLOCK_ORDER);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		virtqueue_kick(vq);
-		spin_lock_irq(&vb->free_page_list_lock);
-		balloon_page_push(&vb->free_page_list, page);
-		vb->num_free_page_blocks++;
-		spin_unlock_irq(&vb->free_page_list_lock);
-	} else {
+		spin_lock_irq(&vb->मुक्त_page_list_lock);
+		balloon_page_push(&vb->मुक्त_page_list, page);
+		vb->num_मुक्त_page_blocks++;
+		spin_unlock_irq(&vb->मुक्त_page_list_lock);
+	पूर्ण अन्यथा अणु
 		/*
 		 * The vq has no available entry to add this page block, so
-		 * just free it.
+		 * just मुक्त it.
 		 */
-		free_pages((unsigned long)p, VIRTIO_BALLOON_HINT_BLOCK_ORDER);
-	}
+		मुक्त_pages((अचिन्हित दीर्घ)p, VIRTIO_BALLOON_HINT_BLOCK_ORDER);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int send_free_pages(struct virtio_balloon *vb)
-{
-	int err;
+अटल पूर्णांक send_मुक्त_pages(काष्ठा virtio_balloon *vb)
+अणु
+	पूर्णांक err;
 	u32 cmd_id_active;
 
-	while (1) {
+	जबतक (1) अणु
 		/*
 		 * If a stop id or a new cmd id was just received from host,
 		 * stop the reporting.
 		 */
 		cmd_id_active = virtio32_to_cpu(vb->vdev, vb->cmd_id_active);
-		if (unlikely(cmd_id_active !=
+		अगर (unlikely(cmd_id_active !=
 			     virtio_balloon_cmd_id_received(vb)))
-			break;
+			अवरोध;
 
 		/*
-		 * The free page blocks are allocated and sent to host one by
+		 * The मुक्त page blocks are allocated and sent to host one by
 		 * one.
 		 */
-		err = get_free_page_and_send(vb);
-		if (err == -EINTR)
-			break;
-		else if (unlikely(err))
-			return err;
-	}
+		err = get_मुक्त_page_and_send(vb);
+		अगर (err == -EINTR)
+			अवरोध;
+		अन्यथा अगर (unlikely(err))
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void virtio_balloon_report_free_page(struct virtio_balloon *vb)
-{
-	int err;
-	struct device *dev = &vb->vdev->dev;
+अटल व्योम virtio_balloon_report_मुक्त_page(काष्ठा virtio_balloon *vb)
+अणु
+	पूर्णांक err;
+	काष्ठा device *dev = &vb->vdev->dev;
 
 	/* Start by sending the received cmd id to host with an outbuf. */
 	err = send_cmd_id_start(vb);
-	if (unlikely(err))
+	अगर (unlikely(err))
 		dev_err(dev, "Failed to send a start id, err = %d\n", err);
 
-	err = send_free_pages(vb);
-	if (unlikely(err))
+	err = send_मुक्त_pages(vb);
+	अगर (unlikely(err))
 		dev_err(dev, "Failed to send a free page, err = %d\n", err);
 
 	/* End by sending a stop id to host with an outbuf. */
 	err = send_cmd_id_stop(vb);
-	if (unlikely(err))
+	अगर (unlikely(err))
 		dev_err(dev, "Failed to send a stop id, err = %d\n", err);
-}
+पूर्ण
 
-static void report_free_page_func(struct work_struct *work)
-{
-	struct virtio_balloon *vb = container_of(work, struct virtio_balloon,
-						 report_free_page_work);
+अटल व्योम report_मुक्त_page_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा virtio_balloon *vb = container_of(work, काष्ठा virtio_balloon,
+						 report_मुक्त_page_work);
 	u32 cmd_id_received;
 
 	cmd_id_received = virtio_balloon_cmd_id_received(vb);
-	if (cmd_id_received == VIRTIO_BALLOON_CMD_ID_DONE) {
-		/* Pass ULONG_MAX to give back all the free pages */
-		return_free_pages_to_mm(vb, ULONG_MAX);
-	} else if (cmd_id_received != VIRTIO_BALLOON_CMD_ID_STOP &&
+	अगर (cmd_id_received == VIRTIO_BALLOON_CMD_ID_DONE) अणु
+		/* Pass अच_दीर्घ_उच्च to give back all the मुक्त pages */
+		वापस_मुक्त_pages_to_mm(vb, अच_दीर्घ_उच्च);
+	पूर्ण अन्यथा अगर (cmd_id_received != VIRTIO_BALLOON_CMD_ID_STOP &&
 		   cmd_id_received !=
-		   virtio32_to_cpu(vb->vdev, vb->cmd_id_active)) {
-		virtio_balloon_report_free_page(vb);
-	}
-}
+		   virtio32_to_cpu(vb->vdev, vb->cmd_id_active)) अणु
+		virtio_balloon_report_मुक्त_page(vb);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_BALLOON_COMPACTION
+#अगर_घोषित CONFIG_BALLOON_COMPACTION
 /*
- * virtballoon_migratepage - perform the balloon page migration on behalf of
- *			     a compaction thread.     (called under page lock)
+ * virtballoon_migratepage - perक्रमm the balloon page migration on behalf of
+ *			     a compaction thपढ़ो.     (called under page lock)
  * @vb_dev_info: the balloon device
  * @newpage: page that will replace the isolated page after migration finishes.
  * @page   : the isolated (old) page that is about to be migrated to newpage.
- * @mode   : compaction mode -- not used for balloon page migration.
+ * @mode   : compaction mode -- not used क्रम balloon page migration.
  *
- * After a ballooned page gets isolated by compaction procedures, this is the
- * function that performs the page migration on behalf of a compaction thread
- * The page migration for virtio balloon is done in a simple swap fashion which
+ * After a ballooned page माला_लो isolated by compaction procedures, this is the
+ * function that perक्रमms the page migration on behalf of a compaction thपढ़ो
+ * The page migration क्रम virtio balloon is करोne in a simple swap fashion which
  * follows these two macro steps:
- *  1) insert newpage into vb->pages list and update the host about it;
- *  2) update the host about the old page removed from vb->pages list;
+ *  1) insert newpage पूर्णांकo vb->pages list and update the host about it;
+ *  2) update the host about the old page हटाओd from vb->pages list;
  *
- * This function preforms the balloon page migration task.
+ * This function preक्रमms the balloon page migration task.
  * Called through balloon_mapping->a_ops->migratepage
  */
-static int virtballoon_migratepage(struct balloon_dev_info *vb_dev_info,
-		struct page *newpage, struct page *page, enum migrate_mode mode)
-{
-	struct virtio_balloon *vb = container_of(vb_dev_info,
-			struct virtio_balloon, vb_dev_info);
-	unsigned long flags;
+अटल पूर्णांक virtballoon_migratepage(काष्ठा balloon_dev_info *vb_dev_info,
+		काष्ठा page *newpage, काष्ठा page *page, क्रमागत migrate_mode mode)
+अणु
+	काष्ठा virtio_balloon *vb = container_of(vb_dev_info,
+			काष्ठा virtio_balloon, vb_dev_info);
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * In order to avoid lock contention while migrating pages concurrently
+	 * In order to aव्योम lock contention जबतक migrating pages concurrently
 	 * to leak_balloon() or fill_balloon() we just give up the balloon_lock
 	 * this turn, as it is easier to retry the page migration later.
-	 * This also prevents fill_balloon() getting stuck into a mutex
-	 * recursion in the case it ends up triggering memory compaction
-	 * while it is attempting to inflate the ballon.
+	 * This also prevents fill_balloon() getting stuck पूर्णांकo a mutex
+	 * recursion in the हाल it ends up triggering memory compaction
+	 * जबतक it is attempting to inflate the ballon.
 	 */
-	if (!mutex_trylock(&vb->balloon_lock))
-		return -EAGAIN;
+	अगर (!mutex_trylock(&vb->balloon_lock))
+		वापस -EAGAIN;
 
 	get_page(newpage); /* balloon reference */
 
 	/*
-	  * When we migrate a page to a different zone and adjusted the
+	  * When we migrate a page to a dअगरferent zone and adjusted the
 	  * managed page count when inflating, we have to fixup the count of
 	  * both involved zones.
 	  */
-	if (!virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_DEFLATE_ON_OOM) &&
-	    page_zone(page) != page_zone(newpage)) {
+	अगर (!virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_DEFLATE_ON_OOM) &&
+	    page_zone(page) != page_zone(newpage)) अणु
 		adjust_managed_page_count(page, 1);
 		adjust_managed_page_count(newpage, -1);
-	}
+	पूर्ण
 
 	/* balloon's page migration 1st step  -- inflate "newpage" */
 	spin_lock_irqsave(&vb_dev_info->pages_lock, flags);
@@ -803,336 +804,336 @@ static int virtballoon_migratepage(struct balloon_dev_info *vb_dev_info,
 
 	put_page(page); /* balloon reference */
 
-	return MIGRATEPAGE_SUCCESS;
-}
+	वापस MIGRATEPAGE_SUCCESS;
+पूर्ण
 
-static int balloon_init_fs_context(struct fs_context *fc)
-{
-	return init_pseudo(fc, BALLOON_KVM_MAGIC) ? 0 : -ENOMEM;
-}
+अटल पूर्णांक balloon_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	वापस init_pseuकरो(fc, BALLOON_KVM_MAGIC) ? 0 : -ENOMEM;
+पूर्ण
 
-static struct file_system_type balloon_fs = {
+अटल काष्ठा file_प्रणाली_type balloon_fs = अणु
 	.name           = "balloon-kvm",
 	.init_fs_context = balloon_init_fs_context,
-	.kill_sb        = kill_anon_super,
-};
+	.समाप्त_sb        = समाप्त_anon_super,
+पूर्ण;
 
-#endif /* CONFIG_BALLOON_COMPACTION */
+#पूर्ण_अगर /* CONFIG_BALLOON_COMPACTION */
 
-static unsigned long shrink_free_pages(struct virtio_balloon *vb,
-				       unsigned long pages_to_free)
-{
-	unsigned long blocks_to_free, blocks_freed;
+अटल अचिन्हित दीर्घ shrink_मुक्त_pages(काष्ठा virtio_balloon *vb,
+				       अचिन्हित दीर्घ pages_to_मुक्त)
+अणु
+	अचिन्हित दीर्घ blocks_to_मुक्त, blocks_मुक्तd;
 
-	pages_to_free = round_up(pages_to_free,
+	pages_to_मुक्त = round_up(pages_to_मुक्त,
 				 VIRTIO_BALLOON_HINT_BLOCK_PAGES);
-	blocks_to_free = pages_to_free / VIRTIO_BALLOON_HINT_BLOCK_PAGES;
-	blocks_freed = return_free_pages_to_mm(vb, blocks_to_free);
+	blocks_to_मुक्त = pages_to_मुक्त / VIRTIO_BALLOON_HINT_BLOCK_PAGES;
+	blocks_मुक्तd = वापस_मुक्त_pages_to_mm(vb, blocks_to_मुक्त);
 
-	return blocks_freed * VIRTIO_BALLOON_HINT_BLOCK_PAGES;
-}
+	वापस blocks_मुक्तd * VIRTIO_BALLOON_HINT_BLOCK_PAGES;
+पूर्ण
 
-static unsigned long virtio_balloon_shrinker_scan(struct shrinker *shrinker,
-						  struct shrink_control *sc)
-{
-	struct virtio_balloon *vb = container_of(shrinker,
-					struct virtio_balloon, shrinker);
+अटल अचिन्हित दीर्घ virtio_balloon_shrinker_scan(काष्ठा shrinker *shrinker,
+						  काष्ठा shrink_control *sc)
+अणु
+	काष्ठा virtio_balloon *vb = container_of(shrinker,
+					काष्ठा virtio_balloon, shrinker);
 
-	return shrink_free_pages(vb, sc->nr_to_scan);
-}
+	वापस shrink_मुक्त_pages(vb, sc->nr_to_scan);
+पूर्ण
 
-static unsigned long virtio_balloon_shrinker_count(struct shrinker *shrinker,
-						   struct shrink_control *sc)
-{
-	struct virtio_balloon *vb = container_of(shrinker,
-					struct virtio_balloon, shrinker);
+अटल अचिन्हित दीर्घ virtio_balloon_shrinker_count(काष्ठा shrinker *shrinker,
+						   काष्ठा shrink_control *sc)
+अणु
+	काष्ठा virtio_balloon *vb = container_of(shrinker,
+					काष्ठा virtio_balloon, shrinker);
 
-	return vb->num_free_page_blocks * VIRTIO_BALLOON_HINT_BLOCK_PAGES;
-}
+	वापस vb->num_मुक्त_page_blocks * VIRTIO_BALLOON_HINT_BLOCK_PAGES;
+पूर्ण
 
-static int virtio_balloon_oom_notify(struct notifier_block *nb,
-				     unsigned long dummy, void *parm)
-{
-	struct virtio_balloon *vb = container_of(nb,
-						 struct virtio_balloon, oom_nb);
-	unsigned long *freed = parm;
+अटल पूर्णांक virtio_balloon_oom_notअगरy(काष्ठा notअगरier_block *nb,
+				     अचिन्हित दीर्घ dummy, व्योम *parm)
+अणु
+	काष्ठा virtio_balloon *vb = container_of(nb,
+						 काष्ठा virtio_balloon, oom_nb);
+	अचिन्हित दीर्घ *मुक्तd = parm;
 
-	*freed += leak_balloon(vb, VIRTIO_BALLOON_OOM_NR_PAGES) /
+	*मुक्तd += leak_balloon(vb, VIRTIO_BALLOON_OOM_NR_PAGES) /
 		  VIRTIO_BALLOON_PAGES_PER_PAGE;
 	update_balloon_size(vb);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static void virtio_balloon_unregister_shrinker(struct virtio_balloon *vb)
-{
-	unregister_shrinker(&vb->shrinker);
-}
+अटल व्योम virtio_balloon_unरेजिस्टर_shrinker(काष्ठा virtio_balloon *vb)
+अणु
+	unरेजिस्टर_shrinker(&vb->shrinker);
+पूर्ण
 
-static int virtio_balloon_register_shrinker(struct virtio_balloon *vb)
-{
+अटल पूर्णांक virtio_balloon_रेजिस्टर_shrinker(काष्ठा virtio_balloon *vb)
+अणु
 	vb->shrinker.scan_objects = virtio_balloon_shrinker_scan;
 	vb->shrinker.count_objects = virtio_balloon_shrinker_count;
 	vb->shrinker.seeks = DEFAULT_SEEKS;
 
-	return register_shrinker(&vb->shrinker);
-}
+	वापस रेजिस्टर_shrinker(&vb->shrinker);
+पूर्ण
 
-static int virtballoon_probe(struct virtio_device *vdev)
-{
-	struct virtio_balloon *vb;
-	int err;
+अटल पूर्णांक virtballoon_probe(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_balloon *vb;
+	पूर्णांक err;
 
-	if (!vdev->config->get) {
+	अगर (!vdev->config->get) अणु
 		dev_err(&vdev->dev, "%s failure: config access disabled\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	vdev->priv = vb = kzalloc(sizeof(*vb), GFP_KERNEL);
-	if (!vb) {
+	vdev->priv = vb = kzalloc(माप(*vb), GFP_KERNEL);
+	अगर (!vb) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	INIT_WORK(&vb->update_balloon_stats_work, update_balloon_stats_func);
 	INIT_WORK(&vb->update_balloon_size_work, update_balloon_size_func);
 	spin_lock_init(&vb->stop_update_lock);
 	mutex_init(&vb->balloon_lock);
-	init_waitqueue_head(&vb->acked);
+	init_रुकोqueue_head(&vb->acked);
 	vb->vdev = vdev;
 
 	balloon_devinfo_init(&vb->vb_dev_info);
 
 	err = init_vqs(vb);
-	if (err)
-		goto out_free_vb;
+	अगर (err)
+		जाओ out_मुक्त_vb;
 
-#ifdef CONFIG_BALLOON_COMPACTION
+#अगर_घोषित CONFIG_BALLOON_COMPACTION
 	balloon_mnt = kern_mount(&balloon_fs);
-	if (IS_ERR(balloon_mnt)) {
+	अगर (IS_ERR(balloon_mnt)) अणु
 		err = PTR_ERR(balloon_mnt);
-		goto out_del_vqs;
-	}
+		जाओ out_del_vqs;
+	पूर्ण
 
 	vb->vb_dev_info.migratepage = virtballoon_migratepage;
 	vb->vb_dev_info.inode = alloc_anon_inode(balloon_mnt->mnt_sb);
-	if (IS_ERR(vb->vb_dev_info.inode)) {
+	अगर (IS_ERR(vb->vb_dev_info.inode)) अणु
 		err = PTR_ERR(vb->vb_dev_info.inode);
-		goto out_kern_unmount;
-	}
+		जाओ out_kern_unmount;
+	पूर्ण
 	vb->vb_dev_info.inode->i_mapping->a_ops = &balloon_aops;
-#endif
-	if (virtio_has_feature(vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT)) {
+#पूर्ण_अगर
+	अगर (virtio_has_feature(vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT)) अणु
 		/*
-		 * There is always one entry reserved for cmd id, so the ring
-		 * size needs to be at least two to report free page hints.
+		 * There is always one entry reserved क्रम cmd id, so the ring
+		 * size needs to be at least two to report मुक्त page hपूर्णांकs.
 		 */
-		if (virtqueue_get_vring_size(vb->free_page_vq) < 2) {
+		अगर (virtqueue_get_vring_size(vb->मुक्त_page_vq) < 2) अणु
 			err = -ENOSPC;
-			goto out_iput;
-		}
+			जाओ out_iput;
+		पूर्ण
 		vb->balloon_wq = alloc_workqueue("balloon-wq",
 					WQ_FREEZABLE | WQ_CPU_INTENSIVE, 0);
-		if (!vb->balloon_wq) {
+		अगर (!vb->balloon_wq) अणु
 			err = -ENOMEM;
-			goto out_iput;
-		}
-		INIT_WORK(&vb->report_free_page_work, report_free_page_func);
+			जाओ out_iput;
+		पूर्ण
+		INIT_WORK(&vb->report_मुक्त_page_work, report_मुक्त_page_func);
 		vb->cmd_id_received_cache = VIRTIO_BALLOON_CMD_ID_STOP;
 		vb->cmd_id_active = cpu_to_virtio32(vb->vdev,
 						  VIRTIO_BALLOON_CMD_ID_STOP);
 		vb->cmd_id_stop = cpu_to_virtio32(vb->vdev,
 						  VIRTIO_BALLOON_CMD_ID_STOP);
-		spin_lock_init(&vb->free_page_list_lock);
-		INIT_LIST_HEAD(&vb->free_page_list);
+		spin_lock_init(&vb->मुक्त_page_list_lock);
+		INIT_LIST_HEAD(&vb->मुक्त_page_list);
 		/*
-		 * We're allowed to reuse any free pages, even if they are
+		 * We're allowed to reuse any मुक्त pages, even अगर they are
 		 * still to be processed by the host.
 		 */
-		err = virtio_balloon_register_shrinker(vb);
-		if (err)
-			goto out_del_balloon_wq;
-	}
+		err = virtio_balloon_रेजिस्टर_shrinker(vb);
+		अगर (err)
+			जाओ out_del_balloon_wq;
+	पूर्ण
 
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_DEFLATE_ON_OOM)) {
-		vb->oom_nb.notifier_call = virtio_balloon_oom_notify;
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_DEFLATE_ON_OOM)) अणु
+		vb->oom_nb.notअगरier_call = virtio_balloon_oom_notअगरy;
 		vb->oom_nb.priority = VIRTIO_BALLOON_OOM_NOTIFY_PRIORITY;
-		err = register_oom_notifier(&vb->oom_nb);
-		if (err < 0)
-			goto out_unregister_shrinker;
-	}
+		err = रेजिस्टर_oom_notअगरier(&vb->oom_nb);
+		अगर (err < 0)
+			जाओ out_unरेजिस्टर_shrinker;
+	पूर्ण
 
-	if (virtio_has_feature(vdev, VIRTIO_BALLOON_F_PAGE_POISON)) {
+	अगर (virtio_has_feature(vdev, VIRTIO_BALLOON_F_PAGE_POISON)) अणु
 		/* Start with poison val of 0 representing general init */
 		__u32 poison_val = 0;
 
 		/*
 		 * Let the hypervisor know that we are expecting a
-		 * specific value to be written back in balloon pages.
+		 * specअगरic value to be written back in balloon pages.
 		 *
 		 * If the PAGE_POISON value was larger than a byte we would
 		 * need to byte swap poison_val here to guarantee it is
-		 * little-endian. However for now it is a single byte so we
+		 * little-endian. However क्रम now it is a single byte so we
 		 * can pass it as-is.
 		 */
-		if (!want_init_on_free())
-			memset(&poison_val, PAGE_POISON, sizeof(poison_val));
+		अगर (!want_init_on_मुक्त())
+			स_रखो(&poison_val, PAGE_POISON, माप(poison_val));
 
-		virtio_cwrite_le(vb->vdev, struct virtio_balloon_config,
+		virtio_cग_लिखो_le(vb->vdev, काष्ठा virtio_balloon_config,
 				 poison_val, &poison_val);
-	}
+	पूर्ण
 
-	vb->pr_dev_info.report = virtballoon_free_page_report;
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_REPORTING)) {
-		unsigned int capacity;
+	vb->pr_dev_info.report = virtballoon_मुक्त_page_report;
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_REPORTING)) अणु
+		अचिन्हित पूर्णांक capacity;
 
 		capacity = virtqueue_get_vring_size(vb->reporting_vq);
-		if (capacity < PAGE_REPORTING_CAPACITY) {
+		अगर (capacity < PAGE_REPORTING_CAPACITY) अणु
 			err = -ENOSPC;
-			goto out_unregister_oom;
-		}
+			जाओ out_unरेजिस्टर_oom;
+		पूर्ण
 
-		err = page_reporting_register(&vb->pr_dev_info);
-		if (err)
-			goto out_unregister_oom;
-	}
+		err = page_reporting_रेजिस्टर(&vb->pr_dev_info);
+		अगर (err)
+			जाओ out_unरेजिस्टर_oom;
+	पूर्ण
 
-	virtio_device_ready(vdev);
+	virtio_device_पढ़ोy(vdev);
 
-	if (towards_target(vb))
+	अगर (towards_target(vb))
 		virtballoon_changed(vdev);
-	return 0;
+	वापस 0;
 
-out_unregister_oom:
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_DEFLATE_ON_OOM))
-		unregister_oom_notifier(&vb->oom_nb);
-out_unregister_shrinker:
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
-		virtio_balloon_unregister_shrinker(vb);
+out_unरेजिस्टर_oom:
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_DEFLATE_ON_OOM))
+		unरेजिस्टर_oom_notअगरier(&vb->oom_nb);
+out_unरेजिस्टर_shrinker:
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
+		virtio_balloon_unरेजिस्टर_shrinker(vb);
 out_del_balloon_wq:
-	if (virtio_has_feature(vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
+	अगर (virtio_has_feature(vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
 		destroy_workqueue(vb->balloon_wq);
 out_iput:
-#ifdef CONFIG_BALLOON_COMPACTION
+#अगर_घोषित CONFIG_BALLOON_COMPACTION
 	iput(vb->vb_dev_info.inode);
 out_kern_unmount:
 	kern_unmount(balloon_mnt);
 out_del_vqs:
-#endif
+#पूर्ण_अगर
 	vdev->config->del_vqs(vdev);
-out_free_vb:
-	kfree(vb);
+out_मुक्त_vb:
+	kमुक्त(vb);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void remove_common(struct virtio_balloon *vb)
-{
-	/* There might be pages left in the balloon: free them. */
-	while (vb->num_pages)
+अटल व्योम हटाओ_common(काष्ठा virtio_balloon *vb)
+अणु
+	/* There might be pages left in the balloon: मुक्त them. */
+	जबतक (vb->num_pages)
 		leak_balloon(vb, vb->num_pages);
 	update_balloon_size(vb);
 
-	/* There might be free pages that are being reported: release them. */
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
-		return_free_pages_to_mm(vb, ULONG_MAX);
+	/* There might be मुक्त pages that are being reported: release them. */
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
+		वापस_मुक्त_pages_to_mm(vb, अच_दीर्घ_उच्च);
 
 	/* Now we reset the device so we can clean up the queues. */
 	vb->vdev->config->reset(vb->vdev);
 
 	vb->vdev->config->del_vqs(vb->vdev);
-}
+पूर्ण
 
-static void virtballoon_remove(struct virtio_device *vdev)
-{
-	struct virtio_balloon *vb = vdev->priv;
+अटल व्योम virtballoon_हटाओ(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_balloon *vb = vdev->priv;
 
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_REPORTING))
-		page_reporting_unregister(&vb->pr_dev_info);
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_DEFLATE_ON_OOM))
-		unregister_oom_notifier(&vb->oom_nb);
-	if (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
-		virtio_balloon_unregister_shrinker(vb);
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_REPORTING))
+		page_reporting_unरेजिस्टर(&vb->pr_dev_info);
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_DEFLATE_ON_OOM))
+		unरेजिस्टर_oom_notअगरier(&vb->oom_nb);
+	अगर (virtio_has_feature(vb->vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT))
+		virtio_balloon_unरेजिस्टर_shrinker(vb);
 	spin_lock_irq(&vb->stop_update_lock);
 	vb->stop_update = true;
 	spin_unlock_irq(&vb->stop_update_lock);
 	cancel_work_sync(&vb->update_balloon_size_work);
 	cancel_work_sync(&vb->update_balloon_stats_work);
 
-	if (virtio_has_feature(vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT)) {
-		cancel_work_sync(&vb->report_free_page_work);
+	अगर (virtio_has_feature(vdev, VIRTIO_BALLOON_F_FREE_PAGE_HINT)) अणु
+		cancel_work_sync(&vb->report_मुक्त_page_work);
 		destroy_workqueue(vb->balloon_wq);
-	}
+	पूर्ण
 
-	remove_common(vb);
-#ifdef CONFIG_BALLOON_COMPACTION
-	if (vb->vb_dev_info.inode)
+	हटाओ_common(vb);
+#अगर_घोषित CONFIG_BALLOON_COMPACTION
+	अगर (vb->vb_dev_info.inode)
 		iput(vb->vb_dev_info.inode);
 
 	kern_unmount(balloon_mnt);
-#endif
-	kfree(vb);
-}
+#पूर्ण_अगर
+	kमुक्त(vb);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int virtballoon_freeze(struct virtio_device *vdev)
-{
-	struct virtio_balloon *vb = vdev->priv;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक virtballoon_मुक्तze(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_balloon *vb = vdev->priv;
 
 	/*
-	 * The workqueue is already frozen by the PM core before this
+	 * The workqueue is alपढ़ोy frozen by the PM core beक्रमe this
 	 * function is called.
 	 */
-	remove_common(vb);
-	return 0;
-}
+	हटाओ_common(vb);
+	वापस 0;
+पूर्ण
 
-static int virtballoon_restore(struct virtio_device *vdev)
-{
-	struct virtio_balloon *vb = vdev->priv;
-	int ret;
+अटल पूर्णांक virtballoon_restore(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_balloon *vb = vdev->priv;
+	पूर्णांक ret;
 
 	ret = init_vqs(vdev->priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	virtio_device_ready(vdev);
+	virtio_device_पढ़ोy(vdev);
 
-	if (towards_target(vb))
+	अगर (towards_target(vb))
 		virtballoon_changed(vdev);
 	update_balloon_size(vb);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int virtballoon_validate(struct virtio_device *vdev)
-{
+अटल पूर्णांक virtballoon_validate(काष्ठा virtio_device *vdev)
+अणु
 	/*
-	 * Inform the hypervisor that our pages are poisoned or
-	 * initialized. If we cannot do that then we should disable
+	 * Inक्रमm the hypervisor that our pages are poisoned or
+	 * initialized. If we cannot करो that then we should disable
 	 * page reporting as it could potentially change the contents
-	 * of our free pages.
+	 * of our मुक्त pages.
 	 */
-	if (!want_init_on_free() && !page_poisoning_enabled_static())
+	अगर (!want_init_on_मुक्त() && !page_poisoning_enabled_अटल())
 		__virtio_clear_bit(vdev, VIRTIO_BALLOON_F_PAGE_POISON);
-	else if (!virtio_has_feature(vdev, VIRTIO_BALLOON_F_PAGE_POISON))
+	अन्यथा अगर (!virtio_has_feature(vdev, VIRTIO_BALLOON_F_PAGE_POISON))
 		__virtio_clear_bit(vdev, VIRTIO_BALLOON_F_REPORTING);
 
 	__virtio_clear_bit(vdev, VIRTIO_F_ACCESS_PLATFORM);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int features[] = {
+अटल अचिन्हित पूर्णांक features[] = अणु
 	VIRTIO_BALLOON_F_MUST_TELL_HOST,
 	VIRTIO_BALLOON_F_STATS_VQ,
 	VIRTIO_BALLOON_F_DEFLATE_ON_OOM,
 	VIRTIO_BALLOON_F_FREE_PAGE_HINT,
 	VIRTIO_BALLOON_F_PAGE_POISON,
 	VIRTIO_BALLOON_F_REPORTING,
-};
+पूर्ण;
 
-static struct virtio_driver virtio_balloon_driver = {
+अटल काष्ठा virtio_driver virtio_balloon_driver = अणु
 	.feature_table = features,
 	.feature_table_size = ARRAY_SIZE(features),
 	.driver.name =	KBUILD_MODNAME,
@@ -1140,13 +1141,13 @@ static struct virtio_driver virtio_balloon_driver = {
 	.id_table =	id_table,
 	.validate =	virtballoon_validate,
 	.probe =	virtballoon_probe,
-	.remove =	virtballoon_remove,
+	.हटाओ =	virtballoon_हटाओ,
 	.config_changed = virtballoon_changed,
-#ifdef CONFIG_PM_SLEEP
-	.freeze	=	virtballoon_freeze,
+#अगर_घोषित CONFIG_PM_SLEEP
+	.मुक्तze	=	virtballoon_मुक्तze,
 	.restore =	virtballoon_restore,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_virtio_driver(virtio_balloon_driver);
 MODULE_DEVICE_TABLE(virtio, id_table);

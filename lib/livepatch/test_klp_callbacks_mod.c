@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2018 Joe Lawrence <joe.lawrence@redhat.com>
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
 
-static int test_klp_callbacks_mod_init(void)
-{
+अटल पूर्णांक test_klp_callbacks_mod_init(व्योम)
+अणु
 	pr_info("%s\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void test_klp_callbacks_mod_exit(void)
-{
+अटल व्योम test_klp_callbacks_mod_निकास(व्योम)
+अणु
 	pr_info("%s\n", __func__);
-}
+पूर्ण
 
 module_init(test_klp_callbacks_mod_init);
-module_exit(test_klp_callbacks_mod_exit);
+module_निकास(test_klp_callbacks_mod_निकास);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Joe Lawrence <joe.lawrence@redhat.com>");
 MODULE_DESCRIPTION("Livepatch test: target module");

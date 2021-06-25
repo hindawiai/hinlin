@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Network Checksum & Copy routine
  *
@@ -8,91 +9,91 @@
  * Most of the code has been imported from Linux/Alpha
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/string.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
 
-#include <net/checksum.h>
+#समावेश <net/checksum.h>
 
 /*
- * XXX Fixme: those 2 inlines are meant for debugging and will go away
+ * XXX Fixme: those 2 अंतरभूतs are meant क्रम debugging and will go away
  */
-static inline unsigned
-short from64to16(unsigned long x)
-{
-	/* add up 32-bit words for 33 bits */
+अटल अंतरभूत अचिन्हित
+लघु from64to16(अचिन्हित दीर्घ x)
+अणु
+	/* add up 32-bit words क्रम 33 bits */
 	x = (x & 0xffffffff) + (x >> 32);
-	/* add up 16-bit and 17-bit words for 17+c bits */
+	/* add up 16-bit and 17-bit words क्रम 17+c bits */
 	x = (x & 0xffff) + (x >> 16);
-	/* add up 16-bit and 2-bit for 16+c bit */
+	/* add up 16-bit and 2-bit क्रम 16+c bit */
 	x = (x & 0xffff) + (x >> 16);
 	/* add up carry.. */
 	x = (x & 0xffff) + (x >> 16);
-	return x;
-}
+	वापस x;
+पूर्ण
 
-static inline
-unsigned long do_csum_c(const unsigned char * buff, int len, unsigned int psum)
-{
-	int odd, count;
-	unsigned long result = (unsigned long)psum;
+अटल अंतरभूत
+अचिन्हित दीर्घ करो_csum_c(स्थिर अचिन्हित अक्षर * buff, पूर्णांक len, अचिन्हित पूर्णांक psum)
+अणु
+	पूर्णांक odd, count;
+	अचिन्हित दीर्घ result = (अचिन्हित दीर्घ)psum;
 
-	if (len <= 0)
-		goto out;
-	odd = 1 & (unsigned long) buff;
-	if (odd) {
+	अगर (len <= 0)
+		जाओ out;
+	odd = 1 & (अचिन्हित दीर्घ) buff;
+	अगर (odd) अणु
 		result = *buff << 8;
 		len--;
 		buff++;
-	}
+	पूर्ण
 	count = len >> 1;		/* nr of 16-bit words.. */
-	if (count) {
-		if (2 & (unsigned long) buff) {
-			result += *(unsigned short *) buff;
+	अगर (count) अणु
+		अगर (2 & (अचिन्हित दीर्घ) buff) अणु
+			result += *(अचिन्हित लघु *) buff;
 			count--;
 			len -= 2;
 			buff += 2;
-		}
+		पूर्ण
 		count >>= 1;		/* nr of 32-bit words.. */
-		if (count) {
-			if (4 & (unsigned long) buff) {
-				result += *(unsigned int *) buff;
+		अगर (count) अणु
+			अगर (4 & (अचिन्हित दीर्घ) buff) अणु
+				result += *(अचिन्हित पूर्णांक *) buff;
 				count--;
 				len -= 4;
 				buff += 4;
-			}
+			पूर्ण
 			count >>= 1;	/* nr of 64-bit words.. */
-			if (count) {
-				unsigned long carry = 0;
-				do {
-					unsigned long w = *(unsigned long *) buff;
+			अगर (count) अणु
+				अचिन्हित दीर्घ carry = 0;
+				करो अणु
+					अचिन्हित दीर्घ w = *(अचिन्हित दीर्घ *) buff;
 					count--;
 					buff += 8;
 					result += carry;
 					result += w;
 					carry = (w > result);
-				} while (count);
+				पूर्ण जबतक (count);
 				result += carry;
 				result = (result & 0xffffffff) + (result >> 32);
-			}
-			if (len & 4) {
-				result += *(unsigned int *) buff;
+			पूर्ण
+			अगर (len & 4) अणु
+				result += *(अचिन्हित पूर्णांक *) buff;
 				buff += 4;
-			}
-		}
-		if (len & 2) {
-			result += *(unsigned short *) buff;
+			पूर्ण
+		पूर्ण
+		अगर (len & 2) अणु
+			result += *(अचिन्हित लघु *) buff;
 			buff += 2;
-		}
-	}
-	if (len & 1)
+		पूर्ण
+	पूर्ण
+	अगर (len & 1)
 		result += *buff;
 
 	result = from64to16(result);
 
-	if (odd)
+	अगर (odd)
 		result = ((result >> 8) & 0xff) | ((result & 0xff) << 8);
 
 out:
-	return result;
-}
+	वापस result;
+पूर्ण

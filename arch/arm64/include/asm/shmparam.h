@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_SHMPARAM_H
-#define __ASM_SHMPARAM_H
+#अगर_अघोषित __ASM_SHMPARAM_H
+#घोषणा __ASM_SHMPARAM_H
 
 /*
  * For IPC syscalls from compat tasks, we need to use the legacy 16k
- * alignment value. Since we don't have aliasing D-caches, the rest of
- * the time we can safely use PAGE_SIZE.
+ * alignment value. Since we करोn't have aliasing D-caches, the rest of
+ * the समय we can safely use PAGE_SIZE.
  */
-#define COMPAT_SHMLBA	(4 * PAGE_SIZE)
+#घोषणा COMPAT_SHMLBA	(4 * PAGE_SIZE)
 
-#include <asm-generic/shmparam.h>
+#समावेश <यंत्र-generic/shmparam.h>
 
-#endif /* __ASM_SHMPARAM_H */
+#पूर्ण_अगर /* __ASM_SHMPARAM_H */

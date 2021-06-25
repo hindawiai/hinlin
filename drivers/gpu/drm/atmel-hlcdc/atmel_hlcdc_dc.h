@@ -1,188 +1,189 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2014 Traphandler
  * Copyright (C) 2014 Free Electrons
- * Copyright (C) 2014 Atmel
+ * Copyright (C) 2014 Aपंचांगel
  *
  * Author: Jean-Jacques Hiblot <jjhiblot@traphandler.com>
- * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
+ * Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
  */
 
-#ifndef DRM_ATMEL_HLCDC_H
-#define DRM_ATMEL_HLCDC_H
+#अगर_अघोषित DRM_ATMEL_HLCDC_H
+#घोषणा DRM_ATMEL_HLCDC_H
 
-#include <linux/regmap.h>
+#समावेश <linux/regmap.h>
 
-#include <drm/drm_plane.h>
+#समावेश <drm/drm_plane.h>
 
-#define ATMEL_HLCDC_LAYER_CHER			0x0
-#define ATMEL_HLCDC_LAYER_CHDR			0x4
-#define ATMEL_HLCDC_LAYER_CHSR			0x8
-#define ATMEL_HLCDC_LAYER_EN			BIT(0)
-#define ATMEL_HLCDC_LAYER_UPDATE		BIT(1)
-#define ATMEL_HLCDC_LAYER_A2Q			BIT(2)
-#define ATMEL_HLCDC_LAYER_RST			BIT(8)
+#घोषणा ATMEL_HLCDC_LAYER_CHER			0x0
+#घोषणा ATMEL_HLCDC_LAYER_CHDR			0x4
+#घोषणा ATMEL_HLCDC_LAYER_CHSR			0x8
+#घोषणा ATMEL_HLCDC_LAYER_EN			BIT(0)
+#घोषणा ATMEL_HLCDC_LAYER_UPDATE		BIT(1)
+#घोषणा ATMEL_HLCDC_LAYER_A2Q			BIT(2)
+#घोषणा ATMEL_HLCDC_LAYER_RST			BIT(8)
 
-#define ATMEL_HLCDC_LAYER_IER			0xc
-#define ATMEL_HLCDC_LAYER_IDR			0x10
-#define ATMEL_HLCDC_LAYER_IMR			0x14
-#define ATMEL_HLCDC_LAYER_ISR			0x18
-#define ATMEL_HLCDC_LAYER_DFETCH		BIT(0)
-#define ATMEL_HLCDC_LAYER_LFETCH		BIT(1)
-#define ATMEL_HLCDC_LAYER_DMA_IRQ(p)		BIT(2 + (8 * (p)))
-#define ATMEL_HLCDC_LAYER_DSCR_IRQ(p)		BIT(3 + (8 * (p)))
-#define ATMEL_HLCDC_LAYER_ADD_IRQ(p)		BIT(4 + (8 * (p)))
-#define ATMEL_HLCDC_LAYER_DONE_IRQ(p)		BIT(5 + (8 * (p)))
-#define ATMEL_HLCDC_LAYER_OVR_IRQ(p)		BIT(6 + (8 * (p)))
+#घोषणा ATMEL_HLCDC_LAYER_IER			0xc
+#घोषणा ATMEL_HLCDC_LAYER_IDR			0x10
+#घोषणा ATMEL_HLCDC_LAYER_IMR			0x14
+#घोषणा ATMEL_HLCDC_LAYER_ISR			0x18
+#घोषणा ATMEL_HLCDC_LAYER_DFETCH		BIT(0)
+#घोषणा ATMEL_HLCDC_LAYER_LFETCH		BIT(1)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_IRQ(p)		BIT(2 + (8 * (p)))
+#घोषणा ATMEL_HLCDC_LAYER_DSCR_IRQ(p)		BIT(3 + (8 * (p)))
+#घोषणा ATMEL_HLCDC_LAYER_ADD_IRQ(p)		BIT(4 + (8 * (p)))
+#घोषणा ATMEL_HLCDC_LAYER_DONE_IRQ(p)		BIT(5 + (8 * (p)))
+#घोषणा ATMEL_HLCDC_LAYER_OVR_IRQ(p)		BIT(6 + (8 * (p)))
 
-#define ATMEL_HLCDC_LAYER_PLANE_HEAD(p)		(((p) * 0x10) + 0x1c)
-#define ATMEL_HLCDC_LAYER_PLANE_ADDR(p)		(((p) * 0x10) + 0x20)
-#define ATMEL_HLCDC_LAYER_PLANE_CTRL(p)		(((p) * 0x10) + 0x24)
-#define ATMEL_HLCDC_LAYER_PLANE_NEXT(p)		(((p) * 0x10) + 0x28)
+#घोषणा ATMEL_HLCDC_LAYER_PLANE_HEAD(p)		(((p) * 0x10) + 0x1c)
+#घोषणा ATMEL_HLCDC_LAYER_PLANE_ADDR(p)		(((p) * 0x10) + 0x20)
+#घोषणा ATMEL_HLCDC_LAYER_PLANE_CTRL(p)		(((p) * 0x10) + 0x24)
+#घोषणा ATMEL_HLCDC_LAYER_PLANE_NEXT(p)		(((p) * 0x10) + 0x28)
 
-#define ATMEL_HLCDC_LAYER_DMA_CFG		0
-#define ATMEL_HLCDC_LAYER_DMA_SIF		BIT(0)
-#define ATMEL_HLCDC_LAYER_DMA_BLEN_MASK		GENMASK(5, 4)
-#define ATMEL_HLCDC_LAYER_DMA_BLEN_SINGLE	(0 << 4)
-#define ATMEL_HLCDC_LAYER_DMA_BLEN_INCR4	(1 << 4)
-#define ATMEL_HLCDC_LAYER_DMA_BLEN_INCR8	(2 << 4)
-#define ATMEL_HLCDC_LAYER_DMA_BLEN_INCR16	(3 << 4)
-#define ATMEL_HLCDC_LAYER_DMA_DLBO		BIT(8)
-#define ATMEL_HLCDC_LAYER_DMA_ROTDIS		BIT(12)
-#define ATMEL_HLCDC_LAYER_DMA_LOCKDIS		BIT(13)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_CFG		0
+#घोषणा ATMEL_HLCDC_LAYER_DMA_SIF		BIT(0)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_BLEN_MASK		GENMASK(5, 4)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_BLEN_SINGLE	(0 << 4)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_BLEN_INCR4	(1 << 4)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_BLEN_INCR8	(2 << 4)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_BLEN_INCR16	(3 << 4)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_DLBO		BIT(8)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_ROTDIS		BIT(12)
+#घोषणा ATMEL_HLCDC_LAYER_DMA_LOCKDIS		BIT(13)
 
-#define ATMEL_HLCDC_LAYER_FORMAT_CFG		1
-#define ATMEL_HLCDC_LAYER_RGB			(0 << 0)
-#define ATMEL_HLCDC_LAYER_CLUT			(1 << 0)
-#define ATMEL_HLCDC_LAYER_YUV			(2 << 0)
-#define ATMEL_HLCDC_RGB_MODE(m)			\
+#घोषणा ATMEL_HLCDC_LAYER_FORMAT_CFG		1
+#घोषणा ATMEL_HLCDC_LAYER_RGB			(0 << 0)
+#घोषणा ATMEL_HLCDC_LAYER_CLUT			(1 << 0)
+#घोषणा ATMEL_HLCDC_LAYER_YUV			(2 << 0)
+#घोषणा ATMEL_HLCDC_RGB_MODE(m)			\
 	(ATMEL_HLCDC_LAYER_RGB | (((m) & 0xf) << 4))
-#define ATMEL_HLCDC_CLUT_MODE(m)		\
+#घोषणा ATMEL_HLCDC_CLUT_MODE(m)		\
 	(ATMEL_HLCDC_LAYER_CLUT | (((m) & 0x3) << 8))
-#define ATMEL_HLCDC_YUV_MODE(m)			\
+#घोषणा ATMEL_HLCDC_YUV_MODE(m)			\
 	(ATMEL_HLCDC_LAYER_YUV | (((m) & 0xf) << 12))
-#define ATMEL_HLCDC_YUV422ROT			BIT(16)
-#define ATMEL_HLCDC_YUV422SWP			BIT(17)
-#define ATMEL_HLCDC_DSCALEOPT			BIT(20)
+#घोषणा ATMEL_HLCDC_YUV422ROT			BIT(16)
+#घोषणा ATMEL_HLCDC_YUV422SWP			BIT(17)
+#घोषणा ATMEL_HLCDC_DSCALEOPT			BIT(20)
 
-#define ATMEL_HLCDC_C1_MODE			ATMEL_HLCDC_CLUT_MODE(0)
-#define ATMEL_HLCDC_C2_MODE			ATMEL_HLCDC_CLUT_MODE(1)
-#define ATMEL_HLCDC_C4_MODE			ATMEL_HLCDC_CLUT_MODE(2)
-#define ATMEL_HLCDC_C8_MODE			ATMEL_HLCDC_CLUT_MODE(3)
+#घोषणा ATMEL_HLCDC_C1_MODE			ATMEL_HLCDC_CLUT_MODE(0)
+#घोषणा ATMEL_HLCDC_C2_MODE			ATMEL_HLCDC_CLUT_MODE(1)
+#घोषणा ATMEL_HLCDC_C4_MODE			ATMEL_HLCDC_CLUT_MODE(2)
+#घोषणा ATMEL_HLCDC_C8_MODE			ATMEL_HLCDC_CLUT_MODE(3)
 
-#define ATMEL_HLCDC_XRGB4444_MODE		ATMEL_HLCDC_RGB_MODE(0)
-#define ATMEL_HLCDC_ARGB4444_MODE		ATMEL_HLCDC_RGB_MODE(1)
-#define ATMEL_HLCDC_RGBA4444_MODE		ATMEL_HLCDC_RGB_MODE(2)
-#define ATMEL_HLCDC_RGB565_MODE			ATMEL_HLCDC_RGB_MODE(3)
-#define ATMEL_HLCDC_ARGB1555_MODE		ATMEL_HLCDC_RGB_MODE(4)
-#define ATMEL_HLCDC_XRGB8888_MODE		ATMEL_HLCDC_RGB_MODE(9)
-#define ATMEL_HLCDC_RGB888_MODE			ATMEL_HLCDC_RGB_MODE(10)
-#define ATMEL_HLCDC_ARGB8888_MODE		ATMEL_HLCDC_RGB_MODE(12)
-#define ATMEL_HLCDC_RGBA8888_MODE		ATMEL_HLCDC_RGB_MODE(13)
+#घोषणा ATMEL_HLCDC_XRGB4444_MODE		ATMEL_HLCDC_RGB_MODE(0)
+#घोषणा ATMEL_HLCDC_ARGB4444_MODE		ATMEL_HLCDC_RGB_MODE(1)
+#घोषणा ATMEL_HLCDC_RGBA4444_MODE		ATMEL_HLCDC_RGB_MODE(2)
+#घोषणा ATMEL_HLCDC_RGB565_MODE			ATMEL_HLCDC_RGB_MODE(3)
+#घोषणा ATMEL_HLCDC_ARGB1555_MODE		ATMEL_HLCDC_RGB_MODE(4)
+#घोषणा ATMEL_HLCDC_XRGB8888_MODE		ATMEL_HLCDC_RGB_MODE(9)
+#घोषणा ATMEL_HLCDC_RGB888_MODE			ATMEL_HLCDC_RGB_MODE(10)
+#घोषणा ATMEL_HLCDC_ARGB8888_MODE		ATMEL_HLCDC_RGB_MODE(12)
+#घोषणा ATMEL_HLCDC_RGBA8888_MODE		ATMEL_HLCDC_RGB_MODE(13)
 
-#define ATMEL_HLCDC_AYUV_MODE			ATMEL_HLCDC_YUV_MODE(0)
-#define ATMEL_HLCDC_YUYV_MODE			ATMEL_HLCDC_YUV_MODE(1)
-#define ATMEL_HLCDC_UYVY_MODE			ATMEL_HLCDC_YUV_MODE(2)
-#define ATMEL_HLCDC_YVYU_MODE			ATMEL_HLCDC_YUV_MODE(3)
-#define ATMEL_HLCDC_VYUY_MODE			ATMEL_HLCDC_YUV_MODE(4)
-#define ATMEL_HLCDC_NV61_MODE			ATMEL_HLCDC_YUV_MODE(5)
-#define ATMEL_HLCDC_YUV422_MODE			ATMEL_HLCDC_YUV_MODE(6)
-#define ATMEL_HLCDC_NV21_MODE			ATMEL_HLCDC_YUV_MODE(7)
-#define ATMEL_HLCDC_YUV420_MODE			ATMEL_HLCDC_YUV_MODE(8)
+#घोषणा ATMEL_HLCDC_AYUV_MODE			ATMEL_HLCDC_YUV_MODE(0)
+#घोषणा ATMEL_HLCDC_YUYV_MODE			ATMEL_HLCDC_YUV_MODE(1)
+#घोषणा ATMEL_HLCDC_UYVY_MODE			ATMEL_HLCDC_YUV_MODE(2)
+#घोषणा ATMEL_HLCDC_YVYU_MODE			ATMEL_HLCDC_YUV_MODE(3)
+#घोषणा ATMEL_HLCDC_VYUY_MODE			ATMEL_HLCDC_YUV_MODE(4)
+#घोषणा ATMEL_HLCDC_NV61_MODE			ATMEL_HLCDC_YUV_MODE(5)
+#घोषणा ATMEL_HLCDC_YUV422_MODE			ATMEL_HLCDC_YUV_MODE(6)
+#घोषणा ATMEL_HLCDC_NV21_MODE			ATMEL_HLCDC_YUV_MODE(7)
+#घोषणा ATMEL_HLCDC_YUV420_MODE			ATMEL_HLCDC_YUV_MODE(8)
 
-#define ATMEL_HLCDC_LAYER_POS(x, y)		((x) | ((y) << 16))
-#define ATMEL_HLCDC_LAYER_SIZE(w, h)		(((w) - 1) | (((h) - 1) << 16))
+#घोषणा ATMEL_HLCDC_LAYER_POS(x, y)		((x) | ((y) << 16))
+#घोषणा ATMEL_HLCDC_LAYER_SIZE(w, h)		(((w) - 1) | (((h) - 1) << 16))
 
-#define ATMEL_HLCDC_LAYER_CRKEY			BIT(0)
-#define ATMEL_HLCDC_LAYER_INV			BIT(1)
-#define ATMEL_HLCDC_LAYER_ITER2BL		BIT(2)
-#define ATMEL_HLCDC_LAYER_ITER			BIT(3)
-#define ATMEL_HLCDC_LAYER_REVALPHA		BIT(4)
-#define ATMEL_HLCDC_LAYER_GAEN			BIT(5)
-#define ATMEL_HLCDC_LAYER_LAEN			BIT(6)
-#define ATMEL_HLCDC_LAYER_OVR			BIT(7)
-#define ATMEL_HLCDC_LAYER_DMA			BIT(8)
-#define ATMEL_HLCDC_LAYER_REP			BIT(9)
-#define ATMEL_HLCDC_LAYER_DSTKEY		BIT(10)
-#define ATMEL_HLCDC_LAYER_DISCEN		BIT(11)
-#define ATMEL_HLCDC_LAYER_GA_SHIFT		16
-#define ATMEL_HLCDC_LAYER_GA_MASK		\
+#घोषणा ATMEL_HLCDC_LAYER_CRKEY			BIT(0)
+#घोषणा ATMEL_HLCDC_LAYER_INV			BIT(1)
+#घोषणा ATMEL_HLCDC_LAYER_ITER2BL		BIT(2)
+#घोषणा ATMEL_HLCDC_LAYER_ITER			BIT(3)
+#घोषणा ATMEL_HLCDC_LAYER_REVALPHA		BIT(4)
+#घोषणा ATMEL_HLCDC_LAYER_GAEN			BIT(5)
+#घोषणा ATMEL_HLCDC_LAYER_LAEN			BIT(6)
+#घोषणा ATMEL_HLCDC_LAYER_OVR			BIT(7)
+#घोषणा ATMEL_HLCDC_LAYER_DMA			BIT(8)
+#घोषणा ATMEL_HLCDC_LAYER_REP			BIT(9)
+#घोषणा ATMEL_HLCDC_LAYER_DSTKEY		BIT(10)
+#घोषणा ATMEL_HLCDC_LAYER_DISCEN		BIT(11)
+#घोषणा ATMEL_HLCDC_LAYER_GA_SHIFT		16
+#घोषणा ATMEL_HLCDC_LAYER_GA_MASK		\
 	GENMASK(23, ATMEL_HLCDC_LAYER_GA_SHIFT)
-#define ATMEL_HLCDC_LAYER_GA(x)			\
+#घोषणा ATMEL_HLCDC_LAYER_GA(x)			\
 	((x) << ATMEL_HLCDC_LAYER_GA_SHIFT)
 
-#define ATMEL_HLCDC_LAYER_DISC_POS(x, y)	((x) | ((y) << 16))
-#define ATMEL_HLCDC_LAYER_DISC_SIZE(w, h)	(((w) - 1) | (((h) - 1) << 16))
+#घोषणा ATMEL_HLCDC_LAYER_DISC_POS(x, y)	((x) | ((y) << 16))
+#घोषणा ATMEL_HLCDC_LAYER_DISC_SIZE(w, h)	(((w) - 1) | (((h) - 1) << 16))
 
-#define ATMEL_HLCDC_LAYER_SCALER_FACTORS(x, y)	((x) | ((y) << 16))
-#define ATMEL_HLCDC_LAYER_SCALER_ENABLE		BIT(31)
+#घोषणा ATMEL_HLCDC_LAYER_SCALER_FACTORS(x, y)	((x) | ((y) << 16))
+#घोषणा ATMEL_HLCDC_LAYER_SCALER_ENABLE		BIT(31)
 
-#define ATMEL_HLCDC_LAYER_MAX_PLANES		3
+#घोषणा ATMEL_HLCDC_LAYER_MAX_PLANES		3
 
-#define ATMEL_HLCDC_DMA_CHANNEL_DSCR_RESERVED	BIT(0)
-#define ATMEL_HLCDC_DMA_CHANNEL_DSCR_LOADED	BIT(1)
-#define ATMEL_HLCDC_DMA_CHANNEL_DSCR_DONE	BIT(2)
-#define ATMEL_HLCDC_DMA_CHANNEL_DSCR_OVERRUN	BIT(3)
+#घोषणा ATMEL_HLCDC_DMA_CHANNEL_DSCR_RESERVED	BIT(0)
+#घोषणा ATMEL_HLCDC_DMA_CHANNEL_DSCR_LOADED	BIT(1)
+#घोषणा ATMEL_HLCDC_DMA_CHANNEL_DSCR_DONE	BIT(2)
+#घोषणा ATMEL_HLCDC_DMA_CHANNEL_DSCR_OVERRUN	BIT(3)
 
-#define ATMEL_HLCDC_CLUT_SIZE			256
+#घोषणा ATMEL_HLCDC_CLUT_SIZE			256
 
-#define ATMEL_HLCDC_MAX_LAYERS			6
+#घोषणा ATMEL_HLCDC_MAX_LAYERS			6
 
 /**
- * Atmel HLCDC Layer registers layout structure
+ * Aपंचांगel HLCDC Layer रेजिस्टरs layout काष्ठाure
  *
- * Each HLCDC layer has its own register organization and a given register
- * can be placed differently on 2 different layers depending on its
+ * Each HLCDC layer has its own रेजिस्टर organization and a given रेजिस्टर
+ * can be placed dअगरferently on 2 dअगरferent layers depending on its
  * capabilities.
- * This structure stores common registers layout for a given layer and is
- * used by HLCDC layer code to choose the appropriate register to write to
- * or to read from.
+ * This काष्ठाure stores common रेजिस्टरs layout क्रम a given layer and is
+ * used by HLCDC layer code to choose the appropriate रेजिस्टर to ग_लिखो to
+ * or to पढ़ो from.
  *
  * For all fields, a value of zero means "unsupported".
  *
- * See Atmel's datasheet for a detailled description of these registers.
+ * See Aपंचांगel's datasheet क्रम a detailled description of these रेजिस्टरs.
  *
- * @xstride: xstride registers
- * @pstride: pstride registers
- * @pos: position register
- * @size: displayed size register
- * @memsize: memory size register
- * @default_color: default color register
- * @chroma_key: chroma key register
- * @chroma_key_mask: chroma key mask register
- * @general_config: general layer config register
- * @sacler_config: scaler factors register
- * @phicoeffs: X/Y PHI coefficient registers
- * @disc_pos: discard area position register
- * @disc_size: discard area size register
- * @csc: color space conversion register
+ * @xstride: xstride रेजिस्टरs
+ * @pstride: pstride रेजिस्टरs
+ * @pos: position रेजिस्टर
+ * @size: displayed size रेजिस्टर
+ * @memsize: memory size रेजिस्टर
+ * @शेष_color: शेष color रेजिस्टर
+ * @chroma_key: chroma key रेजिस्टर
+ * @chroma_key_mask: chroma key mask रेजिस्टर
+ * @general_config: general layer config रेजिस्टर
+ * @sacler_config: scaler factors रेजिस्टर
+ * @phicoeffs: X/Y PHI coefficient रेजिस्टरs
+ * @disc_pos: discard area position रेजिस्टर
+ * @disc_size: discard area size रेजिस्टर
+ * @csc: color space conversion रेजिस्टर
  */
-struct atmel_hlcdc_layer_cfg_layout {
-	int xstride[ATMEL_HLCDC_LAYER_MAX_PLANES];
-	int pstride[ATMEL_HLCDC_LAYER_MAX_PLANES];
-	int pos;
-	int size;
-	int memsize;
-	int default_color;
-	int chroma_key;
-	int chroma_key_mask;
-	int general_config;
-	int scaler_config;
-	struct {
-		int x;
-		int y;
-	} phicoeffs;
-	int disc_pos;
-	int disc_size;
-	int csc;
-};
+काष्ठा aपंचांगel_hlcdc_layer_cfg_layout अणु
+	पूर्णांक xstride[ATMEL_HLCDC_LAYER_MAX_PLANES];
+	पूर्णांक pstride[ATMEL_HLCDC_LAYER_MAX_PLANES];
+	पूर्णांक pos;
+	पूर्णांक size;
+	पूर्णांक memsize;
+	पूर्णांक शेष_color;
+	पूर्णांक chroma_key;
+	पूर्णांक chroma_key_mask;
+	पूर्णांक general_config;
+	पूर्णांक scaler_config;
+	काष्ठा अणु
+		पूर्णांक x;
+		पूर्णांक y;
+	पूर्ण phicoeffs;
+	पूर्णांक disc_pos;
+	पूर्णांक disc_size;
+	पूर्णांक csc;
+पूर्ण;
 
 /**
- * Atmel HLCDC DMA descriptor structure
+ * Aपंचांगel HLCDC DMA descriptor काष्ठाure
  *
- * This structure is used by the HLCDC DMA engine to schedule a DMA transfer.
+ * This काष्ठाure is used by the HLCDC DMA engine to schedule a DMA transfer.
  *
- * The structure fields must remain in this specific order, because they're
+ * The काष्ठाure fields must reमुख्य in this specअगरic order, because they're
  * used by the HLCDC DMA engine, which expect them in this order.
  * HLCDC DMA descriptors must be aligned on 64 bits.
  *
@@ -191,108 +192,108 @@ struct atmel_hlcdc_layer_cfg_layout {
  * @next: next DMA descriptor to fetch
  * @self: descriptor DMA address
  */
-struct atmel_hlcdc_dma_channel_dscr {
+काष्ठा aपंचांगel_hlcdc_dma_channel_dscr अणु
 	dma_addr_t addr;
 	u32 ctrl;
 	dma_addr_t next;
 	dma_addr_t self;
-} __aligned(sizeof(u64));
+पूर्ण __aligned(माप(u64));
 
 /**
- * Atmel HLCDC layer types
+ * Aपंचांगel HLCDC layer types
  */
-enum atmel_hlcdc_layer_type {
+क्रमागत aपंचांगel_hlcdc_layer_type अणु
 	ATMEL_HLCDC_NO_LAYER,
 	ATMEL_HLCDC_BASE_LAYER,
 	ATMEL_HLCDC_OVERLAY_LAYER,
 	ATMEL_HLCDC_CURSOR_LAYER,
 	ATMEL_HLCDC_PP_LAYER,
-};
+पूर्ण;
 
 /**
- * Atmel HLCDC Supported formats structure
+ * Aपंचांगel HLCDC Supported क्रमmats काष्ठाure
  *
- * This structure list all the formats supported by a given layer.
+ * This काष्ठाure list all the क्रमmats supported by a given layer.
  *
- * @nformats: number of supported formats
- * @formats: supported formats
+ * @nक्रमmats: number of supported क्रमmats
+ * @क्रमmats: supported क्रमmats
  */
-struct atmel_hlcdc_formats {
-	int nformats;
-	u32 *formats;
-};
+काष्ठा aपंचांगel_hlcdc_क्रमmats अणु
+	पूर्णांक nक्रमmats;
+	u32 *क्रमmats;
+पूर्ण;
 
 /**
- * Atmel HLCDC Layer description structure
+ * Aपंचांगel HLCDC Layer description काष्ठाure
  *
- * This structure describes the capabilities provided by a given layer.
+ * This काष्ठाure describes the capabilities provided by a given layer.
  *
  * @name: layer name
  * @type: layer type
  * @id: layer id
- * @regs_offset: offset of the layer registers from the HLCDC registers base
- * @cfgs_offset: CFGX registers offset from the layer registers base
- * @formats: supported formats
- * @layout: config registers layout
+ * @regs_offset: offset of the layer रेजिस्टरs from the HLCDC रेजिस्टरs base
+ * @cfgs_offset: CFGX रेजिस्टरs offset from the layer रेजिस्टरs base
+ * @क्रमmats: supported क्रमmats
+ * @layout: config रेजिस्टरs layout
  * @max_width: maximum width supported by this layer (0 means unlimited)
  * @max_height: maximum height supported by this layer (0 means unlimited)
  */
-struct atmel_hlcdc_layer_desc {
-	const char *name;
-	enum atmel_hlcdc_layer_type type;
-	int id;
-	int regs_offset;
-	int cfgs_offset;
-	int clut_offset;
-	struct atmel_hlcdc_formats *formats;
-	struct atmel_hlcdc_layer_cfg_layout layout;
-	int max_width;
-	int max_height;
-};
+काष्ठा aपंचांगel_hlcdc_layer_desc अणु
+	स्थिर अक्षर *name;
+	क्रमागत aपंचांगel_hlcdc_layer_type type;
+	पूर्णांक id;
+	पूर्णांक regs_offset;
+	पूर्णांक cfgs_offset;
+	पूर्णांक clut_offset;
+	काष्ठा aपंचांगel_hlcdc_क्रमmats *क्रमmats;
+	काष्ठा aपंचांगel_hlcdc_layer_cfg_layout layout;
+	पूर्णांक max_width;
+	पूर्णांक max_height;
+पूर्ण;
 
 /**
- * Atmel HLCDC Layer.
+ * Aपंचांगel HLCDC Layer.
  *
  * A layer can be a DRM plane of a post processing layer used to render
- * HLCDC composition into memory.
+ * HLCDC composition पूर्णांकo memory.
  *
  * @desc: layer description
- * @regmap: pointer to the HLCDC regmap
+ * @regmap: poपूर्णांकer to the HLCDC regmap
  */
-struct atmel_hlcdc_layer {
-	const struct atmel_hlcdc_layer_desc *desc;
-	struct regmap *regmap;
-};
+काष्ठा aपंचांगel_hlcdc_layer अणु
+	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc;
+	काष्ठा regmap *regmap;
+पूर्ण;
 
 /**
- * Atmel HLCDC Plane.
+ * Aपंचांगel HLCDC Plane.
  *
- * @base: base DRM plane structure
- * @layer: HLCDC layer structure
- * @properties: pointer to the property definitions structure
+ * @base: base DRM plane काष्ठाure
+ * @layer: HLCDC layer काष्ठाure
+ * @properties: poपूर्णांकer to the property definitions काष्ठाure
  */
-struct atmel_hlcdc_plane {
-	struct drm_plane base;
-	struct atmel_hlcdc_layer layer;
-};
+काष्ठा aपंचांगel_hlcdc_plane अणु
+	काष्ठा drm_plane base;
+	काष्ठा aपंचांगel_hlcdc_layer layer;
+पूर्ण;
 
-static inline struct atmel_hlcdc_plane *
-drm_plane_to_atmel_hlcdc_plane(struct drm_plane *p)
-{
-	return container_of(p, struct atmel_hlcdc_plane, base);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_hlcdc_plane *
+drm_plane_to_aपंचांगel_hlcdc_plane(काष्ठा drm_plane *p)
+अणु
+	वापस container_of(p, काष्ठा aपंचांगel_hlcdc_plane, base);
+पूर्ण
 
-static inline struct atmel_hlcdc_plane *
-atmel_hlcdc_layer_to_plane(struct atmel_hlcdc_layer *layer)
-{
-	return container_of(layer, struct atmel_hlcdc_plane, layer);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_hlcdc_plane *
+aपंचांगel_hlcdc_layer_to_plane(काष्ठा aपंचांगel_hlcdc_layer *layer)
+अणु
+	वापस container_of(layer, काष्ठा aपंचांगel_hlcdc_plane, layer);
+पूर्ण
 
 /**
- * Atmel HLCDC Display Controller description structure.
+ * Aपंचांगel HLCDC Display Controller description काष्ठाure.
  *
- * This structure describes the HLCDC IP capabilities and depends on the
- * HLCDC IP version (or Atmel SoC family).
+ * This काष्ठाure describes the HLCDC IP capabilities and depends on the
+ * HLCDC IP version (or Aपंचांगel SoC family).
  *
  * @min_width: minimum width supported by the Display Controller
  * @min_height: minimum height supported by the Display Controller
@@ -301,116 +302,116 @@ atmel_hlcdc_layer_to_plane(struct atmel_hlcdc_layer *layer)
  * @max_spw: maximum vertical/horizontal pulse width
  * @max_vpw: maximum vertical back/front porch width
  * @max_hpw: maximum horizontal back/front porch width
- * @conflicting_output_formats: true if RGBXXX output formats conflict with
+ * @conflicting_output_क्रमmats: true अगर RGBXXX output क्रमmats conflict with
  *				each other.
- * @fixed_clksrc: true if clock source is fixed
+ * @fixed_clksrc: true अगर घड़ी source is fixed
  * @layers: a layer description table describing available layers
  * @nlayers: layer description table size
  */
-struct atmel_hlcdc_dc_desc {
-	int min_width;
-	int min_height;
-	int max_width;
-	int max_height;
-	int max_spw;
-	int max_vpw;
-	int max_hpw;
-	bool conflicting_output_formats;
+काष्ठा aपंचांगel_hlcdc_dc_desc अणु
+	पूर्णांक min_width;
+	पूर्णांक min_height;
+	पूर्णांक max_width;
+	पूर्णांक max_height;
+	पूर्णांक max_spw;
+	पूर्णांक max_vpw;
+	पूर्णांक max_hpw;
+	bool conflicting_output_क्रमmats;
 	bool fixed_clksrc;
-	const struct atmel_hlcdc_layer_desc *layers;
-	int nlayers;
-};
+	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *layers;
+	पूर्णांक nlayers;
+पूर्ण;
 
 /**
- * Atmel HLCDC Display Controller.
+ * Aपंचांगel HLCDC Display Controller.
  *
  * @desc: HLCDC Display Controller description
  * @dscrpool: DMA coherent pool used to allocate DMA descriptors
- * @hlcdc: pointer to the atmel_hlcdc structure provided by the MFD device
+ * @hlcdc: poपूर्णांकer to the aपंचांगel_hlcdc काष्ठाure provided by the MFD device
  * @fbdev: framebuffer device attached to the Display Controller
  * @crtc: CRTC provided by the display controller
  * @planes: instantiated planes
  * @layers: active HLCDC layers
  * @suspend: used to store the HLCDC state when entering suspend
  */
-struct atmel_hlcdc_dc {
-	const struct atmel_hlcdc_dc_desc *desc;
-	struct dma_pool *dscrpool;
-	struct atmel_hlcdc *hlcdc;
-	struct drm_crtc *crtc;
-	struct atmel_hlcdc_layer *layers[ATMEL_HLCDC_MAX_LAYERS];
-	struct {
+काष्ठा aपंचांगel_hlcdc_dc अणु
+	स्थिर काष्ठा aपंचांगel_hlcdc_dc_desc *desc;
+	काष्ठा dma_pool *dscrpool;
+	काष्ठा aपंचांगel_hlcdc *hlcdc;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा aपंचांगel_hlcdc_layer *layers[ATMEL_HLCDC_MAX_LAYERS];
+	काष्ठा अणु
 		u32 imr;
-		struct drm_atomic_state *state;
-	} suspend;
-};
+		काष्ठा drm_atomic_state *state;
+	पूर्ण suspend;
+पूर्ण;
 
-extern struct atmel_hlcdc_formats atmel_hlcdc_plane_rgb_formats;
-extern struct atmel_hlcdc_formats atmel_hlcdc_plane_rgb_and_yuv_formats;
+बाह्य काष्ठा aपंचांगel_hlcdc_क्रमmats aपंचांगel_hlcdc_plane_rgb_क्रमmats;
+बाह्य काष्ठा aपंचांगel_hlcdc_क्रमmats aपंचांगel_hlcdc_plane_rgb_and_yuv_क्रमmats;
 
-static inline void atmel_hlcdc_layer_write_reg(struct atmel_hlcdc_layer *layer,
-					       unsigned int reg, u32 val)
-{
-	regmap_write(layer->regmap, layer->desc->regs_offset + reg, val);
-}
+अटल अंतरभूत व्योम aपंचांगel_hlcdc_layer_ग_लिखो_reg(काष्ठा aपंचांगel_hlcdc_layer *layer,
+					       अचिन्हित पूर्णांक reg, u32 val)
+अणु
+	regmap_ग_लिखो(layer->regmap, layer->desc->regs_offset + reg, val);
+पूर्ण
 
-static inline u32 atmel_hlcdc_layer_read_reg(struct atmel_hlcdc_layer *layer,
-					     unsigned int reg)
-{
+अटल अंतरभूत u32 aपंचांगel_hlcdc_layer_पढ़ो_reg(काष्ठा aपंचांगel_hlcdc_layer *layer,
+					     अचिन्हित पूर्णांक reg)
+अणु
 	u32 val;
 
-	regmap_read(layer->regmap, layer->desc->regs_offset + reg, &val);
+	regmap_पढ़ो(layer->regmap, layer->desc->regs_offset + reg, &val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void atmel_hlcdc_layer_write_cfg(struct atmel_hlcdc_layer *layer,
-					       unsigned int cfgid, u32 val)
-{
-	atmel_hlcdc_layer_write_reg(layer,
+अटल अंतरभूत व्योम aपंचांगel_hlcdc_layer_ग_लिखो_cfg(काष्ठा aपंचांगel_hlcdc_layer *layer,
+					       अचिन्हित पूर्णांक cfgid, u32 val)
+अणु
+	aपंचांगel_hlcdc_layer_ग_लिखो_reg(layer,
 				    layer->desc->cfgs_offset +
-				    (cfgid * sizeof(u32)), val);
-}
+				    (cfgid * माप(u32)), val);
+पूर्ण
 
-static inline u32 atmel_hlcdc_layer_read_cfg(struct atmel_hlcdc_layer *layer,
-					     unsigned int cfgid)
-{
-	return atmel_hlcdc_layer_read_reg(layer,
+अटल अंतरभूत u32 aपंचांगel_hlcdc_layer_पढ़ो_cfg(काष्ठा aपंचांगel_hlcdc_layer *layer,
+					     अचिन्हित पूर्णांक cfgid)
+अणु
+	वापस aपंचांगel_hlcdc_layer_पढ़ो_reg(layer,
 					  layer->desc->cfgs_offset +
-					  (cfgid * sizeof(u32)));
-}
+					  (cfgid * माप(u32)));
+पूर्ण
 
-static inline void atmel_hlcdc_layer_write_clut(struct atmel_hlcdc_layer *layer,
-						unsigned int c, u32 val)
-{
-	regmap_write(layer->regmap,
-		     layer->desc->clut_offset + c * sizeof(u32),
+अटल अंतरभूत व्योम aपंचांगel_hlcdc_layer_ग_लिखो_clut(काष्ठा aपंचांगel_hlcdc_layer *layer,
+						अचिन्हित पूर्णांक c, u32 val)
+अणु
+	regmap_ग_लिखो(layer->regmap,
+		     layer->desc->clut_offset + c * माप(u32),
 		     val);
-}
+पूर्ण
 
-static inline void atmel_hlcdc_layer_init(struct atmel_hlcdc_layer *layer,
-				const struct atmel_hlcdc_layer_desc *desc,
-				struct regmap *regmap)
-{
+अटल अंतरभूत व्योम aपंचांगel_hlcdc_layer_init(काष्ठा aपंचांगel_hlcdc_layer *layer,
+				स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc,
+				काष्ठा regmap *regmap)
+अणु
 	layer->desc = desc;
 	layer->regmap = regmap;
-}
+पूर्ण
 
-enum drm_mode_status
-atmel_hlcdc_dc_mode_valid(struct atmel_hlcdc_dc *dc,
-			  const struct drm_display_mode *mode);
+क्रमागत drm_mode_status
+aपंचांगel_hlcdc_dc_mode_valid(काष्ठा aपंचांगel_hlcdc_dc *dc,
+			  स्थिर काष्ठा drm_display_mode *mode);
 
-int atmel_hlcdc_create_planes(struct drm_device *dev);
-void atmel_hlcdc_plane_irq(struct atmel_hlcdc_plane *plane);
+पूर्णांक aपंचांगel_hlcdc_create_planes(काष्ठा drm_device *dev);
+व्योम aपंचांगel_hlcdc_plane_irq(काष्ठा aपंचांगel_hlcdc_plane *plane);
 
-int atmel_hlcdc_plane_prepare_disc_area(struct drm_crtc_state *c_state);
-int atmel_hlcdc_plane_prepare_ahb_routing(struct drm_crtc_state *c_state);
+पूर्णांक aपंचांगel_hlcdc_plane_prepare_disc_area(काष्ठा drm_crtc_state *c_state);
+पूर्णांक aपंचांगel_hlcdc_plane_prepare_ahb_routing(काष्ठा drm_crtc_state *c_state);
 
-void atmel_hlcdc_crtc_irq(struct drm_crtc *c);
+व्योम aपंचांगel_hlcdc_crtc_irq(काष्ठा drm_crtc *c);
 
-int atmel_hlcdc_crtc_create(struct drm_device *dev);
+पूर्णांक aपंचांगel_hlcdc_crtc_create(काष्ठा drm_device *dev);
 
-int atmel_hlcdc_create_outputs(struct drm_device *dev);
-int atmel_hlcdc_encoder_get_bus_fmt(struct drm_encoder *encoder);
+पूर्णांक aपंचांगel_hlcdc_create_outमाला_दो(काष्ठा drm_device *dev);
+पूर्णांक aपंचांगel_hlcdc_encoder_get_bus_fmt(काष्ठा drm_encoder *encoder);
 
-#endif /* DRM_ATMEL_HLCDC_H */
+#पूर्ण_अगर /* DRM_ATMEL_HLCDC_H */

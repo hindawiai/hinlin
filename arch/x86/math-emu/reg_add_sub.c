@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*---------------------------------------------------------------------------+
  |  reg_add_sub.c                                                            |
  |                                                                           |
- | Functions to add or subtract two registers and put the result in a third. |
+ | Functions to add or subtract two रेजिस्टरs and put the result in a third. |
  |                                                                           |
  | Copyright (C) 1992,1993,1997                                              |
  |                  W. Metzenthen, 22 Parker St, Ormond, Vic 3163, Australia |
@@ -14,96 +15,96 @@
 /*---------------------------------------------------------------------------+
  |  For each function, the destination may be any FPU_REG, including one of  |
  | the source FPU_REGs.                                                      |
- |  Each function returns 0 if the answer is o.k., otherwise a non-zero      |
- | value is returned, indicating either an exception condition or an         |
- | internal error.                                                           |
+ |  Each function वापसs 0 अगर the answer is o.k., otherwise a non-zero      |
+ | value is वापसed, indicating either an exception condition or an         |
+ | पूर्णांकernal error.                                                           |
  +---------------------------------------------------------------------------*/
 
-#include "exception.h"
-#include "reg_constant.h"
-#include "fpu_emu.h"
-#include "control_w.h"
-#include "fpu_system.h"
+#समावेश "exception.h"
+#समावेश "reg_constant.h"
+#समावेश "fpu_emu.h"
+#समावेश "control_w.h"
+#समावेश "fpu_system.h"
 
-static
-int add_sub_specials(FPU_REG const *a, u_char taga, u_char signa,
-		     FPU_REG const *b, u_char tagb, u_char signb,
-		     FPU_REG * dest, int deststnr, int control_w);
+अटल
+पूर्णांक add_sub_specials(FPU_REG स्थिर *a, u_अक्षर taga, u_अक्षर signa,
+		     FPU_REG स्थिर *b, u_अक्षर tagb, u_अक्षर signb,
+		     FPU_REG * dest, पूर्णांक deststnr, पूर्णांक control_w);
 
 /*
   Operates on st(0) and st(n), or on st(0) and temporary data.
   The destination must be one of the source st(x).
   */
-int FPU_add(FPU_REG const *b, u_char tagb, int deststnr, int control_w)
-{
+पूर्णांक FPU_add(FPU_REG स्थिर *b, u_अक्षर tagb, पूर्णांक deststnr, पूर्णांक control_w)
+अणु
 	FPU_REG *a = &st(0);
 	FPU_REG *dest = &st(deststnr);
-	u_char signb = getsign(b);
-	u_char taga = FPU_gettag0();
-	u_char signa = getsign(a);
-	u_char saved_sign = getsign(dest);
-	int diff, tag, expa, expb;
+	u_अक्षर signb = माला_लोign(b);
+	u_अक्षर taga = FPU_gettag0();
+	u_अक्षर signa = माला_लोign(a);
+	u_अक्षर saved_sign = माला_लोign(dest);
+	पूर्णांक dअगरf, tag, expa, expb;
 
-	if (!(taga | tagb)) {
+	अगर (!(taga | tagb)) अणु
 		expa = exponent(a);
 		expb = exponent(b);
 
 	      valid_add:
-		/* Both registers are valid */
-		if (!(signa ^ signb)) {
+		/* Both रेजिस्टरs are valid */
+		अगर (!(signa ^ signb)) अणु
 			/* signs are the same */
 			tag =
 			    FPU_u_add(a, b, dest, control_w, signa, expa, expb);
-		} else {
-			/* The signs are different, so do a subtraction */
-			diff = expa - expb;
-			if (!diff) {
-				diff = a->sigh - b->sigh;	/* This works only if the ms bits
+		पूर्ण अन्यथा अणु
+			/* The signs are dअगरferent, so करो a subtraction */
+			dअगरf = expa - expb;
+			अगर (!dअगरf) अणु
+				dअगरf = a->sigh - b->sigh;	/* This works only अगर the ms bits
 								   are identical. */
-				if (!diff) {
-					diff = a->sigl > b->sigl;
-					if (!diff)
-						diff = -(a->sigl < b->sigl);
-				}
-			}
+				अगर (!dअगरf) अणु
+					dअगरf = a->sigl > b->sigl;
+					अगर (!dअगरf)
+						dअगरf = -(a->sigl < b->sigl);
+				पूर्ण
+			पूर्ण
 
-			if (diff > 0) {
+			अगर (dअगरf > 0) अणु
 				tag =
 				    FPU_u_sub(a, b, dest, control_w, signa,
 					      expa, expb);
-			} else if (diff < 0) {
+			पूर्ण अन्यथा अगर (dअगरf < 0) अणु
 				tag =
 				    FPU_u_sub(b, a, dest, control_w, signb,
 					      expb, expa);
-			} else {
+			पूर्ण अन्यथा अणु
 				FPU_copy_to_regi(&CONST_Z, TAG_Zero, deststnr);
 				/* sign depends upon rounding mode */
 				setsign(dest, ((control_w & CW_RC) != RC_DOWN)
 					? SIGN_POS : SIGN_NEG);
-				return TAG_Zero;
-			}
-		}
+				वापस TAG_Zero;
+			पूर्ण
+		पूर्ण
 
-		if (tag < 0) {
+		अगर (tag < 0) अणु
 			setsign(dest, saved_sign);
-			return tag;
-		}
+			वापस tag;
+		पूर्ण
 		FPU_settagi(deststnr, tag);
-		return tag;
-	}
+		वापस tag;
+	पूर्ण
 
-	if (taga == TAG_Special)
+	अगर (taga == TAG_Special)
 		taga = FPU_Special(a);
-	if (tagb == TAG_Special)
+	अगर (tagb == TAG_Special)
 		tagb = FPU_Special(b);
 
-	if (((taga == TAG_Valid) && (tagb == TW_Denormal))
+	अगर (((taga == TAG_Valid) && (tagb == TW_Denormal))
 	    || ((taga == TW_Denormal) && (tagb == TAG_Valid))
-	    || ((taga == TW_Denormal) && (tagb == TW_Denormal))) {
+	    || ((taga == TW_Denormal) && (tagb == TW_Denormal))) अणु
 		FPU_REG x, y;
 
-		if (denormal_operand() < 0)
-			return FPU_Exception;
+		अगर (denormal_opeअक्रम() < 0)
+			वापस FPU_Exception;
 
 		FPU_to_exp16(a, &x);
 		FPU_to_exp16(b, &y);
@@ -111,130 +112,130 @@ int FPU_add(FPU_REG const *b, u_char tagb, int deststnr, int control_w)
 		b = &y;
 		expa = exponent16(a);
 		expb = exponent16(b);
-		goto valid_add;
-	}
+		जाओ valid_add;
+	पूर्ण
 
-	if ((taga == TW_NaN) || (tagb == TW_NaN)) {
-		if (deststnr == 0)
-			return real_2op_NaN(b, tagb, deststnr, a);
-		else
-			return real_2op_NaN(a, taga, deststnr, a);
-	}
+	अगर ((taga == TW_NaN) || (tagb == TW_NaN)) अणु
+		अगर (deststnr == 0)
+			वापस real_2op_NaN(b, tagb, deststnr, a);
+		अन्यथा
+			वापस real_2op_NaN(a, taga, deststnr, a);
+	पूर्ण
 
-	return add_sub_specials(a, taga, signa, b, tagb, signb,
+	वापस add_sub_specials(a, taga, signa, b, tagb, signb,
 				dest, deststnr, control_w);
-}
+पूर्ण
 
 /* Subtract b from a.  (a-b) -> dest */
-int FPU_sub(int flags, int rm, int control_w)
-{
-	FPU_REG const *a, *b;
+पूर्णांक FPU_sub(पूर्णांक flags, पूर्णांक rm, पूर्णांक control_w)
+अणु
+	FPU_REG स्थिर *a, *b;
 	FPU_REG *dest;
-	u_char taga, tagb, signa, signb, saved_sign, sign;
-	int diff, tag = 0, expa, expb, deststnr;
+	u_अक्षर taga, tagb, signa, signb, saved_sign, sign;
+	पूर्णांक dअगरf, tag = 0, expa, expb, deststnr;
 
 	a = &st(0);
 	taga = FPU_gettag0();
 
 	deststnr = 0;
-	if (flags & LOADED) {
+	अगर (flags & LOADED) अणु
 		b = (FPU_REG *) rm;
 		tagb = flags & 0x0f;
-	} else {
+	पूर्ण अन्यथा अणु
 		b = &st(rm);
 		tagb = FPU_gettagi(rm);
 
-		if (flags & DEST_RM)
+		अगर (flags & DEST_RM)
 			deststnr = rm;
-	}
+	पूर्ण
 
-	signa = getsign(a);
-	signb = getsign(b);
+	signa = माला_लोign(a);
+	signb = माला_लोign(b);
 
-	if (flags & REV) {
+	अगर (flags & REV) अणु
 		signa ^= SIGN_NEG;
 		signb ^= SIGN_NEG;
-	}
+	पूर्ण
 
 	dest = &st(deststnr);
-	saved_sign = getsign(dest);
+	saved_sign = माला_लोign(dest);
 
-	if (!(taga | tagb)) {
+	अगर (!(taga | tagb)) अणु
 		expa = exponent(a);
 		expb = exponent(b);
 
 	      valid_subtract:
-		/* Both registers are valid */
+		/* Both रेजिस्टरs are valid */
 
-		diff = expa - expb;
+		dअगरf = expa - expb;
 
-		if (!diff) {
-			diff = a->sigh - b->sigh;	/* Works only if ms bits are identical */
-			if (!diff) {
-				diff = a->sigl > b->sigl;
-				if (!diff)
-					diff = -(a->sigl < b->sigl);
-			}
-		}
+		अगर (!dअगरf) अणु
+			dअगरf = a->sigh - b->sigh;	/* Works only अगर ms bits are identical */
+			अगर (!dअगरf) अणु
+				dअगरf = a->sigl > b->sigl;
+				अगर (!dअगरf)
+					dअगरf = -(a->sigl < b->sigl);
+			पूर्ण
+		पूर्ण
 
-		switch ((((int)signa) * 2 + signb) / SIGN_NEG) {
-		case 0:	/* P - P */
-		case 3:	/* N - N */
-			if (diff > 0) {
+		चयन ((((पूर्णांक)signa) * 2 + signb) / SIGN_NEG) अणु
+		हाल 0:	/* P - P */
+		हाल 3:	/* N - N */
+			अगर (dअगरf > 0) अणु
 				/* |a| > |b| */
 				tag =
 				    FPU_u_sub(a, b, dest, control_w, signa,
 					      expa, expb);
-			} else if (diff == 0) {
+			पूर्ण अन्यथा अगर (dअगरf == 0) अणु
 				FPU_copy_to_regi(&CONST_Z, TAG_Zero, deststnr);
 
 				/* sign depends upon rounding mode */
 				setsign(dest, ((control_w & CW_RC) != RC_DOWN)
 					? SIGN_POS : SIGN_NEG);
-				return TAG_Zero;
-			} else {
+				वापस TAG_Zero;
+			पूर्ण अन्यथा अणु
 				sign = signa ^ SIGN_NEG;
 				tag =
 				    FPU_u_sub(b, a, dest, control_w, sign, expb,
 					      expa);
-			}
-			break;
-		case 1:	/* P - N */
+			पूर्ण
+			अवरोध;
+		हाल 1:	/* P - N */
 			tag =
 			    FPU_u_add(a, b, dest, control_w, SIGN_POS, expa,
 				      expb);
-			break;
-		case 2:	/* N - P */
+			अवरोध;
+		हाल 2:	/* N - P */
 			tag =
 			    FPU_u_add(a, b, dest, control_w, SIGN_NEG, expa,
 				      expb);
-			break;
-#ifdef PARANOID
-		default:
+			अवरोध;
+#अगर_घोषित PARANOID
+		शेष:
 			EXCEPTION(EX_INTERNAL | 0x111);
-			return -1;
-#endif
-		}
-		if (tag < 0) {
+			वापस -1;
+#पूर्ण_अगर
+		पूर्ण
+		अगर (tag < 0) अणु
 			setsign(dest, saved_sign);
-			return tag;
-		}
+			वापस tag;
+		पूर्ण
 		FPU_settagi(deststnr, tag);
-		return tag;
-	}
+		वापस tag;
+	पूर्ण
 
-	if (taga == TAG_Special)
+	अगर (taga == TAG_Special)
 		taga = FPU_Special(a);
-	if (tagb == TAG_Special)
+	अगर (tagb == TAG_Special)
 		tagb = FPU_Special(b);
 
-	if (((taga == TAG_Valid) && (tagb == TW_Denormal))
+	अगर (((taga == TAG_Valid) && (tagb == TW_Denormal))
 	    || ((taga == TW_Denormal) && (tagb == TAG_Valid))
-	    || ((taga == TW_Denormal) && (tagb == TW_Denormal))) {
+	    || ((taga == TW_Denormal) && (tagb == TW_Denormal))) अणु
 		FPU_REG x, y;
 
-		if (denormal_operand() < 0)
-			return FPU_Exception;
+		अगर (denormal_opeअक्रम() < 0)
+			वापस FPU_Exception;
 
 		FPU_to_exp16(a, &x);
 		FPU_to_exp16(b, &y);
@@ -243,92 +244,92 @@ int FPU_sub(int flags, int rm, int control_w)
 		expa = exponent16(a);
 		expb = exponent16(b);
 
-		goto valid_subtract;
-	}
+		जाओ valid_subtract;
+	पूर्ण
 
-	if ((taga == TW_NaN) || (tagb == TW_NaN)) {
-		FPU_REG const *d1, *d2;
-		if (flags & REV) {
+	अगर ((taga == TW_NaN) || (tagb == TW_NaN)) अणु
+		FPU_REG स्थिर *d1, *d2;
+		अगर (flags & REV) अणु
 			d1 = b;
 			d2 = a;
-		} else {
+		पूर्ण अन्यथा अणु
 			d1 = a;
 			d2 = b;
-		}
-		if (flags & LOADED)
-			return real_2op_NaN(b, tagb, deststnr, d1);
-		if (flags & DEST_RM)
-			return real_2op_NaN(a, taga, deststnr, d2);
-		else
-			return real_2op_NaN(b, tagb, deststnr, d2);
-	}
+		पूर्ण
+		अगर (flags & LOADED)
+			वापस real_2op_NaN(b, tagb, deststnr, d1);
+		अगर (flags & DEST_RM)
+			वापस real_2op_NaN(a, taga, deststnr, d2);
+		अन्यथा
+			वापस real_2op_NaN(b, tagb, deststnr, d2);
+	पूर्ण
 
-	return add_sub_specials(a, taga, signa, b, tagb, signb ^ SIGN_NEG,
+	वापस add_sub_specials(a, taga, signa, b, tagb, signb ^ SIGN_NEG,
 				dest, deststnr, control_w);
-}
+पूर्ण
 
-static
-int add_sub_specials(FPU_REG const *a, u_char taga, u_char signa,
-		     FPU_REG const *b, u_char tagb, u_char signb,
-		     FPU_REG * dest, int deststnr, int control_w)
-{
-	if (((taga == TW_Denormal) || (tagb == TW_Denormal))
-	    && (denormal_operand() < 0))
-		return FPU_Exception;
+अटल
+पूर्णांक add_sub_specials(FPU_REG स्थिर *a, u_अक्षर taga, u_अक्षर signa,
+		     FPU_REG स्थिर *b, u_अक्षर tagb, u_अक्षर signb,
+		     FPU_REG * dest, पूर्णांक deststnr, पूर्णांक control_w)
+अणु
+	अगर (((taga == TW_Denormal) || (tagb == TW_Denormal))
+	    && (denormal_opeअक्रम() < 0))
+		वापस FPU_Exception;
 
-	if (taga == TAG_Zero) {
-		if (tagb == TAG_Zero) {
+	अगर (taga == TAG_Zero) अणु
+		अगर (tagb == TAG_Zero) अणु
 			/* Both are zero, result will be zero. */
-			u_char different_signs = signa ^ signb;
+			u_अक्षर dअगरferent_signs = signa ^ signb;
 
 			FPU_copy_to_regi(a, TAG_Zero, deststnr);
-			if (different_signs) {
-				/* Signs are different. */
+			अगर (dअगरferent_signs) अणु
+				/* Signs are dअगरferent. */
 				/* Sign of answer depends upon rounding mode. */
 				setsign(dest, ((control_w & CW_RC) != RC_DOWN)
 					? SIGN_POS : SIGN_NEG);
-			} else
-				setsign(dest, signa);	/* signa may differ from the sign of a. */
-			return TAG_Zero;
-		} else {
+			पूर्ण अन्यथा
+				setsign(dest, signa);	/* signa may dअगरfer from the sign of a. */
+			वापस TAG_Zero;
+		पूर्ण अन्यथा अणु
 			reg_copy(b, dest);
-			if ((tagb == TW_Denormal) && (b->sigh & 0x80000000)) {
-				/* A pseudoDenormal, convert it. */
+			अगर ((tagb == TW_Denormal) && (b->sigh & 0x80000000)) अणु
+				/* A pseuकरोDenormal, convert it. */
 				addexponent(dest, 1);
 				tagb = TAG_Valid;
-			} else if (tagb > TAG_Empty)
+			पूर्ण अन्यथा अगर (tagb > TAG_Empty)
 				tagb = TAG_Special;
-			setsign(dest, signb);	/* signb may differ from the sign of b. */
+			setsign(dest, signb);	/* signb may dअगरfer from the sign of b. */
 			FPU_settagi(deststnr, tagb);
-			return tagb;
-		}
-	} else if (tagb == TAG_Zero) {
+			वापस tagb;
+		पूर्ण
+	पूर्ण अन्यथा अगर (tagb == TAG_Zero) अणु
 		reg_copy(a, dest);
-		if ((taga == TW_Denormal) && (a->sigh & 0x80000000)) {
-			/* A pseudoDenormal */
+		अगर ((taga == TW_Denormal) && (a->sigh & 0x80000000)) अणु
+			/* A pseuकरोDenormal */
 			addexponent(dest, 1);
 			taga = TAG_Valid;
-		} else if (taga > TAG_Empty)
+		पूर्ण अन्यथा अगर (taga > TAG_Empty)
 			taga = TAG_Special;
-		setsign(dest, signa);	/* signa may differ from the sign of a. */
+		setsign(dest, signa);	/* signa may dअगरfer from the sign of a. */
 		FPU_settagi(deststnr, taga);
-		return taga;
-	} else if (taga == TW_Infinity) {
-		if ((tagb != TW_Infinity) || (signa == signb)) {
+		वापस taga;
+	पूर्ण अन्यथा अगर (taga == TW_Infinity) अणु
+		अगर ((tagb != TW_Infinity) || (signa == signb)) अणु
 			FPU_copy_to_regi(a, TAG_Special, deststnr);
-			setsign(dest, signa);	/* signa may differ from the sign of a. */
-			return taga;
-		}
+			setsign(dest, signa);	/* signa may dअगरfer from the sign of a. */
+			वापस taga;
+		पूर्ण
 		/* Infinity-Infinity is undefined. */
-		return arith_invalid(deststnr);
-	} else if (tagb == TW_Infinity) {
+		वापस arith_invalid(deststnr);
+	पूर्ण अन्यथा अगर (tagb == TW_Infinity) अणु
 		FPU_copy_to_regi(b, TAG_Special, deststnr);
-		setsign(dest, signb);	/* signb may differ from the sign of b. */
-		return tagb;
-	}
-#ifdef PARANOID
+		setsign(dest, signb);	/* signb may dअगरfer from the sign of b. */
+		वापस tagb;
+	पूर्ण
+#अगर_घोषित PARANOID
 	EXCEPTION(EX_INTERNAL | 0x101);
-#endif
+#पूर्ण_अगर
 
-	return FPU_Exception;
-}
+	वापस FPU_Exception;
+पूर्ण

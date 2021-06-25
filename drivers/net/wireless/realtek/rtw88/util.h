@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
-#ifndef __RTW_UTIL_H__
-#define __RTW_UTIL_H__
+#अगर_अघोषित __RTW_UTIL_H__
+#घोषणा __RTW_UTIL_H__
 
-struct rtw_dev;
+काष्ठा rtw_dev;
 
-#define rtw_iterate_vifs(rtwdev, iterator, data)                               \
-	ieee80211_iterate_active_interfaces(rtwdev->hw,                        \
+#घोषणा rtw_iterate_vअगरs(rtwdev, iterator, data)                               \
+	ieee80211_iterate_active_पूर्णांकerfaces(rtwdev->hw,                        \
 			IEEE80211_IFACE_ITER_NORMAL, iterator, data)
-#define rtw_iterate_vifs_atomic(rtwdev, iterator, data)                        \
-	ieee80211_iterate_active_interfaces_atomic(rtwdev->hw,                 \
+#घोषणा rtw_iterate_vअगरs_atomic(rtwdev, iterator, data)                        \
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(rtwdev->hw,                 \
 			IEEE80211_IFACE_ITER_NORMAL, iterator, data)
-#define rtw_iterate_stas_atomic(rtwdev, iterator, data)                        \
+#घोषणा rtw_iterate_stas_atomic(rtwdev, iterator, data)                        \
 	ieee80211_iterate_stations_atomic(rtwdev->hw, iterator, data)
-#define rtw_iterate_keys(rtwdev, vif, iterator, data)			       \
-	ieee80211_iter_keys(rtwdev->hw, vif, iterator, data)
-#define rtw_iterate_keys_rcu(rtwdev, vif, iterator, data)		       \
-	ieee80211_iter_keys_rcu((rtwdev)->hw, vif, iterator, data)
+#घोषणा rtw_iterate_keys(rtwdev, vअगर, iterator, data)			       \
+	ieee80211_iter_keys(rtwdev->hw, vअगर, iterator, data)
+#घोषणा rtw_iterate_keys_rcu(rtwdev, vअगर, iterator, data)		       \
+	ieee80211_iter_keys_rcu((rtwdev)->hw, vअगर, iterator, data)
 
-static inline u8 *get_hdr_bssid(struct ieee80211_hdr *hdr)
-{
+अटल अंतरभूत u8 *get_hdr_bssid(काष्ठा ieee80211_hdr *hdr)
+अणु
 	__le16 fc = hdr->frame_control;
 	u8 *bssid;
 
-	if (ieee80211_has_tods(fc))
+	अगर (ieee80211_has_tods(fc))
 		bssid = hdr->addr1;
-	else if (ieee80211_has_fromds(fc))
+	अन्यथा अगर (ieee80211_has_fromds(fc))
 		bssid = hdr->addr2;
-	else
+	अन्यथा
 		bssid = hdr->addr3;
 
-	return bssid;
-}
+	वापस bssid;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * sysfs.c - sysfs support implementation.
  *
@@ -8,323 +9,323 @@
  * Written by Vyacheslav Dubeyko <Vyacheslav.Dubeyko@hgst.com>
  */
 
-#include <linux/kobject.h>
+#समावेश <linux/kobject.h>
 
-#include "nilfs.h"
-#include "mdt.h"
-#include "sufile.h"
-#include "cpfile.h"
-#include "sysfs.h"
+#समावेश "nilfs.h"
+#समावेश "mdt.h"
+#समावेश "sufile.h"
+#समावेश "cpfile.h"
+#समावेश "sysfs.h"
 
 /* /sys/fs/<nilfs>/ */
-static struct kset *nilfs_kset;
+अटल काष्ठा kset *nilfs_kset;
 
-#define NILFS_SHOW_TIME(time_t_val, buf) ({ \
-		struct tm res; \
-		int count = 0; \
-		time64_to_tm(time_t_val, 0, &res); \
-		res.tm_year += 1900; \
-		res.tm_mon += 1; \
-		count = scnprintf(buf, PAGE_SIZE, \
+#घोषणा NILFS_SHOW_TIME(समय_प्रकार_val, buf) (अणु \
+		काष्ठा पंचांग res; \
+		पूर्णांक count = 0; \
+		समय64_to_पंचांग(समय_प्रकार_val, 0, &res); \
+		res.पंचांग_year += 1900; \
+		res.पंचांग_mon += 1; \
+		count = scnम_लिखो(buf, PAGE_SIZE, \
 				    "%ld-%.2d-%.2d %.2d:%.2d:%.2d\n", \
-				    res.tm_year, res.tm_mon, res.tm_mday, \
-				    res.tm_hour, res.tm_min, res.tm_sec);\
+				    res.पंचांग_year, res.पंचांग_mon, res.पंचांग_mday, \
+				    res.पंचांग_hour, res.पंचांग_min, res.पंचांग_sec);\
 		count; \
-})
+पूर्ण)
 
-#define NILFS_DEV_INT_GROUP_OPS(name, parent_name) \
-static ssize_t nilfs_##name##_attr_show(struct kobject *kobj, \
-					struct attribute *attr, char *buf) \
-{ \
-	struct the_nilfs *nilfs = container_of(kobj->parent, \
-						struct the_nilfs, \
+#घोषणा NILFS_DEV_INT_GROUP_OPS(name, parent_name) \
+अटल sमाप_प्रकार nilfs_##name##_attr_show(काष्ठा kobject *kobj, \
+					काष्ठा attribute *attr, अक्षर *buf) \
+अणु \
+	काष्ठा the_nilfs *nilfs = container_of(kobj->parent, \
+						काष्ठा the_nilfs, \
 						ns_##parent_name##_kobj); \
-	struct nilfs_##name##_attr *a = container_of(attr, \
-						struct nilfs_##name##_attr, \
+	काष्ठा nilfs_##name##_attr *a = container_of(attr, \
+						काष्ठा nilfs_##name##_attr, \
 						attr); \
-	return a->show ? a->show(a, nilfs, buf) : 0; \
-} \
-static ssize_t nilfs_##name##_attr_store(struct kobject *kobj, \
-					 struct attribute *attr, \
-					 const char *buf, size_t len) \
-{ \
-	struct the_nilfs *nilfs = container_of(kobj->parent, \
-						struct the_nilfs, \
+	वापस a->show ? a->show(a, nilfs, buf) : 0; \
+पूर्ण \
+अटल sमाप_प्रकार nilfs_##name##_attr_store(काष्ठा kobject *kobj, \
+					 काष्ठा attribute *attr, \
+					 स्थिर अक्षर *buf, माप_प्रकार len) \
+अणु \
+	काष्ठा the_nilfs *nilfs = container_of(kobj->parent, \
+						काष्ठा the_nilfs, \
 						ns_##parent_name##_kobj); \
-	struct nilfs_##name##_attr *a = container_of(attr, \
-						struct nilfs_##name##_attr, \
+	काष्ठा nilfs_##name##_attr *a = container_of(attr, \
+						काष्ठा nilfs_##name##_attr, \
 						attr); \
-	return a->store ? a->store(a, nilfs, buf, len) : 0; \
-} \
-static const struct sysfs_ops nilfs_##name##_attr_ops = { \
+	वापस a->store ? a->store(a, nilfs, buf, len) : 0; \
+पूर्ण \
+अटल स्थिर काष्ठा sysfs_ops nilfs_##name##_attr_ops = अणु \
 	.show	= nilfs_##name##_attr_show, \
 	.store	= nilfs_##name##_attr_store, \
-}
+पूर्ण
 
-#define NILFS_DEV_INT_GROUP_TYPE(name, parent_name) \
-static void nilfs_##name##_attr_release(struct kobject *kobj) \
-{ \
-	struct nilfs_sysfs_##parent_name##_subgroups *subgroups; \
-	struct the_nilfs *nilfs = container_of(kobj->parent, \
-						struct the_nilfs, \
+#घोषणा NILFS_DEV_INT_GROUP_TYPE(name, parent_name) \
+अटल व्योम nilfs_##name##_attr_release(काष्ठा kobject *kobj) \
+अणु \
+	काष्ठा nilfs_sysfs_##parent_name##_subgroups *subgroups; \
+	काष्ठा the_nilfs *nilfs = container_of(kobj->parent, \
+						काष्ठा the_nilfs, \
 						ns_##parent_name##_kobj); \
 	subgroups = nilfs->ns_##parent_name##_subgroups; \
-	complete(&subgroups->sg_##name##_kobj_unregister); \
-} \
-static struct kobj_type nilfs_##name##_ktype = { \
-	.default_attrs	= nilfs_##name##_attrs, \
+	complete(&subgroups->sg_##name##_kobj_unरेजिस्टर); \
+पूर्ण \
+अटल काष्ठा kobj_type nilfs_##name##_ktype = अणु \
+	.शेष_attrs	= nilfs_##name##_attrs, \
 	.sysfs_ops	= &nilfs_##name##_attr_ops, \
 	.release	= nilfs_##name##_attr_release, \
-}
+पूर्ण
 
-#define NILFS_DEV_INT_GROUP_FNS(name, parent_name) \
-static int nilfs_sysfs_create_##name##_group(struct the_nilfs *nilfs) \
-{ \
-	struct kobject *parent; \
-	struct kobject *kobj; \
-	struct completion *kobj_unregister; \
-	struct nilfs_sysfs_##parent_name##_subgroups *subgroups; \
-	int err; \
+#घोषणा NILFS_DEV_INT_GROUP_FNS(name, parent_name) \
+अटल पूर्णांक nilfs_sysfs_create_##name##_group(काष्ठा the_nilfs *nilfs) \
+अणु \
+	काष्ठा kobject *parent; \
+	काष्ठा kobject *kobj; \
+	काष्ठा completion *kobj_unरेजिस्टर; \
+	काष्ठा nilfs_sysfs_##parent_name##_subgroups *subgroups; \
+	पूर्णांक err; \
 	subgroups = nilfs->ns_##parent_name##_subgroups; \
 	kobj = &subgroups->sg_##name##_kobj; \
-	kobj_unregister = &subgroups->sg_##name##_kobj_unregister; \
+	kobj_unरेजिस्टर = &subgroups->sg_##name##_kobj_unरेजिस्टर; \
 	parent = &nilfs->ns_##parent_name##_kobj; \
 	kobj->kset = nilfs_kset; \
-	init_completion(kobj_unregister); \
+	init_completion(kobj_unरेजिस्टर); \
 	err = kobject_init_and_add(kobj, &nilfs_##name##_ktype, parent, \
 				    #name); \
-	if (err) \
-		return err; \
-	return 0; \
-} \
-static void nilfs_sysfs_delete_##name##_group(struct the_nilfs *nilfs) \
-{ \
+	अगर (err) \
+		वापस err; \
+	वापस 0; \
+पूर्ण \
+अटल व्योम nilfs_sysfs_delete_##name##_group(काष्ठा the_nilfs *nilfs) \
+अणु \
 	kobject_del(&nilfs->ns_##parent_name##_subgroups->sg_##name##_kobj); \
-}
+पूर्ण
 
 /************************************************************************
  *                        NILFS snapshot attrs                          *
  ************************************************************************/
 
-static ssize_t
-nilfs_snapshot_inodes_count_show(struct nilfs_snapshot_attr *attr,
-				 struct nilfs_root *root, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%llu\n",
-			(unsigned long long)atomic64_read(&root->inodes_count));
-}
+अटल sमाप_प्रकार
+nilfs_snapshot_inodes_count_show(काष्ठा nilfs_snapshot_attr *attr,
+				 काष्ठा nilfs_root *root, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n",
+			(अचिन्हित दीर्घ दीर्घ)atomic64_पढ़ो(&root->inodes_count));
+पूर्ण
 
-static ssize_t
-nilfs_snapshot_blocks_count_show(struct nilfs_snapshot_attr *attr,
-				 struct nilfs_root *root, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%llu\n",
-			(unsigned long long)atomic64_read(&root->blocks_count));
-}
+अटल sमाप_प्रकार
+nilfs_snapshot_blocks_count_show(काष्ठा nilfs_snapshot_attr *attr,
+				 काष्ठा nilfs_root *root, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n",
+			(अचिन्हित दीर्घ दीर्घ)atomic64_पढ़ो(&root->blocks_count));
+पूर्ण
 
-static const char snapshot_readme_str[] =
+अटल स्थिर अक्षर snapshot_पढ़ोme_str[] =
 	"The group contains details about mounted snapshot.\n\n"
 	"(1) inodes_count\n\tshow number of inodes for snapshot.\n\n"
 	"(2) blocks_count\n\tshow number of blocks for snapshot.\n\n";
 
-static ssize_t
-nilfs_snapshot_README_show(struct nilfs_snapshot_attr *attr,
-			    struct nilfs_root *root, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, snapshot_readme_str);
-}
+अटल sमाप_प्रकार
+nilfs_snapshot_README_show(काष्ठा nilfs_snapshot_attr *attr,
+			    काष्ठा nilfs_root *root, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, snapshot_पढ़ोme_str);
+पूर्ण
 
 NILFS_SNAPSHOT_RO_ATTR(inodes_count);
 NILFS_SNAPSHOT_RO_ATTR(blocks_count);
 NILFS_SNAPSHOT_RO_ATTR(README);
 
-static struct attribute *nilfs_snapshot_attrs[] = {
+अटल काष्ठा attribute *nilfs_snapshot_attrs[] = अणु
 	NILFS_SNAPSHOT_ATTR_LIST(inodes_count),
 	NILFS_SNAPSHOT_ATTR_LIST(blocks_count),
 	NILFS_SNAPSHOT_ATTR_LIST(README),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static ssize_t nilfs_snapshot_attr_show(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	struct nilfs_root *root =
-			container_of(kobj, struct nilfs_root, snapshot_kobj);
-	struct nilfs_snapshot_attr *a =
-			container_of(attr, struct nilfs_snapshot_attr, attr);
+अटल sमाप_प्रकार nilfs_snapshot_attr_show(काष्ठा kobject *kobj,
+					काष्ठा attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nilfs_root *root =
+			container_of(kobj, काष्ठा nilfs_root, snapshot_kobj);
+	काष्ठा nilfs_snapshot_attr *a =
+			container_of(attr, काष्ठा nilfs_snapshot_attr, attr);
 
-	return a->show ? a->show(a, root, buf) : 0;
-}
+	वापस a->show ? a->show(a, root, buf) : 0;
+पूर्ण
 
-static ssize_t nilfs_snapshot_attr_store(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t len)
-{
-	struct nilfs_root *root =
-			container_of(kobj, struct nilfs_root, snapshot_kobj);
-	struct nilfs_snapshot_attr *a =
-			container_of(attr, struct nilfs_snapshot_attr, attr);
+अटल sमाप_प्रकार nilfs_snapshot_attr_store(काष्ठा kobject *kobj,
+					 काष्ठा attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा nilfs_root *root =
+			container_of(kobj, काष्ठा nilfs_root, snapshot_kobj);
+	काष्ठा nilfs_snapshot_attr *a =
+			container_of(attr, काष्ठा nilfs_snapshot_attr, attr);
 
-	return a->store ? a->store(a, root, buf, len) : 0;
-}
+	वापस a->store ? a->store(a, root, buf, len) : 0;
+पूर्ण
 
-static void nilfs_snapshot_attr_release(struct kobject *kobj)
-{
-	struct nilfs_root *root = container_of(kobj, struct nilfs_root,
+अटल व्योम nilfs_snapshot_attr_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा nilfs_root *root = container_of(kobj, काष्ठा nilfs_root,
 						snapshot_kobj);
-	complete(&root->snapshot_kobj_unregister);
-}
+	complete(&root->snapshot_kobj_unरेजिस्टर);
+पूर्ण
 
-static const struct sysfs_ops nilfs_snapshot_attr_ops = {
+अटल स्थिर काष्ठा sysfs_ops nilfs_snapshot_attr_ops = अणु
 	.show	= nilfs_snapshot_attr_show,
 	.store	= nilfs_snapshot_attr_store,
-};
+पूर्ण;
 
-static struct kobj_type nilfs_snapshot_ktype = {
-	.default_attrs	= nilfs_snapshot_attrs,
+अटल काष्ठा kobj_type nilfs_snapshot_ktype = अणु
+	.शेष_attrs	= nilfs_snapshot_attrs,
 	.sysfs_ops	= &nilfs_snapshot_attr_ops,
 	.release	= nilfs_snapshot_attr_release,
-};
+पूर्ण;
 
-int nilfs_sysfs_create_snapshot_group(struct nilfs_root *root)
-{
-	struct the_nilfs *nilfs;
-	struct kobject *parent;
-	int err;
+पूर्णांक nilfs_sysfs_create_snapshot_group(काष्ठा nilfs_root *root)
+अणु
+	काष्ठा the_nilfs *nilfs;
+	काष्ठा kobject *parent;
+	पूर्णांक err;
 
 	nilfs = root->nilfs;
 	parent = &nilfs->ns_dev_subgroups->sg_mounted_snapshots_kobj;
 	root->snapshot_kobj.kset = nilfs_kset;
-	init_completion(&root->snapshot_kobj_unregister);
+	init_completion(&root->snapshot_kobj_unरेजिस्टर);
 
-	if (root->cno == NILFS_CPTREE_CURRENT_CNO) {
+	अगर (root->cno == NILFS_CPTREE_CURRENT_CNO) अणु
 		err = kobject_init_and_add(&root->snapshot_kobj,
 					    &nilfs_snapshot_ktype,
 					    &nilfs->ns_dev_kobj,
 					    "current_checkpoint");
-	} else {
+	पूर्ण अन्यथा अणु
 		err = kobject_init_and_add(&root->snapshot_kobj,
 					    &nilfs_snapshot_ktype,
 					    parent,
 					    "%llu", root->cno);
-	}
+	पूर्ण
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void nilfs_sysfs_delete_snapshot_group(struct nilfs_root *root)
-{
+व्योम nilfs_sysfs_delete_snapshot_group(काष्ठा nilfs_root *root)
+अणु
 	kobject_del(&root->snapshot_kobj);
-}
+पूर्ण
 
 /************************************************************************
  *                    NILFS mounted snapshots attrs                     *
  ************************************************************************/
 
-static const char mounted_snapshots_readme_str[] =
+अटल स्थिर अक्षर mounted_snapshots_पढ़ोme_str[] =
 	"The mounted_snapshots group contains group for\n"
 	"every mounted snapshot.\n";
 
-static ssize_t
-nilfs_mounted_snapshots_README_show(struct nilfs_mounted_snapshots_attr *attr,
-				    struct the_nilfs *nilfs, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, mounted_snapshots_readme_str);
-}
+अटल sमाप_प्रकार
+nilfs_mounted_snapshots_README_show(काष्ठा nilfs_mounted_snapshots_attr *attr,
+				    काष्ठा the_nilfs *nilfs, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, mounted_snapshots_पढ़ोme_str);
+पूर्ण
 
 NILFS_MOUNTED_SNAPSHOTS_RO_ATTR(README);
 
-static struct attribute *nilfs_mounted_snapshots_attrs[] = {
+अटल काष्ठा attribute *nilfs_mounted_snapshots_attrs[] = अणु
 	NILFS_MOUNTED_SNAPSHOTS_ATTR_LIST(README),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 NILFS_DEV_INT_GROUP_OPS(mounted_snapshots, dev);
 NILFS_DEV_INT_GROUP_TYPE(mounted_snapshots, dev);
 NILFS_DEV_INT_GROUP_FNS(mounted_snapshots, dev);
 
 /************************************************************************
- *                      NILFS checkpoints attrs                         *
+ *                      NILFS checkpoपूर्णांकs attrs                         *
  ************************************************************************/
 
-static ssize_t
-nilfs_checkpoints_checkpoints_number_show(struct nilfs_checkpoints_attr *attr,
-					    struct the_nilfs *nilfs,
-					    char *buf)
-{
-	__u64 ncheckpoints;
-	struct nilfs_cpstat cpstat;
-	int err;
+अटल sमाप_प्रकार
+nilfs_checkpoपूर्णांकs_checkpoपूर्णांकs_number_show(काष्ठा nilfs_checkpoपूर्णांकs_attr *attr,
+					    काष्ठा the_nilfs *nilfs,
+					    अक्षर *buf)
+अणु
+	__u64 ncheckpoपूर्णांकs;
+	काष्ठा nilfs_cpstat cpstat;
+	पूर्णांक err;
 
-	down_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
 	err = nilfs_cpfile_get_stat(nilfs->ns_cpfile, &cpstat);
-	up_read(&nilfs->ns_segctor_sem);
-	if (err < 0) {
+	up_पढ़ो(&nilfs->ns_segctor_sem);
+	अगर (err < 0) अणु
 		nilfs_err(nilfs->ns_sb, "unable to get checkpoint stat: err=%d",
 			  err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	ncheckpoints = cpstat.cs_ncps;
+	ncheckpoपूर्णांकs = cpstat.cs_ncps;
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", ncheckpoints);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", ncheckpoपूर्णांकs);
+पूर्ण
 
-static ssize_t
-nilfs_checkpoints_snapshots_number_show(struct nilfs_checkpoints_attr *attr,
-					struct the_nilfs *nilfs,
-					char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_checkpoपूर्णांकs_snapshots_number_show(काष्ठा nilfs_checkpoपूर्णांकs_attr *attr,
+					काष्ठा the_nilfs *nilfs,
+					अक्षर *buf)
+अणु
 	__u64 nsnapshots;
-	struct nilfs_cpstat cpstat;
-	int err;
+	काष्ठा nilfs_cpstat cpstat;
+	पूर्णांक err;
 
-	down_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
 	err = nilfs_cpfile_get_stat(nilfs->ns_cpfile, &cpstat);
-	up_read(&nilfs->ns_segctor_sem);
-	if (err < 0) {
+	up_पढ़ो(&nilfs->ns_segctor_sem);
+	अगर (err < 0) अणु
 		nilfs_err(nilfs->ns_sb, "unable to get checkpoint stat: err=%d",
 			  err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	nsnapshots = cpstat.cs_nsss;
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", nsnapshots);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", nsnapshots);
+पूर्ण
 
-static ssize_t
-nilfs_checkpoints_last_seg_checkpoint_show(struct nilfs_checkpoints_attr *attr,
-					    struct the_nilfs *nilfs,
-					    char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_checkpoपूर्णांकs_last_seg_checkpoपूर्णांक_show(काष्ठा nilfs_checkpoपूर्णांकs_attr *attr,
+					    काष्ठा the_nilfs *nilfs,
+					    अक्षर *buf)
+अणु
 	__u64 last_cno;
 
 	spin_lock(&nilfs->ns_last_segment_lock);
 	last_cno = nilfs->ns_last_cno;
 	spin_unlock(&nilfs->ns_last_segment_lock);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", last_cno);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", last_cno);
+पूर्ण
 
-static ssize_t
-nilfs_checkpoints_next_checkpoint_show(struct nilfs_checkpoints_attr *attr,
-					struct the_nilfs *nilfs,
-					char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_checkpoपूर्णांकs_next_checkpoपूर्णांक_show(काष्ठा nilfs_checkpoपूर्णांकs_attr *attr,
+					काष्ठा the_nilfs *nilfs,
+					अक्षर *buf)
+अणु
 	__u64 cno;
 
-	down_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
 	cno = nilfs->ns_cno;
-	up_read(&nilfs->ns_segctor_sem);
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", cno);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", cno);
+पूर्ण
 
-static const char checkpoints_readme_str[] =
+अटल स्थिर अक्षर checkpoपूर्णांकs_पढ़ोme_str[] =
 	"The checkpoints group contains attributes that describe\n"
 	"details about volume's checkpoints.\n\n"
 	"(1) checkpoints_number\n\tshow number of checkpoints on volume.\n\n"
@@ -333,87 +334,87 @@ static const char checkpoints_readme_str[] =
 	"\tshow checkpoint number of the latest segment.\n\n"
 	"(4) next_checkpoint\n\tshow next checkpoint number.\n\n";
 
-static ssize_t
-nilfs_checkpoints_README_show(struct nilfs_checkpoints_attr *attr,
-				struct the_nilfs *nilfs, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, checkpoints_readme_str);
-}
+अटल sमाप_प्रकार
+nilfs_checkpoपूर्णांकs_README_show(काष्ठा nilfs_checkpoपूर्णांकs_attr *attr,
+				काष्ठा the_nilfs *nilfs, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, checkpoपूर्णांकs_पढ़ोme_str);
+पूर्ण
 
-NILFS_CHECKPOINTS_RO_ATTR(checkpoints_number);
+NILFS_CHECKPOINTS_RO_ATTR(checkpoपूर्णांकs_number);
 NILFS_CHECKPOINTS_RO_ATTR(snapshots_number);
-NILFS_CHECKPOINTS_RO_ATTR(last_seg_checkpoint);
-NILFS_CHECKPOINTS_RO_ATTR(next_checkpoint);
+NILFS_CHECKPOINTS_RO_ATTR(last_seg_checkpoपूर्णांक);
+NILFS_CHECKPOINTS_RO_ATTR(next_checkpoपूर्णांक);
 NILFS_CHECKPOINTS_RO_ATTR(README);
 
-static struct attribute *nilfs_checkpoints_attrs[] = {
-	NILFS_CHECKPOINTS_ATTR_LIST(checkpoints_number),
+अटल काष्ठा attribute *nilfs_checkpoपूर्णांकs_attrs[] = अणु
+	NILFS_CHECKPOINTS_ATTR_LIST(checkpoपूर्णांकs_number),
 	NILFS_CHECKPOINTS_ATTR_LIST(snapshots_number),
-	NILFS_CHECKPOINTS_ATTR_LIST(last_seg_checkpoint),
-	NILFS_CHECKPOINTS_ATTR_LIST(next_checkpoint),
+	NILFS_CHECKPOINTS_ATTR_LIST(last_seg_checkpoपूर्णांक),
+	NILFS_CHECKPOINTS_ATTR_LIST(next_checkpoपूर्णांक),
 	NILFS_CHECKPOINTS_ATTR_LIST(README),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-NILFS_DEV_INT_GROUP_OPS(checkpoints, dev);
-NILFS_DEV_INT_GROUP_TYPE(checkpoints, dev);
-NILFS_DEV_INT_GROUP_FNS(checkpoints, dev);
+NILFS_DEV_INT_GROUP_OPS(checkpoपूर्णांकs, dev);
+NILFS_DEV_INT_GROUP_TYPE(checkpoपूर्णांकs, dev);
+NILFS_DEV_INT_GROUP_FNS(checkpoपूर्णांकs, dev);
 
 /************************************************************************
  *                        NILFS segments attrs                          *
  ************************************************************************/
 
-static ssize_t
-nilfs_segments_segments_number_show(struct nilfs_segments_attr *attr,
-				     struct the_nilfs *nilfs,
-				     char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%lu\n", nilfs->ns_nsegments);
-}
+अटल sमाप_प्रकार
+nilfs_segments_segments_number_show(काष्ठा nilfs_segments_attr *attr,
+				     काष्ठा the_nilfs *nilfs,
+				     अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%lu\n", nilfs->ns_nsegments);
+पूर्ण
 
-static ssize_t
-nilfs_segments_blocks_per_segment_show(struct nilfs_segments_attr *attr,
-					struct the_nilfs *nilfs,
-					char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%lu\n", nilfs->ns_blocks_per_segment);
-}
+अटल sमाप_प्रकार
+nilfs_segments_blocks_per_segment_show(काष्ठा nilfs_segments_attr *attr,
+					काष्ठा the_nilfs *nilfs,
+					अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%lu\n", nilfs->ns_blocks_per_segment);
+पूर्ण
 
-static ssize_t
-nilfs_segments_clean_segments_show(struct nilfs_segments_attr *attr,
-				    struct the_nilfs *nilfs,
-				    char *buf)
-{
-	unsigned long ncleansegs;
+अटल sमाप_प्रकार
+nilfs_segments_clean_segments_show(काष्ठा nilfs_segments_attr *attr,
+				    काष्ठा the_nilfs *nilfs,
+				    अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ ncleansegs;
 
-	down_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
+	करोwn_पढ़ो(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
 	ncleansegs = nilfs_sufile_get_ncleansegs(nilfs->ns_sufile);
-	up_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
+	up_पढ़ो(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%lu\n", ncleansegs);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%lu\n", ncleansegs);
+पूर्ण
 
-static ssize_t
-nilfs_segments_dirty_segments_show(struct nilfs_segments_attr *attr,
-				    struct the_nilfs *nilfs,
-				    char *buf)
-{
-	struct nilfs_sustat sustat;
-	int err;
+अटल sमाप_प्रकार
+nilfs_segments_dirty_segments_show(काष्ठा nilfs_segments_attr *attr,
+				    काष्ठा the_nilfs *nilfs,
+				    अक्षर *buf)
+अणु
+	काष्ठा nilfs_sustat sustat;
+	पूर्णांक err;
 
-	down_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
 	err = nilfs_sufile_get_stat(nilfs->ns_sufile, &sustat);
-	up_read(&nilfs->ns_segctor_sem);
-	if (err < 0) {
+	up_पढ़ो(&nilfs->ns_segctor_sem);
+	अगर (err < 0) अणु
 		nilfs_err(nilfs->ns_sb, "unable to get segment stat: err=%d",
 			  err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", sustat.ss_ndirtysegs);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", sustat.ss_ndirtysegs);
+पूर्ण
 
-static const char segments_readme_str[] =
+अटल स्थिर अक्षर segments_पढ़ोme_str[] =
 	"The segments group contains attributes that describe\n"
 	"details about volume's segments.\n\n"
 	"(1) segments_number\n\tshow number of segments on volume.\n\n"
@@ -421,13 +422,13 @@ static const char segments_readme_str[] =
 	"(3) clean_segments\n\tshow count of clean segments.\n\n"
 	"(4) dirty_segments\n\tshow count of dirty segments.\n\n";
 
-static ssize_t
-nilfs_segments_README_show(struct nilfs_segments_attr *attr,
-			    struct the_nilfs *nilfs,
-			    char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, segments_readme_str);
-}
+अटल sमाप_प्रकार
+nilfs_segments_README_show(काष्ठा nilfs_segments_attr *attr,
+			    काष्ठा the_nilfs *nilfs,
+			    अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, segments_पढ़ोme_str);
+पूर्ण
 
 NILFS_SEGMENTS_RO_ATTR(segments_number);
 NILFS_SEGMENTS_RO_ATTR(blocks_per_segment);
@@ -435,14 +436,14 @@ NILFS_SEGMENTS_RO_ATTR(clean_segments);
 NILFS_SEGMENTS_RO_ATTR(dirty_segments);
 NILFS_SEGMENTS_RO_ATTR(README);
 
-static struct attribute *nilfs_segments_attrs[] = {
+अटल काष्ठा attribute *nilfs_segments_attrs[] = अणु
 	NILFS_SEGMENTS_ATTR_LIST(segments_number),
 	NILFS_SEGMENTS_ATTR_LIST(blocks_per_segment),
 	NILFS_SEGMENTS_ATTR_LIST(clean_segments),
 	NILFS_SEGMENTS_ATTR_LIST(dirty_segments),
 	NILFS_SEGMENTS_ATTR_LIST(README),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 NILFS_DEV_INT_GROUP_OPS(segments, dev);
 NILFS_DEV_INT_GROUP_TYPE(segments, dev);
@@ -452,190 +453,190 @@ NILFS_DEV_INT_GROUP_FNS(segments, dev);
  *                        NILFS segctor attrs                           *
  ************************************************************************/
 
-static ssize_t
-nilfs_segctor_last_pseg_block_show(struct nilfs_segctor_attr *attr,
-				    struct the_nilfs *nilfs,
-				    char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_segctor_last_pseg_block_show(काष्ठा nilfs_segctor_attr *attr,
+				    काष्ठा the_nilfs *nilfs,
+				    अक्षर *buf)
+अणु
 	sector_t last_pseg;
 
 	spin_lock(&nilfs->ns_last_segment_lock);
 	last_pseg = nilfs->ns_last_pseg;
 	spin_unlock(&nilfs->ns_last_segment_lock);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n",
-			(unsigned long long)last_pseg);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n",
+			(अचिन्हित दीर्घ दीर्घ)last_pseg);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_last_seg_sequence_show(struct nilfs_segctor_attr *attr,
-					struct the_nilfs *nilfs,
-					char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_segctor_last_seg_sequence_show(काष्ठा nilfs_segctor_attr *attr,
+					काष्ठा the_nilfs *nilfs,
+					अक्षर *buf)
+अणु
 	u64 last_seq;
 
 	spin_lock(&nilfs->ns_last_segment_lock);
 	last_seq = nilfs->ns_last_seq;
 	spin_unlock(&nilfs->ns_last_segment_lock);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", last_seq);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", last_seq);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_last_seg_checkpoint_show(struct nilfs_segctor_attr *attr,
-					struct the_nilfs *nilfs,
-					char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_segctor_last_seg_checkpoपूर्णांक_show(काष्ठा nilfs_segctor_attr *attr,
+					काष्ठा the_nilfs *nilfs,
+					अक्षर *buf)
+अणु
 	__u64 last_cno;
 
 	spin_lock(&nilfs->ns_last_segment_lock);
 	last_cno = nilfs->ns_last_cno;
 	spin_unlock(&nilfs->ns_last_segment_lock);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", last_cno);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", last_cno);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_current_seg_sequence_show(struct nilfs_segctor_attr *attr,
-					struct the_nilfs *nilfs,
-					char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_segctor_current_seg_sequence_show(काष्ठा nilfs_segctor_attr *attr,
+					काष्ठा the_nilfs *nilfs,
+					अक्षर *buf)
+अणु
 	u64 seg_seq;
 
-	down_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
 	seg_seq = nilfs->ns_seg_seq;
-	up_read(&nilfs->ns_segctor_sem);
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", seg_seq);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", seg_seq);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_current_last_full_seg_show(struct nilfs_segctor_attr *attr,
-					 struct the_nilfs *nilfs,
-					 char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_segctor_current_last_full_seg_show(काष्ठा nilfs_segctor_attr *attr,
+					 काष्ठा the_nilfs *nilfs,
+					 अक्षर *buf)
+अणु
 	__u64 segnum;
 
-	down_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
 	segnum = nilfs->ns_segnum;
-	up_read(&nilfs->ns_segctor_sem);
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", segnum);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", segnum);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_next_full_seg_show(struct nilfs_segctor_attr *attr,
-				 struct the_nilfs *nilfs,
-				 char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_segctor_next_full_seg_show(काष्ठा nilfs_segctor_attr *attr,
+				 काष्ठा the_nilfs *nilfs,
+				 अक्षर *buf)
+अणु
 	__u64 nextnum;
 
-	down_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
 	nextnum = nilfs->ns_nextnum;
-	up_read(&nilfs->ns_segctor_sem);
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", nextnum);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", nextnum);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_next_pseg_offset_show(struct nilfs_segctor_attr *attr,
-					struct the_nilfs *nilfs,
-					char *buf)
-{
-	unsigned long pseg_offset;
+अटल sमाप_प्रकार
+nilfs_segctor_next_pseg_offset_show(काष्ठा nilfs_segctor_attr *attr,
+					काष्ठा the_nilfs *nilfs,
+					अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ pseg_offset;
 
-	down_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
 	pseg_offset = nilfs->ns_pseg_offset;
-	up_read(&nilfs->ns_segctor_sem);
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%lu\n", pseg_offset);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%lu\n", pseg_offset);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_next_checkpoint_show(struct nilfs_segctor_attr *attr,
-					struct the_nilfs *nilfs,
-					char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_segctor_next_checkpoपूर्णांक_show(काष्ठा nilfs_segctor_attr *attr,
+					काष्ठा the_nilfs *nilfs,
+					अक्षर *buf)
+अणु
 	__u64 cno;
 
-	down_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
 	cno = nilfs->ns_cno;
-	up_read(&nilfs->ns_segctor_sem);
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", cno);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", cno);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_last_seg_write_time_show(struct nilfs_segctor_attr *attr,
-					struct the_nilfs *nilfs,
-					char *buf)
-{
-	time64_t ctime;
+अटल sमाप_प्रकार
+nilfs_segctor_last_seg_ग_लिखो_समय_show(काष्ठा nilfs_segctor_attr *attr,
+					काष्ठा the_nilfs *nilfs,
+					अक्षर *buf)
+अणु
+	समय64_t स_समय;
 
-	down_read(&nilfs->ns_segctor_sem);
-	ctime = nilfs->ns_ctime;
-	up_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
+	स_समय = nilfs->ns_स_समय;
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return NILFS_SHOW_TIME(ctime, buf);
-}
+	वापस NILFS_SHOW_TIME(स_समय, buf);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_last_seg_write_time_secs_show(struct nilfs_segctor_attr *attr,
-					    struct the_nilfs *nilfs,
-					    char *buf)
-{
-	time64_t ctime;
+अटल sमाप_प्रकार
+nilfs_segctor_last_seg_ग_लिखो_समय_secs_show(काष्ठा nilfs_segctor_attr *attr,
+					    काष्ठा the_nilfs *nilfs,
+					    अक्षर *buf)
+अणु
+	समय64_t स_समय;
 
-	down_read(&nilfs->ns_segctor_sem);
-	ctime = nilfs->ns_ctime;
-	up_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
+	स_समय = nilfs->ns_स_समय;
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", ctime);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", स_समय);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_last_nongc_write_time_show(struct nilfs_segctor_attr *attr,
-					 struct the_nilfs *nilfs,
-					 char *buf)
-{
-	time64_t nongc_ctime;
+अटल sमाप_प्रकार
+nilfs_segctor_last_nongc_ग_लिखो_समय_show(काष्ठा nilfs_segctor_attr *attr,
+					 काष्ठा the_nilfs *nilfs,
+					 अक्षर *buf)
+अणु
+	समय64_t nongc_स_समय;
 
-	down_read(&nilfs->ns_segctor_sem);
-	nongc_ctime = nilfs->ns_nongc_ctime;
-	up_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
+	nongc_स_समय = nilfs->ns_nongc_स_समय;
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return NILFS_SHOW_TIME(nongc_ctime, buf);
-}
+	वापस NILFS_SHOW_TIME(nongc_स_समय, buf);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_last_nongc_write_time_secs_show(struct nilfs_segctor_attr *attr,
-						struct the_nilfs *nilfs,
-						char *buf)
-{
-	time64_t nongc_ctime;
+अटल sमाप_प्रकार
+nilfs_segctor_last_nongc_ग_लिखो_समय_secs_show(काष्ठा nilfs_segctor_attr *attr,
+						काष्ठा the_nilfs *nilfs,
+						अक्षर *buf)
+अणु
+	समय64_t nongc_स_समय;
 
-	down_read(&nilfs->ns_segctor_sem);
-	nongc_ctime = nilfs->ns_nongc_ctime;
-	up_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
+	nongc_स_समय = nilfs->ns_nongc_स_समय;
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", nongc_ctime);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", nongc_स_समय);
+पूर्ण
 
-static ssize_t
-nilfs_segctor_dirty_data_blocks_count_show(struct nilfs_segctor_attr *attr,
-					    struct the_nilfs *nilfs,
-					    char *buf)
-{
+अटल sमाप_प्रकार
+nilfs_segctor_dirty_data_blocks_count_show(काष्ठा nilfs_segctor_attr *attr,
+					    काष्ठा the_nilfs *nilfs,
+					    अक्षर *buf)
+अणु
 	u32 ndirtyblks;
 
-	down_read(&nilfs->ns_segctor_sem);
-	ndirtyblks = atomic_read(&nilfs->ns_ndirtyblks);
-	up_read(&nilfs->ns_segctor_sem);
+	करोwn_पढ़ो(&nilfs->ns_segctor_sem);
+	ndirtyblks = atomic_पढ़ो(&nilfs->ns_ndirtyblks);
+	up_पढ़ो(&nilfs->ns_segctor_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%u\n", ndirtyblks);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", ndirtyblks);
+पूर्ण
 
-static const char segctor_readme_str[] =
+अटल स्थिर अक्षर segctor_पढ़ोme_str[] =
 	"The segctor group contains attributes that describe\n"
 	"segctor thread activity details.\n\n"
 	"(1) last_pseg_block\n"
@@ -665,45 +666,45 @@ static const char segctor_readme_str[] =
 	"(13) dirty_data_blocks_count\n"
 	"\tshow number of dirty data blocks.\n\n";
 
-static ssize_t
-nilfs_segctor_README_show(struct nilfs_segctor_attr *attr,
-			  struct the_nilfs *nilfs, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, segctor_readme_str);
-}
+अटल sमाप_प्रकार
+nilfs_segctor_README_show(काष्ठा nilfs_segctor_attr *attr,
+			  काष्ठा the_nilfs *nilfs, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, segctor_पढ़ोme_str);
+पूर्ण
 
 NILFS_SEGCTOR_RO_ATTR(last_pseg_block);
 NILFS_SEGCTOR_RO_ATTR(last_seg_sequence);
-NILFS_SEGCTOR_RO_ATTR(last_seg_checkpoint);
+NILFS_SEGCTOR_RO_ATTR(last_seg_checkpoपूर्णांक);
 NILFS_SEGCTOR_RO_ATTR(current_seg_sequence);
 NILFS_SEGCTOR_RO_ATTR(current_last_full_seg);
 NILFS_SEGCTOR_RO_ATTR(next_full_seg);
 NILFS_SEGCTOR_RO_ATTR(next_pseg_offset);
-NILFS_SEGCTOR_RO_ATTR(next_checkpoint);
-NILFS_SEGCTOR_RO_ATTR(last_seg_write_time);
-NILFS_SEGCTOR_RO_ATTR(last_seg_write_time_secs);
-NILFS_SEGCTOR_RO_ATTR(last_nongc_write_time);
-NILFS_SEGCTOR_RO_ATTR(last_nongc_write_time_secs);
+NILFS_SEGCTOR_RO_ATTR(next_checkpoपूर्णांक);
+NILFS_SEGCTOR_RO_ATTR(last_seg_ग_लिखो_समय);
+NILFS_SEGCTOR_RO_ATTR(last_seg_ग_लिखो_समय_secs);
+NILFS_SEGCTOR_RO_ATTR(last_nongc_ग_लिखो_समय);
+NILFS_SEGCTOR_RO_ATTR(last_nongc_ग_लिखो_समय_secs);
 NILFS_SEGCTOR_RO_ATTR(dirty_data_blocks_count);
 NILFS_SEGCTOR_RO_ATTR(README);
 
-static struct attribute *nilfs_segctor_attrs[] = {
+अटल काष्ठा attribute *nilfs_segctor_attrs[] = अणु
 	NILFS_SEGCTOR_ATTR_LIST(last_pseg_block),
 	NILFS_SEGCTOR_ATTR_LIST(last_seg_sequence),
-	NILFS_SEGCTOR_ATTR_LIST(last_seg_checkpoint),
+	NILFS_SEGCTOR_ATTR_LIST(last_seg_checkpoपूर्णांक),
 	NILFS_SEGCTOR_ATTR_LIST(current_seg_sequence),
 	NILFS_SEGCTOR_ATTR_LIST(current_last_full_seg),
 	NILFS_SEGCTOR_ATTR_LIST(next_full_seg),
 	NILFS_SEGCTOR_ATTR_LIST(next_pseg_offset),
-	NILFS_SEGCTOR_ATTR_LIST(next_checkpoint),
-	NILFS_SEGCTOR_ATTR_LIST(last_seg_write_time),
-	NILFS_SEGCTOR_ATTR_LIST(last_seg_write_time_secs),
-	NILFS_SEGCTOR_ATTR_LIST(last_nongc_write_time),
-	NILFS_SEGCTOR_ATTR_LIST(last_nongc_write_time_secs),
+	NILFS_SEGCTOR_ATTR_LIST(next_checkpoपूर्णांक),
+	NILFS_SEGCTOR_ATTR_LIST(last_seg_ग_लिखो_समय),
+	NILFS_SEGCTOR_ATTR_LIST(last_seg_ग_लिखो_समय_secs),
+	NILFS_SEGCTOR_ATTR_LIST(last_nongc_ग_लिखो_समय),
+	NILFS_SEGCTOR_ATTR_LIST(last_nongc_ग_लिखो_समय_secs),
 	NILFS_SEGCTOR_ATTR_LIST(dirty_data_blocks_count),
 	NILFS_SEGCTOR_ATTR_LIST(README),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 NILFS_DEV_INT_GROUP_OPS(segctor, dev);
 NILFS_DEV_INT_GROUP_TYPE(segctor, dev);
@@ -713,91 +714,91 @@ NILFS_DEV_INT_GROUP_FNS(segctor, dev);
  *                        NILFS superblock attrs                        *
  ************************************************************************/
 
-static ssize_t
-nilfs_superblock_sb_write_time_show(struct nilfs_superblock_attr *attr,
-				     struct the_nilfs *nilfs,
-				     char *buf)
-{
-	time64_t sbwtime;
+अटल sमाप_प्रकार
+nilfs_superblock_sb_ग_लिखो_समय_show(काष्ठा nilfs_superblock_attr *attr,
+				     काष्ठा the_nilfs *nilfs,
+				     अक्षर *buf)
+अणु
+	समय64_t sbwसमय;
 
-	down_read(&nilfs->ns_sem);
-	sbwtime = nilfs->ns_sbwtime;
-	up_read(&nilfs->ns_sem);
+	करोwn_पढ़ो(&nilfs->ns_sem);
+	sbwसमय = nilfs->ns_sbwसमय;
+	up_पढ़ो(&nilfs->ns_sem);
 
-	return NILFS_SHOW_TIME(sbwtime, buf);
-}
+	वापस NILFS_SHOW_TIME(sbwसमय, buf);
+पूर्ण
 
-static ssize_t
-nilfs_superblock_sb_write_time_secs_show(struct nilfs_superblock_attr *attr,
-					 struct the_nilfs *nilfs,
-					 char *buf)
-{
-	time64_t sbwtime;
+अटल sमाप_प्रकार
+nilfs_superblock_sb_ग_लिखो_समय_secs_show(काष्ठा nilfs_superblock_attr *attr,
+					 काष्ठा the_nilfs *nilfs,
+					 अक्षर *buf)
+अणु
+	समय64_t sbwसमय;
 
-	down_read(&nilfs->ns_sem);
-	sbwtime = nilfs->ns_sbwtime;
-	up_read(&nilfs->ns_sem);
+	करोwn_पढ़ो(&nilfs->ns_sem);
+	sbwसमय = nilfs->ns_sbwसमय;
+	up_पढ़ो(&nilfs->ns_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", sbwtime);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", sbwसमय);
+पूर्ण
 
-static ssize_t
-nilfs_superblock_sb_write_count_show(struct nilfs_superblock_attr *attr,
-				      struct the_nilfs *nilfs,
-				      char *buf)
-{
-	unsigned int sbwcount;
+अटल sमाप_प्रकार
+nilfs_superblock_sb_ग_लिखो_count_show(काष्ठा nilfs_superblock_attr *attr,
+				      काष्ठा the_nilfs *nilfs,
+				      अक्षर *buf)
+अणु
+	अचिन्हित पूर्णांक sbwcount;
 
-	down_read(&nilfs->ns_sem);
+	करोwn_पढ़ो(&nilfs->ns_sem);
 	sbwcount = nilfs->ns_sbwcount;
-	up_read(&nilfs->ns_sem);
+	up_पढ़ो(&nilfs->ns_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%u\n", sbwcount);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", sbwcount);
+पूर्ण
 
-static ssize_t
-nilfs_superblock_sb_update_frequency_show(struct nilfs_superblock_attr *attr,
-					    struct the_nilfs *nilfs,
-					    char *buf)
-{
-	unsigned int sb_update_freq;
+अटल sमाप_प्रकार
+nilfs_superblock_sb_update_frequency_show(काष्ठा nilfs_superblock_attr *attr,
+					    काष्ठा the_nilfs *nilfs,
+					    अक्षर *buf)
+अणु
+	अचिन्हित पूर्णांक sb_update_freq;
 
-	down_read(&nilfs->ns_sem);
+	करोwn_पढ़ो(&nilfs->ns_sem);
 	sb_update_freq = nilfs->ns_sb_update_freq;
-	up_read(&nilfs->ns_sem);
+	up_पढ़ो(&nilfs->ns_sem);
 
-	return snprintf(buf, PAGE_SIZE, "%u\n", sb_update_freq);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", sb_update_freq);
+पूर्ण
 
-static ssize_t
-nilfs_superblock_sb_update_frequency_store(struct nilfs_superblock_attr *attr,
-					    struct the_nilfs *nilfs,
-					    const char *buf, size_t count)
-{
-	unsigned int val;
-	int err;
+अटल sमाप_प्रकार
+nilfs_superblock_sb_update_frequency_store(काष्ठा nilfs_superblock_attr *attr,
+					    काष्ठा the_nilfs *nilfs,
+					    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक err;
 
-	err = kstrtouint(skip_spaces(buf), 0, &val);
-	if (err) {
+	err = kstrtouपूर्णांक(skip_spaces(buf), 0, &val);
+	अगर (err) अणु
 		nilfs_err(nilfs->ns_sb, "unable to convert string: err=%d",
 			  err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (val < NILFS_SB_FREQ) {
+	अगर (val < NILFS_SB_FREQ) अणु
 		val = NILFS_SB_FREQ;
 		nilfs_warn(nilfs->ns_sb,
 			   "superblock update frequency cannot be lesser than 10 seconds");
-	}
+	पूर्ण
 
-	down_write(&nilfs->ns_sem);
+	करोwn_ग_लिखो(&nilfs->ns_sem);
 	nilfs->ns_sb_update_freq = val;
-	up_write(&nilfs->ns_sem);
+	up_ग_लिखो(&nilfs->ns_sem);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const char sb_readme_str[] =
+अटल स्थिर अक्षर sb_पढ़ोme_str[] =
 	"The superblock group contains attributes that describe\n"
 	"superblock's details.\n\n"
 	"(1) sb_write_time\n\tshow previous write time of super block "
@@ -810,27 +811,27 @@ static const char sb_readme_str[] =
 	"\tYou can set preferable frequency of superblock update by command:\n\n"
 	"\t'echo <val> > /sys/fs/<nilfs>/<dev>/superblock/sb_update_frequency'\n";
 
-static ssize_t
-nilfs_superblock_README_show(struct nilfs_superblock_attr *attr,
-				struct the_nilfs *nilfs, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, sb_readme_str);
-}
+अटल sमाप_प्रकार
+nilfs_superblock_README_show(काष्ठा nilfs_superblock_attr *attr,
+				काष्ठा the_nilfs *nilfs, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, sb_पढ़ोme_str);
+पूर्ण
 
-NILFS_SUPERBLOCK_RO_ATTR(sb_write_time);
-NILFS_SUPERBLOCK_RO_ATTR(sb_write_time_secs);
-NILFS_SUPERBLOCK_RO_ATTR(sb_write_count);
+NILFS_SUPERBLOCK_RO_ATTR(sb_ग_लिखो_समय);
+NILFS_SUPERBLOCK_RO_ATTR(sb_ग_लिखो_समय_secs);
+NILFS_SUPERBLOCK_RO_ATTR(sb_ग_लिखो_count);
 NILFS_SUPERBLOCK_RW_ATTR(sb_update_frequency);
 NILFS_SUPERBLOCK_RO_ATTR(README);
 
-static struct attribute *nilfs_superblock_attrs[] = {
-	NILFS_SUPERBLOCK_ATTR_LIST(sb_write_time),
-	NILFS_SUPERBLOCK_ATTR_LIST(sb_write_time_secs),
-	NILFS_SUPERBLOCK_ATTR_LIST(sb_write_count),
+अटल काष्ठा attribute *nilfs_superblock_attrs[] = अणु
+	NILFS_SUPERBLOCK_ATTR_LIST(sb_ग_लिखो_समय),
+	NILFS_SUPERBLOCK_ATTR_LIST(sb_ग_लिखो_समय_secs),
+	NILFS_SUPERBLOCK_ATTR_LIST(sb_ग_लिखो_count),
 	NILFS_SUPERBLOCK_ATTR_LIST(sb_update_frequency),
 	NILFS_SUPERBLOCK_ATTR_LIST(README),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 NILFS_DEV_INT_GROUP_OPS(superblock, dev);
 NILFS_DEV_INT_GROUP_TYPE(superblock, dev);
@@ -840,71 +841,71 @@ NILFS_DEV_INT_GROUP_FNS(superblock, dev);
  *                        NILFS device attrs                            *
  ************************************************************************/
 
-static
-ssize_t nilfs_dev_revision_show(struct nilfs_dev_attr *attr,
-				struct the_nilfs *nilfs,
-				char *buf)
-{
-	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+अटल
+sमाप_प्रकार nilfs_dev_revision_show(काष्ठा nilfs_dev_attr *attr,
+				काष्ठा the_nilfs *nilfs,
+				अक्षर *buf)
+अणु
+	काष्ठा nilfs_super_block **sbp = nilfs->ns_sbp;
 	u32 major = le32_to_cpu(sbp[0]->s_rev_level);
 	u16 minor = le16_to_cpu(sbp[0]->s_minor_rev_level);
 
-	return snprintf(buf, PAGE_SIZE, "%d.%d\n", major, minor);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d.%d\n", major, minor);
+पूर्ण
 
-static
-ssize_t nilfs_dev_blocksize_show(struct nilfs_dev_attr *attr,
-				 struct the_nilfs *nilfs,
-				 char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%u\n", nilfs->ns_blocksize);
-}
+अटल
+sमाप_प्रकार nilfs_dev_blocksize_show(काष्ठा nilfs_dev_attr *attr,
+				 काष्ठा the_nilfs *nilfs,
+				 अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", nilfs->ns_blocksize);
+पूर्ण
 
-static
-ssize_t nilfs_dev_device_size_show(struct nilfs_dev_attr *attr,
-				    struct the_nilfs *nilfs,
-				    char *buf)
-{
-	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+अटल
+sमाप_प्रकार nilfs_dev_device_size_show(काष्ठा nilfs_dev_attr *attr,
+				    काष्ठा the_nilfs *nilfs,
+				    अक्षर *buf)
+अणु
+	काष्ठा nilfs_super_block **sbp = nilfs->ns_sbp;
 	u64 dev_size = le64_to_cpu(sbp[0]->s_dev_size);
 
-	return snprintf(buf, PAGE_SIZE, "%llu\n", dev_size);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n", dev_size);
+पूर्ण
 
-static
-ssize_t nilfs_dev_free_blocks_show(struct nilfs_dev_attr *attr,
-				   struct the_nilfs *nilfs,
-				   char *buf)
-{
-	sector_t free_blocks = 0;
+अटल
+sमाप_प्रकार nilfs_dev_मुक्त_blocks_show(काष्ठा nilfs_dev_attr *attr,
+				   काष्ठा the_nilfs *nilfs,
+				   अक्षर *buf)
+अणु
+	sector_t मुक्त_blocks = 0;
 
-	nilfs_count_free_blocks(nilfs, &free_blocks);
-	return snprintf(buf, PAGE_SIZE, "%llu\n",
-			(unsigned long long)free_blocks);
-}
+	nilfs_count_मुक्त_blocks(nilfs, &मुक्त_blocks);
+	वापस snम_लिखो(buf, PAGE_SIZE, "%llu\n",
+			(अचिन्हित दीर्घ दीर्घ)मुक्त_blocks);
+पूर्ण
 
-static
-ssize_t nilfs_dev_uuid_show(struct nilfs_dev_attr *attr,
-			    struct the_nilfs *nilfs,
-			    char *buf)
-{
-	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+अटल
+sमाप_प्रकार nilfs_dev_uuid_show(काष्ठा nilfs_dev_attr *attr,
+			    काष्ठा the_nilfs *nilfs,
+			    अक्षर *buf)
+अणु
+	काष्ठा nilfs_super_block **sbp = nilfs->ns_sbp;
 
-	return snprintf(buf, PAGE_SIZE, "%pUb\n", sbp[0]->s_uuid);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%pUb\n", sbp[0]->s_uuid);
+पूर्ण
 
-static
-ssize_t nilfs_dev_volume_name_show(struct nilfs_dev_attr *attr,
-				    struct the_nilfs *nilfs,
-				    char *buf)
-{
-	struct nilfs_super_block **sbp = nilfs->ns_sbp;
+अटल
+sमाप_प्रकार nilfs_dev_volume_name_show(काष्ठा nilfs_dev_attr *attr,
+				    काष्ठा the_nilfs *nilfs,
+				    अक्षर *buf)
+अणु
+	काष्ठा nilfs_super_block **sbp = nilfs->ns_sbp;
 
-	return scnprintf(buf, sizeof(sbp[0]->s_volume_name), "%s\n",
+	वापस scnम_लिखो(buf, माप(sbp[0]->s_volume_name), "%s\n",
 			 sbp[0]->s_volume_name);
-}
+पूर्ण
 
-static const char dev_readme_str[] =
+अटल स्थिर अक्षर dev_पढ़ोme_str[] =
 	"The <device> group contains attributes that describe file system\n"
 	"partition's details.\n\n"
 	"(1) revision\n\tshow NILFS file system revision.\n\n"
@@ -914,114 +915,114 @@ static const char dev_readme_str[] =
 	"(5) uuid\n\tshow volume's UUID.\n\n"
 	"(6) volume_name\n\tshow volume's name.\n\n";
 
-static ssize_t nilfs_dev_README_show(struct nilfs_dev_attr *attr,
-				     struct the_nilfs *nilfs,
-				     char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, dev_readme_str);
-}
+अटल sमाप_प्रकार nilfs_dev_README_show(काष्ठा nilfs_dev_attr *attr,
+				     काष्ठा the_nilfs *nilfs,
+				     अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, dev_पढ़ोme_str);
+पूर्ण
 
 NILFS_DEV_RO_ATTR(revision);
 NILFS_DEV_RO_ATTR(blocksize);
 NILFS_DEV_RO_ATTR(device_size);
-NILFS_DEV_RO_ATTR(free_blocks);
+NILFS_DEV_RO_ATTR(मुक्त_blocks);
 NILFS_DEV_RO_ATTR(uuid);
 NILFS_DEV_RO_ATTR(volume_name);
 NILFS_DEV_RO_ATTR(README);
 
-static struct attribute *nilfs_dev_attrs[] = {
+अटल काष्ठा attribute *nilfs_dev_attrs[] = अणु
 	NILFS_DEV_ATTR_LIST(revision),
 	NILFS_DEV_ATTR_LIST(blocksize),
 	NILFS_DEV_ATTR_LIST(device_size),
-	NILFS_DEV_ATTR_LIST(free_blocks),
+	NILFS_DEV_ATTR_LIST(मुक्त_blocks),
 	NILFS_DEV_ATTR_LIST(uuid),
 	NILFS_DEV_ATTR_LIST(volume_name),
 	NILFS_DEV_ATTR_LIST(README),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static ssize_t nilfs_dev_attr_show(struct kobject *kobj,
-				    struct attribute *attr, char *buf)
-{
-	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
+अटल sमाप_प्रकार nilfs_dev_attr_show(काष्ठा kobject *kobj,
+				    काष्ठा attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा the_nilfs *nilfs = container_of(kobj, काष्ठा the_nilfs,
 						ns_dev_kobj);
-	struct nilfs_dev_attr *a = container_of(attr, struct nilfs_dev_attr,
+	काष्ठा nilfs_dev_attr *a = container_of(attr, काष्ठा nilfs_dev_attr,
 						attr);
 
-	return a->show ? a->show(a, nilfs, buf) : 0;
-}
+	वापस a->show ? a->show(a, nilfs, buf) : 0;
+पूर्ण
 
-static ssize_t nilfs_dev_attr_store(struct kobject *kobj,
-				    struct attribute *attr,
-				    const char *buf, size_t len)
-{
-	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
+अटल sमाप_प्रकार nilfs_dev_attr_store(काष्ठा kobject *kobj,
+				    काष्ठा attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा the_nilfs *nilfs = container_of(kobj, काष्ठा the_nilfs,
 						ns_dev_kobj);
-	struct nilfs_dev_attr *a = container_of(attr, struct nilfs_dev_attr,
+	काष्ठा nilfs_dev_attr *a = container_of(attr, काष्ठा nilfs_dev_attr,
 						attr);
 
-	return a->store ? a->store(a, nilfs, buf, len) : 0;
-}
+	वापस a->store ? a->store(a, nilfs, buf, len) : 0;
+पूर्ण
 
-static void nilfs_dev_attr_release(struct kobject *kobj)
-{
-	struct the_nilfs *nilfs = container_of(kobj, struct the_nilfs,
+अटल व्योम nilfs_dev_attr_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा the_nilfs *nilfs = container_of(kobj, काष्ठा the_nilfs,
 						ns_dev_kobj);
-	complete(&nilfs->ns_dev_kobj_unregister);
-}
+	complete(&nilfs->ns_dev_kobj_unरेजिस्टर);
+पूर्ण
 
-static const struct sysfs_ops nilfs_dev_attr_ops = {
+अटल स्थिर काष्ठा sysfs_ops nilfs_dev_attr_ops = अणु
 	.show	= nilfs_dev_attr_show,
 	.store	= nilfs_dev_attr_store,
-};
+पूर्ण;
 
-static struct kobj_type nilfs_dev_ktype = {
-	.default_attrs	= nilfs_dev_attrs,
+अटल काष्ठा kobj_type nilfs_dev_ktype = अणु
+	.शेष_attrs	= nilfs_dev_attrs,
 	.sysfs_ops	= &nilfs_dev_attr_ops,
 	.release	= nilfs_dev_attr_release,
-};
+पूर्ण;
 
-int nilfs_sysfs_create_device_group(struct super_block *sb)
-{
-	struct the_nilfs *nilfs = sb->s_fs_info;
-	size_t devgrp_size = sizeof(struct nilfs_sysfs_dev_subgroups);
-	int err;
+पूर्णांक nilfs_sysfs_create_device_group(काष्ठा super_block *sb)
+अणु
+	काष्ठा the_nilfs *nilfs = sb->s_fs_info;
+	माप_प्रकार devgrp_size = माप(काष्ठा nilfs_sysfs_dev_subgroups);
+	पूर्णांक err;
 
 	nilfs->ns_dev_subgroups = kzalloc(devgrp_size, GFP_KERNEL);
-	if (unlikely(!nilfs->ns_dev_subgroups)) {
+	अगर (unlikely(!nilfs->ns_dev_subgroups)) अणु
 		err = -ENOMEM;
 		nilfs_err(sb, "unable to allocate memory for device group");
-		goto failed_create_device_group;
-	}
+		जाओ failed_create_device_group;
+	पूर्ण
 
 	nilfs->ns_dev_kobj.kset = nilfs_kset;
-	init_completion(&nilfs->ns_dev_kobj_unregister);
-	err = kobject_init_and_add(&nilfs->ns_dev_kobj, &nilfs_dev_ktype, NULL,
+	init_completion(&nilfs->ns_dev_kobj_unरेजिस्टर);
+	err = kobject_init_and_add(&nilfs->ns_dev_kobj, &nilfs_dev_ktype, शून्य,
 				    "%s", sb->s_id);
-	if (err)
-		goto free_dev_subgroups;
+	अगर (err)
+		जाओ मुक्त_dev_subgroups;
 
 	err = nilfs_sysfs_create_mounted_snapshots_group(nilfs);
-	if (err)
-		goto cleanup_dev_kobject;
+	अगर (err)
+		जाओ cleanup_dev_kobject;
 
-	err = nilfs_sysfs_create_checkpoints_group(nilfs);
-	if (err)
-		goto delete_mounted_snapshots_group;
+	err = nilfs_sysfs_create_checkpoपूर्णांकs_group(nilfs);
+	अगर (err)
+		जाओ delete_mounted_snapshots_group;
 
 	err = nilfs_sysfs_create_segments_group(nilfs);
-	if (err)
-		goto delete_checkpoints_group;
+	अगर (err)
+		जाओ delete_checkpoपूर्णांकs_group;
 
 	err = nilfs_sysfs_create_superblock_group(nilfs);
-	if (err)
-		goto delete_segments_group;
+	अगर (err)
+		जाओ delete_segments_group;
 
 	err = nilfs_sysfs_create_segctor_group(nilfs);
-	if (err)
-		goto delete_superblock_group;
+	अगर (err)
+		जाओ delete_superblock_group;
 
-	return 0;
+	वापस 0;
 
 delete_superblock_group:
 	nilfs_sysfs_delete_superblock_group(nilfs);
@@ -1029,8 +1030,8 @@ delete_superblock_group:
 delete_segments_group:
 	nilfs_sysfs_delete_segments_group(nilfs);
 
-delete_checkpoints_group:
-	nilfs_sysfs_delete_checkpoints_group(nilfs);
+delete_checkpoपूर्णांकs_group:
+	nilfs_sysfs_delete_checkpoपूर्णांकs_group(nilfs);
 
 delete_mounted_snapshots_group:
 	nilfs_sysfs_delete_mounted_snapshots_group(nilfs);
@@ -1038,89 +1039,89 @@ delete_mounted_snapshots_group:
 cleanup_dev_kobject:
 	kobject_del(&nilfs->ns_dev_kobj);
 
-free_dev_subgroups:
-	kfree(nilfs->ns_dev_subgroups);
+मुक्त_dev_subgroups:
+	kमुक्त(nilfs->ns_dev_subgroups);
 
 failed_create_device_group:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void nilfs_sysfs_delete_device_group(struct the_nilfs *nilfs)
-{
+व्योम nilfs_sysfs_delete_device_group(काष्ठा the_nilfs *nilfs)
+अणु
 	nilfs_sysfs_delete_mounted_snapshots_group(nilfs);
-	nilfs_sysfs_delete_checkpoints_group(nilfs);
+	nilfs_sysfs_delete_checkpoपूर्णांकs_group(nilfs);
 	nilfs_sysfs_delete_segments_group(nilfs);
 	nilfs_sysfs_delete_superblock_group(nilfs);
 	nilfs_sysfs_delete_segctor_group(nilfs);
 	kobject_del(&nilfs->ns_dev_kobj);
-	kfree(nilfs->ns_dev_subgroups);
-}
+	kमुक्त(nilfs->ns_dev_subgroups);
+पूर्ण
 
 /************************************************************************
  *                        NILFS feature attrs                           *
  ************************************************************************/
 
-static ssize_t nilfs_feature_revision_show(struct kobject *kobj,
-					    struct attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d.%d\n",
+अटल sमाप_प्रकार nilfs_feature_revision_show(काष्ठा kobject *kobj,
+					    काष्ठा attribute *attr, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d.%d\n",
 			NILFS_CURRENT_REV, NILFS_MINOR_REV);
-}
+पूर्ण
 
-static const char features_readme_str[] =
+अटल स्थिर अक्षर features_पढ़ोme_str[] =
 	"The features group contains attributes that describe NILFS file\n"
 	"system driver features.\n\n"
 	"(1) revision\n\tshow current revision of NILFS file system driver.\n";
 
-static ssize_t nilfs_feature_README_show(struct kobject *kobj,
-					 struct attribute *attr,
-					 char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, features_readme_str);
-}
+अटल sमाप_प्रकार nilfs_feature_README_show(काष्ठा kobject *kobj,
+					 काष्ठा attribute *attr,
+					 अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, features_पढ़ोme_str);
+पूर्ण
 
 NILFS_FEATURE_RO_ATTR(revision);
 NILFS_FEATURE_RO_ATTR(README);
 
-static struct attribute *nilfs_feature_attrs[] = {
+अटल काष्ठा attribute *nilfs_feature_attrs[] = अणु
 	NILFS_FEATURE_ATTR_LIST(revision),
 	NILFS_FEATURE_ATTR_LIST(README),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nilfs_feature_attr_group = {
+अटल स्थिर काष्ठा attribute_group nilfs_feature_attr_group = अणु
 	.name = "features",
 	.attrs = nilfs_feature_attrs,
-};
+पूर्ण;
 
-int __init nilfs_sysfs_init(void)
-{
-	int err;
+पूर्णांक __init nilfs_sysfs_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	nilfs_kset = kset_create_and_add(NILFS_ROOT_GROUP_NAME, NULL, fs_kobj);
-	if (!nilfs_kset) {
+	nilfs_kset = kset_create_and_add(NILFS_ROOT_GROUP_NAME, शून्य, fs_kobj);
+	अगर (!nilfs_kset) अणु
 		err = -ENOMEM;
-		nilfs_err(NULL, "unable to create sysfs entry: err=%d", err);
-		goto failed_sysfs_init;
-	}
+		nilfs_err(शून्य, "unable to create sysfs entry: err=%d", err);
+		जाओ failed_sysfs_init;
+	पूर्ण
 
 	err = sysfs_create_group(&nilfs_kset->kobj, &nilfs_feature_attr_group);
-	if (unlikely(err)) {
-		nilfs_err(NULL, "unable to create feature group: err=%d", err);
-		goto cleanup_sysfs_init;
-	}
+	अगर (unlikely(err)) अणु
+		nilfs_err(शून्य, "unable to create feature group: err=%d", err);
+		जाओ cleanup_sysfs_init;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup_sysfs_init:
-	kset_unregister(nilfs_kset);
+	kset_unरेजिस्टर(nilfs_kset);
 
 failed_sysfs_init:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void nilfs_sysfs_exit(void)
-{
-	sysfs_remove_group(&nilfs_kset->kobj, &nilfs_feature_attr_group);
-	kset_unregister(nilfs_kset);
-}
+व्योम nilfs_sysfs_निकास(व्योम)
+अणु
+	sysfs_हटाओ_group(&nilfs_kset->kobj, &nilfs_feature_attr_group);
+	kset_unरेजिस्टर(nilfs_kset);
+पूर्ण

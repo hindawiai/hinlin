@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2014-2016 Pratyush Anand <panand@redhat.com>
  */
 
-#ifndef _ASM_UPROBES_H
-#define _ASM_UPROBES_H
+#अगर_अघोषित _ASM_UPROBES_H
+#घोषणा _ASM_UPROBES_H
 
-#include <asm/debug-monitors.h>
-#include <asm/insn.h>
-#include <asm/probes.h>
+#समावेश <यंत्र/debug-monitors.h>
+#समावेश <यंत्र/insn.h>
+#समावेश <यंत्र/probes.h>
 
-#define MAX_UINSN_BYTES		AARCH64_INSN_SIZE
+#घोषणा MAX_UINSN_BYTES		AARCH64_INSN_SIZE
 
-#define UPROBE_SWBP_INSN	BRK64_OPCODE_UPROBES
-#define UPROBE_SWBP_INSN_SIZE	AARCH64_INSN_SIZE
-#define UPROBE_XOL_SLOT_BYTES	MAX_UINSN_BYTES
+#घोषणा UPROBE_SWBP_INSN	BRK64_OPCODE_UPROBES
+#घोषणा UPROBE_SWBP_INSN_SIZE	AARCH64_INSN_SIZE
+#घोषणा UPROBE_XOL_SLOT_BYTES	MAX_UINSN_BYTES
 
-typedef u32 uprobe_opcode_t;
+प्रकार u32 uprobe_opcode_t;
 
-struct arch_uprobe_task {
-};
+काष्ठा arch_uprobe_task अणु
+पूर्ण;
 
-struct arch_uprobe {
-	union {
+काष्ठा arch_uprobe अणु
+	जोड़ अणु
 		u8 insn[MAX_UINSN_BYTES];
 		u8 ixol[MAX_UINSN_BYTES];
-	};
-	struct arch_probe_insn api;
+	पूर्ण;
+	काष्ठा arch_probe_insn api;
 	bool simulate;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,848 +22,848 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/client.h>
-#include <core/option.h>
+#समावेश <core/client.h>
+#समावेश <core/option.h>
 
-#include <nvif/class.h>
-#include <nvif/if0002.h>
-#include <nvif/if0003.h>
-#include <nvif/ioctl.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/अगर0002.h>
+#समावेश <nvअगर/अगर0003.h>
+#समावेश <nvअगर/ioctl.h>
+#समावेश <nvअगर/unpack.h>
 
-static u8
-nvkm_pm_count_perfdom(struct nvkm_pm *pm)
-{
-	struct nvkm_perfdom *dom;
-	u8 domain_nr = 0;
+अटल u8
+nvkm_pm_count_perfकरोm(काष्ठा nvkm_pm *pm)
+अणु
+	काष्ठा nvkm_perfकरोm *करोm;
+	u8 करोमुख्य_nr = 0;
 
-	list_for_each_entry(dom, &pm->domains, head)
-		domain_nr++;
-	return domain_nr;
-}
+	list_क्रम_each_entry(करोm, &pm->करोमुख्यs, head)
+		करोमुख्य_nr++;
+	वापस करोमुख्य_nr;
+पूर्ण
 
-static u16
-nvkm_perfdom_count_perfsig(struct nvkm_perfdom *dom)
-{
-	u16 signal_nr = 0;
-	int i;
+अटल u16
+nvkm_perfकरोm_count_perfsig(काष्ठा nvkm_perfकरोm *करोm)
+अणु
+	u16 संकेत_nr = 0;
+	पूर्णांक i;
 
-	if (dom) {
-		for (i = 0; i < dom->signal_nr; i++) {
-			if (dom->signal[i].name)
-				signal_nr++;
-		}
-	}
-	return signal_nr;
-}
+	अगर (करोm) अणु
+		क्रम (i = 0; i < करोm->संकेत_nr; i++) अणु
+			अगर (करोm->संकेत[i].name)
+				संकेत_nr++;
+		पूर्ण
+	पूर्ण
+	वापस संकेत_nr;
+पूर्ण
 
-static struct nvkm_perfdom *
-nvkm_perfdom_find(struct nvkm_pm *pm, int di)
-{
-	struct nvkm_perfdom *dom;
-	int tmp = 0;
+अटल काष्ठा nvkm_perfकरोm *
+nvkm_perfकरोm_find(काष्ठा nvkm_pm *pm, पूर्णांक di)
+अणु
+	काष्ठा nvkm_perfकरोm *करोm;
+	पूर्णांक पंचांगp = 0;
 
-	list_for_each_entry(dom, &pm->domains, head) {
-		if (tmp++ == di)
-			return dom;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(करोm, &pm->करोमुख्यs, head) अणु
+		अगर (पंचांगp++ == di)
+			वापस करोm;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct nvkm_perfsig *
-nvkm_perfsig_find(struct nvkm_pm *pm, u8 di, u8 si, struct nvkm_perfdom **pdom)
-{
-	struct nvkm_perfdom *dom = *pdom;
+अटल काष्ठा nvkm_perfsig *
+nvkm_perfsig_find(काष्ठा nvkm_pm *pm, u8 di, u8 si, काष्ठा nvkm_perfकरोm **pकरोm)
+अणु
+	काष्ठा nvkm_perfकरोm *करोm = *pकरोm;
 
-	if (dom == NULL) {
-		dom = nvkm_perfdom_find(pm, di);
-		if (dom == NULL)
-			return NULL;
-		*pdom = dom;
-	}
+	अगर (करोm == शून्य) अणु
+		करोm = nvkm_perfकरोm_find(pm, di);
+		अगर (करोm == शून्य)
+			वापस शून्य;
+		*pकरोm = करोm;
+	पूर्ण
 
-	if (!dom->signal[si].name)
-		return NULL;
-	return &dom->signal[si];
-}
+	अगर (!करोm->संकेत[si].name)
+		वापस शून्य;
+	वापस &करोm->संकेत[si];
+पूर्ण
 
-static u8
-nvkm_perfsig_count_perfsrc(struct nvkm_perfsig *sig)
-{
+अटल u8
+nvkm_perfsig_count_perfsrc(काष्ठा nvkm_perfsig *sig)
+अणु
 	u8 source_nr = 0, i;
 
-	for (i = 0; i < ARRAY_SIZE(sig->source); i++) {
-		if (sig->source[i])
+	क्रम (i = 0; i < ARRAY_SIZE(sig->source); i++) अणु
+		अगर (sig->source[i])
 			source_nr++;
-	}
-	return source_nr;
-}
+	पूर्ण
+	वापस source_nr;
+पूर्ण
 
-static struct nvkm_perfsrc *
-nvkm_perfsrc_find(struct nvkm_pm *pm, struct nvkm_perfsig *sig, int si)
-{
-	struct nvkm_perfsrc *src;
+अटल काष्ठा nvkm_perfsrc *
+nvkm_perfsrc_find(काष्ठा nvkm_pm *pm, काष्ठा nvkm_perfsig *sig, पूर्णांक si)
+अणु
+	काष्ठा nvkm_perfsrc *src;
 	bool found = false;
-	int tmp = 1; /* Sources ID start from 1 */
+	पूर्णांक पंचांगp = 1; /* Sources ID start from 1 */
 	u8 i;
 
-	for (i = 0; i < ARRAY_SIZE(sig->source) && sig->source[i]; i++) {
-		if (sig->source[i] == si) {
+	क्रम (i = 0; i < ARRAY_SIZE(sig->source) && sig->source[i]; i++) अणु
+		अगर (sig->source[i] == si) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (found) {
-		list_for_each_entry(src, &pm->sources, head) {
-			if (tmp++ == si)
-				return src;
-		}
-	}
+	अगर (found) अणु
+		list_क्रम_each_entry(src, &pm->sources, head) अणु
+			अगर (पंचांगp++ == si)
+				वापस src;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int
-nvkm_perfsrc_enable(struct nvkm_pm *pm, struct nvkm_perfctr *ctr)
-{
-	struct nvkm_subdev *subdev = &pm->engine.subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_perfdom *dom = NULL;
-	struct nvkm_perfsig *sig;
-	struct nvkm_perfsrc *src;
+अटल पूर्णांक
+nvkm_perfsrc_enable(काष्ठा nvkm_pm *pm, काष्ठा nvkm_perfctr *ctr)
+अणु
+	काष्ठा nvkm_subdev *subdev = &pm->engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_perfकरोm *करोm = शून्य;
+	काष्ठा nvkm_perfsig *sig;
+	काष्ठा nvkm_perfsrc *src;
 	u32 mask, value;
-	int i, j;
+	पूर्णांक i, j;
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 8 && ctr->source[i][j]; j++) {
-			sig = nvkm_perfsig_find(pm, ctr->domain,
-						ctr->signal[i], &dom);
-			if (!sig)
-				return -EINVAL;
+	क्रम (i = 0; i < 4; i++) अणु
+		क्रम (j = 0; j < 8 && ctr->source[i][j]; j++) अणु
+			sig = nvkm_perfsig_find(pm, ctr->करोमुख्य,
+						ctr->संकेत[i], &करोm);
+			अगर (!sig)
+				वापस -EINVAL;
 
 			src = nvkm_perfsrc_find(pm, sig, ctr->source[i][j]);
-			if (!src)
-				return -EINVAL;
+			अगर (!src)
+				वापस -EINVAL;
 
-			/* set enable bit if needed */
+			/* set enable bit अगर needed */
 			mask = value = 0x00000000;
-			if (src->enable)
+			अगर (src->enable)
 				mask = value = 0x80000000;
-			mask  |= (src->mask << src->shift);
-			value |= ((ctr->source[i][j] >> 32) << src->shift);
+			mask  |= (src->mask << src->shअगरt);
+			value |= ((ctr->source[i][j] >> 32) << src->shअगरt);
 
 			/* enable the source */
 			nvkm_mask(device, src->addr, mask, value);
 			nvkm_debug(subdev,
 				   "enabled source %08x %08x %08x\n",
 				   src->addr, mask, value);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_perfsrc_disable(struct nvkm_pm *pm, struct nvkm_perfctr *ctr)
-{
-	struct nvkm_subdev *subdev = &pm->engine.subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_perfdom *dom = NULL;
-	struct nvkm_perfsig *sig;
-	struct nvkm_perfsrc *src;
+अटल पूर्णांक
+nvkm_perfsrc_disable(काष्ठा nvkm_pm *pm, काष्ठा nvkm_perfctr *ctr)
+अणु
+	काष्ठा nvkm_subdev *subdev = &pm->engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_perfकरोm *करोm = शून्य;
+	काष्ठा nvkm_perfsig *sig;
+	काष्ठा nvkm_perfsrc *src;
 	u32 mask;
-	int i, j;
+	पूर्णांक i, j;
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 8 && ctr->source[i][j]; j++) {
-			sig = nvkm_perfsig_find(pm, ctr->domain,
-						ctr->signal[i], &dom);
-			if (!sig)
-				return -EINVAL;
+	क्रम (i = 0; i < 4; i++) अणु
+		क्रम (j = 0; j < 8 && ctr->source[i][j]; j++) अणु
+			sig = nvkm_perfsig_find(pm, ctr->करोमुख्य,
+						ctr->संकेत[i], &करोm);
+			अगर (!sig)
+				वापस -EINVAL;
 
 			src = nvkm_perfsrc_find(pm, sig, ctr->source[i][j]);
-			if (!src)
-				return -EINVAL;
+			अगर (!src)
+				वापस -EINVAL;
 
-			/* unset enable bit if needed */
+			/* unset enable bit अगर needed */
 			mask = 0x00000000;
-			if (src->enable)
+			अगर (src->enable)
 				mask = 0x80000000;
-			mask |= (src->mask << src->shift);
+			mask |= (src->mask << src->shअगरt);
 
 			/* disable the source */
 			nvkm_mask(device, src->addr, mask, 0);
 			nvkm_debug(subdev, "disabled source %08x %08x\n",
 				   src->addr, mask);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*******************************************************************************
- * Perfdom object classes
+ * Perfकरोm object classes
  ******************************************************************************/
-static int
-nvkm_perfdom_init(struct nvkm_perfdom *dom, void *data, u32 size)
-{
-	union {
-		struct nvif_perfdom_init none;
-	} *args = data;
-	struct nvkm_object *object = &dom->object;
-	struct nvkm_pm *pm = dom->perfmon->pm;
-	int ret = -ENOSYS, i;
+अटल पूर्णांक
+nvkm_perfकरोm_init(काष्ठा nvkm_perfकरोm *करोm, व्योम *data, u32 size)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_perfकरोm_init none;
+	पूर्ण *args = data;
+	काष्ठा nvkm_object *object = &करोm->object;
+	काष्ठा nvkm_pm *pm = करोm->perfmon->pm;
+	पूर्णांक ret = -ENOSYS, i;
 
-	nvif_ioctl(object, "perfdom init size %d\n", size);
-	if (!(ret = nvif_unvers(ret, &data, &size, args->none))) {
-		nvif_ioctl(object, "perfdom init\n");
-	} else
-		return ret;
+	nvअगर_ioctl(object, "perfdom init size %d\n", size);
+	अगर (!(ret = nvअगर_unvers(ret, &data, &size, args->none))) अणु
+		nvअगर_ioctl(object, "perfdom init\n");
+	पूर्ण अन्यथा
+		वापस ret;
 
-	for (i = 0; i < 4; i++) {
-		if (dom->ctr[i]) {
-			dom->func->init(pm, dom, dom->ctr[i]);
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (करोm->ctr[i]) अणु
+			करोm->func->init(pm, करोm, करोm->ctr[i]);
 
 			/* enable sources */
-			nvkm_perfsrc_enable(pm, dom->ctr[i]);
-		}
-	}
+			nvkm_perfsrc_enable(pm, करोm->ctr[i]);
+		पूर्ण
+	पूर्ण
 
-	/* start next batch of counters for sampling */
-	dom->func->next(pm, dom);
-	return 0;
-}
+	/* start next batch of counters क्रम sampling */
+	करोm->func->next(pm, करोm);
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_perfdom_sample(struct nvkm_perfdom *dom, void *data, u32 size)
-{
-	union {
-		struct nvif_perfdom_sample none;
-	} *args = data;
-	struct nvkm_object *object = &dom->object;
-	struct nvkm_pm *pm = dom->perfmon->pm;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+nvkm_perfकरोm_sample(काष्ठा nvkm_perfकरोm *करोm, व्योम *data, u32 size)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_perfकरोm_sample none;
+	पूर्ण *args = data;
+	काष्ठा nvkm_object *object = &करोm->object;
+	काष्ठा nvkm_pm *pm = करोm->perfmon->pm;
+	पूर्णांक ret = -ENOSYS;
 
-	nvif_ioctl(object, "perfdom sample size %d\n", size);
-	if (!(ret = nvif_unvers(ret, &data, &size, args->none))) {
-		nvif_ioctl(object, "perfdom sample\n");
-	} else
-		return ret;
+	nvअगर_ioctl(object, "perfdom sample size %d\n", size);
+	अगर (!(ret = nvअगर_unvers(ret, &data, &size, args->none))) अणु
+		nvअगर_ioctl(object, "perfdom sample\n");
+	पूर्ण अन्यथा
+		वापस ret;
 	pm->sequence++;
 
 	/* sample previous batch of counters */
-	list_for_each_entry(dom, &pm->domains, head)
-		dom->func->next(pm, dom);
+	list_क्रम_each_entry(करोm, &pm->करोमुख्यs, head)
+		करोm->func->next(pm, करोm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_perfdom_read(struct nvkm_perfdom *dom, void *data, u32 size)
-{
-	union {
-		struct nvif_perfdom_read_v0 v0;
-	} *args = data;
-	struct nvkm_object *object = &dom->object;
-	struct nvkm_pm *pm = dom->perfmon->pm;
-	int ret = -ENOSYS, i;
+अटल पूर्णांक
+nvkm_perfकरोm_पढ़ो(काष्ठा nvkm_perfकरोm *करोm, व्योम *data, u32 size)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_perfकरोm_पढ़ो_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा nvkm_object *object = &करोm->object;
+	काष्ठा nvkm_pm *pm = करोm->perfmon->pm;
+	पूर्णांक ret = -ENOSYS, i;
 
-	nvif_ioctl(object, "perfdom read size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		nvif_ioctl(object, "perfdom read vers %d\n", args->v0.version);
-	} else
-		return ret;
+	nvअगर_ioctl(object, "perfdom read size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
+		nvअगर_ioctl(object, "perfdom read vers %d\n", args->v0.version);
+	पूर्ण अन्यथा
+		वापस ret;
 
-	for (i = 0; i < 4; i++) {
-		if (dom->ctr[i])
-			dom->func->read(pm, dom, dom->ctr[i]);
-	}
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (करोm->ctr[i])
+			करोm->func->पढ़ो(pm, करोm, करोm->ctr[i]);
+	पूर्ण
 
-	if (!dom->clk)
-		return -EAGAIN;
+	अगर (!करोm->clk)
+		वापस -EAGAIN;
 
-	for (i = 0; i < 4; i++)
-		if (dom->ctr[i])
-			args->v0.ctr[i] = dom->ctr[i]->ctr;
-	args->v0.clk = dom->clk;
-	return 0;
-}
+	क्रम (i = 0; i < 4; i++)
+		अगर (करोm->ctr[i])
+			args->v0.ctr[i] = करोm->ctr[i]->ctr;
+	args->v0.clk = करोm->clk;
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_perfdom_mthd(struct nvkm_object *object, u32 mthd, void *data, u32 size)
-{
-	struct nvkm_perfdom *dom = nvkm_perfdom(object);
-	switch (mthd) {
-	case NVIF_PERFDOM_V0_INIT:
-		return nvkm_perfdom_init(dom, data, size);
-	case NVIF_PERFDOM_V0_SAMPLE:
-		return nvkm_perfdom_sample(dom, data, size);
-	case NVIF_PERFDOM_V0_READ:
-		return nvkm_perfdom_read(dom, data, size);
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक
+nvkm_perfकरोm_mthd(काष्ठा nvkm_object *object, u32 mthd, व्योम *data, u32 size)
+अणु
+	काष्ठा nvkm_perfकरोm *करोm = nvkm_perfकरोm(object);
+	चयन (mthd) अणु
+	हाल NVIF_PERFDOM_V0_INIT:
+		वापस nvkm_perfकरोm_init(करोm, data, size);
+	हाल NVIF_PERFDOM_V0_SAMPLE:
+		वापस nvkm_perfकरोm_sample(करोm, data, size);
+	हाल NVIF_PERFDOM_V0_READ:
+		वापस nvkm_perfकरोm_पढ़ो(करोm, data, size);
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static void *
-nvkm_perfdom_dtor(struct nvkm_object *object)
-{
-	struct nvkm_perfdom *dom = nvkm_perfdom(object);
-	struct nvkm_pm *pm = dom->perfmon->pm;
-	int i;
+अटल व्योम *
+nvkm_perfकरोm_dtor(काष्ठा nvkm_object *object)
+अणु
+	काष्ठा nvkm_perfकरोm *करोm = nvkm_perfकरोm(object);
+	काष्ठा nvkm_pm *pm = करोm->perfmon->pm;
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++) {
-		struct nvkm_perfctr *ctr = dom->ctr[i];
-		if (ctr) {
+	क्रम (i = 0; i < 4; i++) अणु
+		काष्ठा nvkm_perfctr *ctr = करोm->ctr[i];
+		अगर (ctr) अणु
 			nvkm_perfsrc_disable(pm, ctr);
-			if (ctr->head.next)
+			अगर (ctr->head.next)
 				list_del(&ctr->head);
-		}
-		kfree(ctr);
-	}
+		पूर्ण
+		kमुक्त(ctr);
+	पूर्ण
 
-	return dom;
-}
+	वापस करोm;
+पूर्ण
 
-static int
-nvkm_perfctr_new(struct nvkm_perfdom *dom, int slot, u8 domain,
-		 struct nvkm_perfsig *signal[4], u64 source[4][8],
-		 u16 logic_op, struct nvkm_perfctr **pctr)
-{
-	struct nvkm_perfctr *ctr;
-	int i, j;
+अटल पूर्णांक
+nvkm_perfctr_new(काष्ठा nvkm_perfकरोm *करोm, पूर्णांक slot, u8 करोमुख्य,
+		 काष्ठा nvkm_perfsig *संकेत[4], u64 source[4][8],
+		 u16 logic_op, काष्ठा nvkm_perfctr **pctr)
+अणु
+	काष्ठा nvkm_perfctr *ctr;
+	पूर्णांक i, j;
 
-	if (!dom)
-		return -EINVAL;
+	अगर (!करोm)
+		वापस -EINVAL;
 
-	ctr = *pctr = kzalloc(sizeof(*ctr), GFP_KERNEL);
-	if (!ctr)
-		return -ENOMEM;
+	ctr = *pctr = kzalloc(माप(*ctr), GFP_KERNEL);
+	अगर (!ctr)
+		वापस -ENOMEM;
 
-	ctr->domain   = domain;
+	ctr->करोमुख्य   = करोमुख्य;
 	ctr->logic_op = logic_op;
 	ctr->slot     = slot;
-	for (i = 0; i < 4; i++) {
-		if (signal[i]) {
-			ctr->signal[i] = signal[i] - dom->signal;
-			for (j = 0; j < 8; j++)
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (संकेत[i]) अणु
+			ctr->संकेत[i] = संकेत[i] - करोm->संकेत;
+			क्रम (j = 0; j < 8; j++)
 				ctr->source[i][j] = source[i][j];
-		}
-	}
-	list_add_tail(&ctr->head, &dom->list);
+		पूर्ण
+	पूर्ण
+	list_add_tail(&ctr->head, &करोm->list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_object_func
-nvkm_perfdom = {
-	.dtor = nvkm_perfdom_dtor,
-	.mthd = nvkm_perfdom_mthd,
-};
+अटल स्थिर काष्ठा nvkm_object_func
+nvkm_perfकरोm = अणु
+	.dtor = nvkm_perfकरोm_dtor,
+	.mthd = nvkm_perfकरोm_mthd,
+पूर्ण;
 
-static int
-nvkm_perfdom_new_(struct nvkm_perfmon *perfmon,
-		  const struct nvkm_oclass *oclass, void *data, u32 size,
-		  struct nvkm_object **pobject)
-{
-	union {
-		struct nvif_perfdom_v0 v0;
-	} *args = data;
-	struct nvkm_pm *pm = perfmon->pm;
-	struct nvkm_object *parent = oclass->parent;
-	struct nvkm_perfdom *sdom = NULL;
-	struct nvkm_perfctr *ctr[4] = {};
-	struct nvkm_perfdom *dom;
-	int c, s, m;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+nvkm_perfकरोm_new_(काष्ठा nvkm_perfmon *perfmon,
+		  स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
+		  काष्ठा nvkm_object **pobject)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_perfकरोm_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा nvkm_pm *pm = perfmon->pm;
+	काष्ठा nvkm_object *parent = oclass->parent;
+	काष्ठा nvkm_perfकरोm *sकरोm = शून्य;
+	काष्ठा nvkm_perfctr *ctr[4] = अणुपूर्ण;
+	काष्ठा nvkm_perfकरोm *करोm;
+	पूर्णांक c, s, m;
+	पूर्णांक ret = -ENOSYS;
 
-	nvif_ioctl(parent, "create perfdom size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		nvif_ioctl(parent, "create perfdom vers %d dom %d mode %02x\n",
-			   args->v0.version, args->v0.domain, args->v0.mode);
-	} else
-		return ret;
+	nvअगर_ioctl(parent, "create perfdom size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
+		nvअगर_ioctl(parent, "create perfdom vers %d dom %d mode %02x\n",
+			   args->v0.version, args->v0.करोमुख्य, args->v0.mode);
+	पूर्ण अन्यथा
+		वापस ret;
 
-	for (c = 0; c < ARRAY_SIZE(args->v0.ctr); c++) {
-		struct nvkm_perfsig *sig[4] = {};
-		u64 src[4][8] = {};
+	क्रम (c = 0; c < ARRAY_SIZE(args->v0.ctr); c++) अणु
+		काष्ठा nvkm_perfsig *sig[4] = अणुपूर्ण;
+		u64 src[4][8] = अणुपूर्ण;
 
-		for (s = 0; s < ARRAY_SIZE(args->v0.ctr[c].signal); s++) {
-			sig[s] = nvkm_perfsig_find(pm, args->v0.domain,
-						   args->v0.ctr[c].signal[s],
-						   &sdom);
-			if (args->v0.ctr[c].signal[s] && !sig[s])
-				return -EINVAL;
+		क्रम (s = 0; s < ARRAY_SIZE(args->v0.ctr[c].संकेत); s++) अणु
+			sig[s] = nvkm_perfsig_find(pm, args->v0.करोमुख्य,
+						   args->v0.ctr[c].संकेत[s],
+						   &sकरोm);
+			अगर (args->v0.ctr[c].संकेत[s] && !sig[s])
+				वापस -EINVAL;
 
-			for (m = 0; m < 8; m++) {
+			क्रम (m = 0; m < 8; m++) अणु
 				src[s][m] = args->v0.ctr[c].source[s][m];
-				if (src[s][m] && !nvkm_perfsrc_find(pm, sig[s],
+				अगर (src[s][m] && !nvkm_perfsrc_find(pm, sig[s],
 							            src[s][m]))
-					return -EINVAL;
-			}
-		}
+					वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 
-		ret = nvkm_perfctr_new(sdom, c, args->v0.domain, sig, src,
+		ret = nvkm_perfctr_new(sकरोm, c, args->v0.करोमुख्य, sig, src,
 				       args->v0.ctr[c].logic_op, &ctr[c]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (!sdom)
-		return -EINVAL;
+	अगर (!sकरोm)
+		वापस -EINVAL;
 
-	if (!(dom = kzalloc(sizeof(*dom), GFP_KERNEL)))
-		return -ENOMEM;
-	nvkm_object_ctor(&nvkm_perfdom, oclass, &dom->object);
-	dom->perfmon = perfmon;
-	*pobject = &dom->object;
+	अगर (!(करोm = kzalloc(माप(*करोm), GFP_KERNEL)))
+		वापस -ENOMEM;
+	nvkm_object_ctor(&nvkm_perfकरोm, oclass, &करोm->object);
+	करोm->perfmon = perfmon;
+	*pobject = &करोm->object;
 
-	dom->func = sdom->func;
-	dom->addr = sdom->addr;
-	dom->mode = args->v0.mode;
-	for (c = 0; c < ARRAY_SIZE(ctr); c++)
-		dom->ctr[c] = ctr[c];
-	return 0;
-}
+	करोm->func = sकरोm->func;
+	करोm->addr = sकरोm->addr;
+	करोm->mode = args->v0.mode;
+	क्रम (c = 0; c < ARRAY_SIZE(ctr); c++)
+		करोm->ctr[c] = ctr[c];
+	वापस 0;
+पूर्ण
 
 /*******************************************************************************
  * Perfmon object classes
  ******************************************************************************/
-static int
-nvkm_perfmon_mthd_query_domain(struct nvkm_perfmon *perfmon,
-			       void *data, u32 size)
-{
-	union {
-		struct nvif_perfmon_query_domain_v0 v0;
-	} *args = data;
-	struct nvkm_object *object = &perfmon->object;
-	struct nvkm_pm *pm = perfmon->pm;
-	struct nvkm_perfdom *dom;
-	u8 domain_nr;
-	int di, ret = -ENOSYS;
+अटल पूर्णांक
+nvkm_perfmon_mthd_query_करोमुख्य(काष्ठा nvkm_perfmon *perfmon,
+			       व्योम *data, u32 size)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_perfmon_query_करोमुख्य_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा nvkm_object *object = &perfmon->object;
+	काष्ठा nvkm_pm *pm = perfmon->pm;
+	काष्ठा nvkm_perfकरोm *करोm;
+	u8 करोमुख्य_nr;
+	पूर्णांक di, ret = -ENOSYS;
 
-	nvif_ioctl(object, "perfmon query domain size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		nvif_ioctl(object, "perfmon domain vers %d iter %02x\n",
+	nvअगर_ioctl(object, "perfmon query domain size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
+		nvअगर_ioctl(object, "perfmon domain vers %d iter %02x\n",
 			   args->v0.version, args->v0.iter);
 		di = (args->v0.iter & 0xff) - 1;
-	} else
-		return ret;
+	पूर्ण अन्यथा
+		वापस ret;
 
-	domain_nr = nvkm_pm_count_perfdom(pm);
-	if (di >= (int)domain_nr)
-		return -EINVAL;
+	करोमुख्य_nr = nvkm_pm_count_perfकरोm(pm);
+	अगर (di >= (पूर्णांक)करोमुख्य_nr)
+		वापस -EINVAL;
 
-	if (di >= 0) {
-		dom = nvkm_perfdom_find(pm, di);
-		if (dom == NULL)
-			return -EINVAL;
+	अगर (di >= 0) अणु
+		करोm = nvkm_perfकरोm_find(pm, di);
+		अगर (करोm == शून्य)
+			वापस -EINVAL;
 
 		args->v0.id         = di;
-		args->v0.signal_nr  = nvkm_perfdom_count_perfsig(dom);
-		strncpy(args->v0.name, dom->name, sizeof(args->v0.name) - 1);
+		args->v0.संकेत_nr  = nvkm_perfकरोm_count_perfsig(करोm);
+		म_नकलन(args->v0.name, करोm->name, माप(args->v0.name) - 1);
 
 		/* Currently only global counters (PCOUNTER) are implemented
-		 * but this will be different for local counters (MP). */
+		 * but this will be dअगरferent क्रम local counters (MP). */
 		args->v0.counter_nr = 4;
-	}
+	पूर्ण
 
-	if (++di < domain_nr) {
+	अगर (++di < करोमुख्य_nr) अणु
 		args->v0.iter = ++di;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	args->v0.iter = 0xff;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_perfmon_mthd_query_signal(struct nvkm_perfmon *perfmon,
-			       void *data, u32 size)
-{
-	union {
-		struct nvif_perfmon_query_signal_v0 v0;
-	} *args = data;
-	struct nvkm_object *object = &perfmon->object;
-	struct nvkm_pm *pm = perfmon->pm;
-	struct nvkm_device *device = pm->engine.subdev.device;
-	struct nvkm_perfdom *dom;
-	struct nvkm_perfsig *sig;
-	const bool all = nvkm_boolopt(device->cfgopt, "NvPmShowAll", false);
-	const bool raw = nvkm_boolopt(device->cfgopt, "NvPmUnnamed", all);
-	int ret = -ENOSYS, si;
+अटल पूर्णांक
+nvkm_perfmon_mthd_query_संकेत(काष्ठा nvkm_perfmon *perfmon,
+			       व्योम *data, u32 size)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_perfmon_query_संकेत_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा nvkm_object *object = &perfmon->object;
+	काष्ठा nvkm_pm *pm = perfmon->pm;
+	काष्ठा nvkm_device *device = pm->engine.subdev.device;
+	काष्ठा nvkm_perfकरोm *करोm;
+	काष्ठा nvkm_perfsig *sig;
+	स्थिर bool all = nvkm_boolopt(device->cfgopt, "NvPmShowAll", false);
+	स्थिर bool raw = nvkm_boolopt(device->cfgopt, "NvPmUnnamed", all);
+	पूर्णांक ret = -ENOSYS, si;
 
-	nvif_ioctl(object, "perfmon query signal size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		nvif_ioctl(object,
+	nvअगर_ioctl(object, "perfmon query signal size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
+		nvअगर_ioctl(object,
 			   "perfmon query signal vers %d dom %d iter %04x\n",
-			   args->v0.version, args->v0.domain, args->v0.iter);
+			   args->v0.version, args->v0.करोमुख्य, args->v0.iter);
 		si = (args->v0.iter & 0xffff) - 1;
-	} else
-		return ret;
+	पूर्ण अन्यथा
+		वापस ret;
 
-	dom = nvkm_perfdom_find(pm, args->v0.domain);
-	if (dom == NULL || si >= (int)dom->signal_nr)
-		return -EINVAL;
+	करोm = nvkm_perfकरोm_find(pm, args->v0.करोमुख्य);
+	अगर (करोm == शून्य || si >= (पूर्णांक)करोm->संकेत_nr)
+		वापस -EINVAL;
 
-	if (si >= 0) {
-		sig = &dom->signal[si];
-		if (raw || !sig->name) {
-			snprintf(args->v0.name, sizeof(args->v0.name),
-				 "/%s/%02x", dom->name, si);
-		} else {
-			strncpy(args->v0.name, sig->name,
-				sizeof(args->v0.name) - 1);
-		}
+	अगर (si >= 0) अणु
+		sig = &करोm->संकेत[si];
+		अगर (raw || !sig->name) अणु
+			snम_लिखो(args->v0.name, माप(args->v0.name),
+				 "/%s/%02x", करोm->name, si);
+		पूर्ण अन्यथा अणु
+			म_नकलन(args->v0.name, sig->name,
+				माप(args->v0.name) - 1);
+		पूर्ण
 
-		args->v0.signal = si;
+		args->v0.संकेत = si;
 		args->v0.source_nr = nvkm_perfsig_count_perfsrc(sig);
-	}
+	पूर्ण
 
-	while (++si < dom->signal_nr) {
-		if (all || dom->signal[si].name) {
+	जबतक (++si < करोm->संकेत_nr) अणु
+		अगर (all || करोm->संकेत[si].name) अणु
 			args->v0.iter = ++si;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	args->v0.iter = 0xffff;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_perfmon_mthd_query_source(struct nvkm_perfmon *perfmon,
-			       void *data, u32 size)
-{
-	union {
-		struct nvif_perfmon_query_source_v0 v0;
-	} *args = data;
-	struct nvkm_object *object = &perfmon->object;
-	struct nvkm_pm *pm = perfmon->pm;
-	struct nvkm_perfdom *dom = NULL;
-	struct nvkm_perfsig *sig;
-	struct nvkm_perfsrc *src;
+अटल पूर्णांक
+nvkm_perfmon_mthd_query_source(काष्ठा nvkm_perfmon *perfmon,
+			       व्योम *data, u32 size)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_perfmon_query_source_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा nvkm_object *object = &perfmon->object;
+	काष्ठा nvkm_pm *pm = perfmon->pm;
+	काष्ठा nvkm_perfकरोm *करोm = शून्य;
+	काष्ठा nvkm_perfsig *sig;
+	काष्ठा nvkm_perfsrc *src;
 	u8 source_nr = 0;
-	int si, ret = -ENOSYS;
+	पूर्णांक si, ret = -ENOSYS;
 
-	nvif_ioctl(object, "perfmon query source size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		nvif_ioctl(object,
+	nvअगर_ioctl(object, "perfmon query source size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
+		nvअगर_ioctl(object,
 			   "perfmon source vers %d dom %d sig %02x iter %02x\n",
-			   args->v0.version, args->v0.domain, args->v0.signal,
+			   args->v0.version, args->v0.करोमुख्य, args->v0.संकेत,
 			   args->v0.iter);
 		si = (args->v0.iter & 0xff) - 1;
-	} else
-		return ret;
+	पूर्ण अन्यथा
+		वापस ret;
 
-	sig = nvkm_perfsig_find(pm, args->v0.domain, args->v0.signal, &dom);
-	if (!sig)
-		return -EINVAL;
+	sig = nvkm_perfsig_find(pm, args->v0.करोमुख्य, args->v0.संकेत, &करोm);
+	अगर (!sig)
+		वापस -EINVAL;
 
 	source_nr = nvkm_perfsig_count_perfsrc(sig);
-	if (si >= (int)source_nr)
-		return -EINVAL;
+	अगर (si >= (पूर्णांक)source_nr)
+		वापस -EINVAL;
 
-	if (si >= 0) {
+	अगर (si >= 0) अणु
 		src = nvkm_perfsrc_find(pm, sig, sig->source[si]);
-		if (!src)
-			return -EINVAL;
+		अगर (!src)
+			वापस -EINVAL;
 
 		args->v0.source = sig->source[si];
 		args->v0.mask   = src->mask;
-		strncpy(args->v0.name, src->name, sizeof(args->v0.name) - 1);
-	}
+		म_नकलन(args->v0.name, src->name, माप(args->v0.name) - 1);
+	पूर्ण
 
-	if (++si < source_nr) {
+	अगर (++si < source_nr) अणु
 		args->v0.iter = ++si;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	args->v0.iter = 0xff;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_perfmon_mthd(struct nvkm_object *object, u32 mthd, void *data, u32 size)
-{
-	struct nvkm_perfmon *perfmon = nvkm_perfmon(object);
-	switch (mthd) {
-	case NVIF_PERFMON_V0_QUERY_DOMAIN:
-		return nvkm_perfmon_mthd_query_domain(perfmon, data, size);
-	case NVIF_PERFMON_V0_QUERY_SIGNAL:
-		return nvkm_perfmon_mthd_query_signal(perfmon, data, size);
-	case NVIF_PERFMON_V0_QUERY_SOURCE:
-		return nvkm_perfmon_mthd_query_source(perfmon, data, size);
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक
+nvkm_perfmon_mthd(काष्ठा nvkm_object *object, u32 mthd, व्योम *data, u32 size)
+अणु
+	काष्ठा nvkm_perfmon *perfmon = nvkm_perfmon(object);
+	चयन (mthd) अणु
+	हाल NVIF_PERFMON_V0_QUERY_DOMAIN:
+		वापस nvkm_perfmon_mthd_query_करोमुख्य(perfmon, data, size);
+	हाल NVIF_PERFMON_V0_QUERY_SIGNAL:
+		वापस nvkm_perfmon_mthd_query_संकेत(perfmon, data, size);
+	हाल NVIF_PERFMON_V0_QUERY_SOURCE:
+		वापस nvkm_perfmon_mthd_query_source(perfmon, data, size);
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int
-nvkm_perfmon_child_new(const struct nvkm_oclass *oclass, void *data, u32 size,
-		       struct nvkm_object **pobject)
-{
-	struct nvkm_perfmon *perfmon = nvkm_perfmon(oclass->parent);
-	return nvkm_perfdom_new_(perfmon, oclass, data, size, pobject);
-}
+अटल पूर्णांक
+nvkm_perfmon_child_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
+		       काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nvkm_perfmon *perfmon = nvkm_perfmon(oclass->parent);
+	वापस nvkm_perfकरोm_new_(perfmon, oclass, data, size, pobject);
+पूर्ण
 
-static int
-nvkm_perfmon_child_get(struct nvkm_object *object, int index,
-		       struct nvkm_oclass *oclass)
-{
-	if (index == 0) {
+अटल पूर्णांक
+nvkm_perfmon_child_get(काष्ठा nvkm_object *object, पूर्णांक index,
+		       काष्ठा nvkm_oclass *oclass)
+अणु
+	अगर (index == 0) अणु
 		oclass->base.oclass = NVIF_CLASS_PERFDOM;
 		oclass->base.minver = 0;
 		oclass->base.maxver = 0;
 		oclass->ctor = nvkm_perfmon_child_new;
-		return 0;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static void *
-nvkm_perfmon_dtor(struct nvkm_object *object)
-{
-	struct nvkm_perfmon *perfmon = nvkm_perfmon(object);
-	struct nvkm_pm *pm = perfmon->pm;
+अटल व्योम *
+nvkm_perfmon_dtor(काष्ठा nvkm_object *object)
+अणु
+	काष्ठा nvkm_perfmon *perfmon = nvkm_perfmon(object);
+	काष्ठा nvkm_pm *pm = perfmon->pm;
 	spin_lock(&pm->client.lock);
-	if (pm->client.object == &perfmon->object)
-		pm->client.object = NULL;
+	अगर (pm->client.object == &perfmon->object)
+		pm->client.object = शून्य;
 	spin_unlock(&pm->client.lock);
-	return perfmon;
-}
+	वापस perfmon;
+पूर्ण
 
-static const struct nvkm_object_func
-nvkm_perfmon = {
+अटल स्थिर काष्ठा nvkm_object_func
+nvkm_perfmon = अणु
 	.dtor = nvkm_perfmon_dtor,
 	.mthd = nvkm_perfmon_mthd,
 	.sclass = nvkm_perfmon_child_get,
-};
+पूर्ण;
 
-static int
-nvkm_perfmon_new(struct nvkm_pm *pm, const struct nvkm_oclass *oclass,
-		 void *data, u32 size, struct nvkm_object **pobject)
-{
-	struct nvkm_perfmon *perfmon;
+अटल पूर्णांक
+nvkm_perfmon_new(काष्ठा nvkm_pm *pm, स्थिर काष्ठा nvkm_oclass *oclass,
+		 व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nvkm_perfmon *perfmon;
 
-	if (!(perfmon = kzalloc(sizeof(*perfmon), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(perfmon = kzalloc(माप(*perfmon), GFP_KERNEL)))
+		वापस -ENOMEM;
 	nvkm_object_ctor(&nvkm_perfmon, oclass, &perfmon->object);
 	perfmon->pm = pm;
 	*pobject = &perfmon->object;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*******************************************************************************
  * PPM engine/subdev functions
  ******************************************************************************/
 
-static int
-nvkm_pm_oclass_new(struct nvkm_device *device, const struct nvkm_oclass *oclass,
-		   void *data, u32 size, struct nvkm_object **pobject)
-{
-	struct nvkm_pm *pm = nvkm_pm(oclass->engine);
-	int ret;
+अटल पूर्णांक
+nvkm_pm_oclass_new(काष्ठा nvkm_device *device, स्थिर काष्ठा nvkm_oclass *oclass,
+		   व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nvkm_pm *pm = nvkm_pm(oclass->engine);
+	पूर्णांक ret;
 
 	ret = nvkm_perfmon_new(pm, oclass, data, size, pobject);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&pm->client.lock);
-	if (pm->client.object == NULL)
+	अगर (pm->client.object == शून्य)
 		pm->client.object = *pobject;
 	ret = (pm->client.object == *pobject) ? 0 : -EBUSY;
 	spin_unlock(&pm->client.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_device_oclass
-nvkm_pm_oclass = {
+अटल स्थिर काष्ठा nvkm_device_oclass
+nvkm_pm_oclass = अणु
 	.base.oclass = NVIF_CLASS_PERFMON,
 	.base.minver = -1,
 	.base.maxver = -1,
 	.ctor = nvkm_pm_oclass_new,
-};
+पूर्ण;
 
-static int
-nvkm_pm_oclass_get(struct nvkm_oclass *oclass, int index,
-		   const struct nvkm_device_oclass **class)
-{
-	if (index == 0) {
+अटल पूर्णांक
+nvkm_pm_oclass_get(काष्ठा nvkm_oclass *oclass, पूर्णांक index,
+		   स्थिर काष्ठा nvkm_device_oclass **class)
+अणु
+	अगर (index == 0) अणु
 		oclass->base = nvkm_pm_oclass.base;
 		*class = &nvkm_pm_oclass;
-		return index;
-	}
-	return 1;
-}
+		वापस index;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int
-nvkm_perfsrc_new(struct nvkm_pm *pm, struct nvkm_perfsig *sig,
-		 const struct nvkm_specsrc *spec)
-{
-	const struct nvkm_specsrc *ssrc;
-	const struct nvkm_specmux *smux;
-	struct nvkm_perfsrc *src;
+अटल पूर्णांक
+nvkm_perfsrc_new(काष्ठा nvkm_pm *pm, काष्ठा nvkm_perfsig *sig,
+		 स्थिर काष्ठा nvkm_specsrc *spec)
+अणु
+	स्थिर काष्ठा nvkm_specsrc *ssrc;
+	स्थिर काष्ठा nvkm_specmux *smux;
+	काष्ठा nvkm_perfsrc *src;
 	u8 source_nr = 0;
 
-	if (!spec) {
-		/* No sources are defined for this signal. */
-		return 0;
-	}
+	अगर (!spec) अणु
+		/* No sources are defined क्रम this संकेत. */
+		वापस 0;
+	पूर्ण
 
 	ssrc = spec;
-	while (ssrc->name) {
+	जबतक (ssrc->name) अणु
 		smux = ssrc->mux;
-		while (smux->name) {
+		जबतक (smux->name) अणु
 			bool found = false;
 			u8 source_id = 0;
 			u32 len;
 
-			list_for_each_entry(src, &pm->sources, head) {
-				if (src->addr == ssrc->addr &&
-				    src->shift == smux->shift) {
+			list_क्रम_each_entry(src, &pm->sources, head) अणु
+				अगर (src->addr == ssrc->addr &&
+				    src->shअगरt == smux->shअगरt) अणु
 					found = true;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				source_id++;
-			}
+			पूर्ण
 
-			if (!found) {
-				src = kzalloc(sizeof(*src), GFP_KERNEL);
-				if (!src)
-					return -ENOMEM;
+			अगर (!found) अणु
+				src = kzalloc(माप(*src), GFP_KERNEL);
+				अगर (!src)
+					वापस -ENOMEM;
 
 				src->addr   = ssrc->addr;
 				src->mask   = smux->mask;
-				src->shift  = smux->shift;
+				src->shअगरt  = smux->shअगरt;
 				src->enable = smux->enable;
 
-				len = strlen(ssrc->name) +
-				      strlen(smux->name) + 2;
+				len = म_माप(ssrc->name) +
+				      म_माप(smux->name) + 2;
 				src->name = kzalloc(len, GFP_KERNEL);
-				if (!src->name) {
-					kfree(src);
-					return -ENOMEM;
-				}
-				snprintf(src->name, len, "%s_%s", ssrc->name,
+				अगर (!src->name) अणु
+					kमुक्त(src);
+					वापस -ENOMEM;
+				पूर्ण
+				snम_लिखो(src->name, len, "%s_%s", ssrc->name,
 					 smux->name);
 
 				list_add_tail(&src->head, &pm->sources);
-			}
+			पूर्ण
 
 			sig->source[source_nr++] = source_id + 1;
 			smux++;
-		}
+		पूर्ण
 		ssrc++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvkm_perfdom_new(struct nvkm_pm *pm, const char *name, u32 mask,
-		 u32 base, u32 size_unit, u32 size_domain,
-		 const struct nvkm_specdom *spec)
-{
-	const struct nvkm_specdom *sdom;
-	const struct nvkm_specsig *ssig;
-	struct nvkm_perfdom *dom;
-	int ret, i;
+पूर्णांक
+nvkm_perfकरोm_new(काष्ठा nvkm_pm *pm, स्थिर अक्षर *name, u32 mask,
+		 u32 base, u32 size_unit, u32 size_करोमुख्य,
+		 स्थिर काष्ठा nvkm_specकरोm *spec)
+अणु
+	स्थिर काष्ठा nvkm_specकरोm *sकरोm;
+	स्थिर काष्ठा nvkm_specsig *ssig;
+	काष्ठा nvkm_perfकरोm *करोm;
+	पूर्णांक ret, i;
 
-	for (i = 0; i == 0 || mask; i++) {
+	क्रम (i = 0; i == 0 || mask; i++) अणु
 		u32 addr = base + (i * size_unit);
-		if (i && !(mask & (1 << i)))
-			continue;
+		अगर (i && !(mask & (1 << i)))
+			जारी;
 
-		sdom = spec;
-		while (sdom->signal_nr) {
-			dom = kzalloc(struct_size(dom, signal, sdom->signal_nr),
+		sकरोm = spec;
+		जबतक (sकरोm->संकेत_nr) अणु
+			करोm = kzalloc(काष्ठा_size(करोm, संकेत, sकरोm->संकेत_nr),
 				      GFP_KERNEL);
-			if (!dom)
-				return -ENOMEM;
+			अगर (!करोm)
+				वापस -ENOMEM;
 
-			if (mask) {
-				snprintf(dom->name, sizeof(dom->name),
+			अगर (mask) अणु
+				snम_लिखो(करोm->name, माप(करोm->name),
 					 "%s/%02x/%02x", name, i,
-					 (int)(sdom - spec));
-			} else {
-				snprintf(dom->name, sizeof(dom->name),
-					 "%s/%02x", name, (int)(sdom - spec));
-			}
+					 (पूर्णांक)(sकरोm - spec));
+			पूर्ण अन्यथा अणु
+				snम_लिखो(करोm->name, माप(करोm->name),
+					 "%s/%02x", name, (पूर्णांक)(sकरोm - spec));
+			पूर्ण
 
-			list_add_tail(&dom->head, &pm->domains);
-			INIT_LIST_HEAD(&dom->list);
-			dom->func = sdom->func;
-			dom->addr = addr;
-			dom->signal_nr = sdom->signal_nr;
+			list_add_tail(&करोm->head, &pm->करोमुख्यs);
+			INIT_LIST_HEAD(&करोm->list);
+			करोm->func = sकरोm->func;
+			करोm->addr = addr;
+			करोm->संकेत_nr = sकरोm->संकेत_nr;
 
-			ssig = (sdom++)->signal;
-			while (ssig->name) {
-				struct nvkm_perfsig *sig =
-					&dom->signal[ssig->signal];
+			ssig = (sकरोm++)->संकेत;
+			जबतक (ssig->name) अणु
+				काष्ठा nvkm_perfsig *sig =
+					&करोm->संकेत[ssig->संकेत];
 				sig->name = ssig->name;
 				ret = nvkm_perfsrc_new(pm, sig, ssig->source);
-				if (ret)
-					return ret;
+				अगर (ret)
+					वापस ret;
 				ssig++;
-			}
+			पूर्ण
 
-			addr += size_domain;
-		}
+			addr += size_करोमुख्य;
+		पूर्ण
 
 		mask &= ~(1 << i);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_pm_fini(struct nvkm_engine *engine, bool suspend)
-{
-	struct nvkm_pm *pm = nvkm_pm(engine);
-	if (pm->func->fini)
+अटल पूर्णांक
+nvkm_pm_fini(काष्ठा nvkm_engine *engine, bool suspend)
+अणु
+	काष्ठा nvkm_pm *pm = nvkm_pm(engine);
+	अगर (pm->func->fini)
 		pm->func->fini(pm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *
-nvkm_pm_dtor(struct nvkm_engine *engine)
-{
-	struct nvkm_pm *pm = nvkm_pm(engine);
-	struct nvkm_perfdom *dom, *next_dom;
-	struct nvkm_perfsrc *src, *next_src;
+अटल व्योम *
+nvkm_pm_dtor(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_pm *pm = nvkm_pm(engine);
+	काष्ठा nvkm_perfकरोm *करोm, *next_करोm;
+	काष्ठा nvkm_perfsrc *src, *next_src;
 
-	list_for_each_entry_safe(dom, next_dom, &pm->domains, head) {
-		list_del(&dom->head);
-		kfree(dom);
-	}
+	list_क्रम_each_entry_safe(करोm, next_करोm, &pm->करोमुख्यs, head) अणु
+		list_del(&करोm->head);
+		kमुक्त(करोm);
+	पूर्ण
 
-	list_for_each_entry_safe(src, next_src, &pm->sources, head) {
+	list_क्रम_each_entry_safe(src, next_src, &pm->sources, head) अणु
 		list_del(&src->head);
-		kfree(src->name);
-		kfree(src);
-	}
+		kमुक्त(src->name);
+		kमुक्त(src);
+	पूर्ण
 
-	return pm;
-}
+	वापस pm;
+पूर्ण
 
-static const struct nvkm_engine_func
-nvkm_pm = {
+अटल स्थिर काष्ठा nvkm_engine_func
+nvkm_pm = अणु
 	.dtor = nvkm_pm_dtor,
 	.fini = nvkm_pm_fini,
 	.base.sclass = nvkm_pm_oclass_get,
-};
+पूर्ण;
 
-int
-nvkm_pm_ctor(const struct nvkm_pm_func *func, struct nvkm_device *device,
-	     enum nvkm_subdev_type type, int inst, struct nvkm_pm *pm)
-{
+पूर्णांक
+nvkm_pm_ctor(स्थिर काष्ठा nvkm_pm_func *func, काष्ठा nvkm_device *device,
+	     क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_pm *pm)
+अणु
 	pm->func = func;
-	INIT_LIST_HEAD(&pm->domains);
+	INIT_LIST_HEAD(&pm->करोमुख्यs);
 	INIT_LIST_HEAD(&pm->sources);
 	spin_lock_init(&pm->client.lock);
-	return nvkm_engine_ctor(&nvkm_pm, device, type, inst, true, &pm->engine);
-}
+	वापस nvkm_engine_ctor(&nvkm_pm, device, type, inst, true, &pm->engine);
+पूर्ण

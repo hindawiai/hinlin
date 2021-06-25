@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  * mlme_linux.c
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
- * Linux device driver for RTL8192SU
+ * Linux device driver क्रम RTL8192SU
  *
- * Modifications for inclusion into the Linux staging tree are
+ * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact information:
+ * Contact inक्रमmation:
  * WLAN FAE <wlanfae@realtek.com>.
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
 
-#define _MLME_OSDEP_C_
+#घोषणा _MLME_OSDEP_C_
 
-#include "osdep_service.h"
-#include "drv_types.h"
-#include "mlme_osdep.h"
+#समावेश "osdep_service.h"
+#समावेश "drv_types.h"
+#समावेश "mlme_osdep.h"
 
-static void sitesurvey_ctrl_handler(struct timer_list *t)
-{
-	struct _adapter *adapter =
-		from_timer(adapter, t,
-			   mlmepriv.sitesurveyctrl.sitesurvey_ctrl_timer);
+अटल व्योम sitesurvey_ctrl_handler(काष्ठा समयr_list *t)
+अणु
+	काष्ठा _adapter *adapter =
+		from_समयr(adapter, t,
+			   mlmepriv.sitesurveyctrl.sitesurvey_ctrl_समयr);
 
 	_r8712_sitesurvey_ctrl_handler(adapter);
-	mod_timer(&adapter->mlmepriv.sitesurveyctrl.sitesurvey_ctrl_timer,
-		  jiffies + msecs_to_jiffies(3000));
-}
+	mod_समयr(&adapter->mlmepriv.sitesurveyctrl.sitesurvey_ctrl_समयr,
+		  jअगरfies + msecs_to_jअगरfies(3000));
+पूर्ण
 
-static void join_timeout_handler (struct timer_list *t)
-{
-	struct _adapter *adapter =
-		from_timer(adapter, t, mlmepriv.assoc_timer);
+अटल व्योम join_समयout_handler (काष्ठा समयr_list *t)
+अणु
+	काष्ठा _adapter *adapter =
+		from_समयr(adapter, t, mlmepriv.assoc_समयr);
 
-	_r8712_join_timeout_handler(adapter);
-}
+	_r8712_join_समयout_handler(adapter);
+पूर्ण
 
-static void _scan_timeout_handler (struct timer_list *t)
-{
-	struct _adapter *adapter =
-		from_timer(adapter, t, mlmepriv.scan_to_timer);
+अटल व्योम _scan_समयout_handler (काष्ठा समयr_list *t)
+अणु
+	काष्ठा _adapter *adapter =
+		from_समयr(adapter, t, mlmepriv.scan_to_समयr);
 
-	r8712_scan_timeout_handler(adapter);
-}
+	r8712_scan_समयout_handler(adapter);
+पूर्ण
 
-static void dhcp_timeout_handler (struct timer_list *t)
-{
-	struct _adapter *adapter =
-		from_timer(adapter, t, mlmepriv.dhcp_timer);
+अटल व्योम dhcp_समयout_handler (काष्ठा समयr_list *t)
+अणु
+	काष्ठा _adapter *adapter =
+		from_समयr(adapter, t, mlmepriv.dhcp_समयr);
 
-	_r8712_dhcp_timeout_handler(adapter);
-}
+	_r8712_dhcp_समयout_handler(adapter);
+पूर्ण
 
-static void wdg_timeout_handler (struct timer_list *t)
-{
-	struct _adapter *adapter =
-		from_timer(adapter, t, mlmepriv.wdg_timer);
+अटल व्योम wdg_समयout_handler (काष्ठा समयr_list *t)
+अणु
+	काष्ठा _adapter *adapter =
+		from_समयr(adapter, t, mlmepriv.wdg_समयr);
 
 	r8712_wdg_wk_cmd(adapter);
 
-	mod_timer(&adapter->mlmepriv.wdg_timer,
-		  jiffies + msecs_to_jiffies(2000));
-}
+	mod_समयr(&adapter->mlmepriv.wdg_समयr,
+		  jअगरfies + msecs_to_jअगरfies(2000));
+पूर्ण
 
-void r8712_init_mlme_timer(struct _adapter *adapter)
-{
-	struct	mlme_priv *mlmepriv = &adapter->mlmepriv;
+व्योम r8712_init_mlme_समयr(काष्ठा _adapter *adapter)
+अणु
+	काष्ठा	mlme_priv *mlmepriv = &adapter->mlmepriv;
 
-	timer_setup(&mlmepriv->assoc_timer, join_timeout_handler, 0);
-	timer_setup(&mlmepriv->sitesurveyctrl.sitesurvey_ctrl_timer,
+	समयr_setup(&mlmepriv->assoc_समयr, join_समयout_handler, 0);
+	समयr_setup(&mlmepriv->sitesurveyctrl.sitesurvey_ctrl_समयr,
 		    sitesurvey_ctrl_handler, 0);
-	timer_setup(&mlmepriv->scan_to_timer, _scan_timeout_handler, 0);
-	timer_setup(&mlmepriv->dhcp_timer, dhcp_timeout_handler, 0);
-	timer_setup(&mlmepriv->wdg_timer, wdg_timeout_handler, 0);
-}
+	समयr_setup(&mlmepriv->scan_to_समयr, _scan_समयout_handler, 0);
+	समयr_setup(&mlmepriv->dhcp_समयr, dhcp_समयout_handler, 0);
+	समयr_setup(&mlmepriv->wdg_समयr, wdg_समयout_handler, 0);
+पूर्ण
 
-void r8712_os_indicate_connect(struct _adapter *adapter)
-{
+व्योम r8712_os_indicate_connect(काष्ठा _adapter *adapter)
+अणु
 	r8712_indicate_wx_assoc_event(adapter);
-	netif_carrier_on(adapter->pnetdev);
-}
+	netअगर_carrier_on(adapter->pnetdev);
+पूर्ण
 
-static struct RT_PMKID_LIST   backupPMKIDList[NUM_PMKID_CACHE];
-void r8712_os_indicate_disconnect(struct _adapter *adapter)
-{
+अटल काष्ठा RT_PMKID_LIST   backupPMKIDList[NUM_PMKID_CACHE];
+व्योम r8712_os_indicate_disconnect(काष्ठा _adapter *adapter)
+अणु
 	u8 backupPMKIDIndex = 0;
 	u8 backupTKIPCountermeasure = 0x00;
 
 	r8712_indicate_wx_disassoc_event(adapter);
-	netif_carrier_off(adapter->pnetdev);
-	if (adapter->securitypriv.AuthAlgrthm == 2) { /*/802.1x*/
-		/* We have to backup the PMK information for WiFi PMK Caching
-		 * test item. Backup the btkip_countermeasure information.
+	netअगर_carrier_off(adapter->pnetdev);
+	अगर (adapter->securitypriv.AuthAlgrthm == 2) अणु /*/802.1x*/
+		/* We have to backup the PMK inक्रमmation क्रम WiFi PMK Caching
+		 * test item. Backup the btkip_countermeasure inक्रमmation.
 		 * When the countermeasure is trigger, the driver have to
-		 * disconnect with AP for 60 seconds.
+		 * disconnect with AP क्रम 60 seconds.
 		 */
 
-		memcpy(&backupPMKIDList[0],
+		स_नकल(&backupPMKIDList[0],
 		       &adapter->securitypriv.PMKIDList[0],
-		       sizeof(struct RT_PMKID_LIST) * NUM_PMKID_CACHE);
+		       माप(काष्ठा RT_PMKID_LIST) * NUM_PMKID_CACHE);
 		backupPMKIDIndex = adapter->securitypriv.PMKIDIndex;
 		backupTKIPCountermeasure =
 			adapter->securitypriv.btkip_countermeasure;
-		memset((unsigned char *)&adapter->securitypriv, 0,
-		       sizeof(struct security_priv));
-		timer_setup(&adapter->securitypriv.tkip_timer,
+		स_रखो((अचिन्हित अक्षर *)&adapter->securitypriv, 0,
+		       माप(काष्ठा security_priv));
+		समयr_setup(&adapter->securitypriv.tkip_समयr,
 			    r8712_use_tkipkey_handler, 0);
-		/* Restore the PMK information to securitypriv structure
-		 * for the following connection.
+		/* Restore the PMK inक्रमmation to securitypriv काष्ठाure
+		 * क्रम the following connection.
 		 */
-		memcpy(&adapter->securitypriv.PMKIDList[0],
+		स_नकल(&adapter->securitypriv.PMKIDList[0],
 		       &backupPMKIDList[0],
-		       sizeof(struct RT_PMKID_LIST) * NUM_PMKID_CACHE);
+		       माप(काष्ठा RT_PMKID_LIST) * NUM_PMKID_CACHE);
 		adapter->securitypriv.PMKIDIndex = backupPMKIDIndex;
 		adapter->securitypriv.btkip_countermeasure =
 					 backupTKIPCountermeasure;
-	} else { /*reset values in securitypriv*/
-		struct security_priv *sec_priv = &adapter->securitypriv;
+	पूर्ण अन्यथा अणु /*reset values in securitypriv*/
+		काष्ठा security_priv *sec_priv = &adapter->securitypriv;
 
-		sec_priv->AuthAlgrthm = 0; /*open system*/
+		sec_priv->AuthAlgrthm = 0; /*खोलो प्रणाली*/
 		sec_priv->PrivacyAlgrthm = _NO_PRIVACY_;
 		sec_priv->PrivacyKeyIndex = 0;
 		sec_priv->XGrpPrivacy = _NO_PRIVACY_;
@@ -129,32 +130,32 @@ void r8712_os_indicate_disconnect(struct _adapter *adapter)
 		sec_priv->ndisauthtype = Ndis802_11AuthModeOpen;
 		sec_priv->ndisencryptstatus = Ndis802_11WEPDisabled;
 		sec_priv->wps_phase = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void r8712_report_sec_ie(struct _adapter *adapter, u8 authmode, u8 *sec_ie)
-{
-	uint len;
+व्योम r8712_report_sec_ie(काष्ठा _adapter *adapter, u8 authmode, u8 *sec_ie)
+अणु
+	uपूर्णांक len;
 	u8 *buff, *p, i;
-	union iwreq_data wrqu;
+	जोड़ iwreq_data wrqu;
 
-	buff = NULL;
-	if (authmode == _WPA_IE_ID_) {
+	buff = शून्य;
+	अगर (authmode == _WPA_IE_ID_) अणु
 		buff = kzalloc(IW_CUSTOM_MAX, GFP_ATOMIC);
-		if (!buff)
-			return;
+		अगर (!buff)
+			वापस;
 		p = buff;
-		p += sprintf(p, "ASSOCINFO(ReqIEs=");
+		p += प्र_लिखो(p, "ASSOCINFO(ReqIEs=");
 		len = sec_ie[1] + 2;
 		len =  (len < IW_CUSTOM_MAX) ? len : IW_CUSTOM_MAX;
-		for (i = 0; i < len; i++)
-			p += sprintf(p, "%02x", sec_ie[i]);
-		p += sprintf(p, ")");
-		memset(&wrqu, 0, sizeof(wrqu));
+		क्रम (i = 0; i < len; i++)
+			p += प्र_लिखो(p, "%02x", sec_ie[i]);
+		p += प्र_लिखो(p, ")");
+		स_रखो(&wrqu, 0, माप(wrqu));
 		wrqu.data.length = p - buff;
 		wrqu.data.length = (wrqu.data.length < IW_CUSTOM_MAX) ?
 				   wrqu.data.length : IW_CUSTOM_MAX;
 		wireless_send_event(adapter->pnetdev, IWEVCUSTOM, &wrqu, buff);
-		kfree(buff);
-	}
-}
+		kमुक्त(buff);
+	पूर्ण
+पूर्ण

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * flat.h -- uClinux flat-format executables
+ * flat.h -- uClinux flat-क्रमmat executables
  */
 
-#ifndef __M68KNOMMU_FLAT_H__
-#define __M68KNOMMU_FLAT_H__
+#अगर_अघोषित __M68KNOMMU_FLAT_H__
+#घोषणा __M68KNOMMU_FLAT_H__
 
-#include <asm-generic/flat.h>
+#समावेश <यंत्र-generic/flat.h>
 
-#define FLAT_PLAT_INIT(regs) \
-	do { \
-		if (current->mm) \
+#घोषणा FLAT_PLAT_INIT(regs) \
+	करो अणु \
+		अगर (current->mm) \
 			(regs)->d5 = current->mm->start_data; \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#endif /* __M68KNOMMU_FLAT_H__ */
+#पूर्ण_अगर /* __M68KNOMMU_FLAT_H__ */

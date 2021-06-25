@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_MSDOS_PARTITION_H
-#define _LINUX_MSDOS_PARTITION_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_MSDOS_PARTITION_H
+#घोषणा _LINUX_MSDOS_PARTITION_H
 
-#define MSDOS_LABEL_MAGIC		0xAA55
+#घोषणा MSDOS_LABEL_MAGIC		0xAA55
 
-struct msdos_partition {
+काष्ठा msकरोs_partition अणु
 	u8 boot_ind;		/* 0x80 - active */
 	u8 head;		/* starting head */
 	u8 sector;		/* starting sector */
@@ -15,12 +16,12 @@ struct msdos_partition {
 	u8 end_cyl;		/* end cylinder */
 	__le32 start_sect;	/* starting sector counting from 0 */
 	__le32 nr_sects;	/* nr of sectors in partition */
-} __packed;
+पूर्ण __packed;
 
-enum msdos_sys_ind {
+क्रमागत msकरोs_sys_ind अणु
 	/*
-	 * These three have identical behaviour; use the second one if DOS FDISK
-	 * gets confused about extended/logical partitions starting past
+	 * These three have identical behaviour; use the second one अगर DOS FDISK
+	 * माला_लो confused about extended/logical partitions starting past
 	 * cylinder 1023.
 	 */
 	DOS_EXTENDED_PARTITION = 5,
@@ -29,7 +30,7 @@ enum msdos_sys_ind {
 
 	LINUX_DATA_PARTITION = 0x83,
 	LINUX_LVM_PARTITION = 0x8e,
-	LINUX_RAID_PARTITION = 0xfd,	/* autodetect RAID partition */
+	LINUX_RAID_PARTITION = 0xfd,	/* स्वतःdetect RAID partition */
 
 	SOLARIS_X86_PARTITION =	0x82,	/* also Linux swap partitions */
 	NEW_SOLARIS_X86_PARTITION = 0xbf,
@@ -45,6 +46,6 @@ enum msdos_sys_ind {
 	BSDI_PARTITION = 0xb7,		/* BSDI Partition ID */
 	MINIX_PARTITION = 0x81,		/* Minix Partition ID */
 	UNIXWARE_PARTITION = 0x63,	/* Same as GNU_HURD and SCO Unix */
-};
+पूर्ण;
 
-#endif /* LINUX_MSDOS_PARTITION_H */
+#पूर्ण_अगर /* LINUX_MSDOS_PARTITION_H */

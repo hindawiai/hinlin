@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
-   CMTP implementation for Linux Bluetooth stack (BlueZ).
-   Copyright (C) 2002-2003 Marcel Holtmann <marcel@holtmann.org>
+   CMTP implementation क्रम Linux Bluetooth stack (BlueZ).
+   Copyright (C) 2002-2003 Marcel Holपंचांगann <marcel@holपंचांगann.org>
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -10,7 +11,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -20,352 +21,352 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/poll.h>
-#include <linux/fcntl.h>
-#include <linux/freezer.h>
-#include <linux/skbuff.h>
-#include <linux/socket.h>
-#include <linux/ioctl.h>
-#include <linux/file.h>
-#include <linux/init.h>
-#include <linux/kthread.h>
-#include <net/sock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/file.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <net/sock.h>
 
-#include <linux/isdn/capilli.h>
+#समावेश <linux/isdn/capilli.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/l2cap.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/l2cap.h>
 
-#include "cmtp.h"
+#समावेश "cmtp.h"
 
-#define VERSION "1.0"
+#घोषणा VERSION "1.0"
 
-static DECLARE_RWSEM(cmtp_session_sem);
-static LIST_HEAD(cmtp_session_list);
+अटल DECLARE_RWSEM(cmtp_session_sem);
+अटल LIST_HEAD(cmtp_session_list);
 
-static struct cmtp_session *__cmtp_get_session(bdaddr_t *bdaddr)
-{
-	struct cmtp_session *session;
+अटल काष्ठा cmtp_session *__cmtp_get_session(bdaddr_t *bdaddr)
+अणु
+	काष्ठा cmtp_session *session;
 
 	BT_DBG("");
 
-	list_for_each_entry(session, &cmtp_session_list, list)
-		if (!bacmp(bdaddr, &session->bdaddr))
-			return session;
+	list_क्रम_each_entry(session, &cmtp_session_list, list)
+		अगर (!bacmp(bdaddr, &session->bdaddr))
+			वापस session;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __cmtp_link_session(struct cmtp_session *session)
-{
+अटल व्योम __cmtp_link_session(काष्ठा cmtp_session *session)
+अणु
 	list_add(&session->list, &cmtp_session_list);
-}
+पूर्ण
 
-static void __cmtp_unlink_session(struct cmtp_session *session)
-{
+अटल व्योम __cmtp_unlink_session(काष्ठा cmtp_session *session)
+अणु
 	list_del(&session->list);
-}
+पूर्ण
 
-static void __cmtp_copy_session(struct cmtp_session *session, struct cmtp_conninfo *ci)
-{
+अटल व्योम __cmtp_copy_session(काष्ठा cmtp_session *session, काष्ठा cmtp_conninfo *ci)
+अणु
 	u32 valid_flags = BIT(CMTP_LOOPBACK);
-	memset(ci, 0, sizeof(*ci));
+	स_रखो(ci, 0, माप(*ci));
 	bacpy(&ci->bdaddr, &session->bdaddr);
 
 	ci->flags = session->flags & valid_flags;
 	ci->state = session->state;
 
 	ci->num = session->num;
-}
+पूर्ण
 
 
-static inline int cmtp_alloc_block_id(struct cmtp_session *session)
-{
-	int i, id = -1;
+अटल अंतरभूत पूर्णांक cmtp_alloc_block_id(काष्ठा cmtp_session *session)
+अणु
+	पूर्णांक i, id = -1;
 
-	for (i = 0; i < 16; i++)
-		if (!test_and_set_bit(i, &session->blockids)) {
+	क्रम (i = 0; i < 16; i++)
+		अगर (!test_and_set_bit(i, &session->blockids)) अणु
 			id = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
-static inline void cmtp_free_block_id(struct cmtp_session *session, int id)
-{
+अटल अंतरभूत व्योम cmtp_मुक्त_block_id(काष्ठा cmtp_session *session, पूर्णांक id)
+अणु
 	clear_bit(id, &session->blockids);
-}
+पूर्ण
 
-static inline void cmtp_add_msgpart(struct cmtp_session *session, int id, const unsigned char *buf, int count)
-{
-	struct sk_buff *skb = session->reassembly[id], *nskb;
-	int size;
+अटल अंतरभूत व्योम cmtp_add_msgpart(काष्ठा cmtp_session *session, पूर्णांक id, स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	काष्ठा sk_buff *skb = session->reassembly[id], *nskb;
+	पूर्णांक size;
 
 	BT_DBG("session %p buf %p count %d", session, buf, count);
 
 	size = (skb) ? skb->len + count : count;
 
 	nskb = alloc_skb(size, GFP_ATOMIC);
-	if (!nskb) {
+	अगर (!nskb) अणु
 		BT_ERR("Can't allocate memory for CAPI message");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (skb && (skb->len > 0))
+	अगर (skb && (skb->len > 0))
 		skb_copy_from_linear_data(skb, skb_put(nskb, skb->len), skb->len);
 
 	skb_put_data(nskb, buf, count);
 
 	session->reassembly[id] = nskb;
 
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-static inline int cmtp_recv_frame(struct cmtp_session *session, struct sk_buff *skb)
-{
+अटल अंतरभूत पूर्णांक cmtp_recv_frame(काष्ठा cmtp_session *session, काष्ठा sk_buff *skb)
+अणु
 	__u8 hdr, hdrlen, id;
 	__u16 len;
 
 	BT_DBG("session %p skb %p len %d", session, skb, skb->len);
 
-	while (skb->len > 0) {
+	जबतक (skb->len > 0) अणु
 		hdr = skb->data[0];
 
-		switch (hdr & 0xc0) {
-		case 0x40:
+		चयन (hdr & 0xc0) अणु
+		हाल 0x40:
 			hdrlen = 2;
 			len = skb->data[1];
-			break;
-		case 0x80:
+			अवरोध;
+		हाल 0x80:
 			hdrlen = 3;
 			len = skb->data[1] | (skb->data[2] << 8);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			hdrlen = 1;
 			len = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		id = (hdr & 0x3c) >> 2;
 
 		BT_DBG("hdr 0x%02x hdrlen %d len %d id %d", hdr, hdrlen, len, id);
 
-		if (hdrlen + len > skb->len) {
+		अगर (hdrlen + len > skb->len) अणु
 			BT_ERR("Wrong size or header information in CMTP frame");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (len == 0) {
+		अगर (len == 0) अणु
 			skb_pull(skb, hdrlen);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (hdr & 0x03) {
-		case 0x00:
+		चयन (hdr & 0x03) अणु
+		हाल 0x00:
 			cmtp_add_msgpart(session, id, skb->data + hdrlen, len);
 			cmtp_recv_capimsg(session, session->reassembly[id]);
-			session->reassembly[id] = NULL;
-			break;
-		case 0x01:
+			session->reassembly[id] = शून्य;
+			अवरोध;
+		हाल 0x01:
 			cmtp_add_msgpart(session, id, skb->data + hdrlen, len);
-			break;
-		default:
-			kfree_skb(session->reassembly[id]);
-			session->reassembly[id] = NULL;
-			break;
-		}
+			अवरोध;
+		शेष:
+			kमुक्त_skb(session->reassembly[id]);
+			session->reassembly[id] = शून्य;
+			अवरोध;
+		पूर्ण
 
 		skb_pull(skb, hdrlen + len);
-	}
+	पूर्ण
 
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int cmtp_send_frame(struct cmtp_session *session, unsigned char *data, int len)
-{
-	struct socket *sock = session->sock;
-	struct kvec iv = { data, len };
-	struct msghdr msg;
+अटल पूर्णांक cmtp_send_frame(काष्ठा cmtp_session *session, अचिन्हित अक्षर *data, पूर्णांक len)
+अणु
+	काष्ठा socket *sock = session->sock;
+	काष्ठा kvec iv = अणु data, len पूर्ण;
+	काष्ठा msghdr msg;
 
 	BT_DBG("session %p data %p len %d", session, data, len);
 
-	if (!len)
-		return 0;
+	अगर (!len)
+		वापस 0;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 
-	return kernel_sendmsg(sock, &msg, &iv, 1, len);
-}
+	वापस kernel_sendmsg(sock, &msg, &iv, 1, len);
+पूर्ण
 
-static void cmtp_process_transmit(struct cmtp_session *session)
-{
-	struct sk_buff *skb, *nskb;
-	unsigned char *hdr;
-	unsigned int size, tail;
+अटल व्योम cmtp_process_transmit(काष्ठा cmtp_session *session)
+अणु
+	काष्ठा sk_buff *skb, *nskb;
+	अचिन्हित अक्षर *hdr;
+	अचिन्हित पूर्णांक size, tail;
 
 	BT_DBG("session %p", session);
 
 	nskb = alloc_skb(session->mtu, GFP_ATOMIC);
-	if (!nskb) {
+	अगर (!nskb) अणु
 		BT_ERR("Can't allocate memory for new frame");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while ((skb = skb_dequeue(&session->transmit))) {
-		struct cmtp_scb *scb = (void *) skb->cb;
+	जबतक ((skb = skb_dequeue(&session->transmit))) अणु
+		काष्ठा cmtp_scb *scb = (व्योम *) skb->cb;
 
 		tail = session->mtu - nskb->len;
-		if (tail < 5) {
+		अगर (tail < 5) अणु
 			cmtp_send_frame(session, nskb->data, nskb->len);
 			skb_trim(nskb, 0);
 			tail = session->mtu;
-		}
+		पूर्ण
 
-		size = min_t(uint, ((tail < 258) ? (tail - 2) : (tail - 3)), skb->len);
+		size = min_t(uपूर्णांक, ((tail < 258) ? (tail - 2) : (tail - 3)), skb->len);
 
-		if (scb->id < 0) {
+		अगर (scb->id < 0) अणु
 			scb->id = cmtp_alloc_block_id(session);
-			if (scb->id < 0) {
+			अगर (scb->id < 0) अणु
 				skb_queue_head(&session->transmit, skb);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (size < 256) {
+		अगर (size < 256) अणु
 			hdr = skb_put(nskb, 2);
 			hdr[0] = 0x40
 				| ((scb->id << 2) & 0x3c)
 				| ((skb->len == size) ? 0x00 : 0x01);
 			hdr[1] = size;
-		} else {
+		पूर्ण अन्यथा अणु
 			hdr = skb_put(nskb, 3);
 			hdr[0] = 0x80
 				| ((scb->id << 2) & 0x3c)
 				| ((skb->len == size) ? 0x00 : 0x01);
 			hdr[1] = size & 0xff;
 			hdr[2] = size >> 8;
-		}
+		पूर्ण
 
 		skb_copy_from_linear_data(skb, skb_put(nskb, size), size);
 		skb_pull(skb, size);
 
-		if (skb->len > 0) {
+		अगर (skb->len > 0) अणु
 			skb_queue_head(&session->transmit, skb);
-		} else {
-			cmtp_free_block_id(session, scb->id);
-			if (scb->data) {
+		पूर्ण अन्यथा अणु
+			cmtp_मुक्त_block_id(session, scb->id);
+			अगर (scb->data) अणु
 				cmtp_send_frame(session, nskb->data, nskb->len);
 				skb_trim(nskb, 0);
-			}
-			kfree_skb(skb);
-		}
-	}
+			पूर्ण
+			kमुक्त_skb(skb);
+		पूर्ण
+	पूर्ण
 
 	cmtp_send_frame(session, nskb->data, nskb->len);
 
-	kfree_skb(nskb);
-}
+	kमुक्त_skb(nskb);
+पूर्ण
 
-static int cmtp_session(void *arg)
-{
-	struct cmtp_session *session = arg;
-	struct sock *sk = session->sock->sk;
-	struct sk_buff *skb;
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+अटल पूर्णांक cmtp_session(व्योम *arg)
+अणु
+	काष्ठा cmtp_session *session = arg;
+	काष्ठा sock *sk = session->sock->sk;
+	काष्ठा sk_buff *skb;
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
 
 	BT_DBG("session %p", session);
 
 	set_user_nice(current, -15);
 
-	add_wait_queue(sk_sleep(sk), &wait);
-	while (1) {
-		if (atomic_read(&session->terminate))
-			break;
-		if (sk->sk_state != BT_CONNECTED)
-			break;
+	add_रुको_queue(sk_sleep(sk), &रुको);
+	जबतक (1) अणु
+		अगर (atomic_पढ़ो(&session->terminate))
+			अवरोध;
+		अगर (sk->sk_state != BT_CONNECTED)
+			अवरोध;
 
-		while ((skb = skb_dequeue(&sk->sk_receive_queue))) {
+		जबतक ((skb = skb_dequeue(&sk->sk_receive_queue))) अणु
 			skb_orphan(skb);
-			if (!skb_linearize(skb))
+			अगर (!skb_linearize(skb))
 				cmtp_recv_frame(session, skb);
-			else
-				kfree_skb(skb);
-		}
+			अन्यथा
+				kमुक्त_skb(skb);
+		पूर्ण
 
 		cmtp_process_transmit(session);
 
 		/*
-		 * wait_woken() performs the necessary memory barriers
-		 * for us; see the header comment for this primitive.
+		 * रुको_woken() perक्रमms the necessary memory barriers
+		 * क्रम us; see the header comment क्रम this primitive.
 		 */
-		wait_woken(&wait, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
-	}
-	remove_wait_queue(sk_sleep(sk), &wait);
+		रुको_woken(&रुको, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
+	पूर्ण
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
 
-	down_write(&cmtp_session_sem);
+	करोwn_ग_लिखो(&cmtp_session_sem);
 
-	if (!(session->flags & BIT(CMTP_LOOPBACK)))
+	अगर (!(session->flags & BIT(CMTP_LOOPBACK)))
 		cmtp_detach_device(session);
 
 	fput(session->sock->file);
 
 	__cmtp_unlink_session(session);
 
-	up_write(&cmtp_session_sem);
+	up_ग_लिखो(&cmtp_session_sem);
 
-	kfree(session);
-	module_put_and_exit(0);
-	return 0;
-}
+	kमुक्त(session);
+	module_put_and_निकास(0);
+	वापस 0;
+पूर्ण
 
-int cmtp_add_connection(struct cmtp_connadd_req *req, struct socket *sock)
-{
+पूर्णांक cmtp_add_connection(काष्ठा cmtp_connadd_req *req, काष्ठा socket *sock)
+अणु
 	u32 valid_flags = BIT(CMTP_LOOPBACK);
-	struct cmtp_session *session, *s;
-	int i, err;
+	काष्ठा cmtp_session *session, *s;
+	पूर्णांक i, err;
 
 	BT_DBG("");
 
-	if (!l2cap_is_socket(sock))
-		return -EBADFD;
+	अगर (!l2cap_is_socket(sock))
+		वापस -EBADFD;
 
-	if (req->flags & ~valid_flags)
-		return -EINVAL;
+	अगर (req->flags & ~valid_flags)
+		वापस -EINVAL;
 
-	session = kzalloc(sizeof(struct cmtp_session), GFP_KERNEL);
-	if (!session)
-		return -ENOMEM;
+	session = kzalloc(माप(काष्ठा cmtp_session), GFP_KERNEL);
+	अगर (!session)
+		वापस -ENOMEM;
 
-	down_write(&cmtp_session_sem);
+	करोwn_ग_लिखो(&cmtp_session_sem);
 
 	s = __cmtp_get_session(&l2cap_pi(sock->sk)->chan->dst);
-	if (s && s->state == BT_CONNECTED) {
+	अगर (s && s->state == BT_CONNECTED) अणु
 		err = -EEXIST;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	bacpy(&session->bdaddr, &l2cap_pi(sock->sk)->chan->dst);
 
-	session->mtu = min_t(uint, l2cap_pi(sock->sk)->chan->omtu,
+	session->mtu = min_t(uपूर्णांक, l2cap_pi(sock->sk)->chan->omtu,
 					l2cap_pi(sock->sk)->chan->imtu);
 
 	BT_DBG("mtu %d", session->mtu);
 
-	sprintf(session->name, "%pMR", &session->bdaddr);
+	प्र_लिखो(session->name, "%pMR", &session->bdaddr);
 
 	session->sock  = sock;
 	session->state = BT_CONFIG;
 
-	init_waitqueue_head(&session->wait);
+	init_रुकोqueue_head(&session->रुको);
 
 	session->msgnum = CMTP_INITIAL_MSGNUM;
 
@@ -373,141 +374,141 @@ int cmtp_add_connection(struct cmtp_connadd_req *req, struct socket *sock)
 
 	skb_queue_head_init(&session->transmit);
 
-	for (i = 0; i < 16; i++)
-		session->reassembly[i] = NULL;
+	क्रम (i = 0; i < 16; i++)
+		session->reassembly[i] = शून्य;
 
 	session->flags = req->flags;
 
 	__cmtp_link_session(session);
 
 	__module_get(THIS_MODULE);
-	session->task = kthread_run(cmtp_session, session, "kcmtpd_ctr_%d",
+	session->task = kthपढ़ो_run(cmtp_session, session, "kcmtpd_ctr_%d",
 								session->num);
-	if (IS_ERR(session->task)) {
+	अगर (IS_ERR(session->task)) अणु
 		module_put(THIS_MODULE);
 		err = PTR_ERR(session->task);
-		goto unlink;
-	}
+		जाओ unlink;
+	पूर्ण
 
-	if (!(session->flags & BIT(CMTP_LOOPBACK))) {
+	अगर (!(session->flags & BIT(CMTP_LOOPBACK))) अणु
 		err = cmtp_attach_device(session);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			atomic_inc(&session->terminate);
-			wake_up_interruptible(sk_sleep(session->sock->sk));
-			up_write(&cmtp_session_sem);
-			return err;
-		}
-	}
+			wake_up_पूर्णांकerruptible(sk_sleep(session->sock->sk));
+			up_ग_लिखो(&cmtp_session_sem);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	up_write(&cmtp_session_sem);
-	return 0;
+	up_ग_लिखो(&cmtp_session_sem);
+	वापस 0;
 
 unlink:
 	__cmtp_unlink_session(session);
 
 failed:
-	up_write(&cmtp_session_sem);
-	kfree(session);
-	return err;
-}
+	up_ग_लिखो(&cmtp_session_sem);
+	kमुक्त(session);
+	वापस err;
+पूर्ण
 
-int cmtp_del_connection(struct cmtp_conndel_req *req)
-{
+पूर्णांक cmtp_del_connection(काष्ठा cmtp_conndel_req *req)
+अणु
 	u32 valid_flags = 0;
-	struct cmtp_session *session;
-	int err = 0;
+	काष्ठा cmtp_session *session;
+	पूर्णांक err = 0;
 
 	BT_DBG("");
 
-	if (req->flags & ~valid_flags)
-		return -EINVAL;
+	अगर (req->flags & ~valid_flags)
+		वापस -EINVAL;
 
-	down_read(&cmtp_session_sem);
+	करोwn_पढ़ो(&cmtp_session_sem);
 
 	session = __cmtp_get_session(&req->bdaddr);
-	if (session) {
+	अगर (session) अणु
 		/* Flush the transmit queue */
 		skb_queue_purge(&session->transmit);
 
-		/* Stop session thread */
+		/* Stop session thपढ़ो */
 		atomic_inc(&session->terminate);
 
 		/*
-		 * See the comment preceding the call to wait_woken()
+		 * See the comment preceding the call to रुको_woken()
 		 * in cmtp_session().
 		 */
-		wake_up_interruptible(sk_sleep(session->sock->sk));
-	} else
+		wake_up_पूर्णांकerruptible(sk_sleep(session->sock->sk));
+	पूर्ण अन्यथा
 		err = -ENOENT;
 
-	up_read(&cmtp_session_sem);
-	return err;
-}
+	up_पढ़ो(&cmtp_session_sem);
+	वापस err;
+पूर्ण
 
-int cmtp_get_connlist(struct cmtp_connlist_req *req)
-{
-	struct cmtp_session *session;
-	int err = 0, n = 0;
+पूर्णांक cmtp_get_connlist(काष्ठा cmtp_connlist_req *req)
+अणु
+	काष्ठा cmtp_session *session;
+	पूर्णांक err = 0, n = 0;
 
 	BT_DBG("");
 
-	down_read(&cmtp_session_sem);
+	करोwn_पढ़ो(&cmtp_session_sem);
 
-	list_for_each_entry(session, &cmtp_session_list, list) {
-		struct cmtp_conninfo ci;
+	list_क्रम_each_entry(session, &cmtp_session_list, list) अणु
+		काष्ठा cmtp_conninfo ci;
 
 		__cmtp_copy_session(session, &ci);
 
-		if (copy_to_user(req->ci, &ci, sizeof(ci))) {
+		अगर (copy_to_user(req->ci, &ci, माप(ci))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (++n >= req->cnum)
-			break;
+		अगर (++n >= req->cnum)
+			अवरोध;
 
 		req->ci++;
-	}
+	पूर्ण
 	req->cnum = n;
 
-	up_read(&cmtp_session_sem);
-	return err;
-}
+	up_पढ़ो(&cmtp_session_sem);
+	वापस err;
+पूर्ण
 
-int cmtp_get_conninfo(struct cmtp_conninfo *ci)
-{
-	struct cmtp_session *session;
-	int err = 0;
+पूर्णांक cmtp_get_conninfo(काष्ठा cmtp_conninfo *ci)
+अणु
+	काष्ठा cmtp_session *session;
+	पूर्णांक err = 0;
 
-	down_read(&cmtp_session_sem);
+	करोwn_पढ़ो(&cmtp_session_sem);
 
 	session = __cmtp_get_session(&ci->bdaddr);
-	if (session)
+	अगर (session)
 		__cmtp_copy_session(session, ci);
-	else
+	अन्यथा
 		err = -ENOENT;
 
-	up_read(&cmtp_session_sem);
-	return err;
-}
+	up_पढ़ो(&cmtp_session_sem);
+	वापस err;
+पूर्ण
 
 
-static int __init cmtp_init(void)
-{
+अटल पूर्णांक __init cmtp_init(व्योम)
+अणु
 	BT_INFO("CMTP (CAPI Emulation) ver %s", VERSION);
 
 	cmtp_init_sockets();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit cmtp_exit(void)
-{
+अटल व्योम __निकास cmtp_निकास(व्योम)
+अणु
 	cmtp_cleanup_sockets();
-}
+पूर्ण
 
 module_init(cmtp_init);
-module_exit(cmtp_exit);
+module_निकास(cmtp_निकास);
 
 MODULE_AUTHOR("Marcel Holtmann <marcel@holtmann.org>");
 MODULE_DESCRIPTION("Bluetooth CMTP ver " VERSION);

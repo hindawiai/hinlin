@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * cap_audit.c - audit iommu capabilities for boot time and hot plug
+ * cap_audit.c - audit iommu capabilities क्रम boot समय and hot plug
  *
  * Copyright (C) 2021 Intel Corporation
  *
- * Author: Kyung Min Park <kyung.min.park@intel.com>
- *         Lu Baolu <baolu.lu@linux.intel.com>
+ * Author: Kyung Min Park <kyung.min.park@पूर्णांकel.com>
+ *         Lu Baolu <baolu.lu@linux.पूर्णांकel.com>
  */
 
-#define pr_fmt(fmt)	"DMAR: " fmt
+#घोषणा pr_fmt(fmt)	"DMAR: " fmt
 
-#include <linux/intel-iommu.h>
-#include "cap_audit.h"
+#समावेश <linux/पूर्णांकel-iommu.h>
+#समावेश "cap_audit.h"
 
-static u64 intel_iommu_cap_sanity;
-static u64 intel_iommu_ecap_sanity;
+अटल u64 पूर्णांकel_iommu_cap_sanity;
+अटल u64 पूर्णांकel_iommu_ecap_sanity;
 
-static inline void check_irq_capabilities(struct intel_iommu *a,
-					  struct intel_iommu *b)
-{
+अटल अंतरभूत व्योम check_irq_capabilities(काष्ठा पूर्णांकel_iommu *a,
+					  काष्ठा पूर्णांकel_iommu *b)
+अणु
 	CHECK_FEATURE_MISMATCH(a, b, cap, pi_support, CAP_PI_MASK);
 	CHECK_FEATURE_MISMATCH(a, b, ecap, eim_support, ECAP_EIM_MASK);
-}
+पूर्ण
 
-static inline void check_dmar_capabilities(struct intel_iommu *a,
-					   struct intel_iommu *b)
-{
+अटल अंतरभूत व्योम check_dmar_capabilities(काष्ठा पूर्णांकel_iommu *a,
+					   काष्ठा पूर्णांकel_iommu *b)
+अणु
 	MINIMAL_FEATURE_IOMMU(b, cap, CAP_MAMV_MASK);
 	MINIMAL_FEATURE_IOMMU(b, cap, CAP_NFR_MASK);
 	MINIMAL_FEATURE_IOMMU(b, cap, CAP_SLLPS_MASK);
@@ -39,8 +40,8 @@ static inline void check_dmar_capabilities(struct intel_iommu *a,
 
 	CHECK_FEATURE_MISMATCH(a, b, cap, 5lp_support, CAP_FL5LP_MASK);
 	CHECK_FEATURE_MISMATCH(a, b, cap, fl1gp_support, CAP_FL1GP_MASK);
-	CHECK_FEATURE_MISMATCH(a, b, cap, read_drain, CAP_RD_MASK);
-	CHECK_FEATURE_MISMATCH(a, b, cap, write_drain, CAP_WD_MASK);
+	CHECK_FEATURE_MISMATCH(a, b, cap, पढ़ो_drain, CAP_RD_MASK);
+	CHECK_FEATURE_MISMATCH(a, b, cap, ग_लिखो_drain, CAP_WD_MASK);
 	CHECK_FEATURE_MISMATCH(a, b, cap, pgsel_inv, CAP_PSI_MASK);
 	CHECK_FEATURE_MISMATCH(a, b, cap, zlr, CAP_ZLR_MASK);
 	CHECK_FEATURE_MISMATCH(a, b, cap, caching_mode, CAP_CM_MASK);
@@ -70,24 +71,24 @@ static inline void check_dmar_capabilities(struct intel_iommu *a,
 	CHECK_FEATURE_MISMATCH(a, b, ecap, dev_iotlb_support, ECAP_DT_MASK);
 	CHECK_FEATURE_MISMATCH(a, b, ecap, qis, ECAP_QI_MASK);
 	CHECK_FEATURE_MISMATCH(a, b, ecap, coherent, ECAP_C_MASK);
-}
+पूर्ण
 
-static int cap_audit_hotplug(struct intel_iommu *iommu, enum cap_audit_type type)
-{
+अटल पूर्णांक cap_audit_hotplug(काष्ठा पूर्णांकel_iommu *iommu, क्रमागत cap_audit_type type)
+अणु
 	bool mismatch = false;
-	u64 old_cap = intel_iommu_cap_sanity;
-	u64 old_ecap = intel_iommu_ecap_sanity;
+	u64 old_cap = पूर्णांकel_iommu_cap_sanity;
+	u64 old_ecap = पूर्णांकel_iommu_ecap_sanity;
 
-	if (type == CAP_AUDIT_HOTPLUG_IRQR) {
+	अगर (type == CAP_AUDIT_HOTPLUG_IRQR) अणु
 		CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, pi_support, CAP_PI_MASK);
 		CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, ecap, eim_support, ECAP_EIM_MASK);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, 5lp_support, CAP_FL5LP_MASK);
 	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, fl1gp_support, CAP_FL1GP_MASK);
-	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, read_drain, CAP_RD_MASK);
-	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, write_drain, CAP_WD_MASK);
+	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, पढ़ो_drain, CAP_RD_MASK);
+	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, ग_लिखो_drain, CAP_WD_MASK);
 	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, pgsel_inv, CAP_PSI_MASK);
 	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, zlr, CAP_ZLR_MASK);
 	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, cap, caching_mode, CAP_CM_MASK);
@@ -118,88 +119,88 @@ static int cap_audit_hotplug(struct intel_iommu *iommu, enum cap_audit_type type
 	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, ecap, qis, ECAP_QI_MASK);
 	CHECK_FEATURE_MISMATCH_HOTPLUG(iommu, ecap, coherent, ECAP_C_MASK);
 
-	/* Abort hot plug if the hot plug iommu feature is smaller than global */
+	/* Abort hot plug अगर the hot plug iommu feature is smaller than global */
 	MINIMAL_FEATURE_HOTPLUG(iommu, cap, max_amask_val, CAP_MAMV_MASK, mismatch);
 	MINIMAL_FEATURE_HOTPLUG(iommu, cap, num_fault_regs, CAP_NFR_MASK, mismatch);
 	MINIMAL_FEATURE_HOTPLUG(iommu, cap, super_page_val, CAP_SLLPS_MASK, mismatch);
 	MINIMAL_FEATURE_HOTPLUG(iommu, cap, fault_reg_offset, CAP_FRO_MASK, mismatch);
 	MINIMAL_FEATURE_HOTPLUG(iommu, cap, mgaw, CAP_MGAW_MASK, mismatch);
 	MINIMAL_FEATURE_HOTPLUG(iommu, cap, sagaw, CAP_SAGAW_MASK, mismatch);
-	MINIMAL_FEATURE_HOTPLUG(iommu, cap, ndoms, CAP_NDOMS_MASK, mismatch);
+	MINIMAL_FEATURE_HOTPLUG(iommu, cap, nकरोms, CAP_NDOMS_MASK, mismatch);
 	MINIMAL_FEATURE_HOTPLUG(iommu, ecap, pss, ECAP_PSS_MASK, mismatch);
 	MINIMAL_FEATURE_HOTPLUG(iommu, ecap, max_handle_mask, ECAP_MHMV_MASK, mismatch);
 	MINIMAL_FEATURE_HOTPLUG(iommu, ecap, iotlb_offset, ECAP_IRO_MASK, mismatch);
 
 out:
-	if (mismatch) {
-		intel_iommu_cap_sanity = old_cap;
-		intel_iommu_ecap_sanity = old_ecap;
-		return -EFAULT;
-	}
+	अगर (mismatch) अणु
+		पूर्णांकel_iommu_cap_sanity = old_cap;
+		पूर्णांकel_iommu_ecap_sanity = old_ecap;
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cap_audit_static(struct intel_iommu *iommu, enum cap_audit_type type)
-{
-	struct dmar_drhd_unit *d;
-	struct intel_iommu *i;
+अटल पूर्णांक cap_audit_अटल(काष्ठा पूर्णांकel_iommu *iommu, क्रमागत cap_audit_type type)
+अणु
+	काष्ठा dmar_drhd_unit *d;
+	काष्ठा पूर्णांकel_iommu *i;
 
-	rcu_read_lock();
-	if (list_empty(&dmar_drhd_units))
-		goto out;
+	rcu_पढ़ो_lock();
+	अगर (list_empty(&dmar_drhd_units))
+		जाओ out;
 
-	for_each_active_iommu(i, d) {
-		if (!iommu) {
-			intel_iommu_ecap_sanity = i->ecap;
-			intel_iommu_cap_sanity = i->cap;
+	क्रम_each_active_iommu(i, d) अणु
+		अगर (!iommu) अणु
+			पूर्णांकel_iommu_ecap_sanity = i->ecap;
+			पूर्णांकel_iommu_cap_sanity = i->cap;
 			iommu = i;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (type == CAP_AUDIT_STATIC_DMAR)
+		अगर (type == CAP_AUDIT_STATIC_DMAR)
 			check_dmar_capabilities(iommu, i);
-		else
+		अन्यथा
 			check_irq_capabilities(iommu, i);
-	}
+	पूर्ण
 
 out:
-	rcu_read_unlock();
-	return 0;
-}
+	rcu_पढ़ो_unlock();
+	वापस 0;
+पूर्ण
 
-int intel_cap_audit(enum cap_audit_type type, struct intel_iommu *iommu)
-{
-	switch (type) {
-	case CAP_AUDIT_STATIC_DMAR:
-	case CAP_AUDIT_STATIC_IRQR:
-		return cap_audit_static(iommu, type);
-	case CAP_AUDIT_HOTPLUG_DMAR:
-	case CAP_AUDIT_HOTPLUG_IRQR:
-		return cap_audit_hotplug(iommu, type);
-	default:
-		break;
-	}
+पूर्णांक पूर्णांकel_cap_audit(क्रमागत cap_audit_type type, काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	चयन (type) अणु
+	हाल CAP_AUDIT_STATIC_DMAR:
+	हाल CAP_AUDIT_STATIC_IRQR:
+		वापस cap_audit_अटल(iommu, type);
+	हाल CAP_AUDIT_HOTPLUG_DMAR:
+	हाल CAP_AUDIT_HOTPLUG_IRQR:
+		वापस cap_audit_hotplug(iommu, type);
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-bool intel_cap_smts_sanity(void)
-{
-	return ecap_smts(intel_iommu_ecap_sanity);
-}
+bool पूर्णांकel_cap_smts_sanity(व्योम)
+अणु
+	वापस ecap_smts(पूर्णांकel_iommu_ecap_sanity);
+पूर्ण
 
-bool intel_cap_pasid_sanity(void)
-{
-	return ecap_pasid(intel_iommu_ecap_sanity);
-}
+bool पूर्णांकel_cap_pasid_sanity(व्योम)
+अणु
+	वापस ecap_pasid(पूर्णांकel_iommu_ecap_sanity);
+पूर्ण
 
-bool intel_cap_nest_sanity(void)
-{
-	return ecap_nest(intel_iommu_ecap_sanity);
-}
+bool पूर्णांकel_cap_nest_sanity(व्योम)
+अणु
+	वापस ecap_nest(पूर्णांकel_iommu_ecap_sanity);
+पूर्ण
 
-bool intel_cap_flts_sanity(void)
-{
-	return ecap_flts(intel_iommu_ecap_sanity);
-}
+bool पूर्णांकel_cap_flts_sanity(व्योम)
+अणु
+	वापस ecap_flts(पूर्णांकel_iommu_ecap_sanity);
+पूर्ण

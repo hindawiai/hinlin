@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Actions Semi Owl timer
+ * Actions Semi Owl समयr
  *
  * Copyright 2012 Actions Semi Inc.
  * Author: Actions Semi, Inc.
  *
  * Copyright (c) 2017 SUSE Linux GmbH
- * Author: Andreas Färber
+ * Author: Andreas Fथअrber
  */
 
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqreturn.h>
-#include <linux/sched_clock.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
-#define OWL_Tx_CTL		0x0
-#define OWL_Tx_CMP		0x4
-#define OWL_Tx_VAL		0x8
+#घोषणा OWL_Tx_CTL		0x0
+#घोषणा OWL_Tx_CMP		0x4
+#घोषणा OWL_Tx_VAL		0x8
 
-#define OWL_Tx_CTL_PD		BIT(0)
-#define OWL_Tx_CTL_INTEN	BIT(1)
-#define OWL_Tx_CTL_EN		BIT(2)
+#घोषणा OWL_Tx_CTL_PD		BIT(0)
+#घोषणा OWL_Tx_CTL_INTEN	BIT(1)
+#घोषणा OWL_Tx_CTL_EN		BIT(2)
 
-static void __iomem *owl_timer_base;
-static void __iomem *owl_clksrc_base;
-static void __iomem *owl_clkevt_base;
+अटल व्योम __iomem *owl_समयr_base;
+अटल व्योम __iomem *owl_clksrc_base;
+अटल व्योम __iomem *owl_clkevt_base;
 
-static inline void owl_timer_reset(void __iomem *base)
-{
-	writel(0, base + OWL_Tx_CTL);
-	writel(0, base + OWL_Tx_VAL);
-	writel(0, base + OWL_Tx_CMP);
-}
+अटल अंतरभूत व्योम owl_समयr_reset(व्योम __iomem *base)
+अणु
+	ग_लिखोl(0, base + OWL_Tx_CTL);
+	ग_लिखोl(0, base + OWL_Tx_VAL);
+	ग_लिखोl(0, base + OWL_Tx_CMP);
+पूर्ण
 
-static inline void owl_timer_set_enabled(void __iomem *base, bool enabled)
-{
-	u32 ctl = readl(base + OWL_Tx_CTL);
+अटल अंतरभूत व्योम owl_समयr_set_enabled(व्योम __iomem *base, bool enabled)
+अणु
+	u32 ctl = पढ़ोl(base + OWL_Tx_CTL);
 
 	/* PD bit is cleared when set */
 	ctl &= ~OWL_Tx_CTL_PD;
 
-	if (enabled)
+	अगर (enabled)
 		ctl |= OWL_Tx_CTL_EN;
-	else
+	अन्यथा
 		ctl &= ~OWL_Tx_CTL_EN;
 
-	writel(ctl, base + OWL_Tx_CTL);
-}
+	ग_लिखोl(ctl, base + OWL_Tx_CTL);
+पूर्ण
 
-static u64 notrace owl_timer_sched_read(void)
-{
-	return (u64)readl(owl_clksrc_base + OWL_Tx_VAL);
-}
+अटल u64 notrace owl_समयr_sched_पढ़ो(व्योम)
+अणु
+	वापस (u64)पढ़ोl(owl_clksrc_base + OWL_Tx_VAL);
+पूर्ण
 
-static int owl_timer_set_state_shutdown(struct clock_event_device *evt)
-{
-	owl_timer_set_enabled(owl_clkevt_base, false);
+अटल पूर्णांक owl_समयr_set_state_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	owl_समयr_set_enabled(owl_clkevt_base, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_timer_set_state_oneshot(struct clock_event_device *evt)
-{
-	owl_timer_reset(owl_clkevt_base);
+अटल पूर्णांक owl_समयr_set_state_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	owl_समयr_reset(owl_clkevt_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_timer_tick_resume(struct clock_event_device *evt)
-{
-	return 0;
-}
+अटल पूर्णांक owl_समयr_tick_resume(काष्ठा घड़ी_event_device *evt)
+अणु
+	वापस 0;
+पूर्ण
 
-static int owl_timer_set_next_event(unsigned long evt,
-				    struct clock_event_device *ev)
-{
-	void __iomem *base = owl_clkevt_base;
+अटल पूर्णांक owl_समयr_set_next_event(अचिन्हित दीर्घ evt,
+				    काष्ठा घड़ी_event_device *ev)
+अणु
+	व्योम __iomem *base = owl_clkevt_base;
 
-	owl_timer_set_enabled(base, false);
-	writel(OWL_Tx_CTL_INTEN, base + OWL_Tx_CTL);
-	writel(0, base + OWL_Tx_VAL);
-	writel(evt, base + OWL_Tx_CMP);
-	owl_timer_set_enabled(base, true);
+	owl_समयr_set_enabled(base, false);
+	ग_लिखोl(OWL_Tx_CTL_INTEN, base + OWL_Tx_CTL);
+	ग_लिखोl(0, base + OWL_Tx_VAL);
+	ग_लिखोl(evt, base + OWL_Tx_CMP);
+	owl_समयr_set_enabled(base, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct clock_event_device owl_clockevent = {
+अटल काष्ठा घड़ी_event_device owl_घड़ीevent = अणु
 	.name			= "owl_tick",
 	.rating			= 200,
 	.features		= CLOCK_EVT_FEAT_ONESHOT |
 				  CLOCK_EVT_FEAT_DYNIRQ,
-	.set_state_shutdown	= owl_timer_set_state_shutdown,
-	.set_state_oneshot	= owl_timer_set_state_oneshot,
-	.tick_resume		= owl_timer_tick_resume,
-	.set_next_event		= owl_timer_set_next_event,
-};
+	.set_state_shutकरोwn	= owl_समयr_set_state_shutकरोwn,
+	.set_state_oneshot	= owl_समयr_set_state_oneshot,
+	.tick_resume		= owl_समयr_tick_resume,
+	.set_next_event		= owl_समयr_set_next_event,
+पूर्ण;
 
-static irqreturn_t owl_timer1_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = (struct clock_event_device *)dev_id;
+अटल irqवापस_t owl_समयr1_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = (काष्ठा घड़ी_event_device *)dev_id;
 
-	writel(OWL_Tx_CTL_PD, owl_clkevt_base + OWL_Tx_CTL);
+	ग_लिखोl(OWL_Tx_CTL_PD, owl_clkevt_base + OWL_Tx_CTL);
 
 	evt->event_handler(evt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init owl_timer_init(struct device_node *node)
-{
-	struct clk *clk;
-	unsigned long rate;
-	int timer1_irq, ret;
+अटल पूर्णांक __init owl_समयr_init(काष्ठा device_node *node)
+अणु
+	काष्ठा clk *clk;
+	अचिन्हित दीर्घ rate;
+	पूर्णांक समयr1_irq, ret;
 
-	owl_timer_base = of_io_request_and_map(node, 0, "owl-timer");
-	if (IS_ERR(owl_timer_base)) {
+	owl_समयr_base = of_io_request_and_map(node, 0, "owl-timer");
+	अगर (IS_ERR(owl_समयr_base)) अणु
 		pr_err("Can't map timer registers\n");
-		return PTR_ERR(owl_timer_base);
-	}
+		वापस PTR_ERR(owl_समयr_base);
+	पूर्ण
 
-	owl_clksrc_base = owl_timer_base + 0x08;
-	owl_clkevt_base = owl_timer_base + 0x14;
+	owl_clksrc_base = owl_समयr_base + 0x08;
+	owl_clkevt_base = owl_समयr_base + 0x14;
 
-	timer1_irq = of_irq_get_byname(node, "timer1");
-	if (timer1_irq <= 0) {
+	समयr1_irq = of_irq_get_byname(node, "timer1");
+	अगर (समयr1_irq <= 0) अणु
 		pr_err("Can't parse timer1 IRQ\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	clk = of_clk_get(node, 0);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		ret = PTR_ERR(clk);
 		pr_err("Failed to get clock for clocksource (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	rate = clk_get_rate(clk);
 
-	owl_timer_reset(owl_clksrc_base);
-	owl_timer_set_enabled(owl_clksrc_base, true);
+	owl_समयr_reset(owl_clksrc_base);
+	owl_समयr_set_enabled(owl_clksrc_base, true);
 
-	sched_clock_register(owl_timer_sched_read, 32, rate);
-	ret = clocksource_mmio_init(owl_clksrc_base + OWL_Tx_VAL, node->name,
-				    rate, 200, 32, clocksource_mmio_readl_up);
-	if (ret) {
+	sched_घड़ी_रेजिस्टर(owl_समयr_sched_पढ़ो, 32, rate);
+	ret = घड़ीsource_mmio_init(owl_clksrc_base + OWL_Tx_VAL, node->name,
+				    rate, 200, 32, घड़ीsource_mmio_पढ़ोl_up);
+	अगर (ret) अणु
 		pr_err("Failed to register clocksource (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	owl_timer_reset(owl_clkevt_base);
+	owl_समयr_reset(owl_clkevt_base);
 
-	ret = request_irq(timer1_irq, owl_timer1_interrupt, IRQF_TIMER,
-			  "owl-timer", &owl_clockevent);
-	if (ret) {
-		pr_err("failed to request irq %d\n", timer1_irq);
-		return ret;
-	}
+	ret = request_irq(समयr1_irq, owl_समयr1_पूर्णांकerrupt, IRQF_TIMER,
+			  "owl-timer", &owl_घड़ीevent);
+	अगर (ret) अणु
+		pr_err("failed to request irq %d\n", समयr1_irq);
+		वापस ret;
+	पूर्ण
 
-	owl_clockevent.cpumask = cpumask_of(0);
-	owl_clockevent.irq = timer1_irq;
+	owl_घड़ीevent.cpumask = cpumask_of(0);
+	owl_घड़ीevent.irq = समयr1_irq;
 
-	clockevents_config_and_register(&owl_clockevent, rate,
+	घड़ीevents_config_and_रेजिस्टर(&owl_घड़ीevent, rate,
 					0xf, 0xffffffff);
 
-	return 0;
-}
-TIMER_OF_DECLARE(owl_s500, "actions,s500-timer", owl_timer_init);
-TIMER_OF_DECLARE(owl_s700, "actions,s700-timer", owl_timer_init);
-TIMER_OF_DECLARE(owl_s900, "actions,s900-timer", owl_timer_init);
+	वापस 0;
+पूर्ण
+TIMER_OF_DECLARE(owl_s500, "actions,s500-timer", owl_समयr_init);
+TIMER_OF_DECLARE(owl_s700, "actions,s700-timer", owl_समयr_init);
+TIMER_OF_DECLARE(owl_s900, "actions,s900-timer", owl_समयr_init);

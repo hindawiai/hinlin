@@ -1,466 +1,467 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* XDP sockets
  *
  * AF_XDP sockets allows a channel between XDP programs and userspace
  * applications.
  * Copyright(c) 2018 Intel Corporation.
  *
- * Author(s): Björn Töpel <bjorn.topel@intel.com>
- *	      Magnus Karlsson <magnus.karlsson@intel.com>
+ * Author(s): Bjथघrn Tथघpel <bjorn.topel@पूर्णांकel.com>
+ *	      Magnus Karlsson <magnus.karlsson@पूर्णांकel.com>
  */
 
-#define pr_fmt(fmt) "AF_XDP: %s: " fmt, __func__
+#घोषणा pr_fmt(fmt) "AF_XDP: %s: " fmt, __func__
 
-#include <linux/if_xdp.h>
-#include <linux/init.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/task.h>
-#include <linux/socket.h>
-#include <linux/file.h>
-#include <linux/uaccess.h>
-#include <linux/net.h>
-#include <linux/netdevice.h>
-#include <linux/rculist.h>
-#include <net/xdp_sock_drv.h>
-#include <net/busy_poll.h>
-#include <net/xdp.h>
+#समावेश <linux/अगर_xdp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/file.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/net.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/rculist.h>
+#समावेश <net/xdp_sock_drv.h>
+#समावेश <net/busy_poll.h>
+#समावेश <net/xdp.h>
 
-#include "xsk_queue.h"
-#include "xdp_umem.h"
-#include "xsk.h"
+#समावेश "xsk_queue.h"
+#समावेश "xdp_umem.h"
+#समावेश "xsk.h"
 
-#define TX_BATCH_SIZE 32
+#घोषणा TX_BATCH_SIZE 32
 
-static DEFINE_PER_CPU(struct list_head, xskmap_flush_list);
+अटल DEFINE_PER_CPU(काष्ठा list_head, xskmap_flush_list);
 
-void xsk_set_rx_need_wakeup(struct xsk_buff_pool *pool)
-{
-	if (pool->cached_need_wakeup & XDP_WAKEUP_RX)
-		return;
+व्योम xsk_set_rx_need_wakeup(काष्ठा xsk_buff_pool *pool)
+अणु
+	अगर (pool->cached_need_wakeup & XDP_WAKEUP_RX)
+		वापस;
 
 	pool->fq->ring->flags |= XDP_RING_NEED_WAKEUP;
 	pool->cached_need_wakeup |= XDP_WAKEUP_RX;
-}
+पूर्ण
 EXPORT_SYMBOL(xsk_set_rx_need_wakeup);
 
-void xsk_set_tx_need_wakeup(struct xsk_buff_pool *pool)
-{
-	struct xdp_sock *xs;
+व्योम xsk_set_tx_need_wakeup(काष्ठा xsk_buff_pool *pool)
+अणु
+	काष्ठा xdp_sock *xs;
 
-	if (pool->cached_need_wakeup & XDP_WAKEUP_TX)
-		return;
+	अगर (pool->cached_need_wakeup & XDP_WAKEUP_TX)
+		वापस;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(xs, &pool->xsk_tx_list, tx_list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(xs, &pool->xsk_tx_list, tx_list) अणु
 		xs->tx->ring->flags |= XDP_RING_NEED_WAKEUP;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	pool->cached_need_wakeup |= XDP_WAKEUP_TX;
-}
+पूर्ण
 EXPORT_SYMBOL(xsk_set_tx_need_wakeup);
 
-void xsk_clear_rx_need_wakeup(struct xsk_buff_pool *pool)
-{
-	if (!(pool->cached_need_wakeup & XDP_WAKEUP_RX))
-		return;
+व्योम xsk_clear_rx_need_wakeup(काष्ठा xsk_buff_pool *pool)
+अणु
+	अगर (!(pool->cached_need_wakeup & XDP_WAKEUP_RX))
+		वापस;
 
 	pool->fq->ring->flags &= ~XDP_RING_NEED_WAKEUP;
 	pool->cached_need_wakeup &= ~XDP_WAKEUP_RX;
-}
+पूर्ण
 EXPORT_SYMBOL(xsk_clear_rx_need_wakeup);
 
-void xsk_clear_tx_need_wakeup(struct xsk_buff_pool *pool)
-{
-	struct xdp_sock *xs;
+व्योम xsk_clear_tx_need_wakeup(काष्ठा xsk_buff_pool *pool)
+अणु
+	काष्ठा xdp_sock *xs;
 
-	if (!(pool->cached_need_wakeup & XDP_WAKEUP_TX))
-		return;
+	अगर (!(pool->cached_need_wakeup & XDP_WAKEUP_TX))
+		वापस;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(xs, &pool->xsk_tx_list, tx_list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(xs, &pool->xsk_tx_list, tx_list) अणु
 		xs->tx->ring->flags &= ~XDP_RING_NEED_WAKEUP;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	pool->cached_need_wakeup &= ~XDP_WAKEUP_TX;
-}
+पूर्ण
 EXPORT_SYMBOL(xsk_clear_tx_need_wakeup);
 
-bool xsk_uses_need_wakeup(struct xsk_buff_pool *pool)
-{
-	return pool->uses_need_wakeup;
-}
+bool xsk_uses_need_wakeup(काष्ठा xsk_buff_pool *pool)
+अणु
+	वापस pool->uses_need_wakeup;
+पूर्ण
 EXPORT_SYMBOL(xsk_uses_need_wakeup);
 
-struct xsk_buff_pool *xsk_get_pool_from_qid(struct net_device *dev,
+काष्ठा xsk_buff_pool *xsk_get_pool_from_qid(काष्ठा net_device *dev,
 					    u16 queue_id)
-{
-	if (queue_id < dev->real_num_rx_queues)
-		return dev->_rx[queue_id].pool;
-	if (queue_id < dev->real_num_tx_queues)
-		return dev->_tx[queue_id].pool;
+अणु
+	अगर (queue_id < dev->real_num_rx_queues)
+		वापस dev->_rx[queue_id].pool;
+	अगर (queue_id < dev->real_num_tx_queues)
+		वापस dev->_tx[queue_id].pool;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(xsk_get_pool_from_qid);
 
-void xsk_clear_pool_at_qid(struct net_device *dev, u16 queue_id)
-{
-	if (queue_id < dev->num_rx_queues)
-		dev->_rx[queue_id].pool = NULL;
-	if (queue_id < dev->num_tx_queues)
-		dev->_tx[queue_id].pool = NULL;
-}
+व्योम xsk_clear_pool_at_qid(काष्ठा net_device *dev, u16 queue_id)
+अणु
+	अगर (queue_id < dev->num_rx_queues)
+		dev->_rx[queue_id].pool = शून्य;
+	अगर (queue_id < dev->num_tx_queues)
+		dev->_tx[queue_id].pool = शून्य;
+पूर्ण
 
-/* The buffer pool is stored both in the _rx struct and the _tx struct as we do
- * not know if the device has more tx queues than rx, or the opposite.
- * This might also change during run time.
+/* The buffer pool is stored both in the _rx काष्ठा and the _tx काष्ठा as we करो
+ * not know अगर the device has more tx queues than rx, or the opposite.
+ * This might also change during run समय.
  */
-int xsk_reg_pool_at_qid(struct net_device *dev, struct xsk_buff_pool *pool,
+पूर्णांक xsk_reg_pool_at_qid(काष्ठा net_device *dev, काष्ठा xsk_buff_pool *pool,
 			u16 queue_id)
-{
-	if (queue_id >= max_t(unsigned int,
+अणु
+	अगर (queue_id >= max_t(अचिन्हित पूर्णांक,
 			      dev->real_num_rx_queues,
 			      dev->real_num_tx_queues))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (queue_id < dev->real_num_rx_queues)
+	अगर (queue_id < dev->real_num_rx_queues)
 		dev->_rx[queue_id].pool = pool;
-	if (queue_id < dev->real_num_tx_queues)
+	अगर (queue_id < dev->real_num_tx_queues)
 		dev->_tx[queue_id].pool = pool;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void xp_release(struct xdp_buff_xsk *xskb)
-{
-	xskb->pool->free_heads[xskb->pool->free_heads_cnt++] = xskb;
-}
+व्योम xp_release(काष्ठा xdp_buff_xsk *xskb)
+अणु
+	xskb->pool->मुक्त_heads[xskb->pool->मुक्त_heads_cnt++] = xskb;
+पूर्ण
 
-static u64 xp_get_handle(struct xdp_buff_xsk *xskb)
-{
+अटल u64 xp_get_handle(काष्ठा xdp_buff_xsk *xskb)
+अणु
 	u64 offset = xskb->xdp.data - xskb->xdp.data_hard_start;
 
 	offset += xskb->pool->headroom;
-	if (!xskb->pool->unaligned)
-		return xskb->orig_addr + offset;
-	return xskb->orig_addr + (offset << XSK_UNALIGNED_BUF_OFFSET_SHIFT);
-}
+	अगर (!xskb->pool->unaligned)
+		वापस xskb->orig_addr + offset;
+	वापस xskb->orig_addr + (offset << XSK_UNALIGNED_BUF_OFFSET_SHIFT);
+पूर्ण
 
-static int __xsk_rcv_zc(struct xdp_sock *xs, struct xdp_buff *xdp, u32 len)
-{
-	struct xdp_buff_xsk *xskb = container_of(xdp, struct xdp_buff_xsk, xdp);
+अटल पूर्णांक __xsk_rcv_zc(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp, u32 len)
+अणु
+	काष्ठा xdp_buff_xsk *xskb = container_of(xdp, काष्ठा xdp_buff_xsk, xdp);
 	u64 addr;
-	int err;
+	पूर्णांक err;
 
 	addr = xp_get_handle(xskb);
 	err = xskq_prod_reserve_desc(xs->rx, addr, len);
-	if (err) {
+	अगर (err) अणु
 		xs->rx_queue_full++;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	xp_release(xskb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xsk_copy_xdp(struct xdp_buff *to, struct xdp_buff *from, u32 len)
-{
-	void *from_buf, *to_buf;
+अटल व्योम xsk_copy_xdp(काष्ठा xdp_buff *to, काष्ठा xdp_buff *from, u32 len)
+अणु
+	व्योम *from_buf, *to_buf;
 	u32 metalen;
 
-	if (unlikely(xdp_data_meta_unsupported(from))) {
+	अगर (unlikely(xdp_data_meta_unsupported(from))) अणु
 		from_buf = from->data;
 		to_buf = to->data;
 		metalen = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		from_buf = from->data_meta;
 		metalen = from->data - from->data_meta;
 		to_buf = to->data - metalen;
-	}
+	पूर्ण
 
-	memcpy(to_buf, from_buf, len + metalen);
-}
+	स_नकल(to_buf, from_buf, len + metalen);
+पूर्ण
 
-static int __xsk_rcv(struct xdp_sock *xs, struct xdp_buff *xdp)
-{
-	struct xdp_buff *xsk_xdp;
-	int err;
+अटल पूर्णांक __xsk_rcv(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp)
+अणु
+	काष्ठा xdp_buff *xsk_xdp;
+	पूर्णांक err;
 	u32 len;
 
 	len = xdp->data_end - xdp->data;
-	if (len > xsk_pool_get_rx_frame_size(xs->pool)) {
+	अगर (len > xsk_pool_get_rx_frame_size(xs->pool)) अणु
 		xs->rx_dropped++;
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
 	xsk_xdp = xsk_buff_alloc(xs->pool);
-	if (!xsk_xdp) {
+	अगर (!xsk_xdp) अणु
 		xs->rx_dropped++;
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
 	xsk_copy_xdp(xsk_xdp, xdp, len);
 	err = __xsk_rcv_zc(xs, xsk_xdp, len);
-	if (err) {
-		xsk_buff_free(xsk_xdp);
-		return err;
-	}
-	return 0;
-}
+	अगर (err) अणु
+		xsk_buff_मुक्त(xsk_xdp);
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static bool xsk_tx_writeable(struct xdp_sock *xs)
-{
-	if (xskq_cons_present_entries(xs->tx) > xs->tx->nentries / 2)
-		return false;
+अटल bool xsk_tx_ग_लिखोable(काष्ठा xdp_sock *xs)
+अणु
+	अगर (xskq_cons_present_entries(xs->tx) > xs->tx->nentries / 2)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool xsk_is_bound(struct xdp_sock *xs)
-{
-	if (READ_ONCE(xs->state) == XSK_BOUND) {
+अटल bool xsk_is_bound(काष्ठा xdp_sock *xs)
+अणु
+	अगर (READ_ONCE(xs->state) == XSK_BOUND) अणु
 		/* Matches smp_wmb() in bind(). */
 		smp_rmb();
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int xsk_rcv_check(struct xdp_sock *xs, struct xdp_buff *xdp)
-{
-	if (!xsk_is_bound(xs))
-		return -EINVAL;
+अटल पूर्णांक xsk_rcv_check(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp)
+अणु
+	अगर (!xsk_is_bound(xs))
+		वापस -EINVAL;
 
-	if (xs->dev != xdp->rxq->dev || xs->queue_id != xdp->rxq->queue_index)
-		return -EINVAL;
+	अगर (xs->dev != xdp->rxq->dev || xs->queue_id != xdp->rxq->queue_index)
+		वापस -EINVAL;
 
 	sk_mark_napi_id_once_xdp(&xs->sk, xdp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xsk_flush(struct xdp_sock *xs)
-{
+अटल व्योम xsk_flush(काष्ठा xdp_sock *xs)
+अणु
 	xskq_prod_submit(xs->rx);
 	__xskq_cons_release(xs->pool->fq);
-	sock_def_readable(&xs->sk);
-}
+	sock_def_पढ़ोable(&xs->sk);
+पूर्ण
 
-int xsk_generic_rcv(struct xdp_sock *xs, struct xdp_buff *xdp)
-{
-	int err;
+पूर्णांक xsk_generic_rcv(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp)
+अणु
+	पूर्णांक err;
 
 	spin_lock_bh(&xs->rx_lock);
 	err = xsk_rcv_check(xs, xdp);
-	if (!err) {
+	अगर (!err) अणु
 		err = __xsk_rcv(xs, xdp);
 		xsk_flush(xs);
-	}
+	पूर्ण
 	spin_unlock_bh(&xs->rx_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xsk_rcv(struct xdp_sock *xs, struct xdp_buff *xdp)
-{
-	int err;
+अटल पूर्णांक xsk_rcv(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp)
+अणु
+	पूर्णांक err;
 	u32 len;
 
 	err = xsk_rcv_check(xs, xdp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (xdp->rxq->mem.type == MEM_TYPE_XSK_BUFF_POOL) {
+	अगर (xdp->rxq->mem.type == MEM_TYPE_XSK_BUFF_POOL) अणु
 		len = xdp->data_end - xdp->data;
-		return __xsk_rcv_zc(xs, xdp, len);
-	}
+		वापस __xsk_rcv_zc(xs, xdp, len);
+	पूर्ण
 
 	err = __xsk_rcv(xs, xdp);
-	if (!err)
-		xdp_return_buff(xdp);
-	return err;
-}
+	अगर (!err)
+		xdp_वापस_buff(xdp);
+	वापस err;
+पूर्ण
 
-int __xsk_map_redirect(struct xdp_sock *xs, struct xdp_buff *xdp)
-{
-	struct list_head *flush_list = this_cpu_ptr(&xskmap_flush_list);
-	int err;
+पूर्णांक __xsk_map_redirect(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp)
+अणु
+	काष्ठा list_head *flush_list = this_cpu_ptr(&xskmap_flush_list);
+	पूर्णांक err;
 
 	err = xsk_rcv(xs, xdp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!xs->flush_node.prev)
+	अगर (!xs->flush_node.prev)
 		list_add(&xs->flush_node, flush_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __xsk_map_flush(void)
-{
-	struct list_head *flush_list = this_cpu_ptr(&xskmap_flush_list);
-	struct xdp_sock *xs, *tmp;
+व्योम __xsk_map_flush(व्योम)
+अणु
+	काष्ठा list_head *flush_list = this_cpu_ptr(&xskmap_flush_list);
+	काष्ठा xdp_sock *xs, *पंचांगp;
 
-	list_for_each_entry_safe(xs, tmp, flush_list, flush_node) {
+	list_क्रम_each_entry_safe(xs, पंचांगp, flush_list, flush_node) अणु
 		xsk_flush(xs);
 		__list_del_clearprev(&xs->flush_node);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void xsk_tx_completed(struct xsk_buff_pool *pool, u32 nb_entries)
-{
+व्योम xsk_tx_completed(काष्ठा xsk_buff_pool *pool, u32 nb_entries)
+अणु
 	xskq_prod_submit_n(pool->cq, nb_entries);
-}
+पूर्ण
 EXPORT_SYMBOL(xsk_tx_completed);
 
-void xsk_tx_release(struct xsk_buff_pool *pool)
-{
-	struct xdp_sock *xs;
+व्योम xsk_tx_release(काष्ठा xsk_buff_pool *pool)
+अणु
+	काष्ठा xdp_sock *xs;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(xs, &pool->xsk_tx_list, tx_list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(xs, &pool->xsk_tx_list, tx_list) अणु
 		__xskq_cons_release(xs->tx);
-		if (xsk_tx_writeable(xs))
-			xs->sk.sk_write_space(&xs->sk);
-	}
-	rcu_read_unlock();
-}
+		अगर (xsk_tx_ग_लिखोable(xs))
+			xs->sk.sk_ग_लिखो_space(&xs->sk);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL(xsk_tx_release);
 
-bool xsk_tx_peek_desc(struct xsk_buff_pool *pool, struct xdp_desc *desc)
-{
-	struct xdp_sock *xs;
+bool xsk_tx_peek_desc(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_desc *desc)
+अणु
+	काष्ठा xdp_sock *xs;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(xs, &pool->xsk_tx_list, tx_list) {
-		if (!xskq_cons_peek_desc(xs->tx, desc, pool)) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(xs, &pool->xsk_tx_list, tx_list) अणु
+		अगर (!xskq_cons_peek_desc(xs->tx, desc, pool)) अणु
 			xs->tx->queue_empty_descs++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* This is the backpressure mechanism for the Tx path.
+		/* This is the backpressure mechanism क्रम the Tx path.
 		 * Reserve space in the completion queue and only proceed
-		 * if there is space in it. This avoids having to implement
+		 * अगर there is space in it. This aव्योमs having to implement
 		 * any buffering in the Tx path.
 		 */
-		if (xskq_prod_reserve_addr(pool->cq, desc->addr))
-			goto out;
+		अगर (xskq_prod_reserve_addr(pool->cq, desc->addr))
+			जाओ out;
 
 		xskq_cons_release(xs->tx);
-		rcu_read_unlock();
-		return true;
-	}
+		rcu_पढ़ो_unlock();
+		वापस true;
+	पूर्ण
 
 out:
-	rcu_read_unlock();
-	return false;
-}
+	rcu_पढ़ो_unlock();
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL(xsk_tx_peek_desc);
 
-static u32 xsk_tx_peek_release_fallback(struct xsk_buff_pool *pool, struct xdp_desc *descs,
+अटल u32 xsk_tx_peek_release_fallback(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_desc *descs,
 					u32 max_entries)
-{
+अणु
 	u32 nb_pkts = 0;
 
-	while (nb_pkts < max_entries && xsk_tx_peek_desc(pool, &descs[nb_pkts]))
+	जबतक (nb_pkts < max_entries && xsk_tx_peek_desc(pool, &descs[nb_pkts]))
 		nb_pkts++;
 
 	xsk_tx_release(pool);
-	return nb_pkts;
-}
+	वापस nb_pkts;
+पूर्ण
 
-u32 xsk_tx_peek_release_desc_batch(struct xsk_buff_pool *pool, struct xdp_desc *descs,
+u32 xsk_tx_peek_release_desc_batch(काष्ठा xsk_buff_pool *pool, काष्ठा xdp_desc *descs,
 				   u32 max_entries)
-{
-	struct xdp_sock *xs;
+अणु
+	काष्ठा xdp_sock *xs;
 	u32 nb_pkts;
 
-	rcu_read_lock();
-	if (!list_is_singular(&pool->xsk_tx_list)) {
+	rcu_पढ़ो_lock();
+	अगर (!list_is_singular(&pool->xsk_tx_list)) अणु
 		/* Fallback to the non-batched version */
-		rcu_read_unlock();
-		return xsk_tx_peek_release_fallback(pool, descs, max_entries);
-	}
+		rcu_पढ़ो_unlock();
+		वापस xsk_tx_peek_release_fallback(pool, descs, max_entries);
+	पूर्ण
 
-	xs = list_first_or_null_rcu(&pool->xsk_tx_list, struct xdp_sock, tx_list);
-	if (!xs) {
+	xs = list_first_or_null_rcu(&pool->xsk_tx_list, काष्ठा xdp_sock, tx_list);
+	अगर (!xs) अणु
 		nb_pkts = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	nb_pkts = xskq_cons_peek_desc_batch(xs->tx, descs, pool, max_entries);
-	if (!nb_pkts) {
+	अगर (!nb_pkts) अणु
 		xs->tx->queue_empty_descs++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* This is the backpressure mechanism for the Tx path. Try to
-	 * reserve space in the completion queue for all packets, but
-	 * if there are fewer slots available, just process that many
-	 * packets. This avoids having to implement any buffering in
+	/* This is the backpressure mechanism क्रम the Tx path. Try to
+	 * reserve space in the completion queue क्रम all packets, but
+	 * अगर there are fewer slots available, just process that many
+	 * packets. This aव्योमs having to implement any buffering in
 	 * the Tx path.
 	 */
 	nb_pkts = xskq_prod_reserve_addr_batch(pool->cq, descs, nb_pkts);
-	if (!nb_pkts)
-		goto out;
+	अगर (!nb_pkts)
+		जाओ out;
 
 	xskq_cons_release_n(xs->tx, nb_pkts);
 	__xskq_cons_release(xs->tx);
-	xs->sk.sk_write_space(&xs->sk);
+	xs->sk.sk_ग_लिखो_space(&xs->sk);
 
 out:
-	rcu_read_unlock();
-	return nb_pkts;
-}
+	rcu_पढ़ो_unlock();
+	वापस nb_pkts;
+पूर्ण
 EXPORT_SYMBOL(xsk_tx_peek_release_desc_batch);
 
-static int xsk_wakeup(struct xdp_sock *xs, u8 flags)
-{
-	struct net_device *dev = xs->dev;
-	int err;
+अटल पूर्णांक xsk_wakeup(काष्ठा xdp_sock *xs, u8 flags)
+अणु
+	काष्ठा net_device *dev = xs->dev;
+	पूर्णांक err;
 
-	rcu_read_lock();
-	err = dev->netdev_ops->ndo_xsk_wakeup(dev, xs->queue_id, flags);
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	err = dev->netdev_ops->nकरो_xsk_wakeup(dev, xs->queue_id, flags);
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xsk_zc_xmit(struct xdp_sock *xs)
-{
-	return xsk_wakeup(xs, XDP_WAKEUP_TX);
-}
+अटल पूर्णांक xsk_zc_xmit(काष्ठा xdp_sock *xs)
+अणु
+	वापस xsk_wakeup(xs, XDP_WAKEUP_TX);
+पूर्ण
 
-static void xsk_destruct_skb(struct sk_buff *skb)
-{
-	u64 addr = (u64)(long)skb_shinfo(skb)->destructor_arg;
-	struct xdp_sock *xs = xdp_sk(skb->sk);
-	unsigned long flags;
+अटल व्योम xsk_deकाष्ठा_skb(काष्ठा sk_buff *skb)
+अणु
+	u64 addr = (u64)(दीर्घ)skb_shinfo(skb)->deकाष्ठाor_arg;
+	काष्ठा xdp_sock *xs = xdp_sk(skb->sk);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&xs->pool->cq_lock, flags);
 	xskq_prod_submit_addr(xs->pool->cq, addr);
 	spin_unlock_irqrestore(&xs->pool->cq_lock, flags);
 
-	sock_wfree(skb);
-}
+	sock_wमुक्त(skb);
+पूर्ण
 
-static struct sk_buff *xsk_build_skb_zerocopy(struct xdp_sock *xs,
-					      struct xdp_desc *desc)
-{
-	struct xsk_buff_pool *pool = xs->pool;
+अटल काष्ठा sk_buff *xsk_build_skb_zerocopy(काष्ठा xdp_sock *xs,
+					      काष्ठा xdp_desc *desc)
+अणु
+	काष्ठा xsk_buff_pool *pool = xs->pool;
 	u32 hr, len, ts, offset, copy, copied;
-	struct sk_buff *skb;
-	struct page *page;
-	void *buffer;
-	int err, i;
+	काष्ठा sk_buff *skb;
+	काष्ठा page *page;
+	व्योम *buffer;
+	पूर्णांक err, i;
 	u64 addr;
 
 	hr = max(NET_SKB_PAD, L1_CACHE_ALIGN(xs->dev->needed_headroom));
 
 	skb = sock_alloc_send_skb(&xs->sk, hr, 1, &err);
-	if (unlikely(!skb))
-		return ERR_PTR(err);
+	अगर (unlikely(!skb))
+		वापस ERR_PTR(err);
 
 	skb_reserve(skb, hr);
 
@@ -472,7 +473,7 @@ static struct sk_buff *xsk_build_skb_zerocopy(struct xdp_sock *xs,
 	offset = offset_in_page(buffer);
 	addr = buffer - pool->addrs;
 
-	for (copied = 0, i = 0; copied < len; i++) {
+	क्रम (copied = 0, i = 0; copied < len; i++) अणु
 		page = pool->umem->pgs[addr >> PAGE_SHIFT];
 		get_page(page);
 
@@ -482,7 +483,7 @@ static struct sk_buff *xsk_build_skb_zerocopy(struct xdp_sock *xs,
 		copied += copy;
 		addr += copy;
 		offset = 0;
-	}
+	पूर्ण
 
 	skb->len += len;
 	skb->data_len += len;
@@ -490,318 +491,318 @@ static struct sk_buff *xsk_build_skb_zerocopy(struct xdp_sock *xs,
 
 	refcount_add(ts, &xs->sk.sk_wmem_alloc);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *xsk_build_skb(struct xdp_sock *xs,
-				     struct xdp_desc *desc)
-{
-	struct net_device *dev = xs->dev;
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *xsk_build_skb(काष्ठा xdp_sock *xs,
+				     काष्ठा xdp_desc *desc)
+अणु
+	काष्ठा net_device *dev = xs->dev;
+	काष्ठा sk_buff *skb;
 
-	if (dev->priv_flags & IFF_TX_SKB_NO_LINEAR) {
+	अगर (dev->priv_flags & IFF_TX_SKB_NO_LINEAR) अणु
 		skb = xsk_build_skb_zerocopy(xs, desc);
-		if (IS_ERR(skb))
-			return skb;
-	} else {
+		अगर (IS_ERR(skb))
+			वापस skb;
+	पूर्ण अन्यथा अणु
 		u32 hr, tr, len;
-		void *buffer;
-		int err;
+		व्योम *buffer;
+		पूर्णांक err;
 
 		hr = max(NET_SKB_PAD, L1_CACHE_ALIGN(dev->needed_headroom));
 		tr = dev->needed_tailroom;
 		len = desc->len;
 
 		skb = sock_alloc_send_skb(&xs->sk, hr + len + tr, 1, &err);
-		if (unlikely(!skb))
-			return ERR_PTR(err);
+		अगर (unlikely(!skb))
+			वापस ERR_PTR(err);
 
 		skb_reserve(skb, hr);
 		skb_put(skb, len);
 
 		buffer = xsk_buff_raw_get_data(xs->pool, desc->addr);
 		err = skb_store_bits(skb, 0, buffer, len);
-		if (unlikely(err)) {
-			kfree_skb(skb);
-			return ERR_PTR(err);
-		}
-	}
+		अगर (unlikely(err)) अणु
+			kमुक्त_skb(skb);
+			वापस ERR_PTR(err);
+		पूर्ण
+	पूर्ण
 
 	skb->dev = dev;
 	skb->priority = xs->sk.sk_priority;
 	skb->mark = xs->sk.sk_mark;
-	skb_shinfo(skb)->destructor_arg = (void *)(long)desc->addr;
-	skb->destructor = xsk_destruct_skb;
+	skb_shinfo(skb)->deकाष्ठाor_arg = (व्योम *)(दीर्घ)desc->addr;
+	skb->deकाष्ठाor = xsk_deकाष्ठा_skb;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int xsk_generic_xmit(struct sock *sk)
-{
-	struct xdp_sock *xs = xdp_sk(sk);
+अटल पूर्णांक xsk_generic_xmit(काष्ठा sock *sk)
+अणु
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
 	u32 max_batch = TX_BATCH_SIZE;
 	bool sent_frame = false;
-	struct xdp_desc desc;
-	struct sk_buff *skb;
-	unsigned long flags;
-	int err = 0;
+	काष्ठा xdp_desc desc;
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
 
 	mutex_lock(&xs->mutex);
 
-	if (xs->queue_id >= xs->dev->real_num_tx_queues)
-		goto out;
+	अगर (xs->queue_id >= xs->dev->real_num_tx_queues)
+		जाओ out;
 
-	while (xskq_cons_peek_desc(xs->tx, &desc, xs->pool)) {
-		if (max_batch-- == 0) {
+	जबतक (xskq_cons_peek_desc(xs->tx, &desc, xs->pool)) अणु
+		अगर (max_batch-- == 0) अणु
 			err = -EAGAIN;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		skb = xsk_build_skb(xs, &desc);
-		if (IS_ERR(skb)) {
+		अगर (IS_ERR(skb)) अणु
 			err = PTR_ERR(skb);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* This is the backpressure mechanism for the Tx path.
+		/* This is the backpressure mechanism क्रम the Tx path.
 		 * Reserve space in the completion queue and only proceed
-		 * if there is space in it. This avoids having to implement
+		 * अगर there is space in it. This aव्योमs having to implement
 		 * any buffering in the Tx path.
 		 */
 		spin_lock_irqsave(&xs->pool->cq_lock, flags);
-		if (xskq_prod_reserve(xs->pool->cq)) {
+		अगर (xskq_prod_reserve(xs->pool->cq)) अणु
 			spin_unlock_irqrestore(&xs->pool->cq_lock, flags);
-			kfree_skb(skb);
-			goto out;
-		}
+			kमुक्त_skb(skb);
+			जाओ out;
+		पूर्ण
 		spin_unlock_irqrestore(&xs->pool->cq_lock, flags);
 
 		err = __dev_direct_xmit(skb, xs->queue_id);
-		if  (err == NETDEV_TX_BUSY) {
+		अगर  (err == NETDEV_TX_BUSY) अणु
 			/* Tell user-space to retry the send */
-			skb->destructor = sock_wfree;
+			skb->deकाष्ठाor = sock_wमुक्त;
 			spin_lock_irqsave(&xs->pool->cq_lock, flags);
 			xskq_prod_cancel(xs->pool->cq);
 			spin_unlock_irqrestore(&xs->pool->cq_lock, flags);
 			/* Free skb without triggering the perf drop trace */
 			consume_skb(skb);
 			err = -EAGAIN;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		xskq_cons_release(xs->tx);
 		/* Ignore NET_XMIT_CN as packet might have been sent */
-		if (err == NET_XMIT_DROP) {
+		अगर (err == NET_XMIT_DROP) अणु
 			/* SKB completed but not sent */
 			err = -EBUSY;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		sent_frame = true;
-	}
+	पूर्ण
 
 	xs->tx->queue_empty_descs++;
 
 out:
-	if (sent_frame)
-		if (xsk_tx_writeable(xs))
-			sk->sk_write_space(sk);
+	अगर (sent_frame)
+		अगर (xsk_tx_ग_लिखोable(xs))
+			sk->sk_ग_लिखो_space(sk);
 
 	mutex_unlock(&xs->mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __xsk_sendmsg(struct sock *sk)
-{
-	struct xdp_sock *xs = xdp_sk(sk);
+अटल पूर्णांक __xsk_sendmsg(काष्ठा sock *sk)
+अणु
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
 
-	if (unlikely(!(xs->dev->flags & IFF_UP)))
-		return -ENETDOWN;
-	if (unlikely(!xs->tx))
-		return -ENOBUFS;
+	अगर (unlikely(!(xs->dev->flags & IFF_UP)))
+		वापस -ENETDOWN;
+	अगर (unlikely(!xs->tx))
+		वापस -ENOBUFS;
 
-	return xs->zc ? xsk_zc_xmit(xs) : xsk_generic_xmit(sk);
-}
+	वापस xs->zc ? xsk_zc_xmit(xs) : xsk_generic_xmit(sk);
+पूर्ण
 
-static bool xsk_no_wakeup(struct sock *sk)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
+अटल bool xsk_no_wakeup(काष्ठा sock *sk)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
 	/* Prefer busy-polling, skip the wakeup. */
-	return READ_ONCE(sk->sk_prefer_busy_poll) && READ_ONCE(sk->sk_ll_usec) &&
+	वापस READ_ONCE(sk->sk_prefer_busy_poll) && READ_ONCE(sk->sk_ll_usec) &&
 		READ_ONCE(sk->sk_napi_id) >= MIN_NAPI_ID;
-#else
-	return false;
-#endif
-}
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
-static int xsk_sendmsg(struct socket *sock, struct msghdr *m, size_t total_len)
-{
-	bool need_wait = !(m->msg_flags & MSG_DONTWAIT);
-	struct sock *sk = sock->sk;
-	struct xdp_sock *xs = xdp_sk(sk);
-	struct xsk_buff_pool *pool;
+अटल पूर्णांक xsk_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार total_len)
+अणु
+	bool need_रुको = !(m->msg_flags & MSG_DONTWAIT);
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
+	काष्ठा xsk_buff_pool *pool;
 
-	if (unlikely(!xsk_is_bound(xs)))
-		return -ENXIO;
-	if (unlikely(need_wait))
-		return -EOPNOTSUPP;
+	अगर (unlikely(!xsk_is_bound(xs)))
+		वापस -ENXIO;
+	अगर (unlikely(need_रुको))
+		वापस -EOPNOTSUPP;
 
-	if (sk_can_busy_loop(sk))
+	अगर (sk_can_busy_loop(sk))
 		sk_busy_loop(sk, 1); /* only support non-blocking sockets */
 
-	if (xsk_no_wakeup(sk))
-		return 0;
+	अगर (xsk_no_wakeup(sk))
+		वापस 0;
 
 	pool = xs->pool;
-	if (pool->cached_need_wakeup & XDP_WAKEUP_TX)
-		return __xsk_sendmsg(sk);
-	return 0;
-}
+	अगर (pool->cached_need_wakeup & XDP_WAKEUP_TX)
+		वापस __xsk_sendmsg(sk);
+	वापस 0;
+पूर्ण
 
-static int xsk_recvmsg(struct socket *sock, struct msghdr *m, size_t len, int flags)
-{
-	bool need_wait = !(flags & MSG_DONTWAIT);
-	struct sock *sk = sock->sk;
-	struct xdp_sock *xs = xdp_sk(sk);
+अटल पूर्णांक xsk_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार len, पूर्णांक flags)
+अणु
+	bool need_रुको = !(flags & MSG_DONTWAIT);
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
 
-	if (unlikely(!xsk_is_bound(xs)))
-		return -ENXIO;
-	if (unlikely(!(xs->dev->flags & IFF_UP)))
-		return -ENETDOWN;
-	if (unlikely(!xs->rx))
-		return -ENOBUFS;
-	if (unlikely(need_wait))
-		return -EOPNOTSUPP;
+	अगर (unlikely(!xsk_is_bound(xs)))
+		वापस -ENXIO;
+	अगर (unlikely(!(xs->dev->flags & IFF_UP)))
+		वापस -ENETDOWN;
+	अगर (unlikely(!xs->rx))
+		वापस -ENOBUFS;
+	अगर (unlikely(need_रुको))
+		वापस -EOPNOTSUPP;
 
-	if (sk_can_busy_loop(sk))
+	अगर (sk_can_busy_loop(sk))
 		sk_busy_loop(sk, 1); /* only support non-blocking sockets */
 
-	if (xsk_no_wakeup(sk))
-		return 0;
+	अगर (xsk_no_wakeup(sk))
+		वापस 0;
 
-	if (xs->pool->cached_need_wakeup & XDP_WAKEUP_RX && xs->zc)
-		return xsk_wakeup(xs, XDP_WAKEUP_RX);
-	return 0;
-}
+	अगर (xs->pool->cached_need_wakeup & XDP_WAKEUP_RX && xs->zc)
+		वापस xsk_wakeup(xs, XDP_WAKEUP_RX);
+	वापस 0;
+पूर्ण
 
-static __poll_t xsk_poll(struct file *file, struct socket *sock,
-			     struct poll_table_struct *wait)
-{
+अटल __poll_t xsk_poll(काष्ठा file *file, काष्ठा socket *sock,
+			     काष्ठा poll_table_काष्ठा *रुको)
+अणु
 	__poll_t mask = 0;
-	struct sock *sk = sock->sk;
-	struct xdp_sock *xs = xdp_sk(sk);
-	struct xsk_buff_pool *pool;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
+	काष्ठा xsk_buff_pool *pool;
 
-	sock_poll_wait(file, sock, wait);
+	sock_poll_रुको(file, sock, रुको);
 
-	if (unlikely(!xsk_is_bound(xs)))
-		return mask;
+	अगर (unlikely(!xsk_is_bound(xs)))
+		वापस mask;
 
 	pool = xs->pool;
 
-	if (pool->cached_need_wakeup) {
-		if (xs->zc)
+	अगर (pool->cached_need_wakeup) अणु
+		अगर (xs->zc)
 			xsk_wakeup(xs, pool->cached_need_wakeup);
-		else
+		अन्यथा
 			/* Poll needs to drive Tx also in copy mode */
 			__xsk_sendmsg(sk);
-	}
+	पूर्ण
 
-	if (xs->rx && !xskq_prod_is_empty(xs->rx))
+	अगर (xs->rx && !xskq_prod_is_empty(xs->rx))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	if (xs->tx && xsk_tx_writeable(xs))
+	अगर (xs->tx && xsk_tx_ग_लिखोable(xs))
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int xsk_init_queue(u32 entries, struct xsk_queue **queue,
+अटल पूर्णांक xsk_init_queue(u32 entries, काष्ठा xsk_queue **queue,
 			  bool umem_queue)
-{
-	struct xsk_queue *q;
+अणु
+	काष्ठा xsk_queue *q;
 
-	if (entries == 0 || *queue || !is_power_of_2(entries))
-		return -EINVAL;
+	अगर (entries == 0 || *queue || !is_घातer_of_2(entries))
+		वापस -EINVAL;
 
 	q = xskq_create(entries, umem_queue);
-	if (!q)
-		return -ENOMEM;
+	अगर (!q)
+		वापस -ENOMEM;
 
-	/* Make sure queue is ready before it can be seen by others */
+	/* Make sure queue is पढ़ोy beक्रमe it can be seen by others */
 	smp_wmb();
 	WRITE_ONCE(*queue, q);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xsk_unbind_dev(struct xdp_sock *xs)
-{
-	struct net_device *dev = xs->dev;
+अटल व्योम xsk_unbind_dev(काष्ठा xdp_sock *xs)
+अणु
+	काष्ठा net_device *dev = xs->dev;
 
-	if (xs->state != XSK_BOUND)
-		return;
+	अगर (xs->state != XSK_BOUND)
+		वापस;
 	WRITE_ONCE(xs->state, XSK_UNBOUND);
 
-	/* Wait for driver to stop using the xdp socket. */
+	/* Wait क्रम driver to stop using the xdp socket. */
 	xp_del_xsk(xs->pool, xs);
-	xs->dev = NULL;
+	xs->dev = शून्य;
 	synchronize_net();
 	dev_put(dev);
-}
+पूर्ण
 
-static struct xsk_map *xsk_get_map_list_entry(struct xdp_sock *xs,
-					      struct xdp_sock ***map_entry)
-{
-	struct xsk_map *map = NULL;
-	struct xsk_map_node *node;
+अटल काष्ठा xsk_map *xsk_get_map_list_entry(काष्ठा xdp_sock *xs,
+					      काष्ठा xdp_sock ***map_entry)
+अणु
+	काष्ठा xsk_map *map = शून्य;
+	काष्ठा xsk_map_node *node;
 
-	*map_entry = NULL;
+	*map_entry = शून्य;
 
 	spin_lock_bh(&xs->map_list_lock);
-	node = list_first_entry_or_null(&xs->map_list, struct xsk_map_node,
+	node = list_first_entry_or_null(&xs->map_list, काष्ठा xsk_map_node,
 					node);
-	if (node) {
+	अगर (node) अणु
 		bpf_map_inc(&node->map->map);
 		map = node->map;
 		*map_entry = node->map_entry;
-	}
+	पूर्ण
 	spin_unlock_bh(&xs->map_list_lock);
-	return map;
-}
+	वापस map;
+पूर्ण
 
-static void xsk_delete_from_maps(struct xdp_sock *xs)
-{
-	/* This function removes the current XDP socket from all the
+अटल व्योम xsk_delete_from_maps(काष्ठा xdp_sock *xs)
+अणु
+	/* This function हटाओs the current XDP socket from all the
 	 * maps it resides in. We need to take extra care here, due to
 	 * the two locks involved. Each map has a lock synchronizing
 	 * updates to the entries, and each socket has a lock that
 	 * synchronizes access to the list of maps (map_list). For
-	 * deadlock avoidance the locks need to be taken in the order
+	 * deadlock aव्योमance the locks need to be taken in the order
 	 * "map lock"->"socket map list lock". We start off by
 	 * accessing the socket map list, and take a reference to the
 	 * map to guarantee existence between the
 	 * xsk_get_map_list_entry() and xsk_map_try_sock_delete()
-	 * calls. Then we ask the map to remove the socket, which
-	 * tries to remove the socket from the map. Note that there
+	 * calls. Then we ask the map to हटाओ the socket, which
+	 * tries to हटाओ the socket from the map. Note that there
 	 * might be updates to the map between
 	 * xsk_get_map_list_entry() and xsk_map_try_sock_delete().
 	 */
-	struct xdp_sock **map_entry = NULL;
-	struct xsk_map *map;
+	काष्ठा xdp_sock **map_entry = शून्य;
+	काष्ठा xsk_map *map;
 
-	while ((map = xsk_get_map_list_entry(xs, &map_entry))) {
+	जबतक ((map = xsk_get_map_list_entry(xs, &map_entry))) अणु
 		xsk_map_try_sock_delete(map, xs, map_entry);
 		bpf_map_put(&map->map);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int xsk_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	struct xdp_sock *xs = xdp_sk(sk);
-	struct net *net;
+अटल पूर्णांक xsk_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
+	काष्ठा net *net;
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
 	net = sock_net(sk);
 
@@ -820,167 +821,167 @@ static int xsk_release(struct socket *sock)
 
 	xskq_destroy(xs->rx);
 	xskq_destroy(xs->tx);
-	xskq_destroy(xs->fq_tmp);
-	xskq_destroy(xs->cq_tmp);
+	xskq_destroy(xs->fq_पंचांगp);
+	xskq_destroy(xs->cq_पंचांगp);
 
 	sock_orphan(sk);
-	sock->sk = NULL;
+	sock->sk = शून्य;
 
 	sk_refcnt_debug_release(sk);
 	sock_put(sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct socket *xsk_lookup_xsk_from_fd(int fd)
-{
-	struct socket *sock;
-	int err;
+अटल काष्ठा socket *xsk_lookup_xsk_from_fd(पूर्णांक fd)
+अणु
+	काष्ठा socket *sock;
+	पूर्णांक err;
 
 	sock = sockfd_lookup(fd, &err);
-	if (!sock)
-		return ERR_PTR(-ENOTSOCK);
+	अगर (!sock)
+		वापस ERR_PTR(-ENOTSOCK);
 
-	if (sock->sk->sk_family != PF_XDP) {
+	अगर (sock->sk->sk_family != PF_XDP) अणु
 		sockfd_put(sock);
-		return ERR_PTR(-ENOPROTOOPT);
-	}
+		वापस ERR_PTR(-ENOPROTOOPT);
+	पूर्ण
 
-	return sock;
-}
+	वापस sock;
+पूर्ण
 
-static bool xsk_validate_queues(struct xdp_sock *xs)
-{
-	return xs->fq_tmp && xs->cq_tmp;
-}
+अटल bool xsk_validate_queues(काष्ठा xdp_sock *xs)
+अणु
+	वापस xs->fq_पंचांगp && xs->cq_पंचांगp;
+पूर्ण
 
-static int xsk_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
-{
-	struct sockaddr_xdp *sxdp = (struct sockaddr_xdp *)addr;
-	struct sock *sk = sock->sk;
-	struct xdp_sock *xs = xdp_sk(sk);
-	struct net_device *dev;
+अटल पूर्णांक xsk_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक addr_len)
+अणु
+	काष्ठा sockaddr_xdp *sxdp = (काष्ठा sockaddr_xdp *)addr;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
+	काष्ठा net_device *dev;
 	u32 flags, qid;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (addr_len < sizeof(struct sockaddr_xdp))
-		return -EINVAL;
-	if (sxdp->sxdp_family != AF_XDP)
-		return -EINVAL;
+	अगर (addr_len < माप(काष्ठा sockaddr_xdp))
+		वापस -EINVAL;
+	अगर (sxdp->sxdp_family != AF_XDP)
+		वापस -EINVAL;
 
 	flags = sxdp->sxdp_flags;
-	if (flags & ~(XDP_SHARED_UMEM | XDP_COPY | XDP_ZEROCOPY |
+	अगर (flags & ~(XDP_SHARED_UMEM | XDP_COPY | XDP_ZEROCOPY |
 		      XDP_USE_NEED_WAKEUP))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	rtnl_lock();
 	mutex_lock(&xs->mutex);
-	if (xs->state != XSK_READY) {
+	अगर (xs->state != XSK_READY) अणु
 		err = -EBUSY;
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
-	dev = dev_get_by_index(sock_net(sk), sxdp->sxdp_ifindex);
-	if (!dev) {
+	dev = dev_get_by_index(sock_net(sk), sxdp->sxdp_अगरindex);
+	अगर (!dev) अणु
 		err = -ENODEV;
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
-	if (!xs->rx && !xs->tx) {
+	अगर (!xs->rx && !xs->tx) अणु
 		err = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	qid = sxdp->sxdp_queue_id;
 
-	if (flags & XDP_SHARED_UMEM) {
-		struct xdp_sock *umem_xs;
-		struct socket *sock;
+	अगर (flags & XDP_SHARED_UMEM) अणु
+		काष्ठा xdp_sock *umem_xs;
+		काष्ठा socket *sock;
 
-		if ((flags & XDP_COPY) || (flags & XDP_ZEROCOPY) ||
-		    (flags & XDP_USE_NEED_WAKEUP)) {
-			/* Cannot specify flags for shared sockets. */
+		अगर ((flags & XDP_COPY) || (flags & XDP_ZEROCOPY) ||
+		    (flags & XDP_USE_NEED_WAKEUP)) अणु
+			/* Cannot specअगरy flags क्रम shared sockets. */
 			err = -EINVAL;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
-		if (xs->umem) {
-			/* We have already our own. */
+		अगर (xs->umem) अणु
+			/* We have alपढ़ोy our own. */
 			err = -EINVAL;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		sock = xsk_lookup_xsk_from_fd(sxdp->sxdp_shared_umem_fd);
-		if (IS_ERR(sock)) {
+		अगर (IS_ERR(sock)) अणु
 			err = PTR_ERR(sock);
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		umem_xs = xdp_sk(sock->sk);
-		if (!xsk_is_bound(umem_xs)) {
+		अगर (!xsk_is_bound(umem_xs)) अणु
 			err = -EBADF;
 			sockfd_put(sock);
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
-		if (umem_xs->queue_id != qid || umem_xs->dev != dev) {
+		अगर (umem_xs->queue_id != qid || umem_xs->dev != dev) अणु
 			/* Share the umem with another socket on another qid
 			 * and/or device.
 			 */
 			xs->pool = xp_create_and_assign_umem(xs,
 							     umem_xs->umem);
-			if (!xs->pool) {
+			अगर (!xs->pool) अणु
 				err = -ENOMEM;
 				sockfd_put(sock);
-				goto out_unlock;
-			}
+				जाओ out_unlock;
+			पूर्ण
 
 			err = xp_assign_dev_shared(xs->pool, umem_xs->umem,
 						   dev, qid);
-			if (err) {
+			अगर (err) अणु
 				xp_destroy(xs->pool);
-				xs->pool = NULL;
+				xs->pool = शून्य;
 				sockfd_put(sock);
-				goto out_unlock;
-			}
-		} else {
+				जाओ out_unlock;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Share the buffer pool with the other socket. */
-			if (xs->fq_tmp || xs->cq_tmp) {
+			अगर (xs->fq_पंचांगp || xs->cq_पंचांगp) अणु
 				/* Do not allow setting your own fq or cq. */
 				err = -EINVAL;
 				sockfd_put(sock);
-				goto out_unlock;
-			}
+				जाओ out_unlock;
+			पूर्ण
 
 			xp_get_pool(umem_xs->pool);
 			xs->pool = umem_xs->pool;
-		}
+		पूर्ण
 
 		xdp_get_umem(umem_xs->umem);
 		WRITE_ONCE(xs->umem, umem_xs->umem);
 		sockfd_put(sock);
-	} else if (!xs->umem || !xsk_validate_queues(xs)) {
+	पूर्ण अन्यथा अगर (!xs->umem || !xsk_validate_queues(xs)) अणु
 		err = -EINVAL;
-		goto out_unlock;
-	} else {
+		जाओ out_unlock;
+	पूर्ण अन्यथा अणु
 		/* This xsk has its own umem. */
 		xs->pool = xp_create_and_assign_umem(xs, xs->umem);
-		if (!xs->pool) {
+		अगर (!xs->pool) अणु
 			err = -ENOMEM;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		err = xp_assign_dev(xs->pool, dev, qid, flags);
-		if (err) {
+		अगर (err) अणु
 			xp_destroy(xs->pool);
-			xs->pool = NULL;
-			goto out_unlock;
-		}
-	}
+			xs->pool = शून्य;
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 
 	/* FQ and CQ are now owned by the buffer pool and cleaned up with it. */
-	xs->fq_tmp = NULL;
-	xs->cq_tmp = NULL;
+	xs->fq_पंचांगp = शून्य;
+	xs->cq_पंचांगp = शून्य;
 
 	xs->dev = dev;
 	xs->zc = xs->umem->zc;
@@ -988,353 +989,353 @@ static int xsk_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 	xp_add_xsk(xs->pool, xs);
 
 out_unlock:
-	if (err) {
+	अगर (err) अणु
 		dev_put(dev);
-	} else {
-		/* Matches smp_rmb() in bind() for shared umem
+	पूर्ण अन्यथा अणु
+		/* Matches smp_rmb() in bind() क्रम shared umem
 		 * sockets, and xsk_is_bound().
 		 */
 		smp_wmb();
 		WRITE_ONCE(xs->state, XSK_BOUND);
-	}
+	पूर्ण
 out_release:
 	mutex_unlock(&xs->mutex);
 	rtnl_unlock();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct xdp_umem_reg_v1 {
+काष्ठा xdp_umem_reg_v1 अणु
 	__u64 addr; /* Start of packet data area */
 	__u64 len; /* Length of packet data area */
 	__u32 chunk_size;
 	__u32 headroom;
-};
+पूर्ण;
 
-static int xsk_setsockopt(struct socket *sock, int level, int optname,
-			  sockptr_t optval, unsigned int optlen)
-{
-	struct sock *sk = sock->sk;
-	struct xdp_sock *xs = xdp_sk(sk);
-	int err;
+अटल पूर्णांक xsk_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
+	पूर्णांक err;
 
-	if (level != SOL_XDP)
-		return -ENOPROTOOPT;
+	अगर (level != SOL_XDP)
+		वापस -ENOPROTOOPT;
 
-	switch (optname) {
-	case XDP_RX_RING:
-	case XDP_TX_RING:
-	{
-		struct xsk_queue **q;
-		int entries;
+	चयन (optname) अणु
+	हाल XDP_RX_RING:
+	हाल XDP_TX_RING:
+	अणु
+		काष्ठा xsk_queue **q;
+		पूर्णांक entries;
 
-		if (optlen < sizeof(entries))
-			return -EINVAL;
-		if (copy_from_sockptr(&entries, optval, sizeof(entries)))
-			return -EFAULT;
+		अगर (optlen < माप(entries))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&entries, optval, माप(entries)))
+			वापस -EFAULT;
 
 		mutex_lock(&xs->mutex);
-		if (xs->state != XSK_READY) {
+		अगर (xs->state != XSK_READY) अणु
 			mutex_unlock(&xs->mutex);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		q = (optname == XDP_TX_RING) ? &xs->tx : &xs->rx;
 		err = xsk_init_queue(entries, q, false);
-		if (!err && optname == XDP_TX_RING)
-			/* Tx needs to be explicitly woken up the first time */
+		अगर (!err && optname == XDP_TX_RING)
+			/* Tx needs to be explicitly woken up the first समय */
 			xs->tx->ring->flags |= XDP_RING_NEED_WAKEUP;
 		mutex_unlock(&xs->mutex);
-		return err;
-	}
-	case XDP_UMEM_REG:
-	{
-		size_t mr_size = sizeof(struct xdp_umem_reg);
-		struct xdp_umem_reg mr = {};
-		struct xdp_umem *umem;
+		वापस err;
+	पूर्ण
+	हाल XDP_UMEM_REG:
+	अणु
+		माप_प्रकार mr_size = माप(काष्ठा xdp_umem_reg);
+		काष्ठा xdp_umem_reg mr = अणुपूर्ण;
+		काष्ठा xdp_umem *umem;
 
-		if (optlen < sizeof(struct xdp_umem_reg_v1))
-			return -EINVAL;
-		else if (optlen < sizeof(mr))
-			mr_size = sizeof(struct xdp_umem_reg_v1);
+		अगर (optlen < माप(काष्ठा xdp_umem_reg_v1))
+			वापस -EINVAL;
+		अन्यथा अगर (optlen < माप(mr))
+			mr_size = माप(काष्ठा xdp_umem_reg_v1);
 
-		if (copy_from_sockptr(&mr, optval, mr_size))
-			return -EFAULT;
+		अगर (copy_from_sockptr(&mr, optval, mr_size))
+			वापस -EFAULT;
 
 		mutex_lock(&xs->mutex);
-		if (xs->state != XSK_READY || xs->umem) {
+		अगर (xs->state != XSK_READY || xs->umem) अणु
 			mutex_unlock(&xs->mutex);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
 		umem = xdp_umem_create(&mr);
-		if (IS_ERR(umem)) {
+		अगर (IS_ERR(umem)) अणु
 			mutex_unlock(&xs->mutex);
-			return PTR_ERR(umem);
-		}
+			वापस PTR_ERR(umem);
+		पूर्ण
 
-		/* Make sure umem is ready before it can be seen by others */
+		/* Make sure umem is पढ़ोy beक्रमe it can be seen by others */
 		smp_wmb();
 		WRITE_ONCE(xs->umem, umem);
 		mutex_unlock(&xs->mutex);
-		return 0;
-	}
-	case XDP_UMEM_FILL_RING:
-	case XDP_UMEM_COMPLETION_RING:
-	{
-		struct xsk_queue **q;
-		int entries;
+		वापस 0;
+	पूर्ण
+	हाल XDP_UMEM_FILL_RING:
+	हाल XDP_UMEM_COMPLETION_RING:
+	अणु
+		काष्ठा xsk_queue **q;
+		पूर्णांक entries;
 
-		if (copy_from_sockptr(&entries, optval, sizeof(entries)))
-			return -EFAULT;
+		अगर (copy_from_sockptr(&entries, optval, माप(entries)))
+			वापस -EFAULT;
 
 		mutex_lock(&xs->mutex);
-		if (xs->state != XSK_READY) {
+		अगर (xs->state != XSK_READY) अणु
 			mutex_unlock(&xs->mutex);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
-		q = (optname == XDP_UMEM_FILL_RING) ? &xs->fq_tmp :
-			&xs->cq_tmp;
+		q = (optname == XDP_UMEM_FILL_RING) ? &xs->fq_पंचांगp :
+			&xs->cq_पंचांगp;
 		err = xsk_init_queue(entries, q, true);
 		mutex_unlock(&xs->mutex);
-		return err;
-	}
-	default:
-		break;
-	}
+		वापस err;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -ENOPROTOOPT;
-}
+	वापस -ENOPROTOOPT;
+पूर्ण
 
-static void xsk_enter_rxtx_offsets(struct xdp_ring_offset_v1 *ring)
-{
-	ring->producer = offsetof(struct xdp_rxtx_ring, ptrs.producer);
-	ring->consumer = offsetof(struct xdp_rxtx_ring, ptrs.consumer);
-	ring->desc = offsetof(struct xdp_rxtx_ring, desc);
-}
+अटल व्योम xsk_enter_rxtx_offsets(काष्ठा xdp_ring_offset_v1 *ring)
+अणु
+	ring->producer = दुरत्व(काष्ठा xdp_rxtx_ring, ptrs.producer);
+	ring->consumer = दुरत्व(काष्ठा xdp_rxtx_ring, ptrs.consumer);
+	ring->desc = दुरत्व(काष्ठा xdp_rxtx_ring, desc);
+पूर्ण
 
-static void xsk_enter_umem_offsets(struct xdp_ring_offset_v1 *ring)
-{
-	ring->producer = offsetof(struct xdp_umem_ring, ptrs.producer);
-	ring->consumer = offsetof(struct xdp_umem_ring, ptrs.consumer);
-	ring->desc = offsetof(struct xdp_umem_ring, desc);
-}
+अटल व्योम xsk_enter_umem_offsets(काष्ठा xdp_ring_offset_v1 *ring)
+अणु
+	ring->producer = दुरत्व(काष्ठा xdp_umem_ring, ptrs.producer);
+	ring->consumer = दुरत्व(काष्ठा xdp_umem_ring, ptrs.consumer);
+	ring->desc = दुरत्व(काष्ठा xdp_umem_ring, desc);
+पूर्ण
 
-struct xdp_statistics_v1 {
+काष्ठा xdp_statistics_v1 अणु
 	__u64 rx_dropped;
 	__u64 rx_invalid_descs;
 	__u64 tx_invalid_descs;
-};
+पूर्ण;
 
-static int xsk_getsockopt(struct socket *sock, int level, int optname,
-			  char __user *optval, int __user *optlen)
-{
-	struct sock *sk = sock->sk;
-	struct xdp_sock *xs = xdp_sk(sk);
-	int len;
+अटल पूर्णांक xsk_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+			  अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
+	पूर्णांक len;
 
-	if (level != SOL_XDP)
-		return -ENOPROTOOPT;
+	अगर (level != SOL_XDP)
+		वापस -ENOPROTOOPT;
 
-	if (get_user(len, optlen))
-		return -EFAULT;
-	if (len < 0)
-		return -EINVAL;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
+	अगर (len < 0)
+		वापस -EINVAL;
 
-	switch (optname) {
-	case XDP_STATISTICS:
-	{
-		struct xdp_statistics stats = {};
+	चयन (optname) अणु
+	हाल XDP_STATISTICS:
+	अणु
+		काष्ठा xdp_statistics stats = अणुपूर्ण;
 		bool extra_stats = true;
-		size_t stats_size;
+		माप_प्रकार stats_size;
 
-		if (len < sizeof(struct xdp_statistics_v1)) {
-			return -EINVAL;
-		} else if (len < sizeof(stats)) {
+		अगर (len < माप(काष्ठा xdp_statistics_v1)) अणु
+			वापस -EINVAL;
+		पूर्ण अन्यथा अगर (len < माप(stats)) अणु
 			extra_stats = false;
-			stats_size = sizeof(struct xdp_statistics_v1);
-		} else {
-			stats_size = sizeof(stats);
-		}
+			stats_size = माप(काष्ठा xdp_statistics_v1);
+		पूर्ण अन्यथा अणु
+			stats_size = माप(stats);
+		पूर्ण
 
 		mutex_lock(&xs->mutex);
 		stats.rx_dropped = xs->rx_dropped;
-		if (extra_stats) {
+		अगर (extra_stats) अणु
 			stats.rx_ring_full = xs->rx_queue_full;
 			stats.rx_fill_ring_empty_descs =
 				xs->pool ? xskq_nb_queue_empty_descs(xs->pool->fq) : 0;
 			stats.tx_ring_empty_descs = xskq_nb_queue_empty_descs(xs->tx);
-		} else {
+		पूर्ण अन्यथा अणु
 			stats.rx_dropped += xs->rx_queue_full;
-		}
+		पूर्ण
 		stats.rx_invalid_descs = xskq_nb_invalid_descs(xs->rx);
 		stats.tx_invalid_descs = xskq_nb_invalid_descs(xs->tx);
 		mutex_unlock(&xs->mutex);
 
-		if (copy_to_user(optval, &stats, stats_size))
-			return -EFAULT;
-		if (put_user(stats_size, optlen))
-			return -EFAULT;
+		अगर (copy_to_user(optval, &stats, stats_size))
+			वापस -EFAULT;
+		अगर (put_user(stats_size, optlen))
+			वापस -EFAULT;
 
-		return 0;
-	}
-	case XDP_MMAP_OFFSETS:
-	{
-		struct xdp_mmap_offsets off;
-		struct xdp_mmap_offsets_v1 off_v1;
+		वापस 0;
+	पूर्ण
+	हाल XDP_MMAP_OFFSETS:
+	अणु
+		काष्ठा xdp_mmap_offsets off;
+		काष्ठा xdp_mmap_offsets_v1 off_v1;
 		bool flags_supported = true;
-		void *to_copy;
+		व्योम *to_copy;
 
-		if (len < sizeof(off_v1))
-			return -EINVAL;
-		else if (len < sizeof(off))
+		अगर (len < माप(off_v1))
+			वापस -EINVAL;
+		अन्यथा अगर (len < माप(off))
 			flags_supported = false;
 
-		if (flags_supported) {
+		अगर (flags_supported) अणु
 			/* xdp_ring_offset is identical to xdp_ring_offset_v1
-			 * except for the flags field added to the end.
+			 * except क्रम the flags field added to the end.
 			 */
-			xsk_enter_rxtx_offsets((struct xdp_ring_offset_v1 *)
+			xsk_enter_rxtx_offsets((काष्ठा xdp_ring_offset_v1 *)
 					       &off.rx);
-			xsk_enter_rxtx_offsets((struct xdp_ring_offset_v1 *)
+			xsk_enter_rxtx_offsets((काष्ठा xdp_ring_offset_v1 *)
 					       &off.tx);
-			xsk_enter_umem_offsets((struct xdp_ring_offset_v1 *)
+			xsk_enter_umem_offsets((काष्ठा xdp_ring_offset_v1 *)
 					       &off.fr);
-			xsk_enter_umem_offsets((struct xdp_ring_offset_v1 *)
+			xsk_enter_umem_offsets((काष्ठा xdp_ring_offset_v1 *)
 					       &off.cr);
-			off.rx.flags = offsetof(struct xdp_rxtx_ring,
+			off.rx.flags = दुरत्व(काष्ठा xdp_rxtx_ring,
 						ptrs.flags);
-			off.tx.flags = offsetof(struct xdp_rxtx_ring,
+			off.tx.flags = दुरत्व(काष्ठा xdp_rxtx_ring,
 						ptrs.flags);
-			off.fr.flags = offsetof(struct xdp_umem_ring,
+			off.fr.flags = दुरत्व(काष्ठा xdp_umem_ring,
 						ptrs.flags);
-			off.cr.flags = offsetof(struct xdp_umem_ring,
+			off.cr.flags = दुरत्व(काष्ठा xdp_umem_ring,
 						ptrs.flags);
 
-			len = sizeof(off);
+			len = माप(off);
 			to_copy = &off;
-		} else {
+		पूर्ण अन्यथा अणु
 			xsk_enter_rxtx_offsets(&off_v1.rx);
 			xsk_enter_rxtx_offsets(&off_v1.tx);
 			xsk_enter_umem_offsets(&off_v1.fr);
 			xsk_enter_umem_offsets(&off_v1.cr);
 
-			len = sizeof(off_v1);
+			len = माप(off_v1);
 			to_copy = &off_v1;
-		}
+		पूर्ण
 
-		if (copy_to_user(optval, to_copy, len))
-			return -EFAULT;
-		if (put_user(len, optlen))
-			return -EFAULT;
+		अगर (copy_to_user(optval, to_copy, len))
+			वापस -EFAULT;
+		अगर (put_user(len, optlen))
+			वापस -EFAULT;
 
-		return 0;
-	}
-	case XDP_OPTIONS:
-	{
-		struct xdp_options opts = {};
+		वापस 0;
+	पूर्ण
+	हाल XDP_OPTIONS:
+	अणु
+		काष्ठा xdp_options opts = अणुपूर्ण;
 
-		if (len < sizeof(opts))
-			return -EINVAL;
+		अगर (len < माप(opts))
+			वापस -EINVAL;
 
 		mutex_lock(&xs->mutex);
-		if (xs->zc)
+		अगर (xs->zc)
 			opts.flags |= XDP_OPTIONS_ZEROCOPY;
 		mutex_unlock(&xs->mutex);
 
-		len = sizeof(opts);
-		if (copy_to_user(optval, &opts, len))
-			return -EFAULT;
-		if (put_user(len, optlen))
-			return -EFAULT;
+		len = माप(opts);
+		अगर (copy_to_user(optval, &opts, len))
+			वापस -EFAULT;
+		अगर (put_user(len, optlen))
+			वापस -EFAULT;
 
-		return 0;
-	}
-	default:
-		break;
-	}
+		वापस 0;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int xsk_mmap(struct file *file, struct socket *sock,
-		    struct vm_area_struct *vma)
-{
+अटल पूर्णांक xsk_mmap(काष्ठा file *file, काष्ठा socket *sock,
+		    काष्ठा vm_area_काष्ठा *vma)
+अणु
 	loff_t offset = (loff_t)vma->vm_pgoff << PAGE_SHIFT;
-	unsigned long size = vma->vm_end - vma->vm_start;
-	struct xdp_sock *xs = xdp_sk(sock->sk);
-	struct xsk_queue *q = NULL;
-	unsigned long pfn;
-	struct page *qpg;
+	अचिन्हित दीर्घ size = vma->vm_end - vma->vm_start;
+	काष्ठा xdp_sock *xs = xdp_sk(sock->sk);
+	काष्ठा xsk_queue *q = शून्य;
+	अचिन्हित दीर्घ pfn;
+	काष्ठा page *qpg;
 
-	if (READ_ONCE(xs->state) != XSK_READY)
-		return -EBUSY;
+	अगर (READ_ONCE(xs->state) != XSK_READY)
+		वापस -EBUSY;
 
-	if (offset == XDP_PGOFF_RX_RING) {
+	अगर (offset == XDP_PGOFF_RX_RING) अणु
 		q = READ_ONCE(xs->rx);
-	} else if (offset == XDP_PGOFF_TX_RING) {
+	पूर्ण अन्यथा अगर (offset == XDP_PGOFF_TX_RING) अणु
 		q = READ_ONCE(xs->tx);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Matches the smp_wmb() in XDP_UMEM_REG */
 		smp_rmb();
-		if (offset == XDP_UMEM_PGOFF_FILL_RING)
-			q = READ_ONCE(xs->fq_tmp);
-		else if (offset == XDP_UMEM_PGOFF_COMPLETION_RING)
-			q = READ_ONCE(xs->cq_tmp);
-	}
+		अगर (offset == XDP_UMEM_PGOFF_FILL_RING)
+			q = READ_ONCE(xs->fq_पंचांगp);
+		अन्यथा अगर (offset == XDP_UMEM_PGOFF_COMPLETION_RING)
+			q = READ_ONCE(xs->cq_पंचांगp);
+	पूर्ण
 
-	if (!q)
-		return -EINVAL;
+	अगर (!q)
+		वापस -EINVAL;
 
 	/* Matches the smp_wmb() in xsk_init_queue */
 	smp_rmb();
 	qpg = virt_to_head_page(q->ring);
-	if (size > page_size(qpg))
-		return -EINVAL;
+	अगर (size > page_size(qpg))
+		वापस -EINVAL;
 
 	pfn = virt_to_phys(q->ring) >> PAGE_SHIFT;
-	return remap_pfn_range(vma, vma->vm_start, pfn,
+	वापस remap_pfn_range(vma, vma->vm_start, pfn,
 			       size, vma->vm_page_prot);
-}
+पूर्ण
 
-static int xsk_notifier(struct notifier_block *this,
-			unsigned long msg, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct net *net = dev_net(dev);
-	struct sock *sk;
+अटल पूर्णांक xsk_notअगरier(काष्ठा notअगरier_block *this,
+			अचिन्हित दीर्घ msg, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा sock *sk;
 
-	switch (msg) {
-	case NETDEV_UNREGISTER:
+	चयन (msg) अणु
+	हाल NETDEV_UNREGISTER:
 		mutex_lock(&net->xdp.lock);
-		sk_for_each(sk, &net->xdp.list) {
-			struct xdp_sock *xs = xdp_sk(sk);
+		sk_क्रम_each(sk, &net->xdp.list) अणु
+			काष्ठा xdp_sock *xs = xdp_sk(sk);
 
 			mutex_lock(&xs->mutex);
-			if (xs->dev == dev) {
+			अगर (xs->dev == dev) अणु
 				sk->sk_err = ENETDOWN;
-				if (!sock_flag(sk, SOCK_DEAD))
+				अगर (!sock_flag(sk, SOCK_DEAD))
 					sk->sk_error_report(sk);
 
 				xsk_unbind_dev(xs);
 
 				/* Clear device references. */
 				xp_clear_dev(xs->pool);
-			}
+			पूर्ण
 			mutex_unlock(&xs->mutex);
-		}
+		पूर्ण
 		mutex_unlock(&net->xdp.lock);
-		break;
-	}
-	return NOTIFY_DONE;
-}
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct proto xsk_proto = {
+अटल काष्ठा proto xsk_proto = अणु
 	.name =		"XDP",
 	.owner =	THIS_MODULE,
-	.obj_size =	sizeof(struct xdp_sock),
-};
+	.obj_size =	माप(काष्ठा xdp_sock),
+पूर्ण;
 
-static const struct proto_ops xsk_proto_ops = {
+अटल स्थिर काष्ठा proto_ops xsk_proto_ops = अणु
 	.family		= PF_XDP,
 	.owner		= THIS_MODULE,
 	.release	= xsk_release,
@@ -1346,47 +1347,47 @@ static const struct proto_ops xsk_proto_ops = {
 	.poll		= xsk_poll,
 	.ioctl		= sock_no_ioctl,
 	.listen		= sock_no_listen,
-	.shutdown	= sock_no_shutdown,
+	.shutकरोwn	= sock_no_shutकरोwn,
 	.setsockopt	= xsk_setsockopt,
-	.getsockopt	= xsk_getsockopt,
+	.माला_लोockopt	= xsk_माला_लोockopt,
 	.sendmsg	= xsk_sendmsg,
 	.recvmsg	= xsk_recvmsg,
 	.mmap		= xsk_mmap,
 	.sendpage	= sock_no_sendpage,
-};
+पूर्ण;
 
-static void xsk_destruct(struct sock *sk)
-{
-	struct xdp_sock *xs = xdp_sk(sk);
+अटल व्योम xsk_deकाष्ठा(काष्ठा sock *sk)
+अणु
+	काष्ठा xdp_sock *xs = xdp_sk(sk);
 
-	if (!sock_flag(sk, SOCK_DEAD))
-		return;
+	अगर (!sock_flag(sk, SOCK_DEAD))
+		वापस;
 
-	if (!xp_put_pool(xs->pool))
+	अगर (!xp_put_pool(xs->pool))
 		xdp_put_umem(xs->umem, !xs->pool);
 
 	sk_refcnt_debug_dec(sk);
-}
+पूर्ण
 
-static int xsk_create(struct net *net, struct socket *sock, int protocol,
-		      int kern)
-{
-	struct xdp_sock *xs;
-	struct sock *sk;
+अटल पूर्णांक xsk_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
+		      पूर्णांक kern)
+अणु
+	काष्ठा xdp_sock *xs;
+	काष्ठा sock *sk;
 
-	if (!ns_capable(net->user_ns, CAP_NET_RAW))
-		return -EPERM;
-	if (sock->type != SOCK_RAW)
-		return -ESOCKTNOSUPPORT;
+	अगर (!ns_capable(net->user_ns, CAP_NET_RAW))
+		वापस -EPERM;
+	अगर (sock->type != SOCK_RAW)
+		वापस -ESOCKTNOSUPPORT;
 
-	if (protocol)
-		return -EPROTONOSUPPORT;
+	अगर (protocol)
+		वापस -EPROTONOSUPPORT;
 
 	sock->state = SS_UNCONNECTED;
 
 	sk = sk_alloc(net, PF_XDP, GFP_KERNEL, &xsk_proto, kern);
-	if (!sk)
-		return -ENOBUFS;
+	अगर (!sk)
+		वापस -ENOBUFS;
 
 	sock->ops = &xsk_proto_ops;
 
@@ -1394,7 +1395,7 @@ static int xsk_create(struct net *net, struct socket *sock, int protocol,
 
 	sk->sk_family = PF_XDP;
 
-	sk->sk_destruct = xsk_destruct;
+	sk->sk_deकाष्ठा = xsk_deकाष्ठा;
 	sk_refcnt_debug_inc(sk);
 
 	sock_set_flag(sk, SOCK_RCU_FREE);
@@ -1415,68 +1416,68 @@ static int xsk_create(struct net *net, struct socket *sock, int protocol,
 	sock_prot_inuse_add(net, &xsk_proto, 1);
 	local_bh_enable();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_proto_family xsk_family_ops = {
+अटल स्थिर काष्ठा net_proto_family xsk_family_ops = अणु
 	.family = PF_XDP,
 	.create = xsk_create,
 	.owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static struct notifier_block xsk_netdev_notifier = {
-	.notifier_call	= xsk_notifier,
-};
+अटल काष्ठा notअगरier_block xsk_netdev_notअगरier = अणु
+	.notअगरier_call	= xsk_notअगरier,
+पूर्ण;
 
-static int __net_init xsk_net_init(struct net *net)
-{
+अटल पूर्णांक __net_init xsk_net_init(काष्ठा net *net)
+अणु
 	mutex_init(&net->xdp.lock);
 	INIT_HLIST_HEAD(&net->xdp.list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit xsk_net_exit(struct net *net)
-{
+अटल व्योम __net_निकास xsk_net_निकास(काष्ठा net *net)
+अणु
 	WARN_ON_ONCE(!hlist_empty(&net->xdp.list));
-}
+पूर्ण
 
-static struct pernet_operations xsk_net_ops = {
+अटल काष्ठा pernet_operations xsk_net_ops = अणु
 	.init = xsk_net_init,
-	.exit = xsk_net_exit,
-};
+	.निकास = xsk_net_निकास,
+पूर्ण;
 
-static int __init xsk_init(void)
-{
-	int err, cpu;
+अटल पूर्णांक __init xsk_init(व्योम)
+अणु
+	पूर्णांक err, cpu;
 
-	err = proto_register(&xsk_proto, 0 /* no slab */);
-	if (err)
-		goto out;
+	err = proto_रेजिस्टर(&xsk_proto, 0 /* no slab */);
+	अगर (err)
+		जाओ out;
 
-	err = sock_register(&xsk_family_ops);
-	if (err)
-		goto out_proto;
+	err = sock_रेजिस्टर(&xsk_family_ops);
+	अगर (err)
+		जाओ out_proto;
 
-	err = register_pernet_subsys(&xsk_net_ops);
-	if (err)
-		goto out_sk;
+	err = रेजिस्टर_pernet_subsys(&xsk_net_ops);
+	अगर (err)
+		जाओ out_sk;
 
-	err = register_netdevice_notifier(&xsk_netdev_notifier);
-	if (err)
-		goto out_pernet;
+	err = रेजिस्टर_netdevice_notअगरier(&xsk_netdev_notअगरier);
+	अगर (err)
+		जाओ out_pernet;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		INIT_LIST_HEAD(&per_cpu(xskmap_flush_list, cpu));
-	return 0;
+	वापस 0;
 
 out_pernet:
-	unregister_pernet_subsys(&xsk_net_ops);
+	unरेजिस्टर_pernet_subsys(&xsk_net_ops);
 out_sk:
-	sock_unregister(PF_XDP);
+	sock_unरेजिस्टर(PF_XDP);
 out_proto:
-	proto_unregister(&xsk_proto);
+	proto_unरेजिस्टर(&xsk_proto);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 fs_initcall(xsk_init);

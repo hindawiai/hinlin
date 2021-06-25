@@ -1,188 +1,189 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Industrial I/O utilities - lsiio.c
  *
  * Copyright (c) 2010 Manuel Stahl <manuel.stahl@iis.fraunhofer.de>
  */
 
-#include <string.h>
-#include <dirent.h>
-#include <stdio.h>
-#include <errno.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/dir.h>
-#include "iio_utils.h"
+#समावेश <माला.स>
+#समावेश <dirent.h>
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/सूची.स>
+#समावेश "iio_utils.h"
 
-static enum verbosity {
+अटल क्रमागत verbosity अणु
 	VERBLEVEL_DEFAULT,	/* 0 gives lspci behaviour */
 	VERBLEVEL_SENSORS,	/* 1 lists sensors */
-} verblevel = VERBLEVEL_DEFAULT;
+पूर्ण verblevel = VERBLEVEL_DEFAULT;
 
-const char *type_device = "iio:device";
-const char *type_trigger = "trigger";
+स्थिर अक्षर *type_device = "iio:device";
+स्थिर अक्षर *type_trigger = "trigger";
 
-static inline int check_prefix(const char *str, const char *prefix)
-{
-	return strlen(str) > strlen(prefix) &&
-	       strncmp(str, prefix, strlen(prefix)) == 0;
-}
+अटल अंतरभूत पूर्णांक check_prefix(स्थिर अक्षर *str, स्थिर अक्षर *prefix)
+अणु
+	वापस म_माप(str) > म_माप(prefix) &&
+	       म_भेदन(str, prefix, म_माप(prefix)) == 0;
+पूर्ण
 
-static inline int check_postfix(const char *str, const char *postfix)
-{
-	return strlen(str) > strlen(postfix) &&
-	       strcmp(str + strlen(str) - strlen(postfix), postfix) == 0;
-}
+अटल अंतरभूत पूर्णांक check_postfix(स्थिर अक्षर *str, स्थिर अक्षर *postfix)
+अणु
+	वापस म_माप(str) > म_माप(postfix) &&
+	       म_भेद(str + म_माप(str) - म_माप(postfix), postfix) == 0;
+पूर्ण
 
-static int dump_channels(const char *dev_dir_name)
-{
-	DIR *dp;
-	const struct dirent *ent;
+अटल पूर्णांक dump_channels(स्थिर अक्षर *dev_dir_name)
+अणु
+	सूची *dp;
+	स्थिर काष्ठा dirent *ent;
 
-	dp = opendir(dev_dir_name);
-	if (!dp)
-		return -errno;
+	dp = सूची_खोलो(dev_dir_name);
+	अगर (!dp)
+		वापस -त्रुटि_सं;
 
-	while (ent = readdir(dp), ent)
-		if (check_prefix(ent->d_name, "in_") &&
+	जबतक (ent = सूची_पढ़ो(dp), ent)
+		अगर (check_prefix(ent->d_name, "in_") &&
 		   (check_postfix(ent->d_name, "_raw") ||
 		    check_postfix(ent->d_name, "_input")))
-			printf("   %-10s\n", ent->d_name);
+			म_लिखो("   %-10s\n", ent->d_name);
 
-	return (closedir(dp) == -1) ? -errno : 0;
-}
+	वापस (बंद_सूची(dp) == -1) ? -त्रुटि_सं : 0;
+पूर्ण
 
-static int dump_one_device(const char *dev_dir_name)
-{
-	char name[IIO_MAX_NAME_LENGTH];
-	int dev_idx;
-	int ret;
+अटल पूर्णांक dump_one_device(स्थिर अक्षर *dev_dir_name)
+अणु
+	अक्षर name[IIO_MAX_NAME_LENGTH];
+	पूर्णांक dev_idx;
+	पूर्णांक ret;
 
-	ret = sscanf(dev_dir_name + strlen(iio_dir) + strlen(type_device), "%i",
+	ret = माला_पूछो(dev_dir_name + म_माप(iio_dir) + म_माप(type_device), "%i",
 		     &dev_idx);
-	if (ret != 1)
-		return -EINVAL;
+	अगर (ret != 1)
+		वापस -EINVAL;
 
-	ret = read_sysfs_string("name", dev_dir_name, name);
-	if (ret < 0)
-		return ret;
+	ret = पढ़ो_sysfs_string("name", dev_dir_name, name);
+	अगर (ret < 0)
+		वापस ret;
 
-	printf("Device %03d: %s\n", dev_idx, name);
+	म_लिखो("Device %03d: %s\n", dev_idx, name);
 
-	if (verblevel >= VERBLEVEL_SENSORS)
-		return dump_channels(dev_dir_name);
+	अगर (verblevel >= VERBLEVEL_SENSORS)
+		वापस dump_channels(dev_dir_name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dump_one_trigger(const char *dev_dir_name)
-{
-	char name[IIO_MAX_NAME_LENGTH];
-	int dev_idx;
-	int ret;
+अटल पूर्णांक dump_one_trigger(स्थिर अक्षर *dev_dir_name)
+अणु
+	अक्षर name[IIO_MAX_NAME_LENGTH];
+	पूर्णांक dev_idx;
+	पूर्णांक ret;
 
-	ret = sscanf(dev_dir_name + strlen(iio_dir) + strlen(type_trigger),
+	ret = माला_पूछो(dev_dir_name + म_माप(iio_dir) + म_माप(type_trigger),
 		     "%i", &dev_idx);
-	if (ret != 1)
-		return -EINVAL;
+	अगर (ret != 1)
+		वापस -EINVAL;
 
-	ret = read_sysfs_string("name", dev_dir_name, name);
-	if (ret < 0)
-		return ret;
+	ret = पढ़ो_sysfs_string("name", dev_dir_name, name);
+	अगर (ret < 0)
+		वापस ret;
 
-	printf("Trigger %03d: %s\n", dev_idx, name);
+	म_लिखो("Trigger %03d: %s\n", dev_idx, name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dump_devices(void)
-{
-	const struct dirent *ent;
-	int ret;
-	DIR *dp;
+अटल पूर्णांक dump_devices(व्योम)
+अणु
+	स्थिर काष्ठा dirent *ent;
+	पूर्णांक ret;
+	सूची *dp;
 
-	dp = opendir(iio_dir);
-	if (!dp) {
-		fprintf(stderr, "No industrial I/O devices available\n");
-		return -ENODEV;
-	}
+	dp = सूची_खोलो(iio_dir);
+	अगर (!dp) अणु
+		ख_लिखो(मानक_त्रुटि, "No industrial I/O devices available\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	while (ent = readdir(dp), ent) {
-		if (check_prefix(ent->d_name, type_device)) {
-			char *dev_dir_name;
+	जबतक (ent = सूची_पढ़ो(dp), ent) अणु
+		अगर (check_prefix(ent->d_name, type_device)) अणु
+			अक्षर *dev_dir_name;
 
-			if (asprintf(&dev_dir_name, "%s%s", iio_dir,
-				     ent->d_name) < 0) {
+			अगर (aप्र_लिखो(&dev_dir_name, "%s%s", iio_dir,
+				     ent->d_name) < 0) अणु
 				ret = -ENOMEM;
-				goto error_close_dir;
-			}
+				जाओ error_बंद_dir;
+			पूर्ण
 
 			ret = dump_one_device(dev_dir_name);
-			if (ret) {
-				free(dev_dir_name);
-				goto error_close_dir;
-			}
+			अगर (ret) अणु
+				मुक्त(dev_dir_name);
+				जाओ error_बंद_dir;
+			पूर्ण
 
-			free(dev_dir_name);
-			if (verblevel >= VERBLEVEL_SENSORS)
-				printf("\n");
-		}
-	}
-	rewinddir(dp);
-	while (ent = readdir(dp), ent) {
-		if (check_prefix(ent->d_name, type_trigger)) {
-			char *dev_dir_name;
+			मुक्त(dev_dir_name);
+			अगर (verblevel >= VERBLEVEL_SENSORS)
+				म_लिखो("\n");
+		पूर्ण
+	पूर्ण
+	सूची_शुरु(dp);
+	जबतक (ent = सूची_पढ़ो(dp), ent) अणु
+		अगर (check_prefix(ent->d_name, type_trigger)) अणु
+			अक्षर *dev_dir_name;
 
-			if (asprintf(&dev_dir_name, "%s%s", iio_dir,
-				     ent->d_name) < 0) {
+			अगर (aप्र_लिखो(&dev_dir_name, "%s%s", iio_dir,
+				     ent->d_name) < 0) अणु
 				ret = -ENOMEM;
-				goto error_close_dir;
-			}
+				जाओ error_बंद_dir;
+			पूर्ण
 
 			ret = dump_one_trigger(dev_dir_name);
-			if (ret) {
-				free(dev_dir_name);
-				goto error_close_dir;
-			}
+			अगर (ret) अणु
+				मुक्त(dev_dir_name);
+				जाओ error_बंद_dir;
+			पूर्ण
 
-			free(dev_dir_name);
-		}
-	}
+			मुक्त(dev_dir_name);
+		पूर्ण
+	पूर्ण
 
-	return (closedir(dp) == -1) ? -errno : 0;
+	वापस (बंद_सूची(dp) == -1) ? -त्रुटि_सं : 0;
 
-error_close_dir:
-	if (closedir(dp) == -1)
-		perror("dump_devices(): Failed to close directory");
+error_बंद_dir:
+	अगर (बंद_सूची(dp) == -1)
+		लिखो_त्रुटि("dump_devices(): Failed to close directory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int c, err = 0;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक c, err = 0;
 
-	while ((c = getopt(argc, argv, "v")) != EOF) {
-		switch (c) {
-		case 'v':
+	जबतक ((c = getopt(argc, argv, "v")) != खातापूर्ण) अणु
+		चयन (c) अणु
+		हाल 'v':
 			verblevel++;
-			break;
+			अवरोध;
 
-		case '?':
-		default:
+		हाल '?':
+		शेष:
 			err++;
-			break;
-		}
-	}
-	if (err || argc > optind) {
-		fprintf(stderr, "Usage: lsiio [options]...\n"
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (err || argc > optind) अणु
+		ख_लिखो(मानक_त्रुटि, "Usage: lsiio [options]...\n"
 			"List industrial I/O devices\n"
 			"  -v  Increase verbosity (may be given multiple times)\n");
-		exit(1);
-	}
+		निकास(1);
+	पूर्ण
 
-	return dump_devices();
-}
+	वापस dump_devices();
+पूर्ण

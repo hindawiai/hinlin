@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * ADAU1977/ADAU1978/ADAU1979 driver
  *
@@ -6,31 +7,31 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#ifndef __SOUND_SOC_CODECS_ADAU1977_H__
-#define __SOUND_SOC_CODECS_ADAU1977_H__
+#अगर_अघोषित __SOUND_SOC_CODECS_ADAU1977_H__
+#घोषणा __SOUND_SOC_CODECS_ADAU1977_H__
 
-#include <linux/regmap.h>
+#समावेश <linux/regmap.h>
 
-struct device;
+काष्ठा device;
 
-enum adau1977_type {
+क्रमागत adau1977_type अणु
 	ADAU1977,
 	ADAU1978,
 	ADAU1979,
-};
+पूर्ण;
 
-int adau1977_probe(struct device *dev, struct regmap *regmap,
-	enum adau1977_type type, void (*switch_mode)(struct device *dev));
+पूर्णांक adau1977_probe(काष्ठा device *dev, काष्ठा regmap *regmap,
+	क्रमागत adau1977_type type, व्योम (*चयन_mode)(काष्ठा device *dev));
 
-extern const struct regmap_config adau1977_regmap_config;
+बाह्य स्थिर काष्ठा regmap_config adau1977_regmap_config;
 
-enum adau1977_clk_id {
+क्रमागत adau1977_clk_id अणु
 	ADAU1977_SYSCLK,
-};
+पूर्ण;
 
-enum adau1977_sysclk_src {
+क्रमागत adau1977_sysclk_src अणु
 	ADAU1977_SYSCLK_SRC_MCLK,
 	ADAU1977_SYSCLK_SRC_LRCLK,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

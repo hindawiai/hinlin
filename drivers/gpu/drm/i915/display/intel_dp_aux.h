@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020-2021 Intel Corporation
+ * Copyright तऊ 2020-2021 Intel Corporation
  */
 
-#ifndef __INTEL_DP_AUX_H__
-#define __INTEL_DP_AUX_H__
+#अगर_अघोषित __INTEL_DP_AUX_H__
+#घोषणा __INTEL_DP_AUX_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct intel_dp;
+काष्ठा पूर्णांकel_dp;
 
-u32 intel_dp_pack_aux(const u8 *src, int src_bytes);
+u32 पूर्णांकel_dp_pack_aux(स्थिर u8 *src, पूर्णांक src_bytes);
 
-void intel_dp_aux_fini(struct intel_dp *intel_dp);
-void intel_dp_aux_init(struct intel_dp *intel_dp);
+व्योम पूर्णांकel_dp_aux_fini(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
+व्योम पूर्णांकel_dp_aux_init(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
 
-#endif /* __INTEL_DP_AUX_H__ */
+#पूर्ण_अगर /* __INTEL_DP_AUX_H__ */

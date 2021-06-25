@@ -1,163 +1,164 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Generic cpu hotunplug interrupt migration code copied from the
+ * Generic cpu hotunplug पूर्णांकerrupt migration code copied from the
  * arch/arm implementation
  *
  * Copyright (C) Russell King
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-#include <linux/interrupt.h>
-#include <linux/ratelimit.h>
-#include <linux/irq.h>
-#include <linux/sched/isolation.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/sched/isolation.h>
 
-#include "internals.h"
+#समावेश "internals.h"
 
 /* For !GENERIC_IRQ_EFFECTIVE_AFF_MASK this looks at general affinity mask */
-static inline bool irq_needs_fixup(struct irq_data *d)
-{
-	const struct cpumask *m = irq_data_get_effective_affinity_mask(d);
-	unsigned int cpu = smp_processor_id();
+अटल अंतरभूत bool irq_needs_fixup(काष्ठा irq_data *d)
+अणु
+	स्थिर काष्ठा cpumask *m = irq_data_get_effective_affinity_mask(d);
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-#ifdef CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK
+#अगर_घोषित CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK
 	/*
-	 * The cpumask_empty() check is a workaround for interrupt chips,
-	 * which do not implement effective affinity, but the architecture has
-	 * enabled the config switch. Use the general affinity mask instead.
+	 * The cpumask_empty() check is a workaround क्रम पूर्णांकerrupt chips,
+	 * which करो not implement effective affinity, but the architecture has
+	 * enabled the config चयन. Use the general affinity mask instead.
 	 */
-	if (cpumask_empty(m))
+	अगर (cpumask_empty(m))
 		m = irq_data_get_affinity_mask(d);
 
 	/*
 	 * Sanity check. If the mask is not empty when excluding the outgoing
 	 * CPU then it must contain at least one online CPU. The outgoing CPU
-	 * has been removed from the online mask already.
+	 * has been हटाओd from the online mask alपढ़ोy.
 	 */
-	if (cpumask_any_but(m, cpu) < nr_cpu_ids &&
-	    cpumask_any_and(m, cpu_online_mask) >= nr_cpu_ids) {
+	अगर (cpumask_any_but(m, cpu) < nr_cpu_ids &&
+	    cpumask_any_and(m, cpu_online_mask) >= nr_cpu_ids) अणु
 		/*
 		 * If this happens then there was a missed IRQ fixup at some
-		 * point. Warn about it and enforce fixup.
+		 * poपूर्णांक. Warn about it and enक्रमce fixup.
 		 */
 		pr_warn("Eff. affinity %*pbl of IRQ %u contains only offline CPUs after offlining CPU %u\n",
 			cpumask_pr_args(m), d->irq, cpu);
-		return true;
-	}
-#endif
-	return cpumask_test_cpu(cpu, m);
-}
+		वापस true;
+	पूर्ण
+#पूर्ण_अगर
+	वापस cpumask_test_cpu(cpu, m);
+पूर्ण
 
-static bool migrate_one_irq(struct irq_desc *desc)
-{
-	struct irq_data *d = irq_desc_get_irq_data(desc);
-	struct irq_chip *chip = irq_data_get_irq_chip(d);
+अटल bool migrate_one_irq(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_data *d = irq_desc_get_irq_data(desc);
+	काष्ठा irq_chip *chip = irq_data_get_irq_chip(d);
 	bool maskchip = !irq_can_move_pcntxt(d) && !irqd_irq_masked(d);
-	const struct cpumask *affinity;
+	स्थिर काष्ठा cpumask *affinity;
 	bool brokeaff = false;
-	int err;
+	पूर्णांक err;
 
 	/*
-	 * IRQ chip might be already torn down, but the irq descriptor is
-	 * still in the radix tree. Also if the chip has no affinity setter,
-	 * nothing can be done here.
+	 * IRQ chip might be alपढ़ोy torn करोwn, but the irq descriptor is
+	 * still in the radix tree. Also अगर the chip has no affinity setter,
+	 * nothing can be करोne here.
 	 */
-	if (!chip || !chip->irq_set_affinity) {
+	अगर (!chip || !chip->irq_set_affinity) अणु
 		pr_debug("IRQ %u: Unable to migrate away\n", d->irq);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/*
-	 * No move required, if:
+	 * No move required, अगर:
 	 * - Interrupt is per cpu
 	 * - Interrupt is not started
-	 * - Affinity mask does not include this CPU.
+	 * - Affinity mask करोes not include this CPU.
 	 *
 	 * Note: Do not check desc->action as this might be a chained
-	 * interrupt.
+	 * पूर्णांकerrupt.
 	 */
-	if (irqd_is_per_cpu(d) || !irqd_is_started(d) || !irq_needs_fixup(d)) {
+	अगर (irqd_is_per_cpu(d) || !irqd_is_started(d) || !irq_needs_fixup(d)) अणु
 		/*
-		 * If an irq move is pending, abort it if the dying CPU is
+		 * If an irq move is pending, पात it अगर the dying CPU is
 		 * the sole target.
 		 */
 		irq_fixup_move_pending(desc, false);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/*
 	 * Complete an eventually pending irq move cleanup. If this
-	 * interrupt was moved in hard irq context, then the vectors need
-	 * to be cleaned up. It can't wait until this interrupt actually
+	 * पूर्णांकerrupt was moved in hard irq context, then the vectors need
+	 * to be cleaned up. It can't रुको until this पूर्णांकerrupt actually
 	 * happens and this CPU was involved.
 	 */
-	irq_force_complete_move(desc);
+	irq_क्रमce_complete_move(desc);
 
 	/*
 	 * If there is a setaffinity pending, then try to reuse the pending
-	 * mask, so the last change of the affinity does not get lost. If
-	 * there is no move pending or the pending mask does not contain
+	 * mask, so the last change of the affinity करोes not get lost. If
+	 * there is no move pending or the pending mask करोes not contain
 	 * any online CPU, use the current affinity mask.
 	 */
-	if (irq_fixup_move_pending(desc, true))
+	अगर (irq_fixup_move_pending(desc, true))
 		affinity = irq_desc_get_pending_mask(desc);
-	else
+	अन्यथा
 		affinity = irq_data_get_affinity_mask(d);
 
-	/* Mask the chip for interrupts which cannot move in process context */
-	if (maskchip && chip->irq_mask)
+	/* Mask the chip क्रम पूर्णांकerrupts which cannot move in process context */
+	अगर (maskchip && chip->irq_mask)
 		chip->irq_mask(d);
 
-	if (cpumask_any_and(affinity, cpu_online_mask) >= nr_cpu_ids) {
+	अगर (cpumask_any_and(affinity, cpu_online_mask) >= nr_cpu_ids) अणु
 		/*
-		 * If the interrupt is managed, then shut it down and leave
+		 * If the पूर्णांकerrupt is managed, then shut it करोwn and leave
 		 * the affinity untouched.
 		 */
-		if (irqd_affinity_is_managed(d)) {
-			irqd_set_managed_shutdown(d);
-			irq_shutdown_and_deactivate(desc);
-			return false;
-		}
+		अगर (irqd_affinity_is_managed(d)) अणु
+			irqd_set_managed_shutकरोwn(d);
+			irq_shutकरोwn_and_deactivate(desc);
+			वापस false;
+		पूर्ण
 		affinity = cpu_online_mask;
 		brokeaff = true;
-	}
+	पूर्ण
 	/*
-	 * Do not set the force argument of irq_do_set_affinity() as this
+	 * Do not set the क्रमce argument of irq_करो_set_affinity() as this
 	 * disables the masking of offline CPUs from the supplied affinity
-	 * mask and therefore might keep/reassign the irq to the outgoing
+	 * mask and thereक्रमe might keep/reassign the irq to the outgoing
 	 * CPU.
 	 */
-	err = irq_do_set_affinity(d, affinity, false);
-	if (err) {
+	err = irq_करो_set_affinity(d, affinity, false);
+	अगर (err) अणु
 		pr_warn_ratelimited("IRQ%u: set affinity failed(%d).\n",
 				    d->irq, err);
 		brokeaff = false;
-	}
+	पूर्ण
 
-	if (maskchip && chip->irq_unmask)
+	अगर (maskchip && chip->irq_unmask)
 		chip->irq_unmask(d);
 
-	return brokeaff;
-}
+	वापस brokeaff;
+पूर्ण
 
 /**
  * irq_migrate_all_off_this_cpu - Migrate irqs away from offline cpu
  *
  * The current CPU has been marked offline.  Migrate IRQs off this CPU.
- * If the affinity settings do not allow other CPUs, force them onto any
+ * If the affinity settings करो not allow other CPUs, क्रमce them onto any
  * available CPU.
  *
  * Note: we must iterate over all IRQs, whether they have an attached
- * action structure or not, as we need to get chained interrupts too.
+ * action काष्ठाure or not, as we need to get chained पूर्णांकerrupts too.
  */
-void irq_migrate_all_off_this_cpu(void)
-{
-	struct irq_desc *desc;
-	unsigned int irq;
+व्योम irq_migrate_all_off_this_cpu(व्योम)
+अणु
+	काष्ठा irq_desc *desc;
+	अचिन्हित पूर्णांक irq;
 
-	for_each_active_irq(irq) {
+	क्रम_each_active_irq(irq) अणु
 		bool affinity_broken;
 
 		desc = irq_to_desc(irq);
@@ -165,69 +166,69 @@ void irq_migrate_all_off_this_cpu(void)
 		affinity_broken = migrate_one_irq(desc);
 		raw_spin_unlock(&desc->lock);
 
-		if (affinity_broken) {
+		अगर (affinity_broken) अणु
 			pr_warn_ratelimited("IRQ %u: no longer affine to CPU%u\n",
 					    irq, smp_processor_id());
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool hk_should_isolate(struct irq_data *data, unsigned int cpu)
-{
-	const struct cpumask *hk_mask;
+अटल bool hk_should_isolate(काष्ठा irq_data *data, अचिन्हित पूर्णांक cpu)
+अणु
+	स्थिर काष्ठा cpumask *hk_mask;
 
-	if (!housekeeping_enabled(HK_FLAG_MANAGED_IRQ))
-		return false;
+	अगर (!housekeeping_enabled(HK_FLAG_MANAGED_IRQ))
+		वापस false;
 
 	hk_mask = housekeeping_cpumask(HK_FLAG_MANAGED_IRQ);
-	if (cpumask_subset(irq_data_get_effective_affinity_mask(data), hk_mask))
-		return false;
+	अगर (cpumask_subset(irq_data_get_effective_affinity_mask(data), hk_mask))
+		वापस false;
 
-	return cpumask_test_cpu(cpu, hk_mask);
-}
+	वापस cpumask_test_cpu(cpu, hk_mask);
+पूर्ण
 
-static void irq_restore_affinity_of_irq(struct irq_desc *desc, unsigned int cpu)
-{
-	struct irq_data *data = irq_desc_get_irq_data(desc);
-	const struct cpumask *affinity = irq_data_get_affinity_mask(data);
+अटल व्योम irq_restore_affinity_of_irq(काष्ठा irq_desc *desc, अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
+	स्थिर काष्ठा cpumask *affinity = irq_data_get_affinity_mask(data);
 
-	if (!irqd_affinity_is_managed(data) || !desc->action ||
+	अगर (!irqd_affinity_is_managed(data) || !desc->action ||
 	    !irq_data_get_irq_chip(data) || !cpumask_test_cpu(cpu, affinity))
-		return;
+		वापस;
 
-	if (irqd_is_managed_and_shutdown(data)) {
+	अगर (irqd_is_managed_and_shutकरोwn(data)) अणु
 		irq_startup(desc, IRQ_RESEND, IRQ_START_COND);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If the interrupt can only be directed to a single target
-	 * CPU then it is already assigned to a CPU in the affinity
-	 * mask. No point in trying to move it around unless the
+	 * If the पूर्णांकerrupt can only be directed to a single target
+	 * CPU then it is alपढ़ोy asचिन्हित to a CPU in the affinity
+	 * mask. No poपूर्णांक in trying to move it around unless the
 	 * isolation mechanism requests to move it to an upcoming
 	 * housekeeping CPU.
 	 */
-	if (!irqd_is_single_target(data) || hk_should_isolate(data, cpu))
+	अगर (!irqd_is_single_target(data) || hk_should_isolate(data, cpu))
 		irq_set_affinity_locked(data, affinity, false);
-}
+पूर्ण
 
 /**
- * irq_affinity_online_cpu - Restore affinity for managed interrupts
- * @cpu:	Upcoming CPU for which interrupts should be restored
+ * irq_affinity_online_cpu - Restore affinity क्रम managed पूर्णांकerrupts
+ * @cpu:	Upcoming CPU क्रम which पूर्णांकerrupts should be restored
  */
-int irq_affinity_online_cpu(unsigned int cpu)
-{
-	struct irq_desc *desc;
-	unsigned int irq;
+पूर्णांक irq_affinity_online_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा irq_desc *desc;
+	अचिन्हित पूर्णांक irq;
 
 	irq_lock_sparse();
-	for_each_active_irq(irq) {
+	क्रम_each_active_irq(irq) अणु
 		desc = irq_to_desc(irq);
 		raw_spin_lock_irq(&desc->lock);
 		irq_restore_affinity_of_irq(desc, cpu);
 		raw_spin_unlock_irq(&desc->lock);
-	}
+	पूर्ण
 	irq_unlock_sparse();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

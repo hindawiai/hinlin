@@ -1,28 +1,29 @@
+<शैली गुरु>
 /*
- * Regulator driver for LP873X PMIC
+ * Regulator driver क्रम LP873X PMIC
  *
  * Copyright (C) 2016 Texas Instruments Incorporated - https://www.ti.com/
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2 as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether expressed or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License version 2 for more details.
+ * GNU General Public License version 2 क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#include <linux/mfd/lp873x.h>
+#समावेश <linux/mfd/lp873x.h>
 
-#define LP873X_REGULATOR(_name, _id, _of, _ops, _n, _vr, _vm, _er, _em, \
+#घोषणा LP873X_REGULATOR(_name, _id, _of, _ops, _n, _vr, _vm, _er, _em, \
 			 _delay, _lr, _cr)				\
-	[_id] = {							\
-		.desc = {						\
+	[_id] = अणु							\
+		.desc = अणु						\
 			.name			= _name,		\
 			.supply_name		= _of "-in",		\
 			.id			= _id,			\
@@ -43,77 +44,77 @@
 			.n_current_limits = ARRAY_SIZE(lp873x_buck_uA),	\
 			.csel_reg	= (_cr),			\
 			.csel_mask	= LP873X_BUCK0_CTRL_2_BUCK0_ILIM,\
-		},							\
+		पूर्ण,							\
 		.ctrl2_reg = _cr,					\
-	}
+	पूर्ण
 
-struct lp873x_regulator {
-	struct regulator_desc desc;
-	unsigned int ctrl2_reg;
-};
+काष्ठा lp873x_regulator अणु
+	काष्ठा regulator_desc desc;
+	अचिन्हित पूर्णांक ctrl2_reg;
+पूर्ण;
 
-static const struct lp873x_regulator regulators[];
+अटल स्थिर काष्ठा lp873x_regulator regulators[];
 
-static const struct linear_range buck0_buck1_ranges[] = {
+अटल स्थिर काष्ठा linear_range buck0_buck1_ranges[] = अणु
 	REGULATOR_LINEAR_RANGE(0, 0x0, 0x13, 0),
 	REGULATOR_LINEAR_RANGE(700000, 0x14, 0x17, 10000),
 	REGULATOR_LINEAR_RANGE(735000, 0x18, 0x9d, 5000),
 	REGULATOR_LINEAR_RANGE(1420000, 0x9e, 0xff, 20000),
-};
+पूर्ण;
 
-static const struct linear_range ldo0_ldo1_ranges[] = {
+अटल स्थिर काष्ठा linear_range lकरो0_lकरो1_ranges[] = अणु
 	REGULATOR_LINEAR_RANGE(800000, 0x0, 0x19, 100000),
-};
+पूर्ण;
 
-static const unsigned int lp873x_buck_ramp_delay[] = {
+अटल स्थिर अचिन्हित पूर्णांक lp873x_buck_ramp_delay[] = अणु
 	30000, 15000, 10000, 7500, 3800, 1900, 940, 470
-};
+पूर्ण;
 
 /* LP873X BUCK current limit */
-static const unsigned int lp873x_buck_uA[] = {
+अटल स्थिर अचिन्हित पूर्णांक lp873x_buck_uA[] = अणु
 	1500000, 2000000, 2500000, 3000000, 3500000, 4000000,
-};
+पूर्ण;
 
-static int lp873x_buck_set_ramp_delay(struct regulator_dev *rdev,
-				      int ramp_delay)
-{
-	int id = rdev_get_id(rdev);
-	struct lp873x *lp873 = rdev_get_drvdata(rdev);
-	unsigned int reg;
-	int ret;
+अटल पूर्णांक lp873x_buck_set_ramp_delay(काष्ठा regulator_dev *rdev,
+				      पूर्णांक ramp_delay)
+अणु
+	पूर्णांक id = rdev_get_id(rdev);
+	काष्ठा lp873x *lp873 = rdev_get_drvdata(rdev);
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 
-	if (ramp_delay <= 470)
+	अगर (ramp_delay <= 470)
 		reg = 7;
-	else if (ramp_delay <= 940)
+	अन्यथा अगर (ramp_delay <= 940)
 		reg = 6;
-	else if (ramp_delay <= 1900)
+	अन्यथा अगर (ramp_delay <= 1900)
 		reg = 5;
-	else if (ramp_delay <= 3800)
+	अन्यथा अगर (ramp_delay <= 3800)
 		reg = 4;
-	else if (ramp_delay <= 7500)
+	अन्यथा अगर (ramp_delay <= 7500)
 		reg = 3;
-	else if (ramp_delay <= 10000)
+	अन्यथा अगर (ramp_delay <= 10000)
 		reg = 2;
-	else if (ramp_delay <= 15000)
+	अन्यथा अगर (ramp_delay <= 15000)
 		reg = 1;
-	else
+	अन्यथा
 		reg = 0;
 
 	ret = regmap_update_bits(lp873->regmap, regulators[id].ctrl2_reg,
 				 LP873X_BUCK0_CTRL_2_BUCK0_SLEW_RATE,
 				 reg << __ffs(LP873X_BUCK0_CTRL_2_BUCK0_SLEW_RATE));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(lp873->dev, "SLEW RATE write failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	rdev->constraints->ramp_delay = lp873x_buck_ramp_delay[reg];
+	rdev->स्थिरraपूर्णांकs->ramp_delay = lp873x_buck_ramp_delay[reg];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Operations permitted on BUCK0, BUCK1 */
-static const struct regulator_ops lp873x_buck01_ops = {
+अटल स्थिर काष्ठा regulator_ops lp873x_buck01_ops = अणु
 	.is_enabled		= regulator_is_enabled_regmap,
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
@@ -121,14 +122,14 @@ static const struct regulator_ops lp873x_buck01_ops = {
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
 	.list_voltage		= regulator_list_voltage_linear_range,
 	.map_voltage		= regulator_map_voltage_linear_range,
-	.set_voltage_time_sel	= regulator_set_voltage_time_sel,
+	.set_voltage_समय_sel	= regulator_set_voltage_समय_sel,
 	.set_ramp_delay		= lp873x_buck_set_ramp_delay,
 	.set_current_limit	= regulator_set_current_limit_regmap,
 	.get_current_limit	= regulator_get_current_limit_regmap,
-};
+पूर्ण;
 
 /* Operations permitted on LDO0 and LDO1 */
-static const struct regulator_ops lp873x_ldo01_ops = {
+अटल स्थिर काष्ठा regulator_ops lp873x_lकरो01_ops = अणु
 	.is_enabled		= regulator_is_enabled_regmap,
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
@@ -136,9 +137,9 @@ static const struct regulator_ops lp873x_ldo01_ops = {
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
 	.list_voltage		= regulator_list_voltage_linear_range,
 	.map_voltage		= regulator_map_voltage_linear_range,
-};
+पूर्ण;
 
-static const struct lp873x_regulator regulators[] = {
+अटल स्थिर काष्ठा lp873x_regulator regulators[] = अणु
 	LP873X_REGULATOR("BUCK0", LP873X_BUCK_0, "buck0", lp873x_buck01_ops,
 			 256, LP873X_REG_BUCK0_VOUT,
 			 LP873X_BUCK0_VOUT_BUCK0_VSET, LP873X_REG_BUCK0_CTRL_1,
@@ -149,57 +150,57 @@ static const struct lp873x_regulator regulators[] = {
 			 LP873X_BUCK1_VOUT_BUCK1_VSET, LP873X_REG_BUCK1_CTRL_1,
 			 LP873X_BUCK1_CTRL_1_BUCK1_EN, 10000,
 			 buck0_buck1_ranges, LP873X_REG_BUCK1_CTRL_2),
-	LP873X_REGULATOR("LDO0", LP873X_LDO_0, "ldo0", lp873x_ldo01_ops, 26,
+	LP873X_REGULATOR("LDO0", LP873X_LDO_0, "ldo0", lp873x_lकरो01_ops, 26,
 			 LP873X_REG_LDO0_VOUT, LP873X_LDO0_VOUT_LDO0_VSET,
 			 LP873X_REG_LDO0_CTRL,
-			 LP873X_LDO0_CTRL_LDO0_EN, 0, ldo0_ldo1_ranges, 0xFF),
-	LP873X_REGULATOR("LDO1", LP873X_LDO_1, "ldo1", lp873x_ldo01_ops, 26,
+			 LP873X_LDO0_CTRL_LDO0_EN, 0, lकरो0_lकरो1_ranges, 0xFF),
+	LP873X_REGULATOR("LDO1", LP873X_LDO_1, "ldo1", lp873x_lकरो01_ops, 26,
 			 LP873X_REG_LDO1_VOUT, LP873X_LDO1_VOUT_LDO1_VSET,
 			 LP873X_REG_LDO1_CTRL,
-			 LP873X_LDO1_CTRL_LDO1_EN, 0, ldo0_ldo1_ranges, 0xFF),
-};
+			 LP873X_LDO1_CTRL_LDO1_EN, 0, lकरो0_lकरो1_ranges, 0xFF),
+पूर्ण;
 
-static int lp873x_regulator_probe(struct platform_device *pdev)
-{
-	struct lp873x *lp873 = dev_get_drvdata(pdev->dev.parent);
-	struct regulator_config config = { };
-	struct regulator_dev *rdev;
-	int i;
+अटल पूर्णांक lp873x_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lp873x *lp873 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा regulator_dev *rdev;
+	पूर्णांक i;
 
-	platform_set_drvdata(pdev, lp873);
+	platक्रमm_set_drvdata(pdev, lp873);
 
 	config.dev = &pdev->dev;
 	config.dev->of_node = lp873->dev->of_node;
 	config.driver_data = lp873;
 	config.regmap = lp873->regmap;
 
-	for (i = 0; i < ARRAY_SIZE(regulators); i++) {
-		rdev = devm_regulator_register(&pdev->dev, &regulators[i].desc,
+	क्रम (i = 0; i < ARRAY_SIZE(regulators); i++) अणु
+		rdev = devm_regulator_रेजिस्टर(&pdev->dev, &regulators[i].desc,
 					       &config);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			dev_err(lp873->dev, "failed to register %s regulator\n",
 				pdev->name);
-			return PTR_ERR(rdev);
-		}
-	}
+			वापस PTR_ERR(rdev);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id lp873x_regulator_id_table[] = {
-	{ "lp873x-regulator", },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(platform, lp873x_regulator_id_table);
+अटल स्थिर काष्ठा platक्रमm_device_id lp873x_regulator_id_table[] = अणु
+	अणु "lp873x-regulator", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, lp873x_regulator_id_table);
 
-static struct platform_driver lp873x_regulator_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver lp873x_regulator_driver = अणु
+	.driver = अणु
 		.name = "lp873x-pmic",
-	},
+	पूर्ण,
 	.probe = lp873x_regulator_probe,
 	.id_table = lp873x_regulator_id_table,
-};
-module_platform_driver(lp873x_regulator_driver);
+पूर्ण;
+module_platक्रमm_driver(lp873x_regulator_driver);
 
 MODULE_AUTHOR("J Keerthy <j-keerthy@ti.com>");
 MODULE_DESCRIPTION("LP873X voltage regulator driver");

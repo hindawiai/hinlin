@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020, Mellanox Technologies */
 
-#ifndef __MLX5E_TRAP_H__
-#define __MLX5E_TRAP_H__
+#अगर_अघोषित __MLX5E_TRAP_H__
+#घोषणा __MLX5E_TRAP_H__
 
-#include "../en.h"
-#include "../devlink.h"
+#समावेश "../en.h"
+#समावेश "../devlink.h"
 
-struct mlx5e_trap {
+काष्ठा mlx5e_trap अणु
 	/* data path */
-	struct mlx5e_rq            rq;
-	struct mlx5e_tir           tir;
-	struct napi_struct         napi;
-	struct device             *pdev;
-	struct net_device         *netdev;
+	काष्ठा mlx5e_rq            rq;
+	काष्ठा mlx5e_tir           tir;
+	काष्ठा napi_काष्ठा         napi;
+	काष्ठा device             *pdev;
+	काष्ठा net_device         *netdev;
 	__be32                     mkey_be;
 
 	/* data path - accessed per napi poll */
-	struct mlx5e_ch_stats     *stats;
+	काष्ठा mlx5e_ch_stats     *stats;
 
 	/* control */
-	struct mlx5e_priv         *priv;
-	struct mlx5_core_dev      *mdev;
-	struct hwtstamp_config    *tstamp;
+	काष्ठा mlx5e_priv         *priv;
+	काष्ठा mlx5_core_dev      *mdev;
+	काष्ठा hwtstamp_config    *tstamp;
 	DECLARE_BITMAP(state, MLX5E_CHANNEL_NUM_STATES);
 
-	struct mlx5e_params        params;
-	struct mlx5e_rq_param      rq_param;
-};
+	काष्ठा mlx5e_params        params;
+	काष्ठा mlx5e_rq_param      rq_param;
+पूर्ण;
 
-void mlx5e_close_trap(struct mlx5e_trap *trap);
-void mlx5e_deactivate_trap(struct mlx5e_priv *priv);
-int mlx5e_handle_trap_event(struct mlx5e_priv *priv, struct mlx5_trap_ctx *trap_ctx);
-int mlx5e_apply_traps(struct mlx5e_priv *priv, bool enable);
+व्योम mlx5e_बंद_trap(काष्ठा mlx5e_trap *trap);
+व्योम mlx5e_deactivate_trap(काष्ठा mlx5e_priv *priv);
+पूर्णांक mlx5e_handle_trap_event(काष्ठा mlx5e_priv *priv, काष्ठा mlx5_trap_ctx *trap_ctx);
+पूर्णांक mlx5e_apply_traps(काष्ठा mlx5e_priv *priv, bool enable);
 
-#endif
+#पूर्ण_अगर

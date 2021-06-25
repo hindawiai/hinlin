@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * ARAnyM hardware support via Native Features (natfeats)
  *
@@ -6,18 +7,18 @@
  * This software may be used and distributed according to the terms of
  * the GNU General Public License (GPL), incorporated herein by reference.
  */
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-#ifndef _NATFEAT_H
-#define _NATFEAT_H
+#अगर_अघोषित _NATFEAT_H
+#घोषणा _NATFEAT_H
 
-long nf_get_id(const char *feature_name);
-long nf_call(long id, ...);
+दीर्घ nf_get_id(स्थिर अक्षर *feature_name);
+दीर्घ nf_call(दीर्घ id, ...);
 
-void nf_init(void);
-void nf_shutdown(void);
+व्योम nf_init(व्योम);
+व्योम nf_shutकरोwn(व्योम);
 
-void nfprint(const char *fmt, ...)
-	__printf(1, 2);
+व्योम nfprपूर्णांक(स्थिर अक्षर *fmt, ...)
+	__म_लिखो(1, 2);
 
-# endif /* _NATFEAT_H */
+# endअगर /* _NATFEAT_H */

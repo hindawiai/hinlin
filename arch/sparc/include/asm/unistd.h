@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * System calls under the Sparc.
  *
  * Don't be scared by the ugly clobbers, it is the only way I can
- * think of right now to force the arguments into fixed registers
- * before the trap into the system call with gcc 'asm' statements.
+ * think of right now to क्रमce the arguments पूर्णांकo fixed रेजिस्टरs
+ * beक्रमe the trap पूर्णांकo the प्रणाली call with gcc 'asm' statements.
  *
  * Copyright (C) 1995, 2007 David S. Miller (davem@davemloft.net)
  *
@@ -12,51 +13,51 @@
  *
  * Copyright (C) 1995 Adrian M. Rodriguez (adrian@remus.rutgers.edu)
  */
-#ifndef _SPARC_UNISTD_H
-#define _SPARC_UNISTD_H
+#अगर_अघोषित _SPARC_UNISTD_H
+#घोषणा _SPARC_UNISTD_H
 
-#include <uapi/asm/unistd.h>
+#समावेश <uapi/यंत्र/unistd.h>
 
-#define NR_syscalls	__NR_syscalls
+#घोषणा NR_syscalls	__NR_syscalls
 
-#ifdef __32bit_syscall_numbers__
-#else
-#define __NR_time		231 /* Linux sparc32                               */
-#endif
-#define __ARCH_WANT_NEW_STAT
-#define __ARCH_WANT_OLD_READDIR
-#define __ARCH_WANT_STAT64
-#define __ARCH_WANT_SYS_ALARM
-#define __ARCH_WANT_SYS_GETHOSTNAME
-#define __ARCH_WANT_SYS_PAUSE
-#define __ARCH_WANT_SYS_SIGNAL
-#define __ARCH_WANT_SYS_TIME32
-#define __ARCH_WANT_SYS_UTIME32
-#define __ARCH_WANT_SYS_WAITPID
-#define __ARCH_WANT_SYS_SOCKETCALL
-#define __ARCH_WANT_SYS_FADVISE64
-#define __ARCH_WANT_SYS_GETPGRP
-#define __ARCH_WANT_SYS_NICE
-#define __ARCH_WANT_SYS_OLDUMOUNT
-#define __ARCH_WANT_SYS_SIGPENDING
-#define __ARCH_WANT_SYS_SIGPROCMASK
-#ifdef __32bit_syscall_numbers__
-#define __ARCH_WANT_SYS_IPC
-#else
-#define __ARCH_WANT_SYS_TIME
-#define __ARCH_WANT_SYS_UTIME
-#define __ARCH_WANT_COMPAT_SYS_SENDFILE
-#endif
+#अगर_घोषित __32bit_syscall_numbers__
+#अन्यथा
+#घोषणा __NR_समय		231 /* Linux sparc32                               */
+#पूर्ण_अगर
+#घोषणा __ARCH_WANT_NEW_STAT
+#घोषणा __ARCH_WANT_OLD_READसूची
+#घोषणा __ARCH_WANT_STAT64
+#घोषणा __ARCH_WANT_SYS_ALARM
+#घोषणा __ARCH_WANT_SYS_GETHOSTNAME
+#घोषणा __ARCH_WANT_SYS_PAUSE
+#घोषणा __ARCH_WANT_SYS_SIGNAL
+#घोषणा __ARCH_WANT_SYS_TIME32
+#घोषणा __ARCH_WANT_SYS_UTIME32
+#घोषणा __ARCH_WANT_SYS_WAITPID
+#घोषणा __ARCH_WANT_SYS_SOCKETCALL
+#घोषणा __ARCH_WANT_SYS_FADVISE64
+#घोषणा __ARCH_WANT_SYS_GETPGRP
+#घोषणा __ARCH_WANT_SYS_NICE
+#घोषणा __ARCH_WANT_SYS_OLDUMOUNT
+#घोषणा __ARCH_WANT_SYS_SIGPENDING
+#घोषणा __ARCH_WANT_SYS_SIGPROCMASK
+#अगर_घोषित __32bit_syscall_numbers__
+#घोषणा __ARCH_WANT_SYS_IPC
+#अन्यथा
+#घोषणा __ARCH_WANT_SYS_TIME
+#घोषणा __ARCH_WANT_SYS_UTIME
+#घोषणा __ARCH_WANT_COMPAT_SYS_SENDखाता
+#पूर्ण_अगर
 
-#ifdef __32bit_syscall_numbers__
+#अगर_घोषित __32bit_syscall_numbers__
 /* Sparc 32-bit only has the "setresuid32", "getresuid32" variants,
  * it never had the plain ones and there is no value to adding those
- * old versions into the syscall table.
+ * old versions पूर्णांकo the syscall table.
  */
-#define __IGNORE_setresuid
-#define __IGNORE_getresuid
-#define __IGNORE_setresgid
-#define __IGNORE_getresgid
-#endif
+#घोषणा __IGNORE_setresuid
+#घोषणा __IGNORE_getresuid
+#घोषणा __IGNORE_setresgid
+#घोषणा __IGNORE_getresgid
+#पूर्ण_अगर
 
-#endif /* _SPARC_UNISTD_H */
+#पूर्ण_अगर /* _SPARC_UNISTD_H */

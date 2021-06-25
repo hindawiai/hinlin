@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause) */
 /* Copyright 2021 NXP Semiconductors */
 
-#include <linux/pci.h>
-#include <linux/platform_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#if IS_ENABLED(CONFIG_FSL_ENETC_IERB)
+#अगर IS_ENABLED(CONFIG_FSL_ENETC_IERB)
 
-int enetc_ierb_register_pf(struct platform_device *pdev,
-			   struct pci_dev *pf_pdev);
+पूर्णांक enetc_ierb_रेजिस्टर_pf(काष्ठा platक्रमm_device *pdev,
+			   काष्ठा pci_dev *pf_pdev);
 
-#else
+#अन्यथा
 
-static inline int enetc_ierb_register_pf(struct platform_device *pdev,
-					 struct pci_dev *pf_pdev)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक enetc_ierb_रेजिस्टर_pf(काष्ठा platक्रमm_device *pdev,
+					 काष्ठा pci_dev *pf_pdev)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

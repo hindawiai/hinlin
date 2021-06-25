@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 /*
  * Copyright (C) 2009, 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#include "kbuffer.h"
+#समावेश "kbuffer.h"
 
-#define MISSING_EVENTS (1UL << 31)
-#define MISSING_STORED (1UL << 30)
+#घोषणा MISSING_EVENTS (1UL << 31)
+#घोषणा MISSING_STORED (1UL << 30)
 
-#define COMMIT_MASK ((1 << 27) - 1)
+#घोषणा COMMIT_MASK ((1 << 27) - 1)
 
-enum {
+क्रमागत अणु
 	KBUFFER_FL_HOST_BIG_ENDIAN	= (1<<0),
 	KBUFFER_FL_BIG_ENDIAN		= (1<<1),
 	KBUFFER_FL_LONG_8		= (1<<2),
 	KBUFFER_FL_OLD_FORMAT		= (1<<3),
-};
+पूर्ण;
 
-#define ENDIAN_MASK (KBUFFER_FL_HOST_BIG_ENDIAN | KBUFFER_FL_BIG_ENDIAN)
+#घोषणा ENDIAN_MASK (KBUFFER_FL_HOST_BIG_ENDIAN | KBUFFER_FL_BIG_ENDIAN)
 
 /** kbuffer
- * @timestamp		- timestamp of current event
+ * @बारtamp		- बारtamp of current event
  * @lost_events		- # of lost events between this subbuffer and previous
  * @flags		- special flags of the kbuffer
- * @subbuffer		- pointer to the sub-buffer page
- * @data		- pointer to the start of data on the sub-buffer page
+ * @subbuffer		- poपूर्णांकer to the sub-buffer page
+ * @data		- poपूर्णांकer to the start of data on the sub-buffer page
  * @index		- index from @data to the @curr event data
  * @curr		- offset from @data to the start of current event
  *			   (includes metadata)
@@ -36,59 +37,59 @@ enum {
  * @size		- The size of data on @data
  * @start		- The offset from @subbuffer where @data lives
  *
- * @read_4		- Function to read 4 raw bytes (may swap)
- * @read_8		- Function to read 8 raw bytes (may swap)
- * @read_long		- Function to read a long word (4 or 8 bytes with needed swap)
+ * @पढ़ो_4		- Function to पढ़ो 4 raw bytes (may swap)
+ * @पढ़ो_8		- Function to पढ़ो 8 raw bytes (may swap)
+ * @पढ़ो_दीर्घ		- Function to पढ़ो a दीर्घ word (4 or 8 bytes with needed swap)
  */
-struct kbuffer {
-	unsigned long long 	timestamp;
-	long long		lost_events;
-	unsigned long		flags;
-	void			*subbuffer;
-	void			*data;
-	unsigned int		index;
-	unsigned int		curr;
-	unsigned int		next;
-	unsigned int		size;
-	unsigned int		start;
+काष्ठा kbuffer अणु
+	अचिन्हित दीर्घ दीर्घ 	बारtamp;
+	दीर्घ दीर्घ		lost_events;
+	अचिन्हित दीर्घ		flags;
+	व्योम			*subbuffer;
+	व्योम			*data;
+	अचिन्हित पूर्णांक		index;
+	अचिन्हित पूर्णांक		curr;
+	अचिन्हित पूर्णांक		next;
+	अचिन्हित पूर्णांक		size;
+	अचिन्हित पूर्णांक		start;
 
-	unsigned int (*read_4)(void *ptr);
-	unsigned long long (*read_8)(void *ptr);
-	unsigned long long (*read_long)(struct kbuffer *kbuf, void *ptr);
-	int (*next_event)(struct kbuffer *kbuf);
-};
+	अचिन्हित पूर्णांक (*पढ़ो_4)(व्योम *ptr);
+	अचिन्हित दीर्घ दीर्घ (*पढ़ो_8)(व्योम *ptr);
+	अचिन्हित दीर्घ दीर्घ (*पढ़ो_दीर्घ)(काष्ठा kbuffer *kbuf, व्योम *ptr);
+	पूर्णांक (*next_event)(काष्ठा kbuffer *kbuf);
+पूर्ण;
 
-static void *zmalloc(size_t size)
-{
-	return calloc(1, size);
-}
+अटल व्योम *zदो_स्मृति(माप_प्रकार size)
+अणु
+	वापस सुस्मृति(1, size);
+पूर्ण
 
-static int host_is_bigendian(void)
-{
-	unsigned char str[] = { 0x1, 0x2, 0x3, 0x4 };
-	unsigned int *ptr;
+अटल पूर्णांक host_is_bigendian(व्योम)
+अणु
+	अचिन्हित अक्षर str[] = अणु 0x1, 0x2, 0x3, 0x4 पूर्ण;
+	अचिन्हित पूर्णांक *ptr;
 
-	ptr = (unsigned int *)str;
-	return *ptr == 0x01020304;
-}
+	ptr = (अचिन्हित पूर्णांक *)str;
+	वापस *ptr == 0x01020304;
+पूर्ण
 
-static int do_swap(struct kbuffer *kbuf)
-{
-	return ((kbuf->flags & KBUFFER_FL_HOST_BIG_ENDIAN) + kbuf->flags) &
+अटल पूर्णांक करो_swap(काष्ठा kbuffer *kbuf)
+अणु
+	वापस ((kbuf->flags & KBUFFER_FL_HOST_BIG_ENDIAN) + kbuf->flags) &
 		ENDIAN_MASK;
-}
+पूर्ण
 
-static unsigned long long __read_8(void *ptr)
-{
-	unsigned long long data = *(unsigned long long *)ptr;
+अटल अचिन्हित दीर्घ दीर्घ __पढ़ो_8(व्योम *ptr)
+अणु
+	अचिन्हित दीर्घ दीर्घ data = *(अचिन्हित दीर्घ दीर्घ *)ptr;
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static unsigned long long __read_8_sw(void *ptr)
-{
-	unsigned long long data = *(unsigned long long *)ptr;
-	unsigned long long swap;
+अटल अचिन्हित दीर्घ दीर्घ __पढ़ो_8_sw(व्योम *ptr)
+अणु
+	अचिन्हित दीर्घ दीर्घ data = *(अचिन्हित दीर्घ दीर्घ *)ptr;
+	अचिन्हित दीर्घ दीर्घ swap;
 
 	swap = ((data & 0xffULL) << 56) |
 		((data & (0xffULL << 8)) << 40) |
@@ -99,446 +100,446 @@ static unsigned long long __read_8_sw(void *ptr)
 		((data & (0xffULL << 48)) >> 40) |
 		((data & (0xffULL << 56)) >> 56);
 
-	return swap;
-}
+	वापस swap;
+पूर्ण
 
-static unsigned int __read_4(void *ptr)
-{
-	unsigned int data = *(unsigned int *)ptr;
+अटल अचिन्हित पूर्णांक __पढ़ो_4(व्योम *ptr)
+अणु
+	अचिन्हित पूर्णांक data = *(अचिन्हित पूर्णांक *)ptr;
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static unsigned int __read_4_sw(void *ptr)
-{
-	unsigned int data = *(unsigned int *)ptr;
-	unsigned int swap;
+अटल अचिन्हित पूर्णांक __पढ़ो_4_sw(व्योम *ptr)
+अणु
+	अचिन्हित पूर्णांक data = *(अचिन्हित पूर्णांक *)ptr;
+	अचिन्हित पूर्णांक swap;
 
 	swap = ((data & 0xffULL) << 24) |
 		((data & (0xffULL << 8)) << 8) |
 		((data & (0xffULL << 16)) >> 8) |
 		((data & (0xffULL << 24)) >> 24);
 
-	return swap;
-}
+	वापस swap;
+पूर्ण
 
-static unsigned long long read_8(struct kbuffer *kbuf, void *ptr)
-{
-	return kbuf->read_8(ptr);
-}
+अटल अचिन्हित दीर्घ दीर्घ पढ़ो_8(काष्ठा kbuffer *kbuf, व्योम *ptr)
+अणु
+	वापस kbuf->पढ़ो_8(ptr);
+पूर्ण
 
-static unsigned int read_4(struct kbuffer *kbuf, void *ptr)
-{
-	return kbuf->read_4(ptr);
-}
+अटल अचिन्हित पूर्णांक पढ़ो_4(काष्ठा kbuffer *kbuf, व्योम *ptr)
+अणु
+	वापस kbuf->पढ़ो_4(ptr);
+पूर्ण
 
-static unsigned long long __read_long_8(struct kbuffer *kbuf, void *ptr)
-{
-	return kbuf->read_8(ptr);
-}
+अटल अचिन्हित दीर्घ दीर्घ __पढ़ो_दीर्घ_8(काष्ठा kbuffer *kbuf, व्योम *ptr)
+अणु
+	वापस kbuf->पढ़ो_8(ptr);
+पूर्ण
 
-static unsigned long long __read_long_4(struct kbuffer *kbuf, void *ptr)
-{
-	return kbuf->read_4(ptr);
-}
+अटल अचिन्हित दीर्घ दीर्घ __पढ़ो_दीर्घ_4(काष्ठा kbuffer *kbuf, व्योम *ptr)
+अणु
+	वापस kbuf->पढ़ो_4(ptr);
+पूर्ण
 
-static unsigned long long read_long(struct kbuffer *kbuf, void *ptr)
-{
-	return kbuf->read_long(kbuf, ptr);
-}
+अटल अचिन्हित दीर्घ दीर्घ पढ़ो_दीर्घ(काष्ठा kbuffer *kbuf, व्योम *ptr)
+अणु
+	वापस kbuf->पढ़ो_दीर्घ(kbuf, ptr);
+पूर्ण
 
-static int calc_index(struct kbuffer *kbuf, void *ptr)
-{
-	return (unsigned long)ptr - (unsigned long)kbuf->data;
-}
+अटल पूर्णांक calc_index(काष्ठा kbuffer *kbuf, व्योम *ptr)
+अणु
+	वापस (अचिन्हित दीर्घ)ptr - (अचिन्हित दीर्घ)kbuf->data;
+पूर्ण
 
-static int __next_event(struct kbuffer *kbuf);
+अटल पूर्णांक __next_event(काष्ठा kbuffer *kbuf);
 
 /**
  * kbuffer_alloc - allocat a new kbuffer
- * @size;	enum to denote size of word
- * @endian:	enum to denote endianness
+ * @size;	क्रमागत to denote size of word
+ * @endian:	क्रमागत to denote endianness
  *
- * Allocates and returns a new kbuffer.
+ * Allocates and वापसs a new kbuffer.
  */
-struct kbuffer *
-kbuffer_alloc(enum kbuffer_long_size size, enum kbuffer_endian endian)
-{
-	struct kbuffer *kbuf;
-	int flags = 0;
+काष्ठा kbuffer *
+kbuffer_alloc(क्रमागत kbuffer_दीर्घ_size size, क्रमागत kbuffer_endian endian)
+अणु
+	काष्ठा kbuffer *kbuf;
+	पूर्णांक flags = 0;
 
-	switch (size) {
-	case KBUFFER_LSIZE_4:
-		break;
-	case KBUFFER_LSIZE_8:
+	चयन (size) अणु
+	हाल KBUFFER_LSIZE_4:
+		अवरोध;
+	हाल KBUFFER_LSIZE_8:
 		flags |= KBUFFER_FL_LONG_8;
-		break;
-	default:
-		return NULL;
-	}
+		अवरोध;
+	शेष:
+		वापस शून्य;
+	पूर्ण
 
-	switch (endian) {
-	case KBUFFER_ENDIAN_LITTLE:
-		break;
-	case KBUFFER_ENDIAN_BIG:
+	चयन (endian) अणु
+	हाल KBUFFER_ENDIAN_LITTLE:
+		अवरोध;
+	हाल KBUFFER_ENDIAN_BIG:
 		flags |= KBUFFER_FL_BIG_ENDIAN;
-		break;
-	default:
-		return NULL;
-	}
+		अवरोध;
+	शेष:
+		वापस शून्य;
+	पूर्ण
 
-	kbuf = zmalloc(sizeof(*kbuf));
-	if (!kbuf)
-		return NULL;
+	kbuf = zदो_स्मृति(माप(*kbuf));
+	अगर (!kbuf)
+		वापस शून्य;
 
 	kbuf->flags = flags;
 
-	if (host_is_bigendian())
+	अगर (host_is_bigendian())
 		kbuf->flags |= KBUFFER_FL_HOST_BIG_ENDIAN;
 
-	if (do_swap(kbuf)) {
-		kbuf->read_8 = __read_8_sw;
-		kbuf->read_4 = __read_4_sw;
-	} else {
-		kbuf->read_8 = __read_8;
-		kbuf->read_4 = __read_4;
-	}
+	अगर (करो_swap(kbuf)) अणु
+		kbuf->पढ़ो_8 = __पढ़ो_8_sw;
+		kbuf->पढ़ो_4 = __पढ़ो_4_sw;
+	पूर्ण अन्यथा अणु
+		kbuf->पढ़ो_8 = __पढ़ो_8;
+		kbuf->पढ़ो_4 = __पढ़ो_4;
+	पूर्ण
 
-	if (kbuf->flags & KBUFFER_FL_LONG_8)
-		kbuf->read_long = __read_long_8;
-	else
-		kbuf->read_long = __read_long_4;
+	अगर (kbuf->flags & KBUFFER_FL_LONG_8)
+		kbuf->पढ़ो_दीर्घ = __पढ़ो_दीर्घ_8;
+	अन्यथा
+		kbuf->पढ़ो_दीर्घ = __पढ़ो_दीर्घ_4;
 
-	/* May be changed by kbuffer_set_old_format() */
+	/* May be changed by kbuffer_set_old_क्रमmat() */
 	kbuf->next_event = __next_event;
 
-	return kbuf;
-}
+	वापस kbuf;
+पूर्ण
 
-/** kbuffer_free - free an allocated kbuffer
- * @kbuf:	The kbuffer to free
+/** kbuffer_मुक्त - मुक्त an allocated kbuffer
+ * @kbuf:	The kbuffer to मुक्त
  *
- * Can take NULL as a parameter.
+ * Can take शून्य as a parameter.
  */
-void kbuffer_free(struct kbuffer *kbuf)
-{
-	free(kbuf);
-}
+व्योम kbuffer_मुक्त(काष्ठा kbuffer *kbuf)
+अणु
+	मुक्त(kbuf);
+पूर्ण
 
-static unsigned int type4host(struct kbuffer *kbuf,
-			      unsigned int type_len_ts)
-{
-	if (kbuf->flags & KBUFFER_FL_BIG_ENDIAN)
-		return (type_len_ts >> 29) & 3;
-	else
-		return type_len_ts & 3;
-}
+अटल अचिन्हित पूर्णांक type4host(काष्ठा kbuffer *kbuf,
+			      अचिन्हित पूर्णांक type_len_ts)
+अणु
+	अगर (kbuf->flags & KBUFFER_FL_BIG_ENDIAN)
+		वापस (type_len_ts >> 29) & 3;
+	अन्यथा
+		वापस type_len_ts & 3;
+पूर्ण
 
-static unsigned int len4host(struct kbuffer *kbuf,
-			     unsigned int type_len_ts)
-{
-	if (kbuf->flags & KBUFFER_FL_BIG_ENDIAN)
-		return (type_len_ts >> 27) & 7;
-	else
-		return (type_len_ts >> 2) & 7;
-}
+अटल अचिन्हित पूर्णांक len4host(काष्ठा kbuffer *kbuf,
+			     अचिन्हित पूर्णांक type_len_ts)
+अणु
+	अगर (kbuf->flags & KBUFFER_FL_BIG_ENDIAN)
+		वापस (type_len_ts >> 27) & 7;
+	अन्यथा
+		वापस (type_len_ts >> 2) & 7;
+पूर्ण
 
-static unsigned int type_len4host(struct kbuffer *kbuf,
-				  unsigned int type_len_ts)
-{
-	if (kbuf->flags & KBUFFER_FL_BIG_ENDIAN)
-		return (type_len_ts >> 27) & ((1 << 5) - 1);
-	else
-		return type_len_ts & ((1 << 5) - 1);
-}
+अटल अचिन्हित पूर्णांक type_len4host(काष्ठा kbuffer *kbuf,
+				  अचिन्हित पूर्णांक type_len_ts)
+अणु
+	अगर (kbuf->flags & KBUFFER_FL_BIG_ENDIAN)
+		वापस (type_len_ts >> 27) & ((1 << 5) - 1);
+	अन्यथा
+		वापस type_len_ts & ((1 << 5) - 1);
+पूर्ण
 
-static unsigned int ts4host(struct kbuffer *kbuf,
-			    unsigned int type_len_ts)
-{
-	if (kbuf->flags & KBUFFER_FL_BIG_ENDIAN)
-		return type_len_ts & ((1 << 27) - 1);
-	else
-		return type_len_ts >> 5;
-}
+अटल अचिन्हित पूर्णांक ts4host(काष्ठा kbuffer *kbuf,
+			    अचिन्हित पूर्णांक type_len_ts)
+अणु
+	अगर (kbuf->flags & KBUFFER_FL_BIG_ENDIAN)
+		वापस type_len_ts & ((1 << 27) - 1);
+	अन्यथा
+		वापस type_len_ts >> 5;
+पूर्ण
 
 /*
- * Linux 2.6.30 and earlier (not much ealier) had a different
- * ring buffer format. It should be obsolete, but we handle it anyway.
+ * Linux 2.6.30 and earlier (not much ealier) had a dअगरferent
+ * ring buffer क्रमmat. It should be obsolete, but we handle it anyway.
  */
-enum old_ring_buffer_type {
+क्रमागत old_ring_buffer_type अणु
 	OLD_RINGBUF_TYPE_PADDING,
 	OLD_RINGBUF_TYPE_TIME_EXTEND,
 	OLD_RINGBUF_TYPE_TIME_STAMP,
 	OLD_RINGBUF_TYPE_DATA,
-};
+पूर्ण;
 
-static unsigned int old_update_pointers(struct kbuffer *kbuf)
-{
-	unsigned long long extend;
-	unsigned int type_len_ts;
-	unsigned int type;
-	unsigned int len;
-	unsigned int delta;
-	unsigned int length;
-	void *ptr = kbuf->data + kbuf->curr;
+अटल अचिन्हित पूर्णांक old_update_poपूर्णांकers(काष्ठा kbuffer *kbuf)
+अणु
+	अचिन्हित दीर्घ दीर्घ extend;
+	अचिन्हित पूर्णांक type_len_ts;
+	अचिन्हित पूर्णांक type;
+	अचिन्हित पूर्णांक len;
+	अचिन्हित पूर्णांक delta;
+	अचिन्हित पूर्णांक length;
+	व्योम *ptr = kbuf->data + kbuf->curr;
 
-	type_len_ts = read_4(kbuf, ptr);
+	type_len_ts = पढ़ो_4(kbuf, ptr);
 	ptr += 4;
 
 	type = type4host(kbuf, type_len_ts);
 	len = len4host(kbuf, type_len_ts);
 	delta = ts4host(kbuf, type_len_ts);
 
-	switch (type) {
-	case OLD_RINGBUF_TYPE_PADDING:
+	चयन (type) अणु
+	हाल OLD_RINGBUF_TYPE_PADDING:
 		kbuf->next = kbuf->size;
-		return 0;
+		वापस 0;
 
-	case OLD_RINGBUF_TYPE_TIME_EXTEND:
-		extend = read_4(kbuf, ptr);
+	हाल OLD_RINGBUF_TYPE_TIME_EXTEND:
+		extend = पढ़ो_4(kbuf, ptr);
 		extend <<= TS_SHIFT;
 		extend += delta;
 		delta = extend;
 		ptr += 4;
 		length = 0;
-		break;
+		अवरोध;
 
-	case OLD_RINGBUF_TYPE_TIME_STAMP:
+	हाल OLD_RINGBUF_TYPE_TIME_STAMP:
 		/* should never happen! */
 		kbuf->curr = kbuf->size;
 		kbuf->next = kbuf->size;
 		kbuf->index = kbuf->size;
-		return -1;
-	default:
-		if (len)
+		वापस -1;
+	शेष:
+		अगर (len)
 			length = len * 4;
-		else {
-			length = read_4(kbuf, ptr);
+		अन्यथा अणु
+			length = पढ़ो_4(kbuf, ptr);
 			length -= 4;
 			ptr += 4;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	kbuf->timestamp += delta;
+	kbuf->बारtamp += delta;
 	kbuf->index = calc_index(kbuf, ptr);
 	kbuf->next = kbuf->index + length;
 
-	return type;
-}
+	वापस type;
+पूर्ण
 
-static int __old_next_event(struct kbuffer *kbuf)
-{
-	int type;
+अटल पूर्णांक __old_next_event(काष्ठा kbuffer *kbuf)
+अणु
+	पूर्णांक type;
 
-	do {
+	करो अणु
 		kbuf->curr = kbuf->next;
-		if (kbuf->next >= kbuf->size)
-			return -1;
-		type = old_update_pointers(kbuf);
-	} while (type == OLD_RINGBUF_TYPE_TIME_EXTEND || type == OLD_RINGBUF_TYPE_PADDING);
+		अगर (kbuf->next >= kbuf->size)
+			वापस -1;
+		type = old_update_poपूर्णांकers(kbuf);
+	पूर्ण जबतक (type == OLD_RINGBUF_TYPE_TIME_EXTEND || type == OLD_RINGBUF_TYPE_PADDING);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int
-translate_data(struct kbuffer *kbuf, void *data, void **rptr,
-	       unsigned long long *delta, int *length)
-{
-	unsigned long long extend;
-	unsigned int type_len_ts;
-	unsigned int type_len;
+अटल अचिन्हित पूर्णांक
+translate_data(काष्ठा kbuffer *kbuf, व्योम *data, व्योम **rptr,
+	       अचिन्हित दीर्घ दीर्घ *delta, पूर्णांक *length)
+अणु
+	अचिन्हित दीर्घ दीर्घ extend;
+	अचिन्हित पूर्णांक type_len_ts;
+	अचिन्हित पूर्णांक type_len;
 
-	type_len_ts = read_4(kbuf, data);
+	type_len_ts = पढ़ो_4(kbuf, data);
 	data += 4;
 
 	type_len = type_len4host(kbuf, type_len_ts);
 	*delta = ts4host(kbuf, type_len_ts);
 
-	switch (type_len) {
-	case KBUFFER_TYPE_PADDING:
-		*length = read_4(kbuf, data);
-		break;
+	चयन (type_len) अणु
+	हाल KBUFFER_TYPE_PADDING:
+		*length = पढ़ो_4(kbuf, data);
+		अवरोध;
 
-	case KBUFFER_TYPE_TIME_EXTEND:
-	case KBUFFER_TYPE_TIME_STAMP:
-		extend = read_4(kbuf, data);
+	हाल KBUFFER_TYPE_TIME_EXTEND:
+	हाल KBUFFER_TYPE_TIME_STAMP:
+		extend = पढ़ो_4(kbuf, data);
 		data += 4;
 		extend <<= TS_SHIFT;
 		extend += *delta;
 		*delta = extend;
 		*length = 0;
-		break;
+		अवरोध;
 
-	case 0:
-		*length = read_4(kbuf, data) - 4;
+	हाल 0:
+		*length = पढ़ो_4(kbuf, data) - 4;
 		*length = (*length + 3) & ~3;
 		data += 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*length = type_len * 4;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	*rptr = data;
 
-	return type_len;
-}
+	वापस type_len;
+पूर्ण
 
-static unsigned int update_pointers(struct kbuffer *kbuf)
-{
-	unsigned long long delta;
-	unsigned int type_len;
-	int length;
-	void *ptr = kbuf->data + kbuf->curr;
+अटल अचिन्हित पूर्णांक update_poपूर्णांकers(काष्ठा kbuffer *kbuf)
+अणु
+	अचिन्हित दीर्घ दीर्घ delta;
+	अचिन्हित पूर्णांक type_len;
+	पूर्णांक length;
+	व्योम *ptr = kbuf->data + kbuf->curr;
 
 	type_len = translate_data(kbuf, ptr, &ptr, &delta, &length);
 
-	if (type_len == KBUFFER_TYPE_TIME_STAMP)
-		kbuf->timestamp = delta;
-	else
-		kbuf->timestamp += delta;
+	अगर (type_len == KBUFFER_TYPE_TIME_STAMP)
+		kbuf->बारtamp = delta;
+	अन्यथा
+		kbuf->बारtamp += delta;
 
 	kbuf->index = calc_index(kbuf, ptr);
 	kbuf->next = kbuf->index + length;
 
-	return type_len;
-}
+	वापस type_len;
+पूर्ण
 
 /**
- * kbuffer_translate_data - read raw data to get a record
- * @swap:	Set to 1 if bytes in words need to be swapped when read
- * @data:	The raw data to read
+ * kbuffer_translate_data - पढ़ो raw data to get a record
+ * @swap:	Set to 1 अगर bytes in words need to be swapped when पढ़ो
+ * @data:	The raw data to पढ़ो
  * @size:	Address to store the size of the event data.
  *
- * Returns a pointer to the event data. To determine the entire
- * record size (record metadata + data) just add the difference between
- * @data and the returned value to @size.
+ * Returns a poपूर्णांकer to the event data. To determine the entire
+ * record size (record metadata + data) just add the dअगरference between
+ * @data and the वापसed value to @size.
  */
-void *kbuffer_translate_data(int swap, void *data, unsigned int *size)
-{
-	unsigned long long delta;
-	struct kbuffer kbuf;
-	int type_len;
-	int length;
-	void *ptr;
+व्योम *kbuffer_translate_data(पूर्णांक swap, व्योम *data, अचिन्हित पूर्णांक *size)
+अणु
+	अचिन्हित दीर्घ दीर्घ delta;
+	काष्ठा kbuffer kbuf;
+	पूर्णांक type_len;
+	पूर्णांक length;
+	व्योम *ptr;
 
-	if (swap) {
-		kbuf.read_8 = __read_8_sw;
-		kbuf.read_4 = __read_4_sw;
+	अगर (swap) अणु
+		kbuf.पढ़ो_8 = __पढ़ो_8_sw;
+		kbuf.पढ़ो_4 = __पढ़ो_4_sw;
 		kbuf.flags = host_is_bigendian() ? 0 : KBUFFER_FL_BIG_ENDIAN;
-	} else {
-		kbuf.read_8 = __read_8;
-		kbuf.read_4 = __read_4;
+	पूर्ण अन्यथा अणु
+		kbuf.पढ़ो_8 = __पढ़ो_8;
+		kbuf.पढ़ो_4 = __पढ़ो_4;
 		kbuf.flags = host_is_bigendian() ? KBUFFER_FL_BIG_ENDIAN: 0;
-	}
+	पूर्ण
 
 	type_len = translate_data(&kbuf, data, &ptr, &delta, &length);
-	switch (type_len) {
-	case KBUFFER_TYPE_PADDING:
-	case KBUFFER_TYPE_TIME_EXTEND:
-	case KBUFFER_TYPE_TIME_STAMP:
-		return NULL;
-	}
+	चयन (type_len) अणु
+	हाल KBUFFER_TYPE_PADDING:
+	हाल KBUFFER_TYPE_TIME_EXTEND:
+	हाल KBUFFER_TYPE_TIME_STAMP:
+		वापस शून्य;
+	पूर्ण
 
 	*size = length;
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static int __next_event(struct kbuffer *kbuf)
-{
-	int type;
+अटल पूर्णांक __next_event(काष्ठा kbuffer *kbuf)
+अणु
+	पूर्णांक type;
 
-	do {
+	करो अणु
 		kbuf->curr = kbuf->next;
-		if (kbuf->next >= kbuf->size)
-			return -1;
-		type = update_pointers(kbuf);
-	} while (type == KBUFFER_TYPE_TIME_EXTEND ||
+		अगर (kbuf->next >= kbuf->size)
+			वापस -1;
+		type = update_poपूर्णांकers(kbuf);
+	पूर्ण जबतक (type == KBUFFER_TYPE_TIME_EXTEND ||
 		 type == KBUFFER_TYPE_TIME_STAMP ||
 		 type == KBUFFER_TYPE_PADDING);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int next_event(struct kbuffer *kbuf)
-{
-	return kbuf->next_event(kbuf);
-}
+अटल पूर्णांक next_event(काष्ठा kbuffer *kbuf)
+अणु
+	वापस kbuf->next_event(kbuf);
+पूर्ण
 
 /**
- * kbuffer_next_event - increment the current pointer
- * @kbuf:	The kbuffer to read
- * @ts:		Address to store the next record's timestamp (may be NULL to ignore)
+ * kbuffer_next_event - increment the current poपूर्णांकer
+ * @kbuf:	The kbuffer to पढ़ो
+ * @ts:		Address to store the next record's बारtamp (may be शून्य to ignore)
  *
- * Increments the pointers into the subbuffer of the kbuffer to point to the
- * next event so that the next kbuffer_read_event() will return a
+ * Increments the poपूर्णांकers पूर्णांकo the subbuffer of the kbuffer to poपूर्णांक to the
+ * next event so that the next kbuffer_पढ़ो_event() will वापस a
  * new event.
  *
- * Returns the data of the next event if a new event exists on the subbuffer,
- * NULL otherwise.
+ * Returns the data of the next event अगर a new event exists on the subbuffer,
+ * शून्य otherwise.
  */
-void *kbuffer_next_event(struct kbuffer *kbuf, unsigned long long *ts)
-{
-	int ret;
+व्योम *kbuffer_next_event(काष्ठा kbuffer *kbuf, अचिन्हित दीर्घ दीर्घ *ts)
+अणु
+	पूर्णांक ret;
 
-	if (!kbuf || !kbuf->subbuffer)
-		return NULL;
+	अगर (!kbuf || !kbuf->subbuffer)
+		वापस शून्य;
 
 	ret = next_event(kbuf);
-	if (ret < 0)
-		return NULL;
+	अगर (ret < 0)
+		वापस शून्य;
 
-	if (ts)
-		*ts = kbuf->timestamp;
+	अगर (ts)
+		*ts = kbuf->बारtamp;
 
-	return kbuf->data + kbuf->index;
-}
+	वापस kbuf->data + kbuf->index;
+पूर्ण
 
 /**
- * kbuffer_load_subbuffer - load a new subbuffer into the kbuffer
+ * kbuffer_load_subbuffer - load a new subbuffer पूर्णांकo the kbuffer
  * @kbuf:	The kbuffer to load
- * @subbuffer:	The subbuffer to load into @kbuf.
+ * @subbuffer:	The subbuffer to load पूर्णांकo @kbuf.
  *
- * Load a new subbuffer (page) into @kbuf. This will reset all
- * the pointers and update the @kbuf timestamp. The next read will
- * return the first event on @subbuffer.
+ * Load a new subbuffer (page) पूर्णांकo @kbuf. This will reset all
+ * the poपूर्णांकers and update the @kbuf बारtamp. The next पढ़ो will
+ * वापस the first event on @subbuffer.
  *
  * Returns 0 on succes, -1 otherwise.
  */
-int kbuffer_load_subbuffer(struct kbuffer *kbuf, void *subbuffer)
-{
-	unsigned long long flags;
-	void *ptr = subbuffer;
+पूर्णांक kbuffer_load_subbuffer(काष्ठा kbuffer *kbuf, व्योम *subbuffer)
+अणु
+	अचिन्हित दीर्घ दीर्घ flags;
+	व्योम *ptr = subbuffer;
 
-	if (!kbuf || !subbuffer)
-		return -1;
+	अगर (!kbuf || !subbuffer)
+		वापस -1;
 
 	kbuf->subbuffer = subbuffer;
 
-	kbuf->timestamp = read_8(kbuf, ptr);
+	kbuf->बारtamp = पढ़ो_8(kbuf, ptr);
 	ptr += 8;
 
 	kbuf->curr = 0;
 
-	if (kbuf->flags & KBUFFER_FL_LONG_8)
+	अगर (kbuf->flags & KBUFFER_FL_LONG_8)
 		kbuf->start = 16;
-	else
+	अन्यथा
 		kbuf->start = 12;
 
 	kbuf->data = subbuffer + kbuf->start;
 
-	flags = read_long(kbuf, ptr);
-	kbuf->size = (unsigned int)flags & COMMIT_MASK;
+	flags = पढ़ो_दीर्घ(kbuf, ptr);
+	kbuf->size = (अचिन्हित पूर्णांक)flags & COMMIT_MASK;
 
-	if (flags & MISSING_EVENTS) {
-		if (flags & MISSING_STORED) {
+	अगर (flags & MISSING_EVENTS) अणु
+		अगर (flags & MISSING_STORED) अणु
 			ptr = kbuf->data + kbuf->size;
-			kbuf->lost_events = read_long(kbuf, ptr);
-		} else
+			kbuf->lost_events = पढ़ो_दीर्घ(kbuf, ptr);
+		पूर्ण अन्यथा
 			kbuf->lost_events = -1;
-	} else
+	पूर्ण अन्यथा
 		kbuf->lost_events = 0;
 
 	kbuf->index = 0;
@@ -546,218 +547,218 @@ int kbuffer_load_subbuffer(struct kbuffer *kbuf, void *subbuffer)
 
 	next_event(kbuf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * kbuffer_subbuf_timestamp - read the timestamp from a sub buffer
+ * kbuffer_subbuf_बारtamp - पढ़ो the बारtamp from a sub buffer
  * @kbuf:      The kbuffer to load
- * @subbuf:    The subbuffer to read from.
+ * @subbuf:    The subbuffer to पढ़ो from.
  *
- * Return the timestamp from a subbuffer.
+ * Return the बारtamp from a subbuffer.
  */
-unsigned long long kbuffer_subbuf_timestamp(struct kbuffer *kbuf, void *subbuf)
-{
-	return kbuf->read_8(subbuf);
-}
+अचिन्हित दीर्घ दीर्घ kbuffer_subbuf_बारtamp(काष्ठा kbuffer *kbuf, व्योम *subbuf)
+अणु
+	वापस kbuf->पढ़ो_8(subbuf);
+पूर्ण
 
 /**
- * kbuffer_ptr_delta - read the delta field from a record
+ * kbuffer_ptr_delta - पढ़ो the delta field from a record
  * @kbuf:      The kbuffer to load
  * @ptr:       The record in the buffe.
  *
- * Return the timestamp delta from a record
+ * Return the बारtamp delta from a record
  */
-unsigned int kbuffer_ptr_delta(struct kbuffer *kbuf, void *ptr)
-{
-	unsigned int type_len_ts;
+अचिन्हित पूर्णांक kbuffer_ptr_delta(काष्ठा kbuffer *kbuf, व्योम *ptr)
+अणु
+	अचिन्हित पूर्णांक type_len_ts;
 
-	type_len_ts = read_4(kbuf, ptr);
-	return ts4host(kbuf, type_len_ts);
-}
+	type_len_ts = पढ़ो_4(kbuf, ptr);
+	वापस ts4host(kbuf, type_len_ts);
+पूर्ण
 
 
 /**
- * kbuffer_read_event - read the next event in the kbuffer subbuffer
- * @kbuf:	The kbuffer to read from
- * @ts:		The address to store the timestamp of the event (may be NULL to ignore)
+ * kbuffer_पढ़ो_event - पढ़ो the next event in the kbuffer subbuffer
+ * @kbuf:	The kbuffer to पढ़ो from
+ * @ts:		The address to store the बारtamp of the event (may be शून्य to ignore)
  *
- * Returns a pointer to the data part of the current event.
- * NULL if no event is left on the subbuffer.
+ * Returns a poपूर्णांकer to the data part of the current event.
+ * शून्य अगर no event is left on the subbuffer.
  */
-void *kbuffer_read_event(struct kbuffer *kbuf, unsigned long long *ts)
-{
-	if (!kbuf || !kbuf->subbuffer)
-		return NULL;
+व्योम *kbuffer_पढ़ो_event(काष्ठा kbuffer *kbuf, अचिन्हित दीर्घ दीर्घ *ts)
+अणु
+	अगर (!kbuf || !kbuf->subbuffer)
+		वापस शून्य;
 
-	if (kbuf->curr >= kbuf->size)
-		return NULL;
+	अगर (kbuf->curr >= kbuf->size)
+		वापस शून्य;
 
-	if (ts)
-		*ts = kbuf->timestamp;
-	return kbuf->data + kbuf->index;
-}
+	अगर (ts)
+		*ts = kbuf->बारtamp;
+	वापस kbuf->data + kbuf->index;
+पूर्ण
 
 /**
- * kbuffer_timestamp - Return the timestamp of the current event
- * @kbuf:	The kbuffer to read from
+ * kbuffer_बारtamp - Return the बारtamp of the current event
+ * @kbuf:	The kbuffer to पढ़ो from
  *
- * Returns the timestamp of the current (next) event.
+ * Returns the बारtamp of the current (next) event.
  */
-unsigned long long kbuffer_timestamp(struct kbuffer *kbuf)
-{
-	return kbuf->timestamp;
-}
+अचिन्हित दीर्घ दीर्घ kbuffer_बारtamp(काष्ठा kbuffer *kbuf)
+अणु
+	वापस kbuf->बारtamp;
+पूर्ण
 
 /**
- * kbuffer_read_at_offset - read the event that is at offset
- * @kbuf:	The kbuffer to read from
- * @offset:	The offset into the subbuffer
- * @ts:		The address to store the timestamp of the event (may be NULL to ignore)
+ * kbuffer_पढ़ो_at_offset - पढ़ो the event that is at offset
+ * @kbuf:	The kbuffer to पढ़ो from
+ * @offset:	The offset पूर्णांकo the subbuffer
+ * @ts:		The address to store the बारtamp of the event (may be शून्य to ignore)
  *
  * The @offset must be an index from the @kbuf subbuffer beginning.
- * If @offset is bigger than the stored subbuffer, NULL will be returned.
+ * If @offset is bigger than the stored subbuffer, शून्य will be वापसed.
  *
- * Returns the data of the record that is at @offset. Note, @offset does
+ * Returns the data of the record that is at @offset. Note, @offset करोes
  * not need to be the start of the record, the offset just needs to be
  * in the record (or beginning of it).
  *
- * Note, the kbuf timestamp and pointers are updated to the
- * returned record. That is, kbuffer_read_event() will return the same
- * data and timestamp, and kbuffer_next_event() will increment from
+ * Note, the kbuf बारtamp and poपूर्णांकers are updated to the
+ * वापसed record. That is, kbuffer_पढ़ो_event() will वापस the same
+ * data and बारtamp, and kbuffer_next_event() will increment from
  * this record.
  */
-void *kbuffer_read_at_offset(struct kbuffer *kbuf, int offset,
-			     unsigned long long *ts)
-{
-	void *data;
+व्योम *kbuffer_पढ़ो_at_offset(काष्ठा kbuffer *kbuf, पूर्णांक offset,
+			     अचिन्हित दीर्घ दीर्घ *ts)
+अणु
+	व्योम *data;
 
-	if (offset < kbuf->start)
+	अगर (offset < kbuf->start)
 		offset = 0;
-	else
+	अन्यथा
 		offset -= kbuf->start;
 
 	/* Reset the buffer */
 	kbuffer_load_subbuffer(kbuf, kbuf->subbuffer);
-	data = kbuffer_read_event(kbuf, ts);
+	data = kbuffer_पढ़ो_event(kbuf, ts);
 
-	while (kbuf->curr < offset) {
+	जबतक (kbuf->curr < offset) अणु
 		data = kbuffer_next_event(kbuf, ts);
-		if (!data)
-			break;
-	}
+		अगर (!data)
+			अवरोध;
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
 /**
  * kbuffer_subbuffer_size - the size of the loaded subbuffer
- * @kbuf:	The kbuffer to read from
+ * @kbuf:	The kbuffer to पढ़ो from
  *
  * Returns the size of the subbuffer. Note, this size is
  * where the last event resides. The stored subbuffer may actually be
  * bigger due to padding and such.
  */
-int kbuffer_subbuffer_size(struct kbuffer *kbuf)
-{
-	return kbuf->size;
-}
+पूर्णांक kbuffer_subbuffer_size(काष्ठा kbuffer *kbuf)
+अणु
+	वापस kbuf->size;
+पूर्ण
 
 /**
  * kbuffer_curr_index - Return the index of the record
- * @kbuf:	The kbuffer to read from
+ * @kbuf:	The kbuffer to पढ़ो from
  *
  * Returns the index from the start of the data part of
  * the subbuffer to the current location. Note this is not
  * from the start of the subbuffer. An index of zero will
- * point to the first record. Use kbuffer_curr_offset() for
- * the actually offset (that can be used by kbuffer_read_at_offset())
+ * poपूर्णांक to the first record. Use kbuffer_curr_offset() क्रम
+ * the actually offset (that can be used by kbuffer_पढ़ो_at_offset())
  */
-int kbuffer_curr_index(struct kbuffer *kbuf)
-{
-	return kbuf->curr;
-}
+पूर्णांक kbuffer_curr_index(काष्ठा kbuffer *kbuf)
+अणु
+	वापस kbuf->curr;
+पूर्ण
 
 /**
  * kbuffer_curr_offset - Return the offset of the record
- * @kbuf:	The kbuffer to read from
+ * @kbuf:	The kbuffer to पढ़ो from
  *
  * Returns the offset from the start of the subbuffer to the
  * current location.
  */
-int kbuffer_curr_offset(struct kbuffer *kbuf)
-{
-	return kbuf->curr + kbuf->start;
-}
+पूर्णांक kbuffer_curr_offset(काष्ठा kbuffer *kbuf)
+अणु
+	वापस kbuf->curr + kbuf->start;
+पूर्ण
 
 /**
- * kbuffer_event_size - return the size of the event data
- * @kbuf:	The kbuffer to read
+ * kbuffer_event_size - वापस the size of the event data
+ * @kbuf:	The kbuffer to पढ़ो
  *
  * Returns the size of the event data (the payload not counting
  * the meta data of the record) of the current event.
  */
-int kbuffer_event_size(struct kbuffer *kbuf)
-{
-	return kbuf->next - kbuf->index;
-}
+पूर्णांक kbuffer_event_size(काष्ठा kbuffer *kbuf)
+अणु
+	वापस kbuf->next - kbuf->index;
+पूर्ण
 
 /**
- * kbuffer_curr_size - return the size of the entire record
- * @kbuf:	The kbuffer to read
+ * kbuffer_curr_size - वापस the size of the entire record
+ * @kbuf:	The kbuffer to पढ़ो
  *
  * Returns the size of the entire record (meta data and payload)
  * of the current event.
  */
-int kbuffer_curr_size(struct kbuffer *kbuf)
-{
-	return kbuf->next - kbuf->curr;
-}
+पूर्णांक kbuffer_curr_size(काष्ठा kbuffer *kbuf)
+अणु
+	वापस kbuf->next - kbuf->curr;
+पूर्ण
 
 /**
- * kbuffer_missed_events - return the # of missed events from last event.
- * @kbuf: 	The kbuffer to read from
+ * kbuffer_missed_events - वापस the # of missed events from last event.
+ * @kbuf: 	The kbuffer to पढ़ो from
  *
- * Returns the # of missed events (if recorded) before the current
+ * Returns the # of missed events (अगर recorded) beक्रमe the current
  * event. Note, only events on the beginning of a subbuffer can
  * have missed events, all other events within the buffer will be
  * zero.
  */
-int kbuffer_missed_events(struct kbuffer *kbuf)
-{
+पूर्णांक kbuffer_missed_events(काष्ठा kbuffer *kbuf)
+अणु
 	/* Only the first event can have missed events */
-	if (kbuf->curr)
-		return 0;
+	अगर (kbuf->curr)
+		वापस 0;
 
-	return kbuf->lost_events;
-}
+	वापस kbuf->lost_events;
+पूर्ण
 
 /**
- * kbuffer_set_old_forma - set the kbuffer to use the old format parsing
+ * kbuffer_set_old_क्रमma - set the kbuffer to use the old क्रमmat parsing
  * @kbuf:	The kbuffer to set
  *
  * This is obsolete (or should be). The first kernels to use the
- * new ring buffer had a slightly different ring buffer format
+ * new ring buffer had a slightly dअगरferent ring buffer क्रमmat
  * (2.6.30 and earlier). It is still somewhat supported by kbuffer,
  * but should not be counted on in the future.
  */
-void kbuffer_set_old_format(struct kbuffer *kbuf)
-{
+व्योम kbuffer_set_old_क्रमmat(काष्ठा kbuffer *kbuf)
+अणु
 	kbuf->flags |= KBUFFER_FL_OLD_FORMAT;
 
 	kbuf->next_event = __old_next_event;
-}
+पूर्ण
 
 /**
- * kbuffer_start_of_data - return offset of where data starts on subbuffer
+ * kbuffer_start_of_data - वापस offset of where data starts on subbuffer
  * @kbuf:	The kbuffer
  *
  * Returns the location on the subbuffer where the data starts.
  */
-int kbuffer_start_of_data(struct kbuffer *kbuf)
-{
-	return kbuf->start;
-}
+पूर्णांक kbuffer_start_of_data(काष्ठा kbuffer *kbuf)
+अणु
+	वापस kbuf->start;
+पूर्ण
 
 /**
  * kbuffer_raw_get - get raw buffer info
@@ -765,37 +766,37 @@ int kbuffer_start_of_data(struct kbuffer *kbuf)
  * @subbuf:	Start of mapped subbuffer
  * @info:	Info descriptor to fill in
  *
- * For debugging. This can return internals of the ring buffer.
- * Expects to have info->next set to what it will read.
- * The type, length and timestamp delta will be filled in, and
+ * For debugging. This can वापस पूर्णांकernals of the ring buffer.
+ * Expects to have info->next set to what it will पढ़ो.
+ * The type, length and बारtamp delta will be filled in, and
  * @info->next will be updated to the next element.
- * The @subbuf is used to know if the info is passed the end of
- * data and NULL will be returned if it is.
+ * The @subbuf is used to know अगर the info is passed the end of
+ * data and शून्य will be वापसed अगर it is.
  */
-struct kbuffer_raw_info *
-kbuffer_raw_get(struct kbuffer *kbuf, void *subbuf, struct kbuffer_raw_info *info)
-{
-	unsigned long long flags;
-	unsigned long long delta;
-	unsigned int type_len;
-	unsigned int size;
-	int start;
-	int length;
-	void *ptr = info->next;
+काष्ठा kbuffer_raw_info *
+kbuffer_raw_get(काष्ठा kbuffer *kbuf, व्योम *subbuf, काष्ठा kbuffer_raw_info *info)
+अणु
+	अचिन्हित दीर्घ दीर्घ flags;
+	अचिन्हित दीर्घ दीर्घ delta;
+	अचिन्हित पूर्णांक type_len;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक start;
+	पूर्णांक length;
+	व्योम *ptr = info->next;
 
-	if (!kbuf || !subbuf)
-		return NULL;
+	अगर (!kbuf || !subbuf)
+		वापस शून्य;
 
-	if (kbuf->flags & KBUFFER_FL_LONG_8)
+	अगर (kbuf->flags & KBUFFER_FL_LONG_8)
 		start = 16;
-	else
+	अन्यथा
 		start = 12;
 
-	flags = read_long(kbuf, subbuf + 8);
-	size = (unsigned int)flags & COMMIT_MASK;
+	flags = पढ़ो_दीर्घ(kbuf, subbuf + 8);
+	size = (अचिन्हित पूर्णांक)flags & COMMIT_MASK;
 
-	if (ptr < subbuf || ptr >= subbuf + start + size)
-		return NULL;
+	अगर (ptr < subbuf || ptr >= subbuf + start + size)
+		वापस शून्य;
 
 	type_len = translate_data(kbuf, ptr, &ptr, &delta, &length);
 
@@ -805,5 +806,5 @@ kbuffer_raw_get(struct kbuffer *kbuf, void *subbuf, struct kbuffer_raw_info *inf
 	info->delta = delta;
 	info->length = length;
 
-	return info;
-}
+	वापस info;
+पूर्ण

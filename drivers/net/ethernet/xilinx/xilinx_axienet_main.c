@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Xilinx Axi Ethernet device driver
  *
@@ -7,362 +8,362 @@
  * Copyright (c) 2008-2009 Secret Lab Technologies Ltd.
  * Copyright (c) 2010 - 2011 Michal Simek <monstr@monstr.eu>
  * Copyright (c) 2010 - 2011 PetaLogix
- * Copyright (c) 2019 SED Systems, a division of Calian Ltd.
+ * Copyright (c) 2019 SED Systems, a भागision of Calian Ltd.
  * Copyright (c) 2010 - 2012 Xilinx, Inc. All rights reserved.
  *
- * This is a driver for the Xilinx Axi Ethernet which is used in the Virtex6
+ * This is a driver क्रम the Xilinx Axi Ethernet which is used in the Virtex6
  * and Spartan6.
  *
  * TODO:
- *  - Add Axi Fifo support.
- *  - Factor out Axi DMA code into separate driver.
+ *  - Add Axi Fअगरo support.
+ *  - Factor out Axi DMA code पूर्णांकo separate driver.
  *  - Test and fix basic multicast filtering.
- *  - Add support for extended multicast filtering.
+ *  - Add support क्रम extended multicast filtering.
  *  - Test basic VLAN support.
- *  - Add support for extended VLAN support.
+ *  - Add support क्रम extended VLAN support.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/etherdevice.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/of_mdio.h>
-#include <linux/of_net.h>
-#include <linux/of_platform.h>
-#include <linux/of_irq.h>
-#include <linux/of_address.h>
-#include <linux/skbuff.h>
-#include <linux/spinlock.h>
-#include <linux/phy.h>
-#include <linux/mii.h>
-#include <linux/ethtool.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_net.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/ethtool.h>
 
-#include "xilinx_axienet.h"
+#समावेश "xilinx_axienet.h"
 
-/* Descriptors defines for Tx and Rx DMA */
-#define TX_BD_NUM_DEFAULT		64
-#define RX_BD_NUM_DEFAULT		1024
-#define TX_BD_NUM_MAX			4096
-#define RX_BD_NUM_MAX			4096
+/* Descriptors defines क्रम Tx and Rx DMA */
+#घोषणा TX_BD_NUM_DEFAULT		64
+#घोषणा RX_BD_NUM_DEFAULT		1024
+#घोषणा TX_BD_NUM_MAX			4096
+#घोषणा RX_BD_NUM_MAX			4096
 
-/* Must be shorter than length of ethtool_drvinfo.driver field to fit */
-#define DRIVER_NAME		"xaxienet"
-#define DRIVER_DESCRIPTION	"Xilinx Axi Ethernet driver"
-#define DRIVER_VERSION		"1.00a"
+/* Must be लघुer than length of ethtool_drvinfo.driver field to fit */
+#घोषणा DRIVER_NAME		"xaxienet"
+#घोषणा DRIVER_DESCRIPTION	"Xilinx Axi Ethernet driver"
+#घोषणा DRIVER_VERSION		"1.00a"
 
-#define AXIENET_REGS_N		40
+#घोषणा AXIENET_REGS_N		40
 
-/* Match table for of_platform binding */
-static const struct of_device_id axienet_of_match[] = {
-	{ .compatible = "xlnx,axi-ethernet-1.00.a", },
-	{ .compatible = "xlnx,axi-ethernet-1.01.a", },
-	{ .compatible = "xlnx,axi-ethernet-2.01.a", },
-	{},
-};
+/* Match table क्रम of_platक्रमm binding */
+अटल स्थिर काष्ठा of_device_id axienet_of_match[] = अणु
+	अणु .compatible = "xlnx,axi-ethernet-1.00.a", पूर्ण,
+	अणु .compatible = "xlnx,axi-ethernet-1.01.a", पूर्ण,
+	अणु .compatible = "xlnx,axi-ethernet-2.01.a", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, axienet_of_match);
 
-/* Option table for setting up Axi Ethernet hardware options */
-static struct axienet_option axienet_options[] = {
-	/* Turn on jumbo packet support for both Rx and Tx */
-	{
+/* Option table क्रम setting up Axi Ethernet hardware options */
+अटल काष्ठा axienet_option axienet_options[] = अणु
+	/* Turn on jumbo packet support क्रम both Rx and Tx */
+	अणु
 		.opt = XAE_OPTION_JUMBO,
 		.reg = XAE_TC_OFFSET,
 		.m_or = XAE_TC_JUM_MASK,
-	}, {
+	पूर्ण, अणु
 		.opt = XAE_OPTION_JUMBO,
 		.reg = XAE_RCW1_OFFSET,
 		.m_or = XAE_RCW1_JUM_MASK,
-	}, { /* Turn on VLAN packet support for both Rx and Tx */
+	पूर्ण, अणु /* Turn on VLAN packet support क्रम both Rx and Tx */
 		.opt = XAE_OPTION_VLAN,
 		.reg = XAE_TC_OFFSET,
 		.m_or = XAE_TC_VLAN_MASK,
-	}, {
+	पूर्ण, अणु
 		.opt = XAE_OPTION_VLAN,
 		.reg = XAE_RCW1_OFFSET,
 		.m_or = XAE_RCW1_VLAN_MASK,
-	}, { /* Turn on FCS stripping on receive packets */
+	पूर्ण, अणु /* Turn on FCS stripping on receive packets */
 		.opt = XAE_OPTION_FCS_STRIP,
 		.reg = XAE_RCW1_OFFSET,
 		.m_or = XAE_RCW1_FCS_MASK,
-	}, { /* Turn on FCS insertion on transmit packets */
+	पूर्ण, अणु /* Turn on FCS insertion on transmit packets */
 		.opt = XAE_OPTION_FCS_INSERT,
 		.reg = XAE_TC_OFFSET,
 		.m_or = XAE_TC_FCS_MASK,
-	}, { /* Turn off length/type field checking on receive packets */
+	पूर्ण, अणु /* Turn off length/type field checking on receive packets */
 		.opt = XAE_OPTION_LENTYPE_ERR,
 		.reg = XAE_RCW1_OFFSET,
 		.m_or = XAE_RCW1_LT_DIS_MASK,
-	}, { /* Turn on Rx flow control */
+	पूर्ण, अणु /* Turn on Rx flow control */
 		.opt = XAE_OPTION_FLOW_CONTROL,
 		.reg = XAE_FCC_OFFSET,
 		.m_or = XAE_FCC_FCRX_MASK,
-	}, { /* Turn on Tx flow control */
+	पूर्ण, अणु /* Turn on Tx flow control */
 		.opt = XAE_OPTION_FLOW_CONTROL,
 		.reg = XAE_FCC_OFFSET,
 		.m_or = XAE_FCC_FCTX_MASK,
-	}, { /* Turn on promiscuous frame filtering */
+	पूर्ण, अणु /* Turn on promiscuous frame filtering */
 		.opt = XAE_OPTION_PROMISC,
 		.reg = XAE_FMI_OFFSET,
 		.m_or = XAE_FMI_PM_MASK,
-	}, { /* Enable transmitter */
+	पूर्ण, अणु /* Enable transmitter */
 		.opt = XAE_OPTION_TXEN,
 		.reg = XAE_TC_OFFSET,
 		.m_or = XAE_TC_TX_MASK,
-	}, { /* Enable receiver */
+	पूर्ण, अणु /* Enable receiver */
 		.opt = XAE_OPTION_RXEN,
 		.reg = XAE_RCW1_OFFSET,
 		.m_or = XAE_RCW1_RX_MASK,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /**
- * axienet_dma_in32 - Memory mapped Axi DMA register read
- * @lp:		Pointer to axienet local structure
+ * axienet_dma_in32 - Memory mapped Axi DMA रेजिस्टर पढ़ो
+ * @lp:		Poपूर्णांकer to axienet local काष्ठाure
  * @reg:	Address offset from the base address of the Axi DMA core
  *
- * Return: The contents of the Axi DMA register
+ * Return: The contents of the Axi DMA रेजिस्टर
  *
- * This function returns the contents of the corresponding Axi DMA register.
+ * This function वापसs the contents of the corresponding Axi DMA रेजिस्टर.
  */
-static inline u32 axienet_dma_in32(struct axienet_local *lp, off_t reg)
-{
-	return ioread32(lp->dma_regs + reg);
-}
+अटल अंतरभूत u32 axienet_dma_in32(काष्ठा axienet_local *lp, off_t reg)
+अणु
+	वापस ioपढ़ो32(lp->dma_regs + reg);
+पूर्ण
 
 /**
- * axienet_dma_out32 - Memory mapped Axi DMA register write.
- * @lp:		Pointer to axienet local structure
+ * axienet_dma_out32 - Memory mapped Axi DMA रेजिस्टर ग_लिखो.
+ * @lp:		Poपूर्णांकer to axienet local काष्ठाure
  * @reg:	Address offset from the base address of the Axi DMA core
- * @value:	Value to be written into the Axi DMA register
+ * @value:	Value to be written पूर्णांकo the Axi DMA रेजिस्टर
  *
- * This function writes the desired value into the corresponding Axi DMA
- * register.
+ * This function ग_लिखोs the desired value पूर्णांकo the corresponding Axi DMA
+ * रेजिस्टर.
  */
-static inline void axienet_dma_out32(struct axienet_local *lp,
+अटल अंतरभूत व्योम axienet_dma_out32(काष्ठा axienet_local *lp,
 				     off_t reg, u32 value)
-{
-	iowrite32(value, lp->dma_regs + reg);
-}
+अणु
+	ioग_लिखो32(value, lp->dma_regs + reg);
+पूर्ण
 
-static void axienet_dma_out_addr(struct axienet_local *lp, off_t reg,
+अटल व्योम axienet_dma_out_addr(काष्ठा axienet_local *lp, off_t reg,
 				 dma_addr_t addr)
-{
+अणु
 	axienet_dma_out32(lp, reg, lower_32_bits(addr));
 
-	if (lp->features & XAE_FEATURE_DMA_64BIT)
+	अगर (lp->features & XAE_FEATURE_DMA_64BIT)
 		axienet_dma_out32(lp, reg + 4, upper_32_bits(addr));
-}
+पूर्ण
 
-static void desc_set_phys_addr(struct axienet_local *lp, dma_addr_t addr,
-			       struct axidma_bd *desc)
-{
+अटल व्योम desc_set_phys_addr(काष्ठा axienet_local *lp, dma_addr_t addr,
+			       काष्ठा axidma_bd *desc)
+अणु
 	desc->phys = lower_32_bits(addr);
-	if (lp->features & XAE_FEATURE_DMA_64BIT)
+	अगर (lp->features & XAE_FEATURE_DMA_64BIT)
 		desc->phys_msb = upper_32_bits(addr);
-}
+पूर्ण
 
-static dma_addr_t desc_get_phys_addr(struct axienet_local *lp,
-				     struct axidma_bd *desc)
-{
+अटल dma_addr_t desc_get_phys_addr(काष्ठा axienet_local *lp,
+				     काष्ठा axidma_bd *desc)
+अणु
 	dma_addr_t ret = desc->phys;
 
-	if (lp->features & XAE_FEATURE_DMA_64BIT)
+	अगर (lp->features & XAE_FEATURE_DMA_64BIT)
 		ret |= ((dma_addr_t)desc->phys_msb << 16) << 16;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * axienet_dma_bd_release - Release buffer descriptor rings
- * @ndev:	Pointer to the net_device structure
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure
  *
  * This function is used to release the descriptors allocated in
  * axienet_dma_bd_init. axienet_dma_bd_release is called when Axi Ethernet
  * driver stop api is called.
  */
-static void axienet_dma_bd_release(struct net_device *ndev)
-{
-	int i;
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल व्योम axienet_dma_bd_release(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक i;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
 	/* If we end up here, tx_bd_v must have been DMA allocated. */
-	dma_free_coherent(ndev->dev.parent,
-			  sizeof(*lp->tx_bd_v) * lp->tx_bd_num,
+	dma_मुक्त_coherent(ndev->dev.parent,
+			  माप(*lp->tx_bd_v) * lp->tx_bd_num,
 			  lp->tx_bd_v,
 			  lp->tx_bd_p);
 
-	if (!lp->rx_bd_v)
-		return;
+	अगर (!lp->rx_bd_v)
+		वापस;
 
-	for (i = 0; i < lp->rx_bd_num; i++) {
+	क्रम (i = 0; i < lp->rx_bd_num; i++) अणु
 		dma_addr_t phys;
 
-		/* A NULL skb means this descriptor has not been initialised
+		/* A शून्य skb means this descriptor has not been initialised
 		 * at all.
 		 */
-		if (!lp->rx_bd_v[i].skb)
-			break;
+		अगर (!lp->rx_bd_v[i].skb)
+			अवरोध;
 
-		dev_kfree_skb(lp->rx_bd_v[i].skb);
+		dev_kमुक्त_skb(lp->rx_bd_v[i].skb);
 
 		/* For each descriptor, we programmed cntrl with the (non-zero)
 		 * descriptor size, after it had been successfully allocated.
 		 * So a non-zero value in there means we need to unmap it.
 		 */
-		if (lp->rx_bd_v[i].cntrl) {
+		अगर (lp->rx_bd_v[i].cntrl) अणु
 			phys = desc_get_phys_addr(lp, &lp->rx_bd_v[i]);
 			dma_unmap_single(ndev->dev.parent, phys,
 					 lp->max_frm_size, DMA_FROM_DEVICE);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	dma_free_coherent(ndev->dev.parent,
-			  sizeof(*lp->rx_bd_v) * lp->rx_bd_num,
+	dma_मुक्त_coherent(ndev->dev.parent,
+			  माप(*lp->rx_bd_v) * lp->rx_bd_num,
 			  lp->rx_bd_v,
 			  lp->rx_bd_p);
-}
+पूर्ण
 
 /**
- * axienet_dma_bd_init - Setup buffer descriptor rings for Axi DMA
- * @ndev:	Pointer to the net_device structure
+ * axienet_dma_bd_init - Setup buffer descriptor rings क्रम Axi DMA
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure
  *
  * Return: 0, on success -ENOMEM, on failure
  *
  * This function is called to initialize the Rx and Tx DMA descriptor
- * rings. This initializes the descriptors with required default values
+ * rings. This initializes the descriptors with required शेष values
  * and is called when Axi Ethernet driver reset is called.
  */
-static int axienet_dma_bd_init(struct net_device *ndev)
-{
+अटल पूर्णांक axienet_dma_bd_init(काष्ठा net_device *ndev)
+अणु
 	u32 cr;
-	int i;
-	struct sk_buff *skb;
-	struct axienet_local *lp = netdev_priv(ndev);
+	पूर्णांक i;
+	काष्ठा sk_buff *skb;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	/* Reset the indexes which are used for accessing the BDs */
+	/* Reset the indexes which are used क्रम accessing the BDs */
 	lp->tx_bd_ci = 0;
 	lp->tx_bd_tail = 0;
 	lp->rx_bd_ci = 0;
 
 	/* Allocate the Tx and Rx buffer descriptors. */
 	lp->tx_bd_v = dma_alloc_coherent(ndev->dev.parent,
-					 sizeof(*lp->tx_bd_v) * lp->tx_bd_num,
+					 माप(*lp->tx_bd_v) * lp->tx_bd_num,
 					 &lp->tx_bd_p, GFP_KERNEL);
-	if (!lp->tx_bd_v)
-		return -ENOMEM;
+	अगर (!lp->tx_bd_v)
+		वापस -ENOMEM;
 
 	lp->rx_bd_v = dma_alloc_coherent(ndev->dev.parent,
-					 sizeof(*lp->rx_bd_v) * lp->rx_bd_num,
+					 माप(*lp->rx_bd_v) * lp->rx_bd_num,
 					 &lp->rx_bd_p, GFP_KERNEL);
-	if (!lp->rx_bd_v)
-		goto out;
+	अगर (!lp->rx_bd_v)
+		जाओ out;
 
-	for (i = 0; i < lp->tx_bd_num; i++) {
+	क्रम (i = 0; i < lp->tx_bd_num; i++) अणु
 		dma_addr_t addr = lp->tx_bd_p +
-				  sizeof(*lp->tx_bd_v) *
+				  माप(*lp->tx_bd_v) *
 				  ((i + 1) % lp->tx_bd_num);
 
 		lp->tx_bd_v[i].next = lower_32_bits(addr);
-		if (lp->features & XAE_FEATURE_DMA_64BIT)
+		अगर (lp->features & XAE_FEATURE_DMA_64BIT)
 			lp->tx_bd_v[i].next_msb = upper_32_bits(addr);
-	}
+	पूर्ण
 
-	for (i = 0; i < lp->rx_bd_num; i++) {
+	क्रम (i = 0; i < lp->rx_bd_num; i++) अणु
 		dma_addr_t addr;
 
-		addr = lp->rx_bd_p + sizeof(*lp->rx_bd_v) *
+		addr = lp->rx_bd_p + माप(*lp->rx_bd_v) *
 			((i + 1) % lp->rx_bd_num);
 		lp->rx_bd_v[i].next = lower_32_bits(addr);
-		if (lp->features & XAE_FEATURE_DMA_64BIT)
+		अगर (lp->features & XAE_FEATURE_DMA_64BIT)
 			lp->rx_bd_v[i].next_msb = upper_32_bits(addr);
 
 		skb = netdev_alloc_skb_ip_align(ndev, lp->max_frm_size);
-		if (!skb)
-			goto out;
+		अगर (!skb)
+			जाओ out;
 
 		lp->rx_bd_v[i].skb = skb;
 		addr = dma_map_single(ndev->dev.parent, skb->data,
 				      lp->max_frm_size, DMA_FROM_DEVICE);
-		if (dma_mapping_error(ndev->dev.parent, addr)) {
+		अगर (dma_mapping_error(ndev->dev.parent, addr)) अणु
 			netdev_err(ndev, "DMA mapping error\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		desc_set_phys_addr(lp, addr, &lp->rx_bd_v[i]);
 
 		lp->rx_bd_v[i].cntrl = lp->max_frm_size;
-	}
+	पूर्ण
 
-	/* Start updating the Rx channel control register */
+	/* Start updating the Rx channel control रेजिस्टर */
 	cr = axienet_dma_in32(lp, XAXIDMA_RX_CR_OFFSET);
-	/* Update the interrupt coalesce count */
+	/* Update the पूर्णांकerrupt coalesce count */
 	cr = ((cr & ~XAXIDMA_COALESCE_MASK) |
 	      ((lp->coalesce_count_rx) << XAXIDMA_COALESCE_SHIFT));
-	/* Update the delay timer count */
+	/* Update the delay समयr count */
 	cr = ((cr & ~XAXIDMA_DELAY_MASK) |
 	      (XAXIDMA_DFT_RX_WAITBOUND << XAXIDMA_DELAY_SHIFT));
-	/* Enable coalesce, delay timer and error interrupts */
+	/* Enable coalesce, delay समयr and error पूर्णांकerrupts */
 	cr |= XAXIDMA_IRQ_ALL_MASK;
-	/* Write to the Rx channel control register */
+	/* Write to the Rx channel control रेजिस्टर */
 	axienet_dma_out32(lp, XAXIDMA_RX_CR_OFFSET, cr);
 
-	/* Start updating the Tx channel control register */
+	/* Start updating the Tx channel control रेजिस्टर */
 	cr = axienet_dma_in32(lp, XAXIDMA_TX_CR_OFFSET);
-	/* Update the interrupt coalesce count */
+	/* Update the पूर्णांकerrupt coalesce count */
 	cr = (((cr & ~XAXIDMA_COALESCE_MASK)) |
 	      ((lp->coalesce_count_tx) << XAXIDMA_COALESCE_SHIFT));
-	/* Update the delay timer count */
+	/* Update the delay समयr count */
 	cr = (((cr & ~XAXIDMA_DELAY_MASK)) |
 	      (XAXIDMA_DFT_TX_WAITBOUND << XAXIDMA_DELAY_SHIFT));
-	/* Enable coalesce, delay timer and error interrupts */
+	/* Enable coalesce, delay समयr and error पूर्णांकerrupts */
 	cr |= XAXIDMA_IRQ_ALL_MASK;
-	/* Write to the Tx channel control register */
+	/* Write to the Tx channel control रेजिस्टर */
 	axienet_dma_out32(lp, XAXIDMA_TX_CR_OFFSET, cr);
 
-	/* Populate the tail pointer and bring the Rx Axi DMA engine out of
-	 * halted state. This will make the Rx side ready for reception.
+	/* Populate the tail poपूर्णांकer and bring the Rx Axi DMA engine out of
+	 * halted state. This will make the Rx side पढ़ोy क्रम reception.
 	 */
 	axienet_dma_out_addr(lp, XAXIDMA_RX_CDESC_OFFSET, lp->rx_bd_p);
 	cr = axienet_dma_in32(lp, XAXIDMA_RX_CR_OFFSET);
 	axienet_dma_out32(lp, XAXIDMA_RX_CR_OFFSET,
 			  cr | XAXIDMA_CR_RUNSTOP_MASK);
 	axienet_dma_out_addr(lp, XAXIDMA_RX_TDESC_OFFSET, lp->rx_bd_p +
-			     (sizeof(*lp->rx_bd_v) * (lp->rx_bd_num - 1)));
+			     (माप(*lp->rx_bd_v) * (lp->rx_bd_num - 1)));
 
-	/* Write to the RS (Run-stop) bit in the Tx channel control register.
-	 * Tx channel is now ready to run. But only after we write to the
-	 * tail pointer register that the Tx channel will start transmitting.
+	/* Write to the RS (Run-stop) bit in the Tx channel control रेजिस्टर.
+	 * Tx channel is now पढ़ोy to run. But only after we ग_लिखो to the
+	 * tail poपूर्णांकer रेजिस्टर that the Tx channel will start transmitting.
 	 */
 	axienet_dma_out_addr(lp, XAXIDMA_TX_CDESC_OFFSET, lp->tx_bd_p);
 	cr = axienet_dma_in32(lp, XAXIDMA_TX_CR_OFFSET);
 	axienet_dma_out32(lp, XAXIDMA_TX_CR_OFFSET,
 			  cr | XAXIDMA_CR_RUNSTOP_MASK);
 
-	return 0;
+	वापस 0;
 out:
 	axienet_dma_bd_release(ndev);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * axienet_set_mac_address - Write the MAC address
- * @ndev:	Pointer to the net_device structure
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure
  * @address:	6 byte Address to be written as MAC address
  *
  * This function is called to initialize the MAC address of the Axi Ethernet
- * core. It writes to the UAW0 and UAW1 registers of the core.
+ * core. It ग_लिखोs to the UAW0 and UAW1 रेजिस्टरs of the core.
  */
-static void axienet_set_mac_address(struct net_device *ndev,
-				    const void *address)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल व्योम axienet_set_mac_address(काष्ठा net_device *ndev,
+				    स्थिर व्योम *address)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	if (address)
-		memcpy(ndev->dev_addr, address, ETH_ALEN);
-	if (!is_valid_ether_addr(ndev->dev_addr))
-		eth_hw_addr_random(ndev);
+	अगर (address)
+		स_नकल(ndev->dev_addr, address, ETH_ALEN);
+	अगर (!is_valid_ether_addr(ndev->dev_addr))
+		eth_hw_addr_अक्रमom(ndev);
 
 	/* Set up unicast MAC address filter set its mac address */
 	axienet_iow(lp, XAE_UAW0_OFFSET,
@@ -375,61 +376,61 @@ static void axienet_set_mac_address(struct net_device *ndev,
 		      ~XAE_UAW1_UNICASTADDR_MASK) |
 		     (ndev->dev_addr[4] |
 		     (ndev->dev_addr[5] << 8))));
-}
+पूर्ण
 
 /**
  * netdev_set_mac_address - Write the MAC address (from outside the driver)
- * @ndev:	Pointer to the net_device structure
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure
  * @p:		6 byte Address to be written as MAC address
  *
- * Return: 0 for all conditions. Presently, there is no failure case.
+ * Return: 0 क्रम all conditions. Presently, there is no failure हाल.
  *
  * This function is called to initialize the MAC address of the Axi Ethernet
- * core. It calls the core specific axienet_set_mac_address. This is the
- * function that goes into net_device_ops structure entry ndo_set_mac_address.
+ * core. It calls the core specअगरic axienet_set_mac_address. This is the
+ * function that goes पूर्णांकo net_device_ops काष्ठाure entry nकरो_set_mac_address.
  */
-static int netdev_set_mac_address(struct net_device *ndev, void *p)
-{
-	struct sockaddr *addr = p;
+अटल पूर्णांक netdev_set_mac_address(काष्ठा net_device *ndev, व्योम *p)
+अणु
+	काष्ठा sockaddr *addr = p;
 	axienet_set_mac_address(ndev, addr->sa_data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * axienet_set_multicast_list - Prepare the multicast table
- * @ndev:	Pointer to the net_device structure
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure
  *
  * This function is called to initialize the multicast table during
  * initialization. The Axi Ethernet basic multicast support has a four-entry
  * multicast table which is initialized here. Additionally this function
- * goes into the net_device_ops structure entry ndo_set_multicast_list. This
+ * goes पूर्णांकo the net_device_ops काष्ठाure entry nकरो_set_multicast_list. This
  * means whenever the multicast table entries need to be updated this
- * function gets called.
+ * function माला_लो called.
  */
-static void axienet_set_multicast_list(struct net_device *ndev)
-{
-	int i;
+अटल व्योम axienet_set_multicast_list(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक i;
 	u32 reg, af0reg, af1reg;
-	struct axienet_local *lp = netdev_priv(ndev);
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	if (ndev->flags & (IFF_ALLMULTI | IFF_PROMISC) ||
-	    netdev_mc_count(ndev) > XAE_MULTICAST_CAM_TABLE_NUM) {
-		/* We must make the kernel realize we had to move into
+	अगर (ndev->flags & (IFF_ALLMULTI | IFF_PROMISC) ||
+	    netdev_mc_count(ndev) > XAE_MULTICAST_CAM_TABLE_NUM) अणु
+		/* We must make the kernel realize we had to move पूर्णांकo
 		 * promiscuous mode. If it was a promiscuous mode request
-		 * the flag is already set. If not we set it.
+		 * the flag is alपढ़ोy set. If not we set it.
 		 */
 		ndev->flags |= IFF_PROMISC;
 		reg = axienet_ior(lp, XAE_FMI_OFFSET);
 		reg |= XAE_FMI_PM_MASK;
 		axienet_iow(lp, XAE_FMI_OFFSET, reg);
 		dev_info(&ndev->dev, "Promiscuous mode enabled.\n");
-	} else if (!netdev_mc_empty(ndev)) {
-		struct netdev_hw_addr *ha;
+	पूर्ण अन्यथा अगर (!netdev_mc_empty(ndev)) अणु
+		काष्ठा netdev_hw_addr *ha;
 
 		i = 0;
-		netdev_for_each_mc_addr(ha, ndev) {
-			if (i >= XAE_MULTICAST_CAM_TABLE_NUM)
-				break;
+		netdev_क्रम_each_mc_addr(ha, ndev) अणु
+			अगर (i >= XAE_MULTICAST_CAM_TABLE_NUM)
+				अवरोध;
 
 			af0reg = (ha->addr[0]);
 			af0reg |= (ha->addr[1] << 8);
@@ -446,189 +447,189 @@ static void axienet_set_multicast_list(struct net_device *ndev)
 			axienet_iow(lp, XAE_AF0_OFFSET, af0reg);
 			axienet_iow(lp, XAE_AF1_OFFSET, af1reg);
 			i++;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		reg = axienet_ior(lp, XAE_FMI_OFFSET);
 		reg &= ~XAE_FMI_PM_MASK;
 
 		axienet_iow(lp, XAE_FMI_OFFSET, reg);
 
-		for (i = 0; i < XAE_MULTICAST_CAM_TABLE_NUM; i++) {
+		क्रम (i = 0; i < XAE_MULTICAST_CAM_TABLE_NUM; i++) अणु
 			reg = axienet_ior(lp, XAE_FMI_OFFSET) & 0xFFFFFF00;
 			reg |= i;
 
 			axienet_iow(lp, XAE_FMI_OFFSET, reg);
 			axienet_iow(lp, XAE_AF0_OFFSET, 0);
 			axienet_iow(lp, XAE_AF1_OFFSET, 0);
-		}
+		पूर्ण
 
 		dev_info(&ndev->dev, "Promiscuous mode disabled.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * axienet_setoptions - Set an Axi Ethernet option
- * @ndev:	Pointer to the net_device structure
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure
  * @options:	Option to be enabled/disabled
  *
  * The Axi Ethernet core has multiple features which can be selectively turned
  * on or off. The typical options could be jumbo frame option, basic VLAN
  * option, promiscuous mode option etc. This function is used to set or clear
- * these options in the Axi Ethernet hardware. This is done through
- * axienet_option structure .
+ * these options in the Axi Ethernet hardware. This is करोne through
+ * axienet_option काष्ठाure .
  */
-static void axienet_setoptions(struct net_device *ndev, u32 options)
-{
-	int reg;
-	struct axienet_local *lp = netdev_priv(ndev);
-	struct axienet_option *tp = &axienet_options[0];
+अटल व्योम axienet_setoptions(काष्ठा net_device *ndev, u32 options)
+अणु
+	पूर्णांक reg;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
+	काष्ठा axienet_option *tp = &axienet_options[0];
 
-	while (tp->opt) {
+	जबतक (tp->opt) अणु
 		reg = ((axienet_ior(lp, tp->reg)) & ~(tp->m_or));
-		if (options & tp->opt)
+		अगर (options & tp->opt)
 			reg |= tp->m_or;
 		axienet_iow(lp, tp->reg, reg);
 		tp++;
-	}
+	पूर्ण
 
 	lp->options |= options;
-}
+पूर्ण
 
-static int __axienet_device_reset(struct axienet_local *lp)
-{
-	u32 timeout;
+अटल पूर्णांक __axienet_device_reset(काष्ठा axienet_local *lp)
+अणु
+	u32 समयout;
 
 	/* Reset Axi DMA. This would reset Axi Ethernet core as well. The reset
-	 * process of Axi DMA takes a while to complete as all pending
+	 * process of Axi DMA takes a जबतक to complete as all pending
 	 * commands/transfers will be flushed or completed during this
 	 * reset process.
-	 * Note that even though both TX and RX have their own reset register,
+	 * Note that even though both TX and RX have their own reset रेजिस्टर,
 	 * they both reset the entire DMA core, so only one needs to be used.
 	 */
 	axienet_dma_out32(lp, XAXIDMA_TX_CR_OFFSET, XAXIDMA_CR_RESET_MASK);
-	timeout = DELAY_OF_ONE_MILLISEC;
-	while (axienet_dma_in32(lp, XAXIDMA_TX_CR_OFFSET) &
-				XAXIDMA_CR_RESET_MASK) {
+	समयout = DELAY_OF_ONE_MILLISEC;
+	जबतक (axienet_dma_in32(lp, XAXIDMA_TX_CR_OFFSET) &
+				XAXIDMA_CR_RESET_MASK) अणु
 		udelay(1);
-		if (--timeout == 0) {
+		अगर (--समयout == 0) अणु
 			netdev_err(lp->ndev, "%s: DMA reset timeout!\n",
 				   __func__);
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * axienet_device_reset - Reset and initialize the Axi Ethernet hardware.
- * @ndev:	Pointer to the net_device structure
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure
  *
  * This function is called to reset and initialize the Axi Ethernet core. This
- * is typically called during initialization. It does a reset of the Axi DMA
+ * is typically called during initialization. It करोes a reset of the Axi DMA
  * Rx/Tx channels and initializes the Axi DMA BDs. Since Axi DMA reset lines
  * areconnected to Axi Ethernet reset lines, this in turn resets the Axi
- * Ethernet core. No separate hardware reset is done for the Axi Ethernet
+ * Ethernet core. No separate hardware reset is करोne क्रम the Axi Ethernet
  * core.
  * Returns 0 on success or a negative error number otherwise.
  */
-static int axienet_device_reset(struct net_device *ndev)
-{
+अटल पूर्णांक axienet_device_reset(काष्ठा net_device *ndev)
+अणु
 	u32 axienet_status;
-	struct axienet_local *lp = netdev_priv(ndev);
-	int ret;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
+	पूर्णांक ret;
 
 	ret = __axienet_device_reset(lp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	lp->max_frm_size = XAE_MAX_VLAN_FRAME_SIZE;
 	lp->options |= XAE_OPTION_VLAN;
 	lp->options &= (~XAE_OPTION_JUMBO);
 
-	if ((ndev->mtu > XAE_MTU) &&
-		(ndev->mtu <= XAE_JUMBO_MTU)) {
+	अगर ((ndev->mtu > XAE_MTU) &&
+		(ndev->mtu <= XAE_JUMBO_MTU)) अणु
 		lp->max_frm_size = ndev->mtu + VLAN_ETH_HLEN +
 					XAE_TRL_SIZE;
 
-		if (lp->max_frm_size <= lp->rxmem)
+		अगर (lp->max_frm_size <= lp->rxmem)
 			lp->options |= XAE_OPTION_JUMBO;
-	}
+	पूर्ण
 
 	ret = axienet_dma_bd_init(ndev);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(ndev, "%s: descriptor allocation failed\n",
 			   __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	axienet_status = axienet_ior(lp, XAE_RCW1_OFFSET);
 	axienet_status &= ~XAE_RCW1_RX_MASK;
 	axienet_iow(lp, XAE_RCW1_OFFSET, axienet_status);
 
 	axienet_status = axienet_ior(lp, XAE_IP_OFFSET);
-	if (axienet_status & XAE_INT_RXRJECT_MASK)
+	अगर (axienet_status & XAE_INT_RXRJECT_MASK)
 		axienet_iow(lp, XAE_IS_OFFSET, XAE_INT_RXRJECT_MASK);
 	axienet_iow(lp, XAE_IE_OFFSET, lp->eth_irq > 0 ?
 		    XAE_INT_RECV_ERROR_MASK : 0);
 
 	axienet_iow(lp, XAE_FCC_OFFSET, XAE_FCC_FCRX_MASK);
 
-	/* Sync default options with HW but leave receiver and
+	/* Sync शेष options with HW but leave receiver and
 	 * transmitter disabled.
 	 */
 	axienet_setoptions(ndev, lp->options &
 			   ~(XAE_OPTION_TXEN | XAE_OPTION_RXEN));
-	axienet_set_mac_address(ndev, NULL);
+	axienet_set_mac_address(ndev, शून्य);
 	axienet_set_multicast_list(ndev);
 	axienet_setoptions(ndev, lp->options);
 
-	netif_trans_update(ndev);
+	netअगर_trans_update(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * axienet_free_tx_chain - Clean up a series of linked TX descriptors.
- * @ndev:	Pointer to the net_device structure
+ * axienet_मुक्त_tx_chain - Clean up a series of linked TX descriptors.
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure
  * @first_bd:	Index of first descriptor to clean up
- * @nr_bds:	Number of descriptors to clean up, can be -1 if unknown.
- * @sizep:	Pointer to a u32 filled with the total sum of all bytes
- * 		in all cleaned-up descriptors. Ignored if NULL.
+ * @nr_bds:	Number of descriptors to clean up, can be -1 अगर unknown.
+ * @sizep:	Poपूर्णांकer to a u32 filled with the total sum of all bytes
+ * 		in all cleaned-up descriptors. Ignored अगर शून्य.
  *
  * Would either be called after a successful transmit operation, or after
  * there was an error when setting up the chain.
  * Returns the number of descriptors handled.
  */
-static int axienet_free_tx_chain(struct net_device *ndev, u32 first_bd,
-				 int nr_bds, u32 *sizep)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
-	struct axidma_bd *cur_p;
-	int max_bds = nr_bds;
-	unsigned int status;
+अटल पूर्णांक axienet_मुक्त_tx_chain(काष्ठा net_device *ndev, u32 first_bd,
+				 पूर्णांक nr_bds, u32 *sizep)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
+	काष्ठा axidma_bd *cur_p;
+	पूर्णांक max_bds = nr_bds;
+	अचिन्हित पूर्णांक status;
 	dma_addr_t phys;
-	int i;
+	पूर्णांक i;
 
-	if (max_bds == -1)
+	अगर (max_bds == -1)
 		max_bds = lp->tx_bd_num;
 
-	for (i = 0; i < max_bds; i++) {
+	क्रम (i = 0; i < max_bds; i++) अणु
 		cur_p = &lp->tx_bd_v[(first_bd + i) % lp->tx_bd_num];
 		status = cur_p->status;
 
 		/* If no number is given, clean up *all* descriptors that have
 		 * been completed by the MAC.
 		 */
-		if (nr_bds == -1 && !(status & XAXIDMA_BD_STS_COMPLETE_MASK))
-			break;
+		अगर (nr_bds == -1 && !(status & XAXIDMA_BD_STS_COMPLETE_MASK))
+			अवरोध;
 
 		phys = desc_get_phys_addr(lp, cur_p);
 		dma_unmap_single(ndev->dev.parent, phys,
 				 (cur_p->cntrl & XAXIDMA_BD_CTRL_LENGTH_MASK),
 				 DMA_TO_DEVICE);
 
-		if (cur_p->skb && (status & XAXIDMA_BD_STS_COMPLETE_MASK))
+		अगर (cur_p->skb && (status & XAXIDMA_BD_STS_COMPLETE_MASK))
 			dev_consume_skb_irq(cur_p->skb);
 
 		cur_p->cntrl = 0;
@@ -637,36 +638,36 @@ static int axienet_free_tx_chain(struct net_device *ndev, u32 first_bd,
 		cur_p->app2 = 0;
 		cur_p->app4 = 0;
 		cur_p->status = 0;
-		cur_p->skb = NULL;
+		cur_p->skb = शून्य;
 
-		if (sizep)
+		अगर (sizep)
 			*sizep += status & XAXIDMA_BD_STS_ACTUAL_LEN_MASK;
-	}
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /**
- * axienet_start_xmit_done - Invoked once a transmit is completed by the
+ * axienet_start_xmit_करोne - Invoked once a transmit is completed by the
  * Axi DMA Tx channel.
- * @ndev:	Pointer to the net_device structure
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure
  *
- * This function is invoked from the Axi DMA Tx isr to notify the completion
+ * This function is invoked from the Axi DMA Tx isr to notअगरy the completion
  * of transmit operation. It clears fields in the corresponding Tx BDs and
  * unmaps the corresponding buffer so that CPU can regain ownership of the
- * buffer. It finally invokes "netif_wake_queue" to restart transmission if
+ * buffer. It finally invokes "netif_wake_queue" to restart transmission अगर
  * required.
  */
-static void axienet_start_xmit_done(struct net_device *ndev)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल व्योम axienet_start_xmit_करोne(काष्ठा net_device *ndev)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 	u32 packets = 0;
 	u32 size = 0;
 
-	packets = axienet_free_tx_chain(ndev, lp->tx_bd_ci, -1, &size);
+	packets = axienet_मुक्त_tx_chain(ndev, lp->tx_bd_ci, -1, &size);
 
 	lp->tx_bd_ci += packets;
-	if (lp->tx_bd_ci >= lp->tx_bd_num)
+	अगर (lp->tx_bd_ci >= lp->tx_bd_num)
 		lp->tx_bd_ci -= lp->tx_bd_num;
 
 	ndev->stats.tx_packets += packets;
@@ -675,105 +676,105 @@ static void axienet_start_xmit_done(struct net_device *ndev)
 	/* Matches barrier in axienet_start_xmit */
 	smp_mb();
 
-	netif_wake_queue(ndev);
-}
+	netअगर_wake_queue(ndev);
+पूर्ण
 
 /**
- * axienet_check_tx_bd_space - Checks if a BD/group of BDs are currently busy
- * @lp:		Pointer to the axienet_local structure
- * @num_frag:	The number of BDs to check for
+ * axienet_check_tx_bd_space - Checks अगर a BD/group of BDs are currently busy
+ * @lp:		Poपूर्णांकer to the axienet_local काष्ठाure
+ * @num_frag:	The number of BDs to check क्रम
  *
  * Return: 0, on success
- *	    NETDEV_TX_BUSY, if any of the descriptors are not free
+ *	    NETDEV_TX_BUSY, अगर any of the descriptors are not मुक्त
  *
- * This function is invoked before BDs are allocated and transmission starts.
- * This function returns 0 if a BD or group of BDs can be allocated for
- * transmission. If the BD or any of the BDs are not free the function
- * returns a busy status. This is invoked from axienet_start_xmit.
+ * This function is invoked beक्रमe BDs are allocated and transmission starts.
+ * This function वापसs 0 अगर a BD or group of BDs can be allocated क्रम
+ * transmission. If the BD or any of the BDs are not मुक्त the function
+ * वापसs a busy status. This is invoked from axienet_start_xmit.
  */
-static inline int axienet_check_tx_bd_space(struct axienet_local *lp,
-					    int num_frag)
-{
-	struct axidma_bd *cur_p;
+अटल अंतरभूत पूर्णांक axienet_check_tx_bd_space(काष्ठा axienet_local *lp,
+					    पूर्णांक num_frag)
+अणु
+	काष्ठा axidma_bd *cur_p;
 	cur_p = &lp->tx_bd_v[(lp->tx_bd_tail + num_frag) % lp->tx_bd_num];
-	if (cur_p->status & XAXIDMA_BD_STS_ALL_MASK)
-		return NETDEV_TX_BUSY;
-	return 0;
-}
+	अगर (cur_p->status & XAXIDMA_BD_STS_ALL_MASK)
+		वापस NETDEV_TX_BUSY;
+	वापस 0;
+पूर्ण
 
 /**
  * axienet_start_xmit - Starts the transmission.
- * @skb:	sk_buff pointer that contains data to be Txed.
- * @ndev:	Pointer to net_device structure.
+ * @skb:	sk_buff poपूर्णांकer that contains data to be Txed.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure.
  *
  * Return: NETDEV_TX_OK, on success
- *	    NETDEV_TX_BUSY, if any of the descriptors are not free
+ *	    NETDEV_TX_BUSY, अगर any of the descriptors are not मुक्त
  *
  * This function is invoked from upper layers to initiate transmission. The
- * function uses the next available free BDs and populates their fields to
- * start the transmission. Additionally if checksum offloading is supported,
+ * function uses the next available मुक्त BDs and populates their fields to
+ * start the transmission. Additionally अगर checksum offloading is supported,
  * it populates AXI Stream Control fields with appropriate values.
  */
-static netdev_tx_t
-axienet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
-{
+अटल netdev_tx_t
+axienet_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
+अणु
 	u32 ii;
 	u32 num_frag;
 	u32 csum_start_off;
 	u32 csum_index_off;
 	skb_frag_t *frag;
 	dma_addr_t tail_p, phys;
-	struct axienet_local *lp = netdev_priv(ndev);
-	struct axidma_bd *cur_p;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
+	काष्ठा axidma_bd *cur_p;
 	u32 orig_tail_ptr = lp->tx_bd_tail;
 
 	num_frag = skb_shinfo(skb)->nr_frags;
 	cur_p = &lp->tx_bd_v[lp->tx_bd_tail];
 
-	if (axienet_check_tx_bd_space(lp, num_frag)) {
-		if (netif_queue_stopped(ndev))
-			return NETDEV_TX_BUSY;
+	अगर (axienet_check_tx_bd_space(lp, num_frag)) अणु
+		अगर (netअगर_queue_stopped(ndev))
+			वापस NETDEV_TX_BUSY;
 
-		netif_stop_queue(ndev);
+		netअगर_stop_queue(ndev);
 
-		/* Matches barrier in axienet_start_xmit_done */
+		/* Matches barrier in axienet_start_xmit_करोne */
 		smp_mb();
 
-		/* Space might have just been freed - check again */
-		if (axienet_check_tx_bd_space(lp, num_frag))
-			return NETDEV_TX_BUSY;
+		/* Space might have just been मुक्तd - check again */
+		अगर (axienet_check_tx_bd_space(lp, num_frag))
+			वापस NETDEV_TX_BUSY;
 
-		netif_wake_queue(ndev);
-	}
+		netअगर_wake_queue(ndev);
+	पूर्ण
 
-	if (skb->ip_summed == CHECKSUM_PARTIAL) {
-		if (lp->features & XAE_FEATURE_FULL_TX_CSUM) {
+	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+		अगर (lp->features & XAE_FEATURE_FULL_TX_CSUM) अणु
 			/* Tx Full Checksum Offload Enabled */
 			cur_p->app0 |= 2;
-		} else if (lp->features & XAE_FEATURE_PARTIAL_RX_CSUM) {
+		पूर्ण अन्यथा अगर (lp->features & XAE_FEATURE_PARTIAL_RX_CSUM) अणु
 			csum_start_off = skb_transport_offset(skb);
 			csum_index_off = csum_start_off + skb->csum_offset;
 			/* Tx Partial Checksum Offload Enabled */
 			cur_p->app0 |= 1;
 			cur_p->app1 = (csum_start_off << 16) | csum_index_off;
-		}
-	} else if (skb->ip_summed == CHECKSUM_UNNECESSARY) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (skb->ip_summed == CHECKSUM_UNNECESSARY) अणु
 		cur_p->app0 |= 2; /* Tx Full Checksum Offload Enabled */
-	}
+	पूर्ण
 
 	phys = dma_map_single(ndev->dev.parent, skb->data,
 			      skb_headlen(skb), DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(ndev->dev.parent, phys))) {
-		if (net_ratelimit())
+	अगर (unlikely(dma_mapping_error(ndev->dev.parent, phys))) अणु
+		अगर (net_ratelimit())
 			netdev_err(ndev, "TX DMA mapping error\n");
 		ndev->stats.tx_dropped++;
-		return NETDEV_TX_OK;
-	}
+		वापस NETDEV_TX_OK;
+	पूर्ण
 	desc_set_phys_addr(lp, phys, cur_p);
 	cur_p->cntrl = skb_headlen(skb) | XAXIDMA_BD_CTRL_TXSOF_MASK;
 
-	for (ii = 0; ii < num_frag; ii++) {
-		if (++lp->tx_bd_tail >= lp->tx_bd_num)
+	क्रम (ii = 0; ii < num_frag; ii++) अणु
+		अगर (++lp->tx_bd_tail >= lp->tx_bd_num)
 			lp->tx_bd_tail = 0;
 		cur_p = &lp->tx_bd_v[lp->tx_bd_tail];
 		frag = &skb_shinfo(skb)->frags[ii];
@@ -781,340 +782,340 @@ axienet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 				      skb_frag_address(frag),
 				      skb_frag_size(frag),
 				      DMA_TO_DEVICE);
-		if (unlikely(dma_mapping_error(ndev->dev.parent, phys))) {
-			if (net_ratelimit())
+		अगर (unlikely(dma_mapping_error(ndev->dev.parent, phys))) अणु
+			अगर (net_ratelimit())
 				netdev_err(ndev, "TX DMA mapping error\n");
 			ndev->stats.tx_dropped++;
-			axienet_free_tx_chain(ndev, orig_tail_ptr, ii + 1,
-					      NULL);
+			axienet_मुक्त_tx_chain(ndev, orig_tail_ptr, ii + 1,
+					      शून्य);
 			lp->tx_bd_tail = orig_tail_ptr;
 
-			return NETDEV_TX_OK;
-		}
+			वापस NETDEV_TX_OK;
+		पूर्ण
 		desc_set_phys_addr(lp, phys, cur_p);
 		cur_p->cntrl = skb_frag_size(frag);
-	}
+	पूर्ण
 
-	cur_p->cntrl |= XAXIDMA_BD_CTRL_TXEOF_MASK;
+	cur_p->cntrl |= XAXIDMA_BD_CTRL_TXखातापूर्ण_MASK;
 	cur_p->skb = skb;
 
-	tail_p = lp->tx_bd_p + sizeof(*lp->tx_bd_v) * lp->tx_bd_tail;
+	tail_p = lp->tx_bd_p + माप(*lp->tx_bd_v) * lp->tx_bd_tail;
 	/* Start the transfer */
 	axienet_dma_out_addr(lp, XAXIDMA_TX_TDESC_OFFSET, tail_p);
-	if (++lp->tx_bd_tail >= lp->tx_bd_num)
+	अगर (++lp->tx_bd_tail >= lp->tx_bd_num)
 		lp->tx_bd_tail = 0;
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 /**
  * axienet_recv - Is called from Axi DMA Rx Isr to complete the received
  *		  BD processing.
- * @ndev:	Pointer to net_device structure.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure.
  *
  * This function is invoked from the Axi DMA Rx isr to process the Rx BDs. It
- * does minimal processing and invokes "netif_rx" to complete further
+ * करोes minimal processing and invokes "netif_rx" to complete further
  * processing.
  */
-static void axienet_recv(struct net_device *ndev)
-{
+अटल व्योम axienet_recv(काष्ठा net_device *ndev)
+अणु
 	u32 length;
 	u32 csumstatus;
 	u32 size = 0;
 	u32 packets = 0;
 	dma_addr_t tail_p = 0;
-	struct axienet_local *lp = netdev_priv(ndev);
-	struct sk_buff *skb, *new_skb;
-	struct axidma_bd *cur_p;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
+	काष्ठा sk_buff *skb, *new_skb;
+	काष्ठा axidma_bd *cur_p;
 
 	cur_p = &lp->rx_bd_v[lp->rx_bd_ci];
 
-	while ((cur_p->status & XAXIDMA_BD_STS_COMPLETE_MASK)) {
+	जबतक ((cur_p->status & XAXIDMA_BD_STS_COMPLETE_MASK)) अणु
 		dma_addr_t phys;
 
-		tail_p = lp->rx_bd_p + sizeof(*lp->rx_bd_v) * lp->rx_bd_ci;
+		tail_p = lp->rx_bd_p + माप(*lp->rx_bd_v) * lp->rx_bd_ci;
 
 		phys = desc_get_phys_addr(lp, cur_p);
 		dma_unmap_single(ndev->dev.parent, phys, lp->max_frm_size,
 				 DMA_FROM_DEVICE);
 
 		skb = cur_p->skb;
-		cur_p->skb = NULL;
+		cur_p->skb = शून्य;
 		length = cur_p->app4 & 0x0000FFFF;
 
 		skb_put(skb, length);
 		skb->protocol = eth_type_trans(skb, ndev);
-		/*skb_checksum_none_assert(skb);*/
+		/*skb_checksum_none_निश्चित(skb);*/
 		skb->ip_summed = CHECKSUM_NONE;
 
-		/* if we're doing Rx csum offload, set it up */
-		if (lp->features & XAE_FEATURE_FULL_RX_CSUM) {
+		/* अगर we're करोing Rx csum offload, set it up */
+		अगर (lp->features & XAE_FEATURE_FULL_RX_CSUM) अणु
 			csumstatus = (cur_p->app2 &
 				      XAE_FULL_CSUM_STATUS_MASK) >> 3;
-			if ((csumstatus == XAE_IP_TCP_CSUM_VALIDATED) ||
-			    (csumstatus == XAE_IP_UDP_CSUM_VALIDATED)) {
+			अगर ((csumstatus == XAE_IP_TCP_CSUM_VALIDATED) ||
+			    (csumstatus == XAE_IP_UDP_CSUM_VALIDATED)) अणु
 				skb->ip_summed = CHECKSUM_UNNECESSARY;
-			}
-		} else if ((lp->features & XAE_FEATURE_PARTIAL_RX_CSUM) != 0 &&
+			पूर्ण
+		पूर्ण अन्यथा अगर ((lp->features & XAE_FEATURE_PARTIAL_RX_CSUM) != 0 &&
 			   skb->protocol == htons(ETH_P_IP) &&
-			   skb->len > 64) {
+			   skb->len > 64) अणु
 			skb->csum = be32_to_cpu(cur_p->app3 & 0xFFFF);
 			skb->ip_summed = CHECKSUM_COMPLETE;
-		}
+		पूर्ण
 
-		netif_rx(skb);
+		netअगर_rx(skb);
 
 		size += length;
 		packets++;
 
 		new_skb = netdev_alloc_skb_ip_align(ndev, lp->max_frm_size);
-		if (!new_skb)
-			return;
+		अगर (!new_skb)
+			वापस;
 
 		phys = dma_map_single(ndev->dev.parent, new_skb->data,
 				      lp->max_frm_size,
 				      DMA_FROM_DEVICE);
-		if (unlikely(dma_mapping_error(ndev->dev.parent, phys))) {
-			if (net_ratelimit())
+		अगर (unlikely(dma_mapping_error(ndev->dev.parent, phys))) अणु
+			अगर (net_ratelimit())
 				netdev_err(ndev, "RX DMA mapping error\n");
-			dev_kfree_skb(new_skb);
-			return;
-		}
+			dev_kमुक्त_skb(new_skb);
+			वापस;
+		पूर्ण
 		desc_set_phys_addr(lp, phys, cur_p);
 
 		cur_p->cntrl = lp->max_frm_size;
 		cur_p->status = 0;
 		cur_p->skb = new_skb;
 
-		if (++lp->rx_bd_ci >= lp->rx_bd_num)
+		अगर (++lp->rx_bd_ci >= lp->rx_bd_num)
 			lp->rx_bd_ci = 0;
 		cur_p = &lp->rx_bd_v[lp->rx_bd_ci];
-	}
+	पूर्ण
 
 	ndev->stats.rx_packets += packets;
 	ndev->stats.rx_bytes += size;
 
-	if (tail_p)
+	अगर (tail_p)
 		axienet_dma_out_addr(lp, XAXIDMA_RX_TDESC_OFFSET, tail_p);
-}
+पूर्ण
 
 /**
  * axienet_tx_irq - Tx Done Isr.
  * @irq:	irq number
- * @_ndev:	net_device pointer
+ * @_ndev:	net_device poपूर्णांकer
  *
- * Return: IRQ_HANDLED if device generated a TX interrupt, IRQ_NONE otherwise.
+ * Return: IRQ_HANDLED अगर device generated a TX पूर्णांकerrupt, IRQ_NONE otherwise.
  *
- * This is the Axi DMA Tx done Isr. It invokes "axienet_start_xmit_done"
+ * This is the Axi DMA Tx करोne Isr. It invokes "axienet_start_xmit_done"
  * to complete the BD processing.
  */
-static irqreturn_t axienet_tx_irq(int irq, void *_ndev)
-{
+अटल irqवापस_t axienet_tx_irq(पूर्णांक irq, व्योम *_ndev)
+अणु
 	u32 cr;
-	unsigned int status;
-	struct net_device *ndev = _ndev;
-	struct axienet_local *lp = netdev_priv(ndev);
+	अचिन्हित पूर्णांक status;
+	काष्ठा net_device *ndev = _ndev;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
 	status = axienet_dma_in32(lp, XAXIDMA_TX_SR_OFFSET);
-	if (status & (XAXIDMA_IRQ_IOC_MASK | XAXIDMA_IRQ_DELAY_MASK)) {
+	अगर (status & (XAXIDMA_IRQ_IOC_MASK | XAXIDMA_IRQ_DELAY_MASK)) अणु
 		axienet_dma_out32(lp, XAXIDMA_TX_SR_OFFSET, status);
-		axienet_start_xmit_done(lp->ndev);
-		goto out;
-	}
-	if (!(status & XAXIDMA_IRQ_ALL_MASK))
-		return IRQ_NONE;
-	if (status & XAXIDMA_IRQ_ERROR_MASK) {
+		axienet_start_xmit_करोne(lp->ndev);
+		जाओ out;
+	पूर्ण
+	अगर (!(status & XAXIDMA_IRQ_ALL_MASK))
+		वापस IRQ_NONE;
+	अगर (status & XAXIDMA_IRQ_ERROR_MASK) अणु
 		dev_err(&ndev->dev, "DMA Tx error 0x%x\n", status);
 		dev_err(&ndev->dev, "Current BD is at: 0x%x%08x\n",
 			(lp->tx_bd_v[lp->tx_bd_ci]).phys_msb,
 			(lp->tx_bd_v[lp->tx_bd_ci]).phys);
 
 		cr = axienet_dma_in32(lp, XAXIDMA_TX_CR_OFFSET);
-		/* Disable coalesce, delay timer and error interrupts */
+		/* Disable coalesce, delay समयr and error पूर्णांकerrupts */
 		cr &= (~XAXIDMA_IRQ_ALL_MASK);
-		/* Write to the Tx channel control register */
+		/* Write to the Tx channel control रेजिस्टर */
 		axienet_dma_out32(lp, XAXIDMA_TX_CR_OFFSET, cr);
 
 		cr = axienet_dma_in32(lp, XAXIDMA_RX_CR_OFFSET);
-		/* Disable coalesce, delay timer and error interrupts */
+		/* Disable coalesce, delay समयr and error पूर्णांकerrupts */
 		cr &= (~XAXIDMA_IRQ_ALL_MASK);
-		/* Write to the Rx channel control register */
+		/* Write to the Rx channel control रेजिस्टर */
 		axienet_dma_out32(lp, XAXIDMA_RX_CR_OFFSET, cr);
 
 		schedule_work(&lp->dma_err_task);
 		axienet_dma_out32(lp, XAXIDMA_TX_SR_OFFSET, status);
-	}
+	पूर्ण
 out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * axienet_rx_irq - Rx Isr.
  * @irq:	irq number
- * @_ndev:	net_device pointer
+ * @_ndev:	net_device poपूर्णांकer
  *
- * Return: IRQ_HANDLED if device generated a RX interrupt, IRQ_NONE otherwise.
+ * Return: IRQ_HANDLED अगर device generated a RX पूर्णांकerrupt, IRQ_NONE otherwise.
  *
  * This is the Axi DMA Rx Isr. It invokes "axienet_recv" to complete the BD
  * processing.
  */
-static irqreturn_t axienet_rx_irq(int irq, void *_ndev)
-{
+अटल irqवापस_t axienet_rx_irq(पूर्णांक irq, व्योम *_ndev)
+अणु
 	u32 cr;
-	unsigned int status;
-	struct net_device *ndev = _ndev;
-	struct axienet_local *lp = netdev_priv(ndev);
+	अचिन्हित पूर्णांक status;
+	काष्ठा net_device *ndev = _ndev;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
 	status = axienet_dma_in32(lp, XAXIDMA_RX_SR_OFFSET);
-	if (status & (XAXIDMA_IRQ_IOC_MASK | XAXIDMA_IRQ_DELAY_MASK)) {
+	अगर (status & (XAXIDMA_IRQ_IOC_MASK | XAXIDMA_IRQ_DELAY_MASK)) अणु
 		axienet_dma_out32(lp, XAXIDMA_RX_SR_OFFSET, status);
 		axienet_recv(lp->ndev);
-		goto out;
-	}
-	if (!(status & XAXIDMA_IRQ_ALL_MASK))
-		return IRQ_NONE;
-	if (status & XAXIDMA_IRQ_ERROR_MASK) {
+		जाओ out;
+	पूर्ण
+	अगर (!(status & XAXIDMA_IRQ_ALL_MASK))
+		वापस IRQ_NONE;
+	अगर (status & XAXIDMA_IRQ_ERROR_MASK) अणु
 		dev_err(&ndev->dev, "DMA Rx error 0x%x\n", status);
 		dev_err(&ndev->dev, "Current BD is at: 0x%x%08x\n",
 			(lp->rx_bd_v[lp->rx_bd_ci]).phys_msb,
 			(lp->rx_bd_v[lp->rx_bd_ci]).phys);
 
 		cr = axienet_dma_in32(lp, XAXIDMA_TX_CR_OFFSET);
-		/* Disable coalesce, delay timer and error interrupts */
+		/* Disable coalesce, delay समयr and error पूर्णांकerrupts */
 		cr &= (~XAXIDMA_IRQ_ALL_MASK);
-		/* Finally write to the Tx channel control register */
+		/* Finally ग_लिखो to the Tx channel control रेजिस्टर */
 		axienet_dma_out32(lp, XAXIDMA_TX_CR_OFFSET, cr);
 
 		cr = axienet_dma_in32(lp, XAXIDMA_RX_CR_OFFSET);
-		/* Disable coalesce, delay timer and error interrupts */
+		/* Disable coalesce, delay समयr and error पूर्णांकerrupts */
 		cr &= (~XAXIDMA_IRQ_ALL_MASK);
-		/* write to the Rx channel control register */
+		/* ग_लिखो to the Rx channel control रेजिस्टर */
 		axienet_dma_out32(lp, XAXIDMA_RX_CR_OFFSET, cr);
 
 		schedule_work(&lp->dma_err_task);
 		axienet_dma_out32(lp, XAXIDMA_RX_SR_OFFSET, status);
-	}
+	पूर्ण
 out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * axienet_eth_irq - Ethernet core Isr.
  * @irq:	irq number
- * @_ndev:	net_device pointer
+ * @_ndev:	net_device poपूर्णांकer
  *
- * Return: IRQ_HANDLED if device generated a core interrupt, IRQ_NONE otherwise.
+ * Return: IRQ_HANDLED अगर device generated a core पूर्णांकerrupt, IRQ_NONE otherwise.
  *
  * Handle miscellaneous conditions indicated by Ethernet core IRQ.
  */
-static irqreturn_t axienet_eth_irq(int irq, void *_ndev)
-{
-	struct net_device *ndev = _ndev;
-	struct axienet_local *lp = netdev_priv(ndev);
-	unsigned int pending;
+अटल irqवापस_t axienet_eth_irq(पूर्णांक irq, व्योम *_ndev)
+अणु
+	काष्ठा net_device *ndev = _ndev;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
+	अचिन्हित पूर्णांक pending;
 
 	pending = axienet_ior(lp, XAE_IP_OFFSET);
-	if (!pending)
-		return IRQ_NONE;
+	अगर (!pending)
+		वापस IRQ_NONE;
 
-	if (pending & XAE_INT_RXFIFOOVR_MASK)
+	अगर (pending & XAE_INT_RXFIFOOVR_MASK)
 		ndev->stats.rx_missed_errors++;
 
-	if (pending & XAE_INT_RXRJECT_MASK)
+	अगर (pending & XAE_INT_RXRJECT_MASK)
 		ndev->stats.rx_frame_errors++;
 
 	axienet_iow(lp, XAE_IS_OFFSET, pending);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void axienet_dma_err_handler(struct work_struct *work);
+अटल व्योम axienet_dma_err_handler(काष्ठा work_काष्ठा *work);
 
 /**
- * axienet_open - Driver open routine.
- * @ndev:	Pointer to net_device structure
+ * axienet_खोलो - Driver खोलो routine.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
  *
  * Return: 0, on success.
  *	    non-zero error value on failure
  *
- * This is the driver open routine. It calls phylink_start to start the
+ * This is the driver खोलो routine. It calls phylink_start to start the
  * PHY device.
- * It also allocates interrupt service routines, enables the interrupt lines
+ * It also allocates पूर्णांकerrupt service routines, enables the पूर्णांकerrupt lines
  * and ISR handling. Axi Ethernet core is reset through Axi DMA core. Buffer
  * descriptors are initialized.
  */
-static int axienet_open(struct net_device *ndev)
-{
-	int ret;
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल पूर्णांक axienet_खोलो(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक ret;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
 	dev_dbg(&ndev->dev, "axienet_open()\n");
 
-	/* When we do an Axi Ethernet reset, it resets the complete core
-	 * including the MDIO. MDIO must be disabled before resetting.
-	 * Hold MDIO bus lock to avoid MDIO accesses during the reset.
+	/* When we करो an Axi Ethernet reset, it resets the complete core
+	 * including the MDIO. MDIO must be disabled beक्रमe resetting.
+	 * Hold MDIO bus lock to aव्योम MDIO accesses during the reset.
 	 */
 	axienet_lock_mii(lp);
 	ret = axienet_device_reset(ndev);
 	axienet_unlock_mii(lp);
 
 	ret = phylink_of_phy_connect(lp->phylink, lp->dev->of_node, 0);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(lp->dev, "phylink_of_phy_connect() failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	phylink_start(lp->phylink);
 
-	/* Enable worker thread for Axi DMA error handling */
+	/* Enable worker thपढ़ो क्रम Axi DMA error handling */
 	INIT_WORK(&lp->dma_err_task, axienet_dma_err_handler);
 
-	/* Enable interrupts for Axi DMA Tx */
+	/* Enable पूर्णांकerrupts क्रम Axi DMA Tx */
 	ret = request_irq(lp->tx_irq, axienet_tx_irq, IRQF_SHARED,
 			  ndev->name, ndev);
-	if (ret)
-		goto err_tx_irq;
-	/* Enable interrupts for Axi DMA Rx */
+	अगर (ret)
+		जाओ err_tx_irq;
+	/* Enable पूर्णांकerrupts क्रम Axi DMA Rx */
 	ret = request_irq(lp->rx_irq, axienet_rx_irq, IRQF_SHARED,
 			  ndev->name, ndev);
-	if (ret)
-		goto err_rx_irq;
-	/* Enable interrupts for Axi Ethernet core (if defined) */
-	if (lp->eth_irq > 0) {
+	अगर (ret)
+		जाओ err_rx_irq;
+	/* Enable पूर्णांकerrupts क्रम Axi Ethernet core (अगर defined) */
+	अगर (lp->eth_irq > 0) अणु
 		ret = request_irq(lp->eth_irq, axienet_eth_irq, IRQF_SHARED,
 				  ndev->name, ndev);
-		if (ret)
-			goto err_eth_irq;
-	}
+		अगर (ret)
+			जाओ err_eth_irq;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_eth_irq:
-	free_irq(lp->rx_irq, ndev);
+	मुक्त_irq(lp->rx_irq, ndev);
 err_rx_irq:
-	free_irq(lp->tx_irq, ndev);
+	मुक्त_irq(lp->tx_irq, ndev);
 err_tx_irq:
 	phylink_stop(lp->phylink);
 	phylink_disconnect_phy(lp->phylink);
 	cancel_work_sync(&lp->dma_err_task);
 	dev_err(lp->dev, "request_irq() failed\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * axienet_stop - Driver stop routine.
- * @ndev:	Pointer to net_device structure
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
  *
  * Return: 0, on success.
  *
  * This is the driver stop routine. It calls phylink_disconnect to stop the PHY
- * device. It also removes the interrupt handlers and disables the interrupts.
+ * device. It also हटाओs the पूर्णांकerrupt handlers and disables the पूर्णांकerrupts.
  * The Axi DMA Tx/Rx BDs are released.
  */
-static int axienet_stop(struct net_device *ndev)
-{
+अटल पूर्णांक axienet_stop(काष्ठा net_device *ndev)
+अणु
 	u32 cr, sr;
-	int count;
-	struct axienet_local *lp = netdev_priv(ndev);
+	पूर्णांक count;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
 	dev_dbg(&ndev->dev, "axienet_close()\n");
 
@@ -1136,16 +1137,16 @@ static int axienet_stop(struct net_device *ndev)
 
 	/* Give DMAs a chance to halt gracefully */
 	sr = axienet_dma_in32(lp, XAXIDMA_RX_SR_OFFSET);
-	for (count = 0; !(sr & XAXIDMA_SR_HALT_MASK) && count < 5; ++count) {
+	क्रम (count = 0; !(sr & XAXIDMA_SR_HALT_MASK) && count < 5; ++count) अणु
 		msleep(20);
 		sr = axienet_dma_in32(lp, XAXIDMA_RX_SR_OFFSET);
-	}
+	पूर्ण
 
 	sr = axienet_dma_in32(lp, XAXIDMA_TX_SR_OFFSET);
-	for (count = 0; !(sr & XAXIDMA_SR_HALT_MASK) && count < 5; ++count) {
+	क्रम (count = 0; !(sr & XAXIDMA_SR_HALT_MASK) && count < 5; ++count) अणु
 		msleep(20);
 		sr = axienet_dma_in32(lp, XAXIDMA_TX_SR_OFFSET);
-	}
+	पूर्ण
 
 	/* Do a reset to ensure DMA is really stopped */
 	axienet_lock_mii(lp);
@@ -1154,137 +1155,137 @@ static int axienet_stop(struct net_device *ndev)
 
 	cancel_work_sync(&lp->dma_err_task);
 
-	if (lp->eth_irq > 0)
-		free_irq(lp->eth_irq, ndev);
-	free_irq(lp->tx_irq, ndev);
-	free_irq(lp->rx_irq, ndev);
+	अगर (lp->eth_irq > 0)
+		मुक्त_irq(lp->eth_irq, ndev);
+	मुक्त_irq(lp->tx_irq, ndev);
+	मुक्त_irq(lp->rx_irq, ndev);
 
 	axienet_dma_bd_release(ndev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * axienet_change_mtu - Driver change mtu routine.
- * @ndev:	Pointer to net_device structure
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
  * @new_mtu:	New mtu value to be applied
  *
- * Return: Always returns 0 (success).
+ * Return: Always वापसs 0 (success).
  *
- * This is the change mtu driver routine. It checks if the Axi Ethernet
- * hardware supports jumbo frames before changing the mtu. This can be
+ * This is the change mtu driver routine. It checks अगर the Axi Ethernet
+ * hardware supports jumbo frames beक्रमe changing the mtu. This can be
  * called only when the device is not up.
  */
-static int axienet_change_mtu(struct net_device *ndev, int new_mtu)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल पूर्णांक axienet_change_mtu(काष्ठा net_device *ndev, पूर्णांक new_mtu)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	if (netif_running(ndev))
-		return -EBUSY;
+	अगर (netअगर_running(ndev))
+		वापस -EBUSY;
 
-	if ((new_mtu + VLAN_ETH_HLEN +
+	अगर ((new_mtu + VLAN_ETH_HLEN +
 		XAE_TRL_SIZE) > lp->rxmem)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ndev->mtu = new_mtu;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
 /**
  * axienet_poll_controller - Axi Ethernet poll mechanism.
- * @ndev:	Pointer to net_device structure
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
  *
- * This implements Rx/Tx ISR poll mechanisms. The interrupts are disabled prior
- * to polling the ISRs and are enabled back after the polling is done.
+ * This implements Rx/Tx ISR poll mechanisms. The पूर्णांकerrupts are disabled prior
+ * to polling the ISRs and are enabled back after the polling is करोne.
  */
-static void axienet_poll_controller(struct net_device *ndev)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल व्योम axienet_poll_controller(काष्ठा net_device *ndev)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 	disable_irq(lp->tx_irq);
 	disable_irq(lp->rx_irq);
 	axienet_rx_irq(lp->tx_irq, ndev);
 	axienet_tx_irq(lp->rx_irq, ndev);
 	enable_irq(lp->tx_irq);
 	enable_irq(lp->rx_irq);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int axienet_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct axienet_local *lp = netdev_priv(dev);
+अटल पूर्णांक axienet_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(dev);
 
-	if (!netif_running(dev))
-		return -EINVAL;
+	अगर (!netअगर_running(dev))
+		वापस -EINVAL;
 
-	return phylink_mii_ioctl(lp->phylink, rq, cmd);
-}
+	वापस phylink_mii_ioctl(lp->phylink, rq, cmd);
+पूर्ण
 
-static const struct net_device_ops axienet_netdev_ops = {
-	.ndo_open = axienet_open,
-	.ndo_stop = axienet_stop,
-	.ndo_start_xmit = axienet_start_xmit,
-	.ndo_change_mtu	= axienet_change_mtu,
-	.ndo_set_mac_address = netdev_set_mac_address,
-	.ndo_validate_addr = eth_validate_addr,
-	.ndo_do_ioctl = axienet_ioctl,
-	.ndo_set_rx_mode = axienet_set_multicast_list,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller = axienet_poll_controller,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops axienet_netdev_ops = अणु
+	.nकरो_खोलो = axienet_खोलो,
+	.nकरो_stop = axienet_stop,
+	.nकरो_start_xmit = axienet_start_xmit,
+	.nकरो_change_mtu	= axienet_change_mtu,
+	.nकरो_set_mac_address = netdev_set_mac_address,
+	.nकरो_validate_addr = eth_validate_addr,
+	.nकरो_करो_ioctl = axienet_ioctl,
+	.nकरो_set_rx_mode = axienet_set_multicast_list,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller = axienet_poll_controller,
+#पूर्ण_अगर
+पूर्ण;
 
 /**
- * axienet_ethtools_get_drvinfo - Get various Axi Ethernet driver information.
- * @ndev:	Pointer to net_device structure
- * @ed:		Pointer to ethtool_drvinfo structure
+ * axienet_ethtools_get_drvinfo - Get various Axi Ethernet driver inक्रमmation.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
+ * @ed:		Poपूर्णांकer to ethtool_drvinfo काष्ठाure
  *
- * This implements ethtool command for getting the driver information.
+ * This implements ethtool command क्रम getting the driver inक्रमmation.
  * Issue "ethtool -i ethX" under linux prompt to execute this function.
  */
-static void axienet_ethtools_get_drvinfo(struct net_device *ndev,
-					 struct ethtool_drvinfo *ed)
-{
-	strlcpy(ed->driver, DRIVER_NAME, sizeof(ed->driver));
-	strlcpy(ed->version, DRIVER_VERSION, sizeof(ed->version));
-}
+अटल व्योम axienet_ethtools_get_drvinfo(काष्ठा net_device *ndev,
+					 काष्ठा ethtool_drvinfo *ed)
+अणु
+	strlcpy(ed->driver, DRIVER_NAME, माप(ed->driver));
+	strlcpy(ed->version, DRIVER_VERSION, माप(ed->version));
+पूर्ण
 
 /**
  * axienet_ethtools_get_regs_len - Get the total regs length present in the
  *				   AxiEthernet core.
- * @ndev:	Pointer to net_device structure
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
  *
- * This implements ethtool command for getting the total register length
- * information.
+ * This implements ethtool command क्रम getting the total रेजिस्टर length
+ * inक्रमmation.
  *
  * Return: the total regs length
  */
-static int axienet_ethtools_get_regs_len(struct net_device *ndev)
-{
-	return sizeof(u32) * AXIENET_REGS_N;
-}
+अटल पूर्णांक axienet_ethtools_get_regs_len(काष्ठा net_device *ndev)
+अणु
+	वापस माप(u32) * AXIENET_REGS_N;
+पूर्ण
 
 /**
- * axienet_ethtools_get_regs - Dump the contents of all registers present
+ * axienet_ethtools_get_regs - Dump the contents of all रेजिस्टरs present
  *			       in AxiEthernet core.
- * @ndev:	Pointer to net_device structure
- * @regs:	Pointer to ethtool_regs structure
- * @ret:	Void pointer used to return the contents of the registers.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
+ * @regs:	Poपूर्णांकer to ethtool_regs काष्ठाure
+ * @ret:	Void poपूर्णांकer used to वापस the contents of the रेजिस्टरs.
  *
- * This implements ethtool command for getting the Axi Ethernet register dump.
+ * This implements ethtool command क्रम getting the Axi Ethernet रेजिस्टर dump.
  * Issue "ethtool -d ethX" to execute this function.
  */
-static void axienet_ethtools_get_regs(struct net_device *ndev,
-				      struct ethtool_regs *regs, void *ret)
-{
+अटल व्योम axienet_ethtools_get_regs(काष्ठा net_device *ndev,
+				      काष्ठा ethtool_regs *regs, व्योम *ret)
+अणु
 	u32 *data = (u32 *) ret;
-	size_t len = sizeof(u32) * AXIENET_REGS_N;
-	struct axienet_local *lp = netdev_priv(ndev);
+	माप_प्रकार len = माप(u32) * AXIENET_REGS_N;
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
 	regs->version = 0;
 	regs->len = len;
 
-	memset(data, 0, len);
+	स_रखो(data, 0, len);
 	data[0] = axienet_ior(lp, XAE_RAF_OFFSET);
 	data[1] = axienet_ior(lp, XAE_TPF_OFFSET);
 	data[2] = axienet_ior(lp, XAE_IFGP_OFFSET);
@@ -1321,12 +1322,12 @@ static void axienet_ethtools_get_regs(struct net_device *ndev,
 	data[37] = axienet_dma_in32(lp, XAXIDMA_RX_SR_OFFSET);
 	data[38] = axienet_dma_in32(lp, XAXIDMA_RX_CDESC_OFFSET);
 	data[39] = axienet_dma_in32(lp, XAXIDMA_RX_TDESC_OFFSET);
-}
+पूर्ण
 
-static void axienet_ethtools_get_ringparam(struct net_device *ndev,
-					   struct ethtool_ringparam *ering)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल व्योम axienet_ethtools_get_ringparam(काष्ठा net_device *ndev,
+					   काष्ठा ethtool_ringparam *ering)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
 	ering->rx_max_pending = RX_BD_NUM_MAX;
 	ering->rx_mini_max_pending = 0;
@@ -1336,147 +1337,147 @@ static void axienet_ethtools_get_ringparam(struct net_device *ndev,
 	ering->rx_mini_pending = 0;
 	ering->rx_jumbo_pending = 0;
 	ering->tx_pending = lp->tx_bd_num;
-}
+पूर्ण
 
-static int axienet_ethtools_set_ringparam(struct net_device *ndev,
-					  struct ethtool_ringparam *ering)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल पूर्णांक axienet_ethtools_set_ringparam(काष्ठा net_device *ndev,
+					  काष्ठा ethtool_ringparam *ering)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	if (ering->rx_pending > RX_BD_NUM_MAX ||
+	अगर (ering->rx_pending > RX_BD_NUM_MAX ||
 	    ering->rx_mini_pending ||
 	    ering->rx_jumbo_pending ||
 	    ering->rx_pending > TX_BD_NUM_MAX)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (netif_running(ndev))
-		return -EBUSY;
+	अगर (netअगर_running(ndev))
+		वापस -EBUSY;
 
 	lp->rx_bd_num = ering->rx_pending;
 	lp->tx_bd_num = ering->tx_pending;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * axienet_ethtools_get_pauseparam - Get the pause parameter setting for
+ * axienet_ethtools_get_छोड़ोparam - Get the छोड़ो parameter setting क्रम
  *				     Tx and Rx paths.
- * @ndev:	Pointer to net_device structure
- * @epauseparm:	Pointer to ethtool_pauseparam structure.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
+ * @eछोड़ोparm:	Poपूर्णांकer to ethtool_छोड़ोparam काष्ठाure.
  *
- * This implements ethtool command for getting axi ethernet pause frame
+ * This implements ethtool command क्रम getting axi ethernet छोड़ो frame
  * setting. Issue "ethtool -a ethX" to execute this function.
  */
-static void
-axienet_ethtools_get_pauseparam(struct net_device *ndev,
-				struct ethtool_pauseparam *epauseparm)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल व्योम
+axienet_ethtools_get_छोड़ोparam(काष्ठा net_device *ndev,
+				काष्ठा ethtool_छोड़ोparam *eछोड़ोparm)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	phylink_ethtool_get_pauseparam(lp->phylink, epauseparm);
-}
+	phylink_ethtool_get_छोड़ोparam(lp->phylink, eछोड़ोparm);
+पूर्ण
 
 /**
- * axienet_ethtools_set_pauseparam - Set device pause parameter(flow control)
+ * axienet_ethtools_set_छोड़ोparam - Set device छोड़ो parameter(flow control)
  *				     settings.
- * @ndev:	Pointer to net_device structure
- * @epauseparm:Pointer to ethtool_pauseparam structure
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
+ * @eछोड़ोparm:Poपूर्णांकer to ethtool_छोड़ोparam काष्ठाure
  *
- * This implements ethtool command for enabling flow control on Rx and Tx
+ * This implements ethtool command क्रम enabling flow control on Rx and Tx
  * paths. Issue "ethtool -A ethX tx on|off" under linux prompt to execute this
  * function.
  *
- * Return: 0 on success, -EFAULT if device is running
+ * Return: 0 on success, -EFAULT अगर device is running
  */
-static int
-axienet_ethtools_set_pauseparam(struct net_device *ndev,
-				struct ethtool_pauseparam *epauseparm)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल पूर्णांक
+axienet_ethtools_set_छोड़ोparam(काष्ठा net_device *ndev,
+				काष्ठा ethtool_छोड़ोparam *eछोड़ोparm)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	return phylink_ethtool_set_pauseparam(lp->phylink, epauseparm);
-}
+	वापस phylink_ethtool_set_छोड़ोparam(lp->phylink, eछोड़ोparm);
+पूर्ण
 
 /**
- * axienet_ethtools_get_coalesce - Get DMA interrupt coalescing count.
- * @ndev:	Pointer to net_device structure
- * @ecoalesce:	Pointer to ethtool_coalesce structure
+ * axienet_ethtools_get_coalesce - Get DMA पूर्णांकerrupt coalescing count.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
+ * @ecoalesce:	Poपूर्णांकer to ethtool_coalesce काष्ठाure
  *
- * This implements ethtool command for getting the DMA interrupt coalescing
+ * This implements ethtool command क्रम getting the DMA पूर्णांकerrupt coalescing
  * count on Tx and Rx paths. Issue "ethtool -c ethX" under linux prompt to
  * execute this function.
  *
  * Return: 0 always
  */
-static int axienet_ethtools_get_coalesce(struct net_device *ndev,
-					 struct ethtool_coalesce *ecoalesce)
-{
+अटल पूर्णांक axienet_ethtools_get_coalesce(काष्ठा net_device *ndev,
+					 काष्ठा ethtool_coalesce *ecoalesce)
+अणु
 	u32 regval = 0;
-	struct axienet_local *lp = netdev_priv(ndev);
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 	regval = axienet_dma_in32(lp, XAXIDMA_RX_CR_OFFSET);
 	ecoalesce->rx_max_coalesced_frames = (regval & XAXIDMA_COALESCE_MASK)
 					     >> XAXIDMA_COALESCE_SHIFT;
 	regval = axienet_dma_in32(lp, XAXIDMA_TX_CR_OFFSET);
 	ecoalesce->tx_max_coalesced_frames = (regval & XAXIDMA_COALESCE_MASK)
 					     >> XAXIDMA_COALESCE_SHIFT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * axienet_ethtools_set_coalesce - Set DMA interrupt coalescing count.
- * @ndev:	Pointer to net_device structure
- * @ecoalesce:	Pointer to ethtool_coalesce structure
+ * axienet_ethtools_set_coalesce - Set DMA पूर्णांकerrupt coalescing count.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure
+ * @ecoalesce:	Poपूर्णांकer to ethtool_coalesce काष्ठाure
  *
- * This implements ethtool command for setting the DMA interrupt coalescing
+ * This implements ethtool command क्रम setting the DMA पूर्णांकerrupt coalescing
  * count on Tx and Rx paths. Issue "ethtool -C ethX rx-frames 5" under linux
  * prompt to execute this function.
  *
  * Return: 0, on success, Non-zero error value on failure.
  */
-static int axienet_ethtools_set_coalesce(struct net_device *ndev,
-					 struct ethtool_coalesce *ecoalesce)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल पूर्णांक axienet_ethtools_set_coalesce(काष्ठा net_device *ndev,
+					 काष्ठा ethtool_coalesce *ecoalesce)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	if (netif_running(ndev)) {
+	अगर (netअगर_running(ndev)) अणु
 		netdev_err(ndev,
 			   "Please stop netif before applying configuration\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (ecoalesce->rx_max_coalesced_frames)
+	अगर (ecoalesce->rx_max_coalesced_frames)
 		lp->coalesce_count_rx = ecoalesce->rx_max_coalesced_frames;
-	if (ecoalesce->tx_max_coalesced_frames)
+	अगर (ecoalesce->tx_max_coalesced_frames)
 		lp->coalesce_count_tx = ecoalesce->tx_max_coalesced_frames;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-axienet_ethtools_get_link_ksettings(struct net_device *ndev,
-				    struct ethtool_link_ksettings *cmd)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल पूर्णांक
+axienet_ethtools_get_link_ksettings(काष्ठा net_device *ndev,
+				    काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	return phylink_ethtool_ksettings_get(lp->phylink, cmd);
-}
+	वापस phylink_ethtool_ksettings_get(lp->phylink, cmd);
+पूर्ण
 
-static int
-axienet_ethtools_set_link_ksettings(struct net_device *ndev,
-				    const struct ethtool_link_ksettings *cmd)
-{
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल पूर्णांक
+axienet_ethtools_set_link_ksettings(काष्ठा net_device *ndev,
+				    स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	return phylink_ethtool_ksettings_set(lp->phylink, cmd);
-}
+	वापस phylink_ethtool_ksettings_set(lp->phylink, cmd);
+पूर्ण
 
-static int axienet_ethtools_nway_reset(struct net_device *dev)
-{
-	struct axienet_local *lp = netdev_priv(dev);
+अटल पूर्णांक axienet_ethtools_nway_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा axienet_local *lp = netdev_priv(dev);
 
-	return phylink_ethtool_nway_reset(lp->phylink);
-}
+	वापस phylink_ethtool_nway_reset(lp->phylink);
+पूर्ण
 
-static const struct ethtool_ops axienet_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops axienet_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_MAX_FRAMES,
 	.get_drvinfo    = axienet_ethtools_get_drvinfo,
 	.get_regs_len   = axienet_ethtools_get_regs_len,
@@ -1484,41 +1485,41 @@ static const struct ethtool_ops axienet_ethtool_ops = {
 	.get_link       = ethtool_op_get_link,
 	.get_ringparam	= axienet_ethtools_get_ringparam,
 	.set_ringparam	= axienet_ethtools_set_ringparam,
-	.get_pauseparam = axienet_ethtools_get_pauseparam,
-	.set_pauseparam = axienet_ethtools_set_pauseparam,
+	.get_छोड़ोparam = axienet_ethtools_get_छोड़ोparam,
+	.set_छोड़ोparam = axienet_ethtools_set_छोड़ोparam,
 	.get_coalesce   = axienet_ethtools_get_coalesce,
 	.set_coalesce   = axienet_ethtools_set_coalesce,
 	.get_link_ksettings = axienet_ethtools_get_link_ksettings,
 	.set_link_ksettings = axienet_ethtools_set_link_ksettings,
 	.nway_reset	= axienet_ethtools_nway_reset,
-};
+पूर्ण;
 
-static void axienet_validate(struct phylink_config *config,
-			     unsigned long *supported,
-			     struct phylink_link_state *state)
-{
-	struct net_device *ndev = to_net_dev(config->dev);
-	struct axienet_local *lp = netdev_priv(ndev);
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
+अटल व्योम axienet_validate(काष्ठा phylink_config *config,
+			     अचिन्हित दीर्घ *supported,
+			     काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(config->dev);
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
 
-	/* Only support the mode we are configured for */
-	switch (state->interface) {
-	case PHY_INTERFACE_MODE_NA:
-		break;
-	case PHY_INTERFACE_MODE_1000BASEX:
-	case PHY_INTERFACE_MODE_SGMII:
-		if (lp->switch_x_sgmii)
-			break;
+	/* Only support the mode we are configured क्रम */
+	चयन (state->पूर्णांकerface) अणु
+	हाल PHY_INTERFACE_MODE_NA:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_1000BASEX:
+	हाल PHY_INTERFACE_MODE_SGMII:
+		अगर (lp->चयन_x_sgmii)
+			अवरोध;
 		fallthrough;
-	default:
-		if (state->interface != lp->phy_mode) {
+	शेष:
+		अगर (state->पूर्णांकerface != lp->phy_mode) अणु
 			netdev_warn(ndev, "Cannot use PHY mode %s, supported: %s\n",
-				    phy_modes(state->interface),
+				    phy_modes(state->पूर्णांकerface),
 				    phy_modes(lp->phy_mode));
-			bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-			return;
-		}
-	}
+			biपंचांगap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	phylink_set(mask, Autoneg);
 	phylink_set_port_modes(mask);
@@ -1526,205 +1527,205 @@ static void axienet_validate(struct phylink_config *config,
 	phylink_set(mask, Asym_Pause);
 	phylink_set(mask, Pause);
 
-	switch (state->interface) {
-	case PHY_INTERFACE_MODE_NA:
-	case PHY_INTERFACE_MODE_1000BASEX:
-	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_GMII:
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+	चयन (state->पूर्णांकerface) अणु
+	हाल PHY_INTERFACE_MODE_NA:
+	हाल PHY_INTERFACE_MODE_1000BASEX:
+	हाल PHY_INTERFACE_MODE_SGMII:
+	हाल PHY_INTERFACE_MODE_GMII:
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		phylink_set(mask, 1000baseX_Full);
 		phylink_set(mask, 1000baseT_Full);
-		if (state->interface == PHY_INTERFACE_MODE_1000BASEX)
-			break;
+		अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_1000BASEX)
+			अवरोध;
 		fallthrough;
-	case PHY_INTERFACE_MODE_MII:
+	हाल PHY_INTERFACE_MODE_MII:
 		phylink_set(mask, 100baseT_Full);
 		phylink_set(mask, 10baseT_Full);
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	bitmap_and(supported, supported, mask,
+	biपंचांगap_and(supported, supported, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-	bitmap_and(state->advertising, state->advertising, mask,
+	biपंचांगap_and(state->advertising, state->advertising, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-}
+पूर्ण
 
-static void axienet_mac_pcs_get_state(struct phylink_config *config,
-				      struct phylink_link_state *state)
-{
-	struct net_device *ndev = to_net_dev(config->dev);
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल व्योम axienet_mac_pcs_get_state(काष्ठा phylink_config *config,
+				      काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(config->dev);
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	switch (state->interface) {
-	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_1000BASEX:
+	चयन (state->पूर्णांकerface) अणु
+	हाल PHY_INTERFACE_MODE_SGMII:
+	हाल PHY_INTERFACE_MODE_1000BASEX:
 		phylink_mii_c22_pcs_get_state(lp->pcs_phy, state);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void axienet_mac_an_restart(struct phylink_config *config)
-{
-	struct net_device *ndev = to_net_dev(config->dev);
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल व्योम axienet_mac_an_restart(काष्ठा phylink_config *config)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(config->dev);
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
 	phylink_mii_c22_pcs_an_restart(lp->pcs_phy);
-}
+पूर्ण
 
-static int axienet_mac_prepare(struct phylink_config *config, unsigned int mode,
-			       phy_interface_t iface)
-{
-	struct net_device *ndev = to_net_dev(config->dev);
-	struct axienet_local *lp = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक axienet_mac_prepare(काष्ठा phylink_config *config, अचिन्हित पूर्णांक mode,
+			       phy_पूर्णांकerface_t अगरace)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(config->dev);
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	switch (iface) {
-	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_1000BASEX:
-		if (!lp->switch_x_sgmii)
-			return 0;
+	चयन (अगरace) अणु
+	हाल PHY_INTERFACE_MODE_SGMII:
+	हाल PHY_INTERFACE_MODE_1000BASEX:
+		अगर (!lp->चयन_x_sgmii)
+			वापस 0;
 
-		ret = mdiobus_write(lp->pcs_phy->bus,
+		ret = mdiobus_ग_लिखो(lp->pcs_phy->bus,
 				    lp->pcs_phy->addr,
 				    XLNX_MII_STD_SELECT_REG,
-				    iface == PHY_INTERFACE_MODE_SGMII ?
+				    अगरace == PHY_INTERFACE_MODE_SGMII ?
 					XLNX_MII_STD_SELECT_SGMII : 0);
-		if (ret < 0)
+		अगर (ret < 0)
 			netdev_warn(ndev, "Failed to switch PHY interface: %d\n",
 				    ret);
-		return ret;
-	default:
-		return 0;
-	}
-}
+		वापस ret;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void axienet_mac_config(struct phylink_config *config, unsigned int mode,
-			       const struct phylink_link_state *state)
-{
-	struct net_device *ndev = to_net_dev(config->dev);
-	struct axienet_local *lp = netdev_priv(ndev);
-	int ret;
+अटल व्योम axienet_mac_config(काष्ठा phylink_config *config, अचिन्हित पूर्णांक mode,
+			       स्थिर काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(config->dev);
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	switch (state->interface) {
-	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_1000BASEX:
+	चयन (state->पूर्णांकerface) अणु
+	हाल PHY_INTERFACE_MODE_SGMII:
+	हाल PHY_INTERFACE_MODE_1000BASEX:
 		ret = phylink_mii_c22_pcs_config(lp->pcs_phy, mode,
-						 state->interface,
+						 state->पूर्णांकerface,
 						 state->advertising);
-		if (ret < 0)
+		अगर (ret < 0)
 			netdev_warn(ndev, "Failed to configure PCS: %d\n",
 				    ret);
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void axienet_mac_link_down(struct phylink_config *config,
-				  unsigned int mode,
-				  phy_interface_t interface)
-{
-	/* nothing meaningful to do */
-}
+अटल व्योम axienet_mac_link_करोwn(काष्ठा phylink_config *config,
+				  अचिन्हित पूर्णांक mode,
+				  phy_पूर्णांकerface_t पूर्णांकerface)
+अणु
+	/* nothing meaningful to करो */
+पूर्ण
 
-static void axienet_mac_link_up(struct phylink_config *config,
-				struct phy_device *phy,
-				unsigned int mode, phy_interface_t interface,
-				int speed, int duplex,
-				bool tx_pause, bool rx_pause)
-{
-	struct net_device *ndev = to_net_dev(config->dev);
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल व्योम axienet_mac_link_up(काष्ठा phylink_config *config,
+				काष्ठा phy_device *phy,
+				अचिन्हित पूर्णांक mode, phy_पूर्णांकerface_t पूर्णांकerface,
+				पूर्णांक speed, पूर्णांक duplex,
+				bool tx_छोड़ो, bool rx_छोड़ो)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(config->dev);
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 	u32 emmc_reg, fcc_reg;
 
 	emmc_reg = axienet_ior(lp, XAE_EMMC_OFFSET);
 	emmc_reg &= ~XAE_EMMC_LINKSPEED_MASK;
 
-	switch (speed) {
-	case SPEED_1000:
+	चयन (speed) अणु
+	हाल SPEED_1000:
 		emmc_reg |= XAE_EMMC_LINKSPD_1000;
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		emmc_reg |= XAE_EMMC_LINKSPD_100;
-		break;
-	case SPEED_10:
+		अवरोध;
+	हाल SPEED_10:
 		emmc_reg |= XAE_EMMC_LINKSPD_10;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&ndev->dev,
 			"Speed other than 10, 100 or 1Gbps is not supported\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	axienet_iow(lp, XAE_EMMC_OFFSET, emmc_reg);
 
 	fcc_reg = axienet_ior(lp, XAE_FCC_OFFSET);
-	if (tx_pause)
+	अगर (tx_छोड़ो)
 		fcc_reg |= XAE_FCC_FCTX_MASK;
-	else
+	अन्यथा
 		fcc_reg &= ~XAE_FCC_FCTX_MASK;
-	if (rx_pause)
+	अगर (rx_छोड़ो)
 		fcc_reg |= XAE_FCC_FCRX_MASK;
-	else
+	अन्यथा
 		fcc_reg &= ~XAE_FCC_FCRX_MASK;
 	axienet_iow(lp, XAE_FCC_OFFSET, fcc_reg);
-}
+पूर्ण
 
-static const struct phylink_mac_ops axienet_phylink_ops = {
+अटल स्थिर काष्ठा phylink_mac_ops axienet_phylink_ops = अणु
 	.validate = axienet_validate,
 	.mac_pcs_get_state = axienet_mac_pcs_get_state,
 	.mac_an_restart = axienet_mac_an_restart,
 	.mac_prepare = axienet_mac_prepare,
 	.mac_config = axienet_mac_config,
-	.mac_link_down = axienet_mac_link_down,
+	.mac_link_करोwn = axienet_mac_link_करोwn,
 	.mac_link_up = axienet_mac_link_up,
-};
+पूर्ण;
 
 /**
- * axienet_dma_err_handler - Work queue task for Axi DMA Error
- * @work:	pointer to work_struct
+ * axienet_dma_err_handler - Work queue task क्रम Axi DMA Error
+ * @work:	poपूर्णांकer to work_काष्ठा
  *
  * Resets the Axi DMA and Axi Ethernet devices, and reconfigures the
  * Tx/Rx BDs.
  */
-static void axienet_dma_err_handler(struct work_struct *work)
-{
+अटल व्योम axienet_dma_err_handler(काष्ठा work_काष्ठा *work)
+अणु
 	u32 axienet_status;
 	u32 cr, i;
-	struct axienet_local *lp = container_of(work, struct axienet_local,
+	काष्ठा axienet_local *lp = container_of(work, काष्ठा axienet_local,
 						dma_err_task);
-	struct net_device *ndev = lp->ndev;
-	struct axidma_bd *cur_p;
+	काष्ठा net_device *ndev = lp->ndev;
+	काष्ठा axidma_bd *cur_p;
 
 	axienet_setoptions(ndev, lp->options &
 			   ~(XAE_OPTION_TXEN | XAE_OPTION_RXEN));
-	/* When we do an Axi Ethernet reset, it resets the complete core
-	 * including the MDIO. MDIO must be disabled before resetting.
-	 * Hold MDIO bus lock to avoid MDIO accesses during the reset.
+	/* When we करो an Axi Ethernet reset, it resets the complete core
+	 * including the MDIO. MDIO must be disabled beक्रमe resetting.
+	 * Hold MDIO bus lock to aव्योम MDIO accesses during the reset.
 	 */
 	axienet_lock_mii(lp);
 	__axienet_device_reset(lp);
 	axienet_unlock_mii(lp);
 
-	for (i = 0; i < lp->tx_bd_num; i++) {
+	क्रम (i = 0; i < lp->tx_bd_num; i++) अणु
 		cur_p = &lp->tx_bd_v[i];
-		if (cur_p->cntrl) {
+		अगर (cur_p->cntrl) अणु
 			dma_addr_t addr = desc_get_phys_addr(lp, cur_p);
 
 			dma_unmap_single(ndev->dev.parent, addr,
 					 (cur_p->cntrl &
 					  XAXIDMA_BD_CTRL_LENGTH_MASK),
 					 DMA_TO_DEVICE);
-		}
-		if (cur_p->skb)
-			dev_kfree_skb_irq(cur_p->skb);
+		पूर्ण
+		अगर (cur_p->skb)
+			dev_kमुक्त_skb_irq(cur_p->skb);
 		cur_p->phys = 0;
 		cur_p->phys_msb = 0;
 		cur_p->cntrl = 0;
@@ -1734,10 +1735,10 @@ static void axienet_dma_err_handler(struct work_struct *work)
 		cur_p->app2 = 0;
 		cur_p->app3 = 0;
 		cur_p->app4 = 0;
-		cur_p->skb = NULL;
-	}
+		cur_p->skb = शून्य;
+	पूर्ण
 
-	for (i = 0; i < lp->rx_bd_num; i++) {
+	क्रम (i = 0; i < lp->rx_bd_num; i++) अणु
 		cur_p = &lp->rx_bd_v[i];
 		cur_p->status = 0;
 		cur_p->app0 = 0;
@@ -1745,51 +1746,51 @@ static void axienet_dma_err_handler(struct work_struct *work)
 		cur_p->app2 = 0;
 		cur_p->app3 = 0;
 		cur_p->app4 = 0;
-	}
+	पूर्ण
 
 	lp->tx_bd_ci = 0;
 	lp->tx_bd_tail = 0;
 	lp->rx_bd_ci = 0;
 
-	/* Start updating the Rx channel control register */
+	/* Start updating the Rx channel control रेजिस्टर */
 	cr = axienet_dma_in32(lp, XAXIDMA_RX_CR_OFFSET);
-	/* Update the interrupt coalesce count */
+	/* Update the पूर्णांकerrupt coalesce count */
 	cr = ((cr & ~XAXIDMA_COALESCE_MASK) |
 	      (XAXIDMA_DFT_RX_THRESHOLD << XAXIDMA_COALESCE_SHIFT));
-	/* Update the delay timer count */
+	/* Update the delay समयr count */
 	cr = ((cr & ~XAXIDMA_DELAY_MASK) |
 	      (XAXIDMA_DFT_RX_WAITBOUND << XAXIDMA_DELAY_SHIFT));
-	/* Enable coalesce, delay timer and error interrupts */
+	/* Enable coalesce, delay समयr and error पूर्णांकerrupts */
 	cr |= XAXIDMA_IRQ_ALL_MASK;
-	/* Finally write to the Rx channel control register */
+	/* Finally ग_लिखो to the Rx channel control रेजिस्टर */
 	axienet_dma_out32(lp, XAXIDMA_RX_CR_OFFSET, cr);
 
-	/* Start updating the Tx channel control register */
+	/* Start updating the Tx channel control रेजिस्टर */
 	cr = axienet_dma_in32(lp, XAXIDMA_TX_CR_OFFSET);
-	/* Update the interrupt coalesce count */
+	/* Update the पूर्णांकerrupt coalesce count */
 	cr = (((cr & ~XAXIDMA_COALESCE_MASK)) |
 	      (XAXIDMA_DFT_TX_THRESHOLD << XAXIDMA_COALESCE_SHIFT));
-	/* Update the delay timer count */
+	/* Update the delay समयr count */
 	cr = (((cr & ~XAXIDMA_DELAY_MASK)) |
 	      (XAXIDMA_DFT_TX_WAITBOUND << XAXIDMA_DELAY_SHIFT));
-	/* Enable coalesce, delay timer and error interrupts */
+	/* Enable coalesce, delay समयr and error पूर्णांकerrupts */
 	cr |= XAXIDMA_IRQ_ALL_MASK;
-	/* Finally write to the Tx channel control register */
+	/* Finally ग_लिखो to the Tx channel control रेजिस्टर */
 	axienet_dma_out32(lp, XAXIDMA_TX_CR_OFFSET, cr);
 
-	/* Populate the tail pointer and bring the Rx Axi DMA engine out of
-	 * halted state. This will make the Rx side ready for reception.
+	/* Populate the tail poपूर्णांकer and bring the Rx Axi DMA engine out of
+	 * halted state. This will make the Rx side पढ़ोy क्रम reception.
 	 */
 	axienet_dma_out_addr(lp, XAXIDMA_RX_CDESC_OFFSET, lp->rx_bd_p);
 	cr = axienet_dma_in32(lp, XAXIDMA_RX_CR_OFFSET);
 	axienet_dma_out32(lp, XAXIDMA_RX_CR_OFFSET,
 			  cr | XAXIDMA_CR_RUNSTOP_MASK);
 	axienet_dma_out_addr(lp, XAXIDMA_RX_TDESC_OFFSET, lp->rx_bd_p +
-			     (sizeof(*lp->rx_bd_v) * (lp->rx_bd_num - 1)));
+			     (माप(*lp->rx_bd_v) * (lp->rx_bd_num - 1)));
 
-	/* Write to the RS (Run-stop) bit in the Tx channel control register.
-	 * Tx channel is now ready to run. But only after we write to the
-	 * tail pointer register that the Tx channel will start transmitting
+	/* Write to the RS (Run-stop) bit in the Tx channel control रेजिस्टर.
+	 * Tx channel is now पढ़ोy to run. But only after we ग_लिखो to the
+	 * tail poपूर्णांकer रेजिस्टर that the Tx channel will start transmitting
 	 */
 	axienet_dma_out_addr(lp, XAXIDMA_TX_CDESC_OFFSET, lp->tx_bd_p);
 	cr = axienet_dma_in32(lp, XAXIDMA_TX_CR_OFFSET);
@@ -1801,50 +1802,50 @@ static void axienet_dma_err_handler(struct work_struct *work)
 	axienet_iow(lp, XAE_RCW1_OFFSET, axienet_status);
 
 	axienet_status = axienet_ior(lp, XAE_IP_OFFSET);
-	if (axienet_status & XAE_INT_RXRJECT_MASK)
+	अगर (axienet_status & XAE_INT_RXRJECT_MASK)
 		axienet_iow(lp, XAE_IS_OFFSET, XAE_INT_RXRJECT_MASK);
 	axienet_iow(lp, XAE_IE_OFFSET, lp->eth_irq > 0 ?
 		    XAE_INT_RECV_ERROR_MASK : 0);
 	axienet_iow(lp, XAE_FCC_OFFSET, XAE_FCC_FCRX_MASK);
 
-	/* Sync default options with HW but leave receiver and
+	/* Sync शेष options with HW but leave receiver and
 	 * transmitter disabled.
 	 */
 	axienet_setoptions(ndev, lp->options &
 			   ~(XAE_OPTION_TXEN | XAE_OPTION_RXEN));
-	axienet_set_mac_address(ndev, NULL);
+	axienet_set_mac_address(ndev, शून्य);
 	axienet_set_multicast_list(ndev);
 	axienet_setoptions(ndev, lp->options);
-}
+पूर्ण
 
 /**
  * axienet_probe - Axi Ethernet probe function.
- * @pdev:	Pointer to platform device structure.
+ * @pdev:	Poपूर्णांकer to platक्रमm device काष्ठाure.
  *
  * Return: 0, on success
  *	    Non-zero error value on failure.
  *
- * This is the probe routine for Axi Ethernet driver. This is called before
+ * This is the probe routine क्रम Axi Ethernet driver. This is called beक्रमe
  * any other driver routines are invoked. It allocates and sets up the Ethernet
  * device. Parses through device tree and populates fields of
- * axienet_local. It registers the Ethernet device.
+ * axienet_local. It रेजिस्टरs the Ethernet device.
  */
-static int axienet_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct device_node *np;
-	struct axienet_local *lp;
-	struct net_device *ndev;
-	struct resource *ethres;
+अटल पूर्णांक axienet_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा device_node *np;
+	काष्ठा axienet_local *lp;
+	काष्ठा net_device *ndev;
+	काष्ठा resource *ethres;
 	u8 mac_addr[ETH_ALEN];
-	int addr_width = 32;
+	पूर्णांक addr_width = 32;
 	u32 value;
 
-	ndev = alloc_etherdev(sizeof(*lp));
-	if (!ndev)
-		return -ENOMEM;
+	ndev = alloc_etherdev(माप(*lp));
+	अगर (!ndev)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, ndev);
+	platक्रमm_set_drvdata(pdev, ndev);
 
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 	ndev->flags &= ~IFF_MULTICAST;  /* clear multicast */
@@ -1864,237 +1865,237 @@ static int axienet_probe(struct platform_device *pdev)
 	lp->tx_bd_num = TX_BD_NUM_DEFAULT;
 
 	lp->axi_clk = devm_clk_get_optional(&pdev->dev, "s_axi_lite_clk");
-	if (!lp->axi_clk) {
-		/* For backward compatibility, if named AXI clock is not present,
-		 * treat the first clock specified as the AXI clock.
+	अगर (!lp->axi_clk) अणु
+		/* For backward compatibility, अगर named AXI घड़ी is not present,
+		 * treat the first घड़ी specअगरied as the AXI घड़ी.
 		 */
-		lp->axi_clk = devm_clk_get_optional(&pdev->dev, NULL);
-	}
-	if (IS_ERR(lp->axi_clk)) {
+		lp->axi_clk = devm_clk_get_optional(&pdev->dev, शून्य);
+	पूर्ण
+	अगर (IS_ERR(lp->axi_clk)) अणु
 		ret = PTR_ERR(lp->axi_clk);
-		goto free_netdev;
-	}
+		जाओ मुक्त_netdev;
+	पूर्ण
 	ret = clk_prepare_enable(lp->axi_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Unable to enable AXI clock: %d\n", ret);
-		goto free_netdev;
-	}
+		जाओ मुक्त_netdev;
+	पूर्ण
 
 	lp->misc_clks[0].id = "axis_clk";
 	lp->misc_clks[1].id = "ref_clk";
 	lp->misc_clks[2].id = "mgt_clk";
 
 	ret = devm_clk_bulk_get_optional(&pdev->dev, XAE_NUM_MISC_CLOCKS, lp->misc_clks);
-	if (ret)
-		goto cleanup_clk;
+	अगर (ret)
+		जाओ cleanup_clk;
 
 	ret = clk_bulk_prepare_enable(XAE_NUM_MISC_CLOCKS, lp->misc_clks);
-	if (ret)
-		goto cleanup_clk;
+	अगर (ret)
+		जाओ cleanup_clk;
 
-	/* Map device registers */
-	ethres = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	/* Map device रेजिस्टरs */
+	ethres = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	lp->regs = devm_ioremap_resource(&pdev->dev, ethres);
-	if (IS_ERR(lp->regs)) {
+	अगर (IS_ERR(lp->regs)) अणु
 		ret = PTR_ERR(lp->regs);
-		goto cleanup_clk;
-	}
+		जाओ cleanup_clk;
+	पूर्ण
 	lp->regs_start = ethres->start;
 
-	/* Setup checksum offload, but default to off if not specified */
+	/* Setup checksum offload, but शेष to off अगर not specअगरied */
 	lp->features = 0;
 
-	ret = of_property_read_u32(pdev->dev.of_node, "xlnx,txcsum", &value);
-	if (!ret) {
-		switch (value) {
-		case 1:
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node, "xlnx,txcsum", &value);
+	अगर (!ret) अणु
+		चयन (value) अणु
+		हाल 1:
 			lp->csum_offload_on_tx_path =
 				XAE_FEATURE_PARTIAL_TX_CSUM;
 			lp->features |= XAE_FEATURE_PARTIAL_TX_CSUM;
 			/* Can checksum TCP/UDP over IPv4. */
 			ndev->features |= NETIF_F_IP_CSUM;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			lp->csum_offload_on_tx_path =
 				XAE_FEATURE_FULL_TX_CSUM;
 			lp->features |= XAE_FEATURE_FULL_TX_CSUM;
 			/* Can checksum TCP/UDP over IPv4. */
 			ndev->features |= NETIF_F_IP_CSUM;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			lp->csum_offload_on_tx_path = XAE_NO_CSUM_OFFLOAD;
-		}
-	}
-	ret = of_property_read_u32(pdev->dev.of_node, "xlnx,rxcsum", &value);
-	if (!ret) {
-		switch (value) {
-		case 1:
+		पूर्ण
+	पूर्ण
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node, "xlnx,rxcsum", &value);
+	अगर (!ret) अणु
+		चयन (value) अणु
+		हाल 1:
 			lp->csum_offload_on_rx_path =
 				XAE_FEATURE_PARTIAL_RX_CSUM;
 			lp->features |= XAE_FEATURE_PARTIAL_RX_CSUM;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			lp->csum_offload_on_rx_path =
 				XAE_FEATURE_FULL_RX_CSUM;
 			lp->features |= XAE_FEATURE_FULL_RX_CSUM;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			lp->csum_offload_on_rx_path = XAE_NO_CSUM_OFFLOAD;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* For supporting jumbo frames, the Axi Ethernet hardware must have
 	 * a larger Rx/Tx Memory. Typically, the size must be large so that
 	 * we can enable jumbo option and start supporting jumbo frames.
-	 * Here we check for memory allocated for Rx/Tx in the hardware from
+	 * Here we check क्रम memory allocated क्रम Rx/Tx in the hardware from
 	 * the device-tree and accordingly set flags.
 	 */
-	of_property_read_u32(pdev->dev.of_node, "xlnx,rxmem", &lp->rxmem);
+	of_property_पढ़ो_u32(pdev->dev.of_node, "xlnx,rxmem", &lp->rxmem);
 
-	lp->switch_x_sgmii = of_property_read_bool(pdev->dev.of_node,
+	lp->चयन_x_sgmii = of_property_पढ़ो_bool(pdev->dev.of_node,
 						   "xlnx,switch-x-sgmii");
 
 	/* Start with the proprietary, and broken phy_type */
-	ret = of_property_read_u32(pdev->dev.of_node, "xlnx,phy-type", &value);
-	if (!ret) {
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node, "xlnx,phy-type", &value);
+	अगर (!ret) अणु
 		netdev_warn(ndev, "Please upgrade your device tree binary blob to use phy-mode");
-		switch (value) {
-		case XAE_PHY_TYPE_MII:
+		चयन (value) अणु
+		हाल XAE_PHY_TYPE_MII:
 			lp->phy_mode = PHY_INTERFACE_MODE_MII;
-			break;
-		case XAE_PHY_TYPE_GMII:
+			अवरोध;
+		हाल XAE_PHY_TYPE_GMII:
 			lp->phy_mode = PHY_INTERFACE_MODE_GMII;
-			break;
-		case XAE_PHY_TYPE_RGMII_2_0:
+			अवरोध;
+		हाल XAE_PHY_TYPE_RGMII_2_0:
 			lp->phy_mode = PHY_INTERFACE_MODE_RGMII_ID;
-			break;
-		case XAE_PHY_TYPE_SGMII:
+			अवरोध;
+		हाल XAE_PHY_TYPE_SGMII:
 			lp->phy_mode = PHY_INTERFACE_MODE_SGMII;
-			break;
-		case XAE_PHY_TYPE_1000BASE_X:
+			अवरोध;
+		हाल XAE_PHY_TYPE_1000BASE_X:
 			lp->phy_mode = PHY_INTERFACE_MODE_1000BASEX;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-			goto cleanup_clk;
-		}
-	} else {
+			जाओ cleanup_clk;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = of_get_phy_mode(pdev->dev.of_node, &lp->phy_mode);
-		if (ret)
-			goto cleanup_clk;
-	}
-	if (lp->switch_x_sgmii && lp->phy_mode != PHY_INTERFACE_MODE_SGMII &&
-	    lp->phy_mode != PHY_INTERFACE_MODE_1000BASEX) {
+		अगर (ret)
+			जाओ cleanup_clk;
+	पूर्ण
+	अगर (lp->चयन_x_sgmii && lp->phy_mode != PHY_INTERFACE_MODE_SGMII &&
+	    lp->phy_mode != PHY_INTERFACE_MODE_1000BASEX) अणु
 		dev_err(&pdev->dev, "xlnx,switch-x-sgmii only supported with SGMII or 1000BaseX\n");
 		ret = -EINVAL;
-		goto cleanup_clk;
-	}
+		जाओ cleanup_clk;
+	पूर्ण
 
-	/* Find the DMA node, map the DMA registers, and decode the DMA IRQs */
+	/* Find the DMA node, map the DMA रेजिस्टरs, and decode the DMA IRQs */
 	np = of_parse_phandle(pdev->dev.of_node, "axistream-connected", 0);
-	if (np) {
-		struct resource dmares;
+	अगर (np) अणु
+		काष्ठा resource dmares;
 
 		ret = of_address_to_resource(np, 0, &dmares);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev,
 				"unable to get DMA resource\n");
 			of_node_put(np);
-			goto cleanup_clk;
-		}
+			जाओ cleanup_clk;
+		पूर्ण
 		lp->dma_regs = devm_ioremap_resource(&pdev->dev,
 						     &dmares);
 		lp->rx_irq = irq_of_parse_and_map(np, 1);
 		lp->tx_irq = irq_of_parse_and_map(np, 0);
 		of_node_put(np);
-		lp->eth_irq = platform_get_irq_optional(pdev, 0);
-	} else {
-		/* Check for these resources directly on the Ethernet node. */
-		struct resource *res = platform_get_resource(pdev,
+		lp->eth_irq = platक्रमm_get_irq_optional(pdev, 0);
+	पूर्ण अन्यथा अणु
+		/* Check क्रम these resources directly on the Ethernet node. */
+		काष्ठा resource *res = platक्रमm_get_resource(pdev,
 							     IORESOURCE_MEM, 1);
 		lp->dma_regs = devm_ioremap_resource(&pdev->dev, res);
-		lp->rx_irq = platform_get_irq(pdev, 1);
-		lp->tx_irq = platform_get_irq(pdev, 0);
-		lp->eth_irq = platform_get_irq_optional(pdev, 2);
-	}
-	if (IS_ERR(lp->dma_regs)) {
+		lp->rx_irq = platक्रमm_get_irq(pdev, 1);
+		lp->tx_irq = platक्रमm_get_irq(pdev, 0);
+		lp->eth_irq = platक्रमm_get_irq_optional(pdev, 2);
+	पूर्ण
+	अगर (IS_ERR(lp->dma_regs)) अणु
 		dev_err(&pdev->dev, "could not map DMA regs\n");
 		ret = PTR_ERR(lp->dma_regs);
-		goto cleanup_clk;
-	}
-	if ((lp->rx_irq <= 0) || (lp->tx_irq <= 0)) {
+		जाओ cleanup_clk;
+	पूर्ण
+	अगर ((lp->rx_irq <= 0) || (lp->tx_irq <= 0)) अणु
 		dev_err(&pdev->dev, "could not determine irqs\n");
 		ret = -ENOMEM;
-		goto cleanup_clk;
-	}
+		जाओ cleanup_clk;
+	पूर्ण
 
-	/* Autodetect the need for 64-bit DMA pointers.
-	 * When the IP is configured for a bus width bigger than 32 bits,
-	 * writing the MSB registers is mandatory, even if they are all 0.
-	 * We can detect this case by writing all 1's to one such register
-	 * and see if that sticks: when the IP is configured for 32 bits
-	 * only, those registers are RES0.
-	 * Those MSB registers were introduced in IP v7.1, which we check first.
+	/* Autodetect the need क्रम 64-bit DMA poपूर्णांकers.
+	 * When the IP is configured क्रम a bus width bigger than 32 bits,
+	 * writing the MSB रेजिस्टरs is mandatory, even अगर they are all 0.
+	 * We can detect this हाल by writing all 1's to one such रेजिस्टर
+	 * and see अगर that sticks: when the IP is configured क्रम 32 bits
+	 * only, those रेजिस्टरs are RES0.
+	 * Those MSB रेजिस्टरs were पूर्णांकroduced in IP v7.1, which we check first.
 	 */
-	if ((axienet_ior(lp, XAE_ID_OFFSET) >> 24) >= 0x9) {
-		void __iomem *desc = lp->dma_regs + XAXIDMA_TX_CDESC_OFFSET + 4;
+	अगर ((axienet_ior(lp, XAE_ID_OFFSET) >> 24) >= 0x9) अणु
+		व्योम __iomem *desc = lp->dma_regs + XAXIDMA_TX_CDESC_OFFSET + 4;
 
-		iowrite32(0x0, desc);
-		if (ioread32(desc) == 0) {	/* sanity check */
-			iowrite32(0xffffffff, desc);
-			if (ioread32(desc) > 0) {
+		ioग_लिखो32(0x0, desc);
+		अगर (ioपढ़ो32(desc) == 0) अणु	/* sanity check */
+			ioग_लिखो32(0xffffffff, desc);
+			अगर (ioपढ़ो32(desc) > 0) अणु
 				lp->features |= XAE_FEATURE_DMA_64BIT;
 				addr_width = 64;
 				dev_info(&pdev->dev,
 					 "autodetected 64-bit DMA range\n");
-			}
-			iowrite32(0x0, desc);
-		}
-	}
+			पूर्ण
+			ioग_लिखो32(0x0, desc);
+		पूर्ण
+	पूर्ण
 
 	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(addr_width));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "No suitable DMA available\n");
-		goto cleanup_clk;
-	}
+		जाओ cleanup_clk;
+	पूर्ण
 
-	/* Check for Ethernet core IRQ (optional) */
-	if (lp->eth_irq <= 0)
+	/* Check क्रम Ethernet core IRQ (optional) */
+	अगर (lp->eth_irq <= 0)
 		dev_info(&pdev->dev, "Ethernet core IRQ not defined\n");
 
 	/* Retrieve the MAC address */
 	ret = of_get_mac_address(pdev->dev.of_node, mac_addr);
-	if (!ret) {
+	अगर (!ret) अणु
 		axienet_set_mac_address(ndev, mac_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_warn(&pdev->dev, "could not find MAC address property: %d\n",
 			 ret);
-		axienet_set_mac_address(ndev, NULL);
-	}
+		axienet_set_mac_address(ndev, शून्य);
+	पूर्ण
 
 	lp->coalesce_count_rx = XAXIDMA_DFT_RX_THRESHOLD;
 	lp->coalesce_count_tx = XAXIDMA_DFT_TX_THRESHOLD;
 
 	lp->phy_node = of_parse_phandle(pdev->dev.of_node, "phy-handle", 0);
-	if (lp->phy_node) {
+	अगर (lp->phy_node) अणु
 		ret = axienet_mdio_setup(lp);
-		if (ret)
+		अगर (ret)
 			dev_warn(&pdev->dev,
 				 "error registering MDIO bus: %d\n", ret);
-	}
-	if (lp->phy_mode == PHY_INTERFACE_MODE_SGMII ||
-	    lp->phy_mode == PHY_INTERFACE_MODE_1000BASEX) {
-		if (!lp->phy_node) {
+	पूर्ण
+	अगर (lp->phy_mode == PHY_INTERFACE_MODE_SGMII ||
+	    lp->phy_mode == PHY_INTERFACE_MODE_1000BASEX) अणु
+		अगर (!lp->phy_node) अणु
 			dev_err(&pdev->dev, "phy-handle required for 1000BaseX/SGMII\n");
 			ret = -EINVAL;
-			goto cleanup_mdio;
-		}
+			जाओ cleanup_mdio;
+		पूर्ण
 		lp->pcs_phy = of_mdio_find_device(lp->phy_node);
-		if (!lp->pcs_phy) {
+		अगर (!lp->pcs_phy) अणु
 			ret = -EPROBE_DEFER;
-			goto cleanup_mdio;
-		}
+			जाओ cleanup_mdio;
+		पूर्ण
 		lp->phylink_config.pcs_poll = true;
-	}
+	पूर्ण
 
 	lp->phylink_config.dev = &ndev->dev;
 	lp->phylink_config.type = PHYLINK_NETDEV;
@@ -2102,90 +2103,90 @@ static int axienet_probe(struct platform_device *pdev)
 	lp->phylink = phylink_create(&lp->phylink_config, pdev->dev.fwnode,
 				     lp->phy_mode,
 				     &axienet_phylink_ops);
-	if (IS_ERR(lp->phylink)) {
+	अगर (IS_ERR(lp->phylink)) अणु
 		ret = PTR_ERR(lp->phylink);
 		dev_err(&pdev->dev, "phylink_create error (%i)\n", ret);
-		goto cleanup_mdio;
-	}
+		जाओ cleanup_mdio;
+	पूर्ण
 
-	ret = register_netdev(lp->ndev);
-	if (ret) {
+	ret = रेजिस्टर_netdev(lp->ndev);
+	अगर (ret) अणु
 		dev_err(lp->dev, "register_netdev() error (%i)\n", ret);
-		goto cleanup_phylink;
-	}
+		जाओ cleanup_phylink;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup_phylink:
 	phylink_destroy(lp->phylink);
 
 cleanup_mdio:
-	if (lp->pcs_phy)
+	अगर (lp->pcs_phy)
 		put_device(&lp->pcs_phy->dev);
-	if (lp->mii_bus)
-		axienet_mdio_teardown(lp);
+	अगर (lp->mii_bus)
+		axienet_mdio_tearकरोwn(lp);
 	of_node_put(lp->phy_node);
 
 cleanup_clk:
 	clk_bulk_disable_unprepare(XAE_NUM_MISC_CLOCKS, lp->misc_clks);
 	clk_disable_unprepare(lp->axi_clk);
 
-free_netdev:
-	free_netdev(ndev);
+मुक्त_netdev:
+	मुक्त_netdev(ndev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int axienet_remove(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct axienet_local *lp = netdev_priv(ndev);
+अटल पूर्णांक axienet_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा axienet_local *lp = netdev_priv(ndev);
 
-	unregister_netdev(ndev);
+	unरेजिस्टर_netdev(ndev);
 
-	if (lp->phylink)
+	अगर (lp->phylink)
 		phylink_destroy(lp->phylink);
 
-	if (lp->pcs_phy)
+	अगर (lp->pcs_phy)
 		put_device(&lp->pcs_phy->dev);
 
-	axienet_mdio_teardown(lp);
+	axienet_mdio_tearकरोwn(lp);
 
 	clk_bulk_disable_unprepare(XAE_NUM_MISC_CLOCKS, lp->misc_clks);
 	clk_disable_unprepare(lp->axi_clk);
 
 	of_node_put(lp->phy_node);
-	lp->phy_node = NULL;
+	lp->phy_node = शून्य;
 
-	free_netdev(ndev);
+	मुक्त_netdev(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void axienet_shutdown(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
+अटल व्योम axienet_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
 
 	rtnl_lock();
-	netif_device_detach(ndev);
+	netअगर_device_detach(ndev);
 
-	if (netif_running(ndev))
-		dev_close(ndev);
+	अगर (netअगर_running(ndev))
+		dev_बंद(ndev);
 
 	rtnl_unlock();
-}
+पूर्ण
 
-static struct platform_driver axienet_driver = {
+अटल काष्ठा platक्रमm_driver axienet_driver = अणु
 	.probe = axienet_probe,
-	.remove = axienet_remove,
-	.shutdown = axienet_shutdown,
-	.driver = {
+	.हटाओ = axienet_हटाओ,
+	.shutकरोwn = axienet_shutकरोwn,
+	.driver = अणु
 		 .name = "xilinx_axienet",
 		 .of_match_table = axienet_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(axienet_driver);
+module_platक्रमm_driver(axienet_driver);
 
 MODULE_DESCRIPTION("Xilinx Axi Ethernet driver");
 MODULE_AUTHOR("Xilinx");

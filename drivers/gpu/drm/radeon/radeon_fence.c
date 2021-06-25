@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -25,123 +26,123 @@
  */
 /*
  * Authors:
- *    Jerome Glisse <glisse@freedesktop.org>
+ *    Jerome Glisse <glisse@मुक्तdesktop.org>
  *    Dave Airlie
  */
 
-#include <linux/atomic.h>
-#include <linux/firmware.h>
-#include <linux/kref.h>
-#include <linux/sched/signal.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/wait.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/रुको.h>
 
-#include <drm/drm_device.h>
-#include <drm/drm_file.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_file.h>
 
-#include "radeon.h"
-#include "radeon_reg.h"
-#include "radeon_trace.h"
+#समावेश "radeon.h"
+#समावेश "radeon_reg.h"
+#समावेश "radeon_trace.h"
 
 /*
  * Fences
  * Fences mark an event in the GPUs pipeline and are used
- * for GPU/CPU synchronization.  When the fence is written,
+ * क्रम GPU/CPU synchronization.  When the fence is written,
  * it is expected that all buffers associated with that fence
- * are no longer in use by the associated ring on the GPU and
+ * are no दीर्घer in use by the associated ring on the GPU and
  * that the the relevant GPU caches have been flushed.  Whether
- * we use a scratch register or memory location depends on the asic
- * and whether writeback is enabled.
+ * we use a scratch रेजिस्टर or memory location depends on the asic
+ * and whether ग_लिखोback is enabled.
  */
 
 /**
- * radeon_fence_write - write a fence value
+ * radeon_fence_ग_लिखो - ग_लिखो a fence value
  *
- * @rdev: radeon_device pointer
- * @seq: sequence number to write
+ * @rdev: radeon_device poपूर्णांकer
+ * @seq: sequence number to ग_लिखो
  * @ring: ring index the fence is associated with
  *
- * Writes a fence value to memory or a scratch register (all asics).
+ * Writes a fence value to memory or a scratch रेजिस्टर (all asics).
  */
-static void radeon_fence_write(struct radeon_device *rdev, u32 seq, int ring)
-{
-	struct radeon_fence_driver *drv = &rdev->fence_drv[ring];
-	if (likely(rdev->wb.enabled || !drv->scratch_reg)) {
-		if (drv->cpu_addr) {
+अटल व्योम radeon_fence_ग_लिखो(काष्ठा radeon_device *rdev, u32 seq, पूर्णांक ring)
+अणु
+	काष्ठा radeon_fence_driver *drv = &rdev->fence_drv[ring];
+	अगर (likely(rdev->wb.enabled || !drv->scratch_reg)) अणु
+		अगर (drv->cpu_addr) अणु
 			*drv->cpu_addr = cpu_to_le32(seq);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		WREG32(drv->scratch_reg, seq);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * radeon_fence_read - read a fence value
+ * radeon_fence_पढ़ो - पढ़ो a fence value
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @ring: ring index the fence is associated with
  *
- * Reads a fence value from memory or a scratch register (all asics).
- * Returns the value of the fence read from memory or register.
+ * Reads a fence value from memory or a scratch रेजिस्टर (all asics).
+ * Returns the value of the fence पढ़ो from memory or रेजिस्टर.
  */
-static u32 radeon_fence_read(struct radeon_device *rdev, int ring)
-{
-	struct radeon_fence_driver *drv = &rdev->fence_drv[ring];
+अटल u32 radeon_fence_पढ़ो(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
+	काष्ठा radeon_fence_driver *drv = &rdev->fence_drv[ring];
 	u32 seq = 0;
 
-	if (likely(rdev->wb.enabled || !drv->scratch_reg)) {
-		if (drv->cpu_addr) {
+	अगर (likely(rdev->wb.enabled || !drv->scratch_reg)) अणु
+		अगर (drv->cpu_addr) अणु
 			seq = le32_to_cpu(*drv->cpu_addr);
-		} else {
-			seq = lower_32_bits(atomic64_read(&drv->last_seq));
-		}
-	} else {
+		पूर्ण अन्यथा अणु
+			seq = lower_32_bits(atomic64_पढ़ो(&drv->last_seq));
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		seq = RREG32(drv->scratch_reg);
-	}
-	return seq;
-}
+	पूर्ण
+	वापस seq;
+पूर्ण
 
 /**
  * radeon_fence_schedule_check - schedule lockup check
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @ring: ring index we should work with
  *
- * Queues a delayed work item to check for lockups.
+ * Queues a delayed work item to check क्रम lockups.
  */
-static void radeon_fence_schedule_check(struct radeon_device *rdev, int ring)
-{
+अटल व्योम radeon_fence_schedule_check(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
 	/*
-	 * Do not reset the timer here with mod_delayed_work,
-	 * this can livelock in an interaction with TTM delayed destroy.
+	 * Do not reset the समयr here with mod_delayed_work,
+	 * this can livelock in an पूर्णांकeraction with TTM delayed destroy.
 	 */
-	queue_delayed_work(system_power_efficient_wq,
+	queue_delayed_work(प्रणाली_घातer_efficient_wq,
 			   &rdev->fence_drv[ring].lockup_work,
 			   RADEON_FENCE_JIFFIES_TIMEOUT);
-}
+पूर्ण
 
 /**
  * radeon_fence_emit - emit a fence on the requested ring
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @fence: radeon fence object
  * @ring: ring index the fence is associated with
  *
  * Emits a fence command on the requested ring (all asics).
  * Returns 0 on success, -ENOMEM on failure.
  */
-int radeon_fence_emit(struct radeon_device *rdev,
-		      struct radeon_fence **fence,
-		      int ring)
-{
+पूर्णांक radeon_fence_emit(काष्ठा radeon_device *rdev,
+		      काष्ठा radeon_fence **fence,
+		      पूर्णांक ring)
+अणु
 	u64 seq;
 
-	/* we are protected by the ring emission mutex */
-	*fence = kmalloc(sizeof(struct radeon_fence), GFP_KERNEL);
-	if ((*fence) == NULL) {
-		return -ENOMEM;
-	}
+	/* we are रक्षित by the ring emission mutex */
+	*fence = kदो_स्मृति(माप(काष्ठा radeon_fence), GFP_KERNEL);
+	अगर ((*fence) == शून्य) अणु
+		वापस -ENOMEM;
+	पूर्ण
 	(*fence)->rdev = rdev;
 	(*fence)->seq = seq = ++rdev->fence_drv[ring].sync_seq[ring];
 	(*fence)->ring = ring;
@@ -153,546 +154,546 @@ int radeon_fence_emit(struct radeon_device *rdev,
 	radeon_fence_ring_emit(rdev, ring, *fence);
 	trace_radeon_fence_emit(rdev->ddev, ring, (*fence)->seq);
 	radeon_fence_schedule_check(rdev, ring);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * radeon_fence_check_signaled - callback from fence_queue
+ * radeon_fence_check_संकेतed - callback from fence_queue
  *
  * this function is called with fence_queue lock held, which is also used
- * for the fence locking itself, so unlocked variants are used for
- * fence_signal, and remove_wait_queue.
+ * क्रम the fence locking itself, so unlocked variants are used क्रम
+ * fence_संकेत, and हटाओ_रुको_queue.
  */
-static int radeon_fence_check_signaled(wait_queue_entry_t *wait, unsigned mode, int flags, void *key)
-{
-	struct radeon_fence *fence;
+अटल पूर्णांक radeon_fence_check_संकेतed(रुको_queue_entry_t *रुको, अचिन्हित mode, पूर्णांक flags, व्योम *key)
+अणु
+	काष्ठा radeon_fence *fence;
 	u64 seq;
 
-	fence = container_of(wait, struct radeon_fence, fence_wake);
+	fence = container_of(रुको, काष्ठा radeon_fence, fence_wake);
 
 	/*
-	 * We cannot use radeon_fence_process here because we're already
-	 * in the waitqueue, in a call from wake_up_all.
+	 * We cannot use radeon_fence_process here because we're alपढ़ोy
+	 * in the रुकोqueue, in a call from wake_up_all.
 	 */
-	seq = atomic64_read(&fence->rdev->fence_drv[fence->ring].last_seq);
-	if (seq >= fence->seq) {
-		int ret = dma_fence_signal_locked(&fence->base);
+	seq = atomic64_पढ़ो(&fence->rdev->fence_drv[fence->ring].last_seq);
+	अगर (seq >= fence->seq) अणु
+		पूर्णांक ret = dma_fence_संकेत_locked(&fence->base);
 
-		if (!ret)
+		अगर (!ret)
 			DMA_FENCE_TRACE(&fence->base, "signaled from irq context\n");
-		else
+		अन्यथा
 			DMA_FENCE_TRACE(&fence->base, "was already signaled\n");
 
 		radeon_irq_kms_sw_irq_put(fence->rdev, fence->ring);
-		__remove_wait_queue(&fence->rdev->fence_queue, &fence->fence_wake);
+		__हटाओ_रुको_queue(&fence->rdev->fence_queue, &fence->fence_wake);
 		dma_fence_put(&fence->base);
-	} else
+	पूर्ण अन्यथा
 		DMA_FENCE_TRACE(&fence->base, "pending\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * radeon_fence_activity - check for fence activity
+ * radeon_fence_activity - check क्रम fence activity
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @ring: ring index the fence is associated with
  *
  * Checks the current fence value and calculates the last
- * signalled fence value. Returns true if activity occured
+ * संकेतled fence value. Returns true अगर activity occured
  * on the ring, and the fence_queue should be waken up.
  */
-static bool radeon_fence_activity(struct radeon_device *rdev, int ring)
-{
-	uint64_t seq, last_seq, last_emitted;
-	unsigned count_loop = 0;
+अटल bool radeon_fence_activity(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
+	uपूर्णांक64_t seq, last_seq, last_emitted;
+	अचिन्हित count_loop = 0;
 	bool wake = false;
 
-	/* Note there is a scenario here for an infinite loop but it's
+	/* Note there is a scenario here क्रम an infinite loop but it's
 	 * very unlikely to happen. For it to happen, the current polling
-	 * process need to be interrupted by another process and another
-	 * process needs to update the last_seq btw the atomic read and
+	 * process need to be पूर्णांकerrupted by another process and another
+	 * process needs to update the last_seq btw the atomic पढ़ो and
 	 * xchg of the current process.
 	 *
-	 * More over for this to go in infinite loop there need to be
-	 * continuously new fence signaled ie radeon_fence_read needs
-	 * to return a different value each time for both the currently
+	 * More over क्रम this to go in infinite loop there need to be
+	 * continuously new fence संकेतed ie radeon_fence_पढ़ो needs
+	 * to वापस a dअगरferent value each समय क्रम both the currently
 	 * polling process and the other process that xchg the last_seq
-	 * btw atomic read and xchg of the current process. And the
+	 * btw atomic पढ़ो and xchg of the current process. And the
 	 * value the other process set as last seq must be higher than
-	 * the seq value we just read. Which means that current process
-	 * need to be interrupted after radeon_fence_read and before
+	 * the seq value we just पढ़ो. Which means that current process
+	 * need to be पूर्णांकerrupted after radeon_fence_पढ़ो and beक्रमe
 	 * atomic xchg.
 	 *
-	 * To be even more safe we count the number of time we loop and
+	 * To be even more safe we count the number of समय we loop and
 	 * we bail after 10 loop just accepting the fact that we might
 	 * have temporarly set the last_seq not to the true real last
 	 * seq but to an older one.
 	 */
-	last_seq = atomic64_read(&rdev->fence_drv[ring].last_seq);
-	do {
+	last_seq = atomic64_पढ़ो(&rdev->fence_drv[ring].last_seq);
+	करो अणु
 		last_emitted = rdev->fence_drv[ring].sync_seq[ring];
-		seq = radeon_fence_read(rdev, ring);
+		seq = radeon_fence_पढ़ो(rdev, ring);
 		seq |= last_seq & 0xffffffff00000000LL;
-		if (seq < last_seq) {
+		अगर (seq < last_seq) अणु
 			seq &= 0xffffffff;
 			seq |= last_emitted & 0xffffffff00000000LL;
-		}
+		पूर्ण
 
-		if (seq <= last_seq || seq > last_emitted) {
-			break;
-		}
-		/* If we loop over we don't want to return without
-		 * checking if a fence is signaled as it means that the
-		 * seq we just read is different from the previous on.
+		अगर (seq <= last_seq || seq > last_emitted) अणु
+			अवरोध;
+		पूर्ण
+		/* If we loop over we करोn't want to वापस without
+		 * checking अगर a fence is संकेतed as it means that the
+		 * seq we just पढ़ो is dअगरferent from the previous on.
 		 */
 		wake = true;
 		last_seq = seq;
-		if ((count_loop++) > 10) {
-			/* We looped over too many time leave with the
+		अगर ((count_loop++) > 10) अणु
+			/* We looped over too many समय leave with the
 			 * fact that we might have set an older fence
-			 * seq then the current real last seq as signaled
+			 * seq then the current real last seq as संकेतed
 			 * by the hw.
 			 */
-			break;
-		}
-	} while (atomic64_xchg(&rdev->fence_drv[ring].last_seq, seq) > seq);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (atomic64_xchg(&rdev->fence_drv[ring].last_seq, seq) > seq);
 
-	if (seq < last_emitted)
+	अगर (seq < last_emitted)
 		radeon_fence_schedule_check(rdev, ring);
 
-	return wake;
-}
+	वापस wake;
+पूर्ण
 
 /**
- * radeon_fence_check_lockup - check for hardware lockup
+ * radeon_fence_check_lockup - check क्रम hardware lockup
  *
  * @work: delayed work item
  *
- * Checks for fence activity and if there is none probe
- * the hardware if a lockup occured.
+ * Checks क्रम fence activity and अगर there is none probe
+ * the hardware अगर a lockup occured.
  */
-static void radeon_fence_check_lockup(struct work_struct *work)
-{
-	struct radeon_fence_driver *fence_drv;
-	struct radeon_device *rdev;
-	int ring;
+अटल व्योम radeon_fence_check_lockup(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा radeon_fence_driver *fence_drv;
+	काष्ठा radeon_device *rdev;
+	पूर्णांक ring;
 
-	fence_drv = container_of(work, struct radeon_fence_driver,
+	fence_drv = container_of(work, काष्ठा radeon_fence_driver,
 				 lockup_work.work);
 	rdev = fence_drv->rdev;
 	ring = fence_drv - &rdev->fence_drv[0];
 
-	if (!down_read_trylock(&rdev->exclusive_lock)) {
-		/* just reschedule the check if a reset is going on */
+	अगर (!करोwn_पढ़ो_trylock(&rdev->exclusive_lock)) अणु
+		/* just reschedule the check अगर a reset is going on */
 		radeon_fence_schedule_check(rdev, ring);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (fence_drv->delayed_irq && rdev->ddev->irq_enabled) {
-		unsigned long irqflags;
+	अगर (fence_drv->delayed_irq && rdev->ddev->irq_enabled) अणु
+		अचिन्हित दीर्घ irqflags;
 
 		fence_drv->delayed_irq = false;
 		spin_lock_irqsave(&rdev->irq.lock, irqflags);
 		radeon_irq_set(rdev);
 		spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
-	}
+	पूर्ण
 
-	if (radeon_fence_activity(rdev, ring))
+	अगर (radeon_fence_activity(rdev, ring))
 		wake_up_all(&rdev->fence_queue);
 
-	else if (radeon_ring_is_lockup(rdev, ring, &rdev->ring[ring])) {
+	अन्यथा अगर (radeon_ring_is_lockup(rdev, ring, &rdev->ring[ring])) अणु
 
 		/* good news we believe it's a lockup */
 		dev_warn(rdev->dev, "GPU lockup (current fence id "
 			 "0x%016llx last fence id 0x%016llx on ring %d)\n",
-			 (uint64_t)atomic64_read(&fence_drv->last_seq),
+			 (uपूर्णांक64_t)atomic64_पढ़ो(&fence_drv->last_seq),
 			 fence_drv->sync_seq[ring], ring);
 
 		/* remember that we need an reset */
 		rdev->needs_reset = true;
 		wake_up_all(&rdev->fence_queue);
-	}
-	up_read(&rdev->exclusive_lock);
-}
+	पूर्ण
+	up_पढ़ो(&rdev->exclusive_lock);
+पूर्ण
 
 /**
  * radeon_fence_process - process a fence
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @ring: ring index the fence is associated with
  *
  * Checks the current fence value and wakes the fence queue
- * if the sequence number has increased (all asics).
+ * अगर the sequence number has increased (all asics).
  */
-void radeon_fence_process(struct radeon_device *rdev, int ring)
-{
-	if (radeon_fence_activity(rdev, ring))
+व्योम radeon_fence_process(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
+	अगर (radeon_fence_activity(rdev, ring))
 		wake_up_all(&rdev->fence_queue);
-}
+पूर्ण
 
 /**
- * radeon_fence_seq_signaled - check if a fence sequence number has signaled
+ * radeon_fence_seq_संकेतed - check अगर a fence sequence number has संकेतed
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  * @seq: sequence number
  * @ring: ring index the fence is associated with
  *
- * Check if the last signaled fence sequnce number is >= the requested
+ * Check अगर the last संकेतed fence sequnce number is >= the requested
  * sequence number (all asics).
- * Returns true if the fence has signaled (current fence value
- * is >= requested value) or false if it has not (current fence
- * value is < the requested value.  Helper function for
- * radeon_fence_signaled().
+ * Returns true अगर the fence has संकेतed (current fence value
+ * is >= requested value) or false अगर it has not (current fence
+ * value is < the requested value.  Helper function क्रम
+ * radeon_fence_संकेतed().
  */
-static bool radeon_fence_seq_signaled(struct radeon_device *rdev,
-				      u64 seq, unsigned ring)
-{
-	if (atomic64_read(&rdev->fence_drv[ring].last_seq) >= seq) {
-		return true;
-	}
+अटल bool radeon_fence_seq_संकेतed(काष्ठा radeon_device *rdev,
+				      u64 seq, अचिन्हित ring)
+अणु
+	अगर (atomic64_पढ़ो(&rdev->fence_drv[ring].last_seq) >= seq) अणु
+		वापस true;
+	पूर्ण
 	/* poll new last sequence at least once */
 	radeon_fence_process(rdev, ring);
-	if (atomic64_read(&rdev->fence_drv[ring].last_seq) >= seq) {
-		return true;
-	}
-	return false;
-}
+	अगर (atomic64_पढ़ो(&rdev->fence_drv[ring].last_seq) >= seq) अणु
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool radeon_fence_is_signaled(struct dma_fence *f)
-{
-	struct radeon_fence *fence = to_radeon_fence(f);
-	struct radeon_device *rdev = fence->rdev;
-	unsigned ring = fence->ring;
+अटल bool radeon_fence_is_संकेतed(काष्ठा dma_fence *f)
+अणु
+	काष्ठा radeon_fence *fence = to_radeon_fence(f);
+	काष्ठा radeon_device *rdev = fence->rdev;
+	अचिन्हित ring = fence->ring;
 	u64 seq = fence->seq;
 
-	if (atomic64_read(&rdev->fence_drv[ring].last_seq) >= seq) {
-		return true;
-	}
+	अगर (atomic64_पढ़ो(&rdev->fence_drv[ring].last_seq) >= seq) अणु
+		वापस true;
+	पूर्ण
 
-	if (down_read_trylock(&rdev->exclusive_lock)) {
+	अगर (करोwn_पढ़ो_trylock(&rdev->exclusive_lock)) अणु
 		radeon_fence_process(rdev, ring);
-		up_read(&rdev->exclusive_lock);
+		up_पढ़ो(&rdev->exclusive_lock);
 
-		if (atomic64_read(&rdev->fence_drv[ring].last_seq) >= seq) {
-			return true;
-		}
-	}
-	return false;
-}
+		अगर (atomic64_पढ़ो(&rdev->fence_drv[ring].last_seq) >= seq) अणु
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * radeon_fence_enable_signaling - enable signalling on fence
+ * radeon_fence_enable_संकेतing - enable संकेतling on fence
  * @f: fence
  *
  * This function is called with fence_queue lock held, and adds a callback
- * to fence_queue that checks if this fence is signaled, and if so it
- * signals the fence and removes itself.
+ * to fence_queue that checks अगर this fence is संकेतed, and अगर so it
+ * संकेतs the fence and हटाओs itself.
  */
-static bool radeon_fence_enable_signaling(struct dma_fence *f)
-{
-	struct radeon_fence *fence = to_radeon_fence(f);
-	struct radeon_device *rdev = fence->rdev;
+अटल bool radeon_fence_enable_संकेतing(काष्ठा dma_fence *f)
+अणु
+	काष्ठा radeon_fence *fence = to_radeon_fence(f);
+	काष्ठा radeon_device *rdev = fence->rdev;
 
-	if (atomic64_read(&rdev->fence_drv[fence->ring].last_seq) >= fence->seq)
-		return false;
+	अगर (atomic64_पढ़ो(&rdev->fence_drv[fence->ring].last_seq) >= fence->seq)
+		वापस false;
 
-	if (down_read_trylock(&rdev->exclusive_lock)) {
+	अगर (करोwn_पढ़ो_trylock(&rdev->exclusive_lock)) अणु
 		radeon_irq_kms_sw_irq_get(rdev, fence->ring);
 
-		if (radeon_fence_activity(rdev, fence->ring))
+		अगर (radeon_fence_activity(rdev, fence->ring))
 			wake_up_all_locked(&rdev->fence_queue);
 
-		/* did fence get signaled after we enabled the sw irq? */
-		if (atomic64_read(&rdev->fence_drv[fence->ring].last_seq) >= fence->seq) {
+		/* did fence get संकेतed after we enabled the sw irq? */
+		अगर (atomic64_पढ़ो(&rdev->fence_drv[fence->ring].last_seq) >= fence->seq) अणु
 			radeon_irq_kms_sw_irq_put(rdev, fence->ring);
-			up_read(&rdev->exclusive_lock);
-			return false;
-		}
+			up_पढ़ो(&rdev->exclusive_lock);
+			वापस false;
+		पूर्ण
 
-		up_read(&rdev->exclusive_lock);
-	} else {
+		up_पढ़ो(&rdev->exclusive_lock);
+	पूर्ण अन्यथा अणु
 		/* we're probably in a lockup, lets not fiddle too much */
-		if (radeon_irq_kms_sw_irq_get_delayed(rdev, fence->ring))
+		अगर (radeon_irq_kms_sw_irq_get_delayed(rdev, fence->ring))
 			rdev->fence_drv[fence->ring].delayed_irq = true;
 		radeon_fence_schedule_check(rdev, fence->ring);
-	}
+	पूर्ण
 
 	fence->fence_wake.flags = 0;
-	fence->fence_wake.private = NULL;
-	fence->fence_wake.func = radeon_fence_check_signaled;
-	__add_wait_queue(&rdev->fence_queue, &fence->fence_wake);
+	fence->fence_wake.निजी = शून्य;
+	fence->fence_wake.func = radeon_fence_check_संकेतed;
+	__add_रुको_queue(&rdev->fence_queue, &fence->fence_wake);
 	dma_fence_get(f);
 
 	DMA_FENCE_TRACE(&fence->base, "armed on ring %i!\n", fence->ring);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * radeon_fence_signaled - check if a fence has signaled
+ * radeon_fence_संकेतed - check अगर a fence has संकेतed
  *
  * @fence: radeon fence object
  *
- * Check if the requested fence has signaled (all asics).
- * Returns true if the fence has signaled or false if it has not.
+ * Check अगर the requested fence has संकेतed (all asics).
+ * Returns true अगर the fence has संकेतed or false अगर it has not.
  */
-bool radeon_fence_signaled(struct radeon_fence *fence)
-{
-	if (!fence)
-		return true;
+bool radeon_fence_संकेतed(काष्ठा radeon_fence *fence)
+अणु
+	अगर (!fence)
+		वापस true;
 
-	if (radeon_fence_seq_signaled(fence->rdev, fence->seq, fence->ring)) {
-		int ret;
+	अगर (radeon_fence_seq_संकेतed(fence->rdev, fence->seq, fence->ring)) अणु
+		पूर्णांक ret;
 
-		ret = dma_fence_signal(&fence->base);
-		if (!ret)
+		ret = dma_fence_संकेत(&fence->base);
+		अगर (!ret)
 			DMA_FENCE_TRACE(&fence->base, "signaled from radeon_fence_signaled\n");
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * radeon_fence_any_seq_signaled - check if any sequence number is signaled
+ * radeon_fence_any_seq_संकेतed - check अगर any sequence number is संकेतed
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  * @seq: sequence numbers
  *
- * Check if the last signaled fence sequnce number is >= the requested
+ * Check अगर the last संकेतed fence sequnce number is >= the requested
  * sequence number (all asics).
- * Returns true if any has signaled (current value is >= requested value)
- * or false if it has not. Helper function for radeon_fence_wait_seq.
+ * Returns true अगर any has संकेतed (current value is >= requested value)
+ * or false अगर it has not. Helper function क्रम radeon_fence_रुको_seq.
  */
-static bool radeon_fence_any_seq_signaled(struct radeon_device *rdev, u64 *seq)
-{
-	unsigned i;
+अटल bool radeon_fence_any_seq_संकेतed(काष्ठा radeon_device *rdev, u64 *seq)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < RADEON_NUM_RINGS; ++i) {
-		if (seq[i] && radeon_fence_seq_signaled(rdev, seq[i], i))
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < RADEON_NUM_RINGS; ++i) अणु
+		अगर (seq[i] && radeon_fence_seq_संकेतed(rdev, seq[i], i))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * radeon_fence_wait_seq_timeout - wait for a specific sequence numbers
+ * radeon_fence_रुको_seq_समयout - रुको क्रम a specअगरic sequence numbers
  *
- * @rdev: radeon device pointer
- * @target_seq: sequence number(s) we want to wait for
- * @intr: use interruptable sleep
- * @timeout: maximum time to wait, or MAX_SCHEDULE_TIMEOUT for infinite wait
+ * @rdev: radeon device poपूर्णांकer
+ * @target_seq: sequence number(s) we want to रुको क्रम
+ * @पूर्णांकr: use पूर्णांकerruptable sleep
+ * @समयout: maximum समय to रुको, or MAX_SCHEDULE_TIMEOUT क्रम infinite रुको
  *
- * Wait for the requested sequence number(s) to be written by any ring
+ * Wait क्रम the requested sequence number(s) to be written by any ring
  * (all asics).  Sequnce number array is indexed by ring id.
- * @intr selects whether to use interruptable (true) or non-interruptable
- * (false) sleep when waiting for the sequence number.  Helper function
- * for radeon_fence_wait_*().
- * Returns remaining time if the sequence number has passed, 0 when
- * the wait timeout, or an error for all other cases.
- * -EDEADLK is returned when a GPU lockup has been detected.
+ * @पूर्णांकr selects whether to use पूर्णांकerruptable (true) or non-पूर्णांकerruptable
+ * (false) sleep when रुकोing क्रम the sequence number.  Helper function
+ * क्रम radeon_fence_रुको_*().
+ * Returns reमुख्यing समय अगर the sequence number has passed, 0 when
+ * the रुको समयout, or an error क्रम all other हालs.
+ * -EDEADLK is वापसed when a GPU lockup has been detected.
  */
-static long radeon_fence_wait_seq_timeout(struct radeon_device *rdev,
-					  u64 *target_seq, bool intr,
-					  long timeout)
-{
-	long r;
-	int i;
+अटल दीर्घ radeon_fence_रुको_seq_समयout(काष्ठा radeon_device *rdev,
+					  u64 *target_seq, bool पूर्णांकr,
+					  दीर्घ समयout)
+अणु
+	दीर्घ r;
+	पूर्णांक i;
 
-	if (radeon_fence_any_seq_signaled(rdev, target_seq))
-		return timeout;
+	अगर (radeon_fence_any_seq_संकेतed(rdev, target_seq))
+		वापस समयout;
 
 	/* enable IRQs and tracing */
-	for (i = 0; i < RADEON_NUM_RINGS; ++i) {
-		if (!target_seq[i])
-			continue;
+	क्रम (i = 0; i < RADEON_NUM_RINGS; ++i) अणु
+		अगर (!target_seq[i])
+			जारी;
 
-		trace_radeon_fence_wait_begin(rdev->ddev, i, target_seq[i]);
+		trace_radeon_fence_रुको_begin(rdev->ddev, i, target_seq[i]);
 		radeon_irq_kms_sw_irq_get(rdev, i);
-	}
+	पूर्ण
 
-	if (intr) {
-		r = wait_event_interruptible_timeout(rdev->fence_queue, (
-			radeon_fence_any_seq_signaled(rdev, target_seq)
-			 || rdev->needs_reset), timeout);
-	} else {
-		r = wait_event_timeout(rdev->fence_queue, (
-			radeon_fence_any_seq_signaled(rdev, target_seq)
-			 || rdev->needs_reset), timeout);
-	}
+	अगर (पूर्णांकr) अणु
+		r = रुको_event_पूर्णांकerruptible_समयout(rdev->fence_queue, (
+			radeon_fence_any_seq_संकेतed(rdev, target_seq)
+			 || rdev->needs_reset), समयout);
+	पूर्ण अन्यथा अणु
+		r = रुको_event_समयout(rdev->fence_queue, (
+			radeon_fence_any_seq_संकेतed(rdev, target_seq)
+			 || rdev->needs_reset), समयout);
+	पूर्ण
 
-	if (rdev->needs_reset)
+	अगर (rdev->needs_reset)
 		r = -EDEADLK;
 
-	for (i = 0; i < RADEON_NUM_RINGS; ++i) {
-		if (!target_seq[i])
-			continue;
+	क्रम (i = 0; i < RADEON_NUM_RINGS; ++i) अणु
+		अगर (!target_seq[i])
+			जारी;
 
 		radeon_irq_kms_sw_irq_put(rdev, i);
-		trace_radeon_fence_wait_end(rdev->ddev, i, target_seq[i]);
-	}
+		trace_radeon_fence_रुको_end(rdev->ddev, i, target_seq[i]);
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * radeon_fence_wait_timeout - wait for a fence to signal with timeout
+ * radeon_fence_रुको_समयout - रुको क्रम a fence to संकेत with समयout
  *
  * @fence: radeon fence object
- * @intr: use interruptible sleep
+ * @पूर्णांकr: use पूर्णांकerruptible sleep
  *
- * Wait for the requested fence to signal (all asics).
- * @intr selects whether to use interruptable (true) or non-interruptable
- * (false) sleep when waiting for the fence.
- * @timeout: maximum time to wait, or MAX_SCHEDULE_TIMEOUT for infinite wait
- * Returns remaining time if the sequence number has passed, 0 when
- * the wait timeout, or an error for all other cases.
+ * Wait क्रम the requested fence to संकेत (all asics).
+ * @पूर्णांकr selects whether to use पूर्णांकerruptable (true) or non-पूर्णांकerruptable
+ * (false) sleep when रुकोing क्रम the fence.
+ * @समयout: maximum समय to रुको, or MAX_SCHEDULE_TIMEOUT क्रम infinite रुको
+ * Returns reमुख्यing समय अगर the sequence number has passed, 0 when
+ * the रुको समयout, or an error क्रम all other हालs.
  */
-long radeon_fence_wait_timeout(struct radeon_fence *fence, bool intr, long timeout)
-{
-	uint64_t seq[RADEON_NUM_RINGS] = {};
-	long r;
-	int r_sig;
+दीर्घ radeon_fence_रुको_समयout(काष्ठा radeon_fence *fence, bool पूर्णांकr, दीर्घ समयout)
+अणु
+	uपूर्णांक64_t seq[RADEON_NUM_RINGS] = अणुपूर्ण;
+	दीर्घ r;
+	पूर्णांक r_sig;
 
 	/*
 	 * This function should not be called on !radeon fences.
-	 * If this is the case, it would mean this function can
-	 * also be called on radeon fences belonging to another card.
-	 * exclusive_lock is not held in that case.
+	 * If this is the हाल, it would mean this function can
+	 * also be called on radeon fences beदीर्घing to another card.
+	 * exclusive_lock is not held in that हाल.
 	 */
-	if (WARN_ON_ONCE(!to_radeon_fence(&fence->base)))
-		return dma_fence_wait(&fence->base, intr);
+	अगर (WARN_ON_ONCE(!to_radeon_fence(&fence->base)))
+		वापस dma_fence_रुको(&fence->base, पूर्णांकr);
 
 	seq[fence->ring] = fence->seq;
-	r = radeon_fence_wait_seq_timeout(fence->rdev, seq, intr, timeout);
-	if (r <= 0) {
-		return r;
-	}
+	r = radeon_fence_रुको_seq_समयout(fence->rdev, seq, पूर्णांकr, समयout);
+	अगर (r <= 0) अणु
+		वापस r;
+	पूर्ण
 
-	r_sig = dma_fence_signal(&fence->base);
-	if (!r_sig)
+	r_sig = dma_fence_संकेत(&fence->base);
+	अगर (!r_sig)
 		DMA_FENCE_TRACE(&fence->base, "signaled from fence_wait\n");
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * radeon_fence_wait - wait for a fence to signal
+ * radeon_fence_रुको - रुको क्रम a fence to संकेत
  *
  * @fence: radeon fence object
- * @intr: use interruptible sleep
+ * @पूर्णांकr: use पूर्णांकerruptible sleep
  *
- * Wait for the requested fence to signal (all asics).
- * @intr selects whether to use interruptable (true) or non-interruptable
- * (false) sleep when waiting for the fence.
- * Returns 0 if the fence has passed, error for all other cases.
+ * Wait क्रम the requested fence to संकेत (all asics).
+ * @पूर्णांकr selects whether to use पूर्णांकerruptable (true) or non-पूर्णांकerruptable
+ * (false) sleep when रुकोing क्रम the fence.
+ * Returns 0 अगर the fence has passed, error क्रम all other हालs.
  */
-int radeon_fence_wait(struct radeon_fence *fence, bool intr)
-{
-	long r = radeon_fence_wait_timeout(fence, intr, MAX_SCHEDULE_TIMEOUT);
-	if (r > 0) {
-		return 0;
-	} else {
-		return r;
-	}
-}
+पूर्णांक radeon_fence_रुको(काष्ठा radeon_fence *fence, bool पूर्णांकr)
+अणु
+	दीर्घ r = radeon_fence_रुको_समयout(fence, पूर्णांकr, MAX_SCHEDULE_TIMEOUT);
+	अगर (r > 0) अणु
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		वापस r;
+	पूर्ण
+पूर्ण
 
 /**
- * radeon_fence_wait_any - wait for a fence to signal on any ring
+ * radeon_fence_रुको_any - रुको क्रम a fence to संकेत on any ring
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  * @fences: radeon fence object(s)
- * @intr: use interruptable sleep
+ * @पूर्णांकr: use पूर्णांकerruptable sleep
  *
- * Wait for any requested fence to signal (all asics).  Fence
- * array is indexed by ring id.  @intr selects whether to use
- * interruptable (true) or non-interruptable (false) sleep when
- * waiting for the fences. Used by the suballocator.
- * Returns 0 if any fence has passed, error for all other cases.
+ * Wait क्रम any requested fence to संकेत (all asics).  Fence
+ * array is indexed by ring id.  @पूर्णांकr selects whether to use
+ * पूर्णांकerruptable (true) or non-पूर्णांकerruptable (false) sleep when
+ * रुकोing क्रम the fences. Used by the suballocator.
+ * Returns 0 अगर any fence has passed, error क्रम all other हालs.
  */
-int radeon_fence_wait_any(struct radeon_device *rdev,
-			  struct radeon_fence **fences,
-			  bool intr)
-{
-	uint64_t seq[RADEON_NUM_RINGS];
-	unsigned i, num_rings = 0;
-	long r;
+पूर्णांक radeon_fence_रुको_any(काष्ठा radeon_device *rdev,
+			  काष्ठा radeon_fence **fences,
+			  bool पूर्णांकr)
+अणु
+	uपूर्णांक64_t seq[RADEON_NUM_RINGS];
+	अचिन्हित i, num_rings = 0;
+	दीर्घ r;
 
-	for (i = 0; i < RADEON_NUM_RINGS; ++i) {
+	क्रम (i = 0; i < RADEON_NUM_RINGS; ++i) अणु
 		seq[i] = 0;
 
-		if (!fences[i]) {
-			continue;
-		}
+		अगर (!fences[i]) अणु
+			जारी;
+		पूर्ण
 
 		seq[i] = fences[i]->seq;
 		++num_rings;
-	}
+	पूर्ण
 
-	/* nothing to wait for ? */
-	if (num_rings == 0)
-		return -ENOENT;
+	/* nothing to रुको क्रम ? */
+	अगर (num_rings == 0)
+		वापस -ENOENT;
 
-	r = radeon_fence_wait_seq_timeout(rdev, seq, intr, MAX_SCHEDULE_TIMEOUT);
-	if (r < 0) {
-		return r;
-	}
-	return 0;
-}
-
-/**
- * radeon_fence_wait_next - wait for the next fence to signal
- *
- * @rdev: radeon device pointer
- * @ring: ring index the fence is associated with
- *
- * Wait for the next fence on the requested ring to signal (all asics).
- * Returns 0 if the next fence has passed, error for all other cases.
- * Caller must hold ring lock.
- */
-int radeon_fence_wait_next(struct radeon_device *rdev, int ring)
-{
-	uint64_t seq[RADEON_NUM_RINGS] = {};
-	long r;
-
-	seq[ring] = atomic64_read(&rdev->fence_drv[ring].last_seq) + 1ULL;
-	if (seq[ring] >= rdev->fence_drv[ring].sync_seq[ring]) {
-		/* nothing to wait for, last_seq is
-		   already the last emited fence */
-		return -ENOENT;
-	}
-	r = radeon_fence_wait_seq_timeout(rdev, seq, false, MAX_SCHEDULE_TIMEOUT);
-	if (r < 0)
-		return r;
-	return 0;
-}
+	r = radeon_fence_रुको_seq_समयout(rdev, seq, पूर्णांकr, MAX_SCHEDULE_TIMEOUT);
+	अगर (r < 0) अणु
+		वापस r;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * radeon_fence_wait_empty - wait for all fences to signal
+ * radeon_fence_रुको_next - रुको क्रम the next fence to संकेत
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  * @ring: ring index the fence is associated with
  *
- * Wait for all fences on the requested ring to signal (all asics).
- * Returns 0 if the fences have passed, error for all other cases.
+ * Wait क्रम the next fence on the requested ring to संकेत (all asics).
+ * Returns 0 अगर the next fence has passed, error क्रम all other हालs.
  * Caller must hold ring lock.
  */
-int radeon_fence_wait_empty(struct radeon_device *rdev, int ring)
-{
-	uint64_t seq[RADEON_NUM_RINGS] = {};
-	long r;
+पूर्णांक radeon_fence_रुको_next(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
+	uपूर्णांक64_t seq[RADEON_NUM_RINGS] = अणुपूर्ण;
+	दीर्घ r;
+
+	seq[ring] = atomic64_पढ़ो(&rdev->fence_drv[ring].last_seq) + 1ULL;
+	अगर (seq[ring] >= rdev->fence_drv[ring].sync_seq[ring]) अणु
+		/* nothing to रुको क्रम, last_seq is
+		   alपढ़ोy the last emited fence */
+		वापस -ENOENT;
+	पूर्ण
+	r = radeon_fence_रुको_seq_समयout(rdev, seq, false, MAX_SCHEDULE_TIMEOUT);
+	अगर (r < 0)
+		वापस r;
+	वापस 0;
+पूर्ण
+
+/**
+ * radeon_fence_रुको_empty - रुको क्रम all fences to संकेत
+ *
+ * @rdev: radeon device poपूर्णांकer
+ * @ring: ring index the fence is associated with
+ *
+ * Wait क्रम all fences on the requested ring to संकेत (all asics).
+ * Returns 0 अगर the fences have passed, error क्रम all other हालs.
+ * Caller must hold ring lock.
+ */
+पूर्णांक radeon_fence_रुको_empty(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
+	uपूर्णांक64_t seq[RADEON_NUM_RINGS] = अणुपूर्ण;
+	दीर्घ r;
 
 	seq[ring] = rdev->fence_drv[ring].sync_seq[ring];
-	if (!seq[ring])
-		return 0;
+	अगर (!seq[ring])
+		वापस 0;
 
-	r = radeon_fence_wait_seq_timeout(rdev, seq, false, MAX_SCHEDULE_TIMEOUT);
-	if (r < 0) {
-		if (r == -EDEADLK)
-			return -EDEADLK;
+	r = radeon_fence_रुको_seq_समयout(rdev, seq, false, MAX_SCHEDULE_TIMEOUT);
+	अगर (r < 0) अणु
+		अगर (r == -EDEADLK)
+			वापस -EDEADLK;
 
 		dev_err(rdev->dev, "error waiting for ring[%d] to become idle (%ld)\n",
 			ring, r);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * radeon_fence_ref - take a ref on a fence
@@ -702,328 +703,328 @@ int radeon_fence_wait_empty(struct radeon_device *rdev, int ring)
  * Take a reference on a fence (all asics).
  * Returns the fence.
  */
-struct radeon_fence *radeon_fence_ref(struct radeon_fence *fence)
-{
+काष्ठा radeon_fence *radeon_fence_ref(काष्ठा radeon_fence *fence)
+अणु
 	dma_fence_get(&fence->base);
-	return fence;
-}
+	वापस fence;
+पूर्ण
 
 /**
- * radeon_fence_unref - remove a ref on a fence
+ * radeon_fence_unref - हटाओ a ref on a fence
  *
  * @fence: radeon fence object
  *
  * Remove a reference on a fence (all asics).
  */
-void radeon_fence_unref(struct radeon_fence **fence)
-{
-	struct radeon_fence *tmp = *fence;
+व्योम radeon_fence_unref(काष्ठा radeon_fence **fence)
+अणु
+	काष्ठा radeon_fence *पंचांगp = *fence;
 
-	*fence = NULL;
-	if (tmp) {
-		dma_fence_put(&tmp->base);
-	}
-}
+	*fence = शून्य;
+	अगर (पंचांगp) अणु
+		dma_fence_put(&पंचांगp->base);
+	पूर्ण
+पूर्ण
 
 /**
  * radeon_fence_count_emitted - get the count of emitted fences
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  * @ring: ring index the fence is associated with
  *
  * Get the number of fences emitted on the requested ring (all asics).
  * Returns the number of emitted fences on the ring.  Used by the
  * dynpm code to ring track activity.
  */
-unsigned radeon_fence_count_emitted(struct radeon_device *rdev, int ring)
-{
-	uint64_t emitted;
+अचिन्हित radeon_fence_count_emitted(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
+	uपूर्णांक64_t emitted;
 
-	/* We are not protected by ring lock when reading the last sequence
+	/* We are not रक्षित by ring lock when पढ़ोing the last sequence
 	 * but it's ok to report slightly wrong fence count here.
 	 */
 	radeon_fence_process(rdev, ring);
 	emitted = rdev->fence_drv[ring].sync_seq[ring]
-		- atomic64_read(&rdev->fence_drv[ring].last_seq);
-	/* to avoid 32bits warp around */
-	if (emitted > 0x10000000) {
+		- atomic64_पढ़ो(&rdev->fence_drv[ring].last_seq);
+	/* to aव्योम 32bits warp around */
+	अगर (emitted > 0x10000000) अणु
 		emitted = 0x10000000;
-	}
-	return (unsigned)emitted;
-}
+	पूर्ण
+	वापस (अचिन्हित)emitted;
+पूर्ण
 
 /**
- * radeon_fence_need_sync - do we need a semaphore
+ * radeon_fence_need_sync - करो we need a semaphore
  *
  * @fence: radeon fence object
  * @dst_ring: which ring to check against
  *
- * Check if the fence needs to be synced against another ring
+ * Check अगर the fence needs to be synced against another ring
  * (all asics).  If so, we need to emit a semaphore.
- * Returns true if we need to sync with another ring, false if
+ * Returns true अगर we need to sync with another ring, false अगर
  * not.
  */
-bool radeon_fence_need_sync(struct radeon_fence *fence, int dst_ring)
-{
-	struct radeon_fence_driver *fdrv;
+bool radeon_fence_need_sync(काष्ठा radeon_fence *fence, पूर्णांक dst_ring)
+अणु
+	काष्ठा radeon_fence_driver *fdrv;
 
-	if (!fence) {
-		return false;
-	}
+	अगर (!fence) अणु
+		वापस false;
+	पूर्ण
 
-	if (fence->ring == dst_ring) {
-		return false;
-	}
+	अगर (fence->ring == dst_ring) अणु
+		वापस false;
+	पूर्ण
 
-	/* we are protected by the ring mutex */
+	/* we are रक्षित by the ring mutex */
 	fdrv = &fence->rdev->fence_drv[dst_ring];
-	if (fence->seq <= fdrv->sync_seq[fence->ring]) {
-		return false;
-	}
+	अगर (fence->seq <= fdrv->sync_seq[fence->ring]) अणु
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * radeon_fence_note_sync - record the sync point
+ * radeon_fence_note_sync - record the sync poपूर्णांक
  *
  * @fence: radeon fence object
  * @dst_ring: which ring to check against
  *
- * Note the sequence number at which point the fence will
+ * Note the sequence number at which poपूर्णांक the fence will
  * be synced with the requested ring (all asics).
  */
-void radeon_fence_note_sync(struct radeon_fence *fence, int dst_ring)
-{
-	struct radeon_fence_driver *dst, *src;
-	unsigned i;
+व्योम radeon_fence_note_sync(काष्ठा radeon_fence *fence, पूर्णांक dst_ring)
+अणु
+	काष्ठा radeon_fence_driver *dst, *src;
+	अचिन्हित i;
 
-	if (!fence) {
-		return;
-	}
+	अगर (!fence) अणु
+		वापस;
+	पूर्ण
 
-	if (fence->ring == dst_ring) {
-		return;
-	}
+	अगर (fence->ring == dst_ring) अणु
+		वापस;
+	पूर्ण
 
-	/* we are protected by the ring mutex */
+	/* we are रक्षित by the ring mutex */
 	src = &fence->rdev->fence_drv[fence->ring];
 	dst = &fence->rdev->fence_drv[dst_ring];
-	for (i = 0; i < RADEON_NUM_RINGS; ++i) {
-		if (i == dst_ring) {
-			continue;
-		}
+	क्रम (i = 0; i < RADEON_NUM_RINGS; ++i) अणु
+		अगर (i == dst_ring) अणु
+			जारी;
+		पूर्ण
 		dst->sync_seq[i] = max(dst->sync_seq[i], src->sync_seq[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * radeon_fence_driver_start_ring - make the fence driver
- * ready for use on the requested ring.
+ * पढ़ोy क्रम use on the requested ring.
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  * @ring: ring index to start the fence driver on
  *
- * Make the fence driver ready for processing (all asics).
+ * Make the fence driver पढ़ोy क्रम processing (all asics).
  * Not all asics have all rings, so each asic will only
  * start the fence driver on the rings it has.
- * Returns 0 for success, errors for failure.
+ * Returns 0 क्रम success, errors क्रम failure.
  */
-int radeon_fence_driver_start_ring(struct radeon_device *rdev, int ring)
-{
-	uint64_t index;
-	int r;
+पूर्णांक radeon_fence_driver_start_ring(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
+	uपूर्णांक64_t index;
+	पूर्णांक r;
 
-	radeon_scratch_free(rdev, rdev->fence_drv[ring].scratch_reg);
-	if (rdev->wb.use_event || !radeon_ring_supports_scratch_reg(rdev, &rdev->ring[ring])) {
+	radeon_scratch_मुक्त(rdev, rdev->fence_drv[ring].scratch_reg);
+	अगर (rdev->wb.use_event || !radeon_ring_supports_scratch_reg(rdev, &rdev->ring[ring])) अणु
 		rdev->fence_drv[ring].scratch_reg = 0;
-		if (ring != R600_RING_TYPE_UVD_INDEX) {
+		अगर (ring != R600_RING_TYPE_UVD_INDEX) अणु
 			index = R600_WB_EVENT_OFFSET + ring * 4;
 			rdev->fence_drv[ring].cpu_addr = &rdev->wb.wb[index/4];
 			rdev->fence_drv[ring].gpu_addr = rdev->wb.gpu_addr +
 							 index;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* put fence directly behind firmware */
 			index = ALIGN(rdev->uvd_fw->size, 8);
 			rdev->fence_drv[ring].cpu_addr = rdev->uvd.cpu_addr + index;
 			rdev->fence_drv[ring].gpu_addr = rdev->uvd.gpu_addr + index;
-		}
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		r = radeon_scratch_get(rdev, &rdev->fence_drv[ring].scratch_reg);
-		if (r) {
+		अगर (r) अणु
 			dev_err(rdev->dev, "fence failed to get scratch register\n");
-			return r;
-		}
+			वापस r;
+		पूर्ण
 		index = RADEON_WB_SCRATCH_OFFSET +
 			rdev->fence_drv[ring].scratch_reg -
 			rdev->scratch.reg_base;
 		rdev->fence_drv[ring].cpu_addr = &rdev->wb.wb[index/4];
 		rdev->fence_drv[ring].gpu_addr = rdev->wb.gpu_addr + index;
-	}
-	radeon_fence_write(rdev, atomic64_read(&rdev->fence_drv[ring].last_seq), ring);
+	पूर्ण
+	radeon_fence_ग_लिखो(rdev, atomic64_पढ़ो(&rdev->fence_drv[ring].last_seq), ring);
 	rdev->fence_drv[ring].initialized = true;
 	dev_info(rdev->dev, "fence driver on ring %d use gpu addr 0x%016llx\n",
 		 ring, rdev->fence_drv[ring].gpu_addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * radeon_fence_driver_init_ring - init the fence driver
- * for the requested ring.
+ * क्रम the requested ring.
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  * @ring: ring index to start the fence driver on
  *
- * Init the fence driver for the requested ring (all asics).
- * Helper function for radeon_fence_driver_init().
+ * Init the fence driver क्रम the requested ring (all asics).
+ * Helper function क्रम radeon_fence_driver_init().
  */
-static void radeon_fence_driver_init_ring(struct radeon_device *rdev, int ring)
-{
-	int i;
+अटल व्योम radeon_fence_driver_init_ring(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
+	पूर्णांक i;
 
 	rdev->fence_drv[ring].scratch_reg = -1;
-	rdev->fence_drv[ring].cpu_addr = NULL;
+	rdev->fence_drv[ring].cpu_addr = शून्य;
 	rdev->fence_drv[ring].gpu_addr = 0;
-	for (i = 0; i < RADEON_NUM_RINGS; ++i)
+	क्रम (i = 0; i < RADEON_NUM_RINGS; ++i)
 		rdev->fence_drv[ring].sync_seq[i] = 0;
 	atomic64_set(&rdev->fence_drv[ring].last_seq, 0);
 	rdev->fence_drv[ring].initialized = false;
 	INIT_DELAYED_WORK(&rdev->fence_drv[ring].lockup_work,
 			  radeon_fence_check_lockup);
 	rdev->fence_drv[ring].rdev = rdev;
-}
+पूर्ण
 
 /**
  * radeon_fence_driver_init - init the fence driver
- * for all possible rings.
+ * क्रम all possible rings.
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  *
- * Init the fence driver for all possible rings (all asics).
+ * Init the fence driver क्रम all possible rings (all asics).
  * Not all asics have all rings, so each asic will only
  * start the fence driver on the rings it has using
  * radeon_fence_driver_start_ring().
- * Returns 0 for success.
+ * Returns 0 क्रम success.
  */
-int radeon_fence_driver_init(struct radeon_device *rdev)
-{
-	int ring;
+पूर्णांक radeon_fence_driver_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक ring;
 
-	init_waitqueue_head(&rdev->fence_queue);
-	for (ring = 0; ring < RADEON_NUM_RINGS; ring++) {
+	init_रुकोqueue_head(&rdev->fence_queue);
+	क्रम (ring = 0; ring < RADEON_NUM_RINGS; ring++) अणु
 		radeon_fence_driver_init_ring(rdev, ring);
-	}
+	पूर्ण
 
 	radeon_debugfs_fence_init(rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * radeon_fence_driver_fini - tear down the fence driver
- * for all possible rings.
+ * radeon_fence_driver_fini - tear करोwn the fence driver
+ * क्रम all possible rings.
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  *
- * Tear down the fence driver for all possible rings (all asics).
+ * Tear करोwn the fence driver क्रम all possible rings (all asics).
  */
-void radeon_fence_driver_fini(struct radeon_device *rdev)
-{
-	int ring, r;
+व्योम radeon_fence_driver_fini(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक ring, r;
 
 	mutex_lock(&rdev->ring_lock);
-	for (ring = 0; ring < RADEON_NUM_RINGS; ring++) {
-		if (!rdev->fence_drv[ring].initialized)
-			continue;
-		r = radeon_fence_wait_empty(rdev, ring);
-		if (r) {
+	क्रम (ring = 0; ring < RADEON_NUM_RINGS; ring++) अणु
+		अगर (!rdev->fence_drv[ring].initialized)
+			जारी;
+		r = radeon_fence_रुको_empty(rdev, ring);
+		अगर (r) अणु
 			/* no need to trigger GPU reset as we are unloading */
-			radeon_fence_driver_force_completion(rdev, ring);
-		}
+			radeon_fence_driver_क्रमce_completion(rdev, ring);
+		पूर्ण
 		cancel_delayed_work_sync(&rdev->fence_drv[ring].lockup_work);
 		wake_up_all(&rdev->fence_queue);
-		radeon_scratch_free(rdev, rdev->fence_drv[ring].scratch_reg);
+		radeon_scratch_मुक्त(rdev, rdev->fence_drv[ring].scratch_reg);
 		rdev->fence_drv[ring].initialized = false;
-	}
+	पूर्ण
 	mutex_unlock(&rdev->ring_lock);
-}
+पूर्ण
 
 /**
- * radeon_fence_driver_force_completion - force all fence waiter to complete
+ * radeon_fence_driver_क्रमce_completion - क्रमce all fence रुकोer to complete
  *
- * @rdev: radeon device pointer
+ * @rdev: radeon device poपूर्णांकer
  * @ring: the ring to complete
  *
- * In case of GPU reset failure make sure no process keep waiting on fence
+ * In हाल of GPU reset failure make sure no process keep रुकोing on fence
  * that will never complete.
  */
-void radeon_fence_driver_force_completion(struct radeon_device *rdev, int ring)
-{
-	if (rdev->fence_drv[ring].initialized) {
-		radeon_fence_write(rdev, rdev->fence_drv[ring].sync_seq[ring], ring);
+व्योम radeon_fence_driver_क्रमce_completion(काष्ठा radeon_device *rdev, पूर्णांक ring)
+अणु
+	अगर (rdev->fence_drv[ring].initialized) अणु
+		radeon_fence_ग_लिखो(rdev, rdev->fence_drv[ring].sync_seq[ring], ring);
 		cancel_delayed_work_sync(&rdev->fence_drv[ring].lockup_work);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /*
  * Fence debugfs
  */
-#if defined(CONFIG_DEBUG_FS)
-static int radeon_debugfs_fence_info_show(struct seq_file *m, void *data)
-{
-	struct radeon_device *rdev = (struct radeon_device *)m->private;
-	int i, j;
+#अगर defined(CONFIG_DEBUG_FS)
+अटल पूर्णांक radeon_debugfs_fence_info_show(काष्ठा seq_file *m, व्योम *data)
+अणु
+	काष्ठा radeon_device *rdev = (काष्ठा radeon_device *)m->निजी;
+	पूर्णांक i, j;
 
-	for (i = 0; i < RADEON_NUM_RINGS; ++i) {
-		if (!rdev->fence_drv[i].initialized)
-			continue;
+	क्रम (i = 0; i < RADEON_NUM_RINGS; ++i) अणु
+		अगर (!rdev->fence_drv[i].initialized)
+			जारी;
 
 		radeon_fence_process(rdev, i);
 
-		seq_printf(m, "--- ring %d ---\n", i);
-		seq_printf(m, "Last signaled fence 0x%016llx\n",
-			   (unsigned long long)atomic64_read(&rdev->fence_drv[i].last_seq));
-		seq_printf(m, "Last emitted        0x%016llx\n",
+		seq_म_लिखो(m, "--- ring %d ---\n", i);
+		seq_म_लिखो(m, "Last signaled fence 0x%016llx\n",
+			   (अचिन्हित दीर्घ दीर्घ)atomic64_पढ़ो(&rdev->fence_drv[i].last_seq));
+		seq_म_लिखो(m, "Last emitted        0x%016llx\n",
 			   rdev->fence_drv[i].sync_seq[i]);
 
-		for (j = 0; j < RADEON_NUM_RINGS; ++j) {
-			if (i != j && rdev->fence_drv[j].initialized)
-				seq_printf(m, "Last sync to ring %d 0x%016llx\n",
+		क्रम (j = 0; j < RADEON_NUM_RINGS; ++j) अणु
+			अगर (i != j && rdev->fence_drv[j].initialized)
+				seq_म_लिखो(m, "Last sync to ring %d 0x%016llx\n",
 					   j, rdev->fence_drv[i].sync_seq[j]);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * radeon_debugfs_gpu_reset - manually trigger a gpu reset
  *
- * Manually trigger a gpu reset at the next fence wait.
+ * Manually trigger a gpu reset at the next fence रुको.
  */
-static int radeon_debugfs_gpu_reset(void *data, u64 *val)
-{
-	struct radeon_device *rdev = (struct radeon_device *)data;
+अटल पूर्णांक radeon_debugfs_gpu_reset(व्योम *data, u64 *val)
+अणु
+	काष्ठा radeon_device *rdev = (काष्ठा radeon_device *)data;
 
-	down_read(&rdev->exclusive_lock);
+	करोwn_पढ़ो(&rdev->exclusive_lock);
 	*val = rdev->needs_reset;
 	rdev->needs_reset = true;
 	wake_up_all(&rdev->fence_queue);
-	up_read(&rdev->exclusive_lock);
+	up_पढ़ो(&rdev->exclusive_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(radeon_debugfs_fence_info);
 DEFINE_DEBUGFS_ATTRIBUTE(radeon_debugfs_gpu_reset_fops,
-			 radeon_debugfs_gpu_reset, NULL, "%lld\n");
-#endif
+			 radeon_debugfs_gpu_reset, शून्य, "%lld\n");
+#पूर्ण_अगर
 
-void radeon_debugfs_fence_init(struct radeon_device *rdev)
-{
-#if defined(CONFIG_DEBUG_FS)
-	struct dentry *root = rdev->ddev->primary->debugfs_root;
+व्योम radeon_debugfs_fence_init(काष्ठा radeon_device *rdev)
+अणु
+#अगर defined(CONFIG_DEBUG_FS)
+	काष्ठा dentry *root = rdev->ddev->primary->debugfs_root;
 
 	debugfs_create_file("radeon_gpu_reset", 0444, root, rdev,
 			    &radeon_debugfs_gpu_reset_fops);
@@ -1031,96 +1032,96 @@ void radeon_debugfs_fence_init(struct radeon_device *rdev)
 			    &radeon_debugfs_fence_info_fops);
 
 
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static const char *radeon_fence_get_driver_name(struct dma_fence *fence)
-{
-	return "radeon";
-}
+अटल स्थिर अक्षर *radeon_fence_get_driver_name(काष्ठा dma_fence *fence)
+अणु
+	वापस "radeon";
+पूर्ण
 
-static const char *radeon_fence_get_timeline_name(struct dma_fence *f)
-{
-	struct radeon_fence *fence = to_radeon_fence(f);
-	switch (fence->ring) {
-	case RADEON_RING_TYPE_GFX_INDEX: return "radeon.gfx";
-	case CAYMAN_RING_TYPE_CP1_INDEX: return "radeon.cp1";
-	case CAYMAN_RING_TYPE_CP2_INDEX: return "radeon.cp2";
-	case R600_RING_TYPE_DMA_INDEX: return "radeon.dma";
-	case CAYMAN_RING_TYPE_DMA1_INDEX: return "radeon.dma1";
-	case R600_RING_TYPE_UVD_INDEX: return "radeon.uvd";
-	case TN_RING_TYPE_VCE1_INDEX: return "radeon.vce1";
-	case TN_RING_TYPE_VCE2_INDEX: return "radeon.vce2";
-	default: WARN_ON_ONCE(1); return "radeon.unk";
-	}
-}
+अटल स्थिर अक्षर *radeon_fence_get_समयline_name(काष्ठा dma_fence *f)
+अणु
+	काष्ठा radeon_fence *fence = to_radeon_fence(f);
+	चयन (fence->ring) अणु
+	हाल RADEON_RING_TYPE_GFX_INDEX: वापस "radeon.gfx";
+	हाल CAYMAN_RING_TYPE_CP1_INDEX: वापस "radeon.cp1";
+	हाल CAYMAN_RING_TYPE_CP2_INDEX: वापस "radeon.cp2";
+	हाल R600_RING_TYPE_DMA_INDEX: वापस "radeon.dma";
+	हाल CAYMAN_RING_TYPE_DMA1_INDEX: वापस "radeon.dma1";
+	हाल R600_RING_TYPE_UVD_INDEX: वापस "radeon.uvd";
+	हाल TN_RING_TYPE_VCE1_INDEX: वापस "radeon.vce1";
+	हाल TN_RING_TYPE_VCE2_INDEX: वापस "radeon.vce2";
+	शेष: WARN_ON_ONCE(1); वापस "radeon.unk";
+	पूर्ण
+पूर्ण
 
-static inline bool radeon_test_signaled(struct radeon_fence *fence)
-{
-	return test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->base.flags);
-}
+अटल अंतरभूत bool radeon_test_संकेतed(काष्ठा radeon_fence *fence)
+अणु
+	वापस test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->base.flags);
+पूर्ण
 
-struct radeon_wait_cb {
-	struct dma_fence_cb base;
-	struct task_struct *task;
-};
+काष्ठा radeon_रुको_cb अणु
+	काष्ठा dma_fence_cb base;
+	काष्ठा task_काष्ठा *task;
+पूर्ण;
 
-static void
-radeon_fence_wait_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
-{
-	struct radeon_wait_cb *wait =
-		container_of(cb, struct radeon_wait_cb, base);
+अटल व्योम
+radeon_fence_रुको_cb(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb)
+अणु
+	काष्ठा radeon_रुको_cb *रुको =
+		container_of(cb, काष्ठा radeon_रुको_cb, base);
 
-	wake_up_process(wait->task);
-}
+	wake_up_process(रुको->task);
+पूर्ण
 
-static signed long radeon_fence_default_wait(struct dma_fence *f, bool intr,
-					     signed long t)
-{
-	struct radeon_fence *fence = to_radeon_fence(f);
-	struct radeon_device *rdev = fence->rdev;
-	struct radeon_wait_cb cb;
+अटल चिन्हित दीर्घ radeon_fence_शेष_रुको(काष्ठा dma_fence *f, bool पूर्णांकr,
+					     चिन्हित दीर्घ t)
+अणु
+	काष्ठा radeon_fence *fence = to_radeon_fence(f);
+	काष्ठा radeon_device *rdev = fence->rdev;
+	काष्ठा radeon_रुको_cb cb;
 
 	cb.task = current;
 
-	if (dma_fence_add_callback(f, &cb.base, radeon_fence_wait_cb))
-		return t;
+	अगर (dma_fence_add_callback(f, &cb.base, radeon_fence_रुको_cb))
+		वापस t;
 
-	while (t > 0) {
-		if (intr)
+	जबतक (t > 0) अणु
+		अगर (पूर्णांकr)
 			set_current_state(TASK_INTERRUPTIBLE);
-		else
+		अन्यथा
 			set_current_state(TASK_UNINTERRUPTIBLE);
 
 		/*
-		 * radeon_test_signaled must be called after
+		 * radeon_test_संकेतed must be called after
 		 * set_current_state to prevent a race with wake_up_process
 		 */
-		if (radeon_test_signaled(fence))
-			break;
+		अगर (radeon_test_संकेतed(fence))
+			अवरोध;
 
-		if (rdev->needs_reset) {
+		अगर (rdev->needs_reset) अणु
 			t = -EDEADLK;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		t = schedule_timeout(t);
+		t = schedule_समयout(t);
 
-		if (t > 0 && intr && signal_pending(current))
+		अगर (t > 0 && पूर्णांकr && संकेत_pending(current))
 			t = -ERESTARTSYS;
-	}
+	पूर्ण
 
 	__set_current_state(TASK_RUNNING);
-	dma_fence_remove_callback(f, &cb.base);
+	dma_fence_हटाओ_callback(f, &cb.base);
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-const struct dma_fence_ops radeon_fence_ops = {
+स्थिर काष्ठा dma_fence_ops radeon_fence_ops = अणु
 	.get_driver_name = radeon_fence_get_driver_name,
-	.get_timeline_name = radeon_fence_get_timeline_name,
-	.enable_signaling = radeon_fence_enable_signaling,
-	.signaled = radeon_fence_is_signaled,
-	.wait = radeon_fence_default_wait,
-	.release = NULL,
-};
+	.get_समयline_name = radeon_fence_get_समयline_name,
+	.enable_संकेतing = radeon_fence_enable_संकेतing,
+	.संकेतed = radeon_fence_is_संकेतed,
+	.रुको = radeon_fence_शेष_रुको,
+	.release = शून्य,
+पूर्ण;

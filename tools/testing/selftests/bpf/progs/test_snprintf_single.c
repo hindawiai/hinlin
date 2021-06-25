@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2021 Google LLC. */
 
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-/* The format string is filled from the userspace such that loading fails */
-static const char fmt[10];
+/* The क्रमmat string is filled from the userspace such that loading fails */
+अटल स्थिर अक्षर fmt[10];
 
 SEC("raw_tp/sys_enter")
-int handler(const void *ctx)
-{
-	unsigned long long arg = 42;
+पूर्णांक handler(स्थिर व्योम *ctx)
+अणु
+	अचिन्हित दीर्घ दीर्घ arg = 42;
 
-	bpf_snprintf(NULL, 0, fmt, &arg, sizeof(arg));
+	bpf_snम_लिखो(शून्य, 0, fmt, &arg, माप(arg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

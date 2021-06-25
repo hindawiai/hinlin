@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,94 +22,94 @@
  *
  * Authors: Ben Skeggs
  */
-#define gf100_ram(p) container_of((p), struct gf100_ram, base)
-#include "ram.h"
-#include "ramfuc.h"
+#घोषणा gf100_ram(p) container_of((p), काष्ठा gf100_ram, base)
+#समावेश "ram.h"
+#समावेश "ramfuc.h"
 
-#include <core/option.h>
-#include <subdev/bios.h>
-#include <subdev/bios/pll.h>
-#include <subdev/bios/rammap.h>
-#include <subdev/bios/timing.h>
-#include <subdev/clk.h>
-#include <subdev/clk/pll.h>
+#समावेश <core/option.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/pll.h>
+#समावेश <subdev/bios/rammap.h>
+#समावेश <subdev/bios/timing.h>
+#समावेश <subdev/clk.h>
+#समावेश <subdev/clk/pll.h>
 
-struct gf100_ramfuc {
-	struct ramfuc base;
+काष्ठा gf100_ramfuc अणु
+	काष्ठा ramfuc base;
 
-	struct ramfuc_reg r_0x10fe20;
-	struct ramfuc_reg r_0x10fe24;
-	struct ramfuc_reg r_0x137320;
-	struct ramfuc_reg r_0x137330;
+	काष्ठा ramfuc_reg r_0x10fe20;
+	काष्ठा ramfuc_reg r_0x10fe24;
+	काष्ठा ramfuc_reg r_0x137320;
+	काष्ठा ramfuc_reg r_0x137330;
 
-	struct ramfuc_reg r_0x132000;
-	struct ramfuc_reg r_0x132004;
-	struct ramfuc_reg r_0x132100;
+	काष्ठा ramfuc_reg r_0x132000;
+	काष्ठा ramfuc_reg r_0x132004;
+	काष्ठा ramfuc_reg r_0x132100;
 
-	struct ramfuc_reg r_0x137390;
+	काष्ठा ramfuc_reg r_0x137390;
 
-	struct ramfuc_reg r_0x10f290;
-	struct ramfuc_reg r_0x10f294;
-	struct ramfuc_reg r_0x10f298;
-	struct ramfuc_reg r_0x10f29c;
-	struct ramfuc_reg r_0x10f2a0;
+	काष्ठा ramfuc_reg r_0x10f290;
+	काष्ठा ramfuc_reg r_0x10f294;
+	काष्ठा ramfuc_reg r_0x10f298;
+	काष्ठा ramfuc_reg r_0x10f29c;
+	काष्ठा ramfuc_reg r_0x10f2a0;
 
-	struct ramfuc_reg r_0x10f300;
-	struct ramfuc_reg r_0x10f338;
-	struct ramfuc_reg r_0x10f340;
-	struct ramfuc_reg r_0x10f344;
-	struct ramfuc_reg r_0x10f348;
+	काष्ठा ramfuc_reg r_0x10f300;
+	काष्ठा ramfuc_reg r_0x10f338;
+	काष्ठा ramfuc_reg r_0x10f340;
+	काष्ठा ramfuc_reg r_0x10f344;
+	काष्ठा ramfuc_reg r_0x10f348;
 
-	struct ramfuc_reg r_0x10f910;
-	struct ramfuc_reg r_0x10f914;
+	काष्ठा ramfuc_reg r_0x10f910;
+	काष्ठा ramfuc_reg r_0x10f914;
 
-	struct ramfuc_reg r_0x100b0c;
-	struct ramfuc_reg r_0x10f050;
-	struct ramfuc_reg r_0x10f090;
-	struct ramfuc_reg r_0x10f200;
-	struct ramfuc_reg r_0x10f210;
-	struct ramfuc_reg r_0x10f310;
-	struct ramfuc_reg r_0x10f314;
-	struct ramfuc_reg r_0x10f610;
-	struct ramfuc_reg r_0x10f614;
-	struct ramfuc_reg r_0x10f800;
-	struct ramfuc_reg r_0x10f808;
-	struct ramfuc_reg r_0x10f824;
-	struct ramfuc_reg r_0x10f830;
-	struct ramfuc_reg r_0x10f988;
-	struct ramfuc_reg r_0x10f98c;
-	struct ramfuc_reg r_0x10f990;
-	struct ramfuc_reg r_0x10f998;
-	struct ramfuc_reg r_0x10f9b0;
-	struct ramfuc_reg r_0x10f9b4;
-	struct ramfuc_reg r_0x10fb04;
-	struct ramfuc_reg r_0x10fb08;
-	struct ramfuc_reg r_0x137300;
-	struct ramfuc_reg r_0x137310;
-	struct ramfuc_reg r_0x137360;
-	struct ramfuc_reg r_0x1373ec;
-	struct ramfuc_reg r_0x1373f0;
-	struct ramfuc_reg r_0x1373f8;
+	काष्ठा ramfuc_reg r_0x100b0c;
+	काष्ठा ramfuc_reg r_0x10f050;
+	काष्ठा ramfuc_reg r_0x10f090;
+	काष्ठा ramfuc_reg r_0x10f200;
+	काष्ठा ramfuc_reg r_0x10f210;
+	काष्ठा ramfuc_reg r_0x10f310;
+	काष्ठा ramfuc_reg r_0x10f314;
+	काष्ठा ramfuc_reg r_0x10f610;
+	काष्ठा ramfuc_reg r_0x10f614;
+	काष्ठा ramfuc_reg r_0x10f800;
+	काष्ठा ramfuc_reg r_0x10f808;
+	काष्ठा ramfuc_reg r_0x10f824;
+	काष्ठा ramfuc_reg r_0x10f830;
+	काष्ठा ramfuc_reg r_0x10f988;
+	काष्ठा ramfuc_reg r_0x10f98c;
+	काष्ठा ramfuc_reg r_0x10f990;
+	काष्ठा ramfuc_reg r_0x10f998;
+	काष्ठा ramfuc_reg r_0x10f9b0;
+	काष्ठा ramfuc_reg r_0x10f9b4;
+	काष्ठा ramfuc_reg r_0x10fb04;
+	काष्ठा ramfuc_reg r_0x10fb08;
+	काष्ठा ramfuc_reg r_0x137300;
+	काष्ठा ramfuc_reg r_0x137310;
+	काष्ठा ramfuc_reg r_0x137360;
+	काष्ठा ramfuc_reg r_0x1373ec;
+	काष्ठा ramfuc_reg r_0x1373f0;
+	काष्ठा ramfuc_reg r_0x1373f8;
 
-	struct ramfuc_reg r_0x61c140;
-	struct ramfuc_reg r_0x611200;
+	काष्ठा ramfuc_reg r_0x61c140;
+	काष्ठा ramfuc_reg r_0x611200;
 
-	struct ramfuc_reg r_0x13d8f4;
-};
+	काष्ठा ramfuc_reg r_0x13d8f4;
+पूर्ण;
 
-struct gf100_ram {
-	struct nvkm_ram base;
-	struct gf100_ramfuc fuc;
-	struct nvbios_pll refpll;
-	struct nvbios_pll mempll;
-};
+काष्ठा gf100_ram अणु
+	काष्ठा nvkm_ram base;
+	काष्ठा gf100_ramfuc fuc;
+	काष्ठा nvbios_pll refpll;
+	काष्ठा nvbios_pll mempll;
+पूर्ण;
 
-static void
-gf100_ram_train(struct gf100_ramfuc *fuc, u32 magic)
-{
-	struct gf100_ram *ram = container_of(fuc, typeof(*ram), fuc);
-	struct nvkm_fb *fb = ram->base.fb;
-	struct nvkm_device *device = fb->subdev.device;
+अटल व्योम
+gf100_ram_train(काष्ठा gf100_ramfuc *fuc, u32 magic)
+अणु
+	काष्ठा gf100_ram *ram = container_of(fuc, typeof(*ram), fuc);
+	काष्ठा nvkm_fb *fb = ram->base.fb;
+	काष्ठा nvkm_device *device = fb->subdev.device;
 	u32 part = nvkm_rd32(device, 0x022438), i;
 	u32 mask = nvkm_rd32(device, 0x022554);
 	u32 addr = 0x110974;
@@ -116,134 +117,134 @@ gf100_ram_train(struct gf100_ramfuc *fuc, u32 magic)
 	ram_wr32(fuc, 0x10f910, magic);
 	ram_wr32(fuc, 0x10f914, magic);
 
-	for (i = 0; (magic & 0x80000000) && i < part; addr += 0x1000, i++) {
-		if (mask & (1 << i))
-			continue;
-		ram_wait(fuc, addr, 0x0000000f, 0x00000000, 500000);
-	}
-}
+	क्रम (i = 0; (magic & 0x80000000) && i < part; addr += 0x1000, i++) अणु
+		अगर (mask & (1 << i))
+			जारी;
+		ram_रुको(fuc, addr, 0x0000000f, 0x00000000, 500000);
+	पूर्ण
+पूर्ण
 
-int
-gf100_ram_calc(struct nvkm_ram *base, u32 freq)
-{
-	struct gf100_ram *ram = gf100_ram(base);
-	struct gf100_ramfuc *fuc = &ram->fuc;
-	struct nvkm_subdev *subdev = &ram->base.fb->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_clk *clk = device->clk;
-	struct nvkm_bios *bios = device->bios;
-	struct nvbios_ramcfg cfg;
+पूर्णांक
+gf100_ram_calc(काष्ठा nvkm_ram *base, u32 freq)
+अणु
+	काष्ठा gf100_ram *ram = gf100_ram(base);
+	काष्ठा gf100_ramfuc *fuc = &ram->fuc;
+	काष्ठा nvkm_subdev *subdev = &ram->base.fb->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_clk *clk = device->clk;
+	काष्ठा nvkm_bios *bios = device->bios;
+	काष्ठा nvbios_ramcfg cfg;
 	u8  ver, cnt, len, strap;
-	struct {
+	काष्ठा अणु
 		u32 data;
 		u8  size;
-	} rammap, ramcfg, timing;
-	int ref, div, out;
-	int from, mode;
-	int N1, M1, P;
-	int ret;
+	पूर्ण rammap, ramcfg, timing;
+	पूर्णांक ref, भाग, out;
+	पूर्णांक from, mode;
+	पूर्णांक N1, M1, P;
+	पूर्णांक ret;
 
 	/* lookup memory config data relevant to the target frequency */
 	rammap.data = nvbios_rammapEm(bios, freq / 1000, &ver, &rammap.size,
 				      &cnt, &ramcfg.size, &cfg);
-	if (!rammap.data || ver != 0x10 || rammap.size < 0x0e) {
+	अगर (!rammap.data || ver != 0x10 || rammap.size < 0x0e) अणु
 		nvkm_error(subdev, "invalid/missing rammap entry\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* locate specific data set for the attached memory */
+	/* locate specअगरic data set क्रम the attached memory */
 	strap = nvbios_ramcfg_index(subdev);
-	if (strap >= cnt) {
+	अगर (strap >= cnt) अणु
 		nvkm_error(subdev, "invalid ramcfg strap\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ramcfg.data = rammap.data + rammap.size + (strap * ramcfg.size);
-	if (!ramcfg.data || ver != 0x10 || ramcfg.size < 0x0e) {
+	अगर (!ramcfg.data || ver != 0x10 || ramcfg.size < 0x0e) अणु
 		nvkm_error(subdev, "invalid/missing ramcfg entry\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* lookup memory timings, if bios says they're present */
+	/* lookup memory timings, अगर bios says they're present */
 	strap = nvbios_rd08(bios, ramcfg.data + 0x01);
-	if (strap != 0xff) {
+	अगर (strap != 0xff) अणु
 		timing.data = nvbios_timingEe(bios, strap, &ver, &timing.size,
 					      &cnt, &len);
-		if (!timing.data || ver != 0x10 || timing.size < 0x19) {
+		अगर (!timing.data || ver != 0x10 || timing.size < 0x19) अणु
 			nvkm_error(subdev, "invalid/missing timing entry\n");
-			return -EINVAL;
-		}
-	} else {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		timing.data = 0;
-	}
+	पूर्ण
 
 	ret = ram_init(fuc, ram->base.fb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* determine current mclk configuration */
 	from = !!(ram_rd32(fuc, 0x1373f0) & 0x00000002); /*XXX: ok? */
 
 	/* determine target mclk configuration */
-	if (!(ram_rd32(fuc, 0x137300) & 0x00000100))
-		ref = nvkm_clk_read(clk, nv_clk_src_sppll0);
-	else
-		ref = nvkm_clk_read(clk, nv_clk_src_sppll1);
-	div = max(min((ref * 2) / freq, (u32)65), (u32)2) - 2;
-	out = (ref * 2) / (div + 2);
+	अगर (!(ram_rd32(fuc, 0x137300) & 0x00000100))
+		ref = nvkm_clk_पढ़ो(clk, nv_clk_src_sppll0);
+	अन्यथा
+		ref = nvkm_clk_पढ़ो(clk, nv_clk_src_sppll1);
+	भाग = max(min((ref * 2) / freq, (u32)65), (u32)2) - 2;
+	out = (ref * 2) / (भाग + 2);
 	mode = freq != out;
 
 	ram_mask(fuc, 0x137360, 0x00000002, 0x00000000);
 
-	if ((ram_rd32(fuc, 0x132000) & 0x00000002) || 0 /*XXX*/) {
+	अगर ((ram_rd32(fuc, 0x132000) & 0x00000002) || 0 /*XXX*/) अणु
 		ram_nuke(fuc, 0x132000);
 		ram_mask(fuc, 0x132000, 0x00000002, 0x00000002);
 		ram_mask(fuc, 0x132000, 0x00000002, 0x00000000);
-	}
+	पूर्ण
 
-	if (mode == 1) {
+	अगर (mode == 1) अणु
 		ram_nuke(fuc, 0x10fe20);
 		ram_mask(fuc, 0x10fe20, 0x00000002, 0x00000002);
 		ram_mask(fuc, 0x10fe20, 0x00000002, 0x00000000);
-	}
+	पूर्ण
 
 // 0x00020034 // 0x0000000a
 	ram_wr32(fuc, 0x132100, 0x00000001);
 
-	if (mode == 1 && from == 0) {
+	अगर (mode == 1 && from == 0) अणु
 		/* calculate refpll */
 		ret = gt215_pll_calc(subdev, &ram->refpll, ram->mempll.refclk,
-				     &N1, NULL, &M1, &P);
-		if (ret <= 0) {
+				     &N1, शून्य, &M1, &P);
+		अगर (ret <= 0) अणु
 			nvkm_error(subdev, "unable to calc refpll\n");
-			return ret ? ret : -ERANGE;
-		}
+			वापस ret ? ret : -दुस्फल;
+		पूर्ण
 
 		ram_wr32(fuc, 0x10fe20, 0x20010000);
 		ram_wr32(fuc, 0x137320, 0x00000003);
 		ram_wr32(fuc, 0x137330, 0x81200006);
 		ram_wr32(fuc, 0x10fe24, (P << 16) | (N1 << 8) | M1);
 		ram_wr32(fuc, 0x10fe20, 0x20010001);
-		ram_wait(fuc, 0x137390, 0x00020000, 0x00020000, 64000);
+		ram_रुको(fuc, 0x137390, 0x00020000, 0x00020000, 64000);
 
 		/* calculate mempll */
 		ret = gt215_pll_calc(subdev, &ram->mempll, freq,
-				     &N1, NULL, &M1, &P);
-		if (ret <= 0) {
+				     &N1, शून्य, &M1, &P);
+		अगर (ret <= 0) अणु
 			nvkm_error(subdev, "unable to calc refpll\n");
-			return ret ? ret : -ERANGE;
-		}
+			वापस ret ? ret : -दुस्फल;
+		पूर्ण
 
 		ram_wr32(fuc, 0x10fe20, 0x20010005);
 		ram_wr32(fuc, 0x132004, (P << 16) | (N1 << 8) | M1);
 		ram_wr32(fuc, 0x132000, 0x18010101);
-		ram_wait(fuc, 0x137390, 0x00000002, 0x00000002, 64000);
-	} else
-	if (mode == 0) {
+		ram_रुको(fuc, 0x137390, 0x00000002, 0x00000002, 64000);
+	पूर्ण अन्यथा
+	अगर (mode == 0) अणु
 		ram_wr32(fuc, 0x137300, 0x00000003);
-	}
+	पूर्ण
 
-	if (from == 0) {
+	अगर (from == 0) अणु
 		ram_nuke(fuc, 0x10fb04);
 		ram_mask(fuc, 0x10fb04, 0x0000ffff, 0x00000000);
 		ram_nuke(fuc, 0x10fb08);
@@ -253,16 +254,16 @@ gf100_ram_calc(struct nvkm_ram *base, u32 freq)
 		ram_wr32(fuc, 0x10f990, 0x20012001);
 		ram_wr32(fuc, 0x10f998, 0x00011a00);
 		ram_wr32(fuc, 0x13d8f4, 0x00000000);
-	} else {
+	पूर्ण अन्यथा अणु
 		ram_wr32(fuc, 0x10f988, 0x20010000);
 		ram_wr32(fuc, 0x10f98c, 0x00000000);
 		ram_wr32(fuc, 0x10f990, 0x20012001);
 		ram_wr32(fuc, 0x10f998, 0x00010a00);
-	}
+	पूर्ण
 
-	if (from == 0) {
+	अगर (from == 0) अणु
 // 0x00020039 // 0x000000ba
-	}
+	पूर्ण
 
 // 0x0002003a // 0x00000002
 	ram_wr32(fuc, 0x100b0c, 0x00080012);
@@ -275,7 +276,7 @@ gf100_ram_calc(struct nvkm_ram *base, u32 freq)
 	ram_mask(fuc, 0x10f200, 0x00000800, 0x00000000);
 	ram_wr32(fuc, 0x10f210, 0x00000000);
 	ram_nsec(fuc, 1000);
-	if (mode == 0)
+	अगर (mode == 0)
 		gf100_ram_train(fuc, 0x000c1001);
 	ram_wr32(fuc, 0x10f310, 0x00000001);
 	ram_nsec(fuc, 1000);
@@ -283,13 +284,13 @@ gf100_ram_calc(struct nvkm_ram *base, u32 freq)
 	ram_wr32(fuc, 0x10f090, 0xc000007f);
 	ram_nsec(fuc, 1000);
 
-	if (from == 0) {
+	अगर (from == 0) अणु
 		ram_wr32(fuc, 0x10f824, 0x00007fd4);
-	} else {
+	पूर्ण अन्यथा अणु
 		ram_wr32(fuc, 0x1373ec, 0x00020404);
-	}
+	पूर्ण
 
-	if (mode == 0) {
+	अगर (mode == 0) अणु
 		ram_mask(fuc, 0x10f808, 0x00080000, 0x00000000);
 		ram_mask(fuc, 0x10f200, 0x00008000, 0x00008000);
 		ram_wr32(fuc, 0x10f830, 0x41500010);
@@ -334,7 +335,7 @@ gf100_ram_calc(struct nvkm_ram *base, u32 freq)
 // 0x00020034 // 0x0000000b
 		ram_wr32(fuc, 0x100b0c, 0x00080028);
 		ram_wr32(fuc, 0x611200, 0x00003330);
-	} else {
+	पूर्ण अन्यथा अणु
 		ram_wr32(fuc, 0x10f800, 0x00001800);
 		ram_wr32(fuc, 0x13d8f4, 0x00000000);
 		ram_wr32(fuc, 0x1373ec, 0x00020404);
@@ -392,61 +393,61 @@ gf100_ram_calc(struct nvkm_ram *base, u32 freq)
 		ram_wr32(fuc, 0x10f9b4, 0x00002f50);
 
 		gf100_ram_train(fuc, 0x010c1001);
-	}
+	पूर्ण
 
 	ram_mask(fuc, 0x10f200, 0x00000800, 0x00000800);
 // 0x00020016 // 0x00000000
 
-	if (mode == 0)
+	अगर (mode == 0)
 		ram_mask(fuc, 0x132000, 0x00000001, 0x00000000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-gf100_ram_prog(struct nvkm_ram *base)
-{
-	struct gf100_ram *ram = gf100_ram(base);
-	struct nvkm_device *device = ram->base.fb->subdev.device;
+पूर्णांक
+gf100_ram_prog(काष्ठा nvkm_ram *base)
+अणु
+	काष्ठा gf100_ram *ram = gf100_ram(base);
+	काष्ठा nvkm_device *device = ram->base.fb->subdev.device;
 	ram_exec(&ram->fuc, nvkm_boolopt(device->cfgopt, "NvMemExec", true));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-gf100_ram_tidy(struct nvkm_ram *base)
-{
-	struct gf100_ram *ram = gf100_ram(base);
+व्योम
+gf100_ram_tidy(काष्ठा nvkm_ram *base)
+अणु
+	काष्ठा gf100_ram *ram = gf100_ram(base);
 	ram_exec(&ram->fuc, false);
-}
+पूर्ण
 
-int
-gf100_ram_init(struct nvkm_ram *base)
-{
-	static const u8  train0[] = {
+पूर्णांक
+gf100_ram_init(काष्ठा nvkm_ram *base)
+अणु
+	अटल स्थिर u8  train0[] = अणु
 		0x00, 0xff, 0x55, 0xaa, 0x33, 0xcc,
 		0x00, 0xff, 0xff, 0x00, 0xff, 0x00,
-	};
-	static const u32 train1[] = {
+	पूर्ण;
+	अटल स्थिर u32 train1[] = अणु
 		0x00000000, 0xffffffff,
 		0x55555555, 0xaaaaaaaa,
 		0x33333333, 0xcccccccc,
 		0xf0f0f0f0, 0x0f0f0f0f,
 		0x00ff00ff, 0xff00ff00,
 		0x0000ffff, 0xffff0000,
-	};
-	struct gf100_ram *ram = gf100_ram(base);
-	struct nvkm_device *device = ram->base.fb->subdev.device;
-	int i;
+	पूर्ण;
+	काष्ठा gf100_ram *ram = gf100_ram(base);
+	काष्ठा nvkm_device *device = ram->base.fb->subdev.device;
+	पूर्णांक i;
 
-	switch (ram->base.type) {
-	case NVKM_RAM_TYPE_GDDR5:
-		break;
-	default:
-		return 0;
-	}
+	चयन (ram->base.type) अणु
+	हाल NVKM_RAM_TYPE_GDDR5:
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	/* prepare for ddr link training, and load training patterns */
-	for (i = 0; i < 0x30; i++) {
+	/* prepare क्रम ddr link training, and load training patterns */
+	क्रम (i = 0; i < 0x30; i++) अणु
 		nvkm_wr32(device, 0x10f968, 0x00000000 | (i << 8));
 		nvkm_wr32(device, 0x10f96c, 0x00000000 | (i << 8));
 		nvkm_wr32(device, 0x10f920, 0x00000100 | train0[i % 12]);
@@ -457,63 +458,63 @@ gf100_ram_init(struct nvkm_ram *base)
 		nvkm_wr32(device, 0x10f924, 0x00000000 | train0[i % 12]);
 		nvkm_wr32(device, 0x10f918,              train1[i % 12]);
 		nvkm_wr32(device, 0x10f91c,              train1[i % 12]);
-	}
+	पूर्ण
 
-	return 0;
-}
-
-u32
-gf100_ram_probe_fbpa_amount(struct nvkm_device *device, int fbpa)
-{
-	return nvkm_rd32(device, 0x11020c + (fbpa * 0x1000));
-}
+	वापस 0;
+पूर्ण
 
 u32
-gf100_ram_probe_fbp_amount(const struct nvkm_ram_func *func, u32 fbpao,
-			   struct nvkm_device *device, int fbp, int *pltcs)
-{
-	if (!(fbpao & BIT(fbp))) {
+gf100_ram_probe_fbpa_amount(काष्ठा nvkm_device *device, पूर्णांक fbpa)
+अणु
+	वापस nvkm_rd32(device, 0x11020c + (fbpa * 0x1000));
+पूर्ण
+
+u32
+gf100_ram_probe_fbp_amount(स्थिर काष्ठा nvkm_ram_func *func, u32 fbpao,
+			   काष्ठा nvkm_device *device, पूर्णांक fbp, पूर्णांक *pltcs)
+अणु
+	अगर (!(fbpao & BIT(fbp))) अणु
 		*pltcs = 1;
-		return func->probe_fbpa_amount(device, fbp);
-	}
-	return 0;
-}
+		वापस func->probe_fbpa_amount(device, fbp);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 u32
-gf100_ram_probe_fbp(const struct nvkm_ram_func *func,
-		    struct nvkm_device *device, int fbp, int *pltcs)
-{
+gf100_ram_probe_fbp(स्थिर काष्ठा nvkm_ram_func *func,
+		    काष्ठा nvkm_device *device, पूर्णांक fbp, पूर्णांक *pltcs)
+अणु
 	u32 fbpao = nvkm_rd32(device, 0x022554);
-	return func->probe_fbp_amount(func, fbpao, device, fbp, pltcs);
-}
+	वापस func->probe_fbp_amount(func, fbpao, device, fbp, pltcs);
+पूर्ण
 
-int
-gf100_ram_ctor(const struct nvkm_ram_func *func, struct nvkm_fb *fb,
-	       struct nvkm_ram *ram)
-{
-	struct nvkm_subdev *subdev = &fb->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_bios *bios = device->bios;
-	const u32 rsvd_head = ( 256 * 1024); /* vga memory */
-	const u32 rsvd_tail = (1024 * 1024); /* vbios etc */
-	enum nvkm_ram_type type = nvkm_fb_bios_memtype(bios);
+पूर्णांक
+gf100_ram_ctor(स्थिर काष्ठा nvkm_ram_func *func, काष्ठा nvkm_fb *fb,
+	       काष्ठा nvkm_ram *ram)
+अणु
+	काष्ठा nvkm_subdev *subdev = &fb->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_bios *bios = device->bios;
+	स्थिर u32 rsvd_head = ( 256 * 1024); /* vga memory */
+	स्थिर u32 rsvd_tail = (1024 * 1024); /* vbios etc */
+	क्रमागत nvkm_ram_type type = nvkm_fb_bios_memtype(bios);
 	u32 fbps = nvkm_rd32(device, 0x022438);
 	u64 total = 0, lcomm = ~0, lower, ubase, usize;
-	int ret, fbp, ltcs, ltcn = 0;
+	पूर्णांक ret, fbp, ltcs, ltcn = 0;
 
 	nvkm_debug(subdev, "%d FBP(s)\n", fbps);
-	for (fbp = 0; fbp < fbps; fbp++) {
+	क्रम (fbp = 0; fbp < fbps; fbp++) अणु
 		u32 size = func->probe_fbp(func, device, fbp, &ltcs);
-		if (size) {
+		अगर (size) अणु
 			nvkm_debug(subdev, "FBP %d: %4d MiB, %d LTC(s)\n",
 				   fbp, size, ltcs);
 			lcomm  = min(lcomm, (u64)(size / ltcs) << 20);
 			total += (u64) size << 20;
 			ltcn  += ltcs;
-		} else {
+		पूर्ण अन्यथा अणु
 			nvkm_debug(subdev, "FBP %d: disabled\n", fbp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	lower = lcomm * ltcn;
 	ubase = lcomm + func->upper;
@@ -524,8 +525,8 @@ gf100_ram_ctor(const struct nvkm_ram_func *func, struct nvkm_fb *fb,
 	nvkm_debug(subdev, "Total: %4lld MiB\n", total >> 20);
 
 	ret = nvkm_ram_ctor(func, fb, type, total, ram);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	nvkm_mm_fini(&ram->vram);
 
@@ -534,63 +535,63 @@ gf100_ram_ctor(const struct nvkm_ram_func *func, struct nvkm_fb *fb,
 	 * This is either where some FBPs have more memory than the others,
 	 * or where LTCs have been disabled on a FBP.
 	 */
-	if (lower != total) {
+	अगर (lower != total) अणु
 		/* The common memory amount is addressed normally. */
 		ret = nvkm_mm_init(&ram->vram, NVKM_RAM_MM_NORMAL,
 				   rsvd_head >> NVKM_RAM_MM_SHIFT,
 				   (lower - rsvd_head) >> NVKM_RAM_MM_SHIFT, 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/* And the rest is much higher in the physical address
-		 * space, and may not be usable for certain operations.
+		 * space, and may not be usable क्रम certain operations.
 		 */
 		ret = nvkm_mm_init(&ram->vram, NVKM_RAM_MM_MIXED,
 				   ubase >> NVKM_RAM_MM_SHIFT,
 				   (usize - rsvd_tail) >> NVKM_RAM_MM_SHIFT, 1);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		/* GPUs without mixed-memory are a lot nicer... */
 		ret = nvkm_mm_init(&ram->vram, NVKM_RAM_MM_NORMAL,
 				   rsvd_head >> NVKM_RAM_MM_SHIFT,
 				   (total - rsvd_head - rsvd_tail) >>
 				   NVKM_RAM_MM_SHIFT, 1);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-gf100_ram_new_(const struct nvkm_ram_func *func,
-	       struct nvkm_fb *fb, struct nvkm_ram **pram)
-{
-	struct nvkm_subdev *subdev = &fb->subdev;
-	struct nvkm_bios *bios = subdev->device->bios;
-	struct gf100_ram *ram;
-	int ret;
+पूर्णांक
+gf100_ram_new_(स्थिर काष्ठा nvkm_ram_func *func,
+	       काष्ठा nvkm_fb *fb, काष्ठा nvkm_ram **pram)
+अणु
+	काष्ठा nvkm_subdev *subdev = &fb->subdev;
+	काष्ठा nvkm_bios *bios = subdev->device->bios;
+	काष्ठा gf100_ram *ram;
+	पूर्णांक ret;
 
-	if (!(ram = kzalloc(sizeof(*ram), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(ram = kzalloc(माप(*ram), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*pram = &ram->base;
 
 	ret = gf100_ram_ctor(func, fb, &ram->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = nvbios_pll_parse(bios, 0x0c, &ram->refpll);
-	if (ret) {
+	अगर (ret) अणु
 		nvkm_error(subdev, "mclk refpll data not found\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = nvbios_pll_parse(bios, 0x04, &ram->mempll);
-	if (ret) {
+	अगर (ret) अणु
 		nvkm_error(subdev, "mclk pll data not found\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ram->fuc.r_0x10fe20 = ramfuc_reg(0x10fe20);
 	ram->fuc.r_0x10fe24 = ramfuc_reg(0x10fe24);
@@ -650,11 +651,11 @@ gf100_ram_new_(const struct nvkm_ram_func *func,
 	ram->fuc.r_0x611200 = ramfuc_reg(0x611200);
 
 	ram->fuc.r_0x13d8f4 = ramfuc_reg(0x13d8f4);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_ram_func
-gf100_ram = {
+अटल स्थिर काष्ठा nvkm_ram_func
+gf100_ram = अणु
 	.upper = 0x0200000000ULL,
 	.probe_fbp = gf100_ram_probe_fbp,
 	.probe_fbp_amount = gf100_ram_probe_fbp_amount,
@@ -663,10 +664,10 @@ gf100_ram = {
 	.calc = gf100_ram_calc,
 	.prog = gf100_ram_prog,
 	.tidy = gf100_ram_tidy,
-};
+पूर्ण;
 
-int
-gf100_ram_new(struct nvkm_fb *fb, struct nvkm_ram **pram)
-{
-	return gf100_ram_new_(&gf100_ram, fb, pram);
-}
+पूर्णांक
+gf100_ram_new(काष्ठा nvkm_fb *fb, काष्ठा nvkm_ram **pram)
+अणु
+	वापस gf100_ram_new_(&gf100_ram, fb, pram);
+पूर्ण

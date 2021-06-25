@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0
-int cache_control(unsigned int command)
-{
-	volatile unsigned int *p = (volatile unsigned int *) 0x80000000;
-	int i;
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+पूर्णांक cache_control(अचिन्हित पूर्णांक command)
+अणु
+	अस्थिर अचिन्हित पूर्णांक *p = (अस्थिर अचिन्हित पूर्णांक *) 0x80000000;
+	पूर्णांक i;
 
-	for (i = 0; i < (32 * 1024); i += 32) {
-		(void)*p;
-		p += (32 / sizeof(int));
-	}
+	क्रम (i = 0; i < (32 * 1024); i += 32) अणु
+		(व्योम)*p;
+		p += (32 / माप(पूर्णांक));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

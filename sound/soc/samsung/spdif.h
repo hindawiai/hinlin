@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * ALSA SoC Audio Layer - Samsung S/PDIF Controller driver
  *
@@ -6,10 +7,10 @@
  *		http://www.samsung.com/
  */
 
-#ifndef __SND_SOC_SAMSUNG_SPDIF_H
-#define __SND_SOC_SAMSUNG_SPDIF_H	__FILE__
+#अगर_अघोषित __SND_SOC_SAMSUNG_SPDIF_H
+#घोषणा __SND_SOC_SAMSUNG_SPDIF_H	__खाता__
 
-#define SND_SOC_SPDIF_INT_MCLK		0
-#define SND_SOC_SPDIF_EXT_MCLK		1
+#घोषणा SND_SOC_SPDIF_INT_MCLK		0
+#घोषणा SND_SOC_SPDIF_EXT_MCLK		1
 
-#endif	/* __SND_SOC_SAMSUNG_SPDIF_H */
+#पूर्ण_अगर	/* __SND_SOC_SAMSUNG_SPDIF_H */

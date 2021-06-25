@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PROBE_ROMS_H_
-#define _PROBE_ROMS_H_
-struct pci_dev;
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PROBE_ROMS_H_
+#घोषणा _PROBE_ROMS_H_
+काष्ठा pci_dev;
 
-extern void __iomem *pci_map_biosrom(struct pci_dev *pdev);
-extern void pci_unmap_biosrom(void __iomem *rom);
-extern size_t pci_biosrom_size(struct pci_dev *pdev);
-#endif
+बाह्य व्योम __iomem *pci_map_biosrom(काष्ठा pci_dev *pdev);
+बाह्य व्योम pci_unmap_biosrom(व्योम __iomem *rom);
+बाह्य माप_प्रकार pci_biosrom_size(काष्ठा pci_dev *pdev);
+#पूर्ण_अगर

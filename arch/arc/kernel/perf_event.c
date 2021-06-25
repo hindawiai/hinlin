@@ -1,352 +1,353 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// Linux performance counter support for ARC CPUs.
+// Linux perक्रमmance counter support क्रम ARC CPUs.
 // This code is inspired by the perf support of various other architectures.
 //
 // Copyright (C) 2013-2018 Synopsys, Inc. (www.synopsys.com)
 
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/perf_event.h>
-#include <linux/platform_device.h>
-#include <asm/arcregs.h>
-#include <asm/stacktrace.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <यंत्र/arcregs.h>
+#समावेश <यंत्र/stacktrace.h>
 
-/* HW holds 8 symbols + one for null terminator */
-#define ARCPMU_EVENT_NAME_LEN	9
+/* HW holds 8 symbols + one क्रम null terminator */
+#घोषणा ARCPMU_EVENT_NAME_LEN	9
 
-enum arc_pmu_attr_groups {
+क्रमागत arc_pmu_attr_groups अणु
 	ARCPMU_ATTR_GR_EVENTS,
 	ARCPMU_ATTR_GR_FORMATS,
 	ARCPMU_NR_ATTR_GR
-};
+पूर्ण;
 
-struct arc_pmu_raw_event_entry {
-	char name[ARCPMU_EVENT_NAME_LEN];
-};
+काष्ठा arc_pmu_raw_event_entry अणु
+	अक्षर name[ARCPMU_EVENT_NAME_LEN];
+पूर्ण;
 
-struct arc_pmu {
-	struct pmu	pmu;
-	unsigned int	irq;
-	int		n_counters;
-	int		n_events;
+काष्ठा arc_pmu अणु
+	काष्ठा pmu	pmu;
+	अचिन्हित पूर्णांक	irq;
+	पूर्णांक		n_counters;
+	पूर्णांक		n_events;
 	u64		max_period;
-	int		ev_hw_idx[PERF_COUNT_ARC_HW_MAX];
+	पूर्णांक		ev_hw_idx[PERF_COUNT_ARC_HW_MAX];
 
-	struct arc_pmu_raw_event_entry	*raw_entry;
-	struct attribute		**attrs;
-	struct perf_pmu_events_attr	*attr;
-	const struct attribute_group	*attr_groups[ARCPMU_NR_ATTR_GR + 1];
-};
+	काष्ठा arc_pmu_raw_event_entry	*raw_entry;
+	काष्ठा attribute		**attrs;
+	काष्ठा perf_pmu_events_attr	*attr;
+	स्थिर काष्ठा attribute_group	*attr_groups[ARCPMU_NR_ATTR_GR + 1];
+पूर्ण;
 
-struct arc_pmu_cpu {
+काष्ठा arc_pmu_cpu अणु
 	/*
-	 * A 1 bit for an index indicates that the counter is being used for
+	 * A 1 bit क्रम an index indicates that the counter is being used क्रम
 	 * an event. A 0 means that the counter can be used.
 	 */
-	unsigned long	used_mask[BITS_TO_LONGS(ARC_PERF_MAX_COUNTERS)];
+	अचिन्हित दीर्घ	used_mask[BITS_TO_LONGS(ARC_PERF_MAX_COUNTERS)];
 
 	/*
-	 * The events that are active on the PMU for the given index.
+	 * The events that are active on the PMU क्रम the given index.
 	 */
-	struct perf_event *act_counter[ARC_PERF_MAX_COUNTERS];
-};
+	काष्ठा perf_event *act_counter[ARC_PERF_MAX_COUNTERS];
+पूर्ण;
 
-struct arc_callchain_trace {
-	int depth;
-	void *perf_stuff;
-};
+काष्ठा arc_callchain_trace अणु
+	पूर्णांक depth;
+	व्योम *perf_stuff;
+पूर्ण;
 
-static int callchain_trace(unsigned int addr, void *data)
-{
-	struct arc_callchain_trace *ctrl = data;
-	struct perf_callchain_entry_ctx *entry = ctrl->perf_stuff;
+अटल पूर्णांक callchain_trace(अचिन्हित पूर्णांक addr, व्योम *data)
+अणु
+	काष्ठा arc_callchain_trace *ctrl = data;
+	काष्ठा perf_callchain_entry_ctx *entry = ctrl->perf_stuff;
 
 	perf_callchain_store(entry, addr);
 
-	if (ctrl->depth++ < 3)
-		return 0;
+	अगर (ctrl->depth++ < 3)
+		वापस 0;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-void perf_callchain_kernel(struct perf_callchain_entry_ctx *entry,
-			   struct pt_regs *regs)
-{
-	struct arc_callchain_trace ctrl = {
+व्योम perf_callchain_kernel(काष्ठा perf_callchain_entry_ctx *entry,
+			   काष्ठा pt_regs *regs)
+अणु
+	काष्ठा arc_callchain_trace ctrl = अणु
 		.depth = 0,
 		.perf_stuff = entry,
-	};
+	पूर्ण;
 
-	arc_unwind_core(NULL, regs, callchain_trace, &ctrl);
-}
+	arc_unwind_core(शून्य, regs, callchain_trace, &ctrl);
+पूर्ण
 
-void perf_callchain_user(struct perf_callchain_entry_ctx *entry,
-			 struct pt_regs *regs)
-{
+व्योम perf_callchain_user(काष्ठा perf_callchain_entry_ctx *entry,
+			 काष्ठा pt_regs *regs)
+अणु
 	/*
 	 * User stack can't be unwound trivially with kernel dwarf unwinder
-	 * So for now just record the user PC
+	 * So क्रम now just record the user PC
 	 */
-	perf_callchain_store(entry, instruction_pointer(regs));
-}
+	perf_callchain_store(entry, inकाष्ठाion_poपूर्णांकer(regs));
+पूर्ण
 
-static struct arc_pmu *arc_pmu;
-static DEFINE_PER_CPU(struct arc_pmu_cpu, arc_pmu_cpu);
+अटल काष्ठा arc_pmu *arc_pmu;
+अटल DEFINE_PER_CPU(काष्ठा arc_pmu_cpu, arc_pmu_cpu);
 
-/* read counter #idx; note that counter# != event# on ARC! */
-static u64 arc_pmu_read_counter(int idx)
-{
-	u32 tmp;
+/* पढ़ो counter #idx; note that counter# != event# on ARC! */
+अटल u64 arc_pmu_पढ़ो_counter(पूर्णांक idx)
+अणु
+	u32 पंचांगp;
 	u64 result;
 
 	/*
 	 * ARC supports making 'snapshots' of the counters, so we don't
 	 * need to care about counters wrapping to 0 underneath our feet
 	 */
-	write_aux_reg(ARC_REG_PCT_INDEX, idx);
-	tmp = read_aux_reg(ARC_REG_PCT_CONTROL);
-	write_aux_reg(ARC_REG_PCT_CONTROL, tmp | ARC_REG_PCT_CONTROL_SN);
-	result = (u64) (read_aux_reg(ARC_REG_PCT_SNAPH)) << 32;
-	result |= read_aux_reg(ARC_REG_PCT_SNAPL);
+	ग_लिखो_aux_reg(ARC_REG_PCT_INDEX, idx);
+	पंचांगp = पढ़ो_aux_reg(ARC_REG_PCT_CONTROL);
+	ग_लिखो_aux_reg(ARC_REG_PCT_CONTROL, पंचांगp | ARC_REG_PCT_CONTROL_SN);
+	result = (u64) (पढ़ो_aux_reg(ARC_REG_PCT_SNAPH)) << 32;
+	result |= पढ़ो_aux_reg(ARC_REG_PCT_SNAPL);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void arc_perf_event_update(struct perf_event *event,
-				  struct hw_perf_event *hwc, int idx)
-{
-	u64 prev_raw_count = local64_read(&hwc->prev_count);
-	u64 new_raw_count = arc_pmu_read_counter(idx);
+अटल व्योम arc_perf_event_update(काष्ठा perf_event *event,
+				  काष्ठा hw_perf_event *hwc, पूर्णांक idx)
+अणु
+	u64 prev_raw_count = local64_पढ़ो(&hwc->prev_count);
+	u64 new_raw_count = arc_pmu_पढ़ो_counter(idx);
 	s64 delta = new_raw_count - prev_raw_count;
 
 	/*
 	 * We aren't afraid of hwc->prev_count changing beneath our feet
-	 * because there's no way for us to re-enter this function anytime.
+	 * because there's no way क्रम us to re-enter this function anyसमय.
 	 */
 	local64_set(&hwc->prev_count, new_raw_count);
 	local64_add(delta, &event->count);
 	local64_sub(delta, &hwc->period_left);
-}
+पूर्ण
 
-static void arc_pmu_read(struct perf_event *event)
-{
+अटल व्योम arc_pmu_पढ़ो(काष्ठा perf_event *event)
+अणु
 	arc_perf_event_update(event, &event->hw, event->hw.idx);
-}
+पूर्ण
 
-static int arc_pmu_cache_event(u64 config)
-{
-	unsigned int cache_type, cache_op, cache_result;
-	int ret;
+अटल पूर्णांक arc_pmu_cache_event(u64 config)
+अणु
+	अचिन्हित पूर्णांक cache_type, cache_op, cache_result;
+	पूर्णांक ret;
 
 	cache_type	= (config >>  0) & 0xff;
 	cache_op	= (config >>  8) & 0xff;
 	cache_result	= (config >> 16) & 0xff;
-	if (cache_type >= PERF_COUNT_HW_CACHE_MAX)
-		return -EINVAL;
-	if (cache_op >= PERF_COUNT_HW_CACHE_OP_MAX)
-		return -EINVAL;
-	if (cache_result >= PERF_COUNT_HW_CACHE_RESULT_MAX)
-		return -EINVAL;
+	अगर (cache_type >= PERF_COUNT_HW_CACHE_MAX)
+		वापस -EINVAL;
+	अगर (cache_op >= PERF_COUNT_HW_CACHE_OP_MAX)
+		वापस -EINVAL;
+	अगर (cache_result >= PERF_COUNT_HW_CACHE_RESULT_MAX)
+		वापस -EINVAL;
 
 	ret = arc_pmu_cache_map[cache_type][cache_op][cache_result];
 
-	if (ret == CACHE_OP_UNSUPPORTED)
-		return -ENOENT;
+	अगर (ret == CACHE_OP_UNSUPPORTED)
+		वापस -ENOENT;
 
 	pr_debug("init cache event: type/op/result %d/%d/%d with h/w %d \'%s\'\n",
 		 cache_type, cache_op, cache_result, ret,
 		 arc_pmu_ev_hw_map[ret]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* initializes hw_perf_event structure if event is supported */
-static int arc_pmu_event_init(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	int ret;
+/* initializes hw_perf_event काष्ठाure अगर event is supported */
+अटल पूर्णांक arc_pmu_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक ret;
 
-	if (!is_sampling_event(event)) {
+	अगर (!is_sampling_event(event)) अणु
 		hwc->sample_period = arc_pmu->max_period;
 		hwc->last_period = hwc->sample_period;
 		local64_set(&hwc->period_left, hwc->sample_period);
-	}
+	पूर्ण
 
 	hwc->config = 0;
 
-	if (is_isa_arcv2()) {
+	अगर (is_isa_arcv2()) अणु
 		/* "exclude user" means "count only kernel" */
-		if (event->attr.exclude_user)
+		अगर (event->attr.exclude_user)
 			hwc->config |= ARC_REG_PCT_CONFIG_KERN;
 
 		/* "exclude kernel" means "count only user" */
-		if (event->attr.exclude_kernel)
+		अगर (event->attr.exclude_kernel)
 			hwc->config |= ARC_REG_PCT_CONFIG_USER;
-	}
+	पूर्ण
 
-	switch (event->attr.type) {
-	case PERF_TYPE_HARDWARE:
-		if (event->attr.config >= PERF_COUNT_HW_MAX)
-			return -ENOENT;
-		if (arc_pmu->ev_hw_idx[event->attr.config] < 0)
-			return -ENOENT;
+	चयन (event->attr.type) अणु
+	हाल PERF_TYPE_HARDWARE:
+		अगर (event->attr.config >= PERF_COUNT_HW_MAX)
+			वापस -ENOENT;
+		अगर (arc_pmu->ev_hw_idx[event->attr.config] < 0)
+			वापस -ENOENT;
 		hwc->config |= arc_pmu->ev_hw_idx[event->attr.config];
 		pr_debug("init event %d with h/w %08x \'%s\'\n",
-			 (int)event->attr.config, (int)hwc->config,
+			 (पूर्णांक)event->attr.config, (पूर्णांक)hwc->config,
 			 arc_pmu_ev_hw_map[event->attr.config]);
-		return 0;
+		वापस 0;
 
-	case PERF_TYPE_HW_CACHE:
+	हाल PERF_TYPE_HW_CACHE:
 		ret = arc_pmu_cache_event(event->attr.config);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		hwc->config |= arc_pmu->ev_hw_idx[ret];
 		pr_debug("init cache event with h/w %08x \'%s\'\n",
-			 (int)hwc->config, arc_pmu_ev_hw_map[ret]);
-		return 0;
+			 (पूर्णांक)hwc->config, arc_pmu_ev_hw_map[ret]);
+		वापस 0;
 
-	case PERF_TYPE_RAW:
-		if (event->attr.config >= arc_pmu->n_events)
-			return -ENOENT;
+	हाल PERF_TYPE_RAW:
+		अगर (event->attr.config >= arc_pmu->n_events)
+			वापस -ENOENT;
 
 		hwc->config |= event->attr.config;
 		pr_debug("init raw event with idx %lld \'%s\'\n",
 			 event->attr.config,
 			 arc_pmu->raw_entry[event->attr.config].name);
 
-		return 0;
+		वापस 0;
 
-	default:
-		return -ENOENT;
-	}
-}
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
+पूर्ण
 
 /* starts all counters */
-static void arc_pmu_enable(struct pmu *pmu)
-{
-	u32 tmp;
-	tmp = read_aux_reg(ARC_REG_PCT_CONTROL);
-	write_aux_reg(ARC_REG_PCT_CONTROL, (tmp & 0xffff0000) | 0x1);
-}
+अटल व्योम arc_pmu_enable(काष्ठा pmu *pmu)
+अणु
+	u32 पंचांगp;
+	पंचांगp = पढ़ो_aux_reg(ARC_REG_PCT_CONTROL);
+	ग_लिखो_aux_reg(ARC_REG_PCT_CONTROL, (पंचांगp & 0xffff0000) | 0x1);
+पूर्ण
 
 /* stops all counters */
-static void arc_pmu_disable(struct pmu *pmu)
-{
-	u32 tmp;
-	tmp = read_aux_reg(ARC_REG_PCT_CONTROL);
-	write_aux_reg(ARC_REG_PCT_CONTROL, (tmp & 0xffff0000) | 0x0);
-}
+अटल व्योम arc_pmu_disable(काष्ठा pmu *pmu)
+अणु
+	u32 पंचांगp;
+	पंचांगp = पढ़ो_aux_reg(ARC_REG_PCT_CONTROL);
+	ग_लिखो_aux_reg(ARC_REG_PCT_CONTROL, (पंचांगp & 0xffff0000) | 0x0);
+पूर्ण
 
-static int arc_pmu_event_set_period(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	s64 left = local64_read(&hwc->period_left);
+अटल पूर्णांक arc_pmu_event_set_period(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	s64 left = local64_पढ़ो(&hwc->period_left);
 	s64 period = hwc->sample_period;
-	int idx = hwc->idx;
-	int overflow = 0;
+	पूर्णांक idx = hwc->idx;
+	पूर्णांक overflow = 0;
 	u64 value;
 
-	if (unlikely(left <= -period)) {
+	अगर (unlikely(left <= -period)) अणु
 		/* left underflowed by more than period. */
 		left = period;
 		local64_set(&hwc->period_left, left);
 		hwc->last_period = period;
 		overflow = 1;
-	} else if (unlikely(left <= 0)) {
+	पूर्ण अन्यथा अगर (unlikely(left <= 0)) अणु
 		/* left underflowed by less than period. */
 		left += period;
 		local64_set(&hwc->period_left, left);
 		hwc->last_period = period;
 		overflow = 1;
-	}
+	पूर्ण
 
-	if (left > arc_pmu->max_period)
+	अगर (left > arc_pmu->max_period)
 		left = arc_pmu->max_period;
 
 	value = arc_pmu->max_period - left;
 	local64_set(&hwc->prev_count, value);
 
 	/* Select counter */
-	write_aux_reg(ARC_REG_PCT_INDEX, idx);
+	ग_लिखो_aux_reg(ARC_REG_PCT_INDEX, idx);
 
 	/* Write value */
-	write_aux_reg(ARC_REG_PCT_COUNTL, lower_32_bits(value));
-	write_aux_reg(ARC_REG_PCT_COUNTH, upper_32_bits(value));
+	ग_लिखो_aux_reg(ARC_REG_PCT_COUNTL, lower_32_bits(value));
+	ग_लिखो_aux_reg(ARC_REG_PCT_COUNTH, upper_32_bits(value));
 
 	perf_event_update_userpage(event);
 
-	return overflow;
-}
+	वापस overflow;
+पूर्ण
 
 /*
  * Assigns hardware counter to hardware condition.
  * Note that there is no separate start/stop mechanism;
  * stopping is achieved by assigning the 'never' condition
  */
-static void arc_pmu_start(struct perf_event *event, int flags)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल व्योम arc_pmu_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 
-	if (WARN_ON_ONCE(idx == -1))
-		return;
+	अगर (WARN_ON_ONCE(idx == -1))
+		वापस;
 
-	if (flags & PERF_EF_RELOAD)
+	अगर (flags & PERF_EF_RELOAD)
 		WARN_ON_ONCE(!(hwc->state & PERF_HES_UPTODATE));
 
 	hwc->state = 0;
 
 	arc_pmu_event_set_period(event);
 
-	/* Enable interrupt for this counter */
-	if (is_sampling_event(event))
-		write_aux_reg(ARC_REG_PCT_INT_CTRL,
-			      read_aux_reg(ARC_REG_PCT_INT_CTRL) | BIT(idx));
+	/* Enable पूर्णांकerrupt क्रम this counter */
+	अगर (is_sampling_event(event))
+		ग_लिखो_aux_reg(ARC_REG_PCT_INT_CTRL,
+			      पढ़ो_aux_reg(ARC_REG_PCT_INT_CTRL) | BIT(idx));
 
 	/* enable ARC pmu here */
-	write_aux_reg(ARC_REG_PCT_INDEX, idx);		/* counter # */
-	write_aux_reg(ARC_REG_PCT_CONFIG, hwc->config);	/* condition */
-}
+	ग_लिखो_aux_reg(ARC_REG_PCT_INDEX, idx);		/* counter # */
+	ग_लिखो_aux_reg(ARC_REG_PCT_CONFIG, hwc->config);	/* condition */
+पूर्ण
 
-static void arc_pmu_stop(struct perf_event *event, int flags)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल व्योम arc_pmu_stop(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 
-	/* Disable interrupt for this counter */
-	if (is_sampling_event(event)) {
+	/* Disable पूर्णांकerrupt क्रम this counter */
+	अगर (is_sampling_event(event)) अणु
 		/*
-		 * Reset interrupt flag by writing of 1. This is required
-		 * to make sure pending interrupt was not left.
+		 * Reset पूर्णांकerrupt flag by writing of 1. This is required
+		 * to make sure pending पूर्णांकerrupt was not left.
 		 */
-		write_aux_reg(ARC_REG_PCT_INT_ACT, BIT(idx));
-		write_aux_reg(ARC_REG_PCT_INT_CTRL,
-			      read_aux_reg(ARC_REG_PCT_INT_CTRL) & ~BIT(idx));
-	}
+		ग_लिखो_aux_reg(ARC_REG_PCT_INT_ACT, BIT(idx));
+		ग_लिखो_aux_reg(ARC_REG_PCT_INT_CTRL,
+			      पढ़ो_aux_reg(ARC_REG_PCT_INT_CTRL) & ~BIT(idx));
+	पूर्ण
 
-	if (!(event->hw.state & PERF_HES_STOPPED)) {
+	अगर (!(event->hw.state & PERF_HES_STOPPED)) अणु
 		/* stop ARC pmu here */
-		write_aux_reg(ARC_REG_PCT_INDEX, idx);
+		ग_लिखो_aux_reg(ARC_REG_PCT_INDEX, idx);
 
 		/* condition code #0 is always "never" */
-		write_aux_reg(ARC_REG_PCT_CONFIG, 0);
+		ग_लिखो_aux_reg(ARC_REG_PCT_CONFIG, 0);
 
 		event->hw.state |= PERF_HES_STOPPED;
-	}
+	पूर्ण
 
-	if ((flags & PERF_EF_UPDATE) &&
-	    !(event->hw.state & PERF_HES_UPTODATE)) {
+	अगर ((flags & PERF_EF_UPDATE) &&
+	    !(event->hw.state & PERF_HES_UPTODATE)) अणु
 		arc_perf_event_update(event, &event->hw, idx);
 		event->hw.state |= PERF_HES_UPTODATE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void arc_pmu_del(struct perf_event *event, int flags)
-{
-	struct arc_pmu_cpu *pmu_cpu = this_cpu_ptr(&arc_pmu_cpu);
+अटल व्योम arc_pmu_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा arc_pmu_cpu *pmu_cpu = this_cpu_ptr(&arc_pmu_cpu);
 
 	arc_pmu_stop(event, PERF_EF_UPDATE);
 	__clear_bit(event->hw.idx, pmu_cpu->used_mask);
@@ -354,81 +355,81 @@ static void arc_pmu_del(struct perf_event *event, int flags)
 	pmu_cpu->act_counter[event->hw.idx] = 0;
 
 	perf_event_update_userpage(event);
-}
+पूर्ण
 
 /* allocate hardware counter and optionally start counting */
-static int arc_pmu_add(struct perf_event *event, int flags)
-{
-	struct arc_pmu_cpu *pmu_cpu = this_cpu_ptr(&arc_pmu_cpu);
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल पूर्णांक arc_pmu_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा arc_pmu_cpu *pmu_cpu = this_cpu_ptr(&arc_pmu_cpu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 
 	idx = ffz(pmu_cpu->used_mask[0]);
-	if (idx == arc_pmu->n_counters)
-		return -EAGAIN;
+	अगर (idx == arc_pmu->n_counters)
+		वापस -EAGAIN;
 
 	__set_bit(idx, pmu_cpu->used_mask);
 	hwc->idx = idx;
 
-	write_aux_reg(ARC_REG_PCT_INDEX, idx);
+	ग_लिखो_aux_reg(ARC_REG_PCT_INDEX, idx);
 
 	pmu_cpu->act_counter[idx] = event;
 
-	if (is_sampling_event(event)) {
-		/* Mimic full counter overflow as other arches do */
-		write_aux_reg(ARC_REG_PCT_INT_CNTL,
+	अगर (is_sampling_event(event)) अणु
+		/* Mimic full counter overflow as other arches करो */
+		ग_लिखो_aux_reg(ARC_REG_PCT_INT_CNTL,
 			      lower_32_bits(arc_pmu->max_period));
-		write_aux_reg(ARC_REG_PCT_INT_CNTH,
+		ग_लिखो_aux_reg(ARC_REG_PCT_INT_CNTH,
 			      upper_32_bits(arc_pmu->max_period));
-	}
+	पूर्ण
 
-	write_aux_reg(ARC_REG_PCT_CONFIG, 0);
-	write_aux_reg(ARC_REG_PCT_COUNTL, 0);
-	write_aux_reg(ARC_REG_PCT_COUNTH, 0);
+	ग_लिखो_aux_reg(ARC_REG_PCT_CONFIG, 0);
+	ग_लिखो_aux_reg(ARC_REG_PCT_COUNTL, 0);
+	ग_लिखो_aux_reg(ARC_REG_PCT_COUNTH, 0);
 	local64_set(&hwc->prev_count, 0);
 
 	hwc->state = PERF_HES_UPTODATE | PERF_HES_STOPPED;
-	if (flags & PERF_EF_START)
+	अगर (flags & PERF_EF_START)
 		arc_pmu_start(event, PERF_EF_RELOAD);
 
 	perf_event_update_userpage(event);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_ISA_ARCV2
-static irqreturn_t arc_pmu_intr(int irq, void *dev)
-{
-	struct perf_sample_data data;
-	struct arc_pmu_cpu *pmu_cpu = this_cpu_ptr(&arc_pmu_cpu);
-	struct pt_regs *regs;
-	unsigned int active_ints;
-	int idx;
+#अगर_घोषित CONFIG_ISA_ARCV2
+अटल irqवापस_t arc_pmu_पूर्णांकr(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा perf_sample_data data;
+	काष्ठा arc_pmu_cpu *pmu_cpu = this_cpu_ptr(&arc_pmu_cpu);
+	काष्ठा pt_regs *regs;
+	अचिन्हित पूर्णांक active_पूर्णांकs;
+	पूर्णांक idx;
 
 	arc_pmu_disable(&arc_pmu->pmu);
 
-	active_ints = read_aux_reg(ARC_REG_PCT_INT_ACT);
-	if (!active_ints)
-		goto done;
+	active_पूर्णांकs = पढ़ो_aux_reg(ARC_REG_PCT_INT_ACT);
+	अगर (!active_पूर्णांकs)
+		जाओ करोne;
 
 	regs = get_irq_regs();
 
-	do {
-		struct perf_event *event;
-		struct hw_perf_event *hwc;
+	करो अणु
+		काष्ठा perf_event *event;
+		काष्ठा hw_perf_event *hwc;
 
-		idx = __ffs(active_ints);
+		idx = __ffs(active_पूर्णांकs);
 
-		/* Reset interrupt flag by writing of 1 */
-		write_aux_reg(ARC_REG_PCT_INT_ACT, BIT(idx));
+		/* Reset पूर्णांकerrupt flag by writing of 1 */
+		ग_लिखो_aux_reg(ARC_REG_PCT_INT_ACT, BIT(idx));
 
 		/*
 		 * On reset of "interrupt active" bit corresponding
-		 * "interrupt enable" bit gets automatically reset as well.
-		 * Now we need to re-enable interrupt for the counter.
+		 * "interrupt enable" bit माला_लो स्वतःmatically reset as well.
+		 * Now we need to re-enable पूर्णांकerrupt क्रम the counter.
 		 */
-		write_aux_reg(ARC_REG_PCT_INT_CTRL,
-			read_aux_reg(ARC_REG_PCT_INT_CTRL) | BIT(idx));
+		ग_लिखो_aux_reg(ARC_REG_PCT_INT_CTRL,
+			पढ़ो_aux_reg(ARC_REG_PCT_INT_CTRL) | BIT(idx));
 
 		event = pmu_cpu->act_counter[idx];
 		hwc = &event->hw;
@@ -437,166 +438,166 @@ static irqreturn_t arc_pmu_intr(int irq, void *dev)
 
 		arc_perf_event_update(event, &event->hw, event->hw.idx);
 		perf_sample_data_init(&data, 0, hwc->last_period);
-		if (arc_pmu_event_set_period(event)) {
-			if (perf_event_overflow(event, &data, regs))
+		अगर (arc_pmu_event_set_period(event)) अणु
+			अगर (perf_event_overflow(event, &data, regs))
 				arc_pmu_stop(event, 0);
-		}
+		पूर्ण
 
-		active_ints &= ~BIT(idx);
-	} while (active_ints);
+		active_पूर्णांकs &= ~BIT(idx);
+	पूर्ण जबतक (active_पूर्णांकs);
 
-done:
+करोne:
 	arc_pmu_enable(&arc_pmu->pmu);
 
-	return IRQ_HANDLED;
-}
-#else
+	वापस IRQ_HANDLED;
+पूर्ण
+#अन्यथा
 
-static irqreturn_t arc_pmu_intr(int irq, void *dev)
-{
-	return IRQ_NONE;
-}
+अटल irqवापस_t arc_pmu_पूर्णांकr(पूर्णांक irq, व्योम *dev)
+अणु
+	वापस IRQ_NONE;
+पूर्ण
 
-#endif /* CONFIG_ISA_ARCV2 */
+#पूर्ण_अगर /* CONFIG_ISA_ARCV2 */
 
-static void arc_cpu_pmu_irq_init(void *data)
-{
-	int irq = *(int *)data;
+अटल व्योम arc_cpu_pmu_irq_init(व्योम *data)
+अणु
+	पूर्णांक irq = *(पूर्णांक *)data;
 
 	enable_percpu_irq(irq, IRQ_TYPE_NONE);
 
-	/* Clear all pending interrupt flags */
-	write_aux_reg(ARC_REG_PCT_INT_ACT, 0xffffffff);
-}
+	/* Clear all pending पूर्णांकerrupt flags */
+	ग_लिखो_aux_reg(ARC_REG_PCT_INT_ACT, 0xffffffff);
+पूर्ण
 
 /* Event field occupies the bottom 15 bits of our config field */
 PMU_FORMAT_ATTR(event, "config:0-14");
-static struct attribute *arc_pmu_format_attrs[] = {
-	&format_attr_event.attr,
-	NULL,
-};
+अटल काष्ठा attribute *arc_pmu_क्रमmat_attrs[] = अणु
+	&क्रमmat_attr_event.attr,
+	शून्य,
+पूर्ण;
 
-static struct attribute_group arc_pmu_format_attr_gr = {
+अटल काष्ठा attribute_group arc_pmu_क्रमmat_attr_gr = अणु
 	.name = "format",
-	.attrs = arc_pmu_format_attrs,
-};
+	.attrs = arc_pmu_क्रमmat_attrs,
+पूर्ण;
 
-static ssize_t arc_pmu_events_sysfs_show(struct device *dev,
-					 struct device_attribute *attr,
-					 char *page)
-{
-	struct perf_pmu_events_attr *pmu_attr;
+अटल sमाप_प्रकार arc_pmu_events_sysfs_show(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *page)
+अणु
+	काष्ठा perf_pmu_events_attr *pmu_attr;
 
-	pmu_attr = container_of(attr, struct perf_pmu_events_attr, attr);
-	return sprintf(page, "event=0x%04llx\n", pmu_attr->id);
-}
+	pmu_attr = container_of(attr, काष्ठा perf_pmu_events_attr, attr);
+	वापस प्र_लिखो(page, "event=0x%04llx\n", pmu_attr->id);
+पूर्ण
 
 /*
- * We don't add attrs here as we don't have pre-defined list of perf events.
- * We will generate and add attrs dynamically in probe() after we read HW
+ * We करोn't add attrs here as we don't have pre-defined list of perf events.
+ * We will generate and add attrs dynamically in probe() after we पढ़ो HW
  * configuration.
  */
-static struct attribute_group arc_pmu_events_attr_gr = {
+अटल काष्ठा attribute_group arc_pmu_events_attr_gr = अणु
 	.name = "events",
-};
+पूर्ण;
 
-static void arc_pmu_add_raw_event_attr(int j, char *str)
-{
-	memmove(arc_pmu->raw_entry[j].name, str, ARCPMU_EVENT_NAME_LEN - 1);
+अटल व्योम arc_pmu_add_raw_event_attr(पूर्णांक j, अक्षर *str)
+अणु
+	स_हटाओ(arc_pmu->raw_entry[j].name, str, ARCPMU_EVENT_NAME_LEN - 1);
 	arc_pmu->attr[j].attr.attr.name = arc_pmu->raw_entry[j].name;
 	arc_pmu->attr[j].attr.attr.mode = VERIFY_OCTAL_PERMISSIONS(0444);
 	arc_pmu->attr[j].attr.show = arc_pmu_events_sysfs_show;
 	arc_pmu->attr[j].id = j;
 	arc_pmu->attrs[j] = &(arc_pmu->attr[j].attr.attr);
-}
+पूर्ण
 
-static int arc_pmu_raw_alloc(struct device *dev)
-{
-	arc_pmu->attr = devm_kmalloc_array(dev, arc_pmu->n_events + 1,
-		sizeof(*arc_pmu->attr), GFP_KERNEL | __GFP_ZERO);
-	if (!arc_pmu->attr)
-		return -ENOMEM;
+अटल पूर्णांक arc_pmu_raw_alloc(काष्ठा device *dev)
+अणु
+	arc_pmu->attr = devm_kदो_स्मृति_array(dev, arc_pmu->n_events + 1,
+		माप(*arc_pmu->attr), GFP_KERNEL | __GFP_ZERO);
+	अगर (!arc_pmu->attr)
+		वापस -ENOMEM;
 
-	arc_pmu->attrs = devm_kmalloc_array(dev, arc_pmu->n_events + 1,
-		sizeof(*arc_pmu->attrs), GFP_KERNEL | __GFP_ZERO);
-	if (!arc_pmu->attrs)
-		return -ENOMEM;
+	arc_pmu->attrs = devm_kदो_स्मृति_array(dev, arc_pmu->n_events + 1,
+		माप(*arc_pmu->attrs), GFP_KERNEL | __GFP_ZERO);
+	अगर (!arc_pmu->attrs)
+		वापस -ENOMEM;
 
-	arc_pmu->raw_entry = devm_kmalloc_array(dev, arc_pmu->n_events,
-		sizeof(*arc_pmu->raw_entry), GFP_KERNEL | __GFP_ZERO);
-	if (!arc_pmu->raw_entry)
-		return -ENOMEM;
+	arc_pmu->raw_entry = devm_kदो_स्मृति_array(dev, arc_pmu->n_events,
+		माप(*arc_pmu->raw_entry), GFP_KERNEL | __GFP_ZERO);
+	अगर (!arc_pmu->raw_entry)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool event_in_hw_event_map(int i, char *name)
-{
-	if (!arc_pmu_ev_hw_map[i])
-		return false;
+अटल अंतरभूत bool event_in_hw_event_map(पूर्णांक i, अक्षर *name)
+अणु
+	अगर (!arc_pmu_ev_hw_map[i])
+		वापस false;
 
-	if (!strlen(arc_pmu_ev_hw_map[i]))
-		return false;
+	अगर (!म_माप(arc_pmu_ev_hw_map[i]))
+		वापस false;
 
-	if (strcmp(arc_pmu_ev_hw_map[i], name))
-		return false;
+	अगर (म_भेद(arc_pmu_ev_hw_map[i], name))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void arc_pmu_map_hw_event(int j, char *str)
-{
-	int i;
+अटल व्योम arc_pmu_map_hw_event(पूर्णांक j, अक्षर *str)
+अणु
+	पूर्णांक i;
 
-	/* See if HW condition has been mapped to a perf event_id */
-	for (i = 0; i < ARRAY_SIZE(arc_pmu_ev_hw_map); i++) {
-		if (event_in_hw_event_map(i, str)) {
+	/* See अगर HW condition has been mapped to a perf event_id */
+	क्रम (i = 0; i < ARRAY_SIZE(arc_pmu_ev_hw_map); i++) अणु
+		अगर (event_in_hw_event_map(i, str)) अणु
 			pr_debug("mapping perf event %2d to h/w event \'%8s\' (idx %d)\n",
 				 i, str, j);
 			arc_pmu->ev_hw_idx[i] = j;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int arc_pmu_device_probe(struct platform_device *pdev)
-{
-	struct arc_reg_pct_build pct_bcr;
-	struct arc_reg_cc_build cc_bcr;
-	int i, has_interrupts, irq = -1;
-	int counter_size;	/* in bits */
+अटल पूर्णांक arc_pmu_device_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा arc_reg_pct_build pct_bcr;
+	काष्ठा arc_reg_cc_build cc_bcr;
+	पूर्णांक i, has_पूर्णांकerrupts, irq = -1;
+	पूर्णांक counter_size;	/* in bits */
 
-	union cc_name {
-		struct {
+	जोड़ cc_name अणु
+		काष्ठा अणु
 			u32 word0, word1;
-			char sentinel;
-		} indiv;
-		char str[ARCPMU_EVENT_NAME_LEN];
-	} cc_name;
+			अक्षर sentinel;
+		पूर्ण inभाग;
+		अक्षर str[ARCPMU_EVENT_NAME_LEN];
+	पूर्ण cc_name;
 
 
 	READ_BCR(ARC_REG_PCT_BUILD, pct_bcr);
-	if (!pct_bcr.v) {
+	अगर (!pct_bcr.v) अणु
 		pr_err("This core does not have performance counters!\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	BUILD_BUG_ON(ARC_PERF_MAX_COUNTERS > 32);
-	if (WARN_ON(pct_bcr.c > ARC_PERF_MAX_COUNTERS))
-		return -EINVAL;
+	अगर (WARN_ON(pct_bcr.c > ARC_PERF_MAX_COUNTERS))
+		वापस -EINVAL;
 
 	READ_BCR(ARC_REG_CC_BUILD, cc_bcr);
-	if (WARN(!cc_bcr.v, "Counters exist but No countable conditions?"))
-		return -EINVAL;
+	अगर (WARN(!cc_bcr.v, "Counters exist but No countable conditions?"))
+		वापस -EINVAL;
 
-	arc_pmu = devm_kzalloc(&pdev->dev, sizeof(struct arc_pmu), GFP_KERNEL);
-	if (!arc_pmu)
-		return -ENOMEM;
+	arc_pmu = devm_kzalloc(&pdev->dev, माप(काष्ठा arc_pmu), GFP_KERNEL);
+	अगर (!arc_pmu)
+		वापस -ENOMEM;
 
 	arc_pmu->n_events = cc_bcr.c;
 
-	if (arc_pmu_raw_alloc(&pdev->dev))
-		return -ENOMEM;
+	अगर (arc_pmu_raw_alloc(&pdev->dev))
+		वापस -ENOMEM;
 
-	has_interrupts = is_isa_arcv2() ? pct_bcr.i : 0;
+	has_पूर्णांकerrupts = is_isa_arcv2() ? pct_bcr.i : 0;
 
 	arc_pmu->n_counters = pct_bcr.c;
 	counter_size = 32 + (pct_bcr.s << 4);
@@ -605,27 +606,27 @@ static int arc_pmu_device_probe(struct platform_device *pdev)
 
 	pr_info("ARC perf\t: %d counters (%d bits), %d conditions%s\n",
 		arc_pmu->n_counters, counter_size, cc_bcr.c,
-		has_interrupts ? ", [overflow IRQ support]" : "");
+		has_पूर्णांकerrupts ? ", [overflow IRQ support]" : "");
 
 	cc_name.str[ARCPMU_EVENT_NAME_LEN - 1] = 0;
-	for (i = 0; i < PERF_COUNT_ARC_HW_MAX; i++)
+	क्रम (i = 0; i < PERF_COUNT_ARC_HW_MAX; i++)
 		arc_pmu->ev_hw_idx[i] = -1;
 
 	/* loop thru all available h/w condition indexes */
-	for (i = 0; i < cc_bcr.c; i++) {
-		write_aux_reg(ARC_REG_CC_INDEX, i);
-		cc_name.indiv.word0 = le32_to_cpu(read_aux_reg(ARC_REG_CC_NAME0));
-		cc_name.indiv.word1 = le32_to_cpu(read_aux_reg(ARC_REG_CC_NAME1));
+	क्रम (i = 0; i < cc_bcr.c; i++) अणु
+		ग_लिखो_aux_reg(ARC_REG_CC_INDEX, i);
+		cc_name.inभाग.word0 = le32_to_cpu(पढ़ो_aux_reg(ARC_REG_CC_NAME0));
+		cc_name.inभाग.word1 = le32_to_cpu(पढ़ो_aux_reg(ARC_REG_CC_NAME1));
 
 		arc_pmu_map_hw_event(i, cc_name.str);
 		arc_pmu_add_raw_event_attr(i, cc_name.str);
-	}
+	पूर्ण
 
 	arc_pmu_events_attr_gr.attrs = arc_pmu->attrs;
 	arc_pmu->attr_groups[ARCPMU_ATTR_GR_EVENTS] = &arc_pmu_events_attr_gr;
-	arc_pmu->attr_groups[ARCPMU_ATTR_GR_FORMATS] = &arc_pmu_format_attr_gr;
+	arc_pmu->attr_groups[ARCPMU_ATTR_GR_FORMATS] = &arc_pmu_क्रमmat_attr_gr;
 
-	arc_pmu->pmu = (struct pmu) {
+	arc_pmu->pmu = (काष्ठा pmu) अणु
 		.pmu_enable	= arc_pmu_enable,
 		.pmu_disable	= arc_pmu_disable,
 		.event_init	= arc_pmu_event_init,
@@ -633,55 +634,55 @@ static int arc_pmu_device_probe(struct platform_device *pdev)
 		.del		= arc_pmu_del,
 		.start		= arc_pmu_start,
 		.stop		= arc_pmu_stop,
-		.read		= arc_pmu_read,
+		.पढ़ो		= arc_pmu_पढ़ो,
 		.attr_groups	= arc_pmu->attr_groups,
-	};
+	पूर्ण;
 
-	if (has_interrupts) {
-		irq = platform_get_irq(pdev, 0);
-		if (irq >= 0) {
-			int ret;
+	अगर (has_पूर्णांकerrupts) अणु
+		irq = platक्रमm_get_irq(pdev, 0);
+		अगर (irq >= 0) अणु
+			पूर्णांक ret;
 
 			arc_pmu->irq = irq;
 
-			/* intc map function ensures irq_set_percpu_devid() called */
-			ret = request_percpu_irq(irq, arc_pmu_intr, "ARC perf counters",
+			/* पूर्णांकc map function ensures irq_set_percpu_devid() called */
+			ret = request_percpu_irq(irq, arc_pmu_पूर्णांकr, "ARC perf counters",
 						 this_cpu_ptr(&arc_pmu_cpu));
 
-			if (!ret)
+			अगर (!ret)
 				on_each_cpu(arc_cpu_pmu_irq_init, &irq, 1);
-			else
+			अन्यथा
 				irq = -1;
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
-	if (irq == -1)
+	अगर (irq == -1)
 		arc_pmu->pmu.capabilities |= PERF_PMU_CAP_NO_INTERRUPT;
 
 	/*
-	 * perf parser doesn't really like '-' symbol in events name, so let's
+	 * perf parser करोesn't really like '-' symbol in events name, so let's
 	 * use '_' in arc pct name as it goes to kernel PMU event prefix.
 	 */
-	return perf_pmu_register(&arc_pmu->pmu, "arc_pct", PERF_TYPE_RAW);
-}
+	वापस perf_pmu_रेजिस्टर(&arc_pmu->pmu, "arc_pct", PERF_TYPE_RAW);
+पूर्ण
 
-static const struct of_device_id arc_pmu_match[] = {
-	{ .compatible = "snps,arc700-pct" },
-	{ .compatible = "snps,archs-pct" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id arc_pmu_match[] = अणु
+	अणु .compatible = "snps,arc700-pct" पूर्ण,
+	अणु .compatible = "snps,archs-pct" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, arc_pmu_match);
 
-static struct platform_driver arc_pmu_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver arc_pmu_driver = अणु
+	.driver	= अणु
 		.name		= "arc-pct",
 		.of_match_table = of_match_ptr(arc_pmu_match),
-	},
+	पूर्ण,
 	.probe		= arc_pmu_device_probe,
-};
+पूर्ण;
 
-module_platform_driver(arc_pmu_driver);
+module_platक्रमm_driver(arc_pmu_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Mischa Jonker <mjonker@synopsys.com>");

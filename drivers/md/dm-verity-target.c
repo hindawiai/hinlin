@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Red Hat, Inc.
  *
@@ -7,552 +8,552 @@
  * Based on Chromium dm-verity driver (C) 2011 The Chromium OS Authors
  *
  * In the file "/sys/module/dm_verity/parameters/prefetch_cluster" you can set
- * default prefetch value. Data are read in "prefetch_cluster" chunks from the
- * hash device. Setting this greatly improves performance when data and hash
- * are on the same disk on different partitions on devices with poor random
+ * शेष prefetch value. Data are पढ़ो in "prefetch_cluster" chunks from the
+ * hash device. Setting this greatly improves perक्रमmance when data and hash
+ * are on the same disk on dअगरferent partitions on devices with poor अक्रमom
  * access behavior.
  */
 
-#include "dm-verity.h"
-#include "dm-verity-fec.h"
-#include "dm-verity-verify-sig.h"
-#include <linux/module.h>
-#include <linux/reboot.h>
+#समावेश "dm-verity.h"
+#समावेश "dm-verity-fec.h"
+#समावेश "dm-verity-verify-sig.h"
+#समावेश <linux/module.h>
+#समावेश <linux/reboot.h>
 
-#define DM_MSG_PREFIX			"verity"
+#घोषणा DM_MSG_PREFIX			"verity"
 
-#define DM_VERITY_ENV_LENGTH		42
-#define DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
+#घोषणा DM_VERITY_ENV_LENGTH		42
+#घोषणा DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
 
-#define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
+#घोषणा DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
 
-#define DM_VERITY_MAX_CORRUPTED_ERRS	100
+#घोषणा DM_VERITY_MAX_CORRUPTED_ERRS	100
 
-#define DM_VERITY_OPT_LOGGING		"ignore_corruption"
-#define DM_VERITY_OPT_RESTART		"restart_on_corruption"
-#define DM_VERITY_OPT_PANIC		"panic_on_corruption"
-#define DM_VERITY_OPT_IGN_ZEROES	"ignore_zero_blocks"
-#define DM_VERITY_OPT_AT_MOST_ONCE	"check_at_most_once"
+#घोषणा DM_VERITY_OPT_LOGGING		"ignore_corruption"
+#घोषणा DM_VERITY_OPT_RESTART		"restart_on_corruption"
+#घोषणा DM_VERITY_OPT_PANIC		"panic_on_corruption"
+#घोषणा DM_VERITY_OPT_IGN_ZEROES	"ignore_zero_blocks"
+#घोषणा DM_VERITY_OPT_AT_MOST_ONCE	"check_at_most_once"
 
-#define DM_VERITY_OPTS_MAX		(3 + DM_VERITY_OPTS_FEC + \
+#घोषणा DM_VERITY_OPTS_MAX		(3 + DM_VERITY_OPTS_FEC + \
 					 DM_VERITY_ROOT_HASH_VERIFICATION_OPTS)
 
-static unsigned dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE;
+अटल अचिन्हित dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE;
 
-module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, S_IRUGO | S_IWUSR);
+module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uपूर्णांक, S_IRUGO | S_IWUSR);
 
-struct dm_verity_prefetch_work {
-	struct work_struct work;
-	struct dm_verity *v;
+काष्ठा dm_verity_prefetch_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा dm_verity *v;
 	sector_t block;
-	unsigned n_blocks;
-};
+	अचिन्हित n_blocks;
+पूर्ण;
 
 /*
- * Auxiliary structure appended to each dm-bufio buffer. If the value
- * hash_verified is nonzero, hash of the block has been verified.
+ * Auxiliary काष्ठाure appended to each dm-bufio buffer. If the value
+ * hash_verअगरied is nonzero, hash of the block has been verअगरied.
  *
- * The variable hash_verified is set to 0 when allocating the buffer, then
+ * The variable hash_verअगरied is set to 0 when allocating the buffer, then
  * it can be changed to 1 and it is never reset to 0 again.
  *
  * There is no lock around this value, a race condition can at worst cause
- * that multiple processes verify the hash of the same buffer simultaneously
- * and write 1 to hash_verified simultaneously.
- * This condition is harmless, so we don't need locking.
+ * that multiple processes verअगरy the hash of the same buffer simultaneously
+ * and ग_लिखो 1 to hash_verअगरied simultaneously.
+ * This condition is harmless, so we करोn't need locking.
  */
-struct buffer_aux {
-	int hash_verified;
-};
+काष्ठा buffer_aux अणु
+	पूर्णांक hash_verअगरied;
+पूर्ण;
 
 /*
- * Initialize struct buffer_aux for a freshly created buffer.
+ * Initialize काष्ठा buffer_aux क्रम a freshly created buffer.
  */
-static void dm_bufio_alloc_callback(struct dm_buffer *buf)
-{
-	struct buffer_aux *aux = dm_bufio_get_aux_data(buf);
+अटल व्योम dm_bufio_alloc_callback(काष्ठा dm_buffer *buf)
+अणु
+	काष्ठा buffer_aux *aux = dm_bufio_get_aux_data(buf);
 
-	aux->hash_verified = 0;
-}
+	aux->hash_verअगरied = 0;
+पूर्ण
 
 /*
  * Translate input sector number to the sector number on the target device.
  */
-static sector_t verity_map_sector(struct dm_verity *v, sector_t bi_sector)
-{
-	return v->data_start + dm_target_offset(v->ti, bi_sector);
-}
+अटल sector_t verity_map_sector(काष्ठा dm_verity *v, sector_t bi_sector)
+अणु
+	वापस v->data_start + dm_target_offset(v->ti, bi_sector);
+पूर्ण
 
 /*
- * Return hash position of a specified block at a specified tree level
+ * Return hash position of a specअगरied block at a specअगरied tree level
  * (0 is the lowest level).
  * The lowest "hash_per_block_bits"-bits of the result denote hash position
- * inside a hash block. The remaining bits denote location of the hash block.
+ * inside a hash block. The reमुख्यing bits denote location of the hash block.
  */
-static sector_t verity_position_at_level(struct dm_verity *v, sector_t block,
-					 int level)
-{
-	return block >> (level * v->hash_per_block_bits);
-}
+अटल sector_t verity_position_at_level(काष्ठा dm_verity *v, sector_t block,
+					 पूर्णांक level)
+अणु
+	वापस block >> (level * v->hash_per_block_bits);
+पूर्ण
 
-static int verity_hash_update(struct dm_verity *v, struct ahash_request *req,
-				const u8 *data, size_t len,
-				struct crypto_wait *wait)
-{
-	struct scatterlist sg;
+अटल पूर्णांक verity_hash_update(काष्ठा dm_verity *v, काष्ठा ahash_request *req,
+				स्थिर u8 *data, माप_प्रकार len,
+				काष्ठा crypto_रुको *रुको)
+अणु
+	काष्ठा scatterlist sg;
 
-	if (likely(!is_vmalloc_addr(data))) {
+	अगर (likely(!is_vदो_स्मृति_addr(data))) अणु
 		sg_init_one(&sg, data, len);
-		ahash_request_set_crypt(req, &sg, NULL, len);
-		return crypto_wait_req(crypto_ahash_update(req), wait);
-	} else {
-		do {
-			int r;
-			size_t this_step = min_t(size_t, len, PAGE_SIZE - offset_in_page(data));
-			flush_kernel_vmap_range((void *)data, this_step);
+		ahash_request_set_crypt(req, &sg, शून्य, len);
+		वापस crypto_रुको_req(crypto_ahash_update(req), रुको);
+	पूर्ण अन्यथा अणु
+		करो अणु
+			पूर्णांक r;
+			माप_प्रकार this_step = min_t(माप_प्रकार, len, PAGE_SIZE - offset_in_page(data));
+			flush_kernel_vmap_range((व्योम *)data, this_step);
 			sg_init_table(&sg, 1);
-			sg_set_page(&sg, vmalloc_to_page(data), this_step, offset_in_page(data));
-			ahash_request_set_crypt(req, &sg, NULL, this_step);
-			r = crypto_wait_req(crypto_ahash_update(req), wait);
-			if (unlikely(r))
-				return r;
+			sg_set_page(&sg, vदो_स्मृति_to_page(data), this_step, offset_in_page(data));
+			ahash_request_set_crypt(req, &sg, शून्य, this_step);
+			r = crypto_रुको_req(crypto_ahash_update(req), रुको);
+			अगर (unlikely(r))
+				वापस r;
 			data += this_step;
 			len -= this_step;
-		} while (len);
-		return 0;
-	}
-}
+		पूर्ण जबतक (len);
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /*
- * Wrapper for crypto_ahash_init, which handles verity salting.
+ * Wrapper क्रम crypto_ahash_init, which handles verity salting.
  */
-static int verity_hash_init(struct dm_verity *v, struct ahash_request *req,
-				struct crypto_wait *wait)
-{
-	int r;
+अटल पूर्णांक verity_hash_init(काष्ठा dm_verity *v, काष्ठा ahash_request *req,
+				काष्ठा crypto_रुको *रुको)
+अणु
+	पूर्णांक r;
 
 	ahash_request_set_tfm(req, v->tfm);
 	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
 					CRYPTO_TFM_REQ_MAY_BACKLOG,
-					crypto_req_done, (void *)wait);
-	crypto_init_wait(wait);
+					crypto_req_करोne, (व्योम *)रुको);
+	crypto_init_रुको(रुको);
 
-	r = crypto_wait_req(crypto_ahash_init(req), wait);
+	r = crypto_रुको_req(crypto_ahash_init(req), रुको);
 
-	if (unlikely(r < 0)) {
+	अगर (unlikely(r < 0)) अणु
 		DMERR("crypto_ahash_init failed: %d", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	if (likely(v->salt_size && (v->version >= 1)))
-		r = verity_hash_update(v, req, v->salt, v->salt_size, wait);
+	अगर (likely(v->salt_size && (v->version >= 1)))
+		r = verity_hash_update(v, req, v->salt, v->salt_size, रुको);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int verity_hash_final(struct dm_verity *v, struct ahash_request *req,
-			     u8 *digest, struct crypto_wait *wait)
-{
-	int r;
+अटल पूर्णांक verity_hash_final(काष्ठा dm_verity *v, काष्ठा ahash_request *req,
+			     u8 *digest, काष्ठा crypto_रुको *रुको)
+अणु
+	पूर्णांक r;
 
-	if (unlikely(v->salt_size && (!v->version))) {
-		r = verity_hash_update(v, req, v->salt, v->salt_size, wait);
+	अगर (unlikely(v->salt_size && (!v->version))) अणु
+		r = verity_hash_update(v, req, v->salt, v->salt_size, रुको);
 
-		if (r < 0) {
+		अगर (r < 0) अणु
 			DMERR("verity_hash_final failed updating salt: %d", r);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	ahash_request_set_crypt(req, NULL, digest, 0);
-	r = crypto_wait_req(crypto_ahash_final(req), wait);
+	ahash_request_set_crypt(req, शून्य, digest, 0);
+	r = crypto_रुको_req(crypto_ahash_final(req), रुको);
 out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int verity_hash(struct dm_verity *v, struct ahash_request *req,
-		const u8 *data, size_t len, u8 *digest)
-{
-	int r;
-	struct crypto_wait wait;
+पूर्णांक verity_hash(काष्ठा dm_verity *v, काष्ठा ahash_request *req,
+		स्थिर u8 *data, माप_प्रकार len, u8 *digest)
+अणु
+	पूर्णांक r;
+	काष्ठा crypto_रुको रुको;
 
-	r = verity_hash_init(v, req, &wait);
-	if (unlikely(r < 0))
-		goto out;
+	r = verity_hash_init(v, req, &रुको);
+	अगर (unlikely(r < 0))
+		जाओ out;
 
-	r = verity_hash_update(v, req, data, len, &wait);
-	if (unlikely(r < 0))
-		goto out;
+	r = verity_hash_update(v, req, data, len, &रुको);
+	अगर (unlikely(r < 0))
+		जाओ out;
 
-	r = verity_hash_final(v, req, digest, &wait);
+	r = verity_hash_final(v, req, digest, &रुको);
 
 out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void verity_hash_at_level(struct dm_verity *v, sector_t block, int level,
-				 sector_t *hash_block, unsigned *offset)
-{
+अटल व्योम verity_hash_at_level(काष्ठा dm_verity *v, sector_t block, पूर्णांक level,
+				 sector_t *hash_block, अचिन्हित *offset)
+अणु
 	sector_t position = verity_position_at_level(v, block, level);
-	unsigned idx;
+	अचिन्हित idx;
 
 	*hash_block = v->hash_level_block[level] + (position >> v->hash_per_block_bits);
 
-	if (!offset)
-		return;
+	अगर (!offset)
+		वापस;
 
 	idx = position & ((1 << v->hash_per_block_bits) - 1);
-	if (!v->version)
+	अगर (!v->version)
 		*offset = idx * v->digest_size;
-	else
+	अन्यथा
 		*offset = idx << (v->hash_dev_block_bits - v->hash_per_block_bits);
-}
+पूर्ण
 
 /*
- * Handle verification errors.
+ * Handle verअगरication errors.
  */
-static int verity_handle_err(struct dm_verity *v, enum verity_block_type type,
-			     unsigned long long block)
-{
-	char verity_env[DM_VERITY_ENV_LENGTH];
-	char *envp[] = { verity_env, NULL };
-	const char *type_str = "";
-	struct mapped_device *md = dm_table_get_md(v->ti->table);
+अटल पूर्णांक verity_handle_err(काष्ठा dm_verity *v, क्रमागत verity_block_type type,
+			     अचिन्हित दीर्घ दीर्घ block)
+अणु
+	अक्षर verity_env[DM_VERITY_ENV_LENGTH];
+	अक्षर *envp[] = अणु verity_env, शून्य पूर्ण;
+	स्थिर अक्षर *type_str = "";
+	काष्ठा mapped_device *md = dm_table_get_md(v->ti->table);
 
 	/* Corruption should be visible in device status in all modes */
 	v->hash_failed = 1;
 
-	if (v->corrupted_errs >= DM_VERITY_MAX_CORRUPTED_ERRS)
-		goto out;
+	अगर (v->corrupted_errs >= DM_VERITY_MAX_CORRUPTED_ERRS)
+		जाओ out;
 
 	v->corrupted_errs++;
 
-	switch (type) {
-	case DM_VERITY_BLOCK_TYPE_DATA:
+	चयन (type) अणु
+	हाल DM_VERITY_BLOCK_TYPE_DATA:
 		type_str = "data";
-		break;
-	case DM_VERITY_BLOCK_TYPE_METADATA:
+		अवरोध;
+	हाल DM_VERITY_BLOCK_TYPE_METADATA:
 		type_str = "metadata";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	DMERR_LIMIT("%s: %s block %llu is corrupted", v->data_dev->name,
 		    type_str, block);
 
-	if (v->corrupted_errs == DM_VERITY_MAX_CORRUPTED_ERRS)
+	अगर (v->corrupted_errs == DM_VERITY_MAX_CORRUPTED_ERRS)
 		DMERR("%s: reached maximum errors", v->data_dev->name);
 
-	snprintf(verity_env, DM_VERITY_ENV_LENGTH, "%s=%d,%llu",
+	snम_लिखो(verity_env, DM_VERITY_ENV_LENGTH, "%s=%d,%llu",
 		DM_VERITY_ENV_VAR_NAME, type, block);
 
 	kobject_uevent_env(&disk_to_dev(dm_disk(md))->kobj, KOBJ_CHANGE, envp);
 
 out:
-	if (v->mode == DM_VERITY_MODE_LOGGING)
-		return 0;
+	अगर (v->mode == DM_VERITY_MODE_LOGGING)
+		वापस 0;
 
-	if (v->mode == DM_VERITY_MODE_RESTART)
+	अगर (v->mode == DM_VERITY_MODE_RESTART)
 		kernel_restart("dm-verity device corrupted");
 
-	if (v->mode == DM_VERITY_MODE_PANIC)
+	अगर (v->mode == DM_VERITY_MODE_PANIC)
 		panic("dm-verity device corrupted");
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Verify hash of a metadata block pertaining to the specified data block
- * ("block" argument) at a specified level ("level" argument).
+ * Verअगरy hash of a metadata block pertaining to the specअगरied data block
+ * ("block" argument) at a specअगरied level ("level" argument).
  *
- * On successful return, verity_io_want_digest(v, io) contains the hash value
- * for a lower tree level or for the data block (if we're at the lowest level).
+ * On successful वापस, verity_io_want_digest(v, io) contains the hash value
+ * क्रम a lower tree level or क्रम the data block (अगर we're at the lowest level).
  *
- * If "skip_unverified" is true, unverified buffer is skipped and 1 is returned.
- * If "skip_unverified" is false, unverified buffer is hashed and verified
+ * If "skip_unverified" is true, unverअगरied buffer is skipped and 1 is वापसed.
+ * If "skip_unverified" is false, unverअगरied buffer is hashed and verअगरied
  * against current value of verity_io_want_digest(v, io).
  */
-static int verity_verify_level(struct dm_verity *v, struct dm_verity_io *io,
-			       sector_t block, int level, bool skip_unverified,
+अटल पूर्णांक verity_verअगरy_level(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
+			       sector_t block, पूर्णांक level, bool skip_unverअगरied,
 			       u8 *want_digest)
-{
-	struct dm_buffer *buf;
-	struct buffer_aux *aux;
+अणु
+	काष्ठा dm_buffer *buf;
+	काष्ठा buffer_aux *aux;
 	u8 *data;
-	int r;
+	पूर्णांक r;
 	sector_t hash_block;
-	unsigned offset;
+	अचिन्हित offset;
 
 	verity_hash_at_level(v, block, level, &hash_block, &offset);
 
-	data = dm_bufio_read(v->bufio, hash_block, &buf);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	data = dm_bufio_पढ़ो(v->bufio, hash_block, &buf);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	aux = dm_bufio_get_aux_data(buf);
 
-	if (!aux->hash_verified) {
-		if (skip_unverified) {
+	अगर (!aux->hash_verअगरied) अणु
+		अगर (skip_unverअगरied) अणु
 			r = 1;
-			goto release_ret_r;
-		}
+			जाओ release_ret_r;
+		पूर्ण
 
 		r = verity_hash(v, verity_io_hash_req(v, io),
 				data, 1 << v->hash_dev_block_bits,
 				verity_io_real_digest(v, io));
-		if (unlikely(r < 0))
-			goto release_ret_r;
+		अगर (unlikely(r < 0))
+			जाओ release_ret_r;
 
-		if (likely(memcmp(verity_io_real_digest(v, io), want_digest,
+		अगर (likely(स_भेद(verity_io_real_digest(v, io), want_digest,
 				  v->digest_size) == 0))
-			aux->hash_verified = 1;
-		else if (verity_fec_decode(v, io,
+			aux->hash_verअगरied = 1;
+		अन्यथा अगर (verity_fec_decode(v, io,
 					   DM_VERITY_BLOCK_TYPE_METADATA,
-					   hash_block, data, NULL) == 0)
-			aux->hash_verified = 1;
-		else if (verity_handle_err(v,
+					   hash_block, data, शून्य) == 0)
+			aux->hash_verअगरied = 1;
+		अन्यथा अगर (verity_handle_err(v,
 					   DM_VERITY_BLOCK_TYPE_METADATA,
-					   hash_block)) {
+					   hash_block)) अणु
 			r = -EIO;
-			goto release_ret_r;
-		}
-	}
+			जाओ release_ret_r;
+		पूर्ण
+	पूर्ण
 
 	data += offset;
-	memcpy(want_digest, data, v->digest_size);
+	स_नकल(want_digest, data, v->digest_size);
 	r = 0;
 
 release_ret_r:
 	dm_bufio_release(buf);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * Find a hash for a given block, write it to digest and verify the integrity
- * of the hash tree if necessary.
+ * Find a hash क्रम a given block, ग_लिखो it to digest and verअगरy the पूर्णांकegrity
+ * of the hash tree अगर necessary.
  */
-int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
+पूर्णांक verity_hash_क्रम_block(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
 			  sector_t block, u8 *digest, bool *is_zero)
-{
-	int r = 0, i;
+अणु
+	पूर्णांक r = 0, i;
 
-	if (likely(v->levels)) {
+	अगर (likely(v->levels)) अणु
 		/*
-		 * First, we try to get the requested hash for
+		 * First, we try to get the requested hash क्रम
 		 * the current block. If the hash block itself is
-		 * verified, zero is returned. If it isn't, this
-		 * function returns 1 and we fall back to whole
-		 * chain verification.
+		 * verअगरied, zero is वापसed. If it isn't, this
+		 * function वापसs 1 and we fall back to whole
+		 * chain verअगरication.
 		 */
-		r = verity_verify_level(v, io, block, 0, true, digest);
-		if (likely(r <= 0))
-			goto out;
-	}
+		r = verity_verअगरy_level(v, io, block, 0, true, digest);
+		अगर (likely(r <= 0))
+			जाओ out;
+	पूर्ण
 
-	memcpy(digest, v->root_digest, v->digest_size);
+	स_नकल(digest, v->root_digest, v->digest_size);
 
-	for (i = v->levels - 1; i >= 0; i--) {
-		r = verity_verify_level(v, io, block, i, false, digest);
-		if (unlikely(r))
-			goto out;
-	}
+	क्रम (i = v->levels - 1; i >= 0; i--) अणु
+		r = verity_verअगरy_level(v, io, block, i, false, digest);
+		अगर (unlikely(r))
+			जाओ out;
+	पूर्ण
 out:
-	if (!r && v->zero_digest)
-		*is_zero = !memcmp(v->zero_digest, digest, v->digest_size);
-	else
+	अगर (!r && v->zero_digest)
+		*is_zero = !स_भेद(v->zero_digest, digest, v->digest_size);
+	अन्यथा
 		*is_zero = false;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * Calculates the digest for the given bio
+ * Calculates the digest क्रम the given bio
  */
-static int verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
-			       struct bvec_iter *iter, struct crypto_wait *wait)
-{
-	unsigned int todo = 1 << v->data_dev_block_bits;
-	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
-	struct scatterlist sg;
-	struct ahash_request *req = verity_io_hash_req(v, io);
+अटल पूर्णांक verity_क्रम_io_block(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
+			       काष्ठा bvec_iter *iter, काष्ठा crypto_रुको *रुको)
+अणु
+	अचिन्हित पूर्णांक toकरो = 1 << v->data_dev_block_bits;
+	काष्ठा bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+	काष्ठा scatterlist sg;
+	काष्ठा ahash_request *req = verity_io_hash_req(v, io);
 
-	do {
-		int r;
-		unsigned int len;
-		struct bio_vec bv = bio_iter_iovec(bio, *iter);
+	करो अणु
+		पूर्णांक r;
+		अचिन्हित पूर्णांक len;
+		काष्ठा bio_vec bv = bio_iter_iovec(bio, *iter);
 
 		sg_init_table(&sg, 1);
 
 		len = bv.bv_len;
 
-		if (likely(len >= todo))
-			len = todo;
+		अगर (likely(len >= toकरो))
+			len = toकरो;
 		/*
-		 * Operating on a single page at a time looks suboptimal
+		 * Operating on a single page at a समय looks suboptimal
 		 * until you consider the typical block size is 4,096B.
 		 * Going through this loops twice should be very rare.
 		 */
 		sg_set_page(&sg, bv.bv_page, len, bv.bv_offset);
-		ahash_request_set_crypt(req, &sg, NULL, len);
-		r = crypto_wait_req(crypto_ahash_update(req), wait);
+		ahash_request_set_crypt(req, &sg, शून्य, len);
+		r = crypto_रुको_req(crypto_ahash_update(req), रुको);
 
-		if (unlikely(r < 0)) {
+		अगर (unlikely(r < 0)) अणु
 			DMERR("verity_for_io_block crypto op failed: %d", r);
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		bio_advance_iter(bio, iter, len);
-		todo -= len;
-	} while (todo);
+		toकरो -= len;
+	पूर्ण जबतक (toकरो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Calls function process for 1 << v->data_dev_block_bits bytes in the bio_vec
+ * Calls function process क्रम 1 << v->data_dev_block_bits bytes in the bio_vec
  * starting from iter.
  */
-int verity_for_bv_block(struct dm_verity *v, struct dm_verity_io *io,
-			struct bvec_iter *iter,
-			int (*process)(struct dm_verity *v,
-				       struct dm_verity_io *io, u8 *data,
-				       size_t len))
-{
-	unsigned todo = 1 << v->data_dev_block_bits;
-	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+पूर्णांक verity_क्रम_bv_block(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
+			काष्ठा bvec_iter *iter,
+			पूर्णांक (*process)(काष्ठा dm_verity *v,
+				       काष्ठा dm_verity_io *io, u8 *data,
+				       माप_प्रकार len))
+अणु
+	अचिन्हित toकरो = 1 << v->data_dev_block_bits;
+	काष्ठा bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
 
-	do {
-		int r;
+	करो अणु
+		पूर्णांक r;
 		u8 *page;
-		unsigned len;
-		struct bio_vec bv = bio_iter_iovec(bio, *iter);
+		अचिन्हित len;
+		काष्ठा bio_vec bv = bio_iter_iovec(bio, *iter);
 
 		page = kmap_atomic(bv.bv_page);
 		len = bv.bv_len;
 
-		if (likely(len >= todo))
-			len = todo;
+		अगर (likely(len >= toकरो))
+			len = toकरो;
 
 		r = process(v, io, page + bv.bv_offset, len);
 		kunmap_atomic(page);
 
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 
 		bio_advance_iter(bio, iter, len);
-		todo -= len;
-	} while (todo);
+		toकरो -= len;
+	पूर्ण जबतक (toकरो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int verity_bv_zero(struct dm_verity *v, struct dm_verity_io *io,
-			  u8 *data, size_t len)
-{
-	memset(data, 0, len);
-	return 0;
-}
+अटल पूर्णांक verity_bv_zero(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
+			  u8 *data, माप_प्रकार len)
+अणु
+	स_रखो(data, 0, len);
+	वापस 0;
+पूर्ण
 
 /*
- * Moves the bio iter one data block forward.
+ * Moves the bio iter one data block क्रमward.
  */
-static inline void verity_bv_skip_block(struct dm_verity *v,
-					struct dm_verity_io *io,
-					struct bvec_iter *iter)
-{
-	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+अटल अंतरभूत व्योम verity_bv_skip_block(काष्ठा dm_verity *v,
+					काष्ठा dm_verity_io *io,
+					काष्ठा bvec_iter *iter)
+अणु
+	काष्ठा bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
 
 	bio_advance_iter(bio, iter, 1 << v->data_dev_block_bits);
-}
+पूर्ण
 
 /*
- * Verify one "dm_verity_io" structure.
+ * Verअगरy one "dm_verity_io" काष्ठाure.
  */
-static int verity_verify_io(struct dm_verity_io *io)
-{
+अटल पूर्णांक verity_verअगरy_io(काष्ठा dm_verity_io *io)
+अणु
 	bool is_zero;
-	struct dm_verity *v = io->v;
-	struct bvec_iter start;
-	unsigned b;
-	struct crypto_wait wait;
+	काष्ठा dm_verity *v = io->v;
+	काष्ठा bvec_iter start;
+	अचिन्हित b;
+	काष्ठा crypto_रुको रुको;
 
-	for (b = 0; b < io->n_blocks; b++) {
-		int r;
+	क्रम (b = 0; b < io->n_blocks; b++) अणु
+		पूर्णांक r;
 		sector_t cur_block = io->block + b;
-		struct ahash_request *req = verity_io_hash_req(v, io);
+		काष्ठा ahash_request *req = verity_io_hash_req(v, io);
 
-		if (v->validated_blocks &&
-		    likely(test_bit(cur_block, v->validated_blocks))) {
+		अगर (v->validated_blocks &&
+		    likely(test_bit(cur_block, v->validated_blocks))) अणु
 			verity_bv_skip_block(v, io, &io->iter);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		r = verity_hash_for_block(v, io, cur_block,
+		r = verity_hash_क्रम_block(v, io, cur_block,
 					  verity_io_want_digest(v, io),
 					  &is_zero);
-		if (unlikely(r < 0))
-			return r;
+		अगर (unlikely(r < 0))
+			वापस r;
 
-		if (is_zero) {
+		अगर (is_zero) अणु
 			/*
-			 * If we expect a zero block, don't validate, just
-			 * return zeros.
+			 * If we expect a zero block, करोn't validate, just
+			 * वापस zeros.
 			 */
-			r = verity_for_bv_block(v, io, &io->iter,
+			r = verity_क्रम_bv_block(v, io, &io->iter,
 						verity_bv_zero);
-			if (unlikely(r < 0))
-				return r;
+			अगर (unlikely(r < 0))
+				वापस r;
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		r = verity_hash_init(v, req, &wait);
-		if (unlikely(r < 0))
-			return r;
+		r = verity_hash_init(v, req, &रुको);
+		अगर (unlikely(r < 0))
+			वापस r;
 
 		start = io->iter;
-		r = verity_for_io_block(v, io, &io->iter, &wait);
-		if (unlikely(r < 0))
-			return r;
+		r = verity_क्रम_io_block(v, io, &io->iter, &रुको);
+		अगर (unlikely(r < 0))
+			वापस r;
 
 		r = verity_hash_final(v, req, verity_io_real_digest(v, io),
-					&wait);
-		if (unlikely(r < 0))
-			return r;
+					&रुको);
+		अगर (unlikely(r < 0))
+			वापस r;
 
-		if (likely(memcmp(verity_io_real_digest(v, io),
-				  verity_io_want_digest(v, io), v->digest_size) == 0)) {
-			if (v->validated_blocks)
+		अगर (likely(स_भेद(verity_io_real_digest(v, io),
+				  verity_io_want_digest(v, io), v->digest_size) == 0)) अणु
+			अगर (v->validated_blocks)
 				set_bit(cur_block, v->validated_blocks);
-			continue;
-		}
-		else if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_DATA,
-					   cur_block, NULL, &start) == 0)
-			continue;
-		else if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
+			जारी;
+		पूर्ण
+		अन्यथा अगर (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_DATA,
+					   cur_block, शून्य, &start) == 0)
+			जारी;
+		अन्यथा अगर (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
 					   cur_block))
-			return -EIO;
-	}
+			वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
-
-/*
- * Skip verity work in response to I/O error when system is shutting down.
- */
-static inline bool verity_is_system_shutting_down(void)
-{
-	return system_state == SYSTEM_HALT || system_state == SYSTEM_POWER_OFF
-		|| system_state == SYSTEM_RESTART;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * End one "io" structure with a given error.
+ * Skip verity work in response to I/O error when प्रणाली is shutting करोwn.
  */
-static void verity_finish_io(struct dm_verity_io *io, blk_status_t status)
-{
-	struct dm_verity *v = io->v;
-	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+अटल अंतरभूत bool verity_is_प्रणाली_shutting_करोwn(व्योम)
+अणु
+	वापस प्रणाली_state == SYSTEM_HALT || प्रणाली_state == SYSTEM_POWER_OFF
+		|| प्रणाली_state == SYSTEM_RESTART;
+पूर्ण
+
+/*
+ * End one "io" काष्ठाure with a given error.
+ */
+अटल व्योम verity_finish_io(काष्ठा dm_verity_io *io, blk_status_t status)
+अणु
+	काष्ठा dm_verity *v = io->v;
+	काष्ठा bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
 
 	bio->bi_end_io = io->orig_bi_end_io;
 	bio->bi_status = status;
@@ -560,126 +561,126 @@ static void verity_finish_io(struct dm_verity_io *io, blk_status_t status)
 	verity_fec_finish_io(io);
 
 	bio_endio(bio);
-}
+पूर्ण
 
-static void verity_work(struct work_struct *w)
-{
-	struct dm_verity_io *io = container_of(w, struct dm_verity_io, work);
+अटल व्योम verity_work(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा dm_verity_io *io = container_of(w, काष्ठा dm_verity_io, work);
 
-	verity_finish_io(io, errno_to_blk_status(verity_verify_io(io)));
-}
+	verity_finish_io(io, त्रुटि_सं_to_blk_status(verity_verअगरy_io(io)));
+पूर्ण
 
-static void verity_end_io(struct bio *bio)
-{
-	struct dm_verity_io *io = bio->bi_private;
+अटल व्योम verity_end_io(काष्ठा bio *bio)
+अणु
+	काष्ठा dm_verity_io *io = bio->bi_निजी;
 
-	if (bio->bi_status &&
-	    (!verity_fec_is_enabled(io->v) || verity_is_system_shutting_down())) {
+	अगर (bio->bi_status &&
+	    (!verity_fec_is_enabled(io->v) || verity_is_प्रणाली_shutting_करोwn())) अणु
 		verity_finish_io(io, bio->bi_status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	INIT_WORK(&io->work, verity_work);
-	queue_work(io->v->verify_wq, &io->work);
-}
+	queue_work(io->v->verअगरy_wq, &io->work);
+पूर्ण
 
 /*
- * Prefetch buffers for the specified io.
+ * Prefetch buffers क्रम the specअगरied io.
  * The root buffer is not prefetched, it is assumed that it will be cached
- * all the time.
+ * all the समय.
  */
-static void verity_prefetch_io(struct work_struct *work)
-{
-	struct dm_verity_prefetch_work *pw =
-		container_of(work, struct dm_verity_prefetch_work, work);
-	struct dm_verity *v = pw->v;
-	int i;
+अटल व्योम verity_prefetch_io(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dm_verity_prefetch_work *pw =
+		container_of(work, काष्ठा dm_verity_prefetch_work, work);
+	काष्ठा dm_verity *v = pw->v;
+	पूर्णांक i;
 
-	for (i = v->levels - 2; i >= 0; i--) {
+	क्रम (i = v->levels - 2; i >= 0; i--) अणु
 		sector_t hash_block_start;
 		sector_t hash_block_end;
-		verity_hash_at_level(v, pw->block, i, &hash_block_start, NULL);
-		verity_hash_at_level(v, pw->block + pw->n_blocks - 1, i, &hash_block_end, NULL);
-		if (!i) {
-			unsigned cluster = READ_ONCE(dm_verity_prefetch_cluster);
+		verity_hash_at_level(v, pw->block, i, &hash_block_start, शून्य);
+		verity_hash_at_level(v, pw->block + pw->n_blocks - 1, i, &hash_block_end, शून्य);
+		अगर (!i) अणु
+			अचिन्हित cluster = READ_ONCE(dm_verity_prefetch_cluster);
 
 			cluster >>= v->data_dev_block_bits;
-			if (unlikely(!cluster))
-				goto no_prefetch_cluster;
+			अगर (unlikely(!cluster))
+				जाओ no_prefetch_cluster;
 
-			if (unlikely(cluster & (cluster - 1)))
+			अगर (unlikely(cluster & (cluster - 1)))
 				cluster = 1 << __fls(cluster);
 
 			hash_block_start &= ~(sector_t)(cluster - 1);
 			hash_block_end |= cluster - 1;
-			if (unlikely(hash_block_end >= v->hash_blocks))
+			अगर (unlikely(hash_block_end >= v->hash_blocks))
 				hash_block_end = v->hash_blocks - 1;
-		}
+		पूर्ण
 no_prefetch_cluster:
 		dm_bufio_prefetch(v->bufio, hash_block_start,
 				  hash_block_end - hash_block_start + 1);
-	}
+	पूर्ण
 
-	kfree(pw);
-}
+	kमुक्त(pw);
+पूर्ण
 
-static void verity_submit_prefetch(struct dm_verity *v, struct dm_verity_io *io)
-{
+अटल व्योम verity_submit_prefetch(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io)
+अणु
 	sector_t block = io->block;
-	unsigned int n_blocks = io->n_blocks;
-	struct dm_verity_prefetch_work *pw;
+	अचिन्हित पूर्णांक n_blocks = io->n_blocks;
+	काष्ठा dm_verity_prefetch_work *pw;
 
-	if (v->validated_blocks) {
-		while (n_blocks && test_bit(block, v->validated_blocks)) {
+	अगर (v->validated_blocks) अणु
+		जबतक (n_blocks && test_bit(block, v->validated_blocks)) अणु
 			block++;
 			n_blocks--;
-		}
-		while (n_blocks && test_bit(block + n_blocks - 1,
+		पूर्ण
+		जबतक (n_blocks && test_bit(block + n_blocks - 1,
 					    v->validated_blocks))
 			n_blocks--;
-		if (!n_blocks)
-			return;
-	}
+		अगर (!n_blocks)
+			वापस;
+	पूर्ण
 
-	pw = kmalloc(sizeof(struct dm_verity_prefetch_work),
+	pw = kदो_स्मृति(माप(काष्ठा dm_verity_prefetch_work),
 		GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
 
-	if (!pw)
-		return;
+	अगर (!pw)
+		वापस;
 
 	INIT_WORK(&pw->work, verity_prefetch_io);
 	pw->v = v;
 	pw->block = block;
 	pw->n_blocks = n_blocks;
-	queue_work(v->verify_wq, &pw->work);
-}
+	queue_work(v->verअगरy_wq, &pw->work);
+पूर्ण
 
 /*
- * Bio map function. It allocates dm_verity_io structure and bio vector and
+ * Bio map function. It allocates dm_verity_io काष्ठाure and bio vector and
  * fills them. Then it issues prefetches and the I/O.
  */
-static int verity_map(struct dm_target *ti, struct bio *bio)
-{
-	struct dm_verity *v = ti->private;
-	struct dm_verity_io *io;
+अटल पूर्णांक verity_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	काष्ठा dm_verity *v = ti->निजी;
+	काष्ठा dm_verity_io *io;
 
 	bio_set_dev(bio, v->data_dev->bdev);
 	bio->bi_iter.bi_sector = verity_map_sector(v, bio->bi_iter.bi_sector);
 
-	if (((unsigned)bio->bi_iter.bi_sector | bio_sectors(bio)) &
-	    ((1 << (v->data_dev_block_bits - SECTOR_SHIFT)) - 1)) {
+	अगर (((अचिन्हित)bio->bi_iter.bi_sector | bio_sectors(bio)) &
+	    ((1 << (v->data_dev_block_bits - SECTOR_SHIFT)) - 1)) अणु
 		DMERR_LIMIT("unaligned io");
-		return DM_MAPIO_KILL;
-	}
+		वापस DM_MAPIO_KILL;
+	पूर्ण
 
-	if (bio_end_sector(bio) >>
-	    (v->data_dev_block_bits - SECTOR_SHIFT) > v->data_blocks) {
+	अगर (bio_end_sector(bio) >>
+	    (v->data_dev_block_bits - SECTOR_SHIFT) > v->data_blocks) अणु
 		DMERR_LIMIT("io out of range");
-		return DM_MAPIO_KILL;
-	}
+		वापस DM_MAPIO_KILL;
+	पूर्ण
 
-	if (bio_data_dir(bio) == WRITE)
-		return DM_MAPIO_KILL;
+	अगर (bio_data_dir(bio) == WRITE)
+		वापस DM_MAPIO_KILL;
 
 	io = dm_per_bio_data(bio, ti->per_io_data_size);
 	io->v = v;
@@ -688,7 +689,7 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
 	io->n_blocks = bio->bi_iter.bi_size >> v->data_dev_block_bits;
 
 	bio->bi_end_io = verity_end_io;
-	bio->bi_private = io;
+	bio->bi_निजी = io;
 	io->iter = bio->bi_iter;
 
 	verity_fec_init_io(io);
@@ -697,294 +698,294 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
 
 	submit_bio_noacct(bio);
 
-	return DM_MAPIO_SUBMITTED;
-}
+	वापस DM_MAPIO_SUBMITTED;
+पूर्ण
 
 /*
  * Status: V (valid) or C (corruption found)
  */
-static void verity_status(struct dm_target *ti, status_type_t type,
-			  unsigned status_flags, char *result, unsigned maxlen)
-{
-	struct dm_verity *v = ti->private;
-	unsigned args = 0;
-	unsigned sz = 0;
-	unsigned x;
+अटल व्योम verity_status(काष्ठा dm_target *ti, status_type_t type,
+			  अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
+अणु
+	काष्ठा dm_verity *v = ti->निजी;
+	अचिन्हित args = 0;
+	अचिन्हित sz = 0;
+	अचिन्हित x;
 
-	switch (type) {
-	case STATUSTYPE_INFO:
+	चयन (type) अणु
+	हाल STATUSTYPE_INFO:
 		DMEMIT("%c", v->hash_failed ? 'C' : 'V');
-		break;
-	case STATUSTYPE_TABLE:
+		अवरोध;
+	हाल STATUSTYPE_TABLE:
 		DMEMIT("%u %s %s %u %u %llu %llu %s ",
 			v->version,
 			v->data_dev->name,
 			v->hash_dev->name,
 			1 << v->data_dev_block_bits,
 			1 << v->hash_dev_block_bits,
-			(unsigned long long)v->data_blocks,
-			(unsigned long long)v->hash_start,
+			(अचिन्हित दीर्घ दीर्घ)v->data_blocks,
+			(अचिन्हित दीर्घ दीर्घ)v->hash_start,
 			v->alg_name
 			);
-		for (x = 0; x < v->digest_size; x++)
+		क्रम (x = 0; x < v->digest_size; x++)
 			DMEMIT("%02x", v->root_digest[x]);
 		DMEMIT(" ");
-		if (!v->salt_size)
+		अगर (!v->salt_size)
 			DMEMIT("-");
-		else
-			for (x = 0; x < v->salt_size; x++)
+		अन्यथा
+			क्रम (x = 0; x < v->salt_size; x++)
 				DMEMIT("%02x", v->salt[x]);
-		if (v->mode != DM_VERITY_MODE_EIO)
+		अगर (v->mode != DM_VERITY_MODE_EIO)
 			args++;
-		if (verity_fec_is_enabled(v))
+		अगर (verity_fec_is_enabled(v))
 			args += DM_VERITY_OPTS_FEC;
-		if (v->zero_digest)
+		अगर (v->zero_digest)
 			args++;
-		if (v->validated_blocks)
+		अगर (v->validated_blocks)
 			args++;
-		if (v->signature_key_desc)
+		अगर (v->signature_key_desc)
 			args += DM_VERITY_ROOT_HASH_VERIFICATION_OPTS;
-		if (!args)
-			return;
+		अगर (!args)
+			वापस;
 		DMEMIT(" %u", args);
-		if (v->mode != DM_VERITY_MODE_EIO) {
+		अगर (v->mode != DM_VERITY_MODE_EIO) अणु
 			DMEMIT(" ");
-			switch (v->mode) {
-			case DM_VERITY_MODE_LOGGING:
+			चयन (v->mode) अणु
+			हाल DM_VERITY_MODE_LOGGING:
 				DMEMIT(DM_VERITY_OPT_LOGGING);
-				break;
-			case DM_VERITY_MODE_RESTART:
+				अवरोध;
+			हाल DM_VERITY_MODE_RESTART:
 				DMEMIT(DM_VERITY_OPT_RESTART);
-				break;
-			case DM_VERITY_MODE_PANIC:
+				अवरोध;
+			हाल DM_VERITY_MODE_PANIC:
 				DMEMIT(DM_VERITY_OPT_PANIC);
-				break;
-			default:
+				अवरोध;
+			शेष:
 				BUG();
-			}
-		}
-		if (v->zero_digest)
+			पूर्ण
+		पूर्ण
+		अगर (v->zero_digest)
 			DMEMIT(" " DM_VERITY_OPT_IGN_ZEROES);
-		if (v->validated_blocks)
+		अगर (v->validated_blocks)
 			DMEMIT(" " DM_VERITY_OPT_AT_MOST_ONCE);
 		sz = verity_fec_status_table(v, sz, result, maxlen);
-		if (v->signature_key_desc)
+		अगर (v->signature_key_desc)
 			DMEMIT(" " DM_VERITY_ROOT_HASH_VERIFICATION_OPT_SIG_KEY
 				" %s", v->signature_key_desc);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int verity_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-{
-	struct dm_verity *v = ti->private;
+अटल पूर्णांक verity_prepare_ioctl(काष्ठा dm_target *ti, काष्ठा block_device **bdev)
+अणु
+	काष्ठा dm_verity *v = ti->निजी;
 
 	*bdev = v->data_dev->bdev;
 
-	if (v->data_start ||
-	    ti->len != i_size_read(v->data_dev->bdev->bd_inode) >> SECTOR_SHIFT)
-		return 1;
-	return 0;
-}
+	अगर (v->data_start ||
+	    ti->len != i_size_पढ़ो(v->data_dev->bdev->bd_inode) >> SECTOR_SHIFT)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int verity_iterate_devices(struct dm_target *ti,
-				  iterate_devices_callout_fn fn, void *data)
-{
-	struct dm_verity *v = ti->private;
+अटल पूर्णांक verity_iterate_devices(काष्ठा dm_target *ti,
+				  iterate_devices_callout_fn fn, व्योम *data)
+अणु
+	काष्ठा dm_verity *v = ti->निजी;
 
-	return fn(ti, v->data_dev, v->data_start, ti->len, data);
-}
+	वापस fn(ti, v->data_dev, v->data_start, ti->len, data);
+पूर्ण
 
-static void verity_io_hints(struct dm_target *ti, struct queue_limits *limits)
-{
-	struct dm_verity *v = ti->private;
+अटल व्योम verity_io_hपूर्णांकs(काष्ठा dm_target *ti, काष्ठा queue_limits *limits)
+अणु
+	काष्ठा dm_verity *v = ti->निजी;
 
-	if (limits->logical_block_size < 1 << v->data_dev_block_bits)
+	अगर (limits->logical_block_size < 1 << v->data_dev_block_bits)
 		limits->logical_block_size = 1 << v->data_dev_block_bits;
 
-	if (limits->physical_block_size < 1 << v->data_dev_block_bits)
+	अगर (limits->physical_block_size < 1 << v->data_dev_block_bits)
 		limits->physical_block_size = 1 << v->data_dev_block_bits;
 
 	blk_limits_io_min(limits, limits->logical_block_size);
-}
+पूर्ण
 
-static void verity_dtr(struct dm_target *ti)
-{
-	struct dm_verity *v = ti->private;
+अटल व्योम verity_dtr(काष्ठा dm_target *ti)
+अणु
+	काष्ठा dm_verity *v = ti->निजी;
 
-	if (v->verify_wq)
-		destroy_workqueue(v->verify_wq);
+	अगर (v->verअगरy_wq)
+		destroy_workqueue(v->verअगरy_wq);
 
-	if (v->bufio)
+	अगर (v->bufio)
 		dm_bufio_client_destroy(v->bufio);
 
-	kvfree(v->validated_blocks);
-	kfree(v->salt);
-	kfree(v->root_digest);
-	kfree(v->zero_digest);
+	kvमुक्त(v->validated_blocks);
+	kमुक्त(v->salt);
+	kमुक्त(v->root_digest);
+	kमुक्त(v->zero_digest);
 
-	if (v->tfm)
-		crypto_free_ahash(v->tfm);
+	अगर (v->tfm)
+		crypto_मुक्त_ahash(v->tfm);
 
-	kfree(v->alg_name);
+	kमुक्त(v->alg_name);
 
-	if (v->hash_dev)
+	अगर (v->hash_dev)
 		dm_put_device(ti, v->hash_dev);
 
-	if (v->data_dev)
+	अगर (v->data_dev)
 		dm_put_device(ti, v->data_dev);
 
 	verity_fec_dtr(v);
 
-	kfree(v->signature_key_desc);
+	kमुक्त(v->signature_key_desc);
 
-	kfree(v);
-}
+	kमुक्त(v);
+पूर्ण
 
-static int verity_alloc_most_once(struct dm_verity *v)
-{
-	struct dm_target *ti = v->ti;
+अटल पूर्णांक verity_alloc_most_once(काष्ठा dm_verity *v)
+अणु
+	काष्ठा dm_target *ti = v->ti;
 
-	/* the bitset can only handle INT_MAX blocks */
-	if (v->data_blocks > INT_MAX) {
+	/* the bitset can only handle पूर्णांक_उच्च blocks */
+	अगर (v->data_blocks > पूर्णांक_उच्च) अणु
 		ti->error = "device too large to use check_at_most_once";
-		return -E2BIG;
-	}
+		वापस -E2BIG;
+	पूर्ण
 
-	v->validated_blocks = kvcalloc(BITS_TO_LONGS(v->data_blocks),
-				       sizeof(unsigned long),
+	v->validated_blocks = kvसुस्मृति(BITS_TO_LONGS(v->data_blocks),
+				       माप(अचिन्हित दीर्घ),
 				       GFP_KERNEL);
-	if (!v->validated_blocks) {
+	अगर (!v->validated_blocks) अणु
 		ti->error = "failed to allocate bitset for check_at_most_once";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int verity_alloc_zero_digest(struct dm_verity *v)
-{
-	int r = -ENOMEM;
-	struct ahash_request *req;
+अटल पूर्णांक verity_alloc_zero_digest(काष्ठा dm_verity *v)
+अणु
+	पूर्णांक r = -ENOMEM;
+	काष्ठा ahash_request *req;
 	u8 *zero_data;
 
-	v->zero_digest = kmalloc(v->digest_size, GFP_KERNEL);
+	v->zero_digest = kदो_स्मृति(v->digest_size, GFP_KERNEL);
 
-	if (!v->zero_digest)
-		return r;
+	अगर (!v->zero_digest)
+		वापस r;
 
-	req = kmalloc(v->ahash_reqsize, GFP_KERNEL);
+	req = kदो_स्मृति(v->ahash_reqsize, GFP_KERNEL);
 
-	if (!req)
-		return r; /* verity_dtr will free zero_digest */
+	अगर (!req)
+		वापस r; /* verity_dtr will मुक्त zero_digest */
 
 	zero_data = kzalloc(1 << v->data_dev_block_bits, GFP_KERNEL);
 
-	if (!zero_data)
-		goto out;
+	अगर (!zero_data)
+		जाओ out;
 
 	r = verity_hash(v, req, zero_data, 1 << v->data_dev_block_bits,
 			v->zero_digest);
 
 out:
-	kfree(req);
-	kfree(zero_data);
+	kमुक्त(req);
+	kमुक्त(zero_data);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static inline bool verity_is_verity_mode(const char *arg_name)
-{
-	return (!strcasecmp(arg_name, DM_VERITY_OPT_LOGGING) ||
-		!strcasecmp(arg_name, DM_VERITY_OPT_RESTART) ||
-		!strcasecmp(arg_name, DM_VERITY_OPT_PANIC));
-}
+अटल अंतरभूत bool verity_is_verity_mode(स्थिर अक्षर *arg_name)
+अणु
+	वापस (!strहालcmp(arg_name, DM_VERITY_OPT_LOGGING) ||
+		!strहालcmp(arg_name, DM_VERITY_OPT_RESTART) ||
+		!strहालcmp(arg_name, DM_VERITY_OPT_PANIC));
+पूर्ण
 
-static int verity_parse_verity_mode(struct dm_verity *v, const char *arg_name)
-{
-	if (v->mode)
-		return -EINVAL;
+अटल पूर्णांक verity_parse_verity_mode(काष्ठा dm_verity *v, स्थिर अक्षर *arg_name)
+अणु
+	अगर (v->mode)
+		वापस -EINVAL;
 
-	if (!strcasecmp(arg_name, DM_VERITY_OPT_LOGGING))
+	अगर (!strहालcmp(arg_name, DM_VERITY_OPT_LOGGING))
 		v->mode = DM_VERITY_MODE_LOGGING;
-	else if (!strcasecmp(arg_name, DM_VERITY_OPT_RESTART))
+	अन्यथा अगर (!strहालcmp(arg_name, DM_VERITY_OPT_RESTART))
 		v->mode = DM_VERITY_MODE_RESTART;
-	else if (!strcasecmp(arg_name, DM_VERITY_OPT_PANIC))
+	अन्यथा अगर (!strहालcmp(arg_name, DM_VERITY_OPT_PANIC))
 		v->mode = DM_VERITY_MODE_PANIC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
-				 struct dm_verity_sig_opts *verify_args)
-{
-	int r;
-	unsigned argc;
-	struct dm_target *ti = v->ti;
-	const char *arg_name;
+अटल पूर्णांक verity_parse_opt_args(काष्ठा dm_arg_set *as, काष्ठा dm_verity *v,
+				 काष्ठा dm_verity_sig_opts *verअगरy_args)
+अणु
+	पूर्णांक r;
+	अचिन्हित argc;
+	काष्ठा dm_target *ti = v->ti;
+	स्थिर अक्षर *arg_name;
 
-	static const struct dm_arg _args[] = {
-		{0, DM_VERITY_OPTS_MAX, "Invalid number of feature args"},
-	};
+	अटल स्थिर काष्ठा dm_arg _args[] = अणु
+		अणु0, DM_VERITY_OPTS_MAX, "Invalid number of feature args"पूर्ण,
+	पूर्ण;
 
-	r = dm_read_arg_group(_args, as, &argc, &ti->error);
-	if (r)
-		return -EINVAL;
+	r = dm_पढ़ो_arg_group(_args, as, &argc, &ti->error);
+	अगर (r)
+		वापस -EINVAL;
 
-	if (!argc)
-		return 0;
+	अगर (!argc)
+		वापस 0;
 
-	do {
-		arg_name = dm_shift_arg(as);
+	करो अणु
+		arg_name = dm_shअगरt_arg(as);
 		argc--;
 
-		if (verity_is_verity_mode(arg_name)) {
+		अगर (verity_is_verity_mode(arg_name)) अणु
 			r = verity_parse_verity_mode(v, arg_name);
-			if (r) {
+			अगर (r) अणु
 				ti->error = "Conflicting error handling parameters";
-				return r;
-			}
-			continue;
+				वापस r;
+			पूर्ण
+			जारी;
 
-		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_IGN_ZEROES)) {
+		पूर्ण अन्यथा अगर (!strहालcmp(arg_name, DM_VERITY_OPT_IGN_ZEROES)) अणु
 			r = verity_alloc_zero_digest(v);
-			if (r) {
+			अगर (r) अणु
 				ti->error = "Cannot allocate zero digest";
-				return r;
-			}
-			continue;
+				वापस r;
+			पूर्ण
+			जारी;
 
-		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_AT_MOST_ONCE)) {
+		पूर्ण अन्यथा अगर (!strहालcmp(arg_name, DM_VERITY_OPT_AT_MOST_ONCE)) अणु
 			r = verity_alloc_most_once(v);
-			if (r)
-				return r;
-			continue;
+			अगर (r)
+				वापस r;
+			जारी;
 
-		} else if (verity_is_fec_opt_arg(arg_name)) {
+		पूर्ण अन्यथा अगर (verity_is_fec_opt_arg(arg_name)) अणु
 			r = verity_fec_parse_opt_args(as, v, &argc, arg_name);
-			if (r)
-				return r;
-			continue;
-		} else if (verity_verify_is_sig_opt_arg(arg_name)) {
-			r = verity_verify_sig_parse_opt_args(as, v,
-							     verify_args,
+			अगर (r)
+				वापस r;
+			जारी;
+		पूर्ण अन्यथा अगर (verity_verअगरy_is_sig_opt_arg(arg_name)) अणु
+			r = verity_verअगरy_sig_parse_opt_args(as, v,
+							     verअगरy_args,
 							     &argc, arg_name);
-			if (r)
-				return r;
-			continue;
+			अगर (r)
+				वापस r;
+			जारी;
 
-		}
+		पूर्ण
 
 		ti->error = "Unrecognized verity feature request";
-		return -EINVAL;
-	} while (argc && !r);
+		वापस -EINVAL;
+	पूर्ण जबतक (argc && !r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * Target parameters:
- *	<version>	The current format is version 1.
+ *	<version>	The current क्रमmat is version 1.
  *			Vsn 0 is compatible with original Chromium OS releases.
  *	<data device>
  *	<hash device>
@@ -994,273 +995,273 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
  *	<hash start block>
  *	<algorithm>
  *	<digest>
- *	<salt>		Hex string or "-" if no salt.
+ *	<salt>		Hex string or "-" अगर no salt.
  */
-static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
-{
-	struct dm_verity *v;
-	struct dm_verity_sig_opts verify_args = {0};
-	struct dm_arg_set as;
-	unsigned int num;
-	unsigned long long num_ll;
-	int r;
-	int i;
+अटल पूर्णांक verity_ctr(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv)
+अणु
+	काष्ठा dm_verity *v;
+	काष्ठा dm_verity_sig_opts verअगरy_args = अणु0पूर्ण;
+	काष्ठा dm_arg_set as;
+	अचिन्हित पूर्णांक num;
+	अचिन्हित दीर्घ दीर्घ num_ll;
+	पूर्णांक r;
+	पूर्णांक i;
 	sector_t hash_position;
-	char dummy;
-	char *root_hash_digest_to_validate;
+	अक्षर dummy;
+	अक्षर *root_hash_digest_to_validate;
 
-	v = kzalloc(sizeof(struct dm_verity), GFP_KERNEL);
-	if (!v) {
+	v = kzalloc(माप(काष्ठा dm_verity), GFP_KERNEL);
+	अगर (!v) अणु
 		ti->error = "Cannot allocate verity structure";
-		return -ENOMEM;
-	}
-	ti->private = v;
+		वापस -ENOMEM;
+	पूर्ण
+	ti->निजी = v;
 	v->ti = ti;
 
 	r = verity_fec_ctr_alloc(v);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
-	if ((dm_table_get_mode(ti->table) & ~FMODE_READ)) {
+	अगर ((dm_table_get_mode(ti->table) & ~FMODE_READ)) अणु
 		ti->error = "Device must be readonly";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	if (argc < 10) {
+	अगर (argc < 10) अणु
 		ti->error = "Not enough arguments";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	if (sscanf(argv[0], "%u%c", &num, &dummy) != 1 ||
-	    num > 1) {
+	अगर (माला_पूछो(argv[0], "%u%c", &num, &dummy) != 1 ||
+	    num > 1) अणु
 		ti->error = "Invalid version";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 	v->version = num;
 
 	r = dm_get_device(ti, argv[1], FMODE_READ, &v->data_dev);
-	if (r) {
+	अगर (r) अणु
 		ti->error = "Data device lookup failed";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	r = dm_get_device(ti, argv[2], FMODE_READ, &v->hash_dev);
-	if (r) {
+	अगर (r) अणु
 		ti->error = "Hash device lookup failed";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	if (sscanf(argv[3], "%u%c", &num, &dummy) != 1 ||
+	अगर (माला_पूछो(argv[3], "%u%c", &num, &dummy) != 1 ||
 	    !num || (num & (num - 1)) ||
 	    num < bdev_logical_block_size(v->data_dev->bdev) ||
-	    num > PAGE_SIZE) {
+	    num > PAGE_SIZE) अणु
 		ti->error = "Invalid data device block size";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 	v->data_dev_block_bits = __ffs(num);
 
-	if (sscanf(argv[4], "%u%c", &num, &dummy) != 1 ||
+	अगर (माला_पूछो(argv[4], "%u%c", &num, &dummy) != 1 ||
 	    !num || (num & (num - 1)) ||
 	    num < bdev_logical_block_size(v->hash_dev->bdev) ||
-	    num > INT_MAX) {
+	    num > पूर्णांक_उच्च) अणु
 		ti->error = "Invalid hash device block size";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 	v->hash_dev_block_bits = __ffs(num);
 
-	if (sscanf(argv[5], "%llu%c", &num_ll, &dummy) != 1 ||
+	अगर (माला_पूछो(argv[5], "%llu%c", &num_ll, &dummy) != 1 ||
 	    (sector_t)(num_ll << (v->data_dev_block_bits - SECTOR_SHIFT))
-	    >> (v->data_dev_block_bits - SECTOR_SHIFT) != num_ll) {
+	    >> (v->data_dev_block_bits - SECTOR_SHIFT) != num_ll) अणु
 		ti->error = "Invalid data blocks";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 	v->data_blocks = num_ll;
 
-	if (ti->len > (v->data_blocks << (v->data_dev_block_bits - SECTOR_SHIFT))) {
+	अगर (ti->len > (v->data_blocks << (v->data_dev_block_bits - SECTOR_SHIFT))) अणु
 		ti->error = "Data device is too small";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	if (sscanf(argv[6], "%llu%c", &num_ll, &dummy) != 1 ||
+	अगर (माला_पूछो(argv[6], "%llu%c", &num_ll, &dummy) != 1 ||
 	    (sector_t)(num_ll << (v->hash_dev_block_bits - SECTOR_SHIFT))
-	    >> (v->hash_dev_block_bits - SECTOR_SHIFT) != num_ll) {
+	    >> (v->hash_dev_block_bits - SECTOR_SHIFT) != num_ll) अणु
 		ti->error = "Invalid hash start";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 	v->hash_start = num_ll;
 
 	v->alg_name = kstrdup(argv[7], GFP_KERNEL);
-	if (!v->alg_name) {
+	अगर (!v->alg_name) अणु
 		ti->error = "Cannot allocate algorithm name";
 		r = -ENOMEM;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	v->tfm = crypto_alloc_ahash(v->alg_name, 0, 0);
-	if (IS_ERR(v->tfm)) {
+	अगर (IS_ERR(v->tfm)) अणु
 		ti->error = "Cannot initialize hash function";
 		r = PTR_ERR(v->tfm);
-		v->tfm = NULL;
-		goto bad;
-	}
+		v->tfm = शून्य;
+		जाओ bad;
+	पूर्ण
 
 	/*
-	 * dm-verity performance can vary greatly depending on which hash
-	 * algorithm implementation is used.  Help people debug performance
+	 * dm-verity perक्रमmance can vary greatly depending on which hash
+	 * algorithm implementation is used.  Help people debug perक्रमmance
 	 * problems by logging the ->cra_driver_name.
 	 */
 	DMINFO("%s using implementation \"%s\"", v->alg_name,
 	       crypto_hash_alg_common(v->tfm)->base.cra_driver_name);
 
 	v->digest_size = crypto_ahash_digestsize(v->tfm);
-	if ((1 << v->hash_dev_block_bits) < v->digest_size * 2) {
+	अगर ((1 << v->hash_dev_block_bits) < v->digest_size * 2) अणु
 		ti->error = "Digest size too big";
 		r = -EINVAL;
-		goto bad;
-	}
-	v->ahash_reqsize = sizeof(struct ahash_request) +
+		जाओ bad;
+	पूर्ण
+	v->ahash_reqsize = माप(काष्ठा ahash_request) +
 		crypto_ahash_reqsize(v->tfm);
 
-	v->root_digest = kmalloc(v->digest_size, GFP_KERNEL);
-	if (!v->root_digest) {
+	v->root_digest = kदो_स्मृति(v->digest_size, GFP_KERNEL);
+	अगर (!v->root_digest) अणु
 		ti->error = "Cannot allocate root digest";
 		r = -ENOMEM;
-		goto bad;
-	}
-	if (strlen(argv[8]) != v->digest_size * 2 ||
-	    hex2bin(v->root_digest, argv[8], v->digest_size)) {
+		जाओ bad;
+	पूर्ण
+	अगर (म_माप(argv[8]) != v->digest_size * 2 ||
+	    hex2bin(v->root_digest, argv[8], v->digest_size)) अणु
 		ti->error = "Invalid root digest";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 	root_hash_digest_to_validate = argv[8];
 
-	if (strcmp(argv[9], "-")) {
-		v->salt_size = strlen(argv[9]) / 2;
-		v->salt = kmalloc(v->salt_size, GFP_KERNEL);
-		if (!v->salt) {
+	अगर (म_भेद(argv[9], "-")) अणु
+		v->salt_size = म_माप(argv[9]) / 2;
+		v->salt = kदो_स्मृति(v->salt_size, GFP_KERNEL);
+		अगर (!v->salt) अणु
 			ti->error = "Cannot allocate salt";
 			r = -ENOMEM;
-			goto bad;
-		}
-		if (strlen(argv[9]) != v->salt_size * 2 ||
-		    hex2bin(v->salt, argv[9], v->salt_size)) {
+			जाओ bad;
+		पूर्ण
+		अगर (म_माप(argv[9]) != v->salt_size * 2 ||
+		    hex2bin(v->salt, argv[9], v->salt_size)) अणु
 			ti->error = "Invalid salt";
 			r = -EINVAL;
-			goto bad;
-		}
-	}
+			जाओ bad;
+		पूर्ण
+	पूर्ण
 
 	argv += 10;
 	argc -= 10;
 
 	/* Optional parameters */
-	if (argc) {
+	अगर (argc) अणु
 		as.argc = argc;
 		as.argv = argv;
 
-		r = verity_parse_opt_args(&as, v, &verify_args);
-		if (r < 0)
-			goto bad;
-	}
+		r = verity_parse_opt_args(&as, v, &verअगरy_args);
+		अगर (r < 0)
+			जाओ bad;
+	पूर्ण
 
 	/* Root hash signature is  a optional parameter*/
-	r = verity_verify_root_hash(root_hash_digest_to_validate,
-				    strlen(root_hash_digest_to_validate),
-				    verify_args.sig,
-				    verify_args.sig_size);
-	if (r < 0) {
+	r = verity_verअगरy_root_hash(root_hash_digest_to_validate,
+				    म_माप(root_hash_digest_to_validate),
+				    verअगरy_args.sig,
+				    verअगरy_args.sig_size);
+	अगर (r < 0) अणु
 		ti->error = "Root hash verification failed";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 	v->hash_per_block_bits =
 		__fls((1 << v->hash_dev_block_bits) / v->digest_size);
 
 	v->levels = 0;
-	if (v->data_blocks)
-		while (v->hash_per_block_bits * v->levels < 64 &&
-		       (unsigned long long)(v->data_blocks - 1) >>
+	अगर (v->data_blocks)
+		जबतक (v->hash_per_block_bits * v->levels < 64 &&
+		       (अचिन्हित दीर्घ दीर्घ)(v->data_blocks - 1) >>
 		       (v->hash_per_block_bits * v->levels))
 			v->levels++;
 
-	if (v->levels > DM_VERITY_MAX_LEVELS) {
+	अगर (v->levels > DM_VERITY_MAX_LEVELS) अणु
 		ti->error = "Too many tree levels";
 		r = -E2BIG;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	hash_position = v->hash_start;
-	for (i = v->levels - 1; i >= 0; i--) {
+	क्रम (i = v->levels - 1; i >= 0; i--) अणु
 		sector_t s;
 		v->hash_level_block[i] = hash_position;
 		s = (v->data_blocks + ((sector_t)1 << ((i + 1) * v->hash_per_block_bits)) - 1)
 					>> ((i + 1) * v->hash_per_block_bits);
-		if (hash_position + s < hash_position) {
+		अगर (hash_position + s < hash_position) अणु
 			ti->error = "Hash device offset overflow";
 			r = -E2BIG;
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 		hash_position += s;
-	}
+	पूर्ण
 	v->hash_blocks = hash_position;
 
 	v->bufio = dm_bufio_client_create(v->hash_dev->bdev,
-		1 << v->hash_dev_block_bits, 1, sizeof(struct buffer_aux),
-		dm_bufio_alloc_callback, NULL);
-	if (IS_ERR(v->bufio)) {
+		1 << v->hash_dev_block_bits, 1, माप(काष्ठा buffer_aux),
+		dm_bufio_alloc_callback, शून्य);
+	अगर (IS_ERR(v->bufio)) अणु
 		ti->error = "Cannot initialize dm-bufio";
 		r = PTR_ERR(v->bufio);
-		v->bufio = NULL;
-		goto bad;
-	}
+		v->bufio = शून्य;
+		जाओ bad;
+	पूर्ण
 
-	if (dm_bufio_get_device_size(v->bufio) < v->hash_blocks) {
+	अगर (dm_bufio_get_device_size(v->bufio) < v->hash_blocks) अणु
 		ti->error = "Hash device is too small";
 		r = -E2BIG;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	/* WQ_UNBOUND greatly improves performance when running on ramdisk */
-	v->verify_wq = alloc_workqueue("kverityd", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND, num_online_cpus());
-	if (!v->verify_wq) {
+	/* WQ_UNBOUND greatly improves perक्रमmance when running on ramdisk */
+	v->verअगरy_wq = alloc_workqueue("kverityd", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND, num_online_cpus());
+	अगर (!v->verअगरy_wq) अणु
 		ti->error = "Cannot allocate workqueue";
 		r = -ENOMEM;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	ti->per_io_data_size = sizeof(struct dm_verity_io) +
+	ti->per_io_data_size = माप(काष्ठा dm_verity_io) +
 				v->ahash_reqsize + v->digest_size * 2;
 
 	r = verity_fec_ctr(v);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	ti->per_io_data_size = roundup(ti->per_io_data_size,
-				       __alignof__(struct dm_verity_io));
+				       __alignof__(काष्ठा dm_verity_io));
 
-	verity_verify_sig_opts_cleanup(&verify_args);
+	verity_verअगरy_sig_opts_cleanup(&verअगरy_args);
 
-	return 0;
+	वापस 0;
 
 bad:
 
-	verity_verify_sig_opts_cleanup(&verify_args);
+	verity_verअगरy_sig_opts_cleanup(&verअगरy_args);
 	verity_dtr(ti);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static struct target_type verity_target = {
+अटल काष्ठा target_type verity_target = अणु
 	.name		= "verity",
-	.version	= {1, 8, 0},
+	.version	= अणु1, 8, 0पूर्ण,
 	.module		= THIS_MODULE,
 	.ctr		= verity_ctr,
 	.dtr		= verity_dtr,
@@ -1268,27 +1269,27 @@ static struct target_type verity_target = {
 	.status		= verity_status,
 	.prepare_ioctl	= verity_prepare_ioctl,
 	.iterate_devices = verity_iterate_devices,
-	.io_hints	= verity_io_hints,
-};
+	.io_hपूर्णांकs	= verity_io_hपूर्णांकs,
+पूर्ण;
 
-static int __init dm_verity_init(void)
-{
-	int r;
+अटल पूर्णांक __init dm_verity_init(व्योम)
+अणु
+	पूर्णांक r;
 
-	r = dm_register_target(&verity_target);
-	if (r < 0)
+	r = dm_रेजिस्टर_target(&verity_target);
+	अगर (r < 0)
 		DMERR("register failed %d", r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit dm_verity_exit(void)
-{
-	dm_unregister_target(&verity_target);
-}
+अटल व्योम __निकास dm_verity_निकास(व्योम)
+अणु
+	dm_unरेजिस्टर_target(&verity_target);
+पूर्ण
 
 module_init(dm_verity_init);
-module_exit(dm_verity_exit);
+module_निकास(dm_verity_निकास);
 
 MODULE_AUTHOR("Mikulas Patocka <mpatocka@redhat.com>");
 MODULE_AUTHOR("Mandeep Baines <msb@chromium.org>");

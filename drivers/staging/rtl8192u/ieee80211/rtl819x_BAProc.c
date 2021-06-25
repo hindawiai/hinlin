@@ -1,218 +1,219 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /********************************************************************************************************************************
  * This file is created to process BA Action Frame. According to 802.11 spec, there are 3 BA action types at all. And as BA is
- * related to TS, this part need some structure defined in QOS side code. Also TX RX is going to be resturctured, so how to send
+ * related to TS, this part need some काष्ठाure defined in QOS side code. Also TX RX is going to be resturctured, so how to send
  * ADDBAREQ ADDBARSP and DELBA packet is still on consideration. Temporarily use MANAGE QUEUE instead of Normal Queue.
  * WB 2008-05-27
  * *****************************************************************************************************************************/
-#include <asm/byteorder.h>
-#include <asm/unaligned.h>
-#include "ieee80211.h"
-#include "rtl819x_BA.h"
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश "ieee80211.h"
+#समावेश "rtl819x_BA.h"
 
 /********************************************************************************************************************
- *function:  Activate BA entry. And if Time is nozero, start timer.
- *   input:  struct ba_record          *pBA  //BA entry to be enabled
- *	     u16			Time //indicate time delay.
+ *function:  Activate BA entry. And अगर Time is nozero, start समयr.
+ *   input:  काष्ठा ba_record          *pBA  //BA entry to be enabled
+ *	     u16			Time //indicate समय delay.
  *  output:  none
  ********************************************************************************************************************/
-static void ActivateBAEntry(struct ieee80211_device *ieee, struct ba_record *pBA, u16 Time)
-{
+अटल व्योम ActivateBAEntry(काष्ठा ieee80211_device *ieee, काष्ठा ba_record *pBA, u16 Time)
+अणु
 	pBA->valid = true;
-	if (Time != 0)
-		mod_timer(&pBA->timer, jiffies + msecs_to_jiffies(Time));
-}
+	अगर (Time != 0)
+		mod_समयr(&pBA->समयr, jअगरfies + msecs_to_jअगरfies(Time));
+पूर्ण
 
 /********************************************************************************************************************
- *function:  deactivate BA entry, including its timer.
- *   input:  struct ba_record       *pBA  //BA entry to be disabled
+ *function:  deactivate BA entry, including its समयr.
+ *   input:  काष्ठा ba_record       *pBA  //BA entry to be disabled
  *  output:  none
  ********************************************************************************************************************/
-static void DeActivateBAEntry(struct ieee80211_device *ieee, struct ba_record *pBA)
-{
+अटल व्योम DeActivateBAEntry(काष्ठा ieee80211_device *ieee, काष्ठा ba_record *pBA)
+अणु
 	pBA->valid = false;
-	del_timer_sync(&pBA->timer);
-}
+	del_समयr_sync(&pBA->समयr);
+पूर्ण
 /********************************************************************************************************************
  *function: deactivete BA entry in Tx Ts, and send DELBA.
  *   input:
- *	     struct tx_ts_record *pTxTs //Tx Ts which is to deactivate BA entry.
+ *	     काष्ठा tx_ts_record *pTxTs //Tx Ts which is to deactivate BA entry.
  *  output:  none
- *  notice:  As struct tx_ts_record * structure will be defined in QOS, so wait to be merged. //FIXME
+ *  notice:  As काष्ठा tx_ts_record * काष्ठाure will be defined in QOS, so रुको to be merged. //FIXME
  ********************************************************************************************************************/
-static u8 TxTsDeleteBA(struct ieee80211_device *ieee, struct tx_ts_record *pTxTs)
-{
-	struct ba_record *pAdmittedBa = &pTxTs->tx_admitted_ba_record;  //These two BA entries must exist in TS structure
-	struct ba_record *pPendingBa = &pTxTs->tx_pending_ba_record;
+अटल u8 TxTsDeleteBA(काष्ठा ieee80211_device *ieee, काष्ठा tx_ts_record *pTxTs)
+अणु
+	काष्ठा ba_record *pAdmittedBa = &pTxTs->tx_admitted_ba_record;  //These two BA entries must exist in TS काष्ठाure
+	काष्ठा ba_record *pPendingBa = &pTxTs->tx_pending_ba_record;
 	u8			bSendDELBA = false;
 
 	// Delete pending BA
-	if (pPendingBa->valid) {
+	अगर (pPendingBa->valid) अणु
 		DeActivateBAEntry(ieee, pPendingBa);
 		bSendDELBA = true;
-	}
+	पूर्ण
 
 	// Delete admitted BA
-	if (pAdmittedBa->valid) {
+	अगर (pAdmittedBa->valid) अणु
 		DeActivateBAEntry(ieee, pAdmittedBa);
 		bSendDELBA = true;
-	}
+	पूर्ण
 
-	return bSendDELBA;
-}
+	वापस bSendDELBA;
+पूर्ण
 
 /********************************************************************************************************************
  *function: deactivete BA entry in Tx Ts, and send DELBA.
  *   input:
- *	     struct rx_ts_record  *pRxTs //Rx Ts which is to deactivate BA entry.
+ *	     काष्ठा rx_ts_record  *pRxTs //Rx Ts which is to deactivate BA entry.
  *  output:  none
- *  notice:  As struct rx_ts_record * structure will be defined in QOS, so wait to be merged. //FIXME, same with above
+ *  notice:  As काष्ठा rx_ts_record * काष्ठाure will be defined in QOS, so रुको to be merged. //FIXME, same with above
  ********************************************************************************************************************/
-static u8 RxTsDeleteBA(struct ieee80211_device *ieee, struct rx_ts_record *pRxTs)
-{
-	struct ba_record       *pBa = &pRxTs->rx_admitted_ba_record;
+अटल u8 RxTsDeleteBA(काष्ठा ieee80211_device *ieee, काष्ठा rx_ts_record *pRxTs)
+अणु
+	काष्ठा ba_record       *pBa = &pRxTs->rx_admitted_ba_record;
 	u8			bSendDELBA = false;
 
-	if (pBa->valid) {
+	अगर (pBa->valid) अणु
 		DeActivateBAEntry(ieee, pBa);
 		bSendDELBA = true;
-	}
+	पूर्ण
 
-	return bSendDELBA;
-}
+	वापस bSendDELBA;
+पूर्ण
 
 /********************************************************************************************************************
  *function: reset BA entry
  *   input:
- *	     struct ba_record *pBA //entry to be reset
+ *	     काष्ठा ba_record *pBA //entry to be reset
  *  output:  none
  ********************************************************************************************************************/
-void ResetBaEntry(struct ba_record *pBA)
-{
+व्योम ResetBaEntry(काष्ठा ba_record *pBA)
+अणु
 	pBA->valid			= false;
-	pBA->param_set.short_data	= 0;
-	pBA->timeout_value		= 0;
+	pBA->param_set.लघु_data	= 0;
+	pBA->समयout_value		= 0;
 	pBA->dialog_token		= 0;
-	pBA->start_seq_ctrl.short_data	= 0;
-}
+	pBA->start_seq_ctrl.लघु_data	= 0;
+पूर्ण
 //These functions need porting here or not?
 /*******************************************************************************************************************************
- *function:  construct ADDBAREQ and ADDBARSP frame here together.
+ *function:  स्थिरruct ADDBAREQ and ADDBARSP frame here together.
  *   input:  u8*		Dst	//ADDBA frame's destination
- *	     struct ba_record  *pBA	//BA_RECORD entry which stores the necessary information for BA.
+ *	     काष्ठा ba_record  *pBA	//BA_RECORD entry which stores the necessary inक्रमmation क्रम BA.
  *	     u16		StatusCode  //status code in RSP and I will use it to indicate whether it's RSP or REQ(will I?)
  *	     u8			type	//indicate whether it's RSP(ACT_ADDBARSP) ow REQ(ACT_ADDBAREQ)
  *  output:  none
- *  return:  sk_buff*		skb     //return constructed skb to xmit
+ *  वापस:  sk_buff*		skb     //वापस स्थिरructed skb to xmit
  *******************************************************************************************************************************/
-static struct sk_buff *ieee80211_ADDBA(struct ieee80211_device *ieee, u8 *Dst, struct ba_record *pBA, u16 StatusCode, u8 type)
-{
-	struct sk_buff *skb = NULL;
-	struct rtl_80211_hdr_3addr *BAReq = NULL;
-	u8 *tag = NULL;
+अटल काष्ठा sk_buff *ieee80211_ADDBA(काष्ठा ieee80211_device *ieee, u8 *Dst, काष्ठा ba_record *pBA, u16 StatusCode, u8 type)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा rtl_80211_hdr_3addr *BAReq = शून्य;
+	u8 *tag = शून्य;
 	u16 len = ieee->tx_headroom + 9;
 	//category(1) + action field(1) + Dialog Token(1) + BA Parameter Set(2) +  BA Timeout Value(2) +  BA Start SeqCtrl(2)(or StatusCode(2))
 	IEEE80211_DEBUG(IEEE80211_DL_TRACE | IEEE80211_DL_BA, "========>%s(), frame(%d) sentd to:%pM, ieee->dev:%p\n", __func__, type, Dst, ieee->dev);
-	if (pBA == NULL) {
+	अगर (pBA == शून्य) अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "pBA is NULL\n");
-		return NULL;
-	}
-	skb = dev_alloc_skb(len + sizeof(struct rtl_80211_hdr_3addr)); //need to add something others? FIXME
-	if (!skb)
-		return NULL;
+		वापस शून्य;
+	पूर्ण
+	skb = dev_alloc_skb(len + माप(काष्ठा rtl_80211_hdr_3addr)); //need to add something others? FIXME
+	अगर (!skb)
+		वापस शून्य;
 
-	memset(skb->data, 0, sizeof(struct rtl_80211_hdr_3addr));	//I wonder whether it's necessary. Apparently kernel will not do it when alloc a skb.
+	स_रखो(skb->data, 0, माप(काष्ठा rtl_80211_hdr_3addr));	//I wonder whether it's necessary. Apparently kernel will not करो it when alloc a skb.
 	skb_reserve(skb, ieee->tx_headroom);
 
-	BAReq = skb_put(skb, sizeof(struct rtl_80211_hdr_3addr));
+	BAReq = skb_put(skb, माप(काष्ठा rtl_80211_hdr_3addr));
 
-	memcpy(BAReq->addr1, Dst, ETH_ALEN);
-	memcpy(BAReq->addr2, ieee->dev->dev_addr, ETH_ALEN);
+	स_नकल(BAReq->addr1, Dst, ETH_ALEN);
+	स_नकल(BAReq->addr2, ieee->dev->dev_addr, ETH_ALEN);
 
-	memcpy(BAReq->addr3, ieee->current_network.bssid, ETH_ALEN);
+	स_नकल(BAReq->addr3, ieee->current_network.bssid, ETH_ALEN);
 
 	BAReq->frame_ctl = cpu_to_le16(IEEE80211_STYPE_MANAGE_ACT); //action frame
 
-	//tag += sizeof( struct rtl_80211_hdr_3addr); //move to action field
+	//tag += माप( काष्ठा rtl_80211_hdr_3addr); //move to action field
 	tag = skb_put(skb, 9);
 	*tag++ = ACT_CAT_BA;
 	*tag++ = type;
 	// Dialog Token
 	*tag++ = pBA->dialog_token;
 
-	if (type == ACT_ADDBARSP) {
+	अगर (type == ACT_ADDBARSP) अणु
 		// Status Code
 		netdev_info(ieee->dev, "=====>to send ADDBARSP\n");
 
 		put_unaligned_le16(StatusCode, tag);
 		tag += 2;
-	}
+	पूर्ण
 	// BA Parameter Set
 
-	put_unaligned_le16(pBA->param_set.short_data, tag);
+	put_unaligned_le16(pBA->param_set.लघु_data, tag);
 	tag += 2;
 	// BA Timeout Value
 
-	put_unaligned_le16(pBA->timeout_value, tag);
+	put_unaligned_le16(pBA->समयout_value, tag);
 	tag += 2;
 
-	if (type == ACT_ADDBAREQ) {
+	अगर (type == ACT_ADDBAREQ) अणु
 	// BA Start SeqCtrl
-		memcpy(tag, (u8 *)&(pBA->start_seq_ctrl), 2);
+		स_नकल(tag, (u8 *)&(pBA->start_seq_ctrl), 2);
 		tag += 2;
-	}
+	पूर्ण
 
 	IEEE80211_DEBUG_DATA(IEEE80211_DL_DATA | IEEE80211_DL_BA, skb->data, skb->len);
-	return skb;
-	//return NULL;
-}
+	वापस skb;
+	//वापस शून्य;
+पूर्ण
 
 
 /********************************************************************************************************************
- *function:  construct DELBA frame
+ *function:  स्थिरruct DELBA frame
  *   input:  u8*		dst	//DELBA frame's destination
- *	     struct ba_record  *pBA	//BA_RECORD entry which stores the necessary information for BA
- *	     enum tr_select	TxRxSelect  //TX RX direction
+ *	     काष्ठा ba_record  *pBA	//BA_RECORD entry which stores the necessary inक्रमmation क्रम BA
+ *	     क्रमागत tr_select	TxRxSelect  //TX RX direction
  *	     u16		ReasonCode  //status code.
  *  output:  none
- *  return:  sk_buff*		skb     //return constructed skb to xmit
+ *  वापस:  sk_buff*		skb     //वापस स्थिरructed skb to xmit
  ********************************************************************************************************************/
-static struct sk_buff *ieee80211_DELBA(
-	struct ieee80211_device  *ieee,
+अटल काष्ठा sk_buff *ieee80211_DELBA(
+	काष्ठा ieee80211_device  *ieee,
 	u8		         *dst,
-	struct ba_record         *pBA,
-	enum tr_select		 TxRxSelect,
+	काष्ठा ba_record         *pBA,
+	क्रमागत tr_select		 TxRxSelect,
 	u16			 ReasonCode
 	)
-{
-	union delba_param_set	DelbaParamSet;
-	struct sk_buff *skb = NULL;
-	struct rtl_80211_hdr_3addr *Delba = NULL;
-	u8 *tag = NULL;
+अणु
+	जोड़ delba_param_set	DelbaParamSet;
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा rtl_80211_hdr_3addr *Delba = शून्य;
+	u8 *tag = शून्य;
 	//len = head len + DELBA Parameter Set(2) + Reason Code(2)
 	u16 len = 6 + ieee->tx_headroom;
 
-	if (net_ratelimit())
+	अगर (net_ratelimit())
 		IEEE80211_DEBUG(IEEE80211_DL_TRACE | IEEE80211_DL_BA,
 				"========>%s(), ReasonCode(%d) sentd to:%pM\n",
 				__func__, ReasonCode, dst);
 
-	memset(&DelbaParamSet, 0, 2);
+	स_रखो(&DelbaParamSet, 0, 2);
 
-	DelbaParamSet.field.initiator	= (TxRxSelect == TX_DIR) ? 1 : 0;
+	DelbaParamSet.field.initiator	= (TxRxSelect == TX_सूची) ? 1 : 0;
 	DelbaParamSet.field.tid	= pBA->param_set.field.tid;
 
-	skb = dev_alloc_skb(len + sizeof(struct rtl_80211_hdr_3addr)); //need to add something others? FIXME
-	if (!skb)
-		return NULL;
-//	memset(skb->data, 0, len+sizeof( struct rtl_80211_hdr_3addr));
+	skb = dev_alloc_skb(len + माप(काष्ठा rtl_80211_hdr_3addr)); //need to add something others? FIXME
+	अगर (!skb)
+		वापस शून्य;
+//	स_रखो(skb->data, 0, len+माप( काष्ठा rtl_80211_hdr_3addr));
 	skb_reserve(skb, ieee->tx_headroom);
 
-	Delba = skb_put(skb, sizeof(struct rtl_80211_hdr_3addr));
+	Delba = skb_put(skb, माप(काष्ठा rtl_80211_hdr_3addr));
 
-	memcpy(Delba->addr1, dst, ETH_ALEN);
-	memcpy(Delba->addr2, ieee->dev->dev_addr, ETH_ALEN);
-	memcpy(Delba->addr3, ieee->current_network.bssid, ETH_ALEN);
+	स_नकल(Delba->addr1, dst, ETH_ALEN);
+	स_नकल(Delba->addr2, ieee->dev->dev_addr, ETH_ALEN);
+	स_नकल(Delba->addr3, ieee->current_network.bssid, ETH_ALEN);
 	Delba->frame_ctl = cpu_to_le16(IEEE80211_STYPE_MANAGE_ACT); //action frame
 
 	tag = skb_put(skb, 6);
@@ -222,7 +223,7 @@ static struct sk_buff *ieee80211_DELBA(
 
 	// DELBA Parameter Set
 
-	put_unaligned_le16(DelbaParamSet.short_data, tag);
+	put_unaligned_le16(DelbaParamSet.लघु_data, tag);
 	tag += 2;
 	// Reason Code
 
@@ -230,240 +231,240 @@ static struct sk_buff *ieee80211_DELBA(
 	tag += 2;
 
 	IEEE80211_DEBUG_DATA(IEEE80211_DL_DATA | IEEE80211_DL_BA, skb->data, skb->len);
-	if (net_ratelimit())
+	अगर (net_ratelimit())
 		IEEE80211_DEBUG(IEEE80211_DL_TRACE | IEEE80211_DL_BA,
 				"<=====%s()\n", __func__);
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /********************************************************************************************************************
  *function: send ADDBAReq frame out
  *   input:  u8*		dst	//ADDBAReq frame's destination
- *	     struct ba_record  *pBA	//BA_RECORD entry which stores the necessary information for BA
+ *	     काष्ठा ba_record  *pBA	//BA_RECORD entry which stores the necessary inक्रमmation क्रम BA
  *  output:  none
- *  notice: If any possible, please hide pBA in ieee. And temporarily use Manage Queue as softmac_mgmt_xmit() usually does
+ *  notice: If any possible, please hide pBA in ieee. And temporarily use Manage Queue as sofपंचांगac_mgmt_xmit() usually करोes
  ********************************************************************************************************************/
-static void ieee80211_send_ADDBAReq(struct ieee80211_device *ieee,
-				    u8 *dst, struct ba_record *pBA)
-{
-	struct sk_buff *skb;
-	skb = ieee80211_ADDBA(ieee, dst, pBA, 0, ACT_ADDBAREQ); //construct ACT_ADDBAREQ frames so set statuscode zero.
+अटल व्योम ieee80211_send_ADDBAReq(काष्ठा ieee80211_device *ieee,
+				    u8 *dst, काष्ठा ba_record *pBA)
+अणु
+	काष्ठा sk_buff *skb;
+	skb = ieee80211_ADDBA(ieee, dst, pBA, 0, ACT_ADDBAREQ); //स्थिरruct ACT_ADDBAREQ frames so set statuscode zero.
 
-	if (skb) {
-		softmac_mgmt_xmit(skb, ieee);
+	अगर (skb) अणु
+		sofपंचांगac_mgmt_xmit(skb, ieee);
 		//add statistic needed here.
-		//and skb will be freed in softmac_mgmt_xmit(), so omit all dev_kfree_skb_any() outside softmac_mgmt_xmit()
+		//and skb will be मुक्तd in sofपंचांगac_mgmt_xmit(), so omit all dev_kमुक्त_skb_any() outside sofपंचांगac_mgmt_xmit()
 		//WB
-	} else {
+	पूर्ण अन्यथा अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "alloc skb error in function %s()\n", __func__);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /********************************************************************************************************************
  *function: send ADDBARSP frame out
  *   input:  u8*		dst	//DELBA frame's destination
- *	     struct ba_record  *pBA	//BA_RECORD entry which stores the necessary information for BA
+ *	     काष्ठा ba_record  *pBA	//BA_RECORD entry which stores the necessary inक्रमmation क्रम BA
  *	     u16		StatusCode //RSP StatusCode
  *  output:  none
- *  notice: If any possible, please hide pBA in ieee. And temporarily use Manage Queue as softmac_mgmt_xmit() usually does
+ *  notice: If any possible, please hide pBA in ieee. And temporarily use Manage Queue as sofपंचांगac_mgmt_xmit() usually करोes
  ********************************************************************************************************************/
-static void ieee80211_send_ADDBARsp(struct ieee80211_device *ieee, u8 *dst,
-				    struct ba_record *pBA, u16 StatusCode)
-{
-	struct sk_buff *skb;
-	skb = ieee80211_ADDBA(ieee, dst, pBA, StatusCode, ACT_ADDBARSP); //construct ACT_ADDBARSP frames
-	if (skb) {
-		softmac_mgmt_xmit(skb, ieee);
+अटल व्योम ieee80211_send_ADDBARsp(काष्ठा ieee80211_device *ieee, u8 *dst,
+				    काष्ठा ba_record *pBA, u16 StatusCode)
+अणु
+	काष्ठा sk_buff *skb;
+	skb = ieee80211_ADDBA(ieee, dst, pBA, StatusCode, ACT_ADDBARSP); //स्थिरruct ACT_ADDBARSP frames
+	अगर (skb) अणु
+		sofपंचांगac_mgmt_xmit(skb, ieee);
 		//same above
-	} else {
+	पूर्ण अन्यथा अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "alloc skb error in function %s()\n", __func__);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
-}
+पूर्ण
 /********************************************************************************************************************
  *function: send ADDBARSP frame out
  *   input:  u8*		dst	//DELBA frame's destination
- *	     struct ba_record  *pBA	//BA_RECORD entry which stores the necessary information for BA
- *	     enum tr_select     TxRxSelect //TX or RX
+ *	     काष्ठा ba_record  *pBA	//BA_RECORD entry which stores the necessary inक्रमmation क्रम BA
+ *	     क्रमागत tr_select     TxRxSelect //TX or RX
  *	     u16		ReasonCode //DEL ReasonCode
  *  output:  none
- *  notice: If any possible, please hide pBA in ieee. And temporarily use Manage Queue as softmac_mgmt_xmit() usually does
+ *  notice: If any possible, please hide pBA in ieee. And temporarily use Manage Queue as sofपंचांगac_mgmt_xmit() usually करोes
  ********************************************************************************************************************/
 
-static void ieee80211_send_DELBA(struct ieee80211_device *ieee, u8 *dst,
-				 struct ba_record *pBA, enum tr_select TxRxSelect,
+अटल व्योम ieee80211_send_DELBA(काष्ठा ieee80211_device *ieee, u8 *dst,
+				 काष्ठा ba_record *pBA, क्रमागत tr_select TxRxSelect,
 				 u16 ReasonCode)
-{
-	struct sk_buff *skb;
-	skb = ieee80211_DELBA(ieee, dst, pBA, TxRxSelect, ReasonCode); //construct ACT_ADDBARSP frames
-	if (skb) {
-		softmac_mgmt_xmit(skb, ieee);
+अणु
+	काष्ठा sk_buff *skb;
+	skb = ieee80211_DELBA(ieee, dst, pBA, TxRxSelect, ReasonCode); //स्थिरruct ACT_ADDBARSP frames
+	अगर (skb) अणु
+		sofपंचांगac_mgmt_xmit(skb, ieee);
 		//same above
-	} else {
+	पूर्ण अन्यथा अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "alloc skb error in function %s()\n", __func__);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /********************************************************************************************************************
  *function: RX ADDBAReq
- *   input:  struct sk_buff *   skb	//incoming ADDBAReq skb.
- *  return:  0(pass), other(fail)
- *  notice:  As this function need support of QOS, I comment some code out. And when qos is ready, this code need to be support.
+ *   input:  काष्ठा sk_buff *   skb	//incoming ADDBAReq skb.
+ *  वापस:  0(pass), other(fail)
+ *  notice:  As this function need support of QOS, I comment some code out. And when qos is पढ़ोy, this code need to be support.
  ********************************************************************************************************************/
-int ieee80211_rx_ADDBAReq(struct ieee80211_device *ieee, struct sk_buff *skb)
-{
-	struct rtl_80211_hdr_3addr *req = NULL;
+पूर्णांक ieee80211_rx_ADDBAReq(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_80211_hdr_3addr *req = शून्य;
 	u16 rc = 0;
-	u8 *dst = NULL, *pDialogToken = NULL, *tag = NULL;
-	struct ba_record *pBA = NULL;
-	union ba_param_set     *pBaParamSet = NULL;
-	u16 *pBaTimeoutVal = NULL;
-	union sequence_control *pBaStartSeqCtrl = NULL;
-	struct rx_ts_record  *pTS = NULL;
+	u8 *dst = शून्य, *pDialogToken = शून्य, *tag = शून्य;
+	काष्ठा ba_record *pBA = शून्य;
+	जोड़ ba_param_set     *pBaParamSet = शून्य;
+	u16 *pBaTimeoutVal = शून्य;
+	जोड़ sequence_control *pBaStartSeqCtrl = शून्य;
+	काष्ठा rx_ts_record  *pTS = शून्य;
 
-	if (skb->len < sizeof(struct rtl_80211_hdr_3addr) + 9) {
+	अगर (skb->len < माप(काष्ठा rtl_80211_hdr_3addr) + 9) अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR,
 				" Invalid skb len in BAREQ(%d / %zu)\n",
 				skb->len,
-				(sizeof(struct rtl_80211_hdr_3addr) + 9));
-		return -1;
-	}
+				(माप(काष्ठा rtl_80211_hdr_3addr) + 9));
+		वापस -1;
+	पूर्ण
 
 	IEEE80211_DEBUG_DATA(IEEE80211_DL_DATA | IEEE80211_DL_BA, skb->data, skb->len);
 
-	req = (struct rtl_80211_hdr_3addr *)skb->data;
+	req = (काष्ठा rtl_80211_hdr_3addr *)skb->data;
 	tag = (u8 *)req;
 	dst = &req->addr2[0];
-	tag += sizeof(struct rtl_80211_hdr_3addr);
+	tag += माप(काष्ठा rtl_80211_hdr_3addr);
 	pDialogToken = tag + 2;  //category+action
-	pBaParamSet = (union ba_param_set *)(tag + 3);   //+DialogToken
+	pBaParamSet = (जोड़ ba_param_set *)(tag + 3);   //+DialogToken
 	pBaTimeoutVal = (u16 *)(tag + 5);
-	pBaStartSeqCtrl = (union sequence_control *)(req + 7);
+	pBaStartSeqCtrl = (जोड़ sequence_control *)(req + 7);
 
 	netdev_info(ieee->dev, "====================>rx ADDBAREQ from :%pM\n", dst);
-//some other capability is not ready now.
-	if ((ieee->current_network.qos_data.active == 0) ||
+//some other capability is not पढ़ोy now.
+	अगर ((ieee->current_network.qos_data.active == 0) ||
 		(!ieee->pHTInfo->bCurrentHTSupport)) //||
 	//	(!ieee->pStaQos->bEnableRxImmBA)	)
-	{
+	अणु
 		rc = ADDBA_STATUS_REFUSED;
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "Failed to reply on ADDBA_REQ as some capability is not ready(%d, %d)\n", ieee->current_network.qos_data.active, ieee->pHTInfo->bCurrentHTSupport);
-		goto OnADDBAReq_Fail;
-	}
-	// Search for related traffic stream.
+		जाओ OnADDBAReq_Fail;
+	पूर्ण
+	// Search क्रम related traffic stream.
 	// If there is no matched TS, reject the ADDBA request.
-	if (!GetTs(
+	अगर (!GetTs(
 			ieee,
-			(struct ts_common_info **)(&pTS),
+			(काष्ठा ts_common_info **)(&pTS),
 			dst,
 			(u8)(pBaParamSet->field.tid),
-			RX_DIR,
-			true)) {
+			RX_सूची,
+			true)) अणु
 		rc = ADDBA_STATUS_REFUSED;
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "can't get TS in %s()\n", __func__);
-		goto OnADDBAReq_Fail;
-	}
+		जाओ OnADDBAReq_Fail;
+	पूर्ण
 	pBA = &pTS->rx_admitted_ba_record;
 	// To Determine the ADDBA Req content
-	// We can do much more check here, including buffer_size, AMSDU_Support, Policy, StartSeqCtrl...
+	// We can करो much more check here, including buffer_size, AMSDU_Support, Policy, StartSeqCtrl...
 	// I want to check StartSeqCtrl to make sure when we start aggregation!!!
 	//
-	if (pBaParamSet->field.ba_policy == BA_POLICY_DELAYED) {
+	अगर (pBaParamSet->field.ba_policy == BA_POLICY_DELAYED) अणु
 		rc = ADDBA_STATUS_INVALID_PARAM;
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "BA Policy is not correct in %s()\n", __func__);
-		goto OnADDBAReq_Fail;
-	}
+		जाओ OnADDBAReq_Fail;
+	पूर्ण
 		// Admit the ADDBA Request
 	//
 	DeActivateBAEntry(ieee, pBA);
 	pBA->dialog_token = *pDialogToken;
 	pBA->param_set = *pBaParamSet;
-	pBA->timeout_value = *pBaTimeoutVal;
+	pBA->समयout_value = *pBaTimeoutVal;
 	pBA->start_seq_ctrl = *pBaStartSeqCtrl;
-	//for half N mode we only aggregate 1 frame
-	if (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev))
+	//क्रम half N mode we only aggregate 1 frame
+	अगर (ieee->GetHalfNmodeSupportByAPsHandler(ieee->dev))
 		pBA->param_set.field.buffer_size = 1;
-	else
+	अन्यथा
 		pBA->param_set.field.buffer_size = 32;
-	ActivateBAEntry(ieee, pBA, pBA->timeout_value);
+	ActivateBAEntry(ieee, pBA, pBA->समयout_value);
 	ieee80211_send_ADDBARsp(ieee, dst, pBA, ADDBA_STATUS_SUCCESS);
 
 	// End of procedure.
-	return 0;
+	वापस 0;
 
 OnADDBAReq_Fail:
-	{
-		struct ba_record	BA;
+	अणु
+		काष्ठा ba_record	BA;
 		BA.param_set = *pBaParamSet;
-		BA.timeout_value = *pBaTimeoutVal;
+		BA.समयout_value = *pBaTimeoutVal;
 		BA.dialog_token = *pDialogToken;
 		BA.param_set.field.ba_policy = BA_POLICY_IMMEDIATE;
 		ieee80211_send_ADDBARsp(ieee, dst, &BA, rc);
-		return 0; //we send RSP out.
-	}
+		वापस 0; //we send RSP out.
+	पूर्ण
 
-}
+पूर्ण
 
 /********************************************************************************************************************
  *function: RX ADDBARSP
- *   input:  struct sk_buff *   skb	//incoming ADDBAReq skb.
- *  return:  0(pass), other(fail)
- *  notice:  As this function need support of QOS, I comment some code out. And when qos is ready, this code need to be support.
+ *   input:  काष्ठा sk_buff *   skb	//incoming ADDBAReq skb.
+ *  वापस:  0(pass), other(fail)
+ *  notice:  As this function need support of QOS, I comment some code out. And when qos is पढ़ोy, this code need to be support.
  ********************************************************************************************************************/
-int ieee80211_rx_ADDBARsp(struct ieee80211_device *ieee, struct sk_buff *skb)
-{
-	struct rtl_80211_hdr_3addr *rsp = NULL;
-	struct ba_record        *pPendingBA, *pAdmittedBA;
-	struct tx_ts_record     *pTS = NULL;
-	u8 *dst = NULL, *pDialogToken = NULL, *tag = NULL;
-	u16 *pStatusCode = NULL, *pBaTimeoutVal = NULL;
-	union ba_param_set       *pBaParamSet = NULL;
+पूर्णांक ieee80211_rx_ADDBARsp(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_80211_hdr_3addr *rsp = शून्य;
+	काष्ठा ba_record        *pPendingBA, *pAdmittedBA;
+	काष्ठा tx_ts_record     *pTS = शून्य;
+	u8 *dst = शून्य, *pDialogToken = शून्य, *tag = शून्य;
+	u16 *pStatusCode = शून्य, *pBaTimeoutVal = शून्य;
+	जोड़ ba_param_set       *pBaParamSet = शून्य;
 	u16			ReasonCode;
 
-	if (skb->len < sizeof(struct rtl_80211_hdr_3addr) + 9) {
+	अगर (skb->len < माप(काष्ठा rtl_80211_hdr_3addr) + 9) अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR,
 				" Invalid skb len in BARSP(%d / %zu)\n",
 				skb->len,
-				(sizeof(struct rtl_80211_hdr_3addr) + 9));
-		return -1;
-	}
-	rsp = (struct rtl_80211_hdr_3addr *)skb->data;
+				(माप(काष्ठा rtl_80211_hdr_3addr) + 9));
+		वापस -1;
+	पूर्ण
+	rsp = (काष्ठा rtl_80211_hdr_3addr *)skb->data;
 	tag = (u8 *)rsp;
 	dst = &rsp->addr2[0];
-	tag += sizeof(struct rtl_80211_hdr_3addr);
+	tag += माप(काष्ठा rtl_80211_hdr_3addr);
 	pDialogToken = tag + 2;
 	pStatusCode = (u16 *)(tag + 3);
-	pBaParamSet = (union ba_param_set *)(tag + 5);
+	pBaParamSet = (जोड़ ba_param_set *)(tag + 5);
 	pBaTimeoutVal = (u16 *)(tag + 7);
 
 	// Check the capability
-	// Since we can always receive A-MPDU, we just check if it is under HT mode.
-	if (ieee->current_network.qos_data.active == 0  ||
+	// Since we can always receive A-MPDU, we just check अगर it is under HT mode.
+	अगर (ieee->current_network.qos_data.active == 0  ||
 	    !ieee->pHTInfo->bCurrentHTSupport ||
-	    !ieee->pHTInfo->bCurrentAMPDUEnable) {
+	    !ieee->pHTInfo->bCurrentAMPDUEnable) अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "reject to ADDBA_RSP as some capability is not ready(%d, %d, %d)\n", ieee->current_network.qos_data.active, ieee->pHTInfo->bCurrentHTSupport, ieee->pHTInfo->bCurrentAMPDUEnable);
 		ReasonCode = DELBA_REASON_UNKNOWN_BA;
-		goto OnADDBARsp_Reject;
-	}
+		जाओ OnADDBARsp_Reject;
+	पूर्ण
 
 
 	//
-	// Search for related TS.
+	// Search क्रम related TS.
 	// If there is no TS found, we wil reject ADDBA Rsp by sending DELBA frame.
 	//
-	if (!GetTs(
+	अगर (!GetTs(
 			ieee,
-			(struct ts_common_info **)(&pTS),
+			(काष्ठा ts_common_info **)(&pTS),
 			dst,
 			(u8)(pBaParamSet->field.tid),
-			TX_DIR,
-			false)) {
+			TX_सूची,
+			false)) अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "can't get TS in %s()\n", __func__);
 		ReasonCode = DELBA_REASON_UNKNOWN_BA;
-		goto OnADDBARsp_Reject;
-	}
+		जाओ OnADDBARsp_Reject;
+	पूर्ण
 
 	pTS->add_ba_req_in_progress = false;
 	pPendingBA = &pTS->tx_pending_ba_record;
@@ -471,150 +472,150 @@ int ieee80211_rx_ADDBARsp(struct ieee80211_device *ieee, struct sk_buff *skb)
 
 
 	//
-	// Check if related BA is waiting for setup.
+	// Check अगर related BA is रुकोing क्रम setup.
 	// If not, reject by sending DELBA frame.
 	//
-	if (pAdmittedBA->valid) {
-		// Since BA is already setup, we ignore all other ADDBA Response.
+	अगर (pAdmittedBA->valid) अणु
+		// Since BA is alपढ़ोy setup, we ignore all other ADDBA Response.
 		IEEE80211_DEBUG(IEEE80211_DL_BA, "OnADDBARsp(): Recv ADDBA Rsp. Drop because already admit it! \n");
-		return -1;
-	} else if ((!pPendingBA->valid) || (*pDialogToken != pPendingBA->dialog_token)) {
+		वापस -1;
+	पूर्ण अन्यथा अगर ((!pPendingBA->valid) || (*pDialogToken != pPendingBA->dialog_token)) अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR,  "OnADDBARsp(): Recv ADDBA Rsp. BA invalid, DELBA! \n");
 		ReasonCode = DELBA_REASON_UNKNOWN_BA;
-		goto OnADDBARsp_Reject;
-	} else {
+		जाओ OnADDBARsp_Reject;
+	पूर्ण अन्यथा अणु
 		IEEE80211_DEBUG(IEEE80211_DL_BA, "OnADDBARsp(): Recv ADDBA Rsp. BA is admitted! Status code:%X\n", *pStatusCode);
 		DeActivateBAEntry(ieee, pPendingBA);
-	}
+	पूर्ण
 
 
-	if (*pStatusCode == ADDBA_STATUS_SUCCESS) {
+	अगर (*pStatusCode == ADDBA_STATUS_SUCCESS) अणु
 		//
 		// Determine ADDBA Rsp content here.
-		// We can compare the value of BA parameter set that Peer returned and Self sent.
+		// We can compare the value of BA parameter set that Peer वापसed and Self sent.
 		// If it is OK, then admitted. Or we can send DELBA to cancel BA mechanism.
 		//
-		if (pBaParamSet->field.ba_policy == BA_POLICY_DELAYED) {
+		अगर (pBaParamSet->field.ba_policy == BA_POLICY_DELAYED) अणु
 			// Since this is a kind of ADDBA failed, we delay next ADDBA process.
 			pTS->add_ba_req_delayed = true;
 			DeActivateBAEntry(ieee, pAdmittedBA);
 			ReasonCode = DELBA_REASON_END_BA;
-			goto OnADDBARsp_Reject;
-		}
+			जाओ OnADDBARsp_Reject;
+		पूर्ण
 
 
 		//
 		// Admitted condition
 		//
 		pAdmittedBA->dialog_token = *pDialogToken;
-		pAdmittedBA->timeout_value = *pBaTimeoutVal;
+		pAdmittedBA->समयout_value = *pBaTimeoutVal;
 		pAdmittedBA->start_seq_ctrl = pPendingBA->start_seq_ctrl;
 		pAdmittedBA->param_set = *pBaParamSet;
 		DeActivateBAEntry(ieee, pAdmittedBA);
 		ActivateBAEntry(ieee, pAdmittedBA, *pBaTimeoutVal);
-	} else {
+	पूर्ण अन्यथा अणु
 		// Delay next ADDBA process.
 		pTS->add_ba_req_delayed = true;
-	}
+	पूर्ण
 
 	// End of procedure
-	return 0;
+	वापस 0;
 
 OnADDBARsp_Reject:
-	{
-		struct ba_record	BA;
+	अणु
+		काष्ठा ba_record	BA;
 		BA.param_set = *pBaParamSet;
-		ieee80211_send_DELBA(ieee, dst, &BA, TX_DIR, ReasonCode);
-		return 0;
-	}
+		ieee80211_send_DELBA(ieee, dst, &BA, TX_सूची, ReasonCode);
+		वापस 0;
+	पूर्ण
 
-}
+पूर्ण
 
 /********************************************************************************************************************
  *function: RX DELBA
- *   input:  struct sk_buff *   skb	//incoming ADDBAReq skb.
- *  return:  0(pass), other(fail)
- *  notice:  As this function need support of QOS, I comment some code out. And when qos is ready, this code need to be support.
+ *   input:  काष्ठा sk_buff *   skb	//incoming ADDBAReq skb.
+ *  वापस:  0(pass), other(fail)
+ *  notice:  As this function need support of QOS, I comment some code out. And when qos is पढ़ोy, this code need to be support.
  ********************************************************************************************************************/
-int ieee80211_rx_DELBA(struct ieee80211_device *ieee, struct sk_buff *skb)
-{
-	struct rtl_80211_hdr_3addr *delba = NULL;
-	union delba_param_set   *pDelBaParamSet = NULL;
-	u8			*dst = NULL;
+पूर्णांक ieee80211_rx_DELBA(काष्ठा ieee80211_device *ieee, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_80211_hdr_3addr *delba = शून्य;
+	जोड़ delba_param_set   *pDelBaParamSet = शून्य;
+	u8			*dst = शून्य;
 
-	if (skb->len < sizeof(struct rtl_80211_hdr_3addr) + 6) {
+	अगर (skb->len < माप(काष्ठा rtl_80211_hdr_3addr) + 6) अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR,
 				" Invalid skb len in DELBA(%d / %zu)\n",
 				skb->len,
-				(sizeof(struct rtl_80211_hdr_3addr) + 6));
-		return -1;
-	}
+				(माप(काष्ठा rtl_80211_hdr_3addr) + 6));
+		वापस -1;
+	पूर्ण
 
-	if (ieee->current_network.qos_data.active == 0 ||
-	    !ieee->pHTInfo->bCurrentHTSupport) {
+	अगर (ieee->current_network.qos_data.active == 0 ||
+	    !ieee->pHTInfo->bCurrentHTSupport) अणु
 		IEEE80211_DEBUG(IEEE80211_DL_ERR, "received DELBA while QOS or HT is not supported(%d, %d)\n", ieee->current_network.qos_data.active, ieee->pHTInfo->bCurrentHTSupport);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	IEEE80211_DEBUG_DATA(IEEE80211_DL_DATA | IEEE80211_DL_BA, skb->data, skb->len);
-	delba = (struct rtl_80211_hdr_3addr *)skb->data;
+	delba = (काष्ठा rtl_80211_hdr_3addr *)skb->data;
 	dst = &delba->addr2[0];
-	pDelBaParamSet = (union delba_param_set *)&delba->payload[2];
+	pDelBaParamSet = (जोड़ delba_param_set *)&delba->payload[2];
 
-	if (pDelBaParamSet->field.initiator == 1) {
-		struct rx_ts_record *pRxTs;
+	अगर (pDelBaParamSet->field.initiator == 1) अणु
+		काष्ठा rx_ts_record *pRxTs;
 
-		if (!GetTs(
+		अगर (!GetTs(
 				ieee,
-				(struct ts_common_info **)&pRxTs,
+				(काष्ठा ts_common_info **)&pRxTs,
 				dst,
 				(u8)pDelBaParamSet->field.tid,
-				RX_DIR,
-				false)) {
+				RX_सूची,
+				false)) अणु
 			IEEE80211_DEBUG(IEEE80211_DL_ERR,  "can't get TS for RXTS in %s()\n", __func__);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		RxTsDeleteBA(ieee, pRxTs);
-	} else {
-		struct tx_ts_record *pTxTs;
+	पूर्ण अन्यथा अणु
+		काष्ठा tx_ts_record *pTxTs;
 
-		if (!GetTs(
+		अगर (!GetTs(
 			ieee,
-			(struct ts_common_info **)&pTxTs,
+			(काष्ठा ts_common_info **)&pTxTs,
 			dst,
 			(u8)pDelBaParamSet->field.tid,
-			TX_DIR,
-			false)) {
+			TX_सूची,
+			false)) अणु
 			IEEE80211_DEBUG(IEEE80211_DL_ERR,  "can't get TS for TXTS in %s()\n", __func__);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		pTxTs->using_ba = false;
 		pTxTs->add_ba_req_in_progress = false;
 		pTxTs->add_ba_req_delayed = false;
-		del_timer_sync(&pTxTs->ts_add_ba_timer);
-		//PlatformCancelTimer(Adapter, &pTxTs->ts_add_ba_timer);
+		del_समयr_sync(&pTxTs->ts_add_ba_समयr);
+		//Platक्रमmCancelTimer(Adapter, &pTxTs->ts_add_ba_समयr);
 		TxTsDeleteBA(ieee, pTxTs);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 //
 // ADDBA initiate. This can only be called by TX side.
 //
-void
+व्योम
 TsInitAddBA(
-	struct ieee80211_device *ieee,
-	struct tx_ts_record     *pTS,
+	काष्ठा ieee80211_device *ieee,
+	काष्ठा tx_ts_record     *pTS,
 	u8		Policy,
-	u8		bOverwritePending
+	u8		bOverग_लिखोPending
 	)
-{
-	struct ba_record *pBA = &pTS->tx_pending_ba_record;
+अणु
+	काष्ठा ba_record *pBA = &pTS->tx_pending_ba_record;
 
-	if (pBA->valid && !bOverwritePending)
-		return;
+	अगर (pBA->valid && !bOverग_लिखोPending)
+		वापस;
 
 	// Set parameters to "Pending" variable set
 	DeActivateBAEntry(ieee, pBA);
@@ -625,76 +626,76 @@ TsInitAddBA(
 	pBA->param_set.field.tid = pTS->ts_common_info.t_spec.ts_info.uc_tsid;	// TID
 	// buffer_size: This need to be set according to A-MPDU vector
 	pBA->param_set.field.buffer_size = 32;		// buffer_size: This need to be set according to A-MPDU vector
-	pBA->timeout_value = 0;					// Timeout value: Set 0 to disable Timer
+	pBA->समयout_value = 0;					// Timeout value: Set 0 to disable Timer
 	pBA->start_seq_ctrl.field.seq_num = (pTS->tx_cur_seq + 3) % 4096;	// Block Ack will start after 3 packets later.
 
 	ActivateBAEntry(ieee, pBA, BA_SETUP_TIMEOUT);
 
 	ieee80211_send_ADDBAReq(ieee, pTS->ts_common_info.addr, pBA);
-}
+पूर्ण
 
-void
-TsInitDelBA(struct ieee80211_device *ieee, struct ts_common_info *pTsCommonInfo, enum tr_select TxRxSelect)
-{
-	if (TxRxSelect == TX_DIR) {
-		struct tx_ts_record *pTxTs = (struct tx_ts_record *)pTsCommonInfo;
+व्योम
+TsInitDelBA(काष्ठा ieee80211_device *ieee, काष्ठा ts_common_info *pTsCommonInfo, क्रमागत tr_select TxRxSelect)
+अणु
+	अगर (TxRxSelect == TX_सूची) अणु
+		काष्ठा tx_ts_record *pTxTs = (काष्ठा tx_ts_record *)pTsCommonInfo;
 
-		if (TxTsDeleteBA(ieee, pTxTs))
+		अगर (TxTsDeleteBA(ieee, pTxTs))
 			ieee80211_send_DELBA(
 				ieee,
 				pTsCommonInfo->addr,
 				(pTxTs->tx_admitted_ba_record.valid) ? (&pTxTs->tx_admitted_ba_record) : (&pTxTs->tx_pending_ba_record),
 				TxRxSelect,
 				DELBA_REASON_END_BA);
-	} else if (TxRxSelect == RX_DIR) {
-		struct rx_ts_record *pRxTs = (struct rx_ts_record *)pTsCommonInfo;
-		if (RxTsDeleteBA(ieee, pRxTs))
+	पूर्ण अन्यथा अगर (TxRxSelect == RX_सूची) अणु
+		काष्ठा rx_ts_record *pRxTs = (काष्ठा rx_ts_record *)pTsCommonInfo;
+		अगर (RxTsDeleteBA(ieee, pRxTs))
 			ieee80211_send_DELBA(
 				ieee,
 				pTsCommonInfo->addr,
 				&pRxTs->rx_admitted_ba_record,
 				TxRxSelect,
 				DELBA_REASON_END_BA);
-	}
-}
+	पूर्ण
+पूर्ण
 /********************************************************************************************************************
- *function:  BA setup timer
- *   input:  unsigned long	 data		//acturally we send struct tx_ts_record or struct rx_ts_record to these timer
- *  return:  NULL
+ *function:  BA setup समयr
+ *   input:  अचिन्हित दीर्घ	 data		//acturally we send काष्ठा tx_ts_record or काष्ठा rx_ts_record to these समयr
+ *  वापस:  शून्य
  *  notice:
  ********************************************************************************************************************/
-void BaSetupTimeOut(struct timer_list *t)
-{
-	struct tx_ts_record *pTxTs = from_timer(pTxTs, t, tx_pending_ba_record.timer);
+व्योम BaSetupTimeOut(काष्ठा समयr_list *t)
+अणु
+	काष्ठा tx_ts_record *pTxTs = from_समयr(pTxTs, t, tx_pending_ba_record.समयr);
 
 	pTxTs->add_ba_req_in_progress = false;
 	pTxTs->add_ba_req_delayed = true;
 	pTxTs->tx_pending_ba_record.valid = false;
-}
+पूर्ण
 
-void TxBaInactTimeout(struct timer_list *t)
-{
-	struct tx_ts_record *pTxTs = from_timer(pTxTs, t, tx_admitted_ba_record.timer);
-	struct ieee80211_device *ieee = container_of(pTxTs, struct ieee80211_device, TxTsRecord[pTxTs->num]);
+व्योम TxBaInactTimeout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा tx_ts_record *pTxTs = from_समयr(pTxTs, t, tx_admitted_ba_record.समयr);
+	काष्ठा ieee80211_device *ieee = container_of(pTxTs, काष्ठा ieee80211_device, TxTsRecord[pTxTs->num]);
 	TxTsDeleteBA(ieee, pTxTs);
 	ieee80211_send_DELBA(
 		ieee,
 		pTxTs->ts_common_info.addr,
 		&pTxTs->tx_admitted_ba_record,
-		TX_DIR,
+		TX_सूची,
 		DELBA_REASON_TIMEOUT);
-}
+पूर्ण
 
-void RxBaInactTimeout(struct timer_list *t)
-{
-	struct rx_ts_record *pRxTs = from_timer(pRxTs, t, rx_admitted_ba_record.timer);
-	struct ieee80211_device *ieee = container_of(pRxTs, struct ieee80211_device, RxTsRecord[pRxTs->num]);
+व्योम RxBaInactTimeout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा rx_ts_record *pRxTs = from_समयr(pRxTs, t, rx_admitted_ba_record.समयr);
+	काष्ठा ieee80211_device *ieee = container_of(pRxTs, काष्ठा ieee80211_device, RxTsRecord[pRxTs->num]);
 
 	RxTsDeleteBA(ieee, pRxTs);
 	ieee80211_send_DELBA(
 		ieee,
 		pRxTs->ts_common_info.addr,
 		&pRxTs->rx_admitted_ba_record,
-		RX_DIR,
+		RX_सूची,
 		DELBA_REASON_TIMEOUT);
-}
+पूर्ण

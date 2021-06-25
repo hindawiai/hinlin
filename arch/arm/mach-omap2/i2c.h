@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Helper module for board specific I2C bus registration
+ * Helper module क्रम board specअगरic I2C bus registration
  *
  * Copyright (C) 2009 Nokia Corporation.
  */
 
-#ifndef __MACH_OMAP2_I2C_H
-#define __MACH_OMAP2_I2C_H
+#अगर_अघोषित __MACH_OMAP2_I2C_H
+#घोषणा __MACH_OMAP2_I2C_H
 
-struct omap_hwmod;
+काष्ठा omap_hwmod;
 
-int omap_i2c_reset(struct omap_hwmod *oh);
+पूर्णांक omap_i2c_reset(काष्ठा omap_hwmod *oh);
 
-#endif	/* __MACH_OMAP2_I2C_H */
+#पूर्ण_अगर	/* __MACH_OMAP2_I2C_H */

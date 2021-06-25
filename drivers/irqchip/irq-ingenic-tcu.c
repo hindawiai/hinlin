@@ -1,137 +1,138 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * JZ47xx SoCs TCU IRQ driver
  * Copyright (C) 2019 Paul Cercueil <paul@crapouillou.net>
  */
 
-#include <linux/clk.h>
-#include <linux/interrupt.h>
-#include <linux/irqchip.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/mfd/ingenic-tcu.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of_irq.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/mfd/ingenic-tcu.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/regmap.h>
 
-struct ingenic_tcu {
-	struct regmap *map;
-	struct clk *clk;
-	struct irq_domain *domain;
-	unsigned int nb_parent_irqs;
+काष्ठा ingenic_tcu अणु
+	काष्ठा regmap *map;
+	काष्ठा clk *clk;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+	अचिन्हित पूर्णांक nb_parent_irqs;
 	u32 parent_irqs[3];
-};
+पूर्ण;
 
-static void ingenic_tcu_intc_cascade(struct irq_desc *desc)
-{
-	struct irq_chip *irq_chip = irq_data_get_irq_chip(&desc->irq_data);
-	struct irq_domain *domain = irq_desc_get_handler_data(desc);
-	struct irq_chip_generic *gc = irq_get_domain_generic_chip(domain, 0);
-	struct regmap *map = gc->private;
-	uint32_t irq_reg, irq_mask;
-	unsigned int i;
+अटल व्योम ingenic_tcu_पूर्णांकc_cascade(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *irq_chip = irq_data_get_irq_chip(&desc->irq_data);
+	काष्ठा irq_करोमुख्य *करोमुख्य = irq_desc_get_handler_data(desc);
+	काष्ठा irq_chip_generic *gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	काष्ठा regmap *map = gc->निजी;
+	uपूर्णांक32_t irq_reg, irq_mask;
+	अचिन्हित पूर्णांक i;
 
-	regmap_read(map, TCU_REG_TFR, &irq_reg);
-	regmap_read(map, TCU_REG_TMR, &irq_mask);
+	regmap_पढ़ो(map, TCU_REG_TFR, &irq_reg);
+	regmap_पढ़ो(map, TCU_REG_TMR, &irq_mask);
 
 	chained_irq_enter(irq_chip, desc);
 
 	irq_reg &= ~irq_mask;
 
-	for_each_set_bit(i, (unsigned long *)&irq_reg, 32)
-		generic_handle_irq(irq_linear_revmap(domain, i));
+	क्रम_each_set_bit(i, (अचिन्हित दीर्घ *)&irq_reg, 32)
+		generic_handle_irq(irq_linear_revmap(करोमुख्य, i));
 
-	chained_irq_exit(irq_chip, desc);
-}
+	chained_irq_निकास(irq_chip, desc);
+पूर्ण
 
-static void ingenic_tcu_gc_unmask_enable_reg(struct irq_data *d)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	struct irq_chip_type *ct = irq_data_get_chip_type(d);
-	struct regmap *map = gc->private;
+अटल व्योम ingenic_tcu_gc_unmask_enable_reg(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा irq_chip_type *ct = irq_data_get_chip_type(d);
+	काष्ठा regmap *map = gc->निजी;
 	u32 mask = d->mask;
 
 	irq_gc_lock(gc);
-	regmap_write(map, ct->regs.ack, mask);
-	regmap_write(map, ct->regs.enable, mask);
+	regmap_ग_लिखो(map, ct->regs.ack, mask);
+	regmap_ग_लिखो(map, ct->regs.enable, mask);
 	*ct->mask_cache |= mask;
 	irq_gc_unlock(gc);
-}
+पूर्ण
 
-static void ingenic_tcu_gc_mask_disable_reg(struct irq_data *d)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	struct irq_chip_type *ct = irq_data_get_chip_type(d);
-	struct regmap *map = gc->private;
+अटल व्योम ingenic_tcu_gc_mask_disable_reg(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा irq_chip_type *ct = irq_data_get_chip_type(d);
+	काष्ठा regmap *map = gc->निजी;
 	u32 mask = d->mask;
 
 	irq_gc_lock(gc);
-	regmap_write(map, ct->regs.disable, mask);
+	regmap_ग_लिखो(map, ct->regs.disable, mask);
 	*ct->mask_cache &= ~mask;
 	irq_gc_unlock(gc);
-}
+पूर्ण
 
-static void ingenic_tcu_gc_mask_disable_reg_and_ack(struct irq_data *d)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	struct irq_chip_type *ct = irq_data_get_chip_type(d);
-	struct regmap *map = gc->private;
+अटल व्योम ingenic_tcu_gc_mask_disable_reg_and_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा irq_chip_type *ct = irq_data_get_chip_type(d);
+	काष्ठा regmap *map = gc->निजी;
 	u32 mask = d->mask;
 
 	irq_gc_lock(gc);
-	regmap_write(map, ct->regs.ack, mask);
-	regmap_write(map, ct->regs.disable, mask);
+	regmap_ग_लिखो(map, ct->regs.ack, mask);
+	regmap_ग_लिखो(map, ct->regs.disable, mask);
 	irq_gc_unlock(gc);
-}
+पूर्ण
 
-static int __init ingenic_tcu_irq_init(struct device_node *np,
-				       struct device_node *parent)
-{
-	struct irq_chip_generic *gc;
-	struct irq_chip_type *ct;
-	struct ingenic_tcu *tcu;
-	struct regmap *map;
-	unsigned int i;
-	int ret, irqs;
+अटल पूर्णांक __init ingenic_tcu_irq_init(काष्ठा device_node *np,
+				       काष्ठा device_node *parent)
+अणु
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_chip_type *ct;
+	काष्ठा ingenic_tcu *tcu;
+	काष्ठा regmap *map;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret, irqs;
 
 	map = device_node_to_regmap(np);
-	if (IS_ERR(map))
-		return PTR_ERR(map);
+	अगर (IS_ERR(map))
+		वापस PTR_ERR(map);
 
-	tcu = kzalloc(sizeof(*tcu), GFP_KERNEL);
-	if (!tcu)
-		return -ENOMEM;
+	tcu = kzalloc(माप(*tcu), GFP_KERNEL);
+	अगर (!tcu)
+		वापस -ENOMEM;
 
 	tcu->map = map;
 
-	irqs = of_property_count_elems_of_size(np, "interrupts", sizeof(u32));
-	if (irqs < 0 || irqs > ARRAY_SIZE(tcu->parent_irqs)) {
+	irqs = of_property_count_elems_of_size(np, "interrupts", माप(u32));
+	अगर (irqs < 0 || irqs > ARRAY_SIZE(tcu->parent_irqs)) अणु
 		pr_crit("%s: Invalid 'interrupts' property\n", __func__);
 		ret = -EINVAL;
-		goto err_free_tcu;
-	}
+		जाओ err_मुक्त_tcu;
+	पूर्ण
 
 	tcu->nb_parent_irqs = irqs;
 
-	tcu->domain = irq_domain_add_linear(np, 32, &irq_generic_chip_ops,
-					    NULL);
-	if (!tcu->domain) {
+	tcu->करोमुख्य = irq_करोमुख्य_add_linear(np, 32, &irq_generic_chip_ops,
+					    शून्य);
+	अगर (!tcu->करोमुख्य) अणु
 		ret = -ENOMEM;
-		goto err_free_tcu;
-	}
+		जाओ err_मुक्त_tcu;
+	पूर्ण
 
-	ret = irq_alloc_domain_generic_chips(tcu->domain, 32, 1, "TCU",
+	ret = irq_alloc_करोमुख्य_generic_chips(tcu->करोमुख्य, 32, 1, "TCU",
 					     handle_level_irq, 0,
 					     IRQ_NOPROBE | IRQ_LEVEL, 0);
-	if (ret) {
+	अगर (ret) अणु
 		pr_crit("%s: Invalid 'interrupts' property\n", __func__);
-		goto out_domain_remove;
-	}
+		जाओ out_करोमुख्य_हटाओ;
+	पूर्ण
 
-	gc = irq_get_domain_generic_chip(tcu->domain, 0);
+	gc = irq_get_करोमुख्य_generic_chip(tcu->करोमुख्य, 0);
 	ct = gc->chip_types;
 
 	gc->wake_enabled = IRQ_MSK(32);
-	gc->private = tcu->map;
+	gc->निजी = tcu->map;
 
 	ct->regs.disable = TCU_REG_TMSR;
 	ct->regs.enable = TCU_REG_TMCR;
@@ -141,42 +142,42 @@ static int __init ingenic_tcu_irq_init(struct device_node *np,
 	ct->chip.irq_mask_ack = ingenic_tcu_gc_mask_disable_reg_and_ack;
 	ct->chip.flags = IRQCHIP_MASK_ON_SUSPEND | IRQCHIP_SKIP_SET_WAKE;
 
-	/* Mask all IRQs by default */
-	regmap_write(tcu->map, TCU_REG_TMSR, IRQ_MSK(32));
+	/* Mask all IRQs by शेष */
+	regmap_ग_लिखो(tcu->map, TCU_REG_TMSR, IRQ_MSK(32));
 
 	/*
-	 * On JZ4740, timer 0 and timer 1 have their own interrupt line;
-	 * timers 2-7 share one interrupt.
-	 * On SoCs >= JZ4770, timer 5 has its own interrupt line;
-	 * timers 0-4 and 6-7 share one single interrupt.
+	 * On JZ4740, समयr 0 and समयr 1 have their own पूर्णांकerrupt line;
+	 * समयrs 2-7 share one पूर्णांकerrupt.
+	 * On SoCs >= JZ4770, समयr 5 has its own पूर्णांकerrupt line;
+	 * समयrs 0-4 and 6-7 share one single पूर्णांकerrupt.
 	 *
-	 * To keep things simple, we just register the same handler to
-	 * all parent interrupts. The handler will properly detect which
-	 * channel fired the interrupt.
+	 * To keep things simple, we just रेजिस्टर the same handler to
+	 * all parent पूर्णांकerrupts. The handler will properly detect which
+	 * channel fired the पूर्णांकerrupt.
 	 */
-	for (i = 0; i < irqs; i++) {
+	क्रम (i = 0; i < irqs; i++) अणु
 		tcu->parent_irqs[i] = irq_of_parse_and_map(np, i);
-		if (!tcu->parent_irqs[i]) {
+		अगर (!tcu->parent_irqs[i]) अणु
 			ret = -EINVAL;
-			goto out_unmap_irqs;
-		}
+			जाओ out_unmap_irqs;
+		पूर्ण
 
 		irq_set_chained_handler_and_data(tcu->parent_irqs[i],
-						 ingenic_tcu_intc_cascade,
-						 tcu->domain);
-	}
+						 ingenic_tcu_पूर्णांकc_cascade,
+						 tcu->करोमुख्य);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_unmap_irqs:
-	for (; i > 0; i--)
+	क्रम (; i > 0; i--)
 		irq_dispose_mapping(tcu->parent_irqs[i - 1]);
-out_domain_remove:
-	irq_domain_remove(tcu->domain);
-err_free_tcu:
-	kfree(tcu);
-	return ret;
-}
+out_करोमुख्य_हटाओ:
+	irq_करोमुख्य_हटाओ(tcu->करोमुख्य);
+err_मुक्त_tcu:
+	kमुक्त(tcu);
+	वापस ret;
+पूर्ण
 IRQCHIP_DECLARE(jz4740_tcu_irq, "ingenic,jz4740-tcu", ingenic_tcu_irq_init);
 IRQCHIP_DECLARE(jz4725b_tcu_irq, "ingenic,jz4725b-tcu", ingenic_tcu_irq_init);
 IRQCHIP_DECLARE(jz4760_tcu_irq, "ingenic,jz4760-tcu", ingenic_tcu_irq_init);

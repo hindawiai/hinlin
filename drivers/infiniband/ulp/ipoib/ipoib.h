@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
- * Copyright (c) 2005 Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2005 Sun Microप्रणालीs, Inc. All rights reserved.
  * Copyright (c) 2004 Voltaire, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,41 +33,41 @@
  * SOFTWARE.
  */
 
-#ifndef _IPOIB_H
-#define _IPOIB_H
+#अगर_अघोषित _IPOIB_H
+#घोषणा _IPOIB_H
 
-#include <linux/list.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/workqueue.h>
-#include <linux/kref.h>
-#include <linux/if_infiniband.h>
-#include <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/अगर_infiniband.h>
+#समावेश <linux/mutex.h>
 
-#include <net/neighbour.h>
-#include <net/sch_generic.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/sch_generic.h>
 
-#include <linux/atomic.h>
+#समावेश <linux/atomic.h>
 
-#include <rdma/ib_verbs.h>
-#include <rdma/ib_pack.h>
-#include <rdma/ib_sa.h>
-#include <linux/sched.h>
-/* constants */
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/ib_pack.h>
+#समावेश <rdma/ib_sa.h>
+#समावेश <linux/sched.h>
+/* स्थिरants */
 
-enum ipoib_flush_level {
+क्रमागत ipoib_flush_level अणु
 	IPOIB_FLUSH_LIGHT,
 	IPOIB_FLUSH_NORMAL,
 	IPOIB_FLUSH_HEAVY
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	IPOIB_ENCAP_LEN		  = 4,
 	IPOIB_PSEUDO_LEN	  = 20,
 	IPOIB_HARD_LEN		  = IPOIB_ENCAP_LEN + IPOIB_PSEUDO_LEN,
 
 	IPOIB_UD_HEAD_SIZE	  = IB_GRH_BYTES + IPOIB_ENCAP_LEN,
-	IPOIB_UD_RX_SG		  = 2, /* max buffer needed for 4K mtu */
+	IPOIB_UD_RX_SG		  = 2, /* max buffer needed क्रम 4K mtu */
 
 	IPOIB_CM_MTU		  = 0x10000 - 0x10, /* padding to align header to 16 */
 	IPOIB_CM_BUF_SIZE	  = IPOIB_CM_MTU  + IPOIB_ENCAP_LEN,
@@ -102,9 +103,9 @@ enum {
 	/*
 	 * For IPOIB_MCAST_FLAG_BUSY
 	 * When set, in flight join and mcast->mc is unreliable
-	 * When clear and mcast->mc IS_ERR_OR_NULL, need to restart or
+	 * When clear and mcast->mc IS_ERR_OR_शून्य, need to restart or
 	 *   haven't started yet
-	 * When clear and mcast->mc is valid pointer, join was successful
+	 * When clear and mcast->mc is valid poपूर्णांकer, join was successful
 	 */
 	IPOIB_MCAST_FLAG_BUSY	  = 2,
 	IPOIB_MCAST_FLAG_ATTACHED = 3,
@@ -115,728 +116,728 @@ enum {
 	IPOIB_NON_CHILD		  = 0,
 	IPOIB_LEGACY_CHILD	  = 1,
 	IPOIB_RTNL_CHILD	  = 2,
-};
+पूर्ण;
 
-#define	IPOIB_OP_RECV   (1ul << 31)
-#ifdef CONFIG_INFINIBAND_IPOIB_CM
-#define	IPOIB_OP_CM     (1ul << 30)
-#else
-#define	IPOIB_OP_CM     (0)
-#endif
+#घोषणा	IPOIB_OP_RECV   (1ul << 31)
+#अगर_घोषित CONFIG_INFINIBAND_IPOIB_CM
+#घोषणा	IPOIB_OP_CM     (1ul << 30)
+#अन्यथा
+#घोषणा	IPOIB_OP_CM     (0)
+#पूर्ण_अगर
 
-#define IPOIB_QPN_MASK ((__force u32) cpu_to_be32(0xFFFFFF))
+#घोषणा IPOIB_QPN_MASK ((__क्रमce u32) cpu_to_be32(0xFFFFFF))
 
-/* structs */
+/* काष्ठाs */
 
-struct ipoib_header {
+काष्ठा ipoib_header अणु
 	__be16	proto;
 	u16	reserved;
-};
+पूर्ण;
 
-struct ipoib_pseudo_header {
+काष्ठा ipoib_pseuकरो_header अणु
 	u8	hwaddr[INFINIBAND_ALEN];
-};
+पूर्ण;
 
-static inline void skb_add_pseudo_hdr(struct sk_buff *skb)
-{
-	char *data = skb_push(skb, IPOIB_PSEUDO_LEN);
+अटल अंतरभूत व्योम skb_add_pseuकरो_hdr(काष्ठा sk_buff *skb)
+अणु
+	अक्षर *data = skb_push(skb, IPOIB_PSEUDO_LEN);
 
 	/*
-	 * only the ipoib header is present now, make room for a dummy
-	 * pseudo header and set skb field accordingly
+	 * only the ipoib header is present now, make room क्रम a dummy
+	 * pseuकरो header and set skb field accordingly
 	 */
-	memset(data, 0, IPOIB_PSEUDO_LEN);
+	स_रखो(data, 0, IPOIB_PSEUDO_LEN);
 	skb_reset_mac_header(skb);
 	skb_pull(skb, IPOIB_HARD_LEN);
-}
+पूर्ण
 
-static inline struct ipoib_dev_priv *ipoib_priv(const struct net_device *dev)
-{
-	struct rdma_netdev *rn = netdev_priv(dev);
+अटल अंतरभूत काष्ठा ipoib_dev_priv *ipoib_priv(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा rdma_netdev *rn = netdev_priv(dev);
 
-	return rn->clnt_priv;
-}
+	वापस rn->clnt_priv;
+पूर्ण
 
-/* Used for all multicast joins (broadcast, IPv4 mcast and IPv6 mcast) */
-struct ipoib_mcast {
-	struct ib_sa_mcmember_rec mcmember;
-	struct ib_sa_multicast	 *mc;
-	struct ipoib_ah		 *ah;
+/* Used क्रम all multicast joins (broadcast, IPv4 mcast and IPv6 mcast) */
+काष्ठा ipoib_mcast अणु
+	काष्ठा ib_sa_mcmember_rec mcmember;
+	काष्ठा ib_sa_multicast	 *mc;
+	काष्ठा ipoib_ah		 *ah;
 
-	struct rb_node    rb_node;
-	struct list_head  list;
+	काष्ठा rb_node    rb_node;
+	काष्ठा list_head  list;
 
-	unsigned long created;
-	unsigned long backoff;
-	unsigned long delay_until;
+	अचिन्हित दीर्घ created;
+	अचिन्हित दीर्घ backoff;
+	अचिन्हित दीर्घ delay_until;
 
-	unsigned long flags;
-	unsigned char logcount;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर logcount;
 
-	struct list_head  neigh_list;
+	काष्ठा list_head  neigh_list;
 
-	struct sk_buff_head pkt_queue;
+	काष्ठा sk_buff_head pkt_queue;
 
-	struct net_device *dev;
-	struct completion done;
-};
+	काष्ठा net_device *dev;
+	काष्ठा completion करोne;
+पूर्ण;
 
-struct ipoib_rx_buf {
-	struct sk_buff *skb;
+काष्ठा ipoib_rx_buf अणु
+	काष्ठा sk_buff *skb;
 	u64		mapping[IPOIB_UD_RX_SG];
-};
+पूर्ण;
 
-struct ipoib_tx_buf {
-	struct sk_buff *skb;
+काष्ठा ipoib_tx_buf अणु
+	काष्ठा sk_buff *skb;
 	u64		mapping[MAX_SKB_FRAGS + 1];
-};
+पूर्ण;
 
-struct ib_cm_id;
+काष्ठा ib_cm_id;
 
-struct ipoib_cm_data {
+काष्ठा ipoib_cm_data अणु
 	__be32 qpn; /* High byte MUST be ignored on receive */
 	__be32 mtu;
-};
+पूर्ण;
 
 /*
  * Quoting 10.3.1 Queue Pair and EE Context States:
  *
- * Note, for QPs that are associated with an SRQ, the Consumer should take the
- * QP through the Error State before invoking a Destroy QP or a Modify QP to the
- * Reset State.  The Consumer may invoke the Destroy QP without first performing
- * a Modify QP to the Error State and waiting for the Affiliated Asynchronous
- * Last WQE Reached Event. However, if the Consumer does not wait for the
+ * Note, क्रम QPs that are associated with an SRQ, the Consumer should take the
+ * QP through the Error State beक्रमe invoking a Destroy QP or a Modअगरy QP to the
+ * Reset State.  The Consumer may invoke the Destroy QP without first perक्रमming
+ * a Modअगरy QP to the Error State and रुकोing क्रम the Affiliated Asynchronous
+ * Last WQE Reached Event. However, अगर the Consumer करोes not रुको क्रम the
  * Affiliated Asynchronous Last WQE Reached Event, then WQE and Data Segment
- * leakage may occur. Therefore, it is good programming practice to tear down a
+ * leakage may occur. Thereक्रमe, it is good programming practice to tear करोwn a
  * QP that is associated with an SRQ by using the following process:
  *
  * - Put the QP in the Error State
- * - Wait for the Affiliated Asynchronous Last WQE Reached Event;
+ * - Wait क्रम the Affiliated Asynchronous Last WQE Reached Event;
  * - either:
- *       drain the CQ by invoking the Poll CQ verb and either wait for CQ
+ *       drain the CQ by invoking the Poll CQ verb and either रुको क्रम CQ
  *       to be empty or the number of Poll CQ operations has exceeded
  *       CQ capacity size;
  * - or
- *       post another WR that completes on the same CQ and wait for this
- *       WR to return as a WC;
+ *       post another WR that completes on the same CQ and रुको क्रम this
+ *       WR to वापस as a WC;
  * - and then invoke a Destroy QP or Reset QP.
  *
- * We use the second option and wait for a completion on the
- * same CQ before destroying QPs attached to our SRQ.
+ * We use the second option and रुको क्रम a completion on the
+ * same CQ beक्रमe destroying QPs attached to our SRQ.
  */
 
-enum ipoib_cm_state {
+क्रमागत ipoib_cm_state अणु
 	IPOIB_CM_RX_LIVE,
 	IPOIB_CM_RX_ERROR, /* Ignored by stale task */
 	IPOIB_CM_RX_FLUSH  /* Last WQE Reached event observed */
-};
+पूर्ण;
 
-struct ipoib_cm_rx {
-	struct ib_cm_id	       *id;
-	struct ib_qp	       *qp;
-	struct ipoib_cm_rx_buf *rx_ring;
-	struct list_head	list;
-	struct net_device      *dev;
-	unsigned long		jiffies;
-	enum ipoib_cm_state	state;
-	int			recv_count;
-};
+काष्ठा ipoib_cm_rx अणु
+	काष्ठा ib_cm_id	       *id;
+	काष्ठा ib_qp	       *qp;
+	काष्ठा ipoib_cm_rx_buf *rx_ring;
+	काष्ठा list_head	list;
+	काष्ठा net_device      *dev;
+	अचिन्हित दीर्घ		jअगरfies;
+	क्रमागत ipoib_cm_state	state;
+	पूर्णांक			recv_count;
+पूर्ण;
 
-struct ipoib_cm_tx {
-	struct ib_cm_id	    *id;
-	struct ib_qp	    *qp;
-	struct list_head     list;
-	struct net_device   *dev;
-	struct ipoib_neigh  *neigh;
-	struct ipoib_tx_buf *tx_ring;
-	unsigned int	     tx_head;
-	unsigned int	     tx_tail;
-	unsigned long	     flags;
+काष्ठा ipoib_cm_tx अणु
+	काष्ठा ib_cm_id	    *id;
+	काष्ठा ib_qp	    *qp;
+	काष्ठा list_head     list;
+	काष्ठा net_device   *dev;
+	काष्ठा ipoib_neigh  *neigh;
+	काष्ठा ipoib_tx_buf *tx_ring;
+	अचिन्हित पूर्णांक	     tx_head;
+	अचिन्हित पूर्णांक	     tx_tail;
+	अचिन्हित दीर्घ	     flags;
 	u32		     mtu;
-	unsigned int         max_send_sge;
-};
+	अचिन्हित पूर्णांक         max_send_sge;
+पूर्ण;
 
-struct ipoib_cm_rx_buf {
-	struct sk_buff *skb;
+काष्ठा ipoib_cm_rx_buf अणु
+	काष्ठा sk_buff *skb;
 	u64 mapping[IPOIB_CM_RX_SG];
-};
+पूर्ण;
 
-struct ipoib_cm_dev_priv {
-	struct ib_srq	       *srq;
-	struct ipoib_cm_rx_buf *srq_ring;
-	struct ib_cm_id	       *id;
-	struct list_head	passive_ids;   /* state: LIVE */
-	struct list_head	rx_error_list; /* state: ERROR */
-	struct list_head	rx_flush_list; /* state: FLUSH, drain not started */
-	struct list_head	rx_drain_list; /* state: FLUSH, drain started */
-	struct list_head	rx_reap_list;  /* state: FLUSH, drain done */
-	struct work_struct      start_task;
-	struct work_struct      reap_task;
-	struct work_struct      skb_task;
-	struct work_struct      rx_reap_task;
-	struct delayed_work     stale_task;
-	struct sk_buff_head     skb_queue;
-	struct list_head	start_list;
-	struct list_head	reap_list;
-	struct ib_wc		ibwc[IPOIB_NUM_WC];
-	struct ib_sge		rx_sge[IPOIB_CM_RX_SG];
-	struct ib_recv_wr       rx_wr;
-	int			nonsrq_conn_qp;
-	int			max_cm_mtu;
-	int			num_frags;
-};
+काष्ठा ipoib_cm_dev_priv अणु
+	काष्ठा ib_srq	       *srq;
+	काष्ठा ipoib_cm_rx_buf *srq_ring;
+	काष्ठा ib_cm_id	       *id;
+	काष्ठा list_head	passive_ids;   /* state: LIVE */
+	काष्ठा list_head	rx_error_list; /* state: ERROR */
+	काष्ठा list_head	rx_flush_list; /* state: FLUSH, drain not started */
+	काष्ठा list_head	rx_drain_list; /* state: FLUSH, drain started */
+	काष्ठा list_head	rx_reap_list;  /* state: FLUSH, drain करोne */
+	काष्ठा work_काष्ठा      start_task;
+	काष्ठा work_काष्ठा      reap_task;
+	काष्ठा work_काष्ठा      skb_task;
+	काष्ठा work_काष्ठा      rx_reap_task;
+	काष्ठा delayed_work     stale_task;
+	काष्ठा sk_buff_head     skb_queue;
+	काष्ठा list_head	start_list;
+	काष्ठा list_head	reap_list;
+	काष्ठा ib_wc		ibwc[IPOIB_NUM_WC];
+	काष्ठा ib_sge		rx_sge[IPOIB_CM_RX_SG];
+	काष्ठा ib_recv_wr       rx_wr;
+	पूर्णांक			nonsrq_conn_qp;
+	पूर्णांक			max_cm_mtu;
+	पूर्णांक			num_frags;
+पूर्ण;
 
-struct ipoib_ethtool_st {
+काष्ठा ipoib_ethtool_st अणु
 	u16     coalesce_usecs;
 	u16     max_coalesced_frames;
-};
+पूर्ण;
 
-struct ipoib_neigh_table;
+काष्ठा ipoib_neigh_table;
 
-struct ipoib_neigh_hash {
-	struct ipoib_neigh_table       *ntbl;
-	struct ipoib_neigh __rcu      **buckets;
-	struct rcu_head			rcu;
+काष्ठा ipoib_neigh_hash अणु
+	काष्ठा ipoib_neigh_table       *ntbl;
+	काष्ठा ipoib_neigh __rcu      **buckets;
+	काष्ठा rcu_head			rcu;
 	u32				mask;
 	u32				size;
-};
+पूर्ण;
 
-struct ipoib_neigh_table {
-	struct ipoib_neigh_hash __rcu  *htbl;
+काष्ठा ipoib_neigh_table अणु
+	काष्ठा ipoib_neigh_hash __rcu  *htbl;
 	atomic_t			entries;
-	struct completion		flushed;
-	struct completion		deleted;
-};
+	काष्ठा completion		flushed;
+	काष्ठा completion		deleted;
+पूर्ण;
 
-struct ipoib_qp_state_validate {
-	struct work_struct work;
-	struct ipoib_dev_priv   *priv;
-};
+काष्ठा ipoib_qp_state_validate अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा ipoib_dev_priv   *priv;
+पूर्ण;
 
 /*
- * Device private locking: network stack tx_lock protects members used
- * in TX fast path, lock protects everything else.  lock nests inside
- * of tx_lock (ie tx_lock must be acquired first if needed).
+ * Device निजी locking: network stack tx_lock protects members used
+ * in TX fast path, lock protects everything अन्यथा.  lock nests inside
+ * of tx_lock (ie tx_lock must be acquired first अगर needed).
  */
-struct ipoib_dev_priv {
+काष्ठा ipoib_dev_priv अणु
 	spinlock_t lock;
 
-	struct net_device *dev;
-	void (*next_priv_destructor)(struct net_device *dev);
+	काष्ठा net_device *dev;
+	व्योम (*next_priv_deकाष्ठाor)(काष्ठा net_device *dev);
 
-	struct napi_struct send_napi;
-	struct napi_struct recv_napi;
+	काष्ठा napi_काष्ठा send_napi;
+	काष्ठा napi_काष्ठा recv_napi;
 
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * This protects access to the child_intfs list.
-	 * To READ from child_intfs the RTNL or vlan_rwsem read side must be
-	 * held.  To WRITE RTNL and the vlan_rwsem write side must be held (in
+	 * This protects access to the child_पूर्णांकfs list.
+	 * To READ from child_पूर्णांकfs the RTNL or vlan_rwsem पढ़ो side must be
+	 * held.  To WRITE RTNL and the vlan_rwsem ग_लिखो side must be held (in
 	 * that order) This lock exists because we have a few contexts where
-	 * we need the child_intfs, but do not want to grab the RTNL.
+	 * we need the child_पूर्णांकfs, but करो not want to grab the RTNL.
 	 */
-	struct rw_semaphore vlan_rwsem;
-	struct mutex mcast_mutex;
+	काष्ठा rw_semaphore vlan_rwsem;
+	काष्ठा mutex mcast_mutex;
 
-	struct rb_root  path_tree;
-	struct list_head path_list;
+	काष्ठा rb_root  path_tree;
+	काष्ठा list_head path_list;
 
-	struct ipoib_neigh_table ntbl;
+	काष्ठा ipoib_neigh_table ntbl;
 
-	struct ipoib_mcast *broadcast;
-	struct list_head multicast_list;
-	struct rb_root multicast_tree;
+	काष्ठा ipoib_mcast *broadcast;
+	काष्ठा list_head multicast_list;
+	काष्ठा rb_root multicast_tree;
 
-	struct workqueue_struct *wq;
-	struct delayed_work mcast_task;
-	struct work_struct carrier_on_task;
-	struct work_struct flush_light;
-	struct work_struct flush_normal;
-	struct work_struct flush_heavy;
-	struct work_struct restart_task;
-	struct delayed_work ah_reap_task;
-	struct delayed_work neigh_reap_task;
-	struct ib_device *ca;
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा delayed_work mcast_task;
+	काष्ठा work_काष्ठा carrier_on_task;
+	काष्ठा work_काष्ठा flush_light;
+	काष्ठा work_काष्ठा flush_normal;
+	काष्ठा work_काष्ठा flush_heavy;
+	काष्ठा work_काष्ठा restart_task;
+	काष्ठा delayed_work ah_reap_task;
+	काष्ठा delayed_work neigh_reap_task;
+	काष्ठा ib_device *ca;
 	u8		  port;
 	u16		  pkey;
 	u16		  pkey_index;
-	struct ib_pd	 *pd;
-	struct ib_cq	 *recv_cq;
-	struct ib_cq	 *send_cq;
-	struct ib_qp	 *qp;
+	काष्ठा ib_pd	 *pd;
+	काष्ठा ib_cq	 *recv_cq;
+	काष्ठा ib_cq	 *send_cq;
+	काष्ठा ib_qp	 *qp;
 	u32		  qkey;
 
-	union ib_gid local_gid;
+	जोड़ ib_gid local_gid;
 	u32	     local_lid;
 
-	unsigned int admin_mtu;
-	unsigned int mcast_mtu;
-	unsigned int max_ib_mtu;
+	अचिन्हित पूर्णांक admin_mtu;
+	अचिन्हित पूर्णांक mcast_mtu;
+	अचिन्हित पूर्णांक max_ib_mtu;
 
-	struct ipoib_rx_buf *rx_ring;
+	काष्ठा ipoib_rx_buf *rx_ring;
 
-	struct ipoib_tx_buf *tx_ring;
-	/* cyclic ring variables for managing tx_ring, for UD only */
-	unsigned int	     tx_head;
-	unsigned int	     tx_tail;
-	/* cyclic ring variables for counting overall outstanding send WRs */
-	unsigned int	     global_tx_head;
-	unsigned int	     global_tx_tail;
-	struct ib_sge	     tx_sge[MAX_SKB_FRAGS + 1];
-	struct ib_ud_wr      tx_wr;
-	struct ib_wc	     send_wc[MAX_SEND_CQE];
+	काष्ठा ipoib_tx_buf *tx_ring;
+	/* cyclic ring variables क्रम managing tx_ring, क्रम UD only */
+	अचिन्हित पूर्णांक	     tx_head;
+	अचिन्हित पूर्णांक	     tx_tail;
+	/* cyclic ring variables क्रम counting overall outstanding send WRs */
+	अचिन्हित पूर्णांक	     global_tx_head;
+	अचिन्हित पूर्णांक	     global_tx_tail;
+	काष्ठा ib_sge	     tx_sge[MAX_SKB_FRAGS + 1];
+	काष्ठा ib_ud_wr      tx_wr;
+	काष्ठा ib_wc	     send_wc[MAX_SEND_CQE];
 
-	struct ib_recv_wr    rx_wr;
-	struct ib_sge	     rx_sge[IPOIB_UD_RX_SG];
+	काष्ठा ib_recv_wr    rx_wr;
+	काष्ठा ib_sge	     rx_sge[IPOIB_UD_RX_SG];
 
-	struct ib_wc ibwc[IPOIB_NUM_WC];
+	काष्ठा ib_wc ibwc[IPOIB_NUM_WC];
 
-	struct list_head dead_ahs;
+	काष्ठा list_head dead_ahs;
 
-	struct ib_event_handler event_handler;
+	काष्ठा ib_event_handler event_handler;
 
-	struct net_device *parent;
-	struct list_head child_intfs;
-	struct list_head list;
-	int    child_type;
+	काष्ठा net_device *parent;
+	काष्ठा list_head child_पूर्णांकfs;
+	काष्ठा list_head list;
+	पूर्णांक    child_type;
 
-#ifdef CONFIG_INFINIBAND_IPOIB_CM
-	struct ipoib_cm_dev_priv cm;
-#endif
+#अगर_घोषित CONFIG_INFINIBAND_IPOIB_CM
+	काष्ठा ipoib_cm_dev_priv cm;
+#पूर्ण_अगर
 
-#ifdef CONFIG_INFINIBAND_IPOIB_DEBUG
-	struct list_head fs_list;
-	struct dentry *mcg_dentry;
-	struct dentry *path_dentry;
-#endif
+#अगर_घोषित CONFIG_INFINIBAND_IPOIB_DEBUG
+	काष्ठा list_head fs_list;
+	काष्ठा dentry *mcg_dentry;
+	काष्ठा dentry *path_dentry;
+#पूर्ण_अगर
 	u64	hca_caps;
-	struct ipoib_ethtool_st ethtool;
-	unsigned int max_send_sge;
-	const struct net_device_ops	*rn_ops;
-};
+	काष्ठा ipoib_ethtool_st ethtool;
+	अचिन्हित पूर्णांक max_send_sge;
+	स्थिर काष्ठा net_device_ops	*rn_ops;
+पूर्ण;
 
-struct ipoib_ah {
-	struct net_device *dev;
-	struct ib_ah	  *ah;
-	struct list_head   list;
-	struct kref	   ref;
-	unsigned int	   last_send;
-	int  		   valid;
-};
+काष्ठा ipoib_ah अणु
+	काष्ठा net_device *dev;
+	काष्ठा ib_ah	  *ah;
+	काष्ठा list_head   list;
+	काष्ठा kref	   ref;
+	अचिन्हित पूर्णांक	   last_send;
+	पूर्णांक  		   valid;
+पूर्ण;
 
-struct ipoib_path {
-	struct net_device    *dev;
-	struct sa_path_rec pathrec;
-	struct ipoib_ah      *ah;
-	struct sk_buff_head   queue;
+काष्ठा ipoib_path अणु
+	काष्ठा net_device    *dev;
+	काष्ठा sa_path_rec pathrec;
+	काष्ठा ipoib_ah      *ah;
+	काष्ठा sk_buff_head   queue;
 
-	struct list_head      neigh_list;
+	काष्ठा list_head      neigh_list;
 
-	int		      query_id;
-	struct ib_sa_query   *query;
-	struct completion     done;
+	पूर्णांक		      query_id;
+	काष्ठा ib_sa_query   *query;
+	काष्ठा completion     करोne;
 
-	struct rb_node	      rb_node;
-	struct list_head      list;
-};
+	काष्ठा rb_node	      rb_node;
+	काष्ठा list_head      list;
+पूर्ण;
 
-struct ipoib_neigh {
-	struct ipoib_ah    *ah;
-#ifdef CONFIG_INFINIBAND_IPOIB_CM
-	struct ipoib_cm_tx *cm;
-#endif
+काष्ठा ipoib_neigh अणु
+	काष्ठा ipoib_ah    *ah;
+#अगर_घोषित CONFIG_INFINIBAND_IPOIB_CM
+	काष्ठा ipoib_cm_tx *cm;
+#पूर्ण_अगर
 	u8     daddr[INFINIBAND_ALEN];
-	struct sk_buff_head queue;
+	काष्ठा sk_buff_head queue;
 
-	struct net_device *dev;
+	काष्ठा net_device *dev;
 
-	struct list_head    list;
-	struct ipoib_neigh __rcu *hnext;
-	struct rcu_head     rcu;
+	काष्ठा list_head    list;
+	काष्ठा ipoib_neigh __rcu *hnext;
+	काष्ठा rcu_head     rcu;
 	atomic_t	    refcnt;
-	unsigned long       alive;
-};
+	अचिन्हित दीर्घ       alive;
+पूर्ण;
 
-#define IPOIB_UD_MTU(ib_mtu)		(ib_mtu - IPOIB_ENCAP_LEN)
-#define IPOIB_UD_BUF_SIZE(ib_mtu)	(ib_mtu + IB_GRH_BYTES)
+#घोषणा IPOIB_UD_MTU(ib_mtu)		(ib_mtu - IPOIB_ENCAP_LEN)
+#घोषणा IPOIB_UD_BUF_SIZE(ib_mtu)	(ib_mtu + IB_GRH_BYTES)
 
-void ipoib_neigh_dtor(struct ipoib_neigh *neigh);
-static inline void ipoib_neigh_put(struct ipoib_neigh *neigh)
-{
-	if (atomic_dec_and_test(&neigh->refcnt))
+व्योम ipoib_neigh_dtor(काष्ठा ipoib_neigh *neigh);
+अटल अंतरभूत व्योम ipoib_neigh_put(काष्ठा ipoib_neigh *neigh)
+अणु
+	अगर (atomic_dec_and_test(&neigh->refcnt))
 		ipoib_neigh_dtor(neigh);
-}
-struct ipoib_neigh *ipoib_neigh_get(struct net_device *dev, u8 *daddr);
-struct ipoib_neigh *ipoib_neigh_alloc(u8 *daddr,
-				      struct net_device *dev);
-void ipoib_neigh_free(struct ipoib_neigh *neigh);
-void ipoib_del_neighs_by_gid(struct net_device *dev, u8 *gid);
+पूर्ण
+काष्ठा ipoib_neigh *ipoib_neigh_get(काष्ठा net_device *dev, u8 *daddr);
+काष्ठा ipoib_neigh *ipoib_neigh_alloc(u8 *daddr,
+				      काष्ठा net_device *dev);
+व्योम ipoib_neigh_मुक्त(काष्ठा ipoib_neigh *neigh);
+व्योम ipoib_del_neighs_by_gid(काष्ठा net_device *dev, u8 *gid);
 
-extern struct workqueue_struct *ipoib_workqueue;
+बाह्य काष्ठा workqueue_काष्ठा *ipoib_workqueue;
 
 /* functions */
 
-int ipoib_rx_poll(struct napi_struct *napi, int budget);
-int ipoib_tx_poll(struct napi_struct *napi, int budget);
-void ipoib_ib_rx_completion(struct ib_cq *cq, void *ctx_ptr);
-void ipoib_ib_tx_completion(struct ib_cq *cq, void *ctx_ptr);
+पूर्णांक ipoib_rx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
+पूर्णांक ipoib_tx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
+व्योम ipoib_ib_rx_completion(काष्ठा ib_cq *cq, व्योम *ctx_ptr);
+व्योम ipoib_ib_tx_completion(काष्ठा ib_cq *cq, व्योम *ctx_ptr);
 
-struct ipoib_ah *ipoib_create_ah(struct net_device *dev,
-				 struct ib_pd *pd, struct rdma_ah_attr *attr);
-void ipoib_free_ah(struct kref *kref);
-static inline void ipoib_put_ah(struct ipoib_ah *ah)
-{
-	kref_put(&ah->ref, ipoib_free_ah);
-}
-int ipoib_open(struct net_device *dev);
-void ipoib_intf_free(struct net_device *dev);
-int ipoib_add_pkey_attr(struct net_device *dev);
-int ipoib_add_umcast_attr(struct net_device *dev);
+काष्ठा ipoib_ah *ipoib_create_ah(काष्ठा net_device *dev,
+				 काष्ठा ib_pd *pd, काष्ठा rdma_ah_attr *attr);
+व्योम ipoib_मुक्त_ah(काष्ठा kref *kref);
+अटल अंतरभूत व्योम ipoib_put_ah(काष्ठा ipoib_ah *ah)
+अणु
+	kref_put(&ah->ref, ipoib_मुक्त_ah);
+पूर्ण
+पूर्णांक ipoib_खोलो(काष्ठा net_device *dev);
+व्योम ipoib_पूर्णांकf_मुक्त(काष्ठा net_device *dev);
+पूर्णांक ipoib_add_pkey_attr(काष्ठा net_device *dev);
+पूर्णांक ipoib_add_umcast_attr(काष्ठा net_device *dev);
 
-int ipoib_send(struct net_device *dev, struct sk_buff *skb,
-	       struct ib_ah *address, u32 dqpn);
-void ipoib_reap_ah(struct work_struct *work);
+पूर्णांक ipoib_send(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+	       काष्ठा ib_ah *address, u32 dqpn);
+व्योम ipoib_reap_ah(काष्ठा work_काष्ठा *work);
 
-struct ipoib_path *__path_find(struct net_device *dev, void *gid);
-void ipoib_mark_paths_invalid(struct net_device *dev);
-void ipoib_flush_paths(struct net_device *dev);
-struct net_device *ipoib_intf_alloc(struct ib_device *hca, u32 port,
-				    const char *format);
-int ipoib_intf_init(struct ib_device *hca, u32 port, const char *format,
-		    struct net_device *dev);
-void ipoib_ib_tx_timer_func(struct timer_list *t);
-void ipoib_ib_dev_flush_light(struct work_struct *work);
-void ipoib_ib_dev_flush_normal(struct work_struct *work);
-void ipoib_ib_dev_flush_heavy(struct work_struct *work);
-void ipoib_pkey_event(struct work_struct *work);
-void ipoib_ib_dev_cleanup(struct net_device *dev);
+काष्ठा ipoib_path *__path_find(काष्ठा net_device *dev, व्योम *gid);
+व्योम ipoib_mark_paths_invalid(काष्ठा net_device *dev);
+व्योम ipoib_flush_paths(काष्ठा net_device *dev);
+काष्ठा net_device *ipoib_पूर्णांकf_alloc(काष्ठा ib_device *hca, u32 port,
+				    स्थिर अक्षर *क्रमmat);
+पूर्णांक ipoib_पूर्णांकf_init(काष्ठा ib_device *hca, u32 port, स्थिर अक्षर *क्रमmat,
+		    काष्ठा net_device *dev);
+व्योम ipoib_ib_tx_समयr_func(काष्ठा समयr_list *t);
+व्योम ipoib_ib_dev_flush_light(काष्ठा work_काष्ठा *work);
+व्योम ipoib_ib_dev_flush_normal(काष्ठा work_काष्ठा *work);
+व्योम ipoib_ib_dev_flush_heavy(काष्ठा work_काष्ठा *work);
+व्योम ipoib_pkey_event(काष्ठा work_काष्ठा *work);
+व्योम ipoib_ib_dev_cleanup(काष्ठा net_device *dev);
 
-int ipoib_ib_dev_open_default(struct net_device *dev);
-int ipoib_ib_dev_open(struct net_device *dev);
-void ipoib_ib_dev_stop(struct net_device *dev);
-void ipoib_ib_dev_up(struct net_device *dev);
-void ipoib_ib_dev_down(struct net_device *dev);
-int ipoib_ib_dev_stop_default(struct net_device *dev);
-void ipoib_pkey_dev_check_presence(struct net_device *dev);
+पूर्णांक ipoib_ib_dev_खोलो_शेष(काष्ठा net_device *dev);
+पूर्णांक ipoib_ib_dev_खोलो(काष्ठा net_device *dev);
+व्योम ipoib_ib_dev_stop(काष्ठा net_device *dev);
+व्योम ipoib_ib_dev_up(काष्ठा net_device *dev);
+व्योम ipoib_ib_dev_करोwn(काष्ठा net_device *dev);
+पूर्णांक ipoib_ib_dev_stop_शेष(काष्ठा net_device *dev);
+व्योम ipoib_pkey_dev_check_presence(काष्ठा net_device *dev);
 
-void ipoib_mcast_join_task(struct work_struct *work);
-void ipoib_mcast_carrier_on_task(struct work_struct *work);
-void ipoib_mcast_send(struct net_device *dev, u8 *daddr, struct sk_buff *skb);
+व्योम ipoib_mcast_join_task(काष्ठा work_काष्ठा *work);
+व्योम ipoib_mcast_carrier_on_task(काष्ठा work_काष्ठा *work);
+व्योम ipoib_mcast_send(काष्ठा net_device *dev, u8 *daddr, काष्ठा sk_buff *skb);
 
-void ipoib_mcast_restart_task(struct work_struct *work);
-void ipoib_mcast_start_thread(struct net_device *dev);
-void ipoib_mcast_stop_thread(struct net_device *dev);
+व्योम ipoib_mcast_restart_task(काष्ठा work_काष्ठा *work);
+व्योम ipoib_mcast_start_thपढ़ो(काष्ठा net_device *dev);
+व्योम ipoib_mcast_stop_thपढ़ो(काष्ठा net_device *dev);
 
-void ipoib_mcast_dev_down(struct net_device *dev);
-void ipoib_mcast_dev_flush(struct net_device *dev);
+व्योम ipoib_mcast_dev_करोwn(काष्ठा net_device *dev);
+व्योम ipoib_mcast_dev_flush(काष्ठा net_device *dev);
 
-int ipoib_dma_map_tx(struct ib_device *ca, struct ipoib_tx_buf *tx_req);
-void ipoib_dma_unmap_tx(struct ipoib_dev_priv *priv,
-			struct ipoib_tx_buf *tx_req);
+पूर्णांक ipoib_dma_map_tx(काष्ठा ib_device *ca, काष्ठा ipoib_tx_buf *tx_req);
+व्योम ipoib_dma_unmap_tx(काष्ठा ipoib_dev_priv *priv,
+			काष्ठा ipoib_tx_buf *tx_req);
 
-struct rtnl_link_ops *ipoib_get_link_ops(void);
+काष्ठा rtnl_link_ops *ipoib_get_link_ops(व्योम);
 
-static inline void ipoib_build_sge(struct ipoib_dev_priv *priv,
-				   struct ipoib_tx_buf *tx_req)
-{
-	int i, off;
-	struct sk_buff *skb = tx_req->skb;
+अटल अंतरभूत व्योम ipoib_build_sge(काष्ठा ipoib_dev_priv *priv,
+				   काष्ठा ipoib_tx_buf *tx_req)
+अणु
+	पूर्णांक i, off;
+	काष्ठा sk_buff *skb = tx_req->skb;
 	skb_frag_t *frags = skb_shinfo(skb)->frags;
-	int nr_frags = skb_shinfo(skb)->nr_frags;
+	पूर्णांक nr_frags = skb_shinfo(skb)->nr_frags;
 	u64 *mapping = tx_req->mapping;
 
-	if (skb_headlen(skb)) {
+	अगर (skb_headlen(skb)) अणु
 		priv->tx_sge[0].addr         = mapping[0];
 		priv->tx_sge[0].length       = skb_headlen(skb);
 		off = 1;
-	} else
+	पूर्ण अन्यथा
 		off = 0;
 
-	for (i = 0; i < nr_frags; ++i) {
+	क्रम (i = 0; i < nr_frags; ++i) अणु
 		priv->tx_sge[i + off].addr = mapping[i + off];
 		priv->tx_sge[i + off].length = skb_frag_size(&frags[i]);
-	}
+	पूर्ण
 	priv->tx_wr.wr.num_sge	     = nr_frags + off;
-}
+पूर्ण
 
-#ifdef CONFIG_INFINIBAND_IPOIB_DEBUG
-struct ipoib_mcast_iter *ipoib_mcast_iter_init(struct net_device *dev);
-int ipoib_mcast_iter_next(struct ipoib_mcast_iter *iter);
-void ipoib_mcast_iter_read(struct ipoib_mcast_iter *iter,
-				  union ib_gid *gid,
-				  unsigned long *created,
-				  unsigned int *queuelen,
-				  unsigned int *complete,
-				  unsigned int *send_only);
+#अगर_घोषित CONFIG_INFINIBAND_IPOIB_DEBUG
+काष्ठा ipoib_mcast_iter *ipoib_mcast_iter_init(काष्ठा net_device *dev);
+पूर्णांक ipoib_mcast_iter_next(काष्ठा ipoib_mcast_iter *iter);
+व्योम ipoib_mcast_iter_पढ़ो(काष्ठा ipoib_mcast_iter *iter,
+				  जोड़ ib_gid *gid,
+				  अचिन्हित दीर्घ *created,
+				  अचिन्हित पूर्णांक *queuelen,
+				  अचिन्हित पूर्णांक *complete,
+				  अचिन्हित पूर्णांक *send_only);
 
-struct ipoib_path_iter *ipoib_path_iter_init(struct net_device *dev);
-int ipoib_path_iter_next(struct ipoib_path_iter *iter);
-void ipoib_path_iter_read(struct ipoib_path_iter *iter,
-			  struct ipoib_path *path);
-#endif
+काष्ठा ipoib_path_iter *ipoib_path_iter_init(काष्ठा net_device *dev);
+पूर्णांक ipoib_path_iter_next(काष्ठा ipoib_path_iter *iter);
+व्योम ipoib_path_iter_पढ़ो(काष्ठा ipoib_path_iter *iter,
+			  काष्ठा ipoib_path *path);
+#पूर्ण_अगर
 
-int ipoib_mcast_attach(struct net_device *dev, struct ib_device *hca,
-		       union ib_gid *mgid, u16 mlid, int set_qkey, u32 qkey);
-int ipoib_mcast_detach(struct net_device *dev, struct ib_device *hca,
-		       union ib_gid *mgid, u16 mlid);
-void ipoib_mcast_remove_list(struct list_head *remove_list);
-void ipoib_check_and_add_mcast_sendonly(struct ipoib_dev_priv *priv, u8 *mgid,
-				struct list_head *remove_list);
+पूर्णांक ipoib_mcast_attach(काष्ठा net_device *dev, काष्ठा ib_device *hca,
+		       जोड़ ib_gid *mgid, u16 mlid, पूर्णांक set_qkey, u32 qkey);
+पूर्णांक ipoib_mcast_detach(काष्ठा net_device *dev, काष्ठा ib_device *hca,
+		       जोड़ ib_gid *mgid, u16 mlid);
+व्योम ipoib_mcast_हटाओ_list(काष्ठा list_head *हटाओ_list);
+व्योम ipoib_check_and_add_mcast_senकरोnly(काष्ठा ipoib_dev_priv *priv, u8 *mgid,
+				काष्ठा list_head *हटाओ_list);
 
-int ipoib_init_qp(struct net_device *dev);
-int ipoib_transport_dev_init(struct net_device *dev, struct ib_device *ca);
-void ipoib_transport_dev_cleanup(struct net_device *dev);
+पूर्णांक ipoib_init_qp(काष्ठा net_device *dev);
+पूर्णांक ipoib_transport_dev_init(काष्ठा net_device *dev, काष्ठा ib_device *ca);
+व्योम ipoib_transport_dev_cleanup(काष्ठा net_device *dev);
 
-void ipoib_event(struct ib_event_handler *handler,
-		 struct ib_event *record);
+व्योम ipoib_event(काष्ठा ib_event_handler *handler,
+		 काष्ठा ib_event *record);
 
-int ipoib_vlan_add(struct net_device *pdev, unsigned short pkey);
-int ipoib_vlan_delete(struct net_device *pdev, unsigned short pkey);
+पूर्णांक ipoib_vlan_add(काष्ठा net_device *pdev, अचिन्हित लघु pkey);
+पूर्णांक ipoib_vlan_delete(काष्ठा net_device *pdev, अचिन्हित लघु pkey);
 
-int __ipoib_vlan_add(struct ipoib_dev_priv *ppriv, struct ipoib_dev_priv *priv,
-		     u16 pkey, int child_type);
+पूर्णांक __ipoib_vlan_add(काष्ठा ipoib_dev_priv *ppriv, काष्ठा ipoib_dev_priv *priv,
+		     u16 pkey, पूर्णांक child_type);
 
-int  __init ipoib_netlink_init(void);
-void __exit ipoib_netlink_fini(void);
+पूर्णांक  __init ipoib_netlink_init(व्योम);
+व्योम __निकास ipoib_netlink_fini(व्योम);
 
-void ipoib_set_umcast(struct net_device *ndev, int umcast_val);
-int  ipoib_set_mode(struct net_device *dev, const char *buf);
+व्योम ipoib_set_umcast(काष्ठा net_device *ndev, पूर्णांक umcast_val);
+पूर्णांक  ipoib_set_mode(काष्ठा net_device *dev, स्थिर अक्षर *buf);
 
-void ipoib_setup_common(struct net_device *dev);
+व्योम ipoib_setup_common(काष्ठा net_device *dev);
 
-void ipoib_pkey_open(struct ipoib_dev_priv *priv);
-void ipoib_drain_cq(struct net_device *dev);
+व्योम ipoib_pkey_खोलो(काष्ठा ipoib_dev_priv *priv);
+व्योम ipoib_drain_cq(काष्ठा net_device *dev);
 
-void ipoib_set_ethtool_ops(struct net_device *dev);
+व्योम ipoib_set_ethtool_ops(काष्ठा net_device *dev);
 
-#define IPOIB_FLAGS_RC		0x80
-#define IPOIB_FLAGS_UC		0x40
+#घोषणा IPOIB_FLAGS_RC		0x80
+#घोषणा IPOIB_FLAGS_UC		0x40
 
-/* We don't support UC connections at the moment */
-#define IPOIB_CM_SUPPORTED(ha)   (ha[0] & (IPOIB_FLAGS_RC))
+/* We करोn't support UC connections at the moment */
+#घोषणा IPOIB_CM_SUPPORTED(ha)   (ha[0] & (IPOIB_FLAGS_RC))
 
-#ifdef CONFIG_INFINIBAND_IPOIB_CM
+#अगर_घोषित CONFIG_INFINIBAND_IPOIB_CM
 
-extern int ipoib_max_conn_qp;
+बाह्य पूर्णांक ipoib_max_conn_qp;
 
-static inline int ipoib_cm_admin_enabled(struct net_device *dev)
-{
-	struct ipoib_dev_priv *priv = ipoib_priv(dev);
-	return IPOIB_CM_SUPPORTED(dev->dev_addr) &&
+अटल अंतरभूत पूर्णांक ipoib_cm_admin_enabled(काष्ठा net_device *dev)
+अणु
+	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
+	वापस IPOIB_CM_SUPPORTED(dev->dev_addr) &&
 		test_bit(IPOIB_FLAG_ADMIN_CM, &priv->flags);
-}
+पूर्ण
 
-static inline int ipoib_cm_enabled(struct net_device *dev, u8 *hwaddr)
-{
-	struct ipoib_dev_priv *priv = ipoib_priv(dev);
-	return IPOIB_CM_SUPPORTED(hwaddr) &&
+अटल अंतरभूत पूर्णांक ipoib_cm_enabled(काष्ठा net_device *dev, u8 *hwaddr)
+अणु
+	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
+	वापस IPOIB_CM_SUPPORTED(hwaddr) &&
 		test_bit(IPOIB_FLAG_ADMIN_CM, &priv->flags);
-}
+पूर्ण
 
-static inline int ipoib_cm_up(struct ipoib_neigh *neigh)
+अटल अंतरभूत पूर्णांक ipoib_cm_up(काष्ठा ipoib_neigh *neigh)
 
-{
-	return test_bit(IPOIB_FLAG_OPER_UP, &neigh->cm->flags);
-}
+अणु
+	वापस test_bit(IPOIB_FLAG_OPER_UP, &neigh->cm->flags);
+पूर्ण
 
-static inline struct ipoib_cm_tx *ipoib_cm_get(struct ipoib_neigh *neigh)
-{
-	return neigh->cm;
-}
+अटल अंतरभूत काष्ठा ipoib_cm_tx *ipoib_cm_get(काष्ठा ipoib_neigh *neigh)
+अणु
+	वापस neigh->cm;
+पूर्ण
 
-static inline void ipoib_cm_set(struct ipoib_neigh *neigh, struct ipoib_cm_tx *tx)
-{
+अटल अंतरभूत व्योम ipoib_cm_set(काष्ठा ipoib_neigh *neigh, काष्ठा ipoib_cm_tx *tx)
+अणु
 	neigh->cm = tx;
-}
+पूर्ण
 
-static inline int ipoib_cm_has_srq(struct net_device *dev)
-{
-	struct ipoib_dev_priv *priv = ipoib_priv(dev);
-	return !!priv->cm.srq;
-}
+अटल अंतरभूत पूर्णांक ipoib_cm_has_srq(काष्ठा net_device *dev)
+अणु
+	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
+	वापस !!priv->cm.srq;
+पूर्ण
 
-static inline unsigned int ipoib_cm_max_mtu(struct net_device *dev)
-{
-	struct ipoib_dev_priv *priv = ipoib_priv(dev);
-	return priv->cm.max_cm_mtu;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ipoib_cm_max_mtu(काष्ठा net_device *dev)
+अणु
+	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
+	वापस priv->cm.max_cm_mtu;
+पूर्ण
 
-void ipoib_cm_send(struct net_device *dev, struct sk_buff *skb, struct ipoib_cm_tx *tx);
-int ipoib_cm_dev_open(struct net_device *dev);
-void ipoib_cm_dev_stop(struct net_device *dev);
-int ipoib_cm_dev_init(struct net_device *dev);
-int ipoib_cm_add_mode_attr(struct net_device *dev);
-void ipoib_cm_dev_cleanup(struct net_device *dev);
-struct ipoib_cm_tx *ipoib_cm_create_tx(struct net_device *dev, struct ipoib_path *path,
-				    struct ipoib_neigh *neigh);
-void ipoib_cm_destroy_tx(struct ipoib_cm_tx *tx);
-void ipoib_cm_skb_too_long(struct net_device *dev, struct sk_buff *skb,
-			   unsigned int mtu);
-void ipoib_cm_handle_rx_wc(struct net_device *dev, struct ib_wc *wc);
-void ipoib_cm_handle_tx_wc(struct net_device *dev, struct ib_wc *wc);
-#else
+व्योम ipoib_cm_send(काष्ठा net_device *dev, काष्ठा sk_buff *skb, काष्ठा ipoib_cm_tx *tx);
+पूर्णांक ipoib_cm_dev_खोलो(काष्ठा net_device *dev);
+व्योम ipoib_cm_dev_stop(काष्ठा net_device *dev);
+पूर्णांक ipoib_cm_dev_init(काष्ठा net_device *dev);
+पूर्णांक ipoib_cm_add_mode_attr(काष्ठा net_device *dev);
+व्योम ipoib_cm_dev_cleanup(काष्ठा net_device *dev);
+काष्ठा ipoib_cm_tx *ipoib_cm_create_tx(काष्ठा net_device *dev, काष्ठा ipoib_path *path,
+				    काष्ठा ipoib_neigh *neigh);
+व्योम ipoib_cm_destroy_tx(काष्ठा ipoib_cm_tx *tx);
+व्योम ipoib_cm_skb_too_दीर्घ(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			   अचिन्हित पूर्णांक mtu);
+व्योम ipoib_cm_handle_rx_wc(काष्ठा net_device *dev, काष्ठा ib_wc *wc);
+व्योम ipoib_cm_handle_tx_wc(काष्ठा net_device *dev, काष्ठा ib_wc *wc);
+#अन्यथा
 
-#define ipoib_max_conn_qp 0
+#घोषणा ipoib_max_conn_qp 0
 
-static inline int ipoib_cm_admin_enabled(struct net_device *dev)
-{
-	return 0;
-}
-static inline int ipoib_cm_enabled(struct net_device *dev, u8 *hwaddr)
+अटल अंतरभूत पूर्णांक ipoib_cm_admin_enabled(काष्ठा net_device *dev)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक ipoib_cm_enabled(काष्ठा net_device *dev, u8 *hwaddr)
 
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int ipoib_cm_up(struct ipoib_neigh *neigh)
+अटल अंतरभूत पूर्णांक ipoib_cm_up(काष्ठा ipoib_neigh *neigh)
 
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct ipoib_cm_tx *ipoib_cm_get(struct ipoib_neigh *neigh)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा ipoib_cm_tx *ipoib_cm_get(काष्ठा ipoib_neigh *neigh)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void ipoib_cm_set(struct ipoib_neigh *neigh, struct ipoib_cm_tx *tx)
-{
-}
+अटल अंतरभूत व्योम ipoib_cm_set(काष्ठा ipoib_neigh *neigh, काष्ठा ipoib_cm_tx *tx)
+अणु
+पूर्ण
 
-static inline int ipoib_cm_has_srq(struct net_device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ipoib_cm_has_srq(काष्ठा net_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline unsigned int ipoib_cm_max_mtu(struct net_device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ipoib_cm_max_mtu(काष्ठा net_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-void ipoib_cm_send(struct net_device *dev, struct sk_buff *skb, struct ipoib_cm_tx *tx)
-{
-	return;
-}
+अटल अंतरभूत
+व्योम ipoib_cm_send(काष्ठा net_device *dev, काष्ठा sk_buff *skb, काष्ठा ipoib_cm_tx *tx)
+अणु
+	वापस;
+पूर्ण
 
-static inline
-int ipoib_cm_dev_open(struct net_device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक ipoib_cm_dev_खोलो(काष्ठा net_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-void ipoib_cm_dev_stop(struct net_device *dev)
-{
-	return;
-}
+अटल अंतरभूत
+व्योम ipoib_cm_dev_stop(काष्ठा net_device *dev)
+अणु
+	वापस;
+पूर्ण
 
-static inline
-int ipoib_cm_dev_init(struct net_device *dev)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत
+पूर्णांक ipoib_cm_dev_init(काष्ठा net_device *dev)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline
-void ipoib_cm_dev_cleanup(struct net_device *dev)
-{
-	return;
-}
+अटल अंतरभूत
+व्योम ipoib_cm_dev_cleanup(काष्ठा net_device *dev)
+अणु
+	वापस;
+पूर्ण
 
-static inline
-struct ipoib_cm_tx *ipoib_cm_create_tx(struct net_device *dev, struct ipoib_path *path,
-				    struct ipoib_neigh *neigh)
-{
-	return NULL;
-}
+अटल अंतरभूत
+काष्ठा ipoib_cm_tx *ipoib_cm_create_tx(काष्ठा net_device *dev, काष्ठा ipoib_path *path,
+				    काष्ठा ipoib_neigh *neigh)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline
-void ipoib_cm_destroy_tx(struct ipoib_cm_tx *tx)
-{
-	return;
-}
+अटल अंतरभूत
+व्योम ipoib_cm_destroy_tx(काष्ठा ipoib_cm_tx *tx)
+अणु
+	वापस;
+पूर्ण
 
-static inline
-int ipoib_cm_add_mode_attr(struct net_device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक ipoib_cm_add_mode_attr(काष्ठा net_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void ipoib_cm_skb_too_long(struct net_device *dev, struct sk_buff *skb,
-					 unsigned int mtu)
-{
-	dev_kfree_skb_any(skb);
-}
+अटल अंतरभूत व्योम ipoib_cm_skb_too_दीर्घ(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+					 अचिन्हित पूर्णांक mtu)
+अणु
+	dev_kमुक्त_skb_any(skb);
+पूर्ण
 
-static inline void ipoib_cm_handle_rx_wc(struct net_device *dev, struct ib_wc *wc)
-{
-}
+अटल अंतरभूत व्योम ipoib_cm_handle_rx_wc(काष्ठा net_device *dev, काष्ठा ib_wc *wc)
+अणु
+पूर्ण
 
-static inline void ipoib_cm_handle_tx_wc(struct net_device *dev, struct ib_wc *wc)
-{
-}
-#endif
+अटल अंतरभूत व्योम ipoib_cm_handle_tx_wc(काष्ठा net_device *dev, काष्ठा ib_wc *wc)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_INFINIBAND_IPOIB_DEBUG
-void ipoib_create_debug_files(struct net_device *dev);
-void ipoib_delete_debug_files(struct net_device *dev);
-void ipoib_register_debugfs(void);
-void ipoib_unregister_debugfs(void);
-#else
-static inline void ipoib_create_debug_files(struct net_device *dev) { }
-static inline void ipoib_delete_debug_files(struct net_device *dev) { }
-static inline void ipoib_register_debugfs(void) { }
-static inline void ipoib_unregister_debugfs(void) { }
-#endif
+#अगर_घोषित CONFIG_INFINIBAND_IPOIB_DEBUG
+व्योम ipoib_create_debug_files(काष्ठा net_device *dev);
+व्योम ipoib_delete_debug_files(काष्ठा net_device *dev);
+व्योम ipoib_रेजिस्टर_debugfs(व्योम);
+व्योम ipoib_unरेजिस्टर_debugfs(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम ipoib_create_debug_files(काष्ठा net_device *dev) अणु पूर्ण
+अटल अंतरभूत व्योम ipoib_delete_debug_files(काष्ठा net_device *dev) अणु पूर्ण
+अटल अंतरभूत व्योम ipoib_रेजिस्टर_debugfs(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम ipoib_unरेजिस्टर_debugfs(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#define ipoib_printk(level, priv, format, arg...)	\
-	printk(level "%s: " format, ((struct ipoib_dev_priv *) priv)->dev->name , ## arg)
-#define ipoib_warn(priv, format, arg...)		\
-do {							\
-	static DEFINE_RATELIMIT_STATE(_rs,		\
+#घोषणा ipoib_prपूर्णांकk(level, priv, क्रमmat, arg...)	\
+	prपूर्णांकk(level "%s: " क्रमmat, ((काष्ठा ipoib_dev_priv *) priv)->dev->name , ## arg)
+#घोषणा ipoib_warn(priv, क्रमmat, arg...)		\
+करो अणु							\
+	अटल DEFINE_RATELIMIT_STATE(_rs,		\
 		10 * HZ /*10 seconds */,		\
 		100);		\
-	if (__ratelimit(&_rs))				\
-		ipoib_printk(KERN_WARNING, priv, format , ## arg);\
-} while (0)
+	अगर (__ratelimit(&_rs))				\
+		ipoib_prपूर्णांकk(KERN_WARNING, priv, क्रमmat , ## arg);\
+पूर्ण जबतक (0)
 
-extern int ipoib_sendq_size;
-extern int ipoib_recvq_size;
+बाह्य पूर्णांक ipoib_sendq_size;
+बाह्य पूर्णांक ipoib_recvq_size;
 
-extern struct ib_sa_client ipoib_sa_client;
+बाह्य काष्ठा ib_sa_client ipoib_sa_client;
 
-#ifdef CONFIG_INFINIBAND_IPOIB_DEBUG
-extern int ipoib_debug_level;
+#अगर_घोषित CONFIG_INFINIBAND_IPOIB_DEBUG
+बाह्य पूर्णांक ipoib_debug_level;
 
-#define ipoib_dbg(priv, format, arg...)			\
-	do {						\
-		if (ipoib_debug_level > 0)			\
-			ipoib_printk(KERN_DEBUG, priv, format , ## arg); \
-	} while (0)
-#define ipoib_dbg_mcast(priv, format, arg...)		\
-	do {						\
-		if (mcast_debug_level > 0)		\
-			ipoib_printk(KERN_DEBUG, priv, format , ## arg); \
-	} while (0)
-#else /* CONFIG_INFINIBAND_IPOIB_DEBUG */
-#define ipoib_dbg(priv, format, arg...)			\
-	do { (void) (priv); } while (0)
-#define ipoib_dbg_mcast(priv, format, arg...)		\
-	do { (void) (priv); } while (0)
-#endif /* CONFIG_INFINIBAND_IPOIB_DEBUG */
+#घोषणा ipoib_dbg(priv, क्रमmat, arg...)			\
+	करो अणु						\
+		अगर (ipoib_debug_level > 0)			\
+			ipoib_prपूर्णांकk(KERN_DEBUG, priv, क्रमmat , ## arg); \
+	पूर्ण जबतक (0)
+#घोषणा ipoib_dbg_mcast(priv, क्रमmat, arg...)		\
+	करो अणु						\
+		अगर (mcast_debug_level > 0)		\
+			ipoib_prपूर्णांकk(KERN_DEBUG, priv, क्रमmat , ## arg); \
+	पूर्ण जबतक (0)
+#अन्यथा /* CONFIG_INFINIBAND_IPOIB_DEBUG */
+#घोषणा ipoib_dbg(priv, क्रमmat, arg...)			\
+	करो अणु (व्योम) (priv); पूर्ण जबतक (0)
+#घोषणा ipoib_dbg_mcast(priv, क्रमmat, arg...)		\
+	करो अणु (व्योम) (priv); पूर्ण जबतक (0)
+#पूर्ण_अगर /* CONFIG_INFINIBAND_IPOIB_DEBUG */
 
-#ifdef CONFIG_INFINIBAND_IPOIB_DEBUG_DATA
-#define ipoib_dbg_data(priv, format, arg...)		\
-	do {						\
-		if (data_debug_level > 0)		\
-			ipoib_printk(KERN_DEBUG, priv, format , ## arg); \
-	} while (0)
-#else /* CONFIG_INFINIBAND_IPOIB_DEBUG_DATA */
-#define ipoib_dbg_data(priv, format, arg...)		\
-	do { (void) (priv); } while (0)
-#endif /* CONFIG_INFINIBAND_IPOIB_DEBUG_DATA */
+#अगर_घोषित CONFIG_INFINIBAND_IPOIB_DEBUG_DATA
+#घोषणा ipoib_dbg_data(priv, क्रमmat, arg...)		\
+	करो अणु						\
+		अगर (data_debug_level > 0)		\
+			ipoib_prपूर्णांकk(KERN_DEBUG, priv, क्रमmat , ## arg); \
+	पूर्ण जबतक (0)
+#अन्यथा /* CONFIG_INFINIBAND_IPOIB_DEBUG_DATA */
+#घोषणा ipoib_dbg_data(priv, क्रमmat, arg...)		\
+	करो अणु (व्योम) (priv); पूर्ण जबतक (0)
+#पूर्ण_अगर /* CONFIG_INFINIBAND_IPOIB_DEBUG_DATA */
 
-#define IPOIB_QPN(ha) (be32_to_cpup((__be32 *) ha) & 0xffffff)
+#घोषणा IPOIB_QPN(ha) (be32_to_cpup((__be32 *) ha) & 0xffffff)
 
-#endif /* _IPOIB_H */
+#पूर्ण_अगर /* _IPOIB_H */

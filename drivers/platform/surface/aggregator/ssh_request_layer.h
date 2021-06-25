@@ -1,104 +1,105 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * SSH request transport layer.
  *
  * Copyright (C) 2019-2020 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#ifndef _SURFACE_AGGREGATOR_SSH_REQUEST_LAYER_H
-#define _SURFACE_AGGREGATOR_SSH_REQUEST_LAYER_H
+#अगर_अघोषित _SURFACE_AGGREGATOR_SSH_REQUEST_LAYER_H
+#घोषणा _SURFACE_AGGREGATOR_SSH_REQUEST_LAYER_H
 
-#include <linux/atomic.h>
-#include <linux/ktime.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
 
-#include <linux/surface_aggregator/serial_hub.h>
-#include <linux/surface_aggregator/controller.h>
+#समावेश <linux/surface_aggregator/serial_hub.h>
+#समावेश <linux/surface_aggregator/controller.h>
 
-#include "ssh_packet_layer.h"
+#समावेश "ssh_packet_layer.h"
 
 /**
- * enum ssh_rtl_state_flags - State-flags for &struct ssh_rtl.
+ * क्रमागत ssh_rtl_state_flags - State-flags क्रम &काष्ठा ssh_rtl.
  *
  * @SSH_RTL_SF_SHUTDOWN_BIT:
- *	Indicates that the request transport layer has been shut down or is
- *	being shut down and should not accept any new requests.
+ *	Indicates that the request transport layer has been shut करोwn or is
+ *	being shut करोwn and should not accept any new requests.
  */
-enum ssh_rtl_state_flags {
+क्रमागत ssh_rtl_state_flags अणु
 	SSH_RTL_SF_SHUTDOWN_BIT,
-};
+पूर्ण;
 
 /**
- * struct ssh_rtl_ops - Callback operations for request transport layer.
+ * काष्ठा ssh_rtl_ops - Callback operations क्रम request transport layer.
  * @handle_event: Function called when a SSH event has been received. The
- *                specified function takes the request layer, received command
- *                struct, and corresponding payload as arguments. If the event
- *                has no payload, the payload span is empty (not %NULL).
+ *                specअगरied function takes the request layer, received command
+ *                काष्ठा, and corresponding payload as arguments. If the event
+ *                has no payload, the payload span is empty (not %शून्य).
  */
-struct ssh_rtl_ops {
-	void (*handle_event)(struct ssh_rtl *rtl, const struct ssh_command *cmd,
-			     const struct ssam_span *data);
-};
+काष्ठा ssh_rtl_ops अणु
+	व्योम (*handle_event)(काष्ठा ssh_rtl *rtl, स्थिर काष्ठा ssh_command *cmd,
+			     स्थिर काष्ठा ssam_span *data);
+पूर्ण;
 
 /**
- * struct ssh_rtl - SSH request transport layer.
+ * काष्ठा ssh_rtl - SSH request transport layer.
  * @ptl:           Underlying packet transport layer.
  * @state:         State(-flags) of the transport layer.
  * @queue:         Request submission queue.
- * @queue.lock:    Lock for modifying the request submission queue.
+ * @queue.lock:    Lock क्रम modअगरying the request submission queue.
  * @queue.head:    List-head of the request submission queue.
  * @pending:       Set/list of pending requests.
- * @pending.lock:  Lock for modifying the request set.
+ * @pending.lock:  Lock क्रम modअगरying the request set.
  * @pending.head:  List-head of the pending set/list.
  * @pending.count: Number of currently pending requests.
- * @tx:            Transmitter subsystem.
+ * @tx:            Transmitter subप्रणाली.
  * @tx.work:       Transmitter work item.
- * @rtx_timeout:   Retransmission timeout subsystem.
- * @rtx_timeout.lock:    Lock for modifying the retransmission timeout reaper.
- * @rtx_timeout.timeout: Timeout interval for retransmission.
- * @rtx_timeout.expires: Time specifying when the reaper work is next scheduled.
- * @rtx_timeout.reaper:  Work performing timeout checks and subsequent actions.
+ * @rtx_समयout:   Retransmission समयout subप्रणाली.
+ * @rtx_समयout.lock:    Lock क्रम modअगरying the retransmission समयout reaper.
+ * @rtx_समयout.समयout: Timeout पूर्णांकerval क्रम retransmission.
+ * @rtx_समयout.expires: Time specअगरying when the reaper work is next scheduled.
+ * @rtx_समयout.reaper:  Work perक्रमming समयout checks and subsequent actions.
  * @ops:           Request layer operations.
  */
-struct ssh_rtl {
-	struct ssh_ptl ptl;
-	unsigned long state;
+काष्ठा ssh_rtl अणु
+	काष्ठा ssh_ptl ptl;
+	अचिन्हित दीर्घ state;
 
-	struct {
+	काष्ठा अणु
 		spinlock_t lock;
-		struct list_head head;
-	} queue;
+		काष्ठा list_head head;
+	पूर्ण queue;
 
-	struct {
+	काष्ठा अणु
 		spinlock_t lock;
-		struct list_head head;
+		काष्ठा list_head head;
 		atomic_t count;
-	} pending;
+	पूर्ण pending;
 
-	struct {
-		struct work_struct work;
-	} tx;
+	काष्ठा अणु
+		काष्ठा work_काष्ठा work;
+	पूर्ण tx;
 
-	struct {
+	काष्ठा अणु
 		spinlock_t lock;
-		ktime_t timeout;
-		ktime_t expires;
-		struct delayed_work reaper;
-	} rtx_timeout;
+		kसमय_प्रकार समयout;
+		kसमय_प्रकार expires;
+		काष्ठा delayed_work reaper;
+	पूर्ण rtx_समयout;
 
-	struct ssh_rtl_ops ops;
-};
+	काष्ठा ssh_rtl_ops ops;
+पूर्ण;
 
-#define rtl_dbg(r, fmt, ...)  ptl_dbg(&(r)->ptl, fmt, ##__VA_ARGS__)
-#define rtl_info(p, fmt, ...) ptl_info(&(p)->ptl, fmt, ##__VA_ARGS__)
-#define rtl_warn(r, fmt, ...) ptl_warn(&(r)->ptl, fmt, ##__VA_ARGS__)
-#define rtl_err(r, fmt, ...)  ptl_err(&(r)->ptl, fmt, ##__VA_ARGS__)
-#define rtl_dbg_cond(r, fmt, ...) __ssam_prcond(rtl_dbg, r, fmt, ##__VA_ARGS__)
+#घोषणा rtl_dbg(r, fmt, ...)  ptl_dbg(&(r)->ptl, fmt, ##__VA_ARGS__)
+#घोषणा rtl_info(p, fmt, ...) ptl_info(&(p)->ptl, fmt, ##__VA_ARGS__)
+#घोषणा rtl_warn(r, fmt, ...) ptl_warn(&(r)->ptl, fmt, ##__VA_ARGS__)
+#घोषणा rtl_err(r, fmt, ...)  ptl_err(&(r)->ptl, fmt, ##__VA_ARGS__)
+#घोषणा rtl_dbg_cond(r, fmt, ...) __ssam_prcond(rtl_dbg, r, fmt, ##__VA_ARGS__)
 
-#define to_ssh_rtl(ptr, member) \
-	container_of(ptr, struct ssh_rtl, member)
+#घोषणा to_ssh_rtl(ptr, member) \
+	container_of(ptr, काष्ठा ssh_rtl, member)
 
 /**
  * ssh_rtl_get_device() - Get device associated with request transport layer.
@@ -107,37 +108,37 @@ struct ssh_rtl {
  * Return: Returns the device on which the given request transport layer
  * builds upon.
  */
-static inline struct device *ssh_rtl_get_device(struct ssh_rtl *rtl)
-{
-	return ssh_ptl_get_device(&rtl->ptl);
-}
+अटल अंतरभूत काष्ठा device *ssh_rtl_get_device(काष्ठा ssh_rtl *rtl)
+अणु
+	वापस ssh_ptl_get_device(&rtl->ptl);
+पूर्ण
 
 /**
  * ssh_request_rtl() - Get request transport layer associated with request.
- * @rqst: The request to get the request transport layer reference for.
+ * @rqst: The request to get the request transport layer reference क्रम.
  *
- * Return: Returns the &struct ssh_rtl associated with the given SSH request.
+ * Return: Returns the &काष्ठा ssh_rtl associated with the given SSH request.
  */
-static inline struct ssh_rtl *ssh_request_rtl(struct ssh_request *rqst)
-{
-	struct ssh_ptl *ptl;
+अटल अंतरभूत काष्ठा ssh_rtl *ssh_request_rtl(काष्ठा ssh_request *rqst)
+अणु
+	काष्ठा ssh_ptl *ptl;
 
 	ptl = READ_ONCE(rqst->packet.ptl);
-	return likely(ptl) ? to_ssh_rtl(ptl, ptl) : NULL;
-}
+	वापस likely(ptl) ? to_ssh_rtl(ptl, ptl) : शून्य;
+पूर्ण
 
-int ssh_rtl_submit(struct ssh_rtl *rtl, struct ssh_request *rqst);
-bool ssh_rtl_cancel(struct ssh_request *rqst, bool pending);
+पूर्णांक ssh_rtl_submit(काष्ठा ssh_rtl *rtl, काष्ठा ssh_request *rqst);
+bool ssh_rtl_cancel(काष्ठा ssh_request *rqst, bool pending);
 
-int ssh_rtl_init(struct ssh_rtl *rtl, struct serdev_device *serdev,
-		 const struct ssh_rtl_ops *ops);
+पूर्णांक ssh_rtl_init(काष्ठा ssh_rtl *rtl, काष्ठा serdev_device *serdev,
+		 स्थिर काष्ठा ssh_rtl_ops *ops);
 
-int ssh_rtl_start(struct ssh_rtl *rtl);
-int ssh_rtl_flush(struct ssh_rtl *rtl, unsigned long timeout);
-void ssh_rtl_shutdown(struct ssh_rtl *rtl);
-void ssh_rtl_destroy(struct ssh_rtl *rtl);
+पूर्णांक ssh_rtl_start(काष्ठा ssh_rtl *rtl);
+पूर्णांक ssh_rtl_flush(काष्ठा ssh_rtl *rtl, अचिन्हित दीर्घ समयout);
+व्योम ssh_rtl_shutकरोwn(काष्ठा ssh_rtl *rtl);
+व्योम ssh_rtl_destroy(काष्ठा ssh_rtl *rtl);
 
-int ssh_request_init(struct ssh_request *rqst, enum ssam_request_flags flags,
-		     const struct ssh_request_ops *ops);
+पूर्णांक ssh_request_init(काष्ठा ssh_request *rqst, क्रमागत ssam_request_flags flags,
+		     स्थिर काष्ठा ssh_request_ops *ops);
 
-#endif /* _SURFACE_AGGREGATOR_SSH_REQUEST_LAYER_H */
+#पूर्ण_अगर /* _SURFACE_AGGREGATOR_SSH_REQUEST_LAYER_H */

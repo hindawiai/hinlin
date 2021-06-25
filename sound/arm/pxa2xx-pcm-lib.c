@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/dma/pxa-dma.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma/pxa-dma.h>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/pxa2xx-lib.h>
-#include <sound/dmaengine_pcm.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/pxa2xx-lib.h>
+#समावेश <sound/dmaengine_pcm.h>
 
-static const struct snd_pcm_hardware pxa2xx_pcm_hardware = {
+अटल स्थिर काष्ठा snd_pcm_hardware pxa2xx_pcm_hardware = अणु
 	.info			= SNDRV_PCM_INFO_MMAP |
 				  SNDRV_PCM_INFO_MMAP_VALID |
 				  SNDRV_PCM_INFO_INTERLEAVED |
 				  SNDRV_PCM_INFO_PAUSE |
 				  SNDRV_PCM_INFO_RESUME,
-	.formats		= SNDRV_PCM_FMTBIT_S16_LE |
+	.क्रमmats		= SNDRV_PCM_FMTBIT_S16_LE |
 				  SNDRV_PCM_FMTBIT_S24_LE |
 				  SNDRV_PCM_FMTBIT_S32_LE,
 	.period_bytes_min	= 32,
@@ -26,248 +27,248 @@ static const struct snd_pcm_hardware pxa2xx_pcm_hardware = {
 	.periods_min		= 1,
 	.periods_max		= 256,
 	.buffer_bytes_max	= 128 * 1024,
-	.fifo_size		= 32,
-};
+	.fअगरo_size		= 32,
+पूर्ण;
 
-int pxa2xx_pcm_hw_params(struct snd_pcm_substream *substream,
-			 struct snd_pcm_hw_params *params)
-{
-	struct dma_chan *chan = snd_dmaengine_pcm_get_chan(substream);
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_dmaengine_dai_dma_data *dma_params;
-	struct dma_slave_config config;
-	int ret;
+पूर्णांक pxa2xx_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+			 काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा dma_chan *chan = snd_dmaengine_pcm_get_chan(substream);
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
+	काष्ठा snd_dmaengine_dai_dma_data *dma_params;
+	काष्ठा dma_slave_config config;
+	पूर्णांक ret;
 
 	dma_params = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0), substream);
-	if (!dma_params)
-		return 0;
+	अगर (!dma_params)
+		वापस 0;
 
 	ret = snd_hwparams_to_dma_slave_config(substream, params, &config);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	snd_dmaengine_pcm_set_config_from_dai_data(substream,
 			snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0), substream),
 			&config);
 
 	ret = dmaengine_slave_config(chan, &config);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
+	snd_pcm_set_runसमय_buffer(substream, &substream->dma_buffer);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_pcm_hw_params);
 
-int pxa2xx_pcm_hw_free(struct snd_pcm_substream *substream)
-{
-	snd_pcm_set_runtime_buffer(substream, NULL);
-	return 0;
-}
-EXPORT_SYMBOL(pxa2xx_pcm_hw_free);
+पूर्णांक pxa2xx_pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	snd_pcm_set_runसमय_buffer(substream, शून्य);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_pcm_hw_मुक्त);
 
-int pxa2xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	return snd_dmaengine_pcm_trigger(substream, cmd);
-}
+पूर्णांक pxa2xx_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	वापस snd_dmaengine_pcm_trigger(substream, cmd);
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_pcm_trigger);
 
 snd_pcm_uframes_t
-pxa2xx_pcm_pointer(struct snd_pcm_substream *substream)
-{
-	return snd_dmaengine_pcm_pointer(substream);
-}
-EXPORT_SYMBOL(pxa2xx_pcm_pointer);
+pxa2xx_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_dmaengine_pcm_poपूर्णांकer(substream);
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_pcm_poपूर्णांकer);
 
-int pxa2xx_pcm_prepare(struct snd_pcm_substream *substream)
-{
-	return 0;
-}
+पूर्णांक pxa2xx_pcm_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_pcm_prepare);
 
-int pxa2xx_pcm_open(struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_dmaengine_dai_dma_data *dma_params;
-	int ret;
+पूर्णांक pxa2xx_pcm_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_dmaengine_dai_dma_data *dma_params;
+	पूर्णांक ret;
 
-	runtime->hw = pxa2xx_pcm_hardware;
+	runसमय->hw = pxa2xx_pcm_hardware;
 
 	dma_params = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0), substream);
-	if (!dma_params)
-		return 0;
+	अगर (!dma_params)
+		वापस 0;
 
 	/*
 	 * For mysterious reasons (and despite what the manual says)
-	 * playback samples are lost if the DMA count is not a multiple
-	 * of the DMA burst size.  Let's add a rule to enforce that.
+	 * playback samples are lost अगर the DMA count is not a multiple
+	 * of the DMA burst size.  Let's add a rule to enक्रमce that.
 	 */
-	ret = snd_pcm_hw_constraint_step(runtime, 0,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0,
 		SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 32);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = snd_pcm_hw_constraint_step(runtime, 0,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0,
 		SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 32);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = snd_pcm_hw_constraint_integer(runtime,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
 					    SNDRV_PCM_HW_PARAM_PERIODS);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return snd_dmaengine_pcm_open(
+	वापस snd_dmaengine_pcm_खोलो(
 		substream, dma_request_slave_channel(asoc_rtd_to_cpu(rtd, 0)->dev,
 						     dma_params->chan_name));
-}
-EXPORT_SYMBOL(pxa2xx_pcm_open);
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_pcm_खोलो);
 
-int pxa2xx_pcm_close(struct snd_pcm_substream *substream)
-{
-	return snd_dmaengine_pcm_close_release_chan(substream);
-}
-EXPORT_SYMBOL(pxa2xx_pcm_close);
+पूर्णांक pxa2xx_pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_dmaengine_pcm_बंद_release_chan(substream);
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_pcm_बंद);
 
-int pxa2xx_pcm_mmap(struct snd_pcm_substream *substream,
-	struct vm_area_struct *vma)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	return dma_mmap_wc(substream->pcm->card->dev, vma, runtime->dma_area,
-			   runtime->dma_addr, runtime->dma_bytes);
-}
+पूर्णांक pxa2xx_pcm_mmap(काष्ठा snd_pcm_substream *substream,
+	काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	वापस dma_mmap_wc(substream->pcm->card->dev, vma, runसमय->dma_area,
+			   runसमय->dma_addr, runसमय->dma_bytes);
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_pcm_mmap);
 
-int pxa2xx_pcm_preallocate_dma_buffer(struct snd_pcm *pcm, int stream)
-{
-	struct snd_pcm_substream *substream = pcm->streams[stream].substream;
-	struct snd_dma_buffer *buf = &substream->dma_buffer;
-	size_t size = pxa2xx_pcm_hardware.buffer_bytes_max;
+पूर्णांक pxa2xx_pcm_pपुनः_स्मृतिate_dma_buffer(काष्ठा snd_pcm *pcm, पूर्णांक stream)
+अणु
+	काष्ठा snd_pcm_substream *substream = pcm->streams[stream].substream;
+	काष्ठा snd_dma_buffer *buf = &substream->dma_buffer;
+	माप_प्रकार size = pxa2xx_pcm_hardware.buffer_bytes_max;
 	buf->dev.type = SNDRV_DMA_TYPE_DEV;
 	buf->dev.dev = pcm->card->dev;
-	buf->private_data = NULL;
+	buf->निजी_data = शून्य;
 	buf->area = dma_alloc_wc(pcm->card->dev, size, &buf->addr, GFP_KERNEL);
-	if (!buf->area)
-		return -ENOMEM;
+	अगर (!buf->area)
+		वापस -ENOMEM;
 	buf->bytes = size;
-	return 0;
-}
-EXPORT_SYMBOL(pxa2xx_pcm_preallocate_dma_buffer);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_pcm_pपुनः_स्मृतिate_dma_buffer);
 
-void pxa2xx_pcm_free_dma_buffers(struct snd_pcm *pcm)
-{
-	struct snd_pcm_substream *substream;
-	struct snd_dma_buffer *buf;
-	int stream;
+व्योम pxa2xx_pcm_मुक्त_dma_buffers(काष्ठा snd_pcm *pcm)
+अणु
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_dma_buffer *buf;
+	पूर्णांक stream;
 
-	for (stream = 0; stream < 2; stream++) {
+	क्रम (stream = 0; stream < 2; stream++) अणु
 		substream = pcm->streams[stream].substream;
-		if (!substream)
-			continue;
+		अगर (!substream)
+			जारी;
 		buf = &substream->dma_buffer;
-		if (!buf->area)
-			continue;
-		dma_free_wc(pcm->card->dev, buf->bytes, buf->area, buf->addr);
-		buf->area = NULL;
-	}
-}
-EXPORT_SYMBOL(pxa2xx_pcm_free_dma_buffers);
+		अगर (!buf->area)
+			जारी;
+		dma_मुक्त_wc(pcm->card->dev, buf->bytes, buf->area, buf->addr);
+		buf->area = शून्य;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_pcm_मुक्त_dma_buffers);
 
-void pxa2xx_soc_pcm_free(struct snd_soc_component *component,
-			 struct snd_pcm *pcm)
-{
-	pxa2xx_pcm_free_dma_buffers(pcm);
-}
-EXPORT_SYMBOL(pxa2xx_soc_pcm_free);
+व्योम pxa2xx_soc_pcm_मुक्त(काष्ठा snd_soc_component *component,
+			 काष्ठा snd_pcm *pcm)
+अणु
+	pxa2xx_pcm_मुक्त_dma_buffers(pcm);
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_soc_pcm_मुक्त);
 
-int pxa2xx_soc_pcm_new(struct snd_soc_component *component,
-		       struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_card *card = rtd->card->snd_card;
-	struct snd_pcm *pcm = rtd->pcm;
-	int ret;
+पूर्णांक pxa2xx_soc_pcm_new(काष्ठा snd_soc_component *component,
+		       काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा snd_card *card = rtd->card->snd_card;
+	काष्ठा snd_pcm *pcm = rtd->pcm;
+	पूर्णांक ret;
 
 	ret = dma_coerce_mask_and_coherent(card->dev, DMA_BIT_MASK(32));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) {
-		ret = pxa2xx_pcm_preallocate_dma_buffer(pcm,
+	अगर (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) अणु
+		ret = pxa2xx_pcm_pपुनः_स्मृतिate_dma_buffer(pcm,
 			SNDRV_PCM_STREAM_PLAYBACK);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	if (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) {
-		ret = pxa2xx_pcm_preallocate_dma_buffer(pcm,
+	अगर (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) अणु
+		ret = pxa2xx_pcm_pपुनः_स्मृतिate_dma_buffer(pcm,
 			SNDRV_PCM_STREAM_CAPTURE);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_soc_pcm_new);
 
-int pxa2xx_soc_pcm_open(struct snd_soc_component *component,
-			struct snd_pcm_substream *substream)
-{
-	return pxa2xx_pcm_open(substream);
-}
-EXPORT_SYMBOL(pxa2xx_soc_pcm_open);
+पूर्णांक pxa2xx_soc_pcm_खोलो(काष्ठा snd_soc_component *component,
+			काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस pxa2xx_pcm_खोलो(substream);
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_soc_pcm_खोलो);
 
-int pxa2xx_soc_pcm_close(struct snd_soc_component *component,
-			 struct snd_pcm_substream *substream)
-{
-	return pxa2xx_pcm_close(substream);
-}
-EXPORT_SYMBOL(pxa2xx_soc_pcm_close);
+पूर्णांक pxa2xx_soc_pcm_बंद(काष्ठा snd_soc_component *component,
+			 काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस pxa2xx_pcm_बंद(substream);
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_soc_pcm_बंद);
 
-int pxa2xx_soc_pcm_hw_params(struct snd_soc_component *component,
-			     struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *params)
-{
-	return pxa2xx_pcm_hw_params(substream, params);
-}
+पूर्णांक pxa2xx_soc_pcm_hw_params(काष्ठा snd_soc_component *component,
+			     काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_hw_params *params)
+अणु
+	वापस pxa2xx_pcm_hw_params(substream, params);
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_soc_pcm_hw_params);
 
-int pxa2xx_soc_pcm_hw_free(struct snd_soc_component *component,
-			   struct snd_pcm_substream *substream)
-{
-	return pxa2xx_pcm_hw_free(substream);
-}
-EXPORT_SYMBOL(pxa2xx_soc_pcm_hw_free);
+पूर्णांक pxa2xx_soc_pcm_hw_मुक्त(काष्ठा snd_soc_component *component,
+			   काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस pxa2xx_pcm_hw_मुक्त(substream);
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_soc_pcm_hw_मुक्त);
 
-int pxa2xx_soc_pcm_prepare(struct snd_soc_component *component,
-			   struct snd_pcm_substream *substream)
-{
-	return pxa2xx_pcm_prepare(substream);
-}
+पूर्णांक pxa2xx_soc_pcm_prepare(काष्ठा snd_soc_component *component,
+			   काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस pxa2xx_pcm_prepare(substream);
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_soc_pcm_prepare);
 
-int pxa2xx_soc_pcm_trigger(struct snd_soc_component *component,
-			   struct snd_pcm_substream *substream, int cmd)
-{
-	return pxa2xx_pcm_trigger(substream, cmd);
-}
+पूर्णांक pxa2xx_soc_pcm_trigger(काष्ठा snd_soc_component *component,
+			   काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	वापस pxa2xx_pcm_trigger(substream, cmd);
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_soc_pcm_trigger);
 
 snd_pcm_uframes_t
-pxa2xx_soc_pcm_pointer(struct snd_soc_component *component,
-		       struct snd_pcm_substream *substream)
-{
-	return pxa2xx_pcm_pointer(substream);
-}
-EXPORT_SYMBOL(pxa2xx_soc_pcm_pointer);
+pxa2xx_soc_pcm_poपूर्णांकer(काष्ठा snd_soc_component *component,
+		       काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस pxa2xx_pcm_poपूर्णांकer(substream);
+पूर्ण
+EXPORT_SYMBOL(pxa2xx_soc_pcm_poपूर्णांकer);
 
-int pxa2xx_soc_pcm_mmap(struct snd_soc_component *component,
-			struct snd_pcm_substream *substream,
-			struct vm_area_struct *vma)
-{
-	return pxa2xx_pcm_mmap(substream, vma);
-}
+पूर्णांक pxa2xx_soc_pcm_mmap(काष्ठा snd_soc_component *component,
+			काष्ठा snd_pcm_substream *substream,
+			काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस pxa2xx_pcm_mmap(substream, vma);
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_soc_pcm_mmap);
 
 MODULE_AUTHOR("Nicolas Pitre");

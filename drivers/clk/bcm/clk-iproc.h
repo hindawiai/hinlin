@@ -1,224 +1,225 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2014 Broadcom Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#ifndef _CLK_IPROC_H
-#define _CLK_IPROC_H
+#अगर_अघोषित _CLK_IPROC_H
+#घोषणा _CLK_IPROC_H
 
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/of.h>
-#include <linux/clk-provider.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/clk-provider.h>
 
-#define IPROC_CLK_NAME_LEN 25
-#define IPROC_CLK_INVALID_OFFSET 0xffffffff
-#define bit_mask(width) ((1 << (width)) - 1)
+#घोषणा IPROC_CLK_NAME_LEN 25
+#घोषणा IPROC_CLK_INVALID_OFFSET 0xffffffff
+#घोषणा bit_mask(width) ((1 << (width)) - 1)
 
-/* clocks that should not be disabled at runtime */
-#define IPROC_CLK_AON BIT(0)
+/* घड़ीs that should not be disabled at runसमय */
+#घोषणा IPROC_CLK_AON BIT(0)
 
 /* PLL that requires gating through ASIU */
-#define IPROC_CLK_PLL_ASIU BIT(1)
+#घोषणा IPROC_CLK_PLL_ASIU BIT(1)
 
 /* PLL that has fractional part of the NDIV */
-#define IPROC_CLK_PLL_HAS_NDIV_FRAC BIT(2)
+#घोषणा IPROC_CLK_PLL_HAS_NDIV_FRAC BIT(2)
 
 /*
- * Some of the iProc PLL/clocks may have an ASIC bug that requires read back
- * of the same register following the write to flush the write transaction into
- * the intended register
+ * Some of the iProc PLL/घड़ीs may have an ASIC bug that requires पढ़ो back
+ * of the same रेजिस्टर following the ग_लिखो to flush the ग_लिखो transaction पूर्णांकo
+ * the पूर्णांकended रेजिस्टर
  */
-#define IPROC_CLK_NEEDS_READ_BACK BIT(3)
+#घोषणा IPROC_CLK_NEEDS_READ_BACK BIT(3)
 
 /*
- * Some PLLs require the PLL SW override bit to be set before changes can be
+ * Some PLLs require the PLL SW override bit to be set beक्रमe changes can be
  * applied to the PLL
  */
-#define IPROC_CLK_PLL_NEEDS_SW_CFG BIT(4)
+#घोषणा IPROC_CLK_PLL_NEEDS_SW_CFG BIT(4)
 
 /*
- * Some PLLs use a different way to control clock power, via the PWRDWN bit in
- * the PLL control register
+ * Some PLLs use a dअगरferent way to control घड़ी घातer, via the PWRDWN bit in
+ * the PLL control रेजिस्टर
  */
-#define IPROC_CLK_EMBED_PWRCTRL BIT(5)
+#घोषणा IPROC_CLK_EMBED_PWRCTRL BIT(5)
 
 /*
- * Some PLLs have separate registers for Status and Control.  Identify this to
- * let the driver know if additional registers need to be used
+ * Some PLLs have separate रेजिस्टरs क्रम Status and Control.  Identअगरy this to
+ * let the driver know अगर additional रेजिस्टरs need to be used
  */
-#define IPROC_CLK_PLL_SPLIT_STAT_CTRL BIT(6)
+#घोषणा IPROC_CLK_PLL_SPLIT_STAT_CTRL BIT(6)
 
 /*
- * Some PLLs have an additional divide by 2 in master clock calculation;
- * MCLK = VCO_freq / (Mdiv * 2). Identify this to let the driver know
- * of modified calculations
+ * Some PLLs have an additional भागide by 2 in master घड़ी calculation;
+ * MCLK = VCO_freq / (Mभाग * 2). Identअगरy this to let the driver know
+ * of modअगरied calculations
  */
-#define IPROC_CLK_MCLK_DIV_BY_2 BIT(7)
+#घोषणा IPROC_CLK_MCLK_DIV_BY_2 BIT(7)
 
 /*
- * Some PLLs provide a look up table for the leaf clock frequencies and
- * auto calculates VCO frequency parameters based on the provided leaf
- * clock frequencies. They have a user mode that allows the divider
+ * Some PLLs provide a look up table क्रम the leaf घड़ी frequencies and
+ * स्वतः calculates VCO frequency parameters based on the provided leaf
+ * घड़ी frequencies. They have a user mode that allows the भागider
  * controls to be determined by the user
  */
-#define IPROC_CLK_PLL_USER_MODE_ON BIT(8)
+#घोषणा IPROC_CLK_PLL_USER_MODE_ON BIT(8)
 
 /*
  * Some PLLs have an active low reset
  */
-#define IPROC_CLK_PLL_RESET_ACTIVE_LOW BIT(9)
+#घोषणा IPROC_CLK_PLL_RESET_ACTIVE_LOW BIT(9)
 
 /*
- * Calculate the PLL parameters are runtime, instead of using table
+ * Calculate the PLL parameters are runसमय, instead of using table
  */
-#define IPROC_CLK_PLL_CALC_PARAM BIT(10)
+#घोषणा IPROC_CLK_PLL_CALC_PARAM BIT(10)
 
 /*
- * Parameters for VCO frequency configuration
+ * Parameters क्रम VCO frequency configuration
  *
  * VCO frequency =
- * ((ndiv_int + ndiv_frac / 2^20) * (ref freqeuncy  / pdiv)
+ * ((nभाग_पूर्णांक + nभाग_frac / 2^20) * (ref freqeuncy  / pभाग)
  */
-struct iproc_pll_vco_param {
-	unsigned long rate;
-	unsigned int ndiv_int;
-	unsigned int ndiv_frac;
-	unsigned int pdiv;
-};
+काष्ठा iproc_pll_vco_param अणु
+	अचिन्हित दीर्घ rate;
+	अचिन्हित पूर्णांक nभाग_पूर्णांक;
+	अचिन्हित पूर्णांक nभाग_frac;
+	अचिन्हित पूर्णांक pभाग;
+पूर्ण;
 
-struct iproc_clk_reg_op {
-	unsigned int offset;
-	unsigned int shift;
-	unsigned int width;
-};
+काष्ठा iproc_clk_reg_op अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक shअगरt;
+	अचिन्हित पूर्णांक width;
+पूर्ण;
 
 /*
  * Clock gating control at the top ASIU level
  */
-struct iproc_asiu_gate {
-	unsigned int offset;
-	unsigned int en_shift;
-};
+काष्ठा iproc_asiu_gate अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक en_shअगरt;
+पूर्ण;
 
 /*
- * Control of powering on/off of a PLL
+ * Control of घातering on/off of a PLL
  *
- * Before powering off a PLL, input isolation (ISO) needs to be enabled
+ * Beक्रमe घातering off a PLL, input isolation (ISO) needs to be enabled
  */
-struct iproc_pll_aon_pwr_ctrl {
-	unsigned int offset;
-	unsigned int pwr_width;
-	unsigned int pwr_shift;
-	unsigned int iso_shift;
-};
+काष्ठा iproc_pll_aon_pwr_ctrl अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक pwr_width;
+	अचिन्हित पूर्णांक pwr_shअगरt;
+	अचिन्हित पूर्णांक iso_shअगरt;
+पूर्ण;
 
 /*
  * Control of the PLL reset
  */
-struct iproc_pll_reset_ctrl {
-	unsigned int offset;
-	unsigned int reset_shift;
-	unsigned int p_reset_shift;
-};
+काष्ठा iproc_pll_reset_ctrl अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक reset_shअगरt;
+	अचिन्हित पूर्णांक p_reset_shअगरt;
+पूर्ण;
 
 /*
  * Control of the Ki, Kp, and Ka parameters
  */
-struct iproc_pll_dig_filter_ctrl {
-	unsigned int offset;
-	unsigned int ki_shift;
-	unsigned int ki_width;
-	unsigned int kp_shift;
-	unsigned int kp_width;
-	unsigned int ka_shift;
-	unsigned int ka_width;
-};
+काष्ठा iproc_pll_dig_filter_ctrl अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक ki_shअगरt;
+	अचिन्हित पूर्णांक ki_width;
+	अचिन्हित पूर्णांक kp_shअगरt;
+	अचिन्हित पूर्णांक kp_width;
+	अचिन्हित पूर्णांक ka_shअगरt;
+	अचिन्हित पूर्णांक ka_width;
+पूर्ण;
 
 /*
  * To enable SW control of the PLL
  */
-struct iproc_pll_sw_ctrl {
-	unsigned int offset;
-	unsigned int shift;
-};
+काष्ठा iproc_pll_sw_ctrl अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक shअगरt;
+पूर्ण;
 
-struct iproc_pll_vco_ctrl {
-	unsigned int u_offset;
-	unsigned int l_offset;
-};
+काष्ठा iproc_pll_vco_ctrl अणु
+	अचिन्हित पूर्णांक u_offset;
+	अचिन्हित पूर्णांक l_offset;
+पूर्ण;
 
 /*
  * Main PLL control parameters
  */
-struct iproc_pll_ctrl {
-	unsigned long flags;
-	struct iproc_pll_aon_pwr_ctrl aon;
-	struct iproc_asiu_gate asiu;
-	struct iproc_pll_reset_ctrl reset;
-	struct iproc_pll_dig_filter_ctrl dig_filter;
-	struct iproc_pll_sw_ctrl sw_ctrl;
-	struct iproc_clk_reg_op ndiv_int;
-	struct iproc_clk_reg_op ndiv_frac;
-	struct iproc_clk_reg_op pdiv;
-	struct iproc_pll_vco_ctrl vco_ctrl;
-	struct iproc_clk_reg_op status;
-	struct iproc_clk_reg_op macro_mode;
-};
+काष्ठा iproc_pll_ctrl अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा iproc_pll_aon_pwr_ctrl aon;
+	काष्ठा iproc_asiu_gate asiu;
+	काष्ठा iproc_pll_reset_ctrl reset;
+	काष्ठा iproc_pll_dig_filter_ctrl dig_filter;
+	काष्ठा iproc_pll_sw_ctrl sw_ctrl;
+	काष्ठा iproc_clk_reg_op nभाग_पूर्णांक;
+	काष्ठा iproc_clk_reg_op nभाग_frac;
+	काष्ठा iproc_clk_reg_op pभाग;
+	काष्ठा iproc_pll_vco_ctrl vco_ctrl;
+	काष्ठा iproc_clk_reg_op status;
+	काष्ठा iproc_clk_reg_op macro_mode;
+पूर्ण;
 
 /*
- * Controls enabling/disabling a PLL derived clock
+ * Controls enabling/disabling a PLL derived घड़ी
  */
-struct iproc_clk_enable_ctrl {
-	unsigned int offset;
-	unsigned int enable_shift;
-	unsigned int hold_shift;
-	unsigned int bypass_shift;
-};
+काष्ठा iproc_clk_enable_ctrl अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक enable_shअगरt;
+	अचिन्हित पूर्णांक hold_shअगरt;
+	अचिन्हित पूर्णांक bypass_shअगरt;
+पूर्ण;
 
 /*
- * Main clock control parameters for clocks derived from the PLLs
+ * Main घड़ी control parameters क्रम घड़ीs derived from the PLLs
  */
-struct iproc_clk_ctrl {
-	unsigned int channel;
-	unsigned long flags;
-	struct iproc_clk_enable_ctrl enable;
-	struct iproc_clk_reg_op mdiv;
-};
+काष्ठा iproc_clk_ctrl अणु
+	अचिन्हित पूर्णांक channel;
+	अचिन्हित दीर्घ flags;
+	काष्ठा iproc_clk_enable_ctrl enable;
+	काष्ठा iproc_clk_reg_op mभाग;
+पूर्ण;
 
 /*
- * Divisor of the ASIU clocks
+ * Divisor of the ASIU घड़ीs
  */
-struct iproc_asiu_div {
-	unsigned int offset;
-	unsigned int en_shift;
-	unsigned int high_shift;
-	unsigned int high_width;
-	unsigned int low_shift;
-	unsigned int low_width;
-};
+काष्ठा iproc_asiu_भाग अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक en_shअगरt;
+	अचिन्हित पूर्णांक high_shअगरt;
+	अचिन्हित पूर्णांक high_width;
+	अचिन्हित पूर्णांक low_shअगरt;
+	अचिन्हित पूर्णांक low_width;
+पूर्ण;
 
-void iproc_armpll_setup(struct device_node *node);
-void iproc_pll_clk_setup(struct device_node *node,
-			 const struct iproc_pll_ctrl *pll_ctrl,
-			 const struct iproc_pll_vco_param *vco,
-			 unsigned int num_vco_entries,
-			 const struct iproc_clk_ctrl *clk_ctrl,
-			 unsigned int num_clks);
-void iproc_asiu_setup(struct device_node *node,
-		      const struct iproc_asiu_div *div,
-		      const struct iproc_asiu_gate *gate,
-		      unsigned int num_clks);
+व्योम iproc_armpll_setup(काष्ठा device_node *node);
+व्योम iproc_pll_clk_setup(काष्ठा device_node *node,
+			 स्थिर काष्ठा iproc_pll_ctrl *pll_ctrl,
+			 स्थिर काष्ठा iproc_pll_vco_param *vco,
+			 अचिन्हित पूर्णांक num_vco_entries,
+			 स्थिर काष्ठा iproc_clk_ctrl *clk_ctrl,
+			 अचिन्हित पूर्णांक num_clks);
+व्योम iproc_asiu_setup(काष्ठा device_node *node,
+		      स्थिर काष्ठा iproc_asiu_भाग *भाग,
+		      स्थिर काष्ठा iproc_asiu_gate *gate,
+		      अचिन्हित पूर्णांक num_clks);
 
-#endif /* _CLK_IPROC_H */
+#पूर्ण_अगर /* _CLK_IPROC_H */

@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2014-2019 Intel Corporation
+ * Copyright तऊ 2014-2019 Intel Corporation
  */
 
-#include "gt/intel_gt.h"
-#include "gt/intel_lrc.h"
-#include "intel_guc_ads.h"
-#include "intel_uc.h"
-#include "i915_drv.h"
+#समावेश "gt/intel_gt.h"
+#समावेश "gt/intel_lrc.h"
+#समावेश "intel_guc_ads.h"
+#समावेश "intel_uc.h"
+#समावेश "i915_drv.h"
 
 /*
- * The Additional Data Struct (ADS) has pointers for different buffers used by
- * the GuC. One single gem object contains the ADS struct itself (guc_ads) and
- * all the extra buffers indirectly linked via the ADS struct's entries.
+ * The Additional Data Struct (ADS) has poपूर्णांकers क्रम dअगरferent buffers used by
+ * the GuC. One single gem object contains the ADS काष्ठा itself (guc_ads) and
+ * all the extra buffers indirectly linked via the ADS काष्ठा's entries.
  *
- * Layout of the ADS blob allocated for the GuC:
+ * Layout of the ADS blob allocated क्रम the GuC:
  *
  *      +---------------------------------------+ <== base
  *      | guc_ads                               |
  *      +---------------------------------------+
  *      | guc_policies                          |
  *      +---------------------------------------+
- *      | guc_gt_system_info                    |
+ *      | guc_gt_प्रणाली_info                    |
  *      +---------------------------------------+
  *      | guc_clients_info                      |
  *      +---------------------------------------+
@@ -29,100 +30,100 @@
  *      +---------------------------------------+
  *      | padding                               |
  *      +---------------------------------------+ <== 4K aligned
- *      | private data                          |
+ *      | निजी data                          |
  *      +---------------------------------------+
  *      | padding                               |
  *      +---------------------------------------+ <== 4K aligned
  */
-struct __guc_ads_blob {
-	struct guc_ads ads;
-	struct guc_policies policies;
-	struct guc_gt_system_info system_info;
-	struct guc_clients_info clients_info;
-	struct guc_ct_pool_entry ct_pool[GUC_CT_POOL_SIZE];
-} __packed;
+काष्ठा __guc_ads_blob अणु
+	काष्ठा guc_ads ads;
+	काष्ठा guc_policies policies;
+	काष्ठा guc_gt_प्रणाली_info प्रणाली_info;
+	काष्ठा guc_clients_info clients_info;
+	काष्ठा guc_ct_pool_entry ct_pool[GUC_CT_POOL_SIZE];
+पूर्ण __packed;
 
-static u32 guc_ads_private_data_size(struct intel_guc *guc)
-{
-	return PAGE_ALIGN(guc->fw.private_data_size);
-}
+अटल u32 guc_ads_निजी_data_size(काष्ठा पूर्णांकel_guc *guc)
+अणु
+	वापस PAGE_ALIGN(guc->fw.निजी_data_size);
+पूर्ण
 
-static u32 guc_ads_private_data_offset(struct intel_guc *guc)
-{
-	return PAGE_ALIGN(sizeof(struct __guc_ads_blob));
-}
+अटल u32 guc_ads_निजी_data_offset(काष्ठा पूर्णांकel_guc *guc)
+अणु
+	वापस PAGE_ALIGN(माप(काष्ठा __guc_ads_blob));
+पूर्ण
 
-static u32 guc_ads_blob_size(struct intel_guc *guc)
-{
-	return guc_ads_private_data_offset(guc) +
-	       guc_ads_private_data_size(guc);
-}
+अटल u32 guc_ads_blob_size(काष्ठा पूर्णांकel_guc *guc)
+अणु
+	वापस guc_ads_निजी_data_offset(guc) +
+	       guc_ads_निजी_data_size(guc);
+पूर्ण
 
-static void guc_policy_init(struct guc_policy *policy)
-{
+अटल व्योम guc_policy_init(काष्ठा guc_policy *policy)
+अणु
 	policy->execution_quantum = POLICY_DEFAULT_EXECUTION_QUANTUM_US;
-	policy->preemption_time = POLICY_DEFAULT_PREEMPTION_TIME_US;
-	policy->fault_time = POLICY_DEFAULT_FAULT_TIME_US;
+	policy->preemption_समय = POLICY_DEFAULT_PREEMPTION_TIME_US;
+	policy->fault_समय = POLICY_DEFAULT_FAULT_TIME_US;
 	policy->policy_flags = 0;
-}
+पूर्ण
 
-static void guc_policies_init(struct guc_policies *policies)
-{
-	struct guc_policy *policy;
+अटल व्योम guc_policies_init(काष्ठा guc_policies *policies)
+अणु
+	काष्ठा guc_policy *policy;
 	u32 p, i;
 
-	policies->dpc_promote_time = POLICY_DEFAULT_DPC_PROMOTE_TIME_US;
+	policies->dpc_promote_समय = POLICY_DEFAULT_DPC_PROMOTE_TIME_US;
 	policies->max_num_work_items = POLICY_MAX_NUM_WI;
 
-	for (p = 0; p < GUC_CLIENT_PRIORITY_NUM; p++) {
-		for (i = 0; i < GUC_MAX_ENGINE_CLASSES; i++) {
+	क्रम (p = 0; p < GUC_CLIENT_PRIORITY_NUM; p++) अणु
+		क्रम (i = 0; i < GUC_MAX_ENGINE_CLASSES; i++) अणु
 			policy = &policies->policy[p][i];
 
 			guc_policy_init(policy);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	policies->is_valid = 1;
-}
+पूर्ण
 
-static void guc_ct_pool_entries_init(struct guc_ct_pool_entry *pool, u32 num)
-{
-	memset(pool, 0, num * sizeof(*pool));
-}
+अटल व्योम guc_ct_pool_entries_init(काष्ठा guc_ct_pool_entry *pool, u32 num)
+अणु
+	स_रखो(pool, 0, num * माप(*pool));
+पूर्ण
 
-static void guc_mapping_table_init(struct intel_gt *gt,
-				   struct guc_gt_system_info *system_info)
-{
-	unsigned int i, j;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम guc_mapping_table_init(काष्ठा पूर्णांकel_gt *gt,
+				   काष्ठा guc_gt_प्रणाली_info *प्रणाली_info)
+अणु
+	अचिन्हित पूर्णांक i, j;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	/* Table must be set to invalid values for entries not used */
-	for (i = 0; i < GUC_MAX_ENGINE_CLASSES; ++i)
-		for (j = 0; j < GUC_MAX_INSTANCES_PER_CLASS; ++j)
-			system_info->mapping_table[i][j] =
+	/* Table must be set to invalid values क्रम entries not used */
+	क्रम (i = 0; i < GUC_MAX_ENGINE_CLASSES; ++i)
+		क्रम (j = 0; j < GUC_MAX_INSTANCES_PER_CLASS; ++j)
+			प्रणाली_info->mapping_table[i][j] =
 				GUC_MAX_INSTANCES_PER_CLASS;
 
-	for_each_engine(engine, gt, id) {
+	क्रम_each_engine(engine, gt, id) अणु
 		u8 guc_class = engine->class;
 
-		system_info->mapping_table[guc_class][engine->instance] =
+		प्रणाली_info->mapping_table[guc_class][engine->instance] =
 			engine->instance;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * The first 80 dwords of the register state context, containing the
- * execlists and ppgtt registers.
+ * The first 80 dwords of the रेजिस्टर state context, containing the
+ * execlists and ppgtt रेजिस्टरs.
  */
-#define LR_HW_CONTEXT_SIZE	(80 * sizeof(u32))
+#घोषणा LR_HW_CONTEXT_SIZE	(80 * माप(u32))
 
-static void __guc_ads_init(struct intel_guc *guc)
-{
-	struct intel_gt *gt = guc_to_gt(guc);
-	struct drm_i915_private *i915 = gt->i915;
-	struct __guc_ads_blob *blob = guc->ads_blob;
-	const u32 skipped_size = LRC_PPHWSP_SZ * PAGE_SIZE + LR_HW_CONTEXT_SIZE;
+अटल व्योम __guc_ads_init(काष्ठा पूर्णांकel_guc *guc)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = guc_to_gt(guc);
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा __guc_ads_blob *blob = guc->ads_blob;
+	स्थिर u32 skipped_size = LRC_PPHWSP_SZ * PAGE_SIZE + LR_HW_CONTEXT_SIZE;
 	u32 base;
 	u8 engine_class;
 
@@ -137,42 +138,42 @@ static void __guc_ads_init(struct intel_guc *guc)
 	 * we have told GuC where to find it. The context size will be used
 	 * to validate that the LRC base + size fall within allowed GGTT.
 	 */
-	for (engine_class = 0; engine_class <= MAX_ENGINE_CLASS; ++engine_class) {
-		if (engine_class == OTHER_CLASS)
-			continue;
+	क्रम (engine_class = 0; engine_class <= MAX_ENGINE_CLASS; ++engine_class) अणु
+		अगर (engine_class == OTHER_CLASS)
+			जारी;
 		/*
-		 * TODO: Set context pointer to default state to allow
-		 * GuC to re-init guilty contexts after internal reset.
+		 * TODO: Set context poपूर्णांकer to शेष state to allow
+		 * GuC to re-init guilty contexts after पूर्णांकernal reset.
 		 */
 		blob->ads.golden_context_lrca[engine_class] = 0;
 		blob->ads.eng_state_size[engine_class] =
-			intel_engine_context_size(guc_to_gt(guc),
+			पूर्णांकel_engine_context_size(guc_to_gt(guc),
 						  engine_class) -
 			skipped_size;
-	}
+	पूर्ण
 
 	/* System info */
-	blob->system_info.engine_enabled_masks[RENDER_CLASS] = 1;
-	blob->system_info.engine_enabled_masks[COPY_ENGINE_CLASS] = 1;
-	blob->system_info.engine_enabled_masks[VIDEO_DECODE_CLASS] = VDBOX_MASK(gt);
-	blob->system_info.engine_enabled_masks[VIDEO_ENHANCEMENT_CLASS] = VEBOX_MASK(gt);
+	blob->प्रणाली_info.engine_enabled_masks[RENDER_CLASS] = 1;
+	blob->प्रणाली_info.engine_enabled_masks[COPY_ENGINE_CLASS] = 1;
+	blob->प्रणाली_info.engine_enabled_masks[VIDEO_DECODE_CLASS] = VDBOX_MASK(gt);
+	blob->प्रणाली_info.engine_enabled_masks[VIDEO_ENHANCEMENT_CLASS] = VEBOX_MASK(gt);
 
-	blob->system_info.generic_gt_sysinfo[GUC_GENERIC_GT_SYSINFO_SLICE_ENABLED] =
+	blob->प्रणाली_info.generic_gt_sysinfo[GUC_GENERIC_GT_SYSINFO_SLICE_ENABLED] =
 		hweight8(gt->info.sseu.slice_mask);
-	blob->system_info.generic_gt_sysinfo[GUC_GENERIC_GT_SYSINFO_VDBOX_SFC_SUPPORT_MASK] =
+	blob->प्रणाली_info.generic_gt_sysinfo[GUC_GENERIC_GT_SYSINFO_VDBOX_SFC_SUPPORT_MASK] =
 		gt->info.vdbox_sfc_access;
 
-	if (INTEL_GEN(i915) >= 12 && !IS_DGFX(i915)) {
-		u32 distdbreg = intel_uncore_read(gt->uncore,
+	अगर (INTEL_GEN(i915) >= 12 && !IS_DGFX(i915)) अणु
+		u32 distdbreg = पूर्णांकel_uncore_पढ़ो(gt->uncore,
 						  GEN12_DIST_DBS_POPULATED);
-		blob->system_info.generic_gt_sysinfo[GUC_GENERIC_GT_SYSINFO_DOORBELL_COUNT_PER_SQIDI] =
+		blob->प्रणाली_info.generic_gt_sysinfo[GUC_GENERIC_GT_SYSINFO_DOORBELL_COUNT_PER_SQIDI] =
 			((distdbreg >> GEN12_DOORBELLS_PER_SQIDI_SHIFT) &
 			 GEN12_DOORBELLS_PER_SQIDI) + 1;
-	}
+	पूर्ण
 
-	guc_mapping_table_init(guc_to_gt(guc), &blob->system_info);
+	guc_mapping_table_init(guc_to_gt(guc), &blob->प्रणाली_info);
 
-	base = intel_guc_ggtt_offset(guc, guc->ads_vma);
+	base = पूर्णांकel_guc_ggtt_offset(guc, guc->ads_vma);
 
 	/* Clients info  */
 	guc_ct_pool_entries_init(blob->ct_pool, ARRAY_SIZE(blob->ct_pool));
@@ -183,73 +184,73 @@ static void __guc_ads_init(struct intel_guc *guc)
 
 	/* ADS */
 	blob->ads.scheduler_policies = base + ptr_offset(blob, policies);
-	blob->ads.gt_system_info = base + ptr_offset(blob, system_info);
+	blob->ads.gt_प्रणाली_info = base + ptr_offset(blob, प्रणाली_info);
 	blob->ads.clients_info = base + ptr_offset(blob, clients_info);
 
 	/* Private Data */
-	blob->ads.private_data = base + guc_ads_private_data_offset(guc);
+	blob->ads.निजी_data = base + guc_ads_निजी_data_offset(guc);
 
 	i915_gem_object_flush_map(guc->ads_vma->obj);
-}
+पूर्ण
 
 /**
- * intel_guc_ads_create() - allocates and initializes GuC ADS.
- * @guc: intel_guc struct
+ * पूर्णांकel_guc_ads_create() - allocates and initializes GuC ADS.
+ * @guc: पूर्णांकel_guc काष्ठा
  *
  * GuC needs memory block (Additional Data Struct), where it will store
- * some data. Allocate and initialize such memory block for GuC use.
+ * some data. Allocate and initialize such memory block क्रम GuC use.
  */
-int intel_guc_ads_create(struct intel_guc *guc)
-{
+पूर्णांक पूर्णांकel_guc_ads_create(काष्ठा पूर्णांकel_guc *guc)
+अणु
 	u32 size;
-	int ret;
+	पूर्णांक ret;
 
 	GEM_BUG_ON(guc->ads_vma);
 
 	size = guc_ads_blob_size(guc);
 
-	ret = intel_guc_allocate_and_map_vma(guc, size, &guc->ads_vma,
-					     (void **)&guc->ads_blob);
-	if (ret)
-		return ret;
+	ret = पूर्णांकel_guc_allocate_and_map_vma(guc, size, &guc->ads_vma,
+					     (व्योम **)&guc->ads_blob);
+	अगर (ret)
+		वापस ret;
 
 	__guc_ads_init(guc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void intel_guc_ads_destroy(struct intel_guc *guc)
-{
+व्योम पूर्णांकel_guc_ads_destroy(काष्ठा पूर्णांकel_guc *guc)
+अणु
 	i915_vma_unpin_and_release(&guc->ads_vma, I915_VMA_RELEASE_MAP);
-	guc->ads_blob = NULL;
-}
+	guc->ads_blob = शून्य;
+पूर्ण
 
-static void guc_ads_private_data_reset(struct intel_guc *guc)
-{
+अटल व्योम guc_ads_निजी_data_reset(काष्ठा पूर्णांकel_guc *guc)
+अणु
 	u32 size;
 
-	size = guc_ads_private_data_size(guc);
-	if (!size)
-		return;
+	size = guc_ads_निजी_data_size(guc);
+	अगर (!size)
+		वापस;
 
-	memset((void *)guc->ads_blob + guc_ads_private_data_offset(guc), 0,
+	स_रखो((व्योम *)guc->ads_blob + guc_ads_निजी_data_offset(guc), 0,
 	       size);
-}
+पूर्ण
 
 /**
- * intel_guc_ads_reset() - prepares GuC Additional Data Struct for reuse
- * @guc: intel_guc struct
+ * पूर्णांकel_guc_ads_reset() - prepares GuC Additional Data Struct क्रम reuse
+ * @guc: पूर्णांकel_guc काष्ठा
  *
  * GuC stores some data in ADS, which might be stale after a reset.
- * Reinitialize whole ADS in case any part of it was corrupted during
+ * Reinitialize whole ADS in हाल any part of it was corrupted during
  * previous GuC run.
  */
-void intel_guc_ads_reset(struct intel_guc *guc)
-{
-	if (!guc->ads_vma)
-		return;
+व्योम पूर्णांकel_guc_ads_reset(काष्ठा पूर्णांकel_guc *guc)
+अणु
+	अगर (!guc->ads_vma)
+		वापस;
 
 	__guc_ads_init(guc);
 
-	guc_ads_private_data_reset(guc);
-}
+	guc_ads_निजी_data_reset(guc);
+पूर्ण

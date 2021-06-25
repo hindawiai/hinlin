@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2019 HiSilicon Limited. */
-#ifndef HISI_ZIP_H
-#define HISI_ZIP_H
+#अगर_अघोषित HISI_ZIP_H
+#घोषणा HISI_ZIP_H
 
-#undef pr_fmt
-#define pr_fmt(fmt)	"hisi_zip: " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt)	"hisi_zip: " fmt
 
-#include <linux/list.h>
-#include "../qm.h"
+#समावेश <linux/list.h>
+#समावेश "../qm.h"
 
-enum hisi_zip_error_type {
+क्रमागत hisi_zip_error_type अणु
 	/* negative compression */
 	HZIP_NC_ERR = 0x0d,
-};
+पूर्ण;
 
-struct hisi_zip_dfx {
+काष्ठा hisi_zip_dfx अणु
 	atomic64_t send_cnt;
 	atomic64_t recv_cnt;
 	atomic64_t send_busy_cnt;
 	atomic64_t err_bd_cnt;
-};
+पूर्ण;
 
-struct hisi_zip_ctrl;
+काष्ठा hisi_zip_ctrl;
 
-struct hisi_zip {
-	struct hisi_qm qm;
-	struct hisi_zip_ctrl *ctrl;
-	struct hisi_zip_dfx dfx;
-};
+काष्ठा hisi_zip अणु
+	काष्ठा hisi_qm qm;
+	काष्ठा hisi_zip_ctrl *ctrl;
+	काष्ठा hisi_zip_dfx dfx;
+पूर्ण;
 
-struct hisi_zip_sqe {
+काष्ठा hisi_zip_sqe अणु
 	u32 consumed;
 	u32 produced;
 	u32 comp_data_length;
@@ -79,9 +80,9 @@ struct hisi_zip_sqe {
 	u32 dw26;
 	u32 dw27;
 	u32 rsvd1[4];
-};
+पूर्ण;
 
-int zip_create_qps(struct hisi_qp **qps, int ctx_num, int node);
-int hisi_zip_register_to_crypto(struct hisi_qm *qm);
-void hisi_zip_unregister_from_crypto(struct hisi_qm *qm);
-#endif
+पूर्णांक zip_create_qps(काष्ठा hisi_qp **qps, पूर्णांक ctx_num, पूर्णांक node);
+पूर्णांक hisi_zip_रेजिस्टर_to_crypto(काष्ठा hisi_qm *qm);
+व्योम hisi_zip_unरेजिस्टर_from_crypto(काष्ठा hisi_qm *qm);
+#पूर्ण_अगर

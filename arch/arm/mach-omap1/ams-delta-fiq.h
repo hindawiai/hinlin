@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /*
  * arch/arm/mach-omap1/ams-delta-fiq.h
  *
- * Taken from the original Amstrad modifications to fiq.h
+ * Taken from the original Amstrad modअगरications to fiq.h
  *
  * Copyright (c) 2004 Amstrad Plc
  * Copyright (c) 2006 Matt Callow
  * Copyright (c) 2010 Janusz Krzysztofik
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-#ifndef __AMS_DELTA_FIQ_H
-#define __AMS_DELTA_FIQ_H
+#अगर_अघोषित __AMS_DELTA_FIQ_H
+#घोषणा __AMS_DELTA_FIQ_H
 
-#include <mach/irqs.h>
+#समावेश <mach/irqs.h>
 
 /*
- * Interrupt number used for passing control from FIQ to IRQ.
+ * Interrupt number used क्रम passing control from FIQ to IRQ.
  * IRQ12, described as reserved, has been selected.
  */
-#define INT_DEFERRED_FIQ	INT_1510_RES12
+#घोषणा INT_DEFERRED_FIQ	INT_1510_RES12
 /*
- * Base address of an interrupt handler that the INT_DEFERRED_FIQ belongs to.
+ * Base address of an पूर्णांकerrupt handler that the INT_DEFERRED_FIQ beदीर्घs to.
  */
-#if (INT_DEFERRED_FIQ < IH2_BASE)
-#define DEFERRED_FIQ_IH_BASE	OMAP_IH1_BASE
-#else
-#define DEFERRED_FIQ_IH_BASE	OMAP_IH2_BASE
-#endif
+#अगर (INT_DEFERRED_FIQ < IH2_BASE)
+#घोषणा DEFERRED_FIQ_IH_BASE	OMAP_IH1_BASE
+#अन्यथा
+#घोषणा DEFERRED_FIQ_IH_BASE	OMAP_IH2_BASE
+#पूर्ण_अगर
 
-#ifndef __ASSEMBLER__
-extern unsigned char qwerty_fiqin_start, qwerty_fiqin_end;
+#अगर_अघोषित __ASSEMBLER__
+बाह्य अचिन्हित अक्षर qwerty_fiqin_start, qwerty_fiqin_end;
 
-extern void __init ams_delta_init_fiq(struct gpio_chip *chip,
-				      struct platform_device *pdev);
-#endif
+बाह्य व्योम __init ams_delta_init_fiq(काष्ठा gpio_chip *chip,
+				      काष्ठा platक्रमm_device *pdev);
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

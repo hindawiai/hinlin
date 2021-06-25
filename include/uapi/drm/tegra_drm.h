@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2012-2013, NVIDIA CORPORATION.  All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,22 +21,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _UAPI_TEGRA_DRM_H_
-#define _UAPI_TEGRA_DRM_H_
+#अगर_अघोषित _UAPI_TEGRA_DRM_H_
+#घोषणा _UAPI_TEGRA_DRM_H_
 
-#include "drm.h"
+#समावेश "drm.h"
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#अगर defined(__cplusplus)
+बाह्य "C" अणु
+#पूर्ण_अगर
 
-#define DRM_TEGRA_GEM_CREATE_TILED     (1 << 0)
-#define DRM_TEGRA_GEM_CREATE_BOTTOM_UP (1 << 1)
+#घोषणा DRM_TEGRA_GEM_CREATE_TILED     (1 << 0)
+#घोषणा DRM_TEGRA_GEM_CREATE_BOTTOM_UP (1 << 1)
 
 /**
- * struct drm_tegra_gem_create - parameters for the GEM object creation IOCTL
+ * काष्ठा drm_tegra_gem_create - parameters क्रम the GEM object creation IOCTL
  */
-struct drm_tegra_gem_create {
+काष्ठा drm_tegra_gem_create अणु
 	/**
 	 * @size:
 	 *
@@ -46,10 +47,10 @@ struct drm_tegra_gem_create {
 	/**
 	 * @flags:
 	 *
-	 * A bitmask of flags that influence the creation of GEM objects:
+	 * A biपंचांगask of flags that influence the creation of GEM objects:
 	 *
 	 * DRM_TEGRA_GEM_CREATE_TILED
-	 *   Use the 16x16 tiling format for this buffer.
+	 *   Use the 16x16 tiling क्रमmat क्रम this buffer.
 	 *
 	 * DRM_TEGRA_GEM_CREATE_BOTTOM_UP
 	 *   The buffer has a bottom-up layout.
@@ -63,16 +64,16 @@ struct drm_tegra_gem_create {
 	 * successful completion of the IOCTL.
 	 */
 	__u32 handle;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_gem_mmap - parameters for the GEM mmap IOCTL
+ * काष्ठा drm_tegra_gem_mmap - parameters क्रम the GEM mmap IOCTL
  */
-struct drm_tegra_gem_mmap {
+काष्ठा drm_tegra_gem_mmap अणु
 	/**
 	 * @handle:
 	 *
-	 * Handle of the GEM object to obtain an mmap offset for.
+	 * Handle of the GEM object to obtain an mmap offset क्रम.
 	 */
 	__u32 handle;
 
@@ -86,40 +87,40 @@ struct drm_tegra_gem_mmap {
 	/**
 	 * @offset:
 	 *
-	 * The mmap offset for the given GEM object. Set by the kernel upon
+	 * The mmap offset क्रम the given GEM object. Set by the kernel upon
 	 * successful completion of the IOCTL.
 	 */
 	__u64 offset;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_syncpt_read - parameters for the read syncpoint IOCTL
+ * काष्ठा drm_tegra_syncpt_पढ़ो - parameters क्रम the पढ़ो syncpoपूर्णांक IOCTL
  */
-struct drm_tegra_syncpt_read {
+काष्ठा drm_tegra_syncpt_पढ़ो अणु
 	/**
 	 * @id:
 	 *
-	 * ID of the syncpoint to read the current value from.
+	 * ID of the syncpoपूर्णांक to पढ़ो the current value from.
 	 */
 	__u32 id;
 
 	/**
 	 * @value:
 	 *
-	 * The current syncpoint value. Set by the kernel upon successful
+	 * The current syncpoपूर्णांक value. Set by the kernel upon successful
 	 * completion of the IOCTL.
 	 */
 	__u32 value;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_syncpt_incr - parameters for the increment syncpoint IOCTL
+ * काष्ठा drm_tegra_syncpt_incr - parameters क्रम the increment syncpoपूर्णांक IOCTL
  */
-struct drm_tegra_syncpt_incr {
+काष्ठा drm_tegra_syncpt_incr अणु
 	/**
 	 * @id:
 	 *
-	 * ID of the syncpoint to increment.
+	 * ID of the syncpoपूर्णांक to increment.
 	 */
 	__u32 id;
 
@@ -129,52 +130,52 @@ struct drm_tegra_syncpt_incr {
 	 * Structure padding that may be used in the future. Must be 0.
 	 */
 	__u32 pad;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_syncpt_wait - parameters for the wait syncpoint IOCTL
+ * काष्ठा drm_tegra_syncpt_रुको - parameters क्रम the रुको syncpoपूर्णांक IOCTL
  */
-struct drm_tegra_syncpt_wait {
+काष्ठा drm_tegra_syncpt_रुको अणु
 	/**
 	 * @id:
 	 *
-	 * ID of the syncpoint to wait on.
+	 * ID of the syncpoपूर्णांक to रुको on.
 	 */
 	__u32 id;
 
 	/**
 	 * @thresh:
 	 *
-	 * Threshold value for which to wait.
+	 * Threshold value क्रम which to रुको.
 	 */
 	__u32 thresh;
 
 	/**
-	 * @timeout:
+	 * @समयout:
 	 *
-	 * Timeout, in milliseconds, to wait.
+	 * Timeout, in milliseconds, to रुको.
 	 */
-	__u32 timeout;
+	__u32 समयout;
 
 	/**
 	 * @value:
 	 *
-	 * The new syncpoint value after the wait. Set by the kernel upon
+	 * The new syncpoपूर्णांक value after the रुको. Set by the kernel upon
 	 * successful completion of the IOCTL.
 	 */
 	__u32 value;
-};
+पूर्ण;
 
-#define DRM_TEGRA_NO_TIMEOUT	(0xffffffff)
+#घोषणा DRM_TEGRA_NO_TIMEOUT	(0xffffffff)
 
 /**
- * struct drm_tegra_open_channel - parameters for the open channel IOCTL
+ * काष्ठा drm_tegra_खोलो_channel - parameters क्रम the खोलो channel IOCTL
  */
-struct drm_tegra_open_channel {
+काष्ठा drm_tegra_खोलो_channel अणु
 	/**
 	 * @client:
 	 *
-	 * The client ID for this channel.
+	 * The client ID क्रम this channel.
 	 */
 	__u32 client;
 
@@ -193,12 +194,12 @@ struct drm_tegra_open_channel {
 	 * to the DRM_TEGRA_CHANNEL_CLOSE or the DRM_TEGRA_SUBMIT IOCTLs.
 	 */
 	__u64 context;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_close_channel - parameters for the close channel IOCTL
+ * काष्ठा drm_tegra_बंद_channel - parameters क्रम the बंद channel IOCTL
  */
-struct drm_tegra_close_channel {
+काष्ठा drm_tegra_बंद_channel अणु
 	/**
 	 * @context:
 	 *
@@ -206,87 +207,87 @@ struct drm_tegra_close_channel {
 	 * DRM_TEGRA_OPEN_CHANNEL IOCTL.
 	 */
 	__u64 context;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_get_syncpt - parameters for the get syncpoint IOCTL
+ * काष्ठा drm_tegra_get_syncpt - parameters क्रम the get syncpoपूर्णांक IOCTL
  */
-struct drm_tegra_get_syncpt {
+काष्ठा drm_tegra_get_syncpt अणु
 	/**
 	 * @context:
 	 *
-	 * The application context identifying the channel for which to obtain
-	 * the syncpoint ID.
+	 * The application context identअगरying the channel क्रम which to obtain
+	 * the syncpoपूर्णांक ID.
 	 */
 	__u64 context;
 
 	/**
 	 * @index:
 	 *
-	 * Index of the client syncpoint for which to obtain the ID.
+	 * Index of the client syncpoपूर्णांक क्रम which to obtain the ID.
 	 */
 	__u32 index;
 
 	/**
 	 * @id:
 	 *
-	 * The ID of the given syncpoint. Set by the kernel upon successful
+	 * The ID of the given syncpoपूर्णांक. Set by the kernel upon successful
 	 * completion of the IOCTL.
 	 */
 	__u32 id;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_get_syncpt_base - parameters for the get wait base IOCTL
+ * काष्ठा drm_tegra_get_syncpt_base - parameters क्रम the get रुको base IOCTL
  */
-struct drm_tegra_get_syncpt_base {
+काष्ठा drm_tegra_get_syncpt_base अणु
 	/**
 	 * @context:
 	 *
-	 * The application context identifying for which channel to obtain the
-	 * wait base.
+	 * The application context identअगरying क्रम which channel to obtain the
+	 * रुको base.
 	 */
 	__u64 context;
 
 	/**
 	 * @syncpt:
 	 *
-	 * ID of the syncpoint for which to obtain the wait base.
+	 * ID of the syncpoपूर्णांक क्रम which to obtain the रुको base.
 	 */
 	__u32 syncpt;
 
 	/**
 	 * @id:
 	 *
-	 * The ID of the wait base corresponding to the client syncpoint. Set
+	 * The ID of the रुको base corresponding to the client syncpoपूर्णांक. Set
 	 * by the kernel upon successful completion of the IOCTL.
 	 */
 	__u32 id;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_syncpt - syncpoint increment operation
+ * काष्ठा drm_tegra_syncpt - syncpoपूर्णांक increment operation
  */
-struct drm_tegra_syncpt {
+काष्ठा drm_tegra_syncpt अणु
 	/**
 	 * @id:
 	 *
-	 * ID of the syncpoint to operate on.
+	 * ID of the syncpoपूर्णांक to operate on.
 	 */
 	__u32 id;
 
 	/**
 	 * @incrs:
 	 *
-	 * Number of increments to perform for the syncpoint.
+	 * Number of increments to perक्रमm क्रम the syncpoपूर्णांक.
 	 */
 	__u32 incrs;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_cmdbuf - structure describing a command buffer
+ * काष्ठा drm_tegra_cmdbuf - काष्ठाure describing a command buffer
  */
-struct drm_tegra_cmdbuf {
+काष्ठा drm_tegra_cmdbuf अणु
 	/**
 	 * @handle:
 	 *
@@ -297,7 +298,7 @@ struct drm_tegra_cmdbuf {
 	/**
 	 * @offset:
 	 *
-	 * Offset, in bytes, into the GEM object identified by @handle at
+	 * Offset, in bytes, पूर्णांकo the GEM object identअगरied by @handle at
 	 * which the command buffer starts.
 	 */
 	__u32 offset;
@@ -315,30 +316,30 @@ struct drm_tegra_cmdbuf {
 	 * Structure padding that may be used in the future. Must be 0.
 	 */
 	__u32 pad;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_reloc - GEM object relocation structure
+ * काष्ठा drm_tegra_reloc - GEM object relocation काष्ठाure
  */
-struct drm_tegra_reloc {
-	struct {
+काष्ठा drm_tegra_reloc अणु
+	काष्ठा अणु
 		/**
 		 * @cmdbuf.handle:
 		 *
-		 * Handle to the GEM object containing the command buffer for
-		 * which to perform this GEM object relocation.
+		 * Handle to the GEM object containing the command buffer क्रम
+		 * which to perक्रमm this GEM object relocation.
 		 */
 		__u32 handle;
 
 		/**
 		 * @cmdbuf.offset:
 		 *
-		 * Offset, in bytes, into the command buffer at which to
+		 * Offset, in bytes, पूर्णांकo the command buffer at which to
 		 * insert the relocated address.
 		 */
 		__u32 offset;
-	} cmdbuf;
-	struct {
+	पूर्ण cmdbuf;
+	काष्ठा अणु
 		/**
 		 * @target.handle:
 		 *
@@ -349,18 +350,18 @@ struct drm_tegra_reloc {
 		/**
 		 * @target.offset:
 		 *
-		 * Offset, in bytes, into the target GEM object at which the
+		 * Offset, in bytes, पूर्णांकo the target GEM object at which the
 		 * relocated data starts.
 		 */
 		__u32 offset;
-	} target;
+	पूर्ण target;
 
 	/**
-	 * @shift:
+	 * @shअगरt:
 	 *
-	 * The number of bits by which to shift relocated addresses.
+	 * The number of bits by which to shअगरt relocated addresses.
 	 */
-	__u32 shift;
+	__u32 shअगरt;
 
 	/**
 	 * @pad:
@@ -368,51 +369,51 @@ struct drm_tegra_reloc {
 	 * Structure padding that may be used in the future. Must be 0.
 	 */
 	__u32 pad;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_waitchk - wait check structure
+ * काष्ठा drm_tegra_रुकोchk - रुको check काष्ठाure
  */
-struct drm_tegra_waitchk {
+काष्ठा drm_tegra_रुकोchk अणु
 	/**
 	 * @handle:
 	 *
 	 * Handle to the GEM object containing a command stream on which to
-	 * perform the wait check.
+	 * perक्रमm the रुको check.
 	 */
 	__u32 handle;
 
 	/**
 	 * @offset:
 	 *
-	 * Offset, in bytes, of the location in the command stream to perform
-	 * the wait check on.
+	 * Offset, in bytes, of the location in the command stream to perक्रमm
+	 * the रुको check on.
 	 */
 	__u32 offset;
 
 	/**
 	 * @syncpt:
 	 *
-	 * ID of the syncpoint to wait check.
+	 * ID of the syncpoपूर्णांक to रुको check.
 	 */
 	__u32 syncpt;
 
 	/**
 	 * @thresh:
 	 *
-	 * Threshold value for which to check.
+	 * Threshold value क्रम which to check.
 	 */
 	__u32 thresh;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_submit - job submission structure
+ * काष्ठा drm_tegra_submit - job submission काष्ठाure
  */
-struct drm_tegra_submit {
+काष्ठा drm_tegra_submit अणु
 	/**
 	 * @context:
 	 *
-	 * The application context identifying the channel to use for the
+	 * The application context identअगरying the channel to use क्रम the
 	 * execution of this job.
 	 */
 	__u64 context;
@@ -420,8 +421,8 @@ struct drm_tegra_submit {
 	/**
 	 * @num_syncpts:
 	 *
-	 * The number of syncpoints operated on by this job. This defines the
-	 * length of the array pointed to by @syncpts.
+	 * The number of syncpoपूर्णांकs operated on by this job. This defines the
+	 * length of the array poपूर्णांकed to by @syncpts.
 	 */
 	__u32 num_syncpts;
 
@@ -429,45 +430,45 @@ struct drm_tegra_submit {
 	 * @num_cmdbufs:
 	 *
 	 * The number of command buffers to execute as part of this job. This
-	 * defines the length of the array pointed to by @cmdbufs.
+	 * defines the length of the array poपूर्णांकed to by @cmdbufs.
 	 */
 	__u32 num_cmdbufs;
 
 	/**
 	 * @num_relocs:
 	 *
-	 * The number of relocations to perform before executing this job.
-	 * This defines the length of the array pointed to by @relocs.
+	 * The number of relocations to perक्रमm beक्रमe executing this job.
+	 * This defines the length of the array poपूर्णांकed to by @relocs.
 	 */
 	__u32 num_relocs;
 
 	/**
-	 * @num_waitchks:
+	 * @num_रुकोchks:
 	 *
-	 * The number of wait checks to perform as part of this job. This
-	 * defines the length of the array pointed to by @waitchks.
+	 * The number of रुको checks to perक्रमm as part of this job. This
+	 * defines the length of the array poपूर्णांकed to by @रुकोchks.
 	 */
-	__u32 num_waitchks;
+	__u32 num_रुकोchks;
 
 	/**
-	 * @waitchk_mask:
+	 * @रुकोchk_mask:
 	 *
-	 * Bitmask of valid wait checks.
+	 * Biपंचांगask of valid रुको checks.
 	 */
-	__u32 waitchk_mask;
+	__u32 रुकोchk_mask;
 
 	/**
-	 * @timeout:
+	 * @समयout:
 	 *
-	 * Timeout, in milliseconds, before this job is cancelled.
+	 * Timeout, in milliseconds, beक्रमe this job is cancelled.
 	 */
-	__u32 timeout;
+	__u32 समयout;
 
 	/**
 	 * @syncpts:
 	 *
-	 * A pointer to an array of &struct drm_tegra_syncpt structures that
-	 * specify the syncpoint operations performed as part of this job.
+	 * A poपूर्णांकer to an array of &काष्ठा drm_tegra_syncpt काष्ठाures that
+	 * specअगरy the syncpoपूर्णांक operations perक्रमmed as part of this job.
 	 * The number of elements in the array must be equal to the value
 	 * given by @num_syncpts.
 	 */
@@ -476,7 +477,7 @@ struct drm_tegra_submit {
 	/**
 	 * @cmdbufs:
 	 *
-	 * A pointer to an array of &struct drm_tegra_cmdbuf structures that
+	 * A poपूर्णांकer to an array of &काष्ठा drm_tegra_cmdbuf काष्ठाures that
 	 * define the command buffers to execute as part of this job. The
 	 * number of elements in the array must be equal to the value given
 	 * by @num_syncpts.
@@ -486,53 +487,53 @@ struct drm_tegra_submit {
 	/**
 	 * @relocs:
 	 *
-	 * A pointer to an array of &struct drm_tegra_reloc structures that
-	 * specify the relocations that need to be performed before executing
+	 * A poपूर्णांकer to an array of &काष्ठा drm_tegra_reloc काष्ठाures that
+	 * specअगरy the relocations that need to be perक्रमmed beक्रमe executing
 	 * this job. The number of elements in the array must be equal to the
 	 * value given by @num_relocs.
 	 */
 	__u64 relocs;
 
 	/**
-	 * @waitchks:
+	 * @रुकोchks:
 	 *
-	 * A pointer to an array of &struct drm_tegra_waitchk structures that
-	 * specify the wait checks to be performed while executing this job.
+	 * A poपूर्णांकer to an array of &काष्ठा drm_tegra_रुकोchk काष्ठाures that
+	 * specअगरy the रुको checks to be perक्रमmed जबतक executing this job.
 	 * The number of elements in the array must be equal to the value
-	 * given by @num_waitchks.
+	 * given by @num_रुकोchks.
 	 */
-	__u64 waitchks;
+	__u64 रुकोchks;
 
 	/**
 	 * @fence:
 	 *
-	 * The threshold of the syncpoint associated with this job after it
+	 * The threshold of the syncpoपूर्णांक associated with this job after it
 	 * has been completed. Set by the kernel upon successful completion of
 	 * the IOCTL. This can be used with the DRM_TEGRA_SYNCPT_WAIT IOCTL to
-	 * wait for this job to be finished.
+	 * रुको क्रम this job to be finished.
 	 */
 	__u32 fence;
 
 	/**
 	 * @reserved:
 	 *
-	 * This field is reserved for future use. Must be 0.
+	 * This field is reserved क्रम future use. Must be 0.
 	 */
 	__u32 reserved[5];
-};
+पूर्ण;
 
-#define DRM_TEGRA_GEM_TILING_MODE_PITCH 0
-#define DRM_TEGRA_GEM_TILING_MODE_TILED 1
-#define DRM_TEGRA_GEM_TILING_MODE_BLOCK 2
+#घोषणा DRM_TEGRA_GEM_TILING_MODE_PITCH 0
+#घोषणा DRM_TEGRA_GEM_TILING_MODE_TILED 1
+#घोषणा DRM_TEGRA_GEM_TILING_MODE_BLOCK 2
 
 /**
- * struct drm_tegra_gem_set_tiling - parameters for the set tiling IOCTL
+ * काष्ठा drm_tegra_gem_set_tiling - parameters क्रम the set tiling IOCTL
  */
-struct drm_tegra_gem_set_tiling {
+काष्ठा drm_tegra_gem_set_tiling अणु
 	/**
 	 * @handle:
 	 *
-	 * Handle to the GEM object for which to set the tiling parameters.
+	 * Handle to the GEM object क्रम which to set the tiling parameters.
 	 */
 	__u32 handle;
 
@@ -542,20 +543,20 @@ struct drm_tegra_gem_set_tiling {
 	 * The tiling mode to set. Must be one of:
 	 *
 	 * DRM_TEGRA_GEM_TILING_MODE_PITCH
-	 *   pitch linear format
+	 *   pitch linear क्रमmat
 	 *
 	 * DRM_TEGRA_GEM_TILING_MODE_TILED
-	 *   16x16 tiling format
+	 *   16x16 tiling क्रमmat
 	 *
 	 * DRM_TEGRA_GEM_TILING_MODE_BLOCK
-	 *   16Bx2 tiling format
+	 *   16Bx2 tiling क्रमmat
 	 */
 	__u32 mode;
 
 	/**
 	 * @value:
 	 *
-	 * The value to set for the tiling mode parameter.
+	 * The value to set क्रम the tiling mode parameter.
 	 */
 	__u32 value;
 
@@ -565,16 +566,16 @@ struct drm_tegra_gem_set_tiling {
 	 * Structure padding that may be used in the future. Must be 0.
 	 */
 	__u32 pad;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_gem_get_tiling - parameters for the get tiling IOCTL
+ * काष्ठा drm_tegra_gem_get_tiling - parameters क्रम the get tiling IOCTL
  */
-struct drm_tegra_gem_get_tiling {
+काष्ठा drm_tegra_gem_get_tiling अणु
 	/**
 	 * @handle:
 	 *
-	 * Handle to the GEM object for which to query the tiling parameters.
+	 * Handle to the GEM object क्रम which to query the tiling parameters.
 	 */
 	__u32 handle;
 
@@ -600,38 +601,38 @@ struct drm_tegra_gem_get_tiling {
 	 * Structure padding that may be used in the future. Must be 0.
 	 */
 	__u32 pad;
-};
+पूर्ण;
 
-#define DRM_TEGRA_GEM_BOTTOM_UP		(1 << 0)
-#define DRM_TEGRA_GEM_FLAGS		(DRM_TEGRA_GEM_BOTTOM_UP)
+#घोषणा DRM_TEGRA_GEM_BOTTOM_UP		(1 << 0)
+#घोषणा DRM_TEGRA_GEM_FLAGS		(DRM_TEGRA_GEM_BOTTOM_UP)
 
 /**
- * struct drm_tegra_gem_set_flags - parameters for the set flags IOCTL
+ * काष्ठा drm_tegra_gem_set_flags - parameters क्रम the set flags IOCTL
  */
-struct drm_tegra_gem_set_flags {
+काष्ठा drm_tegra_gem_set_flags अणु
 	/**
 	 * @handle:
 	 *
-	 * Handle to the GEM object for which to set the flags.
+	 * Handle to the GEM object क्रम which to set the flags.
 	 */
 	__u32 handle;
 
 	/**
 	 * @flags:
 	 *
-	 * The flags to set for the GEM object.
+	 * The flags to set क्रम the GEM object.
 	 */
 	__u32 flags;
-};
+पूर्ण;
 
 /**
- * struct drm_tegra_gem_get_flags - parameters for the get flags IOCTL
+ * काष्ठा drm_tegra_gem_get_flags - parameters क्रम the get flags IOCTL
  */
-struct drm_tegra_gem_get_flags {
+काष्ठा drm_tegra_gem_get_flags अणु
 	/**
 	 * @handle:
 	 *
-	 * Handle to the GEM object for which to query the flags.
+	 * Handle to the GEM object क्रम which to query the flags.
 	 */
 	__u32 handle;
 
@@ -642,40 +643,40 @@ struct drm_tegra_gem_get_flags {
 	 * kernel upon successful completion of the IOCTL.
 	 */
 	__u32 flags;
-};
+पूर्ण;
 
-#define DRM_TEGRA_GEM_CREATE		0x00
-#define DRM_TEGRA_GEM_MMAP		0x01
-#define DRM_TEGRA_SYNCPT_READ		0x02
-#define DRM_TEGRA_SYNCPT_INCR		0x03
-#define DRM_TEGRA_SYNCPT_WAIT		0x04
-#define DRM_TEGRA_OPEN_CHANNEL		0x05
-#define DRM_TEGRA_CLOSE_CHANNEL		0x06
-#define DRM_TEGRA_GET_SYNCPT		0x07
-#define DRM_TEGRA_SUBMIT		0x08
-#define DRM_TEGRA_GET_SYNCPT_BASE	0x09
-#define DRM_TEGRA_GEM_SET_TILING	0x0a
-#define DRM_TEGRA_GEM_GET_TILING	0x0b
-#define DRM_TEGRA_GEM_SET_FLAGS		0x0c
-#define DRM_TEGRA_GEM_GET_FLAGS		0x0d
+#घोषणा DRM_TEGRA_GEM_CREATE		0x00
+#घोषणा DRM_TEGRA_GEM_MMAP		0x01
+#घोषणा DRM_TEGRA_SYNCPT_READ		0x02
+#घोषणा DRM_TEGRA_SYNCPT_INCR		0x03
+#घोषणा DRM_TEGRA_SYNCPT_WAIT		0x04
+#घोषणा DRM_TEGRA_OPEN_CHANNEL		0x05
+#घोषणा DRM_TEGRA_CLOSE_CHANNEL		0x06
+#घोषणा DRM_TEGRA_GET_SYNCPT		0x07
+#घोषणा DRM_TEGRA_SUBMIT		0x08
+#घोषणा DRM_TEGRA_GET_SYNCPT_BASE	0x09
+#घोषणा DRM_TEGRA_GEM_SET_TILING	0x0a
+#घोषणा DRM_TEGRA_GEM_GET_TILING	0x0b
+#घोषणा DRM_TEGRA_GEM_SET_FLAGS		0x0c
+#घोषणा DRM_TEGRA_GEM_GET_FLAGS		0x0d
 
-#define DRM_IOCTL_TEGRA_GEM_CREATE DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_CREATE, struct drm_tegra_gem_create)
-#define DRM_IOCTL_TEGRA_GEM_MMAP DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_MMAP, struct drm_tegra_gem_mmap)
-#define DRM_IOCTL_TEGRA_SYNCPT_READ DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_SYNCPT_READ, struct drm_tegra_syncpt_read)
-#define DRM_IOCTL_TEGRA_SYNCPT_INCR DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_SYNCPT_INCR, struct drm_tegra_syncpt_incr)
-#define DRM_IOCTL_TEGRA_SYNCPT_WAIT DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_SYNCPT_WAIT, struct drm_tegra_syncpt_wait)
-#define DRM_IOCTL_TEGRA_OPEN_CHANNEL DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_OPEN_CHANNEL, struct drm_tegra_open_channel)
-#define DRM_IOCTL_TEGRA_CLOSE_CHANNEL DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_CLOSE_CHANNEL, struct drm_tegra_close_channel)
-#define DRM_IOCTL_TEGRA_GET_SYNCPT DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GET_SYNCPT, struct drm_tegra_get_syncpt)
-#define DRM_IOCTL_TEGRA_SUBMIT DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_SUBMIT, struct drm_tegra_submit)
-#define DRM_IOCTL_TEGRA_GET_SYNCPT_BASE DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GET_SYNCPT_BASE, struct drm_tegra_get_syncpt_base)
-#define DRM_IOCTL_TEGRA_GEM_SET_TILING DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_SET_TILING, struct drm_tegra_gem_set_tiling)
-#define DRM_IOCTL_TEGRA_GEM_GET_TILING DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_GET_TILING, struct drm_tegra_gem_get_tiling)
-#define DRM_IOCTL_TEGRA_GEM_SET_FLAGS DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_SET_FLAGS, struct drm_tegra_gem_set_flags)
-#define DRM_IOCTL_TEGRA_GEM_GET_FLAGS DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_GET_FLAGS, struct drm_tegra_gem_get_flags)
+#घोषणा DRM_IOCTL_TEGRA_GEM_CREATE DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_CREATE, काष्ठा drm_tegra_gem_create)
+#घोषणा DRM_IOCTL_TEGRA_GEM_MMAP DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_MMAP, काष्ठा drm_tegra_gem_mmap)
+#घोषणा DRM_IOCTL_TEGRA_SYNCPT_READ DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_SYNCPT_READ, काष्ठा drm_tegra_syncpt_पढ़ो)
+#घोषणा DRM_IOCTL_TEGRA_SYNCPT_INCR DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_SYNCPT_INCR, काष्ठा drm_tegra_syncpt_incr)
+#घोषणा DRM_IOCTL_TEGRA_SYNCPT_WAIT DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_SYNCPT_WAIT, काष्ठा drm_tegra_syncpt_रुको)
+#घोषणा DRM_IOCTL_TEGRA_OPEN_CHANNEL DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_OPEN_CHANNEL, काष्ठा drm_tegra_खोलो_channel)
+#घोषणा DRM_IOCTL_TEGRA_CLOSE_CHANNEL DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_CLOSE_CHANNEL, काष्ठा drm_tegra_बंद_channel)
+#घोषणा DRM_IOCTL_TEGRA_GET_SYNCPT DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GET_SYNCPT, काष्ठा drm_tegra_get_syncpt)
+#घोषणा DRM_IOCTL_TEGRA_SUBMIT DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_SUBMIT, काष्ठा drm_tegra_submit)
+#घोषणा DRM_IOCTL_TEGRA_GET_SYNCPT_BASE DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GET_SYNCPT_BASE, काष्ठा drm_tegra_get_syncpt_base)
+#घोषणा DRM_IOCTL_TEGRA_GEM_SET_TILING DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_SET_TILING, काष्ठा drm_tegra_gem_set_tiling)
+#घोषणा DRM_IOCTL_TEGRA_GEM_GET_TILING DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_GET_TILING, काष्ठा drm_tegra_gem_get_tiling)
+#घोषणा DRM_IOCTL_TEGRA_GEM_SET_FLAGS DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_SET_FLAGS, काष्ठा drm_tegra_gem_set_flags)
+#घोषणा DRM_IOCTL_TEGRA_GEM_GET_FLAGS DRM_IOWR(DRM_COMMAND_BASE + DRM_TEGRA_GEM_GET_FLAGS, काष्ठा drm_tegra_gem_get_flags)
 
-#if defined(__cplusplus)
-}
-#endif
+#अगर defined(__cplusplus)
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

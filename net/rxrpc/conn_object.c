@@ -1,247 +1,248 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* RxRPC virtual connection handler, common bits.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* RxRPC भव connection handler, common bits.
  *
  * Copyright (C) 2007, 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/net.h>
-#include <linux/skbuff.h>
-#include "ar-internal.h"
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/net.h>
+#समावेश <linux/skbuff.h>
+#समावेश "ar-internal.h"
 
 /*
  * Time till a connection expires after last use (in seconds).
  */
-unsigned int __read_mostly rxrpc_connection_expiry = 10 * 60;
-unsigned int __read_mostly rxrpc_closed_conn_expiry = 10;
+अचिन्हित पूर्णांक __पढ़ो_mostly rxrpc_connection_expiry = 10 * 60;
+अचिन्हित पूर्णांक __पढ़ो_mostly rxrpc_बंदd_conn_expiry = 10;
 
-static void rxrpc_destroy_connection(struct rcu_head *);
+अटल व्योम rxrpc_destroy_connection(काष्ठा rcu_head *);
 
-static void rxrpc_connection_timer(struct timer_list *timer)
-{
-	struct rxrpc_connection *conn =
-		container_of(timer, struct rxrpc_connection, timer);
+अटल व्योम rxrpc_connection_समयr(काष्ठा समयr_list *समयr)
+अणु
+	काष्ठा rxrpc_connection *conn =
+		container_of(समयr, काष्ठा rxrpc_connection, समयr);
 
 	rxrpc_queue_conn(conn);
-}
+पूर्ण
 
 /*
  * allocate a new connection
  */
-struct rxrpc_connection *rxrpc_alloc_connection(gfp_t gfp)
-{
-	struct rxrpc_connection *conn;
+काष्ठा rxrpc_connection *rxrpc_alloc_connection(gfp_t gfp)
+अणु
+	काष्ठा rxrpc_connection *conn;
 
 	_enter("");
 
-	conn = kzalloc(sizeof(struct rxrpc_connection), gfp);
-	if (conn) {
+	conn = kzalloc(माप(काष्ठा rxrpc_connection), gfp);
+	अगर (conn) अणु
 		INIT_LIST_HEAD(&conn->cache_link);
-		timer_setup(&conn->timer, &rxrpc_connection_timer, 0);
+		समयr_setup(&conn->समयr, &rxrpc_connection_समयr, 0);
 		INIT_WORK(&conn->processor, &rxrpc_process_connection);
 		INIT_LIST_HEAD(&conn->proc_link);
 		INIT_LIST_HEAD(&conn->link);
 		skb_queue_head_init(&conn->rx_queue);
 		conn->security = &rxrpc_no_security;
 		spin_lock_init(&conn->state_lock);
-		conn->debug_id = atomic_inc_return(&rxrpc_debug_id);
-		conn->idle_timestamp = jiffies;
-	}
+		conn->debug_id = atomic_inc_वापस(&rxrpc_debug_id);
+		conn->idle_बारtamp = jअगरfies;
+	पूर्ण
 
 	_leave(" = %p{%d}", conn, conn ? conn->debug_id : 0);
-	return conn;
-}
+	वापस conn;
+पूर्ण
 
 /*
  * Look up a connection in the cache by protocol parameters.
  *
- * If successful, a pointer to the connection is returned, but no ref is taken.
- * NULL is returned if there is no match.
+ * If successful, a poपूर्णांकer to the connection is वापसed, but no ref is taken.
+ * शून्य is वापसed अगर there is no match.
  *
- * When searching for a service call, if we find a peer but no connection, we
- * return that through *_peer in case we need to create a new service call.
+ * When searching क्रम a service call, अगर we find a peer but no connection, we
+ * वापस that through *_peer in हाल we need to create a new service call.
  *
- * The caller must be holding the RCU read lock.
+ * The caller must be holding the RCU पढ़ो lock.
  */
-struct rxrpc_connection *rxrpc_find_connection_rcu(struct rxrpc_local *local,
-						   struct sk_buff *skb,
-						   struct rxrpc_peer **_peer)
-{
-	struct rxrpc_connection *conn;
-	struct rxrpc_conn_proto k;
-	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	struct sockaddr_rxrpc srx;
-	struct rxrpc_peer *peer;
+काष्ठा rxrpc_connection *rxrpc_find_connection_rcu(काष्ठा rxrpc_local *local,
+						   काष्ठा sk_buff *skb,
+						   काष्ठा rxrpc_peer **_peer)
+अणु
+	काष्ठा rxrpc_connection *conn;
+	काष्ठा rxrpc_conn_proto k;
+	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	काष्ठा sockaddr_rxrpc srx;
+	काष्ठा rxrpc_peer *peer;
 
 	_enter(",%x", sp->hdr.cid & RXRPC_CIDMASK);
 
-	if (rxrpc_extract_addr_from_skb(&srx, skb) < 0)
-		goto not_found;
+	अगर (rxrpc_extract_addr_from_skb(&srx, skb) < 0)
+		जाओ not_found;
 
-	if (srx.transport.family != local->srx.transport.family &&
+	अगर (srx.transport.family != local->srx.transport.family &&
 	    (srx.transport.family == AF_INET &&
-	     local->srx.transport.family != AF_INET6)) {
+	     local->srx.transport.family != AF_INET6)) अणु
 		pr_warn_ratelimited("AF_RXRPC: Protocol mismatch %u not %u\n",
 				    srx.transport.family,
 				    local->srx.transport.family);
-		goto not_found;
-	}
+		जाओ not_found;
+	पूर्ण
 
 	k.epoch	= sp->hdr.epoch;
 	k.cid	= sp->hdr.cid & RXRPC_CIDMASK;
 
-	if (rxrpc_to_server(sp)) {
+	अगर (rxrpc_to_server(sp)) अणु
 		/* We need to look up service connections by the full protocol
-		 * parameter set.  We look up the peer first as an intermediate
+		 * parameter set.  We look up the peer first as an पूर्णांकermediate
 		 * step and then the connection from the peer's tree.
 		 */
 		peer = rxrpc_lookup_peer_rcu(local, &srx);
-		if (!peer)
-			goto not_found;
+		अगर (!peer)
+			जाओ not_found;
 		*_peer = peer;
 		conn = rxrpc_find_service_conn_rcu(peer, skb);
-		if (!conn || atomic_read(&conn->usage) == 0)
-			goto not_found;
+		अगर (!conn || atomic_पढ़ो(&conn->usage) == 0)
+			जाओ not_found;
 		_leave(" = %p", conn);
-		return conn;
-	} else {
+		वापस conn;
+	पूर्ण अन्यथा अणु
 		/* Look up client connections by connection ID alone as their
-		 * IDs are unique for this machine.
+		 * IDs are unique क्रम this machine.
 		 */
 		conn = idr_find(&rxrpc_client_conn_ids,
 				sp->hdr.cid >> RXRPC_CIDSHIFT);
-		if (!conn || atomic_read(&conn->usage) == 0) {
+		अगर (!conn || atomic_पढ़ो(&conn->usage) == 0) अणु
 			_debug("no conn");
-			goto not_found;
-		}
+			जाओ not_found;
+		पूर्ण
 
-		if (conn->proto.epoch != k.epoch ||
+		अगर (conn->proto.epoch != k.epoch ||
 		    conn->params.local != local)
-			goto not_found;
+			जाओ not_found;
 
 		peer = conn->params.peer;
-		switch (srx.transport.family) {
-		case AF_INET:
-			if (peer->srx.transport.sin.sin_port !=
+		चयन (srx.transport.family) अणु
+		हाल AF_INET:
+			अगर (peer->srx.transport.sin.sin_port !=
 			    srx.transport.sin.sin_port ||
 			    peer->srx.transport.sin.sin_addr.s_addr !=
 			    srx.transport.sin.sin_addr.s_addr)
-				goto not_found;
-			break;
-#ifdef CONFIG_AF_RXRPC_IPV6
-		case AF_INET6:
-			if (peer->srx.transport.sin6.sin6_port !=
+				जाओ not_found;
+			अवरोध;
+#अगर_घोषित CONFIG_AF_RXRPC_IPV6
+		हाल AF_INET6:
+			अगर (peer->srx.transport.sin6.sin6_port !=
 			    srx.transport.sin6.sin6_port ||
-			    memcmp(&peer->srx.transport.sin6.sin6_addr,
+			    स_भेद(&peer->srx.transport.sin6.sin6_addr,
 				   &srx.transport.sin6.sin6_addr,
-				   sizeof(struct in6_addr)) != 0)
-				goto not_found;
-			break;
-#endif
-		default:
+				   माप(काष्ठा in6_addr)) != 0)
+				जाओ not_found;
+			अवरोध;
+#पूर्ण_अगर
+		शेष:
 			BUG();
-		}
+		पूर्ण
 
 		_leave(" = %p", conn);
-		return conn;
-	}
+		वापस conn;
+	पूर्ण
 
 not_found:
 	_leave(" = NULL");
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Disconnect a call and clear any channel it occupies when that call
  * terminates.  The caller must hold the channel_lock and must release the
  * call's ref on the connection.
  */
-void __rxrpc_disconnect_call(struct rxrpc_connection *conn,
-			     struct rxrpc_call *call)
-{
-	struct rxrpc_channel *chan =
+व्योम __rxrpc_disconnect_call(काष्ठा rxrpc_connection *conn,
+			     काष्ठा rxrpc_call *call)
+अणु
+	काष्ठा rxrpc_channel *chan =
 		&conn->channels[call->cid & RXRPC_CHANNELMASK];
 
 	_enter("%d,%x", conn->debug_id, call->cid);
 
-	if (rcu_access_pointer(chan->call) == call) {
-		/* Save the result of the call so that we can repeat it if necessary
+	अगर (rcu_access_poपूर्णांकer(chan->call) == call) अणु
+		/* Save the result of the call so that we can repeat it अगर necessary
 		 * through the channel, whilst disposing of the actual call record.
 		 */
 		trace_rxrpc_disconnect_call(call);
-		switch (call->completion) {
-		case RXRPC_CALL_SUCCEEDED:
+		चयन (call->completion) अणु
+		हाल RXRPC_CALL_SUCCEEDED:
 			chan->last_seq = call->rx_hard_ack;
 			chan->last_type = RXRPC_PACKET_TYPE_ACK;
-			break;
-		case RXRPC_CALL_LOCALLY_ABORTED:
-			chan->last_abort = call->abort_code;
+			अवरोध;
+		हाल RXRPC_CALL_LOCALLY_ABORTED:
+			chan->last_पात = call->पात_code;
 			chan->last_type = RXRPC_PACKET_TYPE_ABORT;
-			break;
-		default:
-			chan->last_abort = RX_USER_ABORT;
+			अवरोध;
+		शेष:
+			chan->last_पात = RX_USER_ABORT;
 			chan->last_type = RXRPC_PACKET_TYPE_ABORT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Sync with rxrpc_conn_retransmit(). */
 		smp_wmb();
 		chan->last_call = chan->call_id;
 		chan->call_id = chan->call_counter;
 
-		rcu_assign_pointer(chan->call, NULL);
-	}
+		rcu_assign_poपूर्णांकer(chan->call, शून्य);
+	पूर्ण
 
 	_leave("");
-}
+पूर्ण
 
 /*
  * Disconnect a call and clear any channel it occupies when that call
  * terminates.
  */
-void rxrpc_disconnect_call(struct rxrpc_call *call)
-{
-	struct rxrpc_connection *conn = call->conn;
+व्योम rxrpc_disconnect_call(काष्ठा rxrpc_call *call)
+अणु
+	काष्ठा rxrpc_connection *conn = call->conn;
 
 	call->peer->cong_cwnd = call->cong_cwnd;
 
-	if (!hlist_unhashed(&call->error_link)) {
+	अगर (!hlist_unhashed(&call->error_link)) अणु
 		spin_lock_bh(&call->peer->lock);
 		hlist_del_rcu(&call->error_link);
 		spin_unlock_bh(&call->peer->lock);
-	}
+	पूर्ण
 
-	if (rxrpc_is_client_call(call))
-		return rxrpc_disconnect_client_call(conn->bundle, call);
+	अगर (rxrpc_is_client_call(call))
+		वापस rxrpc_disconnect_client_call(conn->bundle, call);
 
 	spin_lock(&conn->bundle->channel_lock);
 	__rxrpc_disconnect_call(conn, call);
 	spin_unlock(&conn->bundle->channel_lock);
 
 	set_bit(RXRPC_CALL_DISCONNECTED, &call->flags);
-	conn->idle_timestamp = jiffies;
-}
+	conn->idle_बारtamp = jअगरfies;
+पूर्ण
 
 /*
  * Kill off a connection.
  */
-void rxrpc_kill_connection(struct rxrpc_connection *conn)
-{
-	struct rxrpc_net *rxnet = conn->params.local->rxnet;
+व्योम rxrpc_समाप्त_connection(काष्ठा rxrpc_connection *conn)
+अणु
+	काष्ठा rxrpc_net *rxnet = conn->params.local->rxnet;
 
-	ASSERT(!rcu_access_pointer(conn->channels[0].call) &&
-	       !rcu_access_pointer(conn->channels[1].call) &&
-	       !rcu_access_pointer(conn->channels[2].call) &&
-	       !rcu_access_pointer(conn->channels[3].call));
+	ASSERT(!rcu_access_poपूर्णांकer(conn->channels[0].call) &&
+	       !rcu_access_poपूर्णांकer(conn->channels[1].call) &&
+	       !rcu_access_poपूर्णांकer(conn->channels[2].call) &&
+	       !rcu_access_poपूर्णांकer(conn->channels[3].call));
 	ASSERT(list_empty(&conn->cache_link));
 
-	write_lock(&rxnet->conn_lock);
+	ग_लिखो_lock(&rxnet->conn_lock);
 	list_del_init(&conn->proc_link);
-	write_unlock(&rxnet->conn_lock);
+	ग_लिखो_unlock(&rxnet->conn_lock);
 
 	/* Drain the Rx queue.  Note that even though we've unpublished, an
 	 * incoming packet could still be being added to our Rx queue, so we
@@ -249,115 +250,115 @@ void rxrpc_kill_connection(struct rxrpc_connection *conn)
 	 */
 	rxrpc_purge_queue(&conn->rx_queue);
 
-	/* Leave final destruction to RCU.  The connection processor work item
+	/* Leave final deकाष्ठाion to RCU.  The connection processor work item
 	 * must carry a ref on the connection to prevent us getting here whilst
 	 * it is queued or running.
 	 */
 	call_rcu(&conn->rcu, rxrpc_destroy_connection);
-}
+पूर्ण
 
 /*
  * Queue a connection's work processor, getting a ref to pass to the work
  * queue.
  */
-bool rxrpc_queue_conn(struct rxrpc_connection *conn)
-{
-	const void *here = __builtin_return_address(0);
-	int n = atomic_fetch_add_unless(&conn->usage, 1, 0);
-	if (n == 0)
-		return false;
-	if (rxrpc_queue_work(&conn->processor))
+bool rxrpc_queue_conn(काष्ठा rxrpc_connection *conn)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
+	पूर्णांक n = atomic_fetch_add_unless(&conn->usage, 1, 0);
+	अगर (n == 0)
+		वापस false;
+	अगर (rxrpc_queue_work(&conn->processor))
 		trace_rxrpc_conn(conn->debug_id, rxrpc_conn_queued, n + 1, here);
-	else
+	अन्यथा
 		rxrpc_put_connection(conn);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Note the re-emergence of a connection.
  */
-void rxrpc_see_connection(struct rxrpc_connection *conn)
-{
-	const void *here = __builtin_return_address(0);
-	if (conn) {
-		int n = atomic_read(&conn->usage);
+व्योम rxrpc_see_connection(काष्ठा rxrpc_connection *conn)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
+	अगर (conn) अणु
+		पूर्णांक n = atomic_पढ़ो(&conn->usage);
 
 		trace_rxrpc_conn(conn->debug_id, rxrpc_conn_seen, n, here);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Get a ref on a connection.
  */
-struct rxrpc_connection *rxrpc_get_connection(struct rxrpc_connection *conn)
-{
-	const void *here = __builtin_return_address(0);
-	int n = atomic_inc_return(&conn->usage);
+काष्ठा rxrpc_connection *rxrpc_get_connection(काष्ठा rxrpc_connection *conn)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
+	पूर्णांक n = atomic_inc_वापस(&conn->usage);
 
 	trace_rxrpc_conn(conn->debug_id, rxrpc_conn_got, n, here);
-	return conn;
-}
+	वापस conn;
+पूर्ण
 
 /*
  * Try to get a ref on a connection.
  */
-struct rxrpc_connection *
-rxrpc_get_connection_maybe(struct rxrpc_connection *conn)
-{
-	const void *here = __builtin_return_address(0);
+काष्ठा rxrpc_connection *
+rxrpc_get_connection_maybe(काष्ठा rxrpc_connection *conn)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
 
-	if (conn) {
-		int n = atomic_fetch_add_unless(&conn->usage, 1, 0);
-		if (n > 0)
+	अगर (conn) अणु
+		पूर्णांक n = atomic_fetch_add_unless(&conn->usage, 1, 0);
+		अगर (n > 0)
 			trace_rxrpc_conn(conn->debug_id, rxrpc_conn_got, n + 1, here);
-		else
-			conn = NULL;
-	}
-	return conn;
-}
+		अन्यथा
+			conn = शून्य;
+	पूर्ण
+	वापस conn;
+पूर्ण
 
 /*
- * Set the service connection reap timer.
+ * Set the service connection reap समयr.
  */
-static void rxrpc_set_service_reap_timer(struct rxrpc_net *rxnet,
-					 unsigned long reap_at)
-{
-	if (rxnet->live)
-		timer_reduce(&rxnet->service_conn_reap_timer, reap_at);
-}
+अटल व्योम rxrpc_set_service_reap_समयr(काष्ठा rxrpc_net *rxnet,
+					 अचिन्हित दीर्घ reap_at)
+अणु
+	अगर (rxnet->live)
+		समयr_reduce(&rxnet->service_conn_reap_समयr, reap_at);
+पूर्ण
 
 /*
  * Release a service connection
  */
-void rxrpc_put_service_conn(struct rxrpc_connection *conn)
-{
-	const void *here = __builtin_return_address(0);
-	unsigned int debug_id = conn->debug_id;
-	int n;
+व्योम rxrpc_put_service_conn(काष्ठा rxrpc_connection *conn)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
+	अचिन्हित पूर्णांक debug_id = conn->debug_id;
+	पूर्णांक n;
 
-	n = atomic_dec_return(&conn->usage);
+	n = atomic_dec_वापस(&conn->usage);
 	trace_rxrpc_conn(debug_id, rxrpc_conn_put_service, n, here);
 	ASSERTCMP(n, >=, 0);
-	if (n == 1)
-		rxrpc_set_service_reap_timer(conn->params.local->rxnet,
-					     jiffies + rxrpc_connection_expiry);
-}
+	अगर (n == 1)
+		rxrpc_set_service_reap_समयr(conn->params.local->rxnet,
+					     jअगरfies + rxrpc_connection_expiry);
+पूर्ण
 
 /*
- * destroy a virtual connection
+ * destroy a भव connection
  */
-static void rxrpc_destroy_connection(struct rcu_head *rcu)
-{
-	struct rxrpc_connection *conn =
-		container_of(rcu, struct rxrpc_connection, rcu);
+अटल व्योम rxrpc_destroy_connection(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा rxrpc_connection *conn =
+		container_of(rcu, काष्ठा rxrpc_connection, rcu);
 
-	_enter("{%d,u=%d}", conn->debug_id, atomic_read(&conn->usage));
+	_enter("{%d,u=%d}", conn->debug_id, atomic_पढ़ो(&conn->usage));
 
-	ASSERTCMP(atomic_read(&conn->usage), ==, 0);
+	ASSERTCMP(atomic_पढ़ो(&conn->usage), ==, 0);
 
 	_net("DESTROY CONN %d", conn->debug_id);
 
-	del_timer_sync(&conn->timer);
+	del_समयr_sync(&conn->समयr);
 	rxrpc_purge_queue(&conn->rx_queue);
 
 	conn->security->clear(conn);
@@ -365,97 +366,97 @@ static void rxrpc_destroy_connection(struct rcu_head *rcu)
 	rxrpc_put_bundle(conn->bundle);
 	rxrpc_put_peer(conn->params.peer);
 
-	if (atomic_dec_and_test(&conn->params.local->rxnet->nr_conns))
+	अगर (atomic_dec_and_test(&conn->params.local->rxnet->nr_conns))
 		wake_up_var(&conn->params.local->rxnet->nr_conns);
 	rxrpc_put_local(conn->params.local);
 
-	kfree(conn);
+	kमुक्त(conn);
 	_leave("");
-}
+पूर्ण
 
 /*
  * reap dead service connections
  */
-void rxrpc_service_connection_reaper(struct work_struct *work)
-{
-	struct rxrpc_connection *conn, *_p;
-	struct rxrpc_net *rxnet =
-		container_of(work, struct rxrpc_net, service_conn_reaper);
-	unsigned long expire_at, earliest, idle_timestamp, now;
+व्योम rxrpc_service_connection_reaper(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rxrpc_connection *conn, *_p;
+	काष्ठा rxrpc_net *rxnet =
+		container_of(work, काष्ठा rxrpc_net, service_conn_reaper);
+	अचिन्हित दीर्घ expire_at, earliest, idle_बारtamp, now;
 
 	LIST_HEAD(graveyard);
 
 	_enter("");
 
-	now = jiffies;
+	now = jअगरfies;
 	earliest = now + MAX_JIFFY_OFFSET;
 
-	write_lock(&rxnet->conn_lock);
-	list_for_each_entry_safe(conn, _p, &rxnet->service_conns, link) {
-		ASSERTCMP(atomic_read(&conn->usage), >, 0);
-		if (likely(atomic_read(&conn->usage) > 1))
-			continue;
-		if (conn->state == RXRPC_CONN_SERVICE_PREALLOC)
-			continue;
+	ग_लिखो_lock(&rxnet->conn_lock);
+	list_क्रम_each_entry_safe(conn, _p, &rxnet->service_conns, link) अणु
+		ASSERTCMP(atomic_पढ़ो(&conn->usage), >, 0);
+		अगर (likely(atomic_पढ़ो(&conn->usage) > 1))
+			जारी;
+		अगर (conn->state == RXRPC_CONN_SERVICE_PREALLOC)
+			जारी;
 
-		if (rxnet->live && !conn->params.local->dead) {
-			idle_timestamp = READ_ONCE(conn->idle_timestamp);
-			expire_at = idle_timestamp + rxrpc_connection_expiry * HZ;
-			if (conn->params.local->service_closed)
-				expire_at = idle_timestamp + rxrpc_closed_conn_expiry * HZ;
+		अगर (rxnet->live && !conn->params.local->dead) अणु
+			idle_बारtamp = READ_ONCE(conn->idle_बारtamp);
+			expire_at = idle_बारtamp + rxrpc_connection_expiry * HZ;
+			अगर (conn->params.local->service_बंदd)
+				expire_at = idle_बारtamp + rxrpc_बंदd_conn_expiry * HZ;
 
 			_debug("reap CONN %d { u=%d,t=%ld }",
-			       conn->debug_id, atomic_read(&conn->usage),
-			       (long)expire_at - (long)now);
+			       conn->debug_id, atomic_पढ़ो(&conn->usage),
+			       (दीर्घ)expire_at - (दीर्घ)now);
 
-			if (time_before(now, expire_at)) {
-				if (time_before(expire_at, earliest))
+			अगर (समय_beक्रमe(now, expire_at)) अणु
+				अगर (समय_beक्रमe(expire_at, earliest))
 					earliest = expire_at;
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		/* The usage count sits at 1 whilst the object is unused on the
 		 * list; we reduce that to 0 to make the object unavailable.
 		 */
-		if (atomic_cmpxchg(&conn->usage, 1, 0) != 1)
-			continue;
-		trace_rxrpc_conn(conn->debug_id, rxrpc_conn_reap_service, 0, NULL);
+		अगर (atomic_cmpxchg(&conn->usage, 1, 0) != 1)
+			जारी;
+		trace_rxrpc_conn(conn->debug_id, rxrpc_conn_reap_service, 0, शून्य);
 
-		if (rxrpc_conn_is_client(conn))
+		अगर (rxrpc_conn_is_client(conn))
 			BUG();
-		else
+		अन्यथा
 			rxrpc_unpublish_service_conn(conn);
 
 		list_move_tail(&conn->link, &graveyard);
-	}
-	write_unlock(&rxnet->conn_lock);
+	पूर्ण
+	ग_लिखो_unlock(&rxnet->conn_lock);
 
-	if (earliest != now + MAX_JIFFY_OFFSET) {
-		_debug("reschedule reaper %ld", (long)earliest - (long)now);
-		ASSERT(time_after(earliest, now));
-		rxrpc_set_service_reap_timer(rxnet, earliest);
-	}
+	अगर (earliest != now + MAX_JIFFY_OFFSET) अणु
+		_debug("reschedule reaper %ld", (दीर्घ)earliest - (दीर्घ)now);
+		ASSERT(समय_after(earliest, now));
+		rxrpc_set_service_reap_समयr(rxnet, earliest);
+	पूर्ण
 
-	while (!list_empty(&graveyard)) {
-		conn = list_entry(graveyard.next, struct rxrpc_connection,
+	जबतक (!list_empty(&graveyard)) अणु
+		conn = list_entry(graveyard.next, काष्ठा rxrpc_connection,
 				  link);
 		list_del_init(&conn->link);
 
-		ASSERTCMP(atomic_read(&conn->usage), ==, 0);
-		rxrpc_kill_connection(conn);
-	}
+		ASSERTCMP(atomic_पढ़ो(&conn->usage), ==, 0);
+		rxrpc_समाप्त_connection(conn);
+	पूर्ण
 
 	_leave("");
-}
+पूर्ण
 
 /*
  * preemptively destroy all the service connection records rather than
- * waiting for them to time out
+ * रुकोing क्रम them to समय out
  */
-void rxrpc_destroy_all_connections(struct rxrpc_net *rxnet)
-{
-	struct rxrpc_connection *conn, *_p;
+व्योम rxrpc_destroy_all_connections(काष्ठा rxrpc_net *rxnet)
+अणु
+	काष्ठा rxrpc_connection *conn, *_p;
 	bool leak = false;
 
 	_enter("");
@@ -463,24 +464,24 @@ void rxrpc_destroy_all_connections(struct rxrpc_net *rxnet)
 	atomic_dec(&rxnet->nr_conns);
 	rxrpc_destroy_all_client_connections(rxnet);
 
-	del_timer_sync(&rxnet->service_conn_reap_timer);
+	del_समयr_sync(&rxnet->service_conn_reap_समयr);
 	rxrpc_queue_work(&rxnet->service_conn_reaper);
 	flush_workqueue(rxrpc_workqueue);
 
-	write_lock(&rxnet->conn_lock);
-	list_for_each_entry_safe(conn, _p, &rxnet->service_conns, link) {
+	ग_लिखो_lock(&rxnet->conn_lock);
+	list_क्रम_each_entry_safe(conn, _p, &rxnet->service_conns, link) अणु
 		pr_err("AF_RXRPC: Leaked conn %p {%d}\n",
-		       conn, atomic_read(&conn->usage));
+		       conn, atomic_पढ़ो(&conn->usage));
 		leak = true;
-	}
-	write_unlock(&rxnet->conn_lock);
+	पूर्ण
+	ग_लिखो_unlock(&rxnet->conn_lock);
 	BUG_ON(leak);
 
 	ASSERT(list_empty(&rxnet->conn_proc_list));
 
-	/* We need to wait for the connections to be destroyed by RCU as they
+	/* We need to रुको क्रम the connections to be destroyed by RCU as they
 	 * pin things that we still need to get rid of.
 	 */
-	wait_var_event(&rxnet->nr_conns, !atomic_read(&rxnet->nr_conns));
+	रुको_var_event(&rxnet->nr_conns, !atomic_पढ़ो(&rxnet->nr_conns));
 	_leave("");
-}
+पूर्ण

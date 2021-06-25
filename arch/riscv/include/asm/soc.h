@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  * Copyright (C) 2020 Google, Inc
  */
 
-#ifndef _ASM_RISCV_SOC_H
-#define _ASM_RISCV_SOC_H
+#अगर_अघोषित _ASM_RISCV_SOC_H
+#घोषणा _ASM_RISCV_SOC_H
 
-#include <linux/of.h>
-#include <linux/linkage.h>
-#include <linux/types.h>
+#समावेश <linux/of.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/types.h>
 
-#define SOC_EARLY_INIT_DECLARE(name, compat, fn)			\
-	static const struct of_device_id __soc_early_init__##name	\
+#घोषणा SOC_EARLY_INIT_DECLARE(name, compat, fn)			\
+	अटल स्थिर काष्ठा of_device_id __soc_early_init__##name	\
 		__used __section("__soc_early_init_table")		\
-		 = { .compatible = compat, .data = fn  }
+		 = अणु .compatible = compat, .data = fn  पूर्ण
 
-void soc_early_init(void);
+व्योम soc_early_init(व्योम);
 
-extern unsigned long __soc_early_init_table_start;
-extern unsigned long __soc_early_init_table_end;
+बाह्य अचिन्हित दीर्घ __soc_early_init_table_start;
+बाह्य अचिन्हित दीर्घ __soc_early_init_table_end;
 
-#endif
+#पूर्ण_अगर

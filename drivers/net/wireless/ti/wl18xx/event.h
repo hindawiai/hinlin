@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl18xx
  *
  * Copyright (C) 2012 Texas Instruments. All rights reserved.
  */
 
-#ifndef __WL18XX_EVENT_H__
-#define __WL18XX_EVENT_H__
+#अगर_अघोषित __WL18XX_EVENT_H__
+#घोषणा __WL18XX_EVENT_H__
 
-#include "../wlcore/wlcore.h"
+#समावेश "../wlcore/wlcore.h"
 
-enum {
+क्रमागत अणु
 	SCAN_COMPLETE_EVENT_ID                   = BIT(8),
 	RADAR_DETECTED_EVENT_ID                  = BIT(9),
 	CHANNEL_SWITCH_COMPLETE_EVENT_ID         = BIT(10),
@@ -29,48 +30,48 @@ enum {
 	SMART_CONFIG_DECODE_EVENT_ID             = BIT(23),
 	TIME_SYNC_EVENT_ID                       = BIT(24),
 	FW_LOGGER_INDICATION			= BIT(25),
-};
+पूर्ण;
 
-enum wl18xx_radar_types {
+क्रमागत wl18xx_radar_types अणु
 	RADAR_TYPE_NONE,
 	RADAR_TYPE_REGULAR,
 	RADAR_TYPE_CHIRP
-};
+पूर्ण;
 
-struct wl18xx_event_mailbox {
+काष्ठा wl18xx_event_mailbox अणु
 	__le32 events_vector;
 
 	u8 number_of_scan_results;
 	u8 number_of_sched_scan_results;
 
-	__le16 channel_switch_role_id_bitmap;
+	__le16 channel_चयन_role_id_biपंचांगap;
 
 	s8 rssi_snr_trigger_metric[NUM_OF_RSSI_SNR_TRIGGERS];
 
-	/* bitmap of removed links */
-	__le32 hlid_removed_bitmap;
+	/* biपंचांगap of हटाओd links */
+	__le32 hlid_हटाओd_biपंचांगap;
 
-	/* rx ba constraint */
-	__le16 rx_ba_role_id_bitmap; /* 0xfff means any role. */
-	__le16 rx_ba_allowed_bitmap;
+	/* rx ba स्थिरraपूर्णांक */
+	__le16 rx_ba_role_id_biपंचांगap; /* 0xfff means any role. */
+	__le16 rx_ba_allowed_biपंचांगap;
 
-	/* bitmap of roc completed (by role id) */
-	__le16 roc_completed_bitmap;
+	/* biपंचांगap of roc completed (by role id) */
+	__le16 roc_completed_biपंचांगap;
 
-	/* bitmap of stations (by role id) with bss loss */
-	__le16 bss_loss_bitmap;
+	/* biपंचांगap of stations (by role id) with bss loss */
+	__le16 bss_loss_biपंचांगap;
 
-	/* bitmap of stations (by HLID) which exceeded max tx retries */
-	__le16 tx_retry_exceeded_bitmap;
+	/* biपंचांगap of stations (by HLID) which exceeded max tx retries */
+	__le16 tx_retry_exceeded_biपंचांगap;
 
-	/* time sync high msb*/
-	__le16 time_sync_tsf_high_msb;
+	/* समय sync high msb*/
+	__le16 समय_sync_tsf_high_msb;
 
-	/* bitmap of inactive stations (by HLID) */
-	__le16 inactive_sta_bitmap;
+	/* biपंचांगap of inactive stations (by HLID) */
+	__le16 inactive_sta_biपंचांगap;
 
-	/* time sync high lsb*/
-	__le16 time_sync_tsf_high_lsb;
+	/* समय sync high lsb*/
+	__le16 समय_sync_tsf_high_lsb;
 
 	/* rx BA win size indicated by RX_BA_WIN_SIZE_CHANGE_EVENT_ID */
 	u8 rx_ba_role_id;
@@ -91,20 +92,20 @@ struct wl18xx_event_mailbox {
 	u8 sc_sync_channel;
 	u8 sc_sync_band;
 
-	/* time sync low msb*/
-	__le16 time_sync_tsf_low_msb;
+	/* समय sync low msb*/
+	__le16 समय_sync_tsf_low_msb;
 
 	/* radar detect */
 	u8 radar_channel;
 	u8 radar_type;
 
-	/* time sync low lsb*/
-	__le16 time_sync_tsf_low_lsb;
+	/* समय sync low lsb*/
+	__le16 समय_sync_tsf_low_lsb;
 
-} __packed;
+पूर्ण __packed;
 
-int wl18xx_wait_for_event(struct wl1271 *wl, enum wlcore_wait_event event,
-			  bool *timeout);
-int wl18xx_process_mailbox_events(struct wl1271 *wl);
+पूर्णांक wl18xx_रुको_क्रम_event(काष्ठा wl1271 *wl, क्रमागत wlcore_रुको_event event,
+			  bool *समयout);
+पूर्णांक wl18xx_process_mailbox_events(काष्ठा wl1271 *wl);
 
-#endif
+#पूर्ण_अगर

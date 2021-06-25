@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /***************************************************************************/
 
 /*
- *	m528x.c  -- platform support for ColdFire 528x based boards
+ *	m528x.c  -- platक्रमm support क्रम ColdFire 528x based boards
  *
- *	Sub-architcture dependent initialization code for the Freescale
+ *	Sub-architcture dependent initialization code क्रम the Freescale
  *	5280, 5281 and 5282 CPUs.
  *
  *	Copyright (C) 1999-2003, Greg Ungerer (gerg@snapgear.com)
@@ -13,16 +14,16 @@
 
 /***************************************************************************/
 
-#include <linux/kernel.h>
-#include <linux/param.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <asm/machdep.h>
-#include <asm/coldfire.h>
-#include <asm/mcfsim.h>
-#include <asm/mcfuart.h>
-#include <asm/mcfclk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/param.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/coldfire.h>
+#समावेश <यंत्र/mcfsim.h>
+#समावेश <यंत्र/mcfuart.h>
+#समावेश <यंत्र/mcfclk.h>
 
 /***************************************************************************/
 
@@ -39,7 +40,7 @@ DEFINE_CLK(mcfqspi0, "mcfqspi.0", MCF_BUSCLK);
 DEFINE_CLK(fec0, "fec.0", MCF_BUSCLK);
 DEFINE_CLK(mcfi2c0, "imx1-i2c.0", MCF_BUSCLK);
 
-struct clk *mcf_clks[] = {
+काष्ठा clk *mcf_clks[] = अणु
 	&clk_pll,
 	&clk_sys,
 	&clk_mcfpit0,
@@ -52,100 +53,100 @@ struct clk *mcf_clks[] = {
 	&clk_mcfqspi0,
 	&clk_fec0,
 	&clk_mcfi2c0,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /***************************************************************************/
 
-static void __init m528x_qspi_init(void)
-{
-#if IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI)
-	/* setup Port QS for QSPI with gpio CS control */
-	__raw_writeb(0x07, MCFGPIO_PQSPAR);
-#endif /* IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI) */
-}
+अटल व्योम __init m528x_qspi_init(व्योम)
+अणु
+#अगर IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI)
+	/* setup Port QS क्रम QSPI with gpio CS control */
+	__raw_ग_लिखोb(0x07, MCFGPIO_PQSPAR);
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI) */
+पूर्ण
 
 /***************************************************************************/
 
-static void __init m528x_i2c_init(void)
-{
-#if IS_ENABLED(CONFIG_I2C_IMX)
+अटल व्योम __init m528x_i2c_init(व्योम)
+अणु
+#अगर IS_ENABLED(CONFIG_I2C_IMX)
 	u16 paspar;
 
-	/* setup Port AS Pin Assignment Register for I2C */
+	/* setup Port AS Pin Assignment Register क्रम I2C */
 	/*  set PASPA0 to SCL and PASPA1 to SDA */
-	paspar = readw(MCFGPIO_PASPAR);
+	paspar = पढ़ोw(MCFGPIO_PASPAR);
 	paspar |= 0xF;
-	writew(paspar, MCFGPIO_PASPAR);
-#endif /* IS_ENABLED(CONFIG_I2C_IMX) */
-}
+	ग_लिखोw(paspar, MCFGPIO_PASPAR);
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_I2C_IMX) */
+पूर्ण
 
 /***************************************************************************/
 
-static void __init m528x_uarts_init(void)
-{
+अटल व्योम __init m528x_uarts_init(व्योम)
+अणु
 	u8 port;
 
-	/* make sure PUAPAR is set for UART0 and UART1 */
-	port = readb(MCFGPIO_PUAPAR);
+	/* make sure PUAPAR is set क्रम UART0 and UART1 */
+	port = पढ़ोb(MCFGPIO_PUAPAR);
 	port |= 0x03 | (0x03 << 2);
-	writeb(port, MCFGPIO_PUAPAR);
-}
+	ग_लिखोb(port, MCFGPIO_PUAPAR);
+पूर्ण
 
 /***************************************************************************/
 
-static void __init m528x_fec_init(void)
-{
+अटल व्योम __init m528x_fec_init(व्योम)
+अणु
 	u16 v16;
 
-	/* Set multi-function pins to ethernet mode for fec0 */
-	v16 = readw(MCFGPIO_PASPAR);
-	writew(v16 | 0xf00, MCFGPIO_PASPAR);
-	writeb(0xc0, MCFGPIO_PEHLPAR);
-}
+	/* Set multi-function pins to ethernet mode क्रम fec0 */
+	v16 = पढ़ोw(MCFGPIO_PASPAR);
+	ग_लिखोw(v16 | 0xf00, MCFGPIO_PASPAR);
+	ग_लिखोb(0xc0, MCFGPIO_PEHLPAR);
+पूर्ण
 
 /***************************************************************************/
 
-#ifdef CONFIG_WILDFIRE
-void wildfire_halt(void)
-{
-	writeb(0, 0x30000007);
-	writeb(0x2, 0x30000007);
-}
-#endif
+#अगर_घोषित CONFIG_WILDFIRE
+व्योम wildfire_halt(व्योम)
+अणु
+	ग_लिखोb(0, 0x30000007);
+	ग_लिखोb(0x2, 0x30000007);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_WILDFIREMOD
-void wildfiremod_halt(void)
-{
-	printk(KERN_INFO "WildFireMod hibernating...\n");
+#अगर_घोषित CONFIG_WILDFIREMOD
+व्योम wildfiremod_halt(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "WildFireMod hibernating...\n");
 
 	/* Set portE.5 to Digital IO */
-	writew(readw(MCFGPIO_PEPAR) & ~(1 << (5 * 2)), MCFGPIO_PEPAR);
+	ग_लिखोw(पढ़ोw(MCFGPIO_PEPAR) & ~(1 << (5 * 2)), MCFGPIO_PEPAR);
 
 	/* Make portE.5 an output */
-	writeb(readb(MCFGPIO_PDDR_E) | (1 << 5), MCFGPIO_PDDR_E);
+	ग_लिखोb(पढ़ोb(MCFGPIO_PDDR_E) | (1 << 5), MCFGPIO_PDDR_E);
 
 	/* Now toggle portE.5 from low to high */
-	writeb(readb(MCFGPIO_PODR_E) & ~(1 << 5), MCFGPIO_PODR_E);
-	writeb(readb(MCFGPIO_PODR_E) | (1 << 5), MCFGPIO_PODR_E);
+	ग_लिखोb(पढ़ोb(MCFGPIO_PODR_E) & ~(1 << 5), MCFGPIO_PODR_E);
+	ग_लिखोb(पढ़ोb(MCFGPIO_PODR_E) | (1 << 5), MCFGPIO_PODR_E);
 
-	printk(KERN_EMERG "Failed to hibernate. Halting!\n");
-}
-#endif
+	prपूर्णांकk(KERN_EMERG "Failed to hibernate. Halting!\n");
+पूर्ण
+#पूर्ण_अगर
 
-void __init config_BSP(char *commandp, int size)
-{
-#ifdef CONFIG_WILDFIRE
+व्योम __init config_BSP(अक्षर *commandp, पूर्णांक size)
+अणु
+#अगर_घोषित CONFIG_WILDFIRE
 	mach_halt = wildfire_halt;
-#endif
-#ifdef CONFIG_WILDFIREMOD
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_WILDFIREMOD
 	mach_halt = wildfiremod_halt;
-#endif
-	mach_sched_init = hw_timer_init;
+#पूर्ण_अगर
+	mach_sched_init = hw_समयr_init;
 	m528x_uarts_init();
 	m528x_fec_init();
 	m528x_qspi_init();
 	m528x_i2c_init();
-}
+पूर्ण
 
 /***************************************************************************/

@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- * dvb-math provides some complex fixed-point math
+ * dvb-math provides some complex fixed-poपूर्णांक math
  * operations shared between the dvb related stuff
  *
  * Copyright (C) 2006 Christoph Pfister (christophpfister@gmail.com)
  *
- * This library is free software; you can redistribute it and/or modify
+ * This library is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2.1 of
  * the License, or (at your option) any later version.
@@ -12,16 +13,16 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
+ * GNU Lesser General Public License क्रम more details.
  */
 
-#include <linux/bitops.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <asm/bug.h>
-#include <media/dvb_math.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/bug.h>
+#समावेश <media/dvb_गणित.स>
 
-static const unsigned short logtable[256] = {
+अटल स्थिर अचिन्हित लघु logtable[256] = अणु
 	0x0000, 0x0171, 0x02e0, 0x044e, 0x05ba, 0x0725, 0x088e, 0x09f7,
 	0x0b5d, 0x0cc3, 0x0e27, 0x0f8a, 0x10eb, 0x124b, 0x13aa, 0x1508,
 	0x1664, 0x17bf, 0x1919, 0x1a71, 0x1bc8, 0x1d1e, 0x1e73, 0x1fc6,
@@ -54,23 +55,23 @@ static const unsigned short logtable[256] = {
 	0xee45, 0xef06, 0xefc8, 0xf088, 0xf149, 0xf209, 0xf2c8, 0xf387,
 	0xf446, 0xf505, 0xf5c3, 0xf680, 0xf73e, 0xf7fb, 0xf8b7, 0xf973,
 	0xfa2f, 0xfaea, 0xfba5, 0xfc60, 0xfd1a, 0xfdd4, 0xfe8e, 0xff47
-};
+पूर्ण;
 
-unsigned int intlog2(u32 value)
-{
+अचिन्हित पूर्णांक पूर्णांकlog2(u32 value)
+अणु
 	/**
-	 *	returns: log2(value) * 2^24
-	 *	wrong result if value = 0 (log2(0) is undefined)
+	 *	वापसs: log2(value) * 2^24
+	 *	wrong result अगर value = 0 (log2(0) is undefined)
 	 */
-	unsigned int msb;
-	unsigned int logentry;
-	unsigned int significand;
-	unsigned int interpolation;
+	अचिन्हित पूर्णांक msb;
+	अचिन्हित पूर्णांक logentry;
+	अचिन्हित पूर्णांक signअगरicand;
+	अचिन्हित पूर्णांक पूर्णांकerpolation;
 
-	if (unlikely(value == 0)) {
+	अगर (unlikely(value == 0)) अणु
 		WARN_ON(1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* first detect the msb (count begins at 0) */
 	msb = fls(value) - 1;
@@ -79,63 +80,63 @@ unsigned int intlog2(u32 value)
 	 *	now we use a logtable after the following method:
 	 *
 	 *	log2(2^x * y) * 2^24 = x * 2^24 + log2(y) * 2^24
-	 *	where x = msb and therefore 1 <= y < 2
-	 *	first y is determined by shifting the value left
+	 *	where x = msb and thereक्रमe 1 <= y < 2
+	 *	first y is determined by shअगरting the value left
 	 *	so that msb is bit 31
 	 *		0x00231f56 -> 0x8C7D5800
 	 *	the result is y * 2^31 -> "significand"
-	 *	then the highest 9 bits are used for a table lookup
+	 *	then the highest 9 bits are used क्रम a table lookup
 	 *	the highest bit is discarded because it's always set
 	 *	the highest nine bits in our example are 100011000
 	 *	so we would use the entry 0x18
 	 */
-	significand = value << (31 - msb);
-	logentry = (significand >> 23) & 0xff;
+	signअगरicand = value << (31 - msb);
+	logentry = (signअगरicand >> 23) & 0xff;
 
 	/**
-	 *	last step we do is interpolation because of the
+	 *	last step we करो is पूर्णांकerpolation because of the
 	 *	limitations of the log table the error is that part of
-	 *	the significand which isn't used for lookup then we
+	 *	the signअगरicand which isn't used क्रम lookup then we
 	 *	compute the ratio between the error and the next table entry
-	 *	and interpolate it between the log table entry used and the
+	 *	and पूर्णांकerpolate it between the log table entry used and the
 	 *	next one the biggest error possible is 0x7fffff
 	 *	(in our example it's 0x7D5800)
-	 *	needed value for next table entry is 0x800000
-	 *	so the interpolation is
+	 *	needed value क्रम next table entry is 0x800000
+	 *	so the पूर्णांकerpolation is
 	 *	(error / 0x800000) * (logtable_next - logtable_current)
-	 *	in the implementation the division is moved to the end for
-	 *	better accuracy there is also an overflow correction if
+	 *	in the implementation the भागision is moved to the end क्रम
+	 *	better accuracy there is also an overflow correction अगर
 	 *	logtable_next is 256
 	 */
-	interpolation = ((significand & 0x7fffff) *
+	पूर्णांकerpolation = ((signअगरicand & 0x7fffff) *
 			((logtable[(logentry + 1) & 0xff] -
 			  logtable[logentry]) & 0xffff)) >> 15;
 
-	/* now we return the result */
-	return ((msb << 24) + (logtable[logentry] << 8) + interpolation);
-}
-EXPORT_SYMBOL(intlog2);
+	/* now we वापस the result */
+	वापस ((msb << 24) + (logtable[logentry] << 8) + पूर्णांकerpolation);
+पूर्ण
+EXPORT_SYMBOL(पूर्णांकlog2);
 
-unsigned int intlog10(u32 value)
-{
+अचिन्हित पूर्णांक पूर्णांकlog10(u32 value)
+अणु
 	/**
-	 *	returns: log10(value) * 2^24
-	 *	wrong result if value = 0 (log10(0) is undefined)
+	 *	वापसs: log10(value) * 2^24
+	 *	wrong result अगर value = 0 (log10(0) is undefined)
 	 */
 	u64 log;
 
-	if (unlikely(value == 0)) {
+	अगर (unlikely(value == 0)) अणु
 		WARN_ON(1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	log = intlog2(value);
+	log = पूर्णांकlog2(value);
 
 	/**
 	 *	we use the following method:
 	 *	log10(x) = log2(x) * log10(2)
 	 */
 
-	return (log * 646456993) >> 31;
-}
-EXPORT_SYMBOL(intlog10);
+	वापस (log * 646456993) >> 31;
+पूर्ण
+EXPORT_SYMBOL(पूर्णांकlog10);

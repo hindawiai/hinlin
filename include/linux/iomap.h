@@ -1,291 +1,292 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_IOMAP_H
-#define LINUX_IOMAP_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_IOMAP_H
+#घोषणा LINUX_IOMAP_H 1
 
-#include <linux/atomic.h>
-#include <linux/bitmap.h>
-#include <linux/blk_types.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <linux/mm_types.h>
-#include <linux/blkdev.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/blk_types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/blkdev.h>
 
-struct address_space;
-struct fiemap_extent_info;
-struct inode;
-struct iomap_dio;
-struct iomap_writepage_ctx;
-struct iov_iter;
-struct kiocb;
-struct page;
-struct vm_area_struct;
-struct vm_fault;
+काष्ठा address_space;
+काष्ठा fiemap_extent_info;
+काष्ठा inode;
+काष्ठा iomap_dio;
+काष्ठा iomap_ग_लिखोpage_ctx;
+काष्ठा iov_iter;
+काष्ठा kiocb;
+काष्ठा page;
+काष्ठा vm_area_काष्ठा;
+काष्ठा vm_fault;
 
 /*
- * Types of block ranges for iomap mappings:
+ * Types of block ranges क्रम iomap mappings:
  */
-#define IOMAP_HOLE	0	/* no blocks allocated, need allocation */
-#define IOMAP_DELALLOC	1	/* delayed allocation blocks */
-#define IOMAP_MAPPED	2	/* blocks allocated at @addr */
-#define IOMAP_UNWRITTEN	3	/* blocks allocated at @addr in unwritten state */
-#define IOMAP_INLINE	4	/* data inline in the inode */
+#घोषणा IOMAP_HOLE	0	/* no blocks allocated, need allocation */
+#घोषणा IOMAP_DELALLOC	1	/* delayed allocation blocks */
+#घोषणा IOMAP_MAPPED	2	/* blocks allocated at @addr */
+#घोषणा IOMAP_UNWRITTEN	3	/* blocks allocated at @addr in unwritten state */
+#घोषणा IOMAP_INLINE	4	/* data अंतरभूत in the inode */
 
 /*
- * Flags reported by the file system from iomap_begin:
+ * Flags reported by the file प्रणाली from iomap_begin:
  *
  * IOMAP_F_NEW indicates that the blocks have been newly allocated and need
- * zeroing for areas that no data is copied to.
+ * zeroing क्रम areas that no data is copied to.
  *
- * IOMAP_F_DIRTY indicates the inode has uncommitted metadata needed to access
+ * IOMAP_F_सूचीTY indicates the inode has uncommitted metadata needed to access
  * written data and requires fdatasync to commit them to persistent storage.
- * This needs to take into account metadata changes that *may* be made at IO
+ * This needs to take पूर्णांकo account metadata changes that *may* be made at IO
  * completion, such as file size updates from direct IO.
  *
  * IOMAP_F_SHARED indicates that the blocks are shared, and will need to be
- * unshared as part a write.
+ * unshared as part a ग_लिखो.
  *
  * IOMAP_F_MERGED indicates that the iomap contains the merge of multiple block
  * mappings.
  *
- * IOMAP_F_BUFFER_HEAD indicates that the file system requires the use of
- * buffer heads for this mapping.
+ * IOMAP_F_BUFFER_HEAD indicates that the file प्रणाली requires the use of
+ * buffer heads क्रम this mapping.
  */
-#define IOMAP_F_NEW		0x01
-#define IOMAP_F_DIRTY		0x02
-#define IOMAP_F_SHARED		0x04
-#define IOMAP_F_MERGED		0x08
-#define IOMAP_F_BUFFER_HEAD	0x10
-#define IOMAP_F_ZONE_APPEND	0x20
+#घोषणा IOMAP_F_NEW		0x01
+#घोषणा IOMAP_F_सूचीTY		0x02
+#घोषणा IOMAP_F_SHARED		0x04
+#घोषणा IOMAP_F_MERGED		0x08
+#घोषणा IOMAP_F_BUFFER_HEAD	0x10
+#घोषणा IOMAP_F_ZONE_APPEND	0x20
 
 /*
  * Flags set by the core iomap code during operations:
  *
  * IOMAP_F_SIZE_CHANGED indicates to the iomap_end method that the file size
- * has changed as the result of this write operation.
+ * has changed as the result of this ग_लिखो operation.
  */
-#define IOMAP_F_SIZE_CHANGED	0x100
+#घोषणा IOMAP_F_SIZE_CHANGED	0x100
 
 /*
- * Flags from 0x1000 up are for file system specific usage:
+ * Flags from 0x1000 up are क्रम file प्रणाली specअगरic usage:
  */
-#define IOMAP_F_PRIVATE		0x1000
+#घोषणा IOMAP_F_PRIVATE		0x1000
 
 
 /*
- * Magic value for addr:
+ * Magic value क्रम addr:
  */
-#define IOMAP_NULL_ADDR -1ULL	/* addr is not valid */
+#घोषणा IOMAP_शून्य_ADDR -1ULL	/* addr is not valid */
 
-struct iomap_page_ops;
+काष्ठा iomap_page_ops;
 
-struct iomap {
+काष्ठा iomap अणु
 	u64			addr; /* disk offset of mapping, bytes */
 	loff_t			offset;	/* file offset of mapping, bytes */
 	u64			length;	/* length of mapping, bytes */
 	u16			type;	/* type of mapping */
-	u16			flags;	/* flags for mapping */
-	struct block_device	*bdev;	/* block device for I/O */
-	struct dax_device	*dax_dev; /* dax_dev for dax operations */
-	void			*inline_data;
-	void			*private; /* filesystem private */
-	const struct iomap_page_ops *page_ops;
-};
+	u16			flags;	/* flags क्रम mapping */
+	काष्ठा block_device	*bdev;	/* block device क्रम I/O */
+	काष्ठा dax_device	*dax_dev; /* dax_dev क्रम dax operations */
+	व्योम			*अंतरभूत_data;
+	व्योम			*निजी; /* fileप्रणाली निजी */
+	स्थिर काष्ठा iomap_page_ops *page_ops;
+पूर्ण;
 
-static inline sector_t
-iomap_sector(struct iomap *iomap, loff_t pos)
-{
-	return (iomap->addr + pos - iomap->offset) >> SECTOR_SHIFT;
-}
+अटल अंतरभूत sector_t
+iomap_sector(काष्ठा iomap *iomap, loff_t pos)
+अणु
+	वापस (iomap->addr + pos - iomap->offset) >> SECTOR_SHIFT;
+पूर्ण
 
 /*
- * When a filesystem sets page_ops in an iomap mapping it returns, page_prepare
- * and page_done will be called for each page written to.  This only applies to
- * buffered writes as unbuffered writes will not typically have pages
+ * When a fileप्रणाली sets page_ops in an iomap mapping it वापसs, page_prepare
+ * and page_करोne will be called क्रम each page written to.  This only applies to
+ * buffered ग_लिखोs as unbuffered ग_लिखोs will not typically have pages
  * associated with them.
  *
- * When page_prepare succeeds, page_done will always be called to do any
- * cleanup work necessary.  In that page_done call, @page will be NULL if the
+ * When page_prepare succeeds, page_करोne will always be called to करो any
+ * cleanup work necessary.  In that page_करोne call, @page will be शून्य अगर the
  * associated page could not be obtained.
  */
-struct iomap_page_ops {
-	int (*page_prepare)(struct inode *inode, loff_t pos, unsigned len,
-			struct iomap *iomap);
-	void (*page_done)(struct inode *inode, loff_t pos, unsigned copied,
-			struct page *page, struct iomap *iomap);
-};
+काष्ठा iomap_page_ops अणु
+	पूर्णांक (*page_prepare)(काष्ठा inode *inode, loff_t pos, अचिन्हित len,
+			काष्ठा iomap *iomap);
+	व्योम (*page_करोne)(काष्ठा inode *inode, loff_t pos, अचिन्हित copied,
+			काष्ठा page *page, काष्ठा iomap *iomap);
+पूर्ण;
 
 /*
- * Flags for iomap_begin / iomap_end.  No flag implies a read.
+ * Flags क्रम iomap_begin / iomap_end.  No flag implies a पढ़ो.
  */
-#define IOMAP_WRITE		(1 << 0) /* writing, must allocate blocks */
-#define IOMAP_ZERO		(1 << 1) /* zeroing operation, may skip holes */
-#define IOMAP_REPORT		(1 << 2) /* report extent status, e.g. FIEMAP */
-#define IOMAP_FAULT		(1 << 3) /* mapping for page fault */
-#define IOMAP_DIRECT		(1 << 4) /* direct I/O */
-#define IOMAP_NOWAIT		(1 << 5) /* do not block */
-#define IOMAP_OVERWRITE_ONLY	(1 << 6) /* only pure overwrites allowed */
+#घोषणा IOMAP_WRITE		(1 << 0) /* writing, must allocate blocks */
+#घोषणा IOMAP_ZERO		(1 << 1) /* zeroing operation, may skip holes */
+#घोषणा IOMAP_REPORT		(1 << 2) /* report extent status, e.g. FIEMAP */
+#घोषणा IOMAP_FAULT		(1 << 3) /* mapping क्रम page fault */
+#घोषणा IOMAP_सूचीECT		(1 << 4) /* direct I/O */
+#घोषणा IOMAP_NOWAIT		(1 << 5) /* करो not block */
+#घोषणा IOMAP_OVERWRITE_ONLY	(1 << 6) /* only pure overग_लिखोs allowed */
 
-struct iomap_ops {
+काष्ठा iomap_ops अणु
 	/*
 	 * Return the existing mapping at pos, or reserve space starting at
-	 * pos for up to length, as long as we can do it as a single mapping.
-	 * The actual length is returned in iomap->length.
+	 * pos क्रम up to length, as दीर्घ as we can करो it as a single mapping.
+	 * The actual length is वापसed in iomap->length.
 	 */
-	int (*iomap_begin)(struct inode *inode, loff_t pos, loff_t length,
-			unsigned flags, struct iomap *iomap,
-			struct iomap *srcmap);
+	पूर्णांक (*iomap_begin)(काष्ठा inode *inode, loff_t pos, loff_t length,
+			अचिन्हित flags, काष्ठा iomap *iomap,
+			काष्ठा iomap *srcmap);
 
 	/*
 	 * Commit and/or unreserve space previous allocated using iomap_begin.
-	 * Written indicates the length of the successful write operation which
-	 * needs to be commited, while the rest needs to be unreserved.
-	 * Written might be zero if no data was written.
+	 * Written indicates the length of the successful ग_लिखो operation which
+	 * needs to be commited, जबतक the rest needs to be unreserved.
+	 * Written might be zero अगर no data was written.
 	 */
-	int (*iomap_end)(struct inode *inode, loff_t pos, loff_t length,
-			ssize_t written, unsigned flags, struct iomap *iomap);
-};
+	पूर्णांक (*iomap_end)(काष्ठा inode *inode, loff_t pos, loff_t length,
+			sमाप_प्रकार written, अचिन्हित flags, काष्ठा iomap *iomap);
+पूर्ण;
 
 /*
  * Main iomap iterator function.
  */
-typedef loff_t (*iomap_actor_t)(struct inode *inode, loff_t pos, loff_t len,
-		void *data, struct iomap *iomap, struct iomap *srcmap);
+प्रकार loff_t (*iomap_actor_t)(काष्ठा inode *inode, loff_t pos, loff_t len,
+		व्योम *data, काष्ठा iomap *iomap, काष्ठा iomap *srcmap);
 
-loff_t iomap_apply(struct inode *inode, loff_t pos, loff_t length,
-		unsigned flags, const struct iomap_ops *ops, void *data,
+loff_t iomap_apply(काष्ठा inode *inode, loff_t pos, loff_t length,
+		अचिन्हित flags, स्थिर काष्ठा iomap_ops *ops, व्योम *data,
 		iomap_actor_t actor);
 
-ssize_t iomap_file_buffered_write(struct kiocb *iocb, struct iov_iter *from,
-		const struct iomap_ops *ops);
-int iomap_readpage(struct page *page, const struct iomap_ops *ops);
-void iomap_readahead(struct readahead_control *, const struct iomap_ops *ops);
-int iomap_set_page_dirty(struct page *page);
-int iomap_is_partially_uptodate(struct page *page, unsigned long from,
-		unsigned long count);
-int iomap_releasepage(struct page *page, gfp_t gfp_mask);
-void iomap_invalidatepage(struct page *page, unsigned int offset,
-		unsigned int len);
-#ifdef CONFIG_MIGRATION
-int iomap_migrate_page(struct address_space *mapping, struct page *newpage,
-		struct page *page, enum migrate_mode mode);
-#else
-#define iomap_migrate_page NULL
-#endif
-int iomap_file_unshare(struct inode *inode, loff_t pos, loff_t len,
-		const struct iomap_ops *ops);
-int iomap_zero_range(struct inode *inode, loff_t pos, loff_t len,
-		bool *did_zero, const struct iomap_ops *ops);
-int iomap_truncate_page(struct inode *inode, loff_t pos, bool *did_zero,
-		const struct iomap_ops *ops);
-vm_fault_t iomap_page_mkwrite(struct vm_fault *vmf,
-			const struct iomap_ops *ops);
-int iomap_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
-		u64 start, u64 len, const struct iomap_ops *ops);
-loff_t iomap_seek_hole(struct inode *inode, loff_t offset,
-		const struct iomap_ops *ops);
-loff_t iomap_seek_data(struct inode *inode, loff_t offset,
-		const struct iomap_ops *ops);
-sector_t iomap_bmap(struct address_space *mapping, sector_t bno,
-		const struct iomap_ops *ops);
+sमाप_प्रकार iomap_file_buffered_ग_लिखो(काष्ठा kiocb *iocb, काष्ठा iov_iter *from,
+		स्थिर काष्ठा iomap_ops *ops);
+पूर्णांक iomap_पढ़ोpage(काष्ठा page *page, स्थिर काष्ठा iomap_ops *ops);
+व्योम iomap_पढ़ोahead(काष्ठा पढ़ोahead_control *, स्थिर काष्ठा iomap_ops *ops);
+पूर्णांक iomap_set_page_dirty(काष्ठा page *page);
+पूर्णांक iomap_is_partially_uptodate(काष्ठा page *page, अचिन्हित दीर्घ from,
+		अचिन्हित दीर्घ count);
+पूर्णांक iomap_releasepage(काष्ठा page *page, gfp_t gfp_mask);
+व्योम iomap_invalidatepage(काष्ठा page *page, अचिन्हित पूर्णांक offset,
+		अचिन्हित पूर्णांक len);
+#अगर_घोषित CONFIG_MIGRATION
+पूर्णांक iomap_migrate_page(काष्ठा address_space *mapping, काष्ठा page *newpage,
+		काष्ठा page *page, क्रमागत migrate_mode mode);
+#अन्यथा
+#घोषणा iomap_migrate_page शून्य
+#पूर्ण_अगर
+पूर्णांक iomap_file_unshare(काष्ठा inode *inode, loff_t pos, loff_t len,
+		स्थिर काष्ठा iomap_ops *ops);
+पूर्णांक iomap_zero_range(काष्ठा inode *inode, loff_t pos, loff_t len,
+		bool *did_zero, स्थिर काष्ठा iomap_ops *ops);
+पूर्णांक iomap_truncate_page(काष्ठा inode *inode, loff_t pos, bool *did_zero,
+		स्थिर काष्ठा iomap_ops *ops);
+vm_fault_t iomap_page_mkग_लिखो(काष्ठा vm_fault *vmf,
+			स्थिर काष्ठा iomap_ops *ops);
+पूर्णांक iomap_fiemap(काष्ठा inode *inode, काष्ठा fiemap_extent_info *fieinfo,
+		u64 start, u64 len, स्थिर काष्ठा iomap_ops *ops);
+loff_t iomap_seek_hole(काष्ठा inode *inode, loff_t offset,
+		स्थिर काष्ठा iomap_ops *ops);
+loff_t iomap_seek_data(काष्ठा inode *inode, loff_t offset,
+		स्थिर काष्ठा iomap_ops *ops);
+sector_t iomap_bmap(काष्ठा address_space *mapping, sector_t bno,
+		स्थिर काष्ठा iomap_ops *ops);
 
 /*
- * Structure for writeback I/O completions.
+ * Structure क्रम ग_लिखोback I/O completions.
  */
-struct iomap_ioend {
-	struct list_head	io_list;	/* next ioend in chain */
+काष्ठा iomap_ioend अणु
+	काष्ठा list_head	io_list;	/* next ioend in chain */
 	u16			io_type;
 	u16			io_flags;	/* IOMAP_F_* */
-	struct inode		*io_inode;	/* file being written to */
-	size_t			io_size;	/* size of the extent */
+	काष्ठा inode		*io_inode;	/* file being written to */
+	माप_प्रकार			io_size;	/* size of the extent */
 	loff_t			io_offset;	/* offset in the file */
-	struct bio		*io_bio;	/* bio being built */
-	struct bio		io_inline_bio;	/* MUST BE LAST! */
-};
+	काष्ठा bio		*io_bio;	/* bio being built */
+	काष्ठा bio		io_अंतरभूत_bio;	/* MUST BE LAST! */
+पूर्ण;
 
-struct iomap_writeback_ops {
+काष्ठा iomap_ग_लिखोback_ops अणु
 	/*
-	 * Required, maps the blocks so that writeback can be performed on
+	 * Required, maps the blocks so that ग_लिखोback can be perक्रमmed on
 	 * the range starting at offset.
 	 */
-	int (*map_blocks)(struct iomap_writepage_ctx *wpc, struct inode *inode,
+	पूर्णांक (*map_blocks)(काष्ठा iomap_ग_लिखोpage_ctx *wpc, काष्ठा inode *inode,
 				loff_t offset);
 
 	/*
-	 * Optional, allows the file systems to perform actions just before
-	 * submitting the bio and/or override the bio end_io handler for complex
-	 * operations like copy on write extent manipulation or unwritten extent
+	 * Optional, allows the file प्रणालीs to perक्रमm actions just beक्रमe
+	 * submitting the bio and/or override the bio end_io handler क्रम complex
+	 * operations like copy on ग_लिखो extent manipulation or unwritten extent
 	 * conversions.
 	 */
-	int (*prepare_ioend)(struct iomap_ioend *ioend, int status);
+	पूर्णांक (*prepare_ioend)(काष्ठा iomap_ioend *ioend, पूर्णांक status);
 
 	/*
-	 * Optional, allows the file system to discard state on a page where
+	 * Optional, allows the file प्रणाली to discard state on a page where
 	 * we failed to submit any I/O.
 	 */
-	void (*discard_page)(struct page *page, loff_t fileoff);
-};
+	व्योम (*discard_page)(काष्ठा page *page, loff_t fileoff);
+पूर्ण;
 
-struct iomap_writepage_ctx {
-	struct iomap		iomap;
-	struct iomap_ioend	*ioend;
-	const struct iomap_writeback_ops *ops;
-};
+काष्ठा iomap_ग_लिखोpage_ctx अणु
+	काष्ठा iomap		iomap;
+	काष्ठा iomap_ioend	*ioend;
+	स्थिर काष्ठा iomap_ग_लिखोback_ops *ops;
+पूर्ण;
 
-void iomap_finish_ioends(struct iomap_ioend *ioend, int error);
-void iomap_ioend_try_merge(struct iomap_ioend *ioend,
-		struct list_head *more_ioends);
-void iomap_sort_ioends(struct list_head *ioend_list);
-int iomap_writepage(struct page *page, struct writeback_control *wbc,
-		struct iomap_writepage_ctx *wpc,
-		const struct iomap_writeback_ops *ops);
-int iomap_writepages(struct address_space *mapping,
-		struct writeback_control *wbc, struct iomap_writepage_ctx *wpc,
-		const struct iomap_writeback_ops *ops);
+व्योम iomap_finish_ioends(काष्ठा iomap_ioend *ioend, पूर्णांक error);
+व्योम iomap_ioend_try_merge(काष्ठा iomap_ioend *ioend,
+		काष्ठा list_head *more_ioends);
+व्योम iomap_sort_ioends(काष्ठा list_head *ioend_list);
+पूर्णांक iomap_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc,
+		काष्ठा iomap_ग_लिखोpage_ctx *wpc,
+		स्थिर काष्ठा iomap_ग_लिखोback_ops *ops);
+पूर्णांक iomap_ग_लिखोpages(काष्ठा address_space *mapping,
+		काष्ठा ग_लिखोback_control *wbc, काष्ठा iomap_ग_लिखोpage_ctx *wpc,
+		स्थिर काष्ठा iomap_ग_लिखोback_ops *ops);
 
 /*
- * Flags for direct I/O ->end_io:
+ * Flags क्रम direct I/O ->end_io:
  */
-#define IOMAP_DIO_UNWRITTEN	(1 << 0)	/* covers unwritten extent(s) */
-#define IOMAP_DIO_COW		(1 << 1)	/* covers COW extent(s) */
+#घोषणा IOMAP_DIO_UNWRITTEN	(1 << 0)	/* covers unwritten extent(s) */
+#घोषणा IOMAP_DIO_COW		(1 << 1)	/* covers COW extent(s) */
 
-struct iomap_dio_ops {
-	int (*end_io)(struct kiocb *iocb, ssize_t size, int error,
-		      unsigned flags);
-	blk_qc_t (*submit_io)(struct inode *inode, struct iomap *iomap,
-			struct bio *bio, loff_t file_offset);
-};
+काष्ठा iomap_dio_ops अणु
+	पूर्णांक (*end_io)(काष्ठा kiocb *iocb, sमाप_प्रकार size, पूर्णांक error,
+		      अचिन्हित flags);
+	blk_qc_t (*submit_io)(काष्ठा inode *inode, काष्ठा iomap *iomap,
+			काष्ठा bio *bio, loff_t file_offset);
+पूर्ण;
 
 /*
- * Wait for the I/O to complete in iomap_dio_rw even if the kiocb is not
+ * Wait क्रम the I/O to complete in iomap_dio_rw even अगर the kiocb is not
  * synchronous.
  */
-#define IOMAP_DIO_FORCE_WAIT	(1 << 0)
+#घोषणा IOMAP_DIO_FORCE_WAIT	(1 << 0)
 
 /*
  * Do not allocate blocks or zero partial blocks, but instead fall back to
- * the caller by returning -EAGAIN.  Used to optimize direct I/O writes that
- * are not aligned to the file system block size.
+ * the caller by वापसing -EAGAIN.  Used to optimize direct I/O ग_लिखोs that
+ * are not aligned to the file प्रणाली block size.
   */
-#define IOMAP_DIO_OVERWRITE_ONLY	(1 << 1)
+#घोषणा IOMAP_DIO_OVERWRITE_ONLY	(1 << 1)
 
-ssize_t iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
-		const struct iomap_ops *ops, const struct iomap_dio_ops *dops,
-		unsigned int dio_flags);
-struct iomap_dio *__iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
-		const struct iomap_ops *ops, const struct iomap_dio_ops *dops,
-		unsigned int dio_flags);
-ssize_t iomap_dio_complete(struct iomap_dio *dio);
-int iomap_dio_iopoll(struct kiocb *kiocb, bool spin);
+sमाप_प्रकार iomap_dio_rw(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter,
+		स्थिर काष्ठा iomap_ops *ops, स्थिर काष्ठा iomap_dio_ops *करोps,
+		अचिन्हित पूर्णांक dio_flags);
+काष्ठा iomap_dio *__iomap_dio_rw(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter,
+		स्थिर काष्ठा iomap_ops *ops, स्थिर काष्ठा iomap_dio_ops *करोps,
+		अचिन्हित पूर्णांक dio_flags);
+sमाप_प्रकार iomap_dio_complete(काष्ठा iomap_dio *dio);
+पूर्णांक iomap_dio_iopoll(काष्ठा kiocb *kiocb, bool spin);
 
-#ifdef CONFIG_SWAP
-struct file;
-struct swap_info_struct;
+#अगर_घोषित CONFIG_SWAP
+काष्ठा file;
+काष्ठा swap_info_काष्ठा;
 
-int iomap_swapfile_activate(struct swap_info_struct *sis,
-		struct file *swap_file, sector_t *pagespan,
-		const struct iomap_ops *ops);
-#else
+पूर्णांक iomap_swapfile_activate(काष्ठा swap_info_काष्ठा *sis,
+		काष्ठा file *swap_file, sector_t *pagespan,
+		स्थिर काष्ठा iomap_ops *ops);
+#अन्यथा
 # define iomap_swapfile_activate(sis, swapfile, pagespan, ops)	(-EIO)
-#endif /* CONFIG_SWAP */
+#पूर्ण_अगर /* CONFIG_SWAP */
 
-#endif /* LINUX_IOMAP_H */
+#पूर्ण_अगर /* LINUX_IOMAP_H */

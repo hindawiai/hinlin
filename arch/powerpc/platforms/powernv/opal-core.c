@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Interface for exporting the OPAL ELF core.
+ * Interface क्रम exporting the OPAL ELF core.
  * Heavily inspired from fs/proc/vmcore.c
  *
  * Copyright 2019, Hari Bathini, IBM Corporation.
  */
 
-#define pr_fmt(fmt) "opal core: " fmt
+#घोषणा pr_fmt(fmt) "opal core: " fmt
 
-#include <linux/memblock.h>
-#include <linux/uaccess.h>
-#include <linux/proc_fs.h>
-#include <linux/elf.h>
-#include <linux/elfcore.h>
-#include <linux/kobject.h>
-#include <linux/sysfs.h>
-#include <linux/slab.h>
-#include <linux/crash_core.h>
-#include <linux/of.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/elfcore.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/crash_core.h>
+#समावेश <linux/of.h>
 
-#include <asm/page.h>
-#include <asm/opal.h>
-#include <asm/fadump-internal.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/fadump-पूर्णांकernal.h>
 
-#include "opal-fadump.h"
+#समावेश "opal-fadump.h"
 
-#define MAX_PT_LOAD_CNT		8
+#घोषणा MAX_PT_LOAD_CNT		8
 
 /* NT_AUXV note related info */
-#define AUXV_CNT		1
-#define AUXV_DESC_SZ		(((2 * AUXV_CNT) + 1) * sizeof(Elf64_Off))
+#घोषणा AUXV_CNT		1
+#घोषणा AUXV_DESC_SZ		(((2 * AUXV_CNT) + 1) * माप(Elf64_Off))
 
-struct opalcore_config {
+काष्ठा opalcore_config अणु
 	u32			num_cpus;
 	/* PIR value of crashing CPU */
 	u32			crashing_cpu;
@@ -46,198 +47,198 @@ struct opalcore_config {
 	u64			ptload_size[MAX_PT_LOAD_CNT];
 	u64			ptload_cnt;
 
-	/* Pointer to the first PT_LOAD in the ELF core file */
+	/* Poपूर्णांकer to the first PT_LOAD in the ELF core file */
 	Elf64_Phdr		*ptload_phdr;
 
 	/* Total size of opalcore file. */
-	size_t			opalcore_size;
+	माप_प्रकार			opalcore_size;
 
-	/* Buffer for all the ELF core headers and the PT_NOTE */
-	size_t			opalcorebuf_sz;
-	char			*opalcorebuf;
+	/* Buffer क्रम all the ELF core headers and the PT_NOTE */
+	माप_प्रकार			opalcorebuf_sz;
+	अक्षर			*opalcorebuf;
 
 	/* NT_AUXV buffer */
-	char			auxv_buf[AUXV_DESC_SZ];
-};
+	अक्षर			auxv_buf[AUXV_DESC_SZ];
+पूर्ण;
 
-struct opalcore {
-	struct list_head	list;
+काष्ठा opalcore अणु
+	काष्ठा list_head	list;
 	u64			paddr;
-	size_t			size;
+	माप_प्रकार			size;
 	loff_t			offset;
-};
+पूर्ण;
 
-static LIST_HEAD(opalcore_list);
-static struct opalcore_config *oc_conf;
-static const struct opal_mpipl_fadump *opalc_metadata;
-static const struct opal_mpipl_fadump *opalc_cpu_metadata;
-static struct kobject *mpipl_kobj;
+अटल LIST_HEAD(opalcore_list);
+अटल काष्ठा opalcore_config *oc_conf;
+अटल स्थिर काष्ठा opal_mpipl_fadump *opalc_metadata;
+अटल स्थिर काष्ठा opal_mpipl_fadump *opalc_cpu_metadata;
+अटल काष्ठा kobject *mpipl_kobj;
 
 /*
- * Set crashing CPU's signal to SIGUSR1. if the kernel is triggered
- * by kernel, SIGTERM otherwise.
+ * Set crashing CPU's संकेत to SIGUSR1. अगर the kernel is triggered
+ * by kernel, संक_इति otherwise.
  */
 bool kernel_initiated;
 
-static struct opalcore * __init get_new_element(void)
-{
-	return kzalloc(sizeof(struct opalcore), GFP_KERNEL);
-}
+अटल काष्ठा opalcore * __init get_new_element(व्योम)
+अणु
+	वापस kzalloc(माप(काष्ठा opalcore), GFP_KERNEL);
+पूर्ण
 
-static inline int is_opalcore_usable(void)
-{
-	return (oc_conf && oc_conf->opalcorebuf != NULL) ? 1 : 0;
-}
+अटल अंतरभूत पूर्णांक is_opalcore_usable(व्योम)
+अणु
+	वापस (oc_conf && oc_conf->opalcorebuf != शून्य) ? 1 : 0;
+पूर्ण
 
-static Elf64_Word *append_elf64_note(Elf64_Word *buf, char *name,
-				     u32 type, void *data,
-				     size_t data_len)
-{
+अटल Elf64_Word *append_elf64_note(Elf64_Word *buf, अक्षर *name,
+				     u32 type, व्योम *data,
+				     माप_प्रकार data_len)
+अणु
 	Elf64_Nhdr *note = (Elf64_Nhdr *)buf;
-	Elf64_Word namesz = strlen(name) + 1;
+	Elf64_Word namesz = म_माप(name) + 1;
 
 	note->n_namesz = cpu_to_be32(namesz);
 	note->n_descsz = cpu_to_be32(data_len);
 	note->n_type   = cpu_to_be32(type);
-	buf += DIV_ROUND_UP(sizeof(*note), sizeof(Elf64_Word));
-	memcpy(buf, name, namesz);
-	buf += DIV_ROUND_UP(namesz, sizeof(Elf64_Word));
-	memcpy(buf, data, data_len);
-	buf += DIV_ROUND_UP(data_len, sizeof(Elf64_Word));
+	buf += DIV_ROUND_UP(माप(*note), माप(Elf64_Word));
+	स_नकल(buf, name, namesz);
+	buf += DIV_ROUND_UP(namesz, माप(Elf64_Word));
+	स_नकल(buf, data, data_len);
+	buf += DIV_ROUND_UP(data_len, माप(Elf64_Word));
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static void fill_prstatus(struct elf_prstatus *prstatus, int pir,
-			  struct pt_regs *regs)
-{
-	memset(prstatus, 0, sizeof(struct elf_prstatus));
+अटल व्योम fill_prstatus(काष्ठा elf_prstatus *prstatus, पूर्णांक pir,
+			  काष्ठा pt_regs *regs)
+अणु
+	स_रखो(prstatus, 0, माप(काष्ठा elf_prstatus));
 	elf_core_copy_kernel_regs(&(prstatus->pr_reg), regs);
 
 	/*
 	 * Overload PID with PIR value.
 	 * As a PIR value could also be '0', add an offset of '100'
-	 * to every PIR to avoid misinterpretations in GDB.
+	 * to every PIR to aव्योम misपूर्णांकerpretations in GDB.
 	 */
 	prstatus->common.pr_pid  = cpu_to_be32(100 + pir);
 	prstatus->common.pr_ppid = cpu_to_be32(1);
 
 	/*
-	 * Indicate SIGUSR1 for crash initiated from kernel.
-	 * SIGTERM otherwise.
+	 * Indicate SIGUSR1 क्रम crash initiated from kernel.
+	 * संक_इति otherwise.
 	 */
-	if (pir == oc_conf->crashing_cpu) {
-		short sig;
+	अगर (pir == oc_conf->crashing_cpu) अणु
+		लघु sig;
 
-		sig = kernel_initiated ? SIGUSR1 : SIGTERM;
+		sig = kernel_initiated ? SIGUSR1 : संक_इति;
 		prstatus->common.pr_cursig = cpu_to_be16(sig);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static Elf64_Word *auxv_to_elf64_notes(Elf64_Word *buf,
+अटल Elf64_Word *auxv_to_elf64_notes(Elf64_Word *buf,
 				       u64 opal_boot_entry)
-{
+अणु
 	Elf64_Off *bufp = (Elf64_Off *)oc_conf->auxv_buf;
-	int idx = 0;
+	पूर्णांक idx = 0;
 
-	memset(bufp, 0, AUXV_DESC_SZ);
+	स_रखो(bufp, 0, AUXV_DESC_SZ);
 
-	/* Entry point of OPAL */
+	/* Entry poपूर्णांक of OPAL */
 	bufp[idx++] = cpu_to_be64(AT_ENTRY);
 	bufp[idx++] = cpu_to_be64(opal_boot_entry);
 
 	/* end of vector */
-	bufp[idx++] = cpu_to_be64(AT_NULL);
+	bufp[idx++] = cpu_to_be64(AT_शून्य);
 
 	buf = append_elf64_note(buf, CRASH_CORE_NOTE_NAME, NT_AUXV,
 				oc_conf->auxv_buf, AUXV_DESC_SZ);
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 /*
  * Read from the ELF header and then the crash dump.
- * Returns number of bytes read on success, -errno on failure.
+ * Returns number of bytes पढ़ो on success, -त्रुटि_सं on failure.
  */
-static ssize_t read_opalcore(struct file *file, struct kobject *kobj,
-			     struct bin_attribute *bin_attr, char *to,
-			     loff_t pos, size_t count)
-{
-	struct opalcore *m;
-	ssize_t tsz, avail;
+अटल sमाप_प्रकार पढ़ो_opalcore(काष्ठा file *file, काष्ठा kobject *kobj,
+			     काष्ठा bin_attribute *bin_attr, अक्षर *to,
+			     loff_t pos, माप_प्रकार count)
+अणु
+	काष्ठा opalcore *m;
+	sमाप_प्रकार tsz, avail;
 	loff_t tpos = pos;
 
-	if (pos >= oc_conf->opalcore_size)
-		return 0;
+	अगर (pos >= oc_conf->opalcore_size)
+		वापस 0;
 
-	/* Adjust count if it goes beyond opalcore size */
+	/* Adjust count अगर it goes beyond opalcore size */
 	avail = oc_conf->opalcore_size - pos;
-	if (count > avail)
+	अगर (count > avail)
 		count = avail;
 
-	if (count == 0)
-		return 0;
+	अगर (count == 0)
+		वापस 0;
 
 	/* Read ELF core header and/or PT_NOTE segment */
-	if (tpos < oc_conf->opalcorebuf_sz) {
-		tsz = min_t(size_t, oc_conf->opalcorebuf_sz - tpos, count);
-		memcpy(to, oc_conf->opalcorebuf + tpos, tsz);
+	अगर (tpos < oc_conf->opalcorebuf_sz) अणु
+		tsz = min_t(माप_प्रकार, oc_conf->opalcorebuf_sz - tpos, count);
+		स_नकल(to, oc_conf->opalcorebuf + tpos, tsz);
 		to += tsz;
 		tpos += tsz;
 		count -= tsz;
-	}
+	पूर्ण
 
-	list_for_each_entry(m, &opalcore_list, list) {
-		/* nothing more to read here */
-		if (count == 0)
-			break;
+	list_क्रम_each_entry(m, &opalcore_list, list) अणु
+		/* nothing more to पढ़ो here */
+		अगर (count == 0)
+			अवरोध;
 
-		if (tpos < m->offset + m->size) {
-			void *addr;
+		अगर (tpos < m->offset + m->size) अणु
+			व्योम *addr;
 
-			tsz = min_t(size_t, m->offset + m->size - tpos, count);
-			addr = (void *)(m->paddr + tpos - m->offset);
-			memcpy(to, __va(addr), tsz);
+			tsz = min_t(माप_प्रकार, m->offset + m->size - tpos, count);
+			addr = (व्योम *)(m->paddr + tpos - m->offset);
+			स_नकल(to, __va(addr), tsz);
 			to += tsz;
 			tpos += tsz;
 			count -= tsz;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return (tpos - pos);
-}
+	वापस (tpos - pos);
+पूर्ण
 
-static struct bin_attribute opal_core_attr = {
-	.attr = {.name = "core", .mode = 0400},
-	.read = read_opalcore
-};
+अटल काष्ठा bin_attribute opal_core_attr = अणु
+	.attr = अणु.name = "core", .mode = 0400पूर्ण,
+	.पढ़ो = पढ़ो_opalcore
+पूर्ण;
 
 /*
- * Read CPU state dump data and convert it into ELF notes.
+ * Read CPU state dump data and convert it पूर्णांकo ELF notes.
  *
- * Each register entry is of 16 bytes, A numerical identifier along with
- * a GPR/SPR flag in the first 8 bytes and the register value in the next
- * 8 bytes. For more details refer to F/W documentation.
+ * Each रेजिस्टर entry is of 16 bytes, A numerical identअगरier aदीर्घ with
+ * a GPR/SPR flag in the first 8 bytes and the रेजिस्टर value in the next
+ * 8 bytes. For more details refer to F/W करोcumentation.
  */
-static Elf64_Word * __init opalcore_append_cpu_notes(Elf64_Word *buf)
-{
-	u32 thread_pir, size_per_thread, regs_offset, regs_cnt, reg_esize;
-	struct hdat_fadump_thread_hdr *thdr;
-	struct elf_prstatus prstatus;
+अटल Elf64_Word * __init opalcore_append_cpu_notes(Elf64_Word *buf)
+अणु
+	u32 thपढ़ो_pir, size_per_thपढ़ो, regs_offset, regs_cnt, reg_esize;
+	काष्ठा hdat_fadump_thपढ़ो_hdr *thdr;
+	काष्ठा elf_prstatus prstatus;
 	Elf64_Word *first_cpu_note;
-	struct pt_regs regs;
-	char *bufp;
-	int i;
+	काष्ठा pt_regs regs;
+	अक्षर *bufp;
+	पूर्णांक i;
 
-	size_per_thread = oc_conf->cpu_state_entry_size;
+	size_per_thपढ़ो = oc_conf->cpu_state_entry_size;
 	bufp = __va(oc_conf->cpu_state_destination_vaddr);
 
 	/*
-	 * Offset for register entries, entry size and registers count is
-	 * duplicated in every thread header in keeping with HDAT format.
-	 * Use these values from the first thread header.
+	 * Offset क्रम रेजिस्टर entries, entry size and रेजिस्टरs count is
+	 * duplicated in every thपढ़ो header in keeping with HDAT क्रमmat.
+	 * Use these values from the first thपढ़ो header.
 	 */
-	thdr = (struct hdat_fadump_thread_hdr *)bufp;
-	regs_offset = (offsetof(struct hdat_fadump_thread_hdr, offset) +
+	thdr = (काष्ठा hdat_fadump_thपढ़ो_hdr *)bufp;
+	regs_offset = (दुरत्व(काष्ठा hdat_fadump_thपढ़ो_hdr, offset) +
 		       be32_to_cpu(thdr->offset));
 	reg_esize = be32_to_cpu(thdr->esize);
 	regs_cnt  = be32_to_cpu(thdr->ecnt);
@@ -253,65 +254,65 @@ static Elf64_Word * __init opalcore_append_cpu_notes(Elf64_Word *buf)
 	 */
 	first_cpu_note = buf;
 	buf = append_elf64_note(buf, CRASH_CORE_NOTE_NAME, NT_PRSTATUS,
-				&prstatus, sizeof(prstatus));
+				&prstatus, माप(prstatus));
 
-	for (i = 0; i < oc_conf->num_cpus; i++, bufp += size_per_thread) {
-		thdr = (struct hdat_fadump_thread_hdr *)bufp;
-		thread_pir = be32_to_cpu(thdr->pir);
+	क्रम (i = 0; i < oc_conf->num_cpus; i++, bufp += size_per_thपढ़ो) अणु
+		thdr = (काष्ठा hdat_fadump_thपढ़ो_hdr *)bufp;
+		thपढ़ो_pir = be32_to_cpu(thdr->pir);
 
 		pr_debug("[%04d] PIR: 0x%x, core state: 0x%02x\n",
-			 i, thread_pir, thdr->core_state);
+			 i, thपढ़ो_pir, thdr->core_state);
 
 		/*
 		 * Register state data of MAX cores is provided by firmware,
-		 * but some of this cores may not be active. So, while
-		 * processing register state data, check core state and
-		 * skip threads that belong to inactive cores.
+		 * but some of this cores may not be active. So, जबतक
+		 * processing रेजिस्टर state data, check core state and
+		 * skip thपढ़ोs that beदीर्घ to inactive cores.
 		 */
-		if (thdr->core_state == HDAT_FADUMP_CORE_INACTIVE)
-			continue;
+		अगर (thdr->core_state == HDAT_FADUMP_CORE_INACTIVE)
+			जारी;
 
-		opal_fadump_read_regs((bufp + regs_offset), regs_cnt,
+		opal_fadump_पढ़ो_regs((bufp + regs_offset), regs_cnt,
 				      reg_esize, false, &regs);
 
-		pr_debug("PIR 0x%x - R1 : 0x%llx, NIP : 0x%llx\n", thread_pir,
+		pr_debug("PIR 0x%x - R1 : 0x%llx, NIP : 0x%llx\n", thपढ़ो_pir,
 			 be64_to_cpu(regs.gpr[1]), be64_to_cpu(regs.nip));
-		fill_prstatus(&prstatus, thread_pir, &regs);
+		fill_prstatus(&prstatus, thपढ़ो_pir, &regs);
 
-		if (thread_pir != oc_conf->crashing_cpu) {
+		अगर (thपढ़ो_pir != oc_conf->crashing_cpu) अणु
 			buf = append_elf64_note(buf, CRASH_CORE_NOTE_NAME,
 						NT_PRSTATUS, &prstatus,
-						sizeof(prstatus));
-		} else {
+						माप(prstatus));
+		पूर्ण अन्यथा अणु
 			/*
-			 * Add crashing CPU as the first NT_PRSTATUS note for
+			 * Add crashing CPU as the first NT_PRSTATUS note क्रम
 			 * GDB to process the core file appropriately.
 			 */
 			append_elf64_note(first_cpu_note, CRASH_CORE_NOTE_NAME,
 					  NT_PRSTATUS, &prstatus,
-					  sizeof(prstatus));
-		}
-	}
+					  माप(prstatus));
+		पूर्ण
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static int __init create_opalcore(void)
-{
+अटल पूर्णांक __init create_opalcore(व्योम)
+अणु
 	u64 opal_boot_entry, opal_base_addr, paddr;
 	u32 hdr_size, cpu_notes_size, count;
-	struct device_node *dn;
-	struct opalcore *new;
+	काष्ठा device_node *dn;
+	काष्ठा opalcore *new;
 	loff_t opalcore_off;
-	struct page *page;
+	काष्ठा page *page;
 	Elf64_Phdr *phdr;
 	Elf64_Ehdr *elf;
-	int i, ret;
-	char *bufp;
+	पूर्णांक i, ret;
+	अक्षर *bufp;
 
-	/* Get size of header & CPU notes for OPAL core */
-	hdr_size = (sizeof(Elf64_Ehdr) +
-		    ((oc_conf->ptload_cnt + 1) * sizeof(Elf64_Phdr)));
+	/* Get size of header & CPU notes क्रम OPAL core */
+	hdr_size = (माप(Elf64_Ehdr) +
+		    ((oc_conf->ptload_cnt + 1) * माप(Elf64_Phdr)));
 	cpu_notes_size = ((oc_conf->num_cpus * (CRASH_CORE_NOTE_HEAD_BYTES +
 			  CRASH_CORE_NOTE_NAME_BYTES +
 			  CRASH_CORE_NOTE_DESC_BYTES)) +
@@ -322,30 +323,30 @@ static int __init create_opalcore(void)
 	oc_conf->opalcorebuf_sz = PAGE_ALIGN(hdr_size + cpu_notes_size);
 	oc_conf->opalcorebuf = alloc_pages_exact(oc_conf->opalcorebuf_sz,
 						 GFP_KERNEL | __GFP_ZERO);
-	if (!oc_conf->opalcorebuf) {
+	अगर (!oc_conf->opalcorebuf) अणु
 		pr_err("Not enough memory to setup OPAL core (size: %lu)\n",
 		       oc_conf->opalcorebuf_sz);
 		oc_conf->opalcorebuf_sz = 0;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	count = oc_conf->opalcorebuf_sz / PAGE_SIZE;
 	page = virt_to_page(oc_conf->opalcorebuf);
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		mark_page_reserved(page + i);
 
 	pr_debug("opalcorebuf = 0x%llx\n", (u64)oc_conf->opalcorebuf);
 
 	/* Read OPAL related device-tree entries */
-	dn = of_find_node_by_name(NULL, "ibm,opal");
-	if (dn) {
-		ret = of_property_read_u64(dn, "opal-base-address",
+	dn = of_find_node_by_name(शून्य, "ibm,opal");
+	अगर (dn) अणु
+		ret = of_property_पढ़ो_u64(dn, "opal-base-address",
 					   &opal_base_addr);
 		pr_debug("opal-base-address: %llx\n", opal_base_addr);
-		ret |= of_property_read_u64(dn, "opal-boot-address",
+		ret |= of_property_पढ़ो_u64(dn, "opal-boot-address",
 					    &opal_boot_entry);
 		pr_debug("opal-boot-address: %llx\n", opal_boot_entry);
-	}
-	if (!dn || ret)
+	पूर्ण
+	अगर (!dn || ret)
 		pr_warn("WARNING: Failed to read OPAL base & entry values\n");
 
 	/* Use count to keep track of the program headers */
@@ -353,30 +354,30 @@ static int __init create_opalcore(void)
 
 	bufp = oc_conf->opalcorebuf;
 	elf = (Elf64_Ehdr *)bufp;
-	bufp += sizeof(Elf64_Ehdr);
-	memcpy(elf->e_ident, ELFMAG, SELFMAG);
+	bufp += माप(Elf64_Ehdr);
+	स_नकल(elf->e_ident, ELFMAG, SELFMAG);
 	elf->e_ident[EI_CLASS] = ELF_CLASS;
 	elf->e_ident[EI_DATA] = ELFDATA2MSB;
 	elf->e_ident[EI_VERSION] = EV_CURRENT;
 	elf->e_ident[EI_OSABI] = ELF_OSABI;
-	memset(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
+	स_रखो(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
 	elf->e_type = cpu_to_be16(ET_CORE);
 	elf->e_machine = cpu_to_be16(ELF_ARCH);
 	elf->e_version = cpu_to_be32(EV_CURRENT);
 	elf->e_entry = 0;
-	elf->e_phoff = cpu_to_be64(sizeof(Elf64_Ehdr));
+	elf->e_phoff = cpu_to_be64(माप(Elf64_Ehdr));
 	elf->e_shoff = 0;
 	elf->e_flags = 0;
 
-	elf->e_ehsize = cpu_to_be16(sizeof(Elf64_Ehdr));
-	elf->e_phentsize = cpu_to_be16(sizeof(Elf64_Phdr));
+	elf->e_ehsize = cpu_to_be16(माप(Elf64_Ehdr));
+	elf->e_phentsize = cpu_to_be16(माप(Elf64_Phdr));
 	elf->e_phnum = 0;
 	elf->e_shentsize = 0;
 	elf->e_shnum = 0;
 	elf->e_shstrndx = 0;
 
 	phdr = (Elf64_Phdr *)bufp;
-	bufp += sizeof(Elf64_Phdr);
+	bufp += माप(Elf64_Phdr);
 	phdr->p_type	= cpu_to_be32(PT_NOTE);
 	phdr->p_flags	= 0;
 	phdr->p_align	= 0;
@@ -388,16 +389,16 @@ static int __init create_opalcore(void)
 	opalcore_off = oc_conf->opalcorebuf_sz;
 	oc_conf->ptload_phdr  = (Elf64_Phdr *)bufp;
 	paddr = 0;
-	for (i = 0; i < oc_conf->ptload_cnt; i++) {
+	क्रम (i = 0; i < oc_conf->ptload_cnt; i++) अणु
 		phdr = (Elf64_Phdr *)bufp;
-		bufp += sizeof(Elf64_Phdr);
+		bufp += माप(Elf64_Phdr);
 		phdr->p_type	= cpu_to_be32(PT_LOAD);
 		phdr->p_flags	= cpu_to_be32(PF_R|PF_W|PF_X);
 		phdr->p_align	= 0;
 
 		new = get_new_element();
-		if (!new)
-			return -ENOMEM;
+		अगर (!new)
+			वापस -ENOMEM;
 		new->paddr  = oc_conf->ptload_addr[i];
 		new->size   = oc_conf->ptload_size[i];
 		new->offset = opalcore_off;
@@ -412,72 +413,72 @@ static int __init create_opalcore(void)
 		count++;
 		opalcore_off += oc_conf->ptload_size[i];
 		paddr += oc_conf->ptload_size[i];
-	}
+	पूर्ण
 
 	elf->e_phnum = cpu_to_be16(count);
 
-	bufp = (char *)opalcore_append_cpu_notes((Elf64_Word *)bufp);
-	bufp = (char *)auxv_to_elf64_notes((Elf64_Word *)bufp, opal_boot_entry);
+	bufp = (अक्षर *)opalcore_append_cpu_notes((Elf64_Word *)bufp);
+	bufp = (अक्षर *)auxv_to_elf64_notes((Elf64_Word *)bufp, opal_boot_entry);
 
 	oc_conf->opalcore_size = opalcore_off;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void opalcore_cleanup(void)
-{
-	if (oc_conf == NULL)
-		return;
+अटल व्योम opalcore_cleanup(व्योम)
+अणु
+	अगर (oc_conf == शून्य)
+		वापस;
 
 	/* Remove OPAL core sysfs file */
-	sysfs_remove_bin_file(mpipl_kobj, &opal_core_attr);
-	oc_conf->ptload_phdr = NULL;
+	sysfs_हटाओ_bin_file(mpipl_kobj, &opal_core_attr);
+	oc_conf->ptload_phdr = शून्य;
 	oc_conf->ptload_cnt = 0;
 
-	/* free the buffer used for setting up OPAL core */
-	if (oc_conf->opalcorebuf) {
-		void *end = (void *)((u64)oc_conf->opalcorebuf +
+	/* मुक्त the buffer used क्रम setting up OPAL core */
+	अगर (oc_conf->opalcorebuf) अणु
+		व्योम *end = (व्योम *)((u64)oc_conf->opalcorebuf +
 				     oc_conf->opalcorebuf_sz);
 
-		free_reserved_area(oc_conf->opalcorebuf, end, -1, NULL);
-		oc_conf->opalcorebuf = NULL;
+		मुक्त_reserved_area(oc_conf->opalcorebuf, end, -1, शून्य);
+		oc_conf->opalcorebuf = शून्य;
 		oc_conf->opalcorebuf_sz = 0;
-	}
+	पूर्ण
 
-	kfree(oc_conf);
-	oc_conf = NULL;
-}
-__exitcall(opalcore_cleanup);
+	kमुक्त(oc_conf);
+	oc_conf = शून्य;
+पूर्ण
+__निकासcall(opalcore_cleanup);
 
-static void __init opalcore_config_init(void)
-{
+अटल व्योम __init opalcore_config_init(व्योम)
+अणु
 	u32 idx, cpu_data_version;
-	struct device_node *np;
-	const __be32 *prop;
+	काष्ठा device_node *np;
+	स्थिर __be32 *prop;
 	u64 addr = 0;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	np = of_find_node_by_path("/ibm,opal/dump");
-	if (np == NULL)
-		return;
+	अगर (np == शून्य)
+		वापस;
 
-	if (!of_device_is_compatible(np, "ibm,opal-dump")) {
+	अगर (!of_device_is_compatible(np, "ibm,opal-dump")) अणु
 		pr_warn("Support missing for this f/w version!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Check if dump has been initiated on last reboot */
-	prop = of_get_property(np, "mpipl-boot", NULL);
-	if (!prop) {
+	/* Check अगर dump has been initiated on last reboot */
+	prop = of_get_property(np, "mpipl-boot", शून्य);
+	अगर (!prop) अणु
 		of_node_put(np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Get OPAL metadata */
 	ret = opal_mpipl_query_tag(OPAL_MPIPL_TAG_OPAL, &addr);
-	if ((ret != OPAL_SUCCESS) || !addr) {
+	अगर ((ret != OPAL_SUCCESS) || !addr) अणु
 		pr_err("Failed to get OPAL metadata (%d)\n", ret);
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 
 	addr = be64_to_cpu(addr);
 	pr_debug("OPAL metadata addr: %llx\n", addr);
@@ -485,61 +486,61 @@ static void __init opalcore_config_init(void)
 
 	/* Get OPAL CPU metadata */
 	ret = opal_mpipl_query_tag(OPAL_MPIPL_TAG_CPU, &addr);
-	if ((ret != OPAL_SUCCESS) || !addr) {
+	अगर ((ret != OPAL_SUCCESS) || !addr) अणु
 		pr_err("Failed to get OPAL CPU metadata (%d)\n", ret);
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 
 	addr = be64_to_cpu(addr);
 	pr_debug("CPU metadata addr: %llx\n", addr);
 	opalc_cpu_metadata = __va(addr);
 
-	/* Allocate memory for config buffer */
-	oc_conf = kzalloc(sizeof(struct opalcore_config), GFP_KERNEL);
-	if (oc_conf == NULL)
-		goto error_out;
+	/* Allocate memory क्रम config buffer */
+	oc_conf = kzalloc(माप(काष्ठा opalcore_config), GFP_KERNEL);
+	अगर (oc_conf == शून्य)
+		जाओ error_out;
 
 	/* Parse OPAL metadata */
-	if (opalc_metadata->version != OPAL_MPIPL_VERSION) {
+	अगर (opalc_metadata->version != OPAL_MPIPL_VERSION) अणु
 		pr_warn("Supported OPAL metadata version: %u, found: %u!\n",
 			OPAL_MPIPL_VERSION, opalc_metadata->version);
 		pr_warn("WARNING: F/W using newer OPAL metadata format!!\n");
-	}
+	पूर्ण
 
 	oc_conf->ptload_cnt = 0;
 	idx = be32_to_cpu(opalc_metadata->region_cnt);
-	if (idx > MAX_PT_LOAD_CNT) {
+	अगर (idx > MAX_PT_LOAD_CNT) अणु
 		pr_warn("WARNING: OPAL regions count (%d) adjusted to limit (%d)",
 			idx, MAX_PT_LOAD_CNT);
 		idx = MAX_PT_LOAD_CNT;
-	}
-	for (i = 0; i < idx; i++) {
+	पूर्ण
+	क्रम (i = 0; i < idx; i++) अणु
 		oc_conf->ptload_addr[oc_conf->ptload_cnt] =
 				be64_to_cpu(opalc_metadata->region[i].dest);
 		oc_conf->ptload_size[oc_conf->ptload_cnt++] =
 				be64_to_cpu(opalc_metadata->region[i].size);
-	}
+	पूर्ण
 	oc_conf->ptload_cnt = i;
 	oc_conf->crashing_cpu = be32_to_cpu(opalc_metadata->crashing_pir);
 
-	if (!oc_conf->ptload_cnt) {
+	अगर (!oc_conf->ptload_cnt) अणु
 		pr_err("OPAL memory regions not found\n");
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 
 	/* Parse OPAL CPU metadata */
 	cpu_data_version = be32_to_cpu(opalc_cpu_metadata->cpu_data_version);
-	if (cpu_data_version != HDAT_FADUMP_CPU_DATA_VER) {
+	अगर (cpu_data_version != HDAT_FADUMP_CPU_DATA_VER) अणु
 		pr_warn("Supported CPU data version: %u, found: %u!\n",
 			HDAT_FADUMP_CPU_DATA_VER, cpu_data_version);
 		pr_warn("WARNING: F/W using newer CPU state data format!!\n");
-	}
+	पूर्ण
 
 	addr = be64_to_cpu(opalc_cpu_metadata->region[0].dest);
-	if (!addr) {
+	अगर (!addr) अणु
 		pr_err("CPU state data not found!\n");
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 	oc_conf->cpu_state_destination_vaddr = (u64)__va(addr);
 
 	oc_conf->cpu_state_data_size =
@@ -547,75 +548,75 @@ static void __init opalcore_config_init(void)
 	oc_conf->cpu_state_entry_size =
 			be32_to_cpu(opalc_cpu_metadata->cpu_data_size);
 
-	if ((oc_conf->cpu_state_entry_size == 0) ||
-	    (oc_conf->cpu_state_entry_size > oc_conf->cpu_state_data_size)) {
+	अगर ((oc_conf->cpu_state_entry_size == 0) ||
+	    (oc_conf->cpu_state_entry_size > oc_conf->cpu_state_data_size)) अणु
 		pr_err("CPU state data is invalid.\n");
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 	oc_conf->num_cpus = (oc_conf->cpu_state_data_size /
 			     oc_conf->cpu_state_entry_size);
 
 	of_node_put(np);
-	return;
+	वापस;
 
 error_out:
 	pr_err("Could not export /sys/firmware/opal/core\n");
 	opalcore_cleanup();
 	of_node_put(np);
-}
+पूर्ण
 
-static ssize_t release_core_store(struct kobject *kobj,
-				  struct kobj_attribute *attr,
-				  const char *buf, size_t count)
-{
-	int input = -1;
+अटल sमाप_प्रकार release_core_store(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक input = -1;
 
-	if (kstrtoint(buf, 0, &input))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 0, &input))
+		वापस -EINVAL;
 
-	if (input == 1) {
-		if (oc_conf == NULL) {
+	अगर (input == 1) अणु
+		अगर (oc_conf == शून्य) अणु
 			pr_err("'/sys/firmware/opal/core' file not accessible!\n");
-			return -EPERM;
-		}
+			वापस -EPERM;
+		पूर्ण
 
 		/*
 		 * Take away '/sys/firmware/opal/core' and release all memory
-		 * used for exporting this file.
+		 * used क्रम exporting this file.
 		 */
 		opalcore_cleanup();
-	} else
-		return -EINVAL;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct kobj_attribute opalcore_rel_attr = __ATTR_WO(release_core);
+अटल काष्ठा kobj_attribute opalcore_rel_attr = __ATTR_WO(release_core);
 
-static struct attribute *mpipl_attr[] = {
+अटल काष्ठा attribute *mpipl_attr[] = अणु
 	&opalcore_rel_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct bin_attribute *mpipl_bin_attr[] = {
+अटल काष्ठा bin_attribute *mpipl_bin_attr[] = अणु
 	&opal_core_attr,
-	NULL,
+	शून्य,
 
-};
+पूर्ण;
 
-static struct attribute_group mpipl_group = {
+अटल काष्ठा attribute_group mpipl_group = अणु
 	.attrs = mpipl_attr,
 	.bin_attrs =  mpipl_bin_attr,
-};
+पूर्ण;
 
-static int __init opalcore_init(void)
-{
-	int rc = -1;
+अटल पूर्णांक __init opalcore_init(व्योम)
+अणु
+	पूर्णांक rc = -1;
 
 	opalcore_config_init();
 
-	if (oc_conf == NULL)
-		return rc;
+	अगर (oc_conf == शून्य)
+		वापस rc;
 
 	create_opalcore();
 
@@ -623,39 +624,39 @@ static int __init opalcore_init(void)
 	 * If oc_conf->opalcorebuf= is set in the 2nd kernel,
 	 * then capture the dump.
 	 */
-	if (!(is_opalcore_usable())) {
+	अगर (!(is_opalcore_usable())) अणु
 		pr_err("Failed to export /sys/firmware/opal/mpipl/core\n");
 		opalcore_cleanup();
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* Set OPAL core file size */
 	opal_core_attr.size = oc_conf->opalcore_size;
 
 	mpipl_kobj = kobject_create_and_add("mpipl", opal_kobj);
-	if (!mpipl_kobj) {
+	अगर (!mpipl_kobj) अणु
 		pr_err("unable to create mpipl kobject\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Export OPAL core sysfs file */
 	rc = sysfs_create_group(mpipl_kobj, &mpipl_group);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("mpipl sysfs group creation failed (%d)", rc);
 		opalcore_cleanup();
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	/* The /sys/firmware/opal/core is moved to /sys/firmware/opal/mpipl/
-	 * directory, need to create symlink at old location to maintain
+	 * directory, need to create symlink at old location to मुख्यtain
 	 * backward compatibility.
 	 */
 	rc = compat_only_sysfs_link_entry_to_kobj(opal_kobj, mpipl_kobj,
-						  "core", NULL);
-	if (rc) {
+						  "core", शून्य);
+	अगर (rc) अणु
 		pr_err("unable to create core symlink (%d)\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 fs_initcall(opalcore_init);

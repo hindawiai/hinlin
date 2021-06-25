@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause
 /*
  * Copyright (c) 2020, MIPI Alliance, Inc.
  *
@@ -8,270 +9,270 @@
  * v1.x of the spec and v2.0 will likely be split out.
  */
 
-#include <linux/bitfield.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/errno.h>
-#include <linux/i3c/master.h>
-#include <linux/io.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/i3c/master.h>
+#समावेश <linux/पन.स>
 
-#include "hci.h"
-#include "cmd.h"
-#include "ibi.h"
+#समावेश "hci.h"
+#समावेश "cmd.h"
+#समावेश "ibi.h"
 
 
 /*
- * Software Parameter Values (somewhat arb itrary for now).
- * Some of them could be determined at run time eventually.
+ * Software Parameter Values (somewhat arb itrary क्रम now).
+ * Some of them could be determined at run समय eventually.
  */
 
-#define XFER_RINGS			1	/* max: 8 */
-#define XFER_RING_ENTRIES		16	/* max: 255 */
+#घोषणा XFER_RINGS			1	/* max: 8 */
+#घोषणा XFER_RING_ENTRIES		16	/* max: 255 */
 
-#define IBI_RINGS			1	/* max: 8 */
-#define IBI_STATUS_RING_ENTRIES		32	/* max: 255 */
-#define IBI_CHUNK_CACHELINES		1	/* max: 256 bytes equivalent */
-#define IBI_CHUNK_POOL_SIZE		128	/* max: 1023 */
+#घोषणा IBI_RINGS			1	/* max: 8 */
+#घोषणा IBI_STATUS_RING_ENTRIES		32	/* max: 255 */
+#घोषणा IBI_CHUNK_CACHELINES		1	/* max: 256 bytes equivalent */
+#घोषणा IBI_CHUNK_POOL_SIZE		128	/* max: 1023 */
 
 /*
  * Ring Header Preamble
  */
 
-#define rhs_reg_read(r)		readl(hci->RHS_regs + (RHS_##r))
-#define rhs_reg_write(r, v)	writel(v, hci->RHS_regs + (RHS_##r))
+#घोषणा rhs_reg_पढ़ो(r)		पढ़ोl(hci->RHS_regs + (RHS_##r))
+#घोषणा rhs_reg_ग_लिखो(r, v)	ग_लिखोl(v, hci->RHS_regs + (RHS_##r))
 
-#define RHS_CONTROL			0x00
-#define PREAMBLE_SIZE			GENMASK(31, 24)	/* Preamble Section Size */
-#define HEADER_SIZE			GENMASK(23, 16)	/* Ring Header Size */
-#define MAX_HEADER_COUNT_CAP		GENMASK(7, 4) /* HC Max Header Count */
-#define MAX_HEADER_COUNT		GENMASK(3, 0) /* Driver Max Header Count */
+#घोषणा RHS_CONTROL			0x00
+#घोषणा PREAMBLE_SIZE			GENMASK(31, 24)	/* Preamble Section Size */
+#घोषणा HEADER_SIZE			GENMASK(23, 16)	/* Ring Header Size */
+#घोषणा MAX_HEADER_COUNT_CAP		GENMASK(7, 4) /* HC Max Header Count */
+#घोषणा MAX_HEADER_COUNT		GENMASK(3, 0) /* Driver Max Header Count */
 
-#define RHS_RHn_OFFSET(n)		(0x04 + (n)*4)
+#घोषणा RHS_RHn_OFFSET(n)		(0x04 + (n)*4)
 
 /*
  * Ring Header (Per-Ring Bundle)
  */
 
-#define rh_reg_read(r)		readl(rh->regs + (RH_##r))
-#define rh_reg_write(r, v)	writel(v, rh->regs + (RH_##r))
+#घोषणा rh_reg_पढ़ो(r)		पढ़ोl(rh->regs + (RH_##r))
+#घोषणा rh_reg_ग_लिखो(r, v)	ग_लिखोl(v, rh->regs + (RH_##r))
 
-#define RH_CR_SETUP			0x00	/* Command/Response Ring */
-#define CR_XFER_STRUCT_SIZE		GENMASK(31, 24)
-#define CR_RESP_STRUCT_SIZE		GENMASK(23, 16)
-#define CR_RING_SIZE			GENMASK(8, 0)
+#घोषणा RH_CR_SETUP			0x00	/* Command/Response Ring */
+#घोषणा CR_XFER_STRUCT_SIZE		GENMASK(31, 24)
+#घोषणा CR_RESP_STRUCT_SIZE		GENMASK(23, 16)
+#घोषणा CR_RING_SIZE			GENMASK(8, 0)
 
-#define RH_IBI_SETUP			0x04
-#define IBI_STATUS_STRUCT_SIZE		GENMASK(31, 24)
-#define IBI_STATUS_RING_SIZE		GENMASK(23, 16)
-#define IBI_DATA_CHUNK_SIZE		GENMASK(12, 10)
-#define IBI_DATA_CHUNK_COUNT		GENMASK(9, 0)
+#घोषणा RH_IBI_SETUP			0x04
+#घोषणा IBI_STATUS_STRUCT_SIZE		GENMASK(31, 24)
+#घोषणा IBI_STATUS_RING_SIZE		GENMASK(23, 16)
+#घोषणा IBI_DATA_CHUNK_SIZE		GENMASK(12, 10)
+#घोषणा IBI_DATA_CHUNK_COUNT		GENMASK(9, 0)
 
-#define RH_CHUNK_CONTROL			0x08
+#घोषणा RH_CHUNK_CONTROL			0x08
 
-#define RH_INTR_STATUS			0x10
-#define RH_INTR_STATUS_ENABLE		0x14
-#define RH_INTR_SIGNAL_ENABLE		0x18
-#define RH_INTR_FORCE			0x1c
-#define INTR_IBI_READY			BIT(12)
-#define INTR_TRANSFER_COMPLETION	BIT(11)
-#define INTR_RING_OP			BIT(10)
-#define INTR_TRANSFER_ERR		BIT(9)
-#define INTR_WARN_INS_STOP_MODE		BIT(7)
-#define INTR_IBI_RING_FULL		BIT(6)
-#define INTR_TRANSFER_ABORT		BIT(5)
+#घोषणा RH_INTR_STATUS			0x10
+#घोषणा RH_INTR_STATUS_ENABLE		0x14
+#घोषणा RH_INTR_SIGNAL_ENABLE		0x18
+#घोषणा RH_INTR_FORCE			0x1c
+#घोषणा INTR_IBI_READY			BIT(12)
+#घोषणा INTR_TRANSFER_COMPLETION	BIT(11)
+#घोषणा INTR_RING_OP			BIT(10)
+#घोषणा INTR_TRANSFER_ERR		BIT(9)
+#घोषणा INTR_WARN_INS_STOP_MODE		BIT(7)
+#घोषणा INTR_IBI_RING_FULL		BIT(6)
+#घोषणा INTR_TRANSFER_ABORT		BIT(5)
 
-#define RH_RING_STATUS			0x20
-#define RING_STATUS_LOCKED		BIT(3)
-#define RING_STATUS_ABORTED		BIT(2)
-#define RING_STATUS_RUNNING		BIT(1)
-#define RING_STATUS_ENABLED		BIT(0)
+#घोषणा RH_RING_STATUS			0x20
+#घोषणा RING_STATUS_LOCKED		BIT(3)
+#घोषणा RING_STATUS_ABORTED		BIT(2)
+#घोषणा RING_STATUS_RUNNING		BIT(1)
+#घोषणा RING_STATUS_ENABLED		BIT(0)
 
-#define RH_RING_CONTROL			0x24
-#define RING_CTRL_ABORT			BIT(2)
-#define RING_CTRL_RUN_STOP		BIT(1)
-#define RING_CTRL_ENABLE		BIT(0)
+#घोषणा RH_RING_CONTROL			0x24
+#घोषणा RING_CTRL_ABORT			BIT(2)
+#घोषणा RING_CTRL_RUN_STOP		BIT(1)
+#घोषणा RING_CTRL_ENABLE		BIT(0)
 
-#define RH_RING_OPERATION1		0x28
-#define RING_OP1_IBI_DEQ_PTR		GENMASK(23, 16)
-#define RING_OP1_CR_SW_DEQ_PTR		GENMASK(15, 8)
-#define RING_OP1_CR_ENQ_PTR		GENMASK(7, 0)
+#घोषणा RH_RING_OPERATION1		0x28
+#घोषणा RING_OP1_IBI_DEQ_PTR		GENMASK(23, 16)
+#घोषणा RING_OP1_CR_SW_DEQ_PTR		GENMASK(15, 8)
+#घोषणा RING_OP1_CR_ENQ_PTR		GENMASK(7, 0)
 
-#define RH_RING_OPERATION2		0x2c
-#define RING_OP2_IBI_ENQ_PTR		GENMASK(23, 16)
-#define RING_OP2_CR_DEQ_PTR		GENMASK(7, 0)
+#घोषणा RH_RING_OPERATION2		0x2c
+#घोषणा RING_OP2_IBI_ENQ_PTR		GENMASK(23, 16)
+#घोषणा RING_OP2_CR_DEQ_PTR		GENMASK(7, 0)
 
-#define RH_CMD_RING_BASE_LO		0x30
-#define RH_CMD_RING_BASE_HI		0x34
-#define RH_RESP_RING_BASE_LO		0x38
-#define RH_RESP_RING_BASE_HI		0x3c
-#define RH_IBI_STATUS_RING_BASE_LO	0x40
-#define RH_IBI_STATUS_RING_BASE_HI	0x44
-#define RH_IBI_DATA_RING_BASE_LO	0x48
-#define RH_IBI_DATA_RING_BASE_HI	0x4c
+#घोषणा RH_CMD_RING_BASE_LO		0x30
+#घोषणा RH_CMD_RING_BASE_HI		0x34
+#घोषणा RH_RESP_RING_BASE_LO		0x38
+#घोषणा RH_RESP_RING_BASE_HI		0x3c
+#घोषणा RH_IBI_STATUS_RING_BASE_LO	0x40
+#घोषणा RH_IBI_STATUS_RING_BASE_HI	0x44
+#घोषणा RH_IBI_DATA_RING_BASE_LO	0x48
+#घोषणा RH_IBI_DATA_RING_BASE_HI	0x4c
 
-#define RH_CMD_RING_SG			0x50	/* Ring Scatter Gather Support */
-#define RH_RESP_RING_SG			0x54
-#define RH_IBI_STATUS_RING_SG		0x58
-#define RH_IBI_DATA_RING_SG		0x5c
-#define RING_SG_BLP			BIT(31)	/* Buffer Vs. List Pointer */
-#define RING_SG_LIST_SIZE		GENMASK(15, 0)
+#घोषणा RH_CMD_RING_SG			0x50	/* Ring Scatter Gather Support */
+#घोषणा RH_RESP_RING_SG			0x54
+#घोषणा RH_IBI_STATUS_RING_SG		0x58
+#घोषणा RH_IBI_DATA_RING_SG		0x5c
+#घोषणा RING_SG_BLP			BIT(31)	/* Buffer Vs. List Poपूर्णांकer */
+#घोषणा RING_SG_LIST_SIZE		GENMASK(15, 0)
 
 /*
  * Data Buffer Descriptor (in memory)
  */
 
-#define DATA_BUF_BLP			BIT(31)	/* Buffer Vs. List Pointer */
-#define DATA_BUF_IOC			BIT(30)	/* Interrupt on Completion */
-#define DATA_BUF_BLOCK_SIZE		GENMASK(15, 0)
+#घोषणा DATA_BUF_BLP			BIT(31)	/* Buffer Vs. List Poपूर्णांकer */
+#घोषणा DATA_BUF_IOC			BIT(30)	/* Interrupt on Completion */
+#घोषणा DATA_BUF_BLOCK_SIZE		GENMASK(15, 0)
 
 
-struct hci_rh_data {
-	void __iomem *regs;
-	void *xfer, *resp, *ibi_status, *ibi_data;
+काष्ठा hci_rh_data अणु
+	व्योम __iomem *regs;
+	व्योम *xfer, *resp, *ibi_status, *ibi_data;
 	dma_addr_t xfer_dma, resp_dma, ibi_status_dma, ibi_data_dma;
-	unsigned int xfer_entries, ibi_status_entries, ibi_chunks_total;
-	unsigned int xfer_struct_sz, resp_struct_sz, ibi_status_sz, ibi_chunk_sz;
-	unsigned int done_ptr, ibi_chunk_ptr;
-	struct hci_xfer **src_xfers;
+	अचिन्हित पूर्णांक xfer_entries, ibi_status_entries, ibi_chunks_total;
+	अचिन्हित पूर्णांक xfer_काष्ठा_sz, resp_काष्ठा_sz, ibi_status_sz, ibi_chunk_sz;
+	अचिन्हित पूर्णांक करोne_ptr, ibi_chunk_ptr;
+	काष्ठा hci_xfer **src_xfers;
 	spinlock_t lock;
-	struct completion op_done;
-};
+	काष्ठा completion op_करोne;
+पूर्ण;
 
-struct hci_rings_data {
-	unsigned int total;
-	struct hci_rh_data headers[];
-};
+काष्ठा hci_rings_data अणु
+	अचिन्हित पूर्णांक total;
+	काष्ठा hci_rh_data headers[];
+पूर्ण;
 
-struct hci_dma_dev_ibi_data {
-	struct i3c_generic_ibi_pool *pool;
-	unsigned int max_len;
-};
+काष्ठा hci_dma_dev_ibi_data अणु
+	काष्ठा i3c_generic_ibi_pool *pool;
+	अचिन्हित पूर्णांक max_len;
+पूर्ण;
 
-static inline u32 lo32(dma_addr_t physaddr)
-{
-	return physaddr;
-}
+अटल अंतरभूत u32 lo32(dma_addr_t physaddr)
+अणु
+	वापस physaddr;
+पूर्ण
 
-static inline u32 hi32(dma_addr_t physaddr)
-{
-	/* trickery to avoid compiler warnings on 32-bit build targets */
-	if (sizeof(dma_addr_t) > 4) {
+अटल अंतरभूत u32 hi32(dma_addr_t physaddr)
+अणु
+	/* trickery to aव्योम compiler warnings on 32-bit build tarमाला_लो */
+	अगर (माप(dma_addr_t) > 4) अणु
 		u64 hi = physaddr;
-		return hi >> 32;
-	}
-	return 0;
-}
+		वापस hi >> 32;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void hci_dma_cleanup(struct i3c_hci *hci)
-{
-	struct hci_rings_data *rings = hci->io_data;
-	struct hci_rh_data *rh;
-	unsigned int i;
+अटल व्योम hci_dma_cleanup(काष्ठा i3c_hci *hci)
+अणु
+	काष्ठा hci_rings_data *rings = hci->io_data;
+	काष्ठा hci_rh_data *rh;
+	अचिन्हित पूर्णांक i;
 
-	if (!rings)
-		return;
+	अगर (!rings)
+		वापस;
 
-	for (i = 0; i < rings->total; i++) {
+	क्रम (i = 0; i < rings->total; i++) अणु
 		rh = &rings->headers[i];
 
-		rh_reg_write(RING_CONTROL, 0);
-		rh_reg_write(CR_SETUP, 0);
-		rh_reg_write(IBI_SETUP, 0);
-		rh_reg_write(INTR_SIGNAL_ENABLE, 0);
+		rh_reg_ग_लिखो(RING_CONTROL, 0);
+		rh_reg_ग_लिखो(CR_SETUP, 0);
+		rh_reg_ग_लिखो(IBI_SETUP, 0);
+		rh_reg_ग_लिखो(INTR_SIGNAL_ENABLE, 0);
 
-		if (rh->xfer)
-			dma_free_coherent(&hci->master.dev,
-					  rh->xfer_struct_sz * rh->xfer_entries,
+		अगर (rh->xfer)
+			dma_मुक्त_coherent(&hci->master.dev,
+					  rh->xfer_काष्ठा_sz * rh->xfer_entries,
 					  rh->xfer, rh->xfer_dma);
-		if (rh->resp)
-			dma_free_coherent(&hci->master.dev,
-					  rh->resp_struct_sz * rh->xfer_entries,
+		अगर (rh->resp)
+			dma_मुक्त_coherent(&hci->master.dev,
+					  rh->resp_काष्ठा_sz * rh->xfer_entries,
 					  rh->resp, rh->resp_dma);
-		kfree(rh->src_xfers);
-		if (rh->ibi_status)
-			dma_free_coherent(&hci->master.dev,
+		kमुक्त(rh->src_xfers);
+		अगर (rh->ibi_status)
+			dma_मुक्त_coherent(&hci->master.dev,
 					  rh->ibi_status_sz * rh->ibi_status_entries,
 					  rh->ibi_status, rh->ibi_status_dma);
-		if (rh->ibi_data_dma)
+		अगर (rh->ibi_data_dma)
 			dma_unmap_single(&hci->master.dev, rh->ibi_data_dma,
 					 rh->ibi_chunk_sz * rh->ibi_chunks_total,
 					 DMA_FROM_DEVICE);
-		kfree(rh->ibi_data);
-	}
+		kमुक्त(rh->ibi_data);
+	पूर्ण
 
-	rhs_reg_write(CONTROL, 0);
+	rhs_reg_ग_लिखो(CONTROL, 0);
 
-	kfree(rings);
-	hci->io_data = NULL;
-}
+	kमुक्त(rings);
+	hci->io_data = शून्य;
+पूर्ण
 
-static int hci_dma_init(struct i3c_hci *hci)
-{
-	struct hci_rings_data *rings;
-	struct hci_rh_data *rh;
+अटल पूर्णांक hci_dma_init(काष्ठा i3c_hci *hci)
+अणु
+	काष्ठा hci_rings_data *rings;
+	काष्ठा hci_rh_data *rh;
 	u32 regval;
-	unsigned int i, nr_rings, xfers_sz, resps_sz;
-	unsigned int ibi_status_ring_sz, ibi_data_ring_sz;
-	int ret;
+	अचिन्हित पूर्णांक i, nr_rings, xfers_sz, resps_sz;
+	अचिन्हित पूर्णांक ibi_status_ring_sz, ibi_data_ring_sz;
+	पूर्णांक ret;
 
-	regval = rhs_reg_read(CONTROL);
+	regval = rhs_reg_पढ़ो(CONTROL);
 	nr_rings = FIELD_GET(MAX_HEADER_COUNT_CAP, regval);
 	dev_info(&hci->master.dev, "%d DMA rings available\n", nr_rings);
-	if (unlikely(nr_rings > 8)) {
+	अगर (unlikely(nr_rings > 8)) अणु
 		dev_err(&hci->master.dev, "number of rings should be <= 8\n");
 		nr_rings = 8;
-	}
-	if (nr_rings > XFER_RINGS)
+	पूर्ण
+	अगर (nr_rings > XFER_RINGS)
 		nr_rings = XFER_RINGS;
-	rings = kzalloc(sizeof(*rings) + nr_rings * sizeof(*rh), GFP_KERNEL);
-	if (!rings)
-		return -ENOMEM;
+	rings = kzalloc(माप(*rings) + nr_rings * माप(*rh), GFP_KERNEL);
+	अगर (!rings)
+		वापस -ENOMEM;
 	hci->io_data = rings;
 	rings->total = nr_rings;
 
-	for (i = 0; i < rings->total; i++) {
-		u32 offset = rhs_reg_read(RHn_OFFSET(i));
+	क्रम (i = 0; i < rings->total; i++) अणु
+		u32 offset = rhs_reg_पढ़ो(RHn_OFFSET(i));
 
 		dev_info(&hci->master.dev, "Ring %d at offset %#x\n", i, offset);
 		ret = -EINVAL;
-		if (!offset)
-			goto err_out;
+		अगर (!offset)
+			जाओ err_out;
 		rh = &rings->headers[i];
 		rh->regs = hci->base_regs + offset;
 		spin_lock_init(&rh->lock);
-		init_completion(&rh->op_done);
+		init_completion(&rh->op_करोne);
 
 		rh->xfer_entries = XFER_RING_ENTRIES;
 
-		regval = rh_reg_read(CR_SETUP);
-		rh->xfer_struct_sz = FIELD_GET(CR_XFER_STRUCT_SIZE, regval);
-		rh->resp_struct_sz = FIELD_GET(CR_RESP_STRUCT_SIZE, regval);
+		regval = rh_reg_पढ़ो(CR_SETUP);
+		rh->xfer_काष्ठा_sz = FIELD_GET(CR_XFER_STRUCT_SIZE, regval);
+		rh->resp_काष्ठा_sz = FIELD_GET(CR_RESP_STRUCT_SIZE, regval);
 		DBG("xfer_struct_sz = %d, resp_struct_sz = %d",
-		    rh->xfer_struct_sz, rh->resp_struct_sz);
-		xfers_sz = rh->xfer_struct_sz * rh->xfer_entries;
-		resps_sz = rh->resp_struct_sz * rh->xfer_entries;
+		    rh->xfer_काष्ठा_sz, rh->resp_काष्ठा_sz);
+		xfers_sz = rh->xfer_काष्ठा_sz * rh->xfer_entries;
+		resps_sz = rh->resp_काष्ठा_sz * rh->xfer_entries;
 
 		rh->xfer = dma_alloc_coherent(&hci->master.dev, xfers_sz,
 					      &rh->xfer_dma, GFP_KERNEL);
 		rh->resp = dma_alloc_coherent(&hci->master.dev, resps_sz,
 					      &rh->resp_dma, GFP_KERNEL);
 		rh->src_xfers =
-			kmalloc_array(rh->xfer_entries, sizeof(*rh->src_xfers),
+			kदो_स्मृति_array(rh->xfer_entries, माप(*rh->src_xfers),
 				      GFP_KERNEL);
 		ret = -ENOMEM;
-		if (!rh->xfer || !rh->resp || !rh->src_xfers)
-			goto err_out;
+		अगर (!rh->xfer || !rh->resp || !rh->src_xfers)
+			जाओ err_out;
 
-		rh_reg_write(CMD_RING_BASE_LO, lo32(rh->xfer_dma));
-		rh_reg_write(CMD_RING_BASE_HI, hi32(rh->xfer_dma));
-		rh_reg_write(RESP_RING_BASE_LO, lo32(rh->resp_dma));
-		rh_reg_write(RESP_RING_BASE_HI, hi32(rh->resp_dma));
+		rh_reg_ग_लिखो(CMD_RING_BASE_LO, lo32(rh->xfer_dma));
+		rh_reg_ग_लिखो(CMD_RING_BASE_HI, hi32(rh->xfer_dma));
+		rh_reg_ग_लिखो(RESP_RING_BASE_LO, lo32(rh->resp_dma));
+		rh_reg_ग_लिखो(RESP_RING_BASE_HI, hi32(rh->resp_dma));
 
 		regval = FIELD_PREP(CR_RING_SIZE, rh->xfer_entries);
-		rh_reg_write(CR_SETUP, regval);
+		rh_reg_ग_लिखो(CR_SETUP, regval);
 
-		rh_reg_write(INTR_STATUS_ENABLE, 0xffffffff);
-		rh_reg_write(INTR_SIGNAL_ENABLE, INTR_IBI_READY |
+		rh_reg_ग_लिखो(INTR_STATUS_ENABLE, 0xffffffff);
+		rh_reg_ग_लिखो(INTR_SIGNAL_ENABLE, INTR_IBI_READY |
 						 INTR_TRANSFER_COMPLETION |
 						 INTR_RING_OP |
 						 INTR_TRANSFER_ERR |
@@ -281,10 +282,10 @@ static int hci_dma_init(struct i3c_hci *hci)
 
 		/* IBIs */
 
-		if (i >= IBI_RINGS)
-			goto ring_ready;
+		अगर (i >= IBI_RINGS)
+			जाओ ring_पढ़ोy;
 
-		regval = rh_reg_read(IBI_SETUP);
+		regval = rh_reg_पढ़ो(IBI_SETUP);
 		rh->ibi_status_sz = FIELD_GET(IBI_STATUS_STRUCT_SIZE, regval);
 		rh->ibi_status_entries = IBI_STATUS_RING_ENTRIES;
 		rh->ibi_chunks_total = IBI_CHUNK_POOL_SIZE;
@@ -299,18 +300,18 @@ static int hci_dma_init(struct i3c_hci *hci)
 		rh->ibi_status =
 			dma_alloc_coherent(&hci->master.dev, ibi_status_ring_sz,
 					   &rh->ibi_status_dma, GFP_KERNEL);
-		rh->ibi_data = kmalloc(ibi_data_ring_sz, GFP_KERNEL);
+		rh->ibi_data = kदो_स्मृति(ibi_data_ring_sz, GFP_KERNEL);
 		ret = -ENOMEM;
-		if (!rh->ibi_status || !rh->ibi_data)
-			goto err_out;
+		अगर (!rh->ibi_status || !rh->ibi_data)
+			जाओ err_out;
 		rh->ibi_data_dma =
 			dma_map_single(&hci->master.dev, rh->ibi_data,
 				       ibi_data_ring_sz, DMA_FROM_DEVICE);
-		if (dma_mapping_error(&hci->master.dev, rh->ibi_data_dma)) {
+		अगर (dma_mapping_error(&hci->master.dev, rh->ibi_data_dma)) अणु
 			rh->ibi_data_dma = 0;
 			ret = -ENOMEM;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
 		regval = FIELD_PREP(IBI_STATUS_RING_SIZE,
 				    rh->ibi_status_entries) |
@@ -318,74 +319,74 @@ static int hci_dma_init(struct i3c_hci *hci)
 				    ilog2(rh->ibi_chunk_sz) - 2) |
 			 FIELD_PREP(IBI_DATA_CHUNK_COUNT,
 				    rh->ibi_chunks_total);
-		rh_reg_write(IBI_SETUP, regval);
+		rh_reg_ग_लिखो(IBI_SETUP, regval);
 
-		regval = rh_reg_read(INTR_SIGNAL_ENABLE);
+		regval = rh_reg_पढ़ो(INTR_SIGNAL_ENABLE);
 		regval |= INTR_IBI_READY;
-		rh_reg_write(INTR_SIGNAL_ENABLE, regval);
+		rh_reg_ग_लिखो(INTR_SIGNAL_ENABLE, regval);
 
-ring_ready:
-		rh_reg_write(RING_CONTROL, RING_CTRL_ENABLE);
-	}
+ring_पढ़ोy:
+		rh_reg_ग_लिखो(RING_CONTROL, RING_CTRL_ENABLE);
+	पूर्ण
 
 	regval = FIELD_PREP(MAX_HEADER_COUNT, rings->total);
-	rhs_reg_write(CONTROL, regval);
-	return 0;
+	rhs_reg_ग_लिखो(CONTROL, regval);
+	वापस 0;
 
 err_out:
 	hci_dma_cleanup(hci);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hci_dma_unmap_xfer(struct i3c_hci *hci,
-			       struct hci_xfer *xfer_list, unsigned int n)
-{
-	struct hci_xfer *xfer;
-	unsigned int i;
+अटल व्योम hci_dma_unmap_xfer(काष्ठा i3c_hci *hci,
+			       काष्ठा hci_xfer *xfer_list, अचिन्हित पूर्णांक n)
+अणु
+	काष्ठा hci_xfer *xfer;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < n; i++) {
+	क्रम (i = 0; i < n; i++) अणु
 		xfer = xfer_list + i;
 		dma_unmap_single(&hci->master.dev,
 				 xfer->data_dma, xfer->data_len,
 				 xfer->rnw ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int hci_dma_queue_xfer(struct i3c_hci *hci,
-			      struct hci_xfer *xfer_list, int n)
-{
-	struct hci_rings_data *rings = hci->io_data;
-	struct hci_rh_data *rh;
-	unsigned int i, ring, enqueue_ptr;
+अटल पूर्णांक hci_dma_queue_xfer(काष्ठा i3c_hci *hci,
+			      काष्ठा hci_xfer *xfer_list, पूर्णांक n)
+अणु
+	काष्ठा hci_rings_data *rings = hci->io_data;
+	काष्ठा hci_rh_data *rh;
+	अचिन्हित पूर्णांक i, ring, enqueue_ptr;
 	u32 op1_val, op2_val;
 
 	/* For now we only use ring 0 */
 	ring = 0;
 	rh = &rings->headers[ring];
 
-	op1_val = rh_reg_read(RING_OPERATION1);
+	op1_val = rh_reg_पढ़ो(RING_OPERATION1);
 	enqueue_ptr = FIELD_GET(RING_OP1_CR_ENQ_PTR, op1_val);
-	for (i = 0; i < n; i++) {
-		struct hci_xfer *xfer = xfer_list + i;
-		u32 *ring_data = rh->xfer + rh->xfer_struct_sz * enqueue_ptr;
+	क्रम (i = 0; i < n; i++) अणु
+		काष्ठा hci_xfer *xfer = xfer_list + i;
+		u32 *ring_data = rh->xfer + rh->xfer_काष्ठा_sz * enqueue_ptr;
 
 		/* store cmd descriptor */
 		*ring_data++ = xfer->cmd_desc[0];
 		*ring_data++ = xfer->cmd_desc[1];
-		if (hci->cmd == &mipi_i3c_hci_cmd_v2) {
+		अगर (hci->cmd == &mipi_i3c_hci_cmd_v2) अणु
 			*ring_data++ = xfer->cmd_desc[2];
 			*ring_data++ = xfer->cmd_desc[3];
-		}
+		पूर्ण
 
 		/* first word of Data Buffer Descriptor Structure */
-		if (!xfer->data)
+		अगर (!xfer->data)
 			xfer->data_len = 0;
 		*ring_data++ =
 			FIELD_PREP(DATA_BUF_BLOCK_SIZE, xfer->data_len) |
 			((i == n - 1) ? DATA_BUF_IOC : 0);
 
 		/* 2nd and 3rd words of Data Buffer Descriptor Structure */
-		if (xfer->data) {
+		अगर (xfer->data) अणु
 			xfer->data_dma =
 				dma_map_single(&hci->master.dev,
 					       xfer->data,
@@ -393,209 +394,209 @@ static int hci_dma_queue_xfer(struct i3c_hci *hci,
 					       xfer->rnw ?
 						  DMA_FROM_DEVICE :
 						  DMA_TO_DEVICE);
-			if (dma_mapping_error(&hci->master.dev,
-					      xfer->data_dma)) {
+			अगर (dma_mapping_error(&hci->master.dev,
+					      xfer->data_dma)) अणु
 				hci_dma_unmap_xfer(hci, xfer_list, i);
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 			*ring_data++ = lo32(xfer->data_dma);
 			*ring_data++ = hi32(xfer->data_dma);
-		} else {
+		पूर्ण अन्यथा अणु
 			*ring_data++ = 0;
 			*ring_data++ = 0;
-		}
+		पूर्ण
 
-		/* remember corresponding xfer struct */
+		/* remember corresponding xfer काष्ठा */
 		rh->src_xfers[enqueue_ptr] = xfer;
-		/* remember corresponding ring/entry for this xfer structure */
+		/* remember corresponding ring/entry क्रम this xfer काष्ठाure */
 		xfer->ring_number = ring;
 		xfer->ring_entry = enqueue_ptr;
 
 		enqueue_ptr = (enqueue_ptr + 1) % rh->xfer_entries;
 
 		/*
-		 * We may update the hardware view of the enqueue pointer
-		 * only if we didn't reach its dequeue pointer.
+		 * We may update the hardware view of the enqueue poपूर्णांकer
+		 * only अगर we didn't reach its dequeue poपूर्णांकer.
 		 */
-		op2_val = rh_reg_read(RING_OPERATION2);
-		if (enqueue_ptr == FIELD_GET(RING_OP2_CR_DEQ_PTR, op2_val)) {
+		op2_val = rh_reg_पढ़ो(RING_OPERATION2);
+		अगर (enqueue_ptr == FIELD_GET(RING_OP2_CR_DEQ_PTR, op2_val)) अणु
 			/* the ring is full */
 			hci_dma_unmap_xfer(hci, xfer_list, i + 1);
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	/* take care to update the hardware enqueue pointer atomically */
+	/* take care to update the hardware enqueue poपूर्णांकer atomically */
 	spin_lock_irq(&rh->lock);
-	op1_val = rh_reg_read(RING_OPERATION1);
+	op1_val = rh_reg_पढ़ो(RING_OPERATION1);
 	op1_val &= ~RING_OP1_CR_ENQ_PTR;
 	op1_val |= FIELD_PREP(RING_OP1_CR_ENQ_PTR, enqueue_ptr);
-	rh_reg_write(RING_OPERATION1, op1_val);
+	rh_reg_ग_लिखो(RING_OPERATION1, op1_val);
 	spin_unlock_irq(&rh->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool hci_dma_dequeue_xfer(struct i3c_hci *hci,
-				 struct hci_xfer *xfer_list, int n)
-{
-	struct hci_rings_data *rings = hci->io_data;
-	struct hci_rh_data *rh = &rings->headers[xfer_list[0].ring_number];
-	unsigned int i;
+अटल bool hci_dma_dequeue_xfer(काष्ठा i3c_hci *hci,
+				 काष्ठा hci_xfer *xfer_list, पूर्णांक n)
+अणु
+	काष्ठा hci_rings_data *rings = hci->io_data;
+	काष्ठा hci_rh_data *rh = &rings->headers[xfer_list[0].ring_number];
+	अचिन्हित पूर्णांक i;
 	bool did_unqueue = false;
 
 	/* stop the ring */
-	rh_reg_write(RING_CONTROL, RING_CTRL_ABORT);
-	if (wait_for_completion_timeout(&rh->op_done, HZ) == 0) {
+	rh_reg_ग_लिखो(RING_CONTROL, RING_CTRL_ABORT);
+	अगर (रुको_क्रम_completion_समयout(&rh->op_करोne, HZ) == 0) अणु
 		/*
-		 * We're deep in it if ever this condition is ever met.
+		 * We're deep in it अगर ever this condition is ever met.
 		 * Hardware might still be writing to memory, etc.
 		 * Better suspend the world than risking silent corruption.
 		 */
 		dev_crit(&hci->master.dev, "unable to abort the ring\n");
 		BUG();
-	}
+	पूर्ण
 
-	for (i = 0; i < n; i++) {
-		struct hci_xfer *xfer = xfer_list + i;
-		int idx = xfer->ring_entry;
+	क्रम (i = 0; i < n; i++) अणु
+		काष्ठा hci_xfer *xfer = xfer_list + i;
+		पूर्णांक idx = xfer->ring_entry;
 
 		/*
-		 * At the time the abort happened, the xfer might have
-		 * completed already. If not then replace corresponding
+		 * At the समय the पात happened, the xfer might have
+		 * completed alपढ़ोy. If not then replace corresponding
 		 * descriptor entries with a no-op.
 		 */
-		if (idx >= 0) {
-			u32 *ring_data = rh->xfer + rh->xfer_struct_sz * idx;
+		अगर (idx >= 0) अणु
+			u32 *ring_data = rh->xfer + rh->xfer_काष्ठा_sz * idx;
 
 			/* store no-op cmd descriptor */
 			*ring_data++ = FIELD_PREP(CMD_0_ATTR, 0x7);
 			*ring_data++ = 0;
-			if (hci->cmd == &mipi_i3c_hci_cmd_v2) {
+			अगर (hci->cmd == &mipi_i3c_hci_cmd_v2) अणु
 				*ring_data++ = 0;
 				*ring_data++ = 0;
-			}
+			पूर्ण
 
-			/* disassociate this xfer struct */
-			rh->src_xfers[idx] = NULL;
+			/* disassociate this xfer काष्ठा */
+			rh->src_xfers[idx] = शून्य;
 
 			/* and unmap it */
 			hci_dma_unmap_xfer(hci, xfer, 1);
 
 			did_unqueue = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* restart the ring */
-	rh_reg_write(RING_CONTROL, RING_CTRL_ENABLE);
+	rh_reg_ग_लिखो(RING_CONTROL, RING_CTRL_ENABLE);
 
-	return did_unqueue;
-}
+	वापस did_unqueue;
+पूर्ण
 
-static void hci_dma_xfer_done(struct i3c_hci *hci, struct hci_rh_data *rh)
-{
+अटल व्योम hci_dma_xfer_करोne(काष्ठा i3c_hci *hci, काष्ठा hci_rh_data *rh)
+अणु
 	u32 op1_val, op2_val, resp, *ring_resp;
-	unsigned int tid, done_ptr = rh->done_ptr;
-	struct hci_xfer *xfer;
+	अचिन्हित पूर्णांक tid, करोne_ptr = rh->करोne_ptr;
+	काष्ठा hci_xfer *xfer;
 
-	for (;;) {
-		op2_val = rh_reg_read(RING_OPERATION2);
-		if (done_ptr == FIELD_GET(RING_OP2_CR_DEQ_PTR, op2_val))
-			break;
+	क्रम (;;) अणु
+		op2_val = rh_reg_पढ़ो(RING_OPERATION2);
+		अगर (करोne_ptr == FIELD_GET(RING_OP2_CR_DEQ_PTR, op2_val))
+			अवरोध;
 
-		ring_resp = rh->resp + rh->resp_struct_sz * done_ptr;
+		ring_resp = rh->resp + rh->resp_काष्ठा_sz * करोne_ptr;
 		resp = *ring_resp;
 		tid = RESP_TID(resp);
 		DBG("resp = 0x%08x", resp);
 
-		xfer = rh->src_xfers[done_ptr];
-		if (!xfer) {
+		xfer = rh->src_xfers[करोne_ptr];
+		अगर (!xfer) अणु
 			DBG("orphaned ring entry");
-		} else {
+		पूर्ण अन्यथा अणु
 			hci_dma_unmap_xfer(hci, xfer, 1);
 			xfer->ring_entry = -1;
 			xfer->response = resp;
-			if (tid != xfer->cmd_tid) {
+			अगर (tid != xfer->cmd_tid) अणु
 				dev_err(&hci->master.dev,
 					"response tid=%d when expecting %d\n",
 					tid, xfer->cmd_tid);
-				/* TODO: do something about it? */
-			}
-			if (xfer->completion)
+				/* TODO: करो something about it? */
+			पूर्ण
+			अगर (xfer->completion)
 				complete(xfer->completion);
-		}
+		पूर्ण
 
-		done_ptr = (done_ptr + 1) % rh->xfer_entries;
-		rh->done_ptr = done_ptr;
-	}
+		करोne_ptr = (करोne_ptr + 1) % rh->xfer_entries;
+		rh->करोne_ptr = करोne_ptr;
+	पूर्ण
 
-	/* take care to update the software dequeue pointer atomically */
+	/* take care to update the software dequeue poपूर्णांकer atomically */
 	spin_lock(&rh->lock);
-	op1_val = rh_reg_read(RING_OPERATION1);
+	op1_val = rh_reg_पढ़ो(RING_OPERATION1);
 	op1_val &= ~RING_OP1_CR_SW_DEQ_PTR;
-	op1_val |= FIELD_PREP(RING_OP1_CR_SW_DEQ_PTR, done_ptr);
-	rh_reg_write(RING_OPERATION1, op1_val);
+	op1_val |= FIELD_PREP(RING_OP1_CR_SW_DEQ_PTR, करोne_ptr);
+	rh_reg_ग_लिखो(RING_OPERATION1, op1_val);
 	spin_unlock(&rh->lock);
-}
+पूर्ण
 
-static int hci_dma_request_ibi(struct i3c_hci *hci, struct i3c_dev_desc *dev,
-			       const struct i3c_ibi_setup *req)
-{
-	struct i3c_hci_dev_data *dev_data = i3c_dev_get_master_data(dev);
-	struct i3c_generic_ibi_pool *pool;
-	struct hci_dma_dev_ibi_data *dev_ibi;
+अटल पूर्णांक hci_dma_request_ibi(काष्ठा i3c_hci *hci, काष्ठा i3c_dev_desc *dev,
+			       स्थिर काष्ठा i3c_ibi_setup *req)
+अणु
+	काष्ठा i3c_hci_dev_data *dev_data = i3c_dev_get_master_data(dev);
+	काष्ठा i3c_generic_ibi_pool *pool;
+	काष्ठा hci_dma_dev_ibi_data *dev_ibi;
 
-	dev_ibi = kmalloc(sizeof(*dev_ibi), GFP_KERNEL);
-	if (!dev_ibi)
-		return -ENOMEM;
+	dev_ibi = kदो_स्मृति(माप(*dev_ibi), GFP_KERNEL);
+	अगर (!dev_ibi)
+		वापस -ENOMEM;
 	pool = i3c_generic_ibi_alloc_pool(dev, req);
-	if (IS_ERR(pool)) {
-		kfree(dev_ibi);
-		return PTR_ERR(pool);
-	}
+	अगर (IS_ERR(pool)) अणु
+		kमुक्त(dev_ibi);
+		वापस PTR_ERR(pool);
+	पूर्ण
 	dev_ibi->pool = pool;
 	dev_ibi->max_len = req->max_payload_len;
 	dev_data->ibi_data = dev_ibi;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hci_dma_free_ibi(struct i3c_hci *hci, struct i3c_dev_desc *dev)
-{
-	struct i3c_hci_dev_data *dev_data = i3c_dev_get_master_data(dev);
-	struct hci_dma_dev_ibi_data *dev_ibi = dev_data->ibi_data;
+अटल व्योम hci_dma_मुक्त_ibi(काष्ठा i3c_hci *hci, काष्ठा i3c_dev_desc *dev)
+अणु
+	काष्ठा i3c_hci_dev_data *dev_data = i3c_dev_get_master_data(dev);
+	काष्ठा hci_dma_dev_ibi_data *dev_ibi = dev_data->ibi_data;
 
-	dev_data->ibi_data = NULL;
-	i3c_generic_ibi_free_pool(dev_ibi->pool);
-	kfree(dev_ibi);
-}
+	dev_data->ibi_data = शून्य;
+	i3c_generic_ibi_मुक्त_pool(dev_ibi->pool);
+	kमुक्त(dev_ibi);
+पूर्ण
 
-static void hci_dma_recycle_ibi_slot(struct i3c_hci *hci,
-				     struct i3c_dev_desc *dev,
-				     struct i3c_ibi_slot *slot)
-{
-	struct i3c_hci_dev_data *dev_data = i3c_dev_get_master_data(dev);
-	struct hci_dma_dev_ibi_data *dev_ibi = dev_data->ibi_data;
+अटल व्योम hci_dma_recycle_ibi_slot(काष्ठा i3c_hci *hci,
+				     काष्ठा i3c_dev_desc *dev,
+				     काष्ठा i3c_ibi_slot *slot)
+अणु
+	काष्ठा i3c_hci_dev_data *dev_data = i3c_dev_get_master_data(dev);
+	काष्ठा hci_dma_dev_ibi_data *dev_ibi = dev_data->ibi_data;
 
 	i3c_generic_ibi_recycle_slot(dev_ibi->pool, slot);
-}
+पूर्ण
 
-static void hci_dma_process_ibi(struct i3c_hci *hci, struct hci_rh_data *rh)
-{
-	struct i3c_dev_desc *dev;
-	struct i3c_hci_dev_data *dev_data;
-	struct hci_dma_dev_ibi_data *dev_ibi;
-	struct i3c_ibi_slot *slot;
+अटल व्योम hci_dma_process_ibi(काष्ठा i3c_hci *hci, काष्ठा hci_rh_data *rh)
+अणु
+	काष्ठा i3c_dev_desc *dev;
+	काष्ठा i3c_hci_dev_data *dev_data;
+	काष्ठा hci_dma_dev_ibi_data *dev_ibi;
+	काष्ठा i3c_ibi_slot *slot;
 	u32 op1_val, op2_val, ibi_status_error;
-	unsigned int ptr, enq_ptr, deq_ptr;
-	unsigned int ibi_size, ibi_chunks, ibi_data_offset, first_part;
-	int ibi_addr, last_ptr;
-	void *ring_ibi_data;
+	अचिन्हित पूर्णांक ptr, enq_ptr, deq_ptr;
+	अचिन्हित पूर्णांक ibi_size, ibi_chunks, ibi_data_offset, first_part;
+	पूर्णांक ibi_addr, last_ptr;
+	व्योम *ring_ibi_data;
 	dma_addr_t ring_ibi_data_dma;
 
-	op1_val = rh_reg_read(RING_OPERATION1);
+	op1_val = rh_reg_पढ़ो(RING_OPERATION1);
 	deq_ptr = FIELD_GET(RING_OP1_IBI_DEQ_PTR, op1_val);
 
-	op2_val = rh_reg_read(RING_OPERATION2);
+	op2_val = rh_reg_पढ़ो(RING_OPERATION2);
 	enq_ptr = FIELD_GET(RING_OP2_IBI_ENQ_PTR, op2_val);
 
 	ibi_status_error = 0;
@@ -605,83 +606,83 @@ static void hci_dma_process_ibi(struct i3c_hci *hci, struct hci_rh_data *rh)
 	last_ptr = -1;
 
 	/* let's find all we can about this IBI */
-	for (ptr = deq_ptr; ptr != enq_ptr;
-	     ptr = (ptr + 1) % rh->ibi_status_entries) {
+	क्रम (ptr = deq_ptr; ptr != enq_ptr;
+	     ptr = (ptr + 1) % rh->ibi_status_entries) अणु
 		u32 ibi_status, *ring_ibi_status;
-		unsigned int chunks;
+		अचिन्हित पूर्णांक chunks;
 
 		ring_ibi_status = rh->ibi_status + rh->ibi_status_sz * ptr;
 		ibi_status = *ring_ibi_status;
 		DBG("status = %#x", ibi_status);
 
-		if (ibi_status_error) {
-			/* we no longer care */
-		} else if (ibi_status & IBI_ERROR) {
+		अगर (ibi_status_error) अणु
+			/* we no दीर्घer care */
+		पूर्ण अन्यथा अगर (ibi_status & IBI_ERROR) अणु
 			ibi_status_error = ibi_status;
-		} else if (ibi_addr ==  -1) {
+		पूर्ण अन्यथा अगर (ibi_addr ==  -1) अणु
 			ibi_addr = FIELD_GET(IBI_TARGET_ADDR, ibi_status);
-		} else if (ibi_addr != FIELD_GET(IBI_TARGET_ADDR, ibi_status)) {
+		पूर्ण अन्यथा अगर (ibi_addr != FIELD_GET(IBI_TARGET_ADDR, ibi_status)) अणु
 			/* the address changed unexpectedly */
 			ibi_status_error = ibi_status;
-		}
+		पूर्ण
 
 		chunks = FIELD_GET(IBI_CHUNKS, ibi_status);
 		ibi_chunks += chunks;
-		if (!(ibi_status & IBI_LAST_STATUS)) {
+		अगर (!(ibi_status & IBI_LAST_STATUS)) अणु
 			ibi_size += chunks * rh->ibi_chunk_sz;
-		} else {
+		पूर्ण अन्यथा अणु
 			ibi_size += FIELD_GET(IBI_DATA_LENGTH, ibi_status);
 			last_ptr = ptr;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* validate what we've got */
 
-	if (last_ptr == -1) {
+	अगर (last_ptr == -1) अणु
 		/* this IBI sequence is not yet complete */
 		DBG("no LAST_STATUS available (e=%d d=%d)", enq_ptr, deq_ptr);
-		return;
-	}
+		वापस;
+	पूर्ण
 	deq_ptr = last_ptr + 1;
 	deq_ptr %= rh->ibi_status_entries;
 
-	if (ibi_status_error) {
+	अगर (ibi_status_error) अणु
 		dev_err(&hci->master.dev, "IBI error from %#x\n", ibi_addr);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* determine who this is for */
+	/* determine who this is क्रम */
 	dev = i3c_hci_addr_to_dev(hci, ibi_addr);
-	if (!dev) {
+	अगर (!dev) अणु
 		dev_err(&hci->master.dev,
 			"IBI for unknown device %#x\n", ibi_addr);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	dev_data = i3c_dev_get_master_data(dev);
 	dev_ibi = dev_data->ibi_data;
-	if (ibi_size > dev_ibi->max_len) {
+	अगर (ibi_size > dev_ibi->max_len) अणु
 		dev_err(&hci->master.dev, "IBI payload too big (%d > %d)\n",
 			ibi_size, dev_ibi->max_len);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/*
-	 * This ring model is not suitable for zero-copy processing of IBIs.
+	 * This ring model is not suitable क्रम zero-copy processing of IBIs.
 	 * We have the data chunk ring wrap-around to deal with, meaning
 	 * that the payload might span multiple chunks beginning at the
 	 * end of the ring and wrap to the start of the ring. Furthermore
 	 * there is no guarantee that those chunks will be released in order
-	 * and in a timely manner by the upper driver. So let's just copy
+	 * and in a समयly manner by the upper driver. So let's just copy
 	 * them to a discrete buffer. In practice they're supposed to be
 	 * small anyway.
 	 */
-	slot = i3c_generic_ibi_get_free_slot(dev_ibi->pool);
-	if (!slot) {
+	slot = i3c_generic_ibi_get_मुक्त_slot(dev_ibi->pool);
+	अगर (!slot) अणु
 		dev_err(&hci->master.dev, "no free slot for IBI\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* copy first part of the payload */
 	ibi_data_offset = rh->ibi_chunk_sz * rh->ibi_chunk_ptr;
@@ -689,96 +690,96 @@ static void hci_dma_process_ibi(struct i3c_hci *hci, struct hci_rh_data *rh)
 	ring_ibi_data_dma = rh->ibi_data_dma + ibi_data_offset;
 	first_part = (rh->ibi_chunks_total - rh->ibi_chunk_ptr)
 			* rh->ibi_chunk_sz;
-	if (first_part > ibi_size)
+	अगर (first_part > ibi_size)
 		first_part = ibi_size;
-	dma_sync_single_for_cpu(&hci->master.dev, ring_ibi_data_dma,
+	dma_sync_single_क्रम_cpu(&hci->master.dev, ring_ibi_data_dma,
 				first_part, DMA_FROM_DEVICE);
-	memcpy(slot->data, ring_ibi_data, first_part);
+	स_नकल(slot->data, ring_ibi_data, first_part);
 
-	/* copy second part if any */
-	if (ibi_size > first_part) {
-		/* we wrap back to the start and copy remaining data */
+	/* copy second part अगर any */
+	अगर (ibi_size > first_part) अणु
+		/* we wrap back to the start and copy reमुख्यing data */
 		ring_ibi_data = rh->ibi_data;
 		ring_ibi_data_dma = rh->ibi_data_dma;
-		dma_sync_single_for_cpu(&hci->master.dev, ring_ibi_data_dma,
+		dma_sync_single_क्रम_cpu(&hci->master.dev, ring_ibi_data_dma,
 					ibi_size - first_part, DMA_FROM_DEVICE);
-		memcpy(slot->data + first_part, ring_ibi_data,
+		स_नकल(slot->data + first_part, ring_ibi_data,
 		       ibi_size - first_part);
-	}
+	पूर्ण
 
 	/* submit it */
 	slot->dev = dev;
 	slot->len = ibi_size;
 	i3c_master_queue_ibi(dev, slot);
 
-done:
-	/* take care to update the ibi dequeue pointer atomically */
+करोne:
+	/* take care to update the ibi dequeue poपूर्णांकer atomically */
 	spin_lock(&rh->lock);
-	op1_val = rh_reg_read(RING_OPERATION1);
+	op1_val = rh_reg_पढ़ो(RING_OPERATION1);
 	op1_val &= ~RING_OP1_IBI_DEQ_PTR;
 	op1_val |= FIELD_PREP(RING_OP1_IBI_DEQ_PTR, deq_ptr);
-	rh_reg_write(RING_OPERATION1, op1_val);
+	rh_reg_ग_लिखो(RING_OPERATION1, op1_val);
 	spin_unlock(&rh->lock);
 
-	/* update the chunk pointer */
+	/* update the chunk poपूर्णांकer */
 	rh->ibi_chunk_ptr += ibi_chunks;
 	rh->ibi_chunk_ptr %= rh->ibi_chunks_total;
 
-	/* and tell the hardware about freed chunks */
-	rh_reg_write(CHUNK_CONTROL, rh_reg_read(CHUNK_CONTROL) + ibi_chunks);
-}
+	/* and tell the hardware about मुक्तd chunks */
+	rh_reg_ग_लिखो(CHUNK_CONTROL, rh_reg_पढ़ो(CHUNK_CONTROL) + ibi_chunks);
+पूर्ण
 
-static bool hci_dma_irq_handler(struct i3c_hci *hci, unsigned int mask)
-{
-	struct hci_rings_data *rings = hci->io_data;
-	unsigned int i;
+अटल bool hci_dma_irq_handler(काष्ठा i3c_hci *hci, अचिन्हित पूर्णांक mask)
+अणु
+	काष्ठा hci_rings_data *rings = hci->io_data;
+	अचिन्हित पूर्णांक i;
 	bool handled = false;
 
-	for (i = 0; mask && i < 8; i++) {
-		struct hci_rh_data *rh;
+	क्रम (i = 0; mask && i < 8; i++) अणु
+		काष्ठा hci_rh_data *rh;
 		u32 status;
 
-		if (!(mask & BIT(i)))
-			continue;
+		अगर (!(mask & BIT(i)))
+			जारी;
 		mask &= ~BIT(i);
 
 		rh = &rings->headers[i];
-		status = rh_reg_read(INTR_STATUS);
+		status = rh_reg_पढ़ो(INTR_STATUS);
 		DBG("rh%d status: %#x", i, status);
-		if (!status)
-			continue;
-		rh_reg_write(INTR_STATUS, status);
+		अगर (!status)
+			जारी;
+		rh_reg_ग_लिखो(INTR_STATUS, status);
 
-		if (status & INTR_IBI_READY)
+		अगर (status & INTR_IBI_READY)
 			hci_dma_process_ibi(hci, rh);
-		if (status & (INTR_TRANSFER_COMPLETION | INTR_TRANSFER_ERR))
-			hci_dma_xfer_done(hci, rh);
-		if (status & INTR_RING_OP)
-			complete(&rh->op_done);
+		अगर (status & (INTR_TRANSFER_COMPLETION | INTR_TRANSFER_ERR))
+			hci_dma_xfer_करोne(hci, rh);
+		अगर (status & INTR_RING_OP)
+			complete(&rh->op_करोne);
 
-		if (status & INTR_TRANSFER_ABORT)
+		अगर (status & INTR_TRANSFER_ABORT)
 			dev_notice_ratelimited(&hci->master.dev,
 				"ring %d: Transfer Aborted\n", i);
-		if (status & INTR_WARN_INS_STOP_MODE)
+		अगर (status & INTR_WARN_INS_STOP_MODE)
 			dev_warn_ratelimited(&hci->master.dev,
 				"ring %d: Inserted Stop on Mode Change\n", i);
-		if (status & INTR_IBI_RING_FULL)
+		अगर (status & INTR_IBI_RING_FULL)
 			dev_err_ratelimited(&hci->master.dev,
 				"ring %d: IBI Ring Full Condition\n", i);
 
 		handled = true;
-	}
+	पूर्ण
 
-	return handled;
-}
+	वापस handled;
+पूर्ण
 
-const struct hci_io_ops mipi_i3c_hci_dma = {
+स्थिर काष्ठा hci_io_ops mipi_i3c_hci_dma = अणु
 	.init			= hci_dma_init,
 	.cleanup		= hci_dma_cleanup,
 	.queue_xfer		= hci_dma_queue_xfer,
 	.dequeue_xfer		= hci_dma_dequeue_xfer,
 	.irq_handler		= hci_dma_irq_handler,
 	.request_ibi		= hci_dma_request_ibi,
-	.free_ibi		= hci_dma_free_ibi,
+	.मुक्त_ibi		= hci_dma_मुक्त_ibi,
 	.recycle_ibi_slot	= hci_dma_recycle_ibi_slot,
-};
+पूर्ण;

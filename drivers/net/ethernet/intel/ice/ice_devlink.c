@@ -1,244 +1,245 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020, Intel Corporation. */
 
-#include "ice.h"
-#include "ice_lib.h"
-#include "ice_devlink.h"
-#include "ice_fw_update.h"
+#समावेश "ice.h"
+#समावेश "ice_lib.h"
+#समावेश "ice_devlink.h"
+#समावेश "ice_fw_update.h"
 
-/* context for devlink info version reporting */
-struct ice_info_ctx {
-	char buf[128];
-	struct ice_orom_info pending_orom;
-	struct ice_nvm_info pending_nvm;
-	struct ice_netlist_info pending_netlist;
-	struct ice_hw_dev_caps dev_caps;
-};
+/* context क्रम devlink info version reporting */
+काष्ठा ice_info_ctx अणु
+	अक्षर buf[128];
+	काष्ठा ice_orom_info pending_orom;
+	काष्ठा ice_nvm_info pending_nvm;
+	काष्ठा ice_netlist_info pending_netlist;
+	काष्ठा ice_hw_dev_caps dev_caps;
+पूर्ण;
 
-/* The following functions are used to format specific strings for various
+/* The following functions are used to क्रमmat specअगरic strings क्रम various
  * devlink info versions. The ctx parameter is used to provide the storage
- * buffer, as well as any ancillary information calculated when the info
+ * buffer, as well as any ancillary inक्रमmation calculated when the info
  * request was made.
  *
- * If a version does not exist, for example when attempting to get the
+ * If a version करोes not exist, क्रम example when attempting to get the
  * inactive version of flash when there is no pending update, the function
- * should leave the buffer in the ctx structure empty and return 0.
+ * should leave the buffer in the ctx काष्ठाure empty and वापस 0.
  */
 
-static void ice_info_get_dsn(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
+अटल व्योम ice_info_get_dsn(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
 	u8 dsn[8];
 
-	/* Copy the DSN into an array in Big Endian format */
+	/* Copy the DSN पूर्णांकo an array in Big Endian क्रमmat */
 	put_unaligned_be64(pci_get_dsn(pf->pdev), dsn);
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "%8phD", dsn);
-}
+	snम_लिखो(ctx->buf, माप(ctx->buf), "%8phD", dsn);
+पूर्ण
 
-static int ice_info_pba(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_hw *hw = &pf->hw;
-	enum ice_status status;
+अटल पूर्णांक ice_info_pba(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
+	क्रमागत ice_status status;
 
-	status = ice_read_pba_string(hw, (u8 *)ctx->buf, sizeof(ctx->buf));
-	if (status)
-		return -EIO;
+	status = ice_पढ़ो_pba_string(hw, (u8 *)ctx->buf, माप(ctx->buf));
+	अगर (status)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_fw_mgmt(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल पूर्णांक ice_info_fw_mgmt(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "%u.%u.%u", hw->fw_maj_ver, hw->fw_min_ver,
+	snम_लिखो(ctx->buf, माप(ctx->buf), "%u.%u.%u", hw->fw_maj_ver, hw->fw_min_ver,
 		 hw->fw_patch);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_fw_api(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल पूर्णांक ice_info_fw_api(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "%u.%u", hw->api_maj_ver, hw->api_min_ver);
+	snम_लिखो(ctx->buf, माप(ctx->buf), "%u.%u", hw->api_maj_ver, hw->api_min_ver);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_fw_build(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल पूर्णांक ice_info_fw_build(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "0x%08x", hw->fw_build);
+	snम_लिखो(ctx->buf, माप(ctx->buf), "0x%08x", hw->fw_build);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_orom_ver(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_orom_info *orom = &pf->hw.flash.orom;
+अटल पूर्णांक ice_info_orom_ver(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_orom_info *orom = &pf->hw.flash.orom;
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "%u.%u.%u", orom->major, orom->build, orom->patch);
+	snम_लिखो(ctx->buf, माप(ctx->buf), "%u.%u.%u", orom->major, orom->build, orom->patch);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ice_info_pending_orom_ver(struct ice_pf __always_unused *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_orom_info *orom = &ctx->pending_orom;
+अटल पूर्णांक
+ice_info_pending_orom_ver(काष्ठा ice_pf __always_unused *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_orom_info *orom = &ctx->pending_orom;
 
-	if (ctx->dev_caps.common_cap.nvm_update_pending_orom)
-		snprintf(ctx->buf, sizeof(ctx->buf), "%u.%u.%u",
+	अगर (ctx->dev_caps.common_cap.nvm_update_pending_orom)
+		snम_लिखो(ctx->buf, माप(ctx->buf), "%u.%u.%u",
 			 orom->major, orom->build, orom->patch);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_nvm_ver(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_nvm_info *nvm = &pf->hw.flash.nvm;
+अटल पूर्णांक ice_info_nvm_ver(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_nvm_info *nvm = &pf->hw.flash.nvm;
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "%x.%02x", nvm->major, nvm->minor);
+	snम_लिखो(ctx->buf, माप(ctx->buf), "%x.%02x", nvm->major, nvm->minor);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ice_info_pending_nvm_ver(struct ice_pf __always_unused *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_nvm_info *nvm = &ctx->pending_nvm;
+अटल पूर्णांक
+ice_info_pending_nvm_ver(काष्ठा ice_pf __always_unused *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_nvm_info *nvm = &ctx->pending_nvm;
 
-	if (ctx->dev_caps.common_cap.nvm_update_pending_nvm)
-		snprintf(ctx->buf, sizeof(ctx->buf), "%x.%02x", nvm->major, nvm->minor);
+	अगर (ctx->dev_caps.common_cap.nvm_update_pending_nvm)
+		snम_लिखो(ctx->buf, माप(ctx->buf), "%x.%02x", nvm->major, nvm->minor);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_eetrack(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_nvm_info *nvm = &pf->hw.flash.nvm;
+अटल पूर्णांक ice_info_eetrack(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_nvm_info *nvm = &pf->hw.flash.nvm;
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "0x%08x", nvm->eetrack);
+	snम_लिखो(ctx->buf, माप(ctx->buf), "0x%08x", nvm->eetrack);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ice_info_pending_eetrack(struct ice_pf __always_unused *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_nvm_info *nvm = &ctx->pending_nvm;
+अटल पूर्णांक
+ice_info_pending_eetrack(काष्ठा ice_pf __always_unused *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_nvm_info *nvm = &ctx->pending_nvm;
 
-	if (ctx->dev_caps.common_cap.nvm_update_pending_nvm)
-		snprintf(ctx->buf, sizeof(ctx->buf), "0x%08x", nvm->eetrack);
+	अगर (ctx->dev_caps.common_cap.nvm_update_pending_nvm)
+		snम_लिखो(ctx->buf, माप(ctx->buf), "0x%08x", nvm->eetrack);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_ddp_pkg_name(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल पूर्णांक ice_info_ddp_pkg_name(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "%s", hw->active_pkg_name);
+	snम_लिखो(ctx->buf, माप(ctx->buf), "%s", hw->active_pkg_name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_ddp_pkg_version(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_pkg_ver *pkg = &pf->hw.active_pkg_ver;
+अटल पूर्णांक ice_info_ddp_pkg_version(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_pkg_ver *pkg = &pf->hw.active_pkg_ver;
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "%u.%u.%u.%u", pkg->major, pkg->minor, pkg->update,
+	snम_लिखो(ctx->buf, माप(ctx->buf), "%u.%u.%u.%u", pkg->major, pkg->minor, pkg->update,
 		 pkg->draft);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_ddp_pkg_bundle_id(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	snprintf(ctx->buf, sizeof(ctx->buf), "0x%08x", pf->hw.active_track_id);
+अटल पूर्णांक ice_info_ddp_pkg_bundle_id(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	snम_लिखो(ctx->buf, माप(ctx->buf), "0x%08x", pf->hw.active_track_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_netlist_ver(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_netlist_info *netlist = &pf->hw.flash.netlist;
+अटल पूर्णांक ice_info_netlist_ver(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_netlist_info *netlist = &pf->hw.flash.netlist;
 
-	/* The netlist version fields are BCD formatted */
-	snprintf(ctx->buf, sizeof(ctx->buf), "%x.%x.%x-%x.%x.%x", netlist->major, netlist->minor,
+	/* The netlist version fields are BCD क्रमmatted */
+	snम_लिखो(ctx->buf, माप(ctx->buf), "%x.%x.%x-%x.%x.%x", netlist->major, netlist->minor,
 		 netlist->type >> 16, netlist->type & 0xFFFF, netlist->rev,
 		 netlist->cust_ver);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ice_info_netlist_build(struct ice_pf *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_netlist_info *netlist = &pf->hw.flash.netlist;
+अटल पूर्णांक ice_info_netlist_build(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_netlist_info *netlist = &pf->hw.flash.netlist;
 
-	snprintf(ctx->buf, sizeof(ctx->buf), "0x%08x", netlist->hash);
+	snम_लिखो(ctx->buf, माप(ctx->buf), "0x%08x", netlist->hash);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ice_info_pending_netlist_ver(struct ice_pf __always_unused *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_netlist_info *netlist = &ctx->pending_netlist;
+अटल पूर्णांक
+ice_info_pending_netlist_ver(काष्ठा ice_pf __always_unused *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_netlist_info *netlist = &ctx->pending_netlist;
 
-	/* The netlist version fields are BCD formatted */
-	if (ctx->dev_caps.common_cap.nvm_update_pending_netlist)
-		snprintf(ctx->buf, sizeof(ctx->buf), "%x.%x.%x-%x.%x.%x",
+	/* The netlist version fields are BCD क्रमmatted */
+	अगर (ctx->dev_caps.common_cap.nvm_update_pending_netlist)
+		snम_लिखो(ctx->buf, माप(ctx->buf), "%x.%x.%x-%x.%x.%x",
 			 netlist->major, netlist->minor,
 			 netlist->type >> 16, netlist->type & 0xFFFF, netlist->rev,
 			 netlist->cust_ver);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ice_info_pending_netlist_build(struct ice_pf __always_unused *pf, struct ice_info_ctx *ctx)
-{
-	struct ice_netlist_info *netlist = &ctx->pending_netlist;
+अटल पूर्णांक
+ice_info_pending_netlist_build(काष्ठा ice_pf __always_unused *pf, काष्ठा ice_info_ctx *ctx)
+अणु
+	काष्ठा ice_netlist_info *netlist = &ctx->pending_netlist;
 
-	if (ctx->dev_caps.common_cap.nvm_update_pending_netlist)
-		snprintf(ctx->buf, sizeof(ctx->buf), "0x%08x", netlist->hash);
+	अगर (ctx->dev_caps.common_cap.nvm_update_pending_netlist)
+		snम_लिखो(ctx->buf, माप(ctx->buf), "0x%08x", netlist->hash);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define fixed(key, getter) { ICE_VERSION_FIXED, key, getter, NULL }
-#define running(key, getter) { ICE_VERSION_RUNNING, key, getter, NULL }
-#define stored(key, getter, fallback) { ICE_VERSION_STORED, key, getter, fallback }
+#घोषणा fixed(key, getter) अणु ICE_VERSION_FIXED, key, getter, शून्य पूर्ण
+#घोषणा running(key, getter) अणु ICE_VERSION_RUNNING, key, getter, शून्य पूर्ण
+#घोषणा stored(key, getter, fallback) अणु ICE_VERSION_STORED, key, getter, fallback पूर्ण
 
 /* The combined() macro inserts both the running entry as well as a stored
  * entry. The running entry will always report the version from the active
  * handler. The stored entry will first try the pending handler, and fallback
- * to the active handler if the pending function does not report a version.
- * The pending handler should check the status of a pending update for the
- * relevant flash component. It should only fill in the buffer in the case
+ * to the active handler अगर the pending function करोes not report a version.
+ * The pending handler should check the status of a pending update क्रम the
+ * relevant flash component. It should only fill in the buffer in the हाल
  * where a valid pending version is available. This ensures that the related
- * stored and running versions remain in sync, and that stored versions are
+ * stored and running versions reमुख्य in sync, and that stored versions are
  * correctly reported as expected.
  */
-#define combined(key, active, pending) \
+#घोषणा combined(key, active, pending) \
 	running(key, active), \
 	stored(key, pending, active)
 
-enum ice_version_type {
+क्रमागत ice_version_type अणु
 	ICE_VERSION_FIXED,
 	ICE_VERSION_RUNNING,
 	ICE_VERSION_STORED,
-};
+पूर्ण;
 
-static const struct ice_devlink_version {
-	enum ice_version_type type;
-	const char *key;
-	int (*getter)(struct ice_pf *pf, struct ice_info_ctx *ctx);
-	int (*fallback)(struct ice_pf *pf, struct ice_info_ctx *ctx);
-} ice_devlink_versions[] = {
+अटल स्थिर काष्ठा ice_devlink_version अणु
+	क्रमागत ice_version_type type;
+	स्थिर अक्षर *key;
+	पूर्णांक (*getter)(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx);
+	पूर्णांक (*fallback)(काष्ठा ice_pf *pf, काष्ठा ice_info_ctx *ctx);
+पूर्ण ice_devlink_versions[] = अणु
 	fixed(DEVLINK_INFO_VERSION_GENERIC_BOARD_ID, ice_info_pba),
 	running(DEVLINK_INFO_VERSION_GENERIC_FW_MGMT, ice_info_fw_mgmt),
 	running("fw.mgmt.api", ice_info_fw_api),
@@ -251,288 +252,288 @@ static const struct ice_devlink_version {
 	running("fw.app.bundle_id", ice_info_ddp_pkg_bundle_id),
 	combined("fw.netlist", ice_info_netlist_ver, ice_info_pending_netlist_ver),
 	combined("fw.netlist.build", ice_info_netlist_build, ice_info_pending_netlist_build),
-};
+पूर्ण;
 
 /**
  * ice_devlink_info_get - .info_get devlink handler
- * @devlink: devlink instance structure
+ * @devlink: devlink instance काष्ठाure
  * @req: the devlink info request
- * @extack: extended netdev ack structure
+ * @extack: extended netdev ack काष्ठाure
  *
- * Callback for the devlink .info_get operation. Reports information about the
+ * Callback क्रम the devlink .info_get operation. Reports inक्रमmation about the
  * device.
  *
  * Return: zero on success or an error code on failure.
  */
-static int ice_devlink_info_get(struct devlink *devlink,
-				struct devlink_info_req *req,
-				struct netlink_ext_ack *extack)
-{
-	struct ice_pf *pf = devlink_priv(devlink);
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
-	struct ice_info_ctx *ctx;
-	enum ice_status status;
-	size_t i;
-	int err;
+अटल पूर्णांक ice_devlink_info_get(काष्ठा devlink *devlink,
+				काष्ठा devlink_info_req *req,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ice_pf *pf = devlink_priv(devlink);
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
+	काष्ठा ice_info_ctx *ctx;
+	क्रमागत ice_status status;
+	माप_प्रकार i;
+	पूर्णांक err;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	/* discover capabilities first */
 	status = ice_discover_dev_caps(hw, &ctx->dev_caps);
-	if (status) {
+	अगर (status) अणु
 		err = -EIO;
-		goto out_free_ctx;
-	}
+		जाओ out_मुक्त_ctx;
+	पूर्ण
 
-	if (ctx->dev_caps.common_cap.nvm_update_pending_orom) {
+	अगर (ctx->dev_caps.common_cap.nvm_update_pending_orom) अणु
 		status = ice_get_inactive_orom_ver(hw, &ctx->pending_orom);
-		if (status) {
+		अगर (status) अणु
 			dev_dbg(dev, "Unable to read inactive Option ROM version data, status %s aq_err %s\n",
 				ice_stat_str(status), ice_aq_str(hw->adminq.sq_last_status));
 
 			/* disable display of pending Option ROM */
 			ctx->dev_caps.common_cap.nvm_update_pending_orom = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ctx->dev_caps.common_cap.nvm_update_pending_nvm) {
+	अगर (ctx->dev_caps.common_cap.nvm_update_pending_nvm) अणु
 		status = ice_get_inactive_nvm_ver(hw, &ctx->pending_nvm);
-		if (status) {
+		अगर (status) अणु
 			dev_dbg(dev, "Unable to read inactive NVM version data, status %s aq_err %s\n",
 				ice_stat_str(status), ice_aq_str(hw->adminq.sq_last_status));
 
 			/* disable display of pending Option ROM */
 			ctx->dev_caps.common_cap.nvm_update_pending_nvm = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ctx->dev_caps.common_cap.nvm_update_pending_netlist) {
+	अगर (ctx->dev_caps.common_cap.nvm_update_pending_netlist) अणु
 		status = ice_get_inactive_netlist_ver(hw, &ctx->pending_netlist);
-		if (status) {
+		अगर (status) अणु
 			dev_dbg(dev, "Unable to read inactive Netlist version data, status %s aq_err %s\n",
 				ice_stat_str(status), ice_aq_str(hw->adminq.sq_last_status));
 
 			/* disable display of pending Option ROM */
 			ctx->dev_caps.common_cap.nvm_update_pending_netlist = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	err = devlink_info_driver_name_put(req, KBUILD_MODNAME);
-	if (err) {
+	अगर (err) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Unable to set driver name");
-		goto out_free_ctx;
-	}
+		जाओ out_मुक्त_ctx;
+	पूर्ण
 
 	ice_info_get_dsn(pf, ctx);
 
 	err = devlink_info_serial_number_put(req, ctx->buf);
-	if (err) {
+	अगर (err) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Unable to set serial number");
-		goto out_free_ctx;
-	}
+		जाओ out_मुक्त_ctx;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(ice_devlink_versions); i++) {
-		enum ice_version_type type = ice_devlink_versions[i].type;
-		const char *key = ice_devlink_versions[i].key;
+	क्रम (i = 0; i < ARRAY_SIZE(ice_devlink_versions); i++) अणु
+		क्रमागत ice_version_type type = ice_devlink_versions[i].type;
+		स्थिर अक्षर *key = ice_devlink_versions[i].key;
 
-		memset(ctx->buf, 0, sizeof(ctx->buf));
+		स_रखो(ctx->buf, 0, माप(ctx->buf));
 
 		err = ice_devlink_versions[i].getter(pf, ctx);
-		if (err) {
+		अगर (err) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Unable to obtain version info");
-			goto out_free_ctx;
-		}
+			जाओ out_मुक्त_ctx;
+		पूर्ण
 
-		/* If the default getter doesn't report a version, use the
-		 * fallback function. This is primarily useful in the case of
+		/* If the शेष getter करोesn't report a version, use the
+		 * fallback function. This is primarily useful in the हाल of
 		 * "stored" versions that want to report the same value as the
-		 * running version in the normal case of no pending update.
+		 * running version in the normal हाल of no pending update.
 		 */
-		if (ctx->buf[0] == '\0' && ice_devlink_versions[i].fallback) {
+		अगर (ctx->buf[0] == '\0' && ice_devlink_versions[i].fallback) अणु
 			err = ice_devlink_versions[i].fallback(pf, ctx);
-			if (err) {
+			अगर (err) अणु
 				NL_SET_ERR_MSG_MOD(extack, "Unable to obtain version info");
-				goto out_free_ctx;
-			}
-		}
+				जाओ out_मुक्त_ctx;
+			पूर्ण
+		पूर्ण
 
 		/* Do not report missing versions */
-		if (ctx->buf[0] == '\0')
-			continue;
+		अगर (ctx->buf[0] == '\0')
+			जारी;
 
-		switch (type) {
-		case ICE_VERSION_FIXED:
+		चयन (type) अणु
+		हाल ICE_VERSION_FIXED:
 			err = devlink_info_version_fixed_put(req, key, ctx->buf);
-			if (err) {
+			अगर (err) अणु
 				NL_SET_ERR_MSG_MOD(extack, "Unable to set fixed version");
-				goto out_free_ctx;
-			}
-			break;
-		case ICE_VERSION_RUNNING:
+				जाओ out_मुक्त_ctx;
+			पूर्ण
+			अवरोध;
+		हाल ICE_VERSION_RUNNING:
 			err = devlink_info_version_running_put(req, key, ctx->buf);
-			if (err) {
+			अगर (err) अणु
 				NL_SET_ERR_MSG_MOD(extack, "Unable to set running version");
-				goto out_free_ctx;
-			}
-			break;
-		case ICE_VERSION_STORED:
+				जाओ out_मुक्त_ctx;
+			पूर्ण
+			अवरोध;
+		हाल ICE_VERSION_STORED:
 			err = devlink_info_version_stored_put(req, key, ctx->buf);
-			if (err) {
+			अगर (err) अणु
 				NL_SET_ERR_MSG_MOD(extack, "Unable to set stored version");
-				goto out_free_ctx;
-			}
-			break;
-		}
-	}
+				जाओ out_मुक्त_ctx;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-out_free_ctx:
-	kfree(ctx);
-	return err;
-}
+out_मुक्त_ctx:
+	kमुक्त(ctx);
+	वापस err;
+पूर्ण
 
 /**
  * ice_devlink_flash_update - Update firmware stored in flash on the device
- * @devlink: pointer to devlink associated with device to update
+ * @devlink: poपूर्णांकer to devlink associated with device to update
  * @params: flash update parameters
- * @extack: netlink extended ACK structure
+ * @extack: netlink extended ACK काष्ठाure
  *
- * Perform a device flash update. The bulk of the update logic is contained
+ * Perक्रमm a device flash update. The bulk of the update logic is contained
  * within the ice_flash_pldm_image function.
  *
  * Returns: zero on success, or an error code on failure.
  */
-static int
-ice_devlink_flash_update(struct devlink *devlink,
-			 struct devlink_flash_update_params *params,
-			 struct netlink_ext_ack *extack)
-{
-	struct ice_pf *pf = devlink_priv(devlink);
-	struct ice_hw *hw = &pf->hw;
+अटल पूर्णांक
+ice_devlink_flash_update(काष्ठा devlink *devlink,
+			 काष्ठा devlink_flash_update_params *params,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ice_pf *pf = devlink_priv(devlink);
+	काष्ठा ice_hw *hw = &pf->hw;
 	u8 preservation;
-	int err;
+	पूर्णांक err;
 
-	if (!params->overwrite_mask) {
-		/* preserve all settings and identifiers */
+	अगर (!params->overग_लिखो_mask) अणु
+		/* preserve all settings and identअगरiers */
 		preservation = ICE_AQC_NVM_PRESERVE_ALL;
-	} else if (params->overwrite_mask == DEVLINK_FLASH_OVERWRITE_SETTINGS) {
-		/* overwrite settings, but preserve the vital device identifiers */
+	पूर्ण अन्यथा अगर (params->overग_लिखो_mask == DEVLINK_FLASH_OVERWRITE_SETTINGS) अणु
+		/* overग_लिखो settings, but preserve the vital device identअगरiers */
 		preservation = ICE_AQC_NVM_PRESERVE_SELECTED;
-	} else if (params->overwrite_mask == (DEVLINK_FLASH_OVERWRITE_SETTINGS |
-					      DEVLINK_FLASH_OVERWRITE_IDENTIFIERS)) {
-		/* overwrite both settings and identifiers, preserve nothing */
+	पूर्ण अन्यथा अगर (params->overग_लिखो_mask == (DEVLINK_FLASH_OVERWRITE_SETTINGS |
+					      DEVLINK_FLASH_OVERWRITE_IDENTIFIERS)) अणु
+		/* overग_लिखो both settings and identअगरiers, preserve nothing */
 		preservation = ICE_AQC_NVM_NO_PRESERVATION;
-	} else {
+	पूर्ण अन्यथा अणु
 		NL_SET_ERR_MSG_MOD(extack, "Requested overwrite mask is not supported");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!hw->dev_caps.common_cap.nvm_unified_update) {
+	अगर (!hw->dev_caps.common_cap.nvm_unअगरied_update) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Current firmware does not support unified update");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	err = ice_check_for_pending_update(pf, NULL, extack);
-	if (err)
-		return err;
+	err = ice_check_क्रम_pending_update(pf, शून्य, extack);
+	अगर (err)
+		वापस err;
 
-	devlink_flash_update_status_notify(devlink, "Preparing to flash", NULL, 0, 0);
+	devlink_flash_update_status_notअगरy(devlink, "Preparing to flash", शून्य, 0, 0);
 
-	return ice_flash_pldm_image(pf, params->fw, preservation, extack);
-}
+	वापस ice_flash_pldm_image(pf, params->fw, preservation, extack);
+पूर्ण
 
-static const struct devlink_ops ice_devlink_ops = {
+अटल स्थिर काष्ठा devlink_ops ice_devlink_ops = अणु
 	.supported_flash_update_params = DEVLINK_SUPPORT_FLASH_UPDATE_OVERWRITE_MASK,
 	.info_get = ice_devlink_info_get,
 	.flash_update = ice_devlink_flash_update,
-};
+पूर्ण;
 
-static void ice_devlink_free(void *devlink_ptr)
-{
-	devlink_free((struct devlink *)devlink_ptr);
-}
+अटल व्योम ice_devlink_मुक्त(व्योम *devlink_ptr)
+अणु
+	devlink_मुक्त((काष्ठा devlink *)devlink_ptr);
+पूर्ण
 
 /**
- * ice_allocate_pf - Allocate devlink and return PF structure pointer
- * @dev: the device to allocate for
+ * ice_allocate_pf - Allocate devlink and वापस PF काष्ठाure poपूर्णांकer
+ * @dev: the device to allocate क्रम
  *
- * Allocate a devlink instance for this device and return the private area as
- * the PF structure. The devlink memory is kept track of through devres by
- * adding an action to remove it when unwinding.
+ * Allocate a devlink instance क्रम this device and वापस the निजी area as
+ * the PF काष्ठाure. The devlink memory is kept track of through devres by
+ * adding an action to हटाओ it when unwinding.
  */
-struct ice_pf *ice_allocate_pf(struct device *dev)
-{
-	struct devlink *devlink;
+काष्ठा ice_pf *ice_allocate_pf(काष्ठा device *dev)
+अणु
+	काष्ठा devlink *devlink;
 
-	devlink = devlink_alloc(&ice_devlink_ops, sizeof(struct ice_pf));
-	if (!devlink)
-		return NULL;
+	devlink = devlink_alloc(&ice_devlink_ops, माप(काष्ठा ice_pf));
+	अगर (!devlink)
+		वापस शून्य;
 
-	/* Add an action to teardown the devlink when unwinding the driver */
-	if (devm_add_action(dev, ice_devlink_free, devlink)) {
-		devlink_free(devlink);
-		return NULL;
-	}
+	/* Add an action to tearकरोwn the devlink when unwinding the driver */
+	अगर (devm_add_action(dev, ice_devlink_मुक्त, devlink)) अणु
+		devlink_मुक्त(devlink);
+		वापस शून्य;
+	पूर्ण
 
-	return devlink_priv(devlink);
-}
+	वापस devlink_priv(devlink);
+पूर्ण
 
 /**
- * ice_devlink_register - Register devlink interface for this PF
- * @pf: the PF to register the devlink for.
+ * ice_devlink_रेजिस्टर - Register devlink पूर्णांकerface क्रम this PF
+ * @pf: the PF to रेजिस्टर the devlink क्रम.
  *
  * Register the devlink instance associated with this physical function.
  *
  * Return: zero on success or an error code on failure.
  */
-int ice_devlink_register(struct ice_pf *pf)
-{
-	struct devlink *devlink = priv_to_devlink(pf);
-	struct device *dev = ice_pf_to_dev(pf);
-	int err;
+पूर्णांक ice_devlink_रेजिस्टर(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(pf);
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	पूर्णांक err;
 
-	err = devlink_register(devlink, dev);
-	if (err) {
+	err = devlink_रेजिस्टर(devlink, dev);
+	अगर (err) अणु
 		dev_err(dev, "devlink registration failed: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_devlink_unregister - Unregister devlink resources for this PF.
- * @pf: the PF structure to cleanup
+ * ice_devlink_unरेजिस्टर - Unरेजिस्टर devlink resources क्रम this PF.
+ * @pf: the PF काष्ठाure to cleanup
  *
  * Releases resources used by devlink and cleans up associated memory.
  */
-void ice_devlink_unregister(struct ice_pf *pf)
-{
-	devlink_unregister(priv_to_devlink(pf));
-}
+व्योम ice_devlink_unरेजिस्टर(काष्ठा ice_pf *pf)
+अणु
+	devlink_unरेजिस्टर(priv_to_devlink(pf));
+पूर्ण
 
 /**
- * ice_devlink_create_port - Create a devlink port for this VSI
- * @vsi: the VSI to create a port for
+ * ice_devlink_create_port - Create a devlink port क्रम this VSI
+ * @vsi: the VSI to create a port क्रम
  *
- * Create and register a devlink_port for this VSI.
+ * Create and रेजिस्टर a devlink_port क्रम this VSI.
  *
  * Return: zero on success or an error code on failure.
  */
-int ice_devlink_create_port(struct ice_vsi *vsi)
-{
-	struct devlink_port_attrs attrs = {};
-	struct ice_port_info *pi;
-	struct devlink *devlink;
-	struct device *dev;
-	struct ice_pf *pf;
-	int err;
+पूर्णांक ice_devlink_create_port(काष्ठा ice_vsi *vsi)
+अणु
+	काष्ठा devlink_port_attrs attrs = अणुपूर्ण;
+	काष्ठा ice_port_info *pi;
+	काष्ठा devlink *devlink;
+	काष्ठा device *dev;
+	काष्ठा ice_pf *pf;
+	पूर्णांक err;
 
-	/* Currently we only create devlink_port instances for PF VSIs */
-	if (vsi->type != ICE_VSI_PF)
-		return -EINVAL;
+	/* Currently we only create devlink_port instances क्रम PF VSIs */
+	अगर (vsi->type != ICE_VSI_PF)
+		वापस -EINVAL;
 
 	pf = vsi->back;
 	devlink = priv_to_devlink(pf);
@@ -542,189 +543,189 @@ int ice_devlink_create_port(struct ice_vsi *vsi)
 	attrs.flavour = DEVLINK_PORT_FLAVOUR_PHYSICAL;
 	attrs.phys.port_number = pi->lport;
 	devlink_port_attrs_set(&vsi->devlink_port, &attrs);
-	err = devlink_port_register(devlink, &vsi->devlink_port, vsi->idx);
-	if (err) {
+	err = devlink_port_रेजिस्टर(devlink, &vsi->devlink_port, vsi->idx);
+	अगर (err) अणु
 		dev_err(dev, "devlink_port_register failed: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	vsi->devlink_port_registered = true;
+	vsi->devlink_port_रेजिस्टरed = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_devlink_destroy_port - Destroy the devlink_port for this VSI
+ * ice_devlink_destroy_port - Destroy the devlink_port क्रम this VSI
  * @vsi: the VSI to cleanup
  *
- * Unregisters the devlink_port structure associated with this VSI.
+ * Unरेजिस्टरs the devlink_port काष्ठाure associated with this VSI.
  */
-void ice_devlink_destroy_port(struct ice_vsi *vsi)
-{
-	if (!vsi->devlink_port_registered)
-		return;
+व्योम ice_devlink_destroy_port(काष्ठा ice_vsi *vsi)
+अणु
+	अगर (!vsi->devlink_port_रेजिस्टरed)
+		वापस;
 
 	devlink_port_type_clear(&vsi->devlink_port);
-	devlink_port_unregister(&vsi->devlink_port);
+	devlink_port_unरेजिस्टर(&vsi->devlink_port);
 
-	vsi->devlink_port_registered = false;
-}
+	vsi->devlink_port_रेजिस्टरed = false;
+पूर्ण
 
 /**
- * ice_devlink_nvm_snapshot - Capture a snapshot of the Shadow RAM contents
+ * ice_devlink_nvm_snapshot - Capture a snapshot of the Shaकरोw RAM contents
  * @devlink: the devlink instance
  * @ops: the devlink region being snapshotted
- * @extack: extended ACK response structure
- * @data: on exit points to snapshot data buffer
+ * @extack: extended ACK response काष्ठाure
+ * @data: on निकास poपूर्णांकs to snapshot data buffer
  *
- * This function is called in response to the DEVLINK_CMD_REGION_TRIGGER for
- * the shadow-ram devlink region. It captures a snapshot of the shadow ram
+ * This function is called in response to the DEVLINK_CMD_REGION_TRIGGER क्रम
+ * the shaकरोw-ram devlink region. It captures a snapshot of the shaकरोw ram
  * contents. This snapshot can later be viewed via the devlink-region
- * interface.
+ * पूर्णांकerface.
  *
- * @returns zero on success, and updates the data pointer. Returns a non-zero
+ * @वापसs zero on success, and updates the data poपूर्णांकer. Returns a non-zero
  * error code on failure.
  */
-static int ice_devlink_nvm_snapshot(struct devlink *devlink,
-				    const struct devlink_region_ops *ops,
-				    struct netlink_ext_ack *extack, u8 **data)
-{
-	struct ice_pf *pf = devlink_priv(devlink);
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
-	enum ice_status status;
-	void *nvm_data;
+अटल पूर्णांक ice_devlink_nvm_snapshot(काष्ठा devlink *devlink,
+				    स्थिर काष्ठा devlink_region_ops *ops,
+				    काष्ठा netlink_ext_ack *extack, u8 **data)
+अणु
+	काष्ठा ice_pf *pf = devlink_priv(devlink);
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
+	क्रमागत ice_status status;
+	व्योम *nvm_data;
 	u32 nvm_size;
 
 	nvm_size = hw->flash.flash_size;
 	nvm_data = vzalloc(nvm_size);
-	if (!nvm_data)
-		return -ENOMEM;
+	अगर (!nvm_data)
+		वापस -ENOMEM;
 
 	status = ice_acquire_nvm(hw, ICE_RES_READ);
-	if (status) {
+	अगर (status) अणु
 		dev_dbg(dev, "ice_acquire_nvm failed, err %d aq_err %d\n",
 			status, hw->adminq.sq_last_status);
 		NL_SET_ERR_MSG_MOD(extack, "Failed to acquire NVM semaphore");
-		vfree(nvm_data);
-		return -EIO;
-	}
+		vमुक्त(nvm_data);
+		वापस -EIO;
+	पूर्ण
 
-	status = ice_read_flat_nvm(hw, 0, &nvm_size, nvm_data, false);
-	if (status) {
+	status = ice_पढ़ो_flat_nvm(hw, 0, &nvm_size, nvm_data, false);
+	अगर (status) अणु
 		dev_dbg(dev, "ice_read_flat_nvm failed after reading %u bytes, err %d aq_err %d\n",
 			nvm_size, status, hw->adminq.sq_last_status);
 		NL_SET_ERR_MSG_MOD(extack, "Failed to read NVM contents");
 		ice_release_nvm(hw);
-		vfree(nvm_data);
-		return -EIO;
-	}
+		vमुक्त(nvm_data);
+		वापस -EIO;
+	पूर्ण
 
 	ice_release_nvm(hw);
 
 	*data = nvm_data;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_devlink_devcaps_snapshot - Capture snapshot of device capabilities
  * @devlink: the devlink instance
  * @ops: the devlink region being snapshotted
- * @extack: extended ACK response structure
- * @data: on exit points to snapshot data buffer
+ * @extack: extended ACK response काष्ठाure
+ * @data: on निकास poपूर्णांकs to snapshot data buffer
  *
- * This function is called in response to the DEVLINK_CMD_REGION_TRIGGER for
+ * This function is called in response to the DEVLINK_CMD_REGION_TRIGGER क्रम
  * the device-caps devlink region. It captures a snapshot of the device
  * capabilities reported by firmware.
  *
- * @returns zero on success, and updates the data pointer. Returns a non-zero
+ * @वापसs zero on success, and updates the data poपूर्णांकer. Returns a non-zero
  * error code on failure.
  */
-static int
-ice_devlink_devcaps_snapshot(struct devlink *devlink,
-			     const struct devlink_region_ops *ops,
-			     struct netlink_ext_ack *extack, u8 **data)
-{
-	struct ice_pf *pf = devlink_priv(devlink);
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
-	enum ice_status status;
-	void *devcaps;
+अटल पूर्णांक
+ice_devlink_devcaps_snapshot(काष्ठा devlink *devlink,
+			     स्थिर काष्ठा devlink_region_ops *ops,
+			     काष्ठा netlink_ext_ack *extack, u8 **data)
+अणु
+	काष्ठा ice_pf *pf = devlink_priv(devlink);
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
+	क्रमागत ice_status status;
+	व्योम *devcaps;
 
 	devcaps = vzalloc(ICE_AQ_MAX_BUF_LEN);
-	if (!devcaps)
-		return -ENOMEM;
+	अगर (!devcaps)
+		वापस -ENOMEM;
 
-	status = ice_aq_list_caps(hw, devcaps, ICE_AQ_MAX_BUF_LEN, NULL,
-				  ice_aqc_opc_list_dev_caps, NULL);
-	if (status) {
+	status = ice_aq_list_caps(hw, devcaps, ICE_AQ_MAX_BUF_LEN, शून्य,
+				  ice_aqc_opc_list_dev_caps, शून्य);
+	अगर (status) अणु
 		dev_dbg(dev, "ice_aq_list_caps: failed to read device capabilities, err %d aq_err %d\n",
 			status, hw->adminq.sq_last_status);
 		NL_SET_ERR_MSG_MOD(extack, "Failed to read device capabilities");
-		vfree(devcaps);
-		return -EIO;
-	}
+		vमुक्त(devcaps);
+		वापस -EIO;
+	पूर्ण
 
 	*data = (u8 *)devcaps;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct devlink_region_ops ice_nvm_region_ops = {
+अटल स्थिर काष्ठा devlink_region_ops ice_nvm_region_ops = अणु
 	.name = "nvm-flash",
-	.destructor = vfree,
+	.deकाष्ठाor = vमुक्त,
 	.snapshot = ice_devlink_nvm_snapshot,
-};
+पूर्ण;
 
-static const struct devlink_region_ops ice_devcaps_region_ops = {
+अटल स्थिर काष्ठा devlink_region_ops ice_devcaps_region_ops = अणु
 	.name = "device-caps",
-	.destructor = vfree,
+	.deकाष्ठाor = vमुक्त,
 	.snapshot = ice_devlink_devcaps_snapshot,
-};
+पूर्ण;
 
 /**
  * ice_devlink_init_regions - Initialize devlink regions
- * @pf: the PF device structure
+ * @pf: the PF device काष्ठाure
  *
  * Create devlink regions used to enable access to dump the contents of the
  * flash memory on the device.
  */
-void ice_devlink_init_regions(struct ice_pf *pf)
-{
-	struct devlink *devlink = priv_to_devlink(pf);
-	struct device *dev = ice_pf_to_dev(pf);
+व्योम ice_devlink_init_regions(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(pf);
+	काष्ठा device *dev = ice_pf_to_dev(pf);
 	u64 nvm_size;
 
 	nvm_size = pf->hw.flash.flash_size;
 	pf->nvm_region = devlink_region_create(devlink, &ice_nvm_region_ops, 1,
 					       nvm_size);
-	if (IS_ERR(pf->nvm_region)) {
+	अगर (IS_ERR(pf->nvm_region)) अणु
 		dev_err(dev, "failed to create NVM devlink region, err %ld\n",
 			PTR_ERR(pf->nvm_region));
-		pf->nvm_region = NULL;
-	}
+		pf->nvm_region = शून्य;
+	पूर्ण
 
 	pf->devcaps_region = devlink_region_create(devlink,
 						   &ice_devcaps_region_ops, 10,
 						   ICE_AQ_MAX_BUF_LEN);
-	if (IS_ERR(pf->devcaps_region)) {
+	अगर (IS_ERR(pf->devcaps_region)) अणु
 		dev_err(dev, "failed to create device-caps devlink region, err %ld\n",
 			PTR_ERR(pf->devcaps_region));
-		pf->devcaps_region = NULL;
-	}
-}
+		pf->devcaps_region = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * ice_devlink_destroy_regions - Destroy devlink regions
- * @pf: the PF device structure
+ * @pf: the PF device काष्ठाure
  *
- * Remove previously created regions for this PF.
+ * Remove previously created regions क्रम this PF.
  */
-void ice_devlink_destroy_regions(struct ice_pf *pf)
-{
-	if (pf->nvm_region)
+व्योम ice_devlink_destroy_regions(काष्ठा ice_pf *pf)
+अणु
+	अगर (pf->nvm_region)
 		devlink_region_destroy(pf->nvm_region);
-	if (pf->devcaps_region)
+	अगर (pf->devcaps_region)
 		devlink_region_destroy(pf->devcaps_region);
-}
+पूर्ण

@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_EXTABLE_H
-#define _ASM_X86_EXTABLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_EXTABLE_H
+#घोषणा _ASM_X86_EXTABLE_H
 /*
  * The exception table consists of triples of addresses relative to the
- * exception table entry itself. The first address is of an instruction
+ * exception table entry itself. The first address is of an inकाष्ठाion
  * that is allowed to fault, the second is the target at which the program
- * should continue. The third is a handler function to deal with the fault
- * caused by the instruction in the first field.
+ * should जारी. The third is a handler function to deal with the fault
+ * caused by the inकाष्ठाion in the first field.
  *
  * All the routines below use bits of fixup code that are out of line
- * with the main instruction path.  This means when everything is well,
- * we don't even have to jump over them.  Further, they do not intrude
+ * with the मुख्य inकाष्ठाion path.  This means when everything is well,
+ * we करोn't even have to jump over them.  Further, they करो not पूर्णांकrude
  * on our cache or tlb entries.
  */
 
-struct exception_table_entry {
-	int insn, fixup, handler;
-};
-struct pt_regs;
+काष्ठा exception_table_entry अणु
+	पूर्णांक insn, fixup, handler;
+पूर्ण;
+काष्ठा pt_regs;
 
-#define ARCH_HAS_RELATIVE_EXTABLE
+#घोषणा ARCH_HAS_RELATIVE_EXTABLE
 
-#define swap_ex_entry_fixup(a, b, tmp, delta)			\
-	do {							\
+#घोषणा swap_ex_entry_fixup(a, b, पंचांगp, delta)			\
+	करो अणु							\
 		(a)->fixup = (b)->fixup + (delta);		\
-		(b)->fixup = (tmp).fixup - (delta);		\
+		(b)->fixup = (पंचांगp).fixup - (delta);		\
 		(a)->handler = (b)->handler + (delta);		\
-		(b)->handler = (tmp).handler - (delta);		\
-	} while (0)
+		(b)->handler = (पंचांगp).handler - (delta);		\
+	पूर्ण जबतक (0)
 
-enum handler_type {
+क्रमागत handler_type अणु
 	EX_HANDLER_NONE,
 	EX_HANDLER_FAULT,
 	EX_HANDLER_UACCESS,
 	EX_HANDLER_OTHER
-};
+पूर्ण;
 
-extern int fixup_exception(struct pt_regs *regs, int trapnr,
-			   unsigned long error_code, unsigned long fault_addr);
-extern int fixup_bug(struct pt_regs *regs, int trapnr);
-extern enum handler_type ex_get_fault_handler_type(unsigned long ip);
-extern void early_fixup_exception(struct pt_regs *regs, int trapnr);
+बाह्य पूर्णांक fixup_exception(काष्ठा pt_regs *regs, पूर्णांक trapnr,
+			   अचिन्हित दीर्घ error_code, अचिन्हित दीर्घ fault_addr);
+बाह्य पूर्णांक fixup_bug(काष्ठा pt_regs *regs, पूर्णांक trapnr);
+बाह्य क्रमागत handler_type ex_get_fault_handler_type(अचिन्हित दीर्घ ip);
+बाह्य व्योम early_fixup_exception(काष्ठा pt_regs *regs, पूर्णांक trapnr);
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*---------------------------------------------------------------------------+
  |  exception.h                                                              |
  |                                                                           |
@@ -7,45 +8,45 @@
  |                                                                           |
  +---------------------------------------------------------------------------*/
 
-#ifndef _EXCEPTION_H_
-#define _EXCEPTION_H_
+#अगर_अघोषित _EXCEPTION_H_
+#घोषणा _EXCEPTION_H_
 
-#ifdef __ASSEMBLY__
-#define	Const_(x)	$##x
-#else
-#define	Const_(x)	x
-#endif
+#अगर_घोषित __ASSEMBLY__
+#घोषणा	Const_(x)	$##x
+#अन्यथा
+#घोषणा	Const_(x)	x
+#पूर्ण_अगर
 
-#ifndef SW_C1
-#include "fpu_emu.h"
-#endif /* SW_C1 */
+#अगर_अघोषित SW_C1
+#समावेश "fpu_emu.h"
+#पूर्ण_अगर /* SW_C1 */
 
-#define FPU_BUSY        Const_(0x8000)	/* FPU busy bit (8087 compatibility) */
-#define EX_ErrorSummary Const_(0x0080)	/* Error summary status */
+#घोषणा FPU_BUSY        Const_(0x8000)	/* FPU busy bit (8087 compatibility) */
+#घोषणा EX_ErrorSummary Const_(0x0080)	/* Error summary status */
 /* Special exceptions: */
-#define	EX_INTERNAL	Const_(0x8000)	/* Internal error in wm-FPU-emu */
-#define EX_StackOver	Const_(0x0041|SW_C1)	/* stack overflow */
-#define EX_StackUnder	Const_(0x0041)	/* stack underflow */
+#घोषणा	EX_INTERNAL	Const_(0x8000)	/* Internal error in wm-FPU-emu */
+#घोषणा EX_StackOver	Const_(0x0041|SW_C1)	/* stack overflow */
+#घोषणा EX_StackUnder	Const_(0x0041)	/* stack underflow */
 /* Exception flags: */
-#define EX_Precision	Const_(0x0020)	/* loss of precision */
-#define EX_Underflow	Const_(0x0010)	/* underflow */
-#define EX_Overflow	Const_(0x0008)	/* overflow */
-#define EX_ZeroDiv	Const_(0x0004)	/* divide by zero */
-#define EX_Denormal	Const_(0x0002)	/* denormalized operand */
-#define EX_Invalid	Const_(0x0001)	/* invalid operation */
+#घोषणा EX_Precision	Const_(0x0020)	/* loss of precision */
+#घोषणा EX_Underflow	Const_(0x0010)	/* underflow */
+#घोषणा EX_Overflow	Const_(0x0008)	/* overflow */
+#घोषणा EX_ZeroDiv	Const_(0x0004)	/* भागide by zero */
+#घोषणा EX_Denormal	Const_(0x0002)	/* denormalized opeअक्रम */
+#घोषणा EX_Invalid	Const_(0x0001)	/* invalid operation */
 
-#define PRECISION_LOST_UP    Const_((EX_Precision | SW_C1))
-#define PRECISION_LOST_DOWN  Const_(EX_Precision)
+#घोषणा PRECISION_LOST_UP    Const_((EX_Precision | SW_C1))
+#घोषणा PRECISION_LOST_DOWN  Const_(EX_Precision)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#ifdef DEBUG
-#define	EXCEPTION(x)	{ printk("exception in %s at line %d\n", \
-	__FILE__, __LINE__); FPU_exception(x); }
-#else
-#define	EXCEPTION(x)	FPU_exception(x)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा	EXCEPTION(x)	अणु prपूर्णांकk("exception in %s at line %d\n", \
+	__खाता__, __LINE__); FPU_exception(x); पूर्ण
+#अन्यथा
+#घोषणा	EXCEPTION(x)	FPU_exception(x)
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _EXCEPTION_H_ */
+#पूर्ण_अगर /* _EXCEPTION_H_ */

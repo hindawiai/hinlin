@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,87 +24,87 @@
  *
  */
 
-#include "dmub_reg.h"
-#include "../dmub_srv.h"
+#समावेश "dmub_reg.h"
+#समावेश "../dmub_srv.h"
 
-struct dmub_reg_value_masks {
-	uint32_t value;
-	uint32_t mask;
-};
+काष्ठा dmub_reg_value_masks अणु
+	uपूर्णांक32_t value;
+	uपूर्णांक32_t mask;
+पूर्ण;
 
-static inline void
-set_reg_field_value_masks(struct dmub_reg_value_masks *field_value_mask,
-			  uint32_t value, uint32_t mask, uint8_t shift)
-{
+अटल अंतरभूत व्योम
+set_reg_field_value_masks(काष्ठा dmub_reg_value_masks *field_value_mask,
+			  uपूर्णांक32_t value, uपूर्णांक32_t mask, uपूर्णांक8_t shअगरt)
+अणु
 	field_value_mask->value =
-		(field_value_mask->value & ~mask) | (mask & (value << shift));
+		(field_value_mask->value & ~mask) | (mask & (value << shअगरt));
 	field_value_mask->mask = field_value_mask->mask | mask;
-}
+पूर्ण
 
-static void set_reg_field_values(struct dmub_reg_value_masks *field_value_mask,
-				 uint32_t addr, int n, uint8_t shift1,
-				 uint32_t mask1, uint32_t field_value1,
-				 va_list ap)
-{
-	uint32_t shift, mask, field_value;
-	int i = 1;
+अटल व्योम set_reg_field_values(काष्ठा dmub_reg_value_masks *field_value_mask,
+				 uपूर्णांक32_t addr, पूर्णांक n, uपूर्णांक8_t shअगरt1,
+				 uपूर्णांक32_t mask1, uपूर्णांक32_t field_value1,
+				 बहु_सूची ap)
+अणु
+	uपूर्णांक32_t shअगरt, mask, field_value;
+	पूर्णांक i = 1;
 
-	/* gather all bits value/mask getting updated in this register */
+	/* gather all bits value/mask getting updated in this रेजिस्टर */
 	set_reg_field_value_masks(field_value_mask, field_value1, mask1,
-				  shift1);
+				  shअगरt1);
 
-	while (i < n) {
-		shift = va_arg(ap, uint32_t);
-		mask = va_arg(ap, uint32_t);
-		field_value = va_arg(ap, uint32_t);
+	जबतक (i < n) अणु
+		shअगरt = बहु_तर्क(ap, uपूर्णांक32_t);
+		mask = बहु_तर्क(ap, uपूर्णांक32_t);
+		field_value = बहु_तर्क(ap, uपूर्णांक32_t);
 
 		set_reg_field_value_masks(field_value_mask, field_value, mask,
-					  shift);
+					  shअगरt);
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline uint32_t get_reg_field_value_ex(uint32_t reg_value, uint32_t mask,
-					      uint8_t shift)
-{
-	return (mask & reg_value) >> shift;
-}
+अटल अंतरभूत uपूर्णांक32_t get_reg_field_value_ex(uपूर्णांक32_t reg_value, uपूर्णांक32_t mask,
+					      uपूर्णांक8_t shअगरt)
+अणु
+	वापस (mask & reg_value) >> shअगरt;
+पूर्ण
 
-void dmub_reg_update(struct dmub_srv *srv, uint32_t addr, int n, uint8_t shift1,
-		     uint32_t mask1, uint32_t field_value1, ...)
-{
-	struct dmub_reg_value_masks field_value_mask = { 0 };
-	uint32_t reg_val;
-	va_list ap;
+व्योम dmub_reg_update(काष्ठा dmub_srv *srv, uपूर्णांक32_t addr, पूर्णांक n, uपूर्णांक8_t shअगरt1,
+		     uपूर्णांक32_t mask1, uपूर्णांक32_t field_value1, ...)
+अणु
+	काष्ठा dmub_reg_value_masks field_value_mask = अणु 0 पूर्ण;
+	uपूर्णांक32_t reg_val;
+	बहु_सूची ap;
 
-	va_start(ap, field_value1);
-	set_reg_field_values(&field_value_mask, addr, n, shift1, mask1,
+	बहु_शुरू(ap, field_value1);
+	set_reg_field_values(&field_value_mask, addr, n, shअगरt1, mask1,
 			     field_value1, ap);
-	va_end(ap);
+	बहु_पूर्ण(ap);
 
-	reg_val = srv->funcs.reg_read(srv->user_ctx, addr);
+	reg_val = srv->funcs.reg_पढ़ो(srv->user_ctx, addr);
 	reg_val = (reg_val & ~field_value_mask.mask) | field_value_mask.value;
-	srv->funcs.reg_write(srv->user_ctx, addr, reg_val);
-}
+	srv->funcs.reg_ग_लिखो(srv->user_ctx, addr, reg_val);
+पूर्ण
 
-void dmub_reg_set(struct dmub_srv *srv, uint32_t addr, uint32_t reg_val, int n,
-		  uint8_t shift1, uint32_t mask1, uint32_t field_value1, ...)
-{
-	struct dmub_reg_value_masks field_value_mask = { 0 };
-	va_list ap;
+व्योम dmub_reg_set(काष्ठा dmub_srv *srv, uपूर्णांक32_t addr, uपूर्णांक32_t reg_val, पूर्णांक n,
+		  uपूर्णांक8_t shअगरt1, uपूर्णांक32_t mask1, uपूर्णांक32_t field_value1, ...)
+अणु
+	काष्ठा dmub_reg_value_masks field_value_mask = अणु 0 पूर्ण;
+	बहु_सूची ap;
 
-	va_start(ap, field_value1);
-	set_reg_field_values(&field_value_mask, addr, n, shift1, mask1,
+	बहु_शुरू(ap, field_value1);
+	set_reg_field_values(&field_value_mask, addr, n, shअगरt1, mask1,
 			     field_value1, ap);
-	va_end(ap);
+	बहु_पूर्ण(ap);
 
 	reg_val = (reg_val & ~field_value_mask.mask) | field_value_mask.value;
-	srv->funcs.reg_write(srv->user_ctx, addr, reg_val);
-}
+	srv->funcs.reg_ग_लिखो(srv->user_ctx, addr, reg_val);
+पूर्ण
 
-void dmub_reg_get(struct dmub_srv *srv, uint32_t addr, uint8_t shift,
-		  uint32_t mask, uint32_t *field_value)
-{
-	uint32_t reg_val = srv->funcs.reg_read(srv->user_ctx, addr);
-	*field_value = get_reg_field_value_ex(reg_val, mask, shift);
-}
+व्योम dmub_reg_get(काष्ठा dmub_srv *srv, uपूर्णांक32_t addr, uपूर्णांक8_t shअगरt,
+		  uपूर्णांक32_t mask, uपूर्णांक32_t *field_value)
+अणु
+	uपूर्णांक32_t reg_val = srv->funcs.reg_पढ़ो(srv->user_ctx, addr);
+	*field_value = get_reg_field_value_ex(reg_val, mask, shअगरt);
+पूर्ण

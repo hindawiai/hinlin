@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,89 +23,89 @@
  *
  */
 
-#ifndef __DC_DMCU_H__
-#define __DC_DMCU_H__
+#अगर_अघोषित __DC_DMCU_H__
+#घोषणा __DC_DMCU_H__
 
-#include "dm_services_types.h"
+#समावेश "dm_services_types.h"
 
-/* If HW itself ever powered down it will be 0.
- * fwDmcuInit will write to 1.
- * Driver will only call MCP init if current state is 1,
+/* If HW itself ever घातered करोwn it will be 0.
+ * fwDmcuInit will ग_लिखो to 1.
+ * Driver will only call MCP init अगर current state is 1,
  * and the MCP command will transition this to 2.
  */
-enum dmcu_state {
+क्रमागत dmcu_state अणु
 	DMCU_UNLOADED = 0,
 	DMCU_LOADED_UNINITIALIZED = 1,
 	DMCU_RUNNING = 2,
-};
+पूर्ण;
 
-struct dmcu_version {
-	unsigned int interface_version;
-	unsigned int abm_version;
-	unsigned int psr_version;
-	unsigned int build_version;
-};
+काष्ठा dmcu_version अणु
+	अचिन्हित पूर्णांक पूर्णांकerface_version;
+	अचिन्हित पूर्णांक abm_version;
+	अचिन्हित पूर्णांक psr_version;
+	अचिन्हित पूर्णांक build_version;
+पूर्ण;
 
-struct dmcu {
-	struct dc_context *ctx;
-	const struct dmcu_funcs *funcs;
+काष्ठा dmcu अणु
+	काष्ठा dc_context *ctx;
+	स्थिर काष्ठा dmcu_funcs *funcs;
 
-	enum dmcu_state dmcu_state;
-	struct dmcu_version dmcu_version;
-	unsigned int cached_wait_loop_number;
-	uint32_t psp_version;
-	bool auto_load_dmcu;
-};
+	क्रमागत dmcu_state dmcu_state;
+	काष्ठा dmcu_version dmcu_version;
+	अचिन्हित पूर्णांक cached_रुको_loop_number;
+	uपूर्णांक32_t psp_version;
+	bool स्वतः_load_dmcu;
+पूर्ण;
 
-#if defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
-struct crc_region {
-	uint16_t x_start;
-	uint16_t y_start;
-	uint16_t x_end;
-	uint16_t y_end;
-};
+#अगर defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
+काष्ठा crc_region अणु
+	uपूर्णांक16_t x_start;
+	uपूर्णांक16_t y_start;
+	uपूर्णांक16_t x_end;
+	uपूर्णांक16_t y_end;
+पूर्ण;
 
-struct otg_phy_mux {
-	uint8_t phy_output_num;
-	uint8_t otg_output_num;
-};
-#endif
+काष्ठा otg_phy_mux अणु
+	uपूर्णांक8_t phy_output_num;
+	uपूर्णांक8_t otg_output_num;
+पूर्ण;
+#पूर्ण_अगर
 
-struct dmcu_funcs {
-	bool (*dmcu_init)(struct dmcu *dmcu);
-	bool (*load_iram)(struct dmcu *dmcu,
-			unsigned int start_offset,
-			const char *src,
-			unsigned int bytes);
-	void (*set_psr_enable)(struct dmcu *dmcu, bool enable, bool wait);
-	bool (*setup_psr)(struct dmcu *dmcu,
-			struct dc_link *link,
-			struct psr_context *psr_context);
-	void (*get_psr_state)(struct dmcu *dmcu, enum dc_psr_state *dc_psr_state);
-	void (*set_psr_wait_loop)(struct dmcu *dmcu,
-			unsigned int wait_loop_number);
-	void (*get_psr_wait_loop)(struct dmcu *dmcu,
-			unsigned int *psr_wait_loop_number);
-	bool (*is_dmcu_initialized)(struct dmcu *dmcu);
-	bool (*lock_phy)(struct dmcu *dmcu);
-	bool (*unlock_phy)(struct dmcu *dmcu);
-	bool (*send_edid_cea)(struct dmcu *dmcu,
-			int offset,
-			int total_length,
-			uint8_t *data,
-			int length);
-	bool (*recv_amd_vsdb)(struct dmcu *dmcu,
-			int *version,
-			int *min_frame_rate,
-			int *max_frame_rate);
-	bool (*recv_edid_cea_ack)(struct dmcu *dmcu, int *offset);
-#if defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
-	void (*forward_crc_window)(struct dmcu *dmcu,
-			struct crc_region *crc_win,
-			struct otg_phy_mux *mux_mapping);
-	void (*stop_crc_win_update)(struct dmcu *dmcu,
-			struct otg_phy_mux *mux_mapping);
-#endif
-};
+काष्ठा dmcu_funcs अणु
+	bool (*dmcu_init)(काष्ठा dmcu *dmcu);
+	bool (*load_iram)(काष्ठा dmcu *dmcu,
+			अचिन्हित पूर्णांक start_offset,
+			स्थिर अक्षर *src,
+			अचिन्हित पूर्णांक bytes);
+	व्योम (*set_psr_enable)(काष्ठा dmcu *dmcu, bool enable, bool रुको);
+	bool (*setup_psr)(काष्ठा dmcu *dmcu,
+			काष्ठा dc_link *link,
+			काष्ठा psr_context *psr_context);
+	व्योम (*get_psr_state)(काष्ठा dmcu *dmcu, क्रमागत dc_psr_state *dc_psr_state);
+	व्योम (*set_psr_रुको_loop)(काष्ठा dmcu *dmcu,
+			अचिन्हित पूर्णांक रुको_loop_number);
+	व्योम (*get_psr_रुको_loop)(काष्ठा dmcu *dmcu,
+			अचिन्हित पूर्णांक *psr_रुको_loop_number);
+	bool (*is_dmcu_initialized)(काष्ठा dmcu *dmcu);
+	bool (*lock_phy)(काष्ठा dmcu *dmcu);
+	bool (*unlock_phy)(काष्ठा dmcu *dmcu);
+	bool (*send_edid_cea)(काष्ठा dmcu *dmcu,
+			पूर्णांक offset,
+			पूर्णांक total_length,
+			uपूर्णांक8_t *data,
+			पूर्णांक length);
+	bool (*recv_amd_vsdb)(काष्ठा dmcu *dmcu,
+			पूर्णांक *version,
+			पूर्णांक *min_frame_rate,
+			पूर्णांक *max_frame_rate);
+	bool (*recv_edid_cea_ack)(काष्ठा dmcu *dmcu, पूर्णांक *offset);
+#अगर defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
+	व्योम (*क्रमward_crc_winकरोw)(काष्ठा dmcu *dmcu,
+			काष्ठा crc_region *crc_win,
+			काष्ठा otg_phy_mux *mux_mapping);
+	व्योम (*stop_crc_win_update)(काष्ठा dmcu *dmcu,
+			काष्ठा otg_phy_mux *mux_mapping);
+#पूर्ण_अगर
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

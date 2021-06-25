@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -25,104 +26,104 @@
  */
 /*
  * Authors:
- *    Christian König <christian.koenig@amd.com>
+ *    Christian Kथघnig <christian.koenig@amd.com>
  */
 
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/mmu_notifier.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mmu_notअगरier.h>
 
-#include <drm/drm.h>
+#समावेश <drm/drm.h>
 
-#include "radeon.h"
+#समावेश "radeon.h"
 
 /**
- * radeon_mn_invalidate - callback to notify about mm change
+ * radeon_mn_invalidate - callback to notअगरy about mm change
  *
- * @mn: our notifier
+ * @mn: our notअगरier
  * @range: the VMA under invalidation
- * @cur_seq: Value to pass to mmu_interval_set_seq()
+ * @cur_seq: Value to pass to mmu_पूर्णांकerval_set_seq()
  *
- * We block for all BOs between start and end to be idle and
- * unmap them by move them into system domain again.
+ * We block क्रम all BOs between start and end to be idle and
+ * unmap them by move them पूर्णांकo प्रणाली करोमुख्य again.
  */
-static bool radeon_mn_invalidate(struct mmu_interval_notifier *mn,
-				 const struct mmu_notifier_range *range,
-				 unsigned long cur_seq)
-{
-	struct radeon_bo *bo = container_of(mn, struct radeon_bo, notifier);
-	struct ttm_operation_ctx ctx = { false, false };
-	long r;
+अटल bool radeon_mn_invalidate(काष्ठा mmu_पूर्णांकerval_notअगरier *mn,
+				 स्थिर काष्ठा mmu_notअगरier_range *range,
+				 अचिन्हित दीर्घ cur_seq)
+अणु
+	काष्ठा radeon_bo *bo = container_of(mn, काष्ठा radeon_bo, notअगरier);
+	काष्ठा tपंचांग_operation_ctx ctx = अणु false, false पूर्ण;
+	दीर्घ r;
 
-	if (!bo->tbo.ttm || !radeon_ttm_tt_is_bound(bo->tbo.bdev, bo->tbo.ttm))
-		return true;
+	अगर (!bo->tbo.tपंचांग || !radeon_tपंचांग_tt_is_bound(bo->tbo.bdev, bo->tbo.tपंचांग))
+		वापस true;
 
-	if (!mmu_notifier_range_blockable(range))
-		return false;
+	अगर (!mmu_notअगरier_range_blockable(range))
+		वापस false;
 
 	r = radeon_bo_reserve(bo, true);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("(%ld) failed to reserve user bo\n", r);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	r = dma_resv_wait_timeout_rcu(bo->tbo.base.resv, true, false,
+	r = dma_resv_रुको_समयout_rcu(bo->tbo.base.resv, true, false,
 				      MAX_SCHEDULE_TIMEOUT);
-	if (r <= 0)
+	अगर (r <= 0)
 		DRM_ERROR("(%ld) failed to wait for user bo\n", r);
 
-	radeon_ttm_placement_from_domain(bo, RADEON_GEM_DOMAIN_CPU);
-	r = ttm_bo_validate(&bo->tbo, &bo->placement, &ctx);
-	if (r)
+	radeon_tपंचांग_placement_from_करोमुख्य(bo, RADEON_GEM_DOMAIN_CPU);
+	r = tपंचांग_bo_validate(&bo->tbo, &bo->placement, &ctx);
+	अगर (r)
 		DRM_ERROR("(%ld) failed to validate user bo\n", r);
 
 	radeon_bo_unreserve(bo);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static const struct mmu_interval_notifier_ops radeon_mn_ops = {
+अटल स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops radeon_mn_ops = अणु
 	.invalidate = radeon_mn_invalidate,
-};
+पूर्ण;
 
 /**
- * radeon_mn_register - register a BO for notifier updates
+ * radeon_mn_रेजिस्टर - रेजिस्टर a BO क्रम notअगरier updates
  *
  * @bo: radeon buffer object
  * @addr: userptr addr we should monitor
  *
- * Registers an MMU notifier for the given BO at the specified address.
- * Returns 0 on success, -ERRNO if anything goes wrong.
+ * Registers an MMU notअगरier क्रम the given BO at the specअगरied address.
+ * Returns 0 on success, -ERRNO अगर anything goes wrong.
  */
-int radeon_mn_register(struct radeon_bo *bo, unsigned long addr)
-{
-	int ret;
+पूर्णांक radeon_mn_रेजिस्टर(काष्ठा radeon_bo *bo, अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक ret;
 
-	ret = mmu_interval_notifier_insert(&bo->notifier, current->mm, addr,
+	ret = mmu_पूर्णांकerval_notअगरier_insert(&bo->notअगरier, current->mm, addr,
 					   radeon_bo_size(bo), &radeon_mn_ops);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * FIXME: radeon appears to allow get_user_pages to run during
-	 * invalidate_range_start/end, which is not a safe way to read the
-	 * PTEs. It should use the mmu_interval_read_begin() scheme around the
-	 * get_user_pages to ensure that the PTEs are read properly
+	 * invalidate_range_start/end, which is not a safe way to पढ़ो the
+	 * PTEs. It should use the mmu_पूर्णांकerval_पढ़ो_begin() scheme around the
+	 * get_user_pages to ensure that the PTEs are पढ़ो properly
 	 */
-	mmu_interval_read_begin(&bo->notifier);
-	return 0;
-}
+	mmu_पूर्णांकerval_पढ़ो_begin(&bo->notअगरier);
+	वापस 0;
+पूर्ण
 
 /**
- * radeon_mn_unregister - unregister a BO for notifier updates
+ * radeon_mn_unरेजिस्टर - unरेजिस्टर a BO क्रम notअगरier updates
  *
  * @bo: radeon buffer object
  *
- * Remove any registration of MMU notifier updates from the buffer object.
+ * Remove any registration of MMU notअगरier updates from the buffer object.
  */
-void radeon_mn_unregister(struct radeon_bo *bo)
-{
-	if (!bo->notifier.mm)
-		return;
-	mmu_interval_notifier_remove(&bo->notifier);
-	bo->notifier.mm = NULL;
-}
+व्योम radeon_mn_unरेजिस्टर(काष्ठा radeon_bo *bo)
+अणु
+	अगर (!bo->notअगरier.mm)
+		वापस;
+	mmu_पूर्णांकerval_notअगरier_हटाओ(&bo->notअगरier);
+	bo->notअगरier.mm = शून्य;
+पूर्ण

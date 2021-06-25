@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * USB Empeg empeg-car player driver
  *
@@ -6,46 +7,46 @@
  *	    Gary Brubaker (xavyer@ix.netcom.com)
  *
  *	Copyright (C) 1999 - 2001
- *	    Greg Kroah-Hartman (greg@kroah.com)
+ *	    Greg Kroah-Harपंचांगan (greg@kroah.com)
  *
- * See Documentation/usb/usb-serial.rst for more information on using this
+ * See Documentation/usb/usb-serial.rst क्रम more inक्रमmation on using this
  * driver
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/tty_flip.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/uaccess.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
 
-#define DRIVER_AUTHOR "Greg Kroah-Hartman <greg@kroah.com>, Gary Brubaker <xavyer@ix.netcom.com>"
-#define DRIVER_DESC "USB Empeg Mark I/II Driver"
+#घोषणा DRIVER_AUTHOR "Greg Kroah-Hartman <greg@kroah.com>, Gary Brubaker <xavyer@ix.netcom.com>"
+#घोषणा DRIVER_DESC "USB Empeg Mark I/II Driver"
 
-#define EMPEG_VENDOR_ID			0x084f
-#define EMPEG_PRODUCT_ID		0x0001
+#घोषणा EMPEG_VENDOR_ID			0x084f
+#घोषणा EMPEG_PRODUCT_ID		0x0001
 
-/* function prototypes for an empeg-car player */
-static int  empeg_startup(struct usb_serial *serial);
-static void empeg_init_termios(struct tty_struct *tty);
+/* function prototypes क्रम an empeg-car player */
+अटल पूर्णांक  empeg_startup(काष्ठा usb_serial *serial);
+अटल व्योम empeg_init_termios(काष्ठा tty_काष्ठा *tty);
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(EMPEG_VENDOR_ID, EMPEG_PRODUCT_ID) },
-	{ }					/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(EMPEG_VENDOR_ID, EMPEG_PRODUCT_ID) पूर्ण,
+	अणु पूर्ण					/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, id_table);
 
-static struct usb_serial_driver empeg_device = {
-	.driver = {
+अटल काष्ठा usb_serial_driver empeg_device = अणु
+	.driver = अणु
 		.owner =	THIS_MODULE,
 		.name =		"empeg",
-	},
+	पूर्ण,
 	.id_table =		id_table,
 	.num_ports =		1,
 	.bulk_out_size =	256,
@@ -53,60 +54,60 @@ static struct usb_serial_driver empeg_device = {
 	.unthrottle =		usb_serial_generic_unthrottle,
 	.attach =		empeg_startup,
 	.init_termios =		empeg_init_termios,
-};
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
-	&empeg_device, NULL
-};
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+	&empeg_device, शून्य
+पूर्ण;
 
-static int empeg_startup(struct usb_serial *serial)
-{
-	int r;
+अटल पूर्णांक empeg_startup(काष्ठा usb_serial *serial)
+अणु
+	पूर्णांक r;
 
-	if (serial->dev->actconfig->desc.bConfigurationValue != 1) {
+	अगर (serial->dev->actconfig->desc.bConfigurationValue != 1) अणु
 		dev_err(&serial->dev->dev, "active config #%d != 1 ??\n",
 			serial->dev->actconfig->desc.bConfigurationValue);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	r = usb_reset_configuration(serial->dev);
 
-	/* continue on with initialization */
-	return r;
-}
+	/* जारी on with initialization */
+	वापस r;
+पूर्ण
 
-static void empeg_init_termios(struct tty_struct *tty)
-{
-	struct ktermios *termios = &tty->termios;
+अटल व्योम empeg_init_termios(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ktermios *termios = &tty->termios;
 
 	/*
 	 * The empeg-car player wants these particular tty settings.
-	 * You could, for example, change the baud rate, however the
+	 * You could, क्रम example, change the baud rate, however the
 	 * player only supports 115200 (currently), so there is really
-	 * no point in support for changes to the tty settings.
-	 * (at least for now)
+	 * no poपूर्णांक in support क्रम changes to the tty settings.
+	 * (at least क्रम now)
 	 *
-	 * The default requirements for this device are:
+	 * The शेष requirements क्रम this device are:
 	 */
-	termios->c_iflag
-		&= ~(IGNBRK	/* disable ignore break */
-		| BRKINT	/* disable break causes interrupt */
+	termios->c_अगरlag
+		&= ~(IGNBRK	/* disable ignore अवरोध */
+		| BRKINT	/* disable अवरोध causes पूर्णांकerrupt */
 		| PARMRK	/* disable mark parity errors */
-		| ISTRIP	/* disable clear high bit of input characters */
+		| ISTRIP	/* disable clear high bit of input अक्षरacters */
 		| INLCR		/* disable translate NL to CR */
 		| IGNCR		/* disable ignore CR */
 		| ICRNL		/* disable translate CR to NL */
 		| IXON);	/* disable enable XON/XOFF flow control */
 
 	termios->c_oflag
-		&= ~OPOST;	/* disable postprocess output characters */
+		&= ~OPOST;	/* disable postprocess output अक्षरacters */
 
 	termios->c_lflag
-		&= ~(ECHO	/* disable echo input characters */
+		&= ~(ECHO	/* disable echo input अक्षरacters */
 		| ECHONL	/* disable echo new line */
-		| ICANON	/* disable erase, kill, werase, and rprnt special characters */
-		| ISIG		/* disable interrupt, quit, and suspend special characters */
-		| IEXTEN);	/* disable non-POSIX special characters */
+		| ICANON	/* disable erase, समाप्त, werase, and rprnt special अक्षरacters */
+		| ISIG		/* disable पूर्णांकerrupt, quit, and suspend special अक्षरacters */
+		| IEXTEN);	/* disable non-POSIX special अक्षरacters */
 
 	termios->c_cflag
 		&= ~(CSIZE	/* no size */
@@ -114,10 +115,10 @@ static void empeg_init_termios(struct tty_struct *tty)
 		| CBAUD);	/* clear current baud rate */
 
 	termios->c_cflag
-		|= CS8;		/* character size 8 bits */
+		|= CS8;		/* अक्षरacter size 8 bits */
 
 	tty_encode_baud_rate(tty, 115200, 115200);
-}
+पूर्ण
 
 module_usb_serial_driver(serial_drivers, id_table);
 

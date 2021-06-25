@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_XILINX_LL_TEMAC_H
-#define __LINUX_XILINX_LL_TEMAC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_XILINX_LL_TEMAC_H
+#घोषणा __LINUX_XILINX_LL_TEMAC_H
 
-#include <linux/if_ether.h>
-#include <linux/phy.h>
-#include <linux/spinlock.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/spinlock.h>
 
-struct ll_temac_platform_data {
+काष्ठा ll_temac_platक्रमm_data अणु
 	bool txcsum;		/* Enable/disable TX checksum */
 	bool rxcsum;		/* Enable/disable RX checksum */
 	u8 mac_addr[ETH_ALEN];	/* MAC address (6 bytes) */
-	/* Clock frequency for input to MDIO clock generator */
+	/* Clock frequency क्रम input to MDIO घड़ी generator */
 	u32 mdio_clk_freq;
-	unsigned long long mdio_bus_id; /* Unique id for MDIO bus */
-	int phy_addr;		/* Address of the PHY to connect to */
-	phy_interface_t phy_interface; /* PHY interface mode */
-	bool reg_little_endian;	/* Little endian TEMAC register access  */
-	bool dma_little_endian;	/* Little endian DMA register access  */
-	/* Pre-initialized mutex to use for synchronizing indirect
-	 * register access.  When using both interfaces of a single
+	अचिन्हित दीर्घ दीर्घ mdio_bus_id; /* Unique id क्रम MDIO bus */
+	पूर्णांक phy_addr;		/* Address of the PHY to connect to */
+	phy_पूर्णांकerface_t phy_पूर्णांकerface; /* PHY पूर्णांकerface mode */
+	bool reg_little_endian;	/* Little endian TEMAC रेजिस्टर access  */
+	bool dma_little_endian;	/* Little endian DMA रेजिस्टर access  */
+	/* Pre-initialized mutex to use क्रम synchronizing indirect
+	 * रेजिस्टर access.  When using both पूर्णांकerfaces of a single
 	 * TEMAC IP block, the same mutex should be passed here, as
 	 * they share the same DCR bus bridge.
 	 */
 	spinlock_t *indirect_lock;
 	/* DMA channel control setup */
-	u8 tx_irq_timeout;	/* TX Interrupt Delay Time-out */
+	u8 tx_irq_समयout;	/* TX Interrupt Delay Time-out */
 	u8 tx_irq_count;	/* TX Interrupt Coalescing Threshold Count */
-	u8 rx_irq_timeout;	/* RX Interrupt Delay Time-out */
+	u8 rx_irq_समयout;	/* RX Interrupt Delay Time-out */
 	u8 rx_irq_count;	/* RX Interrupt Coalescing Threshold Count */
-};
+पूर्ण;
 
-#endif /* __LINUX_XILINX_LL_TEMAC_H */
+#पूर्ण_अगर /* __LINUX_XILINX_LL_TEMAC_H */

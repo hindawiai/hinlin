@@ -1,177 +1,178 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * SN Platform GRU Driver
+ * SN Platक्रमm GRU Driver
  *
  *              PROC INTERFACES
  *
- * This file supports the /proc interfaces for the GRU driver
+ * This file supports the /proc पूर्णांकerfaces क्रम the GRU driver
  *
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
-#include <linux/proc_fs.h>
-#include <linux/device.h>
-#include <linux/seq_file.h>
-#include <linux/uaccess.h>
-#include "gru.h"
-#include "grulib.h"
-#include "grutables.h"
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/uaccess.h>
+#समावेश "gru.h"
+#समावेश "grulib.h"
+#समावेश "grutables.h"
 
-#define printstat(s, f)		printstat_val(s, &gru_stats.f, #f)
+#घोषणा prपूर्णांकstat(s, f)		prपूर्णांकstat_val(s, &gru_stats.f, #f)
 
-static void printstat_val(struct seq_file *s, atomic_long_t *v, char *id)
-{
-	unsigned long val = atomic_long_read(v);
+अटल व्योम prपूर्णांकstat_val(काष्ठा seq_file *s, atomic_दीर्घ_t *v, अक्षर *id)
+अणु
+	अचिन्हित दीर्घ val = atomic_दीर्घ_पढ़ो(v);
 
-	seq_printf(s, "%16lu %s\n", val, id);
-}
+	seq_म_लिखो(s, "%16lu %s\n", val, id);
+पूर्ण
 
-static int statistics_show(struct seq_file *s, void *p)
-{
-	printstat(s, vdata_alloc);
-	printstat(s, vdata_free);
-	printstat(s, gts_alloc);
-	printstat(s, gts_free);
-	printstat(s, gms_alloc);
-	printstat(s, gms_free);
-	printstat(s, gts_double_allocate);
-	printstat(s, assign_context);
-	printstat(s, assign_context_failed);
-	printstat(s, free_context);
-	printstat(s, load_user_context);
-	printstat(s, load_kernel_context);
-	printstat(s, lock_kernel_context);
-	printstat(s, unlock_kernel_context);
-	printstat(s, steal_user_context);
-	printstat(s, steal_kernel_context);
-	printstat(s, steal_context_failed);
-	printstat(s, nopfn);
-	printstat(s, asid_new);
-	printstat(s, asid_next);
-	printstat(s, asid_wrap);
-	printstat(s, asid_reuse);
-	printstat(s, intr);
-	printstat(s, intr_cbr);
-	printstat(s, intr_tfh);
-	printstat(s, intr_spurious);
-	printstat(s, intr_mm_lock_failed);
-	printstat(s, call_os);
-	printstat(s, call_os_wait_queue);
-	printstat(s, user_flush_tlb);
-	printstat(s, user_unload_context);
-	printstat(s, user_exception);
-	printstat(s, set_context_option);
-	printstat(s, check_context_retarget_intr);
-	printstat(s, check_context_unload);
-	printstat(s, tlb_dropin);
-	printstat(s, tlb_preload_page);
-	printstat(s, tlb_dropin_fail_no_asid);
-	printstat(s, tlb_dropin_fail_upm);
-	printstat(s, tlb_dropin_fail_invalid);
-	printstat(s, tlb_dropin_fail_range_active);
-	printstat(s, tlb_dropin_fail_idle);
-	printstat(s, tlb_dropin_fail_fmm);
-	printstat(s, tlb_dropin_fail_no_exception);
-	printstat(s, tfh_stale_on_fault);
-	printstat(s, mmu_invalidate_range);
-	printstat(s, mmu_invalidate_page);
-	printstat(s, flush_tlb);
-	printstat(s, flush_tlb_gru);
-	printstat(s, flush_tlb_gru_tgh);
-	printstat(s, flush_tlb_gru_zero_asid);
-	printstat(s, copy_gpa);
-	printstat(s, read_gpa);
-	printstat(s, mesq_receive);
-	printstat(s, mesq_receive_none);
-	printstat(s, mesq_send);
-	printstat(s, mesq_send_failed);
-	printstat(s, mesq_noop);
-	printstat(s, mesq_send_unexpected_error);
-	printstat(s, mesq_send_lb_overflow);
-	printstat(s, mesq_send_qlimit_reached);
-	printstat(s, mesq_send_amo_nacked);
-	printstat(s, mesq_send_put_nacked);
-	printstat(s, mesq_qf_locked);
-	printstat(s, mesq_qf_noop_not_full);
-	printstat(s, mesq_qf_switch_head_failed);
-	printstat(s, mesq_qf_unexpected_error);
-	printstat(s, mesq_noop_unexpected_error);
-	printstat(s, mesq_noop_lb_overflow);
-	printstat(s, mesq_noop_qlimit_reached);
-	printstat(s, mesq_noop_amo_nacked);
-	printstat(s, mesq_noop_put_nacked);
-	printstat(s, mesq_noop_page_overflow);
-	return 0;
-}
+अटल पूर्णांक statistics_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	prपूर्णांकstat(s, vdata_alloc);
+	prपूर्णांकstat(s, vdata_मुक्त);
+	prपूर्णांकstat(s, gts_alloc);
+	prपूर्णांकstat(s, gts_मुक्त);
+	prपूर्णांकstat(s, gms_alloc);
+	prपूर्णांकstat(s, gms_मुक्त);
+	prपूर्णांकstat(s, gts_द्विगुन_allocate);
+	prपूर्णांकstat(s, assign_context);
+	prपूर्णांकstat(s, assign_context_failed);
+	prपूर्णांकstat(s, मुक्त_context);
+	prपूर्णांकstat(s, load_user_context);
+	prपूर्णांकstat(s, load_kernel_context);
+	prपूर्णांकstat(s, lock_kernel_context);
+	prपूर्णांकstat(s, unlock_kernel_context);
+	prपूर्णांकstat(s, steal_user_context);
+	prपूर्णांकstat(s, steal_kernel_context);
+	prपूर्णांकstat(s, steal_context_failed);
+	prपूर्णांकstat(s, nopfn);
+	prपूर्णांकstat(s, asid_new);
+	prपूर्णांकstat(s, asid_next);
+	prपूर्णांकstat(s, asid_wrap);
+	prपूर्णांकstat(s, asid_reuse);
+	prपूर्णांकstat(s, पूर्णांकr);
+	prपूर्णांकstat(s, पूर्णांकr_cbr);
+	prपूर्णांकstat(s, पूर्णांकr_tfh);
+	prपूर्णांकstat(s, पूर्णांकr_spurious);
+	prपूर्णांकstat(s, पूर्णांकr_mm_lock_failed);
+	prपूर्णांकstat(s, call_os);
+	prपूर्णांकstat(s, call_os_रुको_queue);
+	prपूर्णांकstat(s, user_flush_tlb);
+	prपूर्णांकstat(s, user_unload_context);
+	prपूर्णांकstat(s, user_exception);
+	prपूर्णांकstat(s, set_context_option);
+	prपूर्णांकstat(s, check_context_retarget_पूर्णांकr);
+	prपूर्णांकstat(s, check_context_unload);
+	prपूर्णांकstat(s, tlb_dropin);
+	prपूर्णांकstat(s, tlb_preload_page);
+	prपूर्णांकstat(s, tlb_dropin_fail_no_asid);
+	prपूर्णांकstat(s, tlb_dropin_fail_upm);
+	prपूर्णांकstat(s, tlb_dropin_fail_invalid);
+	prपूर्णांकstat(s, tlb_dropin_fail_range_active);
+	prपूर्णांकstat(s, tlb_dropin_fail_idle);
+	prपूर्णांकstat(s, tlb_dropin_fail_fmm);
+	prपूर्णांकstat(s, tlb_dropin_fail_no_exception);
+	prपूर्णांकstat(s, tfh_stale_on_fault);
+	prपूर्णांकstat(s, mmu_invalidate_range);
+	prपूर्णांकstat(s, mmu_invalidate_page);
+	prपूर्णांकstat(s, flush_tlb);
+	prपूर्णांकstat(s, flush_tlb_gru);
+	prपूर्णांकstat(s, flush_tlb_gru_tgh);
+	prपूर्णांकstat(s, flush_tlb_gru_zero_asid);
+	prपूर्णांकstat(s, copy_gpa);
+	prपूर्णांकstat(s, पढ़ो_gpa);
+	prपूर्णांकstat(s, mesq_receive);
+	prपूर्णांकstat(s, mesq_receive_none);
+	prपूर्णांकstat(s, mesq_send);
+	prपूर्णांकstat(s, mesq_send_failed);
+	prपूर्णांकstat(s, mesq_noop);
+	prपूर्णांकstat(s, mesq_send_unexpected_error);
+	prपूर्णांकstat(s, mesq_send_lb_overflow);
+	prपूर्णांकstat(s, mesq_send_qlimit_reached);
+	prपूर्णांकstat(s, mesq_send_amo_nacked);
+	prपूर्णांकstat(s, mesq_send_put_nacked);
+	prपूर्णांकstat(s, mesq_qf_locked);
+	prपूर्णांकstat(s, mesq_qf_noop_not_full);
+	prपूर्णांकstat(s, mesq_qf_चयन_head_failed);
+	prपूर्णांकstat(s, mesq_qf_unexpected_error);
+	prपूर्णांकstat(s, mesq_noop_unexpected_error);
+	prपूर्णांकstat(s, mesq_noop_lb_overflow);
+	prपूर्णांकstat(s, mesq_noop_qlimit_reached);
+	prपूर्णांकstat(s, mesq_noop_amo_nacked);
+	prपूर्णांकstat(s, mesq_noop_put_nacked);
+	prपूर्णांकstat(s, mesq_noop_page_overflow);
+	वापस 0;
+पूर्ण
 
-static ssize_t statistics_write(struct file *file, const char __user *userbuf,
-				size_t count, loff_t *data)
-{
-	memset(&gru_stats, 0, sizeof(gru_stats));
-	return count;
-}
+अटल sमाप_प्रकार statistics_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *userbuf,
+				माप_प्रकार count, loff_t *data)
+अणु
+	स_रखो(&gru_stats, 0, माप(gru_stats));
+	वापस count;
+पूर्ण
 
-static int mcs_statistics_show(struct seq_file *s, void *p)
-{
-	int op;
-	unsigned long total, count, max;
-	static char *id[] = {"cch_allocate", "cch_start", "cch_interrupt",
+अटल पूर्णांक mcs_statistics_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	पूर्णांक op;
+	अचिन्हित दीर्घ total, count, max;
+	अटल अक्षर *id[] = अणु"cch_allocate", "cch_start", "cch_interrupt",
 		"cch_interrupt_sync", "cch_deallocate", "tfh_write_only",
-		"tfh_write_restart", "tgh_invalidate"};
+		"tfh_write_restart", "tgh_invalidate"पूर्ण;
 
-	seq_puts(s, "#id                        count   aver-clks    max-clks\n");
-	for (op = 0; op < mcsop_last; op++) {
-		count = atomic_long_read(&mcs_op_statistics[op].count);
-		total = atomic_long_read(&mcs_op_statistics[op].total);
+	seq_माला_दो(s, "#id                        count   aver-clks    max-clks\n");
+	क्रम (op = 0; op < mcsop_last; op++) अणु
+		count = atomic_दीर्घ_पढ़ो(&mcs_op_statistics[op].count);
+		total = atomic_दीर्घ_पढ़ो(&mcs_op_statistics[op].total);
 		max = mcs_op_statistics[op].max;
-		seq_printf(s, "%-20s%12ld%12ld%12ld\n", id[op], count,
+		seq_म_लिखो(s, "%-20s%12ld%12ld%12ld\n", id[op], count,
 			   count ? total / count : 0, max);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static ssize_t mcs_statistics_write(struct file *file,
-			const char __user *userbuf, size_t count, loff_t *data)
-{
-	memset(mcs_op_statistics, 0, sizeof(mcs_op_statistics));
-	return count;
-}
+अटल sमाप_प्रकार mcs_statistics_ग_लिखो(काष्ठा file *file,
+			स्थिर अक्षर __user *userbuf, माप_प्रकार count, loff_t *data)
+अणु
+	स_रखो(mcs_op_statistics, 0, माप(mcs_op_statistics));
+	वापस count;
+पूर्ण
 
-static int options_show(struct seq_file *s, void *p)
-{
-	seq_printf(s, "#bitmask: 1=trace, 2=statistics\n");
-	seq_printf(s, "0x%lx\n", gru_options);
-	return 0;
-}
+अटल पूर्णांक options_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	seq_म_लिखो(s, "#bitmask: 1=trace, 2=statistics\n");
+	seq_म_लिखो(s, "0x%lx\n", gru_options);
+	वापस 0;
+पूर्ण
 
-static ssize_t options_write(struct file *file, const char __user *userbuf,
-			     size_t count, loff_t *data)
-{
-	int ret;
+अटल sमाप_प्रकार options_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *userbuf,
+			     माप_प्रकार count, loff_t *data)
+अणु
+	पूर्णांक ret;
 
-	ret = kstrtoul_from_user(userbuf, count, 0, &gru_options);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ_from_user(userbuf, count, 0, &gru_options);
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int cch_seq_show(struct seq_file *file, void *data)
-{
-	long gid = *(long *)data;
-	int i;
-	struct gru_state *gru = GID_TO_GRU(gid);
-	struct gru_thread_state *ts;
-	const char *mode[] = { "??", "UPM", "INTR", "OS_POLL" };
+अटल पूर्णांक cch_seq_show(काष्ठा seq_file *file, व्योम *data)
+अणु
+	दीर्घ gid = *(दीर्घ *)data;
+	पूर्णांक i;
+	काष्ठा gru_state *gru = GID_TO_GRU(gid);
+	काष्ठा gru_thपढ़ो_state *ts;
+	स्थिर अक्षर *mode[] = अणु "??", "UPM", "INTR", "OS_POLL" पूर्ण;
 
-	if (gid == 0)
-		seq_puts(file, "#  gid  bid  ctx#   asid      pid  cbrs dsbytes    mode\n");
-	if (gru)
-		for (i = 0; i < GRU_NUM_CCH; i++) {
+	अगर (gid == 0)
+		seq_माला_दो(file, "#  gid  bid  ctx#   asid      pid  cbrs dsbytes    mode\n");
+	अगर (gru)
+		क्रम (i = 0; i < GRU_NUM_CCH; i++) अणु
 			ts = gru->gs_gts[i];
-			if (!ts)
-				continue;
-			seq_printf(file, " %5d%5d%6d%7d%9d%6d%8d%8s\n",
+			अगर (!ts)
+				जारी;
+			seq_म_लिखो(file, " %5d%5d%6d%7d%9d%6d%8d%8s\n",
 				   gru->gs_gid, gru->gs_blade_id, i,
 				   is_kernel_context(ts) ? 0 : ts->ts_gms->ms_asids[gid].mt_asid,
 				   is_kernel_context(ts) ? 0 : ts->ts_tgid_owner,
@@ -179,130 +180,130 @@ static int cch_seq_show(struct seq_file *file, void *data)
 				   ts->ts_cbr_au_count * GRU_DSR_AU_BYTES,
 				   mode[ts->ts_user_options &
 					GRU_OPT_MISS_MASK]);
-		}
+		पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gru_seq_show(struct seq_file *file, void *data)
-{
-	long gid = *(long *)data, ctxfree, cbrfree, dsrfree;
-	struct gru_state *gru = GID_TO_GRU(gid);
+अटल पूर्णांक gru_seq_show(काष्ठा seq_file *file, व्योम *data)
+अणु
+	दीर्घ gid = *(दीर्घ *)data, ctxमुक्त, cbrमुक्त, dsrमुक्त;
+	काष्ठा gru_state *gru = GID_TO_GRU(gid);
 
-	if (gid == 0) {
-		seq_puts(file, "#  gid  nid    ctx   cbr   dsr     ctx   cbr   dsr\n");
-		seq_puts(file, "#             busy  busy  busy    free  free  free\n");
-	}
-	if (gru) {
-		ctxfree = GRU_NUM_CCH - gru->gs_active_contexts;
-		cbrfree = hweight64(gru->gs_cbr_map) * GRU_CBR_AU_SIZE;
-		dsrfree = hweight64(gru->gs_dsr_map) * GRU_DSR_AU_BYTES;
-		seq_printf(file, " %5d%5d%7ld%6ld%6ld%8ld%6ld%6ld\n",
-			   gru->gs_gid, gru->gs_blade_id, GRU_NUM_CCH - ctxfree,
-			   GRU_NUM_CBE - cbrfree, GRU_NUM_DSR_BYTES - dsrfree,
-			   ctxfree, cbrfree, dsrfree);
-	}
+	अगर (gid == 0) अणु
+		seq_माला_दो(file, "#  gid  nid    ctx   cbr   dsr     ctx   cbr   dsr\n");
+		seq_माला_दो(file, "#             busy  busy  busy    free  free  free\n");
+	पूर्ण
+	अगर (gru) अणु
+		ctxमुक्त = GRU_NUM_CCH - gru->gs_active_contexts;
+		cbrमुक्त = hweight64(gru->gs_cbr_map) * GRU_CBR_AU_SIZE;
+		dsrमुक्त = hweight64(gru->gs_dsr_map) * GRU_DSR_AU_BYTES;
+		seq_म_लिखो(file, " %5d%5d%7ld%6ld%6ld%8ld%6ld%6ld\n",
+			   gru->gs_gid, gru->gs_blade_id, GRU_NUM_CCH - ctxमुक्त,
+			   GRU_NUM_CBE - cbrमुक्त, GRU_NUM_DSR_BYTES - dsrमुक्त,
+			   ctxमुक्त, cbrमुक्त, dsrमुक्त);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void seq_stop(struct seq_file *file, void *data)
-{
-}
+अटल व्योम seq_stop(काष्ठा seq_file *file, व्योम *data)
+अणु
+पूर्ण
 
-static void *seq_start(struct seq_file *file, loff_t *gid)
-{
-	if (*gid < gru_max_gids)
-		return gid;
-	return NULL;
-}
+अटल व्योम *seq_start(काष्ठा seq_file *file, loff_t *gid)
+अणु
+	अगर (*gid < gru_max_gids)
+		वापस gid;
+	वापस शून्य;
+पूर्ण
 
-static void *seq_next(struct seq_file *file, void *data, loff_t *gid)
-{
+अटल व्योम *seq_next(काष्ठा seq_file *file, व्योम *data, loff_t *gid)
+अणु
 	(*gid)++;
-	if (*gid < gru_max_gids)
-		return gid;
-	return NULL;
-}
+	अगर (*gid < gru_max_gids)
+		वापस gid;
+	वापस शून्य;
+पूर्ण
 
-static const struct seq_operations cch_seq_ops = {
+अटल स्थिर काष्ठा seq_operations cch_seq_ops = अणु
 	.start	= seq_start,
 	.next	= seq_next,
 	.stop	= seq_stop,
 	.show	= cch_seq_show
-};
+पूर्ण;
 
-static const struct seq_operations gru_seq_ops = {
+अटल स्थिर काष्ठा seq_operations gru_seq_ops = अणु
 	.start	= seq_start,
 	.next	= seq_next,
 	.stop	= seq_stop,
 	.show	= gru_seq_show
-};
+पूर्ण;
 
-static int statistics_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, statistics_show, NULL);
-}
+अटल पूर्णांक statistics_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, statistics_show, शून्य);
+पूर्ण
 
-static int mcs_statistics_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, mcs_statistics_show, NULL);
-}
+अटल पूर्णांक mcs_statistics_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, mcs_statistics_show, शून्य);
+पूर्ण
 
-static int options_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, options_show, NULL);
-}
+अटल पूर्णांक options_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, options_show, शून्य);
+पूर्ण
 
 /* *INDENT-OFF* */
-static const struct proc_ops statistics_proc_ops = {
-	.proc_open	= statistics_open,
-	.proc_read	= seq_read,
-	.proc_write	= statistics_write,
+अटल स्थिर काष्ठा proc_ops statistics_proc_ops = अणु
+	.proc_खोलो	= statistics_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_ग_लिखो	= statistics_ग_लिखो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static const struct proc_ops mcs_statistics_proc_ops = {
-	.proc_open	= mcs_statistics_open,
-	.proc_read	= seq_read,
-	.proc_write	= mcs_statistics_write,
+अटल स्थिर काष्ठा proc_ops mcs_statistics_proc_ops = अणु
+	.proc_खोलो	= mcs_statistics_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_ग_लिखो	= mcs_statistics_ग_लिखो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static const struct proc_ops options_proc_ops = {
-	.proc_open	= options_open,
-	.proc_read	= seq_read,
-	.proc_write	= options_write,
+अटल स्थिर काष्ठा proc_ops options_proc_ops = अणु
+	.proc_खोलो	= options_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_ग_लिखो	= options_ग_लिखो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static struct proc_dir_entry *proc_gru __read_mostly;
+अटल काष्ठा proc_dir_entry *proc_gru __पढ़ो_mostly;
 
-int gru_proc_init(void)
-{
-	proc_gru = proc_mkdir("sgi_uv/gru", NULL);
-	if (!proc_gru)
-		return -1;
-	if (!proc_create("statistics", 0644, proc_gru, &statistics_proc_ops))
-		goto err;
-	if (!proc_create("mcs_statistics", 0644, proc_gru, &mcs_statistics_proc_ops))
-		goto err;
-	if (!proc_create("debug_options", 0644, proc_gru, &options_proc_ops))
-		goto err;
-	if (!proc_create_seq("cch_status", 0444, proc_gru, &cch_seq_ops))
-		goto err;
-	if (!proc_create_seq("gru_status", 0444, proc_gru, &gru_seq_ops))
-		goto err;
-	return 0;
+पूर्णांक gru_proc_init(व्योम)
+अणु
+	proc_gru = proc_सूची_गढ़ो("sgi_uv/gru", शून्य);
+	अगर (!proc_gru)
+		वापस -1;
+	अगर (!proc_create("statistics", 0644, proc_gru, &statistics_proc_ops))
+		जाओ err;
+	अगर (!proc_create("mcs_statistics", 0644, proc_gru, &mcs_statistics_proc_ops))
+		जाओ err;
+	अगर (!proc_create("debug_options", 0644, proc_gru, &options_proc_ops))
+		जाओ err;
+	अगर (!proc_create_seq("cch_status", 0444, proc_gru, &cch_seq_ops))
+		जाओ err;
+	अगर (!proc_create_seq("gru_status", 0444, proc_gru, &gru_seq_ops))
+		जाओ err;
+	वापस 0;
 err:
-	remove_proc_subtree("sgi_uv/gru", NULL);
-	return -1;
-}
+	हटाओ_proc_subtree("sgi_uv/gru", शून्य);
+	वापस -1;
+पूर्ण
 
-void gru_proc_exit(void)
-{
-	remove_proc_subtree("sgi_uv/gru", NULL);
-}
+व्योम gru_proc_निकास(व्योम)
+अणु
+	हटाओ_proc_subtree("sgi_uv/gru", शून्य);
+पूर्ण

@@ -1,4 +1,5 @@
-/* This file is part of the Emulex RoCE Device Driver for
+<शैली गुरु>
+/* This file is part of the Emulex RoCE Device Driver क्रम
  * RoCE (RDMA over Converged Ethernet) adapters.
  * Copyright (C) 2012-2015 Emulex. All rights reserved.
  * EMULEX and SLI are trademarks of Emulex.
@@ -6,25 +7,25 @@
  *
  * This software is available to you under a choice of one of two licenses.
  * You may choose to be licensed under the terms of the GNU General Public
- * License (GPL) Version 2, available from the file COPYING in the main
+ * License (GPL) Version 2, available from the file COPYING in the मुख्य
  * directory of this source tree, or the BSD license below:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  * - Redistributions of source code must retain the above copyright notice,
  *   this list of conditions and the following disclaimer.
  *
- * - Redistributions in binary form must reproduce the above copyright
+ * - Redistributions in binary क्रमm must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
- *   the documentation and/or other materials provided with the distribution.
+ *   the करोcumentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -32,7 +33,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * linux-drivers@emulex.com
  *
  * Emulex
@@ -40,91 +41,91 @@
  * Costa Mesa, CA 92626
  */
 
-#include <net/neighbour.h>
-#include <net/netevent.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/netevent.h>
 
-#include <rdma/ib_addr.h>
-#include <rdma/ib_mad.h>
-#include <rdma/ib_cache.h>
+#समावेश <rdma/ib_addr.h>
+#समावेश <rdma/ib_mad.h>
+#समावेश <rdma/ib_cache.h>
 
-#include "ocrdma.h"
-#include "ocrdma_verbs.h"
-#include "ocrdma_ah.h"
-#include "ocrdma_hw.h"
-#include "ocrdma_stats.h"
+#समावेश "ocrdma.h"
+#समावेश "ocrdma_verbs.h"
+#समावेश "ocrdma_ah.h"
+#समावेश "ocrdma_hw.h"
+#समावेश "ocrdma_stats.h"
 
-#define OCRDMA_VID_PCP_SHIFT	0xD
+#घोषणा OCRDMA_VID_PCP_SHIFT	0xD
 
-static u16 ocrdma_hdr_type_to_proto_num(int devid, u8 hdr_type)
-{
-	switch (hdr_type) {
-	case OCRDMA_L3_TYPE_IB_GRH:
-		return (u16)ETH_P_IBOE;
-	case OCRDMA_L3_TYPE_IPV4:
-		return (u16)0x0800;
-	case OCRDMA_L3_TYPE_IPV6:
-		return (u16)0x86dd;
-	default:
+अटल u16 ocrdma_hdr_type_to_proto_num(पूर्णांक devid, u8 hdr_type)
+अणु
+	चयन (hdr_type) अणु
+	हाल OCRDMA_L3_TYPE_IB_GRH:
+		वापस (u16)ETH_P_IBOE;
+	हाल OCRDMA_L3_TYPE_IPV4:
+		वापस (u16)0x0800;
+	हाल OCRDMA_L3_TYPE_IPV6:
+		वापस (u16)0x86dd;
+	शेष:
 		pr_err("ocrdma%d: Invalid network header\n", devid);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline int set_av_attr(struct ocrdma_dev *dev, struct ocrdma_ah *ah,
-			struct rdma_ah_attr *attr, const union ib_gid *sgid,
-			int pdid, bool *isvlan, u16 vlan_tag)
-{
-	int status;
-	struct ocrdma_eth_vlan eth;
-	struct ocrdma_grh grh;
-	int eth_sz;
+अटल अंतरभूत पूर्णांक set_av_attr(काष्ठा ocrdma_dev *dev, काष्ठा ocrdma_ah *ah,
+			काष्ठा rdma_ah_attr *attr, स्थिर जोड़ ib_gid *sgid,
+			पूर्णांक pdid, bool *isvlan, u16 vlan_tag)
+अणु
+	पूर्णांक status;
+	काष्ठा ocrdma_eth_vlan eth;
+	काष्ठा ocrdma_grh grh;
+	पूर्णांक eth_sz;
 	u16 proto_num = 0;
 	u8 nxthdr = 0x11;
-	struct iphdr ipv4;
-	const struct ib_global_route *ib_grh;
-	union {
-		struct sockaddr_in  _sockaddr_in;
-		struct sockaddr_in6 _sockaddr_in6;
-	} sgid_addr, dgid_addr;
+	काष्ठा iphdr ipv4;
+	स्थिर काष्ठा ib_global_route *ib_grh;
+	जोड़ अणु
+		काष्ठा sockaddr_in  _sockaddr_in;
+		काष्ठा sockaddr_in6 _sockaddr_in6;
+	पूर्ण sgid_addr, dgid_addr;
 
-	memset(&eth, 0, sizeof(eth));
-	memset(&grh, 0, sizeof(grh));
+	स_रखो(&eth, 0, माप(eth));
+	स_रखो(&grh, 0, माप(grh));
 
 	/* Protocol Number */
 	proto_num = ocrdma_hdr_type_to_proto_num(dev->id, ah->hdr_type);
-	if (!proto_num)
-		return -EINVAL;
+	अगर (!proto_num)
+		वापस -EINVAL;
 	nxthdr = (proto_num == ETH_P_IBOE) ? 0x1b : 0x11;
 	/* VLAN */
-	if (!vlan_tag || (vlan_tag > 0xFFF))
+	अगर (!vlan_tag || (vlan_tag > 0xFFF))
 		vlan_tag = dev->pvid;
-	if (vlan_tag || dev->pfc_state) {
-		if (!vlan_tag) {
+	अगर (vlan_tag || dev->pfc_state) अणु
+		अगर (!vlan_tag) अणु
 			pr_err("ocrdma%d:Using VLAN with PFC is recommended\n",
 				dev->id);
 			pr_err("ocrdma%d:Using VLAN 0 for this connection\n",
 				dev->id);
-		}
+		पूर्ण
 		eth.eth_type = cpu_to_be16(0x8100);
 		eth.roce_eth_type = cpu_to_be16(proto_num);
 		vlan_tag |= (dev->sl & 0x07) << OCRDMA_VID_PCP_SHIFT;
 		eth.vlan_tag = cpu_to_be16(vlan_tag);
-		eth_sz = sizeof(struct ocrdma_eth_vlan);
+		eth_sz = माप(काष्ठा ocrdma_eth_vlan);
 		*isvlan = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		eth.eth_type = cpu_to_be16(proto_num);
-		eth_sz = sizeof(struct ocrdma_eth_basic);
-	}
+		eth_sz = माप(काष्ठा ocrdma_eth_basic);
+	पूर्ण
 	/* MAC */
-	memcpy(&eth.smac[0], &dev->nic_info.mac_addr[0], ETH_ALEN);
+	स_नकल(&eth.smac[0], &dev->nic_info.mac_addr[0], ETH_ALEN);
 	status = ocrdma_resolve_dmac(dev, attr, &eth.dmac[0]);
-	if (status)
-		return status;
-	ib_grh = rdma_ah_read_grh(attr);
+	अगर (status)
+		वापस status;
+	ib_grh = rdma_ah_पढ़ो_grh(attr);
 	ah->sgid_index = ib_grh->sgid_index;
 	/* Eth HDR */
-	memcpy(&ah->av->eth_hdr, &eth, eth_sz);
-	if (ah->hdr_type == RDMA_NETWORK_IPV4) {
+	स_नकल(&ah->av->eth_hdr, &eth, eth_sz);
+	अगर (ah->hdr_type == RDMA_NETWORK_IPV4) अणु
 		*((__be16 *)&ipv4) = htons((4 << 12) | (5 << 8) |
 					   ib_grh->traffic_class);
 		ipv4.id = cpu_to_be16(pdid);
@@ -132,137 +133,137 @@ static inline int set_av_attr(struct ocrdma_dev *dev, struct ocrdma_ah *ah,
 		ipv4.tot_len = htons(0);
 		ipv4.ttl = ib_grh->hop_limit;
 		ipv4.protocol = nxthdr;
-		rdma_gid2ip((struct sockaddr *)&sgid_addr, sgid);
+		rdma_gid2ip((काष्ठा sockaddr *)&sgid_addr, sgid);
 		ipv4.saddr = sgid_addr._sockaddr_in.sin_addr.s_addr;
-		rdma_gid2ip((struct sockaddr*)&dgid_addr, &ib_grh->dgid);
+		rdma_gid2ip((काष्ठा sockaddr*)&dgid_addr, &ib_grh->dgid);
 		ipv4.daddr = dgid_addr._sockaddr_in.sin_addr.s_addr;
-		memcpy((u8 *)ah->av + eth_sz, &ipv4, sizeof(struct iphdr));
-	} else {
-		memcpy(&grh.sgid[0], sgid->raw, sizeof(union ib_gid));
+		स_नकल((u8 *)ah->av + eth_sz, &ipv4, माप(काष्ठा iphdr));
+	पूर्ण अन्यथा अणु
+		स_नकल(&grh.sgid[0], sgid->raw, माप(जोड़ ib_gid));
 		grh.tclass_flow = cpu_to_be32((6 << 28) |
 					      (ib_grh->traffic_class << 24) |
 					      ib_grh->flow_label);
-		memcpy(&grh.dgid[0], ib_grh->dgid.raw,
-		       sizeof(ib_grh->dgid.raw));
+		स_नकल(&grh.dgid[0], ib_grh->dgid.raw,
+		       माप(ib_grh->dgid.raw));
 		grh.pdid_hoplimit = cpu_to_be32((pdid << 16) |
 						(nxthdr << 8) |
 						ib_grh->hop_limit);
-		memcpy((u8 *)ah->av + eth_sz, &grh, sizeof(struct ocrdma_grh));
-	}
-	if (*isvlan)
+		स_नकल((u8 *)ah->av + eth_sz, &grh, माप(काष्ठा ocrdma_grh));
+	पूर्ण
+	अगर (*isvlan)
 		ah->av->valid |= OCRDMA_AV_VLAN_VALID;
 	ah->av->valid = cpu_to_le32(ah->av->valid);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocrdma_create_ah(struct ib_ah *ibah, struct rdma_ah_init_attr *init_attr,
-		     struct ib_udata *udata)
-{
+पूर्णांक ocrdma_create_ah(काष्ठा ib_ah *ibah, काष्ठा rdma_ah_init_attr *init_attr,
+		     काष्ठा ib_udata *udata)
+अणु
 	u32 *ahid_addr;
-	int status;
-	struct ocrdma_ah *ah = get_ocrdma_ah(ibah);
+	पूर्णांक status;
+	काष्ठा ocrdma_ah *ah = get_ocrdma_ah(ibah);
 	bool isvlan = false;
 	u16 vlan_tag = 0xffff;
-	const struct ib_gid_attr *sgid_attr;
-	struct ocrdma_pd *pd = get_ocrdma_pd(ibah->pd);
-	struct rdma_ah_attr *attr = init_attr->ah_attr;
-	struct ocrdma_dev *dev = get_ocrdma_dev(ibah->device);
+	स्थिर काष्ठा ib_gid_attr *sgid_attr;
+	काष्ठा ocrdma_pd *pd = get_ocrdma_pd(ibah->pd);
+	काष्ठा rdma_ah_attr *attr = init_attr->ah_attr;
+	काष्ठा ocrdma_dev *dev = get_ocrdma_dev(ibah->device);
 
-	if ((attr->type != RDMA_AH_ATTR_TYPE_ROCE) ||
+	अगर ((attr->type != RDMA_AH_ATTR_TYPE_ROCE) ||
 	    !(rdma_ah_get_ah_flags(attr) & IB_AH_GRH))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (atomic_cmpxchg(&dev->update_sl, 1, 0))
+	अगर (atomic_cmpxchg(&dev->update_sl, 1, 0))
 		ocrdma_init_service_level(dev);
 
 	sgid_attr = attr->grh.sgid_attr;
-	status = rdma_read_gid_l2_fields(sgid_attr, &vlan_tag, NULL);
-	if (status)
-		return status;
+	status = rdma_पढ़ो_gid_l2_fields(sgid_attr, &vlan_tag, शून्य);
+	अगर (status)
+		वापस status;
 
 	status = ocrdma_alloc_av(dev, ah);
-	if (status)
-		goto av_err;
+	अगर (status)
+		जाओ av_err;
 
-	/* Get network header type for this GID */
+	/* Get network header type क्रम this GID */
 	ah->hdr_type = rdma_gid_attr_network_type(sgid_attr);
 
 	status = set_av_attr(dev, ah, attr, &sgid_attr->gid, pd->id,
 			     &isvlan, vlan_tag);
-	if (status)
-		goto av_conf_err;
+	अगर (status)
+		जाओ av_conf_err;
 
-	/* if pd is for the user process, pass the ah_id to user space */
-	if ((pd->uctx) && (pd->uctx->ah_tbl.va)) {
+	/* अगर pd is क्रम the user process, pass the ah_id to user space */
+	अगर ((pd->uctx) && (pd->uctx->ah_tbl.va)) अणु
 		ahid_addr = pd->uctx->ah_tbl.va + rdma_ah_get_dlid(attr);
 		*ahid_addr = 0;
 		*ahid_addr |= ah->id & OCRDMA_AH_ID_MASK;
-		if (ocrdma_is_udp_encap_supported(dev)) {
+		अगर (ocrdma_is_udp_encap_supported(dev)) अणु
 			*ahid_addr |= ((u32)ah->hdr_type &
 				       OCRDMA_AH_L3_TYPE_MASK) <<
 				       OCRDMA_AH_L3_TYPE_SHIFT;
-		}
-		if (isvlan)
+		पूर्ण
+		अगर (isvlan)
 			*ahid_addr |= (OCRDMA_AH_VLAN_VALID_MASK <<
 				       OCRDMA_AH_VLAN_VALID_SHIFT);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 av_conf_err:
-	ocrdma_free_av(dev, ah);
+	ocrdma_मुक्त_av(dev, ah);
 av_err:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocrdma_destroy_ah(struct ib_ah *ibah, u32 flags)
-{
-	struct ocrdma_ah *ah = get_ocrdma_ah(ibah);
-	struct ocrdma_dev *dev = get_ocrdma_dev(ibah->device);
+पूर्णांक ocrdma_destroy_ah(काष्ठा ib_ah *ibah, u32 flags)
+अणु
+	काष्ठा ocrdma_ah *ah = get_ocrdma_ah(ibah);
+	काष्ठा ocrdma_dev *dev = get_ocrdma_dev(ibah->device);
 
-	ocrdma_free_av(dev, ah);
-	return 0;
-}
+	ocrdma_मुक्त_av(dev, ah);
+	वापस 0;
+पूर्ण
 
-int ocrdma_query_ah(struct ib_ah *ibah, struct rdma_ah_attr *attr)
-{
-	struct ocrdma_ah *ah = get_ocrdma_ah(ibah);
-	struct ocrdma_av *av = ah->av;
-	struct ocrdma_grh *grh;
+पूर्णांक ocrdma_query_ah(काष्ठा ib_ah *ibah, काष्ठा rdma_ah_attr *attr)
+अणु
+	काष्ठा ocrdma_ah *ah = get_ocrdma_ah(ibah);
+	काष्ठा ocrdma_av *av = ah->av;
+	काष्ठा ocrdma_grh *grh;
 
 	attr->type = ibah->type;
-	if (ah->av->valid & OCRDMA_AV_VALID) {
-		grh = (struct ocrdma_grh *)((u8 *)ah->av +
-				sizeof(struct ocrdma_eth_vlan));
+	अगर (ah->av->valid & OCRDMA_AV_VALID) अणु
+		grh = (काष्ठा ocrdma_grh *)((u8 *)ah->av +
+				माप(काष्ठा ocrdma_eth_vlan));
 		rdma_ah_set_sl(attr, be16_to_cpu(av->eth_hdr.vlan_tag) >> 13);
-	} else {
-		grh = (struct ocrdma_grh *)((u8 *)ah->av +
-					sizeof(struct ocrdma_eth_basic));
+	पूर्ण अन्यथा अणु
+		grh = (काष्ठा ocrdma_grh *)((u8 *)ah->av +
+					माप(काष्ठा ocrdma_eth_basic));
 		rdma_ah_set_sl(attr, 0);
-	}
-	rdma_ah_set_grh(attr, NULL,
+	पूर्ण
+	rdma_ah_set_grh(attr, शून्य,
 			be32_to_cpu(grh->tclass_flow) & 0xffffffff,
 			ah->sgid_index,
 			be32_to_cpu(grh->pdid_hoplimit) & 0xff,
 			be32_to_cpu(grh->tclass_flow) >> 24);
 	rdma_ah_set_dgid_raw(attr, &grh->dgid[0]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ocrdma_process_mad(struct ib_device *ibdev, int process_mad_flags,
-		       u32 port_num, const struct ib_wc *in_wc,
-		       const struct ib_grh *in_grh, const struct ib_mad *in,
-		       struct ib_mad *out, size_t *out_mad_size,
+पूर्णांक ocrdma_process_mad(काष्ठा ib_device *ibdev, पूर्णांक process_mad_flags,
+		       u32 port_num, स्थिर काष्ठा ib_wc *in_wc,
+		       स्थिर काष्ठा ib_grh *in_grh, स्थिर काष्ठा ib_mad *in,
+		       काष्ठा ib_mad *out, माप_प्रकार *out_mad_size,
 		       u16 *out_mad_pkey_index)
-{
-	int status = IB_MAD_RESULT_SUCCESS;
-	struct ocrdma_dev *dev;
+अणु
+	पूर्णांक status = IB_MAD_RESULT_SUCCESS;
+	काष्ठा ocrdma_dev *dev;
 
-	if (in->mad_hdr.mgmt_class == IB_MGMT_CLASS_PERF_MGMT) {
+	अगर (in->mad_hdr.mgmt_class == IB_MGMT_CLASS_PERF_MGMT) अणु
 		dev = get_ocrdma_dev(ibdev);
 		ocrdma_pma_counters(dev, out);
 		status |= IB_MAD_RESULT_REPLY;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण

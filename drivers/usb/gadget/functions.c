@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/err.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
 
-#include <linux/usb/composite.h>
+#समावेश <linux/usb/composite.h>
 
-static LIST_HEAD(func_list);
-static DEFINE_MUTEX(func_lock);
+अटल LIST_HEAD(func_list);
+अटल DEFINE_MUTEX(func_lock);
 
-static struct usb_function_instance *try_get_usb_function_instance(const char *name)
-{
-	struct usb_function_driver *fd;
-	struct usb_function_instance *fi;
+अटल काष्ठा usb_function_instance *try_get_usb_function_instance(स्थिर अक्षर *name)
+अणु
+	काष्ठा usb_function_driver *fd;
+	काष्ठा usb_function_instance *fi;
 
 	fi = ERR_PTR(-ENOENT);
 	mutex_lock(&func_lock);
-	list_for_each_entry(fd, &func_list, list) {
+	list_क्रम_each_entry(fd, &func_list, list) अणु
 
-		if (strcmp(name, fd->name))
-			continue;
+		अगर (म_भेद(name, fd->name))
+			जारी;
 
-		if (!try_module_get(fd->mod)) {
+		अगर (!try_module_get(fd->mod)) अणु
 			fi = ERR_PTR(-EBUSY);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fi = fd->alloc_inst();
-		if (IS_ERR(fi))
+		अगर (IS_ERR(fi))
 			module_put(fd->mod);
-		else
+		अन्यथा
 			fi->fd = fd;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&func_lock);
-	return fi;
-}
+	वापस fi;
+पूर्ण
 
-struct usb_function_instance *usb_get_function_instance(const char *name)
-{
-	struct usb_function_instance *fi;
-	int ret;
+काष्ठा usb_function_instance *usb_get_function_instance(स्थिर अक्षर *name)
+अणु
+	काष्ठा usb_function_instance *fi;
+	पूर्णांक ret;
 
 	fi = try_get_usb_function_instance(name);
-	if (!IS_ERR(fi))
-		return fi;
+	अगर (!IS_ERR(fi))
+		वापस fi;
 	ret = PTR_ERR(fi);
-	if (ret != -ENOENT)
-		return fi;
+	अगर (ret != -ENOENT)
+		वापस fi;
 	ret = request_module("usbfunc:%s", name);
-	if (ret < 0)
-		return ERR_PTR(ret);
-	return try_get_usb_function_instance(name);
-}
+	अगर (ret < 0)
+		वापस ERR_PTR(ret);
+	वापस try_get_usb_function_instance(name);
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_get_function_instance);
 
-struct usb_function *usb_get_function(struct usb_function_instance *fi)
-{
-	struct usb_function *f;
+काष्ठा usb_function *usb_get_function(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा usb_function *f;
 
 	f = fi->fd->alloc_func(fi);
-	if (IS_ERR(f))
-		return f;
+	अगर (IS_ERR(f))
+		वापस f;
 	f->fi = fi;
-	return f;
-}
+	वापस f;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_get_function);
 
-void usb_put_function_instance(struct usb_function_instance *fi)
-{
-	struct module *mod;
+व्योम usb_put_function_instance(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा module *mod;
 
-	if (!fi)
-		return;
+	अगर (!fi)
+		वापस;
 
 	mod = fi->fd->mod;
-	fi->free_func_inst(fi);
+	fi->मुक्त_func_inst(fi);
 	module_put(mod);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_put_function_instance);
 
-void usb_put_function(struct usb_function *f)
-{
-	if (!f)
-		return;
+व्योम usb_put_function(काष्ठा usb_function *f)
+अणु
+	अगर (!f)
+		वापस;
 
-	f->free_func(f);
-}
+	f->मुक्त_func(f);
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_put_function);
 
-int usb_function_register(struct usb_function_driver *newf)
-{
-	struct usb_function_driver *fd;
-	int ret;
+पूर्णांक usb_function_रेजिस्टर(काष्ठा usb_function_driver *newf)
+अणु
+	काष्ठा usb_function_driver *fd;
+	पूर्णांक ret;
 
 	ret = -EEXIST;
 
 	mutex_lock(&func_lock);
-	list_for_each_entry(fd, &func_list, list) {
-		if (!strcmp(fd->name, newf->name))
-			goto out;
-	}
+	list_क्रम_each_entry(fd, &func_list, list) अणु
+		अगर (!म_भेद(fd->name, newf->name))
+			जाओ out;
+	पूर्ण
 	ret = 0;
 	list_add_tail(&newf->list, &func_list);
 out:
 	mutex_unlock(&func_lock);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(usb_function_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_function_रेजिस्टर);
 
-void usb_function_unregister(struct usb_function_driver *fd)
-{
+व्योम usb_function_unरेजिस्टर(काष्ठा usb_function_driver *fd)
+अणु
 	mutex_lock(&func_lock);
 	list_del(&fd->list);
 	mutex_unlock(&func_lock);
-}
-EXPORT_SYMBOL_GPL(usb_function_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_function_unरेजिस्टर);

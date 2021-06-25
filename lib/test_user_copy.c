@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Kernel module for testing copy_to/from_user infrastructure.
+ * Kernel module क्रम testing copy_to/from_user infraकाष्ठाure.
  *
  * Copyright 2013 Google Inc. All Rights Reserved
  *
@@ -8,54 +9,54 @@
  *      Kees Cook       <keescook@chromium.org>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/mman.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/vदो_स्मृति.h>
 
 /*
- * Several 32-bit architectures support 64-bit {get,put}_user() calls.
- * As there doesn't appear to be anything that can safely determine
- * their capability at compile-time, we just have to opt-out certain archs.
+ * Several 32-bit architectures support 64-bit अणुget,putपूर्ण_user() calls.
+ * As there करोesn't appear to be anything that can safely determine
+ * their capability at compile-समय, we just have to opt-out certain archs.
  */
-#if BITS_PER_LONG == 64 || (!(defined(CONFIG_ARM) && !defined(MMU)) && \
+#अगर BITS_PER_LONG == 64 || (!(defined(CONFIG_ARM) && !defined(MMU)) && \
 			    !defined(CONFIG_M68K) &&		\
 			    !defined(CONFIG_MICROBLAZE) &&	\
 			    !defined(CONFIG_NIOS2) &&		\
 			    !defined(CONFIG_PPC32) &&		\
 			    !defined(CONFIG_SUPERH))
 # define TEST_U64
-#endif
+#पूर्ण_अगर
 
-#define test(condition, msg, ...)					\
-({									\
-	int cond = (condition);						\
-	if (cond)							\
+#घोषणा test(condition, msg, ...)					\
+(अणु									\
+	पूर्णांक cond = (condition);						\
+	अगर (cond)							\
 		pr_warn("[%d] " msg "\n", __LINE__, ##__VA_ARGS__);	\
 	cond;								\
-})
+पूर्ण)
 
-static bool is_zeroed(void *from, size_t size)
-{
-	return memchr_inv(from, 0x0, size) == NULL;
-}
+अटल bool is_zeroed(व्योम *from, माप_प्रकार size)
+अणु
+	वापस स_प्रथम_inv(from, 0x0, size) == शून्य;
+पूर्ण
 
-static int test_check_nonzero_user(char *kmem, char __user *umem, size_t size)
-{
-	int ret = 0;
-	size_t start, end, i, zero_start, zero_end;
+अटल पूर्णांक test_check_nonzero_user(अक्षर *kmem, अक्षर __user *umem, माप_प्रकार size)
+अणु
+	पूर्णांक ret = 0;
+	माप_प्रकार start, end, i, zero_start, zero_end;
 
-	if (test(size < 2 * PAGE_SIZE, "buffer too small"))
-		return -EINVAL;
+	अगर (test(size < 2 * PAGE_SIZE, "buffer too small"))
+		वापस -EINVAL;
 
 	/*
 	 * We want to cross a page boundary to exercise the code more
-	 * effectively. We also don't want to make the size we scan too large,
-	 * otherwise the test can take a long time and cause soft lockups. So
+	 * effectively. We also करोn't want to make the size we scan too large,
+	 * otherwise the test can take a दीर्घ समय and cause soft lockups. So
 	 * scan a 1024 byte region across the page boundary.
 	 */
 	size = 1024;
@@ -74,153 +75,153 @@ static int test_check_nonzero_user(char *kmem, char __user *umem, size_t size)
 	 *
 	 *   [ 00 ff 00 ff ... 00 00 00 00 ... ff 00 ff 00 ]
 	 *
-	 * And we verify that check_nonzero_user() acts identically to
-	 * memchr_inv().
+	 * And we verअगरy that check_nonzero_user() acts identically to
+	 * स_प्रथम_inv().
 	 */
 
-	memset(kmem, 0x0, size);
-	for (i = 1; i < zero_start; i += 2)
+	स_रखो(kmem, 0x0, size);
+	क्रम (i = 1; i < zero_start; i += 2)
 		kmem[i] = 0xff;
-	for (i = zero_end; i < size; i += 2)
+	क्रम (i = zero_end; i < size; i += 2)
 		kmem[i] = 0xff;
 
 	ret |= test(copy_to_user(umem, kmem, size),
 		    "legitimate copy_to_user failed");
 
-	for (start = 0; start <= size; start++) {
-		for (end = start; end <= size; end++) {
-			size_t len = end - start;
-			int retval = check_zeroed_user(umem + start, len);
-			int expected = is_zeroed(kmem + start, len);
+	क्रम (start = 0; start <= size; start++) अणु
+		क्रम (end = start; end <= size; end++) अणु
+			माप_प्रकार len = end - start;
+			पूर्णांक retval = check_zeroed_user(umem + start, len);
+			पूर्णांक expected = is_zeroed(kmem + start, len);
 
 			ret |= test(retval != expected,
 				    "check_nonzero_user(=%d) != memchr_inv(=%d) mismatch (start=%zu, end=%zu)",
 				    retval, expected, start, end);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test_copy_struct_from_user(char *kmem, char __user *umem,
-				      size_t size)
-{
-	int ret = 0;
-	char *umem_src = NULL, *expected = NULL;
-	size_t ksize, usize;
+अटल पूर्णांक test_copy_काष्ठा_from_user(अक्षर *kmem, अक्षर __user *umem,
+				      माप_प्रकार size)
+अणु
+	पूर्णांक ret = 0;
+	अक्षर *umem_src = शून्य, *expected = शून्य;
+	माप_प्रकार ksize, usize;
 
-	umem_src = kmalloc(size, GFP_KERNEL);
-	ret = test(umem_src == NULL, "kmalloc failed");
-	if (ret)
-		goto out_free;
+	umem_src = kदो_स्मृति(size, GFP_KERNEL);
+	ret = test(umem_src == शून्य, "kmalloc failed");
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	expected = kmalloc(size, GFP_KERNEL);
-	ret = test(expected == NULL, "kmalloc failed");
-	if (ret)
-		goto out_free;
+	expected = kदो_स्मृति(size, GFP_KERNEL);
+	ret = test(expected == शून्य, "kmalloc failed");
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	/* Fill umem with a fixed byte pattern. */
-	memset(umem_src, 0x3e, size);
+	स_रखो(umem_src, 0x3e, size);
 	ret |= test(copy_to_user(umem, umem_src, size),
 		    "legitimate copy_to_user failed");
 
-	/* Check basic case -- (usize == ksize). */
+	/* Check basic हाल -- (usize == ksize). */
 	ksize = size;
 	usize = size;
 
-	memcpy(expected, umem_src, ksize);
+	स_नकल(expected, umem_src, ksize);
 
-	memset(kmem, 0x0, size);
-	ret |= test(copy_struct_from_user(kmem, ksize, umem, usize),
+	स_रखो(kmem, 0x0, size);
+	ret |= test(copy_काष्ठा_from_user(kmem, ksize, umem, usize),
 		    "copy_struct_from_user(usize == ksize) failed");
-	ret |= test(memcmp(kmem, expected, ksize),
+	ret |= test(स_भेद(kmem, expected, ksize),
 		    "copy_struct_from_user(usize == ksize) gives unexpected copy");
 
-	/* Old userspace case -- (usize < ksize). */
+	/* Old userspace हाल -- (usize < ksize). */
 	ksize = size;
 	usize = size / 2;
 
-	memcpy(expected, umem_src, usize);
-	memset(expected + usize, 0x0, ksize - usize);
+	स_नकल(expected, umem_src, usize);
+	स_रखो(expected + usize, 0x0, ksize - usize);
 
-	memset(kmem, 0x0, size);
-	ret |= test(copy_struct_from_user(kmem, ksize, umem, usize),
+	स_रखो(kmem, 0x0, size);
+	ret |= test(copy_काष्ठा_from_user(kmem, ksize, umem, usize),
 		    "copy_struct_from_user(usize < ksize) failed");
-	ret |= test(memcmp(kmem, expected, ksize),
+	ret |= test(स_भेद(kmem, expected, ksize),
 		    "copy_struct_from_user(usize < ksize) gives unexpected copy");
 
-	/* New userspace (-E2BIG) case -- (usize > ksize). */
+	/* New userspace (-E2BIG) हाल -- (usize > ksize). */
 	ksize = size / 2;
 	usize = size;
 
-	memset(kmem, 0x0, size);
-	ret |= test(copy_struct_from_user(kmem, ksize, umem, usize) != -E2BIG,
+	स_रखो(kmem, 0x0, size);
+	ret |= test(copy_काष्ठा_from_user(kmem, ksize, umem, usize) != -E2BIG,
 		    "copy_struct_from_user(usize > ksize) didn't give E2BIG");
 
-	/* New userspace (success) case -- (usize > ksize). */
+	/* New userspace (success) हाल -- (usize > ksize). */
 	ksize = size / 2;
 	usize = size;
 
-	memcpy(expected, umem_src, ksize);
+	स_नकल(expected, umem_src, ksize);
 	ret |= test(clear_user(umem + ksize, usize - ksize),
 		    "legitimate clear_user failed");
 
-	memset(kmem, 0x0, size);
-	ret |= test(copy_struct_from_user(kmem, ksize, umem, usize),
+	स_रखो(kmem, 0x0, size);
+	ret |= test(copy_काष्ठा_from_user(kmem, ksize, umem, usize),
 		    "copy_struct_from_user(usize > ksize) failed");
-	ret |= test(memcmp(kmem, expected, ksize),
+	ret |= test(स_भेद(kmem, expected, ksize),
 		    "copy_struct_from_user(usize > ksize) gives unexpected copy");
 
-out_free:
-	kfree(expected);
-	kfree(umem_src);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(expected);
+	kमुक्त(umem_src);
+	वापस ret;
+पूर्ण
 
-static int __init test_user_copy_init(void)
-{
-	int ret = 0;
-	char *kmem;
-	char __user *usermem;
-	char *bad_usermem;
-	unsigned long user_addr;
+अटल पूर्णांक __init test_user_copy_init(व्योम)
+अणु
+	पूर्णांक ret = 0;
+	अक्षर *kmem;
+	अक्षर __user *usermem;
+	अक्षर *bad_usermem;
+	अचिन्हित दीर्घ user_addr;
 	u8 val_u8;
 	u16 val_u16;
 	u32 val_u32;
-#ifdef TEST_U64
+#अगर_घोषित TEST_U64
 	u64 val_u64;
-#endif
+#पूर्ण_अगर
 
-	kmem = kmalloc(PAGE_SIZE * 2, GFP_KERNEL);
-	if (!kmem)
-		return -ENOMEM;
+	kmem = kदो_स्मृति(PAGE_SIZE * 2, GFP_KERNEL);
+	अगर (!kmem)
+		वापस -ENOMEM;
 
-	user_addr = vm_mmap(NULL, 0, PAGE_SIZE * 2,
+	user_addr = vm_mmap(शून्य, 0, PAGE_SIZE * 2,
 			    PROT_READ | PROT_WRITE | PROT_EXEC,
 			    MAP_ANONYMOUS | MAP_PRIVATE, 0);
-	if (user_addr >= (unsigned long)(TASK_SIZE)) {
+	अगर (user_addr >= (अचिन्हित दीर्घ)(TASK_SIZE)) अणु
 		pr_warn("Failed to allocate user memory\n");
-		kfree(kmem);
-		return -ENOMEM;
-	}
+		kमुक्त(kmem);
+		वापस -ENOMEM;
+	पूर्ण
 
-	usermem = (char __user *)user_addr;
-	bad_usermem = (char *)user_addr;
+	usermem = (अक्षर __user *)user_addr;
+	bad_usermem = (अक्षर *)user_addr;
 
 	/*
 	 * Legitimate usage: none of these copies should fail.
 	 */
-	memset(kmem, 0x3a, PAGE_SIZE * 2);
+	स_रखो(kmem, 0x3a, PAGE_SIZE * 2);
 	ret |= test(copy_to_user(usermem, kmem, PAGE_SIZE),
 		    "legitimate copy_to_user failed");
-	memset(kmem, 0x0, PAGE_SIZE);
+	स_रखो(kmem, 0x0, PAGE_SIZE);
 	ret |= test(copy_from_user(kmem, usermem, PAGE_SIZE),
 		    "legitimate copy_from_user failed");
-	ret |= test(memcmp(kmem, kmem + PAGE_SIZE, PAGE_SIZE),
+	ret |= test(स_भेद(kmem, kmem + PAGE_SIZE, PAGE_SIZE),
 		    "legitimate usercopy failed to copy data");
 
-#define test_legit(size, check)						  \
-	do {								  \
+#घोषणा test_legit(size, check)						  \
+	करो अणु								  \
 		val_##size = check;					  \
 		ret |= test(put_user(val_##size, (size __user *)usermem), \
 		    "legitimate put_user (" #size ") failed");		  \
@@ -229,103 +230,103 @@ static int __init test_user_copy_init(void)
 		    "legitimate get_user (" #size ") failed");		  \
 		ret |= test(val_##size != check,			  \
 		    "legitimate get_user (" #size ") failed to do copy"); \
-		if (val_##size != check) {				  \
+		अगर (val_##size != check) अणु				  \
 			pr_info("0x%llx != 0x%llx\n",			  \
-				(unsigned long long)val_##size,		  \
-				(unsigned long long)check);		  \
-		}							  \
-	} while (0)
+				(अचिन्हित दीर्घ दीर्घ)val_##size,		  \
+				(अचिन्हित दीर्घ दीर्घ)check);		  \
+		पूर्ण							  \
+	पूर्ण जबतक (0)
 
 	test_legit(u8,  0x5a);
 	test_legit(u16, 0x5a5b);
 	test_legit(u32, 0x5a5b5c5d);
-#ifdef TEST_U64
+#अगर_घोषित TEST_U64
 	test_legit(u64, 0x5a5b5c5d6a6b6c6d);
-#endif
-#undef test_legit
+#पूर्ण_अगर
+#अघोषित test_legit
 
 	/* Test usage of check_nonzero_user(). */
 	ret |= test_check_nonzero_user(kmem, usermem, 2 * PAGE_SIZE);
-	/* Test usage of copy_struct_from_user(). */
-	ret |= test_copy_struct_from_user(kmem, usermem, 2 * PAGE_SIZE);
+	/* Test usage of copy_काष्ठा_from_user(). */
+	ret |= test_copy_काष्ठा_from_user(kmem, usermem, 2 * PAGE_SIZE);
 
 	/*
 	 * Invalid usage: none of these copies should succeed.
 	 */
 
 	/* Prepare kernel memory with check values. */
-	memset(kmem, 0x5a, PAGE_SIZE);
-	memset(kmem + PAGE_SIZE, 0, PAGE_SIZE);
+	स_रखो(kmem, 0x5a, PAGE_SIZE);
+	स_रखो(kmem + PAGE_SIZE, 0, PAGE_SIZE);
 
 	/* Reject kernel-to-kernel copies through copy_from_user(). */
-	ret |= test(!copy_from_user(kmem, (char __user *)(kmem + PAGE_SIZE),
+	ret |= test(!copy_from_user(kmem, (अक्षर __user *)(kmem + PAGE_SIZE),
 				    PAGE_SIZE),
 		    "illegal all-kernel copy_from_user passed");
 
 	/* Destination half of buffer should have been zeroed. */
-	ret |= test(memcmp(kmem + PAGE_SIZE, kmem, PAGE_SIZE),
+	ret |= test(स_भेद(kmem + PAGE_SIZE, kmem, PAGE_SIZE),
 		    "zeroing failure for illegal all-kernel copy_from_user");
 
-#if 0
+#अगर 0
 	/*
 	 * When running with SMAP/PAN/etc, this will Oops the kernel
 	 * due to the zeroing of userspace memory on failure. This needs
-	 * to be tested in LKDTM instead, since this test module does not
+	 * to be tested in LKDTM instead, since this test module करोes not
 	 * expect to explode.
 	 */
-	ret |= test(!copy_from_user(bad_usermem, (char __user *)kmem,
+	ret |= test(!copy_from_user(bad_usermem, (अक्षर __user *)kmem,
 				    PAGE_SIZE),
 		    "illegal reversed copy_from_user passed");
-#endif
-	ret |= test(!copy_to_user((char __user *)kmem, kmem + PAGE_SIZE,
+#पूर्ण_अगर
+	ret |= test(!copy_to_user((अक्षर __user *)kmem, kmem + PAGE_SIZE,
 				  PAGE_SIZE),
 		    "illegal all-kernel copy_to_user passed");
-	ret |= test(!copy_to_user((char __user *)kmem, bad_usermem,
+	ret |= test(!copy_to_user((अक्षर __user *)kmem, bad_usermem,
 				  PAGE_SIZE),
 		    "illegal reversed copy_to_user passed");
 
-#define test_illegal(size, check)					    \
-	do {								    \
+#घोषणा test_illegal(size, check)					    \
+	करो अणु								    \
 		val_##size = (check);					    \
 		ret |= test(!get_user(val_##size, (size __user *)kmem),	    \
 		    "illegal get_user (" #size ") passed");		    \
 		ret |= test(val_##size != (size)0,			    \
 		    "zeroing failure for illegal get_user (" #size ")");    \
-		if (val_##size != (size)0) {				    \
+		अगर (val_##size != (size)0) अणु				    \
 			pr_info("0x%llx != 0\n",			    \
-				(unsigned long long)val_##size);	    \
-		}							    \
+				(अचिन्हित दीर्घ दीर्घ)val_##size);	    \
+		पूर्ण							    \
 		ret |= test(!put_user(val_##size, (size __user *)kmem),	    \
 		    "illegal put_user (" #size ") passed");		    \
-	} while (0)
+	पूर्ण जबतक (0)
 
 	test_illegal(u8,  0x5a);
 	test_illegal(u16, 0x5a5b);
 	test_illegal(u32, 0x5a5b5c5d);
-#ifdef TEST_U64
+#अगर_घोषित TEST_U64
 	test_illegal(u64, 0x5a5b5c5d6a6b6c6d);
-#endif
-#undef test_illegal
+#पूर्ण_अगर
+#अघोषित test_illegal
 
 	vm_munmap(user_addr, PAGE_SIZE * 2);
-	kfree(kmem);
+	kमुक्त(kmem);
 
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		pr_info("tests passed.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 module_init(test_user_copy_init);
 
-static void __exit test_user_copy_exit(void)
-{
+अटल व्योम __निकास test_user_copy_निकास(व्योम)
+अणु
 	pr_info("unloaded.\n");
-}
+पूर्ण
 
-module_exit(test_user_copy_exit);
+module_निकास(test_user_copy_निकास);
 
 MODULE_AUTHOR("Kees Cook <keescook@chromium.org>");
 MODULE_LICENSE("GPL");

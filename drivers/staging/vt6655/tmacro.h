@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
  *
- * File: tmacro.h
+ * File: पंचांगacro.h
  *
  * Purpose: define basic common types and macros
  *
@@ -13,33 +14,33 @@
  *
  */
 
-#ifndef __TMACRO_H__
-#define __TMACRO_H__
+#अगर_अघोषित __TMACRO_H__
+#घोषणा __TMACRO_H__
 
 /****** Common helper macros ***********************************************/
 
-#if !defined(LOBYTE)
-#define LOBYTE(w)           ((unsigned char)(w))
-#endif
-#if !defined(HIBYTE)
-#define HIBYTE(w)           ((unsigned char)(((unsigned short)(w) >> 8) & 0xFF))
-#endif
+#अगर !defined(LOBYTE)
+#घोषणा LOBYTE(w)           ((अचिन्हित अक्षर)(w))
+#पूर्ण_अगर
+#अगर !defined(HIBYTE)
+#घोषणा HIBYTE(w)           ((अचिन्हित अक्षर)(((अचिन्हित लघु)(w) >> 8) & 0xFF))
+#पूर्ण_अगर
 
-#if !defined(LOWORD)
-#define LOWORD(d)           ((unsigned short)(d))
-#endif
-#if !defined(HIWORD)
-#define HIWORD(d)           ((unsigned short)((((unsigned long)(d)) >> 16) & 0xFFFF))
-#endif
+#अगर !defined(LOWORD)
+#घोषणा LOWORD(d)           ((अचिन्हित लघु)(d))
+#पूर्ण_अगर
+#अगर !defined(HIWORD)
+#घोषणा HIWORD(d)           ((अचिन्हित लघु)((((अचिन्हित दीर्घ)(d)) >> 16) & 0xFFFF))
+#पूर्ण_अगर
 
-#define LODWORD(q)          ((q).u.dwLowDword)
-#define HIDWORD(q)          ((q).u.dwHighDword)
+#घोषणा LODWORD(q)          ((q).u.dwLowDword)
+#घोषणा HIDWORD(q)          ((q).u.dwHighDword)
 
-#if !defined(MAKEWORD)
-#define MAKEWORD(lb, hb)    ((unsigned short)(((unsigned char)(lb)) | (((unsigned short)((unsigned char)(hb))) << 8)))
-#endif
-#if !defined(MAKEDWORD)
-#define MAKEDWORD(lw, hw)   ((unsigned long)(((unsigned short)(lw)) | (((unsigned long)((unsigned short)(hw))) << 16)))
-#endif
+#अगर !defined(MAKEWORD)
+#घोषणा MAKEWORD(lb, hb)    ((अचिन्हित लघु)(((अचिन्हित अक्षर)(lb)) | (((अचिन्हित लघु)((अचिन्हित अक्षर)(hb))) << 8)))
+#पूर्ण_अगर
+#अगर !defined(MAKEDWORD)
+#घोषणा MAKEDWORD(lw, hw)   ((अचिन्हित दीर्घ)(((अचिन्हित लघु)(lw)) | (((अचिन्हित दीर्घ)((अचिन्हित लघु)(hw))) << 16)))
+#पूर्ण_अगर
 
-#endif /* __TMACRO_H__ */
+#पूर्ण_अगर /* __TMACRO_H__ */

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Backlight Lowlevel Control Abstraction
  *
@@ -6,21 +7,21 @@
  *
  */
 
-#ifndef _LINUX_BACKLIGHT_H
-#define _LINUX_BACKLIGHT_H
+#अगर_अघोषित _LINUX_BACKLIGHT_H
+#घोषणा _LINUX_BACKLIGHT_H
 
-#include <linux/device.h>
-#include <linux/fb.h>
-#include <linux/mutex.h>
-#include <linux/notifier.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/notअगरier.h>
 
 /**
- * enum backlight_update_reason - what method was used to update backlight
+ * क्रमागत backlight_update_reason - what method was used to update backlight
  *
- * A driver indicates the method (reason) used for updating the backlight
- * when calling backlight_force_update().
+ * A driver indicates the method (reason) used क्रम updating the backlight
+ * when calling backlight_क्रमce_update().
  */
-enum backlight_update_reason {
+क्रमागत backlight_update_reason अणु
 	/**
 	 * @BACKLIGHT_UPDATE_HOTKEY: The backlight was updated using a hot-key.
 	 */
@@ -30,32 +31,32 @@ enum backlight_update_reason {
 	 * @BACKLIGHT_UPDATE_SYSFS: The backlight was updated using sysfs.
 	 */
 	BACKLIGHT_UPDATE_SYSFS,
-};
+पूर्ण;
 
 /**
- * enum backlight_type - the type of backlight control
+ * क्रमागत backlight_type - the type of backlight control
  *
- * The type of interface used to control the backlight.
+ * The type of पूर्णांकerface used to control the backlight.
  */
-enum backlight_type {
+क्रमागत backlight_type अणु
 	/**
 	 * @BACKLIGHT_RAW:
 	 *
-	 * The backlight is controlled using hardware registers.
+	 * The backlight is controlled using hardware रेजिस्टरs.
 	 */
 	BACKLIGHT_RAW = 1,
 
 	/**
 	 * @BACKLIGHT_PLATFORM:
 	 *
-	 * The backlight is controlled using a platform-specific interface.
+	 * The backlight is controlled using a platक्रमm-specअगरic पूर्णांकerface.
 	 */
 	BACKLIGHT_PLATFORM,
 
 	/**
 	 * @BACKLIGHT_FIRMWARE:
 	 *
-	 * The backlight is controlled using a standard firmware interface.
+	 * The backlight is controlled using a standard firmware पूर्णांकerface.
 	 */
 	BACKLIGHT_FIRMWARE,
 
@@ -63,31 +64,31 @@ enum backlight_type {
 	 * @BACKLIGHT_TYPE_MAX: Number of entries.
 	 */
 	BACKLIGHT_TYPE_MAX,
-};
+पूर्ण;
 
 /**
- * enum backlight_notification - the type of notification
+ * क्रमागत backlight_notअगरication - the type of notअगरication
  *
- * The notifications that is used for notification sent to the receiver
- * that registered notifications using backlight_register_notifier().
+ * The notअगरications that is used क्रम notअगरication sent to the receiver
+ * that रेजिस्टरed notअगरications using backlight_रेजिस्टर_notअगरier().
  */
-enum backlight_notification {
+क्रमागत backlight_notअगरication अणु
 	/**
-	 * @BACKLIGHT_REGISTERED: The backlight device is registered.
+	 * @BACKLIGHT_REGISTERED: The backlight device is रेजिस्टरed.
 	 */
 	BACKLIGHT_REGISTERED,
 
 	/**
-	 * @BACKLIGHT_UNREGISTERED: The backlight revice is unregistered.
+	 * @BACKLIGHT_UNREGISTERED: The backlight revice is unरेजिस्टरed.
 	 */
 	BACKLIGHT_UNREGISTERED,
-};
+पूर्ण;
 
-/** enum backlight_scale - the type of scale used for brightness values
+/** क्रमागत backlight_scale - the type of scale used क्रम brightness values
  *
- * The type of scale used for brightness values.
+ * The type of scale used क्रम brightness values.
  */
-enum backlight_scale {
+क्रमागत backlight_scale अणु
 	/**
 	 * @BACKLIGHT_SCALE_UNKNOWN: The scale is unknown.
 	 */
@@ -96,7 +97,7 @@ enum backlight_scale {
 	/**
 	 * @BACKLIGHT_SCALE_LINEAR: The scale is linear.
 	 *
-	 * The linear scale will increase brightness the same for each step.
+	 * The linear scale will increase brightness the same क्रम each step.
 	 */
 	BACKLIGHT_SCALE_LINEAR,
 
@@ -107,17 +108,17 @@ enum backlight_scale {
 	 * the relative perception of the eye demanding a non-linear scale.
 	 */
 	BACKLIGHT_SCALE_NON_LINEAR,
-};
+पूर्ण;
 
-struct backlight_device;
-struct fb_info;
+काष्ठा backlight_device;
+काष्ठा fb_info;
 
 /**
- * struct backlight_ops - backlight operations
+ * काष्ठा backlight_ops - backlight operations
  *
- * The backlight operations are specified when the backlight device is registered.
+ * The backlight operations are specअगरied when the backlight device is रेजिस्टरed.
  */
-struct backlight_ops {
+काष्ठा backlight_ops अणु
 	/**
 	 * @options: Configure how operations are called from the core.
 	 *
@@ -125,61 +126,61 @@ struct backlight_ops {
 	 * Set BL_CORE_SUSPENDRESUME to get the update_status() operation called
 	 * upon suspend and resume.
 	 */
-	unsigned int options;
+	अचिन्हित पूर्णांक options;
 
-#define BL_CORE_SUSPENDRESUME	(1 << 0)
+#घोषणा BL_CORE_SUSPENDRESUME	(1 << 0)
 
 	/**
 	 * @update_status: Operation called when properties have changed.
 	 *
-	 * Notify the backlight driver some property has changed.
-	 * The update_status operation is protected by the update_lock.
+	 * Notअगरy the backlight driver some property has changed.
+	 * The update_status operation is रक्षित by the update_lock.
 	 *
 	 * The backlight driver is expected to use backlight_is_blank()
-	 * to check if the display is blanked and set brightness accordingly.
+	 * to check अगर the display is blanked and set brightness accordingly.
 	 * update_status() is called when any of the properties has changed.
 	 *
 	 * RETURNS:
 	 *
-	 * 0 on success, negative error code if any failure occurred.
+	 * 0 on success, negative error code अगर any failure occurred.
 	 */
-	int (*update_status)(struct backlight_device *);
+	पूर्णांक (*update_status)(काष्ठा backlight_device *);
 
 	/**
 	 * @get_brightness: Return the current backlight brightness.
 	 *
-	 * The driver may implement this as a readback from the HW.
-	 * This operation is optional and if not present then the current
+	 * The driver may implement this as a पढ़ोback from the HW.
+	 * This operation is optional and अगर not present then the current
 	 * brightness property value is used.
 	 *
 	 * RETURNS:
 	 *
 	 * A brightness value which is 0 or a positive number.
-	 * On failure a negative error code is returned.
+	 * On failure a negative error code is वापसed.
 	 */
-	int (*get_brightness)(struct backlight_device *);
+	पूर्णांक (*get_brightness)(काष्ठा backlight_device *);
 
 	/**
 	 * @check_fb: Check the framebuffer device.
 	 *
-	 * Check if given framebuffer device is the one bound to this backlight.
-	 * This operation is optional and if not implemented it is assumed that the
+	 * Check अगर given framebuffer device is the one bound to this backlight.
+	 * This operation is optional and अगर not implemented it is assumed that the
 	 * fbdev is always the one bound to the backlight.
 	 *
 	 * RETURNS:
 	 *
-	 * If info is NULL or the info matches the fbdev bound to the backlight return true.
-	 * If info does not match the fbdev bound to the backlight return false.
+	 * If info is शून्य or the info matches the fbdev bound to the backlight वापस true.
+	 * If info करोes not match the fbdev bound to the backlight वापस false.
 	 */
-	int (*check_fb)(struct backlight_device *bd, struct fb_info *info);
-};
+	पूर्णांक (*check_fb)(काष्ठा backlight_device *bd, काष्ठा fb_info *info);
+पूर्ण;
 
 /**
- * struct backlight_properties - backlight properties
+ * काष्ठा backlight_properties - backlight properties
  *
- * This structure defines all the properties of a backlight.
+ * This काष्ठाure defines all the properties of a backlight.
  */
-struct backlight_properties {
+काष्ठा backlight_properties अणु
 	/**
 	 * @brightness: The current brightness requested by the user.
 	 *
@@ -188,38 +189,38 @@ struct backlight_properties {
 	 * /sys/class/backlight/<backlight>/brightness.
 	 *
 	 * This value can be set in the backlight_properties passed
-	 * to devm_backlight_device_register() to set a default brightness
+	 * to devm_backlight_device_रेजिस्टर() to set a शेष brightness
 	 * value.
 	 */
-	int brightness;
+	पूर्णांक brightness;
 
 	/**
 	 * @max_brightness: The maximum brightness value.
 	 *
 	 * This value must be set in the backlight_properties passed to
-	 * devm_backlight_device_register() and shall not be modified by the
+	 * devm_backlight_device_रेजिस्टर() and shall not be modअगरied by the
 	 * driver after registration.
 	 */
-	int max_brightness;
+	पूर्णांक max_brightness;
 
 	/**
-	 * @power: The current power mode.
+	 * @घातer: The current घातer mode.
 	 *
-	 * User space can configure the power mode using the sysfs
-	 * attribute: /sys/class/backlight/<backlight>/bl_power
-	 * When the power property is updated update_status() is called.
+	 * User space can configure the घातer mode using the sysfs
+	 * attribute: /sys/class/backlight/<backlight>/bl_घातer
+	 * When the घातer property is updated update_status() is called.
 	 *
-	 * The possible values are: (0: full on, 1 to 3: power saving
+	 * The possible values are: (0: full on, 1 to 3: घातer saving
 	 * modes; 4: full off), see FB_BLANK_XXX.
 	 *
-	 * When the backlight device is enabled @power is set
+	 * When the backlight device is enabled @घातer is set
 	 * to FB_BLANK_UNBLANK. When the backlight device is disabled
-	 * @power is set to FB_BLANK_POWERDOWN.
+	 * @घातer is set to FB_BLANK_POWERDOWN.
 	 */
-	int power;
+	पूर्णांक घातer;
 
 	/**
-	 * @fb_blank: The power state from the FBIOBLANK ioctl.
+	 * @fb_blank: The घातer state from the FBIOBLANK ioctl.
 	 *
 	 * When the FBIOBLANK ioctl is called @fb_blank is set to the
 	 * blank parameter and the update_status() operation is called.
@@ -228,14 +229,14 @@ struct backlight_properties {
 	 * to FB_BLANK_UNBLANK. When the backlight device is disabled
 	 * @fb_blank is set to FB_BLANK_POWERDOWN.
 	 *
-	 * Backlight drivers should avoid using this property. It has been
+	 * Backlight drivers should aव्योम using this property. It has been
 	 * replaced by state & BL_CORE_FBLANK (although most drivers should
 	 * use backlight_is_blank() as the preferred means to get the blank
 	 * state).
 	 *
-	 * fb_blank is deprecated and will be removed.
+	 * fb_blank is deprecated and will be हटाओd.
 	 */
-	int fb_blank;
+	पूर्णांक fb_blank;
 
 	/**
 	 * @type: The type of backlight supported.
@@ -244,246 +245,246 @@ struct backlight_properties {
 	 * policy decisions based on the backlight type.
 	 *
 	 * This value must be set in the backlight_properties
-	 * passed to devm_backlight_device_register().
+	 * passed to devm_backlight_device_रेजिस्टर().
 	 */
-	enum backlight_type type;
+	क्रमागत backlight_type type;
 
 	/**
 	 * @state: The state of the backlight core.
 	 *
-	 * The state is a bitmask. BL_CORE_FBBLANK is set when the display
+	 * The state is a biपंचांगask. BL_CORE_FBBLANK is set when the display
 	 * is expected to be blank. BL_CORE_SUSPENDED is set when the
 	 * driver is suspended.
 	 *
 	 * backlight drivers are expected to use backlight_is_blank()
-	 * in their update_status() operation rather than reading the
+	 * in their update_status() operation rather than पढ़ोing the
 	 * state property.
 	 *
-	 * The state is maintained by the core and drivers may not modify it.
+	 * The state is मुख्यtained by the core and drivers may not modअगरy it.
 	 */
-	unsigned int state;
+	अचिन्हित पूर्णांक state;
 
-#define BL_CORE_SUSPENDED	(1 << 0)	/* backlight is suspended */
-#define BL_CORE_FBBLANK		(1 << 1)	/* backlight is under an fb blank event */
+#घोषणा BL_CORE_SUSPENDED	(1 << 0)	/* backlight is suspended */
+#घोषणा BL_CORE_FBBLANK		(1 << 1)	/* backlight is under an fb blank event */
 
 	/**
 	 * @scale: The type of the brightness scale.
 	 */
-	enum backlight_scale scale;
-};
+	क्रमागत backlight_scale scale;
+पूर्ण;
 
 /**
- * struct backlight_device - backlight device data
+ * काष्ठा backlight_device - backlight device data
  *
- * This structure holds all data required by a backlight device.
+ * This काष्ठाure holds all data required by a backlight device.
  */
-struct backlight_device {
+काष्ठा backlight_device अणु
 	/**
 	 * @props: Backlight properties
 	 */
-	struct backlight_properties props;
+	काष्ठा backlight_properties props;
 
 	/**
 	 * @update_lock: The lock used when calling the update_status() operation.
 	 *
-	 * update_lock is an internal backlight lock that serialise access
+	 * update_lock is an पूर्णांकernal backlight lock that serialise access
 	 * to the update_status() operation. The backlight core holds the update_lock
 	 * when calling the update_status() operation. The update_lock shall not
 	 * be used by backlight drivers.
 	 */
-	struct mutex update_lock;
+	काष्ठा mutex update_lock;
 
 	/**
 	 * @ops_lock: The lock used around everything related to backlight_ops.
 	 *
-	 * ops_lock is an internal backlight lock that protects the ops pointer
+	 * ops_lock is an पूर्णांकernal backlight lock that protects the ops poपूर्णांकer
 	 * and is used around all accesses to ops and when the operations are
 	 * invoked. The ops_lock shall not be used by backlight drivers.
 	 */
-	struct mutex ops_lock;
+	काष्ठा mutex ops_lock;
 
 	/**
-	 * @ops: Pointer to the backlight operations.
+	 * @ops: Poपूर्णांकer to the backlight operations.
 	 *
-	 * If ops is NULL, the driver that registered this device has been unloaded,
-	 * and if class_get_devdata() points to something in the body of that driver,
+	 * If ops is शून्य, the driver that रेजिस्टरed this device has been unloaded,
+	 * and अगर class_get_devdata() poपूर्णांकs to something in the body of that driver,
 	 * it is also invalid.
 	 */
-	const struct backlight_ops *ops;
+	स्थिर काष्ठा backlight_ops *ops;
 
 	/**
-	 * @fb_notif: The framebuffer notifier block
+	 * @fb_notअगर: The framebuffer notअगरier block
 	 */
-	struct notifier_block fb_notif;
+	काष्ठा notअगरier_block fb_notअगर;
 
 	/**
-	 * @entry: List entry of all registered backlight devices
+	 * @entry: List entry of all रेजिस्टरed backlight devices
 	 */
-	struct list_head entry;
+	काष्ठा list_head entry;
 
 	/**
 	 * @dev: Parent device.
 	 */
-	struct device dev;
+	काष्ठा device dev;
 
 	/**
-	 * @fb_bl_on: The state of individual fbdev's.
+	 * @fb_bl_on: The state of inभागidual fbdev's.
 	 *
 	 * Multiple fbdev's may share one backlight device. The fb_bl_on
-	 * records the state of the individual fbdev.
+	 * records the state of the inभागidual fbdev.
 	 */
 	bool fb_bl_on[FB_MAX];
 
 	/**
 	 * @use_count: The number of uses of fb_bl_on.
 	 */
-	int use_count;
-};
+	पूर्णांक use_count;
+पूर्ण;
 
 /**
- * backlight_update_status - force an update of the backlight device status
+ * backlight_update_status - क्रमce an update of the backlight device status
  * @bd: the backlight device
  */
-static inline int backlight_update_status(struct backlight_device *bd)
-{
-	int ret = -ENOENT;
+अटल अंतरभूत पूर्णांक backlight_update_status(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक ret = -ENOENT;
 
 	mutex_lock(&bd->update_lock);
-	if (bd->ops && bd->ops->update_status)
+	अगर (bd->ops && bd->ops->update_status)
 		ret = bd->ops->update_status(bd);
 	mutex_unlock(&bd->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * backlight_enable - Enable backlight
  * @bd: the backlight device to enable
  */
-static inline int backlight_enable(struct backlight_device *bd)
-{
-	if (!bd)
-		return 0;
+अटल अंतरभूत पूर्णांक backlight_enable(काष्ठा backlight_device *bd)
+अणु
+	अगर (!bd)
+		वापस 0;
 
-	bd->props.power = FB_BLANK_UNBLANK;
+	bd->props.घातer = FB_BLANK_UNBLANK;
 	bd->props.fb_blank = FB_BLANK_UNBLANK;
 	bd->props.state &= ~BL_CORE_FBBLANK;
 
-	return backlight_update_status(bd);
-}
+	वापस backlight_update_status(bd);
+पूर्ण
 
 /**
  * backlight_disable - Disable backlight
  * @bd: the backlight device to disable
  */
-static inline int backlight_disable(struct backlight_device *bd)
-{
-	if (!bd)
-		return 0;
+अटल अंतरभूत पूर्णांक backlight_disable(काष्ठा backlight_device *bd)
+अणु
+	अगर (!bd)
+		वापस 0;
 
-	bd->props.power = FB_BLANK_POWERDOWN;
+	bd->props.घातer = FB_BLANK_POWERDOWN;
 	bd->props.fb_blank = FB_BLANK_POWERDOWN;
 	bd->props.state |= BL_CORE_FBBLANK;
 
-	return backlight_update_status(bd);
-}
+	वापस backlight_update_status(bd);
+पूर्ण
 
 /**
- * backlight_is_blank - Return true if display is expected to be blank
+ * backlight_is_blank - Return true अगर display is expected to be blank
  * @bd: the backlight device
  *
- * Display is expected to be blank if any of these is true::
+ * Display is expected to be blank अगर any of these is true::
  *
- *   1) if power in not UNBLANK
- *   2) if fb_blank is not UNBLANK
- *   3) if state indicate BLANK or SUSPENDED
+ *   1) अगर घातer in not UNBLANK
+ *   2) अगर fb_blank is not UNBLANK
+ *   3) अगर state indicate BLANK or SUSPENDED
  *
- * Returns true if display is expected to be blank, false otherwise.
+ * Returns true अगर display is expected to be blank, false otherwise.
  */
-static inline bool backlight_is_blank(const struct backlight_device *bd)
-{
-	return bd->props.power != FB_BLANK_UNBLANK ||
+अटल अंतरभूत bool backlight_is_blank(स्थिर काष्ठा backlight_device *bd)
+अणु
+	वापस bd->props.घातer != FB_BLANK_UNBLANK ||
 	       bd->props.fb_blank != FB_BLANK_UNBLANK ||
 	       bd->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK);
-}
+पूर्ण
 
 /**
  * backlight_get_brightness - Returns the current brightness value
  * @bd: the backlight device
  *
  * Returns the current brightness value, taking in consideration the current
- * state. If backlight_is_blank() returns true then return 0 as brightness
- * otherwise return the current brightness property value.
+ * state. If backlight_is_blank() वापसs true then वापस 0 as brightness
+ * otherwise वापस the current brightness property value.
  *
  * Backlight drivers are expected to use this function in their update_status()
  * operation to get the brightness value.
  */
-static inline int backlight_get_brightness(const struct backlight_device *bd)
-{
-	if (backlight_is_blank(bd))
-		return 0;
-	else
-		return bd->props.brightness;
-}
+अटल अंतरभूत पूर्णांक backlight_get_brightness(स्थिर काष्ठा backlight_device *bd)
+अणु
+	अगर (backlight_is_blank(bd))
+		वापस 0;
+	अन्यथा
+		वापस bd->props.brightness;
+पूर्ण
 
-struct backlight_device *
-backlight_device_register(const char *name, struct device *dev, void *devdata,
-			  const struct backlight_ops *ops,
-			  const struct backlight_properties *props);
-struct backlight_device *
-devm_backlight_device_register(struct device *dev, const char *name,
-			       struct device *parent, void *devdata,
-			       const struct backlight_ops *ops,
-			       const struct backlight_properties *props);
-void backlight_device_unregister(struct backlight_device *bd);
-void devm_backlight_device_unregister(struct device *dev,
-				      struct backlight_device *bd);
-void backlight_force_update(struct backlight_device *bd,
-			    enum backlight_update_reason reason);
-int backlight_register_notifier(struct notifier_block *nb);
-int backlight_unregister_notifier(struct notifier_block *nb);
-struct backlight_device *backlight_device_get_by_name(const char *name);
-struct backlight_device *backlight_device_get_by_type(enum backlight_type type);
-int backlight_device_set_brightness(struct backlight_device *bd,
-				    unsigned long brightness);
+काष्ठा backlight_device *
+backlight_device_रेजिस्टर(स्थिर अक्षर *name, काष्ठा device *dev, व्योम *devdata,
+			  स्थिर काष्ठा backlight_ops *ops,
+			  स्थिर काष्ठा backlight_properties *props);
+काष्ठा backlight_device *
+devm_backlight_device_रेजिस्टर(काष्ठा device *dev, स्थिर अक्षर *name,
+			       काष्ठा device *parent, व्योम *devdata,
+			       स्थिर काष्ठा backlight_ops *ops,
+			       स्थिर काष्ठा backlight_properties *props);
+व्योम backlight_device_unरेजिस्टर(काष्ठा backlight_device *bd);
+व्योम devm_backlight_device_unरेजिस्टर(काष्ठा device *dev,
+				      काष्ठा backlight_device *bd);
+व्योम backlight_क्रमce_update(काष्ठा backlight_device *bd,
+			    क्रमागत backlight_update_reason reason);
+पूर्णांक backlight_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+पूर्णांक backlight_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+काष्ठा backlight_device *backlight_device_get_by_name(स्थिर अक्षर *name);
+काष्ठा backlight_device *backlight_device_get_by_type(क्रमागत backlight_type type);
+पूर्णांक backlight_device_set_brightness(काष्ठा backlight_device *bd,
+				    अचिन्हित दीर्घ brightness);
 
-#define to_backlight_device(obj) container_of(obj, struct backlight_device, dev)
+#घोषणा to_backlight_device(obj) container_of(obj, काष्ठा backlight_device, dev)
 
 /**
  * bl_get_data - access devdata
- * @bl_dev: pointer to backlight device
+ * @bl_dev: poपूर्णांकer to backlight device
  *
- * When a backlight device is registered the driver has the possibility
- * to supply a void * devdata. bl_get_data() return a pointer to the
+ * When a backlight device is रेजिस्टरed the driver has the possibility
+ * to supply a व्योम * devdata. bl_get_data() वापस a poपूर्णांकer to the
  * devdata.
  *
  * RETURNS:
  *
- * pointer to devdata stored while registering the backlight device.
+ * poपूर्णांकer to devdata stored जबतक रेजिस्टरing the backlight device.
  */
-static inline void * bl_get_data(struct backlight_device *bl_dev)
-{
-	return dev_get_drvdata(&bl_dev->dev);
-}
+अटल अंतरभूत व्योम * bl_get_data(काष्ठा backlight_device *bl_dev)
+अणु
+	वापस dev_get_drvdata(&bl_dev->dev);
+पूर्ण
 
-#ifdef CONFIG_OF
-struct backlight_device *of_find_backlight_by_node(struct device_node *node);
-#else
-static inline struct backlight_device *
-of_find_backlight_by_node(struct device_node *node)
-{
-	return NULL;
-}
-#endif
+#अगर_घोषित CONFIG_OF
+काष्ठा backlight_device *of_find_backlight_by_node(काष्ठा device_node *node);
+#अन्यथा
+अटल अंतरभूत काष्ठा backlight_device *
+of_find_backlight_by_node(काष्ठा device_node *node)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE)
-struct backlight_device *devm_of_find_backlight(struct device *dev);
-#else
-static inline struct backlight_device *
-devm_of_find_backlight(struct device *dev)
-{
-	return NULL;
-}
-#endif
+#अगर IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE)
+काष्ठा backlight_device *devm_of_find_backlight(काष्ठा device *dev);
+#अन्यथा
+अटल अंतरभूत काष्ठा backlight_device *
+devm_of_find_backlight(काष्ठा device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

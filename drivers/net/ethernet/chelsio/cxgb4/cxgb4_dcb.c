@@ -1,217 +1,218 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 2013-2014 Chelsio Communications.  All rights reserved.
  *
  *  Written by Anish Bhatt (anish@chelsio.com)
- *	       Casey Leedom (leedom@chelsio.com)
+ *	       Casey Leeकरोm (leeकरोm@chelsio.com)
  */
 
-#include "cxgb4.h"
+#समावेश "cxgb4.h"
 
 /* DCBx version control
  */
-const char * const dcb_ver_array[] = {
+स्थिर अक्षर * स्थिर dcb_ver_array[] = अणु
 	"Unknown",
 	"DCBx-CIN",
 	"DCBx-CEE 1.01",
 	"DCBx-IEEE",
 	"", "", "",
 	"Auto Negotiated"
-};
+पूर्ण;
 
-static inline bool cxgb4_dcb_state_synced(enum cxgb4_dcb_state state)
-{
-	if (state == CXGB4_DCB_STATE_FW_ALLSYNCED ||
+अटल अंतरभूत bool cxgb4_dcb_state_synced(क्रमागत cxgb4_dcb_state state)
+अणु
+	अगर (state == CXGB4_DCB_STATE_FW_ALLSYNCED ||
 	    state == CXGB4_DCB_STATE_HOST)
-		return true;
-	else
-		return false;
-}
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /* Initialize a port's Data Center Bridging state.
  */
-void cxgb4_dcb_state_init(struct net_device *dev)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct port_dcb_info *dcb = &pi->dcb;
-	int version_temp = dcb->dcb_version;
+व्योम cxgb4_dcb_state_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा port_dcb_info *dcb = &pi->dcb;
+	पूर्णांक version_temp = dcb->dcb_version;
 
-	memset(dcb, 0, sizeof(struct port_dcb_info));
+	स_रखो(dcb, 0, माप(काष्ठा port_dcb_info));
 	dcb->state = CXGB4_DCB_STATE_START;
-	if (version_temp)
+	अगर (version_temp)
 		dcb->dcb_version = version_temp;
 
 	netdev_dbg(dev, "%s: Initializing DCB state for port[%d]\n",
 		    __func__, pi->port_id);
-}
+पूर्ण
 
-void cxgb4_dcb_version_init(struct net_device *dev)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct port_dcb_info *dcb = &pi->dcb;
+व्योम cxgb4_dcb_version_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा port_dcb_info *dcb = &pi->dcb;
 
-	/* Any writes here are only done on kernels that exlicitly need
-	 * a specific version, say < 2.6.38 which only support CEE
+	/* Any ग_लिखोs here are only करोne on kernels that exlicitly need
+	 * a specअगरic version, say < 2.6.38 which only support CEE
 	 */
 	dcb->dcb_version = FW_PORT_DCB_VER_AUTO;
-}
+पूर्ण
 
-static void cxgb4_dcb_cleanup_apps(struct net_device *dev)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	struct port_dcb_info *dcb = &pi->dcb;
-	struct dcb_app app;
-	int i, err;
+अटल व्योम cxgb4_dcb_cleanup_apps(काष्ठा net_device *dev)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा port_dcb_info *dcb = &pi->dcb;
+	काष्ठा dcb_app app;
+	पूर्णांक i, err;
 
-	/* zero priority implies remove */
+	/* zero priority implies हटाओ */
 	app.priority = 0;
 
-	for (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) {
-		/* Check if app list is exhausted */
-		if (!dcb->app_priority[i].protocolid)
-			break;
+	क्रम (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) अणु
+		/* Check अगर app list is exhausted */
+		अगर (!dcb->app_priority[i].protocolid)
+			अवरोध;
 
 		app.protocol = dcb->app_priority[i].protocolid;
 
-		if (dcb->dcb_version == FW_PORT_DCB_VER_IEEE) {
+		अगर (dcb->dcb_version == FW_PORT_DCB_VER_IEEE) अणु
 			app.priority = dcb->app_priority[i].user_prio_map;
 			app.selector = dcb->app_priority[i].sel_field + 1;
 			err = dcb_ieee_delapp(dev, &app);
-		} else {
+		पूर्ण अन्यथा अणु
 			app.selector = !!(dcb->app_priority[i].sel_field);
 			err = dcb_setapp(dev, &app);
-		}
+		पूर्ण
 
-		if (err) {
+		अगर (err) अणु
 			dev_err(adap->pdev_dev,
 				"Failed DCB Clear %s Application Priority: sel=%d, prot=%d, , err=%d\n",
 				dcb_ver_array[dcb->dcb_version], app.selector,
 				app.protocol, -err);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* Reset a port's Data Center Bridging state.  Typically used after a
  * Link Down event.
  */
-void cxgb4_dcb_reset(struct net_device *dev)
-{
+व्योम cxgb4_dcb_reset(काष्ठा net_device *dev)
+अणु
 	cxgb4_dcb_cleanup_apps(dev);
 	cxgb4_dcb_state_init(dev);
-}
+पूर्ण
 
-/* update the dcb port support, if version is IEEE then set it to
- * FW_PORT_DCB_VER_IEEE and if DCB_CAP_DCBX_VER_CEE is already set then
- * clear that. and if it is set to CEE then set dcb supported to
- * DCB_CAP_DCBX_VER_CEE & if DCB_CAP_DCBX_VER_IEEE is set, clear it
+/* update the dcb port support, अगर version is IEEE then set it to
+ * FW_PORT_DCB_VER_IEEE and अगर DCB_CAP_DCBX_VER_CEE is alपढ़ोy set then
+ * clear that. and अगर it is set to CEE then set dcb supported to
+ * DCB_CAP_DCBX_VER_CEE & अगर DCB_CAP_DCBX_VER_IEEE is set, clear it
  */
-static inline void cxgb4_dcb_update_support(struct port_dcb_info *dcb)
-{
-	if (dcb->dcb_version == FW_PORT_DCB_VER_IEEE) {
-		if (dcb->supported & DCB_CAP_DCBX_VER_CEE)
+अटल अंतरभूत व्योम cxgb4_dcb_update_support(काष्ठा port_dcb_info *dcb)
+अणु
+	अगर (dcb->dcb_version == FW_PORT_DCB_VER_IEEE) अणु
+		अगर (dcb->supported & DCB_CAP_DCBX_VER_CEE)
 			dcb->supported &= ~DCB_CAP_DCBX_VER_CEE;
 		dcb->supported |= DCB_CAP_DCBX_VER_IEEE;
-	} else if (dcb->dcb_version == FW_PORT_DCB_VER_CEE1D01) {
-		if (dcb->supported & DCB_CAP_DCBX_VER_IEEE)
+	पूर्ण अन्यथा अगर (dcb->dcb_version == FW_PORT_DCB_VER_CEE1D01) अणु
+		अगर (dcb->supported & DCB_CAP_DCBX_VER_IEEE)
 			dcb->supported &= ~DCB_CAP_DCBX_VER_IEEE;
 		dcb->supported |= DCB_CAP_DCBX_VER_CEE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Finite State machine for Data Center Bridging.
+/* Finite State machine क्रम Data Center Bridging.
  */
-void cxgb4_dcb_state_fsm(struct net_device *dev,
-			 enum cxgb4_dcb_state_input transition_to)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct port_dcb_info *dcb = &pi->dcb;
-	struct adapter *adap = pi->adapter;
-	enum cxgb4_dcb_state current_state = dcb->state;
+व्योम cxgb4_dcb_state_fsm(काष्ठा net_device *dev,
+			 क्रमागत cxgb4_dcb_state_input transition_to)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा port_dcb_info *dcb = &pi->dcb;
+	काष्ठा adapter *adap = pi->adapter;
+	क्रमागत cxgb4_dcb_state current_state = dcb->state;
 
 	netdev_dbg(dev, "%s: State change from %d to %d for %s\n",
 		    __func__, dcb->state, transition_to, dev->name);
 
-	switch (current_state) {
-	case CXGB4_DCB_STATE_START: {
-		switch (transition_to) {
-		case CXGB4_DCB_INPUT_FW_DISABLED: {
+	चयन (current_state) अणु
+	हाल CXGB4_DCB_STATE_START: अणु
+		चयन (transition_to) अणु
+		हाल CXGB4_DCB_INPUT_FW_DISABLED: अणु
 			/* we're going to use Host DCB */
 			dcb->state = CXGB4_DCB_STATE_HOST;
 			dcb->supported = CXGB4_DCBX_HOST_SUPPORT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case CXGB4_DCB_INPUT_FW_ENABLED: {
+		हाल CXGB4_DCB_INPUT_FW_ENABLED: अणु
 			/* we're going to use Firmware DCB */
 			dcb->state = CXGB4_DCB_STATE_FW_INCOMPLETE;
 			dcb->supported = DCB_CAP_DCBX_LLD_MANAGED;
-			if (dcb->dcb_version == FW_PORT_DCB_VER_IEEE)
+			अगर (dcb->dcb_version == FW_PORT_DCB_VER_IEEE)
 				dcb->supported |= DCB_CAP_DCBX_VER_IEEE;
-			else
+			अन्यथा
 				dcb->supported |= DCB_CAP_DCBX_VER_CEE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case CXGB4_DCB_INPUT_FW_INCOMPLETE: {
+		हाल CXGB4_DCB_INPUT_FW_INCOMPLETE: अणु
 			/* expected transition */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case CXGB4_DCB_INPUT_FW_ALLSYNCED: {
+		हाल CXGB4_DCB_INPUT_FW_ALLSYNCED: अणु
 			dcb->state = CXGB4_DCB_STATE_FW_ALLSYNCED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		default:
-			goto bad_state_input;
-		}
-		break;
-	}
+		शेष:
+			जाओ bad_state_input;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case CXGB4_DCB_STATE_FW_INCOMPLETE: {
-		if (transition_to != CXGB4_DCB_INPUT_FW_DISABLED) {
+	हाल CXGB4_DCB_STATE_FW_INCOMPLETE: अणु
+		अगर (transition_to != CXGB4_DCB_INPUT_FW_DISABLED) अणु
 			/* during this CXGB4_DCB_STATE_FW_INCOMPLETE state,
-			 * check if the dcb version is changed (there can be
-			 * mismatch in default config & the negotiated switch
+			 * check अगर the dcb version is changed (there can be
+			 * mismatch in शेष config & the negotiated चयन
 			 * configuration at FW, so update the dcb support
 			 * accordingly.
 			 */
 			cxgb4_dcb_update_support(dcb);
-		}
-		switch (transition_to) {
-		case CXGB4_DCB_INPUT_FW_ENABLED: {
+		पूर्ण
+		चयन (transition_to) अणु
+		हाल CXGB4_DCB_INPUT_FW_ENABLED: अणु
 			/* we're alreaady in firmware DCB mode */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case CXGB4_DCB_INPUT_FW_INCOMPLETE: {
-			/* we're already incomplete */
-			break;
-		}
+		हाल CXGB4_DCB_INPUT_FW_INCOMPLETE: अणु
+			/* we're alपढ़ोy incomplete */
+			अवरोध;
+		पूर्ण
 
-		case CXGB4_DCB_INPUT_FW_ALLSYNCED: {
+		हाल CXGB4_DCB_INPUT_FW_ALLSYNCED: अणु
 			dcb->state = CXGB4_DCB_STATE_FW_ALLSYNCED;
 			dcb->enabled = 1;
 			linkwatch_fire_event(dev);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		default:
-			goto bad_state_input;
-		}
-		break;
-	}
+		शेष:
+			जाओ bad_state_input;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case CXGB4_DCB_STATE_FW_ALLSYNCED: {
-		switch (transition_to) {
-		case CXGB4_DCB_INPUT_FW_ENABLED: {
+	हाल CXGB4_DCB_STATE_FW_ALLSYNCED: अणु
+		चयन (transition_to) अणु
+		हाल CXGB4_DCB_INPUT_FW_ENABLED: अणु
 			/* we're alreaady in firmware DCB mode */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case CXGB4_DCB_INPUT_FW_INCOMPLETE: {
+		हाल CXGB4_DCB_INPUT_FW_INCOMPLETE: अणु
 			/* We were successfully running with firmware DCB but
 			 * now it's telling us that it's in an "incomplete
 			 * state.  We need to reset back to a ground state
@@ -221,169 +222,169 @@ void cxgb4_dcb_state_fsm(struct net_device *dev,
 			dcb->state = CXGB4_DCB_STATE_FW_INCOMPLETE;
 			dcb->supported = CXGB4_DCBX_FW_SUPPORT;
 			linkwatch_fire_event(dev);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case CXGB4_DCB_INPUT_FW_ALLSYNCED: {
+		हाल CXGB4_DCB_INPUT_FW_ALLSYNCED: अणु
 			/* we're already all sync'ed
-			 * this is only applicable for IEEE or
-			 * when another VI already completed negotiaton
+			 * this is only applicable क्रम IEEE or
+			 * when another VI alपढ़ोy completed negotiaton
 			 */
 			dcb->enabled = 1;
 			linkwatch_fire_event(dev);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		default:
-			goto bad_state_input;
-		}
-		break;
-	}
+		शेष:
+			जाओ bad_state_input;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case CXGB4_DCB_STATE_HOST: {
-		switch (transition_to) {
-		case CXGB4_DCB_INPUT_FW_DISABLED: {
+	हाल CXGB4_DCB_STATE_HOST: अणु
+		चयन (transition_to) अणु
+		हाल CXGB4_DCB_INPUT_FW_DISABLED: अणु
 			/* we're alreaady in Host DCB mode */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		default:
-			goto bad_state_input;
-		}
-		break;
-	}
+		शेष:
+			जाओ bad_state_input;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	default:
-		goto bad_state_transition;
-	}
-	return;
+	शेष:
+		जाओ bad_state_transition;
+	पूर्ण
+	वापस;
 
 bad_state_input:
 	dev_err(adap->pdev_dev, "cxgb4_dcb_state_fsm: illegal input symbol %d\n",
 		transition_to);
-	return;
+	वापस;
 
 bad_state_transition:
 	dev_err(adap->pdev_dev, "cxgb4_dcb_state_fsm: bad state transition, state = %d, input = %d\n",
 		current_state, transition_to);
-}
+पूर्ण
 
 /* Handle a DCB/DCBX update message from the firmware.
  */
-void cxgb4_dcb_handle_fw_update(struct adapter *adap,
-				const struct fw_port_cmd *pcmd)
-{
-	const union fw_port_dcb *fwdcb = &pcmd->u.dcb;
-	int port = FW_PORT_CMD_PORTID_G(be32_to_cpu(pcmd->op_to_portid));
-	struct net_device *dev = adap->port[adap->chan_map[port]];
-	struct port_info *pi = netdev_priv(dev);
-	struct port_dcb_info *dcb = &pi->dcb;
-	int dcb_type = pcmd->u.dcb.pgid.type;
-	int dcb_running_version;
+व्योम cxgb4_dcb_handle_fw_update(काष्ठा adapter *adap,
+				स्थिर काष्ठा fw_port_cmd *pcmd)
+अणु
+	स्थिर जोड़ fw_port_dcb *fwdcb = &pcmd->u.dcb;
+	पूर्णांक port = FW_PORT_CMD_PORTID_G(be32_to_cpu(pcmd->op_to_portid));
+	काष्ठा net_device *dev = adap->port[adap->chan_map[port]];
+	काष्ठा port_info *pi = netdev_priv(dev);
+	काष्ठा port_dcb_info *dcb = &pi->dcb;
+	पूर्णांक dcb_type = pcmd->u.dcb.pgid.type;
+	पूर्णांक dcb_running_version;
 
 	/* Handle Firmware DCB Control messages separately since they drive
 	 * our state machine.
 	 */
-	if (dcb_type == FW_PORT_DCB_TYPE_CONTROL) {
-		enum cxgb4_dcb_state_input input =
+	अगर (dcb_type == FW_PORT_DCB_TYPE_CONTROL) अणु
+		क्रमागत cxgb4_dcb_state_input input =
 			((pcmd->u.dcb.control.all_syncd_pkd &
 			  FW_PORT_CMD_ALL_SYNCD_F)
 			 ? CXGB4_DCB_INPUT_FW_ALLSYNCED
 			 : CXGB4_DCB_INPUT_FW_INCOMPLETE);
 
-		if (dcb->dcb_version != FW_PORT_DCB_VER_UNKNOWN) {
+		अगर (dcb->dcb_version != FW_PORT_DCB_VER_UNKNOWN) अणु
 			dcb_running_version = FW_PORT_CMD_DCB_VERSION_G(
 				be16_to_cpu(
 				pcmd->u.dcb.control.dcb_version_to_app_state));
-			if (dcb_running_version == FW_PORT_DCB_VER_CEE1D01 ||
-			    dcb_running_version == FW_PORT_DCB_VER_IEEE) {
+			अगर (dcb_running_version == FW_PORT_DCB_VER_CEE1D01 ||
+			    dcb_running_version == FW_PORT_DCB_VER_IEEE) अणु
 				dcb->dcb_version = dcb_running_version;
 				dev_warn(adap->pdev_dev, "Interface %s is running %s\n",
 					 dev->name,
 					 dcb_ver_array[dcb->dcb_version]);
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_warn(adap->pdev_dev,
 					 "Something screwed up, requested firmware for %s, but firmware returned %s instead\n",
 					 dcb_ver_array[dcb->dcb_version],
 					 dcb_ver_array[dcb_running_version]);
 				dcb->dcb_version = FW_PORT_DCB_VER_UNKNOWN;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		cxgb4_dcb_state_fsm(dev, input);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* It's weird, and almost certainly an error, to get Firmware DCB
 	 * messages when we either haven't been told whether we're going to be
-	 * doing Host or Firmware DCB; and even worse when we've been told
-	 * that we're doing Host DCB!
+	 * करोing Host or Firmware DCB; and even worse when we've been told
+	 * that we're करोing Host DCB!
 	 */
-	if (dcb->state == CXGB4_DCB_STATE_START ||
-	    dcb->state == CXGB4_DCB_STATE_HOST) {
+	अगर (dcb->state == CXGB4_DCB_STATE_START ||
+	    dcb->state == CXGB4_DCB_STATE_HOST) अणु
 		dev_err(adap->pdev_dev, "Receiving Firmware DCB messages in State %d\n",
 			dcb->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Now handle the general Firmware DCB update messages ...
 	 */
-	switch (dcb_type) {
-	case FW_PORT_DCB_TYPE_PGID:
+	चयन (dcb_type) अणु
+	हाल FW_PORT_DCB_TYPE_PGID:
 		dcb->pgid = be32_to_cpu(fwdcb->pgid.pgid);
 		dcb->msgs |= CXGB4_DCB_FW_PGID;
-		break;
+		अवरोध;
 
-	case FW_PORT_DCB_TYPE_PGRATE:
+	हाल FW_PORT_DCB_TYPE_PGRATE:
 		dcb->pg_num_tcs_supported = fwdcb->pgrate.num_tcs_supported;
-		memcpy(dcb->pgrate, &fwdcb->pgrate.pgrate,
-		       sizeof(dcb->pgrate));
-		memcpy(dcb->tsa, &fwdcb->pgrate.tsa,
-		       sizeof(dcb->tsa));
+		स_नकल(dcb->pgrate, &fwdcb->pgrate.pgrate,
+		       माप(dcb->pgrate));
+		स_नकल(dcb->tsa, &fwdcb->pgrate.tsa,
+		       माप(dcb->tsa));
 		dcb->msgs |= CXGB4_DCB_FW_PGRATE;
-		if (dcb->msgs & CXGB4_DCB_FW_PGID)
+		अगर (dcb->msgs & CXGB4_DCB_FW_PGID)
 			IEEE_FAUX_SYNC(dev, dcb);
-		break;
+		अवरोध;
 
-	case FW_PORT_DCB_TYPE_PRIORATE:
-		memcpy(dcb->priorate, &fwdcb->priorate.strict_priorate,
-		       sizeof(dcb->priorate));
+	हाल FW_PORT_DCB_TYPE_PRIORATE:
+		स_नकल(dcb->priorate, &fwdcb->priorate.strict_priorate,
+		       माप(dcb->priorate));
 		dcb->msgs |= CXGB4_DCB_FW_PRIORATE;
-		break;
+		अवरोध;
 
-	case FW_PORT_DCB_TYPE_PFC:
+	हाल FW_PORT_DCB_TYPE_PFC:
 		dcb->pfcen = fwdcb->pfc.pfcen;
 		dcb->pfc_num_tcs_supported = fwdcb->pfc.max_pfc_tcs;
 		dcb->msgs |= CXGB4_DCB_FW_PFC;
 		IEEE_FAUX_SYNC(dev, dcb);
-		break;
+		अवरोध;
 
-	case FW_PORT_DCB_TYPE_APP_ID: {
-		const struct fw_port_app_priority *fwap = &fwdcb->app_priority;
-		int idx = fwap->idx;
-		struct app_priority *ap = &dcb->app_priority[idx];
+	हाल FW_PORT_DCB_TYPE_APP_ID: अणु
+		स्थिर काष्ठा fw_port_app_priority *fwap = &fwdcb->app_priority;
+		पूर्णांक idx = fwap->idx;
+		काष्ठा app_priority *ap = &dcb->app_priority[idx];
 
-		struct dcb_app app = {
+		काष्ठा dcb_app app = अणु
 			.protocol = be16_to_cpu(fwap->protocolid),
-		};
-		int err;
+		पूर्ण;
+		पूर्णांक err;
 
-		/* Convert from firmware format to relevant format
+		/* Convert from firmware क्रमmat to relevant क्रमmat
 		 * when using app selector
 		 */
-		if (dcb->dcb_version == FW_PORT_DCB_VER_IEEE) {
+		अगर (dcb->dcb_version == FW_PORT_DCB_VER_IEEE) अणु
 			app.selector = (fwap->sel_field + 1);
 			app.priority = ffs(fwap->user_prio_map) - 1;
 			err = dcb_ieee_setapp(dev, &app);
 			IEEE_FAUX_SYNC(dev, dcb);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Default is CEE */
 			app.selector = !!(fwap->sel_field);
 			app.priority = fwap->user_prio_map;
 			err = dcb_setapp(dev, &app);
-		}
+		पूर्ण
 
-		if (err)
+		अगर (err)
 			dev_err(adap->pdev_dev,
 				"Failed DCB Set Application Priority: sel=%d, prot=%d, prio=%d, err=%d\n",
 				app.selector, app.protocol, app.priority, -err);
@@ -392,15 +393,15 @@ void cxgb4_dcb_handle_fw_update(struct adapter *adap,
 		ap->sel_field = fwap->sel_field;
 		ap->protocolid = be16_to_cpu(fwap->protocolid);
 		dcb->msgs |= CXGB4_DCB_FW_APP_ID;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		dev_err(adap->pdev_dev, "Unknown DCB update type received %x\n",
 			dcb_type);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* Data Center Bridging netlink operations.
  */
@@ -408,120 +409,120 @@ void cxgb4_dcb_handle_fw_update(struct adapter *adap,
 
 /* Get current DCB enabled/disabled state.
  */
-static u8 cxgb4_getstate(struct net_device *dev)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+अटल u8 cxgb4_माला_लोtate(काष्ठा net_device *dev)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 
-	return pi->dcb.enabled;
-}
+	वापस pi->dcb.enabled;
+पूर्ण
 
 /* Set DCB enabled/disabled.
  */
-static u8 cxgb4_setstate(struct net_device *dev, u8 enabled)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+अटल u8 cxgb4_setstate(काष्ठा net_device *dev, u8 enabled)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 
 	/* If DCBx is host-managed, dcb is enabled by outside lldp agents */
-	if (pi->dcb.state == CXGB4_DCB_STATE_HOST) {
+	अगर (pi->dcb.state == CXGB4_DCB_STATE_HOST) अणु
 		pi->dcb.enabled = enabled;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Firmware doesn't provide any mechanism to control the DCB state.
+	/* Firmware करोesn't provide any mechanism to control the DCB state.
 	 */
-	if (enabled != (pi->dcb.state == CXGB4_DCB_STATE_FW_ALLSYNCED))
-		return 1;
+	अगर (enabled != (pi->dcb.state == CXGB4_DCB_STATE_FW_ALLSYNCED))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cxgb4_getpgtccfg(struct net_device *dev, int tc,
+अटल व्योम cxgb4_getpgtccfg(काष्ठा net_device *dev, पूर्णांक tc,
 			     u8 *prio_type, u8 *pgid, u8 *bw_per,
-			     u8 *up_tc_map, int local)
-{
-	struct fw_port_cmd pcmd;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	int err;
+			     u8 *up_tc_map, पूर्णांक local)
+अणु
+	काष्ठा fw_port_cmd pcmd;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	पूर्णांक err;
 
 	*prio_type = *pgid = *bw_per = *up_tc_map = 0;
 
-	if (local)
+	अगर (local)
 		INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
-	else
+	अन्यथा
 		INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
 
 	pcmd.u.dcb.pgid.type = FW_PORT_DCB_TYPE_PGID;
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGID failed with %d\n", -err);
-		return;
-	}
+		वापस;
+	पूर्ण
 	*pgid = (be32_to_cpu(pcmd.u.dcb.pgid.pgid) >> (tc * 4)) & 0xf;
 
-	if (local)
+	अगर (local)
 		INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
-	else
+	अन्यथा
 		INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
 	pcmd.u.dcb.pgrate.type = FW_PORT_DCB_TYPE_PGRATE;
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGRATE failed with %d\n",
 			-err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	*bw_per = pcmd.u.dcb.pgrate.pgrate[*pgid];
 	*up_tc_map = (1 << tc);
 
 	/* prio_type is link strict */
-	if (*pgid != 0xF)
+	अगर (*pgid != 0xF)
 		*prio_type = 0x2;
-}
+पूर्ण
 
-static void cxgb4_getpgtccfg_tx(struct net_device *dev, int tc,
+अटल व्योम cxgb4_getpgtccfg_tx(काष्ठा net_device *dev, पूर्णांक tc,
 				u8 *prio_type, u8 *pgid, u8 *bw_per,
 				u8 *up_tc_map)
-{
+अणु
 	/* tc 0 is written at MSB position */
-	return cxgb4_getpgtccfg(dev, (7 - tc), prio_type, pgid, bw_per,
+	वापस cxgb4_getpgtccfg(dev, (7 - tc), prio_type, pgid, bw_per,
 				up_tc_map, 1);
-}
+पूर्ण
 
 
-static void cxgb4_getpgtccfg_rx(struct net_device *dev, int tc,
+अटल व्योम cxgb4_getpgtccfg_rx(काष्ठा net_device *dev, पूर्णांक tc,
 				u8 *prio_type, u8 *pgid, u8 *bw_per,
 				u8 *up_tc_map)
-{
+अणु
 	/* tc 0 is written at MSB position */
-	return cxgb4_getpgtccfg(dev, (7 - tc), prio_type, pgid, bw_per,
+	वापस cxgb4_getpgtccfg(dev, (7 - tc), prio_type, pgid, bw_per,
 				up_tc_map, 0);
-}
+पूर्ण
 
-static void cxgb4_setpgtccfg_tx(struct net_device *dev, int tc,
+अटल व्योम cxgb4_setpgtccfg_tx(काष्ठा net_device *dev, पूर्णांक tc,
 				u8 prio_type, u8 pgid, u8 bw_per,
 				u8 up_tc_map)
-{
-	struct fw_port_cmd pcmd;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	int fw_tc = 7 - tc;
+अणु
+	काष्ठा fw_port_cmd pcmd;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	पूर्णांक fw_tc = 7 - tc;
 	u32 _pgid;
-	int err;
+	पूर्णांक err;
 
-	if (pgid == DCB_ATTR_VALUE_UNDEFINED)
-		return;
-	if (bw_per == DCB_ATTR_VALUE_UNDEFINED)
-		return;
+	अगर (pgid == DCB_ATTR_VALUE_UNDEFINED)
+		वापस;
+	अगर (bw_per == DCB_ATTR_VALUE_UNDEFINED)
+		वापस;
 
 	INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
 	pcmd.u.dcb.pgid.type = FW_PORT_DCB_TYPE_PGID;
 
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGID failed with %d\n", -err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	_pgid = be32_to_cpu(pcmd.u.dcb.pgid.pgid);
 	_pgid &= ~(0xF << (fw_tc * 4));
@@ -530,354 +531,354 @@ static void cxgb4_setpgtccfg_tx(struct net_device *dev, int tc,
 
 	INIT_PORT_DCB_WRITE_CMD(pcmd, pi->port_id);
 
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB write PGID failed with %d\n",
 			-err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memset(&pcmd, 0, sizeof(struct fw_port_cmd));
+	स_रखो(&pcmd, 0, माप(काष्ठा fw_port_cmd));
 
 	INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
 	pcmd.u.dcb.pgrate.type = FW_PORT_DCB_TYPE_PGRATE;
 
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGRATE failed with %d\n",
 			-err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pcmd.u.dcb.pgrate.pgrate[pgid] = bw_per;
 
 	INIT_PORT_DCB_WRITE_CMD(pcmd, pi->port_id);
-	if (pi->dcb.state == CXGB4_DCB_STATE_HOST)
+	अगर (pi->dcb.state == CXGB4_DCB_STATE_HOST)
 		pcmd.op_to_portid |= cpu_to_be32(FW_PORT_CMD_APPLY_F);
 
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS)
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS)
 		dev_err(adap->pdev_dev, "DCB write PGRATE failed with %d\n",
 			-err);
-}
+पूर्ण
 
-static void cxgb4_getpgbwgcfg(struct net_device *dev, int pgid, u8 *bw_per,
-			      int local)
-{
-	struct fw_port_cmd pcmd;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	int err;
+अटल व्योम cxgb4_getpgbwgcfg(काष्ठा net_device *dev, पूर्णांक pgid, u8 *bw_per,
+			      पूर्णांक local)
+अणु
+	काष्ठा fw_port_cmd pcmd;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	पूर्णांक err;
 
-	if (local)
+	अगर (local)
 		INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
-	else
+	अन्यथा
 		INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
 
 	pcmd.u.dcb.pgrate.type = FW_PORT_DCB_TYPE_PGRATE;
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGRATE failed with %d\n",
 			-err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	*bw_per = pcmd.u.dcb.pgrate.pgrate[pgid];
-}
+पूर्ण
 
-static void cxgb4_getpgbwgcfg_tx(struct net_device *dev, int pgid, u8 *bw_per)
-{
-	return cxgb4_getpgbwgcfg(dev, pgid, bw_per, 1);
-}
+अटल व्योम cxgb4_getpgbwgcfg_tx(काष्ठा net_device *dev, पूर्णांक pgid, u8 *bw_per)
+अणु
+	वापस cxgb4_getpgbwgcfg(dev, pgid, bw_per, 1);
+पूर्ण
 
-static void cxgb4_getpgbwgcfg_rx(struct net_device *dev, int pgid, u8 *bw_per)
-{
-	return cxgb4_getpgbwgcfg(dev, pgid, bw_per, 0);
-}
+अटल व्योम cxgb4_getpgbwgcfg_rx(काष्ठा net_device *dev, पूर्णांक pgid, u8 *bw_per)
+अणु
+	वापस cxgb4_getpgbwgcfg(dev, pgid, bw_per, 0);
+पूर्ण
 
-static void cxgb4_setpgbwgcfg_tx(struct net_device *dev, int pgid,
+अटल व्योम cxgb4_setpgbwgcfg_tx(काष्ठा net_device *dev, पूर्णांक pgid,
 				 u8 bw_per)
-{
-	struct fw_port_cmd pcmd;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	int err;
+अणु
+	काष्ठा fw_port_cmd pcmd;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	पूर्णांक err;
 
 	INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
 	pcmd.u.dcb.pgrate.type = FW_PORT_DCB_TYPE_PGRATE;
 
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGRATE failed with %d\n",
 			-err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pcmd.u.dcb.pgrate.pgrate[pgid] = bw_per;
 
 	INIT_PORT_DCB_WRITE_CMD(pcmd, pi->port_id);
-	if (pi->dcb.state == CXGB4_DCB_STATE_HOST)
+	अगर (pi->dcb.state == CXGB4_DCB_STATE_HOST)
 		pcmd.op_to_portid |= cpu_to_be32(FW_PORT_CMD_APPLY_F);
 
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
 
-	if (err != FW_PORT_DCB_CFG_SUCCESS)
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS)
 		dev_err(adap->pdev_dev, "DCB write PGRATE failed with %d\n",
 			-err);
-}
+पूर्ण
 
-/* Return whether the specified Traffic Class Priority has Priority Pause
+/* Return whether the specअगरied Traffic Class Priority has Priority Pause
  * Frames enabled.
  */
-static void cxgb4_getpfccfg(struct net_device *dev, int priority, u8 *pfccfg)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct port_dcb_info *dcb = &pi->dcb;
+अटल व्योम cxgb4_getpfccfg(काष्ठा net_device *dev, पूर्णांक priority, u8 *pfccfg)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा port_dcb_info *dcb = &pi->dcb;
 
-	if (!cxgb4_dcb_state_synced(dcb->state) ||
+	अगर (!cxgb4_dcb_state_synced(dcb->state) ||
 	    priority >= CXGB4_MAX_PRIORITY)
 		*pfccfg = 0;
-	else
+	अन्यथा
 		*pfccfg = (pi->dcb.pfcen >> (7 - priority)) & 1;
-}
+पूर्ण
 
-/* Enable/disable Priority Pause Frames for the specified Traffic Class
+/* Enable/disable Priority Pause Frames क्रम the specअगरied Traffic Class
  * Priority.
  */
-static void cxgb4_setpfccfg(struct net_device *dev, int priority, u8 pfccfg)
-{
-	struct fw_port_cmd pcmd;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	int err;
+अटल व्योम cxgb4_setpfccfg(काष्ठा net_device *dev, पूर्णांक priority, u8 pfccfg)
+अणु
+	काष्ठा fw_port_cmd pcmd;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	पूर्णांक err;
 
-	if (!cxgb4_dcb_state_synced(pi->dcb.state) ||
+	अगर (!cxgb4_dcb_state_synced(pi->dcb.state) ||
 	    priority >= CXGB4_MAX_PRIORITY)
-		return;
+		वापस;
 
 	INIT_PORT_DCB_WRITE_CMD(pcmd, pi->port_id);
-	if (pi->dcb.state == CXGB4_DCB_STATE_HOST)
+	अगर (pi->dcb.state == CXGB4_DCB_STATE_HOST)
 		pcmd.op_to_portid |= cpu_to_be32(FW_PORT_CMD_APPLY_F);
 
 	pcmd.u.dcb.pfc.type = FW_PORT_DCB_TYPE_PFC;
 	pcmd.u.dcb.pfc.pfcen = pi->dcb.pfcen;
 
-	if (pfccfg)
+	अगर (pfccfg)
 		pcmd.u.dcb.pfc.pfcen |= (1 << (7 - priority));
-	else
+	अन्यथा
 		pcmd.u.dcb.pfc.pfcen &= (~(1 << (7 - priority)));
 
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB PFC write failed with %d\n", -err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pi->dcb.pfcen = pcmd.u.dcb.pfc.pfcen;
-}
+पूर्ण
 
-static u8 cxgb4_setall(struct net_device *dev)
-{
-	return 0;
-}
+अटल u8 cxgb4_setall(काष्ठा net_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
 /* Return DCB capabilities.
  */
-static u8 cxgb4_getcap(struct net_device *dev, int cap_id, u8 *caps)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+अटल u8 cxgb4_अ_लोap(काष्ठा net_device *dev, पूर्णांक cap_id, u8 *caps)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 
-	switch (cap_id) {
-	case DCB_CAP_ATTR_PG:
-	case DCB_CAP_ATTR_PFC:
+	चयन (cap_id) अणु
+	हाल DCB_CAP_ATTR_PG:
+	हाल DCB_CAP_ATTR_PFC:
 		*caps = true;
-		break;
+		अवरोध;
 
-	case DCB_CAP_ATTR_PG_TCS:
-		/* 8 priorities for PG represented by bitmap */
+	हाल DCB_CAP_ATTR_PG_TCS:
+		/* 8 priorities क्रम PG represented by biपंचांगap */
 		*caps = 0x80;
-		break;
+		अवरोध;
 
-	case DCB_CAP_ATTR_PFC_TCS:
-		/* 8 priorities for PFC represented by bitmap */
+	हाल DCB_CAP_ATTR_PFC_TCS:
+		/* 8 priorities क्रम PFC represented by biपंचांगap */
 		*caps = 0x80;
-		break;
+		अवरोध;
 
-	case DCB_CAP_ATTR_GSP:
+	हाल DCB_CAP_ATTR_GSP:
 		*caps = true;
-		break;
+		अवरोध;
 
-	case DCB_CAP_ATTR_UP2TC:
-	case DCB_CAP_ATTR_BCN:
+	हाल DCB_CAP_ATTR_UP2TC:
+	हाल DCB_CAP_ATTR_BCN:
 		*caps = false;
-		break;
+		अवरोध;
 
-	case DCB_CAP_ATTR_DCBX:
+	हाल DCB_CAP_ATTR_DCBX:
 		*caps = pi->dcb.supported;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		*caps = false;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Return the number of Traffic Classes for the indicated Traffic Class ID.
+/* Return the number of Traffic Classes क्रम the indicated Traffic Class ID.
  */
-static int cxgb4_getnumtcs(struct net_device *dev, int tcs_id, u8 *num)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+अटल पूर्णांक cxgb4_getnumtcs(काष्ठा net_device *dev, पूर्णांक tcs_id, u8 *num)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 
-	switch (tcs_id) {
-	case DCB_NUMTCS_ATTR_PG:
-		if (pi->dcb.msgs & CXGB4_DCB_FW_PGRATE)
+	चयन (tcs_id) अणु
+	हाल DCB_NUMTCS_ATTR_PG:
+		अगर (pi->dcb.msgs & CXGB4_DCB_FW_PGRATE)
 			*num = pi->dcb.pg_num_tcs_supported;
-		else
+		अन्यथा
 			*num = 0x8;
-		break;
+		अवरोध;
 
-	case DCB_NUMTCS_ATTR_PFC:
+	हाल DCB_NUMTCS_ATTR_PFC:
 		*num = 0x8;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set the number of Traffic Classes supported for the indicated Traffic Class
+/* Set the number of Traffic Classes supported क्रम the indicated Traffic Class
  * ID.
  */
-static int cxgb4_setnumtcs(struct net_device *dev, int tcs_id, u8 num)
-{
+अटल पूर्णांक cxgb4_setnumtcs(काष्ठा net_device *dev, पूर्णांक tcs_id, u8 num)
+अणु
 	/* Setting the number of Traffic Classes isn't supported.
 	 */
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
 /* Return whether Priority Flow Control is enabled.  */
-static u8 cxgb4_getpfcstate(struct net_device *dev)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+अटल u8 cxgb4_getpfcstate(काष्ठा net_device *dev)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 
-	if (!cxgb4_dcb_state_synced(pi->dcb.state))
-		return false;
+	अगर (!cxgb4_dcb_state_synced(pi->dcb.state))
+		वापस false;
 
-	return pi->dcb.pfcen != 0;
-}
+	वापस pi->dcb.pfcen != 0;
+पूर्ण
 
 /* Enable/disable Priority Flow Control. */
-static void cxgb4_setpfcstate(struct net_device *dev, u8 state)
-{
+अटल व्योम cxgb4_setpfcstate(काष्ठा net_device *dev, u8 state)
+अणु
 	/* We can't enable/disable Priority Flow Control but we also can't
-	 * return an error ...
+	 * वापस an error ...
 	 */
-}
+पूर्ण
 
-/* Return the Application User Priority Map associated with the specified
+/* Return the Application User Priority Map associated with the specअगरied
  * Application ID.
  */
-static int __cxgb4_getapp(struct net_device *dev, u8 app_idtype, u16 app_id,
-			  int peer)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	int i;
+अटल पूर्णांक __cxgb4_getapp(काष्ठा net_device *dev, u8 app_idtype, u16 app_id,
+			  पूर्णांक peer)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	पूर्णांक i;
 
-	if (!cxgb4_dcb_state_synced(pi->dcb.state))
-		return 0;
+	अगर (!cxgb4_dcb_state_synced(pi->dcb.state))
+		वापस 0;
 
-	for (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) {
-		struct fw_port_cmd pcmd;
-		int err;
+	क्रम (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) अणु
+		काष्ठा fw_port_cmd pcmd;
+		पूर्णांक err;
 
-		if (peer)
+		अगर (peer)
 			INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
-		else
+		अन्यथा
 			INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
 
 		pcmd.u.dcb.app_priority.type = FW_PORT_DCB_TYPE_APP_ID;
 		pcmd.u.dcb.app_priority.idx = i;
 
-		err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-		if (err != FW_PORT_DCB_CFG_SUCCESS) {
+		err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+		अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 			dev_err(adap->pdev_dev, "DCB APP read failed with %d\n",
 				-err);
-			return err;
-		}
-		if (be16_to_cpu(pcmd.u.dcb.app_priority.protocolid) == app_id)
-			if (pcmd.u.dcb.app_priority.sel_field == app_idtype)
-				return pcmd.u.dcb.app_priority.user_prio_map;
+			वापस err;
+		पूर्ण
+		अगर (be16_to_cpu(pcmd.u.dcb.app_priority.protocolid) == app_id)
+			अगर (pcmd.u.dcb.app_priority.sel_field == app_idtype)
+				वापस pcmd.u.dcb.app_priority.user_prio_map;
 
 		/* exhausted app list */
-		if (!pcmd.u.dcb.app_priority.protocolid)
-			break;
-	}
+		अगर (!pcmd.u.dcb.app_priority.protocolid)
+			अवरोध;
+	पूर्ण
 
-	return -EEXIST;
-}
+	वापस -EEXIST;
+पूर्ण
 
-/* Return the Application User Priority Map associated with the specified
+/* Return the Application User Priority Map associated with the specअगरied
  * Application ID.
  */
-static int cxgb4_getapp(struct net_device *dev, u8 app_idtype, u16 app_id)
-{
-	/* Convert app_idtype to firmware format before querying */
-	return __cxgb4_getapp(dev, app_idtype == DCB_APP_IDTYPE_ETHTYPE ?
+अटल पूर्णांक cxgb4_getapp(काष्ठा net_device *dev, u8 app_idtype, u16 app_id)
+अणु
+	/* Convert app_idtype to firmware क्रमmat beक्रमe querying */
+	वापस __cxgb4_getapp(dev, app_idtype == DCB_APP_IDTYPE_ETHTYPE ?
 			      app_idtype : 3, app_id, 0);
-}
+पूर्ण
 
-/* Write a new Application User Priority Map for the specified Application ID
+/* Write a new Application User Priority Map क्रम the specअगरied Application ID
  */
-static int __cxgb4_setapp(struct net_device *dev, u8 app_idtype, u16 app_id,
+अटल पूर्णांक __cxgb4_setapp(काष्ठा net_device *dev, u8 app_idtype, u16 app_id,
 			  u8 app_prio)
-{
-	struct fw_port_cmd pcmd;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	int i, err;
+अणु
+	काष्ठा fw_port_cmd pcmd;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	पूर्णांक i, err;
 
 
-	if (!cxgb4_dcb_state_synced(pi->dcb.state))
-		return -EINVAL;
+	अगर (!cxgb4_dcb_state_synced(pi->dcb.state))
+		वापस -EINVAL;
 
-	/* DCB info gets thrown away on link up */
-	if (!netif_carrier_ok(dev))
-		return -ENOLINK;
+	/* DCB info माला_लो thrown away on link up */
+	अगर (!netअगर_carrier_ok(dev))
+		वापस -ENOLINK;
 
-	for (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) {
+	क्रम (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) अणु
 		INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
 		pcmd.u.dcb.app_priority.type = FW_PORT_DCB_TYPE_APP_ID;
 		pcmd.u.dcb.app_priority.idx = i;
-		err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
+		err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
 
-		if (err != FW_PORT_DCB_CFG_SUCCESS) {
+		अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 			dev_err(adap->pdev_dev, "DCB app table read failed with %d\n",
 				-err);
-			return err;
-		}
-		if (be16_to_cpu(pcmd.u.dcb.app_priority.protocolid) == app_id) {
-			/* overwrite existing app table */
+			वापस err;
+		पूर्ण
+		अगर (be16_to_cpu(pcmd.u.dcb.app_priority.protocolid) == app_id) अणु
+			/* overग_लिखो existing app table */
 			pcmd.u.dcb.app_priority.protocolid = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/* find first empty slot */
-		if (!pcmd.u.dcb.app_priority.protocolid)
-			break;
-	}
+		अगर (!pcmd.u.dcb.app_priority.protocolid)
+			अवरोध;
+	पूर्ण
 
-	if (i == CXGB4_MAX_DCBX_APP_SUPPORTED) {
+	अगर (i == CXGB4_MAX_DCBX_APP_SUPPORTED) अणु
 		/* no empty slots available */
 		dev_err(adap->pdev_dev, "DCB app table full\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* write out new app table entry */
+	/* ग_लिखो out new app table entry */
 	INIT_PORT_DCB_WRITE_CMD(pcmd, pi->port_id);
-	if (pi->dcb.state == CXGB4_DCB_STATE_HOST)
+	अगर (pi->dcb.state == CXGB4_DCB_STATE_HOST)
 		pcmd.op_to_portid |= cpu_to_be32(FW_PORT_CMD_APPLY_F);
 
 	pcmd.u.dcb.app_priority.type = FW_PORT_DCB_TYPE_APP_ID;
@@ -886,305 +887,305 @@ static int __cxgb4_setapp(struct net_device *dev, u8 app_idtype, u16 app_id,
 	pcmd.u.dcb.app_priority.user_prio_map = app_prio;
 	pcmd.u.dcb.app_priority.idx = i;
 
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB app table write failed with %d\n",
 			-err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Priority for CEE inside dcb_app is bitmask, with 0 being an invalid value */
-static int cxgb4_setapp(struct net_device *dev, u8 app_idtype, u16 app_id,
+/* Priority क्रम CEE inside dcb_app is biपंचांगask, with 0 being an invalid value */
+अटल पूर्णांक cxgb4_setapp(काष्ठा net_device *dev, u8 app_idtype, u16 app_id,
 			u8 app_prio)
-{
-	int ret;
-	struct dcb_app app = {
+अणु
+	पूर्णांक ret;
+	काष्ठा dcb_app app = अणु
 		.selector = app_idtype,
 		.protocol = app_id,
 		.priority = app_prio,
-	};
+	पूर्ण;
 
-	if (app_idtype != DCB_APP_IDTYPE_ETHTYPE &&
+	अगर (app_idtype != DCB_APP_IDTYPE_ETHTYPE &&
 	    app_idtype != DCB_APP_IDTYPE_PORTNUM)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Convert app_idtype to a format that firmware understands */
+	/* Convert app_idtype to a क्रमmat that firmware understands */
 	ret = __cxgb4_setapp(dev, app_idtype == DCB_APP_IDTYPE_ETHTYPE ?
 			      app_idtype : 3, app_id, app_prio);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return dcb_setapp(dev, &app);
-}
+	वापस dcb_setapp(dev, &app);
+पूर्ण
 
 /* Return whether IEEE Data Center Bridging has been negotiated.
  */
-static inline int
-cxgb4_ieee_negotiation_complete(struct net_device *dev,
-				enum cxgb4_dcb_fw_msgs dcb_subtype)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct port_dcb_info *dcb = &pi->dcb;
+अटल अंतरभूत पूर्णांक
+cxgb4_ieee_negotiation_complete(काष्ठा net_device *dev,
+				क्रमागत cxgb4_dcb_fw_msgs dcb_subtype)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा port_dcb_info *dcb = &pi->dcb;
 
-	if (dcb->state == CXGB4_DCB_STATE_FW_ALLSYNCED)
-		if (dcb_subtype && !(dcb->msgs & dcb_subtype))
-			return 0;
+	अगर (dcb->state == CXGB4_DCB_STATE_FW_ALLSYNCED)
+		अगर (dcb_subtype && !(dcb->msgs & dcb_subtype))
+			वापस 0;
 
-	return (cxgb4_dcb_state_synced(dcb->state) &&
+	वापस (cxgb4_dcb_state_synced(dcb->state) &&
 		(dcb->supported & DCB_CAP_DCBX_VER_IEEE));
-}
+पूर्ण
 
-static int cxgb4_ieee_read_ets(struct net_device *dev, struct ieee_ets *ets,
-			       int local)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct port_dcb_info *dcb = &pi->dcb;
-	struct adapter *adap = pi->adapter;
-	uint32_t tc_info;
-	struct fw_port_cmd pcmd;
-	int i, bwg, err;
+अटल पूर्णांक cxgb4_ieee_पढ़ो_ets(काष्ठा net_device *dev, काष्ठा ieee_ets *ets,
+			       पूर्णांक local)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा port_dcb_info *dcb = &pi->dcb;
+	काष्ठा adapter *adap = pi->adapter;
+	uपूर्णांक32_t tc_info;
+	काष्ठा fw_port_cmd pcmd;
+	पूर्णांक i, bwg, err;
 
-	if (!(dcb->msgs & (CXGB4_DCB_FW_PGID | CXGB4_DCB_FW_PGRATE)))
-		return 0;
+	अगर (!(dcb->msgs & (CXGB4_DCB_FW_PGID | CXGB4_DCB_FW_PGRATE)))
+		वापस 0;
 
 	ets->ets_cap =  dcb->pg_num_tcs_supported;
 
-	if (local) {
+	अगर (local) अणु
 		ets->willing = 1;
 		INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
-	} else {
+	पूर्ण अन्यथा अणु
 		INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
-	}
+	पूर्ण
 
 	pcmd.u.dcb.pgid.type = FW_PORT_DCB_TYPE_PGID;
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGID failed with %d\n", -err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	tc_info = be32_to_cpu(pcmd.u.dcb.pgid.pgid);
 
-	if (local)
+	अगर (local)
 		INIT_PORT_DCB_READ_LOCAL_CMD(pcmd, pi->port_id);
-	else
+	अन्यथा
 		INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
 
 	pcmd.u.dcb.pgrate.type = FW_PORT_DCB_TYPE_PGRATE;
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGRATE failed with %d\n",
 			-err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
+	क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
 		bwg = (tc_info >> ((7 - i) * 4)) & 0xF;
 		ets->prio_tc[i] = bwg;
 		ets->tc_tx_bw[i] = pcmd.u.dcb.pgrate.pgrate[i];
 		ets->tc_rx_bw[i] = ets->tc_tx_bw[i];
 		ets->tc_tsa[i] = pcmd.u.dcb.pgrate.tsa[i];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxgb4_ieee_get_ets(struct net_device *dev, struct ieee_ets *ets)
-{
-	return cxgb4_ieee_read_ets(dev, ets, 1);
-}
+अटल पूर्णांक cxgb4_ieee_get_ets(काष्ठा net_device *dev, काष्ठा ieee_ets *ets)
+अणु
+	वापस cxgb4_ieee_पढ़ो_ets(dev, ets, 1);
+पूर्ण
 
-/* We reuse this for peer PFC as well, as we can't have it enabled one way */
-static int cxgb4_ieee_get_pfc(struct net_device *dev, struct ieee_pfc *pfc)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct port_dcb_info *dcb = &pi->dcb;
+/* We reuse this क्रम peer PFC as well, as we can't have it enabled one way */
+अटल पूर्णांक cxgb4_ieee_get_pfc(काष्ठा net_device *dev, काष्ठा ieee_pfc *pfc)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा port_dcb_info *dcb = &pi->dcb;
 
-	memset(pfc, 0, sizeof(struct ieee_pfc));
+	स_रखो(pfc, 0, माप(काष्ठा ieee_pfc));
 
-	if (!(dcb->msgs & CXGB4_DCB_FW_PFC))
-		return 0;
+	अगर (!(dcb->msgs & CXGB4_DCB_FW_PFC))
+		वापस 0;
 
 	pfc->pfc_cap = dcb->pfc_num_tcs_supported;
 	pfc->pfc_en = bitswap_1(dcb->pfcen);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxgb4_ieee_peer_ets(struct net_device *dev, struct ieee_ets *ets)
-{
-	return cxgb4_ieee_read_ets(dev, ets, 0);
-}
+अटल पूर्णांक cxgb4_ieee_peer_ets(काष्ठा net_device *dev, काष्ठा ieee_ets *ets)
+अणु
+	वापस cxgb4_ieee_पढ़ो_ets(dev, ets, 0);
+पूर्ण
 
 /* Fill in the Application User Priority Map associated with the
- * specified Application.
- * Priority for IEEE dcb_app is an integer, with 0 being a valid value
+ * specअगरied Application.
+ * Priority क्रम IEEE dcb_app is an पूर्णांकeger, with 0 being a valid value
  */
-static int cxgb4_ieee_getapp(struct net_device *dev, struct dcb_app *app)
-{
-	int prio;
+अटल पूर्णांक cxgb4_ieee_getapp(काष्ठा net_device *dev, काष्ठा dcb_app *app)
+अणु
+	पूर्णांक prio;
 
-	if (!cxgb4_ieee_negotiation_complete(dev, CXGB4_DCB_FW_APP_ID))
-		return -EINVAL;
-	if (!(app->selector && app->protocol))
-		return -EINVAL;
+	अगर (!cxgb4_ieee_negotiation_complete(dev, CXGB4_DCB_FW_APP_ID))
+		वापस -EINVAL;
+	अगर (!(app->selector && app->protocol))
+		वापस -EINVAL;
 
-	/* Try querying firmware first, use firmware format */
+	/* Try querying firmware first, use firmware क्रमmat */
 	prio = __cxgb4_getapp(dev, app->selector - 1, app->protocol, 0);
 
-	if (prio < 0)
+	अगर (prio < 0)
 		prio = dcb_ieee_getapp_mask(dev, app);
 
 	app->priority = ffs(prio) - 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Write a new Application User Priority Map for the specified Application ID.
- * Priority for IEEE dcb_app is an integer, with 0 being a valid value
+/* Write a new Application User Priority Map क्रम the specअगरied Application ID.
+ * Priority क्रम IEEE dcb_app is an पूर्णांकeger, with 0 being a valid value
  */
-static int cxgb4_ieee_setapp(struct net_device *dev, struct dcb_app *app)
-{
-	int ret;
+अटल पूर्णांक cxgb4_ieee_setapp(काष्ठा net_device *dev, काष्ठा dcb_app *app)
+अणु
+	पूर्णांक ret;
 
-	if (!cxgb4_ieee_negotiation_complete(dev, CXGB4_DCB_FW_APP_ID))
-		return -EINVAL;
-	if (!(app->selector && app->protocol))
-		return -EINVAL;
+	अगर (!cxgb4_ieee_negotiation_complete(dev, CXGB4_DCB_FW_APP_ID))
+		वापस -EINVAL;
+	अगर (!(app->selector && app->protocol))
+		वापस -EINVAL;
 
-	if (!(app->selector > IEEE_8021QAZ_APP_SEL_ETHERTYPE  &&
+	अगर (!(app->selector > IEEE_8021QAZ_APP_SEL_ETHERTYPE  &&
 	      app->selector < IEEE_8021QAZ_APP_SEL_ANY))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* change selector to a format that firmware understands */
+	/* change selector to a क्रमmat that firmware understands */
 	ret = __cxgb4_setapp(dev, app->selector - 1, app->protocol,
 			     (1 << app->priority));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return dcb_ieee_setapp(dev, app);
-}
+	वापस dcb_ieee_setapp(dev, app);
+पूर्ण
 
 /* Return our DCBX parameters.
  */
-static u8 cxgb4_getdcbx(struct net_device *dev)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+अटल u8 cxgb4_getdcbx(काष्ठा net_device *dev)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 
-	/* This is already set by cxgb4_set_dcb_caps, so just return it */
-	return pi->dcb.supported;
-}
+	/* This is alपढ़ोy set by cxgb4_set_dcb_caps, so just वापस it */
+	वापस pi->dcb.supported;
+पूर्ण
 
 /* Set our DCBX parameters.
  */
-static u8 cxgb4_setdcbx(struct net_device *dev, u8 dcb_request)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+अटल u8 cxgb4_setdcbx(काष्ठा net_device *dev, u8 dcb_request)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 
 	/* Filter out requests which exceed our capabilities.
 	 */
-	if ((dcb_request & (CXGB4_DCBX_FW_SUPPORT | CXGB4_DCBX_HOST_SUPPORT))
+	अगर ((dcb_request & (CXGB4_DCBX_FW_SUPPORT | CXGB4_DCBX_HOST_SUPPORT))
 	    != dcb_request)
-		return 1;
+		वापस 1;
 
 	/* Can't enable DCB if we haven't successfully negotiated it.
 	 */
-	if (!cxgb4_dcb_state_synced(pi->dcb.state))
-		return 1;
+	अगर (!cxgb4_dcb_state_synced(pi->dcb.state))
+		वापस 1;
 
-	/* There's currently no mechanism to allow for the firmware DCBX
+	/* There's currently no mechanism to allow क्रम the firmware DCBX
 	 * negotiation to be changed from the Host Driver.  If the caller
-	 * requests exactly the same parameters that we already have then
+	 * requests exactly the same parameters that we alपढ़ोy have then
 	 * we'll allow them to be successfully "set" ...
 	 */
-	if (dcb_request != pi->dcb.supported)
-		return 1;
+	अगर (dcb_request != pi->dcb.supported)
+		वापस 1;
 
 	pi->dcb.supported = dcb_request;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxgb4_getpeer_app(struct net_device *dev,
-			     struct dcb_peer_app_info *info, u16 *app_count)
-{
-	struct fw_port_cmd pcmd;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	int i, err = 0;
+अटल पूर्णांक cxgb4_getpeer_app(काष्ठा net_device *dev,
+			     काष्ठा dcb_peer_app_info *info, u16 *app_count)
+अणु
+	काष्ठा fw_port_cmd pcmd;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	पूर्णांक i, err = 0;
 
-	if (!cxgb4_dcb_state_synced(pi->dcb.state))
-		return 1;
+	अगर (!cxgb4_dcb_state_synced(pi->dcb.state))
+		वापस 1;
 
 	info->willing = 0;
 	info->error = 0;
 
 	*app_count = 0;
-	for (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) {
+	क्रम (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) अणु
 		INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
 		pcmd.u.dcb.app_priority.type = FW_PORT_DCB_TYPE_APP_ID;
 		pcmd.u.dcb.app_priority.idx = *app_count;
-		err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
+		err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
 
-		if (err != FW_PORT_DCB_CFG_SUCCESS) {
+		अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 			dev_err(adap->pdev_dev, "DCB app table read failed with %d\n",
 				-err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		/* find first empty slot */
-		if (!pcmd.u.dcb.app_priority.protocolid)
-			break;
-	}
+		अगर (!pcmd.u.dcb.app_priority.protocolid)
+			अवरोध;
+	पूर्ण
 	*app_count = i;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int cxgb4_getpeerapp_tbl(struct net_device *dev, struct dcb_app *table)
-{
-	struct fw_port_cmd pcmd;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
-	int i, err = 0;
+अटल पूर्णांक cxgb4_getpeerapp_tbl(काष्ठा net_device *dev, काष्ठा dcb_app *table)
+अणु
+	काष्ठा fw_port_cmd pcmd;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
+	पूर्णांक i, err = 0;
 
-	if (!cxgb4_dcb_state_synced(pi->dcb.state))
-		return 1;
+	अगर (!cxgb4_dcb_state_synced(pi->dcb.state))
+		वापस 1;
 
-	for (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) {
+	क्रम (i = 0; i < CXGB4_MAX_DCBX_APP_SUPPORTED; i++) अणु
 		INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
 		pcmd.u.dcb.app_priority.type = FW_PORT_DCB_TYPE_APP_ID;
 		pcmd.u.dcb.app_priority.idx = i;
-		err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
+		err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
 
-		if (err != FW_PORT_DCB_CFG_SUCCESS) {
+		अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 			dev_err(adap->pdev_dev, "DCB app table read failed with %d\n",
 				-err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		/* find first empty slot */
-		if (!pcmd.u.dcb.app_priority.protocolid)
-			break;
+		अगर (!pcmd.u.dcb.app_priority.protocolid)
+			अवरोध;
 
 		table[i].selector = (pcmd.u.dcb.app_priority.sel_field + 1);
 		table[i].protocol =
 			be16_to_cpu(pcmd.u.dcb.app_priority.protocolid);
 		table[i].priority =
 			ffs(pcmd.u.dcb.app_priority.user_prio_map) - 1;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-/* Return Priority Group information.
+/* Return Priority Group inक्रमmation.
  */
-static int cxgb4_cee_peer_getpg(struct net_device *dev, struct cee_pg *pg)
-{
-	struct fw_port_cmd pcmd;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = pi->adapter;
+अटल पूर्णांक cxgb4_cee_peer_getpg(काष्ठा net_device *dev, काष्ठा cee_pg *pg)
+अणु
+	काष्ठा fw_port_cmd pcmd;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = pi->adapter;
 	u32 pgid;
-	int i, err;
+	पूर्णांक i, err;
 
 	/* We're always "willing" -- the Switch Fabric always dictates the
 	 * DCBX parameters to us.
@@ -1193,53 +1194,53 @@ static int cxgb4_cee_peer_getpg(struct net_device *dev, struct cee_pg *pg)
 
 	INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
 	pcmd.u.dcb.pgid.type = FW_PORT_DCB_TYPE_PGID;
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGID failed with %d\n", -err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	pgid = be32_to_cpu(pcmd.u.dcb.pgid.pgid);
 
-	for (i = 0; i < CXGB4_MAX_PRIORITY; i++)
+	क्रम (i = 0; i < CXGB4_MAX_PRIORITY; i++)
 		pg->prio_pg[7 - i] = (pgid >> (i * 4)) & 0xF;
 
 	INIT_PORT_DCB_READ_PEER_CMD(pcmd, pi->port_id);
 	pcmd.u.dcb.pgrate.type = FW_PORT_DCB_TYPE_PGRATE;
-	err = t4_wr_mbox(adap, adap->mbox, &pcmd, sizeof(pcmd), &pcmd);
-	if (err != FW_PORT_DCB_CFG_SUCCESS) {
+	err = t4_wr_mbox(adap, adap->mbox, &pcmd, माप(pcmd), &pcmd);
+	अगर (err != FW_PORT_DCB_CFG_SUCCESS) अणु
 		dev_err(adap->pdev_dev, "DCB read PGRATE failed with %d\n",
 			-err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	for (i = 0; i < CXGB4_MAX_PRIORITY; i++)
+	क्रम (i = 0; i < CXGB4_MAX_PRIORITY; i++)
 		pg->pg_bw[i] = pcmd.u.dcb.pgrate.pgrate[i];
 
 	pg->tcs_supported = pcmd.u.dcb.pgrate.num_tcs_supported;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Return Priority Flow Control information.
+/* Return Priority Flow Control inक्रमmation.
  */
-static int cxgb4_cee_peer_getpfc(struct net_device *dev, struct cee_pfc *pfc)
-{
-	struct port_info *pi = netdev2pinfo(dev);
+अटल पूर्णांक cxgb4_cee_peer_getpfc(काष्ठा net_device *dev, काष्ठा cee_pfc *pfc)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
 
 	cxgb4_getnumtcs(dev, DCB_NUMTCS_ATTR_PFC, &(pfc->tcs_supported));
 
-	/* Firmware sends this to us in a formwat that is a bit flipped version
-	 * of spec, correct it before we send it to host. This is taken care of
-	 * by bit shifting in other uses of pfcen
+	/* Firmware sends this to us in a क्रमmwat that is a bit flipped version
+	 * of spec, correct it beक्रमe we send it to host. This is taken care of
+	 * by bit shअगरting in other uses of pfcen
 	 */
 	pfc->pfc_en = bitswap_1(pi->dcb.pfcen);
 
 	pfc->tcs_supported = pi->dcb.pfc_num_tcs_supported;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct dcbnl_rtnl_ops cxgb4_dcb_ops = {
+स्थिर काष्ठा dcbnl_rtnl_ops cxgb4_dcb_ops = अणु
 	.ieee_getets		= cxgb4_ieee_get_ets,
 	.ieee_getpfc		= cxgb4_ieee_get_pfc,
 	.ieee_getapp		= cxgb4_ieee_getapp,
@@ -1248,7 +1249,7 @@ const struct dcbnl_rtnl_ops cxgb4_dcb_ops = {
 	.ieee_peer_getpfc	= cxgb4_ieee_get_pfc,
 
 	/* CEE std */
-	.getstate		= cxgb4_getstate,
+	.माला_लोtate		= cxgb4_माला_लोtate,
 	.setstate		= cxgb4_setstate,
 	.getpgtccfgtx		= cxgb4_getpgtccfg_tx,
 	.getpgbwgcfgtx		= cxgb4_getpgbwgcfg_tx,
@@ -1259,7 +1260,7 @@ const struct dcbnl_rtnl_ops cxgb4_dcb_ops = {
 	.setpfccfg		= cxgb4_setpfccfg,
 	.getpfccfg		= cxgb4_getpfccfg,
 	.setall			= cxgb4_setall,
-	.getcap			= cxgb4_getcap,
+	.अ_लोap			= cxgb4_अ_लोap,
 	.getnumtcs		= cxgb4_getnumtcs,
 	.setnumtcs		= cxgb4_setnumtcs,
 	.getpfcstate		= cxgb4_getpfcstate,
@@ -1278,4 +1279,4 @@ const struct dcbnl_rtnl_ops cxgb4_dcb_ops = {
 	/* CEE peer */
 	.cee_peer_getpg		= cxgb4_cee_peer_getpg,
 	.cee_peer_getpfc	= cxgb4_cee_peer_getpfc,
-};
+पूर्ण;

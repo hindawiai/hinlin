@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	Bus error event handling code for DECstation/DECsystem 3100
- *	and 2100 (KN01) systems equipped with parity error detection
+ *	Bus error event handling code क्रम DECstation/DECप्रणाली 3100
+ *	and 2100 (KN01) प्रणालीs equipped with parity error detection
  *	logic.
  *
  *	Copyright (c) 2005  Maciej W. Rozycki
  */
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
 
-#include <asm/inst.h>
-#include <asm/irq_regs.h>
-#include <asm/mipsregs.h>
-#include <asm/page.h>
-#include <asm/ptrace.h>
-#include <asm/traps.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/inst.h>
+#समावेश <यंत्र/irq_regs.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/dec/kn01.h>
+#समावेश <यंत्र/dec/kn01.h>
 
 
-/* CP0 hazard avoidance. */
-#define BARRIER				\
-	__asm__ __volatile__(		\
+/* CP0 hazard aव्योमance. */
+#घोषणा BARRIER				\
+	__यंत्र__ __अस्थिर__(		\
 		".set	push\n\t"	\
 		".set	noreorder\n\t"	\
 		"nop\n\t"		\
 		".set	pop\n\t")
 
 /*
- * Bits 7:0 of the Control Register are write-only -- the
- * corresponding bits of the Status Register have a different
+ * Bits 7:0 of the Control Register are ग_लिखो-only -- the
+ * corresponding bits of the Status Register have a dअगरferent
  * meaning.  Hence we use a cache.  It speeds up things a bit
  * as well.
  *
- * There is no default value -- it has to be initialized.
+ * There is no शेष value -- it has to be initialized.
  */
 u16 cached_kn01_csr;
-static DEFINE_RAW_SPINLOCK(kn01_lock);
+अटल DEFINE_RAW_SPINLOCK(kn01_lock);
 
 
-static inline void dec_kn01_be_ack(void)
-{
-	volatile u16 *csr = (void *)CKSEG1ADDR(KN01_SLOT_BASE + KN01_CSR);
-	unsigned long flags;
+अटल अंतरभूत व्योम dec_kn01_be_ack(व्योम)
+अणु
+	अस्थिर u16 *csr = (व्योम *)CKSEG1ADDR(KN01_SLOT_BASE + KN01_CSR);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&kn01_lock, flags);
 
@@ -55,131 +56,131 @@ static inline void dec_kn01_be_ack(void)
 	iob();
 
 	raw_spin_unlock_irqrestore(&kn01_lock, flags);
-}
+पूर्ण
 
-static int dec_kn01_be_backend(struct pt_regs *regs, int is_fixup, int invoker)
-{
-	volatile u32 *kn01_erraddr = (void *)CKSEG1ADDR(KN01_SLOT_BASE +
+अटल पूर्णांक dec_kn01_be_backend(काष्ठा pt_regs *regs, पूर्णांक is_fixup, पूर्णांक invoker)
+अणु
+	अस्थिर u32 *kn01_erraddr = (व्योम *)CKSEG1ADDR(KN01_SLOT_BASE +
 							KN01_ERRADDR);
 
-	static const char excstr[] = "exception";
-	static const char intstr[] = "interrupt";
-	static const char cpustr[] = "CPU";
-	static const char mreadstr[] = "memory read";
-	static const char readstr[] = "read";
-	static const char writestr[] = "write";
-	static const char timestr[] = "timeout";
-	static const char paritystr[] = "parity error";
+	अटल स्थिर अक्षर excstr[] = "exception";
+	अटल स्थिर अक्षर पूर्णांकstr[] = "interrupt";
+	अटल स्थिर अक्षर cpustr[] = "CPU";
+	अटल स्थिर अक्षर mपढ़ोstr[] = "memory read";
+	अटल स्थिर अक्षर पढ़ोstr[] = "read";
+	अटल स्थिर अक्षर ग_लिखोstr[] = "write";
+	अटल स्थिर अक्षर बारtr[] = "timeout";
+	अटल स्थिर अक्षर paritystr[] = "parity error";
 
-	int data = regs->cp0_cause & 4;
-	unsigned int __user *pc = (unsigned int __user *)regs->cp0_epc +
+	पूर्णांक data = regs->cp0_cause & 4;
+	अचिन्हित पूर्णांक __user *pc = (अचिन्हित पूर्णांक __user *)regs->cp0_epc +
 				  ((regs->cp0_cause & CAUSEF_BD) != 0);
-	union mips_instruction insn;
-	unsigned long entrylo, offset;
-	long asid, entryhi, vaddr;
+	जोड़ mips_inकाष्ठाion insn;
+	अचिन्हित दीर्घ entrylo, offset;
+	दीर्घ asid, entryhi, vaddr;
 
-	const char *kind, *agent, *cycle, *event;
-	unsigned long address;
+	स्थिर अक्षर *kind, *agent, *cycle, *event;
+	अचिन्हित दीर्घ address;
 
 	u32 erraddr = *kn01_erraddr;
-	int action = MIPS_BE_FATAL;
+	पूर्णांक action = MIPS_BE_FATAL;
 
 	/* Ack ASAP, so that any subsequent errors get caught. */
 	dec_kn01_be_ack();
 
-	kind = invoker ? intstr : excstr;
+	kind = invoker ? पूर्णांकstr : excstr;
 
 	agent = cpustr;
 
-	if (invoker)
+	अगर (invoker)
 		address = erraddr;
-	else {
-		/* Bloody hardware doesn't record the address for reads... */
-		if (data) {
+	अन्यथा अणु
+		/* Bloody hardware करोesn't record the address क्रम पढ़ोs... */
+		अगर (data) अणु
 			/* This never faults. */
 			__get_user(insn.word, pc);
-			vaddr = regs->regs[insn.i_format.rs] +
-				insn.i_format.simmediate;
-		} else
-			vaddr = (long)pc;
-		if (KSEGX(vaddr) == CKSEG0 || KSEGX(vaddr) == CKSEG1)
+			vaddr = regs->regs[insn.i_क्रमmat.rs] +
+				insn.i_क्रमmat.simmediate;
+		पूर्ण अन्यथा
+			vaddr = (दीर्घ)pc;
+		अगर (KSEGX(vaddr) == CKSEG0 || KSEGX(vaddr) == CKSEG1)
 			address = CPHYSADDR(vaddr);
-		else {
+		अन्यथा अणु
 			/* Peek at what physical address the CPU used. */
-			asid = read_c0_entryhi();
+			asid = पढ़ो_c0_entryhi();
 			entryhi = asid & (PAGE_SIZE - 1);
 			entryhi |= vaddr & ~(PAGE_SIZE - 1);
-			write_c0_entryhi(entryhi);
+			ग_लिखो_c0_entryhi(entryhi);
 			BARRIER;
 			tlb_probe();
-			/* No need to check for presence. */
-			tlb_read();
-			entrylo = read_c0_entrylo0();
-			write_c0_entryhi(asid);
+			/* No need to check क्रम presence. */
+			tlb_पढ़ो();
+			entrylo = पढ़ो_c0_entrylo0();
+			ग_लिखो_c0_entryhi(asid);
 			offset = vaddr & (PAGE_SIZE - 1);
 			address = (entrylo & ~(PAGE_SIZE - 1)) | offset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Treat low 256MB as memory, high -- as I/O. */
-	if (address < 0x10000000) {
-		cycle = mreadstr;
+	अगर (address < 0x10000000) अणु
+		cycle = mपढ़ोstr;
 		event = paritystr;
-	} else {
-		cycle = invoker ? writestr : readstr;
-		event = timestr;
-	}
+	पूर्ण अन्यथा अणु
+		cycle = invoker ? ग_लिखोstr : पढ़ोstr;
+		event = बारtr;
+	पूर्ण
 
-	if (is_fixup)
+	अगर (is_fixup)
 		action = MIPS_BE_FIXUP;
 
-	if (action != MIPS_BE_FIXUP)
-		printk(KERN_ALERT "Bus error %s: %s %s %s at %#010lx\n",
+	अगर (action != MIPS_BE_FIXUP)
+		prपूर्णांकk(KERN_ALERT "Bus error %s: %s %s %s at %#010lx\n",
 			kind, agent, cycle, event, address);
 
-	return action;
-}
+	वापस action;
+पूर्ण
 
-int dec_kn01_be_handler(struct pt_regs *regs, int is_fixup)
-{
-	return dec_kn01_be_backend(regs, is_fixup, 0);
-}
+पूर्णांक dec_kn01_be_handler(काष्ठा pt_regs *regs, पूर्णांक is_fixup)
+अणु
+	वापस dec_kn01_be_backend(regs, is_fixup, 0);
+पूर्ण
 
-irqreturn_t dec_kn01_be_interrupt(int irq, void *dev_id)
-{
-	volatile u16 *csr = (void *)CKSEG1ADDR(KN01_SLOT_BASE + KN01_CSR);
-	struct pt_regs *regs = get_irq_regs();
-	int action;
+irqवापस_t dec_kn01_be_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अस्थिर u16 *csr = (व्योम *)CKSEG1ADDR(KN01_SLOT_BASE + KN01_CSR);
+	काष्ठा pt_regs *regs = get_irq_regs();
+	पूर्णांक action;
 
-	if (!(*csr & KN01_CSR_MEMERR))
-		return IRQ_NONE;		/* Must have been video. */
+	अगर (!(*csr & KN01_CSR_MEMERR))
+		वापस IRQ_NONE;		/* Must have been video. */
 
 	action = dec_kn01_be_backend(regs, 0, 1);
 
-	if (action == MIPS_BE_DISCARD)
-		return IRQ_HANDLED;
+	अगर (action == MIPS_BE_DISCARD)
+		वापस IRQ_HANDLED;
 
 	/*
-	 * FIXME: Find the affected processes and kill them, otherwise
+	 * FIXME: Find the affected processes and समाप्त them, otherwise
 	 * we must die.
 	 *
-	 * The interrupt is asynchronously delivered thus EPC and RA
-	 * may be irrelevant, but are printed for a reference.
+	 * The पूर्णांकerrupt is asynchronously delivered thus EPC and RA
+	 * may be irrelevant, but are prपूर्णांकed क्रम a reference.
 	 */
-	printk(KERN_ALERT "Fatal bus interrupt, epc == %08lx, ra == %08lx\n",
+	prपूर्णांकk(KERN_ALERT "Fatal bus interrupt, epc == %08lx, ra == %08lx\n",
 	       regs->cp0_epc, regs->regs[31]);
 	die("Unrecoverable bus error", regs);
-}
+पूर्ण
 
 
-void __init dec_kn01_be_init(void)
-{
-	volatile u16 *csr = (void *)CKSEG1ADDR(KN01_SLOT_BASE + KN01_CSR);
-	unsigned long flags;
+व्योम __init dec_kn01_be_init(व्योम)
+अणु
+	अस्थिर u16 *csr = (व्योम *)CKSEG1ADDR(KN01_SLOT_BASE + KN01_CSR);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&kn01_lock, flags);
 
-	/* Preset write-only bits of the Control Register cache. */
+	/* Preset ग_लिखो-only bits of the Control Register cache. */
 	cached_kn01_csr = *csr;
 	cached_kn01_csr &= KN01_CSR_STATUS | KN01_CSR_PARDIS | KN01_CSR_TXDIS;
 	cached_kn01_csr |= KN01_CSR_LEDS;
@@ -193,4 +194,4 @@ void __init dec_kn01_be_init(void)
 
 	/* Clear any leftover errors from the firmware. */
 	dec_kn01_be_ack();
-}
+पूर्ण

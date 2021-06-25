@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <asm/nds32.h>
-#include <nds32_intrinsic.h>
+#समावेश <यंत्र/nds32.h>
+#समावेश <nds32_पूर्णांकrinsic.h>
 
-#define arch_local_irq_disable()	\
+#घोषणा arch_local_irq_disable()	\
 	GIE_DISABLE();
 
-#define arch_local_irq_enable()	\
+#घोषणा arch_local_irq_enable()	\
 	GIE_ENABLE();
-static inline unsigned long arch_local_irq_save(void)
-{
-	unsigned long flags;
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_irq_save(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	flags = __nds32__mfsr(NDS32_SR_PSW) & PSW_mskGIE;
 	GIE_DISABLE();
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static inline unsigned long arch_local_save_flags(void)
-{
-	unsigned long flags;
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_save_flags(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	flags = __nds32__mfsr(NDS32_SR_PSW) & PSW_mskGIE;
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static inline void arch_local_irq_restore(unsigned long flags)
-{
-	if(flags)
+अटल अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
+अणु
+	अगर(flags)
 		GIE_ENABLE();
-}
+पूर्ण
 
-static inline int arch_irqs_disabled_flags(unsigned long flags)
-{
-	return !flags;
-}
+अटल अंतरभूत पूर्णांक arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
+अणु
+	वापस !flags;
+पूर्ण
 
-static inline int arch_irqs_disabled(void)
-{
-	return arch_irqs_disabled_flags(arch_local_save_flags());
-}
+अटल अंतरभूत पूर्णांक arch_irqs_disabled(व्योम)
+अणु
+	वापस arch_irqs_disabled_flags(arch_local_save_flags());
+पूर्ण

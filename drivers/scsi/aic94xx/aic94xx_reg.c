@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Aic94xx SAS/SATA driver register access.
+ * Aic94xx SAS/SATA driver रेजिस्टर access.
  *
  * Copyright (C) 2005 Adaptec, Inc.  All rights reserved.
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
-#include <linux/pci.h>
-#include "aic94xx_reg.h"
-#include "aic94xx.h"
+#समावेश <linux/pci.h>
+#समावेश "aic94xx_reg.h"
+#समावेश "aic94xx.h"
 
 /* Writing to device address space.
- * Offset comes before value to remind that the operation of
+ * Offset comes beक्रमe value to remind that the operation of
  * this function is *offs = val.
  */
-static void asd_write_byte(struct asd_ha_struct *asd_ha,
-			   unsigned long offs, u8 val)
-{
-	if (unlikely(asd_ha->iospace))
+अटल व्योम asd_ग_लिखो_byte(काष्ठा asd_ha_काष्ठा *asd_ha,
+			   अचिन्हित दीर्घ offs, u8 val)
+अणु
+	अगर (unlikely(asd_ha->iospace))
 		outb(val,
-		     (unsigned long)asd_ha->io_handle[0].addr + (offs & 0xFF));
-	else
-		writeb(val, asd_ha->io_handle[0].addr + offs);
+		     (अचिन्हित दीर्घ)asd_ha->io_handle[0].addr + (offs & 0xFF));
+	अन्यथा
+		ग_लिखोb(val, asd_ha->io_handle[0].addr + offs);
 	wmb();
-}
+पूर्ण
 
-static void asd_write_word(struct asd_ha_struct *asd_ha,
-			   unsigned long offs, u16 val)
-{
-	if (unlikely(asd_ha->iospace))
+अटल व्योम asd_ग_लिखो_word(काष्ठा asd_ha_काष्ठा *asd_ha,
+			   अचिन्हित दीर्घ offs, u16 val)
+अणु
+	अगर (unlikely(asd_ha->iospace))
 		outw(val,
-		     (unsigned long)asd_ha->io_handle[0].addr + (offs & 0xFF));
-	else
-		writew(val, asd_ha->io_handle[0].addr + offs);
+		     (अचिन्हित दीर्घ)asd_ha->io_handle[0].addr + (offs & 0xFF));
+	अन्यथा
+		ग_लिखोw(val, asd_ha->io_handle[0].addr + offs);
 	wmb();
-}
+पूर्ण
 
-static void asd_write_dword(struct asd_ha_struct *asd_ha,
-			    unsigned long offs, u32 val)
-{
-	if (unlikely(asd_ha->iospace))
+अटल व्योम asd_ग_लिखो_dword(काष्ठा asd_ha_काष्ठा *asd_ha,
+			    अचिन्हित दीर्घ offs, u32 val)
+अणु
+	अगर (unlikely(asd_ha->iospace))
 		outl(val,
-		     (unsigned long)asd_ha->io_handle[0].addr + (offs & 0xFF));
-	else
-		writel(val, asd_ha->io_handle[0].addr + offs);
+		     (अचिन्हित दीर्घ)asd_ha->io_handle[0].addr + (offs & 0xFF));
+	अन्यथा
+		ग_लिखोl(val, asd_ha->io_handle[0].addr + offs);
 	wmb();
-}
+पूर्ण
 
 /* Reading from device address space.
  */
-static u8 asd_read_byte(struct asd_ha_struct *asd_ha, unsigned long offs)
-{
+अटल u8 asd_पढ़ो_byte(काष्ठा asd_ha_काष्ठा *asd_ha, अचिन्हित दीर्घ offs)
+अणु
 	u8 val;
-	if (unlikely(asd_ha->iospace))
-		val = inb((unsigned long) asd_ha->io_handle[0].addr
+	अगर (unlikely(asd_ha->iospace))
+		val = inb((अचिन्हित दीर्घ) asd_ha->io_handle[0].addr
 			  + (offs & 0xFF));
-	else
-		val = readb(asd_ha->io_handle[0].addr + offs);
+	अन्यथा
+		val = पढ़ोb(asd_ha->io_handle[0].addr + offs);
 	rmb();
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static u16 asd_read_word(struct asd_ha_struct *asd_ha,
-			 unsigned long offs)
-{
+अटल u16 asd_पढ़ो_word(काष्ठा asd_ha_काष्ठा *asd_ha,
+			 अचिन्हित दीर्घ offs)
+अणु
 	u16 val;
-	if (unlikely(asd_ha->iospace))
-		val = inw((unsigned long)asd_ha->io_handle[0].addr
+	अगर (unlikely(asd_ha->iospace))
+		val = inw((अचिन्हित दीर्घ)asd_ha->io_handle[0].addr
 			  + (offs & 0xFF));
-	else
-		val = readw(asd_ha->io_handle[0].addr + offs);
+	अन्यथा
+		val = पढ़ोw(asd_ha->io_handle[0].addr + offs);
 	rmb();
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static u32 asd_read_dword(struct asd_ha_struct *asd_ha,
-			  unsigned long offs)
-{
+अटल u32 asd_पढ़ो_dword(काष्ठा asd_ha_काष्ठा *asd_ha,
+			  अचिन्हित दीर्घ offs)
+अणु
 	u32 val;
-	if (unlikely(asd_ha->iospace))
-		val = inl((unsigned long) asd_ha->io_handle[0].addr
+	अगर (unlikely(asd_ha->iospace))
+		val = inl((अचिन्हित दीर्घ) asd_ha->io_handle[0].addr
 			  + (offs & 0xFF));
-	else
-		val = readl(asd_ha->io_handle[0].addr + offs);
+	अन्यथा
+		val = पढ़ोl(asd_ha->io_handle[0].addr + offs);
 	rmb();
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline u32 asd_mem_offs_swa(void)
-{
-	return 0;
-}
+अटल अंतरभूत u32 asd_mem_offs_swa(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline u32 asd_mem_offs_swc(void)
-{
-	return asd_mem_offs_swa() + MBAR0_SWA_SIZE;
-}
+अटल अंतरभूत u32 asd_mem_offs_swc(व्योम)
+अणु
+	वापस asd_mem_offs_swa() + MBAR0_SWA_SIZE;
+पूर्ण
 
-static inline u32 asd_mem_offs_swb(void)
-{
-	return asd_mem_offs_swc() + MBAR0_SWC_SIZE + 0x20;
-}
+अटल अंतरभूत u32 asd_mem_offs_swb(व्योम)
+अणु
+	वापस asd_mem_offs_swc() + MBAR0_SWC_SIZE + 0x20;
+पूर्ण
 
-/* We know that the register wanted is in the range
- * of the sliding window.
+/* We know that the रेजिस्टर wanted is in the range
+ * of the sliding winकरोw.
  */
-#define ASD_READ_SW(ww, type, ord)					\
-static type asd_read_##ww##_##ord(struct asd_ha_struct *asd_ha,		\
+#घोषणा ASD_READ_SW(ww, type, ord)					\
+अटल type asd_पढ़ो_##ww##_##ord(काष्ठा asd_ha_काष्ठा *asd_ha,		\
 				   u32 reg)				\
-{									\
-	struct asd_ha_addrspace *io_handle = &asd_ha->io_handle[0];	\
+अणु									\
+	काष्ठा asd_ha_addrspace *io_handle = &asd_ha->io_handle[0];	\
 	u32 map_offs = (reg - io_handle->ww##_base) + asd_mem_offs_##ww();\
-	return asd_read_##ord(asd_ha, (unsigned long)map_offs);	\
-}
+	वापस asd_पढ़ो_##ord(asd_ha, (अचिन्हित दीर्घ)map_offs);	\
+पूर्ण
 
-#define ASD_WRITE_SW(ww, type, ord)					\
-static void asd_write_##ww##_##ord(struct asd_ha_struct *asd_ha,	\
+#घोषणा ASD_WRITE_SW(ww, type, ord)					\
+अटल व्योम asd_ग_लिखो_##ww##_##ord(काष्ठा asd_ha_काष्ठा *asd_ha,	\
 				    u32 reg, type val)			\
-{									\
-	struct asd_ha_addrspace *io_handle = &asd_ha->io_handle[0];	\
+अणु									\
+	काष्ठा asd_ha_addrspace *io_handle = &asd_ha->io_handle[0];	\
 	u32 map_offs = (reg - io_handle->ww##_base) + asd_mem_offs_##ww();\
-	asd_write_##ord(asd_ha, (unsigned long)map_offs, val);		\
-}
+	asd_ग_लिखो_##ord(asd_ha, (अचिन्हित दीर्घ)map_offs, val);		\
+पूर्ण
 
 ASD_READ_SW(swa, u8,  byte);
 ASD_READ_SW(swa, u16, word);
@@ -148,166 +149,166 @@ ASD_WRITE_SW(swc, u16, word);
 ASD_WRITE_SW(swc, u32, dword);
 
 /*
- * A word about sliding windows:
- * MBAR0 is divided into sliding windows A, C and B, in that order.
+ * A word about sliding winकरोws:
+ * MBAR0 is भागided पूर्णांकo sliding winकरोws A, C and B, in that order.
  * SWA starts at offset 0 of MBAR0, up to 0x57, with size 0x58 bytes.
  * SWC starts at offset 0x58 of MBAR0, up to 0x60, with size 0x8 bytes.
  * From 0x60 to 0x7F, we have a copy of PCI config space 0x60-0x7F.
  * SWB starts at offset 0x80 of MBAR0 and extends to the end of MBAR0.
  * See asd_init_sw() in aic94xx_hwi.c
  *
- * We map the most common registers we'd access of the internal 4GB
- * host adapter memory space.  If a register/internal memory location
+ * We map the most common रेजिस्टरs we'd access of the पूर्णांकernal 4GB
+ * host adapter memory space.  If a रेजिस्टर/पूर्णांकernal memory location
  * is wanted which is not mapped, we slide SWB, by paging it,
  * see asd_move_swb() in aic94xx_reg.c.
  */
 
 /**
- * asd_move_swb -- move sliding window B
- * @asd_ha: pointer to host adapter structure
- * @reg: register desired to be within range of the new window
+ * asd_move_swb -- move sliding winकरोw B
+ * @asd_ha: poपूर्णांकer to host adapter काष्ठाure
+ * @reg: रेजिस्टर desired to be within range of the new winकरोw
  */
-static void asd_move_swb(struct asd_ha_struct *asd_ha, u32 reg)
-{
+अटल व्योम asd_move_swb(काष्ठा asd_ha_काष्ठा *asd_ha, u32 reg)
+अणु
 	u32 base = reg & ~(MBAR0_SWB_SIZE-1);
-	pci_write_config_dword(asd_ha->pcidev, PCI_CONF_MBAR0_SWB, base);
+	pci_ग_लिखो_config_dword(asd_ha->pcidev, PCI_CONF_MBAR0_SWB, base);
 	asd_ha->io_handle[0].swb_base = base;
-}
+पूर्ण
 
-static void __asd_write_reg_byte(struct asd_ha_struct *asd_ha, u32 reg, u8 val)
-{
-	struct asd_ha_addrspace *io_handle=&asd_ha->io_handle[0];
+अटल व्योम __asd_ग_लिखो_reg_byte(काष्ठा asd_ha_काष्ठा *asd_ha, u32 reg, u8 val)
+अणु
+	काष्ठा asd_ha_addrspace *io_handle=&asd_ha->io_handle[0];
 	BUG_ON(reg >= 0xC0000000 || reg < ALL_BASE_ADDR);
-	if (io_handle->swa_base <= reg
+	अगर (io_handle->swa_base <= reg
 	    && reg < io_handle->swa_base + MBAR0_SWA_SIZE)
-		asd_write_swa_byte (asd_ha, reg,val);
-	else if (io_handle->swb_base <= reg
+		asd_ग_लिखो_swa_byte (asd_ha, reg,val);
+	अन्यथा अगर (io_handle->swb_base <= reg
 		 && reg < io_handle->swb_base + MBAR0_SWB_SIZE)
-		asd_write_swb_byte (asd_ha, reg, val);
-	else if (io_handle->swc_base <= reg
+		asd_ग_लिखो_swb_byte (asd_ha, reg, val);
+	अन्यथा अगर (io_handle->swc_base <= reg
 		 && reg < io_handle->swc_base + MBAR0_SWC_SIZE)
-		asd_write_swc_byte (asd_ha, reg, val);
-	else {
+		asd_ग_लिखो_swc_byte (asd_ha, reg, val);
+	अन्यथा अणु
 		/* Ok, we have to move SWB */
 		asd_move_swb(asd_ha, reg);
-		asd_write_swb_byte (asd_ha, reg, val);
-	}
-}
+		asd_ग_लिखो_swb_byte (asd_ha, reg, val);
+	पूर्ण
+पूर्ण
 
-#define ASD_WRITE_REG(type, ord)                                  \
-void asd_write_reg_##ord (struct asd_ha_struct *asd_ha, u32 reg, type val)\
-{                                                                 \
-	struct asd_ha_addrspace *io_handle=&asd_ha->io_handle[0]; \
-	unsigned long flags;                                      \
+#घोषणा ASD_WRITE_REG(type, ord)                                  \
+व्योम asd_ग_लिखो_reg_##ord (काष्ठा asd_ha_काष्ठा *asd_ha, u32 reg, type val)\
+अणु                                                                 \
+	काष्ठा asd_ha_addrspace *io_handle=&asd_ha->io_handle[0]; \
+	अचिन्हित दीर्घ flags;                                      \
 	BUG_ON(reg >= 0xC0000000 || reg < ALL_BASE_ADDR);         \
 	spin_lock_irqsave(&asd_ha->iolock, flags);                \
-	if (io_handle->swa_base <= reg                            \
+	अगर (io_handle->swa_base <= reg                            \
 	    && reg < io_handle->swa_base + MBAR0_SWA_SIZE)        \
-		asd_write_swa_##ord (asd_ha, reg,val);            \
-	else if (io_handle->swb_base <= reg                       \
+		asd_ग_लिखो_swa_##ord (asd_ha, reg,val);            \
+	अन्यथा अगर (io_handle->swb_base <= reg                       \
 		 && reg < io_handle->swb_base + MBAR0_SWB_SIZE)   \
-		asd_write_swb_##ord (asd_ha, reg, val);           \
-	else if (io_handle->swc_base <= reg                       \
+		asd_ग_लिखो_swb_##ord (asd_ha, reg, val);           \
+	अन्यथा अगर (io_handle->swc_base <= reg                       \
 		 && reg < io_handle->swc_base + MBAR0_SWC_SIZE)   \
-		asd_write_swc_##ord (asd_ha, reg, val);           \
-	else {                                                    \
+		asd_ग_लिखो_swc_##ord (asd_ha, reg, val);           \
+	अन्यथा अणु                                                    \
 		/* Ok, we have to move SWB */                     \
 		asd_move_swb(asd_ha, reg);                        \
-		asd_write_swb_##ord (asd_ha, reg, val);           \
-	}                                                         \
+		asd_ग_लिखो_swb_##ord (asd_ha, reg, val);           \
+	पूर्ण                                                         \
 	spin_unlock_irqrestore(&asd_ha->iolock, flags);           \
-}
+पूर्ण
 
 ASD_WRITE_REG(u8, byte);
 ASD_WRITE_REG(u16,word);
 ASD_WRITE_REG(u32,dword);
 
-static u8 __asd_read_reg_byte(struct asd_ha_struct *asd_ha, u32 reg)
-{
-	struct asd_ha_addrspace *io_handle=&asd_ha->io_handle[0];
+अटल u8 __asd_पढ़ो_reg_byte(काष्ठा asd_ha_काष्ठा *asd_ha, u32 reg)
+अणु
+	काष्ठा asd_ha_addrspace *io_handle=&asd_ha->io_handle[0];
 	u8 val;
 	BUG_ON(reg >= 0xC0000000 || reg < ALL_BASE_ADDR);
-	if (io_handle->swa_base <= reg
+	अगर (io_handle->swa_base <= reg
 	    && reg < io_handle->swa_base + MBAR0_SWA_SIZE)
-		val = asd_read_swa_byte (asd_ha, reg);
-	else if (io_handle->swb_base <= reg
+		val = asd_पढ़ो_swa_byte (asd_ha, reg);
+	अन्यथा अगर (io_handle->swb_base <= reg
 		 && reg < io_handle->swb_base + MBAR0_SWB_SIZE)
-		val = asd_read_swb_byte (asd_ha, reg);
-	else if (io_handle->swc_base <= reg
+		val = asd_पढ़ो_swb_byte (asd_ha, reg);
+	अन्यथा अगर (io_handle->swc_base <= reg
 		 && reg < io_handle->swc_base + MBAR0_SWC_SIZE)
-		val = asd_read_swc_byte (asd_ha, reg);
-	else {
+		val = asd_पढ़ो_swc_byte (asd_ha, reg);
+	अन्यथा अणु
 		/* Ok, we have to move SWB */
 		asd_move_swb(asd_ha, reg);
-		val = asd_read_swb_byte (asd_ha, reg);
-	}
-	return val;
-}
+		val = asd_पढ़ो_swb_byte (asd_ha, reg);
+	पूर्ण
+	वापस val;
+पूर्ण
 
-#define ASD_READ_REG(type, ord)                                   \
-type asd_read_reg_##ord (struct asd_ha_struct *asd_ha, u32 reg)   \
-{                                                                 \
-	struct asd_ha_addrspace *io_handle=&asd_ha->io_handle[0]; \
+#घोषणा ASD_READ_REG(type, ord)                                   \
+type asd_पढ़ो_reg_##ord (काष्ठा asd_ha_काष्ठा *asd_ha, u32 reg)   \
+अणु                                                                 \
+	काष्ठा asd_ha_addrspace *io_handle=&asd_ha->io_handle[0]; \
 	type val;                                                 \
-	unsigned long flags;                                      \
+	अचिन्हित दीर्घ flags;                                      \
 	BUG_ON(reg >= 0xC0000000 || reg < ALL_BASE_ADDR);         \
 	spin_lock_irqsave(&asd_ha->iolock, flags);                \
-	if (io_handle->swa_base <= reg                            \
+	अगर (io_handle->swa_base <= reg                            \
 	    && reg < io_handle->swa_base + MBAR0_SWA_SIZE)        \
-		val = asd_read_swa_##ord (asd_ha, reg);           \
-	else if (io_handle->swb_base <= reg                       \
+		val = asd_पढ़ो_swa_##ord (asd_ha, reg);           \
+	अन्यथा अगर (io_handle->swb_base <= reg                       \
 		 && reg < io_handle->swb_base + MBAR0_SWB_SIZE)   \
-		val = asd_read_swb_##ord (asd_ha, reg);           \
-	else if (io_handle->swc_base <= reg                       \
+		val = asd_पढ़ो_swb_##ord (asd_ha, reg);           \
+	अन्यथा अगर (io_handle->swc_base <= reg                       \
 		 && reg < io_handle->swc_base + MBAR0_SWC_SIZE)   \
-		val = asd_read_swc_##ord (asd_ha, reg);           \
-	else {                                                    \
+		val = asd_पढ़ो_swc_##ord (asd_ha, reg);           \
+	अन्यथा अणु                                                    \
 		/* Ok, we have to move SWB */                     \
 		asd_move_swb(asd_ha, reg);                        \
-		val = asd_read_swb_##ord (asd_ha, reg);           \
-	}                                                         \
+		val = asd_पढ़ो_swb_##ord (asd_ha, reg);           \
+	पूर्ण                                                         \
 	spin_unlock_irqrestore(&asd_ha->iolock, flags);           \
-	return val;                                               \
-}
+	वापस val;                                               \
+पूर्ण
 
 ASD_READ_REG(u8, byte);
 ASD_READ_REG(u16,word);
 ASD_READ_REG(u32,dword);
 
 /**
- * asd_read_reg_string -- read a string of bytes from io space memory
- * @asd_ha: pointer to host adapter structure
- * @dst: pointer to a destination buffer where data will be written to
- * @offs: start offset (register) to read from
- * @count: number of bytes to read
+ * asd_पढ़ो_reg_string -- पढ़ो a string of bytes from io space memory
+ * @asd_ha: poपूर्णांकer to host adapter काष्ठाure
+ * @dst: poपूर्णांकer to a destination buffer where data will be written to
+ * @offs: start offset (रेजिस्टर) to पढ़ो from
+ * @count: number of bytes to पढ़ो
  */
-void asd_read_reg_string(struct asd_ha_struct *asd_ha, void *dst,
-			 u32 offs, int count)
-{
+व्योम asd_पढ़ो_reg_string(काष्ठा asd_ha_काष्ठा *asd_ha, व्योम *dst,
+			 u32 offs, पूर्णांक count)
+अणु
 	u8 *p = dst;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&asd_ha->iolock, flags);
-	for ( ; count > 0; count--, offs++, p++)
-		*p = __asd_read_reg_byte(asd_ha, offs);
+	क्रम ( ; count > 0; count--, offs++, p++)
+		*p = __asd_पढ़ो_reg_byte(asd_ha, offs);
 	spin_unlock_irqrestore(&asd_ha->iolock, flags);
-}
+पूर्ण
 
 /**
- * asd_write_reg_string -- write a string of bytes to io space memory
- * @asd_ha: pointer to host adapter structure
- * @src: pointer to source buffer where data will be read from
- * @offs: start offset (register) to write to
- * @count: number of bytes to write
+ * asd_ग_लिखो_reg_string -- ग_लिखो a string of bytes to io space memory
+ * @asd_ha: poपूर्णांकer to host adapter काष्ठाure
+ * @src: poपूर्णांकer to source buffer where data will be पढ़ो from
+ * @offs: start offset (रेजिस्टर) to ग_लिखो to
+ * @count: number of bytes to ग_लिखो
  */
-void asd_write_reg_string(struct asd_ha_struct *asd_ha, void *src,
-			  u32 offs, int count)
-{
+व्योम asd_ग_लिखो_reg_string(काष्ठा asd_ha_काष्ठा *asd_ha, व्योम *src,
+			  u32 offs, पूर्णांक count)
+अणु
 	u8 *p = src;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&asd_ha->iolock, flags);
-	for ( ; count > 0; count--, offs++, p++)
-		__asd_write_reg_byte(asd_ha, offs, *p);
+	क्रम ( ; count > 0; count--, offs++, p++)
+		__asd_ग_लिखो_reg_byte(asd_ha, offs, *p);
 	spin_unlock_irqrestore(&asd_ha->iolock, flags);
-}
+पूर्ण

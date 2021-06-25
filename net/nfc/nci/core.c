@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  The NFC Controller Interface is the communication protocol between an
  *  NFC Controller (NFCC) and a Device Host (DH).
@@ -13,274 +14,274 @@
  *  by Maxim Krasnyansky.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
-#include <linux/completion.h>
-#include <linux/export.h>
-#include <linux/sched.h>
-#include <linux/bitops.h>
-#include <linux/skbuff.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/skbuff.h>
 
-#include "../nfc.h"
-#include <net/nfc/nci.h>
-#include <net/nfc/nci_core.h>
-#include <linux/nfc.h>
+#समावेश "../nfc.h"
+#समावेश <net/nfc/nci.h>
+#समावेश <net/nfc/nci_core.h>
+#समावेश <linux/nfc.h>
 
-struct core_conn_create_data {
-	int length;
-	struct nci_core_conn_create_cmd *cmd;
-};
+काष्ठा core_conn_create_data अणु
+	पूर्णांक length;
+	काष्ठा nci_core_conn_create_cmd *cmd;
+पूर्ण;
 
-static void nci_cmd_work(struct work_struct *work);
-static void nci_rx_work(struct work_struct *work);
-static void nci_tx_work(struct work_struct *work);
+अटल व्योम nci_cmd_work(काष्ठा work_काष्ठा *work);
+अटल व्योम nci_rx_work(काष्ठा work_काष्ठा *work);
+अटल व्योम nci_tx_work(काष्ठा work_काष्ठा *work);
 
-struct nci_conn_info *nci_get_conn_info_by_conn_id(struct nci_dev *ndev,
-						   int conn_id)
-{
-	struct nci_conn_info *conn_info;
+काष्ठा nci_conn_info *nci_get_conn_info_by_conn_id(काष्ठा nci_dev *ndev,
+						   पूर्णांक conn_id)
+अणु
+	काष्ठा nci_conn_info *conn_info;
 
-	list_for_each_entry(conn_info, &ndev->conn_info_list, list) {
-		if (conn_info->conn_id == conn_id)
-			return conn_info;
-	}
+	list_क्रम_each_entry(conn_info, &ndev->conn_info_list, list) अणु
+		अगर (conn_info->conn_id == conn_id)
+			वापस conn_info;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int nci_get_conn_info_by_dest_type_params(struct nci_dev *ndev, u8 dest_type,
-					  struct dest_spec_params *params)
-{
-	struct nci_conn_info *conn_info;
+पूर्णांक nci_get_conn_info_by_dest_type_params(काष्ठा nci_dev *ndev, u8 dest_type,
+					  काष्ठा dest_spec_params *params)
+अणु
+	काष्ठा nci_conn_info *conn_info;
 
-	list_for_each_entry(conn_info, &ndev->conn_info_list, list) {
-		if (conn_info->dest_type == dest_type) {
-			if (!params)
-				return conn_info->conn_id;
+	list_क्रम_each_entry(conn_info, &ndev->conn_info_list, list) अणु
+		अगर (conn_info->dest_type == dest_type) अणु
+			अगर (!params)
+				वापस conn_info->conn_id;
 
-			if (params->id == conn_info->dest_params->id &&
+			अगर (params->id == conn_info->dest_params->id &&
 			    params->protocol == conn_info->dest_params->protocol)
-				return conn_info->conn_id;
-		}
-	}
+				वापस conn_info->conn_id;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(nci_get_conn_info_by_dest_type_params);
 
 /* ---- NCI requests ---- */
 
-void nci_req_complete(struct nci_dev *ndev, int result)
-{
-	if (ndev->req_status == NCI_REQ_PEND) {
+व्योम nci_req_complete(काष्ठा nci_dev *ndev, पूर्णांक result)
+अणु
+	अगर (ndev->req_status == NCI_REQ_PEND) अणु
 		ndev->req_result = result;
 		ndev->req_status = NCI_REQ_DONE;
 		complete(&ndev->req_completion);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(nci_req_complete);
 
-static void nci_req_cancel(struct nci_dev *ndev, int err)
-{
-	if (ndev->req_status == NCI_REQ_PEND) {
+अटल व्योम nci_req_cancel(काष्ठा nci_dev *ndev, पूर्णांक err)
+अणु
+	अगर (ndev->req_status == NCI_REQ_PEND) अणु
 		ndev->req_result = err;
 		ndev->req_status = NCI_REQ_CANCELED;
 		complete(&ndev->req_completion);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Execute request and wait for completion. */
-static int __nci_request(struct nci_dev *ndev,
-			 void (*req)(struct nci_dev *ndev, unsigned long opt),
-			 unsigned long opt, __u32 timeout)
-{
-	int rc = 0;
-	long completion_rc;
+/* Execute request and रुको क्रम completion. */
+अटल पूर्णांक __nci_request(काष्ठा nci_dev *ndev,
+			 व्योम (*req)(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt),
+			 अचिन्हित दीर्घ opt, __u32 समयout)
+अणु
+	पूर्णांक rc = 0;
+	दीर्घ completion_rc;
 
 	ndev->req_status = NCI_REQ_PEND;
 
 	reinit_completion(&ndev->req_completion);
 	req(ndev, opt);
 	completion_rc =
-		wait_for_completion_interruptible_timeout(&ndev->req_completion,
-							  timeout);
+		रुको_क्रम_completion_पूर्णांकerruptible_समयout(&ndev->req_completion,
+							  समयout);
 
 	pr_debug("wait_for_completion return %ld\n", completion_rc);
 
-	if (completion_rc > 0) {
-		switch (ndev->req_status) {
-		case NCI_REQ_DONE:
-			rc = nci_to_errno(ndev->req_result);
-			break;
+	अगर (completion_rc > 0) अणु
+		चयन (ndev->req_status) अणु
+		हाल NCI_REQ_DONE:
+			rc = nci_to_त्रुटि_सं(ndev->req_result);
+			अवरोध;
 
-		case NCI_REQ_CANCELED:
+		हाल NCI_REQ_CANCELED:
 			rc = -ndev->req_result;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			rc = -ETIMEDOUT;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pr_err("wait_for_completion_interruptible_timeout failed %ld\n",
 		       completion_rc);
 
 		rc = ((completion_rc == 0) ? (-ETIMEDOUT) : (completion_rc));
-	}
+	पूर्ण
 
 	ndev->req_status = ndev->req_result = 0;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-inline int nci_request(struct nci_dev *ndev,
-		       void (*req)(struct nci_dev *ndev,
-				   unsigned long opt),
-		       unsigned long opt, __u32 timeout)
-{
-	int rc;
+अंतरभूत पूर्णांक nci_request(काष्ठा nci_dev *ndev,
+		       व्योम (*req)(काष्ठा nci_dev *ndev,
+				   अचिन्हित दीर्घ opt),
+		       अचिन्हित दीर्घ opt, __u32 समयout)
+अणु
+	पूर्णांक rc;
 
-	if (!test_bit(NCI_UP, &ndev->flags))
-		return -ENETDOWN;
+	अगर (!test_bit(NCI_UP, &ndev->flags))
+		वापस -ENETDOWN;
 
 	/* Serialize all requests */
 	mutex_lock(&ndev->req_lock);
-	rc = __nci_request(ndev, req, opt, timeout);
+	rc = __nci_request(ndev, req, opt, समयout);
 	mutex_unlock(&ndev->req_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void nci_reset_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_core_reset_cmd cmd;
+अटल व्योम nci_reset_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_core_reset_cmd cmd;
 
 	cmd.reset_type = NCI_RESET_TYPE_RESET_CONFIG;
 	nci_send_cmd(ndev, NCI_OP_CORE_RESET_CMD, 1, &cmd);
-}
+पूर्ण
 
-static void nci_init_req(struct nci_dev *ndev, unsigned long opt)
-{
+अटल व्योम nci_init_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
 	u8 plen = 0;
 
-	if (opt)
-		plen = sizeof(struct nci_core_init_v2_cmd);
+	अगर (opt)
+		plen = माप(काष्ठा nci_core_init_v2_cmd);
 
-	nci_send_cmd(ndev, NCI_OP_CORE_INIT_CMD, plen, (void *)opt);
-}
+	nci_send_cmd(ndev, NCI_OP_CORE_INIT_CMD, plen, (व्योम *)opt);
+पूर्ण
 
-static void nci_init_complete_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_rf_disc_map_cmd cmd;
-	struct disc_map_config *cfg = cmd.mapping_configs;
+अटल व्योम nci_init_complete_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_rf_disc_map_cmd cmd;
+	काष्ठा disc_map_config *cfg = cmd.mapping_configs;
 	__u8 *num = &cmd.num_mapping_configs;
-	int i;
+	पूर्णांक i;
 
 	/* set rf mapping configurations */
 	*num = 0;
 
-	/* by default mapping is set to NCI_RF_INTERFACE_FRAME */
-	for (i = 0; i < ndev->num_supported_rf_interfaces; i++) {
-		if (ndev->supported_rf_interfaces[i] ==
-		    NCI_RF_INTERFACE_ISO_DEP) {
+	/* by शेष mapping is set to NCI_RF_INTERFACE_FRAME */
+	क्रम (i = 0; i < ndev->num_supported_rf_पूर्णांकerfaces; i++) अणु
+		अगर (ndev->supported_rf_पूर्णांकerfaces[i] ==
+		    NCI_RF_INTERFACE_ISO_DEP) अणु
 			cfg[*num].rf_protocol = NCI_RF_PROTOCOL_ISO_DEP;
 			cfg[*num].mode = NCI_DISC_MAP_MODE_POLL |
 				NCI_DISC_MAP_MODE_LISTEN;
-			cfg[*num].rf_interface = NCI_RF_INTERFACE_ISO_DEP;
+			cfg[*num].rf_पूर्णांकerface = NCI_RF_INTERFACE_ISO_DEP;
 			(*num)++;
-		} else if (ndev->supported_rf_interfaces[i] ==
-			   NCI_RF_INTERFACE_NFC_DEP) {
+		पूर्ण अन्यथा अगर (ndev->supported_rf_पूर्णांकerfaces[i] ==
+			   NCI_RF_INTERFACE_NFC_DEP) अणु
 			cfg[*num].rf_protocol = NCI_RF_PROTOCOL_NFC_DEP;
 			cfg[*num].mode = NCI_DISC_MAP_MODE_POLL |
 				NCI_DISC_MAP_MODE_LISTEN;
-			cfg[*num].rf_interface = NCI_RF_INTERFACE_NFC_DEP;
+			cfg[*num].rf_पूर्णांकerface = NCI_RF_INTERFACE_NFC_DEP;
 			(*num)++;
-		}
+		पूर्ण
 
-		if (*num == NCI_MAX_NUM_MAPPING_CONFIGS)
-			break;
-	}
+		अगर (*num == NCI_MAX_NUM_MAPPING_CONFIGS)
+			अवरोध;
+	पूर्ण
 
 	nci_send_cmd(ndev, NCI_OP_RF_DISCOVER_MAP_CMD,
-		     (1 + ((*num) * sizeof(struct disc_map_config))), &cmd);
-}
+		     (1 + ((*num) * माप(काष्ठा disc_map_config))), &cmd);
+पूर्ण
 
-struct nci_set_config_param {
+काष्ठा nci_set_config_param अणु
 	__u8	id;
-	size_t	len;
+	माप_प्रकार	len;
 	__u8	*val;
-};
+पूर्ण;
 
-static void nci_set_config_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_set_config_param *param = (struct nci_set_config_param *)opt;
-	struct nci_core_set_config_cmd cmd;
+अटल व्योम nci_set_config_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_set_config_param *param = (काष्ठा nci_set_config_param *)opt;
+	काष्ठा nci_core_set_config_cmd cmd;
 
 	BUG_ON(param->len > NCI_MAX_PARAM_LEN);
 
 	cmd.num_params = 1;
 	cmd.param.id = param->id;
 	cmd.param.len = param->len;
-	memcpy(cmd.param.val, param->val, param->len);
+	स_नकल(cmd.param.val, param->val, param->len);
 
 	nci_send_cmd(ndev, NCI_OP_CORE_SET_CONFIG_CMD, (3 + param->len), &cmd);
-}
+पूर्ण
 
-struct nci_rf_discover_param {
+काष्ठा nci_rf_discover_param अणु
 	__u32	im_protocols;
-	__u32	tm_protocols;
-};
+	__u32	पंचांग_protocols;
+पूर्ण;
 
-static void nci_rf_discover_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_rf_discover_param *param =
-		(struct nci_rf_discover_param *)opt;
-	struct nci_rf_disc_cmd cmd;
+अटल व्योम nci_rf_discover_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_rf_discover_param *param =
+		(काष्ठा nci_rf_discover_param *)opt;
+	काष्ठा nci_rf_disc_cmd cmd;
 
 	cmd.num_disc_configs = 0;
 
-	if ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS) &&
+	अगर ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS) &&
 	    (param->im_protocols & NFC_PROTO_JEWEL_MASK ||
 	     param->im_protocols & NFC_PROTO_MIFARE_MASK ||
 	     param->im_protocols & NFC_PROTO_ISO14443_MASK ||
-	     param->im_protocols & NFC_PROTO_NFC_DEP_MASK)) {
+	     param->im_protocols & NFC_PROTO_NFC_DEP_MASK)) अणु
 		cmd.disc_configs[cmd.num_disc_configs].rf_tech_and_mode =
 			NCI_NFC_A_PASSIVE_POLL_MODE;
 		cmd.disc_configs[cmd.num_disc_configs].frequency = 1;
 		cmd.num_disc_configs++;
-	}
+	पूर्ण
 
-	if ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS) &&
-	    (param->im_protocols & NFC_PROTO_ISO14443_B_MASK)) {
+	अगर ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS) &&
+	    (param->im_protocols & NFC_PROTO_ISO14443_B_MASK)) अणु
 		cmd.disc_configs[cmd.num_disc_configs].rf_tech_and_mode =
 			NCI_NFC_B_PASSIVE_POLL_MODE;
 		cmd.disc_configs[cmd.num_disc_configs].frequency = 1;
 		cmd.num_disc_configs++;
-	}
+	पूर्ण
 
-	if ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS) &&
+	अगर ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS) &&
 	    (param->im_protocols & NFC_PROTO_FELICA_MASK ||
-	     param->im_protocols & NFC_PROTO_NFC_DEP_MASK)) {
+	     param->im_protocols & NFC_PROTO_NFC_DEP_MASK)) अणु
 		cmd.disc_configs[cmd.num_disc_configs].rf_tech_and_mode =
 			NCI_NFC_F_PASSIVE_POLL_MODE;
 		cmd.disc_configs[cmd.num_disc_configs].frequency = 1;
 		cmd.num_disc_configs++;
-	}
+	पूर्ण
 
-	if ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS) &&
-	    (param->im_protocols & NFC_PROTO_ISO15693_MASK)) {
+	अगर ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS) &&
+	    (param->im_protocols & NFC_PROTO_ISO15693_MASK)) अणु
 		cmd.disc_configs[cmd.num_disc_configs].rf_tech_and_mode =
 			NCI_NFC_V_PASSIVE_POLL_MODE;
 		cmd.disc_configs[cmd.num_disc_configs].frequency = 1;
 		cmd.num_disc_configs++;
-	}
+	पूर्ण
 
-	if ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS - 1) &&
-	    (param->tm_protocols & NFC_PROTO_NFC_DEP_MASK)) {
+	अगर ((cmd.num_disc_configs < NCI_MAX_NUM_RF_CONFIGS - 1) &&
+	    (param->पंचांग_protocols & NFC_PROTO_NFC_DEP_MASK)) अणु
 		cmd.disc_configs[cmd.num_disc_configs].rf_tech_and_mode =
 			NCI_NFC_A_PASSIVE_LISTEN_MODE;
 		cmd.disc_configs[cmd.num_disc_configs].frequency = 1;
@@ -289,169 +290,169 @@ static void nci_rf_discover_req(struct nci_dev *ndev, unsigned long opt)
 			NCI_NFC_F_PASSIVE_LISTEN_MODE;
 		cmd.disc_configs[cmd.num_disc_configs].frequency = 1;
 		cmd.num_disc_configs++;
-	}
+	पूर्ण
 
 	nci_send_cmd(ndev, NCI_OP_RF_DISCOVER_CMD,
-		     (1 + (cmd.num_disc_configs * sizeof(struct disc_config))),
+		     (1 + (cmd.num_disc_configs * माप(काष्ठा disc_config))),
 		     &cmd);
-}
+पूर्ण
 
-struct nci_rf_discover_select_param {
+काष्ठा nci_rf_discover_select_param अणु
 	__u8	rf_discovery_id;
 	__u8	rf_protocol;
-};
+पूर्ण;
 
-static void nci_rf_discover_select_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_rf_discover_select_param *param =
-		(struct nci_rf_discover_select_param *)opt;
-	struct nci_rf_discover_select_cmd cmd;
+अटल व्योम nci_rf_discover_select_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_rf_discover_select_param *param =
+		(काष्ठा nci_rf_discover_select_param *)opt;
+	काष्ठा nci_rf_discover_select_cmd cmd;
 
 	cmd.rf_discovery_id = param->rf_discovery_id;
 	cmd.rf_protocol = param->rf_protocol;
 
-	switch (cmd.rf_protocol) {
-	case NCI_RF_PROTOCOL_ISO_DEP:
-		cmd.rf_interface = NCI_RF_INTERFACE_ISO_DEP;
-		break;
+	चयन (cmd.rf_protocol) अणु
+	हाल NCI_RF_PROTOCOL_ISO_DEP:
+		cmd.rf_पूर्णांकerface = NCI_RF_INTERFACE_ISO_DEP;
+		अवरोध;
 
-	case NCI_RF_PROTOCOL_NFC_DEP:
-		cmd.rf_interface = NCI_RF_INTERFACE_NFC_DEP;
-		break;
+	हाल NCI_RF_PROTOCOL_NFC_DEP:
+		cmd.rf_पूर्णांकerface = NCI_RF_INTERFACE_NFC_DEP;
+		अवरोध;
 
-	default:
-		cmd.rf_interface = NCI_RF_INTERFACE_FRAME;
-		break;
-	}
+	शेष:
+		cmd.rf_पूर्णांकerface = NCI_RF_INTERFACE_FRAME;
+		अवरोध;
+	पूर्ण
 
 	nci_send_cmd(ndev, NCI_OP_RF_DISCOVER_SELECT_CMD,
-		     sizeof(struct nci_rf_discover_select_cmd), &cmd);
-}
+		     माप(काष्ठा nci_rf_discover_select_cmd), &cmd);
+पूर्ण
 
-static void nci_rf_deactivate_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_rf_deactivate_cmd cmd;
+अटल व्योम nci_rf_deactivate_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_rf_deactivate_cmd cmd;
 
 	cmd.type = opt;
 
 	nci_send_cmd(ndev, NCI_OP_RF_DEACTIVATE_CMD,
-		     sizeof(struct nci_rf_deactivate_cmd), &cmd);
-}
+		     माप(काष्ठा nci_rf_deactivate_cmd), &cmd);
+पूर्ण
 
-struct nci_cmd_param {
+काष्ठा nci_cmd_param अणु
 	__u16 opcode;
-	size_t len;
+	माप_प्रकार len;
 	__u8 *payload;
-};
+पूर्ण;
 
-static void nci_generic_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_cmd_param *param =
-		(struct nci_cmd_param *)opt;
+अटल व्योम nci_generic_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_cmd_param *param =
+		(काष्ठा nci_cmd_param *)opt;
 
 	nci_send_cmd(ndev, param->opcode, param->len, param->payload);
-}
+पूर्ण
 
-int nci_prop_cmd(struct nci_dev *ndev, __u8 oid, size_t len, __u8 *payload)
-{
-	struct nci_cmd_param param;
+पूर्णांक nci_prop_cmd(काष्ठा nci_dev *ndev, __u8 oid, माप_प्रकार len, __u8 *payload)
+अणु
+	काष्ठा nci_cmd_param param;
 
 	param.opcode = nci_opcode_pack(NCI_GID_PROPRIETARY, oid);
 	param.len = len;
 	param.payload = payload;
 
-	return __nci_request(ndev, nci_generic_req, (unsigned long)&param,
-			     msecs_to_jiffies(NCI_CMD_TIMEOUT));
-}
+	वापस __nci_request(ndev, nci_generic_req, (अचिन्हित दीर्घ)&param,
+			     msecs_to_jअगरfies(NCI_CMD_TIMEOUT));
+पूर्ण
 EXPORT_SYMBOL(nci_prop_cmd);
 
-int nci_core_cmd(struct nci_dev *ndev, __u16 opcode, size_t len, __u8 *payload)
-{
-	struct nci_cmd_param param;
+पूर्णांक nci_core_cmd(काष्ठा nci_dev *ndev, __u16 opcode, माप_प्रकार len, __u8 *payload)
+अणु
+	काष्ठा nci_cmd_param param;
 
 	param.opcode = opcode;
 	param.len = len;
 	param.payload = payload;
 
-	return __nci_request(ndev, nci_generic_req, (unsigned long)&param,
-			     msecs_to_jiffies(NCI_CMD_TIMEOUT));
-}
+	वापस __nci_request(ndev, nci_generic_req, (अचिन्हित दीर्घ)&param,
+			     msecs_to_jअगरfies(NCI_CMD_TIMEOUT));
+पूर्ण
 EXPORT_SYMBOL(nci_core_cmd);
 
-int nci_core_reset(struct nci_dev *ndev)
-{
-	return __nci_request(ndev, nci_reset_req, 0,
-			     msecs_to_jiffies(NCI_RESET_TIMEOUT));
-}
+पूर्णांक nci_core_reset(काष्ठा nci_dev *ndev)
+अणु
+	वापस __nci_request(ndev, nci_reset_req, 0,
+			     msecs_to_jअगरfies(NCI_RESET_TIMEOUT));
+पूर्ण
 EXPORT_SYMBOL(nci_core_reset);
 
-int nci_core_init(struct nci_dev *ndev)
-{
-	return __nci_request(ndev, nci_init_req, 0,
-			     msecs_to_jiffies(NCI_INIT_TIMEOUT));
-}
+पूर्णांक nci_core_init(काष्ठा nci_dev *ndev)
+अणु
+	वापस __nci_request(ndev, nci_init_req, 0,
+			     msecs_to_jअगरfies(NCI_INIT_TIMEOUT));
+पूर्ण
 EXPORT_SYMBOL(nci_core_init);
 
-struct nci_loopback_data {
+काष्ठा nci_loopback_data अणु
 	u8 conn_id;
-	struct sk_buff *data;
-};
+	काष्ठा sk_buff *data;
+पूर्ण;
 
-static void nci_send_data_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_loopback_data *data = (struct nci_loopback_data *)opt;
+अटल व्योम nci_send_data_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_loopback_data *data = (काष्ठा nci_loopback_data *)opt;
 
 	nci_send_data(ndev, data->conn_id, data->data);
-}
+पूर्ण
 
-static void nci_nfcc_loopback_cb(void *context, struct sk_buff *skb, int err)
-{
-	struct nci_dev *ndev = (struct nci_dev *)context;
-	struct nci_conn_info    *conn_info;
+अटल व्योम nci_nfcc_loopback_cb(व्योम *context, काष्ठा sk_buff *skb, पूर्णांक err)
+अणु
+	काष्ठा nci_dev *ndev = (काष्ठा nci_dev *)context;
+	काष्ठा nci_conn_info    *conn_info;
 
 	conn_info = nci_get_conn_info_by_conn_id(ndev, ndev->cur_conn_id);
-	if (!conn_info) {
+	अगर (!conn_info) अणु
 		nci_req_complete(ndev, NCI_STATUS_REJECTED);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	conn_info->rx_skb = skb;
 
 	nci_req_complete(ndev, NCI_STATUS_OK);
-}
+पूर्ण
 
-int nci_nfcc_loopback(struct nci_dev *ndev, void *data, size_t data_len,
-		      struct sk_buff **resp)
-{
-	int r;
-	struct nci_loopback_data loopback_data;
-	struct nci_conn_info *conn_info;
-	struct sk_buff *skb;
-	int conn_id = nci_get_conn_info_by_dest_type_params(ndev,
-					NCI_DESTINATION_NFCC_LOOPBACK, NULL);
+पूर्णांक nci_nfcc_loopback(काष्ठा nci_dev *ndev, व्योम *data, माप_प्रकार data_len,
+		      काष्ठा sk_buff **resp)
+अणु
+	पूर्णांक r;
+	काष्ठा nci_loopback_data loopback_data;
+	काष्ठा nci_conn_info *conn_info;
+	काष्ठा sk_buff *skb;
+	पूर्णांक conn_id = nci_get_conn_info_by_dest_type_params(ndev,
+					NCI_DESTINATION_NFCC_LOOPBACK, शून्य);
 
-	if (conn_id < 0) {
+	अगर (conn_id < 0) अणु
 		r = nci_core_conn_create(ndev, NCI_DESTINATION_NFCC_LOOPBACK,
-					 0, 0, NULL);
-		if (r != NCI_STATUS_OK)
-			return r;
+					 0, 0, शून्य);
+		अगर (r != NCI_STATUS_OK)
+			वापस r;
 
 		conn_id = nci_get_conn_info_by_dest_type_params(ndev,
 					NCI_DESTINATION_NFCC_LOOPBACK,
-					NULL);
-	}
+					शून्य);
+	पूर्ण
 
 	conn_info = nci_get_conn_info_by_conn_id(ndev, conn_id);
-	if (!conn_info)
-		return -EPROTO;
+	अगर (!conn_info)
+		वापस -EPROTO;
 
 	/* store cb and context to be used on receiving data */
 	conn_info->data_exchange_cb = nci_nfcc_loopback_cb;
 	conn_info->data_exchange_cb_context = ndev;
 
 	skb = nci_skb_alloc(ndev, NCI_DATA_HDR_SIZE + data_len, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	skb_reserve(skb, NCI_DATA_HDR_SIZE);
 	skb_put_data(skb, data, data_len);
@@ -460,101 +461,101 @@ int nci_nfcc_loopback(struct nci_dev *ndev, void *data, size_t data_len,
 	loopback_data.data = skb;
 
 	ndev->cur_conn_id = conn_id;
-	r = nci_request(ndev, nci_send_data_req, (unsigned long)&loopback_data,
-			msecs_to_jiffies(NCI_DATA_TIMEOUT));
-	if (r == NCI_STATUS_OK && resp)
+	r = nci_request(ndev, nci_send_data_req, (अचिन्हित दीर्घ)&loopback_data,
+			msecs_to_jअगरfies(NCI_DATA_TIMEOUT));
+	अगर (r == NCI_STATUS_OK && resp)
 		*resp = conn_info->rx_skb;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL(nci_nfcc_loopback);
 
-static int nci_open_device(struct nci_dev *ndev)
-{
-	int rc = 0;
+अटल पूर्णांक nci_खोलो_device(काष्ठा nci_dev *ndev)
+अणु
+	पूर्णांक rc = 0;
 
 	mutex_lock(&ndev->req_lock);
 
-	if (test_bit(NCI_UP, &ndev->flags)) {
+	अगर (test_bit(NCI_UP, &ndev->flags)) अणु
 		rc = -EALREADY;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (ndev->ops->open(ndev)) {
+	अगर (ndev->ops->खोलो(ndev)) अणु
 		rc = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	atomic_set(&ndev->cmd_cnt, 1);
 
 	set_bit(NCI_INIT, &ndev->flags);
 
-	if (ndev->ops->init)
+	अगर (ndev->ops->init)
 		rc = ndev->ops->init(ndev);
 
-	if (!rc) {
+	अगर (!rc) अणु
 		rc = __nci_request(ndev, nci_reset_req, 0,
-				   msecs_to_jiffies(NCI_RESET_TIMEOUT));
-	}
+				   msecs_to_jअगरfies(NCI_RESET_TIMEOUT));
+	पूर्ण
 
-	if (!rc && ndev->ops->setup) {
+	अगर (!rc && ndev->ops->setup) अणु
 		rc = ndev->ops->setup(ndev);
-	}
+	पूर्ण
 
-	if (!rc) {
-		struct nci_core_init_v2_cmd nci_init_v2_cmd = {
+	अगर (!rc) अणु
+		काष्ठा nci_core_init_v2_cmd nci_init_v2_cmd = अणु
 			.feature1 = NCI_FEATURE_DISABLE,
 			.feature2 = NCI_FEATURE_DISABLE
-		};
-		unsigned long opt = 0;
+		पूर्ण;
+		अचिन्हित दीर्घ opt = 0;
 
-		if (ndev->nci_ver & NCI_VER_2_MASK)
-			opt = (unsigned long)&nci_init_v2_cmd;
+		अगर (ndev->nci_ver & NCI_VER_2_MASK)
+			opt = (अचिन्हित दीर्घ)&nci_init_v2_cmd;
 
 		rc = __nci_request(ndev, nci_init_req, opt,
-				   msecs_to_jiffies(NCI_INIT_TIMEOUT));
-	}
+				   msecs_to_jअगरfies(NCI_INIT_TIMEOUT));
+	पूर्ण
 
-	if (!rc && ndev->ops->post_setup)
+	अगर (!rc && ndev->ops->post_setup)
 		rc = ndev->ops->post_setup(ndev);
 
-	if (!rc) {
+	अगर (!rc) अणु
 		rc = __nci_request(ndev, nci_init_complete_req, 0,
-				   msecs_to_jiffies(NCI_INIT_TIMEOUT));
-	}
+				   msecs_to_jअगरfies(NCI_INIT_TIMEOUT));
+	पूर्ण
 
 	clear_bit(NCI_INIT, &ndev->flags);
 
-	if (!rc) {
+	अगर (!rc) अणु
 		set_bit(NCI_UP, &ndev->flags);
 		nci_clear_target_list(ndev);
 		atomic_set(&ndev->state, NCI_IDLE);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Init failed, cleanup */
 		skb_queue_purge(&ndev->cmd_q);
 		skb_queue_purge(&ndev->rx_q);
 		skb_queue_purge(&ndev->tx_q);
 
-		ndev->ops->close(ndev);
+		ndev->ops->बंद(ndev);
 		ndev->flags = 0;
-	}
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&ndev->req_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nci_close_device(struct nci_dev *ndev)
-{
+अटल पूर्णांक nci_बंद_device(काष्ठा nci_dev *ndev)
+अणु
 	nci_req_cancel(ndev, ENODEV);
 	mutex_lock(&ndev->req_lock);
 
-	if (!test_and_clear_bit(NCI_UP, &ndev->flags)) {
-		del_timer_sync(&ndev->cmd_timer);
-		del_timer_sync(&ndev->data_timer);
+	अगर (!test_and_clear_bit(NCI_UP, &ndev->flags)) अणु
+		del_समयr_sync(&ndev->cmd_समयr);
+		del_समयr_sync(&ndev->data_समयr);
 		mutex_unlock(&ndev->req_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Drop RX and TX queues */
 	skb_queue_purge(&ndev->rx_q);
@@ -570,555 +571,555 @@ static int nci_close_device(struct nci_dev *ndev)
 
 	set_bit(NCI_INIT, &ndev->flags);
 	__nci_request(ndev, nci_reset_req, 0,
-		      msecs_to_jiffies(NCI_RESET_TIMEOUT));
+		      msecs_to_jअगरfies(NCI_RESET_TIMEOUT));
 
-	/* After this point our queues are empty
+	/* After this poपूर्णांक our queues are empty
 	 * and no works are scheduled.
 	 */
-	ndev->ops->close(ndev);
+	ndev->ops->बंद(ndev);
 
 	clear_bit(NCI_INIT, &ndev->flags);
 
 	/* Flush cmd wq */
 	flush_workqueue(ndev->cmd_wq);
 
-	del_timer_sync(&ndev->cmd_timer);
+	del_समयr_sync(&ndev->cmd_समयr);
 
 	/* Clear flags */
 	ndev->flags = 0;
 
 	mutex_unlock(&ndev->req_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* NCI command timer function */
-static void nci_cmd_timer(struct timer_list *t)
-{
-	struct nci_dev *ndev = from_timer(ndev, t, cmd_timer);
+/* NCI command समयr function */
+अटल व्योम nci_cmd_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा nci_dev *ndev = from_समयr(ndev, t, cmd_समयr);
 
 	atomic_set(&ndev->cmd_cnt, 1);
 	queue_work(ndev->cmd_wq, &ndev->cmd_work);
-}
+पूर्ण
 
-/* NCI data exchange timer function */
-static void nci_data_timer(struct timer_list *t)
-{
-	struct nci_dev *ndev = from_timer(ndev, t, data_timer);
+/* NCI data exchange समयr function */
+अटल व्योम nci_data_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा nci_dev *ndev = from_समयr(ndev, t, data_समयr);
 
 	set_bit(NCI_DATA_EXCHANGE_TO, &ndev->flags);
 	queue_work(ndev->rx_wq, &ndev->rx_work);
-}
+पूर्ण
 
-static int nci_dev_up(struct nfc_dev *nfc_dev)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+अटल पूर्णांक nci_dev_up(काष्ठा nfc_dev *nfc_dev)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
 
-	return nci_open_device(ndev);
-}
+	वापस nci_खोलो_device(ndev);
+पूर्ण
 
-static int nci_dev_down(struct nfc_dev *nfc_dev)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+अटल पूर्णांक nci_dev_करोwn(काष्ठा nfc_dev *nfc_dev)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
 
-	return nci_close_device(ndev);
-}
+	वापस nci_बंद_device(ndev);
+पूर्ण
 
-int nci_set_config(struct nci_dev *ndev, __u8 id, size_t len, __u8 *val)
-{
-	struct nci_set_config_param param;
+पूर्णांक nci_set_config(काष्ठा nci_dev *ndev, __u8 id, माप_प्रकार len, __u8 *val)
+अणु
+	काष्ठा nci_set_config_param param;
 
-	if (!val || !len)
-		return 0;
+	अगर (!val || !len)
+		वापस 0;
 
 	param.id = id;
 	param.len = len;
 	param.val = val;
 
-	return __nci_request(ndev, nci_set_config_req, (unsigned long)&param,
-			     msecs_to_jiffies(NCI_SET_CONFIG_TIMEOUT));
-}
+	वापस __nci_request(ndev, nci_set_config_req, (अचिन्हित दीर्घ)&param,
+			     msecs_to_jअगरfies(NCI_SET_CONFIG_TIMEOUT));
+पूर्ण
 EXPORT_SYMBOL(nci_set_config);
 
-static void nci_nfcee_discover_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_nfcee_discover_cmd cmd;
+अटल व्योम nci_nfcee_discover_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_nfcee_discover_cmd cmd;
 	__u8 action = opt;
 
 	cmd.discovery_action = action;
 
 	nci_send_cmd(ndev, NCI_OP_NFCEE_DISCOVER_CMD, 1, &cmd);
-}
+पूर्ण
 
-int nci_nfcee_discover(struct nci_dev *ndev, u8 action)
-{
-	return __nci_request(ndev, nci_nfcee_discover_req, action,
-				msecs_to_jiffies(NCI_CMD_TIMEOUT));
-}
+पूर्णांक nci_nfcee_discover(काष्ठा nci_dev *ndev, u8 action)
+अणु
+	वापस __nci_request(ndev, nci_nfcee_discover_req, action,
+				msecs_to_jअगरfies(NCI_CMD_TIMEOUT));
+पूर्ण
 EXPORT_SYMBOL(nci_nfcee_discover);
 
-static void nci_nfcee_mode_set_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct nci_nfcee_mode_set_cmd *cmd =
-					(struct nci_nfcee_mode_set_cmd *)opt;
+अटल व्योम nci_nfcee_mode_set_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा nci_nfcee_mode_set_cmd *cmd =
+					(काष्ठा nci_nfcee_mode_set_cmd *)opt;
 
 	nci_send_cmd(ndev, NCI_OP_NFCEE_MODE_SET_CMD,
-		     sizeof(struct nci_nfcee_mode_set_cmd), cmd);
-}
+		     माप(काष्ठा nci_nfcee_mode_set_cmd), cmd);
+पूर्ण
 
-int nci_nfcee_mode_set(struct nci_dev *ndev, u8 nfcee_id, u8 nfcee_mode)
-{
-	struct nci_nfcee_mode_set_cmd cmd;
+पूर्णांक nci_nfcee_mode_set(काष्ठा nci_dev *ndev, u8 nfcee_id, u8 nfcee_mode)
+अणु
+	काष्ठा nci_nfcee_mode_set_cmd cmd;
 
 	cmd.nfcee_id = nfcee_id;
 	cmd.nfcee_mode = nfcee_mode;
 
-	return __nci_request(ndev, nci_nfcee_mode_set_req,
-			     (unsigned long)&cmd,
-			     msecs_to_jiffies(NCI_CMD_TIMEOUT));
-}
+	वापस __nci_request(ndev, nci_nfcee_mode_set_req,
+			     (अचिन्हित दीर्घ)&cmd,
+			     msecs_to_jअगरfies(NCI_CMD_TIMEOUT));
+पूर्ण
 EXPORT_SYMBOL(nci_nfcee_mode_set);
 
-static void nci_core_conn_create_req(struct nci_dev *ndev, unsigned long opt)
-{
-	struct core_conn_create_data *data =
-					(struct core_conn_create_data *)opt;
+अटल व्योम nci_core_conn_create_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा core_conn_create_data *data =
+					(काष्ठा core_conn_create_data *)opt;
 
 	nci_send_cmd(ndev, NCI_OP_CORE_CONN_CREATE_CMD, data->length, data->cmd);
-}
+पूर्ण
 
-int nci_core_conn_create(struct nci_dev *ndev, u8 destination_type,
+पूर्णांक nci_core_conn_create(काष्ठा nci_dev *ndev, u8 destination_type,
 			 u8 number_destination_params,
-			 size_t params_len,
-			 struct core_conn_create_dest_spec_params *params)
-{
-	int r;
-	struct nci_core_conn_create_cmd *cmd;
-	struct core_conn_create_data data;
+			 माप_प्रकार params_len,
+			 काष्ठा core_conn_create_dest_spec_params *params)
+अणु
+	पूर्णांक r;
+	काष्ठा nci_core_conn_create_cmd *cmd;
+	काष्ठा core_conn_create_data data;
 
-	data.length = params_len + sizeof(struct nci_core_conn_create_cmd);
+	data.length = params_len + माप(काष्ठा nci_core_conn_create_cmd);
 	cmd = kzalloc(data.length, GFP_KERNEL);
-	if (!cmd)
-		return -ENOMEM;
+	अगर (!cmd)
+		वापस -ENOMEM;
 
 	cmd->destination_type = destination_type;
 	cmd->number_destination_params = number_destination_params;
 
 	data.cmd = cmd;
 
-	if (params) {
-		memcpy(cmd->params, params, params_len);
-		if (params->length > 0)
-			memcpy(&ndev->cur_params,
+	अगर (params) अणु
+		स_नकल(cmd->params, params, params_len);
+		अगर (params->length > 0)
+			स_नकल(&ndev->cur_params,
 			       &params->value[DEST_SPEC_PARAMS_ID_INDEX],
-			       sizeof(struct dest_spec_params));
-		else
+			       माप(काष्ठा dest_spec_params));
+		अन्यथा
 			ndev->cur_params.id = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		ndev->cur_params.id = 0;
-	}
+	पूर्ण
 	ndev->cur_dest_type = destination_type;
 
-	r = __nci_request(ndev, nci_core_conn_create_req, (unsigned long)&data,
-			  msecs_to_jiffies(NCI_CMD_TIMEOUT));
-	kfree(cmd);
-	return r;
-}
+	r = __nci_request(ndev, nci_core_conn_create_req, (अचिन्हित दीर्घ)&data,
+			  msecs_to_jअगरfies(NCI_CMD_TIMEOUT));
+	kमुक्त(cmd);
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL(nci_core_conn_create);
 
-static void nci_core_conn_close_req(struct nci_dev *ndev, unsigned long opt)
-{
+अटल व्योम nci_core_conn_बंद_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
+अणु
 	__u8 conn_id = opt;
 
 	nci_send_cmd(ndev, NCI_OP_CORE_CONN_CLOSE_CMD, 1, &conn_id);
-}
+पूर्ण
 
-int nci_core_conn_close(struct nci_dev *ndev, u8 conn_id)
-{
+पूर्णांक nci_core_conn_बंद(काष्ठा nci_dev *ndev, u8 conn_id)
+अणु
 	ndev->cur_conn_id = conn_id;
-	return __nci_request(ndev, nci_core_conn_close_req, conn_id,
-			     msecs_to_jiffies(NCI_CMD_TIMEOUT));
-}
-EXPORT_SYMBOL(nci_core_conn_close);
+	वापस __nci_request(ndev, nci_core_conn_बंद_req, conn_id,
+			     msecs_to_jअगरfies(NCI_CMD_TIMEOUT));
+पूर्ण
+EXPORT_SYMBOL(nci_core_conn_बंद);
 
-static int nci_set_local_general_bytes(struct nfc_dev *nfc_dev)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
-	struct nci_set_config_param param;
-	int rc;
+अटल पूर्णांक nci_set_local_general_bytes(काष्ठा nfc_dev *nfc_dev)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+	काष्ठा nci_set_config_param param;
+	पूर्णांक rc;
 
 	param.val = nfc_get_local_general_bytes(nfc_dev, &param.len);
-	if ((param.val == NULL) || (param.len == 0))
-		return 0;
+	अगर ((param.val == शून्य) || (param.len == 0))
+		वापस 0;
 
-	if (param.len > NFC_MAX_GT_LEN)
-		return -EINVAL;
+	अगर (param.len > NFC_MAX_GT_LEN)
+		वापस -EINVAL;
 
 	param.id = NCI_PN_ATR_REQ_GEN_BYTES;
 
-	rc = nci_request(ndev, nci_set_config_req, (unsigned long)&param,
-			 msecs_to_jiffies(NCI_SET_CONFIG_TIMEOUT));
-	if (rc)
-		return rc;
+	rc = nci_request(ndev, nci_set_config_req, (अचिन्हित दीर्घ)&param,
+			 msecs_to_jअगरfies(NCI_SET_CONFIG_TIMEOUT));
+	अगर (rc)
+		वापस rc;
 
 	param.id = NCI_LN_ATR_RES_GEN_BYTES;
 
-	return nci_request(ndev, nci_set_config_req, (unsigned long)&param,
-			   msecs_to_jiffies(NCI_SET_CONFIG_TIMEOUT));
-}
+	वापस nci_request(ndev, nci_set_config_req, (अचिन्हित दीर्घ)&param,
+			   msecs_to_jअगरfies(NCI_SET_CONFIG_TIMEOUT));
+पूर्ण
 
-static int nci_set_listen_parameters(struct nfc_dev *nfc_dev)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
-	int rc;
+अटल पूर्णांक nci_set_listen_parameters(काष्ठा nfc_dev *nfc_dev)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+	पूर्णांक rc;
 	__u8 val;
 
 	val = NCI_LA_SEL_INFO_NFC_DEP_MASK;
 
 	rc = nci_set_config(ndev, NCI_LA_SEL_INFO, 1, &val);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	val = NCI_LF_PROTOCOL_TYPE_NFC_DEP_MASK;
 
 	rc = nci_set_config(ndev, NCI_LF_PROTOCOL_TYPE, 1, &val);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	val = NCI_LF_CON_BITR_F_212 | NCI_LF_CON_BITR_F_424;
 
-	return nci_set_config(ndev, NCI_LF_CON_BITR_F, 1, &val);
-}
+	वापस nci_set_config(ndev, NCI_LF_CON_BITR_F, 1, &val);
+पूर्ण
 
-static int nci_start_poll(struct nfc_dev *nfc_dev,
-			  __u32 im_protocols, __u32 tm_protocols)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
-	struct nci_rf_discover_param param;
-	int rc;
+अटल पूर्णांक nci_start_poll(काष्ठा nfc_dev *nfc_dev,
+			  __u32 im_protocols, __u32 पंचांग_protocols)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+	काष्ठा nci_rf_discover_param param;
+	पूर्णांक rc;
 
-	if ((atomic_read(&ndev->state) == NCI_DISCOVERY) ||
-	    (atomic_read(&ndev->state) == NCI_W4_ALL_DISCOVERIES)) {
+	अगर ((atomic_पढ़ो(&ndev->state) == NCI_DISCOVERY) ||
+	    (atomic_पढ़ो(&ndev->state) == NCI_W4_ALL_DISCOVERIES)) अणु
 		pr_err("unable to start poll, since poll is already active\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (ndev->target_active_prot) {
+	अगर (ndev->target_active_prot) अणु
 		pr_err("there is an active target\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if ((atomic_read(&ndev->state) == NCI_W4_HOST_SELECT) ||
-	    (atomic_read(&ndev->state) == NCI_POLL_ACTIVE)) {
+	अगर ((atomic_पढ़ो(&ndev->state) == NCI_W4_HOST_SELECT) ||
+	    (atomic_पढ़ो(&ndev->state) == NCI_POLL_ACTIVE)) अणु
 		pr_debug("target active or w4 select, implicitly deactivate\n");
 
 		rc = nci_request(ndev, nci_rf_deactivate_req,
 				 NCI_DEACTIVATE_TYPE_IDLE_MODE,
-				 msecs_to_jiffies(NCI_RF_DEACTIVATE_TIMEOUT));
-		if (rc)
-			return -EBUSY;
-	}
+				 msecs_to_jअगरfies(NCI_RF_DEACTIVATE_TIMEOUT));
+		अगर (rc)
+			वापस -EBUSY;
+	पूर्ण
 
-	if ((im_protocols | tm_protocols) & NFC_PROTO_NFC_DEP_MASK) {
+	अगर ((im_protocols | पंचांग_protocols) & NFC_PROTO_NFC_DEP_MASK) अणु
 		rc = nci_set_local_general_bytes(nfc_dev);
-		if (rc) {
+		अगर (rc) अणु
 			pr_err("failed to set local general bytes\n");
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	if (tm_protocols & NFC_PROTO_NFC_DEP_MASK) {
+	अगर (पंचांग_protocols & NFC_PROTO_NFC_DEP_MASK) अणु
 		rc = nci_set_listen_parameters(nfc_dev);
-		if (rc)
+		अगर (rc)
 			pr_err("failed to set listen parameters\n");
-	}
+	पूर्ण
 
 	param.im_protocols = im_protocols;
-	param.tm_protocols = tm_protocols;
-	rc = nci_request(ndev, nci_rf_discover_req, (unsigned long)&param,
-			 msecs_to_jiffies(NCI_RF_DISC_TIMEOUT));
+	param.पंचांग_protocols = पंचांग_protocols;
+	rc = nci_request(ndev, nci_rf_discover_req, (अचिन्हित दीर्घ)&param,
+			 msecs_to_jअगरfies(NCI_RF_DISC_TIMEOUT));
 
-	if (!rc)
+	अगर (!rc)
 		ndev->poll_prots = im_protocols;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void nci_stop_poll(struct nfc_dev *nfc_dev)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+अटल व्योम nci_stop_poll(काष्ठा nfc_dev *nfc_dev)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
 
-	if ((atomic_read(&ndev->state) != NCI_DISCOVERY) &&
-	    (atomic_read(&ndev->state) != NCI_W4_ALL_DISCOVERIES)) {
+	अगर ((atomic_पढ़ो(&ndev->state) != NCI_DISCOVERY) &&
+	    (atomic_पढ़ो(&ndev->state) != NCI_W4_ALL_DISCOVERIES)) अणु
 		pr_err("unable to stop poll, since poll is not active\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	nci_request(ndev, nci_rf_deactivate_req, NCI_DEACTIVATE_TYPE_IDLE_MODE,
-		    msecs_to_jiffies(NCI_RF_DEACTIVATE_TIMEOUT));
-}
+		    msecs_to_jअगरfies(NCI_RF_DEACTIVATE_TIMEOUT));
+पूर्ण
 
-static int nci_activate_target(struct nfc_dev *nfc_dev,
-			       struct nfc_target *target, __u32 protocol)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
-	struct nci_rf_discover_select_param param;
-	struct nfc_target *nci_target = NULL;
-	int i;
-	int rc = 0;
+अटल पूर्णांक nci_activate_target(काष्ठा nfc_dev *nfc_dev,
+			       काष्ठा nfc_target *target, __u32 protocol)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+	काष्ठा nci_rf_discover_select_param param;
+	काष्ठा nfc_target *nci_target = शून्य;
+	पूर्णांक i;
+	पूर्णांक rc = 0;
 
 	pr_debug("target_idx %d, protocol 0x%x\n", target->idx, protocol);
 
-	if ((atomic_read(&ndev->state) != NCI_W4_HOST_SELECT) &&
-	    (atomic_read(&ndev->state) != NCI_POLL_ACTIVE)) {
+	अगर ((atomic_पढ़ो(&ndev->state) != NCI_W4_HOST_SELECT) &&
+	    (atomic_पढ़ो(&ndev->state) != NCI_POLL_ACTIVE)) अणु
 		pr_err("there is no available target to activate\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ndev->target_active_prot) {
+	अगर (ndev->target_active_prot) अणु
 		pr_err("there is already an active target\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	for (i = 0; i < ndev->n_targets; i++) {
-		if (ndev->targets[i].idx == target->idx) {
-			nci_target = &ndev->targets[i];
-			break;
-		}
-	}
+	क्रम (i = 0; i < ndev->n_tarमाला_लो; i++) अणु
+		अगर (ndev->tarमाला_लो[i].idx == target->idx) अणु
+			nci_target = &ndev->tarमाला_लो[i];
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!nci_target) {
+	अगर (!nci_target) अणु
 		pr_err("unable to find the selected target\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(nci_target->supported_protocols & (1 << protocol))) {
+	अगर (!(nci_target->supported_protocols & (1 << protocol))) अणु
 		pr_err("target does not support the requested protocol 0x%x\n",
 		       protocol);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (atomic_read(&ndev->state) == NCI_W4_HOST_SELECT) {
+	अगर (atomic_पढ़ो(&ndev->state) == NCI_W4_HOST_SELECT) अणु
 		param.rf_discovery_id = nci_target->logical_idx;
 
-		if (protocol == NFC_PROTO_JEWEL)
+		अगर (protocol == NFC_PROTO_JEWEL)
 			param.rf_protocol = NCI_RF_PROTOCOL_T1T;
-		else if (protocol == NFC_PROTO_MIFARE)
+		अन्यथा अगर (protocol == NFC_PROTO_MIFARE)
 			param.rf_protocol = NCI_RF_PROTOCOL_T2T;
-		else if (protocol == NFC_PROTO_FELICA)
+		अन्यथा अगर (protocol == NFC_PROTO_FELICA)
 			param.rf_protocol = NCI_RF_PROTOCOL_T3T;
-		else if (protocol == NFC_PROTO_ISO14443 ||
+		अन्यथा अगर (protocol == NFC_PROTO_ISO14443 ||
 			 protocol == NFC_PROTO_ISO14443_B)
 			param.rf_protocol = NCI_RF_PROTOCOL_ISO_DEP;
-		else
+		अन्यथा
 			param.rf_protocol = NCI_RF_PROTOCOL_NFC_DEP;
 
 		rc = nci_request(ndev, nci_rf_discover_select_req,
-				 (unsigned long)&param,
-				 msecs_to_jiffies(NCI_RF_DISC_SELECT_TIMEOUT));
-	}
+				 (अचिन्हित दीर्घ)&param,
+				 msecs_to_jअगरfies(NCI_RF_DISC_SELECT_TIMEOUT));
+	पूर्ण
 
-	if (!rc)
+	अगर (!rc)
 		ndev->target_active_prot = protocol;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void nci_deactivate_target(struct nfc_dev *nfc_dev,
-				  struct nfc_target *target,
+अटल व्योम nci_deactivate_target(काष्ठा nfc_dev *nfc_dev,
+				  काष्ठा nfc_target *target,
 				  __u8 mode)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
 	u8 nci_mode = NCI_DEACTIVATE_TYPE_IDLE_MODE;
 
 	pr_debug("entry\n");
 
-	if (!ndev->target_active_prot) {
+	अगर (!ndev->target_active_prot) अणु
 		pr_err("unable to deactivate target, no active target\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ndev->target_active_prot = 0;
 
-	switch (mode) {
-	case NFC_TARGET_MODE_SLEEP:
+	चयन (mode) अणु
+	हाल NFC_TARGET_MODE_SLEEP:
 		nci_mode = NCI_DEACTIVATE_TYPE_SLEEP_MODE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (atomic_read(&ndev->state) == NCI_POLL_ACTIVE) {
+	अगर (atomic_पढ़ो(&ndev->state) == NCI_POLL_ACTIVE) अणु
 		nci_request(ndev, nci_rf_deactivate_req, nci_mode,
-			    msecs_to_jiffies(NCI_RF_DEACTIVATE_TIMEOUT));
-	}
-}
+			    msecs_to_jअगरfies(NCI_RF_DEACTIVATE_TIMEOUT));
+	पूर्ण
+पूर्ण
 
-static int nci_dep_link_up(struct nfc_dev *nfc_dev, struct nfc_target *target,
-			   __u8 comm_mode, __u8 *gb, size_t gb_len)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
-	int rc;
+अटल पूर्णांक nci_dep_link_up(काष्ठा nfc_dev *nfc_dev, काष्ठा nfc_target *target,
+			   __u8 comm_mode, __u8 *gb, माप_प्रकार gb_len)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+	पूर्णांक rc;
 
 	pr_debug("target_idx %d, comm_mode %d\n", target->idx, comm_mode);
 
 	rc = nci_activate_target(nfc_dev, target, NFC_PROTO_NFC_DEP);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = nfc_set_remote_general_bytes(nfc_dev, ndev->remote_gb,
 					  ndev->remote_gb_len);
-	if (!rc)
+	अगर (!rc)
 		rc = nfc_dep_link_is_up(nfc_dev, target->idx, NFC_COMM_PASSIVE,
 					NFC_RF_INITIATOR);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nci_dep_link_down(struct nfc_dev *nfc_dev)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
-	int rc;
+अटल पूर्णांक nci_dep_link_करोwn(काष्ठा nfc_dev *nfc_dev)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+	पूर्णांक rc;
 
 	pr_debug("entry\n");
 
-	if (nfc_dev->rf_mode == NFC_RF_INITIATOR) {
-		nci_deactivate_target(nfc_dev, NULL, NCI_DEACTIVATE_TYPE_IDLE_MODE);
-	} else {
-		if (atomic_read(&ndev->state) == NCI_LISTEN_ACTIVE ||
-		    atomic_read(&ndev->state) == NCI_DISCOVERY) {
+	अगर (nfc_dev->rf_mode == NFC_RF_INITIATOR) अणु
+		nci_deactivate_target(nfc_dev, शून्य, NCI_DEACTIVATE_TYPE_IDLE_MODE);
+	पूर्ण अन्यथा अणु
+		अगर (atomic_पढ़ो(&ndev->state) == NCI_LISTEN_ACTIVE ||
+		    atomic_पढ़ो(&ndev->state) == NCI_DISCOVERY) अणु
 			nci_request(ndev, nci_rf_deactivate_req, 0,
-				msecs_to_jiffies(NCI_RF_DEACTIVATE_TIMEOUT));
-		}
+				msecs_to_jअगरfies(NCI_RF_DEACTIVATE_TIMEOUT));
+		पूर्ण
 
-		rc = nfc_tm_deactivated(nfc_dev);
-		if (rc)
+		rc = nfc_पंचांग_deactivated(nfc_dev);
+		अगर (rc)
 			pr_err("error when signaling tm deactivation\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int nci_transceive(struct nfc_dev *nfc_dev, struct nfc_target *target,
-			  struct sk_buff *skb,
-			  data_exchange_cb_t cb, void *cb_context)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
-	int rc;
-	struct nci_conn_info    *conn_info;
+अटल पूर्णांक nci_transceive(काष्ठा nfc_dev *nfc_dev, काष्ठा nfc_target *target,
+			  काष्ठा sk_buff *skb,
+			  data_exchange_cb_t cb, व्योम *cb_context)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+	पूर्णांक rc;
+	काष्ठा nci_conn_info    *conn_info;
 
 	conn_info = ndev->rf_conn_info;
-	if (!conn_info)
-		return -EPROTO;
+	अगर (!conn_info)
+		वापस -EPROTO;
 
 	pr_debug("target_idx %d, len %d\n", target->idx, skb->len);
 
-	if (!ndev->target_active_prot) {
+	अगर (!ndev->target_active_prot) अणु
 		pr_err("unable to exchange data, no active target\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (test_and_set_bit(NCI_DATA_EXCHANGE, &ndev->flags))
-		return -EBUSY;
+	अगर (test_and_set_bit(NCI_DATA_EXCHANGE, &ndev->flags))
+		वापस -EBUSY;
 
 	/* store cb and context to be used on receiving data */
 	conn_info->data_exchange_cb = cb;
 	conn_info->data_exchange_cb_context = cb_context;
 
 	rc = nci_send_data(ndev, NCI_STATIC_RF_CONN_ID, skb);
-	if (rc)
+	अगर (rc)
 		clear_bit(NCI_DATA_EXCHANGE, &ndev->flags);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nci_tm_send(struct nfc_dev *nfc_dev, struct sk_buff *skb)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
-	int rc;
+अटल पूर्णांक nci_पंचांग_send(काष्ठा nfc_dev *nfc_dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+	पूर्णांक rc;
 
 	rc = nci_send_data(ndev, NCI_STATIC_RF_CONN_ID, skb);
-	if (rc)
+	अगर (rc)
 		pr_err("unable to send data\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nci_enable_se(struct nfc_dev *nfc_dev, u32 se_idx)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+अटल पूर्णांक nci_enable_se(काष्ठा nfc_dev *nfc_dev, u32 se_idx)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
 
-	if (ndev->ops->enable_se)
-		return ndev->ops->enable_se(ndev, se_idx);
+	अगर (ndev->ops->enable_se)
+		वापस ndev->ops->enable_se(ndev, se_idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nci_disable_se(struct nfc_dev *nfc_dev, u32 se_idx)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+अटल पूर्णांक nci_disable_se(काष्ठा nfc_dev *nfc_dev, u32 se_idx)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
 
-	if (ndev->ops->disable_se)
-		return ndev->ops->disable_se(ndev, se_idx);
+	अगर (ndev->ops->disable_se)
+		वापस ndev->ops->disable_se(ndev, se_idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nci_discover_se(struct nfc_dev *nfc_dev)
-{
-	int r;
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+अटल पूर्णांक nci_discover_se(काष्ठा nfc_dev *nfc_dev)
+अणु
+	पूर्णांक r;
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
 
-	if (ndev->ops->discover_se) {
+	अगर (ndev->ops->discover_se) अणु
 		r = nci_nfcee_discover(ndev, NCI_NFCEE_DISCOVERY_ACTION_ENABLE);
-		if (r != NCI_STATUS_OK)
-			return -EPROTO;
+		अगर (r != NCI_STATUS_OK)
+			वापस -EPROTO;
 
-		return ndev->ops->discover_se(ndev);
-	}
+		वापस ndev->ops->discover_se(ndev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nci_se_io(struct nfc_dev *nfc_dev, u32 se_idx,
-		     u8 *apdu, size_t apdu_length,
-		     se_io_cb_t cb, void *cb_context)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+अटल पूर्णांक nci_se_io(काष्ठा nfc_dev *nfc_dev, u32 se_idx,
+		     u8 *apdu, माप_प्रकार apdu_length,
+		     se_io_cb_t cb, व्योम *cb_context)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
 
-	if (ndev->ops->se_io)
-		return ndev->ops->se_io(ndev, se_idx, apdu,
+	अगर (ndev->ops->se_io)
+		वापस ndev->ops->se_io(ndev, se_idx, apdu,
 				apdu_length, cb, cb_context);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nci_fw_download(struct nfc_dev *nfc_dev, const char *firmware_name)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(nfc_dev);
+अटल पूर्णांक nci_fw_करोwnload(काष्ठा nfc_dev *nfc_dev, स्थिर अक्षर *firmware_name)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(nfc_dev);
 
-	if (!ndev->ops->fw_download)
-		return -ENOTSUPP;
+	अगर (!ndev->ops->fw_करोwnload)
+		वापस -ENOTSUPP;
 
-	return ndev->ops->fw_download(ndev, firmware_name);
-}
+	वापस ndev->ops->fw_करोwnload(ndev, firmware_name);
+पूर्ण
 
-static struct nfc_ops nci_nfc_ops = {
+अटल काष्ठा nfc_ops nci_nfc_ops = अणु
 	.dev_up = nci_dev_up,
-	.dev_down = nci_dev_down,
+	.dev_करोwn = nci_dev_करोwn,
 	.start_poll = nci_start_poll,
 	.stop_poll = nci_stop_poll,
 	.dep_link_up = nci_dep_link_up,
-	.dep_link_down = nci_dep_link_down,
+	.dep_link_करोwn = nci_dep_link_करोwn,
 	.activate_target = nci_activate_target,
 	.deactivate_target = nci_deactivate_target,
 	.im_transceive = nci_transceive,
-	.tm_send = nci_tm_send,
+	.पंचांग_send = nci_पंचांग_send,
 	.enable_se = nci_enable_se,
 	.disable_se = nci_disable_se,
 	.discover_se = nci_discover_se,
 	.se_io = nci_se_io,
-	.fw_download = nci_fw_download,
-};
+	.fw_करोwnload = nci_fw_करोwnload,
+पूर्ण;
 
 /* ---- Interface to NCI drivers ---- */
 /**
@@ -1129,32 +1130,32 @@ static struct nfc_ops nci_nfc_ops = {
  * @tx_headroom: Reserved space at beginning of skb
  * @tx_tailroom: Reserved space at end of skb
  */
-struct nci_dev *nci_allocate_device(struct nci_ops *ops,
+काष्ठा nci_dev *nci_allocate_device(काष्ठा nci_ops *ops,
 				    __u32 supported_protocols,
-				    int tx_headroom, int tx_tailroom)
-{
-	struct nci_dev *ndev;
+				    पूर्णांक tx_headroom, पूर्णांक tx_tailroom)
+अणु
+	काष्ठा nci_dev *ndev;
 
 	pr_debug("supported_protocols 0x%x\n", supported_protocols);
 
-	if (!ops->open || !ops->close || !ops->send)
-		return NULL;
+	अगर (!ops->खोलो || !ops->बंद || !ops->send)
+		वापस शून्य;
 
-	if (!supported_protocols)
-		return NULL;
+	अगर (!supported_protocols)
+		वापस शून्य;
 
-	ndev = kzalloc(sizeof(struct nci_dev), GFP_KERNEL);
-	if (!ndev)
-		return NULL;
+	ndev = kzalloc(माप(काष्ठा nci_dev), GFP_KERNEL);
+	अगर (!ndev)
+		वापस शून्य;
 
 	ndev->ops = ops;
 
-	if (ops->n_prop_ops > NCI_MAX_PROPRIETARY_CMD) {
+	अगर (ops->n_prop_ops > NCI_MAX_PROPRIETARY_CMD) अणु
 		pr_err("Too many proprietary commands: %zd\n",
 		       ops->n_prop_ops);
-		ops->prop_ops = NULL;
+		ops->prop_ops = शून्य;
 		ops->n_prop_ops = 0;
-	}
+	पूर्ण
 
 	ndev->tx_headroom = tx_headroom;
 	ndev->tx_tailroom = tx_tailroom;
@@ -1164,128 +1165,128 @@ struct nci_dev *nci_allocate_device(struct nci_ops *ops,
 					    supported_protocols,
 					    tx_headroom + NCI_DATA_HDR_SIZE,
 					    tx_tailroom);
-	if (!ndev->nfc_dev)
-		goto free_nci;
+	अगर (!ndev->nfc_dev)
+		जाओ मुक्त_nci;
 
 	ndev->hci_dev = nci_hci_allocate(ndev);
-	if (!ndev->hci_dev)
-		goto free_nfc;
+	अगर (!ndev->hci_dev)
+		जाओ मुक्त_nfc;
 
 	nfc_set_drvdata(ndev->nfc_dev, ndev);
 
-	return ndev;
+	वापस ndev;
 
-free_nfc:
-	nfc_free_device(ndev->nfc_dev);
-free_nci:
-	kfree(ndev);
-	return NULL;
-}
+मुक्त_nfc:
+	nfc_मुक्त_device(ndev->nfc_dev);
+मुक्त_nci:
+	kमुक्त(ndev);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(nci_allocate_device);
 
 /**
- * nci_free_device - deallocate nci device
+ * nci_मुक्त_device - deallocate nci device
  *
  * @ndev: The nci device to deallocate
  */
-void nci_free_device(struct nci_dev *ndev)
-{
-	nfc_free_device(ndev->nfc_dev);
+व्योम nci_मुक्त_device(काष्ठा nci_dev *ndev)
+अणु
+	nfc_मुक्त_device(ndev->nfc_dev);
 	nci_hci_deallocate(ndev);
-	kfree(ndev);
-}
-EXPORT_SYMBOL(nci_free_device);
+	kमुक्त(ndev);
+पूर्ण
+EXPORT_SYMBOL(nci_मुक्त_device);
 
 /**
- * nci_register_device - register a nci device in the nfc subsystem
+ * nci_रेजिस्टर_device - रेजिस्टर a nci device in the nfc subप्रणाली
  *
- * @ndev: The nci device to register
+ * @ndev: The nci device to रेजिस्टर
  */
-int nci_register_device(struct nci_dev *ndev)
-{
-	int rc;
-	struct device *dev = &ndev->nfc_dev->dev;
-	char name[32];
+पूर्णांक nci_रेजिस्टर_device(काष्ठा nci_dev *ndev)
+अणु
+	पूर्णांक rc;
+	काष्ठा device *dev = &ndev->nfc_dev->dev;
+	अक्षर name[32];
 
 	ndev->flags = 0;
 
 	INIT_WORK(&ndev->cmd_work, nci_cmd_work);
-	snprintf(name, sizeof(name), "%s_nci_cmd_wq", dev_name(dev));
-	ndev->cmd_wq = create_singlethread_workqueue(name);
-	if (!ndev->cmd_wq) {
+	snम_लिखो(name, माप(name), "%s_nci_cmd_wq", dev_name(dev));
+	ndev->cmd_wq = create_singlethपढ़ो_workqueue(name);
+	अगर (!ndev->cmd_wq) अणु
 		rc = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	INIT_WORK(&ndev->rx_work, nci_rx_work);
-	snprintf(name, sizeof(name), "%s_nci_rx_wq", dev_name(dev));
-	ndev->rx_wq = create_singlethread_workqueue(name);
-	if (!ndev->rx_wq) {
+	snम_लिखो(name, माप(name), "%s_nci_rx_wq", dev_name(dev));
+	ndev->rx_wq = create_singlethपढ़ो_workqueue(name);
+	अगर (!ndev->rx_wq) अणु
 		rc = -ENOMEM;
-		goto destroy_cmd_wq_exit;
-	}
+		जाओ destroy_cmd_wq_निकास;
+	पूर्ण
 
 	INIT_WORK(&ndev->tx_work, nci_tx_work);
-	snprintf(name, sizeof(name), "%s_nci_tx_wq", dev_name(dev));
-	ndev->tx_wq = create_singlethread_workqueue(name);
-	if (!ndev->tx_wq) {
+	snम_लिखो(name, माप(name), "%s_nci_tx_wq", dev_name(dev));
+	ndev->tx_wq = create_singlethपढ़ो_workqueue(name);
+	अगर (!ndev->tx_wq) अणु
 		rc = -ENOMEM;
-		goto destroy_rx_wq_exit;
-	}
+		जाओ destroy_rx_wq_निकास;
+	पूर्ण
 
 	skb_queue_head_init(&ndev->cmd_q);
 	skb_queue_head_init(&ndev->rx_q);
 	skb_queue_head_init(&ndev->tx_q);
 
-	timer_setup(&ndev->cmd_timer, nci_cmd_timer, 0);
-	timer_setup(&ndev->data_timer, nci_data_timer, 0);
+	समयr_setup(&ndev->cmd_समयr, nci_cmd_समयr, 0);
+	समयr_setup(&ndev->data_समयr, nci_data_समयr, 0);
 
 	mutex_init(&ndev->req_lock);
 	INIT_LIST_HEAD(&ndev->conn_info_list);
 
-	rc = nfc_register_device(ndev->nfc_dev);
-	if (rc)
-		goto destroy_tx_wq_exit;
+	rc = nfc_रेजिस्टर_device(ndev->nfc_dev);
+	अगर (rc)
+		जाओ destroy_tx_wq_निकास;
 
-	goto exit;
+	जाओ निकास;
 
-destroy_tx_wq_exit:
+destroy_tx_wq_निकास:
 	destroy_workqueue(ndev->tx_wq);
 
-destroy_rx_wq_exit:
+destroy_rx_wq_निकास:
 	destroy_workqueue(ndev->rx_wq);
 
-destroy_cmd_wq_exit:
+destroy_cmd_wq_निकास:
 	destroy_workqueue(ndev->cmd_wq);
 
-exit:
-	return rc;
-}
-EXPORT_SYMBOL(nci_register_device);
+निकास:
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL(nci_रेजिस्टर_device);
 
 /**
- * nci_unregister_device - unregister a nci device in the nfc subsystem
+ * nci_unरेजिस्टर_device - unरेजिस्टर a nci device in the nfc subप्रणाली
  *
- * @ndev: The nci device to unregister
+ * @ndev: The nci device to unरेजिस्टर
  */
-void nci_unregister_device(struct nci_dev *ndev)
-{
-	struct nci_conn_info    *conn_info, *n;
+व्योम nci_unरेजिस्टर_device(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा nci_conn_info    *conn_info, *n;
 
-	nci_close_device(ndev);
+	nci_बंद_device(ndev);
 
 	destroy_workqueue(ndev->cmd_wq);
 	destroy_workqueue(ndev->rx_wq);
 	destroy_workqueue(ndev->tx_wq);
 
-	list_for_each_entry_safe(conn_info, n, &ndev->conn_info_list, list) {
+	list_क्रम_each_entry_safe(conn_info, n, &ndev->conn_info_list, list) अणु
 		list_del(&conn_info->list);
 		/* conn_info is allocated with devm_kzalloc */
-	}
+	पूर्ण
 
-	nfc_unregister_device(ndev->nfc_dev);
-}
-EXPORT_SYMBOL(nci_unregister_device);
+	nfc_unरेजिस्टर_device(ndev->nfc_dev);
+पूर्ण
+EXPORT_SYMBOL(nci_unरेजिस्टर_device);
 
 /**
  * nci_recv_frame - receive frame from NCI drivers
@@ -1293,57 +1294,57 @@ EXPORT_SYMBOL(nci_unregister_device);
  * @ndev: The nci device
  * @skb: The sk_buff to receive
  */
-int nci_recv_frame(struct nci_dev *ndev, struct sk_buff *skb)
-{
+पूर्णांक nci_recv_frame(काष्ठा nci_dev *ndev, काष्ठा sk_buff *skb)
+अणु
 	pr_debug("len %d\n", skb->len);
 
-	if (!ndev || (!test_bit(NCI_UP, &ndev->flags) &&
-	    !test_bit(NCI_INIT, &ndev->flags))) {
-		kfree_skb(skb);
-		return -ENXIO;
-	}
+	अगर (!ndev || (!test_bit(NCI_UP, &ndev->flags) &&
+	    !test_bit(NCI_INIT, &ndev->flags))) अणु
+		kमुक्त_skb(skb);
+		वापस -ENXIO;
+	पूर्ण
 
-	/* Queue frame for rx worker thread */
+	/* Queue frame क्रम rx worker thपढ़ो */
 	skb_queue_tail(&ndev->rx_q, skb);
 	queue_work(ndev->rx_wq, &ndev->rx_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nci_recv_frame);
 
-int nci_send_frame(struct nci_dev *ndev, struct sk_buff *skb)
-{
+पूर्णांक nci_send_frame(काष्ठा nci_dev *ndev, काष्ठा sk_buff *skb)
+अणु
 	pr_debug("len %d\n", skb->len);
 
-	if (!ndev) {
-		kfree_skb(skb);
-		return -ENODEV;
-	}
+	अगर (!ndev) अणु
+		kमुक्त_skb(skb);
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Get rid of skb owner, prior to sending to the driver. */
 	skb_orphan(skb);
 
-	/* Send copy to sniffer */
+	/* Send copy to snअगरfer */
 	nfc_send_to_raw_sock(ndev->nfc_dev, skb,
-			     RAW_PAYLOAD_NCI, NFC_DIRECTION_TX);
+			     RAW_PAYLOAD_NCI, NFC_सूचीECTION_TX);
 
-	return ndev->ops->send(ndev, skb);
-}
+	वापस ndev->ops->send(ndev, skb);
+पूर्ण
 EXPORT_SYMBOL(nci_send_frame);
 
 /* Send NCI command */
-int nci_send_cmd(struct nci_dev *ndev, __u16 opcode, __u8 plen, void *payload)
-{
-	struct nci_ctrl_hdr *hdr;
-	struct sk_buff *skb;
+पूर्णांक nci_send_cmd(काष्ठा nci_dev *ndev, __u16 opcode, __u8 plen, व्योम *payload)
+अणु
+	काष्ठा nci_ctrl_hdr *hdr;
+	काष्ठा sk_buff *skb;
 
 	pr_debug("opcode 0x%x, plen %d\n", opcode, plen);
 
 	skb = nci_skb_alloc(ndev, (NCI_CTRL_HDR_SIZE + plen), GFP_KERNEL);
-	if (!skb) {
+	अगर (!skb) अणु
 		pr_err("no memory for command\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	hdr = skb_put(skb, NCI_CTRL_HDR_SIZE);
 	hdr->gid = nci_opcode_gid(opcode);
@@ -1353,112 +1354,112 @@ int nci_send_cmd(struct nci_dev *ndev, __u16 opcode, __u8 plen, void *payload)
 	nci_mt_set((__u8 *)hdr, NCI_MT_CMD_PKT);
 	nci_pbf_set((__u8 *)hdr, NCI_PBF_LAST);
 
-	if (plen)
+	अगर (plen)
 		skb_put_data(skb, payload, plen);
 
 	skb_queue_tail(&ndev->cmd_q, skb);
 	queue_work(ndev->cmd_wq, &ndev->cmd_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nci_send_cmd);
 
 /* Proprietary commands API */
-static struct nci_driver_ops *ops_cmd_lookup(struct nci_driver_ops *ops,
-					     size_t n_ops,
+अटल काष्ठा nci_driver_ops *ops_cmd_lookup(काष्ठा nci_driver_ops *ops,
+					     माप_प्रकार n_ops,
 					     __u16 opcode)
-{
-	size_t i;
-	struct nci_driver_ops *op;
+अणु
+	माप_प्रकार i;
+	काष्ठा nci_driver_ops *op;
 
-	if (!ops || !n_ops)
-		return NULL;
+	अगर (!ops || !n_ops)
+		वापस शून्य;
 
-	for (i = 0; i < n_ops; i++) {
+	क्रम (i = 0; i < n_ops; i++) अणु
 		op = &ops[i];
-		if (op->opcode == opcode)
-			return op;
-	}
+		अगर (op->opcode == opcode)
+			वापस op;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int nci_op_rsp_packet(struct nci_dev *ndev, __u16 rsp_opcode,
-			     struct sk_buff *skb, struct nci_driver_ops *ops,
-			     size_t n_ops)
-{
-	struct nci_driver_ops *op;
+अटल पूर्णांक nci_op_rsp_packet(काष्ठा nci_dev *ndev, __u16 rsp_opcode,
+			     काष्ठा sk_buff *skb, काष्ठा nci_driver_ops *ops,
+			     माप_प्रकार n_ops)
+अणु
+	काष्ठा nci_driver_ops *op;
 
 	op = ops_cmd_lookup(ops, n_ops, rsp_opcode);
-	if (!op || !op->rsp)
-		return -ENOTSUPP;
+	अगर (!op || !op->rsp)
+		वापस -ENOTSUPP;
 
-	return op->rsp(ndev, skb);
-}
+	वापस op->rsp(ndev, skb);
+पूर्ण
 
-static int nci_op_ntf_packet(struct nci_dev *ndev, __u16 ntf_opcode,
-			     struct sk_buff *skb, struct nci_driver_ops *ops,
-			     size_t n_ops)
-{
-	struct nci_driver_ops *op;
+अटल पूर्णांक nci_op_ntf_packet(काष्ठा nci_dev *ndev, __u16 ntf_opcode,
+			     काष्ठा sk_buff *skb, काष्ठा nci_driver_ops *ops,
+			     माप_प्रकार n_ops)
+अणु
+	काष्ठा nci_driver_ops *op;
 
 	op = ops_cmd_lookup(ops, n_ops, ntf_opcode);
-	if (!op || !op->ntf)
-		return -ENOTSUPP;
+	अगर (!op || !op->ntf)
+		वापस -ENOTSUPP;
 
-	return op->ntf(ndev, skb);
-}
+	वापस op->ntf(ndev, skb);
+पूर्ण
 
-int nci_prop_rsp_packet(struct nci_dev *ndev, __u16 opcode,
-			struct sk_buff *skb)
-{
-	return nci_op_rsp_packet(ndev, opcode, skb, ndev->ops->prop_ops,
+पूर्णांक nci_prop_rsp_packet(काष्ठा nci_dev *ndev, __u16 opcode,
+			काष्ठा sk_buff *skb)
+अणु
+	वापस nci_op_rsp_packet(ndev, opcode, skb, ndev->ops->prop_ops,
 				 ndev->ops->n_prop_ops);
-}
+पूर्ण
 
-int nci_prop_ntf_packet(struct nci_dev *ndev, __u16 opcode,
-			struct sk_buff *skb)
-{
-	return nci_op_ntf_packet(ndev, opcode, skb, ndev->ops->prop_ops,
+पूर्णांक nci_prop_ntf_packet(काष्ठा nci_dev *ndev, __u16 opcode,
+			काष्ठा sk_buff *skb)
+अणु
+	वापस nci_op_ntf_packet(ndev, opcode, skb, ndev->ops->prop_ops,
 				 ndev->ops->n_prop_ops);
-}
+पूर्ण
 
-int nci_core_rsp_packet(struct nci_dev *ndev, __u16 opcode,
-			struct sk_buff *skb)
-{
-	return nci_op_rsp_packet(ndev, opcode, skb, ndev->ops->core_ops,
+पूर्णांक nci_core_rsp_packet(काष्ठा nci_dev *ndev, __u16 opcode,
+			काष्ठा sk_buff *skb)
+अणु
+	वापस nci_op_rsp_packet(ndev, opcode, skb, ndev->ops->core_ops,
 				  ndev->ops->n_core_ops);
-}
+पूर्ण
 
-int nci_core_ntf_packet(struct nci_dev *ndev, __u16 opcode,
-			struct sk_buff *skb)
-{
-	return nci_op_ntf_packet(ndev, opcode, skb, ndev->ops->core_ops,
+पूर्णांक nci_core_ntf_packet(काष्ठा nci_dev *ndev, __u16 opcode,
+			काष्ठा sk_buff *skb)
+अणु
+	वापस nci_op_ntf_packet(ndev, opcode, skb, ndev->ops->core_ops,
 				 ndev->ops->n_core_ops);
-}
+पूर्ण
 
-/* ---- NCI TX Data worker thread ---- */
+/* ---- NCI TX Data worker thपढ़ो ---- */
 
-static void nci_tx_work(struct work_struct *work)
-{
-	struct nci_dev *ndev = container_of(work, struct nci_dev, tx_work);
-	struct nci_conn_info    *conn_info;
-	struct sk_buff *skb;
+अटल व्योम nci_tx_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nci_dev *ndev = container_of(work, काष्ठा nci_dev, tx_work);
+	काष्ठा nci_conn_info    *conn_info;
+	काष्ठा sk_buff *skb;
 
 	conn_info = nci_get_conn_info_by_conn_id(ndev, ndev->cur_conn_id);
-	if (!conn_info)
-		return;
+	अगर (!conn_info)
+		वापस;
 
-	pr_debug("credits_cnt %d\n", atomic_read(&conn_info->credits_cnt));
+	pr_debug("credits_cnt %d\n", atomic_पढ़ो(&conn_info->credits_cnt));
 
 	/* Send queued tx data */
-	while (atomic_read(&conn_info->credits_cnt)) {
+	जबतक (atomic_पढ़ो(&conn_info->credits_cnt)) अणु
 		skb = skb_dequeue(&ndev->tx_q);
-		if (!skb)
-			return;
+		अगर (!skb)
+			वापस;
 
-		/* Check if data flow control is used */
-		if (atomic_read(&conn_info->credits_cnt) !=
+		/* Check अगर data flow control is used */
+		अगर (atomic_पढ़ो(&conn_info->credits_cnt) !=
 		    NCI_DATA_FLOW_CONTROL_NOT_USED)
 			atomic_dec(&conn_info->credits_cnt);
 
@@ -1469,71 +1470,71 @@ static void nci_tx_work(struct work_struct *work)
 
 		nci_send_frame(ndev, skb);
 
-		mod_timer(&ndev->data_timer,
-			  jiffies + msecs_to_jiffies(NCI_DATA_TIMEOUT));
-	}
-}
+		mod_समयr(&ndev->data_समयr,
+			  jअगरfies + msecs_to_jअगरfies(NCI_DATA_TIMEOUT));
+	पूर्ण
+पूर्ण
 
-/* ----- NCI RX worker thread (data & control) ----- */
+/* ----- NCI RX worker thपढ़ो (data & control) ----- */
 
-static void nci_rx_work(struct work_struct *work)
-{
-	struct nci_dev *ndev = container_of(work, struct nci_dev, rx_work);
-	struct sk_buff *skb;
+अटल व्योम nci_rx_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nci_dev *ndev = container_of(work, काष्ठा nci_dev, rx_work);
+	काष्ठा sk_buff *skb;
 
-	while ((skb = skb_dequeue(&ndev->rx_q))) {
+	जबतक ((skb = skb_dequeue(&ndev->rx_q))) अणु
 
-		/* Send copy to sniffer */
+		/* Send copy to snअगरfer */
 		nfc_send_to_raw_sock(ndev->nfc_dev, skb,
-				     RAW_PAYLOAD_NCI, NFC_DIRECTION_RX);
+				     RAW_PAYLOAD_NCI, NFC_सूचीECTION_RX);
 
 		/* Process frame */
-		switch (nci_mt(skb->data)) {
-		case NCI_MT_RSP_PKT:
+		चयन (nci_mt(skb->data)) अणु
+		हाल NCI_MT_RSP_PKT:
 			nci_rsp_packet(ndev, skb);
-			break;
+			अवरोध;
 
-		case NCI_MT_NTF_PKT:
+		हाल NCI_MT_NTF_PKT:
 			nci_ntf_packet(ndev, skb);
-			break;
+			अवरोध;
 
-		case NCI_MT_DATA_PKT:
+		हाल NCI_MT_DATA_PKT:
 			nci_rx_data_packet(ndev, skb);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			pr_err("unknown MT 0x%x\n", nci_mt(skb->data));
-			kfree_skb(skb);
-			break;
-		}
-	}
+			kमुक्त_skb(skb);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* check if a data exchange timeout has occurred */
-	if (test_bit(NCI_DATA_EXCHANGE_TO, &ndev->flags)) {
-		/* complete the data exchange transaction, if exists */
-		if (test_bit(NCI_DATA_EXCHANGE, &ndev->flags))
-			nci_data_exchange_complete(ndev, NULL,
+	/* check अगर a data exchange समयout has occurred */
+	अगर (test_bit(NCI_DATA_EXCHANGE_TO, &ndev->flags)) अणु
+		/* complete the data exchange transaction, अगर exists */
+		अगर (test_bit(NCI_DATA_EXCHANGE, &ndev->flags))
+			nci_data_exchange_complete(ndev, शून्य,
 						   ndev->cur_conn_id,
 						   -ETIMEDOUT);
 
 		clear_bit(NCI_DATA_EXCHANGE_TO, &ndev->flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* ----- NCI TX CMD worker thread ----- */
+/* ----- NCI TX CMD worker thपढ़ो ----- */
 
-static void nci_cmd_work(struct work_struct *work)
-{
-	struct nci_dev *ndev = container_of(work, struct nci_dev, cmd_work);
-	struct sk_buff *skb;
+अटल व्योम nci_cmd_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nci_dev *ndev = container_of(work, काष्ठा nci_dev, cmd_work);
+	काष्ठा sk_buff *skb;
 
-	pr_debug("cmd_cnt %d\n", atomic_read(&ndev->cmd_cnt));
+	pr_debug("cmd_cnt %d\n", atomic_पढ़ो(&ndev->cmd_cnt));
 
 	/* Send queued command */
-	if (atomic_read(&ndev->cmd_cnt)) {
+	अगर (atomic_पढ़ो(&ndev->cmd_cnt)) अणु
 		skb = skb_dequeue(&ndev->cmd_q);
-		if (!skb)
-			return;
+		अगर (!skb)
+			वापस;
 
 		atomic_dec(&ndev->cmd_cnt);
 
@@ -1545,9 +1546,9 @@ static void nci_cmd_work(struct work_struct *work)
 
 		nci_send_frame(ndev, skb);
 
-		mod_timer(&ndev->cmd_timer,
-			  jiffies + msecs_to_jiffies(NCI_CMD_TIMEOUT));
-	}
-}
+		mod_समयr(&ndev->cmd_समयr,
+			  jअगरfies + msecs_to_jअगरfies(NCI_CMD_TIMEOUT));
+	पूर्ण
+पूर्ण
 
 MODULE_LICENSE("GPL");

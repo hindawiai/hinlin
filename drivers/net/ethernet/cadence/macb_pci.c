@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /**
  * DOC: Cadence GEM PCI wrapper.
  *
@@ -8,42 +9,42 @@
  *	    Bartosz Folta <bfolta@cadence.com>
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/etherdevice.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include "macb.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश "macb.h"
 
-#define PCI_DRIVER_NAME "macb_pci"
-#define PLAT_DRIVER_NAME "macb"
+#घोषणा PCI_DRIVER_NAME "macb_pci"
+#घोषणा PLAT_DRIVER_NAME "macb"
 
-#define CDNS_VENDOR_ID 0x17cd
-#define CDNS_DEVICE_ID 0xe007
+#घोषणा CDNS_VENDOR_ID 0x17cd
+#घोषणा CDNS_DEVICE_ID 0xe007
 
-#define GEM_PCLK_RATE 50000000
-#define GEM_HCLK_RATE 50000000
+#घोषणा GEM_PCLK_RATE 50000000
+#घोषणा GEM_HCLK_RATE 50000000
 
-static int macb_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	int err;
-	struct platform_device *plat_dev;
-	struct platform_device_info plat_info;
-	struct macb_platform_data plat_data;
-	struct resource res[2];
+अटल पूर्णांक macb_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक err;
+	काष्ठा platक्रमm_device *plat_dev;
+	काष्ठा platक्रमm_device_info plat_info;
+	काष्ठा macb_platक्रमm_data plat_data;
+	काष्ठा resource res[2];
 
 	/* enable pci device */
 	err = pcim_enable_device(pdev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "Enabling PCI device has failed: %d", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	pci_set_master(pdev);
 
 	/* set up resources */
-	memset(res, 0x00, sizeof(struct resource) * ARRAY_SIZE(res));
+	स_रखो(res, 0x00, माप(काष्ठा resource) * ARRAY_SIZE(res));
 	res[0].start = pci_resource_start(pdev, 0);
 	res[0].end = pci_resource_end(pdev, 0);
 	res[0].name = PCI_DRIVER_NAME;
@@ -55,26 +56,26 @@ static int macb_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	dev_info(&pdev->dev, "EMAC physical base addr: %pa\n",
 		 &res[0].start);
 
-	/* set up macb platform data */
-	memset(&plat_data, 0, sizeof(plat_data));
+	/* set up macb platक्रमm data */
+	स_रखो(&plat_data, 0, माप(plat_data));
 
-	/* initialize clocks */
-	plat_data.pclk = clk_register_fixed_rate(&pdev->dev, "pclk", NULL, 0,
+	/* initialize घड़ीs */
+	plat_data.pclk = clk_रेजिस्टर_fixed_rate(&pdev->dev, "pclk", शून्य, 0,
 						 GEM_PCLK_RATE);
-	if (IS_ERR(plat_data.pclk)) {
+	अगर (IS_ERR(plat_data.pclk)) अणु
 		err = PTR_ERR(plat_data.pclk);
-		goto err_pclk_register;
-	}
+		जाओ err_pclk_रेजिस्टर;
+	पूर्ण
 
-	plat_data.hclk = clk_register_fixed_rate(&pdev->dev, "hclk", NULL, 0,
+	plat_data.hclk = clk_रेजिस्टर_fixed_rate(&pdev->dev, "hclk", शून्य, 0,
 						 GEM_HCLK_RATE);
-	if (IS_ERR(plat_data.hclk)) {
+	अगर (IS_ERR(plat_data.hclk)) अणु
 		err = PTR_ERR(plat_data.hclk);
-		goto err_hclk_register;
-	}
+		जाओ err_hclk_रेजिस्टर;
+	पूर्ण
 
-	/* set up platform device info */
-	memset(&plat_info, 0, sizeof(plat_info));
+	/* set up platक्रमm device info */
+	स_रखो(&plat_info, 0, माप(plat_info));
 	plat_info.parent = &pdev->dev;
 	plat_info.fwnode = pdev->dev.fwnode;
 	plat_info.name = PLAT_DRIVER_NAME;
@@ -82,51 +83,51 @@ static int macb_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	plat_info.res = res;
 	plat_info.num_res = ARRAY_SIZE(res);
 	plat_info.data = &plat_data;
-	plat_info.size_data = sizeof(plat_data);
+	plat_info.size_data = माप(plat_data);
 	plat_info.dma_mask = pdev->dma_mask;
 
-	/* register platform device */
-	plat_dev = platform_device_register_full(&plat_info);
-	if (IS_ERR(plat_dev)) {
+	/* रेजिस्टर platक्रमm device */
+	plat_dev = platक्रमm_device_रेजिस्टर_full(&plat_info);
+	अगर (IS_ERR(plat_dev)) अणु
 		err = PTR_ERR(plat_dev);
-		goto err_plat_dev_register;
-	}
+		जाओ err_plat_dev_रेजिस्टर;
+	पूर्ण
 
 	pci_set_drvdata(pdev, plat_dev);
 
-	return 0;
+	वापस 0;
 
-err_plat_dev_register:
-	clk_unregister(plat_data.hclk);
+err_plat_dev_रेजिस्टर:
+	clk_unरेजिस्टर(plat_data.hclk);
 
-err_hclk_register:
-	clk_unregister(plat_data.pclk);
+err_hclk_रेजिस्टर:
+	clk_unरेजिस्टर(plat_data.pclk);
 
-err_pclk_register:
-	return err;
-}
+err_pclk_रेजिस्टर:
+	वापस err;
+पूर्ण
 
-static void macb_remove(struct pci_dev *pdev)
-{
-	struct platform_device *plat_dev = pci_get_drvdata(pdev);
-	struct macb_platform_data *plat_data = dev_get_platdata(&plat_dev->dev);
+अटल व्योम macb_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा platक्रमm_device *plat_dev = pci_get_drvdata(pdev);
+	काष्ठा macb_platक्रमm_data *plat_data = dev_get_platdata(&plat_dev->dev);
 
-	platform_device_unregister(plat_dev);
-	clk_unregister(plat_data->pclk);
-	clk_unregister(plat_data->hclk);
-}
+	platक्रमm_device_unरेजिस्टर(plat_dev);
+	clk_unरेजिस्टर(plat_data->pclk);
+	clk_unरेजिस्टर(plat_data->hclk);
+पूर्ण
 
-static const struct pci_device_id dev_id_table[] = {
-	{ PCI_DEVICE(CDNS_VENDOR_ID, CDNS_DEVICE_ID), },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id dev_id_table[] = अणु
+	अणु PCI_DEVICE(CDNS_VENDOR_ID, CDNS_DEVICE_ID), पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
-static struct pci_driver macb_pci_driver = {
+अटल काष्ठा pci_driver macb_pci_driver = अणु
 	.name     = PCI_DRIVER_NAME,
 	.id_table = dev_id_table,
 	.probe    = macb_probe,
-	.remove	  = macb_remove,
-};
+	.हटाओ	  = macb_हटाओ,
+पूर्ण;
 
 module_pci_driver(macb_pci_driver);
 MODULE_DEVICE_TABLE(pci, dev_id_table);

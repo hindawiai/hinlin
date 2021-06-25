@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_DEBUGOBJECTS_H
-#define _LINUX_DEBUGOBJECTS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_DEBUGOBJECTS_H
+#घोषणा _LINUX_DEBUGOBJECTS_H
 
-#include <linux/list.h>
-#include <linux/spinlock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
 
-enum debug_obj_state {
+क्रमागत debug_obj_state अणु
 	ODEBUG_STATE_NONE,
 	ODEBUG_STATE_INIT,
 	ODEBUG_STATE_INACTIVE,
@@ -13,102 +14,102 @@ enum debug_obj_state {
 	ODEBUG_STATE_DESTROYED,
 	ODEBUG_STATE_NOTAVAILABLE,
 	ODEBUG_STATE_MAX,
-};
+पूर्ण;
 
-struct debug_obj_descr;
+काष्ठा debug_obj_descr;
 
 /**
- * struct debug_obj - representaion of an tracked object
- * @node:	hlist node to link the object into the tracker list
+ * काष्ठा debug_obj - representaion of an tracked object
+ * @node:	hlist node to link the object पूर्णांकo the tracker list
  * @state:	tracked object state
  * @astate:	current active state
- * @object:	pointer to the real object
- * @descr:	pointer to an object type specific debug description structure
+ * @object:	poपूर्णांकer to the real object
+ * @descr:	poपूर्णांकer to an object type specअगरic debug description काष्ठाure
  */
-struct debug_obj {
-	struct hlist_node	node;
-	enum debug_obj_state	state;
-	unsigned int		astate;
-	void			*object;
-	const struct debug_obj_descr *descr;
-};
+काष्ठा debug_obj अणु
+	काष्ठा hlist_node	node;
+	क्रमागत debug_obj_state	state;
+	अचिन्हित पूर्णांक		astate;
+	व्योम			*object;
+	स्थिर काष्ठा debug_obj_descr *descr;
+पूर्ण;
 
 /**
- * struct debug_obj_descr - object type specific debug description structure
+ * काष्ठा debug_obj_descr - object type specअगरic debug description काष्ठाure
  *
  * @name:		name of the object typee
- * @debug_hint:		function returning address, which have associated
- *			kernel symbol, to allow identify the object
- * @is_static_object:	return true if the obj is static, otherwise return false
+ * @debug_hपूर्णांक:		function वापसing address, which have associated
+ *			kernel symbol, to allow identअगरy the object
+ * @is_अटल_object:	वापस true अगर the obj is अटल, otherwise वापस false
  * @fixup_init:		fixup function, which is called when the init check
- *			fails. All fixup functions must return true if fixup
- *			was successful, otherwise return false
+ *			fails. All fixup functions must वापस true अगर fixup
+ *			was successful, otherwise वापस false
  * @fixup_activate:	fixup function, which is called when the activate check
  *			fails
  * @fixup_destroy:	fixup function, which is called when the destroy check
  *			fails
- * @fixup_free:		fixup function, which is called when the free check
+ * @fixup_मुक्त:		fixup function, which is called when the मुक्त check
  *			fails
- * @fixup_assert_init:  fixup function, which is called when the assert_init
+ * @fixup_निश्चित_init:  fixup function, which is called when the निश्चित_init
  *			check fails
  */
-struct debug_obj_descr {
-	const char		*name;
-	void *(*debug_hint)(void *addr);
-	bool (*is_static_object)(void *addr);
-	bool (*fixup_init)(void *addr, enum debug_obj_state state);
-	bool (*fixup_activate)(void *addr, enum debug_obj_state state);
-	bool (*fixup_destroy)(void *addr, enum debug_obj_state state);
-	bool (*fixup_free)(void *addr, enum debug_obj_state state);
-	bool (*fixup_assert_init)(void *addr, enum debug_obj_state state);
-};
+काष्ठा debug_obj_descr अणु
+	स्थिर अक्षर		*name;
+	व्योम *(*debug_hपूर्णांक)(व्योम *addr);
+	bool (*is_अटल_object)(व्योम *addr);
+	bool (*fixup_init)(व्योम *addr, क्रमागत debug_obj_state state);
+	bool (*fixup_activate)(व्योम *addr, क्रमागत debug_obj_state state);
+	bool (*fixup_destroy)(व्योम *addr, क्रमागत debug_obj_state state);
+	bool (*fixup_मुक्त)(व्योम *addr, क्रमागत debug_obj_state state);
+	bool (*fixup_निश्चित_init)(व्योम *addr, क्रमागत debug_obj_state state);
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_OBJECTS
-extern void debug_object_init      (void *addr, const struct debug_obj_descr *descr);
-extern void
-debug_object_init_on_stack(void *addr, const struct debug_obj_descr *descr);
-extern int debug_object_activate  (void *addr, const struct debug_obj_descr *descr);
-extern void debug_object_deactivate(void *addr, const struct debug_obj_descr *descr);
-extern void debug_object_destroy   (void *addr, const struct debug_obj_descr *descr);
-extern void debug_object_free      (void *addr, const struct debug_obj_descr *descr);
-extern void debug_object_assert_init(void *addr, const struct debug_obj_descr *descr);
+#अगर_घोषित CONFIG_DEBUG_OBJECTS
+बाह्य व्योम debug_object_init      (व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr);
+बाह्य व्योम
+debug_object_init_on_stack(व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr);
+बाह्य पूर्णांक debug_object_activate  (व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr);
+बाह्य व्योम debug_object_deactivate(व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr);
+बाह्य व्योम debug_object_destroy   (व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr);
+बाह्य व्योम debug_object_मुक्त      (व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr);
+बाह्य व्योम debug_object_निश्चित_init(व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr);
 
 /*
  * Active state:
  * - Set at 0 upon initialization.
- * - Must return to 0 before deactivation.
+ * - Must वापस to 0 beक्रमe deactivation.
  */
-extern void
-debug_object_active_state(void *addr, const struct debug_obj_descr *descr,
-			  unsigned int expect, unsigned int next);
+बाह्य व्योम
+debug_object_active_state(व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr,
+			  अचिन्हित पूर्णांक expect, अचिन्हित पूर्णांक next);
 
-extern void debug_objects_early_init(void);
-extern void debug_objects_mem_init(void);
-#else
-static inline void
-debug_object_init      (void *addr, const struct debug_obj_descr *descr) { }
-static inline void
-debug_object_init_on_stack(void *addr, const struct debug_obj_descr *descr) { }
-static inline int
-debug_object_activate  (void *addr, const struct debug_obj_descr *descr) { return 0; }
-static inline void
-debug_object_deactivate(void *addr, const struct debug_obj_descr *descr) { }
-static inline void
-debug_object_destroy   (void *addr, const struct debug_obj_descr *descr) { }
-static inline void
-debug_object_free      (void *addr, const struct debug_obj_descr *descr) { }
-static inline void
-debug_object_assert_init(void *addr, const struct debug_obj_descr *descr) { }
+बाह्य व्योम debug_objects_early_init(व्योम);
+बाह्य व्योम debug_objects_mem_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम
+debug_object_init      (व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr) अणु पूर्ण
+अटल अंतरभूत व्योम
+debug_object_init_on_stack(व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr) अणु पूर्ण
+अटल अंतरभूत पूर्णांक
+debug_object_activate  (व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम
+debug_object_deactivate(व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr) अणु पूर्ण
+अटल अंतरभूत व्योम
+debug_object_destroy   (व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr) अणु पूर्ण
+अटल अंतरभूत व्योम
+debug_object_मुक्त      (व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr) अणु पूर्ण
+अटल अंतरभूत व्योम
+debug_object_निश्चित_init(व्योम *addr, स्थिर काष्ठा debug_obj_descr *descr) अणु पूर्ण
 
-static inline void debug_objects_early_init(void) { }
-static inline void debug_objects_mem_init(void) { }
-#endif
+अटल अंतरभूत व्योम debug_objects_early_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम debug_objects_mem_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_DEBUG_OBJECTS_FREE
-extern void debug_check_no_obj_freed(const void *address, unsigned long size);
-#else
-static inline void
-debug_check_no_obj_freed(const void *address, unsigned long size) { }
-#endif
+#अगर_घोषित CONFIG_DEBUG_OBJECTS_FREE
+बाह्य व्योम debug_check_no_obj_मुक्तd(स्थिर व्योम *address, अचिन्हित दीर्घ size);
+#अन्यथा
+अटल अंतरभूत व्योम
+debug_check_no_obj_मुक्तd(स्थिर व्योम *address, अचिन्हित दीर्घ size) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

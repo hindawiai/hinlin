@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,58 +22,58 @@
  *
  */
 
-#ifndef __ATOMBIOS_ENCODER_H__
-#define __ATOMBIOS_ENCODER_H__
+#अगर_अघोषित __ATOMBIOS_ENCODER_H__
+#घोषणा __ATOMBIOS_ENCODER_H__
 
 u8
-amdgpu_atombios_encoder_get_backlight_level_from_reg(struct amdgpu_device *adev);
-void
-amdgpu_atombios_encoder_set_backlight_level_to_reg(struct amdgpu_device *adev,
+amdgpu_atombios_encoder_get_backlight_level_from_reg(काष्ठा amdgpu_device *adev);
+व्योम
+amdgpu_atombios_encoder_set_backlight_level_to_reg(काष्ठा amdgpu_device *adev,
 						   u8 backlight_level);
 u8
-amdgpu_atombios_encoder_get_backlight_level(struct amdgpu_encoder *amdgpu_encoder);
-void
-amdgpu_atombios_encoder_set_backlight_level(struct amdgpu_encoder *amdgpu_encoder,
+amdgpu_atombios_encoder_get_backlight_level(काष्ठा amdgpu_encoder *amdgpu_encoder);
+व्योम
+amdgpu_atombios_encoder_set_backlight_level(काष्ठा amdgpu_encoder *amdgpu_encoder,
 				     u8 level);
-void amdgpu_atombios_encoder_init_backlight(struct amdgpu_encoder *amdgpu_encoder,
-				     struct drm_connector *drm_connector);
-void
-amdgpu_atombios_encoder_fini_backlight(struct amdgpu_encoder *amdgpu_encoder);
-bool amdgpu_atombios_encoder_is_digital(struct drm_encoder *encoder);
-bool amdgpu_atombios_encoder_mode_fixup(struct drm_encoder *encoder,
-				 const struct drm_display_mode *mode,
-				 struct drm_display_mode *adjusted_mode);
-int amdgpu_atombios_encoder_get_encoder_mode(struct drm_encoder *encoder);
-void
-amdgpu_atombios_encoder_setup_dig_encoder(struct drm_encoder *encoder,
-				   int action, int panel_mode);
-void
-amdgpu_atombios_encoder_setup_dig_transmitter(struct drm_encoder *encoder, int action,
-				       uint8_t lane_num, uint8_t lane_set);
+व्योम amdgpu_atombios_encoder_init_backlight(काष्ठा amdgpu_encoder *amdgpu_encoder,
+				     काष्ठा drm_connector *drm_connector);
+व्योम
+amdgpu_atombios_encoder_fini_backlight(काष्ठा amdgpu_encoder *amdgpu_encoder);
+bool amdgpu_atombios_encoder_is_digital(काष्ठा drm_encoder *encoder);
+bool amdgpu_atombios_encoder_mode_fixup(काष्ठा drm_encoder *encoder,
+				 स्थिर काष्ठा drm_display_mode *mode,
+				 काष्ठा drm_display_mode *adjusted_mode);
+पूर्णांक amdgpu_atombios_encoder_get_encoder_mode(काष्ठा drm_encoder *encoder);
+व्योम
+amdgpu_atombios_encoder_setup_dig_encoder(काष्ठा drm_encoder *encoder,
+				   पूर्णांक action, पूर्णांक panel_mode);
+व्योम
+amdgpu_atombios_encoder_setup_dig_transmitter(काष्ठा drm_encoder *encoder, पूर्णांक action,
+				       uपूर्णांक8_t lane_num, uपूर्णांक8_t lane_set);
 bool
-amdgpu_atombios_encoder_set_edp_panel_power(struct drm_connector *connector,
-				     int action);
-void
-amdgpu_atombios_encoder_dpms(struct drm_encoder *encoder, int mode);
-void
-amdgpu_atombios_encoder_set_crtc_source(struct drm_encoder *encoder);
-void
-amdgpu_atombios_encoder_init_dig(struct amdgpu_device *adev);
-enum drm_connector_status
-amdgpu_atombios_encoder_dac_detect(struct drm_encoder *encoder,
-			    struct drm_connector *connector);
-enum drm_connector_status
-amdgpu_atombios_encoder_dig_detect(struct drm_encoder *encoder,
-			    struct drm_connector *connector);
-void
-amdgpu_atombios_encoder_setup_ext_encoder_ddc(struct drm_encoder *encoder);
-void
-amdgpu_atombios_encoder_set_bios_scratch_regs(struct drm_connector *connector,
-				       struct drm_encoder *encoder,
+amdgpu_atombios_encoder_set_edp_panel_घातer(काष्ठा drm_connector *connector,
+				     पूर्णांक action);
+व्योम
+amdgpu_atombios_encoder_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode);
+व्योम
+amdgpu_atombios_encoder_set_crtc_source(काष्ठा drm_encoder *encoder);
+व्योम
+amdgpu_atombios_encoder_init_dig(काष्ठा amdgpu_device *adev);
+क्रमागत drm_connector_status
+amdgpu_atombios_encoder_dac_detect(काष्ठा drm_encoder *encoder,
+			    काष्ठा drm_connector *connector);
+क्रमागत drm_connector_status
+amdgpu_atombios_encoder_dig_detect(काष्ठा drm_encoder *encoder,
+			    काष्ठा drm_connector *connector);
+व्योम
+amdgpu_atombios_encoder_setup_ext_encoder_ddc(काष्ठा drm_encoder *encoder);
+व्योम
+amdgpu_atombios_encoder_set_bios_scratch_regs(काष्ठा drm_connector *connector,
+				       काष्ठा drm_encoder *encoder,
 				       bool connected);
-struct amdgpu_encoder_atom_dig *
-amdgpu_atombios_encoder_get_lcd_info(struct amdgpu_encoder *encoder);
-struct amdgpu_encoder_atom_dig *
-amdgpu_atombios_encoder_get_dig_info(struct amdgpu_encoder *amdgpu_encoder);
+काष्ठा amdgpu_encoder_atom_dig *
+amdgpu_atombios_encoder_get_lcd_info(काष्ठा amdgpu_encoder *encoder);
+काष्ठा amdgpu_encoder_atom_dig *
+amdgpu_atombios_encoder_get_dig_info(काष्ठा amdgpu_encoder *amdgpu_encoder);
 
-#endif
+#पूर्ण_अगर

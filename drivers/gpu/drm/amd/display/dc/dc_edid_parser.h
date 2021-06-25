@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2021 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,22 +24,22 @@
  *
  */
 
-#ifndef _DC_EDID_PARSER_H_
-#define _DC_EDID_PARSER_H_
+#अगर_अघोषित _DC_EDID_PARSER_H_
+#घोषणा _DC_EDID_PARSER_H_
 
-#include "core_types.h"
+#समावेश "core_types.h"
 
-bool dc_edid_parser_send_cea(struct dc *dc,
-		int offset,
-		int total_length,
-		uint8_t *data,
-		int length);
+bool dc_edid_parser_send_cea(काष्ठा dc *dc,
+		पूर्णांक offset,
+		पूर्णांक total_length,
+		uपूर्णांक8_t *data,
+		पूर्णांक length);
 
-bool dc_edid_parser_recv_cea_ack(struct dc *dc, int *offset);
+bool dc_edid_parser_recv_cea_ack(काष्ठा dc *dc, पूर्णांक *offset);
 
-bool dc_edid_parser_recv_amd_vsdb(struct dc *dc,
-		int *version,
-		int *min_frame_rate,
-		int *max_frame_rate);
+bool dc_edid_parser_recv_amd_vsdb(काष्ठा dc *dc,
+		पूर्णांक *version,
+		पूर्णांक *min_frame_rate,
+		पूर्णांक *max_frame_rate);
 
-#endif /* _DC_EDID_PARSER_H_ */
+#पूर्ण_अगर /* _DC_EDID_PARSER_H_ */

@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/sched/signal.h>
-#include <linux/errno.h>
-#include <linux/dcache.h>
-#include <linux/path.h>
-#include <linux/fdtable.h>
-#include <linux/namei.h>
-#include <linux/pid.h>
-#include <linux/security.h>
-#include <linux/file.h>
-#include <linux/seq_file.h>
-#include <linux/fs.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/dcache.h>
+#समावेश <linux/path.h>
+#समावेश <linux/fdtable.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/pid.h>
+#समावेश <linux/security.h>
+#समावेश <linux/file.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/fs.h>
 
-#include <linux/proc_fs.h>
+#समावेश <linux/proc_fs.h>
 
-#include "../mount.h"
-#include "internal.h"
-#include "fd.h"
+#समावेश "../mount.h"
+#समावेश "internal.h"
+#समावेश "fd.h"
 
-static int seq_show(struct seq_file *m, void *v)
-{
-	struct files_struct *files = NULL;
-	int f_flags = 0, ret = -ENOENT;
-	struct file *file = NULL;
-	struct task_struct *task;
+अटल पूर्णांक seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा files_काष्ठा *files = शून्य;
+	पूर्णांक f_flags = 0, ret = -ENOENT;
+	काष्ठा file *file = शून्य;
+	काष्ठा task_काष्ठा *task;
 
-	task = get_proc_task(m->private);
-	if (!task)
-		return -ENOENT;
+	task = get_proc_task(m->निजी);
+	अगर (!task)
+		वापस -ENOENT;
 
 	task_lock(task);
 	files = task->files;
-	if (files) {
-		unsigned int fd = proc_fd(m->private);
+	अगर (files) अणु
+		अचिन्हित पूर्णांक fd = proc_fd(m->निजी);
 
 		spin_lock(&files->file_lock);
 		file = files_lookup_fd_locked(files, fd);
-		if (file) {
-			struct fdtable *fdt = files_fdtable(files);
+		अगर (file) अणु
+			काष्ठा fdtable *fdt = files_fdtable(files);
 
 			f_flags = file->f_flags;
-			if (close_on_exec(fd, fdt))
+			अगर (बंद_on_exec(fd, fdt))
 				f_flags |= O_CLOEXEC;
 
 			get_file(file);
 			ret = 0;
-		}
+		पूर्ण
 		spin_unlock(&files->file_lock);
-	}
+	पूर्ण
 	task_unlock(task);
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	seq_printf(m, "pos:\t%lli\nflags:\t0%o\nmnt_id:\t%i\n",
-		   (long long)file->f_pos, f_flags,
+	seq_म_लिखो(m, "pos:\t%lli\nflags:\t0%o\nmnt_id:\t%i\n",
+		   (दीर्घ दीर्घ)file->f_pos, f_flags,
 		   real_mount(file->f_path.mnt)->mnt_id);
 
 	/* show_fd_locks() never deferences files so a stale value is safe */
 	show_fd_locks(m, file, files);
-	if (seq_has_overflowed(m))
-		goto out;
+	अगर (seq_has_overflowed(m))
+		जाओ out;
 
-	if (file->f_op->show_fdinfo)
+	अगर (file->f_op->show_fdinfo)
 		file->f_op->show_fdinfo(m, file);
 
 out:
 	fput(file);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_fdinfo_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, seq_show, inode);
-}
+अटल पूर्णांक seq_fdinfo_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, seq_show, inode);
+पूर्ण
 
-static const struct file_operations proc_fdinfo_file_operations = {
-	.open		= seq_fdinfo_open,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations proc_fdinfo_file_operations = अणु
+	.खोलो		= seq_fdinfo_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-static bool tid_fd_mode(struct task_struct *task, unsigned fd, fmode_t *mode)
-{
-	struct file *file;
+अटल bool tid_fd_mode(काष्ठा task_काष्ठा *task, अचिन्हित fd, भ_शेषe_t *mode)
+अणु
+	काष्ठा file *file;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	file = task_lookup_fd_rcu(task, fd);
-	if (file)
+	अगर (file)
 		*mode = file->f_mode;
-	rcu_read_unlock();
-	return !!file;
-}
+	rcu_पढ़ो_unlock();
+	वापस !!file;
+पूर्ण
 
-static void tid_fd_update_inode(struct task_struct *task, struct inode *inode,
-				fmode_t f_mode)
-{
+अटल व्योम tid_fd_update_inode(काष्ठा task_काष्ठा *task, काष्ठा inode *inode,
+				भ_शेषe_t f_mode)
+अणु
 	task_dump_owner(task, 0, &inode->i_uid, &inode->i_gid);
 
-	if (S_ISLNK(inode->i_mode)) {
-		unsigned i_mode = S_IFLNK;
-		if (f_mode & FMODE_READ)
+	अगर (S_ISLNK(inode->i_mode)) अणु
+		अचिन्हित i_mode = S_IFLNK;
+		अगर (f_mode & FMODE_READ)
 			i_mode |= S_IRUSR | S_IXUSR;
-		if (f_mode & FMODE_WRITE)
+		अगर (f_mode & FMODE_WRITE)
 			i_mode |= S_IWUSR | S_IXUSR;
 		inode->i_mode = i_mode;
-	}
+	पूर्ण
 	security_task_to_inode(task, inode);
-}
+पूर्ण
 
-static int tid_fd_revalidate(struct dentry *dentry, unsigned int flags)
-{
-	struct task_struct *task;
-	struct inode *inode;
-	unsigned int fd;
+अटल पूर्णांक tid_fd_revalidate(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा task_काष्ठा *task;
+	काष्ठा inode *inode;
+	अचिन्हित पूर्णांक fd;
 
-	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+	अगर (flags & LOOKUP_RCU)
+		वापस -ECHILD;
 
 	inode = d_inode(dentry);
 	task = get_proc_task(inode);
 	fd = proc_fd(inode);
 
-	if (task) {
-		fmode_t f_mode;
-		if (tid_fd_mode(task, fd, &f_mode)) {
+	अगर (task) अणु
+		भ_शेषe_t f_mode;
+		अगर (tid_fd_mode(task, fd, &f_mode)) अणु
 			tid_fd_update_inode(task, inode, f_mode);
-			put_task_struct(task);
-			return 1;
-		}
-		put_task_struct(task);
-	}
-	return 0;
-}
+			put_task_काष्ठा(task);
+			वापस 1;
+		पूर्ण
+		put_task_काष्ठा(task);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct dentry_operations tid_fd_dentry_operations = {
+अटल स्थिर काष्ठा dentry_operations tid_fd_dentry_operations = अणु
 	.d_revalidate	= tid_fd_revalidate,
 	.d_delete	= pid_delete_dentry,
-};
+पूर्ण;
 
-static int proc_fd_link(struct dentry *dentry, struct path *path)
-{
-	struct task_struct *task;
-	int ret = -ENOENT;
+अटल पूर्णांक proc_fd_link(काष्ठा dentry *dentry, काष्ठा path *path)
+अणु
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक ret = -ENOENT;
 
 	task = get_proc_task(d_inode(dentry));
-	if (task) {
-		unsigned int fd = proc_fd(d_inode(dentry));
-		struct file *fd_file;
+	अगर (task) अणु
+		अचिन्हित पूर्णांक fd = proc_fd(d_inode(dentry));
+		काष्ठा file *fd_file;
 
 		fd_file = fget_task(task, fd);
-		if (fd_file) {
+		अगर (fd_file) अणु
 			*path = fd_file->f_path;
 			path_get(&fd_file->f_path);
 			ret = 0;
 			fput(fd_file);
-		}
-		put_task_struct(task);
-	}
+		पूर्ण
+		put_task_काष्ठा(task);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct fd_data {
-	fmode_t mode;
-	unsigned fd;
-};
+काष्ठा fd_data अणु
+	भ_शेषe_t mode;
+	अचिन्हित fd;
+पूर्ण;
 
-static struct dentry *proc_fd_instantiate(struct dentry *dentry,
-	struct task_struct *task, const void *ptr)
-{
-	const struct fd_data *data = ptr;
-	struct proc_inode *ei;
-	struct inode *inode;
+अटल काष्ठा dentry *proc_fd_instantiate(काष्ठा dentry *dentry,
+	काष्ठा task_काष्ठा *task, स्थिर व्योम *ptr)
+अणु
+	स्थिर काष्ठा fd_data *data = ptr;
+	काष्ठा proc_inode *ei;
+	काष्ठा inode *inode;
 
 	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFLNK);
-	if (!inode)
-		return ERR_PTR(-ENOENT);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOENT);
 
 	ei = PROC_I(inode);
 	ei->fd = data->fd;
@@ -189,128 +190,128 @@ static struct dentry *proc_fd_instantiate(struct dentry *dentry,
 	tid_fd_update_inode(task, inode, data->mode);
 
 	d_set_d_op(dentry, &tid_fd_dentry_operations);
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-static struct dentry *proc_lookupfd_common(struct inode *dir,
-					   struct dentry *dentry,
+अटल काष्ठा dentry *proc_lookupfd_common(काष्ठा inode *dir,
+					   काष्ठा dentry *dentry,
 					   instantiate_t instantiate)
-{
-	struct task_struct *task = get_proc_task(dir);
-	struct fd_data data = {.fd = name_to_int(&dentry->d_name)};
-	struct dentry *result = ERR_PTR(-ENOENT);
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(dir);
+	काष्ठा fd_data data = अणु.fd = name_to_पूर्णांक(&dentry->d_name)पूर्ण;
+	काष्ठा dentry *result = ERR_PTR(-ENOENT);
 
-	if (!task)
-		goto out_no_task;
-	if (data.fd == ~0U)
-		goto out;
-	if (!tid_fd_mode(task, data.fd, &data.mode))
-		goto out;
+	अगर (!task)
+		जाओ out_no_task;
+	अगर (data.fd == ~0U)
+		जाओ out;
+	अगर (!tid_fd_mode(task, data.fd, &data.mode))
+		जाओ out;
 
 	result = instantiate(dentry, task, &data);
 out:
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 out_no_task:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int proc_readfd_common(struct file *file, struct dir_context *ctx,
+अटल पूर्णांक proc_पढ़ोfd_common(काष्ठा file *file, काष्ठा dir_context *ctx,
 			      instantiate_t instantiate)
-{
-	struct task_struct *p = get_proc_task(file_inode(file));
-	unsigned int fd;
+अणु
+	काष्ठा task_काष्ठा *p = get_proc_task(file_inode(file));
+	अचिन्हित पूर्णांक fd;
 
-	if (!p)
-		return -ENOENT;
+	अगर (!p)
+		वापस -ENOENT;
 
-	if (!dir_emit_dots(file, ctx))
-		goto out;
+	अगर (!dir_emit_करोts(file, ctx))
+		जाओ out;
 
-	rcu_read_lock();
-	for (fd = ctx->pos - 2;; fd++) {
-		struct file *f;
-		struct fd_data data;
-		char name[10 + 1];
-		unsigned int len;
+	rcu_पढ़ो_lock();
+	क्रम (fd = ctx->pos - 2;; fd++) अणु
+		काष्ठा file *f;
+		काष्ठा fd_data data;
+		अक्षर name[10 + 1];
+		अचिन्हित पूर्णांक len;
 
 		f = task_lookup_next_fd_rcu(p, &fd);
 		ctx->pos = fd + 2LL;
-		if (!f)
-			break;
+		अगर (!f)
+			अवरोध;
 		data.mode = f->f_mode;
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 		data.fd = fd;
 
-		len = snprintf(name, sizeof(name), "%u", fd);
-		if (!proc_fill_cache(file, ctx,
+		len = snम_लिखो(name, माप(name), "%u", fd);
+		अगर (!proc_fill_cache(file, ctx,
 				     name, len, instantiate, p,
 				     &data))
-			goto out;
+			जाओ out;
 		cond_resched();
-		rcu_read_lock();
-	}
-	rcu_read_unlock();
+		rcu_पढ़ो_lock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 out:
-	put_task_struct(p);
-	return 0;
-}
+	put_task_काष्ठा(p);
+	वापस 0;
+पूर्ण
 
-static int proc_readfd(struct file *file, struct dir_context *ctx)
-{
-	return proc_readfd_common(file, ctx, proc_fd_instantiate);
-}
+अटल पूर्णांक proc_पढ़ोfd(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	वापस proc_पढ़ोfd_common(file, ctx, proc_fd_instantiate);
+पूर्ण
 
-const struct file_operations proc_fd_operations = {
-	.read		= generic_read_dir,
-	.iterate_shared	= proc_readfd,
+स्थिर काष्ठा file_operations proc_fd_operations = अणु
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= proc_पढ़ोfd,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-static struct dentry *proc_lookupfd(struct inode *dir, struct dentry *dentry,
-				    unsigned int flags)
-{
-	return proc_lookupfd_common(dir, dentry, proc_fd_instantiate);
-}
+अटल काष्ठा dentry *proc_lookupfd(काष्ठा inode *dir, काष्ठा dentry *dentry,
+				    अचिन्हित पूर्णांक flags)
+अणु
+	वापस proc_lookupfd_common(dir, dentry, proc_fd_instantiate);
+पूर्ण
 
 /*
  * /proc/pid/fd needs a special permission handler so that a process can still
  * access /proc/self/fd after it has executed a setuid().
  */
-int proc_fd_permission(struct user_namespace *mnt_userns,
-		       struct inode *inode, int mask)
-{
-	struct task_struct *p;
-	int rv;
+पूर्णांक proc_fd_permission(काष्ठा user_namespace *mnt_userns,
+		       काष्ठा inode *inode, पूर्णांक mask)
+अणु
+	काष्ठा task_काष्ठा *p;
+	पूर्णांक rv;
 
 	rv = generic_permission(&init_user_ns, inode, mask);
-	if (rv == 0)
-		return rv;
+	अगर (rv == 0)
+		वापस rv;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	p = pid_task(proc_pid(inode), PIDTYPE_PID);
-	if (p && same_thread_group(p, current))
+	अगर (p && same_thपढ़ो_group(p, current))
 		rv = 0;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-const struct inode_operations proc_fd_inode_operations = {
+स्थिर काष्ठा inode_operations proc_fd_inode_operations = अणु
 	.lookup		= proc_lookupfd,
 	.permission	= proc_fd_permission,
 	.setattr	= proc_setattr,
-};
+पूर्ण;
 
-static struct dentry *proc_fdinfo_instantiate(struct dentry *dentry,
-	struct task_struct *task, const void *ptr)
-{
-	const struct fd_data *data = ptr;
-	struct proc_inode *ei;
-	struct inode *inode;
+अटल काष्ठा dentry *proc_fdinfo_instantiate(काष्ठा dentry *dentry,
+	काष्ठा task_काष्ठा *task, स्थिर व्योम *ptr)
+अणु
+	स्थिर काष्ठा fd_data *data = ptr;
+	काष्ठा proc_inode *ei;
+	काष्ठा inode *inode;
 
 	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFREG | S_IRUSR);
-	if (!inode)
-		return ERR_PTR(-ENOENT);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOENT);
 
 	ei = PROC_I(inode);
 	ei->fd = data->fd;
@@ -319,28 +320,28 @@ static struct dentry *proc_fdinfo_instantiate(struct dentry *dentry,
 	tid_fd_update_inode(task, inode, 0);
 
 	d_set_d_op(dentry, &tid_fd_dentry_operations);
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-static struct dentry *
-proc_lookupfdinfo(struct inode *dir, struct dentry *dentry, unsigned int flags)
-{
-	return proc_lookupfd_common(dir, dentry, proc_fdinfo_instantiate);
-}
+अटल काष्ठा dentry *
+proc_lookupfdinfo(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	वापस proc_lookupfd_common(dir, dentry, proc_fdinfo_instantiate);
+पूर्ण
 
-static int proc_readfdinfo(struct file *file, struct dir_context *ctx)
-{
-	return proc_readfd_common(file, ctx,
+अटल पूर्णांक proc_पढ़ोfdinfo(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	वापस proc_पढ़ोfd_common(file, ctx,
 				  proc_fdinfo_instantiate);
-}
+पूर्ण
 
-const struct inode_operations proc_fdinfo_inode_operations = {
+स्थिर काष्ठा inode_operations proc_fdinfo_inode_operations = अणु
 	.lookup		= proc_lookupfdinfo,
 	.setattr	= proc_setattr,
-};
+पूर्ण;
 
-const struct file_operations proc_fdinfo_operations = {
-	.read		= generic_read_dir,
-	.iterate_shared	= proc_readfdinfo,
+स्थिर काष्ठा file_operations proc_fdinfo_operations = अणु
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= proc_पढ़ोfdinfo,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;

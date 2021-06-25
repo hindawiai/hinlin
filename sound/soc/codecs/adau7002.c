@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ADAU7002 Stereo PDM-to-I2S/TDM converter driver
  *
@@ -6,132 +7,132 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#include <linux/acpi.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <sound/soc.h>
+#समावेश <sound/soc.h>
 
-struct adau7002_priv {
-	int wakeup_delay;
-};
+काष्ठा adau7002_priv अणु
+	पूर्णांक wakeup_delay;
+पूर्ण;
 
-static int adau7002_aif_event(struct snd_soc_dapm_widget *w,
-			      struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component =
+अटल पूर्णांक adau7002_aअगर_event(काष्ठा snd_soc_dapm_widget *w,
+			      काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component =
 			snd_soc_dapm_to_component(w->dapm);
-	struct adau7002_priv *adau7002 =
+	काष्ठा adau7002_priv *adau7002 =
 			snd_soc_component_get_drvdata(component);
 
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
-		if (adau7002->wakeup_delay)
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMU:
+		अगर (adau7002->wakeup_delay)
 			msleep(adau7002->wakeup_delay);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adau7002_component_probe(struct snd_soc_component *component)
-{
-	struct adau7002_priv *adau7002;
+अटल पूर्णांक adau7002_component_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा adau7002_priv *adau7002;
 
-	adau7002 = devm_kzalloc(component->dev, sizeof(*adau7002),
+	adau7002 = devm_kzalloc(component->dev, माप(*adau7002),
 				GFP_KERNEL);
-	if (!adau7002)
-		return -ENOMEM;
+	अगर (!adau7002)
+		वापस -ENOMEM;
 
-	device_property_read_u32(component->dev, "wakeup-delay-ms",
+	device_property_पढ़ो_u32(component->dev, "wakeup-delay-ms",
 				 &adau7002->wakeup_delay);
 
 	snd_soc_component_set_drvdata(component, adau7002);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dapm_widget adau7002_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget adau7002_widमाला_लो[] = अणु
 	SND_SOC_DAPM_AIF_OUT_E("ADAU AIF", "Capture", 0,
-			       SND_SOC_NOPM, 0, 0, adau7002_aif_event,
+			       SND_SOC_NOPM, 0, 0, adau7002_aअगर_event,
 			       SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_INPUT("PDM_DAT"),
 	SND_SOC_DAPM_REGULATOR_SUPPLY("IOVDD", 0, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route adau7002_routes[] = {
-	{ "ADAU AIF", NULL, "PDM_DAT"},
-	{ "Capture", NULL, "PDM_DAT" },
-	{ "Capture", NULL, "IOVDD" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route adau7002_routes[] = अणु
+	अणु "ADAU AIF", शून्य, "PDM_DAT"पूर्ण,
+	अणु "Capture", शून्य, "PDM_DAT" पूर्ण,
+	अणु "Capture", शून्य, "IOVDD" पूर्ण,
+पूर्ण;
 
-static struct snd_soc_dai_driver adau7002_dai = {
+अटल काष्ठा snd_soc_dai_driver adau7002_dai = अणु
 	.name = "adau7002-hifi",
-	.capture = {
+	.capture = अणु
 		.stream_name = "Capture",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_96000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S18_3LE |
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S18_3LE |
 			SNDRV_PCM_FMTBIT_S20_3LE | SNDRV_PCM_FMTBIT_S24_LE |
 			SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S32_LE,
 		.sig_bits = 20,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_component_driver adau7002_component_driver = {
+अटल स्थिर काष्ठा snd_soc_component_driver adau7002_component_driver = अणु
 	.probe			= adau7002_component_probe,
-	.dapm_widgets		= adau7002_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(adau7002_widgets),
+	.dapm_widमाला_लो		= adau7002_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(adau7002_widमाला_लो),
 	.dapm_routes		= adau7002_routes,
 	.num_dapm_routes	= ARRAY_SIZE(adau7002_routes),
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static int adau7002_probe(struct platform_device *pdev)
-{
-	return devm_snd_soc_register_component(&pdev->dev,
+अटल पूर्णांक adau7002_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
 			&adau7002_component_driver,
 			&adau7002_dai, 1);
-}
+पूर्ण
 
-static int adau7002_remove(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक adau7002_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id adau7002_dt_ids[] = {
-	{ .compatible = "adi,adau7002", },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id adau7002_dt_ids[] = अणु
+	अणु .compatible = "adi,adau7002", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, adau7002_dt_ids);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id adau7002_acpi_match[] = {
-	{ "ADAU7002", 0 },
-	{},
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id adau7002_acpi_match[] = अणु
+	अणु "ADAU7002", 0 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, adau7002_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver adau7002_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver adau7002_driver = अणु
+	.driver = अणु
 		.name = "adau7002",
 		.of_match_table	= of_match_ptr(adau7002_dt_ids),
 		.acpi_match_table = ACPI_PTR(adau7002_acpi_match),
-	},
+	पूर्ण,
 	.probe = adau7002_probe,
-	.remove = adau7002_remove,
-};
-module_platform_driver(adau7002_driver);
+	.हटाओ = adau7002_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(adau7002_driver);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");
 MODULE_DESCRIPTION("ADAU7002 Stereo PDM-to-I2S/TDM Converter driver");

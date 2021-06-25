@@ -1,649 +1,650 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * fs/f2fs/checkpoint.c
+ * fs/f2fs/checkpoपूर्णांक.c
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
-#include <linux/fs.h>
-#include <linux/bio.h>
-#include <linux/mpage.h>
-#include <linux/writeback.h>
-#include <linux/blkdev.h>
-#include <linux/f2fs_fs.h>
-#include <linux/pagevec.h>
-#include <linux/swap.h>
-#include <linux/kthread.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/mpage.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/f2fs_fs.h>
+#समावेश <linux/pagevec.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include "f2fs.h"
-#include "node.h"
-#include "segment.h"
-#include <trace/events/f2fs.h>
+#समावेश "f2fs.h"
+#समावेश "node.h"
+#समावेश "segment.h"
+#समावेश <trace/events/f2fs.h>
 
-#define DEFAULT_CHECKPOINT_IOPRIO (IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 3))
+#घोषणा DEFAULT_CHECKPOINT_IOPRIO (IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 3))
 
-static struct kmem_cache *ino_entry_slab;
-struct kmem_cache *f2fs_inode_entry_slab;
+अटल काष्ठा kmem_cache *ino_entry_slab;
+काष्ठा kmem_cache *f2fs_inode_entry_slab;
 
-void f2fs_stop_checkpoint(struct f2fs_sb_info *sbi, bool end_io)
-{
+व्योम f2fs_stop_checkpoपूर्णांक(काष्ठा f2fs_sb_info *sbi, bool end_io)
+अणु
 	f2fs_build_fault_attr(sbi, 0, 0);
 	set_ckpt_flags(sbi, CP_ERROR_FLAG);
-	if (!end_io)
-		f2fs_flush_merged_writes(sbi);
-}
+	अगर (!end_io)
+		f2fs_flush_merged_ग_लिखोs(sbi);
+पूर्ण
 
 /*
- * We guarantee no failure on the returned page.
+ * We guarantee no failure on the वापसed page.
  */
-struct page *f2fs_grab_meta_page(struct f2fs_sb_info *sbi, pgoff_t index)
-{
-	struct address_space *mapping = META_MAPPING(sbi);
-	struct page *page;
+काष्ठा page *f2fs_grab_meta_page(काष्ठा f2fs_sb_info *sbi, pgoff_t index)
+अणु
+	काष्ठा address_space *mapping = META_MAPPING(sbi);
+	काष्ठा page *page;
 repeat:
 	page = f2fs_grab_cache_page(mapping, index, false);
-	if (!page) {
+	अगर (!page) अणु
 		cond_resched();
-		goto repeat;
-	}
-	f2fs_wait_on_page_writeback(page, META, true, true);
-	if (!PageUptodate(page))
+		जाओ repeat;
+	पूर्ण
+	f2fs_रुको_on_page_ग_लिखोback(page, META, true, true);
+	अगर (!PageUptodate(page))
 		SetPageUptodate(page);
-	return page;
-}
+	वापस page;
+पूर्ण
 
-static struct page *__get_meta_page(struct f2fs_sb_info *sbi, pgoff_t index,
+अटल काष्ठा page *__get_meta_page(काष्ठा f2fs_sb_info *sbi, pgoff_t index,
 							bool is_meta)
-{
-	struct address_space *mapping = META_MAPPING(sbi);
-	struct page *page;
-	struct f2fs_io_info fio = {
+अणु
+	काष्ठा address_space *mapping = META_MAPPING(sbi);
+	काष्ठा page *page;
+	काष्ठा f2fs_io_info fio = अणु
 		.sbi = sbi,
 		.type = META,
 		.op = REQ_OP_READ,
 		.op_flags = REQ_META | REQ_PRIO,
 		.old_blkaddr = index,
 		.new_blkaddr = index,
-		.encrypted_page = NULL,
+		.encrypted_page = शून्य,
 		.is_por = !is_meta,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
-	if (unlikely(!is_meta))
+	अगर (unlikely(!is_meta))
 		fio.op_flags &= ~REQ_META;
 repeat:
 	page = f2fs_grab_cache_page(mapping, index, false);
-	if (!page) {
+	अगर (!page) अणु
 		cond_resched();
-		goto repeat;
-	}
-	if (PageUptodate(page))
-		goto out;
+		जाओ repeat;
+	पूर्ण
+	अगर (PageUptodate(page))
+		जाओ out;
 
 	fio.page = page;
 
 	err = f2fs_submit_page_bio(&fio);
-	if (err) {
+	अगर (err) अणु
 		f2fs_put_page(page, 1);
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	f2fs_update_iostat(sbi, FS_META_READ_IO, F2FS_BLKSIZE);
 
 	lock_page(page);
-	if (unlikely(page->mapping != mapping)) {
+	अगर (unlikely(page->mapping != mapping)) अणु
 		f2fs_put_page(page, 1);
-		goto repeat;
-	}
+		जाओ repeat;
+	पूर्ण
 
-	if (unlikely(!PageUptodate(page))) {
+	अगर (unlikely(!PageUptodate(page))) अणु
 		f2fs_put_page(page, 1);
-		return ERR_PTR(-EIO);
-	}
+		वापस ERR_PTR(-EIO);
+	पूर्ण
 out:
-	return page;
-}
+	वापस page;
+पूर्ण
 
-struct page *f2fs_get_meta_page(struct f2fs_sb_info *sbi, pgoff_t index)
-{
-	return __get_meta_page(sbi, index, true);
-}
+काष्ठा page *f2fs_get_meta_page(काष्ठा f2fs_sb_info *sbi, pgoff_t index)
+अणु
+	वापस __get_meta_page(sbi, index, true);
+पूर्ण
 
-struct page *f2fs_get_meta_page_retry(struct f2fs_sb_info *sbi, pgoff_t index)
-{
-	struct page *page;
-	int count = 0;
+काष्ठा page *f2fs_get_meta_page_retry(काष्ठा f2fs_sb_info *sbi, pgoff_t index)
+अणु
+	काष्ठा page *page;
+	पूर्णांक count = 0;
 
 retry:
 	page = __get_meta_page(sbi, index, true);
-	if (IS_ERR(page)) {
-		if (PTR_ERR(page) == -EIO &&
+	अगर (IS_ERR(page)) अणु
+		अगर (PTR_ERR(page) == -EIO &&
 				++count <= DEFAULT_RETRY_IO_COUNT)
-			goto retry;
-		f2fs_stop_checkpoint(sbi, false);
-	}
-	return page;
-}
+			जाओ retry;
+		f2fs_stop_checkpoपूर्णांक(sbi, false);
+	पूर्ण
+	वापस page;
+पूर्ण
 
-/* for POR only */
-struct page *f2fs_get_tmp_page(struct f2fs_sb_info *sbi, pgoff_t index)
-{
-	return __get_meta_page(sbi, index, false);
-}
+/* क्रम POR only */
+काष्ठा page *f2fs_get_पंचांगp_page(काष्ठा f2fs_sb_info *sbi, pgoff_t index)
+अणु
+	वापस __get_meta_page(sbi, index, false);
+पूर्ण
 
-static bool __is_bitmap_valid(struct f2fs_sb_info *sbi, block_t blkaddr,
-							int type)
-{
-	struct seg_entry *se;
-	unsigned int segno, offset;
+अटल bool __is_biपंचांगap_valid(काष्ठा f2fs_sb_info *sbi, block_t blkaddr,
+							पूर्णांक type)
+अणु
+	काष्ठा seg_entry *se;
+	अचिन्हित पूर्णांक segno, offset;
 	bool exist;
 
-	if (type != DATA_GENERIC_ENHANCE && type != DATA_GENERIC_ENHANCE_READ)
-		return true;
+	अगर (type != DATA_GENERIC_ENHANCE && type != DATA_GENERIC_ENHANCE_READ)
+		वापस true;
 
 	segno = GET_SEGNO(sbi, blkaddr);
 	offset = GET_BLKOFF_FROM_SEG0(sbi, blkaddr);
 	se = get_seg_entry(sbi, segno);
 
 	exist = f2fs_test_bit(offset, se->cur_valid_map);
-	if (!exist && type == DATA_GENERIC_ENHANCE) {
+	अगर (!exist && type == DATA_GENERIC_ENHANCE) अणु
 		f2fs_err(sbi, "Inconsistent error blkaddr:%u, sit bitmap:%d",
 			 blkaddr, exist);
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
 		WARN_ON(1);
-	}
-	return exist;
-}
+	पूर्ण
+	वापस exist;
+पूर्ण
 
-bool f2fs_is_valid_blkaddr(struct f2fs_sb_info *sbi,
-					block_t blkaddr, int type)
-{
-	switch (type) {
-	case META_NAT:
-		break;
-	case META_SIT:
-		if (unlikely(blkaddr >= SIT_BLK_CNT(sbi)))
-			return false;
-		break;
-	case META_SSA:
-		if (unlikely(blkaddr >= MAIN_BLKADDR(sbi) ||
+bool f2fs_is_valid_blkaddr(काष्ठा f2fs_sb_info *sbi,
+					block_t blkaddr, पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल META_NAT:
+		अवरोध;
+	हाल META_SIT:
+		अगर (unlikely(blkaddr >= SIT_BLK_CNT(sbi)))
+			वापस false;
+		अवरोध;
+	हाल META_SSA:
+		अगर (unlikely(blkaddr >= MAIN_BLKADDR(sbi) ||
 			blkaddr < SM_I(sbi)->ssa_blkaddr))
-			return false;
-		break;
-	case META_CP:
-		if (unlikely(blkaddr >= SIT_I(sbi)->sit_base_addr ||
+			वापस false;
+		अवरोध;
+	हाल META_CP:
+		अगर (unlikely(blkaddr >= SIT_I(sbi)->sit_base_addr ||
 			blkaddr < __start_cp_addr(sbi)))
-			return false;
-		break;
-	case META_POR:
-		if (unlikely(blkaddr >= MAX_BLKADDR(sbi) ||
+			वापस false;
+		अवरोध;
+	हाल META_POR:
+		अगर (unlikely(blkaddr >= MAX_BLKADDR(sbi) ||
 			blkaddr < MAIN_BLKADDR(sbi)))
-			return false;
-		break;
-	case DATA_GENERIC:
-	case DATA_GENERIC_ENHANCE:
-	case DATA_GENERIC_ENHANCE_READ:
-		if (unlikely(blkaddr >= MAX_BLKADDR(sbi) ||
-				blkaddr < MAIN_BLKADDR(sbi))) {
+			वापस false;
+		अवरोध;
+	हाल DATA_GENERIC:
+	हाल DATA_GENERIC_ENHANCE:
+	हाल DATA_GENERIC_ENHANCE_READ:
+		अगर (unlikely(blkaddr >= MAX_BLKADDR(sbi) ||
+				blkaddr < MAIN_BLKADDR(sbi))) अणु
 			f2fs_warn(sbi, "access invalid blkaddr:%u",
 				  blkaddr);
 			set_sbi_flag(sbi, SBI_NEED_FSCK);
 			WARN_ON(1);
-			return false;
-		} else {
-			return __is_bitmap_valid(sbi, blkaddr, type);
-		}
-		break;
-	case META_GENERIC:
-		if (unlikely(blkaddr < SEG0_BLKADDR(sbi) ||
+			वापस false;
+		पूर्ण अन्यथा अणु
+			वापस __is_biपंचांगap_valid(sbi, blkaddr, type);
+		पूर्ण
+		अवरोध;
+	हाल META_GENERIC:
+		अगर (unlikely(blkaddr < SEG0_BLKADDR(sbi) ||
 			blkaddr >= MAIN_BLKADDR(sbi)))
-			return false;
-		break;
-	default:
+			वापस false;
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Readahead CP/NAT/SIT/SSA/POR pages
  */
-int f2fs_ra_meta_pages(struct f2fs_sb_info *sbi, block_t start, int nrpages,
-							int type, bool sync)
-{
-	struct page *page;
+पूर्णांक f2fs_ra_meta_pages(काष्ठा f2fs_sb_info *sbi, block_t start, पूर्णांक nrpages,
+							पूर्णांक type, bool sync)
+अणु
+	काष्ठा page *page;
 	block_t blkno = start;
-	struct f2fs_io_info fio = {
+	काष्ठा f2fs_io_info fio = अणु
 		.sbi = sbi,
 		.type = META,
 		.op = REQ_OP_READ,
 		.op_flags = sync ? (REQ_META | REQ_PRIO) : REQ_RAHEAD,
-		.encrypted_page = NULL,
+		.encrypted_page = शून्य,
 		.in_list = false,
 		.is_por = (type == META_POR),
-	};
-	struct blk_plug plug;
-	int err;
+	पूर्ण;
+	काष्ठा blk_plug plug;
+	पूर्णांक err;
 
-	if (unlikely(type == META_POR))
+	अगर (unlikely(type == META_POR))
 		fio.op_flags &= ~REQ_META;
 
 	blk_start_plug(&plug);
-	for (; nrpages-- > 0; blkno++) {
+	क्रम (; nrpages-- > 0; blkno++) अणु
 
-		if (!f2fs_is_valid_blkaddr(sbi, blkno, type))
-			goto out;
+		अगर (!f2fs_is_valid_blkaddr(sbi, blkno, type))
+			जाओ out;
 
-		switch (type) {
-		case META_NAT:
-			if (unlikely(blkno >=
+		चयन (type) अणु
+		हाल META_NAT:
+			अगर (unlikely(blkno >=
 					NAT_BLOCK_OFFSET(NM_I(sbi)->max_nid)))
 				blkno = 0;
 			/* get nat block addr */
 			fio.new_blkaddr = current_nat_addr(sbi,
 					blkno * NAT_ENTRY_PER_BLOCK);
-			break;
-		case META_SIT:
-			if (unlikely(blkno >= TOTAL_SEGS(sbi)))
-				goto out;
+			अवरोध;
+		हाल META_SIT:
+			अगर (unlikely(blkno >= TOTAL_SEGS(sbi)))
+				जाओ out;
 			/* get sit block addr */
 			fio.new_blkaddr = current_sit_addr(sbi,
 					blkno * SIT_ENTRY_PER_BLOCK);
-			break;
-		case META_SSA:
-		case META_CP:
-		case META_POR:
+			अवरोध;
+		हाल META_SSA:
+		हाल META_CP:
+		हाल META_POR:
 			fio.new_blkaddr = blkno;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			BUG();
-		}
+		पूर्ण
 
 		page = f2fs_grab_cache_page(META_MAPPING(sbi),
 						fio.new_blkaddr, false);
-		if (!page)
-			continue;
-		if (PageUptodate(page)) {
+		अगर (!page)
+			जारी;
+		अगर (PageUptodate(page)) अणु
 			f2fs_put_page(page, 1);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		fio.page = page;
 		err = f2fs_submit_page_bio(&fio);
 		f2fs_put_page(page, err ? 1 : 0);
 
-		if (!err)
+		अगर (!err)
 			f2fs_update_iostat(sbi, FS_META_READ_IO, F2FS_BLKSIZE);
-	}
+	पूर्ण
 out:
 	blk_finish_plug(&plug);
-	return blkno - start;
-}
+	वापस blkno - start;
+पूर्ण
 
-void f2fs_ra_meta_pages_cond(struct f2fs_sb_info *sbi, pgoff_t index)
-{
-	struct page *page;
-	bool readahead = false;
+व्योम f2fs_ra_meta_pages_cond(काष्ठा f2fs_sb_info *sbi, pgoff_t index)
+अणु
+	काष्ठा page *page;
+	bool पढ़ोahead = false;
 
 	page = find_get_page(META_MAPPING(sbi), index);
-	if (!page || !PageUptodate(page))
-		readahead = true;
+	अगर (!page || !PageUptodate(page))
+		पढ़ोahead = true;
 	f2fs_put_page(page, 0);
 
-	if (readahead)
+	अगर (पढ़ोahead)
 		f2fs_ra_meta_pages(sbi, index, BIO_MAX_VECS, META_POR, true);
-}
+पूर्ण
 
-static int __f2fs_write_meta_page(struct page *page,
-				struct writeback_control *wbc,
-				enum iostat_type io_type)
-{
-	struct f2fs_sb_info *sbi = F2FS_P_SB(page);
+अटल पूर्णांक __f2fs_ग_लिखो_meta_page(काष्ठा page *page,
+				काष्ठा ग_लिखोback_control *wbc,
+				क्रमागत iostat_type io_type)
+अणु
+	काष्ठा f2fs_sb_info *sbi = F2FS_P_SB(page);
 
-	trace_f2fs_writepage(page, META);
+	trace_f2fs_ग_लिखोpage(page, META);
 
-	if (unlikely(f2fs_cp_error(sbi)))
-		goto redirty_out;
-	if (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
-		goto redirty_out;
-	if (wbc->for_reclaim && page->index < GET_SUM_BLOCK(sbi, 0))
-		goto redirty_out;
+	अगर (unlikely(f2fs_cp_error(sbi)))
+		जाओ redirty_out;
+	अगर (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
+		जाओ redirty_out;
+	अगर (wbc->क्रम_reclaim && page->index < GET_SUM_BLOCK(sbi, 0))
+		जाओ redirty_out;
 
-	f2fs_do_write_meta_page(sbi, page, io_type);
-	dec_page_count(sbi, F2FS_DIRTY_META);
+	f2fs_करो_ग_लिखो_meta_page(sbi, page, io_type);
+	dec_page_count(sbi, F2FS_सूचीTY_META);
 
-	if (wbc->for_reclaim)
-		f2fs_submit_merged_write_cond(sbi, NULL, page, 0, META);
+	अगर (wbc->क्रम_reclaim)
+		f2fs_submit_merged_ग_लिखो_cond(sbi, शून्य, page, 0, META);
 
 	unlock_page(page);
 
-	if (unlikely(f2fs_cp_error(sbi)))
-		f2fs_submit_merged_write(sbi, META);
+	अगर (unlikely(f2fs_cp_error(sbi)))
+		f2fs_submit_merged_ग_लिखो(sbi, META);
 
-	return 0;
+	वापस 0;
 
 redirty_out:
-	redirty_page_for_writepage(wbc, page);
-	return AOP_WRITEPAGE_ACTIVATE;
-}
+	redirty_page_क्रम_ग_लिखोpage(wbc, page);
+	वापस AOP_WRITEPAGE_ACTIVATE;
+पूर्ण
 
-static int f2fs_write_meta_page(struct page *page,
-				struct writeback_control *wbc)
-{
-	return __f2fs_write_meta_page(page, wbc, FS_META_IO);
-}
+अटल पूर्णांक f2fs_ग_लिखो_meta_page(काष्ठा page *page,
+				काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस __f2fs_ग_लिखो_meta_page(page, wbc, FS_META_IO);
+पूर्ण
 
-static int f2fs_write_meta_pages(struct address_space *mapping,
-				struct writeback_control *wbc)
-{
-	struct f2fs_sb_info *sbi = F2FS_M_SB(mapping);
-	long diff, written;
+अटल पूर्णांक f2fs_ग_लिखो_meta_pages(काष्ठा address_space *mapping,
+				काष्ठा ग_लिखोback_control *wbc)
+अणु
+	काष्ठा f2fs_sb_info *sbi = F2FS_M_SB(mapping);
+	दीर्घ dअगरf, written;
 
-	if (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
-		goto skip_write;
+	अगर (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
+		जाओ skip_ग_लिखो;
 
-	/* collect a number of dirty meta pages and write together */
-	if (wbc->sync_mode != WB_SYNC_ALL &&
-			get_pages(sbi, F2FS_DIRTY_META) <
+	/* collect a number of dirty meta pages and ग_लिखो together */
+	अगर (wbc->sync_mode != WB_SYNC_ALL &&
+			get_pages(sbi, F2FS_सूचीTY_META) <
 					nr_pages_to_skip(sbi, META))
-		goto skip_write;
+		जाओ skip_ग_लिखो;
 
-	/* if locked failed, cp will flush dirty pages instead */
-	if (!down_write_trylock(&sbi->cp_global_sem))
-		goto skip_write;
+	/* अगर locked failed, cp will flush dirty pages instead */
+	अगर (!करोwn_ग_लिखो_trylock(&sbi->cp_global_sem))
+		जाओ skip_ग_लिखो;
 
-	trace_f2fs_writepages(mapping->host, wbc, META);
-	diff = nr_pages_to_write(sbi, META, wbc);
-	written = f2fs_sync_meta_pages(sbi, META, wbc->nr_to_write, FS_META_IO);
-	up_write(&sbi->cp_global_sem);
-	wbc->nr_to_write = max((long)0, wbc->nr_to_write - written - diff);
-	return 0;
+	trace_f2fs_ग_लिखोpages(mapping->host, wbc, META);
+	dअगरf = nr_pages_to_ग_लिखो(sbi, META, wbc);
+	written = f2fs_sync_meta_pages(sbi, META, wbc->nr_to_ग_लिखो, FS_META_IO);
+	up_ग_लिखो(&sbi->cp_global_sem);
+	wbc->nr_to_ग_लिखो = max((दीर्घ)0, wbc->nr_to_ग_लिखो - written - dअगरf);
+	वापस 0;
 
-skip_write:
-	wbc->pages_skipped += get_pages(sbi, F2FS_DIRTY_META);
-	trace_f2fs_writepages(mapping->host, wbc, META);
-	return 0;
-}
+skip_ग_लिखो:
+	wbc->pages_skipped += get_pages(sbi, F2FS_सूचीTY_META);
+	trace_f2fs_ग_लिखोpages(mapping->host, wbc, META);
+	वापस 0;
+पूर्ण
 
-long f2fs_sync_meta_pages(struct f2fs_sb_info *sbi, enum page_type type,
-				long nr_to_write, enum iostat_type io_type)
-{
-	struct address_space *mapping = META_MAPPING(sbi);
-	pgoff_t index = 0, prev = ULONG_MAX;
-	struct pagevec pvec;
-	long nwritten = 0;
-	int nr_pages;
-	struct writeback_control wbc = {
-		.for_reclaim = 0,
-	};
-	struct blk_plug plug;
+दीर्घ f2fs_sync_meta_pages(काष्ठा f2fs_sb_info *sbi, क्रमागत page_type type,
+				दीर्घ nr_to_ग_लिखो, क्रमागत iostat_type io_type)
+अणु
+	काष्ठा address_space *mapping = META_MAPPING(sbi);
+	pgoff_t index = 0, prev = अच_दीर्घ_उच्च;
+	काष्ठा pagevec pvec;
+	दीर्घ nwritten = 0;
+	पूर्णांक nr_pages;
+	काष्ठा ग_लिखोback_control wbc = अणु
+		.क्रम_reclaim = 0,
+	पूर्ण;
+	काष्ठा blk_plug plug;
 
 	pagevec_init(&pvec);
 
 	blk_start_plug(&plug);
 
-	while ((nr_pages = pagevec_lookup_tag(&pvec, mapping, &index,
-				PAGECACHE_TAG_DIRTY))) {
-		int i;
+	जबतक ((nr_pages = pagevec_lookup_tag(&pvec, mapping, &index,
+				PAGECACHE_TAG_सूचीTY))) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < nr_pages; i++) {
-			struct page *page = pvec.pages[i];
+		क्रम (i = 0; i < nr_pages; i++) अणु
+			काष्ठा page *page = pvec.pages[i];
 
-			if (prev == ULONG_MAX)
+			अगर (prev == अच_दीर्घ_उच्च)
 				prev = page->index - 1;
-			if (nr_to_write != LONG_MAX && page->index != prev + 1) {
+			अगर (nr_to_ग_लिखो != दीर्घ_उच्च && page->index != prev + 1) अणु
 				pagevec_release(&pvec);
-				goto stop;
-			}
+				जाओ stop;
+			पूर्ण
 
 			lock_page(page);
 
-			if (unlikely(page->mapping != mapping)) {
-continue_unlock:
+			अगर (unlikely(page->mapping != mapping)) अणु
+जारी_unlock:
 				unlock_page(page);
-				continue;
-			}
-			if (!PageDirty(page)) {
-				/* someone wrote it for us */
-				goto continue_unlock;
-			}
+				जारी;
+			पूर्ण
+			अगर (!PageDirty(page)) अणु
+				/* someone wrote it क्रम us */
+				जाओ जारी_unlock;
+			पूर्ण
 
-			f2fs_wait_on_page_writeback(page, META, true, true);
+			f2fs_रुको_on_page_ग_लिखोback(page, META, true, true);
 
-			if (!clear_page_dirty_for_io(page))
-				goto continue_unlock;
+			अगर (!clear_page_dirty_क्रम_io(page))
+				जाओ जारी_unlock;
 
-			if (__f2fs_write_meta_page(page, &wbc, io_type)) {
+			अगर (__f2fs_ग_लिखो_meta_page(page, &wbc, io_type)) अणु
 				unlock_page(page);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			nwritten++;
 			prev = page->index;
-			if (unlikely(nwritten >= nr_to_write))
-				break;
-		}
+			अगर (unlikely(nwritten >= nr_to_ग_लिखो))
+				अवरोध;
+		पूर्ण
 		pagevec_release(&pvec);
 		cond_resched();
-	}
+	पूर्ण
 stop:
-	if (nwritten)
-		f2fs_submit_merged_write(sbi, type);
+	अगर (nwritten)
+		f2fs_submit_merged_ग_लिखो(sbi, type);
 
 	blk_finish_plug(&plug);
 
-	return nwritten;
-}
+	वापस nwritten;
+पूर्ण
 
-static int f2fs_set_meta_page_dirty(struct page *page)
-{
+अटल पूर्णांक f2fs_set_meta_page_dirty(काष्ठा page *page)
+अणु
 	trace_f2fs_set_page_dirty(page, META);
 
-	if (!PageUptodate(page))
+	अगर (!PageUptodate(page))
 		SetPageUptodate(page);
-	if (!PageDirty(page)) {
+	अगर (!PageDirty(page)) अणु
 		__set_page_dirty_nobuffers(page);
-		inc_page_count(F2FS_P_SB(page), F2FS_DIRTY_META);
-		f2fs_set_page_private(page, 0);
-		return 1;
-	}
-	return 0;
-}
+		inc_page_count(F2FS_P_SB(page), F2FS_सूचीTY_META);
+		f2fs_set_page_निजी(page, 0);
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-const struct address_space_operations f2fs_meta_aops = {
-	.writepage	= f2fs_write_meta_page,
-	.writepages	= f2fs_write_meta_pages,
+स्थिर काष्ठा address_space_operations f2fs_meta_aops = अणु
+	.ग_लिखोpage	= f2fs_ग_लिखो_meta_page,
+	.ग_लिखोpages	= f2fs_ग_लिखो_meta_pages,
 	.set_page_dirty	= f2fs_set_meta_page_dirty,
 	.invalidatepage = f2fs_invalidate_page,
 	.releasepage	= f2fs_release_page,
-#ifdef CONFIG_MIGRATION
+#अगर_घोषित CONFIG_MIGRATION
 	.migratepage    = f2fs_migrate_page,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static void __add_ino_entry(struct f2fs_sb_info *sbi, nid_t ino,
-						unsigned int devidx, int type)
-{
-	struct inode_management *im = &sbi->im[type];
-	struct ino_entry *e, *tmp;
+अटल व्योम __add_ino_entry(काष्ठा f2fs_sb_info *sbi, nid_t ino,
+						अचिन्हित पूर्णांक devidx, पूर्णांक type)
+अणु
+	काष्ठा inode_management *im = &sbi->im[type];
+	काष्ठा ino_entry *e, *पंचांगp;
 
-	tmp = f2fs_kmem_cache_alloc(ino_entry_slab, GFP_NOFS);
+	पंचांगp = f2fs_kmem_cache_alloc(ino_entry_slab, GFP_NOFS);
 
 	radix_tree_preload(GFP_NOFS | __GFP_NOFAIL);
 
 	spin_lock(&im->ino_lock);
 	e = radix_tree_lookup(&im->ino_root, ino);
-	if (!e) {
-		e = tmp;
-		if (unlikely(radix_tree_insert(&im->ino_root, ino, e)))
+	अगर (!e) अणु
+		e = पंचांगp;
+		अगर (unlikely(radix_tree_insert(&im->ino_root, ino, e)))
 			f2fs_bug_on(sbi, 1);
 
-		memset(e, 0, sizeof(struct ino_entry));
+		स_रखो(e, 0, माप(काष्ठा ino_entry));
 		e->ino = ino;
 
 		list_add_tail(&e->list, &im->ino_list);
-		if (type != ORPHAN_INO)
+		अगर (type != ORPHAN_INO)
 			im->ino_num++;
-	}
+	पूर्ण
 
-	if (type == FLUSH_INO)
-		f2fs_set_bit(devidx, (char *)&e->dirty_device);
+	अगर (type == FLUSH_INO)
+		f2fs_set_bit(devidx, (अक्षर *)&e->dirty_device);
 
 	spin_unlock(&im->ino_lock);
 	radix_tree_preload_end();
 
-	if (e != tmp)
-		kmem_cache_free(ino_entry_slab, tmp);
-}
+	अगर (e != पंचांगp)
+		kmem_cache_मुक्त(ino_entry_slab, पंचांगp);
+पूर्ण
 
-static void __remove_ino_entry(struct f2fs_sb_info *sbi, nid_t ino, int type)
-{
-	struct inode_management *im = &sbi->im[type];
-	struct ino_entry *e;
+अटल व्योम __हटाओ_ino_entry(काष्ठा f2fs_sb_info *sbi, nid_t ino, पूर्णांक type)
+अणु
+	काष्ठा inode_management *im = &sbi->im[type];
+	काष्ठा ino_entry *e;
 
 	spin_lock(&im->ino_lock);
 	e = radix_tree_lookup(&im->ino_root, ino);
-	if (e) {
+	अगर (e) अणु
 		list_del(&e->list);
 		radix_tree_delete(&im->ino_root, ino);
 		im->ino_num--;
 		spin_unlock(&im->ino_lock);
-		kmem_cache_free(ino_entry_slab, e);
-		return;
-	}
+		kmem_cache_मुक्त(ino_entry_slab, e);
+		वापस;
+	पूर्ण
 	spin_unlock(&im->ino_lock);
-}
+पूर्ण
 
-void f2fs_add_ino_entry(struct f2fs_sb_info *sbi, nid_t ino, int type)
-{
-	/* add new dirty ino entry into list */
+व्योम f2fs_add_ino_entry(काष्ठा f2fs_sb_info *sbi, nid_t ino, पूर्णांक type)
+अणु
+	/* add new dirty ino entry पूर्णांकo list */
 	__add_ino_entry(sbi, ino, 0, type);
-}
+पूर्ण
 
-void f2fs_remove_ino_entry(struct f2fs_sb_info *sbi, nid_t ino, int type)
-{
-	/* remove dirty ino entry from list */
-	__remove_ino_entry(sbi, ino, type);
-}
+व्योम f2fs_हटाओ_ino_entry(काष्ठा f2fs_sb_info *sbi, nid_t ino, पूर्णांक type)
+अणु
+	/* हटाओ dirty ino entry from list */
+	__हटाओ_ino_entry(sbi, ino, type);
+पूर्ण
 
-/* mode should be APPEND_INO, UPDATE_INO or TRANS_DIR_INO */
-bool f2fs_exist_written_data(struct f2fs_sb_info *sbi, nid_t ino, int mode)
-{
-	struct inode_management *im = &sbi->im[mode];
-	struct ino_entry *e;
+/* mode should be APPEND_INO, UPDATE_INO or TRANS_सूची_INO */
+bool f2fs_exist_written_data(काष्ठा f2fs_sb_info *sbi, nid_t ino, पूर्णांक mode)
+अणु
+	काष्ठा inode_management *im = &sbi->im[mode];
+	काष्ठा ino_entry *e;
 
 	spin_lock(&im->ino_lock);
 	e = radix_tree_lookup(&im->ino_root, ino);
 	spin_unlock(&im->ino_lock);
-	return e ? true : false;
-}
+	वापस e ? true : false;
+पूर्ण
 
-void f2fs_release_ino_entry(struct f2fs_sb_info *sbi, bool all)
-{
-	struct ino_entry *e, *tmp;
-	int i;
+व्योम f2fs_release_ino_entry(काष्ठा f2fs_sb_info *sbi, bool all)
+अणु
+	काष्ठा ino_entry *e, *पंचांगp;
+	पूर्णांक i;
 
-	for (i = all ? ORPHAN_INO : APPEND_INO; i < MAX_INO_ENTRY; i++) {
-		struct inode_management *im = &sbi->im[i];
+	क्रम (i = all ? ORPHAN_INO : APPEND_INO; i < MAX_INO_ENTRY; i++) अणु
+		काष्ठा inode_management *im = &sbi->im[i];
 
 		spin_lock(&im->ino_lock);
-		list_for_each_entry_safe(e, tmp, &im->ino_list, list) {
+		list_क्रम_each_entry_safe(e, पंचांगp, &im->ino_list, list) अणु
 			list_del(&e->list);
 			radix_tree_delete(&im->ino_root, e->ino);
-			kmem_cache_free(ino_entry_slab, e);
+			kmem_cache_मुक्त(ino_entry_slab, e);
 			im->ino_num--;
-		}
+		पूर्ण
 		spin_unlock(&im->ino_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void f2fs_set_dirty_device(struct f2fs_sb_info *sbi, nid_t ino,
-					unsigned int devidx, int type)
-{
+व्योम f2fs_set_dirty_device(काष्ठा f2fs_sb_info *sbi, nid_t ino,
+					अचिन्हित पूर्णांक devidx, पूर्णांक type)
+अणु
 	__add_ino_entry(sbi, ino, devidx, type);
-}
+पूर्ण
 
-bool f2fs_is_dirty_device(struct f2fs_sb_info *sbi, nid_t ino,
-					unsigned int devidx, int type)
-{
-	struct inode_management *im = &sbi->im[type];
-	struct ino_entry *e;
+bool f2fs_is_dirty_device(काष्ठा f2fs_sb_info *sbi, nid_t ino,
+					अचिन्हित पूर्णांक devidx, पूर्णांक type)
+अणु
+	काष्ठा inode_management *im = &sbi->im[type];
+	काष्ठा ino_entry *e;
 	bool is_dirty = false;
 
 	spin_lock(&im->ino_lock);
 	e = radix_tree_lookup(&im->ino_root, ino);
-	if (e && f2fs_test_bit(devidx, (char *)&e->dirty_device))
+	अगर (e && f2fs_test_bit(devidx, (अक्षर *)&e->dirty_device))
 		is_dirty = true;
 	spin_unlock(&im->ino_lock);
-	return is_dirty;
-}
+	वापस is_dirty;
+पूर्ण
 
-int f2fs_acquire_orphan_inode(struct f2fs_sb_info *sbi)
-{
-	struct inode_management *im = &sbi->im[ORPHAN_INO];
-	int err = 0;
+पूर्णांक f2fs_acquire_orphan_inode(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा inode_management *im = &sbi->im[ORPHAN_INO];
+	पूर्णांक err = 0;
 
 	spin_lock(&im->ino_lock);
 
-	if (time_to_inject(sbi, FAULT_ORPHAN)) {
+	अगर (समय_प्रकारo_inject(sbi, FAULT_ORPHAN)) अणु
 		spin_unlock(&im->ino_lock);
 		f2fs_show_injection_info(sbi, FAULT_ORPHAN);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	if (unlikely(im->ino_num >= sbi->max_orphans))
+	अगर (unlikely(im->ino_num >= sbi->max_orphans))
 		err = -ENOSPC;
-	else
+	अन्यथा
 		im->ino_num++;
 	spin_unlock(&im->ino_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void f2fs_release_orphan_inode(struct f2fs_sb_info *sbi)
-{
-	struct inode_management *im = &sbi->im[ORPHAN_INO];
+व्योम f2fs_release_orphan_inode(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा inode_management *im = &sbi->im[ORPHAN_INO];
 
 	spin_lock(&im->ino_lock);
 	f2fs_bug_on(sbi, im->ino_num == 0);
 	im->ino_num--;
 	spin_unlock(&im->ino_lock);
-}
+पूर्ण
 
-void f2fs_add_orphan_inode(struct inode *inode)
-{
-	/* add new orphan ino entry into list */
+व्योम f2fs_add_orphan_inode(काष्ठा inode *inode)
+अणु
+	/* add new orphan ino entry पूर्णांकo list */
 	__add_ino_entry(F2FS_I_SB(inode), inode->i_ino, 0, ORPHAN_INO);
 	f2fs_update_inode_page(inode);
-}
+पूर्ण
 
-void f2fs_remove_orphan_inode(struct f2fs_sb_info *sbi, nid_t ino)
-{
-	/* remove orphan entry from orphan list */
-	__remove_ino_entry(sbi, ino, ORPHAN_INO);
-}
+व्योम f2fs_हटाओ_orphan_inode(काष्ठा f2fs_sb_info *sbi, nid_t ino)
+अणु
+	/* हटाओ orphan entry from orphan list */
+	__हटाओ_ino_entry(sbi, ino, ORPHAN_INO);
+पूर्ण
 
-static int recover_orphan_inode(struct f2fs_sb_info *sbi, nid_t ino)
-{
-	struct inode *inode;
-	struct node_info ni;
-	int err;
+अटल पूर्णांक recover_orphan_inode(काष्ठा f2fs_sb_info *sbi, nid_t ino)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा node_info ni;
+	पूर्णांक err;
 
 	inode = f2fs_iget_retry(sbi->sb, ino);
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		/*
 		 * there should be a bug that we can't find the entry
 		 * to orphan inode.
 		 */
 		f2fs_bug_on(sbi, PTR_ERR(inode) == -ENOENT);
-		return PTR_ERR(inode);
-	}
+		वापस PTR_ERR(inode);
+	पूर्ण
 
 	err = dquot_initialize(inode);
-	if (err) {
+	अगर (err) अणु
 		iput(inode);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	clear_nlink(inode);
 
@@ -651,130 +652,130 @@ static int recover_orphan_inode(struct f2fs_sb_info *sbi, nid_t ino)
 	iput(inode);
 
 	err = f2fs_get_node_info(sbi, ino, &ni);
-	if (err)
-		goto err_out;
+	अगर (err)
+		जाओ err_out;
 
 	/* ENOMEM was fully retried in f2fs_evict_inode. */
-	if (ni.blk_addr != NULL_ADDR) {
+	अगर (ni.blk_addr != शून्य_ADDR) अणु
 		err = -EIO;
-		goto err_out;
-	}
-	return 0;
+		जाओ err_out;
+	पूर्ण
+	वापस 0;
 
 err_out:
 	set_sbi_flag(sbi, SBI_NEED_FSCK);
 	f2fs_warn(sbi, "%s: orphan failed (ino=%x), run fsck to fix.",
 		  __func__, ino);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int f2fs_recover_orphan_inodes(struct f2fs_sb_info *sbi)
-{
+पूर्णांक f2fs_recover_orphan_inodes(काष्ठा f2fs_sb_info *sbi)
+अणु
 	block_t start_blk, orphan_blocks, i, j;
-	unsigned int s_flags = sbi->sb->s_flags;
-	int err = 0;
-#ifdef CONFIG_QUOTA
-	int quota_enabled;
-#endif
+	अचिन्हित पूर्णांक s_flags = sbi->sb->s_flags;
+	पूर्णांक err = 0;
+#अगर_घोषित CONFIG_QUOTA
+	पूर्णांक quota_enabled;
+#पूर्ण_अगर
 
-	if (!is_set_ckpt_flags(sbi, CP_ORPHAN_PRESENT_FLAG))
-		return 0;
+	अगर (!is_set_ckpt_flags(sbi, CP_ORPHAN_PRESENT_FLAG))
+		वापस 0;
 
-	if (bdev_read_only(sbi->sb->s_bdev)) {
+	अगर (bdev_पढ़ो_only(sbi->sb->s_bdev)) अणु
 		f2fs_info(sbi, "write access unavailable, skipping orphan cleanup");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (s_flags & SB_RDONLY) {
+	अगर (s_flags & SB_RDONLY) अणु
 		f2fs_info(sbi, "orphan cleanup on readonly fs");
 		sbi->sb->s_flags &= ~SB_RDONLY;
-	}
+	पूर्ण
 
-#ifdef CONFIG_QUOTA
-	/* Needed for iput() to work correctly and not trash data */
+#अगर_घोषित CONFIG_QUOTA
+	/* Needed क्रम iput() to work correctly and not trash data */
 	sbi->sb->s_flags |= SB_ACTIVE;
 
 	/*
-	 * Turn on quotas which were not enabled for read-only mounts if
-	 * filesystem has quota feature, so that they are updated correctly.
+	 * Turn on quotas which were not enabled क्रम पढ़ो-only mounts अगर
+	 * fileप्रणाली has quota feature, so that they are updated correctly.
 	 */
 	quota_enabled = f2fs_enable_quota_files(sbi, s_flags & SB_RDONLY);
-#endif
+#पूर्ण_अगर
 
 	start_blk = __start_cp_addr(sbi) + 1 + __cp_payload(sbi);
 	orphan_blocks = __start_sum_addr(sbi) - 1 - __cp_payload(sbi);
 
 	f2fs_ra_meta_pages(sbi, start_blk, orphan_blocks, META_CP, true);
 
-	for (i = 0; i < orphan_blocks; i++) {
-		struct page *page;
-		struct f2fs_orphan_block *orphan_blk;
+	क्रम (i = 0; i < orphan_blocks; i++) अणु
+		काष्ठा page *page;
+		काष्ठा f2fs_orphan_block *orphan_blk;
 
 		page = f2fs_get_meta_page(sbi, start_blk + i);
-		if (IS_ERR(page)) {
+		अगर (IS_ERR(page)) अणु
 			err = PTR_ERR(page);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		orphan_blk = (struct f2fs_orphan_block *)page_address(page);
-		for (j = 0; j < le32_to_cpu(orphan_blk->entry_count); j++) {
+		orphan_blk = (काष्ठा f2fs_orphan_block *)page_address(page);
+		क्रम (j = 0; j < le32_to_cpu(orphan_blk->entry_count); j++) अणु
 			nid_t ino = le32_to_cpu(orphan_blk->ino[j]);
 
 			err = recover_orphan_inode(sbi, ino);
-			if (err) {
+			अगर (err) अणु
 				f2fs_put_page(page, 1);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 		f2fs_put_page(page, 1);
-	}
+	पूर्ण
 	/* clear Orphan Flag */
 	clear_ckpt_flags(sbi, CP_ORPHAN_PRESENT_FLAG);
 out:
 	set_sbi_flag(sbi, SBI_IS_RECOVERED);
 
-#ifdef CONFIG_QUOTA
+#अगर_घोषित CONFIG_QUOTA
 	/* Turn quotas off */
-	if (quota_enabled)
+	अगर (quota_enabled)
 		f2fs_quota_off_umount(sbi->sb);
-#endif
+#पूर्ण_अगर
 	sbi->sb->s_flags = s_flags; /* Restore SB_RDONLY status */
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void write_orphan_inodes(struct f2fs_sb_info *sbi, block_t start_blk)
-{
-	struct list_head *head;
-	struct f2fs_orphan_block *orphan_blk = NULL;
-	unsigned int nentries = 0;
-	unsigned short index = 1;
-	unsigned short orphan_blocks;
-	struct page *page = NULL;
-	struct ino_entry *orphan = NULL;
-	struct inode_management *im = &sbi->im[ORPHAN_INO];
+अटल व्योम ग_लिखो_orphan_inodes(काष्ठा f2fs_sb_info *sbi, block_t start_blk)
+अणु
+	काष्ठा list_head *head;
+	काष्ठा f2fs_orphan_block *orphan_blk = शून्य;
+	अचिन्हित पूर्णांक nentries = 0;
+	अचिन्हित लघु index = 1;
+	अचिन्हित लघु orphan_blocks;
+	काष्ठा page *page = शून्य;
+	काष्ठा ino_entry *orphan = शून्य;
+	काष्ठा inode_management *im = &sbi->im[ORPHAN_INO];
 
 	orphan_blocks = GET_ORPHAN_BLOCKS(im->ino_num);
 
 	/*
-	 * we don't need to do spin_lock(&im->ino_lock) here, since all the
+	 * we करोn't need to करो spin_lock(&im->ino_lock) here, since all the
 	 * orphan inode operations are covered under f2fs_lock_op().
-	 * And, spin_lock should be avoided due to page operations below.
+	 * And, spin_lock should be aव्योमed due to page operations below.
 	 */
 	head = &im->ino_list;
 
-	/* loop for each orphan inode entry and write them in Jornal block */
-	list_for_each_entry(orphan, head, list) {
-		if (!page) {
+	/* loop क्रम each orphan inode entry and ग_लिखो them in Jornal block */
+	list_क्रम_each_entry(orphan, head, list) अणु
+		अगर (!page) अणु
 			page = f2fs_grab_meta_page(sbi, start_blk++);
 			orphan_blk =
-				(struct f2fs_orphan_block *)page_address(page);
-			memset(orphan_blk, 0, sizeof(*orphan_blk));
-		}
+				(काष्ठा f2fs_orphan_block *)page_address(page);
+			स_रखो(orphan_blk, 0, माप(*orphan_blk));
+		पूर्ण
 
 		orphan_blk->ino[nentries++] = cpu_to_le32(orphan->ino);
 
-		if (nentries == F2FS_ORPHANS_PER_BLOCK) {
+		अगर (nentries == F2FS_ORPHANS_PER_BLOCK) अणु
 			/*
 			 * an orphan block is full of 1020 entries,
 			 * then we need to flush current orphan blocks
@@ -787,668 +788,668 @@ static void write_orphan_inodes(struct f2fs_sb_info *sbi, block_t start_blk)
 			f2fs_put_page(page, 1);
 			index++;
 			nentries = 0;
-			page = NULL;
-		}
-	}
+			page = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (page) {
+	अगर (page) अणु
 		orphan_blk->blk_addr = cpu_to_le16(index);
 		orphan_blk->blk_count = cpu_to_le16(orphan_blocks);
 		orphan_blk->entry_count = cpu_to_le32(nentries);
 		set_page_dirty(page);
 		f2fs_put_page(page, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static __u32 f2fs_checkpoint_chksum(struct f2fs_sb_info *sbi,
-						struct f2fs_checkpoint *ckpt)
-{
-	unsigned int chksum_ofs = le32_to_cpu(ckpt->checksum_offset);
+अटल __u32 f2fs_checkpoपूर्णांक_chksum(काष्ठा f2fs_sb_info *sbi,
+						काष्ठा f2fs_checkpoपूर्णांक *ckpt)
+अणु
+	अचिन्हित पूर्णांक chksum_ofs = le32_to_cpu(ckpt->checksum_offset);
 	__u32 chksum;
 
 	chksum = f2fs_crc32(sbi, ckpt, chksum_ofs);
-	if (chksum_ofs < CP_CHKSUM_OFFSET) {
-		chksum_ofs += sizeof(chksum);
+	अगर (chksum_ofs < CP_CHKSUM_OFFSET) अणु
+		chksum_ofs += माप(chksum);
 		chksum = f2fs_chksum(sbi, chksum, (__u8 *)ckpt + chksum_ofs,
 						F2FS_BLKSIZE - chksum_ofs);
-	}
-	return chksum;
-}
+	पूर्ण
+	वापस chksum;
+पूर्ण
 
-static int get_checkpoint_version(struct f2fs_sb_info *sbi, block_t cp_addr,
-		struct f2fs_checkpoint **cp_block, struct page **cp_page,
-		unsigned long long *version)
-{
-	size_t crc_offset = 0;
+अटल पूर्णांक get_checkpoपूर्णांक_version(काष्ठा f2fs_sb_info *sbi, block_t cp_addr,
+		काष्ठा f2fs_checkpoपूर्णांक **cp_block, काष्ठा page **cp_page,
+		अचिन्हित दीर्घ दीर्घ *version)
+अणु
+	माप_प्रकार crc_offset = 0;
 	__u32 crc;
 
 	*cp_page = f2fs_get_meta_page(sbi, cp_addr);
-	if (IS_ERR(*cp_page))
-		return PTR_ERR(*cp_page);
+	अगर (IS_ERR(*cp_page))
+		वापस PTR_ERR(*cp_page);
 
-	*cp_block = (struct f2fs_checkpoint *)page_address(*cp_page);
+	*cp_block = (काष्ठा f2fs_checkpoपूर्णांक *)page_address(*cp_page);
 
 	crc_offset = le32_to_cpu((*cp_block)->checksum_offset);
-	if (crc_offset < CP_MIN_CHKSUM_OFFSET ||
-			crc_offset > CP_CHKSUM_OFFSET) {
+	अगर (crc_offset < CP_MIN_CHKSUM_OFFSET ||
+			crc_offset > CP_CHKSUM_OFFSET) अणु
 		f2fs_put_page(*cp_page, 1);
 		f2fs_warn(sbi, "invalid crc_offset: %zu", crc_offset);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	crc = f2fs_checkpoint_chksum(sbi, *cp_block);
-	if (crc != cur_cp_crc(*cp_block)) {
+	crc = f2fs_checkpoपूर्णांक_chksum(sbi, *cp_block);
+	अगर (crc != cur_cp_crc(*cp_block)) अणु
 		f2fs_put_page(*cp_page, 1);
 		f2fs_warn(sbi, "invalid crc value");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*version = cur_cp_version(*cp_block);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct page *validate_checkpoint(struct f2fs_sb_info *sbi,
-				block_t cp_addr, unsigned long long *version)
-{
-	struct page *cp_page_1 = NULL, *cp_page_2 = NULL;
-	struct f2fs_checkpoint *cp_block = NULL;
-	unsigned long long cur_version = 0, pre_version = 0;
-	int err;
+अटल काष्ठा page *validate_checkpoपूर्णांक(काष्ठा f2fs_sb_info *sbi,
+				block_t cp_addr, अचिन्हित दीर्घ दीर्घ *version)
+अणु
+	काष्ठा page *cp_page_1 = शून्य, *cp_page_2 = शून्य;
+	काष्ठा f2fs_checkpoपूर्णांक *cp_block = शून्य;
+	अचिन्हित दीर्घ दीर्घ cur_version = 0, pre_version = 0;
+	पूर्णांक err;
 
-	err = get_checkpoint_version(sbi, cp_addr, &cp_block,
+	err = get_checkpoपूर्णांक_version(sbi, cp_addr, &cp_block,
 					&cp_page_1, version);
-	if (err)
-		return NULL;
+	अगर (err)
+		वापस शून्य;
 
-	if (le32_to_cpu(cp_block->cp_pack_total_block_count) >
-					sbi->blocks_per_seg) {
+	अगर (le32_to_cpu(cp_block->cp_pack_total_block_count) >
+					sbi->blocks_per_seg) अणु
 		f2fs_warn(sbi, "invalid cp_pack_total_block_count:%u",
 			  le32_to_cpu(cp_block->cp_pack_total_block_count));
-		goto invalid_cp;
-	}
+		जाओ invalid_cp;
+	पूर्ण
 	pre_version = *version;
 
 	cp_addr += le32_to_cpu(cp_block->cp_pack_total_block_count) - 1;
-	err = get_checkpoint_version(sbi, cp_addr, &cp_block,
+	err = get_checkpoपूर्णांक_version(sbi, cp_addr, &cp_block,
 					&cp_page_2, version);
-	if (err)
-		goto invalid_cp;
+	अगर (err)
+		जाओ invalid_cp;
 	cur_version = *version;
 
-	if (cur_version == pre_version) {
+	अगर (cur_version == pre_version) अणु
 		*version = cur_version;
 		f2fs_put_page(cp_page_2, 1);
-		return cp_page_1;
-	}
+		वापस cp_page_1;
+	पूर्ण
 	f2fs_put_page(cp_page_2, 1);
 invalid_cp:
 	f2fs_put_page(cp_page_1, 1);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int f2fs_get_valid_checkpoint(struct f2fs_sb_info *sbi)
-{
-	struct f2fs_checkpoint *cp_block;
-	struct f2fs_super_block *fsb = sbi->raw_super;
-	struct page *cp1, *cp2, *cur_page;
-	unsigned long blk_size = sbi->blocksize;
-	unsigned long long cp1_version = 0, cp2_version = 0;
-	unsigned long long cp_start_blk_no;
-	unsigned int cp_blks = 1 + __cp_payload(sbi);
+पूर्णांक f2fs_get_valid_checkpoपूर्णांक(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा f2fs_checkpoपूर्णांक *cp_block;
+	काष्ठा f2fs_super_block *fsb = sbi->raw_super;
+	काष्ठा page *cp1, *cp2, *cur_page;
+	अचिन्हित दीर्घ blk_size = sbi->blocksize;
+	अचिन्हित दीर्घ दीर्घ cp1_version = 0, cp2_version = 0;
+	अचिन्हित दीर्घ दीर्घ cp_start_blk_no;
+	अचिन्हित पूर्णांक cp_blks = 1 + __cp_payload(sbi);
 	block_t cp_blk_no;
-	int i;
-	int err;
+	पूर्णांक i;
+	पूर्णांक err;
 
 	sbi->ckpt = f2fs_kvzalloc(sbi, array_size(blk_size, cp_blks),
 				  GFP_KERNEL);
-	if (!sbi->ckpt)
-		return -ENOMEM;
+	अगर (!sbi->ckpt)
+		वापस -ENOMEM;
 	/*
-	 * Finding out valid cp block involves read both
+	 * Finding out valid cp block involves पढ़ो both
 	 * sets( cp pack 1 and cp pack 2)
 	 */
 	cp_start_blk_no = le32_to_cpu(fsb->cp_blkaddr);
-	cp1 = validate_checkpoint(sbi, cp_start_blk_no, &cp1_version);
+	cp1 = validate_checkpoपूर्णांक(sbi, cp_start_blk_no, &cp1_version);
 
-	/* The second checkpoint pack should start at the next segment */
-	cp_start_blk_no += ((unsigned long long)1) <<
+	/* The second checkpoपूर्णांक pack should start at the next segment */
+	cp_start_blk_no += ((अचिन्हित दीर्घ दीर्घ)1) <<
 				le32_to_cpu(fsb->log_blocks_per_seg);
-	cp2 = validate_checkpoint(sbi, cp_start_blk_no, &cp2_version);
+	cp2 = validate_checkpoपूर्णांक(sbi, cp_start_blk_no, &cp2_version);
 
-	if (cp1 && cp2) {
-		if (ver_after(cp2_version, cp1_version))
+	अगर (cp1 && cp2) अणु
+		अगर (ver_after(cp2_version, cp1_version))
 			cur_page = cp2;
-		else
+		अन्यथा
 			cur_page = cp1;
-	} else if (cp1) {
+	पूर्ण अन्यथा अगर (cp1) अणु
 		cur_page = cp1;
-	} else if (cp2) {
+	पूर्ण अन्यथा अगर (cp2) अणु
 		cur_page = cp2;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -EFSCORRUPTED;
-		goto fail_no_cp;
-	}
+		जाओ fail_no_cp;
+	पूर्ण
 
-	cp_block = (struct f2fs_checkpoint *)page_address(cur_page);
-	memcpy(sbi->ckpt, cp_block, blk_size);
+	cp_block = (काष्ठा f2fs_checkpoपूर्णांक *)page_address(cur_page);
+	स_नकल(sbi->ckpt, cp_block, blk_size);
 
-	if (cur_page == cp1)
+	अगर (cur_page == cp1)
 		sbi->cur_cp_pack = 1;
-	else
+	अन्यथा
 		sbi->cur_cp_pack = 2;
 
-	/* Sanity checking of checkpoint */
-	if (f2fs_sanity_check_ckpt(sbi)) {
+	/* Sanity checking of checkpoपूर्णांक */
+	अगर (f2fs_sanity_check_ckpt(sbi)) अणु
 		err = -EFSCORRUPTED;
-		goto free_fail_no_cp;
-	}
+		जाओ मुक्त_fail_no_cp;
+	पूर्ण
 
-	if (cp_blks <= 1)
-		goto done;
+	अगर (cp_blks <= 1)
+		जाओ करोne;
 
 	cp_blk_no = le32_to_cpu(fsb->cp_blkaddr);
-	if (cur_page == cp2)
+	अगर (cur_page == cp2)
 		cp_blk_no += 1 << le32_to_cpu(fsb->log_blocks_per_seg);
 
-	for (i = 1; i < cp_blks; i++) {
-		void *sit_bitmap_ptr;
-		unsigned char *ckpt = (unsigned char *)sbi->ckpt;
+	क्रम (i = 1; i < cp_blks; i++) अणु
+		व्योम *sit_biपंचांगap_ptr;
+		अचिन्हित अक्षर *ckpt = (अचिन्हित अक्षर *)sbi->ckpt;
 
 		cur_page = f2fs_get_meta_page(sbi, cp_blk_no + i);
-		if (IS_ERR(cur_page)) {
+		अगर (IS_ERR(cur_page)) अणु
 			err = PTR_ERR(cur_page);
-			goto free_fail_no_cp;
-		}
-		sit_bitmap_ptr = page_address(cur_page);
-		memcpy(ckpt + i * blk_size, sit_bitmap_ptr, blk_size);
+			जाओ मुक्त_fail_no_cp;
+		पूर्ण
+		sit_biपंचांगap_ptr = page_address(cur_page);
+		स_नकल(ckpt + i * blk_size, sit_biपंचांगap_ptr, blk_size);
 		f2fs_put_page(cur_page, 1);
-	}
-done:
+	पूर्ण
+करोne:
 	f2fs_put_page(cp1, 1);
 	f2fs_put_page(cp2, 1);
-	return 0;
+	वापस 0;
 
-free_fail_no_cp:
+मुक्त_fail_no_cp:
 	f2fs_put_page(cp1, 1);
 	f2fs_put_page(cp2, 1);
 fail_no_cp:
-	kvfree(sbi->ckpt);
-	return err;
-}
+	kvमुक्त(sbi->ckpt);
+	वापस err;
+पूर्ण
 
-static void __add_dirty_inode(struct inode *inode, enum inode_type type)
-{
-	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	int flag = (type == DIR_INODE) ? FI_DIRTY_DIR : FI_DIRTY_FILE;
+अटल व्योम __add_dirty_inode(काष्ठा inode *inode, क्रमागत inode_type type)
+अणु
+	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	पूर्णांक flag = (type == सूची_INODE) ? FI_सूचीTY_सूची : FI_सूचीTY_खाता;
 
-	if (is_inode_flag_set(inode, flag))
-		return;
+	अगर (is_inode_flag_set(inode, flag))
+		वापस;
 
 	set_inode_flag(inode, flag);
-	if (!f2fs_is_volatile_file(inode))
+	अगर (!f2fs_is_अस्थिर_file(inode))
 		list_add_tail(&F2FS_I(inode)->dirty_list,
 						&sbi->inode_list[type]);
 	stat_inc_dirty_inode(sbi, type);
-}
+पूर्ण
 
-static void __remove_dirty_inode(struct inode *inode, enum inode_type type)
-{
-	int flag = (type == DIR_INODE) ? FI_DIRTY_DIR : FI_DIRTY_FILE;
+अटल व्योम __हटाओ_dirty_inode(काष्ठा inode *inode, क्रमागत inode_type type)
+अणु
+	पूर्णांक flag = (type == सूची_INODE) ? FI_सूचीTY_सूची : FI_सूचीTY_खाता;
 
-	if (get_dirty_pages(inode) || !is_inode_flag_set(inode, flag))
-		return;
+	अगर (get_dirty_pages(inode) || !is_inode_flag_set(inode, flag))
+		वापस;
 
 	list_del_init(&F2FS_I(inode)->dirty_list);
 	clear_inode_flag(inode, flag);
 	stat_dec_dirty_inode(F2FS_I_SB(inode), type);
-}
+पूर्ण
 
-void f2fs_update_dirty_page(struct inode *inode, struct page *page)
-{
-	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	enum inode_type type = S_ISDIR(inode->i_mode) ? DIR_INODE : FILE_INODE;
+व्योम f2fs_update_dirty_page(काष्ठा inode *inode, काष्ठा page *page)
+अणु
+	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	क्रमागत inode_type type = S_ISसूची(inode->i_mode) ? सूची_INODE : खाता_INODE;
 
-	if (!S_ISDIR(inode->i_mode) && !S_ISREG(inode->i_mode) &&
+	अगर (!S_ISसूची(inode->i_mode) && !S_ISREG(inode->i_mode) &&
 			!S_ISLNK(inode->i_mode))
-		return;
+		वापस;
 
 	spin_lock(&sbi->inode_lock[type]);
-	if (type != FILE_INODE || test_opt(sbi, DATA_FLUSH))
+	अगर (type != खाता_INODE || test_opt(sbi, DATA_FLUSH))
 		__add_dirty_inode(inode, type);
 	inode_inc_dirty_pages(inode);
 	spin_unlock(&sbi->inode_lock[type]);
 
-	f2fs_set_page_private(page, 0);
-}
+	f2fs_set_page_निजी(page, 0);
+पूर्ण
 
-void f2fs_remove_dirty_inode(struct inode *inode)
-{
-	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	enum inode_type type = S_ISDIR(inode->i_mode) ? DIR_INODE : FILE_INODE;
+व्योम f2fs_हटाओ_dirty_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	क्रमागत inode_type type = S_ISसूची(inode->i_mode) ? सूची_INODE : खाता_INODE;
 
-	if (!S_ISDIR(inode->i_mode) && !S_ISREG(inode->i_mode) &&
+	अगर (!S_ISसूची(inode->i_mode) && !S_ISREG(inode->i_mode) &&
 			!S_ISLNK(inode->i_mode))
-		return;
+		वापस;
 
-	if (type == FILE_INODE && !test_opt(sbi, DATA_FLUSH))
-		return;
+	अगर (type == खाता_INODE && !test_opt(sbi, DATA_FLUSH))
+		वापस;
 
 	spin_lock(&sbi->inode_lock[type]);
-	__remove_dirty_inode(inode, type);
+	__हटाओ_dirty_inode(inode, type);
 	spin_unlock(&sbi->inode_lock[type]);
-}
+पूर्ण
 
-int f2fs_sync_dirty_inodes(struct f2fs_sb_info *sbi, enum inode_type type)
-{
-	struct list_head *head;
-	struct inode *inode;
-	struct f2fs_inode_info *fi;
-	bool is_dir = (type == DIR_INODE);
-	unsigned long ino = 0;
+पूर्णांक f2fs_sync_dirty_inodes(काष्ठा f2fs_sb_info *sbi, क्रमागत inode_type type)
+अणु
+	काष्ठा list_head *head;
+	काष्ठा inode *inode;
+	काष्ठा f2fs_inode_info *fi;
+	bool is_dir = (type == सूची_INODE);
+	अचिन्हित दीर्घ ino = 0;
 
 	trace_f2fs_sync_dirty_inodes_enter(sbi->sb, is_dir,
 				get_pages(sbi, is_dir ?
-				F2FS_DIRTY_DENTS : F2FS_DIRTY_DATA));
+				F2FS_सूचीTY_DENTS : F2FS_सूचीTY_DATA));
 retry:
-	if (unlikely(f2fs_cp_error(sbi))) {
-		trace_f2fs_sync_dirty_inodes_exit(sbi->sb, is_dir,
+	अगर (unlikely(f2fs_cp_error(sbi))) अणु
+		trace_f2fs_sync_dirty_inodes_निकास(sbi->sb, is_dir,
 				get_pages(sbi, is_dir ?
-				F2FS_DIRTY_DENTS : F2FS_DIRTY_DATA));
-		return -EIO;
-	}
+				F2FS_सूचीTY_DENTS : F2FS_सूचीTY_DATA));
+		वापस -EIO;
+	पूर्ण
 
 	spin_lock(&sbi->inode_lock[type]);
 
 	head = &sbi->inode_list[type];
-	if (list_empty(head)) {
+	अगर (list_empty(head)) अणु
 		spin_unlock(&sbi->inode_lock[type]);
-		trace_f2fs_sync_dirty_inodes_exit(sbi->sb, is_dir,
+		trace_f2fs_sync_dirty_inodes_निकास(sbi->sb, is_dir,
 				get_pages(sbi, is_dir ?
-				F2FS_DIRTY_DENTS : F2FS_DIRTY_DATA));
-		return 0;
-	}
-	fi = list_first_entry(head, struct f2fs_inode_info, dirty_list);
+				F2FS_सूचीTY_DENTS : F2FS_सूचीTY_DATA));
+		वापस 0;
+	पूर्ण
+	fi = list_first_entry(head, काष्ठा f2fs_inode_info, dirty_list);
 	inode = igrab(&fi->vfs_inode);
 	spin_unlock(&sbi->inode_lock[type]);
-	if (inode) {
-		unsigned long cur_ino = inode->i_ino;
+	अगर (inode) अणु
+		अचिन्हित दीर्घ cur_ino = inode->i_ino;
 
 		F2FS_I(inode)->cp_task = current;
 
-		filemap_fdatawrite(inode->i_mapping);
+		filemap_fdataग_लिखो(inode->i_mapping);
 
-		F2FS_I(inode)->cp_task = NULL;
+		F2FS_I(inode)->cp_task = शून्य;
 
 		iput(inode);
-		/* We need to give cpu to another writers. */
-		if (ino == cur_ino)
+		/* We need to give cpu to another ग_लिखोrs. */
+		अगर (ino == cur_ino)
 			cond_resched();
-		else
+		अन्यथा
 			ino = cur_ino;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * We should submit bio, since it exists several
-		 * wribacking dentry pages in the freeing inode.
+		 * wribacking dentry pages in the मुक्तing inode.
 		 */
-		f2fs_submit_merged_write(sbi, DATA);
+		f2fs_submit_merged_ग_लिखो(sbi, DATA);
 		cond_resched();
-	}
-	goto retry;
-}
+	पूर्ण
+	जाओ retry;
+पूर्ण
 
-int f2fs_sync_inode_meta(struct f2fs_sb_info *sbi)
-{
-	struct list_head *head = &sbi->inode_list[DIRTY_META];
-	struct inode *inode;
-	struct f2fs_inode_info *fi;
-	s64 total = get_pages(sbi, F2FS_DIRTY_IMETA);
+पूर्णांक f2fs_sync_inode_meta(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा list_head *head = &sbi->inode_list[सूचीTY_META];
+	काष्ठा inode *inode;
+	काष्ठा f2fs_inode_info *fi;
+	s64 total = get_pages(sbi, F2FS_सूचीTY_IMETA);
 
-	while (total--) {
-		if (unlikely(f2fs_cp_error(sbi)))
-			return -EIO;
+	जबतक (total--) अणु
+		अगर (unlikely(f2fs_cp_error(sbi)))
+			वापस -EIO;
 
-		spin_lock(&sbi->inode_lock[DIRTY_META]);
-		if (list_empty(head)) {
-			spin_unlock(&sbi->inode_lock[DIRTY_META]);
-			return 0;
-		}
-		fi = list_first_entry(head, struct f2fs_inode_info,
+		spin_lock(&sbi->inode_lock[सूचीTY_META]);
+		अगर (list_empty(head)) अणु
+			spin_unlock(&sbi->inode_lock[सूचीTY_META]);
+			वापस 0;
+		पूर्ण
+		fi = list_first_entry(head, काष्ठा f2fs_inode_info,
 							gdirty_list);
 		inode = igrab(&fi->vfs_inode);
-		spin_unlock(&sbi->inode_lock[DIRTY_META]);
-		if (inode) {
+		spin_unlock(&sbi->inode_lock[सूचीTY_META]);
+		अगर (inode) अणु
 			sync_inode_metadata(inode, 0);
 
 			/* it's on eviction */
-			if (is_inode_flag_set(inode, FI_DIRTY_INODE))
+			अगर (is_inode_flag_set(inode, FI_सूचीTY_INODE))
 				f2fs_update_inode_page(inode);
 			iput(inode);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __prepare_cp_block(struct f2fs_sb_info *sbi)
-{
-	struct f2fs_checkpoint *ckpt = F2FS_CKPT(sbi);
-	struct f2fs_nm_info *nm_i = NM_I(sbi);
+अटल व्योम __prepare_cp_block(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा f2fs_checkpoपूर्णांक *ckpt = F2FS_CKPT(sbi);
+	काष्ठा f2fs_nm_info *nm_i = NM_I(sbi);
 	nid_t last_nid = nm_i->next_scan_nid;
 
-	next_free_nid(sbi, &last_nid);
+	next_मुक्त_nid(sbi, &last_nid);
 	ckpt->valid_block_count = cpu_to_le64(valid_user_blocks(sbi));
 	ckpt->valid_node_count = cpu_to_le32(valid_node_count(sbi));
 	ckpt->valid_inode_count = cpu_to_le32(valid_inode_count(sbi));
-	ckpt->next_free_nid = cpu_to_le32(last_nid);
-}
+	ckpt->next_मुक्त_nid = cpu_to_le32(last_nid);
+पूर्ण
 
-static bool __need_flush_quota(struct f2fs_sb_info *sbi)
-{
+अटल bool __need_flush_quota(काष्ठा f2fs_sb_info *sbi)
+अणु
 	bool ret = false;
 
-	if (!is_journalled_quota(sbi))
-		return false;
+	अगर (!is_journalled_quota(sbi))
+		वापस false;
 
-	down_write(&sbi->quota_sem);
-	if (is_sbi_flag_set(sbi, SBI_QUOTA_SKIP_FLUSH)) {
+	करोwn_ग_लिखो(&sbi->quota_sem);
+	अगर (is_sbi_flag_set(sbi, SBI_QUOTA_SKIP_FLUSH)) अणु
 		ret = false;
-	} else if (is_sbi_flag_set(sbi, SBI_QUOTA_NEED_REPAIR)) {
+	पूर्ण अन्यथा अगर (is_sbi_flag_set(sbi, SBI_QUOTA_NEED_REPAIR)) अणु
 		ret = false;
-	} else if (is_sbi_flag_set(sbi, SBI_QUOTA_NEED_FLUSH)) {
+	पूर्ण अन्यथा अगर (is_sbi_flag_set(sbi, SBI_QUOTA_NEED_FLUSH)) अणु
 		clear_sbi_flag(sbi, SBI_QUOTA_NEED_FLUSH);
 		ret = true;
-	} else if (get_pages(sbi, F2FS_DIRTY_QDATA)) {
+	पूर्ण अन्यथा अगर (get_pages(sbi, F2FS_सूचीTY_QDATA)) अणु
 		ret = true;
-	}
-	up_write(&sbi->quota_sem);
-	return ret;
-}
+	पूर्ण
+	up_ग_लिखो(&sbi->quota_sem);
+	वापस ret;
+पूर्ण
 
 /*
- * Freeze all the FS-operations for checkpoint.
+ * Freeze all the FS-operations क्रम checkpoपूर्णांक.
  */
-static int block_operations(struct f2fs_sb_info *sbi)
-{
-	struct writeback_control wbc = {
+अटल पूर्णांक block_operations(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा ग_लिखोback_control wbc = अणु
 		.sync_mode = WB_SYNC_ALL,
-		.nr_to_write = LONG_MAX,
-		.for_reclaim = 0,
-	};
-	int err = 0, cnt = 0;
+		.nr_to_ग_लिखो = दीर्घ_उच्च,
+		.क्रम_reclaim = 0,
+	पूर्ण;
+	पूर्णांक err = 0, cnt = 0;
 
 	/*
-	 * Let's flush inline_data in dirty node pages.
+	 * Let's flush अंतरभूत_data in dirty node pages.
 	 */
-	f2fs_flush_inline_data(sbi);
+	f2fs_flush_अंतरभूत_data(sbi);
 
 retry_flush_quotas:
 	f2fs_lock_all(sbi);
-	if (__need_flush_quota(sbi)) {
-		int locked;
+	अगर (__need_flush_quota(sbi)) अणु
+		पूर्णांक locked;
 
-		if (++cnt > DEFAULT_RETRY_QUOTA_FLUSH_COUNT) {
+		अगर (++cnt > DEFAULT_RETRY_QUOTA_FLUSH_COUNT) अणु
 			set_sbi_flag(sbi, SBI_QUOTA_SKIP_FLUSH);
 			set_sbi_flag(sbi, SBI_QUOTA_NEED_FLUSH);
-			goto retry_flush_dents;
-		}
+			जाओ retry_flush_dents;
+		पूर्ण
 		f2fs_unlock_all(sbi);
 
-		/* only failed during mount/umount/freeze/quotactl */
-		locked = down_read_trylock(&sbi->sb->s_umount);
+		/* only failed during mount/umount/मुक्तze/quotactl */
+		locked = करोwn_पढ़ो_trylock(&sbi->sb->s_umount);
 		f2fs_quota_sync(sbi->sb, -1);
-		if (locked)
-			up_read(&sbi->sb->s_umount);
+		अगर (locked)
+			up_पढ़ो(&sbi->sb->s_umount);
 		cond_resched();
-		goto retry_flush_quotas;
-	}
+		जाओ retry_flush_quotas;
+	पूर्ण
 
 retry_flush_dents:
-	/* write all the dirty dentry pages */
-	if (get_pages(sbi, F2FS_DIRTY_DENTS)) {
+	/* ग_लिखो all the dirty dentry pages */
+	अगर (get_pages(sbi, F2FS_सूचीTY_DENTS)) अणु
 		f2fs_unlock_all(sbi);
-		err = f2fs_sync_dirty_inodes(sbi, DIR_INODE);
-		if (err)
-			return err;
+		err = f2fs_sync_dirty_inodes(sbi, सूची_INODE);
+		अगर (err)
+			वापस err;
 		cond_resched();
-		goto retry_flush_quotas;
-	}
+		जाओ retry_flush_quotas;
+	पूर्ण
 
 	/*
 	 * POR: we should ensure that there are no dirty node pages
 	 * until finishing nat/sit flush. inode->i_blocks can be updated.
 	 */
-	down_write(&sbi->node_change);
+	करोwn_ग_लिखो(&sbi->node_change);
 
-	if (get_pages(sbi, F2FS_DIRTY_IMETA)) {
-		up_write(&sbi->node_change);
+	अगर (get_pages(sbi, F2FS_सूचीTY_IMETA)) अणु
+		up_ग_लिखो(&sbi->node_change);
 		f2fs_unlock_all(sbi);
 		err = f2fs_sync_inode_meta(sbi);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		cond_resched();
-		goto retry_flush_quotas;
-	}
+		जाओ retry_flush_quotas;
+	पूर्ण
 
 retry_flush_nodes:
-	down_write(&sbi->node_write);
+	करोwn_ग_लिखो(&sbi->node_ग_लिखो);
 
-	if (get_pages(sbi, F2FS_DIRTY_NODES)) {
-		up_write(&sbi->node_write);
+	अगर (get_pages(sbi, F2FS_सूचीTY_NODES)) अणु
+		up_ग_लिखो(&sbi->node_ग_लिखो);
 		atomic_inc(&sbi->wb_sync_req[NODE]);
 		err = f2fs_sync_node_pages(sbi, &wbc, false, FS_CP_NODE_IO);
 		atomic_dec(&sbi->wb_sync_req[NODE]);
-		if (err) {
-			up_write(&sbi->node_change);
+		अगर (err) अणु
+			up_ग_लिखो(&sbi->node_change);
 			f2fs_unlock_all(sbi);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		cond_resched();
-		goto retry_flush_nodes;
-	}
+		जाओ retry_flush_nodes;
+	पूर्ण
 
 	/*
-	 * sbi->node_change is used only for AIO write_begin path which produces
-	 * dirty node blocks and some checkpoint values by block allocation.
+	 * sbi->node_change is used only क्रम AIO ग_लिखो_begin path which produces
+	 * dirty node blocks and some checkpoपूर्णांक values by block allocation.
 	 */
 	__prepare_cp_block(sbi);
-	up_write(&sbi->node_change);
-	return err;
-}
+	up_ग_लिखो(&sbi->node_change);
+	वापस err;
+पूर्ण
 
-static void unblock_operations(struct f2fs_sb_info *sbi)
-{
-	up_write(&sbi->node_write);
+अटल व्योम unblock_operations(काष्ठा f2fs_sb_info *sbi)
+अणु
+	up_ग_लिखो(&sbi->node_ग_लिखो);
 	f2fs_unlock_all(sbi);
-}
+पूर्ण
 
-void f2fs_wait_on_all_pages(struct f2fs_sb_info *sbi, int type)
-{
-	DEFINE_WAIT(wait);
+व्योम f2fs_रुको_on_all_pages(काष्ठा f2fs_sb_info *sbi, पूर्णांक type)
+अणु
+	DEFINE_WAIT(रुको);
 
-	for (;;) {
-		if (!get_pages(sbi, type))
-			break;
+	क्रम (;;) अणु
+		अगर (!get_pages(sbi, type))
+			अवरोध;
 
-		if (unlikely(f2fs_cp_error(sbi)))
-			break;
+		अगर (unlikely(f2fs_cp_error(sbi)))
+			अवरोध;
 
-		if (type == F2FS_DIRTY_META)
-			f2fs_sync_meta_pages(sbi, META, LONG_MAX,
+		अगर (type == F2FS_सूचीTY_META)
+			f2fs_sync_meta_pages(sbi, META, दीर्घ_उच्च,
 							FS_CP_META_IO);
-		else if (type == F2FS_WB_CP_DATA)
-			f2fs_submit_merged_write(sbi, DATA);
+		अन्यथा अगर (type == F2FS_WB_CP_DATA)
+			f2fs_submit_merged_ग_लिखो(sbi, DATA);
 
-		prepare_to_wait(&sbi->cp_wait, &wait, TASK_UNINTERRUPTIBLE);
-		io_schedule_timeout(DEFAULT_IO_TIMEOUT);
-	}
-	finish_wait(&sbi->cp_wait, &wait);
-}
+		prepare_to_रुको(&sbi->cp_रुको, &रुको, TASK_UNINTERRUPTIBLE);
+		io_schedule_समयout(DEFAULT_IO_TIMEOUT);
+	पूर्ण
+	finish_रुको(&sbi->cp_रुको, &रुको);
+पूर्ण
 
-static void update_ckpt_flags(struct f2fs_sb_info *sbi, struct cp_control *cpc)
-{
-	unsigned long orphan_num = sbi->im[ORPHAN_INO].ino_num;
-	struct f2fs_checkpoint *ckpt = F2FS_CKPT(sbi);
-	unsigned long flags;
+अटल व्योम update_ckpt_flags(काष्ठा f2fs_sb_info *sbi, काष्ठा cp_control *cpc)
+अणु
+	अचिन्हित दीर्घ orphan_num = sbi->im[ORPHAN_INO].ino_num;
+	काष्ठा f2fs_checkpoपूर्णांक *ckpt = F2FS_CKPT(sbi);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sbi->cp_lock, flags);
 
-	if ((cpc->reason & CP_UMOUNT) &&
+	अगर ((cpc->reason & CP_UMOUNT) &&
 			le32_to_cpu(ckpt->cp_pack_total_block_count) >
 			sbi->blocks_per_seg - NM_I(sbi)->nat_bits_blocks)
 		disable_nat_bits(sbi, false);
 
-	if (cpc->reason & CP_TRIMMED)
+	अगर (cpc->reason & CP_TRIMMED)
 		__set_ckpt_flags(ckpt, CP_TRIMMED_FLAG);
-	else
+	अन्यथा
 		__clear_ckpt_flags(ckpt, CP_TRIMMED_FLAG);
 
-	if (cpc->reason & CP_UMOUNT)
+	अगर (cpc->reason & CP_UMOUNT)
 		__set_ckpt_flags(ckpt, CP_UMOUNT_FLAG);
-	else
+	अन्यथा
 		__clear_ckpt_flags(ckpt, CP_UMOUNT_FLAG);
 
-	if (cpc->reason & CP_FASTBOOT)
+	अगर (cpc->reason & CP_FASTBOOT)
 		__set_ckpt_flags(ckpt, CP_FASTBOOT_FLAG);
-	else
+	अन्यथा
 		__clear_ckpt_flags(ckpt, CP_FASTBOOT_FLAG);
 
-	if (orphan_num)
+	अगर (orphan_num)
 		__set_ckpt_flags(ckpt, CP_ORPHAN_PRESENT_FLAG);
-	else
+	अन्यथा
 		__clear_ckpt_flags(ckpt, CP_ORPHAN_PRESENT_FLAG);
 
-	if (is_sbi_flag_set(sbi, SBI_NEED_FSCK))
+	अगर (is_sbi_flag_set(sbi, SBI_NEED_FSCK))
 		__set_ckpt_flags(ckpt, CP_FSCK_FLAG);
 
-	if (is_sbi_flag_set(sbi, SBI_IS_RESIZEFS))
+	अगर (is_sbi_flag_set(sbi, SBI_IS_RESIZEFS))
 		__set_ckpt_flags(ckpt, CP_RESIZEFS_FLAG);
-	else
+	अन्यथा
 		__clear_ckpt_flags(ckpt, CP_RESIZEFS_FLAG);
 
-	if (is_sbi_flag_set(sbi, SBI_CP_DISABLED))
+	अगर (is_sbi_flag_set(sbi, SBI_CP_DISABLED))
 		__set_ckpt_flags(ckpt, CP_DISABLED_FLAG);
-	else
+	अन्यथा
 		__clear_ckpt_flags(ckpt, CP_DISABLED_FLAG);
 
-	if (is_sbi_flag_set(sbi, SBI_CP_DISABLED_QUICK))
+	अगर (is_sbi_flag_set(sbi, SBI_CP_DISABLED_QUICK))
 		__set_ckpt_flags(ckpt, CP_DISABLED_QUICK_FLAG);
-	else
+	अन्यथा
 		__clear_ckpt_flags(ckpt, CP_DISABLED_QUICK_FLAG);
 
-	if (is_sbi_flag_set(sbi, SBI_QUOTA_SKIP_FLUSH))
+	अगर (is_sbi_flag_set(sbi, SBI_QUOTA_SKIP_FLUSH))
 		__set_ckpt_flags(ckpt, CP_QUOTA_NEED_FSCK_FLAG);
-	else
+	अन्यथा
 		__clear_ckpt_flags(ckpt, CP_QUOTA_NEED_FSCK_FLAG);
 
-	if (is_sbi_flag_set(sbi, SBI_QUOTA_NEED_REPAIR))
+	अगर (is_sbi_flag_set(sbi, SBI_QUOTA_NEED_REPAIR))
 		__set_ckpt_flags(ckpt, CP_QUOTA_NEED_FSCK_FLAG);
 
-	/* set this flag to activate crc|cp_ver for recovery */
+	/* set this flag to activate crc|cp_ver क्रम recovery */
 	__set_ckpt_flags(ckpt, CP_CRC_RECOVERY_FLAG);
 	__clear_ckpt_flags(ckpt, CP_NOCRC_RECOVERY_FLAG);
 
 	spin_unlock_irqrestore(&sbi->cp_lock, flags);
-}
+पूर्ण
 
-static void commit_checkpoint(struct f2fs_sb_info *sbi,
-	void *src, block_t blk_addr)
-{
-	struct writeback_control wbc = {
-		.for_reclaim = 0,
-	};
+अटल व्योम commit_checkpoपूर्णांक(काष्ठा f2fs_sb_info *sbi,
+	व्योम *src, block_t blk_addr)
+अणु
+	काष्ठा ग_लिखोback_control wbc = अणु
+		.क्रम_reclaim = 0,
+	पूर्ण;
 
 	/*
 	 * pagevec_lookup_tag and lock_page again will take
-	 * some extra time. Therefore, f2fs_update_meta_pages and
+	 * some extra समय. Thereक्रमe, f2fs_update_meta_pages and
 	 * f2fs_sync_meta_pages are combined in this function.
 	 */
-	struct page *page = f2fs_grab_meta_page(sbi, blk_addr);
-	int err;
+	काष्ठा page *page = f2fs_grab_meta_page(sbi, blk_addr);
+	पूर्णांक err;
 
-	f2fs_wait_on_page_writeback(page, META, true, true);
+	f2fs_रुको_on_page_ग_लिखोback(page, META, true, true);
 
-	memcpy(page_address(page), src, PAGE_SIZE);
+	स_नकल(page_address(page), src, PAGE_SIZE);
 
 	set_page_dirty(page);
-	if (unlikely(!clear_page_dirty_for_io(page)))
+	अगर (unlikely(!clear_page_dirty_क्रम_io(page)))
 		f2fs_bug_on(sbi, 1);
 
-	/* writeout cp pack 2 page */
-	err = __f2fs_write_meta_page(page, &wbc, FS_CP_META_IO);
-	if (unlikely(err && f2fs_cp_error(sbi))) {
+	/* ग_लिखोout cp pack 2 page */
+	err = __f2fs_ग_लिखो_meta_page(page, &wbc, FS_CP_META_IO);
+	अगर (unlikely(err && f2fs_cp_error(sbi))) अणु
 		f2fs_put_page(page, 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	f2fs_bug_on(sbi, err);
 	f2fs_put_page(page, 0);
 
-	/* submit checkpoint (with barrier if NOBARRIER is not set) */
-	f2fs_submit_merged_write(sbi, META_FLUSH);
-}
+	/* submit checkpoपूर्णांक (with barrier अगर NOBARRIER is not set) */
+	f2fs_submit_merged_ग_लिखो(sbi, META_FLUSH);
+पूर्ण
 
-static inline u64 get_sectors_written(struct block_device *bdev)
-{
-	return (u64)part_stat_read(bdev, sectors[STAT_WRITE]);
-}
+अटल अंतरभूत u64 get_sectors_written(काष्ठा block_device *bdev)
+अणु
+	वापस (u64)part_stat_पढ़ो(bdev, sectors[STAT_WRITE]);
+पूर्ण
 
-u64 f2fs_get_sectors_written(struct f2fs_sb_info *sbi)
-{
-	if (f2fs_is_multi_device(sbi)) {
+u64 f2fs_get_sectors_written(काष्ठा f2fs_sb_info *sbi)
+अणु
+	अगर (f2fs_is_multi_device(sbi)) अणु
 		u64 sectors = 0;
-		int i;
+		पूर्णांक i;
 
-		for (i = 0; i < sbi->s_ndevs; i++)
+		क्रम (i = 0; i < sbi->s_ndevs; i++)
 			sectors += get_sectors_written(FDEV(i).bdev);
 
-		return sectors;
-	}
+		वापस sectors;
+	पूर्ण
 
-	return get_sectors_written(sbi->sb->s_bdev);
-}
+	वापस get_sectors_written(sbi->sb->s_bdev);
+पूर्ण
 
-static int do_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
-{
-	struct f2fs_checkpoint *ckpt = F2FS_CKPT(sbi);
-	struct f2fs_nm_info *nm_i = NM_I(sbi);
-	unsigned long orphan_num = sbi->im[ORPHAN_INO].ino_num, flags;
+अटल पूर्णांक करो_checkpoपूर्णांक(काष्ठा f2fs_sb_info *sbi, काष्ठा cp_control *cpc)
+अणु
+	काष्ठा f2fs_checkpoपूर्णांक *ckpt = F2FS_CKPT(sbi);
+	काष्ठा f2fs_nm_info *nm_i = NM_I(sbi);
+	अचिन्हित दीर्घ orphan_num = sbi->im[ORPHAN_INO].ino_num, flags;
 	block_t start_blk;
-	unsigned int data_sum_blocks, orphan_blocks;
+	अचिन्हित पूर्णांक data_sum_blocks, orphan_blocks;
 	__u32 crc32 = 0;
-	int i;
-	int cp_payload_blks = __cp_payload(sbi);
-	struct curseg_info *seg_i = CURSEG_I(sbi, CURSEG_HOT_NODE);
+	पूर्णांक i;
+	पूर्णांक cp_payload_blks = __cp_payload(sbi);
+	काष्ठा curseg_info *seg_i = CURSEG_I(sbi, CURSEG_HOT_NODE);
 	u64 kbytes_written;
-	int err;
+	पूर्णांक err;
 
 	/* Flush all the NAT/SIT pages */
-	f2fs_sync_meta_pages(sbi, META, LONG_MAX, FS_CP_META_IO);
+	f2fs_sync_meta_pages(sbi, META, दीर्घ_उच्च, FS_CP_META_IO);
 
-	/* start to update checkpoint, cp ver is already updated previously */
-	ckpt->elapsed_time = cpu_to_le64(get_mtime(sbi, true));
-	ckpt->free_segment_count = cpu_to_le32(free_segments(sbi));
-	for (i = 0; i < NR_CURSEG_NODE_TYPE; i++) {
+	/* start to update checkpoपूर्णांक, cp ver is alपढ़ोy updated previously */
+	ckpt->elapsed_समय = cpu_to_le64(get_mसमय(sbi, true));
+	ckpt->मुक्त_segment_count = cpu_to_le32(मुक्त_segments(sbi));
+	क्रम (i = 0; i < NR_CURSEG_NODE_TYPE; i++) अणु
 		ckpt->cur_node_segno[i] =
 			cpu_to_le32(curseg_segno(sbi, i + CURSEG_HOT_NODE));
 		ckpt->cur_node_blkoff[i] =
 			cpu_to_le16(curseg_blkoff(sbi, i + CURSEG_HOT_NODE));
 		ckpt->alloc_type[i + CURSEG_HOT_NODE] =
 				curseg_alloc_type(sbi, i + CURSEG_HOT_NODE);
-	}
-	for (i = 0; i < NR_CURSEG_DATA_TYPE; i++) {
+	पूर्ण
+	क्रम (i = 0; i < NR_CURSEG_DATA_TYPE; i++) अणु
 		ckpt->cur_data_segno[i] =
 			cpu_to_le32(curseg_segno(sbi, i + CURSEG_HOT_DATA));
 		ckpt->cur_data_blkoff[i] =
 			cpu_to_le16(curseg_blkoff(sbi, i + CURSEG_HOT_DATA));
 		ckpt->alloc_type[i + CURSEG_HOT_DATA] =
 				curseg_alloc_type(sbi, i + CURSEG_HOT_DATA);
-	}
+	पूर्ण
 
 	/* 2 cp + n data seg summary + orphan inode blocks */
-	data_sum_blocks = f2fs_npages_for_summary_flush(sbi, false);
+	data_sum_blocks = f2fs_npages_क्रम_summary_flush(sbi, false);
 	spin_lock_irqsave(&sbi->cp_lock, flags);
-	if (data_sum_blocks < NR_CURSEG_DATA_TYPE)
+	अगर (data_sum_blocks < NR_CURSEG_DATA_TYPE)
 		__set_ckpt_flags(ckpt, CP_COMPACT_SUM_FLAG);
-	else
+	अन्यथा
 		__clear_ckpt_flags(ckpt, CP_COMPACT_SUM_FLAG);
 	spin_unlock_irqrestore(&sbi->cp_lock, flags);
 
@@ -1456,31 +1457,31 @@ static int do_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 	ckpt->cp_pack_start_sum = cpu_to_le32(1 + cp_payload_blks +
 			orphan_blocks);
 
-	if (__remain_node_summaries(cpc->reason))
+	अगर (__reमुख्य_node_summaries(cpc->reason))
 		ckpt->cp_pack_total_block_count = cpu_to_le32(F2FS_CP_PACKS +
 				cp_payload_blks + data_sum_blocks +
 				orphan_blocks + NR_CURSEG_NODE_TYPE);
-	else
+	अन्यथा
 		ckpt->cp_pack_total_block_count = cpu_to_le32(F2FS_CP_PACKS +
 				cp_payload_blks + data_sum_blocks +
 				orphan_blocks);
 
-	/* update ckpt flag for checkpoint */
+	/* update ckpt flag क्रम checkpoपूर्णांक */
 	update_ckpt_flags(sbi, cpc);
 
-	/* update SIT/NAT bitmap */
-	get_sit_bitmap(sbi, __bitmap_ptr(sbi, SIT_BITMAP));
-	get_nat_bitmap(sbi, __bitmap_ptr(sbi, NAT_BITMAP));
+	/* update SIT/NAT biपंचांगap */
+	get_sit_biपंचांगap(sbi, __biपंचांगap_ptr(sbi, SIT_BITMAP));
+	get_nat_biपंचांगap(sbi, __biपंचांगap_ptr(sbi, NAT_BITMAP));
 
-	crc32 = f2fs_checkpoint_chksum(sbi, ckpt);
-	*((__le32 *)((unsigned char *)ckpt +
+	crc32 = f2fs_checkpoपूर्णांक_chksum(sbi, ckpt);
+	*((__le32 *)((अचिन्हित अक्षर *)ckpt +
 				le32_to_cpu(ckpt->checksum_offset)))
 				= cpu_to_le32(crc32);
 
 	start_blk = __start_cp_next_addr(sbi);
 
-	/* write nat bits */
-	if (enabled_nat_bits(sbi, cpc)) {
+	/* ग_लिखो nat bits */
+	अगर (enabled_nat_bits(sbi, cpc)) अणु
 		__u64 cp_ver = cur_cp_version(ckpt);
 		block_t blk;
 
@@ -1488,63 +1489,63 @@ static int do_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 		*(__le64 *)nm_i->nat_bits = cpu_to_le64(cp_ver);
 
 		blk = start_blk + sbi->blocks_per_seg - nm_i->nat_bits_blocks;
-		for (i = 0; i < nm_i->nat_bits_blocks; i++)
+		क्रम (i = 0; i < nm_i->nat_bits_blocks; i++)
 			f2fs_update_meta_page(sbi, nm_i->nat_bits +
 					(i << F2FS_BLKSIZE_BITS), blk + i);
-	}
+	पूर्ण
 
-	/* write out checkpoint buffer at block 0 */
+	/* ग_लिखो out checkpoपूर्णांक buffer at block 0 */
 	f2fs_update_meta_page(sbi, ckpt, start_blk++);
 
-	for (i = 1; i < 1 + cp_payload_blks; i++)
-		f2fs_update_meta_page(sbi, (char *)ckpt + i * F2FS_BLKSIZE,
+	क्रम (i = 1; i < 1 + cp_payload_blks; i++)
+		f2fs_update_meta_page(sbi, (अक्षर *)ckpt + i * F2FS_BLKSIZE,
 							start_blk++);
 
-	if (orphan_num) {
-		write_orphan_inodes(sbi, start_blk);
+	अगर (orphan_num) अणु
+		ग_लिखो_orphan_inodes(sbi, start_blk);
 		start_blk += orphan_blocks;
-	}
+	पूर्ण
 
-	f2fs_write_data_summaries(sbi, start_blk);
+	f2fs_ग_लिखो_data_summaries(sbi, start_blk);
 	start_blk += data_sum_blocks;
 
-	/* Record write statistics in the hot node summary */
+	/* Record ग_लिखो statistics in the hot node summary */
 	kbytes_written = sbi->kbytes_written;
 	kbytes_written += (f2fs_get_sectors_written(sbi) -
 				sbi->sectors_written_start) >> 1;
 	seg_i->journal->info.kbytes_written = cpu_to_le64(kbytes_written);
 
-	if (__remain_node_summaries(cpc->reason)) {
-		f2fs_write_node_summaries(sbi, start_blk);
+	अगर (__reमुख्य_node_summaries(cpc->reason)) अणु
+		f2fs_ग_लिखो_node_summaries(sbi, start_blk);
 		start_blk += NR_CURSEG_NODE_TYPE;
-	}
+	पूर्ण
 
 	/* update user_block_counts */
 	sbi->last_valid_block_count = sbi->total_valid_block_count;
 	percpu_counter_set(&sbi->alloc_valid_block_count, 0);
 
 	/* Here, we have one bio having CP pack except cp pack 2 page */
-	f2fs_sync_meta_pages(sbi, META, LONG_MAX, FS_CP_META_IO);
-	/* Wait for all dirty meta pages to be submitted for IO */
-	f2fs_wait_on_all_pages(sbi, F2FS_DIRTY_META);
+	f2fs_sync_meta_pages(sbi, META, दीर्घ_उच्च, FS_CP_META_IO);
+	/* Wait क्रम all dirty meta pages to be submitted क्रम IO */
+	f2fs_रुको_on_all_pages(sbi, F2FS_सूचीTY_META);
 
-	/* wait for previous submitted meta pages writeback */
-	f2fs_wait_on_all_pages(sbi, F2FS_WB_CP_DATA);
+	/* रुको क्रम previous submitted meta pages ग_लिखोback */
+	f2fs_रुको_on_all_pages(sbi, F2FS_WB_CP_DATA);
 
 	/* flush all device cache */
 	err = f2fs_flush_device_cache(sbi);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* barrier and flush checkpoint cp pack 2 page if it can */
-	commit_checkpoint(sbi, ckpt, start_blk);
-	f2fs_wait_on_all_pages(sbi, F2FS_WB_CP_DATA);
+	/* barrier and flush checkpoपूर्णांक cp pack 2 page अगर it can */
+	commit_checkpoपूर्णांक(sbi, ckpt, start_blk);
+	f2fs_रुको_on_all_pages(sbi, F2FS_WB_CP_DATA);
 
 	/*
-	 * invalidate intermediate page cache borrowed from meta inode which are
-	 * used for migration of encrypted, verity or compressed inode's blocks.
+	 * invalidate पूर्णांकermediate page cache borrowed from meta inode which are
+	 * used क्रम migration of encrypted, verity or compressed inode's blocks.
 	 */
-	if (f2fs_sb_has_encrypt(sbi) || f2fs_sb_has_verity(sbi) ||
+	अगर (f2fs_sb_has_encrypt(sbi) || f2fs_sb_has_verity(sbi) ||
 		f2fs_sb_has_compression(sbi))
 		invalidate_mapping_pages(META_MAPPING(sbi),
 				MAIN_BLKADDR(sbi), MAX_BLKADDR(sbi) - 1);
@@ -1553,7 +1554,7 @@ static int do_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 
 	f2fs_reset_fsync_node_info(sbi);
 
-	clear_sbi_flag(sbi, SBI_IS_DIRTY);
+	clear_sbi_flag(sbi, SBI_IS_सूचीTY);
 	clear_sbi_flag(sbi, SBI_NEED_CP);
 	clear_sbi_flag(sbi, SBI_QUOTA_SKIP_FLUSH);
 
@@ -1564,255 +1565,255 @@ static int do_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 	__set_cp_next_pack(sbi);
 
 	/*
-	 * redirty superblock if metadata like node page or inode cache is
-	 * updated during writing checkpoint.
+	 * redirty superblock अगर metadata like node page or inode cache is
+	 * updated during writing checkpoपूर्णांक.
 	 */
-	if (get_pages(sbi, F2FS_DIRTY_NODES) ||
-			get_pages(sbi, F2FS_DIRTY_IMETA))
-		set_sbi_flag(sbi, SBI_IS_DIRTY);
+	अगर (get_pages(sbi, F2FS_सूचीTY_NODES) ||
+			get_pages(sbi, F2FS_सूचीTY_IMETA))
+		set_sbi_flag(sbi, SBI_IS_सूचीTY);
 
-	f2fs_bug_on(sbi, get_pages(sbi, F2FS_DIRTY_DENTS));
+	f2fs_bug_on(sbi, get_pages(sbi, F2FS_सूचीTY_DENTS));
 
-	return unlikely(f2fs_cp_error(sbi)) ? -EIO : 0;
-}
+	वापस unlikely(f2fs_cp_error(sbi)) ? -EIO : 0;
+पूर्ण
 
-int f2fs_write_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
-{
-	struct f2fs_checkpoint *ckpt = F2FS_CKPT(sbi);
-	unsigned long long ckpt_ver;
-	int err = 0;
+पूर्णांक f2fs_ग_लिखो_checkpoपूर्णांक(काष्ठा f2fs_sb_info *sbi, काष्ठा cp_control *cpc)
+अणु
+	काष्ठा f2fs_checkpoपूर्णांक *ckpt = F2FS_CKPT(sbi);
+	अचिन्हित दीर्घ दीर्घ ckpt_ver;
+	पूर्णांक err = 0;
 
-	if (f2fs_readonly(sbi->sb) || f2fs_hw_is_readonly(sbi))
-		return -EROFS;
+	अगर (f2fs_पढ़ोonly(sbi->sb) || f2fs_hw_is_पढ़ोonly(sbi))
+		वापस -EROFS;
 
-	if (unlikely(is_sbi_flag_set(sbi, SBI_CP_DISABLED))) {
-		if (cpc->reason != CP_PAUSE)
-			return 0;
+	अगर (unlikely(is_sbi_flag_set(sbi, SBI_CP_DISABLED))) अणु
+		अगर (cpc->reason != CP_PAUSE)
+			वापस 0;
 		f2fs_warn(sbi, "Start checkpoint disabled!");
-	}
-	if (cpc->reason != CP_RESIZE)
-		down_write(&sbi->cp_global_sem);
+	पूर्ण
+	अगर (cpc->reason != CP_RESIZE)
+		करोwn_ग_लिखो(&sbi->cp_global_sem);
 
-	if (!is_sbi_flag_set(sbi, SBI_IS_DIRTY) &&
+	अगर (!is_sbi_flag_set(sbi, SBI_IS_सूचीTY) &&
 		((cpc->reason & CP_FASTBOOT) || (cpc->reason & CP_SYNC) ||
 		((cpc->reason & CP_DISCARD) && !sbi->discard_blks)))
-		goto out;
-	if (unlikely(f2fs_cp_error(sbi))) {
+		जाओ out;
+	अगर (unlikely(f2fs_cp_error(sbi))) अणु
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	trace_f2fs_write_checkpoint(sbi->sb, cpc->reason, "start block_ops");
+	trace_f2fs_ग_लिखो_checkpoपूर्णांक(sbi->sb, cpc->reason, "start block_ops");
 
 	err = block_operations(sbi);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	trace_f2fs_write_checkpoint(sbi->sb, cpc->reason, "finish block_ops");
+	trace_f2fs_ग_लिखो_checkpoपूर्णांक(sbi->sb, cpc->reason, "finish block_ops");
 
-	f2fs_flush_merged_writes(sbi);
+	f2fs_flush_merged_ग_लिखोs(sbi);
 
-	/* this is the case of multiple fstrims without any changes */
-	if (cpc->reason & CP_DISCARD) {
-		if (!f2fs_exist_trim_candidates(sbi, cpc)) {
+	/* this is the हाल of multiple fstrims without any changes */
+	अगर (cpc->reason & CP_DISCARD) अणु
+		अगर (!f2fs_exist_trim_candidates(sbi, cpc)) अणु
 			unblock_operations(sbi);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (NM_I(sbi)->nat_cnt[DIRTY_NAT] == 0 &&
+		अगर (NM_I(sbi)->nat_cnt[सूचीTY_NAT] == 0 &&
 				SIT_I(sbi)->dirty_sentries == 0 &&
-				prefree_segments(sbi) == 0) {
+				preमुक्त_segments(sbi) == 0) अणु
 			f2fs_flush_sit_entries(sbi, cpc);
-			f2fs_clear_prefree_segments(sbi, cpc);
+			f2fs_clear_preमुक्त_segments(sbi, cpc);
 			unblock_operations(sbi);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * update checkpoint pack index
+	 * update checkpoपूर्णांक pack index
 	 * Increase the version number so that
 	 * SIT entries and seg summaries are written at correct place
 	 */
 	ckpt_ver = cur_cp_version(ckpt);
-	ckpt->checkpoint_ver = cpu_to_le64(++ckpt_ver);
+	ckpt->checkpoपूर्णांक_ver = cpu_to_le64(++ckpt_ver);
 
-	/* write cached NAT/SIT entries to NAT/SIT area */
+	/* ग_लिखो cached NAT/SIT entries to NAT/SIT area */
 	err = f2fs_flush_nat_entries(sbi, cpc);
-	if (err)
-		goto stop;
+	अगर (err)
+		जाओ stop;
 
 	f2fs_flush_sit_entries(sbi, cpc);
 
 	/* save inmem log status */
 	f2fs_save_inmem_curseg(sbi);
 
-	err = do_checkpoint(sbi, cpc);
-	if (err)
+	err = करो_checkpoपूर्णांक(sbi, cpc);
+	अगर (err)
 		f2fs_release_discard_addrs(sbi);
-	else
-		f2fs_clear_prefree_segments(sbi, cpc);
+	अन्यथा
+		f2fs_clear_preमुक्त_segments(sbi, cpc);
 
 	f2fs_restore_inmem_curseg(sbi);
 stop:
 	unblock_operations(sbi);
 	stat_inc_cp_count(sbi->stat_info);
 
-	if (cpc->reason & CP_RECOVERY)
+	अगर (cpc->reason & CP_RECOVERY)
 		f2fs_notice(sbi, "checkpoint: version = %llx", ckpt_ver);
 
-	/* update CP_TIME to trigger checkpoint periodically */
-	f2fs_update_time(sbi, CP_TIME);
-	trace_f2fs_write_checkpoint(sbi->sb, cpc->reason, "finish checkpoint");
+	/* update CP_TIME to trigger checkpoपूर्णांक periodically */
+	f2fs_update_समय(sbi, CP_TIME);
+	trace_f2fs_ग_लिखो_checkpoपूर्णांक(sbi->sb, cpc->reason, "finish checkpoint");
 out:
-	if (cpc->reason != CP_RESIZE)
-		up_write(&sbi->cp_global_sem);
-	return err;
-}
+	अगर (cpc->reason != CP_RESIZE)
+		up_ग_लिखो(&sbi->cp_global_sem);
+	वापस err;
+पूर्ण
 
-void f2fs_init_ino_entry_info(struct f2fs_sb_info *sbi)
-{
-	int i;
+व्योम f2fs_init_ino_entry_info(काष्ठा f2fs_sb_info *sbi)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_INO_ENTRY; i++) {
-		struct inode_management *im = &sbi->im[i];
+	क्रम (i = 0; i < MAX_INO_ENTRY; i++) अणु
+		काष्ठा inode_management *im = &sbi->im[i];
 
 		INIT_RADIX_TREE(&im->ino_root, GFP_ATOMIC);
 		spin_lock_init(&im->ino_lock);
 		INIT_LIST_HEAD(&im->ino_list);
 		im->ino_num = 0;
-	}
+	पूर्ण
 
 	sbi->max_orphans = (sbi->blocks_per_seg - F2FS_CP_PACKS -
 			NR_CURSEG_PERSIST_TYPE - __cp_payload(sbi)) *
 				F2FS_ORPHANS_PER_BLOCK;
-}
+पूर्ण
 
-int __init f2fs_create_checkpoint_caches(void)
-{
+पूर्णांक __init f2fs_create_checkpoपूर्णांक_caches(व्योम)
+अणु
 	ino_entry_slab = f2fs_kmem_cache_create("f2fs_ino_entry",
-			sizeof(struct ino_entry));
-	if (!ino_entry_slab)
-		return -ENOMEM;
+			माप(काष्ठा ino_entry));
+	अगर (!ino_entry_slab)
+		वापस -ENOMEM;
 	f2fs_inode_entry_slab = f2fs_kmem_cache_create("f2fs_inode_entry",
-			sizeof(struct inode_entry));
-	if (!f2fs_inode_entry_slab) {
+			माप(काष्ठा inode_entry));
+	अगर (!f2fs_inode_entry_slab) अणु
 		kmem_cache_destroy(ino_entry_slab);
-		return -ENOMEM;
-	}
-	return 0;
-}
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void f2fs_destroy_checkpoint_caches(void)
-{
+व्योम f2fs_destroy_checkpoपूर्णांक_caches(व्योम)
+अणु
 	kmem_cache_destroy(ino_entry_slab);
 	kmem_cache_destroy(f2fs_inode_entry_slab);
-}
+पूर्ण
 
-static int __write_checkpoint_sync(struct f2fs_sb_info *sbi)
-{
-	struct cp_control cpc = { .reason = CP_SYNC, };
-	int err;
+अटल पूर्णांक __ग_लिखो_checkpoपूर्णांक_sync(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा cp_control cpc = अणु .reason = CP_SYNC, पूर्ण;
+	पूर्णांक err;
 
-	down_write(&sbi->gc_lock);
-	err = f2fs_write_checkpoint(sbi, &cpc);
-	up_write(&sbi->gc_lock);
+	करोwn_ग_लिखो(&sbi->gc_lock);
+	err = f2fs_ग_लिखो_checkpoपूर्णांक(sbi, &cpc);
+	up_ग_लिखो(&sbi->gc_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __checkpoint_and_complete_reqs(struct f2fs_sb_info *sbi)
-{
-	struct ckpt_req_control *cprc = &sbi->cprc_info;
-	struct ckpt_req *req, *next;
-	struct llist_node *dispatch_list;
-	u64 sum_diff = 0, diff, count = 0;
-	int ret;
+अटल व्योम __checkpoपूर्णांक_and_complete_reqs(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा ckpt_req_control *cprc = &sbi->cprc_info;
+	काष्ठा ckpt_req *req, *next;
+	काष्ठा llist_node *dispatch_list;
+	u64 sum_dअगरf = 0, dअगरf, count = 0;
+	पूर्णांक ret;
 
 	dispatch_list = llist_del_all(&cprc->issue_list);
-	if (!dispatch_list)
-		return;
+	अगर (!dispatch_list)
+		वापस;
 	dispatch_list = llist_reverse_order(dispatch_list);
 
-	ret = __write_checkpoint_sync(sbi);
+	ret = __ग_लिखो_checkpoपूर्णांक_sync(sbi);
 	atomic_inc(&cprc->issued_ckpt);
 
-	llist_for_each_entry_safe(req, next, dispatch_list, llnode) {
-		diff = (u64)ktime_ms_delta(ktime_get(), req->queue_time);
+	llist_क्रम_each_entry_safe(req, next, dispatch_list, llnode) अणु
+		dअगरf = (u64)kसमय_ms_delta(kसमय_get(), req->queue_समय);
 		req->ret = ret;
-		complete(&req->wait);
+		complete(&req->रुको);
 
-		sum_diff += diff;
+		sum_dअगरf += dअगरf;
 		count++;
-	}
+	पूर्ण
 	atomic_sub(count, &cprc->queued_ckpt);
 	atomic_add(count, &cprc->total_ckpt);
 
 	spin_lock(&cprc->stat_lock);
-	cprc->cur_time = (unsigned int)div64_u64(sum_diff, count);
-	if (cprc->peak_time < cprc->cur_time)
-		cprc->peak_time = cprc->cur_time;
+	cprc->cur_समय = (अचिन्हित पूर्णांक)भाग64_u64(sum_dअगरf, count);
+	अगर (cprc->peak_समय < cprc->cur_समय)
+		cprc->peak_समय = cprc->cur_समय;
 	spin_unlock(&cprc->stat_lock);
-}
+पूर्ण
 
-static int issue_checkpoint_thread(void *data)
-{
-	struct f2fs_sb_info *sbi = data;
-	struct ckpt_req_control *cprc = &sbi->cprc_info;
-	wait_queue_head_t *q = &cprc->ckpt_wait_queue;
+अटल पूर्णांक issue_checkpoपूर्णांक_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा f2fs_sb_info *sbi = data;
+	काष्ठा ckpt_req_control *cprc = &sbi->cprc_info;
+	रुको_queue_head_t *q = &cprc->ckpt_रुको_queue;
 repeat:
-	if (kthread_should_stop())
-		return 0;
+	अगर (kthपढ़ो_should_stop())
+		वापस 0;
 
-	if (!llist_empty(&cprc->issue_list))
-		__checkpoint_and_complete_reqs(sbi);
+	अगर (!llist_empty(&cprc->issue_list))
+		__checkpoपूर्णांक_and_complete_reqs(sbi);
 
-	wait_event_interruptible(*q,
-		kthread_should_stop() || !llist_empty(&cprc->issue_list));
-	goto repeat;
-}
+	रुको_event_पूर्णांकerruptible(*q,
+		kthपढ़ो_should_stop() || !llist_empty(&cprc->issue_list));
+	जाओ repeat;
+पूर्ण
 
-static void flush_remained_ckpt_reqs(struct f2fs_sb_info *sbi,
-		struct ckpt_req *wait_req)
-{
-	struct ckpt_req_control *cprc = &sbi->cprc_info;
+अटल व्योम flush_reमुख्यed_ckpt_reqs(काष्ठा f2fs_sb_info *sbi,
+		काष्ठा ckpt_req *रुको_req)
+अणु
+	काष्ठा ckpt_req_control *cprc = &sbi->cprc_info;
 
-	if (!llist_empty(&cprc->issue_list)) {
-		__checkpoint_and_complete_reqs(sbi);
-	} else {
-		/* already dispatched by issue_checkpoint_thread */
-		if (wait_req)
-			wait_for_completion(&wait_req->wait);
-	}
-}
+	अगर (!llist_empty(&cprc->issue_list)) अणु
+		__checkpoपूर्णांक_and_complete_reqs(sbi);
+	पूर्ण अन्यथा अणु
+		/* alपढ़ोy dispatched by issue_checkpoपूर्णांक_thपढ़ो */
+		अगर (रुको_req)
+			रुको_क्रम_completion(&रुको_req->रुको);
+	पूर्ण
+पूर्ण
 
-static void init_ckpt_req(struct ckpt_req *req)
-{
-	memset(req, 0, sizeof(struct ckpt_req));
+अटल व्योम init_ckpt_req(काष्ठा ckpt_req *req)
+अणु
+	स_रखो(req, 0, माप(काष्ठा ckpt_req));
 
-	init_completion(&req->wait);
-	req->queue_time = ktime_get();
-}
+	init_completion(&req->रुको);
+	req->queue_समय = kसमय_get();
+पूर्ण
 
-int f2fs_issue_checkpoint(struct f2fs_sb_info *sbi)
-{
-	struct ckpt_req_control *cprc = &sbi->cprc_info;
-	struct ckpt_req req;
-	struct cp_control cpc;
+पूर्णांक f2fs_issue_checkpoपूर्णांक(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा ckpt_req_control *cprc = &sbi->cprc_info;
+	काष्ठा ckpt_req req;
+	काष्ठा cp_control cpc;
 
 	cpc.reason = __get_cp_reason(sbi);
-	if (!test_opt(sbi, MERGE_CHECKPOINT) || cpc.reason != CP_SYNC) {
-		int ret;
+	अगर (!test_opt(sbi, MERGE_CHECKPOINT) || cpc.reason != CP_SYNC) अणु
+		पूर्णांक ret;
 
-		down_write(&sbi->gc_lock);
-		ret = f2fs_write_checkpoint(sbi, &cpc);
-		up_write(&sbi->gc_lock);
+		करोwn_ग_लिखो(&sbi->gc_lock);
+		ret = f2fs_ग_लिखो_checkpoपूर्णांक(sbi, &cpc);
+		up_ग_लिखो(&sbi->gc_lock);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!cprc->f2fs_issue_ckpt)
-		return __write_checkpoint_sync(sbi);
+	अगर (!cprc->f2fs_issue_ckpt)
+		वापस __ग_लिखो_checkpoपूर्णांक_sync(sbi);
 
 	init_ckpt_req(&req);
 
@@ -1820,66 +1821,66 @@ int f2fs_issue_checkpoint(struct f2fs_sb_info *sbi)
 	atomic_inc(&cprc->queued_ckpt);
 
 	/*
-	 * update issue_list before we wake up issue_checkpoint thread,
-	 * this smp_mb() pairs with another barrier in ___wait_event(),
-	 * see more details in comments of waitqueue_active().
+	 * update issue_list beक्रमe we wake up issue_checkpoपूर्णांक thपढ़ो,
+	 * this smp_mb() pairs with another barrier in ___रुको_event(),
+	 * see more details in comments of रुकोqueue_active().
 	 */
 	smp_mb();
 
-	if (waitqueue_active(&cprc->ckpt_wait_queue))
-		wake_up(&cprc->ckpt_wait_queue);
+	अगर (रुकोqueue_active(&cprc->ckpt_रुको_queue))
+		wake_up(&cprc->ckpt_रुको_queue);
 
-	if (cprc->f2fs_issue_ckpt)
-		wait_for_completion(&req.wait);
-	else
-		flush_remained_ckpt_reqs(sbi, &req);
+	अगर (cprc->f2fs_issue_ckpt)
+		रुको_क्रम_completion(&req.रुको);
+	अन्यथा
+		flush_reमुख्यed_ckpt_reqs(sbi, &req);
 
-	return req.ret;
-}
+	वापस req.ret;
+पूर्ण
 
-int f2fs_start_ckpt_thread(struct f2fs_sb_info *sbi)
-{
+पूर्णांक f2fs_start_ckpt_thपढ़ो(काष्ठा f2fs_sb_info *sbi)
+अणु
 	dev_t dev = sbi->sb->s_bdev->bd_dev;
-	struct ckpt_req_control *cprc = &sbi->cprc_info;
+	काष्ठा ckpt_req_control *cprc = &sbi->cprc_info;
 
-	if (cprc->f2fs_issue_ckpt)
-		return 0;
+	अगर (cprc->f2fs_issue_ckpt)
+		वापस 0;
 
-	cprc->f2fs_issue_ckpt = kthread_run(issue_checkpoint_thread, sbi,
+	cprc->f2fs_issue_ckpt = kthपढ़ो_run(issue_checkpoपूर्णांक_thपढ़ो, sbi,
 			"f2fs_ckpt-%u:%u", MAJOR(dev), MINOR(dev));
-	if (IS_ERR(cprc->f2fs_issue_ckpt)) {
-		cprc->f2fs_issue_ckpt = NULL;
-		return -ENOMEM;
-	}
+	अगर (IS_ERR(cprc->f2fs_issue_ckpt)) अणु
+		cprc->f2fs_issue_ckpt = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	set_task_ioprio(cprc->f2fs_issue_ckpt, cprc->ckpt_thread_ioprio);
+	set_task_ioprio(cprc->f2fs_issue_ckpt, cprc->ckpt_thपढ़ो_ioprio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void f2fs_stop_ckpt_thread(struct f2fs_sb_info *sbi)
-{
-	struct ckpt_req_control *cprc = &sbi->cprc_info;
+व्योम f2fs_stop_ckpt_thपढ़ो(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा ckpt_req_control *cprc = &sbi->cprc_info;
 
-	if (cprc->f2fs_issue_ckpt) {
-		struct task_struct *ckpt_task = cprc->f2fs_issue_ckpt;
+	अगर (cprc->f2fs_issue_ckpt) अणु
+		काष्ठा task_काष्ठा *ckpt_task = cprc->f2fs_issue_ckpt;
 
-		cprc->f2fs_issue_ckpt = NULL;
-		kthread_stop(ckpt_task);
+		cprc->f2fs_issue_ckpt = शून्य;
+		kthपढ़ो_stop(ckpt_task);
 
-		flush_remained_ckpt_reqs(sbi, NULL);
-	}
-}
+		flush_reमुख्यed_ckpt_reqs(sbi, शून्य);
+	पूर्ण
+पूर्ण
 
-void f2fs_init_ckpt_req_control(struct f2fs_sb_info *sbi)
-{
-	struct ckpt_req_control *cprc = &sbi->cprc_info;
+व्योम f2fs_init_ckpt_req_control(काष्ठा f2fs_sb_info *sbi)
+अणु
+	काष्ठा ckpt_req_control *cprc = &sbi->cprc_info;
 
 	atomic_set(&cprc->issued_ckpt, 0);
 	atomic_set(&cprc->total_ckpt, 0);
 	atomic_set(&cprc->queued_ckpt, 0);
-	cprc->ckpt_thread_ioprio = DEFAULT_CHECKPOINT_IOPRIO;
-	init_waitqueue_head(&cprc->ckpt_wait_queue);
+	cprc->ckpt_thपढ़ो_ioprio = DEFAULT_CHECKPOINT_IOPRIO;
+	init_रुकोqueue_head(&cprc->ckpt_रुको_queue);
 	init_llist_head(&cprc->issue_list);
 	spin_lock_init(&cprc->stat_lock);
-}
+पूर्ण

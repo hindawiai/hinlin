@@ -1,99 +1,100 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#include "i915_selftest.h"
+#समावेश "i915_selftest.h"
 
-#include "huge_gem_object.h"
-#include "selftests/igt_flush_test.h"
-#include "selftests/mock_gem_device.h"
+#समावेश "huge_gem_object.h"
+#समावेश "selftests/igt_flush_test.h"
+#समावेश "selftests/mock_gem_device.h"
 
-static int igt_gem_object(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct drm_i915_gem_object *obj;
-	int err;
+अटल पूर्णांक igt_gem_object(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा drm_i915_gem_object *obj;
+	पूर्णांक err;
 
 	/* Basic test to ensure we can create an object */
 
 	obj = i915_gem_object_create_shmem(i915, PAGE_SIZE);
-	if (IS_ERR(obj)) {
+	अगर (IS_ERR(obj)) अणु
 		err = PTR_ERR(obj);
 		pr_err("i915_gem_object_create failed, err=%d\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = 0;
 	i915_gem_object_put(obj);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_gem_huge(void *arg)
-{
-	const unsigned int nreal = 509; /* just to be awkward */
-	struct drm_i915_private *i915 = arg;
-	struct drm_i915_gem_object *obj;
-	unsigned int n;
-	int err;
+अटल पूर्णांक igt_gem_huge(व्योम *arg)
+अणु
+	स्थिर अचिन्हित पूर्णांक nreal = 509; /* just to be awkward */
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा drm_i915_gem_object *obj;
+	अचिन्हित पूर्णांक n;
+	पूर्णांक err;
 
 	/* Basic sanitycheck of our huge fake object allocation */
 
 	obj = huge_gem_object(i915,
 			      nreal * PAGE_SIZE,
 			      i915->ggtt.vm.total + PAGE_SIZE);
-	if (IS_ERR(obj))
-		return PTR_ERR(obj);
+	अगर (IS_ERR(obj))
+		वापस PTR_ERR(obj);
 
 	err = i915_gem_object_pin_pages_unlocked(obj);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to allocate %u pages (%lu total), err=%d\n",
 		       nreal, obj->base.size / PAGE_SIZE, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (n = 0; n < obj->base.size / PAGE_SIZE; n++) {
-		if (i915_gem_object_get_page(obj, n) !=
-		    i915_gem_object_get_page(obj, n % nreal)) {
+	क्रम (n = 0; n < obj->base.size / PAGE_SIZE; n++) अणु
+		अगर (i915_gem_object_get_page(obj, n) !=
+		    i915_gem_object_get_page(obj, n % nreal)) अणु
 			pr_err("Page lookup mismatch at index %u [%u]\n",
 			       n, n % nreal);
 			err = -EINVAL;
-			goto out_unpin;
-		}
-	}
+			जाओ out_unpin;
+		पूर्ण
+	पूर्ण
 
 out_unpin:
 	i915_gem_object_unpin_pages(obj);
 out:
 	i915_gem_object_put(obj);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int i915_gem_object_mock_selftests(void)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक i915_gem_object_mock_selftests(व्योम)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_gem_object),
-	};
-	struct drm_i915_private *i915;
-	int err;
+	पूर्ण;
+	काष्ठा drm_i915_निजी *i915;
+	पूर्णांक err;
 
 	i915 = mock_gem_device();
-	if (!i915)
-		return -ENOMEM;
+	अगर (!i915)
+		वापस -ENOMEM;
 
 	err = i915_subtests(tests, i915);
 
 	mock_destroy_device(i915);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int i915_gem_object_live_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक i915_gem_object_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_gem_huge),
-	};
+	पूर्ण;
 
-	return i915_subtests(tests, i915);
-}
+	वापस i915_subtests(tests, i915);
+पूर्ण

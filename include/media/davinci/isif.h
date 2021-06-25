@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2008-2009 Texas Instruments Inc
  *
- * isif header file
+ * isअगर header file
  */
-#ifndef _ISIF_H
-#define _ISIF_H
+#अगर_अघोषित _ISIF_H
+#घोषणा _ISIF_H
 
-#include <media/davinci/ccdc_types.h>
-#include <media/davinci/vpfe_types.h>
+#समावेश <media/davinci/ccdc_types.h>
+#समावेश <media/davinci/vpfe_types.h>
 
-/* isif float type S8Q8/U8Q8 */
-struct isif_float_8 {
-	/* 8 bit integer part */
-	__u8 integer;
+/* isअगर भग्न type S8Q8/U8Q8 */
+काष्ठा isअगर_भग्न_8 अणु
+	/* 8 bit पूर्णांकeger part */
+	__u8 पूर्णांकeger;
 	/* 8 bit decimal part */
 	__u8 decimal;
-};
+पूर्ण;
 
-/* isif float type U16Q16/S16Q16 */
-struct isif_float_16 {
-	/* 16 bit integer part */
-	__u16 integer;
+/* isअगर भग्न type U16Q16/S16Q16 */
+काष्ठा isअगर_भग्न_16 अणु
+	/* 16 bit पूर्णांकeger part */
+	__u16 पूर्णांकeger;
 	/* 16 bit decimal part */
 	__u16 decimal;
-};
+पूर्ण;
 
 /************************************************************************
  *   Vertical Defect Correction parameters
  ***********************************************************************/
 /* Defect Correction (DFC) table entry */
-struct isif_vdfc_entry {
+काष्ठा isअगर_vdfc_entry अणु
 	/* vertical position of defect */
 	__u16 pos_vert;
 	/* horizontal position of defect */
@@ -50,58 +51,58 @@ struct isif_vdfc_entry {
 	 * This is subtracted from the data
 	 */
 	__u8 level_low_pixels;
-};
+पूर्ण;
 
-#define ISIF_VDFC_TABLE_SIZE		8
-struct isif_dfc {
+#घोषणा ISIF_VDFC_TABLE_SIZE		8
+काष्ठा isअगर_dfc अणु
 	/* enable vertical defect correction */
 	__u8 en;
-	/* Defect level subtraction. Just fed through if saturating */
-#define	ISIF_VDFC_NORMAL		0
+	/* Defect level subtraction. Just fed through अगर saturating */
+#घोषणा	ISIF_VDFC_NORMAL		0
 	/*
-	 * Defect level subtraction. Horizontal interpolation ((i-2)+(i+2))/2
-	 * if data saturating
+	 * Defect level subtraction. Horizontal पूर्णांकerpolation ((i-2)+(i+2))/2
+	 * अगर data saturating
 	 */
-#define ISIF_VDFC_HORZ_INTERPOL_IF_SAT	1
-	/* Horizontal interpolation (((i-2)+(i+2))/2) */
-#define	ISIF_VDFC_HORZ_INTERPOL		2
+#घोषणा ISIF_VDFC_HORZ_INTERPOL_IF_SAT	1
+	/* Horizontal पूर्णांकerpolation (((i-2)+(i+2))/2) */
+#घोषणा	ISIF_VDFC_HORZ_INTERPOL		2
 	/* one of the vertical defect correction modes above */
 	__u8 corr_mode;
 	/* 0 - whole line corrected, 1 - not pixels upper than the defect */
 	__u8 corr_whole_line;
-#define ISIF_VDFC_NO_SHIFT		0
-#define ISIF_VDFC_SHIFT_1		1
-#define ISIF_VDFC_SHIFT_2		2
-#define ISIF_VDFC_SHIFT_3		3
-#define ISIF_VDFC_SHIFT_4		4
+#घोषणा ISIF_VDFC_NO_SHIFT		0
+#घोषणा ISIF_VDFC_SHIFT_1		1
+#घोषणा ISIF_VDFC_SHIFT_2		2
+#घोषणा ISIF_VDFC_SHIFT_3		3
+#घोषणा ISIF_VDFC_SHIFT_4		4
 	/*
-	 * defect level shift value. level_at_pos, level_upper_pos,
-	 * and level_lower_pos can be shifted up by this value. Choose
+	 * defect level shअगरt value. level_at_pos, level_upper_pos,
+	 * and level_lower_pos can be shअगरted up by this value. Choose
 	 * one of the values above
 	 */
-	__u8 def_level_shift;
+	__u8 def_level_shअगरt;
 	/* defect saturation level */
 	__u16 def_sat_level;
 	/* number of vertical defects. Max is ISIF_VDFC_TABLE_SIZE */
 	__u16 num_vdefects;
 	/* VDFC table ptr */
-	struct isif_vdfc_entry table[ISIF_VDFC_TABLE_SIZE];
-};
+	काष्ठा isअगर_vdfc_entry table[ISIF_VDFC_TABLE_SIZE];
+पूर्ण;
 
-struct isif_horz_bclamp {
+काष्ठा isअगर_horz_bclamp अणु
 
 	/* Horizontal clamp disabled. Only vertical clamp value is subtracted */
-#define	ISIF_HORZ_BC_DISABLE		0
+#घोषणा	ISIF_HORZ_BC_DISABLE		0
 	/*
 	 * Horizontal clamp value is calculated and subtracted from image data
-	 * along with vertical clamp value
+	 * aदीर्घ with vertical clamp value
 	 */
-#define ISIF_HORZ_BC_CLAMP_CALC_ENABLED	1
+#घोषणा ISIF_HORZ_BC_CLAMP_CALC_ENABLED	1
 	/*
 	 * Horizontal clamp value calculated from previous image is subtracted
-	 * from image data along with vertical clamp value.
+	 * from image data aदीर्घ with vertical clamp value.
 	 */
-#define ISIF_HORZ_BC_CLAMP_NOT_UPDATED	2
+#घोषणा ISIF_HORZ_BC_CLAMP_NOT_UPDATED	2
 	/* horizontal clamp mode. One of the values above */
 	__u8 mode;
 	/*
@@ -110,58 +111,58 @@ struct isif_horz_bclamp {
 	 *  1 - pixel value limited to 1023
 	 */
 	__u8 clamp_pix_limit;
-	/* Select Most left window for bc calculation */
-#define	ISIF_SEL_MOST_LEFT_WIN		0
-	/* Select Most right window for bc calculation */
-#define ISIF_SEL_MOST_RIGHT_WIN		1
-	/* Select most left or right window for clamp val calculation */
+	/* Select Most left winकरोw क्रम bc calculation */
+#घोषणा	ISIF_SEL_MOST_LEFT_WIN		0
+	/* Select Most right winकरोw क्रम bc calculation */
+#घोषणा ISIF_SEL_MOST_RIGHT_WIN		1
+	/* Select most left or right winकरोw क्रम clamp val calculation */
 	__u8 base_win_sel_calc;
-	/* Window count per color for calculation. range 1-32 */
+	/* Winकरोw count per color क्रम calculation. range 1-32 */
 	__u8 win_count_calc;
-	/* Window start position - horizontal for calculation. 0 - 8191 */
+	/* Winकरोw start position - horizontal क्रम calculation. 0 - 8191 */
 	__u16 win_start_h_calc;
-	/* Window start position - vertical for calculation 0 - 8191 */
+	/* Winकरोw start position - vertical क्रम calculation 0 - 8191 */
 	__u16 win_start_v_calc;
-#define ISIF_HORZ_BC_SZ_H_2PIXELS	0
-#define ISIF_HORZ_BC_SZ_H_4PIXELS	1
-#define ISIF_HORZ_BC_SZ_H_8PIXELS	2
-#define ISIF_HORZ_BC_SZ_H_16PIXELS	3
-	/* Width of the sample window in pixels for calculation */
+#घोषणा ISIF_HORZ_BC_SZ_H_2PIXELS	0
+#घोषणा ISIF_HORZ_BC_SZ_H_4PIXELS	1
+#घोषणा ISIF_HORZ_BC_SZ_H_8PIXELS	2
+#घोषणा ISIF_HORZ_BC_SZ_H_16PIXELS	3
+	/* Width of the sample winकरोw in pixels क्रम calculation */
 	__u8 win_h_sz_calc;
-#define ISIF_HORZ_BC_SZ_V_32PIXELS	0
-#define ISIF_HORZ_BC_SZ_V_64PIXELS	1
-#define	ISIF_HORZ_BC_SZ_V_128PIXELS	2
-#define ISIF_HORZ_BC_SZ_V_256PIXELS	3
-	/* Height of the sample window in pixels for calculation */
+#घोषणा ISIF_HORZ_BC_SZ_V_32PIXELS	0
+#घोषणा ISIF_HORZ_BC_SZ_V_64PIXELS	1
+#घोषणा	ISIF_HORZ_BC_SZ_V_128PIXELS	2
+#घोषणा ISIF_HORZ_BC_SZ_V_256PIXELS	3
+	/* Height of the sample winकरोw in pixels क्रम calculation */
 	__u8 win_v_sz_calc;
-};
+पूर्ण;
 
 /************************************************************************
  *  Black Clamp parameters
  ***********************************************************************/
-struct isif_vert_bclamp {
+काष्ठा isअगर_vert_bclamp अणु
 	/* Reset value used is the clamp value calculated */
-#define	ISIF_VERT_BC_USE_HORZ_CLAMP_VAL		0
+#घोषणा	ISIF_VERT_BC_USE_HORZ_CLAMP_VAL		0
 	/* Reset value used is reset_clamp_val configured */
-#define	ISIF_VERT_BC_USE_CONFIG_CLAMP_VAL	1
+#घोषणा	ISIF_VERT_BC_USE_CONFIG_CLAMP_VAL	1
 	/* No update, previous image value is used */
-#define	ISIF_VERT_BC_NO_UPDATE			2
+#घोषणा	ISIF_VERT_BC_NO_UPDATE			2
 	/*
-	 * Reset value selector for vertical clamp calculation. Use one of
+	 * Reset value selector क्रम vertical clamp calculation. Use one of
 	 * the above values
 	 */
 	__u8 reset_val_sel;
 	/* U8Q8. Line average coefficient used in vertical clamp calculation */
 	__u8 line_ave_coef;
-	/* Height of the optical black region for calculation */
+	/* Height of the optical black region क्रम calculation */
 	__u16 ob_v_sz_calc;
 	/* Optical black region start position - horizontal. 0 - 8191 */
 	__u16 ob_start_h;
 	/* Optical black region start position - vertical 0 - 8191 */
 	__u16 ob_start_v;
-};
+पूर्ण;
 
-struct isif_black_clamp {
+काष्ठा isअगर_black_clamp अणु
 	/*
 	 * This offset value is added irrespective of the clamp enable status.
 	 * S13
@@ -172,180 +173,180 @@ struct isif_black_clamp {
 	 */
 	__u8 en;
 	/*
-	 * black clamp mode. same/separate clamp for 4 colors
-	 * 0 - disable - same clamp value for all colors
-	 * 1 - clamp value calculated separately for all colors
+	 * black clamp mode. same/separate clamp क्रम 4 colors
+	 * 0 - disable - same clamp value क्रम all colors
+	 * 1 - clamp value calculated separately क्रम all colors
 	 */
 	__u8 bc_mode_color;
-	/* Vertical start position for bc subtraction */
+	/* Vertical start position क्रम bc subtraction */
 	__u16 vert_start_sub;
-	/* Black clamp for horizontal direction */
-	struct isif_horz_bclamp horz;
-	/* Black clamp for vertical direction */
-	struct isif_vert_bclamp vert;
-};
+	/* Black clamp क्रम horizontal direction */
+	काष्ठा isअगर_horz_bclamp horz;
+	/* Black clamp क्रम vertical direction */
+	काष्ठा isअगर_vert_bclamp vert;
+पूर्ण;
 
 /*************************************************************************
 ** Color Space Conversion (CSC)
 *************************************************************************/
-#define ISIF_CSC_NUM_COEFF	16
-struct isif_color_space_conv {
+#घोषणा ISIF_CSC_NUM_COEFF	16
+काष्ठा isअगर_color_space_conv अणु
 	/* Enable color space conversion */
 	__u8 en;
 	/*
 	 * csc coefficient table. S8Q5, M00 at index 0, M01 at index 1, and
-	 * so forth
+	 * so क्रमth
 	 */
-	struct isif_float_8 coeff[ISIF_CSC_NUM_COEFF];
-};
+	काष्ठा isअगर_भग्न_8 coeff[ISIF_CSC_NUM_COEFF];
+पूर्ण;
 
 
 /*************************************************************************
 **  Black  Compensation parameters
 *************************************************************************/
-struct isif_black_comp {
-	/* Comp for Red */
+काष्ठा isअगर_black_comp अणु
+	/* Comp क्रम Red */
 	__s8 r_comp;
-	/* Comp for Gr */
+	/* Comp क्रम Gr */
 	__s8 gr_comp;
-	/* Comp for Blue */
+	/* Comp क्रम Blue */
 	__s8 b_comp;
-	/* Comp for Gb */
+	/* Comp क्रम Gb */
 	__s8 gb_comp;
-};
+पूर्ण;
 
 /*************************************************************************
 **  Gain parameters
 *************************************************************************/
-struct isif_gain {
-	/* Gain for Red or ye */
-	struct isif_float_16 r_ye;
-	/* Gain for Gr or cy */
-	struct isif_float_16 gr_cy;
-	/* Gain for Gb or g */
-	struct isif_float_16 gb_g;
-	/* Gain for Blue or mg */
-	struct isif_float_16 b_mg;
-};
+काष्ठा isअगर_gain अणु
+	/* Gain क्रम Red or ye */
+	काष्ठा isअगर_भग्न_16 r_ye;
+	/* Gain क्रम Gr or cy */
+	काष्ठा isअगर_भग्न_16 gr_cy;
+	/* Gain क्रम Gb or g */
+	काष्ठा isअगर_भग्न_16 gb_g;
+	/* Gain क्रम Blue or mg */
+	काष्ठा isअगर_भग्न_16 b_mg;
+पूर्ण;
 
-#define ISIF_LINEAR_TAB_SIZE	192
+#घोषणा ISIF_LINEAR_TAB_SIZE	192
 /*************************************************************************
 **  Linearization parameters
 *************************************************************************/
-struct isif_linearize {
+काष्ठा isअगर_linearize अणु
 	/* Enable or Disable linearization of data */
 	__u8 en;
-	/* Shift value applied */
+	/* Shअगरt value applied */
 	__u8 corr_shft;
 	/* scale factor applied U11Q10 */
-	struct isif_float_16 scale_fact;
+	काष्ठा isअगर_भग्न_16 scale_fact;
 	/* Size of the linear table */
 	__u16 table[ISIF_LINEAR_TAB_SIZE];
-};
+पूर्ण;
 
 /* Color patterns */
-#define ISIF_RED	0
-#define	ISIF_GREEN_RED	1
-#define ISIF_GREEN_BLUE	2
-#define ISIF_BLUE	3
-struct isif_col_pat {
+#घोषणा ISIF_RED	0
+#घोषणा	ISIF_GREEN_RED	1
+#घोषणा ISIF_GREEN_BLUE	2
+#घोषणा ISIF_BLUE	3
+काष्ठा isअगर_col_pat अणु
 	__u8 olop;
 	__u8 olep;
 	__u8 elop;
 	__u8 elep;
-};
+पूर्ण;
 
 /*************************************************************************
-**  Data formatter parameters
+**  Data क्रमmatter parameters
 *************************************************************************/
-struct isif_fmtplen {
+काष्ठा isअगर_fmtplen अणु
 	/*
-	 * number of program entries for SET0, range 1 - 16
-	 * when fmtmode is ISIF_SPLIT, 1 - 8 when fmtmode is
+	 * number of program entries क्रम SET0, range 1 - 16
+	 * when fmपंचांगode is ISIF_SPLIT, 1 - 8 when fmपंचांगode is
 	 * ISIF_COMBINE
 	 */
 	__u16 plen0;
 	/*
-	 * number of program entries for SET1, range 1 - 16
-	 * when fmtmode is ISIF_SPLIT, 1 - 8 when fmtmode is
+	 * number of program entries क्रम SET1, range 1 - 16
+	 * when fmपंचांगode is ISIF_SPLIT, 1 - 8 when fmपंचांगode is
 	 * ISIF_COMBINE
 	 */
 	__u16 plen1;
 	/**
-	 * number of program entries for SET2, range 1 - 16
-	 * when fmtmode is ISIF_SPLIT, 1 - 8 when fmtmode is
+	 * number of program entries क्रम SET2, range 1 - 16
+	 * when fmपंचांगode is ISIF_SPLIT, 1 - 8 when fmपंचांगode is
 	 * ISIF_COMBINE
 	 */
 	__u16 plen2;
 	/**
-	 * number of program entries for SET3, range 1 - 16
-	 * when fmtmode is ISIF_SPLIT, 1 - 8 when fmtmode is
+	 * number of program entries क्रम SET3, range 1 - 16
+	 * when fmपंचांगode is ISIF_SPLIT, 1 - 8 when fmपंचांगode is
 	 * ISIF_COMBINE
 	 */
 	__u16 plen3;
-};
+पूर्ण;
 
-struct isif_fmt_cfg {
-#define ISIF_SPLIT		0
-#define ISIF_COMBINE		1
+काष्ठा isअगर_fmt_cfg अणु
+#घोषणा ISIF_SPLIT		0
+#घोषणा ISIF_COMBINE		1
 	/* Split or combine or line alternate */
-	__u8 fmtmode;
+	__u8 fmपंचांगode;
 	/* enable or disable line alternating mode */
 	__u8 ln_alter_en;
-#define ISIF_1LINE		0
-#define	ISIF_2LINES		1
-#define	ISIF_3LINES		2
-#define	ISIF_4LINES		3
+#घोषणा ISIF_1LINE		0
+#घोषणा	ISIF_2LINES		1
+#घोषणा	ISIF_3LINES		2
+#घोषणा	ISIF_4LINES		3
 	/* Split/combine line number */
 	__u8 lnum;
 	/* Address increment Range 1 - 16 */
 	__u8 addrinc;
-};
+पूर्ण;
 
-struct isif_fmt_addr_ptr {
+काष्ठा isअगर_fmt_addr_ptr अणु
 	/* Initial address */
 	__u32 init_addr;
 	/* output line number */
-#define ISIF_1STLINE		0
-#define	ISIF_2NDLINE		1
-#define	ISIF_3RDLINE		2
-#define	ISIF_4THLINE		3
+#घोषणा ISIF_1STLINE		0
+#घोषणा	ISIF_2NDLINE		1
+#घोषणा	ISIF_3RDLINE		2
+#घोषणा	ISIF_4THLINE		3
 	__u8 out_line;
-};
+पूर्ण;
 
-struct isif_fmtpgm_ap {
-	/* program address pointer */
+काष्ठा isअगर_fmtpgm_ap अणु
+	/* program address poपूर्णांकer */
 	__u8 pgm_aptr;
 	/* program address increment or decrement */
 	__u8 pgmupdt;
-};
+पूर्ण;
 
-struct isif_data_formatter {
-	/* Enable/Disable data formatter */
+काष्ठा isअगर_data_क्रमmatter अणु
+	/* Enable/Disable data क्रमmatter */
 	__u8 en;
-	/* data formatter configuration */
-	struct isif_fmt_cfg cfg;
+	/* data क्रमmatter configuration */
+	काष्ठा isअगर_fmt_cfg cfg;
 	/* Formatter program entries length */
-	struct isif_fmtplen plen;
-	/* first pixel in a line fed to formatter */
+	काष्ठा isअगर_fmtplen plen;
+	/* first pixel in a line fed to क्रमmatter */
 	__u16 fmtrlen;
-	/* HD interval for output line. Only valid when split line */
+	/* HD पूर्णांकerval क्रम output line. Only valid when split line */
 	__u16 fmthcnt;
-	/* formatter address pointers */
-	struct isif_fmt_addr_ptr fmtaddr_ptr[16];
+	/* क्रमmatter address poपूर्णांकers */
+	काष्ठा isअगर_fmt_addr_ptr fmtaddr_ptr[16];
 	/* program enable/disable */
 	__u8 pgm_en[32];
-	/* program address pointers */
-	struct isif_fmtpgm_ap fmtpgm_ap[32];
-};
+	/* program address poपूर्णांकers */
+	काष्ठा isअगर_fmtpgm_ap fmtpgm_ap[32];
+पूर्ण;
 
-struct isif_df_csc {
+काष्ठा isअगर_df_csc अणु
 	/* Color Space Conversion configuration, 0 - csc, 1 - df */
 	__u8 df_or_csc;
-	/* csc configuration valid if df_or_csc is 0 */
-	struct isif_color_space_conv csc;
-	/* data formatter configuration valid if df_or_csc is 1 */
-	struct isif_data_formatter df;
+	/* csc configuration valid अगर df_or_csc is 0 */
+	काष्ठा isअगर_color_space_conv csc;
+	/* data क्रमmatter configuration valid अगर df_or_csc is 1 */
+	काष्ठा isअगर_data_क्रमmatter df;
 	/* start pixel in a line at the input */
 	__u32 start_pix;
 	/* number of pixels in input line */
@@ -354,111 +355,111 @@ struct isif_df_csc {
 	__u32 start_line;
 	/* number of lines at the input */
 	__u32 num_lines;
-};
+पूर्ण;
 
-struct isif_gain_offsets_adj {
-	/* Gain adjustment per color */
-	struct isif_gain gain;
-	/* Offset adjustment */
+काष्ठा isअगर_gain_offsets_adj अणु
+	/* Gain adjusपंचांगent per color */
+	काष्ठा isअगर_gain gain;
+	/* Offset adjusपंचांगent */
 	__u16 offset;
-	/* Enable or Disable Gain adjustment for SDRAM data */
+	/* Enable or Disable Gain adjusपंचांगent क्रम SDRAM data */
 	__u8 gain_sdram_en;
-	/* Enable or Disable Gain adjustment for IPIPE data */
+	/* Enable or Disable Gain adjusपंचांगent क्रम IPIPE data */
 	__u8 gain_ipipe_en;
-	/* Enable or Disable Gain adjustment for H3A data */
+	/* Enable or Disable Gain adjusपंचांगent क्रम H3A data */
 	__u8 gain_h3a_en;
-	/* Enable or Disable Gain adjustment for SDRAM data */
+	/* Enable or Disable Gain adjusपंचांगent क्रम SDRAM data */
 	__u8 offset_sdram_en;
-	/* Enable or Disable Gain adjustment for IPIPE data */
+	/* Enable or Disable Gain adjusपंचांगent क्रम IPIPE data */
 	__u8 offset_ipipe_en;
-	/* Enable or Disable Gain adjustment for H3A data */
+	/* Enable or Disable Gain adjusपंचांगent क्रम H3A data */
 	__u8 offset_h3a_en;
-};
+पूर्ण;
 
-struct isif_cul {
-	/* Horizontal Cull pattern for odd lines */
+काष्ठा isअगर_cul अणु
+	/* Horizontal Cull pattern क्रम odd lines */
 	__u8 hcpat_odd;
-	/* Horizontal Cull pattern for even lines */
+	/* Horizontal Cull pattern क्रम even lines */
 	__u8 hcpat_even;
 	/* Vertical Cull pattern */
 	__u8 vcpat;
 	/* Enable or disable lpf. Apply when cull is enabled */
 	__u8 en_lpf;
-};
+पूर्ण;
 
-struct isif_compress {
-#define ISIF_ALAW		0
-#define ISIF_DPCM		1
-#define ISIF_NO_COMPRESSION	2
+काष्ठा isअगर_compress अणु
+#घोषणा ISIF_ALAW		0
+#घोषणा ISIF_DPCM		1
+#घोषणा ISIF_NO_COMPRESSION	2
 	/* Compression Algorithm used */
 	__u8 alg;
-	/* Choose Predictor1 for DPCM compression */
-#define ISIF_DPCM_PRED1		0
-	/* Choose Predictor2 for DPCM compression */
-#define ISIF_DPCM_PRED2		1
-	/* Predictor for DPCM compression */
+	/* Choose Predictor1 क्रम DPCM compression */
+#घोषणा ISIF_DPCM_PRED1		0
+	/* Choose Predictor2 क्रम DPCM compression */
+#घोषणा ISIF_DPCM_PRED2		1
+	/* Predictor क्रम DPCM compression */
 	__u8 pred;
-};
+पूर्ण;
 
-/* all the stuff in this struct will be provided by userland */
-struct isif_config_params_raw {
-	/* Linearization parameters for image sensor data input */
-	struct isif_linearize linearize;
-	/* Data formatter or CSC */
-	struct isif_df_csc df_csc;
+/* all the stuff in this काष्ठा will be provided by userland */
+काष्ठा isअगर_config_params_raw अणु
+	/* Linearization parameters क्रम image sensor data input */
+	काष्ठा isअगर_linearize linearize;
+	/* Data क्रमmatter or CSC */
+	काष्ठा isअगर_df_csc df_csc;
 	/* Defect Pixel Correction (DFC) configuration */
-	struct isif_dfc dfc;
+	काष्ठा isअगर_dfc dfc;
 	/* Black/Digital Clamp configuration */
-	struct isif_black_clamp bclamp;
-	/* Gain, offset adjustments */
-	struct isif_gain_offsets_adj gain_offset;
+	काष्ठा isअगर_black_clamp bclamp;
+	/* Gain, offset adjusपंचांगents */
+	काष्ठा isअगर_gain_offsets_adj gain_offset;
 	/* Culling */
-	struct isif_cul culling;
+	काष्ठा isअगर_cul culling;
 	/* A-Law and DPCM compression options */
-	struct isif_compress compress;
-	/* horizontal offset for Gain/LSC/DFC */
+	काष्ठा isअगर_compress compress;
+	/* horizontal offset क्रम Gain/LSC/DFC */
 	__u16 horz_offset;
-	/* vertical offset for Gain/LSC/DFC */
+	/* vertical offset क्रम Gain/LSC/DFC */
 	__u16 vert_offset;
-	/* color pattern for field 0 */
-	struct isif_col_pat col_pat_field0;
-	/* color pattern for field 1 */
-	struct isif_col_pat col_pat_field1;
-#define ISIF_NO_SHIFT		0
-#define	ISIF_1BIT_SHIFT		1
-#define	ISIF_2BIT_SHIFT		2
-#define	ISIF_3BIT_SHIFT		3
-#define	ISIF_4BIT_SHIFT		4
-#define ISIF_5BIT_SHIFT		5
-#define ISIF_6BIT_SHIFT		6
-	/* Data shift applied before storing to SDRAM */
-	__u8 data_shift;
+	/* color pattern क्रम field 0 */
+	काष्ठा isअगर_col_pat col_pat_field0;
+	/* color pattern क्रम field 1 */
+	काष्ठा isअगर_col_pat col_pat_field1;
+#घोषणा ISIF_NO_SHIFT		0
+#घोषणा	ISIF_1BIT_SHIFT		1
+#घोषणा	ISIF_2BIT_SHIFT		2
+#घोषणा	ISIF_3BIT_SHIFT		3
+#घोषणा	ISIF_4BIT_SHIFT		4
+#घोषणा ISIF_5BIT_SHIFT		5
+#घोषणा ISIF_6BIT_SHIFT		6
+	/* Data shअगरt applied beक्रमe storing to SDRAM */
+	__u8 data_shअगरt;
 	/* enable input test pattern generation */
 	__u8 test_pat_gen;
-};
+पूर्ण;
 
-#ifdef __KERNEL__
-struct isif_ycbcr_config {
-	/* isif pixel format */
-	enum ccdc_pixfmt pix_fmt;
-	/* isif frame format */
-	enum ccdc_frmfmt frm_fmt;
-	/* ISIF crop window */
-	struct v4l2_rect win;
+#अगर_घोषित __KERNEL__
+काष्ठा isअगर_ycbcr_config अणु
+	/* isअगर pixel क्रमmat */
+	क्रमागत ccdc_pixfmt pix_fmt;
+	/* isअगर frame क्रमmat */
+	क्रमागत ccdc_frmfmt frm_fmt;
+	/* ISIF crop winकरोw */
+	काष्ठा v4l2_rect win;
 	/* field polarity */
-	enum vpfe_pin_pol fid_pol;
-	/* interface VD polarity */
-	enum vpfe_pin_pol vd_pol;
-	/* interface HD polarity */
-	enum vpfe_pin_pol hd_pol;
-	/* isif pix order. Only used for ycbcr capture */
-	enum ccdc_pixorder pix_order;
-	/* isif buffer type. Only used for ycbcr capture */
-	enum ccdc_buftype buf_type;
-};
+	क्रमागत vpfe_pin_pol fid_pol;
+	/* पूर्णांकerface VD polarity */
+	क्रमागत vpfe_pin_pol vd_pol;
+	/* पूर्णांकerface HD polarity */
+	क्रमागत vpfe_pin_pol hd_pol;
+	/* isअगर pix order. Only used क्रम ycbcr capture */
+	क्रमागत ccdc_pixorder pix_order;
+	/* isअगर buffer type. Only used क्रम ycbcr capture */
+	क्रमागत ccdc_buftype buf_type;
+पूर्ण;
 
 /* MSB of image data connected to sensor port */
-enum isif_data_msb {
+क्रमागत isअगर_data_msb अणु
 	ISIF_BIT_MSB_15,
 	ISIF_BIT_MSB_14,
 	ISIF_BIT_MSB_13,
@@ -468,51 +469,51 @@ enum isif_data_msb {
 	ISIF_BIT_MSB_9,
 	ISIF_BIT_MSB_8,
 	ISIF_BIT_MSB_7
-};
+पूर्ण;
 
-enum isif_cfa_pattern {
+क्रमागत isअगर_cfa_pattern अणु
 	ISIF_CFA_PAT_MOSAIC,
 	ISIF_CFA_PAT_STRIPE
-};
+पूर्ण;
 
-struct isif_params_raw {
-	/* isif pixel format */
-	enum ccdc_pixfmt pix_fmt;
-	/* isif frame format */
-	enum ccdc_frmfmt frm_fmt;
-	/* video window */
-	struct v4l2_rect win;
+काष्ठा isअगर_params_raw अणु
+	/* isअगर pixel क्रमmat */
+	क्रमागत ccdc_pixfmt pix_fmt;
+	/* isअगर frame क्रमmat */
+	क्रमागत ccdc_frmfmt frm_fmt;
+	/* video winकरोw */
+	काष्ठा v4l2_rect win;
 	/* field polarity */
-	enum vpfe_pin_pol fid_pol;
-	/* interface VD polarity */
-	enum vpfe_pin_pol vd_pol;
-	/* interface HD polarity */
-	enum vpfe_pin_pol hd_pol;
-	/* buffer type. Applicable for interlaced mode */
-	enum ccdc_buftype buf_type;
+	क्रमागत vpfe_pin_pol fid_pol;
+	/* पूर्णांकerface VD polarity */
+	क्रमागत vpfe_pin_pol vd_pol;
+	/* पूर्णांकerface HD polarity */
+	क्रमागत vpfe_pin_pol hd_pol;
+	/* buffer type. Applicable क्रम पूर्णांकerlaced mode */
+	क्रमागत ccdc_buftype buf_type;
 	/* Gain values */
-	struct isif_gain gain;
+	काष्ठा isअगर_gain gain;
 	/* cfa pattern */
-	enum isif_cfa_pattern cfa_pat;
+	क्रमागत isअगर_cfa_pattern cfa_pat;
 	/* Data MSB position */
-	enum isif_data_msb data_msb;
+	क्रमागत isअगर_data_msb data_msb;
 	/* Enable horizontal flip */
-	unsigned char horz_flip_en;
+	अचिन्हित अक्षर horz_flip_en;
 	/* Enable image invert vertically */
-	unsigned char image_invert_en;
+	अचिन्हित अक्षर image_invert_en;
 
 	/* all the userland defined stuff*/
-	struct isif_config_params_raw config_params;
-};
+	काष्ठा isअगर_config_params_raw config_params;
+पूर्ण;
 
-enum isif_data_pack {
+क्रमागत isअगर_data_pack अणु
 	ISIF_PACK_16BIT,
 	ISIF_PACK_12BIT,
 	ISIF_PACK_8BIT
-};
+पूर्ण;
 
-#define ISIF_WIN_NTSC				{0, 0, 720, 480}
-#define ISIF_WIN_VGA				{0, 0, 640, 480}
+#घोषणा ISIF_WIN_NTSC				अणु0, 0, 720, 480पूर्ण
+#घोषणा ISIF_WIN_VGA				अणु0, 0, 640, 480पूर्ण
 
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर

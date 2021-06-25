@@ -1,294 +1,295 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/export.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/if_vlan.h>
-#include <net/dsa.h>
-#include <net/dst_metadata.h>
-#include <net/ip.h>
-#include <net/ipv6.h>
-#include <net/gre.h>
-#include <net/pptp.h>
-#include <net/tipc.h>
-#include <linux/igmp.h>
-#include <linux/icmp.h>
-#include <linux/sctp.h>
-#include <linux/dccp.h>
-#include <linux/if_tunnel.h>
-#include <linux/if_pppox.h>
-#include <linux/ppp_defs.h>
-#include <linux/stddef.h>
-#include <linux/if_ether.h>
-#include <linux/mpls.h>
-#include <linux/tcp.h>
-#include <linux/ptp_classify.h>
-#include <net/flow_dissector.h>
-#include <scsi/fc/fc_fcoe.h>
-#include <uapi/linux/batadv_packet.h>
-#include <linux/bpf.h>
-#if IS_ENABLED(CONFIG_NF_CONNTRACK)
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack_labels.h>
-#endif
-#include <linux/bpf-netns.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/export.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/dsa.h>
+#समावेश <net/dst_metadata.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/gre.h>
+#समावेश <net/pptp.h>
+#समावेश <net/tipc.h>
+#समावेश <linux/igmp.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/sctp.h>
+#समावेश <linux/dccp.h>
+#समावेश <linux/अगर_tunnel.h>
+#समावेश <linux/अगर_pppox.h>
+#समावेश <linux/ppp_defs.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/mpls.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/ptp_classअगरy.h>
+#समावेश <net/flow_dissector.h>
+#समावेश <scsi/fc/fc_fcoe.h>
+#समावेश <uapi/linux/batadv_packet.h>
+#समावेश <linux/bpf.h>
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack_labels.h>
+#पूर्ण_अगर
+#समावेश <linux/bpf-netns.h>
 
-static void dissector_set_key(struct flow_dissector *flow_dissector,
-			      enum flow_dissector_key_id key_id)
-{
+अटल व्योम dissector_set_key(काष्ठा flow_dissector *flow_dissector,
+			      क्रमागत flow_dissector_key_id key_id)
+अणु
 	flow_dissector->used_keys |= (1 << key_id);
-}
+पूर्ण
 
-void skb_flow_dissector_init(struct flow_dissector *flow_dissector,
-			     const struct flow_dissector_key *key,
-			     unsigned int key_count)
-{
-	unsigned int i;
+व्योम skb_flow_dissector_init(काष्ठा flow_dissector *flow_dissector,
+			     स्थिर काष्ठा flow_dissector_key *key,
+			     अचिन्हित पूर्णांक key_count)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	memset(flow_dissector, 0, sizeof(*flow_dissector));
+	स_रखो(flow_dissector, 0, माप(*flow_dissector));
 
-	for (i = 0; i < key_count; i++, key++) {
+	क्रम (i = 0; i < key_count; i++, key++) अणु
 		/* User should make sure that every key target offset is within
-		 * boundaries of unsigned short.
+		 * boundaries of अचिन्हित लघु.
 		 */
-		BUG_ON(key->offset > USHRT_MAX);
+		BUG_ON(key->offset > अच_लघु_उच्च);
 		BUG_ON(dissector_uses_key(flow_dissector,
 					  key->key_id));
 
 		dissector_set_key(flow_dissector, key->key_id);
 		flow_dissector->offset[key->key_id] = key->offset;
-	}
+	पूर्ण
 
 	/* Ensure that the dissector always includes control and basic key.
-	 * That way we are able to avoid handling lack of these in fast path.
+	 * That way we are able to aव्योम handling lack of these in fast path.
 	 */
 	BUG_ON(!dissector_uses_key(flow_dissector,
 				   FLOW_DISSECTOR_KEY_CONTROL));
 	BUG_ON(!dissector_uses_key(flow_dissector,
 				   FLOW_DISSECTOR_KEY_BASIC));
-}
+पूर्ण
 EXPORT_SYMBOL(skb_flow_dissector_init);
 
-#ifdef CONFIG_BPF_SYSCALL
-int flow_dissector_bpf_prog_attach_check(struct net *net,
-					 struct bpf_prog *prog)
-{
-	enum netns_bpf_attach_type type = NETNS_BPF_FLOW_DISSECTOR;
+#अगर_घोषित CONFIG_BPF_SYSCALL
+पूर्णांक flow_dissector_bpf_prog_attach_check(काष्ठा net *net,
+					 काष्ठा bpf_prog *prog)
+अणु
+	क्रमागत netns_bpf_attach_type type = NETNS_BPF_FLOW_DISSECTOR;
 
-	if (net == &init_net) {
+	अगर (net == &init_net) अणु
 		/* BPF flow dissector in the root namespace overrides
 		 * any per-net-namespace one. When attaching to root,
-		 * make sure we don't have any BPF program attached
+		 * make sure we करोn't have any BPF program attached
 		 * to the non-root namespaces.
 		 */
-		struct net *ns;
+		काष्ठा net *ns;
 
-		for_each_net(ns) {
-			if (ns == &init_net)
-				continue;
-			if (rcu_access_pointer(ns->bpf.run_array[type]))
-				return -EEXIST;
-		}
-	} else {
+		क्रम_each_net(ns) अणु
+			अगर (ns == &init_net)
+				जारी;
+			अगर (rcu_access_poपूर्णांकer(ns->bpf.run_array[type]))
+				वापस -EEXIST;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Make sure root flow dissector is not attached
 		 * when attaching to the non-root namespace.
 		 */
-		if (rcu_access_pointer(init_net.bpf.run_array[type]))
-			return -EEXIST;
-	}
+		अगर (rcu_access_poपूर्णांकer(init_net.bpf.run_array[type]))
+			वापस -EEXIST;
+	पूर्ण
 
-	return 0;
-}
-#endif /* CONFIG_BPF_SYSCALL */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_BPF_SYSCALL */
 
 /**
- * __skb_flow_get_ports - extract the upper layer ports and return them
+ * __skb_flow_get_ports - extract the upper layer ports and वापस them
  * @skb: sk_buff to extract the ports from
  * @thoff: transport header offset
- * @ip_proto: protocol for which to get port offset
- * @data: raw buffer pointer to the packet, if NULL use skb->data
- * @hlen: packet header length, if @data is NULL use skb_headlen(skb)
+ * @ip_proto: protocol क्रम which to get port offset
+ * @data: raw buffer poपूर्णांकer to the packet, अगर शून्य use skb->data
+ * @hlen: packet header length, अगर @data is शून्य use skb_headlen(skb)
  *
  * The function will try to retrieve the ports at offset thoff + poff where poff
- * is the protocol port offset returned from proto_ports_offset
+ * is the protocol port offset वापसed from proto_ports_offset
  */
-__be32 __skb_flow_get_ports(const struct sk_buff *skb, int thoff, u8 ip_proto,
-			    const void *data, int hlen)
-{
-	int poff = proto_ports_offset(ip_proto);
+__be32 __skb_flow_get_ports(स्थिर काष्ठा sk_buff *skb, पूर्णांक thoff, u8 ip_proto,
+			    स्थिर व्योम *data, पूर्णांक hlen)
+अणु
+	पूर्णांक poff = proto_ports_offset(ip_proto);
 
-	if (!data) {
+	अगर (!data) अणु
 		data = skb->data;
 		hlen = skb_headlen(skb);
-	}
+	पूर्ण
 
-	if (poff >= 0) {
+	अगर (poff >= 0) अणु
 		__be32 *ports, _ports;
 
-		ports = __skb_header_pointer(skb, thoff + poff,
-					     sizeof(_ports), data, hlen, &_ports);
-		if (ports)
-			return *ports;
-	}
+		ports = __skb_header_poपूर्णांकer(skb, thoff + poff,
+					     माप(_ports), data, hlen, &_ports);
+		अगर (ports)
+			वापस *ports;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(__skb_flow_get_ports);
 
-static bool icmp_has_id(u8 type)
-{
-	switch (type) {
-	case ICMP_ECHO:
-	case ICMP_ECHOREPLY:
-	case ICMP_TIMESTAMP:
-	case ICMP_TIMESTAMPREPLY:
-	case ICMPV6_ECHO_REQUEST:
-	case ICMPV6_ECHO_REPLY:
-		return true;
-	}
+अटल bool icmp_has_id(u8 type)
+अणु
+	चयन (type) अणु
+	हाल ICMP_ECHO:
+	हाल ICMP_ECHOREPLY:
+	हाल ICMP_TIMESTAMP:
+	हाल ICMP_TIMESTAMPREPLY:
+	हाल ICMPV6_ECHO_REQUEST:
+	हाल ICMPV6_ECHO_REPLY:
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * skb_flow_get_icmp_tci - extract ICMP(6) Type, Code and Identifier fields
+ * skb_flow_get_icmp_tci - extract ICMP(6) Type, Code and Identअगरier fields
  * @skb: sk_buff to extract from
- * @key_icmp: struct flow_dissector_key_icmp to fill
- * @data: raw buffer pointer to the packet
+ * @key_icmp: काष्ठा flow_dissector_key_icmp to fill
+ * @data: raw buffer poपूर्णांकer to the packet
  * @thoff: offset to extract at
  * @hlen: packet header length
  */
-void skb_flow_get_icmp_tci(const struct sk_buff *skb,
-			   struct flow_dissector_key_icmp *key_icmp,
-			   const void *data, int thoff, int hlen)
-{
-	struct icmphdr *ih, _ih;
+व्योम skb_flow_get_icmp_tci(स्थिर काष्ठा sk_buff *skb,
+			   काष्ठा flow_dissector_key_icmp *key_icmp,
+			   स्थिर व्योम *data, पूर्णांक thoff, पूर्णांक hlen)
+अणु
+	काष्ठा icmphdr *ih, _ih;
 
-	ih = __skb_header_pointer(skb, thoff, sizeof(_ih), data, hlen, &_ih);
-	if (!ih)
-		return;
+	ih = __skb_header_poपूर्णांकer(skb, thoff, माप(_ih), data, hlen, &_ih);
+	अगर (!ih)
+		वापस;
 
 	key_icmp->type = ih->type;
 	key_icmp->code = ih->code;
 
-	/* As we use 0 to signal that the Id field is not present,
-	 * avoid confusion with packets without such field
+	/* As we use 0 to संकेत that the Id field is not present,
+	 * aव्योम confusion with packets without such field
 	 */
-	if (icmp_has_id(ih->type))
+	अगर (icmp_has_id(ih->type))
 		key_icmp->id = ih->un.echo.id ? ntohs(ih->un.echo.id) : 1;
-	else
+	अन्यथा
 		key_icmp->id = 0;
-}
+पूर्ण
 EXPORT_SYMBOL(skb_flow_get_icmp_tci);
 
 /* If FLOW_DISSECTOR_KEY_ICMP is set, dissect an ICMP packet
  * using skb_flow_get_icmp_tci().
  */
-static void __skb_flow_dissect_icmp(const struct sk_buff *skb,
-				    struct flow_dissector *flow_dissector,
-				    void *target_container, const void *data,
-				    int thoff, int hlen)
-{
-	struct flow_dissector_key_icmp *key_icmp;
+अटल व्योम __skb_flow_dissect_icmp(स्थिर काष्ठा sk_buff *skb,
+				    काष्ठा flow_dissector *flow_dissector,
+				    व्योम *target_container, स्थिर व्योम *data,
+				    पूर्णांक thoff, पूर्णांक hlen)
+अणु
+	काष्ठा flow_dissector_key_icmp *key_icmp;
 
-	if (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ICMP))
-		return;
+	अगर (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ICMP))
+		वापस;
 
 	key_icmp = skb_flow_dissector_target(flow_dissector,
 					     FLOW_DISSECTOR_KEY_ICMP,
 					     target_container);
 
 	skb_flow_get_icmp_tci(skb, key_icmp, data, thoff, hlen);
-}
+पूर्ण
 
-void skb_flow_dissect_meta(const struct sk_buff *skb,
-			   struct flow_dissector *flow_dissector,
-			   void *target_container)
-{
-	struct flow_dissector_key_meta *meta;
+व्योम skb_flow_dissect_meta(स्थिर काष्ठा sk_buff *skb,
+			   काष्ठा flow_dissector *flow_dissector,
+			   व्योम *target_container)
+अणु
+	काष्ठा flow_dissector_key_meta *meta;
 
-	if (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_META))
-		return;
+	अगर (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_META))
+		वापस;
 
 	meta = skb_flow_dissector_target(flow_dissector,
 					 FLOW_DISSECTOR_KEY_META,
 					 target_container);
-	meta->ingress_ifindex = skb->skb_iif;
-}
+	meta->ingress_अगरindex = skb->skb_iअगर;
+पूर्ण
 EXPORT_SYMBOL(skb_flow_dissect_meta);
 
-static void
-skb_flow_dissect_set_enc_addr_type(enum flow_dissector_key_id type,
-				   struct flow_dissector *flow_dissector,
-				   void *target_container)
-{
-	struct flow_dissector_key_control *ctrl;
+अटल व्योम
+skb_flow_dissect_set_enc_addr_type(क्रमागत flow_dissector_key_id type,
+				   काष्ठा flow_dissector *flow_dissector,
+				   व्योम *target_container)
+अणु
+	काष्ठा flow_dissector_key_control *ctrl;
 
-	if (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_CONTROL))
-		return;
+	अगर (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_CONTROL))
+		वापस;
 
 	ctrl = skb_flow_dissector_target(flow_dissector,
 					 FLOW_DISSECTOR_KEY_ENC_CONTROL,
 					 target_container);
 	ctrl->addr_type = type;
-}
+पूर्ण
 
-void
-skb_flow_dissect_ct(const struct sk_buff *skb,
-		    struct flow_dissector *flow_dissector,
-		    void *target_container, u16 *ctinfo_map,
-		    size_t mapsize, bool post_ct)
-{
-#if IS_ENABLED(CONFIG_NF_CONNTRACK)
-	struct flow_dissector_key_ct *key;
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn_labels *cl;
-	struct nf_conn *ct;
+व्योम
+skb_flow_dissect_ct(स्थिर काष्ठा sk_buff *skb,
+		    काष्ठा flow_dissector *flow_dissector,
+		    व्योम *target_container, u16 *ctinfo_map,
+		    माप_प्रकार mapsize, bool post_ct)
+अणु
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
+	काष्ठा flow_dissector_key_ct *key;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn_labels *cl;
+	काष्ठा nf_conn *ct;
 
-	if (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_CT))
-		return;
+	अगर (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_CT))
+		वापस;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct && !post_ct)
-		return;
+	अगर (!ct && !post_ct)
+		वापस;
 
 	key = skb_flow_dissector_target(flow_dissector,
 					FLOW_DISSECTOR_KEY_CT,
 					target_container);
 
-	if (!ct) {
+	अगर (!ct) अणु
 		key->ct_state = TCA_FLOWER_KEY_CT_FLAGS_TRACKED |
 				TCA_FLOWER_KEY_CT_FLAGS_INVALID;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ctinfo < mapsize)
+	अगर (ctinfo < mapsize)
 		key->ct_state = ctinfo_map[ctinfo];
-#if IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES)
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES)
 	key->ct_zone = ct->zone.id;
-#endif
-#if IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
 	key->ct_mark = ct->mark;
-#endif
+#पूर्ण_अगर
 
 	cl = nf_ct_labels_find(ct);
-	if (cl)
-		memcpy(key->ct_labels, cl->bits, sizeof(key->ct_labels));
-#endif /* CONFIG_NF_CONNTRACK */
-}
+	अगर (cl)
+		स_नकल(key->ct_labels, cl->bits, माप(key->ct_labels));
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK */
+पूर्ण
 EXPORT_SYMBOL(skb_flow_dissect_ct);
 
-void
-skb_flow_dissect_tunnel_info(const struct sk_buff *skb,
-			     struct flow_dissector *flow_dissector,
-			     void *target_container)
-{
-	struct ip_tunnel_info *info;
-	struct ip_tunnel_key *key;
+व्योम
+skb_flow_dissect_tunnel_info(स्थिर काष्ठा sk_buff *skb,
+			     काष्ठा flow_dissector *flow_dissector,
+			     व्योम *target_container)
+अणु
+	काष्ठा ip_tunnel_info *info;
+	काष्ठा ip_tunnel_key *key;
 
-	/* A quick check to see if there might be something to do. */
-	if (!dissector_uses_key(flow_dissector,
+	/* A quick check to see अगर there might be something to करो. */
+	अगर (!dissector_uses_key(flow_dissector,
 				FLOW_DISSECTOR_KEY_ENC_KEYID) &&
 	    !dissector_uses_key(flow_dissector,
 				FLOW_DISSECTOR_KEY_ENC_IPV4_ADDRS) &&
@@ -302,139 +303,139 @@ skb_flow_dissect_tunnel_info(const struct sk_buff *skb,
 				FLOW_DISSECTOR_KEY_ENC_IP) &&
 	    !dissector_uses_key(flow_dissector,
 				FLOW_DISSECTOR_KEY_ENC_OPTS))
-		return;
+		वापस;
 
 	info = skb_tunnel_info(skb);
-	if (!info)
-		return;
+	अगर (!info)
+		वापस;
 
 	key = &info->key;
 
-	switch (ip_tunnel_info_af(info)) {
-	case AF_INET:
+	चयन (ip_tunnel_info_af(info)) अणु
+	हाल AF_INET:
 		skb_flow_dissect_set_enc_addr_type(FLOW_DISSECTOR_KEY_IPV4_ADDRS,
 						   flow_dissector,
 						   target_container);
-		if (dissector_uses_key(flow_dissector,
-				       FLOW_DISSECTOR_KEY_ENC_IPV4_ADDRS)) {
-			struct flow_dissector_key_ipv4_addrs *ipv4;
+		अगर (dissector_uses_key(flow_dissector,
+				       FLOW_DISSECTOR_KEY_ENC_IPV4_ADDRS)) अणु
+			काष्ठा flow_dissector_key_ipv4_addrs *ipv4;
 
 			ipv4 = skb_flow_dissector_target(flow_dissector,
 							 FLOW_DISSECTOR_KEY_ENC_IPV4_ADDRS,
 							 target_container);
 			ipv4->src = key->u.ipv4.src;
 			ipv4->dst = key->u.ipv4.dst;
-		}
-		break;
-	case AF_INET6:
+		पूर्ण
+		अवरोध;
+	हाल AF_INET6:
 		skb_flow_dissect_set_enc_addr_type(FLOW_DISSECTOR_KEY_IPV6_ADDRS,
 						   flow_dissector,
 						   target_container);
-		if (dissector_uses_key(flow_dissector,
-				       FLOW_DISSECTOR_KEY_ENC_IPV6_ADDRS)) {
-			struct flow_dissector_key_ipv6_addrs *ipv6;
+		अगर (dissector_uses_key(flow_dissector,
+				       FLOW_DISSECTOR_KEY_ENC_IPV6_ADDRS)) अणु
+			काष्ठा flow_dissector_key_ipv6_addrs *ipv6;
 
 			ipv6 = skb_flow_dissector_target(flow_dissector,
 							 FLOW_DISSECTOR_KEY_ENC_IPV6_ADDRS,
 							 target_container);
 			ipv6->src = key->u.ipv6.src;
 			ipv6->dst = key->u.ipv6.dst;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_KEYID)) {
-		struct flow_dissector_key_keyid *keyid;
+	अगर (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_KEYID)) अणु
+		काष्ठा flow_dissector_key_keyid *keyid;
 
 		keyid = skb_flow_dissector_target(flow_dissector,
 						  FLOW_DISSECTOR_KEY_ENC_KEYID,
 						  target_container);
 		keyid->keyid = tunnel_id_to_key32(key->tun_id);
-	}
+	पूर्ण
 
-	if (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_PORTS)) {
-		struct flow_dissector_key_ports *tp;
+	अगर (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_PORTS)) अणु
+		काष्ठा flow_dissector_key_ports *tp;
 
 		tp = skb_flow_dissector_target(flow_dissector,
 					       FLOW_DISSECTOR_KEY_ENC_PORTS,
 					       target_container);
 		tp->src = key->tp_src;
 		tp->dst = key->tp_dst;
-	}
+	पूर्ण
 
-	if (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_IP)) {
-		struct flow_dissector_key_ip *ip;
+	अगर (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_IP)) अणु
+		काष्ठा flow_dissector_key_ip *ip;
 
 		ip = skb_flow_dissector_target(flow_dissector,
 					       FLOW_DISSECTOR_KEY_ENC_IP,
 					       target_container);
 		ip->tos = key->tos;
 		ip->ttl = key->ttl;
-	}
+	पूर्ण
 
-	if (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_OPTS)) {
-		struct flow_dissector_key_enc_opts *enc_opt;
+	अगर (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ENC_OPTS)) अणु
+		काष्ठा flow_dissector_key_enc_opts *enc_opt;
 
 		enc_opt = skb_flow_dissector_target(flow_dissector,
 						    FLOW_DISSECTOR_KEY_ENC_OPTS,
 						    target_container);
 
-		if (info->options_len) {
+		अगर (info->options_len) अणु
 			enc_opt->len = info->options_len;
 			ip_tunnel_info_opts_get(enc_opt->data, info);
 			enc_opt->dst_opt_type = info->key.tun_flags &
 						TUNNEL_OPTIONS_PRESENT;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(skb_flow_dissect_tunnel_info);
 
-void skb_flow_dissect_hash(const struct sk_buff *skb,
-			   struct flow_dissector *flow_dissector,
-			   void *target_container)
-{
-	struct flow_dissector_key_hash *key;
+व्योम skb_flow_dissect_hash(स्थिर काष्ठा sk_buff *skb,
+			   काष्ठा flow_dissector *flow_dissector,
+			   व्योम *target_container)
+अणु
+	काष्ठा flow_dissector_key_hash *key;
 
-	if (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_HASH))
-		return;
+	अगर (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_HASH))
+		वापस;
 
 	key = skb_flow_dissector_target(flow_dissector,
 					FLOW_DISSECTOR_KEY_HASH,
 					target_container);
 
 	key->hash = skb_get_hash_raw(skb);
-}
+पूर्ण
 EXPORT_SYMBOL(skb_flow_dissect_hash);
 
-static enum flow_dissect_ret
-__skb_flow_dissect_mpls(const struct sk_buff *skb,
-			struct flow_dissector *flow_dissector,
-			void *target_container, const void *data, int nhoff,
-			int hlen, int lse_index, bool *entropy_label)
-{
-	struct mpls_label *hdr, _hdr;
+अटल क्रमागत flow_dissect_ret
+__skb_flow_dissect_mpls(स्थिर काष्ठा sk_buff *skb,
+			काष्ठा flow_dissector *flow_dissector,
+			व्योम *target_container, स्थिर व्योम *data, पूर्णांक nhoff,
+			पूर्णांक hlen, पूर्णांक lse_index, bool *entropy_label)
+अणु
+	काष्ठा mpls_label *hdr, _hdr;
 	u32 entry, label, bos;
 
-	if (!dissector_uses_key(flow_dissector,
+	अगर (!dissector_uses_key(flow_dissector,
 				FLOW_DISSECTOR_KEY_MPLS_ENTROPY) &&
 	    !dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_MPLS))
-		return FLOW_DISSECT_RET_OUT_GOOD;
+		वापस FLOW_DISSECT_RET_OUT_GOOD;
 
-	if (lse_index >= FLOW_DIS_MPLS_MAX)
-		return FLOW_DISSECT_RET_OUT_GOOD;
+	अगर (lse_index >= FLOW_DIS_MPLS_MAX)
+		वापस FLOW_DISSECT_RET_OUT_GOOD;
 
-	hdr = __skb_header_pointer(skb, nhoff, sizeof(_hdr), data,
+	hdr = __skb_header_poपूर्णांकer(skb, nhoff, माप(_hdr), data,
 				   hlen, &_hdr);
-	if (!hdr)
-		return FLOW_DISSECT_RET_OUT_BAD;
+	अगर (!hdr)
+		वापस FLOW_DISSECT_RET_OUT_BAD;
 
 	entry = ntohl(hdr->entry);
 	label = (entry & MPLS_LS_LABEL_MASK) >> MPLS_LS_LABEL_SHIFT;
 	bos = (entry & MPLS_LS_S_MASK) >> MPLS_LS_S_SHIFT;
 
-	if (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_MPLS)) {
-		struct flow_dissector_key_mpls *key_mpls;
-		struct flow_dissector_mpls_lse *lse;
+	अगर (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_MPLS)) अणु
+		काष्ठा flow_dissector_key_mpls *key_mpls;
+		काष्ठा flow_dissector_mpls_lse *lse;
 
 		key_mpls = skb_flow_dissector_target(flow_dissector,
 						     FLOW_DISSECTOR_KEY_MPLS,
@@ -446,68 +447,68 @@ __skb_flow_dissect_mpls(const struct sk_buff *skb,
 		lse->mpls_tc = (entry & MPLS_LS_TC_MASK) >> MPLS_LS_TC_SHIFT;
 		lse->mpls_label = label;
 		dissector_set_mpls_lse(key_mpls, lse_index);
-	}
+	पूर्ण
 
-	if (*entropy_label &&
+	अगर (*entropy_label &&
 	    dissector_uses_key(flow_dissector,
-			       FLOW_DISSECTOR_KEY_MPLS_ENTROPY)) {
-		struct flow_dissector_key_keyid *key_keyid;
+			       FLOW_DISSECTOR_KEY_MPLS_ENTROPY)) अणु
+		काष्ठा flow_dissector_key_keyid *key_keyid;
 
 		key_keyid = skb_flow_dissector_target(flow_dissector,
 						      FLOW_DISSECTOR_KEY_MPLS_ENTROPY,
 						      target_container);
 		key_keyid->keyid = cpu_to_be32(label);
-	}
+	पूर्ण
 
 	*entropy_label = label == MPLS_LABEL_ENTROPY;
 
-	return bos ? FLOW_DISSECT_RET_OUT_GOOD : FLOW_DISSECT_RET_PROTO_AGAIN;
-}
+	वापस bos ? FLOW_DISSECT_RET_OUT_GOOD : FLOW_DISSECT_RET_PROTO_AGAIN;
+पूर्ण
 
-static enum flow_dissect_ret
-__skb_flow_dissect_arp(const struct sk_buff *skb,
-		       struct flow_dissector *flow_dissector,
-		       void *target_container, const void *data,
-		       int nhoff, int hlen)
-{
-	struct flow_dissector_key_arp *key_arp;
-	struct {
-		unsigned char ar_sha[ETH_ALEN];
-		unsigned char ar_sip[4];
-		unsigned char ar_tha[ETH_ALEN];
-		unsigned char ar_tip[4];
-	} *arp_eth, _arp_eth;
-	const struct arphdr *arp;
-	struct arphdr _arp;
+अटल क्रमागत flow_dissect_ret
+__skb_flow_dissect_arp(स्थिर काष्ठा sk_buff *skb,
+		       काष्ठा flow_dissector *flow_dissector,
+		       व्योम *target_container, स्थिर व्योम *data,
+		       पूर्णांक nhoff, पूर्णांक hlen)
+अणु
+	काष्ठा flow_dissector_key_arp *key_arp;
+	काष्ठा अणु
+		अचिन्हित अक्षर ar_sha[ETH_ALEN];
+		अचिन्हित अक्षर ar_sip[4];
+		अचिन्हित अक्षर ar_tha[ETH_ALEN];
+		अचिन्हित अक्षर ar_tip[4];
+	पूर्ण *arp_eth, _arp_eth;
+	स्थिर काष्ठा arphdr *arp;
+	काष्ठा arphdr _arp;
 
-	if (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ARP))
-		return FLOW_DISSECT_RET_OUT_GOOD;
+	अगर (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_ARP))
+		वापस FLOW_DISSECT_RET_OUT_GOOD;
 
-	arp = __skb_header_pointer(skb, nhoff, sizeof(_arp), data,
+	arp = __skb_header_poपूर्णांकer(skb, nhoff, माप(_arp), data,
 				   hlen, &_arp);
-	if (!arp)
-		return FLOW_DISSECT_RET_OUT_BAD;
+	अगर (!arp)
+		वापस FLOW_DISSECT_RET_OUT_BAD;
 
-	if (arp->ar_hrd != htons(ARPHRD_ETHER) ||
+	अगर (arp->ar_hrd != htons(ARPHRD_ETHER) ||
 	    arp->ar_pro != htons(ETH_P_IP) ||
 	    arp->ar_hln != ETH_ALEN ||
 	    arp->ar_pln != 4 ||
 	    (arp->ar_op != htons(ARPOP_REPLY) &&
 	     arp->ar_op != htons(ARPOP_REQUEST)))
-		return FLOW_DISSECT_RET_OUT_BAD;
+		वापस FLOW_DISSECT_RET_OUT_BAD;
 
-	arp_eth = __skb_header_pointer(skb, nhoff + sizeof(_arp),
-				       sizeof(_arp_eth), data,
+	arp_eth = __skb_header_poपूर्णांकer(skb, nhoff + माप(_arp),
+				       माप(_arp_eth), data,
 				       hlen, &_arp_eth);
-	if (!arp_eth)
-		return FLOW_DISSECT_RET_OUT_BAD;
+	अगर (!arp_eth)
+		वापस FLOW_DISSECT_RET_OUT_BAD;
 
 	key_arp = skb_flow_dissector_target(flow_dissector,
 					    FLOW_DISSECTOR_KEY_ARP,
 					    target_container);
 
-	memcpy(&key_arp->sip, arp_eth->ar_sip, sizeof(key_arp->sip));
-	memcpy(&key_arp->tip, arp_eth->ar_tip, sizeof(key_arp->tip));
+	स_नकल(&key_arp->sip, arp_eth->ar_sip, माप(key_arp->sip));
+	स_नकल(&key_arp->tip, arp_eth->ar_tip, माप(key_arp->tip));
 
 	/* Only store the lower byte of the opcode;
 	 * this covers ARPOP_REPLY and ARPOP_REQUEST.
@@ -517,299 +518,299 @@ __skb_flow_dissect_arp(const struct sk_buff *skb,
 	ether_addr_copy(key_arp->sha, arp_eth->ar_sha);
 	ether_addr_copy(key_arp->tha, arp_eth->ar_tha);
 
-	return FLOW_DISSECT_RET_OUT_GOOD;
-}
+	वापस FLOW_DISSECT_RET_OUT_GOOD;
+पूर्ण
 
-static enum flow_dissect_ret
-__skb_flow_dissect_gre(const struct sk_buff *skb,
-		       struct flow_dissector_key_control *key_control,
-		       struct flow_dissector *flow_dissector,
-		       void *target_container, const void *data,
-		       __be16 *p_proto, int *p_nhoff, int *p_hlen,
-		       unsigned int flags)
-{
-	struct flow_dissector_key_keyid *key_keyid;
-	struct gre_base_hdr *hdr, _hdr;
-	int offset = 0;
+अटल क्रमागत flow_dissect_ret
+__skb_flow_dissect_gre(स्थिर काष्ठा sk_buff *skb,
+		       काष्ठा flow_dissector_key_control *key_control,
+		       काष्ठा flow_dissector *flow_dissector,
+		       व्योम *target_container, स्थिर व्योम *data,
+		       __be16 *p_proto, पूर्णांक *p_nhoff, पूर्णांक *p_hlen,
+		       अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा flow_dissector_key_keyid *key_keyid;
+	काष्ठा gre_base_hdr *hdr, _hdr;
+	पूर्णांक offset = 0;
 	u16 gre_ver;
 
-	hdr = __skb_header_pointer(skb, *p_nhoff, sizeof(_hdr),
+	hdr = __skb_header_poपूर्णांकer(skb, *p_nhoff, माप(_hdr),
 				   data, *p_hlen, &_hdr);
-	if (!hdr)
-		return FLOW_DISSECT_RET_OUT_BAD;
+	अगर (!hdr)
+		वापस FLOW_DISSECT_RET_OUT_BAD;
 
 	/* Only look inside GRE without routing */
-	if (hdr->flags & GRE_ROUTING)
-		return FLOW_DISSECT_RET_OUT_GOOD;
+	अगर (hdr->flags & GRE_ROUTING)
+		वापस FLOW_DISSECT_RET_OUT_GOOD;
 
-	/* Only look inside GRE for version 0 and 1 */
+	/* Only look inside GRE क्रम version 0 and 1 */
 	gre_ver = ntohs(hdr->flags & GRE_VERSION);
-	if (gre_ver > 1)
-		return FLOW_DISSECT_RET_OUT_GOOD;
+	अगर (gre_ver > 1)
+		वापस FLOW_DISSECT_RET_OUT_GOOD;
 
 	*p_proto = hdr->protocol;
-	if (gre_ver) {
+	अगर (gre_ver) अणु
 		/* Version1 must be PPTP, and check the flags */
-		if (!(*p_proto == GRE_PROTO_PPP && (hdr->flags & GRE_KEY)))
-			return FLOW_DISSECT_RET_OUT_GOOD;
-	}
+		अगर (!(*p_proto == GRE_PROTO_PPP && (hdr->flags & GRE_KEY)))
+			वापस FLOW_DISSECT_RET_OUT_GOOD;
+	पूर्ण
 
-	offset += sizeof(struct gre_base_hdr);
+	offset += माप(काष्ठा gre_base_hdr);
 
-	if (hdr->flags & GRE_CSUM)
-		offset += sizeof_field(struct gre_full_hdr, csum) +
-			  sizeof_field(struct gre_full_hdr, reserved1);
+	अगर (hdr->flags & GRE_CSUM)
+		offset += माप_field(काष्ठा gre_full_hdr, csum) +
+			  माप_field(काष्ठा gre_full_hdr, reserved1);
 
-	if (hdr->flags & GRE_KEY) {
-		const __be32 *keyid;
+	अगर (hdr->flags & GRE_KEY) अणु
+		स्थिर __be32 *keyid;
 		__be32 _keyid;
 
-		keyid = __skb_header_pointer(skb, *p_nhoff + offset,
-					     sizeof(_keyid),
+		keyid = __skb_header_poपूर्णांकer(skb, *p_nhoff + offset,
+					     माप(_keyid),
 					     data, *p_hlen, &_keyid);
-		if (!keyid)
-			return FLOW_DISSECT_RET_OUT_BAD;
+		अगर (!keyid)
+			वापस FLOW_DISSECT_RET_OUT_BAD;
 
-		if (dissector_uses_key(flow_dissector,
-				       FLOW_DISSECTOR_KEY_GRE_KEYID)) {
+		अगर (dissector_uses_key(flow_dissector,
+				       FLOW_DISSECTOR_KEY_GRE_KEYID)) अणु
 			key_keyid = skb_flow_dissector_target(flow_dissector,
 							      FLOW_DISSECTOR_KEY_GRE_KEYID,
 							      target_container);
-			if (gre_ver == 0)
+			अगर (gre_ver == 0)
 				key_keyid->keyid = *keyid;
-			else
+			अन्यथा
 				key_keyid->keyid = *keyid & GRE_PPTP_KEY_MASK;
-		}
-		offset += sizeof_field(struct gre_full_hdr, key);
-	}
+		पूर्ण
+		offset += माप_field(काष्ठा gre_full_hdr, key);
+	पूर्ण
 
-	if (hdr->flags & GRE_SEQ)
-		offset += sizeof_field(struct pptp_gre_header, seq);
+	अगर (hdr->flags & GRE_SEQ)
+		offset += माप_field(काष्ठा pptp_gre_header, seq);
 
-	if (gre_ver == 0) {
-		if (*p_proto == htons(ETH_P_TEB)) {
-			const struct ethhdr *eth;
-			struct ethhdr _eth;
+	अगर (gre_ver == 0) अणु
+		अगर (*p_proto == htons(ETH_P_TEB)) अणु
+			स्थिर काष्ठा ethhdr *eth;
+			काष्ठा ethhdr _eth;
 
-			eth = __skb_header_pointer(skb, *p_nhoff + offset,
-						   sizeof(_eth),
+			eth = __skb_header_poपूर्णांकer(skb, *p_nhoff + offset,
+						   माप(_eth),
 						   data, *p_hlen, &_eth);
-			if (!eth)
-				return FLOW_DISSECT_RET_OUT_BAD;
+			अगर (!eth)
+				वापस FLOW_DISSECT_RET_OUT_BAD;
 			*p_proto = eth->h_proto;
-			offset += sizeof(*eth);
+			offset += माप(*eth);
 
-			/* Cap headers that we access via pointers at the
+			/* Cap headers that we access via poपूर्णांकers at the
 			 * end of the Ethernet header as our maximum alignment
-			 * at that point is only 2 bytes.
+			 * at that poपूर्णांक is only 2 bytes.
 			 */
-			if (NET_IP_ALIGN)
+			अगर (NET_IP_ALIGN)
 				*p_hlen = *p_nhoff + offset;
-		}
-	} else { /* version 1, must be PPTP */
+		पूर्ण
+	पूर्ण अन्यथा अणु /* version 1, must be PPTP */
 		u8 _ppp_hdr[PPP_HDRLEN];
 		u8 *ppp_hdr;
 
-		if (hdr->flags & GRE_ACK)
-			offset += sizeof_field(struct pptp_gre_header, ack);
+		अगर (hdr->flags & GRE_ACK)
+			offset += माप_field(काष्ठा pptp_gre_header, ack);
 
-		ppp_hdr = __skb_header_pointer(skb, *p_nhoff + offset,
-					       sizeof(_ppp_hdr),
+		ppp_hdr = __skb_header_poपूर्णांकer(skb, *p_nhoff + offset,
+					       माप(_ppp_hdr),
 					       data, *p_hlen, _ppp_hdr);
-		if (!ppp_hdr)
-			return FLOW_DISSECT_RET_OUT_BAD;
+		अगर (!ppp_hdr)
+			वापस FLOW_DISSECT_RET_OUT_BAD;
 
-		switch (PPP_PROTOCOL(ppp_hdr)) {
-		case PPP_IP:
+		चयन (PPP_PROTOCOL(ppp_hdr)) अणु
+		हाल PPP_IP:
 			*p_proto = htons(ETH_P_IP);
-			break;
-		case PPP_IPV6:
+			अवरोध;
+		हाल PPP_IPV6:
 			*p_proto = htons(ETH_P_IPV6);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* Could probably catch some more like MPLS */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		offset += PPP_HDRLEN;
-	}
+	पूर्ण
 
 	*p_nhoff += offset;
 	key_control->flags |= FLOW_DIS_ENCAPSULATION;
-	if (flags & FLOW_DISSECTOR_F_STOP_AT_ENCAP)
-		return FLOW_DISSECT_RET_OUT_GOOD;
+	अगर (flags & FLOW_DISSECTOR_F_STOP_AT_ENCAP)
+		वापस FLOW_DISSECT_RET_OUT_GOOD;
 
-	return FLOW_DISSECT_RET_PROTO_AGAIN;
-}
+	वापस FLOW_DISSECT_RET_PROTO_AGAIN;
+पूर्ण
 
 /**
- * __skb_flow_dissect_batadv() - dissect batman-adv header
- * @skb: sk_buff to with the batman-adv header
+ * __skb_flow_dissect_batadv() - dissect baपंचांगan-adv header
+ * @skb: sk_buff to with the baपंचांगan-adv header
  * @key_control: flow dissectors control key
- * @data: raw buffer pointer to the packet, if NULL use skb->data
- * @p_proto: pointer used to update the protocol to process next
- * @p_nhoff: pointer used to update inner network header offset
+ * @data: raw buffer poपूर्णांकer to the packet, अगर शून्य use skb->data
+ * @p_proto: poपूर्णांकer used to update the protocol to process next
+ * @p_nhoff: poपूर्णांकer used to update inner network header offset
  * @hlen: packet header length
  * @flags: any combination of FLOW_DISSECTOR_F_*
  *
  * ETH_P_BATMAN packets are tried to be dissected. Only
- * &struct batadv_unicast packets are actually processed because they contain an
+ * &काष्ठा batadv_unicast packets are actually processed because they contain an
  * inner ethernet header and are usually followed by actual network header. This
- * allows the flow dissector to continue processing the packet.
+ * allows the flow dissector to जारी processing the packet.
  *
- * Return: FLOW_DISSECT_RET_PROTO_AGAIN when &struct batadv_unicast was found,
+ * Return: FLOW_DISSECT_RET_PROTO_AGAIN when &काष्ठा batadv_unicast was found,
  *  FLOW_DISSECT_RET_OUT_GOOD when dissector should stop after encapsulation,
  *  otherwise FLOW_DISSECT_RET_OUT_BAD
  */
-static enum flow_dissect_ret
-__skb_flow_dissect_batadv(const struct sk_buff *skb,
-			  struct flow_dissector_key_control *key_control,
-			  const void *data, __be16 *p_proto, int *p_nhoff,
-			  int hlen, unsigned int flags)
-{
-	struct {
-		struct batadv_unicast_packet batadv_unicast;
-		struct ethhdr eth;
-	} *hdr, _hdr;
+अटल क्रमागत flow_dissect_ret
+__skb_flow_dissect_batadv(स्थिर काष्ठा sk_buff *skb,
+			  काष्ठा flow_dissector_key_control *key_control,
+			  स्थिर व्योम *data, __be16 *p_proto, पूर्णांक *p_nhoff,
+			  पूर्णांक hlen, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा अणु
+		काष्ठा batadv_unicast_packet batadv_unicast;
+		काष्ठा ethhdr eth;
+	पूर्ण *hdr, _hdr;
 
-	hdr = __skb_header_pointer(skb, *p_nhoff, sizeof(_hdr), data, hlen,
+	hdr = __skb_header_poपूर्णांकer(skb, *p_nhoff, माप(_hdr), data, hlen,
 				   &_hdr);
-	if (!hdr)
-		return FLOW_DISSECT_RET_OUT_BAD;
+	अगर (!hdr)
+		वापस FLOW_DISSECT_RET_OUT_BAD;
 
-	if (hdr->batadv_unicast.version != BATADV_COMPAT_VERSION)
-		return FLOW_DISSECT_RET_OUT_BAD;
+	अगर (hdr->batadv_unicast.version != BATADV_COMPAT_VERSION)
+		वापस FLOW_DISSECT_RET_OUT_BAD;
 
-	if (hdr->batadv_unicast.packet_type != BATADV_UNICAST)
-		return FLOW_DISSECT_RET_OUT_BAD;
+	अगर (hdr->batadv_unicast.packet_type != BATADV_UNICAST)
+		वापस FLOW_DISSECT_RET_OUT_BAD;
 
 	*p_proto = hdr->eth.h_proto;
-	*p_nhoff += sizeof(*hdr);
+	*p_nhoff += माप(*hdr);
 
 	key_control->flags |= FLOW_DIS_ENCAPSULATION;
-	if (flags & FLOW_DISSECTOR_F_STOP_AT_ENCAP)
-		return FLOW_DISSECT_RET_OUT_GOOD;
+	अगर (flags & FLOW_DISSECTOR_F_STOP_AT_ENCAP)
+		वापस FLOW_DISSECT_RET_OUT_GOOD;
 
-	return FLOW_DISSECT_RET_PROTO_AGAIN;
-}
+	वापस FLOW_DISSECT_RET_PROTO_AGAIN;
+पूर्ण
 
-static void
-__skb_flow_dissect_tcp(const struct sk_buff *skb,
-		       struct flow_dissector *flow_dissector,
-		       void *target_container, const void *data,
-		       int thoff, int hlen)
-{
-	struct flow_dissector_key_tcp *key_tcp;
-	struct tcphdr *th, _th;
+अटल व्योम
+__skb_flow_dissect_tcp(स्थिर काष्ठा sk_buff *skb,
+		       काष्ठा flow_dissector *flow_dissector,
+		       व्योम *target_container, स्थिर व्योम *data,
+		       पूर्णांक thoff, पूर्णांक hlen)
+अणु
+	काष्ठा flow_dissector_key_tcp *key_tcp;
+	काष्ठा tcphdr *th, _th;
 
-	if (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_TCP))
-		return;
+	अगर (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_TCP))
+		वापस;
 
-	th = __skb_header_pointer(skb, thoff, sizeof(_th), data, hlen, &_th);
-	if (!th)
-		return;
+	th = __skb_header_poपूर्णांकer(skb, thoff, माप(_th), data, hlen, &_th);
+	अगर (!th)
+		वापस;
 
-	if (unlikely(__tcp_hdrlen(th) < sizeof(_th)))
-		return;
+	अगर (unlikely(__tcp_hdrlen(th) < माप(_th)))
+		वापस;
 
 	key_tcp = skb_flow_dissector_target(flow_dissector,
 					    FLOW_DISSECTOR_KEY_TCP,
 					    target_container);
 	key_tcp->flags = (*(__be16 *) &tcp_flag_word(th) & htons(0x0FFF));
-}
+पूर्ण
 
-static void
-__skb_flow_dissect_ports(const struct sk_buff *skb,
-			 struct flow_dissector *flow_dissector,
-			 void *target_container, const void *data,
-			 int nhoff, u8 ip_proto, int hlen)
-{
-	enum flow_dissector_key_id dissector_ports = FLOW_DISSECTOR_KEY_MAX;
-	struct flow_dissector_key_ports *key_ports;
+अटल व्योम
+__skb_flow_dissect_ports(स्थिर काष्ठा sk_buff *skb,
+			 काष्ठा flow_dissector *flow_dissector,
+			 व्योम *target_container, स्थिर व्योम *data,
+			 पूर्णांक nhoff, u8 ip_proto, पूर्णांक hlen)
+अणु
+	क्रमागत flow_dissector_key_id dissector_ports = FLOW_DISSECTOR_KEY_MAX;
+	काष्ठा flow_dissector_key_ports *key_ports;
 
-	if (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_PORTS))
+	अगर (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_PORTS))
 		dissector_ports = FLOW_DISSECTOR_KEY_PORTS;
-	else if (dissector_uses_key(flow_dissector,
+	अन्यथा अगर (dissector_uses_key(flow_dissector,
 				    FLOW_DISSECTOR_KEY_PORTS_RANGE))
 		dissector_ports = FLOW_DISSECTOR_KEY_PORTS_RANGE;
 
-	if (dissector_ports == FLOW_DISSECTOR_KEY_MAX)
-		return;
+	अगर (dissector_ports == FLOW_DISSECTOR_KEY_MAX)
+		वापस;
 
 	key_ports = skb_flow_dissector_target(flow_dissector,
 					      dissector_ports,
 					      target_container);
 	key_ports->ports = __skb_flow_get_ports(skb, nhoff, ip_proto,
 						data, hlen);
-}
+पूर्ण
 
-static void
-__skb_flow_dissect_ipv4(const struct sk_buff *skb,
-			struct flow_dissector *flow_dissector,
-			void *target_container, const void *data,
-			const struct iphdr *iph)
-{
-	struct flow_dissector_key_ip *key_ip;
+अटल व्योम
+__skb_flow_dissect_ipv4(स्थिर काष्ठा sk_buff *skb,
+			काष्ठा flow_dissector *flow_dissector,
+			व्योम *target_container, स्थिर व्योम *data,
+			स्थिर काष्ठा iphdr *iph)
+अणु
+	काष्ठा flow_dissector_key_ip *key_ip;
 
-	if (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_IP))
-		return;
+	अगर (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_IP))
+		वापस;
 
 	key_ip = skb_flow_dissector_target(flow_dissector,
 					   FLOW_DISSECTOR_KEY_IP,
 					   target_container);
 	key_ip->tos = iph->tos;
 	key_ip->ttl = iph->ttl;
-}
+पूर्ण
 
-static void
-__skb_flow_dissect_ipv6(const struct sk_buff *skb,
-			struct flow_dissector *flow_dissector,
-			void *target_container, const void *data,
-			const struct ipv6hdr *iph)
-{
-	struct flow_dissector_key_ip *key_ip;
+अटल व्योम
+__skb_flow_dissect_ipv6(स्थिर काष्ठा sk_buff *skb,
+			काष्ठा flow_dissector *flow_dissector,
+			व्योम *target_container, स्थिर व्योम *data,
+			स्थिर काष्ठा ipv6hdr *iph)
+अणु
+	काष्ठा flow_dissector_key_ip *key_ip;
 
-	if (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_IP))
-		return;
+	अगर (!dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_IP))
+		वापस;
 
 	key_ip = skb_flow_dissector_target(flow_dissector,
 					   FLOW_DISSECTOR_KEY_IP,
 					   target_container);
 	key_ip->tos = ipv6_get_dsfield(iph);
 	key_ip->ttl = iph->hop_limit;
-}
+पूर्ण
 
 /* Maximum number of protocol headers that can be parsed in
  * __skb_flow_dissect
  */
-#define MAX_FLOW_DISSECT_HDRS	15
+#घोषणा MAX_FLOW_DISSECT_HDRS	15
 
-static bool skb_flow_dissect_allowed(int *num_hdrs)
-{
+अटल bool skb_flow_dissect_allowed(पूर्णांक *num_hdrs)
+अणु
 	++*num_hdrs;
 
-	return (*num_hdrs <= MAX_FLOW_DISSECT_HDRS);
-}
+	वापस (*num_hdrs <= MAX_FLOW_DISSECT_HDRS);
+पूर्ण
 
-static void __skb_flow_bpf_to_target(const struct bpf_flow_keys *flow_keys,
-				     struct flow_dissector *flow_dissector,
-				     void *target_container)
-{
-	struct flow_dissector_key_ports *key_ports = NULL;
-	struct flow_dissector_key_control *key_control;
-	struct flow_dissector_key_basic *key_basic;
-	struct flow_dissector_key_addrs *key_addrs;
-	struct flow_dissector_key_tags *key_tags;
+अटल व्योम __skb_flow_bpf_to_target(स्थिर काष्ठा bpf_flow_keys *flow_keys,
+				     काष्ठा flow_dissector *flow_dissector,
+				     व्योम *target_container)
+अणु
+	काष्ठा flow_dissector_key_ports *key_ports = शून्य;
+	काष्ठा flow_dissector_key_control *key_control;
+	काष्ठा flow_dissector_key_basic *key_basic;
+	काष्ठा flow_dissector_key_addrs *key_addrs;
+	काष्ठा flow_dissector_key_tags *key_tags;
 
 	key_control = skb_flow_dissector_target(flow_dissector,
 						FLOW_DISSECTOR_KEY_CONTROL,
 						target_container);
 	key_control->thoff = flow_keys->thoff;
-	if (flow_keys->is_frag)
+	अगर (flow_keys->is_frag)
 		key_control->flags |= FLOW_DIS_IS_FRAGMENT;
-	if (flow_keys->is_first_frag)
+	अगर (flow_keys->is_first_frag)
 		key_control->flags |= FLOW_DIS_FIRST_FRAG;
-	if (flow_keys->is_encap)
+	अगर (flow_keys->is_encap)
 		key_control->flags |= FLOW_DIS_ENCAPSULATION;
 
 	key_basic = skb_flow_dissector_target(flow_dissector,
@@ -818,69 +819,69 @@ static void __skb_flow_bpf_to_target(const struct bpf_flow_keys *flow_keys,
 	key_basic->n_proto = flow_keys->n_proto;
 	key_basic->ip_proto = flow_keys->ip_proto;
 
-	if (flow_keys->addr_proto == ETH_P_IP &&
-	    dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_IPV4_ADDRS)) {
+	अगर (flow_keys->addr_proto == ETH_P_IP &&
+	    dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_IPV4_ADDRS)) अणु
 		key_addrs = skb_flow_dissector_target(flow_dissector,
 						      FLOW_DISSECTOR_KEY_IPV4_ADDRS,
 						      target_container);
 		key_addrs->v4addrs.src = flow_keys->ipv4_src;
 		key_addrs->v4addrs.dst = flow_keys->ipv4_dst;
 		key_control->addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
-	} else if (flow_keys->addr_proto == ETH_P_IPV6 &&
+	पूर्ण अन्यथा अगर (flow_keys->addr_proto == ETH_P_IPV6 &&
 		   dissector_uses_key(flow_dissector,
-				      FLOW_DISSECTOR_KEY_IPV6_ADDRS)) {
+				      FLOW_DISSECTOR_KEY_IPV6_ADDRS)) अणु
 		key_addrs = skb_flow_dissector_target(flow_dissector,
 						      FLOW_DISSECTOR_KEY_IPV6_ADDRS,
 						      target_container);
-		memcpy(&key_addrs->v6addrs.src, &flow_keys->ipv6_src,
-		       sizeof(key_addrs->v6addrs.src));
-		memcpy(&key_addrs->v6addrs.dst, &flow_keys->ipv6_dst,
-		       sizeof(key_addrs->v6addrs.dst));
+		स_नकल(&key_addrs->v6addrs.src, &flow_keys->ipv6_src,
+		       माप(key_addrs->v6addrs.src));
+		स_नकल(&key_addrs->v6addrs.dst, &flow_keys->ipv6_dst,
+		       माप(key_addrs->v6addrs.dst));
 		key_control->addr_type = FLOW_DISSECTOR_KEY_IPV6_ADDRS;
-	}
+	पूर्ण
 
-	if (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_PORTS))
+	अगर (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_PORTS))
 		key_ports = skb_flow_dissector_target(flow_dissector,
 						      FLOW_DISSECTOR_KEY_PORTS,
 						      target_container);
-	else if (dissector_uses_key(flow_dissector,
+	अन्यथा अगर (dissector_uses_key(flow_dissector,
 				    FLOW_DISSECTOR_KEY_PORTS_RANGE))
 		key_ports = skb_flow_dissector_target(flow_dissector,
 						      FLOW_DISSECTOR_KEY_PORTS_RANGE,
 						      target_container);
 
-	if (key_ports) {
+	अगर (key_ports) अणु
 		key_ports->src = flow_keys->sport;
 		key_ports->dst = flow_keys->dport;
-	}
+	पूर्ण
 
-	if (dissector_uses_key(flow_dissector,
-			       FLOW_DISSECTOR_KEY_FLOW_LABEL)) {
+	अगर (dissector_uses_key(flow_dissector,
+			       FLOW_DISSECTOR_KEY_FLOW_LABEL)) अणु
 		key_tags = skb_flow_dissector_target(flow_dissector,
 						     FLOW_DISSECTOR_KEY_FLOW_LABEL,
 						     target_container);
 		key_tags->flow_label = ntohl(flow_keys->flow_label);
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool bpf_flow_dissect(struct bpf_prog *prog, struct bpf_flow_dissector *ctx,
-		      __be16 proto, int nhoff, int hlen, unsigned int flags)
-{
-	struct bpf_flow_keys *flow_keys = ctx->flow_keys;
+bool bpf_flow_dissect(काष्ठा bpf_prog *prog, काष्ठा bpf_flow_dissector *ctx,
+		      __be16 proto, पूर्णांक nhoff, पूर्णांक hlen, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा bpf_flow_keys *flow_keys = ctx->flow_keys;
 	u32 result;
 
 	/* Pass parameters to the BPF program */
-	memset(flow_keys, 0, sizeof(*flow_keys));
+	स_रखो(flow_keys, 0, माप(*flow_keys));
 	flow_keys->n_proto = proto;
 	flow_keys->nhoff = nhoff;
 	flow_keys->thoff = flow_keys->nhoff;
 
-	BUILD_BUG_ON((int)BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG !=
-		     (int)FLOW_DISSECTOR_F_PARSE_1ST_FRAG);
-	BUILD_BUG_ON((int)BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL !=
-		     (int)FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL);
-	BUILD_BUG_ON((int)BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP !=
-		     (int)FLOW_DISSECTOR_F_STOP_AT_ENCAP);
+	BUILD_BUG_ON((पूर्णांक)BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG !=
+		     (पूर्णांक)FLOW_DISSECTOR_F_PARSE_1ST_FRAG);
+	BUILD_BUG_ON((पूर्णांक)BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL !=
+		     (पूर्णांक)FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL);
+	BUILD_BUG_ON((पूर्णांक)BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP !=
+		     (पूर्णांक)FLOW_DISSECTOR_F_STOP_AT_ENCAP);
 	flow_keys->flags = flags;
 
 	result = bpf_prog_run_pin_on_cpu(prog, ctx);
@@ -889,74 +890,74 @@ bool bpf_flow_dissect(struct bpf_prog *prog, struct bpf_flow_dissector *ctx,
 	flow_keys->thoff = clamp_t(u16, flow_keys->thoff,
 				   flow_keys->nhoff, hlen);
 
-	return result == BPF_OK;
-}
+	वापस result == BPF_OK;
+पूर्ण
 
 /**
- * __skb_flow_dissect - extract the flow_keys struct and return it
- * @net: associated network namespace, derived from @skb if NULL
- * @skb: sk_buff to extract the flow from, can be NULL if the rest are specified
+ * __skb_flow_dissect - extract the flow_keys काष्ठा and वापस it
+ * @net: associated network namespace, derived from @skb अगर शून्य
+ * @skb: sk_buff to extract the flow from, can be शून्य अगर the rest are specअगरied
  * @flow_dissector: list of keys to dissect
- * @target_container: target structure to put dissected values into
- * @data: raw buffer pointer to the packet, if NULL use skb->data
- * @proto: protocol for which to get the flow, if @data is NULL use skb->protocol
- * @nhoff: network header offset, if @data is NULL use skb_network_offset(skb)
- * @hlen: packet header length, if @data is NULL use skb_headlen(skb)
+ * @target_container: target काष्ठाure to put dissected values पूर्णांकo
+ * @data: raw buffer poपूर्णांकer to the packet, अगर शून्य use skb->data
+ * @proto: protocol क्रम which to get the flow, अगर @data is शून्य use skb->protocol
+ * @nhoff: network header offset, अगर @data is शून्य use skb_network_offset(skb)
+ * @hlen: packet header length, अगर @data is शून्य use skb_headlen(skb)
  * @flags: flags that control the dissection process, e.g.
  *         FLOW_DISSECTOR_F_STOP_AT_ENCAP.
  *
- * The function will try to retrieve individual keys into target specified
- * by flow_dissector from either the skbuff or a raw buffer specified by the
+ * The function will try to retrieve inभागidual keys पूर्णांकo target specअगरied
+ * by flow_dissector from either the skbuff or a raw buffer specअगरied by the
  * rest parameters.
  *
  * Caller must take care of zeroing target container memory.
  */
-bool __skb_flow_dissect(const struct net *net,
-			const struct sk_buff *skb,
-			struct flow_dissector *flow_dissector,
-			void *target_container, const void *data,
-			__be16 proto, int nhoff, int hlen, unsigned int flags)
-{
-	struct flow_dissector_key_control *key_control;
-	struct flow_dissector_key_basic *key_basic;
-	struct flow_dissector_key_addrs *key_addrs;
-	struct flow_dissector_key_tags *key_tags;
-	struct flow_dissector_key_vlan *key_vlan;
-	enum flow_dissect_ret fdret;
-	enum flow_dissector_key_id dissector_vlan = FLOW_DISSECTOR_KEY_MAX;
+bool __skb_flow_dissect(स्थिर काष्ठा net *net,
+			स्थिर काष्ठा sk_buff *skb,
+			काष्ठा flow_dissector *flow_dissector,
+			व्योम *target_container, स्थिर व्योम *data,
+			__be16 proto, पूर्णांक nhoff, पूर्णांक hlen, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा flow_dissector_key_control *key_control;
+	काष्ठा flow_dissector_key_basic *key_basic;
+	काष्ठा flow_dissector_key_addrs *key_addrs;
+	काष्ठा flow_dissector_key_tags *key_tags;
+	काष्ठा flow_dissector_key_vlan *key_vlan;
+	क्रमागत flow_dissect_ret fdret;
+	क्रमागत flow_dissector_key_id dissector_vlan = FLOW_DISSECTOR_KEY_MAX;
 	bool mpls_el = false;
-	int mpls_lse = 0;
-	int num_hdrs = 0;
+	पूर्णांक mpls_lse = 0;
+	पूर्णांक num_hdrs = 0;
 	u8 ip_proto = 0;
 	bool ret;
 
-	if (!data) {
+	अगर (!data) अणु
 		data = skb->data;
 		proto = skb_vlan_tag_present(skb) ?
 			 skb->vlan_proto : skb->protocol;
 		nhoff = skb_network_offset(skb);
 		hlen = skb_headlen(skb);
-#if IS_ENABLED(CONFIG_NET_DSA)
-		if (unlikely(skb->dev && netdev_uses_dsa(skb->dev) &&
-			     proto == htons(ETH_P_XDSA))) {
-			const struct dsa_device_ops *ops;
-			int offset = 0;
+#अगर IS_ENABLED(CONFIG_NET_DSA)
+		अगर (unlikely(skb->dev && netdev_uses_dsa(skb->dev) &&
+			     proto == htons(ETH_P_XDSA))) अणु
+			स्थिर काष्ठा dsa_device_ops *ops;
+			पूर्णांक offset = 0;
 
 			ops = skb->dev->dsa_ptr->tag_ops;
-			/* Tail taggers don't break flow dissection */
-			if (!ops->tail_tag) {
-				if (ops->flow_dissect)
+			/* Tail taggers करोn't अवरोध flow dissection */
+			अगर (!ops->tail_tag) अणु
+				अगर (ops->flow_dissect)
 					ops->flow_dissect(skb, &proto, &offset);
-				else
+				अन्यथा
 					dsa_tag_generic_flow_dissect(skb,
 								     &proto,
 								     &offset);
 				hlen -= offset;
 				nhoff += offset;
-			}
-		}
-#endif
-	}
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
 	/* It is ensured by skb_flow_dissector_init() that control key will
 	 * be always present.
@@ -972,459 +973,459 @@ bool __skb_flow_dissect(const struct net *net,
 					      FLOW_DISSECTOR_KEY_BASIC,
 					      target_container);
 
-	if (skb) {
-		if (!net) {
-			if (skb->dev)
+	अगर (skb) अणु
+		अगर (!net) अणु
+			अगर (skb->dev)
 				net = dev_net(skb->dev);
-			else if (skb->sk)
+			अन्यथा अगर (skb->sk)
 				net = sock_net(skb->sk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	WARN_ON_ONCE(!net);
-	if (net) {
-		enum netns_bpf_attach_type type = NETNS_BPF_FLOW_DISSECTOR;
-		struct bpf_prog_array *run_array;
+	अगर (net) अणु
+		क्रमागत netns_bpf_attach_type type = NETNS_BPF_FLOW_DISSECTOR;
+		काष्ठा bpf_prog_array *run_array;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		run_array = rcu_dereference(init_net.bpf.run_array[type]);
-		if (!run_array)
+		अगर (!run_array)
 			run_array = rcu_dereference(net->bpf.run_array[type]);
 
-		if (run_array) {
-			struct bpf_flow_keys flow_keys;
-			struct bpf_flow_dissector ctx = {
+		अगर (run_array) अणु
+			काष्ठा bpf_flow_keys flow_keys;
+			काष्ठा bpf_flow_dissector ctx = अणु
 				.flow_keys = &flow_keys,
 				.data = data,
 				.data_end = data + hlen,
-			};
+			पूर्ण;
 			__be16 n_proto = proto;
-			struct bpf_prog *prog;
+			काष्ठा bpf_prog *prog;
 
-			if (skb) {
+			अगर (skb) अणु
 				ctx.skb = skb;
-				/* we can't use 'proto' in the skb case
+				/* we can't use 'proto' in the skb हाल
 				 * because it might be set to skb->vlan_proto
 				 * which has been pulled from the data
 				 */
 				n_proto = skb->protocol;
-			}
+			पूर्ण
 
 			prog = READ_ONCE(run_array->items[0].prog);
 			ret = bpf_flow_dissect(prog, &ctx, n_proto, nhoff,
 					       hlen, flags);
 			__skb_flow_bpf_to_target(&flow_keys, flow_dissector,
 						 target_container);
-			rcu_read_unlock();
-			return ret;
-		}
-		rcu_read_unlock();
-	}
+			rcu_पढ़ो_unlock();
+			वापस ret;
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	if (dissector_uses_key(flow_dissector,
-			       FLOW_DISSECTOR_KEY_ETH_ADDRS)) {
-		struct ethhdr *eth = eth_hdr(skb);
-		struct flow_dissector_key_eth_addrs *key_eth_addrs;
+	अगर (dissector_uses_key(flow_dissector,
+			       FLOW_DISSECTOR_KEY_ETH_ADDRS)) अणु
+		काष्ठा ethhdr *eth = eth_hdr(skb);
+		काष्ठा flow_dissector_key_eth_addrs *key_eth_addrs;
 
 		key_eth_addrs = skb_flow_dissector_target(flow_dissector,
 							  FLOW_DISSECTOR_KEY_ETH_ADDRS,
 							  target_container);
-		memcpy(key_eth_addrs, &eth->h_dest, sizeof(*key_eth_addrs));
-	}
+		स_नकल(key_eth_addrs, &eth->h_dest, माप(*key_eth_addrs));
+	पूर्ण
 
 proto_again:
 	fdret = FLOW_DISSECT_RET_CONTINUE;
 
-	switch (proto) {
-	case htons(ETH_P_IP): {
-		const struct iphdr *iph;
-		struct iphdr _iph;
+	चयन (proto) अणु
+	हाल htons(ETH_P_IP): अणु
+		स्थिर काष्ठा iphdr *iph;
+		काष्ठा iphdr _iph;
 
-		iph = __skb_header_pointer(skb, nhoff, sizeof(_iph), data, hlen, &_iph);
-		if (!iph || iph->ihl < 5) {
+		iph = __skb_header_poपूर्णांकer(skb, nhoff, माप(_iph), data, hlen, &_iph);
+		अगर (!iph || iph->ihl < 5) अणु
 			fdret = FLOW_DISSECT_RET_OUT_BAD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		nhoff += iph->ihl * 4;
 
 		ip_proto = iph->protocol;
 
-		if (dissector_uses_key(flow_dissector,
-				       FLOW_DISSECTOR_KEY_IPV4_ADDRS)) {
+		अगर (dissector_uses_key(flow_dissector,
+				       FLOW_DISSECTOR_KEY_IPV4_ADDRS)) अणु
 			key_addrs = skb_flow_dissector_target(flow_dissector,
 							      FLOW_DISSECTOR_KEY_IPV4_ADDRS,
 							      target_container);
 
-			memcpy(&key_addrs->v4addrs, &iph->saddr,
-			       sizeof(key_addrs->v4addrs));
+			स_नकल(&key_addrs->v4addrs, &iph->saddr,
+			       माप(key_addrs->v4addrs));
 			key_control->addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
-		}
+		पूर्ण
 
 		__skb_flow_dissect_ipv4(skb, flow_dissector,
 					target_container, data, iph);
 
-		if (ip_is_fragment(iph)) {
+		अगर (ip_is_fragment(iph)) अणु
 			key_control->flags |= FLOW_DIS_IS_FRAGMENT;
 
-			if (iph->frag_off & htons(IP_OFFSET)) {
+			अगर (iph->frag_off & htons(IP_OFFSET)) अणु
 				fdret = FLOW_DISSECT_RET_OUT_GOOD;
-				break;
-			} else {
+				अवरोध;
+			पूर्ण अन्यथा अणु
 				key_control->flags |= FLOW_DIS_FIRST_FRAG;
-				if (!(flags &
-				      FLOW_DISSECTOR_F_PARSE_1ST_FRAG)) {
+				अगर (!(flags &
+				      FLOW_DISSECTOR_F_PARSE_1ST_FRAG)) अणु
 					fdret = FLOW_DISSECT_RET_OUT_GOOD;
-					break;
-				}
-			}
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		break;
-	}
-	case htons(ETH_P_IPV6): {
-		const struct ipv6hdr *iph;
-		struct ipv6hdr _iph;
+		अवरोध;
+	पूर्ण
+	हाल htons(ETH_P_IPV6): अणु
+		स्थिर काष्ठा ipv6hdr *iph;
+		काष्ठा ipv6hdr _iph;
 
-		iph = __skb_header_pointer(skb, nhoff, sizeof(_iph), data, hlen, &_iph);
-		if (!iph) {
+		iph = __skb_header_poपूर्णांकer(skb, nhoff, माप(_iph), data, hlen, &_iph);
+		अगर (!iph) अणु
 			fdret = FLOW_DISSECT_RET_OUT_BAD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ip_proto = iph->nexthdr;
-		nhoff += sizeof(struct ipv6hdr);
+		nhoff += माप(काष्ठा ipv6hdr);
 
-		if (dissector_uses_key(flow_dissector,
-				       FLOW_DISSECTOR_KEY_IPV6_ADDRS)) {
+		अगर (dissector_uses_key(flow_dissector,
+				       FLOW_DISSECTOR_KEY_IPV6_ADDRS)) अणु
 			key_addrs = skb_flow_dissector_target(flow_dissector,
 							      FLOW_DISSECTOR_KEY_IPV6_ADDRS,
 							      target_container);
 
-			memcpy(&key_addrs->v6addrs, &iph->saddr,
-			       sizeof(key_addrs->v6addrs));
+			स_नकल(&key_addrs->v6addrs, &iph->saddr,
+			       माप(key_addrs->v6addrs));
 			key_control->addr_type = FLOW_DISSECTOR_KEY_IPV6_ADDRS;
-		}
+		पूर्ण
 
-		if ((dissector_uses_key(flow_dissector,
+		अगर ((dissector_uses_key(flow_dissector,
 					FLOW_DISSECTOR_KEY_FLOW_LABEL) ||
 		     (flags & FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL)) &&
-		    ip6_flowlabel(iph)) {
+		    ip6_flowlabel(iph)) अणु
 			__be32 flow_label = ip6_flowlabel(iph);
 
-			if (dissector_uses_key(flow_dissector,
-					       FLOW_DISSECTOR_KEY_FLOW_LABEL)) {
+			अगर (dissector_uses_key(flow_dissector,
+					       FLOW_DISSECTOR_KEY_FLOW_LABEL)) अणु
 				key_tags = skb_flow_dissector_target(flow_dissector,
 								     FLOW_DISSECTOR_KEY_FLOW_LABEL,
 								     target_container);
 				key_tags->flow_label = ntohl(flow_label);
-			}
-			if (flags & FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL) {
+			पूर्ण
+			अगर (flags & FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL) अणु
 				fdret = FLOW_DISSECT_RET_OUT_GOOD;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		__skb_flow_dissect_ipv6(skb, flow_dissector,
 					target_container, data, iph);
 
-		break;
-	}
-	case htons(ETH_P_8021AD):
-	case htons(ETH_P_8021Q): {
-		const struct vlan_hdr *vlan = NULL;
-		struct vlan_hdr _vlan;
+		अवरोध;
+	पूर्ण
+	हाल htons(ETH_P_8021AD):
+	हाल htons(ETH_P_8021Q): अणु
+		स्थिर काष्ठा vlan_hdr *vlan = शून्य;
+		काष्ठा vlan_hdr _vlan;
 		__be16 saved_vlan_tpid = proto;
 
-		if (dissector_vlan == FLOW_DISSECTOR_KEY_MAX &&
-		    skb && skb_vlan_tag_present(skb)) {
+		अगर (dissector_vlan == FLOW_DISSECTOR_KEY_MAX &&
+		    skb && skb_vlan_tag_present(skb)) अणु
 			proto = skb->protocol;
-		} else {
-			vlan = __skb_header_pointer(skb, nhoff, sizeof(_vlan),
+		पूर्ण अन्यथा अणु
+			vlan = __skb_header_poपूर्णांकer(skb, nhoff, माप(_vlan),
 						    data, hlen, &_vlan);
-			if (!vlan) {
+			अगर (!vlan) अणु
 				fdret = FLOW_DISSECT_RET_OUT_BAD;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			proto = vlan->h_vlan_encapsulated_proto;
-			nhoff += sizeof(*vlan);
-		}
+			nhoff += माप(*vlan);
+		पूर्ण
 
-		if (dissector_vlan == FLOW_DISSECTOR_KEY_MAX) {
+		अगर (dissector_vlan == FLOW_DISSECTOR_KEY_MAX) अणु
 			dissector_vlan = FLOW_DISSECTOR_KEY_VLAN;
-		} else if (dissector_vlan == FLOW_DISSECTOR_KEY_VLAN) {
+		पूर्ण अन्यथा अगर (dissector_vlan == FLOW_DISSECTOR_KEY_VLAN) अणु
 			dissector_vlan = FLOW_DISSECTOR_KEY_CVLAN;
-		} else {
+		पूर्ण अन्यथा अणु
 			fdret = FLOW_DISSECT_RET_PROTO_AGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (dissector_uses_key(flow_dissector, dissector_vlan)) {
+		अगर (dissector_uses_key(flow_dissector, dissector_vlan)) अणु
 			key_vlan = skb_flow_dissector_target(flow_dissector,
 							     dissector_vlan,
 							     target_container);
 
-			if (!vlan) {
+			अगर (!vlan) अणु
 				key_vlan->vlan_id = skb_vlan_tag_get_id(skb);
 				key_vlan->vlan_priority = skb_vlan_tag_get_prio(skb);
-			} else {
+			पूर्ण अन्यथा अणु
 				key_vlan->vlan_id = ntohs(vlan->h_vlan_TCI) &
 					VLAN_VID_MASK;
 				key_vlan->vlan_priority =
 					(ntohs(vlan->h_vlan_TCI) &
 					 VLAN_PRIO_MASK) >> VLAN_PRIO_SHIFT;
-			}
+			पूर्ण
 			key_vlan->vlan_tpid = saved_vlan_tpid;
-		}
+		पूर्ण
 
 		fdret = FLOW_DISSECT_RET_PROTO_AGAIN;
-		break;
-	}
-	case htons(ETH_P_PPP_SES): {
-		struct {
-			struct pppoe_hdr hdr;
+		अवरोध;
+	पूर्ण
+	हाल htons(ETH_P_PPP_SES): अणु
+		काष्ठा अणु
+			काष्ठा pppoe_hdr hdr;
 			__be16 proto;
-		} *hdr, _hdr;
-		hdr = __skb_header_pointer(skb, nhoff, sizeof(_hdr), data, hlen, &_hdr);
-		if (!hdr) {
+		पूर्ण *hdr, _hdr;
+		hdr = __skb_header_poपूर्णांकer(skb, nhoff, माप(_hdr), data, hlen, &_hdr);
+		अगर (!hdr) अणु
 			fdret = FLOW_DISSECT_RET_OUT_BAD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		proto = hdr->proto;
 		nhoff += PPPOE_SES_HLEN;
-		switch (proto) {
-		case htons(PPP_IP):
+		चयन (proto) अणु
+		हाल htons(PPP_IP):
 			proto = htons(ETH_P_IP);
 			fdret = FLOW_DISSECT_RET_PROTO_AGAIN;
-			break;
-		case htons(PPP_IPV6):
+			अवरोध;
+		हाल htons(PPP_IPV6):
 			proto = htons(ETH_P_IPV6);
 			fdret = FLOW_DISSECT_RET_PROTO_AGAIN;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			fdret = FLOW_DISSECT_RET_OUT_BAD;
-			break;
-		}
-		break;
-	}
-	case htons(ETH_P_TIPC): {
-		struct tipc_basic_hdr *hdr, _hdr;
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल htons(ETH_P_TIPC): अणु
+		काष्ठा tipc_basic_hdr *hdr, _hdr;
 
-		hdr = __skb_header_pointer(skb, nhoff, sizeof(_hdr),
+		hdr = __skb_header_poपूर्णांकer(skb, nhoff, माप(_hdr),
 					   data, hlen, &_hdr);
-		if (!hdr) {
+		अगर (!hdr) अणु
 			fdret = FLOW_DISSECT_RET_OUT_BAD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (dissector_uses_key(flow_dissector,
-				       FLOW_DISSECTOR_KEY_TIPC)) {
+		अगर (dissector_uses_key(flow_dissector,
+				       FLOW_DISSECTOR_KEY_TIPC)) अणु
 			key_addrs = skb_flow_dissector_target(flow_dissector,
 							      FLOW_DISSECTOR_KEY_TIPC,
 							      target_container);
 			key_addrs->tipckey.key = tipc_hdr_rps_key(hdr);
 			key_control->addr_type = FLOW_DISSECTOR_KEY_TIPC;
-		}
+		पूर्ण
 		fdret = FLOW_DISSECT_RET_OUT_GOOD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case htons(ETH_P_MPLS_UC):
-	case htons(ETH_P_MPLS_MC):
+	हाल htons(ETH_P_MPLS_UC):
+	हाल htons(ETH_P_MPLS_MC):
 		fdret = __skb_flow_dissect_mpls(skb, flow_dissector,
 						target_container, data,
 						nhoff, hlen, mpls_lse,
 						&mpls_el);
-		nhoff += sizeof(struct mpls_label);
+		nhoff += माप(काष्ठा mpls_label);
 		mpls_lse++;
-		break;
-	case htons(ETH_P_FCOE):
-		if ((hlen - nhoff) < FCOE_HEADER_LEN) {
+		अवरोध;
+	हाल htons(ETH_P_FCOE):
+		अगर ((hlen - nhoff) < FCOE_HEADER_LEN) अणु
 			fdret = FLOW_DISSECT_RET_OUT_BAD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		nhoff += FCOE_HEADER_LEN;
 		fdret = FLOW_DISSECT_RET_OUT_GOOD;
-		break;
+		अवरोध;
 
-	case htons(ETH_P_ARP):
-	case htons(ETH_P_RARP):
+	हाल htons(ETH_P_ARP):
+	हाल htons(ETH_P_RARP):
 		fdret = __skb_flow_dissect_arp(skb, flow_dissector,
 					       target_container, data,
 					       nhoff, hlen);
-		break;
+		अवरोध;
 
-	case htons(ETH_P_BATMAN):
+	हाल htons(ETH_P_BATMAN):
 		fdret = __skb_flow_dissect_batadv(skb, key_control, data,
 						  &proto, &nhoff, hlen, flags);
-		break;
+		अवरोध;
 
-	case htons(ETH_P_1588): {
-		struct ptp_header *hdr, _hdr;
+	हाल htons(ETH_P_1588): अणु
+		काष्ठा ptp_header *hdr, _hdr;
 
-		hdr = __skb_header_pointer(skb, nhoff, sizeof(_hdr), data,
+		hdr = __skb_header_poपूर्णांकer(skb, nhoff, माप(_hdr), data,
 					   hlen, &_hdr);
-		if (!hdr) {
+		अगर (!hdr) अणु
 			fdret = FLOW_DISSECT_RET_OUT_BAD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		nhoff += ntohs(hdr->message_length);
 		fdret = FLOW_DISSECT_RET_OUT_GOOD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		fdret = FLOW_DISSECT_RET_OUT_BAD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Process result of proto processing */
-	switch (fdret) {
-	case FLOW_DISSECT_RET_OUT_GOOD:
-		goto out_good;
-	case FLOW_DISSECT_RET_PROTO_AGAIN:
-		if (skb_flow_dissect_allowed(&num_hdrs))
-			goto proto_again;
-		goto out_good;
-	case FLOW_DISSECT_RET_CONTINUE:
-	case FLOW_DISSECT_RET_IPPROTO_AGAIN:
-		break;
-	case FLOW_DISSECT_RET_OUT_BAD:
-	default:
-		goto out_bad;
-	}
+	चयन (fdret) अणु
+	हाल FLOW_DISSECT_RET_OUT_GOOD:
+		जाओ out_good;
+	हाल FLOW_DISSECT_RET_PROTO_AGAIN:
+		अगर (skb_flow_dissect_allowed(&num_hdrs))
+			जाओ proto_again;
+		जाओ out_good;
+	हाल FLOW_DISSECT_RET_CONTINUE:
+	हाल FLOW_DISSECT_RET_IPPROTO_AGAIN:
+		अवरोध;
+	हाल FLOW_DISSECT_RET_OUT_BAD:
+	शेष:
+		जाओ out_bad;
+	पूर्ण
 
 ip_proto_again:
 	fdret = FLOW_DISSECT_RET_CONTINUE;
 
-	switch (ip_proto) {
-	case IPPROTO_GRE:
+	चयन (ip_proto) अणु
+	हाल IPPROTO_GRE:
 		fdret = __skb_flow_dissect_gre(skb, key_control, flow_dissector,
 					       target_container, data,
 					       &proto, &nhoff, &hlen, flags);
-		break;
+		अवरोध;
 
-	case NEXTHDR_HOP:
-	case NEXTHDR_ROUTING:
-	case NEXTHDR_DEST: {
+	हाल NEXTHDR_HOP:
+	हाल NEXTHDR_ROUTING:
+	हाल NEXTHDR_DEST: अणु
 		u8 _opthdr[2], *opthdr;
 
-		if (proto != htons(ETH_P_IPV6))
-			break;
+		अगर (proto != htons(ETH_P_IPV6))
+			अवरोध;
 
-		opthdr = __skb_header_pointer(skb, nhoff, sizeof(_opthdr),
+		opthdr = __skb_header_poपूर्णांकer(skb, nhoff, माप(_opthdr),
 					      data, hlen, &_opthdr);
-		if (!opthdr) {
+		अगर (!opthdr) अणु
 			fdret = FLOW_DISSECT_RET_OUT_BAD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ip_proto = opthdr[0];
 		nhoff += (opthdr[1] + 1) << 3;
 
 		fdret = FLOW_DISSECT_RET_IPPROTO_AGAIN;
-		break;
-	}
-	case NEXTHDR_FRAGMENT: {
-		struct frag_hdr _fh, *fh;
+		अवरोध;
+	पूर्ण
+	हाल NEXTHDR_FRAGMENT: अणु
+		काष्ठा frag_hdr _fh, *fh;
 
-		if (proto != htons(ETH_P_IPV6))
-			break;
+		अगर (proto != htons(ETH_P_IPV6))
+			अवरोध;
 
-		fh = __skb_header_pointer(skb, nhoff, sizeof(_fh),
+		fh = __skb_header_poपूर्णांकer(skb, nhoff, माप(_fh),
 					  data, hlen, &_fh);
 
-		if (!fh) {
+		अगर (!fh) अणु
 			fdret = FLOW_DISSECT_RET_OUT_BAD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		key_control->flags |= FLOW_DIS_IS_FRAGMENT;
 
-		nhoff += sizeof(_fh);
+		nhoff += माप(_fh);
 		ip_proto = fh->nexthdr;
 
-		if (!(fh->frag_off & htons(IP6_OFFSET))) {
+		अगर (!(fh->frag_off & htons(IP6_OFFSET))) अणु
 			key_control->flags |= FLOW_DIS_FIRST_FRAG;
-			if (flags & FLOW_DISSECTOR_F_PARSE_1ST_FRAG) {
+			अगर (flags & FLOW_DISSECTOR_F_PARSE_1ST_FRAG) अणु
 				fdret = FLOW_DISSECT_RET_IPPROTO_AGAIN;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		fdret = FLOW_DISSECT_RET_OUT_GOOD;
-		break;
-	}
-	case IPPROTO_IPIP:
+		अवरोध;
+	पूर्ण
+	हाल IPPROTO_IPIP:
 		proto = htons(ETH_P_IP);
 
 		key_control->flags |= FLOW_DIS_ENCAPSULATION;
-		if (flags & FLOW_DISSECTOR_F_STOP_AT_ENCAP) {
+		अगर (flags & FLOW_DISSECTOR_F_STOP_AT_ENCAP) अणु
 			fdret = FLOW_DISSECT_RET_OUT_GOOD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		fdret = FLOW_DISSECT_RET_PROTO_AGAIN;
-		break;
+		अवरोध;
 
-	case IPPROTO_IPV6:
+	हाल IPPROTO_IPV6:
 		proto = htons(ETH_P_IPV6);
 
 		key_control->flags |= FLOW_DIS_ENCAPSULATION;
-		if (flags & FLOW_DISSECTOR_F_STOP_AT_ENCAP) {
+		अगर (flags & FLOW_DISSECTOR_F_STOP_AT_ENCAP) अणु
 			fdret = FLOW_DISSECT_RET_OUT_GOOD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		fdret = FLOW_DISSECT_RET_PROTO_AGAIN;
-		break;
+		अवरोध;
 
 
-	case IPPROTO_MPLS:
+	हाल IPPROTO_MPLS:
 		proto = htons(ETH_P_MPLS_UC);
 		fdret = FLOW_DISSECT_RET_PROTO_AGAIN;
-		break;
+		अवरोध;
 
-	case IPPROTO_TCP:
+	हाल IPPROTO_TCP:
 		__skb_flow_dissect_tcp(skb, flow_dissector, target_container,
 				       data, nhoff, hlen);
-		break;
+		अवरोध;
 
-	case IPPROTO_ICMP:
-	case IPPROTO_ICMPV6:
+	हाल IPPROTO_ICMP:
+	हाल IPPROTO_ICMPV6:
 		__skb_flow_dissect_icmp(skb, flow_dissector, target_container,
 					data, nhoff, hlen);
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (!(key_control->flags & FLOW_DIS_IS_FRAGMENT))
+	अगर (!(key_control->flags & FLOW_DIS_IS_FRAGMENT))
 		__skb_flow_dissect_ports(skb, flow_dissector, target_container,
 					 data, nhoff, ip_proto, hlen);
 
 	/* Process result of IP proto processing */
-	switch (fdret) {
-	case FLOW_DISSECT_RET_PROTO_AGAIN:
-		if (skb_flow_dissect_allowed(&num_hdrs))
-			goto proto_again;
-		break;
-	case FLOW_DISSECT_RET_IPPROTO_AGAIN:
-		if (skb_flow_dissect_allowed(&num_hdrs))
-			goto ip_proto_again;
-		break;
-	case FLOW_DISSECT_RET_OUT_GOOD:
-	case FLOW_DISSECT_RET_CONTINUE:
-		break;
-	case FLOW_DISSECT_RET_OUT_BAD:
-	default:
-		goto out_bad;
-	}
+	चयन (fdret) अणु
+	हाल FLOW_DISSECT_RET_PROTO_AGAIN:
+		अगर (skb_flow_dissect_allowed(&num_hdrs))
+			जाओ proto_again;
+		अवरोध;
+	हाल FLOW_DISSECT_RET_IPPROTO_AGAIN:
+		अगर (skb_flow_dissect_allowed(&num_hdrs))
+			जाओ ip_proto_again;
+		अवरोध;
+	हाल FLOW_DISSECT_RET_OUT_GOOD:
+	हाल FLOW_DISSECT_RET_CONTINUE:
+		अवरोध;
+	हाल FLOW_DISSECT_RET_OUT_BAD:
+	शेष:
+		जाओ out_bad;
+	पूर्ण
 
 out_good:
 	ret = true;
@@ -1434,186 +1435,186 @@ out:
 	key_basic->n_proto = proto;
 	key_basic->ip_proto = ip_proto;
 
-	return ret;
+	वापस ret;
 
 out_bad:
 	ret = false;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 EXPORT_SYMBOL(__skb_flow_dissect);
 
-static siphash_key_t hashrnd __read_mostly;
-static __always_inline void __flow_hash_secret_init(void)
-{
-	net_get_random_once(&hashrnd, sizeof(hashrnd));
-}
+अटल siphash_key_t hashrnd __पढ़ो_mostly;
+अटल __always_अंतरभूत व्योम __flow_hash_secret_init(व्योम)
+अणु
+	net_get_अक्रमom_once(&hashrnd, माप(hashrnd));
+पूर्ण
 
-static const void *flow_keys_hash_start(const struct flow_keys *flow)
-{
+अटल स्थिर व्योम *flow_keys_hash_start(स्थिर काष्ठा flow_keys *flow)
+अणु
 	BUILD_BUG_ON(FLOW_KEYS_HASH_OFFSET % SIPHASH_ALIGNMENT);
-	return &flow->FLOW_KEYS_HASH_START_FIELD;
-}
+	वापस &flow->FLOW_KEYS_HASH_START_FIELD;
+पूर्ण
 
-static inline size_t flow_keys_hash_length(const struct flow_keys *flow)
-{
-	size_t diff = FLOW_KEYS_HASH_OFFSET + sizeof(flow->addrs);
+अटल अंतरभूत माप_प्रकार flow_keys_hash_length(स्थिर काष्ठा flow_keys *flow)
+अणु
+	माप_प्रकार dअगरf = FLOW_KEYS_HASH_OFFSET + माप(flow->addrs);
 
-	BUILD_BUG_ON((sizeof(*flow) - FLOW_KEYS_HASH_OFFSET) % sizeof(u32));
+	BUILD_BUG_ON((माप(*flow) - FLOW_KEYS_HASH_OFFSET) % माप(u32));
 
-	switch (flow->control.addr_type) {
-	case FLOW_DISSECTOR_KEY_IPV4_ADDRS:
-		diff -= sizeof(flow->addrs.v4addrs);
-		break;
-	case FLOW_DISSECTOR_KEY_IPV6_ADDRS:
-		diff -= sizeof(flow->addrs.v6addrs);
-		break;
-	case FLOW_DISSECTOR_KEY_TIPC:
-		diff -= sizeof(flow->addrs.tipckey);
-		break;
-	}
-	return sizeof(*flow) - diff;
-}
+	चयन (flow->control.addr_type) अणु
+	हाल FLOW_DISSECTOR_KEY_IPV4_ADDRS:
+		dअगरf -= माप(flow->addrs.v4addrs);
+		अवरोध;
+	हाल FLOW_DISSECTOR_KEY_IPV6_ADDRS:
+		dअगरf -= माप(flow->addrs.v6addrs);
+		अवरोध;
+	हाल FLOW_DISSECTOR_KEY_TIPC:
+		dअगरf -= माप(flow->addrs.tipckey);
+		अवरोध;
+	पूर्ण
+	वापस माप(*flow) - dअगरf;
+पूर्ण
 
-__be32 flow_get_u32_src(const struct flow_keys *flow)
-{
-	switch (flow->control.addr_type) {
-	case FLOW_DISSECTOR_KEY_IPV4_ADDRS:
-		return flow->addrs.v4addrs.src;
-	case FLOW_DISSECTOR_KEY_IPV6_ADDRS:
-		return (__force __be32)ipv6_addr_hash(
+__be32 flow_get_u32_src(स्थिर काष्ठा flow_keys *flow)
+अणु
+	चयन (flow->control.addr_type) अणु
+	हाल FLOW_DISSECTOR_KEY_IPV4_ADDRS:
+		वापस flow->addrs.v4addrs.src;
+	हाल FLOW_DISSECTOR_KEY_IPV6_ADDRS:
+		वापस (__क्रमce __be32)ipv6_addr_hash(
 			&flow->addrs.v6addrs.src);
-	case FLOW_DISSECTOR_KEY_TIPC:
-		return flow->addrs.tipckey.key;
-	default:
-		return 0;
-	}
-}
+	हाल FLOW_DISSECTOR_KEY_TIPC:
+		वापस flow->addrs.tipckey.key;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(flow_get_u32_src);
 
-__be32 flow_get_u32_dst(const struct flow_keys *flow)
-{
-	switch (flow->control.addr_type) {
-	case FLOW_DISSECTOR_KEY_IPV4_ADDRS:
-		return flow->addrs.v4addrs.dst;
-	case FLOW_DISSECTOR_KEY_IPV6_ADDRS:
-		return (__force __be32)ipv6_addr_hash(
+__be32 flow_get_u32_dst(स्थिर काष्ठा flow_keys *flow)
+अणु
+	चयन (flow->control.addr_type) अणु
+	हाल FLOW_DISSECTOR_KEY_IPV4_ADDRS:
+		वापस flow->addrs.v4addrs.dst;
+	हाल FLOW_DISSECTOR_KEY_IPV6_ADDRS:
+		वापस (__क्रमce __be32)ipv6_addr_hash(
 			&flow->addrs.v6addrs.dst);
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(flow_get_u32_dst);
 
-/* Sort the source and destination IP (and the ports if the IP are the same),
+/* Sort the source and destination IP (and the ports अगर the IP are the same),
  * to have consistent hash within the two directions
  */
-static inline void __flow_hash_consistentify(struct flow_keys *keys)
-{
-	int addr_diff, i;
+अटल अंतरभूत व्योम __flow_hash_consistentअगरy(काष्ठा flow_keys *keys)
+अणु
+	पूर्णांक addr_dअगरf, i;
 
-	switch (keys->control.addr_type) {
-	case FLOW_DISSECTOR_KEY_IPV4_ADDRS:
-		addr_diff = (__force u32)keys->addrs.v4addrs.dst -
-			    (__force u32)keys->addrs.v4addrs.src;
-		if ((addr_diff < 0) ||
-		    (addr_diff == 0 &&
-		     ((__force u16)keys->ports.dst <
-		      (__force u16)keys->ports.src))) {
+	चयन (keys->control.addr_type) अणु
+	हाल FLOW_DISSECTOR_KEY_IPV4_ADDRS:
+		addr_dअगरf = (__क्रमce u32)keys->addrs.v4addrs.dst -
+			    (__क्रमce u32)keys->addrs.v4addrs.src;
+		अगर ((addr_dअगरf < 0) ||
+		    (addr_dअगरf == 0 &&
+		     ((__क्रमce u16)keys->ports.dst <
+		      (__क्रमce u16)keys->ports.src))) अणु
 			swap(keys->addrs.v4addrs.src, keys->addrs.v4addrs.dst);
 			swap(keys->ports.src, keys->ports.dst);
-		}
-		break;
-	case FLOW_DISSECTOR_KEY_IPV6_ADDRS:
-		addr_diff = memcmp(&keys->addrs.v6addrs.dst,
+		पूर्ण
+		अवरोध;
+	हाल FLOW_DISSECTOR_KEY_IPV6_ADDRS:
+		addr_dअगरf = स_भेद(&keys->addrs.v6addrs.dst,
 				   &keys->addrs.v6addrs.src,
-				   sizeof(keys->addrs.v6addrs.dst));
-		if ((addr_diff < 0) ||
-		    (addr_diff == 0 &&
-		     ((__force u16)keys->ports.dst <
-		      (__force u16)keys->ports.src))) {
-			for (i = 0; i < 4; i++)
+				   माप(keys->addrs.v6addrs.dst));
+		अगर ((addr_dअगरf < 0) ||
+		    (addr_dअगरf == 0 &&
+		     ((__क्रमce u16)keys->ports.dst <
+		      (__क्रमce u16)keys->ports.src))) अणु
+			क्रम (i = 0; i < 4; i++)
 				swap(keys->addrs.v6addrs.src.s6_addr32[i],
 				     keys->addrs.v6addrs.dst.s6_addr32[i]);
 			swap(keys->ports.src, keys->ports.dst);
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static inline u32 __flow_hash_from_keys(struct flow_keys *keys,
-					const siphash_key_t *keyval)
-{
+अटल अंतरभूत u32 __flow_hash_from_keys(काष्ठा flow_keys *keys,
+					स्थिर siphash_key_t *keyval)
+अणु
 	u32 hash;
 
-	__flow_hash_consistentify(keys);
+	__flow_hash_consistentअगरy(keys);
 
 	hash = siphash(flow_keys_hash_start(keys),
 		       flow_keys_hash_length(keys), keyval);
-	if (!hash)
+	अगर (!hash)
 		hash = 1;
 
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-u32 flow_hash_from_keys(struct flow_keys *keys)
-{
+u32 flow_hash_from_keys(काष्ठा flow_keys *keys)
+अणु
 	__flow_hash_secret_init();
-	return __flow_hash_from_keys(keys, &hashrnd);
-}
+	वापस __flow_hash_from_keys(keys, &hashrnd);
+पूर्ण
 EXPORT_SYMBOL(flow_hash_from_keys);
 
-static inline u32 ___skb_get_hash(const struct sk_buff *skb,
-				  struct flow_keys *keys,
-				  const siphash_key_t *keyval)
-{
+अटल अंतरभूत u32 ___skb_get_hash(स्थिर काष्ठा sk_buff *skb,
+				  काष्ठा flow_keys *keys,
+				  स्थिर siphash_key_t *keyval)
+अणु
 	skb_flow_dissect_flow_keys(skb, keys,
 				   FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL);
 
-	return __flow_hash_from_keys(keys, keyval);
-}
+	वापस __flow_hash_from_keys(keys, keyval);
+पूर्ण
 
-struct _flow_keys_digest_data {
+काष्ठा _flow_keys_digest_data अणु
 	__be16	n_proto;
 	u8	ip_proto;
 	u8	padding;
 	__be32	ports;
 	__be32	src;
 	__be32	dst;
-};
+पूर्ण;
 
-void make_flow_keys_digest(struct flow_keys_digest *digest,
-			   const struct flow_keys *flow)
-{
-	struct _flow_keys_digest_data *data =
-	    (struct _flow_keys_digest_data *)digest;
+व्योम make_flow_keys_digest(काष्ठा flow_keys_digest *digest,
+			   स्थिर काष्ठा flow_keys *flow)
+अणु
+	काष्ठा _flow_keys_digest_data *data =
+	    (काष्ठा _flow_keys_digest_data *)digest;
 
-	BUILD_BUG_ON(sizeof(*data) > sizeof(*digest));
+	BUILD_BUG_ON(माप(*data) > माप(*digest));
 
-	memset(digest, 0, sizeof(*digest));
+	स_रखो(digest, 0, माप(*digest));
 
 	data->n_proto = flow->basic.n_proto;
 	data->ip_proto = flow->basic.ip_proto;
 	data->ports = flow->ports.ports;
 	data->src = flow->addrs.v4addrs.src;
 	data->dst = flow->addrs.v4addrs.dst;
-}
+पूर्ण
 EXPORT_SYMBOL(make_flow_keys_digest);
 
-static struct flow_dissector flow_keys_dissector_symmetric __read_mostly;
+अटल काष्ठा flow_dissector flow_keys_dissector_symmetric __पढ़ो_mostly;
 
-u32 __skb_get_hash_symmetric(const struct sk_buff *skb)
-{
-	struct flow_keys keys;
+u32 __skb_get_hash_symmetric(स्थिर काष्ठा sk_buff *skb)
+अणु
+	काष्ठा flow_keys keys;
 
 	__flow_hash_secret_init();
 
-	memset(&keys, 0, sizeof(keys));
-	__skb_flow_dissect(NULL, skb, &flow_keys_dissector_symmetric,
-			   &keys, NULL, 0, 0, 0,
+	स_रखो(&keys, 0, माप(keys));
+	__skb_flow_dissect(शून्य, skb, &flow_keys_dissector_symmetric,
+			   &keys, शून्य, 0, 0, 0,
 			   FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL);
 
-	return __flow_hash_from_keys(&keys, &hashrnd);
-}
+	वापस __flow_hash_from_keys(&keys, &hashrnd);
+पूर्ण
 EXPORT_SYMBOL_GPL(__skb_get_hash_symmetric);
 
 /**
@@ -1623,11 +1624,11 @@ EXPORT_SYMBOL_GPL(__skb_get_hash_symmetric);
  * This function calculates a flow hash based on src/dst addresses
  * and src/dst port numbers.  Sets hash in skb to non-zero hash value
  * on success, zero indicates no valid hash.  Also, sets l4_hash in skb
- * if hash is a canonical 4-tuple hash over transport ports.
+ * अगर hash is a canonical 4-tuple hash over transport ports.
  */
-void __skb_get_hash(struct sk_buff *skb)
-{
-	struct flow_keys keys;
+व्योम __skb_get_hash(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा flow_keys keys;
 	u32 hash;
 
 	__flow_hash_secret_init();
@@ -1635,189 +1636,189 @@ void __skb_get_hash(struct sk_buff *skb)
 	hash = ___skb_get_hash(skb, &keys, &hashrnd);
 
 	__skb_set_sw_hash(skb, hash, flow_keys_have_l4(&keys));
-}
+पूर्ण
 EXPORT_SYMBOL(__skb_get_hash);
 
-__u32 skb_get_hash_perturb(const struct sk_buff *skb,
-			   const siphash_key_t *perturb)
-{
-	struct flow_keys keys;
+__u32 skb_get_hash_perturb(स्थिर काष्ठा sk_buff *skb,
+			   स्थिर siphash_key_t *perturb)
+अणु
+	काष्ठा flow_keys keys;
 
-	return ___skb_get_hash(skb, &keys, perturb);
-}
+	वापस ___skb_get_hash(skb, &keys, perturb);
+पूर्ण
 EXPORT_SYMBOL(skb_get_hash_perturb);
 
-u32 __skb_get_poff(const struct sk_buff *skb, const void *data,
-		   const struct flow_keys_basic *keys, int hlen)
-{
+u32 __skb_get_poff(स्थिर काष्ठा sk_buff *skb, स्थिर व्योम *data,
+		   स्थिर काष्ठा flow_keys_basic *keys, पूर्णांक hlen)
+अणु
 	u32 poff = keys->control.thoff;
 
-	/* skip L4 headers for fragments after the first */
-	if ((keys->control.flags & FLOW_DIS_IS_FRAGMENT) &&
+	/* skip L4 headers क्रम fragments after the first */
+	अगर ((keys->control.flags & FLOW_DIS_IS_FRAGMENT) &&
 	    !(keys->control.flags & FLOW_DIS_FIRST_FRAG))
-		return poff;
+		वापस poff;
 
-	switch (keys->basic.ip_proto) {
-	case IPPROTO_TCP: {
-		/* access doff as u8 to avoid unaligned access */
-		const u8 *doff;
-		u8 _doff;
+	चयन (keys->basic.ip_proto) अणु
+	हाल IPPROTO_TCP: अणु
+		/* access करोff as u8 to aव्योम unaligned access */
+		स्थिर u8 *करोff;
+		u8 _करोff;
 
-		doff = __skb_header_pointer(skb, poff + 12, sizeof(_doff),
-					    data, hlen, &_doff);
-		if (!doff)
-			return poff;
+		करोff = __skb_header_poपूर्णांकer(skb, poff + 12, माप(_करोff),
+					    data, hlen, &_करोff);
+		अगर (!करोff)
+			वापस poff;
 
-		poff += max_t(u32, sizeof(struct tcphdr), (*doff & 0xF0) >> 2);
-		break;
-	}
-	case IPPROTO_UDP:
-	case IPPROTO_UDPLITE:
-		poff += sizeof(struct udphdr);
-		break;
-	/* For the rest, we do not really care about header
-	 * extensions at this point for now.
+		poff += max_t(u32, माप(काष्ठा tcphdr), (*करोff & 0xF0) >> 2);
+		अवरोध;
+	पूर्ण
+	हाल IPPROTO_UDP:
+	हाल IPPROTO_UDPLITE:
+		poff += माप(काष्ठा udphdr);
+		अवरोध;
+	/* For the rest, we करो not really care about header
+	 * extensions at this poपूर्णांक क्रम now.
 	 */
-	case IPPROTO_ICMP:
-		poff += sizeof(struct icmphdr);
-		break;
-	case IPPROTO_ICMPV6:
-		poff += sizeof(struct icmp6hdr);
-		break;
-	case IPPROTO_IGMP:
-		poff += sizeof(struct igmphdr);
-		break;
-	case IPPROTO_DCCP:
-		poff += sizeof(struct dccp_hdr);
-		break;
-	case IPPROTO_SCTP:
-		poff += sizeof(struct sctphdr);
-		break;
-	}
+	हाल IPPROTO_ICMP:
+		poff += माप(काष्ठा icmphdr);
+		अवरोध;
+	हाल IPPROTO_ICMPV6:
+		poff += माप(काष्ठा icmp6hdr);
+		अवरोध;
+	हाल IPPROTO_IGMP:
+		poff += माप(काष्ठा igmphdr);
+		अवरोध;
+	हाल IPPROTO_DCCP:
+		poff += माप(काष्ठा dccp_hdr);
+		अवरोध;
+	हाल IPPROTO_SCTP:
+		poff += माप(काष्ठा sctphdr);
+		अवरोध;
+	पूर्ण
 
-	return poff;
-}
+	वापस poff;
+पूर्ण
 
 /**
  * skb_get_poff - get the offset to the payload
  * @skb: sk_buff to get the payload offset from
  *
  * The function will get the offset to the payload as far as it could
- * be dissected.  The main user is currently BPF, so that we can dynamically
+ * be dissected.  The मुख्य user is currently BPF, so that we can dynamically
  * truncate packets without needing to push actual payload to the user
  * space and can analyze headers only, instead.
  */
-u32 skb_get_poff(const struct sk_buff *skb)
-{
-	struct flow_keys_basic keys;
+u32 skb_get_poff(स्थिर काष्ठा sk_buff *skb)
+अणु
+	काष्ठा flow_keys_basic keys;
 
-	if (!skb_flow_dissect_flow_keys_basic(NULL, skb, &keys,
-					      NULL, 0, 0, 0, 0))
-		return 0;
+	अगर (!skb_flow_dissect_flow_keys_basic(शून्य, skb, &keys,
+					      शून्य, 0, 0, 0, 0))
+		वापस 0;
 
-	return __skb_get_poff(skb, skb->data, &keys, skb_headlen(skb));
-}
+	वापस __skb_get_poff(skb, skb->data, &keys, skb_headlen(skb));
+पूर्ण
 
-__u32 __get_hash_from_flowi6(const struct flowi6 *fl6, struct flow_keys *keys)
-{
-	memset(keys, 0, sizeof(*keys));
+__u32 __get_hash_from_flowi6(स्थिर काष्ठा flowi6 *fl6, काष्ठा flow_keys *keys)
+अणु
+	स_रखो(keys, 0, माप(*keys));
 
-	memcpy(&keys->addrs.v6addrs.src, &fl6->saddr,
-	    sizeof(keys->addrs.v6addrs.src));
-	memcpy(&keys->addrs.v6addrs.dst, &fl6->daddr,
-	    sizeof(keys->addrs.v6addrs.dst));
+	स_नकल(&keys->addrs.v6addrs.src, &fl6->saddr,
+	    माप(keys->addrs.v6addrs.src));
+	स_नकल(&keys->addrs.v6addrs.dst, &fl6->daddr,
+	    माप(keys->addrs.v6addrs.dst));
 	keys->control.addr_type = FLOW_DISSECTOR_KEY_IPV6_ADDRS;
 	keys->ports.src = fl6->fl6_sport;
 	keys->ports.dst = fl6->fl6_dport;
 	keys->keyid.keyid = fl6->fl6_gre_key;
-	keys->tags.flow_label = (__force u32)flowi6_get_flowlabel(fl6);
+	keys->tags.flow_label = (__क्रमce u32)flowi6_get_flowlabel(fl6);
 	keys->basic.ip_proto = fl6->flowi6_proto;
 
-	return flow_hash_from_keys(keys);
-}
+	वापस flow_hash_from_keys(keys);
+पूर्ण
 EXPORT_SYMBOL(__get_hash_from_flowi6);
 
-static const struct flow_dissector_key flow_keys_dissector_keys[] = {
-	{
+अटल स्थिर काष्ठा flow_dissector_key flow_keys_dissector_keys[] = अणु
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_CONTROL,
-		.offset = offsetof(struct flow_keys, control),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, control),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_BASIC,
-		.offset = offsetof(struct flow_keys, basic),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, basic),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_IPV4_ADDRS,
-		.offset = offsetof(struct flow_keys, addrs.v4addrs),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, addrs.v4addrs),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_IPV6_ADDRS,
-		.offset = offsetof(struct flow_keys, addrs.v6addrs),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, addrs.v6addrs),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_TIPC,
-		.offset = offsetof(struct flow_keys, addrs.tipckey),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, addrs.tipckey),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_PORTS,
-		.offset = offsetof(struct flow_keys, ports),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, ports),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_VLAN,
-		.offset = offsetof(struct flow_keys, vlan),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, vlan),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_FLOW_LABEL,
-		.offset = offsetof(struct flow_keys, tags),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, tags),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_GRE_KEYID,
-		.offset = offsetof(struct flow_keys, keyid),
-	},
-};
+		.offset = दुरत्व(काष्ठा flow_keys, keyid),
+	पूर्ण,
+पूर्ण;
 
-static const struct flow_dissector_key flow_keys_dissector_symmetric_keys[] = {
-	{
+अटल स्थिर काष्ठा flow_dissector_key flow_keys_dissector_symmetric_keys[] = अणु
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_CONTROL,
-		.offset = offsetof(struct flow_keys, control),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, control),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_BASIC,
-		.offset = offsetof(struct flow_keys, basic),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, basic),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_IPV4_ADDRS,
-		.offset = offsetof(struct flow_keys, addrs.v4addrs),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, addrs.v4addrs),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_IPV6_ADDRS,
-		.offset = offsetof(struct flow_keys, addrs.v6addrs),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, addrs.v6addrs),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_PORTS,
-		.offset = offsetof(struct flow_keys, ports),
-	},
-};
+		.offset = दुरत्व(काष्ठा flow_keys, ports),
+	पूर्ण,
+पूर्ण;
 
-static const struct flow_dissector_key flow_keys_basic_dissector_keys[] = {
-	{
+अटल स्थिर काष्ठा flow_dissector_key flow_keys_basic_dissector_keys[] = अणु
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_CONTROL,
-		.offset = offsetof(struct flow_keys, control),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, control),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_BASIC,
-		.offset = offsetof(struct flow_keys, basic),
-	},
-};
+		.offset = दुरत्व(काष्ठा flow_keys, basic),
+	पूर्ण,
+पूर्ण;
 
-struct flow_dissector flow_keys_dissector __read_mostly;
+काष्ठा flow_dissector flow_keys_dissector __पढ़ो_mostly;
 EXPORT_SYMBOL(flow_keys_dissector);
 
-struct flow_dissector flow_keys_basic_dissector __read_mostly;
+काष्ठा flow_dissector flow_keys_basic_dissector __पढ़ो_mostly;
 EXPORT_SYMBOL(flow_keys_basic_dissector);
 
-static int __init init_default_flow_dissectors(void)
-{
+अटल पूर्णांक __init init_शेष_flow_dissectors(व्योम)
+अणु
 	skb_flow_dissector_init(&flow_keys_dissector,
 				flow_keys_dissector_keys,
 				ARRAY_SIZE(flow_keys_dissector_keys));
@@ -1827,6 +1828,6 @@ static int __init init_default_flow_dissectors(void)
 	skb_flow_dissector_init(&flow_keys_basic_dissector,
 				flow_keys_basic_dissector_keys,
 				ARRAY_SIZE(flow_keys_basic_dissector_keys));
-	return 0;
-}
-core_initcall(init_default_flow_dissectors);
+	वापस 0;
+पूर्ण
+core_initcall(init_शेष_flow_dissectors);

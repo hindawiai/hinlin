@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * ci_hdrc_pci.c - MIPS USB IP core family device controller
  *
@@ -7,85 +8,85 @@
  * Author: David Lopo
  */
 
-#include <linux/platform_device.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb/chipidea.h>
-#include <linux/usb/usb_phy_generic.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/chipidea.h>
+#समावेश <linux/usb/usb_phy_generic.h>
 
 /* driver name */
-#define UDC_DRIVER_NAME   "ci_hdrc_pci"
+#घोषणा UDC_DRIVER_NAME   "ci_hdrc_pci"
 
-struct ci_hdrc_pci {
-	struct platform_device	*ci;
-	struct platform_device	*phy;
-};
+काष्ठा ci_hdrc_pci अणु
+	काष्ठा platक्रमm_device	*ci;
+	काष्ठा platक्रमm_device	*phy;
+पूर्ण;
 
 /******************************************************************************
  * PCI block
  *****************************************************************************/
-static struct ci_hdrc_platform_data pci_platdata = {
+अटल काष्ठा ci_hdrc_platक्रमm_data pci_platdata = अणु
 	.name		= UDC_DRIVER_NAME,
 	.capoffset	= DEF_CAPOFFSET,
-};
+पूर्ण;
 
-static struct ci_hdrc_platform_data langwell_pci_platdata = {
+अटल काष्ठा ci_hdrc_platक्रमm_data langwell_pci_platdata = अणु
 	.name		= UDC_DRIVER_NAME,
 	.capoffset	= 0,
-};
+पूर्ण;
 
-static struct ci_hdrc_platform_data penwell_pci_platdata = {
+अटल काष्ठा ci_hdrc_platक्रमm_data penwell_pci_platdata = अणु
 	.name		= UDC_DRIVER_NAME,
 	.capoffset	= 0,
-	.power_budget	= 200,
-};
+	.घातer_budget	= 200,
+पूर्ण;
 
 /**
  * ci_hdrc_pci_probe: PCI probe
  * @pdev: USB device controller being probed
  * @id:   PCI hotplug ID connecting controller to UDC framework
  *
- * This function returns an error code
- * Allocates basic PCI resources for this USB device controller, and then
+ * This function वापसs an error code
+ * Allocates basic PCI resources क्रम this USB device controller, and then
  * invokes the udc_probe() method to start the UDC associated with it
  */
-static int ci_hdrc_pci_probe(struct pci_dev *pdev,
-				       const struct pci_device_id *id)
-{
-	struct ci_hdrc_platform_data *platdata = (void *)id->driver_data;
-	struct ci_hdrc_pci *ci;
-	struct resource res[3];
-	int retval = 0, nres = 2;
+अटल पूर्णांक ci_hdrc_pci_probe(काष्ठा pci_dev *pdev,
+				       स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा ci_hdrc_platक्रमm_data *platdata = (व्योम *)id->driver_data;
+	काष्ठा ci_hdrc_pci *ci;
+	काष्ठा resource res[3];
+	पूर्णांक retval = 0, nres = 2;
 
-	if (!platdata) {
+	अगर (!platdata) अणु
 		dev_err(&pdev->dev, "device doesn't provide driver data\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ci = devm_kzalloc(&pdev->dev, sizeof(*ci), GFP_KERNEL);
-	if (!ci)
-		return -ENOMEM;
+	ci = devm_kzalloc(&pdev->dev, माप(*ci), GFP_KERNEL);
+	अगर (!ci)
+		वापस -ENOMEM;
 
 	retval = pcim_enable_device(pdev);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	if (!pdev->irq) {
+	अगर (!pdev->irq) अणु
 		dev_err(&pdev->dev, "No IRQ, check BIOS/PCI setup!");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	pci_set_master(pdev);
 	pci_try_set_mwi(pdev);
 
-	/* register a nop PHY */
-	ci->phy = usb_phy_generic_register();
-	if (IS_ERR(ci->phy))
-		return PTR_ERR(ci->phy);
+	/* रेजिस्टर a nop PHY */
+	ci->phy = usb_phy_generic_रेजिस्टर();
+	अगर (IS_ERR(ci->phy))
+		वापस PTR_ERR(ci->phy);
 
-	memset(res, 0, sizeof(res));
+	स_रखो(res, 0, माप(res));
 	res[0].start	= pci_resource_start(pdev, 0);
 	res[0].end	= pci_resource_end(pdev, 0);
 	res[0].flags	= IORESOURCE_MEM;
@@ -93,74 +94,74 @@ static int ci_hdrc_pci_probe(struct pci_dev *pdev,
 	res[1].flags	= IORESOURCE_IRQ;
 
 	ci->ci = ci_hdrc_add_device(&pdev->dev, res, nres, platdata);
-	if (IS_ERR(ci->ci)) {
+	अगर (IS_ERR(ci->ci)) अणु
 		dev_err(&pdev->dev, "ci_hdrc_add_device failed!\n");
-		usb_phy_generic_unregister(ci->phy);
-		return PTR_ERR(ci->ci);
-	}
+		usb_phy_generic_unरेजिस्टर(ci->phy);
+		वापस PTR_ERR(ci->ci);
+	पूर्ण
 
 	pci_set_drvdata(pdev, ci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ci_hdrc_pci_remove: PCI remove
- * @pdev: USB Device Controller being removed
+ * ci_hdrc_pci_हटाओ: PCI हटाओ
+ * @pdev: USB Device Controller being हटाओd
  *
  * Reverses the effect of ci_hdrc_pci_probe(),
- * first invoking the udc_remove() and then releases
- * all PCI resources allocated for this USB device controller
+ * first invoking the udc_हटाओ() and then releases
+ * all PCI resources allocated क्रम this USB device controller
  */
-static void ci_hdrc_pci_remove(struct pci_dev *pdev)
-{
-	struct ci_hdrc_pci *ci = pci_get_drvdata(pdev);
+अटल व्योम ci_hdrc_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ci_hdrc_pci *ci = pci_get_drvdata(pdev);
 
-	ci_hdrc_remove_device(ci->ci);
-	usb_phy_generic_unregister(ci->phy);
-}
+	ci_hdrc_हटाओ_device(ci->ci);
+	usb_phy_generic_unरेजिस्टर(ci->phy);
+पूर्ण
 
 /*
  * PCI device table
- * PCI device structure
+ * PCI device काष्ठाure
  *
- * Check "pci.h" for details
+ * Check "pci.h" क्रम details
  *
  * Note: ehci-pci driver may try to probe the device first. You have to add an
  * ID to the bypass_pci_id_table in ehci-pci driver to prevent this.
  */
-static const struct pci_device_id ci_hdrc_pci_id_table[] = {
-	{
+अटल स्थिर काष्ठा pci_device_id ci_hdrc_pci_id_table[] = अणु
+	अणु
 		PCI_DEVICE(0x153F, 0x1004),
-		.driver_data = (kernel_ulong_t)&pci_platdata,
-	},
-	{
+		.driver_data = (kernel_uदीर्घ_t)&pci_platdata,
+	पूर्ण,
+	अणु
 		PCI_DEVICE(0x153F, 0x1006),
-		.driver_data = (kernel_ulong_t)&pci_platdata,
-	},
-	{
+		.driver_data = (kernel_uदीर्घ_t)&pci_platdata,
+	पूर्ण,
+	अणु
 		PCI_VDEVICE(INTEL, 0x0811),
-		.driver_data = (kernel_ulong_t)&langwell_pci_platdata,
-	},
-	{
+		.driver_data = (kernel_uदीर्घ_t)&langwell_pci_platdata,
+	पूर्ण,
+	अणु
 		PCI_VDEVICE(INTEL, 0x0829),
-		.driver_data = (kernel_ulong_t)&penwell_pci_platdata,
-	},
-	{
+		.driver_data = (kernel_uदीर्घ_t)&penwell_pci_platdata,
+	पूर्ण,
+	अणु
 		/* Intel Clovertrail */
 		PCI_VDEVICE(INTEL, 0xe006),
-		.driver_data = (kernel_ulong_t)&penwell_pci_platdata,
-	},
-	{ 0 } /* end: all zeroes */
-};
+		.driver_data = (kernel_uदीर्घ_t)&penwell_pci_platdata,
+	पूर्ण,
+	अणु 0 पूर्ण /* end: all zeroes */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, ci_hdrc_pci_id_table);
 
-static struct pci_driver ci_hdrc_pci_driver = {
+अटल काष्ठा pci_driver ci_hdrc_pci_driver = अणु
 	.name         =	UDC_DRIVER_NAME,
 	.id_table     =	ci_hdrc_pci_id_table,
 	.probe        =	ci_hdrc_pci_probe,
-	.remove       =	ci_hdrc_pci_remove,
-};
+	.हटाओ       =	ci_hdrc_pci_हटाओ,
+पूर्ण;
 
 module_pci_driver(ci_hdrc_pci_driver);
 

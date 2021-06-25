@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1995, 1999, 2000 Ralf Baechle
  * Copyright (C) 2000 Silicon Graphics, Inc.
  */
-#ifndef _ASM_STAT_H
-#define _ASM_STAT_H
+#अगर_अघोषित _ASM_STAT_H
+#घोषणा _ASM_STAT_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include <asm/sgidefs.h>
+#समावेश <यंत्र/sgidefs.h>
 
-#if (_MIPS_SIM == _MIPS_SIM_ABI32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
+#अगर (_MIPS_SIM == _MIPS_SIM_ABI32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
 
-struct stat {
-	unsigned	st_dev;
-	long		st_pad1[3];		/* Reserved for network id */
+काष्ठा stat अणु
+	अचिन्हित	st_dev;
+	दीर्घ		st_pad1[3];		/* Reserved क्रम network id */
 	ino_t		st_ino;
 	mode_t		st_mode;
 	__u32		st_nlink;
 	uid_t		st_uid;
 	gid_t		st_gid;
-	unsigned	st_rdev;
-	long		st_pad2[2];
-	long		st_size;
-	long		st_pad3;
+	अचिन्हित	st_rdev;
+	दीर्घ		st_pad2[2];
+	दीर्घ		st_size;
+	दीर्घ		st_pad3;
 	/*
-	 * Actually this should be timestruc_t st_atime, st_mtime and st_ctime
-	 * but we don't have it under Linux.
+	 * Actually this should be बारtruc_t st_aसमय, st_mसमय and st_स_समय
+	 * but we करोn't have it under Linux.
 	 */
-	long		st_atime;
-	long		st_atime_nsec;
-	long		st_mtime;
-	long		st_mtime_nsec;
-	long		st_ctime;
-	long		st_ctime_nsec;
-	long		st_blksize;
-	long		st_blocks;
-	long		st_pad4[14];
-};
+	दीर्घ		st_aसमय;
+	दीर्घ		st_aसमय_nsec;
+	दीर्घ		st_mसमय;
+	दीर्घ		st_mसमय_nsec;
+	दीर्घ		st_स_समय;
+	दीर्घ		st_स_समय_nsec;
+	दीर्घ		st_blksize;
+	दीर्घ		st_blocks;
+	दीर्घ		st_pad4[14];
+पूर्ण;
 
 /*
- * This matches struct stat64 in glibc2.1, hence the absolutely insane
+ * This matches काष्ठा stat64 in glibc2.1, hence the असलolutely insane
  * amounts of padding around dev_t's.  The memory layout is the same as of
- * struct stat of the 64-bit kernel.
+ * काष्ठा stat of the 64-bit kernel.
  */
 
-struct stat64 {
-	unsigned long	st_dev;
-	unsigned long	st_pad0[3];	/* Reserved for st_dev expansion  */
+काष्ठा stat64 अणु
+	अचिन्हित दीर्घ	st_dev;
+	अचिन्हित दीर्घ	st_pad0[3];	/* Reserved क्रम st_dev expansion  */
 
-	unsigned long long	st_ino;
+	अचिन्हित दीर्घ दीर्घ	st_ino;
 
 	mode_t		st_mode;
 	__u32		st_nlink;
@@ -61,40 +62,40 @@ struct stat64 {
 	uid_t		st_uid;
 	gid_t		st_gid;
 
-	unsigned long	st_rdev;
-	unsigned long	st_pad1[3];	/* Reserved for st_rdev expansion  */
+	अचिन्हित दीर्घ	st_rdev;
+	अचिन्हित दीर्घ	st_pad1[3];	/* Reserved क्रम st_rdev expansion  */
 
-	long long	st_size;
+	दीर्घ दीर्घ	st_size;
 
 	/*
-	 * Actually this should be timestruc_t st_atime, st_mtime and st_ctime
-	 * but we don't have it under Linux.
+	 * Actually this should be बारtruc_t st_aसमय, st_mसमय and st_स_समय
+	 * but we करोn't have it under Linux.
 	 */
-	long		st_atime;
-	unsigned long	st_atime_nsec;	/* Reserved for st_atime expansion  */
+	दीर्घ		st_aसमय;
+	अचिन्हित दीर्घ	st_aसमय_nsec;	/* Reserved क्रम st_aसमय expansion  */
 
-	long		st_mtime;
-	unsigned long	st_mtime_nsec;	/* Reserved for st_mtime expansion  */
+	दीर्घ		st_mसमय;
+	अचिन्हित दीर्घ	st_mसमय_nsec;	/* Reserved क्रम st_mसमय expansion  */
 
-	long		st_ctime;
-	unsigned long	st_ctime_nsec;	/* Reserved for st_ctime expansion  */
+	दीर्घ		st_स_समय;
+	अचिन्हित दीर्घ	st_स_समय_nsec;	/* Reserved क्रम st_स_समय expansion  */
 
-	unsigned long	st_blksize;
-	unsigned long	st_pad2;
+	अचिन्हित दीर्घ	st_blksize;
+	अचिन्हित दीर्घ	st_pad2;
 
-	long long	st_blocks;
-};
+	दीर्घ दीर्घ	st_blocks;
+पूर्ण;
 
-#endif /* _MIPS_SIM == _MIPS_SIM_ABI32 */
+#पूर्ण_अगर /* _MIPS_SIM == _MIPS_SIM_ABI32 */
 
-#if _MIPS_SIM == _MIPS_SIM_ABI64
+#अगर _MIPS_SIM == _MIPS_SIM_ABI64
 
-/* The memory layout is the same as of struct stat64 of the 32-bit kernel.  */
-struct stat {
-	unsigned int		st_dev;
-	unsigned int		st_pad0[3]; /* Reserved for st_dev expansion */
+/* The memory layout is the same as of काष्ठा stat64 of the 32-bit kernel.  */
+काष्ठा stat अणु
+	अचिन्हित पूर्णांक		st_dev;
+	अचिन्हित पूर्णांक		st_pad0[3]; /* Reserved क्रम st_dev expansion */
 
-	unsigned long		st_ino;
+	अचिन्हित दीर्घ		st_ino;
 
 	mode_t			st_mode;
 	__u32			st_nlink;
@@ -102,32 +103,32 @@ struct stat {
 	uid_t			st_uid;
 	gid_t			st_gid;
 
-	unsigned int		st_rdev;
-	unsigned int		st_pad1[3]; /* Reserved for st_rdev expansion */
+	अचिन्हित पूर्णांक		st_rdev;
+	अचिन्हित पूर्णांक		st_pad1[3]; /* Reserved क्रम st_rdev expansion */
 
-	long			st_size;
+	दीर्घ			st_size;
 
 	/*
-	 * Actually this should be timestruc_t st_atime, st_mtime and st_ctime
-	 * but we don't have it under Linux.
+	 * Actually this should be बारtruc_t st_aसमय, st_mसमय and st_स_समय
+	 * but we करोn't have it under Linux.
 	 */
-	unsigned int		st_atime;
-	unsigned int		st_atime_nsec;
+	अचिन्हित पूर्णांक		st_aसमय;
+	अचिन्हित पूर्णांक		st_aसमय_nsec;
 
-	unsigned int		st_mtime;
-	unsigned int		st_mtime_nsec;
+	अचिन्हित पूर्णांक		st_mसमय;
+	अचिन्हित पूर्णांक		st_mसमय_nsec;
 
-	unsigned int		st_ctime;
-	unsigned int		st_ctime_nsec;
+	अचिन्हित पूर्णांक		st_स_समय;
+	अचिन्हित पूर्णांक		st_स_समय_nsec;
 
-	unsigned int		st_blksize;
-	unsigned int		st_pad2;
+	अचिन्हित पूर्णांक		st_blksize;
+	अचिन्हित पूर्णांक		st_pad2;
 
-	unsigned long		st_blocks;
-};
+	अचिन्हित दीर्घ		st_blocks;
+पूर्ण;
 
-#endif /* _MIPS_SIM == _MIPS_SIM_ABI64 */
+#पूर्ण_अगर /* _MIPS_SIM == _MIPS_SIM_ABI64 */
 
-#define STAT_HAVE_NSEC 1
+#घोषणा STAT_HAVE_NSEC 1
 
-#endif /* _ASM_STAT_H */
+#पूर्ण_अगर /* _ASM_STAT_H */

@@ -1,563 +1,564 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _FS_CEPH_OSD_CLIENT_H
-#define _FS_CEPH_OSD_CLIENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _FS_CEPH_OSD_CLIENT_H
+#घोषणा _FS_CEPH_OSD_CLIENT_H
 
-#include <linux/bitrev.h>
-#include <linux/completion.h>
-#include <linux/kref.h>
-#include <linux/mempool.h>
-#include <linux/rbtree.h>
-#include <linux/refcount.h>
-#include <linux/ktime.h>
+#समावेश <linux/bitrev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/kसमय.स>
 
-#include <linux/ceph/types.h>
-#include <linux/ceph/osdmap.h>
-#include <linux/ceph/messenger.h>
-#include <linux/ceph/msgpool.h>
-#include <linux/ceph/auth.h>
-#include <linux/ceph/pagelist.h>
+#समावेश <linux/ceph/types.h>
+#समावेश <linux/ceph/osdmap.h>
+#समावेश <linux/ceph/messenger.h>
+#समावेश <linux/ceph/msgpool.h>
+#समावेश <linux/ceph/auth.h>
+#समावेश <linux/ceph/pagelist.h>
 
-struct ceph_msg;
-struct ceph_snap_context;
-struct ceph_osd_request;
-struct ceph_osd_client;
+काष्ठा ceph_msg;
+काष्ठा ceph_snap_context;
+काष्ठा ceph_osd_request;
+काष्ठा ceph_osd_client;
 
 /*
- * completion callback for async writepages
+ * completion callback क्रम async ग_लिखोpages
  */
-typedef void (*ceph_osdc_callback_t)(struct ceph_osd_request *);
+प्रकार व्योम (*ceph_osdc_callback_t)(काष्ठा ceph_osd_request *);
 
-#define CEPH_HOMELESS_OSD	-1
+#घोषणा CEPH_HOMELESS_OSD	-1
 
 /* a given osd we're communicating with */
-struct ceph_osd {
+काष्ठा ceph_osd अणु
 	refcount_t o_ref;
-	struct ceph_osd_client *o_osdc;
-	int o_osd;
-	int o_incarnation;
-	struct rb_node o_node;
-	struct ceph_connection o_con;
-	struct rb_root o_requests;
-	struct rb_root o_linger_requests;
-	struct rb_root o_backoff_mappings;
-	struct rb_root o_backoffs_by_id;
-	struct list_head o_osd_lru;
-	struct ceph_auth_handshake o_auth;
-	unsigned long lru_ttl;
-	struct list_head o_keepalive_item;
-	struct mutex lock;
-};
+	काष्ठा ceph_osd_client *o_osdc;
+	पूर्णांक o_osd;
+	पूर्णांक o_incarnation;
+	काष्ठा rb_node o_node;
+	काष्ठा ceph_connection o_con;
+	काष्ठा rb_root o_requests;
+	काष्ठा rb_root o_linger_requests;
+	काष्ठा rb_root o_backoff_mappings;
+	काष्ठा rb_root o_backoffs_by_id;
+	काष्ठा list_head o_osd_lru;
+	काष्ठा ceph_auth_handshake o_auth;
+	अचिन्हित दीर्घ lru_ttl;
+	काष्ठा list_head o_keepalive_item;
+	काष्ठा mutex lock;
+पूर्ण;
 
-#define CEPH_OSD_SLAB_OPS	2
-#define CEPH_OSD_MAX_OPS	16
+#घोषणा CEPH_OSD_SLAB_OPS	2
+#घोषणा CEPH_OSD_MAX_OPS	16
 
-enum ceph_osd_data_type {
+क्रमागत ceph_osd_data_type अणु
 	CEPH_OSD_DATA_TYPE_NONE = 0,
 	CEPH_OSD_DATA_TYPE_PAGES,
 	CEPH_OSD_DATA_TYPE_PAGELIST,
-#ifdef CONFIG_BLOCK
+#अगर_घोषित CONFIG_BLOCK
 	CEPH_OSD_DATA_TYPE_BIO,
-#endif /* CONFIG_BLOCK */
+#पूर्ण_अगर /* CONFIG_BLOCK */
 	CEPH_OSD_DATA_TYPE_BVECS,
-};
+पूर्ण;
 
-struct ceph_osd_data {
-	enum ceph_osd_data_type	type;
-	union {
-		struct {
-			struct page	**pages;
+काष्ठा ceph_osd_data अणु
+	क्रमागत ceph_osd_data_type	type;
+	जोड़ अणु
+		काष्ठा अणु
+			काष्ठा page	**pages;
 			u64		length;
 			u32		alignment;
 			bool		pages_from_pool;
 			bool		own_pages;
-		};
-		struct ceph_pagelist	*pagelist;
-#ifdef CONFIG_BLOCK
-		struct {
-			struct ceph_bio_iter	bio_pos;
+		पूर्ण;
+		काष्ठा ceph_pagelist	*pagelist;
+#अगर_घोषित CONFIG_BLOCK
+		काष्ठा अणु
+			काष्ठा ceph_bio_iter	bio_pos;
 			u32			bio_length;
-		};
-#endif /* CONFIG_BLOCK */
-		struct {
-			struct ceph_bvec_iter	bvec_pos;
+		पूर्ण;
+#पूर्ण_अगर /* CONFIG_BLOCK */
+		काष्ठा अणु
+			काष्ठा ceph_bvec_iter	bvec_pos;
 			u32			num_bvecs;
-		};
-	};
-};
+		पूर्ण;
+	पूर्ण;
+पूर्ण;
 
-struct ceph_osd_req_op {
+काष्ठा ceph_osd_req_op अणु
 	u16 op;           /* CEPH_OSD_OP_* */
 	u32 flags;        /* CEPH_OSD_OP_FLAG_* */
 	u32 indata_len;   /* request */
 	u32 outdata_len;  /* reply */
 	s32 rval;
 
-	union {
-		struct ceph_osd_data raw_data_in;
-		struct {
+	जोड़ अणु
+		काष्ठा ceph_osd_data raw_data_in;
+		काष्ठा अणु
 			u64 offset, length;
 			u64 truncate_size;
 			u32 truncate_seq;
-			struct ceph_osd_data osd_data;
-		} extent;
-		struct {
+			काष्ठा ceph_osd_data osd_data;
+		पूर्ण extent;
+		काष्ठा अणु
 			u32 name_len;
 			u32 value_len;
 			__u8 cmp_op;       /* CEPH_OSD_CMPXATTR_OP_* */
 			__u8 cmp_mode;     /* CEPH_OSD_CMPXATTR_MODE_* */
-			struct ceph_osd_data osd_data;
-		} xattr;
-		struct {
-			const char *class_name;
-			const char *method_name;
-			struct ceph_osd_data request_info;
-			struct ceph_osd_data request_data;
-			struct ceph_osd_data response_data;
+			काष्ठा ceph_osd_data osd_data;
+		पूर्ण xattr;
+		काष्ठा अणु
+			स्थिर अक्षर *class_name;
+			स्थिर अक्षर *method_name;
+			काष्ठा ceph_osd_data request_info;
+			काष्ठा ceph_osd_data request_data;
+			काष्ठा ceph_osd_data response_data;
 			__u8 class_len;
 			__u8 method_len;
 			u32 indata_len;
-		} cls;
-		struct {
+		पूर्ण cls;
+		काष्ठा अणु
 			u64 cookie;
 			__u8 op;           /* CEPH_OSD_WATCH_OP_ */
 			u32 gen;
-		} watch;
-		struct {
-			struct ceph_osd_data request_data;
-		} notify_ack;
-		struct {
+		पूर्ण watch;
+		काष्ठा अणु
+			काष्ठा ceph_osd_data request_data;
+		पूर्ण notअगरy_ack;
+		काष्ठा अणु
 			u64 cookie;
-			struct ceph_osd_data request_data;
-			struct ceph_osd_data response_data;
-		} notify;
-		struct {
-			struct ceph_osd_data response_data;
-		} list_watchers;
-		struct {
+			काष्ठा ceph_osd_data request_data;
+			काष्ठा ceph_osd_data response_data;
+		पूर्ण notअगरy;
+		काष्ठा अणु
+			काष्ठा ceph_osd_data response_data;
+		पूर्ण list_watchers;
+		काष्ठा अणु
 			u64 expected_object_size;
-			u64 expected_write_size;
+			u64 expected_ग_लिखो_size;
 			u32 flags;  /* CEPH_OSD_OP_ALLOC_HINT_FLAG_* */
-		} alloc_hint;
-		struct {
+		पूर्ण alloc_hपूर्णांक;
+		काष्ठा अणु
 			u64 snapid;
 			u64 src_version;
 			u8 flags;
 			u32 src_fadvise_flags;
-			struct ceph_osd_data osd_data;
-		} copy_from;
-	};
-};
+			काष्ठा ceph_osd_data osd_data;
+		पूर्ण copy_from;
+	पूर्ण;
+पूर्ण;
 
-struct ceph_osd_request_target {
-	struct ceph_object_id base_oid;
-	struct ceph_object_locator base_oloc;
-	struct ceph_object_id target_oid;
-	struct ceph_object_locator target_oloc;
+काष्ठा ceph_osd_request_target अणु
+	काष्ठा ceph_object_id base_oid;
+	काष्ठा ceph_object_locator base_oloc;
+	काष्ठा ceph_object_id target_oid;
+	काष्ठा ceph_object_locator target_oloc;
 
-	struct ceph_pg pgid;               /* last raw pg we mapped to */
-	struct ceph_spg spgid;             /* last actual spg we mapped to */
+	काष्ठा ceph_pg pgid;               /* last raw pg we mapped to */
+	काष्ठा ceph_spg spgid;             /* last actual spg we mapped to */
 	u32 pg_num;
 	u32 pg_num_mask;
-	struct ceph_osds acting;
-	struct ceph_osds up;
-	int size;
-	int min_size;
+	काष्ठा ceph_osds acting;
+	काष्ठा ceph_osds up;
+	पूर्णांक size;
+	पूर्णांक min_size;
 	bool sort_bitwise;
 	bool recovery_deletes;
 
-	unsigned int flags;                /* CEPH_OSD_FLAG_* */
+	अचिन्हित पूर्णांक flags;                /* CEPH_OSD_FLAG_* */
 	bool used_replica;
-	bool paused;
+	bool छोड़ोd;
 
 	u32 epoch;
-	u32 last_force_resend;
+	u32 last_क्रमce_resend;
 
-	int osd;
-};
+	पूर्णांक osd;
+पूर्ण;
 
 /* an in-flight request */
-struct ceph_osd_request {
-	u64             r_tid;              /* unique for this client */
-	struct rb_node  r_node;
-	struct rb_node  r_mc_node;          /* map check */
-	struct work_struct r_complete_work;
-	struct ceph_osd *r_osd;
+काष्ठा ceph_osd_request अणु
+	u64             r_tid;              /* unique क्रम this client */
+	काष्ठा rb_node  r_node;
+	काष्ठा rb_node  r_mc_node;          /* map check */
+	काष्ठा work_काष्ठा r_complete_work;
+	काष्ठा ceph_osd *r_osd;
 
-	struct ceph_osd_request_target r_t;
-#define r_base_oid	r_t.base_oid
-#define r_base_oloc	r_t.base_oloc
-#define r_flags		r_t.flags
+	काष्ठा ceph_osd_request_target r_t;
+#घोषणा r_base_oid	r_t.base_oid
+#घोषणा r_base_oloc	r_t.base_oloc
+#घोषणा r_flags		r_t.flags
 
-	struct ceph_msg  *r_request, *r_reply;
-	u32               r_sent;      /* >0 if r_request is sending/sent */
+	काष्ठा ceph_msg  *r_request, *r_reply;
+	u32               r_sent;      /* >0 अगर r_request is sending/sent */
 
 	/* request osd ops array  */
-	unsigned int		r_num_ops;
+	अचिन्हित पूर्णांक		r_num_ops;
 
-	int               r_result;
+	पूर्णांक               r_result;
 
-	struct ceph_osd_client *r_osdc;
-	struct kref       r_kref;
+	काष्ठा ceph_osd_client *r_osdc;
+	काष्ठा kref       r_kref;
 	bool              r_mempool;
-	struct completion r_completion;       /* private to osd_client.c */
+	काष्ठा completion r_completion;       /* निजी to osd_client.c */
 	ceph_osdc_callback_t r_callback;
 
-	struct inode *r_inode;         	      /* for use by callbacks */
-	struct list_head r_private_item;      /* ditto */
-	void *r_priv;			      /* ditto */
+	काष्ठा inode *r_inode;         	      /* क्रम use by callbacks */
+	काष्ठा list_head r_निजी_item;      /* ditto */
+	व्योम *r_priv;			      /* ditto */
 
 	/* set by submitter */
-	u64 r_snapid;                         /* for reads, CEPH_NOSNAP o/w */
-	struct ceph_snap_context *r_snapc;    /* for writes */
-	struct timespec64 r_mtime;            /* ditto */
+	u64 r_snapid;                         /* क्रम पढ़ोs, CEPH_NOSNAP o/w */
+	काष्ठा ceph_snap_context *r_snapc;    /* क्रम ग_लिखोs */
+	काष्ठा बारpec64 r_mसमय;            /* ditto */
 	u64 r_data_offset;                    /* ditto */
-	bool r_linger;                        /* don't resend on failure */
+	bool r_linger;                        /* करोn't resend on failure */
 
-	/* internal */
-	unsigned long r_stamp;                /* jiffies, send or check time */
-	unsigned long r_start_stamp;          /* jiffies */
-	ktime_t r_start_latency;              /* ktime_t */
-	ktime_t r_end_latency;                /* ktime_t */
-	int r_attempts;
+	/* पूर्णांकernal */
+	अचिन्हित दीर्घ r_stamp;                /* jअगरfies, send or check समय */
+	अचिन्हित दीर्घ r_start_stamp;          /* jअगरfies */
+	kसमय_प्रकार r_start_latency;              /* kसमय_प्रकार */
+	kसमय_प्रकार r_end_latency;                /* kसमय_प्रकार */
+	पूर्णांक r_attempts;
 	u32 r_map_dne_bound;
 
-	struct ceph_osd_req_op r_ops[];
-};
+	काष्ठा ceph_osd_req_op r_ops[];
+पूर्ण;
 
-struct ceph_request_redirect {
-	struct ceph_object_locator oloc;
-};
+काष्ठा ceph_request_redirect अणु
+	काष्ठा ceph_object_locator oloc;
+पूर्ण;
 
 /*
- * osd request identifier
+ * osd request identअगरier
  *
- * caller name + incarnation# + tid to unique identify this request
+ * caller name + incarnation# + tid to unique identअगरy this request
  */
-struct ceph_osd_reqid {
-	struct ceph_entity_name name;
+काष्ठा ceph_osd_reqid अणु
+	काष्ठा ceph_entity_name name;
 	__le64 tid;
 	__le32 inc;
-} __packed;
+पूर्ण __packed;
 
-struct ceph_blkin_trace_info {
+काष्ठा ceph_blkin_trace_info अणु
 	__le64 trace_id;
 	__le64 span_id;
 	__le64 parent_span_id;
-} __packed;
+पूर्ण __packed;
 
-typedef void (*rados_watchcb2_t)(void *arg, u64 notify_id, u64 cookie,
-				 u64 notifier_id, void *data, size_t data_len);
-typedef void (*rados_watcherrcb_t)(void *arg, u64 cookie, int err);
+प्रकार व्योम (*raकरोs_watchcb2_t)(व्योम *arg, u64 notअगरy_id, u64 cookie,
+				 u64 notअगरier_id, व्योम *data, माप_प्रकार data_len);
+प्रकार व्योम (*raकरोs_watcherrcb_t)(व्योम *arg, u64 cookie, पूर्णांक err);
 
-struct ceph_osd_linger_request {
-	struct ceph_osd_client *osdc;
+काष्ठा ceph_osd_linger_request अणु
+	काष्ठा ceph_osd_client *osdc;
 	u64 linger_id;
 	bool committed;
-	bool is_watch;                  /* watch or notify */
+	bool is_watch;                  /* watch or notअगरy */
 
-	struct ceph_osd *osd;
-	struct ceph_osd_request *reg_req;
-	struct ceph_osd_request *ping_req;
-	unsigned long ping_sent;
-	unsigned long watch_valid_thru;
-	struct list_head pending_lworks;
+	काष्ठा ceph_osd *osd;
+	काष्ठा ceph_osd_request *reg_req;
+	काष्ठा ceph_osd_request *ping_req;
+	अचिन्हित दीर्घ ping_sent;
+	अचिन्हित दीर्घ watch_valid_thru;
+	काष्ठा list_head pending_lworks;
 
-	struct ceph_osd_request_target t;
+	काष्ठा ceph_osd_request_target t;
 	u32 map_dne_bound;
 
-	struct timespec64 mtime;
+	काष्ठा बारpec64 mसमय;
 
-	struct kref kref;
-	struct mutex lock;
-	struct rb_node node;            /* osd */
-	struct rb_node osdc_node;       /* osdc */
-	struct rb_node mc_node;         /* map check */
-	struct list_head scan_item;
+	काष्ठा kref kref;
+	काष्ठा mutex lock;
+	काष्ठा rb_node node;            /* osd */
+	काष्ठा rb_node osdc_node;       /* osdc */
+	काष्ठा rb_node mc_node;         /* map check */
+	काष्ठा list_head scan_item;
 
-	struct completion reg_commit_wait;
-	struct completion notify_finish_wait;
-	int reg_commit_error;
-	int notify_finish_error;
-	int last_error;
+	काष्ठा completion reg_commit_रुको;
+	काष्ठा completion notअगरy_finish_रुको;
+	पूर्णांक reg_commit_error;
+	पूर्णांक notअगरy_finish_error;
+	पूर्णांक last_error;
 
-	u32 register_gen;
-	u64 notify_id;
+	u32 रेजिस्टर_gen;
+	u64 notअगरy_id;
 
-	rados_watchcb2_t wcb;
-	rados_watcherrcb_t errcb;
-	void *data;
+	raकरोs_watchcb2_t wcb;
+	raकरोs_watcherrcb_t errcb;
+	व्योम *data;
 
-	struct page ***preply_pages;
-	size_t *preply_len;
-};
+	काष्ठा page ***preply_pages;
+	माप_प्रकार *preply_len;
+पूर्ण;
 
-struct ceph_watch_item {
-	struct ceph_entity_name name;
+काष्ठा ceph_watch_item अणु
+	काष्ठा ceph_entity_name name;
 	u64 cookie;
-	struct ceph_entity_addr addr;
-};
+	काष्ठा ceph_entity_addr addr;
+पूर्ण;
 
-struct ceph_spg_mapping {
-	struct rb_node node;
-	struct ceph_spg spgid;
+काष्ठा ceph_spg_mapping अणु
+	काष्ठा rb_node node;
+	काष्ठा ceph_spg spgid;
 
-	struct rb_root backoffs;
-};
+	काष्ठा rb_root backoffs;
+पूर्ण;
 
-struct ceph_hobject_id {
-	void *key;
-	size_t key_len;
-	void *oid;
-	size_t oid_len;
+काष्ठा ceph_hobject_id अणु
+	व्योम *key;
+	माप_प्रकार key_len;
+	व्योम *oid;
+	माप_प्रकार oid_len;
 	u64 snapid;
 	u32 hash;
 	u8 is_max;
-	void *nspace;
-	size_t nspace_len;
+	व्योम *nspace;
+	माप_प्रकार nspace_len;
 	s64 pool;
 
 	/* cache */
 	u32 hash_reverse_bits;
-};
+पूर्ण;
 
-static inline void ceph_hoid_build_hash_cache(struct ceph_hobject_id *hoid)
-{
+अटल अंतरभूत व्योम ceph_hoid_build_hash_cache(काष्ठा ceph_hobject_id *hoid)
+अणु
 	hoid->hash_reverse_bits = bitrev32(hoid->hash);
-}
+पूर्ण
 
 /*
  * PG-wide backoff: [begin, end)
  * per-object backoff: begin == end
  */
-struct ceph_osd_backoff {
-	struct rb_node spg_node;
-	struct rb_node id_node;
+काष्ठा ceph_osd_backoff अणु
+	काष्ठा rb_node spg_node;
+	काष्ठा rb_node id_node;
 
-	struct ceph_spg spgid;
+	काष्ठा ceph_spg spgid;
 	u64 id;
-	struct ceph_hobject_id *begin;
-	struct ceph_hobject_id *end;
-};
+	काष्ठा ceph_hobject_id *begin;
+	काष्ठा ceph_hobject_id *end;
+पूर्ण;
 
-#define CEPH_LINGER_ID_START	0xffff000000000000ULL
+#घोषणा CEPH_LINGER_ID_START	0xffff000000000000ULL
 
-struct ceph_osd_client {
-	struct ceph_client     *client;
+काष्ठा ceph_osd_client अणु
+	काष्ठा ceph_client     *client;
 
-	struct ceph_osdmap     *osdmap;       /* current map */
-	struct rw_semaphore    lock;
+	काष्ठा ceph_osdmap     *osdmap;       /* current map */
+	काष्ठा rw_semaphore    lock;
 
-	struct rb_root         osds;          /* osds */
-	struct list_head       osd_lru;       /* idle osds */
+	काष्ठा rb_root         osds;          /* osds */
+	काष्ठा list_head       osd_lru;       /* idle osds */
 	spinlock_t             osd_lru_lock;
 	u32		       epoch_barrier;
-	struct ceph_osd        homeless_osd;
+	काष्ठा ceph_osd        homeless_osd;
 	atomic64_t             last_tid;      /* tid of last request */
 	u64                    last_linger_id;
-	struct rb_root         linger_requests; /* lingering requests */
-	struct rb_root         map_checks;
-	struct rb_root         linger_map_checks;
+	काष्ठा rb_root         linger_requests; /* lingering requests */
+	काष्ठा rb_root         map_checks;
+	काष्ठा rb_root         linger_map_checks;
 	atomic_t               num_requests;
 	atomic_t               num_homeless;
-	int                    abort_err;
-	struct delayed_work    timeout_work;
-	struct delayed_work    osds_timeout_work;
-#ifdef CONFIG_DEBUG_FS
-	struct dentry 	       *debugfs_file;
-#endif
+	पूर्णांक                    पात_err;
+	काष्ठा delayed_work    समयout_work;
+	काष्ठा delayed_work    osds_समयout_work;
+#अगर_घोषित CONFIG_DEBUG_FS
+	काष्ठा dentry 	       *debugfs_file;
+#पूर्ण_अगर
 
 	mempool_t              *req_mempool;
 
-	struct ceph_msgpool	msgpool_op;
-	struct ceph_msgpool	msgpool_op_reply;
+	काष्ठा ceph_msgpool	msgpool_op;
+	काष्ठा ceph_msgpool	msgpool_op_reply;
 
-	struct workqueue_struct	*notify_wq;
-	struct workqueue_struct	*completion_wq;
-};
+	काष्ठा workqueue_काष्ठा	*notअगरy_wq;
+	काष्ठा workqueue_काष्ठा	*completion_wq;
+पूर्ण;
 
-static inline bool ceph_osdmap_flag(struct ceph_osd_client *osdc, int flag)
-{
-	return osdc->osdmap->flags & flag;
-}
+अटल अंतरभूत bool ceph_osdmap_flag(काष्ठा ceph_osd_client *osdc, पूर्णांक flag)
+अणु
+	वापस osdc->osdmap->flags & flag;
+पूर्ण
 
-extern int ceph_osdc_setup(void);
-extern void ceph_osdc_cleanup(void);
+बाह्य पूर्णांक ceph_osdc_setup(व्योम);
+बाह्य व्योम ceph_osdc_cleanup(व्योम);
 
-extern int ceph_osdc_init(struct ceph_osd_client *osdc,
-			  struct ceph_client *client);
-extern void ceph_osdc_stop(struct ceph_osd_client *osdc);
-extern void ceph_osdc_reopen_osds(struct ceph_osd_client *osdc);
+बाह्य पूर्णांक ceph_osdc_init(काष्ठा ceph_osd_client *osdc,
+			  काष्ठा ceph_client *client);
+बाह्य व्योम ceph_osdc_stop(काष्ठा ceph_osd_client *osdc);
+बाह्य व्योम ceph_osdc_reखोलो_osds(काष्ठा ceph_osd_client *osdc);
 
-extern void ceph_osdc_handle_reply(struct ceph_osd_client *osdc,
-				   struct ceph_msg *msg);
-extern void ceph_osdc_handle_map(struct ceph_osd_client *osdc,
-				 struct ceph_msg *msg);
-void ceph_osdc_update_epoch_barrier(struct ceph_osd_client *osdc, u32 eb);
-void ceph_osdc_abort_requests(struct ceph_osd_client *osdc, int err);
-void ceph_osdc_clear_abort_err(struct ceph_osd_client *osdc);
+बाह्य व्योम ceph_osdc_handle_reply(काष्ठा ceph_osd_client *osdc,
+				   काष्ठा ceph_msg *msg);
+बाह्य व्योम ceph_osdc_handle_map(काष्ठा ceph_osd_client *osdc,
+				 काष्ठा ceph_msg *msg);
+व्योम ceph_osdc_update_epoch_barrier(काष्ठा ceph_osd_client *osdc, u32 eb);
+व्योम ceph_osdc_पात_requests(काष्ठा ceph_osd_client *osdc, पूर्णांक err);
+व्योम ceph_osdc_clear_पात_err(काष्ठा ceph_osd_client *osdc);
 
-#define osd_req_op_data(oreq, whch, typ, fld)				\
-({									\
-	struct ceph_osd_request *__oreq = (oreq);			\
-	unsigned int __whch = (whch);					\
+#घोषणा osd_req_op_data(oreq, whch, typ, fld)				\
+(अणु									\
+	काष्ठा ceph_osd_request *__oreq = (oreq);			\
+	अचिन्हित पूर्णांक __whch = (whch);					\
 	BUG_ON(__whch >= __oreq->r_num_ops);				\
 	&__oreq->r_ops[__whch].typ.fld;					\
-})
+पूर्ण)
 
-struct ceph_osd_req_op *osd_req_op_init(struct ceph_osd_request *osd_req,
-			    unsigned int which, u16 opcode, u32 flags);
+काष्ठा ceph_osd_req_op *osd_req_op_init(काष्ठा ceph_osd_request *osd_req,
+			    अचिन्हित पूर्णांक which, u16 opcode, u32 flags);
 
-extern void osd_req_op_raw_data_in_pages(struct ceph_osd_request *,
-					unsigned int which,
-					struct page **pages, u64 length,
+बाह्य व्योम osd_req_op_raw_data_in_pages(काष्ठा ceph_osd_request *,
+					अचिन्हित पूर्णांक which,
+					काष्ठा page **pages, u64 length,
 					u32 alignment, bool pages_from_pool,
 					bool own_pages);
 
-extern void osd_req_op_extent_init(struct ceph_osd_request *osd_req,
-					unsigned int which, u16 opcode,
+बाह्य व्योम osd_req_op_extent_init(काष्ठा ceph_osd_request *osd_req,
+					अचिन्हित पूर्णांक which, u16 opcode,
 					u64 offset, u64 length,
 					u64 truncate_size, u32 truncate_seq);
-extern void osd_req_op_extent_update(struct ceph_osd_request *osd_req,
-					unsigned int which, u64 length);
-extern void osd_req_op_extent_dup_last(struct ceph_osd_request *osd_req,
-				       unsigned int which, u64 offset_inc);
+बाह्य व्योम osd_req_op_extent_update(काष्ठा ceph_osd_request *osd_req,
+					अचिन्हित पूर्णांक which, u64 length);
+बाह्य व्योम osd_req_op_extent_dup_last(काष्ठा ceph_osd_request *osd_req,
+				       अचिन्हित पूर्णांक which, u64 offset_inc);
 
-extern struct ceph_osd_data *osd_req_op_extent_osd_data(
-					struct ceph_osd_request *osd_req,
-					unsigned int which);
+बाह्य काष्ठा ceph_osd_data *osd_req_op_extent_osd_data(
+					काष्ठा ceph_osd_request *osd_req,
+					अचिन्हित पूर्णांक which);
 
-extern void osd_req_op_extent_osd_data_pages(struct ceph_osd_request *,
-					unsigned int which,
-					struct page **pages, u64 length,
+बाह्य व्योम osd_req_op_extent_osd_data_pages(काष्ठा ceph_osd_request *,
+					अचिन्हित पूर्णांक which,
+					काष्ठा page **pages, u64 length,
 					u32 alignment, bool pages_from_pool,
 					bool own_pages);
-extern void osd_req_op_extent_osd_data_pagelist(struct ceph_osd_request *,
-					unsigned int which,
-					struct ceph_pagelist *pagelist);
-#ifdef CONFIG_BLOCK
-void osd_req_op_extent_osd_data_bio(struct ceph_osd_request *osd_req,
-				    unsigned int which,
-				    struct ceph_bio_iter *bio_pos,
+बाह्य व्योम osd_req_op_extent_osd_data_pagelist(काष्ठा ceph_osd_request *,
+					अचिन्हित पूर्णांक which,
+					काष्ठा ceph_pagelist *pagelist);
+#अगर_घोषित CONFIG_BLOCK
+व्योम osd_req_op_extent_osd_data_bio(काष्ठा ceph_osd_request *osd_req,
+				    अचिन्हित पूर्णांक which,
+				    काष्ठा ceph_bio_iter *bio_pos,
 				    u32 bio_length);
-#endif /* CONFIG_BLOCK */
-void osd_req_op_extent_osd_data_bvecs(struct ceph_osd_request *osd_req,
-				      unsigned int which,
-				      struct bio_vec *bvecs, u32 num_bvecs,
+#पूर्ण_अगर /* CONFIG_BLOCK */
+व्योम osd_req_op_extent_osd_data_bvecs(काष्ठा ceph_osd_request *osd_req,
+				      अचिन्हित पूर्णांक which,
+				      काष्ठा bio_vec *bvecs, u32 num_bvecs,
 				      u32 bytes);
-void osd_req_op_extent_osd_data_bvec_pos(struct ceph_osd_request *osd_req,
-					 unsigned int which,
-					 struct ceph_bvec_iter *bvec_pos);
+व्योम osd_req_op_extent_osd_data_bvec_pos(काष्ठा ceph_osd_request *osd_req,
+					 अचिन्हित पूर्णांक which,
+					 काष्ठा ceph_bvec_iter *bvec_pos);
 
-extern void osd_req_op_cls_request_data_pagelist(struct ceph_osd_request *,
-					unsigned int which,
-					struct ceph_pagelist *pagelist);
-extern void osd_req_op_cls_request_data_pages(struct ceph_osd_request *,
-					unsigned int which,
-					struct page **pages, u64 length,
+बाह्य व्योम osd_req_op_cls_request_data_pagelist(काष्ठा ceph_osd_request *,
+					अचिन्हित पूर्णांक which,
+					काष्ठा ceph_pagelist *pagelist);
+बाह्य व्योम osd_req_op_cls_request_data_pages(काष्ठा ceph_osd_request *,
+					अचिन्हित पूर्णांक which,
+					काष्ठा page **pages, u64 length,
 					u32 alignment, bool pages_from_pool,
 					bool own_pages);
-void osd_req_op_cls_request_data_bvecs(struct ceph_osd_request *osd_req,
-				       unsigned int which,
-				       struct bio_vec *bvecs, u32 num_bvecs,
+व्योम osd_req_op_cls_request_data_bvecs(काष्ठा ceph_osd_request *osd_req,
+				       अचिन्हित पूर्णांक which,
+				       काष्ठा bio_vec *bvecs, u32 num_bvecs,
 				       u32 bytes);
-extern void osd_req_op_cls_response_data_pages(struct ceph_osd_request *,
-					unsigned int which,
-					struct page **pages, u64 length,
+बाह्य व्योम osd_req_op_cls_response_data_pages(काष्ठा ceph_osd_request *,
+					अचिन्हित पूर्णांक which,
+					काष्ठा page **pages, u64 length,
 					u32 alignment, bool pages_from_pool,
 					bool own_pages);
-int osd_req_op_cls_init(struct ceph_osd_request *osd_req, unsigned int which,
-			const char *class, const char *method);
-extern int osd_req_op_xattr_init(struct ceph_osd_request *osd_req, unsigned int which,
-				 u16 opcode, const char *name, const void *value,
-				 size_t size, u8 cmp_op, u8 cmp_mode);
-extern void osd_req_op_alloc_hint_init(struct ceph_osd_request *osd_req,
-				       unsigned int which,
+पूर्णांक osd_req_op_cls_init(काष्ठा ceph_osd_request *osd_req, अचिन्हित पूर्णांक which,
+			स्थिर अक्षर *class, स्थिर अक्षर *method);
+बाह्य पूर्णांक osd_req_op_xattr_init(काष्ठा ceph_osd_request *osd_req, अचिन्हित पूर्णांक which,
+				 u16 opcode, स्थिर अक्षर *name, स्थिर व्योम *value,
+				 माप_प्रकार size, u8 cmp_op, u8 cmp_mode);
+बाह्य व्योम osd_req_op_alloc_hपूर्णांक_init(काष्ठा ceph_osd_request *osd_req,
+				       अचिन्हित पूर्णांक which,
 				       u64 expected_object_size,
-				       u64 expected_write_size,
+				       u64 expected_ग_लिखो_size,
 				       u32 flags);
 
-extern struct ceph_osd_request *ceph_osdc_alloc_request(struct ceph_osd_client *osdc,
-					       struct ceph_snap_context *snapc,
-					       unsigned int num_ops,
+बाह्य काष्ठा ceph_osd_request *ceph_osdc_alloc_request(काष्ठा ceph_osd_client *osdc,
+					       काष्ठा ceph_snap_context *snapc,
+					       अचिन्हित पूर्णांक num_ops,
 					       bool use_mempool,
 					       gfp_t gfp_flags);
-int ceph_osdc_alloc_messages(struct ceph_osd_request *req, gfp_t gfp);
+पूर्णांक ceph_osdc_alloc_messages(काष्ठा ceph_osd_request *req, gfp_t gfp);
 
-extern struct ceph_osd_request *ceph_osdc_new_request(struct ceph_osd_client *,
-				      struct ceph_file_layout *layout,
-				      struct ceph_vino vino,
+बाह्य काष्ठा ceph_osd_request *ceph_osdc_new_request(काष्ठा ceph_osd_client *,
+				      काष्ठा ceph_file_layout *layout,
+				      काष्ठा ceph_vino vino,
 				      u64 offset, u64 *len,
-				      unsigned int which, int num_ops,
-				      int opcode, int flags,
-				      struct ceph_snap_context *snapc,
+				      अचिन्हित पूर्णांक which, पूर्णांक num_ops,
+				      पूर्णांक opcode, पूर्णांक flags,
+				      काष्ठा ceph_snap_context *snapc,
 				      u32 truncate_seq, u64 truncate_size,
 				      bool use_mempool);
 
-extern void ceph_osdc_get_request(struct ceph_osd_request *req);
-extern void ceph_osdc_put_request(struct ceph_osd_request *req);
+बाह्य व्योम ceph_osdc_get_request(काष्ठा ceph_osd_request *req);
+बाह्य व्योम ceph_osdc_put_request(काष्ठा ceph_osd_request *req);
 
-extern int ceph_osdc_start_request(struct ceph_osd_client *osdc,
-				   struct ceph_osd_request *req,
+बाह्य पूर्णांक ceph_osdc_start_request(काष्ठा ceph_osd_client *osdc,
+				   काष्ठा ceph_osd_request *req,
 				   bool nofail);
-extern void ceph_osdc_cancel_request(struct ceph_osd_request *req);
-extern int ceph_osdc_wait_request(struct ceph_osd_client *osdc,
-				  struct ceph_osd_request *req);
-extern void ceph_osdc_sync(struct ceph_osd_client *osdc);
+बाह्य व्योम ceph_osdc_cancel_request(काष्ठा ceph_osd_request *req);
+बाह्य पूर्णांक ceph_osdc_रुको_request(काष्ठा ceph_osd_client *osdc,
+				  काष्ठा ceph_osd_request *req);
+बाह्य व्योम ceph_osdc_sync(काष्ठा ceph_osd_client *osdc);
 
-extern void ceph_osdc_flush_notifies(struct ceph_osd_client *osdc);
-void ceph_osdc_maybe_request_map(struct ceph_osd_client *osdc);
+बाह्य व्योम ceph_osdc_flush_notअगरies(काष्ठा ceph_osd_client *osdc);
+व्योम ceph_osdc_maybe_request_map(काष्ठा ceph_osd_client *osdc);
 
-int ceph_osdc_call(struct ceph_osd_client *osdc,
-		   struct ceph_object_id *oid,
-		   struct ceph_object_locator *oloc,
-		   const char *class, const char *method,
-		   unsigned int flags,
-		   struct page *req_page, size_t req_len,
-		   struct page **resp_pages, size_t *resp_len);
+पूर्णांक ceph_osdc_call(काष्ठा ceph_osd_client *osdc,
+		   काष्ठा ceph_object_id *oid,
+		   काष्ठा ceph_object_locator *oloc,
+		   स्थिर अक्षर *class, स्थिर अक्षर *method,
+		   अचिन्हित पूर्णांक flags,
+		   काष्ठा page *req_page, माप_प्रकार req_len,
+		   काष्ठा page **resp_pages, माप_प्रकार *resp_len);
 
-int ceph_osdc_copy_from(struct ceph_osd_client *osdc,
+पूर्णांक ceph_osdc_copy_from(काष्ठा ceph_osd_client *osdc,
 			u64 src_snapid, u64 src_version,
-			struct ceph_object_id *src_oid,
-			struct ceph_object_locator *src_oloc,
+			काष्ठा ceph_object_id *src_oid,
+			काष्ठा ceph_object_locator *src_oloc,
 			u32 src_fadvise_flags,
-			struct ceph_object_id *dst_oid,
-			struct ceph_object_locator *dst_oloc,
+			काष्ठा ceph_object_id *dst_oid,
+			काष्ठा ceph_object_locator *dst_oloc,
 			u32 dst_fadvise_flags,
 			u32 truncate_seq, u64 truncate_size,
 			u8 copy_from_flags);
 
-/* watch/notify */
-struct ceph_osd_linger_request *
-ceph_osdc_watch(struct ceph_osd_client *osdc,
-		struct ceph_object_id *oid,
-		struct ceph_object_locator *oloc,
-		rados_watchcb2_t wcb,
-		rados_watcherrcb_t errcb,
-		void *data);
-int ceph_osdc_unwatch(struct ceph_osd_client *osdc,
-		      struct ceph_osd_linger_request *lreq);
+/* watch/notअगरy */
+काष्ठा ceph_osd_linger_request *
+ceph_osdc_watch(काष्ठा ceph_osd_client *osdc,
+		काष्ठा ceph_object_id *oid,
+		काष्ठा ceph_object_locator *oloc,
+		raकरोs_watchcb2_t wcb,
+		raकरोs_watcherrcb_t errcb,
+		व्योम *data);
+पूर्णांक ceph_osdc_unwatch(काष्ठा ceph_osd_client *osdc,
+		      काष्ठा ceph_osd_linger_request *lreq);
 
-int ceph_osdc_notify_ack(struct ceph_osd_client *osdc,
-			 struct ceph_object_id *oid,
-			 struct ceph_object_locator *oloc,
-			 u64 notify_id,
+पूर्णांक ceph_osdc_notअगरy_ack(काष्ठा ceph_osd_client *osdc,
+			 काष्ठा ceph_object_id *oid,
+			 काष्ठा ceph_object_locator *oloc,
+			 u64 notअगरy_id,
 			 u64 cookie,
-			 void *payload,
+			 व्योम *payload,
 			 u32 payload_len);
-int ceph_osdc_notify(struct ceph_osd_client *osdc,
-		     struct ceph_object_id *oid,
-		     struct ceph_object_locator *oloc,
-		     void *payload,
+पूर्णांक ceph_osdc_notअगरy(काष्ठा ceph_osd_client *osdc,
+		     काष्ठा ceph_object_id *oid,
+		     काष्ठा ceph_object_locator *oloc,
+		     व्योम *payload,
 		     u32 payload_len,
-		     u32 timeout,
-		     struct page ***preply_pages,
-		     size_t *preply_len);
-int ceph_osdc_watch_check(struct ceph_osd_client *osdc,
-			  struct ceph_osd_linger_request *lreq);
-int ceph_osdc_list_watchers(struct ceph_osd_client *osdc,
-			    struct ceph_object_id *oid,
-			    struct ceph_object_locator *oloc,
-			    struct ceph_watch_item **watchers,
+		     u32 समयout,
+		     काष्ठा page ***preply_pages,
+		     माप_प्रकार *preply_len);
+पूर्णांक ceph_osdc_watch_check(काष्ठा ceph_osd_client *osdc,
+			  काष्ठा ceph_osd_linger_request *lreq);
+पूर्णांक ceph_osdc_list_watchers(काष्ठा ceph_osd_client *osdc,
+			    काष्ठा ceph_object_id *oid,
+			    काष्ठा ceph_object_locator *oloc,
+			    काष्ठा ceph_watch_item **watchers,
 			    u32 *num_watchers);
-#endif
+#पूर्ण_अगर
 

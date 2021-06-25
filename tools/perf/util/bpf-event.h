@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_BPF_EVENT_H
-#define __PERF_BPF_EVENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_BPF_EVENT_H
+#घोषणा __PERF_BPF_EVENT_H
 
-#include <linux/compiler.h>
-#include <linux/rbtree.h>
-#include <pthread.h>
-#include <api/fd/array.h>
-#include <stdio.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/rbtree.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <api/fd/array.h>
+#समावेश <मानकपन.स>
 
-struct bpf_prog_info;
-struct machine;
-union perf_event;
-struct perf_env;
-struct perf_sample;
-struct perf_session;
-struct record_opts;
-struct evlist;
-struct target;
+काष्ठा bpf_prog_info;
+काष्ठा machine;
+जोड़ perf_event;
+काष्ठा perf_env;
+काष्ठा perf_sample;
+काष्ठा perf_session;
+काष्ठा record_opts;
+काष्ठा evlist;
+काष्ठा target;
 
-struct bpf_prog_info_node {
-	struct bpf_prog_info_linear	*info_linear;
-	struct rb_node			rb_node;
-};
+काष्ठा bpf_prog_info_node अणु
+	काष्ठा bpf_prog_info_linear	*info_linear;
+	काष्ठा rb_node			rb_node;
+पूर्ण;
 
-struct btf_node {
-	struct rb_node	rb_node;
+काष्ठा btf_node अणु
+	काष्ठा rb_node	rb_node;
 	u32		id;
 	u32		data_size;
-	char		data[];
-};
+	अक्षर		data[];
+पूर्ण;
 
-#ifdef HAVE_LIBBPF_SUPPORT
-int machine__process_bpf(struct machine *machine, union perf_event *event,
-			 struct perf_sample *sample);
-int evlist__add_bpf_sb_event(struct evlist *evlist, struct perf_env *env);
-void bpf_event__print_bpf_prog_info(struct bpf_prog_info *info,
-				    struct perf_env *env,
-				    FILE *fp);
-#else
-static inline int machine__process_bpf(struct machine *machine __maybe_unused,
-				       union perf_event *event __maybe_unused,
-				       struct perf_sample *sample __maybe_unused)
-{
-	return 0;
-}
+#अगर_घोषित HAVE_LIBBPF_SUPPORT
+पूर्णांक machine__process_bpf(काष्ठा machine *machine, जोड़ perf_event *event,
+			 काष्ठा perf_sample *sample);
+पूर्णांक evlist__add_bpf_sb_event(काष्ठा evlist *evlist, काष्ठा perf_env *env);
+व्योम bpf_event__prपूर्णांक_bpf_prog_info(काष्ठा bpf_prog_info *info,
+				    काष्ठा perf_env *env,
+				    खाता *fp);
+#अन्यथा
+अटल अंतरभूत पूर्णांक machine__process_bpf(काष्ठा machine *machine __maybe_unused,
+				       जोड़ perf_event *event __maybe_unused,
+				       काष्ठा perf_sample *sample __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int evlist__add_bpf_sb_event(struct evlist *evlist __maybe_unused,
-					   struct perf_env *env __maybe_unused)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक evlist__add_bpf_sb_event(काष्ठा evlist *evlist __maybe_unused,
+					   काष्ठा perf_env *env __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void bpf_event__print_bpf_prog_info(struct bpf_prog_info *info __maybe_unused,
-						  struct perf_env *env __maybe_unused,
-						  FILE *fp __maybe_unused)
-{
+अटल अंतरभूत व्योम bpf_event__prपूर्णांक_bpf_prog_info(काष्ठा bpf_prog_info *info __maybe_unused,
+						  काष्ठा perf_env *env __maybe_unused,
+						  खाता *fp __maybe_unused)
+अणु
 
-}
-#endif // HAVE_LIBBPF_SUPPORT
-#endif
+पूर्ण
+#पूर्ण_अगर // HAVE_LIBBPF_SUPPORT
+#पूर्ण_अगर

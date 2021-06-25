@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Allwinner H6 R_PIO pin controller driver
  *
@@ -6,21 +7,21 @@
  *
  * Based on pinctrl-sun6i-a31-r.c, which is:
  *   Copyright (C) 2014 Boris Brezillon
- *   Boris Brezillon <boris.brezillon@free-electrons.com>
+ *   Boris Brezillon <boris.brezillon@मुक्त-electrons.com>
  *   Copyright (C) 2014 Maxime Ripard
- *   Maxime Ripard <maxime.ripard@free-electrons.com>
+ *   Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/reset.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/reset.h>
 
-#include "pinctrl-sunxi.h"
+#समावेश "pinctrl-sunxi.h"
 
-static const struct sunxi_desc_pin sun50i_h6_r_pins[] = {
+अटल स्थिर काष्ठा sunxi_desc_pin sun50i_h6_r_pins[] = अणु
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(L, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -100,31 +101,31 @@ static const struct sunxi_desc_pin sun50i_h6_r_pins[] = {
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 1, 4)),	/* PM_EINT4 */
-};
+पूर्ण;
 
-static const struct sunxi_pinctrl_desc sun50i_h6_r_pinctrl_data = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc sun50i_h6_r_pinctrl_data = अणु
 	.pins = sun50i_h6_r_pins,
 	.npins = ARRAY_SIZE(sun50i_h6_r_pins),
 	.pin_base = PL_BASE,
 	.irq_banks = 2,
-};
+पूर्ण;
 
-static int sun50i_h6_r_pinctrl_probe(struct platform_device *pdev)
-{
-	return sunxi_pinctrl_init(pdev,
+अटल पूर्णांक sun50i_h6_r_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस sunxi_pinctrl_init(pdev,
 				  &sun50i_h6_r_pinctrl_data);
-}
+पूर्ण
 
-static const struct of_device_id sun50i_h6_r_pinctrl_match[] = {
-	{ .compatible = "allwinner,sun50i-h6-r-pinctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id sun50i_h6_r_pinctrl_match[] = अणु
+	अणु .compatible = "allwinner,sun50i-h6-r-pinctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver sun50i_h6_r_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver sun50i_h6_r_pinctrl_driver = अणु
 	.probe	= sun50i_h6_r_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "sun50i-h6-r-pinctrl",
 		.of_match_table	= sun50i_h6_r_pinctrl_match,
-	},
-};
-builtin_platform_driver(sun50i_h6_r_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(sun50i_h6_r_pinctrl_driver);

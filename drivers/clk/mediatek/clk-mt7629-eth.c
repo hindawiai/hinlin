@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018 MediaTek Inc.
  * Author: Wenzhen Yu <Wenzhen Yu@mediatek.com>
  *	   Ryder Lee <ryder.lee@mediatek.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "clk-mtk.h"
-#include "clk-gate.h"
+#समावेश "clk-mtk.h"
+#समावेश "clk-gate.h"
 
-#include <dt-bindings/clock/mt7629-clk.h>
+#समावेश <dt-bindings/घड़ी/mt7629-clk.h>
 
-#define GATE_ETH(_id, _name, _parent, _shift) {		\
+#घोषणा GATE_ETH(_id, _name, _parent, _shअगरt) अणु		\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_name = _parent,			\
 		.regs = &eth_cg_regs,			\
-		.shift = _shift,			\
+		.shअगरt = _shअगरt,			\
 		.ops = &mtk_clk_gate_ops_no_setclr_inv,	\
-	}
+	पूर्ण
 
-static const struct mtk_gate_regs eth_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs eth_cg_regs = अणु
 	.set_ofs = 0x30,
 	.clr_ofs = 0x30,
 	.sta_ofs = 0x30,
-};
+पूर्ण;
 
-static const struct mtk_gate eth_clks[] = {
+अटल स्थिर काष्ठा mtk_gate eth_clks[] = अणु
 	GATE_ETH(CLK_ETH_FE_EN, "eth_fe_en", "eth2pll", 6),
 	GATE_ETH(CLK_ETH_GP2_EN, "eth_gp2_en", "txclk_src_pre", 7),
 	GATE_ETH(CLK_ETH_GP1_EN, "eth_gp1_en", "txclk_src_pre", 8),
 	GATE_ETH(CLK_ETH_GP0_EN, "eth_gp0_en", "txclk_src_pre", 9),
 	GATE_ETH(CLK_ETH_ESW_EN, "eth_esw_en", "eth_500m", 16),
-};
+पूर्ण;
 
-static const struct mtk_gate_regs sgmii_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs sgmii_cg_regs = अणु
 	.set_ofs = 0xE4,
 	.clr_ofs = 0xE4,
 	.sta_ofs = 0xE4,
-};
+पूर्ण;
 
-#define GATE_SGMII(_id, _name, _parent, _shift) {	\
+#घोषणा GATE_SGMII(_id, _name, _parent, _shअगरt) अणु	\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_name = _parent,			\
 		.regs = &sgmii_cg_regs,			\
-		.shift = _shift,			\
+		.shअगरt = _shअगरt,			\
 		.ops = &mtk_clk_gate_ops_no_setclr_inv,	\
-	}
+	पूर्ण
 
-static const struct mtk_gate sgmii_clks[2][4] = {
-	{
+अटल स्थिर काष्ठा mtk_gate sgmii_clks[2][4] = अणु
+	अणु
 		GATE_SGMII(CLK_SGMII_TX_EN, "sgmii_tx_en",
 			   "ssusb_tx250m", 2),
 		GATE_SGMII(CLK_SGMII_RX_EN, "sgmii_rx_en",
@@ -64,7 +65,7 @@ static const struct mtk_gate sgmii_clks[2][4] = {
 			   "ssusb_cdr_ref", 4),
 		GATE_SGMII(CLK_SGMII_CDR_FB, "sgmii_cdr_fb",
 			   "ssusb_cdr_fb", 5),
-	}, {
+	पूर्ण, अणु
 		GATE_SGMII(CLK_SGMII_TX_EN, "sgmii_tx_en1",
 			   "ssusb_tx250m", 2),
 		GATE_SGMII(CLK_SGMII_RX_EN, "sgmii_rx_en1",
@@ -73,87 +74,87 @@ static const struct mtk_gate sgmii_clks[2][4] = {
 			   "ssusb_cdr_ref", 4),
 		GATE_SGMII(CLK_SGMII_CDR_FB, "sgmii_cdr_fb1",
 			   "ssusb_cdr_fb", 5),
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int clk_mt7629_ethsys_init(struct platform_device *pdev)
-{
-	struct clk_onecell_data *clk_data;
-	struct device_node *node = pdev->dev.of_node;
-	int r;
+अटल पूर्णांक clk_mt7629_ethsys_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_onecell_data *clk_data;
+	काष्ठा device_node *node = pdev->dev.of_node;
+	पूर्णांक r;
 
 	clk_data = mtk_alloc_clk_data(CLK_ETH_NR_CLK);
 
-	mtk_clk_register_gates(node, eth_clks, CLK_ETH_NR_CLK, clk_data);
+	mtk_clk_रेजिस्टर_gates(node, eth_clks, CLK_ETH_NR_CLK, clk_data);
 
 	r = of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-	if (r)
+	अगर (r)
 		dev_err(&pdev->dev,
 			"could not register clock provider: %s: %d\n",
 			pdev->name, r);
 
-	mtk_register_reset_controller(node, 1, 0x34);
+	mtk_रेजिस्टर_reset_controller(node, 1, 0x34);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int clk_mt7629_sgmiisys_init(struct platform_device *pdev)
-{
-	struct clk_onecell_data *clk_data;
-	struct device_node *node = pdev->dev.of_node;
-	static int id;
-	int r;
+अटल पूर्णांक clk_mt7629_sgmiisys_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_onecell_data *clk_data;
+	काष्ठा device_node *node = pdev->dev.of_node;
+	अटल पूर्णांक id;
+	पूर्णांक r;
 
 	clk_data = mtk_alloc_clk_data(CLK_SGMII_NR_CLK);
 
-	mtk_clk_register_gates(node, sgmii_clks[id++], CLK_SGMII_NR_CLK,
+	mtk_clk_रेजिस्टर_gates(node, sgmii_clks[id++], CLK_SGMII_NR_CLK,
 			       clk_data);
 
 	r = of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-	if (r)
+	अगर (r)
 		dev_err(&pdev->dev,
 			"could not register clock provider: %s: %d\n",
 			pdev->name, r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static const struct of_device_id of_match_clk_mt7629_eth[] = {
-	{
+अटल स्थिर काष्ठा of_device_id of_match_clk_mt7629_eth[] = अणु
+	अणु
 		.compatible = "mediatek,mt7629-ethsys",
 		.data = clk_mt7629_ethsys_init,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt7629-sgmiisys",
 		.data = clk_mt7629_sgmiisys_init,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int clk_mt7629_eth_probe(struct platform_device *pdev)
-{
-	int (*clk_init)(struct platform_device *);
-	int r;
+अटल पूर्णांक clk_mt7629_eth_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक (*clk_init)(काष्ठा platक्रमm_device *);
+	पूर्णांक r;
 
 	clk_init = of_device_get_match_data(&pdev->dev);
-	if (!clk_init)
-		return -EINVAL;
+	अगर (!clk_init)
+		वापस -EINVAL;
 
 	r = clk_init(pdev);
-	if (r)
+	अगर (r)
 		dev_err(&pdev->dev,
 			"could not register clock provider: %s: %d\n",
 			pdev->name, r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static struct platform_driver clk_mt7629_eth_drv = {
+अटल काष्ठा platक्रमm_driver clk_mt7629_eth_drv = अणु
 	.probe = clk_mt7629_eth_probe,
-	.driver = {
+	.driver = अणु
 		.name = "clk-mt7629-eth",
 		.of_match_table = of_match_clk_mt7629_eth,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-builtin_platform_driver(clk_mt7629_eth_drv);
+builtin_platक्रमm_driver(clk_mt7629_eth_drv);

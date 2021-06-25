@@ -1,110 +1,111 @@
+<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright © 2007 Nokia Corporation. All rights reserved.
- * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 2007 Nokia Corporation. All rights reserved.
+ * Copyright तऊ 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
- * Created by Richard Purdie <rpurdie@openedhand.com>
+ * Created by Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
  *
- * For licensing information, see the file 'LICENCE' in this directory.
+ * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/vmalloc.h>
-#include <linux/init.h>
-#include <linux/lzo.h>
-#include "compr.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/init.h>
+#समावेश <linux/lzo.h>
+#समावेश "compr.h"
 
-static void *lzo_mem;
-static void *lzo_compress_buf;
-static DEFINE_MUTEX(deflate_mutex);	/* for lzo_mem and lzo_compress_buf */
+अटल व्योम *lzo_mem;
+अटल व्योम *lzo_compress_buf;
+अटल DEFINE_MUTEX(deflate_mutex);	/* क्रम lzo_mem and lzo_compress_buf */
 
-static void free_workspace(void)
-{
-	vfree(lzo_mem);
-	vfree(lzo_compress_buf);
-}
+अटल व्योम मुक्त_workspace(व्योम)
+अणु
+	vमुक्त(lzo_mem);
+	vमुक्त(lzo_compress_buf);
+पूर्ण
 
-static int __init alloc_workspace(void)
-{
-	lzo_mem = vmalloc(LZO1X_MEM_COMPRESS);
-	lzo_compress_buf = vmalloc(lzo1x_worst_compress(PAGE_SIZE));
+अटल पूर्णांक __init alloc_workspace(व्योम)
+अणु
+	lzo_mem = vदो_स्मृति(LZO1X_MEM_COMPRESS);
+	lzo_compress_buf = vदो_स्मृति(lzo1x_worst_compress(PAGE_SIZE));
 
-	if (!lzo_mem || !lzo_compress_buf) {
-		free_workspace();
-		return -ENOMEM;
-	}
+	अगर (!lzo_mem || !lzo_compress_buf) अणु
+		मुक्त_workspace();
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jffs2_lzo_compress(unsigned char *data_in, unsigned char *cpage_out,
-			      uint32_t *sourcelen, uint32_t *dstlen)
-{
-	size_t compress_size;
-	int ret;
+अटल पूर्णांक jffs2_lzo_compress(अचिन्हित अक्षर *data_in, अचिन्हित अक्षर *cpage_out,
+			      uपूर्णांक32_t *sourcelen, uपूर्णांक32_t *dstlen)
+अणु
+	माप_प्रकार compress_size;
+	पूर्णांक ret;
 
 	mutex_lock(&deflate_mutex);
 	ret = lzo1x_1_compress(data_in, *sourcelen, lzo_compress_buf, &compress_size, lzo_mem);
-	if (ret != LZO_E_OK)
-		goto fail;
+	अगर (ret != LZO_E_OK)
+		जाओ fail;
 
-	if (compress_size > *dstlen)
-		goto fail;
+	अगर (compress_size > *dstlen)
+		जाओ fail;
 
-	memcpy(cpage_out, lzo_compress_buf, compress_size);
+	स_नकल(cpage_out, lzo_compress_buf, compress_size);
 	mutex_unlock(&deflate_mutex);
 
 	*dstlen = compress_size;
-	return 0;
+	वापस 0;
 
  fail:
 	mutex_unlock(&deflate_mutex);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int jffs2_lzo_decompress(unsigned char *data_in, unsigned char *cpage_out,
-				 uint32_t srclen, uint32_t destlen)
-{
-	size_t dl = destlen;
-	int ret;
+अटल पूर्णांक jffs2_lzo_decompress(अचिन्हित अक्षर *data_in, अचिन्हित अक्षर *cpage_out,
+				 uपूर्णांक32_t srclen, uपूर्णांक32_t destlen)
+अणु
+	माप_प्रकार dl = destlen;
+	पूर्णांक ret;
 
 	ret = lzo1x_decompress_safe(data_in, srclen, cpage_out, &dl);
 
-	if (ret != LZO_E_OK || dl != destlen)
-		return -1;
+	अगर (ret != LZO_E_OK || dl != destlen)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct jffs2_compressor jffs2_lzo_comp = {
+अटल काष्ठा jffs2_compressor jffs2_lzo_comp = अणु
 	.priority = JFFS2_LZO_PRIORITY,
 	.name = "lzo",
 	.compr = JFFS2_COMPR_LZO,
 	.compress = &jffs2_lzo_compress,
 	.decompress = &jffs2_lzo_decompress,
 	.disabled = 0,
-};
+पूर्ण;
 
-int __init jffs2_lzo_init(void)
-{
-	int ret;
+पूर्णांक __init jffs2_lzo_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = alloc_workspace();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = jffs2_register_compressor(&jffs2_lzo_comp);
-	if (ret)
-		free_workspace();
+	ret = jffs2_रेजिस्टर_compressor(&jffs2_lzo_comp);
+	अगर (ret)
+		मुक्त_workspace();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void jffs2_lzo_exit(void)
-{
-	jffs2_unregister_compressor(&jffs2_lzo_comp);
-	free_workspace();
-}
+व्योम jffs2_lzo_निकास(व्योम)
+अणु
+	jffs2_unरेजिस्टर_compressor(&jffs2_lzo_comp);
+	मुक्त_workspace();
+पूर्ण

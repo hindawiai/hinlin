@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Generic VM initialization for x86-64 NUMA setups.
- * Copyright 2002,2003 Andi Kleen, SuSE Labs.
+ * Generic VM initialization क्रम x86-64 NUMA setups.
+ * Copyright 2002,2003 Andi Kleen, SuSE Lअसल.
  */
-#include <linux/memblock.h>
+#समावेश <linux/memblock.h>
 
-#include "numa_internal.h"
+#समावेश "numa_internal.h"
 
-void __init initmem_init(void)
-{
+व्योम __init iniपंचांगem_init(व्योम)
+अणु
 	x86_numa_init();
-}
+पूर्ण

@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * rbtx4939-flash (based on physmap.c)
  *
- * This is a simplified physmap driver with map_init callback function.
+ * This is a simplअगरied physmap driver with map_init callback function.
  *
  * Copyright (C) 2009 Atsushi Nemoto <anemo@mba.ocn.ne.jp>
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/map.h>
-#include <linux/mtd/partitions.h>
-#include <asm/txx9/rbtx4939.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/map.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <यंत्र/txx9/rbtx4939.h>
 
-struct rbtx4939_flash_info {
-	struct mtd_info *mtd;
-	struct map_info map;
-};
+काष्ठा rbtx4939_flash_info अणु
+	काष्ठा mtd_info *mtd;
+	काष्ठा map_info map;
+पूर्ण;
 
-static int rbtx4939_flash_remove(struct platform_device *dev)
-{
-	struct rbtx4939_flash_info *info;
+अटल पूर्णांक rbtx4939_flash_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा rbtx4939_flash_info *info;
 
-	info = platform_get_drvdata(dev);
-	if (!info)
-		return 0;
+	info = platक्रमm_get_drvdata(dev);
+	अगर (!info)
+		वापस 0;
 
-	if (info->mtd) {
-		mtd_device_unregister(info->mtd);
+	अगर (info->mtd) अणु
+		mtd_device_unरेजिस्टर(info->mtd);
 		map_destroy(info->mtd);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const char * const rom_probe_types[] = {
-	"cfi_probe", "jedec_probe", NULL };
+अटल स्थिर अक्षर * स्थिर rom_probe_types[] = अणु
+	"cfi_probe", "jedec_probe", शून्य पूर्ण;
 
-static int rbtx4939_flash_probe(struct platform_device *dev)
-{
-	struct rbtx4939_flash_data *pdata;
-	struct rbtx4939_flash_info *info;
-	struct resource *res;
-	const char * const *probe_type;
-	int err = 0;
-	unsigned long size;
+अटल पूर्णांक rbtx4939_flash_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा rbtx4939_flash_data *pdata;
+	काष्ठा rbtx4939_flash_info *info;
+	काष्ठा resource *res;
+	स्थिर अक्षर * स्थिर *probe_type;
+	पूर्णांक err = 0;
+	अचिन्हित दीर्घ size;
 
 	pdata = dev_get_platdata(&dev->dev);
-	if (!pdata)
-		return -ENODEV;
+	अगर (!pdata)
+		वापस -ENODEV;
 
-	res = platform_get_resource(dev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
-	info = devm_kzalloc(&dev->dev, sizeof(struct rbtx4939_flash_info),
+	res = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
+	info = devm_kzalloc(&dev->dev, माप(काष्ठा rbtx4939_flash_info),
 			    GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	अगर (!info)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(dev, info);
+	platक्रमm_set_drvdata(dev, info);
 
 	size = resource_size(res);
 	pr_notice("rbtx4939 platform flash device: %pR\n", res);
 
-	if (!devm_request_mem_region(&dev->dev, res->start, size,
+	अगर (!devm_request_mem_region(&dev->dev, res->start, size,
 				     dev_name(&dev->dev)))
-		return -EBUSY;
+		वापस -EBUSY;
 
 	info->map.name = dev_name(&dev->dev);
 	info->map.phys = res->start;
@@ -77,56 +78,56 @@ static int rbtx4939_flash_probe(struct platform_device *dev)
 	info->map.bankwidth = pdata->width;
 
 	info->map.virt = devm_ioremap(&dev->dev, info->map.phys, size);
-	if (!info->map.virt)
-		return -EBUSY;
+	अगर (!info->map.virt)
+		वापस -EBUSY;
 
-	if (pdata->map_init)
+	अगर (pdata->map_init)
 		(*pdata->map_init)(&info->map);
-	else
+	अन्यथा
 		simple_map_init(&info->map);
 
 	probe_type = rom_probe_types;
-	for (; !info->mtd && *probe_type; probe_type++)
-		info->mtd = do_map_probe(*probe_type, &info->map);
-	if (!info->mtd) {
+	क्रम (; !info->mtd && *probe_type; probe_type++)
+		info->mtd = करो_map_probe(*probe_type, &info->map);
+	अगर (!info->mtd) अणु
 		dev_err(&dev->dev, "map_probe failed\n");
 		err = -ENXIO;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	info->mtd->dev.parent = &dev->dev;
-	err = mtd_device_register(info->mtd, pdata->parts, pdata->nr_parts);
+	err = mtd_device_रेजिस्टर(info->mtd, pdata->parts, pdata->nr_parts);
 
-	if (err)
-		goto err_out;
-	return 0;
+	अगर (err)
+		जाओ err_out;
+	वापस 0;
 
 err_out:
-	rbtx4939_flash_remove(dev);
-	return err;
-}
+	rbtx4939_flash_हटाओ(dev);
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_PM
-static void rbtx4939_flash_shutdown(struct platform_device *dev)
-{
-	struct rbtx4939_flash_info *info = platform_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल व्योम rbtx4939_flash_shutकरोwn(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा rbtx4939_flash_info *info = platक्रमm_get_drvdata(dev);
 
-	if (mtd_suspend(info->mtd) == 0)
+	अगर (mtd_suspend(info->mtd) == 0)
 		mtd_resume(info->mtd);
-}
-#else
-#define rbtx4939_flash_shutdown NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा rbtx4939_flash_shutकरोwn शून्य
+#पूर्ण_अगर
 
-static struct platform_driver rbtx4939_flash_driver = {
+अटल काष्ठा platक्रमm_driver rbtx4939_flash_driver = अणु
 	.probe		= rbtx4939_flash_probe,
-	.remove		= rbtx4939_flash_remove,
-	.shutdown	= rbtx4939_flash_shutdown,
-	.driver		= {
+	.हटाओ		= rbtx4939_flash_हटाओ,
+	.shutकरोwn	= rbtx4939_flash_shutकरोwn,
+	.driver		= अणु
 		.name	= "rbtx4939-flash",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(rbtx4939_flash_driver);
+module_platक्रमm_driver(rbtx4939_flash_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("RBTX4939 MTD map driver");

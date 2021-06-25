@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Fileserver-directed operation handling.
  *
  * Copyright (C) 2020 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include "internal.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश "internal.h"
 
-static atomic_t afs_operation_debug_counter;
+अटल atomic_t afs_operation_debug_counter;
 
 /*
  * Create an operation against a volume.
  */
-struct afs_operation *afs_alloc_operation(struct key *key, struct afs_volume *volume)
-{
-	struct afs_operation *op;
+काष्ठा afs_operation *afs_alloc_operation(काष्ठा key *key, काष्ठा afs_volume *volume)
+अणु
+	काष्ठा afs_operation *op;
 
 	_enter("");
 
-	op = kzalloc(sizeof(*op), GFP_KERNEL);
-	if (!op)
-		return ERR_PTR(-ENOMEM);
+	op = kzalloc(माप(*op), GFP_KERNEL);
+	अगर (!op)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (!key) {
+	अगर (!key) अणु
 		key = afs_request_key(volume->cell);
-		if (IS_ERR(key)) {
-			kfree(op);
-			return ERR_CAST(key);
-		}
-	} else {
+		अगर (IS_ERR(key)) अणु
+			kमुक्त(op);
+			वापस ERR_CAST(key);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		key_get(key);
-	}
+	पूर्ण
 
 	op->key		= key;
 	op->volume	= afs_get_volume(volume, afs_volume_trace_get_new_op);
 	op->net		= volume->cell->net;
-	op->cb_v_break	= volume->cb_v_break;
-	op->debug_id	= atomic_inc_return(&afs_operation_debug_counter);
+	op->cb_v_अवरोध	= volume->cb_v_अवरोध;
+	op->debug_id	= atomic_inc_वापस(&afs_operation_debug_counter);
 	op->error	= -EDESTADDRREQ;
-	op->ac.error	= SHRT_MAX;
+	op->ac.error	= लघु_उच्च;
 
 	_leave(" = [op=%08x]", op->debug_id);
-	return op;
-}
+	वापस op;
+पूर्ण
 
 /*
  * Lock the vnode(s) being operated upon.
  */
-static bool afs_get_io_locks(struct afs_operation *op)
-{
-	struct afs_vnode *vnode = op->file[0].vnode;
-	struct afs_vnode *vnode2 = op->file[1].vnode;
+अटल bool afs_get_io_locks(काष्ठा afs_operation *op)
+अणु
+	काष्ठा afs_vnode *vnode = op->file[0].vnode;
+	काष्ठा afs_vnode *vnode2 = op->file[1].vnode;
 
 	_enter("");
 
-	if (op->flags & AFS_OPERATION_UNINTR) {
+	अगर (op->flags & AFS_OPERATION_UNINTR) अणु
 		mutex_lock(&vnode->io_lock);
 		op->flags |= AFS_OPERATION_LOCK_0;
 		_leave(" = t [1]");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (!vnode2 || !op->file[1].need_io_lock || vnode == vnode2)
-		vnode2 = NULL;
+	अगर (!vnode2 || !op->file[1].need_io_lock || vnode == vnode2)
+		vnode2 = शून्य;
 
-	if (vnode2 > vnode)
+	अगर (vnode2 > vnode)
 		swap(vnode, vnode2);
 
-	if (mutex_lock_interruptible(&vnode->io_lock) < 0) {
+	अगर (mutex_lock_पूर्णांकerruptible(&vnode->io_lock) < 0) अणु
 		op->error = -ERESTARTSYS;
 		op->flags |= AFS_OPERATION_STOP;
 		_leave(" = f [I 0]");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	op->flags |= AFS_OPERATION_LOCK_0;
 
-	if (vnode2) {
-		if (mutex_lock_interruptible_nested(&vnode2->io_lock, 1) < 0) {
+	अगर (vnode2) अणु
+		अगर (mutex_lock_पूर्णांकerruptible_nested(&vnode2->io_lock, 1) < 0) अणु
 			op->error = -ERESTARTSYS;
 			op->flags |= AFS_OPERATION_STOP;
 			mutex_unlock(&vnode->io_lock);
 			op->flags &= ~AFS_OPERATION_LOCK_0;
 			_leave(" = f [I 1]");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 		op->flags |= AFS_OPERATION_LOCK_1;
-	}
+	पूर्ण
 
 	_leave(" = t [2]");
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void afs_drop_io_locks(struct afs_operation *op)
-{
-	struct afs_vnode *vnode = op->file[0].vnode;
-	struct afs_vnode *vnode2 = op->file[1].vnode;
+अटल व्योम afs_drop_io_locks(काष्ठा afs_operation *op)
+अणु
+	काष्ठा afs_vnode *vnode = op->file[0].vnode;
+	काष्ठा afs_vnode *vnode2 = op->file[1].vnode;
 
 	_enter("");
 
-	if (op->flags & AFS_OPERATION_LOCK_1)
+	अगर (op->flags & AFS_OPERATION_LOCK_1)
 		mutex_unlock(&vnode2->io_lock);
-	if (op->flags & AFS_OPERATION_LOCK_0)
+	अगर (op->flags & AFS_OPERATION_LOCK_0)
 		mutex_unlock(&vnode->io_lock);
-}
+पूर्ण
 
-static void afs_prepare_vnode(struct afs_operation *op, struct afs_vnode_param *vp,
-			      unsigned int index)
-{
-	struct afs_vnode *vnode = vp->vnode;
+अटल व्योम afs_prepare_vnode(काष्ठा afs_operation *op, काष्ठा afs_vnode_param *vp,
+			      अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा afs_vnode *vnode = vp->vnode;
 
-	if (vnode) {
+	अगर (vnode) अणु
 		vp->fid			= vnode->fid;
-		vp->dv_before		= vnode->status.data_version;
-		vp->cb_break_before	= afs_calc_vnode_cb_break(vnode);
-		if (vnode->lock_state != AFS_VNODE_LOCK_NONE)
+		vp->dv_beक्रमe		= vnode->status.data_version;
+		vp->cb_अवरोध_beक्रमe	= afs_calc_vnode_cb_अवरोध(vnode);
+		अगर (vnode->lock_state != AFS_VNODE_LOCK_NONE)
 			op->flags	|= AFS_OPERATION_CUR_ONLY;
-		if (vp->modification)
+		अगर (vp->modअगरication)
 			set_bit(AFS_VNODE_MODIFYING, &vnode->flags);
-	}
+	पूर्ण
 
-	if (vp->fid.vnode)
+	अगर (vp->fid.vnode)
 		_debug("PREP[%u] {%llx:%llu.%u}",
 		       index, vp->fid.vid, vp->fid.vnode, vp->fid.unique);
-}
+पूर्ण
 
 /*
  * Begin an operation on the fileserver.
@@ -133,33 +134,33 @@ static void afs_prepare_vnode(struct afs_operation *op, struct afs_vnode_param *
  * Fileserver operations are serialised on the server by vnode, so we serialise
  * them here also using the io_lock.
  */
-bool afs_begin_vnode_operation(struct afs_operation *op)
-{
-	struct afs_vnode *vnode = op->file[0].vnode;
+bool afs_begin_vnode_operation(काष्ठा afs_operation *op)
+अणु
+	काष्ठा afs_vnode *vnode = op->file[0].vnode;
 
 	ASSERT(vnode);
 
 	_enter("");
 
-	if (op->file[0].need_io_lock)
-		if (!afs_get_io_locks(op))
-			return false;
+	अगर (op->file[0].need_io_lock)
+		अगर (!afs_get_io_locks(op))
+			वापस false;
 
 	afs_prepare_vnode(op, &op->file[0], 0);
 	afs_prepare_vnode(op, &op->file[1], 1);
-	op->cb_v_break = op->volume->cb_v_break;
+	op->cb_v_अवरोध = op->volume->cb_v_अवरोध;
 	_leave(" = true");
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Tidy up a filesystem cursor and unlock the vnode.
+ * Tidy up a fileप्रणाली cursor and unlock the vnode.
  */
-static void afs_end_vnode_operation(struct afs_operation *op)
-{
+अटल व्योम afs_end_vnode_operation(काष्ठा afs_operation *op)
+अणु
 	_enter("");
 
-	if (op->error == -EDESTADDRREQ ||
+	अगर (op->error == -EDESTADDRREQ ||
 	    op->error == -EADDRNOTAVAIL ||
 	    op->error == -ENETUNREACH ||
 	    op->error == -EHOSTUNREACH)
@@ -167,93 +168,93 @@ static void afs_end_vnode_operation(struct afs_operation *op)
 
 	afs_drop_io_locks(op);
 
-	if (op->error == -ECONNABORTED)
-		op->error = afs_abort_to_error(op->ac.abort_code);
-}
+	अगर (op->error == -ECONNABORTED)
+		op->error = afs_पात_to_error(op->ac.पात_code);
+पूर्ण
 
 /*
- * Wait for an in-progress operation to complete.
+ * Wait क्रम an in-progress operation to complete.
  */
-void afs_wait_for_operation(struct afs_operation *op)
-{
+व्योम afs_रुको_क्रम_operation(काष्ठा afs_operation *op)
+अणु
 	_enter("");
 
-	while (afs_select_fileserver(op)) {
-		op->cb_s_break = op->server->cb_s_break;
-		if (test_bit(AFS_SERVER_FL_IS_YFS, &op->server->flags) &&
+	जबतक (afs_select_fileserver(op)) अणु
+		op->cb_s_अवरोध = op->server->cb_s_अवरोध;
+		अगर (test_bit(AFS_SERVER_FL_IS_YFS, &op->server->flags) &&
 		    op->ops->issue_yfs_rpc)
 			op->ops->issue_yfs_rpc(op);
-		else if (op->ops->issue_afs_rpc)
+		अन्यथा अगर (op->ops->issue_afs_rpc)
 			op->ops->issue_afs_rpc(op);
-		else
+		अन्यथा
 			op->ac.error = -ENOTSUPP;
 
-		if (op->call)
-			op->error = afs_wait_for_call_to_complete(op->call, &op->ac);
-	}
+		अगर (op->call)
+			op->error = afs_रुको_क्रम_call_to_complete(op->call, &op->ac);
+	पूर्ण
 
-	switch (op->error) {
-	case 0:
+	चयन (op->error) अणु
+	हाल 0:
 		_debug("success");
 		op->ops->success(op);
-		break;
-	case -ECONNABORTED:
-		if (op->ops->aborted)
-			op->ops->aborted(op);
+		अवरोध;
+	हाल -ECONNABORTED:
+		अगर (op->ops->पातed)
+			op->ops->पातed(op);
 		fallthrough;
-	default:
-		if (op->ops->failed)
+	शेष:
+		अगर (op->ops->failed)
 			op->ops->failed(op);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	afs_end_vnode_operation(op);
 
-	if (op->error == 0 && op->ops->edit_dir) {
+	अगर (op->error == 0 && op->ops->edit_dir) अणु
 		_debug("edit_dir");
 		op->ops->edit_dir(op);
-	}
+	पूर्ण
 	_leave("");
-}
+पूर्ण
 
 /*
  * Dispose of an operation.
  */
-int afs_put_operation(struct afs_operation *op)
-{
-	int i, ret = op->error;
+पूर्णांक afs_put_operation(काष्ठा afs_operation *op)
+अणु
+	पूर्णांक i, ret = op->error;
 
 	_enter("op=%08x,%d", op->debug_id, ret);
 
-	if (op->ops && op->ops->put)
+	अगर (op->ops && op->ops->put)
 		op->ops->put(op);
-	if (op->file[0].modification)
+	अगर (op->file[0].modअगरication)
 		clear_bit(AFS_VNODE_MODIFYING, &op->file[0].vnode->flags);
-	if (op->file[1].modification && op->file[1].vnode != op->file[0].vnode)
+	अगर (op->file[1].modअगरication && op->file[1].vnode != op->file[0].vnode)
 		clear_bit(AFS_VNODE_MODIFYING, &op->file[1].vnode->flags);
-	if (op->file[0].put_vnode)
+	अगर (op->file[0].put_vnode)
 		iput(&op->file[0].vnode->vfs_inode);
-	if (op->file[1].put_vnode)
+	अगर (op->file[1].put_vnode)
 		iput(&op->file[1].vnode->vfs_inode);
 
-	if (op->more_files) {
-		for (i = 0; i < op->nr_files - 2; i++)
-			if (op->more_files[i].put_vnode)
+	अगर (op->more_files) अणु
+		क्रम (i = 0; i < op->nr_files - 2; i++)
+			अगर (op->more_files[i].put_vnode)
 				iput(&op->more_files[i].vnode->vfs_inode);
-		kfree(op->more_files);
-	}
+		kमुक्त(op->more_files);
+	पूर्ण
 
 	afs_end_cursor(&op->ac);
 	afs_put_serverlist(op->net, op->server_list);
 	afs_put_volume(op->net, op->volume, afs_volume_trace_put_put_op);
 	key_put(op->key);
-	kfree(op);
-	return ret;
-}
+	kमुक्त(op);
+	वापस ret;
+पूर्ण
 
-int afs_do_sync_operation(struct afs_operation *op)
-{
+पूर्णांक afs_करो_sync_operation(काष्ठा afs_operation *op)
+अणु
 	afs_begin_vnode_operation(op);
-	afs_wait_for_operation(op);
-	return afs_put_operation(op);
-}
+	afs_रुको_क्रम_operation(op);
+	वापस afs_put_operation(op);
+पूर्ण

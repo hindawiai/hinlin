@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * LP5562 LED driver
  *
@@ -7,435 +8,435 @@
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
-#include <linux/delay.h>
-#include <linux/firmware.h>
-#include <linux/i2c.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/platform_data/leds-lp55xx.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_data/leds-lp55xx.h>
+#समावेश <linux/slab.h>
 
-#include "leds-lp55xx-common.h"
+#समावेश "leds-lp55xx-common.h"
 
-#define LP5562_PROGRAM_LENGTH		32
-#define LP5562_MAX_LEDS			4
+#घोषणा LP5562_PROGRAM_LENGTH		32
+#घोषणा LP5562_MAX_LEDS			4
 
 /* ENABLE Register 00h */
-#define LP5562_REG_ENABLE		0x00
-#define LP5562_EXEC_ENG1_M		0x30
-#define LP5562_EXEC_ENG2_M		0x0C
-#define LP5562_EXEC_ENG3_M		0x03
-#define LP5562_EXEC_M			0x3F
-#define LP5562_MASTER_ENABLE		0x40	/* Chip master enable */
-#define LP5562_LOGARITHMIC_PWM		0x80	/* Logarithmic PWM adjustment */
-#define LP5562_EXEC_RUN			0x2A
-#define LP5562_ENABLE_DEFAULT	\
+#घोषणा LP5562_REG_ENABLE		0x00
+#घोषणा LP5562_EXEC_ENG1_M		0x30
+#घोषणा LP5562_EXEC_ENG2_M		0x0C
+#घोषणा LP5562_EXEC_ENG3_M		0x03
+#घोषणा LP5562_EXEC_M			0x3F
+#घोषणा LP5562_MASTER_ENABLE		0x40	/* Chip master enable */
+#घोषणा LP5562_LOGARITHMIC_PWM		0x80	/* Logarithmic PWM adjusपंचांगent */
+#घोषणा LP5562_EXEC_RUN			0x2A
+#घोषणा LP5562_ENABLE_DEFAULT	\
 	(LP5562_MASTER_ENABLE | LP5562_LOGARITHMIC_PWM)
-#define LP5562_ENABLE_RUN_PROGRAM	\
+#घोषणा LP5562_ENABLE_RUN_PROGRAM	\
 	(LP5562_ENABLE_DEFAULT | LP5562_EXEC_RUN)
 
 /* OPMODE Register 01h */
-#define LP5562_REG_OP_MODE		0x01
-#define LP5562_MODE_ENG1_M		0x30
-#define LP5562_MODE_ENG2_M		0x0C
-#define LP5562_MODE_ENG3_M		0x03
-#define LP5562_LOAD_ENG1		0x10
-#define LP5562_LOAD_ENG2		0x04
-#define LP5562_LOAD_ENG3		0x01
-#define LP5562_RUN_ENG1			0x20
-#define LP5562_RUN_ENG2			0x08
-#define LP5562_RUN_ENG3			0x02
-#define LP5562_ENG1_IS_LOADING(mode)	\
+#घोषणा LP5562_REG_OP_MODE		0x01
+#घोषणा LP5562_MODE_ENG1_M		0x30
+#घोषणा LP5562_MODE_ENG2_M		0x0C
+#घोषणा LP5562_MODE_ENG3_M		0x03
+#घोषणा LP5562_LOAD_ENG1		0x10
+#घोषणा LP5562_LOAD_ENG2		0x04
+#घोषणा LP5562_LOAD_ENG3		0x01
+#घोषणा LP5562_RUN_ENG1			0x20
+#घोषणा LP5562_RUN_ENG2			0x08
+#घोषणा LP5562_RUN_ENG3			0x02
+#घोषणा LP5562_ENG1_IS_LOADING(mode)	\
 	((mode & LP5562_MODE_ENG1_M) == LP5562_LOAD_ENG1)
-#define LP5562_ENG2_IS_LOADING(mode)	\
+#घोषणा LP5562_ENG2_IS_LOADING(mode)	\
 	((mode & LP5562_MODE_ENG2_M) == LP5562_LOAD_ENG2)
-#define LP5562_ENG3_IS_LOADING(mode)	\
+#घोषणा LP5562_ENG3_IS_LOADING(mode)	\
 	((mode & LP5562_MODE_ENG3_M) == LP5562_LOAD_ENG3)
 
 /* BRIGHTNESS Registers */
-#define LP5562_REG_R_PWM		0x04
-#define LP5562_REG_G_PWM		0x03
-#define LP5562_REG_B_PWM		0x02
-#define LP5562_REG_W_PWM		0x0E
+#घोषणा LP5562_REG_R_PWM		0x04
+#घोषणा LP5562_REG_G_PWM		0x03
+#घोषणा LP5562_REG_B_PWM		0x02
+#घोषणा LP5562_REG_W_PWM		0x0E
 
 /* CURRENT Registers */
-#define LP5562_REG_R_CURRENT		0x07
-#define LP5562_REG_G_CURRENT		0x06
-#define LP5562_REG_B_CURRENT		0x05
-#define LP5562_REG_W_CURRENT		0x0F
+#घोषणा LP5562_REG_R_CURRENT		0x07
+#घोषणा LP5562_REG_G_CURRENT		0x06
+#घोषणा LP5562_REG_B_CURRENT		0x05
+#घोषणा LP5562_REG_W_CURRENT		0x0F
 
 /* CONFIG Register 08h */
-#define LP5562_REG_CONFIG		0x08
-#define LP5562_PWM_HF			0x40
-#define LP5562_PWRSAVE_EN		0x20
-#define LP5562_CLK_INT			0x01	/* Internal clock */
-#define LP5562_DEFAULT_CFG		(LP5562_PWM_HF | LP5562_PWRSAVE_EN)
+#घोषणा LP5562_REG_CONFIG		0x08
+#घोषणा LP5562_PWM_HF			0x40
+#घोषणा LP5562_PWRSAVE_EN		0x20
+#घोषणा LP5562_CLK_INT			0x01	/* Internal घड़ी */
+#घोषणा LP5562_DEFAULT_CFG		(LP5562_PWM_HF | LP5562_PWRSAVE_EN)
 
 /* RESET Register 0Dh */
-#define LP5562_REG_RESET		0x0D
-#define LP5562_RESET			0xFF
+#घोषणा LP5562_REG_RESET		0x0D
+#घोषणा LP5562_RESET			0xFF
 
 /* PROGRAM ENGINE Registers */
-#define LP5562_REG_PROG_MEM_ENG1	0x10
-#define LP5562_REG_PROG_MEM_ENG2	0x30
-#define LP5562_REG_PROG_MEM_ENG3	0x50
+#घोषणा LP5562_REG_PROG_MEM_ENG1	0x10
+#घोषणा LP5562_REG_PROG_MEM_ENG2	0x30
+#घोषणा LP5562_REG_PROG_MEM_ENG3	0x50
 
 /* LEDMAP Register 70h */
-#define LP5562_REG_ENG_SEL		0x70
-#define LP5562_ENG_SEL_PWM		0
-#define LP5562_ENG_FOR_RGB_M		0x3F
-#define LP5562_ENG_SEL_RGB		0x1B	/* R:ENG1, G:ENG2, B:ENG3 */
-#define LP5562_ENG_FOR_W_M		0xC0
-#define LP5562_ENG1_FOR_W		0x40	/* W:ENG1 */
-#define LP5562_ENG2_FOR_W		0x80	/* W:ENG2 */
-#define LP5562_ENG3_FOR_W		0xC0	/* W:ENG3 */
+#घोषणा LP5562_REG_ENG_SEL		0x70
+#घोषणा LP5562_ENG_SEL_PWM		0
+#घोषणा LP5562_ENG_FOR_RGB_M		0x3F
+#घोषणा LP5562_ENG_SEL_RGB		0x1B	/* R:ENG1, G:ENG2, B:ENG3 */
+#घोषणा LP5562_ENG_FOR_W_M		0xC0
+#घोषणा LP5562_ENG1_FOR_W		0x40	/* W:ENG1 */
+#घोषणा LP5562_ENG2_FOR_W		0x80	/* W:ENG2 */
+#घोषणा LP5562_ENG3_FOR_W		0xC0	/* W:ENG3 */
 
 /* Program Commands */
-#define LP5562_CMD_DISABLE		0x00
-#define LP5562_CMD_LOAD			0x15
-#define LP5562_CMD_RUN			0x2A
-#define LP5562_CMD_DIRECT		0x3F
-#define LP5562_PATTERN_OFF		0
+#घोषणा LP5562_CMD_DISABLE		0x00
+#घोषणा LP5562_CMD_LOAD			0x15
+#घोषणा LP5562_CMD_RUN			0x2A
+#घोषणा LP5562_CMD_सूचीECT		0x3F
+#घोषणा LP5562_PATTERN_OFF		0
 
-static inline void lp5562_wait_opmode_done(void)
-{
-	/* operation mode change needs to be longer than 153 us */
+अटल अंतरभूत व्योम lp5562_रुको_opmode_करोne(व्योम)
+अणु
+	/* operation mode change needs to be दीर्घer than 153 us */
 	usleep_range(200, 300);
-}
+पूर्ण
 
-static inline void lp5562_wait_enable_done(void)
-{
-	/* it takes more 488 us to update ENABLE register */
+अटल अंतरभूत व्योम lp5562_रुको_enable_करोne(व्योम)
+अणु
+	/* it takes more 488 us to update ENABLE रेजिस्टर */
 	usleep_range(500, 600);
-}
+पूर्ण
 
-static void lp5562_set_led_current(struct lp55xx_led *led, u8 led_current)
-{
-	static const u8 addr[] = {
+अटल व्योम lp5562_set_led_current(काष्ठा lp55xx_led *led, u8 led_current)
+अणु
+	अटल स्थिर u8 addr[] = अणु
 		LP5562_REG_R_CURRENT,
 		LP5562_REG_G_CURRENT,
 		LP5562_REG_B_CURRENT,
 		LP5562_REG_W_CURRENT,
-	};
+	पूर्ण;
 
 	led->led_current = led_current;
-	lp55xx_write(led->chip, addr[led->chan_nr], led_current);
-}
+	lp55xx_ग_लिखो(led->chip, addr[led->chan_nr], led_current);
+पूर्ण
 
-static void lp5562_load_engine(struct lp55xx_chip *chip)
-{
-	enum lp55xx_engine_index idx = chip->engine_idx;
-	static const u8 mask[] = {
+अटल व्योम lp5562_load_engine(काष्ठा lp55xx_chip *chip)
+अणु
+	क्रमागत lp55xx_engine_index idx = chip->engine_idx;
+	अटल स्थिर u8 mask[] = अणु
 		[LP55XX_ENGINE_1] = LP5562_MODE_ENG1_M,
 		[LP55XX_ENGINE_2] = LP5562_MODE_ENG2_M,
 		[LP55XX_ENGINE_3] = LP5562_MODE_ENG3_M,
-	};
+	पूर्ण;
 
-	static const u8 val[] = {
+	अटल स्थिर u8 val[] = अणु
 		[LP55XX_ENGINE_1] = LP5562_LOAD_ENG1,
 		[LP55XX_ENGINE_2] = LP5562_LOAD_ENG2,
 		[LP55XX_ENGINE_3] = LP5562_LOAD_ENG3,
-	};
+	पूर्ण;
 
 	lp55xx_update_bits(chip, LP5562_REG_OP_MODE, mask[idx], val[idx]);
 
-	lp5562_wait_opmode_done();
-}
+	lp5562_रुको_opmode_करोne();
+पूर्ण
 
-static void lp5562_stop_engine(struct lp55xx_chip *chip)
-{
-	lp55xx_write(chip, LP5562_REG_OP_MODE, LP5562_CMD_DISABLE);
-	lp5562_wait_opmode_done();
-}
+अटल व्योम lp5562_stop_engine(काष्ठा lp55xx_chip *chip)
+अणु
+	lp55xx_ग_लिखो(chip, LP5562_REG_OP_MODE, LP5562_CMD_DISABLE);
+	lp5562_रुको_opmode_करोne();
+पूर्ण
 
-static void lp5562_run_engine(struct lp55xx_chip *chip, bool start)
-{
-	int ret;
+अटल व्योम lp5562_run_engine(काष्ठा lp55xx_chip *chip, bool start)
+अणु
+	पूर्णांक ret;
 	u8 mode;
 	u8 exec;
 
 	/* stop engine */
-	if (!start) {
-		lp55xx_write(chip, LP5562_REG_ENABLE, LP5562_ENABLE_DEFAULT);
-		lp5562_wait_enable_done();
+	अगर (!start) अणु
+		lp55xx_ग_लिखो(chip, LP5562_REG_ENABLE, LP5562_ENABLE_DEFAULT);
+		lp5562_रुको_enable_करोne();
 		lp5562_stop_engine(chip);
-		lp55xx_write(chip, LP5562_REG_ENG_SEL, LP5562_ENG_SEL_PWM);
-		lp55xx_write(chip, LP5562_REG_OP_MODE, LP5562_CMD_DIRECT);
-		lp5562_wait_opmode_done();
-		return;
-	}
+		lp55xx_ग_लिखो(chip, LP5562_REG_ENG_SEL, LP5562_ENG_SEL_PWM);
+		lp55xx_ग_लिखो(chip, LP5562_REG_OP_MODE, LP5562_CMD_सूचीECT);
+		lp5562_रुको_opmode_करोne();
+		वापस;
+	पूर्ण
 
 	/*
 	 * To run the engine,
-	 * operation mode and enable register should updated at the same time
+	 * operation mode and enable रेजिस्टर should updated at the same समय
 	 */
 
-	ret = lp55xx_read(chip, LP5562_REG_OP_MODE, &mode);
-	if (ret)
-		return;
+	ret = lp55xx_पढ़ो(chip, LP5562_REG_OP_MODE, &mode);
+	अगर (ret)
+		वापस;
 
-	ret = lp55xx_read(chip, LP5562_REG_ENABLE, &exec);
-	if (ret)
-		return;
+	ret = lp55xx_पढ़ो(chip, LP5562_REG_ENABLE, &exec);
+	अगर (ret)
+		वापस;
 
 	/* change operation mode to RUN only when each engine is loading */
-	if (LP5562_ENG1_IS_LOADING(mode)) {
+	अगर (LP5562_ENG1_IS_LOADING(mode)) अणु
 		mode = (mode & ~LP5562_MODE_ENG1_M) | LP5562_RUN_ENG1;
 		exec = (exec & ~LP5562_EXEC_ENG1_M) | LP5562_RUN_ENG1;
-	}
+	पूर्ण
 
-	if (LP5562_ENG2_IS_LOADING(mode)) {
+	अगर (LP5562_ENG2_IS_LOADING(mode)) अणु
 		mode = (mode & ~LP5562_MODE_ENG2_M) | LP5562_RUN_ENG2;
 		exec = (exec & ~LP5562_EXEC_ENG2_M) | LP5562_RUN_ENG2;
-	}
+	पूर्ण
 
-	if (LP5562_ENG3_IS_LOADING(mode)) {
+	अगर (LP5562_ENG3_IS_LOADING(mode)) अणु
 		mode = (mode & ~LP5562_MODE_ENG3_M) | LP5562_RUN_ENG3;
 		exec = (exec & ~LP5562_EXEC_ENG3_M) | LP5562_RUN_ENG3;
-	}
+	पूर्ण
 
-	lp55xx_write(chip, LP5562_REG_OP_MODE, mode);
-	lp5562_wait_opmode_done();
+	lp55xx_ग_लिखो(chip, LP5562_REG_OP_MODE, mode);
+	lp5562_रुको_opmode_करोne();
 
 	lp55xx_update_bits(chip, LP5562_REG_ENABLE, LP5562_EXEC_M, exec);
-	lp5562_wait_enable_done();
-}
+	lp5562_रुको_enable_करोne();
+पूर्ण
 
-static int lp5562_update_firmware(struct lp55xx_chip *chip,
-					const u8 *data, size_t size)
-{
-	enum lp55xx_engine_index idx = chip->engine_idx;
-	u8 pattern[LP5562_PROGRAM_LENGTH] = {0};
-	static const u8 addr[] = {
+अटल पूर्णांक lp5562_update_firmware(काष्ठा lp55xx_chip *chip,
+					स्थिर u8 *data, माप_प्रकार size)
+अणु
+	क्रमागत lp55xx_engine_index idx = chip->engine_idx;
+	u8 pattern[LP5562_PROGRAM_LENGTH] = अणु0पूर्ण;
+	अटल स्थिर u8 addr[] = अणु
 		[LP55XX_ENGINE_1] = LP5562_REG_PROG_MEM_ENG1,
 		[LP55XX_ENGINE_2] = LP5562_REG_PROG_MEM_ENG2,
 		[LP55XX_ENGINE_3] = LP5562_REG_PROG_MEM_ENG3,
-	};
-	unsigned cmd;
-	char c[3];
-	int program_size;
-	int nrchars;
-	int offset = 0;
-	int ret;
-	int i;
+	पूर्ण;
+	अचिन्हित cmd;
+	अक्षर c[3];
+	पूर्णांक program_size;
+	पूर्णांक nrअक्षरs;
+	पूर्णांक offset = 0;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	/* clear program memory before updating */
-	for (i = 0; i < LP5562_PROGRAM_LENGTH; i++)
-		lp55xx_write(chip, addr[idx] + i, 0);
+	/* clear program memory beक्रमe updating */
+	क्रम (i = 0; i < LP5562_PROGRAM_LENGTH; i++)
+		lp55xx_ग_लिखो(chip, addr[idx] + i, 0);
 
 	i = 0;
-	while ((offset < size - 1) && (i < LP5562_PROGRAM_LENGTH)) {
-		/* separate sscanfs because length is working only for %s */
-		ret = sscanf(data + offset, "%2s%n ", c, &nrchars);
-		if (ret != 1)
-			goto err;
+	जबतक ((offset < size - 1) && (i < LP5562_PROGRAM_LENGTH)) अणु
+		/* separate माला_पूछोs because length is working only क्रम %s */
+		ret = माला_पूछो(data + offset, "%2s%n ", c, &nrअक्षरs);
+		अगर (ret != 1)
+			जाओ err;
 
-		ret = sscanf(c, "%2x", &cmd);
-		if (ret != 1)
-			goto err;
+		ret = माला_पूछो(c, "%2x", &cmd);
+		अगर (ret != 1)
+			जाओ err;
 
 		pattern[i] = (u8)cmd;
-		offset += nrchars;
+		offset += nrअक्षरs;
 		i++;
-	}
+	पूर्ण
 
-	/* Each instruction is 16bit long. Check that length is even */
-	if (i % 2)
-		goto err;
+	/* Each inकाष्ठाion is 16bit दीर्घ. Check that length is even */
+	अगर (i % 2)
+		जाओ err;
 
 	program_size = i;
-	for (i = 0; i < program_size; i++)
-		lp55xx_write(chip, addr[idx] + i, pattern[i]);
+	क्रम (i = 0; i < program_size; i++)
+		lp55xx_ग_लिखो(chip, addr[idx] + i, pattern[i]);
 
-	return 0;
+	वापस 0;
 
 err:
 	dev_err(&chip->cl->dev, "wrong pattern format\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void lp5562_firmware_loaded(struct lp55xx_chip *chip)
-{
-	const struct firmware *fw = chip->fw;
+अटल व्योम lp5562_firmware_loaded(काष्ठा lp55xx_chip *chip)
+अणु
+	स्थिर काष्ठा firmware *fw = chip->fw;
 
 	/*
-	 * the firmware is encoded in ascii hex character, with 2 chars
+	 * the firmware is encoded in ascii hex अक्षरacter, with 2 अक्षरs
 	 * per byte
 	 */
-	if (fw->size > (LP5562_PROGRAM_LENGTH * 2)) {
+	अगर (fw->size > (LP5562_PROGRAM_LENGTH * 2)) अणु
 		dev_err(&chip->cl->dev, "firmware data size overflow: %zu\n",
 			fw->size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Program memory sequence
 	 *  1) set engine mode to "LOAD"
-	 *  2) write firmware data into program memory
+	 *  2) ग_लिखो firmware data पूर्णांकo program memory
 	 */
 
 	lp5562_load_engine(chip);
 	lp5562_update_firmware(chip, fw->data, fw->size);
-}
+पूर्ण
 
-static int lp5562_post_init_device(struct lp55xx_chip *chip)
-{
-	int ret;
+अटल पूर्णांक lp5562_post_init_device(काष्ठा lp55xx_chip *chip)
+अणु
+	पूर्णांक ret;
 	u8 cfg = LP5562_DEFAULT_CFG;
 
 	/* Set all PWMs to direct control mode */
-	ret = lp55xx_write(chip, LP5562_REG_OP_MODE, LP5562_CMD_DIRECT);
-	if (ret)
-		return ret;
+	ret = lp55xx_ग_लिखो(chip, LP5562_REG_OP_MODE, LP5562_CMD_सूचीECT);
+	अगर (ret)
+		वापस ret;
 
-	lp5562_wait_opmode_done();
+	lp5562_रुको_opmode_करोne();
 
-	/* Update configuration for the clock setting */
-	if (!lp55xx_is_extclk_used(chip))
+	/* Update configuration क्रम the घड़ी setting */
+	अगर (!lp55xx_is_extclk_used(chip))
 		cfg |= LP5562_CLK_INT;
 
-	ret = lp55xx_write(chip, LP5562_REG_CONFIG, cfg);
-	if (ret)
-		return ret;
+	ret = lp55xx_ग_लिखो(chip, LP5562_REG_CONFIG, cfg);
+	अगर (ret)
+		वापस ret;
 
 	/* Initialize all channels PWM to zero -> leds off */
-	lp55xx_write(chip, LP5562_REG_R_PWM, 0);
-	lp55xx_write(chip, LP5562_REG_G_PWM, 0);
-	lp55xx_write(chip, LP5562_REG_B_PWM, 0);
-	lp55xx_write(chip, LP5562_REG_W_PWM, 0);
+	lp55xx_ग_लिखो(chip, LP5562_REG_R_PWM, 0);
+	lp55xx_ग_लिखो(chip, LP5562_REG_G_PWM, 0);
+	lp55xx_ग_लिखो(chip, LP5562_REG_B_PWM, 0);
+	lp55xx_ग_लिखो(chip, LP5562_REG_W_PWM, 0);
 
-	/* Set LED map as register PWM by default */
-	lp55xx_write(chip, LP5562_REG_ENG_SEL, LP5562_ENG_SEL_PWM);
+	/* Set LED map as रेजिस्टर PWM by शेष */
+	lp55xx_ग_लिखो(chip, LP5562_REG_ENG_SEL, LP5562_ENG_SEL_PWM);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp5562_led_brightness(struct lp55xx_led *led)
-{
-	struct lp55xx_chip *chip = led->chip;
-	static const u8 addr[] = {
+अटल पूर्णांक lp5562_led_brightness(काष्ठा lp55xx_led *led)
+अणु
+	काष्ठा lp55xx_chip *chip = led->chip;
+	अटल स्थिर u8 addr[] = अणु
 		LP5562_REG_R_PWM,
 		LP5562_REG_G_PWM,
 		LP5562_REG_B_PWM,
 		LP5562_REG_W_PWM,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
 	mutex_lock(&chip->lock);
-	ret = lp55xx_write(chip, addr[led->chan_nr], led->brightness);
+	ret = lp55xx_ग_लिखो(chip, addr[led->chan_nr], led->brightness);
 	mutex_unlock(&chip->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void lp5562_write_program_memory(struct lp55xx_chip *chip,
-					u8 base, const u8 *rgb, int size)
-{
-	int i;
+अटल व्योम lp5562_ग_लिखो_program_memory(काष्ठा lp55xx_chip *chip,
+					u8 base, स्थिर u8 *rgb, पूर्णांक size)
+अणु
+	पूर्णांक i;
 
-	if (!rgb || size <= 0)
-		return;
+	अगर (!rgb || size <= 0)
+		वापस;
 
-	for (i = 0; i < size; i++)
-		lp55xx_write(chip, base + i, *(rgb + i));
+	क्रम (i = 0; i < size; i++)
+		lp55xx_ग_लिखो(chip, base + i, *(rgb + i));
 
-	lp55xx_write(chip, base + i, 0);
-	lp55xx_write(chip, base + i + 1, 0);
-}
+	lp55xx_ग_लिखो(chip, base + i, 0);
+	lp55xx_ग_लिखो(chip, base + i + 1, 0);
+पूर्ण
 
 /* check the size of program count */
-static inline bool _is_pc_overflow(struct lp55xx_predef_pattern *ptn)
-{
-	return ptn->size_r >= LP5562_PROGRAM_LENGTH ||
+अटल अंतरभूत bool _is_pc_overflow(काष्ठा lp55xx_predef_pattern *ptn)
+अणु
+	वापस ptn->size_r >= LP5562_PROGRAM_LENGTH ||
 	       ptn->size_g >= LP5562_PROGRAM_LENGTH ||
 	       ptn->size_b >= LP5562_PROGRAM_LENGTH;
-}
+पूर्ण
 
-static int lp5562_run_predef_led_pattern(struct lp55xx_chip *chip, int mode)
-{
-	struct lp55xx_predef_pattern *ptn;
-	int i;
+अटल पूर्णांक lp5562_run_predef_led_pattern(काष्ठा lp55xx_chip *chip, पूर्णांक mode)
+अणु
+	काष्ठा lp55xx_predef_pattern *ptn;
+	पूर्णांक i;
 
-	if (mode == LP5562_PATTERN_OFF) {
+	अगर (mode == LP5562_PATTERN_OFF) अणु
 		lp5562_run_engine(chip, false);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ptn = chip->pdata->patterns + (mode - 1);
-	if (!ptn || _is_pc_overflow(ptn)) {
+	अगर (!ptn || _is_pc_overflow(ptn)) अणु
 		dev_err(&chip->cl->dev, "invalid pattern data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	lp5562_stop_engine(chip);
 
 	/* Set LED map as RGB */
-	lp55xx_write(chip, LP5562_REG_ENG_SEL, LP5562_ENG_SEL_RGB);
+	lp55xx_ग_लिखो(chip, LP5562_REG_ENG_SEL, LP5562_ENG_SEL_RGB);
 
 	/* Load engines */
-	for (i = LP55XX_ENGINE_1; i <= LP55XX_ENGINE_3; i++) {
+	क्रम (i = LP55XX_ENGINE_1; i <= LP55XX_ENGINE_3; i++) अणु
 		chip->engine_idx = i;
 		lp5562_load_engine(chip);
-	}
+	पूर्ण
 
-	/* Clear program registers */
-	lp55xx_write(chip, LP5562_REG_PROG_MEM_ENG1, 0);
-	lp55xx_write(chip, LP5562_REG_PROG_MEM_ENG1 + 1, 0);
-	lp55xx_write(chip, LP5562_REG_PROG_MEM_ENG2, 0);
-	lp55xx_write(chip, LP5562_REG_PROG_MEM_ENG2 + 1, 0);
-	lp55xx_write(chip, LP5562_REG_PROG_MEM_ENG3, 0);
-	lp55xx_write(chip, LP5562_REG_PROG_MEM_ENG3 + 1, 0);
+	/* Clear program रेजिस्टरs */
+	lp55xx_ग_लिखो(chip, LP5562_REG_PROG_MEM_ENG1, 0);
+	lp55xx_ग_लिखो(chip, LP5562_REG_PROG_MEM_ENG1 + 1, 0);
+	lp55xx_ग_लिखो(chip, LP5562_REG_PROG_MEM_ENG2, 0);
+	lp55xx_ग_लिखो(chip, LP5562_REG_PROG_MEM_ENG2 + 1, 0);
+	lp55xx_ग_लिखो(chip, LP5562_REG_PROG_MEM_ENG3, 0);
+	lp55xx_ग_लिखो(chip, LP5562_REG_PROG_MEM_ENG3 + 1, 0);
 
 	/* Program engines */
-	lp5562_write_program_memory(chip, LP5562_REG_PROG_MEM_ENG1,
+	lp5562_ग_लिखो_program_memory(chip, LP5562_REG_PROG_MEM_ENG1,
 				ptn->r, ptn->size_r);
-	lp5562_write_program_memory(chip, LP5562_REG_PROG_MEM_ENG2,
+	lp5562_ग_लिखो_program_memory(chip, LP5562_REG_PROG_MEM_ENG2,
 				ptn->g, ptn->size_g);
-	lp5562_write_program_memory(chip, LP5562_REG_PROG_MEM_ENG3,
+	lp5562_ग_लिखो_program_memory(chip, LP5562_REG_PROG_MEM_ENG3,
 				ptn->b, ptn->size_b);
 
 	/* Run engines */
 	lp5562_run_engine(chip, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t lp5562_store_pattern(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t len)
-{
-	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
-	struct lp55xx_chip *chip = led->chip;
-	struct lp55xx_predef_pattern *ptn = chip->pdata->patterns;
-	int num_patterns = chip->pdata->num_patterns;
-	unsigned long mode;
-	int ret;
+अटल sमाप_प्रकार lp5562_store_pattern(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा lp55xx_chip *chip = led->chip;
+	काष्ठा lp55xx_predef_pattern *ptn = chip->pdata->patterns;
+	पूर्णांक num_patterns = chip->pdata->num_patterns;
+	अचिन्हित दीर्घ mode;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 0, &mode);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 0, &mode);
+	अगर (ret)
+		वापस ret;
 
-	if (mode > num_patterns || !ptn)
-		return -EINVAL;
+	अगर (mode > num_patterns || !ptn)
+		वापस -EINVAL;
 
 	mutex_lock(&chip->lock);
 	ret = lp5562_run_predef_led_pattern(chip, mode);
 	mutex_unlock(&chip->lock);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t lp5562_store_engine_mux(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t len)
-{
-	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
-	struct lp55xx_chip *chip = led->chip;
+अटल sमाप_प्रकार lp5562_store_engine_mux(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा lp55xx_chip *chip = led->chip;
 	u8 mask;
 	u8 val;
 
@@ -446,103 +447,103 @@ static ssize_t lp5562_store_engine_mux(struct device *dev,
 	 * W ... Engine 1 or 2 or 3
 	 */
 
-	if (sysfs_streq(buf, "RGB")) {
+	अगर (sysfs_streq(buf, "RGB")) अणु
 		mask = LP5562_ENG_FOR_RGB_M;
 		val = LP5562_ENG_SEL_RGB;
-	} else if (sysfs_streq(buf, "W")) {
-		enum lp55xx_engine_index idx = chip->engine_idx;
+	पूर्ण अन्यथा अगर (sysfs_streq(buf, "W")) अणु
+		क्रमागत lp55xx_engine_index idx = chip->engine_idx;
 
 		mask = LP5562_ENG_FOR_W_M;
-		switch (idx) {
-		case LP55XX_ENGINE_1:
+		चयन (idx) अणु
+		हाल LP55XX_ENGINE_1:
 			val = LP5562_ENG1_FOR_W;
-			break;
-		case LP55XX_ENGINE_2:
+			अवरोध;
+		हाल LP55XX_ENGINE_2:
 			val = LP5562_ENG2_FOR_W;
-			break;
-		case LP55XX_ENGINE_3:
+			अवरोध;
+		हाल LP55XX_ENGINE_3:
 			val = LP5562_ENG3_FOR_W;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "choose RGB or W\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&chip->lock);
 	lp55xx_update_bits(chip, LP5562_REG_ENG_SEL, mask, val);
 	mutex_unlock(&chip->lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static LP55XX_DEV_ATTR_WO(led_pattern, lp5562_store_pattern);
-static LP55XX_DEV_ATTR_WO(engine_mux, lp5562_store_engine_mux);
+अटल LP55XX_DEV_ATTR_WO(led_pattern, lp5562_store_pattern);
+अटल LP55XX_DEV_ATTR_WO(engine_mux, lp5562_store_engine_mux);
 
-static struct attribute *lp5562_attributes[] = {
+अटल काष्ठा attribute *lp5562_attributes[] = अणु
 	&dev_attr_led_pattern.attr,
 	&dev_attr_engine_mux.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group lp5562_group = {
+अटल स्थिर काष्ठा attribute_group lp5562_group = अणु
 	.attrs = lp5562_attributes,
-};
+पूर्ण;
 
-/* Chip specific configurations */
-static struct lp55xx_device_config lp5562_cfg = {
+/* Chip specअगरic configurations */
+अटल काष्ठा lp55xx_device_config lp5562_cfg = अणु
 	.max_channel  = LP5562_MAX_LEDS,
-	.reset = {
+	.reset = अणु
 		.addr = LP5562_REG_RESET,
 		.val  = LP5562_RESET,
-	},
-	.enable = {
+	पूर्ण,
+	.enable = अणु
 		.addr = LP5562_REG_ENABLE,
 		.val  = LP5562_ENABLE_DEFAULT,
-	},
+	पूर्ण,
 	.post_init_device   = lp5562_post_init_device,
 	.set_led_current    = lp5562_set_led_current,
 	.brightness_fn      = lp5562_led_brightness,
 	.run_engine         = lp5562_run_engine,
 	.firmware_cb        = lp5562_firmware_loaded,
 	.dev_attr_group     = &lp5562_group,
-};
+पूर्ण;
 
-static int lp5562_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	int ret;
-	struct lp55xx_chip *chip;
-	struct lp55xx_led *led;
-	struct lp55xx_platform_data *pdata = dev_get_platdata(&client->dev);
-	struct device_node *np = dev_of_node(&client->dev);
+अटल पूर्णांक lp5562_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा lp55xx_chip *chip;
+	काष्ठा lp55xx_led *led;
+	काष्ठा lp55xx_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
+	काष्ठा device_node *np = dev_of_node(&client->dev);
 
-	chip = devm_kzalloc(&client->dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(&client->dev, माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	chip->cfg = &lp5562_cfg;
 
-	if (!pdata) {
-		if (np) {
+	अगर (!pdata) अणु
+		अगर (np) अणु
 			pdata = lp55xx_of_populate_pdata(&client->dev, np,
 							 chip);
-			if (IS_ERR(pdata))
-				return PTR_ERR(pdata);
-		} else {
+			अगर (IS_ERR(pdata))
+				वापस PTR_ERR(pdata);
+		पूर्ण अन्यथा अणु
 			dev_err(&client->dev, "no platform data\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 
-	led = devm_kcalloc(&client->dev,
-			pdata->num_channels, sizeof(*led), GFP_KERNEL);
-	if (!led)
-		return -ENOMEM;
+	led = devm_kसुस्मृति(&client->dev,
+			pdata->num_channels, माप(*led), GFP_KERNEL);
+	अगर (!led)
+		वापस -ENOMEM;
 
 	chip->cl = client;
 	chip->pdata = pdata;
@@ -552,64 +553,64 @@ static int lp5562_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, led);
 
 	ret = lp55xx_init_device(chip);
-	if (ret)
-		goto err_init;
+	अगर (ret)
+		जाओ err_init;
 
-	ret = lp55xx_register_leds(led, chip);
-	if (ret)
-		goto err_out;
+	ret = lp55xx_रेजिस्टर_leds(led, chip);
+	अगर (ret)
+		जाओ err_out;
 
-	ret = lp55xx_register_sysfs(chip);
-	if (ret) {
+	ret = lp55xx_रेजिस्टर_sysfs(chip);
+	अगर (ret) अणु
 		dev_err(&client->dev, "registering sysfs failed\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out:
 	lp55xx_deinit_device(chip);
 err_init:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lp5562_remove(struct i2c_client *client)
-{
-	struct lp55xx_led *led = i2c_get_clientdata(client);
-	struct lp55xx_chip *chip = led->chip;
+अटल पूर्णांक lp5562_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा lp55xx_led *led = i2c_get_clientdata(client);
+	काष्ठा lp55xx_chip *chip = led->chip;
 
 	lp5562_stop_engine(chip);
 
-	lp55xx_unregister_sysfs(chip);
+	lp55xx_unरेजिस्टर_sysfs(chip);
 	lp55xx_deinit_device(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id lp5562_id[] = {
-	{ "lp5562", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id lp5562_id[] = अणु
+	अणु "lp5562", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, lp5562_id);
 
-#ifdef CONFIG_OF
-static const struct of_device_id of_lp5562_leds_match[] = {
-	{ .compatible = "ti,lp5562", },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id of_lp5562_leds_match[] = अणु
+	अणु .compatible = "ti,lp5562", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, of_lp5562_leds_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver lp5562_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver lp5562_driver = अणु
+	.driver = अणु
 		.name	= "lp5562",
 		.of_match_table = of_match_ptr(of_lp5562_leds_match),
-	},
+	पूर्ण,
 	.probe		= lp5562_probe,
-	.remove		= lp5562_remove,
+	.हटाओ		= lp5562_हटाओ,
 	.id_table	= lp5562_id,
-};
+पूर्ण;
 
 module_i2c_driver(lp5562_driver);
 

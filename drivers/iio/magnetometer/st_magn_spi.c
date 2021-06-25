@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics magnetometers driver
  *
@@ -7,109 +8,109 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
-#include <linux/iio/iio.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/iio/iपन.स>
 
-#include <linux/iio/common/st_sensors.h>
-#include <linux/iio/common/st_sensors_spi.h>
-#include "st_magn.h"
+#समावेश <linux/iio/common/st_sensors.h>
+#समावेश <linux/iio/common/st_sensors_spi.h>
+#समावेश "st_magn.h"
 
 /*
  * For new single-chip sensors use <device_name> as compatible string.
- * For old single-chip devices keep <device_name>-magn to maintain
+ * For old single-chip devices keep <device_name>-magn to मुख्यtain
  * compatibility
  * For multi-chip devices, use <device_name>-magn to distinguish which
  * capability is being used
  */
-static const struct of_device_id st_magn_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id st_magn_of_match[] = अणु
+	अणु
 		.compatible = "st,lis3mdl-magn",
 		.data = LIS3MDL_MAGN_DEV_NAME,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm303agr-magn",
 		.data = LSM303AGR_MAGN_DEV_NAME,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "st,lis2mdl",
 		.data = LIS2MDL_MAGN_DEV_NAME,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm9ds1-magn",
 		.data = LSM9DS1_MAGN_DEV_NAME,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "st,iis2mdc",
 		.data = IIS2MDC_MAGN_DEV_NAME,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, st_magn_of_match);
 
-static int st_magn_spi_probe(struct spi_device *spi)
-{
-	const struct st_sensor_settings *settings;
-	struct st_sensor_data *mdata;
-	struct iio_dev *indio_dev;
-	int err;
+अटल पूर्णांक st_magn_spi_probe(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा st_sensor_settings *settings;
+	काष्ठा st_sensor_data *mdata;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक err;
 
-	st_sensors_dev_name_probe(&spi->dev, spi->modalias, sizeof(spi->modalias));
+	st_sensors_dev_name_probe(&spi->dev, spi->modalias, माप(spi->modalias));
 
 	settings = st_magn_get_settings(spi->modalias);
-	if (!settings) {
+	अगर (!settings) अणु
 		dev_err(&spi->dev, "device name %s not recognized.\n",
 			spi->modalias);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*mdata));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*mdata));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	mdata = iio_priv(indio_dev);
-	mdata->sensor_settings = (struct st_sensor_settings *)settings;
+	mdata->sensor_settings = (काष्ठा st_sensor_settings *)settings;
 
 	err = st_sensors_spi_configure(indio_dev, spi);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = st_magn_common_probe(indio_dev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_magn_spi_remove(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-	st_magn_common_remove(indio_dev);
+अटल पूर्णांक st_magn_spi_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
+	st_magn_common_हटाओ(indio_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id st_magn_id_table[] = {
-	{ LIS3MDL_MAGN_DEV_NAME },
-	{ LSM303AGR_MAGN_DEV_NAME },
-	{ LIS2MDL_MAGN_DEV_NAME },
-	{ LSM9DS1_MAGN_DEV_NAME },
-	{ IIS2MDC_MAGN_DEV_NAME },
-	{},
-};
+अटल स्थिर काष्ठा spi_device_id st_magn_id_table[] = अणु
+	अणु LIS3MDL_MAGN_DEV_NAME पूर्ण,
+	अणु LSM303AGR_MAGN_DEV_NAME पूर्ण,
+	अणु LIS2MDL_MAGN_DEV_NAME पूर्ण,
+	अणु LSM9DS1_MAGN_DEV_NAME पूर्ण,
+	अणु IIS2MDC_MAGN_DEV_NAME पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, st_magn_id_table);
 
-static struct spi_driver st_magn_driver = {
-	.driver = {
+अटल काष्ठा spi_driver st_magn_driver = अणु
+	.driver = अणु
 		.name = "st-magn-spi",
 		.of_match_table = st_magn_of_match,
-	},
+	पूर्ण,
 	.probe = st_magn_spi_probe,
-	.remove = st_magn_spi_remove,
+	.हटाओ = st_magn_spi_हटाओ,
 	.id_table = st_magn_id_table,
-};
+पूर्ण;
 module_spi_driver(st_magn_driver);
 
 MODULE_AUTHOR("Denis Ciocca <denis.ciocca@st.com>");

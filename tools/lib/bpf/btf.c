@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 /* Copyright (c) 2018 Facebook */
 
-#include <byteswap.h>
-#include <endian.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/utsname.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/btf.h>
-#include <gelf.h>
-#include "btf.h"
-#include "bpf.h"
-#include "libbpf.h"
-#include "libbpf_internal.h"
-#include "hashmap.h"
-#include "strset.h"
+#समावेश <byteswap.h>
+#समावेश <endian.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <sys/utsname.h>
+#समावेश <sys/param.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/btf.h>
+#समावेश <gelf.h>
+#समावेश "btf.h"
+#समावेश "bpf.h"
+#समावेश "libbpf.h"
+#समावेश "libbpf_internal.h"
+#समावेश "hashmap.h"
+#समावेश "strset.h"
 
-#define BTF_MAX_NR_TYPES 0x7fffffffU
-#define BTF_MAX_STR_OFFSET 0x7fffffffU
+#घोषणा BTF_MAX_NR_TYPES 0x7fffffffU
+#घोषणा BTF_MAX_STR_OFFSET 0x7fffffffU
 
-static struct btf_type btf_void;
+अटल काष्ठा btf_type btf_व्योम;
 
-struct btf {
+काष्ठा btf अणु
 	/* raw BTF data in native endianness */
-	void *raw_data;
+	व्योम *raw_data;
 	/* raw BTF data in non-native endianness */
-	void *raw_data_swapped;
+	व्योम *raw_data_swapped;
 	__u32 raw_size;
-	/* whether target endianness differs from the native one */
+	/* whether target endianness dअगरfers from the native one */
 	bool swapped_endian;
 
 	/*
 	 * When BTF is loaded from an ELF or raw memory it is stored
 	 * in a contiguous memory block. The hdr, type_data, and, strs_data
-	 * point inside that memory region to their respective parts of BTF
+	 * poपूर्णांक inside that memory region to their respective parts of BTF
 	 * representation:
 	 *
 	 * +--------------------------------+
@@ -52,12 +53,12 @@ struct btf {
 	 * types_data-+         |
 	 * strs_data------------+
 	 *
-	 * If BTF data is later modified, e.g., due to types added or
-	 * removed, BTF deduplication performed, etc, this contiguous
-	 * representation is broken up into three independently allocated
-	 * memory regions to be able to modify them independently.
-	 * raw_data is nulled out at that point, but can be later allocated
-	 * and cached again if user calls btf__get_raw_data(), at which point
+	 * If BTF data is later modअगरied, e.g., due to types added or
+	 * हटाओd, BTF deduplication perक्रमmed, etc, this contiguous
+	 * representation is broken up पूर्णांकo three independently allocated
+	 * memory regions to be able to modअगरy them independently.
+	 * raw_data is nulled out at that poपूर्णांक, but can be later allocated
+	 * and cached again अगर user calls btf__get_raw_data(), at which poपूर्णांक
 	 * raw_data will contain a contiguous copy of header, types, and
 	 * strings:
 	 *
@@ -74,705 +75,705 @@ struct btf {
 	 *               |  Header  |  Types  |  Strings  |
 	 * raw_data----->+----------+---------+-----------+
 	 */
-	struct btf_header *hdr;
+	काष्ठा btf_header *hdr;
 
-	void *types_data;
-	size_t types_data_cap; /* used size stored in hdr->type_len */
+	व्योम *types_data;
+	माप_प्रकार types_data_cap; /* used size stored in hdr->type_len */
 
-	/* type ID to `struct btf_type *` lookup index
+	/* type ID to `काष्ठा btf_type *` lookup index
 	 * type_offs[0] corresponds to the first non-VOID type:
-	 *   - for base BTF it's type [1];
-	 *   - for split BTF it's the first non-base BTF type.
+	 *   - क्रम base BTF it's type [1];
+	 *   - क्रम split BTF it's the first non-base BTF type.
 	 */
 	__u32 *type_offs;
-	size_t type_offs_cap;
+	माप_प्रकार type_offs_cap;
 	/* number of types in this BTF instance:
-	 *   - doesn't include special [0] void type;
-	 *   - for split BTF counts number of types added on top of base BTF.
+	 *   - करोesn't include special [0] व्योम type;
+	 *   - क्रम split BTF counts number of types added on top of base BTF.
 	 */
 	__u32 nr_types;
-	/* if not NULL, points to the base BTF on top of which the current
+	/* अगर not शून्य, poपूर्णांकs to the base BTF on top of which the current
 	 * split BTF is based
 	 */
-	struct btf *base_btf;
+	काष्ठा btf *base_btf;
 	/* BTF type ID of the first type in this BTF instance:
-	 *   - for base BTF it's equal to 1;
-	 *   - for split BTF it's equal to biggest type ID of base BTF plus 1.
+	 *   - क्रम base BTF it's equal to 1;
+	 *   - क्रम split BTF it's equal to biggest type ID of base BTF plus 1.
 	 */
-	int start_id;
+	पूर्णांक start_id;
 	/* logical string offset of this BTF instance:
-	 *   - for base BTF it's equal to 0;
-	 *   - for split BTF it's equal to total size of base BTF's string section size.
+	 *   - क्रम base BTF it's equal to 0;
+	 *   - क्रम split BTF it's equal to total size of base BTF's string section size.
 	 */
-	int start_str_off;
+	पूर्णांक start_str_off;
 
-	/* only one of strs_data or strs_set can be non-NULL, depending on
-	 * whether BTF is in a modifiable state (strs_set is used) or not
-	 * (strs_data points inside raw_data)
+	/* only one of strs_data or strs_set can be non-शून्य, depending on
+	 * whether BTF is in a modअगरiable state (strs_set is used) or not
+	 * (strs_data poपूर्णांकs inside raw_data)
 	 */
-	void *strs_data;
+	व्योम *strs_data;
 	/* a set of unique strings */
-	struct strset *strs_set;
-	/* whether strings are already deduplicated */
+	काष्ठा strset *strs_set;
+	/* whether strings are alपढ़ोy deduplicated */
 	bool strs_deduped;
 
-	/* BTF object FD, if loaded into kernel */
-	int fd;
+	/* BTF object FD, अगर loaded पूर्णांकo kernel */
+	पूर्णांक fd;
 
-	/* Pointer size (in bytes) for a target architecture of this BTF */
-	int ptr_sz;
-};
+	/* Poपूर्णांकer size (in bytes) क्रम a target architecture of this BTF */
+	पूर्णांक ptr_sz;
+पूर्ण;
 
-static inline __u64 ptr_to_u64(const void *ptr)
-{
-	return (__u64) (unsigned long) ptr;
-}
+अटल अंतरभूत __u64 ptr_to_u64(स्थिर व्योम *ptr)
+अणु
+	वापस (__u64) (अचिन्हित दीर्घ) ptr;
+पूर्ण
 
-/* Ensure given dynamically allocated memory region pointed to by *data* with
+/* Ensure given dynamically allocated memory region poपूर्णांकed to by *data* with
  * capacity of *cap_cnt* elements each taking *elem_sz* bytes has enough
  * memory to accomodate *add_cnt* new elements, assuming *cur_cnt* elements
- * are already used. At most *max_cnt* elements can be ever allocated.
- * If necessary, memory is reallocated and all existing data is copied over,
- * new pointer to the memory region is stored at *data, new memory region
+ * are alपढ़ोy used. At most *max_cnt* elements can be ever allocated.
+ * If necessary, memory is पुनः_स्मृतिated and all existing data is copied over,
+ * new poपूर्णांकer to the memory region is stored at *data, new memory region
  * capacity (in number of elements) is stored in *cap.
- * On success, memory pointer to the beginning of unused memory is returned.
- * On error, NULL is returned.
+ * On success, memory poपूर्णांकer to the beginning of unused memory is वापसed.
+ * On error, शून्य is वापसed.
  */
-void *libbpf_add_mem(void **data, size_t *cap_cnt, size_t elem_sz,
-		     size_t cur_cnt, size_t max_cnt, size_t add_cnt)
-{
-	size_t new_cnt;
-	void *new_data;
+व्योम *libbpf_add_mem(व्योम **data, माप_प्रकार *cap_cnt, माप_प्रकार elem_sz,
+		     माप_प्रकार cur_cnt, माप_प्रकार max_cnt, माप_प्रकार add_cnt)
+अणु
+	माप_प्रकार new_cnt;
+	व्योम *new_data;
 
-	if (cur_cnt + add_cnt <= *cap_cnt)
-		return *data + cur_cnt * elem_sz;
+	अगर (cur_cnt + add_cnt <= *cap_cnt)
+		वापस *data + cur_cnt * elem_sz;
 
 	/* requested more than the set limit */
-	if (cur_cnt + add_cnt > max_cnt)
-		return NULL;
+	अगर (cur_cnt + add_cnt > max_cnt)
+		वापस शून्य;
 
 	new_cnt = *cap_cnt;
 	new_cnt += new_cnt / 4;		  /* expand by 25% */
-	if (new_cnt < 16)		  /* but at least 16 elements */
+	अगर (new_cnt < 16)		  /* but at least 16 elements */
 		new_cnt = 16;
-	if (new_cnt > max_cnt)		  /* but not exceeding a set limit */
+	अगर (new_cnt > max_cnt)		  /* but not exceeding a set limit */
 		new_cnt = max_cnt;
-	if (new_cnt < cur_cnt + add_cnt)  /* also ensure we have enough memory */
+	अगर (new_cnt < cur_cnt + add_cnt)  /* also ensure we have enough memory */
 		new_cnt = cur_cnt + add_cnt;
 
-	new_data = libbpf_reallocarray(*data, new_cnt, elem_sz);
-	if (!new_data)
-		return NULL;
+	new_data = libbpf_पुनः_स्मृतिarray(*data, new_cnt, elem_sz);
+	अगर (!new_data)
+		वापस शून्य;
 
 	/* zero out newly allocated portion of memory */
-	memset(new_data + (*cap_cnt) * elem_sz, 0, (new_cnt - *cap_cnt) * elem_sz);
+	स_रखो(new_data + (*cap_cnt) * elem_sz, 0, (new_cnt - *cap_cnt) * elem_sz);
 
 	*data = new_data;
 	*cap_cnt = new_cnt;
-	return new_data + cur_cnt * elem_sz;
-}
+	वापस new_data + cur_cnt * elem_sz;
+पूर्ण
 
 /* Ensure given dynamically allocated memory region has enough allocated space
  * to accommodate *need_cnt* elements of size *elem_sz* bytes each
  */
-int libbpf_ensure_mem(void **data, size_t *cap_cnt, size_t elem_sz, size_t need_cnt)
-{
-	void *p;
+पूर्णांक libbpf_ensure_mem(व्योम **data, माप_प्रकार *cap_cnt, माप_प्रकार elem_sz, माप_प्रकार need_cnt)
+अणु
+	व्योम *p;
 
-	if (need_cnt <= *cap_cnt)
-		return 0;
+	अगर (need_cnt <= *cap_cnt)
+		वापस 0;
 
 	p = libbpf_add_mem(data, cap_cnt, elem_sz, *cap_cnt, SIZE_MAX, need_cnt - *cap_cnt);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btf_add_type_idx_entry(struct btf *btf, __u32 type_off)
-{
+अटल पूर्णांक btf_add_type_idx_entry(काष्ठा btf *btf, __u32 type_off)
+अणु
 	__u32 *p;
 
-	p = libbpf_add_mem((void **)&btf->type_offs, &btf->type_offs_cap, sizeof(__u32),
+	p = libbpf_add_mem((व्योम **)&btf->type_offs, &btf->type_offs_cap, माप(__u32),
 			   btf->nr_types, BTF_MAX_NR_TYPES, 1);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
 	*p = type_off;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void btf_bswap_hdr(struct btf_header *h)
-{
+अटल व्योम btf_bswap_hdr(काष्ठा btf_header *h)
+अणु
 	h->magic = bswap_16(h->magic);
 	h->hdr_len = bswap_32(h->hdr_len);
 	h->type_off = bswap_32(h->type_off);
 	h->type_len = bswap_32(h->type_len);
 	h->str_off = bswap_32(h->str_off);
 	h->str_len = bswap_32(h->str_len);
-}
+पूर्ण
 
-static int btf_parse_hdr(struct btf *btf)
-{
-	struct btf_header *hdr = btf->hdr;
+अटल पूर्णांक btf_parse_hdr(काष्ठा btf *btf)
+अणु
+	काष्ठा btf_header *hdr = btf->hdr;
 	__u32 meta_left;
 
-	if (btf->raw_size < sizeof(struct btf_header)) {
+	अगर (btf->raw_size < माप(काष्ठा btf_header)) अणु
 		pr_debug("BTF header not found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hdr->magic == bswap_16(BTF_MAGIC)) {
+	अगर (hdr->magic == bswap_16(BTF_MAGIC)) अणु
 		btf->swapped_endian = true;
-		if (bswap_32(hdr->hdr_len) != sizeof(struct btf_header)) {
+		अगर (bswap_32(hdr->hdr_len) != माप(काष्ठा btf_header)) अणु
 			pr_warn("Can't load BTF with non-native endianness due to unsupported header length %u\n",
 				bswap_32(hdr->hdr_len));
-			return -ENOTSUP;
-		}
+			वापस -ENOTSUP;
+		पूर्ण
 		btf_bswap_hdr(hdr);
-	} else if (hdr->magic != BTF_MAGIC) {
+	पूर्ण अन्यथा अगर (hdr->magic != BTF_MAGIC) अणु
 		pr_debug("Invalid BTF magic:%x\n", hdr->magic);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	meta_left = btf->raw_size - sizeof(*hdr);
-	if (meta_left < hdr->str_off + hdr->str_len) {
+	meta_left = btf->raw_size - माप(*hdr);
+	अगर (meta_left < hdr->str_off + hdr->str_len) अणु
 		pr_debug("Invalid BTF total size:%u\n", btf->raw_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hdr->type_off + hdr->type_len > hdr->str_off) {
+	अगर (hdr->type_off + hdr->type_len > hdr->str_off) अणु
 		pr_debug("Invalid BTF data sections layout: type data at %u + %u, strings data at %u + %u\n",
 			 hdr->type_off, hdr->type_len, hdr->str_off, hdr->str_len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hdr->type_off % 4) {
+	अगर (hdr->type_off % 4) अणु
 		pr_debug("BTF type section is not aligned to 4 bytes\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btf_parse_str_sec(struct btf *btf)
-{
-	const struct btf_header *hdr = btf->hdr;
-	const char *start = btf->strs_data;
-	const char *end = start + btf->hdr->str_len;
+अटल पूर्णांक btf_parse_str_sec(काष्ठा btf *btf)
+अणु
+	स्थिर काष्ठा btf_header *hdr = btf->hdr;
+	स्थिर अक्षर *start = btf->strs_data;
+	स्थिर अक्षर *end = start + btf->hdr->str_len;
 
-	if (btf->base_btf && hdr->str_len == 0)
-		return 0;
-	if (!hdr->str_len || hdr->str_len - 1 > BTF_MAX_STR_OFFSET || end[-1]) {
+	अगर (btf->base_btf && hdr->str_len == 0)
+		वापस 0;
+	अगर (!hdr->str_len || hdr->str_len - 1 > BTF_MAX_STR_OFFSET || end[-1]) अणु
 		pr_debug("Invalid BTF string section\n");
-		return -EINVAL;
-	}
-	if (!btf->base_btf && start[0]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!btf->base_btf && start[0]) अणु
 		pr_debug("Invalid BTF string section\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int btf_type_size(const struct btf_type *t)
-{
-	const int base_size = sizeof(struct btf_type);
+अटल पूर्णांक btf_type_size(स्थिर काष्ठा btf_type *t)
+अणु
+	स्थिर पूर्णांक base_size = माप(काष्ठा btf_type);
 	__u16 vlen = btf_vlen(t);
 
-	switch (btf_kind(t)) {
-	case BTF_KIND_FWD:
-	case BTF_KIND_CONST:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_RESTRICT:
-	case BTF_KIND_PTR:
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_FUNC:
-	case BTF_KIND_FLOAT:
-		return base_size;
-	case BTF_KIND_INT:
-		return base_size + sizeof(__u32);
-	case BTF_KIND_ENUM:
-		return base_size + vlen * sizeof(struct btf_enum);
-	case BTF_KIND_ARRAY:
-		return base_size + sizeof(struct btf_array);
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION:
-		return base_size + vlen * sizeof(struct btf_member);
-	case BTF_KIND_FUNC_PROTO:
-		return base_size + vlen * sizeof(struct btf_param);
-	case BTF_KIND_VAR:
-		return base_size + sizeof(struct btf_var);
-	case BTF_KIND_DATASEC:
-		return base_size + vlen * sizeof(struct btf_var_secinfo);
-	default:
+	चयन (btf_kind(t)) अणु
+	हाल BTF_KIND_FWD:
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_RESTRICT:
+	हाल BTF_KIND_PTR:
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_FUNC:
+	हाल BTF_KIND_FLOAT:
+		वापस base_size;
+	हाल BTF_KIND_INT:
+		वापस base_size + माप(__u32);
+	हाल BTF_KIND_ENUM:
+		वापस base_size + vlen * माप(काष्ठा btf_क्रमागत);
+	हाल BTF_KIND_ARRAY:
+		वापस base_size + माप(काष्ठा btf_array);
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION:
+		वापस base_size + vlen * माप(काष्ठा btf_member);
+	हाल BTF_KIND_FUNC_PROTO:
+		वापस base_size + vlen * माप(काष्ठा btf_param);
+	हाल BTF_KIND_VAR:
+		वापस base_size + माप(काष्ठा btf_var);
+	हाल BTF_KIND_DATASEC:
+		वापस base_size + vlen * माप(काष्ठा btf_var_secinfo);
+	शेष:
 		pr_debug("Unsupported BTF_KIND:%u\n", btf_kind(t));
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void btf_bswap_type_base(struct btf_type *t)
-{
+अटल व्योम btf_bswap_type_base(काष्ठा btf_type *t)
+अणु
 	t->name_off = bswap_32(t->name_off);
 	t->info = bswap_32(t->info);
 	t->type = bswap_32(t->type);
-}
+पूर्ण
 
-static int btf_bswap_type_rest(struct btf_type *t)
-{
-	struct btf_var_secinfo *v;
-	struct btf_member *m;
-	struct btf_array *a;
-	struct btf_param *p;
-	struct btf_enum *e;
+अटल पूर्णांक btf_bswap_type_rest(काष्ठा btf_type *t)
+अणु
+	काष्ठा btf_var_secinfo *v;
+	काष्ठा btf_member *m;
+	काष्ठा btf_array *a;
+	काष्ठा btf_param *p;
+	काष्ठा btf_क्रमागत *e;
 	__u16 vlen = btf_vlen(t);
-	int i;
+	पूर्णांक i;
 
-	switch (btf_kind(t)) {
-	case BTF_KIND_FWD:
-	case BTF_KIND_CONST:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_RESTRICT:
-	case BTF_KIND_PTR:
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_FUNC:
-	case BTF_KIND_FLOAT:
-		return 0;
-	case BTF_KIND_INT:
+	चयन (btf_kind(t)) अणु
+	हाल BTF_KIND_FWD:
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_RESTRICT:
+	हाल BTF_KIND_PTR:
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_FUNC:
+	हाल BTF_KIND_FLOAT:
+		वापस 0;
+	हाल BTF_KIND_INT:
 		*(__u32 *)(t + 1) = bswap_32(*(__u32 *)(t + 1));
-		return 0;
-	case BTF_KIND_ENUM:
-		for (i = 0, e = btf_enum(t); i < vlen; i++, e++) {
+		वापस 0;
+	हाल BTF_KIND_ENUM:
+		क्रम (i = 0, e = btf_क्रमागत(t); i < vlen; i++, e++) अणु
 			e->name_off = bswap_32(e->name_off);
 			e->val = bswap_32(e->val);
-		}
-		return 0;
-	case BTF_KIND_ARRAY:
+		पूर्ण
+		वापस 0;
+	हाल BTF_KIND_ARRAY:
 		a = btf_array(t);
 		a->type = bswap_32(a->type);
 		a->index_type = bswap_32(a->index_type);
 		a->nelems = bswap_32(a->nelems);
-		return 0;
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION:
-		for (i = 0, m = btf_members(t); i < vlen; i++, m++) {
+		वापस 0;
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION:
+		क्रम (i = 0, m = btf_members(t); i < vlen; i++, m++) अणु
 			m->name_off = bswap_32(m->name_off);
 			m->type = bswap_32(m->type);
 			m->offset = bswap_32(m->offset);
-		}
-		return 0;
-	case BTF_KIND_FUNC_PROTO:
-		for (i = 0, p = btf_params(t); i < vlen; i++, p++) {
+		पूर्ण
+		वापस 0;
+	हाल BTF_KIND_FUNC_PROTO:
+		क्रम (i = 0, p = btf_params(t); i < vlen; i++, p++) अणु
 			p->name_off = bswap_32(p->name_off);
 			p->type = bswap_32(p->type);
-		}
-		return 0;
-	case BTF_KIND_VAR:
+		पूर्ण
+		वापस 0;
+	हाल BTF_KIND_VAR:
 		btf_var(t)->linkage = bswap_32(btf_var(t)->linkage);
-		return 0;
-	case BTF_KIND_DATASEC:
-		for (i = 0, v = btf_var_secinfos(t); i < vlen; i++, v++) {
+		वापस 0;
+	हाल BTF_KIND_DATASEC:
+		क्रम (i = 0, v = btf_var_secinfos(t); i < vlen; i++, v++) अणु
 			v->type = bswap_32(v->type);
 			v->offset = bswap_32(v->offset);
 			v->size = bswap_32(v->size);
-		}
-		return 0;
-	default:
+		पूर्ण
+		वापस 0;
+	शेष:
 		pr_debug("Unsupported BTF_KIND:%u\n", btf_kind(t));
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int btf_parse_type_sec(struct btf *btf)
-{
-	struct btf_header *hdr = btf->hdr;
-	void *next_type = btf->types_data;
-	void *end_type = next_type + hdr->type_len;
-	int err, type_size;
+अटल पूर्णांक btf_parse_type_sec(काष्ठा btf *btf)
+अणु
+	काष्ठा btf_header *hdr = btf->hdr;
+	व्योम *next_type = btf->types_data;
+	व्योम *end_type = next_type + hdr->type_len;
+	पूर्णांक err, type_size;
 
-	while (next_type + sizeof(struct btf_type) <= end_type) {
-		if (btf->swapped_endian)
+	जबतक (next_type + माप(काष्ठा btf_type) <= end_type) अणु
+		अगर (btf->swapped_endian)
 			btf_bswap_type_base(next_type);
 
 		type_size = btf_type_size(next_type);
-		if (type_size < 0)
-			return type_size;
-		if (next_type + type_size > end_type) {
+		अगर (type_size < 0)
+			वापस type_size;
+		अगर (next_type + type_size > end_type) अणु
 			pr_warn("BTF type [%d] is malformed\n", btf->start_id + btf->nr_types);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (btf->swapped_endian && btf_bswap_type_rest(next_type))
-			return -EINVAL;
+		अगर (btf->swapped_endian && btf_bswap_type_rest(next_type))
+			वापस -EINVAL;
 
 		err = btf_add_type_idx_entry(btf, next_type - btf->types_data);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		next_type += type_size;
 		btf->nr_types++;
-	}
+	पूर्ण
 
-	if (next_type != end_type) {
+	अगर (next_type != end_type) अणु
 		pr_warn("BTF types data is malformed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__u32 btf__get_nr_types(const struct btf *btf)
-{
-	return btf->start_id + btf->nr_types - 1;
-}
+__u32 btf__get_nr_types(स्थिर काष्ठा btf *btf)
+अणु
+	वापस btf->start_id + btf->nr_types - 1;
+पूर्ण
 
-const struct btf *btf__base_btf(const struct btf *btf)
-{
-	return btf->base_btf;
-}
+स्थिर काष्ठा btf *btf__base_btf(स्थिर काष्ठा btf *btf)
+अणु
+	वापस btf->base_btf;
+पूर्ण
 
-/* internal helper returning non-const pointer to a type */
-struct btf_type *btf_type_by_id(struct btf *btf, __u32 type_id)
-{
-	if (type_id == 0)
-		return &btf_void;
-	if (type_id < btf->start_id)
-		return btf_type_by_id(btf->base_btf, type_id);
-	return btf->types_data + btf->type_offs[type_id - btf->start_id];
-}
+/* पूर्णांकernal helper वापसing non-स्थिर poपूर्णांकer to a type */
+काष्ठा btf_type *btf_type_by_id(काष्ठा btf *btf, __u32 type_id)
+अणु
+	अगर (type_id == 0)
+		वापस &btf_व्योम;
+	अगर (type_id < btf->start_id)
+		वापस btf_type_by_id(btf->base_btf, type_id);
+	वापस btf->types_data + btf->type_offs[type_id - btf->start_id];
+पूर्ण
 
-const struct btf_type *btf__type_by_id(const struct btf *btf, __u32 type_id)
-{
-	if (type_id >= btf->start_id + btf->nr_types)
-		return NULL;
-	return btf_type_by_id((struct btf *)btf, type_id);
-}
+स्थिर काष्ठा btf_type *btf__type_by_id(स्थिर काष्ठा btf *btf, __u32 type_id)
+अणु
+	अगर (type_id >= btf->start_id + btf->nr_types)
+		वापस शून्य;
+	वापस btf_type_by_id((काष्ठा btf *)btf, type_id);
+पूर्ण
 
-static int determine_ptr_size(const struct btf *btf)
-{
-	const struct btf_type *t;
-	const char *name;
-	int i, n;
+अटल पूर्णांक determine_ptr_size(स्थिर काष्ठा btf *btf)
+अणु
+	स्थिर काष्ठा btf_type *t;
+	स्थिर अक्षर *name;
+	पूर्णांक i, n;
 
-	if (btf->base_btf && btf->base_btf->ptr_sz > 0)
-		return btf->base_btf->ptr_sz;
+	अगर (btf->base_btf && btf->base_btf->ptr_sz > 0)
+		वापस btf->base_btf->ptr_sz;
 
 	n = btf__get_nr_types(btf);
-	for (i = 1; i <= n; i++) {
+	क्रम (i = 1; i <= n; i++) अणु
 		t = btf__type_by_id(btf, i);
-		if (!btf_is_int(t))
-			continue;
+		अगर (!btf_is_पूर्णांक(t))
+			जारी;
 
 		name = btf__name_by_offset(btf, t->name_off);
-		if (!name)
-			continue;
+		अगर (!name)
+			जारी;
 
-		if (strcmp(name, "long int") == 0 ||
-		    strcmp(name, "long unsigned int") == 0) {
-			if (t->size != 4 && t->size != 8)
-				continue;
-			return t->size;
-		}
-	}
+		अगर (म_भेद(name, "long int") == 0 ||
+		    म_भेद(name, "long unsigned int") == 0) अणु
+			अगर (t->size != 4 && t->size != 8)
+				जारी;
+			वापस t->size;
+		पूर्ण
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static size_t btf_ptr_sz(const struct btf *btf)
-{
-	if (!btf->ptr_sz)
-		((struct btf *)btf)->ptr_sz = determine_ptr_size(btf);
-	return btf->ptr_sz < 0 ? sizeof(void *) : btf->ptr_sz;
-}
+अटल माप_प्रकार btf_ptr_sz(स्थिर काष्ठा btf *btf)
+अणु
+	अगर (!btf->ptr_sz)
+		((काष्ठा btf *)btf)->ptr_sz = determine_ptr_size(btf);
+	वापस btf->ptr_sz < 0 ? माप(व्योम *) : btf->ptr_sz;
+पूर्ण
 
-/* Return pointer size this BTF instance assumes. The size is heuristically
- * determined by looking for 'long' or 'unsigned long' integer type and
- * recording its size in bytes. If BTF type information doesn't have any such
- * type, this function returns 0. In the latter case, native architecture's
- * pointer size is assumed, so will be either 4 or 8, depending on
- * architecture that libbpf was compiled for. It's possible to override
- * guessed value by using btf__set_pointer_size() API.
+/* Return poपूर्णांकer size this BTF instance assumes. The size is heuristically
+ * determined by looking क्रम 'long' or 'unsigned long' पूर्णांकeger type and
+ * recording its size in bytes. If BTF type inक्रमmation करोesn't have any such
+ * type, this function वापसs 0. In the latter हाल, native architecture's
+ * poपूर्णांकer size is assumed, so will be either 4 or 8, depending on
+ * architecture that libbpf was compiled क्रम. It's possible to override
+ * guessed value by using btf__set_poपूर्णांकer_size() API.
  */
-size_t btf__pointer_size(const struct btf *btf)
-{
-	if (!btf->ptr_sz)
-		((struct btf *)btf)->ptr_sz = determine_ptr_size(btf);
+माप_प्रकार btf__poपूर्णांकer_size(स्थिर काष्ठा btf *btf)
+अणु
+	अगर (!btf->ptr_sz)
+		((काष्ठा btf *)btf)->ptr_sz = determine_ptr_size(btf);
 
-	if (btf->ptr_sz < 0)
+	अगर (btf->ptr_sz < 0)
 		/* not enough BTF type info to guess */
-		return 0;
+		वापस 0;
 
-	return btf->ptr_sz;
-}
+	वापस btf->ptr_sz;
+पूर्ण
 
-/* Override or set pointer size in bytes. Only values of 4 and 8 are
+/* Override or set poपूर्णांकer size in bytes. Only values of 4 and 8 are
  * supported.
  */
-int btf__set_pointer_size(struct btf *btf, size_t ptr_sz)
-{
-	if (ptr_sz != 4 && ptr_sz != 8)
-		return -EINVAL;
+पूर्णांक btf__set_poपूर्णांकer_size(काष्ठा btf *btf, माप_प्रकार ptr_sz)
+अणु
+	अगर (ptr_sz != 4 && ptr_sz != 8)
+		वापस -EINVAL;
 	btf->ptr_sz = ptr_sz;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool is_host_big_endian(void)
-{
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-	return false;
-#elif __BYTE_ORDER == __BIG_ENDIAN
-	return true;
-#else
+अटल bool is_host_big_endian(व्योम)
+अणु
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
+	वापस false;
+#या_अगर __BYTE_ORDER == __BIG_ENDIAN
+	वापस true;
+#अन्यथा
 # error "Unrecognized __BYTE_ORDER__"
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-enum btf_endianness btf__endianness(const struct btf *btf)
-{
-	if (is_host_big_endian())
-		return btf->swapped_endian ? BTF_LITTLE_ENDIAN : BTF_BIG_ENDIAN;
-	else
-		return btf->swapped_endian ? BTF_BIG_ENDIAN : BTF_LITTLE_ENDIAN;
-}
+क्रमागत btf_endianness btf__endianness(स्थिर काष्ठा btf *btf)
+अणु
+	अगर (is_host_big_endian())
+		वापस btf->swapped_endian ? BTF_LITTLE_ENDIAN : BTF_BIG_ENDIAN;
+	अन्यथा
+		वापस btf->swapped_endian ? BTF_BIG_ENDIAN : BTF_LITTLE_ENDIAN;
+पूर्ण
 
-int btf__set_endianness(struct btf *btf, enum btf_endianness endian)
-{
-	if (endian != BTF_LITTLE_ENDIAN && endian != BTF_BIG_ENDIAN)
-		return -EINVAL;
+पूर्णांक btf__set_endianness(काष्ठा btf *btf, क्रमागत btf_endianness endian)
+अणु
+	अगर (endian != BTF_LITTLE_ENDIAN && endian != BTF_BIG_ENDIAN)
+		वापस -EINVAL;
 
 	btf->swapped_endian = is_host_big_endian() != (endian == BTF_BIG_ENDIAN);
-	if (!btf->swapped_endian) {
-		free(btf->raw_data_swapped);
-		btf->raw_data_swapped = NULL;
-	}
-	return 0;
-}
+	अगर (!btf->swapped_endian) अणु
+		मुक्त(btf->raw_data_swapped);
+		btf->raw_data_swapped = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static bool btf_type_is_void(const struct btf_type *t)
-{
-	return t == &btf_void || btf_is_fwd(t);
-}
+अटल bool btf_type_is_व्योम(स्थिर काष्ठा btf_type *t)
+अणु
+	वापस t == &btf_व्योम || btf_is_fwd(t);
+पूर्ण
 
-static bool btf_type_is_void_or_null(const struct btf_type *t)
-{
-	return !t || btf_type_is_void(t);
-}
+अटल bool btf_type_is_व्योम_or_null(स्थिर काष्ठा btf_type *t)
+अणु
+	वापस !t || btf_type_is_व्योम(t);
+पूर्ण
 
-#define MAX_RESOLVE_DEPTH 32
+#घोषणा MAX_RESOLVE_DEPTH 32
 
-__s64 btf__resolve_size(const struct btf *btf, __u32 type_id)
-{
-	const struct btf_array *array;
-	const struct btf_type *t;
+__s64 btf__resolve_size(स्थिर काष्ठा btf *btf, __u32 type_id)
+अणु
+	स्थिर काष्ठा btf_array *array;
+	स्थिर काष्ठा btf_type *t;
 	__u32 nelems = 1;
 	__s64 size = -1;
-	int i;
+	पूर्णांक i;
 
 	t = btf__type_by_id(btf, type_id);
-	for (i = 0; i < MAX_RESOLVE_DEPTH && !btf_type_is_void_or_null(t);
-	     i++) {
-		switch (btf_kind(t)) {
-		case BTF_KIND_INT:
-		case BTF_KIND_STRUCT:
-		case BTF_KIND_UNION:
-		case BTF_KIND_ENUM:
-		case BTF_KIND_DATASEC:
-		case BTF_KIND_FLOAT:
+	क्रम (i = 0; i < MAX_RESOLVE_DEPTH && !btf_type_is_व्योम_or_null(t);
+	     i++) अणु
+		चयन (btf_kind(t)) अणु
+		हाल BTF_KIND_INT:
+		हाल BTF_KIND_STRUCT:
+		हाल BTF_KIND_UNION:
+		हाल BTF_KIND_ENUM:
+		हाल BTF_KIND_DATASEC:
+		हाल BTF_KIND_FLOAT:
 			size = t->size;
-			goto done;
-		case BTF_KIND_PTR:
+			जाओ करोne;
+		हाल BTF_KIND_PTR:
 			size = btf_ptr_sz(btf);
-			goto done;
-		case BTF_KIND_TYPEDEF:
-		case BTF_KIND_VOLATILE:
-		case BTF_KIND_CONST:
-		case BTF_KIND_RESTRICT:
-		case BTF_KIND_VAR:
+			जाओ करोne;
+		हाल BTF_KIND_TYPEDEF:
+		हाल BTF_KIND_VOLATILE:
+		हाल BTF_KIND_CONST:
+		हाल BTF_KIND_RESTRICT:
+		हाल BTF_KIND_VAR:
 			type_id = t->type;
-			break;
-		case BTF_KIND_ARRAY:
+			अवरोध;
+		हाल BTF_KIND_ARRAY:
 			array = btf_array(t);
-			if (nelems && array->nelems > UINT32_MAX / nelems)
-				return -E2BIG;
+			अगर (nelems && array->nelems > UINT32_MAX / nelems)
+				वापस -E2BIG;
 			nelems *= array->nelems;
 			type_id = array->type;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
 		t = btf__type_by_id(btf, type_id);
-	}
+	पूर्ण
 
-done:
-	if (size < 0)
-		return -EINVAL;
-	if (nelems && size > UINT32_MAX / nelems)
-		return -E2BIG;
+करोne:
+	अगर (size < 0)
+		वापस -EINVAL;
+	अगर (nelems && size > UINT32_MAX / nelems)
+		वापस -E2BIG;
 
-	return nelems * size;
-}
+	वापस nelems * size;
+पूर्ण
 
-int btf__align_of(const struct btf *btf, __u32 id)
-{
-	const struct btf_type *t = btf__type_by_id(btf, id);
+पूर्णांक btf__align_of(स्थिर काष्ठा btf *btf, __u32 id)
+अणु
+	स्थिर काष्ठा btf_type *t = btf__type_by_id(btf, id);
 	__u16 kind = btf_kind(t);
 
-	switch (kind) {
-	case BTF_KIND_INT:
-	case BTF_KIND_ENUM:
-	case BTF_KIND_FLOAT:
-		return min(btf_ptr_sz(btf), (size_t)t->size);
-	case BTF_KIND_PTR:
-		return btf_ptr_sz(btf);
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_CONST:
-	case BTF_KIND_RESTRICT:
-		return btf__align_of(btf, t->type);
-	case BTF_KIND_ARRAY:
-		return btf__align_of(btf, btf_array(t)->type);
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION: {
-		const struct btf_member *m = btf_members(t);
+	चयन (kind) अणु
+	हाल BTF_KIND_INT:
+	हाल BTF_KIND_ENUM:
+	हाल BTF_KIND_FLOAT:
+		वापस min(btf_ptr_sz(btf), (माप_प्रकार)t->size);
+	हाल BTF_KIND_PTR:
+		वापस btf_ptr_sz(btf);
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_RESTRICT:
+		वापस btf__align_of(btf, t->type);
+	हाल BTF_KIND_ARRAY:
+		वापस btf__align_of(btf, btf_array(t)->type);
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION: अणु
+		स्थिर काष्ठा btf_member *m = btf_members(t);
 		__u16 vlen = btf_vlen(t);
-		int i, max_align = 1, align;
+		पूर्णांक i, max_align = 1, align;
 
-		for (i = 0; i < vlen; i++, m++) {
+		क्रम (i = 0; i < vlen; i++, m++) अणु
 			align = btf__align_of(btf, m->type);
-			if (align <= 0)
-				return align;
+			अगर (align <= 0)
+				वापस align;
 			max_align = max(max_align, align);
-		}
+		पूर्ण
 
-		return max_align;
-	}
-	default:
+		वापस max_align;
+	पूर्ण
+	शेष:
 		pr_warn("unsupported BTF_KIND:%u\n", btf_kind(t));
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-int btf__resolve_type(const struct btf *btf, __u32 type_id)
-{
-	const struct btf_type *t;
-	int depth = 0;
+पूर्णांक btf__resolve_type(स्थिर काष्ठा btf *btf, __u32 type_id)
+अणु
+	स्थिर काष्ठा btf_type *t;
+	पूर्णांक depth = 0;
 
 	t = btf__type_by_id(btf, type_id);
-	while (depth < MAX_RESOLVE_DEPTH &&
-	       !btf_type_is_void_or_null(t) &&
-	       (btf_is_mod(t) || btf_is_typedef(t) || btf_is_var(t))) {
+	जबतक (depth < MAX_RESOLVE_DEPTH &&
+	       !btf_type_is_व्योम_or_null(t) &&
+	       (btf_is_mod(t) || btf_is_प्रकार(t) || btf_is_var(t))) अणु
 		type_id = t->type;
 		t = btf__type_by_id(btf, type_id);
 		depth++;
-	}
+	पूर्ण
 
-	if (depth == MAX_RESOLVE_DEPTH || btf_type_is_void_or_null(t))
-		return -EINVAL;
+	अगर (depth == MAX_RESOLVE_DEPTH || btf_type_is_व्योम_or_null(t))
+		वापस -EINVAL;
 
-	return type_id;
-}
+	वापस type_id;
+पूर्ण
 
-__s32 btf__find_by_name(const struct btf *btf, const char *type_name)
-{
+__s32 btf__find_by_name(स्थिर काष्ठा btf *btf, स्थिर अक्षर *type_name)
+अणु
 	__u32 i, nr_types = btf__get_nr_types(btf);
 
-	if (!strcmp(type_name, "void"))
-		return 0;
+	अगर (!म_भेद(type_name, "void"))
+		वापस 0;
 
-	for (i = 1; i <= nr_types; i++) {
-		const struct btf_type *t = btf__type_by_id(btf, i);
-		const char *name = btf__name_by_offset(btf, t->name_off);
+	क्रम (i = 1; i <= nr_types; i++) अणु
+		स्थिर काष्ठा btf_type *t = btf__type_by_id(btf, i);
+		स्थिर अक्षर *name = btf__name_by_offset(btf, t->name_off);
 
-		if (name && !strcmp(type_name, name))
-			return i;
-	}
+		अगर (name && !म_भेद(type_name, name))
+			वापस i;
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-__s32 btf__find_by_name_kind(const struct btf *btf, const char *type_name,
+__s32 btf__find_by_name_kind(स्थिर काष्ठा btf *btf, स्थिर अक्षर *type_name,
 			     __u32 kind)
-{
+अणु
 	__u32 i, nr_types = btf__get_nr_types(btf);
 
-	if (kind == BTF_KIND_UNKN || !strcmp(type_name, "void"))
-		return 0;
+	अगर (kind == BTF_KIND_UNKN || !म_भेद(type_name, "void"))
+		वापस 0;
 
-	for (i = 1; i <= nr_types; i++) {
-		const struct btf_type *t = btf__type_by_id(btf, i);
-		const char *name;
+	क्रम (i = 1; i <= nr_types; i++) अणु
+		स्थिर काष्ठा btf_type *t = btf__type_by_id(btf, i);
+		स्थिर अक्षर *name;
 
-		if (btf_kind(t) != kind)
-			continue;
+		अगर (btf_kind(t) != kind)
+			जारी;
 		name = btf__name_by_offset(btf, t->name_off);
-		if (name && !strcmp(type_name, name))
-			return i;
-	}
+		अगर (name && !म_भेद(type_name, name))
+			वापस i;
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static bool btf_is_modifiable(const struct btf *btf)
-{
-	return (void *)btf->hdr != btf->raw_data;
-}
+अटल bool btf_is_modअगरiable(स्थिर काष्ठा btf *btf)
+अणु
+	वापस (व्योम *)btf->hdr != btf->raw_data;
+पूर्ण
 
-void btf__free(struct btf *btf)
-{
-	if (IS_ERR_OR_NULL(btf))
-		return;
+व्योम btf__मुक्त(काष्ठा btf *btf)
+अणु
+	अगर (IS_ERR_OR_शून्य(btf))
+		वापस;
 
-	if (btf->fd >= 0)
-		close(btf->fd);
+	अगर (btf->fd >= 0)
+		बंद(btf->fd);
 
-	if (btf_is_modifiable(btf)) {
-		/* if BTF was modified after loading, it will have a split
-		 * in-memory representation for header, types, and strings
-		 * sections, so we need to free all of them individually. It
+	अगर (btf_is_modअगरiable(btf)) अणु
+		/* अगर BTF was modअगरied after loading, it will have a split
+		 * in-memory representation क्रम header, types, and strings
+		 * sections, so we need to मुक्त all of them inभागidually. It
 		 * might still have a cached contiguous raw data present,
-		 * which will be unconditionally freed below.
+		 * which will be unconditionally मुक्तd below.
 		 */
-		free(btf->hdr);
-		free(btf->types_data);
-		strset__free(btf->strs_set);
-	}
-	free(btf->raw_data);
-	free(btf->raw_data_swapped);
-	free(btf->type_offs);
-	free(btf);
-}
+		मुक्त(btf->hdr);
+		मुक्त(btf->types_data);
+		strset__मुक्त(btf->strs_set);
+	पूर्ण
+	मुक्त(btf->raw_data);
+	मुक्त(btf->raw_data_swapped);
+	मुक्त(btf->type_offs);
+	मुक्त(btf);
+पूर्ण
 
-static struct btf *btf_new_empty(struct btf *base_btf)
-{
-	struct btf *btf;
+अटल काष्ठा btf *btf_new_empty(काष्ठा btf *base_btf)
+अणु
+	काष्ठा btf *btf;
 
-	btf = calloc(1, sizeof(*btf));
-	if (!btf)
-		return ERR_PTR(-ENOMEM);
+	btf = सुस्मृति(1, माप(*btf));
+	अगर (!btf)
+		वापस ERR_PTR(-ENOMEM);
 
 	btf->nr_types = 0;
 	btf->start_id = 1;
 	btf->start_str_off = 0;
 	btf->fd = -1;
-	btf->ptr_sz = sizeof(void *);
+	btf->ptr_sz = माप(व्योम *);
 	btf->swapped_endian = false;
 
-	if (base_btf) {
+	अगर (base_btf) अणु
 		btf->base_btf = base_btf;
 		btf->start_id = btf__get_nr_types(base_btf) + 1;
 		btf->start_str_off = base_btf->hdr->str_len;
-	}
+	पूर्ण
 
-	/* +1 for empty string at offset 0 */
-	btf->raw_size = sizeof(struct btf_header) + (base_btf ? 0 : 1);
-	btf->raw_data = calloc(1, btf->raw_size);
-	if (!btf->raw_data) {
-		free(btf);
-		return ERR_PTR(-ENOMEM);
-	}
+	/* +1 क्रम empty string at offset 0 */
+	btf->raw_size = माप(काष्ठा btf_header) + (base_btf ? 0 : 1);
+	btf->raw_data = सुस्मृति(1, btf->raw_size);
+	अगर (!btf->raw_data) अणु
+		मुक्त(btf);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	btf->hdr = btf->raw_data;
-	btf->hdr->hdr_len = sizeof(struct btf_header);
+	btf->hdr->hdr_len = माप(काष्ठा btf_header);
 	btf->hdr->magic = BTF_MAGIC;
 	btf->hdr->version = BTF_VERSION;
 
@@ -780,1028 +781,1028 @@ static struct btf *btf_new_empty(struct btf *base_btf)
 	btf->strs_data = btf->raw_data + btf->hdr->hdr_len;
 	btf->hdr->str_len = base_btf ? 0 : 1; /* empty string at offset 0 */
 
-	return btf;
-}
+	वापस btf;
+पूर्ण
 
-struct btf *btf__new_empty(void)
-{
-	return btf_new_empty(NULL);
-}
+काष्ठा btf *btf__new_empty(व्योम)
+अणु
+	वापस btf_new_empty(शून्य);
+पूर्ण
 
-struct btf *btf__new_empty_split(struct btf *base_btf)
-{
-	return btf_new_empty(base_btf);
-}
+काष्ठा btf *btf__new_empty_split(काष्ठा btf *base_btf)
+अणु
+	वापस btf_new_empty(base_btf);
+पूर्ण
 
-static struct btf *btf_new(const void *data, __u32 size, struct btf *base_btf)
-{
-	struct btf *btf;
-	int err;
+अटल काष्ठा btf *btf_new(स्थिर व्योम *data, __u32 size, काष्ठा btf *base_btf)
+अणु
+	काष्ठा btf *btf;
+	पूर्णांक err;
 
-	btf = calloc(1, sizeof(struct btf));
-	if (!btf)
-		return ERR_PTR(-ENOMEM);
+	btf = सुस्मृति(1, माप(काष्ठा btf));
+	अगर (!btf)
+		वापस ERR_PTR(-ENOMEM);
 
 	btf->nr_types = 0;
 	btf->start_id = 1;
 	btf->start_str_off = 0;
 
-	if (base_btf) {
+	अगर (base_btf) अणु
 		btf->base_btf = base_btf;
 		btf->start_id = btf__get_nr_types(base_btf) + 1;
 		btf->start_str_off = base_btf->hdr->str_len;
-	}
+	पूर्ण
 
-	btf->raw_data = malloc(size);
-	if (!btf->raw_data) {
+	btf->raw_data = दो_स्मृति(size);
+	अगर (!btf->raw_data) अणु
 		err = -ENOMEM;
-		goto done;
-	}
-	memcpy(btf->raw_data, data, size);
+		जाओ करोne;
+	पूर्ण
+	स_नकल(btf->raw_data, data, size);
 	btf->raw_size = size;
 
 	btf->hdr = btf->raw_data;
 	err = btf_parse_hdr(btf);
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
 	btf->strs_data = btf->raw_data + btf->hdr->hdr_len + btf->hdr->str_off;
 	btf->types_data = btf->raw_data + btf->hdr->hdr_len + btf->hdr->type_off;
 
 	err = btf_parse_str_sec(btf);
 	err = err ?: btf_parse_type_sec(btf);
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
 	btf->fd = -1;
 
-done:
-	if (err) {
-		btf__free(btf);
-		return ERR_PTR(err);
-	}
+करोne:
+	अगर (err) अणु
+		btf__मुक्त(btf);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return btf;
-}
+	वापस btf;
+पूर्ण
 
-struct btf *btf__new(const void *data, __u32 size)
-{
-	return btf_new(data, size, NULL);
-}
+काष्ठा btf *btf__new(स्थिर व्योम *data, __u32 size)
+अणु
+	वापस btf_new(data, size, शून्य);
+पूर्ण
 
-static struct btf *btf_parse_elf(const char *path, struct btf *base_btf,
-				 struct btf_ext **btf_ext)
-{
-	Elf_Data *btf_data = NULL, *btf_ext_data = NULL;
-	int err = 0, fd = -1, idx = 0;
-	struct btf *btf = NULL;
-	Elf_Scn *scn = NULL;
-	Elf *elf = NULL;
+अटल काष्ठा btf *btf_parse_elf(स्थिर अक्षर *path, काष्ठा btf *base_btf,
+				 काष्ठा btf_ext **btf_ext)
+अणु
+	Elf_Data *btf_data = शून्य, *btf_ext_data = शून्य;
+	पूर्णांक err = 0, fd = -1, idx = 0;
+	काष्ठा btf *btf = शून्य;
+	Elf_Scn *scn = शून्य;
+	Elf *elf = शून्य;
 	GElf_Ehdr ehdr;
-	size_t shstrndx;
+	माप_प्रकार shstrndx;
 
-	if (elf_version(EV_CURRENT) == EV_NONE) {
+	अगर (elf_version(EV_CURRENT) == EV_NONE) अणु
 		pr_warn("failed to init libelf for %s\n", path);
-		return ERR_PTR(-LIBBPF_ERRNO__LIBELF);
-	}
+		वापस ERR_PTR(-LIBBPF_ERRNO__LIBELF);
+	पूर्ण
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		err = -errno;
-		pr_warn("failed to open %s: %s\n", path, strerror(errno));
-		return ERR_PTR(err);
-	}
+	fd = खोलो(path, O_RDONLY);
+	अगर (fd < 0) अणु
+		err = -त्रुटि_सं;
+		pr_warn("failed to open %s: %s\n", path, म_त्रुटि(त्रुटि_सं));
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	err = -LIBBPF_ERRNO__FORMAT;
 
-	elf = elf_begin(fd, ELF_C_READ, NULL);
-	if (!elf) {
+	elf = elf_begin(fd, ELF_C_READ, शून्य);
+	अगर (!elf) अणु
 		pr_warn("failed to open %s as ELF file\n", path);
-		goto done;
-	}
-	if (!gelf_getehdr(elf, &ehdr)) {
+		जाओ करोne;
+	पूर्ण
+	अगर (!gelf_getehdr(elf, &ehdr)) अणु
 		pr_warn("failed to get EHDR from %s\n", path);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (elf_getshdrstrndx(elf, &shstrndx)) {
+	अगर (elf_माला_लोhdrstrndx(elf, &shstrndx)) अणु
 		pr_warn("failed to get section names section index for %s\n",
 			path);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (!elf_rawdata(elf_getscn(elf, shstrndx), NULL)) {
+	अगर (!elf_rawdata(elf_माला_लोcn(elf, shstrndx), शून्य)) अणु
 		pr_warn("failed to get e_shstrndx from %s\n", path);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	while ((scn = elf_nextscn(elf, scn)) != NULL) {
+	जबतक ((scn = elf_nextscn(elf, scn)) != शून्य) अणु
 		GElf_Shdr sh;
-		char *name;
+		अक्षर *name;
 
 		idx++;
-		if (gelf_getshdr(scn, &sh) != &sh) {
+		अगर (gelf_माला_लोhdr(scn, &sh) != &sh) अणु
 			pr_warn("failed to get section(%d) header from %s\n",
 				idx, path);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		name = elf_strptr(elf, shstrndx, sh.sh_name);
-		if (!name) {
+		अगर (!name) अणु
 			pr_warn("failed to get section(%d) name from %s\n",
 				idx, path);
-			goto done;
-		}
-		if (strcmp(name, BTF_ELF_SEC) == 0) {
+			जाओ करोne;
+		पूर्ण
+		अगर (म_भेद(name, BTF_ELF_SEC) == 0) अणु
 			btf_data = elf_getdata(scn, 0);
-			if (!btf_data) {
+			अगर (!btf_data) अणु
 				pr_warn("failed to get section(%d, %s) data from %s\n",
 					idx, name, path);
-				goto done;
-			}
-			continue;
-		} else if (btf_ext && strcmp(name, BTF_EXT_ELF_SEC) == 0) {
+				जाओ करोne;
+			पूर्ण
+			जारी;
+		पूर्ण अन्यथा अगर (btf_ext && म_भेद(name, BTF_EXT_ELF_SEC) == 0) अणु
 			btf_ext_data = elf_getdata(scn, 0);
-			if (!btf_ext_data) {
+			अगर (!btf_ext_data) अणु
 				pr_warn("failed to get section(%d, %s) data from %s\n",
 					idx, name, path);
-				goto done;
-			}
-			continue;
-		}
-	}
+				जाओ करोne;
+			पूर्ण
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	err = 0;
 
-	if (!btf_data) {
+	अगर (!btf_data) अणु
 		err = -ENOENT;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	btf = btf_new(btf_data->d_buf, btf_data->d_size, base_btf);
-	if (IS_ERR(btf))
-		goto done;
+	अगर (IS_ERR(btf))
+		जाओ करोne;
 
-	switch (gelf_getclass(elf)) {
-	case ELFCLASS32:
-		btf__set_pointer_size(btf, 4);
-		break;
-	case ELFCLASS64:
-		btf__set_pointer_size(btf, 8);
-		break;
-	default:
+	चयन (gelf_अ_लोlass(elf)) अणु
+	हाल ELFCLASS32:
+		btf__set_poपूर्णांकer_size(btf, 4);
+		अवरोध;
+	हाल ELFCLASS64:
+		btf__set_poपूर्णांकer_size(btf, 8);
+		अवरोध;
+	शेष:
 		pr_warn("failed to get ELF class (bitness) for %s\n", path);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (btf_ext && btf_ext_data) {
+	अगर (btf_ext && btf_ext_data) अणु
 		*btf_ext = btf_ext__new(btf_ext_data->d_buf,
 					btf_ext_data->d_size);
-		if (IS_ERR(*btf_ext))
-			goto done;
-	} else if (btf_ext) {
-		*btf_ext = NULL;
-	}
-done:
-	if (elf)
+		अगर (IS_ERR(*btf_ext))
+			जाओ करोne;
+	पूर्ण अन्यथा अगर (btf_ext) अणु
+		*btf_ext = शून्य;
+	पूर्ण
+करोne:
+	अगर (elf)
 		elf_end(elf);
-	close(fd);
+	बंद(fd);
 
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 	/*
-	 * btf is always parsed before btf_ext, so no need to clean up
-	 * btf_ext, if btf loading failed
+	 * btf is always parsed beक्रमe btf_ext, so no need to clean up
+	 * btf_ext, अगर btf loading failed
 	 */
-	if (IS_ERR(btf))
-		return btf;
-	if (btf_ext && IS_ERR(*btf_ext)) {
-		btf__free(btf);
+	अगर (IS_ERR(btf))
+		वापस btf;
+	अगर (btf_ext && IS_ERR(*btf_ext)) अणु
+		btf__मुक्त(btf);
 		err = PTR_ERR(*btf_ext);
-		return ERR_PTR(err);
-	}
-	return btf;
-}
+		वापस ERR_PTR(err);
+	पूर्ण
+	वापस btf;
+पूर्ण
 
-struct btf *btf__parse_elf(const char *path, struct btf_ext **btf_ext)
-{
-	return btf_parse_elf(path, NULL, btf_ext);
-}
+काष्ठा btf *btf__parse_elf(स्थिर अक्षर *path, काष्ठा btf_ext **btf_ext)
+अणु
+	वापस btf_parse_elf(path, शून्य, btf_ext);
+पूर्ण
 
-struct btf *btf__parse_elf_split(const char *path, struct btf *base_btf)
-{
-	return btf_parse_elf(path, base_btf, NULL);
-}
+काष्ठा btf *btf__parse_elf_split(स्थिर अक्षर *path, काष्ठा btf *base_btf)
+अणु
+	वापस btf_parse_elf(path, base_btf, शून्य);
+पूर्ण
 
-static struct btf *btf_parse_raw(const char *path, struct btf *base_btf)
-{
-	struct btf *btf = NULL;
-	void *data = NULL;
-	FILE *f = NULL;
+अटल काष्ठा btf *btf_parse_raw(स्थिर अक्षर *path, काष्ठा btf *base_btf)
+अणु
+	काष्ठा btf *btf = शून्य;
+	व्योम *data = शून्य;
+	खाता *f = शून्य;
 	__u16 magic;
-	int err = 0;
-	long sz;
+	पूर्णांक err = 0;
+	दीर्घ sz;
 
-	f = fopen(path, "rb");
-	if (!f) {
-		err = -errno;
-		goto err_out;
-	}
+	f = ख_खोलो(path, "rb");
+	अगर (!f) अणु
+		err = -त्रुटि_सं;
+		जाओ err_out;
+	पूर्ण
 
 	/* check BTF magic */
-	if (fread(&magic, 1, sizeof(magic), f) < sizeof(magic)) {
+	अगर (ख_पढ़ो(&magic, 1, माप(magic), f) < माप(magic)) अणु
 		err = -EIO;
-		goto err_out;
-	}
-	if (magic != BTF_MAGIC && magic != bswap_16(BTF_MAGIC)) {
+		जाओ err_out;
+	पूर्ण
+	अगर (magic != BTF_MAGIC && magic != bswap_16(BTF_MAGIC)) अणु
 		/* definitely not a raw BTF */
 		err = -EPROTO;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	/* get file size */
-	if (fseek(f, 0, SEEK_END)) {
-		err = -errno;
-		goto err_out;
-	}
-	sz = ftell(f);
-	if (sz < 0) {
-		err = -errno;
-		goto err_out;
-	}
-	/* rewind to the start */
-	if (fseek(f, 0, SEEK_SET)) {
-		err = -errno;
-		goto err_out;
-	}
+	अगर (ख_जाओ(f, 0, अंत_से)) अणु
+		err = -त्रुटि_सं;
+		जाओ err_out;
+	पूर्ण
+	sz = ख_बताओ(f);
+	अगर (sz < 0) अणु
+		err = -त्रुटि_सं;
+		जाओ err_out;
+	पूर्ण
+	/* शुरुआत to the start */
+	अगर (ख_जाओ(f, 0, शुरू_से)) अणु
+		err = -त्रुटि_सं;
+		जाओ err_out;
+	पूर्ण
 
-	/* pre-alloc memory and read all of BTF data */
-	data = malloc(sz);
-	if (!data) {
+	/* pre-alloc memory and पढ़ो all of BTF data */
+	data = दो_स्मृति(sz);
+	अगर (!data) अणु
 		err = -ENOMEM;
-		goto err_out;
-	}
-	if (fread(data, 1, sz, f) < sz) {
+		जाओ err_out;
+	पूर्ण
+	अगर (ख_पढ़ो(data, 1, sz, f) < sz) अणु
 		err = -EIO;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	/* finally parse BTF data */
 	btf = btf_new(data, sz, base_btf);
 
 err_out:
-	free(data);
-	if (f)
-		fclose(f);
-	return err ? ERR_PTR(err) : btf;
-}
+	मुक्त(data);
+	अगर (f)
+		ख_बंद(f);
+	वापस err ? ERR_PTR(err) : btf;
+पूर्ण
 
-struct btf *btf__parse_raw(const char *path)
-{
-	return btf_parse_raw(path, NULL);
-}
+काष्ठा btf *btf__parse_raw(स्थिर अक्षर *path)
+अणु
+	वापस btf_parse_raw(path, शून्य);
+पूर्ण
 
-struct btf *btf__parse_raw_split(const char *path, struct btf *base_btf)
-{
-	return btf_parse_raw(path, base_btf);
-}
+काष्ठा btf *btf__parse_raw_split(स्थिर अक्षर *path, काष्ठा btf *base_btf)
+अणु
+	वापस btf_parse_raw(path, base_btf);
+पूर्ण
 
-static struct btf *btf_parse(const char *path, struct btf *base_btf, struct btf_ext **btf_ext)
-{
-	struct btf *btf;
+अटल काष्ठा btf *btf_parse(स्थिर अक्षर *path, काष्ठा btf *base_btf, काष्ठा btf_ext **btf_ext)
+अणु
+	काष्ठा btf *btf;
 
-	if (btf_ext)
-		*btf_ext = NULL;
+	अगर (btf_ext)
+		*btf_ext = शून्य;
 
 	btf = btf_parse_raw(path, base_btf);
-	if (!IS_ERR(btf) || PTR_ERR(btf) != -EPROTO)
-		return btf;
+	अगर (!IS_ERR(btf) || PTR_ERR(btf) != -EPROTO)
+		वापस btf;
 
-	return btf_parse_elf(path, base_btf, btf_ext);
-}
+	वापस btf_parse_elf(path, base_btf, btf_ext);
+पूर्ण
 
-struct btf *btf__parse(const char *path, struct btf_ext **btf_ext)
-{
-	return btf_parse(path, NULL, btf_ext);
-}
+काष्ठा btf *btf__parse(स्थिर अक्षर *path, काष्ठा btf_ext **btf_ext)
+अणु
+	वापस btf_parse(path, शून्य, btf_ext);
+पूर्ण
 
-struct btf *btf__parse_split(const char *path, struct btf *base_btf)
-{
-	return btf_parse(path, base_btf, NULL);
-}
+काष्ठा btf *btf__parse_split(स्थिर अक्षर *path, काष्ठा btf *base_btf)
+अणु
+	वापस btf_parse(path, base_btf, शून्य);
+पूर्ण
 
-static int compare_vsi_off(const void *_a, const void *_b)
-{
-	const struct btf_var_secinfo *a = _a;
-	const struct btf_var_secinfo *b = _b;
+अटल पूर्णांक compare_vsi_off(स्थिर व्योम *_a, स्थिर व्योम *_b)
+अणु
+	स्थिर काष्ठा btf_var_secinfo *a = _a;
+	स्थिर काष्ठा btf_var_secinfo *b = _b;
 
-	return a->offset - b->offset;
-}
+	वापस a->offset - b->offset;
+पूर्ण
 
-static int btf_fixup_datasec(struct bpf_object *obj, struct btf *btf,
-			     struct btf_type *t)
-{
+अटल पूर्णांक btf_fixup_datasec(काष्ठा bpf_object *obj, काष्ठा btf *btf,
+			     काष्ठा btf_type *t)
+अणु
 	__u32 size = 0, off = 0, i, vars = btf_vlen(t);
-	const char *name = btf__name_by_offset(btf, t->name_off);
-	const struct btf_type *t_var;
-	struct btf_var_secinfo *vsi;
-	const struct btf_var *var;
-	int ret;
+	स्थिर अक्षर *name = btf__name_by_offset(btf, t->name_off);
+	स्थिर काष्ठा btf_type *t_var;
+	काष्ठा btf_var_secinfo *vsi;
+	स्थिर काष्ठा btf_var *var;
+	पूर्णांक ret;
 
-	if (!name) {
+	अगर (!name) अणु
 		pr_debug("No name found in string section for DATASEC kind.\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	/* .extern datasec size and var offsets were set correctly during
-	 * extern collection step, so just skip straight to sorting variables
+	/* .बाह्य datasec size and var offsets were set correctly during
+	 * बाह्य collection step, so just skip straight to sorting variables
 	 */
-	if (t->size)
-		goto sort_vars;
+	अगर (t->size)
+		जाओ sort_vars;
 
 	ret = bpf_object__section_size(obj, name, &size);
-	if (ret || !size || (t->size && t->size != size)) {
+	अगर (ret || !size || (t->size && t->size != size)) अणु
 		pr_debug("Invalid size for section %s: %u bytes\n", name, size);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	t->size = size;
 
-	for (i = 0, vsi = btf_var_secinfos(t); i < vars; i++, vsi++) {
+	क्रम (i = 0, vsi = btf_var_secinfos(t); i < vars; i++, vsi++) अणु
 		t_var = btf__type_by_id(btf, vsi->type);
 		var = btf_var(t_var);
 
-		if (!btf_is_var(t_var)) {
+		अगर (!btf_is_var(t_var)) अणु
 			pr_debug("Non-VAR type seen in section %s\n", name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (var->linkage == BTF_VAR_STATIC)
-			continue;
+		अगर (var->linkage == BTF_VAR_STATIC)
+			जारी;
 
 		name = btf__name_by_offset(btf, t_var->name_off);
-		if (!name) {
+		अगर (!name) अणु
 			pr_debug("No name found in string section for VAR kind\n");
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 
 		ret = bpf_object__variable_offset(obj, name, &off);
-		if (ret) {
+		अगर (ret) अणु
 			pr_debug("No offset found in symbol table for VAR %s\n",
 				 name);
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 
 		vsi->offset = off;
-	}
+	पूर्ण
 
 sort_vars:
-	qsort(btf_var_secinfos(t), vars, sizeof(*vsi), compare_vsi_off);
-	return 0;
-}
+	क्विक(btf_var_secinfos(t), vars, माप(*vsi), compare_vsi_off);
+	वापस 0;
+पूर्ण
 
-int btf__finalize_data(struct bpf_object *obj, struct btf *btf)
-{
-	int err = 0;
+पूर्णांक btf__finalize_data(काष्ठा bpf_object *obj, काष्ठा btf *btf)
+अणु
+	पूर्णांक err = 0;
 	__u32 i;
 
-	for (i = 1; i <= btf->nr_types; i++) {
-		struct btf_type *t = btf_type_by_id(btf, i);
+	क्रम (i = 1; i <= btf->nr_types; i++) अणु
+		काष्ठा btf_type *t = btf_type_by_id(btf, i);
 
 		/* Loader needs to fix up some of the things compiler
-		 * couldn't get its hands on while emitting BTF. This
+		 * couldn't get its hands on जबतक emitting BTF. This
 		 * is section size and global variable offset. We use
-		 * the info from the ELF itself for this purpose.
+		 * the info from the ELF itself क्रम this purpose.
 		 */
-		if (btf_is_datasec(t)) {
+		अगर (btf_is_datasec(t)) अणु
 			err = btf_fixup_datasec(obj, btf, t);
-			if (err)
-				break;
-		}
-	}
+			अगर (err)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void *btf_get_raw_data(const struct btf *btf, __u32 *size, bool swap_endian);
+अटल व्योम *btf_get_raw_data(स्थिर काष्ठा btf *btf, __u32 *size, bool swap_endian);
 
-int btf__load(struct btf *btf)
-{
+पूर्णांक btf__load(काष्ठा btf *btf)
+अणु
 	__u32 log_buf_size = 0, raw_size;
-	char *log_buf = NULL;
-	void *raw_data;
-	int err = 0;
+	अक्षर *log_buf = शून्य;
+	व्योम *raw_data;
+	पूर्णांक err = 0;
 
-	if (btf->fd >= 0)
-		return -EEXIST;
+	अगर (btf->fd >= 0)
+		वापस -EEXIST;
 
 retry_load:
-	if (log_buf_size) {
-		log_buf = malloc(log_buf_size);
-		if (!log_buf)
-			return -ENOMEM;
+	अगर (log_buf_size) अणु
+		log_buf = दो_स्मृति(log_buf_size);
+		अगर (!log_buf)
+			वापस -ENOMEM;
 
 		*log_buf = 0;
-	}
+	पूर्ण
 
 	raw_data = btf_get_raw_data(btf, &raw_size, false);
-	if (!raw_data) {
+	अगर (!raw_data) अणु
 		err = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	/* cache native raw data representation */
 	btf->raw_size = raw_size;
 	btf->raw_data = raw_data;
 
 	btf->fd = bpf_load_btf(raw_data, raw_size, log_buf, log_buf_size, false);
-	if (btf->fd < 0) {
-		if (!log_buf || errno == ENOSPC) {
+	अगर (btf->fd < 0) अणु
+		अगर (!log_buf || त्रुटि_सं == ENOSPC) अणु
 			log_buf_size = max((__u32)BPF_LOG_BUF_SIZE,
 					   log_buf_size << 1);
-			free(log_buf);
-			goto retry_load;
-		}
+			मुक्त(log_buf);
+			जाओ retry_load;
+		पूर्ण
 
-		err = -errno;
-		pr_warn("Error loading BTF: %s(%d)\n", strerror(errno), errno);
-		if (*log_buf)
+		err = -त्रुटि_सं;
+		pr_warn("Error loading BTF: %s(%d)\n", म_त्रुटि(त्रुटि_सं), त्रुटि_सं);
+		अगर (*log_buf)
 			pr_warn("%s\n", log_buf);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-done:
-	free(log_buf);
-	return err;
-}
+करोne:
+	मुक्त(log_buf);
+	वापस err;
+पूर्ण
 
-int btf__fd(const struct btf *btf)
-{
-	return btf->fd;
-}
+पूर्णांक btf__fd(स्थिर काष्ठा btf *btf)
+अणु
+	वापस btf->fd;
+पूर्ण
 
-void btf__set_fd(struct btf *btf, int fd)
-{
+व्योम btf__set_fd(काष्ठा btf *btf, पूर्णांक fd)
+अणु
 	btf->fd = fd;
-}
+पूर्ण
 
-static const void *btf_strs_data(const struct btf *btf)
-{
-	return btf->strs_data ? btf->strs_data : strset__data(btf->strs_set);
-}
+अटल स्थिर व्योम *btf_strs_data(स्थिर काष्ठा btf *btf)
+अणु
+	वापस btf->strs_data ? btf->strs_data : strset__data(btf->strs_set);
+पूर्ण
 
-static void *btf_get_raw_data(const struct btf *btf, __u32 *size, bool swap_endian)
-{
-	struct btf_header *hdr = btf->hdr;
-	struct btf_type *t;
-	void *data, *p;
+अटल व्योम *btf_get_raw_data(स्थिर काष्ठा btf *btf, __u32 *size, bool swap_endian)
+अणु
+	काष्ठा btf_header *hdr = btf->hdr;
+	काष्ठा btf_type *t;
+	व्योम *data, *p;
 	__u32 data_sz;
-	int i;
+	पूर्णांक i;
 
 	data = swap_endian ? btf->raw_data_swapped : btf->raw_data;
-	if (data) {
+	अगर (data) अणु
 		*size = btf->raw_size;
-		return data;
-	}
+		वापस data;
+	पूर्ण
 
 	data_sz = hdr->hdr_len + hdr->type_len + hdr->str_len;
-	data = calloc(1, data_sz);
-	if (!data)
-		return NULL;
+	data = सुस्मृति(1, data_sz);
+	अगर (!data)
+		वापस शून्य;
 	p = data;
 
-	memcpy(p, hdr, hdr->hdr_len);
-	if (swap_endian)
+	स_नकल(p, hdr, hdr->hdr_len);
+	अगर (swap_endian)
 		btf_bswap_hdr(p);
 	p += hdr->hdr_len;
 
-	memcpy(p, btf->types_data, hdr->type_len);
-	if (swap_endian) {
-		for (i = 0; i < btf->nr_types; i++) {
+	स_नकल(p, btf->types_data, hdr->type_len);
+	अगर (swap_endian) अणु
+		क्रम (i = 0; i < btf->nr_types; i++) अणु
 			t = p + btf->type_offs[i];
 			/* btf_bswap_type_rest() relies on native t->info, so
 			 * we swap base type info after we swapped all the
-			 * additional information
+			 * additional inक्रमmation
 			 */
-			if (btf_bswap_type_rest(t))
-				goto err_out;
+			अगर (btf_bswap_type_rest(t))
+				जाओ err_out;
 			btf_bswap_type_base(t);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	p += hdr->type_len;
 
-	memcpy(p, btf_strs_data(btf), hdr->str_len);
+	स_नकल(p, btf_strs_data(btf), hdr->str_len);
 	p += hdr->str_len;
 
 	*size = data_sz;
-	return data;
+	वापस data;
 err_out:
-	free(data);
-	return NULL;
-}
+	मुक्त(data);
+	वापस शून्य;
+पूर्ण
 
-const void *btf__get_raw_data(const struct btf *btf_ro, __u32 *size)
-{
-	struct btf *btf = (struct btf *)btf_ro;
+स्थिर व्योम *btf__get_raw_data(स्थिर काष्ठा btf *btf_ro, __u32 *size)
+अणु
+	काष्ठा btf *btf = (काष्ठा btf *)btf_ro;
 	__u32 data_sz;
-	void *data;
+	व्योम *data;
 
 	data = btf_get_raw_data(btf, &data_sz, btf->swapped_endian);
-	if (!data)
-		return NULL;
+	अगर (!data)
+		वापस शून्य;
 
 	btf->raw_size = data_sz;
-	if (btf->swapped_endian)
+	अगर (btf->swapped_endian)
 		btf->raw_data_swapped = data;
-	else
+	अन्यथा
 		btf->raw_data = data;
 	*size = data_sz;
-	return data;
-}
+	वापस data;
+पूर्ण
 
-const char *btf__str_by_offset(const struct btf *btf, __u32 offset)
-{
-	if (offset < btf->start_str_off)
-		return btf__str_by_offset(btf->base_btf, offset);
-	else if (offset - btf->start_str_off < btf->hdr->str_len)
-		return btf_strs_data(btf) + (offset - btf->start_str_off);
-	else
-		return NULL;
-}
+स्थिर अक्षर *btf__str_by_offset(स्थिर काष्ठा btf *btf, __u32 offset)
+अणु
+	अगर (offset < btf->start_str_off)
+		वापस btf__str_by_offset(btf->base_btf, offset);
+	अन्यथा अगर (offset - btf->start_str_off < btf->hdr->str_len)
+		वापस btf_strs_data(btf) + (offset - btf->start_str_off);
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-const char *btf__name_by_offset(const struct btf *btf, __u32 offset)
-{
-	return btf__str_by_offset(btf, offset);
-}
+स्थिर अक्षर *btf__name_by_offset(स्थिर काष्ठा btf *btf, __u32 offset)
+अणु
+	वापस btf__str_by_offset(btf, offset);
+पूर्ण
 
-struct btf *btf_get_from_fd(int btf_fd, struct btf *base_btf)
-{
-	struct bpf_btf_info btf_info;
-	__u32 len = sizeof(btf_info);
+काष्ठा btf *btf_get_from_fd(पूर्णांक btf_fd, काष्ठा btf *base_btf)
+अणु
+	काष्ठा bpf_btf_info btf_info;
+	__u32 len = माप(btf_info);
 	__u32 last_size;
-	struct btf *btf;
-	void *ptr;
-	int err;
+	काष्ठा btf *btf;
+	व्योम *ptr;
+	पूर्णांक err;
 
 	/* we won't know btf_size until we call bpf_obj_get_info_by_fd(). so
-	 * let's start with a sane default - 4KiB here - and resize it only if
+	 * let's start with a sane शेष - 4KiB here - and resize it only अगर
 	 * bpf_obj_get_info_by_fd() needs a bigger buffer.
 	 */
 	last_size = 4096;
-	ptr = malloc(last_size);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = दो_स्मृति(last_size);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
-	memset(&btf_info, 0, sizeof(btf_info));
+	स_रखो(&btf_info, 0, माप(btf_info));
 	btf_info.btf = ptr_to_u64(ptr);
 	btf_info.btf_size = last_size;
 	err = bpf_obj_get_info_by_fd(btf_fd, &btf_info, &len);
 
-	if (!err && btf_info.btf_size > last_size) {
-		void *temp_ptr;
+	अगर (!err && btf_info.btf_size > last_size) अणु
+		व्योम *temp_ptr;
 
 		last_size = btf_info.btf_size;
-		temp_ptr = realloc(ptr, last_size);
-		if (!temp_ptr) {
+		temp_ptr = पुनः_स्मृति(ptr, last_size);
+		अगर (!temp_ptr) अणु
 			btf = ERR_PTR(-ENOMEM);
-			goto exit_free;
-		}
+			जाओ निकास_मुक्त;
+		पूर्ण
 		ptr = temp_ptr;
 
-		len = sizeof(btf_info);
-		memset(&btf_info, 0, sizeof(btf_info));
+		len = माप(btf_info);
+		स_रखो(&btf_info, 0, माप(btf_info));
 		btf_info.btf = ptr_to_u64(ptr);
 		btf_info.btf_size = last_size;
 
 		err = bpf_obj_get_info_by_fd(btf_fd, &btf_info, &len);
-	}
+	पूर्ण
 
-	if (err || btf_info.btf_size > last_size) {
-		btf = err ? ERR_PTR(-errno) : ERR_PTR(-E2BIG);
-		goto exit_free;
-	}
+	अगर (err || btf_info.btf_size > last_size) अणु
+		btf = err ? ERR_PTR(-त्रुटि_सं) : ERR_PTR(-E2BIG);
+		जाओ निकास_मुक्त;
+	पूर्ण
 
 	btf = btf_new(ptr, btf_info.btf_size, base_btf);
 
-exit_free:
-	free(ptr);
-	return btf;
-}
+निकास_मुक्त:
+	मुक्त(ptr);
+	वापस btf;
+पूर्ण
 
-int btf__get_from_id(__u32 id, struct btf **btf)
-{
-	struct btf *res;
-	int btf_fd;
+पूर्णांक btf__get_from_id(__u32 id, काष्ठा btf **btf)
+अणु
+	काष्ठा btf *res;
+	पूर्णांक btf_fd;
 
-	*btf = NULL;
+	*btf = शून्य;
 	btf_fd = bpf_btf_get_fd_by_id(id);
-	if (btf_fd < 0)
-		return -errno;
+	अगर (btf_fd < 0)
+		वापस -त्रुटि_सं;
 
-	res = btf_get_from_fd(btf_fd, NULL);
-	close(btf_fd);
-	if (IS_ERR(res))
-		return PTR_ERR(res);
+	res = btf_get_from_fd(btf_fd, शून्य);
+	बंद(btf_fd);
+	अगर (IS_ERR(res))
+		वापस PTR_ERR(res);
 
 	*btf = res;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int btf__get_map_kv_tids(const struct btf *btf, const char *map_name,
+पूर्णांक btf__get_map_kv_tids(स्थिर काष्ठा btf *btf, स्थिर अक्षर *map_name,
 			 __u32 expected_key_size, __u32 expected_value_size,
 			 __u32 *key_type_id, __u32 *value_type_id)
-{
-	const struct btf_type *container_type;
-	const struct btf_member *key, *value;
-	const size_t max_name = 256;
-	char container_name[max_name];
+अणु
+	स्थिर काष्ठा btf_type *container_type;
+	स्थिर काष्ठा btf_member *key, *value;
+	स्थिर माप_प्रकार max_name = 256;
+	अक्षर container_name[max_name];
 	__s64 key_size, value_size;
 	__s32 container_id;
 
-	if (snprintf(container_name, max_name, "____btf_map_%s", map_name) ==
-	    max_name) {
+	अगर (snम_लिखो(container_name, max_name, "____btf_map_%s", map_name) ==
+	    max_name) अणु
 		pr_warn("map:%s length of '____btf_map_%s' is too long\n",
 			map_name, map_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	container_id = btf__find_by_name(btf, container_name);
-	if (container_id < 0) {
+	अगर (container_id < 0) अणु
 		pr_debug("map:%s container_name:%s cannot be found in BTF. Missing BPF_ANNOTATE_KV_PAIR?\n",
 			 map_name, container_name);
-		return container_id;
-	}
+		वापस container_id;
+	पूर्ण
 
 	container_type = btf__type_by_id(btf, container_id);
-	if (!container_type) {
+	अगर (!container_type) अणु
 		pr_warn("map:%s cannot find BTF type for container_id:%u\n",
 			map_name, container_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!btf_is_struct(container_type) || btf_vlen(container_type) < 2) {
+	अगर (!btf_is_काष्ठा(container_type) || btf_vlen(container_type) < 2) अणु
 		pr_warn("map:%s container_name:%s is an invalid container struct\n",
 			map_name, container_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	key = btf_members(container_type);
 	value = key + 1;
 
 	key_size = btf__resolve_size(btf, key->type);
-	if (key_size < 0) {
+	अगर (key_size < 0) अणु
 		pr_warn("map:%s invalid BTF key_type_size\n", map_name);
-		return key_size;
-	}
+		वापस key_size;
+	पूर्ण
 
-	if (expected_key_size != key_size) {
+	अगर (expected_key_size != key_size) अणु
 		pr_warn("map:%s btf_key_type_size:%u != map_def_key_size:%u\n",
 			map_name, (__u32)key_size, expected_key_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	value_size = btf__resolve_size(btf, value->type);
-	if (value_size < 0) {
+	अगर (value_size < 0) अणु
 		pr_warn("map:%s invalid BTF value_type_size\n", map_name);
-		return value_size;
-	}
+		वापस value_size;
+	पूर्ण
 
-	if (expected_value_size != value_size) {
+	अगर (expected_value_size != value_size) अणु
 		pr_warn("map:%s btf_value_type_size:%u != map_def_value_size:%u\n",
 			map_name, (__u32)value_size, expected_value_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*key_type_id = key->type;
 	*value_type_id = value->type;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void btf_invalidate_raw_data(struct btf *btf)
-{
-	if (btf->raw_data) {
-		free(btf->raw_data);
-		btf->raw_data = NULL;
-	}
-	if (btf->raw_data_swapped) {
-		free(btf->raw_data_swapped);
-		btf->raw_data_swapped = NULL;
-	}
-}
+अटल व्योम btf_invalidate_raw_data(काष्ठा btf *btf)
+अणु
+	अगर (btf->raw_data) अणु
+		मुक्त(btf->raw_data);
+		btf->raw_data = शून्य;
+	पूर्ण
+	अगर (btf->raw_data_swapped) अणु
+		मुक्त(btf->raw_data_swapped);
+		btf->raw_data_swapped = शून्य;
+	पूर्ण
+पूर्ण
 
-/* Ensure BTF is ready to be modified (by splitting into a three memory
- * regions for header, types, and strings). Also invalidate cached
- * raw_data, if any.
+/* Ensure BTF is पढ़ोy to be modअगरied (by splitting पूर्णांकo a three memory
+ * regions क्रम header, types, and strings). Also invalidate cached
+ * raw_data, अगर any.
  */
-static int btf_ensure_modifiable(struct btf *btf)
-{
-	void *hdr, *types;
-	struct strset *set = NULL;
-	int err = -ENOMEM;
+अटल पूर्णांक btf_ensure_modअगरiable(काष्ठा btf *btf)
+अणु
+	व्योम *hdr, *types;
+	काष्ठा strset *set = शून्य;
+	पूर्णांक err = -ENOMEM;
 
-	if (btf_is_modifiable(btf)) {
-		/* any BTF modification invalidates raw_data */
+	अगर (btf_is_modअगरiable(btf)) अणु
+		/* any BTF modअगरication invalidates raw_data */
 		btf_invalidate_raw_data(btf);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* split raw data into three memory regions */
-	hdr = malloc(btf->hdr->hdr_len);
-	types = malloc(btf->hdr->type_len);
-	if (!hdr || !types)
-		goto err_out;
+	/* split raw data पूर्णांकo three memory regions */
+	hdr = दो_स्मृति(btf->hdr->hdr_len);
+	types = दो_स्मृति(btf->hdr->type_len);
+	अगर (!hdr || !types)
+		जाओ err_out;
 
-	memcpy(hdr, btf->hdr, btf->hdr->hdr_len);
-	memcpy(types, btf->types_data, btf->hdr->type_len);
+	स_नकल(hdr, btf->hdr, btf->hdr->hdr_len);
+	स_नकल(types, btf->types_data, btf->hdr->type_len);
 
-	/* build lookup index for all strings */
+	/* build lookup index क्रम all strings */
 	set = strset__new(BTF_MAX_STR_OFFSET, btf->strs_data, btf->hdr->str_len);
-	if (IS_ERR(set)) {
+	अगर (IS_ERR(set)) अणु
 		err = PTR_ERR(set);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	/* only when everything was successful, update internal state */
+	/* only when everything was successful, update पूर्णांकernal state */
 	btf->hdr = hdr;
 	btf->types_data = types;
 	btf->types_data_cap = btf->hdr->type_len;
-	btf->strs_data = NULL;
+	btf->strs_data = शून्य;
 	btf->strs_set = set;
-	/* if BTF was created from scratch, all strings are guaranteed to be
+	/* अगर BTF was created from scratch, all strings are guaranteed to be
 	 * unique and deduplicated
 	 */
-	if (btf->hdr->str_len == 0)
+	अगर (btf->hdr->str_len == 0)
 		btf->strs_deduped = true;
-	if (!btf->base_btf && btf->hdr->str_len == 1)
+	अगर (!btf->base_btf && btf->hdr->str_len == 1)
 		btf->strs_deduped = true;
 
 	/* invalidate raw_data representation */
 	btf_invalidate_raw_data(btf);
 
-	return 0;
+	वापस 0;
 
 err_out:
-	strset__free(set);
-	free(hdr);
-	free(types);
-	return err;
-}
+	strset__मुक्त(set);
+	मुक्त(hdr);
+	मुक्त(types);
+	वापस err;
+पूर्ण
 
 /* Find an offset in BTF string section that corresponds to a given string *s*.
  * Returns:
- *   - >0 offset into string section, if string is found;
- *   - -ENOENT, if string is not in the string section;
+ *   - >0 offset पूर्णांकo string section, अगर string is found;
+ *   - -ENOENT, अगर string is not in the string section;
  *   - <0, on any other error.
  */
-int btf__find_str(struct btf *btf, const char *s)
-{
-	int off;
+पूर्णांक btf__find_str(काष्ठा btf *btf, स्थिर अक्षर *s)
+अणु
+	पूर्णांक off;
 
-	if (btf->base_btf) {
+	अगर (btf->base_btf) अणु
 		off = btf__find_str(btf->base_btf, s);
-		if (off != -ENOENT)
-			return off;
-	}
+		अगर (off != -ENOENT)
+			वापस off;
+	पूर्ण
 
-	/* BTF needs to be in a modifiable state to build string lookup index */
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	/* BTF needs to be in a modअगरiable state to build string lookup index */
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
 	off = strset__find_str(btf->strs_set, s);
-	if (off < 0)
-		return off;
+	अगर (off < 0)
+		वापस off;
 
-	return btf->start_str_off + off;
-}
+	वापस btf->start_str_off + off;
+पूर्ण
 
 /* Add a string s to the BTF string section.
  * Returns:
- *   - > 0 offset into string section, on success;
+ *   - > 0 offset पूर्णांकo string section, on success;
  *   - < 0, on error.
  */
-int btf__add_str(struct btf *btf, const char *s)
-{
-	int off;
+पूर्णांक btf__add_str(काष्ठा btf *btf, स्थिर अक्षर *s)
+अणु
+	पूर्णांक off;
 
-	if (btf->base_btf) {
+	अगर (btf->base_btf) अणु
 		off = btf__find_str(btf->base_btf, s);
-		if (off != -ENOENT)
-			return off;
-	}
+		अगर (off != -ENOENT)
+			वापस off;
+	पूर्ण
 
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
 	off = strset__add_str(btf->strs_set, s);
-	if (off < 0)
-		return off;
+	अगर (off < 0)
+		वापस off;
 
 	btf->hdr->str_len = strset__data_size(btf->strs_set);
 
-	return btf->start_str_off + off;
-}
+	वापस btf->start_str_off + off;
+पूर्ण
 
-static void *btf_add_type_mem(struct btf *btf, size_t add_sz)
-{
-	return libbpf_add_mem(&btf->types_data, &btf->types_data_cap, 1,
-			      btf->hdr->type_len, UINT_MAX, add_sz);
-}
+अटल व्योम *btf_add_type_mem(काष्ठा btf *btf, माप_प्रकार add_sz)
+अणु
+	वापस libbpf_add_mem(&btf->types_data, &btf->types_data_cap, 1,
+			      btf->hdr->type_len, अच_पूर्णांक_उच्च, add_sz);
+पूर्ण
 
-static void btf_type_inc_vlen(struct btf_type *t)
-{
+अटल व्योम btf_type_inc_vlen(काष्ठा btf_type *t)
+अणु
 	t->info = btf_type_info(btf_kind(t), btf_vlen(t) + 1, btf_kflag(t));
-}
+पूर्ण
 
-static int btf_commit_type(struct btf *btf, int data_sz)
-{
-	int err;
+अटल पूर्णांक btf_commit_type(काष्ठा btf *btf, पूर्णांक data_sz)
+अणु
+	पूर्णांक err;
 
 	err = btf_add_type_idx_entry(btf, btf->hdr->type_len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	btf->hdr->type_len += data_sz;
 	btf->hdr->str_off += data_sz;
 	btf->nr_types++;
-	return btf->start_id + btf->nr_types - 1;
-}
+	वापस btf->start_id + btf->nr_types - 1;
+पूर्ण
 
-struct btf_pipe {
-	const struct btf *src;
-	struct btf *dst;
-};
+काष्ठा btf_pipe अणु
+	स्थिर काष्ठा btf *src;
+	काष्ठा btf *dst;
+पूर्ण;
 
-static int btf_rewrite_str(__u32 *str_off, void *ctx)
-{
-	struct btf_pipe *p = ctx;
-	int off;
+अटल पूर्णांक btf_reग_लिखो_str(__u32 *str_off, व्योम *ctx)
+अणु
+	काष्ठा btf_pipe *p = ctx;
+	पूर्णांक off;
 
-	if (!*str_off) /* nothing to do for empty strings */
-		return 0;
+	अगर (!*str_off) /* nothing to करो क्रम empty strings */
+		वापस 0;
 
 	off = btf__add_str(p->dst, btf__str_by_offset(p->src, *str_off));
-	if (off < 0)
-		return off;
+	अगर (off < 0)
+		वापस off;
 
 	*str_off = off;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int btf__add_type(struct btf *btf, const struct btf *src_btf, const struct btf_type *src_type)
-{
-	struct btf_pipe p = { .src = src_btf, .dst = btf };
-	struct btf_type *t;
-	int sz, err;
+पूर्णांक btf__add_type(काष्ठा btf *btf, स्थिर काष्ठा btf *src_btf, स्थिर काष्ठा btf_type *src_type)
+अणु
+	काष्ठा btf_pipe p = अणु .src = src_btf, .dst = btf पूर्ण;
+	काष्ठा btf_type *t;
+	पूर्णांक sz, err;
 
 	sz = btf_type_size(src_type);
-	if (sz < 0)
-		return sz;
+	अगर (sz < 0)
+		वापस sz;
 
-	/* deconstruct BTF, if necessary, and invalidate raw_data */
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	/* deस्थिरruct BTF, अगर necessary, and invalidate raw_data */
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
-	memcpy(t, src_type, sz);
+	स_नकल(t, src_type, sz);
 
-	err = btf_type_visit_str_offs(t, btf_rewrite_str, &p);
-	if (err)
-		return err;
+	err = btf_type_visit_str_offs(t, btf_reग_लिखो_str, &p);
+	अगर (err)
+		वापस err;
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
 /*
  * Append new BTF_KIND_INT type with:
- *   - *name* - non-empty, non-NULL type name;
- *   - *sz* - power-of-2 (1, 2, 4, ..) size of the type, in bytes;
+ *   - *name* - non-empty, non-शून्य type name;
+ *   - *sz* - घातer-of-2 (1, 2, 4, ..) size of the type, in bytes;
  *   - encoding is a combination of BTF_INT_SIGNED, BTF_INT_CHAR, BTF_INT_BOOL.
  * Returns:
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_int(struct btf *btf, const char *name, size_t byte_sz, int encoding)
-{
-	struct btf_type *t;
-	int sz, name_off;
+पूर्णांक btf__add_पूर्णांक(काष्ठा btf *btf, स्थिर अक्षर *name, माप_प्रकार byte_sz, पूर्णांक encoding)
+अणु
+	काष्ठा btf_type *t;
+	पूर्णांक sz, name_off;
 
 	/* non-empty name */
-	if (!name || !name[0])
-		return -EINVAL;
-	/* byte_sz must be power of 2 */
-	if (!byte_sz || (byte_sz & (byte_sz - 1)) || byte_sz > 16)
-		return -EINVAL;
-	if (encoding & ~(BTF_INT_SIGNED | BTF_INT_CHAR | BTF_INT_BOOL))
-		return -EINVAL;
+	अगर (!name || !name[0])
+		वापस -EINVAL;
+	/* byte_sz must be घातer of 2 */
+	अगर (!byte_sz || (byte_sz & (byte_sz - 1)) || byte_sz > 16)
+		वापस -EINVAL;
+	अगर (encoding & ~(BTF_INT_SIGNED | BTF_INT_CHAR | BTF_INT_BOOL))
+		वापस -EINVAL;
 
-	/* deconstruct BTF, if necessary, and invalidate raw_data */
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	/* deस्थिरruct BTF, अगर necessary, and invalidate raw_data */
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_type) + sizeof(int);
+	sz = माप(काष्ठा btf_type) + माप(पूर्णांक);
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
-	/* if something goes wrong later, we might end up with an extra string,
-	 * but that shouldn't be a problem, because BTF can't be constructed
+	/* अगर something goes wrong later, we might end up with an extra string,
+	 * but that shouldn't be a problem, because BTF can't be स्थिरructed
 	 * completely anyway and will most probably be just discarded
 	 */
 	name_off = btf__add_str(btf, name);
-	if (name_off < 0)
-		return name_off;
+	अगर (name_off < 0)
+		वापस name_off;
 
 	t->name_off = name_off;
 	t->info = btf_type_info(BTF_KIND_INT, 0, 0);
 	t->size = byte_sz;
-	/* set INT info, we don't allow setting legacy bit offset/size */
+	/* set INT info, we करोn't allow setting legacy bit offset/size */
 	*(__u32 *)(t + 1) = (encoding << 24) | (byte_sz * 8);
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
 /*
  * Append new BTF_KIND_FLOAT type with:
- *   - *name* - non-empty, non-NULL type name;
+ *   - *name* - non-empty, non-शून्य type name;
  *   - *sz* - size of the type, in bytes;
  * Returns:
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_float(struct btf *btf, const char *name, size_t byte_sz)
-{
-	struct btf_type *t;
-	int sz, name_off;
+पूर्णांक btf__add_भग्न(काष्ठा btf *btf, स्थिर अक्षर *name, माप_प्रकार byte_sz)
+अणु
+	काष्ठा btf_type *t;
+	पूर्णांक sz, name_off;
 
 	/* non-empty name */
-	if (!name || !name[0])
-		return -EINVAL;
+	अगर (!name || !name[0])
+		वापस -EINVAL;
 
 	/* byte_sz must be one of the explicitly allowed values */
-	if (byte_sz != 2 && byte_sz != 4 && byte_sz != 8 && byte_sz != 12 &&
+	अगर (byte_sz != 2 && byte_sz != 4 && byte_sz != 8 && byte_sz != 12 &&
 	    byte_sz != 16)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_type);
+	sz = माप(काष्ठा btf_type);
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
 	name_off = btf__add_str(btf, name);
-	if (name_off < 0)
-		return name_off;
+	अगर (name_off < 0)
+		वापस name_off;
 
 	t->name_off = name_off;
 	t->info = btf_type_info(BTF_KIND_FLOAT, 0, 0);
 	t->size = byte_sz;
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
-/* it's completely legal to append BTF types with type IDs pointing forward to
+/* it's completely legal to append BTF types with type IDs poपूर्णांकing क्रमward to
  * types that haven't been appended yet, so we only make sure that id looks
  * sane, we can't guarantee that ID will always be valid
  */
-static int validate_type_id(int id)
-{
-	if (id < 0 || id > BTF_MAX_NR_TYPES)
-		return -EINVAL;
-	return 0;
-}
+अटल पूर्णांक validate_type_id(पूर्णांक id)
+अणु
+	अगर (id < 0 || id > BTF_MAX_NR_TYPES)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-/* generic append function for PTR, TYPEDEF, CONST/VOLATILE/RESTRICT */
-static int btf_add_ref_kind(struct btf *btf, int kind, const char *name, int ref_type_id)
-{
-	struct btf_type *t;
-	int sz, name_off = 0;
+/* generic append function क्रम PTR, TYPEDEF, CONST/VOLATILE/RESTRICT */
+अटल पूर्णांक btf_add_ref_kind(काष्ठा btf *btf, पूर्णांक kind, स्थिर अक्षर *name, पूर्णांक ref_type_id)
+अणु
+	काष्ठा btf_type *t;
+	पूर्णांक sz, name_off = 0;
 
-	if (validate_type_id(ref_type_id))
-		return -EINVAL;
+	अगर (validate_type_id(ref_type_id))
+		वापस -EINVAL;
 
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_type);
+	sz = माप(काष्ठा btf_type);
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
-	if (name && name[0]) {
+	अगर (name && name[0]) अणु
 		name_off = btf__add_str(btf, name);
-		if (name_off < 0)
-			return name_off;
-	}
+		अगर (name_off < 0)
+			वापस name_off;
+	पूर्ण
 
 	t->name_off = name_off;
 	t->info = btf_type_info(kind, 0, 0);
 	t->type = ref_type_id;
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
 /*
  * Append new BTF_KIND_PTR type with:
@@ -1810,10 +1811,10 @@ static int btf_add_ref_kind(struct btf *btf, int kind, const char *name, int ref
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_ptr(struct btf *btf, int ref_type_id)
-{
-	return btf_add_ref_kind(btf, BTF_KIND_PTR, NULL, ref_type_id);
-}
+पूर्णांक btf__add_ptr(काष्ठा btf *btf, पूर्णांक ref_type_id)
+अणु
+	वापस btf_add_ref_kind(btf, BTF_KIND_PTR, शून्य, ref_type_id);
+पूर्ण
 
 /*
  * Append new BTF_KIND_ARRAY type with:
@@ -1824,22 +1825,22 @@ int btf__add_ptr(struct btf *btf, int ref_type_id)
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_array(struct btf *btf, int index_type_id, int elem_type_id, __u32 nr_elems)
-{
-	struct btf_type *t;
-	struct btf_array *a;
-	int sz;
+पूर्णांक btf__add_array(काष्ठा btf *btf, पूर्णांक index_type_id, पूर्णांक elem_type_id, __u32 nr_elems)
+अणु
+	काष्ठा btf_type *t;
+	काष्ठा btf_array *a;
+	पूर्णांक sz;
 
-	if (validate_type_id(index_type_id) || validate_type_id(elem_type_id))
-		return -EINVAL;
+	अगर (validate_type_id(index_type_id) || validate_type_id(elem_type_id))
+		वापस -EINVAL;
 
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_type) + sizeof(struct btf_array);
+	sz = माप(काष्ठा btf_type) + माप(काष्ठा btf_array);
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
 	t->name_off = 0;
 	t->info = btf_type_info(BTF_KIND_ARRAY, 0, 0);
@@ -1850,28 +1851,28 @@ int btf__add_array(struct btf *btf, int index_type_id, int elem_type_id, __u32 n
 	a->index_type = index_type_id;
 	a->nelems = nr_elems;
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
 /* generic STRUCT/UNION append function */
-static int btf_add_composite(struct btf *btf, int kind, const char *name, __u32 bytes_sz)
-{
-	struct btf_type *t;
-	int sz, name_off = 0;
+अटल पूर्णांक btf_add_composite(काष्ठा btf *btf, पूर्णांक kind, स्थिर अक्षर *name, __u32 bytes_sz)
+अणु
+	काष्ठा btf_type *t;
+	पूर्णांक sz, name_off = 0;
 
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_type);
+	sz = माप(काष्ठा btf_type);
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
-	if (name && name[0]) {
+	अगर (name && name[0]) अणु
 		name_off = btf__add_str(btf, name);
-		if (name_off < 0)
-			return name_off;
-	}
+		अगर (name_off < 0)
+			वापस name_off;
+	पूर्ण
 
 	/* start out with vlen=0 and no kflag; this will be adjusted when
 	 * adding each member
@@ -1880,197 +1881,197 @@ static int btf_add_composite(struct btf *btf, int kind, const char *name, __u32 
 	t->info = btf_type_info(kind, 0, 0);
 	t->size = bytes_sz;
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
 /*
  * Append new BTF_KIND_STRUCT type with:
- *   - *name* - name of the struct, can be NULL or empty for anonymous structs;
- *   - *byte_sz* - size of the struct, in bytes;
+ *   - *name* - name of the काष्ठा, can be शून्य or empty क्रम anonymous काष्ठाs;
+ *   - *byte_sz* - size of the काष्ठा, in bytes;
  *
  * Struct initially has no fields in it. Fields can be added by
- * btf__add_field() right after btf__add_struct() succeeds.
+ * btf__add_field() right after btf__add_काष्ठा() succeeds.
  *
  * Returns:
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_struct(struct btf *btf, const char *name, __u32 byte_sz)
-{
-	return btf_add_composite(btf, BTF_KIND_STRUCT, name, byte_sz);
-}
+पूर्णांक btf__add_काष्ठा(काष्ठा btf *btf, स्थिर अक्षर *name, __u32 byte_sz)
+अणु
+	वापस btf_add_composite(btf, BTF_KIND_STRUCT, name, byte_sz);
+पूर्ण
 
 /*
  * Append new BTF_KIND_UNION type with:
- *   - *name* - name of the union, can be NULL or empty for anonymous union;
- *   - *byte_sz* - size of the union, in bytes;
+ *   - *name* - name of the जोड़, can be शून्य or empty क्रम anonymous जोड़;
+ *   - *byte_sz* - size of the जोड़, in bytes;
  *
  * Union initially has no fields in it. Fields can be added by
- * btf__add_field() right after btf__add_union() succeeds. All fields
+ * btf__add_field() right after btf__add_जोड़() succeeds. All fields
  * should have *bit_offset* of 0.
  *
  * Returns:
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_union(struct btf *btf, const char *name, __u32 byte_sz)
-{
-	return btf_add_composite(btf, BTF_KIND_UNION, name, byte_sz);
-}
+पूर्णांक btf__add_जोड़(काष्ठा btf *btf, स्थिर अक्षर *name, __u32 byte_sz)
+अणु
+	वापस btf_add_composite(btf, BTF_KIND_UNION, name, byte_sz);
+पूर्ण
 
-static struct btf_type *btf_last_type(struct btf *btf)
-{
-	return btf_type_by_id(btf, btf__get_nr_types(btf));
-}
+अटल काष्ठा btf_type *btf_last_type(काष्ठा btf *btf)
+अणु
+	वापस btf_type_by_id(btf, btf__get_nr_types(btf));
+पूर्ण
 
 /*
- * Append new field for the current STRUCT/UNION type with:
- *   - *name* - name of the field, can be NULL or empty for anonymous field;
- *   - *type_id* - type ID for the type describing field type;
- *   - *bit_offset* - bit offset of the start of the field within struct/union;
- *   - *bit_size* - bit size of a bitfield, 0 for non-bitfield fields;
+ * Append new field क्रम the current STRUCT/UNION type with:
+ *   - *name* - name of the field, can be शून्य or empty क्रम anonymous field;
+ *   - *type_id* - type ID क्रम the type describing field type;
+ *   - *bit_offset* - bit offset of the start of the field within काष्ठा/जोड़;
+ *   - *bit_size* - bit size of a bitfield, 0 क्रम non-bitfield fields;
  * Returns:
  *   -  0, on success;
  *   - <0, on error.
  */
-int btf__add_field(struct btf *btf, const char *name, int type_id,
+पूर्णांक btf__add_field(काष्ठा btf *btf, स्थिर अक्षर *name, पूर्णांक type_id,
 		   __u32 bit_offset, __u32 bit_size)
-{
-	struct btf_type *t;
-	struct btf_member *m;
+अणु
+	काष्ठा btf_type *t;
+	काष्ठा btf_member *m;
 	bool is_bitfield;
-	int sz, name_off = 0;
+	पूर्णांक sz, name_off = 0;
 
-	/* last type should be union/struct */
-	if (btf->nr_types == 0)
-		return -EINVAL;
+	/* last type should be जोड़/काष्ठा */
+	अगर (btf->nr_types == 0)
+		वापस -EINVAL;
 	t = btf_last_type(btf);
-	if (!btf_is_composite(t))
-		return -EINVAL;
+	अगर (!btf_is_composite(t))
+		वापस -EINVAL;
 
-	if (validate_type_id(type_id))
-		return -EINVAL;
-	/* best-effort bit field offset/size enforcement */
+	अगर (validate_type_id(type_id))
+		वापस -EINVAL;
+	/* best-efक्रमt bit field offset/size enक्रमcement */
 	is_bitfield = bit_size || (bit_offset % 8 != 0);
-	if (is_bitfield && (bit_size == 0 || bit_size > 255 || bit_offset > 0xffffff))
-		return -EINVAL;
+	अगर (is_bitfield && (bit_size == 0 || bit_size > 255 || bit_offset > 0xffffff))
+		वापस -EINVAL;
 
-	/* only offset 0 is allowed for unions */
-	if (btf_is_union(t) && bit_offset)
-		return -EINVAL;
+	/* only offset 0 is allowed क्रम जोड़s */
+	अगर (btf_is_जोड़(t) && bit_offset)
+		वापस -EINVAL;
 
 	/* decompose and invalidate raw data */
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_member);
+	sz = माप(काष्ठा btf_member);
 	m = btf_add_type_mem(btf, sz);
-	if (!m)
-		return -ENOMEM;
+	अगर (!m)
+		वापस -ENOMEM;
 
-	if (name && name[0]) {
+	अगर (name && name[0]) अणु
 		name_off = btf__add_str(btf, name);
-		if (name_off < 0)
-			return name_off;
-	}
+		अगर (name_off < 0)
+			वापस name_off;
+	पूर्ण
 
 	m->name_off = name_off;
 	m->type = type_id;
 	m->offset = bit_offset | (bit_size << 24);
 
-	/* btf_add_type_mem can invalidate t pointer */
+	/* btf_add_type_mem can invalidate t poपूर्णांकer */
 	t = btf_last_type(btf);
 	/* update parent type's vlen and kflag */
 	t->info = btf_type_info(btf_kind(t), btf_vlen(t) + 1, is_bitfield || btf_kflag(t));
 
 	btf->hdr->type_len += sz;
 	btf->hdr->str_off += sz;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Append new BTF_KIND_ENUM type with:
- *   - *name* - name of the enum, can be NULL or empty for anonymous enums;
- *   - *byte_sz* - size of the enum, in bytes.
+ *   - *name* - name of the क्रमागत, can be शून्य or empty क्रम anonymous क्रमागतs;
+ *   - *byte_sz* - size of the क्रमागत, in bytes.
  *
- * Enum initially has no enum values in it (and corresponds to enum forward
- * declaration). Enumerator values can be added by btf__add_enum_value()
- * immediately after btf__add_enum() succeeds.
+ * Enum initially has no क्रमागत values in it (and corresponds to क्रमागत क्रमward
+ * declaration). Enumerator values can be added by btf__add_क्रमागत_value()
+ * immediately after btf__add_क्रमागत() succeeds.
  *
  * Returns:
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_enum(struct btf *btf, const char *name, __u32 byte_sz)
-{
-	struct btf_type *t;
-	int sz, name_off = 0;
+पूर्णांक btf__add_क्रमागत(काष्ठा btf *btf, स्थिर अक्षर *name, __u32 byte_sz)
+अणु
+	काष्ठा btf_type *t;
+	पूर्णांक sz, name_off = 0;
 
-	/* byte_sz must be power of 2 */
-	if (!byte_sz || (byte_sz & (byte_sz - 1)) || byte_sz > 8)
-		return -EINVAL;
+	/* byte_sz must be घातer of 2 */
+	अगर (!byte_sz || (byte_sz & (byte_sz - 1)) || byte_sz > 8)
+		वापस -EINVAL;
 
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_type);
+	sz = माप(काष्ठा btf_type);
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
-	if (name && name[0]) {
+	अगर (name && name[0]) अणु
 		name_off = btf__add_str(btf, name);
-		if (name_off < 0)
-			return name_off;
-	}
+		अगर (name_off < 0)
+			वापस name_off;
+	पूर्ण
 
-	/* start out with vlen=0; it will be adjusted when adding enum values */
+	/* start out with vlen=0; it will be adjusted when adding क्रमागत values */
 	t->name_off = name_off;
 	t->info = btf_type_info(BTF_KIND_ENUM, 0, 0);
 	t->size = byte_sz;
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
 /*
- * Append new enum value for the current ENUM type with:
- *   - *name* - name of the enumerator value, can't be NULL or empty;
- *   - *value* - integer value corresponding to enum value *name*;
+ * Append new क्रमागत value क्रम the current ENUM type with:
+ *   - *name* - name of the क्रमागतerator value, can't be शून्य or empty;
+ *   - *value* - पूर्णांकeger value corresponding to क्रमागत value *name*;
  * Returns:
  *   -  0, on success;
  *   - <0, on error.
  */
-int btf__add_enum_value(struct btf *btf, const char *name, __s64 value)
-{
-	struct btf_type *t;
-	struct btf_enum *v;
-	int sz, name_off;
+पूर्णांक btf__add_क्रमागत_value(काष्ठा btf *btf, स्थिर अक्षर *name, __s64 value)
+अणु
+	काष्ठा btf_type *t;
+	काष्ठा btf_क्रमागत *v;
+	पूर्णांक sz, name_off;
 
 	/* last type should be BTF_KIND_ENUM */
-	if (btf->nr_types == 0)
-		return -EINVAL;
+	अगर (btf->nr_types == 0)
+		वापस -EINVAL;
 	t = btf_last_type(btf);
-	if (!btf_is_enum(t))
-		return -EINVAL;
+	अगर (!btf_is_क्रमागत(t))
+		वापस -EINVAL;
 
 	/* non-empty name */
-	if (!name || !name[0])
-		return -EINVAL;
-	if (value < INT_MIN || value > UINT_MAX)
-		return -E2BIG;
+	अगर (!name || !name[0])
+		वापस -EINVAL;
+	अगर (value < पूर्णांक_न्यून || value > अच_पूर्णांक_उच्च)
+		वापस -E2BIG;
 
 	/* decompose and invalidate raw data */
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_enum);
+	sz = माप(काष्ठा btf_क्रमागत);
 	v = btf_add_type_mem(btf, sz);
-	if (!v)
-		return -ENOMEM;
+	अगर (!v)
+		वापस -ENOMEM;
 
 	name_off = btf__add_str(btf, name);
-	if (name_off < 0)
-		return name_off;
+	अगर (name_off < 0)
+		वापस name_off;
 
 	v->name_off = name_off;
 	v->val = value;
@@ -2081,61 +2082,61 @@ int btf__add_enum_value(struct btf *btf, const char *name, __s64 value)
 
 	btf->hdr->type_len += sz;
 	btf->hdr->str_off += sz;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Append new BTF_KIND_FWD type with:
- *   - *name*, non-empty/non-NULL name;
- *   - *fwd_kind*, kind of forward declaration, one of BTF_FWD_STRUCT,
+ *   - *name*, non-empty/non-शून्य name;
+ *   - *fwd_kind*, kind of क्रमward declaration, one of BTF_FWD_STRUCT,
  *     BTF_FWD_UNION, or BTF_FWD_ENUM;
  * Returns:
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_fwd(struct btf *btf, const char *name, enum btf_fwd_kind fwd_kind)
-{
-	if (!name || !name[0])
-		return -EINVAL;
+पूर्णांक btf__add_fwd(काष्ठा btf *btf, स्थिर अक्षर *name, क्रमागत btf_fwd_kind fwd_kind)
+अणु
+	अगर (!name || !name[0])
+		वापस -EINVAL;
 
-	switch (fwd_kind) {
-	case BTF_FWD_STRUCT:
-	case BTF_FWD_UNION: {
-		struct btf_type *t;
-		int id;
+	चयन (fwd_kind) अणु
+	हाल BTF_FWD_STRUCT:
+	हाल BTF_FWD_UNION: अणु
+		काष्ठा btf_type *t;
+		पूर्णांक id;
 
 		id = btf_add_ref_kind(btf, BTF_KIND_FWD, name, 0);
-		if (id <= 0)
-			return id;
+		अगर (id <= 0)
+			वापस id;
 		t = btf_type_by_id(btf, id);
 		t->info = btf_type_info(BTF_KIND_FWD, 0, fwd_kind == BTF_FWD_UNION);
-		return id;
-	}
-	case BTF_FWD_ENUM:
-		/* enum forward in BTF currently is just an enum with no enum
-		 * values; we also assume a standard 4-byte size for it
+		वापस id;
+	पूर्ण
+	हाल BTF_FWD_ENUM:
+		/* क्रमागत क्रमward in BTF currently is just an क्रमागत with no क्रमागत
+		 * values; we also assume a standard 4-byte size क्रम it
 		 */
-		return btf__add_enum(btf, name, sizeof(int));
-	default:
-		return -EINVAL;
-	}
-}
+		वापस btf__add_क्रमागत(btf, name, माप(पूर्णांक));
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /*
  * Append new BTF_KING_TYPEDEF type with:
- *   - *name*, non-empty/non-NULL name;
+ *   - *name*, non-empty/non-शून्य name;
  *   - *ref_type_id* - referenced type ID, it might not exist yet;
  * Returns:
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_typedef(struct btf *btf, const char *name, int ref_type_id)
-{
-	if (!name || !name[0])
-		return -EINVAL;
+पूर्णांक btf__add_प्रकार(काष्ठा btf *btf, स्थिर अक्षर *name, पूर्णांक ref_type_id)
+अणु
+	अगर (!name || !name[0])
+		वापस -EINVAL;
 
-	return btf_add_ref_kind(btf, BTF_KIND_TYPEDEF, name, ref_type_id);
-}
+	वापस btf_add_ref_kind(btf, BTF_KIND_TYPEDEF, name, ref_type_id);
+पूर्ण
 
 /*
  * Append new BTF_KIND_VOLATILE type with:
@@ -2144,10 +2145,10 @@ int btf__add_typedef(struct btf *btf, const char *name, int ref_type_id)
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_volatile(struct btf *btf, int ref_type_id)
-{
-	return btf_add_ref_kind(btf, BTF_KIND_VOLATILE, NULL, ref_type_id);
-}
+पूर्णांक btf__add_अस्थिर(काष्ठा btf *btf, पूर्णांक ref_type_id)
+अणु
+	वापस btf_add_ref_kind(btf, BTF_KIND_VOLATILE, शून्य, ref_type_id);
+पूर्ण
 
 /*
  * Append new BTF_KIND_CONST type with:
@@ -2156,10 +2157,10 @@ int btf__add_volatile(struct btf *btf, int ref_type_id)
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_const(struct btf *btf, int ref_type_id)
-{
-	return btf_add_ref_kind(btf, BTF_KIND_CONST, NULL, ref_type_id);
-}
+पूर्णांक btf__add_स्थिर(काष्ठा btf *btf, पूर्णांक ref_type_id)
+अणु
+	वापस btf_add_ref_kind(btf, BTF_KIND_CONST, शून्य, ref_type_id);
+पूर्ण
 
 /*
  * Append new BTF_KIND_RESTRICT type with:
@@ -2168,42 +2169,42 @@ int btf__add_const(struct btf *btf, int ref_type_id)
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_restrict(struct btf *btf, int ref_type_id)
-{
-	return btf_add_ref_kind(btf, BTF_KIND_RESTRICT, NULL, ref_type_id);
-}
+पूर्णांक btf__add_restrict(काष्ठा btf *btf, पूर्णांक ref_type_id)
+अणु
+	वापस btf_add_ref_kind(btf, BTF_KIND_RESTRICT, शून्य, ref_type_id);
+पूर्ण
 
 /*
  * Append new BTF_KIND_FUNC type with:
- *   - *name*, non-empty/non-NULL name;
+ *   - *name*, non-empty/non-शून्य name;
  *   - *proto_type_id* - FUNC_PROTO's type ID, it might not exist yet;
  * Returns:
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_func(struct btf *btf, const char *name,
-		  enum btf_func_linkage linkage, int proto_type_id)
-{
-	int id;
+पूर्णांक btf__add_func(काष्ठा btf *btf, स्थिर अक्षर *name,
+		  क्रमागत btf_func_linkage linkage, पूर्णांक proto_type_id)
+अणु
+	पूर्णांक id;
 
-	if (!name || !name[0])
-		return -EINVAL;
-	if (linkage != BTF_FUNC_STATIC && linkage != BTF_FUNC_GLOBAL &&
+	अगर (!name || !name[0])
+		वापस -EINVAL;
+	अगर (linkage != BTF_FUNC_STATIC && linkage != BTF_FUNC_GLOBAL &&
 	    linkage != BTF_FUNC_EXTERN)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	id = btf_add_ref_kind(btf, BTF_KIND_FUNC, name, proto_type_id);
-	if (id > 0) {
-		struct btf_type *t = btf_type_by_id(btf, id);
+	अगर (id > 0) अणु
+		काष्ठा btf_type *t = btf_type_by_id(btf, id);
 
 		t->info = btf_type_info(BTF_KIND_FUNC, linkage, 0);
-	}
-	return id;
-}
+	पूर्ण
+	वापस id;
+पूर्ण
 
 /*
  * Append new BTF_KIND_FUNC_PROTO with:
- *   - *ret_type_id* - type ID for return result of a function.
+ *   - *ret_type_id* - type ID क्रम वापस result of a function.
  *
  * Function prototype initially has no arguments, but they can be added by
  * btf__add_func_param() one by one, immediately after
@@ -2213,70 +2214,70 @@ int btf__add_func(struct btf *btf, const char *name,
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_func_proto(struct btf *btf, int ret_type_id)
-{
-	struct btf_type *t;
-	int sz;
+पूर्णांक btf__add_func_proto(काष्ठा btf *btf, पूर्णांक ret_type_id)
+अणु
+	काष्ठा btf_type *t;
+	पूर्णांक sz;
 
-	if (validate_type_id(ret_type_id))
-		return -EINVAL;
+	अगर (validate_type_id(ret_type_id))
+		वापस -EINVAL;
 
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_type);
+	sz = माप(काष्ठा btf_type);
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
-	/* start out with vlen=0; this will be adjusted when adding enum
-	 * values, if necessary
+	/* start out with vlen=0; this will be adjusted when adding क्रमागत
+	 * values, अगर necessary
 	 */
 	t->name_off = 0;
 	t->info = btf_type_info(BTF_KIND_FUNC_PROTO, 0, 0);
 	t->type = ret_type_id;
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
 /*
- * Append new function parameter for current FUNC_PROTO type with:
- *   - *name* - parameter name, can be NULL or empty;
+ * Append new function parameter क्रम current FUNC_PROTO type with:
+ *   - *name* - parameter name, can be शून्य or empty;
  *   - *type_id* - type ID describing the type of the parameter.
  * Returns:
  *   -  0, on success;
  *   - <0, on error.
  */
-int btf__add_func_param(struct btf *btf, const char *name, int type_id)
-{
-	struct btf_type *t;
-	struct btf_param *p;
-	int sz, name_off = 0;
+पूर्णांक btf__add_func_param(काष्ठा btf *btf, स्थिर अक्षर *name, पूर्णांक type_id)
+अणु
+	काष्ठा btf_type *t;
+	काष्ठा btf_param *p;
+	पूर्णांक sz, name_off = 0;
 
-	if (validate_type_id(type_id))
-		return -EINVAL;
+	अगर (validate_type_id(type_id))
+		वापस -EINVAL;
 
 	/* last type should be BTF_KIND_FUNC_PROTO */
-	if (btf->nr_types == 0)
-		return -EINVAL;
+	अगर (btf->nr_types == 0)
+		वापस -EINVAL;
 	t = btf_last_type(btf);
-	if (!btf_is_func_proto(t))
-		return -EINVAL;
+	अगर (!btf_is_func_proto(t))
+		वापस -EINVAL;
 
 	/* decompose and invalidate raw data */
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_param);
+	sz = माप(काष्ठा btf_param);
 	p = btf_add_type_mem(btf, sz);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
-	if (name && name[0]) {
+	अगर (name && name[0]) अणु
 		name_off = btf__add_str(btf, name);
-		if (name_off < 0)
-			return name_off;
-	}
+		अगर (name_off < 0)
+			वापस name_off;
+	पूर्ण
 
 	p->name_off = name_off;
 	p->type = type_id;
@@ -2287,12 +2288,12 @@ int btf__add_func_param(struct btf *btf, const char *name, int type_id)
 
 	btf->hdr->type_len += sz;
 	btf->hdr->str_off += sz;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Append new BTF_KIND_VAR type with:
- *   - *name* - non-empty/non-NULL name;
+ *   - *name* - non-empty/non-शून्य name;
  *   - *linkage* - variable linkage, one of BTF_VAR_STATIC,
  *     BTF_VAR_GLOBAL_ALLOCATED, or BTF_VAR_GLOBAL_EXTERN;
  *   - *type_id* - type ID of the type describing the type of the variable.
@@ -2300,33 +2301,33 @@ int btf__add_func_param(struct btf *btf, const char *name, int type_id)
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_var(struct btf *btf, const char *name, int linkage, int type_id)
-{
-	struct btf_type *t;
-	struct btf_var *v;
-	int sz, name_off;
+पूर्णांक btf__add_var(काष्ठा btf *btf, स्थिर अक्षर *name, पूर्णांक linkage, पूर्णांक type_id)
+अणु
+	काष्ठा btf_type *t;
+	काष्ठा btf_var *v;
+	पूर्णांक sz, name_off;
 
 	/* non-empty name */
-	if (!name || !name[0])
-		return -EINVAL;
-	if (linkage != BTF_VAR_STATIC && linkage != BTF_VAR_GLOBAL_ALLOCATED &&
+	अगर (!name || !name[0])
+		वापस -EINVAL;
+	अगर (linkage != BTF_VAR_STATIC && linkage != BTF_VAR_GLOBAL_ALLOCATED &&
 	    linkage != BTF_VAR_GLOBAL_EXTERN)
-		return -EINVAL;
-	if (validate_type_id(type_id))
-		return -EINVAL;
+		वापस -EINVAL;
+	अगर (validate_type_id(type_id))
+		वापस -EINVAL;
 
-	/* deconstruct BTF, if necessary, and invalidate raw_data */
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	/* deस्थिरruct BTF, अगर necessary, and invalidate raw_data */
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_type) + sizeof(struct btf_var);
+	sz = माप(काष्ठा btf_type) + माप(काष्ठा btf_var);
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
 	name_off = btf__add_str(btf, name);
-	if (name_off < 0)
-		return name_off;
+	अगर (name_off < 0)
+		वापस name_off;
 
 	t->name_off = name_off;
 	t->info = btf_type_info(BTF_KIND_VAR, 0, 0);
@@ -2335,12 +2336,12 @@ int btf__add_var(struct btf *btf, const char *name, int linkage, int type_id)
 	v = btf_var(t);
 	v->linkage = linkage;
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
 /*
  * Append new BTF_KIND_DATASEC type with:
- *   - *name* - non-empty/non-NULL name;
+ *   - *name* - non-empty/non-शून्य name;
  *   - *byte_sz* - data section size, in bytes.
  *
  * Data section is initially empty. Variables info can be added with
@@ -2350,37 +2351,37 @@ int btf__add_var(struct btf *btf, const char *name, int linkage, int type_id)
  *   - >0, type ID of newly added BTF type;
  *   - <0, on error.
  */
-int btf__add_datasec(struct btf *btf, const char *name, __u32 byte_sz)
-{
-	struct btf_type *t;
-	int sz, name_off;
+पूर्णांक btf__add_datasec(काष्ठा btf *btf, स्थिर अक्षर *name, __u32 byte_sz)
+अणु
+	काष्ठा btf_type *t;
+	पूर्णांक sz, name_off;
 
 	/* non-empty name */
-	if (!name || !name[0])
-		return -EINVAL;
+	अगर (!name || !name[0])
+		वापस -EINVAL;
 
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_type);
+	sz = माप(काष्ठा btf_type);
 	t = btf_add_type_mem(btf, sz);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
 	name_off = btf__add_str(btf, name);
-	if (name_off < 0)
-		return name_off;
+	अगर (name_off < 0)
+		वापस name_off;
 
 	/* start with vlen=0, which will be update as var_secinfos are added */
 	t->name_off = name_off;
 	t->info = btf_type_info(BTF_KIND_DATASEC, 0, 0);
 	t->size = byte_sz;
 
-	return btf_commit_type(btf, sz);
-}
+	वापस btf_commit_type(btf, sz);
+पूर्ण
 
 /*
- * Append new data section variable information entry for current DATASEC type:
+ * Append new data section variable inक्रमmation entry क्रम current DATASEC type:
  *   - *var_type_id* - type ID, describing type of the variable;
  *   - *offset* - variable offset within data section, in bytes;
  *   - *byte_sz* - variable size, in bytes.
@@ -2389,30 +2390,30 @@ int btf__add_datasec(struct btf *btf, const char *name, __u32 byte_sz)
  *   -  0, on success;
  *   - <0, on error.
  */
-int btf__add_datasec_var_info(struct btf *btf, int var_type_id, __u32 offset, __u32 byte_sz)
-{
-	struct btf_type *t;
-	struct btf_var_secinfo *v;
-	int sz;
+पूर्णांक btf__add_datasec_var_info(काष्ठा btf *btf, पूर्णांक var_type_id, __u32 offset, __u32 byte_sz)
+अणु
+	काष्ठा btf_type *t;
+	काष्ठा btf_var_secinfo *v;
+	पूर्णांक sz;
 
 	/* last type should be BTF_KIND_DATASEC */
-	if (btf->nr_types == 0)
-		return -EINVAL;
+	अगर (btf->nr_types == 0)
+		वापस -EINVAL;
 	t = btf_last_type(btf);
-	if (!btf_is_datasec(t))
-		return -EINVAL;
+	अगर (!btf_is_datasec(t))
+		वापस -EINVAL;
 
-	if (validate_type_id(var_type_id))
-		return -EINVAL;
+	अगर (validate_type_id(var_type_id))
+		वापस -EINVAL;
 
 	/* decompose and invalidate raw data */
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
-	sz = sizeof(struct btf_var_secinfo);
+	sz = माप(काष्ठा btf_var_secinfo);
 	v = btf_add_type_mem(btf, sz);
-	if (!v)
-		return -ENOMEM;
+	अगर (!v)
+		वापस -ENOMEM;
 
 	v->type = var_type_id;
 	v->offset = offset;
@@ -2424,431 +2425,431 @@ int btf__add_datasec_var_info(struct btf *btf, int var_type_id, __u32 offset, __
 
 	btf->hdr->type_len += sz;
 	btf->hdr->str_off += sz;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct btf_ext_sec_setup_param {
+काष्ठा btf_ext_sec_setup_param अणु
 	__u32 off;
 	__u32 len;
 	__u32 min_rec_size;
-	struct btf_ext_info *ext_info;
-	const char *desc;
-};
+	काष्ठा btf_ext_info *ext_info;
+	स्थिर अक्षर *desc;
+पूर्ण;
 
-static int btf_ext_setup_info(struct btf_ext *btf_ext,
-			      struct btf_ext_sec_setup_param *ext_sec)
-{
-	const struct btf_ext_info_sec *sinfo;
-	struct btf_ext_info *ext_info;
+अटल पूर्णांक btf_ext_setup_info(काष्ठा btf_ext *btf_ext,
+			      काष्ठा btf_ext_sec_setup_param *ext_sec)
+अणु
+	स्थिर काष्ठा btf_ext_info_sec *sinfo;
+	काष्ठा btf_ext_info *ext_info;
 	__u32 info_left, record_size;
 	/* The start of the info sec (including the __u32 record_size). */
-	void *info;
+	व्योम *info;
 
-	if (ext_sec->len == 0)
-		return 0;
+	अगर (ext_sec->len == 0)
+		वापस 0;
 
-	if (ext_sec->off & 0x03) {
+	अगर (ext_sec->off & 0x03) अणु
 		pr_debug(".BTF.ext %s section is not aligned to 4 bytes\n",
 		     ext_sec->desc);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	info = btf_ext->data + btf_ext->hdr->hdr_len + ext_sec->off;
 	info_left = ext_sec->len;
 
-	if (btf_ext->data + btf_ext->data_size < info + ext_sec->len) {
+	अगर (btf_ext->data + btf_ext->data_size < info + ext_sec->len) अणु
 		pr_debug("%s section (off:%u len:%u) is beyond the end of the ELF section .BTF.ext\n",
 			 ext_sec->desc, ext_sec->off, ext_sec->len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* At least a record size */
-	if (info_left < sizeof(__u32)) {
+	अगर (info_left < माप(__u32)) अणु
 		pr_debug(".BTF.ext %s record size not found\n", ext_sec->desc);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* The record size needs to meet the minimum standard */
 	record_size = *(__u32 *)info;
-	if (record_size < ext_sec->min_rec_size ||
-	    record_size & 0x03) {
+	अगर (record_size < ext_sec->min_rec_size ||
+	    record_size & 0x03) अणु
 		pr_debug("%s section in .BTF.ext has invalid record size %u\n",
 			 ext_sec->desc, record_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sinfo = info + sizeof(__u32);
-	info_left -= sizeof(__u32);
+	sinfo = info + माप(__u32);
+	info_left -= माप(__u32);
 
-	/* If no records, return failure now so .BTF.ext won't be used. */
-	if (!info_left) {
+	/* If no records, वापस failure now so .BTF.ext won't be used. */
+	अगर (!info_left) अणु
 		pr_debug("%s section in .BTF.ext has no records", ext_sec->desc);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	while (info_left) {
-		unsigned int sec_hdrlen = sizeof(struct btf_ext_info_sec);
+	जबतक (info_left) अणु
+		अचिन्हित पूर्णांक sec_hdrlen = माप(काष्ठा btf_ext_info_sec);
 		__u64 total_record_size;
 		__u32 num_records;
 
-		if (info_left < sec_hdrlen) {
+		अगर (info_left < sec_hdrlen) अणु
 			pr_debug("%s section header is not found in .BTF.ext\n",
 			     ext_sec->desc);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		num_records = sinfo->num_info;
-		if (num_records == 0) {
+		अगर (num_records == 0) अणु
 			pr_debug("%s section has incorrect num_records in .BTF.ext\n",
 			     ext_sec->desc);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		total_record_size = sec_hdrlen +
 				    (__u64)num_records * record_size;
-		if (info_left < total_record_size) {
+		अगर (info_left < total_record_size) अणु
 			pr_debug("%s section has incorrect num_records in .BTF.ext\n",
 			     ext_sec->desc);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		info_left -= total_record_size;
-		sinfo = (void *)sinfo + total_record_size;
-	}
+		sinfo = (व्योम *)sinfo + total_record_size;
+	पूर्ण
 
 	ext_info = ext_sec->ext_info;
-	ext_info->len = ext_sec->len - sizeof(__u32);
+	ext_info->len = ext_sec->len - माप(__u32);
 	ext_info->rec_size = record_size;
-	ext_info->info = info + sizeof(__u32);
+	ext_info->info = info + माप(__u32);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btf_ext_setup_func_info(struct btf_ext *btf_ext)
-{
-	struct btf_ext_sec_setup_param param = {
+अटल पूर्णांक btf_ext_setup_func_info(काष्ठा btf_ext *btf_ext)
+अणु
+	काष्ठा btf_ext_sec_setup_param param = अणु
 		.off = btf_ext->hdr->func_info_off,
 		.len = btf_ext->hdr->func_info_len,
-		.min_rec_size = sizeof(struct bpf_func_info_min),
+		.min_rec_size = माप(काष्ठा bpf_func_info_min),
 		.ext_info = &btf_ext->func_info,
 		.desc = "func_info"
-	};
+	पूर्ण;
 
-	return btf_ext_setup_info(btf_ext, &param);
-}
+	वापस btf_ext_setup_info(btf_ext, &param);
+पूर्ण
 
-static int btf_ext_setup_line_info(struct btf_ext *btf_ext)
-{
-	struct btf_ext_sec_setup_param param = {
+अटल पूर्णांक btf_ext_setup_line_info(काष्ठा btf_ext *btf_ext)
+अणु
+	काष्ठा btf_ext_sec_setup_param param = अणु
 		.off = btf_ext->hdr->line_info_off,
 		.len = btf_ext->hdr->line_info_len,
-		.min_rec_size = sizeof(struct bpf_line_info_min),
+		.min_rec_size = माप(काष्ठा bpf_line_info_min),
 		.ext_info = &btf_ext->line_info,
 		.desc = "line_info",
-	};
+	पूर्ण;
 
-	return btf_ext_setup_info(btf_ext, &param);
-}
+	वापस btf_ext_setup_info(btf_ext, &param);
+पूर्ण
 
-static int btf_ext_setup_core_relos(struct btf_ext *btf_ext)
-{
-	struct btf_ext_sec_setup_param param = {
+अटल पूर्णांक btf_ext_setup_core_relos(काष्ठा btf_ext *btf_ext)
+अणु
+	काष्ठा btf_ext_sec_setup_param param = अणु
 		.off = btf_ext->hdr->core_relo_off,
 		.len = btf_ext->hdr->core_relo_len,
-		.min_rec_size = sizeof(struct bpf_core_relo),
+		.min_rec_size = माप(काष्ठा bpf_core_relo),
 		.ext_info = &btf_ext->core_relo_info,
 		.desc = "core_relo",
-	};
+	पूर्ण;
 
-	return btf_ext_setup_info(btf_ext, &param);
-}
+	वापस btf_ext_setup_info(btf_ext, &param);
+पूर्ण
 
-static int btf_ext_parse_hdr(__u8 *data, __u32 data_size)
-{
-	const struct btf_ext_header *hdr = (struct btf_ext_header *)data;
+अटल पूर्णांक btf_ext_parse_hdr(__u8 *data, __u32 data_size)
+अणु
+	स्थिर काष्ठा btf_ext_header *hdr = (काष्ठा btf_ext_header *)data;
 
-	if (data_size < offsetofend(struct btf_ext_header, hdr_len) ||
-	    data_size < hdr->hdr_len) {
+	अगर (data_size < दुरत्वend(काष्ठा btf_ext_header, hdr_len) ||
+	    data_size < hdr->hdr_len) अणु
 		pr_debug("BTF.ext header not found");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hdr->magic == bswap_16(BTF_MAGIC)) {
+	अगर (hdr->magic == bswap_16(BTF_MAGIC)) अणु
 		pr_warn("BTF.ext in non-native endianness is not supported\n");
-		return -ENOTSUP;
-	} else if (hdr->magic != BTF_MAGIC) {
+		वापस -ENOTSUP;
+	पूर्ण अन्यथा अगर (hdr->magic != BTF_MAGIC) अणु
 		pr_debug("Invalid BTF.ext magic:%x\n", hdr->magic);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hdr->version != BTF_VERSION) {
+	अगर (hdr->version != BTF_VERSION) अणु
 		pr_debug("Unsupported BTF.ext version:%u\n", hdr->version);
-		return -ENOTSUP;
-	}
+		वापस -ENOTSUP;
+	पूर्ण
 
-	if (hdr->flags) {
+	अगर (hdr->flags) अणु
 		pr_debug("Unsupported BTF.ext flags:%x\n", hdr->flags);
-		return -ENOTSUP;
-	}
+		वापस -ENOTSUP;
+	पूर्ण
 
-	if (data_size == hdr->hdr_len) {
+	अगर (data_size == hdr->hdr_len) अणु
 		pr_debug("BTF.ext has no data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void btf_ext__free(struct btf_ext *btf_ext)
-{
-	if (IS_ERR_OR_NULL(btf_ext))
-		return;
-	free(btf_ext->data);
-	free(btf_ext);
-}
+व्योम btf_ext__मुक्त(काष्ठा btf_ext *btf_ext)
+अणु
+	अगर (IS_ERR_OR_शून्य(btf_ext))
+		वापस;
+	मुक्त(btf_ext->data);
+	मुक्त(btf_ext);
+पूर्ण
 
-struct btf_ext *btf_ext__new(__u8 *data, __u32 size)
-{
-	struct btf_ext *btf_ext;
-	int err;
+काष्ठा btf_ext *btf_ext__new(__u8 *data, __u32 size)
+अणु
+	काष्ठा btf_ext *btf_ext;
+	पूर्णांक err;
 
 	err = btf_ext_parse_hdr(data, size);
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	btf_ext = calloc(1, sizeof(struct btf_ext));
-	if (!btf_ext)
-		return ERR_PTR(-ENOMEM);
+	btf_ext = सुस्मृति(1, माप(काष्ठा btf_ext));
+	अगर (!btf_ext)
+		वापस ERR_PTR(-ENOMEM);
 
 	btf_ext->data_size = size;
-	btf_ext->data = malloc(size);
-	if (!btf_ext->data) {
+	btf_ext->data = दो_स्मृति(size);
+	अगर (!btf_ext->data) अणु
 		err = -ENOMEM;
-		goto done;
-	}
-	memcpy(btf_ext->data, data, size);
+		जाओ करोne;
+	पूर्ण
+	स_नकल(btf_ext->data, data, size);
 
-	if (btf_ext->hdr->hdr_len <
-	    offsetofend(struct btf_ext_header, line_info_len))
-		goto done;
+	अगर (btf_ext->hdr->hdr_len <
+	    दुरत्वend(काष्ठा btf_ext_header, line_info_len))
+		जाओ करोne;
 	err = btf_ext_setup_func_info(btf_ext);
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
 	err = btf_ext_setup_line_info(btf_ext);
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
-	if (btf_ext->hdr->hdr_len < offsetofend(struct btf_ext_header, core_relo_len))
-		goto done;
+	अगर (btf_ext->hdr->hdr_len < दुरत्वend(काष्ठा btf_ext_header, core_relo_len))
+		जाओ करोne;
 	err = btf_ext_setup_core_relos(btf_ext);
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
-done:
-	if (err) {
-		btf_ext__free(btf_ext);
-		return ERR_PTR(err);
-	}
+करोne:
+	अगर (err) अणु
+		btf_ext__मुक्त(btf_ext);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return btf_ext;
-}
+	वापस btf_ext;
+पूर्ण
 
-const void *btf_ext__get_raw_data(const struct btf_ext *btf_ext, __u32 *size)
-{
+स्थिर व्योम *btf_ext__get_raw_data(स्थिर काष्ठा btf_ext *btf_ext, __u32 *size)
+अणु
 	*size = btf_ext->data_size;
-	return btf_ext->data;
-}
+	वापस btf_ext->data;
+पूर्ण
 
-static int btf_ext_reloc_info(const struct btf *btf,
-			      const struct btf_ext_info *ext_info,
-			      const char *sec_name, __u32 insns_cnt,
-			      void **info, __u32 *cnt)
-{
-	__u32 sec_hdrlen = sizeof(struct btf_ext_info_sec);
+अटल पूर्णांक btf_ext_reloc_info(स्थिर काष्ठा btf *btf,
+			      स्थिर काष्ठा btf_ext_info *ext_info,
+			      स्थिर अक्षर *sec_name, __u32 insns_cnt,
+			      व्योम **info, __u32 *cnt)
+अणु
+	__u32 sec_hdrlen = माप(काष्ठा btf_ext_info_sec);
 	__u32 i, record_size, existing_len, records_len;
-	struct btf_ext_info_sec *sinfo;
-	const char *info_sec_name;
-	__u64 remain_len;
-	void *data;
+	काष्ठा btf_ext_info_sec *sinfo;
+	स्थिर अक्षर *info_sec_name;
+	__u64 reमुख्य_len;
+	व्योम *data;
 
 	record_size = ext_info->rec_size;
 	sinfo = ext_info->info;
-	remain_len = ext_info->len;
-	while (remain_len > 0) {
+	reमुख्य_len = ext_info->len;
+	जबतक (reमुख्य_len > 0) अणु
 		records_len = sinfo->num_info * record_size;
 		info_sec_name = btf__name_by_offset(btf, sinfo->sec_name_off);
-		if (strcmp(info_sec_name, sec_name)) {
-			remain_len -= sec_hdrlen + records_len;
-			sinfo = (void *)sinfo + sec_hdrlen + records_len;
-			continue;
-		}
+		अगर (म_भेद(info_sec_name, sec_name)) अणु
+			reमुख्य_len -= sec_hdrlen + records_len;
+			sinfo = (व्योम *)sinfo + sec_hdrlen + records_len;
+			जारी;
+		पूर्ण
 
 		existing_len = (*cnt) * record_size;
-		data = realloc(*info, existing_len + records_len);
-		if (!data)
-			return -ENOMEM;
+		data = पुनः_स्मृति(*info, existing_len + records_len);
+		अगर (!data)
+			वापस -ENOMEM;
 
-		memcpy(data + existing_len, sinfo->data, records_len);
+		स_नकल(data + existing_len, sinfo->data, records_len);
 		/* adjust insn_off only, the rest data will be passed
 		 * to the kernel.
 		 */
-		for (i = 0; i < sinfo->num_info; i++) {
+		क्रम (i = 0; i < sinfo->num_info; i++) अणु
 			__u32 *insn_off;
 
 			insn_off = data + existing_len + (i * record_size);
-			*insn_off = *insn_off / sizeof(struct bpf_insn) +
+			*insn_off = *insn_off / माप(काष्ठा bpf_insn) +
 				insns_cnt;
-		}
+		पूर्ण
 		*info = data;
 		*cnt += sinfo->num_info;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-int btf_ext__reloc_func_info(const struct btf *btf,
-			     const struct btf_ext *btf_ext,
-			     const char *sec_name, __u32 insns_cnt,
-			     void **func_info, __u32 *cnt)
-{
-	return btf_ext_reloc_info(btf, &btf_ext->func_info, sec_name,
+पूर्णांक btf_ext__reloc_func_info(स्थिर काष्ठा btf *btf,
+			     स्थिर काष्ठा btf_ext *btf_ext,
+			     स्थिर अक्षर *sec_name, __u32 insns_cnt,
+			     व्योम **func_info, __u32 *cnt)
+अणु
+	वापस btf_ext_reloc_info(btf, &btf_ext->func_info, sec_name,
 				  insns_cnt, func_info, cnt);
-}
+पूर्ण
 
-int btf_ext__reloc_line_info(const struct btf *btf,
-			     const struct btf_ext *btf_ext,
-			     const char *sec_name, __u32 insns_cnt,
-			     void **line_info, __u32 *cnt)
-{
-	return btf_ext_reloc_info(btf, &btf_ext->line_info, sec_name,
+पूर्णांक btf_ext__reloc_line_info(स्थिर काष्ठा btf *btf,
+			     स्थिर काष्ठा btf_ext *btf_ext,
+			     स्थिर अक्षर *sec_name, __u32 insns_cnt,
+			     व्योम **line_info, __u32 *cnt)
+अणु
+	वापस btf_ext_reloc_info(btf, &btf_ext->line_info, sec_name,
 				  insns_cnt, line_info, cnt);
-}
+पूर्ण
 
-__u32 btf_ext__func_info_rec_size(const struct btf_ext *btf_ext)
-{
-	return btf_ext->func_info.rec_size;
-}
+__u32 btf_ext__func_info_rec_size(स्थिर काष्ठा btf_ext *btf_ext)
+अणु
+	वापस btf_ext->func_info.rec_size;
+पूर्ण
 
-__u32 btf_ext__line_info_rec_size(const struct btf_ext *btf_ext)
-{
-	return btf_ext->line_info.rec_size;
-}
+__u32 btf_ext__line_info_rec_size(स्थिर काष्ठा btf_ext *btf_ext)
+अणु
+	वापस btf_ext->line_info.rec_size;
+पूर्ण
 
-struct btf_dedup;
+काष्ठा btf_dedup;
 
-static struct btf_dedup *btf_dedup_new(struct btf *btf, struct btf_ext *btf_ext,
-				       const struct btf_dedup_opts *opts);
-static void btf_dedup_free(struct btf_dedup *d);
-static int btf_dedup_prep(struct btf_dedup *d);
-static int btf_dedup_strings(struct btf_dedup *d);
-static int btf_dedup_prim_types(struct btf_dedup *d);
-static int btf_dedup_struct_types(struct btf_dedup *d);
-static int btf_dedup_ref_types(struct btf_dedup *d);
-static int btf_dedup_compact_types(struct btf_dedup *d);
-static int btf_dedup_remap_types(struct btf_dedup *d);
+अटल काष्ठा btf_dedup *btf_dedup_new(काष्ठा btf *btf, काष्ठा btf_ext *btf_ext,
+				       स्थिर काष्ठा btf_dedup_opts *opts);
+अटल व्योम btf_dedup_मुक्त(काष्ठा btf_dedup *d);
+अटल पूर्णांक btf_dedup_prep(काष्ठा btf_dedup *d);
+अटल पूर्णांक btf_dedup_strings(काष्ठा btf_dedup *d);
+अटल पूर्णांक btf_dedup_prim_types(काष्ठा btf_dedup *d);
+अटल पूर्णांक btf_dedup_काष्ठा_types(काष्ठा btf_dedup *d);
+अटल पूर्णांक btf_dedup_ref_types(काष्ठा btf_dedup *d);
+अटल पूर्णांक btf_dedup_compact_types(काष्ठा btf_dedup *d);
+अटल पूर्णांक btf_dedup_remap_types(काष्ठा btf_dedup *d);
 
 /*
  * Deduplicate BTF types and strings.
  *
- * BTF dedup algorithm takes as an input `struct btf` representing `.BTF` ELF
- * section with all BTF type descriptors and string data. It overwrites that
+ * BTF dedup algorithm takes as an input `काष्ठा btf` representing `.BTF` ELF
+ * section with all BTF type descriptors and string data. It overग_लिखोs that
  * memory in-place with deduplicated types and strings without any loss of
- * information. If optional `struct btf_ext` representing '.BTF.ext' ELF section
+ * inक्रमmation. If optional `काष्ठा btf_ext` representing '.BTF.ext' ELF section
  * is provided, all the strings referenced from .BTF.ext section are honored
- * and updated to point to the right offsets after deduplication.
+ * and updated to poपूर्णांक to the right offsets after deduplication.
  *
- * If function returns with error, type/string data might be garbled and should
+ * If function वापसs with error, type/string data might be garbled and should
  * be discarded.
  *
  * More verbose and detailed description of both problem btf_dedup is solving,
  * as well as solution could be found at:
- * https://facebookmicrosites.github.io/bpf/blog/2018/11/14/btf-enhancement.html
+ * https://facebookmicrosites.github.io/bpf/blog/2018/11/14/btf-enhancement.hपंचांगl
  *
- * Problem description and justification
+ * Problem description and justअगरication
  * =====================================
  *
- * BTF type information is typically emitted either as a result of conversion
- * from DWARF to BTF or directly by compiler. In both cases, each compilation
- * unit contains information about a subset of all the types that are used
+ * BTF type inक्रमmation is typically emitted either as a result of conversion
+ * from DWARF to BTF or directly by compiler. In both हालs, each compilation
+ * unit contains inक्रमmation about a subset of all the types that are used
  * in an application. These subsets are frequently overlapping and contain a lot
- * of duplicated information when later concatenated together into a single
+ * of duplicated inक्रमmation when later concatenated together पूर्णांकo a single
  * binary. This algorithm ensures that each unique type is represented by single
  * BTF type descriptor, greatly reducing resulting size of BTF data.
  *
  * Compilation unit isolation and subsequent duplication of data is not the only
- * problem. The same type hierarchy (e.g., struct and all the type that struct
- * references) in different compilation units can be represented in BTF to
+ * problem. The same type hierarchy (e.g., काष्ठा and all the type that काष्ठा
+ * references) in dअगरferent compilation units can be represented in BTF to
  * various degrees of completeness (or, rather, incompleteness) due to
- * struct/union forward declarations.
+ * काष्ठा/जोड़ क्रमward declarations.
  *
  * Let's take a look at an example, that we'll use to better understand the
  * problem (and solution). Suppose we have two compilation units, each using
- * same `struct S`, but each of them having incomplete type information about
- * struct's fields:
+ * same `काष्ठा S`, but each of them having incomplete type inक्रमmation about
+ * काष्ठा's fields:
  *
  * // CU #1:
- * struct S;
- * struct A {
- *	int a;
- *	struct A* self;
- *	struct S* parent;
- * };
- * struct B;
- * struct S {
- *	struct A* a_ptr;
- *	struct B* b_ptr;
- * };
+ * काष्ठा S;
+ * काष्ठा A अणु
+ *	पूर्णांक a;
+ *	काष्ठा A* self;
+ *	काष्ठा S* parent;
+ * पूर्ण;
+ * काष्ठा B;
+ * काष्ठा S अणु
+ *	काष्ठा A* a_ptr;
+ *	काष्ठा B* b_ptr;
+ * पूर्ण;
  *
  * // CU #2:
- * struct S;
- * struct A;
- * struct B {
- *	int b;
- *	struct B* self;
- *	struct S* parent;
- * };
- * struct S {
- *	struct A* a_ptr;
- *	struct B* b_ptr;
- * };
+ * काष्ठा S;
+ * काष्ठा A;
+ * काष्ठा B अणु
+ *	पूर्णांक b;
+ *	काष्ठा B* self;
+ *	काष्ठा S* parent;
+ * पूर्ण;
+ * काष्ठा S अणु
+ *	काष्ठा A* a_ptr;
+ *	काष्ठा B* b_ptr;
+ * पूर्ण;
  *
- * In case of CU #1, BTF data will know only that `struct B` exist (but no
- * more), but will know the complete type information about `struct A`. While
- * for CU #2, it will know full type information about `struct B`, but will
- * only know about forward declaration of `struct A` (in BTF terms, it will
+ * In हाल of CU #1, BTF data will know only that `काष्ठा B` exist (but no
+ * more), but will know the complete type inक्रमmation about `काष्ठा A`. While
+ * क्रम CU #2, it will know full type inक्रमmation about `काष्ठा B`, but will
+ * only know about क्रमward declaration of `काष्ठा A` (in BTF terms, it will
  * have `BTF_KIND_FWD` type descriptor with name `B`).
  *
  * This compilation unit isolation means that it's possible that there is no
- * single CU with complete type information describing structs `S`, `A`, and
- * `B`. Also, we might get tons of duplicated and redundant type information.
+ * single CU with complete type inक्रमmation describing काष्ठाs `S`, `A`, and
+ * `B`. Also, we might get tons of duplicated and redundant type inक्रमmation.
  *
  * Additional complication we need to keep in mind comes from the fact that
- * types, in general, can form graphs containing cycles, not just DAGs.
+ * types, in general, can क्रमm graphs containing cycles, not just DAGs.
  *
- * While algorithm does deduplication, it also merges and resolves type
- * information (unless disabled throught `struct btf_opts`), whenever possible.
+ * While algorithm करोes deduplication, it also merges and resolves type
+ * inक्रमmation (unless disabled throught `काष्ठा btf_opts`), whenever possible.
  * E.g., in the example above with two compilation units having partial type
- * information for structs `A` and `B`, the output of algorithm will emit
- * a single copy of each BTF type that describes structs `A`, `B`, and `S`
- * (as well as type information for `int` and pointers), as if they were defined
+ * inक्रमmation क्रम काष्ठाs `A` and `B`, the output of algorithm will emit
+ * a single copy of each BTF type that describes काष्ठाs `A`, `B`, and `S`
+ * (as well as type inक्रमmation क्रम `पूर्णांक` and poपूर्णांकers), as अगर they were defined
  * in a single compilation unit as:
  *
- * struct A {
- *	int a;
- *	struct A* self;
- *	struct S* parent;
- * };
- * struct B {
- *	int b;
- *	struct B* self;
- *	struct S* parent;
- * };
- * struct S {
- *	struct A* a_ptr;
- *	struct B* b_ptr;
- * };
+ * काष्ठा A अणु
+ *	पूर्णांक a;
+ *	काष्ठा A* self;
+ *	काष्ठा S* parent;
+ * पूर्ण;
+ * काष्ठा B अणु
+ *	पूर्णांक b;
+ *	काष्ठा B* self;
+ *	काष्ठा S* parent;
+ * पूर्ण;
+ * काष्ठा S अणु
+ *	काष्ठा A* a_ptr;
+ *	काष्ठा B* b_ptr;
+ * पूर्ण;
  *
  * Algorithm summary
  * =================
@@ -2856,915 +2857,915 @@ static int btf_dedup_remap_types(struct btf_dedup *d);
  * Algorithm completes its work in 6 separate passes:
  *
  * 1. Strings deduplication.
- * 2. Primitive types deduplication (int, enum, fwd).
- * 3. Struct/union types deduplication.
- * 4. Reference types deduplication (pointers, typedefs, arrays, funcs, func
- *    protos, and const/volatile/restrict modifiers).
+ * 2. Primitive types deduplication (पूर्णांक, क्रमागत, fwd).
+ * 3. Struct/जोड़ types deduplication.
+ * 4. Reference types deduplication (poपूर्णांकers, प्रकारs, arrays, funcs, func
+ *    protos, and स्थिर/अस्थिर/restrict modअगरiers).
  * 5. Types compaction.
  * 6. Types remapping.
  *
  * Algorithm determines canonical type descriptor, which is a single
- * representative type for each truly unique type. This canonical type is the
- * one that will go into final deduplicated BTF type information. For
- * struct/unions, it is also the type that algorithm will merge additional type
- * information into (while resolving FWDs), as it discovers it from data in
- * other CUs. Each input BTF type eventually gets either mapped to itself, if
- * that type is canonical, or to some other type, if that type is equivalent
+ * representative type क्रम each truly unique type. This canonical type is the
+ * one that will go पूर्णांकo final deduplicated BTF type inक्रमmation. For
+ * काष्ठा/जोड़s, it is also the type that algorithm will merge additional type
+ * inक्रमmation पूर्णांकo (जबतक resolving FWDs), as it discovers it from data in
+ * other CUs. Each input BTF type eventually माला_लो either mapped to itself, अगर
+ * that type is canonical, or to some other type, अगर that type is equivalent
  * and was chosen as canonical representative. This mapping is stored in
  * `btf_dedup->map` array. This map is also used to record STRUCT/UNION that
  * FWD type got resolved to.
  *
- * To facilitate fast discovery of canonical types, we also maintain canonical
+ * To facilitate fast discovery of canonical types, we also मुख्यtain canonical
  * index (`btf_dedup->dedup_table`), which maps type descriptor's signature hash
- * (i.e., hashed kind, name, size, fields, etc) into a list of canonical types
+ * (i.e., hashed kind, name, size, fields, etc) पूर्णांकo a list of canonical types
  * that match that signature. With sufficiently good choice of type signature
- * hashing function, we can limit number of canonical types for each unique type
- * signature to a very small number, allowing to find canonical type for any
+ * hashing function, we can limit number of canonical types क्रम each unique type
+ * signature to a very small number, allowing to find canonical type क्रम any
  * duplicated type very quickly.
  *
- * Struct/union deduplication is the most critical part and algorithm for
- * deduplicating structs/unions is described in greater details in comments for
+ * Struct/जोड़ deduplication is the most critical part and algorithm क्रम
+ * deduplicating काष्ठाs/जोड़s is described in greater details in comments क्रम
  * `btf_dedup_is_equiv` function.
  */
-int btf__dedup(struct btf *btf, struct btf_ext *btf_ext,
-	       const struct btf_dedup_opts *opts)
-{
-	struct btf_dedup *d = btf_dedup_new(btf, btf_ext, opts);
-	int err;
+पूर्णांक btf__dedup(काष्ठा btf *btf, काष्ठा btf_ext *btf_ext,
+	       स्थिर काष्ठा btf_dedup_opts *opts)
+अणु
+	काष्ठा btf_dedup *d = btf_dedup_new(btf, btf_ext, opts);
+	पूर्णांक err;
 
-	if (IS_ERR(d)) {
+	अगर (IS_ERR(d)) अणु
 		pr_debug("btf_dedup_new failed: %ld", PTR_ERR(d));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (btf_ensure_modifiable(btf))
-		return -ENOMEM;
+	अगर (btf_ensure_modअगरiable(btf))
+		वापस -ENOMEM;
 
 	err = btf_dedup_prep(d);
-	if (err) {
+	अगर (err) अणु
 		pr_debug("btf_dedup_prep failed:%d\n", err);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	err = btf_dedup_strings(d);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_debug("btf_dedup_strings failed:%d\n", err);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	err = btf_dedup_prim_types(d);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_debug("btf_dedup_prim_types failed:%d\n", err);
-		goto done;
-	}
-	err = btf_dedup_struct_types(d);
-	if (err < 0) {
+		जाओ करोne;
+	पूर्ण
+	err = btf_dedup_काष्ठा_types(d);
+	अगर (err < 0) अणु
 		pr_debug("btf_dedup_struct_types failed:%d\n", err);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	err = btf_dedup_ref_types(d);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_debug("btf_dedup_ref_types failed:%d\n", err);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	err = btf_dedup_compact_types(d);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_debug("btf_dedup_compact_types failed:%d\n", err);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	err = btf_dedup_remap_types(d);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_debug("btf_dedup_remap_types failed:%d\n", err);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-done:
-	btf_dedup_free(d);
-	return err;
-}
+करोne:
+	btf_dedup_मुक्त(d);
+	वापस err;
+पूर्ण
 
-#define BTF_UNPROCESSED_ID ((__u32)-1)
-#define BTF_IN_PROGRESS_ID ((__u32)-2)
+#घोषणा BTF_UNPROCESSED_ID ((__u32)-1)
+#घोषणा BTF_IN_PROGRESS_ID ((__u32)-2)
 
-struct btf_dedup {
+काष्ठा btf_dedup अणु
 	/* .BTF section to be deduped in-place */
-	struct btf *btf;
+	काष्ठा btf *btf;
 	/*
 	 * Optional .BTF.ext section. When provided, any strings referenced
-	 * from it will be taken into account when deduping strings
+	 * from it will be taken पूर्णांकo account when deduping strings
 	 */
-	struct btf_ext *btf_ext;
+	काष्ठा btf_ext *btf_ext;
 	/*
 	 * This is a map from any type's signature hash to a list of possible
 	 * canonical representative type candidates. Hash collisions are
 	 * ignored, so even types of various kinds can share same list of
 	 * candidates, which is fine because we rely on subsequent
-	 * btf_xxx_equal() checks to authoritatively verify type equality.
+	 * btf_xxx_equal() checks to authoritatively verअगरy type equality.
 	 */
-	struct hashmap *dedup_table;
+	काष्ठा hashmap *dedup_table;
 	/* Canonical types map */
 	__u32 *map;
 	/* Hypothetical mapping, used during type graph equivalence checks */
 	__u32 *hypot_map;
 	__u32 *hypot_list;
-	size_t hypot_cnt;
-	size_t hypot_cap;
-	/* Whether hypothetical mapping, if successful, would need to adjust
-	 * already canonicalized types (due to a new forward declaration to
-	 * concrete type resolution). In such case, during split BTF dedup
-	 * candidate type would still be considered as different, because base
+	माप_प्रकार hypot_cnt;
+	माप_प्रकार hypot_cap;
+	/* Whether hypothetical mapping, अगर successful, would need to adjust
+	 * alपढ़ोy canonicalized types (due to a new क्रमward declaration to
+	 * concrete type resolution). In such हाल, during split BTF dedup
+	 * candidate type would still be considered as dअगरferent, because base
 	 * BTF is considered to be immutable.
 	 */
 	bool hypot_adjust_canon;
-	/* Various option modifying behavior of algorithm */
-	struct btf_dedup_opts opts;
+	/* Various option modअगरying behavior of algorithm */
+	काष्ठा btf_dedup_opts opts;
 	/* temporary strings deduplication state */
-	struct strset *strs_set;
-};
+	काष्ठा strset *strs_set;
+पूर्ण;
 
-static long hash_combine(long h, long value)
-{
-	return h * 31 + value;
-}
+अटल दीर्घ hash_combine(दीर्घ h, दीर्घ value)
+अणु
+	वापस h * 31 + value;
+पूर्ण
 
-#define for_each_dedup_cand(d, node, hash) \
-	hashmap__for_each_key_entry(d->dedup_table, node, (void *)hash)
+#घोषणा क्रम_each_dedup_cand(d, node, hash) \
+	hashmap__क्रम_each_key_entry(d->dedup_table, node, (व्योम *)hash)
 
-static int btf_dedup_table_add(struct btf_dedup *d, long hash, __u32 type_id)
-{
-	return hashmap__append(d->dedup_table,
-			       (void *)hash, (void *)(long)type_id);
-}
+अटल पूर्णांक btf_dedup_table_add(काष्ठा btf_dedup *d, दीर्घ hash, __u32 type_id)
+अणु
+	वापस hashmap__append(d->dedup_table,
+			       (व्योम *)hash, (व्योम *)(दीर्घ)type_id);
+पूर्ण
 
-static int btf_dedup_hypot_map_add(struct btf_dedup *d,
+अटल पूर्णांक btf_dedup_hypot_map_add(काष्ठा btf_dedup *d,
 				   __u32 from_id, __u32 to_id)
-{
-	if (d->hypot_cnt == d->hypot_cap) {
+अणु
+	अगर (d->hypot_cnt == d->hypot_cap) अणु
 		__u32 *new_list;
 
-		d->hypot_cap += max((size_t)16, d->hypot_cap / 2);
-		new_list = libbpf_reallocarray(d->hypot_list, d->hypot_cap, sizeof(__u32));
-		if (!new_list)
-			return -ENOMEM;
+		d->hypot_cap += max((माप_प्रकार)16, d->hypot_cap / 2);
+		new_list = libbpf_पुनः_स्मृतिarray(d->hypot_list, d->hypot_cap, माप(__u32));
+		अगर (!new_list)
+			वापस -ENOMEM;
 		d->hypot_list = new_list;
-	}
+	पूर्ण
 	d->hypot_list[d->hypot_cnt++] = from_id;
 	d->hypot_map[from_id] = to_id;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void btf_dedup_clear_hypot_map(struct btf_dedup *d)
-{
-	int i;
+अटल व्योम btf_dedup_clear_hypot_map(काष्ठा btf_dedup *d)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < d->hypot_cnt; i++)
+	क्रम (i = 0; i < d->hypot_cnt; i++)
 		d->hypot_map[d->hypot_list[i]] = BTF_UNPROCESSED_ID;
 	d->hypot_cnt = 0;
 	d->hypot_adjust_canon = false;
-}
+पूर्ण
 
-static void btf_dedup_free(struct btf_dedup *d)
-{
-	hashmap__free(d->dedup_table);
-	d->dedup_table = NULL;
+अटल व्योम btf_dedup_मुक्त(काष्ठा btf_dedup *d)
+अणु
+	hashmap__मुक्त(d->dedup_table);
+	d->dedup_table = शून्य;
 
-	free(d->map);
-	d->map = NULL;
+	मुक्त(d->map);
+	d->map = शून्य;
 
-	free(d->hypot_map);
-	d->hypot_map = NULL;
+	मुक्त(d->hypot_map);
+	d->hypot_map = शून्य;
 
-	free(d->hypot_list);
-	d->hypot_list = NULL;
+	मुक्त(d->hypot_list);
+	d->hypot_list = शून्य;
 
-	free(d);
-}
+	मुक्त(d);
+पूर्ण
 
-static size_t btf_dedup_identity_hash_fn(const void *key, void *ctx)
-{
-	return (size_t)key;
-}
+अटल माप_प्रकार btf_dedup_identity_hash_fn(स्थिर व्योम *key, व्योम *ctx)
+अणु
+	वापस (माप_प्रकार)key;
+पूर्ण
 
-static size_t btf_dedup_collision_hash_fn(const void *key, void *ctx)
-{
-	return 0;
-}
+अटल माप_प्रकार btf_dedup_collision_hash_fn(स्थिर व्योम *key, व्योम *ctx)
+अणु
+	वापस 0;
+पूर्ण
 
-static bool btf_dedup_equal_fn(const void *k1, const void *k2, void *ctx)
-{
-	return k1 == k2;
-}
+अटल bool btf_dedup_equal_fn(स्थिर व्योम *k1, स्थिर व्योम *k2, व्योम *ctx)
+अणु
+	वापस k1 == k2;
+पूर्ण
 
-static struct btf_dedup *btf_dedup_new(struct btf *btf, struct btf_ext *btf_ext,
-				       const struct btf_dedup_opts *opts)
-{
-	struct btf_dedup *d = calloc(1, sizeof(struct btf_dedup));
+अटल काष्ठा btf_dedup *btf_dedup_new(काष्ठा btf *btf, काष्ठा btf_ext *btf_ext,
+				       स्थिर काष्ठा btf_dedup_opts *opts)
+अणु
+	काष्ठा btf_dedup *d = सुस्मृति(1, माप(काष्ठा btf_dedup));
 	hashmap_hash_fn hash_fn = btf_dedup_identity_hash_fn;
-	int i, err = 0, type_cnt;
+	पूर्णांक i, err = 0, type_cnt;
 
-	if (!d)
-		return ERR_PTR(-ENOMEM);
+	अगर (!d)
+		वापस ERR_PTR(-ENOMEM);
 
-	d->opts.dont_resolve_fwds = opts && opts->dont_resolve_fwds;
-	/* dedup_table_size is now used only to force collisions in tests */
-	if (opts && opts->dedup_table_size == 1)
+	d->opts.करोnt_resolve_fwds = opts && opts->करोnt_resolve_fwds;
+	/* dedup_table_size is now used only to क्रमce collisions in tests */
+	अगर (opts && opts->dedup_table_size == 1)
 		hash_fn = btf_dedup_collision_hash_fn;
 
 	d->btf = btf;
 	d->btf_ext = btf_ext;
 
-	d->dedup_table = hashmap__new(hash_fn, btf_dedup_equal_fn, NULL);
-	if (IS_ERR(d->dedup_table)) {
+	d->dedup_table = hashmap__new(hash_fn, btf_dedup_equal_fn, शून्य);
+	अगर (IS_ERR(d->dedup_table)) अणु
 		err = PTR_ERR(d->dedup_table);
-		d->dedup_table = NULL;
-		goto done;
-	}
+		d->dedup_table = शून्य;
+		जाओ करोne;
+	पूर्ण
 
 	type_cnt = btf__get_nr_types(btf) + 1;
-	d->map = malloc(sizeof(__u32) * type_cnt);
-	if (!d->map) {
+	d->map = दो_स्मृति(माप(__u32) * type_cnt);
+	अगर (!d->map) अणु
 		err = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	/* special BTF "void" type is made canonical immediately */
 	d->map[0] = 0;
-	for (i = 1; i < type_cnt; i++) {
-		struct btf_type *t = btf_type_by_id(d->btf, i);
+	क्रम (i = 1; i < type_cnt; i++) अणु
+		काष्ठा btf_type *t = btf_type_by_id(d->btf, i);
 
 		/* VAR and DATASEC are never deduped and are self-canonical */
-		if (btf_is_var(t) || btf_is_datasec(t))
+		अगर (btf_is_var(t) || btf_is_datasec(t))
 			d->map[i] = i;
-		else
+		अन्यथा
 			d->map[i] = BTF_UNPROCESSED_ID;
-	}
+	पूर्ण
 
-	d->hypot_map = malloc(sizeof(__u32) * type_cnt);
-	if (!d->hypot_map) {
+	d->hypot_map = दो_स्मृति(माप(__u32) * type_cnt);
+	अगर (!d->hypot_map) अणु
 		err = -ENOMEM;
-		goto done;
-	}
-	for (i = 0; i < type_cnt; i++)
+		जाओ करोne;
+	पूर्ण
+	क्रम (i = 0; i < type_cnt; i++)
 		d->hypot_map[i] = BTF_UNPROCESSED_ID;
 
-done:
-	if (err) {
-		btf_dedup_free(d);
-		return ERR_PTR(err);
-	}
+करोne:
+	अगर (err) अणु
+		btf_dedup_मुक्त(d);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
 /*
  * Iterate over all possible places in .BTF and .BTF.ext that can reference
- * string and pass pointer to it to a provided callback `fn`.
+ * string and pass poपूर्णांकer to it to a provided callback `fn`.
  */
-static int btf_for_each_str_off(struct btf_dedup *d, str_off_visit_fn fn, void *ctx)
-{
-	int i, r;
+अटल पूर्णांक btf_क्रम_each_str_off(काष्ठा btf_dedup *d, str_off_visit_fn fn, व्योम *ctx)
+अणु
+	पूर्णांक i, r;
 
-	for (i = 0; i < d->btf->nr_types; i++) {
-		struct btf_type *t = btf_type_by_id(d->btf, d->btf->start_id + i);
+	क्रम (i = 0; i < d->btf->nr_types; i++) अणु
+		काष्ठा btf_type *t = btf_type_by_id(d->btf, d->btf->start_id + i);
 
 		r = btf_type_visit_str_offs(t, fn, ctx);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	if (!d->btf_ext)
-		return 0;
+	अगर (!d->btf_ext)
+		वापस 0;
 
 	r = btf_ext_visit_str_offs(d->btf_ext, fn, ctx);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int strs_dedup_remap_str_off(__u32 *str_off_ptr, void *ctx)
-{
-	struct btf_dedup *d = ctx;
+अटल पूर्णांक strs_dedup_remap_str_off(__u32 *str_off_ptr, व्योम *ctx)
+अणु
+	काष्ठा btf_dedup *d = ctx;
 	__u32 str_off = *str_off_ptr;
-	const char *s;
-	int off, err;
+	स्थिर अक्षर *s;
+	पूर्णांक off, err;
 
-	/* don't touch empty string or string in main BTF */
-	if (str_off == 0 || str_off < d->btf->start_str_off)
-		return 0;
+	/* करोn't touch empty string or string in मुख्य BTF */
+	अगर (str_off == 0 || str_off < d->btf->start_str_off)
+		वापस 0;
 
 	s = btf__str_by_offset(d->btf, str_off);
-	if (d->btf->base_btf) {
+	अगर (d->btf->base_btf) अणु
 		err = btf__find_str(d->btf->base_btf, s);
-		if (err >= 0) {
+		अगर (err >= 0) अणु
 			*str_off_ptr = err;
-			return 0;
-		}
-		if (err != -ENOENT)
-			return err;
-	}
+			वापस 0;
+		पूर्ण
+		अगर (err != -ENOENT)
+			वापस err;
+	पूर्ण
 
 	off = strset__add_str(d->strs_set, s);
-	if (off < 0)
-		return off;
+	अगर (off < 0)
+		वापस off;
 
 	*str_off_ptr = d->btf->start_str_off + off;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Dedup string and filter out those that are not referenced from either .BTF
- * or .BTF.ext (if provided) sections.
+ * or .BTF.ext (अगर provided) sections.
  *
- * This is done by building index of all strings in BTF's string section,
+ * This is करोne by building index of all strings in BTF's string section,
  * then iterating over all entities that can reference strings (e.g., type
- * names, struct field names, .BTF.ext line info, etc) and marking corresponding
- * strings as used. After that all used strings are deduped and compacted into
+ * names, काष्ठा field names, .BTF.ext line info, etc) and marking corresponding
+ * strings as used. After that all used strings are deduped and compacted पूर्णांकo
  * sequential blob of memory and new offsets are calculated. Then all the string
  * references are iterated again and rewritten using new offsets.
  */
-static int btf_dedup_strings(struct btf_dedup *d)
-{
-	int err;
+अटल पूर्णांक btf_dedup_strings(काष्ठा btf_dedup *d)
+अणु
+	पूर्णांक err;
 
-	if (d->btf->strs_deduped)
-		return 0;
+	अगर (d->btf->strs_deduped)
+		वापस 0;
 
-	d->strs_set = strset__new(BTF_MAX_STR_OFFSET, NULL, 0);
-	if (IS_ERR(d->strs_set)) {
+	d->strs_set = strset__new(BTF_MAX_STR_OFFSET, शून्य, 0);
+	अगर (IS_ERR(d->strs_set)) अणु
 		err = PTR_ERR(d->strs_set);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	if (!d->btf->base_btf) {
+	अगर (!d->btf->base_btf) अणु
 		/* insert empty string; we won't be looking it up during strings
-		 * dedup, but it's good to have it for generic BTF string lookups
+		 * dedup, but it's good to have it क्रम generic BTF string lookups
 		 */
 		err = strset__add_str(d->strs_set, "");
-		if (err < 0)
-			goto err_out;
-	}
+		अगर (err < 0)
+			जाओ err_out;
+	पूर्ण
 
 	/* remap string offsets */
-	err = btf_for_each_str_off(d, strs_dedup_remap_str_off, d);
-	if (err)
-		goto err_out;
+	err = btf_क्रम_each_str_off(d, strs_dedup_remap_str_off, d);
+	अगर (err)
+		जाओ err_out;
 
 	/* replace BTF string data and hash with deduped ones */
-	strset__free(d->btf->strs_set);
+	strset__मुक्त(d->btf->strs_set);
 	d->btf->hdr->str_len = strset__data_size(d->strs_set);
 	d->btf->strs_set = d->strs_set;
-	d->strs_set = NULL;
+	d->strs_set = शून्य;
 	d->btf->strs_deduped = true;
-	return 0;
+	वापस 0;
 
 err_out:
-	strset__free(d->strs_set);
-	d->strs_set = NULL;
+	strset__मुक्त(d->strs_set);
+	d->strs_set = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static long btf_hash_common(struct btf_type *t)
-{
-	long h;
+अटल दीर्घ btf_hash_common(काष्ठा btf_type *t)
+अणु
+	दीर्घ h;
 
 	h = hash_combine(0, t->name_off);
 	h = hash_combine(h, t->info);
 	h = hash_combine(h, t->size);
-	return h;
-}
+	वापस h;
+पूर्ण
 
-static bool btf_equal_common(struct btf_type *t1, struct btf_type *t2)
-{
-	return t1->name_off == t2->name_off &&
+अटल bool btf_equal_common(काष्ठा btf_type *t1, काष्ठा btf_type *t2)
+अणु
+	वापस t1->name_off == t2->name_off &&
 	       t1->info == t2->info &&
 	       t1->size == t2->size;
-}
+पूर्ण
 
 /* Calculate type signature hash of INT. */
-static long btf_hash_int(struct btf_type *t)
-{
+अटल दीर्घ btf_hash_पूर्णांक(काष्ठा btf_type *t)
+अणु
 	__u32 info = *(__u32 *)(t + 1);
-	long h;
+	दीर्घ h;
 
 	h = btf_hash_common(t);
 	h = hash_combine(h, info);
-	return h;
-}
+	वापस h;
+पूर्ण
 
-/* Check structural equality of two INTs. */
-static bool btf_equal_int(struct btf_type *t1, struct btf_type *t2)
-{
+/* Check काष्ठाural equality of two INTs. */
+अटल bool btf_equal_पूर्णांक(काष्ठा btf_type *t1, काष्ठा btf_type *t2)
+अणु
 	__u32 info1, info2;
 
-	if (!btf_equal_common(t1, t2))
-		return false;
+	अगर (!btf_equal_common(t1, t2))
+		वापस false;
 	info1 = *(__u32 *)(t1 + 1);
 	info2 = *(__u32 *)(t2 + 1);
-	return info1 == info2;
-}
+	वापस info1 == info2;
+पूर्ण
 
 /* Calculate type signature hash of ENUM. */
-static long btf_hash_enum(struct btf_type *t)
-{
-	long h;
+अटल दीर्घ btf_hash_क्रमागत(काष्ठा btf_type *t)
+अणु
+	दीर्घ h;
 
-	/* don't hash vlen and enum members to support enum fwd resolving */
+	/* करोn't hash vlen and क्रमागत members to support क्रमागत fwd resolving */
 	h = hash_combine(0, t->name_off);
 	h = hash_combine(h, t->info & ~0xffff);
 	h = hash_combine(h, t->size);
-	return h;
-}
+	वापस h;
+पूर्ण
 
-/* Check structural equality of two ENUMs. */
-static bool btf_equal_enum(struct btf_type *t1, struct btf_type *t2)
-{
-	const struct btf_enum *m1, *m2;
+/* Check काष्ठाural equality of two ENUMs. */
+अटल bool btf_equal_क्रमागत(काष्ठा btf_type *t1, काष्ठा btf_type *t2)
+अणु
+	स्थिर काष्ठा btf_क्रमागत *m1, *m2;
 	__u16 vlen;
-	int i;
+	पूर्णांक i;
 
-	if (!btf_equal_common(t1, t2))
-		return false;
+	अगर (!btf_equal_common(t1, t2))
+		वापस false;
 
 	vlen = btf_vlen(t1);
-	m1 = btf_enum(t1);
-	m2 = btf_enum(t2);
-	for (i = 0; i < vlen; i++) {
-		if (m1->name_off != m2->name_off || m1->val != m2->val)
-			return false;
+	m1 = btf_क्रमागत(t1);
+	m2 = btf_क्रमागत(t2);
+	क्रम (i = 0; i < vlen; i++) अणु
+		अगर (m1->name_off != m2->name_off || m1->val != m2->val)
+			वापस false;
 		m1++;
 		m2++;
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static inline bool btf_is_enum_fwd(struct btf_type *t)
-{
-	return btf_is_enum(t) && btf_vlen(t) == 0;
-}
+अटल अंतरभूत bool btf_is_क्रमागत_fwd(काष्ठा btf_type *t)
+अणु
+	वापस btf_is_क्रमागत(t) && btf_vlen(t) == 0;
+पूर्ण
 
-static bool btf_compat_enum(struct btf_type *t1, struct btf_type *t2)
-{
-	if (!btf_is_enum_fwd(t1) && !btf_is_enum_fwd(t2))
-		return btf_equal_enum(t1, t2);
+अटल bool btf_compat_क्रमागत(काष्ठा btf_type *t1, काष्ठा btf_type *t2)
+अणु
+	अगर (!btf_is_क्रमागत_fwd(t1) && !btf_is_क्रमागत_fwd(t2))
+		वापस btf_equal_क्रमागत(t1, t2);
 	/* ignore vlen when comparing */
-	return t1->name_off == t2->name_off &&
+	वापस t1->name_off == t2->name_off &&
 	       (t1->info & ~0xffff) == (t2->info & ~0xffff) &&
 	       t1->size == t2->size;
-}
+पूर्ण
 
 /*
  * Calculate type signature hash of STRUCT/UNION, ignoring referenced type IDs,
  * as referenced type IDs equivalence is established separately during type
  * graph equivalence check algorithm.
  */
-static long btf_hash_struct(struct btf_type *t)
-{
-	const struct btf_member *member = btf_members(t);
+अटल दीर्घ btf_hash_काष्ठा(काष्ठा btf_type *t)
+अणु
+	स्थिर काष्ठा btf_member *member = btf_members(t);
 	__u32 vlen = btf_vlen(t);
-	long h = btf_hash_common(t);
-	int i;
+	दीर्घ h = btf_hash_common(t);
+	पूर्णांक i;
 
-	for (i = 0; i < vlen; i++) {
+	क्रम (i = 0; i < vlen; i++) अणु
 		h = hash_combine(h, member->name_off);
 		h = hash_combine(h, member->offset);
 		/* no hashing of referenced type ID, it can be unresolved yet */
 		member++;
-	}
-	return h;
-}
+	पूर्ण
+	वापस h;
+पूर्ण
 
 /*
- * Check structural compatibility of two FUNC_PROTOs, ignoring referenced type
- * IDs. This check is performed during type graph equivalence check and
+ * Check काष्ठाural compatibility of two FUNC_PROTOs, ignoring referenced type
+ * IDs. This check is perक्रमmed during type graph equivalence check and
  * referenced types equivalence is checked separately.
  */
-static bool btf_shallow_equal_struct(struct btf_type *t1, struct btf_type *t2)
-{
-	const struct btf_member *m1, *m2;
+अटल bool btf_shallow_equal_काष्ठा(काष्ठा btf_type *t1, काष्ठा btf_type *t2)
+अणु
+	स्थिर काष्ठा btf_member *m1, *m2;
 	__u16 vlen;
-	int i;
+	पूर्णांक i;
 
-	if (!btf_equal_common(t1, t2))
-		return false;
+	अगर (!btf_equal_common(t1, t2))
+		वापस false;
 
 	vlen = btf_vlen(t1);
 	m1 = btf_members(t1);
 	m2 = btf_members(t2);
-	for (i = 0; i < vlen; i++) {
-		if (m1->name_off != m2->name_off || m1->offset != m2->offset)
-			return false;
+	क्रम (i = 0; i < vlen; i++) अणु
+		अगर (m1->name_off != m2->name_off || m1->offset != m2->offset)
+			वापस false;
 		m1++;
 		m2++;
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
  * Calculate type signature hash of ARRAY, including referenced type IDs,
- * under assumption that they were already resolved to canonical type IDs and
+ * under assumption that they were alपढ़ोy resolved to canonical type IDs and
  * are not going to change.
  */
-static long btf_hash_array(struct btf_type *t)
-{
-	const struct btf_array *info = btf_array(t);
-	long h = btf_hash_common(t);
+अटल दीर्घ btf_hash_array(काष्ठा btf_type *t)
+अणु
+	स्थिर काष्ठा btf_array *info = btf_array(t);
+	दीर्घ h = btf_hash_common(t);
 
 	h = hash_combine(h, info->type);
 	h = hash_combine(h, info->index_type);
 	h = hash_combine(h, info->nelems);
-	return h;
-}
+	वापस h;
+पूर्ण
 
 /*
- * Check exact equality of two ARRAYs, taking into account referenced
- * type IDs, under assumption that they were already resolved to canonical
+ * Check exact equality of two ARRAYs, taking पूर्णांकo account referenced
+ * type IDs, under assumption that they were alपढ़ोy resolved to canonical
  * type IDs and are not going to change.
  * This function is called during reference types deduplication to compare
  * ARRAY to potential canonical representative.
  */
-static bool btf_equal_array(struct btf_type *t1, struct btf_type *t2)
-{
-	const struct btf_array *info1, *info2;
+अटल bool btf_equal_array(काष्ठा btf_type *t1, काष्ठा btf_type *t2)
+अणु
+	स्थिर काष्ठा btf_array *info1, *info2;
 
-	if (!btf_equal_common(t1, t2))
-		return false;
+	अगर (!btf_equal_common(t1, t2))
+		वापस false;
 
 	info1 = btf_array(t1);
 	info2 = btf_array(t2);
-	return info1->type == info2->type &&
+	वापस info1->type == info2->type &&
 	       info1->index_type == info2->index_type &&
 	       info1->nelems == info2->nelems;
-}
+पूर्ण
 
 /*
- * Check structural compatibility of two ARRAYs, ignoring referenced type
- * IDs. This check is performed during type graph equivalence check and
+ * Check काष्ठाural compatibility of two ARRAYs, ignoring referenced type
+ * IDs. This check is perक्रमmed during type graph equivalence check and
  * referenced types equivalence is checked separately.
  */
-static bool btf_compat_array(struct btf_type *t1, struct btf_type *t2)
-{
-	if (!btf_equal_common(t1, t2))
-		return false;
+अटल bool btf_compat_array(काष्ठा btf_type *t1, काष्ठा btf_type *t2)
+अणु
+	अगर (!btf_equal_common(t1, t2))
+		वापस false;
 
-	return btf_array(t1)->nelems == btf_array(t2)->nelems;
-}
+	वापस btf_array(t1)->nelems == btf_array(t2)->nelems;
+पूर्ण
 
 /*
  * Calculate type signature hash of FUNC_PROTO, including referenced type IDs,
- * under assumption that they were already resolved to canonical type IDs and
+ * under assumption that they were alपढ़ोy resolved to canonical type IDs and
  * are not going to change.
  */
-static long btf_hash_fnproto(struct btf_type *t)
-{
-	const struct btf_param *member = btf_params(t);
+अटल दीर्घ btf_hash_fnproto(काष्ठा btf_type *t)
+अणु
+	स्थिर काष्ठा btf_param *member = btf_params(t);
 	__u16 vlen = btf_vlen(t);
-	long h = btf_hash_common(t);
-	int i;
+	दीर्घ h = btf_hash_common(t);
+	पूर्णांक i;
 
-	for (i = 0; i < vlen; i++) {
+	क्रम (i = 0; i < vlen; i++) अणु
 		h = hash_combine(h, member->name_off);
 		h = hash_combine(h, member->type);
 		member++;
-	}
-	return h;
-}
+	पूर्ण
+	वापस h;
+पूर्ण
 
 /*
- * Check exact equality of two FUNC_PROTOs, taking into account referenced
- * type IDs, under assumption that they were already resolved to canonical
+ * Check exact equality of two FUNC_PROTOs, taking पूर्णांकo account referenced
+ * type IDs, under assumption that they were alपढ़ोy resolved to canonical
  * type IDs and are not going to change.
  * This function is called during reference types deduplication to compare
  * FUNC_PROTO to potential canonical representative.
  */
-static bool btf_equal_fnproto(struct btf_type *t1, struct btf_type *t2)
-{
-	const struct btf_param *m1, *m2;
+अटल bool btf_equal_fnproto(काष्ठा btf_type *t1, काष्ठा btf_type *t2)
+अणु
+	स्थिर काष्ठा btf_param *m1, *m2;
 	__u16 vlen;
-	int i;
+	पूर्णांक i;
 
-	if (!btf_equal_common(t1, t2))
-		return false;
+	अगर (!btf_equal_common(t1, t2))
+		वापस false;
 
 	vlen = btf_vlen(t1);
 	m1 = btf_params(t1);
 	m2 = btf_params(t2);
-	for (i = 0; i < vlen; i++) {
-		if (m1->name_off != m2->name_off || m1->type != m2->type)
-			return false;
+	क्रम (i = 0; i < vlen; i++) अणु
+		अगर (m1->name_off != m2->name_off || m1->type != m2->type)
+			वापस false;
 		m1++;
 		m2++;
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
- * Check structural compatibility of two FUNC_PROTOs, ignoring referenced type
- * IDs. This check is performed during type graph equivalence check and
+ * Check काष्ठाural compatibility of two FUNC_PROTOs, ignoring referenced type
+ * IDs. This check is perक्रमmed during type graph equivalence check and
  * referenced types equivalence is checked separately.
  */
-static bool btf_compat_fnproto(struct btf_type *t1, struct btf_type *t2)
-{
-	const struct btf_param *m1, *m2;
+अटल bool btf_compat_fnproto(काष्ठा btf_type *t1, काष्ठा btf_type *t2)
+अणु
+	स्थिर काष्ठा btf_param *m1, *m2;
 	__u16 vlen;
-	int i;
+	पूर्णांक i;
 
-	/* skip return type ID */
-	if (t1->name_off != t2->name_off || t1->info != t2->info)
-		return false;
+	/* skip वापस type ID */
+	अगर (t1->name_off != t2->name_off || t1->info != t2->info)
+		वापस false;
 
 	vlen = btf_vlen(t1);
 	m1 = btf_params(t1);
 	m2 = btf_params(t2);
-	for (i = 0; i < vlen; i++) {
-		if (m1->name_off != m2->name_off)
-			return false;
+	क्रम (i = 0; i < vlen; i++) अणु
+		अगर (m1->name_off != m2->name_off)
+			वापस false;
 		m1++;
 		m2++;
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-/* Prepare split BTF for deduplication by calculating hashes of base BTF's
- * types and initializing the rest of the state (canonical type mapping) for
+/* Prepare split BTF क्रम deduplication by calculating hashes of base BTF's
+ * types and initializing the rest of the state (canonical type mapping) क्रम
  * the fixed base BTF part.
  */
-static int btf_dedup_prep(struct btf_dedup *d)
-{
-	struct btf_type *t;
-	int type_id;
-	long h;
+अटल पूर्णांक btf_dedup_prep(काष्ठा btf_dedup *d)
+अणु
+	काष्ठा btf_type *t;
+	पूर्णांक type_id;
+	दीर्घ h;
 
-	if (!d->btf->base_btf)
-		return 0;
+	अगर (!d->btf->base_btf)
+		वापस 0;
 
-	for (type_id = 1; type_id < d->btf->start_id; type_id++) {
+	क्रम (type_id = 1; type_id < d->btf->start_id; type_id++) अणु
 		t = btf_type_by_id(d->btf, type_id);
 
 		/* all base BTF types are self-canonical by definition */
 		d->map[type_id] = type_id;
 
-		switch (btf_kind(t)) {
-		case BTF_KIND_VAR:
-		case BTF_KIND_DATASEC:
+		चयन (btf_kind(t)) अणु
+		हाल BTF_KIND_VAR:
+		हाल BTF_KIND_DATASEC:
 			/* VAR and DATASEC are never hash/deduplicated */
-			continue;
-		case BTF_KIND_CONST:
-		case BTF_KIND_VOLATILE:
-		case BTF_KIND_RESTRICT:
-		case BTF_KIND_PTR:
-		case BTF_KIND_FWD:
-		case BTF_KIND_TYPEDEF:
-		case BTF_KIND_FUNC:
-		case BTF_KIND_FLOAT:
+			जारी;
+		हाल BTF_KIND_CONST:
+		हाल BTF_KIND_VOLATILE:
+		हाल BTF_KIND_RESTRICT:
+		हाल BTF_KIND_PTR:
+		हाल BTF_KIND_FWD:
+		हाल BTF_KIND_TYPEDEF:
+		हाल BTF_KIND_FUNC:
+		हाल BTF_KIND_FLOAT:
 			h = btf_hash_common(t);
-			break;
-		case BTF_KIND_INT:
-			h = btf_hash_int(t);
-			break;
-		case BTF_KIND_ENUM:
-			h = btf_hash_enum(t);
-			break;
-		case BTF_KIND_STRUCT:
-		case BTF_KIND_UNION:
-			h = btf_hash_struct(t);
-			break;
-		case BTF_KIND_ARRAY:
+			अवरोध;
+		हाल BTF_KIND_INT:
+			h = btf_hash_पूर्णांक(t);
+			अवरोध;
+		हाल BTF_KIND_ENUM:
+			h = btf_hash_क्रमागत(t);
+			अवरोध;
+		हाल BTF_KIND_STRUCT:
+		हाल BTF_KIND_UNION:
+			h = btf_hash_काष्ठा(t);
+			अवरोध;
+		हाल BTF_KIND_ARRAY:
 			h = btf_hash_array(t);
-			break;
-		case BTF_KIND_FUNC_PROTO:
+			अवरोध;
+		हाल BTF_KIND_FUNC_PROTO:
 			h = btf_hash_fnproto(t);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_debug("unknown kind %d for type [%d]\n", btf_kind(t), type_id);
-			return -EINVAL;
-		}
-		if (btf_dedup_table_add(d, h, type_id))
-			return -ENOMEM;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		अगर (btf_dedup_table_add(d, h, type_id))
+			वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Deduplicate primitive types, that can't reference other types, by calculating
  * their type signature hash and comparing them with any possible canonical
  * candidate. If no canonical candidate matches, type itself is marked as
- * canonical and is added into `btf_dedup->dedup_table` as another candidate.
+ * canonical and is added पूर्णांकo `btf_dedup->dedup_table` as another candidate.
  */
-static int btf_dedup_prim_type(struct btf_dedup *d, __u32 type_id)
-{
-	struct btf_type *t = btf_type_by_id(d->btf, type_id);
-	struct hashmap_entry *hash_entry;
-	struct btf_type *cand;
-	/* if we don't find equivalent type, then we are canonical */
+अटल पूर्णांक btf_dedup_prim_type(काष्ठा btf_dedup *d, __u32 type_id)
+अणु
+	काष्ठा btf_type *t = btf_type_by_id(d->btf, type_id);
+	काष्ठा hashmap_entry *hash_entry;
+	काष्ठा btf_type *cand;
+	/* अगर we करोn't find equivalent type, then we are canonical */
 	__u32 new_id = type_id;
 	__u32 cand_id;
-	long h;
+	दीर्घ h;
 
-	switch (btf_kind(t)) {
-	case BTF_KIND_CONST:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_RESTRICT:
-	case BTF_KIND_PTR:
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_ARRAY:
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION:
-	case BTF_KIND_FUNC:
-	case BTF_KIND_FUNC_PROTO:
-	case BTF_KIND_VAR:
-	case BTF_KIND_DATASEC:
-		return 0;
+	चयन (btf_kind(t)) अणु
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_RESTRICT:
+	हाल BTF_KIND_PTR:
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_ARRAY:
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION:
+	हाल BTF_KIND_FUNC:
+	हाल BTF_KIND_FUNC_PROTO:
+	हाल BTF_KIND_VAR:
+	हाल BTF_KIND_DATASEC:
+		वापस 0;
 
-	case BTF_KIND_INT:
-		h = btf_hash_int(t);
-		for_each_dedup_cand(d, hash_entry, h) {
-			cand_id = (__u32)(long)hash_entry->value;
+	हाल BTF_KIND_INT:
+		h = btf_hash_पूर्णांक(t);
+		क्रम_each_dedup_cand(d, hash_entry, h) अणु
+			cand_id = (__u32)(दीर्घ)hash_entry->value;
 			cand = btf_type_by_id(d->btf, cand_id);
-			if (btf_equal_int(t, cand)) {
+			अगर (btf_equal_पूर्णांक(t, cand)) अणु
 				new_id = cand_id;
-				break;
-			}
-		}
-		break;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case BTF_KIND_ENUM:
-		h = btf_hash_enum(t);
-		for_each_dedup_cand(d, hash_entry, h) {
-			cand_id = (__u32)(long)hash_entry->value;
+	हाल BTF_KIND_ENUM:
+		h = btf_hash_क्रमागत(t);
+		क्रम_each_dedup_cand(d, hash_entry, h) अणु
+			cand_id = (__u32)(दीर्घ)hash_entry->value;
 			cand = btf_type_by_id(d->btf, cand_id);
-			if (btf_equal_enum(t, cand)) {
+			अगर (btf_equal_क्रमागत(t, cand)) अणु
 				new_id = cand_id;
-				break;
-			}
-			if (d->opts.dont_resolve_fwds)
-				continue;
-			if (btf_compat_enum(t, cand)) {
-				if (btf_is_enum_fwd(t)) {
-					/* resolve fwd to full enum */
+				अवरोध;
+			पूर्ण
+			अगर (d->opts.करोnt_resolve_fwds)
+				जारी;
+			अगर (btf_compat_क्रमागत(t, cand)) अणु
+				अगर (btf_is_क्रमागत_fwd(t)) अणु
+					/* resolve fwd to full क्रमागत */
 					new_id = cand_id;
-					break;
-				}
-				/* resolve canonical enum fwd to full enum */
+					अवरोध;
+				पूर्ण
+				/* resolve canonical क्रमागत fwd to full क्रमागत */
 				d->map[cand_id] = type_id;
-			}
-		}
-		break;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case BTF_KIND_FWD:
-	case BTF_KIND_FLOAT:
+	हाल BTF_KIND_FWD:
+	हाल BTF_KIND_FLOAT:
 		h = btf_hash_common(t);
-		for_each_dedup_cand(d, hash_entry, h) {
-			cand_id = (__u32)(long)hash_entry->value;
+		क्रम_each_dedup_cand(d, hash_entry, h) अणु
+			cand_id = (__u32)(दीर्घ)hash_entry->value;
 			cand = btf_type_by_id(d->btf, cand_id);
-			if (btf_equal_common(t, cand)) {
+			अगर (btf_equal_common(t, cand)) अणु
 				new_id = cand_id;
-				break;
-			}
-		}
-		break;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	d->map[type_id] = new_id;
-	if (type_id == new_id && btf_dedup_table_add(d, h, type_id))
-		return -ENOMEM;
+	अगर (type_id == new_id && btf_dedup_table_add(d, h, type_id))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btf_dedup_prim_types(struct btf_dedup *d)
-{
-	int i, err;
+अटल पूर्णांक btf_dedup_prim_types(काष्ठा btf_dedup *d)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 0; i < d->btf->nr_types; i++) {
+	क्रम (i = 0; i < d->btf->nr_types; i++) अणु
 		err = btf_dedup_prim_type(d, d->btf->start_id + i);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Check whether type is already mapped into canonical one (could be to itself).
+ * Check whether type is alपढ़ोy mapped पूर्णांकo canonical one (could be to itself).
  */
-static inline bool is_type_mapped(struct btf_dedup *d, uint32_t type_id)
-{
-	return d->map[type_id] <= BTF_MAX_NR_TYPES;
-}
+अटल अंतरभूत bool is_type_mapped(काष्ठा btf_dedup *d, uपूर्णांक32_t type_id)
+अणु
+	वापस d->map[type_id] <= BTF_MAX_NR_TYPES;
+पूर्ण
 
 /*
- * Resolve type ID into its canonical type ID, if any; otherwise return original
- * type ID. If type is FWD and is resolved into STRUCT/UNION already, follow
- * STRUCT/UNION link and resolve it into canonical type ID as well.
+ * Resolve type ID पूर्णांकo its canonical type ID, अगर any; otherwise वापस original
+ * type ID. If type is FWD and is resolved पूर्णांकo STRUCT/UNION alपढ़ोy, follow
+ * STRUCT/UNION link and resolve it पूर्णांकo canonical type ID as well.
  */
-static inline __u32 resolve_type_id(struct btf_dedup *d, __u32 type_id)
-{
-	while (is_type_mapped(d, type_id) && d->map[type_id] != type_id)
+अटल अंतरभूत __u32 resolve_type_id(काष्ठा btf_dedup *d, __u32 type_id)
+अणु
+	जबतक (is_type_mapped(d, type_id) && d->map[type_id] != type_id)
 		type_id = d->map[type_id];
-	return type_id;
-}
+	वापस type_id;
+पूर्ण
 
 /*
- * Resolve FWD to underlying STRUCT/UNION, if any; otherwise return original
+ * Resolve FWD to underlying STRUCT/UNION, अगर any; otherwise वापस original
  * type ID.
  */
-static uint32_t resolve_fwd_id(struct btf_dedup *d, uint32_t type_id)
-{
+अटल uपूर्णांक32_t resolve_fwd_id(काष्ठा btf_dedup *d, uपूर्णांक32_t type_id)
+अणु
 	__u32 orig_type_id = type_id;
 
-	if (!btf_is_fwd(btf__type_by_id(d->btf, type_id)))
-		return type_id;
+	अगर (!btf_is_fwd(btf__type_by_id(d->btf, type_id)))
+		वापस type_id;
 
-	while (is_type_mapped(d, type_id) && d->map[type_id] != type_id)
+	जबतक (is_type_mapped(d, type_id) && d->map[type_id] != type_id)
 		type_id = d->map[type_id];
 
-	if (!btf_is_fwd(btf__type_by_id(d->btf, type_id)))
-		return type_id;
+	अगर (!btf_is_fwd(btf__type_by_id(d->btf, type_id)))
+		वापस type_id;
 
-	return orig_type_id;
-}
+	वापस orig_type_id;
+पूर्ण
 
 
-static inline __u16 btf_fwd_kind(struct btf_type *t)
-{
-	return btf_kflag(t) ? BTF_KIND_UNION : BTF_KIND_STRUCT;
-}
+अटल अंतरभूत __u16 btf_fwd_kind(काष्ठा btf_type *t)
+अणु
+	वापस btf_kflag(t) ? BTF_KIND_UNION : BTF_KIND_STRUCT;
+पूर्ण
 
-/* Check if given two types are identical ARRAY definitions */
-static int btf_dedup_identical_arrays(struct btf_dedup *d, __u32 id1, __u32 id2)
-{
-	struct btf_type *t1, *t2;
+/* Check अगर given two types are identical ARRAY definitions */
+अटल पूर्णांक btf_dedup_identical_arrays(काष्ठा btf_dedup *d, __u32 id1, __u32 id2)
+अणु
+	काष्ठा btf_type *t1, *t2;
 
 	t1 = btf_type_by_id(d->btf, id1);
 	t2 = btf_type_by_id(d->btf, id2);
-	if (!btf_is_array(t1) || !btf_is_array(t2))
-		return 0;
+	अगर (!btf_is_array(t1) || !btf_is_array(t2))
+		वापस 0;
 
-	return btf_equal_array(t1, t2);
-}
+	वापस btf_equal_array(t1, t2);
+पूर्ण
 
 /*
- * Check equivalence of BTF type graph formed by candidate struct/union (we'll
- * call it "candidate graph" in this description for brevity) to a type graph
- * formed by (potential) canonical struct/union ("canonical graph" for brevity
+ * Check equivalence of BTF type graph क्रमmed by candidate काष्ठा/जोड़ (we'll
+ * call it "candidate graph" in this description क्रम brevity) to a type graph
+ * क्रमmed by (potential) canonical काष्ठा/जोड़ ("canonical graph" क्रम brevity
  * here, though keep in mind that not all types in canonical graph are
  * necessarily canonical representatives themselves, some of them might be
  * duplicates or its uniqueness might not have been established yet).
  * Returns:
- *  - >0, if type graphs are equivalent;
- *  -  0, if not equivalent;
+ *  - >0, अगर type graphs are equivalent;
+ *  -  0, अगर not equivalent;
  *  - <0, on error.
  *
- * Algorithm performs side-by-side DFS traversal of both type graphs and checks
- * equivalence of BTF types at each step. If at any point BTF types in candidate
- * and canonical graphs are not compatible structurally, whole graphs are
- * incompatible. If types are structurally equivalent (i.e., all information
+ * Algorithm perक्रमms side-by-side DFS traversal of both type graphs and checks
+ * equivalence of BTF types at each step. If at any poपूर्णांक BTF types in candidate
+ * and canonical graphs are not compatible काष्ठाurally, whole graphs are
+ * incompatible. If types are काष्ठाurally equivalent (i.e., all inक्रमmation
  * except referenced type IDs is exactly the same), a mapping from `canon_id` to
  * a `cand_id` is recored in hypothetical mapping (`btf_dedup->hypot_map`).
  * If a type references other types, then those referenced types are checked
- * for equivalence recursively.
+ * क्रम equivalence recursively.
  *
- * During DFS traversal, if we find that for current `canon_id` type we
- * already have some mapping in hypothetical map, we check for two possible
+ * During DFS traversal, अगर we find that क्रम current `canon_id` type we
+ * alपढ़ोy have some mapping in hypothetical map, we check क्रम two possible
  * situations:
  *   - `canon_id` is mapped to exactly the same type as `cand_id`. This will
- *     happen when type graphs have cycles. In this case we assume those two
+ *     happen when type graphs have cycles. In this हाल we assume those two
  *     types are equivalent.
- *   - `canon_id` is mapped to different type. This is contradiction in our
+ *   - `canon_id` is mapped to dअगरferent type. This is contradiction in our
  *     hypothetical mapping, because same graph in canonical graph corresponds
- *     to two different types in candidate graph, which for equivalent type
+ *     to two dअगरferent types in candidate graph, which क्रम equivalent type
  *     graphs shouldn't happen. This condition terminates equivalence check
  *     with negative result.
  *
  * If type graphs traversal exhausts types to check and find no contradiction,
  * then type graphs are equivalent.
  *
- * When checking types for equivalence, there is one special case: FWD types.
+ * When checking types क्रम equivalence, there is one special हाल: FWD types.
  * If FWD type resolution is allowed and one of the types (either from canonical
  * or candidate graph) is FWD and other is STRUCT/UNION (depending on FWD's kind
- * flag) and their names match, hypothetical mapping is updated to point from
+ * flag) and their names match, hypothetical mapping is updated to poपूर्णांक from
  * FWD to STRUCT/UNION. If graphs will be determined as equivalent successfully,
  * this mapping will be used to record FWD -> STRUCT/UNION mapping permanently.
  *
  * Technically, this could lead to incorrect FWD to STRUCT/UNION resolution,
- * if there are two exactly named (or anonymous) structs/unions that are
- * compatible structurally, one of which has FWD field, while other is concrete
- * STRUCT/UNION, but according to C sources they are different structs/unions
- * that are referencing different types with the same name. This is extremely
- * unlikely to happen, but btf_dedup API allows to disable FWD resolution if
+ * अगर there are two exactly named (or anonymous) काष्ठाs/जोड़s that are
+ * compatible काष्ठाurally, one of which has FWD field, जबतक other is concrete
+ * STRUCT/UNION, but according to C sources they are dअगरferent काष्ठाs/जोड़s
+ * that are referencing dअगरferent types with the same name. This is extremely
+ * unlikely to happen, but btf_dedup API allows to disable FWD resolution अगर
  * this logic is causing problems.
  *
  * Doing FWD resolution means that both candidate and/or canonical graphs can
  * consists of portions of the graph that come from multiple compilation units.
  * This is due to the fact that types within single compilation unit are always
- * deduplicated and FWDs are already resolved, if referenced struct/union
- * definiton is available. So, if we had unresolved FWD and found corresponding
- * STRUCT/UNION, they will be from different compilation units. This
+ * deduplicated and FWDs are alपढ़ोy resolved, अगर referenced काष्ठा/जोड़
+ * definiton is available. So, अगर we had unresolved FWD and found corresponding
+ * STRUCT/UNION, they will be from dअगरferent compilation units. This
  * consequently means that when we "link" FWD to corresponding STRUCT/UNION,
- * type graph will likely have at least two different BTF types that describe
- * same type (e.g., most probably there will be two different BTF types for the
+ * type graph will likely have at least two dअगरferent BTF types that describe
+ * same type (e.g., most probably there will be two dअगरferent BTF types क्रम the
  * same 'int' primitive type) and could even have "overlapping" parts of type
  * graph that describe same subset of types.
  *
@@ -3776,212 +3777,212 @@ static int btf_dedup_identical_arrays(struct btf_dedup *d, __u32 id1, __u32 id2)
  * resolved. To see why it's OK, let's check all possible situations w.r.t. FWDs
  * that can occur:
  *   - Both types in canonical and candidate graphs are FWDs. If they are
- *     structurally equivalent, then they can either be both resolved to the
- *     same STRUCT/UNION or not resolved at all. In both cases they are
+ *     काष्ठाurally equivalent, then they can either be both resolved to the
+ *     same STRUCT/UNION or not resolved at all. In both हालs they are
  *     equivalent and there is no need to resolve FWD on candidate side.
  *   - Both types in canonical and candidate graphs are concrete STRUCT/UNION,
  *     so nothing to resolve as well, algorithm will check equivalence anyway.
- *   - Type in canonical graph is FWD, while type in candidate is concrete
- *     STRUCT/UNION. In this case candidate graph comes from single compilation
- *     unit, so there is exactly one BTF type for each unique C type. After
- *     resolving FWD into STRUCT/UNION, there might be more than one BTF type
+ *   - Type in canonical graph is FWD, जबतक type in candidate is concrete
+ *     STRUCT/UNION. In this हाल candidate graph comes from single compilation
+ *     unit, so there is exactly one BTF type क्रम each unique C type. After
+ *     resolving FWD पूर्णांकo STRUCT/UNION, there might be more than one BTF type
  *     in canonical graph mapping to single BTF type in candidate graph, but
  *     because hypothetical mapping maps from canonical to candidate types, it's
- *     alright, and we still maintain the property of having single `canon_id`
- *     mapping to single `cand_id` (there could be two different `canon_id`
+ *     alright, and we still मुख्यtain the property of having single `canon_id`
+ *     mapping to single `cand_id` (there could be two dअगरferent `canon_id`
  *     mapped to the same `cand_id`, but it's not contradictory).
- *   - Type in canonical graph is concrete STRUCT/UNION, while type in candidate
- *     graph is FWD. In this case we are just going to check compatibility of
- *     STRUCT/UNION and corresponding FWD, and if they are compatible, we'll
+ *   - Type in canonical graph is concrete STRUCT/UNION, जबतक type in candidate
+ *     graph is FWD. In this हाल we are just going to check compatibility of
+ *     STRUCT/UNION and corresponding FWD, and अगर they are compatible, we'll
  *     assume that whatever STRUCT/UNION FWD resolves to must be equivalent to
  *     a concrete STRUCT/UNION from canonical graph. If the rest of type graphs
  *     turn out equivalent, we'll re-resolve FWD to concrete STRUCT/UNION from
  *     canonical graph.
  */
-static int btf_dedup_is_equiv(struct btf_dedup *d, __u32 cand_id,
+अटल पूर्णांक btf_dedup_is_equiv(काष्ठा btf_dedup *d, __u32 cand_id,
 			      __u32 canon_id)
-{
-	struct btf_type *cand_type;
-	struct btf_type *canon_type;
+अणु
+	काष्ठा btf_type *cand_type;
+	काष्ठा btf_type *canon_type;
 	__u32 hypot_type_id;
 	__u16 cand_kind;
 	__u16 canon_kind;
-	int i, eq;
+	पूर्णांक i, eq;
 
-	/* if both resolve to the same canonical, they must be equivalent */
-	if (resolve_type_id(d, cand_id) == resolve_type_id(d, canon_id))
-		return 1;
+	/* अगर both resolve to the same canonical, they must be equivalent */
+	अगर (resolve_type_id(d, cand_id) == resolve_type_id(d, canon_id))
+		वापस 1;
 
 	canon_id = resolve_fwd_id(d, canon_id);
 
 	hypot_type_id = d->hypot_map[canon_id];
-	if (hypot_type_id <= BTF_MAX_NR_TYPES) {
-		/* In some cases compiler will generate different DWARF types
-		 * for *identical* array type definitions and use them for
-		 * different fields within the *same* struct. This breaks type
+	अगर (hypot_type_id <= BTF_MAX_NR_TYPES) अणु
+		/* In some हालs compiler will generate dअगरferent DWARF types
+		 * क्रम *identical* array type definitions and use them क्रम
+		 * dअगरferent fields within the *same* काष्ठा. This अवरोधs type
 		 * equivalence check, which makes an assumption that candidate
 		 * types sub-graph has a consistent and deduped-by-compiler
 		 * types within a single CU. So work around that by explicitly
 		 * allowing identical array types here.
 		 */
-		return hypot_type_id == cand_id ||
+		वापस hypot_type_id == cand_id ||
 		       btf_dedup_identical_arrays(d, hypot_type_id, cand_id);
-	}
+	पूर्ण
 
-	if (btf_dedup_hypot_map_add(d, canon_id, cand_id))
-		return -ENOMEM;
+	अगर (btf_dedup_hypot_map_add(d, canon_id, cand_id))
+		वापस -ENOMEM;
 
 	cand_type = btf_type_by_id(d->btf, cand_id);
 	canon_type = btf_type_by_id(d->btf, canon_id);
 	cand_kind = btf_kind(cand_type);
 	canon_kind = btf_kind(canon_type);
 
-	if (cand_type->name_off != canon_type->name_off)
-		return 0;
+	अगर (cand_type->name_off != canon_type->name_off)
+		वापस 0;
 
-	/* FWD <--> STRUCT/UNION equivalence check, if enabled */
-	if (!d->opts.dont_resolve_fwds
+	/* FWD <--> STRUCT/UNION equivalence check, अगर enabled */
+	अगर (!d->opts.करोnt_resolve_fwds
 	    && (cand_kind == BTF_KIND_FWD || canon_kind == BTF_KIND_FWD)
-	    && cand_kind != canon_kind) {
+	    && cand_kind != canon_kind) अणु
 		__u16 real_kind;
 		__u16 fwd_kind;
 
-		if (cand_kind == BTF_KIND_FWD) {
+		अगर (cand_kind == BTF_KIND_FWD) अणु
 			real_kind = canon_kind;
 			fwd_kind = btf_fwd_kind(cand_type);
-		} else {
+		पूर्ण अन्यथा अणु
 			real_kind = cand_kind;
 			fwd_kind = btf_fwd_kind(canon_type);
 			/* we'd need to resolve base FWD to STRUCT/UNION */
-			if (fwd_kind == real_kind && canon_id < d->btf->start_id)
+			अगर (fwd_kind == real_kind && canon_id < d->btf->start_id)
 				d->hypot_adjust_canon = true;
-		}
-		return fwd_kind == real_kind;
-	}
+		पूर्ण
+		वापस fwd_kind == real_kind;
+	पूर्ण
 
-	if (cand_kind != canon_kind)
-		return 0;
+	अगर (cand_kind != canon_kind)
+		वापस 0;
 
-	switch (cand_kind) {
-	case BTF_KIND_INT:
-		return btf_equal_int(cand_type, canon_type);
+	चयन (cand_kind) अणु
+	हाल BTF_KIND_INT:
+		वापस btf_equal_पूर्णांक(cand_type, canon_type);
 
-	case BTF_KIND_ENUM:
-		if (d->opts.dont_resolve_fwds)
-			return btf_equal_enum(cand_type, canon_type);
-		else
-			return btf_compat_enum(cand_type, canon_type);
+	हाल BTF_KIND_ENUM:
+		अगर (d->opts.करोnt_resolve_fwds)
+			वापस btf_equal_क्रमागत(cand_type, canon_type);
+		अन्यथा
+			वापस btf_compat_क्रमागत(cand_type, canon_type);
 
-	case BTF_KIND_FWD:
-	case BTF_KIND_FLOAT:
-		return btf_equal_common(cand_type, canon_type);
+	हाल BTF_KIND_FWD:
+	हाल BTF_KIND_FLOAT:
+		वापस btf_equal_common(cand_type, canon_type);
 
-	case BTF_KIND_CONST:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_RESTRICT:
-	case BTF_KIND_PTR:
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_FUNC:
-		if (cand_type->info != canon_type->info)
-			return 0;
-		return btf_dedup_is_equiv(d, cand_type->type, canon_type->type);
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_RESTRICT:
+	हाल BTF_KIND_PTR:
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_FUNC:
+		अगर (cand_type->info != canon_type->info)
+			वापस 0;
+		वापस btf_dedup_is_equiv(d, cand_type->type, canon_type->type);
 
-	case BTF_KIND_ARRAY: {
-		const struct btf_array *cand_arr, *canon_arr;
+	हाल BTF_KIND_ARRAY: अणु
+		स्थिर काष्ठा btf_array *cand_arr, *canon_arr;
 
-		if (!btf_compat_array(cand_type, canon_type))
-			return 0;
+		अगर (!btf_compat_array(cand_type, canon_type))
+			वापस 0;
 		cand_arr = btf_array(cand_type);
 		canon_arr = btf_array(canon_type);
 		eq = btf_dedup_is_equiv(d, cand_arr->index_type, canon_arr->index_type);
-		if (eq <= 0)
-			return eq;
-		return btf_dedup_is_equiv(d, cand_arr->type, canon_arr->type);
-	}
+		अगर (eq <= 0)
+			वापस eq;
+		वापस btf_dedup_is_equiv(d, cand_arr->type, canon_arr->type);
+	पूर्ण
 
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION: {
-		const struct btf_member *cand_m, *canon_m;
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION: अणु
+		स्थिर काष्ठा btf_member *cand_m, *canon_m;
 		__u16 vlen;
 
-		if (!btf_shallow_equal_struct(cand_type, canon_type))
-			return 0;
+		अगर (!btf_shallow_equal_काष्ठा(cand_type, canon_type))
+			वापस 0;
 		vlen = btf_vlen(cand_type);
 		cand_m = btf_members(cand_type);
 		canon_m = btf_members(canon_type);
-		for (i = 0; i < vlen; i++) {
+		क्रम (i = 0; i < vlen; i++) अणु
 			eq = btf_dedup_is_equiv(d, cand_m->type, canon_m->type);
-			if (eq <= 0)
-				return eq;
+			अगर (eq <= 0)
+				वापस eq;
 			cand_m++;
 			canon_m++;
-		}
+		पूर्ण
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	case BTF_KIND_FUNC_PROTO: {
-		const struct btf_param *cand_p, *canon_p;
+	हाल BTF_KIND_FUNC_PROTO: अणु
+		स्थिर काष्ठा btf_param *cand_p, *canon_p;
 		__u16 vlen;
 
-		if (!btf_compat_fnproto(cand_type, canon_type))
-			return 0;
+		अगर (!btf_compat_fnproto(cand_type, canon_type))
+			वापस 0;
 		eq = btf_dedup_is_equiv(d, cand_type->type, canon_type->type);
-		if (eq <= 0)
-			return eq;
+		अगर (eq <= 0)
+			वापस eq;
 		vlen = btf_vlen(cand_type);
 		cand_p = btf_params(cand_type);
 		canon_p = btf_params(canon_type);
-		for (i = 0; i < vlen; i++) {
+		क्रम (i = 0; i < vlen; i++) अणु
 			eq = btf_dedup_is_equiv(d, cand_p->type, canon_p->type);
-			if (eq <= 0)
-				return eq;
+			अगर (eq <= 0)
+				वापस eq;
 			cand_p++;
 			canon_p++;
-		}
-		return 1;
-	}
+		पूर्ण
+		वापस 1;
+	पूर्ण
 
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Use hypothetical mapping, produced by successful type graph equivalence
- * check, to augment existing struct/union canonical mapping, where possible.
+ * check, to augment existing काष्ठा/जोड़ canonical mapping, where possible.
  *
  * If BTF_KIND_FWD resolution is allowed, this mapping is also used to record
  * FWD -> STRUCT/UNION correspondence as well. FWD resolution is bidirectional:
- * it doesn't matter if FWD type was part of canonical graph or candidate one,
+ * it करोesn't matter अगर FWD type was part of canonical graph or candidate one,
  * we are recording the mapping anyway. As opposed to carefulness required
- * for struct/union correspondence mapping (described below), for FWD resolution
- * it's not important, as by the time that FWD type (reference type) will be
- * deduplicated all structs/unions will be deduped already anyway.
+ * क्रम काष्ठा/जोड़ correspondence mapping (described below), क्रम FWD resolution
+ * it's not important, as by the समय that FWD type (reference type) will be
+ * deduplicated all काष्ठाs/जोड़s will be deduped alपढ़ोy anyway.
  *
- * Recording STRUCT/UNION mapping is purely a performance optimization and is
- * not required for correctness. It needs to be done carefully to ensure that
- * struct/union from candidate's type graph is not mapped into corresponding
- * struct/union from canonical type graph that itself hasn't been resolved into
+ * Recording STRUCT/UNION mapping is purely a perक्रमmance optimization and is
+ * not required क्रम correctness. It needs to be करोne carefully to ensure that
+ * काष्ठा/जोड़ from candidate's type graph is not mapped पूर्णांकo corresponding
+ * काष्ठा/जोड़ from canonical type graph that itself hasn't been resolved पूर्णांकo
  * canonical representative. The only guarantee we have is that canonical
- * struct/union was determined as canonical and that won't change. But any
- * types referenced through that struct/union fields could have been not yet
- * resolved, so in case like that it's too early to establish any kind of
- * correspondence between structs/unions.
+ * काष्ठा/जोड़ was determined as canonical and that won't change. But any
+ * types referenced through that काष्ठा/जोड़ fields could have been not yet
+ * resolved, so in हाल like that it's too early to establish any kind of
+ * correspondence between काष्ठाs/जोड़s.
  *
- * No canonical correspondence is derived for primitive types (they are already
- * deduplicated completely already anyway) or reference types (they rely on
- * stability of struct/union canonical relationship for equivalence checks).
+ * No canonical correspondence is derived क्रम primitive types (they are alपढ़ोy
+ * deduplicated completely alपढ़ोy anyway) or reference types (they rely on
+ * stability of काष्ठा/जोड़ canonical relationship क्रम equivalence checks).
  */
-static void btf_dedup_merge_hypot_map(struct btf_dedup *d)
-{
+अटल व्योम btf_dedup_merge_hypot_map(काष्ठा btf_dedup *d)
+अणु
 	__u32 canon_type_id, targ_type_id;
 	__u16 t_kind, c_kind;
 	__u32 t_id, c_id;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < d->hypot_cnt; i++) {
+	क्रम (i = 0; i < d->hypot_cnt; i++) अणु
 		canon_type_id = d->hypot_list[i];
 		targ_type_id = d->hypot_map[canon_type_id];
 		t_id = resolve_type_id(d, targ_type_id);
@@ -3989,648 +3990,648 @@ static void btf_dedup_merge_hypot_map(struct btf_dedup *d)
 		t_kind = btf_kind(btf__type_by_id(d->btf, t_id));
 		c_kind = btf_kind(btf__type_by_id(d->btf, c_id));
 		/*
-		 * Resolve FWD into STRUCT/UNION.
+		 * Resolve FWD पूर्णांकo STRUCT/UNION.
 		 * It's ok to resolve FWD into STRUCT/UNION that's not yet
 		 * mapped to canonical representative (as opposed to
 		 * STRUCT/UNION <--> STRUCT/UNION mapping logic below), because
-		 * eventually that struct is going to be mapped and all resolved
-		 * FWDs will automatically resolve to correct canonical
-		 * representative. This will happen before ref type deduping,
+		 * eventually that काष्ठा is going to be mapped and all resolved
+		 * FWDs will स्वतःmatically resolve to correct canonical
+		 * representative. This will happen beक्रमe ref type deduping,
 		 * which critically depends on stability of these mapping. This
-		 * stability is not a requirement for STRUCT/UNION equivalence
+		 * stability is not a requirement क्रम STRUCT/UNION equivalence
 		 * checks, though.
 		 */
 
-		/* if it's the split BTF case, we still need to point base FWD
+		/* अगर it's the split BTF हाल, we still need to poपूर्णांक base FWD
 		 * to STRUCT/UNION in a split BTF, because FWDs from split BTF
-		 * will be resolved against base FWD. If we don't point base
+		 * will be resolved against base FWD. If we करोn't poपूर्णांक base
 		 * canonical FWD to the resolved STRUCT/UNION, then all the
 		 * FWDs in split BTF won't be correctly resolved to a proper
 		 * STRUCT/UNION.
 		 */
-		if (t_kind != BTF_KIND_FWD && c_kind == BTF_KIND_FWD)
+		अगर (t_kind != BTF_KIND_FWD && c_kind == BTF_KIND_FWD)
 			d->map[c_id] = t_id;
 
-		/* if graph equivalence determined that we'd need to adjust
-		 * base canonical types, then we need to only point base FWDs
-		 * to STRUCTs/UNIONs and do no more modifications. For all
+		/* अगर graph equivalence determined that we'd need to adjust
+		 * base canonical types, then we need to only poपूर्णांक base FWDs
+		 * to STRUCTs/UNIONs and करो no more modअगरications. For all
 		 * other purposes the type graphs were not equivalent.
 		 */
-		if (d->hypot_adjust_canon)
-			continue;
+		अगर (d->hypot_adjust_canon)
+			जारी;
 		
-		if (t_kind == BTF_KIND_FWD && c_kind != BTF_KIND_FWD)
+		अगर (t_kind == BTF_KIND_FWD && c_kind != BTF_KIND_FWD)
 			d->map[t_id] = c_id;
 
-		if ((t_kind == BTF_KIND_STRUCT || t_kind == BTF_KIND_UNION) &&
+		अगर ((t_kind == BTF_KIND_STRUCT || t_kind == BTF_KIND_UNION) &&
 		    c_kind != BTF_KIND_FWD &&
 		    is_type_mapped(d, c_id) &&
-		    !is_type_mapped(d, t_id)) {
+		    !is_type_mapped(d, t_id)) अणु
 			/*
-			 * as a perf optimization, we can map struct/union
-			 * that's part of type graph we just verified for
-			 * equivalence. We can do that for struct/union that has
+			 * as a perf optimization, we can map काष्ठा/जोड़
+			 * that's part of type graph we just verअगरied क्रम
+			 * equivalence. We can करो that क्रम काष्ठा/जोड़ that has
 			 * canonical representative only, though.
 			 */
 			d->map[t_id] = c_id;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Deduplicate struct/union types.
+ * Deduplicate काष्ठा/जोड़ types.
  *
- * For each struct/union type its type signature hash is calculated, taking
- * into account type's name, size, number, order and names of fields, but
+ * For each काष्ठा/जोड़ type its type signature hash is calculated, taking
+ * पूर्णांकo account type's name, size, number, order and names of fields, but
  * ignoring type ID's referenced from fields, because they might not be deduped
  * completely until after reference types deduplication phase. This type hash
  * is used to iterate over all potential canonical types, sharing same hash.
- * For each canonical candidate we check whether type graphs that they form
+ * For each canonical candidate we check whether type graphs that they क्रमm
  * (through referenced types in fields and so on) are equivalent using algorithm
  * implemented in `btf_dedup_is_equiv`. If such equivalence is found and
  * BTF_KIND_FWD resolution is allowed, then hypothetical mapping
- * (btf_dedup->hypot_map) produced by aforementioned type graph equivalence
+ * (btf_dedup->hypot_map) produced by aक्रमementioned type graph equivalence
  * algorithm is used to record FWD -> STRUCT/UNION mapping. It's also used to
- * potentially map other structs/unions to their canonical representatives,
- * if such relationship hasn't yet been established. This speeds up algorithm
+ * potentially map other काष्ठाs/जोड़s to their canonical representatives,
+ * अगर such relationship hasn't yet been established. This speeds up algorithm
  * by eliminating some of the duplicate work.
  *
- * If no matching canonical representative was found, struct/union is marked
- * as canonical for itself and is added into btf_dedup->dedup_table hash map
- * for further look ups.
+ * If no matching canonical representative was found, काष्ठा/जोड़ is marked
+ * as canonical क्रम itself and is added पूर्णांकo btf_dedup->dedup_table hash map
+ * क्रम further look ups.
  */
-static int btf_dedup_struct_type(struct btf_dedup *d, __u32 type_id)
-{
-	struct btf_type *cand_type, *t;
-	struct hashmap_entry *hash_entry;
-	/* if we don't find equivalent type, then we are canonical */
+अटल पूर्णांक btf_dedup_काष्ठा_type(काष्ठा btf_dedup *d, __u32 type_id)
+अणु
+	काष्ठा btf_type *cand_type, *t;
+	काष्ठा hashmap_entry *hash_entry;
+	/* अगर we करोn't find equivalent type, then we are canonical */
 	__u32 new_id = type_id;
 	__u16 kind;
-	long h;
+	दीर्घ h;
 
-	/* already deduped or is in process of deduping (loop detected) */
-	if (d->map[type_id] <= BTF_MAX_NR_TYPES)
-		return 0;
+	/* alपढ़ोy deduped or is in process of deduping (loop detected) */
+	अगर (d->map[type_id] <= BTF_MAX_NR_TYPES)
+		वापस 0;
 
 	t = btf_type_by_id(d->btf, type_id);
 	kind = btf_kind(t);
 
-	if (kind != BTF_KIND_STRUCT && kind != BTF_KIND_UNION)
-		return 0;
+	अगर (kind != BTF_KIND_STRUCT && kind != BTF_KIND_UNION)
+		वापस 0;
 
-	h = btf_hash_struct(t);
-	for_each_dedup_cand(d, hash_entry, h) {
-		__u32 cand_id = (__u32)(long)hash_entry->value;
-		int eq;
+	h = btf_hash_काष्ठा(t);
+	क्रम_each_dedup_cand(d, hash_entry, h) अणु
+		__u32 cand_id = (__u32)(दीर्घ)hash_entry->value;
+		पूर्णांक eq;
 
 		/*
-		 * Even though btf_dedup_is_equiv() checks for
-		 * btf_shallow_equal_struct() internally when checking two
-		 * structs (unions) for equivalence, we need to guard here
+		 * Even though btf_dedup_is_equiv() checks क्रम
+		 * btf_shallow_equal_काष्ठा() पूर्णांकernally when checking two
+		 * काष्ठाs (जोड़s) क्रम equivalence, we need to guard here
 		 * from picking matching FWD type as a dedup candidate.
-		 * This can happen due to hash collision. In such case just
+		 * This can happen due to hash collision. In such हाल just
 		 * relying on btf_dedup_is_equiv() would lead to potentially
 		 * creating a loop (FWD -> STRUCT and STRUCT -> FWD), because
 		 * FWD and compatible STRUCT/UNION are considered equivalent.
 		 */
 		cand_type = btf_type_by_id(d->btf, cand_id);
-		if (!btf_shallow_equal_struct(t, cand_type))
-			continue;
+		अगर (!btf_shallow_equal_काष्ठा(t, cand_type))
+			जारी;
 
 		btf_dedup_clear_hypot_map(d);
 		eq = btf_dedup_is_equiv(d, type_id, cand_id);
-		if (eq < 0)
-			return eq;
-		if (!eq)
-			continue;
+		अगर (eq < 0)
+			वापस eq;
+		अगर (!eq)
+			जारी;
 		btf_dedup_merge_hypot_map(d);
-		if (d->hypot_adjust_canon) /* not really equivalent */
-			continue;
+		अगर (d->hypot_adjust_canon) /* not really equivalent */
+			जारी;
 		new_id = cand_id;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	d->map[type_id] = new_id;
-	if (type_id == new_id && btf_dedup_table_add(d, h, type_id))
-		return -ENOMEM;
+	अगर (type_id == new_id && btf_dedup_table_add(d, h, type_id))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btf_dedup_struct_types(struct btf_dedup *d)
-{
-	int i, err;
+अटल पूर्णांक btf_dedup_काष्ठा_types(काष्ठा btf_dedup *d)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 0; i < d->btf->nr_types; i++) {
-		err = btf_dedup_struct_type(d, d->btf->start_id + i);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+	क्रम (i = 0; i < d->btf->nr_types; i++) अणु
+		err = btf_dedup_काष्ठा_type(d, d->btf->start_id + i);
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Deduplicate reference type.
  *
- * Once all primitive and struct/union types got deduplicated, we can easily
- * deduplicate all other (reference) BTF types. This is done in two steps:
+ * Once all primitive and काष्ठा/जोड़ types got deduplicated, we can easily
+ * deduplicate all other (reference) BTF types. This is करोne in two steps:
  *
- * 1. Resolve all referenced type IDs into their canonical type IDs. This
- * resolution can be done either immediately for primitive or struct/union types
- * (because they were deduped in previous two phases) or recursively for
+ * 1. Resolve all referenced type IDs पूर्णांकo their canonical type IDs. This
+ * resolution can be करोne either immediately क्रम primitive or काष्ठा/जोड़ types
+ * (because they were deduped in previous two phases) or recursively क्रम
  * reference types. Recursion will always terminate at either primitive or
- * struct/union type, at which point we can "unwind" chain of reference types
+ * काष्ठा/जोड़ type, at which poपूर्णांक we can "unwind" chain of reference types
  * one by one. There is no danger of encountering cycles because in C type
- * system the only way to form type cycle is through struct/union, so any chain
+ * प्रणाली the only way to क्रमm type cycle is through काष्ठा/जोड़, so any chain
  * of reference types, even those taking part in a type cycle, will inevitably
- * reach struct/union at some point.
+ * reach काष्ठा/जोड़ at some poपूर्णांक.
  *
- * 2. Once all referenced type IDs are resolved into canonical ones, BTF type
+ * 2. Once all referenced type IDs are resolved पूर्णांकo canonical ones, BTF type
  * becomes "stable", in the sense that no further deduplication will cause
  * any changes to it. With that, it's now possible to calculate type's signature
- * hash (this time taking into account referenced type IDs) and loop over all
+ * hash (this समय taking पूर्णांकo account referenced type IDs) and loop over all
  * potential canonical representatives. If no match was found, current type
- * will become canonical representative of itself and will be added into
+ * will become canonical representative of itself and will be added पूर्णांकo
  * btf_dedup->dedup_table as another possible canonical representative.
  */
-static int btf_dedup_ref_type(struct btf_dedup *d, __u32 type_id)
-{
-	struct hashmap_entry *hash_entry;
+अटल पूर्णांक btf_dedup_ref_type(काष्ठा btf_dedup *d, __u32 type_id)
+अणु
+	काष्ठा hashmap_entry *hash_entry;
 	__u32 new_id = type_id, cand_id;
-	struct btf_type *t, *cand;
-	/* if we don't find equivalent type, then we are representative type */
-	int ref_type_id;
-	long h;
+	काष्ठा btf_type *t, *cand;
+	/* अगर we करोn't find equivalent type, then we are representative type */
+	पूर्णांक ref_type_id;
+	दीर्घ h;
 
-	if (d->map[type_id] == BTF_IN_PROGRESS_ID)
-		return -ELOOP;
-	if (d->map[type_id] <= BTF_MAX_NR_TYPES)
-		return resolve_type_id(d, type_id);
+	अगर (d->map[type_id] == BTF_IN_PROGRESS_ID)
+		वापस -ELOOP;
+	अगर (d->map[type_id] <= BTF_MAX_NR_TYPES)
+		वापस resolve_type_id(d, type_id);
 
 	t = btf_type_by_id(d->btf, type_id);
 	d->map[type_id] = BTF_IN_PROGRESS_ID;
 
-	switch (btf_kind(t)) {
-	case BTF_KIND_CONST:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_RESTRICT:
-	case BTF_KIND_PTR:
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_FUNC:
+	चयन (btf_kind(t)) अणु
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_RESTRICT:
+	हाल BTF_KIND_PTR:
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_FUNC:
 		ref_type_id = btf_dedup_ref_type(d, t->type);
-		if (ref_type_id < 0)
-			return ref_type_id;
+		अगर (ref_type_id < 0)
+			वापस ref_type_id;
 		t->type = ref_type_id;
 
 		h = btf_hash_common(t);
-		for_each_dedup_cand(d, hash_entry, h) {
-			cand_id = (__u32)(long)hash_entry->value;
+		क्रम_each_dedup_cand(d, hash_entry, h) अणु
+			cand_id = (__u32)(दीर्घ)hash_entry->value;
 			cand = btf_type_by_id(d->btf, cand_id);
-			if (btf_equal_common(t, cand)) {
+			अगर (btf_equal_common(t, cand)) अणु
 				new_id = cand_id;
-				break;
-			}
-		}
-		break;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case BTF_KIND_ARRAY: {
-		struct btf_array *info = btf_array(t);
+	हाल BTF_KIND_ARRAY: अणु
+		काष्ठा btf_array *info = btf_array(t);
 
 		ref_type_id = btf_dedup_ref_type(d, info->type);
-		if (ref_type_id < 0)
-			return ref_type_id;
+		अगर (ref_type_id < 0)
+			वापस ref_type_id;
 		info->type = ref_type_id;
 
 		ref_type_id = btf_dedup_ref_type(d, info->index_type);
-		if (ref_type_id < 0)
-			return ref_type_id;
+		अगर (ref_type_id < 0)
+			वापस ref_type_id;
 		info->index_type = ref_type_id;
 
 		h = btf_hash_array(t);
-		for_each_dedup_cand(d, hash_entry, h) {
-			cand_id = (__u32)(long)hash_entry->value;
+		क्रम_each_dedup_cand(d, hash_entry, h) अणु
+			cand_id = (__u32)(दीर्घ)hash_entry->value;
 			cand = btf_type_by_id(d->btf, cand_id);
-			if (btf_equal_array(t, cand)) {
+			अगर (btf_equal_array(t, cand)) अणु
 				new_id = cand_id;
-				break;
-			}
-		}
-		break;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case BTF_KIND_FUNC_PROTO: {
-		struct btf_param *param;
+	हाल BTF_KIND_FUNC_PROTO: अणु
+		काष्ठा btf_param *param;
 		__u16 vlen;
-		int i;
+		पूर्णांक i;
 
 		ref_type_id = btf_dedup_ref_type(d, t->type);
-		if (ref_type_id < 0)
-			return ref_type_id;
+		अगर (ref_type_id < 0)
+			वापस ref_type_id;
 		t->type = ref_type_id;
 
 		vlen = btf_vlen(t);
 		param = btf_params(t);
-		for (i = 0; i < vlen; i++) {
+		क्रम (i = 0; i < vlen; i++) अणु
 			ref_type_id = btf_dedup_ref_type(d, param->type);
-			if (ref_type_id < 0)
-				return ref_type_id;
+			अगर (ref_type_id < 0)
+				वापस ref_type_id;
 			param->type = ref_type_id;
 			param++;
-		}
+		पूर्ण
 
 		h = btf_hash_fnproto(t);
-		for_each_dedup_cand(d, hash_entry, h) {
-			cand_id = (__u32)(long)hash_entry->value;
+		क्रम_each_dedup_cand(d, hash_entry, h) अणु
+			cand_id = (__u32)(दीर्घ)hash_entry->value;
 			cand = btf_type_by_id(d->btf, cand_id);
-			if (btf_equal_fnproto(t, cand)) {
+			अगर (btf_equal_fnproto(t, cand)) अणु
 				new_id = cand_id;
-				break;
-			}
-		}
-		break;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	d->map[type_id] = new_id;
-	if (type_id == new_id && btf_dedup_table_add(d, h, type_id))
-		return -ENOMEM;
+	अगर (type_id == new_id && btf_dedup_table_add(d, h, type_id))
+		वापस -ENOMEM;
 
-	return new_id;
-}
+	वापस new_id;
+पूर्ण
 
-static int btf_dedup_ref_types(struct btf_dedup *d)
-{
-	int i, err;
+अटल पूर्णांक btf_dedup_ref_types(काष्ठा btf_dedup *d)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 0; i < d->btf->nr_types; i++) {
+	क्रम (i = 0; i < d->btf->nr_types; i++) अणु
 		err = btf_dedup_ref_type(d, d->btf->start_id + i);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 	/* we won't need d->dedup_table anymore */
-	hashmap__free(d->dedup_table);
-	d->dedup_table = NULL;
-	return 0;
-}
+	hashmap__मुक्त(d->dedup_table);
+	d->dedup_table = शून्य;
+	वापस 0;
+पूर्ण
 
 /*
  * Compact types.
  *
- * After we established for each type its corresponding canonical representative
+ * After we established क्रम each type its corresponding canonical representative
  * type, we now can eliminate types that are not canonical and leave only
  * canonical ones layed out sequentially in memory by copying them over
  * duplicates. During compaction btf_dedup->hypot_map array is reused to store
  * a map from original type ID to a new compacted type ID, which will be used
- * during next phase to "fix up" type IDs, referenced from struct/union and
+ * during next phase to "fix up" type IDs, referenced from काष्ठा/जोड़ and
  * reference types.
  */
-static int btf_dedup_compact_types(struct btf_dedup *d)
-{
+अटल पूर्णांक btf_dedup_compact_types(काष्ठा btf_dedup *d)
+अणु
 	__u32 *new_offs;
 	__u32 next_type_id = d->btf->start_id;
-	const struct btf_type *t;
-	void *p;
-	int i, id, len;
+	स्थिर काष्ठा btf_type *t;
+	व्योम *p;
+	पूर्णांक i, id, len;
 
 	/* we are going to reuse hypot_map to store compaction remapping */
 	d->hypot_map[0] = 0;
-	/* base BTF types are not renumbered */
-	for (id = 1; id < d->btf->start_id; id++)
+	/* base BTF types are not rक्रमागतbered */
+	क्रम (id = 1; id < d->btf->start_id; id++)
 		d->hypot_map[id] = id;
-	for (i = 0, id = d->btf->start_id; i < d->btf->nr_types; i++, id++)
+	क्रम (i = 0, id = d->btf->start_id; i < d->btf->nr_types; i++, id++)
 		d->hypot_map[id] = BTF_UNPROCESSED_ID;
 
 	p = d->btf->types_data;
 
-	for (i = 0, id = d->btf->start_id; i < d->btf->nr_types; i++, id++) {
-		if (d->map[id] != id)
-			continue;
+	क्रम (i = 0, id = d->btf->start_id; i < d->btf->nr_types; i++, id++) अणु
+		अगर (d->map[id] != id)
+			जारी;
 
 		t = btf__type_by_id(d->btf, id);
 		len = btf_type_size(t);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
-		memmove(p, t, len);
+		स_हटाओ(p, t, len);
 		d->hypot_map[id] = next_type_id;
 		d->btf->type_offs[next_type_id - d->btf->start_id] = p - d->btf->types_data;
 		p += len;
 		next_type_id++;
-	}
+	पूर्ण
 
-	/* shrink struct btf's internal types index and update btf_header */
+	/* shrink काष्ठा btf's पूर्णांकernal types index and update btf_header */
 	d->btf->nr_types = next_type_id - d->btf->start_id;
 	d->btf->type_offs_cap = d->btf->nr_types;
 	d->btf->hdr->type_len = p - d->btf->types_data;
-	new_offs = libbpf_reallocarray(d->btf->type_offs, d->btf->type_offs_cap,
-				       sizeof(*new_offs));
-	if (d->btf->type_offs_cap && !new_offs)
-		return -ENOMEM;
+	new_offs = libbpf_पुनः_स्मृतिarray(d->btf->type_offs, d->btf->type_offs_cap,
+				       माप(*new_offs));
+	अगर (d->btf->type_offs_cap && !new_offs)
+		वापस -ENOMEM;
 	d->btf->type_offs = new_offs;
 	d->btf->hdr->str_off = d->btf->hdr->type_len;
 	d->btf->raw_size = d->btf->hdr->hdr_len + d->btf->hdr->type_len + d->btf->hdr->str_len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Figure out final (deduplicated and compacted) type ID for provided original
- * `type_id` by first resolving it into corresponding canonical type ID and
+ * Figure out final (deduplicated and compacted) type ID क्रम provided original
+ * `type_id` by first resolving it पूर्णांकo corresponding canonical type ID and
  * then mapping it to a deduplicated type ID, stored in btf_dedup->hypot_map,
  * which is populated during compaction phase.
  */
-static int btf_dedup_remap_type_id(__u32 *type_id, void *ctx)
-{
-	struct btf_dedup *d = ctx;
+अटल पूर्णांक btf_dedup_remap_type_id(__u32 *type_id, व्योम *ctx)
+अणु
+	काष्ठा btf_dedup *d = ctx;
 	__u32 resolved_type_id, new_type_id;
 
 	resolved_type_id = resolve_type_id(d, *type_id);
 	new_type_id = d->hypot_map[resolved_type_id];
-	if (new_type_id > BTF_MAX_NR_TYPES)
-		return -EINVAL;
+	अगर (new_type_id > BTF_MAX_NR_TYPES)
+		वापस -EINVAL;
 
 	*type_id = new_type_id;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Remap referenced type IDs into deduped type IDs.
+ * Remap referenced type IDs पूर्णांकo deduped type IDs.
  *
  * After BTF types are deduplicated and compacted, their final type IDs may
- * differ from original ones. The map from original to a corresponding
+ * dअगरfer from original ones. The map from original to a corresponding
  * deduped type ID is stored in btf_dedup->hypot_map and is populated during
  * compaction phase. During remapping phase we are rewriting all type IDs
- * referenced from any BTF type (e.g., struct fields, func proto args, etc) to
+ * referenced from any BTF type (e.g., काष्ठा fields, func proto args, etc) to
  * their final deduped type IDs.
  */
-static int btf_dedup_remap_types(struct btf_dedup *d)
-{
-	int i, r;
+अटल पूर्णांक btf_dedup_remap_types(काष्ठा btf_dedup *d)
+अणु
+	पूर्णांक i, r;
 
-	for (i = 0; i < d->btf->nr_types; i++) {
-		struct btf_type *t = btf_type_by_id(d->btf, d->btf->start_id + i);
+	क्रम (i = 0; i < d->btf->nr_types; i++) अणु
+		काष्ठा btf_type *t = btf_type_by_id(d->btf, d->btf->start_id + i);
 
 		r = btf_type_visit_type_ids(t, btf_dedup_remap_type_id, d);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	if (!d->btf_ext)
-		return 0;
+	अगर (!d->btf_ext)
+		वापस 0;
 
 	r = btf_ext_visit_type_ids(d->btf_ext, btf_dedup_remap_type_id, d);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Probe few well-known locations for vmlinux kernel image and try to load BTF
- * data out of it to use for target BTF.
+ * Probe few well-known locations क्रम vmlinux kernel image and try to load BTF
+ * data out of it to use क्रम target BTF.
  */
-struct btf *libbpf_find_kernel_btf(void)
-{
-	struct {
-		const char *path_fmt;
+काष्ठा btf *libbpf_find_kernel_btf(व्योम)
+अणु
+	काष्ठा अणु
+		स्थिर अक्षर *path_fmt;
 		bool raw_btf;
-	} locations[] = {
+	पूर्ण locations[] = अणु
 		/* try canonical vmlinux BTF through sysfs first */
-		{ "/sys/kernel/btf/vmlinux", true /* raw BTF */ },
+		अणु "/sys/kernel/btf/vmlinux", true /* raw BTF */ पूर्ण,
 		/* fall back to trying to find vmlinux ELF on disk otherwise */
-		{ "/boot/vmlinux-%1$s" },
-		{ "/lib/modules/%1$s/vmlinux-%1$s" },
-		{ "/lib/modules/%1$s/build/vmlinux" },
-		{ "/usr/lib/modules/%1$s/kernel/vmlinux" },
-		{ "/usr/lib/debug/boot/vmlinux-%1$s" },
-		{ "/usr/lib/debug/boot/vmlinux-%1$s.debug" },
-		{ "/usr/lib/debug/lib/modules/%1$s/vmlinux" },
-	};
-	char path[PATH_MAX + 1];
-	struct utsname buf;
-	struct btf *btf;
-	int i;
+		अणु "/boot/vmlinux-%1$s" पूर्ण,
+		अणु "/lib/modules/%1$s/vmlinux-%1$s" पूर्ण,
+		अणु "/lib/modules/%1$s/build/vmlinux" पूर्ण,
+		अणु "/usr/lib/modules/%1$s/kernel/vmlinux" पूर्ण,
+		अणु "/usr/lib/debug/boot/vmlinux-%1$s" पूर्ण,
+		अणु "/usr/lib/debug/boot/vmlinux-%1$s.debug" पूर्ण,
+		अणु "/usr/lib/debug/lib/modules/%1$s/vmlinux" पूर्ण,
+	पूर्ण;
+	अक्षर path[PATH_MAX + 1];
+	काष्ठा utsname buf;
+	काष्ठा btf *btf;
+	पूर्णांक i;
 
 	uname(&buf);
 
-	for (i = 0; i < ARRAY_SIZE(locations); i++) {
-		snprintf(path, PATH_MAX, locations[i].path_fmt, buf.release);
+	क्रम (i = 0; i < ARRAY_SIZE(locations); i++) अणु
+		snम_लिखो(path, PATH_MAX, locations[i].path_fmt, buf.release);
 
-		if (access(path, R_OK))
-			continue;
+		अगर (access(path, R_OK))
+			जारी;
 
-		if (locations[i].raw_btf)
+		अगर (locations[i].raw_btf)
 			btf = btf__parse_raw(path);
-		else
-			btf = btf__parse_elf(path, NULL);
+		अन्यथा
+			btf = btf__parse_elf(path, शून्य);
 
 		pr_debug("loading kernel BTF '%s': %ld\n",
 			 path, IS_ERR(btf) ? PTR_ERR(btf) : 0);
-		if (IS_ERR(btf))
-			continue;
+		अगर (IS_ERR(btf))
+			जारी;
 
-		return btf;
-	}
+		वापस btf;
+	पूर्ण
 
 	pr_warn("failed to find valid kernel BTF\n");
-	return ERR_PTR(-ESRCH);
-}
+	वापस ERR_PTR(-ESRCH);
+पूर्ण
 
-int btf_type_visit_type_ids(struct btf_type *t, type_id_visit_fn visit, void *ctx)
-{
-	int i, n, err;
+पूर्णांक btf_type_visit_type_ids(काष्ठा btf_type *t, type_id_visit_fn visit, व्योम *ctx)
+अणु
+	पूर्णांक i, n, err;
 
-	switch (btf_kind(t)) {
-	case BTF_KIND_INT:
-	case BTF_KIND_FLOAT:
-	case BTF_KIND_ENUM:
-		return 0;
+	चयन (btf_kind(t)) अणु
+	हाल BTF_KIND_INT:
+	हाल BTF_KIND_FLOAT:
+	हाल BTF_KIND_ENUM:
+		वापस 0;
 
-	case BTF_KIND_FWD:
-	case BTF_KIND_CONST:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_RESTRICT:
-	case BTF_KIND_PTR:
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_FUNC:
-	case BTF_KIND_VAR:
-		return visit(&t->type, ctx);
+	हाल BTF_KIND_FWD:
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_RESTRICT:
+	हाल BTF_KIND_PTR:
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_FUNC:
+	हाल BTF_KIND_VAR:
+		वापस visit(&t->type, ctx);
 
-	case BTF_KIND_ARRAY: {
-		struct btf_array *a = btf_array(t);
+	हाल BTF_KIND_ARRAY: अणु
+		काष्ठा btf_array *a = btf_array(t);
 
 		err = visit(&a->type, ctx);
 		err = err ?: visit(&a->index_type, ctx);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION: {
-		struct btf_member *m = btf_members(t);
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION: अणु
+		काष्ठा btf_member *m = btf_members(t);
 
-		for (i = 0, n = btf_vlen(t); i < n; i++, m++) {
+		क्रम (i = 0, n = btf_vlen(t); i < n; i++, m++) अणु
 			err = visit(&m->type, ctx);
-			if (err)
-				return err;
-		}
-		return 0;
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	case BTF_KIND_FUNC_PROTO: {
-		struct btf_param *m = btf_params(t);
+	हाल BTF_KIND_FUNC_PROTO: अणु
+		काष्ठा btf_param *m = btf_params(t);
 
 		err = visit(&t->type, ctx);
-		if (err)
-			return err;
-		for (i = 0, n = btf_vlen(t); i < n; i++, m++) {
+		अगर (err)
+			वापस err;
+		क्रम (i = 0, n = btf_vlen(t); i < n; i++, m++) अणु
 			err = visit(&m->type, ctx);
-			if (err)
-				return err;
-		}
-		return 0;
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	case BTF_KIND_DATASEC: {
-		struct btf_var_secinfo *m = btf_var_secinfos(t);
+	हाल BTF_KIND_DATASEC: अणु
+		काष्ठा btf_var_secinfo *m = btf_var_secinfos(t);
 
-		for (i = 0, n = btf_vlen(t); i < n; i++, m++) {
+		क्रम (i = 0, n = btf_vlen(t); i < n; i++, m++) अणु
 			err = visit(&m->type, ctx);
-			if (err)
-				return err;
-		}
-		return 0;
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int btf_type_visit_str_offs(struct btf_type *t, str_off_visit_fn visit, void *ctx)
-{
-	int i, n, err;
+पूर्णांक btf_type_visit_str_offs(काष्ठा btf_type *t, str_off_visit_fn visit, व्योम *ctx)
+अणु
+	पूर्णांक i, n, err;
 
 	err = visit(&t->name_off, ctx);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	switch (btf_kind(t)) {
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION: {
-		struct btf_member *m = btf_members(t);
+	चयन (btf_kind(t)) अणु
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION: अणु
+		काष्ठा btf_member *m = btf_members(t);
 
-		for (i = 0, n = btf_vlen(t); i < n; i++, m++) {
+		क्रम (i = 0, n = btf_vlen(t); i < n; i++, m++) अणु
 			err = visit(&m->name_off, ctx);
-			if (err)
-				return err;
-		}
-		break;
-	}
-	case BTF_KIND_ENUM: {
-		struct btf_enum *m = btf_enum(t);
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल BTF_KIND_ENUM: अणु
+		काष्ठा btf_क्रमागत *m = btf_क्रमागत(t);
 
-		for (i = 0, n = btf_vlen(t); i < n; i++, m++) {
+		क्रम (i = 0, n = btf_vlen(t); i < n; i++, m++) अणु
 			err = visit(&m->name_off, ctx);
-			if (err)
-				return err;
-		}
-		break;
-	}
-	case BTF_KIND_FUNC_PROTO: {
-		struct btf_param *m = btf_params(t);
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल BTF_KIND_FUNC_PROTO: अणु
+		काष्ठा btf_param *m = btf_params(t);
 
-		for (i = 0, n = btf_vlen(t); i < n; i++, m++) {
+		क्रम (i = 0, n = btf_vlen(t); i < n; i++, m++) अणु
 			err = visit(&m->name_off, ctx);
-			if (err)
-				return err;
-		}
-		break;
-	}
-	default:
-		break;
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int btf_ext_visit_type_ids(struct btf_ext *btf_ext, type_id_visit_fn visit, void *ctx)
-{
-	const struct btf_ext_info *seg;
-	struct btf_ext_info_sec *sec;
-	int i, err;
+पूर्णांक btf_ext_visit_type_ids(काष्ठा btf_ext *btf_ext, type_id_visit_fn visit, व्योम *ctx)
+अणु
+	स्थिर काष्ठा btf_ext_info *seg;
+	काष्ठा btf_ext_info_sec *sec;
+	पूर्णांक i, err;
 
 	seg = &btf_ext->func_info;
-	for_each_btf_ext_sec(seg, sec) {
-		struct bpf_func_info_min *rec;
+	क्रम_each_btf_ext_sec(seg, sec) अणु
+		काष्ठा bpf_func_info_min *rec;
 
-		for_each_btf_ext_rec(seg, sec, i, rec) {
+		क्रम_each_btf_ext_rec(seg, sec, i, rec) अणु
 			err = visit(&rec->type_id, ctx);
-			if (err < 0)
-				return err;
-		}
-	}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
 	seg = &btf_ext->core_relo_info;
-	for_each_btf_ext_sec(seg, sec) {
-		struct bpf_core_relo *rec;
+	क्रम_each_btf_ext_sec(seg, sec) अणु
+		काष्ठा bpf_core_relo *rec;
 
-		for_each_btf_ext_rec(seg, sec, i, rec) {
+		क्रम_each_btf_ext_rec(seg, sec, i, rec) अणु
 			err = visit(&rec->type_id, ctx);
-			if (err < 0)
-				return err;
-		}
-	}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int btf_ext_visit_str_offs(struct btf_ext *btf_ext, str_off_visit_fn visit, void *ctx)
-{
-	const struct btf_ext_info *seg;
-	struct btf_ext_info_sec *sec;
-	int i, err;
+पूर्णांक btf_ext_visit_str_offs(काष्ठा btf_ext *btf_ext, str_off_visit_fn visit, व्योम *ctx)
+अणु
+	स्थिर काष्ठा btf_ext_info *seg;
+	काष्ठा btf_ext_info_sec *sec;
+	पूर्णांक i, err;
 
 	seg = &btf_ext->func_info;
-	for_each_btf_ext_sec(seg, sec) {
+	क्रम_each_btf_ext_sec(seg, sec) अणु
 		err = visit(&sec->sec_name_off, ctx);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	seg = &btf_ext->line_info;
-	for_each_btf_ext_sec(seg, sec) {
-		struct bpf_line_info_min *rec;
+	क्रम_each_btf_ext_sec(seg, sec) अणु
+		काष्ठा bpf_line_info_min *rec;
 
 		err = visit(&sec->sec_name_off, ctx);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		for_each_btf_ext_rec(seg, sec, i, rec) {
+		क्रम_each_btf_ext_rec(seg, sec, i, rec) अणु
 			err = visit(&rec->file_name_off, ctx);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			err = visit(&rec->line_off, ctx);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
 	seg = &btf_ext->core_relo_info;
-	for_each_btf_ext_sec(seg, sec) {
-		struct bpf_core_relo *rec;
+	क्रम_each_btf_ext_sec(seg, sec) अणु
+		काष्ठा bpf_core_relo *rec;
 
 		err = visit(&sec->sec_name_off, ctx);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		for_each_btf_ext_rec(seg, sec, i, rec) {
+		क्रम_each_btf_ext_rec(seg, sec, i, rec) अणु
 			err = visit(&rec->access_str_off, ctx);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

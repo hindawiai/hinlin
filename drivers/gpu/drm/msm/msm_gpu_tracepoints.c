@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "msm_gem.h"
-#include "msm_ringbuffer.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "msm_gem.h"
+#समावेश "msm_ringbuffer.h"
 
-#define CREATE_TRACE_POINTS
-#include "msm_gpu_trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "msm_gpu_trace.h"

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -12,7 +13,7 @@
  * Date: Feb. 19, 2004
  *
  * Functions:
- *      IFRFbWriteEmbedded      - Embedded write RF register via MAC
+ *      IFRFbWriteEmbedded      - Embedded ग_लिखो RF रेजिस्टर via MAC
  *
  * Revision History:
  *	RobertYu 2005
@@ -20,22 +21,22 @@
  *
  */
 
-#include "mac.h"
-#include "srom.h"
-#include "rf.h"
-#include "baseband.h"
+#समावेश "mac.h"
+#समावेश "srom.h"
+#समावेश "rf.h"
+#समावेश "baseband.h"
 
-#define BY_AL2230_REG_LEN     23 /* 24bit */
-#define CB_AL2230_INIT_SEQ    15
-#define SWITCH_CHANNEL_DELAY_AL2230 200 /* us */
-#define AL2230_PWR_IDX_LEN    64
+#घोषणा BY_AL2230_REG_LEN     23 /* 24bit */
+#घोषणा CB_AL2230_INIT_SEQ    15
+#घोषणा SWITCH_CHANNEL_DELAY_AL2230 200 /* us */
+#घोषणा AL2230_PWR_IDX_LEN    64
 
-#define BY_AL7230_REG_LEN     23 /* 24bit */
-#define CB_AL7230_INIT_SEQ    16
-#define SWITCH_CHANNEL_DELAY_AL7230 200 /* us */
-#define AL7230_PWR_IDX_LEN    64
+#घोषणा BY_AL7230_REG_LEN     23 /* 24bit */
+#घोषणा CB_AL7230_INIT_SEQ    16
+#घोषणा SWITCH_CHANNEL_DELAY_AL7230 200 /* us */
+#घोषणा AL7230_PWR_IDX_LEN    64
 
-static const unsigned long dwAL2230InitTable[CB_AL2230_INIT_SEQ] = {
+अटल स्थिर अचिन्हित दीर्घ dwAL2230InitTable[CB_AL2230_INIT_SEQ] = अणु
 	0x03F79000 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x03333100 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x01A00200 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
@@ -51,9 +52,9 @@ static const unsigned long dwAL2230InitTable[CB_AL2230_INIT_SEQ] = {
 	0x0BDFFC00 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x00000D00 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x00580F00 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW
-};
+पूर्ण;
 
-static const unsigned long dwAL2230ChannelTable0[CB_MAX_CHANNEL] = {
+अटल स्थिर अचिन्हित दीर्घ dwAL2230ChannelTable0[CB_MAX_CHANNEL] = अणु
 	0x03F79000 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 1, Tf = 2412MHz */
 	0x03F79000 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 2, Tf = 2417MHz */
 	0x03E79000 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 3, Tf = 2422MHz */
@@ -68,9 +69,9 @@ static const unsigned long dwAL2230ChannelTable0[CB_MAX_CHANNEL] = {
 	0x03E7B000 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 12, Tf = 2467MHz */
 	0x03F7C000 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 13, Tf = 2472MHz */
 	0x03E7C000 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW  /* channel = 14, Tf = 2412M */
-};
+पूर्ण;
 
-static const unsigned long dwAL2230ChannelTable1[CB_MAX_CHANNEL] = {
+अटल स्थिर अचिन्हित दीर्घ dwAL2230ChannelTable1[CB_MAX_CHANNEL] = अणु
 	0x03333100 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 1, Tf = 2412MHz */
 	0x0B333100 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 2, Tf = 2417MHz */
 	0x03333100 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 3, Tf = 2422MHz */
@@ -85,9 +86,9 @@ static const unsigned long dwAL2230ChannelTable1[CB_MAX_CHANNEL] = {
 	0x0B333100 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 12, Tf = 2467MHz */
 	0x03333100 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 13, Tf = 2472MHz */
 	0x06666100 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW  /* channel = 14, Tf = 2412M */
-};
+पूर्ण;
 
-static unsigned long dwAL2230PowerTable[AL2230_PWR_IDX_LEN] = {
+अटल अचिन्हित दीर्घ dwAL2230PowerTable[AL2230_PWR_IDX_LEN] = अणु
 	0x04040900 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x04041900 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x04042900 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
@@ -152,52 +153,52 @@ static unsigned long dwAL2230PowerTable[AL2230_PWR_IDX_LEN] = {
 	0x0407D900 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x0407E900 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x0407F900 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW
-};
+पूर्ण;
 
 /* 40MHz reference frequency
- * Need to Pull PLLON(PE3) low when writing channel registers through 3-wire.
+ * Need to Pull PLLON(PE3) low when writing channel रेजिस्टरs through 3-wire.
  */
-static const unsigned long dwAL7230InitTable[CB_AL7230_INIT_SEQ] = {
-	0x00379000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Channel1 // Need modify for 11a */
-	0x13333100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Channel1 // Need modify for 11a */
-	0x841FF200 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11a: 451FE2 */
-	0x3FDFA300 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11a: 5FDFA3 */
-	0x7FD78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* 11b/g    // Need modify for 11a */
+अटल स्थिर अचिन्हित दीर्घ dwAL7230InitTable[CB_AL7230_INIT_SEQ] = अणु
+	0x00379000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Channel1 // Need modअगरy क्रम 11a */
+	0x13333100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Channel1 // Need modअगरy क्रम 11a */
+	0x841FF200 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11a: 451FE2 */
+	0x3FDFA300 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11a: 5FDFA3 */
+	0x7FD78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* 11b/g    // Need modअगरy क्रम 11a */
 	/* RoberYu:20050113, Rev0.47 Register Setting Guide */
-	0x802B5500 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11a: 8D1B55 */
+	0x802B5500 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11a: 8D1B55 */
 	0x56AF3600 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
-	0xCE020700 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11a: 860207 */
+	0xCE020700 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11a: 860207 */
 	0x6EBC0800 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x221BB900 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
-	0xE0000A00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11a: E0600A */
-	0x08031B00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* init 0x080B1B00 => 0x080F1B00 for 3 wire control TxGain(D10) */
+	0xE0000A00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11a: E0600A */
+	0x08031B00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* init 0x080B1B00 => 0x080F1B00 क्रम 3 wire control TxGain(D10) */
 	/* RoberYu:20050113, Rev0.47 Register Setting Guide */
-	0x000A3C00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11a: 00143C */
+	0x000A3C00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11a: 00143C */
 	0xFFFFFD00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x00000E00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
-	0x1ABA8F00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW  /* Need modify for 11a: 12BACF */
-};
+	0x1ABA8F00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW  /* Need modअगरy क्रम 11a: 12BACF */
+पूर्ण;
 
-static const unsigned long dwAL7230InitTableAMode[CB_AL7230_INIT_SEQ] = {
-	0x0FF52000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Channel184 // Need modify for 11b/g */
-	0x00000100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Channel184 // Need modify for 11b/g */
-	0x451FE200 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11b/g */
-	0x5FDFA300 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11b/g */
-	0x67F78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* 11a    // Need modify for 11b/g */
-	0x853F5500 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11b/g, RoberYu:20050113 */
+अटल स्थिर अचिन्हित दीर्घ dwAL7230InitTableAMode[CB_AL7230_INIT_SEQ] = अणु
+	0x0FF52000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Channel184 // Need modअगरy क्रम 11b/g */
+	0x00000100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Channel184 // Need modअगरy क्रम 11b/g */
+	0x451FE200 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11b/g */
+	0x5FDFA300 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11b/g */
+	0x67F78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* 11a    // Need modअगरy क्रम 11b/g */
+	0x853F5500 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11b/g, RoberYu:20050113 */
 	0x56AF3600 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
-	0xCE020700 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11b/g */
+	0xCE020700 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11b/g */
 	0x6EBC0800 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x221BB900 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
-	0xE0600A00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11b/g */
-	0x08031B00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* init 0x080B1B00 => 0x080F1B00 for 3 wire control TxGain(D10) */
-	0x00147C00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modify for 11b/g */
+	0xE0600A00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11b/g */
+	0x08031B00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* init 0x080B1B00 => 0x080F1B00 क्रम 3 wire control TxGain(D10) */
+	0x00147C00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* Need modअगरy क्रम 11b/g */
 	0xFFFFFD00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
 	0x00000E00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW,
-	0x12BACF00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW  /* Need modify for 11b/g */
-};
+	0x12BACF00 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW  /* Need modअगरy क्रम 11b/g */
+पूर्ण;
 
-static const unsigned long dwAL7230ChannelTable0[CB_MAX_CHANNEL] = {
+अटल स्थिर अचिन्हित दीर्घ dwAL7230ChannelTable0[CB_MAX_CHANNEL] = अणु
 	0x00379000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  1, Tf = 2412MHz */
 	0x00379000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  2, Tf = 2417MHz */
 	0x00379000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  3, Tf = 2422MHz */
@@ -205,12 +206,12 @@ static const unsigned long dwAL7230ChannelTable0[CB_MAX_CHANNEL] = {
 	0x0037A000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  5, Tf = 2432MHz */
 	0x0037A000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  6, Tf = 2437MHz */
 	0x0037A000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  7, Tf = 2442MHz */
-	0x0037A000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  8, Tf = 2447MHz //RobertYu: 20050218, update for APNode 0.49 */
-	0x0037B000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  9, Tf = 2452MHz //RobertYu: 20050218, update for APNode 0.49 */
-	0x0037B000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 10, Tf = 2457MHz //RobertYu: 20050218, update for APNode 0.49 */
-	0x0037B000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 11, Tf = 2462MHz //RobertYu: 20050218, update for APNode 0.49 */
-	0x0037B000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 12, Tf = 2467MHz //RobertYu: 20050218, update for APNode 0.49 */
-	0x0037C000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 13, Tf = 2472MHz //RobertYu: 20050218, update for APNode 0.49 */
+	0x0037A000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  8, Tf = 2447MHz //RobertYu: 20050218, update क्रम APNode 0.49 */
+	0x0037B000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  9, Tf = 2452MHz //RobertYu: 20050218, update क्रम APNode 0.49 */
+	0x0037B000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 10, Tf = 2457MHz //RobertYu: 20050218, update क्रम APNode 0.49 */
+	0x0037B000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 11, Tf = 2462MHz //RobertYu: 20050218, update क्रम APNode 0.49 */
+	0x0037B000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 12, Tf = 2467MHz //RobertYu: 20050218, update क्रम APNode 0.49 */
+	0x0037C000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 13, Tf = 2472MHz //RobertYu: 20050218, update क्रम APNode 0.49 */
 	0x0037C000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 14, Tf = 2484MHz */
 
 	/* 4.9G => Ch 183, 184, 185, 187, 188, 189, 192, 196  (Value:15 ~ 22) */
@@ -235,7 +236,7 @@ static const unsigned long dwAL7230ChannelTable0[CB_MAX_CHANNEL] = {
 	0x0FF55000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  16, Tf = 5080MHz (28) */
 	0x0FF56000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  34, Tf = 5170MHz (29) */
 	0x0FF56000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  36, Tf = 5180MHz (30) */
-	0x0FF57000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  38, Tf = 5190MHz (31) //RobertYu: 20050218, update for APNode 0.49 */
+	0x0FF57000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  38, Tf = 5190MHz (31) //RobertYu: 20050218, update क्रम APNode 0.49 */
 	0x0FF57000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  40, Tf = 5200MHz (32) */
 	0x0FF57000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  42, Tf = 5210MHz (33) */
 	0x0FF57000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  44, Tf = 5220MHz (34) */
@@ -262,9 +263,9 @@ static const unsigned long dwAL7230ChannelTable0[CB_MAX_CHANNEL] = {
 	0x0FF60000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 157, Tf = 5785MHz (54) */
 	0x0FF61000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 161, Tf = 5805MHz (55) */
 	0x0FF61000 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW  /* channel = 165, Tf = 5825MHz (56) */
-};
+पूर्ण;
 
-static const unsigned long dwAL7230ChannelTable1[CB_MAX_CHANNEL] = {
+अटल स्थिर अचिन्हित दीर्घ dwAL7230ChannelTable1[CB_MAX_CHANNEL] = अणु
 	0x13333100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  1, Tf = 2412MHz */
 	0x1B333100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  2, Tf = 2417MHz */
 	0x03333100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  3, Tf = 2422MHz */
@@ -327,9 +328,9 @@ static const unsigned long dwAL7230ChannelTable1[CB_MAX_CHANNEL] = {
 	0x0D555100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 157, Tf = 5785MHz (54) */
 	0x18000100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 161, Tf = 5805MHz (55) */
 	0x02AAA100 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW  /* channel = 165, Tf = 5825MHz (56) */
-};
+पूर्ण;
 
-static const unsigned long dwAL7230ChannelTable2[CB_MAX_CHANNEL] = {
+अटल स्थिर अचिन्हित दीर्घ dwAL7230ChannelTable2[CB_MAX_CHANNEL] = अणु
 	0x7FD78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  1, Tf = 2412MHz */
 	0x7FD78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  2, Tf = 2417MHz */
 	0x7FD78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel =  3, Tf = 2422MHz */
@@ -392,7 +393,7 @@ static const unsigned long dwAL7230ChannelTable2[CB_MAX_CHANNEL] = {
 	0x77D78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 157, Tf = 5785MHz (54) */
 	0x77D78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW, /* channel = 161, Tf = 5805MHz (55) */
 	0x77D78400 + (BY_AL7230_REG_LEN << 3) + IFREGCTL_REGW  /* channel = 165, Tf = 5825MHz (56) */
-};
+पूर्ण;
 
 /*
  * Description: AIROHA IFRF chip init function
@@ -403,25 +404,25 @@ static const unsigned long dwAL7230ChannelTable2[CB_MAX_CHANNEL] = {
  *  Out:
  *      none
  *
- * Return Value: true if succeeded; false if failed.
+ * Return Value: true अगर succeeded; false अगर failed.
  *
  */
-static bool s_bAL7230Init(struct vnt_private *priv)
-{
-	void __iomem *iobase = priv->PortOffset;
-	int     ii;
+अटल bool s_bAL7230Init(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *iobase = priv->PortOffset;
+	पूर्णांक     ii;
 	bool ret;
 
 	ret = true;
 
-	/* 3-wire control for normal mode */
+	/* 3-wire control क्रम normal mode */
 	VNSvOutPortB(iobase + MAC_REG_SOFTPWRCTL, 0);
 
 	MACvWordRegBitsOn(iobase, MAC_REG_SOFTPWRCTL, (SOFTPWRCTL_SWPECTI  |
 							 SOFTPWRCTL_TXPEINV));
-	bb_power_save_mode_off(priv); /* RobertYu:20050106, have DC value for Calibration */
+	bb_घातer_save_mode_off(priv); /* RobertYu:20050106, have DC value क्रम Calibration */
 
-	for (ii = 0; ii < CB_AL7230_INIT_SEQ; ii++)
+	क्रम (ii = 0; ii < CB_AL7230_INIT_SEQ; ii++)
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTable[ii]);
 
 	/* PLL On */
@@ -443,21 +444,21 @@ static bool s_bAL7230Init(struct vnt_private *priv)
 							 SOFTPWRCTL_SWPECTI  |
 							 SOFTPWRCTL_TXPEINV));
 
-	bb_power_save_mode_on(priv); /* RobertYu:20050106 */
+	bb_घातer_save_mode_on(priv); /* RobertYu:20050106 */
 
 	/* PE1: TX_ON, PE2: RX_ON, PE3: PLLON */
-	/* 3-wire control for power saving mode */
+	/* 3-wire control क्रम घातer saving mode */
 	VNSvOutPortB(iobase + MAC_REG_PSPWRSIG, (PSSIG_WPE3 | PSSIG_WPE2)); /* 1100 0000 */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Need to Pull PLLON low when writing channel registers through
- * 3-wire interface
+/* Need to Pull PLLON low when writing channel रेजिस्टरs through
+ * 3-wire पूर्णांकerface
  */
-static bool s_bAL7230SelectChannel(struct vnt_private *priv, unsigned char byChannel)
-{
-	void __iomem *iobase = priv->PortOffset;
+अटल bool s_bAL7230SelectChannel(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर byChannel)
+अणु
+	व्योम __iomem *iobase = priv->PortOffset;
 	bool ret;
 
 	ret = true;
@@ -475,11 +476,11 @@ static bool s_bAL7230SelectChannel(struct vnt_private *priv, unsigned char byCha
 	/* Set Channel[7] = 0 to tell H/W channel is changing now. */
 	VNSvOutPortB(iobase + MAC_REG_CHANNEL, (byChannel & 0x7F));
 	MACvTimer0MicroSDelay(priv, SWITCH_CHANNEL_DELAY_AL7230);
-	/* Set Channel[7] = 1 to tell H/W channel change is done. */
+	/* Set Channel[7] = 1 to tell H/W channel change is करोne. */
 	VNSvOutPortB(iobase + MAC_REG_CHANNEL, (byChannel | 0x80));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Description: Write to IF/RF, by embedded programming
@@ -487,33 +488,33 @@ static bool s_bAL7230SelectChannel(struct vnt_private *priv, unsigned char byCha
  * Parameters:
  *  In:
  *      iobase      - I/O base address
- *      dwData      - data to write
+ *      dwData      - data to ग_लिखो
  *  Out:
  *      none
  *
- * Return Value: true if succeeded; false if failed.
+ * Return Value: true अगर succeeded; false अगर failed.
  *
  */
-bool IFRFbWriteEmbedded(struct vnt_private *priv, unsigned long dwData)
-{
-	void __iomem *iobase = priv->PortOffset;
-	unsigned short ww;
-	unsigned long dwValue;
+bool IFRFbWriteEmbedded(काष्ठा vnt_निजी *priv, अचिन्हित दीर्घ dwData)
+अणु
+	व्योम __iomem *iobase = priv->PortOffset;
+	अचिन्हित लघु ww;
+	अचिन्हित दीर्घ dwValue;
 
 	VNSvOutPortD(iobase + MAC_REG_IFREGCTL, dwData);
 
-	/* W_MAX_TIMEOUT is the timeout period */
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
+	/* W_MAX_TIMEOUT is the समयout period */
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
 		VNSvInPortD(iobase + MAC_REG_IFREGCTL, &dwValue);
-		if (dwValue & IFREGCTL_DONE)
-			break;
-	}
+		अगर (dwValue & IFREGCTL_DONE)
+			अवरोध;
+	पूर्ण
 
-	if (ww == W_MAX_TIMEOUT)
-		return false;
+	अगर (ww == W_MAX_TIMEOUT)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Description: AIROHA IFRF chip init function
@@ -524,18 +525,18 @@ bool IFRFbWriteEmbedded(struct vnt_private *priv, unsigned long dwData)
  *  Out:
  *      none
  *
- * Return Value: true if succeeded; false if failed.
+ * Return Value: true अगर succeeded; false अगर failed.
  *
  */
-static bool RFbAL2230Init(struct vnt_private *priv)
-{
-	void __iomem *iobase = priv->PortOffset;
-	int     ii;
+अटल bool RFbAL2230Init(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *iobase = priv->PortOffset;
+	पूर्णांक     ii;
 	bool ret;
 
 	ret = true;
 
-	/* 3-wire control for normal mode */
+	/* 3-wire control क्रम normal mode */
 	VNSvOutPortB(iobase + MAC_REG_SOFTPWRCTL, 0);
 
 	MACvWordRegBitsOn(iobase, MAC_REG_SOFTPWRCTL, (SOFTPWRCTL_SWPECTI  |
@@ -546,7 +547,7 @@ static bool RFbAL2230Init(struct vnt_private *priv)
 	/* patch abnormal AL2230 frequency output */
 	IFRFbWriteEmbedded(priv, (0x07168700 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW));
 
-	for (ii = 0; ii < CB_AL2230_INIT_SEQ; ii++)
+	क्रम (ii = 0; ii < CB_AL2230_INIT_SEQ; ii++)
 		ret &= IFRFbWriteEmbedded(priv, dwAL2230InitTable[ii]);
 	MACvTimer0MicroSDelay(priv, 30); /* delay 30 us */
 
@@ -566,15 +567,15 @@ static bool RFbAL2230Init(struct vnt_private *priv)
 							 SOFTPWRCTL_SWPECTI  |
 							 SOFTPWRCTL_TXPEINV));
 
-	/* 3-wire control for power saving mode */
+	/* 3-wire control क्रम घातer saving mode */
 	VNSvOutPortB(iobase + MAC_REG_PSPWRSIG, (PSSIG_WPE3 | PSSIG_WPE2)); /* 1100 0000 */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool RFbAL2230SelectChannel(struct vnt_private *priv, unsigned char byChannel)
-{
-	void __iomem *iobase = priv->PortOffset;
+अटल bool RFbAL2230SelectChannel(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर byChannel)
+अणु
+	व्योम __iomem *iobase = priv->PortOffset;
 	bool ret;
 
 	ret = true;
@@ -585,11 +586,11 @@ static bool RFbAL2230SelectChannel(struct vnt_private *priv, unsigned char byCha
 	/* Set Channel[7] = 0 to tell H/W channel is changing now. */
 	VNSvOutPortB(iobase + MAC_REG_CHANNEL, (byChannel & 0x7F));
 	MACvTimer0MicroSDelay(priv, SWITCH_CHANNEL_DELAY_AL2230);
-	/* Set Channel[7] = 1 to tell H/W channel change is done. */
+	/* Set Channel[7] = 1 to tell H/W channel change is करोne. */
 	VNSvOutPortB(iobase + MAC_REG_CHANNEL, (byChannel | 0x80));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Description: RF init function
@@ -601,32 +602,32 @@ static bool RFbAL2230SelectChannel(struct vnt_private *priv, unsigned char byCha
  *  Out:
  *      none
  *
- * Return Value: true if succeeded; false if failed.
+ * Return Value: true अगर succeeded; false अगर failed.
  *
  */
-bool RFbInit(struct vnt_private *priv)
-{
+bool RFbInit(काष्ठा vnt_निजी *priv)
+अणु
 	bool ret = true;
 
-	switch (priv->byRFType) {
-	case RF_AIROHA:
-	case RF_AL2230S:
+	चयन (priv->byRFType) अणु
+	हाल RF_AIROHA:
+	हाल RF_AL2230S:
 		priv->byMaxPwrLevel = AL2230_PWR_IDX_LEN;
 		ret = RFbAL2230Init(priv);
-		break;
-	case RF_AIROHA7230:
+		अवरोध;
+	हाल RF_AIROHA7230:
 		priv->byMaxPwrLevel = AL7230_PWR_IDX_LEN;
 		ret = s_bAL7230Init(priv);
-		break;
-	case RF_NOTHING:
+		अवरोध;
+	हाल RF_NOTHING:
 		ret = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = false;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  * Description: Select channel
@@ -638,33 +639,33 @@ bool RFbInit(struct vnt_private *priv)
  *  Out:
  *      none
  *
- * Return Value: true if succeeded; false if failed.
+ * Return Value: true अगर succeeded; false अगर failed.
  *
  */
-bool RFbSelectChannel(struct vnt_private *priv, unsigned char byRFType,
+bool RFbSelectChannel(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर byRFType,
 		      u16 byChannel)
-{
+अणु
 	bool ret = true;
 
-	switch (byRFType) {
-	case RF_AIROHA:
-	case RF_AL2230S:
+	चयन (byRFType) अणु
+	हाल RF_AIROHA:
+	हाल RF_AL2230S:
 		ret = RFbAL2230SelectChannel(priv, byChannel);
-		break;
-		/*{{ RobertYu: 20050104 */
-	case RF_AIROHA7230:
+		अवरोध;
+		/*अणुअणु RobertYu: 20050104 */
+	हाल RF_AIROHA7230:
 		ret = s_bAL7230SelectChannel(priv, byChannel);
-		break;
-		/*}} RobertYu */
-	case RF_NOTHING:
+		अवरोध;
+		/*पूर्णपूर्ण RobertYu */
+	हाल RF_NOTHING:
 		ret = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = false;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  * Description: Write WakeProgSyn
@@ -678,73 +679,73 @@ bool RFbSelectChannel(struct vnt_private *priv, unsigned char byRFType,
  * Return Value: None.
  *
  */
-bool RFvWriteWakeProgSyn(struct vnt_private *priv, unsigned char byRFType,
+bool RFvWriteWakeProgSyn(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर byRFType,
 			 u16 uChannel)
-{
-	void __iomem *iobase = priv->PortOffset;
-	int   ii;
-	unsigned char byInitCount = 0;
-	unsigned char bySleepCount = 0;
+अणु
+	व्योम __iomem *iobase = priv->PortOffset;
+	पूर्णांक   ii;
+	अचिन्हित अक्षर byInitCount = 0;
+	अचिन्हित अक्षर bySleepCount = 0;
 
 	VNSvOutPortW(iobase + MAC_REG_MISCFFNDEX, 0);
-	switch (byRFType) {
-	case RF_AIROHA:
-	case RF_AL2230S:
+	चयन (byRFType) अणु
+	हाल RF_AIROHA:
+	हाल RF_AL2230S:
 
-		if (uChannel > CB_MAX_CHANNEL_24G)
-			return false;
+		अगर (uChannel > CB_MAX_CHANNEL_24G)
+			वापस false;
 
 		 /* Init Reg + Channel Reg (2) */
 		byInitCount = CB_AL2230_INIT_SEQ + 2;
 		bySleepCount = 0;
-		if (byInitCount > (MISCFIFO_SYNDATASIZE - bySleepCount))
-			return false;
+		अगर (byInitCount > (MISCFIFO_SYNDATASIZE - bySleepCount))
+			वापस false;
 
-		for (ii = 0; ii < CB_AL2230_INIT_SEQ; ii++)
-			MACvSetMISCFifo(priv, (unsigned short)(MISCFIFO_SYNDATA_IDX + ii), dwAL2230InitTable[ii]);
+		क्रम (ii = 0; ii < CB_AL2230_INIT_SEQ; ii++)
+			MACvSetMISCFअगरo(priv, (अचिन्हित लघु)(MISCFIFO_SYNDATA_IDX + ii), dwAL2230InitTable[ii]);
 
-		MACvSetMISCFifo(priv, (unsigned short)(MISCFIFO_SYNDATA_IDX + ii), dwAL2230ChannelTable0[uChannel - 1]);
+		MACvSetMISCFअगरo(priv, (अचिन्हित लघु)(MISCFIFO_SYNDATA_IDX + ii), dwAL2230ChannelTable0[uChannel - 1]);
 		ii++;
-		MACvSetMISCFifo(priv, (unsigned short)(MISCFIFO_SYNDATA_IDX + ii), dwAL2230ChannelTable1[uChannel - 1]);
-		break;
+		MACvSetMISCFअगरo(priv, (अचिन्हित लघु)(MISCFIFO_SYNDATA_IDX + ii), dwAL2230ChannelTable1[uChannel - 1]);
+		अवरोध;
 
-		/* Need to check, PLLON need to be low for channel setting */
-	case RF_AIROHA7230:
+		/* Need to check, PLLON need to be low क्रम channel setting */
+	हाल RF_AIROHA7230:
 		 /* Init Reg + Channel Reg (3) */
 		byInitCount = CB_AL7230_INIT_SEQ + 3;
 		bySleepCount = 0;
-		if (byInitCount > (MISCFIFO_SYNDATASIZE - bySleepCount))
-			return false;
+		अगर (byInitCount > (MISCFIFO_SYNDATASIZE - bySleepCount))
+			वापस false;
 
-		if (uChannel <= CB_MAX_CHANNEL_24G) {
-			for (ii = 0; ii < CB_AL7230_INIT_SEQ; ii++)
-				MACvSetMISCFifo(priv, (unsigned short)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230InitTable[ii]);
-		} else {
-			for (ii = 0; ii < CB_AL7230_INIT_SEQ; ii++)
-				MACvSetMISCFifo(priv, (unsigned short)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230InitTableAMode[ii]);
-		}
+		अगर (uChannel <= CB_MAX_CHANNEL_24G) अणु
+			क्रम (ii = 0; ii < CB_AL7230_INIT_SEQ; ii++)
+				MACvSetMISCFअगरo(priv, (अचिन्हित लघु)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230InitTable[ii]);
+		पूर्ण अन्यथा अणु
+			क्रम (ii = 0; ii < CB_AL7230_INIT_SEQ; ii++)
+				MACvSetMISCFअगरo(priv, (अचिन्हित लघु)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230InitTableAMode[ii]);
+		पूर्ण
 
-		MACvSetMISCFifo(priv, (unsigned short)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230ChannelTable0[uChannel - 1]);
+		MACvSetMISCFअगरo(priv, (अचिन्हित लघु)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230ChannelTable0[uChannel - 1]);
 		ii++;
-		MACvSetMISCFifo(priv, (unsigned short)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230ChannelTable1[uChannel - 1]);
+		MACvSetMISCFअगरo(priv, (अचिन्हित लघु)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230ChannelTable1[uChannel - 1]);
 		ii++;
-		MACvSetMISCFifo(priv, (unsigned short)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230ChannelTable2[uChannel - 1]);
-		break;
+		MACvSetMISCFअगरo(priv, (अचिन्हित लघु)(MISCFIFO_SYNDATA_IDX + ii), dwAL7230ChannelTable2[uChannel - 1]);
+		अवरोध;
 
-	case RF_NOTHING:
-		return true;
+	हाल RF_NOTHING:
+		वापस true;
 
-	default:
-		return false;
-	}
+	शेष:
+		वापस false;
+	पूर्ण
 
-	MACvSetMISCFifo(priv, MISCFIFO_SYNINFO_IDX, (unsigned long)MAKEWORD(bySleepCount, byInitCount));
+	MACvSetMISCFअगरo(priv, MISCFIFO_SYNINFO_IDX, (अचिन्हित दीर्घ)MAKEWORD(bySleepCount, byInitCount));
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Description: Set Tx power
+ * Description: Set Tx घातer
  *
  * Parameters:
  *  In:
@@ -753,66 +754,66 @@ bool RFvWriteWakeProgSyn(struct vnt_private *priv, unsigned char byRFType,
  *  Out:
  *      none
  *
- * Return Value: true if succeeded; false if failed.
+ * Return Value: true अगर succeeded; false अगर failed.
  *
  */
-bool RFbSetPower(struct vnt_private *priv, unsigned int rate, u16 uCH)
-{
+bool RFbSetPower(काष्ठा vnt_निजी *priv, अचिन्हित पूर्णांक rate, u16 uCH)
+अणु
 	bool ret;
-	unsigned char byPwr = 0;
-	unsigned char byDec = 0;
+	अचिन्हित अक्षर byPwr = 0;
+	अचिन्हित अक्षर byDec = 0;
 
-	if (priv->dwDiagRefCount != 0)
-		return true;
+	अगर (priv->dwDiagRefCount != 0)
+		वापस true;
 
-	if ((uCH < 1) || (uCH > CB_MAX_CHANNEL))
-		return false;
+	अगर ((uCH < 1) || (uCH > CB_MAX_CHANNEL))
+		वापस false;
 
-	switch (rate) {
-	case RATE_1M:
-	case RATE_2M:
-	case RATE_5M:
-	case RATE_11M:
-		if (uCH > CB_MAX_CHANNEL_24G)
-			return false;
+	चयन (rate) अणु
+	हाल RATE_1M:
+	हाल RATE_2M:
+	हाल RATE_5M:
+	हाल RATE_11M:
+		अगर (uCH > CB_MAX_CHANNEL_24G)
+			वापस false;
 
 		byPwr = priv->abyCCKPwrTbl[uCH];
-		break;
-	case RATE_6M:
-	case RATE_9M:
-	case RATE_12M:
-	case RATE_18M:
+		अवरोध;
+	हाल RATE_6M:
+	हाल RATE_9M:
+	हाल RATE_12M:
+	हाल RATE_18M:
 		byPwr = priv->abyOFDMPwrTbl[uCH];
-		if (priv->byRFType == RF_UW2452)
+		अगर (priv->byRFType == RF_UW2452)
 			byDec = byPwr + 14;
-		else
+		अन्यथा
 			byDec = byPwr + 10;
 
-		if (byDec >= priv->byMaxPwrLevel)
+		अगर (byDec >= priv->byMaxPwrLevel)
 			byDec = priv->byMaxPwrLevel - 1;
 
 		byPwr = byDec;
-		break;
-	case RATE_24M:
-	case RATE_36M:
-	case RATE_48M:
-	case RATE_54M:
+		अवरोध;
+	हाल RATE_24M:
+	हाल RATE_36M:
+	हाल RATE_48M:
+	हाल RATE_54M:
 		byPwr = priv->abyOFDMPwrTbl[uCH];
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (priv->byCurPwr == byPwr)
-		return true;
+	अगर (priv->byCurPwr == byPwr)
+		वापस true;
 
 	ret = RFbRawSetPower(priv, byPwr, rate);
-	if (ret)
+	अगर (ret)
 		priv->byCurPwr = byPwr;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Description: Set Tx power
+ * Description: Set Tx घातer
  *
  * Parameters:
  *  In:
@@ -821,56 +822,56 @@ bool RFbSetPower(struct vnt_private *priv, unsigned int rate, u16 uCH)
  *  Out:
  *      none
  *
- * Return Value: true if succeeded; false if failed.
+ * Return Value: true अगर succeeded; false अगर failed.
  *
  */
 
-bool RFbRawSetPower(struct vnt_private *priv, unsigned char byPwr,
-		    unsigned int rate)
-{
+bool RFbRawSetPower(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर byPwr,
+		    अचिन्हित पूर्णांक rate)
+अणु
 	bool ret = true;
-	unsigned long dwMax7230Pwr = 0;
+	अचिन्हित दीर्घ dwMax7230Pwr = 0;
 
-	if (byPwr >=  priv->byMaxPwrLevel)
-		return false;
+	अगर (byPwr >=  priv->byMaxPwrLevel)
+		वापस false;
 
-	switch (priv->byRFType) {
-	case RF_AIROHA:
+	चयन (priv->byRFType) अणु
+	हाल RF_AIROHA:
 		ret &= IFRFbWriteEmbedded(priv, dwAL2230PowerTable[byPwr]);
-		if (rate <= RATE_11M)
+		अगर (rate <= RATE_11M)
 			ret &= IFRFbWriteEmbedded(priv, 0x0001B400 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW);
-		else
+		अन्यथा
 			ret &= IFRFbWriteEmbedded(priv, 0x0005A400 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW);
 
-		break;
+		अवरोध;
 
-	case RF_AL2230S:
+	हाल RF_AL2230S:
 		ret &= IFRFbWriteEmbedded(priv, dwAL2230PowerTable[byPwr]);
-		if (rate <= RATE_11M) {
+		अगर (rate <= RATE_11M) अणु
 			ret &= IFRFbWriteEmbedded(priv, 0x040C1400 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW);
 			ret &= IFRFbWriteEmbedded(priv, 0x00299B00 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret &= IFRFbWriteEmbedded(priv, 0x0005A400 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW);
 			ret &= IFRFbWriteEmbedded(priv, 0x00099B00 + (BY_AL2230_REG_LEN << 3) + IFREGCTL_REGW);
-		}
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case RF_AIROHA7230:
-		/* 0x080F1B00 for 3 wire control TxGain(D10)
+	हाल RF_AIROHA7230:
+		/* 0x080F1B00 क्रम 3 wire control TxGain(D10)
 		 * and 0x31 as TX Gain value
 		 */
 		dwMax7230Pwr = 0x080C0B00 | ((byPwr) << 12) |
 			(BY_AL7230_REG_LEN << 3)  | IFREGCTL_REGW;
 
 		ret &= IFRFbWriteEmbedded(priv, dwMax7230Pwr);
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
-	return ret;
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  *
@@ -887,43 +888,43 @@ bool RFbRawSetPower(struct vnt_private *priv, unsigned char byPwr,
  * Return Value: none
  *
  */
-void
-RFvRSSITodBm(struct vnt_private *priv, unsigned char byCurrRSSI, long *pldBm)
-{
-	unsigned char byIdx = (((byCurrRSSI & 0xC0) >> 6) & 0x03);
-	long b = (byCurrRSSI & 0x3F);
-	long a = 0;
-	unsigned char abyAIROHARF[4] = {0, 18, 0, 40};
+व्योम
+RFvRSSITodBm(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर byCurrRSSI, दीर्घ *pldBm)
+अणु
+	अचिन्हित अक्षर byIdx = (((byCurrRSSI & 0xC0) >> 6) & 0x03);
+	दीर्घ b = (byCurrRSSI & 0x3F);
+	दीर्घ a = 0;
+	अचिन्हित अक्षर abyAIROHARF[4] = अणु0, 18, 0, 40पूर्ण;
 
-	switch (priv->byRFType) {
-	case RF_AIROHA:
-	case RF_AL2230S:
-	case RF_AIROHA7230:
+	चयन (priv->byRFType) अणु
+	हाल RF_AIROHA:
+	हाल RF_AL2230S:
+	हाल RF_AIROHA7230:
 		a = abyAIROHARF[byIdx];
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	*pldBm = -1 * (a + b * 2);
-}
+पूर्ण
 
-/* Post processing for the 11b/g and 11a.
- * for save time on changing Reg2,3,5,7,10,12,15
+/* Post processing क्रम the 11b/g and 11a.
+ * क्रम save समय on changing Reg2,3,5,7,10,12,15
  */
-bool RFbAL7230SelectChannelPostProcess(struct vnt_private *priv,
+bool RFbAL7230SelectChannelPostProcess(काष्ठा vnt_निजी *priv,
 				       u16 byOldChannel,
 				       u16 byNewChannel)
-{
+अणु
 	bool ret;
 
 	ret = true;
 
-	/* if change between 11 b/g and 11a need to update the following
-	 * register
+	/* अगर change between 11 b/g and 11a need to update the following
+	 * रेजिस्टर
 	 * Channel Index 1~14
 	 */
-	if ((byOldChannel <= CB_MAX_CHANNEL_24G) && (byNewChannel > CB_MAX_CHANNEL_24G)) {
+	अगर ((byOldChannel <= CB_MAX_CHANNEL_24G) && (byNewChannel > CB_MAX_CHANNEL_24G)) अणु
 		/* Change from 2.4G to 5G [Reg] */
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTableAMode[2]);
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTableAMode[3]);
@@ -932,7 +933,7 @@ bool RFbAL7230SelectChannelPostProcess(struct vnt_private *priv,
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTableAMode[10]);
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTableAMode[12]);
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTableAMode[15]);
-	} else if ((byOldChannel > CB_MAX_CHANNEL_24G) && (byNewChannel <= CB_MAX_CHANNEL_24G)) {
+	पूर्ण अन्यथा अगर ((byOldChannel > CB_MAX_CHANNEL_24G) && (byNewChannel <= CB_MAX_CHANNEL_24G)) अणु
 		/* Change from 5G to 2.4G [Reg] */
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTable[2]);
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTable[3]);
@@ -941,7 +942,7 @@ bool RFbAL7230SelectChannelPostProcess(struct vnt_private *priv,
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTable[10]);
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTable[12]);
 		ret &= IFRFbWriteEmbedded(priv, dwAL7230InitTable[15]);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

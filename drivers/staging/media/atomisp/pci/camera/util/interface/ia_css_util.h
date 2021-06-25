@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __IA_CSS_UTIL_H__
-#define __IA_CSS_UTIL_H__
+#अगर_अघोषित __IA_CSS_UTIL_H__
+#घोषणा __IA_CSS_UTIL_H__
 
-#include <linux/errno.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#include <ia_css_err.h>
-#include <type_support.h>
-#include <ia_css_frame_public.h>
-#include <ia_css_stream_public.h>
-#include <ia_css_stream_format.h>
+#समावेश <ia_css_err.h>
+#समावेश <type_support.h>
+#समावेश <ia_css_frame_खुला.h>
+#समावेश <ia_css_stream_खुला.h>
+#समावेश <ia_css_stream_क्रमmat.h>
 
 /* @brief convert "errno" error code to "ia_css_err" error code
  *
  * @param[in]	"errno" error code
- * @return	"ia_css_err" error code
+ * @वापस	"ia_css_err" error code
  *
  */
-int ia_css_convert_errno(
-    int in_err);
+पूर्णांक ia_css_convert_त्रुटि_सं(
+    पूर्णांक in_err);
 
 /* @brief check vf frame info.
  *
  * @param[in] info
- * @return	0 or error code upon error.
+ * @वापस	0 or error code upon error.
  *
  */
-int ia_css_util_check_vf_info(
-    const struct ia_css_frame_info *const info);
+पूर्णांक ia_css_util_check_vf_info(
+    स्थिर काष्ठा ia_css_frame_info *स्थिर info);
 
 /* @brief check input configuration.
  *
  * @param[in] stream_config
  * @param[in] must_be_raw
- * @return	0 or error code upon error.
+ * @वापस	0 or error code upon error.
  *
  */
-int ia_css_util_check_input(
-    const struct ia_css_stream_config *const stream_config,
+पूर्णांक ia_css_util_check_input(
+    स्थिर काष्ठा ia_css_stream_config *स्थिर stream_config,
     bool must_be_raw,
     bool must_be_yuv);
 
@@ -58,86 +59,86 @@ int ia_css_util_check_input(
  *
  * @param[in] out_info
  * @param[in] vf_info
- * @return	0 or error code upon error.
+ * @वापस	0 or error code upon error.
  *
  */
-int ia_css_util_check_vf_out_info(
-    const struct ia_css_frame_info *const out_info,
-    const struct ia_css_frame_info *const vf_info);
+पूर्णांक ia_css_util_check_vf_out_info(
+    स्थिर काष्ठा ia_css_frame_info *स्थिर out_info,
+    स्थिर काष्ठा ia_css_frame_info *स्थिर vf_info);
 
 /* @brief check width and height
  *
  * @param[in] width
  * @param[in] height
- * @return	0 or error code upon error.
+ * @वापस	0 or error code upon error.
  *
  */
-int ia_css_util_check_res(
-    unsigned int width,
-    unsigned int height);
+पूर्णांक ia_css_util_check_res(
+    अचिन्हित पूर्णांक width,
+    अचिन्हित पूर्णांक height);
 
 /* ISP2401 */
 /* @brief compare resolutions (less or equal)
  *
  * @param[in] a resolution
  * @param[in] b resolution
- * @return    true if both dimensions of a are less or
+ * @वापस    true अगर both dimensions of a are less or
  *            equal than those of b, false otherwise
  *
  */
 bool ia_css_util_res_leq(
-    struct ia_css_resolution a,
-    struct ia_css_resolution b);
+    काष्ठा ia_css_resolution a,
+    काष्ठा ia_css_resolution b);
 
 /* ISP2401 */
 /**
- * @brief Check if resolution is zero
+ * @brief Check अगर resolution is zero
  *
  * @param[in] resolution The resolution to check
  *
- * @returns true if resolution is zero
+ * @वापसs true अगर resolution is zero
  */
 bool ia_css_util_resolution_is_zero(
-    const struct ia_css_resolution resolution);
+    स्थिर काष्ठा ia_css_resolution resolution);
 
 /* ISP2401 */
 /**
- * @brief Check if resolution is even
+ * @brief Check अगर resolution is even
  *
  * @param[in] resolution The resolution to check
  *
- * @returns true if resolution is even
+ * @वापसs true अगर resolution is even
  */
 bool ia_css_util_resolution_is_even(
-    const struct ia_css_resolution resolution);
+    स्थिर काष्ठा ia_css_resolution resolution);
 
 /* @brief check width and height
  *
- * @param[in] stream_format
+ * @param[in] stream_क्रमmat
  * @param[in] two_ppc
- * @return bits per pixel based on given parameters.
+ * @वापस bits per pixel based on given parameters.
  *
  */
-unsigned int ia_css_util_input_format_bpp(
-    enum atomisp_input_format stream_format,
+अचिन्हित पूर्णांक ia_css_util_input_क्रमmat_bpp(
+    क्रमागत atomisp_input_क्रमmat stream_क्रमmat,
     bool two_ppc);
 
-/* @brief check if input format it raw
+/* @brief check अगर input क्रमmat it raw
  *
- * @param[in] stream_format
- * @return true if the input format is raw or false otherwise
- *
- */
-bool ia_css_util_is_input_format_raw(
-    enum atomisp_input_format stream_format);
-
-/* @brief check if input format it yuv
- *
- * @param[in] stream_format
- * @return true if the input format is yuv or false otherwise
+ * @param[in] stream_क्रमmat
+ * @वापस true अगर the input क्रमmat is raw or false otherwise
  *
  */
-bool ia_css_util_is_input_format_yuv(
-    enum atomisp_input_format stream_format);
+bool ia_css_util_is_input_क्रमmat_raw(
+    क्रमागत atomisp_input_क्रमmat stream_क्रमmat);
 
-#endif /* __IA_CSS_UTIL_H__ */
+/* @brief check अगर input क्रमmat it yuv
+ *
+ * @param[in] stream_क्रमmat
+ * @वापस true अगर the input क्रमmat is yuv or false otherwise
+ *
+ */
+bool ia_css_util_is_input_क्रमmat_yuv(
+    क्रमागत atomisp_input_क्रमmat stream_क्रमmat);
+
+#पूर्ण_अगर /* __IA_CSS_UTIL_H__ */

@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
- * Public API and common code for kernel->userspace relay file support.
+ * Public API and common code क्रम kernel->userspace relay file support.
  *
- * See Documentation/filesystems/relay.rst for an overview.
+ * See Documentation/fileप्रणालीs/relay.rst क्रम an overview.
  *
  * Copyright (C) 2002-2005 - Tom Zanussi (zanussi@us.ibm.com), IBM Corp
  * Copyright (C) 1999-2005 - Karim Yaghmour (karim@opersys.com)
@@ -12,288 +13,288 @@
  *
  * This file is released under the GPL.
  */
-#include <linux/errno.h>
-#include <linux/stddef.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/string.h>
-#include <linux/relay.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h>
-#include <linux/cpu.h>
-#include <linux/splice.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/relay.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/splice.h>
 
-/* list of open channels, for cpu hotplug */
-static DEFINE_MUTEX(relay_channels_mutex);
-static LIST_HEAD(relay_channels);
+/* list of खोलो channels, क्रम cpu hotplug */
+अटल DEFINE_MUTEX(relay_channels_mutex);
+अटल LIST_HEAD(relay_channels);
 
 /*
- * fault() vm_op implementation for relay file mapping.
+ * fault() vm_op implementation क्रम relay file mapping.
  */
-static vm_fault_t relay_buf_fault(struct vm_fault *vmf)
-{
-	struct page *page;
-	struct rchan_buf *buf = vmf->vma->vm_private_data;
+अटल vm_fault_t relay_buf_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा page *page;
+	काष्ठा rchan_buf *buf = vmf->vma->vm_निजी_data;
 	pgoff_t pgoff = vmf->pgoff;
 
-	if (!buf)
-		return VM_FAULT_OOM;
+	अगर (!buf)
+		वापस VM_FAULT_OOM;
 
-	page = vmalloc_to_page(buf->start + (pgoff << PAGE_SHIFT));
-	if (!page)
-		return VM_FAULT_SIGBUS;
+	page = vदो_स्मृति_to_page(buf->start + (pgoff << PAGE_SHIFT));
+	अगर (!page)
+		वापस VM_FAULT_SIGBUS;
 	get_page(page);
 	vmf->page = page;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * vm_ops for relay file mappings.
+ * vm_ops क्रम relay file mappings.
  */
-static const struct vm_operations_struct relay_file_mmap_ops = {
+अटल स्थिर काष्ठा vm_operations_काष्ठा relay_file_mmap_ops = अणु
 	.fault = relay_buf_fault,
-};
+पूर्ण;
 
 /*
- * allocate an array of pointers of struct page
+ * allocate an array of poपूर्णांकers of काष्ठा page
  */
-static struct page **relay_alloc_page_array(unsigned int n_pages)
-{
-	const size_t pa_size = n_pages * sizeof(struct page *);
-	if (pa_size > PAGE_SIZE)
-		return vzalloc(pa_size);
-	return kzalloc(pa_size, GFP_KERNEL);
-}
+अटल काष्ठा page **relay_alloc_page_array(अचिन्हित पूर्णांक n_pages)
+अणु
+	स्थिर माप_प्रकार pa_size = n_pages * माप(काष्ठा page *);
+	अगर (pa_size > PAGE_SIZE)
+		वापस vzalloc(pa_size);
+	वापस kzalloc(pa_size, GFP_KERNEL);
+पूर्ण
 
 /*
- * free an array of pointers of struct page
+ * मुक्त an array of poपूर्णांकers of काष्ठा page
  */
-static void relay_free_page_array(struct page **array)
-{
-	kvfree(array);
-}
+अटल व्योम relay_मुक्त_page_array(काष्ठा page **array)
+अणु
+	kvमुक्त(array);
+पूर्ण
 
 /**
  *	relay_mmap_buf: - mmap channel buffer to process address space
  *	@buf: relay channel buffer
- *	@vma: vm_area_struct describing memory to be mapped
+ *	@vma: vm_area_काष्ठा describing memory to be mapped
  *
- *	Returns 0 if ok, negative on error
+ *	Returns 0 अगर ok, negative on error
  *
- *	Caller should already have grabbed mmap_lock.
+ *	Caller should alपढ़ोy have grabbed mmap_lock.
  */
-static int relay_mmap_buf(struct rchan_buf *buf, struct vm_area_struct *vma)
-{
-	unsigned long length = vma->vm_end - vma->vm_start;
+अटल पूर्णांक relay_mmap_buf(काष्ठा rchan_buf *buf, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अचिन्हित दीर्घ length = vma->vm_end - vma->vm_start;
 
-	if (!buf)
-		return -EBADF;
+	अगर (!buf)
+		वापस -EBADF;
 
-	if (length != (unsigned long)buf->chan->alloc_size)
-		return -EINVAL;
+	अगर (length != (अचिन्हित दीर्घ)buf->chan->alloc_size)
+		वापस -EINVAL;
 
 	vma->vm_ops = &relay_file_mmap_ops;
 	vma->vm_flags |= VM_DONTEXPAND;
-	vma->vm_private_data = buf;
+	vma->vm_निजी_data = buf;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	relay_alloc_buf - allocate a channel buffer
- *	@buf: the buffer struct
+ *	@buf: the buffer काष्ठा
  *	@size: total size of the buffer
  *
- *	Returns a pointer to the resulting buffer, %NULL if unsuccessful. The
- *	passed in size will get page aligned, if it isn't already.
+ *	Returns a poपूर्णांकer to the resulting buffer, %शून्य अगर unsuccessful. The
+ *	passed in size will get page aligned, अगर it isn't alपढ़ोy.
  */
-static void *relay_alloc_buf(struct rchan_buf *buf, size_t *size)
-{
-	void *mem;
-	unsigned int i, j, n_pages;
+अटल व्योम *relay_alloc_buf(काष्ठा rchan_buf *buf, माप_प्रकार *size)
+अणु
+	व्योम *mem;
+	अचिन्हित पूर्णांक i, j, n_pages;
 
 	*size = PAGE_ALIGN(*size);
 	n_pages = *size >> PAGE_SHIFT;
 
 	buf->page_array = relay_alloc_page_array(n_pages);
-	if (!buf->page_array)
-		return NULL;
+	अगर (!buf->page_array)
+		वापस शून्य;
 
-	for (i = 0; i < n_pages; i++) {
+	क्रम (i = 0; i < n_pages; i++) अणु
 		buf->page_array[i] = alloc_page(GFP_KERNEL);
-		if (unlikely(!buf->page_array[i]))
-			goto depopulate;
-		set_page_private(buf->page_array[i], (unsigned long)buf);
-	}
+		अगर (unlikely(!buf->page_array[i]))
+			जाओ depopulate;
+		set_page_निजी(buf->page_array[i], (अचिन्हित दीर्घ)buf);
+	पूर्ण
 	mem = vmap(buf->page_array, n_pages, VM_MAP, PAGE_KERNEL);
-	if (!mem)
-		goto depopulate;
+	अगर (!mem)
+		जाओ depopulate;
 
-	memset(mem, 0, *size);
+	स_रखो(mem, 0, *size);
 	buf->page_count = n_pages;
-	return mem;
+	वापस mem;
 
 depopulate:
-	for (j = 0; j < i; j++)
-		__free_page(buf->page_array[j]);
-	relay_free_page_array(buf->page_array);
-	return NULL;
-}
+	क्रम (j = 0; j < i; j++)
+		__मुक्त_page(buf->page_array[j]);
+	relay_मुक्त_page_array(buf->page_array);
+	वापस शून्य;
+पूर्ण
 
 /**
  *	relay_create_buf - allocate and initialize a channel buffer
  *	@chan: the relay channel
  *
- *	Returns channel buffer if successful, %NULL otherwise.
+ *	Returns channel buffer अगर successful, %शून्य otherwise.
  */
-static struct rchan_buf *relay_create_buf(struct rchan *chan)
-{
-	struct rchan_buf *buf;
+अटल काष्ठा rchan_buf *relay_create_buf(काष्ठा rchan *chan)
+अणु
+	काष्ठा rchan_buf *buf;
 
-	if (chan->n_subbufs > KMALLOC_MAX_SIZE / sizeof(size_t *))
-		return NULL;
+	अगर (chan->n_subbufs > KMALLOC_MAX_SIZE / माप(माप_प्रकार *))
+		वापस शून्य;
 
-	buf = kzalloc(sizeof(struct rchan_buf), GFP_KERNEL);
-	if (!buf)
-		return NULL;
-	buf->padding = kmalloc_array(chan->n_subbufs, sizeof(size_t *),
+	buf = kzalloc(माप(काष्ठा rchan_buf), GFP_KERNEL);
+	अगर (!buf)
+		वापस शून्य;
+	buf->padding = kदो_स्मृति_array(chan->n_subbufs, माप(माप_प्रकार *),
 				     GFP_KERNEL);
-	if (!buf->padding)
-		goto free_buf;
+	अगर (!buf->padding)
+		जाओ मुक्त_buf;
 
 	buf->start = relay_alloc_buf(buf, &chan->alloc_size);
-	if (!buf->start)
-		goto free_buf;
+	अगर (!buf->start)
+		जाओ मुक्त_buf;
 
 	buf->chan = chan;
 	kref_get(&buf->chan->kref);
-	return buf;
+	वापस buf;
 
-free_buf:
-	kfree(buf->padding);
-	kfree(buf);
-	return NULL;
-}
+मुक्त_buf:
+	kमुक्त(buf->padding);
+	kमुक्त(buf);
+	वापस शून्य;
+पूर्ण
 
 /**
- *	relay_destroy_channel - free the channel struct
+ *	relay_destroy_channel - मुक्त the channel काष्ठा
  *	@kref: target kernel reference that contains the relay channel
  *
  *	Should only be called from kref_put().
  */
-static void relay_destroy_channel(struct kref *kref)
-{
-	struct rchan *chan = container_of(kref, struct rchan, kref);
-	free_percpu(chan->buf);
-	kfree(chan);
-}
+अटल व्योम relay_destroy_channel(काष्ठा kref *kref)
+अणु
+	काष्ठा rchan *chan = container_of(kref, काष्ठा rchan, kref);
+	मुक्त_percpu(chan->buf);
+	kमुक्त(chan);
+पूर्ण
 
 /**
- *	relay_destroy_buf - destroy an rchan_buf struct and associated buffer
- *	@buf: the buffer struct
+ *	relay_destroy_buf - destroy an rchan_buf काष्ठा and associated buffer
+ *	@buf: the buffer काष्ठा
  */
-static void relay_destroy_buf(struct rchan_buf *buf)
-{
-	struct rchan *chan = buf->chan;
-	unsigned int i;
+अटल व्योम relay_destroy_buf(काष्ठा rchan_buf *buf)
+अणु
+	काष्ठा rchan *chan = buf->chan;
+	अचिन्हित पूर्णांक i;
 
-	if (likely(buf->start)) {
+	अगर (likely(buf->start)) अणु
 		vunmap(buf->start);
-		for (i = 0; i < buf->page_count; i++)
-			__free_page(buf->page_array[i]);
-		relay_free_page_array(buf->page_array);
-	}
-	*per_cpu_ptr(chan->buf, buf->cpu) = NULL;
-	kfree(buf->padding);
-	kfree(buf);
+		क्रम (i = 0; i < buf->page_count; i++)
+			__मुक्त_page(buf->page_array[i]);
+		relay_मुक्त_page_array(buf->page_array);
+	पूर्ण
+	*per_cpu_ptr(chan->buf, buf->cpu) = शून्य;
+	kमुक्त(buf->padding);
+	kमुक्त(buf);
 	kref_put(&chan->kref, relay_destroy_channel);
-}
+पूर्ण
 
 /**
- *	relay_remove_buf - remove a channel buffer
+ *	relay_हटाओ_buf - हटाओ a channel buffer
  *	@kref: target kernel reference that contains the relay buffer
  *
- *	Removes the file from the filesystem, which also frees the
- *	rchan_buf_struct and the channel buffer.  Should only be called from
+ *	Removes the file from the fileप्रणाली, which also मुक्तs the
+ *	rchan_buf_काष्ठा and the channel buffer.  Should only be called from
  *	kref_put().
  */
-static void relay_remove_buf(struct kref *kref)
-{
-	struct rchan_buf *buf = container_of(kref, struct rchan_buf, kref);
+अटल व्योम relay_हटाओ_buf(काष्ठा kref *kref)
+अणु
+	काष्ठा rchan_buf *buf = container_of(kref, काष्ठा rchan_buf, kref);
 	relay_destroy_buf(buf);
-}
+पूर्ण
 
 /**
  *	relay_buf_empty - boolean, is the channel buffer empty?
  *	@buf: channel buffer
  *
- *	Returns 1 if the buffer is empty, 0 otherwise.
+ *	Returns 1 अगर the buffer is empty, 0 otherwise.
  */
-static int relay_buf_empty(struct rchan_buf *buf)
-{
-	return (buf->subbufs_produced - buf->subbufs_consumed) ? 0 : 1;
-}
+अटल पूर्णांक relay_buf_empty(काष्ठा rchan_buf *buf)
+अणु
+	वापस (buf->subbufs_produced - buf->subbufs_consumed) ? 0 : 1;
+पूर्ण
 
 /**
  *	relay_buf_full - boolean, is the channel buffer full?
  *	@buf: channel buffer
  *
- *	Returns 1 if the buffer is full, 0 otherwise.
+ *	Returns 1 अगर the buffer is full, 0 otherwise.
  */
-int relay_buf_full(struct rchan_buf *buf)
-{
-	size_t ready = buf->subbufs_produced - buf->subbufs_consumed;
-	return (ready >= buf->chan->n_subbufs) ? 1 : 0;
-}
+पूर्णांक relay_buf_full(काष्ठा rchan_buf *buf)
+अणु
+	माप_प्रकार पढ़ोy = buf->subbufs_produced - buf->subbufs_consumed;
+	वापस (पढ़ोy >= buf->chan->n_subbufs) ? 1 : 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(relay_buf_full);
 
 /*
  * High-level relay kernel API and associated functions.
  */
 
-static int relay_subbuf_start(struct rchan_buf *buf, void *subbuf,
-			      void *prev_subbuf, size_t prev_padding)
-{
-	if (!buf->chan->cb->subbuf_start)
-		return !relay_buf_full(buf);
+अटल पूर्णांक relay_subbuf_start(काष्ठा rchan_buf *buf, व्योम *subbuf,
+			      व्योम *prev_subbuf, माप_प्रकार prev_padding)
+अणु
+	अगर (!buf->chan->cb->subbuf_start)
+		वापस !relay_buf_full(buf);
 
-	return buf->chan->cb->subbuf_start(buf, subbuf,
+	वापस buf->chan->cb->subbuf_start(buf, subbuf,
 					   prev_subbuf, prev_padding);
-}
+पूर्ण
 
 /**
- *	wakeup_readers - wake up readers waiting on a channel
+ *	wakeup_पढ़ोers - wake up पढ़ोers रुकोing on a channel
  *	@work: contains the channel buffer
  *
- *	This is the function used to defer reader waking
+ *	This is the function used to defer पढ़ोer waking
  */
-static void wakeup_readers(struct irq_work *work)
-{
-	struct rchan_buf *buf;
+अटल व्योम wakeup_पढ़ोers(काष्ठा irq_work *work)
+अणु
+	काष्ठा rchan_buf *buf;
 
-	buf = container_of(work, struct rchan_buf, wakeup_work);
-	wake_up_interruptible(&buf->read_wait);
-}
+	buf = container_of(work, काष्ठा rchan_buf, wakeup_work);
+	wake_up_पूर्णांकerruptible(&buf->पढ़ो_रुको);
+पूर्ण
 
 /**
  *	__relay_reset - reset a channel buffer
  *	@buf: the channel buffer
- *	@init: 1 if this is a first-time initialization
+ *	@init: 1 अगर this is a first-समय initialization
  *
- *	See relay_reset() for description of effect.
+ *	See relay_reset() क्रम description of effect.
  */
-static void __relay_reset(struct rchan_buf *buf, unsigned int init)
-{
-	size_t i;
+अटल व्योम __relay_reset(काष्ठा rchan_buf *buf, अचिन्हित पूर्णांक init)
+अणु
+	माप_प्रकार i;
 
-	if (init) {
-		init_waitqueue_head(&buf->read_wait);
+	अगर (init) अणु
+		init_रुकोqueue_head(&buf->पढ़ो_रुको);
 		kref_init(&buf->kref);
-		init_irq_work(&buf->wakeup_work, wakeup_readers);
-	} else {
+		init_irq_work(&buf->wakeup_work, wakeup_पढ़ोers);
+	पूर्ण अन्यथा अणु
 		irq_work_sync(&buf->wakeup_work);
-	}
+	पूर्ण
 
 	buf->subbufs_produced = 0;
 	buf->subbufs_consumed = 0;
@@ -302,11 +303,11 @@ static void __relay_reset(struct rchan_buf *buf, unsigned int init)
 	buf->data = buf->start;
 	buf->offset = 0;
 
-	for (i = 0; i < buf->chan->n_subbufs; i++)
+	क्रम (i = 0; i < buf->chan->n_subbufs; i++)
 		buf->padding[i] = 0;
 
-	relay_subbuf_start(buf, buf->data, NULL, 0);
-}
+	relay_subbuf_start(buf, buf->data, शून्य, 0);
+पूर्ण
 
 /**
  *	relay_reset - reset the channel
@@ -314,404 +315,404 @@ static void __relay_reset(struct rchan_buf *buf, unsigned int init)
  *
  *	This has the effect of erasing all data from all channel buffers
  *	and restarting the channel in its initial state.  The buffers
- *	are not freed, so any mappings are still in effect.
+ *	are not मुक्तd, so any mappings are still in effect.
  *
  *	NOTE. Care should be taken that the channel isn't actually
  *	being used by anything when this call is made.
  */
-void relay_reset(struct rchan *chan)
-{
-	struct rchan_buf *buf;
-	unsigned int i;
+व्योम relay_reset(काष्ठा rchan *chan)
+अणु
+	काष्ठा rchan_buf *buf;
+	अचिन्हित पूर्णांक i;
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 
-	if (chan->is_global && (buf = *per_cpu_ptr(chan->buf, 0))) {
+	अगर (chan->is_global && (buf = *per_cpu_ptr(chan->buf, 0))) अणु
 		__relay_reset(buf, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&relay_channels_mutex);
-	for_each_possible_cpu(i)
-		if ((buf = *per_cpu_ptr(chan->buf, i)))
+	क्रम_each_possible_cpu(i)
+		अगर ((buf = *per_cpu_ptr(chan->buf, i)))
 			__relay_reset(buf, 0);
 	mutex_unlock(&relay_channels_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(relay_reset);
 
-static inline void relay_set_buf_dentry(struct rchan_buf *buf,
-					struct dentry *dentry)
-{
+अटल अंतरभूत व्योम relay_set_buf_dentry(काष्ठा rchan_buf *buf,
+					काष्ठा dentry *dentry)
+अणु
 	buf->dentry = dentry;
 	d_inode(buf->dentry)->i_size = buf->early_bytes;
-}
+पूर्ण
 
-static struct dentry *relay_create_buf_file(struct rchan *chan,
-					    struct rchan_buf *buf,
-					    unsigned int cpu)
-{
-	struct dentry *dentry;
-	char *tmpname;
+अटल काष्ठा dentry *relay_create_buf_file(काष्ठा rchan *chan,
+					    काष्ठा rchan_buf *buf,
+					    अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा dentry *dentry;
+	अक्षर *क्षणिकe;
 
-	tmpname = kzalloc(NAME_MAX + 1, GFP_KERNEL);
-	if (!tmpname)
-		return NULL;
-	snprintf(tmpname, NAME_MAX, "%s%d", chan->base_filename, cpu);
+	क्षणिकe = kzalloc(NAME_MAX + 1, GFP_KERNEL);
+	अगर (!क्षणिकe)
+		वापस शून्य;
+	snम_लिखो(क्षणिकe, NAME_MAX, "%s%d", chan->base_filename, cpu);
 
 	/* Create file in fs */
-	dentry = chan->cb->create_buf_file(tmpname, chan->parent,
+	dentry = chan->cb->create_buf_file(क्षणिकe, chan->parent,
 					   S_IRUSR, buf,
 					   &chan->is_global);
-	if (IS_ERR(dentry))
-		dentry = NULL;
+	अगर (IS_ERR(dentry))
+		dentry = शून्य;
 
-	kfree(tmpname);
+	kमुक्त(क्षणिकe);
 
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
 /*
- *	relay_open_buf - create a new relay channel buffer
+ *	relay_खोलो_buf - create a new relay channel buffer
  *
- *	used by relay_open() and CPU hotplug.
+ *	used by relay_खोलो() and CPU hotplug.
  */
-static struct rchan_buf *relay_open_buf(struct rchan *chan, unsigned int cpu)
-{
- 	struct rchan_buf *buf = NULL;
-	struct dentry *dentry;
+अटल काष्ठा rchan_buf *relay_खोलो_buf(काष्ठा rchan *chan, अचिन्हित पूर्णांक cpu)
+अणु
+ 	काष्ठा rchan_buf *buf = शून्य;
+	काष्ठा dentry *dentry;
 
- 	if (chan->is_global)
-		return *per_cpu_ptr(chan->buf, 0);
+ 	अगर (chan->is_global)
+		वापस *per_cpu_ptr(chan->buf, 0);
 
 	buf = relay_create_buf(chan);
-	if (!buf)
-		return NULL;
+	अगर (!buf)
+		वापस शून्य;
 
-	if (chan->has_base_filename) {
+	अगर (chan->has_base_filename) अणु
 		dentry = relay_create_buf_file(chan, buf, cpu);
-		if (!dentry)
-			goto free_buf;
+		अगर (!dentry)
+			जाओ मुक्त_buf;
 		relay_set_buf_dentry(buf, dentry);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Only retrieve global info, nothing more, nothing less */
-		dentry = chan->cb->create_buf_file(NULL, NULL,
+		dentry = chan->cb->create_buf_file(शून्य, शून्य,
 						   S_IRUSR, buf,
 						   &chan->is_global);
-		if (IS_ERR_OR_NULL(dentry))
-			goto free_buf;
-	}
+		अगर (IS_ERR_OR_शून्य(dentry))
+			जाओ मुक्त_buf;
+	पूर्ण
 
  	buf->cpu = cpu;
  	__relay_reset(buf, 1);
 
- 	if(chan->is_global) {
+ 	अगर(chan->is_global) अणु
 		*per_cpu_ptr(chan->buf, 0) = buf;
  		buf->cpu = 0;
-  	}
+  	पूर्ण
 
-	return buf;
+	वापस buf;
 
-free_buf:
+मुक्त_buf:
  	relay_destroy_buf(buf);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- *	relay_close_buf - close a channel buffer
+ *	relay_बंद_buf - बंद a channel buffer
  *	@buf: channel buffer
  *
- *	Marks the buffer finalized and restores the default callbacks.
- *	The channel buffer and channel buffer data structure are then freed
- *	automatically when the last reference is given up.
+ *	Marks the buffer finalized and restores the शेष callbacks.
+ *	The channel buffer and channel buffer data काष्ठाure are then मुक्तd
+ *	स्वतःmatically when the last reference is given up.
  */
-static void relay_close_buf(struct rchan_buf *buf)
-{
+अटल व्योम relay_बंद_buf(काष्ठा rchan_buf *buf)
+अणु
 	buf->finalized = 1;
 	irq_work_sync(&buf->wakeup_work);
-	buf->chan->cb->remove_buf_file(buf->dentry);
-	kref_put(&buf->kref, relay_remove_buf);
-}
+	buf->chan->cb->हटाओ_buf_file(buf->dentry);
+	kref_put(&buf->kref, relay_हटाओ_buf);
+पूर्ण
 
-int relay_prepare_cpu(unsigned int cpu)
-{
-	struct rchan *chan;
-	struct rchan_buf *buf;
+पूर्णांक relay_prepare_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा rchan *chan;
+	काष्ठा rchan_buf *buf;
 
 	mutex_lock(&relay_channels_mutex);
-	list_for_each_entry(chan, &relay_channels, list) {
-		if ((buf = *per_cpu_ptr(chan->buf, cpu)))
-			continue;
-		buf = relay_open_buf(chan, cpu);
-		if (!buf) {
+	list_क्रम_each_entry(chan, &relay_channels, list) अणु
+		अगर ((buf = *per_cpu_ptr(chan->buf, cpu)))
+			जारी;
+		buf = relay_खोलो_buf(chan, cpu);
+		अगर (!buf) अणु
 			pr_err("relay: cpu %d buffer creation failed\n", cpu);
 			mutex_unlock(&relay_channels_mutex);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		*per_cpu_ptr(chan->buf, cpu) = buf;
-	}
+	पूर्ण
 	mutex_unlock(&relay_channels_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	relay_open - create a new relay channel
- *	@base_filename: base name of files to create, %NULL for buffering only
- *	@parent: dentry of parent directory, %NULL for root directory or buffer
+ *	relay_खोलो - create a new relay channel
+ *	@base_filename: base name of files to create, %शून्य क्रम buffering only
+ *	@parent: dentry of parent directory, %शून्य क्रम root directory or buffer
  *	@subbuf_size: size of sub-buffers
  *	@n_subbufs: number of sub-buffers
  *	@cb: client callback functions
- *	@private_data: user-defined data
+ *	@निजी_data: user-defined data
  *
- *	Returns channel pointer if successful, %NULL otherwise.
+ *	Returns channel poपूर्णांकer अगर successful, %शून्य otherwise.
  *
- *	Creates a channel buffer for each cpu using the sizes and
- *	attributes specified.  The created channel buffer files
+ *	Creates a channel buffer क्रम each cpu using the sizes and
+ *	attributes specअगरied.  The created channel buffer files
  *	will be named base_filename0...base_filenameN-1.  File
  *	permissions will be %S_IRUSR.
  *
- *	If opening a buffer (@parent = NULL) that you later wish to register
- *	in a filesystem, call relay_late_setup_files() once the @parent dentry
+ *	If खोलोing a buffer (@parent = शून्य) that you later wish to रेजिस्टर
+ *	in a fileप्रणाली, call relay_late_setup_files() once the @parent dentry
  *	is available.
  */
-struct rchan *relay_open(const char *base_filename,
-			 struct dentry *parent,
-			 size_t subbuf_size,
-			 size_t n_subbufs,
-			 const struct rchan_callbacks *cb,
-			 void *private_data)
-{
-	unsigned int i;
-	struct rchan *chan;
-	struct rchan_buf *buf;
+काष्ठा rchan *relay_खोलो(स्थिर अक्षर *base_filename,
+			 काष्ठा dentry *parent,
+			 माप_प्रकार subbuf_size,
+			 माप_प्रकार n_subbufs,
+			 स्थिर काष्ठा rchan_callbacks *cb,
+			 व्योम *निजी_data)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा rchan *chan;
+	काष्ठा rchan_buf *buf;
 
-	if (!(subbuf_size && n_subbufs))
-		return NULL;
-	if (subbuf_size > UINT_MAX / n_subbufs)
-		return NULL;
-	if (!cb || !cb->create_buf_file || !cb->remove_buf_file)
-		return NULL;
+	अगर (!(subbuf_size && n_subbufs))
+		वापस शून्य;
+	अगर (subbuf_size > अच_पूर्णांक_उच्च / n_subbufs)
+		वापस शून्य;
+	अगर (!cb || !cb->create_buf_file || !cb->हटाओ_buf_file)
+		वापस शून्य;
 
-	chan = kzalloc(sizeof(struct rchan), GFP_KERNEL);
-	if (!chan)
-		return NULL;
+	chan = kzalloc(माप(काष्ठा rchan), GFP_KERNEL);
+	अगर (!chan)
+		वापस शून्य;
 
-	chan->buf = alloc_percpu(struct rchan_buf *);
-	if (!chan->buf) {
-		kfree(chan);
-		return NULL;
-	}
+	chan->buf = alloc_percpu(काष्ठा rchan_buf *);
+	अगर (!chan->buf) अणु
+		kमुक्त(chan);
+		वापस शून्य;
+	पूर्ण
 
 	chan->version = RELAYFS_CHANNEL_VERSION;
 	chan->n_subbufs = n_subbufs;
 	chan->subbuf_size = subbuf_size;
 	chan->alloc_size = PAGE_ALIGN(subbuf_size * n_subbufs);
 	chan->parent = parent;
-	chan->private_data = private_data;
-	if (base_filename) {
+	chan->निजी_data = निजी_data;
+	अगर (base_filename) अणु
 		chan->has_base_filename = 1;
 		strlcpy(chan->base_filename, base_filename, NAME_MAX);
-	}
+	पूर्ण
 	chan->cb = cb;
 	kref_init(&chan->kref);
 
 	mutex_lock(&relay_channels_mutex);
-	for_each_online_cpu(i) {
-		buf = relay_open_buf(chan, i);
-		if (!buf)
-			goto free_bufs;
+	क्रम_each_online_cpu(i) अणु
+		buf = relay_खोलो_buf(chan, i);
+		अगर (!buf)
+			जाओ मुक्त_bufs;
 		*per_cpu_ptr(chan->buf, i) = buf;
-	}
+	पूर्ण
 	list_add(&chan->list, &relay_channels);
 	mutex_unlock(&relay_channels_mutex);
 
-	return chan;
+	वापस chan;
 
-free_bufs:
-	for_each_possible_cpu(i) {
-		if ((buf = *per_cpu_ptr(chan->buf, i)))
-			relay_close_buf(buf);
-	}
+मुक्त_bufs:
+	क्रम_each_possible_cpu(i) अणु
+		अगर ((buf = *per_cpu_ptr(chan->buf, i)))
+			relay_बंद_buf(buf);
+	पूर्ण
 
 	kref_put(&chan->kref, relay_destroy_channel);
 	mutex_unlock(&relay_channels_mutex);
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(relay_open);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(relay_खोलो);
 
-struct rchan_percpu_buf_dispatcher {
-	struct rchan_buf *buf;
-	struct dentry *dentry;
-};
+काष्ठा rchan_percpu_buf_dispatcher अणु
+	काष्ठा rchan_buf *buf;
+	काष्ठा dentry *dentry;
+पूर्ण;
 
 /* Called in atomic context. */
-static void __relay_set_buf_dentry(void *info)
-{
-	struct rchan_percpu_buf_dispatcher *p = info;
+अटल व्योम __relay_set_buf_dentry(व्योम *info)
+अणु
+	काष्ठा rchan_percpu_buf_dispatcher *p = info;
 
 	relay_set_buf_dentry(p->buf, p->dentry);
-}
+पूर्ण
 
 /**
  *	relay_late_setup_files - triggers file creation
  *	@chan: channel to operate on
  *	@base_filename: base name of files to create
- *	@parent: dentry of parent directory, %NULL for root directory
+ *	@parent: dentry of parent directory, %शून्य क्रम root directory
  *
- *	Returns 0 if successful, non-zero otherwise.
+ *	Returns 0 अगर successful, non-zero otherwise.
  *
- *	Use to setup files for a previously buffer-only channel created
- *	by relay_open() with a NULL parent dentry.
+ *	Use to setup files क्रम a previously buffer-only channel created
+ *	by relay_खोलो() with a शून्य parent dentry.
  *
- *	For example, this is useful for perfomring early tracing in kernel,
- *	before VFS is up and then exposing the early results once the dentry
+ *	For example, this is useful क्रम perfomring early tracing in kernel,
+ *	beक्रमe VFS is up and then exposing the early results once the dentry
  *	is available.
  */
-int relay_late_setup_files(struct rchan *chan,
-			   const char *base_filename,
-			   struct dentry *parent)
-{
-	int err = 0;
-	unsigned int i, curr_cpu;
-	unsigned long flags;
-	struct dentry *dentry;
-	struct rchan_buf *buf;
-	struct rchan_percpu_buf_dispatcher disp;
+पूर्णांक relay_late_setup_files(काष्ठा rchan *chan,
+			   स्थिर अक्षर *base_filename,
+			   काष्ठा dentry *parent)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक i, curr_cpu;
+	अचिन्हित दीर्घ flags;
+	काष्ठा dentry *dentry;
+	काष्ठा rchan_buf *buf;
+	काष्ठा rchan_percpu_buf_dispatcher disp;
 
-	if (!chan || !base_filename)
-		return -EINVAL;
+	अगर (!chan || !base_filename)
+		वापस -EINVAL;
 
 	strlcpy(chan->base_filename, base_filename, NAME_MAX);
 
 	mutex_lock(&relay_channels_mutex);
-	/* Is chan already set up? */
-	if (unlikely(chan->has_base_filename)) {
+	/* Is chan alपढ़ोy set up? */
+	अगर (unlikely(chan->has_base_filename)) अणु
 		mutex_unlock(&relay_channels_mutex);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 	chan->has_base_filename = 1;
 	chan->parent = parent;
 
-	if (chan->is_global) {
+	अगर (chan->is_global) अणु
 		err = -EINVAL;
 		buf = *per_cpu_ptr(chan->buf, 0);
-		if (!WARN_ON_ONCE(!buf)) {
+		अगर (!WARN_ON_ONCE(!buf)) अणु
 			dentry = relay_create_buf_file(chan, buf, 0);
-			if (dentry && !WARN_ON_ONCE(!chan->is_global)) {
+			अगर (dentry && !WARN_ON_ONCE(!chan->is_global)) अणु
 				relay_set_buf_dentry(buf, dentry);
 				err = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		mutex_unlock(&relay_channels_mutex);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	curr_cpu = get_cpu();
 	/*
-	 * The CPU hotplug notifier ran before us and created buffers with
+	 * The CPU hotplug notअगरier ran beक्रमe us and created buffers with
 	 * no files associated. So it's safe to call relay_setup_buf_file()
 	 * on all currently online CPUs.
 	 */
-	for_each_online_cpu(i) {
+	क्रम_each_online_cpu(i) अणु
 		buf = *per_cpu_ptr(chan->buf, i);
-		if (unlikely(!buf)) {
+		अगर (unlikely(!buf)) अणु
 			WARN_ONCE(1, KERN_ERR "CPU has no buffer!\n");
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dentry = relay_create_buf_file(chan, buf, i);
-		if (unlikely(!dentry)) {
+		अगर (unlikely(!dentry)) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (curr_cpu == i) {
+		अगर (curr_cpu == i) अणु
 			local_irq_save(flags);
 			relay_set_buf_dentry(buf, dentry);
 			local_irq_restore(flags);
-		} else {
+		पूर्ण अन्यथा अणु
 			disp.buf = buf;
 			disp.dentry = dentry;
 			smp_mb();
-			/* relay_channels_mutex must be held, so wait. */
+			/* relay_channels_mutex must be held, so रुको. */
 			err = smp_call_function_single(i,
 						       __relay_set_buf_dentry,
 						       &disp, 1);
-		}
-		if (unlikely(err))
-			break;
-	}
+		पूर्ण
+		अगर (unlikely(err))
+			अवरोध;
+	पूर्ण
 	put_cpu();
 	mutex_unlock(&relay_channels_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(relay_late_setup_files);
 
 /**
- *	relay_switch_subbuf - switch to a new sub-buffer
+ *	relay_चयन_subbuf - चयन to a new sub-buffer
  *	@buf: channel buffer
  *	@length: size of current event
  *
- *	Returns either the length passed in or 0 if full.
+ *	Returns either the length passed in or 0 अगर full.
  *
- *	Performs sub-buffer-switch tasks such as invoking callbacks,
- *	updating padding counts, waking up readers, etc.
+ *	Perक्रमms sub-buffer-चयन tasks such as invoking callbacks,
+ *	updating padding counts, waking up पढ़ोers, etc.
  */
-size_t relay_switch_subbuf(struct rchan_buf *buf, size_t length)
-{
-	void *old, *new;
-	size_t old_subbuf, new_subbuf;
+माप_प्रकार relay_चयन_subbuf(काष्ठा rchan_buf *buf, माप_प्रकार length)
+अणु
+	व्योम *old, *new;
+	माप_प्रकार old_subbuf, new_subbuf;
 
-	if (unlikely(length > buf->chan->subbuf_size))
-		goto toobig;
+	अगर (unlikely(length > buf->chan->subbuf_size))
+		जाओ toobig;
 
-	if (buf->offset != buf->chan->subbuf_size + 1) {
+	अगर (buf->offset != buf->chan->subbuf_size + 1) अणु
 		buf->prev_padding = buf->chan->subbuf_size - buf->offset;
 		old_subbuf = buf->subbufs_produced % buf->chan->n_subbufs;
 		buf->padding[old_subbuf] = buf->prev_padding;
 		buf->subbufs_produced++;
-		if (buf->dentry)
+		अगर (buf->dentry)
 			d_inode(buf->dentry)->i_size +=
 				buf->chan->subbuf_size -
 				buf->padding[old_subbuf];
-		else
+		अन्यथा
 			buf->early_bytes += buf->chan->subbuf_size -
 					    buf->padding[old_subbuf];
 		smp_mb();
-		if (waitqueue_active(&buf->read_wait)) {
+		अगर (रुकोqueue_active(&buf->पढ़ो_रुको)) अणु
 			/*
-			 * Calling wake_up_interruptible() from here
-			 * will deadlock if we happen to be logging
+			 * Calling wake_up_पूर्णांकerruptible() from here
+			 * will deadlock अगर we happen to be logging
 			 * from the scheduler (trying to re-grab
 			 * rq->lock), so defer it.
 			 */
 			irq_work_queue(&buf->wakeup_work);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	old = buf->data;
 	new_subbuf = buf->subbufs_produced % buf->chan->n_subbufs;
 	new = buf->start + new_subbuf * buf->chan->subbuf_size;
 	buf->offset = 0;
-	if (!relay_subbuf_start(buf, new, old, buf->prev_padding)) {
+	अगर (!relay_subbuf_start(buf, new, old, buf->prev_padding)) अणु
 		buf->offset = buf->chan->subbuf_size + 1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	buf->data = new;
 	buf->padding[new_subbuf] = 0;
 
-	if (unlikely(length + buf->offset > buf->chan->subbuf_size))
-		goto toobig;
+	अगर (unlikely(length + buf->offset > buf->chan->subbuf_size))
+		जाओ toobig;
 
-	return length;
+	वापस length;
 
 toobig:
 	buf->chan->last_toobig = length;
-	return 0;
-}
-EXPORT_SYMBOL_GPL(relay_switch_subbuf);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(relay_चयन_subbuf);
 
 /**
  *	relay_subbufs_consumed - update the buffer's sub-buffers-consumed count
@@ -723,527 +724,527 @@ EXPORT_SYMBOL_GPL(relay_switch_subbuf);
  *	subbufs_consumed should be the number of sub-buffers newly consumed,
  *	not the total consumed.
  *
- *	NOTE. Kernel clients don't need to call this function if the channel
+ *	NOTE. Kernel clients करोn't need to call this function अगर the channel
  *	mode is 'overwrite'.
  */
-void relay_subbufs_consumed(struct rchan *chan,
-			    unsigned int cpu,
-			    size_t subbufs_consumed)
-{
-	struct rchan_buf *buf;
+व्योम relay_subbufs_consumed(काष्ठा rchan *chan,
+			    अचिन्हित पूर्णांक cpu,
+			    माप_प्रकार subbufs_consumed)
+अणु
+	काष्ठा rchan_buf *buf;
 
-	if (!chan || cpu >= NR_CPUS)
-		return;
+	अगर (!chan || cpu >= NR_CPUS)
+		वापस;
 
 	buf = *per_cpu_ptr(chan->buf, cpu);
-	if (!buf || subbufs_consumed > chan->n_subbufs)
-		return;
+	अगर (!buf || subbufs_consumed > chan->n_subbufs)
+		वापस;
 
-	if (subbufs_consumed > buf->subbufs_produced - buf->subbufs_consumed)
+	अगर (subbufs_consumed > buf->subbufs_produced - buf->subbufs_consumed)
 		buf->subbufs_consumed = buf->subbufs_produced;
-	else
+	अन्यथा
 		buf->subbufs_consumed += subbufs_consumed;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(relay_subbufs_consumed);
 
 /**
- *	relay_close - close the channel
+ *	relay_बंद - बंद the channel
  *	@chan: the channel
  *
- *	Closes all channel buffers and frees the channel.
+ *	Closes all channel buffers and मुक्तs the channel.
  */
-void relay_close(struct rchan *chan)
-{
-	struct rchan_buf *buf;
-	unsigned int i;
+व्योम relay_बंद(काष्ठा rchan *chan)
+अणु
+	काष्ठा rchan_buf *buf;
+	अचिन्हित पूर्णांक i;
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 
 	mutex_lock(&relay_channels_mutex);
-	if (chan->is_global && (buf = *per_cpu_ptr(chan->buf, 0)))
-		relay_close_buf(buf);
-	else
-		for_each_possible_cpu(i)
-			if ((buf = *per_cpu_ptr(chan->buf, i)))
-				relay_close_buf(buf);
+	अगर (chan->is_global && (buf = *per_cpu_ptr(chan->buf, 0)))
+		relay_बंद_buf(buf);
+	अन्यथा
+		क्रम_each_possible_cpu(i)
+			अगर ((buf = *per_cpu_ptr(chan->buf, i)))
+				relay_बंद_buf(buf);
 
-	if (chan->last_toobig)
-		printk(KERN_WARNING "relay: one or more items not logged "
+	अगर (chan->last_toobig)
+		prपूर्णांकk(KERN_WARNING "relay: one or more items not logged "
 		       "[item size (%zd) > sub-buffer size (%zd)]\n",
 		       chan->last_toobig, chan->subbuf_size);
 
 	list_del(&chan->list);
 	kref_put(&chan->kref, relay_destroy_channel);
 	mutex_unlock(&relay_channels_mutex);
-}
-EXPORT_SYMBOL_GPL(relay_close);
+पूर्ण
+EXPORT_SYMBOL_GPL(relay_बंद);
 
 /**
- *	relay_flush - close the channel
+ *	relay_flush - बंद the channel
  *	@chan: the channel
  *
- *	Flushes all channel buffers, i.e. forces buffer switch.
+ *	Flushes all channel buffers, i.e. क्रमces buffer चयन.
  */
-void relay_flush(struct rchan *chan)
-{
-	struct rchan_buf *buf;
-	unsigned int i;
+व्योम relay_flush(काष्ठा rchan *chan)
+अणु
+	काष्ठा rchan_buf *buf;
+	अचिन्हित पूर्णांक i;
 
-	if (!chan)
-		return;
+	अगर (!chan)
+		वापस;
 
-	if (chan->is_global && (buf = *per_cpu_ptr(chan->buf, 0))) {
-		relay_switch_subbuf(buf, 0);
-		return;
-	}
+	अगर (chan->is_global && (buf = *per_cpu_ptr(chan->buf, 0))) अणु
+		relay_चयन_subbuf(buf, 0);
+		वापस;
+	पूर्ण
 
 	mutex_lock(&relay_channels_mutex);
-	for_each_possible_cpu(i)
-		if ((buf = *per_cpu_ptr(chan->buf, i)))
-			relay_switch_subbuf(buf, 0);
+	क्रम_each_possible_cpu(i)
+		अगर ((buf = *per_cpu_ptr(chan->buf, i)))
+			relay_चयन_subbuf(buf, 0);
 	mutex_unlock(&relay_channels_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(relay_flush);
 
 /**
- *	relay_file_open - open file op for relay files
+ *	relay_file_खोलो - खोलो file op क्रम relay files
  *	@inode: the inode
  *	@filp: the file
  *
  *	Increments the channel buffer refcount.
  */
-static int relay_file_open(struct inode *inode, struct file *filp)
-{
-	struct rchan_buf *buf = inode->i_private;
+अटल पूर्णांक relay_file_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा rchan_buf *buf = inode->i_निजी;
 	kref_get(&buf->kref);
-	filp->private_data = buf;
+	filp->निजी_data = buf;
 
-	return nonseekable_open(inode, filp);
-}
+	वापस nonseekable_खोलो(inode, filp);
+पूर्ण
 
 /**
- *	relay_file_mmap - mmap file op for relay files
+ *	relay_file_mmap - mmap file op क्रम relay files
  *	@filp: the file
  *	@vma: the vma describing what to map
  *
- *	Calls upon relay_mmap_buf() to map the file into user space.
+ *	Calls upon relay_mmap_buf() to map the file पूर्णांकo user space.
  */
-static int relay_file_mmap(struct file *filp, struct vm_area_struct *vma)
-{
-	struct rchan_buf *buf = filp->private_data;
-	return relay_mmap_buf(buf, vma);
-}
+अटल पूर्णांक relay_file_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा rchan_buf *buf = filp->निजी_data;
+	वापस relay_mmap_buf(buf, vma);
+पूर्ण
 
 /**
- *	relay_file_poll - poll file op for relay files
+ *	relay_file_poll - poll file op क्रम relay files
  *	@filp: the file
- *	@wait: poll table
+ *	@रुको: poll table
  *
  *	Poll implemention.
  */
-static __poll_t relay_file_poll(struct file *filp, poll_table *wait)
-{
+अटल __poll_t relay_file_poll(काष्ठा file *filp, poll_table *रुको)
+अणु
 	__poll_t mask = 0;
-	struct rchan_buf *buf = filp->private_data;
+	काष्ठा rchan_buf *buf = filp->निजी_data;
 
-	if (buf->finalized)
-		return EPOLLERR;
+	अगर (buf->finalized)
+		वापस EPOLLERR;
 
-	if (filp->f_mode & FMODE_READ) {
-		poll_wait(filp, &buf->read_wait, wait);
-		if (!relay_buf_empty(buf))
+	अगर (filp->f_mode & FMODE_READ) अणु
+		poll_रुको(filp, &buf->पढ़ो_रुको, रुको);
+		अगर (!relay_buf_empty(buf))
 			mask |= EPOLLIN | EPOLLRDNORM;
-	}
+	पूर्ण
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /**
- *	relay_file_release - release file op for relay files
+ *	relay_file_release - release file op क्रम relay files
  *	@inode: the inode
  *	@filp: the file
  *
- *	Decrements the channel refcount, as the filesystem is
- *	no longer using it.
+ *	Decrements the channel refcount, as the fileप्रणाली is
+ *	no दीर्घer using it.
  */
-static int relay_file_release(struct inode *inode, struct file *filp)
-{
-	struct rchan_buf *buf = filp->private_data;
-	kref_put(&buf->kref, relay_remove_buf);
+अटल पूर्णांक relay_file_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा rchan_buf *buf = filp->निजी_data;
+	kref_put(&buf->kref, relay_हटाओ_buf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	relay_file_read_consume - update the consumed count for the buffer
+ *	relay_file_पढ़ो_consume - update the consumed count क्रम the buffer
  */
-static void relay_file_read_consume(struct rchan_buf *buf,
-				    size_t read_pos,
-				    size_t bytes_consumed)
-{
-	size_t subbuf_size = buf->chan->subbuf_size;
-	size_t n_subbufs = buf->chan->n_subbufs;
-	size_t read_subbuf;
+अटल व्योम relay_file_पढ़ो_consume(काष्ठा rchan_buf *buf,
+				    माप_प्रकार पढ़ो_pos,
+				    माप_प्रकार bytes_consumed)
+अणु
+	माप_प्रकार subbuf_size = buf->chan->subbuf_size;
+	माप_प्रकार n_subbufs = buf->chan->n_subbufs;
+	माप_प्रकार पढ़ो_subbuf;
 
-	if (buf->subbufs_produced == buf->subbufs_consumed &&
+	अगर (buf->subbufs_produced == buf->subbufs_consumed &&
 	    buf->offset == buf->bytes_consumed)
-		return;
+		वापस;
 
-	if (buf->bytes_consumed + bytes_consumed > subbuf_size) {
+	अगर (buf->bytes_consumed + bytes_consumed > subbuf_size) अणु
 		relay_subbufs_consumed(buf->chan, buf->cpu, 1);
 		buf->bytes_consumed = 0;
-	}
+	पूर्ण
 
 	buf->bytes_consumed += bytes_consumed;
-	if (!read_pos)
-		read_subbuf = buf->subbufs_consumed % n_subbufs;
-	else
-		read_subbuf = read_pos / buf->chan->subbuf_size;
-	if (buf->bytes_consumed + buf->padding[read_subbuf] == subbuf_size) {
-		if ((read_subbuf == buf->subbufs_produced % n_subbufs) &&
+	अगर (!पढ़ो_pos)
+		पढ़ो_subbuf = buf->subbufs_consumed % n_subbufs;
+	अन्यथा
+		पढ़ो_subbuf = पढ़ो_pos / buf->chan->subbuf_size;
+	अगर (buf->bytes_consumed + buf->padding[पढ़ो_subbuf] == subbuf_size) अणु
+		अगर ((पढ़ो_subbuf == buf->subbufs_produced % n_subbufs) &&
 		    (buf->offset == subbuf_size))
-			return;
+			वापस;
 		relay_subbufs_consumed(buf->chan, buf->cpu, 1);
 		buf->bytes_consumed = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *	relay_file_read_avail - boolean, are there unconsumed bytes available?
+ *	relay_file_पढ़ो_avail - boolean, are there unconsumed bytes available?
  */
-static int relay_file_read_avail(struct rchan_buf *buf)
-{
-	size_t subbuf_size = buf->chan->subbuf_size;
-	size_t n_subbufs = buf->chan->n_subbufs;
-	size_t produced = buf->subbufs_produced;
-	size_t consumed;
+अटल पूर्णांक relay_file_पढ़ो_avail(काष्ठा rchan_buf *buf)
+अणु
+	माप_प्रकार subbuf_size = buf->chan->subbuf_size;
+	माप_प्रकार n_subbufs = buf->chan->n_subbufs;
+	माप_प्रकार produced = buf->subbufs_produced;
+	माप_प्रकार consumed;
 
-	relay_file_read_consume(buf, 0, 0);
+	relay_file_पढ़ो_consume(buf, 0, 0);
 
 	consumed = buf->subbufs_consumed;
 
-	if (unlikely(buf->offset > subbuf_size)) {
-		if (produced == consumed)
-			return 0;
-		return 1;
-	}
+	अगर (unlikely(buf->offset > subbuf_size)) अणु
+		अगर (produced == consumed)
+			वापस 0;
+		वापस 1;
+	पूर्ण
 
-	if (unlikely(produced - consumed >= n_subbufs)) {
+	अगर (unlikely(produced - consumed >= n_subbufs)) अणु
 		consumed = produced - n_subbufs + 1;
 		buf->subbufs_consumed = consumed;
 		buf->bytes_consumed = 0;
-	}
+	पूर्ण
 
 	produced = (produced % n_subbufs) * subbuf_size + buf->offset;
 	consumed = (consumed % n_subbufs) * subbuf_size + buf->bytes_consumed;
 
-	if (consumed > produced)
+	अगर (consumed > produced)
 		produced += n_subbufs * subbuf_size;
 
-	if (consumed == produced) {
-		if (buf->offset == subbuf_size &&
+	अगर (consumed == produced) अणु
+		अगर (buf->offset == subbuf_size &&
 		    buf->subbufs_produced > buf->subbufs_consumed)
-			return 1;
-		return 0;
-	}
+			वापस 1;
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
- *	relay_file_read_subbuf_avail - return bytes available in sub-buffer
- *	@read_pos: file read position
+ *	relay_file_पढ़ो_subbuf_avail - वापस bytes available in sub-buffer
+ *	@पढ़ो_pos: file पढ़ो position
  *	@buf: relay channel buffer
  */
-static size_t relay_file_read_subbuf_avail(size_t read_pos,
-					   struct rchan_buf *buf)
-{
-	size_t padding, avail = 0;
-	size_t read_subbuf, read_offset, write_subbuf, write_offset;
-	size_t subbuf_size = buf->chan->subbuf_size;
+अटल माप_प्रकार relay_file_पढ़ो_subbuf_avail(माप_प्रकार पढ़ो_pos,
+					   काष्ठा rchan_buf *buf)
+अणु
+	माप_प्रकार padding, avail = 0;
+	माप_प्रकार पढ़ो_subbuf, पढ़ो_offset, ग_लिखो_subbuf, ग_लिखो_offset;
+	माप_प्रकार subbuf_size = buf->chan->subbuf_size;
 
-	write_subbuf = (buf->data - buf->start) / subbuf_size;
-	write_offset = buf->offset > subbuf_size ? subbuf_size : buf->offset;
-	read_subbuf = read_pos / subbuf_size;
-	read_offset = read_pos % subbuf_size;
-	padding = buf->padding[read_subbuf];
+	ग_लिखो_subbuf = (buf->data - buf->start) / subbuf_size;
+	ग_लिखो_offset = buf->offset > subbuf_size ? subbuf_size : buf->offset;
+	पढ़ो_subbuf = पढ़ो_pos / subbuf_size;
+	पढ़ो_offset = पढ़ो_pos % subbuf_size;
+	padding = buf->padding[पढ़ो_subbuf];
 
-	if (read_subbuf == write_subbuf) {
-		if (read_offset + padding < write_offset)
-			avail = write_offset - (read_offset + padding);
-	} else
-		avail = (subbuf_size - padding) - read_offset;
+	अगर (पढ़ो_subbuf == ग_लिखो_subbuf) अणु
+		अगर (पढ़ो_offset + padding < ग_लिखो_offset)
+			avail = ग_लिखो_offset - (पढ़ो_offset + padding);
+	पूर्ण अन्यथा
+		avail = (subbuf_size - padding) - पढ़ो_offset;
 
-	return avail;
-}
+	वापस avail;
+पूर्ण
 
 /**
- *	relay_file_read_start_pos - find the first available byte to read
+ *	relay_file_पढ़ो_start_pos - find the first available byte to पढ़ो
  *	@buf: relay channel buffer
  *
- *	If the read_pos is in the middle of padding, return the
+ *	If the पढ़ो_pos is in the middle of padding, वापस the
  *	position of the first actually available byte, otherwise
- *	return the original value.
+ *	वापस the original value.
  */
-static size_t relay_file_read_start_pos(struct rchan_buf *buf)
-{
-	size_t read_subbuf, padding, padding_start, padding_end;
-	size_t subbuf_size = buf->chan->subbuf_size;
-	size_t n_subbufs = buf->chan->n_subbufs;
-	size_t consumed = buf->subbufs_consumed % n_subbufs;
-	size_t read_pos = consumed * subbuf_size + buf->bytes_consumed;
+अटल माप_प्रकार relay_file_पढ़ो_start_pos(काष्ठा rchan_buf *buf)
+अणु
+	माप_प्रकार पढ़ो_subbuf, padding, padding_start, padding_end;
+	माप_प्रकार subbuf_size = buf->chan->subbuf_size;
+	माप_प्रकार n_subbufs = buf->chan->n_subbufs;
+	माप_प्रकार consumed = buf->subbufs_consumed % n_subbufs;
+	माप_प्रकार पढ़ो_pos = consumed * subbuf_size + buf->bytes_consumed;
 
-	read_subbuf = read_pos / subbuf_size;
-	padding = buf->padding[read_subbuf];
-	padding_start = (read_subbuf + 1) * subbuf_size - padding;
-	padding_end = (read_subbuf + 1) * subbuf_size;
-	if (read_pos >= padding_start && read_pos < padding_end) {
-		read_subbuf = (read_subbuf + 1) % n_subbufs;
-		read_pos = read_subbuf * subbuf_size;
-	}
+	पढ़ो_subbuf = पढ़ो_pos / subbuf_size;
+	padding = buf->padding[पढ़ो_subbuf];
+	padding_start = (पढ़ो_subbuf + 1) * subbuf_size - padding;
+	padding_end = (पढ़ो_subbuf + 1) * subbuf_size;
+	अगर (पढ़ो_pos >= padding_start && पढ़ो_pos < padding_end) अणु
+		पढ़ो_subbuf = (पढ़ो_subbuf + 1) % n_subbufs;
+		पढ़ो_pos = पढ़ो_subbuf * subbuf_size;
+	पूर्ण
 
-	return read_pos;
-}
+	वापस पढ़ो_pos;
+पूर्ण
 
 /**
- *	relay_file_read_end_pos - return the new read position
- *	@read_pos: file read position
+ *	relay_file_पढ़ो_end_pos - वापस the new पढ़ो position
+ *	@पढ़ो_pos: file पढ़ो position
  *	@buf: relay channel buffer
- *	@count: number of bytes to be read
+ *	@count: number of bytes to be पढ़ो
  */
-static size_t relay_file_read_end_pos(struct rchan_buf *buf,
-				      size_t read_pos,
-				      size_t count)
-{
-	size_t read_subbuf, padding, end_pos;
-	size_t subbuf_size = buf->chan->subbuf_size;
-	size_t n_subbufs = buf->chan->n_subbufs;
+अटल माप_प्रकार relay_file_पढ़ो_end_pos(काष्ठा rchan_buf *buf,
+				      माप_प्रकार पढ़ो_pos,
+				      माप_प्रकार count)
+अणु
+	माप_प्रकार पढ़ो_subbuf, padding, end_pos;
+	माप_प्रकार subbuf_size = buf->chan->subbuf_size;
+	माप_प्रकार n_subbufs = buf->chan->n_subbufs;
 
-	read_subbuf = read_pos / subbuf_size;
-	padding = buf->padding[read_subbuf];
-	if (read_pos % subbuf_size + count + padding == subbuf_size)
-		end_pos = (read_subbuf + 1) * subbuf_size;
-	else
-		end_pos = read_pos + count;
-	if (end_pos >= subbuf_size * n_subbufs)
+	पढ़ो_subbuf = पढ़ो_pos / subbuf_size;
+	padding = buf->padding[पढ़ो_subbuf];
+	अगर (पढ़ो_pos % subbuf_size + count + padding == subbuf_size)
+		end_pos = (पढ़ो_subbuf + 1) * subbuf_size;
+	अन्यथा
+		end_pos = पढ़ो_pos + count;
+	अगर (end_pos >= subbuf_size * n_subbufs)
 		end_pos = 0;
 
-	return end_pos;
-}
+	वापस end_pos;
+पूर्ण
 
-static ssize_t relay_file_read(struct file *filp,
-			       char __user *buffer,
-			       size_t count,
+अटल sमाप_प्रकार relay_file_पढ़ो(काष्ठा file *filp,
+			       अक्षर __user *buffer,
+			       माप_प्रकार count,
 			       loff_t *ppos)
-{
-	struct rchan_buf *buf = filp->private_data;
-	size_t read_start, avail;
-	size_t written = 0;
-	int ret;
+अणु
+	काष्ठा rchan_buf *buf = filp->निजी_data;
+	माप_प्रकार पढ़ो_start, avail;
+	माप_प्रकार written = 0;
+	पूर्णांक ret;
 
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
 	inode_lock(file_inode(filp));
-	do {
-		void *from;
+	करो अणु
+		व्योम *from;
 
-		if (!relay_file_read_avail(buf))
-			break;
+		अगर (!relay_file_पढ़ो_avail(buf))
+			अवरोध;
 
-		read_start = relay_file_read_start_pos(buf);
-		avail = relay_file_read_subbuf_avail(read_start, buf);
-		if (!avail)
-			break;
+		पढ़ो_start = relay_file_पढ़ो_start_pos(buf);
+		avail = relay_file_पढ़ो_subbuf_avail(पढ़ो_start, buf);
+		अगर (!avail)
+			अवरोध;
 
 		avail = min(count, avail);
-		from = buf->start + read_start;
+		from = buf->start + पढ़ो_start;
 		ret = avail;
-		if (copy_to_user(buffer, from, avail))
-			break;
+		अगर (copy_to_user(buffer, from, avail))
+			अवरोध;
 
 		buffer += ret;
 		written += ret;
 		count -= ret;
 
-		relay_file_read_consume(buf, read_start, ret);
-		*ppos = relay_file_read_end_pos(buf, read_start, ret);
-	} while (count);
+		relay_file_पढ़ो_consume(buf, पढ़ो_start, ret);
+		*ppos = relay_file_पढ़ो_end_pos(buf, पढ़ो_start, ret);
+	पूर्ण जबतक (count);
 	inode_unlock(file_inode(filp));
 
-	return written;
-}
+	वापस written;
+पूर्ण
 
-static void relay_consume_bytes(struct rchan_buf *rbuf, int bytes_consumed)
-{
+अटल व्योम relay_consume_bytes(काष्ठा rchan_buf *rbuf, पूर्णांक bytes_consumed)
+अणु
 	rbuf->bytes_consumed += bytes_consumed;
 
-	if (rbuf->bytes_consumed >= rbuf->chan->subbuf_size) {
+	अगर (rbuf->bytes_consumed >= rbuf->chan->subbuf_size) अणु
 		relay_subbufs_consumed(rbuf->chan, rbuf->cpu, 1);
 		rbuf->bytes_consumed %= rbuf->chan->subbuf_size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void relay_pipe_buf_release(struct pipe_inode_info *pipe,
-				   struct pipe_buffer *buf)
-{
-	struct rchan_buf *rbuf;
+अटल व्योम relay_pipe_buf_release(काष्ठा pipe_inode_info *pipe,
+				   काष्ठा pipe_buffer *buf)
+अणु
+	काष्ठा rchan_buf *rbuf;
 
-	rbuf = (struct rchan_buf *)page_private(buf->page);
-	relay_consume_bytes(rbuf, buf->private);
-}
+	rbuf = (काष्ठा rchan_buf *)page_निजी(buf->page);
+	relay_consume_bytes(rbuf, buf->निजी);
+पूर्ण
 
-static const struct pipe_buf_operations relay_pipe_buf_ops = {
+अटल स्थिर काष्ठा pipe_buf_operations relay_pipe_buf_ops = अणु
 	.release	= relay_pipe_buf_release,
 	.try_steal	= generic_pipe_buf_try_steal,
 	.get		= generic_pipe_buf_get,
-};
+पूर्ण;
 
-static void relay_page_release(struct splice_pipe_desc *spd, unsigned int i)
-{
-}
+अटल व्योम relay_page_release(काष्ठा splice_pipe_desc *spd, अचिन्हित पूर्णांक i)
+अणु
+पूर्ण
 
 /*
  *	subbuf_splice_actor - splice up to one subbuf's worth of data
  */
-static ssize_t subbuf_splice_actor(struct file *in,
+अटल sमाप_प्रकार subbuf_splice_actor(काष्ठा file *in,
 			       loff_t *ppos,
-			       struct pipe_inode_info *pipe,
-			       size_t len,
-			       unsigned int flags,
-			       int *nonpad_ret)
-{
-	unsigned int pidx, poff, total_len, subbuf_pages, nr_pages;
-	struct rchan_buf *rbuf = in->private_data;
-	unsigned int subbuf_size = rbuf->chan->subbuf_size;
-	uint64_t pos = (uint64_t) *ppos;
-	uint32_t alloc_size = (uint32_t) rbuf->chan->alloc_size;
-	size_t read_start = (size_t) do_div(pos, alloc_size);
-	size_t read_subbuf = read_start / subbuf_size;
-	size_t padding = rbuf->padding[read_subbuf];
-	size_t nonpad_end = read_subbuf * subbuf_size + subbuf_size - padding;
-	struct page *pages[PIPE_DEF_BUFFERS];
-	struct partial_page partial[PIPE_DEF_BUFFERS];
-	struct splice_pipe_desc spd = {
+			       काष्ठा pipe_inode_info *pipe,
+			       माप_प्रकार len,
+			       अचिन्हित पूर्णांक flags,
+			       पूर्णांक *nonpad_ret)
+अणु
+	अचिन्हित पूर्णांक pidx, poff, total_len, subbuf_pages, nr_pages;
+	काष्ठा rchan_buf *rbuf = in->निजी_data;
+	अचिन्हित पूर्णांक subbuf_size = rbuf->chan->subbuf_size;
+	uपूर्णांक64_t pos = (uपूर्णांक64_t) *ppos;
+	uपूर्णांक32_t alloc_size = (uपूर्णांक32_t) rbuf->chan->alloc_size;
+	माप_प्रकार पढ़ो_start = (माप_प्रकार) करो_भाग(pos, alloc_size);
+	माप_प्रकार पढ़ो_subbuf = पढ़ो_start / subbuf_size;
+	माप_प्रकार padding = rbuf->padding[पढ़ो_subbuf];
+	माप_प्रकार nonpad_end = पढ़ो_subbuf * subbuf_size + subbuf_size - padding;
+	काष्ठा page *pages[PIPE_DEF_BUFFERS];
+	काष्ठा partial_page partial[PIPE_DEF_BUFFERS];
+	काष्ठा splice_pipe_desc spd = अणु
 		.pages = pages,
 		.nr_pages = 0,
 		.nr_pages_max = PIPE_DEF_BUFFERS,
 		.partial = partial,
 		.ops = &relay_pipe_buf_ops,
 		.spd_release = relay_page_release,
-	};
-	ssize_t ret;
+	पूर्ण;
+	sमाप_प्रकार ret;
 
-	if (rbuf->subbufs_produced == rbuf->subbufs_consumed)
-		return 0;
-	if (splice_grow_spd(pipe, &spd))
-		return -ENOMEM;
+	अगर (rbuf->subbufs_produced == rbuf->subbufs_consumed)
+		वापस 0;
+	अगर (splice_grow_spd(pipe, &spd))
+		वापस -ENOMEM;
 
 	/*
-	 * Adjust read len, if longer than what is available
+	 * Adjust पढ़ो len, अगर दीर्घer than what is available
 	 */
-	if (len > (subbuf_size - read_start % subbuf_size))
-		len = subbuf_size - read_start % subbuf_size;
+	अगर (len > (subbuf_size - पढ़ो_start % subbuf_size))
+		len = subbuf_size - पढ़ो_start % subbuf_size;
 
 	subbuf_pages = rbuf->chan->alloc_size >> PAGE_SHIFT;
-	pidx = (read_start / PAGE_SIZE) % subbuf_pages;
-	poff = read_start & ~PAGE_MASK;
-	nr_pages = min_t(unsigned int, subbuf_pages, spd.nr_pages_max);
+	pidx = (पढ़ो_start / PAGE_SIZE) % subbuf_pages;
+	poff = पढ़ो_start & ~PAGE_MASK;
+	nr_pages = min_t(अचिन्हित पूर्णांक, subbuf_pages, spd.nr_pages_max);
 
-	for (total_len = 0; spd.nr_pages < nr_pages; spd.nr_pages++) {
-		unsigned int this_len, this_end, private;
-		unsigned int cur_pos = read_start + total_len;
+	क्रम (total_len = 0; spd.nr_pages < nr_pages; spd.nr_pages++) अणु
+		अचिन्हित पूर्णांक this_len, this_end, निजी;
+		अचिन्हित पूर्णांक cur_pos = पढ़ो_start + total_len;
 
-		if (!len)
-			break;
+		अगर (!len)
+			अवरोध;
 
-		this_len = min_t(unsigned long, len, PAGE_SIZE - poff);
-		private = this_len;
+		this_len = min_t(अचिन्हित दीर्घ, len, PAGE_SIZE - poff);
+		निजी = this_len;
 
 		spd.pages[spd.nr_pages] = rbuf->page_array[pidx];
 		spd.partial[spd.nr_pages].offset = poff;
 
 		this_end = cur_pos + this_len;
-		if (this_end >= nonpad_end) {
+		अगर (this_end >= nonpad_end) अणु
 			this_len = nonpad_end - cur_pos;
-			private = this_len + padding;
-		}
+			निजी = this_len + padding;
+		पूर्ण
 		spd.partial[spd.nr_pages].len = this_len;
-		spd.partial[spd.nr_pages].private = private;
+		spd.partial[spd.nr_pages].निजी = निजी;
 
 		len -= this_len;
 		total_len += this_len;
 		poff = 0;
 		pidx = (pidx + 1) % subbuf_pages;
 
-		if (this_end >= nonpad_end) {
+		अगर (this_end >= nonpad_end) अणु
 			spd.nr_pages++;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
-	if (!spd.nr_pages)
-		goto out;
+	अगर (!spd.nr_pages)
+		जाओ out;
 
 	ret = *nonpad_ret = splice_to_pipe(pipe, &spd);
-	if (ret < 0 || ret < total_len)
-		goto out;
+	अगर (ret < 0 || ret < total_len)
+		जाओ out;
 
-        if (read_start + ret == nonpad_end)
+        अगर (पढ़ो_start + ret == nonpad_end)
                 ret += padding;
 
 out:
 	splice_shrink_spd(&spd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t relay_file_splice_read(struct file *in,
+अटल sमाप_प्रकार relay_file_splice_पढ़ो(काष्ठा file *in,
 				      loff_t *ppos,
-				      struct pipe_inode_info *pipe,
-				      size_t len,
-				      unsigned int flags)
-{
-	ssize_t spliced;
-	int ret;
-	int nonpad_ret = 0;
+				      काष्ठा pipe_inode_info *pipe,
+				      माप_प्रकार len,
+				      अचिन्हित पूर्णांक flags)
+अणु
+	sमाप_प्रकार spliced;
+	पूर्णांक ret;
+	पूर्णांक nonpad_ret = 0;
 
 	ret = 0;
 	spliced = 0;
 
-	while (len && !spliced) {
+	जबतक (len && !spliced) अणु
 		ret = subbuf_splice_actor(in, ppos, pipe, len, flags, &nonpad_ret);
-		if (ret < 0)
-			break;
-		else if (!ret) {
-			if (flags & SPLICE_F_NONBLOCK)
+		अगर (ret < 0)
+			अवरोध;
+		अन्यथा अगर (!ret) अणु
+			अगर (flags & SPLICE_F_NONBLOCK)
 				ret = -EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		*ppos += ret;
-		if (ret > len)
+		अगर (ret > len)
 			len = 0;
-		else
+		अन्यथा
 			len -= ret;
 		spliced += nonpad_ret;
 		nonpad_ret = 0;
-	}
+	पूर्ण
 
-	if (spliced)
-		return spliced;
+	अगर (spliced)
+		वापस spliced;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct file_operations relay_file_operations = {
-	.open		= relay_file_open,
+स्थिर काष्ठा file_operations relay_file_operations = अणु
+	.खोलो		= relay_file_खोलो,
 	.poll		= relay_file_poll,
 	.mmap		= relay_file_mmap,
-	.read		= relay_file_read,
+	.पढ़ो		= relay_file_पढ़ो,
 	.llseek		= no_llseek,
 	.release	= relay_file_release,
-	.splice_read	= relay_file_splice_read,
-};
+	.splice_पढ़ो	= relay_file_splice_पढ़ो,
+पूर्ण;
 EXPORT_SYMBOL_GPL(relay_file_operations);

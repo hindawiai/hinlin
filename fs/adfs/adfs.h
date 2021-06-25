@@ -1,164 +1,165 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/buffer_head.h>
-#include <linux/fs.h>
-#include <linux/adfs_fs.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/adfs_fs.h>
 
-/* Internal data structures for ADFS */
+/* Internal data काष्ठाures क्रम ADFS */
 
-#define ADFS_FREE_FRAG		 0
-#define ADFS_BAD_FRAG		 1
-#define ADFS_ROOT_FRAG		 2
+#घोषणा ADFS_FREE_FRAG		 0
+#घोषणा ADFS_BAD_FRAG		 1
+#घोषणा ADFS_ROOT_FRAG		 2
 
-#define ADFS_FILETYPE_NONE	((u16)~0)
+#घोषणा ADFS_खाताTYPE_NONE	((u16)~0)
 
 /* RISC OS 12-bit filetype is stored in load_address[19:8] */
-static inline u16 adfs_filetype(u32 loadaddr)
-{
-	return (loadaddr & 0xfff00000) == 0xfff00000 ?
-	       (loadaddr >> 8) & 0xfff : ADFS_FILETYPE_NONE;
-}
+अटल अंतरभूत u16 adfs_filetype(u32 loadaddr)
+अणु
+	वापस (loadaddr & 0xfff00000) == 0xfff00000 ?
+	       (loadaddr >> 8) & 0xfff : ADFS_खाताTYPE_NONE;
+पूर्ण
 
-#define ADFS_NDA_OWNER_READ	(1 << 0)
-#define ADFS_NDA_OWNER_WRITE	(1 << 1)
-#define ADFS_NDA_LOCKED		(1 << 2)
-#define ADFS_NDA_DIRECTORY	(1 << 3)
-#define ADFS_NDA_EXECUTE	(1 << 4)
-#define ADFS_NDA_PUBLIC_READ	(1 << 5)
-#define ADFS_NDA_PUBLIC_WRITE	(1 << 6)
+#घोषणा ADFS_NDA_OWNER_READ	(1 << 0)
+#घोषणा ADFS_NDA_OWNER_WRITE	(1 << 1)
+#घोषणा ADFS_NDA_LOCKED		(1 << 2)
+#घोषणा ADFS_NDA_सूचीECTORY	(1 << 3)
+#घोषणा ADFS_NDA_EXECUTE	(1 << 4)
+#घोषणा ADFS_NDA_PUBLIC_READ	(1 << 5)
+#घोषणा ADFS_NDA_PUBLIC_WRITE	(1 << 6)
 
 /*
- * adfs file system inode data in memory
+ * adfs file प्रणाली inode data in memory
  */
-struct adfs_inode_info {
-	loff_t		mmu_private;
+काष्ठा adfs_inode_info अणु
+	loff_t		mmu_निजी;
 	__u32		parent_id;	/* parent indirect disc address	*/
 	__u32		indaddr;	/* object indirect disc address	*/
 	__u32		loadaddr;	/* RISC OS load address		*/
 	__u32		execaddr;	/* RISC OS exec address		*/
-	unsigned int	attr;		/* RISC OS permissions		*/
-	struct inode vfs_inode;
-};
+	अचिन्हित पूर्णांक	attr;		/* RISC OS permissions		*/
+	काष्ठा inode vfs_inode;
+पूर्ण;
 
-static inline struct adfs_inode_info *ADFS_I(struct inode *inode)
-{
-	return container_of(inode, struct adfs_inode_info, vfs_inode);
-}
+अटल अंतरभूत काष्ठा adfs_inode_info *ADFS_I(काष्ठा inode *inode)
+अणु
+	वापस container_of(inode, काष्ठा adfs_inode_info, vfs_inode);
+पूर्ण
 
-static inline bool adfs_inode_is_stamped(struct inode *inode)
-{
-	return (ADFS_I(inode)->loadaddr & 0xfff00000) == 0xfff00000;
-}
+अटल अंतरभूत bool adfs_inode_is_stamped(काष्ठा inode *inode)
+अणु
+	वापस (ADFS_I(inode)->loadaddr & 0xfff00000) == 0xfff00000;
+पूर्ण
 
 /*
  * Forward-declare this
  */
-struct adfs_discmap;
-struct adfs_dir_ops;
+काष्ठा adfs_discmap;
+काष्ठा adfs_dir_ops;
 
 /*
- * ADFS file system superblock data in memory
+ * ADFS file प्रणाली superblock data in memory
  */
-struct adfs_sb_info {
-	union { struct {
-		struct adfs_discmap *s_map;	/* bh list containing map */
-		const struct adfs_dir_ops *s_dir; /* directory operations */
-		};
-		struct rcu_head rcu;	/* used only at shutdown time	 */
-	};
+काष्ठा adfs_sb_info अणु
+	जोड़ अणु काष्ठा अणु
+		काष्ठा adfs_discmap *s_map;	/* bh list containing map */
+		स्थिर काष्ठा adfs_dir_ops *s_dir; /* directory operations */
+		पूर्ण;
+		काष्ठा rcu_head rcu;	/* used only at shutकरोwn समय	 */
+	पूर्ण;
 	kuid_t		s_uid;		/* owner uid */
 	kgid_t		s_gid;		/* owner gid */
 	umode_t		s_owner_mask;	/* ADFS owner perm -> unix perm */
 	umode_t		s_other_mask;	/* ADFS other perm -> unix perm	*/
-	int		s_ftsuffix;	/* ,xyz hex filetype suffix option */
+	पूर्णांक		s_ftsuffix;	/* ,xyz hex filetype suffix option */
 
 	__u32		s_ids_per_zone;	/* max. no ids in one zone */
 	__u32		s_idlen;	/* length of ID in map */
 	__u32		s_map_size;	/* sector size of a map	*/
-	signed int	s_map2blk;	/* shift left by this for map->sector*/
-	unsigned int	s_log2sharesize;/* log2 share size */
-	unsigned int	s_namelen;	/* maximum number of characters in name	 */
-};
+	चिन्हित पूर्णांक	s_map2blk;	/* shअगरt left by this क्रम map->sector*/
+	अचिन्हित पूर्णांक	s_log2sharesize;/* log2 share size */
+	अचिन्हित पूर्णांक	s_namelen;	/* maximum number of अक्षरacters in name	 */
+पूर्ण;
 
-static inline struct adfs_sb_info *ADFS_SB(struct super_block *sb)
-{
-	return sb->s_fs_info;
-}
+अटल अंतरभूत काष्ठा adfs_sb_info *ADFS_SB(काष्ठा super_block *sb)
+अणु
+	वापस sb->s_fs_info;
+पूर्ण
 
 /*
  * Directory handling
  */
-struct adfs_dir {
-	struct super_block	*sb;
+काष्ठा adfs_dir अणु
+	काष्ठा super_block	*sb;
 
-	int			nr_buffers;
-	struct buffer_head	*bh[4];
-	struct buffer_head	**bhs;
+	पूर्णांक			nr_buffers;
+	काष्ठा buffer_head	*bh[4];
+	काष्ठा buffer_head	**bhs;
 
-	unsigned int		pos;
+	अचिन्हित पूर्णांक		pos;
 	__u32			parent_id;
 
-	union {
-		struct adfs_dirheader	*dirhead;
-		struct adfs_bigdirheader *bighead;
-	};
-	union {
-		struct adfs_newdirtail	*newtail;
-		struct adfs_bigdirtail	*bigtail;
-	};
-};
+	जोड़ अणु
+		काष्ठा adfs_dirheader	*dirhead;
+		काष्ठा adfs_bigdirheader *bighead;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा adfs_newdirtail	*newtail;
+		काष्ठा adfs_bigdirtail	*bigtail;
+	पूर्ण;
+पूर्ण;
 
 /*
  * This is the overall maximum name length
  */
-#define ADFS_MAX_NAME_LEN	(256 + 4) /* +4 for ,xyz hex filetype suffix */
-struct object_info {
+#घोषणा ADFS_MAX_NAME_LEN	(256 + 4) /* +4 क्रम ,xyz hex filetype suffix */
+काष्ठा object_info अणु
 	__u32		parent_id;		/* parent object id	*/
 	__u32		indaddr;		/* indirect disc addr	*/
 	__u32		loadaddr;		/* load address		*/
 	__u32		execaddr;		/* execution address	*/
 	__u32		size;			/* size			*/
 	__u8		attr;			/* RISC OS attributes	*/
-	unsigned int	name_len;		/* name length		*/
-	char		name[ADFS_MAX_NAME_LEN];/* file name		*/
-};
+	अचिन्हित पूर्णांक	name_len;		/* name length		*/
+	अक्षर		name[ADFS_MAX_NAME_LEN];/* file name		*/
+पूर्ण;
 
-struct adfs_dir_ops {
-	int	(*read)(struct super_block *sb, unsigned int indaddr,
-			unsigned int size, struct adfs_dir *dir);
-	int	(*iterate)(struct adfs_dir *dir, struct dir_context *ctx);
-	int	(*setpos)(struct adfs_dir *dir, unsigned int fpos);
-	int	(*getnext)(struct adfs_dir *dir, struct object_info *obj);
-	int	(*update)(struct adfs_dir *dir, struct object_info *obj);
-	int	(*create)(struct adfs_dir *dir, struct object_info *obj);
-	int	(*remove)(struct adfs_dir *dir, struct object_info *obj);
-	int	(*commit)(struct adfs_dir *dir);
-};
+काष्ठा adfs_dir_ops अणु
+	पूर्णांक	(*पढ़ो)(काष्ठा super_block *sb, अचिन्हित पूर्णांक indaddr,
+			अचिन्हित पूर्णांक size, काष्ठा adfs_dir *dir);
+	पूर्णांक	(*iterate)(काष्ठा adfs_dir *dir, काष्ठा dir_context *ctx);
+	पूर्णांक	(*setpos)(काष्ठा adfs_dir *dir, अचिन्हित पूर्णांक fpos);
+	पूर्णांक	(*getnext)(काष्ठा adfs_dir *dir, काष्ठा object_info *obj);
+	पूर्णांक	(*update)(काष्ठा adfs_dir *dir, काष्ठा object_info *obj);
+	पूर्णांक	(*create)(काष्ठा adfs_dir *dir, काष्ठा object_info *obj);
+	पूर्णांक	(*हटाओ)(काष्ठा adfs_dir *dir, काष्ठा object_info *obj);
+	पूर्णांक	(*commit)(काष्ठा adfs_dir *dir);
+पूर्ण;
 
-struct adfs_discmap {
-	struct buffer_head	*dm_bh;
+काष्ठा adfs_discmap अणु
+	काष्ठा buffer_head	*dm_bh;
 	__u32			dm_startblk;
-	unsigned int		dm_startbit;
-	unsigned int		dm_endbit;
-};
+	अचिन्हित पूर्णांक		dm_startbit;
+	अचिन्हित पूर्णांक		dm_endbit;
+पूर्ण;
 
 /* Inode stuff */
-struct inode *adfs_iget(struct super_block *sb, struct object_info *obj);
-int adfs_write_inode(struct inode *inode, struct writeback_control *wbc);
-int adfs_notify_change(struct user_namespace *mnt_userns, struct dentry *dentry,
-		       struct iattr *attr);
+काष्ठा inode *adfs_iget(काष्ठा super_block *sb, काष्ठा object_info *obj);
+पूर्णांक adfs_ग_लिखो_inode(काष्ठा inode *inode, काष्ठा ग_लिखोback_control *wbc);
+पूर्णांक adfs_notअगरy_change(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		       काष्ठा iattr *attr);
 
 /* map.c */
-int adfs_map_lookup(struct super_block *sb, u32 frag_id, unsigned int offset);
-void adfs_map_statfs(struct super_block *sb, struct kstatfs *buf);
-struct adfs_discmap *adfs_read_map(struct super_block *sb, struct adfs_discrecord *dr);
-void adfs_free_map(struct super_block *sb);
+पूर्णांक adfs_map_lookup(काष्ठा super_block *sb, u32 frag_id, अचिन्हित पूर्णांक offset);
+व्योम adfs_map_statfs(काष्ठा super_block *sb, काष्ठा kstatfs *buf);
+काष्ठा adfs_discmap *adfs_पढ़ो_map(काष्ठा super_block *sb, काष्ठा adfs_discrecord *dr);
+व्योम adfs_मुक्त_map(काष्ठा super_block *sb);
 
 /* Misc */
-__printf(3, 4)
-void __adfs_error(struct super_block *sb, const char *function,
-		  const char *fmt, ...);
-#define adfs_error(sb, fmt...) __adfs_error(sb, __func__, fmt)
-void adfs_msg(struct super_block *sb, const char *pfx, const char *fmt, ...);
+__म_लिखो(3, 4)
+व्योम __adfs_error(काष्ठा super_block *sb, स्थिर अक्षर *function,
+		  स्थिर अक्षर *fmt, ...);
+#घोषणा adfs_error(sb, fmt...) __adfs_error(sb, __func__, fmt)
+व्योम adfs_msg(काष्ठा super_block *sb, स्थिर अक्षर *pfx, स्थिर अक्षर *fmt, ...);
 
 /* super.c */
 
@@ -167,35 +168,35 @@ void adfs_msg(struct super_block *sb, const char *pfx, const char *fmt, ...);
  */
 
 /* dir_*.c */
-extern const struct inode_operations adfs_dir_inode_operations;
-extern const struct file_operations adfs_dir_operations;
-extern const struct dentry_operations adfs_dentry_operations;
-extern const struct adfs_dir_ops adfs_f_dir_ops;
-extern const struct adfs_dir_ops adfs_fplus_dir_ops;
+बाह्य स्थिर काष्ठा inode_operations adfs_dir_inode_operations;
+बाह्य स्थिर काष्ठा file_operations adfs_dir_operations;
+बाह्य स्थिर काष्ठा dentry_operations adfs_dentry_operations;
+बाह्य स्थिर काष्ठा adfs_dir_ops adfs_f_dir_ops;
+बाह्य स्थिर काष्ठा adfs_dir_ops adfs_fplus_dir_ops;
 
-int adfs_dir_copyfrom(void *dst, struct adfs_dir *dir, unsigned int offset,
-		      size_t len);
-int adfs_dir_copyto(struct adfs_dir *dir, unsigned int offset, const void *src,
-		    size_t len);
-void adfs_dir_relse(struct adfs_dir *dir);
-int adfs_dir_read_buffers(struct super_block *sb, u32 indaddr,
-			  unsigned int size, struct adfs_dir *dir);
-void adfs_object_fixup(struct adfs_dir *dir, struct object_info *obj);
-extern int adfs_dir_update(struct super_block *sb, struct object_info *obj,
-			   int wait);
+पूर्णांक adfs_dir_copyfrom(व्योम *dst, काष्ठा adfs_dir *dir, अचिन्हित पूर्णांक offset,
+		      माप_प्रकार len);
+पूर्णांक adfs_dir_copyto(काष्ठा adfs_dir *dir, अचिन्हित पूर्णांक offset, स्थिर व्योम *src,
+		    माप_प्रकार len);
+व्योम adfs_dir_rअन्यथा(काष्ठा adfs_dir *dir);
+पूर्णांक adfs_dir_पढ़ो_buffers(काष्ठा super_block *sb, u32 indaddr,
+			  अचिन्हित पूर्णांक size, काष्ठा adfs_dir *dir);
+व्योम adfs_object_fixup(काष्ठा adfs_dir *dir, काष्ठा object_info *obj);
+बाह्य पूर्णांक adfs_dir_update(काष्ठा super_block *sb, काष्ठा object_info *obj,
+			   पूर्णांक रुको);
 
 /* file.c */
-extern const struct inode_operations adfs_file_inode_operations;
-extern const struct file_operations adfs_file_operations;
+बाह्य स्थिर काष्ठा inode_operations adfs_file_inode_operations;
+बाह्य स्थिर काष्ठा file_operations adfs_file_operations;
 
-static inline __u32 signed_asl(__u32 val, signed int shift)
-{
-	if (shift >= 0)
-		val <<= shift;
-	else
-		val >>= -shift;
-	return val;
-}
+अटल अंतरभूत __u32 चिन्हित_asl(__u32 val, चिन्हित पूर्णांक shअगरt)
+अणु
+	अगर (shअगरt >= 0)
+		val <<= shअगरt;
+	अन्यथा
+		val >>= -shअगरt;
+	वापस val;
+पूर्ण
 
 /*
  * Calculate the address of a block in an object given the block offset
@@ -203,28 +204,28 @@ static inline __u32 signed_asl(__u32 val, signed int shift)
  *
  * The root directory ID should always be looked up in the map [3.4]
  */
-static inline int __adfs_block_map(struct super_block *sb, u32 indaddr,
-				   unsigned int block)
-{
-	if (indaddr & 255) {
-		unsigned int off;
+अटल अंतरभूत पूर्णांक __adfs_block_map(काष्ठा super_block *sb, u32 indaddr,
+				   अचिन्हित पूर्णांक block)
+अणु
+	अगर (indaddr & 255) अणु
+		अचिन्हित पूर्णांक off;
 
 		off = (indaddr & 255) - 1;
 		block += off << ADFS_SB(sb)->s_log2sharesize;
-	}
+	पूर्ण
 
-	return adfs_map_lookup(sb, indaddr >> 8, block);
-}
+	वापस adfs_map_lookup(sb, indaddr >> 8, block);
+पूर्ण
 
 /* Return the disc record from the map */
-static inline
-struct adfs_discrecord *adfs_map_discrecord(struct adfs_discmap *dm)
-{
-	return (void *)(dm[0].dm_bh->b_data + 4);
-}
+अटल अंतरभूत
+काष्ठा adfs_discrecord *adfs_map_discrecord(काष्ठा adfs_discmap *dm)
+अणु
+	वापस (व्योम *)(dm[0].dm_bh->b_data + 4);
+पूर्ण
 
-static inline u64 adfs_disc_size(const struct adfs_discrecord *dr)
-{
-	return (u64)le32_to_cpu(dr->disc_size_high) << 32 |
+अटल अंतरभूत u64 adfs_disc_size(स्थिर काष्ठा adfs_discrecord *dr)
+अणु
+	वापस (u64)le32_to_cpu(dr->disc_size_high) << 32 |
 		    le32_to_cpu(dr->disc_size);
-}
+पूर्ण

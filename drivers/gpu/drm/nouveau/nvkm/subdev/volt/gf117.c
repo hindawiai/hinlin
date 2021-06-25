@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Ilia Mirkin
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,41 +22,41 @@
  *
  * Authors: Ilia Mirkin
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <subdev/fuse.h>
+#समावेश <subdev/fuse.h>
 
-static int
-gf117_volt_speedo_read(struct nvkm_volt *volt)
-{
-	struct nvkm_device *device = volt->subdev.device;
-	struct nvkm_fuse *fuse = device->fuse;
+अटल पूर्णांक
+gf117_volt_speeकरो_पढ़ो(काष्ठा nvkm_volt *volt)
+अणु
+	काष्ठा nvkm_device *device = volt->subdev.device;
+	काष्ठा nvkm_fuse *fuse = device->fuse;
 
-	if (!fuse)
-		return -EINVAL;
+	अगर (!fuse)
+		वापस -EINVAL;
 
-	return nvkm_fuse_read(fuse, 0x3a8);
-}
+	वापस nvkm_fuse_पढ़ो(fuse, 0x3a8);
+पूर्ण
 
-static const struct nvkm_volt_func
-gf117_volt = {
+अटल स्थिर काष्ठा nvkm_volt_func
+gf117_volt = अणु
 	.oneinit = gf100_volt_oneinit,
 	.vid_get = nvkm_voltgpio_get,
 	.vid_set = nvkm_voltgpio_set,
-	.speedo_read = gf117_volt_speedo_read,
-};
+	.speeकरो_पढ़ो = gf117_volt_speeकरो_पढ़ो,
+पूर्ण;
 
-int
-gf117_volt_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	       struct nvkm_volt **pvolt)
-{
-	struct nvkm_volt *volt;
-	int ret;
+पूर्णांक
+gf117_volt_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	       काष्ठा nvkm_volt **pvolt)
+अणु
+	काष्ठा nvkm_volt *volt;
+	पूर्णांक ret;
 
 	ret = nvkm_volt_new_(&gf117_volt, device, type, inst, &volt);
 	*pvolt = volt;
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return nvkm_voltgpio_init(volt);
-}
+	वापस nvkm_voltgpio_init(volt);
+पूर्ण

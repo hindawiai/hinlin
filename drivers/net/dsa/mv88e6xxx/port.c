@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Marvell 88E6xxx Switch Port Registers support
  *
@@ -8,1681 +9,1681 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
-#include <linux/bitfield.h>
-#include <linux/if_bridge.h>
-#include <linux/phy.h>
-#include <linux/phylink.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/phylink.h>
 
-#include "chip.h"
-#include "global2.h"
-#include "port.h"
-#include "serdes.h"
+#समावेश "chip.h"
+#समावेश "global2.h"
+#समावेश "port.h"
+#समावेश "serdes.h"
 
-int mv88e6xxx_port_read(struct mv88e6xxx_chip *chip, int port, int reg,
+पूर्णांक mv88e6xxx_port_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, पूर्णांक reg,
 			u16 *val)
-{
-	int addr = chip->info->port_base_addr + port;
+अणु
+	पूर्णांक addr = chip->info->port_base_addr + port;
 
-	return mv88e6xxx_read(chip, addr, reg, val);
-}
+	वापस mv88e6xxx_पढ़ो(chip, addr, reg, val);
+पूर्ण
 
-int mv88e6xxx_port_wait_bit(struct mv88e6xxx_chip *chip, int port, int reg,
-			    int bit, int val)
-{
-	int addr = chip->info->port_base_addr + port;
+पूर्णांक mv88e6xxx_port_रुको_bit(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, पूर्णांक reg,
+			    पूर्णांक bit, पूर्णांक val)
+अणु
+	पूर्णांक addr = chip->info->port_base_addr + port;
 
-	return mv88e6xxx_wait_bit(chip, addr, reg, bit, val);
-}
+	वापस mv88e6xxx_रुको_bit(chip, addr, reg, bit, val);
+पूर्ण
 
-int mv88e6xxx_port_write(struct mv88e6xxx_chip *chip, int port, int reg,
+पूर्णांक mv88e6xxx_port_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, पूर्णांक reg,
 			 u16 val)
-{
-	int addr = chip->info->port_base_addr + port;
+अणु
+	पूर्णांक addr = chip->info->port_base_addr + port;
 
-	return mv88e6xxx_write(chip, addr, reg, val);
-}
+	वापस mv88e6xxx_ग_लिखो(chip, addr, reg, val);
+पूर्ण
 
 /* Offset 0x00: MAC (or PCS or Physical) Status Register
  *
- * For most devices, this is read only. However the 6185 has the MyPause
- * bit read/write.
+ * For most devices, this is पढ़ो only. However the 6185 has the MyPause
+ * bit पढ़ो/ग_लिखो.
  */
-int mv88e6185_port_set_pause(struct mv88e6xxx_chip *chip, int port,
-			     int pause)
-{
+पूर्णांक mv88e6185_port_set_छोड़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+			     पूर्णांक छोड़ो)
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_STS, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_STS, &reg);
+	अगर (err)
+		वापस err;
 
-	if (pause)
+	अगर (छोड़ो)
 		reg |= MV88E6XXX_PORT_STS_MY_PAUSE;
-	else
+	अन्यथा
 		reg &= ~MV88E6XXX_PORT_STS_MY_PAUSE;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_STS, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_STS, reg);
+पूर्ण
 
 /* Offset 0x01: MAC (or PCS or Physical) Control Register
  *
- * Link, Duplex and Flow Control have one force bit, one value bit.
+ * Link, Duplex and Flow Control have one क्रमce bit, one value bit.
  *
  * For port's MAC speed, ForceSpd (or SpdValue) bits 1:0 program the value.
  * Alternative values require the 200BASE (or AltSpeed) bit 12 set.
  * Newer chips need a ForcedSpd bit 13 set to consider the value.
  */
 
-static int mv88e6xxx_port_set_rgmii_delay(struct mv88e6xxx_chip *chip, int port,
-					  phy_interface_t mode)
-{
+अटल पूर्णांक mv88e6xxx_port_set_rgmii_delay(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+					  phy_पूर्णांकerface_t mode)
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~(MV88E6XXX_PORT_MAC_CTL_RGMII_DELAY_RXCLK |
 		 MV88E6XXX_PORT_MAC_CTL_RGMII_DELAY_TXCLK);
 
-	switch (mode) {
-	case PHY_INTERFACE_MODE_RGMII_RXID:
+	चयन (mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
 		reg |= MV88E6XXX_PORT_MAC_CTL_RGMII_DELAY_RXCLK;
-		break;
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		reg |= MV88E6XXX_PORT_MAC_CTL_RGMII_DELAY_TXCLK;
-		break;
-	case PHY_INTERFACE_MODE_RGMII_ID:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
 		reg |= MV88E6XXX_PORT_MAC_CTL_RGMII_DELAY_RXCLK |
 			MV88E6XXX_PORT_MAC_CTL_RGMII_DELAY_TXCLK;
-		break;
-	case PHY_INTERFACE_MODE_RGMII:
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII:
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
+	अगर (err)
+		वापस err;
 
 	dev_dbg(chip->dev, "p%d: delay RXCLK %s, TXCLK %s\n", port,
 		reg & MV88E6XXX_PORT_MAC_CTL_RGMII_DELAY_RXCLK ? "yes" : "no",
 		reg & MV88E6XXX_PORT_MAC_CTL_RGMII_DELAY_TXCLK ? "yes" : "no");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6352_port_set_rgmii_delay(struct mv88e6xxx_chip *chip, int port,
-				   phy_interface_t mode)
-{
-	if (port < 5)
-		return -EOPNOTSUPP;
+पूर्णांक mv88e6352_port_set_rgmii_delay(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				   phy_पूर्णांकerface_t mode)
+अणु
+	अगर (port < 5)
+		वापस -EOPNOTSUPP;
 
-	return mv88e6xxx_port_set_rgmii_delay(chip, port, mode);
-}
+	वापस mv88e6xxx_port_set_rgmii_delay(chip, port, mode);
+पूर्ण
 
-int mv88e6390_port_set_rgmii_delay(struct mv88e6xxx_chip *chip, int port,
-				   phy_interface_t mode)
-{
-	if (port != 0)
-		return -EOPNOTSUPP;
+पूर्णांक mv88e6390_port_set_rgmii_delay(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				   phy_पूर्णांकerface_t mode)
+अणु
+	अगर (port != 0)
+		वापस -EOPNOTSUPP;
 
-	return mv88e6xxx_port_set_rgmii_delay(chip, port, mode);
-}
+	वापस mv88e6xxx_port_set_rgmii_delay(chip, port, mode);
+पूर्ण
 
-int mv88e6xxx_port_set_link(struct mv88e6xxx_chip *chip, int port, int link)
-{
+पूर्णांक mv88e6xxx_port_set_link(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, पूर्णांक link)
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~(MV88E6XXX_PORT_MAC_CTL_FORCE_LINK |
 		 MV88E6XXX_PORT_MAC_CTL_LINK_UP);
 
-	switch (link) {
-	case LINK_FORCED_DOWN:
+	चयन (link) अणु
+	हाल LINK_FORCED_DOWN:
 		reg |= MV88E6XXX_PORT_MAC_CTL_FORCE_LINK;
-		break;
-	case LINK_FORCED_UP:
+		अवरोध;
+	हाल LINK_FORCED_UP:
 		reg |= MV88E6XXX_PORT_MAC_CTL_FORCE_LINK |
 			MV88E6XXX_PORT_MAC_CTL_LINK_UP;
-		break;
-	case LINK_UNFORCED:
+		अवरोध;
+	हाल LINK_UNFORCED:
 		/* normal link detection */
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
+	अगर (err)
+		वापस err;
 
 	dev_dbg(chip->dev, "p%d: %s link %s\n", port,
 		reg & MV88E6XXX_PORT_MAC_CTL_FORCE_LINK ? "Force" : "Unforce",
 		reg & MV88E6XXX_PORT_MAC_CTL_LINK_UP ? "up" : "down");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6xxx_port_sync_link(struct mv88e6xxx_chip *chip, int port, unsigned int mode, bool isup)
-{
-	const struct mv88e6xxx_ops *ops = chip->info->ops;
-	int err = 0;
-	int link;
+पूर्णांक mv88e6xxx_port_sync_link(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, अचिन्हित पूर्णांक mode, bool isup)
+अणु
+	स्थिर काष्ठा mv88e6xxx_ops *ops = chip->info->ops;
+	पूर्णांक err = 0;
+	पूर्णांक link;
 
-	if (isup)
+	अगर (isup)
 		link = LINK_FORCED_UP;
-	else
+	अन्यथा
 		link = LINK_FORCED_DOWN;
 
-	if (ops->port_set_link)
+	अगर (ops->port_set_link)
 		err = ops->port_set_link(chip, port, link);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mv88e6185_port_sync_link(struct mv88e6xxx_chip *chip, int port, unsigned int mode, bool isup)
-{
-	const struct mv88e6xxx_ops *ops = chip->info->ops;
-	int err = 0;
-	int link;
+पूर्णांक mv88e6185_port_sync_link(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, अचिन्हित पूर्णांक mode, bool isup)
+अणु
+	स्थिर काष्ठा mv88e6xxx_ops *ops = chip->info->ops;
+	पूर्णांक err = 0;
+	पूर्णांक link;
 
-	if (mode == MLO_AN_INBAND)
+	अगर (mode == MLO_AN_INBAND)
 		link = LINK_UNFORCED;
-	else if (isup)
+	अन्यथा अगर (isup)
 		link = LINK_FORCED_UP;
-	else
+	अन्यथा
 		link = LINK_FORCED_DOWN;
 
-	if (ops->port_set_link)
+	अगर (ops->port_set_link)
 		err = ops->port_set_link(chip, port, link);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mv88e6xxx_port_set_speed_duplex(struct mv88e6xxx_chip *chip,
-					   int port, int speed, bool alt_bit,
-					   bool force_bit, int duplex)
-{
+अटल पूर्णांक mv88e6xxx_port_set_speed_duplex(काष्ठा mv88e6xxx_chip *chip,
+					   पूर्णांक port, पूर्णांक speed, bool alt_bit,
+					   bool क्रमce_bit, पूर्णांक duplex)
+अणु
 	u16 reg, ctrl;
-	int err;
+	पूर्णांक err;
 
-	switch (speed) {
-	case 10:
+	चयन (speed) अणु
+	हाल 10:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_10;
-		break;
-	case 100:
+		अवरोध;
+	हाल 100:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_100;
-		break;
-	case 200:
-		if (alt_bit)
+		अवरोध;
+	हाल 200:
+		अगर (alt_bit)
 			ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_100 |
 				MV88E6390_PORT_MAC_CTL_ALTSPEED;
-		else
+		अन्यथा
 			ctrl = MV88E6065_PORT_MAC_CTL_SPEED_200;
-		break;
-	case 1000:
+		अवरोध;
+	हाल 1000:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_1000;
-		break;
-	case 2500:
-		if (alt_bit)
+		अवरोध;
+	हाल 2500:
+		अगर (alt_bit)
 			ctrl = MV88E6390_PORT_MAC_CTL_SPEED_10000 |
 				MV88E6390_PORT_MAC_CTL_ALTSPEED;
-		else
+		अन्यथा
 			ctrl = MV88E6390_PORT_MAC_CTL_SPEED_10000;
-		break;
-	case 10000:
+		अवरोध;
+	हाल 10000:
 		/* all bits set, fall through... */
-	case SPEED_UNFORCED:
+	हाल SPEED_UNFORCED:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_UNFORCED;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	switch (duplex) {
-	case DUPLEX_HALF:
+	चयन (duplex) अणु
+	हाल DUPLEX_HALF:
 		ctrl |= MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX;
-		break;
-	case DUPLEX_FULL:
+		अवरोध;
+	हाल DUPLEX_FULL:
 		ctrl |= MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX |
 			MV88E6XXX_PORT_MAC_CTL_DUPLEX_FULL;
-		break;
-	case DUPLEX_UNFORCED:
+		अवरोध;
+	हाल DUPLEX_UNFORCED:
 		/* normal duplex detection */
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~(MV88E6XXX_PORT_MAC_CTL_SPEED_MASK |
 		 MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX |
 		 MV88E6XXX_PORT_MAC_CTL_DUPLEX_FULL);
 
-	if (alt_bit)
+	अगर (alt_bit)
 		reg &= ~MV88E6390_PORT_MAC_CTL_ALTSPEED;
-	if (force_bit) {
+	अगर (क्रमce_bit) अणु
 		reg &= ~MV88E6390_PORT_MAC_CTL_FORCE_SPEED;
-		if (speed != SPEED_UNFORCED)
+		अगर (speed != SPEED_UNFORCED)
 			ctrl |= MV88E6390_PORT_MAC_CTL_FORCE_SPEED;
-	}
+	पूर्ण
 	reg |= ctrl;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
+	अगर (err)
+		वापस err;
 
-	if (speed)
+	अगर (speed)
 		dev_dbg(chip->dev, "p%d: Speed set to %d Mbps\n", port, speed);
-	else
+	अन्यथा
 		dev_dbg(chip->dev, "p%d: Speed unforced\n", port);
 	dev_dbg(chip->dev, "p%d: %s %s duplex\n", port,
 		reg & MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX ? "Force" : "Unforce",
 		reg & MV88E6XXX_PORT_MAC_CTL_DUPLEX_FULL ? "full" : "half");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Support 10, 100, 200 Mbps (e.g. 88E6065 family) */
-int mv88e6065_port_set_speed_duplex(struct mv88e6xxx_chip *chip, int port,
-				    int speed, int duplex)
-{
-	if (speed == SPEED_MAX)
+पूर्णांक mv88e6065_port_set_speed_duplex(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				    पूर्णांक speed, पूर्णांक duplex)
+अणु
+	अगर (speed == SPEED_MAX)
 		speed = 200;
 
-	if (speed > 200)
-		return -EOPNOTSUPP;
+	अगर (speed > 200)
+		वापस -EOPNOTSUPP;
 
 	/* Setting 200 Mbps on port 0 to 3 selects 100 Mbps */
-	return mv88e6xxx_port_set_speed_duplex(chip, port, speed, false, false,
+	वापस mv88e6xxx_port_set_speed_duplex(chip, port, speed, false, false,
 					       duplex);
-}
+पूर्ण
 
 /* Support 10, 100, 1000 Mbps (e.g. 88E6185 family) */
-int mv88e6185_port_set_speed_duplex(struct mv88e6xxx_chip *chip, int port,
-				    int speed, int duplex)
-{
-	if (speed == SPEED_MAX)
+पूर्णांक mv88e6185_port_set_speed_duplex(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				    पूर्णांक speed, पूर्णांक duplex)
+अणु
+	अगर (speed == SPEED_MAX)
 		speed = 1000;
 
-	if (speed == 200 || speed > 1000)
-		return -EOPNOTSUPP;
+	अगर (speed == 200 || speed > 1000)
+		वापस -EOPNOTSUPP;
 
-	return mv88e6xxx_port_set_speed_duplex(chip, port, speed, false, false,
+	वापस mv88e6xxx_port_set_speed_duplex(chip, port, speed, false, false,
 					       duplex);
-}
+पूर्ण
 
 /* Support 10, 100 Mbps (e.g. 88E6250 family) */
-int mv88e6250_port_set_speed_duplex(struct mv88e6xxx_chip *chip, int port,
-				    int speed, int duplex)
-{
-	if (speed == SPEED_MAX)
+पूर्णांक mv88e6250_port_set_speed_duplex(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				    पूर्णांक speed, पूर्णांक duplex)
+अणु
+	अगर (speed == SPEED_MAX)
 		speed = 100;
 
-	if (speed > 100)
-		return -EOPNOTSUPP;
+	अगर (speed > 100)
+		वापस -EOPNOTSUPP;
 
-	return mv88e6xxx_port_set_speed_duplex(chip, port, speed, false, false,
+	वापस mv88e6xxx_port_set_speed_duplex(chip, port, speed, false, false,
 					       duplex);
-}
+पूर्ण
 
 /* Support 10, 100, 200, 1000, 2500 Mbps (e.g. 88E6341) */
-int mv88e6341_port_set_speed_duplex(struct mv88e6xxx_chip *chip, int port,
-				    int speed, int duplex)
-{
-	if (speed == SPEED_MAX)
+पूर्णांक mv88e6341_port_set_speed_duplex(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				    पूर्णांक speed, पूर्णांक duplex)
+अणु
+	अगर (speed == SPEED_MAX)
 		speed = port < 5 ? 1000 : 2500;
 
-	if (speed > 2500)
-		return -EOPNOTSUPP;
+	अगर (speed > 2500)
+		वापस -EOPNOTSUPP;
 
-	if (speed == 200 && port != 0)
-		return -EOPNOTSUPP;
+	अगर (speed == 200 && port != 0)
+		वापस -EOPNOTSUPP;
 
-	if (speed == 2500 && port < 5)
-		return -EOPNOTSUPP;
+	अगर (speed == 2500 && port < 5)
+		वापस -EOPNOTSUPP;
 
-	return mv88e6xxx_port_set_speed_duplex(chip, port, speed, !port, true,
+	वापस mv88e6xxx_port_set_speed_duplex(chip, port, speed, !port, true,
 					       duplex);
-}
+पूर्ण
 
-phy_interface_t mv88e6341_port_max_speed_mode(int port)
-{
-	if (port == 5)
-		return PHY_INTERFACE_MODE_2500BASEX;
+phy_पूर्णांकerface_t mv88e6341_port_max_speed_mode(पूर्णांक port)
+अणु
+	अगर (port == 5)
+		वापस PHY_INTERFACE_MODE_2500BASEX;
 
-	return PHY_INTERFACE_MODE_NA;
-}
+	वापस PHY_INTERFACE_MODE_NA;
+पूर्ण
 
 /* Support 10, 100, 200, 1000 Mbps (e.g. 88E6352 family) */
-int mv88e6352_port_set_speed_duplex(struct mv88e6xxx_chip *chip, int port,
-				    int speed, int duplex)
-{
-	if (speed == SPEED_MAX)
+पूर्णांक mv88e6352_port_set_speed_duplex(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				    पूर्णांक speed, पूर्णांक duplex)
+अणु
+	अगर (speed == SPEED_MAX)
 		speed = 1000;
 
-	if (speed > 1000)
-		return -EOPNOTSUPP;
+	अगर (speed > 1000)
+		वापस -EOPNOTSUPP;
 
-	if (speed == 200 && port < 5)
-		return -EOPNOTSUPP;
+	अगर (speed == 200 && port < 5)
+		वापस -EOPNOTSUPP;
 
-	return mv88e6xxx_port_set_speed_duplex(chip, port, speed, true, false,
+	वापस mv88e6xxx_port_set_speed_duplex(chip, port, speed, true, false,
 					       duplex);
-}
+पूर्ण
 
 /* Support 10, 100, 200, 1000, 2500 Mbps (e.g. 88E6390) */
-int mv88e6390_port_set_speed_duplex(struct mv88e6xxx_chip *chip, int port,
-				    int speed, int duplex)
-{
-	if (speed == SPEED_MAX)
+पूर्णांक mv88e6390_port_set_speed_duplex(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				    पूर्णांक speed, पूर्णांक duplex)
+अणु
+	अगर (speed == SPEED_MAX)
 		speed = port < 9 ? 1000 : 2500;
 
-	if (speed > 2500)
-		return -EOPNOTSUPP;
+	अगर (speed > 2500)
+		वापस -EOPNOTSUPP;
 
-	if (speed == 200 && port != 0)
-		return -EOPNOTSUPP;
+	अगर (speed == 200 && port != 0)
+		वापस -EOPNOTSUPP;
 
-	if (speed == 2500 && port < 9)
-		return -EOPNOTSUPP;
+	अगर (speed == 2500 && port < 9)
+		वापस -EOPNOTSUPP;
 
-	return mv88e6xxx_port_set_speed_duplex(chip, port, speed, true, true,
+	वापस mv88e6xxx_port_set_speed_duplex(chip, port, speed, true, true,
 					       duplex);
-}
+पूर्ण
 
-phy_interface_t mv88e6390_port_max_speed_mode(int port)
-{
-	if (port == 9 || port == 10)
-		return PHY_INTERFACE_MODE_2500BASEX;
+phy_पूर्णांकerface_t mv88e6390_port_max_speed_mode(पूर्णांक port)
+अणु
+	अगर (port == 9 || port == 10)
+		वापस PHY_INTERFACE_MODE_2500BASEX;
 
-	return PHY_INTERFACE_MODE_NA;
-}
+	वापस PHY_INTERFACE_MODE_NA;
+पूर्ण
 
 /* Support 10, 100, 200, 1000, 2500, 10000 Mbps (e.g. 88E6190X) */
-int mv88e6390x_port_set_speed_duplex(struct mv88e6xxx_chip *chip, int port,
-				     int speed, int duplex)
-{
-	if (speed == SPEED_MAX)
+पूर्णांक mv88e6390x_port_set_speed_duplex(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				     पूर्णांक speed, पूर्णांक duplex)
+अणु
+	अगर (speed == SPEED_MAX)
 		speed = port < 9 ? 1000 : 10000;
 
-	if (speed == 200 && port != 0)
-		return -EOPNOTSUPP;
+	अगर (speed == 200 && port != 0)
+		वापस -EOPNOTSUPP;
 
-	if (speed >= 2500 && port < 9)
-		return -EOPNOTSUPP;
+	अगर (speed >= 2500 && port < 9)
+		वापस -EOPNOTSUPP;
 
-	return mv88e6xxx_port_set_speed_duplex(chip, port, speed, true, true,
+	वापस mv88e6xxx_port_set_speed_duplex(chip, port, speed, true, true,
 					       duplex);
-}
+पूर्ण
 
-phy_interface_t mv88e6390x_port_max_speed_mode(int port)
-{
-	if (port == 9 || port == 10)
-		return PHY_INTERFACE_MODE_XAUI;
+phy_पूर्णांकerface_t mv88e6390x_port_max_speed_mode(पूर्णांक port)
+अणु
+	अगर (port == 9 || port == 10)
+		वापस PHY_INTERFACE_MODE_XAUI;
 
-	return PHY_INTERFACE_MODE_NA;
-}
+	वापस PHY_INTERFACE_MODE_NA;
+पूर्ण
 
 /* Support 10, 100, 200, 1000, 2500, 5000, 10000 Mbps (e.g. 88E6393X)
- * Function mv88e6xxx_port_set_speed_duplex() can't be used as the register
- * values for speeds 2500 & 5000 conflict.
+ * Function mv88e6xxx_port_set_speed_duplex() can't be used as the रेजिस्टर
+ * values क्रम speeds 2500 & 5000 conflict.
  */
-int mv88e6393x_port_set_speed_duplex(struct mv88e6xxx_chip *chip, int port,
-				     int speed, int duplex)
-{
+पूर्णांक mv88e6393x_port_set_speed_duplex(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				     पूर्णांक speed, पूर्णांक duplex)
+अणु
 	u16 reg, ctrl;
-	int err;
+	पूर्णांक err;
 
-	if (speed == SPEED_MAX)
+	अगर (speed == SPEED_MAX)
 		speed = (port > 0 && port < 9) ? 1000 : 10000;
 
-	if (speed == 200 && port != 0)
-		return -EOPNOTSUPP;
+	अगर (speed == 200 && port != 0)
+		वापस -EOPNOTSUPP;
 
-	if (speed >= 2500 && port > 0 && port < 9)
-		return -EOPNOTSUPP;
+	अगर (speed >= 2500 && port > 0 && port < 9)
+		वापस -EOPNOTSUPP;
 
-	switch (speed) {
-	case 10:
+	चयन (speed) अणु
+	हाल 10:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_10;
-		break;
-	case 100:
+		अवरोध;
+	हाल 100:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_100;
-		break;
-	case 200:
+		अवरोध;
+	हाल 200:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_100 |
 			MV88E6390_PORT_MAC_CTL_ALTSPEED;
-		break;
-	case 1000:
+		अवरोध;
+	हाल 1000:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_1000;
-		break;
-	case 2500:
+		अवरोध;
+	हाल 2500:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_1000 |
 			MV88E6390_PORT_MAC_CTL_ALTSPEED;
-		break;
-	case 5000:
+		अवरोध;
+	हाल 5000:
 		ctrl = MV88E6390_PORT_MAC_CTL_SPEED_10000 |
 			MV88E6390_PORT_MAC_CTL_ALTSPEED;
-		break;
-	case 10000:
-	case SPEED_UNFORCED:
+		अवरोध;
+	हाल 10000:
+	हाल SPEED_UNFORCED:
 		ctrl = MV88E6XXX_PORT_MAC_CTL_SPEED_UNFORCED;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	switch (duplex) {
-	case DUPLEX_HALF:
+	चयन (duplex) अणु
+	हाल DUPLEX_HALF:
 		ctrl |= MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX;
-		break;
-	case DUPLEX_FULL:
+		अवरोध;
+	हाल DUPLEX_FULL:
 		ctrl |= MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX |
 			MV88E6XXX_PORT_MAC_CTL_DUPLEX_FULL;
-		break;
-	case DUPLEX_UNFORCED:
+		अवरोध;
+	हाल DUPLEX_UNFORCED:
 		/* normal duplex detection */
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~(MV88E6XXX_PORT_MAC_CTL_SPEED_MASK |
 		 MV88E6390_PORT_MAC_CTL_ALTSPEED |
 		 MV88E6390_PORT_MAC_CTL_FORCE_SPEED);
 
-	if (speed != SPEED_UNFORCED)
+	अगर (speed != SPEED_UNFORCED)
 		reg |= MV88E6390_PORT_MAC_CTL_FORCE_SPEED;
 
 	reg |= ctrl;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
+	अगर (err)
+		वापस err;
 
-	if (speed)
+	अगर (speed)
 		dev_dbg(chip->dev, "p%d: Speed set to %d Mbps\n", port, speed);
-	else
+	अन्यथा
 		dev_dbg(chip->dev, "p%d: Speed unforced\n", port);
 	dev_dbg(chip->dev, "p%d: %s %s duplex\n", port,
 		reg & MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX ? "Force" : "Unforce",
 		reg & MV88E6XXX_PORT_MAC_CTL_DUPLEX_FULL ? "full" : "half");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-phy_interface_t mv88e6393x_port_max_speed_mode(int port)
-{
-	if (port == 0 || port == 9 || port == 10)
-		return PHY_INTERFACE_MODE_10GBASER;
+phy_पूर्णांकerface_t mv88e6393x_port_max_speed_mode(पूर्णांक port)
+अणु
+	अगर (port == 0 || port == 9 || port == 10)
+		वापस PHY_INTERFACE_MODE_10GBASER;
 
-	return PHY_INTERFACE_MODE_NA;
-}
+	वापस PHY_INTERFACE_MODE_NA;
+पूर्ण
 
-static int mv88e6xxx_port_set_cmode(struct mv88e6xxx_chip *chip, int port,
-				    phy_interface_t mode, bool force)
-{
+अटल पूर्णांक mv88e6xxx_port_set_cmode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				    phy_पूर्णांकerface_t mode, bool क्रमce)
+अणु
 	u16 cmode;
-	int lane;
+	पूर्णांक lane;
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	/* Default to a slow mode, so freeing up SERDES interfaces for
-	 * other ports which might use them for SFPs.
+	/* Default to a slow mode, so मुक्तing up SERDES पूर्णांकerfaces क्रम
+	 * other ports which might use them क्रम SFPs.
 	 */
-	if (mode == PHY_INTERFACE_MODE_NA)
+	अगर (mode == PHY_INTERFACE_MODE_NA)
 		mode = PHY_INTERFACE_MODE_1000BASEX;
 
-	switch (mode) {
-	case PHY_INTERFACE_MODE_1000BASEX:
+	चयन (mode) अणु
+	हाल PHY_INTERFACE_MODE_1000BASEX:
 		cmode = MV88E6XXX_PORT_STS_CMODE_1000BASEX;
-		break;
-	case PHY_INTERFACE_MODE_SGMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_SGMII:
 		cmode = MV88E6XXX_PORT_STS_CMODE_SGMII;
-		break;
-	case PHY_INTERFACE_MODE_2500BASEX:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_2500BASEX:
 		cmode = MV88E6XXX_PORT_STS_CMODE_2500BASEX;
-		break;
-	case PHY_INTERFACE_MODE_5GBASER:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_5GBASER:
 		cmode = MV88E6393X_PORT_STS_CMODE_5GBASER;
-		break;
-	case PHY_INTERFACE_MODE_XGMII:
-	case PHY_INTERFACE_MODE_XAUI:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_XGMII:
+	हाल PHY_INTERFACE_MODE_XAUI:
 		cmode = MV88E6XXX_PORT_STS_CMODE_XAUI;
-		break;
-	case PHY_INTERFACE_MODE_RXAUI:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RXAUI:
 		cmode = MV88E6XXX_PORT_STS_CMODE_RXAUI;
-		break;
-	case PHY_INTERFACE_MODE_10GBASER:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_10GBASER:
 		cmode = MV88E6393X_PORT_STS_CMODE_10GBASER;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		cmode = 0;
-	}
+	पूर्ण
 
-	/* cmode doesn't change, nothing to do for us unless forced */
-	if (cmode == chip->ports[port].cmode && !force)
-		return 0;
+	/* cmode करोesn't change, nothing to करो क्रम us unless क्रमced */
+	अगर (cmode == chip->ports[port].cmode && !क्रमce)
+		वापस 0;
 
 	lane = mv88e6xxx_serdes_get_lane(chip, port);
-	if (lane >= 0) {
-		if (chip->ports[port].serdes_irq) {
+	अगर (lane >= 0) अणु
+		अगर (chip->ports[port].serdes_irq) अणु
 			err = mv88e6xxx_serdes_irq_disable(chip, port, lane);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		err = mv88e6xxx_serdes_power_down(chip, port, lane);
-		if (err)
-			return err;
-	}
+		err = mv88e6xxx_serdes_घातer_करोwn(chip, port, lane);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	chip->ports[port].cmode = 0;
 
-	if (cmode) {
-		err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_STS, &reg);
-		if (err)
-			return err;
+	अगर (cmode) अणु
+		err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_STS, &reg);
+		अगर (err)
+			वापस err;
 
 		reg &= ~MV88E6XXX_PORT_STS_CMODE_MASK;
 		reg |= cmode;
 
-		err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_STS, reg);
-		if (err)
-			return err;
+		err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_STS, reg);
+		अगर (err)
+			वापस err;
 
 		chip->ports[port].cmode = cmode;
 
 		lane = mv88e6xxx_serdes_get_lane(chip, port);
-		if (lane < 0)
-			return lane;
+		अगर (lane < 0)
+			वापस lane;
 
-		err = mv88e6xxx_serdes_power_up(chip, port, lane);
-		if (err)
-			return err;
+		err = mv88e6xxx_serdes_घातer_up(chip, port, lane);
+		अगर (err)
+			वापस err;
 
-		if (chip->ports[port].serdes_irq) {
+		अगर (chip->ports[port].serdes_irq) अणु
 			err = mv88e6xxx_serdes_irq_enable(chip, port, lane);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6390x_port_set_cmode(struct mv88e6xxx_chip *chip, int port,
-			      phy_interface_t mode)
-{
-	if (port != 9 && port != 10)
-		return -EOPNOTSUPP;
+पूर्णांक mv88e6390x_port_set_cmode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+			      phy_पूर्णांकerface_t mode)
+अणु
+	अगर (port != 9 && port != 10)
+		वापस -EOPNOTSUPP;
 
-	return mv88e6xxx_port_set_cmode(chip, port, mode, false);
-}
+	वापस mv88e6xxx_port_set_cmode(chip, port, mode, false);
+पूर्ण
 
-int mv88e6390_port_set_cmode(struct mv88e6xxx_chip *chip, int port,
-			     phy_interface_t mode)
-{
-	if (port != 9 && port != 10)
-		return -EOPNOTSUPP;
+पूर्णांक mv88e6390_port_set_cmode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+			     phy_पूर्णांकerface_t mode)
+अणु
+	अगर (port != 9 && port != 10)
+		वापस -EOPNOTSUPP;
 
-	switch (mode) {
-	case PHY_INTERFACE_MODE_NA:
-		return 0;
-	case PHY_INTERFACE_MODE_XGMII:
-	case PHY_INTERFACE_MODE_XAUI:
-	case PHY_INTERFACE_MODE_RXAUI:
-		return -EINVAL;
-	default:
-		break;
-	}
+	चयन (mode) अणु
+	हाल PHY_INTERFACE_MODE_NA:
+		वापस 0;
+	हाल PHY_INTERFACE_MODE_XGMII:
+	हाल PHY_INTERFACE_MODE_XAUI:
+	हाल PHY_INTERFACE_MODE_RXAUI:
+		वापस -EINVAL;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return mv88e6xxx_port_set_cmode(chip, port, mode, false);
-}
+	वापस mv88e6xxx_port_set_cmode(chip, port, mode, false);
+पूर्ण
 
-int mv88e6393x_port_set_cmode(struct mv88e6xxx_chip *chip, int port,
-			      phy_interface_t mode)
-{
-	int err;
+पूर्णांक mv88e6393x_port_set_cmode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+			      phy_पूर्णांकerface_t mode)
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	if (port != 0 && port != 9 && port != 10)
-		return -EOPNOTSUPP;
+	अगर (port != 0 && port != 9 && port != 10)
+		वापस -EOPNOTSUPP;
 
 	/* mv88e6393x errata 4.5: EEE should be disabled on SERDES ports */
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~MV88E6XXX_PORT_MAC_CTL_EEE;
 	reg |= MV88E6XXX_PORT_MAC_CTL_FORCE_EEE;
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_port_set_cmode(chip, port, mode, false);
-}
+	वापस mv88e6xxx_port_set_cmode(chip, port, mode, false);
+पूर्ण
 
-static int mv88e6341_port_set_cmode_writable(struct mv88e6xxx_chip *chip,
-					     int port)
-{
-	int err, addr;
+अटल पूर्णांक mv88e6341_port_set_cmode_writable(काष्ठा mv88e6xxx_chip *chip,
+					     पूर्णांक port)
+अणु
+	पूर्णांक err, addr;
 	u16 reg, bits;
 
-	if (port != 5)
-		return -EOPNOTSUPP;
+	अगर (port != 5)
+		वापस -EOPNOTSUPP;
 
 	addr = chip->info->port_base_addr + port;
 
-	err = mv88e6xxx_port_hidden_read(chip, 0x7, addr, 0, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_hidden_पढ़ो(chip, 0x7, addr, 0, &reg);
+	अगर (err)
+		वापस err;
 
 	bits = MV88E6341_PORT_RESERVED_1A_FORCE_CMODE |
 	       MV88E6341_PORT_RESERVED_1A_SGMII_AN;
 
-	if ((reg & bits) == bits)
-		return 0;
+	अगर ((reg & bits) == bits)
+		वापस 0;
 
 	reg |= bits;
-	return mv88e6xxx_port_hidden_write(chip, 0x7, addr, 0, reg);
-}
+	वापस mv88e6xxx_port_hidden_ग_लिखो(chip, 0x7, addr, 0, reg);
+पूर्ण
 
-int mv88e6341_port_set_cmode(struct mv88e6xxx_chip *chip, int port,
-			     phy_interface_t mode)
-{
-	int err;
+पूर्णांक mv88e6341_port_set_cmode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+			     phy_पूर्णांकerface_t mode)
+अणु
+	पूर्णांक err;
 
-	if (port != 5)
-		return -EOPNOTSUPP;
+	अगर (port != 5)
+		वापस -EOPNOTSUPP;
 
-	switch (mode) {
-	case PHY_INTERFACE_MODE_NA:
-		return 0;
-	case PHY_INTERFACE_MODE_XGMII:
-	case PHY_INTERFACE_MODE_XAUI:
-	case PHY_INTERFACE_MODE_RXAUI:
-		return -EINVAL;
-	default:
-		break;
-	}
+	चयन (mode) अणु
+	हाल PHY_INTERFACE_MODE_NA:
+		वापस 0;
+	हाल PHY_INTERFACE_MODE_XGMII:
+	हाल PHY_INTERFACE_MODE_XAUI:
+	हाल PHY_INTERFACE_MODE_RXAUI:
+		वापस -EINVAL;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	err = mv88e6341_port_set_cmode_writable(chip, port);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_port_set_cmode(chip, port, mode, true);
-}
+	वापस mv88e6xxx_port_set_cmode(chip, port, mode, true);
+पूर्ण
 
-int mv88e6185_port_get_cmode(struct mv88e6xxx_chip *chip, int port, u8 *cmode)
-{
-	int err;
+पूर्णांक mv88e6185_port_get_cmode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u8 *cmode)
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_STS, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_STS, &reg);
+	अगर (err)
+		वापस err;
 
 	*cmode = reg & MV88E6185_PORT_STS_CMODE_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6352_port_get_cmode(struct mv88e6xxx_chip *chip, int port, u8 *cmode)
-{
-	int err;
+पूर्णांक mv88e6352_port_get_cmode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u8 *cmode)
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_STS, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_STS, &reg);
+	अगर (err)
+		वापस err;
 
 	*cmode = reg & MV88E6XXX_PORT_STS_CMODE_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Offset 0x02: Jamming Control
  *
- * Do not limit the period of time that this port can be paused for by
- * the remote end or the period of time that this port can pause the
+ * Do not limit the period of समय that this port can be छोड़ोd क्रम by
+ * the remote end or the period of समय that this port can छोड़ो the
  * remote end.
  */
-int mv88e6097_port_pause_limit(struct mv88e6xxx_chip *chip, int port, u8 in,
+पूर्णांक mv88e6097_port_छोड़ो_limit(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u8 in,
 			       u8 out)
-{
-	return mv88e6xxx_port_write(chip, port, MV88E6097_PORT_JAM_CTL,
+अणु
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6097_PORT_JAM_CTL,
 				    out << 8 | in);
-}
+पूर्ण
 
-int mv88e6390_port_pause_limit(struct mv88e6xxx_chip *chip, int port, u8 in,
+पूर्णांक mv88e6390_port_छोड़ो_limit(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u8 in,
 			       u8 out)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6390_PORT_FLOW_CTL,
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6390_PORT_FLOW_CTL,
 				   MV88E6390_PORT_FLOW_CTL_UPDATE |
 				   MV88E6390_PORT_FLOW_CTL_LIMIT_IN | in);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6390_PORT_FLOW_CTL,
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6390_PORT_FLOW_CTL,
 				    MV88E6390_PORT_FLOW_CTL_UPDATE |
 				    MV88E6390_PORT_FLOW_CTL_LIMIT_OUT | out);
-}
+पूर्ण
 
 /* Offset 0x04: Port Control Register */
 
-static const char * const mv88e6xxx_port_state_names[] = {
+अटल स्थिर अक्षर * स्थिर mv88e6xxx_port_state_names[] = अणु
 	[MV88E6XXX_PORT_CTL0_STATE_DISABLED] = "Disabled",
 	[MV88E6XXX_PORT_CTL0_STATE_BLOCKING] = "Blocking/Listening",
 	[MV88E6XXX_PORT_CTL0_STATE_LEARNING] = "Learning",
 	[MV88E6XXX_PORT_CTL0_STATE_FORWARDING] = "Forwarding",
-};
+पूर्ण;
 
-int mv88e6xxx_port_set_state(struct mv88e6xxx_chip *chip, int port, u8 state)
-{
+पूर्णांक mv88e6xxx_port_set_state(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u8 state)
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL0, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL0, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~MV88E6XXX_PORT_CTL0_STATE_MASK;
 
-	switch (state) {
-	case BR_STATE_DISABLED:
+	चयन (state) अणु
+	हाल BR_STATE_DISABLED:
 		state = MV88E6XXX_PORT_CTL0_STATE_DISABLED;
-		break;
-	case BR_STATE_BLOCKING:
-	case BR_STATE_LISTENING:
+		अवरोध;
+	हाल BR_STATE_BLOCKING:
+	हाल BR_STATE_LISTENING:
 		state = MV88E6XXX_PORT_CTL0_STATE_BLOCKING;
-		break;
-	case BR_STATE_LEARNING:
+		अवरोध;
+	हाल BR_STATE_LEARNING:
 		state = MV88E6XXX_PORT_CTL0_STATE_LEARNING;
-		break;
-	case BR_STATE_FORWARDING:
+		अवरोध;
+	हाल BR_STATE_FORWARDING:
 		state = MV88E6XXX_PORT_CTL0_STATE_FORWARDING;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	reg |= state;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL0, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL0, reg);
+	अगर (err)
+		वापस err;
 
 	dev_dbg(chip->dev, "p%d: PortState set to %s\n", port,
 		mv88e6xxx_port_state_names[state]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6xxx_port_set_egress_mode(struct mv88e6xxx_chip *chip, int port,
-				   enum mv88e6xxx_egress_mode mode)
-{
-	int err;
+पूर्णांक mv88e6xxx_port_set_egress_mode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				   क्रमागत mv88e6xxx_egress_mode mode)
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL0, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL0, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~MV88E6XXX_PORT_CTL0_EGRESS_MODE_MASK;
 
-	switch (mode) {
-	case MV88E6XXX_EGRESS_MODE_UNMODIFIED:
+	चयन (mode) अणु
+	हाल MV88E6XXX_EGRESS_MODE_UNMODIFIED:
 		reg |= MV88E6XXX_PORT_CTL0_EGRESS_MODE_UNMODIFIED;
-		break;
-	case MV88E6XXX_EGRESS_MODE_UNTAGGED:
+		अवरोध;
+	हाल MV88E6XXX_EGRESS_MODE_UNTAGGED:
 		reg |= MV88E6XXX_PORT_CTL0_EGRESS_MODE_UNTAGGED;
-		break;
-	case MV88E6XXX_EGRESS_MODE_TAGGED:
+		अवरोध;
+	हाल MV88E6XXX_EGRESS_MODE_TAGGED:
 		reg |= MV88E6XXX_PORT_CTL0_EGRESS_MODE_TAGGED;
-		break;
-	case MV88E6XXX_EGRESS_MODE_ETHERTYPE:
+		अवरोध;
+	हाल MV88E6XXX_EGRESS_MODE_ETHERTYPE:
 		reg |= MV88E6XXX_PORT_CTL0_EGRESS_MODE_ETHER_TYPE_DSA;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL0, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL0, reg);
+पूर्ण
 
-int mv88e6085_port_set_frame_mode(struct mv88e6xxx_chip *chip, int port,
-				  enum mv88e6xxx_frame_mode mode)
-{
-	int err;
+पूर्णांक mv88e6085_port_set_frame_mode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				  क्रमागत mv88e6xxx_frame_mode mode)
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL0, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL0, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~MV88E6XXX_PORT_CTL0_FRAME_MODE_MASK;
 
-	switch (mode) {
-	case MV88E6XXX_FRAME_MODE_NORMAL:
+	चयन (mode) अणु
+	हाल MV88E6XXX_FRAME_MODE_NORMAL:
 		reg |= MV88E6XXX_PORT_CTL0_FRAME_MODE_NORMAL;
-		break;
-	case MV88E6XXX_FRAME_MODE_DSA:
+		अवरोध;
+	हाल MV88E6XXX_FRAME_MODE_DSA:
 		reg |= MV88E6XXX_PORT_CTL0_FRAME_MODE_DSA;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL0, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL0, reg);
+पूर्ण
 
-int mv88e6351_port_set_frame_mode(struct mv88e6xxx_chip *chip, int port,
-				  enum mv88e6xxx_frame_mode mode)
-{
-	int err;
+पूर्णांक mv88e6351_port_set_frame_mode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				  क्रमागत mv88e6xxx_frame_mode mode)
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL0, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL0, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~MV88E6XXX_PORT_CTL0_FRAME_MODE_MASK;
 
-	switch (mode) {
-	case MV88E6XXX_FRAME_MODE_NORMAL:
+	चयन (mode) अणु
+	हाल MV88E6XXX_FRAME_MODE_NORMAL:
 		reg |= MV88E6XXX_PORT_CTL0_FRAME_MODE_NORMAL;
-		break;
-	case MV88E6XXX_FRAME_MODE_DSA:
+		अवरोध;
+	हाल MV88E6XXX_FRAME_MODE_DSA:
 		reg |= MV88E6XXX_PORT_CTL0_FRAME_MODE_DSA;
-		break;
-	case MV88E6XXX_FRAME_MODE_PROVIDER:
+		अवरोध;
+	हाल MV88E6XXX_FRAME_MODE_PROVIDER:
 		reg |= MV88E6XXX_PORT_CTL0_FRAME_MODE_PROVIDER;
-		break;
-	case MV88E6XXX_FRAME_MODE_ETHERTYPE:
+		अवरोध;
+	हाल MV88E6XXX_FRAME_MODE_ETHERTYPE:
 		reg |= MV88E6XXX_PORT_CTL0_FRAME_MODE_ETHER_TYPE_DSA;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL0, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL0, reg);
+पूर्ण
 
-int mv88e6185_port_set_forward_unknown(struct mv88e6xxx_chip *chip,
-				       int port, bool unicast)
-{
-	int err;
+पूर्णांक mv88e6185_port_set_क्रमward_unknown(काष्ठा mv88e6xxx_chip *chip,
+				       पूर्णांक port, bool unicast)
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL0, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL0, &reg);
+	अगर (err)
+		वापस err;
 
-	if (unicast)
+	अगर (unicast)
 		reg |= MV88E6185_PORT_CTL0_FORWARD_UNKNOWN;
-	else
+	अन्यथा
 		reg &= ~MV88E6185_PORT_CTL0_FORWARD_UNKNOWN;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL0, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL0, reg);
+पूर्ण
 
-int mv88e6352_port_set_ucast_flood(struct mv88e6xxx_chip *chip, int port,
+पूर्णांक mv88e6352_port_set_ucast_flood(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
 				   bool unicast)
-{
-	int err;
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL0, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL0, &reg);
+	अगर (err)
+		वापस err;
 
-	if (unicast)
+	अगर (unicast)
 		reg |= MV88E6352_PORT_CTL0_EGRESS_FLOODS_UC;
-	else
+	अन्यथा
 		reg &= ~MV88E6352_PORT_CTL0_EGRESS_FLOODS_UC;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL0, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL0, reg);
+पूर्ण
 
-int mv88e6352_port_set_mcast_flood(struct mv88e6xxx_chip *chip, int port,
+पूर्णांक mv88e6352_port_set_mcast_flood(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
 				   bool multicast)
-{
-	int err;
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL0, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL0, &reg);
+	अगर (err)
+		वापस err;
 
-	if (multicast)
+	अगर (multicast)
 		reg |= MV88E6352_PORT_CTL0_EGRESS_FLOODS_MC;
-	else
+	अन्यथा
 		reg &= ~MV88E6352_PORT_CTL0_EGRESS_FLOODS_MC;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL0, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL0, reg);
+पूर्ण
 
 /* Offset 0x05: Port Control 1 */
 
-int mv88e6xxx_port_set_message_port(struct mv88e6xxx_chip *chip, int port,
+पूर्णांक mv88e6xxx_port_set_message_port(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
 				    bool message_port)
-{
+अणु
 	u16 val;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL1, &val);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL1, &val);
+	अगर (err)
+		वापस err;
 
-	if (message_port)
+	अगर (message_port)
 		val |= MV88E6XXX_PORT_CTL1_MESSAGE_PORT;
-	else
+	अन्यथा
 		val &= ~MV88E6XXX_PORT_CTL1_MESSAGE_PORT;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL1, val);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL1, val);
+पूर्ण
 
-int mv88e6xxx_port_set_trunk(struct mv88e6xxx_chip *chip, int port,
+पूर्णांक mv88e6xxx_port_set_trunk(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
 			     bool trunk, u8 id)
-{
+अणु
 	u16 val;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL1, &val);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL1, &val);
+	अगर (err)
+		वापस err;
 
 	val &= ~MV88E6XXX_PORT_CTL1_TRUNK_ID_MASK;
 
-	if (trunk)
+	अगर (trunk)
 		val |= MV88E6XXX_PORT_CTL1_TRUNK_PORT |
 			(id << MV88E6XXX_PORT_CTL1_TRUNK_ID_SHIFT);
-	else
+	अन्यथा
 		val &= ~MV88E6XXX_PORT_CTL1_TRUNK_PORT;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL1, val);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL1, val);
+पूर्ण
 
 /* Offset 0x06: Port Based VLAN Map */
 
-int mv88e6xxx_port_set_vlan_map(struct mv88e6xxx_chip *chip, int port, u16 map)
-{
-	const u16 mask = mv88e6xxx_port_mask(chip);
+पूर्णांक mv88e6xxx_port_set_vlan_map(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u16 map)
+अणु
+	स्थिर u16 mask = mv88e6xxx_port_mask(chip);
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_BASE_VLAN, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_BASE_VLAN, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~mask;
 	reg |= map & mask;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_BASE_VLAN, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_BASE_VLAN, reg);
+	अगर (err)
+		वापस err;
 
 	dev_dbg(chip->dev, "p%d: VLANTable set to %.3x\n", port, map);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6xxx_port_get_fid(struct mv88e6xxx_chip *chip, int port, u16 *fid)
-{
-	const u16 upper_mask = (mv88e6xxx_num_databases(chip) - 1) >> 4;
+पूर्णांक mv88e6xxx_port_get_fid(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u16 *fid)
+अणु
+	स्थिर u16 upper_mask = (mv88e6xxx_num_databases(chip) - 1) >> 4;
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	/* Port's default FID lower 4 bits are located in reg 0x06, offset 12 */
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_BASE_VLAN, &reg);
-	if (err)
-		return err;
+	/* Port's शेष FID lower 4 bits are located in reg 0x06, offset 12 */
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_BASE_VLAN, &reg);
+	अगर (err)
+		वापस err;
 
 	*fid = (reg & 0xf000) >> 12;
 
-	/* Port's default FID upper bits are located in reg 0x05, offset 0 */
-	if (upper_mask) {
-		err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL1,
+	/* Port's शेष FID upper bits are located in reg 0x05, offset 0 */
+	अगर (upper_mask) अणु
+		err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL1,
 					  &reg);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		*fid |= (reg & upper_mask) << 4;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6xxx_port_set_fid(struct mv88e6xxx_chip *chip, int port, u16 fid)
-{
-	const u16 upper_mask = (mv88e6xxx_num_databases(chip) - 1) >> 4;
+पूर्णांक mv88e6xxx_port_set_fid(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u16 fid)
+अणु
+	स्थिर u16 upper_mask = (mv88e6xxx_num_databases(chip) - 1) >> 4;
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	if (fid >= mv88e6xxx_num_databases(chip))
-		return -EINVAL;
+	अगर (fid >= mv88e6xxx_num_databases(chip))
+		वापस -EINVAL;
 
-	/* Port's default FID lower 4 bits are located in reg 0x06, offset 12 */
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_BASE_VLAN, &reg);
-	if (err)
-		return err;
+	/* Port's शेष FID lower 4 bits are located in reg 0x06, offset 12 */
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_BASE_VLAN, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= 0x0fff;
 	reg |= (fid & 0x000f) << 12;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_BASE_VLAN, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_BASE_VLAN, reg);
+	अगर (err)
+		वापस err;
 
-	/* Port's default FID upper bits are located in reg 0x05, offset 0 */
-	if (upper_mask) {
-		err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL1,
+	/* Port's शेष FID upper bits are located in reg 0x05, offset 0 */
+	अगर (upper_mask) अणु
+		err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL1,
 					  &reg);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		reg &= ~upper_mask;
 		reg |= (fid >> 4) & upper_mask;
 
-		err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL1,
+		err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL1,
 					   reg);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	dev_dbg(chip->dev, "p%d: FID set to %u\n", port, fid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Offset 0x07: Default Port VLAN ID & Priority */
 
-int mv88e6xxx_port_get_pvid(struct mv88e6xxx_chip *chip, int port, u16 *pvid)
-{
+पूर्णांक mv88e6xxx_port_get_pvid(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u16 *pvid)
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_DEFAULT_VLAN,
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_DEFAULT_VLAN,
 				  &reg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	*pvid = reg & MV88E6XXX_PORT_DEFAULT_VLAN_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6xxx_port_set_pvid(struct mv88e6xxx_chip *chip, int port, u16 pvid)
-{
+पूर्णांक mv88e6xxx_port_set_pvid(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port, u16 pvid)
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_DEFAULT_VLAN,
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_DEFAULT_VLAN,
 				  &reg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	reg &= ~MV88E6XXX_PORT_DEFAULT_VLAN_MASK;
 	reg |= pvid & MV88E6XXX_PORT_DEFAULT_VLAN_MASK;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_DEFAULT_VLAN,
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_DEFAULT_VLAN,
 				   reg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	dev_dbg(chip->dev, "p%d: DefaultVID set to %u\n", port, pvid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Offset 0x08: Port Control 2 Register */
 
-static const char * const mv88e6xxx_port_8021q_mode_names[] = {
+अटल स्थिर अक्षर * स्थिर mv88e6xxx_port_8021q_mode_names[] = अणु
 	[MV88E6XXX_PORT_CTL2_8021Q_MODE_DISABLED] = "Disabled",
 	[MV88E6XXX_PORT_CTL2_8021Q_MODE_FALLBACK] = "Fallback",
 	[MV88E6XXX_PORT_CTL2_8021Q_MODE_CHECK] = "Check",
 	[MV88E6XXX_PORT_CTL2_8021Q_MODE_SECURE] = "Secure",
-};
+पूर्ण;
 
-int mv88e6185_port_set_default_forward(struct mv88e6xxx_chip *chip,
-				       int port, bool multicast)
-{
-	int err;
+पूर्णांक mv88e6185_port_set_शेष_क्रमward(काष्ठा mv88e6xxx_chip *chip,
+				       पूर्णांक port, bool multicast)
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL2, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL2, &reg);
+	अगर (err)
+		वापस err;
 
-	if (multicast)
+	अगर (multicast)
 		reg |= MV88E6XXX_PORT_CTL2_DEFAULT_FORWARD;
-	else
+	अन्यथा
 		reg &= ~MV88E6XXX_PORT_CTL2_DEFAULT_FORWARD;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL2, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL2, reg);
+पूर्ण
 
-int mv88e6095_port_set_upstream_port(struct mv88e6xxx_chip *chip, int port,
-				     int upstream_port)
-{
-	int err;
+पूर्णांक mv88e6095_port_set_upstream_port(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				     पूर्णांक upstream_port)
+अणु
+	पूर्णांक err;
 	u16 reg;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL2, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL2, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~MV88E6095_PORT_CTL2_CPU_PORT_MASK;
 	reg |= upstream_port;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL2, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL2, reg);
+पूर्ण
 
-int mv88e6xxx_port_set_mirror(struct mv88e6xxx_chip *chip, int port,
-			      enum mv88e6xxx_egress_direction direction,
+पूर्णांक mv88e6xxx_port_set_mirror(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+			      क्रमागत mv88e6xxx_egress_direction direction,
 			      bool mirror)
-{
+अणु
 	bool *mirror_port;
 	u16 reg;
 	u16 bit;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL2, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL2, &reg);
+	अगर (err)
+		वापस err;
 
-	switch (direction) {
-	case MV88E6XXX_EGRESS_DIR_INGRESS:
+	चयन (direction) अणु
+	हाल MV88E6XXX_EGRESS_सूची_INGRESS:
 		bit = MV88E6XXX_PORT_CTL2_INGRESS_MONITOR;
 		mirror_port = &chip->ports[port].mirror_ingress;
-		break;
-	case MV88E6XXX_EGRESS_DIR_EGRESS:
+		अवरोध;
+	हाल MV88E6XXX_EGRESS_सूची_EGRESS:
 		bit = MV88E6XXX_PORT_CTL2_EGRESS_MONITOR;
 		mirror_port = &chip->ports[port].mirror_egress;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	reg &= ~bit;
-	if (mirror)
+	अगर (mirror)
 		reg |= bit;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL2, reg);
-	if (!err)
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL2, reg);
+	अगर (!err)
 		*mirror_port = mirror;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mv88e6xxx_port_set_8021q_mode(struct mv88e6xxx_chip *chip, int port,
+पूर्णांक mv88e6xxx_port_set_8021q_mode(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
 				  u16 mode)
-{
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL2, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL2, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~MV88E6XXX_PORT_CTL2_8021Q_MODE_MASK;
 	reg |= mode & MV88E6XXX_PORT_CTL2_8021Q_MODE_MASK;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL2, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL2, reg);
+	अगर (err)
+		वापस err;
 
 	dev_dbg(chip->dev, "p%d: 802.1QMode set to %s\n", port,
 		mv88e6xxx_port_8021q_mode_names[mode]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6xxx_port_set_map_da(struct mv88e6xxx_chip *chip, int port)
-{
+पूर्णांक mv88e6xxx_port_set_map_da(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL2, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL2, &reg);
+	अगर (err)
+		वापस err;
 
 	reg |= MV88E6XXX_PORT_CTL2_MAP_DA;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL2, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL2, reg);
+पूर्ण
 
-int mv88e6165_port_set_jumbo_size(struct mv88e6xxx_chip *chip, int port,
-				  size_t size)
-{
+पूर्णांक mv88e6165_port_set_jumbo_size(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				  माप_प्रकार size)
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_CTL2, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_CTL2, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~MV88E6XXX_PORT_CTL2_JUMBO_MODE_MASK;
 
-	if (size <= 1522)
+	अगर (size <= 1522)
 		reg |= MV88E6XXX_PORT_CTL2_JUMBO_MODE_1522;
-	else if (size <= 2048)
+	अन्यथा अगर (size <= 2048)
 		reg |= MV88E6XXX_PORT_CTL2_JUMBO_MODE_2048;
-	else if (size <= 10240)
+	अन्यथा अगर (size <= 10240)
 		reg |= MV88E6XXX_PORT_CTL2_JUMBO_MODE_10240;
-	else
-		return -ERANGE;
+	अन्यथा
+		वापस -दुस्फल;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_CTL2, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_CTL2, reg);
+पूर्ण
 
 /* Offset 0x09: Port Rate Control */
 
-int mv88e6095_port_egress_rate_limiting(struct mv88e6xxx_chip *chip, int port)
-{
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_EGRESS_RATE_CTL1,
+पूर्णांक mv88e6095_port_egress_rate_limiting(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_EGRESS_RATE_CTL1,
 				    0x0000);
-}
+पूर्ण
 
-int mv88e6097_port_egress_rate_limiting(struct mv88e6xxx_chip *chip, int port)
-{
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_EGRESS_RATE_CTL1,
+पूर्णांक mv88e6097_port_egress_rate_limiting(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_EGRESS_RATE_CTL1,
 				    0x0001);
-}
+पूर्ण
 
 /* Offset 0x0B: Port Association Vector */
 
-int mv88e6xxx_port_set_assoc_vector(struct mv88e6xxx_chip *chip, int port,
+पूर्णांक mv88e6xxx_port_set_assoc_vector(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
 				    u16 pav)
-{
+अणु
 	u16 reg, mask;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_ASSOC_VECTOR,
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_ASSOC_VECTOR,
 				  &reg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mask = mv88e6xxx_port_mask(chip);
 	reg &= ~mask;
 	reg |= pav & mask;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_ASSOC_VECTOR,
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_ASSOC_VECTOR,
 				    reg);
-}
+पूर्ण
 
 /* Offset 0x0C: Port ATU Control */
 
-int mv88e6xxx_port_disable_learn_limit(struct mv88e6xxx_chip *chip, int port)
-{
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_ATU_CTL, 0);
-}
+पूर्णांक mv88e6xxx_port_disable_learn_limit(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_ATU_CTL, 0);
+पूर्ण
 
 /* Offset 0x0D: (Priority) Override Register */
 
-int mv88e6xxx_port_disable_pri_override(struct mv88e6xxx_chip *chip, int port)
-{
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_PRI_OVERRIDE, 0);
-}
+पूर्णांक mv88e6xxx_port_disable_pri_override(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_PRI_OVERRIDE, 0);
+पूर्ण
 
-/* Offset 0x0E: Policy & MGMT Control Register for FAMILY 6191X 6193X 6393X */
+/* Offset 0x0E: Policy & MGMT Control Register क्रम FAMILY 6191X 6193X 6393X */
 
-static int mv88e6393x_port_policy_read(struct mv88e6xxx_chip *chip, int port,
-				       u16 pointer, u8 *data)
-{
+अटल पूर्णांक mv88e6393x_port_policy_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				       u16 poपूर्णांकer, u8 *data)
+अणु
 	u16 reg;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6393X_PORT_POLICY_MGMT_CTL,
-				   pointer);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6393X_PORT_POLICY_MGMT_CTL,
+				   poपूर्णांकer);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6393X_PORT_POLICY_MGMT_CTL,
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6393X_PORT_POLICY_MGMT_CTL,
 				  &reg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	*data = reg;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv88e6393x_port_policy_write(struct mv88e6xxx_chip *chip, int port,
-					u16 pointer, u8 data)
-{
+अटल पूर्णांक mv88e6393x_port_policy_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+					u16 poपूर्णांकer, u8 data)
+अणु
 	u16 reg;
 
-	reg = MV88E6393X_PORT_POLICY_MGMT_CTL_UPDATE | pointer | data;
+	reg = MV88E6393X_PORT_POLICY_MGMT_CTL_UPDATE | poपूर्णांकer | data;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6393X_PORT_POLICY_MGMT_CTL,
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6393X_PORT_POLICY_MGMT_CTL,
 				    reg);
-}
+पूर्ण
 
-static int mv88e6393x_port_policy_write_all(struct mv88e6xxx_chip *chip,
-					    u16 pointer, u8 data)
-{
-	int err, port;
+अटल पूर्णांक mv88e6393x_port_policy_ग_लिखो_all(काष्ठा mv88e6xxx_chip *chip,
+					    u16 poपूर्णांकer, u8 data)
+अणु
+	पूर्णांक err, port;
 
-	for (port = 0; port < mv88e6xxx_num_ports(chip); port++) {
-		if (dsa_is_unused_port(chip->ds, port))
-			continue;
+	क्रम (port = 0; port < mv88e6xxx_num_ports(chip); port++) अणु
+		अगर (dsa_is_unused_port(chip->ds, port))
+			जारी;
 
-		err = mv88e6393x_port_policy_write(chip, port, pointer, data);
-		if (err)
-			return err;
-	}
+		err = mv88e6393x_port_policy_ग_लिखो(chip, port, poपूर्णांकer, data);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6393x_set_egress_port(struct mv88e6xxx_chip *chip,
-			       enum mv88e6xxx_egress_direction direction,
-			       int port)
-{
+पूर्णांक mv88e6393x_set_egress_port(काष्ठा mv88e6xxx_chip *chip,
+			       क्रमागत mv88e6xxx_egress_direction direction,
+			       पूर्णांक port)
+अणु
 	u16 ptr;
-	int err;
+	पूर्णांक err;
 
-	switch (direction) {
-	case MV88E6XXX_EGRESS_DIR_INGRESS:
+	चयन (direction) अणु
+	हाल MV88E6XXX_EGRESS_सूची_INGRESS:
 		ptr = MV88E6393X_PORT_POLICY_MGMT_CTL_PTR_INGRESS_DEST;
-		err = mv88e6393x_port_policy_write_all(chip, ptr, port);
-		if (err)
-			return err;
-		break;
-	case MV88E6XXX_EGRESS_DIR_EGRESS:
+		err = mv88e6393x_port_policy_ग_लिखो_all(chip, ptr, port);
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल MV88E6XXX_EGRESS_सूची_EGRESS:
 		ptr = MV88E6393X_G2_EGRESS_MONITOR_DEST;
-		err = mv88e6xxx_g2_write(chip, ptr, port);
-		if (err)
-			return err;
-		break;
-	}
+		err = mv88e6xxx_g2_ग_लिखो(chip, ptr, port);
+		अगर (err)
+			वापस err;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6393x_port_set_upstream_port(struct mv88e6xxx_chip *chip, int port,
-				      int upstream_port)
-{
+पूर्णांक mv88e6393x_port_set_upstream_port(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+				      पूर्णांक upstream_port)
+अणु
 	u16 ptr = MV88E6393X_PORT_POLICY_MGMT_CTL_PTR_CPU_DEST;
 	u8 data = MV88E6393X_PORT_POLICY_MGMT_CTL_CPU_DEST_MGMTPRI |
 		  upstream_port;
 
-	return mv88e6393x_port_policy_write(chip, port, ptr, data);
-}
+	वापस mv88e6393x_port_policy_ग_लिखो(chip, port, ptr, data);
+पूर्ण
 
-int mv88e6393x_port_mgmt_rsvd2cpu(struct mv88e6xxx_chip *chip)
-{
+पूर्णांक mv88e6393x_port_mgmt_rsvd2cpu(काष्ठा mv88e6xxx_chip *chip)
+अणु
 	u16 ptr;
-	int err;
+	पूर्णांक err;
 
 	/* Consider the frames with reserved multicast destination
 	 * addresses matching 01:80:c2:00:00:00 and
 	 * 01:80:c2:00:00:02 as MGMT.
 	 */
 	ptr = MV88E6393X_PORT_POLICY_MGMT_CTL_PTR_01C280000000XLO;
-	err = mv88e6393x_port_policy_write_all(chip, ptr, 0xff);
-	if (err)
-		return err;
+	err = mv88e6393x_port_policy_ग_लिखो_all(chip, ptr, 0xff);
+	अगर (err)
+		वापस err;
 
 	ptr = MV88E6393X_PORT_POLICY_MGMT_CTL_PTR_01C280000000XHI;
-	err = mv88e6393x_port_policy_write_all(chip, ptr, 0xff);
-	if (err)
-		return err;
+	err = mv88e6393x_port_policy_ग_लिखो_all(chip, ptr, 0xff);
+	अगर (err)
+		वापस err;
 
 	ptr = MV88E6393X_PORT_POLICY_MGMT_CTL_PTR_01C280000002XLO;
-	err = mv88e6393x_port_policy_write_all(chip, ptr, 0xff);
-	if (err)
-		return err;
+	err = mv88e6393x_port_policy_ग_लिखो_all(chip, ptr, 0xff);
+	अगर (err)
+		वापस err;
 
 	ptr = MV88E6393X_PORT_POLICY_MGMT_CTL_PTR_01C280000002XHI;
-	err = mv88e6393x_port_policy_write_all(chip, ptr, 0xff);
-	if (err)
-		return err;
+	err = mv88e6393x_port_policy_ग_लिखो_all(chip, ptr, 0xff);
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Offset 0x10 & 0x11: EPC */
 
-static int mv88e6393x_port_epc_wait_ready(struct mv88e6xxx_chip *chip, int port)
-{
-	int bit = __bf_shf(MV88E6393X_PORT_EPC_CMD_BUSY);
+अटल पूर्णांक mv88e6393x_port_epc_रुको_पढ़ोy(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
+	पूर्णांक bit = __bf_shf(MV88E6393X_PORT_EPC_CMD_BUSY);
 
-	return mv88e6xxx_port_wait_bit(chip, port, MV88E6393X_PORT_EPC_CMD, bit, 0);
-}
+	वापस mv88e6xxx_port_रुको_bit(chip, port, MV88E6393X_PORT_EPC_CMD, bit, 0);
+पूर्ण
 
-/* Port Ether type for 6393X family */
+/* Port Ether type क्रम 6393X family */
 
-int mv88e6393x_port_set_ether_type(struct mv88e6xxx_chip *chip, int port,
+पूर्णांक mv88e6393x_port_set_ether_type(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
 				   u16 etype)
-{
+अणु
 	u16 val;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6393x_port_epc_wait_ready(chip, port);
-	if (err)
-		return err;
+	err = mv88e6393x_port_epc_रुको_पढ़ोy(chip, port);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_port_write(chip, port, MV88E6393X_PORT_EPC_DATA, etype);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_ग_लिखो(chip, port, MV88E6393X_PORT_EPC_DATA, etype);
+	अगर (err)
+		वापस err;
 
 	val = MV88E6393X_PORT_EPC_CMD_BUSY |
 	      MV88E6393X_PORT_EPC_CMD_WRITE |
 	      MV88E6393X_PORT_EPC_INDEX_PORT_ETYPE;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6393X_PORT_EPC_CMD, val);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6393X_PORT_EPC_CMD, val);
+पूर्ण
 
 /* Offset 0x0f: Port Ether type */
 
-int mv88e6351_port_set_ether_type(struct mv88e6xxx_chip *chip, int port,
+पूर्णांक mv88e6351_port_set_ether_type(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
 				  u16 etype)
-{
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_ETH_TYPE, etype);
-}
+अणु
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_ETH_TYPE, etype);
+पूर्ण
 
 /* Offset 0x18: Port IEEE Priority Remapping Registers [0-3]
  * Offset 0x19: Port IEEE Priority Remapping Registers [4-7]
  */
 
-int mv88e6095_port_tag_remap(struct mv88e6xxx_chip *chip, int port)
-{
-	int err;
+पूर्णांक mv88e6095_port_tag_remap(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
+	पूर्णांक err;
 
-	/* Use a direct priority mapping for all IEEE tagged frames */
-	err = mv88e6xxx_port_write(chip, port,
+	/* Use a direct priority mapping क्रम all IEEE tagged frames */
+	err = mv88e6xxx_port_ग_लिखो(chip, port,
 				   MV88E6095_PORT_IEEE_PRIO_REMAP_0123,
 				   0x3210);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_port_write(chip, port,
+	वापस mv88e6xxx_port_ग_लिखो(chip, port,
 				    MV88E6095_PORT_IEEE_PRIO_REMAP_4567,
 				    0x7654);
-}
+पूर्ण
 
-static int mv88e6xxx_port_ieeepmt_write(struct mv88e6xxx_chip *chip,
-					int port, u16 table, u8 ptr, u16 data)
-{
+अटल पूर्णांक mv88e6xxx_port_ieeepmt_ग_लिखो(काष्ठा mv88e6xxx_chip *chip,
+					पूर्णांक port, u16 table, u8 ptr, u16 data)
+अणु
 	u16 reg;
 
 	reg = MV88E6390_PORT_IEEE_PRIO_MAP_TABLE_UPDATE | table |
 		(ptr << __bf_shf(MV88E6390_PORT_IEEE_PRIO_MAP_TABLE_PTR_MASK)) |
 		(data & MV88E6390_PORT_IEEE_PRIO_MAP_TABLE_DATA_MASK);
 
-	return mv88e6xxx_port_write(chip, port,
+	वापस mv88e6xxx_port_ग_लिखो(chip, port,
 				    MV88E6390_PORT_IEEE_PRIO_MAP_TABLE, reg);
-}
+पूर्ण
 
-int mv88e6390_port_tag_remap(struct mv88e6xxx_chip *chip, int port)
-{
-	int err, i;
+पूर्णांक mv88e6390_port_tag_remap(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
+	पूर्णांक err, i;
 	u16 table;
 
-	for (i = 0; i <= 7; i++) {
+	क्रम (i = 0; i <= 7; i++) अणु
 		table = MV88E6390_PORT_IEEE_PRIO_MAP_TABLE_INGRESS_PCP;
-		err = mv88e6xxx_port_ieeepmt_write(chip, port, table, i,
+		err = mv88e6xxx_port_ieeepmt_ग_लिखो(chip, port, table, i,
 						   (i | i << 4));
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		table = MV88E6390_PORT_IEEE_PRIO_MAP_TABLE_EGRESS_GREEN_PCP;
-		err = mv88e6xxx_port_ieeepmt_write(chip, port, table, i, i);
-		if (err)
-			return err;
+		err = mv88e6xxx_port_ieeepmt_ग_लिखो(chip, port, table, i, i);
+		अगर (err)
+			वापस err;
 
 		table = MV88E6390_PORT_IEEE_PRIO_MAP_TABLE_EGRESS_YELLOW_PCP;
-		err = mv88e6xxx_port_ieeepmt_write(chip, port, table, i, i);
-		if (err)
-			return err;
+		err = mv88e6xxx_port_ieeepmt_ग_लिखो(chip, port, table, i, i);
+		अगर (err)
+			वापस err;
 
 		table = MV88E6390_PORT_IEEE_PRIO_MAP_TABLE_EGRESS_AVB_PCP;
-		err = mv88e6xxx_port_ieeepmt_write(chip, port, table, i, i);
-		if (err)
-			return err;
-	}
+		err = mv88e6xxx_port_ieeepmt_ग_लिखो(chip, port, table, i, i);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Offset 0x0E: Policy Control Register */
 
-static int
-mv88e6xxx_port_policy_mapping_get_pos(enum mv88e6xxx_policy_mapping mapping,
-				      enum mv88e6xxx_policy_action action,
-				      u16 *mask, u16 *val, int *shift)
-{
-	switch (mapping) {
-	case MV88E6XXX_POLICY_MAPPING_DA:
-		*shift = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_DA_MASK);
+अटल पूर्णांक
+mv88e6xxx_port_policy_mapping_get_pos(क्रमागत mv88e6xxx_policy_mapping mapping,
+				      क्रमागत mv88e6xxx_policy_action action,
+				      u16 *mask, u16 *val, पूर्णांक *shअगरt)
+अणु
+	चयन (mapping) अणु
+	हाल MV88E6XXX_POLICY_MAPPING_DA:
+		*shअगरt = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_DA_MASK);
 		*mask = MV88E6XXX_PORT_POLICY_CTL_DA_MASK;
-		break;
-	case MV88E6XXX_POLICY_MAPPING_SA:
-		*shift = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_SA_MASK);
+		अवरोध;
+	हाल MV88E6XXX_POLICY_MAPPING_SA:
+		*shअगरt = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_SA_MASK);
 		*mask = MV88E6XXX_PORT_POLICY_CTL_SA_MASK;
-		break;
-	case MV88E6XXX_POLICY_MAPPING_VTU:
-		*shift = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_VTU_MASK);
+		अवरोध;
+	हाल MV88E6XXX_POLICY_MAPPING_VTU:
+		*shअगरt = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_VTU_MASK);
 		*mask = MV88E6XXX_PORT_POLICY_CTL_VTU_MASK;
-		break;
-	case MV88E6XXX_POLICY_MAPPING_ETYPE:
-		*shift = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_ETYPE_MASK);
+		अवरोध;
+	हाल MV88E6XXX_POLICY_MAPPING_ETYPE:
+		*shअगरt = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_ETYPE_MASK);
 		*mask = MV88E6XXX_PORT_POLICY_CTL_ETYPE_MASK;
-		break;
-	case MV88E6XXX_POLICY_MAPPING_PPPOE:
-		*shift = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_PPPOE_MASK);
+		अवरोध;
+	हाल MV88E6XXX_POLICY_MAPPING_PPPOE:
+		*shअगरt = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_PPPOE_MASK);
 		*mask = MV88E6XXX_PORT_POLICY_CTL_PPPOE_MASK;
-		break;
-	case MV88E6XXX_POLICY_MAPPING_VBAS:
-		*shift = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_VBAS_MASK);
+		अवरोध;
+	हाल MV88E6XXX_POLICY_MAPPING_VBAS:
+		*shअगरt = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_VBAS_MASK);
 		*mask = MV88E6XXX_PORT_POLICY_CTL_VBAS_MASK;
-		break;
-	case MV88E6XXX_POLICY_MAPPING_OPT82:
-		*shift = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_OPT82_MASK);
+		अवरोध;
+	हाल MV88E6XXX_POLICY_MAPPING_OPT82:
+		*shअगरt = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_OPT82_MASK);
 		*mask = MV88E6XXX_PORT_POLICY_CTL_OPT82_MASK;
-		break;
-	case MV88E6XXX_POLICY_MAPPING_UDP:
-		*shift = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_UDP_MASK);
+		अवरोध;
+	हाल MV88E6XXX_POLICY_MAPPING_UDP:
+		*shअगरt = __bf_shf(MV88E6XXX_PORT_POLICY_CTL_UDP_MASK);
 		*mask = MV88E6XXX_PORT_POLICY_CTL_UDP_MASK;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	switch (action) {
-	case MV88E6XXX_POLICY_ACTION_NORMAL:
+	चयन (action) अणु
+	हाल MV88E6XXX_POLICY_ACTION_NORMAL:
 		*val = MV88E6XXX_PORT_POLICY_CTL_NORMAL;
-		break;
-	case MV88E6XXX_POLICY_ACTION_MIRROR:
+		अवरोध;
+	हाल MV88E6XXX_POLICY_ACTION_MIRROR:
 		*val = MV88E6XXX_PORT_POLICY_CTL_MIRROR;
-		break;
-	case MV88E6XXX_POLICY_ACTION_TRAP:
+		अवरोध;
+	हाल MV88E6XXX_POLICY_ACTION_TRAP:
 		*val = MV88E6XXX_PORT_POLICY_CTL_TRAP;
-		break;
-	case MV88E6XXX_POLICY_ACTION_DISCARD:
+		अवरोध;
+	हाल MV88E6XXX_POLICY_ACTION_DISCARD:
 		*val = MV88E6XXX_PORT_POLICY_CTL_DISCARD;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6352_port_set_policy(struct mv88e6xxx_chip *chip, int port,
-			      enum mv88e6xxx_policy_mapping mapping,
-			      enum mv88e6xxx_policy_action action)
-{
+पूर्णांक mv88e6352_port_set_policy(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+			      क्रमागत mv88e6xxx_policy_mapping mapping,
+			      क्रमागत mv88e6xxx_policy_action action)
+अणु
 	u16 reg, mask, val;
-	int shift;
-	int err;
+	पूर्णांक shअगरt;
+	पूर्णांक err;
 
 	err = mv88e6xxx_port_policy_mapping_get_pos(mapping, action, &mask,
-						    &val, &shift);
-	if (err)
-		return err;
+						    &val, &shअगरt);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_POLICY_CTL, &reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_port_पढ़ो(chip, port, MV88E6XXX_PORT_POLICY_CTL, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~mask;
-	reg |= (val << shift) & mask;
+	reg |= (val << shअगरt) & mask;
 
-	return mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_POLICY_CTL, reg);
-}
+	वापस mv88e6xxx_port_ग_लिखो(chip, port, MV88E6XXX_PORT_POLICY_CTL, reg);
+पूर्ण
 
-int mv88e6393x_port_set_policy(struct mv88e6xxx_chip *chip, int port,
-			       enum mv88e6xxx_policy_mapping mapping,
-			       enum mv88e6xxx_policy_action action)
-{
+पूर्णांक mv88e6393x_port_set_policy(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port,
+			       क्रमागत mv88e6xxx_policy_mapping mapping,
+			       क्रमागत mv88e6xxx_policy_action action)
+अणु
 	u16 mask, val;
-	int shift;
-	int err;
+	पूर्णांक shअगरt;
+	पूर्णांक err;
 	u16 ptr;
 	u8 reg;
 
 	err = mv88e6xxx_port_policy_mapping_get_pos(mapping, action, &mask,
-						    &val, &shift);
-	if (err)
-		return err;
+						    &val, &shअगरt);
+	अगर (err)
+		वापस err;
 
-	/* The 16-bit Port Policy CTL register from older chips is on 6393x
+	/* The 16-bit Port Policy CTL रेजिस्टर from older chips is on 6393x
 	 * changed to Port Policy MGMT CTL, which can access more data, but
-	 * indirectly. The original 16-bit value is divided into two 8-bit
-	 * registers.
+	 * indirectly. The original 16-bit value is भागided पूर्णांकo two 8-bit
+	 * रेजिस्टरs.
 	 */
-	ptr = shift / 8;
-	shift %= 8;
+	ptr = shअगरt / 8;
+	shअगरt %= 8;
 	mask >>= ptr * 8;
 
-	err = mv88e6393x_port_policy_read(chip, port, ptr, &reg);
-	if (err)
-		return err;
+	err = mv88e6393x_port_policy_पढ़ो(chip, port, ptr, &reg);
+	अगर (err)
+		वापस err;
 
 	reg &= ~mask;
-	reg |= (val << shift) & mask;
+	reg |= (val << shअगरt) & mask;
 
-	return mv88e6393x_port_policy_write(chip, port, ptr, reg);
-}
+	वापस mv88e6393x_port_policy_ग_लिखो(chip, port, ptr, reg);
+पूर्ण

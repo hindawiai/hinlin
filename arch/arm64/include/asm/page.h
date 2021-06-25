@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Based on arch/arm/include/asm/page.h
+ * Based on arch/arm/include/यंत्र/page.h
  *
  * Copyright (C) 1995-2003 Russell King
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_PAGE_H
-#define __ASM_PAGE_H
+#अगर_अघोषित __ASM_PAGE_H
+#घोषणा __ASM_PAGE_H
 
-#include <asm/page-def.h>
+#समावेश <यंत्र/page-def.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/personality.h> /* for READ_IMPLIES_EXEC */
-#include <asm/pgtable-types.h>
+#समावेश <linux/personality.h> /* क्रम READ_IMPLIES_EXEC */
+#समावेश <यंत्र/pgtable-types.h>
 
-struct page;
-struct vm_area_struct;
+काष्ठा page;
+काष्ठा vm_area_काष्ठा;
 
-extern void copy_page(void *to, const void *from);
-extern void clear_page(void *to);
+बाह्य व्योम copy_page(व्योम *to, स्थिर व्योम *from);
+बाह्य व्योम clear_page(व्योम *to);
 
-void copy_user_highpage(struct page *to, struct page *from,
-			unsigned long vaddr, struct vm_area_struct *vma);
-#define __HAVE_ARCH_COPY_USER_HIGHPAGE
+व्योम copy_user_highpage(काष्ठा page *to, काष्ठा page *from,
+			अचिन्हित दीर्घ vaddr, काष्ठा vm_area_काष्ठा *vma);
+#घोषणा __HAVE_ARCH_COPY_USER_HIGHPAGE
 
-void copy_highpage(struct page *to, struct page *from);
-#define __HAVE_ARCH_COPY_HIGHPAGE
+व्योम copy_highpage(काष्ठा page *to, काष्ठा page *from);
+#घोषणा __HAVE_ARCH_COPY_HIGHPAGE
 
-#define __alloc_zeroed_user_highpage(movableflags, vma, vaddr) \
+#घोषणा __alloc_zeroed_user_highpage(movableflags, vma, vaddr) \
 	alloc_page_vma(GFP_HIGHUSER | __GFP_ZERO | movableflags, vma, vaddr)
-#define __HAVE_ARCH_ALLOC_ZEROED_USER_HIGHPAGE
+#घोषणा __HAVE_ARCH_ALLOC_ZEROED_USER_HIGHPAGE
 
-#define clear_user_page(page, vaddr, pg)	clear_page(page)
-#define copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
+#घोषणा clear_user_page(page, vaddr, pg)	clear_page(page)
+#घोषणा copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
 
-typedef struct page *pgtable_t;
+प्रकार काष्ठा page *pgtable_t;
 
-extern int pfn_valid(unsigned long);
+बाह्य पूर्णांक pfn_valid(अचिन्हित दीर्घ);
 
-#include <asm/memory.h>
+#समावेश <यंत्र/memory.h>
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#define VM_DATA_DEFAULT_FLAGS	(VM_DATA_FLAGS_TSK_EXEC | VM_MTE_ALLOWED)
+#घोषणा VM_DATA_DEFAULT_FLAGS	(VM_DATA_FLAGS_TSK_EXEC | VM_MTE_ALLOWED)
 
-#include <asm-generic/getorder.h>
+#समावेश <यंत्र-generic/getorder.h>
 
-#endif
+#पूर्ण_अगर

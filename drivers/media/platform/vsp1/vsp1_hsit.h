@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * vsp1_hsit.h  --  R-Car VSP1 Hue Saturation value (Inverse) Transform
+ * vsp1_hsit.h  --  R-Car VSP1 Hue Saturation value (Inverse) Transक्रमm
  *
  * Copyright (C) 2013 Renesas Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
-#ifndef __VSP1_HSIT_H__
-#define __VSP1_HSIT_H__
+#अगर_अघोषित __VSP1_HSIT_H__
+#घोषणा __VSP1_HSIT_H__
 
-#include <media/media-entity.h>
-#include <media/v4l2-subdev.h>
+#समावेश <media/media-entity.h>
+#समावेश <media/v4l2-subdev.h>
 
-#include "vsp1_entity.h"
+#समावेश "vsp1_entity.h"
 
-struct vsp1_device;
+काष्ठा vsp1_device;
 
-#define HSIT_PAD_SINK				0
-#define HSIT_PAD_SOURCE				1
+#घोषणा HSIT_PAD_SINK				0
+#घोषणा HSIT_PAD_SOURCE				1
 
-struct vsp1_hsit {
-	struct vsp1_entity entity;
+काष्ठा vsp1_hsit अणु
+	काष्ठा vsp1_entity entity;
 	bool inverse;
-};
+पूर्ण;
 
-static inline struct vsp1_hsit *to_hsit(struct v4l2_subdev *subdev)
-{
-	return container_of(subdev, struct vsp1_hsit, entity.subdev);
-}
+अटल अंतरभूत काष्ठा vsp1_hsit *to_hsit(काष्ठा v4l2_subdev *subdev)
+अणु
+	वापस container_of(subdev, काष्ठा vsp1_hsit, entity.subdev);
+पूर्ण
 
-struct vsp1_hsit *vsp1_hsit_create(struct vsp1_device *vsp1, bool inverse);
+काष्ठा vsp1_hsit *vsp1_hsit_create(काष्ठा vsp1_device *vsp1, bool inverse);
 
-#endif /* __VSP1_HSIT_H__ */
+#पूर्ण_अगर /* __VSP1_HSIT_H__ */

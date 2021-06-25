@@ -1,36 +1,37 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <net/netlink.h>
-#include <linux/firmware.h>
-#include <net/cfg80211.h>
-#include "wcn36xx.h"
+#समावेश <net/netlink.h>
+#समावेश <linux/firmware.h>
+#समावेश <net/cfg80211.h>
+#समावेश "wcn36xx.h"
 
-#include "testmode.h"
-#include "testmode_i.h"
-#include "hal.h"
-#include "smd.h"
+#समावेश "testmode.h"
+#समावेश "testmode_i.h"
+#समावेश "hal.h"
+#समावेश "smd.h"
 
-static const struct nla_policy wcn36xx_tm_policy[WCN36XX_TM_ATTR_MAX + 1] = {
-	[WCN36XX_TM_ATTR_CMD] = { .type = NLA_U16 },
-	[WCN36XX_TM_ATTR_DATA] = { .type = NLA_BINARY,
-	.len = WCN36XX_TM_DATA_MAX_LEN },
-};
+अटल स्थिर काष्ठा nla_policy wcn36xx_पंचांग_policy[WCN36XX_TM_ATTR_MAX + 1] = अणु
+	[WCN36XX_TM_ATTR_CMD] = अणु .type = NLA_U16 पूर्ण,
+	[WCN36XX_TM_ATTR_DATA] = अणु .type = NLA_BINARY,
+	.len = WCN36XX_TM_DATA_MAX_LEN पूर्ण,
+पूर्ण;
 
-struct build_release_number {
+काष्ठा build_release_number अणु
 	u16 drv_major;
 	u16 drv_minor;
 	u16 drv_patch;
@@ -38,22 +39,22 @@ struct build_release_number {
 	u16 ptt_max;
 	u16 ptt_min;
 	u16 fw_ver;
-} __packed;
+पूर्ण __packed;
 
-static int wcn36xx_tm_cmd_ptt(struct wcn36xx *wcn, struct ieee80211_vif *vif,
-			      struct nlattr *tb[])
-{
-	int ret = 0, buf_len;
-	void *buf;
-	struct ftm_rsp_msg *msg, *rsp = NULL;
-	struct sk_buff *skb;
+अटल पूर्णांक wcn36xx_पंचांग_cmd_ptt(काष्ठा wcn36xx *wcn, काष्ठा ieee80211_vअगर *vअगर,
+			      काष्ठा nlattr *tb[])
+अणु
+	पूर्णांक ret = 0, buf_len;
+	व्योम *buf;
+	काष्ठा fपंचांग_rsp_msg *msg, *rsp = शून्य;
+	काष्ठा sk_buff *skb;
 
-	if (!tb[WCN36XX_TM_ATTR_DATA])
-		return -EINVAL;
+	अगर (!tb[WCN36XX_TM_ATTR_DATA])
+		वापस -EINVAL;
 
 	buf = nla_data(tb[WCN36XX_TM_ATTR_DATA]);
 	buf_len = nla_len(tb[WCN36XX_TM_ATTR_DATA]);
-	msg = (struct ftm_rsp_msg *)buf;
+	msg = (काष्ठा fपंचांग_rsp_msg *)buf;
 
 	wcn36xx_dbg(WCN36XX_DBG_TESTMODE,
 		    "testmode cmd wmi msg_id 0x%04X msg_len %d buf %pK buf_len %d\n",
@@ -62,9 +63,9 @@ static int wcn36xx_tm_cmd_ptt(struct wcn36xx *wcn, struct ieee80211_vif *vif,
 
 	wcn36xx_dbg_dump(WCN36XX_DBG_TESTMODE_DUMP, "REQ ", buf, buf_len);
 
-	if (msg->msg_id == MSG_GET_BUILD_RELEASE_NUMBER) {
-		struct build_release_number *body =
-				(struct build_release_number *)
+	अगर (msg->msg_id == MSG_GET_BUILD_RELEASE_NUMBER) अणु
+		काष्ठा build_release_number *body =
+				(काष्ठा build_release_number *)
 				msg->msg_response;
 
 		body->drv_major = wcn->fw_major;
@@ -76,74 +77,74 @@ static int wcn36xx_tm_cmd_ptt(struct wcn36xx *wcn, struct ieee80211_vif *vif,
 
 		rsp = msg;
 		rsp->resp_status = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		wcn36xx_dbg(WCN36XX_DBG_TESTMODE,
 			    "PPT Request >> HAL size %d\n",
 				msg->msg_body_length);
 
-		msg->resp_status = wcn36xx_smd_process_ptt_msg(wcn, vif, msg,
-							       msg->msg_body_length, (void *)(&rsp));
+		msg->resp_status = wcn36xx_smd_process_ptt_msg(wcn, vअगर, msg,
+							       msg->msg_body_length, (व्योम *)(&rsp));
 
 		wcn36xx_dbg(WCN36XX_DBG_TESTMODE,
 			    "Response status = %d\n",
 				msg->resp_status);
-		if (rsp)
+		अगर (rsp)
 			wcn36xx_dbg(WCN36XX_DBG_TESTMODE,
 				    "PPT Response << HAL size %d\n",
 					rsp->msg_body_length);
-	}
+	पूर्ण
 
-	if (!rsp) {
+	अगर (!rsp) अणु
 		rsp = msg;
 		wcn36xx_warn("No response! Echoing request with response status %d\n",
 			     rsp->resp_status);
-	}
+	पूर्ण
 	wcn36xx_dbg_dump(WCN36XX_DBG_TESTMODE_DUMP, "RSP ",
 			 rsp, rsp->msg_body_length);
 
-	skb = cfg80211_testmode_alloc_reply_skb(wcn->hw->wiphy,
+	skb = cfg80211_tesपंचांगode_alloc_reply_skb(wcn->hw->wiphy,
 						nla_total_size(msg->msg_body_length));
-	if (!skb) {
+	अगर (!skb) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = nla_put(skb, WCN36XX_TM_ATTR_DATA, rsp->msg_body_length, rsp);
-	if (ret) {
-		kfree_skb(skb);
-		goto out;
-	}
+	अगर (ret) अणु
+		kमुक्त_skb(skb);
+		जाओ out;
+	पूर्ण
 
-	ret = cfg80211_testmode_reply(skb);
+	ret = cfg80211_tesपंचांगode_reply(skb);
 
 out:
-	if (rsp != msg)
-		kfree(rsp);
+	अगर (rsp != msg)
+		kमुक्त(rsp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int wcn36xx_tm_cmd(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		   void *data, int len)
-{
-	struct wcn36xx *wcn = hw->priv;
-	struct nlattr *tb[WCN36XX_TM_ATTR_MAX + 1];
-	int ret = 0;
-	unsigned short attr;
+पूर्णांक wcn36xx_पंचांग_cmd(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+		   व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा wcn36xx *wcn = hw->priv;
+	काष्ठा nlattr *tb[WCN36XX_TM_ATTR_MAX + 1];
+	पूर्णांक ret = 0;
+	अचिन्हित लघु attr;
 
 	wcn36xx_dbg_dump(WCN36XX_DBG_TESTMODE_DUMP, "Data:", data, len);
 	ret = nla_parse_deprecated(tb, WCN36XX_TM_ATTR_MAX, data, len,
-				   wcn36xx_tm_policy, NULL);
-	if (ret)
-		return ret;
+				   wcn36xx_पंचांग_policy, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	if (!tb[WCN36XX_TM_ATTR_CMD])
-		return -EINVAL;
+	अगर (!tb[WCN36XX_TM_ATTR_CMD])
+		वापस -EINVAL;
 
 	attr = nla_get_u16(tb[WCN36XX_TM_ATTR_CMD]);
 
-	if (attr != WCN36XX_TM_CMD_PTT)
-		return -EOPNOTSUPP;
+	अगर (attr != WCN36XX_TM_CMD_PTT)
+		वापस -EOPNOTSUPP;
 
-	return wcn36xx_tm_cmd_ptt(wcn, vif, tb);
-}
+	वापस wcn36xx_पंचांग_cmd_ptt(wcn, vअगर, tb);
+पूर्ण

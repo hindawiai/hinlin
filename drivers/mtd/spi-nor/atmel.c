@@ -1,199 +1,200 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2005, Intec Automation Inc.
  * Copyright (C) 2014, Freescale Semiconductor, Inc.
  */
 
-#include <linux/mtd/spi-nor.h>
+#समावेश <linux/mtd/spi-nor.h>
 
-#include "core.h"
+#समावेश "core.h"
 
-#define ATMEL_SR_GLOBAL_PROTECT_MASK GENMASK(5, 2)
+#घोषणा ATMEL_SR_GLOBAL_PROTECT_MASK GENMASK(5, 2)
 
 /*
- * The Atmel AT25FS010/AT25FS040 parts have some weird configuration for the
- * block protection bits. We don't support them. But legacy behavior in linux
- * is to unlock the whole flash array on startup. Therefore, we have to support
+ * The Aपंचांगel AT25FS010/AT25FS040 parts have some weird configuration क्रम the
+ * block protection bits. We करोn't support them. But legacy behavior in linux
+ * is to unlock the whole flash array on startup. Thereक्रमe, we have to support
  * exactly this operation.
  */
-static int atmel_at25fs_lock(struct spi_nor *nor, loff_t ofs, uint64_t len)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक aपंचांगel_at25fs_lock(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int atmel_at25fs_unlock(struct spi_nor *nor, loff_t ofs, uint64_t len)
-{
-	int ret;
+अटल पूर्णांक aपंचांगel_at25fs_unlock(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	पूर्णांक ret;
 
 	/* We only support unlocking the whole flash array */
-	if (ofs || len != nor->params->size)
-		return -EINVAL;
+	अगर (ofs || len != nor->params->size)
+		वापस -EINVAL;
 
-	/* Write 0x00 to the status register to disable write protection */
-	ret = spi_nor_write_sr_and_check(nor, 0);
-	if (ret)
+	/* Write 0x00 to the status रेजिस्टर to disable ग_लिखो protection */
+	ret = spi_nor_ग_लिखो_sr_and_check(nor, 0);
+	अगर (ret)
 		dev_dbg(nor->dev, "unable to clear BP bits, WP# asserted?\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int atmel_at25fs_is_locked(struct spi_nor *nor, loff_t ofs, uint64_t len)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक aपंचांगel_at25fs_is_locked(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static const struct spi_nor_locking_ops atmel_at25fs_locking_ops = {
-	.lock = atmel_at25fs_lock,
-	.unlock = atmel_at25fs_unlock,
-	.is_locked = atmel_at25fs_is_locked,
-};
+अटल स्थिर काष्ठा spi_nor_locking_ops aपंचांगel_at25fs_locking_ops = अणु
+	.lock = aपंचांगel_at25fs_lock,
+	.unlock = aपंचांगel_at25fs_unlock,
+	.is_locked = aपंचांगel_at25fs_is_locked,
+पूर्ण;
 
-static void atmel_at25fs_default_init(struct spi_nor *nor)
-{
-	nor->params->locking_ops = &atmel_at25fs_locking_ops;
-}
+अटल व्योम aपंचांगel_at25fs_शेष_init(काष्ठा spi_nor *nor)
+अणु
+	nor->params->locking_ops = &aपंचांगel_at25fs_locking_ops;
+पूर्ण
 
-static const struct spi_nor_fixups atmel_at25fs_fixups = {
-	.default_init = atmel_at25fs_default_init,
-};
+अटल स्थिर काष्ठा spi_nor_fixups aपंचांगel_at25fs_fixups = अणु
+	.शेष_init = aपंचांगel_at25fs_शेष_init,
+पूर्ण;
 
 /**
- * atmel_set_global_protection - Do a Global Protect or Unprotect command
- * @nor:	pointer to 'struct spi_nor'
+ * aपंचांगel_set_global_protection - Do a Global Protect or Unprotect command
+ * @nor:	poपूर्णांकer to 'struct spi_nor'
  * @ofs:	offset in bytes
  * @len:	len in bytes
- * @is_protect:	if true do a Global Protect otherwise it is a Global Unprotect
+ * @is_protect:	अगर true करो a Global Protect otherwise it is a Global Unprotect
  *
  * Return: 0 on success, -error otherwise.
  */
-static int atmel_set_global_protection(struct spi_nor *nor, loff_t ofs,
-				       uint64_t len, bool is_protect)
-{
-	int ret;
+अटल पूर्णांक aपंचांगel_set_global_protection(काष्ठा spi_nor *nor, loff_t ofs,
+				       uपूर्णांक64_t len, bool is_protect)
+अणु
+	पूर्णांक ret;
 	u8 sr;
 
 	/* We only support locking the whole flash array */
-	if (ofs || len != nor->params->size)
-		return -EINVAL;
+	अगर (ofs || len != nor->params->size)
+		वापस -EINVAL;
 
-	ret = spi_nor_read_sr(nor, nor->bouncebuf);
-	if (ret)
-		return ret;
+	ret = spi_nor_पढ़ो_sr(nor, nor->bouncebuf);
+	अगर (ret)
+		वापस ret;
 
 	sr = nor->bouncebuf[0];
 
-	/* SRWD bit needs to be cleared, otherwise the protection doesn't change */
-	if (sr & SR_SRWD) {
+	/* SRWD bit needs to be cleared, otherwise the protection करोesn't change */
+	अगर (sr & SR_SRWD) अणु
 		sr &= ~SR_SRWD;
-		ret = spi_nor_write_sr_and_check(nor, sr);
-		if (ret) {
+		ret = spi_nor_ग_लिखो_sr_and_check(nor, sr);
+		अगर (ret) अणु
 			dev_dbg(nor->dev, "unable to clear SRWD bit, WP# asserted?\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (is_protect) {
+	अगर (is_protect) अणु
 		sr |= ATMEL_SR_GLOBAL_PROTECT_MASK;
 		/*
 		 * Set the SRWD bit again as soon as we are protecting
 		 * anything. This will ensure that the WP# pin is working
-		 * correctly. By doing this we also behave the same as
-		 * spi_nor_sr_lock(), which sets SRWD if any block protection
+		 * correctly. By करोing this we also behave the same as
+		 * spi_nor_sr_lock(), which sets SRWD अगर any block protection
 		 * is active.
 		 */
 		sr |= SR_SRWD;
-	} else {
+	पूर्ण अन्यथा अणु
 		sr &= ~ATMEL_SR_GLOBAL_PROTECT_MASK;
-	}
+	पूर्ण
 
 	nor->bouncebuf[0] = sr;
 
 	/*
-	 * We cannot use the spi_nor_write_sr_and_check() because this command
-	 * isn't really setting any bits, instead it is an pseudo command for
+	 * We cannot use the spi_nor_ग_लिखो_sr_and_check() because this command
+	 * isn't really setting any bits, instead it is an pseuकरो command क्रम
 	 * "Global Unprotect" or "Global Protect"
 	 */
-	return spi_nor_write_sr(nor, nor->bouncebuf, 1);
-}
+	वापस spi_nor_ग_लिखो_sr(nor, nor->bouncebuf, 1);
+पूर्ण
 
-static int atmel_global_protect(struct spi_nor *nor, loff_t ofs, uint64_t len)
-{
-	return atmel_set_global_protection(nor, ofs, len, true);
-}
+अटल पूर्णांक aपंचांगel_global_protect(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	वापस aपंचांगel_set_global_protection(nor, ofs, len, true);
+पूर्ण
 
-static int atmel_global_unprotect(struct spi_nor *nor, loff_t ofs, uint64_t len)
-{
-	return atmel_set_global_protection(nor, ofs, len, false);
-}
+अटल पूर्णांक aपंचांगel_global_unprotect(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	वापस aपंचांगel_set_global_protection(nor, ofs, len, false);
+पूर्ण
 
-static int atmel_is_global_protected(struct spi_nor *nor, loff_t ofs, uint64_t len)
-{
-	int ret;
+अटल पूर्णांक aपंचांगel_is_global_रक्षित(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	पूर्णांक ret;
 
-	if (ofs >= nor->params->size || (ofs + len) > nor->params->size)
-		return -EINVAL;
+	अगर (ofs >= nor->params->size || (ofs + len) > nor->params->size)
+		वापस -EINVAL;
 
-	ret = spi_nor_read_sr(nor, nor->bouncebuf);
-	if (ret)
-		return ret;
+	ret = spi_nor_पढ़ो_sr(nor, nor->bouncebuf);
+	अगर (ret)
+		वापस ret;
 
-	return ((nor->bouncebuf[0] & ATMEL_SR_GLOBAL_PROTECT_MASK) == ATMEL_SR_GLOBAL_PROTECT_MASK);
-}
+	वापस ((nor->bouncebuf[0] & ATMEL_SR_GLOBAL_PROTECT_MASK) == ATMEL_SR_GLOBAL_PROTECT_MASK);
+पूर्ण
 
-static const struct spi_nor_locking_ops atmel_global_protection_ops = {
-	.lock = atmel_global_protect,
-	.unlock = atmel_global_unprotect,
-	.is_locked = atmel_is_global_protected,
-};
+अटल स्थिर काष्ठा spi_nor_locking_ops aपंचांगel_global_protection_ops = अणु
+	.lock = aपंचांगel_global_protect,
+	.unlock = aपंचांगel_global_unprotect,
+	.is_locked = aपंचांगel_is_global_रक्षित,
+पूर्ण;
 
-static void atmel_global_protection_default_init(struct spi_nor *nor)
-{
-	nor->params->locking_ops = &atmel_global_protection_ops;
-}
+अटल व्योम aपंचांगel_global_protection_शेष_init(काष्ठा spi_nor *nor)
+अणु
+	nor->params->locking_ops = &aपंचांगel_global_protection_ops;
+पूर्ण
 
-static const struct spi_nor_fixups atmel_global_protection_fixups = {
-	.default_init = atmel_global_protection_default_init,
-};
+अटल स्थिर काष्ठा spi_nor_fixups aपंचांगel_global_protection_fixups = अणु
+	.शेष_init = aपंचांगel_global_protection_शेष_init,
+पूर्ण;
 
-static const struct flash_info atmel_parts[] = {
-	/* Atmel -- some are (confusingly) marketed as "DataFlash" */
-	{ "at25fs010",  INFO(0x1f6601, 0, 32 * 1024,   4, SECT_4K | SPI_NOR_HAS_LOCK)
-		.fixups = &atmel_at25fs_fixups },
-	{ "at25fs040",  INFO(0x1f6604, 0, 64 * 1024,   8, SECT_4K | SPI_NOR_HAS_LOCK)
-		.fixups = &atmel_at25fs_fixups },
+अटल स्थिर काष्ठा flash_info aपंचांगel_parts[] = अणु
+	/* Aपंचांगel -- some are (confusingly) marketed as "DataFlash" */
+	अणु "at25fs010",  INFO(0x1f6601, 0, 32 * 1024,   4, SECT_4K | SPI_NOR_HAS_LOCK)
+		.fixups = &aपंचांगel_at25fs_fixups पूर्ण,
+	अणु "at25fs040",  INFO(0x1f6604, 0, 64 * 1024,   8, SECT_4K | SPI_NOR_HAS_LOCK)
+		.fixups = &aपंचांगel_at25fs_fixups पूर्ण,
 
-	{ "at25df041a", INFO(0x1f4401, 0, 64 * 1024,   8,
+	अणु "at25df041a", INFO(0x1f4401, 0, 64 * 1024,   8,
 			     SECT_4K | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE)
-			.fixups = &atmel_global_protection_fixups },
-	{ "at25df321",  INFO(0x1f4700, 0, 64 * 1024,  64,
+			.fixups = &aपंचांगel_global_protection_fixups पूर्ण,
+	अणु "at25df321",  INFO(0x1f4700, 0, 64 * 1024,  64,
 			     SECT_4K | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE)
-			.fixups = &atmel_global_protection_fixups },
-	{ "at25df321a", INFO(0x1f4701, 0, 64 * 1024,  64,
+			.fixups = &aपंचांगel_global_protection_fixups पूर्ण,
+	अणु "at25df321a", INFO(0x1f4701, 0, 64 * 1024,  64,
 			     SECT_4K | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE)
-			.fixups = &atmel_global_protection_fixups },
-	{ "at25df641",  INFO(0x1f4800, 0, 64 * 1024, 128,
+			.fixups = &aपंचांगel_global_protection_fixups पूर्ण,
+	अणु "at25df641",  INFO(0x1f4800, 0, 64 * 1024, 128,
 			     SECT_4K | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE)
-			.fixups = &atmel_global_protection_fixups },
+			.fixups = &aपंचांगel_global_protection_fixups पूर्ण,
 
-	{ "at25sl321",	INFO(0x1f4216, 0, 64 * 1024, 64,
-			     SECT_4K | SPI_NOR_DUAL_READ | SPI_NOR_QUAD_READ) },
+	अणु "at25sl321",	INFO(0x1f4216, 0, 64 * 1024, 64,
+			     SECT_4K | SPI_NOR_DUAL_READ | SPI_NOR_QUAD_READ) पूर्ण,
 
-	{ "at26f004",   INFO(0x1f0400, 0, 64 * 1024,  8, SECT_4K) },
-	{ "at26df081a", INFO(0x1f4501, 0, 64 * 1024, 16,
+	अणु "at26f004",   INFO(0x1f0400, 0, 64 * 1024,  8, SECT_4K) पूर्ण,
+	अणु "at26df081a", INFO(0x1f4501, 0, 64 * 1024, 16,
 			     SECT_4K | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE)
-			.fixups = &atmel_global_protection_fixups },
-	{ "at26df161a", INFO(0x1f4601, 0, 64 * 1024, 32,
+			.fixups = &aपंचांगel_global_protection_fixups पूर्ण,
+	अणु "at26df161a", INFO(0x1f4601, 0, 64 * 1024, 32,
 			     SECT_4K | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE)
-			.fixups = &atmel_global_protection_fixups },
-	{ "at26df321",  INFO(0x1f4700, 0, 64 * 1024, 64,
+			.fixups = &aपंचांगel_global_protection_fixups पूर्ण,
+	अणु "at26df321",  INFO(0x1f4700, 0, 64 * 1024, 64,
 			     SECT_4K | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE)
-			.fixups = &atmel_global_protection_fixups },
+			.fixups = &aपंचांगel_global_protection_fixups पूर्ण,
 
-	{ "at45db081d", INFO(0x1f2500, 0, 64 * 1024, 16, SECT_4K) },
-};
+	अणु "at45db081d", INFO(0x1f2500, 0, 64 * 1024, 16, SECT_4K) पूर्ण,
+पूर्ण;
 
-const struct spi_nor_manufacturer spi_nor_atmel = {
+स्थिर काष्ठा spi_nor_manufacturer spi_nor_aपंचांगel = अणु
 	.name = "atmel",
-	.parts = atmel_parts,
-	.nparts = ARRAY_SIZE(atmel_parts),
-};
+	.parts = aपंचांगel_parts,
+	.nparts = ARRAY_SIZE(aपंचांगel_parts),
+पूर्ण;

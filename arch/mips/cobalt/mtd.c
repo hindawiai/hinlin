@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Registration of Cobalt MTD device.
  *
  *  Copyright (C) 2006  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/physmap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/physmap.h>
 
-static struct mtd_partition cobalt_mtd_partitions[] = {
-	{
+अटल काष्ठा mtd_partition cobalt_mtd_partitions[] = अणु
+	अणु
 		.name	= "firmware",
 		.offset = 0x0,
 		.size	= 0x80000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct physmap_flash_data cobalt_flash_data = {
+अटल काष्ठा physmap_flash_data cobalt_flash_data = अणु
 	.width		= 1,
 	.nr_parts	= 1,
 	.parts		= cobalt_mtd_partitions,
-};
+पूर्ण;
 
-static struct resource cobalt_mtd_resource = {
+अटल काष्ठा resource cobalt_mtd_resource = अणु
 	.start	= 0x1fc00000,
 	.end	= 0x1fc7ffff,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device cobalt_mtd = {
+अटल काष्ठा platक्रमm_device cobalt_mtd = अणु
 	.name		= "physmap-flash",
-	.dev		= {
-		.platform_data	= &cobalt_flash_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data	= &cobalt_flash_data,
+	पूर्ण,
 	.num_resources	= 1,
 	.resource	= &cobalt_mtd_resource,
-};
+पूर्ण;
 
-static int __init cobalt_mtd_init(void)
-{
-	platform_device_register(&cobalt_mtd);
+अटल पूर्णांक __init cobalt_mtd_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&cobalt_mtd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(cobalt_mtd_init);

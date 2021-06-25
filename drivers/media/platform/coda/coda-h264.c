@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Coda multi-standard codec IP - H.264 helper functions
  *
@@ -7,233 +8,233 @@
  *    Xavier Duret
  */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/videodev2.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/videodev2.h>
 
-#include "coda.h"
+#समावेश "coda.h"
 
-static const u8 coda_filler_size[8] = { 0, 7, 14, 13, 12, 11, 10, 9 };
+अटल स्थिर u8 coda_filler_size[8] = अणु 0, 7, 14, 13, 12, 11, 10, 9 पूर्ण;
 
-static const u8 *coda_find_nal_header(const u8 *buf, const u8 *end)
-{
+अटल स्थिर u8 *coda_find_nal_header(स्थिर u8 *buf, स्थिर u8 *end)
+अणु
 	u32 val = 0xffffffff;
 
-	do {
+	करो अणु
 		val = val << 8 | *buf++;
-		if (buf >= end)
-			return NULL;
-	} while (val != 0x00000001);
+		अगर (buf >= end)
+			वापस शून्य;
+	पूर्ण जबतक (val != 0x00000001);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-int coda_sps_parse_profile(struct coda_ctx *ctx, struct vb2_buffer *vb)
-{
-	const u8 *buf = vb2_plane_vaddr(vb, 0);
-	const u8 *end = buf + vb2_get_plane_payload(vb, 0);
+पूर्णांक coda_sps_parse_profile(काष्ठा coda_ctx *ctx, काष्ठा vb2_buffer *vb)
+अणु
+	स्थिर u8 *buf = vb2_plane_vaddr(vb, 0);
+	स्थिर u8 *end = buf + vb2_get_plane_payload(vb, 0);
 
 	/* Find SPS header */
-	do {
+	करो अणु
 		buf = coda_find_nal_header(buf, end);
-		if (!buf)
-			return -EINVAL;
-	} while ((*buf++ & 0x1f) != 0x7);
+		अगर (!buf)
+			वापस -EINVAL;
+	पूर्ण जबतक ((*buf++ & 0x1f) != 0x7);
 
 	ctx->params.h264_profile_idc = buf[0];
 	ctx->params.h264_level_idc = buf[2];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int coda_h264_filler_nal(int size, char *p)
-{
-	if (size < 6)
-		return -EINVAL;
+पूर्णांक coda_h264_filler_nal(पूर्णांक size, अक्षर *p)
+अणु
+	अगर (size < 6)
+		वापस -EINVAL;
 
 	p[0] = 0x00;
 	p[1] = 0x00;
 	p[2] = 0x00;
 	p[3] = 0x01;
 	p[4] = 0x0c;
-	memset(p + 5, 0xff, size - 6);
+	स_रखो(p + 5, 0xff, size - 6);
 	/* Add rbsp stop bit and trailing at the end */
 	p[size - 1] = 0x80;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int coda_h264_padding(int size, char *p)
-{
-	int nal_size;
-	int diff;
+पूर्णांक coda_h264_padding(पूर्णांक size, अक्षर *p)
+अणु
+	पूर्णांक nal_size;
+	पूर्णांक dअगरf;
 
-	diff = size - (size & ~0x7);
-	if (diff == 0)
-		return 0;
+	dअगरf = size - (size & ~0x7);
+	अगर (dअगरf == 0)
+		वापस 0;
 
-	nal_size = coda_filler_size[diff];
+	nal_size = coda_filler_size[dअगरf];
 	coda_h264_filler_nal(nal_size, p);
 
-	return nal_size;
-}
+	वापस nal_size;
+पूर्ण
 
-int coda_h264_profile(int profile_idc)
-{
-	switch (profile_idc) {
-	case 66: return V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE;
-	case 77: return V4L2_MPEG_VIDEO_H264_PROFILE_MAIN;
-	case 88: return V4L2_MPEG_VIDEO_H264_PROFILE_EXTENDED;
-	case 100: return V4L2_MPEG_VIDEO_H264_PROFILE_HIGH;
-	default: return -EINVAL;
-	}
-}
+पूर्णांक coda_h264_profile(पूर्णांक profile_idc)
+अणु
+	चयन (profile_idc) अणु
+	हाल 66: वापस V4L2_MPEG_VIDEO_H264_PROखाता_BASELINE;
+	हाल 77: वापस V4L2_MPEG_VIDEO_H264_PROखाता_MAIN;
+	हाल 88: वापस V4L2_MPEG_VIDEO_H264_PROखाता_EXTENDED;
+	हाल 100: वापस V4L2_MPEG_VIDEO_H264_PROखाता_HIGH;
+	शेष: वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int coda_h264_level(int level_idc)
-{
-	switch (level_idc) {
-	case 10: return V4L2_MPEG_VIDEO_H264_LEVEL_1_0;
-	case 9:  return V4L2_MPEG_VIDEO_H264_LEVEL_1B;
-	case 11: return V4L2_MPEG_VIDEO_H264_LEVEL_1_1;
-	case 12: return V4L2_MPEG_VIDEO_H264_LEVEL_1_2;
-	case 13: return V4L2_MPEG_VIDEO_H264_LEVEL_1_3;
-	case 20: return V4L2_MPEG_VIDEO_H264_LEVEL_2_0;
-	case 21: return V4L2_MPEG_VIDEO_H264_LEVEL_2_1;
-	case 22: return V4L2_MPEG_VIDEO_H264_LEVEL_2_2;
-	case 30: return V4L2_MPEG_VIDEO_H264_LEVEL_3_0;
-	case 31: return V4L2_MPEG_VIDEO_H264_LEVEL_3_1;
-	case 32: return V4L2_MPEG_VIDEO_H264_LEVEL_3_2;
-	case 40: return V4L2_MPEG_VIDEO_H264_LEVEL_4_0;
-	case 41: return V4L2_MPEG_VIDEO_H264_LEVEL_4_1;
-	case 42: return V4L2_MPEG_VIDEO_H264_LEVEL_4_2;
-	case 50: return V4L2_MPEG_VIDEO_H264_LEVEL_5_0;
-	case 51: return V4L2_MPEG_VIDEO_H264_LEVEL_5_1;
-	default: return -EINVAL;
-	}
-}
+पूर्णांक coda_h264_level(पूर्णांक level_idc)
+अणु
+	चयन (level_idc) अणु
+	हाल 10: वापस V4L2_MPEG_VIDEO_H264_LEVEL_1_0;
+	हाल 9:  वापस V4L2_MPEG_VIDEO_H264_LEVEL_1B;
+	हाल 11: वापस V4L2_MPEG_VIDEO_H264_LEVEL_1_1;
+	हाल 12: वापस V4L2_MPEG_VIDEO_H264_LEVEL_1_2;
+	हाल 13: वापस V4L2_MPEG_VIDEO_H264_LEVEL_1_3;
+	हाल 20: वापस V4L2_MPEG_VIDEO_H264_LEVEL_2_0;
+	हाल 21: वापस V4L2_MPEG_VIDEO_H264_LEVEL_2_1;
+	हाल 22: वापस V4L2_MPEG_VIDEO_H264_LEVEL_2_2;
+	हाल 30: वापस V4L2_MPEG_VIDEO_H264_LEVEL_3_0;
+	हाल 31: वापस V4L2_MPEG_VIDEO_H264_LEVEL_3_1;
+	हाल 32: वापस V4L2_MPEG_VIDEO_H264_LEVEL_3_2;
+	हाल 40: वापस V4L2_MPEG_VIDEO_H264_LEVEL_4_0;
+	हाल 41: वापस V4L2_MPEG_VIDEO_H264_LEVEL_4_1;
+	हाल 42: वापस V4L2_MPEG_VIDEO_H264_LEVEL_4_2;
+	हाल 50: वापस V4L2_MPEG_VIDEO_H264_LEVEL_5_0;
+	हाल 51: वापस V4L2_MPEG_VIDEO_H264_LEVEL_5_1;
+	शेष: वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-struct rbsp {
-	char *buf;
-	int size;
-	int pos;
-};
+काष्ठा rbsp अणु
+	अक्षर *buf;
+	पूर्णांक size;
+	पूर्णांक pos;
+पूर्ण;
 
-static inline int rbsp_read_bit(struct rbsp *rbsp)
-{
-	int shift = 7 - (rbsp->pos % 8);
-	int ofs = rbsp->pos++ / 8;
+अटल अंतरभूत पूर्णांक rbsp_पढ़ो_bit(काष्ठा rbsp *rbsp)
+अणु
+	पूर्णांक shअगरt = 7 - (rbsp->pos % 8);
+	पूर्णांक ofs = rbsp->pos++ / 8;
 
-	if (ofs >= rbsp->size)
-		return -EINVAL;
+	अगर (ofs >= rbsp->size)
+		वापस -EINVAL;
 
-	return (rbsp->buf[ofs] >> shift) & 1;
-}
+	वापस (rbsp->buf[ofs] >> shअगरt) & 1;
+पूर्ण
 
-static inline int rbsp_write_bit(struct rbsp *rbsp, int bit)
-{
-	int shift = 7 - (rbsp->pos % 8);
-	int ofs = rbsp->pos++ / 8;
+अटल अंतरभूत पूर्णांक rbsp_ग_लिखो_bit(काष्ठा rbsp *rbsp, पूर्णांक bit)
+अणु
+	पूर्णांक shअगरt = 7 - (rbsp->pos % 8);
+	पूर्णांक ofs = rbsp->pos++ / 8;
 
-	if (ofs >= rbsp->size)
-		return -EINVAL;
+	अगर (ofs >= rbsp->size)
+		वापस -EINVAL;
 
-	rbsp->buf[ofs] &= ~(1 << shift);
-	rbsp->buf[ofs] |= bit << shift;
+	rbsp->buf[ofs] &= ~(1 << shअगरt);
+	rbsp->buf[ofs] |= bit << shअगरt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int rbsp_read_bits(struct rbsp *rbsp, int num, int *val)
-{
-	int i, ret;
-	int tmp = 0;
+अटल अंतरभूत पूर्णांक rbsp_पढ़ो_bits(काष्ठा rbsp *rbsp, पूर्णांक num, पूर्णांक *val)
+अणु
+	पूर्णांक i, ret;
+	पूर्णांक पंचांगp = 0;
 
-	if (num > 32)
-		return -EINVAL;
+	अगर (num > 32)
+		वापस -EINVAL;
 
-	for (i = 0; i < num; i++) {
-		ret = rbsp_read_bit(rbsp);
-		if (ret < 0)
-			return ret;
-		tmp |= ret << (num - i - 1);
-	}
+	क्रम (i = 0; i < num; i++) अणु
+		ret = rbsp_पढ़ो_bit(rbsp);
+		अगर (ret < 0)
+			वापस ret;
+		पंचांगp |= ret << (num - i - 1);
+	पूर्ण
 
-	if (val)
-		*val = tmp;
+	अगर (val)
+		*val = पंचांगp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rbsp_write_bits(struct rbsp *rbsp, int num, int value)
-{
-	int ret;
+अटल पूर्णांक rbsp_ग_लिखो_bits(काष्ठा rbsp *rbsp, पूर्णांक num, पूर्णांक value)
+अणु
+	पूर्णांक ret;
 
-	while (num--) {
-		ret = rbsp_write_bit(rbsp, (value >> num) & 1);
-		if (ret)
-			return ret;
-	}
+	जबतक (num--) अणु
+		ret = rbsp_ग_लिखो_bit(rbsp, (value >> num) & 1);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rbsp_read_uev(struct rbsp *rbsp, unsigned int *val)
-{
-	int leading_zero_bits = 0;
-	unsigned int tmp = 0;
-	int ret;
+अटल पूर्णांक rbsp_पढ़ो_uev(काष्ठा rbsp *rbsp, अचिन्हित पूर्णांक *val)
+अणु
+	पूर्णांक leading_zero_bits = 0;
+	अचिन्हित पूर्णांक पंचांगp = 0;
+	पूर्णांक ret;
 
-	while ((ret = rbsp_read_bit(rbsp)) == 0)
+	जबतक ((ret = rbsp_पढ़ो_bit(rbsp)) == 0)
 		leading_zero_bits++;
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (leading_zero_bits > 0) {
-		ret = rbsp_read_bits(rbsp, leading_zero_bits, &tmp);
-		if (ret)
-			return ret;
-	}
+	अगर (leading_zero_bits > 0) अणु
+		ret = rbsp_पढ़ो_bits(rbsp, leading_zero_bits, &पंचांगp);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (val)
-		*val = (1 << leading_zero_bits) - 1 + tmp;
+	अगर (val)
+		*val = (1 << leading_zero_bits) - 1 + पंचांगp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rbsp_write_uev(struct rbsp *rbsp, unsigned int value)
-{
-	int i;
-	int ret;
-	int tmp = value + 1;
-	int leading_zero_bits = fls(tmp) - 1;
+अटल पूर्णांक rbsp_ग_लिखो_uev(काष्ठा rbsp *rbsp, अचिन्हित पूर्णांक value)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
+	पूर्णांक पंचांगp = value + 1;
+	पूर्णांक leading_zero_bits = fls(पंचांगp) - 1;
 
-	for (i = 0; i < leading_zero_bits; i++) {
-		ret = rbsp_write_bit(rbsp, 0);
-		if (ret)
-			return ret;
-	}
+	क्रम (i = 0; i < leading_zero_bits; i++) अणु
+		ret = rbsp_ग_लिखो_bit(rbsp, 0);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return rbsp_write_bits(rbsp, leading_zero_bits + 1, tmp);
-}
+	वापस rbsp_ग_लिखो_bits(rbsp, leading_zero_bits + 1, पंचांगp);
+पूर्ण
 
-static int rbsp_read_sev(struct rbsp *rbsp, int *val)
-{
-	unsigned int tmp;
-	int ret;
+अटल पूर्णांक rbsp_पढ़ो_sev(काष्ठा rbsp *rbsp, पूर्णांक *val)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
+	पूर्णांक ret;
 
-	ret = rbsp_read_uev(rbsp, &tmp);
-	if (ret)
-		return ret;
+	ret = rbsp_पढ़ो_uev(rbsp, &पंचांगp);
+	अगर (ret)
+		वापस ret;
 
-	if (val) {
-		if (tmp & 1)
-			*val = (tmp + 1) / 2;
-		else
-			*val = -(tmp / 2);
-	}
+	अगर (val) अणु
+		अगर (पंचांगp & 1)
+			*val = (पंचांगp + 1) / 2;
+		अन्यथा
+			*val = -(पंचांगp / 2);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * coda_h264_sps_fixup - fixes frame cropping values in h.264 SPS
@@ -241,189 +242,189 @@ static int rbsp_read_sev(struct rbsp *rbsp, int *val)
  * @width: visible width
  * @height: visible height
  * @buf: buffer containing h.264 SPS RBSP, starting with NAL header
- * @size: modified RBSP size return value
+ * @size: modअगरied RBSP size वापस value
  * @max_size: available size in buf
  *
- * Rewrites the frame cropping values in an h.264 SPS RBSP correctly for the
+ * Reग_लिखोs the frame cropping values in an h.264 SPS RBSP correctly क्रम the
  * given visible width and height.
  */
-int coda_h264_sps_fixup(struct coda_ctx *ctx, int width, int height, char *buf,
-			int *size, int max_size)
-{
-	int profile_idc;
-	unsigned int pic_order_cnt_type;
-	int pic_width_in_mbs_minus1, pic_height_in_map_units_minus1;
-	int frame_mbs_only_flag, frame_cropping_flag;
-	int vui_parameters_present_flag;
-	unsigned int crop_right, crop_bottom;
-	struct rbsp sps;
-	int pos;
-	int ret;
+पूर्णांक coda_h264_sps_fixup(काष्ठा coda_ctx *ctx, पूर्णांक width, पूर्णांक height, अक्षर *buf,
+			पूर्णांक *size, पूर्णांक max_size)
+अणु
+	पूर्णांक profile_idc;
+	अचिन्हित पूर्णांक pic_order_cnt_type;
+	पूर्णांक pic_width_in_mbs_minus1, pic_height_in_map_units_minus1;
+	पूर्णांक frame_mbs_only_flag, frame_cropping_flag;
+	पूर्णांक vui_parameters_present_flag;
+	अचिन्हित पूर्णांक crop_right, crop_bottom;
+	काष्ठा rbsp sps;
+	पूर्णांक pos;
+	पूर्णांक ret;
 
-	if (*size < 8 || *size >= max_size)
-		return -EINVAL;
+	अगर (*size < 8 || *size >= max_size)
+		वापस -EINVAL;
 
 	sps.buf = buf + 5; /* Skip NAL header */
 	sps.size = *size - 5;
 
 	profile_idc = sps.buf[0];
-	/* Skip constraint_set[0-5]_flag, reserved_zero_2bits */
+	/* Skip स्थिरraपूर्णांक_set[0-5]_flag, reserved_zero_2bits */
 	/* Skip level_idc */
 	sps.pos = 24;
 
 	/* seq_parameter_set_id */
-	ret = rbsp_read_uev(&sps, NULL);
-	if (ret)
-		return ret;
+	ret = rbsp_पढ़ो_uev(&sps, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	if (profile_idc == 100 || profile_idc == 110 || profile_idc == 122 ||
+	अगर (profile_idc == 100 || profile_idc == 110 || profile_idc == 122 ||
 	    profile_idc == 244 || profile_idc == 44 || profile_idc == 83 ||
 	    profile_idc == 86 || profile_idc == 118 || profile_idc == 128 ||
 	    profile_idc == 138 || profile_idc == 139 || profile_idc == 134 ||
-	    profile_idc == 135) {
+	    profile_idc == 135) अणु
 		dev_err(ctx->fh.vdev->dev_parent,
 			"%s: Handling profile_idc %d not implemented\n",
 			__func__, profile_idc);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* log2_max_frame_num_minus4 */
-	ret = rbsp_read_uev(&sps, NULL);
-	if (ret)
-		return ret;
+	ret = rbsp_पढ़ो_uev(&sps, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	ret = rbsp_read_uev(&sps, &pic_order_cnt_type);
-	if (ret)
-		return ret;
+	ret = rbsp_पढ़ो_uev(&sps, &pic_order_cnt_type);
+	अगर (ret)
+		वापस ret;
 
-	if (pic_order_cnt_type == 0) {
+	अगर (pic_order_cnt_type == 0) अणु
 		/* log2_max_pic_order_cnt_lsb_minus4 */
-		ret = rbsp_read_uev(&sps, NULL);
-		if (ret)
-			return ret;
-	} else if (pic_order_cnt_type == 1) {
-		unsigned int i, num_ref_frames_in_pic_order_cnt_cycle;
+		ret = rbsp_पढ़ो_uev(&sps, शून्य);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अगर (pic_order_cnt_type == 1) अणु
+		अचिन्हित पूर्णांक i, num_ref_frames_in_pic_order_cnt_cycle;
 
 		/* delta_pic_order_always_zero_flag */
-		ret = rbsp_read_bit(&sps);
-		if (ret < 0)
-			return ret;
-		/* offset_for_non_ref_pic */
-		ret = rbsp_read_sev(&sps, NULL);
-		if (ret)
-			return ret;
-		/* offset_for_top_to_bottom_field */
-		ret = rbsp_read_sev(&sps, NULL);
-		if (ret)
-			return ret;
+		ret = rbsp_पढ़ो_bit(&sps);
+		अगर (ret < 0)
+			वापस ret;
+		/* offset_क्रम_non_ref_pic */
+		ret = rbsp_पढ़ो_sev(&sps, शून्य);
+		अगर (ret)
+			वापस ret;
+		/* offset_क्रम_top_to_bottom_field */
+		ret = rbsp_पढ़ो_sev(&sps, शून्य);
+		अगर (ret)
+			वापस ret;
 
-		ret = rbsp_read_uev(&sps,
+		ret = rbsp_पढ़ो_uev(&sps,
 				    &num_ref_frames_in_pic_order_cnt_cycle);
-		if (ret)
-			return ret;
-		for (i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++) {
-			/* offset_for_ref_frame */
-			ret = rbsp_read_sev(&sps, NULL);
-			if (ret)
-				return ret;
-		}
-	}
+		अगर (ret)
+			वापस ret;
+		क्रम (i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++) अणु
+			/* offset_क्रम_ref_frame */
+			ret = rbsp_पढ़ो_sev(&sps, शून्य);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* max_num_ref_frames */
-	ret = rbsp_read_uev(&sps, NULL);
-	if (ret)
-		return ret;
+	ret = rbsp_पढ़ो_uev(&sps, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	/* gaps_in_frame_num_value_allowed_flag */
-	ret = rbsp_read_bit(&sps);
-	if (ret < 0)
-		return ret;
-	ret = rbsp_read_uev(&sps, &pic_width_in_mbs_minus1);
-	if (ret)
-		return ret;
-	ret = rbsp_read_uev(&sps, &pic_height_in_map_units_minus1);
-	if (ret)
-		return ret;
-	frame_mbs_only_flag = ret = rbsp_read_bit(&sps);
-	if (ret < 0)
-		return ret;
-	if (!frame_mbs_only_flag) {
+	ret = rbsp_पढ़ो_bit(&sps);
+	अगर (ret < 0)
+		वापस ret;
+	ret = rbsp_पढ़ो_uev(&sps, &pic_width_in_mbs_minus1);
+	अगर (ret)
+		वापस ret;
+	ret = rbsp_पढ़ो_uev(&sps, &pic_height_in_map_units_minus1);
+	अगर (ret)
+		वापस ret;
+	frame_mbs_only_flag = ret = rbsp_पढ़ो_bit(&sps);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (!frame_mbs_only_flag) अणु
 		/* mb_adaptive_frame_field_flag */
-		ret = rbsp_read_bit(&sps);
-		if (ret < 0)
-			return ret;
-	}
+		ret = rbsp_पढ़ो_bit(&sps);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 	/* direct_8x8_inference_flag */
-	ret = rbsp_read_bit(&sps);
-	if (ret < 0)
-		return ret;
+	ret = rbsp_पढ़ो_bit(&sps);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Mark position of the frame cropping flag */
 	pos = sps.pos;
-	frame_cropping_flag = ret = rbsp_read_bit(&sps);
-	if (ret < 0)
-		return ret;
-	if (frame_cropping_flag) {
-		unsigned int crop_left, crop_top;
+	frame_cropping_flag = ret = rbsp_पढ़ो_bit(&sps);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (frame_cropping_flag) अणु
+		अचिन्हित पूर्णांक crop_left, crop_top;
 
-		ret = rbsp_read_uev(&sps, &crop_left);
-		if (ret)
-			return ret;
-		ret = rbsp_read_uev(&sps, &crop_right);
-		if (ret)
-			return ret;
-		ret = rbsp_read_uev(&sps, &crop_top);
-		if (ret)
-			return ret;
-		ret = rbsp_read_uev(&sps, &crop_bottom);
-		if (ret)
-			return ret;
-	}
-	vui_parameters_present_flag = ret = rbsp_read_bit(&sps);
-	if (ret < 0)
-		return ret;
-	if (vui_parameters_present_flag) {
+		ret = rbsp_पढ़ो_uev(&sps, &crop_left);
+		अगर (ret)
+			वापस ret;
+		ret = rbsp_पढ़ो_uev(&sps, &crop_right);
+		अगर (ret)
+			वापस ret;
+		ret = rbsp_पढ़ो_uev(&sps, &crop_top);
+		अगर (ret)
+			वापस ret;
+		ret = rbsp_पढ़ो_uev(&sps, &crop_bottom);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	vui_parameters_present_flag = ret = rbsp_पढ़ो_bit(&sps);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (vui_parameters_present_flag) अणु
 		dev_err(ctx->fh.vdev->dev_parent,
 			"%s: Handling vui_parameters not implemented\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	crop_right = round_up(width, 16) - width;
 	crop_bottom = round_up(height, 16) - height;
 	crop_right /= 2;
-	if (frame_mbs_only_flag)
+	अगर (frame_mbs_only_flag)
 		crop_bottom /= 2;
-	else
+	अन्यथा
 		crop_bottom /= 4;
 
 
 	sps.size = max_size - 5;
 	sps.pos = pos;
 	frame_cropping_flag = 1;
-	ret = rbsp_write_bit(&sps, frame_cropping_flag);
-	if (ret)
-		return ret;
-	ret = rbsp_write_uev(&sps, 0); /* crop_left */
-	if (ret)
-		return ret;
-	ret = rbsp_write_uev(&sps, crop_right);
-	if (ret)
-		return ret;
-	ret = rbsp_write_uev(&sps, 0); /* crop_top */
-	if (ret)
-		return ret;
-	ret = rbsp_write_uev(&sps, crop_bottom);
-	if (ret)
-		return ret;
-	ret = rbsp_write_bit(&sps, 0); /* vui_parameters_present_flag */
-	if (ret)
-		return ret;
-	ret = rbsp_write_bit(&sps, 1);
-	if (ret)
-		return ret;
+	ret = rbsp_ग_लिखो_bit(&sps, frame_cropping_flag);
+	अगर (ret)
+		वापस ret;
+	ret = rbsp_ग_लिखो_uev(&sps, 0); /* crop_left */
+	अगर (ret)
+		वापस ret;
+	ret = rbsp_ग_लिखो_uev(&sps, crop_right);
+	अगर (ret)
+		वापस ret;
+	ret = rbsp_ग_लिखो_uev(&sps, 0); /* crop_top */
+	अगर (ret)
+		वापस ret;
+	ret = rbsp_ग_लिखो_uev(&sps, crop_bottom);
+	अगर (ret)
+		वापस ret;
+	ret = rbsp_ग_लिखो_bit(&sps, 0); /* vui_parameters_present_flag */
+	अगर (ret)
+		वापस ret;
+	ret = rbsp_ग_लिखो_bit(&sps, 1);
+	अगर (ret)
+		वापस ret;
 
 	*size = 5 + DIV_ROUND_UP(sps.pos, 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

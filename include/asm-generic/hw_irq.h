@@ -1,9 +1,10 @@
-#ifndef __ASM_GENERIC_HW_IRQ_H
-#define __ASM_GENERIC_HW_IRQ_H
+<शैली गुरु>
+#अगर_अघोषित __ASM_GENERIC_HW_IRQ_H
+#घोषणा __ASM_GENERIC_HW_IRQ_H
 /*
- * hw_irq.h has internal declarations for the low-level interrupt
+ * hw_irq.h has पूर्णांकernal declarations क्रम the low-level पूर्णांकerrupt
  * controller, like the original i8259A.
- * In general, this is not needed for new architectures.
+ * In general, this is not needed क्रम new architectures.
  */
 
-#endif /* __ASM_GENERIC_HW_IRQ_H */
+#पूर्ण_अगर /* __ASM_GENERIC_HW_IRQ_H */

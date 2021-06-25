@@ -1,276 +1,277 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * TQ-Systems PLD MFD core driver, based on vendor driver by
+ * TQ-Systems PLD MFD core driver, based on venकरोr driver by
  * Vadim V.Vlasov <vvlasov@dev.rtsoft.ru>
  *
  * Copyright (c) 2015 TQ-Systems GmbH
  * Copyright (c) 2019 Andrew Lunn <andrew@lunn.ch>
  */
 
-#include <linux/delay.h>
-#include <linux/dmi.h>
-#include <linux/i2c.h>
-#include <linux/io.h>
-#include <linux/mfd/core.h>
-#include <linux/module.h>
-#include <linux/platform_data/i2c-ocores.h>
-#include <linux/platform_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/i2c-ocores.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define TQMX86_IOBASE	0x160
-#define TQMX86_IOSIZE	0x3f
-#define TQMX86_IOBASE_I2C	0x1a0
-#define TQMX86_IOSIZE_I2C	0xa
-#define TQMX86_IOBASE_WATCHDOG	0x18b
-#define TQMX86_IOSIZE_WATCHDOG	0x2
-#define TQMX86_IOBASE_GPIO	0x18d
-#define TQMX86_IOSIZE_GPIO	0x4
+#घोषणा TQMX86_IOBASE	0x160
+#घोषणा TQMX86_IOSIZE	0x3f
+#घोषणा TQMX86_IOBASE_I2C	0x1a0
+#घोषणा TQMX86_IOSIZE_I2C	0xa
+#घोषणा TQMX86_IOBASE_WATCHDOG	0x18b
+#घोषणा TQMX86_IOSIZE_WATCHDOG	0x2
+#घोषणा TQMX86_IOBASE_GPIO	0x18d
+#घोषणा TQMX86_IOSIZE_GPIO	0x4
 
-#define TQMX86_REG_BOARD_ID	0x20
-#define TQMX86_REG_BOARD_ID_E38M	1
-#define TQMX86_REG_BOARD_ID_50UC	2
-#define TQMX86_REG_BOARD_ID_E38C	3
-#define TQMX86_REG_BOARD_ID_60EB	4
-#define TQMX86_REG_BOARD_ID_E39M	5
-#define TQMX86_REG_BOARD_ID_E39C	6
-#define TQMX86_REG_BOARD_ID_E39x	7
-#define TQMX86_REG_BOARD_ID_70EB	8
-#define TQMX86_REG_BOARD_ID_80UC	9
-#define TQMX86_REG_BOARD_ID_90UC	10
-#define TQMX86_REG_BOARD_REV	0x21
-#define TQMX86_REG_IO_EXT_INT	0x26
-#define TQMX86_REG_IO_EXT_INT_NONE		0
-#define TQMX86_REG_IO_EXT_INT_7			1
-#define TQMX86_REG_IO_EXT_INT_9			2
-#define TQMX86_REG_IO_EXT_INT_12		3
-#define TQMX86_REG_IO_EXT_INT_MASK		0x3
-#define TQMX86_REG_IO_EXT_INT_GPIO_SHIFT	4
+#घोषणा TQMX86_REG_BOARD_ID	0x20
+#घोषणा TQMX86_REG_BOARD_ID_E38M	1
+#घोषणा TQMX86_REG_BOARD_ID_50UC	2
+#घोषणा TQMX86_REG_BOARD_ID_E38C	3
+#घोषणा TQMX86_REG_BOARD_ID_60EB	4
+#घोषणा TQMX86_REG_BOARD_ID_E39M	5
+#घोषणा TQMX86_REG_BOARD_ID_E39C	6
+#घोषणा TQMX86_REG_BOARD_ID_E39x	7
+#घोषणा TQMX86_REG_BOARD_ID_70EB	8
+#घोषणा TQMX86_REG_BOARD_ID_80UC	9
+#घोषणा TQMX86_REG_BOARD_ID_90UC	10
+#घोषणा TQMX86_REG_BOARD_REV	0x21
+#घोषणा TQMX86_REG_IO_EXT_INT	0x26
+#घोषणा TQMX86_REG_IO_EXT_INT_NONE		0
+#घोषणा TQMX86_REG_IO_EXT_INT_7			1
+#घोषणा TQMX86_REG_IO_EXT_INT_9			2
+#घोषणा TQMX86_REG_IO_EXT_INT_12		3
+#घोषणा TQMX86_REG_IO_EXT_INT_MASK		0x3
+#घोषणा TQMX86_REG_IO_EXT_INT_GPIO_SHIFT	4
 
-#define TQMX86_REG_I2C_DETECT	0x47
-#define TQMX86_REG_I2C_DETECT_SOFT		0xa5
-#define TQMX86_REG_I2C_INT_EN	0x49
+#घोषणा TQMX86_REG_I2C_DETECT	0x47
+#घोषणा TQMX86_REG_I2C_DETECT_SOFT		0xa5
+#घोषणा TQMX86_REG_I2C_INT_EN	0x49
 
-static uint gpio_irq;
-module_param(gpio_irq, uint, 0);
+अटल uपूर्णांक gpio_irq;
+module_param(gpio_irq, uपूर्णांक, 0);
 MODULE_PARM_DESC(gpio_irq, "GPIO IRQ number (7, 9, 12)");
 
-static const struct resource tqmx_i2c_soft_resources[] = {
+अटल स्थिर काष्ठा resource tqmx_i2c_soft_resources[] = अणु
 	DEFINE_RES_IO(TQMX86_IOBASE_I2C, TQMX86_IOSIZE_I2C),
-};
+पूर्ण;
 
-static const struct resource tqmx_watchdog_resources[] = {
+अटल स्थिर काष्ठा resource tqmx_watchकरोg_resources[] = अणु
 	DEFINE_RES_IO(TQMX86_IOBASE_WATCHDOG, TQMX86_IOSIZE_WATCHDOG),
-};
+पूर्ण;
 
 /*
  * The IRQ resource must be first, since it is updated with the
  * configured IRQ in the probe function.
  */
-static struct resource tqmx_gpio_resources[] = {
+अटल काष्ठा resource tqmx_gpio_resources[] = अणु
 	DEFINE_RES_IRQ(0),
 	DEFINE_RES_IO(TQMX86_IOBASE_GPIO, TQMX86_IOSIZE_GPIO),
-};
+पूर्ण;
 
-static struct i2c_board_info tqmx86_i2c_devices[] = {
-	{
+अटल काष्ठा i2c_board_info tqmx86_i2c_devices[] = अणु
+	अणु
 		/* 4K EEPROM at 0x50 */
 		I2C_BOARD_INFO("24c32", 0x50),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ocores_i2c_platform_data ocores_platfom_data = {
+अटल काष्ठा ocores_i2c_platक्रमm_data ocores_platfom_data = अणु
 	.num_devices = ARRAY_SIZE(tqmx86_i2c_devices),
 	.devices = tqmx86_i2c_devices,
-};
+पूर्ण;
 
-static const struct mfd_cell tqmx86_i2c_soft_dev[] = {
-	{
+अटल स्थिर काष्ठा mfd_cell tqmx86_i2c_soft_dev[] = अणु
+	अणु
 		.name = "ocores-i2c",
-		.platform_data = &ocores_platfom_data,
-		.pdata_size = sizeof(ocores_platfom_data),
+		.platक्रमm_data = &ocores_platfom_data,
+		.pdata_size = माप(ocores_platfom_data),
 		.resources = tqmx_i2c_soft_resources,
 		.num_resources = ARRAY_SIZE(tqmx_i2c_soft_resources),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct mfd_cell tqmx86_devs[] = {
-	{
+अटल स्थिर काष्ठा mfd_cell tqmx86_devs[] = अणु
+	अणु
 		.name = "tqmx86-wdt",
-		.resources = tqmx_watchdog_resources,
-		.num_resources = ARRAY_SIZE(tqmx_watchdog_resources),
+		.resources = tqmx_watchकरोg_resources,
+		.num_resources = ARRAY_SIZE(tqmx_watchकरोg_resources),
 		.ignore_resource_conflicts = true,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "tqmx86-gpio",
 		.resources = tqmx_gpio_resources,
 		.num_resources = ARRAY_SIZE(tqmx_gpio_resources),
 		.ignore_resource_conflicts = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const char *tqmx86_board_id_to_name(u8 board_id)
-{
-	switch (board_id) {
-	case TQMX86_REG_BOARD_ID_E38M:
-		return "TQMxE38M";
-	case TQMX86_REG_BOARD_ID_50UC:
-		return "TQMx50UC";
-	case TQMX86_REG_BOARD_ID_E38C:
-		return "TQMxE38C";
-	case TQMX86_REG_BOARD_ID_60EB:
-		return "TQMx60EB";
-	case TQMX86_REG_BOARD_ID_E39M:
-		return "TQMxE39M";
-	case TQMX86_REG_BOARD_ID_E39C:
-		return "TQMxE39C";
-	case TQMX86_REG_BOARD_ID_E39x:
-		return "TQMxE39x";
-	case TQMX86_REG_BOARD_ID_70EB:
-		return "TQMx70EB";
-	case TQMX86_REG_BOARD_ID_80UC:
-		return "TQMx80UC";
-	case TQMX86_REG_BOARD_ID_90UC:
-		return "TQMx90UC";
-	default:
-		return "Unknown";
-	}
-}
+अटल स्थिर अक्षर *tqmx86_board_id_to_name(u8 board_id)
+अणु
+	चयन (board_id) अणु
+	हाल TQMX86_REG_BOARD_ID_E38M:
+		वापस "TQMxE38M";
+	हाल TQMX86_REG_BOARD_ID_50UC:
+		वापस "TQMx50UC";
+	हाल TQMX86_REG_BOARD_ID_E38C:
+		वापस "TQMxE38C";
+	हाल TQMX86_REG_BOARD_ID_60EB:
+		वापस "TQMx60EB";
+	हाल TQMX86_REG_BOARD_ID_E39M:
+		वापस "TQMxE39M";
+	हाल TQMX86_REG_BOARD_ID_E39C:
+		वापस "TQMxE39C";
+	हाल TQMX86_REG_BOARD_ID_E39x:
+		वापस "TQMxE39x";
+	हाल TQMX86_REG_BOARD_ID_70EB:
+		वापस "TQMx70EB";
+	हाल TQMX86_REG_BOARD_ID_80UC:
+		वापस "TQMx80UC";
+	हाल TQMX86_REG_BOARD_ID_90UC:
+		वापस "TQMx90UC";
+	शेष:
+		वापस "Unknown";
+	पूर्ण
+पूर्ण
 
-static int tqmx86_board_id_to_clk_rate(u8 board_id)
-{
-	switch (board_id) {
-	case TQMX86_REG_BOARD_ID_50UC:
-	case TQMX86_REG_BOARD_ID_60EB:
-	case TQMX86_REG_BOARD_ID_70EB:
-	case TQMX86_REG_BOARD_ID_80UC:
-	case TQMX86_REG_BOARD_ID_90UC:
-		return 24000;
-	case TQMX86_REG_BOARD_ID_E39M:
-	case TQMX86_REG_BOARD_ID_E39C:
-	case TQMX86_REG_BOARD_ID_E39x:
-		return 25000;
-	case TQMX86_REG_BOARD_ID_E38M:
-	case TQMX86_REG_BOARD_ID_E38C:
-		return 33000;
-	default:
-		return 0;
-	}
-}
+अटल पूर्णांक tqmx86_board_id_to_clk_rate(u8 board_id)
+अणु
+	चयन (board_id) अणु
+	हाल TQMX86_REG_BOARD_ID_50UC:
+	हाल TQMX86_REG_BOARD_ID_60EB:
+	हाल TQMX86_REG_BOARD_ID_70EB:
+	हाल TQMX86_REG_BOARD_ID_80UC:
+	हाल TQMX86_REG_BOARD_ID_90UC:
+		वापस 24000;
+	हाल TQMX86_REG_BOARD_ID_E39M:
+	हाल TQMX86_REG_BOARD_ID_E39C:
+	हाल TQMX86_REG_BOARD_ID_E39x:
+		वापस 25000;
+	हाल TQMX86_REG_BOARD_ID_E38M:
+	हाल TQMX86_REG_BOARD_ID_E38C:
+		वापस 33000;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int tqmx86_probe(struct platform_device *pdev)
-{
-	u8 board_id, rev, i2c_det, io_ext_int_val;
-	struct device *dev = &pdev->dev;
-	u8 gpio_irq_cfg, readback;
-	const char *board_name;
-	void __iomem *io_base;
-	int err;
+अटल पूर्णांक tqmx86_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	u8 board_id, rev, i2c_det, io_ext_पूर्णांक_val;
+	काष्ठा device *dev = &pdev->dev;
+	u8 gpio_irq_cfg, पढ़ोback;
+	स्थिर अक्षर *board_name;
+	व्योम __iomem *io_base;
+	पूर्णांक err;
 
-	switch (gpio_irq) {
-	case 0:
+	चयन (gpio_irq) अणु
+	हाल 0:
 		gpio_irq_cfg = TQMX86_REG_IO_EXT_INT_NONE;
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		gpio_irq_cfg = TQMX86_REG_IO_EXT_INT_7;
-		break;
-	case 9:
+		अवरोध;
+	हाल 9:
 		gpio_irq_cfg = TQMX86_REG_IO_EXT_INT_9;
-		break;
-	case 12:
+		अवरोध;
+	हाल 12:
 		gpio_irq_cfg = TQMX86_REG_IO_EXT_INT_12;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("tqmx86: Invalid GPIO IRQ (%d)\n", gpio_irq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	io_base = devm_ioport_map(dev, TQMX86_IOBASE, TQMX86_IOSIZE);
-	if (!io_base)
-		return -ENOMEM;
+	अगर (!io_base)
+		वापस -ENOMEM;
 
-	board_id = ioread8(io_base + TQMX86_REG_BOARD_ID);
+	board_id = ioपढ़ो8(io_base + TQMX86_REG_BOARD_ID);
 	board_name = tqmx86_board_id_to_name(board_id);
-	rev = ioread8(io_base + TQMX86_REG_BOARD_REV);
+	rev = ioपढ़ो8(io_base + TQMX86_REG_BOARD_REV);
 
 	dev_info(dev,
 		 "Found %s - Board ID %d, PCB Revision %d, PLD Revision %d\n",
 		 board_name, board_id, rev >> 4, rev & 0xf);
 
-	i2c_det = ioread8(io_base + TQMX86_REG_I2C_DETECT);
+	i2c_det = ioपढ़ो8(io_base + TQMX86_REG_I2C_DETECT);
 
-	if (gpio_irq_cfg) {
-		io_ext_int_val =
+	अगर (gpio_irq_cfg) अणु
+		io_ext_पूर्णांक_val =
 			gpio_irq_cfg << TQMX86_REG_IO_EXT_INT_GPIO_SHIFT;
-		iowrite8(io_ext_int_val, io_base + TQMX86_REG_IO_EXT_INT);
-		readback = ioread8(io_base + TQMX86_REG_IO_EXT_INT);
-		if (readback != io_ext_int_val) {
+		ioग_लिखो8(io_ext_पूर्णांक_val, io_base + TQMX86_REG_IO_EXT_INT);
+		पढ़ोback = ioपढ़ो8(io_base + TQMX86_REG_IO_EXT_INT);
+		अगर (पढ़ोback != io_ext_पूर्णांक_val) अणु
 			dev_warn(dev, "GPIO interrupts not supported.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* Assumes the IRQ resource is first. */
 		tqmx_gpio_resources[0].start = gpio_irq;
-	}
+	पूर्ण
 
-	ocores_platfom_data.clock_khz = tqmx86_board_id_to_clk_rate(board_id);
+	ocores_platfom_data.घड़ी_khz = tqmx86_board_id_to_clk_rate(board_id);
 
-	if (i2c_det == TQMX86_REG_I2C_DETECT_SOFT) {
+	अगर (i2c_det == TQMX86_REG_I2C_DETECT_SOFT) अणु
 		err = devm_mfd_add_devices(dev, PLATFORM_DEVID_NONE,
 					   tqmx86_i2c_soft_dev,
 					   ARRAY_SIZE(tqmx86_i2c_soft_dev),
-					   NULL, 0, NULL);
-		if (err)
-			return err;
-	}
+					   शून्य, 0, शून्य);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return devm_mfd_add_devices(dev, PLATFORM_DEVID_NONE,
+	वापस devm_mfd_add_devices(dev, PLATFORM_DEVID_NONE,
 				    tqmx86_devs,
 				    ARRAY_SIZE(tqmx86_devs),
-				    NULL, 0, NULL);
-}
+				    शून्य, 0, शून्य);
+पूर्ण
 
-static int tqmx86_create_platform_device(const struct dmi_system_id *id)
-{
-	struct platform_device *pdev;
-	int err;
+अटल पूर्णांक tqmx86_create_platक्रमm_device(स्थिर काष्ठा dmi_प्रणाली_id *id)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक err;
 
-	pdev = platform_device_alloc("tqmx86", -1);
-	if (!pdev)
-		return -ENOMEM;
+	pdev = platक्रमm_device_alloc("tqmx86", -1);
+	अगर (!pdev)
+		वापस -ENOMEM;
 
-	err = platform_device_add(pdev);
-	if (err)
-		platform_device_put(pdev);
+	err = platक्रमm_device_add(pdev);
+	अगर (err)
+		platक्रमm_device_put(pdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct dmi_system_id tqmx86_dmi_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id tqmx86_dmi_table[] __initस्थिर = अणु
+	अणु
 		.ident = "TQMX86",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "TQ-Group"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "TQMx"),
-		},
-		.callback = tqmx86_create_platform_device,
-	},
-	{}
-};
+		पूर्ण,
+		.callback = tqmx86_create_platक्रमm_device,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(dmi, tqmx86_dmi_table);
 
-static struct platform_driver tqmx86_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver tqmx86_driver = अणु
+	.driver		= अणु
 		.name	= "tqmx86",
-	},
+	पूर्ण,
 	.probe		= tqmx86_probe,
-};
+पूर्ण;
 
-static int __init tqmx86_init(void)
-{
-	if (!dmi_check_system(tqmx86_dmi_table))
-		return -ENODEV;
+अटल पूर्णांक __init tqmx86_init(व्योम)
+अणु
+	अगर (!dmi_check_प्रणाली(tqmx86_dmi_table))
+		वापस -ENODEV;
 
-	return platform_driver_register(&tqmx86_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&tqmx86_driver);
+पूर्ण
 
 module_init(tqmx86_init);
 

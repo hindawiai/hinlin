@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * MUSB OTG driver defines
  *
@@ -7,595 +8,595 @@
  * Copyright (C) 2006-2007 Nokia Corporation
  */
 
-#ifndef __MUSB_CORE_H__
-#define __MUSB_CORE_H__
+#अगर_अघोषित __MUSB_CORE_H__
+#घोषणा __MUSB_CORE_H__
 
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/errno.h>
-#include <linux/timer.h>
-#include <linux/device.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb.h>
-#include <linux/usb/otg.h>
-#include <linux/usb/musb.h>
-#include <linux/phy/phy.h>
-#include <linux/workqueue.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/device.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/otg.h>
+#समावेश <linux/usb/musb.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/workqueue.h>
 
-struct musb;
-struct musb_hw_ep;
-struct musb_ep;
-struct musb_qh;
+काष्ठा musb;
+काष्ठा musb_hw_ep;
+काष्ठा musb_ep;
+काष्ठा musb_qh;
 
-/* Helper defines for struct musb->hwvers */
-#define MUSB_HWVERS_MAJOR(x)	((x >> 10) & 0x1f)
-#define MUSB_HWVERS_MINOR(x)	(x & 0x3ff)
-#define MUSB_HWVERS_RC		0x8000
-#define MUSB_HWVERS_1300	0x52C
-#define MUSB_HWVERS_1400	0x590
-#define MUSB_HWVERS_1800	0x720
-#define MUSB_HWVERS_1900	0x784
-#define MUSB_HWVERS_2000	0x800
+/* Helper defines क्रम काष्ठा musb->hwvers */
+#घोषणा MUSB_HWVERS_MAJOR(x)	((x >> 10) & 0x1f)
+#घोषणा MUSB_HWVERS_MINOR(x)	(x & 0x3ff)
+#घोषणा MUSB_HWVERS_RC		0x8000
+#घोषणा MUSB_HWVERS_1300	0x52C
+#घोषणा MUSB_HWVERS_1400	0x590
+#घोषणा MUSB_HWVERS_1800	0x720
+#घोषणा MUSB_HWVERS_1900	0x784
+#घोषणा MUSB_HWVERS_2000	0x800
 
-#include "musb_debug.h"
-#include "musb_dma.h"
+#समावेश "musb_debug.h"
+#समावेश "musb_dma.h"
 
-#include "musb_io.h"
+#समावेश "musb_io.h"
 
-#include "musb_gadget.h"
-#include <linux/usb/hcd.h>
-#include "musb_host.h"
+#समावेश "musb_gadget.h"
+#समावेश <linux/usb/hcd.h>
+#समावेश "musb_host.h"
 
 /* NOTE:  otg and peripheral-only state machines start at B_IDLE.
  * OTG or host-only go to A_IDLE when ID is sensed.
  */
-#define is_peripheral_active(m)		(!(m)->is_host)
-#define is_host_active(m)		((m)->is_host)
+#घोषणा is_peripheral_active(m)		(!(m)->is_host)
+#घोषणा is_host_active(m)		((m)->is_host)
 
 /****************************** CONSTANTS ********************************/
 
-#ifndef MUSB_C_NUM_EPS
-#define MUSB_C_NUM_EPS ((u8)16)
-#endif
+#अगर_अघोषित MUSB_C_NUM_EPS
+#घोषणा MUSB_C_NUM_EPS ((u8)16)
+#पूर्ण_अगर
 
-#ifndef MUSB_MAX_END0_PACKET
-#define MUSB_MAX_END0_PACKET ((u16)MUSB_EP0_FIFOSIZE)
-#endif
+#अगर_अघोषित MUSB_MAX_END0_PACKET
+#घोषणा MUSB_MAX_END0_PACKET ((u16)MUSB_EP0_FIFOSIZE)
+#पूर्ण_अगर
 
 /* host side ep0 states */
-enum musb_h_ep0_state {
+क्रमागत musb_h_ep0_state अणु
 	MUSB_EP0_IDLE,
 	MUSB_EP0_START,			/* expect ack of setup */
 	MUSB_EP0_IN,			/* expect IN DATA */
 	MUSB_EP0_OUT,			/* expect ack of OUT DATA */
 	MUSB_EP0_STATUS,		/* expect ack of STATUS */
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
 /* peripheral side ep0 states */
-enum musb_g_ep0_state {
-	MUSB_EP0_STAGE_IDLE,		/* idle, waiting for SETUP */
+क्रमागत musb_g_ep0_state अणु
+	MUSB_EP0_STAGE_IDLE,		/* idle, रुकोing क्रम SETUP */
 	MUSB_EP0_STAGE_SETUP,		/* received SETUP */
 	MUSB_EP0_STAGE_TX,		/* IN data */
 	MUSB_EP0_STAGE_RX,		/* OUT data */
 	MUSB_EP0_STAGE_STATUSIN,	/* (after OUT data) */
 	MUSB_EP0_STAGE_STATUSOUT,	/* (after IN data) */
-	MUSB_EP0_STAGE_ACKWAIT,		/* after zlp, before statusin */
-} __attribute__ ((packed));
+	MUSB_EP0_STAGE_ACKWAIT,		/* after zlp, beक्रमe statusin */
+पूर्ण __attribute__ ((packed));
 
 /*
- * OTG protocol constants.  See USB OTG 1.3 spec,
+ * OTG protocol स्थिरants.  See USB OTG 1.3 spec,
  * sections 5.5 "Device Timings" and 6.6.5 "Timers".
  */
-#define OTG_TIME_A_WAIT_VRISE	100		/* msec (max) */
-#define OTG_TIME_A_WAIT_BCON	1100		/* min 1 second */
-#define OTG_TIME_A_AIDL_BDIS	200		/* min 200 msec */
-#define OTG_TIME_B_ASE0_BRST	100		/* min 3.125 ms */
+#घोषणा OTG_TIME_A_WAIT_VRISE	100		/* msec (max) */
+#घोषणा OTG_TIME_A_WAIT_BCON	1100		/* min 1 second */
+#घोषणा OTG_TIME_A_AIDL_BDIS	200		/* min 200 msec */
+#घोषणा OTG_TIME_B_ASE0_BRST	100		/* min 3.125 ms */
 
 /****************************** FUNCTIONS ********************************/
 
-#define MUSB_HST_MODE(_musb)\
-	{ (_musb)->is_host = true; }
-#define MUSB_DEV_MODE(_musb) \
-	{ (_musb)->is_host = false; }
+#घोषणा MUSB_HST_MODE(_musb)\
+	अणु (_musb)->is_host = true; पूर्ण
+#घोषणा MUSB_DEV_MODE(_musb) \
+	अणु (_musb)->is_host = false; पूर्ण
 
-#define test_devctl_hst_mode(_x) \
-	(musb_readb((_x)->mregs, MUSB_DEVCTL)&MUSB_DEVCTL_HM)
+#घोषणा test_devctl_hst_mode(_x) \
+	(musb_पढ़ोb((_x)->mregs, MUSB_DEVCTL)&MUSB_DEVCTL_HM)
 
-#define MUSB_MODE(musb) ((musb)->is_host ? "Host" : "Peripheral")
+#घोषणा MUSB_MODE(musb) ((musb)->is_host ? "Host" : "Peripheral")
 
 /******************************** TYPES *************************************/
 
-struct musb_io;
+काष्ठा musb_io;
 
 /**
- * struct musb_platform_ops - Operations passed to musb_core by HW glue layer
- * @quirks:	flags for platform specific quirks
+ * काष्ठा musb_platक्रमm_ops - Operations passed to musb_core by HW glue layer
+ * @quirks:	flags क्रम platक्रमm specअगरic quirks
  * @enable:	enable device
  * @disable:	disable device
- * @ep_offset:	returns the end point offset
- * @ep_select:	selects the specified end point
- * @fifo_mode:	sets the fifo mode
- * @fifo_offset: returns the fifo offset
- * @readb:	read 8 bits
- * @writeb:	write 8 bits
- * @clearb:	could be clear-on-readb or W1C
- * @readw:	read 16 bits
- * @writew:	write 16 bits
- * @clearw:	could be clear-on-readw or W1C
- * @read_fifo:	reads the fifo
- * @write_fifo:	writes to fifo
- * @get_toggle:	platform specific get toggle function
- * @set_toggle:	platform specific set toggle function
- * @dma_init:	platform specific dma init function
- * @dma_exit:	platform specific dma exit function
- * @init:	turns on clocks, sets up platform-specific registers, etc
- * @exit:	undoes @init
- * @set_mode:	forcefully changes operating mode
+ * @ep_offset:	वापसs the end poपूर्णांक offset
+ * @ep_select:	selects the specअगरied end poपूर्णांक
+ * @fअगरo_mode:	sets the fअगरo mode
+ * @fअगरo_offset: वापसs the fअगरo offset
+ * @पढ़ोb:	पढ़ो 8 bits
+ * @ग_लिखोb:	ग_लिखो 8 bits
+ * @clearb:	could be clear-on-पढ़ोb or W1C
+ * @पढ़ोw:	पढ़ो 16 bits
+ * @ग_लिखोw:	ग_लिखो 16 bits
+ * @clearw:	could be clear-on-पढ़ोw or W1C
+ * @पढ़ो_fअगरo:	पढ़ोs the fअगरo
+ * @ग_लिखो_fअगरo:	ग_लिखोs to fअगरo
+ * @get_toggle:	platक्रमm specअगरic get toggle function
+ * @set_toggle:	platक्रमm specअगरic set toggle function
+ * @dma_init:	platक्रमm specअगरic dma init function
+ * @dma_निकास:	platक्रमm specअगरic dma निकास function
+ * @init:	turns on घड़ीs, sets up platक्रमm-specअगरic रेजिस्टरs, etc
+ * @निकास:	unकरोes @init
+ * @set_mode:	क्रमcefully changes operating mode
  * @try_idle:	tries to idle the IP
- * @recover:	platform-specific babble recovery
- * @vbus_status: returns vbus status if possible
- * @set_vbus:	forces vbus status
- * @pre_root_reset_end: called before the root usb port reset flag gets cleared
- * @post_root_reset_end: called after the root usb port reset flag gets cleared
- * @phy_callback: optional callback function for the phy to call
+ * @recover:	platक्रमm-specअगरic babble recovery
+ * @vbus_status: वापसs vbus status अगर possible
+ * @set_vbus:	क्रमces vbus status
+ * @pre_root_reset_end: called beक्रमe the root usb port reset flag माला_लो cleared
+ * @post_root_reset_end: called after the root usb port reset flag माला_लो cleared
+ * @phy_callback: optional callback function क्रम the phy to call
  */
-struct musb_platform_ops {
+काष्ठा musb_platक्रमm_ops अणु
 
-#define MUSB_G_NO_SKB_RESERVE	BIT(9)
-#define MUSB_DA8XX		BIT(8)
-#define MUSB_PRESERVE_SESSION	BIT(7)
-#define MUSB_DMA_UX500		BIT(6)
-#define MUSB_DMA_CPPI41		BIT(5)
-#define MUSB_DMA_CPPI		BIT(4)
-#define MUSB_DMA_TUSB_OMAP	BIT(3)
-#define MUSB_DMA_INVENTRA	BIT(2)
-#define MUSB_IN_TUSB		BIT(1)
-#define MUSB_INDEXED_EP		BIT(0)
+#घोषणा MUSB_G_NO_SKB_RESERVE	BIT(9)
+#घोषणा MUSB_DA8XX		BIT(8)
+#घोषणा MUSB_PRESERVE_SESSION	BIT(7)
+#घोषणा MUSB_DMA_UX500		BIT(6)
+#घोषणा MUSB_DMA_CPPI41		BIT(5)
+#घोषणा MUSB_DMA_CPPI		BIT(4)
+#घोषणा MUSB_DMA_TUSB_OMAP	BIT(3)
+#घोषणा MUSB_DMA_INVENTRA	BIT(2)
+#घोषणा MUSB_IN_TUSB		BIT(1)
+#घोषणा MUSB_INDEXED_EP		BIT(0)
 	u32	quirks;
 
-	int	(*init)(struct musb *musb);
-	int	(*exit)(struct musb *musb);
+	पूर्णांक	(*init)(काष्ठा musb *musb);
+	पूर्णांक	(*निकास)(काष्ठा musb *musb);
 
-	void	(*enable)(struct musb *musb);
-	void	(*disable)(struct musb *musb);
+	व्योम	(*enable)(काष्ठा musb *musb);
+	व्योम	(*disable)(काष्ठा musb *musb);
 
 	u32	(*ep_offset)(u8 epnum, u16 offset);
-	void	(*ep_select)(void __iomem *mbase, u8 epnum);
-	u16	fifo_mode;
-	u32	(*fifo_offset)(u8 epnum);
+	व्योम	(*ep_select)(व्योम __iomem *mbase, u8 epnum);
+	u16	fअगरo_mode;
+	u32	(*fअगरo_offset)(u8 epnum);
 	u32	(*busctl_offset)(u8 epnum, u16 offset);
-	u8	(*readb)(void __iomem *addr, u32 offset);
-	void	(*writeb)(void __iomem *addr, u32 offset, u8 data);
-	u8	(*clearb)(void __iomem *addr, u32 offset);
-	u16	(*readw)(void __iomem *addr, u32 offset);
-	void	(*writew)(void __iomem *addr, u32 offset, u16 data);
-	u16	(*clearw)(void __iomem *addr, u32 offset);
-	void	(*read_fifo)(struct musb_hw_ep *hw_ep, u16 len, u8 *buf);
-	void	(*write_fifo)(struct musb_hw_ep *hw_ep, u16 len, const u8 *buf);
-	u16	(*get_toggle)(struct musb_qh *qh, int is_out);
-	u16	(*set_toggle)(struct musb_qh *qh, int is_out, struct urb *urb);
-	struct dma_controller *
-		(*dma_init) (struct musb *musb, void __iomem *base);
-	void	(*dma_exit)(struct dma_controller *c);
-	int	(*set_mode)(struct musb *musb, u8 mode);
-	void	(*try_idle)(struct musb *musb, unsigned long timeout);
-	int	(*recover)(struct musb *musb);
+	u8	(*पढ़ोb)(व्योम __iomem *addr, u32 offset);
+	व्योम	(*ग_लिखोb)(व्योम __iomem *addr, u32 offset, u8 data);
+	u8	(*clearb)(व्योम __iomem *addr, u32 offset);
+	u16	(*पढ़ोw)(व्योम __iomem *addr, u32 offset);
+	व्योम	(*ग_लिखोw)(व्योम __iomem *addr, u32 offset, u16 data);
+	u16	(*clearw)(व्योम __iomem *addr, u32 offset);
+	व्योम	(*पढ़ो_fअगरo)(काष्ठा musb_hw_ep *hw_ep, u16 len, u8 *buf);
+	व्योम	(*ग_लिखो_fअगरo)(काष्ठा musb_hw_ep *hw_ep, u16 len, स्थिर u8 *buf);
+	u16	(*get_toggle)(काष्ठा musb_qh *qh, पूर्णांक is_out);
+	u16	(*set_toggle)(काष्ठा musb_qh *qh, पूर्णांक is_out, काष्ठा urb *urb);
+	काष्ठा dma_controller *
+		(*dma_init) (काष्ठा musb *musb, व्योम __iomem *base);
+	व्योम	(*dma_निकास)(काष्ठा dma_controller *c);
+	पूर्णांक	(*set_mode)(काष्ठा musb *musb, u8 mode);
+	व्योम	(*try_idle)(काष्ठा musb *musb, अचिन्हित दीर्घ समयout);
+	पूर्णांक	(*recover)(काष्ठा musb *musb);
 
-	int	(*vbus_status)(struct musb *musb);
-	void	(*set_vbus)(struct musb *musb, int on);
+	पूर्णांक	(*vbus_status)(काष्ठा musb *musb);
+	व्योम	(*set_vbus)(काष्ठा musb *musb, पूर्णांक on);
 
-	void	(*pre_root_reset_end)(struct musb *musb);
-	void	(*post_root_reset_end)(struct musb *musb);
-	int	(*phy_callback)(enum musb_vbus_id_status status);
-	void	(*clear_ep_rxintr)(struct musb *musb, int epnum);
-};
+	व्योम	(*pre_root_reset_end)(काष्ठा musb *musb);
+	व्योम	(*post_root_reset_end)(काष्ठा musb *musb);
+	पूर्णांक	(*phy_callback)(क्रमागत musb_vbus_id_status status);
+	व्योम	(*clear_ep_rxपूर्णांकr)(काष्ठा musb *musb, पूर्णांक epnum);
+पूर्ण;
 
 /*
- * struct musb_hw_ep - endpoint hardware (bidirectional)
+ * काष्ठा musb_hw_ep - endpoपूर्णांक hardware (bidirectional)
  *
- * Ordered slightly for better cacheline locality.
+ * Ordered slightly क्रम better cacheline locality.
  */
-struct musb_hw_ep {
-	struct musb		*musb;
-	void __iomem		*fifo;
-	void __iomem		*regs;
+काष्ठा musb_hw_ep अणु
+	काष्ठा musb		*musb;
+	व्योम __iomem		*fअगरo;
+	व्योम __iomem		*regs;
 
-#if IS_ENABLED(CONFIG_USB_MUSB_TUSB6010)
-	void __iomem		*conf;
-#endif
+#अगर IS_ENABLED(CONFIG_USB_MUSB_TUSB6010)
+	व्योम __iomem		*conf;
+#पूर्ण_अगर
 
-	/* index in musb->endpoints[]  */
+	/* index in musb->endpoपूर्णांकs[]  */
 	u8			epnum;
 
 	/* hardware configuration, possibly dynamic */
-	bool			is_shared_fifo;
-	bool			tx_double_buffered;
-	bool			rx_double_buffered;
+	bool			is_shared_fअगरo;
+	bool			tx_द्विगुन_buffered;
+	bool			rx_द्विगुन_buffered;
 	u16			max_packet_sz_tx;
 	u16			max_packet_sz_rx;
 
-	struct dma_channel	*tx_channel;
-	struct dma_channel	*rx_channel;
+	काष्ठा dma_channel	*tx_channel;
+	काष्ठा dma_channel	*rx_channel;
 
-#if IS_ENABLED(CONFIG_USB_MUSB_TUSB6010)
+#अगर IS_ENABLED(CONFIG_USB_MUSB_TUSB6010)
 	/* TUSB has "asynchronous" and "synchronous" dma modes */
-	dma_addr_t		fifo_async;
-	dma_addr_t		fifo_sync;
-	void __iomem		*fifo_sync_va;
-#endif
+	dma_addr_t		fअगरo_async;
+	dma_addr_t		fअगरo_sync;
+	व्योम __iomem		*fअगरo_sync_va;
+#पूर्ण_अगर
 
-	/* currently scheduled peripheral endpoint */
-	struct musb_qh		*in_qh;
-	struct musb_qh		*out_qh;
+	/* currently scheduled peripheral endpoपूर्णांक */
+	काष्ठा musb_qh		*in_qh;
+	काष्ठा musb_qh		*out_qh;
 
 	u8			rx_reinit;
 	u8			tx_reinit;
 
 	/* peripheral side */
-	struct musb_ep		ep_in;			/* TX */
-	struct musb_ep		ep_out;			/* RX */
-};
+	काष्ठा musb_ep		ep_in;			/* TX */
+	काष्ठा musb_ep		ep_out;			/* RX */
+पूर्ण;
 
-static inline struct musb_request *next_in_request(struct musb_hw_ep *hw_ep)
-{
-	return next_request(&hw_ep->ep_in);
-}
+अटल अंतरभूत काष्ठा musb_request *next_in_request(काष्ठा musb_hw_ep *hw_ep)
+अणु
+	वापस next_request(&hw_ep->ep_in);
+पूर्ण
 
-static inline struct musb_request *next_out_request(struct musb_hw_ep *hw_ep)
-{
-	return next_request(&hw_ep->ep_out);
-}
+अटल अंतरभूत काष्ठा musb_request *next_out_request(काष्ठा musb_hw_ep *hw_ep)
+अणु
+	वापस next_request(&hw_ep->ep_out);
+पूर्ण
 
-struct musb_csr_regs {
-	/* FIFO registers */
+काष्ठा musb_csr_regs अणु
+	/* FIFO रेजिस्टरs */
 	u16 txmaxp, txcsr, rxmaxp, rxcsr;
-	u16 rxfifoadd, txfifoadd;
-	u8 txtype, txinterval, rxtype, rxinterval;
-	u8 rxfifosz, txfifosz;
+	u16 rxfअगरoadd, txfअगरoadd;
+	u8 txtype, txपूर्णांकerval, rxtype, rxपूर्णांकerval;
+	u8 rxfअगरosz, txfअगरosz;
 	u8 txfunaddr, txhubaddr, txhubport;
 	u8 rxfunaddr, rxhubaddr, rxhubport;
-};
+पूर्ण;
 
-struct musb_context_registers {
+काष्ठा musb_context_रेजिस्टरs अणु
 
-	u8 power;
-	u8 intrusbe;
+	u8 घातer;
+	u8 पूर्णांकrusbe;
 	u16 frame;
-	u8 index, testmode;
+	u8 index, tesपंचांगode;
 
 	u8 devctl, busctl, misc;
-	u32 otg_interfsel;
+	u32 otg_पूर्णांकerfsel;
 
-	struct musb_csr_regs index_regs[MUSB_C_NUM_EPS];
-};
+	काष्ठा musb_csr_regs index_regs[MUSB_C_NUM_EPS];
+पूर्ण;
 
 /*
- * struct musb - Driver instance data.
+ * काष्ठा musb - Driver instance data.
  */
-struct musb {
+काष्ठा musb अणु
 	/* device lock */
 	spinlock_t		lock;
 	spinlock_t		list_lock;	/* resume work list lock */
 
-	struct musb_io		io;
-	const struct musb_platform_ops *ops;
-	struct musb_context_registers context;
+	काष्ठा musb_io		io;
+	स्थिर काष्ठा musb_platक्रमm_ops *ops;
+	काष्ठा musb_context_रेजिस्टरs context;
 
-	irqreturn_t		(*isr)(int, void *);
-	struct delayed_work	irq_work;
-	struct delayed_work	deassert_reset_work;
-	struct delayed_work	finish_resume_work;
-	struct delayed_work	gadget_work;
+	irqवापस_t		(*isr)(पूर्णांक, व्योम *);
+	काष्ठा delayed_work	irq_work;
+	काष्ठा delayed_work	deनिश्चित_reset_work;
+	काष्ठा delayed_work	finish_resume_work;
+	काष्ठा delayed_work	gadget_work;
 	u16			hwvers;
 
-	u16			intrrxe;
-	u16			intrtxe;
+	u16			पूर्णांकrrxe;
+	u16			पूर्णांकrtxe;
 /* this hub status bit is reserved by USB 2.0 and not seen by usbcore */
-#define MUSB_PORT_STAT_RESUME	(1 << 31)
+#घोषणा MUSB_PORT_STAT_RESUME	(1 << 31)
 
 	u32			port1_status;
 
-	unsigned long		rh_timer;
+	अचिन्हित दीर्घ		rh_समयr;
 
-	enum musb_h_ep0_state	ep0_stage;
+	क्रमागत musb_h_ep0_state	ep0_stage;
 
-	/* bulk traffic normally dedicates endpoint hardware, and each
-	 * direction has its own ring of host side endpoints.
-	 * we try to progress the transfer at the head of each endpoint's
+	/* bulk traffic normally dedicates endpoपूर्णांक hardware, and each
+	 * direction has its own ring of host side endpoपूर्णांकs.
+	 * we try to progress the transfer at the head of each endpoपूर्णांक's
 	 * queue until it completes or NAKs too much; then we try the next
-	 * endpoint.
+	 * endpoपूर्णांक.
 	 */
-	struct musb_hw_ep	*bulk_ep;
+	काष्ठा musb_hw_ep	*bulk_ep;
 
-	struct list_head	control;	/* of musb_qh */
-	struct list_head	in_bulk;	/* of musb_qh */
-	struct list_head	out_bulk;	/* of musb_qh */
-	struct list_head	pending_list;	/* pending work list */
+	काष्ठा list_head	control;	/* of musb_qh */
+	काष्ठा list_head	in_bulk;	/* of musb_qh */
+	काष्ठा list_head	out_bulk;	/* of musb_qh */
+	काष्ठा list_head	pending_list;	/* pending work list */
 
-	struct timer_list	otg_timer;
-	struct timer_list	dev_timer;
-	struct notifier_block	nb;
+	काष्ठा समयr_list	otg_समयr;
+	काष्ठा समयr_list	dev_समयr;
+	काष्ठा notअगरier_block	nb;
 
-	struct dma_controller	*dma_controller;
+	काष्ठा dma_controller	*dma_controller;
 
-	struct device		*controller;
-	void __iomem		*ctrl_base;
-	void __iomem		*mregs;
+	काष्ठा device		*controller;
+	व्योम __iomem		*ctrl_base;
+	व्योम __iomem		*mregs;
 
-#if IS_ENABLED(CONFIG_USB_MUSB_TUSB6010)
+#अगर IS_ENABLED(CONFIG_USB_MUSB_TUSB6010)
 	dma_addr_t		async;
 	dma_addr_t		sync;
-	void __iomem		*sync_va;
+	व्योम __iomem		*sync_va;
 	u8			tusb_revision;
-#endif
+#पूर्ण_अगर
 
-	/* passed down from chip/board specific irq handlers */
-	u8			int_usb;
-	u16			int_rx;
-	u16			int_tx;
+	/* passed करोwn from chip/board specअगरic irq handlers */
+	u8			पूर्णांक_usb;
+	u16			पूर्णांक_rx;
+	u16			पूर्णांक_tx;
 
-	struct usb_phy		*xceiv;
-	struct phy		*phy;
+	काष्ठा usb_phy		*xceiv;
+	काष्ठा phy		*phy;
 
-	int nIrq;
-	unsigned		irq_wake:1;
+	पूर्णांक nIrq;
+	अचिन्हित		irq_wake:1;
 
-	struct musb_hw_ep	 endpoints[MUSB_C_NUM_EPS];
-#define control_ep		endpoints
+	काष्ठा musb_hw_ep	 endpoपूर्णांकs[MUSB_C_NUM_EPS];
+#घोषणा control_ep		endpoपूर्णांकs
 
-#define VBUSERR_RETRY_COUNT	3
+#घोषणा VBUSERR_RETRY_COUNT	3
 	u16			vbuserr_retry;
 	u16 epmask;
-	u8 nr_endpoints;
+	u8 nr_endpoपूर्णांकs;
 
-	int			(*board_set_power)(int state);
+	पूर्णांक			(*board_set_घातer)(पूर्णांक state);
 
-	u8			min_power;	/* vbus for periph, in mA/2 */
+	u8			min_घातer;	/* vbus क्रम periph, in mA/2 */
 
-	enum musb_mode		port_mode;
+	क्रमागत musb_mode		port_mode;
 	bool			session;
-	unsigned long		quirk_retries;
+	अचिन्हित दीर्घ		quirk_retries;
 	bool			is_host;
 
-	int			a_wait_bcon;	/* VBUS timeout in msecs */
-	unsigned long		idle_timeout;	/* Next timeout in jiffies */
+	पूर्णांक			a_रुको_bcon;	/* VBUS समयout in msecs */
+	अचिन्हित दीर्घ		idle_समयout;	/* Next समयout in jअगरfies */
 
-	unsigned		is_initialized:1;
-	unsigned		is_runtime_suspended:1;
+	अचिन्हित		is_initialized:1;
+	अचिन्हित		is_runसमय_suspended:1;
 
 	/* active means connected and not suspended */
-	unsigned		is_active:1;
+	अचिन्हित		is_active:1;
 
-	unsigned is_multipoint:1;
+	अचिन्हित is_multipoपूर्णांक:1;
 
-	unsigned		hb_iso_rx:1;	/* high bandwidth iso rx? */
-	unsigned		hb_iso_tx:1;	/* high bandwidth iso tx? */
-	unsigned		dyn_fifo:1;	/* dynamic FIFO supported? */
+	अचिन्हित		hb_iso_rx:1;	/* high bandwidth iso rx? */
+	अचिन्हित		hb_iso_tx:1;	/* high bandwidth iso tx? */
+	अचिन्हित		dyn_fअगरo:1;	/* dynamic FIFO supported? */
 
-	unsigned		bulk_split:1;
-#define	can_bulk_split(musb, type) \
+	अचिन्हित		bulk_split:1;
+#घोषणा	can_bulk_split(musb, type) \
 	(((type) == USB_ENDPOINT_XFER_BULK) && (musb)->bulk_split)
 
-	unsigned		bulk_combine:1;
-#define	can_bulk_combine(musb, type) \
+	अचिन्हित		bulk_combine:1;
+#घोषणा	can_bulk_combine(musb, type) \
 	(((type) == USB_ENDPOINT_XFER_BULK) && (musb)->bulk_combine)
 
 	/* is_suspended means USB B_PERIPHERAL suspend */
-	unsigned		is_suspended:1;
+	अचिन्हित		is_suspended:1;
 
 	/* may_wakeup means remote wakeup is enabled */
-	unsigned		may_wakeup:1;
+	अचिन्हित		may_wakeup:1;
 
-	/* is_self_powered is reported in device status and the
-	 * config descriptor.  is_bus_powered means B_PERIPHERAL
+	/* is_self_घातered is reported in device status and the
+	 * config descriptor.  is_bus_घातered means B_PERIPHERAL
 	 * draws some VBUS current; both can be true.
 	 */
-	unsigned		is_self_powered:1;
-	unsigned		is_bus_powered:1;
+	अचिन्हित		is_self_घातered:1;
+	अचिन्हित		is_bus_घातered:1;
 
-	unsigned		set_address:1;
-	unsigned		test_mode:1;
-	unsigned		softconnect:1;
+	अचिन्हित		set_address:1;
+	अचिन्हित		test_mode:1;
+	अचिन्हित		softconnect:1;
 
-	unsigned		flush_irq_work:1;
+	अचिन्हित		flush_irq_work:1;
 
 	u8			address;
 	u8			test_mode_nr;
 	u16			ackpend;		/* ep0 */
-	enum musb_g_ep0_state	ep0_state;
-	struct usb_gadget	g;			/* the gadget */
-	struct usb_gadget_driver *gadget_driver;	/* its driver */
-	struct usb_hcd		*hcd;			/* the usb hcd */
+	क्रमागत musb_g_ep0_state	ep0_state;
+	काष्ठा usb_gadget	g;			/* the gadget */
+	काष्ठा usb_gadget_driver *gadget_driver;	/* its driver */
+	काष्ठा usb_hcd		*hcd;			/* the usb hcd */
 
-	const struct musb_hdrc_config *config;
+	स्थिर काष्ठा musb_hdrc_config *config;
 
-	int			xceiv_old_state;
-#ifdef CONFIG_DEBUG_FS
-	struct dentry		*debugfs_root;
-#endif
-};
+	पूर्णांक			xceiv_old_state;
+#अगर_घोषित CONFIG_DEBUG_FS
+	काष्ठा dentry		*debugfs_root;
+#पूर्ण_अगर
+पूर्ण;
 
-/* This must be included after struct musb is defined */
-#include "musb_regs.h"
+/* This must be included after काष्ठा musb is defined */
+#समावेश "musb_regs.h"
 
-static inline struct musb *gadget_to_musb(struct usb_gadget *g)
-{
-	return container_of(g, struct musb, g);
-}
+अटल अंतरभूत काष्ठा musb *gadget_to_musb(काष्ठा usb_gadget *g)
+अणु
+	वापस container_of(g, काष्ठा musb, g);
+पूर्ण
 
-static inline char *musb_ep_xfertype_string(u8 type)
-{
-	char *s;
+अटल अंतरभूत अक्षर *musb_ep_xfertype_string(u8 type)
+अणु
+	अक्षर *s;
 
-	switch (type) {
-	case USB_ENDPOINT_XFER_CONTROL:
+	चयन (type) अणु
+	हाल USB_ENDPOINT_XFER_CONTROL:
 		s = "ctrl";
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
 		s = "iso";
-		break;
-	case USB_ENDPOINT_XFER_BULK:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_BULK:
 		s = "bulk";
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		s = "int";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		s = "";
-		break;
-	}
-	return s;
-}
+		अवरोध;
+	पूर्ण
+	वापस s;
+पूर्ण
 
-static inline int musb_read_fifosize(struct musb *musb,
-		struct musb_hw_ep *hw_ep, u8 epnum)
-{
-	void __iomem *mbase = musb->mregs;
+अटल अंतरभूत पूर्णांक musb_पढ़ो_fअगरosize(काष्ठा musb *musb,
+		काष्ठा musb_hw_ep *hw_ep, u8 epnum)
+अणु
+	व्योम __iomem *mbase = musb->mregs;
 	u8 reg = 0;
 
-	/* read from core using indexed model */
-	reg = musb_readb(mbase, musb->io.ep_offset(epnum, MUSB_FIFOSIZE));
-	/* 0's returned when no more endpoints */
-	if (!reg)
-		return -ENODEV;
+	/* पढ़ो from core using indexed model */
+	reg = musb_पढ़ोb(mbase, musb->io.ep_offset(epnum, MUSB_FIFOSIZE));
+	/* 0's वापसed when no more endpoपूर्णांकs */
+	अगर (!reg)
+		वापस -ENODEV;
 
-	musb->nr_endpoints++;
+	musb->nr_endpoपूर्णांकs++;
 	musb->epmask |= (1 << epnum);
 
 	hw_ep->max_packet_sz_tx = 1 << (reg & 0x0f);
 
 	/* shared TX/RX FIFO? */
-	if ((reg & 0xf0) == 0xf0) {
+	अगर ((reg & 0xf0) == 0xf0) अणु
 		hw_ep->max_packet_sz_rx = hw_ep->max_packet_sz_tx;
-		hw_ep->is_shared_fifo = true;
-		return 0;
-	} else {
+		hw_ep->is_shared_fअगरo = true;
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		hw_ep->max_packet_sz_rx = 1 << ((reg & 0xf0) >> 4);
-		hw_ep->is_shared_fifo = false;
-	}
+		hw_ep->is_shared_fअगरo = false;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void musb_configure_ep0(struct musb *musb)
-{
-	musb->endpoints[0].max_packet_sz_tx = MUSB_EP0_FIFOSIZE;
-	musb->endpoints[0].max_packet_sz_rx = MUSB_EP0_FIFOSIZE;
-	musb->endpoints[0].is_shared_fifo = true;
-}
+अटल अंतरभूत व्योम musb_configure_ep0(काष्ठा musb *musb)
+अणु
+	musb->endpoपूर्णांकs[0].max_packet_sz_tx = MUSB_EP0_FIFOSIZE;
+	musb->endpoपूर्णांकs[0].max_packet_sz_rx = MUSB_EP0_FIFOSIZE;
+	musb->endpoपूर्णांकs[0].is_shared_fअगरo = true;
+पूर्ण
 
 /***************************** Glue it together *****************************/
 
-extern const char musb_driver_name[];
+बाह्य स्थिर अक्षर musb_driver_name[];
 
-extern void musb_stop(struct musb *musb);
-extern void musb_start(struct musb *musb);
+बाह्य व्योम musb_stop(काष्ठा musb *musb);
+बाह्य व्योम musb_start(काष्ठा musb *musb);
 
-extern void musb_write_fifo(struct musb_hw_ep *ep, u16 len, const u8 *src);
-extern void musb_read_fifo(struct musb_hw_ep *ep, u16 len, u8 *dst);
+बाह्य व्योम musb_ग_लिखो_fअगरo(काष्ठा musb_hw_ep *ep, u16 len, स्थिर u8 *src);
+बाह्य व्योम musb_पढ़ो_fअगरo(काष्ठा musb_hw_ep *ep, u16 len, u8 *dst);
 
-extern int musb_set_host(struct musb *musb);
-extern int musb_set_peripheral(struct musb *musb);
+बाह्य पूर्णांक musb_set_host(काष्ठा musb *musb);
+बाह्य पूर्णांक musb_set_peripheral(काष्ठा musb *musb);
 
-extern void musb_load_testpacket(struct musb *);
+बाह्य व्योम musb_load_testpacket(काष्ठा musb *);
 
-extern irqreturn_t musb_interrupt(struct musb *);
+बाह्य irqवापस_t musb_पूर्णांकerrupt(काष्ठा musb *);
 
-extern void musb_hnp_stop(struct musb *musb);
+बाह्य व्योम musb_hnp_stop(काष्ठा musb *musb);
 
-int musb_queue_resume_work(struct musb *musb,
-			   int (*callback)(struct musb *musb, void *data),
-			   void *data);
+पूर्णांक musb_queue_resume_work(काष्ठा musb *musb,
+			   पूर्णांक (*callback)(काष्ठा musb *musb, व्योम *data),
+			   व्योम *data);
 
-static inline void musb_platform_set_vbus(struct musb *musb, int is_on)
-{
-	if (musb->ops->set_vbus)
+अटल अंतरभूत व्योम musb_platक्रमm_set_vbus(काष्ठा musb *musb, पूर्णांक is_on)
+अणु
+	अगर (musb->ops->set_vbus)
 		musb->ops->set_vbus(musb, is_on);
-}
+पूर्ण
 
-static inline void musb_platform_enable(struct musb *musb)
-{
-	if (musb->ops->enable)
+अटल अंतरभूत व्योम musb_platक्रमm_enable(काष्ठा musb *musb)
+अणु
+	अगर (musb->ops->enable)
 		musb->ops->enable(musb);
-}
+पूर्ण
 
-static inline void musb_platform_disable(struct musb *musb)
-{
-	if (musb->ops->disable)
+अटल अंतरभूत व्योम musb_platक्रमm_disable(काष्ठा musb *musb)
+अणु
+	अगर (musb->ops->disable)
 		musb->ops->disable(musb);
-}
+पूर्ण
 
-static inline int musb_platform_set_mode(struct musb *musb, u8 mode)
-{
-	if (!musb->ops->set_mode)
-		return 0;
+अटल अंतरभूत पूर्णांक musb_platक्रमm_set_mode(काष्ठा musb *musb, u8 mode)
+अणु
+	अगर (!musb->ops->set_mode)
+		वापस 0;
 
-	return musb->ops->set_mode(musb, mode);
-}
+	वापस musb->ops->set_mode(musb, mode);
+पूर्ण
 
-static inline void musb_platform_try_idle(struct musb *musb,
-		unsigned long timeout)
-{
-	if (musb->ops->try_idle)
-		musb->ops->try_idle(musb, timeout);
-}
+अटल अंतरभूत व्योम musb_platक्रमm_try_idle(काष्ठा musb *musb,
+		अचिन्हित दीर्घ समयout)
+अणु
+	अगर (musb->ops->try_idle)
+		musb->ops->try_idle(musb, समयout);
+पूर्ण
 
-static inline int  musb_platform_recover(struct musb *musb)
-{
-	if (!musb->ops->recover)
-		return 0;
+अटल अंतरभूत पूर्णांक  musb_platक्रमm_recover(काष्ठा musb *musb)
+अणु
+	अगर (!musb->ops->recover)
+		वापस 0;
 
-	return musb->ops->recover(musb);
-}
+	वापस musb->ops->recover(musb);
+पूर्ण
 
-static inline int musb_platform_get_vbus_status(struct musb *musb)
-{
-	if (!musb->ops->vbus_status)
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक musb_platक्रमm_get_vbus_status(काष्ठा musb *musb)
+अणु
+	अगर (!musb->ops->vbus_status)
+		वापस -EINVAL;
 
-	return musb->ops->vbus_status(musb);
-}
+	वापस musb->ops->vbus_status(musb);
+पूर्ण
 
-static inline int musb_platform_init(struct musb *musb)
-{
-	if (!musb->ops->init)
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक musb_platक्रमm_init(काष्ठा musb *musb)
+अणु
+	अगर (!musb->ops->init)
+		वापस -EINVAL;
 
-	return musb->ops->init(musb);
-}
+	वापस musb->ops->init(musb);
+पूर्ण
 
-static inline int musb_platform_exit(struct musb *musb)
-{
-	if (!musb->ops->exit)
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक musb_platक्रमm_निकास(काष्ठा musb *musb)
+अणु
+	अगर (!musb->ops->निकास)
+		वापस -EINVAL;
 
-	return musb->ops->exit(musb);
-}
+	वापस musb->ops->निकास(musb);
+पूर्ण
 
-static inline void musb_platform_pre_root_reset_end(struct musb *musb)
-{
-	if (musb->ops->pre_root_reset_end)
+अटल अंतरभूत व्योम musb_platक्रमm_pre_root_reset_end(काष्ठा musb *musb)
+अणु
+	अगर (musb->ops->pre_root_reset_end)
 		musb->ops->pre_root_reset_end(musb);
-}
+पूर्ण
 
-static inline void musb_platform_post_root_reset_end(struct musb *musb)
-{
-	if (musb->ops->post_root_reset_end)
+अटल अंतरभूत व्योम musb_platक्रमm_post_root_reset_end(काष्ठा musb *musb)
+अणु
+	अगर (musb->ops->post_root_reset_end)
 		musb->ops->post_root_reset_end(musb);
-}
+पूर्ण
 
-static inline void musb_platform_clear_ep_rxintr(struct musb *musb, int epnum)
-{
-	if (musb->ops->clear_ep_rxintr)
-		musb->ops->clear_ep_rxintr(musb, epnum);
-}
+अटल अंतरभूत व्योम musb_platक्रमm_clear_ep_rxपूर्णांकr(काष्ठा musb *musb, पूर्णांक epnum)
+अणु
+	अगर (musb->ops->clear_ep_rxपूर्णांकr)
+		musb->ops->clear_ep_rxपूर्णांकr(musb, epnum);
+पूर्ण
 
 /*
- * gets the "dr_mode" property from DT and converts it into musb_mode
- * if the property is not found or not recognized returns MUSB_OTG
+ * माला_लो the "dr_mode" property from DT and converts it पूर्णांकo musb_mode
+ * अगर the property is not found or not recognized वापसs MUSB_OTG
  */
-extern enum musb_mode musb_get_mode(struct device *dev);
+बाह्य क्रमागत musb_mode musb_get_mode(काष्ठा device *dev);
 
-#endif	/* __MUSB_CORE_H__ */
+#पूर्ण_अगर	/* __MUSB_CORE_H__ */

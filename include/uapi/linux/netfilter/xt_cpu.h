@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_CPU_H
-#define _XT_CPU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_CPU_H
+#घोषणा _XT_CPU_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct xt_cpu_info {
+काष्ठा xt_cpu_info अणु
 	__u32	cpu;
 	__u32	invert;
-};
+पूर्ण;
 
-#endif /*_XT_CPU_H*/
+#पूर्ण_अगर /*_XT_CPU_H*/

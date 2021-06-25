@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  */
 
-#include <linux/device.h>
-#include <linux/tee.h>
-#include <linux/tee_drv.h>
-#include <linux/psp-tee.h>
-#include <linux/slab.h>
-#include <linux/psp-sev.h>
-#include "amdtee_if.h"
-#include "amdtee_private.h"
+#समावेश <linux/device.h>
+#समावेश <linux/tee.h>
+#समावेश <linux/tee_drv.h>
+#समावेश <linux/psp-tee.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/psp-sev.h>
+#समावेश "amdtee_if.h"
+#समावेश "amdtee_private.h"
 
-static int tee_params_to_amd_params(struct tee_param *tee, u32 count,
-				    struct tee_operation *amd)
-{
-	int i, ret = 0;
+अटल पूर्णांक tee_params_to_amd_params(काष्ठा tee_param *tee, u32 count,
+				    काष्ठा tee_operation *amd)
+अणु
+	पूर्णांक i, ret = 0;
 	u32 type;
 
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
-	if (!tee || !amd || count > TEE_MAX_PARAMS)
-		return -EINVAL;
+	अगर (!tee || !amd || count > TEE_MAX_PARAMS)
+		वापस -EINVAL;
 
 	amd->param_types = 0;
-	for (i = 0; i < count; i++) {
-		/* AMD TEE does not support meta parameter */
-		if (tee[i].attr > TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT)
-			return -EINVAL;
+	क्रम (i = 0; i < count; i++) अणु
+		/* AMD TEE करोes not support meta parameter */
+		अगर (tee[i].attr > TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT)
+			वापस -EINVAL;
 
 		amd->param_types |= ((tee[i].attr & 0xF) << i * 4);
-	}
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		type = TEE_PARAM_TYPE_GET(amd->param_types, i);
 		pr_debug("%s: type[%d] = 0x%x\n", __func__, i, type);
 
-		if (type == TEE_OP_PARAM_TYPE_INVALID)
-			return -EINVAL;
+		अगर (type == TEE_OP_PARAM_TYPE_INVALID)
+			वापस -EINVAL;
 
-		if (type == TEE_OP_PARAM_TYPE_NONE)
-			continue;
+		अगर (type == TEE_OP_PARAM_TYPE_NONE)
+			जारी;
 
 		/* It is assumed that all values are within 2^32-1 */
-		if (type > TEE_OP_PARAM_TYPE_VALUE_INOUT) {
+		अगर (type > TEE_OP_PARAM_TYPE_VALUE_INOUT) अणु
 			u32 buf_id = get_buffer_id(tee[i].u.memref.shm);
 
 			amd->params[i].mref.buf_id = buf_id;
@@ -55,8 +56,8 @@ static int tee_params_to_amd_params(struct tee_param *tee, u32 count,
 				 i, amd->params[i].mref.buf_id,
 				 i, amd->params[i].mref.offset,
 				 i, amd->params[i].mref.size);
-		} else {
-			if (tee[i].u.value.c)
+		पूर्ण अन्यथा अणु
+			अगर (tee[i].u.value.c)
 				pr_warn("%s: Discarding value c", __func__);
 
 			amd->params[i].val.a = tee[i].u.value.a;
@@ -64,42 +65,42 @@ static int tee_params_to_amd_params(struct tee_param *tee, u32 count,
 			pr_debug("%s: a[%d] = 0x%x, b[%d] = 0x%x\n", __func__,
 				 i, amd->params[i].val.a,
 				 i, amd->params[i].val.b);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int amd_params_to_tee_params(struct tee_param *tee, u32 count,
-				    struct tee_operation *amd)
-{
-	int i, ret = 0;
+अटल पूर्णांक amd_params_to_tee_params(काष्ठा tee_param *tee, u32 count,
+				    काष्ठा tee_operation *amd)
+अणु
+	पूर्णांक i, ret = 0;
 	u32 type;
 
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
-	if (!tee || !amd || count > TEE_MAX_PARAMS)
-		return -EINVAL;
+	अगर (!tee || !amd || count > TEE_MAX_PARAMS)
+		वापस -EINVAL;
 
 	/* Assumes amd->param_types is valid */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		type = TEE_PARAM_TYPE_GET(amd->param_types, i);
 		pr_debug("%s: type[%d] = 0x%x\n", __func__, i, type);
 
-		if (type == TEE_OP_PARAM_TYPE_INVALID ||
+		अगर (type == TEE_OP_PARAM_TYPE_INVALID ||
 		    type > TEE_OP_PARAM_TYPE_MEMREF_INOUT)
-			return -EINVAL;
+			वापस -EINVAL;
 
-		if (type == TEE_OP_PARAM_TYPE_NONE ||
+		अगर (type == TEE_OP_PARAM_TYPE_NONE ||
 		    type == TEE_OP_PARAM_TYPE_VALUE_INPUT ||
 		    type == TEE_OP_PARAM_TYPE_MEMREF_INPUT)
-			continue;
+			जारी;
 
 		/*
-		 * It is assumed that buf_id remains unchanged for
-		 * both open_session and invoke_cmd call
+		 * It is assumed that buf_id reमुख्यs unchanged क्रम
+		 * both खोलो_session and invoke_cmd call
 		 */
-		if (type > TEE_OP_PARAM_TYPE_MEMREF_INPUT) {
+		अगर (type > TEE_OP_PARAM_TYPE_MEMREF_INPUT) अणु
 			tee[i].u.memref.shm_offs = amd->params[i].mref.offset;
 			tee[i].u.memref.size = amd->params[i].mref.size;
 			pr_debug("%s: bufid[%d] = 0x%x, offset[%d] = 0x%x, size[%d] = 0x%x\n",
@@ -107,7 +108,7 @@ static int amd_params_to_tee_params(struct tee_param *tee, u32 count,
 				 i, amd->params[i].mref.buf_id,
 				 i, amd->params[i].mref.offset,
 				 i, amd->params[i].mref.size);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* field 'c' not supported by AMD TEE */
 			tee[i].u.value.a = amd->params[i].val.a;
 			tee[i].u.value.b = amd->params[i].val.b;
@@ -116,206 +117,206 @@ static int amd_params_to_tee_params(struct tee_param *tee, u32 count,
 				 __func__,
 				 i, amd->params[i].val.a,
 				 i, amd->params[i].val.b);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static DEFINE_MUTEX(ta_refcount_mutex);
-static struct list_head ta_list = LIST_HEAD_INIT(ta_list);
+अटल DEFINE_MUTEX(ta_refcount_mutex);
+अटल काष्ठा list_head ta_list = LIST_HEAD_INIT(ta_list);
 
-static u32 get_ta_refcount(u32 ta_handle)
-{
-	struct amdtee_ta_data *ta_data;
+अटल u32 get_ta_refcount(u32 ta_handle)
+अणु
+	काष्ठा amdtee_ta_data *ta_data;
 	u32 count = 0;
 
 	/* Caller must hold a mutex */
-	list_for_each_entry(ta_data, &ta_list, list_node)
-		if (ta_data->ta_handle == ta_handle)
-			return ++ta_data->refcount;
+	list_क्रम_each_entry(ta_data, &ta_list, list_node)
+		अगर (ta_data->ta_handle == ta_handle)
+			वापस ++ta_data->refcount;
 
-	ta_data = kzalloc(sizeof(*ta_data), GFP_KERNEL);
-	if (ta_data) {
+	ta_data = kzalloc(माप(*ta_data), GFP_KERNEL);
+	अगर (ta_data) अणु
 		ta_data->ta_handle = ta_handle;
 		ta_data->refcount = 1;
 		count = ta_data->refcount;
 		list_add(&ta_data->list_node, &ta_list);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static u32 put_ta_refcount(u32 ta_handle)
-{
-	struct amdtee_ta_data *ta_data;
+अटल u32 put_ta_refcount(u32 ta_handle)
+अणु
+	काष्ठा amdtee_ta_data *ta_data;
 	u32 count = 0;
 
 	/* Caller must hold a mutex */
-	list_for_each_entry(ta_data, &ta_list, list_node)
-		if (ta_data->ta_handle == ta_handle) {
+	list_क्रम_each_entry(ta_data, &ta_list, list_node)
+		अगर (ta_data->ta_handle == ta_handle) अणु
 			count = --ta_data->refcount;
-			if (count == 0) {
+			अगर (count == 0) अणु
 				list_del(&ta_data->list_node);
-				kfree(ta_data);
-				break;
-			}
-		}
+				kमुक्त(ta_data);
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-int handle_unload_ta(u32 ta_handle)
-{
-	struct tee_cmd_unload_ta cmd = {0};
+पूर्णांक handle_unload_ta(u32 ta_handle)
+अणु
+	काष्ठा tee_cmd_unload_ta cmd = अणु0पूर्ण;
 	u32 status, count;
-	int ret;
+	पूर्णांक ret;
 
-	if (!ta_handle)
-		return -EINVAL;
+	अगर (!ta_handle)
+		वापस -EINVAL;
 
 	mutex_lock(&ta_refcount_mutex);
 
 	count = put_ta_refcount(ta_handle);
 
-	if (count) {
+	अगर (count) अणु
 		pr_debug("unload ta: not unloading %u count %u\n",
 			 ta_handle, count);
 		ret = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	cmd.ta_handle = ta_handle;
 
-	ret = psp_tee_process_cmd(TEE_CMD_ID_UNLOAD_TA, (void *)&cmd,
-				  sizeof(cmd), &status);
-	if (!ret && status != 0) {
+	ret = psp_tee_process_cmd(TEE_CMD_ID_UNLOAD_TA, (व्योम *)&cmd,
+				  माप(cmd), &status);
+	अगर (!ret && status != 0) अणु
 		pr_err("unload ta: status = 0x%x\n", status);
 		ret = -EBUSY;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_debug("unloaded ta handle %u\n", ta_handle);
-	}
+	पूर्ण
 
 unlock:
 	mutex_unlock(&ta_refcount_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int handle_close_session(u32 ta_handle, u32 info)
-{
-	struct tee_cmd_close_session cmd = {0};
+पूर्णांक handle_बंद_session(u32 ta_handle, u32 info)
+अणु
+	काष्ठा tee_cmd_बंद_session cmd = अणु0पूर्ण;
 	u32 status;
-	int ret;
+	पूर्णांक ret;
 
-	if (ta_handle == 0)
-		return -EINVAL;
+	अगर (ta_handle == 0)
+		वापस -EINVAL;
 
 	cmd.ta_handle = ta_handle;
 	cmd.session_info = info;
 
-	ret = psp_tee_process_cmd(TEE_CMD_ID_CLOSE_SESSION, (void *)&cmd,
-				  sizeof(cmd), &status);
-	if (!ret && status != 0) {
+	ret = psp_tee_process_cmd(TEE_CMD_ID_CLOSE_SESSION, (व्योम *)&cmd,
+				  माप(cmd), &status);
+	अगर (!ret && status != 0) अणु
 		pr_err("close session: status = 0x%x\n", status);
 		ret = -EBUSY;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void handle_unmap_shmem(u32 buf_id)
-{
-	struct tee_cmd_unmap_shared_mem cmd = {0};
+व्योम handle_unmap_shmem(u32 buf_id)
+अणु
+	काष्ठा tee_cmd_unmap_shared_mem cmd = अणु0पूर्ण;
 	u32 status;
-	int ret;
+	पूर्णांक ret;
 
 	cmd.buf_id = buf_id;
 
-	ret = psp_tee_process_cmd(TEE_CMD_ID_UNMAP_SHARED_MEM, (void *)&cmd,
-				  sizeof(cmd), &status);
-	if (!ret)
+	ret = psp_tee_process_cmd(TEE_CMD_ID_UNMAP_SHARED_MEM, (व्योम *)&cmd,
+				  माप(cmd), &status);
+	अगर (!ret)
 		pr_debug("unmap shared memory: buf_id %u status = 0x%x\n",
 			 buf_id, status);
-}
+पूर्ण
 
-int handle_invoke_cmd(struct tee_ioctl_invoke_arg *arg, u32 sinfo,
-		      struct tee_param *p)
-{
-	struct tee_cmd_invoke_cmd cmd = {0};
-	int ret;
+पूर्णांक handle_invoke_cmd(काष्ठा tee_ioctl_invoke_arg *arg, u32 sinfo,
+		      काष्ठा tee_param *p)
+अणु
+	काष्ठा tee_cmd_invoke_cmd cmd = अणु0पूर्ण;
+	पूर्णांक ret;
 
-	if (!arg || (!p && arg->num_params))
-		return -EINVAL;
+	अगर (!arg || (!p && arg->num_params))
+		वापस -EINVAL;
 
 	arg->ret_origin = TEEC_ORIGIN_COMMS;
 
-	if (arg->session == 0) {
+	अगर (arg->session == 0) अणु
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = tee_params_to_amd_params(p, arg->num_params, &cmd.op);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("invalid Params. Abort invoke command\n");
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	cmd.ta_handle = get_ta_handle(arg->session);
 	cmd.cmd_id = arg->func;
 	cmd.session_info = sinfo;
 
-	ret = psp_tee_process_cmd(TEE_CMD_ID_INVOKE_CMD, (void *)&cmd,
-				  sizeof(cmd), &arg->ret);
-	if (ret) {
+	ret = psp_tee_process_cmd(TEE_CMD_ID_INVOKE_CMD, (व्योम *)&cmd,
+				  माप(cmd), &arg->ret);
+	अगर (ret) अणु
 		arg->ret = TEEC_ERROR_COMMUNICATION;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = amd_params_to_tee_params(p, arg->num_params, &cmd.op);
-		if (unlikely(ret)) {
+		अगर (unlikely(ret)) अणु
 			pr_err("invoke command: failed to copy output\n");
 			arg->ret = TEEC_ERROR_GENERIC;
-			return ret;
-		}
-		arg->ret_origin = cmd.return_origin;
+			वापस ret;
+		पूर्ण
+		arg->ret_origin = cmd.वापस_origin;
 		pr_debug("invoke command: RO = 0x%x ret = 0x%x\n",
 			 arg->ret_origin, arg->ret);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int handle_map_shmem(u32 count, struct shmem_desc *start, u32 *buf_id)
-{
-	struct tee_cmd_map_shared_mem *cmd;
+पूर्णांक handle_map_shmem(u32 count, काष्ठा shmem_desc *start, u32 *buf_id)
+अणु
+	काष्ठा tee_cmd_map_shared_mem *cmd;
 	phys_addr_t paddr;
-	int ret, i;
+	पूर्णांक ret, i;
 	u32 status;
 
-	if (!count || !start || !buf_id)
-		return -EINVAL;
+	अगर (!count || !start || !buf_id)
+		वापस -EINVAL;
 
-	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
-	if (!cmd)
-		return -ENOMEM;
+	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
+	अगर (!cmd)
+		वापस -ENOMEM;
 
 	/* Size must be page aligned */
-	for (i = 0; i < count ; i++) {
-		if (!start[i].kaddr || (start[i].size & (PAGE_SIZE - 1))) {
+	क्रम (i = 0; i < count ; i++) अणु
+		अगर (!start[i].kaddr || (start[i].size & (PAGE_SIZE - 1))) अणु
 			ret = -EINVAL;
-			goto free_cmd;
-		}
+			जाओ मुक्त_cmd;
+		पूर्ण
 
-		if ((u64)start[i].kaddr & (PAGE_SIZE - 1)) {
+		अगर ((u64)start[i].kaddr & (PAGE_SIZE - 1)) अणु
 			pr_err("map shared memory: page unaligned. addr 0x%llx",
 			       (u64)start[i].kaddr);
 			ret = -EINVAL;
-			goto free_cmd;
-		}
-	}
+			जाओ मुक्त_cmd;
+		पूर्ण
+	पूर्ण
 
 	cmd->sg_list.count = count;
 
 	/* Create buffer list */
-	for (i = 0; i < count ; i++) {
+	क्रम (i = 0; i < count ; i++) अणु
 		paddr = __psp_pa(start[i].kaddr);
 		cmd->sg_list.buf[i].hi_addr = upper_32_bits(paddr);
 		cmd->sg_list.buf[i].low_addr = lower_32_bits(paddr);
@@ -328,89 +329,89 @@ int handle_map_shmem(u32 count, struct shmem_desc *start, u32 *buf_id)
 			 cmd->sg_list.buf[i].low_addr);
 		pr_debug("buf[%d]:size = 0x%x\n", i, cmd->sg_list.buf[i].size);
 		pr_debug("list size = 0x%x\n", cmd->sg_list.size);
-	}
+	पूर्ण
 
 	*buf_id = 0;
 
-	ret = psp_tee_process_cmd(TEE_CMD_ID_MAP_SHARED_MEM, (void *)cmd,
-				  sizeof(*cmd), &status);
-	if (!ret && !status) {
+	ret = psp_tee_process_cmd(TEE_CMD_ID_MAP_SHARED_MEM, (व्योम *)cmd,
+				  माप(*cmd), &status);
+	अगर (!ret && !status) अणु
 		*buf_id = cmd->buf_id;
 		pr_debug("mapped buffer ID = 0x%x\n", *buf_id);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("map shared memory: status = 0x%x\n", status);
 		ret = -ENOMEM;
-	}
+	पूर्ण
 
-free_cmd:
-	kfree(cmd);
+मुक्त_cmd:
+	kमुक्त(cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int handle_open_session(struct tee_ioctl_open_session_arg *arg, u32 *info,
-			struct tee_param *p)
-{
-	struct tee_cmd_open_session cmd = {0};
-	int ret;
+पूर्णांक handle_खोलो_session(काष्ठा tee_ioctl_खोलो_session_arg *arg, u32 *info,
+			काष्ठा tee_param *p)
+अणु
+	काष्ठा tee_cmd_खोलो_session cmd = अणु0पूर्ण;
+	पूर्णांक ret;
 
-	if (!arg || !info || (!p && arg->num_params))
-		return -EINVAL;
+	अगर (!arg || !info || (!p && arg->num_params))
+		वापस -EINVAL;
 
 	arg->ret_origin = TEEC_ORIGIN_COMMS;
 
-	if (arg->session == 0) {
+	अगर (arg->session == 0) अणु
 		arg->ret = TEEC_ERROR_GENERIC;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = tee_params_to_amd_params(p, arg->num_params, &cmd.op);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("invalid Params. Abort open session\n");
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	cmd.ta_handle = get_ta_handle(arg->session);
 	*info = 0;
 
-	ret = psp_tee_process_cmd(TEE_CMD_ID_OPEN_SESSION, (void *)&cmd,
-				  sizeof(cmd), &arg->ret);
-	if (ret) {
+	ret = psp_tee_process_cmd(TEE_CMD_ID_OPEN_SESSION, (व्योम *)&cmd,
+				  माप(cmd), &arg->ret);
+	अगर (ret) अणु
 		arg->ret = TEEC_ERROR_COMMUNICATION;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = amd_params_to_tee_params(p, arg->num_params, &cmd.op);
-		if (unlikely(ret)) {
+		अगर (unlikely(ret)) अणु
 			pr_err("open session: failed to copy output\n");
 			arg->ret = TEEC_ERROR_GENERIC;
-			return ret;
-		}
-		arg->ret_origin = cmd.return_origin;
+			वापस ret;
+		पूर्ण
+		arg->ret_origin = cmd.वापस_origin;
 		*info = cmd.session_info;
 		pr_debug("open session: session info = 0x%x\n", *info);
-	}
+	पूर्ण
 
 	pr_debug("open session: ret = 0x%x RO = 0x%x\n", arg->ret,
 		 arg->ret_origin);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int handle_load_ta(void *data, u32 size, struct tee_ioctl_open_session_arg *arg)
-{
-	struct tee_cmd_unload_ta unload_cmd = {};
-	struct tee_cmd_load_ta load_cmd = {};
+पूर्णांक handle_load_ta(व्योम *data, u32 size, काष्ठा tee_ioctl_खोलो_session_arg *arg)
+अणु
+	काष्ठा tee_cmd_unload_ta unload_cmd = अणुपूर्ण;
+	काष्ठा tee_cmd_load_ta load_cmd = अणुपूर्ण;
 	phys_addr_t blob;
-	int ret;
+	पूर्णांक ret;
 
-	if (size == 0 || !data || !arg)
-		return -EINVAL;
+	अगर (size == 0 || !data || !arg)
+		वापस -EINVAL;
 
 	blob = __psp_pa(data);
-	if (blob & (PAGE_SIZE - 1)) {
+	अगर (blob & (PAGE_SIZE - 1)) अणु
 		pr_err("load TA: page unaligned. blob 0x%llx", blob);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	load_cmd.hi_addr = upper_32_bits(blob);
 	load_cmd.low_addr = lower_32_bits(blob);
@@ -418,30 +419,30 @@ int handle_load_ta(void *data, u32 size, struct tee_ioctl_open_session_arg *arg)
 
 	mutex_lock(&ta_refcount_mutex);
 
-	ret = psp_tee_process_cmd(TEE_CMD_ID_LOAD_TA, (void *)&load_cmd,
-				  sizeof(load_cmd), &arg->ret);
-	if (ret) {
+	ret = psp_tee_process_cmd(TEE_CMD_ID_LOAD_TA, (व्योम *)&load_cmd,
+				  माप(load_cmd), &arg->ret);
+	अगर (ret) अणु
 		arg->ret_origin = TEEC_ORIGIN_COMMS;
 		arg->ret = TEEC_ERROR_COMMUNICATION;
-	} else if (arg->ret == TEEC_SUCCESS) {
+	पूर्ण अन्यथा अगर (arg->ret == TEEC_SUCCESS) अणु
 		ret = get_ta_refcount(load_cmd.ta_handle);
-		if (!ret) {
+		अगर (!ret) अणु
 			arg->ret_origin = TEEC_ORIGIN_COMMS;
 			arg->ret = TEEC_ERROR_OUT_OF_MEMORY;
 
 			/* Unload the TA on error */
 			unload_cmd.ta_handle = load_cmd.ta_handle;
 			psp_tee_process_cmd(TEE_CMD_ID_UNLOAD_TA,
-					    (void *)&unload_cmd,
-					    sizeof(unload_cmd), &ret);
-		} else {
+					    (व्योम *)&unload_cmd,
+					    माप(unload_cmd), &ret);
+		पूर्ण अन्यथा अणु
 			set_session_id(load_cmd.ta_handle, 0, &arg->session);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&ta_refcount_mutex);
 
 	pr_debug("load TA: TA handle = 0x%x, RO = 0x%x, ret = 0x%x\n",
 		 load_cmd.ta_handle, arg->ret_origin, arg->ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

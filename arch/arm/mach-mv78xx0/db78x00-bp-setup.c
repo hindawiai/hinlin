@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * arch/arm/mach-mv78xx0/db78x00-bp-setup.c
  *
@@ -8,45 +9,45 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/ata_platform.h>
-#include <linux/mv643xx_eth.h>
-#include <linux/ethtool.h>
-#include <linux/i2c.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include "mv78xx0.h"
-#include "common.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ata_platक्रमm.h>
+#समावेश <linux/mv643xx_eth.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/i2c.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश "mv78xx0.h"
+#समावेश "common.h"
 
-static struct mv643xx_eth_platform_data db78x00_ge00_data = {
+अटल काष्ठा mv643xx_eth_platक्रमm_data db78x00_ge00_data = अणु
 	.phy_addr	= MV643XX_ETH_PHY_ADDR(8),
-};
+पूर्ण;
 
-static struct mv643xx_eth_platform_data db78x00_ge01_data = {
+अटल काष्ठा mv643xx_eth_platक्रमm_data db78x00_ge01_data = अणु
 	.phy_addr	= MV643XX_ETH_PHY_ADDR(9),
-};
+पूर्ण;
 
-static struct mv643xx_eth_platform_data db78x00_ge10_data = {
+अटल काष्ठा mv643xx_eth_platक्रमm_data db78x00_ge10_data = अणु
 	.phy_addr	= MV643XX_ETH_PHY_ADDR(10),
-};
+पूर्ण;
 
-static struct mv643xx_eth_platform_data db78x00_ge11_data = {
+अटल काष्ठा mv643xx_eth_platक्रमm_data db78x00_ge11_data = अणु
 	.phy_addr	= MV643XX_ETH_PHY_ADDR(11),
-};
+पूर्ण;
 
-static struct mv_sata_platform_data db78x00_sata_data = {
+अटल काष्ठा mv_sata_platक्रमm_data db78x00_sata_data = अणु
 	.n_ports	= 2,
-};
+पूर्ण;
 
-static struct i2c_board_info __initdata db78x00_i2c_rtc = {
+अटल काष्ठा i2c_board_info __initdata db78x00_i2c_rtc = अणु
 	I2C_BOARD_INFO("ds1338", 0x68),
-};
+पूर्ण;
 
 
-static void __init db78x00_init(void)
-{
+अटल व्योम __init db78x00_init(व्योम)
+अणु
 	/*
 	 * Basic MV78xx0 setup. Needs to be called early.
 	 */
@@ -55,7 +56,7 @@ static void __init db78x00_init(void)
 	/*
 	 * Partition on-chip peripherals between the two CPU cores.
 	 */
-	if (mv78xx0_core_index() == 0) {
+	अगर (mv78xx0_core_index() == 0) अणु
 		mv78xx0_ehci0_init();
 		mv78xx0_ehci1_init();
 		mv78xx0_ehci2_init();
@@ -67,38 +68,38 @@ static void __init db78x00_init(void)
 		mv78xx0_uart0_init();
 		mv78xx0_uart2_init();
 		mv78xx0_i2c_init();
-		i2c_register_board_info(0, &db78x00_i2c_rtc, 1);
-	} else {
+		i2c_रेजिस्टर_board_info(0, &db78x00_i2c_rtc, 1);
+	पूर्ण अन्यथा अणु
 		mv78xx0_uart1_init();
 		mv78xx0_uart3_init();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init db78x00_pci_init(void)
-{
-	if (machine_is_db78x00_bp()) {
+अटल पूर्णांक __init db78x00_pci_init(व्योम)
+अणु
+	अगर (machine_is_db78x00_bp()) अणु
 		/*
 		 * Assign the x16 PCIe slot on the board to CPU core
 		 * #0, and let CPU core #1 have the four x1 slots.
 		 */
-		if (mv78xx0_core_index() == 0)
+		अगर (mv78xx0_core_index() == 0)
 			mv78xx0_pcie_init(0, 1);
-		else
+		अन्यथा
 			mv78xx0_pcie_init(1, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(db78x00_pci_init);
 
 MACHINE_START(DB78X00_BP, "Marvell DB-78x00-BP Development Board")
-	/* Maintainer: Lennert Buytenhek <buytenh@marvell.com> */
+	/* Maपूर्णांकainer: Lennert Buytenhek <buytenh@marvell.com> */
 	.atag_offset	= 0x100,
 	.nr_irqs	= MV78XX0_NR_IRQS,
 	.init_machine	= db78x00_init,
 	.map_io		= mv78xx0_map_io,
 	.init_early	= mv78xx0_init_early,
 	.init_irq	= mv78xx0_init_irq,
-	.init_time	= mv78xx0_timer_init,
+	.init_समय	= mv78xx0_समयr_init,
 	.restart	= mv78xx0_restart,
 MACHINE_END

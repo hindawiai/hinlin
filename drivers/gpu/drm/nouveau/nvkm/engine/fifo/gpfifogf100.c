@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,234 +22,234 @@
  *
  * Authors: Ben Skeggs
  */
-#include "changf100.h"
+#समावेश "changf100.h"
 
-#include <core/client.h>
-#include <core/gpuobj.h>
-#include <subdev/fb.h>
-#include <subdev/timer.h>
+#समावेश <core/client.h>
+#समावेश <core/gpuobj.h>
+#समावेश <subdev/fb.h>
+#समावेश <subdev/समयr.h>
 
-#include <nvif/class.h>
-#include <nvif/cl906f.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/cl906f.h>
+#समावेश <nvअगर/unpack.h>
 
-int
-gf100_fifo_chan_ntfy(struct nvkm_fifo_chan *chan, u32 type,
-		     struct nvkm_event **pevent)
-{
-	switch (type) {
-	case NV906F_V0_NTFY_NON_STALL_INTERRUPT:
-		*pevent = &chan->fifo->uevent;
-		return 0;
-	case NV906F_V0_NTFY_KILLED:
-		*pevent = &chan->fifo->kevent;
-		return 0;
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+पूर्णांक
+gf100_fअगरo_chan_ntfy(काष्ठा nvkm_fअगरo_chan *chan, u32 type,
+		     काष्ठा nvkm_event **pevent)
+अणु
+	चयन (type) अणु
+	हाल NV906F_V0_NTFY_NON_STALL_INTERRUPT:
+		*pevent = &chan->fअगरo->uevent;
+		वापस 0;
+	हाल NV906F_V0_NTFY_KILLED:
+		*pevent = &chan->fअगरo->kevent;
+		वापस 0;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static u32
-gf100_fifo_gpfifo_engine_addr(struct nvkm_engine *engine)
-{
-	switch (engine->subdev.type) {
-	case NVKM_ENGINE_SW    : return 0;
-	case NVKM_ENGINE_GR    : return 0x0210;
-	case NVKM_ENGINE_CE    : return 0x0230 + (engine->subdev.inst * 0x10);
-	case NVKM_ENGINE_MSPDEC: return 0x0250;
-	case NVKM_ENGINE_MSPPP : return 0x0260;
-	case NVKM_ENGINE_MSVLD : return 0x0270;
-	default:
+अटल u32
+gf100_fअगरo_gpfअगरo_engine_addr(काष्ठा nvkm_engine *engine)
+अणु
+	चयन (engine->subdev.type) अणु
+	हाल NVKM_ENGINE_SW    : वापस 0;
+	हाल NVKM_ENGINE_GR    : वापस 0x0210;
+	हाल NVKM_ENGINE_CE    : वापस 0x0230 + (engine->subdev.inst * 0x10);
+	हाल NVKM_ENGINE_MSPDEC: वापस 0x0250;
+	हाल NVKM_ENGINE_MSPPP : वापस 0x0260;
+	हाल NVKM_ENGINE_MSVLD : वापस 0x0270;
+	शेष:
 		WARN_ON(1);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static struct gf100_fifo_engn *
-gf100_fifo_gpfifo_engine(struct gf100_fifo_chan *chan, struct nvkm_engine *engine)
-{
-	int engi = chan->base.fifo->func->engine_id(chan->base.fifo, engine);
-	if (engi >= 0)
-		return &chan->engn[engi];
-	return NULL;
-}
+अटल काष्ठा gf100_fअगरo_engn *
+gf100_fअगरo_gpfअगरo_engine(काष्ठा gf100_fअगरo_chan *chan, काष्ठा nvkm_engine *engine)
+अणु
+	पूर्णांक engi = chan->base.fअगरo->func->engine_id(chan->base.fअगरo, engine);
+	अगर (engi >= 0)
+		वापस &chan->engn[engi];
+	वापस शून्य;
+पूर्ण
 
-static int
-gf100_fifo_gpfifo_engine_fini(struct nvkm_fifo_chan *base,
-			      struct nvkm_engine *engine, bool suspend)
-{
-	const u32 offset = gf100_fifo_gpfifo_engine_addr(engine);
-	struct gf100_fifo_chan *chan = gf100_fifo_chan(base);
-	struct nvkm_subdev *subdev = &chan->fifo->base.engine.subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_gpuobj *inst = chan->base.inst;
-	int ret = 0;
+अटल पूर्णांक
+gf100_fअगरo_gpfअगरo_engine_fini(काष्ठा nvkm_fअगरo_chan *base,
+			      काष्ठा nvkm_engine *engine, bool suspend)
+अणु
+	स्थिर u32 offset = gf100_fअगरo_gpfअगरo_engine_addr(engine);
+	काष्ठा gf100_fअगरo_chan *chan = gf100_fअगरo_chan(base);
+	काष्ठा nvkm_subdev *subdev = &chan->fअगरo->base.engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_gpuobj *inst = chan->base.inst;
+	पूर्णांक ret = 0;
 
-	mutex_lock(&chan->fifo->base.mutex);
+	mutex_lock(&chan->fअगरo->base.mutex);
 	nvkm_wr32(device, 0x002634, chan->base.chid);
-	if (nvkm_msec(device, 2000,
-		if (nvkm_rd32(device, 0x002634) == chan->base.chid)
-			break;
-	) < 0) {
+	अगर (nvkm_msec(device, 2000,
+		अगर (nvkm_rd32(device, 0x002634) == chan->base.chid)
+			अवरोध;
+	) < 0) अणु
 		nvkm_error(subdev, "channel %d [%s] kick timeout\n",
 			   chan->base.chid, chan->base.object.client->name);
 		ret = -ETIMEDOUT;
-	}
-	mutex_unlock(&chan->fifo->base.mutex);
+	पूर्ण
+	mutex_unlock(&chan->fअगरo->base.mutex);
 
-	if (ret && suspend)
-		return ret;
+	अगर (ret && suspend)
+		वापस ret;
 
-	if (offset) {
+	अगर (offset) अणु
 		nvkm_kmap(inst);
 		nvkm_wo32(inst, offset + 0x00, 0x00000000);
 		nvkm_wo32(inst, offset + 0x04, 0x00000000);
-		nvkm_done(inst);
-	}
+		nvkm_करोne(inst);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-gf100_fifo_gpfifo_engine_init(struct nvkm_fifo_chan *base,
-			      struct nvkm_engine *engine)
-{
-	const u32 offset = gf100_fifo_gpfifo_engine_addr(engine);
-	struct gf100_fifo_chan *chan = gf100_fifo_chan(base);
-	struct gf100_fifo_engn *engn = gf100_fifo_gpfifo_engine(chan, engine);
-	struct nvkm_gpuobj *inst = chan->base.inst;
+अटल पूर्णांक
+gf100_fअगरo_gpfअगरo_engine_init(काष्ठा nvkm_fअगरo_chan *base,
+			      काष्ठा nvkm_engine *engine)
+अणु
+	स्थिर u32 offset = gf100_fअगरo_gpfअगरo_engine_addr(engine);
+	काष्ठा gf100_fअगरo_chan *chan = gf100_fअगरo_chan(base);
+	काष्ठा gf100_fअगरo_engn *engn = gf100_fअगरo_gpfअगरo_engine(chan, engine);
+	काष्ठा nvkm_gpuobj *inst = chan->base.inst;
 
-	if (offset) {
+	अगर (offset) अणु
 		nvkm_kmap(inst);
 		nvkm_wo32(inst, offset + 0x00, lower_32_bits(engn->vma->addr) | 4);
 		nvkm_wo32(inst, offset + 0x04, upper_32_bits(engn->vma->addr));
-		nvkm_done(inst);
-	}
+		nvkm_करोne(inst);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-gf100_fifo_gpfifo_engine_dtor(struct nvkm_fifo_chan *base,
-			      struct nvkm_engine *engine)
-{
-	struct gf100_fifo_chan *chan = gf100_fifo_chan(base);
-	struct gf100_fifo_engn *engn = gf100_fifo_gpfifo_engine(chan, engine);
+अटल व्योम
+gf100_fअगरo_gpfअगरo_engine_dtor(काष्ठा nvkm_fअगरo_chan *base,
+			      काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा gf100_fअगरo_chan *chan = gf100_fअगरo_chan(base);
+	काष्ठा gf100_fअगरo_engn *engn = gf100_fअगरo_gpfअगरo_engine(chan, engine);
 	nvkm_vmm_put(chan->base.vmm, &engn->vma);
 	nvkm_gpuobj_del(&engn->inst);
-}
+पूर्ण
 
-static int
-gf100_fifo_gpfifo_engine_ctor(struct nvkm_fifo_chan *base,
-			      struct nvkm_engine *engine,
-			      struct nvkm_object *object)
-{
-	struct gf100_fifo_chan *chan = gf100_fifo_chan(base);
-	struct gf100_fifo_engn *engn = gf100_fifo_gpfifo_engine(chan, engine);
-	int ret;
+अटल पूर्णांक
+gf100_fअगरo_gpfअगरo_engine_ctor(काष्ठा nvkm_fअगरo_chan *base,
+			      काष्ठा nvkm_engine *engine,
+			      काष्ठा nvkm_object *object)
+अणु
+	काष्ठा gf100_fअगरo_chan *chan = gf100_fअगरo_chan(base);
+	काष्ठा gf100_fअगरo_engn *engn = gf100_fअगरo_gpfअगरo_engine(chan, engine);
+	पूर्णांक ret;
 
-	if (!gf100_fifo_gpfifo_engine_addr(engine))
-		return 0;
+	अगर (!gf100_fअगरo_gpfअगरo_engine_addr(engine))
+		वापस 0;
 
-	ret = nvkm_object_bind(object, NULL, 0, &engn->inst);
-	if (ret)
-		return ret;
+	ret = nvkm_object_bind(object, शून्य, 0, &engn->inst);
+	अगर (ret)
+		वापस ret;
 
 	ret = nvkm_vmm_get(chan->base.vmm, 12, engn->inst->size, &engn->vma);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return nvkm_memory_map(engn->inst, 0, chan->base.vmm, engn->vma, NULL, 0);
-}
+	वापस nvkm_memory_map(engn->inst, 0, chan->base.vmm, engn->vma, शून्य, 0);
+पूर्ण
 
-static void
-gf100_fifo_gpfifo_fini(struct nvkm_fifo_chan *base)
-{
-	struct gf100_fifo_chan *chan = gf100_fifo_chan(base);
-	struct gf100_fifo *fifo = chan->fifo;
-	struct nvkm_device *device = fifo->base.engine.subdev.device;
+अटल व्योम
+gf100_fअगरo_gpfअगरo_fini(काष्ठा nvkm_fअगरo_chan *base)
+अणु
+	काष्ठा gf100_fअगरo_chan *chan = gf100_fअगरo_chan(base);
+	काष्ठा gf100_fअगरo *fअगरo = chan->fअगरo;
+	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
 	u32 coff = chan->base.chid * 8;
 
-	if (!list_empty(&chan->head) && !chan->killed) {
-		gf100_fifo_runlist_remove(fifo, chan);
+	अगर (!list_empty(&chan->head) && !chan->समाप्तed) अणु
+		gf100_fअगरo_runlist_हटाओ(fअगरo, chan);
 		nvkm_mask(device, 0x003004 + coff, 0x00000001, 0x00000000);
-		gf100_fifo_runlist_commit(fifo);
-	}
+		gf100_fअगरo_runlist_commit(fअगरo);
+	पूर्ण
 
-	gf100_fifo_intr_engine(fifo);
+	gf100_fअगरo_पूर्णांकr_engine(fअगरo);
 
 	nvkm_wr32(device, 0x003000 + coff, 0x00000000);
-}
+पूर्ण
 
-static void
-gf100_fifo_gpfifo_init(struct nvkm_fifo_chan *base)
-{
-	struct gf100_fifo_chan *chan = gf100_fifo_chan(base);
-	struct gf100_fifo *fifo = chan->fifo;
-	struct nvkm_device *device = fifo->base.engine.subdev.device;
+अटल व्योम
+gf100_fअगरo_gpfअगरo_init(काष्ठा nvkm_fअगरo_chan *base)
+अणु
+	काष्ठा gf100_fअगरo_chan *chan = gf100_fअगरo_chan(base);
+	काष्ठा gf100_fअगरo *fअगरo = chan->fअगरo;
+	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
 	u32 addr = chan->base.inst->addr >> 12;
 	u32 coff = chan->base.chid * 8;
 
 	nvkm_wr32(device, 0x003000 + coff, 0xc0000000 | addr);
 
-	if (list_empty(&chan->head) && !chan->killed) {
-		gf100_fifo_runlist_insert(fifo, chan);
+	अगर (list_empty(&chan->head) && !chan->समाप्तed) अणु
+		gf100_fअगरo_runlist_insert(fअगरo, chan);
 		nvkm_wr32(device, 0x003004 + coff, 0x001f0001);
-		gf100_fifo_runlist_commit(fifo);
-	}
-}
+		gf100_fअगरo_runlist_commit(fअगरo);
+	पूर्ण
+पूर्ण
 
-static void *
-gf100_fifo_gpfifo_dtor(struct nvkm_fifo_chan *base)
-{
-	return gf100_fifo_chan(base);
-}
+अटल व्योम *
+gf100_fअगरo_gpfअगरo_dtor(काष्ठा nvkm_fअगरo_chan *base)
+अणु
+	वापस gf100_fअगरo_chan(base);
+पूर्ण
 
-static const struct nvkm_fifo_chan_func
-gf100_fifo_gpfifo_func = {
-	.dtor = gf100_fifo_gpfifo_dtor,
-	.init = gf100_fifo_gpfifo_init,
-	.fini = gf100_fifo_gpfifo_fini,
-	.ntfy = gf100_fifo_chan_ntfy,
-	.engine_ctor = gf100_fifo_gpfifo_engine_ctor,
-	.engine_dtor = gf100_fifo_gpfifo_engine_dtor,
-	.engine_init = gf100_fifo_gpfifo_engine_init,
-	.engine_fini = gf100_fifo_gpfifo_engine_fini,
-};
+अटल स्थिर काष्ठा nvkm_fअगरo_chan_func
+gf100_fअगरo_gpfअगरo_func = अणु
+	.dtor = gf100_fअगरo_gpfअगरo_dtor,
+	.init = gf100_fअगरo_gpfअगरo_init,
+	.fini = gf100_fअगरo_gpfअगरo_fini,
+	.ntfy = gf100_fअगरo_chan_ntfy,
+	.engine_ctor = gf100_fअगरo_gpfअगरo_engine_ctor,
+	.engine_dtor = gf100_fअगरo_gpfअगरo_engine_dtor,
+	.engine_init = gf100_fअगरo_gpfअगरo_engine_init,
+	.engine_fini = gf100_fअगरo_gpfअगरo_engine_fini,
+पूर्ण;
 
-static int
-gf100_fifo_gpfifo_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
-		      void *data, u32 size, struct nvkm_object **pobject)
-{
-	union {
-		struct fermi_channel_gpfifo_v0 v0;
-	} *args = data;
-	struct gf100_fifo *fifo = gf100_fifo(base);
-	struct nvkm_object *parent = oclass->parent;
-	struct gf100_fifo_chan *chan;
+अटल पूर्णांक
+gf100_fअगरo_gpfअगरo_new(काष्ठा nvkm_fअगरo *base, स्थिर काष्ठा nvkm_oclass *oclass,
+		      व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
+अणु
+	जोड़ अणु
+		काष्ठा fermi_channel_gpfअगरo_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा gf100_fअगरo *fअगरo = gf100_fअगरo(base);
+	काष्ठा nvkm_object *parent = oclass->parent;
+	काष्ठा gf100_fअगरo_chan *chan;
 	u64 usermem, ioffset, ilength;
-	int ret = -ENOSYS, i;
+	पूर्णांक ret = -ENOSYS, i;
 
-	nvif_ioctl(parent, "create channel gpfifo size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		nvif_ioctl(parent, "create channel gpfifo vers %d vmm %llx "
+	nvअगर_ioctl(parent, "create channel gpfifo size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
+		nvअगर_ioctl(parent, "create channel gpfifo vers %d vmm %llx "
 				   "ioffset %016llx ilength %08x\n",
 			   args->v0.version, args->v0.vmm, args->v0.ioffset,
 			   args->v0.ilength);
-		if (!args->v0.vmm)
-			return -EINVAL;
-	} else
-		return ret;
+		अगर (!args->v0.vmm)
+			वापस -EINVAL;
+	पूर्ण अन्यथा
+		वापस ret;
 
 	/* allocate channel */
-	if (!(chan = kzalloc(sizeof(*chan), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(chan = kzalloc(माप(*chan), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*pobject = &chan->base.object;
-	chan->fifo = fifo;
+	chan->fअगरo = fअगरo;
 	INIT_LIST_HEAD(&chan->head);
 
-	ret = nvkm_fifo_chan_ctor(&gf100_fifo_gpfifo_func, &fifo->base,
+	ret = nvkm_fअगरo_chan_ctor(&gf100_fअगरo_gpfअगरo_func, &fअगरo->base,
 				  0x1000, 0x1000, true, args->v0.vmm, 0,
 				  BIT(GF100_FIFO_ENGN_GR) |
 				  BIT(GF100_FIFO_ENGN_MSPDEC) |
@@ -257,24 +258,24 @@ gf100_fifo_gpfifo_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
 				  BIT(GF100_FIFO_ENGN_CE0) |
 				  BIT(GF100_FIFO_ENGN_CE1) |
 				  BIT(GF100_FIFO_ENGN_SW),
-				  1, fifo->user.bar->addr, 0x1000,
+				  1, fअगरo->user.bar->addr, 0x1000,
 				  oclass, &chan->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	args->v0.chid = chan->base.chid;
 
-	/* clear channel control registers */
+	/* clear channel control रेजिस्टरs */
 
 	usermem = chan->base.chid * 0x1000;
 	ioffset = args->v0.ioffset;
 	ilength = order_base_2(args->v0.ilength / 8);
 
-	nvkm_kmap(fifo->user.mem);
-	for (i = 0; i < 0x1000; i += 4)
-		nvkm_wo32(fifo->user.mem, usermem + i, 0x00000000);
-	nvkm_done(fifo->user.mem);
-	usermem = nvkm_memory_addr(fifo->user.mem) + usermem;
+	nvkm_kmap(fअगरo->user.mem);
+	क्रम (i = 0; i < 0x1000; i += 4)
+		nvkm_wo32(fअगरo->user.mem, usermem + i, 0x00000000);
+	nvkm_करोne(fअगरo->user.mem);
+	usermem = nvkm_memory_addr(fअगरo->user.mem) + usermem;
 
 	/* RAMFC */
 	nvkm_kmap(chan->base.inst);
@@ -295,14 +296,14 @@ gf100_fifo_gpfifo_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
 	nvkm_wo32(chan->base.inst, 0xb8, 0xf8000000);
 	nvkm_wo32(chan->base.inst, 0xf8, 0x10003080); /* 0x002310 */
 	nvkm_wo32(chan->base.inst, 0xfc, 0x10000010); /* 0x002350 */
-	nvkm_done(chan->base.inst);
-	return 0;
-}
+	nvkm_करोne(chan->base.inst);
+	वापस 0;
+पूर्ण
 
-const struct nvkm_fifo_chan_oclass
-gf100_fifo_gpfifo_oclass = {
+स्थिर काष्ठा nvkm_fअगरo_chan_oclass
+gf100_fअगरo_gpfअगरo_oclass = अणु
 	.base.oclass = FERMI_CHANNEL_GPFIFO,
 	.base.minver = 0,
 	.base.maxver = 0,
-	.ctor = gf100_fifo_gpfifo_new,
-};
+	.ctor = gf100_fअगरo_gpfअगरo_new,
+पूर्ण;

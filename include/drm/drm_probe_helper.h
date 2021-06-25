@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 
-#ifndef __DRM_PROBE_HELPER_H__
-#define __DRM_PROBE_HELPER_H__
+#अगर_अघोषित __DRM_PROBE_HELPER_H__
+#घोषणा __DRM_PROBE_HELPER_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_connector;
-struct drm_device;
-struct drm_modeset_acquire_ctx;
+काष्ठा drm_connector;
+काष्ठा drm_device;
+काष्ठा drm_modeset_acquire_ctx;
 
-int drm_helper_probe_single_connector_modes(struct drm_connector
-					    *connector, uint32_t maxX,
-					    uint32_t maxY);
-int drm_helper_probe_detect(struct drm_connector *connector,
-			    struct drm_modeset_acquire_ctx *ctx,
-			    bool force);
-void drm_kms_helper_poll_init(struct drm_device *dev);
-void drm_kms_helper_poll_fini(struct drm_device *dev);
-bool drm_helper_hpd_irq_event(struct drm_device *dev);
-void drm_kms_helper_hotplug_event(struct drm_device *dev);
+पूर्णांक drm_helper_probe_single_connector_modes(काष्ठा drm_connector
+					    *connector, uपूर्णांक32_t maxX,
+					    uपूर्णांक32_t maxY);
+पूर्णांक drm_helper_probe_detect(काष्ठा drm_connector *connector,
+			    काष्ठा drm_modeset_acquire_ctx *ctx,
+			    bool क्रमce);
+व्योम drm_kms_helper_poll_init(काष्ठा drm_device *dev);
+व्योम drm_kms_helper_poll_fini(काष्ठा drm_device *dev);
+bool drm_helper_hpd_irq_event(काष्ठा drm_device *dev);
+व्योम drm_kms_helper_hotplug_event(काष्ठा drm_device *dev);
 
-void drm_kms_helper_poll_disable(struct drm_device *dev);
-void drm_kms_helper_poll_enable(struct drm_device *dev);
-bool drm_kms_helper_is_poll_worker(void);
+व्योम drm_kms_helper_poll_disable(काष्ठा drm_device *dev);
+व्योम drm_kms_helper_poll_enable(काष्ठा drm_device *dev);
+bool drm_kms_helper_is_poll_worker(व्योम);
 
-#endif
+#पूर्ण_अगर

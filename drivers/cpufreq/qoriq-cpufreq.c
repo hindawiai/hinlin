@@ -1,146 +1,147 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2013 Freescale Semiconductor, Inc.
  *
- * CPU Frequency Scaling driver for Freescale QorIQ SoCs.
+ * CPU Frequency Scaling driver क्रम Freescale QorIQ SoCs.
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/cpufreq.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/smp.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/platक्रमm_device.h>
 
 /**
- * struct cpu_data
- * @pclk: the parent clock of cpu
+ * काष्ठा cpu_data
+ * @pclk: the parent घड़ी of cpu
  * @table: frequency table
  */
-struct cpu_data {
-	struct clk **pclk;
-	struct cpufreq_frequency_table *table;
-};
+काष्ठा cpu_data अणु
+	काष्ठा clk **pclk;
+	काष्ठा cpufreq_frequency_table *table;
+पूर्ण;
 
 /**
- * struct soc_data - SoC specific data
+ * काष्ठा soc_data - SoC specअगरic data
  * @flags: SOC_xxx
  */
-struct soc_data {
+काष्ठा soc_data अणु
 	u32 flags;
-};
+पूर्ण;
 
-static u32 get_bus_freq(void)
-{
-	struct device_node *soc;
+अटल u32 get_bus_freq(व्योम)
+अणु
+	काष्ठा device_node *soc;
 	u32 sysfreq;
-	struct clk *pltclk;
-	int ret;
+	काष्ठा clk *pltclk;
+	पूर्णांक ret;
 
-	/* get platform freq by searching bus-frequency property */
-	soc = of_find_node_by_type(NULL, "soc");
-	if (soc) {
-		ret = of_property_read_u32(soc, "bus-frequency", &sysfreq);
+	/* get platक्रमm freq by searching bus-frequency property */
+	soc = of_find_node_by_type(शून्य, "soc");
+	अगर (soc) अणु
+		ret = of_property_पढ़ो_u32(soc, "bus-frequency", &sysfreq);
 		of_node_put(soc);
-		if (!ret)
-			return sysfreq;
-	}
+		अगर (!ret)
+			वापस sysfreq;
+	पूर्ण
 
-	/* get platform freq by its clock name */
-	pltclk = clk_get(NULL, "cg-pll0-div1");
-	if (IS_ERR(pltclk)) {
+	/* get platक्रमm freq by its घड़ी name */
+	pltclk = clk_get(शून्य, "cg-pll0-div1");
+	अगर (IS_ERR(pltclk)) अणु
 		pr_err("%s: can't get bus frequency %ld\n",
 		       __func__, PTR_ERR(pltclk));
-		return PTR_ERR(pltclk);
-	}
+		वापस PTR_ERR(pltclk);
+	पूर्ण
 
-	return clk_get_rate(pltclk);
-}
+	वापस clk_get_rate(pltclk);
+पूर्ण
 
-static struct clk *cpu_to_clk(int cpu)
-{
-	struct device_node *np;
-	struct clk *clk;
+अटल काष्ठा clk *cpu_to_clk(पूर्णांक cpu)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा clk *clk;
 
-	if (!cpu_present(cpu))
-		return NULL;
+	अगर (!cpu_present(cpu))
+		वापस शून्य;
 
-	np = of_get_cpu_node(cpu, NULL);
-	if (!np)
-		return NULL;
+	np = of_get_cpu_node(cpu, शून्य);
+	अगर (!np)
+		वापस शून्य;
 
 	clk = of_clk_get(np, 0);
 	of_node_put(np);
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-/* traverse cpu nodes to get cpu mask of sharing clock wire */
-static void set_affected_cpus(struct cpufreq_policy *policy)
-{
-	struct cpumask *dstp = policy->cpus;
-	struct clk *clk;
-	int i;
+/* traverse cpu nodes to get cpu mask of sharing घड़ी wire */
+अटल व्योम set_affected_cpus(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा cpumask *dstp = policy->cpus;
+	काष्ठा clk *clk;
+	पूर्णांक i;
 
-	for_each_present_cpu(i) {
+	क्रम_each_present_cpu(i) अणु
 		clk = cpu_to_clk(i);
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			pr_err("%s: no clock for cpu %d\n", __func__, i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (clk_is_match(policy->clk, clk))
+		अगर (clk_is_match(policy->clk, clk))
 			cpumask_set_cpu(i, dstp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* reduce the duplicated frequencies in frequency table */
-static void freq_table_redup(struct cpufreq_frequency_table *freq_table,
-		int count)
-{
-	int i, j;
+अटल व्योम freq_table_redup(काष्ठा cpufreq_frequency_table *freq_table,
+		पूर्णांक count)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 1; i < count; i++) {
-		for (j = 0; j < i; j++) {
-			if (freq_table[j].frequency == CPUFREQ_ENTRY_INVALID ||
+	क्रम (i = 1; i < count; i++) अणु
+		क्रम (j = 0; j < i; j++) अणु
+			अगर (freq_table[j].frequency == CPUFREQ_ENTRY_INVALID ||
 					freq_table[j].frequency !=
 					freq_table[i].frequency)
-				continue;
+				जारी;
 
 			freq_table[i].frequency = CPUFREQ_ENTRY_INVALID;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* sort the frequencies in frequency table in descenting order */
-static void freq_table_sort(struct cpufreq_frequency_table *freq_table,
-		int count)
-{
-	int i, j, ind;
-	unsigned int freq, max_freq;
-	struct cpufreq_frequency_table table;
+अटल व्योम freq_table_sort(काष्ठा cpufreq_frequency_table *freq_table,
+		पूर्णांक count)
+अणु
+	पूर्णांक i, j, ind;
+	अचिन्हित पूर्णांक freq, max_freq;
+	काष्ठा cpufreq_frequency_table table;
 
-	for (i = 0; i < count - 1; i++) {
+	क्रम (i = 0; i < count - 1; i++) अणु
 		max_freq = freq_table[i].frequency;
 		ind = i;
-		for (j = i + 1; j < count; j++) {
+		क्रम (j = i + 1; j < count; j++) अणु
 			freq = freq_table[j].frequency;
-			if (freq == CPUFREQ_ENTRY_INVALID ||
+			अगर (freq == CPUFREQ_ENTRY_INVALID ||
 					freq <= max_freq)
-				continue;
+				जारी;
 			ind = j;
 			max_freq = freq;
-		}
+		पूर्ण
 
-		if (ind != i) {
+		अगर (ind != i) अणु
 			/* exchange the frequencies */
 			table.driver_data = freq_table[i].driver_data;
 			table.frequency = freq_table[i].frequency;
@@ -148,160 +149,160 @@ static void freq_table_sort(struct cpufreq_frequency_table *freq_table,
 			freq_table[i].frequency = freq_table[ind].frequency;
 			freq_table[ind].driver_data = table.driver_data;
 			freq_table[ind].frequency = table.frequency;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int qoriq_cpufreq_cpu_init(struct cpufreq_policy *policy)
-{
-	struct device_node *np;
-	int i, count;
+अटल पूर्णांक qoriq_cpufreq_cpu_init(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक i, count;
 	u32 freq;
-	struct clk *clk;
-	const struct clk_hw *hwclk;
-	struct cpufreq_frequency_table *table;
-	struct cpu_data *data;
-	unsigned int cpu = policy->cpu;
+	काष्ठा clk *clk;
+	स्थिर काष्ठा clk_hw *hwclk;
+	काष्ठा cpufreq_frequency_table *table;
+	काष्ठा cpu_data *data;
+	अचिन्हित पूर्णांक cpu = policy->cpu;
 	u64 u64temp;
 
-	np = of_get_cpu_node(cpu, NULL);
-	if (!np)
-		return -ENODEV;
+	np = of_get_cpu_node(cpu, शून्य);
+	अगर (!np)
+		वापस -ENODEV;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		goto err_np;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		जाओ err_np;
 
 	policy->clk = of_clk_get(np, 0);
-	if (IS_ERR(policy->clk)) {
+	अगर (IS_ERR(policy->clk)) अणु
 		pr_err("%s: no clock information\n", __func__);
-		goto err_nomem2;
-	}
+		जाओ err_nomem2;
+	पूर्ण
 
 	hwclk = __clk_get_hw(policy->clk);
 	count = clk_hw_get_num_parents(hwclk);
 
-	data->pclk = kcalloc(count, sizeof(struct clk *), GFP_KERNEL);
-	if (!data->pclk)
-		goto err_nomem2;
+	data->pclk = kसुस्मृति(count, माप(काष्ठा clk *), GFP_KERNEL);
+	अगर (!data->pclk)
+		जाओ err_nomem2;
 
-	table = kcalloc(count + 1, sizeof(*table), GFP_KERNEL);
-	if (!table)
-		goto err_pclk;
+	table = kसुस्मृति(count + 1, माप(*table), GFP_KERNEL);
+	अगर (!table)
+		जाओ err_pclk;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		clk = clk_hw_get_parent_by_index(hwclk, i)->clk;
 		data->pclk[i] = clk;
 		freq = clk_get_rate(clk);
 		table[i].frequency = freq / 1000;
 		table[i].driver_data = i;
-	}
+	पूर्ण
 	freq_table_redup(table, count);
 	freq_table_sort(table, count);
 	table[i].frequency = CPUFREQ_TABLE_END;
 	policy->freq_table = table;
 	data->table = table;
 
-	/* update ->cpus if we have cluster, no harm if not */
+	/* update ->cpus अगर we have cluster, no harm अगर not */
 	set_affected_cpus(policy);
 	policy->driver_data = data;
 
-	/* Minimum transition latency is 12 platform clocks */
+	/* Minimum transition latency is 12 platक्रमm घड़ीs */
 	u64temp = 12ULL * NSEC_PER_SEC;
-	do_div(u64temp, get_bus_freq());
+	करो_भाग(u64temp, get_bus_freq());
 	policy->cpuinfo.transition_latency = u64temp + 1;
 
 	of_node_put(np);
 
-	return 0;
+	वापस 0;
 
 err_pclk:
-	kfree(data->pclk);
+	kमुक्त(data->pclk);
 err_nomem2:
-	kfree(data);
+	kमुक्त(data);
 err_np:
 	of_node_put(np);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int qoriq_cpufreq_cpu_exit(struct cpufreq_policy *policy)
-{
-	struct cpu_data *data = policy->driver_data;
+अटल पूर्णांक qoriq_cpufreq_cpu_निकास(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा cpu_data *data = policy->driver_data;
 
-	kfree(data->pclk);
-	kfree(data->table);
-	kfree(data);
-	policy->driver_data = NULL;
+	kमुक्त(data->pclk);
+	kमुक्त(data->table);
+	kमुक्त(data);
+	policy->driver_data = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qoriq_cpufreq_target(struct cpufreq_policy *policy,
-		unsigned int index)
-{
-	struct clk *parent;
-	struct cpu_data *data = policy->driver_data;
+अटल पूर्णांक qoriq_cpufreq_target(काष्ठा cpufreq_policy *policy,
+		अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा clk *parent;
+	काष्ठा cpu_data *data = policy->driver_data;
 
 	parent = data->pclk[data->table[index].driver_data];
-	return clk_set_parent(policy->clk, parent);
-}
+	वापस clk_set_parent(policy->clk, parent);
+पूर्ण
 
-static struct cpufreq_driver qoriq_cpufreq_driver = {
+अटल काष्ठा cpufreq_driver qoriq_cpufreq_driver = अणु
 	.name		= "qoriq_cpufreq",
 	.flags		= CPUFREQ_CONST_LOOPS |
 			  CPUFREQ_IS_COOLING_DEV,
 	.init		= qoriq_cpufreq_cpu_init,
-	.exit		= qoriq_cpufreq_cpu_exit,
-	.verify		= cpufreq_generic_frequency_table_verify,
+	.निकास		= qoriq_cpufreq_cpu_निकास,
+	.verअगरy		= cpufreq_generic_frequency_table_verअगरy,
 	.target_index	= qoriq_cpufreq_target,
 	.get		= cpufreq_generic_get,
 	.attr		= cpufreq_generic_attr,
-};
+पूर्ण;
 
-static const struct of_device_id qoriq_cpufreq_blacklist[] = {
+अटल स्थिर काष्ठा of_device_id qoriq_cpufreq_blacklist[] = अणु
 	/* e6500 cannot use cpufreq due to erratum A-008083 */
-	{ .compatible = "fsl,b4420-clockgen", },
-	{ .compatible = "fsl,b4860-clockgen", },
-	{ .compatible = "fsl,t2080-clockgen", },
-	{ .compatible = "fsl,t4240-clockgen", },
-	{}
-};
+	अणु .compatible = "fsl,b4420-clockgen", पूर्ण,
+	अणु .compatible = "fsl,b4860-clockgen", पूर्ण,
+	अणु .compatible = "fsl,t2080-clockgen", पूर्ण,
+	अणु .compatible = "fsl,t4240-clockgen", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int qoriq_cpufreq_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct device_node *np;
+अटल पूर्णांक qoriq_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा device_node *np;
 
-	np = of_find_matching_node(NULL, qoriq_cpufreq_blacklist);
-	if (np) {
+	np = of_find_matching_node(शून्य, qoriq_cpufreq_blacklist);
+	अगर (np) अणु
 		dev_info(&pdev->dev, "Disabling due to erratum A-008083");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = cpufreq_register_driver(&qoriq_cpufreq_driver);
-	if (ret)
-		return ret;
+	ret = cpufreq_रेजिस्टर_driver(&qoriq_cpufreq_driver);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(&pdev->dev, "Freescale QorIQ CPU frequency scaling driver\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qoriq_cpufreq_remove(struct platform_device *pdev)
-{
-	cpufreq_unregister_driver(&qoriq_cpufreq_driver);
+अटल पूर्णांक qoriq_cpufreq_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	cpufreq_unरेजिस्टर_driver(&qoriq_cpufreq_driver);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver qoriq_cpufreq_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver qoriq_cpufreq_platक्रमm_driver = अणु
+	.driver = अणु
 		.name = "qoriq-cpufreq",
-	},
+	पूर्ण,
 	.probe = qoriq_cpufreq_probe,
-	.remove = qoriq_cpufreq_remove,
-};
-module_platform_driver(qoriq_cpufreq_platform_driver);
+	.हटाओ = qoriq_cpufreq_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(qoriq_cpufreq_platक्रमm_driver);
 
 MODULE_ALIAS("platform:qoriq-cpufreq");
 MODULE_LICENSE("GPL");

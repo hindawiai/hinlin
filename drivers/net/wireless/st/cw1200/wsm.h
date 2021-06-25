@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * WSM host interface (HI) interface for ST-Ericsson CW1200 mac80211 drivers
+ * WSM host पूर्णांकerface (HI) पूर्णांकerface क्रम ST-Ericsson CW1200 mac80211 drivers
  *
  * Copyright (c) 2010, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
@@ -10,605 +11,605 @@
  * Author: Stewart Mathers <stewart.mathers@stericsson.com>
  */
 
-#ifndef CW1200_WSM_H_INCLUDED
-#define CW1200_WSM_H_INCLUDED
+#अगर_अघोषित CW1200_WSM_H_INCLUDED
+#घोषणा CW1200_WSM_H_INCLUDED
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-struct cw1200_common;
+काष्ठा cw1200_common;
 
 /* Bands */
 /* Radio band 2.412 -2.484 GHz. */
-#define WSM_PHY_BAND_2_4G		(0)
+#घोषणा WSM_PHY_BAND_2_4G		(0)
 
 /* Radio band 4.9375-5.8250 GHz. */
-#define WSM_PHY_BAND_5G			(1)
+#घोषणा WSM_PHY_BAND_5G			(1)
 
 /* Transmit rates */
 /* 1   Mbps            ERP-DSSS */
-#define WSM_TRANSMIT_RATE_1		(0)
+#घोषणा WSM_TRANSMIT_RATE_1		(0)
 
 /* 2   Mbps            ERP-DSSS */
-#define WSM_TRANSMIT_RATE_2		(1)
+#घोषणा WSM_TRANSMIT_RATE_2		(1)
 
 /* 5.5 Mbps            ERP-CCK */
-#define WSM_TRANSMIT_RATE_5		(2)
+#घोषणा WSM_TRANSMIT_RATE_5		(2)
 
 /* 11  Mbps            ERP-CCK */
-#define WSM_TRANSMIT_RATE_11		(3)
+#घोषणा WSM_TRANSMIT_RATE_11		(3)
 
 /* 22  Mbps            ERP-PBCC (Not supported) */
-/* #define WSM_TRANSMIT_RATE_22		(4) */
+/* #घोषणा WSM_TRANSMIT_RATE_22		(4) */
 
 /* 33  Mbps            ERP-PBCC (Not supported) */
-/* #define WSM_TRANSMIT_RATE_33		(5) */
+/* #घोषणा WSM_TRANSMIT_RATE_33		(5) */
 
 /* 6   Mbps   (3 Mbps) ERP-OFDM, BPSK coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_6		(6)
+#घोषणा WSM_TRANSMIT_RATE_6		(6)
 
 /* 9   Mbps (4.5 Mbps) ERP-OFDM, BPSK coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_9		(7)
+#घोषणा WSM_TRANSMIT_RATE_9		(7)
 
 /* 12  Mbps  (6 Mbps)  ERP-OFDM, QPSK coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_12		(8)
+#घोषणा WSM_TRANSMIT_RATE_12		(8)
 
 /* 18  Mbps  (9 Mbps)  ERP-OFDM, QPSK coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_18		(9)
+#घोषणा WSM_TRANSMIT_RATE_18		(9)
 
 /* 24  Mbps (12 Mbps)  ERP-OFDM, 16QAM coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_24		(10)
+#घोषणा WSM_TRANSMIT_RATE_24		(10)
 
 /* 36  Mbps (18 Mbps)  ERP-OFDM, 16QAM coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_36		(11)
+#घोषणा WSM_TRANSMIT_RATE_36		(11)
 
 /* 48  Mbps (24 Mbps)  ERP-OFDM, 64QAM coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_48		(12)
+#घोषणा WSM_TRANSMIT_RATE_48		(12)
 
 /* 54  Mbps (27 Mbps)  ERP-OFDM, 64QAM coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_54		(13)
+#घोषणा WSM_TRANSMIT_RATE_54		(13)
 
 /* 6.5 Mbps            HT-OFDM, BPSK coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_HT_6		(14)
+#घोषणा WSM_TRANSMIT_RATE_HT_6		(14)
 
 /* 13  Mbps            HT-OFDM, QPSK coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_HT_13		(15)
+#घोषणा WSM_TRANSMIT_RATE_HT_13		(15)
 
 /* 19.5 Mbps           HT-OFDM, QPSK coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_HT_19		(16)
+#घोषणा WSM_TRANSMIT_RATE_HT_19		(16)
 
 /* 26  Mbps            HT-OFDM, 16QAM coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_HT_26		(17)
+#घोषणा WSM_TRANSMIT_RATE_HT_26		(17)
 
 /* 39  Mbps            HT-OFDM, 16QAM coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_HT_39		(18)
+#घोषणा WSM_TRANSMIT_RATE_HT_39		(18)
 
 /* 52  Mbps            HT-OFDM, 64QAM coding rate 2/3 */
-#define WSM_TRANSMIT_RATE_HT_52		(19)
+#घोषणा WSM_TRANSMIT_RATE_HT_52		(19)
 
 /* 58.5 Mbps           HT-OFDM, 64QAM coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_HT_58		(20)
+#घोषणा WSM_TRANSMIT_RATE_HT_58		(20)
 
 /* 65  Mbps            HT-OFDM, 64QAM coding rate 5/6 */
-#define WSM_TRANSMIT_RATE_HT_65		(21)
+#घोषणा WSM_TRANSMIT_RATE_HT_65		(21)
 
 /* Scan types */
 /* Foreground scan */
-#define WSM_SCAN_TYPE_FOREGROUND	(0)
+#घोषणा WSM_SCAN_TYPE_FOREGROUND	(0)
 
 /* Background scan */
-#define WSM_SCAN_TYPE_BACKGROUND	(1)
+#घोषणा WSM_SCAN_TYPE_BACKGROUND	(1)
 
 /* Auto scan */
-#define WSM_SCAN_TYPE_AUTO		(2)
+#घोषणा WSM_SCAN_TYPE_AUTO		(2)
 
 /* Scan flags */
-/* Forced background scan means if the station cannot */
-/* enter the power-save mode, it shall force to perform a */
+/* Forced background scan means अगर the station cannot */
+/* enter the घातer-save mode, it shall क्रमce to perक्रमm a */
 /* background scan. Only valid when ScanType is */
 /* background scan. */
-#define WSM_SCAN_FLAG_FORCE_BACKGROUND	(BIT(0))
+#घोषणा WSM_SCAN_FLAG_FORCE_BACKGROUND	(BIT(0))
 
-/* The WLAN device scans one channel at a time so */
+/* The WLAN device scans one channel at a समय so */
 /* that disturbance to the data traffic is minimized. */
-#define WSM_SCAN_FLAG_SPLIT_METHOD	(BIT(1))
+#घोषणा WSM_SCAN_FLAG_SPLIT_METHOD	(BIT(1))
 
-/* Preamble Type. Long if not set. */
-#define WSM_SCAN_FLAG_SHORT_PREAMBLE	(BIT(2))
+/* Preamble Type. Long अगर not set. */
+#घोषणा WSM_SCAN_FLAG_SHORT_PREAMBLE	(BIT(2))
 
-/* 11n Tx Mode. Mixed if not set. */
-#define WSM_SCAN_FLAG_11N_GREENFIELD	(BIT(3))
+/* 11n Tx Mode. Mixed अगर not set. */
+#घोषणा WSM_SCAN_FLAG_11N_GREENFIELD	(BIT(3))
 
-/* Scan constraints */
+/* Scan स्थिरraपूर्णांकs */
 /* Maximum number of channels to be scanned. */
-#define WSM_SCAN_MAX_NUM_OF_CHANNELS	(48)
+#घोषणा WSM_SCAN_MAX_NUM_OF_CHANNELS	(48)
 
-/* The maximum number of SSIDs that the device can scan for. */
-#define WSM_SCAN_MAX_NUM_OF_SSIDS	(2)
+/* The maximum number of SSIDs that the device can scan क्रम. */
+#घोषणा WSM_SCAN_MAX_NUM_OF_SSIDS	(2)
 
 /* Power management modes */
 /* 802.11 Active mode */
-#define WSM_PSM_ACTIVE			(0)
+#घोषणा WSM_PSM_ACTIVE			(0)
 
 /* 802.11 PS mode */
-#define WSM_PSM_PS			BIT(0)
+#घोषणा WSM_PSM_PS			BIT(0)
 
 /* Fast Power Save bit */
-#define WSM_PSM_FAST_PS_FLAG		BIT(7)
+#घोषणा WSM_PSM_FAST_PS_FLAG		BIT(7)
 
-/* Dynamic aka Fast power save */
-#define WSM_PSM_FAST_PS			(BIT(0) | BIT(7))
+/* Dynamic aka Fast घातer save */
+#घोषणा WSM_PSM_FAST_PS			(BIT(0) | BIT(7))
 
 /* Undetermined */
 /* Note : Undetermined status is reported when the */
-/* NULL data frame used to advertise the PM mode to */
+/* शून्य data frame used to advertise the PM mode to */
 /* the AP at Pre or Post Background Scan is not Acknowledged */
-#define WSM_PSM_UNKNOWN			BIT(1)
+#घोषणा WSM_PSM_UNKNOWN			BIT(1)
 
 /* Queue IDs */
-/* best effort/legacy */
-#define WSM_QUEUE_BEST_EFFORT		(0)
+/* best efक्रमt/legacy */
+#घोषणा WSM_QUEUE_BEST_EFFORT		(0)
 
 /* background */
-#define WSM_QUEUE_BACKGROUND		(1)
+#घोषणा WSM_QUEUE_BACKGROUND		(1)
 
 /* video */
-#define WSM_QUEUE_VIDEO			(2)
+#घोषणा WSM_QUEUE_VIDEO			(2)
 
 /* voice */
-#define WSM_QUEUE_VOICE			(3)
+#घोषणा WSM_QUEUE_VOICE			(3)
 
 /* HT TX parameters */
 /* Non-HT */
-#define WSM_HT_TX_NON_HT		(0)
+#घोषणा WSM_HT_TX_NON_HT		(0)
 
-/* Mixed format */
-#define WSM_HT_TX_MIXED			(1)
+/* Mixed क्रमmat */
+#घोषणा WSM_HT_TX_MIXED			(1)
 
-/* Greenfield format */
-#define WSM_HT_TX_GREENFIELD		(2)
+/* Greenfield क्रमmat */
+#घोषणा WSM_HT_TX_GREENFIELD		(2)
 
 /* STBC allowed */
-#define WSM_HT_TX_STBC			(BIT(7))
+#घोषणा WSM_HT_TX_STBC			(BIT(7))
 
-/* EPTA prioirty flags for BT Coex */
-/* default epta priority */
-#define WSM_EPTA_PRIORITY_DEFAULT	4
-/* use for normal data */
-#define WSM_EPTA_PRIORITY_DATA		4
-/* use for connect/disconnect/roaming*/
-#define WSM_EPTA_PRIORITY_MGT		5
-/* use for action frames */
-#define WSM_EPTA_PRIORITY_ACTION	5
-/* use for AC_VI data */
-#define WSM_EPTA_PRIORITY_VIDEO		5
-/* use for AC_VO data */
-#define WSM_EPTA_PRIORITY_VOICE		6
-/* use for EAPOL exchange */
-#define WSM_EPTA_PRIORITY_EAPOL		7
+/* EPTA prioirty flags क्रम BT Coex */
+/* शेष epta priority */
+#घोषणा WSM_EPTA_PRIORITY_DEFAULT	4
+/* use क्रम normal data */
+#घोषणा WSM_EPTA_PRIORITY_DATA		4
+/* use क्रम connect/disconnect/roaming*/
+#घोषणा WSM_EPTA_PRIORITY_MGT		5
+/* use क्रम action frames */
+#घोषणा WSM_EPTA_PRIORITY_ACTION	5
+/* use क्रम AC_VI data */
+#घोषणा WSM_EPTA_PRIORITY_VIDEO		5
+/* use क्रम AC_VO data */
+#घोषणा WSM_EPTA_PRIORITY_VOICE		6
+/* use क्रम EAPOL exchange */
+#घोषणा WSM_EPTA_PRIORITY_EAPOL		7
 
 /* TX status */
 /* Frame was sent aggregated */
-/* Only valid for WSM_SUCCESS status. */
-#define WSM_TX_STATUS_AGGREGATION	(BIT(0))
+/* Only valid क्रम WSM_SUCCESS status. */
+#घोषणा WSM_TX_STATUS_AGGREGATION	(BIT(0))
 
 /* Host should requeue this frame later. */
 /* Valid only when status is WSM_REQUEUE. */
-#define WSM_TX_STATUS_REQUEUE		(BIT(1))
+#घोषणा WSM_TX_STATUS_REQUEUE		(BIT(1))
 
 /* Normal Ack */
-#define WSM_TX_STATUS_NORMAL_ACK	(0<<2)
+#घोषणा WSM_TX_STATUS_NORMAL_ACK	(0<<2)
 
 /* No Ack */
-#define WSM_TX_STATUS_NO_ACK		(1<<2)
+#घोषणा WSM_TX_STATUS_NO_ACK		(1<<2)
 
 /* No explicit acknowledgement */
-#define WSM_TX_STATUS_NO_EXPLICIT_ACK	(2<<2)
+#घोषणा WSM_TX_STATUS_NO_EXPLICIT_ACK	(2<<2)
 
 /* Block Ack */
-/* Only valid for WSM_SUCCESS status. */
-#define WSM_TX_STATUS_BLOCK_ACK		(3<<2)
+/* Only valid क्रम WSM_SUCCESS status. */
+#घोषणा WSM_TX_STATUS_BLOCK_ACK		(3<<2)
 
 /* RX status */
 /* Unencrypted */
-#define WSM_RX_STATUS_UNENCRYPTED	(0<<0)
+#घोषणा WSM_RX_STATUS_UNENCRYPTED	(0<<0)
 
 /* WEP */
-#define WSM_RX_STATUS_WEP		(1<<0)
+#घोषणा WSM_RX_STATUS_WEP		(1<<0)
 
 /* TKIP */
-#define WSM_RX_STATUS_TKIP		(2<<0)
+#घोषणा WSM_RX_STATUS_TKIP		(2<<0)
 
 /* AES */
-#define WSM_RX_STATUS_AES		(3<<0)
+#घोषणा WSM_RX_STATUS_AES		(3<<0)
 
 /* WAPI */
-#define WSM_RX_STATUS_WAPI		(4<<0)
+#घोषणा WSM_RX_STATUS_WAPI		(4<<0)
 
 /* Macro to fetch encryption subfield. */
-#define WSM_RX_STATUS_ENCRYPTION(status) ((status) & 0x07)
+#घोषणा WSM_RX_STATUS_ENCRYPTION(status) ((status) & 0x07)
 
 /* Frame was part of an aggregation */
-#define WSM_RX_STATUS_AGGREGATE		(BIT(3))
+#घोषणा WSM_RX_STATUS_AGGREGATE		(BIT(3))
 
 /* Frame was first in the aggregation */
-#define WSM_RX_STATUS_AGGREGATE_FIRST	(BIT(4))
+#घोषणा WSM_RX_STATUS_AGGREGATE_FIRST	(BIT(4))
 
 /* Frame was last in the aggregation */
-#define WSM_RX_STATUS_AGGREGATE_LAST	(BIT(5))
+#घोषणा WSM_RX_STATUS_AGGREGATE_LAST	(BIT(5))
 
 /* Indicates a defragmented frame */
-#define WSM_RX_STATUS_DEFRAGMENTED	(BIT(6))
+#घोषणा WSM_RX_STATUS_DEFRAGMENTED	(BIT(6))
 
 /* Indicates a Beacon frame */
-#define WSM_RX_STATUS_BEACON		(BIT(7))
+#घोषणा WSM_RX_STATUS_BEACON		(BIT(7))
 
 /* Indicates STA bit beacon TIM field */
-#define WSM_RX_STATUS_TIM		(BIT(8))
+#घोषणा WSM_RX_STATUS_TIM		(BIT(8))
 
-/* Indicates Beacon frame's virtual bitmap contains multicast bit */
-#define WSM_RX_STATUS_MULTICAST		(BIT(9))
+/* Indicates Beacon frame's भव biपंचांगap contains multicast bit */
+#घोषणा WSM_RX_STATUS_MULTICAST		(BIT(9))
 
 /* Indicates frame contains a matching SSID */
-#define WSM_RX_STATUS_MATCHING_SSID	(BIT(10))
+#घोषणा WSM_RX_STATUS_MATCHING_SSID	(BIT(10))
 
 /* Indicates frame contains a matching BSSI */
-#define WSM_RX_STATUS_MATCHING_BSSI	(BIT(11))
+#घोषणा WSM_RX_STATUS_MATCHING_BSSI	(BIT(11))
 
 /* Indicates More bit set in Framectl field */
-#define WSM_RX_STATUS_MORE_DATA		(BIT(12))
+#घोषणा WSM_RX_STATUS_MORE_DATA		(BIT(12))
 
 /* Indicates frame received during a measurement process */
-#define WSM_RX_STATUS_MEASUREMENT	(BIT(13))
+#घोषणा WSM_RX_STATUS_MEASUREMENT	(BIT(13))
 
 /* Indicates frame received as an HT packet */
-#define WSM_RX_STATUS_HT		(BIT(14))
+#घोषणा WSM_RX_STATUS_HT		(BIT(14))
 
 /* Indicates frame received with STBC */
-#define WSM_RX_STATUS_STBC		(BIT(15))
+#घोषणा WSM_RX_STATUS_STBC		(BIT(15))
 
-/* Indicates Address 1 field matches dot11StationId */
-#define WSM_RX_STATUS_ADDRESS1		(BIT(16))
+/* Indicates Address 1 field matches करोt11StationId */
+#घोषणा WSM_RX_STATUS_ADDRESS1		(BIT(16))
 
 /* Indicates Group address present in the Address 1 field */
-#define WSM_RX_STATUS_GROUP		(BIT(17))
+#घोषणा WSM_RX_STATUS_GROUP		(BIT(17))
 
 /* Indicates Broadcast address present in the Address 1 field */
-#define WSM_RX_STATUS_BROADCAST		(BIT(18))
+#घोषणा WSM_RX_STATUS_BROADCAST		(BIT(18))
 
 /* Indicates group key used with encrypted frames */
-#define WSM_RX_STATUS_GROUP_KEY		(BIT(19))
+#घोषणा WSM_RX_STATUS_GROUP_KEY		(BIT(19))
 
 /* Macro to fetch encryption key index. */
-#define WSM_RX_STATUS_KEY_IDX(status)	(((status >> 20)) & 0x0F)
+#घोषणा WSM_RX_STATUS_KEY_IDX(status)	(((status >> 20)) & 0x0F)
 
 /* Indicates TSF inclusion after 802.11 frame body */
-#define WSM_RX_STATUS_TSF_INCLUDED	(BIT(24))
+#घोषणा WSM_RX_STATUS_TSF_INCLUDED	(BIT(24))
 
 /* Frame Control field starts at Frame offset + 2 */
-#define WSM_TX_2BYTES_SHIFT		(BIT(7))
+#घोषणा WSM_TX_2BYTES_SHIFT		(BIT(7))
 
 /* Join mode */
 /* IBSS */
-#define WSM_JOIN_MODE_IBSS		(0)
+#घोषणा WSM_JOIN_MODE_IBSS		(0)
 
 /* BSS */
-#define WSM_JOIN_MODE_BSS		(1)
+#घोषणा WSM_JOIN_MODE_BSS		(1)
 
 /* PLCP preamble type */
-/* For long preamble */
-#define WSM_JOIN_PREAMBLE_LONG		(0)
+/* For दीर्घ preamble */
+#घोषणा WSM_JOIN_PREAMBLE_LONG		(0)
 
-/* For short preamble (Long for 1Mbps) */
-#define WSM_JOIN_PREAMBLE_SHORT		(1)
+/* For लघु preamble (Long क्रम 1Mbps) */
+#घोषणा WSM_JOIN_PREAMBLE_SHORT		(1)
 
-/* For short preamble (Long for 1 and 2Mbps) */
-#define WSM_JOIN_PREAMBLE_SHORT_2	(2)
+/* For लघु preamble (Long क्रम 1 and 2Mbps) */
+#घोषणा WSM_JOIN_PREAMBLE_SHORT_2	(2)
 
 /* Join flags */
 /* Unsynchronized */
-#define WSM_JOIN_FLAGS_UNSYNCRONIZED	BIT(0)
+#घोषणा WSM_JOIN_FLAGS_UNSYNCRONIZED	BIT(0)
 /* The BSS owner is a P2P GO */
-#define WSM_JOIN_FLAGS_P2P_GO		BIT(1)
+#घोषणा WSM_JOIN_FLAGS_P2P_GO		BIT(1)
 /* Force to join BSS with the BSSID and the
- * SSID specified without waiting for beacons. The
+ * SSID specअगरied without रुकोing क्रम beacons. The
  * ProbeForJoin parameter is ignored.
  */
-#define WSM_JOIN_FLAGS_FORCE		BIT(2)
+#घोषणा WSM_JOIN_FLAGS_FORCE		BIT(2)
 /* Give probe request/response higher
  * priority over the BT traffic
  */
-#define WSM_JOIN_FLAGS_PRIO		BIT(3)
+#घोषणा WSM_JOIN_FLAGS_PRIO		BIT(3)
 /* Issue immediate join confirmation and use
- * join complete to notify about completion
+ * join complete to notअगरy about completion
  */
-#define WSM_JOIN_FLAGS_FORCE_WITH_COMPLETE_IND BIT(5)
+#घोषणा WSM_JOIN_FLAGS_FORCE_WITH_COMPLETE_IND BIT(5)
 
 /* Key types */
-#define WSM_KEY_TYPE_WEP_DEFAULT	(0)
-#define WSM_KEY_TYPE_WEP_PAIRWISE	(1)
-#define WSM_KEY_TYPE_TKIP_GROUP		(2)
-#define WSM_KEY_TYPE_TKIP_PAIRWISE	(3)
-#define WSM_KEY_TYPE_AES_GROUP		(4)
-#define WSM_KEY_TYPE_AES_PAIRWISE	(5)
-#define WSM_KEY_TYPE_WAPI_GROUP		(6)
-#define WSM_KEY_TYPE_WAPI_PAIRWISE	(7)
+#घोषणा WSM_KEY_TYPE_WEP_DEFAULT	(0)
+#घोषणा WSM_KEY_TYPE_WEP_PAIRWISE	(1)
+#घोषणा WSM_KEY_TYPE_TKIP_GROUP		(2)
+#घोषणा WSM_KEY_TYPE_TKIP_PAIRWISE	(3)
+#घोषणा WSM_KEY_TYPE_AES_GROUP		(4)
+#घोषणा WSM_KEY_TYPE_AES_PAIRWISE	(5)
+#घोषणा WSM_KEY_TYPE_WAPI_GROUP		(6)
+#घोषणा WSM_KEY_TYPE_WAPI_PAIRWISE	(7)
 
 /* Key indexes */
-#define WSM_KEY_MAX_INDEX		(10)
+#घोषणा WSM_KEY_MAX_INDEX		(10)
 
 /* ACK policy */
-#define WSM_ACK_POLICY_NORMAL		(0)
-#define WSM_ACK_POLICY_NO_ACK		(1)
+#घोषणा WSM_ACK_POLICY_NORMAL		(0)
+#घोषणा WSM_ACK_POLICY_NO_ACK		(1)
 
 /* Start modes */
-#define WSM_START_MODE_AP		(0)	/* Mini AP */
-#define WSM_START_MODE_P2P_GO		(1)	/* P2P GO */
-#define WSM_START_MODE_P2P_DEV		(2)	/* P2P device */
+#घोषणा WSM_START_MODE_AP		(0)	/* Mini AP */
+#घोषणा WSM_START_MODE_P2P_GO		(1)	/* P2P GO */
+#घोषणा WSM_START_MODE_P2P_DEV		(2)	/* P2P device */
 
 /* SetAssociationMode MIB flags */
-#define WSM_ASSOCIATION_MODE_USE_PREAMBLE_TYPE		(BIT(0))
-#define WSM_ASSOCIATION_MODE_USE_HT_MODE		(BIT(1))
-#define WSM_ASSOCIATION_MODE_USE_BASIC_RATE_SET		(BIT(2))
-#define WSM_ASSOCIATION_MODE_USE_MPDU_START_SPACING	(BIT(3))
-#define WSM_ASSOCIATION_MODE_SNOOP_ASSOC_FRAMES		(BIT(4))
+#घोषणा WSM_ASSOCIATION_MODE_USE_PREAMBLE_TYPE		(BIT(0))
+#घोषणा WSM_ASSOCIATION_MODE_USE_HT_MODE		(BIT(1))
+#घोषणा WSM_ASSOCIATION_MODE_USE_BASIC_RATE_SET		(BIT(2))
+#घोषणा WSM_ASSOCIATION_MODE_USE_MPDU_START_SPACING	(BIT(3))
+#घोषणा WSM_ASSOCIATION_MODE_SNOOP_ASSOC_FRAMES		(BIT(4))
 
 /* RcpiRssiThreshold MIB flags */
-#define WSM_RCPI_RSSI_THRESHOLD_ENABLE	(BIT(0))
-#define WSM_RCPI_RSSI_USE_RSSI		(BIT(1))
-#define WSM_RCPI_RSSI_DONT_USE_UPPER	(BIT(2))
-#define WSM_RCPI_RSSI_DONT_USE_LOWER	(BIT(3))
+#घोषणा WSM_RCPI_RSSI_THRESHOLD_ENABLE	(BIT(0))
+#घोषणा WSM_RCPI_RSSI_USE_RSSI		(BIT(1))
+#घोषणा WSM_RCPI_RSSI_DONT_USE_UPPER	(BIT(2))
+#घोषणा WSM_RCPI_RSSI_DONT_USE_LOWER	(BIT(3))
 
-/* Update-ie constants */
-#define WSM_UPDATE_IE_BEACON		(BIT(0))
-#define WSM_UPDATE_IE_PROBE_RESP	(BIT(1))
-#define WSM_UPDATE_IE_PROBE_REQ		(BIT(2))
+/* Update-ie स्थिरants */
+#घोषणा WSM_UPDATE_IE_BEACON		(BIT(0))
+#घोषणा WSM_UPDATE_IE_PROBE_RESP	(BIT(1))
+#घोषणा WSM_UPDATE_IE_PROBE_REQ		(BIT(2))
 
 /* WSM events */
 /* Error */
-#define WSM_EVENT_ERROR			(0)
+#घोषणा WSM_EVENT_ERROR			(0)
 
 /* BSS lost */
-#define WSM_EVENT_BSS_LOST		(1)
+#घोषणा WSM_EVENT_BSS_LOST		(1)
 
 /* BSS regained */
-#define WSM_EVENT_BSS_REGAINED		(2)
+#घोषणा WSM_EVENT_BSS_REGAINED		(2)
 
 /* Radar detected */
-#define WSM_EVENT_RADAR_DETECTED	(3)
+#घोषणा WSM_EVENT_RADAR_DETECTED	(3)
 
 /* RCPI or RSSI threshold triggered */
-#define WSM_EVENT_RCPI_RSSI		(4)
+#घोषणा WSM_EVENT_RCPI_RSSI		(4)
 
 /* BT inactive */
-#define WSM_EVENT_BT_INACTIVE		(5)
+#घोषणा WSM_EVENT_BT_INACTIVE		(5)
 
 /* BT active */
-#define WSM_EVENT_BT_ACTIVE		(6)
+#घोषणा WSM_EVENT_BT_ACTIVE		(6)
 
 /* MIB IDs */
-/* 4.1  dot11StationId */
-#define WSM_MIB_ID_DOT11_STATION_ID		0x0000
+/* 4.1  करोt11StationId */
+#घोषणा WSM_MIB_ID_DOT11_STATION_ID		0x0000
 
-/* 4.2  dot11MaxtransmitMsduLifeTime */
-#define WSM_MIB_ID_DOT11_MAX_TRANSMIT_LIFTIME	0x0001
+/* 4.2  करोt11MaxtransmitMsduLअगरeTime */
+#घोषणा WSM_MIB_ID_DOT11_MAX_TRANSMIT_LIFTIME	0x0001
 
-/* 4.3  dot11MaxReceiveLifeTime */
-#define WSM_MIB_ID_DOT11_MAX_RECEIVE_LIFETIME	0x0002
+/* 4.3  करोt11MaxReceiveLअगरeTime */
+#घोषणा WSM_MIB_ID_DOT11_MAX_RECEIVE_LIFETIME	0x0002
 
-/* 4.4  dot11SlotTime */
-#define WSM_MIB_ID_DOT11_SLOT_TIME		0x0003
+/* 4.4  करोt11SlotTime */
+#घोषणा WSM_MIB_ID_DOT11_SLOT_TIME		0x0003
 
-/* 4.5  dot11GroupAddressesTable */
-#define WSM_MIB_ID_DOT11_GROUP_ADDRESSES_TABLE	0x0004
-#define WSM_MAX_GRP_ADDRTABLE_ENTRIES		8
+/* 4.5  करोt11GroupAddressesTable */
+#घोषणा WSM_MIB_ID_DOT11_GROUP_ADDRESSES_TABLE	0x0004
+#घोषणा WSM_MAX_GRP_ADDRTABLE_ENTRIES		8
 
-/* 4.6  dot11WepDefaultKeyId */
-#define WSM_MIB_ID_DOT11_WEP_DEFAULT_KEY_ID	0x0005
+/* 4.6  करोt11WepDefaultKeyId */
+#घोषणा WSM_MIB_ID_DOT11_WEP_DEFAULT_KEY_ID	0x0005
 
-/* 4.7  dot11CurrentTxPowerLevel */
-#define WSM_MIB_ID_DOT11_CURRENT_TX_POWER_LEVEL	0x0006
+/* 4.7  करोt11CurrentTxPowerLevel */
+#घोषणा WSM_MIB_ID_DOT11_CURRENT_TX_POWER_LEVEL	0x0006
 
-/* 4.8  dot11RTSThreshold */
-#define WSM_MIB_ID_DOT11_RTS_THRESHOLD		0x0007
+/* 4.8  करोt11RTSThreshold */
+#घोषणा WSM_MIB_ID_DOT11_RTS_THRESHOLD		0x0007
 
 /* 4.9  NonErpProtection */
-#define WSM_MIB_ID_NON_ERP_PROTECTION		0x1000
+#घोषणा WSM_MIB_ID_NON_ERP_PROTECTION		0x1000
 
 /* 4.10 ArpIpAddressesTable */
-#define WSM_MIB_ID_ARP_IP_ADDRESSES_TABLE	0x1001
-#define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	1
+#घोषणा WSM_MIB_ID_ARP_IP_ADDRESSES_TABLE	0x1001
+#घोषणा WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	1
 
 /* 4.11 TemplateFrame */
-#define WSM_MIB_ID_TEMPLATE_FRAME		0x1002
+#घोषणा WSM_MIB_ID_TEMPLATE_FRAME		0x1002
 
 /* 4.12 RxFilter */
-#define WSM_MIB_ID_RX_FILTER			0x1003
+#घोषणा WSM_MIB_ID_RX_FILTER			0x1003
 
 /* 4.13 BeaconFilterTable */
-#define WSM_MIB_ID_BEACON_FILTER_TABLE		0x1004
+#घोषणा WSM_MIB_ID_BEACON_FILTER_TABLE		0x1004
 
 /* 4.14 BeaconFilterEnable */
-#define WSM_MIB_ID_BEACON_FILTER_ENABLE		0x1005
+#घोषणा WSM_MIB_ID_BEACON_FILTER_ENABLE		0x1005
 
 /* 4.15 OperationalPowerMode */
-#define WSM_MIB_ID_OPERATIONAL_POWER_MODE	0x1006
+#घोषणा WSM_MIB_ID_OPERATIONAL_POWER_MODE	0x1006
 
 /* 4.16 BeaconWakeUpPeriod */
-#define WSM_MIB_ID_BEACON_WAKEUP_PERIOD		0x1007
+#घोषणा WSM_MIB_ID_BEACON_WAKEUP_PERIOD		0x1007
 
 /* 4.17 RcpiRssiThreshold */
-#define WSM_MIB_ID_RCPI_RSSI_THRESHOLD		0x1009
+#घोषणा WSM_MIB_ID_RCPI_RSSI_THRESHOLD		0x1009
 
 /* 4.18 StatisticsTable */
-#define WSM_MIB_ID_STATISTICS_TABLE		0x100A
+#घोषणा WSM_MIB_ID_STATISTICS_TABLE		0x100A
 
 /* 4.19 IbssPsConfig */
-#define WSM_MIB_ID_IBSS_PS_CONFIG		0x100B
+#घोषणा WSM_MIB_ID_IBSS_PS_CONFIG		0x100B
 
 /* 4.20 CountersTable */
-#define WSM_MIB_ID_COUNTERS_TABLE		0x100C
+#घोषणा WSM_MIB_ID_COUNTERS_TABLE		0x100C
 
 /* 4.21 BlockAckPolicy */
-#define WSM_MIB_ID_BLOCK_ACK_POLICY		0x100E
+#घोषणा WSM_MIB_ID_BLOCK_ACK_POLICY		0x100E
 
 /* 4.22 OverrideInternalTxRate */
-#define WSM_MIB_ID_OVERRIDE_INTERNAL_TX_RATE	0x100F
+#घोषणा WSM_MIB_ID_OVERRIDE_INTERNAL_TX_RATE	0x100F
 
 /* 4.23 SetAssociationMode */
-#define WSM_MIB_ID_SET_ASSOCIATION_MODE		0x1010
+#घोषणा WSM_MIB_ID_SET_ASSOCIATION_MODE		0x1010
 
 /* 4.24 UpdateEptaConfigData */
-#define WSM_MIB_ID_UPDATE_EPTA_CONFIG_DATA	0x1011
+#घोषणा WSM_MIB_ID_UPDATE_EPTA_CONFIG_DATA	0x1011
 
 /* 4.25 SelectCcaMethod */
-#define WSM_MIB_ID_SELECT_CCA_METHOD		0x1012
+#घोषणा WSM_MIB_ID_SELECT_CCA_METHOD		0x1012
 
-/* 4.26 SetUpasdInformation */
-#define WSM_MIB_ID_SET_UAPSD_INFORMATION	0x1013
+/* 4.26 SetUpasdInक्रमmation */
+#घोषणा WSM_MIB_ID_SET_UAPSD_INFORMATION	0x1013
 
 /* 4.27 SetAutoCalibrationMode  WBF00004073 */
-#define WSM_MIB_ID_SET_AUTO_CALIBRATION_MODE	0x1015
+#घोषणा WSM_MIB_ID_SET_AUTO_CALIBRATION_MODE	0x1015
 
 /* 4.28 SetTxRateRetryPolicy */
-#define WSM_MIB_ID_SET_TX_RATE_RETRY_POLICY	0x1016
+#घोषणा WSM_MIB_ID_SET_TX_RATE_RETRY_POLICY	0x1016
 
 /* 4.29 SetHostMessageTypeFilter */
-#define WSM_MIB_ID_SET_HOST_MSG_TYPE_FILTER	0x1017
+#घोषणा WSM_MIB_ID_SET_HOST_MSG_TYPE_FILTER	0x1017
 
 /* 4.30 P2PFindInfo */
-#define WSM_MIB_ID_P2P_FIND_INFO		0x1018
+#घोषणा WSM_MIB_ID_P2P_FIND_INFO		0x1018
 
 /* 4.31 P2PPsModeInfo */
-#define WSM_MIB_ID_P2P_PS_MODE_INFO		0x1019
+#घोषणा WSM_MIB_ID_P2P_PS_MODE_INFO		0x1019
 
 /* 4.32 SetEtherTypeDataFrameFilter */
-#define WSM_MIB_ID_SET_ETHERTYPE_DATAFRAME_FILTER 0x101A
+#घोषणा WSM_MIB_ID_SET_ETHERTYPE_DATAFRAME_FILTER 0x101A
 
 /* 4.33 SetUDPPortDataFrameFilter */
-#define WSM_MIB_ID_SET_UDPPORT_DATAFRAME_FILTER	0x101B
+#घोषणा WSM_MIB_ID_SET_UDPPORT_DATAFRAME_FILTER	0x101B
 
 /* 4.34 SetMagicDataFrameFilter */
-#define WSM_MIB_ID_SET_MAGIC_DATAFRAME_FILTER	0x101C
+#घोषणा WSM_MIB_ID_SET_MAGIC_DATAFRAME_FILTER	0x101C
 
 /* 4.35 P2PDeviceInfo */
-#define WSM_MIB_ID_P2P_DEVICE_INFO		0x101D
+#घोषणा WSM_MIB_ID_P2P_DEVICE_INFO		0x101D
 
 /* 4.36 SetWCDMABand */
-#define WSM_MIB_ID_SET_WCDMA_BAND		0x101E
+#घोषणा WSM_MIB_ID_SET_WCDMA_BAND		0x101E
 
 /* 4.37 GroupTxSequenceCounter */
-#define WSM_MIB_ID_GRP_SEQ_COUNTER		0x101F
+#घोषणा WSM_MIB_ID_GRP_SEQ_COUNTER		0x101F
 
 /* 4.38 ProtectedMgmtPolicy */
-#define WSM_MIB_ID_PROTECTED_MGMT_POLICY	0x1020
+#घोषणा WSM_MIB_ID_PROTECTED_MGMT_POLICY	0x1020
 
 /* 4.39 SetHtProtection */
-#define WSM_MIB_ID_SET_HT_PROTECTION		0x1021
+#घोषणा WSM_MIB_ID_SET_HT_PROTECTION		0x1021
 
 /* 4.40 GPIO Command */
-#define WSM_MIB_ID_GPIO_COMMAND			0x1022
+#घोषणा WSM_MIB_ID_GPIO_COMMAND			0x1022
 
 /* 4.41 TSF Counter Value */
-#define WSM_MIB_ID_TSF_COUNTER			0x1023
+#घोषणा WSM_MIB_ID_TSF_COUNTER			0x1023
 
 /* Test Purposes Only */
-#define WSM_MIB_ID_BLOCK_ACK_INFO		0x100D
+#घोषणा WSM_MIB_ID_BLOCK_ACK_INFO		0x100D
 
 /* 4.42 UseMultiTxConfMessage */
-#define WSM_MIB_USE_MULTI_TX_CONF		0x1024
+#घोषणा WSM_MIB_USE_MULTI_TX_CONF		0x1024
 
 /* 4.43 Keep-alive period */
-#define WSM_MIB_ID_KEEP_ALIVE_PERIOD		0x1025
+#घोषणा WSM_MIB_ID_KEEP_ALIVE_PERIOD		0x1025
 
 /* 4.44 Disable BSSID filter */
-#define WSM_MIB_ID_DISABLE_BSSID_FILTER		0x1026
+#घोषणा WSM_MIB_ID_DISABLE_BSSID_FILTER		0x1026
 
-/* Frame template types */
-#define WSM_FRAME_TYPE_PROBE_REQUEST	(0)
-#define WSM_FRAME_TYPE_BEACON		(1)
-#define WSM_FRAME_TYPE_NULL		(2)
-#define WSM_FRAME_TYPE_QOS_NULL		(3)
-#define WSM_FRAME_TYPE_PS_POLL		(4)
-#define WSM_FRAME_TYPE_PROBE_RESPONSE	(5)
+/* Frame ढाँचा types */
+#घोषणा WSM_FRAME_TYPE_PROBE_REQUEST	(0)
+#घोषणा WSM_FRAME_TYPE_BEACON		(1)
+#घोषणा WSM_FRAME_TYPE_शून्य		(2)
+#घोषणा WSM_FRAME_TYPE_QOS_शून्य		(3)
+#घोषणा WSM_FRAME_TYPE_PS_POLL		(4)
+#घोषणा WSM_FRAME_TYPE_PROBE_RESPONSE	(5)
 
-#define WSM_FRAME_GREENFIELD		(0x80)	/* See 4.11 */
+#घोषणा WSM_FRAME_GREENFIELD		(0x80)	/* See 4.11 */
 
 /* Status */
 /* The WSM firmware has completed a request */
 /* successfully. */
-#define WSM_STATUS_SUCCESS              (0)
+#घोषणा WSM_STATUS_SUCCESS              (0)
 
-/* This is a generic failure code if other error codes do */
+/* This is a generic failure code अगर other error codes करो */
 /* not apply. */
-#define WSM_STATUS_FAILURE              (1)
+#घोषणा WSM_STATUS_FAILURE              (1)
 
 /* A request contains one or more invalid parameters. */
-#define WSM_INVALID_PARAMETER           (2)
+#घोषणा WSM_INVALID_PARAMETER           (2)
 
-/* The request cannot perform because the device is in */
+/* The request cannot perक्रमm because the device is in */
 /* an inappropriate mode. */
-#define WSM_ACCESS_DENIED               (3)
+#घोषणा WSM_ACCESS_DENIED               (3)
 
 /* The frame received includes a decryption error. */
-#define WSM_STATUS_DECRYPTFAILURE       (4)
+#घोषणा WSM_STATUS_DECRYPTFAILURE       (4)
 
 /* A MIC failure is detected in the received packets. */
-#define WSM_STATUS_MICFAILURE           (5)
+#घोषणा WSM_STATUS_MICFAILURE           (5)
 
 /* The transmit request failed due to retry limit being */
 /* exceeded. */
-#define WSM_STATUS_RETRY_EXCEEDED       (6)
+#घोषणा WSM_STATUS_RETRY_EXCEEDED       (6)
 
-/* The transmit request failed due to MSDU life time */
+/* The transmit request failed due to MSDU lअगरe समय */
 /* being exceeded. */
-#define WSM_STATUS_TX_LIFETIME_EXCEEDED (7)
+#घोषणा WSM_STATUS_TX_LIFETIME_EXCEEDED (7)
 
 /* The link to the AP is lost. */
-#define WSM_STATUS_LINK_LOST            (8)
+#घोषणा WSM_STATUS_LINK_LOST            (8)
 
-/* No key was found for the encrypted frame */
-#define WSM_STATUS_NO_KEY_FOUND         (9)
+/* No key was found क्रम the encrypted frame */
+#घोषणा WSM_STATUS_NO_KEY_FOUND         (9)
 
 /* Jammer was detected when transmitting this frame */
-#define WSM_STATUS_JAMMER_DETECTED      (10)
+#घोषणा WSM_STATUS_JAMMER_DETECTED      (10)
 
 /* The message should be requeued later. */
 /* This is applicable only to Transmit */
-#define WSM_REQUEUE                     (11)
+#घोषणा WSM_REQUEUE                     (11)
 
 /* Advanced filtering options */
-#define WSM_MAX_FILTER_ELEMENTS		(4)
+#घोषणा WSM_MAX_FILTER_ELEMENTS		(4)
 
-#define WSM_FILTER_ACTION_IGNORE	(0)
-#define WSM_FILTER_ACTION_FILTER_IN	(1)
-#define WSM_FILTER_ACTION_FILTER_OUT	(2)
+#घोषणा WSM_FILTER_ACTION_IGNORE	(0)
+#घोषणा WSM_FILTER_ACTION_FILTER_IN	(1)
+#घोषणा WSM_FILTER_ACTION_FILTER_OUT	(2)
 
-#define WSM_FILTER_PORT_TYPE_DST	(0)
-#define WSM_FILTER_PORT_TYPE_SRC	(1)
+#घोषणा WSM_FILTER_PORT_TYPE_DST	(0)
+#घोषणा WSM_FILTER_PORT_TYPE_SRC	(1)
 
 /* Actual header of WSM messages */
-struct wsm_hdr {
+काष्ठा wsm_hdr अणु
 	__le16 len;
 	__le16 id;
-};
+पूर्ण;
 
-#define WSM_TX_SEQ_MAX			(7)
-#define WSM_TX_SEQ(seq)			\
+#घोषणा WSM_TX_SEQ_MAX			(7)
+#घोषणा WSM_TX_SEQ(seq)			\
 		((seq & WSM_TX_SEQ_MAX) << 13)
-#define WSM_TX_LINK_ID_MAX		(0x0F)
-#define WSM_TX_LINK_ID(link_id)		\
+#घोषणा WSM_TX_LINK_ID_MAX		(0x0F)
+#घोषणा WSM_TX_LINK_ID(link_id)		\
 		((link_id & WSM_TX_LINK_ID_MAX) << 6)
 
-#define MAX_BEACON_SKIP_TIME_MS 1000
+#घोषणा MAX_BEACON_SKIP_TIME_MS 1000
 
-#define WSM_CMD_LAST_CHANCE_TIMEOUT (HZ * 3 / 2)
+#घोषणा WSM_CMD_LAST_CHANCE_TIMEOUT (HZ * 3 / 2)
 
 /* ******************************************************************** */
 /* WSM capability							*/
 
-#define WSM_STARTUP_IND_ID 0x0801
+#घोषणा WSM_STARTUP_IND_ID 0x0801
 
-struct wsm_startup_ind {
+काष्ठा wsm_startup_ind अणु
 	u16 input_buffers;
 	u16 input_buffer_size;
 	u16 status;
@@ -619,77 +620,77 @@ struct wsm_startup_ind {
 	u16 fw_api;
 	u16 fw_build;
 	u16 fw_ver;
-	char fw_label[128];
+	अक्षर fw_label[128];
 	u32 config[4];
-};
+पूर्ण;
 
 /* ******************************************************************** */
 /* WSM commands								*/
 
 /* 3.1 */
-#define WSM_CONFIGURATION_REQ_ID 0x0009
-#define WSM_CONFIGURATION_RESP_ID 0x0409
+#घोषणा WSM_CONFIGURATION_REQ_ID 0x0009
+#घोषणा WSM_CONFIGURATION_RESP_ID 0x0409
 
-struct wsm_tx_power_range {
-	int min_power_level;
-	int max_power_level;
+काष्ठा wsm_tx_घातer_range अणु
+	पूर्णांक min_घातer_level;
+	पूर्णांक max_घातer_level;
 	u32 stepping;
-};
+पूर्ण;
 
-struct wsm_configuration {
-	/* [in] */ u32 dot11MaxTransmitMsduLifeTime;
-	/* [in] */ u32 dot11MaxReceiveLifeTime;
-	/* [in] */ u32 dot11RtsThreshold;
-	/* [in, out] */ u8 *dot11StationId;
-	/* [in] */ const void *dpdData;
-	/* [in] */ size_t dpdData_size;
-	/* [out] */ u8 dot11FrequencyBandsSupported;
+काष्ठा wsm_configuration अणु
+	/* [in] */ u32 करोt11MaxTransmitMsduLअगरeTime;
+	/* [in] */ u32 करोt11MaxReceiveLअगरeTime;
+	/* [in] */ u32 करोt11RtsThreshold;
+	/* [in, out] */ u8 *करोt11StationId;
+	/* [in] */ स्थिर व्योम *dpdData;
+	/* [in] */ माप_प्रकार dpdData_size;
+	/* [out] */ u8 करोt11FrequencyBandsSupported;
 	/* [out] */ u32 supportedRateMask;
-	/* [out] */ struct wsm_tx_power_range txPowerRange[2];
-};
+	/* [out] */ काष्ठा wsm_tx_घातer_range txPowerRange[2];
+पूर्ण;
 
-int wsm_configuration(struct cw1200_common *priv,
-		      struct wsm_configuration *arg);
+पूर्णांक wsm_configuration(काष्ठा cw1200_common *priv,
+		      काष्ठा wsm_configuration *arg);
 
 /* 3.3 */
-#define WSM_RESET_REQ_ID 0x000A
-#define WSM_RESET_RESP_ID 0x040A
-struct wsm_reset {
-	/* [in] */ int link_id;
+#घोषणा WSM_RESET_REQ_ID 0x000A
+#घोषणा WSM_RESET_RESP_ID 0x040A
+काष्ठा wsm_reset अणु
+	/* [in] */ पूर्णांक link_id;
 	/* [in] */ bool reset_statistics;
-};
+पूर्ण;
 
-int wsm_reset(struct cw1200_common *priv, const struct wsm_reset *arg);
+पूर्णांक wsm_reset(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_reset *arg);
 
 /* 3.5 */
-#define WSM_READ_MIB_REQ_ID 0x0005
-#define WSM_READ_MIB_RESP_ID 0x0405
-int wsm_read_mib(struct cw1200_common *priv, u16 mib_id, void *buf,
-		 size_t buf_size);
+#घोषणा WSM_READ_MIB_REQ_ID 0x0005
+#घोषणा WSM_READ_MIB_RESP_ID 0x0405
+पूर्णांक wsm_पढ़ो_mib(काष्ठा cw1200_common *priv, u16 mib_id, व्योम *buf,
+		 माप_प्रकार buf_size);
 
 /* 3.7 */
-#define WSM_WRITE_MIB_REQ_ID 0x0006
-#define WSM_WRITE_MIB_RESP_ID 0x0406
-int wsm_write_mib(struct cw1200_common *priv, u16 mib_id, void *buf,
-		  size_t buf_size);
+#घोषणा WSM_WRITE_MIB_REQ_ID 0x0006
+#घोषणा WSM_WRITE_MIB_RESP_ID 0x0406
+पूर्णांक wsm_ग_लिखो_mib(काष्ठा cw1200_common *priv, u16 mib_id, व्योम *buf,
+		  माप_प्रकार buf_size);
 
 /* 3.9 */
-#define WSM_START_SCAN_REQ_ID 0x0007
-#define WSM_START_SCAN_RESP_ID 0x0407
+#घोषणा WSM_START_SCAN_REQ_ID 0x0007
+#घोषणा WSM_START_SCAN_RESP_ID 0x0407
 
-struct wsm_ssid {
+काष्ठा wsm_ssid अणु
 	u8 ssid[32];
 	u32 length;
-};
+पूर्ण;
 
-struct wsm_scan_ch {
+काष्ठा wsm_scan_ch अणु
 	u16 number;
-	u32 min_chan_time;
-	u32 max_chan_time;
-	u32 tx_power_level;
-};
+	u32 min_chan_समय;
+	u32 max_chan_समय;
+	u32 tx_घातer_level;
+पूर्ण;
 
-struct wsm_scan {
+काष्ठा wsm_scan अणु
 	/* WSM_PHY_BAND_... */
 	u8 band;
 
@@ -705,13 +706,13 @@ struct wsm_scan {
 	/* Interval period in TUs that the device shall the re- */
 	/* execute the requested scan. Max value supported by the device */
 	/* is 256s. */
-	u32 auto_scan_interval;
+	u32 स्वतः_scan_पूर्णांकerval;
 
 	/* Number of probe requests (per SSID) sent to one (1) */
 	/* channel. Zero (0) means that none is send, which */
-	/* means that a passive scan is to be done. Value */
+	/* means that a passive scan is to be करोne. Value */
 	/* greater than zero (0) means that an active scan is to */
-	/* be done. */
+	/* be करोne. */
 	u32 num_probes;
 
 	/* Number of channels to be scanned. */
@@ -723,27 +724,27 @@ struct wsm_scan {
 	/* The maximum number of SSIDs is WSM_SCAN_MAX_NUM_OF_SSIDS. */
 	u8 num_ssids;
 
-	/* The delay time (in microseconds) period */
-	/* before sending a probe-request. */
+	/* The delay समय (in microseconds) period */
+	/* beक्रमe sending a probe-request. */
 	u8 probe_delay;
 
 	/* SSIDs to be scanned [numOfSSIDs]; */
-	struct wsm_ssid *ssids;
+	काष्ठा wsm_ssid *ssids;
 
 	/* Channels to be scanned [numOfChannels]; */
-	struct wsm_scan_ch *ch;
-};
+	काष्ठा wsm_scan_ch *ch;
+पूर्ण;
 
-int wsm_scan(struct cw1200_common *priv, const struct wsm_scan *arg);
+पूर्णांक wsm_scan(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_scan *arg);
 
 /* 3.11 */
-#define WSM_STOP_SCAN_REQ_ID 0x0008
-#define WSM_STOP_SCAN_RESP_ID 0x0408
-int wsm_stop_scan(struct cw1200_common *priv);
+#घोषणा WSM_STOP_SCAN_REQ_ID 0x0008
+#घोषणा WSM_STOP_SCAN_RESP_ID 0x0408
+पूर्णांक wsm_stop_scan(काष्ठा cw1200_common *priv);
 
 /* 3.13 */
-#define WSM_SCAN_COMPLETE_IND_ID 0x0806
-struct wsm_scan_complete {
+#घोषणा WSM_SCAN_COMPLETE_IND_ID 0x0806
+काष्ठा wsm_scan_complete अणु
 	/* WSM_STATUS_... */
 	u32 status;
 
@@ -752,14 +753,14 @@ struct wsm_scan_complete {
 
 	/* Number of channels that the scan operation completed. */
 	u8 num_channels;
-};
+पूर्ण;
 
 /* 3.14 */
-#define WSM_TX_CONFIRM_IND_ID 0x0404
-#define WSM_MULTI_TX_CONFIRM_ID 0x041E
+#घोषणा WSM_TX_CONFIRM_IND_ID 0x0404
+#घोषणा WSM_MULTI_TX_CONFIRM_ID 0x041E
 
-struct wsm_tx_confirm {
-	/* Packet identifier used in wsm_tx. */
+काष्ठा wsm_tx_confirm अणु
+	/* Packet identअगरier used in wsm_tx. */
 	u32 packet_id;
 
 	/* WSM_STATUS_... */
@@ -768,39 +769,39 @@ struct wsm_tx_confirm {
 	/* WSM_TRANSMIT_RATE_... */
 	u8 tx_rate;
 
-	/* The number of times the frame was transmitted */
+	/* The number of बार the frame was transmitted */
 	/* without receiving an acknowledgement. */
 	u8 ack_failures;
 
 	/* WSM_TX_STATUS_... */
 	u16 flags;
 
-	/* The total time in microseconds that the frame spent in */
-	/* the WLAN device before transmission as completed. */
+	/* The total समय in microseconds that the frame spent in */
+	/* the WLAN device beक्रमe transmission as completed. */
 	u32 media_delay;
 
-	/* The total time in microseconds that the frame spent in */
-	/* the WLAN device before transmission was started. */
+	/* The total समय in microseconds that the frame spent in */
+	/* the WLAN device beक्रमe transmission was started. */
 	u32 tx_queue_delay;
-};
+पूर्ण;
 
 /* 3.15 */
 
-/* Note that ideology of wsm_tx struct is different against the rest of
- * WSM API. wsm_hdr is /not/ a caller-adapted struct to be used as an input
- * argument for WSM call, but a prepared bytestream to be sent to firmware.
+/* Note that ideology of wsm_tx काष्ठा is dअगरferent against the rest of
+ * WSM API. wsm_hdr is /not/ a caller-adapted काष्ठा to be used as an input
+ * argument क्रम WSM call, but a prepared bytestream to be sent to firmware.
  * It is filled partly in cw1200_tx, partly in low-level WSM code.
- * Please pay attention once again: ideology is different.
+ * Please pay attention once again: ideology is dअगरferent.
  *
  * Legend:
  * - [in]: cw1200_tx must fill this field.
  * - [wsm]: the field is filled by low-level WSM.
  */
-struct wsm_tx {
+काष्ठा wsm_tx अणु
 	/* common WSM header */
-	struct wsm_hdr hdr;
+	काष्ठा wsm_hdr hdr;
 
-	/* Packet identifier that meant to be used in completion. */
+	/* Packet identअगरier that meant to be used in completion. */
 	u32 packet_id;  /* Note this is actually a cookie */
 
 	/* WSM_TRANSMIT_RATE_... */
@@ -809,11 +810,11 @@ struct wsm_tx {
 	/* WSM_QUEUE_... */
 	u8 queue_id;
 
-	/* True: another packet is pending on the host for transmission. */
+	/* True: another packet is pending on the host क्रम transmission. */
 	u8 more;
 
-	/* Bit 0 = 0 - Start expiry time from first Tx attempt (default) */
-	/* Bit 0 = 1 - Start expiry time from receipt of Tx Request */
+	/* Bit 0 = 0 - Start expiry समय from first Tx attempt (शेष) */
+	/* Bit 0 = 1 - Start expiry समय from receipt of Tx Request */
 	/* Bits 3:1  - PTA Priority */
 	/* Bits 6:4  - Tx Rate Retry Policy */
 	/* Bit 7 - Reserved */
@@ -822,46 +823,46 @@ struct wsm_tx {
 	/* Should be 0. */
 	u32 reserved;
 
-	/* The elapsed time in TUs, after the initial transmission */
+	/* The elapsed समय in TUs, after the initial transmission */
 	/* of an MSDU, after which further attempts to transmit */
 	/* the MSDU shall be terminated. Overrides the global */
-	/* dot11MaxTransmitMsduLifeTime setting [optional] */
-	/* Device will set the default value if this is 0. */
-	__le32 expire_time;
+	/* करोt11MaxTransmitMsduLअगरeTime setting [optional] */
+	/* Device will set the शेष value अगर this is 0. */
+	__le32 expire_समय;
 
 	/* WSM_HT_TX_... */
 	__le32 ht_tx_parameters;
-} __packed;
+पूर्ण __packed;
 
-/* = sizeof(generic hi hdr) + sizeof(wsm hdr) + sizeof(alignment) */
-#define WSM_TX_EXTRA_HEADROOM (28)
+/* = माप(generic hi hdr) + माप(wsm hdr) + माप(alignment) */
+#घोषणा WSM_TX_EXTRA_HEADROOM (28)
 
 /* 3.16 */
-#define WSM_RECEIVE_IND_ID 0x0804
+#घोषणा WSM_RECEIVE_IND_ID 0x0804
 
-struct wsm_rx {
+काष्ठा wsm_rx अणु
 	/* WSM_STATUS_... */
 	u32 status;
 
-	/* Specifies the channel of the received packet. */
+	/* Specअगरies the channel of the received packet. */
 	u16 channel_number;
 
 	/* WSM_TRANSMIT_RATE_... */
 	u8 rx_rate;
 
-	/* This value is expressed in signed Q8.0 format for */
-	/* RSSI and unsigned Q7.1 format for RCPI. */
+	/* This value is expressed in चिन्हित Q8.0 क्रमmat क्रम */
+	/* RSSI and अचिन्हित Q7.1 क्रमmat क्रम RCPI. */
 	u8 rcpi_rssi;
 
 	/* WSM_RX_STATUS_... */
 	u32 flags;
-};
+पूर्ण;
 
-/* = sizeof(generic hi hdr) + sizeof(wsm hdr) */
-#define WSM_RX_EXTRA_HEADROOM (16)
+/* = माप(generic hi hdr) + माप(wsm hdr) */
+#घोषणा WSM_RX_EXTRA_HEADROOM (16)
 
 /* 3.17 */
-struct wsm_event {
+काष्ठा wsm_event अणु
 	/* WSM_STATUS_... */
 	/* [out] */ u32 id;
 
@@ -870,52 +871,52 @@ struct wsm_event {
 	/* For RCPI or RSSI indication, this should be an 8-bit */
 	/* RCPI or RSSI value. */
 	/* [out] */ u32 data;
-};
+पूर्ण;
 
-struct cw1200_wsm_event {
-	struct list_head link;
-	struct wsm_event evt;
-};
+काष्ठा cw1200_wsm_event अणु
+	काष्ठा list_head link;
+	काष्ठा wsm_event evt;
+पूर्ण;
 
 /* 3.18 - 3.22 */
-/* Measurement. Skipped for now. Irrelevent. */
+/* Measurement. Skipped क्रम now. Irrelevent. */
 
-typedef void (*wsm_event_cb) (struct cw1200_common *priv,
-			      struct wsm_event *arg);
+प्रकार व्योम (*wsm_event_cb) (काष्ठा cw1200_common *priv,
+			      काष्ठा wsm_event *arg);
 
 /* 3.23 */
-#define WSM_JOIN_REQ_ID 0x000B
-#define WSM_JOIN_RESP_ID 0x040B
+#घोषणा WSM_JOIN_REQ_ID 0x000B
+#घोषणा WSM_JOIN_RESP_ID 0x040B
 
-struct wsm_join {
+काष्ठा wsm_join अणु
 	/* WSM_JOIN_MODE_... */
 	u8 mode;
 
 	/* WSM_PHY_BAND_... */
 	u8 band;
 
-	/* Specifies the channel number to join. The channel */
+	/* Specअगरies the channel number to join. The channel */
 	/* number will be mapped to an actual frequency */
 	/* according to the band */
 	u16 channel_number;
 
-	/* Specifies the BSSID of the BSS or IBSS to be joined */
+	/* Specअगरies the BSSID of the BSS or IBSS to be joined */
 	/* or the IBSS to be started. */
 	u8 bssid[6];
 
-	/* ATIM window of IBSS */
-	/* When ATIM window is zero the initiated IBSS does */
-	/* not support power saving. */
-	u16 atim_window;
+	/* ATIM winकरोw of IBSS */
+	/* When ATIM winकरोw is zero the initiated IBSS करोes */
+	/* not support घातer saving. */
+	u16 atim_winकरोw;
 
 	/* WSM_JOIN_PREAMBLE_... */
 	u8 preamble_type;
 
-	/* Specifies if a probe request should be send with the */
-	/* specified SSID when joining to the network. */
-	u8 probe_for_join;
+	/* Specअगरies अगर a probe request should be send with the */
+	/* specअगरied SSID when joining to the network. */
+	u8 probe_क्रम_join;
 
-	/* DTIM Period (In multiples of beacon interval) */
+	/* DTIM Period (In multiples of beacon पूर्णांकerval) */
 	u8 dtim_period;
 
 	/* WSM_JOIN_FLAGS_... */
@@ -924,62 +925,62 @@ struct wsm_join {
 	/* Length of the SSID */
 	u32 ssid_len;
 
-	/* Specifies the SSID of the IBSS to join or start */
+	/* Specअगरies the SSID of the IBSS to join or start */
 	u8 ssid[32];
 
-	/* Specifies the time between TBTTs in TUs */
-	u32 beacon_interval;
+	/* Specअगरies the समय between TBTTs in TUs */
+	u32 beacon_पूर्णांकerval;
 
 	/* A bit mask that defines the BSS basic rate set. */
 	u32 basic_rate_set;
-};
+पूर्ण;
 
-struct wsm_join_cnf {
+काष्ठा wsm_join_cnf अणु
 	u32 status;
 
-	/* Minimum transmission power level in units of 0.1dBm */
-	u32 min_power_level;
+	/* Minimum transmission घातer level in units of 0.1dBm */
+	u32 min_घातer_level;
 
-	/* Maximum transmission power level in units of 0.1dBm */
-	u32 max_power_level;
-};
+	/* Maximum transmission घातer level in units of 0.1dBm */
+	u32 max_घातer_level;
+पूर्ण;
 
-int wsm_join(struct cw1200_common *priv, struct wsm_join *arg);
+पूर्णांक wsm_join(काष्ठा cw1200_common *priv, काष्ठा wsm_join *arg);
 
 /* 3.24 */
-struct wsm_join_complete {
+काष्ठा wsm_join_complete अणु
 	/* WSM_STATUS_... */
 	u32 status;
-};
+पूर्ण;
 
 /* 3.25 */
-#define WSM_SET_PM_REQ_ID 0x0010
-#define WSM_SET_PM_RESP_ID 0x0410
-struct wsm_set_pm {
+#घोषणा WSM_SET_PM_REQ_ID 0x0010
+#घोषणा WSM_SET_PM_RESP_ID 0x0410
+काष्ठा wsm_set_pm अणु
 	/* WSM_PSM_... */
 	u8 mode;
 
-	/* in unit of 500us; 0 to use default */
+	/* in unit of 500us; 0 to use शेष */
 	u8 fast_psm_idle_period;
 
-	/* in unit of 500us; 0 to use default */
+	/* in unit of 500us; 0 to use शेष */
 	u8 ap_psm_change_period;
 
-	/* in unit of 500us; 0 to disable auto-pspoll */
-	u8 min_auto_pspoll_period;
-};
+	/* in unit of 500us; 0 to disable स्वतः-pspoll */
+	u8 min_स्वतः_pspoll_period;
+पूर्ण;
 
-int wsm_set_pm(struct cw1200_common *priv, const struct wsm_set_pm *arg);
+पूर्णांक wsm_set_pm(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_set_pm *arg);
 
 /* 3.27 */
-struct wsm_set_pm_complete {
+काष्ठा wsm_set_pm_complete अणु
 	u8 psm;			/* WSM_PSM_... */
-};
+पूर्ण;
 
 /* 3.28 */
-#define WSM_SET_BSS_PARAMS_REQ_ID 0x0011
-#define WSM_SET_BSS_PARAMS_RESP_ID 0x0411
-struct wsm_set_bss_params {
+#घोषणा WSM_SET_BSS_PARAMS_REQ_ID 0x0011
+#घोषणा WSM_SET_BSS_PARAMS_RESP_ID 0x0411
+काष्ठा wsm_set_bss_params अणु
 	/* This resets the beacon loss counters only */
 	u8 reset_beacon_loss;
 
@@ -993,192 +994,192 @@ struct wsm_set_bss_params {
 
 	/* The operational rate set mask */
 	u32 operational_rate_set;
-};
+पूर्ण;
 
-int wsm_set_bss_params(struct cw1200_common *priv,
-		       const struct wsm_set_bss_params *arg);
+पूर्णांक wsm_set_bss_params(काष्ठा cw1200_common *priv,
+		       स्थिर काष्ठा wsm_set_bss_params *arg);
 
 /* 3.30 */
-#define WSM_ADD_KEY_REQ_ID         0x000C
-#define WSM_ADD_KEY_RESP_ID        0x040C
-struct wsm_add_key {
+#घोषणा WSM_ADD_KEY_REQ_ID         0x000C
+#घोषणा WSM_ADD_KEY_RESP_ID        0x040C
+काष्ठा wsm_add_key अणु
 	u8 type;		/* WSM_KEY_TYPE_... */
 	u8 index;		/* Key entry index: 0 -- WSM_KEY_MAX_INDEX */
 	u16 reserved;
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u8 peer[6];	/* MAC address of the peer station */
 			u8 reserved;
 			u8 keylen;		/* Key length in bytes */
 			u8 keydata[16];		/* Key data */
-		} __packed wep_pairwise;
-		struct {
-			u8 keyid;	/* Unique per key identifier (0..3) */
+		पूर्ण __packed wep_pairwise;
+		काष्ठा अणु
+			u8 keyid;	/* Unique per key identअगरier (0..3) */
 			u8 keylen;		/* Key length in bytes */
 			u16 reserved;
 			u8 keydata[16];		/* Key data */
-		} __packed wep_group;
-		struct {
+		पूर्ण __packed wep_group;
+		काष्ठा अणु
 			u8 peer[6];	/* MAC address of the peer station */
 			u16 reserved;
 			u8 keydata[16];	/* TKIP key data */
 			u8 rx_mic_key[8];		/* Rx MIC key */
 			u8 tx_mic_key[8];		/* Tx MIC key */
-		} __packed tkip_pairwise;
-		struct {
+		पूर्ण __packed tkip_pairwise;
+		काष्ठा अणु
 			u8 keydata[16];	/* TKIP key data */
 			u8 rx_mic_key[8];		/* Rx MIC key */
 			u8 keyid;		/* Key ID */
 			u8 reserved[3];
 			u8 rx_seqnum[8];	/* Receive Sequence Counter */
-		} __packed tkip_group;
-		struct {
+		पूर्ण __packed tkip_group;
+		काष्ठा अणु
 			u8 peer[6];	/* MAC address of the peer station */
 			u16 reserved;
 			u8 keydata[16];	/* AES key data */
-		} __packed aes_pairwise;
-		struct {
+		पूर्ण __packed aes_pairwise;
+		काष्ठा अणु
 			u8 keydata[16];	/* AES key data */
 			u8 keyid;		/* Key ID */
 			u8 reserved[3];
 			u8 rx_seqnum[8];	/* Receive Sequence Counter */
-		} __packed aes_group;
-		struct {
+		पूर्ण __packed aes_group;
+		काष्ठा अणु
 			u8 peer[6];	/* MAC address of the peer station */
 			u8 keyid;		/* Key ID */
 			u8 reserved;
 			u8 keydata[16];	/* WAPI key data */
 			u8 mic_key[16];	/* MIC key data */
-		} __packed wapi_pairwise;
-		struct {
+		पूर्ण __packed wapi_pairwise;
+		काष्ठा अणु
 			u8 keydata[16];	/* WAPI key data */
 			u8 mic_key[16];	/* MIC key data */
 			u8 keyid;		/* Key ID */
 			u8 reserved[3];
-		} __packed wapi_group;
-	} __packed;
-} __packed;
+		पूर्ण __packed wapi_group;
+	पूर्ण __packed;
+पूर्ण __packed;
 
-int wsm_add_key(struct cw1200_common *priv, const struct wsm_add_key *arg);
+पूर्णांक wsm_add_key(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_add_key *arg);
 
 /* 3.32 */
-#define WSM_REMOVE_KEY_REQ_ID         0x000D
-#define WSM_REMOVE_KEY_RESP_ID        0x040D
-struct wsm_remove_key {
+#घोषणा WSM_REMOVE_KEY_REQ_ID         0x000D
+#घोषणा WSM_REMOVE_KEY_RESP_ID        0x040D
+काष्ठा wsm_हटाओ_key अणु
 	u8 index; /* Key entry index : 0-10 */
-};
+पूर्ण;
 
-int wsm_remove_key(struct cw1200_common *priv,
-		   const struct wsm_remove_key *arg);
+पूर्णांक wsm_हटाओ_key(काष्ठा cw1200_common *priv,
+		   स्थिर काष्ठा wsm_हटाओ_key *arg);
 
 /* 3.34 */
-struct wsm_set_tx_queue_params {
+काष्ठा wsm_set_tx_queue_params अणु
 	/* WSM_ACK_POLICY_... */
 	u8 ackPolicy;
 
 	/* Medium Time of TSPEC (in 32us units) allowed per */
-	/* One Second Averaging Period for this queue. */
+	/* One Second Averaging Period क्रम this queue. */
 	u16 allowedMediumTime;
 
-	/* dot11MaxTransmitMsduLifetime to be used for the */
-	/* specified queue. */
-	u32 maxTransmitLifetime;
-};
+	/* करोt11MaxTransmitMsduLअगरeसमय to be used क्रम the */
+	/* specअगरied queue. */
+	u32 maxTransmitLअगरeसमय;
+पूर्ण;
 
-struct wsm_tx_queue_params {
+काष्ठा wsm_tx_queue_params अणु
 	/* NOTE: index is a linux queue id. */
-	struct wsm_set_tx_queue_params params[4];
-};
+	काष्ठा wsm_set_tx_queue_params params[4];
+पूर्ण;
 
 
-#define WSM_TX_QUEUE_SET(queue_params, queue, ack_policy, allowed_time,\
-		max_life_time)	\
-do {							\
-	struct wsm_set_tx_queue_params *p = &(queue_params)->params[queue]; \
+#घोषणा WSM_TX_QUEUE_SET(queue_params, queue, ack_policy, allowed_समय,\
+		max_lअगरe_समय)	\
+करो अणु							\
+	काष्ठा wsm_set_tx_queue_params *p = &(queue_params)->params[queue]; \
 	p->ackPolicy = (ack_policy);				\
-	p->allowedMediumTime = (allowed_time);				\
-	p->maxTransmitLifetime = (max_life_time);			\
-} while (0)
+	p->allowedMediumTime = (allowed_समय);				\
+	p->maxTransmitLअगरeसमय = (max_lअगरe_समय);			\
+पूर्ण जबतक (0)
 
-int wsm_set_tx_queue_params(struct cw1200_common *priv,
-			    const struct wsm_set_tx_queue_params *arg, u8 id);
+पूर्णांक wsm_set_tx_queue_params(काष्ठा cw1200_common *priv,
+			    स्थिर काष्ठा wsm_set_tx_queue_params *arg, u8 id);
 
 /* 3.36 */
-#define WSM_EDCA_PARAMS_REQ_ID 0x0013
-#define WSM_EDCA_PARAMS_RESP_ID 0x0413
-struct wsm_edca_queue_params {
-	/* CWmin (in slots) for the access class. */
+#घोषणा WSM_EDCA_PARAMS_REQ_ID 0x0013
+#घोषणा WSM_EDCA_PARAMS_RESP_ID 0x0413
+काष्ठा wsm_edca_queue_params अणु
+	/* CWmin (in slots) क्रम the access class. */
 	u16 cwmin;
 
-	/* CWmax (in slots) for the access class. */
+	/* CWmax (in slots) क्रम the access class. */
 	u16 cwmax;
 
-	/* AIFS (in slots) for the access class. */
-	u16 aifns;
+	/* AIFS (in slots) क्रम the access class. */
+	u16 aअगरns;
 
-	/* TX OP Limit (in microseconds) for the access class. */
+	/* TX OP Limit (in microseconds) क्रम the access class. */
 	u16 txop_limit;
 
-	/* dot11MaxReceiveLifetime to be used for the specified */
+	/* करोt11MaxReceiveLअगरeसमय to be used क्रम the specअगरied */
 	/* the access class. Overrides the global */
-	/* dot11MaxReceiveLifetime value */
-	u32 max_rx_lifetime;
-};
+	/* करोt11MaxReceiveLअगरeसमय value */
+	u32 max_rx_lअगरeसमय;
+पूर्ण;
 
-struct wsm_edca_params {
+काष्ठा wsm_edca_params अणु
 	/* NOTE: index is a linux queue id. */
-	struct wsm_edca_queue_params params[4];
+	काष्ठा wsm_edca_queue_params params[4];
 	bool uapsd_enable[4];
-};
+पूर्ण;
 
-#define TXOP_UNIT 32
-#define WSM_EDCA_SET(__edca, __queue, __aifs, __cw_min, __cw_max, __txop, __lifetime,\
+#घोषणा TXOP_UNIT 32
+#घोषणा WSM_EDCA_SET(__edca, __queue, __aअगरs, __cw_min, __cw_max, __txop, __lअगरeसमय,\
 		     __uapsd) \
-	do {							\
-		struct wsm_edca_queue_params *p = &(__edca)->params[__queue]; \
+	करो अणु							\
+		काष्ठा wsm_edca_queue_params *p = &(__edca)->params[__queue]; \
 		p->cwmin = __cw_min;					\
 		p->cwmax = __cw_max;					\
-		p->aifns = __aifs;					\
+		p->aअगरns = __aअगरs;					\
 		p->txop_limit = ((__txop) * TXOP_UNIT);			\
-		p->max_rx_lifetime = __lifetime;			\
+		p->max_rx_lअगरeसमय = __lअगरeसमय;			\
 		(__edca)->uapsd_enable[__queue] = (__uapsd);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-int wsm_set_edca_params(struct cw1200_common *priv,
-			const struct wsm_edca_params *arg);
+पूर्णांक wsm_set_edca_params(काष्ठा cw1200_common *priv,
+			स्थिर काष्ठा wsm_edca_params *arg);
 
-int wsm_set_uapsd_param(struct cw1200_common *priv,
-			const struct wsm_edca_params *arg);
+पूर्णांक wsm_set_uapsd_param(काष्ठा cw1200_common *priv,
+			स्थिर काष्ठा wsm_edca_params *arg);
 
 /* 3.38 */
-/* Set-System info. Skipped for now. Irrelevent. */
+/* Set-System info. Skipped क्रम now. Irrelevent. */
 
 /* 3.40 */
-#define WSM_SWITCH_CHANNEL_REQ_ID 0x0016
-#define WSM_SWITCH_CHANNEL_RESP_ID 0x0416
+#घोषणा WSM_SWITCH_CHANNEL_REQ_ID 0x0016
+#घोषणा WSM_SWITCH_CHANNEL_RESP_ID 0x0416
 
-struct wsm_switch_channel {
+काष्ठा wsm_चयन_channel अणु
 	/* 1 - means the STA shall not transmit any further */
-	/* frames until the channel switch has completed */
+	/* frames until the channel चयन has completed */
 	u8 mode;
 
-	/* Number of TBTTs until channel switch occurs. */
-	/* 0 - indicates switch shall occur at any time */
-	/* 1 - occurs immediately before the next TBTT */
-	u8 switch_count;
+	/* Number of TBTTs until channel चयन occurs. */
+	/* 0 - indicates चयन shall occur at any समय */
+	/* 1 - occurs immediately beक्रमe the next TBTT */
+	u8 चयन_count;
 
-	/* The new channel number to switch to. */
+	/* The new channel number to चयन to. */
 	/* Note this is defined as per section 2.7. */
 	u16 channel_number;
-};
+पूर्ण;
 
-int wsm_switch_channel(struct cw1200_common *priv,
-		       const struct wsm_switch_channel *arg);
+पूर्णांक wsm_चयन_channel(काष्ठा cw1200_common *priv,
+		       स्थिर काष्ठा wsm_चयन_channel *arg);
 
-#define WSM_START_REQ_ID 0x0017
-#define WSM_START_RESP_ID 0x0417
+#घोषणा WSM_START_REQ_ID 0x0017
+#घोषणा WSM_START_RESP_ID 0x0417
 
-struct wsm_start {
+काष्ठा wsm_start अणु
 	/* WSM_START_MODE_... */
 	/* [in] */ u8 mode;
 
@@ -1188,22 +1189,22 @@ struct wsm_start {
 	/* Channel number */
 	/* [in] */ u16 channel_number;
 
-	/* Client Traffic window in units of TU */
+	/* Client Traffic winकरोw in units of TU */
 	/* Valid only when mode == ..._P2P */
-	/* [in] */ u32 ct_window;
+	/* [in] */ u32 ct_winकरोw;
 
 	/* Interval between two consecutive */
 	/* beacon transmissions in TU. */
-	/* [in] */ u32 beacon_interval;
+	/* [in] */ u32 beacon_पूर्णांकerval;
 
-	/* DTIM period in terms of beacon intervals */
+	/* DTIM period in terms of beacon पूर्णांकervals */
 	/* [in] */ u8 dtim_period;
 
 	/* WSM_JOIN_PREAMBLE_... */
 	/* [in] */ u8 preamble;
 
-	/* The delay time (in microseconds) period */
-	/* before sending a probe-request. */
+	/* The delay समय (in microseconds) period */
+	/* beक्रमe sending a probe-request. */
 	/* [in] */ u8 probe_delay;
 
 	/* Length of the SSID */
@@ -1212,107 +1213,107 @@ struct wsm_start {
 	/* SSID of the BSS or P2P_GO to be started now. */
 	/* [in] */ u8 ssid[32];
 
-	/* The basic supported rates for the MiniAP. */
+	/* The basic supported rates क्रम the MiniAP. */
 	/* [in] */ u32 basic_rate_set;
-};
+पूर्ण;
 
-int wsm_start(struct cw1200_common *priv, const struct wsm_start *arg);
+पूर्णांक wsm_start(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_start *arg);
 
-#define WSM_BEACON_TRANSMIT_REQ_ID 0x0018
-#define WSM_BEACON_TRANSMIT_RESP_ID 0x0418
+#घोषणा WSM_BEACON_TRANSMIT_REQ_ID 0x0018
+#घोषणा WSM_BEACON_TRANSMIT_RESP_ID 0x0418
 
-struct wsm_beacon_transmit {
+काष्ठा wsm_beacon_transmit अणु
 	/* 1: enable; 0: disable */
 	/* [in] */ u8 enable_beaconing;
-};
+पूर्ण;
 
-int wsm_beacon_transmit(struct cw1200_common *priv,
-			const struct wsm_beacon_transmit *arg);
+पूर्णांक wsm_beacon_transmit(काष्ठा cw1200_common *priv,
+			स्थिर काष्ठा wsm_beacon_transmit *arg);
 
-int wsm_start_find(struct cw1200_common *priv);
+पूर्णांक wsm_start_find(काष्ठा cw1200_common *priv);
 
-int wsm_stop_find(struct cw1200_common *priv);
+पूर्णांक wsm_stop_find(काष्ठा cw1200_common *priv);
 
-struct wsm_suspend_resume {
+काष्ठा wsm_suspend_resume अणु
 	/* See 3.52 */
 	/* Link ID */
-	/* [out] */ int link_id;
-	/* Stop sending further Tx requests down to device for this link */
+	/* [out] */ पूर्णांक link_id;
+	/* Stop sending further Tx requests करोwn to device क्रम this link */
 	/* [out] */ bool stop;
 	/* Transmit multicast Frames */
 	/* [out] */ bool multicast;
 	/* The AC on which Tx to be suspended /resumed. */
-	/* This is applicable only for U-APSD */
+	/* This is applicable only क्रम U-APSD */
 	/* WSM_QUEUE_... */
-	/* [out] */ int queue;
-};
+	/* [out] */ पूर्णांक queue;
+पूर्ण;
 
 /* 3.54 Update-IE request. */
-struct wsm_update_ie {
+काष्ठा wsm_update_ie अणु
 	/* WSM_UPDATE_IE_... */
 	/* [in] */ u16 what;
 	/* [in] */ u16 count;
 	/* [in] */ u8 *ies;
-	/* [in] */ size_t length;
-};
+	/* [in] */ माप_प्रकार length;
+पूर्ण;
 
-int wsm_update_ie(struct cw1200_common *priv,
-		  const struct wsm_update_ie *arg);
+पूर्णांक wsm_update_ie(काष्ठा cw1200_common *priv,
+		  स्थिर काष्ठा wsm_update_ie *arg);
 
 /* 3.56 */
-struct wsm_map_link {
+काष्ठा wsm_map_link अणु
 	/* MAC address of the remote device */
 	/* [in] */ u8 mac_addr[6];
 	/* [in] */ u8 link_id;
-};
+पूर्ण;
 
-int wsm_map_link(struct cw1200_common *priv, const struct wsm_map_link *arg);
+पूर्णांक wsm_map_link(काष्ठा cw1200_common *priv, स्थिर काष्ठा wsm_map_link *arg);
 
 /* ******************************************************************** */
-/* MIB shortcats							*/
+/* MIB लघुcats							*/
 
-static inline int wsm_set_output_power(struct cw1200_common *priv,
-				       int power_level)
-{
-	__le32 val = __cpu_to_le32(power_level);
-	return wsm_write_mib(priv, WSM_MIB_ID_DOT11_CURRENT_TX_POWER_LEVEL,
-			     &val, sizeof(val));
-}
+अटल अंतरभूत पूर्णांक wsm_set_output_घातer(काष्ठा cw1200_common *priv,
+				       पूर्णांक घातer_level)
+अणु
+	__le32 val = __cpu_to_le32(घातer_level);
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_DOT11_CURRENT_TX_POWER_LEVEL,
+			     &val, माप(val));
+पूर्ण
 
-static inline int wsm_set_beacon_wakeup_period(struct cw1200_common *priv,
-					       unsigned dtim_interval,
-					       unsigned listen_interval)
-{
-	struct {
+अटल अंतरभूत पूर्णांक wsm_set_beacon_wakeup_period(काष्ठा cw1200_common *priv,
+					       अचिन्हित dtim_पूर्णांकerval,
+					       अचिन्हित listen_पूर्णांकerval)
+अणु
+	काष्ठा अणु
 		u8 numBeaconPeriods;
 		u8 reserved;
 		__le16 listenInterval;
-	} val = {
-		dtim_interval, 0, __cpu_to_le16(listen_interval)
-	};
+	पूर्ण val = अणु
+		dtim_पूर्णांकerval, 0, __cpu_to_le16(listen_पूर्णांकerval)
+	पूर्ण;
 
-	if (dtim_interval > 0xFF || listen_interval > 0xFFFF)
-		return -EINVAL;
-	else
-		return wsm_write_mib(priv, WSM_MIB_ID_BEACON_WAKEUP_PERIOD,
-				     &val, sizeof(val));
-}
+	अगर (dtim_पूर्णांकerval > 0xFF || listen_पूर्णांकerval > 0xFFFF)
+		वापस -EINVAL;
+	अन्यथा
+		वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_BEACON_WAKEUP_PERIOD,
+				     &val, माप(val));
+पूर्ण
 
-struct wsm_rcpi_rssi_threshold {
+काष्ठा wsm_rcpi_rssi_threshold अणु
 	u8 rssiRcpiMode;	/* WSM_RCPI_RSSI_... */
 	u8 lowerThreshold;
 	u8 upperThreshold;
 	u8 rollingAverageCount;
-};
+पूर्ण;
 
-static inline int wsm_set_rcpi_rssi_threshold(struct cw1200_common *priv,
-					struct wsm_rcpi_rssi_threshold *arg)
-{
-	return wsm_write_mib(priv, WSM_MIB_ID_RCPI_RSSI_THRESHOLD, arg,
-			     sizeof(*arg));
-}
+अटल अंतरभूत पूर्णांक wsm_set_rcpi_rssi_threshold(काष्ठा cw1200_common *priv,
+					काष्ठा wsm_rcpi_rssi_threshold *arg)
+अणु
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_RCPI_RSSI_THRESHOLD, arg,
+			     माप(*arg));
+पूर्ण
 
-struct wsm_mib_counters_table {
+काष्ठा wsm_mib_counters_table अणु
 	__le32 plcp_errors;
 	__le32 fcs_errors;
 	__le32 tx_packets;
@@ -1335,197 +1336,197 @@ struct wsm_mib_counters_table {
 	__le32 rx_cmac_icv_errors;
 	__le32 rx_cmac_replays;
 	__le32 rx_mgmt_ccmp_replays;
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_get_counters_table(struct cw1200_common *priv,
-					 struct wsm_mib_counters_table *arg)
-{
-	return wsm_read_mib(priv, WSM_MIB_ID_COUNTERS_TABLE,
-			    arg, sizeof(*arg));
-}
+अटल अंतरभूत पूर्णांक wsm_get_counters_table(काष्ठा cw1200_common *priv,
+					 काष्ठा wsm_mib_counters_table *arg)
+अणु
+	वापस wsm_पढ़ो_mib(priv, WSM_MIB_ID_COUNTERS_TABLE,
+			    arg, माप(*arg));
+पूर्ण
 
-static inline int wsm_get_station_id(struct cw1200_common *priv, u8 *mac)
-{
-	return wsm_read_mib(priv, WSM_MIB_ID_DOT11_STATION_ID, mac, ETH_ALEN);
-}
+अटल अंतरभूत पूर्णांक wsm_get_station_id(काष्ठा cw1200_common *priv, u8 *mac)
+अणु
+	वापस wsm_पढ़ो_mib(priv, WSM_MIB_ID_DOT11_STATION_ID, mac, ETH_ALEN);
+पूर्ण
 
-struct wsm_rx_filter {
+काष्ठा wsm_rx_filter अणु
 	bool promiscuous;
 	bool bssid;
 	bool fcs;
 	bool probeResponder;
-};
+पूर्ण;
 
-static inline int wsm_set_rx_filter(struct cw1200_common *priv,
-				    const struct wsm_rx_filter *arg)
-{
+अटल अंतरभूत पूर्णांक wsm_set_rx_filter(काष्ठा cw1200_common *priv,
+				    स्थिर काष्ठा wsm_rx_filter *arg)
+अणु
 	__le32 val = 0;
-	if (arg->promiscuous)
+	अगर (arg->promiscuous)
 		val |= __cpu_to_le32(BIT(0));
-	if (arg->bssid)
+	अगर (arg->bssid)
 		val |= __cpu_to_le32(BIT(1));
-	if (arg->fcs)
+	अगर (arg->fcs)
 		val |= __cpu_to_le32(BIT(2));
-	if (arg->probeResponder)
+	अगर (arg->probeResponder)
 		val |= __cpu_to_le32(BIT(3));
-	return wsm_write_mib(priv, WSM_MIB_ID_RX_FILTER, &val, sizeof(val));
-}
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_RX_FILTER, &val, माप(val));
+पूर्ण
 
-int wsm_set_probe_responder(struct cw1200_common *priv, bool enable);
+पूर्णांक wsm_set_probe_responder(काष्ठा cw1200_common *priv, bool enable);
 
-#define WSM_BEACON_FILTER_IE_HAS_CHANGED	BIT(0)
-#define WSM_BEACON_FILTER_IE_NO_LONGER_PRESENT	BIT(1)
-#define WSM_BEACON_FILTER_IE_HAS_APPEARED	BIT(2)
+#घोषणा WSM_BEACON_FILTER_IE_HAS_CHANGED	BIT(0)
+#घोषणा WSM_BEACON_FILTER_IE_NO_LONGER_PRESENT	BIT(1)
+#घोषणा WSM_BEACON_FILTER_IE_HAS_APPEARED	BIT(2)
 
-struct wsm_beacon_filter_table_entry {
+काष्ठा wsm_beacon_filter_table_entry अणु
 	u8	ie_id;
 	u8	flags;
 	u8	oui[3];
 	u8	match_data[3];
-} __packed;
+पूर्ण __packed;
 
-struct wsm_mib_beacon_filter_table {
+काष्ठा wsm_mib_beacon_filter_table अणु
 	__le32 num;
-	struct wsm_beacon_filter_table_entry entry[10];
-} __packed;
+	काष्ठा wsm_beacon_filter_table_entry entry[10];
+पूर्ण __packed;
 
-static inline int wsm_set_beacon_filter_table(struct cw1200_common *priv,
-					      struct wsm_mib_beacon_filter_table *ft)
-{
-	size_t size = __le32_to_cpu(ft->num) *
-		     sizeof(struct wsm_beacon_filter_table_entry) +
-		     sizeof(__le32);
+अटल अंतरभूत पूर्णांक wsm_set_beacon_filter_table(काष्ठा cw1200_common *priv,
+					      काष्ठा wsm_mib_beacon_filter_table *ft)
+अणु
+	माप_प्रकार size = __le32_to_cpu(ft->num) *
+		     माप(काष्ठा wsm_beacon_filter_table_entry) +
+		     माप(__le32);
 
-	return wsm_write_mib(priv, WSM_MIB_ID_BEACON_FILTER_TABLE, ft, size);
-}
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_BEACON_FILTER_TABLE, ft, size);
+पूर्ण
 
-#define WSM_BEACON_FILTER_ENABLE	BIT(0) /* Enable/disable beacon filtering */
-#define WSM_BEACON_FILTER_AUTO_ERP	BIT(1) /* If 1 FW will handle ERP IE changes internally */
+#घोषणा WSM_BEACON_FILTER_ENABLE	BIT(0) /* Enable/disable beacon filtering */
+#घोषणा WSM_BEACON_FILTER_AUTO_ERP	BIT(1) /* If 1 FW will handle ERP IE changes पूर्णांकernally */
 
-struct wsm_beacon_filter_control {
-	int enabled;
-	int bcn_count;
-};
+काष्ठा wsm_beacon_filter_control अणु
+	पूर्णांक enabled;
+	पूर्णांक bcn_count;
+पूर्ण;
 
-static inline int wsm_beacon_filter_control(struct cw1200_common *priv,
-					struct wsm_beacon_filter_control *arg)
-{
-	struct {
+अटल अंतरभूत पूर्णांक wsm_beacon_filter_control(काष्ठा cw1200_common *priv,
+					काष्ठा wsm_beacon_filter_control *arg)
+अणु
+	काष्ठा अणु
 		__le32 enabled;
 		__le32 bcn_count;
-	} val;
+	पूर्ण val;
 	val.enabled = __cpu_to_le32(arg->enabled);
 	val.bcn_count = __cpu_to_le32(arg->bcn_count);
-	return wsm_write_mib(priv, WSM_MIB_ID_BEACON_FILTER_ENABLE, &val,
-			     sizeof(val));
-}
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_BEACON_FILTER_ENABLE, &val,
+			     माप(val));
+पूर्ण
 
-enum wsm_power_mode {
-	wsm_power_mode_active = 0,
-	wsm_power_mode_doze = 1,
-	wsm_power_mode_quiescent = 2,
-};
+क्रमागत wsm_घातer_mode अणु
+	wsm_घातer_mode_active = 0,
+	wsm_घातer_mode_करोze = 1,
+	wsm_घातer_mode_quiescent = 2,
+पूर्ण;
 
-struct wsm_operational_mode {
-	enum wsm_power_mode power_mode;
-	int disable_more_flag_usage;
-	int perform_ant_diversity;
-};
+काष्ठा wsm_operational_mode अणु
+	क्रमागत wsm_घातer_mode घातer_mode;
+	पूर्णांक disable_more_flag_usage;
+	पूर्णांक perक्रमm_ant_भागersity;
+पूर्ण;
 
-static inline int wsm_set_operational_mode(struct cw1200_common *priv,
-					const struct wsm_operational_mode *arg)
-{
-	u8 val = arg->power_mode;
-	if (arg->disable_more_flag_usage)
+अटल अंतरभूत पूर्णांक wsm_set_operational_mode(काष्ठा cw1200_common *priv,
+					स्थिर काष्ठा wsm_operational_mode *arg)
+अणु
+	u8 val = arg->घातer_mode;
+	अगर (arg->disable_more_flag_usage)
 		val |= BIT(4);
-	if (arg->perform_ant_diversity)
+	अगर (arg->perक्रमm_ant_भागersity)
 		val |= BIT(5);
-	return wsm_write_mib(priv, WSM_MIB_ID_OPERATIONAL_POWER_MODE, &val,
-			     sizeof(val));
-}
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_OPERATIONAL_POWER_MODE, &val,
+			     माप(val));
+पूर्ण
 
-struct wsm_template_frame {
+काष्ठा wsm_ढाँचा_frame अणु
 	u8 frame_type;
 	u8 rate;
-	struct sk_buff *skb;
-};
+	काष्ठा sk_buff *skb;
+पूर्ण;
 
-static inline int wsm_set_template_frame(struct cw1200_common *priv,
-					 struct wsm_template_frame *arg)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक wsm_set_ढाँचा_frame(काष्ठा cw1200_common *priv,
+					 काष्ठा wsm_ढाँचा_frame *arg)
+अणु
+	पूर्णांक ret;
 	u8 *p = skb_push(arg->skb, 4);
 	p[0] = arg->frame_type;
 	p[1] = arg->rate;
 	((__le16 *)p)[1] = __cpu_to_le16(arg->skb->len - 4);
-	ret = wsm_write_mib(priv, WSM_MIB_ID_TEMPLATE_FRAME, p, arg->skb->len);
+	ret = wsm_ग_लिखो_mib(priv, WSM_MIB_ID_TEMPLATE_FRAME, p, arg->skb->len);
 	skb_pull(arg->skb, 4);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-struct wsm_protected_mgmt_policy {
-	bool protectedMgmtEnable;
-	bool unprotectedMgmtFramesAllowed;
+काष्ठा wsm_रक्षित_mgmt_policy अणु
+	bool रक्षितMgmtEnable;
+	bool unरक्षितMgmtFramesAllowed;
 	bool encryptionForAuthFrame;
-};
+पूर्ण;
 
-static inline int wsm_set_protected_mgmt_policy(struct cw1200_common *priv,
-		struct wsm_protected_mgmt_policy *arg)
-{
+अटल अंतरभूत पूर्णांक wsm_set_रक्षित_mgmt_policy(काष्ठा cw1200_common *priv,
+		काष्ठा wsm_रक्षित_mgmt_policy *arg)
+अणु
 	__le32 val = 0;
-	int ret;
-	if (arg->protectedMgmtEnable)
+	पूर्णांक ret;
+	अगर (arg->रक्षितMgmtEnable)
 		val |= __cpu_to_le32(BIT(0));
-	if (arg->unprotectedMgmtFramesAllowed)
+	अगर (arg->unरक्षितMgmtFramesAllowed)
 		val |= __cpu_to_le32(BIT(1));
-	if (arg->encryptionForAuthFrame)
+	अगर (arg->encryptionForAuthFrame)
 		val |= __cpu_to_le32(BIT(2));
-	ret = wsm_write_mib(priv, WSM_MIB_ID_PROTECTED_MGMT_POLICY,
-			&val, sizeof(val));
-	return ret;
-}
+	ret = wsm_ग_लिखो_mib(priv, WSM_MIB_ID_PROTECTED_MGMT_POLICY,
+			&val, माप(val));
+	वापस ret;
+पूर्ण
 
-struct wsm_mib_block_ack_policy {
+काष्ठा wsm_mib_block_ack_policy अणु
 	u8 tx_tid;
 	u8 reserved1;
 	u8 rx_tid;
 	u8 reserved2;
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_set_block_ack_policy(struct cw1200_common *priv,
+अटल अंतरभूत पूर्णांक wsm_set_block_ack_policy(काष्ठा cw1200_common *priv,
 					   u8 tx_tid_policy,
 					   u8 rx_tid_policy)
-{
-	struct wsm_mib_block_ack_policy val = {
+अणु
+	काष्ठा wsm_mib_block_ack_policy val = अणु
 		.tx_tid = tx_tid_policy,
 		.rx_tid = rx_tid_policy,
-	};
-	return wsm_write_mib(priv, WSM_MIB_ID_BLOCK_ACK_POLICY, &val,
-			     sizeof(val));
-}
+	पूर्ण;
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_BLOCK_ACK_POLICY, &val,
+			     माप(val));
+पूर्ण
 
-struct wsm_mib_association_mode {
+काष्ठा wsm_mib_association_mode अणु
 	u8 flags;		/* WSM_ASSOCIATION_MODE_... */
 	u8 preamble;	/* WSM_JOIN_PREAMBLE_... */
-	u8 greenfield;	/* 1 for greenfield */
+	u8 greenfield;	/* 1 क्रम greenfield */
 	u8 mpdu_start_spacing;
 	__le32 basic_rate_set;
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_set_association_mode(struct cw1200_common *priv,
-					   struct wsm_mib_association_mode *arg)
-{
-	return wsm_write_mib(priv, WSM_MIB_ID_SET_ASSOCIATION_MODE, arg,
-			     sizeof(*arg));
-}
+अटल अंतरभूत पूर्णांक wsm_set_association_mode(काष्ठा cw1200_common *priv,
+					   काष्ठा wsm_mib_association_mode *arg)
+अणु
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_SET_ASSOCIATION_MODE, arg,
+			     माप(*arg));
+पूर्ण
 
-#define WSM_TX_RATE_POLICY_FLAG_TERMINATE_WHEN_FINISHED BIT(2)
-#define WSM_TX_RATE_POLICY_FLAG_COUNT_INITIAL_TRANSMIT BIT(3)
-struct wsm_tx_rate_retry_policy {
+#घोषणा WSM_TX_RATE_POLICY_FLAG_TERMINATE_WHEN_FINISHED BIT(2)
+#घोषणा WSM_TX_RATE_POLICY_FLAG_COUNT_INITIAL_TRANSMIT BIT(3)
+काष्ठा wsm_tx_rate_retry_policy अणु
 	u8 index;
-	u8 short_retries;
-	u8 long_retries;
+	u8 लघु_retries;
+	u8 दीर्घ_retries;
 	/* BIT(2) - Terminate retries when Tx rate retry policy
 	 *          finishes.
 	 * BIT(3) - Count initial frame transmission as part of
@@ -1536,320 +1537,320 @@ struct wsm_tx_rate_retry_policy {
 	u8 rate_recoveries;
 	u8 reserved[3];
 	__le32 rate_count_indices[3];
-} __packed;
+पूर्ण __packed;
 
-struct wsm_set_tx_rate_retry_policy {
+काष्ठा wsm_set_tx_rate_retry_policy अणु
 	u8 num;
 	u8 reserved[3];
-	struct wsm_tx_rate_retry_policy tbl[8];
-} __packed;
+	काष्ठा wsm_tx_rate_retry_policy tbl[8];
+पूर्ण __packed;
 
-static inline int wsm_set_tx_rate_retry_policy(struct cw1200_common *priv,
-				struct wsm_set_tx_rate_retry_policy *arg)
-{
-	size_t size = 4 + arg->num * sizeof(struct wsm_tx_rate_retry_policy);
-	return wsm_write_mib(priv, WSM_MIB_ID_SET_TX_RATE_RETRY_POLICY, arg,
+अटल अंतरभूत पूर्णांक wsm_set_tx_rate_retry_policy(काष्ठा cw1200_common *priv,
+				काष्ठा wsm_set_tx_rate_retry_policy *arg)
+अणु
+	माप_प्रकार size = 4 + arg->num * माप(काष्ठा wsm_tx_rate_retry_policy);
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_SET_TX_RATE_RETRY_POLICY, arg,
 			     size);
-}
+पूर्ण
 
 /* 4.32 SetEtherTypeDataFrameFilter */
-struct wsm_ether_type_filter_hdr {
+काष्ठा wsm_ether_type_filter_hdr अणु
 	u8 num;		/* Up to WSM_MAX_FILTER_ELEMENTS */
 	u8 reserved[3];
-} __packed;
+पूर्ण __packed;
 
-struct wsm_ether_type_filter {
+काष्ठा wsm_ether_type_filter अणु
 	u8 action;	/* WSM_FILTER_ACTION_XXX */
 	u8 reserved;
 	__le16 type;	/* Type of ethernet frame */
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_set_ether_type_filter(struct cw1200_common *priv,
-				struct wsm_ether_type_filter_hdr *arg)
-{
-	size_t size = sizeof(struct wsm_ether_type_filter_hdr) +
-		arg->num * sizeof(struct wsm_ether_type_filter);
-	return wsm_write_mib(priv, WSM_MIB_ID_SET_ETHERTYPE_DATAFRAME_FILTER,
+अटल अंतरभूत पूर्णांक wsm_set_ether_type_filter(काष्ठा cw1200_common *priv,
+				काष्ठा wsm_ether_type_filter_hdr *arg)
+अणु
+	माप_प्रकार size = माप(काष्ठा wsm_ether_type_filter_hdr) +
+		arg->num * माप(काष्ठा wsm_ether_type_filter);
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_SET_ETHERTYPE_DATAFRAME_FILTER,
 		arg, size);
-}
+पूर्ण
 
 /* 4.33 SetUDPPortDataFrameFilter */
-struct wsm_udp_port_filter_hdr {
+काष्ठा wsm_udp_port_filter_hdr अणु
 	u8 num;		/* Up to WSM_MAX_FILTER_ELEMENTS */
 	u8 reserved[3];
-} __packed;
+पूर्ण __packed;
 
-struct wsm_udp_port_filter {
+काष्ठा wsm_udp_port_filter अणु
 	u8 action;	/* WSM_FILTER_ACTION_XXX */
 	u8 type;		/* WSM_FILTER_PORT_TYPE_XXX */
 	__le16 port;		/* Port number */
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_set_udp_port_filter(struct cw1200_common *priv,
-				struct wsm_udp_port_filter_hdr *arg)
-{
-	size_t size = sizeof(struct wsm_udp_port_filter_hdr) +
-		arg->num * sizeof(struct wsm_udp_port_filter);
-	return wsm_write_mib(priv, WSM_MIB_ID_SET_UDPPORT_DATAFRAME_FILTER,
+अटल अंतरभूत पूर्णांक wsm_set_udp_port_filter(काष्ठा cw1200_common *priv,
+				काष्ठा wsm_udp_port_filter_hdr *arg)
+अणु
+	माप_प्रकार size = माप(काष्ठा wsm_udp_port_filter_hdr) +
+		arg->num * माप(काष्ठा wsm_udp_port_filter);
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_SET_UDPPORT_DATAFRAME_FILTER,
 		arg, size);
-}
+पूर्ण
 
-/* Undocumented MIBs: */
+/* Unकरोcumented MIBs: */
 /* 4.35 P2PDeviceInfo */
-#define D11_MAX_SSID_LEN		(32)
+#घोषणा D11_MAX_SSID_LEN		(32)
 
-struct wsm_p2p_device_type {
+काष्ठा wsm_p2p_device_type अणु
 	__le16 category_id;
 	u8 oui[4];
 	__le16 subcategory_id;
-} __packed;
+पूर्ण __packed;
 
-struct wsm_p2p_device_info {
-	struct wsm_p2p_device_type primaryDevice;
+काष्ठा wsm_p2p_device_info अणु
+	काष्ठा wsm_p2p_device_type primaryDevice;
 	u8 reserved1[3];
 	u8 devname_size;
 	u8 local_devname[D11_MAX_SSID_LEN];
 	u8 reserved2[3];
 	u8 num_secdev_supported;
-	struct wsm_p2p_device_type secdevs[];
-} __packed;
+	काष्ठा wsm_p2p_device_type secdevs[];
+पूर्ण __packed;
 
 /* 4.36 SetWCDMABand - WO */
-struct wsm_cdma_band {
+काष्ठा wsm_cdma_band अणु
 	u8 wcdma_band;
 	u8 reserved[3];
-} __packed;
+पूर्ण __packed;
 
 /* 4.37 GroupTxSequenceCounter - RO */
-struct wsm_group_tx_seq {
+काष्ठा wsm_group_tx_seq अणु
 	__le32 bits_47_16;
 	__le16 bits_15_00;
 	__le16 reserved;
-} __packed;
+पूर्ण __packed;
 
 /* 4.39 SetHtProtection - WO */
-#define WSM_DUAL_CTS_PROT_ENB		(1 << 0)
-#define WSM_NON_GREENFIELD_STA_PRESENT  (1 << 1)
-#define WSM_HT_PROT_MODE__NO_PROT	(0 << 2)
-#define WSM_HT_PROT_MODE__NON_MEMBER	(1 << 2)
-#define WSM_HT_PROT_MODE__20_MHZ	(2 << 2)
-#define WSM_HT_PROT_MODE__NON_HT_MIXED	(3 << 2)
-#define WSM_LSIG_TXOP_PROT_FULL		(1 << 4)
-#define WSM_LARGE_L_LENGTH_PROT		(1 << 5)
+#घोषणा WSM_DUAL_CTS_PROT_ENB		(1 << 0)
+#घोषणा WSM_NON_GREENFIELD_STA_PRESENT  (1 << 1)
+#घोषणा WSM_HT_PROT_MODE__NO_PROT	(0 << 2)
+#घोषणा WSM_HT_PROT_MODE__NON_MEMBER	(1 << 2)
+#घोषणा WSM_HT_PROT_MODE__20_MHZ	(2 << 2)
+#घोषणा WSM_HT_PROT_MODE__NON_HT_MIXED	(3 << 2)
+#घोषणा WSM_LSIG_TXOP_PROT_FULL		(1 << 4)
+#घोषणा WSM_LARGE_L_LENGTH_PROT		(1 << 5)
 
-struct wsm_ht_protection {
+काष्ठा wsm_ht_protection अणु
 	__le32 flags;
-} __packed;
+पूर्ण __packed;
 
 /* 4.40 GPIO Command - R/W */
-#define WSM_GPIO_COMMAND_SETUP	0
-#define WSM_GPIO_COMMAND_READ	1
-#define WSM_GPIO_COMMAND_WRITE	2
-#define WSM_GPIO_COMMAND_RESET	3
-#define WSM_GPIO_ALL_PINS	0xFF
+#घोषणा WSM_GPIO_COMMAND_SETUP	0
+#घोषणा WSM_GPIO_COMMAND_READ	1
+#घोषणा WSM_GPIO_COMMAND_WRITE	2
+#घोषणा WSM_GPIO_COMMAND_RESET	3
+#घोषणा WSM_GPIO_ALL_PINS	0xFF
 
-struct wsm_gpio_command {
+काष्ठा wsm_gpio_command अणु
 	u8 command;
 	u8 pin;
 	__le16 config;
-} __packed;
+पूर्ण __packed;
 
 /* 4.41 TSFCounter - RO */
-struct wsm_tsf_counter {
+काष्ठा wsm_tsf_counter अणु
 	__le64 tsf_counter;
-} __packed;
+पूर्ण __packed;
 
 /* 4.43 Keep alive period */
-struct wsm_keep_alive_period {
+काष्ठा wsm_keep_alive_period अणु
 	__le16 period;
 	u8 reserved[2];
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_keep_alive_period(struct cw1200_common *priv,
-					int period)
-{
-	struct wsm_keep_alive_period arg = {
+अटल अंतरभूत पूर्णांक wsm_keep_alive_period(काष्ठा cw1200_common *priv,
+					पूर्णांक period)
+अणु
+	काष्ठा wsm_keep_alive_period arg = अणु
 		.period = __cpu_to_le16(period),
-	};
-	return wsm_write_mib(priv, WSM_MIB_ID_KEEP_ALIVE_PERIOD,
-			&arg, sizeof(arg));
-};
+	पूर्ण;
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_KEEP_ALIVE_PERIOD,
+			&arg, माप(arg));
+पूर्ण;
 
 /* BSSID filtering */
-struct wsm_set_bssid_filtering {
+काष्ठा wsm_set_bssid_filtering अणु
 	u8 filter;
 	u8 reserved[3];
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_set_bssid_filtering(struct cw1200_common *priv,
+अटल अंतरभूत पूर्णांक wsm_set_bssid_filtering(काष्ठा cw1200_common *priv,
 					  bool enabled)
-{
-	struct wsm_set_bssid_filtering arg = {
+अणु
+	काष्ठा wsm_set_bssid_filtering arg = अणु
 		.filter = !enabled,
-	};
-	return wsm_write_mib(priv, WSM_MIB_ID_DISABLE_BSSID_FILTER,
-			&arg, sizeof(arg));
-}
+	पूर्ण;
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_DISABLE_BSSID_FILTER,
+			&arg, माप(arg));
+पूर्ण
 
 /* Multicast filtering - 4.5 */
-struct wsm_mib_multicast_filter {
+काष्ठा wsm_mib_multicast_filter अणु
 	__le32 enable;
 	__le32 num_addrs;
 	u8 macaddrs[WSM_MAX_GRP_ADDRTABLE_ENTRIES][ETH_ALEN];
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_set_multicast_filter(struct cw1200_common *priv,
-					   struct wsm_mib_multicast_filter *fp)
-{
-	return wsm_write_mib(priv, WSM_MIB_ID_DOT11_GROUP_ADDRESSES_TABLE,
-			     fp, sizeof(*fp));
-}
+अटल अंतरभूत पूर्णांक wsm_set_multicast_filter(काष्ठा cw1200_common *priv,
+					   काष्ठा wsm_mib_multicast_filter *fp)
+अणु
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_DOT11_GROUP_ADDRESSES_TABLE,
+			     fp, माप(*fp));
+पूर्ण
 
 /* ARP IPv4 filtering - 4.10 */
-struct wsm_mib_arp_ipv4_filter {
+काष्ठा wsm_mib_arp_ipv4_filter अणु
 	__le32 enable;
 	__be32 ipv4addrs[WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES];
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_set_arp_ipv4_filter(struct cw1200_common *priv,
-					  struct wsm_mib_arp_ipv4_filter *fp)
-{
-	return wsm_write_mib(priv, WSM_MIB_ID_ARP_IP_ADDRESSES_TABLE,
-			    fp, sizeof(*fp));
-}
+अटल अंतरभूत पूर्णांक wsm_set_arp_ipv4_filter(काष्ठा cw1200_common *priv,
+					  काष्ठा wsm_mib_arp_ipv4_filter *fp)
+अणु
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_ARP_IP_ADDRESSES_TABLE,
+			    fp, माप(*fp));
+पूर्ण
 
 /* P2P Power Save Mode Info - 4.31 */
-struct wsm_p2p_ps_modeinfo {
-	u8	opp_ps_ct_window;
+काष्ठा wsm_p2p_ps_modeinfo अणु
+	u8	opp_ps_ct_winकरोw;
 	u8	count;
 	u8	reserved;
 	u8	dtim_count;
 	__le32	duration;
-	__le32	interval;
-	__le32	start_time;
-} __packed;
+	__le32	पूर्णांकerval;
+	__le32	start_समय;
+पूर्ण __packed;
 
-static inline int wsm_set_p2p_ps_modeinfo(struct cw1200_common *priv,
-					  struct wsm_p2p_ps_modeinfo *mi)
-{
-	return wsm_write_mib(priv, WSM_MIB_ID_P2P_PS_MODE_INFO,
-			     mi, sizeof(*mi));
-}
+अटल अंतरभूत पूर्णांक wsm_set_p2p_ps_modeinfo(काष्ठा cw1200_common *priv,
+					  काष्ठा wsm_p2p_ps_modeinfo *mi)
+अणु
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_P2P_PS_MODE_INFO,
+			     mi, माप(*mi));
+पूर्ण
 
-static inline int wsm_get_p2p_ps_modeinfo(struct cw1200_common *priv,
-					  struct wsm_p2p_ps_modeinfo *mi)
-{
-	return wsm_read_mib(priv, WSM_MIB_ID_P2P_PS_MODE_INFO,
-			    mi, sizeof(*mi));
-}
+अटल अंतरभूत पूर्णांक wsm_get_p2p_ps_modeinfo(काष्ठा cw1200_common *priv,
+					  काष्ठा wsm_p2p_ps_modeinfo *mi)
+अणु
+	वापस wsm_पढ़ो_mib(priv, WSM_MIB_ID_P2P_PS_MODE_INFO,
+			    mi, माप(*mi));
+पूर्ण
 
 /* UseMultiTxConfMessage */
 
-static inline int wsm_use_multi_tx_conf(struct cw1200_common *priv,
+अटल अंतरभूत पूर्णांक wsm_use_multi_tx_conf(काष्ठा cw1200_common *priv,
 					bool enabled)
-{
+अणु
 	__le32 arg = enabled ? __cpu_to_le32(1) : 0;
 
-	return wsm_write_mib(priv, WSM_MIB_USE_MULTI_TX_CONF,
-			&arg, sizeof(arg));
-}
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_USE_MULTI_TX_CONF,
+			&arg, माप(arg));
+पूर्ण
 
 
-/* 4.26 SetUpasdInformation */
-struct wsm_uapsd_info {
+/* 4.26 SetUpasdInक्रमmation */
+काष्ठा wsm_uapsd_info अणु
 	__le16 uapsd_flags;
-	__le16 min_auto_trigger_interval;
-	__le16 max_auto_trigger_interval;
-	__le16 auto_trigger_step;
-};
+	__le16 min_स्वतः_trigger_पूर्णांकerval;
+	__le16 max_स्वतः_trigger_पूर्णांकerval;
+	__le16 स्वतः_trigger_step;
+पूर्ण;
 
-static inline int wsm_set_uapsd_info(struct cw1200_common *priv,
-				     struct wsm_uapsd_info *arg)
-{
-	return wsm_write_mib(priv, WSM_MIB_ID_SET_UAPSD_INFORMATION,
-				arg, sizeof(*arg));
-}
+अटल अंतरभूत पूर्णांक wsm_set_uapsd_info(काष्ठा cw1200_common *priv,
+				     काष्ठा wsm_uapsd_info *arg)
+अणु
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_SET_UAPSD_INFORMATION,
+				arg, माप(*arg));
+पूर्ण
 
 /* 4.22 OverrideInternalTxRate */
-struct wsm_override_internal_txrate {
-	u8 internalTxRate;
+काष्ठा wsm_override_पूर्णांकernal_txrate अणु
+	u8 पूर्णांकernalTxRate;
 	u8 nonErpInternalTxRate;
 	u8 reserved[2];
-} __packed;
+पूर्ण __packed;
 
-static inline int wsm_set_override_internal_txrate(struct cw1200_common *priv,
-				     struct wsm_override_internal_txrate *arg)
-{
-	return wsm_write_mib(priv, WSM_MIB_ID_OVERRIDE_INTERNAL_TX_RATE,
-				arg, sizeof(*arg));
-}
+अटल अंतरभूत पूर्णांक wsm_set_override_पूर्णांकernal_txrate(काष्ठा cw1200_common *priv,
+				     काष्ठा wsm_override_पूर्णांकernal_txrate *arg)
+अणु
+	वापस wsm_ग_लिखो_mib(priv, WSM_MIB_ID_OVERRIDE_INTERNAL_TX_RATE,
+				arg, माप(*arg));
+पूर्ण
 
 /* ******************************************************************** */
 /* WSM TX port control							*/
 
-void wsm_lock_tx(struct cw1200_common *priv);
-void wsm_lock_tx_async(struct cw1200_common *priv);
-bool wsm_flush_tx(struct cw1200_common *priv);
-void wsm_unlock_tx(struct cw1200_common *priv);
+व्योम wsm_lock_tx(काष्ठा cw1200_common *priv);
+व्योम wsm_lock_tx_async(काष्ठा cw1200_common *priv);
+bool wsm_flush_tx(काष्ठा cw1200_common *priv);
+व्योम wsm_unlock_tx(काष्ठा cw1200_common *priv);
 
 /* ******************************************************************** */
 /* WSM / BH API								*/
 
-int wsm_handle_exception(struct cw1200_common *priv, u8 *data, size_t len);
-int wsm_handle_rx(struct cw1200_common *priv, u16 id, struct wsm_hdr *wsm,
-		  struct sk_buff **skb_p);
+पूर्णांक wsm_handle_exception(काष्ठा cw1200_common *priv, u8 *data, माप_प्रकार len);
+पूर्णांक wsm_handle_rx(काष्ठा cw1200_common *priv, u16 id, काष्ठा wsm_hdr *wsm,
+		  काष्ठा sk_buff **skb_p);
 
 /* ******************************************************************** */
 /* wsm_buf API								*/
 
-struct wsm_buf {
+काष्ठा wsm_buf अणु
 	u8 *begin;
 	u8 *data;
 	u8 *end;
-};
+पूर्ण;
 
-void wsm_buf_init(struct wsm_buf *buf);
-void wsm_buf_deinit(struct wsm_buf *buf);
+व्योम wsm_buf_init(काष्ठा wsm_buf *buf);
+व्योम wsm_buf_deinit(काष्ठा wsm_buf *buf);
 
 /* ******************************************************************** */
 /* wsm_cmd API								*/
 
-struct wsm_cmd {
-	spinlock_t lock; /* Protect structure from multiple access */
-	int done;
+काष्ठा wsm_cmd अणु
+	spinlock_t lock; /* Protect काष्ठाure from multiple access */
+	पूर्णांक करोne;
 	u8 *ptr;
-	size_t len;
-	void *arg;
-	int ret;
+	माप_प्रकार len;
+	व्योम *arg;
+	पूर्णांक ret;
 	u16 cmd;
-};
+पूर्ण;
 
 /* ******************************************************************** */
 /* WSM TX buffer access							*/
 
-int wsm_get_tx(struct cw1200_common *priv, u8 **data,
-	       size_t *tx_len, int *burst);
-void wsm_txed(struct cw1200_common *priv, u8 *data);
+पूर्णांक wsm_get_tx(काष्ठा cw1200_common *priv, u8 **data,
+	       माप_प्रकार *tx_len, पूर्णांक *burst);
+व्योम wsm_txed(काष्ठा cw1200_common *priv, u8 *data);
 
 /* ******************************************************************** */
 /* Queue mapping: WSM <---> linux					*/
 /* Linux: VO VI BE BK							*/
 /* WSM:   BE BK VI VO							*/
 
-static inline u8 wsm_queue_id_to_linux(u8 queue_id)
-{
-	static const u8 queue_mapping[] = {
+अटल अंतरभूत u8 wsm_queue_id_to_linux(u8 queue_id)
+अणु
+	अटल स्थिर u8 queue_mapping[] = अणु
 		2, 3, 1, 0
-	};
-	return queue_mapping[queue_id];
-}
+	पूर्ण;
+	वापस queue_mapping[queue_id];
+पूर्ण
 
-static inline u8 wsm_queue_id_to_wsm(u8 queue_id)
-{
-	static const u8 queue_mapping[] = {
+अटल अंतरभूत u8 wsm_queue_id_to_wsm(u8 queue_id)
+अणु
+	अटल स्थिर u8 queue_mapping[] = अणु
 		3, 2, 0, 1
-	};
-	return queue_mapping[queue_id];
-}
+	पूर्ण;
+	वापस queue_mapping[queue_id];
+पूर्ण
 
-#endif /* CW1200_HWIO_H_INCLUDED */
+#पूर्ण_अगर /* CW1200_HWIO_H_INCLUDED */

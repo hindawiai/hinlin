@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,368 +24,368 @@
  *
  */
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "dm_services.h"
-#include "dc.h"
-#include "mod_freesync.h"
-#include "core_types.h"
+#समावेश "dm_services.h"
+#समावेश "dc.h"
+#समावेश "mod_freesync.h"
+#समावेश "core_types.h"
 
-#define MOD_FREESYNC_MAX_CONCURRENT_STREAMS  32
+#घोषणा MOD_FREESYNC_MAX_CONCURRENT_STREAMS  32
 
-#define MIN_REFRESH_RANGE 10
+#घोषणा MIN_REFRESH_RANGE 10
 /* Refresh rate ramp at a fixed rate of 65 Hz/second */
-#define STATIC_SCREEN_RAMP_DELTA_REFRESH_RATE_PER_FRAME ((1000 / 60) * 65)
-/* Number of elements in the render times cache array */
-#define RENDER_TIMES_MAX_COUNT 10
-/* Threshold to exit/exit BTR (to avoid frequent enter-exits at the lower limit) */
-#define BTR_MAX_MARGIN 2500
-/* Threshold to change BTR multiplier (to avoid frequent changes) */
-#define BTR_DRIFT_MARGIN 2000
-/* Threshold to exit fixed refresh rate */
-#define FIXED_REFRESH_EXIT_MARGIN_IN_HZ 1
-/* Number of consecutive frames to check before entering/exiting fixed refresh */
-#define FIXED_REFRESH_ENTER_FRAME_COUNT 5
-#define FIXED_REFRESH_EXIT_FRAME_COUNT 10
+#घोषणा STATIC_SCREEN_RAMP_DELTA_REFRESH_RATE_PER_FRAME ((1000 / 60) * 65)
+/* Number of elements in the render बार cache array */
+#घोषणा RENDER_TIMES_MAX_COUNT 10
+/* Threshold to निकास/निकास BTR (to aव्योम frequent enter-निकासs at the lower limit) */
+#घोषणा BTR_MAX_MARGIN 2500
+/* Threshold to change BTR multiplier (to aव्योम frequent changes) */
+#घोषणा BTR_DRIFT_MARGIN 2000
+/* Threshold to निकास fixed refresh rate */
+#घोषणा FIXED_REFRESH_EXIT_MARGIN_IN_HZ 1
+/* Number of consecutive frames to check beक्रमe entering/निकासing fixed refresh */
+#घोषणा FIXED_REFRESH_ENTER_FRAME_COUNT 5
+#घोषणा FIXED_REFRESH_EXIT_FRAME_COUNT 10
 
-struct core_freesync {
-	struct mod_freesync public;
-	struct dc *dc;
-};
+काष्ठा core_मुक्तsync अणु
+	काष्ठा mod_मुक्तsync खुला;
+	काष्ठा dc *dc;
+पूर्ण;
 
-#define MOD_FREESYNC_TO_CORE(mod_freesync)\
-		container_of(mod_freesync, struct core_freesync, public)
+#घोषणा MOD_FREESYNC_TO_CORE(mod_मुक्तsync)\
+		container_of(mod_मुक्तsync, काष्ठा core_मुक्तsync, खुला)
 
-struct mod_freesync *mod_freesync_create(struct dc *dc)
-{
-	struct core_freesync *core_freesync =
-			kzalloc(sizeof(struct core_freesync), GFP_KERNEL);
+काष्ठा mod_मुक्तsync *mod_मुक्तsync_create(काष्ठा dc *dc)
+अणु
+	काष्ठा core_मुक्तsync *core_मुक्तsync =
+			kzalloc(माप(काष्ठा core_मुक्तsync), GFP_KERNEL);
 
-	if (core_freesync == NULL)
-		goto fail_alloc_context;
+	अगर (core_मुक्तsync == शून्य)
+		जाओ fail_alloc_context;
 
-	if (dc == NULL)
-		goto fail_construct;
+	अगर (dc == शून्य)
+		जाओ fail_स्थिरruct;
 
-	core_freesync->dc = dc;
-	return &core_freesync->public;
+	core_मुक्तsync->dc = dc;
+	वापस &core_मुक्तsync->खुला;
 
-fail_construct:
-	kfree(core_freesync);
+fail_स्थिरruct:
+	kमुक्त(core_मुक्तsync);
 
 fail_alloc_context:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void mod_freesync_destroy(struct mod_freesync *mod_freesync)
-{
-	struct core_freesync *core_freesync = NULL;
-	if (mod_freesync == NULL)
-		return;
-	core_freesync = MOD_FREESYNC_TO_CORE(mod_freesync);
-	kfree(core_freesync);
-}
+व्योम mod_मुक्तsync_destroy(काष्ठा mod_मुक्तsync *mod_मुक्तsync)
+अणु
+	काष्ठा core_मुक्तsync *core_मुक्तsync = शून्य;
+	अगर (mod_मुक्तsync == शून्य)
+		वापस;
+	core_मुक्तsync = MOD_FREESYNC_TO_CORE(mod_मुक्तsync);
+	kमुक्त(core_मुक्तsync);
+पूर्ण
 
-#if 0 /* Unused currently */
-static unsigned int calc_refresh_in_uhz_from_duration(
-		unsigned int duration_in_ns)
-{
-	unsigned int refresh_in_uhz =
-			((unsigned int)(div64_u64((1000000000ULL * 1000000),
+#अगर 0 /* Unused currently */
+अटल अचिन्हित पूर्णांक calc_refresh_in_uhz_from_duration(
+		अचिन्हित पूर्णांक duration_in_ns)
+अणु
+	अचिन्हित पूर्णांक refresh_in_uhz =
+			((अचिन्हित पूर्णांक)(भाग64_u64((1000000000ULL * 1000000),
 					duration_in_ns)));
-	return refresh_in_uhz;
-}
-#endif
+	वापस refresh_in_uhz;
+पूर्ण
+#पूर्ण_अगर
 
-static unsigned int calc_duration_in_us_from_refresh_in_uhz(
-		unsigned int refresh_in_uhz)
-{
-	unsigned int duration_in_us =
-			((unsigned int)(div64_u64((1000000000ULL * 1000),
+अटल अचिन्हित पूर्णांक calc_duration_in_us_from_refresh_in_uhz(
+		अचिन्हित पूर्णांक refresh_in_uhz)
+अणु
+	अचिन्हित पूर्णांक duration_in_us =
+			((अचिन्हित पूर्णांक)(भाग64_u64((1000000000ULL * 1000),
 					refresh_in_uhz)));
-	return duration_in_us;
-}
+	वापस duration_in_us;
+पूर्ण
 
-static unsigned int calc_duration_in_us_from_v_total(
-		const struct dc_stream_state *stream,
-		const struct mod_vrr_params *in_vrr,
-		unsigned int v_total)
-{
-	unsigned int duration_in_us =
-			(unsigned int)(div64_u64(((unsigned long long)(v_total)
+अटल अचिन्हित पूर्णांक calc_duration_in_us_from_v_total(
+		स्थिर काष्ठा dc_stream_state *stream,
+		स्थिर काष्ठा mod_vrr_params *in_vrr,
+		अचिन्हित पूर्णांक v_total)
+अणु
+	अचिन्हित पूर्णांक duration_in_us =
+			(अचिन्हित पूर्णांक)(भाग64_u64(((अचिन्हित दीर्घ दीर्घ)(v_total)
 				* 10000) * stream->timing.h_total,
 					stream->timing.pix_clk_100hz));
 
-	return duration_in_us;
-}
+	वापस duration_in_us;
+पूर्ण
 
-unsigned int mod_freesync_calc_v_total_from_refresh(
-		const struct dc_stream_state *stream,
-		unsigned int refresh_in_uhz)
-{
-	unsigned int v_total;
-	unsigned int frame_duration_in_ns;
+अचिन्हित पूर्णांक mod_मुक्तsync_calc_v_total_from_refresh(
+		स्थिर काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक refresh_in_uhz)
+अणु
+	अचिन्हित पूर्णांक v_total;
+	अचिन्हित पूर्णांक frame_duration_in_ns;
 
 	frame_duration_in_ns =
-			((unsigned int)(div64_u64((1000000000ULL * 1000000),
+			((अचिन्हित पूर्णांक)(भाग64_u64((1000000000ULL * 1000000),
 					refresh_in_uhz)));
 
-	v_total = div64_u64(div64_u64(((unsigned long long)(
+	v_total = भाग64_u64(भाग64_u64(((अचिन्हित दीर्घ दीर्घ)(
 			frame_duration_in_ns) * (stream->timing.pix_clk_100hz / 10)),
 			stream->timing.h_total), 1000000);
 
 	/* v_total cannot be less than nominal */
-	if (v_total < stream->timing.v_total) {
+	अगर (v_total < stream->timing.v_total) अणु
 		ASSERT(v_total < stream->timing.v_total);
 		v_total = stream->timing.v_total;
-	}
+	पूर्ण
 
-	return v_total;
-}
+	वापस v_total;
+पूर्ण
 
-static unsigned int calc_v_total_from_duration(
-		const struct dc_stream_state *stream,
-		const struct mod_vrr_params *vrr,
-		unsigned int duration_in_us)
-{
-	unsigned int v_total = 0;
+अटल अचिन्हित पूर्णांक calc_v_total_from_duration(
+		स्थिर काष्ठा dc_stream_state *stream,
+		स्थिर काष्ठा mod_vrr_params *vrr,
+		अचिन्हित पूर्णांक duration_in_us)
+अणु
+	अचिन्हित पूर्णांक v_total = 0;
 
-	if (duration_in_us < vrr->min_duration_in_us)
+	अगर (duration_in_us < vrr->min_duration_in_us)
 		duration_in_us = vrr->min_duration_in_us;
 
-	if (duration_in_us > vrr->max_duration_in_us)
+	अगर (duration_in_us > vrr->max_duration_in_us)
 		duration_in_us = vrr->max_duration_in_us;
 
-	v_total = div64_u64(div64_u64(((unsigned long long)(
+	v_total = भाग64_u64(भाग64_u64(((अचिन्हित दीर्घ दीर्घ)(
 				duration_in_us) * (stream->timing.pix_clk_100hz / 10)),
 				stream->timing.h_total), 1000);
 
 	/* v_total cannot be less than nominal */
-	if (v_total < stream->timing.v_total) {
+	अगर (v_total < stream->timing.v_total) अणु
 		ASSERT(v_total < stream->timing.v_total);
 		v_total = stream->timing.v_total;
-	}
+	पूर्ण
 
-	return v_total;
-}
+	वापस v_total;
+पूर्ण
 
-static void update_v_total_for_static_ramp(
-		struct core_freesync *core_freesync,
-		const struct dc_stream_state *stream,
-		struct mod_vrr_params *in_out_vrr)
-{
-	unsigned int v_total = 0;
-	unsigned int current_duration_in_us =
+अटल व्योम update_v_total_क्रम_अटल_ramp(
+		काष्ठा core_मुक्तsync *core_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		काष्ठा mod_vrr_params *in_out_vrr)
+अणु
+	अचिन्हित पूर्णांक v_total = 0;
+	अचिन्हित पूर्णांक current_duration_in_us =
 			calc_duration_in_us_from_v_total(
 				stream, in_out_vrr,
 				in_out_vrr->adjust.v_total_max);
-	unsigned int target_duration_in_us =
+	अचिन्हित पूर्णांक target_duration_in_us =
 			calc_duration_in_us_from_refresh_in_uhz(
 				in_out_vrr->fixed.target_refresh_in_uhz);
 	bool ramp_direction_is_up = (current_duration_in_us >
 				target_duration_in_us) ? true : false;
 
 	/* Calculate ratio between new and current frame duration with 3 digit */
-	unsigned int frame_duration_ratio = div64_u64(1000000,
-		(1000 +  div64_u64(((unsigned long long)(
+	अचिन्हित पूर्णांक frame_duration_ratio = भाग64_u64(1000000,
+		(1000 +  भाग64_u64(((अचिन्हित दीर्घ दीर्घ)(
 		STATIC_SCREEN_RAMP_DELTA_REFRESH_RATE_PER_FRAME) *
 		current_duration_in_us),
 		1000000)));
 
 	/* Calculate delta between new and current frame duration in us */
-	unsigned int frame_duration_delta = div64_u64(((unsigned long long)(
+	अचिन्हित पूर्णांक frame_duration_delta = भाग64_u64(((अचिन्हित दीर्घ दीर्घ)(
 		current_duration_in_us) *
 		(1000 - frame_duration_ratio)), 1000);
 
 	/* Adjust frame duration delta based on ratio between current and
 	 * standard frame duration (frame duration at 60 Hz refresh rate).
 	 */
-	unsigned int ramp_rate_interpolated = div64_u64(((unsigned long long)(
+	अचिन्हित पूर्णांक ramp_rate_पूर्णांकerpolated = भाग64_u64(((अचिन्हित दीर्घ दीर्घ)(
 		frame_duration_delta) * current_duration_in_us), 16666);
 
 	/* Going to a higher refresh rate (lower frame duration) */
-	if (ramp_direction_is_up) {
+	अगर (ramp_direction_is_up) अणु
 		/* Reduce frame duration */
-		current_duration_in_us -= ramp_rate_interpolated;
+		current_duration_in_us -= ramp_rate_पूर्णांकerpolated;
 
-		/* Adjust for frame duration below min */
-		if (current_duration_in_us <= target_duration_in_us) {
+		/* Adjust क्रम frame duration below min */
+		अगर (current_duration_in_us <= target_duration_in_us) अणु
 			in_out_vrr->fixed.ramping_active = false;
-			in_out_vrr->fixed.ramping_done = true;
+			in_out_vrr->fixed.ramping_करोne = true;
 			current_duration_in_us =
 				calc_duration_in_us_from_refresh_in_uhz(
 				in_out_vrr->fixed.target_refresh_in_uhz);
-		}
+		पूर्ण
 	/* Going to a lower refresh rate (larger frame duration) */
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Increase frame duration */
-		current_duration_in_us += ramp_rate_interpolated;
+		current_duration_in_us += ramp_rate_पूर्णांकerpolated;
 
-		/* Adjust for frame duration above max */
-		if (current_duration_in_us >= target_duration_in_us) {
+		/* Adjust क्रम frame duration above max */
+		अगर (current_duration_in_us >= target_duration_in_us) अणु
 			in_out_vrr->fixed.ramping_active = false;
-			in_out_vrr->fixed.ramping_done = true;
+			in_out_vrr->fixed.ramping_करोne = true;
 			current_duration_in_us =
 				calc_duration_in_us_from_refresh_in_uhz(
 				in_out_vrr->fixed.target_refresh_in_uhz);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	v_total = div64_u64(div64_u64(((unsigned long long)(
+	v_total = भाग64_u64(भाग64_u64(((अचिन्हित दीर्घ दीर्घ)(
 			current_duration_in_us) * (stream->timing.pix_clk_100hz / 10)),
 				stream->timing.h_total), 1000);
 
 	/* v_total cannot be less than nominal */
-	if (v_total < stream->timing.v_total)
+	अगर (v_total < stream->timing.v_total)
 		v_total = stream->timing.v_total;
 
 	in_out_vrr->adjust.v_total_min = v_total;
 	in_out_vrr->adjust.v_total_max = v_total;
-}
+पूर्ण
 
-static void apply_below_the_range(struct core_freesync *core_freesync,
-		const struct dc_stream_state *stream,
-		unsigned int last_render_time_in_us,
-		struct mod_vrr_params *in_out_vrr)
-{
-	unsigned int inserted_frame_duration_in_us = 0;
-	unsigned int mid_point_frames_ceil = 0;
-	unsigned int mid_point_frames_floor = 0;
-	unsigned int frame_time_in_us = 0;
-	unsigned int delta_from_mid_point_in_us_1 = 0xFFFFFFFF;
-	unsigned int delta_from_mid_point_in_us_2 = 0xFFFFFFFF;
-	unsigned int frames_to_insert = 0;
-	unsigned int delta_from_mid_point_delta_in_us;
-	unsigned int max_render_time_in_us =
+अटल व्योम apply_below_the_range(काष्ठा core_मुक्तsync *core_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक last_render_समय_in_us,
+		काष्ठा mod_vrr_params *in_out_vrr)
+अणु
+	अचिन्हित पूर्णांक inserted_frame_duration_in_us = 0;
+	अचिन्हित पूर्णांक mid_poपूर्णांक_frames_उच्चमान = 0;
+	अचिन्हित पूर्णांक mid_poपूर्णांक_frames_न्यूनमान = 0;
+	अचिन्हित पूर्णांक frame_समय_in_us = 0;
+	अचिन्हित पूर्णांक delta_from_mid_poपूर्णांक_in_us_1 = 0xFFFFFFFF;
+	अचिन्हित पूर्णांक delta_from_mid_poपूर्णांक_in_us_2 = 0xFFFFFFFF;
+	अचिन्हित पूर्णांक frames_to_insert = 0;
+	अचिन्हित पूर्णांक delta_from_mid_poपूर्णांक_delta_in_us;
+	अचिन्हित पूर्णांक max_render_समय_in_us =
 			in_out_vrr->max_duration_in_us - in_out_vrr->btr.margin_in_us;
 
 	/* Program BTR */
-	if ((last_render_time_in_us + in_out_vrr->btr.margin_in_us / 2) < max_render_time_in_us) {
+	अगर ((last_render_समय_in_us + in_out_vrr->btr.margin_in_us / 2) < max_render_समय_in_us) अणु
 		/* Exit Below the Range */
-		if (in_out_vrr->btr.btr_active) {
+		अगर (in_out_vrr->btr.btr_active) अणु
 			in_out_vrr->btr.frame_counter = 0;
 			in_out_vrr->btr.btr_active = false;
-		}
-	} else if (last_render_time_in_us > (max_render_time_in_us + in_out_vrr->btr.margin_in_us / 2)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (last_render_समय_in_us > (max_render_समय_in_us + in_out_vrr->btr.margin_in_us / 2)) अणु
 		/* Enter Below the Range */
-		if (!in_out_vrr->btr.btr_active) {
+		अगर (!in_out_vrr->btr.btr_active) अणु
 			in_out_vrr->btr.btr_active = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* BTR set to "not active" so disengage */
-	if (!in_out_vrr->btr.btr_active) {
+	अगर (!in_out_vrr->btr.btr_active) अणु
 		in_out_vrr->btr.inserted_duration_in_us = 0;
 		in_out_vrr->btr.frames_to_insert = 0;
 		in_out_vrr->btr.frame_counter = 0;
 
 		/* Restore FreeSync */
 		in_out_vrr->adjust.v_total_min =
-			mod_freesync_calc_v_total_from_refresh(stream,
+			mod_मुक्तsync_calc_v_total_from_refresh(stream,
 				in_out_vrr->max_refresh_in_uhz);
 		in_out_vrr->adjust.v_total_max =
-			mod_freesync_calc_v_total_from_refresh(stream,
+			mod_मुक्तsync_calc_v_total_from_refresh(stream,
 				in_out_vrr->min_refresh_in_uhz);
 	/* BTR set to "active" so engage */
-	} else {
+	पूर्ण अन्यथा अणु
 
-		/* Calculate number of midPoint frames that could fit within
-		 * the render time interval - take ceil of this value
+		/* Calculate number of midPoपूर्णांक frames that could fit within
+		 * the render समय पूर्णांकerval - take उच्चमान of this value
 		 */
-		mid_point_frames_ceil = (last_render_time_in_us +
-				in_out_vrr->btr.mid_point_in_us - 1) /
-					in_out_vrr->btr.mid_point_in_us;
+		mid_poपूर्णांक_frames_उच्चमान = (last_render_समय_in_us +
+				in_out_vrr->btr.mid_poपूर्णांक_in_us - 1) /
+					in_out_vrr->btr.mid_poपूर्णांक_in_us;
 
-		if (mid_point_frames_ceil > 0) {
-			frame_time_in_us = last_render_time_in_us /
-				mid_point_frames_ceil;
-			delta_from_mid_point_in_us_1 =
-				(in_out_vrr->btr.mid_point_in_us >
-				frame_time_in_us) ?
-				(in_out_vrr->btr.mid_point_in_us - frame_time_in_us) :
-				(frame_time_in_us - in_out_vrr->btr.mid_point_in_us);
-		}
+		अगर (mid_poपूर्णांक_frames_उच्चमान > 0) अणु
+			frame_समय_in_us = last_render_समय_in_us /
+				mid_poपूर्णांक_frames_उच्चमान;
+			delta_from_mid_poपूर्णांक_in_us_1 =
+				(in_out_vrr->btr.mid_poपूर्णांक_in_us >
+				frame_समय_in_us) ?
+				(in_out_vrr->btr.mid_poपूर्णांक_in_us - frame_समय_in_us) :
+				(frame_समय_in_us - in_out_vrr->btr.mid_poपूर्णांक_in_us);
+		पूर्ण
 
-		/* Calculate number of midPoint frames that could fit within
-		 * the render time interval - take floor of this value
+		/* Calculate number of midPoपूर्णांक frames that could fit within
+		 * the render समय पूर्णांकerval - take न्यूनमान of this value
 		 */
-		mid_point_frames_floor = last_render_time_in_us /
-				in_out_vrr->btr.mid_point_in_us;
+		mid_poपूर्णांक_frames_न्यूनमान = last_render_समय_in_us /
+				in_out_vrr->btr.mid_poपूर्णांक_in_us;
 
-		if (mid_point_frames_floor > 0) {
+		अगर (mid_poपूर्णांक_frames_न्यूनमान > 0) अणु
 
-			frame_time_in_us = last_render_time_in_us /
-				mid_point_frames_floor;
-			delta_from_mid_point_in_us_2 =
-				(in_out_vrr->btr.mid_point_in_us >
-				frame_time_in_us) ?
-				(in_out_vrr->btr.mid_point_in_us - frame_time_in_us) :
-				(frame_time_in_us - in_out_vrr->btr.mid_point_in_us);
-		}
+			frame_समय_in_us = last_render_समय_in_us /
+				mid_poपूर्णांक_frames_न्यूनमान;
+			delta_from_mid_poपूर्णांक_in_us_2 =
+				(in_out_vrr->btr.mid_poपूर्णांक_in_us >
+				frame_समय_in_us) ?
+				(in_out_vrr->btr.mid_poपूर्णांक_in_us - frame_समय_in_us) :
+				(frame_समय_in_us - in_out_vrr->btr.mid_poपूर्णांक_in_us);
+		पूर्ण
 
-		/* Choose number of frames to insert based on how close it
-		 * can get to the mid point of the variable range.
-		 *  - Delta for CEIL: delta_from_mid_point_in_us_1
-		 *  - Delta for FLOOR: delta_from_mid_point_in_us_2
+		/* Choose number of frames to insert based on how बंद it
+		 * can get to the mid poपूर्णांक of the variable range.
+		 *  - Delta क्रम CEIL: delta_from_mid_poपूर्णांक_in_us_1
+		 *  - Delta क्रम FLOOR: delta_from_mid_poपूर्णांक_in_us_2
 		 */
-		if ((last_render_time_in_us / mid_point_frames_ceil) < in_out_vrr->min_duration_in_us) {
-			/* Check for out of range.
+		अगर ((last_render_समय_in_us / mid_poपूर्णांक_frames_उच्चमान) < in_out_vrr->min_duration_in_us) अणु
+			/* Check क्रम out of range.
 			 * If using CEIL produces a value that is out of range,
-			 * then we are forced to use FLOOR.
+			 * then we are क्रमced to use FLOOR.
 			 */
-			frames_to_insert = mid_point_frames_floor;
-		} else if (mid_point_frames_floor < 2) {
-			/* Check if FLOOR would result in non-LFC. In this case
+			frames_to_insert = mid_poपूर्णांक_frames_न्यूनमान;
+		पूर्ण अन्यथा अगर (mid_poपूर्णांक_frames_न्यूनमान < 2) अणु
+			/* Check अगर FLOOR would result in non-LFC. In this हाल
 			 * choose to use CEIL
 			 */
-			frames_to_insert = mid_point_frames_ceil;
-		} else if (delta_from_mid_point_in_us_1 < delta_from_mid_point_in_us_2) {
+			frames_to_insert = mid_poपूर्णांक_frames_उच्चमान;
+		पूर्ण अन्यथा अगर (delta_from_mid_poपूर्णांक_in_us_1 < delta_from_mid_poपूर्णांक_in_us_2) अणु
 			/* If choosing CEIL results in a frame duration that is
-			 * closer to the mid point of the range.
+			 * बंदr to the mid poपूर्णांक of the range.
 			 * Choose CEIL
 			 */
-			frames_to_insert = mid_point_frames_ceil;
-		} else {
+			frames_to_insert = mid_poपूर्णांक_frames_उच्चमान;
+		पूर्ण अन्यथा अणु
 			/* If choosing FLOOR results in a frame duration that is
-			 * closer to the mid point of the range.
+			 * बंदr to the mid poपूर्णांक of the range.
 			 * Choose FLOOR
 			 */
-			frames_to_insert = mid_point_frames_floor;
-		}
+			frames_to_insert = mid_poपूर्णांक_frames_न्यूनमान;
+		पूर्ण
 
-		/* Prefer current frame multiplier when BTR is enabled unless it drifts
-		 * too far from the midpoint
+		/* Prefer current frame multiplier when BTR is enabled unless it drअगरts
+		 * too far from the midpoपूर्णांक
 		 */
-		if (delta_from_mid_point_in_us_1 < delta_from_mid_point_in_us_2) {
-			delta_from_mid_point_delta_in_us = delta_from_mid_point_in_us_2 -
-					delta_from_mid_point_in_us_1;
-		} else {
-			delta_from_mid_point_delta_in_us = delta_from_mid_point_in_us_1 -
-					delta_from_mid_point_in_us_2;
-		}
-		if (in_out_vrr->btr.frames_to_insert != 0 &&
-				delta_from_mid_point_delta_in_us < BTR_DRIFT_MARGIN) {
-			if (((last_render_time_in_us / in_out_vrr->btr.frames_to_insert) <
-					max_render_time_in_us) &&
-				((last_render_time_in_us / in_out_vrr->btr.frames_to_insert) >
+		अगर (delta_from_mid_poपूर्णांक_in_us_1 < delta_from_mid_poपूर्णांक_in_us_2) अणु
+			delta_from_mid_poपूर्णांक_delta_in_us = delta_from_mid_poपूर्णांक_in_us_2 -
+					delta_from_mid_poपूर्णांक_in_us_1;
+		पूर्ण अन्यथा अणु
+			delta_from_mid_poपूर्णांक_delta_in_us = delta_from_mid_poपूर्णांक_in_us_1 -
+					delta_from_mid_poपूर्णांक_in_us_2;
+		पूर्ण
+		अगर (in_out_vrr->btr.frames_to_insert != 0 &&
+				delta_from_mid_poपूर्णांक_delta_in_us < BTR_DRIFT_MARGIN) अणु
+			अगर (((last_render_समय_in_us / in_out_vrr->btr.frames_to_insert) <
+					max_render_समय_in_us) &&
+				((last_render_समय_in_us / in_out_vrr->btr.frames_to_insert) >
 					in_out_vrr->min_duration_in_us))
 				frames_to_insert = in_out_vrr->btr.frames_to_insert;
-		}
+		पूर्ण
 
 		/* Either we've calculated the number of frames to insert,
 		 * or we need to insert min duration frames
 		 */
-		if (last_render_time_in_us / frames_to_insert <
-				in_out_vrr->min_duration_in_us){
+		अगर (last_render_समय_in_us / frames_to_insert <
+				in_out_vrr->min_duration_in_us)अणु
 			frames_to_insert -= (frames_to_insert > 1) ?
 					1 : 0;
-		}
+		पूर्ण
 
-		if (frames_to_insert > 0)
-			inserted_frame_duration_in_us = last_render_time_in_us /
+		अगर (frames_to_insert > 0)
+			inserted_frame_duration_in_us = last_render_समय_in_us /
 							frames_to_insert;
 
-		if (inserted_frame_duration_in_us < in_out_vrr->min_duration_in_us)
+		अगर (inserted_frame_duration_in_us < in_out_vrr->min_duration_in_us)
 			inserted_frame_duration_in_us = in_out_vrr->min_duration_in_us;
 
 		/* Cache the calculated variables */
@@ -392,132 +393,132 @@ static void apply_below_the_range(struct core_freesync *core_freesync,
 			inserted_frame_duration_in_us;
 		in_out_vrr->btr.frames_to_insert = frames_to_insert;
 		in_out_vrr->btr.frame_counter = frames_to_insert;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void apply_fixed_refresh(struct core_freesync *core_freesync,
-		const struct dc_stream_state *stream,
-		unsigned int last_render_time_in_us,
-		struct mod_vrr_params *in_out_vrr)
-{
+अटल व्योम apply_fixed_refresh(काष्ठा core_मुक्तsync *core_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक last_render_समय_in_us,
+		काष्ठा mod_vrr_params *in_out_vrr)
+अणु
 	bool update = false;
-	unsigned int max_render_time_in_us = in_out_vrr->max_duration_in_us;
+	अचिन्हित पूर्णांक max_render_समय_in_us = in_out_vrr->max_duration_in_us;
 
-	/* Compute the exit refresh rate and exit frame duration */
-	unsigned int exit_refresh_rate_in_milli_hz = ((1000000000/max_render_time_in_us)
+	/* Compute the निकास refresh rate and निकास frame duration */
+	अचिन्हित पूर्णांक निकास_refresh_rate_in_milli_hz = ((1000000000/max_render_समय_in_us)
 			+ (1000*FIXED_REFRESH_EXIT_MARGIN_IN_HZ));
-	unsigned int exit_frame_duration_in_us = 1000000000/exit_refresh_rate_in_milli_hz;
+	अचिन्हित पूर्णांक निकास_frame_duration_in_us = 1000000000/निकास_refresh_rate_in_milli_hz;
 
-	if (last_render_time_in_us < exit_frame_duration_in_us) {
+	अगर (last_render_समय_in_us < निकास_frame_duration_in_us) अणु
 		/* Exit Fixed Refresh mode */
-		if (in_out_vrr->fixed.fixed_active) {
+		अगर (in_out_vrr->fixed.fixed_active) अणु
 			in_out_vrr->fixed.frame_counter++;
 
-			if (in_out_vrr->fixed.frame_counter >
-					FIXED_REFRESH_EXIT_FRAME_COUNT) {
+			अगर (in_out_vrr->fixed.frame_counter >
+					FIXED_REFRESH_EXIT_FRAME_COUNT) अणु
 				in_out_vrr->fixed.frame_counter = 0;
 				in_out_vrr->fixed.fixed_active = false;
 				in_out_vrr->fixed.target_refresh_in_uhz = 0;
 				update = true;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			in_out_vrr->fixed.frame_counter = 0;
-	} else if (last_render_time_in_us > max_render_time_in_us) {
+	पूर्ण अन्यथा अगर (last_render_समय_in_us > max_render_समय_in_us) अणु
 		/* Enter Fixed Refresh mode */
-		if (!in_out_vrr->fixed.fixed_active) {
+		अगर (!in_out_vrr->fixed.fixed_active) अणु
 			in_out_vrr->fixed.frame_counter++;
 
-			if (in_out_vrr->fixed.frame_counter >
-					FIXED_REFRESH_ENTER_FRAME_COUNT) {
+			अगर (in_out_vrr->fixed.frame_counter >
+					FIXED_REFRESH_ENTER_FRAME_COUNT) अणु
 				in_out_vrr->fixed.frame_counter = 0;
 				in_out_vrr->fixed.fixed_active = true;
 				in_out_vrr->fixed.target_refresh_in_uhz =
 						in_out_vrr->max_refresh_in_uhz;
 				update = true;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			in_out_vrr->fixed.frame_counter = 0;
-	}
+	पूर्ण
 
-	if (update) {
-		if (in_out_vrr->fixed.fixed_active) {
+	अगर (update) अणु
+		अगर (in_out_vrr->fixed.fixed_active) अणु
 			in_out_vrr->adjust.v_total_min =
-				mod_freesync_calc_v_total_from_refresh(
+				mod_मुक्तsync_calc_v_total_from_refresh(
 				stream, in_out_vrr->max_refresh_in_uhz);
 			in_out_vrr->adjust.v_total_max =
 					in_out_vrr->adjust.v_total_min;
-		} else {
+		पूर्ण अन्यथा अणु
 			in_out_vrr->adjust.v_total_min =
-				mod_freesync_calc_v_total_from_refresh(stream,
+				mod_मुक्तsync_calc_v_total_from_refresh(stream,
 					in_out_vrr->max_refresh_in_uhz);
 			in_out_vrr->adjust.v_total_max =
-				mod_freesync_calc_v_total_from_refresh(stream,
+				mod_मुक्तsync_calc_v_total_from_refresh(stream,
 					in_out_vrr->min_refresh_in_uhz);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool vrr_settings_require_update(struct core_freesync *core_freesync,
-		struct mod_freesync_config *in_config,
-		unsigned int min_refresh_in_uhz,
-		unsigned int max_refresh_in_uhz,
-		struct mod_vrr_params *in_vrr)
-{
-	if (in_vrr->state != in_config->state) {
-		return true;
-	} else if (in_vrr->state == VRR_STATE_ACTIVE_FIXED &&
+अटल bool vrr_settings_require_update(काष्ठा core_मुक्तsync *core_मुक्तsync,
+		काष्ठा mod_मुक्तsync_config *in_config,
+		अचिन्हित पूर्णांक min_refresh_in_uhz,
+		अचिन्हित पूर्णांक max_refresh_in_uhz,
+		काष्ठा mod_vrr_params *in_vrr)
+अणु
+	अगर (in_vrr->state != in_config->state) अणु
+		वापस true;
+	पूर्ण अन्यथा अगर (in_vrr->state == VRR_STATE_ACTIVE_FIXED &&
 			in_vrr->fixed.target_refresh_in_uhz !=
-					in_config->fixed_refresh_in_uhz) {
-		return true;
-	} else if (in_vrr->min_refresh_in_uhz != min_refresh_in_uhz) {
-		return true;
-	} else if (in_vrr->max_refresh_in_uhz != max_refresh_in_uhz) {
-		return true;
-	}
+					in_config->fixed_refresh_in_uhz) अणु
+		वापस true;
+	पूर्ण अन्यथा अगर (in_vrr->min_refresh_in_uhz != min_refresh_in_uhz) अणु
+		वापस true;
+	पूर्ण अन्यथा अगर (in_vrr->max_refresh_in_uhz != max_refresh_in_uhz) अणु
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool mod_freesync_get_vmin_vmax(struct mod_freesync *mod_freesync,
-		const struct dc_stream_state *stream,
-		unsigned int *vmin,
-		unsigned int *vmax)
-{
+bool mod_मुक्तsync_get_vmin_vmax(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक *vmin,
+		अचिन्हित पूर्णांक *vmax)
+अणु
 	*vmin = stream->adjust.v_total_min;
 	*vmax = stream->adjust.v_total_max;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool mod_freesync_get_v_position(struct mod_freesync *mod_freesync,
-		struct dc_stream_state *stream,
-		unsigned int *nom_v_pos,
-		unsigned int *v_pos)
-{
-	struct core_freesync *core_freesync = NULL;
-	struct crtc_position position;
+bool mod_मुक्तsync_get_v_position(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक *nom_v_pos,
+		अचिन्हित पूर्णांक *v_pos)
+अणु
+	काष्ठा core_मुक्तsync *core_मुक्तsync = शून्य;
+	काष्ठा crtc_position position;
 
-	if (mod_freesync == NULL)
-		return false;
+	अगर (mod_मुक्तsync == शून्य)
+		वापस false;
 
-	core_freesync = MOD_FREESYNC_TO_CORE(mod_freesync);
+	core_मुक्तsync = MOD_FREESYNC_TO_CORE(mod_मुक्तsync);
 
-	if (dc_stream_get_crtc_position(core_freesync->dc, &stream, 1,
+	अगर (dc_stream_get_crtc_position(core_मुक्तsync->dc, &stream, 1,
 					&position.vertical_count,
-					&position.nominal_vcount)) {
+					&position.nominal_vcount)) अणु
 
 		*nom_v_pos = position.nominal_vcount;
 		*v_pos = position.vertical_count;
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void build_vrr_infopacket_data_v1(const struct mod_vrr_params *vrr,
-		struct dc_info_packet *infopacket)
-{
+अटल व्योम build_vrr_infopacket_data_v1(स्थिर काष्ठा mod_vrr_params *vrr,
+		काष्ठा dc_info_packet *infopacket)
+अणु
 	/* PB1 = 0x1A (24bit AMD IEEE OUI (0x00001A) - Byte 0) */
 	infopacket->sb[1] = 0x1A;
 
@@ -534,46 +535,46 @@ static void build_vrr_infopacket_data_v1(const struct mod_vrr_params *vrr,
 	/* PB6 = [Bits 7:3 = Reserved] */
 
 	/* PB6 = [Bit 0 = FreeSync Supported] */
-	if (vrr->state != VRR_STATE_UNSUPPORTED)
+	अगर (vrr->state != VRR_STATE_UNSUPPORTED)
 		infopacket->sb[6] |= 0x01;
 
 	/* PB6 = [Bit 1 = FreeSync Enabled] */
-	if (vrr->state != VRR_STATE_DISABLED &&
+	अगर (vrr->state != VRR_STATE_DISABLED &&
 			vrr->state != VRR_STATE_UNSUPPORTED)
 		infopacket->sb[6] |= 0x02;
 
 	/* PB6 = [Bit 2 = FreeSync Active] */
-	if (vrr->state != VRR_STATE_DISABLED &&
+	अगर (vrr->state != VRR_STATE_DISABLED &&
 			vrr->state != VRR_STATE_UNSUPPORTED)
 		infopacket->sb[6] |= 0x04;
 
-	// For v1 & 2 infoframes program nominal if non-fs mode, otherwise full range
+	// For v1 & 2 infoframes program nominal अगर non-fs mode, otherwise full range
 	/* PB7 = FreeSync Minimum refresh rate (Hz) */
-	if (vrr->state == VRR_STATE_ACTIVE_VARIABLE ||
-			vrr->state == VRR_STATE_ACTIVE_FIXED) {
-		infopacket->sb[7] = (unsigned char)((vrr->min_refresh_in_uhz + 500000) / 1000000);
-	} else {
-		infopacket->sb[7] = (unsigned char)((vrr->max_refresh_in_uhz + 500000) / 1000000);
-	}
+	अगर (vrr->state == VRR_STATE_ACTIVE_VARIABLE ||
+			vrr->state == VRR_STATE_ACTIVE_FIXED) अणु
+		infopacket->sb[7] = (अचिन्हित अक्षर)((vrr->min_refresh_in_uhz + 500000) / 1000000);
+	पूर्ण अन्यथा अणु
+		infopacket->sb[7] = (अचिन्हित अक्षर)((vrr->max_refresh_in_uhz + 500000) / 1000000);
+	पूर्ण
 
 	/* PB8 = FreeSync Maximum refresh rate (Hz)
 	 * Note: We should never go above the field rate of the mode timing set.
 	 */
-	infopacket->sb[8] = (unsigned char)((vrr->max_refresh_in_uhz + 500000) / 1000000);
+	infopacket->sb[8] = (अचिन्हित अक्षर)((vrr->max_refresh_in_uhz + 500000) / 1000000);
 
 	/* FreeSync HDR */
 	infopacket->sb[9] = 0;
 	infopacket->sb[10] = 0;
-}
+पूर्ण
 
-static void build_vrr_infopacket_data_v3(const struct mod_vrr_params *vrr,
-		struct dc_info_packet *infopacket)
-{
-	unsigned int min_refresh;
-	unsigned int max_refresh;
-	unsigned int fixed_refresh;
-	unsigned int min_programmed;
-	unsigned int max_programmed;
+अटल व्योम build_vrr_infopacket_data_v3(स्थिर काष्ठा mod_vrr_params *vrr,
+		काष्ठा dc_info_packet *infopacket)
+अणु
+	अचिन्हित पूर्णांक min_refresh;
+	अचिन्हित पूर्णांक max_refresh;
+	अचिन्हित पूर्णांक fixed_refresh;
+	अचिन्हित पूर्णांक min_programmed;
+	अचिन्हित पूर्णांक max_programmed;
 
 	/* PB1 = 0x1A (24bit AMD IEEE OUI (0x00001A) - Byte 0) */
 	infopacket->sb[1] = 0x1A;
@@ -591,16 +592,16 @@ static void build_vrr_infopacket_data_v3(const struct mod_vrr_params *vrr,
 	/* PB6 = [Bits 7:3 = Reserved] */
 
 	/* PB6 = [Bit 0 = FreeSync Supported] */
-	if (vrr->state != VRR_STATE_UNSUPPORTED)
+	अगर (vrr->state != VRR_STATE_UNSUPPORTED)
 		infopacket->sb[6] |= 0x01;
 
 	/* PB6 = [Bit 1 = FreeSync Enabled] */
-	if (vrr->state != VRR_STATE_DISABLED &&
+	अगर (vrr->state != VRR_STATE_DISABLED &&
 			vrr->state != VRR_STATE_UNSUPPORTED)
 		infopacket->sb[6] |= 0x02;
 
 	/* PB6 = [Bit 2 = FreeSync Active] */
-	if (vrr->state == VRR_STATE_ACTIVE_VARIABLE ||
+	अगर (vrr->state == VRR_STATE_ACTIVE_VARIABLE ||
 			vrr->state == VRR_STATE_ACTIVE_FIXED)
 		infopacket->sb[6] |= 0x04;
 
@@ -611,11 +612,11 @@ static void build_vrr_infopacket_data_v3(const struct mod_vrr_params *vrr,
 	min_programmed = (vrr->state == VRR_STATE_ACTIVE_FIXED) ? fixed_refresh :
 			(vrr->state == VRR_STATE_ACTIVE_VARIABLE) ? min_refresh :
 			(vrr->state == VRR_STATE_INACTIVE) ? min_refresh :
-			max_refresh; // Non-fs case, program nominal range
+			max_refresh; // Non-fs हाल, program nominal range
 
 	max_programmed = (vrr->state == VRR_STATE_ACTIVE_FIXED) ? fixed_refresh :
 			(vrr->state == VRR_STATE_ACTIVE_VARIABLE) ? max_refresh :
-			max_refresh;// Non-fs case, program nominal range
+			max_refresh;// Non-fs हाल, program nominal range
 
 	/* PB7 = FreeSync Minimum refresh rate (Hz) */
 	infopacket->sb[7] = min_programmed & 0xFF;
@@ -635,27 +636,27 @@ static void build_vrr_infopacket_data_v3(const struct mod_vrr_params *vrr,
 	//FreeSync HDR
 	infopacket->sb[9] = 0;
 	infopacket->sb[10] = 0;
-}
+पूर्ण
 
-static void build_vrr_infopacket_fs2_data(enum color_transfer_func app_tf,
-		struct dc_info_packet *infopacket)
-{
-	if (app_tf != TRANSFER_FUNC_UNKNOWN) {
+अटल व्योम build_vrr_infopacket_fs2_data(क्रमागत color_transfer_func app_tf,
+		काष्ठा dc_info_packet *infopacket)
+अणु
+	अगर (app_tf != TRANSFER_FUNC_UNKNOWN) अणु
 		infopacket->valid = true;
 
 		infopacket->sb[6] |= 0x08;  // PB6 = [Bit 3 = Native Color Active]
 
-		if (app_tf == TRANSFER_FUNC_GAMMA_22) {
+		अगर (app_tf == TRANSFER_FUNC_GAMMA_22) अणु
 			infopacket->sb[9] |= 0x04;  // PB6 = [Bit 2 = Gamma 2.2 EOTF Active]
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void build_vrr_infopacket_header_v1(enum signal_type signal,
-		struct dc_info_packet *infopacket,
-		unsigned int *payload_size)
-{
-	if (dc_is_hdmi_signal(signal)) {
+अटल व्योम build_vrr_infopacket_header_v1(क्रमागत संकेत_type संकेत,
+		काष्ठा dc_info_packet *infopacket,
+		अचिन्हित पूर्णांक *payload_size)
+अणु
+	अगर (dc_is_hdmi_संकेत(संकेत)) अणु
 
 		/* HEADER */
 
@@ -672,7 +673,7 @@ static void build_vrr_infopacket_header_v1(enum signal_type signal,
 
 		*payload_size = 0x08;
 
-	} else if (dc_is_dp_signal(signal)) {
+	पूर्ण अन्यथा अगर (dc_is_dp_संकेत(संकेत)) अणु
 
 		/* HEADER */
 
@@ -686,25 +687,25 @@ static void build_vrr_infopacket_header_v1(enum signal_type signal,
 		 */
 		infopacket->hb1 = DC_HDMI_INFOFRAME_TYPE_SPD;
 
-		/* HB2  = [Bits 7:0 = Least significant eight bits -
+		/* HB2  = [Bits 7:0 = Least signअगरicant eight bits -
 		 *	  For INFOFRAME, the value must be 1Bh]
 		 */
 		infopacket->hb2 = 0x1B;
 
 		/* HB3  = [Bits 7:2 = INFOFRAME SDP Version Number = 0x1]
-		 *	  [Bits 1:0 = Most significant two bits = 0x00]
+		 *	  [Bits 1:0 = Most signअगरicant two bits = 0x00]
 		 */
 		infopacket->hb3 = 0x04;
 
 		*payload_size = 0x1B;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void build_vrr_infopacket_header_v2(enum signal_type signal,
-		struct dc_info_packet *infopacket,
-		unsigned int *payload_size)
-{
-	if (dc_is_hdmi_signal(signal)) {
+अटल व्योम build_vrr_infopacket_header_v2(क्रमागत संकेत_type संकेत,
+		काष्ठा dc_info_packet *infopacket,
+		अचिन्हित पूर्णांक *payload_size)
+अणु
+	अगर (dc_is_hdmi_संकेत(संकेत)) अणु
 
 		/* HEADER */
 
@@ -721,7 +722,7 @@ static void build_vrr_infopacket_header_v2(enum signal_type signal,
 
 		*payload_size = 0x0A;
 
-	} else if (dc_is_dp_signal(signal)) {
+	पूर्ण अन्यथा अगर (dc_is_dp_संकेत(संकेत)) अणु
 
 		/* HEADER */
 
@@ -735,28 +736,28 @@ static void build_vrr_infopacket_header_v2(enum signal_type signal,
 		 */
 		infopacket->hb1 = DC_HDMI_INFOFRAME_TYPE_SPD;
 
-		/* HB2  = [Bits 7:0 = Least significant eight bits -
+		/* HB2  = [Bits 7:0 = Least signअगरicant eight bits -
 		 *	  For INFOFRAME, the value must be 1Bh]
 		 */
 		infopacket->hb2 = 0x1B;
 
 		/* HB3  = [Bits 7:2 = INFOFRAME SDP Version Number = 0x2]
-		 *	  [Bits 1:0 = Most significant two bits = 0x00]
+		 *	  [Bits 1:0 = Most signअगरicant two bits = 0x00]
 		 */
 		infopacket->hb3 = 0x08;
 
 		*payload_size = 0x1B;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void build_vrr_infopacket_header_v3(enum signal_type signal,
-		struct dc_info_packet *infopacket,
-		unsigned int *payload_size)
-{
-	unsigned char version;
+अटल व्योम build_vrr_infopacket_header_v3(क्रमागत संकेत_type संकेत,
+		काष्ठा dc_info_packet *infopacket,
+		अचिन्हित पूर्णांक *payload_size)
+अणु
+	अचिन्हित अक्षर version;
 
 	version = 3;
-	if (dc_is_hdmi_signal(signal)) {
+	अगर (dc_is_hdmi_संकेत(संकेत)) अणु
 
 		/* HEADER */
 
@@ -770,9 +771,9 @@ static void build_vrr_infopacket_header_v3(enum signal_type signal,
 
 		/* HB2  = [Bits 7:5 = 0] [Bits 4:0 = Length] */
 		*payload_size = 0x10;
-		infopacket->hb2 = *payload_size - 1; //-1 for checksum
+		infopacket->hb2 = *payload_size - 1; //-1 क्रम checksum
 
-	} else if (dc_is_dp_signal(signal)) {
+	पूर्ण अन्यथा अगर (dc_is_dp_संकेत(संकेत)) अणु
 
 		/* HEADER */
 
@@ -786,64 +787,64 @@ static void build_vrr_infopacket_header_v3(enum signal_type signal,
 		 */
 		infopacket->hb1 = DC_HDMI_INFOFRAME_TYPE_SPD;
 
-		/* HB2  = [Bits 7:0 = Least significant eight bits -
+		/* HB2  = [Bits 7:0 = Least signअगरicant eight bits -
 		 *	  For INFOFRAME, the value must be 1Bh]
 		 */
 		infopacket->hb2 = 0x1B;
 
 		/* HB3  = [Bits 7:2 = INFOFRAME SDP Version Number = 0x2]
-		 *	  [Bits 1:0 = Most significant two bits = 0x00]
+		 *	  [Bits 1:0 = Most signअगरicant two bits = 0x00]
 		 */
 
 		infopacket->hb3 = (version & 0x3F) << 2;
 
 		*payload_size = 0x1B;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void build_vrr_infopacket_checksum(unsigned int *payload_size,
-		struct dc_info_packet *infopacket)
-{
+अटल व्योम build_vrr_infopacket_checksum(अचिन्हित पूर्णांक *payload_size,
+		काष्ठा dc_info_packet *infopacket)
+अणु
 	/* Calculate checksum */
-	unsigned int idx = 0;
-	unsigned char checksum = 0;
+	अचिन्हित पूर्णांक idx = 0;
+	अचिन्हित अक्षर checksum = 0;
 
 	checksum += infopacket->hb0;
 	checksum += infopacket->hb1;
 	checksum += infopacket->hb2;
 	checksum += infopacket->hb3;
 
-	for (idx = 1; idx <= *payload_size; idx++)
+	क्रम (idx = 1; idx <= *payload_size; idx++)
 		checksum += infopacket->sb[idx];
 
 	/* PB0 = Checksum (one byte complement) */
-	infopacket->sb[0] = (unsigned char)(0x100 - checksum);
+	infopacket->sb[0] = (अचिन्हित अक्षर)(0x100 - checksum);
 
 	infopacket->valid = true;
-}
+पूर्ण
 
-static void build_vrr_infopacket_v1(enum signal_type signal,
-		const struct mod_vrr_params *vrr,
-		struct dc_info_packet *infopacket)
-{
-	/* SPD info packet for FreeSync */
-	unsigned int payload_size = 0;
+अटल व्योम build_vrr_infopacket_v1(क्रमागत संकेत_type संकेत,
+		स्थिर काष्ठा mod_vrr_params *vrr,
+		काष्ठा dc_info_packet *infopacket)
+अणु
+	/* SPD info packet क्रम FreeSync */
+	अचिन्हित पूर्णांक payload_size = 0;
 
-	build_vrr_infopacket_header_v1(signal, infopacket, &payload_size);
+	build_vrr_infopacket_header_v1(संकेत, infopacket, &payload_size);
 	build_vrr_infopacket_data_v1(vrr, infopacket);
 	build_vrr_infopacket_checksum(&payload_size, infopacket);
 
 	infopacket->valid = true;
-}
+पूर्ण
 
-static void build_vrr_infopacket_v2(enum signal_type signal,
-		const struct mod_vrr_params *vrr,
-		enum color_transfer_func app_tf,
-		struct dc_info_packet *infopacket)
-{
-	unsigned int payload_size = 0;
+अटल व्योम build_vrr_infopacket_v2(क्रमागत संकेत_type संकेत,
+		स्थिर काष्ठा mod_vrr_params *vrr,
+		क्रमागत color_transfer_func app_tf,
+		काष्ठा dc_info_packet *infopacket)
+अणु
+	अचिन्हित पूर्णांक payload_size = 0;
 
-	build_vrr_infopacket_header_v2(signal, infopacket, &payload_size);
+	build_vrr_infopacket_header_v2(संकेत, infopacket, &payload_size);
 	build_vrr_infopacket_data_v1(vrr, infopacket);
 
 	build_vrr_infopacket_fs2_data(app_tf, infopacket);
@@ -851,15 +852,15 @@ static void build_vrr_infopacket_v2(enum signal_type signal,
 	build_vrr_infopacket_checksum(&payload_size, infopacket);
 
 	infopacket->valid = true;
-}
-#ifndef TRIM_FSFT
-static void build_vrr_infopacket_fast_transport_data(
+पूर्ण
+#अगर_अघोषित TRIM_FSFT
+अटल व्योम build_vrr_infopacket_fast_transport_data(
 	bool ftActive,
-	unsigned int ftOutputRate,
-	struct dc_info_packet *infopacket)
-{
+	अचिन्हित पूर्णांक ftOutputRate,
+	काष्ठा dc_info_packet *infopacket)
+अणु
 	/* PB9 : bit7 - fast transport Active*/
-	unsigned char activeBit = (ftActive) ? 1 << 7 : 0;
+	अचिन्हित अक्षर activeBit = (ftActive) ? 1 << 7 : 0;
 
 	infopacket->sb[1] &= ~activeBit;  //clear bit
 	infopacket->sb[1] |=  activeBit;  //set bit
@@ -873,190 +874,190 @@ static void build_vrr_infopacket_fast_transport_data(
 	/* PB15 : Target Output Pixel Rate [kHz] - bits 23:16  */
 	infopacket->sb[15] = (ftOutputRate >> 16) & 0xFF;
 
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void build_vrr_infopacket_v3(enum signal_type signal,
-		const struct mod_vrr_params *vrr,
-#ifndef TRIM_FSFT
-		bool ftActive, unsigned int ftOutputRate,
-#endif
-		enum color_transfer_func app_tf,
-		struct dc_info_packet *infopacket)
-{
-	unsigned int payload_size = 0;
+अटल व्योम build_vrr_infopacket_v3(क्रमागत संकेत_type संकेत,
+		स्थिर काष्ठा mod_vrr_params *vrr,
+#अगर_अघोषित TRIM_FSFT
+		bool ftActive, अचिन्हित पूर्णांक ftOutputRate,
+#पूर्ण_अगर
+		क्रमागत color_transfer_func app_tf,
+		काष्ठा dc_info_packet *infopacket)
+अणु
+	अचिन्हित पूर्णांक payload_size = 0;
 
-	build_vrr_infopacket_header_v3(signal, infopacket, &payload_size);
+	build_vrr_infopacket_header_v3(संकेत, infopacket, &payload_size);
 	build_vrr_infopacket_data_v3(vrr, infopacket);
 
 	build_vrr_infopacket_fs2_data(app_tf, infopacket);
 
-#ifndef TRIM_FSFT
+#अगर_अघोषित TRIM_FSFT
 	build_vrr_infopacket_fast_transport_data(
 			ftActive,
 			ftOutputRate,
 			infopacket);
-#endif
+#पूर्ण_अगर
 
 	build_vrr_infopacket_checksum(&payload_size, infopacket);
 
 	infopacket->valid = true;
-}
+पूर्ण
 
-static void build_vrr_infopacket_sdp_v1_3(enum vrr_packet_type packet_type,
-										struct dc_info_packet *infopacket)
-{
-	uint8_t idx = 0, size = 0;
+अटल व्योम build_vrr_infopacket_sdp_v1_3(क्रमागत vrr_packet_type packet_type,
+										काष्ठा dc_info_packet *infopacket)
+अणु
+	uपूर्णांक8_t idx = 0, size = 0;
 
 	size = ((packet_type == PACKET_TYPE_FS_V1) ? 0x08 :
 			(packet_type == PACKET_TYPE_FS_V3) ? 0x10 :
 												0x09);
 
-	for (idx = infopacket->hb2; idx > 1; idx--) // Data Byte Count: 0x1B
+	क्रम (idx = infopacket->hb2; idx > 1; idx--) // Data Byte Count: 0x1B
 		infopacket->sb[idx] = infopacket->sb[idx-1];
 
 	infopacket->sb[1] = size;                         // Length
 	infopacket->sb[0] = (infopacket->hb3 >> 2) & 0x3F;//Version
 	infopacket->hb3   = (0x13 << 2);                  // Header,SDP 1.3
 	infopacket->hb2   = 0x1D;
-}
+पूर्ण
 
-void mod_freesync_build_vrr_infopacket(struct mod_freesync *mod_freesync,
-		const struct dc_stream_state *stream,
-		const struct mod_vrr_params *vrr,
-		enum vrr_packet_type packet_type,
-		enum color_transfer_func app_tf,
-		struct dc_info_packet *infopacket,
+व्योम mod_मुक्तsync_build_vrr_infopacket(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		स्थिर काष्ठा mod_vrr_params *vrr,
+		क्रमागत vrr_packet_type packet_type,
+		क्रमागत color_transfer_func app_tf,
+		काष्ठा dc_info_packet *infopacket,
 		bool pack_sdp_v1_3)
-{
-	/* SPD info packet for FreeSync
-	 * VTEM info packet for HdmiVRR
-	 * Check if Freesync is supported. Return if false. If true,
+अणु
+	/* SPD info packet क्रम FreeSync
+	 * VTEM info packet क्रम HdmiVRR
+	 * Check अगर Freesync is supported. Return अगर false. If true,
 	 * set the corresponding bit in the info packet
 	 */
-	if (!vrr->send_info_frame)
-		return;
+	अगर (!vrr->send_info_frame)
+		वापस;
 
-	switch (packet_type) {
-	case PACKET_TYPE_FS_V3:
-#ifndef TRIM_FSFT
+	चयन (packet_type) अणु
+	हाल PACKET_TYPE_FS_V3:
+#अगर_अघोषित TRIM_FSFT
 		// always populate with pixel rate.
 		build_vrr_infopacket_v3(
-				stream->signal, vrr,
+				stream->संकेत, vrr,
 				stream->timing.flags.FAST_TRANSPORT,
 				(stream->timing.flags.FAST_TRANSPORT) ?
 						stream->timing.fast_transport_output_rate_100hz :
 						stream->timing.pix_clk_100hz,
 				app_tf, infopacket);
-#else
-		build_vrr_infopacket_v3(stream->signal, vrr, app_tf, infopacket);
-#endif
-		break;
-	case PACKET_TYPE_FS_V2:
-		build_vrr_infopacket_v2(stream->signal, vrr, app_tf, infopacket);
-		break;
-	case PACKET_TYPE_VRR:
-	case PACKET_TYPE_FS_V1:
-	default:
-		build_vrr_infopacket_v1(stream->signal, vrr, infopacket);
-	}
+#अन्यथा
+		build_vrr_infopacket_v3(stream->संकेत, vrr, app_tf, infopacket);
+#पूर्ण_अगर
+		अवरोध;
+	हाल PACKET_TYPE_FS_V2:
+		build_vrr_infopacket_v2(stream->संकेत, vrr, app_tf, infopacket);
+		अवरोध;
+	हाल PACKET_TYPE_VRR:
+	हाल PACKET_TYPE_FS_V1:
+	शेष:
+		build_vrr_infopacket_v1(stream->संकेत, vrr, infopacket);
+	पूर्ण
 
-	if (true == pack_sdp_v1_3 &&
-		true == dc_is_dp_signal(stream->signal) &&
+	अगर (true == pack_sdp_v1_3 &&
+		true == dc_is_dp_संकेत(stream->संकेत) &&
 		packet_type != PACKET_TYPE_VRR &&
 		packet_type != PACKET_TYPE_VTEM)
 		build_vrr_infopacket_sdp_v1_3(packet_type, infopacket);
-}
+पूर्ण
 
-void mod_freesync_build_vrr_params(struct mod_freesync *mod_freesync,
-		const struct dc_stream_state *stream,
-		struct mod_freesync_config *in_config,
-		struct mod_vrr_params *in_out_vrr)
-{
-	struct core_freesync *core_freesync = NULL;
-	unsigned long long nominal_field_rate_in_uhz = 0;
-	unsigned long long rounded_nominal_in_uhz = 0;
-	unsigned int refresh_range = 0;
-	unsigned long long min_refresh_in_uhz = 0;
-	unsigned long long max_refresh_in_uhz = 0;
+व्योम mod_मुक्तsync_build_vrr_params(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		काष्ठा mod_मुक्तsync_config *in_config,
+		काष्ठा mod_vrr_params *in_out_vrr)
+अणु
+	काष्ठा core_मुक्तsync *core_मुक्तsync = शून्य;
+	अचिन्हित दीर्घ दीर्घ nominal_field_rate_in_uhz = 0;
+	अचिन्हित दीर्घ दीर्घ rounded_nominal_in_uhz = 0;
+	अचिन्हित पूर्णांक refresh_range = 0;
+	अचिन्हित दीर्घ दीर्घ min_refresh_in_uhz = 0;
+	अचिन्हित दीर्घ दीर्घ max_refresh_in_uhz = 0;
 
-	if (mod_freesync == NULL)
-		return;
+	अगर (mod_मुक्तsync == शून्य)
+		वापस;
 
-	core_freesync = MOD_FREESYNC_TO_CORE(mod_freesync);
+	core_मुक्तsync = MOD_FREESYNC_TO_CORE(mod_मुक्तsync);
 
-	/* Calculate nominal field rate for stream */
+	/* Calculate nominal field rate क्रम stream */
 	nominal_field_rate_in_uhz =
-			mod_freesync_calc_nominal_field_rate(stream);
+			mod_मुक्तsync_calc_nominal_field_rate(stream);
 
 	min_refresh_in_uhz = in_config->min_refresh_in_uhz;
 	max_refresh_in_uhz = in_config->max_refresh_in_uhz;
 
 	/* Full range may be larger than current video timing, so cap at nominal */
-	if (max_refresh_in_uhz > nominal_field_rate_in_uhz)
+	अगर (max_refresh_in_uhz > nominal_field_rate_in_uhz)
 		max_refresh_in_uhz = nominal_field_rate_in_uhz;
 
 	/* Full range may be larger than current video timing, so cap at nominal */
-	if (min_refresh_in_uhz > max_refresh_in_uhz)
+	अगर (min_refresh_in_uhz > max_refresh_in_uhz)
 		min_refresh_in_uhz = max_refresh_in_uhz;
 
-	/* If a monitor reports exactly max refresh of 2x of min, enforce it on nominal */
+	/* If a monitor reports exactly max refresh of 2x of min, enक्रमce it on nominal */
 	rounded_nominal_in_uhz =
-			div_u64(nominal_field_rate_in_uhz + 50000, 100000) * 100000;
-	if (in_config->max_refresh_in_uhz == (2 * in_config->min_refresh_in_uhz) &&
+			भाग_u64(nominal_field_rate_in_uhz + 50000, 100000) * 100000;
+	अगर (in_config->max_refresh_in_uhz == (2 * in_config->min_refresh_in_uhz) &&
 		in_config->max_refresh_in_uhz == rounded_nominal_in_uhz)
-		min_refresh_in_uhz = div_u64(nominal_field_rate_in_uhz, 2);
+		min_refresh_in_uhz = भाग_u64(nominal_field_rate_in_uhz, 2);
 
-	if (!vrr_settings_require_update(core_freesync,
-			in_config, (unsigned int)min_refresh_in_uhz, (unsigned int)max_refresh_in_uhz,
+	अगर (!vrr_settings_require_update(core_मुक्तsync,
+			in_config, (अचिन्हित पूर्णांक)min_refresh_in_uhz, (अचिन्हित पूर्णांक)max_refresh_in_uhz,
 			in_out_vrr))
-		return;
+		वापस;
 
 	in_out_vrr->state = in_config->state;
-	in_out_vrr->send_info_frame = in_config->vsif_supported;
+	in_out_vrr->send_info_frame = in_config->vsअगर_supported;
 
-	if (in_config->state == VRR_STATE_UNSUPPORTED) {
+	अगर (in_config->state == VRR_STATE_UNSUPPORTED) अणु
 		in_out_vrr->state = VRR_STATE_UNSUPPORTED;
 		in_out_vrr->supported = false;
 		in_out_vrr->adjust.v_total_min = stream->timing.v_total;
 		in_out_vrr->adjust.v_total_max = stream->timing.v_total;
 
-		return;
+		वापस;
 
-	} else {
-		in_out_vrr->min_refresh_in_uhz = (unsigned int)min_refresh_in_uhz;
+	पूर्ण अन्यथा अणु
+		in_out_vrr->min_refresh_in_uhz = (अचिन्हित पूर्णांक)min_refresh_in_uhz;
 		in_out_vrr->max_duration_in_us =
 				calc_duration_in_us_from_refresh_in_uhz(
-						(unsigned int)min_refresh_in_uhz);
+						(अचिन्हित पूर्णांक)min_refresh_in_uhz);
 
-		in_out_vrr->max_refresh_in_uhz = (unsigned int)max_refresh_in_uhz;
+		in_out_vrr->max_refresh_in_uhz = (अचिन्हित पूर्णांक)max_refresh_in_uhz;
 		in_out_vrr->min_duration_in_us =
 				calc_duration_in_us_from_refresh_in_uhz(
-						(unsigned int)max_refresh_in_uhz);
+						(अचिन्हित पूर्णांक)max_refresh_in_uhz);
 
-		if (in_config->state == VRR_STATE_ACTIVE_FIXED)
+		अगर (in_config->state == VRR_STATE_ACTIVE_FIXED)
 			in_out_vrr->fixed_refresh_in_uhz = in_config->fixed_refresh_in_uhz;
-		else
+		अन्यथा
 			in_out_vrr->fixed_refresh_in_uhz = 0;
 
-		refresh_range = div_u64(in_out_vrr->max_refresh_in_uhz + 500000, 1000000) -
-+				div_u64(in_out_vrr->min_refresh_in_uhz + 500000, 1000000);
+		refresh_range = भाग_u64(in_out_vrr->max_refresh_in_uhz + 500000, 1000000) -
++				भाग_u64(in_out_vrr->min_refresh_in_uhz + 500000, 1000000);
 
 		in_out_vrr->supported = true;
-	}
+	पूर्ण
 
 	in_out_vrr->fixed.ramping_active = in_config->ramping;
 
 	in_out_vrr->btr.btr_enabled = in_config->btr;
 
-	if (in_out_vrr->max_refresh_in_uhz < (2 * in_out_vrr->min_refresh_in_uhz))
+	अगर (in_out_vrr->max_refresh_in_uhz < (2 * in_out_vrr->min_refresh_in_uhz))
 		in_out_vrr->btr.btr_enabled = false;
-	else {
+	अन्यथा अणु
 		in_out_vrr->btr.margin_in_us = in_out_vrr->max_duration_in_us -
 				2 * in_out_vrr->min_duration_in_us;
-		if (in_out_vrr->btr.margin_in_us > BTR_MAX_MARGIN)
+		अगर (in_out_vrr->btr.margin_in_us > BTR_MAX_MARGIN)
 			in_out_vrr->btr.margin_in_us = BTR_MAX_MARGIN;
-	}
+	पूर्ण
 
 	in_out_vrr->btr.btr_active = false;
 	in_out_vrr->btr.inserted_duration_in_us = 0;
@@ -1065,230 +1066,230 @@ void mod_freesync_build_vrr_params(struct mod_freesync *mod_freesync,
 	in_out_vrr->fixed.fixed_active = false;
 	in_out_vrr->fixed.target_refresh_in_uhz = 0;
 
-	in_out_vrr->btr.mid_point_in_us =
+	in_out_vrr->btr.mid_poपूर्णांक_in_us =
 				(in_out_vrr->min_duration_in_us +
 				 in_out_vrr->max_duration_in_us) / 2;
 
-	if (in_out_vrr->state == VRR_STATE_UNSUPPORTED) {
+	अगर (in_out_vrr->state == VRR_STATE_UNSUPPORTED) अणु
 		in_out_vrr->adjust.v_total_min = stream->timing.v_total;
 		in_out_vrr->adjust.v_total_max = stream->timing.v_total;
-	} else if (in_out_vrr->state == VRR_STATE_DISABLED) {
+	पूर्ण अन्यथा अगर (in_out_vrr->state == VRR_STATE_DISABLED) अणु
 		in_out_vrr->adjust.v_total_min = stream->timing.v_total;
 		in_out_vrr->adjust.v_total_max = stream->timing.v_total;
-	} else if (in_out_vrr->state == VRR_STATE_INACTIVE) {
+	पूर्ण अन्यथा अगर (in_out_vrr->state == VRR_STATE_INACTIVE) अणु
 		in_out_vrr->adjust.v_total_min = stream->timing.v_total;
 		in_out_vrr->adjust.v_total_max = stream->timing.v_total;
-	} else if (in_out_vrr->state == VRR_STATE_ACTIVE_VARIABLE &&
-			refresh_range >= MIN_REFRESH_RANGE) {
+	पूर्ण अन्यथा अगर (in_out_vrr->state == VRR_STATE_ACTIVE_VARIABLE &&
+			refresh_range >= MIN_REFRESH_RANGE) अणु
 
 		in_out_vrr->adjust.v_total_min =
-			mod_freesync_calc_v_total_from_refresh(stream,
+			mod_मुक्तsync_calc_v_total_from_refresh(stream,
 				in_out_vrr->max_refresh_in_uhz);
 		in_out_vrr->adjust.v_total_max =
-			mod_freesync_calc_v_total_from_refresh(stream,
+			mod_मुक्तsync_calc_v_total_from_refresh(stream,
 				in_out_vrr->min_refresh_in_uhz);
-	} else if (in_out_vrr->state == VRR_STATE_ACTIVE_FIXED) {
+	पूर्ण अन्यथा अगर (in_out_vrr->state == VRR_STATE_ACTIVE_FIXED) अणु
 		in_out_vrr->fixed.target_refresh_in_uhz =
 				in_out_vrr->fixed_refresh_in_uhz;
-		if (in_out_vrr->fixed.ramping_active &&
-				in_out_vrr->fixed.fixed_active) {
-			/* Do not update vtotals if ramping is already active
-			 * in order to continue ramp from current refresh.
+		अगर (in_out_vrr->fixed.ramping_active &&
+				in_out_vrr->fixed.fixed_active) अणु
+			/* Do not update vtotals अगर ramping is alपढ़ोy active
+			 * in order to जारी ramp from current refresh.
 			 */
 			in_out_vrr->fixed.fixed_active = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			in_out_vrr->fixed.fixed_active = true;
 			in_out_vrr->adjust.v_total_min =
-				mod_freesync_calc_v_total_from_refresh(stream,
+				mod_मुक्तsync_calc_v_total_from_refresh(stream,
 					in_out_vrr->fixed.target_refresh_in_uhz);
 			in_out_vrr->adjust.v_total_max =
 				in_out_vrr->adjust.v_total_min;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		in_out_vrr->state = VRR_STATE_INACTIVE;
 		in_out_vrr->adjust.v_total_min = stream->timing.v_total;
 		in_out_vrr->adjust.v_total_max = stream->timing.v_total;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void mod_freesync_handle_preflip(struct mod_freesync *mod_freesync,
-		const struct dc_plane_state *plane,
-		const struct dc_stream_state *stream,
-		unsigned int curr_time_stamp_in_us,
-		struct mod_vrr_params *in_out_vrr)
-{
-	struct core_freesync *core_freesync = NULL;
-	unsigned int last_render_time_in_us = 0;
-	unsigned int average_render_time_in_us = 0;
+व्योम mod_मुक्तsync_handle_preflip(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_plane_state *plane,
+		स्थिर काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक curr_समय_stamp_in_us,
+		काष्ठा mod_vrr_params *in_out_vrr)
+अणु
+	काष्ठा core_मुक्तsync *core_मुक्तsync = शून्य;
+	अचिन्हित पूर्णांक last_render_समय_in_us = 0;
+	अचिन्हित पूर्णांक average_render_समय_in_us = 0;
 
-	if (mod_freesync == NULL)
-		return;
+	अगर (mod_मुक्तsync == शून्य)
+		वापस;
 
-	core_freesync = MOD_FREESYNC_TO_CORE(mod_freesync);
+	core_मुक्तsync = MOD_FREESYNC_TO_CORE(mod_मुक्तsync);
 
-	if (in_out_vrr->supported &&
-			in_out_vrr->state == VRR_STATE_ACTIVE_VARIABLE) {
-		unsigned int i = 0;
-		unsigned int oldest_index = plane->time.index + 1;
+	अगर (in_out_vrr->supported &&
+			in_out_vrr->state == VRR_STATE_ACTIVE_VARIABLE) अणु
+		अचिन्हित पूर्णांक i = 0;
+		अचिन्हित पूर्णांक oldest_index = plane->समय.index + 1;
 
-		if (oldest_index >= DC_PLANE_UPDATE_TIMES_MAX)
+		अगर (oldest_index >= DC_PLANE_UPDATE_TIMES_MAX)
 			oldest_index = 0;
 
-		last_render_time_in_us = curr_time_stamp_in_us -
-				plane->time.prev_update_time_in_us;
+		last_render_समय_in_us = curr_समय_stamp_in_us -
+				plane->समय.prev_update_समय_in_us;
 
 		/* Sum off all entries except oldest one */
-		for (i = 0; i < DC_PLANE_UPDATE_TIMES_MAX; i++) {
-			average_render_time_in_us +=
-					plane->time.time_elapsed_in_us[i];
-		}
-		average_render_time_in_us -=
-				plane->time.time_elapsed_in_us[oldest_index];
+		क्रम (i = 0; i < DC_PLANE_UPDATE_TIMES_MAX; i++) अणु
+			average_render_समय_in_us +=
+					plane->समय.समय_elapsed_in_us[i];
+		पूर्ण
+		average_render_समय_in_us -=
+				plane->समय.समय_elapsed_in_us[oldest_index];
 
-		/* Add render time for current flip */
-		average_render_time_in_us += last_render_time_in_us;
-		average_render_time_in_us /= DC_PLANE_UPDATE_TIMES_MAX;
+		/* Add render समय क्रम current flip */
+		average_render_समय_in_us += last_render_समय_in_us;
+		average_render_समय_in_us /= DC_PLANE_UPDATE_TIMES_MAX;
 
-		if (in_out_vrr->btr.btr_enabled) {
-			apply_below_the_range(core_freesync,
+		अगर (in_out_vrr->btr.btr_enabled) अणु
+			apply_below_the_range(core_मुक्तsync,
 					stream,
-					last_render_time_in_us,
+					last_render_समय_in_us,
 					in_out_vrr);
-		} else {
-			apply_fixed_refresh(core_freesync,
+		पूर्ण अन्यथा अणु
+			apply_fixed_refresh(core_मुक्तsync,
 				stream,
-				last_render_time_in_us,
+				last_render_समय_in_us,
 				in_out_vrr);
-		}
+		पूर्ण
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-void mod_freesync_handle_v_update(struct mod_freesync *mod_freesync,
-		const struct dc_stream_state *stream,
-		struct mod_vrr_params *in_out_vrr)
-{
-	struct core_freesync *core_freesync = NULL;
+व्योम mod_मुक्तsync_handle_v_update(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		काष्ठा mod_vrr_params *in_out_vrr)
+अणु
+	काष्ठा core_मुक्तsync *core_मुक्तsync = शून्य;
 
-	if ((mod_freesync == NULL) || (stream == NULL) || (in_out_vrr == NULL))
-		return;
+	अगर ((mod_मुक्तsync == शून्य) || (stream == शून्य) || (in_out_vrr == शून्य))
+		वापस;
 
-	core_freesync = MOD_FREESYNC_TO_CORE(mod_freesync);
+	core_मुक्तsync = MOD_FREESYNC_TO_CORE(mod_मुक्तsync);
 
-	if (in_out_vrr->supported == false)
-		return;
+	अगर (in_out_vrr->supported == false)
+		वापस;
 
 	/* Below the Range Logic */
 
-	/* Only execute if in fullscreen mode */
-	if (in_out_vrr->state == VRR_STATE_ACTIVE_VARIABLE &&
-					in_out_vrr->btr.btr_active) {
-		/* TODO: pass in flag for Pre-DCE12 ASIC
-		 * in order for frame variable duration to take affect,
-		 * it needs to be done one VSYNC early, which is at
+	/* Only execute अगर in fullscreen mode */
+	अगर (in_out_vrr->state == VRR_STATE_ACTIVE_VARIABLE &&
+					in_out_vrr->btr.btr_active) अणु
+		/* TODO: pass in flag क्रम Pre-DCE12 ASIC
+		 * in order क्रम frame variable duration to take affect,
+		 * it needs to be करोne one VSYNC early, which is at
 		 * frameCounter == 1.
 		 * For DCE12 and newer updates to V_TOTAL_MIN/MAX
 		 * will take affect on current frame
 		 */
-		if (in_out_vrr->btr.frames_to_insert ==
-				in_out_vrr->btr.frame_counter) {
+		अगर (in_out_vrr->btr.frames_to_insert ==
+				in_out_vrr->btr.frame_counter) अणु
 			in_out_vrr->adjust.v_total_min =
 				calc_v_total_from_duration(stream,
 				in_out_vrr,
 				in_out_vrr->btr.inserted_duration_in_us);
 			in_out_vrr->adjust.v_total_max =
 				in_out_vrr->adjust.v_total_min;
-		}
+		पूर्ण
 
-		if (in_out_vrr->btr.frame_counter > 0)
+		अगर (in_out_vrr->btr.frame_counter > 0)
 			in_out_vrr->btr.frame_counter--;
 
 		/* Restore FreeSync */
-		if (in_out_vrr->btr.frame_counter == 0) {
+		अगर (in_out_vrr->btr.frame_counter == 0) अणु
 			in_out_vrr->adjust.v_total_min =
-				mod_freesync_calc_v_total_from_refresh(stream,
+				mod_मुक्तsync_calc_v_total_from_refresh(stream,
 				in_out_vrr->max_refresh_in_uhz);
 			in_out_vrr->adjust.v_total_max =
-				mod_freesync_calc_v_total_from_refresh(stream,
+				mod_मुक्तsync_calc_v_total_from_refresh(stream,
 				in_out_vrr->min_refresh_in_uhz);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* If in fullscreen freesync mode or in video, do not program
-	 * static screen ramp values
+	/* If in fullscreen मुक्तsync mode or in video, करो not program
+	 * अटल screen ramp values
 	 */
-	if (in_out_vrr->state == VRR_STATE_ACTIVE_VARIABLE)
+	अगर (in_out_vrr->state == VRR_STATE_ACTIVE_VARIABLE)
 		in_out_vrr->fixed.ramping_active = false;
 
 	/* Gradual Static Screen Ramping Logic
-	 * Execute if ramp is active and user enabled freesync static screen
+	 * Execute अगर ramp is active and user enabled मुक्तsync अटल screen
 	 */
-	if (in_out_vrr->state == VRR_STATE_ACTIVE_FIXED &&
-				in_out_vrr->fixed.ramping_active) {
-		update_v_total_for_static_ramp(
-				core_freesync, stream, in_out_vrr);
-	}
-}
+	अगर (in_out_vrr->state == VRR_STATE_ACTIVE_FIXED &&
+				in_out_vrr->fixed.ramping_active) अणु
+		update_v_total_क्रम_अटल_ramp(
+				core_मुक्तsync, stream, in_out_vrr);
+	पूर्ण
+पूर्ण
 
-void mod_freesync_get_settings(struct mod_freesync *mod_freesync,
-		const struct mod_vrr_params *vrr,
-		unsigned int *v_total_min, unsigned int *v_total_max,
-		unsigned int *event_triggers,
-		unsigned int *window_min, unsigned int *window_max,
-		unsigned int *lfc_mid_point_in_us,
-		unsigned int *inserted_frames,
-		unsigned int *inserted_duration_in_us)
-{
-	if (mod_freesync == NULL)
-		return;
+व्योम mod_मुक्तsync_get_settings(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा mod_vrr_params *vrr,
+		अचिन्हित पूर्णांक *v_total_min, अचिन्हित पूर्णांक *v_total_max,
+		अचिन्हित पूर्णांक *event_triggers,
+		अचिन्हित पूर्णांक *winकरोw_min, अचिन्हित पूर्णांक *winकरोw_max,
+		अचिन्हित पूर्णांक *lfc_mid_poपूर्णांक_in_us,
+		अचिन्हित पूर्णांक *inserted_frames,
+		अचिन्हित पूर्णांक *inserted_duration_in_us)
+अणु
+	अगर (mod_मुक्तsync == शून्य)
+		वापस;
 
-	if (vrr->supported) {
+	अगर (vrr->supported) अणु
 		*v_total_min = vrr->adjust.v_total_min;
 		*v_total_max = vrr->adjust.v_total_max;
 		*event_triggers = 0;
-		*lfc_mid_point_in_us = vrr->btr.mid_point_in_us;
+		*lfc_mid_poपूर्णांक_in_us = vrr->btr.mid_poपूर्णांक_in_us;
 		*inserted_frames = vrr->btr.frames_to_insert;
 		*inserted_duration_in_us = vrr->btr.inserted_duration_in_us;
-	}
-}
+	पूर्ण
+पूर्ण
 
-unsigned long long mod_freesync_calc_nominal_field_rate(
-			const struct dc_stream_state *stream)
-{
-	unsigned long long nominal_field_rate_in_uhz = 0;
-	unsigned int total = stream->timing.h_total * stream->timing.v_total;
+अचिन्हित दीर्घ दीर्घ mod_मुक्तsync_calc_nominal_field_rate(
+			स्थिर काष्ठा dc_stream_state *stream)
+अणु
+	अचिन्हित दीर्घ दीर्घ nominal_field_rate_in_uhz = 0;
+	अचिन्हित पूर्णांक total = stream->timing.h_total * stream->timing.v_total;
 
-	/* Calculate nominal field rate for stream, rounded up to nearest integer */
+	/* Calculate nominal field rate क्रम stream, rounded up to nearest पूर्णांकeger */
 	nominal_field_rate_in_uhz = stream->timing.pix_clk_100hz;
 	nominal_field_rate_in_uhz *= 100000000ULL;
 
-	nominal_field_rate_in_uhz =	div_u64(nominal_field_rate_in_uhz, total);
+	nominal_field_rate_in_uhz =	भाग_u64(nominal_field_rate_in_uhz, total);
 
-	return nominal_field_rate_in_uhz;
-}
+	वापस nominal_field_rate_in_uhz;
+पूर्ण
 
-unsigned long long mod_freesync_calc_field_rate_from_timing(
-		unsigned int vtotal, unsigned int htotal, unsigned int pix_clk)
-{
-	unsigned long long field_rate_in_uhz = 0;
-	unsigned int total = htotal * vtotal;
+अचिन्हित दीर्घ दीर्घ mod_मुक्तsync_calc_field_rate_from_timing(
+		अचिन्हित पूर्णांक vtotal, अचिन्हित पूर्णांक htotal, अचिन्हित पूर्णांक pix_clk)
+अणु
+	अचिन्हित दीर्घ दीर्घ field_rate_in_uhz = 0;
+	अचिन्हित पूर्णांक total = htotal * vtotal;
 
-	/* Calculate nominal field rate for stream, rounded up to nearest integer */
+	/* Calculate nominal field rate क्रम stream, rounded up to nearest पूर्णांकeger */
 	field_rate_in_uhz = pix_clk;
 	field_rate_in_uhz *= 1000000ULL;
 
-	field_rate_in_uhz =	div_u64(field_rate_in_uhz, total);
+	field_rate_in_uhz =	भाग_u64(field_rate_in_uhz, total);
 
-	return field_rate_in_uhz;
-}
+	वापस field_rate_in_uhz;
+पूर्ण
 
-bool mod_freesync_is_valid_range(uint32_t min_refresh_cap_in_uhz,
-		uint32_t max_refresh_cap_in_uhz,
-		uint32_t nominal_field_rate_in_uhz) 
-{
+bool mod_मुक्तsync_is_valid_range(uपूर्णांक32_t min_refresh_cap_in_uhz,
+		uपूर्णांक32_t max_refresh_cap_in_uhz,
+		uपूर्णांक32_t nominal_field_rate_in_uhz) 
+अणु
 
 	/* Typically nominal refresh calculated can have some fractional part.
-	 * Allow for some rounding error of actual video timing by taking floor
+	 * Allow क्रम some rounding error of actual video timing by taking न्यूनमान
 	 * of caps and request. Round the nominal refresh rate.
 	 *
 	 * Dividing will convert everything to units in Hz although input
@@ -1311,36 +1312,36 @@ bool mod_freesync_is_valid_range(uint32_t min_refresh_cap_in_uhz,
 	 * Example 3. Caps    Min = 40 Hz, Max = 144 Hz
 	 *            Request Min = 40 Hz, Max = 144 Hz
 	 *                    Nominal = 120.xx Hz rounded to 120 Hz
-	 *            This function should return NOT valid since the requested
+	 *            This function should वापस NOT valid since the requested
 	 *            max is greater than current timing's nominal
 	 *
 	 * Example 4. Caps    Min = 40 Hz, Max = 120 Hz
 	 *            Request Min = 40 Hz, Max = 120 Hz
 	 *                    Nominal = 144.xx Hz rounded to 144 Hz
-	 *            This function should return NOT valid since the nominal
+	 *            This function should वापस NOT valid since the nominal
 	 *            is greater than the capability's max refresh
 	 */
 	nominal_field_rate_in_uhz =
-			div_u64(nominal_field_rate_in_uhz + 500000, 1000000);
+			भाग_u64(nominal_field_rate_in_uhz + 500000, 1000000);
 	min_refresh_cap_in_uhz /= 1000000;
 	max_refresh_cap_in_uhz /= 1000000;
 
 	/* Check nominal is within range */
-	if (nominal_field_rate_in_uhz > max_refresh_cap_in_uhz ||
+	अगर (nominal_field_rate_in_uhz > max_refresh_cap_in_uhz ||
 		nominal_field_rate_in_uhz < min_refresh_cap_in_uhz)
-		return false;
+		वापस false;
 
 	/* If nominal is less than max, limit the max allowed refresh rate */
-	if (nominal_field_rate_in_uhz < max_refresh_cap_in_uhz)
+	अगर (nominal_field_rate_in_uhz < max_refresh_cap_in_uhz)
 		max_refresh_cap_in_uhz = nominal_field_rate_in_uhz;
 
 	/* Check min is within range */
-	if (min_refresh_cap_in_uhz > max_refresh_cap_in_uhz)
-		return false;
+	अगर (min_refresh_cap_in_uhz > max_refresh_cap_in_uhz)
+		वापस false;
 
-	/* For variable range, check for at least 10 Hz range */
-	if (nominal_field_rate_in_uhz - min_refresh_cap_in_uhz < 10)
-		return false;
+	/* For variable range, check क्रम at least 10 Hz range */
+	अगर (nominal_field_rate_in_uhz - min_refresh_cap_in_uhz < 10)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण

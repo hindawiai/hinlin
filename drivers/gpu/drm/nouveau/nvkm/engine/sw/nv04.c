@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,119 +22,119 @@
  *
  * Authors: Ben Skeggs
  */
-#define nv04_sw_chan(p) container_of((p), struct nv04_sw_chan, base)
-#include "priv.h"
-#include "chan.h"
-#include "nvsw.h"
+#घोषणा nv04_sw_chan(p) container_of((p), काष्ठा nv04_sw_chan, base)
+#समावेश "priv.h"
+#समावेश "chan.h"
+#समावेश "nvsw.h"
 
-#include <nvif/class.h>
-#include <nvif/if0004.h>
-#include <nvif/ioctl.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/अगर0004.h>
+#समावेश <nvअगर/ioctl.h>
+#समावेश <nvअगर/unpack.h>
 
-struct nv04_sw_chan {
-	struct nvkm_sw_chan base;
+काष्ठा nv04_sw_chan अणु
+	काष्ठा nvkm_sw_chan base;
 	atomic_t ref;
-};
+पूर्ण;
 
 /*******************************************************************************
  * software object classes
  ******************************************************************************/
 
-static int
-nv04_nvsw_mthd_get_ref(struct nvkm_nvsw *nvsw, void *data, u32 size)
-{
-	struct nv04_sw_chan *chan = nv04_sw_chan(nvsw->chan);
-	union {
-		struct nv04_nvsw_get_ref_v0 v0;
-	} *args = data;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+nv04_nvsw_mthd_get_ref(काष्ठा nvkm_nvsw *nvsw, व्योम *data, u32 size)
+अणु
+	काष्ठा nv04_sw_chan *chan = nv04_sw_chan(nvsw->chan);
+	जोड़ अणु
+		काष्ठा nv04_nvsw_get_ref_v0 v0;
+	पूर्ण *args = data;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		args->v0.ref = atomic_read(&chan->ref);
-	}
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
+		args->v0.ref = atomic_पढ़ो(&chan->ref);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-nv04_nvsw_mthd(struct nvkm_nvsw *nvsw, u32 mthd, void *data, u32 size)
-{
-	switch (mthd) {
-	case NV04_NVSW_GET_REF:
-		return nv04_nvsw_mthd_get_ref(nvsw, data, size);
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक
+nv04_nvsw_mthd(काष्ठा nvkm_nvsw *nvsw, u32 mthd, व्योम *data, u32 size)
+अणु
+	चयन (mthd) अणु
+	हाल NV04_NVSW_GET_REF:
+		वापस nv04_nvsw_mthd_get_ref(nvsw, data, size);
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static const struct nvkm_nvsw_func
-nv04_nvsw = {
+अटल स्थिर काष्ठा nvkm_nvsw_func
+nv04_nvsw = अणु
 	.mthd = nv04_nvsw_mthd,
-};
+पूर्ण;
 
-static int
-nv04_nvsw_new(struct nvkm_sw_chan *chan, const struct nvkm_oclass *oclass,
-	      void *data, u32 size, struct nvkm_object **pobject)
-{
-	return nvkm_nvsw_new_(&nv04_nvsw, chan, oclass, data, size, pobject);
-}
+अटल पूर्णांक
+nv04_nvsw_new(काष्ठा nvkm_sw_chan *chan, स्थिर काष्ठा nvkm_oclass *oclass,
+	      व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
+अणु
+	वापस nvkm_nvsw_new_(&nv04_nvsw, chan, oclass, data, size, pobject);
+पूर्ण
 
 /*******************************************************************************
  * software context
  ******************************************************************************/
 
-static bool
-nv04_sw_chan_mthd(struct nvkm_sw_chan *base, int subc, u32 mthd, u32 data)
-{
-	struct nv04_sw_chan *chan = nv04_sw_chan(base);
+अटल bool
+nv04_sw_chan_mthd(काष्ठा nvkm_sw_chan *base, पूर्णांक subc, u32 mthd, u32 data)
+अणु
+	काष्ठा nv04_sw_chan *chan = nv04_sw_chan(base);
 
-	switch (mthd) {
-	case 0x0150:
+	चयन (mthd) अणु
+	हाल 0x0150:
 		atomic_set(&chan->ref, data);
-		return true;
-	default:
-		break;
-	}
+		वापस true;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static const struct nvkm_sw_chan_func
-nv04_sw_chan = {
+अटल स्थिर काष्ठा nvkm_sw_chan_func
+nv04_sw_chan = अणु
 	.mthd = nv04_sw_chan_mthd,
-};
+पूर्ण;
 
-static int
-nv04_sw_chan_new(struct nvkm_sw *sw, struct nvkm_fifo_chan *fifo,
-		 const struct nvkm_oclass *oclass, struct nvkm_object **pobject)
-{
-	struct nv04_sw_chan *chan;
+अटल पूर्णांक
+nv04_sw_chan_new(काष्ठा nvkm_sw *sw, काष्ठा nvkm_fअगरo_chan *fअगरo,
+		 स्थिर काष्ठा nvkm_oclass *oclass, काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nv04_sw_chan *chan;
 
-	if (!(chan = kzalloc(sizeof(*chan), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(chan = kzalloc(माप(*chan), GFP_KERNEL)))
+		वापस -ENOMEM;
 	atomic_set(&chan->ref, 0);
 	*pobject = &chan->base.object;
 
-	return nvkm_sw_chan_ctor(&nv04_sw_chan, sw, fifo, oclass, &chan->base);
-}
+	वापस nvkm_sw_chan_ctor(&nv04_sw_chan, sw, fअगरo, oclass, &chan->base);
+पूर्ण
 
 /*******************************************************************************
  * software engine/subdev functions
  ******************************************************************************/
 
-static const struct nvkm_sw_func
-nv04_sw = {
+अटल स्थिर काष्ठा nvkm_sw_func
+nv04_sw = अणु
 	.chan_new = nv04_sw_chan_new,
-	.sclass = {
-		{ nv04_nvsw_new, { -1, -1, NVIF_CLASS_SW_NV04 } },
-		{}
-	}
-};
+	.sclass = अणु
+		अणु nv04_nvsw_new, अणु -1, -1, NVIF_CLASS_SW_NV04 पूर्ण पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-nv04_sw_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_sw **psw)
-{
-	return nvkm_sw_new_(&nv04_sw, device, type, inst, psw);
-}
+पूर्णांक
+nv04_sw_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_sw **psw)
+अणु
+	वापस nvkm_sw_new_(&nv04_sw, device, type, inst, psw);
+पूर्ण

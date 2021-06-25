@@ -1,185 +1,186 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018 BayLibre, SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
-#include <linux/module.h>
-#include "clk-regmap.h"
+#समावेश <linux/module.h>
+#समावेश "clk-regmap.h"
 
-static int clk_regmap_gate_endisable(struct clk_hw *hw, int enable)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct clk_regmap_gate_data *gate = clk_get_regmap_gate_data(clk);
-	int set = gate->flags & CLK_GATE_SET_TO_DISABLE ? 1 : 0;
+अटल पूर्णांक clk_regmap_gate_endisable(काष्ठा clk_hw *hw, पूर्णांक enable)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा clk_regmap_gate_data *gate = clk_get_regmap_gate_data(clk);
+	पूर्णांक set = gate->flags & CLK_GATE_SET_TO_DISABLE ? 1 : 0;
 
 	set ^= enable;
 
-	return regmap_update_bits(clk->map, gate->offset, BIT(gate->bit_idx),
+	वापस regmap_update_bits(clk->map, gate->offset, BIT(gate->bit_idx),
 				  set ? BIT(gate->bit_idx) : 0);
-}
+पूर्ण
 
-static int clk_regmap_gate_enable(struct clk_hw *hw)
-{
-	return clk_regmap_gate_endisable(hw, 1);
-}
+अटल पूर्णांक clk_regmap_gate_enable(काष्ठा clk_hw *hw)
+अणु
+	वापस clk_regmap_gate_endisable(hw, 1);
+पूर्ण
 
-static void clk_regmap_gate_disable(struct clk_hw *hw)
-{
+अटल व्योम clk_regmap_gate_disable(काष्ठा clk_hw *hw)
+अणु
 	clk_regmap_gate_endisable(hw, 0);
-}
+पूर्ण
 
-static int clk_regmap_gate_is_enabled(struct clk_hw *hw)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct clk_regmap_gate_data *gate = clk_get_regmap_gate_data(clk);
-	unsigned int val;
+अटल पूर्णांक clk_regmap_gate_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा clk_regmap_gate_data *gate = clk_get_regmap_gate_data(clk);
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(clk->map, gate->offset, &val);
-	if (gate->flags & CLK_GATE_SET_TO_DISABLE)
+	regmap_पढ़ो(clk->map, gate->offset, &val);
+	अगर (gate->flags & CLK_GATE_SET_TO_DISABLE)
 		val ^= BIT(gate->bit_idx);
 
 	val &= BIT(gate->bit_idx);
 
-	return val ? 1 : 0;
-}
+	वापस val ? 1 : 0;
+पूर्ण
 
-const struct clk_ops clk_regmap_gate_ops = {
+स्थिर काष्ठा clk_ops clk_regmap_gate_ops = अणु
 	.enable = clk_regmap_gate_enable,
 	.disable = clk_regmap_gate_disable,
 	.is_enabled = clk_regmap_gate_is_enabled,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(clk_regmap_gate_ops);
 
-const struct clk_ops clk_regmap_gate_ro_ops = {
+स्थिर काष्ठा clk_ops clk_regmap_gate_ro_ops = अणु
 	.is_enabled = clk_regmap_gate_is_enabled,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(clk_regmap_gate_ro_ops);
 
-static unsigned long clk_regmap_div_recalc_rate(struct clk_hw *hw,
-						unsigned long prate)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct clk_regmap_div_data *div = clk_get_regmap_div_data(clk);
-	unsigned int val;
-	int ret;
+अटल अचिन्हित दीर्घ clk_regmap_भाग_recalc_rate(काष्ठा clk_hw *hw,
+						अचिन्हित दीर्घ prate)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा clk_regmap_भाग_data *भाग = clk_get_regmap_भाग_data(clk);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(clk->map, div->offset, &val);
-	if (ret)
-		/* Gives a hint that something is wrong */
-		return 0;
+	ret = regmap_पढ़ो(clk->map, भाग->offset, &val);
+	अगर (ret)
+		/* Gives a hपूर्णांक that something is wrong */
+		वापस 0;
 
-	val >>= div->shift;
-	val &= clk_div_mask(div->width);
-	return divider_recalc_rate(hw, prate, val, div->table, div->flags,
-				   div->width);
-}
+	val >>= भाग->shअगरt;
+	val &= clk_भाग_mask(भाग->width);
+	वापस भागider_recalc_rate(hw, prate, val, भाग->table, भाग->flags,
+				   भाग->width);
+पूर्ण
 
-static long clk_regmap_div_round_rate(struct clk_hw *hw, unsigned long rate,
-				      unsigned long *prate)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct clk_regmap_div_data *div = clk_get_regmap_div_data(clk);
-	unsigned int val;
-	int ret;
+अटल दीर्घ clk_regmap_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				      अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा clk_regmap_भाग_data *भाग = clk_get_regmap_भाग_data(clk);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	/* if read only, just return current value */
-	if (div->flags & CLK_DIVIDER_READ_ONLY) {
-		ret = regmap_read(clk->map, div->offset, &val);
-		if (ret)
-			/* Gives a hint that something is wrong */
-			return 0;
+	/* अगर पढ़ो only, just वापस current value */
+	अगर (भाग->flags & CLK_DIVIDER_READ_ONLY) अणु
+		ret = regmap_पढ़ो(clk->map, भाग->offset, &val);
+		अगर (ret)
+			/* Gives a hपूर्णांक that something is wrong */
+			वापस 0;
 
-		val >>= div->shift;
-		val &= clk_div_mask(div->width);
+		val >>= भाग->shअगरt;
+		val &= clk_भाग_mask(भाग->width);
 
-		return divider_ro_round_rate(hw, rate, prate, div->table,
-					     div->width, div->flags, val);
-	}
+		वापस भागider_ro_round_rate(hw, rate, prate, भाग->table,
+					     भाग->width, भाग->flags, val);
+	पूर्ण
 
-	return divider_round_rate(hw, rate, prate, div->table, div->width,
-				  div->flags);
-}
+	वापस भागider_round_rate(hw, rate, prate, भाग->table, भाग->width,
+				  भाग->flags);
+पूर्ण
 
-static int clk_regmap_div_set_rate(struct clk_hw *hw, unsigned long rate,
-				   unsigned long parent_rate)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct clk_regmap_div_data *div = clk_get_regmap_div_data(clk);
-	unsigned int val;
-	int ret;
+अटल पूर्णांक clk_regmap_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा clk_regmap_भाग_data *भाग = clk_get_regmap_भाग_data(clk);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = divider_get_val(rate, parent_rate, div->table, div->width,
-			      div->flags);
-	if (ret < 0)
-		return ret;
+	ret = भागider_get_val(rate, parent_rate, भाग->table, भाग->width,
+			      भाग->flags);
+	अगर (ret < 0)
+		वापस ret;
 
-	val = (unsigned int)ret << div->shift;
-	return regmap_update_bits(clk->map, div->offset,
-				  clk_div_mask(div->width) << div->shift, val);
-};
+	val = (अचिन्हित पूर्णांक)ret << भाग->shअगरt;
+	वापस regmap_update_bits(clk->map, भाग->offset,
+				  clk_भाग_mask(भाग->width) << भाग->shअगरt, val);
+पूर्ण;
 
-/* Would prefer clk_regmap_div_ro_ops but clashes with qcom */
+/* Would prefer clk_regmap_भाग_ro_ops but clashes with qcom */
 
-const struct clk_ops clk_regmap_divider_ops = {
-	.recalc_rate = clk_regmap_div_recalc_rate,
-	.round_rate = clk_regmap_div_round_rate,
-	.set_rate = clk_regmap_div_set_rate,
-};
-EXPORT_SYMBOL_GPL(clk_regmap_divider_ops);
+स्थिर काष्ठा clk_ops clk_regmap_भागider_ops = अणु
+	.recalc_rate = clk_regmap_भाग_recalc_rate,
+	.round_rate = clk_regmap_भाग_round_rate,
+	.set_rate = clk_regmap_भाग_set_rate,
+पूर्ण;
+EXPORT_SYMBOL_GPL(clk_regmap_भागider_ops);
 
-const struct clk_ops clk_regmap_divider_ro_ops = {
-	.recalc_rate = clk_regmap_div_recalc_rate,
-	.round_rate = clk_regmap_div_round_rate,
-};
-EXPORT_SYMBOL_GPL(clk_regmap_divider_ro_ops);
+स्थिर काष्ठा clk_ops clk_regmap_भागider_ro_ops = अणु
+	.recalc_rate = clk_regmap_भाग_recalc_rate,
+	.round_rate = clk_regmap_भाग_round_rate,
+पूर्ण;
+EXPORT_SYMBOL_GPL(clk_regmap_भागider_ro_ops);
 
-static u8 clk_regmap_mux_get_parent(struct clk_hw *hw)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct clk_regmap_mux_data *mux = clk_get_regmap_mux_data(clk);
-	unsigned int val;
-	int ret;
+अटल u8 clk_regmap_mux_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा clk_regmap_mux_data *mux = clk_get_regmap_mux_data(clk);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(clk->map, mux->offset, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(clk->map, mux->offset, &val);
+	अगर (ret)
+		वापस ret;
 
-	val >>= mux->shift;
+	val >>= mux->shअगरt;
 	val &= mux->mask;
-	return clk_mux_val_to_index(hw, mux->table, mux->flags, val);
-}
+	वापस clk_mux_val_to_index(hw, mux->table, mux->flags, val);
+पूर्ण
 
-static int clk_regmap_mux_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct clk_regmap_mux_data *mux = clk_get_regmap_mux_data(clk);
-	unsigned int val = clk_mux_index_to_val(mux->table, mux->flags, index);
+अटल पूर्णांक clk_regmap_mux_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा clk_regmap_mux_data *mux = clk_get_regmap_mux_data(clk);
+	अचिन्हित पूर्णांक val = clk_mux_index_to_val(mux->table, mux->flags, index);
 
-	return regmap_update_bits(clk->map, mux->offset,
-				  mux->mask << mux->shift,
-				  val << mux->shift);
-}
+	वापस regmap_update_bits(clk->map, mux->offset,
+				  mux->mask << mux->shअगरt,
+				  val << mux->shअगरt);
+पूर्ण
 
-static int clk_regmap_mux_determine_rate(struct clk_hw *hw,
-					 struct clk_rate_request *req)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct clk_regmap_mux_data *mux = clk_get_regmap_mux_data(clk);
+अटल पूर्णांक clk_regmap_mux_determine_rate(काष्ठा clk_hw *hw,
+					 काष्ठा clk_rate_request *req)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा clk_regmap_mux_data *mux = clk_get_regmap_mux_data(clk);
 
-	return clk_mux_determine_rate_flags(hw, req, mux->flags);
-}
+	वापस clk_mux_determine_rate_flags(hw, req, mux->flags);
+पूर्ण
 
-const struct clk_ops clk_regmap_mux_ops = {
+स्थिर काष्ठा clk_ops clk_regmap_mux_ops = अणु
 	.get_parent = clk_regmap_mux_get_parent,
 	.set_parent = clk_regmap_mux_set_parent,
 	.determine_rate = clk_regmap_mux_determine_rate,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(clk_regmap_mux_ops);
 
-const struct clk_ops clk_regmap_mux_ro_ops = {
+स्थिर काष्ठा clk_ops clk_regmap_mux_ro_ops = अणु
 	.get_parent = clk_regmap_mux_get_parent,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(clk_regmap_mux_ro_ops);
 
 MODULE_DESCRIPTION("Amlogic regmap backed clock driver");

@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 1999 - 2008 Intel Corporation. */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include "ixgb_hw.h"
-#include "ixgb_ee.h"
+#समावेश "ixgb_hw.h"
+#समावेश "ixgb_ee.h"
 /* Local prototypes */
-static u16 ixgb_shift_in_bits(struct ixgb_hw *hw);
+अटल u16 ixgb_shअगरt_in_bits(काष्ठा ixgb_hw *hw);
 
-static void ixgb_shift_out_bits(struct ixgb_hw *hw,
+अटल व्योम ixgb_shअगरt_out_bits(काष्ठा ixgb_hw *hw,
 				u16 data,
 				u16 count);
-static void ixgb_standby_eeprom(struct ixgb_hw *hw);
+अटल व्योम ixgb_standby_eeprom(काष्ठा ixgb_hw *hw);
 
-static bool ixgb_wait_eeprom_command(struct ixgb_hw *hw);
+अटल bool ixgb_रुको_eeprom_command(काष्ठा ixgb_hw *hw);
 
-static void ixgb_cleanup_eeprom(struct ixgb_hw *hw);
+अटल व्योम ixgb_cleanup_eeprom(काष्ठा ixgb_hw *hw);
 
 /******************************************************************************
- * Raises the EEPROM's clock input.
+ * Raises the EEPROM's घड़ी input.
  *
  * hw - Struct containing variables accessed by shared code
  * eecd_reg - EECD's current value
  *****************************************************************************/
-static void
-ixgb_raise_clock(struct ixgb_hw *hw,
+अटल व्योम
+ixgb_उठाओ_घड़ी(काष्ठा ixgb_hw *hw,
 		  u32 *eecd_reg)
-{
-	/* Raise the clock input to the EEPROM (by setting the SK bit), and then
-	 *  wait 50 microseconds.
+अणु
+	/* Raise the घड़ी input to the EEPROM (by setting the SK bit), and then
+	 *  रुको 50 microseconds.
 	 */
 	*eecd_reg = *eecd_reg | IXGB_EECD_SK;
 	IXGB_WRITE_REG(hw, EECD, *eecd_reg);
 	IXGB_WRITE_FLUSH(hw);
 	udelay(50);
-}
+पूर्ण
 
 /******************************************************************************
- * Lowers the EEPROM's clock input.
+ * Lowers the EEPROM's घड़ी input.
  *
  * hw - Struct containing variables accessed by shared code
  * eecd_reg - EECD's current value
  *****************************************************************************/
-static void
-ixgb_lower_clock(struct ixgb_hw *hw,
+अटल व्योम
+ixgb_lower_घड़ी(काष्ठा ixgb_hw *hw,
 		  u32 *eecd_reg)
-{
-	/* Lower the clock input to the EEPROM (by clearing the SK bit), and then
-	 * wait 50 microseconds.
+अणु
+	/* Lower the घड़ी input to the EEPROM (by clearing the SK bit), and then
+	 * रुको 50 microseconds.
 	 */
 	*eecd_reg = *eecd_reg & ~IXGB_EECD_SK;
 	IXGB_WRITE_REG(hw, EECD, *eecd_reg);
 	IXGB_WRITE_FLUSH(hw);
 	udelay(50);
-}
+पूर्ण
 
 /******************************************************************************
- * Shift data bits out to the EEPROM.
+ * Shअगरt data bits out to the EEPROM.
  *
  * hw - Struct containing variables accessed by shared code
  * data - data to send to the EEPROM
- * count - number of bits to shift out
+ * count - number of bits to shअगरt out
  *****************************************************************************/
-static void
-ixgb_shift_out_bits(struct ixgb_hw *hw,
+अटल व्योम
+ixgb_shअगरt_out_bits(काष्ठा ixgb_hw *hw,
 					 u16 data,
 					 u16 count)
-{
+अणु
 	u32 eecd_reg;
 	u32 mask;
 
-	/* We need to shift "count" bits out to the EEPROM. So, value in the
-	 * "data" parameter will be shifted out to the EEPROM one bit at a time.
-	 * In order to do this, "data" must be broken down into bits.
+	/* We need to shअगरt "count" bits out to the EEPROM. So, value in the
+	 * "data" parameter will be shअगरted out to the EEPROM one bit at a समय.
+	 * In order to करो this, "data" must be broken करोwn पूर्णांकo bits.
 	 */
 	mask = 0x01 << (count - 1);
 	eecd_reg = IXGB_READ_REG(hw, EECD);
 	eecd_reg &= ~(IXGB_EECD_DO | IXGB_EECD_DI);
-	do {
-		/* A "1" is shifted out to the EEPROM by setting bit "DI" to a "1",
-		 * and then raising and then lowering the clock (the SK bit controls
-		 * the clock input to the EEPROM).  A "0" is shifted out to the EEPROM
-		 * by setting "DI" to "0" and then raising and then lowering the clock.
+	करो अणु
+		/* A "1" is shअगरted out to the EEPROM by setting bit "DI" to a "1",
+		 * and then raising and then lowering the घड़ी (the SK bit controls
+		 * the घड़ी input to the EEPROM).  A "0" is shअगरted out to the EEPROM
+		 * by setting "DI" to "0" and then raising and then lowering the घड़ी.
 		 */
 		eecd_reg &= ~IXGB_EECD_DI;
 
-		if (data & mask)
+		अगर (data & mask)
 			eecd_reg |= IXGB_EECD_DI;
 
 		IXGB_WRITE_REG(hw, EECD, eecd_reg);
@@ -93,33 +94,33 @@ ixgb_shift_out_bits(struct ixgb_hw *hw,
 
 		udelay(50);
 
-		ixgb_raise_clock(hw, &eecd_reg);
-		ixgb_lower_clock(hw, &eecd_reg);
+		ixgb_उठाओ_घड़ी(hw, &eecd_reg);
+		ixgb_lower_घड़ी(hw, &eecd_reg);
 
 		mask = mask >> 1;
 
-	} while (mask);
+	पूर्ण जबतक (mask);
 
 	/* We leave the "DI" bit set to "0" when we leave this routine. */
 	eecd_reg &= ~IXGB_EECD_DI;
 	IXGB_WRITE_REG(hw, EECD, eecd_reg);
-}
+पूर्ण
 
 /******************************************************************************
- * Shift data bits in from the EEPROM
+ * Shअगरt data bits in from the EEPROM
  *
  * hw - Struct containing variables accessed by shared code
  *****************************************************************************/
-static u16
-ixgb_shift_in_bits(struct ixgb_hw *hw)
-{
+अटल u16
+ixgb_shअगरt_in_bits(काष्ठा ixgb_hw *hw)
+अणु
 	u32 eecd_reg;
 	u32 i;
 	u16 data;
 
-	/* In order to read a register from the EEPROM, we need to shift 16 bits
-	 * in from the EEPROM. Bits are "shifted in" by raising the clock input to
-	 * the EEPROM (setting the SK bit), and then reading the value of the "DO"
+	/* In order to पढ़ो a रेजिस्टर from the EEPROM, we need to shअगरt 16 bits
+	 * in from the EEPROM. Bits are "shifted in" by raising the घड़ी input to
+	 * the EEPROM (setting the SK bit), and then पढ़ोing the value of the "DO"
 	 * bit.  During this "shifting in" process the "DI" bit should always be
 	 * clear..
 	 */
@@ -129,33 +130,33 @@ ixgb_shift_in_bits(struct ixgb_hw *hw)
 	eecd_reg &= ~(IXGB_EECD_DO | IXGB_EECD_DI);
 	data = 0;
 
-	for (i = 0; i < 16; i++) {
+	क्रम (i = 0; i < 16; i++) अणु
 		data = data << 1;
-		ixgb_raise_clock(hw, &eecd_reg);
+		ixgb_उठाओ_घड़ी(hw, &eecd_reg);
 
 		eecd_reg = IXGB_READ_REG(hw, EECD);
 
 		eecd_reg &= ~(IXGB_EECD_DI);
-		if (eecd_reg & IXGB_EECD_DO)
+		अगर (eecd_reg & IXGB_EECD_DO)
 			data |= 1;
 
-		ixgb_lower_clock(hw, &eecd_reg);
-	}
+		ixgb_lower_घड़ी(hw, &eecd_reg);
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
 /******************************************************************************
- * Prepares EEPROM for access
+ * Prepares EEPROM क्रम access
  *
  * hw - Struct containing variables accessed by shared code
  *
- * Lowers EEPROM clock. Clears input pin. Sets the chip select pin. This
- * function should be called before issuing a command to the EEPROM.
+ * Lowers EEPROM घड़ी. Clears input pin. Sets the chip select pin. This
+ * function should be called beक्रमe issuing a command to the EEPROM.
  *****************************************************************************/
-static void
-ixgb_setup_eeprom(struct ixgb_hw *hw)
-{
+अटल व्योम
+ixgb_setup_eeprom(काष्ठा ixgb_hw *hw)
+अणु
 	u32 eecd_reg;
 
 	eecd_reg = IXGB_READ_REG(hw, EECD);
@@ -167,16 +168,16 @@ ixgb_setup_eeprom(struct ixgb_hw *hw)
 	/*  Set CS  */
 	eecd_reg |= IXGB_EECD_CS;
 	IXGB_WRITE_REG(hw, EECD, eecd_reg);
-}
+पूर्ण
 
 /******************************************************************************
  * Returns EEPROM to a "standby" state
  *
  * hw - Struct containing variables accessed by shared code
  *****************************************************************************/
-static void
-ixgb_standby_eeprom(struct ixgb_hw *hw)
-{
+अटल व्योम
+ixgb_standby_eeprom(काष्ठा ixgb_hw *hw)
+अणु
 	u32 eecd_reg;
 
 	eecd_reg = IXGB_READ_REG(hw, EECD);
@@ -204,41 +205,41 @@ ixgb_standby_eeprom(struct ixgb_hw *hw)
 	IXGB_WRITE_REG(hw, EECD, eecd_reg);
 	IXGB_WRITE_FLUSH(hw);
 	udelay(50);
-}
+पूर्ण
 
 /******************************************************************************
- * Raises then lowers the EEPROM's clock pin
+ * Raises then lowers the EEPROM's घड़ी pin
  *
  * hw - Struct containing variables accessed by shared code
  *****************************************************************************/
-static void
-ixgb_clock_eeprom(struct ixgb_hw *hw)
-{
+अटल व्योम
+ixgb_घड़ी_eeprom(काष्ठा ixgb_hw *hw)
+अणु
 	u32 eecd_reg;
 
 	eecd_reg = IXGB_READ_REG(hw, EECD);
 
-	/*  Rising edge of clock  */
+	/*  Rising edge of घड़ी  */
 	eecd_reg |= IXGB_EECD_SK;
 	IXGB_WRITE_REG(hw, EECD, eecd_reg);
 	IXGB_WRITE_FLUSH(hw);
 	udelay(50);
 
-	/*  Falling edge of clock  */
+	/*  Falling edge of घड़ी  */
 	eecd_reg &= ~IXGB_EECD_SK;
 	IXGB_WRITE_REG(hw, EECD, eecd_reg);
 	IXGB_WRITE_FLUSH(hw);
 	udelay(50);
-}
+पूर्ण
 
 /******************************************************************************
  * Terminates a command by lowering the EEPROM's chip select pin
  *
  * hw - Struct containing variables accessed by shared code
  *****************************************************************************/
-static void
-ixgb_cleanup_eeprom(struct ixgb_hw *hw)
-{
+अटल व्योम
+ixgb_cleanup_eeprom(काष्ठा ixgb_hw *hw)
+अणु
 	u32 eecd_reg;
 
 	eecd_reg = IXGB_READ_REG(hw, EECD);
@@ -247,23 +248,23 @@ ixgb_cleanup_eeprom(struct ixgb_hw *hw)
 
 	IXGB_WRITE_REG(hw, EECD, eecd_reg);
 
-	ixgb_clock_eeprom(hw);
-}
+	ixgb_घड़ी_eeprom(hw);
+पूर्ण
 
 /******************************************************************************
- * Waits for the EEPROM to finish the current command.
+ * Waits क्रम the EEPROM to finish the current command.
  *
  * hw - Struct containing variables accessed by shared code
  *
- * The command is done when the EEPROM's data out pin goes high.
+ * The command is करोne when the EEPROM's data out pin goes high.
  *
  * Returns:
- *      true: EEPROM data pin is high before timeout.
+ *      true: EEPROM data pin is high beक्रमe समयout.
  *      false:  Time expired.
  *****************************************************************************/
-static bool
-ixgb_wait_eeprom_command(struct ixgb_hw *hw)
-{
+अटल bool
+ixgb_रुको_eeprom_command(काष्ठा ixgb_hw *hw)
+अणु
 	u32 eecd_reg;
 	u32 i;
 
@@ -272,28 +273,28 @@ ixgb_wait_eeprom_command(struct ixgb_hw *hw)
 	 */
 	ixgb_standby_eeprom(hw);
 
-	/* Now read DO repeatedly until is high (equal to '1').  The EEPROM will
-	 * signal that the command has been completed by raising the DO signal.
-	 * If DO does not go high in 10 milliseconds, then error out.
+	/* Now पढ़ो DO repeatedly until is high (equal to '1').  The EEPROM will
+	 * संकेत that the command has been completed by raising the DO संकेत.
+	 * If DO करोes not go high in 10 milliseconds, then error out.
 	 */
-	for (i = 0; i < 200; i++) {
+	क्रम (i = 0; i < 200; i++) अणु
 		eecd_reg = IXGB_READ_REG(hw, EECD);
 
-		if (eecd_reg & IXGB_EECD_DO)
-			return true;
+		अगर (eecd_reg & IXGB_EECD_DO)
+			वापस true;
 
 		udelay(50);
-	}
+	पूर्ण
 	ASSERT(0);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /******************************************************************************
- * Verifies that the EEPROM has a valid checksum
+ * Verअगरies that the EEPROM has a valid checksum
  *
  * hw - Struct containing variables accessed by shared code
  *
- * Reads the first 64 16 bit words of the EEPROM and sums the values read.
+ * Reads the first 64 16 bit words of the EEPROM and sums the values पढ़ो.
  * If the sum of the 64 16 bit words is 0xBABA, the EEPROM's checksum is
  * valid.
  *
@@ -302,41 +303,41 @@ ixgb_wait_eeprom_command(struct ixgb_hw *hw)
  *  false: Checksum is not valid.
  *****************************************************************************/
 bool
-ixgb_validate_eeprom_checksum(struct ixgb_hw *hw)
-{
+ixgb_validate_eeprom_checksum(काष्ठा ixgb_hw *hw)
+अणु
 	u16 checksum = 0;
 	u16 i;
 
-	for (i = 0; i < (EEPROM_CHECKSUM_REG + 1); i++)
-		checksum += ixgb_read_eeprom(hw, i);
+	क्रम (i = 0; i < (EEPROM_CHECKSUM_REG + 1); i++)
+		checksum += ixgb_पढ़ो_eeprom(hw, i);
 
-	if (checksum == (u16) EEPROM_SUM)
-		return true;
-	else
-		return false;
-}
+	अगर (checksum == (u16) EEPROM_SUM)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /******************************************************************************
- * Calculates the EEPROM checksum and writes it to the EEPROM
+ * Calculates the EEPROM checksum and ग_लिखोs it to the EEPROM
  *
  * hw - Struct containing variables accessed by shared code
  *
  * Sums the first 63 16 bit words of the EEPROM. Subtracts the sum from 0xBABA.
- * Writes the difference to word offset 63 of the EEPROM.
+ * Writes the dअगरference to word offset 63 of the EEPROM.
  *****************************************************************************/
-void
-ixgb_update_eeprom_checksum(struct ixgb_hw *hw)
-{
+व्योम
+ixgb_update_eeprom_checksum(काष्ठा ixgb_hw *hw)
+अणु
 	u16 checksum = 0;
 	u16 i;
 
-	for (i = 0; i < EEPROM_CHECKSUM_REG; i++)
-		checksum += ixgb_read_eeprom(hw, i);
+	क्रम (i = 0; i < EEPROM_CHECKSUM_REG; i++)
+		checksum += ixgb_पढ़ो_eeprom(hw, i);
 
 	checksum = (u16) EEPROM_SUM - checksum;
 
-	ixgb_write_eeprom(hw, EEPROM_CHECKSUM_REG, checksum);
-}
+	ixgb_ग_लिखो_eeprom(hw, EEPROM_CHECKSUM_REG, checksum);
+पूर्ण
 
 /******************************************************************************
  * Writes a 16 bit word to a given offset in the EEPROM.
@@ -349,232 +350,232 @@ ixgb_update_eeprom_checksum(struct ixgb_hw *hw)
  * EEPROM will most likely contain an invalid checksum.
  *
  *****************************************************************************/
-void
-ixgb_write_eeprom(struct ixgb_hw *hw, u16 offset, u16 data)
-{
-	struct ixgb_ee_map_type *ee_map = (struct ixgb_ee_map_type *)hw->eeprom;
+व्योम
+ixgb_ग_लिखो_eeprom(काष्ठा ixgb_hw *hw, u16 offset, u16 data)
+अणु
+	काष्ठा ixgb_ee_map_type *ee_map = (काष्ठा ixgb_ee_map_type *)hw->eeprom;
 
-	/* Prepare the EEPROM for writing */
+	/* Prepare the EEPROM क्रम writing */
 	ixgb_setup_eeprom(hw);
 
-	/*  Send the 9-bit EWEN (write enable) command to the EEPROM (5-bit opcode
-	 *  plus 4-bit dummy).  This puts the EEPROM into write/erase mode.
+	/*  Send the 9-bit EWEN (ग_लिखो enable) command to the EEPROM (5-bit opcode
+	 *  plus 4-bit dummy).  This माला_दो the EEPROM पूर्णांकo ग_लिखो/erase mode.
 	 */
-	ixgb_shift_out_bits(hw, EEPROM_EWEN_OPCODE, 5);
-	ixgb_shift_out_bits(hw, 0, 4);
+	ixgb_shअगरt_out_bits(hw, EEPROM_EWEN_OPCODE, 5);
+	ixgb_shअगरt_out_bits(hw, 0, 4);
 
 	/*  Prepare the EEPROM  */
 	ixgb_standby_eeprom(hw);
 
 	/*  Send the Write command (3-bit opcode + 6-bit addr)  */
-	ixgb_shift_out_bits(hw, EEPROM_WRITE_OPCODE, 3);
-	ixgb_shift_out_bits(hw, offset, 6);
+	ixgb_shअगरt_out_bits(hw, EEPROM_WRITE_OPCODE, 3);
+	ixgb_shअगरt_out_bits(hw, offset, 6);
 
 	/*  Send the data  */
-	ixgb_shift_out_bits(hw, data, 16);
+	ixgb_shअगरt_out_bits(hw, data, 16);
 
-	ixgb_wait_eeprom_command(hw);
+	ixgb_रुको_eeprom_command(hw);
 
-	/*  Recover from write  */
+	/*  Recover from ग_लिखो  */
 	ixgb_standby_eeprom(hw);
 
-	/* Send the 9-bit EWDS (write disable) command to the EEPROM (5-bit
-	 * opcode plus 4-bit dummy).  This takes the EEPROM out of write/erase
+	/* Send the 9-bit EWDS (ग_लिखो disable) command to the EEPROM (5-bit
+	 * opcode plus 4-bit dummy).  This takes the EEPROM out of ग_लिखो/erase
 	 * mode.
 	 */
-	ixgb_shift_out_bits(hw, EEPROM_EWDS_OPCODE, 5);
-	ixgb_shift_out_bits(hw, 0, 4);
+	ixgb_shअगरt_out_bits(hw, EEPROM_EWDS_OPCODE, 5);
+	ixgb_shअगरt_out_bits(hw, 0, 4);
 
 	/*  Done with writing  */
 	ixgb_cleanup_eeprom(hw);
 
-	/* clear the init_ctrl_reg_1 to signify that the cache is invalidated */
+	/* clear the init_ctrl_reg_1 to signअगरy that the cache is invalidated */
 	ee_map->init_ctrl_reg_1 = cpu_to_le16(EEPROM_ICW1_SIGNATURE_CLEAR);
-}
+पूर्ण
 
 /******************************************************************************
  * Reads a 16 bit word from the EEPROM.
  *
  * hw - Struct containing variables accessed by shared code
- * offset - offset of 16 bit word in the EEPROM to read
+ * offset - offset of 16 bit word in the EEPROM to पढ़ो
  *
  * Returns:
- *  The 16-bit value read from the eeprom
+ *  The 16-bit value पढ़ो from the eeprom
  *****************************************************************************/
 u16
-ixgb_read_eeprom(struct ixgb_hw *hw,
+ixgb_पढ़ो_eeprom(काष्ठा ixgb_hw *hw,
 		  u16 offset)
-{
+अणु
 	u16 data;
 
-	/*  Prepare the EEPROM for reading  */
+	/*  Prepare the EEPROM क्रम पढ़ोing  */
 	ixgb_setup_eeprom(hw);
 
 	/*  Send the READ command (opcode + addr)  */
-	ixgb_shift_out_bits(hw, EEPROM_READ_OPCODE, 3);
+	ixgb_shअगरt_out_bits(hw, EEPROM_READ_OPCODE, 3);
 	/*
 	 * We have a 64 word EEPROM, there are 6 address bits
 	 */
-	ixgb_shift_out_bits(hw, offset, 6);
+	ixgb_shअगरt_out_bits(hw, offset, 6);
 
 	/*  Read the data  */
-	data = ixgb_shift_in_bits(hw);
+	data = ixgb_shअगरt_in_bits(hw);
 
-	/*  End this read operation  */
+	/*  End this पढ़ो operation  */
 	ixgb_standby_eeprom(hw);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
 /******************************************************************************
- * Reads eeprom and stores data in shared structure.
+ * Reads eeprom and stores data in shared काष्ठाure.
  * Validates eeprom checksum and eeprom signature.
  *
  * hw - Struct containing variables accessed by shared code
  *
  * Returns:
- *      true: if eeprom read is successful
+ *      true: अगर eeprom पढ़ो is successful
  *      false: otherwise.
  *****************************************************************************/
 bool
-ixgb_get_eeprom_data(struct ixgb_hw *hw)
-{
+ixgb_get_eeprom_data(काष्ठा ixgb_hw *hw)
+अणु
 	u16 i;
 	u16 checksum = 0;
-	struct ixgb_ee_map_type *ee_map;
+	काष्ठा ixgb_ee_map_type *ee_map;
 
 	ENTER();
 
-	ee_map = (struct ixgb_ee_map_type *)hw->eeprom;
+	ee_map = (काष्ठा ixgb_ee_map_type *)hw->eeprom;
 
 	pr_debug("Reading eeprom data\n");
-	for (i = 0; i < IXGB_EEPROM_SIZE ; i++) {
+	क्रम (i = 0; i < IXGB_EEPROM_SIZE ; i++) अणु
 		u16 ee_data;
-		ee_data = ixgb_read_eeprom(hw, i);
+		ee_data = ixgb_पढ़ो_eeprom(hw, i);
 		checksum += ee_data;
 		hw->eeprom[i] = cpu_to_le16(ee_data);
-	}
+	पूर्ण
 
-	if (checksum != (u16) EEPROM_SUM) {
+	अगर (checksum != (u16) EEPROM_SUM) अणु
 		pr_debug("Checksum invalid\n");
-		/* clear the init_ctrl_reg_1 to signify that the cache is
+		/* clear the init_ctrl_reg_1 to signअगरy that the cache is
 		 * invalidated */
 		ee_map->init_ctrl_reg_1 = cpu_to_le16(EEPROM_ICW1_SIGNATURE_CLEAR);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if ((ee_map->init_ctrl_reg_1 & cpu_to_le16(EEPROM_ICW1_SIGNATURE_MASK))
-		 != cpu_to_le16(EEPROM_ICW1_SIGNATURE_VALID)) {
+	अगर ((ee_map->init_ctrl_reg_1 & cpu_to_le16(EEPROM_ICW1_SIGNATURE_MASK))
+		 != cpu_to_le16(EEPROM_ICW1_SIGNATURE_VALID)) अणु
 		pr_debug("Signature invalid\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /******************************************************************************
- * Local function to check if the eeprom signature is good
+ * Local function to check अगर the eeprom signature is good
  * If the eeprom signature is good, calls ixgb)get_eeprom_data.
  *
  * hw - Struct containing variables accessed by shared code
  *
  * Returns:
- *      true: eeprom signature was good and the eeprom read was successful
+ *      true: eeprom signature was good and the eeprom पढ़ो was successful
  *      false: otherwise.
  ******************************************************************************/
-static bool
-ixgb_check_and_get_eeprom_data (struct ixgb_hw* hw)
-{
-	struct ixgb_ee_map_type *ee_map = (struct ixgb_ee_map_type *)hw->eeprom;
+अटल bool
+ixgb_check_and_get_eeprom_data (काष्ठा ixgb_hw* hw)
+अणु
+	काष्ठा ixgb_ee_map_type *ee_map = (काष्ठा ixgb_ee_map_type *)hw->eeprom;
 
-	if ((ee_map->init_ctrl_reg_1 & cpu_to_le16(EEPROM_ICW1_SIGNATURE_MASK))
-	    == cpu_to_le16(EEPROM_ICW1_SIGNATURE_VALID)) {
-		return true;
-	} else {
-		return ixgb_get_eeprom_data(hw);
-	}
-}
+	अगर ((ee_map->init_ctrl_reg_1 & cpu_to_le16(EEPROM_ICW1_SIGNATURE_MASK))
+	    == cpu_to_le16(EEPROM_ICW1_SIGNATURE_VALID)) अणु
+		वापस true;
+	पूर्ण अन्यथा अणु
+		वापस ixgb_get_eeprom_data(hw);
+	पूर्ण
+पूर्ण
 
 /******************************************************************************
- * return a word from the eeprom
+ * वापस a word from the eeprom
  *
  * hw - Struct containing variables accessed by shared code
  * index - Offset of eeprom word
  *
  * Returns:
- *          Word at indexed offset in eeprom, if valid, 0 otherwise.
+ *          Word at indexed offset in eeprom, अगर valid, 0 otherwise.
  ******************************************************************************/
 __le16
-ixgb_get_eeprom_word(struct ixgb_hw *hw, u16 index)
-{
+ixgb_get_eeprom_word(काष्ठा ixgb_hw *hw, u16 index)
+अणु
 
-	if (index < IXGB_EEPROM_SIZE && ixgb_check_and_get_eeprom_data(hw))
-		return hw->eeprom[index];
+	अगर (index < IXGB_EEPROM_SIZE && ixgb_check_and_get_eeprom_data(hw))
+		वापस hw->eeprom[index];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /******************************************************************************
- * return the mac address from EEPROM
+ * वापस the mac address from EEPROM
  *
  * hw       - Struct containing variables accessed by shared code
- * mac_addr - Ethernet Address if EEPROM contents are valid, 0 otherwise
+ * mac_addr - Ethernet Address अगर EEPROM contents are valid, 0 otherwise
  *
  * Returns: None.
  ******************************************************************************/
-void
-ixgb_get_ee_mac_addr(struct ixgb_hw *hw,
+व्योम
+ixgb_get_ee_mac_addr(काष्ठा ixgb_hw *hw,
 			u8 *mac_addr)
-{
-	int i;
-	struct ixgb_ee_map_type *ee_map = (struct ixgb_ee_map_type *)hw->eeprom;
+अणु
+	पूर्णांक i;
+	काष्ठा ixgb_ee_map_type *ee_map = (काष्ठा ixgb_ee_map_type *)hw->eeprom;
 
 	ENTER();
 
-	if (ixgb_check_and_get_eeprom_data(hw)) {
-		for (i = 0; i < ETH_ALEN; i++) {
+	अगर (ixgb_check_and_get_eeprom_data(hw)) अणु
+		क्रम (i = 0; i < ETH_ALEN; i++) अणु
 			mac_addr[i] = ee_map->mac_addr[i];
-		}
+		पूर्ण
 		pr_debug("eeprom mac address = %pM\n", mac_addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /******************************************************************************
- * return the Printed Board Assembly number from EEPROM
+ * वापस the Prपूर्णांकed Board Assembly number from EEPROM
  *
  * hw - Struct containing variables accessed by shared code
  *
  * Returns:
- *          PBA number if EEPROM contents are valid, 0 otherwise
+ *          PBA number अगर EEPROM contents are valid, 0 otherwise
  ******************************************************************************/
 u32
-ixgb_get_ee_pba_number(struct ixgb_hw *hw)
-{
-	if (ixgb_check_and_get_eeprom_data(hw))
-		return le16_to_cpu(hw->eeprom[EEPROM_PBA_1_2_REG])
+ixgb_get_ee_pba_number(काष्ठा ixgb_hw *hw)
+अणु
+	अगर (ixgb_check_and_get_eeprom_data(hw))
+		वापस le16_to_cpu(hw->eeprom[EEPROM_PBA_1_2_REG])
 			| (le16_to_cpu(hw->eeprom[EEPROM_PBA_3_4_REG])<<16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /******************************************************************************
- * return the Device Id from EEPROM
+ * वापस the Device Id from EEPROM
  *
  * hw - Struct containing variables accessed by shared code
  *
  * Returns:
- *          Device Id if EEPROM contents are valid, 0 otherwise
+ *          Device Id अगर EEPROM contents are valid, 0 otherwise
  ******************************************************************************/
 u16
-ixgb_get_ee_device_id(struct ixgb_hw *hw)
-{
-	struct ixgb_ee_map_type *ee_map = (struct ixgb_ee_map_type *)hw->eeprom;
+ixgb_get_ee_device_id(काष्ठा ixgb_hw *hw)
+अणु
+	काष्ठा ixgb_ee_map_type *ee_map = (काष्ठा ixgb_ee_map_type *)hw->eeprom;
 
-	if (ixgb_check_and_get_eeprom_data(hw))
-		return le16_to_cpu(ee_map->device_id);
+	अगर (ixgb_check_and_get_eeprom_data(hw))
+		वापस le16_to_cpu(ee_map->device_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

@@ -1,517 +1,518 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the  BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
- *		IPv4 Forwarding Information Base: semantics.
+ *		IPv4 Forwarding Inक्रमmation Base: semantics.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
-#include <linux/uaccess.h>
-#include <linux/bitops.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/jiffies.h>
-#include <linux/mm.h>
-#include <linux/string.h>
-#include <linux/socket.h>
-#include <linux/sockios.h>
-#include <linux/errno.h>
-#include <linux/in.h>
-#include <linux/inet.h>
-#include <linux/inetdevice.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/proc_fs.h>
-#include <linux/skbuff.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/netlink.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/socket.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/in.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/netlink.h>
 
-#include <net/arp.h>
-#include <net/ip.h>
-#include <net/protocol.h>
-#include <net/route.h>
-#include <net/tcp.h>
-#include <net/sock.h>
-#include <net/ip_fib.h>
-#include <net/ip6_fib.h>
-#include <net/nexthop.h>
-#include <net/netlink.h>
-#include <net/rtnh.h>
-#include <net/lwtunnel.h>
-#include <net/fib_notifier.h>
-#include <net/addrconf.h>
+#समावेश <net/arp.h>
+#समावेश <net/ip.h>
+#समावेश <net/protocol.h>
+#समावेश <net/route.h>
+#समावेश <net/tcp.h>
+#समावेश <net/sock.h>
+#समावेश <net/ip_fib.h>
+#समावेश <net/ip6_fib.h>
+#समावेश <net/nexthop.h>
+#समावेश <net/netlink.h>
+#समावेश <net/rtnh.h>
+#समावेश <net/lwtunnel.h>
+#समावेश <net/fib_notअगरier.h>
+#समावेश <net/addrconf.h>
 
-#include "fib_lookup.h"
+#समावेश "fib_lookup.h"
 
-static DEFINE_SPINLOCK(fib_info_lock);
-static struct hlist_head *fib_info_hash;
-static struct hlist_head *fib_info_laddrhash;
-static unsigned int fib_info_hash_size;
-static unsigned int fib_info_cnt;
+अटल DEFINE_SPINLOCK(fib_info_lock);
+अटल काष्ठा hlist_head *fib_info_hash;
+अटल काष्ठा hlist_head *fib_info_laddrhash;
+अटल अचिन्हित पूर्णांक fib_info_hash_size;
+अटल अचिन्हित पूर्णांक fib_info_cnt;
 
-#define DEVINDEX_HASHBITS 8
-#define DEVINDEX_HASHSIZE (1U << DEVINDEX_HASHBITS)
-static struct hlist_head fib_info_devhash[DEVINDEX_HASHSIZE];
+#घोषणा DEVINDEX_HASHBITS 8
+#घोषणा DEVINDEX_HASHSIZE (1U << DEVINDEX_HASHBITS)
+अटल काष्ठा hlist_head fib_info_devhash[DEVINDEX_HASHSIZE];
 
-/* for_nexthops and change_nexthops only used when nexthop object
+/* क्रम_nexthops and change_nexthops only used when nexthop object
  * is not set in a fib_info. The logic within can reference fib_nh.
  */
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
 
-#define for_nexthops(fi) {						\
-	int nhsel; const struct fib_nh *nh;				\
-	for (nhsel = 0, nh = (fi)->fib_nh;				\
+#घोषणा क्रम_nexthops(fi) अणु						\
+	पूर्णांक nhsel; स्थिर काष्ठा fib_nh *nh;				\
+	क्रम (nhsel = 0, nh = (fi)->fib_nh;				\
 	     nhsel < fib_info_num_path((fi));				\
 	     nh++, nhsel++)
 
-#define change_nexthops(fi) {						\
-	int nhsel; struct fib_nh *nexthop_nh;				\
-	for (nhsel = 0,	nexthop_nh = (struct fib_nh *)((fi)->fib_nh);	\
+#घोषणा change_nexthops(fi) अणु						\
+	पूर्णांक nhsel; काष्ठा fib_nh *nexthop_nh;				\
+	क्रम (nhsel = 0,	nexthop_nh = (काष्ठा fib_nh *)((fi)->fib_nh);	\
 	     nhsel < fib_info_num_path((fi));				\
 	     nexthop_nh++, nhsel++)
 
-#else /* CONFIG_IP_ROUTE_MULTIPATH */
+#अन्यथा /* CONFIG_IP_ROUTE_MULTIPATH */
 
 /* Hope, that gcc will optimize it to get rid of dummy loop */
 
-#define for_nexthops(fi) {						\
-	int nhsel; const struct fib_nh *nh = (fi)->fib_nh;		\
-	for (nhsel = 0; nhsel < 1; nhsel++)
+#घोषणा क्रम_nexthops(fi) अणु						\
+	पूर्णांक nhsel; स्थिर काष्ठा fib_nh *nh = (fi)->fib_nh;		\
+	क्रम (nhsel = 0; nhsel < 1; nhsel++)
 
-#define change_nexthops(fi) {						\
-	int nhsel;							\
-	struct fib_nh *nexthop_nh = (struct fib_nh *)((fi)->fib_nh);	\
-	for (nhsel = 0; nhsel < 1; nhsel++)
+#घोषणा change_nexthops(fi) अणु						\
+	पूर्णांक nhsel;							\
+	काष्ठा fib_nh *nexthop_nh = (काष्ठा fib_nh *)((fi)->fib_nh);	\
+	क्रम (nhsel = 0; nhsel < 1; nhsel++)
 
-#endif /* CONFIG_IP_ROUTE_MULTIPATH */
+#पूर्ण_अगर /* CONFIG_IP_ROUTE_MULTIPATH */
 
-#define endfor_nexthops(fi) }
+#घोषणा endक्रम_nexthops(fi) पूर्ण
 
 
-const struct fib_prop fib_props[RTN_MAX + 1] = {
-	[RTN_UNSPEC] = {
+स्थिर काष्ठा fib_prop fib_props[RTN_MAX + 1] = अणु
+	[RTN_UNSPEC] = अणु
 		.error	= 0,
 		.scope	= RT_SCOPE_NOWHERE,
-	},
-	[RTN_UNICAST] = {
+	पूर्ण,
+	[RTN_UNICAST] = अणु
 		.error	= 0,
 		.scope	= RT_SCOPE_UNIVERSE,
-	},
-	[RTN_LOCAL] = {
+	पूर्ण,
+	[RTN_LOCAL] = अणु
 		.error	= 0,
 		.scope	= RT_SCOPE_HOST,
-	},
-	[RTN_BROADCAST] = {
+	पूर्ण,
+	[RTN_BROADCAST] = अणु
 		.error	= 0,
 		.scope	= RT_SCOPE_LINK,
-	},
-	[RTN_ANYCAST] = {
+	पूर्ण,
+	[RTN_ANYCAST] = अणु
 		.error	= 0,
 		.scope	= RT_SCOPE_LINK,
-	},
-	[RTN_MULTICAST] = {
+	पूर्ण,
+	[RTN_MULTICAST] = अणु
 		.error	= 0,
 		.scope	= RT_SCOPE_UNIVERSE,
-	},
-	[RTN_BLACKHOLE] = {
+	पूर्ण,
+	[RTN_BLACKHOLE] = अणु
 		.error	= -EINVAL,
 		.scope	= RT_SCOPE_UNIVERSE,
-	},
-	[RTN_UNREACHABLE] = {
+	पूर्ण,
+	[RTN_UNREACHABLE] = अणु
 		.error	= -EHOSTUNREACH,
 		.scope	= RT_SCOPE_UNIVERSE,
-	},
-	[RTN_PROHIBIT] = {
+	पूर्ण,
+	[RTN_PROHIBIT] = अणु
 		.error	= -EACCES,
 		.scope	= RT_SCOPE_UNIVERSE,
-	},
-	[RTN_THROW] = {
+	पूर्ण,
+	[RTN_THROW] = अणु
 		.error	= -EAGAIN,
 		.scope	= RT_SCOPE_UNIVERSE,
-	},
-	[RTN_NAT] = {
+	पूर्ण,
+	[RTN_NAT] = अणु
 		.error	= -EINVAL,
 		.scope	= RT_SCOPE_NOWHERE,
-	},
-	[RTN_XRESOLVE] = {
+	पूर्ण,
+	[RTN_XRESOLVE] = अणु
 		.error	= -EINVAL,
 		.scope	= RT_SCOPE_NOWHERE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void rt_fibinfo_free(struct rtable __rcu **rtp)
-{
-	struct rtable *rt = rcu_dereference_protected(*rtp, 1);
+अटल व्योम rt_fibinfo_मुक्त(काष्ठा rtable __rcu **rtp)
+अणु
+	काष्ठा rtable *rt = rcu_dereference_रक्षित(*rtp, 1);
 
-	if (!rt)
-		return;
+	अगर (!rt)
+		वापस;
 
-	/* Not even needed : RCU_INIT_POINTER(*rtp, NULL);
-	 * because we waited an RCU grace period before calling
-	 * free_fib_info_rcu()
+	/* Not even needed : RCU_INIT_POINTER(*rtp, शून्य);
+	 * because we रुकोed an RCU grace period beक्रमe calling
+	 * मुक्त_fib_info_rcu()
 	 */
 
 	dst_dev_put(&rt->dst);
 	dst_release_immediate(&rt->dst);
-}
+पूर्ण
 
-static void free_nh_exceptions(struct fib_nh_common *nhc)
-{
-	struct fnhe_hash_bucket *hash;
-	int i;
+अटल व्योम मुक्त_nh_exceptions(काष्ठा fib_nh_common *nhc)
+अणु
+	काष्ठा fnhe_hash_bucket *hash;
+	पूर्णांक i;
 
-	hash = rcu_dereference_protected(nhc->nhc_exceptions, 1);
-	if (!hash)
-		return;
-	for (i = 0; i < FNHE_HASH_SIZE; i++) {
-		struct fib_nh_exception *fnhe;
+	hash = rcu_dereference_रक्षित(nhc->nhc_exceptions, 1);
+	अगर (!hash)
+		वापस;
+	क्रम (i = 0; i < FNHE_HASH_SIZE; i++) अणु
+		काष्ठा fib_nh_exception *fnhe;
 
-		fnhe = rcu_dereference_protected(hash[i].chain, 1);
-		while (fnhe) {
-			struct fib_nh_exception *next;
+		fnhe = rcu_dereference_रक्षित(hash[i].chain, 1);
+		जबतक (fnhe) अणु
+			काष्ठा fib_nh_exception *next;
 
-			next = rcu_dereference_protected(fnhe->fnhe_next, 1);
+			next = rcu_dereference_रक्षित(fnhe->fnhe_next, 1);
 
-			rt_fibinfo_free(&fnhe->fnhe_rth_input);
-			rt_fibinfo_free(&fnhe->fnhe_rth_output);
+			rt_fibinfo_मुक्त(&fnhe->fnhe_rth_input);
+			rt_fibinfo_मुक्त(&fnhe->fnhe_rth_output);
 
-			kfree(fnhe);
+			kमुक्त(fnhe);
 
 			fnhe = next;
-		}
-	}
-	kfree(hash);
-}
+		पूर्ण
+	पूर्ण
+	kमुक्त(hash);
+पूर्ण
 
-static void rt_fibinfo_free_cpus(struct rtable __rcu * __percpu *rtp)
-{
-	int cpu;
+अटल व्योम rt_fibinfo_मुक्त_cpus(काष्ठा rtable __rcu * __percpu *rtp)
+अणु
+	पूर्णांक cpu;
 
-	if (!rtp)
-		return;
+	अगर (!rtp)
+		वापस;
 
-	for_each_possible_cpu(cpu) {
-		struct rtable *rt;
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा rtable *rt;
 
-		rt = rcu_dereference_protected(*per_cpu_ptr(rtp, cpu), 1);
-		if (rt) {
+		rt = rcu_dereference_रक्षित(*per_cpu_ptr(rtp, cpu), 1);
+		अगर (rt) अणु
 			dst_dev_put(&rt->dst);
 			dst_release_immediate(&rt->dst);
-		}
-	}
-	free_percpu(rtp);
-}
+		पूर्ण
+	पूर्ण
+	मुक्त_percpu(rtp);
+पूर्ण
 
-void fib_nh_common_release(struct fib_nh_common *nhc)
-{
-	if (nhc->nhc_dev)
+व्योम fib_nh_common_release(काष्ठा fib_nh_common *nhc)
+अणु
+	अगर (nhc->nhc_dev)
 		dev_put(nhc->nhc_dev);
 
 	lwtstate_put(nhc->nhc_lwtstate);
-	rt_fibinfo_free_cpus(nhc->nhc_pcpu_rth_output);
-	rt_fibinfo_free(&nhc->nhc_rth_input);
-	free_nh_exceptions(nhc);
-}
+	rt_fibinfo_मुक्त_cpus(nhc->nhc_pcpu_rth_output);
+	rt_fibinfo_मुक्त(&nhc->nhc_rth_input);
+	मुक्त_nh_exceptions(nhc);
+पूर्ण
 EXPORT_SYMBOL_GPL(fib_nh_common_release);
 
-void fib_nh_release(struct net *net, struct fib_nh *fib_nh)
-{
-#ifdef CONFIG_IP_ROUTE_CLASSID
-	if (fib_nh->nh_tclassid)
+व्योम fib_nh_release(काष्ठा net *net, काष्ठा fib_nh *fib_nh)
+अणु
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
+	अगर (fib_nh->nh_tclassid)
 		net->ipv4.fib_num_tclassid_users--;
-#endif
+#पूर्ण_अगर
 	fib_nh_common_release(&fib_nh->nh_common);
-}
+पूर्ण
 
 /* Release a nexthop info record */
-static void free_fib_info_rcu(struct rcu_head *head)
-{
-	struct fib_info *fi = container_of(head, struct fib_info, rcu);
+अटल व्योम मुक्त_fib_info_rcu(काष्ठा rcu_head *head)
+अणु
+	काष्ठा fib_info *fi = container_of(head, काष्ठा fib_info, rcu);
 
-	if (fi->nh) {
+	अगर (fi->nh) अणु
 		nexthop_put(fi->nh);
-	} else {
-		change_nexthops(fi) {
+	पूर्ण अन्यथा अणु
+		change_nexthops(fi) अणु
 			fib_nh_release(fi->fib_net, nexthop_nh);
-		} endfor_nexthops(fi);
-	}
+		पूर्ण endक्रम_nexthops(fi);
+	पूर्ण
 
 	ip_fib_metrics_put(fi->fib_metrics);
 
-	kfree(fi);
-}
+	kमुक्त(fi);
+पूर्ण
 
-void free_fib_info(struct fib_info *fi)
-{
-	if (fi->fib_dead == 0) {
+व्योम मुक्त_fib_info(काष्ठा fib_info *fi)
+अणु
+	अगर (fi->fib_dead == 0) अणु
 		pr_warn("Freeing alive fib_info %p\n", fi);
-		return;
-	}
+		वापस;
+	पूर्ण
 	fib_info_cnt--;
 
-	call_rcu(&fi->rcu, free_fib_info_rcu);
-}
-EXPORT_SYMBOL_GPL(free_fib_info);
+	call_rcu(&fi->rcu, मुक्त_fib_info_rcu);
+पूर्ण
+EXPORT_SYMBOL_GPL(मुक्त_fib_info);
 
-void fib_release_info(struct fib_info *fi)
-{
+व्योम fib_release_info(काष्ठा fib_info *fi)
+अणु
 	spin_lock_bh(&fib_info_lock);
-	if (fi && --fi->fib_treeref == 0) {
+	अगर (fi && --fi->fib_treeref == 0) अणु
 		hlist_del(&fi->fib_hash);
-		if (fi->fib_prefsrc)
+		अगर (fi->fib_prefsrc)
 			hlist_del(&fi->fib_lhash);
-		if (fi->nh) {
+		अगर (fi->nh) अणु
 			list_del(&fi->nh_list);
-		} else {
-			change_nexthops(fi) {
-				if (!nexthop_nh->fib_nh_dev)
-					continue;
+		पूर्ण अन्यथा अणु
+			change_nexthops(fi) अणु
+				अगर (!nexthop_nh->fib_nh_dev)
+					जारी;
 				hlist_del(&nexthop_nh->nh_hash);
-			} endfor_nexthops(fi)
-		}
+			पूर्ण endक्रम_nexthops(fi)
+		पूर्ण
 		fi->fib_dead = 1;
 		fib_info_put(fi);
-	}
+	पूर्ण
 	spin_unlock_bh(&fib_info_lock);
-}
+पूर्ण
 
-static inline int nh_comp(struct fib_info *fi, struct fib_info *ofi)
-{
-	const struct fib_nh *onh;
+अटल अंतरभूत पूर्णांक nh_comp(काष्ठा fib_info *fi, काष्ठा fib_info *ofi)
+अणु
+	स्थिर काष्ठा fib_nh *onh;
 
-	if (fi->nh || ofi->nh)
-		return nexthop_cmp(fi->nh, ofi->nh) ? 0 : -1;
+	अगर (fi->nh || ofi->nh)
+		वापस nexthop_cmp(fi->nh, ofi->nh) ? 0 : -1;
 
-	if (ofi->fib_nhs == 0)
-		return 0;
+	अगर (ofi->fib_nhs == 0)
+		वापस 0;
 
-	for_nexthops(fi) {
+	क्रम_nexthops(fi) अणु
 		onh = fib_info_nh(ofi, nhsel);
 
-		if (nh->fib_nh_oif != onh->fib_nh_oif ||
+		अगर (nh->fib_nh_oअगर != onh->fib_nh_oअगर ||
 		    nh->fib_nh_gw_family != onh->fib_nh_gw_family ||
 		    nh->fib_nh_scope != onh->fib_nh_scope ||
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
 		    nh->fib_nh_weight != onh->fib_nh_weight ||
-#endif
-#ifdef CONFIG_IP_ROUTE_CLASSID
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
 		    nh->nh_tclassid != onh->nh_tclassid ||
-#endif
+#पूर्ण_अगर
 		    lwtunnel_cmp_encap(nh->fib_nh_lws, onh->fib_nh_lws) ||
 		    ((nh->fib_nh_flags ^ onh->fib_nh_flags) & ~RTNH_COMPARE_MASK))
-			return -1;
+			वापस -1;
 
-		if (nh->fib_nh_gw_family == AF_INET &&
+		अगर (nh->fib_nh_gw_family == AF_INET &&
 		    nh->fib_nh_gw4 != onh->fib_nh_gw4)
-			return -1;
+			वापस -1;
 
-		if (nh->fib_nh_gw_family == AF_INET6 &&
+		अगर (nh->fib_nh_gw_family == AF_INET6 &&
 		    ipv6_addr_cmp(&nh->fib_nh_gw6, &onh->fib_nh_gw6))
-			return -1;
-	} endfor_nexthops(fi);
-	return 0;
-}
+			वापस -1;
+	पूर्ण endक्रम_nexthops(fi);
+	वापस 0;
+पूर्ण
 
-static inline unsigned int fib_devindex_hashfn(unsigned int val)
-{
-	unsigned int mask = DEVINDEX_HASHSIZE - 1;
+अटल अंतरभूत अचिन्हित पूर्णांक fib_devindex_hashfn(अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक mask = DEVINDEX_HASHSIZE - 1;
 
-	return (val ^
+	वापस (val ^
 		(val >> DEVINDEX_HASHBITS) ^
 		(val >> (DEVINDEX_HASHBITS * 2))) & mask;
-}
+पूर्ण
 
-static unsigned int fib_info_hashfn_1(int init_val, u8 protocol, u8 scope,
+अटल अचिन्हित पूर्णांक fib_info_hashfn_1(पूर्णांक init_val, u8 protocol, u8 scope,
 				      u32 prefsrc, u32 priority)
-{
-	unsigned int val = init_val;
+अणु
+	अचिन्हित पूर्णांक val = init_val;
 
 	val ^= (protocol << 8) | scope;
 	val ^= prefsrc;
 	val ^= priority;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static unsigned int fib_info_hashfn_result(unsigned int val)
-{
-	unsigned int mask = (fib_info_hash_size - 1);
+अटल अचिन्हित पूर्णांक fib_info_hashfn_result(अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक mask = (fib_info_hash_size - 1);
 
-	return (val ^ (val >> 7) ^ (val >> 12)) & mask;
-}
+	वापस (val ^ (val >> 7) ^ (val >> 12)) & mask;
+पूर्ण
 
-static inline unsigned int fib_info_hashfn(struct fib_info *fi)
-{
-	unsigned int val;
+अटल अंतरभूत अचिन्हित पूर्णांक fib_info_hashfn(काष्ठा fib_info *fi)
+अणु
+	अचिन्हित पूर्णांक val;
 
 	val = fib_info_hashfn_1(fi->fib_nhs, fi->fib_protocol,
-				fi->fib_scope, (__force u32)fi->fib_prefsrc,
+				fi->fib_scope, (__क्रमce u32)fi->fib_prefsrc,
 				fi->fib_priority);
 
-	if (fi->nh) {
+	अगर (fi->nh) अणु
 		val ^= fib_devindex_hashfn(fi->nh->id);
-	} else {
-		for_nexthops(fi) {
-			val ^= fib_devindex_hashfn(nh->fib_nh_oif);
-		} endfor_nexthops(fi)
-	}
+	पूर्ण अन्यथा अणु
+		क्रम_nexthops(fi) अणु
+			val ^= fib_devindex_hashfn(nh->fib_nh_oअगर);
+		पूर्ण endक्रम_nexthops(fi)
+	पूर्ण
 
-	return fib_info_hashfn_result(val);
-}
+	वापस fib_info_hashfn_result(val);
+पूर्ण
 
 /* no metrics, only nexthop id */
-static struct fib_info *fib_find_info_nh(struct net *net,
-					 const struct fib_config *cfg)
-{
-	struct hlist_head *head;
-	struct fib_info *fi;
-	unsigned int hash;
+अटल काष्ठा fib_info *fib_find_info_nh(काष्ठा net *net,
+					 स्थिर काष्ठा fib_config *cfg)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा fib_info *fi;
+	अचिन्हित पूर्णांक hash;
 
 	hash = fib_info_hashfn_1(fib_devindex_hashfn(cfg->fc_nh_id),
 				 cfg->fc_protocol, cfg->fc_scope,
-				 (__force u32)cfg->fc_prefsrc,
+				 (__क्रमce u32)cfg->fc_prefsrc,
 				 cfg->fc_priority);
 	hash = fib_info_hashfn_result(hash);
 	head = &fib_info_hash[hash];
 
-	hlist_for_each_entry(fi, head, fib_hash) {
-		if (!net_eq(fi->fib_net, net))
-			continue;
-		if (!fi->nh || fi->nh->id != cfg->fc_nh_id)
-			continue;
-		if (cfg->fc_protocol == fi->fib_protocol &&
+	hlist_क्रम_each_entry(fi, head, fib_hash) अणु
+		अगर (!net_eq(fi->fib_net, net))
+			जारी;
+		अगर (!fi->nh || fi->nh->id != cfg->fc_nh_id)
+			जारी;
+		अगर (cfg->fc_protocol == fi->fib_protocol &&
 		    cfg->fc_scope == fi->fib_scope &&
 		    cfg->fc_prefsrc == fi->fib_prefsrc &&
 		    cfg->fc_priority == fi->fib_priority &&
 		    cfg->fc_type == fi->fib_type &&
 		    cfg->fc_table == fi->fib_tb_id &&
 		    !((cfg->fc_flags ^ fi->fib_flags) & ~RTNH_COMPARE_MASK))
-			return fi;
-	}
+			वापस fi;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct fib_info *fib_find_info(struct fib_info *nfi)
-{
-	struct hlist_head *head;
-	struct fib_info *fi;
-	unsigned int hash;
+अटल काष्ठा fib_info *fib_find_info(काष्ठा fib_info *nfi)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा fib_info *fi;
+	अचिन्हित पूर्णांक hash;
 
 	hash = fib_info_hashfn(nfi);
 	head = &fib_info_hash[hash];
 
-	hlist_for_each_entry(fi, head, fib_hash) {
-		if (!net_eq(fi->fib_net, nfi->fib_net))
-			continue;
-		if (fi->fib_nhs != nfi->fib_nhs)
-			continue;
-		if (nfi->fib_protocol == fi->fib_protocol &&
+	hlist_क्रम_each_entry(fi, head, fib_hash) अणु
+		अगर (!net_eq(fi->fib_net, nfi->fib_net))
+			जारी;
+		अगर (fi->fib_nhs != nfi->fib_nhs)
+			जारी;
+		अगर (nfi->fib_protocol == fi->fib_protocol &&
 		    nfi->fib_scope == fi->fib_scope &&
 		    nfi->fib_prefsrc == fi->fib_prefsrc &&
 		    nfi->fib_priority == fi->fib_priority &&
 		    nfi->fib_type == fi->fib_type &&
-		    memcmp(nfi->fib_metrics, fi->fib_metrics,
-			   sizeof(u32) * RTAX_MAX) == 0 &&
+		    स_भेद(nfi->fib_metrics, fi->fib_metrics,
+			   माप(u32) * RTAX_MAX) == 0 &&
 		    !((nfi->fib_flags ^ fi->fib_flags) & ~RTNH_COMPARE_MASK) &&
 		    nh_comp(fi, nfi) == 0)
-			return fi;
-	}
+			वापस fi;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Check, that the gateway is already configured.
+/* Check, that the gateway is alपढ़ोy configured.
  * Used only by redirect accept routine.
  */
-int ip_fib_check_default(__be32 gw, struct net_device *dev)
-{
-	struct hlist_head *head;
-	struct fib_nh *nh;
-	unsigned int hash;
+पूर्णांक ip_fib_check_शेष(__be32 gw, काष्ठा net_device *dev)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा fib_nh *nh;
+	अचिन्हित पूर्णांक hash;
 
 	spin_lock(&fib_info_lock);
 
-	hash = fib_devindex_hashfn(dev->ifindex);
+	hash = fib_devindex_hashfn(dev->अगरindex);
 	head = &fib_info_devhash[hash];
-	hlist_for_each_entry(nh, head, nh_hash) {
-		if (nh->fib_nh_dev == dev &&
+	hlist_क्रम_each_entry(nh, head, nh_hash) अणु
+		अगर (nh->fib_nh_dev == dev &&
 		    nh->fib_nh_gw4 == gw &&
-		    !(nh->fib_nh_flags & RTNH_F_DEAD)) {
+		    !(nh->fib_nh_flags & RTNH_F_DEAD)) अणु
 			spin_unlock(&fib_info_lock);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&fib_info_lock);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-size_t fib_nlmsg_size(struct fib_info *fi)
-{
-	size_t payload = NLMSG_ALIGN(sizeof(struct rtmsg))
+माप_प्रकार fib_nlmsg_size(काष्ठा fib_info *fi)
+अणु
+	माप_प्रकार payload = NLMSG_ALIGN(माप(काष्ठा rपंचांगsg))
 			 + nla_total_size(4) /* RTA_TABLE */
 			 + nla_total_size(4) /* RTA_DST */
 			 + nla_total_size(4) /* RTA_PRIORITY */
 			 + nla_total_size(4) /* RTA_PREFSRC */
 			 + nla_total_size(TCP_CA_NAME_MAX); /* RTAX_CC_ALGO */
-	unsigned int nhs = fib_info_num_path(fi);
+	अचिन्हित पूर्णांक nhs = fib_info_num_path(fi);
 
-	/* space for nested metrics */
+	/* space क्रम nested metrics */
 	payload += nla_total_size((RTAX_MAX * nla_total_size(4)));
 
-	if (fi->nh)
+	अगर (fi->nh)
 		payload += nla_total_size(4); /* RTA_NH_ID */
 
-	if (nhs) {
-		size_t nh_encapsize = 0;
-		/* Also handles the special case nhs == 1 */
+	अगर (nhs) अणु
+		माप_प्रकार nh_encapsize = 0;
+		/* Also handles the special हाल nhs == 1 */
 
 		/* each nexthop is packed in an attribute */
-		size_t nhsize = nla_total_size(sizeof(struct rtnexthop));
-		unsigned int i;
+		माप_प्रकार nhsize = nla_total_size(माप(काष्ठा rtnexthop));
+		अचिन्हित पूर्णांक i;
 
 		/* may contain flow and gateway attribute */
 		nhsize += 2 * nla_total_size(4);
 
 		/* grab encap info */
-		for (i = 0; i < fib_info_num_path(fi); i++) {
-			struct fib_nh_common *nhc = fib_info_nhc(fi, i);
+		क्रम (i = 0; i < fib_info_num_path(fi); i++) अणु
+			काष्ठा fib_nh_common *nhc = fib_info_nhc(fi, i);
 
-			if (nhc->nhc_lwtstate) {
+			अगर (nhc->nhc_lwtstate) अणु
 				/* RTA_ENCAP_TYPE */
 				nh_encapsize += lwtunnel_get_encap_size(
 						nhc->nhc_lwtstate);
 				/* RTA_ENCAP */
 				nh_encapsize +=  nla_total_size(2);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* all nexthops are packed in a nested attribute */
 		payload += nla_total_size((nhs * nhsize) + nh_encapsize);
 
-	}
+	पूर्ण
 
-	return payload;
-}
+	वापस payload;
+पूर्ण
 
-void rtmsg_fib(int event, __be32 key, struct fib_alias *fa,
-	       int dst_len, u32 tb_id, const struct nl_info *info,
-	       unsigned int nlm_flags)
-{
-	struct fib_rt_info fri;
-	struct sk_buff *skb;
+व्योम rपंचांगsg_fib(पूर्णांक event, __be32 key, काष्ठा fib_alias *fa,
+	       पूर्णांक dst_len, u32 tb_id, स्थिर काष्ठा nl_info *info,
+	       अचिन्हित पूर्णांक nlm_flags)
+अणु
+	काष्ठा fib_rt_info fri;
+	काष्ठा sk_buff *skb;
 	u32 seq = info->nlh ? info->nlh->nlmsg_seq : 0;
-	int err = -ENOBUFS;
+	पूर्णांक err = -ENOBUFS;
 
 	skb = nlmsg_new(fib_nlmsg_size(fa->fa_info), GFP_KERNEL);
-	if (!skb)
-		goto errout;
+	अगर (!skb)
+		जाओ errout;
 
 	fri.fi = fa->fa_info;
 	fri.tb_id = tb_id;
@@ -523,512 +524,512 @@ void rtmsg_fib(int event, __be32 key, struct fib_alias *fa,
 	fri.trap = fa->trap;
 	fri.offload_failed = fa->offload_failed;
 	err = fib_dump_info(skb, info->portid, seq, event, &fri, nlm_flags);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		/* -EMSGSIZE implies BUG in fib_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kfree_skb(skb);
-		goto errout;
-	}
-	rtnl_notify(skb, info->nl_net, info->portid, RTNLGRP_IPV4_ROUTE,
+		kमुक्त_skb(skb);
+		जाओ errout;
+	पूर्ण
+	rtnl_notअगरy(skb, info->nl_net, info->portid, RTNLGRP_IPV4_ROUTE,
 		    info->nlh, GFP_KERNEL);
-	return;
+	वापस;
 errout:
-	if (err < 0)
+	अगर (err < 0)
 		rtnl_set_sk_err(info->nl_net, RTNLGRP_IPV4_ROUTE, err);
-}
+पूर्ण
 
-static int fib_detect_death(struct fib_info *fi, int order,
-			    struct fib_info **last_resort, int *last_idx,
-			    int dflt)
-{
-	const struct fib_nh_common *nhc = fib_info_nhc(fi, 0);
-	struct neighbour *n;
-	int state = NUD_NONE;
+अटल पूर्णांक fib_detect_death(काष्ठा fib_info *fi, पूर्णांक order,
+			    काष्ठा fib_info **last_resort, पूर्णांक *last_idx,
+			    पूर्णांक dflt)
+अणु
+	स्थिर काष्ठा fib_nh_common *nhc = fib_info_nhc(fi, 0);
+	काष्ठा neighbour *n;
+	पूर्णांक state = NUD_NONE;
 
-	if (likely(nhc->nhc_gw_family == AF_INET))
+	अगर (likely(nhc->nhc_gw_family == AF_INET))
 		n = neigh_lookup(&arp_tbl, &nhc->nhc_gw.ipv4, nhc->nhc_dev);
-	else if (nhc->nhc_gw_family == AF_INET6)
+	अन्यथा अगर (nhc->nhc_gw_family == AF_INET6)
 		n = neigh_lookup(ipv6_stub->nd_tbl, &nhc->nhc_gw.ipv6,
 				 nhc->nhc_dev);
-	else
-		n = NULL;
+	अन्यथा
+		n = शून्य;
 
-	if (n) {
+	अगर (n) अणु
 		state = n->nud_state;
 		neigh_release(n);
-	} else {
-		return 0;
-	}
-	if (state == NUD_REACHABLE)
-		return 0;
-	if ((state & NUD_VALID) && order != dflt)
-		return 0;
-	if ((state & NUD_VALID) ||
-	    (*last_idx < 0 && order > dflt && state != NUD_INCOMPLETE)) {
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
+	अगर (state == NUD_REACHABLE)
+		वापस 0;
+	अगर ((state & NUD_VALID) && order != dflt)
+		वापस 0;
+	अगर ((state & NUD_VALID) ||
+	    (*last_idx < 0 && order > dflt && state != NUD_INCOMPLETE)) अणु
 		*last_resort = fi;
 		*last_idx = order;
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-int fib_nh_common_init(struct net *net, struct fib_nh_common *nhc,
-		       struct nlattr *encap, u16 encap_type,
-		       void *cfg, gfp_t gfp_flags,
-		       struct netlink_ext_ack *extack)
-{
-	int err;
+पूर्णांक fib_nh_common_init(काष्ठा net *net, काष्ठा fib_nh_common *nhc,
+		       काष्ठा nlattr *encap, u16 encap_type,
+		       व्योम *cfg, gfp_t gfp_flags,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err;
 
-	nhc->nhc_pcpu_rth_output = alloc_percpu_gfp(struct rtable __rcu *,
+	nhc->nhc_pcpu_rth_output = alloc_percpu_gfp(काष्ठा rtable __rcu *,
 						    gfp_flags);
-	if (!nhc->nhc_pcpu_rth_output)
-		return -ENOMEM;
+	अगर (!nhc->nhc_pcpu_rth_output)
+		वापस -ENOMEM;
 
-	if (encap) {
-		struct lwtunnel_state *lwtstate;
+	अगर (encap) अणु
+		काष्ठा lwtunnel_state *lwtstate;
 
-		if (encap_type == LWTUNNEL_ENCAP_NONE) {
+		अगर (encap_type == LWTUNNEL_ENCAP_NONE) अणु
 			NL_SET_ERR_MSG(extack, "LWT encap type not specified");
 			err = -EINVAL;
-			goto lwt_failure;
-		}
+			जाओ lwt_failure;
+		पूर्ण
 		err = lwtunnel_build_state(net, encap_type, encap,
 					   nhc->nhc_family, cfg, &lwtstate,
 					   extack);
-		if (err)
-			goto lwt_failure;
+		अगर (err)
+			जाओ lwt_failure;
 
 		nhc->nhc_lwtstate = lwtstate_get(lwtstate);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 lwt_failure:
-	rt_fibinfo_free_cpus(nhc->nhc_pcpu_rth_output);
-	nhc->nhc_pcpu_rth_output = NULL;
-	return err;
-}
+	rt_fibinfo_मुक्त_cpus(nhc->nhc_pcpu_rth_output);
+	nhc->nhc_pcpu_rth_output = शून्य;
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(fib_nh_common_init);
 
-int fib_nh_init(struct net *net, struct fib_nh *nh,
-		struct fib_config *cfg, int nh_weight,
-		struct netlink_ext_ack *extack)
-{
-	int err;
+पूर्णांक fib_nh_init(काष्ठा net *net, काष्ठा fib_nh *nh,
+		काष्ठा fib_config *cfg, पूर्णांक nh_weight,
+		काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err;
 
 	nh->fib_nh_family = AF_INET;
 
 	err = fib_nh_common_init(net, &nh->nh_common, cfg->fc_encap,
 				 cfg->fc_encap_type, cfg, GFP_KERNEL, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	nh->fib_nh_oif = cfg->fc_oif;
+	nh->fib_nh_oअगर = cfg->fc_oअगर;
 	nh->fib_nh_gw_family = cfg->fc_gw_family;
-	if (cfg->fc_gw_family == AF_INET)
+	अगर (cfg->fc_gw_family == AF_INET)
 		nh->fib_nh_gw4 = cfg->fc_gw4;
-	else if (cfg->fc_gw_family == AF_INET6)
+	अन्यथा अगर (cfg->fc_gw_family == AF_INET6)
 		nh->fib_nh_gw6 = cfg->fc_gw6;
 
 	nh->fib_nh_flags = cfg->fc_flags;
 
-#ifdef CONFIG_IP_ROUTE_CLASSID
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
 	nh->nh_tclassid = cfg->fc_flow;
-	if (nh->nh_tclassid)
+	अगर (nh->nh_tclassid)
 		net->ipv4.fib_num_tclassid_users++;
-#endif
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
 	nh->fib_nh_weight = nh_weight;
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
 
-static int fib_count_nexthops(struct rtnexthop *rtnh, int remaining,
-			      struct netlink_ext_ack *extack)
-{
-	int nhs = 0;
+अटल पूर्णांक fib_count_nexthops(काष्ठा rtnexthop *rtnh, पूर्णांक reमुख्यing,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक nhs = 0;
 
-	while (rtnh_ok(rtnh, remaining)) {
+	जबतक (rtnh_ok(rtnh, reमुख्यing)) अणु
 		nhs++;
-		rtnh = rtnh_next(rtnh, &remaining);
-	}
+		rtnh = rtnh_next(rtnh, &reमुख्यing);
+	पूर्ण
 
 	/* leftover implies invalid nexthop configuration, discard it */
-	if (remaining > 0) {
+	अगर (reमुख्यing > 0) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Invalid nexthop configuration - extra data after nexthops");
 		nhs = 0;
-	}
+	पूर्ण
 
-	return nhs;
-}
+	वापस nhs;
+पूर्ण
 
-/* only called when fib_nh is integrated into fib_info */
-static int fib_get_nhs(struct fib_info *fi, struct rtnexthop *rtnh,
-		       int remaining, struct fib_config *cfg,
-		       struct netlink_ext_ack *extack)
-{
-	struct net *net = fi->fib_net;
-	struct fib_config fib_cfg;
-	struct fib_nh *nh;
-	int ret;
+/* only called when fib_nh is पूर्णांकegrated पूर्णांकo fib_info */
+अटल पूर्णांक fib_get_nhs(काष्ठा fib_info *fi, काष्ठा rtnexthop *rtnh,
+		       पूर्णांक reमुख्यing, काष्ठा fib_config *cfg,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = fi->fib_net;
+	काष्ठा fib_config fib_cfg;
+	काष्ठा fib_nh *nh;
+	पूर्णांक ret;
 
-	change_nexthops(fi) {
-		int attrlen;
+	change_nexthops(fi) अणु
+		पूर्णांक attrlen;
 
-		memset(&fib_cfg, 0, sizeof(fib_cfg));
+		स_रखो(&fib_cfg, 0, माप(fib_cfg));
 
-		if (!rtnh_ok(rtnh, remaining)) {
+		अगर (!rtnh_ok(rtnh, reमुख्यing)) अणु
 			NL_SET_ERR_MSG(extack,
 				       "Invalid nexthop configuration - extra data after nexthop");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (rtnh->rtnh_flags & (RTNH_F_DEAD | RTNH_F_LINKDOWN)) {
+		अगर (rtnh->rtnh_flags & (RTNH_F_DEAD | RTNH_F_LINKDOWN)) अणु
 			NL_SET_ERR_MSG(extack,
 				       "Invalid flags for nexthop - can not contain DEAD or LINKDOWN");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		fib_cfg.fc_flags = (cfg->fc_flags & ~0xFF) | rtnh->rtnh_flags;
-		fib_cfg.fc_oif = rtnh->rtnh_ifindex;
+		fib_cfg.fc_oअगर = rtnh->rtnh_अगरindex;
 
 		attrlen = rtnh_attrlen(rtnh);
-		if (attrlen > 0) {
-			struct nlattr *nla, *nlav, *attrs = rtnh_attrs(rtnh);
+		अगर (attrlen > 0) अणु
+			काष्ठा nlattr *nla, *nlav, *attrs = rtnh_attrs(rtnh);
 
 			nla = nla_find(attrs, attrlen, RTA_GATEWAY);
 			nlav = nla_find(attrs, attrlen, RTA_VIA);
-			if (nla && nlav) {
+			अगर (nla && nlav) अणु
 				NL_SET_ERR_MSG(extack,
 					       "Nexthop configuration can not contain both GATEWAY and VIA");
-				return -EINVAL;
-			}
-			if (nla) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (nla) अणु
 				fib_cfg.fc_gw4 = nla_get_in_addr(nla);
-				if (fib_cfg.fc_gw4)
+				अगर (fib_cfg.fc_gw4)
 					fib_cfg.fc_gw_family = AF_INET;
-			} else if (nlav) {
+			पूर्ण अन्यथा अगर (nlav) अणु
 				ret = fib_gw_from_via(&fib_cfg, nlav, extack);
-				if (ret)
-					goto errout;
-			}
+				अगर (ret)
+					जाओ errout;
+			पूर्ण
 
 			nla = nla_find(attrs, attrlen, RTA_FLOW);
-			if (nla)
+			अगर (nla)
 				fib_cfg.fc_flow = nla_get_u32(nla);
 
 			fib_cfg.fc_encap = nla_find(attrs, attrlen, RTA_ENCAP);
 			nla = nla_find(attrs, attrlen, RTA_ENCAP_TYPE);
-			if (nla)
+			अगर (nla)
 				fib_cfg.fc_encap_type = nla_get_u16(nla);
-		}
+		पूर्ण
 
 		ret = fib_nh_init(net, nexthop_nh, &fib_cfg,
 				  rtnh->rtnh_hops + 1, extack);
-		if (ret)
-			goto errout;
+		अगर (ret)
+			जाओ errout;
 
-		rtnh = rtnh_next(rtnh, &remaining);
-	} endfor_nexthops(fi);
+		rtnh = rtnh_next(rtnh, &reमुख्यing);
+	पूर्ण endक्रम_nexthops(fi);
 
 	ret = -EINVAL;
 	nh = fib_info_nh(fi, 0);
-	if (cfg->fc_oif && nh->fib_nh_oif != cfg->fc_oif) {
+	अगर (cfg->fc_oअगर && nh->fib_nh_oअगर != cfg->fc_oअगर) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Nexthop device index does not match RTA_OIF");
-		goto errout;
-	}
-	if (cfg->fc_gw_family) {
-		if (cfg->fc_gw_family != nh->fib_nh_gw_family ||
+		जाओ errout;
+	पूर्ण
+	अगर (cfg->fc_gw_family) अणु
+		अगर (cfg->fc_gw_family != nh->fib_nh_gw_family ||
 		    (cfg->fc_gw_family == AF_INET &&
 		     nh->fib_nh_gw4 != cfg->fc_gw4) ||
 		    (cfg->fc_gw_family == AF_INET6 &&
-		     ipv6_addr_cmp(&nh->fib_nh_gw6, &cfg->fc_gw6))) {
+		     ipv6_addr_cmp(&nh->fib_nh_gw6, &cfg->fc_gw6))) अणु
 			NL_SET_ERR_MSG(extack,
 				       "Nexthop gateway does not match RTA_GATEWAY or RTA_VIA");
-			goto errout;
-		}
-	}
-#ifdef CONFIG_IP_ROUTE_CLASSID
-	if (cfg->fc_flow && nh->nh_tclassid != cfg->fc_flow) {
+			जाओ errout;
+		पूर्ण
+	पूर्ण
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
+	अगर (cfg->fc_flow && nh->nh_tclassid != cfg->fc_flow) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Nexthop class id does not match RTA_FLOW");
-		goto errout;
-	}
-#endif
+		जाओ errout;
+	पूर्ण
+#पूर्ण_अगर
 	ret = 0;
 errout:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* only called when fib_nh is integrated into fib_info */
-static void fib_rebalance(struct fib_info *fi)
-{
-	int total;
-	int w;
+/* only called when fib_nh is पूर्णांकegrated पूर्णांकo fib_info */
+अटल व्योम fib_rebalance(काष्ठा fib_info *fi)
+अणु
+	पूर्णांक total;
+	पूर्णांक w;
 
-	if (fib_info_num_path(fi) < 2)
-		return;
+	अगर (fib_info_num_path(fi) < 2)
+		वापस;
 
 	total = 0;
-	for_nexthops(fi) {
-		if (nh->fib_nh_flags & RTNH_F_DEAD)
-			continue;
+	क्रम_nexthops(fi) अणु
+		अगर (nh->fib_nh_flags & RTNH_F_DEAD)
+			जारी;
 
-		if (ip_ignore_linkdown(nh->fib_nh_dev) &&
+		अगर (ip_ignore_linkकरोwn(nh->fib_nh_dev) &&
 		    nh->fib_nh_flags & RTNH_F_LINKDOWN)
-			continue;
+			जारी;
 
 		total += nh->fib_nh_weight;
-	} endfor_nexthops(fi);
+	पूर्ण endक्रम_nexthops(fi);
 
 	w = 0;
-	change_nexthops(fi) {
-		int upper_bound;
+	change_nexthops(fi) अणु
+		पूर्णांक upper_bound;
 
-		if (nexthop_nh->fib_nh_flags & RTNH_F_DEAD) {
+		अगर (nexthop_nh->fib_nh_flags & RTNH_F_DEAD) अणु
 			upper_bound = -1;
-		} else if (ip_ignore_linkdown(nexthop_nh->fib_nh_dev) &&
-			   nexthop_nh->fib_nh_flags & RTNH_F_LINKDOWN) {
+		पूर्ण अन्यथा अगर (ip_ignore_linkकरोwn(nexthop_nh->fib_nh_dev) &&
+			   nexthop_nh->fib_nh_flags & RTNH_F_LINKDOWN) अणु
 			upper_bound = -1;
-		} else {
+		पूर्ण अन्यथा अणु
 			w += nexthop_nh->fib_nh_weight;
 			upper_bound = DIV_ROUND_CLOSEST_ULL((u64)w << 31,
 							    total) - 1;
-		}
+		पूर्ण
 
 		atomic_set(&nexthop_nh->fib_nh_upper_bound, upper_bound);
-	} endfor_nexthops(fi);
-}
-#else /* CONFIG_IP_ROUTE_MULTIPATH */
+	पूर्ण endक्रम_nexthops(fi);
+पूर्ण
+#अन्यथा /* CONFIG_IP_ROUTE_MULTIPATH */
 
-static int fib_get_nhs(struct fib_info *fi, struct rtnexthop *rtnh,
-		       int remaining, struct fib_config *cfg,
-		       struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक fib_get_nhs(काष्ठा fib_info *fi, काष्ठा rtnexthop *rtnh,
+		       पूर्णांक reमुख्यing, काष्ठा fib_config *cfg,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
 	NL_SET_ERR_MSG(extack, "Multipath support not enabled in kernel");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-#define fib_rebalance(fi) do { } while (0)
+#घोषणा fib_rebalance(fi) करो अणु पूर्ण जबतक (0)
 
-#endif /* CONFIG_IP_ROUTE_MULTIPATH */
+#पूर्ण_अगर /* CONFIG_IP_ROUTE_MULTIPATH */
 
-static int fib_encap_match(struct net *net, u16 encap_type,
-			   struct nlattr *encap,
-			   const struct fib_nh *nh,
-			   const struct fib_config *cfg,
-			   struct netlink_ext_ack *extack)
-{
-	struct lwtunnel_state *lwtstate;
-	int ret, result = 0;
+अटल पूर्णांक fib_encap_match(काष्ठा net *net, u16 encap_type,
+			   काष्ठा nlattr *encap,
+			   स्थिर काष्ठा fib_nh *nh,
+			   स्थिर काष्ठा fib_config *cfg,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा lwtunnel_state *lwtstate;
+	पूर्णांक ret, result = 0;
 
-	if (encap_type == LWTUNNEL_ENCAP_NONE)
-		return 0;
+	अगर (encap_type == LWTUNNEL_ENCAP_NONE)
+		वापस 0;
 
 	ret = lwtunnel_build_state(net, encap_type, encap, AF_INET,
 				   cfg, &lwtstate, extack);
-	if (!ret) {
+	अगर (!ret) अणु
 		result = lwtunnel_cmp_encap(lwtstate, nh->fib_nh_lws);
-		lwtstate_free(lwtstate);
-	}
+		lwtstate_मुक्त(lwtstate);
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-int fib_nh_match(struct net *net, struct fib_config *cfg, struct fib_info *fi,
-		 struct netlink_ext_ack *extack)
-{
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
-	struct rtnexthop *rtnh;
-	int remaining;
-#endif
+पूर्णांक fib_nh_match(काष्ठा net *net, काष्ठा fib_config *cfg, काष्ठा fib_info *fi,
+		 काष्ठा netlink_ext_ack *extack)
+अणु
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
+	काष्ठा rtnexthop *rtnh;
+	पूर्णांक reमुख्यing;
+#पूर्ण_अगर
 
-	if (cfg->fc_priority && cfg->fc_priority != fi->fib_priority)
-		return 1;
+	अगर (cfg->fc_priority && cfg->fc_priority != fi->fib_priority)
+		वापस 1;
 
-	if (cfg->fc_nh_id) {
-		if (fi->nh && cfg->fc_nh_id == fi->nh->id)
-			return 0;
-		return 1;
-	}
+	अगर (cfg->fc_nh_id) अणु
+		अगर (fi->nh && cfg->fc_nh_id == fi->nh->id)
+			वापस 0;
+		वापस 1;
+	पूर्ण
 
-	if (cfg->fc_oif || cfg->fc_gw_family) {
-		struct fib_nh *nh = fib_info_nh(fi, 0);
+	अगर (cfg->fc_oअगर || cfg->fc_gw_family) अणु
+		काष्ठा fib_nh *nh = fib_info_nh(fi, 0);
 
-		if (cfg->fc_encap) {
-			if (fib_encap_match(net, cfg->fc_encap_type,
+		अगर (cfg->fc_encap) अणु
+			अगर (fib_encap_match(net, cfg->fc_encap_type,
 					    cfg->fc_encap, nh, cfg, extack))
-				return 1;
-		}
-#ifdef CONFIG_IP_ROUTE_CLASSID
-		if (cfg->fc_flow &&
+				वापस 1;
+		पूर्ण
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
+		अगर (cfg->fc_flow &&
 		    cfg->fc_flow != nh->nh_tclassid)
-			return 1;
-#endif
-		if ((cfg->fc_oif && cfg->fc_oif != nh->fib_nh_oif) ||
+			वापस 1;
+#पूर्ण_अगर
+		अगर ((cfg->fc_oअगर && cfg->fc_oअगर != nh->fib_nh_oअगर) ||
 		    (cfg->fc_gw_family &&
 		     cfg->fc_gw_family != nh->fib_nh_gw_family))
-			return 1;
+			वापस 1;
 
-		if (cfg->fc_gw_family == AF_INET &&
+		अगर (cfg->fc_gw_family == AF_INET &&
 		    cfg->fc_gw4 != nh->fib_nh_gw4)
-			return 1;
+			वापस 1;
 
-		if (cfg->fc_gw_family == AF_INET6 &&
+		अगर (cfg->fc_gw_family == AF_INET6 &&
 		    ipv6_addr_cmp(&cfg->fc_gw6, &nh->fib_nh_gw6))
-			return 1;
+			वापस 1;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
-	if (!cfg->fc_mp)
-		return 0;
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
+	अगर (!cfg->fc_mp)
+		वापस 0;
 
 	rtnh = cfg->fc_mp;
-	remaining = cfg->fc_mp_len;
+	reमुख्यing = cfg->fc_mp_len;
 
-	for_nexthops(fi) {
-		int attrlen;
+	क्रम_nexthops(fi) अणु
+		पूर्णांक attrlen;
 
-		if (!rtnh_ok(rtnh, remaining))
-			return -EINVAL;
+		अगर (!rtnh_ok(rtnh, reमुख्यing))
+			वापस -EINVAL;
 
-		if (rtnh->rtnh_ifindex && rtnh->rtnh_ifindex != nh->fib_nh_oif)
-			return 1;
+		अगर (rtnh->rtnh_अगरindex && rtnh->rtnh_अगरindex != nh->fib_nh_oअगर)
+			वापस 1;
 
 		attrlen = rtnh_attrlen(rtnh);
-		if (attrlen > 0) {
-			struct nlattr *nla, *nlav, *attrs = rtnh_attrs(rtnh);
+		अगर (attrlen > 0) अणु
+			काष्ठा nlattr *nla, *nlav, *attrs = rtnh_attrs(rtnh);
 
 			nla = nla_find(attrs, attrlen, RTA_GATEWAY);
 			nlav = nla_find(attrs, attrlen, RTA_VIA);
-			if (nla && nlav) {
+			अगर (nla && nlav) अणु
 				NL_SET_ERR_MSG(extack,
 					       "Nexthop configuration can not contain both GATEWAY and VIA");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (nla) {
-				if (nh->fib_nh_gw_family != AF_INET ||
+			अगर (nla) अणु
+				अगर (nh->fib_nh_gw_family != AF_INET ||
 				    nla_get_in_addr(nla) != nh->fib_nh_gw4)
-					return 1;
-			} else if (nlav) {
-				struct fib_config cfg2;
-				int err;
+					वापस 1;
+			पूर्ण अन्यथा अगर (nlav) अणु
+				काष्ठा fib_config cfg2;
+				पूर्णांक err;
 
 				err = fib_gw_from_via(&cfg2, nlav, extack);
-				if (err)
-					return err;
+				अगर (err)
+					वापस err;
 
-				switch (nh->fib_nh_gw_family) {
-				case AF_INET:
-					if (cfg2.fc_gw_family != AF_INET ||
+				चयन (nh->fib_nh_gw_family) अणु
+				हाल AF_INET:
+					अगर (cfg2.fc_gw_family != AF_INET ||
 					    cfg2.fc_gw4 != nh->fib_nh_gw4)
-						return 1;
-					break;
-				case AF_INET6:
-					if (cfg2.fc_gw_family != AF_INET6 ||
+						वापस 1;
+					अवरोध;
+				हाल AF_INET6:
+					अगर (cfg2.fc_gw_family != AF_INET6 ||
 					    ipv6_addr_cmp(&cfg2.fc_gw6,
 							  &nh->fib_nh_gw6))
-						return 1;
-					break;
-				}
-			}
+						वापस 1;
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
-#ifdef CONFIG_IP_ROUTE_CLASSID
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
 			nla = nla_find(attrs, attrlen, RTA_FLOW);
-			if (nla && nla_get_u32(nla) != nh->nh_tclassid)
-				return 1;
-#endif
-		}
+			अगर (nla && nla_get_u32(nla) != nh->nh_tclassid)
+				वापस 1;
+#पूर्ण_अगर
+		पूर्ण
 
-		rtnh = rtnh_next(rtnh, &remaining);
-	} endfor_nexthops(fi);
-#endif
-	return 0;
-}
+		rtnh = rtnh_next(rtnh, &reमुख्यing);
+	पूर्ण endक्रम_nexthops(fi);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-bool fib_metrics_match(struct fib_config *cfg, struct fib_info *fi)
-{
-	struct nlattr *nla;
-	int remaining;
+bool fib_metrics_match(काष्ठा fib_config *cfg, काष्ठा fib_info *fi)
+अणु
+	काष्ठा nlattr *nla;
+	पूर्णांक reमुख्यing;
 
-	if (!cfg->fc_mx)
-		return true;
+	अगर (!cfg->fc_mx)
+		वापस true;
 
-	nla_for_each_attr(nla, cfg->fc_mx, cfg->fc_mx_len, remaining) {
-		int type = nla_type(nla);
+	nla_क्रम_each_attr(nla, cfg->fc_mx, cfg->fc_mx_len, reमुख्यing) अणु
+		पूर्णांक type = nla_type(nla);
 		u32 fi_val, val;
 
-		if (!type)
-			continue;
-		if (type > RTAX_MAX)
-			return false;
+		अगर (!type)
+			जारी;
+		अगर (type > RTAX_MAX)
+			वापस false;
 
-		if (type == RTAX_CC_ALGO) {
-			char tmp[TCP_CA_NAME_MAX];
+		अगर (type == RTAX_CC_ALGO) अणु
+			अक्षर पंचांगp[TCP_CA_NAME_MAX];
 			bool ecn_ca = false;
 
-			nla_strscpy(tmp, nla, sizeof(tmp));
-			val = tcp_ca_get_key_by_name(fi->fib_net, tmp, &ecn_ca);
-		} else {
-			if (nla_len(nla) != sizeof(u32))
-				return false;
+			nla_strscpy(पंचांगp, nla, माप(पंचांगp));
+			val = tcp_ca_get_key_by_name(fi->fib_net, पंचांगp, &ecn_ca);
+		पूर्ण अन्यथा अणु
+			अगर (nla_len(nla) != माप(u32))
+				वापस false;
 			val = nla_get_u32(nla);
-		}
+		पूर्ण
 
 		fi_val = fi->fib_metrics->metrics[type - 1];
-		if (type == RTAX_FEATURES)
+		अगर (type == RTAX_FEATURES)
 			fi_val &= ~DST_FEATURE_ECN_CA;
 
-		if (fi_val != val)
-			return false;
-	}
+		अगर (fi_val != val)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int fib_check_nh_v6_gw(struct net *net, struct fib_nh *nh,
-			      u32 table, struct netlink_ext_ack *extack)
-{
-	struct fib6_config cfg = {
+अटल पूर्णांक fib_check_nh_v6_gw(काष्ठा net *net, काष्ठा fib_nh *nh,
+			      u32 table, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा fib6_config cfg = अणु
 		.fc_table = table,
 		.fc_flags = nh->fib_nh_flags | RTF_GATEWAY,
-		.fc_ifindex = nh->fib_nh_oif,
+		.fc_अगरindex = nh->fib_nh_oअगर,
 		.fc_gateway = nh->fib_nh_gw6,
-	};
-	struct fib6_nh fib6_nh = {};
-	int err;
+	पूर्ण;
+	काष्ठा fib6_nh fib6_nh = अणुपूर्ण;
+	पूर्णांक err;
 
 	err = ipv6_stub->fib6_nh_init(net, &fib6_nh, &cfg, GFP_KERNEL, extack);
-	if (!err) {
+	अगर (!err) अणु
 		nh->fib_nh_dev = fib6_nh.fib_nh_dev;
 		dev_hold(nh->fib_nh_dev);
-		nh->fib_nh_oif = nh->fib_nh_dev->ifindex;
+		nh->fib_nh_oअगर = nh->fib_nh_dev->अगरindex;
 		nh->fib_nh_scope = RT_SCOPE_LINK;
 
 		ipv6_stub->fib6_nh_release(&fib6_nh);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Picture
  * -------
  *
  * Semantics of nexthop is very messy by historical reasons.
- * We have to take into account, that:
- * a) gateway can be actually local interface address,
+ * We have to take पूर्णांकo account, that:
+ * a) gateway can be actually local पूर्णांकerface address,
  *    so that gatewayed route is direct.
  * b) gateway must be on-link address, possibly
- *    described not by an ifaddr, but also by a direct route.
- * c) If both gateway and interface are specified, they should not
+ *    described not by an अगरaddr, but also by a direct route.
+ * c) If both gateway and पूर्णांकerface are specअगरied, they should not
  *    contradict.
  * d) If we use tunnel routes, gateway could be not on-link.
  *
@@ -1036,396 +1037,396 @@ static int fib_check_nh_v6_gw(struct net *net, struct fib_nh *nh,
  * results in pretty ugly and hairy code with obscure logic.
  *
  * I chose to generalized it instead, so that the size
- * of code does not increase practically, but it becomes
+ * of code करोes not increase practically, but it becomes
  * much more general.
- * Every prefix is assigned a "scope" value: "host" is local address,
+ * Every prefix is asचिन्हित a "scope" value: "host" is local address,
  * "link" is direct route,
  * [ ... "site" ... "interior" ... ]
  * and "universe" is true gateway route with global meaning.
  *
- * Every prefix refers to a set of "nexthop"s (gw, oif),
+ * Every prefix refers to a set of "nexthop"s (gw, oअगर),
  * where gw must have narrower scope. This recursion stops
- * when gw has LOCAL scope or if "nexthop" is declared ONLINK,
- * which means that gw is forced to be on link.
+ * when gw has LOCAL scope or अगर "nexthop" is declared ONLINK,
+ * which means that gw is क्रमced to be on link.
  *
  * Code is still hairy, but now it is apparently logically
  * consistent and very flexible. F.e. as by-product it allows
- * to co-exists in peace independent exterior and interior
+ * to co-exists in peace independent exterior and पूर्णांकerior
  * routing processes.
  *
  * Normally it looks as following.
  *
- * {universe prefix}  -> (gw, oif) [scope link]
+ * अणुuniverse prefixपूर्ण  -> (gw, oअगर) [scope link]
  *		  |
- *		  |-> {link prefix} -> (gw, oif) [scope local]
+ *		  |-> अणुlink prefixपूर्ण -> (gw, oअगर) [scope local]
  *					|
- *					|-> {local prefix} (terminal node)
+ *					|-> अणुlocal prefixपूर्ण (terminal node)
  */
-static int fib_check_nh_v4_gw(struct net *net, struct fib_nh *nh, u32 table,
-			      u8 scope, struct netlink_ext_ack *extack)
-{
-	struct net_device *dev;
-	struct fib_result res;
-	int err = 0;
+अटल पूर्णांक fib_check_nh_v4_gw(काष्ठा net *net, काष्ठा fib_nh *nh, u32 table,
+			      u8 scope, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा fib_result res;
+	पूर्णांक err = 0;
 
-	if (nh->fib_nh_flags & RTNH_F_ONLINK) {
-		unsigned int addr_type;
+	अगर (nh->fib_nh_flags & RTNH_F_ONLINK) अणु
+		अचिन्हित पूर्णांक addr_type;
 
-		if (scope >= RT_SCOPE_LINK) {
+		अगर (scope >= RT_SCOPE_LINK) अणु
 			NL_SET_ERR_MSG(extack, "Nexthop has invalid scope");
-			return -EINVAL;
-		}
-		dev = __dev_get_by_index(net, nh->fib_nh_oif);
-		if (!dev) {
+			वापस -EINVAL;
+		पूर्ण
+		dev = __dev_get_by_index(net, nh->fib_nh_oअगर);
+		अगर (!dev) अणु
 			NL_SET_ERR_MSG(extack, "Nexthop device required for onlink");
-			return -ENODEV;
-		}
-		if (!(dev->flags & IFF_UP)) {
+			वापस -ENODEV;
+		पूर्ण
+		अगर (!(dev->flags & IFF_UP)) अणु
 			NL_SET_ERR_MSG(extack, "Nexthop device is not up");
-			return -ENETDOWN;
-		}
+			वापस -ENETDOWN;
+		पूर्ण
 		addr_type = inet_addr_type_dev_table(net, dev, nh->fib_nh_gw4);
-		if (addr_type != RTN_UNICAST) {
+		अगर (addr_type != RTN_UNICAST) अणु
 			NL_SET_ERR_MSG(extack, "Nexthop has invalid gateway");
-			return -EINVAL;
-		}
-		if (!netif_carrier_ok(dev))
+			वापस -EINVAL;
+		पूर्ण
+		अगर (!netअगर_carrier_ok(dev))
 			nh->fib_nh_flags |= RTNH_F_LINKDOWN;
 		nh->fib_nh_dev = dev;
 		dev_hold(dev);
 		nh->fib_nh_scope = RT_SCOPE_LINK;
-		return 0;
-	}
-	rcu_read_lock();
-	{
-		struct fib_table *tbl = NULL;
-		struct flowi4 fl4 = {
+		वापस 0;
+	पूर्ण
+	rcu_पढ़ो_lock();
+	अणु
+		काष्ठा fib_table *tbl = शून्य;
+		काष्ठा flowi4 fl4 = अणु
 			.daddr = nh->fib_nh_gw4,
 			.flowi4_scope = scope + 1,
-			.flowi4_oif = nh->fib_nh_oif,
-			.flowi4_iif = LOOPBACK_IFINDEX,
-		};
+			.flowi4_oअगर = nh->fib_nh_oअगर,
+			.flowi4_iअगर = LOOPBACK_IFINDEX,
+		पूर्ण;
 
 		/* It is not necessary, but requires a bit of thinking */
-		if (fl4.flowi4_scope < RT_SCOPE_LINK)
+		अगर (fl4.flowi4_scope < RT_SCOPE_LINK)
 			fl4.flowi4_scope = RT_SCOPE_LINK;
 
-		if (table && table != RT_TABLE_MAIN)
+		अगर (table && table != RT_TABLE_MAIN)
 			tbl = fib_get_table(net, table);
 
-		if (tbl)
+		अगर (tbl)
 			err = fib_table_lookup(tbl, &fl4, &res,
 					       FIB_LOOKUP_IGNORE_LINKSTATE |
 					       FIB_LOOKUP_NOREF);
 
-		/* on error or if no table given do full lookup. This
-		 * is needed for example when nexthops are in the local
+		/* on error or अगर no table given करो full lookup. This
+		 * is needed क्रम example when nexthops are in the local
 		 * table rather than the given table
 		 */
-		if (!tbl || err) {
+		अगर (!tbl || err) अणु
 			err = fib_lookup(net, &fl4, &res,
 					 FIB_LOOKUP_IGNORE_LINKSTATE);
-		}
+		पूर्ण
 
-		if (err) {
+		अगर (err) अणु
 			NL_SET_ERR_MSG(extack, "Nexthop has invalid gateway");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	err = -EINVAL;
-	if (res.type != RTN_UNICAST && res.type != RTN_LOCAL) {
+	अगर (res.type != RTN_UNICAST && res.type != RTN_LOCAL) अणु
 		NL_SET_ERR_MSG(extack, "Nexthop has invalid gateway");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	nh->fib_nh_scope = res.scope;
-	nh->fib_nh_oif = FIB_RES_OIF(res);
+	nh->fib_nh_oअगर = FIB_RES_OIF(res);
 	nh->fib_nh_dev = dev = FIB_RES_DEV(res);
-	if (!dev) {
+	अगर (!dev) अणु
 		NL_SET_ERR_MSG(extack,
 			       "No egress device for nexthop gateway");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	dev_hold(dev);
-	if (!netif_carrier_ok(dev))
+	अगर (!netअगर_carrier_ok(dev))
 		nh->fib_nh_flags |= RTNH_F_LINKDOWN;
 	err = (dev->flags & IFF_UP) ? 0 : -ENETDOWN;
 out:
-	rcu_read_unlock();
-	return err;
-}
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 
-static int fib_check_nh_nongw(struct net *net, struct fib_nh *nh,
-			      struct netlink_ext_ack *extack)
-{
-	struct in_device *in_dev;
-	int err;
+अटल पूर्णांक fib_check_nh_nongw(काष्ठा net *net, काष्ठा fib_nh *nh,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा in_device *in_dev;
+	पूर्णांक err;
 
-	if (nh->fib_nh_flags & (RTNH_F_PERVASIVE | RTNH_F_ONLINK)) {
+	अगर (nh->fib_nh_flags & (RTNH_F_PERVASIVE | RTNH_F_ONLINK)) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Invalid flags for nexthop - PERVASIVE and ONLINK can not be set");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	err = -ENODEV;
-	in_dev = inetdev_by_index(net, nh->fib_nh_oif);
-	if (!in_dev)
-		goto out;
+	in_dev = inetdev_by_index(net, nh->fib_nh_oअगर);
+	अगर (!in_dev)
+		जाओ out;
 	err = -ENETDOWN;
-	if (!(in_dev->dev->flags & IFF_UP)) {
+	अगर (!(in_dev->dev->flags & IFF_UP)) अणु
 		NL_SET_ERR_MSG(extack, "Device for nexthop is not up");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	nh->fib_nh_dev = in_dev->dev;
 	dev_hold(nh->fib_nh_dev);
 	nh->fib_nh_scope = RT_SCOPE_HOST;
-	if (!netif_carrier_ok(nh->fib_nh_dev))
+	अगर (!netअगर_carrier_ok(nh->fib_nh_dev))
 		nh->fib_nh_flags |= RTNH_F_LINKDOWN;
 	err = 0;
 out:
-	rcu_read_unlock();
-	return err;
-}
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 
-int fib_check_nh(struct net *net, struct fib_nh *nh, u32 table, u8 scope,
-		 struct netlink_ext_ack *extack)
-{
-	int err;
+पूर्णांक fib_check_nh(काष्ठा net *net, काष्ठा fib_nh *nh, u32 table, u8 scope,
+		 काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err;
 
-	if (nh->fib_nh_gw_family == AF_INET)
+	अगर (nh->fib_nh_gw_family == AF_INET)
 		err = fib_check_nh_v4_gw(net, nh, table, scope, extack);
-	else if (nh->fib_nh_gw_family == AF_INET6)
+	अन्यथा अगर (nh->fib_nh_gw_family == AF_INET6)
 		err = fib_check_nh_v6_gw(net, nh, table, extack);
-	else
+	अन्यथा
 		err = fib_check_nh_nongw(net, nh, extack);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline unsigned int fib_laddr_hashfn(__be32 val)
-{
-	unsigned int mask = (fib_info_hash_size - 1);
+अटल अंतरभूत अचिन्हित पूर्णांक fib_laddr_hashfn(__be32 val)
+अणु
+	अचिन्हित पूर्णांक mask = (fib_info_hash_size - 1);
 
-	return ((__force u32)val ^
-		((__force u32)val >> 7) ^
-		((__force u32)val >> 14)) & mask;
-}
+	वापस ((__क्रमce u32)val ^
+		((__क्रमce u32)val >> 7) ^
+		((__क्रमce u32)val >> 14)) & mask;
+पूर्ण
 
-static struct hlist_head *fib_info_hash_alloc(int bytes)
-{
-	if (bytes <= PAGE_SIZE)
-		return kzalloc(bytes, GFP_KERNEL);
-	else
-		return (struct hlist_head *)
-			__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+अटल काष्ठा hlist_head *fib_info_hash_alloc(पूर्णांक bytes)
+अणु
+	अगर (bytes <= PAGE_SIZE)
+		वापस kzalloc(bytes, GFP_KERNEL);
+	अन्यथा
+		वापस (काष्ठा hlist_head *)
+			__get_मुक्त_pages(GFP_KERNEL | __GFP_ZERO,
 					 get_order(bytes));
-}
+पूर्ण
 
-static void fib_info_hash_free(struct hlist_head *hash, int bytes)
-{
-	if (!hash)
-		return;
+अटल व्योम fib_info_hash_मुक्त(काष्ठा hlist_head *hash, पूर्णांक bytes)
+अणु
+	अगर (!hash)
+		वापस;
 
-	if (bytes <= PAGE_SIZE)
-		kfree(hash);
-	else
-		free_pages((unsigned long) hash, get_order(bytes));
-}
+	अगर (bytes <= PAGE_SIZE)
+		kमुक्त(hash);
+	अन्यथा
+		मुक्त_pages((अचिन्हित दीर्घ) hash, get_order(bytes));
+पूर्ण
 
-static void fib_info_hash_move(struct hlist_head *new_info_hash,
-			       struct hlist_head *new_laddrhash,
-			       unsigned int new_size)
-{
-	struct hlist_head *old_info_hash, *old_laddrhash;
-	unsigned int old_size = fib_info_hash_size;
-	unsigned int i, bytes;
+अटल व्योम fib_info_hash_move(काष्ठा hlist_head *new_info_hash,
+			       काष्ठा hlist_head *new_laddrhash,
+			       अचिन्हित पूर्णांक new_size)
+अणु
+	काष्ठा hlist_head *old_info_hash, *old_laddrhash;
+	अचिन्हित पूर्णांक old_size = fib_info_hash_size;
+	अचिन्हित पूर्णांक i, bytes;
 
 	spin_lock_bh(&fib_info_lock);
 	old_info_hash = fib_info_hash;
 	old_laddrhash = fib_info_laddrhash;
 	fib_info_hash_size = new_size;
 
-	for (i = 0; i < old_size; i++) {
-		struct hlist_head *head = &fib_info_hash[i];
-		struct hlist_node *n;
-		struct fib_info *fi;
+	क्रम (i = 0; i < old_size; i++) अणु
+		काष्ठा hlist_head *head = &fib_info_hash[i];
+		काष्ठा hlist_node *n;
+		काष्ठा fib_info *fi;
 
-		hlist_for_each_entry_safe(fi, n, head, fib_hash) {
-			struct hlist_head *dest;
-			unsigned int new_hash;
+		hlist_क्रम_each_entry_safe(fi, n, head, fib_hash) अणु
+			काष्ठा hlist_head *dest;
+			अचिन्हित पूर्णांक new_hash;
 
 			new_hash = fib_info_hashfn(fi);
 			dest = &new_info_hash[new_hash];
 			hlist_add_head(&fi->fib_hash, dest);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	fib_info_hash = new_info_hash;
 
-	for (i = 0; i < old_size; i++) {
-		struct hlist_head *lhead = &fib_info_laddrhash[i];
-		struct hlist_node *n;
-		struct fib_info *fi;
+	क्रम (i = 0; i < old_size; i++) अणु
+		काष्ठा hlist_head *lhead = &fib_info_laddrhash[i];
+		काष्ठा hlist_node *n;
+		काष्ठा fib_info *fi;
 
-		hlist_for_each_entry_safe(fi, n, lhead, fib_lhash) {
-			struct hlist_head *ldest;
-			unsigned int new_hash;
+		hlist_क्रम_each_entry_safe(fi, n, lhead, fib_lhash) अणु
+			काष्ठा hlist_head *ldest;
+			अचिन्हित पूर्णांक new_hash;
 
 			new_hash = fib_laddr_hashfn(fi->fib_prefsrc);
 			ldest = &new_laddrhash[new_hash];
 			hlist_add_head(&fi->fib_lhash, ldest);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	fib_info_laddrhash = new_laddrhash;
 
 	spin_unlock_bh(&fib_info_lock);
 
-	bytes = old_size * sizeof(struct hlist_head *);
-	fib_info_hash_free(old_info_hash, bytes);
-	fib_info_hash_free(old_laddrhash, bytes);
-}
+	bytes = old_size * माप(काष्ठा hlist_head *);
+	fib_info_hash_मुक्त(old_info_hash, bytes);
+	fib_info_hash_मुक्त(old_laddrhash, bytes);
+पूर्ण
 
-__be32 fib_info_update_nhc_saddr(struct net *net, struct fib_nh_common *nhc,
-				 unsigned char scope)
-{
-	struct fib_nh *nh;
+__be32 fib_info_update_nhc_saddr(काष्ठा net *net, काष्ठा fib_nh_common *nhc,
+				 अचिन्हित अक्षर scope)
+अणु
+	काष्ठा fib_nh *nh;
 
-	if (nhc->nhc_family != AF_INET)
-		return inet_select_addr(nhc->nhc_dev, 0, scope);
+	अगर (nhc->nhc_family != AF_INET)
+		वापस inet_select_addr(nhc->nhc_dev, 0, scope);
 
-	nh = container_of(nhc, struct fib_nh, nh_common);
+	nh = container_of(nhc, काष्ठा fib_nh, nh_common);
 	nh->nh_saddr = inet_select_addr(nh->fib_nh_dev, nh->fib_nh_gw4, scope);
-	nh->nh_saddr_genid = atomic_read(&net->ipv4.dev_addr_genid);
+	nh->nh_saddr_genid = atomic_पढ़ो(&net->ipv4.dev_addr_genid);
 
-	return nh->nh_saddr;
-}
+	वापस nh->nh_saddr;
+पूर्ण
 
-__be32 fib_result_prefsrc(struct net *net, struct fib_result *res)
-{
-	struct fib_nh_common *nhc = res->nhc;
+__be32 fib_result_prefsrc(काष्ठा net *net, काष्ठा fib_result *res)
+अणु
+	काष्ठा fib_nh_common *nhc = res->nhc;
 
-	if (res->fi->fib_prefsrc)
-		return res->fi->fib_prefsrc;
+	अगर (res->fi->fib_prefsrc)
+		वापस res->fi->fib_prefsrc;
 
-	if (nhc->nhc_family == AF_INET) {
-		struct fib_nh *nh;
+	अगर (nhc->nhc_family == AF_INET) अणु
+		काष्ठा fib_nh *nh;
 
-		nh = container_of(nhc, struct fib_nh, nh_common);
-		if (nh->nh_saddr_genid == atomic_read(&net->ipv4.dev_addr_genid))
-			return nh->nh_saddr;
-	}
+		nh = container_of(nhc, काष्ठा fib_nh, nh_common);
+		अगर (nh->nh_saddr_genid == atomic_पढ़ो(&net->ipv4.dev_addr_genid))
+			वापस nh->nh_saddr;
+	पूर्ण
 
-	return fib_info_update_nhc_saddr(net, nhc, res->fi->fib_scope);
-}
+	वापस fib_info_update_nhc_saddr(net, nhc, res->fi->fib_scope);
+पूर्ण
 
-static bool fib_valid_prefsrc(struct fib_config *cfg, __be32 fib_prefsrc)
-{
-	if (cfg->fc_type != RTN_LOCAL || !cfg->fc_dst ||
-	    fib_prefsrc != cfg->fc_dst) {
+अटल bool fib_valid_prefsrc(काष्ठा fib_config *cfg, __be32 fib_prefsrc)
+अणु
+	अगर (cfg->fc_type != RTN_LOCAL || !cfg->fc_dst ||
+	    fib_prefsrc != cfg->fc_dst) अणु
 		u32 tb_id = cfg->fc_table;
-		int rc;
+		पूर्णांक rc;
 
-		if (tb_id == RT_TABLE_MAIN)
+		अगर (tb_id == RT_TABLE_MAIN)
 			tb_id = RT_TABLE_LOCAL;
 
 		rc = inet_addr_type_table(cfg->fc_nlinfo.nl_net,
 					  fib_prefsrc, tb_id);
 
-		if (rc != RTN_LOCAL && tb_id != RT_TABLE_LOCAL) {
+		अगर (rc != RTN_LOCAL && tb_id != RT_TABLE_LOCAL) अणु
 			rc = inet_addr_type_table(cfg->fc_nlinfo.nl_net,
 						  fib_prefsrc, RT_TABLE_LOCAL);
-		}
+		पूर्ण
 
-		if (rc != RTN_LOCAL)
-			return false;
-	}
-	return true;
-}
+		अगर (rc != RTN_LOCAL)
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-struct fib_info *fib_create_info(struct fib_config *cfg,
-				 struct netlink_ext_ack *extack)
-{
-	int err;
-	struct fib_info *fi = NULL;
-	struct nexthop *nh = NULL;
-	struct fib_info *ofi;
-	int nhs = 1;
-	struct net *net = cfg->fc_nlinfo.nl_net;
+काष्ठा fib_info *fib_create_info(काष्ठा fib_config *cfg,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err;
+	काष्ठा fib_info *fi = शून्य;
+	काष्ठा nexthop *nh = शून्य;
+	काष्ठा fib_info *ofi;
+	पूर्णांक nhs = 1;
+	काष्ठा net *net = cfg->fc_nlinfo.nl_net;
 
-	if (cfg->fc_type > RTN_MAX)
-		goto err_inval;
+	अगर (cfg->fc_type > RTN_MAX)
+		जाओ err_inval;
 
-	/* Fast check to catch the most weird cases */
-	if (fib_props[cfg->fc_type].scope > cfg->fc_scope) {
+	/* Fast check to catch the most weird हालs */
+	अगर (fib_props[cfg->fc_type].scope > cfg->fc_scope) अणु
 		NL_SET_ERR_MSG(extack, "Invalid scope");
-		goto err_inval;
-	}
+		जाओ err_inval;
+	पूर्ण
 
-	if (cfg->fc_flags & (RTNH_F_DEAD | RTNH_F_LINKDOWN)) {
+	अगर (cfg->fc_flags & (RTNH_F_DEAD | RTNH_F_LINKDOWN)) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Invalid rtm_flags - can not contain DEAD or LINKDOWN");
-		goto err_inval;
-	}
+		जाओ err_inval;
+	पूर्ण
 
-	if (cfg->fc_nh_id) {
-		if (!cfg->fc_mx) {
+	अगर (cfg->fc_nh_id) अणु
+		अगर (!cfg->fc_mx) अणु
 			fi = fib_find_info_nh(net, cfg);
-			if (fi) {
+			अगर (fi) अणु
 				fi->fib_treeref++;
-				return fi;
-			}
-		}
+				वापस fi;
+			पूर्ण
+		पूर्ण
 
 		nh = nexthop_find_by_id(net, cfg->fc_nh_id);
-		if (!nh) {
+		अगर (!nh) अणु
 			NL_SET_ERR_MSG(extack, "Nexthop id does not exist");
-			goto err_inval;
-		}
+			जाओ err_inval;
+		पूर्ण
 		nhs = 0;
-	}
+	पूर्ण
 
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
-	if (cfg->fc_mp) {
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
+	अगर (cfg->fc_mp) अणु
 		nhs = fib_count_nexthops(cfg->fc_mp, cfg->fc_mp_len, extack);
-		if (nhs == 0)
-			goto err_inval;
-	}
-#endif
+		अगर (nhs == 0)
+			जाओ err_inval;
+	पूर्ण
+#पूर्ण_अगर
 
 	err = -ENOBUFS;
-	if (fib_info_cnt >= fib_info_hash_size) {
-		unsigned int new_size = fib_info_hash_size << 1;
-		struct hlist_head *new_info_hash;
-		struct hlist_head *new_laddrhash;
-		unsigned int bytes;
+	अगर (fib_info_cnt >= fib_info_hash_size) अणु
+		अचिन्हित पूर्णांक new_size = fib_info_hash_size << 1;
+		काष्ठा hlist_head *new_info_hash;
+		काष्ठा hlist_head *new_laddrhash;
+		अचिन्हित पूर्णांक bytes;
 
-		if (!new_size)
+		अगर (!new_size)
 			new_size = 16;
-		bytes = new_size * sizeof(struct hlist_head *);
+		bytes = new_size * माप(काष्ठा hlist_head *);
 		new_info_hash = fib_info_hash_alloc(bytes);
 		new_laddrhash = fib_info_hash_alloc(bytes);
-		if (!new_info_hash || !new_laddrhash) {
-			fib_info_hash_free(new_info_hash, bytes);
-			fib_info_hash_free(new_laddrhash, bytes);
-		} else
+		अगर (!new_info_hash || !new_laddrhash) अणु
+			fib_info_hash_मुक्त(new_info_hash, bytes);
+			fib_info_hash_मुक्त(new_laddrhash, bytes);
+		पूर्ण अन्यथा
 			fib_info_hash_move(new_info_hash, new_laddrhash, new_size);
 
-		if (!fib_info_hash_size)
-			goto failure;
-	}
+		अगर (!fib_info_hash_size)
+			जाओ failure;
+	पूर्ण
 
-	fi = kzalloc(struct_size(fi, fib_nh, nhs), GFP_KERNEL);
-	if (!fi)
-		goto failure;
+	fi = kzalloc(काष्ठा_size(fi, fib_nh, nhs), GFP_KERNEL);
+	अगर (!fi)
+		जाओ failure;
 	fi->fib_metrics = ip_fib_metrics_init(fi->fib_net, cfg->fc_mx,
 					      cfg->fc_mx_len, extack);
-	if (IS_ERR(fi->fib_metrics)) {
+	अगर (IS_ERR(fi->fib_metrics)) अणु
 		err = PTR_ERR(fi->fib_metrics);
-		kfree(fi);
-		return ERR_PTR(err);
-	}
+		kमुक्त(fi);
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	fib_info_cnt++;
 	fi->fib_net = net;
@@ -1438,795 +1439,795 @@ struct fib_info *fib_create_info(struct fib_config *cfg,
 	fi->fib_tb_id = cfg->fc_table;
 
 	fi->fib_nhs = nhs;
-	if (nh) {
-		if (!nexthop_get(nh)) {
+	अगर (nh) अणु
+		अगर (!nexthop_get(nh)) अणु
 			NL_SET_ERR_MSG(extack, "Nexthop has been deleted");
 			err = -EINVAL;
-		} else {
+		पूर्ण अन्यथा अणु
 			err = 0;
 			fi->nh = nh;
-		}
-	} else {
-		change_nexthops(fi) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		change_nexthops(fi) अणु
 			nexthop_nh->nh_parent = fi;
-		} endfor_nexthops(fi)
+		पूर्ण endक्रम_nexthops(fi)
 
-		if (cfg->fc_mp)
+		अगर (cfg->fc_mp)
 			err = fib_get_nhs(fi, cfg->fc_mp, cfg->fc_mp_len, cfg,
 					  extack);
-		else
+		अन्यथा
 			err = fib_nh_init(net, fi->fib_nh, cfg, 1, extack);
-	}
+	पूर्ण
 
-	if (err != 0)
-		goto failure;
+	अगर (err != 0)
+		जाओ failure;
 
-	if (fib_props[cfg->fc_type].error) {
-		if (cfg->fc_gw_family || cfg->fc_oif || cfg->fc_mp) {
+	अगर (fib_props[cfg->fc_type].error) अणु
+		अगर (cfg->fc_gw_family || cfg->fc_oअगर || cfg->fc_mp) अणु
 			NL_SET_ERR_MSG(extack,
 				       "Gateway, device and multipath can not be specified for this route type");
-			goto err_inval;
-		}
-		goto link_it;
-	} else {
-		switch (cfg->fc_type) {
-		case RTN_UNICAST:
-		case RTN_LOCAL:
-		case RTN_BROADCAST:
-		case RTN_ANYCAST:
-		case RTN_MULTICAST:
-			break;
-		default:
+			जाओ err_inval;
+		पूर्ण
+		जाओ link_it;
+	पूर्ण अन्यथा अणु
+		चयन (cfg->fc_type) अणु
+		हाल RTN_UNICAST:
+		हाल RTN_LOCAL:
+		हाल RTN_BROADCAST:
+		हाल RTN_ANYCAST:
+		हाल RTN_MULTICAST:
+			अवरोध;
+		शेष:
 			NL_SET_ERR_MSG(extack, "Invalid route type");
-			goto err_inval;
-		}
-	}
+			जाओ err_inval;
+		पूर्ण
+	पूर्ण
 
-	if (cfg->fc_scope > RT_SCOPE_HOST) {
+	अगर (cfg->fc_scope > RT_SCOPE_HOST) अणु
 		NL_SET_ERR_MSG(extack, "Invalid scope");
-		goto err_inval;
-	}
+		जाओ err_inval;
+	पूर्ण
 
-	if (fi->nh) {
+	अगर (fi->nh) अणु
 		err = fib_check_nexthop(fi->nh, cfg->fc_scope, extack);
-		if (err)
-			goto failure;
-	} else if (cfg->fc_scope == RT_SCOPE_HOST) {
-		struct fib_nh *nh = fi->fib_nh;
+		अगर (err)
+			जाओ failure;
+	पूर्ण अन्यथा अगर (cfg->fc_scope == RT_SCOPE_HOST) अणु
+		काष्ठा fib_nh *nh = fi->fib_nh;
 
 		/* Local address is added. */
-		if (nhs != 1) {
+		अगर (nhs != 1) अणु
 			NL_SET_ERR_MSG(extack,
 				       "Route with host scope can not have multiple nexthops");
-			goto err_inval;
-		}
-		if (nh->fib_nh_gw_family) {
+			जाओ err_inval;
+		पूर्ण
+		अगर (nh->fib_nh_gw_family) अणु
 			NL_SET_ERR_MSG(extack,
 				       "Route with host scope can not have a gateway");
-			goto err_inval;
-		}
+			जाओ err_inval;
+		पूर्ण
 		nh->fib_nh_scope = RT_SCOPE_NOWHERE;
-		nh->fib_nh_dev = dev_get_by_index(net, nh->fib_nh_oif);
+		nh->fib_nh_dev = dev_get_by_index(net, nh->fib_nh_oअगर);
 		err = -ENODEV;
-		if (!nh->fib_nh_dev)
-			goto failure;
-	} else {
-		int linkdown = 0;
+		अगर (!nh->fib_nh_dev)
+			जाओ failure;
+	पूर्ण अन्यथा अणु
+		पूर्णांक linkकरोwn = 0;
 
-		change_nexthops(fi) {
+		change_nexthops(fi) अणु
 			err = fib_check_nh(cfg->fc_nlinfo.nl_net, nexthop_nh,
 					   cfg->fc_table, cfg->fc_scope,
 					   extack);
-			if (err != 0)
-				goto failure;
-			if (nexthop_nh->fib_nh_flags & RTNH_F_LINKDOWN)
-				linkdown++;
-		} endfor_nexthops(fi)
-		if (linkdown == fi->fib_nhs)
+			अगर (err != 0)
+				जाओ failure;
+			अगर (nexthop_nh->fib_nh_flags & RTNH_F_LINKDOWN)
+				linkकरोwn++;
+		पूर्ण endक्रम_nexthops(fi)
+		अगर (linkकरोwn == fi->fib_nhs)
 			fi->fib_flags |= RTNH_F_LINKDOWN;
-	}
+	पूर्ण
 
-	if (fi->fib_prefsrc && !fib_valid_prefsrc(cfg, fi->fib_prefsrc)) {
+	अगर (fi->fib_prefsrc && !fib_valid_prefsrc(cfg, fi->fib_prefsrc)) अणु
 		NL_SET_ERR_MSG(extack, "Invalid prefsrc address");
-		goto err_inval;
-	}
+		जाओ err_inval;
+	पूर्ण
 
-	if (!fi->nh) {
-		change_nexthops(fi) {
+	अगर (!fi->nh) अणु
+		change_nexthops(fi) अणु
 			fib_info_update_nhc_saddr(net, &nexthop_nh->nh_common,
 						  fi->fib_scope);
-			if (nexthop_nh->fib_nh_gw_family == AF_INET6)
+			अगर (nexthop_nh->fib_nh_gw_family == AF_INET6)
 				fi->fib_nh_is_v6 = true;
-		} endfor_nexthops(fi)
+		पूर्ण endक्रम_nexthops(fi)
 
 		fib_rebalance(fi);
-	}
+	पूर्ण
 
 link_it:
 	ofi = fib_find_info(fi);
-	if (ofi) {
+	अगर (ofi) अणु
 		fi->fib_dead = 1;
-		free_fib_info(fi);
+		मुक्त_fib_info(fi);
 		ofi->fib_treeref++;
-		return ofi;
-	}
+		वापस ofi;
+	पूर्ण
 
 	fi->fib_treeref++;
 	refcount_set(&fi->fib_clntref, 1);
 	spin_lock_bh(&fib_info_lock);
 	hlist_add_head(&fi->fib_hash,
 		       &fib_info_hash[fib_info_hashfn(fi)]);
-	if (fi->fib_prefsrc) {
-		struct hlist_head *head;
+	अगर (fi->fib_prefsrc) अणु
+		काष्ठा hlist_head *head;
 
 		head = &fib_info_laddrhash[fib_laddr_hashfn(fi->fib_prefsrc)];
 		hlist_add_head(&fi->fib_lhash, head);
-	}
-	if (fi->nh) {
+	पूर्ण
+	अगर (fi->nh) अणु
 		list_add(&fi->nh_list, &nh->fi_list);
-	} else {
-		change_nexthops(fi) {
-			struct hlist_head *head;
-			unsigned int hash;
+	पूर्ण अन्यथा अणु
+		change_nexthops(fi) अणु
+			काष्ठा hlist_head *head;
+			अचिन्हित पूर्णांक hash;
 
-			if (!nexthop_nh->fib_nh_dev)
-				continue;
-			hash = fib_devindex_hashfn(nexthop_nh->fib_nh_dev->ifindex);
+			अगर (!nexthop_nh->fib_nh_dev)
+				जारी;
+			hash = fib_devindex_hashfn(nexthop_nh->fib_nh_dev->अगरindex);
 			head = &fib_info_devhash[hash];
 			hlist_add_head(&nexthop_nh->nh_hash, head);
-		} endfor_nexthops(fi)
-	}
+		पूर्ण endक्रम_nexthops(fi)
+	पूर्ण
 	spin_unlock_bh(&fib_info_lock);
-	return fi;
+	वापस fi;
 
 err_inval:
 	err = -EINVAL;
 
 failure:
-	if (fi) {
+	अगर (fi) अणु
 		fi->fib_dead = 1;
-		free_fib_info(fi);
-	}
+		मुक्त_fib_info(fi);
+	पूर्ण
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-int fib_nexthop_info(struct sk_buff *skb, const struct fib_nh_common *nhc,
-		     u8 rt_family, unsigned char *flags, bool skip_oif)
-{
-	if (nhc->nhc_flags & RTNH_F_DEAD)
+पूर्णांक fib_nexthop_info(काष्ठा sk_buff *skb, स्थिर काष्ठा fib_nh_common *nhc,
+		     u8 rt_family, अचिन्हित अक्षर *flags, bool skip_oअगर)
+अणु
+	अगर (nhc->nhc_flags & RTNH_F_DEAD)
 		*flags |= RTNH_F_DEAD;
 
-	if (nhc->nhc_flags & RTNH_F_LINKDOWN) {
+	अगर (nhc->nhc_flags & RTNH_F_LINKDOWN) अणु
 		*flags |= RTNH_F_LINKDOWN;
 
-		rcu_read_lock();
-		switch (nhc->nhc_family) {
-		case AF_INET:
-			if (ip_ignore_linkdown(nhc->nhc_dev))
+		rcu_पढ़ो_lock();
+		चयन (nhc->nhc_family) अणु
+		हाल AF_INET:
+			अगर (ip_ignore_linkकरोwn(nhc->nhc_dev))
 				*flags |= RTNH_F_DEAD;
-			break;
-		case AF_INET6:
-			if (ip6_ignore_linkdown(nhc->nhc_dev))
+			अवरोध;
+		हाल AF_INET6:
+			अगर (ip6_ignore_linkकरोwn(nhc->nhc_dev))
 				*flags |= RTNH_F_DEAD;
-			break;
-		}
-		rcu_read_unlock();
-	}
+			अवरोध;
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	switch (nhc->nhc_gw_family) {
-	case AF_INET:
-		if (nla_put_in_addr(skb, RTA_GATEWAY, nhc->nhc_gw.ipv4))
-			goto nla_put_failure;
-		break;
-	case AF_INET6:
-		/* if gateway family does not match nexthop family
+	चयन (nhc->nhc_gw_family) अणु
+	हाल AF_INET:
+		अगर (nla_put_in_addr(skb, RTA_GATEWAY, nhc->nhc_gw.ipv4))
+			जाओ nla_put_failure;
+		अवरोध;
+	हाल AF_INET6:
+		/* अगर gateway family करोes not match nexthop family
 		 * gateway is encoded as RTA_VIA
 		 */
-		if (rt_family != nhc->nhc_gw_family) {
-			int alen = sizeof(struct in6_addr);
-			struct nlattr *nla;
-			struct rtvia *via;
+		अगर (rt_family != nhc->nhc_gw_family) अणु
+			पूर्णांक alen = माप(काष्ठा in6_addr);
+			काष्ठा nlattr *nla;
+			काष्ठा rtvia *via;
 
 			nla = nla_reserve(skb, RTA_VIA, alen + 2);
-			if (!nla)
-				goto nla_put_failure;
+			अगर (!nla)
+				जाओ nla_put_failure;
 
 			via = nla_data(nla);
 			via->rtvia_family = AF_INET6;
-			memcpy(via->rtvia_addr, &nhc->nhc_gw.ipv6, alen);
-		} else if (nla_put_in6_addr(skb, RTA_GATEWAY,
-					    &nhc->nhc_gw.ipv6) < 0) {
-			goto nla_put_failure;
-		}
-		break;
-	}
+			स_नकल(via->rtvia_addr, &nhc->nhc_gw.ipv6, alen);
+		पूर्ण अन्यथा अगर (nla_put_in6_addr(skb, RTA_GATEWAY,
+					    &nhc->nhc_gw.ipv6) < 0) अणु
+			जाओ nla_put_failure;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	*flags |= (nhc->nhc_flags &
 		   (RTNH_F_ONLINK | RTNH_F_OFFLOAD | RTNH_F_TRAP));
 
-	if (!skip_oif && nhc->nhc_dev &&
-	    nla_put_u32(skb, RTA_OIF, nhc->nhc_dev->ifindex))
-		goto nla_put_failure;
+	अगर (!skip_oअगर && nhc->nhc_dev &&
+	    nla_put_u32(skb, RTA_OIF, nhc->nhc_dev->अगरindex))
+		जाओ nla_put_failure;
 
-	if (nhc->nhc_lwtstate &&
+	अगर (nhc->nhc_lwtstate &&
 	    lwtunnel_fill_encap(skb, nhc->nhc_lwtstate,
 				RTA_ENCAP, RTA_ENCAP_TYPE) < 0)
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 EXPORT_SYMBOL_GPL(fib_nexthop_info);
 
-#if IS_ENABLED(CONFIG_IP_ROUTE_MULTIPATH) || IS_ENABLED(CONFIG_IPV6)
-int fib_add_nexthop(struct sk_buff *skb, const struct fib_nh_common *nhc,
-		    int nh_weight, u8 rt_family)
-{
-	const struct net_device *dev = nhc->nhc_dev;
-	struct rtnexthop *rtnh;
-	unsigned char flags = 0;
+#अगर IS_ENABLED(CONFIG_IP_ROUTE_MULTIPATH) || IS_ENABLED(CONFIG_IPV6)
+पूर्णांक fib_add_nexthop(काष्ठा sk_buff *skb, स्थिर काष्ठा fib_nh_common *nhc,
+		    पूर्णांक nh_weight, u8 rt_family)
+अणु
+	स्थिर काष्ठा net_device *dev = nhc->nhc_dev;
+	काष्ठा rtnexthop *rtnh;
+	अचिन्हित अक्षर flags = 0;
 
-	rtnh = nla_reserve_nohdr(skb, sizeof(*rtnh));
-	if (!rtnh)
-		goto nla_put_failure;
+	rtnh = nla_reserve_nohdr(skb, माप(*rtnh));
+	अगर (!rtnh)
+		जाओ nla_put_failure;
 
 	rtnh->rtnh_hops = nh_weight - 1;
-	rtnh->rtnh_ifindex = dev ? dev->ifindex : 0;
+	rtnh->rtnh_अगरindex = dev ? dev->अगरindex : 0;
 
-	if (fib_nexthop_info(skb, nhc, rt_family, &flags, true) < 0)
-		goto nla_put_failure;
+	अगर (fib_nexthop_info(skb, nhc, rt_family, &flags, true) < 0)
+		जाओ nla_put_failure;
 
 	rtnh->rtnh_flags = flags;
 
 	/* length of rtnetlink header + attributes */
-	rtnh->rtnh_len = nlmsg_get_pos(skb) - (void *)rtnh;
+	rtnh->rtnh_len = nlmsg_get_pos(skb) - (व्योम *)rtnh;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 EXPORT_SYMBOL_GPL(fib_add_nexthop);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
-static int fib_add_multipath(struct sk_buff *skb, struct fib_info *fi)
-{
-	struct nlattr *mp;
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
+अटल पूर्णांक fib_add_multipath(काष्ठा sk_buff *skb, काष्ठा fib_info *fi)
+अणु
+	काष्ठा nlattr *mp;
 
 	mp = nla_nest_start_noflag(skb, RTA_MULTIPATH);
-	if (!mp)
-		goto nla_put_failure;
+	अगर (!mp)
+		जाओ nla_put_failure;
 
-	if (unlikely(fi->nh)) {
-		if (nexthop_mpath_fill_node(skb, fi->nh, AF_INET) < 0)
-			goto nla_put_failure;
-		goto mp_end;
-	}
+	अगर (unlikely(fi->nh)) अणु
+		अगर (nexthop_mpath_fill_node(skb, fi->nh, AF_INET) < 0)
+			जाओ nla_put_failure;
+		जाओ mp_end;
+	पूर्ण
 
-	for_nexthops(fi) {
-		if (fib_add_nexthop(skb, &nh->nh_common, nh->fib_nh_weight,
+	क्रम_nexthops(fi) अणु
+		अगर (fib_add_nexthop(skb, &nh->nh_common, nh->fib_nh_weight,
 				    AF_INET) < 0)
-			goto nla_put_failure;
-#ifdef CONFIG_IP_ROUTE_CLASSID
-		if (nh->nh_tclassid &&
+			जाओ nla_put_failure;
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
+		अगर (nh->nh_tclassid &&
 		    nla_put_u32(skb, RTA_FLOW, nh->nh_tclassid))
-			goto nla_put_failure;
-#endif
-	} endfor_nexthops(fi);
+			जाओ nla_put_failure;
+#पूर्ण_अगर
+	पूर्ण endक्रम_nexthops(fi);
 
 mp_end:
 	nla_nest_end(skb, mp);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
-#else
-static int fib_add_multipath(struct sk_buff *skb, struct fib_info *fi)
-{
-	return 0;
-}
-#endif
+	वापस -EMSGSIZE;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक fib_add_multipath(काष्ठा sk_buff *skb, काष्ठा fib_info *fi)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-int fib_dump_info(struct sk_buff *skb, u32 portid, u32 seq, int event,
-		  const struct fib_rt_info *fri, unsigned int flags)
-{
-	unsigned int nhs = fib_info_num_path(fri->fi);
-	struct fib_info *fi = fri->fi;
+पूर्णांक fib_dump_info(काष्ठा sk_buff *skb, u32 portid, u32 seq, पूर्णांक event,
+		  स्थिर काष्ठा fib_rt_info *fri, अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक nhs = fib_info_num_path(fri->fi);
+	काष्ठा fib_info *fi = fri->fi;
 	u32 tb_id = fri->tb_id;
-	struct nlmsghdr *nlh;
-	struct rtmsg *rtm;
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा rपंचांगsg *rपंचांग;
 
-	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*rtm), flags);
-	if (!nlh)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, event, माप(*rपंचांग), flags);
+	अगर (!nlh)
+		वापस -EMSGSIZE;
 
-	rtm = nlmsg_data(nlh);
-	rtm->rtm_family = AF_INET;
-	rtm->rtm_dst_len = fri->dst_len;
-	rtm->rtm_src_len = 0;
-	rtm->rtm_tos = fri->tos;
-	if (tb_id < 256)
-		rtm->rtm_table = tb_id;
-	else
-		rtm->rtm_table = RT_TABLE_COMPAT;
-	if (nla_put_u32(skb, RTA_TABLE, tb_id))
-		goto nla_put_failure;
-	rtm->rtm_type = fri->type;
-	rtm->rtm_flags = fi->fib_flags;
-	rtm->rtm_scope = fi->fib_scope;
-	rtm->rtm_protocol = fi->fib_protocol;
+	rपंचांग = nlmsg_data(nlh);
+	rपंचांग->rपंचांग_family = AF_INET;
+	rपंचांग->rपंचांग_dst_len = fri->dst_len;
+	rपंचांग->rपंचांग_src_len = 0;
+	rपंचांग->rपंचांग_tos = fri->tos;
+	अगर (tb_id < 256)
+		rपंचांग->rपंचांग_table = tb_id;
+	अन्यथा
+		rपंचांग->rपंचांग_table = RT_TABLE_COMPAT;
+	अगर (nla_put_u32(skb, RTA_TABLE, tb_id))
+		जाओ nla_put_failure;
+	rपंचांग->rपंचांग_type = fri->type;
+	rपंचांग->rपंचांग_flags = fi->fib_flags;
+	rपंचांग->rपंचांग_scope = fi->fib_scope;
+	rपंचांग->rपंचांग_protocol = fi->fib_protocol;
 
-	if (rtm->rtm_dst_len &&
+	अगर (rपंचांग->rपंचांग_dst_len &&
 	    nla_put_in_addr(skb, RTA_DST, fri->dst))
-		goto nla_put_failure;
-	if (fi->fib_priority &&
+		जाओ nla_put_failure;
+	अगर (fi->fib_priority &&
 	    nla_put_u32(skb, RTA_PRIORITY, fi->fib_priority))
-		goto nla_put_failure;
-	if (rtnetlink_put_metrics(skb, fi->fib_metrics->metrics) < 0)
-		goto nla_put_failure;
+		जाओ nla_put_failure;
+	अगर (rtnetlink_put_metrics(skb, fi->fib_metrics->metrics) < 0)
+		जाओ nla_put_failure;
 
-	if (fi->fib_prefsrc &&
+	अगर (fi->fib_prefsrc &&
 	    nla_put_in_addr(skb, RTA_PREFSRC, fi->fib_prefsrc))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (fi->nh) {
-		if (nla_put_u32(skb, RTA_NH_ID, fi->nh->id))
-			goto nla_put_failure;
-		if (nexthop_is_blackhole(fi->nh))
-			rtm->rtm_type = RTN_BLACKHOLE;
-		if (!fi->fib_net->ipv4.sysctl_nexthop_compat_mode)
-			goto offload;
-	}
+	अगर (fi->nh) अणु
+		अगर (nla_put_u32(skb, RTA_NH_ID, fi->nh->id))
+			जाओ nla_put_failure;
+		अगर (nexthop_is_blackhole(fi->nh))
+			rपंचांग->rपंचांग_type = RTN_BLACKHOLE;
+		अगर (!fi->fib_net->ipv4.sysctl_nexthop_compat_mode)
+			जाओ offload;
+	पूर्ण
 
-	if (nhs == 1) {
-		const struct fib_nh_common *nhc = fib_info_nhc(fi, 0);
-		unsigned char flags = 0;
+	अगर (nhs == 1) अणु
+		स्थिर काष्ठा fib_nh_common *nhc = fib_info_nhc(fi, 0);
+		अचिन्हित अक्षर flags = 0;
 
-		if (fib_nexthop_info(skb, nhc, AF_INET, &flags, false) < 0)
-			goto nla_put_failure;
+		अगर (fib_nexthop_info(skb, nhc, AF_INET, &flags, false) < 0)
+			जाओ nla_put_failure;
 
-		rtm->rtm_flags = flags;
-#ifdef CONFIG_IP_ROUTE_CLASSID
-		if (nhc->nhc_family == AF_INET) {
-			struct fib_nh *nh;
+		rपंचांग->rपंचांग_flags = flags;
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
+		अगर (nhc->nhc_family == AF_INET) अणु
+			काष्ठा fib_nh *nh;
 
-			nh = container_of(nhc, struct fib_nh, nh_common);
-			if (nh->nh_tclassid &&
+			nh = container_of(nhc, काष्ठा fib_nh, nh_common);
+			अगर (nh->nh_tclassid &&
 			    nla_put_u32(skb, RTA_FLOW, nh->nh_tclassid))
-				goto nla_put_failure;
-		}
-#endif
-	} else {
-		if (fib_add_multipath(skb, fi) < 0)
-			goto nla_put_failure;
-	}
+				जाओ nla_put_failure;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		अगर (fib_add_multipath(skb, fi) < 0)
+			जाओ nla_put_failure;
+	पूर्ण
 
 offload:
-	if (fri->offload)
-		rtm->rtm_flags |= RTM_F_OFFLOAD;
-	if (fri->trap)
-		rtm->rtm_flags |= RTM_F_TRAP;
-	if (fri->offload_failed)
-		rtm->rtm_flags |= RTM_F_OFFLOAD_FAILED;
+	अगर (fri->offload)
+		rपंचांग->rपंचांग_flags |= RTM_F_OFFLOAD;
+	अगर (fri->trap)
+		rपंचांग->rपंचांग_flags |= RTM_F_TRAP;
+	अगर (fri->offload_failed)
+		rपंचांग->rपंचांग_flags |= RTM_F_OFFLOAD_FAILED;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
 /*
- * Update FIB if:
+ * Update FIB अगर:
  * - local address disappeared -> we must delete all the entries
  *   referring to it.
- * - device went down -> we must shutdown all nexthops going via it.
+ * - device went करोwn -> we must shutकरोwn all nexthops going via it.
  */
-int fib_sync_down_addr(struct net_device *dev, __be32 local)
-{
-	int ret = 0;
-	unsigned int hash = fib_laddr_hashfn(local);
-	struct hlist_head *head = &fib_info_laddrhash[hash];
-	int tb_id = l3mdev_fib_table(dev) ? : RT_TABLE_MAIN;
-	struct net *net = dev_net(dev);
-	struct fib_info *fi;
+पूर्णांक fib_sync_करोwn_addr(काष्ठा net_device *dev, __be32 local)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक hash = fib_laddr_hashfn(local);
+	काष्ठा hlist_head *head = &fib_info_laddrhash[hash];
+	पूर्णांक tb_id = l3mdev_fib_table(dev) ? : RT_TABLE_MAIN;
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा fib_info *fi;
 
-	if (!fib_info_laddrhash || local == 0)
-		return 0;
+	अगर (!fib_info_laddrhash || local == 0)
+		वापस 0;
 
-	hlist_for_each_entry(fi, head, fib_lhash) {
-		if (!net_eq(fi->fib_net, net) ||
+	hlist_क्रम_each_entry(fi, head, fib_lhash) अणु
+		अगर (!net_eq(fi->fib_net, net) ||
 		    fi->fib_tb_id != tb_id)
-			continue;
-		if (fi->fib_prefsrc == local) {
+			जारी;
+		अगर (fi->fib_prefsrc == local) अणु
 			fi->fib_flags |= RTNH_F_DEAD;
 			ret++;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int call_fib_nh_notifiers(struct fib_nh *nh,
-				 enum fib_event_type event_type)
-{
-	bool ignore_link_down = ip_ignore_linkdown(nh->fib_nh_dev);
-	struct fib_nh_notifier_info info = {
+अटल पूर्णांक call_fib_nh_notअगरiers(काष्ठा fib_nh *nh,
+				 क्रमागत fib_event_type event_type)
+अणु
+	bool ignore_link_करोwn = ip_ignore_linkकरोwn(nh->fib_nh_dev);
+	काष्ठा fib_nh_notअगरier_info info = अणु
 		.fib_nh = nh,
-	};
+	पूर्ण;
 
-	switch (event_type) {
-	case FIB_EVENT_NH_ADD:
-		if (nh->fib_nh_flags & RTNH_F_DEAD)
-			break;
-		if (ignore_link_down && nh->fib_nh_flags & RTNH_F_LINKDOWN)
-			break;
-		return call_fib4_notifiers(dev_net(nh->fib_nh_dev), event_type,
+	चयन (event_type) अणु
+	हाल FIB_EVENT_NH_ADD:
+		अगर (nh->fib_nh_flags & RTNH_F_DEAD)
+			अवरोध;
+		अगर (ignore_link_करोwn && nh->fib_nh_flags & RTNH_F_LINKDOWN)
+			अवरोध;
+		वापस call_fib4_notअगरiers(dev_net(nh->fib_nh_dev), event_type,
 					   &info.info);
-	case FIB_EVENT_NH_DEL:
-		if ((ignore_link_down && nh->fib_nh_flags & RTNH_F_LINKDOWN) ||
+	हाल FIB_EVENT_NH_DEL:
+		अगर ((ignore_link_करोwn && nh->fib_nh_flags & RTNH_F_LINKDOWN) ||
 		    (nh->fib_nh_flags & RTNH_F_DEAD))
-			return call_fib4_notifiers(dev_net(nh->fib_nh_dev),
+			वापस call_fib4_notअगरiers(dev_net(nh->fib_nh_dev),
 						   event_type, &info.info);
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /* Update the PMTU of exceptions when:
  * - the new MTU of the first hop becomes smaller than the PMTU
  * - the old MTU was the same as the PMTU, and it limited discovery of
- *   larger MTUs on the path. With that limit raised, we can now
+ *   larger MTUs on the path. With that limit उठाओd, we can now
  *   discover larger MTUs
- * A special case is locked exceptions, for which the PMTU is smaller
+ * A special हाल is locked exceptions, क्रम which the PMTU is smaller
  * than the minimal accepted PMTU:
- * - if the new MTU is greater than the PMTU, don't make any change
+ * - अगर the new MTU is greater than the PMTU, करोn't make any change
  * - otherwise, unlock and set PMTU
  */
-void fib_nhc_update_mtu(struct fib_nh_common *nhc, u32 new, u32 orig)
-{
-	struct fnhe_hash_bucket *bucket;
-	int i;
+व्योम fib_nhc_update_mtu(काष्ठा fib_nh_common *nhc, u32 new, u32 orig)
+अणु
+	काष्ठा fnhe_hash_bucket *bucket;
+	पूर्णांक i;
 
-	bucket = rcu_dereference_protected(nhc->nhc_exceptions, 1);
-	if (!bucket)
-		return;
+	bucket = rcu_dereference_रक्षित(nhc->nhc_exceptions, 1);
+	अगर (!bucket)
+		वापस;
 
-	for (i = 0; i < FNHE_HASH_SIZE; i++) {
-		struct fib_nh_exception *fnhe;
+	क्रम (i = 0; i < FNHE_HASH_SIZE; i++) अणु
+		काष्ठा fib_nh_exception *fnhe;
 
-		for (fnhe = rcu_dereference_protected(bucket[i].chain, 1);
+		क्रम (fnhe = rcu_dereference_रक्षित(bucket[i].chain, 1);
 		     fnhe;
-		     fnhe = rcu_dereference_protected(fnhe->fnhe_next, 1)) {
-			if (fnhe->fnhe_mtu_locked) {
-				if (new <= fnhe->fnhe_pmtu) {
+		     fnhe = rcu_dereference_रक्षित(fnhe->fnhe_next, 1)) अणु
+			अगर (fnhe->fnhe_mtu_locked) अणु
+				अगर (new <= fnhe->fnhe_pmtu) अणु
 					fnhe->fnhe_pmtu = new;
 					fnhe->fnhe_mtu_locked = false;
-				}
-			} else if (new < fnhe->fnhe_pmtu ||
-				   orig == fnhe->fnhe_pmtu) {
+				पूर्ण
+			पूर्ण अन्यथा अगर (new < fnhe->fnhe_pmtu ||
+				   orig == fnhe->fnhe_pmtu) अणु
 				fnhe->fnhe_pmtu = new;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void fib_sync_mtu(struct net_device *dev, u32 orig_mtu)
-{
-	unsigned int hash = fib_devindex_hashfn(dev->ifindex);
-	struct hlist_head *head = &fib_info_devhash[hash];
-	struct fib_nh *nh;
+व्योम fib_sync_mtu(काष्ठा net_device *dev, u32 orig_mtu)
+अणु
+	अचिन्हित पूर्णांक hash = fib_devindex_hashfn(dev->अगरindex);
+	काष्ठा hlist_head *head = &fib_info_devhash[hash];
+	काष्ठा fib_nh *nh;
 
-	hlist_for_each_entry(nh, head, nh_hash) {
-		if (nh->fib_nh_dev == dev)
+	hlist_क्रम_each_entry(nh, head, nh_hash) अणु
+		अगर (nh->fib_nh_dev == dev)
 			fib_nhc_update_mtu(&nh->nh_common, dev->mtu, orig_mtu);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Event              force Flags           Description
- * NETDEV_CHANGE      0     LINKDOWN        Carrier OFF, not for scope host
- * NETDEV_DOWN        0     LINKDOWN|DEAD   Link down, not for scope host
- * NETDEV_DOWN        1     LINKDOWN|DEAD   Last address removed
- * NETDEV_UNREGISTER  1     LINKDOWN|DEAD   Device removed
+/* Event              क्रमce Flags           Description
+ * NETDEV_CHANGE      0     LINKDOWN        Carrier OFF, not क्रम scope host
+ * NETDEV_DOWN        0     LINKDOWN|DEAD   Link करोwn, not क्रम scope host
+ * NETDEV_DOWN        1     LINKDOWN|DEAD   Last address हटाओd
+ * NETDEV_UNREGISTER  1     LINKDOWN|DEAD   Device हटाओd
  *
- * only used when fib_nh is built into fib_info
+ * only used when fib_nh is built पूर्णांकo fib_info
  */
-int fib_sync_down_dev(struct net_device *dev, unsigned long event, bool force)
-{
-	int ret = 0;
-	int scope = RT_SCOPE_NOWHERE;
-	struct fib_info *prev_fi = NULL;
-	unsigned int hash = fib_devindex_hashfn(dev->ifindex);
-	struct hlist_head *head = &fib_info_devhash[hash];
-	struct fib_nh *nh;
+पूर्णांक fib_sync_करोwn_dev(काष्ठा net_device *dev, अचिन्हित दीर्घ event, bool क्रमce)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक scope = RT_SCOPE_NOWHERE;
+	काष्ठा fib_info *prev_fi = शून्य;
+	अचिन्हित पूर्णांक hash = fib_devindex_hashfn(dev->अगरindex);
+	काष्ठा hlist_head *head = &fib_info_devhash[hash];
+	काष्ठा fib_nh *nh;
 
-	if (force)
+	अगर (क्रमce)
 		scope = -1;
 
-	hlist_for_each_entry(nh, head, nh_hash) {
-		struct fib_info *fi = nh->nh_parent;
-		int dead;
+	hlist_क्रम_each_entry(nh, head, nh_hash) अणु
+		काष्ठा fib_info *fi = nh->nh_parent;
+		पूर्णांक dead;
 
 		BUG_ON(!fi->fib_nhs);
-		if (nh->fib_nh_dev != dev || fi == prev_fi)
-			continue;
+		अगर (nh->fib_nh_dev != dev || fi == prev_fi)
+			जारी;
 		prev_fi = fi;
 		dead = 0;
-		change_nexthops(fi) {
-			if (nexthop_nh->fib_nh_flags & RTNH_F_DEAD)
+		change_nexthops(fi) अणु
+			अगर (nexthop_nh->fib_nh_flags & RTNH_F_DEAD)
 				dead++;
-			else if (nexthop_nh->fib_nh_dev == dev &&
-				 nexthop_nh->fib_nh_scope != scope) {
-				switch (event) {
-				case NETDEV_DOWN:
-				case NETDEV_UNREGISTER:
+			अन्यथा अगर (nexthop_nh->fib_nh_dev == dev &&
+				 nexthop_nh->fib_nh_scope != scope) अणु
+				चयन (event) अणु
+				हाल NETDEV_DOWN:
+				हाल NETDEV_UNREGISTER:
 					nexthop_nh->fib_nh_flags |= RTNH_F_DEAD;
 					fallthrough;
-				case NETDEV_CHANGE:
+				हाल NETDEV_CHANGE:
 					nexthop_nh->fib_nh_flags |= RTNH_F_LINKDOWN;
-					break;
-				}
-				call_fib_nh_notifiers(nexthop_nh,
+					अवरोध;
+				पूर्ण
+				call_fib_nh_notअगरiers(nexthop_nh,
 						      FIB_EVENT_NH_DEL);
 				dead++;
-			}
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
-			if (event == NETDEV_UNREGISTER &&
-			    nexthop_nh->fib_nh_dev == dev) {
+			पूर्ण
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
+			अगर (event == NETDEV_UNREGISTER &&
+			    nexthop_nh->fib_nh_dev == dev) अणु
 				dead = fi->fib_nhs;
-				break;
-			}
-#endif
-		} endfor_nexthops(fi)
-		if (dead == fi->fib_nhs) {
-			switch (event) {
-			case NETDEV_DOWN:
-			case NETDEV_UNREGISTER:
+				अवरोध;
+			पूर्ण
+#पूर्ण_अगर
+		पूर्ण endक्रम_nexthops(fi)
+		अगर (dead == fi->fib_nhs) अणु
+			चयन (event) अणु
+			हाल NETDEV_DOWN:
+			हाल NETDEV_UNREGISTER:
 				fi->fib_flags |= RTNH_F_DEAD;
 				fallthrough;
-			case NETDEV_CHANGE:
+			हाल NETDEV_CHANGE:
 				fi->fib_flags |= RTNH_F_LINKDOWN;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			ret++;
-		}
+		पूर्ण
 
 		fib_rebalance(fi);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Must be invoked inside of an RCU protected region.  */
-static void fib_select_default(const struct flowi4 *flp, struct fib_result *res)
-{
-	struct fib_info *fi = NULL, *last_resort = NULL;
-	struct hlist_head *fa_head = res->fa_head;
-	struct fib_table *tb = res->table;
+/* Must be invoked inside of an RCU रक्षित region.  */
+अटल व्योम fib_select_शेष(स्थिर काष्ठा flowi4 *flp, काष्ठा fib_result *res)
+अणु
+	काष्ठा fib_info *fi = शून्य, *last_resort = शून्य;
+	काष्ठा hlist_head *fa_head = res->fa_head;
+	काष्ठा fib_table *tb = res->table;
 	u8 slen = 32 - res->prefixlen;
-	int order = -1, last_idx = -1;
-	struct fib_alias *fa, *fa1 = NULL;
+	पूर्णांक order = -1, last_idx = -1;
+	काष्ठा fib_alias *fa, *fa1 = शून्य;
 	u32 last_prio = res->fi->fib_priority;
 	u8 last_tos = 0;
 
-	hlist_for_each_entry_rcu(fa, fa_head, fa_list) {
-		struct fib_info *next_fi = fa->fa_info;
-		struct fib_nh_common *nhc;
+	hlist_क्रम_each_entry_rcu(fa, fa_head, fa_list) अणु
+		काष्ठा fib_info *next_fi = fa->fa_info;
+		काष्ठा fib_nh_common *nhc;
 
-		if (fa->fa_slen != slen)
-			continue;
-		if (fa->fa_tos && fa->fa_tos != flp->flowi4_tos)
-			continue;
-		if (fa->tb_id != tb->tb_id)
-			continue;
-		if (next_fi->fib_priority > last_prio &&
-		    fa->fa_tos == last_tos) {
-			if (last_tos)
-				continue;
-			break;
-		}
-		if (next_fi->fib_flags & RTNH_F_DEAD)
-			continue;
+		अगर (fa->fa_slen != slen)
+			जारी;
+		अगर (fa->fa_tos && fa->fa_tos != flp->flowi4_tos)
+			जारी;
+		अगर (fa->tb_id != tb->tb_id)
+			जारी;
+		अगर (next_fi->fib_priority > last_prio &&
+		    fa->fa_tos == last_tos) अणु
+			अगर (last_tos)
+				जारी;
+			अवरोध;
+		पूर्ण
+		अगर (next_fi->fib_flags & RTNH_F_DEAD)
+			जारी;
 		last_tos = fa->fa_tos;
 		last_prio = next_fi->fib_priority;
 
-		if (next_fi->fib_scope != res->scope ||
+		अगर (next_fi->fib_scope != res->scope ||
 		    fa->fa_type != RTN_UNICAST)
-			continue;
+			जारी;
 
 		nhc = fib_info_nhc(next_fi, 0);
-		if (!nhc->nhc_gw_family || nhc->nhc_scope != RT_SCOPE_LINK)
-			continue;
+		अगर (!nhc->nhc_gw_family || nhc->nhc_scope != RT_SCOPE_LINK)
+			जारी;
 
 		fib_alias_accessed(fa);
 
-		if (!fi) {
-			if (next_fi != res->fi)
-				break;
+		अगर (!fi) अणु
+			अगर (next_fi != res->fi)
+				अवरोध;
 			fa1 = fa;
-		} else if (!fib_detect_death(fi, order, &last_resort,
-					     &last_idx, fa1->fa_default)) {
+		पूर्ण अन्यथा अगर (!fib_detect_death(fi, order, &last_resort,
+					     &last_idx, fa1->fa_शेष)) अणु
 			fib_result_assign(res, fi);
-			fa1->fa_default = order;
-			goto out;
-		}
+			fa1->fa_शेष = order;
+			जाओ out;
+		पूर्ण
 		fi = next_fi;
 		order++;
-	}
+	पूर्ण
 
-	if (order <= 0 || !fi) {
-		if (fa1)
-			fa1->fa_default = -1;
-		goto out;
-	}
+	अगर (order <= 0 || !fi) अणु
+		अगर (fa1)
+			fa1->fa_शेष = -1;
+		जाओ out;
+	पूर्ण
 
-	if (!fib_detect_death(fi, order, &last_resort, &last_idx,
-			      fa1->fa_default)) {
+	अगर (!fib_detect_death(fi, order, &last_resort, &last_idx,
+			      fa1->fa_शेष)) अणु
 		fib_result_assign(res, fi);
-		fa1->fa_default = order;
-		goto out;
-	}
+		fa1->fa_शेष = order;
+		जाओ out;
+	पूर्ण
 
-	if (last_idx >= 0)
+	अगर (last_idx >= 0)
 		fib_result_assign(res, last_resort);
-	fa1->fa_default = last_idx;
+	fa1->fa_शेष = last_idx;
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * Dead device goes up. We wake up dead nexthops.
  * It takes sense only on multipath routes.
  *
- * only used when fib_nh is built into fib_info
+ * only used when fib_nh is built पूर्णांकo fib_info
  */
-int fib_sync_up(struct net_device *dev, unsigned char nh_flags)
-{
-	struct fib_info *prev_fi;
-	unsigned int hash;
-	struct hlist_head *head;
-	struct fib_nh *nh;
-	int ret;
+पूर्णांक fib_sync_up(काष्ठा net_device *dev, अचिन्हित अक्षर nh_flags)
+अणु
+	काष्ठा fib_info *prev_fi;
+	अचिन्हित पूर्णांक hash;
+	काष्ठा hlist_head *head;
+	काष्ठा fib_nh *nh;
+	पूर्णांक ret;
 
-	if (!(dev->flags & IFF_UP))
-		return 0;
+	अगर (!(dev->flags & IFF_UP))
+		वापस 0;
 
-	if (nh_flags & RTNH_F_DEAD) {
-		unsigned int flags = dev_get_flags(dev);
+	अगर (nh_flags & RTNH_F_DEAD) अणु
+		अचिन्हित पूर्णांक flags = dev_get_flags(dev);
 
-		if (flags & (IFF_RUNNING | IFF_LOWER_UP))
+		अगर (flags & (IFF_RUNNING | IFF_LOWER_UP))
 			nh_flags |= RTNH_F_LINKDOWN;
-	}
+	पूर्ण
 
-	prev_fi = NULL;
-	hash = fib_devindex_hashfn(dev->ifindex);
+	prev_fi = शून्य;
+	hash = fib_devindex_hashfn(dev->अगरindex);
 	head = &fib_info_devhash[hash];
 	ret = 0;
 
-	hlist_for_each_entry(nh, head, nh_hash) {
-		struct fib_info *fi = nh->nh_parent;
-		int alive;
+	hlist_क्रम_each_entry(nh, head, nh_hash) अणु
+		काष्ठा fib_info *fi = nh->nh_parent;
+		पूर्णांक alive;
 
 		BUG_ON(!fi->fib_nhs);
-		if (nh->fib_nh_dev != dev || fi == prev_fi)
-			continue;
+		अगर (nh->fib_nh_dev != dev || fi == prev_fi)
+			जारी;
 
 		prev_fi = fi;
 		alive = 0;
-		change_nexthops(fi) {
-			if (!(nexthop_nh->fib_nh_flags & nh_flags)) {
+		change_nexthops(fi) अणु
+			अगर (!(nexthop_nh->fib_nh_flags & nh_flags)) अणु
 				alive++;
-				continue;
-			}
-			if (!nexthop_nh->fib_nh_dev ||
+				जारी;
+			पूर्ण
+			अगर (!nexthop_nh->fib_nh_dev ||
 			    !(nexthop_nh->fib_nh_dev->flags & IFF_UP))
-				continue;
-			if (nexthop_nh->fib_nh_dev != dev ||
+				जारी;
+			अगर (nexthop_nh->fib_nh_dev != dev ||
 			    !__in_dev_get_rtnl(dev))
-				continue;
+				जारी;
 			alive++;
 			nexthop_nh->fib_nh_flags &= ~nh_flags;
-			call_fib_nh_notifiers(nexthop_nh, FIB_EVENT_NH_ADD);
-		} endfor_nexthops(fi)
+			call_fib_nh_notअगरiers(nexthop_nh, FIB_EVENT_NH_ADD);
+		पूर्ण endक्रम_nexthops(fi)
 
-		if (alive > 0) {
+		अगर (alive > 0) अणु
 			fi->fib_flags &= ~nh_flags;
 			ret++;
-		}
+		पूर्ण
 
 		fib_rebalance(fi);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
-static bool fib_good_nh(const struct fib_nh *nh)
-{
-	int state = NUD_REACHABLE;
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
+अटल bool fib_good_nh(स्थिर काष्ठा fib_nh *nh)
+अणु
+	पूर्णांक state = NUD_REACHABLE;
 
-	if (nh->fib_nh_scope == RT_SCOPE_LINK) {
-		struct neighbour *n;
+	अगर (nh->fib_nh_scope == RT_SCOPE_LINK) अणु
+		काष्ठा neighbour *n;
 
-		rcu_read_lock_bh();
+		rcu_पढ़ो_lock_bh();
 
-		if (likely(nh->fib_nh_gw_family == AF_INET))
+		अगर (likely(nh->fib_nh_gw_family == AF_INET))
 			n = __ipv4_neigh_lookup_noref(nh->fib_nh_dev,
-						   (__force u32)nh->fib_nh_gw4);
-		else if (nh->fib_nh_gw_family == AF_INET6)
+						   (__क्रमce u32)nh->fib_nh_gw4);
+		अन्यथा अगर (nh->fib_nh_gw_family == AF_INET6)
 			n = __ipv6_neigh_lookup_noref_stub(nh->fib_nh_dev,
 							   &nh->fib_nh_gw6);
-		else
-			n = NULL;
-		if (n)
+		अन्यथा
+			n = शून्य;
+		अगर (n)
 			state = n->nud_state;
 
-		rcu_read_unlock_bh();
-	}
+		rcu_पढ़ो_unlock_bh();
+	पूर्ण
 
-	return !!(state & NUD_VALID);
-}
+	वापस !!(state & NUD_VALID);
+पूर्ण
 
-void fib_select_multipath(struct fib_result *res, int hash)
-{
-	struct fib_info *fi = res->fi;
-	struct net *net = fi->fib_net;
+व्योम fib_select_multipath(काष्ठा fib_result *res, पूर्णांक hash)
+अणु
+	काष्ठा fib_info *fi = res->fi;
+	काष्ठा net *net = fi->fib_net;
 	bool first = false;
 
-	if (unlikely(res->fi->nh)) {
+	अगर (unlikely(res->fi->nh)) अणु
 		nexthop_path_fib_result(res, hash);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	change_nexthops(fi) {
-		if (net->ipv4.sysctl_fib_multipath_use_neigh) {
-			if (!fib_good_nh(nexthop_nh))
-				continue;
-			if (!first) {
+	change_nexthops(fi) अणु
+		अगर (net->ipv4.sysctl_fib_multipath_use_neigh) अणु
+			अगर (!fib_good_nh(nexthop_nh))
+				जारी;
+			अगर (!first) अणु
 				res->nh_sel = nhsel;
 				res->nhc = &nexthop_nh->nh_common;
 				first = true;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (hash > atomic_read(&nexthop_nh->fib_nh_upper_bound))
-			continue;
+		अगर (hash > atomic_पढ़ो(&nexthop_nh->fib_nh_upper_bound))
+			जारी;
 
 		res->nh_sel = nhsel;
 		res->nhc = &nexthop_nh->nh_common;
-		return;
-	} endfor_nexthops(fi);
-}
-#endif
+		वापस;
+	पूर्ण endक्रम_nexthops(fi);
+पूर्ण
+#पूर्ण_अगर
 
-void fib_select_path(struct net *net, struct fib_result *res,
-		     struct flowi4 *fl4, const struct sk_buff *skb)
-{
-	if (fl4->flowi4_oif && !(fl4->flowi4_flags & FLOWI_FLAG_SKIP_NH_OIF))
-		goto check_saddr;
+व्योम fib_select_path(काष्ठा net *net, काष्ठा fib_result *res,
+		     काष्ठा flowi4 *fl4, स्थिर काष्ठा sk_buff *skb)
+अणु
+	अगर (fl4->flowi4_oअगर && !(fl4->flowi4_flags & FLOWI_FLAG_SKIP_NH_OIF))
+		जाओ check_saddr;
 
-#ifdef CONFIG_IP_ROUTE_MULTIPATH
-	if (fib_info_num_path(res->fi) > 1) {
-		int h = fib_multipath_hash(net, fl4, skb, NULL);
+#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
+	अगर (fib_info_num_path(res->fi) > 1) अणु
+		पूर्णांक h = fib_multipath_hash(net, fl4, skb, शून्य);
 
 		fib_select_multipath(res, h);
-	}
-	else
-#endif
-	if (!res->prefixlen &&
-	    res->table->tb_num_default > 1 &&
+	पूर्ण
+	अन्यथा
+#पूर्ण_अगर
+	अगर (!res->prefixlen &&
+	    res->table->tb_num_शेष > 1 &&
 	    res->type == RTN_UNICAST)
-		fib_select_default(fl4, res);
+		fib_select_शेष(fl4, res);
 
 check_saddr:
-	if (!fl4->saddr)
+	अगर (!fl4->saddr)
 		fl4->saddr = fib_result_prefsrc(net, res);
-}
+पूर्ण

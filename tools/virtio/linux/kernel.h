@@ -1,146 +1,147 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef KERNEL_H
-#define KERNEL_H
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-#include <stdarg.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित KERNEL_H
+#घोषणा KERNEL_H
+#समावेश <stdbool.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकघोष.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <निश्चित.स>
+#समावेश <मानकतर्क.स>
 
-#include <linux/compiler.h>
-#include <linux/types.h>
-#include <linux/overflow.h>
-#include <linux/list.h>
-#include <linux/printk.h>
-#include <linux/bug.h>
-#include <errno.h>
-#include <unistd.h>
-#include <asm/barrier.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <linux/overflow.h>
+#समावेश <linux/list.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/bug.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <यंत्र/barrier.h>
 
-#define CONFIG_SMP
+#घोषणा CONFIG_SMP
 
-#define PAGE_SIZE getpagesize()
-#define PAGE_MASK (~(PAGE_SIZE-1))
-#define PAGE_ALIGN(x) ((x + PAGE_SIZE - 1) & PAGE_MASK)
+#घोषणा PAGE_SIZE getpagesize()
+#घोषणा PAGE_MASK (~(PAGE_SIZE-1))
+#घोषणा PAGE_ALIGN(x) ((x + PAGE_SIZE - 1) & PAGE_MASK)
 
 /* generic data direction definitions */
-#define READ                    0
-#define WRITE                   1
+#घोषणा READ                    0
+#घोषणा WRITE                   1
 
-typedef unsigned long long phys_addr_t;
-typedef unsigned long long dma_addr_t;
-typedef size_t __kernel_size_t;
-typedef unsigned int __wsum;
+प्रकार अचिन्हित दीर्घ दीर्घ phys_addr_t;
+प्रकार अचिन्हित दीर्घ दीर्घ dma_addr_t;
+प्रकार माप_प्रकार __kernel_माप_प्रकार;
+प्रकार अचिन्हित पूर्णांक __wsum;
 
-struct page {
-	unsigned long long dummy;
-};
+काष्ठा page अणु
+	अचिन्हित दीर्घ दीर्घ dummy;
+पूर्ण;
 
 /* Physical == Virtual */
-#define virt_to_phys(p) ((unsigned long)p)
-#define phys_to_virt(a) ((void *)(unsigned long)(a))
+#घोषणा virt_to_phys(p) ((अचिन्हित दीर्घ)p)
+#घोषणा phys_to_virt(a) ((व्योम *)(अचिन्हित दीर्घ)(a))
 /* Page address: Virtual / 4K */
-#define page_to_phys(p) ((dma_addr_t)(unsigned long)(p))
-#define virt_to_page(p) ((struct page *)((unsigned long)p & PAGE_MASK))
+#घोषणा page_to_phys(p) ((dma_addr_t)(अचिन्हित दीर्घ)(p))
+#घोषणा virt_to_page(p) ((काष्ठा page *)((अचिन्हित दीर्घ)p & PAGE_MASK))
 
-#define offset_in_page(p) (((unsigned long)p) % PAGE_SIZE)
+#घोषणा offset_in_page(p) (((अचिन्हित दीर्घ)p) % PAGE_SIZE)
 
-#define __printf(a,b) __attribute__((format(printf,a,b)))
+#घोषणा __म_लिखो(a,b) __attribute__((क्रमmat(म_लिखो,a,b)))
 
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+#घोषणा ARRAY_SIZE(x) (माप(x)/माप(x[0]))
 
-extern void *__kmalloc_fake, *__kfree_ignore_start, *__kfree_ignore_end;
-static inline void *kmalloc(size_t s, gfp_t gfp)
-{
-	if (__kmalloc_fake)
-		return __kmalloc_fake;
-	return malloc(s);
-}
-static inline void *kmalloc_array(unsigned n, size_t s, gfp_t gfp)
-{
-	return kmalloc(n * s, gfp);
-}
+बाह्य व्योम *__kदो_स्मृति_fake, *__kमुक्त_ignore_start, *__kमुक्त_ignore_end;
+अटल अंतरभूत व्योम *kदो_स्मृति(माप_प्रकार s, gfp_t gfp)
+अणु
+	अगर (__kदो_स्मृति_fake)
+		वापस __kदो_स्मृति_fake;
+	वापस दो_स्मृति(s);
+पूर्ण
+अटल अंतरभूत व्योम *kदो_स्मृति_array(अचिन्हित n, माप_प्रकार s, gfp_t gfp)
+अणु
+	वापस kदो_स्मृति(n * s, gfp);
+पूर्ण
 
-static inline void *kzalloc(size_t s, gfp_t gfp)
-{
-	void *p = kmalloc(s, gfp);
+अटल अंतरभूत व्योम *kzalloc(माप_प्रकार s, gfp_t gfp)
+अणु
+	व्योम *p = kदो_स्मृति(s, gfp);
 
-	memset(p, 0, s);
-	return p;
-}
+	स_रखो(p, 0, s);
+	वापस p;
+पूर्ण
 
-static inline void *alloc_pages_exact(size_t s, gfp_t gfp)
-{
-	return kmalloc(s, gfp);
-}
+अटल अंतरभूत व्योम *alloc_pages_exact(माप_प्रकार s, gfp_t gfp)
+अणु
+	वापस kदो_स्मृति(s, gfp);
+पूर्ण
 
-static inline void kfree(void *p)
-{
-	if (p >= __kfree_ignore_start && p < __kfree_ignore_end)
-		return;
-	free(p);
-}
+अटल अंतरभूत व्योम kमुक्त(व्योम *p)
+अणु
+	अगर (p >= __kमुक्त_ignore_start && p < __kमुक्त_ignore_end)
+		वापस;
+	मुक्त(p);
+पूर्ण
 
-static inline void free_pages_exact(void *p, size_t s)
-{
-	kfree(p);
-}
+अटल अंतरभूत व्योम मुक्त_pages_exact(व्योम *p, माप_प्रकार s)
+अणु
+	kमुक्त(p);
+पूर्ण
 
-static inline void *krealloc(void *p, size_t s, gfp_t gfp)
-{
-	return realloc(p, s);
-}
+अटल अंतरभूत व्योम *kपुनः_स्मृति(व्योम *p, माप_प्रकार s, gfp_t gfp)
+अणु
+	वापस पुनः_स्मृति(p, s);
+पूर्ण
 
 
-static inline unsigned long __get_free_page(gfp_t gfp)
-{
-	void *p;
+अटल अंतरभूत अचिन्हित दीर्घ __get_मुक्त_page(gfp_t gfp)
+अणु
+	व्योम *p;
 
 	posix_memalign(&p, PAGE_SIZE, PAGE_SIZE);
-	return (unsigned long)p;
-}
+	वापस (अचिन्हित दीर्घ)p;
+पूर्ण
 
-static inline void free_page(unsigned long addr)
-{
-	free((void *)addr);
-}
+अटल अंतरभूत व्योम मुक्त_page(अचिन्हित दीर्घ addr)
+अणु
+	मुक्त((व्योम *)addr);
+पूर्ण
 
-#define container_of(ptr, type, member) ({			\
-	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-	(type *)( (char *)__mptr - offsetof(type,member) );})
+#घोषणा container_of(ptr, type, member) (अणु			\
+	स्थिर typeof( ((type *)0)->member ) *__mptr = (ptr);	\
+	(type *)( (अक्षर *)__mptr - दुरत्व(type,member) );पूर्ण)
 
-# ifndef likely
+# अगरndef likely
 #  define likely(x)	(__builtin_expect(!!(x), 1))
-# endif
-# ifndef unlikely
+# endअगर
+# अगरndef unlikely
 #  define unlikely(x)	(__builtin_expect(!!(x), 0))
-# endif
+# endअगर
 
-static inline void *krealloc_array(void *p, size_t new_n, size_t new_size, gfp_t gfp)
-{
-	size_t bytes;
+अटल अंतरभूत व्योम *kपुनः_स्मृति_array(व्योम *p, माप_प्रकार new_n, माप_प्रकार new_size, gfp_t gfp)
+अणु
+	माप_प्रकार bytes;
 
-	if (unlikely(check_mul_overflow(new_n, new_size, &bytes)))
-		return NULL;
+	अगर (unlikely(check_mul_overflow(new_n, new_size, &bytes)))
+		वापस शून्य;
 
-	return krealloc(p, bytes, gfp);
-}
+	वापस kपुनः_स्मृति(p, bytes, gfp);
+पूर्ण
 
-#define pr_err(format, ...) fprintf (stderr, format, ## __VA_ARGS__)
-#ifdef DEBUG
-#define pr_debug(format, ...) fprintf (stderr, format, ## __VA_ARGS__)
-#else
-#define pr_debug(format, ...) do {} while (0)
-#endif
-#define dev_err(dev, format, ...) fprintf (stderr, format, ## __VA_ARGS__)
-#define dev_warn(dev, format, ...) fprintf (stderr, format, ## __VA_ARGS__)
+#घोषणा pr_err(क्रमmat, ...) ख_लिखो (मानक_त्रुटि, क्रमmat, ## __VA_ARGS__)
+#अगर_घोषित DEBUG
+#घोषणा pr_debug(क्रमmat, ...) ख_लिखो (मानक_त्रुटि, क्रमmat, ## __VA_ARGS__)
+#अन्यथा
+#घोषणा pr_debug(क्रमmat, ...) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
+#घोषणा dev_err(dev, क्रमmat, ...) ख_लिखो (मानक_त्रुटि, क्रमmat, ## __VA_ARGS__)
+#घोषणा dev_warn(dev, क्रमmat, ...) ख_लिखो (मानक_त्रुटि, क्रमmat, ## __VA_ARGS__)
 
-#define min(x, y) ({				\
+#घोषणा min(x, y) (अणु				\
 	typeof(x) _min1 = (x);			\
 	typeof(y) _min2 = (y);			\
-	(void) (&_min1 == &_min2);		\
-	_min1 < _min2 ? _min1 : _min2; })
+	(व्योम) (&_min1 == &_min2);		\
+	_min1 < _min2 ? _min1 : _min2; पूर्ण)
 
-#endif /* KERNEL_H */
+#पूर्ण_अगर /* KERNEL_H */

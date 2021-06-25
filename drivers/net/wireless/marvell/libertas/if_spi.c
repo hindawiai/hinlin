@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	linux/drivers/net/wireless/libertas/if_spi.c
+ *	linux/drivers/net/wireless/libertas/अगर_spi.c
  *
- *	Driver for Marvell SPI WLAN cards.
+ *	Driver क्रम Marvell SPI WLAN cards.
  *
  *	Copyright 2008 Analog Devices Inc.
  *
@@ -10,100 +11,100 @@
  *	Andrey Yurovsky <andrey@cozybit.com>
  *	Colin McCabe <colin@cozybit.com>
  *
- *	Inspired by if_sdio.c, Copyright 2007-2008 Pierre Ossman
+ *	Inspired by अगर_sdio.c, Copyright 2007-2008 Pierre Ossman
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/hardirq.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/firmware.h>
-#include <linux/jiffies.h>
-#include <linux/list.h>
-#include <linux/netdevice.h>
-#include <linux/slab.h>
-#include <linux/spi/libertas_spi.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/list.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/libertas_spi.h>
+#समावेश <linux/spi/spi.h>
 
-#include "host.h"
-#include "decl.h"
-#include "defs.h"
-#include "dev.h"
-#include "if_spi.h"
+#समावेश "host.h"
+#समावेश "decl.h"
+#समावेश "defs.h"
+#समावेश "dev.h"
+#समावेश "if_spi.h"
 
-struct if_spi_packet {
-	struct list_head		list;
+काष्ठा अगर_spi_packet अणु
+	काष्ठा list_head		list;
 	u16				blen;
 	u8				buffer[] __aligned(4);
-};
+पूर्ण;
 
-struct if_spi_card {
-	struct spi_device		*spi;
-	struct lbs_private		*priv;
-	struct libertas_spi_platform_data *pdata;
+काष्ठा अगर_spi_card अणु
+	काष्ठा spi_device		*spi;
+	काष्ठा lbs_निजी		*priv;
+	काष्ठा libertas_spi_platक्रमm_data *pdata;
 
 	/* The card ID and card revision, as reported by the hardware. */
 	u16				card_id;
 	u8				card_rev;
 
-	/* The last time that we initiated an SPU operation */
-	unsigned long			prev_xfer_time;
+	/* The last समय that we initiated an SPU operation */
+	अचिन्हित दीर्घ			prev_xfer_समय;
 
-	int				use_dummy_writes;
-	unsigned long			spu_port_delay;
-	unsigned long			spu_reg_delay;
+	पूर्णांक				use_dummy_ग_लिखोs;
+	अचिन्हित दीर्घ			spu_port_delay;
+	अचिन्हित दीर्घ			spu_reg_delay;
 
-	/* Handles all SPI communication (except for FW load) */
-	struct workqueue_struct		*workqueue;
-	struct work_struct		packet_work;
-	struct work_struct		resume_work;
+	/* Handles all SPI communication (except क्रम FW load) */
+	काष्ठा workqueue_काष्ठा		*workqueue;
+	काष्ठा work_काष्ठा		packet_work;
+	काष्ठा work_काष्ठा		resume_work;
 
 	u8				cmd_buffer[IF_SPI_CMD_BUF_SIZE];
 
 	/* A buffer of incoming packets from libertas core.
 	 * Since we can't sleep in hw_host_to_card, we have to buffer
 	 * them. */
-	struct list_head		cmd_packet_list;
-	struct list_head		data_packet_list;
+	काष्ठा list_head		cmd_packet_list;
+	काष्ठा list_head		data_packet_list;
 
 	/* Protects cmd_packet_list and data_packet_list */
 	spinlock_t			buffer_lock;
 
 	/* True is card suspended */
 	u8				suspended;
-};
+पूर्ण;
 
-static void free_if_spi_card(struct if_spi_card *card)
-{
-	struct list_head *cursor, *next;
-	struct if_spi_packet *packet;
+अटल व्योम मुक्त_अगर_spi_card(काष्ठा अगर_spi_card *card)
+अणु
+	काष्ठा list_head *cursor, *next;
+	काष्ठा अगर_spi_packet *packet;
 
-	list_for_each_safe(cursor, next, &card->cmd_packet_list) {
-		packet = container_of(cursor, struct if_spi_packet, list);
+	list_क्रम_each_safe(cursor, next, &card->cmd_packet_list) अणु
+		packet = container_of(cursor, काष्ठा अगर_spi_packet, list);
 		list_del(&packet->list);
-		kfree(packet);
-	}
-	list_for_each_safe(cursor, next, &card->data_packet_list) {
-		packet = container_of(cursor, struct if_spi_packet, list);
+		kमुक्त(packet);
+	पूर्ण
+	list_क्रम_each_safe(cursor, next, &card->data_packet_list) अणु
+		packet = container_of(cursor, काष्ठा अगर_spi_packet, list);
 		list_del(&packet->list);
-		kfree(packet);
-	}
-	kfree(card);
-}
+		kमुक्त(packet);
+	पूर्ण
+	kमुक्त(card);
+पूर्ण
 
-#define MODEL_8385	0x04
-#define MODEL_8686	0x0b
-#define MODEL_8688	0x10
+#घोषणा MODEL_8385	0x04
+#घोषणा MODEL_8686	0x0b
+#घोषणा MODEL_8688	0x10
 
-static const struct lbs_fw_table fw_table[] = {
-	{ MODEL_8385, "libertas/gspi8385_helper.bin", "libertas/gspi8385.bin" },
-	{ MODEL_8385, "libertas/gspi8385_hlp.bin", "libertas/gspi8385.bin" },
-	{ MODEL_8686, "libertas/gspi8686_v9_helper.bin", "libertas/gspi8686_v9.bin" },
-	{ MODEL_8686, "libertas/gspi8686_hlp.bin", "libertas/gspi8686.bin" },
-	{ MODEL_8688, "libertas/gspi8688_helper.bin", "libertas/gspi8688.bin" },
-	{ 0, NULL, NULL }
-};
+अटल स्थिर काष्ठा lbs_fw_table fw_table[] = अणु
+	अणु MODEL_8385, "libertas/gspi8385_helper.bin", "libertas/gspi8385.bin" पूर्ण,
+	अणु MODEL_8385, "libertas/gspi8385_hlp.bin", "libertas/gspi8385.bin" पूर्ण,
+	अणु MODEL_8686, "libertas/gspi8686_v9_helper.bin", "libertas/gspi8686_v9.bin" पूर्ण,
+	अणु MODEL_8686, "libertas/gspi8686_hlp.bin", "libertas/gspi8686.bin" पूर्ण,
+	अणु MODEL_8688, "libertas/gspi8688_helper.bin", "libertas/gspi8688.bin" पूर्ण,
+	अणु 0, शून्य, शून्य पूर्ण
+पूर्ण;
 MODULE_FIRMWARE("libertas/gspi8385_helper.bin");
 MODULE_FIRMWARE("libertas/gspi8385_hlp.bin");
 MODULE_FIRMWARE("libertas/gspi8385.bin");
@@ -121,52 +122,52 @@ MODULE_FIRMWARE("libertas/gspi8688.bin");
  * The SPU sits between the host and the WLAN module.
  * All communication with the firmware is through SPU transactions.
  *
- * First we have to put a SPU register name on the bus. Then we can
- * either read from or write to that register.
+ * First we have to put a SPU रेजिस्टर name on the bus. Then we can
+ * either पढ़ो from or ग_लिखो to that रेजिस्टर.
  *
  */
 
-static void spu_transaction_init(struct if_spi_card *card)
-{
-	if (!time_after(jiffies, card->prev_xfer_time + 1)) {
-		/* Unfortunately, the SPU requires a delay between successive
-		 * transactions. If our last transaction was more than a jiffy
-		 * ago, we have obviously already delayed enough.
-		 * If not, we have to busy-wait to be on the safe side. */
+अटल व्योम spu_transaction_init(काष्ठा अगर_spi_card *card)
+अणु
+	अगर (!समय_after(jअगरfies, card->prev_xfer_समय + 1)) अणु
+		/* Unक्रमtunately, the SPU requires a delay between successive
+		 * transactions. If our last transaction was more than a jअगरfy
+		 * ago, we have obviously alपढ़ोy delayed enough.
+		 * If not, we have to busy-रुको to be on the safe side. */
 		ndelay(400);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void spu_transaction_finish(struct if_spi_card *card)
-{
-	card->prev_xfer_time = jiffies;
-}
+अटल व्योम spu_transaction_finish(काष्ठा अगर_spi_card *card)
+अणु
+	card->prev_xfer_समय = jअगरfies;
+पूर्ण
 
 /*
- * Write out a byte buffer to an SPI register,
+ * Write out a byte buffer to an SPI रेजिस्टर,
  * using a series of 16-bit transfers.
  */
-static int spu_write(struct if_spi_card *card, u16 reg, const u8 *buf, int len)
-{
-	int err = 0;
+अटल पूर्णांक spu_ग_लिखो(काष्ठा अगर_spi_card *card, u16 reg, स्थिर u8 *buf, पूर्णांक len)
+अणु
+	पूर्णांक err = 0;
 	__le16 reg_out = cpu_to_le16(reg | IF_SPI_WRITE_OPERATION_MASK);
-	struct spi_message m;
-	struct spi_transfer reg_trans;
-	struct spi_transfer data_trans;
+	काष्ठा spi_message m;
+	काष्ठा spi_transfer reg_trans;
+	काष्ठा spi_transfer data_trans;
 
 	spi_message_init(&m);
-	memset(&reg_trans, 0, sizeof(reg_trans));
-	memset(&data_trans, 0, sizeof(data_trans));
+	स_रखो(&reg_trans, 0, माप(reg_trans));
+	स_रखो(&data_trans, 0, माप(data_trans));
 
-	/* You must give an even number of bytes to the SPU, even if it
-	 * doesn't care about the last one.  */
+	/* You must give an even number of bytes to the SPU, even अगर it
+	 * करोesn't care about the last one.  */
 	BUG_ON(len & 0x1);
 
 	spu_transaction_init(card);
 
-	/* write SPU register index */
+	/* ग_लिखो SPU रेजिस्टर index */
 	reg_trans.tx_buf = &reg_out;
-	reg_trans.len = sizeof(reg_out);
+	reg_trans.len = माप(reg_out);
 
 	data_trans.tx_buf = buf;
 	data_trans.len = len;
@@ -176,505 +177,505 @@ static int spu_write(struct if_spi_card *card, u16 reg, const u8 *buf, int len)
 
 	err = spi_sync(card->spi, &m);
 	spu_transaction_finish(card);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int spu_write_u16(struct if_spi_card *card, u16 reg, u16 val)
-{
+अटल अंतरभूत पूर्णांक spu_ग_लिखो_u16(काष्ठा अगर_spi_card *card, u16 reg, u16 val)
+अणु
 	__le16 buff;
 
 	buff = cpu_to_le16(val);
-	return spu_write(card, reg, (u8 *)&buff, sizeof(u16));
-}
+	वापस spu_ग_लिखो(card, reg, (u8 *)&buff, माप(u16));
+पूर्ण
 
-static inline int spu_reg_is_port_reg(u16 reg)
-{
-	switch (reg) {
-	case IF_SPI_IO_RDWRPORT_REG:
-	case IF_SPI_CMD_RDWRPORT_REG:
-	case IF_SPI_DATA_RDWRPORT_REG:
-		return 1;
-	default:
-		return 0;
-	}
-}
+अटल अंतरभूत पूर्णांक spu_reg_is_port_reg(u16 reg)
+अणु
+	चयन (reg) अणु
+	हाल IF_SPI_IO_RDWRPORT_REG:
+	हाल IF_SPI_CMD_RDWRPORT_REG:
+	हाल IF_SPI_DATA_RDWRPORT_REG:
+		वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int spu_read(struct if_spi_card *card, u16 reg, u8 *buf, int len)
-{
-	unsigned int delay;
-	int err = 0;
+अटल पूर्णांक spu_पढ़ो(काष्ठा अगर_spi_card *card, u16 reg, u8 *buf, पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक delay;
+	पूर्णांक err = 0;
 	__le16 reg_out = cpu_to_le16(reg | IF_SPI_READ_OPERATION_MASK);
-	struct spi_message m;
-	struct spi_transfer reg_trans;
-	struct spi_transfer dummy_trans;
-	struct spi_transfer data_trans;
+	काष्ठा spi_message m;
+	काष्ठा spi_transfer reg_trans;
+	काष्ठा spi_transfer dummy_trans;
+	काष्ठा spi_transfer data_trans;
 
 	/*
-	 * You must take an even number of bytes from the SPU, even if you
-	 * don't care about the last one.
+	 * You must take an even number of bytes from the SPU, even अगर you
+	 * करोn't care about the last one.
 	 */
 	BUG_ON(len & 0x1);
 
 	spu_transaction_init(card);
 
 	spi_message_init(&m);
-	memset(&reg_trans, 0, sizeof(reg_trans));
-	memset(&dummy_trans, 0, sizeof(dummy_trans));
-	memset(&data_trans, 0, sizeof(data_trans));
+	स_रखो(&reg_trans, 0, माप(reg_trans));
+	स_रखो(&dummy_trans, 0, माप(dummy_trans));
+	स_रखो(&data_trans, 0, माप(data_trans));
 
-	/* write SPU register index */
+	/* ग_लिखो SPU रेजिस्टर index */
 	reg_trans.tx_buf = &reg_out;
-	reg_trans.len = sizeof(reg_out);
+	reg_trans.len = माप(reg_out);
 	spi_message_add_tail(&reg_trans, &m);
 
 	delay = spu_reg_is_port_reg(reg) ? card->spu_port_delay :
 						card->spu_reg_delay;
-	if (card->use_dummy_writes) {
-		/* Clock in dummy cycles while the SPU fills the FIFO */
+	अगर (card->use_dummy_ग_लिखोs) अणु
+		/* Clock in dummy cycles जबतक the SPU fills the FIFO */
 		dummy_trans.len = delay / 8;
 		spi_message_add_tail(&dummy_trans, &m);
-	} else {
-		/* Busy-wait while the SPU fills the FIFO */
+	पूर्ण अन्यथा अणु
+		/* Busy-रुको जबतक the SPU fills the FIFO */
 		reg_trans.delay.value =
 			DIV_ROUND_UP((100 + (delay * 10)), 1000);
 		reg_trans.delay.unit = SPI_DELAY_UNIT_USECS;
-	}
+	पूर्ण
 
-	/* read in data */
+	/* पढ़ो in data */
 	data_trans.rx_buf = buf;
 	data_trans.len = len;
 	spi_message_add_tail(&data_trans, &m);
 
 	err = spi_sync(card->spi, &m);
 	spu_transaction_finish(card);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Read 16 bits from an SPI register */
-static inline int spu_read_u16(struct if_spi_card *card, u16 reg, u16 *val)
-{
+/* Read 16 bits from an SPI रेजिस्टर */
+अटल अंतरभूत पूर्णांक spu_पढ़ो_u16(काष्ठा अगर_spi_card *card, u16 reg, u16 *val)
+अणु
 	__le16 buf;
-	int ret;
+	पूर्णांक ret;
 
-	ret = spu_read(card, reg, (u8 *)&buf, sizeof(buf));
-	if (ret == 0)
+	ret = spu_पढ़ो(card, reg, (u8 *)&buf, माप(buf));
+	अगर (ret == 0)
 		*val = le16_to_cpup(&buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Read 32 bits from an SPI register.
- * The low 16 bits are read first.
+ * Read 32 bits from an SPI रेजिस्टर.
+ * The low 16 bits are पढ़ो first.
  */
-static int spu_read_u32(struct if_spi_card *card, u16 reg, u32 *val)
-{
+अटल पूर्णांक spu_पढ़ो_u32(काष्ठा अगर_spi_card *card, u16 reg, u32 *val)
+अणु
 	__le32 buf;
-	int err;
+	पूर्णांक err;
 
-	err = spu_read(card, reg, (u8 *)&buf, sizeof(buf));
-	if (!err)
+	err = spu_पढ़ो(card, reg, (u8 *)&buf, माप(buf));
+	अगर (!err)
 		*val = le32_to_cpup(&buf);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Keep reading 16 bits from an SPI register until you get the correct result.
+ * Keep पढ़ोing 16 bits from an SPI रेजिस्टर until you get the correct result.
  *
  * If mask = 0, the correct result is any non-zero number.
  * If mask != 0, the correct result is any number where
  * number & target_mask == target
  *
- * Returns -ETIMEDOUT if a second passes without the correct result.
+ * Returns -ETIMEDOUT अगर a second passes without the correct result.
  */
-static int spu_wait_for_u16(struct if_spi_card *card, u16 reg,
+अटल पूर्णांक spu_रुको_क्रम_u16(काष्ठा अगर_spi_card *card, u16 reg,
 			u16 target_mask, u16 target)
-{
-	int err;
-	unsigned long timeout = jiffies + 5*HZ;
-	while (1) {
+अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ समयout = jअगरfies + 5*HZ;
+	जबतक (1) अणु
 		u16 val;
-		err = spu_read_u16(card, reg, &val);
-		if (err)
-			return err;
-		if (target_mask) {
-			if ((val & target_mask) == target)
-				return 0;
-		} else {
-			if (val)
-				return 0;
-		}
+		err = spu_पढ़ो_u16(card, reg, &val);
+		अगर (err)
+			वापस err;
+		अगर (target_mask) अणु
+			अगर ((val & target_mask) == target)
+				वापस 0;
+		पूर्ण अन्यथा अणु
+			अगर (val)
+				वापस 0;
+		पूर्ण
 		udelay(100);
-		if (time_after(jiffies, timeout)) {
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			pr_err("%s: timeout with val=%02x, target_mask=%02x, target=%02x\n",
 			       __func__, val, target_mask, target);
-			return -ETIMEDOUT;
-		}
-	}
-}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Read 16 bits from an SPI register until you receive a specific value.
- * Returns -ETIMEDOUT if a 4 tries pass without success.
+ * Read 16 bits from an SPI रेजिस्टर until you receive a specअगरic value.
+ * Returns -ETIMEDOUT अगर a 4 tries pass without success.
  */
-static int spu_wait_for_u32(struct if_spi_card *card, u32 reg, u32 target)
-{
-	int err, try;
-	for (try = 0; try < 4; ++try) {
+अटल पूर्णांक spu_रुको_क्रम_u32(काष्ठा अगर_spi_card *card, u32 reg, u32 target)
+अणु
+	पूर्णांक err, try;
+	क्रम (try = 0; try < 4; ++try) अणु
 		u32 val = 0;
-		err = spu_read_u32(card, reg, &val);
-		if (err)
-			return err;
-		if (val == target)
-			return 0;
+		err = spu_पढ़ो_u32(card, reg, &val);
+		अगर (err)
+			वापस err;
+		अगर (val == target)
+			वापस 0;
 		mdelay(100);
-	}
-	return -ETIMEDOUT;
-}
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int spu_set_interrupt_mode(struct if_spi_card *card,
-			   int suppress_host_int,
-			   int auto_int)
-{
-	int err = 0;
+अटल पूर्णांक spu_set_पूर्णांकerrupt_mode(काष्ठा अगर_spi_card *card,
+			   पूर्णांक suppress_host_पूर्णांक,
+			   पूर्णांक स्वतः_पूर्णांक)
+अणु
+	पूर्णांक err = 0;
 
 	/*
-	 * We can suppress a host interrupt by clearing the appropriate
-	 * bit in the "host interrupt status mask" register
+	 * We can suppress a host पूर्णांकerrupt by clearing the appropriate
+	 * bit in the "host interrupt status mask" रेजिस्टर
 	 */
-	if (suppress_host_int) {
-		err = spu_write_u16(card, IF_SPI_HOST_INT_STATUS_MASK_REG, 0);
-		if (err)
-			return err;
-	} else {
-		err = spu_write_u16(card, IF_SPI_HOST_INT_STATUS_MASK_REG,
+	अगर (suppress_host_पूर्णांक) अणु
+		err = spu_ग_लिखो_u16(card, IF_SPI_HOST_INT_STATUS_MASK_REG, 0);
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा अणु
+		err = spu_ग_लिखो_u16(card, IF_SPI_HOST_INT_STATUS_MASK_REG,
 			      IF_SPI_HISM_TX_DOWNLOAD_RDY |
 			      IF_SPI_HISM_RX_UPLOAD_RDY |
 			      IF_SPI_HISM_CMD_DOWNLOAD_RDY |
 			      IF_SPI_HISM_CARDEVENT |
 			      IF_SPI_HISM_CMD_UPLOAD_RDY);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/*
-	 * If auto-interrupts are on, the completion of certain transactions
-	 * will trigger an interrupt automatically. If auto-interrupts
-	 * are off, we need to set the "Card Interrupt Cause" register to
-	 * trigger a card interrupt.
+	 * If स्वतः-पूर्णांकerrupts are on, the completion of certain transactions
+	 * will trigger an पूर्णांकerrupt स्वतःmatically. If स्वतः-पूर्णांकerrupts
+	 * are off, we need to set the "Card Interrupt Cause" रेजिस्टर to
+	 * trigger a card पूर्णांकerrupt.
 	 */
-	if (auto_int) {
-		err = spu_write_u16(card, IF_SPI_HOST_INT_CTRL_REG,
+	अगर (स्वतः_पूर्णांक) अणु
+		err = spu_ग_लिखो_u16(card, IF_SPI_HOST_INT_CTRL_REG,
 				IF_SPI_HICT_TX_DOWNLOAD_OVER_AUTO |
 				IF_SPI_HICT_RX_UPLOAD_OVER_AUTO |
 				IF_SPI_HICT_CMD_DOWNLOAD_OVER_AUTO |
 				IF_SPI_HICT_CMD_UPLOAD_OVER_AUTO);
-		if (err)
-			return err;
-	} else {
-		err = spu_write_u16(card, IF_SPI_HOST_INT_STATUS_MASK_REG, 0);
-		if (err)
-			return err;
-	}
-	return err;
-}
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा अणु
+		err = spu_ग_लिखो_u16(card, IF_SPI_HOST_INT_STATUS_MASK_REG, 0);
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int spu_get_chip_revision(struct if_spi_card *card,
+अटल पूर्णांक spu_get_chip_revision(काष्ठा अगर_spi_card *card,
 				  u16 *card_id, u8 *card_rev)
-{
-	int err = 0;
+अणु
+	पूर्णांक err = 0;
 	u32 dev_ctrl;
-	err = spu_read_u32(card, IF_SPI_DEVICEID_CTRL_REG, &dev_ctrl);
-	if (err)
-		return err;
+	err = spu_पढ़ो_u32(card, IF_SPI_DEVICEID_CTRL_REG, &dev_ctrl);
+	अगर (err)
+		वापस err;
 	*card_id = IF_SPI_DEVICEID_CTRL_REG_TO_CARD_ID(dev_ctrl);
 	*card_rev = IF_SPI_DEVICEID_CTRL_REG_TO_CARD_REV(dev_ctrl);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int spu_set_bus_mode(struct if_spi_card *card, u16 mode)
-{
-	int err = 0;
+अटल पूर्णांक spu_set_bus_mode(काष्ठा अगर_spi_card *card, u16 mode)
+अणु
+	पूर्णांक err = 0;
 	u16 rval;
 	/* set bus mode */
-	err = spu_write_u16(card, IF_SPI_SPU_BUS_MODE_REG, mode);
-	if (err)
-		return err;
-	/* Check that we were able to read back what we just wrote. */
-	err = spu_read_u16(card, IF_SPI_SPU_BUS_MODE_REG, &rval);
-	if (err)
-		return err;
-	if ((rval & 0xF) != mode) {
+	err = spu_ग_लिखो_u16(card, IF_SPI_SPU_BUS_MODE_REG, mode);
+	अगर (err)
+		वापस err;
+	/* Check that we were able to पढ़ो back what we just wrote. */
+	err = spu_पढ़ो_u16(card, IF_SPI_SPU_BUS_MODE_REG, &rval);
+	अगर (err)
+		वापस err;
+	अगर ((rval & 0xF) != mode) अणु
 		pr_err("Can't read bus mode register\n");
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int spu_init(struct if_spi_card *card, int use_dummy_writes)
-{
-	int err = 0;
+अटल पूर्णांक spu_init(काष्ठा अगर_spi_card *card, पूर्णांक use_dummy_ग_लिखोs)
+अणु
+	पूर्णांक err = 0;
 	u32 delay;
 
 	/*
-	 * We have to start up in timed delay mode so that we can safely
-	 * read the Delay Read Register.
+	 * We have to start up in समयd delay mode so that we can safely
+	 * पढ़ो the Delay Read Register.
 	 */
-	card->use_dummy_writes = 0;
+	card->use_dummy_ग_लिखोs = 0;
 	err = spu_set_bus_mode(card,
 				IF_SPI_BUS_MODE_SPI_CLOCK_PHASE_RISING |
 				IF_SPI_BUS_MODE_DELAY_METHOD_TIMED |
 				IF_SPI_BUS_MODE_16_BIT_ADDRESS_16_BIT_DATA);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	card->spu_port_delay = 1000;
 	card->spu_reg_delay = 1000;
-	err = spu_read_u32(card, IF_SPI_DELAY_READ_REG, &delay);
-	if (err)
-		return err;
+	err = spu_पढ़ो_u32(card, IF_SPI_DELAY_READ_REG, &delay);
+	अगर (err)
+		वापस err;
 	card->spu_port_delay = delay & 0x0000ffff;
 	card->spu_reg_delay = (delay & 0xffff0000) >> 16;
 
-	/* If dummy clock delay mode has been requested, switch to it now */
-	if (use_dummy_writes) {
-		card->use_dummy_writes = 1;
+	/* If dummy घड़ी delay mode has been requested, चयन to it now */
+	अगर (use_dummy_ग_लिखोs) अणु
+		card->use_dummy_ग_लिखोs = 1;
 		err = spu_set_bus_mode(card,
 				IF_SPI_BUS_MODE_SPI_CLOCK_PHASE_RISING |
 				IF_SPI_BUS_MODE_DELAY_METHOD_DUMMY_CLOCK |
 				IF_SPI_BUS_MODE_16_BIT_ADDRESS_16_BIT_DATA);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	lbs_deb_spi("Initialized SPU unit. "
 		    "spu_port_delay=0x%04lx, spu_reg_delay=0x%04lx\n",
 		    card->spu_port_delay, card->spu_reg_delay);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Firmware Loading
  */
 
-static int if_spi_prog_helper_firmware(struct if_spi_card *card,
-					const struct firmware *firmware)
-{
-	int err = 0;
-	int bytes_remaining;
-	const u8 *fw;
+अटल पूर्णांक अगर_spi_prog_helper_firmware(काष्ठा अगर_spi_card *card,
+					स्थिर काष्ठा firmware *firmware)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक bytes_reमुख्यing;
+	स्थिर u8 *fw;
 	u8 temp[HELPER_FW_LOAD_CHUNK_SZ];
 
-	err = spu_set_interrupt_mode(card, 1, 0);
-	if (err)
-		goto out;
+	err = spu_set_पूर्णांकerrupt_mode(card, 1, 0);
+	अगर (err)
+		जाओ out;
 
-	bytes_remaining = firmware->size;
+	bytes_reमुख्यing = firmware->size;
 	fw = firmware->data;
 
 	/* Load helper firmware image */
-	while (bytes_remaining > 0) {
+	जबतक (bytes_reमुख्यing > 0) अणु
 		/*
 		 * Scratch pad 1 should contain the number of bytes we
-		 * want to download to the firmware
+		 * want to करोwnload to the firmware
 		 */
-		err = spu_write_u16(card, IF_SPI_SCRATCH_1_REG,
+		err = spu_ग_लिखो_u16(card, IF_SPI_SCRATCH_1_REG,
 					HELPER_FW_LOAD_CHUNK_SZ);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
-		err = spu_wait_for_u16(card, IF_SPI_HOST_INT_STATUS_REG,
+		err = spu_रुको_क्रम_u16(card, IF_SPI_HOST_INT_STATUS_REG,
 					IF_SPI_HIST_CMD_DOWNLOAD_RDY,
 					IF_SPI_HIST_CMD_DOWNLOAD_RDY);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		/*
-		 * Feed the data into the command read/write port reg
+		 * Feed the data पूर्णांकo the command पढ़ो/ग_लिखो port reg
 		 * in chunks of 64 bytes
 		 */
-		memset(temp, 0, sizeof(temp));
-		memcpy(temp, fw,
-		       min(bytes_remaining, HELPER_FW_LOAD_CHUNK_SZ));
+		स_रखो(temp, 0, माप(temp));
+		स_नकल(temp, fw,
+		       min(bytes_reमुख्यing, HELPER_FW_LOAD_CHUNK_SZ));
 		mdelay(10);
-		err = spu_write(card, IF_SPI_CMD_RDWRPORT_REG,
+		err = spu_ग_लिखो(card, IF_SPI_CMD_RDWRPORT_REG,
 					temp, HELPER_FW_LOAD_CHUNK_SZ);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		/* Interrupt the boot code */
-		err = spu_write_u16(card, IF_SPI_HOST_INT_STATUS_REG, 0);
-		if (err)
-			goto out;
-		err = spu_write_u16(card, IF_SPI_CARD_INT_CAUSE_REG,
+		err = spu_ग_लिखो_u16(card, IF_SPI_HOST_INT_STATUS_REG, 0);
+		अगर (err)
+			जाओ out;
+		err = spu_ग_लिखो_u16(card, IF_SPI_CARD_INT_CAUSE_REG,
 				       IF_SPI_CIC_CMD_DOWNLOAD_OVER);
-		if (err)
-			goto out;
-		bytes_remaining -= HELPER_FW_LOAD_CHUNK_SZ;
+		अगर (err)
+			जाओ out;
+		bytes_reमुख्यing -= HELPER_FW_LOAD_CHUNK_SZ;
 		fw += HELPER_FW_LOAD_CHUNK_SZ;
-	}
+	पूर्ण
 
 	/*
-	 * Once the helper / single stage firmware download is complete,
-	 * write 0 to scratch pad 1 and interrupt the
-	 * bootloader. This completes the helper download.
+	 * Once the helper / single stage firmware करोwnload is complete,
+	 * ग_लिखो 0 to scratch pad 1 and पूर्णांकerrupt the
+	 * bootloader. This completes the helper करोwnload.
 	 */
-	err = spu_write_u16(card, IF_SPI_SCRATCH_1_REG, FIRMWARE_DNLD_OK);
-	if (err)
-		goto out;
-	err = spu_write_u16(card, IF_SPI_HOST_INT_STATUS_REG, 0);
-	if (err)
-		goto out;
-	err = spu_write_u16(card, IF_SPI_CARD_INT_CAUSE_REG,
+	err = spu_ग_लिखो_u16(card, IF_SPI_SCRATCH_1_REG, FIRMWARE_DNLD_OK);
+	अगर (err)
+		जाओ out;
+	err = spu_ग_लिखो_u16(card, IF_SPI_HOST_INT_STATUS_REG, 0);
+	अगर (err)
+		जाओ out;
+	err = spu_ग_लिखो_u16(card, IF_SPI_CARD_INT_CAUSE_REG,
 				IF_SPI_CIC_CMD_DOWNLOAD_OVER);
 out:
-	if (err)
+	अगर (err)
 		pr_err("failed to load helper firmware (err=%d)\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Returns the length of the next packet the firmware expects us to send.
- * Sets crc_err if the previous transfer had a CRC error.
+ * Sets crc_err अगर the previous transfer had a CRC error.
  */
-static int if_spi_prog_main_firmware_check_len(struct if_spi_card *card,
-						int *crc_err)
-{
+अटल पूर्णांक अगर_spi_prog_मुख्य_firmware_check_len(काष्ठा अगर_spi_card *card,
+						पूर्णांक *crc_err)
+अणु
 	u16 len;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	/*
-	 * wait until the host interrupt status register indicates
-	 * that we are ready to download
+	 * रुको until the host पूर्णांकerrupt status रेजिस्टर indicates
+	 * that we are पढ़ोy to करोwnload
 	 */
-	err = spu_wait_for_u16(card, IF_SPI_HOST_INT_STATUS_REG,
+	err = spu_रुको_क्रम_u16(card, IF_SPI_HOST_INT_STATUS_REG,
 				IF_SPI_HIST_CMD_DOWNLOAD_RDY,
 				IF_SPI_HIST_CMD_DOWNLOAD_RDY);
-	if (err) {
+	अगर (err) अणु
 		pr_err("timed out waiting for host_int_status\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Ask the device how many bytes of firmware it wants. */
-	err = spu_read_u16(card, IF_SPI_SCRATCH_1_REG, &len);
-	if (err)
-		return err;
+	err = spu_पढ़ो_u16(card, IF_SPI_SCRATCH_1_REG, &len);
+	अगर (err)
+		वापस err;
 
-	if (len > IF_SPI_CMD_BUF_SIZE) {
+	अगर (len > IF_SPI_CMD_BUF_SIZE) अणु
 		pr_err("firmware load device requested a larger transfer than we are prepared to handle (len = %d)\n",
 		       len);
-		return -EIO;
-	}
-	if (len & 0x1) {
+		वापस -EIO;
+	पूर्ण
+	अगर (len & 0x1) अणु
 		lbs_deb_spi("%s: crc error\n", __func__);
 		len &= ~0x1;
 		*crc_err = 1;
-	} else
+	पूर्ण अन्यथा
 		*crc_err = 0;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int if_spi_prog_main_firmware(struct if_spi_card *card,
-					const struct firmware *firmware)
-{
-	struct lbs_private *priv = card->priv;
-	int len, prev_len;
-	int bytes, crc_err = 0, err = 0;
-	const u8 *fw;
+अटल पूर्णांक अगर_spi_prog_मुख्य_firmware(काष्ठा अगर_spi_card *card,
+					स्थिर काष्ठा firmware *firmware)
+अणु
+	काष्ठा lbs_निजी *priv = card->priv;
+	पूर्णांक len, prev_len;
+	पूर्णांक bytes, crc_err = 0, err = 0;
+	स्थिर u8 *fw;
 	u16 num_crc_errs;
 
-	err = spu_set_interrupt_mode(card, 1, 0);
-	if (err)
-		goto out;
+	err = spu_set_पूर्णांकerrupt_mode(card, 1, 0);
+	अगर (err)
+		जाओ out;
 
-	err = spu_wait_for_u16(card, IF_SPI_SCRATCH_1_REG, 0, 0);
-	if (err) {
+	err = spu_रुको_क्रम_u16(card, IF_SPI_SCRATCH_1_REG, 0, 0);
+	अगर (err) अणु
 		netdev_err(priv->dev,
 			   "%s: timed out waiting for initial scratch reg = 0\n",
 			   __func__);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	num_crc_errs = 0;
 	prev_len = 0;
 	bytes = firmware->size;
 	fw = firmware->data;
-	while ((len = if_spi_prog_main_firmware_check_len(card, &crc_err))) {
-		if (len < 0) {
+	जबतक ((len = अगर_spi_prog_मुख्य_firmware_check_len(card, &crc_err))) अणु
+		अगर (len < 0) अणु
 			err = len;
-			goto out;
-		}
-		if (bytes < 0) {
+			जाओ out;
+		पूर्ण
+		अगर (bytes < 0) अणु
 			/*
 			 * If there are no more bytes left, we would normally
 			 * expect to have terminated with len = 0
 			 */
 			netdev_err(priv->dev,
 				   "Firmware load wants more bytes than we have to offer.\n");
-			break;
-		}
-		if (crc_err) {
+			अवरोध;
+		पूर्ण
+		अगर (crc_err) अणु
 			/* Previous transfer failed. */
-			if (++num_crc_errs > MAX_MAIN_FW_LOAD_CRC_ERR) {
+			अगर (++num_crc_errs > MAX_MAIN_FW_LOAD_CRC_ERR) अणु
 				pr_err("Too many CRC errors encountered in firmware load.\n");
 				err = -EIO;
-				goto out;
-			}
-		} else {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Previous transfer succeeded. Advance counters. */
 			bytes -= prev_len;
 			fw += prev_len;
-		}
-		if (bytes < len) {
-			memset(card->cmd_buffer, 0, len);
-			memcpy(card->cmd_buffer, fw, bytes);
-		} else
-			memcpy(card->cmd_buffer, fw, len);
+		पूर्ण
+		अगर (bytes < len) अणु
+			स_रखो(card->cmd_buffer, 0, len);
+			स_नकल(card->cmd_buffer, fw, bytes);
+		पूर्ण अन्यथा
+			स_नकल(card->cmd_buffer, fw, len);
 
-		err = spu_write_u16(card, IF_SPI_HOST_INT_STATUS_REG, 0);
-		if (err)
-			goto out;
-		err = spu_write(card, IF_SPI_CMD_RDWRPORT_REG,
+		err = spu_ग_लिखो_u16(card, IF_SPI_HOST_INT_STATUS_REG, 0);
+		अगर (err)
+			जाओ out;
+		err = spu_ग_लिखो(card, IF_SPI_CMD_RDWRPORT_REG,
 				card->cmd_buffer, len);
-		if (err)
-			goto out;
-		err = spu_write_u16(card, IF_SPI_CARD_INT_CAUSE_REG ,
+		अगर (err)
+			जाओ out;
+		err = spu_ग_लिखो_u16(card, IF_SPI_CARD_INT_CAUSE_REG ,
 					IF_SPI_CIC_CMD_DOWNLOAD_OVER);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		prev_len = len;
-	}
-	if (bytes > prev_len) {
+	पूर्ण
+	अगर (bytes > prev_len) अणु
 		pr_err("firmware load wants fewer bytes than we have to offer\n");
-	}
+	पूर्ण
 
-	/* Confirm firmware download */
-	err = spu_wait_for_u32(card, IF_SPI_SCRATCH_4_REG,
+	/* Confirm firmware करोwnload */
+	err = spu_रुको_क्रम_u32(card, IF_SPI_SCRATCH_4_REG,
 					SUCCESSFUL_FW_DOWNLOAD_MAGIC);
-	if (err) {
+	अगर (err) अणु
 		pr_err("failed to confirm the firmware download\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	if (err)
+	अगर (err)
 		pr_err("failed to load firmware (err=%d)\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * SPI Transfer Thread
+ * SPI Transfer Thपढ़ो
  *
- * The SPI worker handles all SPI transfers, so there is no need for a lock.
+ * The SPI worker handles all SPI transfers, so there is no need क्रम a lock.
  */
 
 /* Move a command from the card to the host */
-static int if_spi_c2h_cmd(struct if_spi_card *card)
-{
-	struct lbs_private *priv = card->priv;
-	unsigned long flags;
-	int err = 0;
+अटल पूर्णांक अगर_spi_c2h_cmd(काष्ठा अगर_spi_card *card)
+अणु
+	काष्ठा lbs_निजी *priv = card->priv;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
 	u16 len;
 	u8 i;
 
@@ -692,239 +693,239 @@ static int if_spi_c2h_cmd(struct if_spi_card *card)
 	 */
 	BUILD_BUG_ON(IF_SPI_CMD_BUF_SIZE % 4 != 0);
 
-	/* How many bytes are there to read? */
-	err = spu_read_u16(card, IF_SPI_SCRATCH_2_REG, &len);
-	if (err)
-		goto out;
-	if (!len) {
+	/* How many bytes are there to पढ़ो? */
+	err = spu_पढ़ो_u16(card, IF_SPI_SCRATCH_2_REG, &len);
+	अगर (err)
+		जाओ out;
+	अगर (!len) अणु
 		netdev_err(priv->dev, "%s: error: card has no data for host\n",
 			   __func__);
 		err = -EINVAL;
-		goto out;
-	} else if (len > IF_SPI_CMD_BUF_SIZE) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (len > IF_SPI_CMD_BUF_SIZE) अणु
 		netdev_err(priv->dev,
 			   "%s: error: response packet too large: %d bytes, but maximum is %d\n",
 			   __func__, len, IF_SPI_CMD_BUF_SIZE);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Read the data from the WLAN module into our command buffer */
-	err = spu_read(card, IF_SPI_CMD_RDWRPORT_REG,
+	/* Read the data from the WLAN module पूर्णांकo our command buffer */
+	err = spu_पढ़ो(card, IF_SPI_CMD_RDWRPORT_REG,
 				card->cmd_buffer, ALIGN(len, 4));
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	spin_lock_irqsave(&priv->driver_lock, flags);
 	i = (priv->resp_idx == 0) ? 1 : 0;
 	BUG_ON(priv->resp_len[i]);
 	priv->resp_len[i] = len;
-	memcpy(priv->resp_buf[i], card->cmd_buffer, len);
-	lbs_notify_command_response(priv, i);
+	स_नकल(priv->resp_buf[i], card->cmd_buffer, len);
+	lbs_notअगरy_command_response(priv, i);
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
 out:
-	if (err)
+	अगर (err)
 		netdev_err(priv->dev, "%s: err=%d\n", __func__, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Move data from the card to the host */
-static int if_spi_c2h_data(struct if_spi_card *card)
-{
-	struct lbs_private *priv = card->priv;
-	struct sk_buff *skb;
-	char *data;
+अटल पूर्णांक अगर_spi_c2h_data(काष्ठा अगर_spi_card *card)
+अणु
+	काष्ठा lbs_निजी *priv = card->priv;
+	काष्ठा sk_buff *skb;
+	अक्षर *data;
 	u16 len;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	/* How many bytes are there to read? */
-	err = spu_read_u16(card, IF_SPI_SCRATCH_1_REG, &len);
-	if (err)
-		goto out;
-	if (!len) {
+	/* How many bytes are there to पढ़ो? */
+	err = spu_पढ़ो_u16(card, IF_SPI_SCRATCH_1_REG, &len);
+	अगर (err)
+		जाओ out;
+	अगर (!len) अणु
 		netdev_err(priv->dev, "%s: error: card has no data for host\n",
 			   __func__);
 		err = -EINVAL;
-		goto out;
-	} else if (len > MRVDRV_ETH_RX_PACKET_BUFFER_SIZE) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (len > MRVDRV_ETH_RX_PACKET_BUFFER_SIZE) अणु
 		netdev_err(priv->dev,
 			   "%s: error: card has %d bytes of data, but our maximum skb size is %zu\n",
 			   __func__, len, MRVDRV_ETH_RX_PACKET_BUFFER_SIZE);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* TODO: should we allocate a smaller skb if we have less data? */
+	/* TODO: should we allocate a smaller skb अगर we have less data? */
 	skb = dev_alloc_skb(MRVDRV_ETH_RX_PACKET_BUFFER_SIZE);
-	if (!skb) {
+	अगर (!skb) अणु
 		err = -ENOBUFS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	skb_reserve(skb, IPFIELD_ALIGN_OFFSET);
 	data = skb_put(skb, len);
 
-	/* Read the data from the WLAN module into our skb... */
-	err = spu_read(card, IF_SPI_DATA_RDWRPORT_REG, data, ALIGN(len, 4));
-	if (err) {
-		dev_kfree_skb(skb);
-		goto out;
-	}
+	/* Read the data from the WLAN module पूर्णांकo our skb... */
+	err = spu_पढ़ो(card, IF_SPI_DATA_RDWRPORT_REG, data, ALIGN(len, 4));
+	अगर (err) अणु
+		dev_kमुक्त_skb(skb);
+		जाओ out;
+	पूर्ण
 
 	/* pass the SKB to libertas */
 	err = lbs_process_rxed_packet(card->priv, skb);
 	/* lbs_process_rxed_packet() consumes the skb */
 
 out:
-	if (err)
+	अगर (err)
 		netdev_err(priv->dev, "%s: err=%d\n", __func__, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Move data or a command from the host to the card. */
-static void if_spi_h2c(struct if_spi_card *card,
-			struct if_spi_packet *packet, int type)
-{
-	struct lbs_private *priv = card->priv;
-	int err = 0;
+अटल व्योम अगर_spi_h2c(काष्ठा अगर_spi_card *card,
+			काष्ठा अगर_spi_packet *packet, पूर्णांक type)
+अणु
+	काष्ठा lbs_निजी *priv = card->priv;
+	पूर्णांक err = 0;
 	u16 port_reg;
 
-	switch (type) {
-	case MVMS_DAT:
+	चयन (type) अणु
+	हाल MVMS_DAT:
 		port_reg = IF_SPI_DATA_RDWRPORT_REG;
-		break;
-	case MVMS_CMD:
+		अवरोध;
+	हाल MVMS_CMD:
 		port_reg = IF_SPI_CMD_RDWRPORT_REG;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(priv->dev, "can't transfer buffer of type %d\n",
 			   type);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Write the data to the card */
-	err = spu_write(card, port_reg, packet->buffer, packet->blen);
-	if (err)
-		goto out;
+	err = spu_ग_लिखो(card, port_reg, packet->buffer, packet->blen);
+	अगर (err)
+		जाओ out;
 
 out:
-	kfree(packet);
+	kमुक्त(packet);
 
-	if (err)
+	अगर (err)
 		netdev_err(priv->dev, "%s: error %d\n", __func__, err);
-}
+पूर्ण
 
-/* Inform the host about a card event */
-static void if_spi_e2h(struct if_spi_card *card)
-{
-	int err = 0;
+/* Inक्रमm the host about a card event */
+अटल व्योम अगर_spi_e2h(काष्ठा अगर_spi_card *card)
+अणु
+	पूर्णांक err = 0;
 	u32 cause;
-	struct lbs_private *priv = card->priv;
+	काष्ठा lbs_निजी *priv = card->priv;
 
-	err = spu_read_u32(card, IF_SPI_SCRATCH_3_REG, &cause);
-	if (err)
-		goto out;
+	err = spu_पढ़ो_u32(card, IF_SPI_SCRATCH_3_REG, &cause);
+	अगर (err)
+		जाओ out;
 
-	/* re-enable the card event interrupt */
-	spu_write_u16(card, IF_SPI_HOST_INT_STATUS_REG,
+	/* re-enable the card event पूर्णांकerrupt */
+	spu_ग_लिखो_u16(card, IF_SPI_HOST_INT_STATUS_REG,
 			~IF_SPI_HICU_CARD_EVENT);
 
-	/* generate a card interrupt */
-	spu_write_u16(card, IF_SPI_CARD_INT_CAUSE_REG, IF_SPI_CIC_HOST_EVENT);
+	/* generate a card पूर्णांकerrupt */
+	spu_ग_लिखो_u16(card, IF_SPI_CARD_INT_CAUSE_REG, IF_SPI_CIC_HOST_EVENT);
 
 	lbs_queue_event(priv, cause & 0xff);
 out:
-	if (err)
+	अगर (err)
 		netdev_err(priv->dev, "%s: error %d\n", __func__, err);
-}
+पूर्ण
 
-static void if_spi_host_to_card_worker(struct work_struct *work)
-{
-	int err;
-	struct if_spi_card *card;
+अटल व्योम अगर_spi_host_to_card_worker(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक err;
+	काष्ठा अगर_spi_card *card;
 	u16 hiStatus;
-	unsigned long flags;
-	struct if_spi_packet *packet;
-	struct lbs_private *priv;
+	अचिन्हित दीर्घ flags;
+	काष्ठा अगर_spi_packet *packet;
+	काष्ठा lbs_निजी *priv;
 
-	card = container_of(work, struct if_spi_card, packet_work);
+	card = container_of(work, काष्ठा अगर_spi_card, packet_work);
 	priv = card->priv;
 
 	/*
-	 * Read the host interrupt status register to see what we
-	 * can do.
+	 * Read the host पूर्णांकerrupt status रेजिस्टर to see what we
+	 * can करो.
 	 */
-	err = spu_read_u16(card, IF_SPI_HOST_INT_STATUS_REG,
+	err = spu_पढ़ो_u16(card, IF_SPI_HOST_INT_STATUS_REG,
 				&hiStatus);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(priv->dev, "I/O error\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (hiStatus & IF_SPI_HIST_CMD_UPLOAD_RDY) {
-		err = if_spi_c2h_cmd(card);
-		if (err)
-			goto err;
-	}
-	if (hiStatus & IF_SPI_HIST_RX_UPLOAD_RDY) {
-		err = if_spi_c2h_data(card);
-		if (err)
-			goto err;
-	}
+	अगर (hiStatus & IF_SPI_HIST_CMD_UPLOAD_RDY) अणु
+		err = अगर_spi_c2h_cmd(card);
+		अगर (err)
+			जाओ err;
+	पूर्ण
+	अगर (hiStatus & IF_SPI_HIST_RX_UPLOAD_RDY) अणु
+		err = अगर_spi_c2h_data(card);
+		अगर (err)
+			जाओ err;
+	पूर्ण
 
 	/*
-	 * workaround: in PS mode, the card does not set the Command
+	 * workaround: in PS mode, the card करोes not set the Command
 	 * Download Ready bit, but it sets TX Download Ready.
 	 */
-	if (hiStatus & IF_SPI_HIST_CMD_DOWNLOAD_RDY ||
+	अगर (hiStatus & IF_SPI_HIST_CMD_DOWNLOAD_RDY ||
 	   (card->priv->psstate != PS_STATE_FULL_POWER &&
-	    (hiStatus & IF_SPI_HIST_TX_DOWNLOAD_RDY))) {
+	    (hiStatus & IF_SPI_HIST_TX_DOWNLOAD_RDY))) अणु
 		/*
 		 * This means two things. First of all,
-		 * if there was a previous command sent, the card has
+		 * अगर there was a previous command sent, the card has
 		 * successfully received it.
-		 * Secondly, it is now ready to download another
+		 * Secondly, it is now पढ़ोy to करोwnload another
 		 * command.
 		 */
-		lbs_host_to_card_done(card->priv);
+		lbs_host_to_card_करोne(card->priv);
 
 		/* Do we have any command packets from the host to send? */
-		packet = NULL;
+		packet = शून्य;
 		spin_lock_irqsave(&card->buffer_lock, flags);
-		if (!list_empty(&card->cmd_packet_list)) {
-			packet = (struct if_spi_packet *)(card->
+		अगर (!list_empty(&card->cmd_packet_list)) अणु
+			packet = (काष्ठा अगर_spi_packet *)(card->
 					cmd_packet_list.next);
 			list_del(&packet->list);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&card->buffer_lock, flags);
 
-		if (packet)
-			if_spi_h2c(card, packet, MVMS_CMD);
-	}
-	if (hiStatus & IF_SPI_HIST_TX_DOWNLOAD_RDY) {
+		अगर (packet)
+			अगर_spi_h2c(card, packet, MVMS_CMD);
+	पूर्ण
+	अगर (hiStatus & IF_SPI_HIST_TX_DOWNLOAD_RDY) अणु
 		/* Do we have any data packets from the host to send? */
-		packet = NULL;
+		packet = शून्य;
 		spin_lock_irqsave(&card->buffer_lock, flags);
-		if (!list_empty(&card->data_packet_list)) {
-			packet = (struct if_spi_packet *)(card->
+		अगर (!list_empty(&card->data_packet_list)) अणु
+			packet = (काष्ठा अगर_spi_packet *)(card->
 					data_packet_list.next);
 			list_del(&packet->list);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&card->buffer_lock, flags);
 
-		if (packet)
-			if_spi_h2c(card, packet, MVMS_DAT);
-	}
-	if (hiStatus & IF_SPI_HIST_CARD_EVENT)
-		if_spi_e2h(card);
+		अगर (packet)
+			अगर_spi_h2c(card, packet, MVMS_DAT);
+	पूर्ण
+	अगर (hiStatus & IF_SPI_HIST_CARD_EVENT)
+		अगर_spi_e2h(card);
 
 err:
-	if (err)
+	अगर (err)
 		netdev_err(priv->dev, "%s: got error %d\n", __func__, err);
-}
+पूर्ण
 
 /*
  * Host to Card
@@ -932,118 +933,118 @@ err:
  * Called from Libertas to transfer some data to the WLAN device
  * We can't sleep here.
  */
-static int if_spi_host_to_card(struct lbs_private *priv,
+अटल पूर्णांक अगर_spi_host_to_card(काष्ठा lbs_निजी *priv,
 				u8 type, u8 *buf, u16 nb)
-{
-	int err = 0;
-	unsigned long flags;
-	struct if_spi_card *card = priv->card;
-	struct if_spi_packet *packet;
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा अगर_spi_card *card = priv->card;
+	काष्ठा अगर_spi_packet *packet;
 	u16 blen;
 
-	if (nb == 0) {
+	अगर (nb == 0) अणु
 		netdev_err(priv->dev, "%s: invalid size requested: %d\n",
 			   __func__, nb);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	blen = ALIGN(nb, 4);
-	packet = kzalloc(sizeof(struct if_spi_packet) + blen, GFP_ATOMIC);
-	if (!packet) {
+	packet = kzalloc(माप(काष्ठा अगर_spi_packet) + blen, GFP_ATOMIC);
+	अगर (!packet) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	packet->blen = blen;
-	memcpy(packet->buffer, buf, nb);
-	memset(packet->buffer + nb, 0, blen - nb);
+	स_नकल(packet->buffer, buf, nb);
+	स_रखो(packet->buffer + nb, 0, blen - nb);
 
-	switch (type) {
-	case MVMS_CMD:
+	चयन (type) अणु
+	हाल MVMS_CMD:
 		priv->dnld_sent = DNLD_CMD_SENT;
 		spin_lock_irqsave(&card->buffer_lock, flags);
 		list_add_tail(&packet->list, &card->cmd_packet_list);
 		spin_unlock_irqrestore(&card->buffer_lock, flags);
-		break;
-	case MVMS_DAT:
+		अवरोध;
+	हाल MVMS_DAT:
 		priv->dnld_sent = DNLD_DATA_SENT;
 		spin_lock_irqsave(&card->buffer_lock, flags);
 		list_add_tail(&packet->list, &card->data_packet_list);
 		spin_unlock_irqrestore(&card->buffer_lock, flags);
-		break;
-	default:
-		kfree(packet);
+		अवरोध;
+	शेष:
+		kमुक्त(packet);
 		netdev_err(priv->dev, "can't transfer buffer of type %d\n",
 			   type);
 		err = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Queue spi xfer work */
 	queue_work(card->workqueue, &card->packet_work);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Host Interrupts
  *
- * Service incoming interrupts from the WLAN device. We can't sleep here, so
- * don't try to talk on the SPI bus, just queue the SPI xfer work.
+ * Service incoming पूर्णांकerrupts from the WLAN device. We can't sleep here, so
+ * करोn't try to talk on the SPI bus, just queue the SPI xfer work.
  */
-static irqreturn_t if_spi_host_interrupt(int irq, void *dev_id)
-{
-	struct if_spi_card *card = dev_id;
+अटल irqवापस_t अगर_spi_host_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा अगर_spi_card *card = dev_id;
 
 	queue_work(card->workqueue, &card->packet_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * SPI callbacks
  */
 
-static int if_spi_init_card(struct if_spi_card *card)
-{
-	struct lbs_private *priv = card->priv;
-	int err, i;
+अटल पूर्णांक अगर_spi_init_card(काष्ठा अगर_spi_card *card)
+अणु
+	काष्ठा lbs_निजी *priv = card->priv;
+	पूर्णांक err, i;
 	u32 scratch;
-	const struct firmware *helper = NULL;
-	const struct firmware *mainfw = NULL;
+	स्थिर काष्ठा firmware *helper = शून्य;
+	स्थिर काष्ठा firmware *मुख्यfw = शून्य;
 
-	err = spu_init(card, card->pdata->use_dummy_writes);
-	if (err)
-		goto out;
+	err = spu_init(card, card->pdata->use_dummy_ग_लिखोs);
+	अगर (err)
+		जाओ out;
 	err = spu_get_chip_revision(card, &card->card_id, &card->card_rev);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = spu_read_u32(card, IF_SPI_SCRATCH_4_REG, &scratch);
-	if (err)
-		goto out;
-	if (scratch == SUCCESSFUL_FW_DOWNLOAD_MAGIC)
+	err = spu_पढ़ो_u32(card, IF_SPI_SCRATCH_4_REG, &scratch);
+	अगर (err)
+		जाओ out;
+	अगर (scratch == SUCCESSFUL_FW_DOWNLOAD_MAGIC)
 		lbs_deb_spi("Firmware is already loaded for "
 			    "Marvell WLAN 802.11 adapter\n");
-	else {
-		/* Check if we support this card */
-		for (i = 0; i < ARRAY_SIZE(fw_table); i++) {
-			if (card->card_id == fw_table[i].model)
-				break;
-		}
-		if (i == ARRAY_SIZE(fw_table)) {
+	अन्यथा अणु
+		/* Check अगर we support this card */
+		क्रम (i = 0; i < ARRAY_SIZE(fw_table); i++) अणु
+			अगर (card->card_id == fw_table[i].model)
+				अवरोध;
+		पूर्ण
+		अगर (i == ARRAY_SIZE(fw_table)) अणु
 			netdev_err(priv->dev, "Unsupported chip_id: 0x%02x\n",
 				   card->card_id);
 			err = -ENODEV;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		err = lbs_get_firmware(&card->spi->dev, card->card_id,
-					&fw_table[0], &helper, &mainfw);
-		if (err) {
+					&fw_table[0], &helper, &मुख्यfw);
+		अगर (err) अणु
 			netdev_err(priv->dev, "failed to find firmware (%d)\n",
 				   err);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		lbs_deb_spi("Initializing FW for Marvell WLAN 802.11 adapter "
 				"(chip_id = 0x%04x, chip_rev = 0x%02x) "
@@ -1053,35 +1054,35 @@ static int if_spi_init_card(struct if_spi_card *card)
 				card->spi->master->bus_num,
 				card->spi->chip_select,
 				card->spi->max_speed_hz);
-		err = if_spi_prog_helper_firmware(card, helper);
-		if (err)
-			goto out;
-		err = if_spi_prog_main_firmware(card, mainfw);
-		if (err)
-			goto out;
+		err = अगर_spi_prog_helper_firmware(card, helper);
+		अगर (err)
+			जाओ out;
+		err = अगर_spi_prog_मुख्य_firmware(card, मुख्यfw);
+		अगर (err)
+			जाओ out;
 		lbs_deb_spi("loaded FW for Marvell WLAN 802.11 adapter\n");
-	}
+	पूर्ण
 
-	err = spu_set_interrupt_mode(card, 0, 1);
-	if (err)
-		goto out;
+	err = spu_set_पूर्णांकerrupt_mode(card, 0, 1);
+	अगर (err)
+		जाओ out;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void if_spi_resume_worker(struct work_struct *work)
-{
-	struct if_spi_card *card;
+अटल व्योम अगर_spi_resume_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा अगर_spi_card *card;
 
-	card = container_of(work, struct if_spi_card, resume_work);
+	card = container_of(work, काष्ठा अगर_spi_card, resume_work);
 
-	if (card->suspended) {
-		if (card->pdata->setup)
+	अगर (card->suspended) अणु
+		अगर (card->pdata->setup)
 			card->pdata->setup(card->spi);
 
 		/* Init card ... */
-		if_spi_init_card(card);
+		अगर_spi_init_card(card);
 
 		enable_irq(card->spi->irq);
 
@@ -1089,37 +1090,37 @@ static void if_spi_resume_worker(struct work_struct *work)
 		lbs_resume(card->priv);
 
 		card->suspended = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int if_spi_probe(struct spi_device *spi)
-{
-	struct if_spi_card *card;
-	struct lbs_private *priv = NULL;
-	struct libertas_spi_platform_data *pdata = dev_get_platdata(&spi->dev);
-	int err = 0;
+अटल पूर्णांक अगर_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा अगर_spi_card *card;
+	काष्ठा lbs_निजी *priv = शून्य;
+	काष्ठा libertas_spi_platक्रमm_data *pdata = dev_get_platdata(&spi->dev);
+	पूर्णांक err = 0;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (pdata->setup) {
+	अगर (pdata->setup) अणु
 		err = pdata->setup(spi);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
-	/* Allocate card structure to represent this specific device */
-	card = kzalloc(sizeof(struct if_spi_card), GFP_KERNEL);
-	if (!card) {
+	/* Allocate card काष्ठाure to represent this specअगरic device */
+	card = kzalloc(माप(काष्ठा अगर_spi_card), GFP_KERNEL);
+	अगर (!card) अणु
 		err = -ENOMEM;
-		goto teardown;
-	}
+		जाओ tearकरोwn;
+	पूर्ण
 	spi_set_drvdata(spi, card);
 	card->pdata = pdata;
 	card->spi = spi;
-	card->prev_xfer_time = jiffies;
+	card->prev_xfer_समय = jअगरfies;
 
 	INIT_LIST_HEAD(&card->cmd_packet_list);
 	INIT_LIST_HEAD(&card->data_packet_list);
@@ -1128,158 +1129,158 @@ static int if_spi_probe(struct spi_device *spi)
 	/* Initialize the SPI Interface Unit */
 
 	/* Firmware load */
-	err = if_spi_init_card(card);
-	if (err)
-		goto free_card;
+	err = अगर_spi_init_card(card);
+	अगर (err)
+		जाओ मुक्त_card;
 
 	/*
 	 * Register our card with libertas.
 	 * This will call alloc_etherdev.
 	 */
 	priv = lbs_add_card(card, &spi->dev);
-	if (IS_ERR(priv)) {
+	अगर (IS_ERR(priv)) अणु
 		err = PTR_ERR(priv);
-		goto free_card;
-	}
+		जाओ मुक्त_card;
+	पूर्ण
 	card->priv = priv;
 	priv->setup_fw_on_resume = 1;
 	priv->card = card;
-	priv->hw_host_to_card = if_spi_host_to_card;
-	priv->enter_deep_sleep = NULL;
-	priv->exit_deep_sleep = NULL;
-	priv->reset_deep_sleep_wakeup = NULL;
-	priv->fw_ready = 1;
+	priv->hw_host_to_card = अगर_spi_host_to_card;
+	priv->enter_deep_sleep = शून्य;
+	priv->निकास_deep_sleep = शून्य;
+	priv->reset_deep_sleep_wakeup = शून्य;
+	priv->fw_पढ़ोy = 1;
 
-	/* Initialize interrupt handling stuff. */
+	/* Initialize पूर्णांकerrupt handling stuff. */
 	card->workqueue = alloc_workqueue("libertas_spi", WQ_MEM_RECLAIM, 0);
-	if (!card->workqueue) {
+	अगर (!card->workqueue) अणु
 		err = -ENOMEM;
-		goto remove_card;
-	}
-	INIT_WORK(&card->packet_work, if_spi_host_to_card_worker);
-	INIT_WORK(&card->resume_work, if_spi_resume_worker);
+		जाओ हटाओ_card;
+	पूर्ण
+	INIT_WORK(&card->packet_work, अगर_spi_host_to_card_worker);
+	INIT_WORK(&card->resume_work, अगर_spi_resume_worker);
 
-	err = request_irq(spi->irq, if_spi_host_interrupt,
+	err = request_irq(spi->irq, अगर_spi_host_पूर्णांकerrupt,
 			IRQF_TRIGGER_FALLING, "libertas_spi", card);
-	if (err) {
+	अगर (err) अणु
 		pr_err("can't get host irq line-- request_irq failed\n");
-		goto terminate_workqueue;
-	}
+		जाओ terminate_workqueue;
+	पूर्ण
 
 	/*
 	 * Start the card.
-	 * This will call register_netdev, and we'll start
-	 * getting interrupts...
+	 * This will call रेजिस्टर_netdev, and we'll start
+	 * getting पूर्णांकerrupts...
 	 */
 	err = lbs_start_card(priv);
-	if (err)
-		goto release_irq;
+	अगर (err)
+		जाओ release_irq;
 
 	lbs_deb_spi("Finished initializing WLAN module.\n");
 
-	/* successful exit */
-	goto out;
+	/* successful निकास */
+	जाओ out;
 
 release_irq:
-	free_irq(spi->irq, card);
+	मुक्त_irq(spi->irq, card);
 terminate_workqueue:
 	destroy_workqueue(card->workqueue);
-remove_card:
-	lbs_remove_card(priv); /* will call free_netdev */
-free_card:
-	free_if_spi_card(card);
-teardown:
-	if (pdata->teardown)
-		pdata->teardown(spi);
+हटाओ_card:
+	lbs_हटाओ_card(priv); /* will call मुक्त_netdev */
+मुक्त_card:
+	मुक्त_अगर_spi_card(card);
+tearकरोwn:
+	अगर (pdata->tearकरोwn)
+		pdata->tearकरोwn(spi);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int libertas_spi_remove(struct spi_device *spi)
-{
-	struct if_spi_card *card = spi_get_drvdata(spi);
-	struct lbs_private *priv = card->priv;
+अटल पूर्णांक libertas_spi_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा अगर_spi_card *card = spi_get_drvdata(spi);
+	काष्ठा lbs_निजी *priv = card->priv;
 
 	lbs_deb_spi("libertas_spi_remove\n");
 
 	cancel_work_sync(&card->resume_work);
 
 	lbs_stop_card(priv);
-	lbs_remove_card(priv); /* will call free_netdev */
+	lbs_हटाओ_card(priv); /* will call मुक्त_netdev */
 
-	free_irq(spi->irq, card);
+	मुक्त_irq(spi->irq, card);
 	destroy_workqueue(card->workqueue);
-	if (card->pdata->teardown)
-		card->pdata->teardown(spi);
-	free_if_spi_card(card);
+	अगर (card->pdata->tearकरोwn)
+		card->pdata->tearकरोwn(spi);
+	मुक्त_अगर_spi_card(card);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int if_spi_suspend(struct device *dev)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct if_spi_card *card = spi_get_drvdata(spi);
+अटल पूर्णांक अगर_spi_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा अगर_spi_card *card = spi_get_drvdata(spi);
 
-	if (!card->suspended) {
+	अगर (!card->suspended) अणु
 		lbs_suspend(card->priv);
 		flush_workqueue(card->workqueue);
 		disable_irq(spi->irq);
 
-		if (card->pdata->teardown)
-			card->pdata->teardown(spi);
+		अगर (card->pdata->tearकरोwn)
+			card->pdata->tearकरोwn(spi);
 		card->suspended = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int if_spi_resume(struct device *dev)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct if_spi_card *card = spi_get_drvdata(spi);
+अटल पूर्णांक अगर_spi_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा अगर_spi_card *card = spi_get_drvdata(spi);
 
 	/* Schedule delayed work */
 	schedule_work(&card->resume_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops if_spi_pm_ops = {
-	.suspend	= if_spi_suspend,
-	.resume		= if_spi_resume,
-};
+अटल स्थिर काष्ठा dev_pm_ops अगर_spi_pm_ops = अणु
+	.suspend	= अगर_spi_suspend,
+	.resume		= अगर_spi_resume,
+पूर्ण;
 
-static struct spi_driver libertas_spi_driver = {
-	.probe	= if_spi_probe,
-	.remove = libertas_spi_remove,
-	.driver = {
+अटल काष्ठा spi_driver libertas_spi_driver = अणु
+	.probe	= अगर_spi_probe,
+	.हटाओ = libertas_spi_हटाओ,
+	.driver = अणु
 		.name	= "libertas_spi",
-		.pm	= &if_spi_pm_ops,
-	},
-};
+		.pm	= &अगर_spi_pm_ops,
+	पूर्ण,
+पूर्ण;
 
 /*
  * Module functions
  */
 
-static int __init if_spi_init_module(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init अगर_spi_init_module(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	printk(KERN_INFO "libertas_spi: Libertas SPI driver\n");
-	ret = spi_register_driver(&libertas_spi_driver);
+	prपूर्णांकk(KERN_INFO "libertas_spi: Libertas SPI driver\n");
+	ret = spi_रेजिस्टर_driver(&libertas_spi_driver);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit if_spi_exit_module(void)
-{
-	spi_unregister_driver(&libertas_spi_driver);
-}
+अटल व्योम __निकास अगर_spi_निकास_module(व्योम)
+अणु
+	spi_unरेजिस्टर_driver(&libertas_spi_driver);
+पूर्ण
 
-module_init(if_spi_init_module);
-module_exit(if_spi_exit_module);
+module_init(अगर_spi_init_module);
+module_निकास(अगर_spi_निकास_module);
 
 MODULE_DESCRIPTION("Libertas SPI WLAN Driver");
 MODULE_AUTHOR("Andrey Yurovsky <andrey@cozybit.com>, "

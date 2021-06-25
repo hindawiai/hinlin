@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *		Swansea University Computer Society NET3
  *
@@ -7,7 +8,7 @@
  * 		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
  *
  *		This work was derived from Ross Biro's inspirational work
- *		for the LINUX operating system.  His version numbers were:
+ *		क्रम the LINUX operating प्रणाली.  His version numbers were:
  *
  *		$Id: Space.c,v     0.8.4.5  1992/12/12 19:25:04 bir7 Exp $
  *		$Id: arp.c,v       0.8.4.6  1993/01/28 22:30:00 bir7 Exp $
@@ -28,33 +29,33 @@
  *		$Id: sock.h,v      0.8.4.7  1993/01/26 22:04:00 bir7 Exp $
  *		$Id: tcp.c,v       0.8.4.16 1993/01/26 22:04:00 bir7 Exp $
  *		$Id: tcp.h,v       0.8.4.7  1993/01/22 22:58:08 bir7 Exp $
- *		$Id: timer.c,v     0.8.4.8  1993/01/23 18:00:11 bir7 Exp $
- *		$Id: timer.h,v     0.8.4.2  1993/01/23 18:00:11 bir7 Exp $
+ *		$Id: समयr.c,v     0.8.4.8  1993/01/23 18:00:11 bir7 Exp $
+ *		$Id: समयr.h,v     0.8.4.2  1993/01/23 18:00:11 bir7 Exp $
  *		$Id: udp.c,v       0.8.4.12 1993/01/26 22:04:00 bir7 Exp $
  *		$Id: udp.h,v       0.8.4.1  1992/11/10 00:17:18 bir7 Exp $
  *		$Id: we.c,v        0.8.4.10 1993/01/23 18:00:11 bir7 Exp $
  *		$Id: wereg.h,v     0.8.4.1  1992/11/10 00:17:18 bir7 Exp $
  */
-#ifndef _LINUX_INET_H
-#define _LINUX_INET_H
+#अगर_अघोषित _LINUX_INET_H
+#घोषणा _LINUX_INET_H
 
-#include <linux/types.h>
-#include <net/net_namespace.h>
-#include <linux/socket.h>
+#समावेश <linux/types.h>
+#समावेश <net/net_namespace.h>
+#समावेश <linux/socket.h>
 
 /*
- * These mimic similar macros defined in user-space for inet_ntop(3).
+ * These mimic similar macros defined in user-space क्रम inet_ntop(3).
  * See /usr/include/netinet/in.h .
  */
-#define INET_ADDRSTRLEN		(16)
-#define INET6_ADDRSTRLEN	(48)
+#घोषणा INET_ADDRSTRLEN		(16)
+#घोषणा INET6_ADDRSTRLEN	(48)
 
-extern __be32 in_aton(const char *str);
-extern int in4_pton(const char *src, int srclen, u8 *dst, int delim, const char **end);
-extern int in6_pton(const char *src, int srclen, u8 *dst, int delim, const char **end);
+बाह्य __be32 in_aton(स्थिर अक्षर *str);
+बाह्य पूर्णांक in4_pton(स्थिर अक्षर *src, पूर्णांक srclen, u8 *dst, पूर्णांक delim, स्थिर अक्षर **end);
+बाह्य पूर्णांक in6_pton(स्थिर अक्षर *src, पूर्णांक srclen, u8 *dst, पूर्णांक delim, स्थिर अक्षर **end);
 
-extern int inet_pton_with_scope(struct net *net, unsigned short af,
-		const char *src, const char *port, struct sockaddr_storage *addr);
-extern bool inet_addr_is_any(struct sockaddr *addr);
+बाह्य पूर्णांक inet_pton_with_scope(काष्ठा net *net, अचिन्हित लघु af,
+		स्थिर अक्षर *src, स्थिर अक्षर *port, काष्ठा sockaddr_storage *addr);
+बाह्य bool inet_addr_is_any(काष्ठा sockaddr *addr);
 
-#endif	/* _LINUX_INET_H */
+#पूर्ण_अगर	/* _LINUX_INET_H */

@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef XFS_SYNC_H
-#define XFS_SYNC_H 1
+#अगर_अघोषित XFS_SYNC_H
+#घोषणा XFS_SYNC_H 1
 
-struct xfs_mount;
-struct xfs_perag;
+काष्ठा xfs_mount;
+काष्ठा xfs_perag;
 
-struct xfs_eofblocks {
+काष्ठा xfs_eofblocks अणु
 	__u32		eof_flags;
 	kuid_t		eof_uid;
 	kgid_t		eof_gid;
 	prid_t		eof_prid;
 	__u64		eof_min_file_size;
-};
+पूर्ण;
 
 /*
- * tags for inode radix tree
+ * tags क्रम inode radix tree
  */
-#define XFS_ICI_NO_TAG		(-1)	/* special flag for an untagged lookup
+#घोषणा XFS_ICI_NO_TAG		(-1)	/* special flag क्रम an untagged lookup
 					   in xfs_inode_walk */
-#define XFS_ICI_RECLAIM_TAG	0	/* inode is to be reclaimed */
-/* Inode has speculative preallocations (posteof or cow) to clean. */
-#define XFS_ICI_BLOCKGC_TAG	1
+#घोषणा XFS_ICI_RECLAIM_TAG	0	/* inode is to be reclaimed */
+/* Inode has speculative pपुनः_स्मृतिations (posteof or cow) to clean. */
+#घोषणा XFS_ICI_BLOCKGC_TAG	1
 
 /*
- * Flags for xfs_iget()
+ * Flags क्रम xfs_iget()
  */
-#define XFS_IGET_CREATE		0x1
-#define XFS_IGET_UNTRUSTED	0x2
-#define XFS_IGET_DONTCACHE	0x4
-#define XFS_IGET_INCORE		0x8	/* don't read from disk or reinit */
+#घोषणा XFS_IGET_CREATE		0x1
+#घोषणा XFS_IGET_UNTRUSTED	0x2
+#घोषणा XFS_IGET_DONTCACHE	0x4
+#घोषणा XFS_IGET_INCORE		0x8	/* करोn't पढ़ो from disk or reinit */
 
 /*
- * flags for AG inode iterator
+ * flags क्रम AG inode iterator
  */
-#define XFS_INODE_WALK_INEW_WAIT	0x1	/* wait on new inodes */
+#घोषणा XFS_INODE_WALK_INEW_WAIT	0x1	/* रुको on new inodes */
 
-int xfs_iget(struct xfs_mount *mp, struct xfs_trans *tp, xfs_ino_t ino,
-	     uint flags, uint lock_flags, xfs_inode_t **ipp);
+पूर्णांक xfs_iget(काष्ठा xfs_mount *mp, काष्ठा xfs_trans *tp, xfs_ino_t ino,
+	     uपूर्णांक flags, uपूर्णांक lock_flags, xfs_inode_t **ipp);
 
 /* recovery needs direct inode allocation capability */
-struct xfs_inode * xfs_inode_alloc(struct xfs_mount *mp, xfs_ino_t ino);
-void xfs_inode_free(struct xfs_inode *ip);
+काष्ठा xfs_inode * xfs_inode_alloc(काष्ठा xfs_mount *mp, xfs_ino_t ino);
+व्योम xfs_inode_मुक्त(काष्ठा xfs_inode *ip);
 
-void xfs_reclaim_worker(struct work_struct *work);
+व्योम xfs_reclaim_worker(काष्ठा work_काष्ठा *work);
 
-void xfs_reclaim_inodes(struct xfs_mount *mp);
-int xfs_reclaim_inodes_count(struct xfs_mount *mp);
-long xfs_reclaim_inodes_nr(struct xfs_mount *mp, int nr_to_scan);
+व्योम xfs_reclaim_inodes(काष्ठा xfs_mount *mp);
+पूर्णांक xfs_reclaim_inodes_count(काष्ठा xfs_mount *mp);
+दीर्घ xfs_reclaim_inodes_nr(काष्ठा xfs_mount *mp, पूर्णांक nr_to_scan);
 
-void xfs_inode_set_reclaim_tag(struct xfs_inode *ip);
+व्योम xfs_inode_set_reclaim_tag(काष्ठा xfs_inode *ip);
 
-int xfs_blockgc_free_dquots(struct xfs_mount *mp, struct xfs_dquot *udqp,
-		struct xfs_dquot *gdqp, struct xfs_dquot *pdqp,
-		unsigned int eof_flags);
-int xfs_blockgc_free_quota(struct xfs_inode *ip, unsigned int eof_flags);
-int xfs_blockgc_free_space(struct xfs_mount *mp, struct xfs_eofblocks *eofb);
+पूर्णांक xfs_blockgc_मुक्त_dquots(काष्ठा xfs_mount *mp, काष्ठा xfs_dquot *udqp,
+		काष्ठा xfs_dquot *gdqp, काष्ठा xfs_dquot *pdqp,
+		अचिन्हित पूर्णांक eof_flags);
+पूर्णांक xfs_blockgc_मुक्त_quota(काष्ठा xfs_inode *ip, अचिन्हित पूर्णांक eof_flags);
+पूर्णांक xfs_blockgc_मुक्त_space(काष्ठा xfs_mount *mp, काष्ठा xfs_eofblocks *eofb);
 
-void xfs_inode_set_eofblocks_tag(struct xfs_inode *ip);
-void xfs_inode_clear_eofblocks_tag(struct xfs_inode *ip);
+व्योम xfs_inode_set_eofblocks_tag(काष्ठा xfs_inode *ip);
+व्योम xfs_inode_clear_eofblocks_tag(काष्ठा xfs_inode *ip);
 
-void xfs_inode_set_cowblocks_tag(struct xfs_inode *ip);
-void xfs_inode_clear_cowblocks_tag(struct xfs_inode *ip);
+व्योम xfs_inode_set_cowblocks_tag(काष्ठा xfs_inode *ip);
+व्योम xfs_inode_clear_cowblocks_tag(काष्ठा xfs_inode *ip);
 
-void xfs_blockgc_worker(struct work_struct *work);
+व्योम xfs_blockgc_worker(काष्ठा work_काष्ठा *work);
 
-int xfs_inode_walk(struct xfs_mount *mp, int iter_flags,
-	int (*execute)(struct xfs_inode *ip, void *args),
-	void *args, int tag);
+पूर्णांक xfs_inode_walk(काष्ठा xfs_mount *mp, पूर्णांक iter_flags,
+	पूर्णांक (*execute)(काष्ठा xfs_inode *ip, व्योम *args),
+	व्योम *args, पूर्णांक tag);
 
-int xfs_icache_inode_is_allocated(struct xfs_mount *mp, struct xfs_trans *tp,
+पूर्णांक xfs_icache_inode_is_allocated(काष्ठा xfs_mount *mp, काष्ठा xfs_trans *tp,
 				  xfs_ino_t ino, bool *inuse);
 
-void xfs_blockgc_stop(struct xfs_mount *mp);
-void xfs_blockgc_start(struct xfs_mount *mp);
+व्योम xfs_blockgc_stop(काष्ठा xfs_mount *mp);
+व्योम xfs_blockgc_start(काष्ठा xfs_mount *mp);
 
-#endif
+#पूर्ण_अगर

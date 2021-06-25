@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  arch/arm/mach-pxa/include/mach/dma.h
  *
@@ -6,12 +7,12 @@
  *  Created:	Jun 15, 2001
  *  Copyright:	MontaVista Software, Inc.
  */
-#ifndef __ASM_ARCH_DMA_H
-#define __ASM_ARCH_DMA_H
+#अगर_अघोषित __ASM_ARCH_DMA_H
+#घोषणा __ASM_ARCH_DMA_H
 
-#include <mach/hardware.h>
+#समावेश <mach/hardware.h>
 
 /* DMA Controller Registers Definitions */
-#define DMAC_REGS_VIRT	io_p2v(0x40000000)
+#घोषणा DMAC_REGS_VIRT	io_p2v(0x40000000)
 
-#endif /* _ASM_ARCH_DMA_H */
+#पूर्ण_अगर /* _ASM_ARCH_DMA_H */

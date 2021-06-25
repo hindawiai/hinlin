@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/nodemask.h>
-#include <linux/module.h>
-#include <linux/random.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/nodemask.h>
+#समावेश <linux/module.h>
+#समावेश <linux/अक्रमom.h>
 
-int __next_node_in(int node, const nodemask_t *srcp)
-{
-	int ret = __next_node(node, srcp);
+पूर्णांक __next_node_in(पूर्णांक node, स्थिर nodemask_t *srcp)
+अणु
+	पूर्णांक ret = __next_node(node, srcp);
 
-	if (ret == MAX_NUMNODES)
+	अगर (ret == MAX_NUMNODES)
 		ret = __first_node(srcp);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(__next_node_in);
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 /*
- * Return the bit number of a random bit set in the nodemask.
- * (returns NUMA_NO_NODE if nodemask is empty)
+ * Return the bit number of a अक्रमom bit set in the nodemask.
+ * (वापसs NUMA_NO_NODE अगर nodemask is empty)
  */
-int node_random(const nodemask_t *maskp)
-{
-	int w, bit = NUMA_NO_NODE;
+पूर्णांक node_अक्रमom(स्थिर nodemask_t *maskp)
+अणु
+	पूर्णांक w, bit = NUMA_NO_NODE;
 
 	w = nodes_weight(*maskp);
-	if (w)
-		bit = bitmap_ord_to_pos(maskp->bits,
-			get_random_int() % w, MAX_NUMNODES);
-	return bit;
-}
-#endif
+	अगर (w)
+		bit = biपंचांगap_ord_to_pos(maskp->bits,
+			get_अक्रमom_पूर्णांक() % w, MAX_NUMNODES);
+	वापस bit;
+पूर्ण
+#पूर्ण_अगर

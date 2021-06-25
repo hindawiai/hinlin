@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
  /*
  * Copyright (c) 2012 Analog Devices, Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/buffer_impl.h>
-#include <linux/iio/kfifo_buf.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/trigger_consumer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/buffer_impl.h>
+#समावेश <linux/iio/kfअगरo_buf.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/trigger_consumer.h>
 
 /**
  * iio_triggered_buffer_setup_ext() - Setup triggered buffer and pollfunc
- * @indio_dev:		IIO device structure
+ * @indio_dev:		IIO device काष्ठाure
  * @h:			Function which will be used as pollfunc top half
- * @thread:		Function which will be used as pollfunc bottom half
- * @setup_ops:		Buffer setup functions to use for this device.
- *			If NULL the default setup functions for triggered
+ * @thपढ़ो:		Function which will be used as pollfunc bottom half
+ * @setup_ops:		Buffer setup functions to use क्रम this device.
+ *			If शून्य the शेष setup functions क्रम triggered
  *			buffers will be used.
- * @buffer_attrs:	Extra sysfs buffer attributes for this IIO buffer
+ * @buffer_attrs:	Extra sysfs buffer attributes क्रम this IIO buffer
  *
- * This function combines some common tasks which will normally be performed
+ * This function combines some common tasks which will normally be perक्रमmed
  * when setting up a triggered buffer. It will allocate the buffer and the
  * pollfunc.
  *
- * Before calling this function the indio_dev structure should already be
- * completely initialized, but not yet registered. In practice this means that
- * this function should be called right before iio_device_register().
+ * Beक्रमe calling this function the indio_dev काष्ठाure should alपढ़ोy be
+ * completely initialized, but not yet रेजिस्टरed. In practice this means that
+ * this function should be called right beक्रमe iio_device_रेजिस्टर().
  *
- * To free the resources allocated by this function call
+ * To मुक्त the resources allocated by this function call
  * iio_triggered_buffer_cleanup().
  */
-int iio_triggered_buffer_setup_ext(struct iio_dev *indio_dev,
-	irqreturn_t (*h)(int irq, void *p),
-	irqreturn_t (*thread)(int irq, void *p),
-	const struct iio_buffer_setup_ops *setup_ops,
-	const struct attribute **buffer_attrs)
-{
-	struct iio_buffer *buffer;
-	int ret;
+पूर्णांक iio_triggered_buffer_setup_ext(काष्ठा iio_dev *indio_dev,
+	irqवापस_t (*h)(पूर्णांक irq, व्योम *p),
+	irqवापस_t (*thपढ़ो)(पूर्णांक irq, व्योम *p),
+	स्थिर काष्ठा iio_buffer_setup_ops *setup_ops,
+	स्थिर काष्ठा attribute **buffer_attrs)
+अणु
+	काष्ठा iio_buffer *buffer;
+	पूर्णांक ret;
 
-	buffer = iio_kfifo_allocate();
-	if (!buffer) {
+	buffer = iio_kfअगरo_allocate();
+	अगर (!buffer) अणु
 		ret = -ENOMEM;
-		goto error_ret;
-	}
+		जाओ error_ret;
+	पूर्ण
 
 	indio_dev->pollfunc = iio_alloc_pollfunc(h,
-						 thread,
+						 thपढ़ो,
 						 IRQF_ONESHOT,
 						 indio_dev,
 						 "%s_consumer%d",
 						 indio_dev->name,
 						 indio_dev->id);
-	if (indio_dev->pollfunc == NULL) {
+	अगर (indio_dev->pollfunc == शून्य) अणु
 		ret = -ENOMEM;
-		goto error_kfifo_free;
-	}
+		जाओ error_kfअगरo_मुक्त;
+	पूर्ण
 
 	/* Ring buffer functions - here trigger setup related */
 	indio_dev->setup_ops = setup_ops;
@@ -71,62 +72,62 @@ int iio_triggered_buffer_setup_ext(struct iio_dev *indio_dev,
 	buffer->attrs = buffer_attrs;
 
 	ret = iio_device_attach_buffer(indio_dev, buffer);
-	if (ret < 0)
-		goto error_dealloc_pollfunc;
+	अगर (ret < 0)
+		जाओ error_dealloc_pollfunc;
 
-	return 0;
+	वापस 0;
 
 error_dealloc_pollfunc:
 	iio_dealloc_pollfunc(indio_dev->pollfunc);
-error_kfifo_free:
-	iio_kfifo_free(buffer);
+error_kfअगरo_मुक्त:
+	iio_kfअगरo_मुक्त(buffer);
 error_ret:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(iio_triggered_buffer_setup_ext);
 
 /**
  * iio_triggered_buffer_cleanup() - Free resources allocated by iio_triggered_buffer_setup_ext()
- * @indio_dev: IIO device structure
+ * @indio_dev: IIO device काष्ठाure
  */
-void iio_triggered_buffer_cleanup(struct iio_dev *indio_dev)
-{
+व्योम iio_triggered_buffer_cleanup(काष्ठा iio_dev *indio_dev)
+अणु
 	iio_dealloc_pollfunc(indio_dev->pollfunc);
-	iio_kfifo_free(indio_dev->buffer);
-}
+	iio_kfअगरo_मुक्त(indio_dev->buffer);
+पूर्ण
 EXPORT_SYMBOL(iio_triggered_buffer_cleanup);
 
-static void devm_iio_triggered_buffer_clean(struct device *dev, void *res)
-{
-	iio_triggered_buffer_cleanup(*(struct iio_dev **)res);
-}
+अटल व्योम devm_iio_triggered_buffer_clean(काष्ठा device *dev, व्योम *res)
+अणु
+	iio_triggered_buffer_cleanup(*(काष्ठा iio_dev **)res);
+पूर्ण
 
-int devm_iio_triggered_buffer_setup_ext(struct device *dev,
-					struct iio_dev *indio_dev,
-					irqreturn_t (*h)(int irq, void *p),
-					irqreturn_t (*thread)(int irq, void *p),
-					const struct iio_buffer_setup_ops *ops,
-					const struct attribute **buffer_attrs)
-{
-	struct iio_dev **ptr;
-	int ret;
+पूर्णांक devm_iio_triggered_buffer_setup_ext(काष्ठा device *dev,
+					काष्ठा iio_dev *indio_dev,
+					irqवापस_t (*h)(पूर्णांक irq, व्योम *p),
+					irqवापस_t (*thपढ़ो)(पूर्णांक irq, व्योम *p),
+					स्थिर काष्ठा iio_buffer_setup_ops *ops,
+					स्थिर काष्ठा attribute **buffer_attrs)
+अणु
+	काष्ठा iio_dev **ptr;
+	पूर्णांक ret;
 
-	ptr = devres_alloc(devm_iio_triggered_buffer_clean, sizeof(*ptr),
+	ptr = devres_alloc(devm_iio_triggered_buffer_clean, माप(*ptr),
 			   GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	अगर (!ptr)
+		वापस -ENOMEM;
 
 	*ptr = indio_dev;
 
-	ret = iio_triggered_buffer_setup_ext(indio_dev, h, thread, ops,
+	ret = iio_triggered_buffer_setup_ext(indio_dev, h, thपढ़ो, ops,
 					     buffer_attrs);
-	if (!ret)
+	अगर (!ret)
 		devres_add(dev, ptr);
-	else
-		devres_free(ptr);
+	अन्यथा
+		devres_मुक्त(ptr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_iio_triggered_buffer_setup_ext);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");

@@ -1,3 +1,4 @@
+<शैली गुरु>
 
 /*
  * Keyed 32-bit hash function using TEA in a Davis-Meyer function
@@ -12,50 +13,50 @@
  * Yura's function is added (04/07/2000)
  */
 
-#include <linux/kernel.h>
-#include "reiserfs.h"
-#include <asm/types.h>
+#समावेश <linux/kernel.h>
+#समावेश "reiserfs.h"
+#समावेश <यंत्र/types.h>
 
-#define DELTA 0x9E3779B9
-#define FULLROUNDS 10		/* 32 is overkill, 16 is strong crypto */
-#define PARTROUNDS 6		/* 6 gets complete mixing */
+#घोषणा DELTA 0x9E3779B9
+#घोषणा FULLROUNDS 10		/* 32 is overसमाप्त, 16 is strong crypto */
+#घोषणा PARTROUNDS 6		/* 6 माला_लो complete mixing */
 
 /* a, b, c, d - data; h0, h1 - accumulated hash */
-#define TEACORE(rounds)							\
-	do {								\
+#घोषणा TEACORE(rounds)							\
+	करो अणु								\
 		u32 sum = 0;						\
-		int n = rounds;						\
+		पूर्णांक n = rounds;						\
 		u32 b0, b1;						\
 									\
 		b0 = h0;						\
 		b1 = h1;						\
 									\
-		do							\
-		{							\
+		करो							\
+		अणु							\
 			sum += DELTA;					\
 			b0 += ((b1 << 4)+a) ^ (b1+sum) ^ ((b1 >> 5)+b);	\
 			b1 += ((b0 << 4)+c) ^ (b0+sum) ^ ((b0 >> 5)+d);	\
-		} while(--n);						\
+		पूर्ण जबतक(--n);						\
 									\
 		h0 += b0;						\
 		h1 += b1;						\
-	} while(0)
+	पूर्ण जबतक(0)
 
-u32 keyed_hash(const signed char *msg, int len)
-{
-	u32 k[] = { 0x9464a485, 0x542e1a94, 0x3e846bff, 0xb75bcfc3 };
+u32 keyed_hash(स्थिर चिन्हित अक्षर *msg, पूर्णांक len)
+अणु
+	u32 k[] = अणु 0x9464a485, 0x542e1a94, 0x3e846bff, 0xb75bcfc3 पूर्ण;
 
 	u32 h0 = k[0], h1 = k[1];
 	u32 a, b, c, d;
 	u32 pad;
-	int i;
+	पूर्णांक i;
 
-	/*      assert(len >= 0 && len < 256); */
+	/*      निश्चित(len >= 0 && len < 256); */
 
 	pad = (u32) len | ((u32) len << 8);
 	pad |= pad << 16;
 
-	while (len >= 16) {
+	जबतक (len >= 16) अणु
 		a = (u32) msg[0] |
 		    (u32) msg[1] << 8 | (u32) msg[2] << 16 | (u32) msg[3] << 24;
 		b = (u32) msg[4] |
@@ -71,9 +72,9 @@ u32 keyed_hash(const signed char *msg, int len)
 
 		len -= 16;
 		msg += 16;
-	}
+	पूर्ण
 
-	if (len >= 12) {
+	अगर (len >= 12) अणु
 		a = (u32) msg[0] |
 		    (u32) msg[1] << 8 | (u32) msg[2] << 16 | (u32) msg[3] << 24;
 		b = (u32) msg[4] |
@@ -83,95 +84,95 @@ u32 keyed_hash(const signed char *msg, int len)
 		    (u32) msg[10] << 16 | (u32) msg[11] << 24;
 
 		d = pad;
-		for (i = 12; i < len; i++) {
+		क्रम (i = 12; i < len; i++) अणु
 			d <<= 8;
 			d |= msg[i];
-		}
-	} else if (len >= 8) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (len >= 8) अणु
 		a = (u32) msg[0] |
 		    (u32) msg[1] << 8 | (u32) msg[2] << 16 | (u32) msg[3] << 24;
 		b = (u32) msg[4] |
 		    (u32) msg[5] << 8 | (u32) msg[6] << 16 | (u32) msg[7] << 24;
 
 		c = d = pad;
-		for (i = 8; i < len; i++) {
+		क्रम (i = 8; i < len; i++) अणु
 			c <<= 8;
 			c |= msg[i];
-		}
-	} else if (len >= 4) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (len >= 4) अणु
 		a = (u32) msg[0] |
 		    (u32) msg[1] << 8 | (u32) msg[2] << 16 | (u32) msg[3] << 24;
 
 		b = c = d = pad;
-		for (i = 4; i < len; i++) {
+		क्रम (i = 4; i < len; i++) अणु
 			b <<= 8;
 			b |= msg[i];
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		a = b = c = d = pad;
-		for (i = 0; i < len; i++) {
+		क्रम (i = 0; i < len; i++) अणु
 			a <<= 8;
 			a |= msg[i];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	TEACORE(FULLROUNDS);
 
-/*	return 0;*/
-	return h0 ^ h1;
-}
+/*	वापस 0;*/
+	वापस h0 ^ h1;
+पूर्ण
 
 /*
  * What follows in this file is copyright 2000 by Hans Reiser, and the
  * licensing of what follows is governed by reiserfs/README
  */
-u32 yura_hash(const signed char *msg, int len)
-{
-	int j, pow;
+u32 yura_hash(स्थिर चिन्हित अक्षर *msg, पूर्णांक len)
+अणु
+	पूर्णांक j, घात;
 	u32 a, c;
-	int i;
+	पूर्णांक i;
 
-	for (pow = 1, i = 1; i < len; i++)
-		pow = pow * 10;
+	क्रम (घात = 1, i = 1; i < len; i++)
+		घात = घात * 10;
 
-	if (len == 1)
+	अगर (len == 1)
 		a = msg[0] - 48;
-	else
-		a = (msg[0] - 48) * pow;
+	अन्यथा
+		a = (msg[0] - 48) * घात;
 
-	for (i = 1; i < len; i++) {
+	क्रम (i = 1; i < len; i++) अणु
 		c = msg[i] - 48;
-		for (pow = 1, j = i; j < len - 1; j++)
-			pow = pow * 10;
-		a = a + c * pow;
-	}
+		क्रम (घात = 1, j = i; j < len - 1; j++)
+			घात = घात * 10;
+		a = a + c * घात;
+	पूर्ण
 
-	for (; i < 40; i++) {
+	क्रम (; i < 40; i++) अणु
 		c = '0' - 48;
-		for (pow = 1, j = i; j < len - 1; j++)
-			pow = pow * 10;
-		a = a + c * pow;
-	}
+		क्रम (घात = 1, j = i; j < len - 1; j++)
+			घात = घात * 10;
+		a = a + c * घात;
+	पूर्ण
 
-	for (; i < 256; i++) {
+	क्रम (; i < 256; i++) अणु
 		c = i;
-		for (pow = 1, j = i; j < len - 1; j++)
-			pow = pow * 10;
-		a = a + c * pow;
-	}
+		क्रम (घात = 1, j = i; j < len - 1; j++)
+			घात = घात * 10;
+		a = a + c * घात;
+	पूर्ण
 
 	a = a << 7;
-	return a;
-}
+	वापस a;
+पूर्ण
 
-u32 r5_hash(const signed char *msg, int len)
-{
+u32 r5_hash(स्थिर चिन्हित अक्षर *msg, पूर्णांक len)
+अणु
 	u32 a = 0;
-	while (*msg) {
+	जबतक (*msg) अणु
 		a += *msg << 4;
 		a += *msg >> 4;
 		a *= 11;
 		msg++;
-	}
-	return a;
-}
+	पूर्ण
+	वापस a;
+पूर्ण

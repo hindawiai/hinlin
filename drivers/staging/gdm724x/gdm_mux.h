@@ -1,85 +1,86 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2012 GCT Semiconductor, Inc. All rights reserved. */
 
-#ifndef _GDM_MUX_H_
-#define _GDM_MUX_H_
+#अगर_अघोषित _GDM_MUX_H_
+#घोषणा _GDM_MUX_H_
 
-#include <linux/types.h>
-#include <linux/usb.h>
-#include <linux/list.h>
+#समावेश <linux/types.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/list.h>
 
-#include "gdm_tty.h"
+#समावेश "gdm_tty.h"
 
-#define PM_NORMAL 0
-#define PM_SUSPEND 1
+#घोषणा PM_NORMAL 0
+#घोषणा PM_SUSPEND 1
 
-#define USB_RT_ACM          (USB_TYPE_CLASS | USB_RECIP_INTERFACE)
+#घोषणा USB_RT_ACM          (USB_TYPE_CLASS | USB_RECIP_INTERFACE)
 
-#define START_FLAG 0xA512485A
-#define MUX_HEADER_SIZE 14
-#define MUX_TX_MAX_SIZE (1024 * 10)
-#define MUX_RX_MAX_SIZE (1024 * 30)
-#define AT_PKT_TYPE 0xF011
-#define DM_PKT_TYPE 0xF010
+#घोषणा START_FLAG 0xA512485A
+#घोषणा MUX_HEADER_SIZE 14
+#घोषणा MUX_TX_MAX_SIZE (1024 * 10)
+#घोषणा MUX_RX_MAX_SIZE (1024 * 30)
+#घोषणा AT_PKT_TYPE 0xF011
+#घोषणा DM_PKT_TYPE 0xF010
 
-#define RETRY_TIMER 30 /* msec */
+#घोषणा RETRY_TIMER 30 /* msec */
 
-struct mux_pkt_header {
+काष्ठा mux_pkt_header अणु
 	__le32 start_flag;
 	__le32 seq_num;
 	__le32 payload_size;
 	__le16 packet_type;
-	unsigned char data[];
-};
+	अचिन्हित अक्षर data[];
+पूर्ण;
 
-struct mux_tx {
-	struct urb *urb;
+काष्ठा mux_tx अणु
+	काष्ठा urb *urb;
 	u8 *buf;
-	int  len;
-	void (*callback)(void *cb_data);
-	void *cb_data;
-};
+	पूर्णांक  len;
+	व्योम (*callback)(व्योम *cb_data);
+	व्योम *cb_data;
+पूर्ण;
 
-struct mux_rx {
-	struct list_head free_list;
-	struct list_head rx_submit_list;
-	struct list_head to_host_list;
-	struct urb *urb;
+काष्ठा mux_rx अणु
+	काष्ठा list_head मुक्त_list;
+	काष्ठा list_head rx_submit_list;
+	काष्ठा list_head to_host_list;
+	काष्ठा urb *urb;
 	u8 *buf;
-	void *mux_dev;
+	व्योम *mux_dev;
 	u32 offset;
 	u32 len;
-	int (*callback)(void *data,
-			int len,
-			int tty_index,
-			struct tty_dev *tty_dev,
-			int complete);
-};
+	पूर्णांक (*callback)(व्योम *data,
+			पूर्णांक len,
+			पूर्णांक tty_index,
+			काष्ठा tty_dev *tty_dev,
+			पूर्णांक complete);
+पूर्ण;
 
-struct rx_cxt {
-	struct list_head to_host_list;
-	struct list_head rx_submit_list;
-	struct list_head rx_free_list;
+काष्ठा rx_cxt अणु
+	काष्ठा list_head to_host_list;
+	काष्ठा list_head rx_submit_list;
+	काष्ठा list_head rx_मुक्त_list;
 	spinlock_t to_host_lock;
 	spinlock_t submit_list_lock;
-	spinlock_t free_list_lock;
-};
+	spinlock_t मुक्त_list_lock;
+पूर्ण;
 
-struct mux_dev {
-	struct usb_device *usbdev;
-	struct usb_interface *control_intf;
-	struct usb_interface *data_intf;
-	struct rx_cxt	rx;
-	struct delayed_work work_rx;
-	struct usb_interface *intf;
-	int usb_state;
-	int (*rx_cb)(void *data,
-		     int len,
-		     int tty_index,
-		     struct tty_dev *tty_dev,
-		     int complete);
-	spinlock_t write_lock;
-	struct tty_dev *tty_dev;
-};
+काष्ठा mux_dev अणु
+	काष्ठा usb_device *usbdev;
+	काष्ठा usb_पूर्णांकerface *control_पूर्णांकf;
+	काष्ठा usb_पूर्णांकerface *data_पूर्णांकf;
+	काष्ठा rx_cxt	rx;
+	काष्ठा delayed_work work_rx;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	पूर्णांक usb_state;
+	पूर्णांक (*rx_cb)(व्योम *data,
+		     पूर्णांक len,
+		     पूर्णांक tty_index,
+		     काष्ठा tty_dev *tty_dev,
+		     पूर्णांक complete);
+	spinlock_t ग_लिखो_lock;
+	काष्ठा tty_dev *tty_dev;
+पूर्ण;
 
-#endif /* _GDM_MUX_H_ */
+#पूर्ण_अगर /* _GDM_MUX_H_ */

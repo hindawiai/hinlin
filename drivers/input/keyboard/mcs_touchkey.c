@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Touchkey driver for MELFAS MCS5000/5080 controller
+ * Touchkey driver क्रम MELFAS MCS5000/5080 controller
  *
  * Copyright (C) 2010 Samsung Electronics Co.Ltd
  * Author: HeungJun Kim <riverful.kim@samsung.com>
  * Author: Joonyoung Shim <jy0922.shim@samsung.com>
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/input.h>
-#include <linux/irq.h>
-#include <linux/slab.h>
-#include <linux/platform_data/mcs.h>
-#include <linux/pm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/input.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_data/mcs.h>
+#समावेश <linux/pm.h>
 
 /* MCS5000 Touchkey */
-#define MCS5000_TOUCHKEY_STATUS		0x04
-#define MCS5000_TOUCHKEY_STATUS_PRESS	7
-#define MCS5000_TOUCHKEY_FW		0x0a
-#define MCS5000_TOUCHKEY_BASE_VAL	0x61
+#घोषणा MCS5000_TOUCHKEY_STATUS		0x04
+#घोषणा MCS5000_TOUCHKEY_STATUS_PRESS	7
+#घोषणा MCS5000_TOUCHKEY_FW		0x0a
+#घोषणा MCS5000_TOUCHKEY_BASE_VAL	0x61
 
 /* MCS5080 Touchkey */
-#define MCS5080_TOUCHKEY_STATUS		0x00
-#define MCS5080_TOUCHKEY_STATUS_PRESS	3
-#define MCS5080_TOUCHKEY_FW		0x01
-#define MCS5080_TOUCHKEY_BASE_VAL	0x1
+#घोषणा MCS5080_TOUCHKEY_STATUS		0x00
+#घोषणा MCS5080_TOUCHKEY_STATUS_PRESS	3
+#घोषणा MCS5080_TOUCHKEY_FW		0x01
+#घोषणा MCS5080_TOUCHKEY_BASE_VAL	0x1
 
-enum mcs_touchkey_type {
+क्रमागत mcs_touchkey_type अणु
 	MCS5000_TOUCHKEY,
 	MCS5080_TOUCHKEY,
-};
+पूर्ण;
 
-struct mcs_touchkey_chip {
-	unsigned int status_reg;
-	unsigned int pressbit;
-	unsigned int press_invert;
-	unsigned int baseval;
-};
+काष्ठा mcs_touchkey_chip अणु
+	अचिन्हित पूर्णांक status_reg;
+	अचिन्हित पूर्णांक pressbit;
+	अचिन्हित पूर्णांक press_invert;
+	अचिन्हित पूर्णांक baseval;
+पूर्ण;
 
-struct mcs_touchkey_data {
-	void (*poweron)(bool);
+काष्ठा mcs_touchkey_data अणु
+	व्योम (*घातeron)(bool);
 
-	struct i2c_client *client;
-	struct input_dev *input_dev;
-	struct mcs_touchkey_chip chip;
-	unsigned int key_code;
-	unsigned int key_val;
-	unsigned short keycodes[];
-};
+	काष्ठा i2c_client *client;
+	काष्ठा input_dev *input_dev;
+	काष्ठा mcs_touchkey_chip chip;
+	अचिन्हित पूर्णांक key_code;
+	अचिन्हित पूर्णांक key_val;
+	अचिन्हित लघु keycodes[];
+पूर्ण;
 
-static irqreturn_t mcs_touchkey_interrupt(int irq, void *dev_id)
-{
-	struct mcs_touchkey_data *data = dev_id;
-	struct mcs_touchkey_chip *chip = &data->chip;
-	struct i2c_client *client = data->client;
-	struct input_dev *input = data->input_dev;
-	unsigned int key_val;
-	unsigned int pressed;
-	int val;
+अटल irqवापस_t mcs_touchkey_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mcs_touchkey_data *data = dev_id;
+	काष्ठा mcs_touchkey_chip *chip = &data->chip;
+	काष्ठा i2c_client *client = data->client;
+	काष्ठा input_dev *input = data->input_dev;
+	अचिन्हित पूर्णांक key_val;
+	अचिन्हित पूर्णांक pressed;
+	पूर्णांक val;
 
-	val = i2c_smbus_read_byte_data(client, chip->status_reg);
-	if (val < 0) {
+	val = i2c_smbus_पढ़ो_byte_data(client, chip->status_reg);
+	अगर (val < 0) अणु
 		dev_err(&client->dev, "i2c read error [%d]\n", val);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pressed = (val & (1 << chip->pressbit)) >> chip->pressbit;
-	if (chip->press_invert)
+	अगर (chip->press_invert)
 		pressed ^= chip->press_invert;
 
 	/* key_val is 0 when released, so we should use key_val of press. */
-	if (pressed) {
+	अगर (pressed) अणु
 		key_val = val & (0xff >> (8 - chip->pressbit));
-		if (!key_val)
-			goto out;
+		अगर (!key_val)
+			जाओ out;
 		key_val -= chip->baseval;
 		data->key_code = data->keycodes[key_val];
 		data->key_val = key_val;
-	}
+	पूर्ण
 
 	input_event(input, EV_MSC, MSC_SCAN, data->key_val);
 	input_report_key(input, data->key_code, pressed);
@@ -89,188 +90,188 @@ static irqreturn_t mcs_touchkey_interrupt(int irq, void *dev_id)
 		pressed ? "pressed" : "released");
 
  out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mcs_touchkey_probe(struct i2c_client *client,
-		const struct i2c_device_id *id)
-{
-	const struct mcs_platform_data *pdata;
-	struct mcs_touchkey_data *data;
-	struct input_dev *input_dev;
-	unsigned int fw_reg;
-	int fw_ver;
-	int error;
-	int i;
+अटल पूर्णांक mcs_touchkey_probe(काष्ठा i2c_client *client,
+		स्थिर काष्ठा i2c_device_id *id)
+अणु
+	स्थिर काष्ठा mcs_platक्रमm_data *pdata;
+	काष्ठा mcs_touchkey_data *data;
+	काष्ठा input_dev *input_dev;
+	अचिन्हित पूर्णांक fw_reg;
+	पूर्णांक fw_ver;
+	पूर्णांक error;
+	पूर्णांक i;
 
 	pdata = dev_get_platdata(&client->dev);
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&client->dev, "no platform data defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	data = kzalloc(struct_size(data, keycodes, pdata->key_maxval + 1),
+	data = kzalloc(काष्ठा_size(data, keycodes, pdata->key_maxval + 1),
 		       GFP_KERNEL);
 	input_dev = input_allocate_device();
-	if (!data || !input_dev) {
+	अगर (!data || !input_dev) अणु
 		dev_err(&client->dev, "Failed to allocate memory\n");
 		error = -ENOMEM;
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
 	data->client = client;
 	data->input_dev = input_dev;
 
-	if (id->driver_data == MCS5000_TOUCHKEY) {
+	अगर (id->driver_data == MCS5000_TOUCHKEY) अणु
 		data->chip.status_reg = MCS5000_TOUCHKEY_STATUS;
 		data->chip.pressbit = MCS5000_TOUCHKEY_STATUS_PRESS;
 		data->chip.baseval = MCS5000_TOUCHKEY_BASE_VAL;
 		fw_reg = MCS5000_TOUCHKEY_FW;
-	} else {
+	पूर्ण अन्यथा अणु
 		data->chip.status_reg = MCS5080_TOUCHKEY_STATUS;
 		data->chip.pressbit = MCS5080_TOUCHKEY_STATUS_PRESS;
 		data->chip.press_invert = 1;
 		data->chip.baseval = MCS5080_TOUCHKEY_BASE_VAL;
 		fw_reg = MCS5080_TOUCHKEY_FW;
-	}
+	पूर्ण
 
-	fw_ver = i2c_smbus_read_byte_data(client, fw_reg);
-	if (fw_ver < 0) {
+	fw_ver = i2c_smbus_पढ़ो_byte_data(client, fw_reg);
+	अगर (fw_ver < 0) अणु
 		error = fw_ver;
 		dev_err(&client->dev, "i2c read error[%d]\n", error);
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 	dev_info(&client->dev, "Firmware version: %d\n", fw_ver);
 
 	input_dev->name = "MELFAS MCS Touchkey";
 	input_dev->id.bustype = BUS_I2C;
 	input_dev->dev.parent = &client->dev;
 	input_dev->evbit[0] = BIT_MASK(EV_KEY);
-	if (!pdata->no_autorepeat)
+	अगर (!pdata->no_स्वतःrepeat)
 		input_dev->evbit[0] |= BIT_MASK(EV_REP);
 	input_dev->keycode = data->keycodes;
-	input_dev->keycodesize = sizeof(data->keycodes[0]);
+	input_dev->keycodesize = माप(data->keycodes[0]);
 	input_dev->keycodemax = pdata->key_maxval + 1;
 
-	for (i = 0; i < pdata->keymap_size; i++) {
-		unsigned int val = MCS_KEY_VAL(pdata->keymap[i]);
-		unsigned int code = MCS_KEY_CODE(pdata->keymap[i]);
+	क्रम (i = 0; i < pdata->keymap_size; i++) अणु
+		अचिन्हित पूर्णांक val = MCS_KEY_VAL(pdata->keymap[i]);
+		अचिन्हित पूर्णांक code = MCS_KEY_CODE(pdata->keymap[i]);
 
 		data->keycodes[val] = code;
 		__set_bit(code, input_dev->keybit);
-	}
+	पूर्ण
 
 	input_set_capability(input_dev, EV_MSC, MSC_SCAN);
 	input_set_drvdata(input_dev, data);
 
-	if (pdata->cfg_pin)
+	अगर (pdata->cfg_pin)
 		pdata->cfg_pin();
 
-	if (pdata->poweron) {
-		data->poweron = pdata->poweron;
-		data->poweron(true);
-	}
+	अगर (pdata->घातeron) अणु
+		data->घातeron = pdata->घातeron;
+		data->घातeron(true);
+	पूर्ण
 
-	error = request_threaded_irq(client->irq, NULL, mcs_touchkey_interrupt,
+	error = request_thपढ़ोed_irq(client->irq, शून्य, mcs_touchkey_पूर्णांकerrupt,
 				     IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 				     client->dev.driver->name, data);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to register interrupt\n");
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
-	error = input_register_device(input_dev);
-	if (error)
-		goto err_free_irq;
+	error = input_रेजिस्टर_device(input_dev);
+	अगर (error)
+		जाओ err_मुक्त_irq;
 
 	i2c_set_clientdata(client, data);
-	return 0;
+	वापस 0;
 
-err_free_irq:
-	free_irq(client->irq, data);
-err_free_mem:
-	input_free_device(input_dev);
-	kfree(data);
-	return error;
-}
+err_मुक्त_irq:
+	मुक्त_irq(client->irq, data);
+err_मुक्त_mem:
+	input_मुक्त_device(input_dev);
+	kमुक्त(data);
+	वापस error;
+पूर्ण
 
-static int mcs_touchkey_remove(struct i2c_client *client)
-{
-	struct mcs_touchkey_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक mcs_touchkey_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा mcs_touchkey_data *data = i2c_get_clientdata(client);
 
-	free_irq(client->irq, data);
-	if (data->poweron)
-		data->poweron(false);
-	input_unregister_device(data->input_dev);
-	kfree(data);
+	मुक्त_irq(client->irq, data);
+	अगर (data->घातeron)
+		data->घातeron(false);
+	input_unरेजिस्टर_device(data->input_dev);
+	kमुक्त(data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mcs_touchkey_shutdown(struct i2c_client *client)
-{
-	struct mcs_touchkey_data *data = i2c_get_clientdata(client);
+अटल व्योम mcs_touchkey_shutकरोwn(काष्ठा i2c_client *client)
+अणु
+	काष्ठा mcs_touchkey_data *data = i2c_get_clientdata(client);
 
-	if (data->poweron)
-		data->poweron(false);
-}
+	अगर (data->घातeron)
+		data->घातeron(false);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int mcs_touchkey_suspend(struct device *dev)
-{
-	struct mcs_touchkey_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mcs_touchkey_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mcs_touchkey_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
 
 	/* Disable the work */
 	disable_irq(client->irq);
 
-	/* Finally turn off the power */
-	if (data->poweron)
-		data->poweron(false);
+	/* Finally turn off the घातer */
+	अगर (data->घातeron)
+		data->घातeron(false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mcs_touchkey_resume(struct device *dev)
-{
-	struct mcs_touchkey_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
+अटल पूर्णांक mcs_touchkey_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mcs_touchkey_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
 
 	/* Enable the device first */
-	if (data->poweron)
-		data->poweron(true);
+	अगर (data->घातeron)
+		data->घातeron(true);
 
 	/* Enable irq again */
 	enable_irq(client->irq);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(mcs_touchkey_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(mcs_touchkey_pm_ops,
 			 mcs_touchkey_suspend, mcs_touchkey_resume);
 
-static const struct i2c_device_id mcs_touchkey_id[] = {
-	{ "mcs5000_touchkey", MCS5000_TOUCHKEY },
-	{ "mcs5080_touchkey", MCS5080_TOUCHKEY },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id mcs_touchkey_id[] = अणु
+	अणु "mcs5000_touchkey", MCS5000_TOUCHKEY पूर्ण,
+	अणु "mcs5080_touchkey", MCS5080_TOUCHKEY पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, mcs_touchkey_id);
 
-static struct i2c_driver mcs_touchkey_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver mcs_touchkey_driver = अणु
+	.driver = अणु
 		.name	= "mcs_touchkey",
 		.pm	= &mcs_touchkey_pm_ops,
-	},
+	पूर्ण,
 	.probe		= mcs_touchkey_probe,
-	.remove		= mcs_touchkey_remove,
-	.shutdown       = mcs_touchkey_shutdown,
+	.हटाओ		= mcs_touchkey_हटाओ,
+	.shutकरोwn       = mcs_touchkey_shutकरोwn,
 	.id_table	= mcs_touchkey_id,
-};
+पूर्ण;
 
 module_i2c_driver(mcs_touchkey_driver);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Joonyoung Shim <jy0922.shim@samsung.com>");
 MODULE_AUTHOR("HeungJun Kim <riverful.kim@samsung.com>");
 MODULE_DESCRIPTION("Touchkey driver for MELFAS MCS5000/5080 controller");

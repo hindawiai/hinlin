@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_KASAN_H
-#define __ASM_KASAN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_KASAN_H
+#घोषणा __ASM_KASAN_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#ifdef CONFIG_KASAN
+#अगर_घोषित CONFIG_KASAN
 
-#include <linux/kernel.h>
-#include <linux/sizes.h>
-#include <asm/kmem_layout.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sizes.h>
+#समावेश <यंत्र/kmem_layout.h>
 
-#define KASAN_SHADOW_SCALE_SHIFT 3
+#घोषणा KASAN_SHADOW_SCALE_SHIFT 3
 
 /* Start of area covered by KASAN */
-#define KASAN_START_VADDR __XTENSA_UL_CONST(0x90000000)
-/* Start of the shadow map */
-#define KASAN_SHADOW_START (XCHAL_PAGE_TABLE_VADDR + XCHAL_PAGE_TABLE_SIZE)
-/* Size of the shadow map */
-#define KASAN_SHADOW_SIZE (-KASAN_START_VADDR >> KASAN_SHADOW_SCALE_SHIFT)
-/* Offset for mem to shadow address transformation */
-#define KASAN_SHADOW_OFFSET __XTENSA_UL_CONST(CONFIG_KASAN_SHADOW_OFFSET)
+#घोषणा KASAN_START_VADDR __XTENSA_UL_CONST(0x90000000)
+/* Start of the shaकरोw map */
+#घोषणा KASAN_SHADOW_START (XCHAL_PAGE_TABLE_VADDR + XCHAL_PAGE_TABLE_SIZE)
+/* Size of the shaकरोw map */
+#घोषणा KASAN_SHADOW_SIZE (-KASAN_START_VADDR >> KASAN_SHADOW_SCALE_SHIFT)
+/* Offset क्रम mem to shaकरोw address transक्रमmation */
+#घोषणा KASAN_SHADOW_OFFSET __XTENSA_UL_CONST(CONFIG_KASAN_SHADOW_OFFSET)
 
-void __init kasan_early_init(void);
-void __init kasan_init(void);
+व्योम __init kasan_early_init(व्योम);
+व्योम __init kasan_init(व्योम);
 
-#else
+#अन्यथा
 
-static inline void kasan_early_init(void)
-{
-}
+अटल अंतरभूत व्योम kasan_early_init(व्योम)
+अणु
+पूर्ण
 
-static inline void kasan_init(void)
-{
-}
+अटल अंतरभूत व्योम kasan_init(व्योम)
+अणु
+पूर्ण
 
-#endif
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
+#पूर्ण_अगर

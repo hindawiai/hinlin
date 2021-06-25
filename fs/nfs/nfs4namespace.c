@@ -1,520 +1,521 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/nfs/nfs4namespace.c
  *
  * Copyright (C) 2005 Trond Myklebust <Trond.Myklebust@netapp.com>
- * - Modified by David Howells <dhowells@redhat.com>
+ * - Modअगरied by David Howells <dhowells@redhat.com>
  *
  * NFSv4 namespace
  */
 
-#include <linux/module.h>
-#include <linux/dcache.h>
-#include <linux/mount.h>
-#include <linux/namei.h>
-#include <linux/nfs_fs.h>
-#include <linux/nfs_mount.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/sunrpc/clnt.h>
-#include <linux/sunrpc/addr.h>
-#include <linux/vfs.h>
-#include <linux/inet.h>
-#include "internal.h"
-#include "nfs4_fs.h"
-#include "nfs.h"
-#include "dns_resolve.h"
+#समावेश <linux/module.h>
+#समावेश <linux/dcache.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/nfs_mount.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sunrpc/clnt.h>
+#समावेश <linux/sunrpc/addr.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/inet.h>
+#समावेश "internal.h"
+#समावेश "nfs4_fs.h"
+#समावेश "nfs.h"
+#समावेश "dns_resolve.h"
 
-#define NFSDBG_FACILITY		NFSDBG_VFS
+#घोषणा NFSDBG_FACILITY		NFSDBG_VFS
 
 /*
  * Work out the length that an NFSv4 path would render to as a standard posix
  * path, with a leading slash but no terminating slash.
  */
-static ssize_t nfs4_pathname_len(const struct nfs4_pathname *pathname)
-{
-	ssize_t len = 0;
-	int i;
+अटल sमाप_प्रकार nfs4_pathname_len(स्थिर काष्ठा nfs4_pathname *pathname)
+अणु
+	sमाप_प्रकार len = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < pathname->ncomponents; i++) {
-		const struct nfs4_string *component = &pathname->components[i];
+	क्रम (i = 0; i < pathname->ncomponents; i++) अणु
+		स्थिर काष्ठा nfs4_string *component = &pathname->components[i];
 
-		if (component->len > NAME_MAX)
-			goto too_long;
+		अगर (component->len > NAME_MAX)
+			जाओ too_दीर्घ;
 		len += 1 + component->len; /* Adding "/foo" */
-		if (len > PATH_MAX)
-			goto too_long;
-	}
-	return len;
+		अगर (len > PATH_MAX)
+			जाओ too_दीर्घ;
+	पूर्ण
+	वापस len;
 
-too_long:
-	return -ENAMETOOLONG;
-}
+too_दीर्घ:
+	वापस -ENAMETOOLONG;
+पूर्ण
 
 /*
- * Convert the NFSv4 pathname components into a standard posix path.
+ * Convert the NFSv4 pathname components पूर्णांकo a standard posix path.
  */
-static char *nfs4_pathname_string(const struct nfs4_pathname *pathname,
-				  unsigned short *_len)
-{
-	ssize_t len;
-	char *buf, *p;
-	int i;
+अटल अक्षर *nfs4_pathname_string(स्थिर काष्ठा nfs4_pathname *pathname,
+				  अचिन्हित लघु *_len)
+अणु
+	sमाप_प्रकार len;
+	अक्षर *buf, *p;
+	पूर्णांक i;
 
 	len = nfs4_pathname_len(pathname);
-	if (len < 0)
-		return ERR_PTR(len);
+	अगर (len < 0)
+		वापस ERR_PTR(len);
 	*_len = len;
 
-	p = buf = kmalloc(len + 1, GFP_KERNEL);
-	if (!buf)
-		return ERR_PTR(-ENOMEM);
+	p = buf = kदो_स्मृति(len + 1, GFP_KERNEL);
+	अगर (!buf)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (i = 0; i < pathname->ncomponents; i++) {
-		const struct nfs4_string *component = &pathname->components[i];
+	क्रम (i = 0; i < pathname->ncomponents; i++) अणु
+		स्थिर काष्ठा nfs4_string *component = &pathname->components[i];
 
 		*p++ = '/';
-		memcpy(p, component->data, component->len);
+		स_नकल(p, component->data, component->len);
 		p += component->len;
-	}
+	पूर्ण
 
 	*p = 0;
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 /*
- * return the path component of "<server>:<path>"
+ * वापस the path component of "<server>:<path>"
  *  nfspath - the "<server>:<path>" string
- *  end - one past the last char that could contain "<server>:"
- * returns NULL on failure
+ *  end - one past the last अक्षर that could contain "<server>:"
+ * वापसs शून्य on failure
  */
-static char *nfs_path_component(const char *nfspath, const char *end)
-{
-	char *p;
+अटल अक्षर *nfs_path_component(स्थिर अक्षर *nfspath, स्थिर अक्षर *end)
+अणु
+	अक्षर *p;
 
-	if (*nfspath == '[') {
+	अगर (*nfspath == '[') अणु
 		/* parse [] escaped IPv6 addrs */
-		p = strchr(nfspath, ']');
-		if (p != NULL && ++p < end && *p == ':')
-			return p + 1;
-	} else {
+		p = म_अक्षर(nfspath, ']');
+		अगर (p != शून्य && ++p < end && *p == ':')
+			वापस p + 1;
+	पूर्ण अन्यथा अणु
 		/* otherwise split on first colon */
-		p = strchr(nfspath, ':');
-		if (p != NULL && p < end)
-			return p + 1;
-	}
-	return NULL;
-}
+		p = म_अक्षर(nfspath, ':');
+		अगर (p != शून्य && p < end)
+			वापस p + 1;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * Determine the mount path as a string
  */
-static char *nfs4_path(struct dentry *dentry, char *buffer, ssize_t buflen)
-{
-	char *limit;
-	char *path = nfs_path(&limit, dentry, buffer, buflen,
+अटल अक्षर *nfs4_path(काष्ठा dentry *dentry, अक्षर *buffer, sमाप_प्रकार buflen)
+अणु
+	अक्षर *limit;
+	अक्षर *path = nfs_path(&limit, dentry, buffer, buflen,
 			      NFS_PATH_CANONICAL);
-	if (!IS_ERR(path)) {
-		char *path_component = nfs_path_component(path, limit);
-		if (path_component)
-			return path_component;
-	}
-	return path;
-}
+	अगर (!IS_ERR(path)) अणु
+		अक्षर *path_component = nfs_path_component(path, limit);
+		अगर (path_component)
+			वापस path_component;
+	पूर्ण
+	वापस path;
+पूर्ण
 
 /*
- * Check that fs_locations::fs_root [RFC3530 6.3] is a prefix for what we
+ * Check that fs_locations::fs_root [RFC3530 6.3] is a prefix क्रम what we
  * believe to be the server path to this dentry
  */
-static int nfs4_validate_fspath(struct dentry *dentry,
-				const struct nfs4_fs_locations *locations,
-				struct nfs_fs_context *ctx)
-{
-	const char *path;
-	char *fs_path;
-	unsigned short len;
-	char *buf;
-	int n;
+अटल पूर्णांक nfs4_validate_fspath(काष्ठा dentry *dentry,
+				स्थिर काष्ठा nfs4_fs_locations *locations,
+				काष्ठा nfs_fs_context *ctx)
+अणु
+	स्थिर अक्षर *path;
+	अक्षर *fs_path;
+	अचिन्हित लघु len;
+	अक्षर *buf;
+	पूर्णांक n;
 
-	buf = kmalloc(4096, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(4096, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	path = nfs4_path(dentry, buf, 4096);
-	if (IS_ERR(path)) {
-		kfree(buf);
-		return PTR_ERR(path);
-	}
+	अगर (IS_ERR(path)) अणु
+		kमुक्त(buf);
+		वापस PTR_ERR(path);
+	पूर्ण
 
 	fs_path = nfs4_pathname_string(&locations->fs_path, &len);
-	if (IS_ERR(fs_path)) {
-		kfree(buf);
-		return PTR_ERR(fs_path);
-	}
+	अगर (IS_ERR(fs_path)) अणु
+		kमुक्त(buf);
+		वापस PTR_ERR(fs_path);
+	पूर्ण
 
-	n = strncmp(path, fs_path, len);
-	kfree(buf);
-	kfree(fs_path);
-	if (n != 0) {
-		dprintk("%s: path %s does not begin with fsroot %s\n",
+	n = म_भेदन(path, fs_path, len);
+	kमुक्त(buf);
+	kमुक्त(fs_path);
+	अगर (n != 0) अणु
+		dprपूर्णांकk("%s: path %s does not begin with fsroot %s\n",
 			__func__, path, ctx->nfs_server.export_path);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static size_t nfs_parse_server_name(char *string, size_t len,
-		struct sockaddr *sa, size_t salen, struct net *net)
-{
-	ssize_t ret;
+अटल माप_प्रकार nfs_parse_server_name(अक्षर *string, माप_प्रकार len,
+		काष्ठा sockaddr *sa, माप_प्रकार salen, काष्ठा net *net)
+अणु
+	sमाप_प्रकार ret;
 
 	ret = rpc_pton(net, string, len, sa, salen);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		ret = nfs_dns_resolve_name(net, string, len, sa, salen);
-		if (ret < 0)
+		अगर (ret < 0)
 			ret = 0;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
  * nfs_find_best_sec - Find a security mechanism supported locally
- * @clnt: pointer to rpc_clnt
- * @server: NFS server struct
- * @flavors: List of security tuples returned by SECINFO procedure
+ * @clnt: poपूर्णांकer to rpc_clnt
+ * @server: NFS server काष्ठा
+ * @flavors: List of security tuples वापसed by SECINFO procedure
  *
  * Return an rpc client that uses the first security mechanism in
  * "flavors" that is locally supported.  The "flavors" array
- * is searched in the order returned from the server, per RFC 3530
- * recommendation and each flavor is checked for membership in the
- * sec= mount option list if it exists.
+ * is searched in the order वापसed from the server, per RFC 3530
+ * recommendation and each flavor is checked क्रम membership in the
+ * sec= mount option list अगर it exists.
  *
- * Return -EPERM if no matching flavor is found in the array.
+ * Return -EPERM अगर no matching flavor is found in the array.
  *
- * Please call rpc_shutdown_client() when you are done with this rpc client.
+ * Please call rpc_shutकरोwn_client() when you are करोne with this rpc client.
  *
  */
-static struct rpc_clnt *nfs_find_best_sec(struct rpc_clnt *clnt,
-					  struct nfs_server *server,
-					  struct nfs4_secinfo_flavors *flavors)
-{
+अटल काष्ठा rpc_clnt *nfs_find_best_sec(काष्ठा rpc_clnt *clnt,
+					  काष्ठा nfs_server *server,
+					  काष्ठा nfs4_secinfo_flavors *flavors)
+अणु
 	rpc_authflavor_t pflavor;
-	struct nfs4_secinfo4 *secinfo;
-	unsigned int i;
+	काष्ठा nfs4_secinfo4 *secinfo;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < flavors->num_flavors; i++) {
+	क्रम (i = 0; i < flavors->num_flavors; i++) अणु
 		secinfo = &flavors->flavors[i];
 
-		switch (secinfo->flavor) {
-		case RPC_AUTH_NULL:
-		case RPC_AUTH_UNIX:
-		case RPC_AUTH_GSS:
-			pflavor = rpcauth_get_pseudoflavor(secinfo->flavor,
+		चयन (secinfo->flavor) अणु
+		हाल RPC_AUTH_शून्य:
+		हाल RPC_AUTH_UNIX:
+		हाल RPC_AUTH_GSS:
+			pflavor = rpcauth_get_pseuकरोflavor(secinfo->flavor,
 							&secinfo->flavor_info);
-			/* does the pseudoflavor match a sec= mount opt? */
-			if (pflavor != RPC_AUTH_MAXFLAVOR &&
-			    nfs_auth_info_match(&server->auth_info, pflavor)) {
-				struct rpc_clnt *new;
-				struct rpc_cred *cred;
+			/* करोes the pseuकरोflavor match a sec= mount opt? */
+			अगर (pflavor != RPC_AUTH_MAXFLAVOR &&
+			    nfs_auth_info_match(&server->auth_info, pflavor)) अणु
+				काष्ठा rpc_clnt *new;
+				काष्ठा rpc_cred *cred;
 
-				/* Cloning creates an rpc_auth for the flavor */
+				/* Cloning creates an rpc_auth क्रम the flavor */
 				new = rpc_clone_client_set_auth(clnt, pflavor);
-				if (IS_ERR(new))
-					continue;
+				अगर (IS_ERR(new))
+					जारी;
 				/**
 				* Check that the user actually can use the
-				* flavor. This is mostly for RPC_AUTH_GSS
+				* flavor. This is mostly क्रम RPC_AUTH_GSS
 				* where cr_init obtains a gss context
 				*/
 				cred = rpcauth_lookupcred(new->cl_auth, 0);
-				if (IS_ERR(cred)) {
-					rpc_shutdown_client(new);
-					continue;
-				}
+				अगर (IS_ERR(cred)) अणु
+					rpc_shutकरोwn_client(new);
+					जारी;
+				पूर्ण
 				put_rpccred(cred);
-				return new;
-			}
-		}
-	}
-	return ERR_PTR(-EPERM);
-}
+				वापस new;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस ERR_PTR(-EPERM);
+पूर्ण
 
 /**
  * nfs4_negotiate_security - in response to an NFS4ERR_WRONGSEC on lookup,
- * return an rpc_clnt that uses the best available security flavor with
+ * वापस an rpc_clnt that uses the best available security flavor with
  * respect to the secinfo flavor list and the sec= mount options.
  *
  * @clnt: RPC client to clone
  * @inode: directory inode
  * @name: lookup name
  *
- * Please call rpc_shutdown_client() when you are done with this rpc client.
+ * Please call rpc_shutकरोwn_client() when you are करोne with this rpc client.
  */
-struct rpc_clnt *
-nfs4_negotiate_security(struct rpc_clnt *clnt, struct inode *inode,
-					const struct qstr *name)
-{
-	struct page *page;
-	struct nfs4_secinfo_flavors *flavors;
-	struct rpc_clnt *new;
-	int err;
+काष्ठा rpc_clnt *
+nfs4_negotiate_security(काष्ठा rpc_clnt *clnt, काष्ठा inode *inode,
+					स्थिर काष्ठा qstr *name)
+अणु
+	काष्ठा page *page;
+	काष्ठा nfs4_secinfo_flavors *flavors;
+	काष्ठा rpc_clnt *new;
+	पूर्णांक err;
 
 	page = alloc_page(GFP_KERNEL);
-	if (!page)
-		return ERR_PTR(-ENOMEM);
+	अगर (!page)
+		वापस ERR_PTR(-ENOMEM);
 
 	flavors = page_address(page);
 
 	err = nfs4_proc_secinfo(inode, name, flavors);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		new = ERR_PTR(err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	new = nfs_find_best_sec(clnt, NFS_SERVER(inode), flavors);
 
 out:
 	put_page(page);
-	return new;
-}
+	वापस new;
+पूर्ण
 
-static int try_location(struct fs_context *fc,
-			const struct nfs4_fs_location *location)
-{
-	struct nfs_fs_context *ctx = nfs_fc2context(fc);
-	unsigned int len, s;
-	char *export_path, *source, *p;
-	int ret = -ENOENT;
+अटल पूर्णांक try_location(काष्ठा fs_context *fc,
+			स्थिर काष्ठा nfs4_fs_location *location)
+अणु
+	काष्ठा nfs_fs_context *ctx = nfs_fc2context(fc);
+	अचिन्हित पूर्णांक len, s;
+	अक्षर *export_path, *source, *p;
+	पूर्णांक ret = -ENOENT;
 
 	/* Allocate a buffer big enough to hold any of the hostnames plus a
-	 * terminating char and also a buffer big enough to hold the hostname
+	 * terminating अक्षर and also a buffer big enough to hold the hostname
 	 * plus a colon plus the path.
 	 */
 	len = 0;
-	for (s = 0; s < location->nservers; s++) {
-		const struct nfs4_string *buf = &location->servers[s];
-		if (buf->len > len)
+	क्रम (s = 0; s < location->nservers; s++) अणु
+		स्थिर काष्ठा nfs4_string *buf = &location->servers[s];
+		अगर (buf->len > len)
 			len = buf->len;
-	}
+	पूर्ण
 
-	kfree(ctx->nfs_server.hostname);
-	ctx->nfs_server.hostname = kmalloc(len + 1, GFP_KERNEL);
-	if (!ctx->nfs_server.hostname)
-		return -ENOMEM;
+	kमुक्त(ctx->nfs_server.hostname);
+	ctx->nfs_server.hostname = kदो_स्मृति(len + 1, GFP_KERNEL);
+	अगर (!ctx->nfs_server.hostname)
+		वापस -ENOMEM;
 
 	export_path = nfs4_pathname_string(&location->rootpath,
 					   &ctx->nfs_server.export_path_len);
-	if (IS_ERR(export_path))
-		return PTR_ERR(export_path);
+	अगर (IS_ERR(export_path))
+		वापस PTR_ERR(export_path);
 
-	kfree(ctx->nfs_server.export_path);
+	kमुक्त(ctx->nfs_server.export_path);
 	ctx->nfs_server.export_path = export_path;
 
-	source = kmalloc(len + 1 + ctx->nfs_server.export_path_len + 1,
+	source = kदो_स्मृति(len + 1 + ctx->nfs_server.export_path_len + 1,
 			 GFP_KERNEL);
-	if (!source)
-		return -ENOMEM;
+	अगर (!source)
+		वापस -ENOMEM;
 
-	kfree(fc->source);
+	kमुक्त(fc->source);
 	fc->source = source;
-	for (s = 0; s < location->nservers; s++) {
-		const struct nfs4_string *buf = &location->servers[s];
+	क्रम (s = 0; s < location->nservers; s++) अणु
+		स्थिर काष्ठा nfs4_string *buf = &location->servers[s];
 
-		if (memchr(buf->data, IPV6_SCOPE_DELIMITER, buf->len))
-			continue;
+		अगर (स_प्रथम(buf->data, IPV6_SCOPE_DELIMITER, buf->len))
+			जारी;
 
 		ctx->nfs_server.addrlen =
 			nfs_parse_server_name(buf->data, buf->len,
 					      &ctx->nfs_server.address,
-					      sizeof(ctx->nfs_server._address),
+					      माप(ctx->nfs_server._address),
 					      fc->net_ns);
-		if (ctx->nfs_server.addrlen == 0)
-			continue;
+		अगर (ctx->nfs_server.addrlen == 0)
+			जारी;
 
 		rpc_set_port(&ctx->nfs_server.address, NFS_PORT);
 
-		memcpy(ctx->nfs_server.hostname, buf->data, buf->len);
+		स_नकल(ctx->nfs_server.hostname, buf->data, buf->len);
 		ctx->nfs_server.hostname[buf->len] = '\0';
 
 		p = source;
-		memcpy(p, buf->data, buf->len);
+		स_नकल(p, buf->data, buf->len);
 		p += buf->len;
 		*p++ = ':';
-		memcpy(p, ctx->nfs_server.export_path, ctx->nfs_server.export_path_len);
+		स_नकल(p, ctx->nfs_server.export_path, ctx->nfs_server.export_path_len);
 		p += ctx->nfs_server.export_path_len;
 		*p = 0;
 
 		ret = nfs4_get_referral_tree(fc);
-		if (ret == 0)
-			return 0;
-	}
+		अगर (ret == 0)
+			वापस 0;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nfs_follow_referral - set up mountpoint when hitting a referral on moved error
- * @fc: pointer to struct nfs_fs_context
- * @locations: array of NFSv4 server location information
+ * nfs_follow_referral - set up mountpoपूर्णांक when hitting a referral on moved error
+ * @fc: poपूर्णांकer to काष्ठा nfs_fs_context
+ * @locations: array of NFSv4 server location inक्रमmation
  *
  */
-static int nfs_follow_referral(struct fs_context *fc,
-			       const struct nfs4_fs_locations *locations)
-{
-	struct nfs_fs_context *ctx = nfs_fc2context(fc);
-	int loc, error;
+अटल पूर्णांक nfs_follow_referral(काष्ठा fs_context *fc,
+			       स्थिर काष्ठा nfs4_fs_locations *locations)
+अणु
+	काष्ठा nfs_fs_context *ctx = nfs_fc2context(fc);
+	पूर्णांक loc, error;
 
-	if (locations == NULL || locations->nlocations <= 0)
-		return -ENOENT;
+	अगर (locations == शून्य || locations->nlocations <= 0)
+		वापस -ENOENT;
 
-	dprintk("%s: referral at %pd2\n", __func__, ctx->clone_data.dentry);
+	dprपूर्णांकk("%s: referral at %pd2\n", __func__, ctx->clone_data.dentry);
 
 	/* Ensure fs path is a prefix of current dentry path */
 	error = nfs4_validate_fspath(ctx->clone_data.dentry, locations, ctx);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
 	error = -ENOENT;
-	for (loc = 0; loc < locations->nlocations; loc++) {
-		const struct nfs4_fs_location *location = &locations->locations[loc];
+	क्रम (loc = 0; loc < locations->nlocations; loc++) अणु
+		स्थिर काष्ठा nfs4_fs_location *location = &locations->locations[loc];
 
-		if (location == NULL || location->nservers <= 0 ||
+		अगर (location == शून्य || location->nservers <= 0 ||
 		    location->rootpath.ncomponents == 0)
-			continue;
+			जारी;
 
 		error = try_location(fc, location);
-		if (error == 0)
-			return 0;
-	}
+		अगर (error == 0)
+			वापस 0;
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * nfs_do_refmount - handle crossing a referral on server
+ * nfs_करो_refmount - handle crossing a referral on server
  * @dentry - dentry of referral
  *
  */
-static int nfs_do_refmount(struct fs_context *fc, struct rpc_clnt *client)
-{
-	struct nfs_fs_context *ctx = nfs_fc2context(fc);
-	struct dentry *dentry, *parent;
-	struct nfs4_fs_locations *fs_locations = NULL;
-	struct page *page;
-	int err = -ENOMEM;
+अटल पूर्णांक nfs_करो_refmount(काष्ठा fs_context *fc, काष्ठा rpc_clnt *client)
+अणु
+	काष्ठा nfs_fs_context *ctx = nfs_fc2context(fc);
+	काष्ठा dentry *dentry, *parent;
+	काष्ठा nfs4_fs_locations *fs_locations = शून्य;
+	काष्ठा page *page;
+	पूर्णांक err = -ENOMEM;
 
 	/* BUG_ON(IS_ROOT(dentry)); */
 	page = alloc_page(GFP_KERNEL);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 
-	fs_locations = kmalloc(sizeof(struct nfs4_fs_locations), GFP_KERNEL);
-	if (!fs_locations)
-		goto out_free;
+	fs_locations = kदो_स्मृति(माप(काष्ठा nfs4_fs_locations), GFP_KERNEL);
+	अगर (!fs_locations)
+		जाओ out_मुक्त;
 
 	/* Get locations */
 	dentry = ctx->clone_data.dentry;
 	parent = dget_parent(dentry);
-	dprintk("%s: getting locations for %pd2\n",
+	dprपूर्णांकk("%s: getting locations for %pd2\n",
 		__func__, dentry);
 
 	err = nfs4_proc_fs_locations(client, d_inode(parent), &dentry->d_name, fs_locations, page);
 	dput(parent);
-	if (err != 0)
-		goto out_free_2;
+	अगर (err != 0)
+		जाओ out_मुक्त_2;
 
 	err = -ENOENT;
-	if (fs_locations->nlocations <= 0 ||
+	अगर (fs_locations->nlocations <= 0 ||
 	    fs_locations->fs_path.ncomponents <= 0)
-		goto out_free_2;
+		जाओ out_मुक्त_2;
 
 	err = nfs_follow_referral(fc, fs_locations);
-out_free_2:
-	kfree(fs_locations);
-out_free:
-	__free_page(page);
-	return err;
-}
+out_मुक्त_2:
+	kमुक्त(fs_locations);
+out_मुक्त:
+	__मुक्त_page(page);
+	वापस err;
+पूर्ण
 
-int nfs4_submount(struct fs_context *fc, struct nfs_server *server)
-{
-	struct nfs_fs_context *ctx = nfs_fc2context(fc);
-	struct dentry *dentry = ctx->clone_data.dentry;
-	struct dentry *parent = dget_parent(dentry);
-	struct inode *dir = d_inode(parent);
-	struct rpc_clnt *client;
-	int ret;
+पूर्णांक nfs4_submount(काष्ठा fs_context *fc, काष्ठा nfs_server *server)
+अणु
+	काष्ठा nfs_fs_context *ctx = nfs_fc2context(fc);
+	काष्ठा dentry *dentry = ctx->clone_data.dentry;
+	काष्ठा dentry *parent = dget_parent(dentry);
+	काष्ठा inode *dir = d_inode(parent);
+	काष्ठा rpc_clnt *client;
+	पूर्णांक ret;
 
 	/* Look it up again to get its attributes and sec flavor */
-	client = nfs4_proc_lookup_mountpoint(dir, dentry, ctx->mntfh,
+	client = nfs4_proc_lookup_mountpoपूर्णांक(dir, dentry, ctx->mntfh,
 					     ctx->clone_data.fattr);
 	dput(parent);
-	if (IS_ERR(client))
-		return PTR_ERR(client);
+	अगर (IS_ERR(client))
+		वापस PTR_ERR(client);
 
 	ctx->selected_flavor = client->cl_auth->au_flavor;
-	if (ctx->clone_data.fattr->valid & NFS_ATTR_FATTR_V4_REFERRAL) {
-		ret = nfs_do_refmount(fc, client);
-	} else {
-		ret = nfs_do_submount(fc);
-	}
+	अगर (ctx->clone_data.fattr->valid & NFS_ATTR_FATTR_V4_REFERRAL) अणु
+		ret = nfs_करो_refmount(fc, client);
+	पूर्ण अन्यथा अणु
+		ret = nfs_करो_submount(fc);
+	पूर्ण
 
-	rpc_shutdown_client(client);
-	return ret;
-}
+	rpc_shutकरोwn_client(client);
+	वापस ret;
+पूर्ण
 
 /*
  * Try one location from the fs_locations array.
  *
- * Returns zero on success, or a negative errno value.
+ * Returns zero on success, or a negative त्रुटि_सं value.
  */
-static int nfs4_try_replacing_one_location(struct nfs_server *server,
-		char *page, char *page2,
-		const struct nfs4_fs_location *location)
-{
-	const size_t addr_bufsize = sizeof(struct sockaddr_storage);
-	struct net *net = rpc_net_ns(server->client);
-	struct sockaddr *sap;
-	unsigned int s;
-	size_t salen;
-	int error;
+अटल पूर्णांक nfs4_try_replacing_one_location(काष्ठा nfs_server *server,
+		अक्षर *page, अक्षर *page2,
+		स्थिर काष्ठा nfs4_fs_location *location)
+अणु
+	स्थिर माप_प्रकार addr_bufsize = माप(काष्ठा sockaddr_storage);
+	काष्ठा net *net = rpc_net_ns(server->client);
+	काष्ठा sockaddr *sap;
+	अचिन्हित पूर्णांक s;
+	माप_प्रकार salen;
+	पूर्णांक error;
 
-	sap = kmalloc(addr_bufsize, GFP_KERNEL);
-	if (sap == NULL)
-		return -ENOMEM;
+	sap = kदो_स्मृति(addr_bufsize, GFP_KERNEL);
+	अगर (sap == शून्य)
+		वापस -ENOMEM;
 
 	error = -ENOENT;
-	for (s = 0; s < location->nservers; s++) {
-		const struct nfs4_string *buf = &location->servers[s];
-		char *hostname;
+	क्रम (s = 0; s < location->nservers; s++) अणु
+		स्थिर काष्ठा nfs4_string *buf = &location->servers[s];
+		अक्षर *hostname;
 
-		if (buf->len <= 0 || buf->len > PAGE_SIZE)
-			continue;
+		अगर (buf->len <= 0 || buf->len > PAGE_SIZE)
+			जारी;
 
-		if (memchr(buf->data, IPV6_SCOPE_DELIMITER, buf->len) != NULL)
-			continue;
+		अगर (स_प्रथम(buf->data, IPV6_SCOPE_DELIMITER, buf->len) != शून्य)
+			जारी;
 
 		salen = nfs_parse_server_name(buf->data, buf->len,
 						sap, addr_bufsize, net);
-		if (salen == 0)
-			continue;
+		अगर (salen == 0)
+			जारी;
 		rpc_set_port(sap, NFS_PORT);
 
 		error = -ENOMEM;
 		hostname = kmemdup_nul(buf->data, buf->len, GFP_KERNEL);
-		if (hostname == NULL)
-			break;
+		अगर (hostname == शून्य)
+			अवरोध;
 
 		error = nfs4_update_server(server, hostname, sap, salen, net);
-		kfree(hostname);
-		if (error == 0)
-			break;
-	}
+		kमुक्त(hostname);
+		अगर (error == 0)
+			अवरोध;
+	पूर्ण
 
-	kfree(sap);
-	return error;
-}
+	kमुक्त(sap);
+	वापस error;
+पूर्ण
 
 /**
  * nfs4_replace_transport - set up transport to destination server
@@ -522,46 +523,46 @@ static int nfs4_try_replacing_one_location(struct nfs_server *server,
  * @server: export being migrated
  * @locations: fs_locations array
  *
- * Returns zero on success, or a negative errno value.
+ * Returns zero on success, or a negative त्रुटि_सं value.
  *
  * The client tries all the entries in the "locations" array, in the
- * order returned by the server, until one works or the end of the
+ * order वापसed by the server, until one works or the end of the
  * array is reached.
  */
-int nfs4_replace_transport(struct nfs_server *server,
-			   const struct nfs4_fs_locations *locations)
-{
-	char *page = NULL, *page2 = NULL;
-	int loc, error;
+पूर्णांक nfs4_replace_transport(काष्ठा nfs_server *server,
+			   स्थिर काष्ठा nfs4_fs_locations *locations)
+अणु
+	अक्षर *page = शून्य, *page2 = शून्य;
+	पूर्णांक loc, error;
 
 	error = -ENOENT;
-	if (locations == NULL || locations->nlocations <= 0)
-		goto out;
+	अगर (locations == शून्य || locations->nlocations <= 0)
+		जाओ out;
 
 	error = -ENOMEM;
-	page = (char *) __get_free_page(GFP_USER);
-	if (!page)
-		goto out;
-	page2 = (char *) __get_free_page(GFP_USER);
-	if (!page2)
-		goto out;
+	page = (अक्षर *) __get_मुक्त_page(GFP_USER);
+	अगर (!page)
+		जाओ out;
+	page2 = (अक्षर *) __get_मुक्त_page(GFP_USER);
+	अगर (!page2)
+		जाओ out;
 
-	for (loc = 0; loc < locations->nlocations; loc++) {
-		const struct nfs4_fs_location *location =
+	क्रम (loc = 0; loc < locations->nlocations; loc++) अणु
+		स्थिर काष्ठा nfs4_fs_location *location =
 						&locations->locations[loc];
 
-		if (location == NULL || location->nservers <= 0 ||
+		अगर (location == शून्य || location->nservers <= 0 ||
 		    location->rootpath.ncomponents == 0)
-			continue;
+			जारी;
 
 		error = nfs4_try_replacing_one_location(server, page,
 							page2, location);
-		if (error == 0)
-			break;
-	}
+		अगर (error == 0)
+			अवरोध;
+	पूर्ण
 
 out:
-	free_page((unsigned long)page);
-	free_page((unsigned long)page2);
-	return error;
-}
+	मुक्त_page((अचिन्हित दीर्घ)page);
+	मुक्त_page((अचिन्हित दीर्घ)page2);
+	वापस error;
+पूर्ण

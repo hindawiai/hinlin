@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Smart reflex Class 3 specific implementations
+ * Smart reflex Class 3 specअगरic implementations
  *
  * Author: Thara Gopinath       <thara@ti.com>
  *
@@ -8,52 +9,52 @@
  * Thara Gopinath <thara@ti.com>
  */
 
-#include <linux/power/smartreflex.h>
-#include "soc.h"
-#include "voltage.h"
+#समावेश <linux/घातer/smartreflex.h>
+#समावेश "soc.h"
+#समावेश "voltage.h"
 
-static int sr_class3_enable(struct omap_sr *sr)
-{
-	unsigned long volt = voltdm_get_voltage(sr->voltdm);
+अटल पूर्णांक sr_class3_enable(काष्ठा omap_sr *sr)
+अणु
+	अचिन्हित दीर्घ volt = voltdm_get_voltage(sr->voltdm);
 
-	if (!volt) {
+	अगर (!volt) अणु
 		pr_warn("%s: Curr voltage unknown. Cannot enable %s\n",
 			__func__, sr->name);
-		return -ENODATA;
-	}
+		वापस -ENODATA;
+	पूर्ण
 
 	omap_vp_enable(sr->voltdm);
-	return sr_enable(sr, volt);
-}
+	वापस sr_enable(sr, volt);
+पूर्ण
 
-static int sr_class3_disable(struct omap_sr *sr, int is_volt_reset)
-{
+अटल पूर्णांक sr_class3_disable(काष्ठा omap_sr *sr, पूर्णांक is_volt_reset)
+अणु
 	sr_disable_errgen(sr);
 	omap_vp_disable(sr->voltdm);
 	sr_disable(sr);
-	if (is_volt_reset)
+	अगर (is_volt_reset)
 		voltdm_reset(sr->voltdm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sr_class3_configure(struct omap_sr *sr)
-{
-	return sr_configure_errgen(sr);
-}
+अटल पूर्णांक sr_class3_configure(काष्ठा omap_sr *sr)
+अणु
+	वापस sr_configure_errgen(sr);
+पूर्ण
 
-/* SR class3 structure */
-static struct omap_sr_class_data class3_data = {
+/* SR class3 काष्ठाure */
+अटल काष्ठा omap_sr_class_data class3_data = अणु
 	.enable = sr_class3_enable,
 	.disable = sr_class3_disable,
 	.configure = sr_class3_configure,
 	.class_type = SR_CLASS3,
-};
+पूर्ण;
 
 /* Smartreflex Class3 init API to be called from board file */
-static int __init sr_class3_init(void)
-{
+अटल पूर्णांक __init sr_class3_init(व्योम)
+अणु
 	pr_info("SmartReflex Class3 initialized\n");
-	return sr_register_class(&class3_data);
-}
+	वापस sr_रेजिस्टर_class(&class3_data);
+पूर्ण
 omap_late_initcall(sr_class3_init);

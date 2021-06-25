@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 	Copyright (C) 2004 - 2009 Ivo van Doorn <IvDoorn@gmail.com>
 	Copyright (C) 2004 - 2009 Gertjan van Wingerde <gwingerde@gmail.com>
@@ -11,88 +12,88 @@
 	Abstract: rt2x00 firmware loading routines.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "rt2x00.h"
-#include "rt2x00lib.h"
+#समावेश "rt2x00.h"
+#समावेश "rt2x00lib.h"
 
-static int rt2x00lib_request_firmware(struct rt2x00_dev *rt2x00dev)
-{
-	struct device *device = wiphy_dev(rt2x00dev->hw->wiphy);
-	const struct firmware *fw;
-	char *fw_name;
-	int retval;
+अटल पूर्णांक rt2x00lib_request_firmware(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	काष्ठा device *device = wiphy_dev(rt2x00dev->hw->wiphy);
+	स्थिर काष्ठा firmware *fw;
+	अक्षर *fw_name;
+	पूर्णांक retval;
 
 	/*
 	 * Read correct firmware from harddisk.
 	 */
 	fw_name = rt2x00dev->ops->lib->get_firmware_name(rt2x00dev);
-	if (!fw_name) {
+	अगर (!fw_name) अणु
 		rt2x00_err(rt2x00dev,
 			   "Invalid firmware filename\n"
 			   "Please file bug report to %s\n", DRV_PROJECT);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rt2x00_info(rt2x00dev, "Loading firmware file '%s'\n", fw_name);
 
 	retval = request_firmware(&fw, fw_name, device);
-	if (retval) {
+	अगर (retval) अणु
 		rt2x00_err(rt2x00dev, "Failed to request Firmware\n");
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	if (!fw || !fw->size || !fw->data) {
+	अगर (!fw || !fw->size || !fw->data) अणु
 		rt2x00_err(rt2x00dev, "Failed to read Firmware\n");
 		release_firmware(fw);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	rt2x00_info(rt2x00dev, "Firmware detected - version: %d.%d\n",
 		    fw->data[fw->size - 4], fw->data[fw->size - 3]);
-	snprintf(rt2x00dev->hw->wiphy->fw_version,
-			sizeof(rt2x00dev->hw->wiphy->fw_version), "%d.%d",
+	snम_लिखो(rt2x00dev->hw->wiphy->fw_version,
+			माप(rt2x00dev->hw->wiphy->fw_version), "%d.%d",
 			fw->data[fw->size - 4], fw->data[fw->size - 3]);
 
 	retval = rt2x00dev->ops->lib->check_firmware(rt2x00dev, fw->data, fw->size);
-	switch (retval) {
-	case FW_OK:
-		break;
-	case FW_BAD_CRC:
+	चयन (retval) अणु
+	हाल FW_OK:
+		अवरोध;
+	हाल FW_BAD_CRC:
 		rt2x00_err(rt2x00dev, "Firmware checksum error\n");
-		goto exit;
-	case FW_BAD_LENGTH:
+		जाओ निकास;
+	हाल FW_BAD_LENGTH:
 		rt2x00_err(rt2x00dev, "Invalid firmware file length (len=%zu)\n",
 			   fw->size);
-		goto exit;
-	case FW_BAD_VERSION:
+		जाओ निकास;
+	हाल FW_BAD_VERSION:
 		rt2x00_err(rt2x00dev, "Current firmware does not support detected chipset\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rt2x00dev->fw = fw;
 
-	return 0;
+	वापस 0;
 
-exit:
+निकास:
 	release_firmware(fw);
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-int rt2x00lib_load_firmware(struct rt2x00_dev *rt2x00dev)
-{
-	int retval;
+पूर्णांक rt2x00lib_load_firmware(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	पूर्णांक retval;
 
-	if (!rt2x00_has_cap_flag(rt2x00dev, REQUIRE_FIRMWARE))
-		return 0;
+	अगर (!rt2x00_has_cap_flag(rt2x00dev, REQUIRE_FIRMWARE))
+		वापस 0;
 
-	if (!rt2x00dev->fw) {
+	अगर (!rt2x00dev->fw) अणु
 		retval = rt2x00lib_request_firmware(rt2x00dev);
-		if (retval)
-			return retval;
-	}
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
 	/*
 	 * Send firmware to the device.
@@ -103,16 +104,16 @@ int rt2x00lib_load_firmware(struct rt2x00_dev *rt2x00dev)
 
 	/*
 	 * When the firmware is uploaded to the hardware the LED
-	 * association status might have been triggered, for correct
+	 * association status might have been triggered, क्रम correct
 	 * LED handling it should now be reset.
 	 */
 	rt2x00leds_led_assoc(rt2x00dev, false);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-void rt2x00lib_free_firmware(struct rt2x00_dev *rt2x00dev)
-{
+व्योम rt2x00lib_मुक्त_firmware(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
 	release_firmware(rt2x00dev->fw);
-	rt2x00dev->fw = NULL;
-}
+	rt2x00dev->fw = शून्य;
+पूर्ण

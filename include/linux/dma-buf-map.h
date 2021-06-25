@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Pointer to dma-buf-mapped memory, plus helpers.
+ * Poपूर्णांकer to dma-buf-mapped memory, plus helpers.
  */
 
-#ifndef __DMA_BUF_MAP_H__
-#define __DMA_BUF_MAP_H__
+#अगर_अघोषित __DMA_BUF_MAP_H__
+#घोषणा __DMA_BUF_MAP_H__
 
-#include <linux/io.h>
-#include <linux/string.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/माला.स>
 
 /**
  * DOC: overview
@@ -15,42 +16,42 @@
  * Calling dma-buf's vmap operation returns a pointer to the buffer's memory.
  * Depending on the location of the buffer, users may have to access it with
  * I/O operations or memory load/store operations. For example, copying to
- * system memory could be done with memcpy(), copying to I/O memory would be
- * done with memcpy_toio().
+ * प्रणाली memory could be करोne with स_नकल(), copying to I/O memory would be
+ * करोne with स_नकल_toio().
  *
  * .. code-block:: c
  *
- *	void *vaddr = ...; // pointer to system memory
- *	memcpy(vaddr, src, len);
+ *	व्योम *vaddr = ...; // poपूर्णांकer to प्रणाली memory
+ *	स_नकल(vaddr, src, len);
  *
- *	void *vaddr_iomem = ...; // pointer to I/O memory
- *	memcpy_toio(vaddr, _iomem, src, len);
+ *	व्योम *vaddr_iomem = ...; // poपूर्णांकer to I/O memory
+ *	स_नकल_toio(vaddr, _iomem, src, len);
  *
- * When using dma-buf's vmap operation, the returned pointer is encoded as
- * :c:type:`struct dma_buf_map <dma_buf_map>`.
- * :c:type:`struct dma_buf_map <dma_buf_map>` stores the buffer's address in
- * system or I/O memory and a flag that signals the required method of
- * accessing the buffer. Use the returned instance and the helper functions
+ * When using dma-buf's vmap operation, the वापसed poपूर्णांकer is encoded as
+ * :c:type:`काष्ठा dma_buf_map <dma_buf_map>`.
+ * :c:type:`काष्ठा dma_buf_map <dma_buf_map>` stores the buffer's address in
+ * प्रणाली or I/O memory and a flag that संकेतs the required method of
+ * accessing the buffer. Use the वापसed instance and the helper functions
  * to access the buffer's memory in the correct way.
  *
- * The type :c:type:`struct dma_buf_map <dma_buf_map>` and its helpers are
- * actually independent from the dma-buf infrastructure. When sharing buffers
+ * The type :c:type:`काष्ठा dma_buf_map <dma_buf_map>` and its helpers are
+ * actually independent from the dma-buf infraकाष्ठाure. When sharing buffers
  * among devices, drivers have to know the location of the memory to access
- * the buffers in a safe way. :c:type:`struct dma_buf_map <dma_buf_map>`
- * solves this problem for dma-buf and its users. If other drivers or
- * sub-systems require similar functionality, the type could be generalized
+ * the buffers in a safe way. :c:type:`काष्ठा dma_buf_map <dma_buf_map>`
+ * solves this problem क्रम dma-buf and its users. If other drivers or
+ * sub-प्रणालीs require similar functionality, the type could be generalized
  * and moved to a more prominent header file.
  *
- * Open-coding access to :c:type:`struct dma_buf_map <dma_buf_map>` is
+ * Open-coding access to :c:type:`काष्ठा dma_buf_map <dma_buf_map>` is
  * considered bad style. Rather then accessing its fields directly, use one
  * of the provided helper functions, or implement your own. For example,
- * instances of :c:type:`struct dma_buf_map <dma_buf_map>` can be initialized
- * statically with DMA_BUF_MAP_INIT_VADDR(), or at runtime with
- * dma_buf_map_set_vaddr(). These helpers will set an address in system memory.
+ * instances of :c:type:`काष्ठा dma_buf_map <dma_buf_map>` can be initialized
+ * अटलally with DMA_BUF_MAP_INIT_VADDR(), or at runसमय with
+ * dma_buf_map_set_vaddr(). These helpers will set an address in प्रणाली memory.
  *
  * .. code-block:: c
  *
- *	struct dma_buf_map map = DMA_BUF_MAP_INIT_VADDR(0xdeadbeaf);
+ *	काष्ठा dma_buf_map map = DMA_BUF_MAP_INIT_VADDR(0xdeadbeaf);
  *
  *	dma_buf_map_set_vaddr(&map. 0xdeadbeaf);
  *
@@ -60,207 +61,207 @@
  *
  *	dma_buf_map_set_vaddr_iomem(&map. 0xdeadbeaf);
  *
- * Instances of struct dma_buf_map do not have to be cleaned up, but
- * can be cleared to NULL with dma_buf_map_clear(). Cleared mappings
- * always refer to system memory.
+ * Instances of काष्ठा dma_buf_map करो not have to be cleaned up, but
+ * can be cleared to शून्य with dma_buf_map_clear(). Cleared mappings
+ * always refer to प्रणाली memory.
  *
  * .. code-block:: c
  *
  *	dma_buf_map_clear(&map);
  *
- * Test if a mapping is valid with either dma_buf_map_is_set() or
+ * Test अगर a mapping is valid with either dma_buf_map_is_set() or
  * dma_buf_map_is_null().
  *
  * .. code-block:: c
  *
- *	if (dma_buf_map_is_set(&map) != dma_buf_map_is_null(&map))
+ *	अगर (dma_buf_map_is_set(&map) != dma_buf_map_is_null(&map))
  *		// always true
  *
- * Instances of :c:type:`struct dma_buf_map <dma_buf_map>` can be compared
- * for equality with dma_buf_map_is_equal(). Mappings the point to different
- * memory spaces, system or I/O, are never equal. That's even true if both
+ * Instances of :c:type:`काष्ठा dma_buf_map <dma_buf_map>` can be compared
+ * क्रम equality with dma_buf_map_is_equal(). Mappings the poपूर्णांक to dअगरferent
+ * memory spaces, प्रणाली or I/O, are never equal. That's even true अगर both
  * spaces are located in the same address space, both mappings contain the
- * same address value, or both mappings refer to NULL.
+ * same address value, or both mappings refer to शून्य.
  *
  * .. code-block:: c
  *
- *	struct dma_buf_map sys_map; // refers to system memory
- *	struct dma_buf_map io_map; // refers to I/O memory
+ *	काष्ठा dma_buf_map sys_map; // refers to प्रणाली memory
+ *	काष्ठा dma_buf_map io_map; // refers to I/O memory
  *
- *	if (dma_buf_map_is_equal(&sys_map, &io_map))
+ *	अगर (dma_buf_map_is_equal(&sys_map, &io_map))
  *		// always false
  *
- * A set up instance of struct dma_buf_map can be used to access or manipulate
+ * A set up instance of काष्ठा dma_buf_map can be used to access or manipulate
  * the buffer memory. Depending on the location of the memory, the provided
- * helpers will pick the correct operations. Data can be copied into the memory
- * with dma_buf_map_memcpy_to(). The address can be manipulated with
+ * helpers will pick the correct operations. Data can be copied पूर्णांकo the memory
+ * with dma_buf_map_स_नकल_to(). The address can be manipulated with
  * dma_buf_map_incr().
  *
  * .. code-block:: c
  *
- *	const void *src = ...; // source buffer
- *	size_t len = ...; // length of src
+ *	स्थिर व्योम *src = ...; // source buffer
+ *	माप_प्रकार len = ...; // length of src
  *
- *	dma_buf_map_memcpy_to(&map, src, len);
- *	dma_buf_map_incr(&map, len); // go to first byte after the memcpy
+ *	dma_buf_map_स_नकल_to(&map, src, len);
+ *	dma_buf_map_incr(&map, len); // go to first byte after the स_नकल
  */
 
 /**
- * struct dma_buf_map - Pointer to vmap'ed dma-buf memory.
- * @vaddr_iomem:	The buffer's address if in I/O memory
- * @vaddr:		The buffer's address if in system memory
- * @is_iomem:		True if the dma-buf memory is located in I/O
+ * काष्ठा dma_buf_map - Poपूर्णांकer to vmap'ed dma-buf memory.
+ * @vaddr_iomem:	The buffer's address अगर in I/O memory
+ * @vaddr:		The buffer's address अगर in प्रणाली memory
+ * @is_iomem:		True अगर the dma-buf memory is located in I/O
  *			memory, or false otherwise.
  */
-struct dma_buf_map {
-	union {
-		void __iomem *vaddr_iomem;
-		void *vaddr;
-	};
+काष्ठा dma_buf_map अणु
+	जोड़ अणु
+		व्योम __iomem *vaddr_iomem;
+		व्योम *vaddr;
+	पूर्ण;
 	bool is_iomem;
-};
+पूर्ण;
 
 /**
- * DMA_BUF_MAP_INIT_VADDR - Initializes struct dma_buf_map to an address in system memory
- * @vaddr_:	A system-memory address
+ * DMA_BUF_MAP_INIT_VADDR - Initializes काष्ठा dma_buf_map to an address in प्रणाली memory
+ * @vaddr_:	A प्रणाली-memory address
  */
-#define DMA_BUF_MAP_INIT_VADDR(vaddr_) \
-	{ \
+#घोषणा DMA_BUF_MAP_INIT_VADDR(vaddr_) \
+	अणु \
 		.vaddr = (vaddr_), \
 		.is_iomem = false, \
-	}
+	पूर्ण
 
 /**
- * dma_buf_map_set_vaddr - Sets a dma-buf mapping structure to an address in system memory
- * @map:	The dma-buf mapping structure
- * @vaddr:	A system-memory address
+ * dma_buf_map_set_vaddr - Sets a dma-buf mapping काष्ठाure to an address in प्रणाली memory
+ * @map:	The dma-buf mapping काष्ठाure
+ * @vaddr:	A प्रणाली-memory address
  *
  * Sets the address and clears the I/O-memory flag.
  */
-static inline void dma_buf_map_set_vaddr(struct dma_buf_map *map, void *vaddr)
-{
+अटल अंतरभूत व्योम dma_buf_map_set_vaddr(काष्ठा dma_buf_map *map, व्योम *vaddr)
+अणु
 	map->vaddr = vaddr;
 	map->is_iomem = false;
-}
+पूर्ण
 
 /**
- * dma_buf_map_set_vaddr_iomem - Sets a dma-buf mapping structure to an address in I/O memory
- * @map:		The dma-buf mapping structure
+ * dma_buf_map_set_vaddr_iomem - Sets a dma-buf mapping काष्ठाure to an address in I/O memory
+ * @map:		The dma-buf mapping काष्ठाure
  * @vaddr_iomem:	An I/O-memory address
  *
  * Sets the address and the I/O-memory flag.
  */
-static inline void dma_buf_map_set_vaddr_iomem(struct dma_buf_map *map,
-					       void __iomem *vaddr_iomem)
-{
+अटल अंतरभूत व्योम dma_buf_map_set_vaddr_iomem(काष्ठा dma_buf_map *map,
+					       व्योम __iomem *vaddr_iomem)
+अणु
 	map->vaddr_iomem = vaddr_iomem;
 	map->is_iomem = true;
-}
+पूर्ण
 
 /**
- * dma_buf_map_is_equal - Compares two dma-buf mapping structures for equality
- * @lhs:	The dma-buf mapping structure
- * @rhs:	A dma-buf mapping structure to compare with
+ * dma_buf_map_is_equal - Compares two dma-buf mapping काष्ठाures क्रम equality
+ * @lhs:	The dma-buf mapping काष्ठाure
+ * @rhs:	A dma-buf mapping काष्ठाure to compare with
  *
- * Two dma-buf mapping structures are equal if they both refer to the same type of memory
+ * Two dma-buf mapping काष्ठाures are equal अगर they both refer to the same type of memory
  * and to the same address within that memory.
  *
  * Returns:
- * True is both structures are equal, or false otherwise.
+ * True is both काष्ठाures are equal, or false otherwise.
  */
-static inline bool dma_buf_map_is_equal(const struct dma_buf_map *lhs,
-					const struct dma_buf_map *rhs)
-{
-	if (lhs->is_iomem != rhs->is_iomem)
-		return false;
-	else if (lhs->is_iomem)
-		return lhs->vaddr_iomem == rhs->vaddr_iomem;
-	else
-		return lhs->vaddr == rhs->vaddr;
-}
+अटल अंतरभूत bool dma_buf_map_is_equal(स्थिर काष्ठा dma_buf_map *lhs,
+					स्थिर काष्ठा dma_buf_map *rhs)
+अणु
+	अगर (lhs->is_iomem != rhs->is_iomem)
+		वापस false;
+	अन्यथा अगर (lhs->is_iomem)
+		वापस lhs->vaddr_iomem == rhs->vaddr_iomem;
+	अन्यथा
+		वापस lhs->vaddr == rhs->vaddr;
+पूर्ण
 
 /**
- * dma_buf_map_is_null - Tests for a dma-buf mapping to be NULL
- * @map:	The dma-buf mapping structure
+ * dma_buf_map_is_null - Tests क्रम a dma-buf mapping to be शून्य
+ * @map:	The dma-buf mapping काष्ठाure
  *
- * Depending on the state of struct dma_buf_map.is_iomem, tests if the
- * mapping is NULL.
+ * Depending on the state of काष्ठा dma_buf_map.is_iomem, tests अगर the
+ * mapping is शून्य.
  *
  * Returns:
- * True if the mapping is NULL, or false otherwise.
+ * True अगर the mapping is शून्य, or false otherwise.
  */
-static inline bool dma_buf_map_is_null(const struct dma_buf_map *map)
-{
-	if (map->is_iomem)
-		return !map->vaddr_iomem;
-	return !map->vaddr;
-}
+अटल अंतरभूत bool dma_buf_map_is_null(स्थिर काष्ठा dma_buf_map *map)
+अणु
+	अगर (map->is_iomem)
+		वापस !map->vaddr_iomem;
+	वापस !map->vaddr;
+पूर्ण
 
 /**
  * dma_buf_map_is_set - Tests is the dma-buf mapping has been set
- * @map:	The dma-buf mapping structure
+ * @map:	The dma-buf mapping काष्ठाure
  *
- * Depending on the state of struct dma_buf_map.is_iomem, tests if the
+ * Depending on the state of काष्ठा dma_buf_map.is_iomem, tests अगर the
  * mapping has been set.
  *
  * Returns:
- * True if the mapping is been set, or false otherwise.
+ * True अगर the mapping is been set, or false otherwise.
  */
-static inline bool dma_buf_map_is_set(const struct dma_buf_map *map)
-{
-	return !dma_buf_map_is_null(map);
-}
+अटल अंतरभूत bool dma_buf_map_is_set(स्थिर काष्ठा dma_buf_map *map)
+अणु
+	वापस !dma_buf_map_is_null(map);
+पूर्ण
 
 /**
- * dma_buf_map_clear - Clears a dma-buf mapping structure
- * @map:	The dma-buf mapping structure
+ * dma_buf_map_clear - Clears a dma-buf mapping काष्ठाure
+ * @map:	The dma-buf mapping काष्ठाure
  *
- * Clears all fields to zero; including struct dma_buf_map.is_iomem. So
- * mapping structures that were set to point to I/O memory are reset for
- * system memory. Pointers are cleared to NULL. This is the default.
+ * Clears all fields to zero; including काष्ठा dma_buf_map.is_iomem. So
+ * mapping काष्ठाures that were set to poपूर्णांक to I/O memory are reset क्रम
+ * प्रणाली memory. Poपूर्णांकers are cleared to शून्य. This is the शेष.
  */
-static inline void dma_buf_map_clear(struct dma_buf_map *map)
-{
-	if (map->is_iomem) {
-		map->vaddr_iomem = NULL;
+अटल अंतरभूत व्योम dma_buf_map_clear(काष्ठा dma_buf_map *map)
+अणु
+	अगर (map->is_iomem) अणु
+		map->vaddr_iomem = शून्य;
 		map->is_iomem = false;
-	} else {
-		map->vaddr = NULL;
-	}
-}
+	पूर्ण अन्यथा अणु
+		map->vaddr = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * dma_buf_map_memcpy_to - Memcpy into dma-buf mapping
- * @dst:	The dma-buf mapping structure
+ * dma_buf_map_स_नकल_to - Memcpy पूर्णांकo dma-buf mapping
+ * @dst:	The dma-buf mapping काष्ठाure
  * @src:	The source buffer
  * @len:	The number of byte in src
  *
- * Copies data into a dma-buf mapping. The source buffer is in system
+ * Copies data पूर्णांकo a dma-buf mapping. The source buffer is in प्रणाली
  * memory. Depending on the buffer's location, the helper picks the correct
  * method of accessing the memory.
  */
-static inline void dma_buf_map_memcpy_to(struct dma_buf_map *dst, const void *src, size_t len)
-{
-	if (dst->is_iomem)
-		memcpy_toio(dst->vaddr_iomem, src, len);
-	else
-		memcpy(dst->vaddr, src, len);
-}
+अटल अंतरभूत व्योम dma_buf_map_स_नकल_to(काष्ठा dma_buf_map *dst, स्थिर व्योम *src, माप_प्रकार len)
+अणु
+	अगर (dst->is_iomem)
+		स_नकल_toio(dst->vaddr_iomem, src, len);
+	अन्यथा
+		स_नकल(dst->vaddr, src, len);
+पूर्ण
 
 /**
  * dma_buf_map_incr - Increments the address stored in a dma-buf mapping
- * @map:	The dma-buf mapping structure
+ * @map:	The dma-buf mapping काष्ठाure
  * @incr:	The number of bytes to increment
  *
  * Increments the address stored in a dma-buf mapping. Depending on the
  * buffer's location, the correct value will be updated.
  */
-static inline void dma_buf_map_incr(struct dma_buf_map *map, size_t incr)
-{
-	if (map->is_iomem)
+अटल अंतरभूत व्योम dma_buf_map_incr(काष्ठा dma_buf_map *map, माप_प्रकार incr)
+अणु
+	अगर (map->is_iomem)
 		map->vaddr_iomem += incr;
-	else
+	अन्यथा
 		map->vaddr += incr;
-}
+पूर्ण
 
-#endif /* __DMA_BUF_MAP_H__ */
+#पूर्ण_अगर /* __DMA_BUF_MAP_H__ */

@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * kaslr.c
  *
  * This contains the routines needed to generate a reasonable level of
- * entropy to choose a randomized kernel base address offset in support
- * of Kernel Address Space Layout Randomization (KASLR). Additionally
+ * entropy to choose a अक्रमomized kernel base address offset in support
+ * of Kernel Address Space Layout Ranकरोmization (KASLR). Additionally
  * handles walking the physical memory maps (and tracking memory regions
- * to avoid) in order to select a physical memory location that can
+ * to aव्योम) in order to select a physical memory location that can
  * contain the entire properly aligned running kernel image.
  *
  */
 
 /*
- * isspace() in linux/ctype.h is expected by next_args() to filter
- * out "space/lf/tab". While boot/ctype.h conflicts with linux/ctype.h,
- * since isdigit() is implemented in both of them. Hence disable it
+ * है_खाली() in linux/प्रकार.स is expected by next_args() to filter
+ * out "space/lf/tab". While boot/प्रकार.स conflicts with linux/प्रकार.स,
+ * since है_अंक() is implemented in both of them. Hence disable it
  * here.
  */
-#define BOOT_CTYPE_H
+#घोषणा BOOT_CTYPE_H
 
-#include "misc.h"
-#include "error.h"
-#include "../string.h"
+#समावेश "misc.h"
+#समावेश "error.h"
+#समावेश "../string.h"
 
-#include <generated/compile.h>
-#include <linux/module.h>
-#include <linux/uts.h>
-#include <linux/utsname.h>
-#include <linux/ctype.h>
-#include <linux/efi.h>
-#include <generated/utsrelease.h>
-#include <asm/efi.h>
+#समावेश <generated/compile.h>
+#समावेश <linux/module.h>
+#समावेश <linux/uts.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/efi.h>
+#समावेश <generated/utsrelease.h>
+#समावेश <यंत्र/efi.h>
 
 /* Macros used by the included decompressor code below. */
-#define STATIC
-#include <linux/decompress/mm.h>
+#घोषणा STATIC
+#समावेश <linux/decompress/mm.h>
 
-#define _SETUP
-#include <asm/setup.h>	/* For COMMAND_LINE_SIZE */
-#undef _SETUP
+#घोषणा _SETUP
+#समावेश <यंत्र/setup.h>	/* For COMMAND_LINE_SIZE */
+#अघोषित _SETUP
 
-extern unsigned long get_cmd_line_ptr(void);
+बाह्य अचिन्हित दीर्घ get_cmd_line_ptr(व्योम);
 
-/* Simplified build-specific string for starting entropy. */
-static const char build_str[] = UTS_RELEASE " (" LINUX_COMPILE_BY "@"
+/* Simplअगरied build-specअगरic string क्रम starting entropy. */
+अटल स्थिर अक्षर build_str[] = UTS_RELEASE " (" LINUX_COMPILE_BY "@"
 		LINUX_COMPILE_HOST ") (" LINUX_COMPILER ") " UTS_VERSION;
 
-static unsigned long rotate_xor(unsigned long hash, const void *area,
-				size_t size)
-{
-	size_t i;
-	unsigned long *ptr = (unsigned long *)area;
+अटल अचिन्हित दीर्घ rotate_xor(अचिन्हित दीर्घ hash, स्थिर व्योम *area,
+				माप_प्रकार size)
+अणु
+	माप_प्रकार i;
+	अचिन्हित दीर्घ *ptr = (अचिन्हित दीर्घ *)area;
 
-	for (i = 0; i < size / sizeof(hash); i++) {
+	क्रम (i = 0; i < size / माप(hash); i++) अणु
 		/* Rotate by odd number of bits and XOR. */
-		hash = (hash << ((sizeof(hash) * 8) - 7)) | (hash >> 7);
+		hash = (hash << ((माप(hash) * 8) - 7)) | (hash >> 7);
 		hash ^= ptr[i];
-	}
+	पूर्ण
 
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
 /* Attempt to create a simple but unpredictable starting entropy. */
-static unsigned long get_boot_seed(void)
-{
-	unsigned long hash = 0;
+अटल अचिन्हित दीर्घ get_boot_seed(व्योम)
+अणु
+	अचिन्हित दीर्घ hash = 0;
 
-	hash = rotate_xor(hash, build_str, sizeof(build_str));
-	hash = rotate_xor(hash, boot_params, sizeof(*boot_params));
+	hash = rotate_xor(hash, build_str, माप(build_str));
+	hash = rotate_xor(hash, boot_params, माप(*boot_params));
 
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-#define KASLR_COMPRESSED_BOOT
-#include "../../lib/kaslr.c"
+#घोषणा KASLR_COMPRESSED_BOOT
+#समावेश "../../lib/kaslr.c"
 
 
 /* Only supporting at most 4 unusable memmap regions with kaslr */
-#define MAX_MEMMAP_REGIONS	4
+#घोषणा MAX_MEMMAP_REGIONS	4
 
-static bool memmap_too_large;
+अटल bool memmap_too_large;
 
 
 /*
  * Store memory limit: MAXMEM on 64-bit and KERNEL_IMAGE_SIZE on 32-bit.
  * It may be reduced by "mem=nn[KMG]" or "memmap=nn[KMG]" command line options.
  */
-static u64 mem_limit;
+अटल u64 mem_limit;
 
 /* Number of immovable memory regions */
-static int num_immovable_mem;
+अटल पूर्णांक num_immovable_mem;
 
-enum mem_avoid_index {
+क्रमागत mem_aव्योम_index अणु
 	MEM_AVOID_ZO_RANGE = 0,
 	MEM_AVOID_INITRD,
 	MEM_AVOID_CMDLINE,
@@ -99,231 +100,231 @@ enum mem_avoid_index {
 	MEM_AVOID_MEMMAP_BEGIN,
 	MEM_AVOID_MEMMAP_END = MEM_AVOID_MEMMAP_BEGIN + MAX_MEMMAP_REGIONS - 1,
 	MEM_AVOID_MAX,
-};
+पूर्ण;
 
-static struct mem_vector mem_avoid[MEM_AVOID_MAX];
+अटल काष्ठा mem_vector mem_aव्योम[MEM_AVOID_MAX];
 
-static bool mem_overlaps(struct mem_vector *one, struct mem_vector *two)
-{
-	/* Item one is entirely before item two. */
-	if (one->start + one->size <= two->start)
-		return false;
+अटल bool mem_overlaps(काष्ठा mem_vector *one, काष्ठा mem_vector *two)
+अणु
+	/* Item one is entirely beक्रमe item two. */
+	अगर (one->start + one->size <= two->start)
+		वापस false;
 	/* Item one is entirely after item two. */
-	if (one->start >= two->start + two->size)
-		return false;
-	return true;
-}
+	अगर (one->start >= two->start + two->size)
+		वापस false;
+	वापस true;
+पूर्ण
 
-char *skip_spaces(const char *str)
-{
-	while (isspace(*str))
+अक्षर *skip_spaces(स्थिर अक्षर *str)
+अणु
+	जबतक (है_खाली(*str))
 		++str;
-	return (char *)str;
-}
-#include "../../../../lib/ctype.c"
-#include "../../../../lib/cmdline.c"
+	वापस (अक्षर *)str;
+पूर्ण
+#समावेश "../../../../lib/ctype.c"
+#समावेश "../../../../lib/cmdline.c"
 
-enum parse_mode {
+क्रमागत parse_mode अणु
 	PARSE_MEMMAP,
 	PARSE_EFI,
-};
+पूर्ण;
 
-static int
-parse_memmap(char *p, u64 *start, u64 *size, enum parse_mode mode)
-{
-	char *oldp;
+अटल पूर्णांक
+parse_memmap(अक्षर *p, u64 *start, u64 *size, क्रमागत parse_mode mode)
+अणु
+	अक्षर *oldp;
 
-	if (!p)
-		return -EINVAL;
+	अगर (!p)
+		वापस -EINVAL;
 
-	/* We don't care about this option here */
-	if (!strncmp(p, "exactmap", 8))
-		return -EINVAL;
+	/* We करोn't care about this option here */
+	अगर (!म_भेदन(p, "exactmap", 8))
+		वापस -EINVAL;
 
 	oldp = p;
 	*size = memparse(p, &p);
-	if (p == oldp)
-		return -EINVAL;
+	अगर (p == oldp)
+		वापस -EINVAL;
 
-	switch (*p) {
-	case '#':
-	case '$':
-	case '!':
+	चयन (*p) अणु
+	हाल '#':
+	हाल '$':
+	हाल '!':
 		*start = memparse(p + 1, &p);
-		return 0;
-	case '@':
-		if (mode == PARSE_MEMMAP) {
+		वापस 0;
+	हाल '@':
+		अगर (mode == PARSE_MEMMAP) अणु
 			/*
-			 * memmap=nn@ss specifies usable region, should
+			 * memmap=nn@ss specअगरies usable region, should
 			 * be skipped
 			 */
 			*size = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			u64 flags;
 
 			/*
-			 * efi_fake_mem=nn@ss:attr the attr specifies
+			 * efi_fake_mem=nn@ss:attr the attr specअगरies
 			 * flags that might imply a soft-reservation.
 			 */
 			*start = memparse(p + 1, &p);
-			if (p && *p == ':') {
+			अगर (p && *p == ':') अणु
 				p++;
-				if (kstrtoull(p, 0, &flags) < 0)
+				अगर (kम_से_अदीर्घl(p, 0, &flags) < 0)
 					*size = 0;
-				else if (flags & EFI_MEMORY_SP)
-					return 0;
-			}
+				अन्यथा अगर (flags & EFI_MEMORY_SP)
+					वापस 0;
+			पूर्ण
 			*size = 0;
-		}
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		/*
-		 * If w/o offset, only size specified, memmap=nn[KMG] has the
+		 * If w/o offset, only size specअगरied, memmap=nn[KMG] has the
 		 * same behaviour as mem=nn[KMG]. It limits the max address
-		 * system can use. Region above the limit should be avoided.
+		 * प्रणाली can use. Region above the limit should be aव्योमed.
 		 */
 		*start = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void mem_avoid_memmap(enum parse_mode mode, char *str)
-{
-	static int i;
+अटल व्योम mem_aव्योम_memmap(क्रमागत parse_mode mode, अक्षर *str)
+अणु
+	अटल पूर्णांक i;
 
-	if (i >= MAX_MEMMAP_REGIONS)
-		return;
+	अगर (i >= MAX_MEMMAP_REGIONS)
+		वापस;
 
-	while (str && (i < MAX_MEMMAP_REGIONS)) {
-		int rc;
+	जबतक (str && (i < MAX_MEMMAP_REGIONS)) अणु
+		पूर्णांक rc;
 		u64 start, size;
-		char *k = strchr(str, ',');
+		अक्षर *k = म_अक्षर(str, ',');
 
-		if (k)
+		अगर (k)
 			*k++ = 0;
 
 		rc = parse_memmap(str, &start, &size, mode);
-		if (rc < 0)
-			break;
+		अगर (rc < 0)
+			अवरोध;
 		str = k;
 
-		if (start == 0) {
-			/* Store the specified memory limit if size > 0 */
-			if (size > 0 && size < mem_limit)
+		अगर (start == 0) अणु
+			/* Store the specअगरied memory limit अगर size > 0 */
+			अगर (size > 0 && size < mem_limit)
 				mem_limit = size;
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		mem_avoid[MEM_AVOID_MEMMAP_BEGIN + i].start = start;
-		mem_avoid[MEM_AVOID_MEMMAP_BEGIN + i].size = size;
+		mem_aव्योम[MEM_AVOID_MEMMAP_BEGIN + i].start = start;
+		mem_aव्योम[MEM_AVOID_MEMMAP_BEGIN + i].size = size;
 		i++;
-	}
+	पूर्ण
 
 	/* More than 4 memmaps, fail kaslr */
-	if ((i >= MAX_MEMMAP_REGIONS) && str)
+	अगर ((i >= MAX_MEMMAP_REGIONS) && str)
 		memmap_too_large = true;
-}
+पूर्ण
 
-/* Store the number of 1GB huge pages which users specified: */
-static unsigned long max_gb_huge_pages;
+/* Store the number of 1GB huge pages which users specअगरied: */
+अटल अचिन्हित दीर्घ max_gb_huge_pages;
 
-static void parse_gb_huge_pages(char *param, char *val)
-{
-	static bool gbpage_sz;
-	char *p;
+अटल व्योम parse_gb_huge_pages(अक्षर *param, अक्षर *val)
+अणु
+	अटल bool gbpage_sz;
+	अक्षर *p;
 
-	if (!strcmp(param, "hugepagesz")) {
+	अगर (!म_भेद(param, "hugepagesz")) अणु
 		p = val;
-		if (memparse(p, &p) != PUD_SIZE) {
+		अगर (memparse(p, &p) != PUD_SIZE) अणु
 			gbpage_sz = false;
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (gbpage_sz)
+		अगर (gbpage_sz)
 			warn("Repeatedly set hugeTLB page size of 1G!\n");
 		gbpage_sz = true;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!strcmp(param, "hugepages") && gbpage_sz) {
+	अगर (!म_भेद(param, "hugepages") && gbpage_sz) अणु
 		p = val;
-		max_gb_huge_pages = simple_strtoull(p, &p, 0);
-		return;
-	}
-}
+		max_gb_huge_pages = simple_म_से_अदीर्घl(p, &p, 0);
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void handle_mem_options(void)
-{
-	char *args = (char *)get_cmd_line_ptr();
-	size_t len;
-	char *tmp_cmdline;
-	char *param, *val;
+अटल व्योम handle_mem_options(व्योम)
+अणु
+	अक्षर *args = (अक्षर *)get_cmd_line_ptr();
+	माप_प्रकार len;
+	अक्षर *पंचांगp_cmdline;
+	अक्षर *param, *val;
 	u64 mem_size;
 
-	if (!args)
-		return;
+	अगर (!args)
+		वापस;
 
 	len = strnlen(args, COMMAND_LINE_SIZE-1);
-	tmp_cmdline = malloc(len + 1);
-	if (!tmp_cmdline)
+	पंचांगp_cmdline = दो_स्मृति(len + 1);
+	अगर (!पंचांगp_cmdline)
 		error("Failed to allocate space for tmp_cmdline");
 
-	memcpy(tmp_cmdline, args, len);
-	tmp_cmdline[len] = 0;
-	args = tmp_cmdline;
+	स_नकल(पंचांगp_cmdline, args, len);
+	पंचांगp_cmdline[len] = 0;
+	args = पंचांगp_cmdline;
 
 	/* Chew leading spaces */
 	args = skip_spaces(args);
 
-	while (*args) {
+	जबतक (*args) अणु
 		args = next_arg(args, &param, &val);
 		/* Stop at -- */
-		if (!val && strcmp(param, "--") == 0)
-			break;
+		अगर (!val && म_भेद(param, "--") == 0)
+			अवरोध;
 
-		if (!strcmp(param, "memmap")) {
-			mem_avoid_memmap(PARSE_MEMMAP, val);
-		} else if (IS_ENABLED(CONFIG_X86_64) && strstr(param, "hugepages")) {
+		अगर (!म_भेद(param, "memmap")) अणु
+			mem_aव्योम_memmap(PARSE_MEMMAP, val);
+		पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_X86_64) && म_माला(param, "hugepages")) अणु
 			parse_gb_huge_pages(param, val);
-		} else if (!strcmp(param, "mem")) {
-			char *p = val;
+		पूर्ण अन्यथा अगर (!म_भेद(param, "mem")) अणु
+			अक्षर *p = val;
 
-			if (!strcmp(p, "nopentium"))
-				continue;
+			अगर (!म_भेद(p, "nopentium"))
+				जारी;
 			mem_size = memparse(p, &p);
-			if (mem_size == 0)
-				break;
+			अगर (mem_size == 0)
+				अवरोध;
 
-			if (mem_size < mem_limit)
+			अगर (mem_size < mem_limit)
 				mem_limit = mem_size;
-		} else if (!strcmp(param, "efi_fake_mem")) {
-			mem_avoid_memmap(PARSE_EFI, val);
-		}
-	}
+		पूर्ण अन्यथा अगर (!म_भेद(param, "efi_fake_mem")) अणु
+			mem_aव्योम_memmap(PARSE_EFI, val);
+		पूर्ण
+	पूर्ण
 
-	free(tmp_cmdline);
-	return;
-}
+	मुक्त(पंचांगp_cmdline);
+	वापस;
+पूर्ण
 
 /*
  * In theory, KASLR can put the kernel anywhere in the range of [16M, MAXMEM)
  * on 64-bit, and [16M, KERNEL_IMAGE_SIZE) on 32-bit.
  *
- * The mem_avoid array is used to store the ranges that need to be avoided
- * when KASLR searches for an appropriate random address. We must avoid any
+ * The mem_aव्योम array is used to store the ranges that need to be aव्योमed
+ * when KASLR searches क्रम an appropriate अक्रमom address. We must aव्योम any
  * regions that are unsafe to overlap with during decompression, and other
  * things like the initrd, cmdline and boot_params. This comment seeks to
- * explain mem_avoid as clearly as possible since incorrect mem_avoid
+ * explain mem_aव्योम as clearly as possible since incorrect mem_aव्योम
  * memory ranges lead to really hard to debug boot failures.
  *
- * The initrd, cmdline, and boot_params are trivial to identify for
- * avoiding. They are MEM_AVOID_INITRD, MEM_AVOID_CMDLINE, and
+ * The initrd, cmdline, and boot_params are trivial to identअगरy क्रम
+ * aव्योमing. They are MEM_AVOID_INITRD, MEM_AVOID_CMDLINE, and
  * MEM_AVOID_BOOTPARAMS respectively below.
  *
- * What is not obvious how to avoid is the range of memory that is used
+ * What is not obvious how to aव्योम is the range of memory that is used
  * during decompression (MEM_AVOID_ZO_RANGE below). This range must cover
  * the compressed kernel (ZO) and its run space, which is used to extract
  * the uncompressed kernel (VO) and relocs.
@@ -335,7 +336,7 @@ static void handle_mem_options(void)
  * For additional background, the decompression calculations can be found
  * in header.S, and the memory diagram is based on the one found in misc.c.
  *
- * The following conditions are already enforced by the image layouts and
+ * The following conditions are alपढ़ोy enक्रमced by the image layouts and
  * associated code:
  *  - input + input_size >= output + output_size
  *  - kernel_total_size <= init_size
@@ -343,9 +344,9 @@ static void handle_mem_options(void)
  *  - output + init_size >= output + output_size
  *
  * (Note that kernel_total_size and output_size have no fundamental
- * relationship, but output_size is passed to choose_random_location
- * as a maximum of the two. The diagram is showing a case where
- * kernel_total_size is larger than output_size, but this case is
+ * relationship, but output_size is passed to choose_अक्रमom_location
+ * as a maximum of the two. The diagram is showing a हाल where
+ * kernel_total_size is larger than output_size, but this हाल is
  * handled by bumping output_size.)
  *
  * The above conditions can be illustrated by a diagram:
@@ -358,303 +359,303 @@ static void handle_mem_options(void)
  *                |                       |           |
  * output+init_size-ZO_INIT_SIZE  output+output_size  output+kernel_total_size
  *
- * [output, output+init_size) is the entire memory range used for
+ * [output, output+init_size) is the entire memory range used क्रम
  * extracting the compressed image.
  *
- * [output, output+kernel_total_size) is the range needed for the
+ * [output, output+kernel_total_size) is the range needed क्रम the
  * uncompressed kernel (VO) and its run size (bss, brk, etc).
  *
  * [output, output+output_size) is VO plus relocs (i.e. the entire
  * uncompressed payload contained by ZO). This is the area of the buffer
  * written to during decompression.
  *
- * [output+init_size-ZO_INIT_SIZE, output+init_size) is the worst-case
+ * [output+init_size-ZO_INIT_SIZE, output+init_size) is the worst-हाल
  * range of the copied ZO and decompression code. (i.e. the range
  * covered backwards of size ZO_INIT_SIZE, starting from output+init_size.)
  *
  * [input, input+input_size) is the original copied compressed image (ZO)
- * (i.e. it does not include its run size). This range must be avoided
- * because it contains the data used for decompression.
+ * (i.e. it करोes not include its run size). This range must be aव्योमed
+ * because it contains the data used क्रम decompression.
  *
- * [input+input_size, output+init_size) is [_text, _end) for ZO. This
- * range includes ZO's heap and stack, and must be avoided since it
- * performs the decompression.
+ * [input+input_size, output+init_size) is [_text, _end) क्रम ZO. This
+ * range includes ZO's heap and stack, and must be aव्योमed since it
+ * perक्रमms the decompression.
  *
- * Since the above two ranges need to be avoided and they are adjacent,
+ * Since the above two ranges need to be aव्योमed and they are adjacent,
  * they can be merged, resulting in: [input, output+init_size) which
  * becomes the MEM_AVOID_ZO_RANGE below.
  */
-static void mem_avoid_init(unsigned long input, unsigned long input_size,
-			   unsigned long output)
-{
-	unsigned long init_size = boot_params->hdr.init_size;
+अटल व्योम mem_aव्योम_init(अचिन्हित दीर्घ input, अचिन्हित दीर्घ input_size,
+			   अचिन्हित दीर्घ output)
+अणु
+	अचिन्हित दीर्घ init_size = boot_params->hdr.init_size;
 	u64 initrd_start, initrd_size;
-	unsigned long cmd_line, cmd_line_size;
+	अचिन्हित दीर्घ cmd_line, cmd_line_size;
 
 	/*
-	 * Avoid the region that is unsafe to overlap during
+	 * Aव्योम the region that is unsafe to overlap during
 	 * decompression.
 	 */
-	mem_avoid[MEM_AVOID_ZO_RANGE].start = input;
-	mem_avoid[MEM_AVOID_ZO_RANGE].size = (output + init_size) - input;
+	mem_aव्योम[MEM_AVOID_ZO_RANGE].start = input;
+	mem_aव्योम[MEM_AVOID_ZO_RANGE].size = (output + init_size) - input;
 
-	/* Avoid initrd. */
+	/* Aव्योम initrd. */
 	initrd_start  = (u64)boot_params->ext_ramdisk_image << 32;
 	initrd_start |= boot_params->hdr.ramdisk_image;
 	initrd_size  = (u64)boot_params->ext_ramdisk_size << 32;
 	initrd_size |= boot_params->hdr.ramdisk_size;
-	mem_avoid[MEM_AVOID_INITRD].start = initrd_start;
-	mem_avoid[MEM_AVOID_INITRD].size = initrd_size;
-	/* No need to set mapping for initrd, it will be handled in VO. */
+	mem_aव्योम[MEM_AVOID_INITRD].start = initrd_start;
+	mem_aव्योम[MEM_AVOID_INITRD].size = initrd_size;
+	/* No need to set mapping क्रम initrd, it will be handled in VO. */
 
-	/* Avoid kernel command line. */
+	/* Aव्योम kernel command line. */
 	cmd_line = get_cmd_line_ptr();
 	/* Calculate size of cmd_line. */
-	if (cmd_line) {
-		cmd_line_size = strnlen((char *)cmd_line, COMMAND_LINE_SIZE-1) + 1;
-		mem_avoid[MEM_AVOID_CMDLINE].start = cmd_line;
-		mem_avoid[MEM_AVOID_CMDLINE].size = cmd_line_size;
-	}
+	अगर (cmd_line) अणु
+		cmd_line_size = strnlen((अक्षर *)cmd_line, COMMAND_LINE_SIZE-1) + 1;
+		mem_aव्योम[MEM_AVOID_CMDLINE].start = cmd_line;
+		mem_aव्योम[MEM_AVOID_CMDLINE].size = cmd_line_size;
+	पूर्ण
 
-	/* Avoid boot parameters. */
-	mem_avoid[MEM_AVOID_BOOTPARAMS].start = (unsigned long)boot_params;
-	mem_avoid[MEM_AVOID_BOOTPARAMS].size = sizeof(*boot_params);
+	/* Aव्योम boot parameters. */
+	mem_aव्योम[MEM_AVOID_BOOTPARAMS].start = (अचिन्हित दीर्घ)boot_params;
+	mem_aव्योम[MEM_AVOID_BOOTPARAMS].size = माप(*boot_params);
 
-	/* We don't need to set a mapping for setup_data. */
+	/* We करोn't need to set a mapping क्रम setup_data. */
 
-	/* Mark the memmap regions we need to avoid */
+	/* Mark the memmap regions we need to aव्योम */
 	handle_mem_options();
 
 	/* Enumerate the immovable memory regions */
 	num_immovable_mem = count_immovable_mem_regions();
-}
+पूर्ण
 
 /*
- * Does this memory vector overlap a known avoided area? If so, record the
+ * Does this memory vector overlap a known aव्योमed area? If so, record the
  * overlap region with the lowest address.
  */
-static bool mem_avoid_overlap(struct mem_vector *img,
-			      struct mem_vector *overlap)
-{
-	int i;
-	struct setup_data *ptr;
+अटल bool mem_aव्योम_overlap(काष्ठा mem_vector *img,
+			      काष्ठा mem_vector *overlap)
+अणु
+	पूर्णांक i;
+	काष्ठा setup_data *ptr;
 	u64 earliest = img->start + img->size;
 	bool is_overlapping = false;
 
-	for (i = 0; i < MEM_AVOID_MAX; i++) {
-		if (mem_overlaps(img, &mem_avoid[i]) &&
-		    mem_avoid[i].start < earliest) {
-			*overlap = mem_avoid[i];
+	क्रम (i = 0; i < MEM_AVOID_MAX; i++) अणु
+		अगर (mem_overlaps(img, &mem_aव्योम[i]) &&
+		    mem_aव्योम[i].start < earliest) अणु
+			*overlap = mem_aव्योम[i];
 			earliest = overlap->start;
 			is_overlapping = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Avoid all entries in the setup_data linked list. */
-	ptr = (struct setup_data *)(unsigned long)boot_params->hdr.setup_data;
-	while (ptr) {
-		struct mem_vector avoid;
+	/* Aव्योम all entries in the setup_data linked list. */
+	ptr = (काष्ठा setup_data *)(अचिन्हित दीर्घ)boot_params->hdr.setup_data;
+	जबतक (ptr) अणु
+		काष्ठा mem_vector aव्योम;
 
-		avoid.start = (unsigned long)ptr;
-		avoid.size = sizeof(*ptr) + ptr->len;
+		aव्योम.start = (अचिन्हित दीर्घ)ptr;
+		aव्योम.size = माप(*ptr) + ptr->len;
 
-		if (mem_overlaps(img, &avoid) && (avoid.start < earliest)) {
-			*overlap = avoid;
+		अगर (mem_overlaps(img, &aव्योम) && (aव्योम.start < earliest)) अणु
+			*overlap = aव्योम;
 			earliest = overlap->start;
 			is_overlapping = true;
-		}
+		पूर्ण
 
-		if (ptr->type == SETUP_INDIRECT &&
-		    ((struct setup_indirect *)ptr->data)->type != SETUP_INDIRECT) {
-			avoid.start = ((struct setup_indirect *)ptr->data)->addr;
-			avoid.size = ((struct setup_indirect *)ptr->data)->len;
+		अगर (ptr->type == SETUP_INसूचीECT &&
+		    ((काष्ठा setup_indirect *)ptr->data)->type != SETUP_INसूचीECT) अणु
+			aव्योम.start = ((काष्ठा setup_indirect *)ptr->data)->addr;
+			aव्योम.size = ((काष्ठा setup_indirect *)ptr->data)->len;
 
-			if (mem_overlaps(img, &avoid) && (avoid.start < earliest)) {
-				*overlap = avoid;
+			अगर (mem_overlaps(img, &aव्योम) && (aव्योम.start < earliest)) अणु
+				*overlap = aव्योम;
 				earliest = overlap->start;
 				is_overlapping = true;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		ptr = (struct setup_data *)(unsigned long)ptr->next;
-	}
+		ptr = (काष्ठा setup_data *)(अचिन्हित दीर्घ)ptr->next;
+	पूर्ण
 
-	return is_overlapping;
-}
+	वापस is_overlapping;
+पूर्ण
 
-struct slot_area {
+काष्ठा slot_area अणु
 	u64 addr;
-	unsigned long num;
-};
+	अचिन्हित दीर्घ num;
+पूर्ण;
 
-#define MAX_SLOT_AREA 100
+#घोषणा MAX_SLOT_AREA 100
 
-static struct slot_area slot_areas[MAX_SLOT_AREA];
-static unsigned int slot_area_index;
-static unsigned long slot_max;
+अटल काष्ठा slot_area slot_areas[MAX_SLOT_AREA];
+अटल अचिन्हित पूर्णांक slot_area_index;
+अटल अचिन्हित दीर्घ slot_max;
 
-static void store_slot_info(struct mem_vector *region, unsigned long image_size)
-{
-	struct slot_area slot_area;
+अटल व्योम store_slot_info(काष्ठा mem_vector *region, अचिन्हित दीर्घ image_size)
+अणु
+	काष्ठा slot_area slot_area;
 
-	if (slot_area_index == MAX_SLOT_AREA)
-		return;
+	अगर (slot_area_index == MAX_SLOT_AREA)
+		वापस;
 
 	slot_area.addr = region->start;
 	slot_area.num = 1 + (region->size - image_size) / CONFIG_PHYSICAL_ALIGN;
 
 	slot_areas[slot_area_index++] = slot_area;
 	slot_max += slot_area.num;
-}
+पूर्ण
 
 /*
  * Skip as many 1GB huge pages as possible in the passed region
- * according to the number which users specified:
+ * according to the number which users specअगरied:
  */
-static void
-process_gb_huge_pages(struct mem_vector *region, unsigned long image_size)
-{
+अटल व्योम
+process_gb_huge_pages(काष्ठा mem_vector *region, अचिन्हित दीर्घ image_size)
+अणु
 	u64 pud_start, pud_end;
-	unsigned long gb_huge_pages;
-	struct mem_vector tmp;
+	अचिन्हित दीर्घ gb_huge_pages;
+	काष्ठा mem_vector पंचांगp;
 
-	if (!IS_ENABLED(CONFIG_X86_64) || !max_gb_huge_pages) {
+	अगर (!IS_ENABLED(CONFIG_X86_64) || !max_gb_huge_pages) अणु
 		store_slot_info(region, image_size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Are there any 1GB pages in the region? */
 	pud_start = ALIGN(region->start, PUD_SIZE);
 	pud_end = ALIGN_DOWN(region->start + region->size, PUD_SIZE);
 
 	/* No good 1GB huge pages found: */
-	if (pud_start >= pud_end) {
+	अगर (pud_start >= pud_end) अणु
 		store_slot_info(region, image_size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Check if the head part of the region is usable. */
-	if (pud_start >= region->start + image_size) {
-		tmp.start = region->start;
-		tmp.size = pud_start - region->start;
-		store_slot_info(&tmp, image_size);
-	}
+	/* Check अगर the head part of the region is usable. */
+	अगर (pud_start >= region->start + image_size) अणु
+		पंचांगp.start = region->start;
+		पंचांगp.size = pud_start - region->start;
+		store_slot_info(&पंचांगp, image_size);
+	पूर्ण
 
 	/* Skip the good 1GB pages. */
 	gb_huge_pages = (pud_end - pud_start) >> PUD_SHIFT;
-	if (gb_huge_pages > max_gb_huge_pages) {
+	अगर (gb_huge_pages > max_gb_huge_pages) अणु
 		pud_end = pud_start + (max_gb_huge_pages << PUD_SHIFT);
 		max_gb_huge_pages = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		max_gb_huge_pages -= gb_huge_pages;
-	}
+	पूर्ण
 
-	/* Check if the tail part of the region is usable. */
-	if (region->start + region->size >= pud_end + image_size) {
-		tmp.start = pud_end;
-		tmp.size = region->start + region->size - pud_end;
-		store_slot_info(&tmp, image_size);
-	}
-}
+	/* Check अगर the tail part of the region is usable. */
+	अगर (region->start + region->size >= pud_end + image_size) अणु
+		पंचांगp.start = pud_end;
+		पंचांगp.size = region->start + region->size - pud_end;
+		store_slot_info(&पंचांगp, image_size);
+	पूर्ण
+पूर्ण
 
-static u64 slots_fetch_random(void)
-{
-	unsigned long slot;
-	unsigned int i;
+अटल u64 slots_fetch_अक्रमom(व्योम)
+अणु
+	अचिन्हित दीर्घ slot;
+	अचिन्हित पूर्णांक i;
 
-	/* Handle case of no slots stored. */
-	if (slot_max == 0)
-		return 0;
+	/* Handle हाल of no slots stored. */
+	अगर (slot_max == 0)
+		वापस 0;
 
-	slot = kaslr_get_random_long("Physical") % slot_max;
+	slot = kaslr_get_अक्रमom_दीर्घ("Physical") % slot_max;
 
-	for (i = 0; i < slot_area_index; i++) {
-		if (slot >= slot_areas[i].num) {
+	क्रम (i = 0; i < slot_area_index; i++) अणु
+		अगर (slot >= slot_areas[i].num) अणु
 			slot -= slot_areas[i].num;
-			continue;
-		}
-		return slot_areas[i].addr + ((u64)slot * CONFIG_PHYSICAL_ALIGN);
-	}
+			जारी;
+		पूर्ण
+		वापस slot_areas[i].addr + ((u64)slot * CONFIG_PHYSICAL_ALIGN);
+	पूर्ण
 
-	if (i == slot_area_index)
-		debug_putstr("slots_fetch_random() failed!?\n");
-	return 0;
-}
+	अगर (i == slot_area_index)
+		debug_माला_दोtr("slots_fetch_random() failed!?\n");
+	वापस 0;
+पूर्ण
 
-static void __process_mem_region(struct mem_vector *entry,
-				 unsigned long minimum,
-				 unsigned long image_size)
-{
-	struct mem_vector region, overlap;
+अटल व्योम __process_mem_region(काष्ठा mem_vector *entry,
+				 अचिन्हित दीर्घ minimum,
+				 अचिन्हित दीर्घ image_size)
+अणु
+	काष्ठा mem_vector region, overlap;
 	u64 region_end;
 
-	/* Enforce minimum and memory limit. */
+	/* Enक्रमce minimum and memory limit. */
 	region.start = max_t(u64, entry->start, minimum);
 	region_end = min(entry->start + entry->size, mem_limit);
 
-	/* Give up if slot area array is full. */
-	while (slot_area_index < MAX_SLOT_AREA) {
-		/* Potentially raise address to meet alignment needs. */
+	/* Give up अगर slot area array is full. */
+	जबतक (slot_area_index < MAX_SLOT_AREA) अणु
+		/* Potentially उठाओ address to meet alignment needs. */
 		region.start = ALIGN(region.start, CONFIG_PHYSICAL_ALIGN);
 
-		/* Did we raise the address above the passed in memory entry? */
-		if (region.start > region_end)
-			return;
+		/* Did we उठाओ the address above the passed in memory entry? */
+		अगर (region.start > region_end)
+			वापस;
 
 		/* Reduce size by any delta from the original address. */
 		region.size = region_end - region.start;
 
-		/* Return if region can't contain decompressed kernel */
-		if (region.size < image_size)
-			return;
+		/* Return अगर region can't contain decompressed kernel */
+		अगर (region.size < image_size)
+			वापस;
 
-		/* If nothing overlaps, store the region and return. */
-		if (!mem_avoid_overlap(&region, &overlap)) {
+		/* If nothing overlaps, store the region and वापस. */
+		अगर (!mem_aव्योम_overlap(&region, &overlap)) अणु
 			process_gb_huge_pages(&region, image_size);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		/* Store beginning of region if holds at least image_size. */
-		if (overlap.start >= region.start + image_size) {
+		/* Store beginning of region अगर holds at least image_size. */
+		अगर (overlap.start >= region.start + image_size) अणु
 			region.size = overlap.start - region.start;
 			process_gb_huge_pages(&region, image_size);
-		}
+		पूर्ण
 
 		/* Clip off the overlapping region and start over. */
 		region.start = overlap.start + overlap.size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool process_mem_region(struct mem_vector *region,
-			       unsigned long minimum,
-			       unsigned long image_size)
-{
-	int i;
+अटल bool process_mem_region(काष्ठा mem_vector *region,
+			       अचिन्हित दीर्घ minimum,
+			       अचिन्हित दीर्घ image_size)
+अणु
+	पूर्णांक i;
 	/*
 	 * If no immovable memory found, or MEMORY_HOTREMOVE disabled,
 	 * use @region directly.
 	 */
-	if (!num_immovable_mem) {
+	अगर (!num_immovable_mem) अणु
 		__process_mem_region(region, minimum, image_size);
 
-		if (slot_area_index == MAX_SLOT_AREA) {
-			debug_putstr("Aborted e820/efi memmap scan (slot_areas full)!\n");
-			return true;
-		}
-		return false;
-	}
+		अगर (slot_area_index == MAX_SLOT_AREA) अणु
+			debug_माला_दोtr("Aborted e820/efi memmap scan (slot_areas full)!\n");
+			वापस true;
+		पूर्ण
+		वापस false;
+	पूर्ण
 
-#if defined(CONFIG_MEMORY_HOTREMOVE) && defined(CONFIG_ACPI)
+#अगर defined(CONFIG_MEMORY_HOTREMOVE) && defined(CONFIG_ACPI)
 	/*
-	 * If immovable memory found, filter the intersection between
+	 * If immovable memory found, filter the पूर्णांकersection between
 	 * immovable memory and @region.
 	 */
-	for (i = 0; i < num_immovable_mem; i++) {
+	क्रम (i = 0; i < num_immovable_mem; i++) अणु
 		u64 start, end, entry_end, region_end;
-		struct mem_vector entry;
+		काष्ठा mem_vector entry;
 
-		if (!mem_overlaps(region, &immovable_mem[i]))
-			continue;
+		अगर (!mem_overlaps(region, &immovable_mem[i]))
+			जारी;
 
 		start = immovable_mem[i].start;
 		end = start + immovable_mem[i].size;
@@ -666,150 +667,150 @@ static bool process_mem_region(struct mem_vector *region,
 
 		__process_mem_region(&entry, minimum, image_size);
 
-		if (slot_area_index == MAX_SLOT_AREA) {
-			debug_putstr("Aborted e820/efi memmap scan when walking immovable regions(slot_areas full)!\n");
-			return 1;
-		}
-	}
-#endif
-	return 0;
-}
+		अगर (slot_area_index == MAX_SLOT_AREA) अणु
+			debug_माला_दोtr("Aborted e820/efi memmap scan when walking immovable regions(slot_areas full)!\n");
+			वापस 1;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_EFI
+#अगर_घोषित CONFIG_EFI
 /*
- * Returns true if we processed the EFI memmap, which we prefer over the E820
- * table if it is available.
+ * Returns true अगर we processed the EFI memmap, which we prefer over the E820
+ * table अगर it is available.
  */
-static bool
-process_efi_entries(unsigned long minimum, unsigned long image_size)
-{
-	struct efi_info *e = &boot_params->efi_info;
+अटल bool
+process_efi_entries(अचिन्हित दीर्घ minimum, अचिन्हित दीर्घ image_size)
+अणु
+	काष्ठा efi_info *e = &boot_params->efi_info;
 	bool efi_mirror_found = false;
-	struct mem_vector region;
+	काष्ठा mem_vector region;
 	efi_memory_desc_t *md;
-	unsigned long pmap;
-	char *signature;
+	अचिन्हित दीर्घ pmap;
+	अक्षर *signature;
 	u32 nr_desc;
-	int i;
+	पूर्णांक i;
 
-	signature = (char *)&e->efi_loader_signature;
-	if (strncmp(signature, EFI32_LOADER_SIGNATURE, 4) &&
-	    strncmp(signature, EFI64_LOADER_SIGNATURE, 4))
-		return false;
+	signature = (अक्षर *)&e->efi_loader_signature;
+	अगर (म_भेदन(signature, EFI32_LOADER_SIGNATURE, 4) &&
+	    म_भेदन(signature, EFI64_LOADER_SIGNATURE, 4))
+		वापस false;
 
-#ifdef CONFIG_X86_32
-	/* Can't handle data above 4GB at this time */
-	if (e->efi_memmap_hi) {
+#अगर_घोषित CONFIG_X86_32
+	/* Can't handle data above 4GB at this समय */
+	अगर (e->efi_memmap_hi) अणु
 		warn("EFI memmap is above 4GB, can't be handled now on x86_32. EFI should be disabled.\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	pmap =  e->efi_memmap;
-#else
+#अन्यथा
 	pmap = (e->efi_memmap | ((__u64)e->efi_memmap_hi << 32));
-#endif
+#पूर्ण_अगर
 
 	nr_desc = e->efi_memmap_size / e->efi_memdesc_size;
-	for (i = 0; i < nr_desc; i++) {
+	क्रम (i = 0; i < nr_desc; i++) अणु
 		md = efi_early_memdesc_ptr(pmap, e->efi_memdesc_size, i);
-		if (md->attribute & EFI_MEMORY_MORE_RELIABLE) {
+		अगर (md->attribute & EFI_MEMORY_MORE_RELIABLE) अणु
 			efi_mirror_found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < nr_desc; i++) {
+	क्रम (i = 0; i < nr_desc; i++) अणु
 		md = efi_early_memdesc_ptr(pmap, e->efi_memdesc_size, i);
 
 		/*
-		 * Here we are more conservative in picking free memory than
+		 * Here we are more conservative in picking मुक्त memory than
 		 * the EFI spec allows:
 		 *
-		 * According to the spec, EFI_BOOT_SERVICES_{CODE|DATA} are also
-		 * free memory and thus available to place the kernel image into,
+		 * According to the spec, EFI_BOOT_SERVICES_अणुCODE|DATAपूर्ण are also
+		 * मुक्त memory and thus available to place the kernel image पूर्णांकo,
 		 * but in practice there's firmware where using that memory leads
 		 * to crashes.
 		 *
-		 * Only EFI_CONVENTIONAL_MEMORY is guaranteed to be free.
+		 * Only EFI_CONVENTIONAL_MEMORY is guaranteed to be मुक्त.
 		 */
-		if (md->type != EFI_CONVENTIONAL_MEMORY)
-			continue;
+		अगर (md->type != EFI_CONVENTIONAL_MEMORY)
+			जारी;
 
-		if (efi_soft_reserve_enabled() &&
+		अगर (efi_soft_reserve_enabled() &&
 		    (md->attribute & EFI_MEMORY_SP))
-			continue;
+			जारी;
 
-		if (efi_mirror_found &&
+		अगर (efi_mirror_found &&
 		    !(md->attribute & EFI_MEMORY_MORE_RELIABLE))
-			continue;
+			जारी;
 
 		region.start = md->phys_addr;
 		region.size = md->num_pages << EFI_PAGE_SHIFT;
-		if (process_mem_region(&region, minimum, image_size))
-			break;
-	}
-	return true;
-}
-#else
-static inline bool
-process_efi_entries(unsigned long minimum, unsigned long image_size)
-{
-	return false;
-}
-#endif
+		अगर (process_mem_region(&region, minimum, image_size))
+			अवरोध;
+	पूर्ण
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool
+process_efi_entries(अचिन्हित दीर्घ minimum, अचिन्हित दीर्घ image_size)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static void process_e820_entries(unsigned long minimum,
-				 unsigned long image_size)
-{
-	int i;
-	struct mem_vector region;
-	struct boot_e820_entry *entry;
+अटल व्योम process_e820_entries(अचिन्हित दीर्घ minimum,
+				 अचिन्हित दीर्घ image_size)
+अणु
+	पूर्णांक i;
+	काष्ठा mem_vector region;
+	काष्ठा boot_e820_entry *entry;
 
-	/* Verify potential e820 positions, appending to slots list. */
-	for (i = 0; i < boot_params->e820_entries; i++) {
+	/* Verअगरy potential e820 positions, appending to slots list. */
+	क्रम (i = 0; i < boot_params->e820_entries; i++) अणु
 		entry = &boot_params->e820_table[i];
 		/* Skip non-RAM entries. */
-		if (entry->type != E820_TYPE_RAM)
-			continue;
+		अगर (entry->type != E820_TYPE_RAM)
+			जारी;
 		region.start = entry->addr;
 		region.size = entry->size;
-		if (process_mem_region(&region, minimum, image_size))
-			break;
-	}
-}
+		अगर (process_mem_region(&region, minimum, image_size))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static unsigned long find_random_phys_addr(unsigned long minimum,
-					   unsigned long image_size)
-{
+अटल अचिन्हित दीर्घ find_अक्रमom_phys_addr(अचिन्हित दीर्घ minimum,
+					   अचिन्हित दीर्घ image_size)
+अणु
 	u64 phys_addr;
 
-	/* Bail out early if it's impossible to succeed. */
-	if (minimum + image_size > mem_limit)
-		return 0;
+	/* Bail out early अगर it's impossible to succeed. */
+	अगर (minimum + image_size > mem_limit)
+		वापस 0;
 
-	/* Check if we had too many memmaps. */
-	if (memmap_too_large) {
-		debug_putstr("Aborted memory entries scan (more than 4 memmap= args)!\n");
-		return 0;
-	}
+	/* Check अगर we had too many memmaps. */
+	अगर (memmap_too_large) अणु
+		debug_माला_दोtr("Aborted memory entries scan (more than 4 memmap= args)!\n");
+		वापस 0;
+	पूर्ण
 
-	if (!process_efi_entries(minimum, image_size))
+	अगर (!process_efi_entries(minimum, image_size))
 		process_e820_entries(minimum, image_size);
 
-	phys_addr = slots_fetch_random();
+	phys_addr = slots_fetch_अक्रमom();
 
-	/* Perform a final check to make sure the address is in range. */
-	if (phys_addr < minimum || phys_addr + image_size > mem_limit) {
+	/* Perक्रमm a final check to make sure the address is in range. */
+	अगर (phys_addr < minimum || phys_addr + image_size > mem_limit) अणु
 		warn("Invalid physical address chosen!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return (unsigned long)phys_addr;
-}
+	वापस (अचिन्हित दीर्घ)phys_addr;
+पूर्ण
 
-static unsigned long find_random_virt_addr(unsigned long minimum,
-					   unsigned long image_size)
-{
-	unsigned long slots, random_addr;
+अटल अचिन्हित दीर्घ find_अक्रमom_virt_addr(अचिन्हित दीर्घ minimum,
+					   अचिन्हित दीर्घ image_size)
+अणु
+	अचिन्हित दीर्घ slots, अक्रमom_addr;
 
 	/*
 	 * There are how many CONFIG_PHYSICAL_ALIGN-sized slots
@@ -818,40 +819,40 @@ static unsigned long find_random_virt_addr(unsigned long minimum,
 	 */
 	slots = 1 + (KERNEL_IMAGE_SIZE - minimum - image_size) / CONFIG_PHYSICAL_ALIGN;
 
-	random_addr = kaslr_get_random_long("Virtual") % slots;
+	अक्रमom_addr = kaslr_get_अक्रमom_दीर्घ("Virtual") % slots;
 
-	return random_addr * CONFIG_PHYSICAL_ALIGN + minimum;
-}
+	वापस अक्रमom_addr * CONFIG_PHYSICAL_ALIGN + minimum;
+पूर्ण
 
 /*
  * Since this function examines addresses much more numerically,
- * it takes the input and output pointers as 'unsigned long'.
+ * it takes the input and output poपूर्णांकers as 'unsigned long'.
  */
-void choose_random_location(unsigned long input,
-			    unsigned long input_size,
-			    unsigned long *output,
-			    unsigned long output_size,
-			    unsigned long *virt_addr)
-{
-	unsigned long random_addr, min_addr;
+व्योम choose_अक्रमom_location(अचिन्हित दीर्घ input,
+			    अचिन्हित दीर्घ input_size,
+			    अचिन्हित दीर्घ *output,
+			    अचिन्हित दीर्घ output_size,
+			    अचिन्हित दीर्घ *virt_addr)
+अणु
+	अचिन्हित दीर्घ अक्रमom_addr, min_addr;
 
-	if (cmdline_find_option_bool("nokaslr")) {
+	अगर (cmdline_find_option_bool("nokaslr")) अणु
 		warn("KASLR disabled: 'nokaslr' on cmdline.");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	boot_params->hdr.loadflags |= KASLR_FLAG;
 
-	if (IS_ENABLED(CONFIG_X86_32))
+	अगर (IS_ENABLED(CONFIG_X86_32))
 		mem_limit = KERNEL_IMAGE_SIZE;
-	else
+	अन्यथा
 		mem_limit = MAXMEM;
 
 	/* Record the various known unsafe memory ranges. */
-	mem_avoid_init(input, input_size, *output);
+	mem_aव्योम_init(input, input_size, *output);
 
 	/*
-	 * Low end of the randomization range should be the
+	 * Low end of the अक्रमomization range should be the
 	 * smaller of 512M or the initial kernel image
 	 * location:
 	 */
@@ -859,19 +860,19 @@ void choose_random_location(unsigned long input,
 	/* Make sure minimum is aligned. */
 	min_addr = ALIGN(min_addr, CONFIG_PHYSICAL_ALIGN);
 
-	/* Walk available memory entries to find a random address. */
-	random_addr = find_random_phys_addr(min_addr, output_size);
-	if (!random_addr) {
+	/* Walk available memory entries to find a अक्रमom address. */
+	अक्रमom_addr = find_अक्रमom_phys_addr(min_addr, output_size);
+	अगर (!अक्रमom_addr) अणु
 		warn("Physical KASLR disabled: no suitable memory region!");
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Update the new physical address location. */
-		if (*output != random_addr)
-			*output = random_addr;
-	}
+		अगर (*output != अक्रमom_addr)
+			*output = अक्रमom_addr;
+	पूर्ण
 
 
-	/* Pick random virtual address starting from LOAD_PHYSICAL_ADDR. */
-	if (IS_ENABLED(CONFIG_X86_64))
-		random_addr = find_random_virt_addr(LOAD_PHYSICAL_ADDR, output_size);
-	*virt_addr = random_addr;
-}
+	/* Pick अक्रमom भव address starting from LOAD_PHYSICAL_ADDR. */
+	अगर (IS_ENABLED(CONFIG_X86_64))
+		अक्रमom_addr = find_अक्रमom_virt_addr(LOAD_PHYSICAL_ADDR, output_size);
+	*virt_addr = अक्रमom_addr;
+पूर्ण

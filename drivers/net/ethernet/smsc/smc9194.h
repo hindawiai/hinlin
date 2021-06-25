@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*------------------------------------------------------------------------
  . smc9194.h
  . Copyright (C) 1996 by Erik Stahlman
@@ -5,49 +6,49 @@
  . This software may be used and distributed according to the terms
  . of the GNU General Public License, incorporated herein by reference.
  .
- . This file contains register information and access macros for
+ . This file contains रेजिस्टर inक्रमmation and access macros क्रम
  . the SMC91xxx chipset.
  .
- . Information contained in this file was obtained from the SMC91C94
- . manual from SMC.  To get a copy, if you really want one, you can find
- . information under www.smc.com in the components division.
+ . Inक्रमmation contained in this file was obtained from the SMC91C94
+ . manual from SMC.  To get a copy, अगर you really want one, you can find
+ . inक्रमmation under www.smc.com in the components भागision.
  . ( this thanks to advice from Donald Becker ).
  .
  . Authors
  . 	Erik Stahlman				( erik@vt.edu )
  .
  . History
- . 01/06/96		 Erik Stahlman   moved definitions here from main .c file
+ . 01/06/96		 Erik Stahlman   moved definitions here from मुख्य .c file
  . 01/19/96		 Erik Stahlman	  polished this up some, and added better
  .										  error handling
  .
  ---------------------------------------------------------------------------*/
-#ifndef _SMC9194_H_
-#define _SMC9194_H_
+#अगर_अघोषित _SMC9194_H_
+#घोषणा _SMC9194_H_
 
 /* I want some simple types */
 
-typedef unsigned char			byte;
-typedef unsigned short			word;
-typedef unsigned long int 		dword;
+प्रकार अचिन्हित अक्षर			byte;
+प्रकार अचिन्हित लघु			word;
+प्रकार अचिन्हित दीर्घ पूर्णांक 		dword;
 
 
-/* Because of bank switching, the SMC91xxx uses only 16 I/O ports */
+/* Because of bank चयनing, the SMC91xxx uses only 16 I/O ports */
 
-#define SMC_IO_EXTENT	16
+#घोषणा SMC_IO_EXTENT	16
 
 
 /*---------------------------------------------------------------
  .
- . A description of the SMC registers is probably in order here,
- . although for details, the SMC datasheet is invaluable.
+ . A description of the SMC रेजिस्टरs is probably in order here,
+ . although क्रम details, the SMC datasheet is invaluable.
  .
- . Basically, the chip has 4 banks of registers ( 0 to 3 ), which
- . are accessed by writing a number into the BANK_SELECT register
- . ( I also use a SMC_SELECT_BANK macro for this ).
+ . Basically, the chip has 4 banks of रेजिस्टरs ( 0 to 3 ), which
+ . are accessed by writing a number पूर्णांकo the BANK_SELECT रेजिस्टर
+ . ( I also use a SMC_SELECT_BANK macro क्रम this ).
  .
- . The banks are configured so that for most purposes, bank 2 is all
- . that is needed for simple run time tasks.
+ . The banks are configured so that क्रम most purposes, bank 2 is all
+ . that is needed क्रम simple run समय tasks.
  -----------------------------------------------------------------------*/
 
 /*
@@ -55,187 +56,187 @@ typedef unsigned long int 		dword;
  .
  .		yyyy yyyy 0000 00xx
  .		xx 		= bank number
- .		yyyy yyyy	= 0x33, for identification purposes.
+ .		yyyy yyyy	= 0x33, क्रम identअगरication purposes.
 */
-#define	BANK_SELECT		14
+#घोषणा	BANK_SELECT		14
 
 /* BANK 0  */
 
-#define	TCR 		0    	/* transmit control register */
-#define TCR_ENABLE	0x0001	/* if this is 1, we can transmit */
-#define TCR_FDUPLX    	0x0800  /* receive packets sent out */
-#define TCR_STP_SQET	0x1000	/* stop transmitting if Signal quality error */
-#define	TCR_MON_CNS	0x0400	/* monitors the carrier status */
-#define	TCR_PAD_ENABLE	0x0080	/* pads short packets to 64 bytes */
+#घोषणा	TCR 		0    	/* transmit control रेजिस्टर */
+#घोषणा TCR_ENABLE	0x0001	/* अगर this is 1, we can transmit */
+#घोषणा TCR_FDUPLX    	0x0800  /* receive packets sent out */
+#घोषणा TCR_STP_SQET	0x1000	/* stop transmitting अगर Signal quality error */
+#घोषणा	TCR_MON_CNS	0x0400	/* monitors the carrier status */
+#घोषणा	TCR_PAD_ENABLE	0x0080	/* pads लघु packets to 64 bytes */
 
-#define	TCR_CLEAR	0	/* do NOTHING */
-/* the normal settings for the TCR register : */
-/* QUESTION: do I want to enable padding of short packets ? */
-#define	TCR_NORMAL  	TCR_ENABLE
+#घोषणा	TCR_CLEAR	0	/* करो NOTHING */
+/* the normal settings क्रम the TCR रेजिस्टर : */
+/* QUESTION: करो I want to enable padding of लघु packets ? */
+#घोषणा	TCR_NORMAL  	TCR_ENABLE
 
 
-#define EPH_STATUS	2
-#define ES_LINK_OK	0x4000	/* is the link integrity ok ? */
+#घोषणा EPH_STATUS	2
+#घोषणा ES_LINK_OK	0x4000	/* is the link पूर्णांकegrity ok ? */
 
-#define	RCR		4
-#define RCR_SOFTRESET	0x8000 	/* resets the chip */
-#define	RCR_STRIP_CRC	0x200	/* strips CRC */
-#define RCR_ENABLE	0x100	/* IFF this is set, we can receive packets */
-#define RCR_ALMUL	0x4 	/* receive all multicast packets */
-#define	RCR_PROMISC	0x2	/* enable promiscuous mode */
+#घोषणा	RCR		4
+#घोषणा RCR_SOFTRESET	0x8000 	/* resets the chip */
+#घोषणा	RCR_STRIP_CRC	0x200	/* strips CRC */
+#घोषणा RCR_ENABLE	0x100	/* IFF this is set, we can receive packets */
+#घोषणा RCR_ALMUL	0x4 	/* receive all multicast packets */
+#घोषणा	RCR_PROMISC	0x2	/* enable promiscuous mode */
 
-/* the normal settings for the RCR register : */
-#define	RCR_NORMAL	(RCR_STRIP_CRC | RCR_ENABLE)
-#define RCR_CLEAR	0x0		/* set it to a base state */
+/* the normal settings क्रम the RCR रेजिस्टर : */
+#घोषणा	RCR_NORMAL	(RCR_STRIP_CRC | RCR_ENABLE)
+#घोषणा RCR_CLEAR	0x0		/* set it to a base state */
 
-#define	COUNTER		6
-#define	MIR		8
-#define	MCR		10
+#घोषणा	COUNTER		6
+#घोषणा	MIR		8
+#घोषणा	MCR		10
 /* 12 is reserved */
 
 /* BANK 1 */
-#define CONFIG			0
-#define CFG_AUI_SELECT	 	0x100
-#define	BASE			2
-#define	ADDR0			4
-#define	ADDR1			6
-#define	ADDR2			8
-#define	GENERAL			10
-#define	CONTROL			12
-#define	CTL_POWERDOWN		0x2000
-#define	CTL_LE_ENABLE		0x80
-#define	CTL_CR_ENABLE		0x40
-#define	CTL_TE_ENABLE		0x0020
-#define CTL_AUTO_RELEASE	0x0800
-#define	CTL_EPROM_ACCESS	0x0003 /* high if Eprom is being read */
+#घोषणा CONFIG			0
+#घोषणा CFG_AUI_SELECT	 	0x100
+#घोषणा	BASE			2
+#घोषणा	ADDR0			4
+#घोषणा	ADDR1			6
+#घोषणा	ADDR2			8
+#घोषणा	GENERAL			10
+#घोषणा	CONTROL			12
+#घोषणा	CTL_POWERDOWN		0x2000
+#घोषणा	CTL_LE_ENABLE		0x80
+#घोषणा	CTL_CR_ENABLE		0x40
+#घोषणा	CTL_TE_ENABLE		0x0020
+#घोषणा CTL_AUTO_RELEASE	0x0800
+#घोषणा	CTL_EPROM_ACCESS	0x0003 /* high अगर Eprom is being पढ़ो */
 
 /* BANK 2 */
-#define MMU_CMD		0
-#define MC_BUSY		1	/* only readable bit in the register */
-#define MC_NOP		0
-#define	MC_ALLOC	0x20  	/* or with number of 256 byte packets */
-#define	MC_RESET	0x40
-#define	MC_REMOVE	0x60  	/* remove the current rx packet */
-#define MC_RELEASE  	0x80  	/* remove and release the current rx packet */
-#define MC_FREEPKT  	0xA0  	/* Release packet in PNR register */
-#define MC_ENQUEUE	0xC0 	/* Enqueue the packet for transmit */
+#घोषणा MMU_CMD		0
+#घोषणा MC_BUSY		1	/* only पढ़ोable bit in the रेजिस्टर */
+#घोषणा MC_NOP		0
+#घोषणा	MC_ALLOC	0x20  	/* or with number of 256 byte packets */
+#घोषणा	MC_RESET	0x40
+#घोषणा	MC_REMOVE	0x60  	/* हटाओ the current rx packet */
+#घोषणा MC_RELEASE  	0x80  	/* हटाओ and release the current rx packet */
+#घोषणा MC_FREEPKT  	0xA0  	/* Release packet in PNR रेजिस्टर */
+#घोषणा MC_ENQUEUE	0xC0 	/* Enqueue the packet क्रम transmit */
 
-#define	PNR_ARR		2
-#define FIFO_PORTS	4
+#घोषणा	PNR_ARR		2
+#घोषणा FIFO_PORTS	4
 
-#define FP_RXEMPTY  0x8000
-#define FP_TXEMPTY  0x80
+#घोषणा FP_RXEMPTY  0x8000
+#घोषणा FP_TXEMPTY  0x80
 
-#define	POINTER		6
-#define PTR_READ	0x2000
-#define	PTR_RCV		0x8000
-#define	PTR_AUTOINC 	0x4000
-#define PTR_AUTO_INC	0x0040
+#घोषणा	POINTER		6
+#घोषणा PTR_READ	0x2000
+#घोषणा	PTR_RCV		0x8000
+#घोषणा	PTR_AUTOINC 	0x4000
+#घोषणा PTR_AUTO_INC	0x0040
 
-#define	DATA_1		8
-#define	DATA_2		10
-#define	INTERRUPT	12
+#घोषणा	DATA_1		8
+#घोषणा	DATA_2		10
+#घोषणा	INTERRUPT	12
 
-#define INT_MASK	13
-#define IM_RCV_INT	0x1
-#define	IM_TX_INT	0x2
-#define	IM_TX_EMPTY_INT	0x4
-#define	IM_ALLOC_INT	0x8
-#define	IM_RX_OVRN_INT	0x10
-#define	IM_EPH_INT	0x20
-#define	IM_ERCV_INT	0x40 /* not on SMC9192 */
+#घोषणा INT_MASK	13
+#घोषणा IM_RCV_INT	0x1
+#घोषणा	IM_TX_INT	0x2
+#घोषणा	IM_TX_EMPTY_INT	0x4
+#घोषणा	IM_ALLOC_INT	0x8
+#घोषणा	IM_RX_OVRN_INT	0x10
+#घोषणा	IM_EPH_INT	0x20
+#घोषणा	IM_ERCV_INT	0x40 /* not on SMC9192 */
 
 /* BANK 3 */
-#define	MULTICAST1	0
-#define	MULTICAST2	2
-#define	MULTICAST3	4
-#define	MULTICAST4	6
-#define	MGMT		8
-#define	REVISION	10 /* ( hi: chip id   low: rev # ) */
+#घोषणा	MULTICAST1	0
+#घोषणा	MULTICAST2	2
+#घोषणा	MULTICAST3	4
+#घोषणा	MULTICAST4	6
+#घोषणा	MGMT		8
+#घोषणा	REVISION	10 /* ( hi: chip id   low: rev # ) */
 
 
 /* this is NOT on SMC9192 */
-#define	ERCV		12
+#घोषणा	ERCV		12
 
-#define CHIP_9190	3
-#define CHIP_9194	4
-#define CHIP_9195	5
-#define CHIP_91100	7
+#घोषणा CHIP_9190	3
+#घोषणा CHIP_9194	4
+#घोषणा CHIP_9195	5
+#घोषणा CHIP_91100	7
 
-static const char * chip_ids[ 15 ] =  {
-	NULL, NULL, NULL,
+अटल स्थिर अक्षर * chip_ids[ 15 ] =  अणु
+	शून्य, शून्य, शून्य,
 	/* 3 */ "SMC91C90/91C92",
 	/* 4 */ "SMC91C94",
 	/* 5 */ "SMC91C95",
-	NULL,
+	शून्य,
 	/* 7 */ "SMC91C100",
 	/* 8 */ "SMC91C100FD",
-	NULL, NULL, NULL,
-	NULL, NULL, NULL};
+	शून्य, शून्य, शून्य,
+	शून्य, शून्य, शून्यपूर्ण;
 
 /*
  . Transmit status bits
 */
-#define TS_SUCCESS 0x0001
-#define TS_LOSTCAR 0x0400
-#define TS_LATCOL  0x0200
-#define TS_16COL   0x0010
+#घोषणा TS_SUCCESS 0x0001
+#घोषणा TS_LOSTCAR 0x0400
+#घोषणा TS_LATCOL  0x0200
+#घोषणा TS_16COL   0x0010
 
 /*
  . Receive status bits
 */
-#define RS_ALGNERR	0x8000
-#define RS_BADCRC	0x2000
-#define RS_ODDFRAME	0x1000
-#define RS_TOOLONG	0x0800
-#define RS_TOOSHORT	0x0400
-#define RS_MULTICAST	0x0001
-#define RS_ERRORS	(RS_ALGNERR | RS_BADCRC | RS_TOOLONG | RS_TOOSHORT)
+#घोषणा RS_ALGNERR	0x8000
+#घोषणा RS_BADCRC	0x2000
+#घोषणा RS_ODDFRAME	0x1000
+#घोषणा RS_TOOLONG	0x0800
+#घोषणा RS_TOOSHORT	0x0400
+#घोषणा RS_MULTICAST	0x0001
+#घोषणा RS_ERRORS	(RS_ALGNERR | RS_BADCRC | RS_TOOLONG | RS_TOOSHORT)
 
-static const char * interfaces[ 2 ] = { "TP", "AUI" };
+अटल स्थिर अक्षर * पूर्णांकerfaces[ 2 ] = अणु "TP", "AUI" पूर्ण;
 
 /*-------------------------------------------------------------------------
- .  I define some macros to make it easier to do somewhat common
+ .  I define some macros to make it easier to करो somewhat common
  . or slightly complicated, repeated tasks.
  --------------------------------------------------------------------------*/
 
-/* select a register bank, 0 to 3  */
+/* select a रेजिस्टर bank, 0 to 3  */
 
-#define SMC_SELECT_BANK(x)  { outw( x, ioaddr + BANK_SELECT ); }
+#घोषणा SMC_SELECT_BANK(x)  अणु outw( x, ioaddr + BANK_SELECT ); पूर्ण
 
-/* define a small delay for the reset */
-#define SMC_DELAY() { inw( ioaddr + RCR );\
+/* define a small delay क्रम the reset */
+#घोषणा SMC_DELAY() अणु inw( ioaddr + RCR );\
 			inw( ioaddr + RCR );\
-			inw( ioaddr + RCR );  }
+			inw( ioaddr + RCR );  पूर्ण
 
-/* this enables an interrupt in the interrupt mask register */
-#define SMC_ENABLE_INT(x) {\
-		unsigned char mask;\
+/* this enables an पूर्णांकerrupt in the पूर्णांकerrupt mask रेजिस्टर */
+#घोषणा SMC_ENABLE_INT(x) अणु\
+		अचिन्हित अक्षर mask;\
 		SMC_SELECT_BANK(2);\
 		mask = inb( ioaddr + INT_MASK );\
 		mask |= (x);\
 		outb( mask, ioaddr + INT_MASK ); \
-}
+पूर्ण
 
-/* this disables an interrupt from the interrupt mask register */
+/* this disables an पूर्णांकerrupt from the पूर्णांकerrupt mask रेजिस्टर */
 
-#define SMC_DISABLE_INT(x) {\
-		unsigned char mask;\
+#घोषणा SMC_DISABLE_INT(x) अणु\
+		अचिन्हित अक्षर mask;\
 		SMC_SELECT_BANK(2);\
 		mask = inb( ioaddr + INT_MASK );\
 		mask &= ~(x);\
 		outb( mask, ioaddr + INT_MASK ); \
-}
+पूर्ण
 
 /*----------------------------------------------------------------------
- . Define the interrupts that I want to receive from the card
+ . Define the पूर्णांकerrupts that I want to receive from the card
  .
  . I want:
- .  IM_EPH_INT, for nasty errors
- .  IM_RCV_INT, for happy received packets
+ .  IM_EPH_INT, क्रम nasty errors
+ .  IM_RCV_INT, क्रम happy received packets
  .  IM_RX_OVRN_INT, because I have to kick the receiver
  --------------------------------------------------------------------------*/
-#define SMC_INTERRUPT_MASK   (IM_EPH_INT | IM_RX_OVRN_INT | IM_RCV_INT)
+#घोषणा SMC_INTERRUPT_MASK   (IM_EPH_INT | IM_RX_OVRN_INT | IM_RCV_INT)
 
-#endif  /* _SMC_9194_H_ */
+#पूर्ण_अगर  /* _SMC_9194_H_ */
 

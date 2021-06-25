@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/pxa3xx-ulpi.c
  *
- * code specific to pxa3xx aka Monahans
+ * code specअगरic to pxa3xx aka Monahans
  *
  * Copyright (C) 2010 CompuLab Ltd.
  *
@@ -10,375 +11,375 @@
  *             initial version: pxa310 USB Host mode support
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/usb.h>
-#include <linux/usb/otg.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/otg.h>
 
-#include <mach/hardware.h>
-#include "regs-u2d.h"
-#include <linux/platform_data/usb-pxa3xx-ulpi.h>
+#समावेश <mach/hardware.h>
+#समावेश "regs-u2d.h"
+#समावेश <linux/platक्रमm_data/usb-pxa3xx-ulpi.h>
 
-struct pxa3xx_u2d_ulpi {
-	struct clk		*clk;
-	void __iomem		*mmio_base;
+काष्ठा pxa3xx_u2d_ulpi अणु
+	काष्ठा clk		*clk;
+	व्योम __iomem		*mmio_base;
 
-	struct usb_phy		*otg;
-	unsigned int		ulpi_mode;
-};
+	काष्ठा usb_phy		*otg;
+	अचिन्हित पूर्णांक		ulpi_mode;
+पूर्ण;
 
-static struct pxa3xx_u2d_ulpi *u2d;
+अटल काष्ठा pxa3xx_u2d_ulpi *u2d;
 
-static inline u32 u2d_readl(u32 reg)
-{
-	return __raw_readl(u2d->mmio_base + reg);
-}
+अटल अंतरभूत u32 u2d_पढ़ोl(u32 reg)
+अणु
+	वापस __raw_पढ़ोl(u2d->mmio_base + reg);
+पूर्ण
 
-static inline void u2d_writel(u32 reg, u32 val)
-{
-	__raw_writel(val, u2d->mmio_base + reg);
-}
+अटल अंतरभूत व्योम u2d_ग_लिखोl(u32 reg, u32 val)
+अणु
+	__raw_ग_लिखोl(val, u2d->mmio_base + reg);
+पूर्ण
 
-#if defined(CONFIG_PXA310_ULPI)
-enum u2d_ulpi_phy_mode {
+#अगर defined(CONFIG_PXA310_ULPI)
+क्रमागत u2d_ulpi_phy_mode अणु
 	SYNCH		= 0,
 	CARKIT		= (1 << 0),
 	SER_3PIN	= (1 << 1),
 	SER_6PIN	= (1 << 2),
 	LOWPOWER	= (1 << 3),
-};
+पूर्ण;
 
-static inline enum u2d_ulpi_phy_mode pxa310_ulpi_get_phymode(void)
-{
-	return (u2d_readl(U2DOTGUSR) >> 28) & 0xF;
-}
+अटल अंतरभूत क्रमागत u2d_ulpi_phy_mode pxa310_ulpi_get_phymode(व्योम)
+अणु
+	वापस (u2d_पढ़ोl(U2DOTGUSR) >> 28) & 0xF;
+पूर्ण
 
-static int pxa310_ulpi_poll(void)
-{
-	int timeout = 50000;
+अटल पूर्णांक pxa310_ulpi_poll(व्योम)
+अणु
+	पूर्णांक समयout = 50000;
 
-	while (timeout--) {
-		if (!(u2d_readl(U2DOTGUCR) & U2DOTGUCR_RUN))
-			return 0;
+	जबतक (समयout--) अणु
+		अगर (!(u2d_पढ़ोl(U2DOTGUCR) & U2DOTGUCR_RUN))
+			वापस 0;
 
 		cpu_relax();
-	}
+	पूर्ण
 
 	pr_warn("%s: ULPI access timed out!\n", __func__);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int pxa310_ulpi_read(struct usb_phy *otg, u32 reg)
-{
-	int err;
+अटल पूर्णांक pxa310_ulpi_पढ़ो(काष्ठा usb_phy *otg, u32 reg)
+अणु
+	पूर्णांक err;
 
-	if (pxa310_ulpi_get_phymode() != SYNCH) {
+	अगर (pxa310_ulpi_get_phymode() != SYNCH) अणु
 		pr_warn("%s: PHY is not in SYNCH mode!\n", __func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	u2d_writel(U2DOTGUCR, U2DOTGUCR_RUN | U2DOTGUCR_RNW | (reg << 16));
+	u2d_ग_लिखोl(U2DOTGUCR, U2DOTGUCR_RUN | U2DOTGUCR_RNW | (reg << 16));
 	msleep(5);
 
 	err = pxa310_ulpi_poll();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return u2d_readl(U2DOTGUCR) & U2DOTGUCR_RDATA;
-}
+	वापस u2d_पढ़ोl(U2DOTGUCR) & U2DOTGUCR_RDATA;
+पूर्ण
 
-static int pxa310_ulpi_write(struct usb_phy *otg, u32 val, u32 reg)
-{
-	if (pxa310_ulpi_get_phymode() != SYNCH) {
+अटल पूर्णांक pxa310_ulpi_ग_लिखो(काष्ठा usb_phy *otg, u32 val, u32 reg)
+अणु
+	अगर (pxa310_ulpi_get_phymode() != SYNCH) अणु
 		pr_warn("%s: PHY is not in SYNCH mode!\n", __func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	u2d_writel(U2DOTGUCR, U2DOTGUCR_RUN | (reg << 16) | (val << 8));
+	u2d_ग_लिखोl(U2DOTGUCR, U2DOTGUCR_RUN | (reg << 16) | (val << 8));
 	msleep(5);
 
-	return pxa310_ulpi_poll();
-}
+	वापस pxa310_ulpi_poll();
+पूर्ण
 
-struct usb_phy_io_ops pxa310_ulpi_access_ops = {
-	.read	= pxa310_ulpi_read,
-	.write	= pxa310_ulpi_write,
-};
+काष्ठा usb_phy_io_ops pxa310_ulpi_access_ops = अणु
+	.पढ़ो	= pxa310_ulpi_पढ़ो,
+	.ग_लिखो	= pxa310_ulpi_ग_लिखो,
+पूर्ण;
 
-static void pxa310_otg_transceiver_rtsm(void)
-{
-	u32 u2dotgcr;
+अटल व्योम pxa310_otg_transceiver_rtsm(व्योम)
+अणु
+	u32 u2करोtgcr;
 
 	/* put PHY to sync mode */
-	u2dotgcr = u2d_readl(U2DOTGCR);
-	u2dotgcr |=  U2DOTGCR_RTSM | U2DOTGCR_UTMID;
-	u2d_writel(U2DOTGCR, u2dotgcr);
+	u2करोtgcr = u2d_पढ़ोl(U2DOTGCR);
+	u2करोtgcr |=  U2DOTGCR_RTSM | U2DOTGCR_UTMID;
+	u2d_ग_लिखोl(U2DOTGCR, u2करोtgcr);
 	msleep(10);
 
 	/* setup OTG sync mode */
-	u2dotgcr = u2d_readl(U2DOTGCR);
-	u2dotgcr |= U2DOTGCR_ULAF;
-	u2dotgcr &= ~(U2DOTGCR_SMAF | U2DOTGCR_CKAF);
-	u2d_writel(U2DOTGCR, u2dotgcr);
-}
+	u2करोtgcr = u2d_पढ़ोl(U2DOTGCR);
+	u2करोtgcr |= U2DOTGCR_ULAF;
+	u2करोtgcr &= ~(U2DOTGCR_SMAF | U2DOTGCR_CKAF);
+	u2d_ग_लिखोl(U2DOTGCR, u2करोtgcr);
+पूर्ण
 
-static int pxa310_start_otg_host_transcvr(struct usb_bus *host)
-{
-	int err;
+अटल पूर्णांक pxa310_start_otg_host_transcvr(काष्ठा usb_bus *host)
+अणु
+	पूर्णांक err;
 
 	pxa310_otg_transceiver_rtsm();
 
 	err = usb_phy_init(u2d->otg);
-	if (err) {
+	अगर (err) अणु
 		pr_err("OTG transceiver init failed");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = otg_set_vbus(u2d->otg->otg, 1);
-	if (err) {
+	अगर (err) अणु
 		pr_err("OTG transceiver VBUS set failed");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = otg_set_host(u2d->otg->otg, host);
-	if (err)
+	अगर (err)
 		pr_err("OTG transceiver Host mode set failed");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pxa310_start_otg_hc(struct usb_bus *host)
-{
-	u32 u2dotgcr;
-	int err;
+अटल पूर्णांक pxa310_start_otg_hc(काष्ठा usb_bus *host)
+अणु
+	u32 u2करोtgcr;
+	पूर्णांक err;
 
 	/* disable USB device controller */
-	u2d_writel(U2DCR, u2d_readl(U2DCR) & ~U2DCR_UDE);
-	u2d_writel(U2DOTGCR, u2d_readl(U2DOTGCR) | U2DOTGCR_UTMID);
-	u2d_writel(U2DOTGICR, u2d_readl(U2DOTGICR) & ~0x37F7F);
+	u2d_ग_लिखोl(U2DCR, u2d_पढ़ोl(U2DCR) & ~U2DCR_UDE);
+	u2d_ग_लिखोl(U2DOTGCR, u2d_पढ़ोl(U2DOTGCR) | U2DOTGCR_UTMID);
+	u2d_ग_लिखोl(U2DOTGICR, u2d_पढ़ोl(U2DOTGICR) & ~0x37F7F);
 
 	err = pxa310_start_otg_host_transcvr(host);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* set xceiver mode */
-	if (u2d->ulpi_mode & ULPI_IC_6PIN_SERIAL)
-		u2d_writel(U2DP3CR, u2d_readl(U2DP3CR) & ~U2DP3CR_P2SS);
-	else if (u2d->ulpi_mode & ULPI_IC_3PIN_SERIAL)
-		u2d_writel(U2DP3CR, u2d_readl(U2DP3CR) | U2DP3CR_P2SS);
+	अगर (u2d->ulpi_mode & ULPI_IC_6PIN_SERIAL)
+		u2d_ग_लिखोl(U2DP3CR, u2d_पढ़ोl(U2DP3CR) & ~U2DP3CR_P2SS);
+	अन्यथा अगर (u2d->ulpi_mode & ULPI_IC_3PIN_SERIAL)
+		u2d_ग_लिखोl(U2DP3CR, u2d_पढ़ोl(U2DP3CR) | U2DP3CR_P2SS);
 
 	/* start OTG host controller */
-	u2dotgcr = u2d_readl(U2DOTGCR) | U2DOTGCR_SMAF;
-	u2d_writel(U2DOTGCR, u2dotgcr & ~(U2DOTGCR_ULAF | U2DOTGCR_CKAF));
+	u2करोtgcr = u2d_पढ़ोl(U2DOTGCR) | U2DOTGCR_SMAF;
+	u2d_ग_लिखोl(U2DOTGCR, u2करोtgcr & ~(U2DOTGCR_ULAF | U2DOTGCR_CKAF));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pxa310_stop_otg_hc(void)
-{
+अटल व्योम pxa310_stop_otg_hc(व्योम)
+अणु
 	pxa310_otg_transceiver_rtsm();
 
-	otg_set_host(u2d->otg->otg, NULL);
+	otg_set_host(u2d->otg->otg, शून्य);
 	otg_set_vbus(u2d->otg->otg, 0);
-	usb_phy_shutdown(u2d->otg);
-}
+	usb_phy_shutकरोwn(u2d->otg);
+पूर्ण
 
-static void pxa310_u2d_setup_otg_hc(void)
-{
-	u32 u2dotgcr;
+अटल व्योम pxa310_u2d_setup_otg_hc(व्योम)
+अणु
+	u32 u2करोtgcr;
 
-	u2dotgcr = u2d_readl(U2DOTGCR);
-	u2dotgcr |= U2DOTGCR_ULAF | U2DOTGCR_UTMID;
-	u2dotgcr &= ~(U2DOTGCR_SMAF | U2DOTGCR_CKAF);
-	u2d_writel(U2DOTGCR, u2dotgcr);
+	u2करोtgcr = u2d_पढ़ोl(U2DOTGCR);
+	u2करोtgcr |= U2DOTGCR_ULAF | U2DOTGCR_UTMID;
+	u2करोtgcr &= ~(U2DOTGCR_SMAF | U2DOTGCR_CKAF);
+	u2d_ग_लिखोl(U2DOTGCR, u2करोtgcr);
 	msleep(5);
-	u2d_writel(U2DOTGCR, u2dotgcr | U2DOTGCR_ULE);
+	u2d_ग_लिखोl(U2DOTGCR, u2करोtgcr | U2DOTGCR_ULE);
 	msleep(5);
-	u2d_writel(U2DOTGICR, u2d_readl(U2DOTGICR) & ~0x37F7F);
-}
+	u2d_ग_लिखोl(U2DOTGICR, u2d_पढ़ोl(U2DOTGICR) & ~0x37F7F);
+पूर्ण
 
-static int pxa310_otg_init(struct pxa3xx_u2d_platform_data *pdata)
-{
-	unsigned int ulpi_mode = ULPI_OTG_DRVVBUS;
+अटल पूर्णांक pxa310_otg_init(काष्ठा pxa3xx_u2d_platक्रमm_data *pdata)
+अणु
+	अचिन्हित पूर्णांक ulpi_mode = ULPI_OTG_DRVVBUS;
 
-	if (pdata) {
-		if (pdata->ulpi_mode & ULPI_SER_6PIN)
+	अगर (pdata) अणु
+		अगर (pdata->ulpi_mode & ULPI_SER_6PIN)
 			ulpi_mode |= ULPI_IC_6PIN_SERIAL;
-		else if (pdata->ulpi_mode & ULPI_SER_3PIN)
+		अन्यथा अगर (pdata->ulpi_mode & ULPI_SER_3PIN)
 			ulpi_mode |= ULPI_IC_3PIN_SERIAL;
-	}
+	पूर्ण
 
 	u2d->ulpi_mode = ulpi_mode;
 
 	u2d->otg = otg_ulpi_create(&pxa310_ulpi_access_ops, ulpi_mode);
-	if (!u2d->otg)
-		return -ENOMEM;
+	अगर (!u2d->otg)
+		वापस -ENOMEM;
 
 	u2d->otg->io_priv = u2d->mmio_base;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pxa310_otg_exit(void)
-{
-	kfree(u2d->otg);
-}
-#else
-static inline void pxa310_u2d_setup_otg_hc(void) {}
-static inline int pxa310_start_otg_hc(struct usb_bus *host)
-{
-	return 0;
-}
-static inline void pxa310_stop_otg_hc(void) {}
-static inline int pxa310_otg_init(struct pxa3xx_u2d_platform_data *pdata)
-{
-	return 0;
-}
-static inline void pxa310_otg_exit(void) {}
-#endif /* CONFIG_PXA310_ULPI */
+अटल व्योम pxa310_otg_निकास(व्योम)
+अणु
+	kमुक्त(u2d->otg);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम pxa310_u2d_setup_otg_hc(व्योम) अणुपूर्ण
+अटल अंतरभूत पूर्णांक pxa310_start_otg_hc(काष्ठा usb_bus *host)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम pxa310_stop_otg_hc(व्योम) अणुपूर्ण
+अटल अंतरभूत पूर्णांक pxa310_otg_init(काष्ठा pxa3xx_u2d_platक्रमm_data *pdata)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम pxa310_otg_निकास(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_PXA310_ULPI */
 
-int pxa3xx_u2d_start_hc(struct usb_bus *host)
-{
-	int err = 0;
+पूर्णांक pxa3xx_u2d_start_hc(काष्ठा usb_bus *host)
+अणु
+	पूर्णांक err = 0;
 
-	/* In case the PXA3xx ULPI isn't used, do nothing. */
-	if (!u2d)
-		return 0;
+	/* In हाल the PXA3xx ULPI isn't used, करो nothing. */
+	अगर (!u2d)
+		वापस 0;
 
 	clk_prepare_enable(u2d->clk);
 
-	if (cpu_is_pxa310()) {
+	अगर (cpu_is_pxa310()) अणु
 		pxa310_u2d_setup_otg_hc();
 		err = pxa310_start_otg_hc(host);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(pxa3xx_u2d_start_hc);
 
-void pxa3xx_u2d_stop_hc(struct usb_bus *host)
-{
-	/* In case the PXA3xx ULPI isn't used, do nothing. */
-	if (!u2d)
-		return;
+व्योम pxa3xx_u2d_stop_hc(काष्ठा usb_bus *host)
+अणु
+	/* In हाल the PXA3xx ULPI isn't used, करो nothing. */
+	अगर (!u2d)
+		वापस;
 
-	if (cpu_is_pxa310())
+	अगर (cpu_is_pxa310())
 		pxa310_stop_otg_hc();
 
 	clk_disable_unprepare(u2d->clk);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pxa3xx_u2d_stop_hc);
 
-static int pxa3xx_u2d_probe(struct platform_device *pdev)
-{
-	struct pxa3xx_u2d_platform_data *pdata = pdev->dev.platform_data;
-	struct resource *r;
-	int err;
+अटल पूर्णांक pxa3xx_u2d_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pxa3xx_u2d_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा resource *r;
+	पूर्णांक err;
 
-	u2d = kzalloc(sizeof(*u2d), GFP_KERNEL);
-	if (!u2d)
-		return -ENOMEM;
+	u2d = kzalloc(माप(*u2d), GFP_KERNEL);
+	अगर (!u2d)
+		वापस -ENOMEM;
 
-	u2d->clk = clk_get(&pdev->dev, NULL);
-	if (IS_ERR(u2d->clk)) {
+	u2d->clk = clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(u2d->clk)) अणु
 		dev_err(&pdev->dev, "failed to get u2d clock\n");
 		err = PTR_ERR(u2d->clk);
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!r) {
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!r) अणु
 		dev_err(&pdev->dev, "no IO memory resource defined\n");
 		err = -ENODEV;
-		goto err_put_clk;
-	}
+		जाओ err_put_clk;
+	पूर्ण
 
         r = request_mem_region(r->start, resource_size(r), pdev->name);
-        if (!r) {
+        अगर (!r) अणु
                 dev_err(&pdev->dev, "failed to request memory resource\n");
                 err = -EBUSY;
-                goto err_put_clk;
-        }
+                जाओ err_put_clk;
+        पूर्ण
 
 	u2d->mmio_base = ioremap(r->start, resource_size(r));
-	if (!u2d->mmio_base) {
+	अगर (!u2d->mmio_base) अणु
 		dev_err(&pdev->dev, "ioremap() failed\n");
 		err = -ENODEV;
-		goto err_free_res;
-	}
+		जाओ err_मुक्त_res;
+	पूर्ण
 
-	if (pdata->init) {
+	अगर (pdata->init) अणु
 		err = pdata->init(&pdev->dev);
-		if (err)
-			goto err_free_io;
-	}
+		अगर (err)
+			जाओ err_मुक्त_io;
+	पूर्ण
 
 	/* Only PXA310 U2D has OTG functionality */
-	if (cpu_is_pxa310()) {
+	अगर (cpu_is_pxa310()) अणु
 		err = pxa310_otg_init(pdata);
-		if (err)
-			goto err_free_plat;
-	}
+		अगर (err)
+			जाओ err_मुक्त_plat;
+	पूर्ण
 
-	platform_set_drvdata(pdev, u2d);
+	platक्रमm_set_drvdata(pdev, u2d);
 
-	return 0;
+	वापस 0;
 
-err_free_plat:
-	if (pdata->exit)
-		pdata->exit(&pdev->dev);
-err_free_io:
+err_मुक्त_plat:
+	अगर (pdata->निकास)
+		pdata->निकास(&pdev->dev);
+err_मुक्त_io:
 	iounmap(u2d->mmio_base);
-err_free_res:
+err_मुक्त_res:
 	release_mem_region(r->start, resource_size(r));
 err_put_clk:
 	clk_put(u2d->clk);
-err_free_mem:
-	kfree(u2d);
-	return err;
-}
+err_मुक्त_mem:
+	kमुक्त(u2d);
+	वापस err;
+पूर्ण
 
-static int pxa3xx_u2d_remove(struct platform_device *pdev)
-{
-	struct pxa3xx_u2d_platform_data *pdata = pdev->dev.platform_data;
-	struct resource *r;
+अटल पूर्णांक pxa3xx_u2d_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pxa3xx_u2d_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा resource *r;
 
-	if (cpu_is_pxa310()) {
+	अगर (cpu_is_pxa310()) अणु
 		pxa310_stop_otg_hc();
-		pxa310_otg_exit();
-	}
+		pxa310_otg_निकास();
+	पूर्ण
 
-	if (pdata->exit)
-		pdata->exit(&pdev->dev);
+	अगर (pdata->निकास)
+		pdata->निकास(&pdev->dev);
 
-	platform_set_drvdata(pdev, NULL);
+	platक्रमm_set_drvdata(pdev, शून्य);
 	iounmap(u2d->mmio_base);
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	release_mem_region(r->start, resource_size(r));
 
 	clk_put(u2d->clk);
 
-	kfree(u2d);
+	kमुक्त(u2d);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pxa3xx_u2d_ulpi_driver = {
-        .driver		= {
+अटल काष्ठा platक्रमm_driver pxa3xx_u2d_ulpi_driver = अणु
+        .driver		= अणु
                 .name   = "pxa3xx-u2d",
-        },
+        पूर्ण,
         .probe          = pxa3xx_u2d_probe,
-        .remove         = pxa3xx_u2d_remove,
-};
-module_platform_driver(pxa3xx_u2d_ulpi_driver);
+        .हटाओ         = pxa3xx_u2d_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(pxa3xx_u2d_ulpi_driver);
 
 MODULE_DESCRIPTION("PXA3xx U2D ULPI driver");
 MODULE_AUTHOR("Igor Grinberg");

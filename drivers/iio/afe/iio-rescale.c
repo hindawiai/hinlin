@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * IIO rescale driver
  *
@@ -7,166 +8,166 @@
  * Author: Peter Rosin <peda@axentia.se>
  */
 
-#include <linux/err.h>
-#include <linux/gcd.h>
-#include <linux/iio/consumer.h>
-#include <linux/iio/iio.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gcd.h>
+#समावेश <linux/iio/consumer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
 
-struct rescale;
+काष्ठा rescale;
 
-struct rescale_cfg {
-	enum iio_chan_type type;
-	int (*props)(struct device *dev, struct rescale *rescale);
-};
+काष्ठा rescale_cfg अणु
+	क्रमागत iio_chan_type type;
+	पूर्णांक (*props)(काष्ठा device *dev, काष्ठा rescale *rescale);
+पूर्ण;
 
-struct rescale {
-	const struct rescale_cfg *cfg;
-	struct iio_channel *source;
-	struct iio_chan_spec chan;
-	struct iio_chan_spec_ext_info *ext_info;
+काष्ठा rescale अणु
+	स्थिर काष्ठा rescale_cfg *cfg;
+	काष्ठा iio_channel *source;
+	काष्ठा iio_chan_spec chan;
+	काष्ठा iio_chan_spec_ext_info *ext_info;
 	s32 numerator;
 	s32 denominator;
-};
+पूर्ण;
 
-static int rescale_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *chan,
-			    int *val, int *val2, long mask)
-{
-	struct rescale *rescale = iio_priv(indio_dev);
-	unsigned long long tmp;
-	int ret;
+अटल पूर्णांक rescale_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan,
+			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा rescale *rescale = iio_priv(indio_dev);
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		return iio_read_channel_raw(rescale->source, val);
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		वापस iio_पढ़ो_channel_raw(rescale->source, val);
 
-	case IIO_CHAN_INFO_SCALE:
-		ret = iio_read_channel_scale(rescale->source, val, val2);
-		switch (ret) {
-		case IIO_VAL_FRACTIONAL:
+	हाल IIO_CHAN_INFO_SCALE:
+		ret = iio_पढ़ो_channel_scale(rescale->source, val, val2);
+		चयन (ret) अणु
+		हाल IIO_VAL_FRACTIONAL:
 			*val *= rescale->numerator;
 			*val2 *= rescale->denominator;
-			return ret;
-		case IIO_VAL_INT:
+			वापस ret;
+		हाल IIO_VAL_INT:
 			*val *= rescale->numerator;
-			if (rescale->denominator == 1)
-				return ret;
+			अगर (rescale->denominator == 1)
+				वापस ret;
 			*val2 = rescale->denominator;
-			return IIO_VAL_FRACTIONAL;
-		case IIO_VAL_FRACTIONAL_LOG2:
-			tmp = *val * 1000000000LL;
-			do_div(tmp, rescale->denominator);
-			tmp *= rescale->numerator;
-			do_div(tmp, 1000000000LL);
-			*val = tmp;
-			return ret;
-		default:
-			return -EOPNOTSUPP;
-		}
-	default:
-		return -EINVAL;
-	}
-}
+			वापस IIO_VAL_FRACTIONAL;
+		हाल IIO_VAL_FRACTIONAL_LOG2:
+			पंचांगp = *val * 1000000000LL;
+			करो_भाग(पंचांगp, rescale->denominator);
+			पंचांगp *= rescale->numerator;
+			करो_भाग(पंचांगp, 1000000000LL);
+			*val = पंचांगp;
+			वापस ret;
+		शेष:
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int rescale_read_avail(struct iio_dev *indio_dev,
-			      struct iio_chan_spec const *chan,
-			      const int **vals, int *type, int *length,
-			      long mask)
-{
-	struct rescale *rescale = iio_priv(indio_dev);
+अटल पूर्णांक rescale_पढ़ो_avail(काष्ठा iio_dev *indio_dev,
+			      काष्ठा iio_chan_spec स्थिर *chan,
+			      स्थिर पूर्णांक **vals, पूर्णांक *type, पूर्णांक *length,
+			      दीर्घ mask)
+अणु
+	काष्ठा rescale *rescale = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		*type = IIO_VAL_INT;
-		return iio_read_avail_channel_raw(rescale->source,
+		वापस iio_पढ़ो_avail_channel_raw(rescale->source,
 						  vals, length);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info rescale_info = {
-	.read_raw = rescale_read_raw,
-	.read_avail = rescale_read_avail,
-};
+अटल स्थिर काष्ठा iio_info rescale_info = अणु
+	.पढ़ो_raw = rescale_पढ़ो_raw,
+	.पढ़ो_avail = rescale_पढ़ो_avail,
+पूर्ण;
 
-static ssize_t rescale_read_ext_info(struct iio_dev *indio_dev,
-				     uintptr_t private,
-				     struct iio_chan_spec const *chan,
-				     char *buf)
-{
-	struct rescale *rescale = iio_priv(indio_dev);
+अटल sमाप_प्रकार rescale_पढ़ो_ext_info(काष्ठा iio_dev *indio_dev,
+				     uपूर्णांकptr_t निजी,
+				     काष्ठा iio_chan_spec स्थिर *chan,
+				     अक्षर *buf)
+अणु
+	काष्ठा rescale *rescale = iio_priv(indio_dev);
 
-	return iio_read_channel_ext_info(rescale->source,
-					 rescale->ext_info[private].name,
+	वापस iio_पढ़ो_channel_ext_info(rescale->source,
+					 rescale->ext_info[निजी].name,
 					 buf);
-}
+पूर्ण
 
-static ssize_t rescale_write_ext_info(struct iio_dev *indio_dev,
-				      uintptr_t private,
-				      struct iio_chan_spec const *chan,
-				      const char *buf, size_t len)
-{
-	struct rescale *rescale = iio_priv(indio_dev);
+अटल sमाप_प्रकार rescale_ग_लिखो_ext_info(काष्ठा iio_dev *indio_dev,
+				      uपूर्णांकptr_t निजी,
+				      काष्ठा iio_chan_spec स्थिर *chan,
+				      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा rescale *rescale = iio_priv(indio_dev);
 
-	return iio_write_channel_ext_info(rescale->source,
-					  rescale->ext_info[private].name,
+	वापस iio_ग_लिखो_channel_ext_info(rescale->source,
+					  rescale->ext_info[निजी].name,
 					  buf, len);
-}
+पूर्ण
 
-static int rescale_configure_channel(struct device *dev,
-				     struct rescale *rescale)
-{
-	struct iio_chan_spec *chan = &rescale->chan;
-	struct iio_chan_spec const *schan = rescale->source->channel;
+अटल पूर्णांक rescale_configure_channel(काष्ठा device *dev,
+				     काष्ठा rescale *rescale)
+अणु
+	काष्ठा iio_chan_spec *chan = &rescale->chan;
+	काष्ठा iio_chan_spec स्थिर *schan = rescale->source->channel;
 
 	chan->indexed = 1;
 	chan->output = schan->output;
 	chan->ext_info = rescale->ext_info;
 	chan->type = rescale->cfg->type;
 
-	if (!iio_channel_has_info(schan, IIO_CHAN_INFO_RAW) ||
-	    !iio_channel_has_info(schan, IIO_CHAN_INFO_SCALE)) {
+	अगर (!iio_channel_has_info(schan, IIO_CHAN_INFO_RAW) ||
+	    !iio_channel_has_info(schan, IIO_CHAN_INFO_SCALE)) अणु
 		dev_err(dev, "source channel does not support raw/scale\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	chan->info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 		BIT(IIO_CHAN_INFO_SCALE);
 
-	if (iio_channel_has_available(schan, IIO_CHAN_INFO_RAW))
+	अगर (iio_channel_has_available(schan, IIO_CHAN_INFO_RAW))
 		chan->info_mask_separate_available |= BIT(IIO_CHAN_INFO_RAW);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rescale_current_sense_amplifier_props(struct device *dev,
-						 struct rescale *rescale)
-{
+अटल पूर्णांक rescale_current_sense_amplअगरier_props(काष्ठा device *dev,
+						 काष्ठा rescale *rescale)
+अणु
 	u32 sense;
 	u32 gain_mult = 1;
-	u32 gain_div = 1;
+	u32 gain_भाग = 1;
 	u32 factor;
-	int ret;
+	पूर्णांक ret;
 
-	ret = device_property_read_u32(dev, "sense-resistor-micro-ohms",
+	ret = device_property_पढ़ो_u32(dev, "sense-resistor-micro-ohms",
 				       &sense);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to read the sense resistance: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	device_property_read_u32(dev, "sense-gain-mult", &gain_mult);
-	device_property_read_u32(dev, "sense-gain-div", &gain_div);
+	device_property_पढ़ो_u32(dev, "sense-gain-mult", &gain_mult);
+	device_property_पढ़ो_u32(dev, "sense-gain-div", &gain_भाग);
 
 	/*
 	 * Calculate the scaling factor, 1 / (gain * sense), or
-	 * gain_div / (gain_mult * sense), while trying to keep the
+	 * gain_भाग / (gain_mult * sense), जबतक trying to keep the
 	 * numerator/denominator from overflowing.
 	 */
 	factor = gcd(sense, 1000000);
@@ -177,120 +178,120 @@ static int rescale_current_sense_amplifier_props(struct device *dev,
 	rescale->numerator /= factor;
 	rescale->denominator *= gain_mult / factor;
 
-	factor = gcd(rescale->denominator, gain_div);
-	rescale->numerator *= gain_div / factor;
+	factor = gcd(rescale->denominator, gain_भाग);
+	rescale->numerator *= gain_भाग / factor;
 	rescale->denominator /= factor;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rescale_current_sense_shunt_props(struct device *dev,
-					     struct rescale *rescale)
-{
+अटल पूर्णांक rescale_current_sense_shunt_props(काष्ठा device *dev,
+					     काष्ठा rescale *rescale)
+अणु
 	u32 shunt;
 	u32 factor;
-	int ret;
+	पूर्णांक ret;
 
-	ret = device_property_read_u32(dev, "shunt-resistor-micro-ohms",
+	ret = device_property_पढ़ो_u32(dev, "shunt-resistor-micro-ohms",
 				       &shunt);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to read the shunt resistance: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	factor = gcd(shunt, 1000000);
 	rescale->numerator = 1000000 / factor;
 	rescale->denominator = shunt / factor;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rescale_voltage_divider_props(struct device *dev,
-					 struct rescale *rescale)
-{
-	int ret;
+अटल पूर्णांक rescale_voltage_भागider_props(काष्ठा device *dev,
+					 काष्ठा rescale *rescale)
+अणु
+	पूर्णांक ret;
 	u32 factor;
 
-	ret = device_property_read_u32(dev, "output-ohms",
+	ret = device_property_पढ़ो_u32(dev, "output-ohms",
 				       &rescale->denominator);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to read output-ohms: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = device_property_read_u32(dev, "full-ohms",
+	ret = device_property_पढ़ो_u32(dev, "full-ohms",
 				       &rescale->numerator);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to read full-ohms: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	factor = gcd(rescale->numerator, rescale->denominator);
 	rescale->numerator /= factor;
 	rescale->denominator /= factor;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum rescale_variant {
+क्रमागत rescale_variant अणु
 	CURRENT_SENSE_AMPLIFIER,
 	CURRENT_SENSE_SHUNT,
 	VOLTAGE_DIVIDER,
-};
+पूर्ण;
 
-static const struct rescale_cfg rescale_cfg[] = {
-	[CURRENT_SENSE_AMPLIFIER] = {
+अटल स्थिर काष्ठा rescale_cfg rescale_cfg[] = अणु
+	[CURRENT_SENSE_AMPLIFIER] = अणु
 		.type = IIO_CURRENT,
-		.props = rescale_current_sense_amplifier_props,
-	},
-	[CURRENT_SENSE_SHUNT] = {
+		.props = rescale_current_sense_amplअगरier_props,
+	पूर्ण,
+	[CURRENT_SENSE_SHUNT] = अणु
 		.type = IIO_CURRENT,
 		.props = rescale_current_sense_shunt_props,
-	},
-	[VOLTAGE_DIVIDER] = {
+	पूर्ण,
+	[VOLTAGE_DIVIDER] = अणु
 		.type = IIO_VOLTAGE,
-		.props = rescale_voltage_divider_props,
-	},
-};
+		.props = rescale_voltage_भागider_props,
+	पूर्ण,
+पूर्ण;
 
-static const struct of_device_id rescale_match[] = {
-	{ .compatible = "current-sense-amplifier",
-	  .data = &rescale_cfg[CURRENT_SENSE_AMPLIFIER], },
-	{ .compatible = "current-sense-shunt",
-	  .data = &rescale_cfg[CURRENT_SENSE_SHUNT], },
-	{ .compatible = "voltage-divider",
-	  .data = &rescale_cfg[VOLTAGE_DIVIDER], },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id rescale_match[] = अणु
+	अणु .compatible = "current-sense-amplifier",
+	  .data = &rescale_cfg[CURRENT_SENSE_AMPLIFIER], पूर्ण,
+	अणु .compatible = "current-sense-shunt",
+	  .data = &rescale_cfg[CURRENT_SENSE_SHUNT], पूर्ण,
+	अणु .compatible = "voltage-divider",
+	  .data = &rescale_cfg[VOLTAGE_DIVIDER], पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rescale_match);
 
-static int rescale_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct iio_dev *indio_dev;
-	struct iio_channel *source;
-	struct rescale *rescale;
-	int sizeof_ext_info;
-	int sizeof_priv;
-	int i;
-	int ret;
+अटल पूर्णांक rescale_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा iio_channel *source;
+	काष्ठा rescale *rescale;
+	पूर्णांक माप_ext_info;
+	पूर्णांक माप_priv;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	source = devm_iio_channel_get(dev, NULL);
-	if (IS_ERR(source))
-		return dev_err_probe(dev, PTR_ERR(source),
+	source = devm_iio_channel_get(dev, शून्य);
+	अगर (IS_ERR(source))
+		वापस dev_err_probe(dev, PTR_ERR(source),
 				     "failed to get source channel\n");
 
-	sizeof_ext_info = iio_get_channel_ext_info_count(source);
-	if (sizeof_ext_info) {
-		sizeof_ext_info += 1; /* one extra entry for the sentinel */
-		sizeof_ext_info *= sizeof(*rescale->ext_info);
-	}
+	माप_ext_info = iio_get_channel_ext_info_count(source);
+	अगर (माप_ext_info) अणु
+		माप_ext_info += 1; /* one extra entry क्रम the sentinel */
+		माप_ext_info *= माप(*rescale->ext_info);
+	पूर्ण
 
-	sizeof_priv = sizeof(*rescale) + sizeof_ext_info;
+	माप_priv = माप(*rescale) + माप_ext_info;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof_priv);
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप_priv);
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	rescale = iio_priv(indio_dev);
 
@@ -299,57 +300,57 @@ static int rescale_probe(struct platform_device *pdev)
 	rescale->denominator = 1;
 
 	ret = rescale->cfg->props(dev, rescale);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!rescale->numerator || !rescale->denominator) {
+	अगर (!rescale->numerator || !rescale->denominator) अणु
 		dev_err(dev, "invalid scaling factor.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	platform_set_drvdata(pdev, indio_dev);
+	platक्रमm_set_drvdata(pdev, indio_dev);
 
 	rescale->source = source;
 
 	indio_dev->name = dev_name(dev);
 	indio_dev->info = &rescale_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = &rescale->chan;
 	indio_dev->num_channels = 1;
-	if (sizeof_ext_info) {
+	अगर (माप_ext_info) अणु
 		rescale->ext_info = devm_kmemdup(dev,
 						 source->channel->ext_info,
-						 sizeof_ext_info, GFP_KERNEL);
-		if (!rescale->ext_info)
-			return -ENOMEM;
+						 माप_ext_info, GFP_KERNEL);
+		अगर (!rescale->ext_info)
+			वापस -ENOMEM;
 
-		for (i = 0; rescale->ext_info[i].name; ++i) {
-			struct iio_chan_spec_ext_info *ext_info =
+		क्रम (i = 0; rescale->ext_info[i].name; ++i) अणु
+			काष्ठा iio_chan_spec_ext_info *ext_info =
 				&rescale->ext_info[i];
 
-			if (source->channel->ext_info[i].read)
-				ext_info->read = rescale_read_ext_info;
-			if (source->channel->ext_info[i].write)
-				ext_info->write = rescale_write_ext_info;
-			ext_info->private = i;
-		}
-	}
+			अगर (source->channel->ext_info[i].पढ़ो)
+				ext_info->पढ़ो = rescale_पढ़ो_ext_info;
+			अगर (source->channel->ext_info[i].ग_लिखो)
+				ext_info->ग_लिखो = rescale_ग_लिखो_ext_info;
+			ext_info->निजी = i;
+		पूर्ण
+	पूर्ण
 
 	ret = rescale_configure_channel(dev, rescale);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return devm_iio_device_register(dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
+पूर्ण
 
-static struct platform_driver rescale_driver = {
+अटल काष्ठा platक्रमm_driver rescale_driver = अणु
 	.probe = rescale_probe,
-	.driver = {
+	.driver = अणु
 		.name = "iio-rescale",
 		.of_match_table = rescale_match,
-	},
-};
-module_platform_driver(rescale_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(rescale_driver);
 
 MODULE_DESCRIPTION("IIO rescale driver");
 MODULE_AUTHOR("Peter Rosin <peda@axentia.se>");

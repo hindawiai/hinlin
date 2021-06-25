@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (c) 2001 by David Brownell
  */
@@ -9,10 +10,10 @@
 
 /*
  * There's basically three types of memory:
- *	- data used only by the HCD ... kmalloc is fine
+ *	- data used only by the HCD ... kदो_स्मृति is fine
  *	- async and periodic schedules, shared by HC and HCD ... these
  *	  need to use dma_pool or dma_alloc_coherent
- *	- driver buffers, read/written by HC ... single shot DMA mapped
+ *	- driver buffers, पढ़ो/written by HC ... single shot DMA mapped
  *
  * There's also "register" data (e.g. PCI or SOC), which is memory mapped.
  * No memory seen by this driver is pageable.
@@ -20,63 +21,63 @@
 
 /*-------------------------------------------------------------------------*/
 
-/* Allocate the key transfer structures from the previously allocated pool */
+/* Allocate the key transfer काष्ठाures from the previously allocated pool */
 
-static inline void ehci_qtd_init(struct ehci_hcd *ehci, struct ehci_qtd *qtd,
+अटल अंतरभूत व्योम ehci_qtd_init(काष्ठा ehci_hcd *ehci, काष्ठा ehci_qtd *qtd,
 				  dma_addr_t dma)
-{
-	memset (qtd, 0, sizeof *qtd);
+अणु
+	स_रखो (qtd, 0, माप *qtd);
 	qtd->qtd_dma = dma;
 	qtd->hw_token = cpu_to_hc32(ehci, QTD_STS_HALT);
 	qtd->hw_next = EHCI_LIST_END(ehci);
 	qtd->hw_alt_next = EHCI_LIST_END(ehci);
 	INIT_LIST_HEAD (&qtd->qtd_list);
-}
+पूर्ण
 
-static struct ehci_qtd *ehci_qtd_alloc (struct ehci_hcd *ehci, gfp_t flags)
-{
-	struct ehci_qtd		*qtd;
+अटल काष्ठा ehci_qtd *ehci_qtd_alloc (काष्ठा ehci_hcd *ehci, gfp_t flags)
+अणु
+	काष्ठा ehci_qtd		*qtd;
 	dma_addr_t		dma;
 
 	qtd = dma_pool_alloc (ehci->qtd_pool, flags, &dma);
-	if (qtd != NULL) {
+	अगर (qtd != शून्य) अणु
 		ehci_qtd_init(ehci, qtd, dma);
-	}
-	return qtd;
-}
+	पूर्ण
+	वापस qtd;
+पूर्ण
 
-static inline void ehci_qtd_free (struct ehci_hcd *ehci, struct ehci_qtd *qtd)
-{
-	dma_pool_free (ehci->qtd_pool, qtd, qtd->qtd_dma);
-}
+अटल अंतरभूत व्योम ehci_qtd_मुक्त (काष्ठा ehci_hcd *ehci, काष्ठा ehci_qtd *qtd)
+अणु
+	dma_pool_मुक्त (ehci->qtd_pool, qtd, qtd->qtd_dma);
+पूर्ण
 
 
-static void qh_destroy(struct ehci_hcd *ehci, struct ehci_qh *qh)
-{
+अटल व्योम qh_destroy(काष्ठा ehci_hcd *ehci, काष्ठा ehci_qh *qh)
+अणु
 	/* clean qtds first, and know this is not linked */
-	if (!list_empty (&qh->qtd_list) || qh->qh_next.ptr) {
+	अगर (!list_empty (&qh->qtd_list) || qh->qh_next.ptr) अणु
 		ehci_dbg (ehci, "unused qh not empty!\n");
 		BUG ();
-	}
-	if (qh->dummy)
-		ehci_qtd_free (ehci, qh->dummy);
-	dma_pool_free(ehci->qh_pool, qh->hw, qh->qh_dma);
-	kfree(qh);
-}
+	पूर्ण
+	अगर (qh->dummy)
+		ehci_qtd_मुक्त (ehci, qh->dummy);
+	dma_pool_मुक्त(ehci->qh_pool, qh->hw, qh->qh_dma);
+	kमुक्त(qh);
+पूर्ण
 
-static struct ehci_qh *ehci_qh_alloc (struct ehci_hcd *ehci, gfp_t flags)
-{
-	struct ehci_qh		*qh;
+अटल काष्ठा ehci_qh *ehci_qh_alloc (काष्ठा ehci_hcd *ehci, gfp_t flags)
+अणु
+	काष्ठा ehci_qh		*qh;
 	dma_addr_t		dma;
 
-	qh = kzalloc(sizeof *qh, GFP_ATOMIC);
-	if (!qh)
-		goto done;
-	qh->hw = (struct ehci_qh_hw *)
+	qh = kzalloc(माप *qh, GFP_ATOMIC);
+	अगर (!qh)
+		जाओ करोne;
+	qh->hw = (काष्ठा ehci_qh_hw *)
 		dma_pool_alloc(ehci->qh_pool, flags, &dma);
-	if (!qh->hw)
-		goto fail;
-	memset(qh->hw, 0, sizeof *qh->hw);
+	अगर (!qh->hw)
+		जाओ fail;
+	स_रखो(qh->hw, 0, माप *qh->hw);
 	qh->qh_dma = dma;
 	// INIT_LIST_HEAD (&qh->qh_list);
 	INIT_LIST_HEAD (&qh->qtd_list);
@@ -84,120 +85,120 @@ static struct ehci_qh *ehci_qh_alloc (struct ehci_hcd *ehci, gfp_t flags)
 
 	/* dummy td enables safe urb queuing */
 	qh->dummy = ehci_qtd_alloc (ehci, flags);
-	if (qh->dummy == NULL) {
+	अगर (qh->dummy == शून्य) अणु
 		ehci_dbg (ehci, "no dummy td\n");
-		goto fail1;
-	}
-done:
-	return qh;
+		जाओ fail1;
+	पूर्ण
+करोne:
+	वापस qh;
 fail1:
-	dma_pool_free(ehci->qh_pool, qh->hw, qh->qh_dma);
+	dma_pool_मुक्त(ehci->qh_pool, qh->hw, qh->qh_dma);
 fail:
-	kfree(qh);
-	return NULL;
-}
+	kमुक्त(qh);
+	वापस शून्य;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /* The queue heads and transfer descriptors are managed from pools tied
- * to each of the "per device" structures.
+ * to each of the "per device" काष्ठाures.
  * This is the initialisation and cleanup code.
  */
 
-static void ehci_mem_cleanup (struct ehci_hcd *ehci)
-{
-	if (ehci->async)
+अटल व्योम ehci_mem_cleanup (काष्ठा ehci_hcd *ehci)
+अणु
+	अगर (ehci->async)
 		qh_destroy(ehci, ehci->async);
-	ehci->async = NULL;
+	ehci->async = शून्य;
 
-	if (ehci->dummy)
+	अगर (ehci->dummy)
 		qh_destroy(ehci, ehci->dummy);
-	ehci->dummy = NULL;
+	ehci->dummy = शून्य;
 
 	/* DMA consistent memory and pools */
 	dma_pool_destroy(ehci->qtd_pool);
-	ehci->qtd_pool = NULL;
+	ehci->qtd_pool = शून्य;
 	dma_pool_destroy(ehci->qh_pool);
-	ehci->qh_pool = NULL;
+	ehci->qh_pool = शून्य;
 	dma_pool_destroy(ehci->itd_pool);
-	ehci->itd_pool = NULL;
+	ehci->itd_pool = शून्य;
 	dma_pool_destroy(ehci->sitd_pool);
-	ehci->sitd_pool = NULL;
+	ehci->sitd_pool = शून्य;
 
-	if (ehci->periodic)
-		dma_free_coherent(ehci_to_hcd(ehci)->self.sysdev,
-			ehci->periodic_size * sizeof (u32),
+	अगर (ehci->periodic)
+		dma_मुक्त_coherent(ehci_to_hcd(ehci)->self.sysdev,
+			ehci->periodic_size * माप (u32),
 			ehci->periodic, ehci->periodic_dma);
-	ehci->periodic = NULL;
+	ehci->periodic = शून्य;
 
-	/* shadow periodic table */
-	kfree(ehci->pshadow);
-	ehci->pshadow = NULL;
-}
+	/* shaकरोw periodic table */
+	kमुक्त(ehci->pshaकरोw);
+	ehci->pshaकरोw = शून्य;
+पूर्ण
 
-/* remember to add cleanup code (above) if you add anything here */
-static int ehci_mem_init (struct ehci_hcd *ehci, gfp_t flags)
-{
-	int i;
+/* remember to add cleanup code (above) अगर you add anything here */
+अटल पूर्णांक ehci_mem_init (काष्ठा ehci_hcd *ehci, gfp_t flags)
+अणु
+	पूर्णांक i;
 
-	/* QTDs for control/bulk/intr transfers */
+	/* QTDs क्रम control/bulk/पूर्णांकr transfers */
 	ehci->qtd_pool = dma_pool_create ("ehci_qtd",
 			ehci_to_hcd(ehci)->self.sysdev,
-			sizeof (struct ehci_qtd),
-			32 /* byte alignment (for hw parts) */,
+			माप (काष्ठा ehci_qtd),
+			32 /* byte alignment (क्रम hw parts) */,
 			4096 /* can't cross 4K */);
-	if (!ehci->qtd_pool) {
-		goto fail;
-	}
+	अगर (!ehci->qtd_pool) अणु
+		जाओ fail;
+	पूर्ण
 
-	/* QHs for control/bulk/intr transfers */
+	/* QHs क्रम control/bulk/पूर्णांकr transfers */
 	ehci->qh_pool = dma_pool_create ("ehci_qh",
 			ehci_to_hcd(ehci)->self.sysdev,
-			sizeof(struct ehci_qh_hw),
-			32 /* byte alignment (for hw parts) */,
+			माप(काष्ठा ehci_qh_hw),
+			32 /* byte alignment (क्रम hw parts) */,
 			4096 /* can't cross 4K */);
-	if (!ehci->qh_pool) {
-		goto fail;
-	}
+	अगर (!ehci->qh_pool) अणु
+		जाओ fail;
+	पूर्ण
 	ehci->async = ehci_qh_alloc (ehci, flags);
-	if (!ehci->async) {
-		goto fail;
-	}
+	अगर (!ehci->async) अणु
+		जाओ fail;
+	पूर्ण
 
-	/* ITD for high speed ISO transfers */
+	/* ITD क्रम high speed ISO transfers */
 	ehci->itd_pool = dma_pool_create ("ehci_itd",
 			ehci_to_hcd(ehci)->self.sysdev,
-			sizeof (struct ehci_itd),
-			32 /* byte alignment (for hw parts) */,
+			माप (काष्ठा ehci_itd),
+			32 /* byte alignment (क्रम hw parts) */,
 			4096 /* can't cross 4K */);
-	if (!ehci->itd_pool) {
-		goto fail;
-	}
+	अगर (!ehci->itd_pool) अणु
+		जाओ fail;
+	पूर्ण
 
-	/* SITD for full/low speed split ISO transfers */
+	/* SITD क्रम full/low speed split ISO transfers */
 	ehci->sitd_pool = dma_pool_create ("ehci_sitd",
 			ehci_to_hcd(ehci)->self.sysdev,
-			sizeof (struct ehci_sitd),
-			32 /* byte alignment (for hw parts) */,
+			माप (काष्ठा ehci_sitd),
+			32 /* byte alignment (क्रम hw parts) */,
 			4096 /* can't cross 4K */);
-	if (!ehci->sitd_pool) {
-		goto fail;
-	}
+	अगर (!ehci->sitd_pool) अणु
+		जाओ fail;
+	पूर्ण
 
 	/* Hardware periodic table */
 	ehci->periodic = (__le32 *)
 		dma_alloc_coherent(ehci_to_hcd(ehci)->self.sysdev,
-			ehci->periodic_size * sizeof(__le32),
+			ehci->periodic_size * माप(__le32),
 			&ehci->periodic_dma, flags);
-	if (ehci->periodic == NULL) {
-		goto fail;
-	}
+	अगर (ehci->periodic == शून्य) अणु
+		जाओ fail;
+	पूर्ण
 
-	if (ehci->use_dummy_qh) {
-		struct ehci_qh_hw	*hw;
+	अगर (ehci->use_dummy_qh) अणु
+		काष्ठा ehci_qh_hw	*hw;
 		ehci->dummy = ehci_qh_alloc(ehci, flags);
-		if (!ehci->dummy)
-			goto fail;
+		अगर (!ehci->dummy)
+			जाओ fail;
 
 		hw = ehci->dummy->hw;
 		hw->hw_next = EHCI_LIST_END(ehci);
@@ -205,21 +206,21 @@ static int ehci_mem_init (struct ehci_hcd *ehci, gfp_t flags)
 		hw->hw_alt_next = EHCI_LIST_END(ehci);
 		ehci->dummy->hw = hw;
 
-		for (i = 0; i < ehci->periodic_size; i++)
+		क्रम (i = 0; i < ehci->periodic_size; i++)
 			ehci->periodic[i] = cpu_to_hc32(ehci,
 					ehci->dummy->qh_dma);
-	} else {
-		for (i = 0; i < ehci->periodic_size; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < ehci->periodic_size; i++)
 			ehci->periodic[i] = EHCI_LIST_END(ehci);
-	}
+	पूर्ण
 
-	/* software shadow of hardware table */
-	ehci->pshadow = kcalloc(ehci->periodic_size, sizeof(void *), flags);
-	if (ehci->pshadow != NULL)
-		return 0;
+	/* software shaकरोw of hardware table */
+	ehci->pshaकरोw = kसुस्मृति(ehci->periodic_size, माप(व्योम *), flags);
+	अगर (ehci->pshaकरोw != शून्य)
+		वापस 0;
 
 fail:
 	ehci_dbg (ehci, "couldn't init memory\n");
 	ehci_mem_cleanup (ehci);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण

@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * mach-davinci/sram.c - DaVinci simple SRAM allocator
  *
  * Copyright (C) 2009 David Brownell
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/genalloc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/genभाग.स>
 
-#include <mach/common.h>
-#include "sram.h"
+#समावेश <mach/common.h>
+#समावेश "sram.h"
 
-static struct gen_pool *sram_pool;
+अटल काष्ठा gen_pool *sram_pool;
 
-struct gen_pool *sram_get_gen_pool(void)
-{
-	return sram_pool;
-}
+काष्ठा gen_pool *sram_get_gen_pool(व्योम)
+अणु
+	वापस sram_pool;
+पूर्ण
 
-void *sram_alloc(size_t len, dma_addr_t *dma)
-{
+व्योम *sram_alloc(माप_प्रकार len, dma_addr_t *dma)
+अणु
 	dma_addr_t dma_base = davinci_soc_info.sram_dma;
 
-	if (dma)
+	अगर (dma)
 		*dma = 0;
-	if (!sram_pool || (dma && !dma_base))
-		return NULL;
+	अगर (!sram_pool || (dma && !dma_base))
+		वापस शून्य;
 
-	return gen_pool_dma_alloc(sram_pool, len, dma);
+	वापस gen_pool_dma_alloc(sram_pool, len, dma);
 
-}
+पूर्ण
 EXPORT_SYMBOL(sram_alloc);
 
-void sram_free(void *addr, size_t len)
-{
-	gen_pool_free(sram_pool, (unsigned long) addr, len);
-}
-EXPORT_SYMBOL(sram_free);
+व्योम sram_मुक्त(व्योम *addr, माप_प्रकार len)
+अणु
+	gen_pool_मुक्त(sram_pool, (अचिन्हित दीर्घ) addr, len);
+पूर्ण
+EXPORT_SYMBOL(sram_मुक्त);
 
 
 /*
  * REVISIT This supports CPU and DMA access to/from SRAM, but it
- * doesn't (yet?) support some other notable uses of SRAM:  as TCM
- * for data and/or instructions; and holding code needed to enter
- * and exit suspend states (while DRAM can't be used).
+ * करोesn't (yet?) support some other notable uses of SRAM:  as TCM
+ * क्रम data and/or inकाष्ठाions; and holding code needed to enter
+ * and निकास suspend states (जबतक DRAM can't be used).
  */
-static int __init sram_init(void)
-{
+अटल पूर्णांक __init sram_init(व्योम)
+अणु
 	phys_addr_t phys = davinci_soc_info.sram_dma;
-	unsigned len = davinci_soc_info.sram_len;
-	int status = 0;
-	void __iomem *addr;
+	अचिन्हित len = davinci_soc_info.sram_len;
+	पूर्णांक status = 0;
+	व्योम __iomem *addr;
 
-	if (len) {
-		len = min_t(unsigned, len, SRAM_SIZE);
+	अगर (len) अणु
+		len = min_t(अचिन्हित, len, SRAM_SIZE);
 		sram_pool = gen_pool_create(ilog2(SRAM_GRANULARITY), -1);
-		if (!sram_pool)
+		अगर (!sram_pool)
 			status = -ENOMEM;
-	}
+	पूर्ण
 
-	if (sram_pool) {
+	अगर (sram_pool) अणु
 		addr = ioremap(phys, len);
-		if (!addr)
-			return -ENOMEM;
-		status = gen_pool_add_virt(sram_pool, (unsigned long) addr,
+		अगर (!addr)
+			वापस -ENOMEM;
+		status = gen_pool_add_virt(sram_pool, (अचिन्हित दीर्घ) addr,
 					   phys, len, -1);
-		if (status < 0)
+		अगर (status < 0)
 			iounmap(addr);
-	}
+	पूर्ण
 
 	WARN_ON(status < 0);
-	return status;
-}
+	वापस status;
+पूर्ण
 core_initcall(sram_init);
 

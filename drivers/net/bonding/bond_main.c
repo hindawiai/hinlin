@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * originally based on the dummy device.
  *
@@ -11,141 +12,141 @@
  *	Sun Trunking (Solaris)
  *	Alteon AceDirector Trunks
  *	Linux Bonding
- *	and probably many L2 switches ...
+ *	and probably many L2 चयनes ...
  *
  * How it works:
- *    ifconfig bond0 ipaddress netmask up
+ *    अगरconfig bond0 ipaddress neपंचांगask up
  *      will setup a network device, with an ip address.  No mac address
- *	will be assigned at this time.  The hw mac address will come from
+ *	will be asचिन्हित at this समय.  The hw mac address will come from
  *	the first slave bonded to the channel.  All slaves will then use
  *	this hw mac address.
  *
- *    ifconfig bond0 down
- *         will release all slaves, marking them as down.
+ *    अगरconfig bond0 करोwn
+ *         will release all slaves, marking them as करोwn.
  *
- *    ifenslave bond0 eth0
+ *    अगरenslave bond0 eth0
  *	will attach eth0 to bond0 as a slave.  eth0 hw mac address will either
  *	a: be used as initial mac address
- *	b: if a hw mac address already is there, eth0's hw mac address
+ *	b: अगर a hw mac address alपढ़ोy is there, eth0's hw mac address
  *	   will then be set from bond0.
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/interrupt.h>
-#include <linux/ptrace.h>
-#include <linux/ioport.h>
-#include <linux/in.h>
-#include <net/ip.h>
-#include <linux/ip.h>
-#include <linux/icmp.h>
-#include <linux/icmpv6.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/timer.h>
-#include <linux/socket.h>
-#include <linux/ctype.h>
-#include <linux/inet.h>
-#include <linux/bitops.h>
-#include <linux/io.h>
-#include <asm/dma.h>
-#include <linux/uaccess.h>
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/inetdevice.h>
-#include <linux/igmp.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <linux/rtnetlink.h>
-#include <linux/smp.h>
-#include <linux/if_ether.h>
-#include <net/arp.h>
-#include <linux/mii.h>
-#include <linux/ethtool.h>
-#include <linux/if_vlan.h>
-#include <linux/if_bonding.h>
-#include <linux/jiffies.h>
-#include <linux/preempt.h>
-#include <net/route.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <net/pkt_sched.h>
-#include <linux/rculist.h>
-#include <net/flow_dissector.h>
-#include <net/xfrm.h>
-#include <net/bonding.h>
-#include <net/bond_3ad.h>
-#include <net/bond_alb.h>
-#if IS_ENABLED(CONFIG_TLS_DEVICE)
-#include <net/tls.h>
-#endif
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/in.h>
+#समावेश <net/ip.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/inet.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/dma.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/igmp.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <net/arp.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/अगर_bonding.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/preempt.h>
+#समावेश <net/route.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <linux/rculist.h>
+#समावेश <net/flow_dissector.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/bonding.h>
+#समावेश <net/bond_3ad.h>
+#समावेश <net/bond_alb.h>
+#अगर IS_ENABLED(CONFIG_TLS_DEVICE)
+#समावेश <net/tls.h>
+#पूर्ण_अगर
 
-#include "bonding_priv.h"
+#समावेश "bonding_priv.h"
 
 /*---------------------------- Module parameters ----------------------------*/
 
 /* monitor all links that often (in milliseconds). <=0 disables monitoring */
 
-static int max_bonds	= BOND_DEFAULT_MAX_BONDS;
-static int tx_queues	= BOND_DEFAULT_TX_QUEUES;
-static int num_peer_notif = 1;
-static int miimon;
-static int updelay;
-static int downdelay;
-static int use_carrier	= 1;
-static char *mode;
-static char *primary;
-static char *primary_reselect;
-static char *lacp_rate;
-static int min_links;
-static char *ad_select;
-static char *xmit_hash_policy;
-static int arp_interval;
-static char *arp_ip_target[BOND_MAX_ARP_TARGETS];
-static char *arp_validate;
-static char *arp_all_targets;
-static char *fail_over_mac;
-static int all_slaves_active;
-static struct bond_params bonding_defaults;
-static int resend_igmp = BOND_DEFAULT_RESEND_IGMP;
-static int packets_per_slave = 1;
-static int lp_interval = BOND_ALB_DEFAULT_LP_INTERVAL;
+अटल पूर्णांक max_bonds	= BOND_DEFAULT_MAX_BONDS;
+अटल पूर्णांक tx_queues	= BOND_DEFAULT_TX_QUEUES;
+अटल पूर्णांक num_peer_notअगर = 1;
+अटल पूर्णांक miimon;
+अटल पूर्णांक updelay;
+अटल पूर्णांक करोwndelay;
+अटल पूर्णांक use_carrier	= 1;
+अटल अक्षर *mode;
+अटल अक्षर *primary;
+अटल अक्षर *primary_reselect;
+अटल अक्षर *lacp_rate;
+अटल पूर्णांक min_links;
+अटल अक्षर *ad_select;
+अटल अक्षर *xmit_hash_policy;
+अटल पूर्णांक arp_पूर्णांकerval;
+अटल अक्षर *arp_ip_target[BOND_MAX_ARP_TARGETS];
+अटल अक्षर *arp_validate;
+अटल अक्षर *arp_all_tarमाला_लो;
+अटल अक्षर *fail_over_mac;
+अटल पूर्णांक all_slaves_active;
+अटल काष्ठा bond_params bonding_शेषs;
+अटल पूर्णांक resend_igmp = BOND_DEFAULT_RESEND_IGMP;
+अटल पूर्णांक packets_per_slave = 1;
+अटल पूर्णांक lp_पूर्णांकerval = BOND_ALB_DEFAULT_LP_INTERVAL;
 
-module_param(max_bonds, int, 0);
+module_param(max_bonds, पूर्णांक, 0);
 MODULE_PARM_DESC(max_bonds, "Max number of bonded devices");
-module_param(tx_queues, int, 0);
+module_param(tx_queues, पूर्णांक, 0);
 MODULE_PARM_DESC(tx_queues, "Max number of transmit queues (default = 16)");
-module_param_named(num_grat_arp, num_peer_notif, int, 0644);
+module_param_named(num_grat_arp, num_peer_notअगर, पूर्णांक, 0644);
 MODULE_PARM_DESC(num_grat_arp, "Number of peer notifications to send on "
 			       "failover event (alias of num_unsol_na)");
-module_param_named(num_unsol_na, num_peer_notif, int, 0644);
+module_param_named(num_unsol_na, num_peer_notअगर, पूर्णांक, 0644);
 MODULE_PARM_DESC(num_unsol_na, "Number of peer notifications to send on "
 			       "failover event (alias of num_grat_arp)");
-module_param(miimon, int, 0);
+module_param(miimon, पूर्णांक, 0);
 MODULE_PARM_DESC(miimon, "Link check interval in milliseconds");
-module_param(updelay, int, 0);
+module_param(updelay, पूर्णांक, 0);
 MODULE_PARM_DESC(updelay, "Delay before considering link up, in milliseconds");
-module_param(downdelay, int, 0);
-MODULE_PARM_DESC(downdelay, "Delay before considering link down, "
+module_param(करोwndelay, पूर्णांक, 0);
+MODULE_PARM_DESC(करोwndelay, "Delay before considering link down, "
 			    "in milliseconds");
-module_param(use_carrier, int, 0);
+module_param(use_carrier, पूर्णांक, 0);
 MODULE_PARM_DESC(use_carrier, "Use netif_carrier_ok (vs MII ioctls) in miimon; "
 			      "0 for off, 1 for on (default)");
-module_param(mode, charp, 0);
+module_param(mode, अक्षरp, 0);
 MODULE_PARM_DESC(mode, "Mode of operation; 0 for balance-rr, "
 		       "1 for active-backup, 2 for balance-xor, "
 		       "3 for broadcast, 4 for 802.3ad, 5 for balance-tlb, "
 		       "6 for balance-alb");
-module_param(primary, charp, 0);
+module_param(primary, अक्षरp, 0);
 MODULE_PARM_DESC(primary, "Primary network device to use");
-module_param(primary_reselect, charp, 0);
+module_param(primary_reselect, अक्षरp, 0);
 MODULE_PARM_DESC(primary_reselect, "Reselect primary slave "
 				   "once it comes up; "
 				   "0 for always (default), "
@@ -153,120 +154,120 @@ MODULE_PARM_DESC(primary_reselect, "Reselect primary slave "
 				   "better, "
 				   "2 for only on active slave "
 				   "failure");
-module_param(lacp_rate, charp, 0);
+module_param(lacp_rate, अक्षरp, 0);
 MODULE_PARM_DESC(lacp_rate, "LACPDU tx rate to request from 802.3ad partner; "
 			    "0 for slow, 1 for fast");
-module_param(ad_select, charp, 0);
+module_param(ad_select, अक्षरp, 0);
 MODULE_PARM_DESC(ad_select, "802.3ad aggregation selection logic; "
 			    "0 for stable (default), 1 for bandwidth, "
 			    "2 for count");
-module_param(min_links, int, 0);
+module_param(min_links, पूर्णांक, 0);
 MODULE_PARM_DESC(min_links, "Minimum number of available links before turning on carrier");
 
-module_param(xmit_hash_policy, charp, 0);
+module_param(xmit_hash_policy, अक्षरp, 0);
 MODULE_PARM_DESC(xmit_hash_policy, "balance-alb, balance-tlb, balance-xor, 802.3ad hashing method; "
 				   "0 for layer 2 (default), 1 for layer 3+4, "
 				   "2 for layer 2+3, 3 for encap layer 2+3, "
 				   "4 for encap layer 3+4, 5 for vlan+srcmac");
-module_param(arp_interval, int, 0);
-MODULE_PARM_DESC(arp_interval, "arp interval in milliseconds");
-module_param_array(arp_ip_target, charp, NULL, 0);
+module_param(arp_पूर्णांकerval, पूर्णांक, 0);
+MODULE_PARM_DESC(arp_पूर्णांकerval, "arp interval in milliseconds");
+module_param_array(arp_ip_target, अक्षरp, शून्य, 0);
 MODULE_PARM_DESC(arp_ip_target, "arp targets in n.n.n.n form");
-module_param(arp_validate, charp, 0);
+module_param(arp_validate, अक्षरp, 0);
 MODULE_PARM_DESC(arp_validate, "validate src/dst of ARP probes; "
 			       "0 for none (default), 1 for active, "
 			       "2 for backup, 3 for all");
-module_param(arp_all_targets, charp, 0);
-MODULE_PARM_DESC(arp_all_targets, "fail on any/all arp targets timeout; 0 for any (default), 1 for all");
-module_param(fail_over_mac, charp, 0);
+module_param(arp_all_tarमाला_लो, अक्षरp, 0);
+MODULE_PARM_DESC(arp_all_tarमाला_लो, "fail on any/all arp targets timeout; 0 for any (default), 1 for all");
+module_param(fail_over_mac, अक्षरp, 0);
 MODULE_PARM_DESC(fail_over_mac, "For active-backup, do not set all slaves to "
 				"the same MAC; 0 for none (default), "
 				"1 for active, 2 for follow");
-module_param(all_slaves_active, int, 0);
+module_param(all_slaves_active, पूर्णांक, 0);
 MODULE_PARM_DESC(all_slaves_active, "Keep all frames received on an interface "
 				     "by setting active flag for all slaves; "
 				     "0 for never (default), 1 for always.");
-module_param(resend_igmp, int, 0);
+module_param(resend_igmp, पूर्णांक, 0);
 MODULE_PARM_DESC(resend_igmp, "Number of IGMP membership reports to send on "
 			      "link failure");
-module_param(packets_per_slave, int, 0);
+module_param(packets_per_slave, पूर्णांक, 0);
 MODULE_PARM_DESC(packets_per_slave, "Packets to send per slave in balance-rr "
 				    "mode; 0 for a random slave, 1 packet per "
 				    "slave (default), >1 packets per slave.");
-module_param(lp_interval, uint, 0);
-MODULE_PARM_DESC(lp_interval, "The number of seconds between instances where "
+module_param(lp_पूर्णांकerval, uपूर्णांक, 0);
+MODULE_PARM_DESC(lp_पूर्णांकerval, "The number of seconds between instances where "
 			      "the bonding driver sends learning packets to "
 			      "each slaves peer switch. The default is 1.");
 
 /*----------------------------- Global variables ----------------------------*/
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
 atomic_t netpoll_block_tx = ATOMIC_INIT(0);
-#endif
+#पूर्ण_अगर
 
-unsigned int bond_net_id __read_mostly;
+अचिन्हित पूर्णांक bond_net_id __पढ़ो_mostly;
 
-static const struct flow_dissector_key flow_keys_bonding_keys[] = {
-	{
+अटल स्थिर काष्ठा flow_dissector_key flow_keys_bonding_keys[] = अणु
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_CONTROL,
-		.offset = offsetof(struct flow_keys, control),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, control),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_BASIC,
-		.offset = offsetof(struct flow_keys, basic),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, basic),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_IPV4_ADDRS,
-		.offset = offsetof(struct flow_keys, addrs.v4addrs),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, addrs.v4addrs),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_IPV6_ADDRS,
-		.offset = offsetof(struct flow_keys, addrs.v6addrs),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, addrs.v6addrs),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_TIPC,
-		.offset = offsetof(struct flow_keys, addrs.tipckey),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, addrs.tipckey),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_PORTS,
-		.offset = offsetof(struct flow_keys, ports),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, ports),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_ICMP,
-		.offset = offsetof(struct flow_keys, icmp),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, icmp),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_VLAN,
-		.offset = offsetof(struct flow_keys, vlan),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, vlan),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_FLOW_LABEL,
-		.offset = offsetof(struct flow_keys, tags),
-	},
-	{
+		.offset = दुरत्व(काष्ठा flow_keys, tags),
+	पूर्ण,
+	अणु
 		.key_id = FLOW_DISSECTOR_KEY_GRE_KEYID,
-		.offset = offsetof(struct flow_keys, keyid),
-	},
-};
+		.offset = दुरत्व(काष्ठा flow_keys, keyid),
+	पूर्ण,
+पूर्ण;
 
-static struct flow_dissector flow_keys_bonding __read_mostly;
+अटल काष्ठा flow_dissector flow_keys_bonding __पढ़ो_mostly;
 
 /*-------------------------- Forward declarations ---------------------------*/
 
-static int bond_init(struct net_device *bond_dev);
-static void bond_uninit(struct net_device *bond_dev);
-static void bond_get_stats(struct net_device *bond_dev,
-			   struct rtnl_link_stats64 *stats);
-static void bond_slave_arr_handler(struct work_struct *work);
-static bool bond_time_in_interval(struct bonding *bond, unsigned long last_act,
-				  int mod);
-static void bond_netdev_notify_work(struct work_struct *work);
+अटल पूर्णांक bond_init(काष्ठा net_device *bond_dev);
+अटल व्योम bond_uninit(काष्ठा net_device *bond_dev);
+अटल व्योम bond_get_stats(काष्ठा net_device *bond_dev,
+			   काष्ठा rtnl_link_stats64 *stats);
+अटल व्योम bond_slave_arr_handler(काष्ठा work_काष्ठा *work);
+अटल bool bond_समय_in_पूर्णांकerval(काष्ठा bonding *bond, अचिन्हित दीर्घ last_act,
+				  पूर्णांक mod);
+अटल व्योम bond_netdev_notअगरy_work(काष्ठा work_काष्ठा *work);
 
 /*---------------------------- General routines -----------------------------*/
 
-const char *bond_mode_name(int mode)
-{
-	static const char *names[] = {
+स्थिर अक्षर *bond_mode_name(पूर्णांक mode)
+अणु
+	अटल स्थिर अक्षर *names[] = अणु
 		[BOND_MODE_ROUNDROBIN] = "load balancing (round-robin)",
 		[BOND_MODE_ACTIVEBACKUP] = "fault-tolerance (active-backup)",
 		[BOND_MODE_XOR] = "load balancing (xor)",
@@ -274,65 +275,65 @@ const char *bond_mode_name(int mode)
 		[BOND_MODE_8023AD] = "IEEE 802.3ad Dynamic link aggregation",
 		[BOND_MODE_TLB] = "transmit load balancing",
 		[BOND_MODE_ALB] = "adaptive load balancing",
-	};
+	पूर्ण;
 
-	if (mode < BOND_MODE_ROUNDROBIN || mode > BOND_MODE_ALB)
-		return "unknown";
+	अगर (mode < BOND_MODE_ROUNDROBIN || mode > BOND_MODE_ALB)
+		वापस "unknown";
 
-	return names[mode];
-}
+	वापस names[mode];
+पूर्ण
 
 /**
- * bond_dev_queue_xmit - Prepare skb for xmit.
+ * bond_dev_queue_xmit - Prepare skb क्रम xmit.
  *
- * @bond: bond device that got this skb for tx.
+ * @bond: bond device that got this skb क्रम tx.
  * @skb: hw accel VLAN tagged skb to transmit
  * @slave_dev: slave that is supposed to xmit this skbuff
  */
-netdev_tx_t bond_dev_queue_xmit(struct bonding *bond, struct sk_buff *skb,
-			struct net_device *slave_dev)
-{
+netdev_tx_t bond_dev_queue_xmit(काष्ठा bonding *bond, काष्ठा sk_buff *skb,
+			काष्ठा net_device *slave_dev)
+अणु
 	skb->dev = slave_dev;
 
-	BUILD_BUG_ON(sizeof(skb->queue_mapping) !=
-		     sizeof(qdisc_skb_cb(skb)->slave_dev_queue_mapping));
+	BUILD_BUG_ON(माप(skb->queue_mapping) !=
+		     माप(qdisc_skb_cb(skb)->slave_dev_queue_mapping));
 	skb_set_queue_mapping(skb, qdisc_skb_cb(skb)->slave_dev_queue_mapping);
 
-	if (unlikely(netpoll_tx_running(bond->dev)))
-		return bond_netpoll_send_skb(bond_get_slave_by_dev(bond, slave_dev), skb);
+	अगर (unlikely(netpoll_tx_running(bond->dev)))
+		वापस bond_netpoll_send_skb(bond_get_slave_by_dev(bond, slave_dev), skb);
 
-	return dev_queue_xmit(skb);
-}
+	वापस dev_queue_xmit(skb);
+पूर्ण
 
-bool bond_sk_check(struct bonding *bond)
-{
-	switch (BOND_MODE(bond)) {
-	case BOND_MODE_8023AD:
-	case BOND_MODE_XOR:
-		if (bond->params.xmit_policy == BOND_XMIT_POLICY_LAYER34)
-			return true;
+bool bond_sk_check(काष्ठा bonding *bond)
+अणु
+	चयन (BOND_MODE(bond)) अणु
+	हाल BOND_MODE_8023AD:
+	हाल BOND_MODE_XOR:
+		अगर (bond->params.xmit_policy == BOND_XMIT_POLICY_LAYER34)
+			वापस true;
 		fallthrough;
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
 /*---------------------------------- VLAN -----------------------------------*/
 
-/* In the following 2 functions, bond_vlan_rx_add_vid and bond_vlan_rx_kill_vid,
- * We don't protect the slave list iteration with a lock because:
- * a. This operation is performed in IOCTL context,
- * b. The operation is protected by the RTNL semaphore in the 8021q code,
- * c. Holding a lock with BH disabled while directly calling a base driver
- *    entry point is generally a BAD idea.
+/* In the following 2 functions, bond_vlan_rx_add_vid and bond_vlan_rx_समाप्त_vid,
+ * We करोn't protect the slave list iteration with a lock because:
+ * a. This operation is perक्रमmed in IOCTL context,
+ * b. The operation is रक्षित by the RTNL semaphore in the 8021q code,
+ * c. Holding a lock with BH disabled जबतक directly calling a base driver
+ *    entry poपूर्णांक is generally a BAD idea.
  *
- * The design of synchronization/protection for this operation in the 8021q
- * module is good for one or more VLAN devices over a single physical device
- * and cannot be extended for a teaming solution like bonding, so there is a
+ * The design of synchronization/protection क्रम this operation in the 8021q
+ * module is good क्रम one or more VLAN devices over a single physical device
+ * and cannot be extended क्रम a teaming solution like bonding, so there is a
  * potential race condition here where a net device from the vlan group might
- * be referenced (either by a base driver or the 8021q code) while it is being
- * removed from the system. However, it turns out we're not making matters
- * worse, and if it works for regular VLAN usage it will work here too.
+ * be referenced (either by a base driver or the 8021q code) जबतक it is being
+ * हटाओd from the प्रणाली. However, it turns out we're not making matters
+ * worse, and अगर it works क्रम regular VLAN usage it will work here too.
 */
 
 /**
@@ -341,423 +342,423 @@ bool bond_sk_check(struct bonding *bond)
  * @proto: network protocol ID
  * @vid: vlan id being added
  */
-static int bond_vlan_rx_add_vid(struct net_device *bond_dev,
+अटल पूर्णांक bond_vlan_rx_add_vid(काष्ठा net_device *bond_dev,
 				__be16 proto, u16 vid)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct slave *slave, *rollback_slave;
-	struct list_head *iter;
-	int res;
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा slave *slave, *rollback_slave;
+	काष्ठा list_head *iter;
+	पूर्णांक res;
 
-	bond_for_each_slave(bond, slave, iter) {
+	bond_क्रम_each_slave(bond, slave, iter) अणु
 		res = vlan_vid_add(slave->dev, proto, vid);
-		if (res)
-			goto unwind;
-	}
+		अगर (res)
+			जाओ unwind;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 unwind:
 	/* unwind to the slave that failed */
-	bond_for_each_slave(bond, rollback_slave, iter) {
-		if (rollback_slave == slave)
-			break;
+	bond_क्रम_each_slave(bond, rollback_slave, iter) अणु
+		अगर (rollback_slave == slave)
+			अवरोध;
 
 		vlan_vid_del(rollback_slave->dev, proto, vid);
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
- * bond_vlan_rx_kill_vid - Propagates deleting an id to slaves
+ * bond_vlan_rx_समाप्त_vid - Propagates deleting an id to slaves
  * @bond_dev: bonding net device that got called
  * @proto: network protocol ID
- * @vid: vlan id being removed
+ * @vid: vlan id being हटाओd
  */
-static int bond_vlan_rx_kill_vid(struct net_device *bond_dev,
+अटल पूर्णांक bond_vlan_rx_समाप्त_vid(काष्ठा net_device *bond_dev,
 				 __be16 proto, u16 vid)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct list_head *iter;
-	struct slave *slave;
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
-	bond_for_each_slave(bond, slave, iter)
+	bond_क्रम_each_slave(bond, slave, iter)
 		vlan_vid_del(slave->dev, proto, vid);
 
-	if (bond_is_lb(bond))
+	अगर (bond_is_lb(bond))
 		bond_alb_clear_vlan(bond, vid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*---------------------------------- XFRM -----------------------------------*/
 
-#ifdef CONFIG_XFRM_OFFLOAD
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
 /**
  * bond_ipsec_add_sa - program device with a security association
- * @xs: pointer to transformer state struct
+ * @xs: poपूर्णांकer to transक्रमmer state काष्ठा
  **/
-static int bond_ipsec_add_sa(struct xfrm_state *xs)
-{
-	struct net_device *bond_dev = xs->xso.dev;
-	struct bonding *bond;
-	struct slave *slave;
+अटल पूर्णांक bond_ipsec_add_sa(काष्ठा xfrm_state *xs)
+अणु
+	काष्ठा net_device *bond_dev = xs->xso.dev;
+	काष्ठा bonding *bond;
+	काष्ठा slave *slave;
 
-	if (!bond_dev)
-		return -EINVAL;
+	अगर (!bond_dev)
+		वापस -EINVAL;
 
 	bond = netdev_priv(bond_dev);
 	slave = rcu_dereference(bond->curr_active_slave);
 	xs->xso.real_dev = slave->dev;
 	bond->xs = xs;
 
-	if (!(slave->dev->xfrmdev_ops
-	      && slave->dev->xfrmdev_ops->xdo_dev_state_add)) {
+	अगर (!(slave->dev->xfrmdev_ops
+	      && slave->dev->xfrmdev_ops->xकरो_dev_state_add)) अणु
 		slave_warn(bond_dev, slave->dev, "Slave does not support ipsec offload\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return slave->dev->xfrmdev_ops->xdo_dev_state_add(xs);
-}
+	वापस slave->dev->xfrmdev_ops->xकरो_dev_state_add(xs);
+पूर्ण
 
 /**
- * bond_ipsec_del_sa - clear out this specific SA
- * @xs: pointer to transformer state struct
+ * bond_ipsec_del_sa - clear out this specअगरic SA
+ * @xs: poपूर्णांकer to transक्रमmer state काष्ठा
  **/
-static void bond_ipsec_del_sa(struct xfrm_state *xs)
-{
-	struct net_device *bond_dev = xs->xso.dev;
-	struct bonding *bond;
-	struct slave *slave;
+अटल व्योम bond_ipsec_del_sa(काष्ठा xfrm_state *xs)
+अणु
+	काष्ठा net_device *bond_dev = xs->xso.dev;
+	काष्ठा bonding *bond;
+	काष्ठा slave *slave;
 
-	if (!bond_dev)
-		return;
+	अगर (!bond_dev)
+		वापस;
 
 	bond = netdev_priv(bond_dev);
 	slave = rcu_dereference(bond->curr_active_slave);
 
-	if (!slave)
-		return;
+	अगर (!slave)
+		वापस;
 
 	xs->xso.real_dev = slave->dev;
 
-	if (!(slave->dev->xfrmdev_ops
-	      && slave->dev->xfrmdev_ops->xdo_dev_state_delete)) {
+	अगर (!(slave->dev->xfrmdev_ops
+	      && slave->dev->xfrmdev_ops->xकरो_dev_state_delete)) अणु
 		slave_warn(bond_dev, slave->dev, "%s: no slave xdo_dev_state_delete\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	slave->dev->xfrmdev_ops->xdo_dev_state_delete(xs);
-}
+	slave->dev->xfrmdev_ops->xकरो_dev_state_delete(xs);
+पूर्ण
 
 /**
  * bond_ipsec_offload_ok - can this packet use the xfrm hw offload
  * @skb: current data packet
- * @xs: pointer to transformer state struct
+ * @xs: poपूर्णांकer to transक्रमmer state काष्ठा
  **/
-static bool bond_ipsec_offload_ok(struct sk_buff *skb, struct xfrm_state *xs)
-{
-	struct net_device *bond_dev = xs->xso.dev;
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct slave *curr_active = rcu_dereference(bond->curr_active_slave);
-	struct net_device *slave_dev = curr_active->dev;
+अटल bool bond_ipsec_offload_ok(काष्ठा sk_buff *skb, काष्ठा xfrm_state *xs)
+अणु
+	काष्ठा net_device *bond_dev = xs->xso.dev;
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा slave *curr_active = rcu_dereference(bond->curr_active_slave);
+	काष्ठा net_device *slave_dev = curr_active->dev;
 
-	if (BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP)
-		return true;
+	अगर (BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP)
+		वापस true;
 
-	if (!(slave_dev->xfrmdev_ops
-	      && slave_dev->xfrmdev_ops->xdo_dev_offload_ok)) {
+	अगर (!(slave_dev->xfrmdev_ops
+	      && slave_dev->xfrmdev_ops->xकरो_dev_offload_ok)) अणु
 		slave_warn(bond_dev, slave_dev, "%s: no slave xdo_dev_offload_ok\n", __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	xs->xso.real_dev = slave_dev;
-	return slave_dev->xfrmdev_ops->xdo_dev_offload_ok(skb, xs);
-}
+	वापस slave_dev->xfrmdev_ops->xकरो_dev_offload_ok(skb, xs);
+पूर्ण
 
-static const struct xfrmdev_ops bond_xfrmdev_ops = {
-	.xdo_dev_state_add = bond_ipsec_add_sa,
-	.xdo_dev_state_delete = bond_ipsec_del_sa,
-	.xdo_dev_offload_ok = bond_ipsec_offload_ok,
-};
-#endif /* CONFIG_XFRM_OFFLOAD */
+अटल स्थिर काष्ठा xfrmdev_ops bond_xfrmdev_ops = अणु
+	.xकरो_dev_state_add = bond_ipsec_add_sa,
+	.xकरो_dev_state_delete = bond_ipsec_del_sa,
+	.xकरो_dev_offload_ok = bond_ipsec_offload_ok,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_XFRM_OFFLOAD */
 
 /*------------------------------- Link status -------------------------------*/
 
-/* Set the carrier state for the master according to the state of its
+/* Set the carrier state क्रम the master according to the state of its
  * slaves.  If any slaves are up, the master is up.  In 802.3ad mode,
- * do special 802.3ad magic.
+ * करो special 802.3ad magic.
  *
- * Returns zero if carrier state does not change, nonzero if it does.
+ * Returns zero अगर carrier state करोes not change, nonzero अगर it करोes.
  */
-int bond_set_carrier(struct bonding *bond)
-{
-	struct list_head *iter;
-	struct slave *slave;
+पूर्णांक bond_set_carrier(काष्ठा bonding *bond)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
-	if (!bond_has_slaves(bond))
-		goto down;
+	अगर (!bond_has_slaves(bond))
+		जाओ करोwn;
 
-	if (BOND_MODE(bond) == BOND_MODE_8023AD)
-		return bond_3ad_set_carrier(bond);
+	अगर (BOND_MODE(bond) == BOND_MODE_8023AD)
+		वापस bond_3ad_set_carrier(bond);
 
-	bond_for_each_slave(bond, slave, iter) {
-		if (slave->link == BOND_LINK_UP) {
-			if (!netif_carrier_ok(bond->dev)) {
-				netif_carrier_on(bond->dev);
-				return 1;
-			}
-			return 0;
-		}
-	}
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		अगर (slave->link == BOND_LINK_UP) अणु
+			अगर (!netअगर_carrier_ok(bond->dev)) अणु
+				netअगर_carrier_on(bond->dev);
+				वापस 1;
+			पूर्ण
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-down:
-	if (netif_carrier_ok(bond->dev)) {
-		netif_carrier_off(bond->dev);
-		return 1;
-	}
-	return 0;
-}
+करोwn:
+	अगर (netअगर_carrier_ok(bond->dev)) अणु
+		netअगर_carrier_off(bond->dev);
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Get link speed and duplex from the slave's base driver
- * using ethtool. If for some reason the call fails or the
+ * using ethtool. If क्रम some reason the call fails or the
  * values are invalid, set speed and duplex to -1,
- * and return. Return 1 if speed or duplex settings are
+ * and वापस. Return 1 अगर speed or duplex settings are
  * UNKNOWN; 0 otherwise.
  */
-static int bond_update_speed_duplex(struct slave *slave)
-{
-	struct net_device *slave_dev = slave->dev;
-	struct ethtool_link_ksettings ecmd;
-	int res;
+अटल पूर्णांक bond_update_speed_duplex(काष्ठा slave *slave)
+अणु
+	काष्ठा net_device *slave_dev = slave->dev;
+	काष्ठा ethtool_link_ksettings ecmd;
+	पूर्णांक res;
 
 	slave->speed = SPEED_UNKNOWN;
 	slave->duplex = DUPLEX_UNKNOWN;
 
 	res = __ethtool_get_link_ksettings(slave_dev, &ecmd);
-	if (res < 0)
-		return 1;
-	if (ecmd.base.speed == 0 || ecmd.base.speed == ((__u32)-1))
-		return 1;
-	switch (ecmd.base.duplex) {
-	case DUPLEX_FULL:
-	case DUPLEX_HALF:
-		break;
-	default:
-		return 1;
-	}
+	अगर (res < 0)
+		वापस 1;
+	अगर (ecmd.base.speed == 0 || ecmd.base.speed == ((__u32)-1))
+		वापस 1;
+	चयन (ecmd.base.duplex) अणु
+	हाल DUPLEX_FULL:
+	हाल DUPLEX_HALF:
+		अवरोध;
+	शेष:
+		वापस 1;
+	पूर्ण
 
 	slave->speed = ecmd.base.speed;
 	slave->duplex = ecmd.base.duplex;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const char *bond_slave_link_status(s8 link)
-{
-	switch (link) {
-	case BOND_LINK_UP:
-		return "up";
-	case BOND_LINK_FAIL:
-		return "going down";
-	case BOND_LINK_DOWN:
-		return "down";
-	case BOND_LINK_BACK:
-		return "going back";
-	default:
-		return "unknown";
-	}
-}
+स्थिर अक्षर *bond_slave_link_status(s8 link)
+अणु
+	चयन (link) अणु
+	हाल BOND_LINK_UP:
+		वापस "up";
+	हाल BOND_LINK_FAIL:
+		वापस "going down";
+	हाल BOND_LINK_DOWN:
+		वापस "down";
+	हाल BOND_LINK_BACK:
+		वापस "going back";
+	शेष:
+		वापस "unknown";
+	पूर्ण
+पूर्ण
 
-/* if <dev> supports MII link status reporting, check its link status.
+/* अगर <dev> supports MII link status reporting, check its link status.
  *
- * We either do MII/ETHTOOL ioctls, or check netif_carrier_ok(),
+ * We either करो MII/ETHTOOL ioctls, or check netअगर_carrier_ok(),
  * depending upon the setting of the use_carrier parameter.
  *
  * Return either BMSR_LSTATUS, meaning that the link is up (or we
  * can't tell and just pretend it is), or 0, meaning that the link is
- * down.
+ * करोwn.
  *
- * If reporting is non-zero, instead of faking link up, return -1 if
- * both ETHTOOL and MII ioctls fail (meaning the device does not
- * support them).  If use_carrier is set, return whatever it says.
- * It'd be nice if there was a good way to tell if a driver supports
- * netif_carrier, but there really isn't.
+ * If reporting is non-zero, instead of faking link up, वापस -1 अगर
+ * both ETHTOOL and MII ioctls fail (meaning the device करोes not
+ * support them).  If use_carrier is set, वापस whatever it says.
+ * It'd be nice अगर there was a good way to tell अगर a driver supports
+ * netअगर_carrier, but there really isn't.
  */
-static int bond_check_dev_link(struct bonding *bond,
-			       struct net_device *slave_dev, int reporting)
-{
-	const struct net_device_ops *slave_ops = slave_dev->netdev_ops;
-	int (*ioctl)(struct net_device *, struct ifreq *, int);
-	struct ifreq ifr;
-	struct mii_ioctl_data *mii;
+अटल पूर्णांक bond_check_dev_link(काष्ठा bonding *bond,
+			       काष्ठा net_device *slave_dev, पूर्णांक reporting)
+अणु
+	स्थिर काष्ठा net_device_ops *slave_ops = slave_dev->netdev_ops;
+	पूर्णांक (*ioctl)(काष्ठा net_device *, काष्ठा अगरreq *, पूर्णांक);
+	काष्ठा अगरreq अगरr;
+	काष्ठा mii_ioctl_data *mii;
 
-	if (!reporting && !netif_running(slave_dev))
-		return 0;
+	अगर (!reporting && !netअगर_running(slave_dev))
+		वापस 0;
 
-	if (bond->params.use_carrier)
-		return netif_carrier_ok(slave_dev) ? BMSR_LSTATUS : 0;
+	अगर (bond->params.use_carrier)
+		वापस netअगर_carrier_ok(slave_dev) ? BMSR_LSTATUS : 0;
 
 	/* Try to get link status using Ethtool first. */
-	if (slave_dev->ethtool_ops->get_link)
-		return slave_dev->ethtool_ops->get_link(slave_dev) ?
+	अगर (slave_dev->ethtool_ops->get_link)
+		वापस slave_dev->ethtool_ops->get_link(slave_dev) ?
 			BMSR_LSTATUS : 0;
 
 	/* Ethtool can't be used, fallback to MII ioctls. */
-	ioctl = slave_ops->ndo_do_ioctl;
-	if (ioctl) {
-		/* TODO: set pointer to correct ioctl on a per team member
+	ioctl = slave_ops->nकरो_करो_ioctl;
+	अगर (ioctl) अणु
+		/* TODO: set poपूर्णांकer to correct ioctl on a per team member
 		 *       bases to make this more efficient. that is, once
 		 *       we determine the correct ioctl, we will always
-		 *       call it and not the others for that team
+		 *       call it and not the others क्रम that team
 		 *       member.
 		 */
 
-		/* We cannot assume that SIOCGMIIPHY will also read a
-		 * register; not all network drivers (e.g., e100)
+		/* We cannot assume that SIOCGMIIPHY will also पढ़ो a
+		 * रेजिस्टर; not all network drivers (e.g., e100)
 		 * support that.
 		 */
 
-		/* Yes, the mii is overlaid on the ifreq.ifr_ifru */
-		strncpy(ifr.ifr_name, slave_dev->name, IFNAMSIZ);
-		mii = if_mii(&ifr);
-		if (ioctl(slave_dev, &ifr, SIOCGMIIPHY) == 0) {
+		/* Yes, the mii is overlaid on the अगरreq.अगरr_अगरru */
+		म_नकलन(अगरr.अगरr_name, slave_dev->name, IFNAMSIZ);
+		mii = अगर_mii(&अगरr);
+		अगर (ioctl(slave_dev, &अगरr, SIOCGMIIPHY) == 0) अणु
 			mii->reg_num = MII_BMSR;
-			if (ioctl(slave_dev, &ifr, SIOCGMIIREG) == 0)
-				return mii->val_out & BMSR_LSTATUS;
-		}
-	}
+			अगर (ioctl(slave_dev, &अगरr, SIOCGMIIREG) == 0)
+				वापस mii->val_out & BMSR_LSTATUS;
+		पूर्ण
+	पूर्ण
 
-	/* If reporting, report that either there's no dev->do_ioctl,
+	/* If reporting, report that either there's no dev->करो_ioctl,
 	 * or both SIOCGMIIREG and get_link failed (meaning that we
 	 * cannot report link status).  If not reporting, pretend
 	 * we're ok.
 	 */
-	return reporting ? -1 : BMSR_LSTATUS;
-}
+	वापस reporting ? -1 : BMSR_LSTATUS;
+पूर्ण
 
 /*----------------------------- Multicast list ------------------------------*/
 
-/* Push the promiscuity flag down to appropriate slaves */
-static int bond_set_promiscuity(struct bonding *bond, int inc)
-{
-	struct list_head *iter;
-	int err = 0;
+/* Push the promiscuity flag करोwn to appropriate slaves */
+अटल पूर्णांक bond_set_promiscuity(काष्ठा bonding *bond, पूर्णांक inc)
+अणु
+	काष्ठा list_head *iter;
+	पूर्णांक err = 0;
 
-	if (bond_uses_primary(bond)) {
-		struct slave *curr_active = rtnl_dereference(bond->curr_active_slave);
+	अगर (bond_uses_primary(bond)) अणु
+		काष्ठा slave *curr_active = rtnl_dereference(bond->curr_active_slave);
 
-		if (curr_active)
+		अगर (curr_active)
 			err = dev_set_promiscuity(curr_active->dev, inc);
-	} else {
-		struct slave *slave;
+	पूर्ण अन्यथा अणु
+		काष्ठा slave *slave;
 
-		bond_for_each_slave(bond, slave, iter) {
+		bond_क्रम_each_slave(bond, slave, iter) अणु
 			err = dev_set_promiscuity(slave->dev, inc);
-			if (err)
-				return err;
-		}
-	}
-	return err;
-}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-/* Push the allmulti flag down to all slaves */
-static int bond_set_allmulti(struct bonding *bond, int inc)
-{
-	struct list_head *iter;
-	int err = 0;
+/* Push the allmulti flag करोwn to all slaves */
+अटल पूर्णांक bond_set_allmulti(काष्ठा bonding *bond, पूर्णांक inc)
+अणु
+	काष्ठा list_head *iter;
+	पूर्णांक err = 0;
 
-	if (bond_uses_primary(bond)) {
-		struct slave *curr_active = rtnl_dereference(bond->curr_active_slave);
+	अगर (bond_uses_primary(bond)) अणु
+		काष्ठा slave *curr_active = rtnl_dereference(bond->curr_active_slave);
 
-		if (curr_active)
+		अगर (curr_active)
 			err = dev_set_allmulti(curr_active->dev, inc);
-	} else {
-		struct slave *slave;
+	पूर्ण अन्यथा अणु
+		काष्ठा slave *slave;
 
-		bond_for_each_slave(bond, slave, iter) {
+		bond_क्रम_each_slave(bond, slave, iter) अणु
 			err = dev_set_allmulti(slave->dev, inc);
-			if (err)
-				return err;
-		}
-	}
-	return err;
-}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-/* Retrieve the list of registered multicast addresses for the bonding
+/* Retrieve the list of रेजिस्टरed multicast addresses क्रम the bonding
  * device and retransmit an IGMP JOIN request to the current active
  * slave.
  */
-static void bond_resend_igmp_join_requests_delayed(struct work_struct *work)
-{
-	struct bonding *bond = container_of(work, struct bonding,
+अटल व्योम bond_resend_igmp_join_requests_delayed(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा bonding *bond = container_of(work, काष्ठा bonding,
 					    mcast_work.work);
 
-	if (!rtnl_trylock()) {
+	अगर (!rtnl_trylock()) अणु
 		queue_delayed_work(bond->wq, &bond->mcast_work, 1);
-		return;
-	}
-	call_netdevice_notifiers(NETDEV_RESEND_IGMP, bond->dev);
+		वापस;
+	पूर्ण
+	call_netdevice_notअगरiers(NETDEV_RESEND_IGMP, bond->dev);
 
-	if (bond->igmp_retrans > 1) {
+	अगर (bond->igmp_retrans > 1) अणु
 		bond->igmp_retrans--;
 		queue_delayed_work(bond->wq, &bond->mcast_work, HZ/5);
-	}
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
 /* Flush bond's hardware addresses from slave */
-static void bond_hw_addr_flush(struct net_device *bond_dev,
-			       struct net_device *slave_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
+अटल व्योम bond_hw_addr_flush(काष्ठा net_device *bond_dev,
+			       काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
 
 	dev_uc_unsync(slave_dev, bond_dev);
 	dev_mc_unsync(slave_dev, bond_dev);
 
-	if (BOND_MODE(bond) == BOND_MODE_8023AD) {
+	अगर (BOND_MODE(bond) == BOND_MODE_8023AD) अणु
 		/* del lacpdu mc addr from mc list */
 		u8 lacpdu_multicast[ETH_ALEN] = MULTICAST_LACPDU_ADDR;
 
 		dev_mc_del(slave_dev, lacpdu_multicast);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*--------------------------- Active slave change ---------------------------*/
 
-/* Update the hardware address list and promisc/allmulti for the new and
- * old active slaves (if any).  Modes that are not using primary keep all
- * slaves up date at all times; only the modes that use primary need to call
+/* Update the hardware address list and promisc/allmulti क्रम the new and
+ * old active slaves (अगर any).  Modes that are not using primary keep all
+ * slaves up date at all बार; only the modes that use primary need to call
  * this function to swap these settings during a failover.
  */
-static void bond_hw_addr_swap(struct bonding *bond, struct slave *new_active,
-			      struct slave *old_active)
-{
-	if (old_active) {
-		if (bond->dev->flags & IFF_PROMISC)
+अटल व्योम bond_hw_addr_swap(काष्ठा bonding *bond, काष्ठा slave *new_active,
+			      काष्ठा slave *old_active)
+अणु
+	अगर (old_active) अणु
+		अगर (bond->dev->flags & IFF_PROMISC)
 			dev_set_promiscuity(old_active->dev, -1);
 
-		if (bond->dev->flags & IFF_ALLMULTI)
+		अगर (bond->dev->flags & IFF_ALLMULTI)
 			dev_set_allmulti(old_active->dev, -1);
 
 		bond_hw_addr_flush(bond->dev, old_active->dev);
-	}
+	पूर्ण
 
-	if (new_active) {
+	अगर (new_active) अणु
 		/* FIXME: Signal errors upstream. */
-		if (bond->dev->flags & IFF_PROMISC)
+		अगर (bond->dev->flags & IFF_PROMISC)
 			dev_set_promiscuity(new_active->dev, 1);
 
-		if (bond->dev->flags & IFF_ALLMULTI)
+		अगर (bond->dev->flags & IFF_ALLMULTI)
 			dev_set_allmulti(new_active->dev, 1);
 
-		netif_addr_lock_bh(bond->dev);
+		netअगर_addr_lock_bh(bond->dev);
 		dev_uc_sync(new_active->dev, bond->dev);
 		dev_mc_sync(new_active->dev, bond->dev);
-		netif_addr_unlock_bh(bond->dev);
-	}
-}
+		netअगर_addr_unlock_bh(bond->dev);
+	पूर्ण
+पूर्ण
 
 /**
  * bond_set_dev_addr - clone slave's address to bond
@@ -766,206 +767,206 @@ static void bond_hw_addr_swap(struct bonding *bond, struct slave *new_active,
  *
  * Should be called with RTNL held.
  */
-static int bond_set_dev_addr(struct net_device *bond_dev,
-			     struct net_device *slave_dev)
-{
-	int err;
+अटल पूर्णांक bond_set_dev_addr(काष्ठा net_device *bond_dev,
+			     काष्ठा net_device *slave_dev)
+अणु
+	पूर्णांक err;
 
 	slave_dbg(bond_dev, slave_dev, "bond_dev=%p slave_dev=%p slave_dev->addr_len=%d\n",
 		  bond_dev, slave_dev, slave_dev->addr_len);
-	err = dev_pre_changeaddr_notify(bond_dev, slave_dev->dev_addr, NULL);
-	if (err)
-		return err;
+	err = dev_pre_changeaddr_notअगरy(bond_dev, slave_dev->dev_addr, शून्य);
+	अगर (err)
+		वापस err;
 
-	memcpy(bond_dev->dev_addr, slave_dev->dev_addr, slave_dev->addr_len);
+	स_नकल(bond_dev->dev_addr, slave_dev->dev_addr, slave_dev->addr_len);
 	bond_dev->addr_assign_type = NET_ADDR_STOLEN;
-	call_netdevice_notifiers(NETDEV_CHANGEADDR, bond_dev);
-	return 0;
-}
+	call_netdevice_notअगरiers(NETDEV_CHANGEADDR, bond_dev);
+	वापस 0;
+पूर्ण
 
-static struct slave *bond_get_old_active(struct bonding *bond,
-					 struct slave *new_active)
-{
-	struct slave *slave;
-	struct list_head *iter;
+अटल काष्ठा slave *bond_get_old_active(काष्ठा bonding *bond,
+					 काष्ठा slave *new_active)
+अणु
+	काष्ठा slave *slave;
+	काष्ठा list_head *iter;
 
-	bond_for_each_slave(bond, slave, iter) {
-		if (slave == new_active)
-			continue;
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		अगर (slave == new_active)
+			जारी;
 
-		if (ether_addr_equal(bond->dev->dev_addr, slave->dev->dev_addr))
-			return slave;
-	}
+		अगर (ether_addr_equal(bond->dev->dev_addr, slave->dev->dev_addr))
+			वापस slave;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* bond_do_fail_over_mac
+/* bond_करो_fail_over_mac
  *
- * Perform special MAC address swapping for fail_over_mac settings
+ * Perक्रमm special MAC address swapping क्रम fail_over_mac settings
  *
  * Called with RTNL
  */
-static void bond_do_fail_over_mac(struct bonding *bond,
-				  struct slave *new_active,
-				  struct slave *old_active)
-{
-	u8 tmp_mac[MAX_ADDR_LEN];
-	struct sockaddr_storage ss;
-	int rv;
+अटल व्योम bond_करो_fail_over_mac(काष्ठा bonding *bond,
+				  काष्ठा slave *new_active,
+				  काष्ठा slave *old_active)
+अणु
+	u8 पंचांगp_mac[MAX_ADDR_LEN];
+	काष्ठा sockaddr_storage ss;
+	पूर्णांक rv;
 
-	switch (bond->params.fail_over_mac) {
-	case BOND_FOM_ACTIVE:
-		if (new_active) {
+	चयन (bond->params.fail_over_mac) अणु
+	हाल BOND_FOM_ACTIVE:
+		अगर (new_active) अणु
 			rv = bond_set_dev_addr(bond->dev, new_active->dev);
-			if (rv)
+			अगर (rv)
 				slave_err(bond->dev, new_active->dev, "Error %d setting bond MAC from slave\n",
 					  -rv);
-		}
-		break;
-	case BOND_FOM_FOLLOW:
-		/* if new_active && old_active, swap them
-		 * if just old_active, do nothing (going to no active slave)
-		 * if just new_active, set new_active to bond's MAC
+		पूर्ण
+		अवरोध;
+	हाल BOND_FOM_FOLLOW:
+		/* अगर new_active && old_active, swap them
+		 * अगर just old_active, करो nothing (going to no active slave)
+		 * अगर just new_active, set new_active to bond's MAC
 		 */
-		if (!new_active)
-			return;
+		अगर (!new_active)
+			वापस;
 
-		if (!old_active)
+		अगर (!old_active)
 			old_active = bond_get_old_active(bond, new_active);
 
-		if (old_active) {
-			bond_hw_addr_copy(tmp_mac, new_active->dev->dev_addr,
+		अगर (old_active) अणु
+			bond_hw_addr_copy(पंचांगp_mac, new_active->dev->dev_addr,
 					  new_active->dev->addr_len);
 			bond_hw_addr_copy(ss.__data,
 					  old_active->dev->dev_addr,
 					  old_active->dev->addr_len);
 			ss.ss_family = new_active->dev->type;
-		} else {
+		पूर्ण अन्यथा अणु
 			bond_hw_addr_copy(ss.__data, bond->dev->dev_addr,
 					  bond->dev->addr_len);
 			ss.ss_family = bond->dev->type;
-		}
+		पूर्ण
 
 		rv = dev_set_mac_address(new_active->dev,
-					 (struct sockaddr *)&ss, NULL);
-		if (rv) {
+					 (काष्ठा sockaddr *)&ss, शून्य);
+		अगर (rv) अणु
 			slave_err(bond->dev, new_active->dev, "Error %d setting MAC of new active slave\n",
 				  -rv);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!old_active)
-			goto out;
+		अगर (!old_active)
+			जाओ out;
 
-		bond_hw_addr_copy(ss.__data, tmp_mac,
+		bond_hw_addr_copy(ss.__data, पंचांगp_mac,
 				  new_active->dev->addr_len);
 		ss.ss_family = old_active->dev->type;
 
 		rv = dev_set_mac_address(old_active->dev,
-					 (struct sockaddr *)&ss, NULL);
-		if (rv)
+					 (काष्ठा sockaddr *)&ss, शून्य);
+		अगर (rv)
 			slave_err(bond->dev, old_active->dev, "Error %d setting MAC of old active slave\n",
 				  -rv);
 out:
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(bond->dev, "bond_do_fail_over_mac impossible: bad policy %d\n",
 			   bond->params.fail_over_mac);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-}
+पूर्ण
 
-static struct slave *bond_choose_primary_or_current(struct bonding *bond)
-{
-	struct slave *prim = rtnl_dereference(bond->primary_slave);
-	struct slave *curr = rtnl_dereference(bond->curr_active_slave);
+अटल काष्ठा slave *bond_choose_primary_or_current(काष्ठा bonding *bond)
+अणु
+	काष्ठा slave *prim = rtnl_dereference(bond->primary_slave);
+	काष्ठा slave *curr = rtnl_dereference(bond->curr_active_slave);
 
-	if (!prim || prim->link != BOND_LINK_UP) {
-		if (!curr || curr->link != BOND_LINK_UP)
-			return NULL;
-		return curr;
-	}
+	अगर (!prim || prim->link != BOND_LINK_UP) अणु
+		अगर (!curr || curr->link != BOND_LINK_UP)
+			वापस शून्य;
+		वापस curr;
+	पूर्ण
 
-	if (bond->force_primary) {
-		bond->force_primary = false;
-		return prim;
-	}
+	अगर (bond->क्रमce_primary) अणु
+		bond->क्रमce_primary = false;
+		वापस prim;
+	पूर्ण
 
-	if (!curr || curr->link != BOND_LINK_UP)
-		return prim;
+	अगर (!curr || curr->link != BOND_LINK_UP)
+		वापस prim;
 
-	/* At this point, prim and curr are both up */
-	switch (bond->params.primary_reselect) {
-	case BOND_PRI_RESELECT_ALWAYS:
-		return prim;
-	case BOND_PRI_RESELECT_BETTER:
-		if (prim->speed < curr->speed)
-			return curr;
-		if (prim->speed == curr->speed && prim->duplex <= curr->duplex)
-			return curr;
-		return prim;
-	case BOND_PRI_RESELECT_FAILURE:
-		return curr;
-	default:
+	/* At this poपूर्णांक, prim and curr are both up */
+	चयन (bond->params.primary_reselect) अणु
+	हाल BOND_PRI_RESELECT_ALWAYS:
+		वापस prim;
+	हाल BOND_PRI_RESELECT_BETTER:
+		अगर (prim->speed < curr->speed)
+			वापस curr;
+		अगर (prim->speed == curr->speed && prim->duplex <= curr->duplex)
+			वापस curr;
+		वापस prim;
+	हाल BOND_PRI_RESELECT_FAILURE:
+		वापस curr;
+	शेष:
 		netdev_err(bond->dev, "impossible primary_reselect %d\n",
 			   bond->params.primary_reselect);
-		return curr;
-	}
-}
+		वापस curr;
+	पूर्ण
+पूर्ण
 
 /**
  * bond_find_best_slave - select the best available slave to be the active one
- * @bond: our bonding struct
+ * @bond: our bonding काष्ठा
  */
-static struct slave *bond_find_best_slave(struct bonding *bond)
-{
-	struct slave *slave, *bestslave = NULL;
-	struct list_head *iter;
-	int mintime = bond->params.updelay;
+अटल काष्ठा slave *bond_find_best_slave(काष्ठा bonding *bond)
+अणु
+	काष्ठा slave *slave, *bestslave = शून्य;
+	काष्ठा list_head *iter;
+	पूर्णांक mपूर्णांकime = bond->params.updelay;
 
 	slave = bond_choose_primary_or_current(bond);
-	if (slave)
-		return slave;
+	अगर (slave)
+		वापस slave;
 
-	bond_for_each_slave(bond, slave, iter) {
-		if (slave->link == BOND_LINK_UP)
-			return slave;
-		if (slave->link == BOND_LINK_BACK && bond_slave_is_up(slave) &&
-		    slave->delay < mintime) {
-			mintime = slave->delay;
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		अगर (slave->link == BOND_LINK_UP)
+			वापस slave;
+		अगर (slave->link == BOND_LINK_BACK && bond_slave_is_up(slave) &&
+		    slave->delay < mपूर्णांकime) अणु
+			mपूर्णांकime = slave->delay;
 			bestslave = slave;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return bestslave;
-}
+	वापस bestslave;
+पूर्ण
 
-static bool bond_should_notify_peers(struct bonding *bond)
-{
-	struct slave *slave;
+अटल bool bond_should_notअगरy_peers(काष्ठा bonding *bond)
+अणु
+	काष्ठा slave *slave;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	slave = rcu_dereference(bond->curr_active_slave);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	netdev_dbg(bond->dev, "bond_should_notify_peers: slave %s\n",
 		   slave ? slave->dev->name : "NULL");
 
-	if (!slave || !bond->send_peer_notif ||
-	    bond->send_peer_notif %
-	    max(1, bond->params.peer_notif_delay) != 0 ||
-	    !netif_carrier_ok(bond->dev) ||
+	अगर (!slave || !bond->send_peer_notअगर ||
+	    bond->send_peer_notअगर %
+	    max(1, bond->params.peer_notअगर_delay) != 0 ||
+	    !netअगर_carrier_ok(bond->dev) ||
 	    test_bit(__LINK_STATE_LINKWATCH_PENDING, &slave->dev->state))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * bond_change_active_slave - change the active slave into the specified one
- * @bond: our bonding struct
+ * bond_change_active_slave - change the active slave पूर्णांकo the specअगरied one
+ * @bond: our bonding काष्ठा
  * @new_active: the new slave to make the active one
  *
  * Set the new slave to the bond's settings and unset them on the old
@@ -974,121 +975,121 @@ static bool bond_should_notify_peers(struct bonding *bond)
  *
  * If @new's link state is %BOND_LINK_BACK we'll set it to %BOND_LINK_UP,
  * because it is apparently the best available slave we have, even though its
- * updelay hasn't timed out yet.
+ * updelay hasn't समयd out yet.
  *
  * Caller must hold RTNL.
  */
-void bond_change_active_slave(struct bonding *bond, struct slave *new_active)
-{
-	struct slave *old_active;
+व्योम bond_change_active_slave(काष्ठा bonding *bond, काष्ठा slave *new_active)
+अणु
+	काष्ठा slave *old_active;
 
 	ASSERT_RTNL();
 
 	old_active = rtnl_dereference(bond->curr_active_slave);
 
-	if (old_active == new_active)
-		return;
+	अगर (old_active == new_active)
+		वापस;
 
-#ifdef CONFIG_XFRM_OFFLOAD
-	if (old_active && bond->xs)
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
+	अगर (old_active && bond->xs)
 		bond_ipsec_del_sa(bond->xs);
-#endif /* CONFIG_XFRM_OFFLOAD */
+#पूर्ण_अगर /* CONFIG_XFRM_OFFLOAD */
 
-	if (new_active) {
-		new_active->last_link_up = jiffies;
+	अगर (new_active) अणु
+		new_active->last_link_up = jअगरfies;
 
-		if (new_active->link == BOND_LINK_BACK) {
-			if (bond_uses_primary(bond)) {
+		अगर (new_active->link == BOND_LINK_BACK) अणु
+			अगर (bond_uses_primary(bond)) अणु
 				slave_info(bond->dev, new_active->dev, "making interface the new active one %d ms earlier\n",
 					   (bond->params.updelay - new_active->delay) * bond->params.miimon);
-			}
+			पूर्ण
 
 			new_active->delay = 0;
 			bond_set_slave_link_state(new_active, BOND_LINK_UP,
 						  BOND_SLAVE_NOTIFY_NOW);
 
-			if (BOND_MODE(bond) == BOND_MODE_8023AD)
+			अगर (BOND_MODE(bond) == BOND_MODE_8023AD)
 				bond_3ad_handle_link_change(new_active, BOND_LINK_UP);
 
-			if (bond_is_lb(bond))
+			अगर (bond_is_lb(bond))
 				bond_alb_handle_link_change(bond, new_active, BOND_LINK_UP);
-		} else {
-			if (bond_uses_primary(bond)) {
+		पूर्ण अन्यथा अणु
+			अगर (bond_uses_primary(bond)) अणु
 				slave_info(bond->dev, new_active->dev, "making interface the new active one\n");
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (bond_uses_primary(bond))
+	अगर (bond_uses_primary(bond))
 		bond_hw_addr_swap(bond, new_active, old_active);
 
-	if (bond_is_lb(bond)) {
+	अगर (bond_is_lb(bond)) अणु
 		bond_alb_handle_active_change(bond, new_active);
-		if (old_active)
+		अगर (old_active)
 			bond_set_slave_inactive_flags(old_active,
 						      BOND_SLAVE_NOTIFY_NOW);
-		if (new_active)
+		अगर (new_active)
 			bond_set_slave_active_flags(new_active,
 						    BOND_SLAVE_NOTIFY_NOW);
-	} else {
-		rcu_assign_pointer(bond->curr_active_slave, new_active);
-	}
+	पूर्ण अन्यथा अणु
+		rcu_assign_poपूर्णांकer(bond->curr_active_slave, new_active);
+	पूर्ण
 
-	if (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP) {
-		if (old_active)
+	अगर (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP) अणु
+		अगर (old_active)
 			bond_set_slave_inactive_flags(old_active,
 						      BOND_SLAVE_NOTIFY_NOW);
 
-		if (new_active) {
-			bool should_notify_peers = false;
+		अगर (new_active) अणु
+			bool should_notअगरy_peers = false;
 
 			bond_set_slave_active_flags(new_active,
 						    BOND_SLAVE_NOTIFY_NOW);
 
-			if (bond->params.fail_over_mac)
-				bond_do_fail_over_mac(bond, new_active,
+			अगर (bond->params.fail_over_mac)
+				bond_करो_fail_over_mac(bond, new_active,
 						      old_active);
 
-			if (netif_running(bond->dev)) {
-				bond->send_peer_notif =
-					bond->params.num_peer_notif *
-					max(1, bond->params.peer_notif_delay);
-				should_notify_peers =
-					bond_should_notify_peers(bond);
-			}
+			अगर (netअगर_running(bond->dev)) अणु
+				bond->send_peer_notअगर =
+					bond->params.num_peer_notअगर *
+					max(1, bond->params.peer_notअगर_delay);
+				should_notअगरy_peers =
+					bond_should_notअगरy_peers(bond);
+			पूर्ण
 
-			call_netdevice_notifiers(NETDEV_BONDING_FAILOVER, bond->dev);
-			if (should_notify_peers) {
-				bond->send_peer_notif--;
-				call_netdevice_notifiers(NETDEV_NOTIFY_PEERS,
+			call_netdevice_notअगरiers(NETDEV_BONDING_FAILOVER, bond->dev);
+			अगर (should_notअगरy_peers) अणु
+				bond->send_peer_notअगर--;
+				call_netdevice_notअगरiers(NETDEV_NOTIFY_PEERS,
 							 bond->dev);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_XFRM_OFFLOAD
-	if (new_active && bond->xs) {
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
+	अगर (new_active && bond->xs) अणु
 		xfrm_dev_state_flush(dev_net(bond->dev), bond->dev, true);
 		bond_ipsec_add_sa(bond->xs);
-	}
-#endif /* CONFIG_XFRM_OFFLOAD */
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_XFRM_OFFLOAD */
 
 	/* resend IGMP joins since active slave has changed or
 	 * all were sent on curr_active_slave.
-	 * resend only if bond is brought up with the affected
+	 * resend only अगर bond is brought up with the affected
 	 * bonding modes and the retransmission is enabled
 	 */
-	if (netif_running(bond->dev) && (bond->params.resend_igmp > 0) &&
+	अगर (netअगर_running(bond->dev) && (bond->params.resend_igmp > 0) &&
 	    ((bond_uses_primary(bond) && new_active) ||
-	     BOND_MODE(bond) == BOND_MODE_ROUNDROBIN)) {
+	     BOND_MODE(bond) == BOND_MODE_ROUNDROBIN)) अणु
 		bond->igmp_retrans = bond->params.resend_igmp;
 		queue_delayed_work(bond->wq, &bond->mcast_work, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * bond_select_active_slave - select a new active slave, if needed
- * @bond: our bonding struct
+ * bond_select_active_slave - select a new active slave, अगर needed
+ * @bond: our bonding काष्ठा
  *
  * This functions should be called when one of the following occurs:
  * - The old curr_active_slave has been released or lost its link.
@@ -1097,193 +1098,193 @@ void bond_change_active_slave(struct bonding *bond, struct slave *new_active)
  *
  * Caller must hold RTNL.
  */
-void bond_select_active_slave(struct bonding *bond)
-{
-	struct slave *best_slave;
-	int rv;
+व्योम bond_select_active_slave(काष्ठा bonding *bond)
+अणु
+	काष्ठा slave *best_slave;
+	पूर्णांक rv;
 
 	ASSERT_RTNL();
 
 	best_slave = bond_find_best_slave(bond);
-	if (best_slave != rtnl_dereference(bond->curr_active_slave)) {
+	अगर (best_slave != rtnl_dereference(bond->curr_active_slave)) अणु
 		bond_change_active_slave(bond, best_slave);
 		rv = bond_set_carrier(bond);
-		if (!rv)
-			return;
+		अगर (!rv)
+			वापस;
 
-		if (netif_carrier_ok(bond->dev))
+		अगर (netअगर_carrier_ok(bond->dev))
 			netdev_info(bond->dev, "active interface up!\n");
-		else
+		अन्यथा
 			netdev_info(bond->dev, "now running without any active interface!\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static inline int slave_enable_netpoll(struct slave *slave)
-{
-	struct netpoll *np;
-	int err = 0;
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल अंतरभूत पूर्णांक slave_enable_netpoll(काष्ठा slave *slave)
+अणु
+	काष्ठा netpoll *np;
+	पूर्णांक err = 0;
 
-	np = kzalloc(sizeof(*np), GFP_KERNEL);
+	np = kzalloc(माप(*np), GFP_KERNEL);
 	err = -ENOMEM;
-	if (!np)
-		goto out;
+	अगर (!np)
+		जाओ out;
 
 	err = __netpoll_setup(np, slave->dev);
-	if (err) {
-		kfree(np);
-		goto out;
-	}
+	अगर (err) अणु
+		kमुक्त(np);
+		जाओ out;
+	पूर्ण
 	slave->np = np;
 out:
-	return err;
-}
-static inline void slave_disable_netpoll(struct slave *slave)
-{
-	struct netpoll *np = slave->np;
+	वापस err;
+पूर्ण
+अटल अंतरभूत व्योम slave_disable_netpoll(काष्ठा slave *slave)
+अणु
+	काष्ठा netpoll *np = slave->np;
 
-	if (!np)
-		return;
+	अगर (!np)
+		वापस;
 
-	slave->np = NULL;
+	slave->np = शून्य;
 
-	__netpoll_free(np);
-}
+	__netpoll_मुक्त(np);
+पूर्ण
 
-static void bond_poll_controller(struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct slave *slave = NULL;
-	struct list_head *iter;
-	struct ad_info ad_info;
+अटल व्योम bond_poll_controller(काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा slave *slave = शून्य;
+	काष्ठा list_head *iter;
+	काष्ठा ad_info ad_info;
 
-	if (BOND_MODE(bond) == BOND_MODE_8023AD)
-		if (bond_3ad_get_active_agg_info(bond, &ad_info))
-			return;
+	अगर (BOND_MODE(bond) == BOND_MODE_8023AD)
+		अगर (bond_3ad_get_active_agg_info(bond, &ad_info))
+			वापस;
 
-	bond_for_each_slave_rcu(bond, slave, iter) {
-		if (!bond_slave_is_up(slave))
-			continue;
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
+		अगर (!bond_slave_is_up(slave))
+			जारी;
 
-		if (BOND_MODE(bond) == BOND_MODE_8023AD) {
-			struct aggregator *agg =
+		अगर (BOND_MODE(bond) == BOND_MODE_8023AD) अणु
+			काष्ठा aggregator *agg =
 			    SLAVE_AD_INFO(slave)->port.aggregator;
 
-			if (agg &&
-			    agg->aggregator_identifier != ad_info.aggregator_id)
-				continue;
-		}
+			अगर (agg &&
+			    agg->aggregator_identअगरier != ad_info.aggregator_id)
+				जारी;
+		पूर्ण
 
 		netpoll_poll_dev(slave->dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bond_netpoll_cleanup(struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct list_head *iter;
-	struct slave *slave;
+अटल व्योम bond_netpoll_cleanup(काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
-	bond_for_each_slave(bond, slave, iter)
-		if (bond_slave_is_up(slave))
+	bond_क्रम_each_slave(bond, slave, iter)
+		अगर (bond_slave_is_up(slave))
 			slave_disable_netpoll(slave);
-}
+पूर्ण
 
-static int bond_netpoll_setup(struct net_device *dev, struct netpoll_info *ni)
-{
-	struct bonding *bond = netdev_priv(dev);
-	struct list_head *iter;
-	struct slave *slave;
-	int err = 0;
+अटल पूर्णांक bond_netpoll_setup(काष्ठा net_device *dev, काष्ठा netpoll_info *ni)
+अणु
+	काष्ठा bonding *bond = netdev_priv(dev);
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
+	पूर्णांक err = 0;
 
-	bond_for_each_slave(bond, slave, iter) {
+	bond_क्रम_each_slave(bond, slave, iter) अणु
 		err = slave_enable_netpoll(slave);
-		if (err) {
+		अगर (err) अणु
 			bond_netpoll_cleanup(dev);
-			break;
-		}
-	}
-	return err;
-}
-#else
-static inline int slave_enable_netpoll(struct slave *slave)
-{
-	return 0;
-}
-static inline void slave_disable_netpoll(struct slave *slave)
-{
-}
-static void bond_netpoll_cleanup(struct net_device *bond_dev)
-{
-}
-#endif
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक slave_enable_netpoll(काष्ठा slave *slave)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम slave_disable_netpoll(काष्ठा slave *slave)
+अणु
+पूर्ण
+अटल व्योम bond_netpoll_cleanup(काष्ठा net_device *bond_dev)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /*---------------------------------- IOCTL ----------------------------------*/
 
-static netdev_features_t bond_fix_features(struct net_device *dev,
+अटल netdev_features_t bond_fix_features(काष्ठा net_device *dev,
 					   netdev_features_t features)
-{
-	struct bonding *bond = netdev_priv(dev);
-	struct list_head *iter;
+अणु
+	काष्ठा bonding *bond = netdev_priv(dev);
+	काष्ठा list_head *iter;
 	netdev_features_t mask;
-	struct slave *slave;
+	काष्ठा slave *slave;
 
-#if IS_ENABLED(CONFIG_TLS_DEVICE)
-	if (bond_sk_check(bond))
+#अगर IS_ENABLED(CONFIG_TLS_DEVICE)
+	अगर (bond_sk_check(bond))
 		features |= BOND_TLS_FEATURES;
-	else
+	अन्यथा
 		features &= ~BOND_TLS_FEATURES;
-#endif
+#पूर्ण_अगर
 
 	mask = features;
 
 	features &= ~NETIF_F_ONE_FOR_ALL;
 	features |= NETIF_F_ALL_FOR_ALL;
 
-	bond_for_each_slave(bond, slave, iter) {
+	bond_क्रम_each_slave(bond, slave, iter) अणु
 		features = netdev_increment_features(features,
 						     slave->dev->features,
 						     mask);
-	}
+	पूर्ण
 	features = netdev_add_tso_features(features, mask);
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-#define BOND_VLAN_FEATURES	(NETIF_F_HW_CSUM | NETIF_F_SG | \
+#घोषणा BOND_VLAN_FEATURES	(NETIF_F_HW_CSUM | NETIF_F_SG | \
 				 NETIF_F_FRAGLIST | NETIF_F_GSO_SOFTWARE | \
 				 NETIF_F_HIGHDMA | NETIF_F_LRO)
 
-#define BOND_ENC_FEATURES	(NETIF_F_HW_CSUM | NETIF_F_SG | \
+#घोषणा BOND_ENC_FEATURES	(NETIF_F_HW_CSUM | NETIF_F_SG | \
 				 NETIF_F_RXCSUM | NETIF_F_GSO_SOFTWARE)
 
-#define BOND_MPLS_FEATURES	(NETIF_F_HW_CSUM | NETIF_F_SG | \
+#घोषणा BOND_MPLS_FEATURES	(NETIF_F_HW_CSUM | NETIF_F_SG | \
 				 NETIF_F_GSO_SOFTWARE)
 
 
-static void bond_compute_features(struct bonding *bond)
-{
-	unsigned int dst_release_flag = IFF_XMIT_DST_RELEASE |
+अटल व्योम bond_compute_features(काष्ठा bonding *bond)
+अणु
+	अचिन्हित पूर्णांक dst_release_flag = IFF_XMIT_DST_RELEASE |
 					IFF_XMIT_DST_RELEASE_PERM;
 	netdev_features_t vlan_features = BOND_VLAN_FEATURES;
 	netdev_features_t enc_features  = BOND_ENC_FEATURES;
-#ifdef CONFIG_XFRM_OFFLOAD
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
 	netdev_features_t xfrm_features  = BOND_XFRM_FEATURES;
-#endif /* CONFIG_XFRM_OFFLOAD */
+#पूर्ण_अगर /* CONFIG_XFRM_OFFLOAD */
 	netdev_features_t mpls_features  = BOND_MPLS_FEATURES;
-	struct net_device *bond_dev = bond->dev;
-	struct list_head *iter;
-	struct slave *slave;
-	unsigned short max_hard_header_len = ETH_HLEN;
-	unsigned int gso_max_size = GSO_MAX_SIZE;
+	काष्ठा net_device *bond_dev = bond->dev;
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
+	अचिन्हित लघु max_hard_header_len = ETH_HLEN;
+	अचिन्हित पूर्णांक gso_max_size = GSO_MAX_SIZE;
 	u16 gso_max_segs = GSO_MAX_SEGS;
 
-	if (!bond_has_slaves(bond))
-		goto done;
+	अगर (!bond_has_slaves(bond))
+		जाओ करोne;
 	vlan_features &= NETIF_F_ALL_FOR_ALL;
 	mpls_features &= NETIF_F_ALL_FOR_ALL;
 
-	bond_for_each_slave(bond, slave, iter) {
+	bond_क्रम_each_slave(bond, slave, iter) अणु
 		vlan_features = netdev_increment_features(vlan_features,
 			slave->dev->vlan_features, BOND_VLAN_FEATURES);
 
@@ -1291,48 +1292,48 @@ static void bond_compute_features(struct bonding *bond)
 							 slave->dev->hw_enc_features,
 							 BOND_ENC_FEATURES);
 
-#ifdef CONFIG_XFRM_OFFLOAD
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
 		xfrm_features = netdev_increment_features(xfrm_features,
 							  slave->dev->hw_enc_features,
 							  BOND_XFRM_FEATURES);
-#endif /* CONFIG_XFRM_OFFLOAD */
+#पूर्ण_अगर /* CONFIG_XFRM_OFFLOAD */
 
 		mpls_features = netdev_increment_features(mpls_features,
 							  slave->dev->mpls_features,
 							  BOND_MPLS_FEATURES);
 
 		dst_release_flag &= slave->dev->priv_flags;
-		if (slave->dev->hard_header_len > max_hard_header_len)
+		अगर (slave->dev->hard_header_len > max_hard_header_len)
 			max_hard_header_len = slave->dev->hard_header_len;
 
 		gso_max_size = min(gso_max_size, slave->dev->gso_max_size);
 		gso_max_segs = min(gso_max_segs, slave->dev->gso_max_segs);
-	}
+	पूर्ण
 	bond_dev->hard_header_len = max_hard_header_len;
 
-done:
+करोne:
 	bond_dev->vlan_features = vlan_features;
 	bond_dev->hw_enc_features = enc_features | NETIF_F_GSO_ENCAP_ALL |
 				    NETIF_F_HW_VLAN_CTAG_TX |
 				    NETIF_F_HW_VLAN_STAG_TX;
-#ifdef CONFIG_XFRM_OFFLOAD
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
 	bond_dev->hw_enc_features |= xfrm_features;
-#endif /* CONFIG_XFRM_OFFLOAD */
+#पूर्ण_अगर /* CONFIG_XFRM_OFFLOAD */
 	bond_dev->mpls_features = mpls_features;
 	bond_dev->gso_max_segs = gso_max_segs;
-	netif_set_gso_max_size(bond_dev, gso_max_size);
+	netअगर_set_gso_max_size(bond_dev, gso_max_size);
 
 	bond_dev->priv_flags &= ~IFF_XMIT_DST_RELEASE;
-	if ((bond_dev->priv_flags & IFF_XMIT_DST_RELEASE_PERM) &&
+	अगर ((bond_dev->priv_flags & IFF_XMIT_DST_RELEASE_PERM) &&
 	    dst_release_flag == (IFF_XMIT_DST_RELEASE | IFF_XMIT_DST_RELEASE_PERM))
 		bond_dev->priv_flags |= IFF_XMIT_DST_RELEASE;
 
 	netdev_change_features(bond_dev);
-}
+पूर्ण
 
-static void bond_setup_by_slave(struct net_device *bond_dev,
-				struct net_device *slave_dev)
-{
+अटल व्योम bond_setup_by_slave(काष्ठा net_device *bond_dev,
+				काष्ठा net_device *slave_dev)
+अणु
 	bond_dev->header_ops	    = slave_dev->header_ops;
 
 	bond_dev->type		    = slave_dev->type;
@@ -1340,39 +1341,39 @@ static void bond_setup_by_slave(struct net_device *bond_dev,
 	bond_dev->needed_headroom   = slave_dev->needed_headroom;
 	bond_dev->addr_len	    = slave_dev->addr_len;
 
-	memcpy(bond_dev->broadcast, slave_dev->broadcast,
+	स_नकल(bond_dev->broadcast, slave_dev->broadcast,
 		slave_dev->addr_len);
-}
+पूर्ण
 
 /* On bonding slaves other than the currently active slave, suppress
- * duplicates except for alb non-mcast/bcast.
+ * duplicates except क्रम alb non-mcast/bcast.
  */
-static bool bond_should_deliver_exact_match(struct sk_buff *skb,
-					    struct slave *slave,
-					    struct bonding *bond)
-{
-	if (bond_is_slave_inactive(slave)) {
-		if (BOND_MODE(bond) == BOND_MODE_ALB &&
+अटल bool bond_should_deliver_exact_match(काष्ठा sk_buff *skb,
+					    काष्ठा slave *slave,
+					    काष्ठा bonding *bond)
+अणु
+	अगर (bond_is_slave_inactive(slave)) अणु
+		अगर (BOND_MODE(bond) == BOND_MODE_ALB &&
 		    skb->pkt_type != PACKET_BROADCAST &&
 		    skb->pkt_type != PACKET_MULTICAST)
-			return false;
-		return true;
-	}
-	return false;
-}
+			वापस false;
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static rx_handler_result_t bond_handle_frame(struct sk_buff **pskb)
-{
-	struct sk_buff *skb = *pskb;
-	struct slave *slave;
-	struct bonding *bond;
-	int (*recv_probe)(const struct sk_buff *, struct bonding *,
-			  struct slave *);
-	int ret = RX_HANDLER_ANOTHER;
+अटल rx_handler_result_t bond_handle_frame(काष्ठा sk_buff **pskb)
+अणु
+	काष्ठा sk_buff *skb = *pskb;
+	काष्ठा slave *slave;
+	काष्ठा bonding *bond;
+	पूर्णांक (*recv_probe)(स्थिर काष्ठा sk_buff *, काष्ठा bonding *,
+			  काष्ठा slave *);
+	पूर्णांक ret = RX_HANDLER_ANOTHER;
 
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	if (unlikely(!skb))
-		return RX_HANDLER_CONSUMED;
+	अगर (unlikely(!skb))
+		वापस RX_HANDLER_CONSUMED;
 
 	*pskb = skb;
 
@@ -1380,531 +1381,531 @@ static rx_handler_result_t bond_handle_frame(struct sk_buff **pskb)
 	bond = slave->bond;
 
 	recv_probe = READ_ONCE(bond->recv_probe);
-	if (recv_probe) {
+	अगर (recv_probe) अणु
 		ret = recv_probe(skb, bond, slave);
-		if (ret == RX_HANDLER_CONSUMED) {
+		अगर (ret == RX_HANDLER_CONSUMED) अणु
 			consume_skb(skb);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * For packets determined by bond_should_deliver_exact_match() call to
-	 * be suppressed we want to make an exception for link-local packets.
-	 * This is necessary for e.g. LLDP daemons to be able to monitor
-	 * inactive slave links without being forced to bind to them
+	 * be suppressed we want to make an exception क्रम link-local packets.
+	 * This is necessary क्रम e.g. LLDP daemons to be able to monitor
+	 * inactive slave links without being क्रमced to bind to them
 	 * explicitly.
 	 *
-	 * At the same time, packets that are passed to the bonding master
-	 * (including link-local ones) can have their originating interface
+	 * At the same समय, packets that are passed to the bonding master
+	 * (including link-local ones) can have their originating पूर्णांकerface
 	 * determined via PACKET_ORIGDEV socket option.
 	 */
-	if (bond_should_deliver_exact_match(skb, slave, bond)) {
-		if (is_link_local_ether_addr(eth_hdr(skb)->h_dest))
-			return RX_HANDLER_PASS;
-		return RX_HANDLER_EXACT;
-	}
+	अगर (bond_should_deliver_exact_match(skb, slave, bond)) अणु
+		अगर (is_link_local_ether_addr(eth_hdr(skb)->h_dest))
+			वापस RX_HANDLER_PASS;
+		वापस RX_HANDLER_EXACT;
+	पूर्ण
 
 	skb->dev = bond->dev;
 
-	if (BOND_MODE(bond) == BOND_MODE_ALB &&
-	    netif_is_bridge_port(bond->dev) &&
-	    skb->pkt_type == PACKET_HOST) {
+	अगर (BOND_MODE(bond) == BOND_MODE_ALB &&
+	    netअगर_is_bridge_port(bond->dev) &&
+	    skb->pkt_type == PACKET_HOST) अणु
 
-		if (unlikely(skb_cow_head(skb,
-					  skb->data - skb_mac_header(skb)))) {
-			kfree_skb(skb);
-			return RX_HANDLER_CONSUMED;
-		}
+		अगर (unlikely(skb_cow_head(skb,
+					  skb->data - skb_mac_header(skb)))) अणु
+			kमुक्त_skb(skb);
+			वापस RX_HANDLER_CONSUMED;
+		पूर्ण
 		bond_hw_addr_copy(eth_hdr(skb)->h_dest, bond->dev->dev_addr,
 				  bond->dev->addr_len);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum netdev_lag_tx_type bond_lag_tx_type(struct bonding *bond)
-{
-	switch (BOND_MODE(bond)) {
-	case BOND_MODE_ROUNDROBIN:
-		return NETDEV_LAG_TX_TYPE_ROUNDROBIN;
-	case BOND_MODE_ACTIVEBACKUP:
-		return NETDEV_LAG_TX_TYPE_ACTIVEBACKUP;
-	case BOND_MODE_BROADCAST:
-		return NETDEV_LAG_TX_TYPE_BROADCAST;
-	case BOND_MODE_XOR:
-	case BOND_MODE_8023AD:
-		return NETDEV_LAG_TX_TYPE_HASH;
-	default:
-		return NETDEV_LAG_TX_TYPE_UNKNOWN;
-	}
-}
+अटल क्रमागत netdev_lag_tx_type bond_lag_tx_type(काष्ठा bonding *bond)
+अणु
+	चयन (BOND_MODE(bond)) अणु
+	हाल BOND_MODE_ROUNDROBIN:
+		वापस NETDEV_LAG_TX_TYPE_ROUNDROBIN;
+	हाल BOND_MODE_ACTIVEBACKUP:
+		वापस NETDEV_LAG_TX_TYPE_ACTIVEBACKUP;
+	हाल BOND_MODE_BROADCAST:
+		वापस NETDEV_LAG_TX_TYPE_BROADCAST;
+	हाल BOND_MODE_XOR:
+	हाल BOND_MODE_8023AD:
+		वापस NETDEV_LAG_TX_TYPE_HASH;
+	शेष:
+		वापस NETDEV_LAG_TX_TYPE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static enum netdev_lag_hash bond_lag_hash_type(struct bonding *bond,
-					       enum netdev_lag_tx_type type)
-{
-	if (type != NETDEV_LAG_TX_TYPE_HASH)
-		return NETDEV_LAG_HASH_NONE;
+अटल क्रमागत netdev_lag_hash bond_lag_hash_type(काष्ठा bonding *bond,
+					       क्रमागत netdev_lag_tx_type type)
+अणु
+	अगर (type != NETDEV_LAG_TX_TYPE_HASH)
+		वापस NETDEV_LAG_HASH_NONE;
 
-	switch (bond->params.xmit_policy) {
-	case BOND_XMIT_POLICY_LAYER2:
-		return NETDEV_LAG_HASH_L2;
-	case BOND_XMIT_POLICY_LAYER34:
-		return NETDEV_LAG_HASH_L34;
-	case BOND_XMIT_POLICY_LAYER23:
-		return NETDEV_LAG_HASH_L23;
-	case BOND_XMIT_POLICY_ENCAP23:
-		return NETDEV_LAG_HASH_E23;
-	case BOND_XMIT_POLICY_ENCAP34:
-		return NETDEV_LAG_HASH_E34;
-	case BOND_XMIT_POLICY_VLAN_SRCMAC:
-		return NETDEV_LAG_HASH_VLAN_SRCMAC;
-	default:
-		return NETDEV_LAG_HASH_UNKNOWN;
-	}
-}
+	चयन (bond->params.xmit_policy) अणु
+	हाल BOND_XMIT_POLICY_LAYER2:
+		वापस NETDEV_LAG_HASH_L2;
+	हाल BOND_XMIT_POLICY_LAYER34:
+		वापस NETDEV_LAG_HASH_L34;
+	हाल BOND_XMIT_POLICY_LAYER23:
+		वापस NETDEV_LAG_HASH_L23;
+	हाल BOND_XMIT_POLICY_ENCAP23:
+		वापस NETDEV_LAG_HASH_E23;
+	हाल BOND_XMIT_POLICY_ENCAP34:
+		वापस NETDEV_LAG_HASH_E34;
+	हाल BOND_XMIT_POLICY_VLAN_SRCMAC:
+		वापस NETDEV_LAG_HASH_VLAN_SRCMAC;
+	शेष:
+		वापस NETDEV_LAG_HASH_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static int bond_master_upper_dev_link(struct bonding *bond, struct slave *slave,
-				      struct netlink_ext_ack *extack)
-{
-	struct netdev_lag_upper_info lag_upper_info;
-	enum netdev_lag_tx_type type;
+अटल पूर्णांक bond_master_upper_dev_link(काष्ठा bonding *bond, काष्ठा slave *slave,
+				      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा netdev_lag_upper_info lag_upper_info;
+	क्रमागत netdev_lag_tx_type type;
 
 	type = bond_lag_tx_type(bond);
 	lag_upper_info.tx_type = type;
 	lag_upper_info.hash_type = bond_lag_hash_type(bond, type);
 
-	return netdev_master_upper_dev_link(slave->dev, bond->dev, slave,
+	वापस netdev_master_upper_dev_link(slave->dev, bond->dev, slave,
 					    &lag_upper_info, extack);
-}
+पूर्ण
 
-static void bond_upper_dev_unlink(struct bonding *bond, struct slave *slave)
-{
+अटल व्योम bond_upper_dev_unlink(काष्ठा bonding *bond, काष्ठा slave *slave)
+अणु
 	netdev_upper_dev_unlink(slave->dev, bond->dev);
 	slave->dev->flags &= ~IFF_SLAVE;
-}
+पूर्ण
 
-static void slave_kobj_release(struct kobject *kobj)
-{
-	struct slave *slave = to_slave(kobj);
-	struct bonding *bond = bond_get_bond_by_slave(slave);
+अटल व्योम slave_kobj_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा slave *slave = to_slave(kobj);
+	काष्ठा bonding *bond = bond_get_bond_by_slave(slave);
 
-	cancel_delayed_work_sync(&slave->notify_work);
-	if (BOND_MODE(bond) == BOND_MODE_8023AD)
-		kfree(SLAVE_AD_INFO(slave));
+	cancel_delayed_work_sync(&slave->notअगरy_work);
+	अगर (BOND_MODE(bond) == BOND_MODE_8023AD)
+		kमुक्त(SLAVE_AD_INFO(slave));
 
-	kfree(slave);
-}
+	kमुक्त(slave);
+पूर्ण
 
-static struct kobj_type slave_ktype = {
+अटल काष्ठा kobj_type slave_ktype = अणु
 	.release = slave_kobj_release,
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 	.sysfs_ops = &slave_sysfs_ops,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int bond_kobj_init(struct slave *slave)
-{
-	int err;
+अटल पूर्णांक bond_kobj_init(काष्ठा slave *slave)
+अणु
+	पूर्णांक err;
 
 	err = kobject_init_and_add(&slave->kobj, &slave_ktype,
 				   &(slave->dev->dev.kobj), "bonding_slave");
-	if (err)
+	अगर (err)
 		kobject_put(&slave->kobj);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct slave *bond_alloc_slave(struct bonding *bond,
-				      struct net_device *slave_dev)
-{
-	struct slave *slave = NULL;
+अटल काष्ठा slave *bond_alloc_slave(काष्ठा bonding *bond,
+				      काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा slave *slave = शून्य;
 
-	slave = kzalloc(sizeof(*slave), GFP_KERNEL);
-	if (!slave)
-		return NULL;
+	slave = kzalloc(माप(*slave), GFP_KERNEL);
+	अगर (!slave)
+		वापस शून्य;
 
 	slave->bond = bond;
 	slave->dev = slave_dev;
-	INIT_DELAYED_WORK(&slave->notify_work, bond_netdev_notify_work);
+	INIT_DELAYED_WORK(&slave->notअगरy_work, bond_netdev_notअगरy_work);
 
-	if (bond_kobj_init(slave))
-		return NULL;
+	अगर (bond_kobj_init(slave))
+		वापस शून्य;
 
-	if (BOND_MODE(bond) == BOND_MODE_8023AD) {
-		SLAVE_AD_INFO(slave) = kzalloc(sizeof(struct ad_slave_info),
+	अगर (BOND_MODE(bond) == BOND_MODE_8023AD) अणु
+		SLAVE_AD_INFO(slave) = kzalloc(माप(काष्ठा ad_slave_info),
 					       GFP_KERNEL);
-		if (!SLAVE_AD_INFO(slave)) {
+		अगर (!SLAVE_AD_INFO(slave)) अणु
 			kobject_put(&slave->kobj);
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return slave;
-}
+	वापस slave;
+पूर्ण
 
-static void bond_fill_ifbond(struct bonding *bond, struct ifbond *info)
-{
+अटल व्योम bond_fill_अगरbond(काष्ठा bonding *bond, काष्ठा अगरbond *info)
+अणु
 	info->bond_mode = BOND_MODE(bond);
 	info->miimon = bond->params.miimon;
 	info->num_slaves = bond->slave_cnt;
-}
+पूर्ण
 
-static void bond_fill_ifslave(struct slave *slave, struct ifslave *info)
-{
-	strcpy(info->slave_name, slave->dev->name);
+अटल व्योम bond_fill_अगरslave(काष्ठा slave *slave, काष्ठा अगरslave *info)
+अणु
+	म_नकल(info->slave_name, slave->dev->name);
 	info->link = slave->link;
 	info->state = bond_slave_state(slave);
 	info->link_failure_count = slave->link_failure_count;
-}
+पूर्ण
 
-static void bond_netdev_notify_work(struct work_struct *_work)
-{
-	struct slave *slave = container_of(_work, struct slave,
-					   notify_work.work);
+अटल व्योम bond_netdev_notअगरy_work(काष्ठा work_काष्ठा *_work)
+अणु
+	काष्ठा slave *slave = container_of(_work, काष्ठा slave,
+					   notअगरy_work.work);
 
-	if (rtnl_trylock()) {
-		struct netdev_bonding_info binfo;
+	अगर (rtnl_trylock()) अणु
+		काष्ठा netdev_bonding_info binfo;
 
-		bond_fill_ifslave(slave, &binfo.slave);
-		bond_fill_ifbond(slave->bond, &binfo.master);
+		bond_fill_अगरslave(slave, &binfo.slave);
+		bond_fill_अगरbond(slave->bond, &binfo.master);
 		netdev_bonding_info_change(slave->dev, &binfo);
 		rtnl_unlock();
-	} else {
-		queue_delayed_work(slave->bond->wq, &slave->notify_work, 1);
-	}
-}
+	पूर्ण अन्यथा अणु
+		queue_delayed_work(slave->bond->wq, &slave->notअगरy_work, 1);
+	पूर्ण
+पूर्ण
 
-void bond_queue_slave_event(struct slave *slave)
-{
-	queue_delayed_work(slave->bond->wq, &slave->notify_work, 0);
-}
+व्योम bond_queue_slave_event(काष्ठा slave *slave)
+अणु
+	queue_delayed_work(slave->bond->wq, &slave->notअगरy_work, 0);
+पूर्ण
 
-void bond_lower_state_changed(struct slave *slave)
-{
-	struct netdev_lag_lower_state_info info;
+व्योम bond_lower_state_changed(काष्ठा slave *slave)
+अणु
+	काष्ठा netdev_lag_lower_state_info info;
 
 	info.link_up = slave->link == BOND_LINK_UP ||
 		       slave->link == BOND_LINK_FAIL;
 	info.tx_enabled = bond_is_active_slave(slave);
 	netdev_lower_state_changed(slave->dev, &info);
-}
+पूर्ण
 
 /* enslave device <slave> to bond device <master> */
-int bond_enslave(struct net_device *bond_dev, struct net_device *slave_dev,
-		 struct netlink_ext_ack *extack)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	const struct net_device_ops *slave_ops = slave_dev->netdev_ops;
-	struct slave *new_slave = NULL, *prev_slave;
-	struct sockaddr_storage ss;
-	int link_reporting;
-	int res = 0, i;
+पूर्णांक bond_enslave(काष्ठा net_device *bond_dev, काष्ठा net_device *slave_dev,
+		 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	स्थिर काष्ठा net_device_ops *slave_ops = slave_dev->netdev_ops;
+	काष्ठा slave *new_slave = शून्य, *prev_slave;
+	काष्ठा sockaddr_storage ss;
+	पूर्णांक link_reporting;
+	पूर्णांक res = 0, i;
 
-	if (!bond->params.use_carrier &&
-	    slave_dev->ethtool_ops->get_link == NULL &&
-	    slave_ops->ndo_do_ioctl == NULL) {
+	अगर (!bond->params.use_carrier &&
+	    slave_dev->ethtool_ops->get_link == शून्य &&
+	    slave_ops->nकरो_करो_ioctl == शून्य) अणु
 		slave_warn(bond_dev, slave_dev, "no link monitoring support\n");
-	}
+	पूर्ण
 
-	/* already in-use? */
-	if (netdev_is_rx_handler_busy(slave_dev)) {
+	/* alपढ़ोy in-use? */
+	अगर (netdev_is_rx_handler_busy(slave_dev)) अणु
 		NL_SET_ERR_MSG(extack, "Device is in use and cannot be enslaved");
 		slave_err(bond_dev, slave_dev,
 			  "Error: Device is in use and cannot be enslaved\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (bond_dev == slave_dev) {
+	अगर (bond_dev == slave_dev) अणु
 		NL_SET_ERR_MSG(extack, "Cannot enslave bond to itself.");
 		netdev_err(bond_dev, "cannot enslave bond to itself.\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	/* vlan challenged mutual exclusion */
-	/* no need to lock since we're protected by rtnl_lock */
-	if (slave_dev->features & NETIF_F_VLAN_CHALLENGED) {
+	/* no need to lock since we're रक्षित by rtnl_lock */
+	अगर (slave_dev->features & NETIF_F_VLAN_CHALLENGED) अणु
 		slave_dbg(bond_dev, slave_dev, "is NETIF_F_VLAN_CHALLENGED\n");
-		if (vlan_uses_dev(bond_dev)) {
+		अगर (vlan_uses_dev(bond_dev)) अणु
 			NL_SET_ERR_MSG(extack, "Can not enslave VLAN challenged device to VLAN enabled bond");
 			slave_err(bond_dev, slave_dev, "Error: cannot enslave VLAN challenged slave on VLAN enabled bond\n");
-			return -EPERM;
-		} else {
+			वापस -EPERM;
+		पूर्ण अन्यथा अणु
 			slave_warn(bond_dev, slave_dev, "enslaved VLAN challenged slave. Adding VLANs will be blocked as long as it is part of bond.\n");
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		slave_dbg(bond_dev, slave_dev, "is !NETIF_F_VLAN_CHALLENGED\n");
-	}
+	पूर्ण
 
-	if (slave_dev->features & NETIF_F_HW_ESP)
+	अगर (slave_dev->features & NETIF_F_HW_ESP)
 		slave_dbg(bond_dev, slave_dev, "is esp-hw-offload capable\n");
 
-	/* Old ifenslave binaries are no longer supported.  These can
-	 * be identified with moderate accuracy by the state of the slave:
-	 * the current ifenslave will set the interface down prior to
-	 * enslaving it; the old ifenslave will not.
+	/* Old अगरenslave binaries are no दीर्घer supported.  These can
+	 * be identअगरied with moderate accuracy by the state of the slave:
+	 * the current अगरenslave will set the पूर्णांकerface करोwn prior to
+	 * enslaving it; the old अगरenslave will not.
 	 */
-	if (slave_dev->flags & IFF_UP) {
+	अगर (slave_dev->flags & IFF_UP) अणु
 		NL_SET_ERR_MSG(extack, "Device can not be enslaved while up");
 		slave_err(bond_dev, slave_dev, "slave is up - this may be due to an out of date ifenslave\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	/* set bonding device ether type by slave - bonding netdevices are
 	 * created with ether_setup, so when the slave type is not ARPHRD_ETHER
 	 * there is a need to override some of the type dependent attribs/funcs.
 	 *
-	 * bond ether type mutual exclusion - don't allow slaves of dissimilar
+	 * bond ether type mutual exclusion - करोn't allow slaves of dissimilar
 	 * ether type (eg ARPHRD_ETHER and ARPHRD_INFINIBAND) share the same bond
 	 */
-	if (!bond_has_slaves(bond)) {
-		if (bond_dev->type != slave_dev->type) {
+	अगर (!bond_has_slaves(bond)) अणु
+		अगर (bond_dev->type != slave_dev->type) अणु
 			slave_dbg(bond_dev, slave_dev, "change device type from %d to %d\n",
 				  bond_dev->type, slave_dev->type);
 
-			res = call_netdevice_notifiers(NETDEV_PRE_TYPE_CHANGE,
+			res = call_netdevice_notअगरiers(NETDEV_PRE_TYPE_CHANGE,
 						       bond_dev);
-			res = notifier_to_errno(res);
-			if (res) {
+			res = notअगरier_to_त्रुटि_सं(res);
+			अगर (res) अणु
 				slave_err(bond_dev, slave_dev, "refused to change device type\n");
-				return -EBUSY;
-			}
+				वापस -EBUSY;
+			पूर्ण
 
 			/* Flush unicast and multicast addresses */
 			dev_uc_flush(bond_dev);
 			dev_mc_flush(bond_dev);
 
-			if (slave_dev->type != ARPHRD_ETHER)
+			अगर (slave_dev->type != ARPHRD_ETHER)
 				bond_setup_by_slave(bond_dev, slave_dev);
-			else {
+			अन्यथा अणु
 				ether_setup(bond_dev);
 				bond_dev->priv_flags &= ~IFF_TX_SKB_SHARING;
-			}
+			पूर्ण
 
-			call_netdevice_notifiers(NETDEV_POST_TYPE_CHANGE,
+			call_netdevice_notअगरiers(NETDEV_POST_TYPE_CHANGE,
 						 bond_dev);
-		}
-	} else if (bond_dev->type != slave_dev->type) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (bond_dev->type != slave_dev->type) अणु
 		NL_SET_ERR_MSG(extack, "Device type is different from other slaves");
 		slave_err(bond_dev, slave_dev, "ether type (%d) is different from other slaves (%d), can not enslave it\n",
 			  slave_dev->type, bond_dev->type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (slave_dev->type == ARPHRD_INFINIBAND &&
-	    BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) {
+	अगर (slave_dev->type == ARPHRD_INFINIBAND &&
+	    BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) अणु
 		NL_SET_ERR_MSG(extack, "Only active-backup mode is supported for infiniband slaves");
 		slave_warn(bond_dev, slave_dev, "Type (%d) supports only active-backup mode\n",
 			   slave_dev->type);
 		res = -EOPNOTSUPP;
-		goto err_undo_flags;
-	}
+		जाओ err_unकरो_flags;
+	पूर्ण
 
-	if (!slave_ops->ndo_set_mac_address ||
-	    slave_dev->type == ARPHRD_INFINIBAND) {
+	अगर (!slave_ops->nकरो_set_mac_address ||
+	    slave_dev->type == ARPHRD_INFINIBAND) अणु
 		slave_warn(bond_dev, slave_dev, "The slave device specified does not support setting the MAC address\n");
-		if (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP &&
-		    bond->params.fail_over_mac != BOND_FOM_ACTIVE) {
-			if (!bond_has_slaves(bond)) {
+		अगर (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP &&
+		    bond->params.fail_over_mac != BOND_FOM_ACTIVE) अणु
+			अगर (!bond_has_slaves(bond)) अणु
 				bond->params.fail_over_mac = BOND_FOM_ACTIVE;
 				slave_warn(bond_dev, slave_dev, "Setting fail_over_mac to active for active-backup mode\n");
-			} else {
+			पूर्ण अन्यथा अणु
 				NL_SET_ERR_MSG(extack, "Slave device does not support setting the MAC address, but fail_over_mac is not set to active");
 				slave_err(bond_dev, slave_dev, "The slave device specified does not support setting the MAC address, but fail_over_mac is not set to active\n");
 				res = -EOPNOTSUPP;
-				goto err_undo_flags;
-			}
-		}
-	}
+				जाओ err_unकरो_flags;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	call_netdevice_notifiers(NETDEV_JOIN, slave_dev);
+	call_netdevice_notअगरiers(NETDEV_JOIN, slave_dev);
 
 	/* If this is the first slave, then we need to set the master's hardware
 	 * address to be the same as the slave's.
 	 */
-	if (!bond_has_slaves(bond) &&
-	    bond->dev->addr_assign_type == NET_ADDR_RANDOM) {
+	अगर (!bond_has_slaves(bond) &&
+	    bond->dev->addr_assign_type == NET_ADDR_RANDOM) अणु
 		res = bond_set_dev_addr(bond->dev, slave_dev);
-		if (res)
-			goto err_undo_flags;
-	}
+		अगर (res)
+			जाओ err_unकरो_flags;
+	पूर्ण
 
 	new_slave = bond_alloc_slave(bond, slave_dev);
-	if (!new_slave) {
+	अगर (!new_slave) अणु
 		res = -ENOMEM;
-		goto err_undo_flags;
-	}
+		जाओ err_unकरो_flags;
+	पूर्ण
 
 	/* Set the new_slave's queue_id to be zero.  Queue ID mapping
-	 * is set via sysfs or module option if desired.
+	 * is set via sysfs or module option अगर desired.
 	 */
 	new_slave->queue_id = 0;
 
 	/* Save slave's original mtu and then set it to match the bond */
 	new_slave->original_mtu = slave_dev->mtu;
 	res = dev_set_mtu(slave_dev, bond->dev->mtu);
-	if (res) {
+	अगर (res) अणु
 		slave_err(bond_dev, slave_dev, "Error %d calling dev_set_mtu\n", res);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	/* Save slave's original ("permanent") mac address for modes
-	 * that need it, and for restoring it upon release, and then
+	/* Save slave's original ("permanent") mac address क्रम modes
+	 * that need it, and क्रम restoring it upon release, and then
 	 * set it to the master's address
 	 */
 	bond_hw_addr_copy(new_slave->perm_hwaddr, slave_dev->dev_addr,
 			  slave_dev->addr_len);
 
-	if (!bond->params.fail_over_mac ||
-	    BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) {
-		/* Set slave to master's mac address.  The application already
+	अगर (!bond->params.fail_over_mac ||
+	    BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) अणु
+		/* Set slave to master's mac address.  The application alपढ़ोy
 		 * set the master's mac address to that of the first slave
 		 */
-		memcpy(ss.__data, bond_dev->dev_addr, bond_dev->addr_len);
+		स_नकल(ss.__data, bond_dev->dev_addr, bond_dev->addr_len);
 		ss.ss_family = slave_dev->type;
-		res = dev_set_mac_address(slave_dev, (struct sockaddr *)&ss,
+		res = dev_set_mac_address(slave_dev, (काष्ठा sockaddr *)&ss,
 					  extack);
-		if (res) {
+		अगर (res) अणु
 			slave_err(bond_dev, slave_dev, "Error %d calling set_mac_address\n", res);
-			goto err_restore_mtu;
-		}
-	}
+			जाओ err_restore_mtu;
+		पूर्ण
+	पूर्ण
 
-	/* set slave flag before open to prevent IPv6 addrconf */
+	/* set slave flag beक्रमe खोलो to prevent IPv6 addrconf */
 	slave_dev->flags |= IFF_SLAVE;
 
-	/* open the slave since the application closed it */
-	res = dev_open(slave_dev, extack);
-	if (res) {
+	/* खोलो the slave since the application बंदd it */
+	res = dev_खोलो(slave_dev, extack);
+	अगर (res) अणु
 		slave_err(bond_dev, slave_dev, "Opening slave failed\n");
-		goto err_restore_mac;
-	}
+		जाओ err_restore_mac;
+	पूर्ण
 
 	slave_dev->priv_flags |= IFF_BONDING;
 	/* initialize slave stats */
 	dev_get_stats(new_slave->dev, &new_slave->slave_stats);
 
-	if (bond_is_lb(bond)) {
-		/* bond_alb_init_slave() must be called before all other stages since
-		 * it might fail and we do not want to have to undo everything
+	अगर (bond_is_lb(bond)) अणु
+		/* bond_alb_init_slave() must be called beक्रमe all other stages since
+		 * it might fail and we करो not want to have to unकरो everything
 		 */
 		res = bond_alb_init_slave(bond, new_slave);
-		if (res)
-			goto err_close;
-	}
+		अगर (res)
+			जाओ err_बंद;
+	पूर्ण
 
 	res = vlan_vids_add_by_dev(slave_dev, bond_dev);
-	if (res) {
+	अगर (res) अणु
 		slave_err(bond_dev, slave_dev, "Couldn't add bond vlan ids\n");
-		goto err_close;
-	}
+		जाओ err_बंद;
+	पूर्ण
 
 	prev_slave = bond_last_slave(bond);
 
 	new_slave->delay = 0;
 	new_slave->link_failure_count = 0;
 
-	if (bond_update_speed_duplex(new_slave) &&
+	अगर (bond_update_speed_duplex(new_slave) &&
 	    bond_needs_speed_duplex(bond))
 		new_slave->link = BOND_LINK_DOWN;
 
-	new_slave->last_rx = jiffies -
-		(msecs_to_jiffies(bond->params.arp_interval) + 1);
-	for (i = 0; i < BOND_MAX_ARP_TARGETS; i++)
+	new_slave->last_rx = jअगरfies -
+		(msecs_to_jअगरfies(bond->params.arp_पूर्णांकerval) + 1);
+	क्रम (i = 0; i < BOND_MAX_ARP_TARGETS; i++)
 		new_slave->target_last_arp_rx[i] = new_slave->last_rx;
 
-	if (bond->params.miimon && !bond->params.use_carrier) {
+	अगर (bond->params.miimon && !bond->params.use_carrier) अणु
 		link_reporting = bond_check_dev_link(bond, slave_dev, 1);
 
-		if ((link_reporting == -1) && !bond->params.arp_interval) {
+		अगर ((link_reporting == -1) && !bond->params.arp_पूर्णांकerval) अणु
 			/* miimon is set but a bonded network driver
-			 * does not support ETHTOOL/MII and
-			 * arp_interval is not set.  Note: if
+			 * करोes not support ETHTOOL/MII and
+			 * arp_पूर्णांकerval is not set.  Note: अगर
 			 * use_carrier is enabled, we will never go
-			 * here (because netif_carrier is always
-			 * supported); thus, we don't need to change
-			 * the messages for netif_carrier.
+			 * here (because netअगर_carrier is always
+			 * supported); thus, we करोn't need to change
+			 * the messages क्रम netअगर_carrier.
 			 */
 			slave_warn(bond_dev, slave_dev, "MII and ETHTOOL support not available for slave, and arp_interval/arp_ip_target module parameters not specified, thus bonding will not detect link failures! see bonding.txt for details\n");
-		} else if (link_reporting == -1) {
+		पूर्ण अन्यथा अगर (link_reporting == -1) अणु
 			/* unable get link status using mii/ethtool */
 			slave_warn(bond_dev, slave_dev, "can't get link status from slave; the network driver associated with this interface does not support MII or ETHTOOL link status reporting, thus miimon has no effect on this interface\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* check for initial state */
+	/* check क्रम initial state */
 	new_slave->link = BOND_LINK_NOCHANGE;
-	if (bond->params.miimon) {
-		if (bond_check_dev_link(bond, slave_dev, 0) == BMSR_LSTATUS) {
-			if (bond->params.updelay) {
+	अगर (bond->params.miimon) अणु
+		अगर (bond_check_dev_link(bond, slave_dev, 0) == BMSR_LSTATUS) अणु
+			अगर (bond->params.updelay) अणु
 				bond_set_slave_link_state(new_slave,
 							  BOND_LINK_BACK,
 							  BOND_SLAVE_NOTIFY_NOW);
 				new_slave->delay = bond->params.updelay;
-			} else {
+			पूर्ण अन्यथा अणु
 				bond_set_slave_link_state(new_slave,
 							  BOND_LINK_UP,
 							  BOND_SLAVE_NOTIFY_NOW);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			bond_set_slave_link_state(new_slave, BOND_LINK_DOWN,
 						  BOND_SLAVE_NOTIFY_NOW);
-		}
-	} else if (bond->params.arp_interval) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (bond->params.arp_पूर्णांकerval) अणु
 		bond_set_slave_link_state(new_slave,
-					  (netif_carrier_ok(slave_dev) ?
+					  (netअगर_carrier_ok(slave_dev) ?
 					  BOND_LINK_UP : BOND_LINK_DOWN),
 					  BOND_SLAVE_NOTIFY_NOW);
-	} else {
+	पूर्ण अन्यथा अणु
 		bond_set_slave_link_state(new_slave, BOND_LINK_UP,
 					  BOND_SLAVE_NOTIFY_NOW);
-	}
+	पूर्ण
 
-	if (new_slave->link != BOND_LINK_DOWN)
-		new_slave->last_link_up = jiffies;
+	अगर (new_slave->link != BOND_LINK_DOWN)
+		new_slave->last_link_up = jअगरfies;
 	slave_dbg(bond_dev, slave_dev, "Initial state of slave is BOND_LINK_%s\n",
 		  new_slave->link == BOND_LINK_DOWN ? "DOWN" :
 		  (new_slave->link == BOND_LINK_UP ? "UP" : "BACK"));
 
-	if (bond_uses_primary(bond) && bond->params.primary[0]) {
-		/* if there is a primary slave, remember it */
-		if (strcmp(bond->params.primary, new_slave->dev->name) == 0) {
-			rcu_assign_pointer(bond->primary_slave, new_slave);
-			bond->force_primary = true;
-		}
-	}
+	अगर (bond_uses_primary(bond) && bond->params.primary[0]) अणु
+		/* अगर there is a primary slave, remember it */
+		अगर (म_भेद(bond->params.primary, new_slave->dev->name) == 0) अणु
+			rcu_assign_poपूर्णांकer(bond->primary_slave, new_slave);
+			bond->क्रमce_primary = true;
+		पूर्ण
+	पूर्ण
 
-	switch (BOND_MODE(bond)) {
-	case BOND_MODE_ACTIVEBACKUP:
+	चयन (BOND_MODE(bond)) अणु
+	हाल BOND_MODE_ACTIVEBACKUP:
 		bond_set_slave_inactive_flags(new_slave,
 					      BOND_SLAVE_NOTIFY_NOW);
-		break;
-	case BOND_MODE_8023AD:
-		/* in 802.3ad mode, the internal mechanism
+		अवरोध;
+	हाल BOND_MODE_8023AD:
+		/* in 802.3ad mode, the पूर्णांकernal mechanism
 		 * will activate the slaves in the selected
 		 * aggregator
 		 */
 		bond_set_slave_inactive_flags(new_slave, BOND_SLAVE_NOTIFY_NOW);
-		/* if this is the first slave */
-		if (!prev_slave) {
+		/* अगर this is the first slave */
+		अगर (!prev_slave) अणु
 			SLAVE_AD_INFO(new_slave)->id = 1;
-			/* Initialize AD with the number of times that the AD timer is called in 1 second
+			/* Initialize AD with the number of बार that the AD समयr is called in 1 second
 			 * can be called only after the mac address of the bond is set
 			 */
 			bond_3ad_initialize(bond, 1000/AD_TIMER_INTERVAL);
-		} else {
+		पूर्ण अन्यथा अणु
 			SLAVE_AD_INFO(new_slave)->id =
 				SLAVE_AD_INFO(prev_slave)->id + 1;
-		}
+		पूर्ण
 
 		bond_3ad_bind_slave(new_slave);
-		break;
-	case BOND_MODE_TLB:
-	case BOND_MODE_ALB:
+		अवरोध;
+	हाल BOND_MODE_TLB:
+	हाल BOND_MODE_ALB:
 		bond_set_active_slave(new_slave);
 		bond_set_slave_inactive_flags(new_slave, BOND_SLAVE_NOTIFY_NOW);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		slave_dbg(bond_dev, slave_dev, "This slave is always active in trunk mode\n");
 
 		/* always active in trunk mode */
@@ -1912,95 +1913,95 @@ int bond_enslave(struct net_device *bond_dev, struct net_device *slave_dev,
 
 		/* In trunking mode there is little meaning to curr_active_slave
 		 * anyway (it holds no special properties of the bond device),
-		 * so we can change it without calling change_active_interface()
+		 * so we can change it without calling change_active_पूर्णांकerface()
 		 */
-		if (!rcu_access_pointer(bond->curr_active_slave) &&
+		अगर (!rcu_access_poपूर्णांकer(bond->curr_active_slave) &&
 		    new_slave->link == BOND_LINK_UP)
-			rcu_assign_pointer(bond->curr_active_slave, new_slave);
+			rcu_assign_poपूर्णांकer(bond->curr_active_slave, new_slave);
 
-		break;
-	} /* switch(bond_mode) */
+		अवरोध;
+	पूर्ण /* चयन(bond_mode) */
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	if (bond->dev->npinfo) {
-		if (slave_enable_netpoll(new_slave)) {
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	अगर (bond->dev->npinfo) अणु
+		अगर (slave_enable_netpoll(new_slave)) अणु
 			slave_info(bond_dev, slave_dev, "master_dev is using netpoll, but new slave device does not support netpoll\n");
 			res = -EBUSY;
-			goto err_detach;
-		}
-	}
-#endif
+			जाओ err_detach;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	if (!(bond_dev->features & NETIF_F_LRO))
+	अगर (!(bond_dev->features & NETIF_F_LRO))
 		dev_disable_lro(slave_dev);
 
-	res = netdev_rx_handler_register(slave_dev, bond_handle_frame,
+	res = netdev_rx_handler_रेजिस्टर(slave_dev, bond_handle_frame,
 					 new_slave);
-	if (res) {
+	अगर (res) अणु
 		slave_dbg(bond_dev, slave_dev, "Error %d calling netdev_rx_handler_register\n", res);
-		goto err_detach;
-	}
+		जाओ err_detach;
+	पूर्ण
 
 	res = bond_master_upper_dev_link(bond, new_slave, extack);
-	if (res) {
+	अगर (res) अणु
 		slave_dbg(bond_dev, slave_dev, "Error %d calling bond_master_upper_dev_link\n", res);
-		goto err_unregister;
-	}
+		जाओ err_unरेजिस्टर;
+	पूर्ण
 
 	bond_lower_state_changed(new_slave);
 
 	res = bond_sysfs_slave_add(new_slave);
-	if (res) {
+	अगर (res) अणु
 		slave_dbg(bond_dev, slave_dev, "Error %d calling bond_sysfs_slave_add\n", res);
-		goto err_upper_unlink;
-	}
+		जाओ err_upper_unlink;
+	पूर्ण
 
 	/* If the mode uses primary, then the following is handled by
 	 * bond_change_active_slave().
 	 */
-	if (!bond_uses_primary(bond)) {
+	अगर (!bond_uses_primary(bond)) अणु
 		/* set promiscuity level to new slave */
-		if (bond_dev->flags & IFF_PROMISC) {
+		अगर (bond_dev->flags & IFF_PROMISC) अणु
 			res = dev_set_promiscuity(slave_dev, 1);
-			if (res)
-				goto err_sysfs_del;
-		}
+			अगर (res)
+				जाओ err_sysfs_del;
+		पूर्ण
 
 		/* set allmulti level to new slave */
-		if (bond_dev->flags & IFF_ALLMULTI) {
+		अगर (bond_dev->flags & IFF_ALLMULTI) अणु
 			res = dev_set_allmulti(slave_dev, 1);
-			if (res) {
-				if (bond_dev->flags & IFF_PROMISC)
+			अगर (res) अणु
+				अगर (bond_dev->flags & IFF_PROMISC)
 					dev_set_promiscuity(slave_dev, -1);
-				goto err_sysfs_del;
-			}
-		}
+				जाओ err_sysfs_del;
+			पूर्ण
+		पूर्ण
 
-		netif_addr_lock_bh(bond_dev);
+		netअगर_addr_lock_bh(bond_dev);
 		dev_mc_sync_multiple(slave_dev, bond_dev);
 		dev_uc_sync_multiple(slave_dev, bond_dev);
-		netif_addr_unlock_bh(bond_dev);
+		netअगर_addr_unlock_bh(bond_dev);
 
-		if (BOND_MODE(bond) == BOND_MODE_8023AD) {
+		अगर (BOND_MODE(bond) == BOND_MODE_8023AD) अणु
 			/* add lacpdu mc addr to mc list */
 			u8 lacpdu_multicast[ETH_ALEN] = MULTICAST_LACPDU_ADDR;
 
 			dev_mc_add(slave_dev, lacpdu_multicast);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	bond->slave_cnt++;
 	bond_compute_features(bond);
 	bond_set_carrier(bond);
 
-	if (bond_uses_primary(bond)) {
+	अगर (bond_uses_primary(bond)) अणु
 		block_netpoll_tx();
 		bond_select_active_slave(bond);
 		unblock_netpoll_tx();
-	}
+	पूर्ण
 
-	if (bond_mode_can_use_xmit_hash(bond))
-		bond_update_slave_arr(bond, NULL);
+	अगर (bond_mode_can_use_xmit_hash(bond))
+		bond_update_slave_arr(bond, शून्य);
 
 
 	slave_info(bond_dev, slave_dev, "Enslaving as %s interface with %s link\n",
@@ -2009,446 +2010,446 @@ int bond_enslave(struct net_device *bond_dev, struct net_device *slave_dev,
 
 	/* enslave is successful */
 	bond_queue_slave_event(new_slave);
-	return 0;
+	वापस 0;
 
-/* Undo stages on error */
+/* Unकरो stages on error */
 err_sysfs_del:
 	bond_sysfs_slave_del(new_slave);
 
 err_upper_unlink:
 	bond_upper_dev_unlink(bond, new_slave);
 
-err_unregister:
-	netdev_rx_handler_unregister(slave_dev);
+err_unरेजिस्टर:
+	netdev_rx_handler_unरेजिस्टर(slave_dev);
 
 err_detach:
 	vlan_vids_del_by_dev(slave_dev, bond_dev);
-	if (rcu_access_pointer(bond->primary_slave) == new_slave)
-		RCU_INIT_POINTER(bond->primary_slave, NULL);
-	if (rcu_access_pointer(bond->curr_active_slave) == new_slave) {
+	अगर (rcu_access_poपूर्णांकer(bond->primary_slave) == new_slave)
+		RCU_INIT_POINTER(bond->primary_slave, शून्य);
+	अगर (rcu_access_poपूर्णांकer(bond->curr_active_slave) == new_slave) अणु
 		block_netpoll_tx();
-		bond_change_active_slave(bond, NULL);
+		bond_change_active_slave(bond, शून्य);
 		bond_select_active_slave(bond);
 		unblock_netpoll_tx();
-	}
+	पूर्ण
 	/* either primary_slave or curr_active_slave might've changed */
 	synchronize_rcu();
 	slave_disable_netpoll(new_slave);
 
-err_close:
-	if (!netif_is_bond_master(slave_dev))
+err_बंद:
+	अगर (!netअगर_is_bond_master(slave_dev))
 		slave_dev->priv_flags &= ~IFF_BONDING;
-	dev_close(slave_dev);
+	dev_बंद(slave_dev);
 
 err_restore_mac:
 	slave_dev->flags &= ~IFF_SLAVE;
-	if (!bond->params.fail_over_mac ||
-	    BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) {
+	अगर (!bond->params.fail_over_mac ||
+	    BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) अणु
 		/* XXX TODO - fom follow mode needs to change master's
-		 * MAC if this slave's MAC is in use by the bond, or at
-		 * least print a warning.
+		 * MAC अगर this slave's MAC is in use by the bond, or at
+		 * least prपूर्णांक a warning.
 		 */
 		bond_hw_addr_copy(ss.__data, new_slave->perm_hwaddr,
 				  new_slave->dev->addr_len);
 		ss.ss_family = slave_dev->type;
-		dev_set_mac_address(slave_dev, (struct sockaddr *)&ss, NULL);
-	}
+		dev_set_mac_address(slave_dev, (काष्ठा sockaddr *)&ss, शून्य);
+	पूर्ण
 
 err_restore_mtu:
 	dev_set_mtu(slave_dev, new_slave->original_mtu);
 
-err_free:
+err_मुक्त:
 	kobject_put(&new_slave->kobj);
 
-err_undo_flags:
+err_unकरो_flags:
 	/* Enslave of first slave has failed and we need to fix master's mac */
-	if (!bond_has_slaves(bond)) {
-		if (ether_addr_equal_64bits(bond_dev->dev_addr,
+	अगर (!bond_has_slaves(bond)) अणु
+		अगर (ether_addr_equal_64bits(bond_dev->dev_addr,
 					    slave_dev->dev_addr))
-			eth_hw_addr_random(bond_dev);
-		if (bond_dev->type != ARPHRD_ETHER) {
-			dev_close(bond_dev);
+			eth_hw_addr_अक्रमom(bond_dev);
+		अगर (bond_dev->type != ARPHRD_ETHER) अणु
+			dev_बंद(bond_dev);
 			ether_setup(bond_dev);
 			bond_dev->flags |= IFF_MASTER;
 			bond_dev->priv_flags &= ~IFF_TX_SKB_SHARING;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* Try to release the slave device <slave> from the bond device <master>
  * It is legal to access curr_active_slave without a lock because all the function
  * is RTNL-locked. If "all" is true it means that the function is being called
- * while destroying a bond interface and all slaves are being released.
+ * जबतक destroying a bond पूर्णांकerface and all slaves are being released.
  *
- * The rules for slave state should be:
- *   for Active/Backup:
- *     Active stays on all backups go down
- *   for Bonded connections:
- *     The first up interface should be left on and all others downed.
+ * The rules क्रम slave state should be:
+ *   क्रम Active/Backup:
+ *     Active stays on all backups go करोwn
+ *   क्रम Bonded connections:
+ *     The first up पूर्णांकerface should be left on and all others करोwned.
  */
-static int __bond_release_one(struct net_device *bond_dev,
-			      struct net_device *slave_dev,
-			      bool all, bool unregister)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct slave *slave, *oldcurrent;
-	struct sockaddr_storage ss;
-	int old_flags = bond_dev->flags;
+अटल पूर्णांक __bond_release_one(काष्ठा net_device *bond_dev,
+			      काष्ठा net_device *slave_dev,
+			      bool all, bool unरेजिस्टर)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा slave *slave, *oldcurrent;
+	काष्ठा sockaddr_storage ss;
+	पूर्णांक old_flags = bond_dev->flags;
 	netdev_features_t old_features = bond_dev->features;
 
 	/* slave is not a slave or master is not master of this slave */
-	if (!(slave_dev->flags & IFF_SLAVE) ||
-	    !netdev_has_upper_dev(slave_dev, bond_dev)) {
+	अगर (!(slave_dev->flags & IFF_SLAVE) ||
+	    !netdev_has_upper_dev(slave_dev, bond_dev)) अणु
 		slave_dbg(bond_dev, slave_dev, "cannot release slave\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	block_netpoll_tx();
 
 	slave = bond_get_slave_by_dev(bond, slave_dev);
-	if (!slave) {
+	अगर (!slave) अणु
 		/* not a slave of this bond */
 		slave_info(bond_dev, slave_dev, "interface not enslaved\n");
 		unblock_netpoll_tx();
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bond_set_slave_inactive_flags(slave, BOND_SLAVE_NOTIFY_NOW);
 
 	bond_sysfs_slave_del(slave);
 
-	/* recompute stats just before removing the slave */
+	/* recompute stats just beक्रमe removing the slave */
 	bond_get_stats(bond->dev, &bond->bond_stats);
 
 	bond_upper_dev_unlink(bond, slave);
-	/* unregister rx_handler early so bond_handle_frame wouldn't be called
-	 * for this slave anymore.
+	/* unरेजिस्टर rx_handler early so bond_handle_frame wouldn't be called
+	 * क्रम this slave anymore.
 	 */
-	netdev_rx_handler_unregister(slave_dev);
+	netdev_rx_handler_unरेजिस्टर(slave_dev);
 
-	if (BOND_MODE(bond) == BOND_MODE_8023AD)
+	अगर (BOND_MODE(bond) == BOND_MODE_8023AD)
 		bond_3ad_unbind_slave(slave);
 
-	if (bond_mode_can_use_xmit_hash(bond))
+	अगर (bond_mode_can_use_xmit_hash(bond))
 		bond_update_slave_arr(bond, slave);
 
 	slave_info(bond_dev, slave_dev, "Releasing %s interface\n",
 		    bond_is_active_slave(slave) ? "active" : "backup");
 
-	oldcurrent = rcu_access_pointer(bond->curr_active_slave);
+	oldcurrent = rcu_access_poपूर्णांकer(bond->curr_active_slave);
 
-	RCU_INIT_POINTER(bond->current_arp_slave, NULL);
+	RCU_INIT_POINTER(bond->current_arp_slave, शून्य);
 
-	if (!all && (!bond->params.fail_over_mac ||
-		     BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP)) {
-		if (ether_addr_equal_64bits(bond_dev->dev_addr, slave->perm_hwaddr) &&
+	अगर (!all && (!bond->params.fail_over_mac ||
+		     BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP)) अणु
+		अगर (ether_addr_equal_64bits(bond_dev->dev_addr, slave->perm_hwaddr) &&
 		    bond_has_slaves(bond))
 			slave_warn(bond_dev, slave_dev, "the permanent HWaddr of slave - %pM - is still in use by bond - set the HWaddr of slave to a different address to avoid conflicts\n",
 				   slave->perm_hwaddr);
-	}
+	पूर्ण
 
-	if (rtnl_dereference(bond->primary_slave) == slave)
-		RCU_INIT_POINTER(bond->primary_slave, NULL);
+	अगर (rtnl_dereference(bond->primary_slave) == slave)
+		RCU_INIT_POINTER(bond->primary_slave, शून्य);
 
-	if (oldcurrent == slave)
-		bond_change_active_slave(bond, NULL);
+	अगर (oldcurrent == slave)
+		bond_change_active_slave(bond, शून्य);
 
-	if (bond_is_lb(bond)) {
+	अगर (bond_is_lb(bond)) अणु
 		/* Must be called only after the slave has been
 		 * detached from the list and the curr_active_slave
-		 * has been cleared (if our_slave == old_current),
-		 * but before a new active slave is selected.
+		 * has been cleared (अगर our_slave == old_current),
+		 * but beक्रमe a new active slave is selected.
 		 */
 		bond_alb_deinit_slave(bond, slave);
-	}
+	पूर्ण
 
-	if (all) {
-		RCU_INIT_POINTER(bond->curr_active_slave, NULL);
-	} else if (oldcurrent == slave) {
+	अगर (all) अणु
+		RCU_INIT_POINTER(bond->curr_active_slave, शून्य);
+	पूर्ण अन्यथा अगर (oldcurrent == slave) अणु
 		/* Note that we hold RTNL over this sequence, so there
-		 * is no concern that another slave add/remove event
-		 * will interfere.
+		 * is no concern that another slave add/हटाओ event
+		 * will पूर्णांकerfere.
 		 */
 		bond_select_active_slave(bond);
-	}
+	पूर्ण
 
-	if (!bond_has_slaves(bond)) {
+	अगर (!bond_has_slaves(bond)) अणु
 		bond_set_carrier(bond);
-		eth_hw_addr_random(bond_dev);
-	}
+		eth_hw_addr_अक्रमom(bond_dev);
+	पूर्ण
 
 	unblock_netpoll_tx();
 	synchronize_rcu();
 	bond->slave_cnt--;
 
-	if (!bond_has_slaves(bond)) {
-		call_netdevice_notifiers(NETDEV_CHANGEADDR, bond->dev);
-		call_netdevice_notifiers(NETDEV_RELEASE, bond->dev);
-	}
+	अगर (!bond_has_slaves(bond)) अणु
+		call_netdevice_notअगरiers(NETDEV_CHANGEADDR, bond->dev);
+		call_netdevice_notअगरiers(NETDEV_RELEASE, bond->dev);
+	पूर्ण
 
 	bond_compute_features(bond);
-	if (!(bond_dev->features & NETIF_F_VLAN_CHALLENGED) &&
+	अगर (!(bond_dev->features & NETIF_F_VLAN_CHALLENGED) &&
 	    (old_features & NETIF_F_VLAN_CHALLENGED))
 		slave_info(bond_dev, slave_dev, "last VLAN challenged slave left bond - VLAN blocking is removed\n");
 
 	vlan_vids_del_by_dev(slave_dev, bond_dev);
 
-	/* If the mode uses primary, then this case was handled above by
-	 * bond_change_active_slave(..., NULL)
+	/* If the mode uses primary, then this हाल was handled above by
+	 * bond_change_active_slave(..., शून्य)
 	 */
-	if (!bond_uses_primary(bond)) {
+	अगर (!bond_uses_primary(bond)) अणु
 		/* unset promiscuity level from slave
 		 * NOTE: The NETDEV_CHANGEADDR call above may change the value
 		 * of the IFF_PROMISC flag in the bond_dev, but we need the
-		 * value of that flag before that change, as that was the value
+		 * value of that flag beक्रमe that change, as that was the value
 		 * when this slave was attached, so we cache at the start of the
-		 * function and use it here. Same goes for ALLMULTI below
+		 * function and use it here. Same goes क्रम ALLMULTI below
 		 */
-		if (old_flags & IFF_PROMISC)
+		अगर (old_flags & IFF_PROMISC)
 			dev_set_promiscuity(slave_dev, -1);
 
 		/* unset allmulti level from slave */
-		if (old_flags & IFF_ALLMULTI)
+		अगर (old_flags & IFF_ALLMULTI)
 			dev_set_allmulti(slave_dev, -1);
 
 		bond_hw_addr_flush(bond_dev, slave_dev);
-	}
+	पूर्ण
 
 	slave_disable_netpoll(slave);
 
-	/* close slave before restoring its mac address */
-	dev_close(slave_dev);
+	/* बंद slave beक्रमe restoring its mac address */
+	dev_बंद(slave_dev);
 
-	if (bond->params.fail_over_mac != BOND_FOM_ACTIVE ||
-	    BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) {
+	अगर (bond->params.fail_over_mac != BOND_FOM_ACTIVE ||
+	    BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) अणु
 		/* restore original ("permanent") mac address */
 		bond_hw_addr_copy(ss.__data, slave->perm_hwaddr,
 				  slave->dev->addr_len);
 		ss.ss_family = slave_dev->type;
-		dev_set_mac_address(slave_dev, (struct sockaddr *)&ss, NULL);
-	}
+		dev_set_mac_address(slave_dev, (काष्ठा sockaddr *)&ss, शून्य);
+	पूर्ण
 
-	if (unregister)
+	अगर (unरेजिस्टर)
 		__dev_set_mtu(slave_dev, slave->original_mtu);
-	else
+	अन्यथा
 		dev_set_mtu(slave_dev, slave->original_mtu);
 
-	if (!netif_is_bond_master(slave_dev))
+	अगर (!netअगर_is_bond_master(slave_dev))
 		slave_dev->priv_flags &= ~IFF_BONDING;
 
 	kobject_put(&slave->kobj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* A wrapper used because of ndo_del_link */
-int bond_release(struct net_device *bond_dev, struct net_device *slave_dev)
-{
-	return __bond_release_one(bond_dev, slave_dev, false, false);
-}
+/* A wrapper used because of nकरो_del_link */
+पूर्णांक bond_release(काष्ठा net_device *bond_dev, काष्ठा net_device *slave_dev)
+अणु
+	वापस __bond_release_one(bond_dev, slave_dev, false, false);
+पूर्ण
 
-/* First release a slave and then destroy the bond if no more slaves are left.
+/* First release a slave and then destroy the bond अगर no more slaves are left.
  * Must be under rtnl_lock when this function is called.
  */
-static int bond_release_and_destroy(struct net_device *bond_dev,
-				    struct net_device *slave_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	int ret;
+अटल पूर्णांक bond_release_and_destroy(काष्ठा net_device *bond_dev,
+				    काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	पूर्णांक ret;
 
 	ret = __bond_release_one(bond_dev, slave_dev, false, true);
-	if (ret == 0 && !bond_has_slaves(bond) &&
-	    bond_dev->reg_state != NETREG_UNREGISTERING) {
+	अगर (ret == 0 && !bond_has_slaves(bond) &&
+	    bond_dev->reg_state != NETREG_UNREGISTERING) अणु
 		bond_dev->priv_flags |= IFF_DISABLE_NETPOLL;
 		netdev_info(bond_dev, "Destroying bond\n");
-		bond_remove_proc_entry(bond);
-		unregister_netdevice(bond_dev);
-	}
-	return ret;
-}
+		bond_हटाओ_proc_entry(bond);
+		unरेजिस्टर_netdevice(bond_dev);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void bond_info_query(struct net_device *bond_dev, struct ifbond *info)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	bond_fill_ifbond(bond, info);
-}
+अटल व्योम bond_info_query(काष्ठा net_device *bond_dev, काष्ठा अगरbond *info)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	bond_fill_अगरbond(bond, info);
+पूर्ण
 
-static int bond_slave_info_query(struct net_device *bond_dev, struct ifslave *info)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct list_head *iter;
-	int i = 0, res = -ENODEV;
-	struct slave *slave;
+अटल पूर्णांक bond_slave_info_query(काष्ठा net_device *bond_dev, काष्ठा अगरslave *info)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा list_head *iter;
+	पूर्णांक i = 0, res = -ENODEV;
+	काष्ठा slave *slave;
 
-	bond_for_each_slave(bond, slave, iter) {
-		if (i++ == (int)info->slave_id) {
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		अगर (i++ == (पूर्णांक)info->slave_id) अणु
 			res = 0;
-			bond_fill_ifslave(slave, info);
-			break;
-		}
-	}
+			bond_fill_अगरslave(slave, info);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*-------------------------------- Monitoring -------------------------------*/
 
-/* called with rcu_read_lock() */
-static int bond_miimon_inspect(struct bonding *bond)
-{
-	int link_state, commit = 0;
-	struct list_head *iter;
-	struct slave *slave;
+/* called with rcu_पढ़ो_lock() */
+अटल पूर्णांक bond_miimon_inspect(काष्ठा bonding *bond)
+अणु
+	पूर्णांक link_state, commit = 0;
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 	bool ignore_updelay;
 
 	ignore_updelay = !rcu_dereference(bond->curr_active_slave);
 
-	bond_for_each_slave_rcu(bond, slave, iter) {
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
 		bond_propose_link_state(slave, BOND_LINK_NOCHANGE);
 
 		link_state = bond_check_dev_link(bond, slave->dev, 0);
 
-		switch (slave->link) {
-		case BOND_LINK_UP:
-			if (link_state)
-				continue;
+		चयन (slave->link) अणु
+		हाल BOND_LINK_UP:
+			अगर (link_state)
+				जारी;
 
 			bond_propose_link_state(slave, BOND_LINK_FAIL);
 			commit++;
-			slave->delay = bond->params.downdelay;
-			if (slave->delay) {
+			slave->delay = bond->params.करोwndelay;
+			अगर (slave->delay) अणु
 				slave_info(bond->dev, slave->dev, "link status down for %sinterface, disabling it in %d ms\n",
 					   (BOND_MODE(bond) ==
 					    BOND_MODE_ACTIVEBACKUP) ?
 					    (bond_is_active_slave(slave) ?
 					     "active " : "backup ") : "",
-					   bond->params.downdelay * bond->params.miimon);
-			}
+					   bond->params.करोwndelay * bond->params.miimon);
+			पूर्ण
 			fallthrough;
-		case BOND_LINK_FAIL:
-			if (link_state) {
-				/* recovered before downdelay expired */
+		हाल BOND_LINK_FAIL:
+			अगर (link_state) अणु
+				/* recovered beक्रमe करोwndelay expired */
 				bond_propose_link_state(slave, BOND_LINK_UP);
-				slave->last_link_up = jiffies;
+				slave->last_link_up = jअगरfies;
 				slave_info(bond->dev, slave->dev, "link status up again after %d ms\n",
-					   (bond->params.downdelay - slave->delay) *
+					   (bond->params.करोwndelay - slave->delay) *
 					   bond->params.miimon);
 				commit++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (slave->delay <= 0) {
+			अगर (slave->delay <= 0) अणु
 				bond_propose_link_state(slave, BOND_LINK_DOWN);
 				commit++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			slave->delay--;
-			break;
+			अवरोध;
 
-		case BOND_LINK_DOWN:
-			if (!link_state)
-				continue;
+		हाल BOND_LINK_DOWN:
+			अगर (!link_state)
+				जारी;
 
 			bond_propose_link_state(slave, BOND_LINK_BACK);
 			commit++;
 			slave->delay = bond->params.updelay;
 
-			if (slave->delay) {
+			अगर (slave->delay) अणु
 				slave_info(bond->dev, slave->dev, "link status up, enabling it in %d ms\n",
 					   ignore_updelay ? 0 :
 					   bond->params.updelay *
 					   bond->params.miimon);
-			}
+			पूर्ण
 			fallthrough;
-		case BOND_LINK_BACK:
-			if (!link_state) {
+		हाल BOND_LINK_BACK:
+			अगर (!link_state) अणु
 				bond_propose_link_state(slave, BOND_LINK_DOWN);
 				slave_info(bond->dev, slave->dev, "link status down again after %d ms\n",
 					   (bond->params.updelay - slave->delay) *
 					   bond->params.miimon);
 				commit++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (ignore_updelay)
+			अगर (ignore_updelay)
 				slave->delay = 0;
 
-			if (slave->delay <= 0) {
+			अगर (slave->delay <= 0) अणु
 				bond_propose_link_state(slave, BOND_LINK_UP);
 				commit++;
 				ignore_updelay = false;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			slave->delay--;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return commit;
-}
+	वापस commit;
+पूर्ण
 
-static void bond_miimon_link_change(struct bonding *bond,
-				    struct slave *slave,
-				    char link)
-{
-	switch (BOND_MODE(bond)) {
-	case BOND_MODE_8023AD:
+अटल व्योम bond_miimon_link_change(काष्ठा bonding *bond,
+				    काष्ठा slave *slave,
+				    अक्षर link)
+अणु
+	चयन (BOND_MODE(bond)) अणु
+	हाल BOND_MODE_8023AD:
 		bond_3ad_handle_link_change(slave, link);
-		break;
-	case BOND_MODE_TLB:
-	case BOND_MODE_ALB:
+		अवरोध;
+	हाल BOND_MODE_TLB:
+	हाल BOND_MODE_ALB:
 		bond_alb_handle_link_change(bond, slave, link);
-		break;
-	case BOND_MODE_XOR:
-		bond_update_slave_arr(bond, NULL);
-		break;
-	}
-}
+		अवरोध;
+	हाल BOND_MODE_XOR:
+		bond_update_slave_arr(bond, शून्य);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void bond_miimon_commit(struct bonding *bond)
-{
-	struct list_head *iter;
-	struct slave *slave, *primary;
+अटल व्योम bond_miimon_commit(काष्ठा bonding *bond)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave, *primary;
 
-	bond_for_each_slave(bond, slave, iter) {
-		switch (slave->link_new_state) {
-		case BOND_LINK_NOCHANGE:
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		चयन (slave->link_new_state) अणु
+		हाल BOND_LINK_NOCHANGE:
 			/* For 802.3ad mode, check current slave speed and
-			 * duplex again in case its port was disabled after
-			 * invalid speed/duplex reporting but recovered before
+			 * duplex again in हाल its port was disabled after
+			 * invalid speed/duplex reporting but recovered beक्रमe
 			 * link monitoring could make a decision on the actual
 			 * link status
 			 */
-			if (BOND_MODE(bond) == BOND_MODE_8023AD &&
+			अगर (BOND_MODE(bond) == BOND_MODE_8023AD &&
 			    slave->link == BOND_LINK_UP)
 				bond_3ad_adapter_speed_duplex_changed(slave);
-			continue;
+			जारी;
 
-		case BOND_LINK_UP:
-			if (bond_update_speed_duplex(slave) &&
-			    bond_needs_speed_duplex(bond)) {
+		हाल BOND_LINK_UP:
+			अगर (bond_update_speed_duplex(slave) &&
+			    bond_needs_speed_duplex(bond)) अणु
 				slave->link = BOND_LINK_DOWN;
-				if (net_ratelimit())
+				अगर (net_ratelimit())
 					slave_warn(bond->dev, slave->dev,
 						   "failed to get link speed/duplex\n");
-				continue;
-			}
+				जारी;
+			पूर्ण
 			bond_set_slave_link_state(slave, BOND_LINK_UP,
 						  BOND_SLAVE_NOTIFY_NOW);
-			slave->last_link_up = jiffies;
+			slave->last_link_up = jअगरfies;
 
 			primary = rtnl_dereference(bond->primary_slave);
-			if (BOND_MODE(bond) == BOND_MODE_8023AD) {
+			अगर (BOND_MODE(bond) == BOND_MODE_8023AD) अणु
 				/* prevent it from being the active one */
 				bond_set_backup_slave(slave);
-			} else if (BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) {
+			पूर्ण अन्यथा अगर (BOND_MODE(bond) != BOND_MODE_ACTIVEBACKUP) अणु
 				/* make it immediately active */
 				bond_set_active_slave(slave);
-			}
+			पूर्ण
 
 			slave_info(bond->dev, slave->dev, "link status definitely up, %u Mbps %s duplex\n",
 				   slave->speed == SPEED_UNKNOWN ? 0 : slave->speed,
@@ -2456,19 +2457,19 @@ static void bond_miimon_commit(struct bonding *bond)
 
 			bond_miimon_link_change(bond, slave, BOND_LINK_UP);
 
-			if (!bond->curr_active_slave || slave == primary)
-				goto do_failover;
+			अगर (!bond->curr_active_slave || slave == primary)
+				जाओ करो_failover;
 
-			continue;
+			जारी;
 
-		case BOND_LINK_DOWN:
-			if (slave->link_failure_count < UINT_MAX)
+		हाल BOND_LINK_DOWN:
+			अगर (slave->link_failure_count < अच_पूर्णांक_उच्च)
 				slave->link_failure_count++;
 
 			bond_set_slave_link_state(slave, BOND_LINK_DOWN,
 						  BOND_SLAVE_NOTIFY_NOW);
 
-			if (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP ||
+			अगर (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP ||
 			    BOND_MODE(bond) == BOND_MODE_8023AD)
 				bond_set_slave_inactive_flags(slave,
 							      BOND_SLAVE_NOTIFY_NOW);
@@ -2477,628 +2478,628 @@ static void bond_miimon_commit(struct bonding *bond)
 
 			bond_miimon_link_change(bond, slave, BOND_LINK_DOWN);
 
-			if (slave == rcu_access_pointer(bond->curr_active_slave))
-				goto do_failover;
+			अगर (slave == rcu_access_poपूर्णांकer(bond->curr_active_slave))
+				जाओ करो_failover;
 
-			continue;
+			जारी;
 
-		default:
+		शेष:
 			slave_err(bond->dev, slave->dev, "invalid new link %d on slave\n",
 				  slave->link_new_state);
 			bond_propose_link_state(slave, BOND_LINK_NOCHANGE);
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-do_failover:
+करो_failover:
 		block_netpoll_tx();
 		bond_select_active_slave(bond);
 		unblock_netpoll_tx();
-	}
+	पूर्ण
 
 	bond_set_carrier(bond);
-}
+पूर्ण
 
 /* bond_mii_monitor
  *
- * Really a wrapper that splits the mii monitor into two phases: an
- * inspection, then (if inspection indicates something needs to be done)
+ * Really a wrapper that splits the mii monitor पूर्णांकo two phases: an
+ * inspection, then (अगर inspection indicates something needs to be करोne)
  * an acquisition of appropriate locks followed by a commit phase to
  * implement whatever link state changes are indicated.
  */
-static void bond_mii_monitor(struct work_struct *work)
-{
-	struct bonding *bond = container_of(work, struct bonding,
+अटल व्योम bond_mii_monitor(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा bonding *bond = container_of(work, काष्ठा bonding,
 					    mii_work.work);
-	bool should_notify_peers = false;
+	bool should_notअगरy_peers = false;
 	bool commit;
-	unsigned long delay;
-	struct slave *slave;
-	struct list_head *iter;
+	अचिन्हित दीर्घ delay;
+	काष्ठा slave *slave;
+	काष्ठा list_head *iter;
 
-	delay = msecs_to_jiffies(bond->params.miimon);
+	delay = msecs_to_jअगरfies(bond->params.miimon);
 
-	if (!bond_has_slaves(bond))
-		goto re_arm;
+	अगर (!bond_has_slaves(bond))
+		जाओ re_arm;
 
-	rcu_read_lock();
-	should_notify_peers = bond_should_notify_peers(bond);
+	rcu_पढ़ो_lock();
+	should_notअगरy_peers = bond_should_notअगरy_peers(bond);
 	commit = !!bond_miimon_inspect(bond);
-	if (bond->send_peer_notif) {
-		rcu_read_unlock();
-		if (rtnl_trylock()) {
-			bond->send_peer_notif--;
+	अगर (bond->send_peer_notअगर) अणु
+		rcu_पढ़ो_unlock();
+		अगर (rtnl_trylock()) अणु
+			bond->send_peer_notअगर--;
 			rtnl_unlock();
-		}
-	} else {
-		rcu_read_unlock();
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	if (commit) {
-		/* Race avoidance with bond_close cancel of workqueue */
-		if (!rtnl_trylock()) {
+	अगर (commit) अणु
+		/* Race aव्योमance with bond_बंद cancel of workqueue */
+		अगर (!rtnl_trylock()) अणु
 			delay = 1;
-			should_notify_peers = false;
-			goto re_arm;
-		}
+			should_notअगरy_peers = false;
+			जाओ re_arm;
+		पूर्ण
 
-		bond_for_each_slave(bond, slave, iter) {
+		bond_क्रम_each_slave(bond, slave, iter) अणु
 			bond_commit_link_state(slave, BOND_SLAVE_NOTIFY_LATER);
-		}
+		पूर्ण
 		bond_miimon_commit(bond);
 
 		rtnl_unlock();	/* might sleep, hold no other locks */
-	}
+	पूर्ण
 
 re_arm:
-	if (bond->params.miimon)
+	अगर (bond->params.miimon)
 		queue_delayed_work(bond->wq, &bond->mii_work, delay);
 
-	if (should_notify_peers) {
-		if (!rtnl_trylock())
-			return;
-		call_netdevice_notifiers(NETDEV_NOTIFY_PEERS, bond->dev);
+	अगर (should_notअगरy_peers) अणु
+		अगर (!rtnl_trylock())
+			वापस;
+		call_netdevice_notअगरiers(NETDEV_NOTIFY_PEERS, bond->dev);
 		rtnl_unlock();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bond_upper_dev_walk(struct net_device *upper,
-			       struct netdev_nested_priv *priv)
-{
+अटल पूर्णांक bond_upper_dev_walk(काष्ठा net_device *upper,
+			       काष्ठा netdev_nested_priv *priv)
+अणु
 	__be32 ip = *(__be32 *)priv->data;
 
-	return ip == bond_confirm_addr(upper, 0, ip);
-}
+	वापस ip == bond_confirm_addr(upper, 0, ip);
+पूर्ण
 
-static bool bond_has_this_ip(struct bonding *bond, __be32 ip)
-{
-	struct netdev_nested_priv priv = {
-		.data = (void *)&ip,
-	};
+अटल bool bond_has_this_ip(काष्ठा bonding *bond, __be32 ip)
+अणु
+	काष्ठा netdev_nested_priv priv = अणु
+		.data = (व्योम *)&ip,
+	पूर्ण;
 	bool ret = false;
 
-	if (ip == bond_confirm_addr(bond->dev, 0, ip))
-		return true;
+	अगर (ip == bond_confirm_addr(bond->dev, 0, ip))
+		वापस true;
 
-	rcu_read_lock();
-	if (netdev_walk_all_upper_dev_rcu(bond->dev, bond_upper_dev_walk, &priv))
+	rcu_पढ़ो_lock();
+	अगर (netdev_walk_all_upper_dev_rcu(bond->dev, bond_upper_dev_walk, &priv))
 		ret = true;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* We go to the (large) trouble of VLAN tagging ARP frames because
- * switches in VLAN mode (especially if ports are configured as
+ * चयनes in VLAN mode (especially अगर ports are configured as
  * "native" to a VLAN) might not pass non-tagged frames.
  */
-static void bond_arp_send(struct slave *slave, int arp_op, __be32 dest_ip,
-			  __be32 src_ip, struct bond_vlan_tag *tags)
-{
-	struct sk_buff *skb;
-	struct bond_vlan_tag *outer_tag = tags;
-	struct net_device *slave_dev = slave->dev;
-	struct net_device *bond_dev = slave->bond->dev;
+अटल व्योम bond_arp_send(काष्ठा slave *slave, पूर्णांक arp_op, __be32 dest_ip,
+			  __be32 src_ip, काष्ठा bond_vlan_tag *tags)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा bond_vlan_tag *outer_tag = tags;
+	काष्ठा net_device *slave_dev = slave->dev;
+	काष्ठा net_device *bond_dev = slave->bond->dev;
 
 	slave_dbg(bond_dev, slave_dev, "arp %d on slave: dst %pI4 src %pI4\n",
 		  arp_op, &dest_ip, &src_ip);
 
 	skb = arp_create(arp_op, ETH_P_ARP, dest_ip, slave_dev, src_ip,
-			 NULL, slave_dev->dev_addr, NULL);
+			 शून्य, slave_dev->dev_addr, शून्य);
 
-	if (!skb) {
+	अगर (!skb) अणु
 		net_err_ratelimited("ARP packet allocation failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!tags || tags->vlan_proto == VLAN_N_VID)
-		goto xmit;
+	अगर (!tags || tags->vlan_proto == VLAN_N_VID)
+		जाओ xmit;
 
 	tags++;
 
 	/* Go through all the tags backwards and add them to the packet */
-	while (tags->vlan_proto != VLAN_N_VID) {
-		if (!tags->vlan_id) {
+	जबतक (tags->vlan_proto != VLAN_N_VID) अणु
+		अगर (!tags->vlan_id) अणु
 			tags++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		slave_dbg(bond_dev, slave_dev, "inner tag: proto %X vid %X\n",
 			  ntohs(outer_tag->vlan_proto), tags->vlan_id);
 		skb = vlan_insert_tag_set_proto(skb, tags->vlan_proto,
 						tags->vlan_id);
-		if (!skb) {
+		अगर (!skb) अणु
 			net_err_ratelimited("failed to insert inner VLAN tag\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		tags++;
-	}
+	पूर्ण
 	/* Set the outer tag */
-	if (outer_tag->vlan_id) {
+	अगर (outer_tag->vlan_id) अणु
 		slave_dbg(bond_dev, slave_dev, "outer tag: proto %X vid %X\n",
 			  ntohs(outer_tag->vlan_proto), outer_tag->vlan_id);
 		__vlan_hwaccel_put_tag(skb, outer_tag->vlan_proto,
 				       outer_tag->vlan_id);
-	}
+	पूर्ण
 
 xmit:
 	arp_xmit(skb);
-}
+पूर्ण
 
 /* Validate the device path between the @start_dev and the @end_dev.
- * The path is valid if the @end_dev is reachable through device
+ * The path is valid अगर the @end_dev is reachable through device
  * stacking.
- * When the path is validated, collect any vlan information in the
+ * When the path is validated, collect any vlan inक्रमmation in the
  * path.
  */
-struct bond_vlan_tag *bond_verify_device_path(struct net_device *start_dev,
-					      struct net_device *end_dev,
-					      int level)
-{
-	struct bond_vlan_tag *tags;
-	struct net_device *upper;
-	struct list_head  *iter;
+काष्ठा bond_vlan_tag *bond_verअगरy_device_path(काष्ठा net_device *start_dev,
+					      काष्ठा net_device *end_dev,
+					      पूर्णांक level)
+अणु
+	काष्ठा bond_vlan_tag *tags;
+	काष्ठा net_device *upper;
+	काष्ठा list_head  *iter;
 
-	if (start_dev == end_dev) {
-		tags = kcalloc(level + 1, sizeof(*tags), GFP_ATOMIC);
-		if (!tags)
-			return ERR_PTR(-ENOMEM);
+	अगर (start_dev == end_dev) अणु
+		tags = kसुस्मृति(level + 1, माप(*tags), GFP_ATOMIC);
+		अगर (!tags)
+			वापस ERR_PTR(-ENOMEM);
 		tags[level].vlan_proto = VLAN_N_VID;
-		return tags;
-	}
+		वापस tags;
+	पूर्ण
 
-	netdev_for_each_upper_dev_rcu(start_dev, upper, iter) {
-		tags = bond_verify_device_path(upper, end_dev, level + 1);
-		if (IS_ERR_OR_NULL(tags)) {
-			if (IS_ERR(tags))
-				return tags;
-			continue;
-		}
-		if (is_vlan_dev(upper)) {
+	netdev_क्रम_each_upper_dev_rcu(start_dev, upper, iter) अणु
+		tags = bond_verअगरy_device_path(upper, end_dev, level + 1);
+		अगर (IS_ERR_OR_शून्य(tags)) अणु
+			अगर (IS_ERR(tags))
+				वापस tags;
+			जारी;
+		पूर्ण
+		अगर (is_vlan_dev(upper)) अणु
 			tags[level].vlan_proto = vlan_dev_vlan_proto(upper);
 			tags[level].vlan_id = vlan_dev_vlan_id(upper);
-		}
+		पूर्ण
 
-		return tags;
-	}
+		वापस tags;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void bond_arp_send_all(struct bonding *bond, struct slave *slave)
-{
-	struct rtable *rt;
-	struct bond_vlan_tag *tags;
-	__be32 *targets = bond->params.arp_targets, addr;
-	int i;
+अटल व्योम bond_arp_send_all(काष्ठा bonding *bond, काष्ठा slave *slave)
+अणु
+	काष्ठा rtable *rt;
+	काष्ठा bond_vlan_tag *tags;
+	__be32 *tarमाला_लो = bond->params.arp_tarमाला_लो, addr;
+	पूर्णांक i;
 
-	for (i = 0; i < BOND_MAX_ARP_TARGETS && targets[i]; i++) {
+	क्रम (i = 0; i < BOND_MAX_ARP_TARGETS && tarमाला_लो[i]; i++) अणु
 		slave_dbg(bond->dev, slave->dev, "%s: target %pI4\n",
-			  __func__, &targets[i]);
-		tags = NULL;
+			  __func__, &tarमाला_लो[i]);
+		tags = शून्य;
 
 		/* Find out through which dev should the packet go */
-		rt = ip_route_output(dev_net(bond->dev), targets[i], 0,
+		rt = ip_route_output(dev_net(bond->dev), tarमाला_लो[i], 0,
 				     RTO_ONLINK, 0);
-		if (IS_ERR(rt)) {
+		अगर (IS_ERR(rt)) अणु
 			/* there's no route to target - try to send arp
 			 * probe to generate any traffic (arp_validate=0)
 			 */
-			if (bond->params.arp_validate)
+			अगर (bond->params.arp_validate)
 				net_warn_ratelimited("%s: no route to arp_ip_target %pI4 and arp_validate is set\n",
 						     bond->dev->name,
-						     &targets[i]);
-			bond_arp_send(slave, ARPOP_REQUEST, targets[i],
+						     &tarमाला_लो[i]);
+			bond_arp_send(slave, ARPOP_REQUEST, tarमाला_लो[i],
 				      0, tags);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* bond device itself */
-		if (rt->dst.dev == bond->dev)
-			goto found;
+		अगर (rt->dst.dev == bond->dev)
+			जाओ found;
 
-		rcu_read_lock();
-		tags = bond_verify_device_path(bond->dev, rt->dst.dev, 0);
-		rcu_read_unlock();
+		rcu_पढ़ो_lock();
+		tags = bond_verअगरy_device_path(bond->dev, rt->dst.dev, 0);
+		rcu_पढ़ो_unlock();
 
-		if (!IS_ERR_OR_NULL(tags))
-			goto found;
+		अगर (!IS_ERR_OR_शून्य(tags))
+			जाओ found;
 
 		/* Not our device - skip */
 		slave_dbg(bond->dev, slave->dev, "no path to arp_ip_target %pI4 via rt.dev %s\n",
-			   &targets[i], rt->dst.dev ? rt->dst.dev->name : "NULL");
+			   &tarमाला_लो[i], rt->dst.dev ? rt->dst.dev->name : "NULL");
 
 		ip_rt_put(rt);
-		continue;
+		जारी;
 
 found:
-		addr = bond_confirm_addr(rt->dst.dev, targets[i], 0);
+		addr = bond_confirm_addr(rt->dst.dev, tarमाला_लो[i], 0);
 		ip_rt_put(rt);
-		bond_arp_send(slave, ARPOP_REQUEST, targets[i], addr, tags);
-		kfree(tags);
-	}
-}
+		bond_arp_send(slave, ARPOP_REQUEST, tarमाला_लो[i], addr, tags);
+		kमुक्त(tags);
+	पूर्ण
+पूर्ण
 
-static void bond_validate_arp(struct bonding *bond, struct slave *slave, __be32 sip, __be32 tip)
-{
-	int i;
+अटल व्योम bond_validate_arp(काष्ठा bonding *bond, काष्ठा slave *slave, __be32 sip, __be32 tip)
+अणु
+	पूर्णांक i;
 
-	if (!sip || !bond_has_this_ip(bond, tip)) {
+	अगर (!sip || !bond_has_this_ip(bond, tip)) अणु
 		slave_dbg(bond->dev, slave->dev, "%s: sip %pI4 tip %pI4 not found\n",
 			   __func__, &sip, &tip);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	i = bond_get_targets_ip(bond->params.arp_targets, sip);
-	if (i == -1) {
+	i = bond_get_tarमाला_लो_ip(bond->params.arp_tarमाला_लो, sip);
+	अगर (i == -1) अणु
 		slave_dbg(bond->dev, slave->dev, "%s: sip %pI4 not found in targets\n",
 			   __func__, &sip);
-		return;
-	}
-	slave->last_rx = jiffies;
-	slave->target_last_arp_rx[i] = jiffies;
-}
+		वापस;
+	पूर्ण
+	slave->last_rx = jअगरfies;
+	slave->target_last_arp_rx[i] = jअगरfies;
+पूर्ण
 
-int bond_arp_rcv(const struct sk_buff *skb, struct bonding *bond,
-		 struct slave *slave)
-{
-	struct arphdr *arp = (struct arphdr *)skb->data;
-	struct slave *curr_active_slave, *curr_arp_slave;
-	unsigned char *arp_ptr;
+पूर्णांक bond_arp_rcv(स्थिर काष्ठा sk_buff *skb, काष्ठा bonding *bond,
+		 काष्ठा slave *slave)
+अणु
+	काष्ठा arphdr *arp = (काष्ठा arphdr *)skb->data;
+	काष्ठा slave *curr_active_slave, *curr_arp_slave;
+	अचिन्हित अक्षर *arp_ptr;
 	__be32 sip, tip;
-	int is_arp = skb->protocol == __cpu_to_be16(ETH_P_ARP);
-	unsigned int alen;
+	पूर्णांक is_arp = skb->protocol == __cpu_to_be16(ETH_P_ARP);
+	अचिन्हित पूर्णांक alen;
 
-	if (!slave_do_arp_validate(bond, slave)) {
-		if ((slave_do_arp_validate_only(bond) && is_arp) ||
-		    !slave_do_arp_validate_only(bond))
-			slave->last_rx = jiffies;
-		return RX_HANDLER_ANOTHER;
-	} else if (!is_arp) {
-		return RX_HANDLER_ANOTHER;
-	}
+	अगर (!slave_करो_arp_validate(bond, slave)) अणु
+		अगर ((slave_करो_arp_validate_only(bond) && is_arp) ||
+		    !slave_करो_arp_validate_only(bond))
+			slave->last_rx = jअगरfies;
+		वापस RX_HANDLER_ANOTHER;
+	पूर्ण अन्यथा अगर (!is_arp) अणु
+		वापस RX_HANDLER_ANOTHER;
+	पूर्ण
 
 	alen = arp_hdr_len(bond->dev);
 
 	slave_dbg(bond->dev, slave->dev, "%s: skb->dev %s\n",
 		   __func__, skb->dev->name);
 
-	if (alen > skb_headlen(skb)) {
-		arp = kmalloc(alen, GFP_ATOMIC);
-		if (!arp)
-			goto out_unlock;
-		if (skb_copy_bits(skb, 0, arp, alen) < 0)
-			goto out_unlock;
-	}
+	अगर (alen > skb_headlen(skb)) अणु
+		arp = kदो_स्मृति(alen, GFP_ATOMIC);
+		अगर (!arp)
+			जाओ out_unlock;
+		अगर (skb_copy_bits(skb, 0, arp, alen) < 0)
+			जाओ out_unlock;
+	पूर्ण
 
-	if (arp->ar_hln != bond->dev->addr_len ||
+	अगर (arp->ar_hln != bond->dev->addr_len ||
 	    skb->pkt_type == PACKET_OTHERHOST ||
 	    skb->pkt_type == PACKET_LOOPBACK ||
 	    arp->ar_hrd != htons(ARPHRD_ETHER) ||
 	    arp->ar_pro != htons(ETH_P_IP) ||
 	    arp->ar_pln != 4)
-		goto out_unlock;
+		जाओ out_unlock;
 
-	arp_ptr = (unsigned char *)(arp + 1);
+	arp_ptr = (अचिन्हित अक्षर *)(arp + 1);
 	arp_ptr += bond->dev->addr_len;
-	memcpy(&sip, arp_ptr, 4);
+	स_नकल(&sip, arp_ptr, 4);
 	arp_ptr += 4 + bond->dev->addr_len;
-	memcpy(&tip, arp_ptr, 4);
+	स_नकल(&tip, arp_ptr, 4);
 
 	slave_dbg(bond->dev, slave->dev, "%s: %s/%d av %d sv %d sip %pI4 tip %pI4\n",
 		  __func__, slave->dev->name, bond_slave_state(slave),
-		  bond->params.arp_validate, slave_do_arp_validate(bond, slave),
+		  bond->params.arp_validate, slave_करो_arp_validate(bond, slave),
 		  &sip, &tip);
 
 	curr_active_slave = rcu_dereference(bond->curr_active_slave);
 	curr_arp_slave = rcu_dereference(bond->current_arp_slave);
 
-	/* We 'trust' the received ARP enough to validate it if:
+	/* We 'trust' the received ARP enough to validate it अगर:
 	 *
 	 * (a) the slave receiving the ARP is active (which includes the
-	 * current ARP slave, if any), or
+	 * current ARP slave, अगर any), or
 	 *
 	 * (b) the receiving slave isn't active, but there is a currently
 	 * active slave and it received valid arp reply(s) after it became
 	 * the currently active slave, or
 	 *
 	 * (c) there is an ARP slave that sent an ARP during the prior ARP
-	 * interval, and we receive an ARP reply on any slave.  We accept
-	 * these because switch FDB update delays may deliver the ARP
+	 * पूर्णांकerval, and we receive an ARP reply on any slave.  We accept
+	 * these because चयन FDB update delays may deliver the ARP
 	 * reply to a slave other than the sender of the ARP request.
 	 *
-	 * Note: for (b), backup slaves are receiving the broadcast ARP
+	 * Note: क्रम (b), backup slaves are receiving the broadcast ARP
 	 * request, not a reply.  This request passes from the sending
-	 * slave through the L2 switch(es) to the receiving slave.  Since
-	 * this is checking the request, sip/tip are swapped for
+	 * slave through the L2 चयन(es) to the receiving slave.  Since
+	 * this is checking the request, sip/tip are swapped क्रम
 	 * validation.
 	 *
-	 * This is done to avoid endless looping when we can't reach the
+	 * This is करोne to aव्योम endless looping when we can't reach the
 	 * arp_ip_target and fool ourselves with our own arp requests.
 	 */
-	if (bond_is_active_slave(slave))
+	अगर (bond_is_active_slave(slave))
 		bond_validate_arp(bond, slave, sip, tip);
-	else if (curr_active_slave &&
-		 time_after(slave_last_rx(bond, curr_active_slave),
+	अन्यथा अगर (curr_active_slave &&
+		 समय_after(slave_last_rx(bond, curr_active_slave),
 			    curr_active_slave->last_link_up))
 		bond_validate_arp(bond, slave, tip, sip);
-	else if (curr_arp_slave && (arp->ar_op == htons(ARPOP_REPLY)) &&
-		 bond_time_in_interval(bond,
+	अन्यथा अगर (curr_arp_slave && (arp->ar_op == htons(ARPOP_REPLY)) &&
+		 bond_समय_in_पूर्णांकerval(bond,
 				       dev_trans_start(curr_arp_slave->dev), 1))
 		bond_validate_arp(bond, slave, sip, tip);
 
 out_unlock:
-	if (arp != (struct arphdr *)skb->data)
-		kfree(arp);
-	return RX_HANDLER_ANOTHER;
-}
+	अगर (arp != (काष्ठा arphdr *)skb->data)
+		kमुक्त(arp);
+	वापस RX_HANDLER_ANOTHER;
+पूर्ण
 
-/* function to verify if we're in the arp_interval timeslice, returns true if
- * (last_act - arp_interval) <= jiffies <= (last_act + mod * arp_interval +
- * arp_interval/2) . the arp_interval/2 is needed for really fast networks.
+/* function to verअगरy अगर we're in the arp_पूर्णांकerval बारlice, वापसs true अगर
+ * (last_act - arp_पूर्णांकerval) <= jअगरfies <= (last_act + mod * arp_पूर्णांकerval +
+ * arp_पूर्णांकerval/2) . the arp_पूर्णांकerval/2 is needed क्रम really fast networks.
  */
-static bool bond_time_in_interval(struct bonding *bond, unsigned long last_act,
-				  int mod)
-{
-	int delta_in_ticks = msecs_to_jiffies(bond->params.arp_interval);
+अटल bool bond_समय_in_पूर्णांकerval(काष्ठा bonding *bond, अचिन्हित दीर्घ last_act,
+				  पूर्णांक mod)
+अणु
+	पूर्णांक delta_in_ticks = msecs_to_jअगरfies(bond->params.arp_पूर्णांकerval);
 
-	return time_in_range(jiffies,
+	वापस समय_in_range(jअगरfies,
 			     last_act - delta_in_ticks,
 			     last_act + mod * delta_in_ticks + delta_in_ticks/2);
-}
+पूर्ण
 
 /* This function is called regularly to monitor each slave's link
  * ensuring that traffic is being sent and received when arp monitoring
- * is used in load-balancing mode. if the adapter has been dormant, then an
- * arp is transmitted to generate traffic. see activebackup_arp_monitor for
+ * is used in load-balancing mode. अगर the adapter has been करोrmant, then an
+ * arp is transmitted to generate traffic. see activebackup_arp_monitor क्रम
  * arp monitoring in active backup mode.
  */
-static void bond_loadbalance_arp_mon(struct bonding *bond)
-{
-	struct slave *slave, *oldcurrent;
-	struct list_head *iter;
-	int do_failover = 0, slave_state_changed = 0;
+अटल व्योम bond_loadbalance_arp_mon(काष्ठा bonding *bond)
+अणु
+	काष्ठा slave *slave, *oldcurrent;
+	काष्ठा list_head *iter;
+	पूर्णांक करो_failover = 0, slave_state_changed = 0;
 
-	if (!bond_has_slaves(bond))
-		goto re_arm;
+	अगर (!bond_has_slaves(bond))
+		जाओ re_arm;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	oldcurrent = rcu_dereference(bond->curr_active_slave);
-	/* see if any of the previous devices are up now (i.e. they have
-	 * xmt and rcv traffic). the curr_active_slave does not come into
+	/* see अगर any of the previous devices are up now (i.e. they have
+	 * xmt and rcv traffic). the curr_active_slave करोes not come पूर्णांकo
 	 * the picture unless it is null. also, slave->last_link_up is not
 	 * needed here because we send an arp on each slave and give a slave
-	 * as long as it needs to get the tx/rx within the delta.
-	 * TODO: what about up/down delay in arp mode? it wasn't here before
-	 *       so it can wait
+	 * as दीर्घ as it needs to get the tx/rx within the delta.
+	 * TODO: what about up/करोwn delay in arp mode? it wasn't here beक्रमe
+	 *       so it can रुको
 	 */
-	bond_for_each_slave_rcu(bond, slave, iter) {
-		unsigned long trans_start = dev_trans_start(slave->dev);
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
+		अचिन्हित दीर्घ trans_start = dev_trans_start(slave->dev);
 
 		bond_propose_link_state(slave, BOND_LINK_NOCHANGE);
 
-		if (slave->link != BOND_LINK_UP) {
-			if (bond_time_in_interval(bond, trans_start, 1) &&
-			    bond_time_in_interval(bond, slave->last_rx, 1)) {
+		अगर (slave->link != BOND_LINK_UP) अणु
+			अगर (bond_समय_in_पूर्णांकerval(bond, trans_start, 1) &&
+			    bond_समय_in_पूर्णांकerval(bond, slave->last_rx, 1)) अणु
 
 				bond_propose_link_state(slave, BOND_LINK_UP);
 				slave_state_changed = 1;
 
 				/* primary_slave has no meaning in round-robin
-				 * mode. the window of a slave being up and
+				 * mode. the winकरोw of a slave being up and
 				 * curr_active_slave being null after enslaving
-				 * is closed.
+				 * is बंदd.
 				 */
-				if (!oldcurrent) {
+				अगर (!oldcurrent) अणु
 					slave_info(bond->dev, slave->dev, "link status definitely up\n");
-					do_failover = 1;
-				} else {
+					करो_failover = 1;
+				पूर्ण अन्यथा अणु
 					slave_info(bond->dev, slave->dev, "interface is now up\n");
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* slave->link == BOND_LINK_UP */
 
-			/* not all switches will respond to an arp request
-			 * when the source ip is 0, so don't take the link down
-			 * if we don't know our ip yet
+			/* not all चयनes will respond to an arp request
+			 * when the source ip is 0, so करोn't take the link करोwn
+			 * अगर we करोn't know our ip yet
 			 */
-			if (!bond_time_in_interval(bond, trans_start, 2) ||
-			    !bond_time_in_interval(bond, slave->last_rx, 2)) {
+			अगर (!bond_समय_in_पूर्णांकerval(bond, trans_start, 2) ||
+			    !bond_समय_in_पूर्णांकerval(bond, slave->last_rx, 2)) अणु
 
 				bond_propose_link_state(slave, BOND_LINK_DOWN);
 				slave_state_changed = 1;
 
-				if (slave->link_failure_count < UINT_MAX)
+				अगर (slave->link_failure_count < अच_पूर्णांक_उच्च)
 					slave->link_failure_count++;
 
 				slave_info(bond->dev, slave->dev, "interface is now down\n");
 
-				if (slave == oldcurrent)
-					do_failover = 1;
-			}
-		}
+				अगर (slave == oldcurrent)
+					करो_failover = 1;
+			पूर्ण
+		पूर्ण
 
-		/* note: if switch is in round-robin mode, all links
+		/* note: अगर चयन is in round-robin mode, all links
 		 * must tx arp to ensure all links rx an arp - otherwise
-		 * links may oscillate or not come up at all; if switch is
+		 * links may oscillate or not come up at all; अगर चयन is
 		 * in something like xor mode, there is nothing we can
-		 * do - all replies will be rx'ed on same link causing slaves
+		 * करो - all replies will be rx'ed on same link causing slaves
 		 * to be unstable during low/no traffic periods
 		 */
-		if (bond_slave_is_up(slave))
+		अगर (bond_slave_is_up(slave))
 			bond_arp_send_all(bond, slave);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (do_failover || slave_state_changed) {
-		if (!rtnl_trylock())
-			goto re_arm;
+	अगर (करो_failover || slave_state_changed) अणु
+		अगर (!rtnl_trylock())
+			जाओ re_arm;
 
-		bond_for_each_slave(bond, slave, iter) {
-			if (slave->link_new_state != BOND_LINK_NOCHANGE)
+		bond_क्रम_each_slave(bond, slave, iter) अणु
+			अगर (slave->link_new_state != BOND_LINK_NOCHANGE)
 				slave->link = slave->link_new_state;
-		}
+		पूर्ण
 
-		if (slave_state_changed) {
+		अगर (slave_state_changed) अणु
 			bond_slave_state_change(bond);
-			if (BOND_MODE(bond) == BOND_MODE_XOR)
-				bond_update_slave_arr(bond, NULL);
-		}
-		if (do_failover) {
+			अगर (BOND_MODE(bond) == BOND_MODE_XOR)
+				bond_update_slave_arr(bond, शून्य);
+		पूर्ण
+		अगर (करो_failover) अणु
 			block_netpoll_tx();
 			bond_select_active_slave(bond);
 			unblock_netpoll_tx();
-		}
+		पूर्ण
 		rtnl_unlock();
-	}
+	पूर्ण
 
 re_arm:
-	if (bond->params.arp_interval)
+	अगर (bond->params.arp_पूर्णांकerval)
 		queue_delayed_work(bond->wq, &bond->arp_work,
-				   msecs_to_jiffies(bond->params.arp_interval));
-}
+				   msecs_to_jअगरfies(bond->params.arp_पूर्णांकerval));
+पूर्ण
 
-/* Called to inspect slaves for active-backup mode ARP monitor link state
- * changes.  Sets proposed link state in slaves to specify what action
- * should take place for the slave.  Returns 0 if no changes are found, >0
- * if changes to link states must be committed.
+/* Called to inspect slaves क्रम active-backup mode ARP monitor link state
+ * changes.  Sets proposed link state in slaves to specअगरy what action
+ * should take place क्रम the slave.  Returns 0 अगर no changes are found, >0
+ * अगर changes to link states must be committed.
  *
- * Called with rcu_read_lock held.
+ * Called with rcu_पढ़ो_lock held.
  */
-static int bond_ab_arp_inspect(struct bonding *bond)
-{
-	unsigned long trans_start, last_rx;
-	struct list_head *iter;
-	struct slave *slave;
-	int commit = 0;
+अटल पूर्णांक bond_ab_arp_inspect(काष्ठा bonding *bond)
+अणु
+	अचिन्हित दीर्घ trans_start, last_rx;
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
+	पूर्णांक commit = 0;
 
-	bond_for_each_slave_rcu(bond, slave, iter) {
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
 		bond_propose_link_state(slave, BOND_LINK_NOCHANGE);
 		last_rx = slave_last_rx(bond, slave);
 
-		if (slave->link != BOND_LINK_UP) {
-			if (bond_time_in_interval(bond, last_rx, 1)) {
+		अगर (slave->link != BOND_LINK_UP) अणु
+			अगर (bond_समय_in_पूर्णांकerval(bond, last_rx, 1)) अणु
 				bond_propose_link_state(slave, BOND_LINK_UP);
 				commit++;
-			} else if (slave->link == BOND_LINK_BACK) {
+			पूर्ण अन्यथा अगर (slave->link == BOND_LINK_BACK) अणु
 				bond_propose_link_state(slave, BOND_LINK_FAIL);
 				commit++;
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
 		/* Give slaves 2*delta after being enslaved or made
-		 * active.  This avoids bouncing, as the last receive
-		 * times need a full ARP monitor cycle to be updated.
+		 * active.  This aव्योमs bouncing, as the last receive
+		 * बार need a full ARP monitor cycle to be updated.
 		 */
-		if (bond_time_in_interval(bond, slave->last_link_up, 2))
-			continue;
+		अगर (bond_समय_in_पूर्णांकerval(bond, slave->last_link_up, 2))
+			जारी;
 
-		/* Backup slave is down if:
+		/* Backup slave is करोwn अगर:
 		 * - No current_arp_slave AND
 		 * - more than 3*delta since last receive AND
 		 * - the bond has an IP address
 		 *
 		 * Note: a non-null current_arp_slave indicates
-		 * the curr_active_slave went down and we are
-		 * searching for a new one; under this condition
-		 * we only take the curr_active_slave down - this
+		 * the curr_active_slave went करोwn and we are
+		 * searching क्रम a new one; under this condition
+		 * we only take the curr_active_slave करोwn - this
 		 * gives each slave a chance to tx/rx traffic
-		 * before being taken out
+		 * beक्रमe being taken out
 		 */
-		if (!bond_is_active_slave(slave) &&
-		    !rcu_access_pointer(bond->current_arp_slave) &&
-		    !bond_time_in_interval(bond, last_rx, 3)) {
+		अगर (!bond_is_active_slave(slave) &&
+		    !rcu_access_poपूर्णांकer(bond->current_arp_slave) &&
+		    !bond_समय_in_पूर्णांकerval(bond, last_rx, 3)) अणु
 			bond_propose_link_state(slave, BOND_LINK_DOWN);
 			commit++;
-		}
+		पूर्ण
 
-		/* Active slave is down if:
+		/* Active slave is करोwn अगर:
 		 * - more than 2*delta since transmitting OR
 		 * - (more than 2*delta since receive AND
 		 *    the bond has an IP address)
 		 */
 		trans_start = dev_trans_start(slave->dev);
-		if (bond_is_active_slave(slave) &&
-		    (!bond_time_in_interval(bond, trans_start, 2) ||
-		     !bond_time_in_interval(bond, last_rx, 2))) {
+		अगर (bond_is_active_slave(slave) &&
+		    (!bond_समय_in_पूर्णांकerval(bond, trans_start, 2) ||
+		     !bond_समय_in_पूर्णांकerval(bond, last_rx, 2))) अणु
 			bond_propose_link_state(slave, BOND_LINK_DOWN);
 			commit++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return commit;
-}
+	वापस commit;
+पूर्ण
 
 /* Called to commit link state changes noted by inspection step of
  * active-backup mode ARP monitor.
  *
  * Called with RTNL hold.
  */
-static void bond_ab_arp_commit(struct bonding *bond)
-{
-	unsigned long trans_start;
-	struct list_head *iter;
-	struct slave *slave;
+अटल व्योम bond_ab_arp_commit(काष्ठा bonding *bond)
+अणु
+	अचिन्हित दीर्घ trans_start;
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
-	bond_for_each_slave(bond, slave, iter) {
-		switch (slave->link_new_state) {
-		case BOND_LINK_NOCHANGE:
-			continue;
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		चयन (slave->link_new_state) अणु
+		हाल BOND_LINK_NOCHANGE:
+			जारी;
 
-		case BOND_LINK_UP:
+		हाल BOND_LINK_UP:
 			trans_start = dev_trans_start(slave->dev);
-			if (rtnl_dereference(bond->curr_active_slave) != slave ||
+			अगर (rtnl_dereference(bond->curr_active_slave) != slave ||
 			    (!rtnl_dereference(bond->curr_active_slave) &&
-			     bond_time_in_interval(bond, trans_start, 1))) {
-				struct slave *current_arp_slave;
+			     bond_समय_in_पूर्णांकerval(bond, trans_start, 1))) अणु
+				काष्ठा slave *current_arp_slave;
 
 				current_arp_slave = rtnl_dereference(bond->current_arp_slave);
 				bond_set_slave_link_state(slave, BOND_LINK_UP,
 							  BOND_SLAVE_NOTIFY_NOW);
-				if (current_arp_slave) {
+				अगर (current_arp_slave) अणु
 					bond_set_slave_inactive_flags(
 						current_arp_slave,
 						BOND_SLAVE_NOTIFY_NOW);
-					RCU_INIT_POINTER(bond->current_arp_slave, NULL);
-				}
+					RCU_INIT_POINTER(bond->current_arp_slave, शून्य);
+				पूर्ण
 
 				slave_info(bond->dev, slave->dev, "link status definitely up\n");
 
-				if (!rtnl_dereference(bond->curr_active_slave) ||
+				अगर (!rtnl_dereference(bond->curr_active_slave) ||
 				    slave == rtnl_dereference(bond->primary_slave))
-					goto do_failover;
+					जाओ करो_failover;
 
-			}
+			पूर्ण
 
-			continue;
+			जारी;
 
-		case BOND_LINK_DOWN:
-			if (slave->link_failure_count < UINT_MAX)
+		हाल BOND_LINK_DOWN:
+			अगर (slave->link_failure_count < अच_पूर्णांक_उच्च)
 				slave->link_failure_count++;
 
 			bond_set_slave_link_state(slave, BOND_LINK_DOWN,
@@ -3108,14 +3109,14 @@ static void bond_ab_arp_commit(struct bonding *bond)
 
 			slave_info(bond->dev, slave->dev, "link status definitely down, disabling slave\n");
 
-			if (slave == rtnl_dereference(bond->curr_active_slave)) {
-				RCU_INIT_POINTER(bond->current_arp_slave, NULL);
-				goto do_failover;
-			}
+			अगर (slave == rtnl_dereference(bond->curr_active_slave)) अणु
+				RCU_INIT_POINTER(bond->current_arp_slave, शून्य);
+				जाओ करो_failover;
+			पूर्ण
 
-			continue;
+			जारी;
 
-		case BOND_LINK_FAIL:
+		हाल BOND_LINK_FAIL:
 			bond_set_slave_link_state(slave, BOND_LINK_FAIL,
 						  BOND_SLAVE_NOTIFY_NOW);
 			bond_set_slave_inactive_flags(slave,
@@ -3124,227 +3125,227 @@ static void bond_ab_arp_commit(struct bonding *bond)
 			/* A slave has just been enslaved and has become
 			 * the current active slave.
 			 */
-			if (rtnl_dereference(bond->curr_active_slave))
-				RCU_INIT_POINTER(bond->current_arp_slave, NULL);
-			continue;
+			अगर (rtnl_dereference(bond->curr_active_slave))
+				RCU_INIT_POINTER(bond->current_arp_slave, शून्य);
+			जारी;
 
-		default:
+		शेष:
 			slave_err(bond->dev, slave->dev,
 				  "impossible: link_new_state %d on slave\n",
 				  slave->link_new_state);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-do_failover:
+करो_failover:
 		block_netpoll_tx();
 		bond_select_active_slave(bond);
 		unblock_netpoll_tx();
-	}
+	पूर्ण
 
 	bond_set_carrier(bond);
-}
+पूर्ण
 
-/* Send ARP probes for active-backup mode ARP monitor.
+/* Send ARP probes क्रम active-backup mode ARP monitor.
  *
- * Called with rcu_read_lock held.
+ * Called with rcu_पढ़ो_lock held.
  */
-static bool bond_ab_arp_probe(struct bonding *bond)
-{
-	struct slave *slave, *before = NULL, *new_slave = NULL,
+अटल bool bond_ab_arp_probe(काष्ठा bonding *bond)
+अणु
+	काष्ठा slave *slave, *beक्रमe = शून्य, *new_slave = शून्य,
 		     *curr_arp_slave = rcu_dereference(bond->current_arp_slave),
 		     *curr_active_slave = rcu_dereference(bond->curr_active_slave);
-	struct list_head *iter;
+	काष्ठा list_head *iter;
 	bool found = false;
-	bool should_notify_rtnl = BOND_SLAVE_NOTIFY_LATER;
+	bool should_notअगरy_rtnl = BOND_SLAVE_NOTIFY_LATER;
 
-	if (curr_arp_slave && curr_active_slave)
+	अगर (curr_arp_slave && curr_active_slave)
 		netdev_info(bond->dev, "PROBE: c_arp %s && cas %s BAD\n",
 			    curr_arp_slave->dev->name,
 			    curr_active_slave->dev->name);
 
-	if (curr_active_slave) {
+	अगर (curr_active_slave) अणु
 		bond_arp_send_all(bond, curr_active_slave);
-		return should_notify_rtnl;
-	}
+		वापस should_notअगरy_rtnl;
+	पूर्ण
 
-	/* if we don't have a curr_active_slave, search for the next available
+	/* अगर we करोn't have a curr_active_slave, search क्रम the next available
 	 * backup slave from the current_arp_slave and make it the candidate
-	 * for becoming the curr_active_slave
+	 * क्रम becoming the curr_active_slave
 	 */
 
-	if (!curr_arp_slave) {
+	अगर (!curr_arp_slave) अणु
 		curr_arp_slave = bond_first_slave_rcu(bond);
-		if (!curr_arp_slave)
-			return should_notify_rtnl;
-	}
+		अगर (!curr_arp_slave)
+			वापस should_notअगरy_rtnl;
+	पूर्ण
 
-	bond_for_each_slave_rcu(bond, slave, iter) {
-		if (!found && !before && bond_slave_is_up(slave))
-			before = slave;
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
+		अगर (!found && !beक्रमe && bond_slave_is_up(slave))
+			beक्रमe = slave;
 
-		if (found && !new_slave && bond_slave_is_up(slave))
+		अगर (found && !new_slave && bond_slave_is_up(slave))
 			new_slave = slave;
-		/* if the link state is up at this point, we
-		 * mark it down - this can happen if we have
+		/* अगर the link state is up at this poपूर्णांक, we
+		 * mark it करोwn - this can happen अगर we have
 		 * simultaneous link failures and
-		 * reselect_active_interface doesn't make this
+		 * reselect_active_पूर्णांकerface करोesn't make this
 		 * one the current slave so it is still marked
-		 * up when it is actually down
+		 * up when it is actually करोwn
 		 */
-		if (!bond_slave_is_up(slave) && slave->link == BOND_LINK_UP) {
+		अगर (!bond_slave_is_up(slave) && slave->link == BOND_LINK_UP) अणु
 			bond_set_slave_link_state(slave, BOND_LINK_DOWN,
 						  BOND_SLAVE_NOTIFY_LATER);
-			if (slave->link_failure_count < UINT_MAX)
+			अगर (slave->link_failure_count < अच_पूर्णांक_उच्च)
 				slave->link_failure_count++;
 
 			bond_set_slave_inactive_flags(slave,
 						      BOND_SLAVE_NOTIFY_LATER);
 
 			slave_info(bond->dev, slave->dev, "backup interface is now down\n");
-		}
-		if (slave == curr_arp_slave)
+		पूर्ण
+		अगर (slave == curr_arp_slave)
 			found = true;
-	}
+	पूर्ण
 
-	if (!new_slave && before)
-		new_slave = before;
+	अगर (!new_slave && beक्रमe)
+		new_slave = beक्रमe;
 
-	if (!new_slave)
-		goto check_state;
+	अगर (!new_slave)
+		जाओ check_state;
 
 	bond_set_slave_link_state(new_slave, BOND_LINK_BACK,
 				  BOND_SLAVE_NOTIFY_LATER);
 	bond_set_slave_active_flags(new_slave, BOND_SLAVE_NOTIFY_LATER);
 	bond_arp_send_all(bond, new_slave);
-	new_slave->last_link_up = jiffies;
-	rcu_assign_pointer(bond->current_arp_slave, new_slave);
+	new_slave->last_link_up = jअगरfies;
+	rcu_assign_poपूर्णांकer(bond->current_arp_slave, new_slave);
 
 check_state:
-	bond_for_each_slave_rcu(bond, slave, iter) {
-		if (slave->should_notify || slave->should_notify_link) {
-			should_notify_rtnl = BOND_SLAVE_NOTIFY_NOW;
-			break;
-		}
-	}
-	return should_notify_rtnl;
-}
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
+		अगर (slave->should_notअगरy || slave->should_notअगरy_link) अणु
+			should_notअगरy_rtnl = BOND_SLAVE_NOTIFY_NOW;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस should_notअगरy_rtnl;
+पूर्ण
 
-static void bond_activebackup_arp_mon(struct bonding *bond)
-{
-	bool should_notify_peers = false;
-	bool should_notify_rtnl = false;
-	int delta_in_ticks;
+अटल व्योम bond_activebackup_arp_mon(काष्ठा bonding *bond)
+अणु
+	bool should_notअगरy_peers = false;
+	bool should_notअगरy_rtnl = false;
+	पूर्णांक delta_in_ticks;
 
-	delta_in_ticks = msecs_to_jiffies(bond->params.arp_interval);
+	delta_in_ticks = msecs_to_jअगरfies(bond->params.arp_पूर्णांकerval);
 
-	if (!bond_has_slaves(bond))
-		goto re_arm;
+	अगर (!bond_has_slaves(bond))
+		जाओ re_arm;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	should_notify_peers = bond_should_notify_peers(bond);
+	should_notअगरy_peers = bond_should_notअगरy_peers(bond);
 
-	if (bond_ab_arp_inspect(bond)) {
-		rcu_read_unlock();
+	अगर (bond_ab_arp_inspect(bond)) अणु
+		rcu_पढ़ो_unlock();
 
-		/* Race avoidance with bond_close flush of workqueue */
-		if (!rtnl_trylock()) {
+		/* Race aव्योमance with bond_बंद flush of workqueue */
+		अगर (!rtnl_trylock()) अणु
 			delta_in_ticks = 1;
-			should_notify_peers = false;
-			goto re_arm;
-		}
+			should_notअगरy_peers = false;
+			जाओ re_arm;
+		पूर्ण
 
 		bond_ab_arp_commit(bond);
 
 		rtnl_unlock();
-		rcu_read_lock();
-	}
+		rcu_पढ़ो_lock();
+	पूर्ण
 
-	should_notify_rtnl = bond_ab_arp_probe(bond);
-	rcu_read_unlock();
+	should_notअगरy_rtnl = bond_ab_arp_probe(bond);
+	rcu_पढ़ो_unlock();
 
 re_arm:
-	if (bond->params.arp_interval)
+	अगर (bond->params.arp_पूर्णांकerval)
 		queue_delayed_work(bond->wq, &bond->arp_work, delta_in_ticks);
 
-	if (should_notify_peers || should_notify_rtnl) {
-		if (!rtnl_trylock())
-			return;
+	अगर (should_notअगरy_peers || should_notअगरy_rtnl) अणु
+		अगर (!rtnl_trylock())
+			वापस;
 
-		if (should_notify_peers)
-			call_netdevice_notifiers(NETDEV_NOTIFY_PEERS,
+		अगर (should_notअगरy_peers)
+			call_netdevice_notअगरiers(NETDEV_NOTIFY_PEERS,
 						 bond->dev);
-		if (should_notify_rtnl) {
-			bond_slave_state_notify(bond);
-			bond_slave_link_notify(bond);
-		}
+		अगर (should_notअगरy_rtnl) अणु
+			bond_slave_state_notअगरy(bond);
+			bond_slave_link_notअगरy(bond);
+		पूर्ण
 
 		rtnl_unlock();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bond_arp_monitor(struct work_struct *work)
-{
-	struct bonding *bond = container_of(work, struct bonding,
+अटल व्योम bond_arp_monitor(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा bonding *bond = container_of(work, काष्ठा bonding,
 					    arp_work.work);
 
-	if (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP)
+	अगर (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP)
 		bond_activebackup_arp_mon(bond);
-	else
+	अन्यथा
 		bond_loadbalance_arp_mon(bond);
-}
+पूर्ण
 
 /*-------------------------- netdev event handling --------------------------*/
 
 /* Change device name */
-static int bond_event_changename(struct bonding *bond)
-{
-	bond_remove_proc_entry(bond);
+अटल पूर्णांक bond_event_changename(काष्ठा bonding *bond)
+अणु
+	bond_हटाओ_proc_entry(bond);
 	bond_create_proc_entry(bond);
 
-	bond_debug_reregister(bond);
+	bond_debug_reरेजिस्टर(bond);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int bond_master_netdev_event(unsigned long event,
-				    struct net_device *bond_dev)
-{
-	struct bonding *event_bond = netdev_priv(bond_dev);
+अटल पूर्णांक bond_master_netdev_event(अचिन्हित दीर्घ event,
+				    काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *event_bond = netdev_priv(bond_dev);
 
 	netdev_dbg(bond_dev, "%s called\n", __func__);
 
-	switch (event) {
-	case NETDEV_CHANGENAME:
-		return bond_event_changename(event_bond);
-	case NETDEV_UNREGISTER:
-		bond_remove_proc_entry(event_bond);
-		break;
-	case NETDEV_REGISTER:
+	चयन (event) अणु
+	हाल NETDEV_CHANGENAME:
+		वापस bond_event_changename(event_bond);
+	हाल NETDEV_UNREGISTER:
+		bond_हटाओ_proc_entry(event_bond);
+		अवरोध;
+	हाल NETDEV_REGISTER:
 		bond_create_proc_entry(event_bond);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int bond_slave_netdev_event(unsigned long event,
-				   struct net_device *slave_dev)
-{
-	struct slave *slave = bond_slave_get_rtnl(slave_dev), *primary;
-	struct bonding *bond;
-	struct net_device *bond_dev;
+अटल पूर्णांक bond_slave_netdev_event(अचिन्हित दीर्घ event,
+				   काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा slave *slave = bond_slave_get_rtnl(slave_dev), *primary;
+	काष्ठा bonding *bond;
+	काष्ठा net_device *bond_dev;
 
-	/* A netdev event can be generated while enslaving a device
-	 * before netdev_rx_handler_register is called in which case
-	 * slave will be NULL
+	/* A netdev event can be generated जबतक enslaving a device
+	 * beक्रमe netdev_rx_handler_रेजिस्टर is called in which हाल
+	 * slave will be शून्य
 	 */
-	if (!slave) {
+	अगर (!slave) अणु
 		netdev_dbg(slave_dev, "%s called on NULL slave\n", __func__);
-		return NOTIFY_DONE;
-	}
+		वापस NOTIFY_DONE;
+	पूर्ण
 
 	bond_dev = slave->bond->dev;
 	bond = slave->bond;
@@ -3352,73 +3353,73 @@ static int bond_slave_netdev_event(unsigned long event,
 
 	slave_dbg(bond_dev, slave_dev, "%s called\n", __func__);
 
-	switch (event) {
-	case NETDEV_UNREGISTER:
-		if (bond_dev->type != ARPHRD_ETHER)
+	चयन (event) अणु
+	हाल NETDEV_UNREGISTER:
+		अगर (bond_dev->type != ARPHRD_ETHER)
 			bond_release_and_destroy(bond_dev, slave_dev);
-		else
+		अन्यथा
 			__bond_release_one(bond_dev, slave_dev, false, true);
-		break;
-	case NETDEV_UP:
-	case NETDEV_CHANGE:
+		अवरोध;
+	हाल NETDEV_UP:
+	हाल NETDEV_CHANGE:
 		/* For 802.3ad mode only:
 		 * Getting invalid Speed/Duplex values here will put slave
-		 * in weird state. Mark it as link-fail if the link was
-		 * previously up or link-down if it hasn't yet come up, and
+		 * in weird state. Mark it as link-fail अगर the link was
+		 * previously up or link-करोwn अगर it hasn't yet come up, and
 		 * let link-monitoring (miimon) set it right when correct
 		 * speeds/duplex are available.
 		 */
-		if (bond_update_speed_duplex(slave) &&
-		    BOND_MODE(bond) == BOND_MODE_8023AD) {
-			if (slave->last_link_up)
+		अगर (bond_update_speed_duplex(slave) &&
+		    BOND_MODE(bond) == BOND_MODE_8023AD) अणु
+			अगर (slave->last_link_up)
 				slave->link = BOND_LINK_FAIL;
-			else
+			अन्यथा
 				slave->link = BOND_LINK_DOWN;
-		}
+		पूर्ण
 
-		if (BOND_MODE(bond) == BOND_MODE_8023AD)
+		अगर (BOND_MODE(bond) == BOND_MODE_8023AD)
 			bond_3ad_adapter_speed_duplex_changed(slave);
 		fallthrough;
-	case NETDEV_DOWN:
-		/* Refresh slave-array if applicable!
-		 * If the setup does not use miimon or arpmon (mode-specific!),
+	हाल NETDEV_DOWN:
+		/* Refresh slave-array अगर applicable!
+		 * If the setup करोes not use miimon or arpmon (mode-specअगरic!),
 		 * then these events will not cause the slave-array to be
 		 * refreshed. This will cause xmit to use a slave that is not
-		 * usable. Avoid such situation by refeshing the array at these
+		 * usable. Aव्योम such situation by refeshing the array at these
 		 * events. If these (miimon/arpmon) parameters are configured
-		 * then array gets refreshed twice and that should be fine!
+		 * then array माला_लो refreshed twice and that should be fine!
 		 */
-		if (bond_mode_can_use_xmit_hash(bond))
-			bond_update_slave_arr(bond, NULL);
-		break;
-	case NETDEV_CHANGEMTU:
+		अगर (bond_mode_can_use_xmit_hash(bond))
+			bond_update_slave_arr(bond, शून्य);
+		अवरोध;
+	हाल NETDEV_CHANGEMTU:
 		/* TODO: Should slaves be allowed to
 		 * independently alter their MTU?  For
 		 * an active-backup bond, slaves need
 		 * not be the same type of device, so
 		 * MTUs may vary.  For other modes,
 		 * slaves arguably should have the
-		 * same MTUs. To do this, we'd need to
+		 * same MTUs. To करो this, we'd need to
 		 * take over the slave's change_mtu
-		 * function for the duration of their
+		 * function क्रम the duration of their
 		 * servitude.
 		 */
-		break;
-	case NETDEV_CHANGENAME:
-		/* we don't care if we don't have primary set */
-		if (!bond_uses_primary(bond) ||
+		अवरोध;
+	हाल NETDEV_CHANGENAME:
+		/* we करोn't care if we don't have primary set */
+		अगर (!bond_uses_primary(bond) ||
 		    !bond->params.primary[0])
-			break;
+			अवरोध;
 
-		if (slave == primary) {
-			/* slave's name changed - he's no longer primary */
-			RCU_INIT_POINTER(bond->primary_slave, NULL);
-		} else if (!strcmp(slave_dev->name, bond->params.primary)) {
+		अगर (slave == primary) अणु
+			/* slave's name changed - he's no दीर्घer primary */
+			RCU_INIT_POINTER(bond->primary_slave, शून्य);
+		पूर्ण अन्यथा अगर (!म_भेद(slave_dev->name, bond->params.primary)) अणु
 			/* we have a new primary slave */
-			rcu_assign_pointer(bond->primary_slave, slave);
-		} else { /* we didn't change primary - exit */
-			break;
-		}
+			rcu_assign_poपूर्णांकer(bond->primary_slave, slave);
+		पूर्ण अन्यथा अणु /* we didn't change primary - निकास */
+			अवरोध;
+		पूर्ण
 
 		netdev_info(bond->dev, "Primary slave changed to %s, reselecting active slave\n",
 			    primary ? slave_dev->name : "none");
@@ -3426,222 +3427,222 @@ static int bond_slave_netdev_event(unsigned long event,
 		block_netpoll_tx();
 		bond_select_active_slave(bond);
 		unblock_netpoll_tx();
-		break;
-	case NETDEV_FEAT_CHANGE:
+		अवरोध;
+	हाल NETDEV_FEAT_CHANGE:
 		bond_compute_features(bond);
-		break;
-	case NETDEV_RESEND_IGMP:
+		अवरोध;
+	हाल NETDEV_RESEND_IGMP:
 		/* Propagate to master device */
-		call_netdevice_notifiers(event, slave->bond->dev);
-		break;
-	default:
-		break;
-	}
+		call_netdevice_notअगरiers(event, slave->bond->dev);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-/* bond_netdev_event: handle netdev notifier chain events.
+/* bond_netdev_event: handle netdev notअगरier chain events.
  *
- * This function receives events for the netdev chain.  The caller (an
- * ioctl handler calling blocking_notifier_call_chain) holds the necessary
- * locks for us to safely manipulate the slave devices (RTNL lock,
+ * This function receives events क्रम the netdev chain.  The caller (an
+ * ioctl handler calling blocking_notअगरier_call_chain) holds the necessary
+ * locks क्रम us to safely manipulate the slave devices (RTNL lock,
  * dev_probe_lock).
  */
-static int bond_netdev_event(struct notifier_block *this,
-			     unsigned long event, void *ptr)
-{
-	struct net_device *event_dev = netdev_notifier_info_to_dev(ptr);
+अटल पूर्णांक bond_netdev_event(काष्ठा notअगरier_block *this,
+			     अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *event_dev = netdev_notअगरier_info_to_dev(ptr);
 
 	netdev_dbg(event_dev, "%s received %s\n",
 		   __func__, netdev_cmd_to_name(event));
 
-	if (!(event_dev->priv_flags & IFF_BONDING))
-		return NOTIFY_DONE;
+	अगर (!(event_dev->priv_flags & IFF_BONDING))
+		वापस NOTIFY_DONE;
 
-	if (event_dev->flags & IFF_MASTER) {
-		int ret;
+	अगर (event_dev->flags & IFF_MASTER) अणु
+		पूर्णांक ret;
 
 		ret = bond_master_netdev_event(event, event_dev);
-		if (ret != NOTIFY_DONE)
-			return ret;
-	}
+		अगर (ret != NOTIFY_DONE)
+			वापस ret;
+	पूर्ण
 
-	if (event_dev->flags & IFF_SLAVE)
-		return bond_slave_netdev_event(event, event_dev);
+	अगर (event_dev->flags & IFF_SLAVE)
+		वापस bond_slave_netdev_event(event, event_dev);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block bond_netdev_notifier = {
-	.notifier_call = bond_netdev_event,
-};
+अटल काष्ठा notअगरier_block bond_netdev_notअगरier = अणु
+	.notअगरier_call = bond_netdev_event,
+पूर्ण;
 
 /*---------------------------- Hashing Policies -----------------------------*/
 
 /* L2 hash helper */
-static inline u32 bond_eth_hash(struct sk_buff *skb)
-{
-	struct ethhdr *ep, hdr_tmp;
+अटल अंतरभूत u32 bond_eth_hash(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ethhdr *ep, hdr_पंचांगp;
 
-	ep = skb_header_pointer(skb, 0, sizeof(hdr_tmp), &hdr_tmp);
-	if (ep)
-		return ep->h_dest[5] ^ ep->h_source[5] ^ ep->h_proto;
-	return 0;
-}
+	ep = skb_header_poपूर्णांकer(skb, 0, माप(hdr_पंचांगp), &hdr_पंचांगp);
+	अगर (ep)
+		वापस ep->h_dest[5] ^ ep->h_source[5] ^ ep->h_proto;
+	वापस 0;
+पूर्ण
 
-static bool bond_flow_ip(struct sk_buff *skb, struct flow_keys *fk,
-			 int *noff, int *proto, bool l34)
-{
-	const struct ipv6hdr *iph6;
-	const struct iphdr *iph;
+अटल bool bond_flow_ip(काष्ठा sk_buff *skb, काष्ठा flow_keys *fk,
+			 पूर्णांक *noff, पूर्णांक *proto, bool l34)
+अणु
+	स्थिर काष्ठा ipv6hdr *iph6;
+	स्थिर काष्ठा iphdr *iph;
 
-	if (skb->protocol == htons(ETH_P_IP)) {
-		if (unlikely(!pskb_may_pull(skb, *noff + sizeof(*iph))))
-			return false;
-		iph = (const struct iphdr *)(skb->data + *noff);
+	अगर (skb->protocol == htons(ETH_P_IP)) अणु
+		अगर (unlikely(!pskb_may_pull(skb, *noff + माप(*iph))))
+			वापस false;
+		iph = (स्थिर काष्ठा iphdr *)(skb->data + *noff);
 		iph_to_flow_copy_v4addrs(fk, iph);
 		*noff += iph->ihl << 2;
-		if (!ip_is_fragment(iph))
+		अगर (!ip_is_fragment(iph))
 			*proto = iph->protocol;
-	} else if (skb->protocol == htons(ETH_P_IPV6)) {
-		if (unlikely(!pskb_may_pull(skb, *noff + sizeof(*iph6))))
-			return false;
-		iph6 = (const struct ipv6hdr *)(skb->data + *noff);
+	पूर्ण अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
+		अगर (unlikely(!pskb_may_pull(skb, *noff + माप(*iph6))))
+			वापस false;
+		iph6 = (स्थिर काष्ठा ipv6hdr *)(skb->data + *noff);
 		iph_to_flow_copy_v6addrs(fk, iph6);
-		*noff += sizeof(*iph6);
+		*noff += माप(*iph6);
 		*proto = iph6->nexthdr;
-	} else {
-		return false;
-	}
+	पूर्ण अन्यथा अणु
+		वापस false;
+	पूर्ण
 
-	if (l34 && *proto >= 0)
+	अगर (l34 && *proto >= 0)
 		fk->ports.ports = skb_flow_get_ports(skb, *noff, *proto);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static u32 bond_vlan_srcmac_hash(struct sk_buff *skb)
-{
-	struct ethhdr *mac_hdr = (struct ethhdr *)skb_mac_header(skb);
-	u32 srcmac_vendor = 0, srcmac_dev = 0;
+अटल u32 bond_vlan_srcmac_hash(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ethhdr *mac_hdr = (काष्ठा ethhdr *)skb_mac_header(skb);
+	u32 srcmac_venकरोr = 0, srcmac_dev = 0;
 	u16 vlan;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 3; i++)
-		srcmac_vendor = (srcmac_vendor << 8) | mac_hdr->h_source[i];
+	क्रम (i = 0; i < 3; i++)
+		srcmac_venकरोr = (srcmac_venकरोr << 8) | mac_hdr->h_source[i];
 
-	for (i = 3; i < ETH_ALEN; i++)
+	क्रम (i = 3; i < ETH_ALEN; i++)
 		srcmac_dev = (srcmac_dev << 8) | mac_hdr->h_source[i];
 
-	if (!skb_vlan_tag_present(skb))
-		return srcmac_vendor ^ srcmac_dev;
+	अगर (!skb_vlan_tag_present(skb))
+		वापस srcmac_venकरोr ^ srcmac_dev;
 
 	vlan = skb_vlan_tag_get(skb);
 
-	return vlan ^ srcmac_vendor ^ srcmac_dev;
-}
+	वापस vlan ^ srcmac_venकरोr ^ srcmac_dev;
+पूर्ण
 
 /* Extract the appropriate headers based on bond's xmit policy */
-static bool bond_flow_dissect(struct bonding *bond, struct sk_buff *skb,
-			      struct flow_keys *fk)
-{
+अटल bool bond_flow_dissect(काष्ठा bonding *bond, काष्ठा sk_buff *skb,
+			      काष्ठा flow_keys *fk)
+अणु
 	bool l34 = bond->params.xmit_policy == BOND_XMIT_POLICY_LAYER34;
-	int noff, proto = -1;
+	पूर्णांक noff, proto = -1;
 
-	switch (bond->params.xmit_policy) {
-	case BOND_XMIT_POLICY_ENCAP23:
-	case BOND_XMIT_POLICY_ENCAP34:
-		memset(fk, 0, sizeof(*fk));
-		return __skb_flow_dissect(NULL, skb, &flow_keys_bonding,
-					  fk, NULL, 0, 0, 0, 0);
-	default:
-		break;
-	}
+	चयन (bond->params.xmit_policy) अणु
+	हाल BOND_XMIT_POLICY_ENCAP23:
+	हाल BOND_XMIT_POLICY_ENCAP34:
+		स_रखो(fk, 0, माप(*fk));
+		वापस __skb_flow_dissect(शून्य, skb, &flow_keys_bonding,
+					  fk, शून्य, 0, 0, 0, 0);
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	fk->ports.ports = 0;
-	memset(&fk->icmp, 0, sizeof(fk->icmp));
+	स_रखो(&fk->icmp, 0, माप(fk->icmp));
 	noff = skb_network_offset(skb);
-	if (!bond_flow_ip(skb, fk, &noff, &proto, l34))
-		return false;
+	अगर (!bond_flow_ip(skb, fk, &noff, &proto, l34))
+		वापस false;
 
 	/* ICMP error packets contains at least 8 bytes of the header
-	 * of the packet which generated the error. Use this information
+	 * of the packet which generated the error. Use this inक्रमmation
 	 * to correlate ICMP error packets within the same flow which
 	 * generated the error.
 	 */
-	if (proto == IPPROTO_ICMP || proto == IPPROTO_ICMPV6) {
+	अगर (proto == IPPROTO_ICMP || proto == IPPROTO_ICMPV6) अणु
 		skb_flow_get_icmp_tci(skb, &fk->icmp, skb->data,
 				      skb_transport_offset(skb),
 				      skb_headlen(skb));
-		if (proto == IPPROTO_ICMP) {
-			if (!icmp_is_err(fk->icmp.type))
-				return true;
+		अगर (proto == IPPROTO_ICMP) अणु
+			अगर (!icmp_is_err(fk->icmp.type))
+				वापस true;
 
-			noff += sizeof(struct icmphdr);
-		} else if (proto == IPPROTO_ICMPV6) {
-			if (!icmpv6_is_err(fk->icmp.type))
-				return true;
+			noff += माप(काष्ठा icmphdr);
+		पूर्ण अन्यथा अगर (proto == IPPROTO_ICMPV6) अणु
+			अगर (!icmpv6_is_err(fk->icmp.type))
+				वापस true;
 
-			noff += sizeof(struct icmp6hdr);
-		}
-		return bond_flow_ip(skb, fk, &noff, &proto, l34);
-	}
+			noff += माप(काष्ठा icmp6hdr);
+		पूर्ण
+		वापस bond_flow_ip(skb, fk, &noff, &proto, l34);
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static u32 bond_ip_hash(u32 hash, struct flow_keys *flow)
-{
-	hash ^= (__force u32)flow_get_u32_dst(flow) ^
-		(__force u32)flow_get_u32_src(flow);
+अटल u32 bond_ip_hash(u32 hash, काष्ठा flow_keys *flow)
+अणु
+	hash ^= (__क्रमce u32)flow_get_u32_dst(flow) ^
+		(__क्रमce u32)flow_get_u32_src(flow);
 	hash ^= (hash >> 16);
 	hash ^= (hash >> 8);
 	/* discard lowest hash bit to deal with the common even ports pattern */
-	return hash >> 1;
-}
+	वापस hash >> 1;
+पूर्ण
 
 /**
  * bond_xmit_hash - generate a hash value based on the xmit policy
  * @bond: bonding device
- * @skb: buffer to use for headers
+ * @skb: buffer to use क्रम headers
  *
  * This function will extract the necessary headers from the skb buffer and use
  * them to generate a hash based on the xmit_policy set in the bonding device
  */
-u32 bond_xmit_hash(struct bonding *bond, struct sk_buff *skb)
-{
-	struct flow_keys flow;
+u32 bond_xmit_hash(काष्ठा bonding *bond, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा flow_keys flow;
 	u32 hash;
 
-	if (bond->params.xmit_policy == BOND_XMIT_POLICY_ENCAP34 &&
+	अगर (bond->params.xmit_policy == BOND_XMIT_POLICY_ENCAP34 &&
 	    skb->l4_hash)
-		return skb->hash;
+		वापस skb->hash;
 
-	if (bond->params.xmit_policy == BOND_XMIT_POLICY_VLAN_SRCMAC)
-		return bond_vlan_srcmac_hash(skb);
+	अगर (bond->params.xmit_policy == BOND_XMIT_POLICY_VLAN_SRCMAC)
+		वापस bond_vlan_srcmac_hash(skb);
 
-	if (bond->params.xmit_policy == BOND_XMIT_POLICY_LAYER2 ||
+	अगर (bond->params.xmit_policy == BOND_XMIT_POLICY_LAYER2 ||
 	    !bond_flow_dissect(bond, skb, &flow))
-		return bond_eth_hash(skb);
+		वापस bond_eth_hash(skb);
 
-	if (bond->params.xmit_policy == BOND_XMIT_POLICY_LAYER23 ||
-	    bond->params.xmit_policy == BOND_XMIT_POLICY_ENCAP23) {
+	अगर (bond->params.xmit_policy == BOND_XMIT_POLICY_LAYER23 ||
+	    bond->params.xmit_policy == BOND_XMIT_POLICY_ENCAP23) अणु
 		hash = bond_eth_hash(skb);
-	} else {
-		if (flow.icmp.id)
-			memcpy(&hash, &flow.icmp, sizeof(hash));
-		else
-			memcpy(&hash, &flow.ports.ports, sizeof(hash));
-	}
+	पूर्ण अन्यथा अणु
+		अगर (flow.icmp.id)
+			स_नकल(&hash, &flow.icmp, माप(hash));
+		अन्यथा
+			स_नकल(&hash, &flow.ports.ports, माप(hash));
+	पूर्ण
 
-	return bond_ip_hash(hash, &flow);
-}
+	वापस bond_ip_hash(hash, &flow);
+पूर्ण
 
-/*-------------------------- Device entry points ----------------------------*/
+/*-------------------------- Device entry poपूर्णांकs ----------------------------*/
 
-void bond_work_init_all(struct bonding *bond)
-{
+व्योम bond_work_init_all(काष्ठा bonding *bond)
+अणु
 	INIT_DELAYED_WORK(&bond->mcast_work,
 			  bond_resend_igmp_join_requests_delayed);
 	INIT_DELAYED_WORK(&bond->alb_work, bond_alb_monitor);
@@ -3649,539 +3650,539 @@ void bond_work_init_all(struct bonding *bond)
 	INIT_DELAYED_WORK(&bond->arp_work, bond_arp_monitor);
 	INIT_DELAYED_WORK(&bond->ad_work, bond_3ad_state_machine_handler);
 	INIT_DELAYED_WORK(&bond->slave_arr_work, bond_slave_arr_handler);
-}
+पूर्ण
 
-static void bond_work_cancel_all(struct bonding *bond)
-{
+अटल व्योम bond_work_cancel_all(काष्ठा bonding *bond)
+अणु
 	cancel_delayed_work_sync(&bond->mii_work);
 	cancel_delayed_work_sync(&bond->arp_work);
 	cancel_delayed_work_sync(&bond->alb_work);
 	cancel_delayed_work_sync(&bond->ad_work);
 	cancel_delayed_work_sync(&bond->mcast_work);
 	cancel_delayed_work_sync(&bond->slave_arr_work);
-}
+पूर्ण
 
-static int bond_open(struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct list_head *iter;
-	struct slave *slave;
+अटल पूर्णांक bond_खोलो(काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
 	/* reset slave->backup and slave->inactive */
-	if (bond_has_slaves(bond)) {
-		bond_for_each_slave(bond, slave, iter) {
-			if (bond_uses_primary(bond) &&
-			    slave != rcu_access_pointer(bond->curr_active_slave)) {
+	अगर (bond_has_slaves(bond)) अणु
+		bond_क्रम_each_slave(bond, slave, iter) अणु
+			अगर (bond_uses_primary(bond) &&
+			    slave != rcu_access_poपूर्णांकer(bond->curr_active_slave)) अणु
 				bond_set_slave_inactive_flags(slave,
 							      BOND_SLAVE_NOTIFY_NOW);
-			} else if (BOND_MODE(bond) != BOND_MODE_8023AD) {
+			पूर्ण अन्यथा अगर (BOND_MODE(bond) != BOND_MODE_8023AD) अणु
 				bond_set_slave_active_flags(slave,
 							    BOND_SLAVE_NOTIFY_NOW);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (bond_is_lb(bond)) {
-		/* bond_alb_initialize must be called before the timer
+	अगर (bond_is_lb(bond)) अणु
+		/* bond_alb_initialize must be called beक्रमe the समयr
 		 * is started.
 		 */
-		if (bond_alb_initialize(bond, (BOND_MODE(bond) == BOND_MODE_ALB)))
-			return -ENOMEM;
-		if (bond->params.tlb_dynamic_lb || BOND_MODE(bond) == BOND_MODE_ALB)
+		अगर (bond_alb_initialize(bond, (BOND_MODE(bond) == BOND_MODE_ALB)))
+			वापस -ENOMEM;
+		अगर (bond->params.tlb_dynamic_lb || BOND_MODE(bond) == BOND_MODE_ALB)
 			queue_delayed_work(bond->wq, &bond->alb_work, 0);
-	}
+	पूर्ण
 
-	if (bond->params.miimon)  /* link check interval, in milliseconds. */
+	अगर (bond->params.miimon)  /* link check पूर्णांकerval, in milliseconds. */
 		queue_delayed_work(bond->wq, &bond->mii_work, 0);
 
-	if (bond->params.arp_interval) {  /* arp interval, in milliseconds. */
+	अगर (bond->params.arp_पूर्णांकerval) अणु  /* arp पूर्णांकerval, in milliseconds. */
 		queue_delayed_work(bond->wq, &bond->arp_work, 0);
 		bond->recv_probe = bond_arp_rcv;
-	}
+	पूर्ण
 
-	if (BOND_MODE(bond) == BOND_MODE_8023AD) {
+	अगर (BOND_MODE(bond) == BOND_MODE_8023AD) अणु
 		queue_delayed_work(bond->wq, &bond->ad_work, 0);
-		/* register to receive LACPDUs */
+		/* रेजिस्टर to receive LACPDUs */
 		bond->recv_probe = bond_3ad_lacpdu_recv;
 		bond_3ad_initiate_agg_selection(bond, 1);
-	}
+	पूर्ण
 
-	if (bond_mode_can_use_xmit_hash(bond))
-		bond_update_slave_arr(bond, NULL);
+	अगर (bond_mode_can_use_xmit_hash(bond))
+		bond_update_slave_arr(bond, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_close(struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
+अटल पूर्णांक bond_बंद(काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
 
 	bond_work_cancel_all(bond);
-	bond->send_peer_notif = 0;
-	if (bond_is_lb(bond))
+	bond->send_peer_notअगर = 0;
+	अगर (bond_is_lb(bond))
 		bond_alb_deinitialize(bond);
-	bond->recv_probe = NULL;
+	bond->recv_probe = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* fold stats, assuming all rtnl_link_stats64 fields are u64, but
  * that some drivers can provide 32bit values only.
  */
-static void bond_fold_stats(struct rtnl_link_stats64 *_res,
-			    const struct rtnl_link_stats64 *_new,
-			    const struct rtnl_link_stats64 *_old)
-{
-	const u64 *new = (const u64 *)_new;
-	const u64 *old = (const u64 *)_old;
+अटल व्योम bond_fold_stats(काष्ठा rtnl_link_stats64 *_res,
+			    स्थिर काष्ठा rtnl_link_stats64 *_new,
+			    स्थिर काष्ठा rtnl_link_stats64 *_old)
+अणु
+	स्थिर u64 *new = (स्थिर u64 *)_new;
+	स्थिर u64 *old = (स्थिर u64 *)_old;
 	u64 *res = (u64 *)_res;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < sizeof(*_res) / sizeof(u64); i++) {
+	क्रम (i = 0; i < माप(*_res) / माप(u64); i++) अणु
 		u64 nv = new[i];
 		u64 ov = old[i];
 		s64 delta = nv - ov;
 
-		/* detects if this particular field is 32bit only */
-		if (((nv | ov) >> 32) == 0)
+		/* detects अगर this particular field is 32bit only */
+		अगर (((nv | ov) >> 32) == 0)
 			delta = (s64)(s32)((u32)nv - (u32)ov);
 
 		/* filter anomalies, some drivers reset their stats
-		 * at down/up events.
+		 * at करोwn/up events.
 		 */
-		if (delta > 0)
+		अगर (delta > 0)
 			res[i] += delta;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_LOCKDEP
-static int bond_get_lowest_level_rcu(struct net_device *dev)
-{
-	struct net_device *ldev, *next, *now, *dev_stack[MAX_NEST_DEV + 1];
-	struct list_head *niter, *iter, *iter_stack[MAX_NEST_DEV + 1];
-	int cur = 0, max = 0;
+#अगर_घोषित CONFIG_LOCKDEP
+अटल पूर्णांक bond_get_lowest_level_rcu(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *ldev, *next, *now, *dev_stack[MAX_NEST_DEV + 1];
+	काष्ठा list_head *niter, *iter, *iter_stack[MAX_NEST_DEV + 1];
+	पूर्णांक cur = 0, max = 0;
 
 	now = dev;
 	iter = &dev->adj_list.lower;
 
-	while (1) {
-		next = NULL;
-		while (1) {
+	जबतक (1) अणु
+		next = शून्य;
+		जबतक (1) अणु
 			ldev = netdev_next_lower_dev_rcu(now, &iter);
-			if (!ldev)
-				break;
+			अगर (!ldev)
+				अवरोध;
 
 			next = ldev;
 			niter = &ldev->adj_list.lower;
 			dev_stack[cur] = now;
 			iter_stack[cur++] = iter;
-			if (max <= cur)
+			अगर (max <= cur)
 				max = cur;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!next) {
-			if (!cur)
-				return max;
+		अगर (!next) अणु
+			अगर (!cur)
+				वापस max;
 			next = dev_stack[--cur];
 			niter = iter_stack[cur];
-		}
+		पूर्ण
 
 		now = next;
 		iter = niter;
-	}
+	पूर्ण
 
-	return max;
-}
-#endif
+	वापस max;
+पूर्ण
+#पूर्ण_अगर
 
-static void bond_get_stats(struct net_device *bond_dev,
-			   struct rtnl_link_stats64 *stats)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct rtnl_link_stats64 temp;
-	struct list_head *iter;
-	struct slave *slave;
-	int nest_level = 0;
+अटल व्योम bond_get_stats(काष्ठा net_device *bond_dev,
+			   काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा rtnl_link_stats64 temp;
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
+	पूर्णांक nest_level = 0;
 
 
-	rcu_read_lock();
-#ifdef CONFIG_LOCKDEP
+	rcu_पढ़ो_lock();
+#अगर_घोषित CONFIG_LOCKDEP
 	nest_level = bond_get_lowest_level_rcu(bond_dev);
-#endif
+#पूर्ण_अगर
 
 	spin_lock_nested(&bond->stats_lock, nest_level);
-	memcpy(stats, &bond->bond_stats, sizeof(*stats));
+	स_नकल(stats, &bond->bond_stats, माप(*stats));
 
-	bond_for_each_slave_rcu(bond, slave, iter) {
-		const struct rtnl_link_stats64 *new =
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
+		स्थिर काष्ठा rtnl_link_stats64 *new =
 			dev_get_stats(slave->dev, &temp);
 
 		bond_fold_stats(stats, new, &slave->slave_stats);
 
-		/* save off the slave stats for the next run */
-		memcpy(&slave->slave_stats, new, sizeof(*new));
-	}
+		/* save off the slave stats क्रम the next run */
+		स_नकल(&slave->slave_stats, new, माप(*new));
+	पूर्ण
 
-	memcpy(&bond->bond_stats, stats, sizeof(*stats));
+	स_नकल(&bond->bond_stats, stats, माप(*stats));
 	spin_unlock(&bond->stats_lock);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int bond_do_ioctl(struct net_device *bond_dev, struct ifreq *ifr, int cmd)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct net_device *slave_dev = NULL;
-	struct ifbond k_binfo;
-	struct ifbond __user *u_binfo = NULL;
-	struct ifslave k_sinfo;
-	struct ifslave __user *u_sinfo = NULL;
-	struct mii_ioctl_data *mii = NULL;
-	struct bond_opt_value newval;
-	struct net *net;
-	int res = 0;
+अटल पूर्णांक bond_करो_ioctl(काष्ठा net_device *bond_dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा net_device *slave_dev = शून्य;
+	काष्ठा अगरbond k_binfo;
+	काष्ठा अगरbond __user *u_binfo = शून्य;
+	काष्ठा अगरslave k_sinfo;
+	काष्ठा अगरslave __user *u_sinfo = शून्य;
+	काष्ठा mii_ioctl_data *mii = शून्य;
+	काष्ठा bond_opt_value newval;
+	काष्ठा net *net;
+	पूर्णांक res = 0;
 
 	netdev_dbg(bond_dev, "bond_ioctl: cmd=%d\n", cmd);
 
-	switch (cmd) {
-	case SIOCGMIIPHY:
-		mii = if_mii(ifr);
-		if (!mii)
-			return -EINVAL;
+	चयन (cmd) अणु
+	हाल SIOCGMIIPHY:
+		mii = अगर_mii(अगरr);
+		अगर (!mii)
+			वापस -EINVAL;
 
 		mii->phy_id = 0;
 		fallthrough;
-	case SIOCGMIIREG:
-		/* We do this again just in case we were called by SIOCGMIIREG
+	हाल SIOCGMIIREG:
+		/* We करो this again just in हाल we were called by SIOCGMIIREG
 		 * instead of SIOCGMIIPHY.
 		 */
-		mii = if_mii(ifr);
-		if (!mii)
-			return -EINVAL;
+		mii = अगर_mii(अगरr);
+		अगर (!mii)
+			वापस -EINVAL;
 
-		if (mii->reg_num == 1) {
+		अगर (mii->reg_num == 1) अणु
 			mii->val_out = 0;
-			if (netif_carrier_ok(bond->dev))
+			अगर (netअगर_carrier_ok(bond->dev))
 				mii->val_out = BMSR_LSTATUS;
-		}
+		पूर्ण
 
-		return 0;
-	case BOND_INFO_QUERY_OLD:
-	case SIOCBONDINFOQUERY:
-		u_binfo = (struct ifbond __user *)ifr->ifr_data;
+		वापस 0;
+	हाल BOND_INFO_QUERY_OLD:
+	हाल SIOCBONDINFOQUERY:
+		u_binfo = (काष्ठा अगरbond __user *)अगरr->अगरr_data;
 
-		if (copy_from_user(&k_binfo, u_binfo, sizeof(ifbond)))
-			return -EFAULT;
+		अगर (copy_from_user(&k_binfo, u_binfo, माप(अगरbond)))
+			वापस -EFAULT;
 
 		bond_info_query(bond_dev, &k_binfo);
-		if (copy_to_user(u_binfo, &k_binfo, sizeof(ifbond)))
-			return -EFAULT;
+		अगर (copy_to_user(u_binfo, &k_binfo, माप(अगरbond)))
+			वापस -EFAULT;
 
-		return 0;
-	case BOND_SLAVE_INFO_QUERY_OLD:
-	case SIOCBONDSLAVEINFOQUERY:
-		u_sinfo = (struct ifslave __user *)ifr->ifr_data;
+		वापस 0;
+	हाल BOND_SLAVE_INFO_QUERY_OLD:
+	हाल SIOCBONDSLAVEINFOQUERY:
+		u_sinfo = (काष्ठा अगरslave __user *)अगरr->अगरr_data;
 
-		if (copy_from_user(&k_sinfo, u_sinfo, sizeof(ifslave)))
-			return -EFAULT;
+		अगर (copy_from_user(&k_sinfo, u_sinfo, माप(अगरslave)))
+			वापस -EFAULT;
 
 		res = bond_slave_info_query(bond_dev, &k_sinfo);
-		if (res == 0 &&
-		    copy_to_user(u_sinfo, &k_sinfo, sizeof(ifslave)))
-			return -EFAULT;
+		अगर (res == 0 &&
+		    copy_to_user(u_sinfo, &k_sinfo, माप(अगरslave)))
+			वापस -EFAULT;
 
-		return res;
-	default:
-		break;
-	}
+		वापस res;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	net = dev_net(bond_dev);
 
-	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	slave_dev = __dev_get_by_name(net, ifr->ifr_slave);
+	slave_dev = __dev_get_by_name(net, अगरr->अगरr_slave);
 
 	slave_dbg(bond_dev, slave_dev, "slave_dev=%p:\n", slave_dev);
 
-	if (!slave_dev)
-		return -ENODEV;
+	अगर (!slave_dev)
+		वापस -ENODEV;
 
-	switch (cmd) {
-	case BOND_ENSLAVE_OLD:
-	case SIOCBONDENSLAVE:
-		res = bond_enslave(bond_dev, slave_dev, NULL);
-		break;
-	case BOND_RELEASE_OLD:
-	case SIOCBONDRELEASE:
+	चयन (cmd) अणु
+	हाल BOND_ENSLAVE_OLD:
+	हाल SIOCBONDENSLAVE:
+		res = bond_enslave(bond_dev, slave_dev, शून्य);
+		अवरोध;
+	हाल BOND_RELEASE_OLD:
+	हाल SIOCBONDRELEASE:
 		res = bond_release(bond_dev, slave_dev);
-		break;
-	case BOND_SETHWADDR_OLD:
-	case SIOCBONDSETHWADDR:
+		अवरोध;
+	हाल BOND_SETHWADDR_OLD:
+	हाल SIOCBONDSETHWADDR:
 		res = bond_set_dev_addr(bond_dev, slave_dev);
-		break;
-	case BOND_CHANGE_ACTIVE_OLD:
-	case SIOCBONDCHANGEACTIVE:
+		अवरोध;
+	हाल BOND_CHANGE_ACTIVE_OLD:
+	हाल SIOCBONDCHANGEACTIVE:
 		bond_opt_initstr(&newval, slave_dev->name);
-		res = __bond_opt_set_notify(bond, BOND_OPT_ACTIVE_SLAVE,
+		res = __bond_opt_set_notअगरy(bond, BOND_OPT_ACTIVE_SLAVE,
 					    &newval);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		res = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void bond_change_rx_flags(struct net_device *bond_dev, int change)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
+अटल व्योम bond_change_rx_flags(काष्ठा net_device *bond_dev, पूर्णांक change)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
 
-	if (change & IFF_PROMISC)
+	अगर (change & IFF_PROMISC)
 		bond_set_promiscuity(bond,
 				     bond_dev->flags & IFF_PROMISC ? 1 : -1);
 
-	if (change & IFF_ALLMULTI)
+	अगर (change & IFF_ALLMULTI)
 		bond_set_allmulti(bond,
 				  bond_dev->flags & IFF_ALLMULTI ? 1 : -1);
-}
+पूर्ण
 
-static void bond_set_rx_mode(struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct list_head *iter;
-	struct slave *slave;
+अटल व्योम bond_set_rx_mode(काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
-	rcu_read_lock();
-	if (bond_uses_primary(bond)) {
+	rcu_पढ़ो_lock();
+	अगर (bond_uses_primary(bond)) अणु
 		slave = rcu_dereference(bond->curr_active_slave);
-		if (slave) {
+		अगर (slave) अणु
 			dev_uc_sync(slave->dev, bond_dev);
 			dev_mc_sync(slave->dev, bond_dev);
-		}
-	} else {
-		bond_for_each_slave_rcu(bond, slave, iter) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
 			dev_uc_sync_multiple(slave->dev, bond_dev);
 			dev_mc_sync_multiple(slave->dev, bond_dev);
-		}
-	}
-	rcu_read_unlock();
-}
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int bond_neigh_init(struct neighbour *n)
-{
-	struct bonding *bond = netdev_priv(n->dev);
-	const struct net_device_ops *slave_ops;
-	struct neigh_parms parms;
-	struct slave *slave;
-	int ret = 0;
+अटल पूर्णांक bond_neigh_init(काष्ठा neighbour *n)
+अणु
+	काष्ठा bonding *bond = netdev_priv(n->dev);
+	स्थिर काष्ठा net_device_ops *slave_ops;
+	काष्ठा neigh_parms parms;
+	काष्ठा slave *slave;
+	पूर्णांक ret = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	slave = bond_first_slave_rcu(bond);
-	if (!slave)
-		goto out;
+	अगर (!slave)
+		जाओ out;
 	slave_ops = slave->dev->netdev_ops;
-	if (!slave_ops->ndo_neigh_setup)
-		goto out;
+	अगर (!slave_ops->nकरो_neigh_setup)
+		जाओ out;
 
 	/* TODO: find another way [1] to implement this.
-	 * Passing a zeroed structure is fragile,
-	 * but at least we do not pass garbage.
+	 * Passing a zeroed काष्ठाure is fragile,
+	 * but at least we करो not pass garbage.
 	 *
-	 * [1] One way would be that ndo_neigh_setup() never touch
-	 *     struct neigh_parms, but propagate the new neigh_setup()
+	 * [1] One way would be that nकरो_neigh_setup() never touch
+	 *     काष्ठा neigh_parms, but propagate the new neigh_setup()
 	 *     back to ___neigh_create() / neigh_parms_alloc()
 	 */
-	memset(&parms, 0, sizeof(parms));
-	ret = slave_ops->ndo_neigh_setup(slave->dev, &parms);
+	स_रखो(&parms, 0, माप(parms));
+	ret = slave_ops->nकरो_neigh_setup(slave->dev, &parms);
 
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (parms.neigh_setup)
+	अगर (parms.neigh_setup)
 		ret = parms.neigh_setup(n);
 out:
-	rcu_read_unlock();
-	return ret;
-}
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
-/* The bonding ndo_neigh_setup is called at init time beofre any
+/* The bonding nकरो_neigh_setup is called at init समय beofre any
  * slave exists. So we must declare proxy setup function which will
- * be used at run time to resolve the actual slave neigh param setup.
+ * be used at run समय to resolve the actual slave neigh param setup.
  *
  * It's also called by master devices (such as vlans) to setup their
- * underlying devices. In that case - do nothing, we're already set up from
+ * underlying devices. In that हाल - करो nothing, we're alपढ़ोy set up from
  * our init.
  */
-static int bond_neigh_setup(struct net_device *dev,
-			    struct neigh_parms *parms)
-{
-	/* modify only our neigh_parms */
-	if (parms->dev == dev)
+अटल पूर्णांक bond_neigh_setup(काष्ठा net_device *dev,
+			    काष्ठा neigh_parms *parms)
+अणु
+	/* modअगरy only our neigh_parms */
+	अगर (parms->dev == dev)
 		parms->neigh_setup = bond_neigh_init;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Change the MTU of all of a master's slaves to match the master */
-static int bond_change_mtu(struct net_device *bond_dev, int new_mtu)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct slave *slave, *rollback_slave;
-	struct list_head *iter;
-	int res = 0;
+अटल पूर्णांक bond_change_mtu(काष्ठा net_device *bond_dev, पूर्णांक new_mtu)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा slave *slave, *rollback_slave;
+	काष्ठा list_head *iter;
+	पूर्णांक res = 0;
 
 	netdev_dbg(bond_dev, "bond=%p, new_mtu=%d\n", bond, new_mtu);
 
-	bond_for_each_slave(bond, slave, iter) {
+	bond_क्रम_each_slave(bond, slave, iter) अणु
 		slave_dbg(bond_dev, slave->dev, "s %p c_m %p\n",
-			   slave, slave->dev->netdev_ops->ndo_change_mtu);
+			   slave, slave->dev->netdev_ops->nकरो_change_mtu);
 
 		res = dev_set_mtu(slave->dev, new_mtu);
 
-		if (res) {
+		अगर (res) अणु
 			/* If we failed to set the slave's mtu to the new value
-			 * we must abort the operation even in ACTIVE_BACKUP
-			 * mode, because if we allow the backup slaves to have
-			 * different mtu values than the active slave we'll
-			 * need to change their mtu when doing a failover. That
-			 * means changing their mtu from timer context, which
+			 * we must पात the operation even in ACTIVE_BACKUP
+			 * mode, because अगर we allow the backup slaves to have
+			 * dअगरferent mtu values than the active slave we'll
+			 * need to change their mtu when करोing a failover. That
+			 * means changing their mtu from समयr context, which
 			 * is probably not a good idea.
 			 */
 			slave_dbg(bond_dev, slave->dev, "err %d setting mtu to %d\n",
 				  res, new_mtu);
-			goto unwind;
-		}
-	}
+			जाओ unwind;
+		पूर्ण
+	पूर्ण
 
 	bond_dev->mtu = new_mtu;
 
-	return 0;
+	वापस 0;
 
 unwind:
 	/* unwind from head to the slave that failed */
-	bond_for_each_slave(bond, rollback_slave, iter) {
-		int tmp_res;
+	bond_क्रम_each_slave(bond, rollback_slave, iter) अणु
+		पूर्णांक पंचांगp_res;
 
-		if (rollback_slave == slave)
-			break;
+		अगर (rollback_slave == slave)
+			अवरोध;
 
-		tmp_res = dev_set_mtu(rollback_slave->dev, bond_dev->mtu);
-		if (tmp_res)
+		पंचांगp_res = dev_set_mtu(rollback_slave->dev, bond_dev->mtu);
+		अगर (पंचांगp_res)
 			slave_dbg(bond_dev, rollback_slave->dev, "unwind err %d\n",
-				  tmp_res);
-	}
+				  पंचांगp_res);
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* Change HW address
  *
- * Note that many devices must be down to change the HW address, and
- * downing the master releases all slaves.  We can make bonds full of
+ * Note that many devices must be करोwn to change the HW address, and
+ * करोwning the master releases all slaves.  We can make bonds full of
  * bonding devices to test this, however.
  */
-static int bond_set_mac_address(struct net_device *bond_dev, void *addr)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct slave *slave, *rollback_slave;
-	struct sockaddr_storage *ss = addr, tmp_ss;
-	struct list_head *iter;
-	int res = 0;
+अटल पूर्णांक bond_set_mac_address(काष्ठा net_device *bond_dev, व्योम *addr)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा slave *slave, *rollback_slave;
+	काष्ठा sockaddr_storage *ss = addr, पंचांगp_ss;
+	काष्ठा list_head *iter;
+	पूर्णांक res = 0;
 
-	if (BOND_MODE(bond) == BOND_MODE_ALB)
-		return bond_alb_set_mac_address(bond_dev, addr);
+	अगर (BOND_MODE(bond) == BOND_MODE_ALB)
+		वापस bond_alb_set_mac_address(bond_dev, addr);
 
 
 	netdev_dbg(bond_dev, "%s: bond=%p\n", __func__, bond);
 
-	/* If fail_over_mac is enabled, do nothing and return success.
-	 * Returning an error causes ifenslave to fail.
+	/* If fail_over_mac is enabled, करो nothing and वापस success.
+	 * Returning an error causes अगरenslave to fail.
 	 */
-	if (bond->params.fail_over_mac &&
+	अगर (bond->params.fail_over_mac &&
 	    BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP)
-		return 0;
+		वापस 0;
 
-	if (!is_valid_ether_addr(ss->__data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(ss->__data))
+		वापस -EADDRNOTAVAIL;
 
-	bond_for_each_slave(bond, slave, iter) {
+	bond_क्रम_each_slave(bond, slave, iter) अणु
 		slave_dbg(bond_dev, slave->dev, "%s: slave=%p\n",
 			  __func__, slave);
-		res = dev_set_mac_address(slave->dev, addr, NULL);
-		if (res) {
-			/* TODO: consider downing the slave
+		res = dev_set_mac_address(slave->dev, addr, शून्य);
+		अगर (res) अणु
+			/* TODO: consider करोwning the slave
 			 * and retry ?
 			 * User should expect communications
-			 * breakage anyway until ARP finish
+			 * अवरोधage anyway until ARP finish
 			 * updating, so...
 			 */
 			slave_dbg(bond_dev, slave->dev, "%s: err %d\n",
 				  __func__, res);
-			goto unwind;
-		}
-	}
+			जाओ unwind;
+		पूर्ण
+	पूर्ण
 
 	/* success */
-	memcpy(bond_dev->dev_addr, ss->__data, bond_dev->addr_len);
-	return 0;
+	स_नकल(bond_dev->dev_addr, ss->__data, bond_dev->addr_len);
+	वापस 0;
 
 unwind:
-	memcpy(tmp_ss.__data, bond_dev->dev_addr, bond_dev->addr_len);
-	tmp_ss.ss_family = bond_dev->type;
+	स_नकल(पंचांगp_ss.__data, bond_dev->dev_addr, bond_dev->addr_len);
+	पंचांगp_ss.ss_family = bond_dev->type;
 
 	/* unwind from head to the slave that failed */
-	bond_for_each_slave(bond, rollback_slave, iter) {
-		int tmp_res;
+	bond_क्रम_each_slave(bond, rollback_slave, iter) अणु
+		पूर्णांक पंचांगp_res;
 
-		if (rollback_slave == slave)
-			break;
+		अगर (rollback_slave == slave)
+			अवरोध;
 
-		tmp_res = dev_set_mac_address(rollback_slave->dev,
-					      (struct sockaddr *)&tmp_ss, NULL);
-		if (tmp_res) {
+		पंचांगp_res = dev_set_mac_address(rollback_slave->dev,
+					      (काष्ठा sockaddr *)&पंचांगp_ss, शून्य);
+		अगर (पंचांगp_res) अणु
 			slave_dbg(bond_dev, rollback_slave->dev, "%s: unwind err %d\n",
-				   __func__, tmp_res);
-		}
-	}
+				   __func__, पंचांगp_res);
+		पूर्ण
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
  * bond_get_slave_by_id - get xmit slave with slave_id
  * @bond: bonding device that is transmitting
  * @slave_id: slave id up to slave_cnt-1 through which to transmit
  *
- * This function tries to get slave with slave_id but in case
- * it fails, it tries to find the first available slave for transmission.
+ * This function tries to get slave with slave_id but in हाल
+ * it fails, it tries to find the first available slave क्रम transmission.
  */
-static struct slave *bond_get_slave_by_id(struct bonding *bond,
-					  int slave_id)
-{
-	struct list_head *iter;
-	struct slave *slave;
-	int i = slave_id;
+अटल काष्ठा slave *bond_get_slave_by_id(काष्ठा bonding *bond,
+					  पूर्णांक slave_id)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
+	पूर्णांक i = slave_id;
 
 	/* Here we start from the slave with slave_id */
-	bond_for_each_slave_rcu(bond, slave, iter) {
-		if (--i < 0) {
-			if (bond_slave_can_tx(slave))
-				return slave;
-		}
-	}
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
+		अगर (--i < 0) अणु
+			अगर (bond_slave_can_tx(slave))
+				वापस slave;
+		पूर्ण
+	पूर्ण
 
 	/* Here we start from the first slave up to slave_id */
 	i = slave_id;
-	bond_for_each_slave_rcu(bond, slave, iter) {
-		if (--i < 0)
-			break;
-		if (bond_slave_can_tx(slave))
-			return slave;
-	}
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
+		अगर (--i < 0)
+			अवरोध;
+		अगर (bond_slave_can_tx(slave))
+			वापस slave;
+	पूर्ण
 	/* no slave that can tx has been found */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * bond_rr_gen_slave_id - generate slave id based on packets_per_slave
@@ -4191,686 +4192,686 @@ static struct slave *bond_get_slave_by_id(struct bonding *bond,
  * this function generates a slave id, which is usually used as the next
  * slave to transmit through.
  */
-static u32 bond_rr_gen_slave_id(struct bonding *bond)
-{
+अटल u32 bond_rr_gen_slave_id(काष्ठा bonding *bond)
+अणु
 	u32 slave_id;
-	struct reciprocal_value reciprocal_packets_per_slave;
-	int packets_per_slave = bond->params.packets_per_slave;
+	काष्ठा reciprocal_value reciprocal_packets_per_slave;
+	पूर्णांक packets_per_slave = bond->params.packets_per_slave;
 
-	switch (packets_per_slave) {
-	case 0:
-		slave_id = prandom_u32();
-		break;
-	case 1:
+	चयन (packets_per_slave) अणु
+	हाल 0:
+		slave_id = pअक्रमom_u32();
+		अवरोध;
+	हाल 1:
 		slave_id = bond->rr_tx_counter;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		reciprocal_packets_per_slave =
 			bond->params.reciprocal_packets_per_slave;
-		slave_id = reciprocal_divide(bond->rr_tx_counter,
+		slave_id = reciprocal_भागide(bond->rr_tx_counter,
 					     reciprocal_packets_per_slave);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	bond->rr_tx_counter++;
 
-	return slave_id;
-}
+	वापस slave_id;
+पूर्ण
 
-static struct slave *bond_xmit_roundrobin_slave_get(struct bonding *bond,
-						    struct sk_buff *skb)
-{
-	struct slave *slave;
-	int slave_cnt;
+अटल काष्ठा slave *bond_xmit_roundrobin_slave_get(काष्ठा bonding *bond,
+						    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा slave *slave;
+	पूर्णांक slave_cnt;
 	u32 slave_id;
 
 	/* Start with the curr_active_slave that joined the bond as the
-	 * default for sending IGMP traffic.  For failover purposes one
-	 * needs to maintain some consistency for the interface that will
+	 * शेष क्रम sending IGMP traffic.  For failover purposes one
+	 * needs to मुख्यtain some consistency क्रम the पूर्णांकerface that will
 	 * send the join/membership reports.  The curr_active_slave found
 	 * will send all of this type of traffic.
 	 */
-	if (skb->protocol == htons(ETH_P_IP)) {
-		int noff = skb_network_offset(skb);
-		struct iphdr *iph;
+	अगर (skb->protocol == htons(ETH_P_IP)) अणु
+		पूर्णांक noff = skb_network_offset(skb);
+		काष्ठा iphdr *iph;
 
-		if (unlikely(!pskb_may_pull(skb, noff + sizeof(*iph))))
-			goto non_igmp;
+		अगर (unlikely(!pskb_may_pull(skb, noff + माप(*iph))))
+			जाओ non_igmp;
 
 		iph = ip_hdr(skb);
-		if (iph->protocol == IPPROTO_IGMP) {
+		अगर (iph->protocol == IPPROTO_IGMP) अणु
 			slave = rcu_dereference(bond->curr_active_slave);
-			if (slave)
-				return slave;
-			return bond_get_slave_by_id(bond, 0);
-		}
-	}
+			अगर (slave)
+				वापस slave;
+			वापस bond_get_slave_by_id(bond, 0);
+		पूर्ण
+	पूर्ण
 
 non_igmp:
 	slave_cnt = READ_ONCE(bond->slave_cnt);
-	if (likely(slave_cnt)) {
+	अगर (likely(slave_cnt)) अणु
 		slave_id = bond_rr_gen_slave_id(bond) % slave_cnt;
-		return bond_get_slave_by_id(bond, slave_id);
-	}
-	return NULL;
-}
+		वापस bond_get_slave_by_id(bond, slave_id);
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static netdev_tx_t bond_xmit_roundrobin(struct sk_buff *skb,
-					struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct slave *slave;
+अटल netdev_tx_t bond_xmit_roundrobin(काष्ठा sk_buff *skb,
+					काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा slave *slave;
 
 	slave = bond_xmit_roundrobin_slave_get(bond, skb);
-	if (likely(slave))
-		return bond_dev_queue_xmit(bond, skb, slave->dev);
+	अगर (likely(slave))
+		वापस bond_dev_queue_xmit(bond, skb, slave->dev);
 
-	return bond_tx_drop(bond_dev, skb);
-}
+	वापस bond_tx_drop(bond_dev, skb);
+पूर्ण
 
-static struct slave *bond_xmit_activebackup_slave_get(struct bonding *bond,
-						      struct sk_buff *skb)
-{
-	return rcu_dereference(bond->curr_active_slave);
-}
+अटल काष्ठा slave *bond_xmit_activebackup_slave_get(काष्ठा bonding *bond,
+						      काष्ठा sk_buff *skb)
+अणु
+	वापस rcu_dereference(bond->curr_active_slave);
+पूर्ण
 
-/* In active-backup mode, we know that bond->curr_active_slave is always valid if
- * the bond has a usable interface.
+/* In active-backup mode, we know that bond->curr_active_slave is always valid अगर
+ * the bond has a usable पूर्णांकerface.
  */
-static netdev_tx_t bond_xmit_activebackup(struct sk_buff *skb,
-					  struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct slave *slave;
+अटल netdev_tx_t bond_xmit_activebackup(काष्ठा sk_buff *skb,
+					  काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा slave *slave;
 
 	slave = bond_xmit_activebackup_slave_get(bond, skb);
-	if (slave)
-		return bond_dev_queue_xmit(bond, skb, slave->dev);
+	अगर (slave)
+		वापस bond_dev_queue_xmit(bond, skb, slave->dev);
 
-	return bond_tx_drop(bond_dev, skb);
-}
+	वापस bond_tx_drop(bond_dev, skb);
+पूर्ण
 
 /* Use this to update slave_array when (a) it's not appropriate to update
  * slave_array right away (note that update_slave_array() may sleep)
  * and / or (b) RTNL is not held.
  */
-void bond_slave_arr_work_rearm(struct bonding *bond, unsigned long delay)
-{
+व्योम bond_slave_arr_work_rearm(काष्ठा bonding *bond, अचिन्हित दीर्घ delay)
+अणु
 	queue_delayed_work(bond->wq, &bond->slave_arr_work, delay);
-}
+पूर्ण
 
 /* Slave array work handler. Holds only RTNL */
-static void bond_slave_arr_handler(struct work_struct *work)
-{
-	struct bonding *bond = container_of(work, struct bonding,
+अटल व्योम bond_slave_arr_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा bonding *bond = container_of(work, काष्ठा bonding,
 					    slave_arr_work.work);
-	int ret;
+	पूर्णांक ret;
 
-	if (!rtnl_trylock())
-		goto err;
+	अगर (!rtnl_trylock())
+		जाओ err;
 
-	ret = bond_update_slave_arr(bond, NULL);
+	ret = bond_update_slave_arr(bond, शून्य);
 	rtnl_unlock();
-	if (ret) {
+	अगर (ret) अणु
 		pr_warn_ratelimited("Failed to update slave array from WT\n");
-		goto err;
-	}
-	return;
+		जाओ err;
+	पूर्ण
+	वापस;
 
 err:
 	bond_slave_arr_work_rearm(bond, 1);
-}
+पूर्ण
 
-static void bond_skip_slave(struct bond_up_slave *slaves,
-			    struct slave *skipslave)
-{
-	int idx;
+अटल व्योम bond_skip_slave(काष्ठा bond_up_slave *slaves,
+			    काष्ठा slave *skipslave)
+अणु
+	पूर्णांक idx;
 
-	/* Rare situation where caller has asked to skip a specific
+	/* Rare situation where caller has asked to skip a specअगरic
 	 * slave but allocation failed (most likely!). BTW this is
 	 * only possible when the call is initiated from
-	 * __bond_release_one(). In this situation; overwrite the
+	 * __bond_release_one(). In this situation; overग_लिखो the
 	 * skipslave entry in the array with the last entry from the
-	 * array to avoid a situation where the xmit path may choose
+	 * array to aव्योम a situation where the xmit path may choose
 	 * this to-be-skipped slave to send a packet out.
 	 */
-	for (idx = 0; slaves && idx < slaves->count; idx++) {
-		if (skipslave == slaves->arr[idx]) {
+	क्रम (idx = 0; slaves && idx < slaves->count; idx++) अणु
+		अगर (skipslave == slaves->arr[idx]) अणु
 			slaves->arr[idx] =
 				slaves->arr[slaves->count - 1];
 			slaves->count--;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bond_set_slave_arr(struct bonding *bond,
-			       struct bond_up_slave *usable_slaves,
-			       struct bond_up_slave *all_slaves)
-{
-	struct bond_up_slave *usable, *all;
-
-	usable = rtnl_dereference(bond->usable_slaves);
-	rcu_assign_pointer(bond->usable_slaves, usable_slaves);
-	kfree_rcu(usable, rcu);
-
-	all = rtnl_dereference(bond->all_slaves);
-	rcu_assign_pointer(bond->all_slaves, all_slaves);
-	kfree_rcu(all, rcu);
-}
-
-static void bond_reset_slave_arr(struct bonding *bond)
-{
-	struct bond_up_slave *usable, *all;
+अटल व्योम bond_set_slave_arr(काष्ठा bonding *bond,
+			       काष्ठा bond_up_slave *usable_slaves,
+			       काष्ठा bond_up_slave *all_slaves)
+अणु
+	काष्ठा bond_up_slave *usable, *all;
 
 	usable = rtnl_dereference(bond->usable_slaves);
-	if (usable) {
-		RCU_INIT_POINTER(bond->usable_slaves, NULL);
-		kfree_rcu(usable, rcu);
-	}
+	rcu_assign_poपूर्णांकer(bond->usable_slaves, usable_slaves);
+	kमुक्त_rcu(usable, rcu);
 
 	all = rtnl_dereference(bond->all_slaves);
-	if (all) {
-		RCU_INIT_POINTER(bond->all_slaves, NULL);
-		kfree_rcu(all, rcu);
-	}
-}
+	rcu_assign_poपूर्णांकer(bond->all_slaves, all_slaves);
+	kमुक्त_rcu(all, rcu);
+पूर्ण
 
-/* Build the usable slaves array in control path for modes that use xmit-hash
- * to determine the slave interface -
+अटल व्योम bond_reset_slave_arr(काष्ठा bonding *bond)
+अणु
+	काष्ठा bond_up_slave *usable, *all;
+
+	usable = rtnl_dereference(bond->usable_slaves);
+	अगर (usable) अणु
+		RCU_INIT_POINTER(bond->usable_slaves, शून्य);
+		kमुक्त_rcu(usable, rcu);
+	पूर्ण
+
+	all = rtnl_dereference(bond->all_slaves);
+	अगर (all) अणु
+		RCU_INIT_POINTER(bond->all_slaves, शून्य);
+		kमुक्त_rcu(all, rcu);
+	पूर्ण
+पूर्ण
+
+/* Build the usable slaves array in control path क्रम modes that use xmit-hash
+ * to determine the slave पूर्णांकerface -
  * (a) BOND_MODE_8023AD
  * (b) BOND_MODE_XOR
  * (c) (BOND_MODE_TLB || BOND_MODE_ALB) && tlb_dynamic_lb == 0
  *
  * The caller is expected to hold RTNL only and NO other lock!
  */
-int bond_update_slave_arr(struct bonding *bond, struct slave *skipslave)
-{
-	struct bond_up_slave *usable_slaves = NULL, *all_slaves = NULL;
-	struct slave *slave;
-	struct list_head *iter;
-	int agg_id = 0;
-	int ret = 0;
+पूर्णांक bond_update_slave_arr(काष्ठा bonding *bond, काष्ठा slave *skipslave)
+अणु
+	काष्ठा bond_up_slave *usable_slaves = शून्य, *all_slaves = शून्य;
+	काष्ठा slave *slave;
+	काष्ठा list_head *iter;
+	पूर्णांक agg_id = 0;
+	पूर्णांक ret = 0;
 
 	might_sleep();
 
-	usable_slaves = kzalloc(struct_size(usable_slaves, arr,
+	usable_slaves = kzalloc(काष्ठा_size(usable_slaves, arr,
 					    bond->slave_cnt), GFP_KERNEL);
-	all_slaves = kzalloc(struct_size(all_slaves, arr,
+	all_slaves = kzalloc(काष्ठा_size(all_slaves, arr,
 					 bond->slave_cnt), GFP_KERNEL);
-	if (!usable_slaves || !all_slaves) {
+	अगर (!usable_slaves || !all_slaves) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
-	if (BOND_MODE(bond) == BOND_MODE_8023AD) {
-		struct ad_info ad_info;
+		जाओ out;
+	पूर्ण
+	अगर (BOND_MODE(bond) == BOND_MODE_8023AD) अणु
+		काष्ठा ad_info ad_info;
 
 		spin_lock_bh(&bond->mode_lock);
-		if (bond_3ad_get_active_agg_info(bond, &ad_info)) {
+		अगर (bond_3ad_get_active_agg_info(bond, &ad_info)) अणु
 			spin_unlock_bh(&bond->mode_lock);
 			pr_debug("bond_3ad_get_active_agg_info failed\n");
 			/* No active aggragator means it's not safe to use
 			 * the previous array.
 			 */
 			bond_reset_slave_arr(bond);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		spin_unlock_bh(&bond->mode_lock);
 		agg_id = ad_info.aggregator_id;
-	}
-	bond_for_each_slave(bond, slave, iter) {
-		if (skipslave == slave)
-			continue;
+	पूर्ण
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		अगर (skipslave == slave)
+			जारी;
 
 		all_slaves->arr[all_slaves->count++] = slave;
-		if (BOND_MODE(bond) == BOND_MODE_8023AD) {
-			struct aggregator *agg;
+		अगर (BOND_MODE(bond) == BOND_MODE_8023AD) अणु
+			काष्ठा aggregator *agg;
 
 			agg = SLAVE_AD_INFO(slave)->port.aggregator;
-			if (!agg || agg->aggregator_identifier != agg_id)
-				continue;
-		}
-		if (!bond_slave_can_tx(slave))
-			continue;
+			अगर (!agg || agg->aggregator_identअगरier != agg_id)
+				जारी;
+		पूर्ण
+		अगर (!bond_slave_can_tx(slave))
+			जारी;
 
 		slave_dbg(bond->dev, slave->dev, "Adding slave to tx hash array[%d]\n",
 			  usable_slaves->count);
 
 		usable_slaves->arr[usable_slaves->count++] = slave;
-	}
+	पूर्ण
 
 	bond_set_slave_arr(bond, usable_slaves, all_slaves);
-	return ret;
+	वापस ret;
 out:
-	if (ret != 0 && skipslave) {
+	अगर (ret != 0 && skipslave) अणु
 		bond_skip_slave(rtnl_dereference(bond->all_slaves),
 				skipslave);
 		bond_skip_slave(rtnl_dereference(bond->usable_slaves),
 				skipslave);
-	}
-	kfree_rcu(all_slaves, rcu);
-	kfree_rcu(usable_slaves, rcu);
+	पूर्ण
+	kमुक्त_rcu(all_slaves, rcu);
+	kमुक्त_rcu(usable_slaves, rcu);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct slave *bond_xmit_3ad_xor_slave_get(struct bonding *bond,
-						 struct sk_buff *skb,
-						 struct bond_up_slave *slaves)
-{
-	struct slave *slave;
-	unsigned int count;
+अटल काष्ठा slave *bond_xmit_3ad_xor_slave_get(काष्ठा bonding *bond,
+						 काष्ठा sk_buff *skb,
+						 काष्ठा bond_up_slave *slaves)
+अणु
+	काष्ठा slave *slave;
+	अचिन्हित पूर्णांक count;
 	u32 hash;
 
 	hash = bond_xmit_hash(bond, skb);
 	count = slaves ? READ_ONCE(slaves->count) : 0;
-	if (unlikely(!count))
-		return NULL;
+	अगर (unlikely(!count))
+		वापस शून्य;
 
 	slave = slaves->arr[hash % count];
-	return slave;
-}
+	वापस slave;
+पूर्ण
 
-/* Use this Xmit function for 3AD as well as XOR modes. The current
- * usable slave array is formed in the control path. The xmit function
+/* Use this Xmit function क्रम 3AD as well as XOR modes. The current
+ * usable slave array is क्रमmed in the control path. The xmit function
  * just calculates hash and sends the packet out.
  */
-static netdev_tx_t bond_3ad_xor_xmit(struct sk_buff *skb,
-				     struct net_device *dev)
-{
-	struct bonding *bond = netdev_priv(dev);
-	struct bond_up_slave *slaves;
-	struct slave *slave;
+अटल netdev_tx_t bond_3ad_xor_xmit(काष्ठा sk_buff *skb,
+				     काष्ठा net_device *dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(dev);
+	काष्ठा bond_up_slave *slaves;
+	काष्ठा slave *slave;
 
 	slaves = rcu_dereference(bond->usable_slaves);
 	slave = bond_xmit_3ad_xor_slave_get(bond, skb, slaves);
-	if (likely(slave))
-		return bond_dev_queue_xmit(bond, skb, slave->dev);
+	अगर (likely(slave))
+		वापस bond_dev_queue_xmit(bond, skb, slave->dev);
 
-	return bond_tx_drop(dev, skb);
-}
+	वापस bond_tx_drop(dev, skb);
+पूर्ण
 
-/* in broadcast mode, we send everything to all usable interfaces. */
-static netdev_tx_t bond_xmit_broadcast(struct sk_buff *skb,
-				       struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct slave *slave = NULL;
-	struct list_head *iter;
+/* in broadcast mode, we send everything to all usable पूर्णांकerfaces. */
+अटल netdev_tx_t bond_xmit_broadcast(काष्ठा sk_buff *skb,
+				       काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा slave *slave = शून्य;
+	काष्ठा list_head *iter;
 
-	bond_for_each_slave_rcu(bond, slave, iter) {
-		if (bond_is_last_slave(bond, slave))
-			break;
-		if (bond_slave_is_up(slave) && slave->link == BOND_LINK_UP) {
-			struct sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
+		अगर (bond_is_last_slave(bond, slave))
+			अवरोध;
+		अगर (bond_slave_is_up(slave) && slave->link == BOND_LINK_UP) अणु
+			काष्ठा sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
 
-			if (!skb2) {
+			अगर (!skb2) अणु
 				net_err_ratelimited("%s: Error: %s: skb_clone() failed\n",
 						    bond_dev->name, __func__);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			bond_dev_queue_xmit(bond, skb2, slave->dev);
-		}
-	}
-	if (slave && bond_slave_is_up(slave) && slave->link == BOND_LINK_UP)
-		return bond_dev_queue_xmit(bond, skb, slave->dev);
+		पूर्ण
+	पूर्ण
+	अगर (slave && bond_slave_is_up(slave) && slave->link == BOND_LINK_UP)
+		वापस bond_dev_queue_xmit(bond, skb, slave->dev);
 
-	return bond_tx_drop(bond_dev, skb);
-}
+	वापस bond_tx_drop(bond_dev, skb);
+पूर्ण
 
 /*------------------------- Device initialization ---------------------------*/
 
 /* Lookup the slave that corresponds to a qid */
-static inline int bond_slave_override(struct bonding *bond,
-				      struct sk_buff *skb)
-{
-	struct slave *slave = NULL;
-	struct list_head *iter;
+अटल अंतरभूत पूर्णांक bond_slave_override(काष्ठा bonding *bond,
+				      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा slave *slave = शून्य;
+	काष्ठा list_head *iter;
 
-	if (!skb_rx_queue_recorded(skb))
-		return 1;
+	अगर (!skb_rx_queue_recorded(skb))
+		वापस 1;
 
-	/* Find out if any slaves have the same mapping as this skb. */
-	bond_for_each_slave_rcu(bond, slave, iter) {
-		if (slave->queue_id == skb_get_queue_mapping(skb)) {
-			if (bond_slave_is_up(slave) &&
-			    slave->link == BOND_LINK_UP) {
+	/* Find out अगर any slaves have the same mapping as this skb. */
+	bond_क्रम_each_slave_rcu(bond, slave, iter) अणु
+		अगर (slave->queue_id == skb_get_queue_mapping(skb)) अणु
+			अगर (bond_slave_is_up(slave) &&
+			    slave->link == BOND_LINK_UP) अणु
 				bond_dev_queue_xmit(bond, skb, slave->dev);
-				return 0;
-			}
-			/* If the slave isn't UP, use default transmit policy. */
-			break;
-		}
-	}
+				वापस 0;
+			पूर्ण
+			/* If the slave isn't UP, use शेष transmit policy. */
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 
-static u16 bond_select_queue(struct net_device *dev, struct sk_buff *skb,
-			     struct net_device *sb_dev)
-{
+अटल u16 bond_select_queue(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			     काष्ठा net_device *sb_dev)
+अणु
 	/* This helper function exists to help dev_pick_tx get the correct
 	 * destination queue.  Using a helper function skips a call to
 	 * skb_tx_hash and will put the skbs in the queue we expect on their
-	 * way down to the bonding driver.
+	 * way करोwn to the bonding driver.
 	 */
 	u16 txq = skb_rx_queue_recorded(skb) ? skb_get_rx_queue(skb) : 0;
 
-	/* Save the original txq to restore before passing to the driver */
+	/* Save the original txq to restore beक्रमe passing to the driver */
 	qdisc_skb_cb(skb)->slave_dev_queue_mapping = skb_get_queue_mapping(skb);
 
-	if (unlikely(txq >= dev->real_num_tx_queues)) {
-		do {
+	अगर (unlikely(txq >= dev->real_num_tx_queues)) अणु
+		करो अणु
 			txq -= dev->real_num_tx_queues;
-		} while (txq >= dev->real_num_tx_queues);
-	}
-	return txq;
-}
+		पूर्ण जबतक (txq >= dev->real_num_tx_queues);
+	पूर्ण
+	वापस txq;
+पूर्ण
 
-static struct net_device *bond_xmit_get_slave(struct net_device *master_dev,
-					      struct sk_buff *skb,
+अटल काष्ठा net_device *bond_xmit_get_slave(काष्ठा net_device *master_dev,
+					      काष्ठा sk_buff *skb,
 					      bool all_slaves)
-{
-	struct bonding *bond = netdev_priv(master_dev);
-	struct bond_up_slave *slaves;
-	struct slave *slave = NULL;
+अणु
+	काष्ठा bonding *bond = netdev_priv(master_dev);
+	काष्ठा bond_up_slave *slaves;
+	काष्ठा slave *slave = शून्य;
 
-	switch (BOND_MODE(bond)) {
-	case BOND_MODE_ROUNDROBIN:
+	चयन (BOND_MODE(bond)) अणु
+	हाल BOND_MODE_ROUNDROBIN:
 		slave = bond_xmit_roundrobin_slave_get(bond, skb);
-		break;
-	case BOND_MODE_ACTIVEBACKUP:
+		अवरोध;
+	हाल BOND_MODE_ACTIVEBACKUP:
 		slave = bond_xmit_activebackup_slave_get(bond, skb);
-		break;
-	case BOND_MODE_8023AD:
-	case BOND_MODE_XOR:
-		if (all_slaves)
+		अवरोध;
+	हाल BOND_MODE_8023AD:
+	हाल BOND_MODE_XOR:
+		अगर (all_slaves)
 			slaves = rcu_dereference(bond->all_slaves);
-		else
+		अन्यथा
 			slaves = rcu_dereference(bond->usable_slaves);
 		slave = bond_xmit_3ad_xor_slave_get(bond, skb, slaves);
-		break;
-	case BOND_MODE_BROADCAST:
-		break;
-	case BOND_MODE_ALB:
+		अवरोध;
+	हाल BOND_MODE_BROADCAST:
+		अवरोध;
+	हाल BOND_MODE_ALB:
 		slave = bond_xmit_alb_slave_get(bond, skb);
-		break;
-	case BOND_MODE_TLB:
+		अवरोध;
+	हाल BOND_MODE_TLB:
 		slave = bond_xmit_tlb_slave_get(bond, skb);
-		break;
-	default:
-		/* Should never happen, mode already checked */
+		अवरोध;
+	शेष:
+		/* Should never happen, mode alपढ़ोy checked */
 		WARN_ONCE(true, "Unknown bonding mode");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (slave)
-		return slave->dev;
-	return NULL;
-}
+	अगर (slave)
+		वापस slave->dev;
+	वापस शून्य;
+पूर्ण
 
-static void bond_sk_to_flow(struct sock *sk, struct flow_keys *flow)
-{
-	switch (sk->sk_family) {
-#if IS_ENABLED(CONFIG_IPV6)
-	case AF_INET6:
-		if (sk->sk_ipv6only ||
-		    ipv6_addr_type(&sk->sk_v6_daddr) != IPV6_ADDR_MAPPED) {
+अटल व्योम bond_sk_to_flow(काष्ठा sock *sk, काष्ठा flow_keys *flow)
+अणु
+	चयन (sk->sk_family) अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+	हाल AF_INET6:
+		अगर (sk->sk_ipv6only ||
+		    ipv6_addr_type(&sk->sk_v6_daddr) != IPV6_ADDR_MAPPED) अणु
 			flow->control.addr_type = FLOW_DISSECTOR_KEY_IPV6_ADDRS;
 			flow->addrs.v6addrs.src = inet6_sk(sk)->saddr;
 			flow->addrs.v6addrs.dst = sk->sk_v6_daddr;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-#endif
-	default: /* AF_INET */
+#पूर्ण_अगर
+	शेष: /* AF_INET */
 		flow->control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
 		flow->addrs.v4addrs.src = inet_sk(sk)->inet_rcv_saddr;
 		flow->addrs.v4addrs.dst = inet_sk(sk)->inet_daddr;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	flow->ports.src = inet_sk(sk)->inet_sport;
 	flow->ports.dst = inet_sk(sk)->inet_dport;
-}
+पूर्ण
 
 /**
  * bond_sk_hash_l34 - generate a hash value based on the socket's L3 and L4 fields
- * @sk: socket to use for headers
+ * @sk: socket to use क्रम headers
  *
  * This function will extract the necessary field from the socket and use
  * them to generate a hash based on the LAYER34 xmit_policy.
  * Assumes that sk is a TCP or UDP socket.
  */
-static u32 bond_sk_hash_l34(struct sock *sk)
-{
-	struct flow_keys flow;
+अटल u32 bond_sk_hash_l34(काष्ठा sock *sk)
+अणु
+	काष्ठा flow_keys flow;
 	u32 hash;
 
 	bond_sk_to_flow(sk, &flow);
 
 	/* L4 */
-	memcpy(&hash, &flow.ports.ports, sizeof(hash));
+	स_नकल(&hash, &flow.ports.ports, माप(hash));
 	/* L3 */
-	return bond_ip_hash(hash, &flow);
-}
+	वापस bond_ip_hash(hash, &flow);
+पूर्ण
 
-static struct net_device *__bond_sk_get_lower_dev(struct bonding *bond,
-						  struct sock *sk)
-{
-	struct bond_up_slave *slaves;
-	struct slave *slave;
-	unsigned int count;
+अटल काष्ठा net_device *__bond_sk_get_lower_dev(काष्ठा bonding *bond,
+						  काष्ठा sock *sk)
+अणु
+	काष्ठा bond_up_slave *slaves;
+	काष्ठा slave *slave;
+	अचिन्हित पूर्णांक count;
 	u32 hash;
 
 	slaves = rcu_dereference(bond->usable_slaves);
 	count = slaves ? READ_ONCE(slaves->count) : 0;
-	if (unlikely(!count))
-		return NULL;
+	अगर (unlikely(!count))
+		वापस शून्य;
 
 	hash = bond_sk_hash_l34(sk);
 	slave = slaves->arr[hash % count];
 
-	return slave->dev;
-}
+	वापस slave->dev;
+पूर्ण
 
-static struct net_device *bond_sk_get_lower_dev(struct net_device *dev,
-						struct sock *sk)
-{
-	struct bonding *bond = netdev_priv(dev);
-	struct net_device *lower = NULL;
+अटल काष्ठा net_device *bond_sk_get_lower_dev(काष्ठा net_device *dev,
+						काष्ठा sock *sk)
+अणु
+	काष्ठा bonding *bond = netdev_priv(dev);
+	काष्ठा net_device *lower = शून्य;
 
-	rcu_read_lock();
-	if (bond_sk_check(bond))
+	rcu_पढ़ो_lock();
+	अगर (bond_sk_check(bond))
 		lower = __bond_sk_get_lower_dev(bond, sk);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return lower;
-}
+	वापस lower;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_TLS_DEVICE)
-static netdev_tx_t bond_tls_device_xmit(struct bonding *bond, struct sk_buff *skb,
-					struct net_device *dev)
-{
-	if (likely(bond_get_slave_by_dev(bond, tls_get_ctx(skb->sk)->netdev)))
-		return bond_dev_queue_xmit(bond, skb, tls_get_ctx(skb->sk)->netdev);
-	return bond_tx_drop(dev, skb);
-}
-#endif
+#अगर IS_ENABLED(CONFIG_TLS_DEVICE)
+अटल netdev_tx_t bond_tls_device_xmit(काष्ठा bonding *bond, काष्ठा sk_buff *skb,
+					काष्ठा net_device *dev)
+अणु
+	अगर (likely(bond_get_slave_by_dev(bond, tls_get_ctx(skb->sk)->netdev)))
+		वापस bond_dev_queue_xmit(bond, skb, tls_get_ctx(skb->sk)->netdev);
+	वापस bond_tx_drop(dev, skb);
+पूर्ण
+#पूर्ण_अगर
 
-static netdev_tx_t __bond_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct bonding *bond = netdev_priv(dev);
+अटल netdev_tx_t __bond_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(dev);
 
-	if (bond_should_override_tx_queue(bond) &&
+	अगर (bond_should_override_tx_queue(bond) &&
 	    !bond_slave_override(bond, skb))
-		return NETDEV_TX_OK;
+		वापस NETDEV_TX_OK;
 
-#if IS_ENABLED(CONFIG_TLS_DEVICE)
-	if (skb->sk && tls_is_sk_tx_device_offloaded(skb->sk))
-		return bond_tls_device_xmit(bond, skb, dev);
-#endif
+#अगर IS_ENABLED(CONFIG_TLS_DEVICE)
+	अगर (skb->sk && tls_is_sk_tx_device_offloaded(skb->sk))
+		वापस bond_tls_device_xmit(bond, skb, dev);
+#पूर्ण_अगर
 
-	switch (BOND_MODE(bond)) {
-	case BOND_MODE_ROUNDROBIN:
-		return bond_xmit_roundrobin(skb, dev);
-	case BOND_MODE_ACTIVEBACKUP:
-		return bond_xmit_activebackup(skb, dev);
-	case BOND_MODE_8023AD:
-	case BOND_MODE_XOR:
-		return bond_3ad_xor_xmit(skb, dev);
-	case BOND_MODE_BROADCAST:
-		return bond_xmit_broadcast(skb, dev);
-	case BOND_MODE_ALB:
-		return bond_alb_xmit(skb, dev);
-	case BOND_MODE_TLB:
-		return bond_tlb_xmit(skb, dev);
-	default:
-		/* Should never happen, mode already checked */
+	चयन (BOND_MODE(bond)) अणु
+	हाल BOND_MODE_ROUNDROBIN:
+		वापस bond_xmit_roundrobin(skb, dev);
+	हाल BOND_MODE_ACTIVEBACKUP:
+		वापस bond_xmit_activebackup(skb, dev);
+	हाल BOND_MODE_8023AD:
+	हाल BOND_MODE_XOR:
+		वापस bond_3ad_xor_xmit(skb, dev);
+	हाल BOND_MODE_BROADCAST:
+		वापस bond_xmit_broadcast(skb, dev);
+	हाल BOND_MODE_ALB:
+		वापस bond_alb_xmit(skb, dev);
+	हाल BOND_MODE_TLB:
+		वापस bond_tlb_xmit(skb, dev);
+	शेष:
+		/* Should never happen, mode alपढ़ोy checked */
 		netdev_err(dev, "Unknown bonding mode %d\n", BOND_MODE(bond));
 		WARN_ON_ONCE(1);
-		return bond_tx_drop(dev, skb);
-	}
-}
+		वापस bond_tx_drop(dev, skb);
+	पूर्ण
+पूर्ण
 
-static netdev_tx_t bond_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct bonding *bond = netdev_priv(dev);
+अटल netdev_tx_t bond_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(dev);
 	netdev_tx_t ret = NETDEV_TX_OK;
 
 	/* If we risk deadlock from transmitting this in the
-	 * netpoll path, tell netpoll to queue the frame for later tx
+	 * netpoll path, tell netpoll to queue the frame क्रम later tx
 	 */
-	if (unlikely(is_netpoll_tx_blocked(dev)))
-		return NETDEV_TX_BUSY;
+	अगर (unlikely(is_netpoll_tx_blocked(dev)))
+		वापस NETDEV_TX_BUSY;
 
-	rcu_read_lock();
-	if (bond_has_slaves(bond))
+	rcu_पढ़ो_lock();
+	अगर (bond_has_slaves(bond))
 		ret = __bond_start_xmit(skb, dev);
-	else
+	अन्यथा
 		ret = bond_tx_drop(dev, skb);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 bond_mode_bcast_speed(struct slave *slave, u32 speed)
-{
-	if (speed == 0 || speed == SPEED_UNKNOWN)
+अटल u32 bond_mode_bcast_speed(काष्ठा slave *slave, u32 speed)
+अणु
+	अगर (speed == 0 || speed == SPEED_UNKNOWN)
 		speed = slave->speed;
-	else
+	अन्यथा
 		speed = min(speed, slave->speed);
 
-	return speed;
-}
+	वापस speed;
+पूर्ण
 
-static int bond_ethtool_get_link_ksettings(struct net_device *bond_dev,
-					   struct ethtool_link_ksettings *cmd)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct list_head *iter;
-	struct slave *slave;
+अटल पूर्णांक bond_ethtool_get_link_ksettings(काष्ठा net_device *bond_dev,
+					   काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 	u32 speed = 0;
 
 	cmd->base.duplex = DUPLEX_UNKNOWN;
 	cmd->base.port = PORT_OTHER;
 
-	/* Since bond_slave_can_tx returns false for all inactive or down slaves, we
-	 * do not need to check mode.  Though link speed might not represent
+	/* Since bond_slave_can_tx वापसs false क्रम all inactive or करोwn slaves, we
+	 * करो not need to check mode.  Though link speed might not represent
 	 * the true receive or transmit bandwidth (not all modes are symmetric)
 	 * this is an accurate maximum.
 	 */
-	bond_for_each_slave(bond, slave, iter) {
-		if (bond_slave_can_tx(slave)) {
-			if (slave->speed != SPEED_UNKNOWN) {
-				if (BOND_MODE(bond) == BOND_MODE_BROADCAST)
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		अगर (bond_slave_can_tx(slave)) अणु
+			अगर (slave->speed != SPEED_UNKNOWN) अणु
+				अगर (BOND_MODE(bond) == BOND_MODE_BROADCAST)
 					speed = bond_mode_bcast_speed(slave,
 								      speed);
-				else
+				अन्यथा
 					speed += slave->speed;
-			}
-			if (cmd->base.duplex == DUPLEX_UNKNOWN &&
+			पूर्ण
+			अगर (cmd->base.duplex == DUPLEX_UNKNOWN &&
 			    slave->duplex != DUPLEX_UNKNOWN)
 				cmd->base.duplex = slave->duplex;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	cmd->base.speed = speed ? : SPEED_UNKNOWN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bond_ethtool_get_drvinfo(struct net_device *bond_dev,
-				     struct ethtool_drvinfo *drvinfo)
-{
-	strlcpy(drvinfo->driver, DRV_NAME, sizeof(drvinfo->driver));
-	snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version), "%d",
+अटल व्योम bond_ethtool_get_drvinfo(काष्ठा net_device *bond_dev,
+				     काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	strlcpy(drvinfo->driver, DRV_NAME, माप(drvinfo->driver));
+	snम_लिखो(drvinfo->fw_version, माप(drvinfo->fw_version), "%d",
 		 BOND_ABI_VERSION);
-}
+पूर्ण
 
-static const struct ethtool_ops bond_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops bond_ethtool_ops = अणु
 	.get_drvinfo		= bond_ethtool_get_drvinfo,
 	.get_link		= ethtool_op_get_link,
 	.get_link_ksettings	= bond_ethtool_get_link_ksettings,
-};
+पूर्ण;
 
-static const struct net_device_ops bond_netdev_ops = {
-	.ndo_init		= bond_init,
-	.ndo_uninit		= bond_uninit,
-	.ndo_open		= bond_open,
-	.ndo_stop		= bond_close,
-	.ndo_start_xmit		= bond_start_xmit,
-	.ndo_select_queue	= bond_select_queue,
-	.ndo_get_stats64	= bond_get_stats,
-	.ndo_do_ioctl		= bond_do_ioctl,
-	.ndo_change_rx_flags	= bond_change_rx_flags,
-	.ndo_set_rx_mode	= bond_set_rx_mode,
-	.ndo_change_mtu		= bond_change_mtu,
-	.ndo_set_mac_address	= bond_set_mac_address,
-	.ndo_neigh_setup	= bond_neigh_setup,
-	.ndo_vlan_rx_add_vid	= bond_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid	= bond_vlan_rx_kill_vid,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_netpoll_setup	= bond_netpoll_setup,
-	.ndo_netpoll_cleanup	= bond_netpoll_cleanup,
-	.ndo_poll_controller	= bond_poll_controller,
-#endif
-	.ndo_add_slave		= bond_enslave,
-	.ndo_del_slave		= bond_release,
-	.ndo_fix_features	= bond_fix_features,
-	.ndo_features_check	= passthru_features_check,
-	.ndo_get_xmit_slave	= bond_xmit_get_slave,
-	.ndo_sk_get_lower_dev	= bond_sk_get_lower_dev,
-};
+अटल स्थिर काष्ठा net_device_ops bond_netdev_ops = अणु
+	.nकरो_init		= bond_init,
+	.nकरो_uninit		= bond_uninit,
+	.nकरो_खोलो		= bond_खोलो,
+	.nकरो_stop		= bond_बंद,
+	.nकरो_start_xmit		= bond_start_xmit,
+	.nकरो_select_queue	= bond_select_queue,
+	.nकरो_get_stats64	= bond_get_stats,
+	.nकरो_करो_ioctl		= bond_करो_ioctl,
+	.nकरो_change_rx_flags	= bond_change_rx_flags,
+	.nकरो_set_rx_mode	= bond_set_rx_mode,
+	.nकरो_change_mtu		= bond_change_mtu,
+	.nकरो_set_mac_address	= bond_set_mac_address,
+	.nकरो_neigh_setup	= bond_neigh_setup,
+	.nकरो_vlan_rx_add_vid	= bond_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid	= bond_vlan_rx_समाप्त_vid,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_netpoll_setup	= bond_netpoll_setup,
+	.nकरो_netpoll_cleanup	= bond_netpoll_cleanup,
+	.nकरो_poll_controller	= bond_poll_controller,
+#पूर्ण_अगर
+	.nकरो_add_slave		= bond_enslave,
+	.nकरो_del_slave		= bond_release,
+	.nकरो_fix_features	= bond_fix_features,
+	.nकरो_features_check	= passthru_features_check,
+	.nकरो_get_xmit_slave	= bond_xmit_get_slave,
+	.nकरो_sk_get_lower_dev	= bond_sk_get_lower_dev,
+पूर्ण;
 
-static const struct device_type bond_type = {
+अटल स्थिर काष्ठा device_type bond_type = अणु
 	.name = "bond",
-};
+पूर्ण;
 
-static void bond_destructor(struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	if (bond->wq)
+अटल व्योम bond_deकाष्ठाor(काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	अगर (bond->wq)
 		destroy_workqueue(bond->wq);
-}
+पूर्ण
 
-void bond_setup(struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
+व्योम bond_setup(काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
 
 	spin_lock_init(&bond->mode_lock);
-	bond->params = bonding_defaults;
+	bond->params = bonding_शेषs;
 
-	/* Initialize pointers */
+	/* Initialize poपूर्णांकers */
 	bond->dev = bond_dev;
 
-	/* Initialize the device entry points */
+	/* Initialize the device entry poपूर्णांकs */
 	ether_setup(bond_dev);
 	bond_dev->max_mtu = ETH_MAX_MTU;
 	bond_dev->netdev_ops = &bond_netdev_ops;
 	bond_dev->ethtool_ops = &bond_ethtool_ops;
 
-	bond_dev->needs_free_netdev = true;
-	bond_dev->priv_destructor = bond_destructor;
+	bond_dev->needs_मुक्त_netdev = true;
+	bond_dev->priv_deकाष्ठाor = bond_deकाष्ठाor;
 
 	SET_NETDEV_DEVTYPE(bond_dev, &bond_type);
 
@@ -4879,16 +4880,16 @@ void bond_setup(struct net_device *bond_dev)
 	bond_dev->priv_flags |= IFF_BONDING | IFF_UNICAST_FLT | IFF_NO_QUEUE;
 	bond_dev->priv_flags &= ~(IFF_XMIT_DST_RELEASE | IFF_TX_SKB_SHARING);
 
-#ifdef CONFIG_XFRM_OFFLOAD
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
 	/* set up xfrm device ops (only supported in active-backup right now) */
 	bond_dev->xfrmdev_ops = &bond_xfrmdev_ops;
-	bond->xs = NULL;
-#endif /* CONFIG_XFRM_OFFLOAD */
+	bond->xs = शून्य;
+#पूर्ण_अगर /* CONFIG_XFRM_OFFLOAD */
 
-	/* don't acquire bond device's netif_tx_lock when transmitting */
+	/* करोn't acquire bond device's netअगर_tx_lock when transmitting */
 	bond_dev->features |= NETIF_F_LLTX;
 
-	/* By default, we declare the bond to be fully
+	/* By शेष, we declare the bond to be fully
 	 * VLAN hardware accelerated capable. Special
 	 * care is taken in the various xmit functions
 	 * when there are slaves that are not hw accel
@@ -4905,404 +4906,404 @@ void bond_setup(struct net_device *bond_dev)
 	bond_dev->hw_features |= NETIF_F_GSO_ENCAP_ALL;
 	bond_dev->features |= bond_dev->hw_features;
 	bond_dev->features |= NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_STAG_TX;
-#ifdef CONFIG_XFRM_OFFLOAD
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
 	bond_dev->hw_features |= BOND_XFRM_FEATURES;
-	/* Only enable XFRM features if this is an active-backup config */
-	if (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP)
+	/* Only enable XFRM features अगर this is an active-backup config */
+	अगर (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP)
 		bond_dev->features |= BOND_XFRM_FEATURES;
-#endif /* CONFIG_XFRM_OFFLOAD */
-#if IS_ENABLED(CONFIG_TLS_DEVICE)
-	if (bond_sk_check(bond))
+#पूर्ण_अगर /* CONFIG_XFRM_OFFLOAD */
+#अगर IS_ENABLED(CONFIG_TLS_DEVICE)
+	अगर (bond_sk_check(bond))
 		bond_dev->features |= BOND_TLS_FEATURES;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /* Destroy a bonding device.
  * Must be under rtnl_lock when this function is called.
  */
-static void bond_uninit(struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct bond_up_slave *usable, *all;
-	struct list_head *iter;
-	struct slave *slave;
+अटल व्योम bond_uninit(काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा bond_up_slave *usable, *all;
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
 	bond_netpoll_cleanup(bond_dev);
 
 	/* Release the bonded slaves */
-	bond_for_each_slave(bond, slave, iter)
+	bond_क्रम_each_slave(bond, slave, iter)
 		__bond_release_one(bond_dev, slave->dev, true, true);
 	netdev_info(bond_dev, "Released all slaves\n");
 
 	usable = rtnl_dereference(bond->usable_slaves);
-	if (usable) {
-		RCU_INIT_POINTER(bond->usable_slaves, NULL);
-		kfree_rcu(usable, rcu);
-	}
+	अगर (usable) अणु
+		RCU_INIT_POINTER(bond->usable_slaves, शून्य);
+		kमुक्त_rcu(usable, rcu);
+	पूर्ण
 
 	all = rtnl_dereference(bond->all_slaves);
-	if (all) {
-		RCU_INIT_POINTER(bond->all_slaves, NULL);
-		kfree_rcu(all, rcu);
-	}
+	अगर (all) अणु
+		RCU_INIT_POINTER(bond->all_slaves, शून्य);
+		kमुक्त_rcu(all, rcu);
+	पूर्ण
 
 	list_del(&bond->bond_list);
 
-	bond_debug_unregister(bond);
-}
+	bond_debug_unरेजिस्टर(bond);
+पूर्ण
 
 /*------------------------- Module initialization ---------------------------*/
 
-static int bond_check_params(struct bond_params *params)
-{
-	int arp_validate_value, fail_over_mac_value, primary_reselect_value, i;
-	struct bond_opt_value newval;
-	const struct bond_opt_value *valptr;
-	int arp_all_targets_value = 0;
+अटल पूर्णांक bond_check_params(काष्ठा bond_params *params)
+अणु
+	पूर्णांक arp_validate_value, fail_over_mac_value, primary_reselect_value, i;
+	काष्ठा bond_opt_value newval;
+	स्थिर काष्ठा bond_opt_value *valptr;
+	पूर्णांक arp_all_tarमाला_लो_value = 0;
 	u16 ad_actor_sys_prio = 0;
 	u16 ad_user_port_key = 0;
-	__be32 arp_target[BOND_MAX_ARP_TARGETS] = { 0 };
-	int arp_ip_count;
-	int bond_mode	= BOND_MODE_ROUNDROBIN;
-	int xmit_hashtype = BOND_XMIT_POLICY_LAYER2;
-	int lacp_fast = 0;
-	int tlb_dynamic_lb;
+	__be32 arp_target[BOND_MAX_ARP_TARGETS] = अणु 0 पूर्ण;
+	पूर्णांक arp_ip_count;
+	पूर्णांक bond_mode	= BOND_MODE_ROUNDROBIN;
+	पूर्णांक xmit_hashtype = BOND_XMIT_POLICY_LAYER2;
+	पूर्णांक lacp_fast = 0;
+	पूर्णांक tlb_dynamic_lb;
 
 	/* Convert string parameters. */
-	if (mode) {
+	अगर (mode) अणु
 		bond_opt_initstr(&newval, mode);
 		valptr = bond_opt_parse(bond_opt_get(BOND_OPT_MODE), &newval);
-		if (!valptr) {
+		अगर (!valptr) अणु
 			pr_err("Error: Invalid bonding mode \"%s\"\n", mode);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		bond_mode = valptr->value;
-	}
+	पूर्ण
 
-	if (xmit_hash_policy) {
-		if (bond_mode == BOND_MODE_ROUNDROBIN ||
+	अगर (xmit_hash_policy) अणु
+		अगर (bond_mode == BOND_MODE_ROUNDROBIN ||
 		    bond_mode == BOND_MODE_ACTIVEBACKUP ||
-		    bond_mode == BOND_MODE_BROADCAST) {
+		    bond_mode == BOND_MODE_BROADCAST) अणु
 			pr_info("xmit_hash_policy param is irrelevant in mode %s\n",
 				bond_mode_name(bond_mode));
-		} else {
+		पूर्ण अन्यथा अणु
 			bond_opt_initstr(&newval, xmit_hash_policy);
 			valptr = bond_opt_parse(bond_opt_get(BOND_OPT_XMIT_HASH),
 						&newval);
-			if (!valptr) {
+			अगर (!valptr) अणु
 				pr_err("Error: Invalid xmit_hash_policy \"%s\"\n",
 				       xmit_hash_policy);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			xmit_hashtype = valptr->value;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (lacp_rate) {
-		if (bond_mode != BOND_MODE_8023AD) {
+	अगर (lacp_rate) अणु
+		अगर (bond_mode != BOND_MODE_8023AD) अणु
 			pr_info("lacp_rate param is irrelevant in mode %s\n",
 				bond_mode_name(bond_mode));
-		} else {
+		पूर्ण अन्यथा अणु
 			bond_opt_initstr(&newval, lacp_rate);
 			valptr = bond_opt_parse(bond_opt_get(BOND_OPT_LACP_RATE),
 						&newval);
-			if (!valptr) {
+			अगर (!valptr) अणु
 				pr_err("Error: Invalid lacp rate \"%s\"\n",
 				       lacp_rate);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			lacp_fast = valptr->value;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ad_select) {
+	अगर (ad_select) अणु
 		bond_opt_initstr(&newval, ad_select);
 		valptr = bond_opt_parse(bond_opt_get(BOND_OPT_AD_SELECT),
 					&newval);
-		if (!valptr) {
+		अगर (!valptr) अणु
 			pr_err("Error: Invalid ad_select \"%s\"\n", ad_select);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		params->ad_select = valptr->value;
-		if (bond_mode != BOND_MODE_8023AD)
+		अगर (bond_mode != BOND_MODE_8023AD)
 			pr_warn("ad_select param only affects 802.3ad mode\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		params->ad_select = BOND_AD_STABLE;
-	}
+	पूर्ण
 
-	if (max_bonds < 0) {
+	अगर (max_bonds < 0) अणु
 		pr_warn("Warning: max_bonds (%d) not in range %d-%d, so it was reset to BOND_DEFAULT_MAX_BONDS (%d)\n",
-			max_bonds, 0, INT_MAX, BOND_DEFAULT_MAX_BONDS);
+			max_bonds, 0, पूर्णांक_उच्च, BOND_DEFAULT_MAX_BONDS);
 		max_bonds = BOND_DEFAULT_MAX_BONDS;
-	}
+	पूर्ण
 
-	if (miimon < 0) {
+	अगर (miimon < 0) अणु
 		pr_warn("Warning: miimon module parameter (%d), not in range 0-%d, so it was reset to 0\n",
-			miimon, INT_MAX);
+			miimon, पूर्णांक_उच्च);
 		miimon = 0;
-	}
+	पूर्ण
 
-	if (updelay < 0) {
+	अगर (updelay < 0) अणु
 		pr_warn("Warning: updelay module parameter (%d), not in range 0-%d, so it was reset to 0\n",
-			updelay, INT_MAX);
+			updelay, पूर्णांक_उच्च);
 		updelay = 0;
-	}
+	पूर्ण
 
-	if (downdelay < 0) {
+	अगर (करोwndelay < 0) अणु
 		pr_warn("Warning: downdelay module parameter (%d), not in range 0-%d, so it was reset to 0\n",
-			downdelay, INT_MAX);
-		downdelay = 0;
-	}
+			करोwndelay, पूर्णांक_उच्च);
+		करोwndelay = 0;
+	पूर्ण
 
-	if ((use_carrier != 0) && (use_carrier != 1)) {
+	अगर ((use_carrier != 0) && (use_carrier != 1)) अणु
 		pr_warn("Warning: use_carrier module parameter (%d), not of valid value (0/1), so it was set to 1\n",
 			use_carrier);
 		use_carrier = 1;
-	}
+	पूर्ण
 
-	if (num_peer_notif < 0 || num_peer_notif > 255) {
+	अगर (num_peer_notअगर < 0 || num_peer_notअगर > 255) अणु
 		pr_warn("Warning: num_grat_arp/num_unsol_na (%d) not in range 0-255 so it was reset to 1\n",
-			num_peer_notif);
-		num_peer_notif = 1;
-	}
+			num_peer_notअगर);
+		num_peer_notअगर = 1;
+	पूर्ण
 
-	/* reset values for 802.3ad/TLB/ALB */
-	if (!bond_mode_uses_arp(bond_mode)) {
-		if (!miimon) {
+	/* reset values क्रम 802.3ad/TLB/ALB */
+	अगर (!bond_mode_uses_arp(bond_mode)) अणु
+		अगर (!miimon) अणु
 			pr_warn("Warning: miimon must be specified, otherwise bonding will not detect link failure, speed and duplex which are essential for 802.3ad operation\n");
 			pr_warn("Forcing miimon to 100msec\n");
 			miimon = BOND_DEFAULT_MIIMON;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (tx_queues < 1 || tx_queues > 255) {
+	अगर (tx_queues < 1 || tx_queues > 255) अणु
 		pr_warn("Warning: tx_queues (%d) should be between 1 and 255, resetting to %d\n",
 			tx_queues, BOND_DEFAULT_TX_QUEUES);
 		tx_queues = BOND_DEFAULT_TX_QUEUES;
-	}
+	पूर्ण
 
-	if ((all_slaves_active != 0) && (all_slaves_active != 1)) {
+	अगर ((all_slaves_active != 0) && (all_slaves_active != 1)) अणु
 		pr_warn("Warning: all_slaves_active module parameter (%d), not of valid value (0/1), so it was set to 0\n",
 			all_slaves_active);
 		all_slaves_active = 0;
-	}
+	पूर्ण
 
-	if (resend_igmp < 0 || resend_igmp > 255) {
+	अगर (resend_igmp < 0 || resend_igmp > 255) अणु
 		pr_warn("Warning: resend_igmp (%d) should be between 0 and 255, resetting to %d\n",
 			resend_igmp, BOND_DEFAULT_RESEND_IGMP);
 		resend_igmp = BOND_DEFAULT_RESEND_IGMP;
-	}
+	पूर्ण
 
 	bond_opt_initval(&newval, packets_per_slave);
-	if (!bond_opt_parse(bond_opt_get(BOND_OPT_PACKETS_PER_SLAVE), &newval)) {
+	अगर (!bond_opt_parse(bond_opt_get(BOND_OPT_PACKETS_PER_SLAVE), &newval)) अणु
 		pr_warn("Warning: packets_per_slave (%d) should be between 0 and %u resetting to 1\n",
-			packets_per_slave, USHRT_MAX);
+			packets_per_slave, अच_लघु_उच्च);
 		packets_per_slave = 1;
-	}
+	पूर्ण
 
-	if (bond_mode == BOND_MODE_ALB) {
+	अगर (bond_mode == BOND_MODE_ALB) अणु
 		pr_notice("In ALB mode you might experience client disconnections upon reconnection of a link if the bonding module updelay parameter (%d msec) is incompatible with the forwarding delay time of the switch\n",
 			  updelay);
-	}
+	पूर्ण
 
-	if (!miimon) {
-		if (updelay || downdelay) {
-			/* just warn the user the up/down delay will have
+	अगर (!miimon) अणु
+		अगर (updelay || करोwndelay) अणु
+			/* just warn the user the up/करोwn delay will have
 			 * no effect since miimon is zero...
 			 */
 			pr_warn("Warning: miimon module parameter not set and updelay (%d) or downdelay (%d) module parameter is set; updelay and downdelay have no effect unless miimon is set\n",
-				updelay, downdelay);
-		}
-	} else {
-		/* don't allow arp monitoring */
-		if (arp_interval) {
+				updelay, करोwndelay);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* करोn't allow arp monitoring */
+		अगर (arp_पूर्णांकerval) अणु
 			pr_warn("Warning: miimon (%d) and arp_interval (%d) can't be used simultaneously, disabling ARP monitoring\n",
-				miimon, arp_interval);
-			arp_interval = 0;
-		}
+				miimon, arp_पूर्णांकerval);
+			arp_पूर्णांकerval = 0;
+		पूर्ण
 
-		if ((updelay % miimon) != 0) {
+		अगर ((updelay % miimon) != 0) अणु
 			pr_warn("Warning: updelay (%d) is not a multiple of miimon (%d), updelay rounded to %d ms\n",
 				updelay, miimon, (updelay / miimon) * miimon);
-		}
+		पूर्ण
 
 		updelay /= miimon;
 
-		if ((downdelay % miimon) != 0) {
+		अगर ((करोwndelay % miimon) != 0) अणु
 			pr_warn("Warning: downdelay (%d) is not a multiple of miimon (%d), downdelay rounded to %d ms\n",
-				downdelay, miimon,
-				(downdelay / miimon) * miimon);
-		}
+				करोwndelay, miimon,
+				(करोwndelay / miimon) * miimon);
+		पूर्ण
 
-		downdelay /= miimon;
-	}
+		करोwndelay /= miimon;
+	पूर्ण
 
-	if (arp_interval < 0) {
+	अगर (arp_पूर्णांकerval < 0) अणु
 		pr_warn("Warning: arp_interval module parameter (%d), not in range 0-%d, so it was reset to 0\n",
-			arp_interval, INT_MAX);
-		arp_interval = 0;
-	}
+			arp_पूर्णांकerval, पूर्णांक_उच्च);
+		arp_पूर्णांकerval = 0;
+	पूर्ण
 
-	for (arp_ip_count = 0, i = 0;
-	     (arp_ip_count < BOND_MAX_ARP_TARGETS) && arp_ip_target[i]; i++) {
+	क्रम (arp_ip_count = 0, i = 0;
+	     (arp_ip_count < BOND_MAX_ARP_TARGETS) && arp_ip_target[i]; i++) अणु
 		__be32 ip;
 
 		/* not a complete check, but good enough to catch mistakes */
-		if (!in4_pton(arp_ip_target[i], -1, (u8 *)&ip, -1, NULL) ||
-		    !bond_is_ip_target_ok(ip)) {
+		अगर (!in4_pton(arp_ip_target[i], -1, (u8 *)&ip, -1, शून्य) ||
+		    !bond_is_ip_target_ok(ip)) अणु
 			pr_warn("Warning: bad arp_ip_target module parameter (%s), ARP monitoring will not be performed\n",
 				arp_ip_target[i]);
-			arp_interval = 0;
-		} else {
-			if (bond_get_targets_ip(arp_target, ip) == -1)
+			arp_पूर्णांकerval = 0;
+		पूर्ण अन्यथा अणु
+			अगर (bond_get_tarमाला_लो_ip(arp_target, ip) == -1)
 				arp_target[arp_ip_count++] = ip;
-			else
+			अन्यथा
 				pr_warn("Warning: duplicate address %pI4 in arp_ip_target, skipping\n",
 					&ip);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (arp_interval && !arp_ip_count) {
-		/* don't allow arping if no arp_ip_target given... */
+	अगर (arp_पूर्णांकerval && !arp_ip_count) अणु
+		/* करोn't allow arping अगर no arp_ip_target given... */
 		pr_warn("Warning: arp_interval module parameter (%d) specified without providing an arp_ip_target parameter, arp_interval was reset to 0\n",
-			arp_interval);
-		arp_interval = 0;
-	}
+			arp_पूर्णांकerval);
+		arp_पूर्णांकerval = 0;
+	पूर्ण
 
-	if (arp_validate) {
-		if (!arp_interval) {
+	अगर (arp_validate) अणु
+		अगर (!arp_पूर्णांकerval) अणु
 			pr_err("arp_validate requires arp_interval\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		bond_opt_initstr(&newval, arp_validate);
 		valptr = bond_opt_parse(bond_opt_get(BOND_OPT_ARP_VALIDATE),
 					&newval);
-		if (!valptr) {
+		अगर (!valptr) अणु
 			pr_err("Error: invalid arp_validate \"%s\"\n",
 			       arp_validate);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		arp_validate_value = valptr->value;
-	} else {
+	पूर्ण अन्यथा अणु
 		arp_validate_value = 0;
-	}
+	पूर्ण
 
-	if (arp_all_targets) {
-		bond_opt_initstr(&newval, arp_all_targets);
+	अगर (arp_all_tarमाला_लो) अणु
+		bond_opt_initstr(&newval, arp_all_tarमाला_लो);
 		valptr = bond_opt_parse(bond_opt_get(BOND_OPT_ARP_ALL_TARGETS),
 					&newval);
-		if (!valptr) {
+		अगर (!valptr) अणु
 			pr_err("Error: invalid arp_all_targets_value \"%s\"\n",
-			       arp_all_targets);
-			arp_all_targets_value = 0;
-		} else {
-			arp_all_targets_value = valptr->value;
-		}
-	}
+			       arp_all_tarमाला_लो);
+			arp_all_tarमाला_लो_value = 0;
+		पूर्ण अन्यथा अणु
+			arp_all_tarमाला_लो_value = valptr->value;
+		पूर्ण
+	पूर्ण
 
-	if (miimon) {
+	अगर (miimon) अणु
 		pr_info("MII link monitoring set to %d ms\n", miimon);
-	} else if (arp_interval) {
+	पूर्ण अन्यथा अगर (arp_पूर्णांकerval) अणु
 		valptr = bond_opt_get_val(BOND_OPT_ARP_VALIDATE,
 					  arp_validate_value);
 		pr_info("ARP monitoring set to %d ms, validate %s, with %d target(s):",
-			arp_interval, valptr->string, arp_ip_count);
+			arp_पूर्णांकerval, valptr->string, arp_ip_count);
 
-		for (i = 0; i < arp_ip_count; i++)
+		क्रम (i = 0; i < arp_ip_count; i++)
 			pr_cont(" %s", arp_ip_target[i]);
 
 		pr_cont("\n");
 
-	} else if (max_bonds) {
-		/* miimon and arp_interval not set, we need one so things
-		 * work as expected, see bonding.txt for details
+	पूर्ण अन्यथा अगर (max_bonds) अणु
+		/* miimon and arp_पूर्णांकerval not set, we need one so things
+		 * work as expected, see bonding.txt क्रम details
 		 */
 		pr_debug("Warning: either miimon or arp_interval and arp_ip_target module parameters must be specified, otherwise bonding will not detect link failures! see bonding.txt for details\n");
-	}
+	पूर्ण
 
-	if (primary && !bond_mode_uses_primary(bond_mode)) {
+	अगर (primary && !bond_mode_uses_primary(bond_mode)) अणु
 		/* currently, using a primary only makes sense
 		 * in active backup, TLB or ALB modes
 		 */
 		pr_warn("Warning: %s primary device specified but has no effect in %s mode\n",
 			primary, bond_mode_name(bond_mode));
-		primary = NULL;
-	}
+		primary = शून्य;
+	पूर्ण
 
-	if (primary && primary_reselect) {
+	अगर (primary && primary_reselect) अणु
 		bond_opt_initstr(&newval, primary_reselect);
 		valptr = bond_opt_parse(bond_opt_get(BOND_OPT_PRIMARY_RESELECT),
 					&newval);
-		if (!valptr) {
+		अगर (!valptr) अणु
 			pr_err("Error: Invalid primary_reselect \"%s\"\n",
 			       primary_reselect);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		primary_reselect_value = valptr->value;
-	} else {
+	पूर्ण अन्यथा अणु
 		primary_reselect_value = BOND_PRI_RESELECT_ALWAYS;
-	}
+	पूर्ण
 
-	if (fail_over_mac) {
+	अगर (fail_over_mac) अणु
 		bond_opt_initstr(&newval, fail_over_mac);
 		valptr = bond_opt_parse(bond_opt_get(BOND_OPT_FAIL_OVER_MAC),
 					&newval);
-		if (!valptr) {
+		अगर (!valptr) अणु
 			pr_err("Error: invalid fail_over_mac \"%s\"\n",
 			       fail_over_mac);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		fail_over_mac_value = valptr->value;
-		if (bond_mode != BOND_MODE_ACTIVEBACKUP)
+		अगर (bond_mode != BOND_MODE_ACTIVEBACKUP)
 			pr_warn("Warning: fail_over_mac only affects active-backup mode\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		fail_over_mac_value = BOND_FOM_NONE;
-	}
+	पूर्ण
 
 	bond_opt_initstr(&newval, "default");
 	valptr = bond_opt_parse(
 			bond_opt_get(BOND_OPT_AD_ACTOR_SYS_PRIO),
 				     &newval);
-	if (!valptr) {
+	अगर (!valptr) अणु
 		pr_err("Error: No ad_actor_sys_prio default value");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	ad_actor_sys_prio = valptr->value;
 
 	valptr = bond_opt_parse(bond_opt_get(BOND_OPT_AD_USER_PORT_KEY),
 				&newval);
-	if (!valptr) {
+	अगर (!valptr) अणु
 		pr_err("Error: No ad_user_port_key default value");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	ad_user_port_key = valptr->value;
 
 	bond_opt_initstr(&newval, "default");
 	valptr = bond_opt_parse(bond_opt_get(BOND_OPT_TLB_DYNAMIC_LB), &newval);
-	if (!valptr) {
+	अगर (!valptr) अणु
 		pr_err("Error: No tlb_dynamic_lb default value");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	tlb_dynamic_lb = valptr->value;
 
-	if (lp_interval == 0) {
+	अगर (lp_पूर्णांकerval == 0) अणु
 		pr_warn("Warning: ip_interval must be between 1 and %d, so it was reset to %d\n",
-			INT_MAX, BOND_ALB_DEFAULT_LP_INTERVAL);
-		lp_interval = BOND_ALB_DEFAULT_LP_INTERVAL;
-	}
+			पूर्णांक_उच्च, BOND_ALB_DEFAULT_LP_INTERVAL);
+		lp_पूर्णांकerval = BOND_ALB_DEFAULT_LP_INTERVAL;
+	पूर्ण
 
-	/* fill params struct with the proper values */
+	/* fill params काष्ठा with the proper values */
 	params->mode = bond_mode;
 	params->xmit_policy = xmit_hashtype;
 	params->miimon = miimon;
-	params->num_peer_notif = num_peer_notif;
-	params->arp_interval = arp_interval;
+	params->num_peer_notअगर = num_peer_notअगर;
+	params->arp_पूर्णांकerval = arp_पूर्णांकerval;
 	params->arp_validate = arp_validate_value;
-	params->arp_all_targets = arp_all_targets_value;
+	params->arp_all_tarमाला_लो = arp_all_tarमाला_लो_value;
 	params->updelay = updelay;
-	params->downdelay = downdelay;
-	params->peer_notif_delay = 0;
+	params->करोwndelay = करोwndelay;
+	params->peer_notअगर_delay = 0;
 	params->use_carrier = use_carrier;
 	params->lacp_fast = lacp_fast;
 	params->primary[0] = 0;
@@ -5312,44 +5313,44 @@ static int bond_check_params(struct bond_params *params)
 	params->all_slaves_active = all_slaves_active;
 	params->resend_igmp = resend_igmp;
 	params->min_links = min_links;
-	params->lp_interval = lp_interval;
+	params->lp_पूर्णांकerval = lp_पूर्णांकerval;
 	params->packets_per_slave = packets_per_slave;
 	params->tlb_dynamic_lb = tlb_dynamic_lb;
 	params->ad_actor_sys_prio = ad_actor_sys_prio;
-	eth_zero_addr(params->ad_actor_system);
+	eth_zero_addr(params->ad_actor_प्रणाली);
 	params->ad_user_port_key = ad_user_port_key;
-	if (packets_per_slave > 0) {
+	अगर (packets_per_slave > 0) अणु
 		params->reciprocal_packets_per_slave =
 			reciprocal_value(packets_per_slave);
-	} else {
-		/* reciprocal_packets_per_slave is unused if
+	पूर्ण अन्यथा अणु
+		/* reciprocal_packets_per_slave is unused अगर
 		 * packets_per_slave is 0 or 1, just initialize it
 		 */
 		params->reciprocal_packets_per_slave =
-			(struct reciprocal_value) { 0 };
-	}
+			(काष्ठा reciprocal_value) अणु 0 पूर्ण;
+	पूर्ण
 
-	if (primary) {
-		strncpy(params->primary, primary, IFNAMSIZ);
+	अगर (primary) अणु
+		म_नकलन(params->primary, primary, IFNAMSIZ);
 		params->primary[IFNAMSIZ - 1] = 0;
-	}
+	पूर्ण
 
-	memcpy(params->arp_targets, arp_target, sizeof(arp_target));
+	स_नकल(params->arp_tarमाला_लो, arp_target, माप(arp_target));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Called from registration process */
-static int bond_init(struct net_device *bond_dev)
-{
-	struct bonding *bond = netdev_priv(bond_dev);
-	struct bond_net *bn = net_generic(dev_net(bond_dev), bond_net_id);
+अटल पूर्णांक bond_init(काष्ठा net_device *bond_dev)
+अणु
+	काष्ठा bonding *bond = netdev_priv(bond_dev);
+	काष्ठा bond_net *bn = net_generic(dev_net(bond_dev), bond_net_id);
 
 	netdev_dbg(bond_dev, "Begin bond_init\n");
 
 	bond->wq = alloc_ordered_workqueue(bond_dev->name, WQ_MEM_RECLAIM);
-	if (!bond->wq)
-		return -ENOMEM;
+	अगर (!bond->wq)
+		वापस -ENOMEM;
 
 	spin_lock_init(&bond->stats_lock);
 	netdev_lockdep_set_classes(bond_dev);
@@ -5358,74 +5359,74 @@ static int bond_init(struct net_device *bond_dev)
 
 	bond_prepare_sysfs_group(bond);
 
-	bond_debug_register(bond);
+	bond_debug_रेजिस्टर(bond);
 
 	/* Ensure valid dev_addr */
-	if (is_zero_ether_addr(bond_dev->dev_addr) &&
+	अगर (is_zero_ether_addr(bond_dev->dev_addr) &&
 	    bond_dev->addr_assign_type == NET_ADDR_PERM)
-		eth_hw_addr_random(bond_dev);
+		eth_hw_addr_अक्रमom(bond_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned int bond_get_num_tx_queues(void)
-{
-	return tx_queues;
-}
+अचिन्हित पूर्णांक bond_get_num_tx_queues(व्योम)
+अणु
+	वापस tx_queues;
+पूर्ण
 
-/* Create a new bond based on the specified name and bonding parameters.
- * If name is NULL, obtain a suitable "bond%d" name for us.
- * Caller must NOT hold rtnl_lock; we need to release it here before we
+/* Create a new bond based on the specअगरied name and bonding parameters.
+ * If name is शून्य, obtain a suitable "bond%d" name क्रम us.
+ * Caller must NOT hold rtnl_lock; we need to release it here beक्रमe we
  * set up our sysfs entries.
  */
-int bond_create(struct net *net, const char *name)
-{
-	struct net_device *bond_dev;
-	struct bonding *bond;
-	struct alb_bond_info *bond_info;
-	int res;
+पूर्णांक bond_create(काष्ठा net *net, स्थिर अक्षर *name)
+अणु
+	काष्ठा net_device *bond_dev;
+	काष्ठा bonding *bond;
+	काष्ठा alb_bond_info *bond_info;
+	पूर्णांक res;
 
 	rtnl_lock();
 
-	bond_dev = alloc_netdev_mq(sizeof(struct bonding),
+	bond_dev = alloc_netdev_mq(माप(काष्ठा bonding),
 				   name ? name : "bond%d", NET_NAME_UNKNOWN,
 				   bond_setup, tx_queues);
-	if (!bond_dev) {
+	अगर (!bond_dev) अणु
 		pr_err("%s: eek! can't alloc netdev!\n", name);
 		rtnl_unlock();
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * Initialize rx_hashtbl_used_head to RLB_NULL_INDEX.
-	 * It is set to 0 by default which is wrong.
+	 * Initialize rx_hashtbl_used_head to RLB_शून्य_INDEX.
+	 * It is set to 0 by शेष which is wrong.
 	 */
 	bond = netdev_priv(bond_dev);
 	bond_info = &(BOND_ALB_INFO(bond));
-	bond_info->rx_hashtbl_used_head = RLB_NULL_INDEX;
+	bond_info->rx_hashtbl_used_head = RLB_शून्य_INDEX;
 
 	dev_net_set(bond_dev, net);
 	bond_dev->rtnl_link_ops = &bond_link_ops;
 
-	res = register_netdevice(bond_dev);
-	if (res < 0) {
-		free_netdev(bond_dev);
+	res = रेजिस्टर_netdevice(bond_dev);
+	अगर (res < 0) अणु
+		मुक्त_netdev(bond_dev);
 		rtnl_unlock();
 
-		return res;
-	}
+		वापस res;
+	पूर्ण
 
-	netif_carrier_off(bond_dev);
+	netअगर_carrier_off(bond_dev);
 
 	bond_work_init_all(bond);
 
 	rtnl_unlock();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __net_init bond_net_init(struct net *net)
-{
-	struct bond_net *bn = net_generic(net, bond_net_id);
+अटल पूर्णांक __net_init bond_net_init(काष्ठा net *net)
+अणु
+	काष्ठा bond_net *bn = net_generic(net, bond_net_id);
 
 	bn->net = net;
 	INIT_LIST_HEAD(&bn->dev_list);
@@ -5433,92 +5434,92 @@ static int __net_init bond_net_init(struct net *net)
 	bond_create_proc_dir(bn);
 	bond_create_sysfs(bn);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit bond_net_exit(struct net *net)
-{
-	struct bond_net *bn = net_generic(net, bond_net_id);
-	struct bonding *bond, *tmp_bond;
+अटल व्योम __net_निकास bond_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा bond_net *bn = net_generic(net, bond_net_id);
+	काष्ठा bonding *bond, *पंचांगp_bond;
 	LIST_HEAD(list);
 
 	bond_destroy_sysfs(bn);
 
-	/* Kill off any bonds created after unregistering bond rtnl ops */
+	/* Kill off any bonds created after unरेजिस्टरing bond rtnl ops */
 	rtnl_lock();
-	list_for_each_entry_safe(bond, tmp_bond, &bn->dev_list, bond_list)
-		unregister_netdevice_queue(bond->dev, &list);
-	unregister_netdevice_many(&list);
+	list_क्रम_each_entry_safe(bond, पंचांगp_bond, &bn->dev_list, bond_list)
+		unरेजिस्टर_netdevice_queue(bond->dev, &list);
+	unरेजिस्टर_netdevice_many(&list);
 	rtnl_unlock();
 
 	bond_destroy_proc_dir(bn);
-}
+पूर्ण
 
-static struct pernet_operations bond_net_ops = {
+अटल काष्ठा pernet_operations bond_net_ops = अणु
 	.init = bond_net_init,
-	.exit = bond_net_exit,
+	.निकास = bond_net_निकास,
 	.id   = &bond_net_id,
-	.size = sizeof(struct bond_net),
-};
+	.size = माप(काष्ठा bond_net),
+पूर्ण;
 
-static int __init bonding_init(void)
-{
-	int i;
-	int res;
+अटल पूर्णांक __init bonding_init(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक res;
 
-	res = bond_check_params(&bonding_defaults);
-	if (res)
-		goto out;
+	res = bond_check_params(&bonding_शेषs);
+	अगर (res)
+		जाओ out;
 
-	res = register_pernet_subsys(&bond_net_ops);
-	if (res)
-		goto out;
+	res = रेजिस्टर_pernet_subsys(&bond_net_ops);
+	अगर (res)
+		जाओ out;
 
 	res = bond_netlink_init();
-	if (res)
-		goto err_link;
+	अगर (res)
+		जाओ err_link;
 
 	bond_create_debugfs();
 
-	for (i = 0; i < max_bonds; i++) {
-		res = bond_create(&init_net, NULL);
-		if (res)
-			goto err;
-	}
+	क्रम (i = 0; i < max_bonds; i++) अणु
+		res = bond_create(&init_net, शून्य);
+		अगर (res)
+			जाओ err;
+	पूर्ण
 
 	skb_flow_dissector_init(&flow_keys_bonding,
 				flow_keys_bonding_keys,
 				ARRAY_SIZE(flow_keys_bonding_keys));
 
-	register_netdevice_notifier(&bond_netdev_notifier);
+	रेजिस्टर_netdevice_notअगरier(&bond_netdev_notअगरier);
 out:
-	return res;
+	वापस res;
 err:
 	bond_destroy_debugfs();
 	bond_netlink_fini();
 err_link:
-	unregister_pernet_subsys(&bond_net_ops);
-	goto out;
+	unरेजिस्टर_pernet_subsys(&bond_net_ops);
+	जाओ out;
 
-}
+पूर्ण
 
-static void __exit bonding_exit(void)
-{
-	unregister_netdevice_notifier(&bond_netdev_notifier);
+अटल व्योम __निकास bonding_निकास(व्योम)
+अणु
+	unरेजिस्टर_netdevice_notअगरier(&bond_netdev_notअगरier);
 
 	bond_destroy_debugfs();
 
 	bond_netlink_fini();
-	unregister_pernet_subsys(&bond_net_ops);
+	unरेजिस्टर_pernet_subsys(&bond_net_ops);
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	/* Make sure we don't have an imbalance on our netpoll blocking */
-	WARN_ON(atomic_read(&netpoll_block_tx));
-#endif
-}
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	/* Make sure we करोn't have an imbalance on our netpoll blocking */
+	WARN_ON(atomic_पढ़ो(&netpoll_block_tx));
+#पूर्ण_अगर
+पूर्ण
 
 module_init(bonding_init);
-module_exit(bonding_exit);
+module_निकास(bonding_निकास);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("Thomas Davis, tadavis@lbl.gov and many others");

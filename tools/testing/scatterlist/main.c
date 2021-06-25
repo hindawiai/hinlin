@@ -1,119 +1,120 @@
-#include <stdio.h>
-#include <assert.h>
+<शैली गुरु>
+#समावेश <मानकपन.स>
+#समावेश <निश्चित.स>
 
-#include <linux/scatterlist.h>
+#समावेश <linux/scatterlist.h>
 
-#define MAX_PAGES (64)
+#घोषणा MAX_PAGES (64)
 
-struct test {
-	int alloc_ret;
-	unsigned num_pages;
-	unsigned *pfn;
-	unsigned *pfn_app;
-	unsigned size;
-	unsigned int max_seg;
-	unsigned int expected_segments;
-};
+काष्ठा test अणु
+	पूर्णांक alloc_ret;
+	अचिन्हित num_pages;
+	अचिन्हित *pfn;
+	अचिन्हित *pfn_app;
+	अचिन्हित size;
+	अचिन्हित पूर्णांक max_seg;
+	अचिन्हित पूर्णांक expected_segments;
+पूर्ण;
 
-static void set_pages(struct page **pages, const unsigned *array, unsigned num)
-{
-	unsigned int i;
+अटल व्योम set_pages(काष्ठा page **pages, स्थिर अचिन्हित *array, अचिन्हित num)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	assert(num < MAX_PAGES);
-	for (i = 0; i < num; i++)
-		pages[i] = (struct page *)(unsigned long)
+	निश्चित(num < MAX_PAGES);
+	क्रम (i = 0; i < num; i++)
+		pages[i] = (काष्ठा page *)(अचिन्हित दीर्घ)
 			   ((1 + array[i]) * PAGE_SIZE);
-}
+पूर्ण
 
-#define pfn(...) (unsigned []){ __VA_ARGS__ }
+#घोषणा pfn(...) (अचिन्हित [])अणु __VA_ARGS__ पूर्ण
 
-static void fail(struct test *test, struct sg_table *st, const char *cond)
-{
-	unsigned int i;
+अटल व्योम fail(काष्ठा test *test, काष्ठा sg_table *st, स्थिर अक्षर *cond)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	fprintf(stderr, "Failed on '%s'!\n\n", cond);
+	ख_लिखो(मानक_त्रुटि, "Failed on '%s'!\n\n", cond);
 
-	printf("size = %u, max segment = %u, expected nents = %u\nst->nents = %u, st->orig_nents= %u\n",
+	म_लिखो("size = %u, max segment = %u, expected nents = %u\nst->nents = %u, st->orig_nents= %u\n",
 	       test->size, test->max_seg, test->expected_segments, st->nents,
 	       st->orig_nents);
 
-	printf("%u input PFNs:", test->num_pages);
-	for (i = 0; i < test->num_pages; i++)
-		printf(" %x", test->pfn[i]);
-	printf("\n");
+	म_लिखो("%u input PFNs:", test->num_pages);
+	क्रम (i = 0; i < test->num_pages; i++)
+		म_लिखो(" %x", test->pfn[i]);
+	म_लिखो("\n");
 
-	exit(1);
-}
+	निकास(1);
+पूर्ण
 
-#define VALIDATE(cond, st, test) \
-	if (!(cond)) \
+#घोषणा VALIDATE(cond, st, test) \
+	अगर (!(cond)) \
 		fail((test), (st), #cond);
 
-int main(void)
-{
-	const unsigned int sgmax = UINT_MAX;
-	struct test *test, tests[] = {
-		{ -EINVAL, 1, pfn(0), NULL, PAGE_SIZE, 0, 1 },
-		{ 0, 1, pfn(0), NULL, PAGE_SIZE, PAGE_SIZE + 1, 1 },
-		{ 0, 1, pfn(0), NULL, PAGE_SIZE, sgmax, 1 },
-		{ 0, 1, pfn(0), NULL, 1, sgmax, 1 },
-		{ 0, 2, pfn(0, 1), NULL, 2 * PAGE_SIZE, sgmax, 1 },
-		{ 0, 2, pfn(1, 0), NULL, 2 * PAGE_SIZE, sgmax, 2 },
-		{ 0, 3, pfn(0, 1, 2), NULL, 3 * PAGE_SIZE, sgmax, 1 },
-		{ 0, 3, pfn(0, 1, 2), NULL, 3 * PAGE_SIZE, sgmax, 1 },
-		{ 0, 3, pfn(0, 1, 2), pfn(3, 4, 5), 3 * PAGE_SIZE, sgmax, 1 },
-		{ 0, 3, pfn(0, 1, 2), pfn(4, 5, 6), 3 * PAGE_SIZE, sgmax, 2 },
-		{ 0, 3, pfn(0, 2, 1), NULL, 3 * PAGE_SIZE, sgmax, 3 },
-		{ 0, 3, pfn(0, 1, 3), NULL, 3 * PAGE_SIZE, sgmax, 2 },
-		{ 0, 3, pfn(1, 2, 4), NULL, 3 * PAGE_SIZE, sgmax, 2 },
-		{ 0, 3, pfn(1, 3, 4), NULL, 3 * PAGE_SIZE, sgmax, 2 },
-		{ 0, 4, pfn(0, 1, 3, 4), NULL, 4 * PAGE_SIZE, sgmax, 2 },
-		{ 0, 5, pfn(0, 1, 3, 4, 5), NULL, 5 * PAGE_SIZE, sgmax, 2 },
-		{ 0, 5, pfn(0, 1, 3, 4, 6), NULL, 5 * PAGE_SIZE, sgmax, 3 },
-		{ 0, 5, pfn(0, 1, 2, 3, 4), NULL, 5 * PAGE_SIZE, sgmax, 1 },
-		{ 0, 5, pfn(0, 1, 2, 3, 4), NULL, 5 * PAGE_SIZE, 2 * PAGE_SIZE,
-		  3 },
-		{ 0, 6, pfn(0, 1, 2, 3, 4, 5), NULL, 6 * PAGE_SIZE,
-		  2 * PAGE_SIZE, 3 },
-		{ 0, 6, pfn(0, 2, 3, 4, 5, 6), NULL, 6 * PAGE_SIZE,
-		  2 * PAGE_SIZE, 4 },
-		{ 0, 6, pfn(0, 1, 3, 4, 5, 6), pfn(7, 8, 9, 10, 11, 12),
-		  6 * PAGE_SIZE, 12 * PAGE_SIZE, 2 },
-		{ 0, 0, NULL, NULL, 0, 0, 0 },
-	};
-	unsigned int i;
+पूर्णांक मुख्य(व्योम)
+अणु
+	स्थिर अचिन्हित पूर्णांक sgmax = अच_पूर्णांक_उच्च;
+	काष्ठा test *test, tests[] = अणु
+		अणु -EINVAL, 1, pfn(0), शून्य, PAGE_SIZE, 0, 1 पूर्ण,
+		अणु 0, 1, pfn(0), शून्य, PAGE_SIZE, PAGE_SIZE + 1, 1 पूर्ण,
+		अणु 0, 1, pfn(0), शून्य, PAGE_SIZE, sgmax, 1 पूर्ण,
+		अणु 0, 1, pfn(0), शून्य, 1, sgmax, 1 पूर्ण,
+		अणु 0, 2, pfn(0, 1), शून्य, 2 * PAGE_SIZE, sgmax, 1 पूर्ण,
+		अणु 0, 2, pfn(1, 0), शून्य, 2 * PAGE_SIZE, sgmax, 2 पूर्ण,
+		अणु 0, 3, pfn(0, 1, 2), शून्य, 3 * PAGE_SIZE, sgmax, 1 पूर्ण,
+		अणु 0, 3, pfn(0, 1, 2), शून्य, 3 * PAGE_SIZE, sgmax, 1 पूर्ण,
+		अणु 0, 3, pfn(0, 1, 2), pfn(3, 4, 5), 3 * PAGE_SIZE, sgmax, 1 पूर्ण,
+		अणु 0, 3, pfn(0, 1, 2), pfn(4, 5, 6), 3 * PAGE_SIZE, sgmax, 2 पूर्ण,
+		अणु 0, 3, pfn(0, 2, 1), शून्य, 3 * PAGE_SIZE, sgmax, 3 पूर्ण,
+		अणु 0, 3, pfn(0, 1, 3), शून्य, 3 * PAGE_SIZE, sgmax, 2 पूर्ण,
+		अणु 0, 3, pfn(1, 2, 4), शून्य, 3 * PAGE_SIZE, sgmax, 2 पूर्ण,
+		अणु 0, 3, pfn(1, 3, 4), शून्य, 3 * PAGE_SIZE, sgmax, 2 पूर्ण,
+		अणु 0, 4, pfn(0, 1, 3, 4), शून्य, 4 * PAGE_SIZE, sgmax, 2 पूर्ण,
+		अणु 0, 5, pfn(0, 1, 3, 4, 5), शून्य, 5 * PAGE_SIZE, sgmax, 2 पूर्ण,
+		अणु 0, 5, pfn(0, 1, 3, 4, 6), शून्य, 5 * PAGE_SIZE, sgmax, 3 पूर्ण,
+		अणु 0, 5, pfn(0, 1, 2, 3, 4), शून्य, 5 * PAGE_SIZE, sgmax, 1 पूर्ण,
+		अणु 0, 5, pfn(0, 1, 2, 3, 4), शून्य, 5 * PAGE_SIZE, 2 * PAGE_SIZE,
+		  3 पूर्ण,
+		अणु 0, 6, pfn(0, 1, 2, 3, 4, 5), शून्य, 6 * PAGE_SIZE,
+		  2 * PAGE_SIZE, 3 पूर्ण,
+		अणु 0, 6, pfn(0, 2, 3, 4, 5, 6), शून्य, 6 * PAGE_SIZE,
+		  2 * PAGE_SIZE, 4 पूर्ण,
+		अणु 0, 6, pfn(0, 1, 3, 4, 5, 6), pfn(7, 8, 9, 10, 11, 12),
+		  6 * PAGE_SIZE, 12 * PAGE_SIZE, 2 पूर्ण,
+		अणु 0, 0, शून्य, शून्य, 0, 0, 0 पूर्ण,
+	पूर्ण;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0, test = tests; test->expected_segments; test++, i++) {
-		int left_pages = test->pfn_app ? test->num_pages : 0;
-		struct page *pages[MAX_PAGES];
-		struct sg_table st;
-		struct scatterlist *sg;
+	क्रम (i = 0, test = tests; test->expected_segments; test++, i++) अणु
+		पूर्णांक left_pages = test->pfn_app ? test->num_pages : 0;
+		काष्ठा page *pages[MAX_PAGES];
+		काष्ठा sg_table st;
+		काष्ठा scatterlist *sg;
 
 		set_pages(pages, test->pfn, test->num_pages);
 
 		sg = __sg_alloc_table_from_pages(&st, pages, test->num_pages, 0,
-				test->size, test->max_seg, NULL, left_pages, GFP_KERNEL);
-		assert(PTR_ERR_OR_ZERO(sg) == test->alloc_ret);
+				test->size, test->max_seg, शून्य, left_pages, GFP_KERNEL);
+		निश्चित(PTR_ERR_OR_ZERO(sg) == test->alloc_ret);
 
-		if (test->alloc_ret)
-			continue;
+		अगर (test->alloc_ret)
+			जारी;
 
-		if (test->pfn_app) {
+		अगर (test->pfn_app) अणु
 			set_pages(pages, test->pfn_app, test->num_pages);
 			sg = __sg_alloc_table_from_pages(&st, pages, test->num_pages, 0,
 					test->size, test->max_seg, sg, 0, GFP_KERNEL);
 
-			assert(PTR_ERR_OR_ZERO(sg) == test->alloc_ret);
-		}
+			निश्चित(PTR_ERR_OR_ZERO(sg) == test->alloc_ret);
+		पूर्ण
 
 		VALIDATE(st.nents == test->expected_segments, &st, test);
-		if (!test->pfn_app)
+		अगर (!test->pfn_app)
 			VALIDATE(st.orig_nents == test->expected_segments, &st, test);
 
-		sg_free_table(&st);
-	}
+		sg_मुक्त_table(&st);
+	पूर्ण
 
-	assert(i == (sizeof(tests) / sizeof(tests[0])) - 1);
+	निश्चित(i == (माप(tests) / माप(tests[0])) - 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

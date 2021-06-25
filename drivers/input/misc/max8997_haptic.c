@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * MAX8997-haptic controller driver
  *
@@ -8,254 +9,254 @@
  * This program is not provided / owned by Maxim Integrated Products.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/pwm.h>
-#include <linux/input.h>
-#include <linux/mfd/max8997-private.h>
-#include <linux/mfd/max8997.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/input.h>
+#समावेश <linux/mfd/max8997-निजी.h>
+#समावेश <linux/mfd/max8997.h>
+#समावेश <linux/regulator/consumer.h>
 
-/* Haptic configuration 2 register */
-#define MAX8997_MOTOR_TYPE_SHIFT	7
-#define MAX8997_ENABLE_SHIFT		6
-#define MAX8997_MODE_SHIFT		5
+/* Haptic configuration 2 रेजिस्टर */
+#घोषणा MAX8997_MOTOR_TYPE_SHIFT	7
+#घोषणा MAX8997_ENABLE_SHIFT		6
+#घोषणा MAX8997_MODE_SHIFT		5
 
-/* Haptic driver configuration register */
-#define MAX8997_CYCLE_SHIFT		6
-#define MAX8997_SIG_PERIOD_SHIFT	4
-#define MAX8997_SIG_DUTY_SHIFT		2
-#define MAX8997_PWM_DUTY_SHIFT		0
+/* Haptic driver configuration रेजिस्टर */
+#घोषणा MAX8997_CYCLE_SHIFT		6
+#घोषणा MAX8997_SIG_PERIOD_SHIFT	4
+#घोषणा MAX8997_SIG_DUTY_SHIFT		2
+#घोषणा MAX8997_PWM_DUTY_SHIFT		0
 
-struct max8997_haptic {
-	struct device *dev;
-	struct i2c_client *client;
-	struct input_dev *input_dev;
-	struct regulator *regulator;
+काष्ठा max8997_haptic अणु
+	काष्ठा device *dev;
+	काष्ठा i2c_client *client;
+	काष्ठा input_dev *input_dev;
+	काष्ठा regulator *regulator;
 
-	struct work_struct work;
-	struct mutex mutex;
+	काष्ठा work_काष्ठा work;
+	काष्ठा mutex mutex;
 
 	bool enabled;
-	unsigned int level;
+	अचिन्हित पूर्णांक level;
 
-	struct pwm_device *pwm;
-	unsigned int pwm_period;
-	enum max8997_haptic_pwm_divisor pwm_divisor;
+	काष्ठा pwm_device *pwm;
+	अचिन्हित पूर्णांक pwm_period;
+	क्रमागत max8997_haptic_pwm_भागisor pwm_भागisor;
 
-	enum max8997_haptic_motor_type type;
-	enum max8997_haptic_pulse_mode mode;
+	क्रमागत max8997_haptic_motor_type type;
+	क्रमागत max8997_haptic_pulse_mode mode;
 
-	unsigned int internal_mode_pattern;
-	unsigned int pattern_cycle;
-	unsigned int pattern_signal_period;
-};
+	अचिन्हित पूर्णांक पूर्णांकernal_mode_pattern;
+	अचिन्हित पूर्णांक pattern_cycle;
+	अचिन्हित पूर्णांक pattern_संकेत_period;
+पूर्ण;
 
-static int max8997_haptic_set_duty_cycle(struct max8997_haptic *chip)
-{
-	int ret = 0;
+अटल पूर्णांक max8997_haptic_set_duty_cycle(काष्ठा max8997_haptic *chip)
+अणु
+	पूर्णांक ret = 0;
 
-	if (chip->mode == MAX8997_EXTERNAL_MODE) {
-		unsigned int duty = chip->pwm_period * chip->level / 100;
+	अगर (chip->mode == MAX8997_EXTERNAL_MODE) अणु
+		अचिन्हित पूर्णांक duty = chip->pwm_period * chip->level / 100;
 		ret = pwm_config(chip->pwm, duty, chip->pwm_period);
-	} else {
+	पूर्ण अन्यथा अणु
 		u8 duty_index = 0;
 
 		duty_index = DIV_ROUND_UP(chip->level * 64, 100);
 
-		switch (chip->internal_mode_pattern) {
-		case 0:
-			max8997_write_reg(chip->client,
+		चयन (chip->पूर्णांकernal_mode_pattern) अणु
+		हाल 0:
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_SIGPWMDC1, duty_index);
-			break;
-		case 1:
-			max8997_write_reg(chip->client,
+			अवरोध;
+		हाल 1:
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_SIGPWMDC2, duty_index);
-			break;
-		case 2:
-			max8997_write_reg(chip->client,
+			अवरोध;
+		हाल 2:
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_SIGPWMDC3, duty_index);
-			break;
-		case 3:
-			max8997_write_reg(chip->client,
+			अवरोध;
+		हाल 3:
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_SIGPWMDC4, duty_index);
-			break;
-		default:
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void max8997_haptic_configure(struct max8997_haptic *chip)
-{
+अटल व्योम max8997_haptic_configure(काष्ठा max8997_haptic *chip)
+अणु
 	u8 value;
 
 	value = chip->type << MAX8997_MOTOR_TYPE_SHIFT |
 		chip->enabled << MAX8997_ENABLE_SHIFT |
-		chip->mode << MAX8997_MODE_SHIFT | chip->pwm_divisor;
-	max8997_write_reg(chip->client, MAX8997_HAPTIC_REG_CONF2, value);
+		chip->mode << MAX8997_MODE_SHIFT | chip->pwm_भागisor;
+	max8997_ग_लिखो_reg(chip->client, MAX8997_HAPTIC_REG_CONF2, value);
 
-	if (chip->mode == MAX8997_INTERNAL_MODE && chip->enabled) {
-		value = chip->internal_mode_pattern << MAX8997_CYCLE_SHIFT |
-			chip->internal_mode_pattern << MAX8997_SIG_PERIOD_SHIFT |
-			chip->internal_mode_pattern << MAX8997_SIG_DUTY_SHIFT |
-			chip->internal_mode_pattern << MAX8997_PWM_DUTY_SHIFT;
-		max8997_write_reg(chip->client,
+	अगर (chip->mode == MAX8997_INTERNAL_MODE && chip->enabled) अणु
+		value = chip->पूर्णांकernal_mode_pattern << MAX8997_CYCLE_SHIFT |
+			chip->पूर्णांकernal_mode_pattern << MAX8997_SIG_PERIOD_SHIFT |
+			chip->पूर्णांकernal_mode_pattern << MAX8997_SIG_DUTY_SHIFT |
+			chip->पूर्णांकernal_mode_pattern << MAX8997_PWM_DUTY_SHIFT;
+		max8997_ग_लिखो_reg(chip->client,
 			MAX8997_HAPTIC_REG_DRVCONF, value);
 
-		switch (chip->internal_mode_pattern) {
-		case 0:
+		चयन (chip->पूर्णांकernal_mode_pattern) अणु
+		हाल 0:
 			value = chip->pattern_cycle << 4;
-			max8997_write_reg(chip->client,
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_CYCLECONF1, value);
-			value = chip->pattern_signal_period;
-			max8997_write_reg(chip->client,
+			value = chip->pattern_संकेत_period;
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_SIGCONF1, value);
-			break;
+			अवरोध;
 
-		case 1:
+		हाल 1:
 			value = chip->pattern_cycle;
-			max8997_write_reg(chip->client,
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_CYCLECONF1, value);
-			value = chip->pattern_signal_period;
-			max8997_write_reg(chip->client,
+			value = chip->pattern_संकेत_period;
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_SIGCONF2, value);
-			break;
+			अवरोध;
 
-		case 2:
+		हाल 2:
 			value = chip->pattern_cycle << 4;
-			max8997_write_reg(chip->client,
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_CYCLECONF2, value);
-			value = chip->pattern_signal_period;
-			max8997_write_reg(chip->client,
+			value = chip->pattern_संकेत_period;
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_SIGCONF3, value);
-			break;
+			अवरोध;
 
-		case 3:
+		हाल 3:
 			value = chip->pattern_cycle;
-			max8997_write_reg(chip->client,
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_CYCLECONF2, value);
-			value = chip->pattern_signal_period;
-			max8997_write_reg(chip->client,
+			value = chip->pattern_संकेत_period;
+			max8997_ग_लिखो_reg(chip->client,
 				MAX8997_HAPTIC_REG_SIGCONF4, value);
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
-}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void max8997_haptic_enable(struct max8997_haptic *chip)
-{
-	int error;
+अटल व्योम max8997_haptic_enable(काष्ठा max8997_haptic *chip)
+अणु
+	पूर्णांक error;
 
 	mutex_lock(&chip->mutex);
 
 	error = max8997_haptic_set_duty_cycle(chip);
-	if (error) {
+	अगर (error) अणु
 		dev_err(chip->dev, "set_pwm_cycle failed, error: %d\n", error);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!chip->enabled) {
+	अगर (!chip->enabled) अणु
 		error = regulator_enable(chip->regulator);
-		if (error) {
+		अगर (error) अणु
 			dev_err(chip->dev, "Failed to enable regulator\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		max8997_haptic_configure(chip);
-		if (chip->mode == MAX8997_EXTERNAL_MODE) {
+		अगर (chip->mode == MAX8997_EXTERNAL_MODE) अणु
 			error = pwm_enable(chip->pwm);
-			if (error) {
+			अगर (error) अणु
 				dev_err(chip->dev, "Failed to enable PWM\n");
 				regulator_disable(chip->regulator);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 		chip->enabled = true;
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&chip->mutex);
-}
+पूर्ण
 
-static void max8997_haptic_disable(struct max8997_haptic *chip)
-{
+अटल व्योम max8997_haptic_disable(काष्ठा max8997_haptic *chip)
+अणु
 	mutex_lock(&chip->mutex);
 
-	if (chip->enabled) {
+	अगर (chip->enabled) अणु
 		chip->enabled = false;
 		max8997_haptic_configure(chip);
-		if (chip->mode == MAX8997_EXTERNAL_MODE)
+		अगर (chip->mode == MAX8997_EXTERNAL_MODE)
 			pwm_disable(chip->pwm);
 		regulator_disable(chip->regulator);
-	}
+	पूर्ण
 
 	mutex_unlock(&chip->mutex);
-}
+पूर्ण
 
-static void max8997_haptic_play_effect_work(struct work_struct *work)
-{
-	struct max8997_haptic *chip =
-			container_of(work, struct max8997_haptic, work);
+अटल व्योम max8997_haptic_play_effect_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा max8997_haptic *chip =
+			container_of(work, काष्ठा max8997_haptic, work);
 
-	if (chip->level)
+	अगर (chip->level)
 		max8997_haptic_enable(chip);
-	else
+	अन्यथा
 		max8997_haptic_disable(chip);
-}
+पूर्ण
 
-static int max8997_haptic_play_effect(struct input_dev *dev, void *data,
-				  struct ff_effect *effect)
-{
-	struct max8997_haptic *chip = input_get_drvdata(dev);
+अटल पूर्णांक max8997_haptic_play_effect(काष्ठा input_dev *dev, व्योम *data,
+				  काष्ठा ff_effect *effect)
+अणु
+	काष्ठा max8997_haptic *chip = input_get_drvdata(dev);
 
 	chip->level = effect->u.rumble.strong_magnitude;
-	if (!chip->level)
+	अगर (!chip->level)
 		chip->level = effect->u.rumble.weak_magnitude;
 
 	schedule_work(&chip->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void max8997_haptic_close(struct input_dev *dev)
-{
-	struct max8997_haptic *chip = input_get_drvdata(dev);
+अटल व्योम max8997_haptic_बंद(काष्ठा input_dev *dev)
+अणु
+	काष्ठा max8997_haptic *chip = input_get_drvdata(dev);
 
 	cancel_work_sync(&chip->work);
 	max8997_haptic_disable(chip);
-}
+पूर्ण
 
-static int max8997_haptic_probe(struct platform_device *pdev)
-{
-	struct max8997_dev *iodev = dev_get_drvdata(pdev->dev.parent);
-	const struct max8997_platform_data *pdata =
+अटल पूर्णांक max8997_haptic_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max8997_dev *iodev = dev_get_drvdata(pdev->dev.parent);
+	स्थिर काष्ठा max8997_platक्रमm_data *pdata =
 					dev_get_platdata(iodev->dev);
-	const struct max8997_haptic_platform_data *haptic_pdata = NULL;
-	struct max8997_haptic *chip;
-	struct input_dev *input_dev;
-	int error;
+	स्थिर काष्ठा max8997_haptic_platक्रमm_data *haptic_pdata = शून्य;
+	काष्ठा max8997_haptic *chip;
+	काष्ठा input_dev *input_dev;
+	पूर्णांक error;
 
-	if (pdata)
+	अगर (pdata)
 		haptic_pdata = pdata->haptic_pdata;
 
-	if (!haptic_pdata) {
+	अगर (!haptic_pdata) अणु
 		dev_err(&pdev->dev, "no haptic platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	chip = kzalloc(sizeof(struct max8997_haptic), GFP_KERNEL);
+	chip = kzalloc(माप(काष्ठा max8997_haptic), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	if (!chip || !input_dev) {
+	अगर (!chip || !input_dev) अणु
 		dev_err(&pdev->dev, "unable to allocate memory\n");
 		error = -ENOMEM;
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
 	INIT_WORK(&chip->work, max8997_haptic_play_effect_work);
 	mutex_init(&chip->mutex);
@@ -266,135 +267,135 @@ static int max8997_haptic_probe(struct platform_device *pdev)
 	chip->pwm_period = haptic_pdata->pwm_period;
 	chip->type = haptic_pdata->type;
 	chip->mode = haptic_pdata->mode;
-	chip->pwm_divisor = haptic_pdata->pwm_divisor;
+	chip->pwm_भागisor = haptic_pdata->pwm_भागisor;
 
-	switch (chip->mode) {
-	case MAX8997_INTERNAL_MODE:
-		chip->internal_mode_pattern =
-				haptic_pdata->internal_mode_pattern;
+	चयन (chip->mode) अणु
+	हाल MAX8997_INTERNAL_MODE:
+		chip->पूर्णांकernal_mode_pattern =
+				haptic_pdata->पूर्णांकernal_mode_pattern;
 		chip->pattern_cycle = haptic_pdata->pattern_cycle;
-		chip->pattern_signal_period =
-				haptic_pdata->pattern_signal_period;
-		break;
+		chip->pattern_संकेत_period =
+				haptic_pdata->pattern_संकेत_period;
+		अवरोध;
 
-	case MAX8997_EXTERNAL_MODE:
+	हाल MAX8997_EXTERNAL_MODE:
 		chip->pwm = pwm_request(haptic_pdata->pwm_channel_id,
 					"max8997-haptic");
-		if (IS_ERR(chip->pwm)) {
+		अगर (IS_ERR(chip->pwm)) अणु
 			error = PTR_ERR(chip->pwm);
 			dev_err(&pdev->dev,
 				"unable to request PWM for haptic, error: %d\n",
 				error);
-			goto err_free_mem;
-		}
+			जाओ err_मुक्त_mem;
+		पूर्ण
 
 		/*
-		 * FIXME: pwm_apply_args() should be removed when switching to
+		 * FIXME: pwm_apply_args() should be हटाओd when चयनing to
 		 * the atomic PWM API.
 		 */
 		pwm_apply_args(chip->pwm);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(&pdev->dev,
 			"Invalid chip mode specified (%d)\n", chip->mode);
 		error = -EINVAL;
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
 	chip->regulator = regulator_get(&pdev->dev, "inmotor");
-	if (IS_ERR(chip->regulator)) {
+	अगर (IS_ERR(chip->regulator)) अणु
 		error = PTR_ERR(chip->regulator);
 		dev_err(&pdev->dev,
 			"unable to get regulator, error: %d\n",
 			error);
-		goto err_free_pwm;
-	}
+		जाओ err_मुक्त_pwm;
+	पूर्ण
 
 	input_dev->name = "max8997-haptic";
 	input_dev->id.version = 1;
 	input_dev->dev.parent = &pdev->dev;
-	input_dev->close = max8997_haptic_close;
+	input_dev->बंद = max8997_haptic_बंद;
 	input_set_drvdata(input_dev, chip);
 	input_set_capability(input_dev, EV_FF, FF_RUMBLE);
 
-	error = input_ff_create_memless(input_dev, NULL,
+	error = input_ff_create_memless(input_dev, शून्य,
 				max8997_haptic_play_effect);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev,
 			"unable to create FF device, error: %d\n",
 			error);
-		goto err_put_regulator;
-	}
+		जाओ err_put_regulator;
+	पूर्ण
 
-	error = input_register_device(input_dev);
-	if (error) {
+	error = input_रेजिस्टर_device(input_dev);
+	अगर (error) अणु
 		dev_err(&pdev->dev,
 			"unable to register input device, error: %d\n",
 			error);
-		goto err_destroy_ff;
-	}
+		जाओ err_destroy_ff;
+	पूर्ण
 
-	platform_set_drvdata(pdev, chip);
-	return 0;
+	platक्रमm_set_drvdata(pdev, chip);
+	वापस 0;
 
 err_destroy_ff:
 	input_ff_destroy(input_dev);
 err_put_regulator:
 	regulator_put(chip->regulator);
-err_free_pwm:
-	if (chip->mode == MAX8997_EXTERNAL_MODE)
-		pwm_free(chip->pwm);
-err_free_mem:
-	input_free_device(input_dev);
-	kfree(chip);
+err_मुक्त_pwm:
+	अगर (chip->mode == MAX8997_EXTERNAL_MODE)
+		pwm_मुक्त(chip->pwm);
+err_मुक्त_mem:
+	input_मुक्त_device(input_dev);
+	kमुक्त(chip);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int max8997_haptic_remove(struct platform_device *pdev)
-{
-	struct max8997_haptic *chip = platform_get_drvdata(pdev);
+अटल पूर्णांक max8997_haptic_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max8997_haptic *chip = platक्रमm_get_drvdata(pdev);
 
-	input_unregister_device(chip->input_dev);
+	input_unरेजिस्टर_device(chip->input_dev);
 	regulator_put(chip->regulator);
 
-	if (chip->mode == MAX8997_EXTERNAL_MODE)
-		pwm_free(chip->pwm);
+	अगर (chip->mode == MAX8997_EXTERNAL_MODE)
+		pwm_मुक्त(chip->pwm);
 
-	kfree(chip);
+	kमुक्त(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused max8997_haptic_suspend(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct max8997_haptic *chip = platform_get_drvdata(pdev);
+अटल पूर्णांक __maybe_unused max8997_haptic_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा max8997_haptic *chip = platक्रमm_get_drvdata(pdev);
 
 	max8997_haptic_disable(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(max8997_haptic_pm_ops, max8997_haptic_suspend, NULL);
+अटल SIMPLE_DEV_PM_OPS(max8997_haptic_pm_ops, max8997_haptic_suspend, शून्य);
 
-static const struct platform_device_id max8997_haptic_id[] = {
-	{ "max8997-haptic", 0 },
-	{ },
-};
-MODULE_DEVICE_TABLE(platform, max8997_haptic_id);
+अटल स्थिर काष्ठा platक्रमm_device_id max8997_haptic_id[] = अणु
+	अणु "max8997-haptic", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, max8997_haptic_id);
 
-static struct platform_driver max8997_haptic_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver max8997_haptic_driver = अणु
+	.driver	= अणु
 		.name	= "max8997-haptic",
 		.pm	= &max8997_haptic_pm_ops,
-	},
+	पूर्ण,
 	.probe		= max8997_haptic_probe,
-	.remove		= max8997_haptic_remove,
+	.हटाओ		= max8997_haptic_हटाओ,
 	.id_table	= max8997_haptic_id,
-};
-module_platform_driver(max8997_haptic_driver);
+पूर्ण;
+module_platक्रमm_driver(max8997_haptic_driver);
 
 MODULE_AUTHOR("Donggeun Kim <dg77.kim@samsung.com>");
 MODULE_DESCRIPTION("max8997_haptic driver");

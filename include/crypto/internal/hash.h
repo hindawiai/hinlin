@@ -1,251 +1,252 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Hash algorithms.
  * 
- * Copyright (c) 2008 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2008 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#ifndef _CRYPTO_INTERNAL_HASH_H
-#define _CRYPTO_INTERNAL_HASH_H
+#अगर_अघोषित _CRYPTO_INTERNAL_HASH_H
+#घोषणा _CRYPTO_INTERNAL_HASH_H
 
-#include <crypto/algapi.h>
-#include <crypto/hash.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/hash.h>
 
-struct ahash_request;
-struct scatterlist;
+काष्ठा ahash_request;
+काष्ठा scatterlist;
 
-struct crypto_hash_walk {
-	char *data;
+काष्ठा crypto_hash_walk अणु
+	अक्षर *data;
 
-	unsigned int offset;
-	unsigned int alignmask;
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक alignmask;
 
-	struct page *pg;
-	unsigned int entrylen;
+	काष्ठा page *pg;
+	अचिन्हित पूर्णांक entrylen;
 
-	unsigned int total;
-	struct scatterlist *sg;
+	अचिन्हित पूर्णांक total;
+	काष्ठा scatterlist *sg;
 
-	unsigned int flags;
-};
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
-struct ahash_instance {
-	void (*free)(struct ahash_instance *inst);
-	union {
-		struct {
-			char head[offsetof(struct ahash_alg, halg.base)];
-			struct crypto_instance base;
-		} s;
-		struct ahash_alg alg;
-	};
-};
+काष्ठा ahash_instance अणु
+	व्योम (*मुक्त)(काष्ठा ahash_instance *inst);
+	जोड़ अणु
+		काष्ठा अणु
+			अक्षर head[दुरत्व(काष्ठा ahash_alg, halg.base)];
+			काष्ठा crypto_instance base;
+		पूर्ण s;
+		काष्ठा ahash_alg alg;
+	पूर्ण;
+पूर्ण;
 
-struct shash_instance {
-	void (*free)(struct shash_instance *inst);
-	union {
-		struct {
-			char head[offsetof(struct shash_alg, base)];
-			struct crypto_instance base;
-		} s;
-		struct shash_alg alg;
-	};
-};
+काष्ठा shash_instance अणु
+	व्योम (*मुक्त)(काष्ठा shash_instance *inst);
+	जोड़ अणु
+		काष्ठा अणु
+			अक्षर head[दुरत्व(काष्ठा shash_alg, base)];
+			काष्ठा crypto_instance base;
+		पूर्ण s;
+		काष्ठा shash_alg alg;
+	पूर्ण;
+पूर्ण;
 
-struct crypto_ahash_spawn {
-	struct crypto_spawn base;
-};
+काष्ठा crypto_ahash_spawn अणु
+	काष्ठा crypto_spawn base;
+पूर्ण;
 
-struct crypto_shash_spawn {
-	struct crypto_spawn base;
-};
+काष्ठा crypto_shash_spawn अणु
+	काष्ठा crypto_spawn base;
+पूर्ण;
 
-int crypto_hash_walk_done(struct crypto_hash_walk *walk, int err);
-int crypto_hash_walk_first(struct ahash_request *req,
-			   struct crypto_hash_walk *walk);
+पूर्णांक crypto_hash_walk_करोne(काष्ठा crypto_hash_walk *walk, पूर्णांक err);
+पूर्णांक crypto_hash_walk_first(काष्ठा ahash_request *req,
+			   काष्ठा crypto_hash_walk *walk);
 
-static inline int crypto_hash_walk_last(struct crypto_hash_walk *walk)
-{
-	return !(walk->entrylen | walk->total);
-}
+अटल अंतरभूत पूर्णांक crypto_hash_walk_last(काष्ठा crypto_hash_walk *walk)
+अणु
+	वापस !(walk->entrylen | walk->total);
+पूर्ण
 
-int crypto_register_ahash(struct ahash_alg *alg);
-void crypto_unregister_ahash(struct ahash_alg *alg);
-int crypto_register_ahashes(struct ahash_alg *algs, int count);
-void crypto_unregister_ahashes(struct ahash_alg *algs, int count);
-int ahash_register_instance(struct crypto_template *tmpl,
-			    struct ahash_instance *inst);
+पूर्णांक crypto_रेजिस्टर_ahash(काष्ठा ahash_alg *alg);
+व्योम crypto_unरेजिस्टर_ahash(काष्ठा ahash_alg *alg);
+पूर्णांक crypto_रेजिस्टर_ahashes(काष्ठा ahash_alg *algs, पूर्णांक count);
+व्योम crypto_unरेजिस्टर_ahashes(काष्ठा ahash_alg *algs, पूर्णांक count);
+पूर्णांक ahash_रेजिस्टर_instance(काष्ठा crypto_ढाँचा *पंचांगpl,
+			    काष्ठा ahash_instance *inst);
 
-int shash_no_setkey(struct crypto_shash *tfm, const u8 *key,
-		    unsigned int keylen);
+पूर्णांक shash_no_setkey(काष्ठा crypto_shash *tfm, स्थिर u8 *key,
+		    अचिन्हित पूर्णांक keylen);
 
-static inline bool crypto_shash_alg_has_setkey(struct shash_alg *alg)
-{
-	return alg->setkey != shash_no_setkey;
-}
+अटल अंतरभूत bool crypto_shash_alg_has_setkey(काष्ठा shash_alg *alg)
+अणु
+	वापस alg->setkey != shash_no_setkey;
+पूर्ण
 
-static inline bool crypto_shash_alg_needs_key(struct shash_alg *alg)
-{
-	return crypto_shash_alg_has_setkey(alg) &&
+अटल अंतरभूत bool crypto_shash_alg_needs_key(काष्ठा shash_alg *alg)
+अणु
+	वापस crypto_shash_alg_has_setkey(alg) &&
 		!(alg->base.cra_flags & CRYPTO_ALG_OPTIONAL_KEY);
-}
+पूर्ण
 
-bool crypto_hash_alg_has_setkey(struct hash_alg_common *halg);
+bool crypto_hash_alg_has_setkey(काष्ठा hash_alg_common *halg);
 
-int crypto_grab_ahash(struct crypto_ahash_spawn *spawn,
-		      struct crypto_instance *inst,
-		      const char *name, u32 type, u32 mask);
+पूर्णांक crypto_grab_ahash(काष्ठा crypto_ahash_spawn *spawn,
+		      काष्ठा crypto_instance *inst,
+		      स्थिर अक्षर *name, u32 type, u32 mask);
 
-static inline void crypto_drop_ahash(struct crypto_ahash_spawn *spawn)
-{
+अटल अंतरभूत व्योम crypto_drop_ahash(काष्ठा crypto_ahash_spawn *spawn)
+अणु
 	crypto_drop_spawn(&spawn->base);
-}
+पूर्ण
 
-static inline struct hash_alg_common *crypto_spawn_ahash_alg(
-	struct crypto_ahash_spawn *spawn)
-{
-	return __crypto_hash_alg_common(spawn->base.alg);
-}
+अटल अंतरभूत काष्ठा hash_alg_common *crypto_spawn_ahash_alg(
+	काष्ठा crypto_ahash_spawn *spawn)
+अणु
+	वापस __crypto_hash_alg_common(spawn->base.alg);
+पूर्ण
 
-int crypto_register_shash(struct shash_alg *alg);
-void crypto_unregister_shash(struct shash_alg *alg);
-int crypto_register_shashes(struct shash_alg *algs, int count);
-void crypto_unregister_shashes(struct shash_alg *algs, int count);
-int shash_register_instance(struct crypto_template *tmpl,
-			    struct shash_instance *inst);
-void shash_free_singlespawn_instance(struct shash_instance *inst);
+पूर्णांक crypto_रेजिस्टर_shash(काष्ठा shash_alg *alg);
+व्योम crypto_unरेजिस्टर_shash(काष्ठा shash_alg *alg);
+पूर्णांक crypto_रेजिस्टर_shashes(काष्ठा shash_alg *algs, पूर्णांक count);
+व्योम crypto_unरेजिस्टर_shashes(काष्ठा shash_alg *algs, पूर्णांक count);
+पूर्णांक shash_रेजिस्टर_instance(काष्ठा crypto_ढाँचा *पंचांगpl,
+			    काष्ठा shash_instance *inst);
+व्योम shash_मुक्त_singlespawn_instance(काष्ठा shash_instance *inst);
 
-int crypto_grab_shash(struct crypto_shash_spawn *spawn,
-		      struct crypto_instance *inst,
-		      const char *name, u32 type, u32 mask);
+पूर्णांक crypto_grab_shash(काष्ठा crypto_shash_spawn *spawn,
+		      काष्ठा crypto_instance *inst,
+		      स्थिर अक्षर *name, u32 type, u32 mask);
 
-static inline void crypto_drop_shash(struct crypto_shash_spawn *spawn)
-{
+अटल अंतरभूत व्योम crypto_drop_shash(काष्ठा crypto_shash_spawn *spawn)
+अणु
 	crypto_drop_spawn(&spawn->base);
-}
+पूर्ण
 
-static inline struct shash_alg *crypto_spawn_shash_alg(
-	struct crypto_shash_spawn *spawn)
-{
-	return __crypto_shash_alg(spawn->base.alg);
-}
+अटल अंतरभूत काष्ठा shash_alg *crypto_spawn_shash_alg(
+	काष्ठा crypto_shash_spawn *spawn)
+अणु
+	वापस __crypto_shash_alg(spawn->base.alg);
+पूर्ण
 
-int shash_ahash_update(struct ahash_request *req, struct shash_desc *desc);
-int shash_ahash_finup(struct ahash_request *req, struct shash_desc *desc);
-int shash_ahash_digest(struct ahash_request *req, struct shash_desc *desc);
+पूर्णांक shash_ahash_update(काष्ठा ahash_request *req, काष्ठा shash_desc *desc);
+पूर्णांक shash_ahash_finup(काष्ठा ahash_request *req, काष्ठा shash_desc *desc);
+पूर्णांक shash_ahash_digest(काष्ठा ahash_request *req, काष्ठा shash_desc *desc);
 
-int crypto_init_shash_ops_async(struct crypto_tfm *tfm);
+पूर्णांक crypto_init_shash_ops_async(काष्ठा crypto_tfm *tfm);
 
-static inline void *crypto_ahash_ctx(struct crypto_ahash *tfm)
-{
-	return crypto_tfm_ctx(crypto_ahash_tfm(tfm));
-}
+अटल अंतरभूत व्योम *crypto_ahash_ctx(काष्ठा crypto_ahash *tfm)
+अणु
+	वापस crypto_tfm_ctx(crypto_ahash_tfm(tfm));
+पूर्ण
 
-static inline struct ahash_alg *__crypto_ahash_alg(struct crypto_alg *alg)
-{
-	return container_of(__crypto_hash_alg_common(alg), struct ahash_alg,
+अटल अंतरभूत काष्ठा ahash_alg *__crypto_ahash_alg(काष्ठा crypto_alg *alg)
+अणु
+	वापस container_of(__crypto_hash_alg_common(alg), काष्ठा ahash_alg,
 			    halg);
-}
+पूर्ण
 
-static inline void crypto_ahash_set_reqsize(struct crypto_ahash *tfm,
-					    unsigned int reqsize)
-{
+अटल अंतरभूत व्योम crypto_ahash_set_reqsize(काष्ठा crypto_ahash *tfm,
+					    अचिन्हित पूर्णांक reqsize)
+अणु
 	tfm->reqsize = reqsize;
-}
+पूर्ण
 
-static inline struct crypto_instance *ahash_crypto_instance(
-	struct ahash_instance *inst)
-{
-	return &inst->s.base;
-}
+अटल अंतरभूत काष्ठा crypto_instance *ahash_crypto_instance(
+	काष्ठा ahash_instance *inst)
+अणु
+	वापस &inst->s.base;
+पूर्ण
 
-static inline struct ahash_instance *ahash_instance(
-	struct crypto_instance *inst)
-{
-	return container_of(inst, struct ahash_instance, s.base);
-}
+अटल अंतरभूत काष्ठा ahash_instance *ahash_instance(
+	काष्ठा crypto_instance *inst)
+अणु
+	वापस container_of(inst, काष्ठा ahash_instance, s.base);
+पूर्ण
 
-static inline struct ahash_instance *ahash_alg_instance(
-	struct crypto_ahash *ahash)
-{
-	return ahash_instance(crypto_tfm_alg_instance(&ahash->base));
-}
+अटल अंतरभूत काष्ठा ahash_instance *ahash_alg_instance(
+	काष्ठा crypto_ahash *ahash)
+अणु
+	वापस ahash_instance(crypto_tfm_alg_instance(&ahash->base));
+पूर्ण
 
-static inline void *ahash_instance_ctx(struct ahash_instance *inst)
-{
-	return crypto_instance_ctx(ahash_crypto_instance(inst));
-}
+अटल अंतरभूत व्योम *ahash_instance_ctx(काष्ठा ahash_instance *inst)
+अणु
+	वापस crypto_instance_ctx(ahash_crypto_instance(inst));
+पूर्ण
 
-static inline void ahash_request_complete(struct ahash_request *req, int err)
-{
+अटल अंतरभूत व्योम ahash_request_complete(काष्ठा ahash_request *req, पूर्णांक err)
+अणु
 	req->base.complete(&req->base, err);
-}
+पूर्ण
 
-static inline u32 ahash_request_flags(struct ahash_request *req)
-{
-	return req->base.flags;
-}
+अटल अंतरभूत u32 ahash_request_flags(काष्ठा ahash_request *req)
+अणु
+	वापस req->base.flags;
+पूर्ण
 
-static inline struct crypto_ahash *crypto_spawn_ahash(
-	struct crypto_ahash_spawn *spawn)
-{
-	return crypto_spawn_tfm2(&spawn->base);
-}
+अटल अंतरभूत काष्ठा crypto_ahash *crypto_spawn_ahash(
+	काष्ठा crypto_ahash_spawn *spawn)
+अणु
+	वापस crypto_spawn_tfm2(&spawn->base);
+पूर्ण
 
-static inline int ahash_enqueue_request(struct crypto_queue *queue,
-					     struct ahash_request *request)
-{
-	return crypto_enqueue_request(queue, &request->base);
-}
+अटल अंतरभूत पूर्णांक ahash_enqueue_request(काष्ठा crypto_queue *queue,
+					     काष्ठा ahash_request *request)
+अणु
+	वापस crypto_enqueue_request(queue, &request->base);
+पूर्ण
 
-static inline struct ahash_request *ahash_dequeue_request(
-	struct crypto_queue *queue)
-{
-	return ahash_request_cast(crypto_dequeue_request(queue));
-}
+अटल अंतरभूत काष्ठा ahash_request *ahash_dequeue_request(
+	काष्ठा crypto_queue *queue)
+अणु
+	वापस ahash_request_cast(crypto_dequeue_request(queue));
+पूर्ण
 
-static inline void *crypto_shash_ctx(struct crypto_shash *tfm)
-{
-	return crypto_tfm_ctx(&tfm->base);
-}
+अटल अंतरभूत व्योम *crypto_shash_ctx(काष्ठा crypto_shash *tfm)
+अणु
+	वापस crypto_tfm_ctx(&tfm->base);
+पूर्ण
 
-static inline struct crypto_instance *shash_crypto_instance(
-	struct shash_instance *inst)
-{
-	return &inst->s.base;
-}
+अटल अंतरभूत काष्ठा crypto_instance *shash_crypto_instance(
+	काष्ठा shash_instance *inst)
+अणु
+	वापस &inst->s.base;
+पूर्ण
 
-static inline struct shash_instance *shash_instance(
-	struct crypto_instance *inst)
-{
-	return container_of(inst, struct shash_instance, s.base);
-}
+अटल अंतरभूत काष्ठा shash_instance *shash_instance(
+	काष्ठा crypto_instance *inst)
+अणु
+	वापस container_of(inst, काष्ठा shash_instance, s.base);
+पूर्ण
 
-static inline struct shash_instance *shash_alg_instance(
-	struct crypto_shash *shash)
-{
-	return shash_instance(crypto_tfm_alg_instance(&shash->base));
-}
+अटल अंतरभूत काष्ठा shash_instance *shash_alg_instance(
+	काष्ठा crypto_shash *shash)
+अणु
+	वापस shash_instance(crypto_tfm_alg_instance(&shash->base));
+पूर्ण
 
-static inline void *shash_instance_ctx(struct shash_instance *inst)
-{
-	return crypto_instance_ctx(shash_crypto_instance(inst));
-}
+अटल अंतरभूत व्योम *shash_instance_ctx(काष्ठा shash_instance *inst)
+अणु
+	वापस crypto_instance_ctx(shash_crypto_instance(inst));
+पूर्ण
 
-static inline struct crypto_shash *crypto_spawn_shash(
-	struct crypto_shash_spawn *spawn)
-{
-	return crypto_spawn_tfm2(&spawn->base);
-}
+अटल अंतरभूत काष्ठा crypto_shash *crypto_spawn_shash(
+	काष्ठा crypto_shash_spawn *spawn)
+अणु
+	वापस crypto_spawn_tfm2(&spawn->base);
+पूर्ण
 
-static inline void *crypto_shash_ctx_aligned(struct crypto_shash *tfm)
-{
-	return crypto_tfm_ctx_aligned(&tfm->base);
-}
+अटल अंतरभूत व्योम *crypto_shash_ctx_aligned(काष्ठा crypto_shash *tfm)
+अणु
+	वापस crypto_tfm_ctx_aligned(&tfm->base);
+पूर्ण
 
-static inline struct crypto_shash *__crypto_shash_cast(struct crypto_tfm *tfm)
-{
-	return container_of(tfm, struct crypto_shash, base);
-}
+अटल अंतरभूत काष्ठा crypto_shash *__crypto_shash_cast(काष्ठा crypto_tfm *tfm)
+अणु
+	वापस container_of(tfm, काष्ठा crypto_shash, base);
+पूर्ण
 
-#endif	/* _CRYPTO_INTERNAL_HASH_H */
+#पूर्ण_अगर	/* _CRYPTO_INTERNAL_HASH_H */
 

@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#define pr_fmt(fmt)     "DMAR-IR: " fmt
+#घोषणा pr_fmt(fmt)     "DMAR-IR: " fmt
 
-#include <linux/interrupt.h>
-#include <linux/dmar.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <linux/hpet.h>
-#include <linux/pci.h>
-#include <linux/irq.h>
-#include <linux/intel-iommu.h>
-#include <linux/acpi.h>
-#include <linux/irqdomain.h>
-#include <linux/crash_dump.h>
-#include <asm/io_apic.h>
-#include <asm/apic.h>
-#include <asm/smp.h>
-#include <asm/cpu.h>
-#include <asm/irq_remapping.h>
-#include <asm/pci-direct.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dmar.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/hpet.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकel-iommu.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/crash_dump.h>
+#समावेश <यंत्र/io_apic.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/irq_remapping.h>
+#समावेश <यंत्र/pci-direct.h>
 
-#include "../irq_remapping.h"
-#include "cap_audit.h"
+#समावेश "../irq_remapping.h"
+#समावेश "cap_audit.h"
 
-enum irq_mode {
+क्रमागत irq_mode अणु
 	IRQ_REMAPPING,
 	IRQ_POSTING,
-};
+पूर्ण;
 
-struct ioapic_scope {
-	struct intel_iommu *iommu;
-	unsigned int id;
-	unsigned int bus;	/* PCI bus number */
-	unsigned int devfn;	/* PCI devfn number */
-};
+काष्ठा ioapic_scope अणु
+	काष्ठा पूर्णांकel_iommu *iommu;
+	अचिन्हित पूर्णांक id;
+	अचिन्हित पूर्णांक bus;	/* PCI bus number */
+	अचिन्हित पूर्णांक devfn;	/* PCI devfn number */
+पूर्ण;
 
-struct hpet_scope {
-	struct intel_iommu *iommu;
+काष्ठा hpet_scope अणु
+	काष्ठा पूर्णांकel_iommu *iommu;
 	u8 id;
-	unsigned int bus;
-	unsigned int devfn;
-};
+	अचिन्हित पूर्णांक bus;
+	अचिन्हित पूर्णांक devfn;
+पूर्ण;
 
-struct irq_2_iommu {
-	struct intel_iommu *iommu;
+काष्ठा irq_2_iommu अणु
+	काष्ठा पूर्णांकel_iommu *iommu;
 	u16 irte_index;
 	u16 sub_handle;
 	u8  irte_mask;
-	enum irq_mode mode;
-};
+	क्रमागत irq_mode mode;
+पूर्ण;
 
-struct intel_ir_data {
-	struct irq_2_iommu			irq_2_iommu;
-	struct irte				irte_entry;
-	union {
-		struct msi_msg			msi_entry;
-	};
-};
+काष्ठा पूर्णांकel_ir_data अणु
+	काष्ठा irq_2_iommu			irq_2_iommu;
+	काष्ठा irte				irte_entry;
+	जोड़ अणु
+		काष्ठा msi_msg			msi_entry;
+	पूर्ण;
+पूर्ण;
 
-#define IR_X2APIC_MODE(mode) (mode ? (1 << 11) : 0)
-#define IRTE_DEST(dest) ((eim_mode) ? dest : dest << 8)
+#घोषणा IR_X2APIC_MODE(mode) (mode ? (1 << 11) : 0)
+#घोषणा IRTE_DEST(dest) ((eim_mode) ? dest : dest << 8)
 
-static int __read_mostly eim_mode;
-static struct ioapic_scope ir_ioapic[MAX_IO_APICS];
-static struct hpet_scope ir_hpet[MAX_HPET_TBS];
+अटल पूर्णांक __पढ़ो_mostly eim_mode;
+अटल काष्ठा ioapic_scope ir_ioapic[MAX_IO_APICS];
+अटल काष्ठा hpet_scope ir_hpet[MAX_HPET_TBS];
 
 /*
  * Lock ordering:
  * ->dmar_global_lock
  *	->irq_2_ir_lock
  *		->qi->q_lock
- *	->iommu->register_lock
+ *	->iommu->रेजिस्टर_lock
  * Note:
- * intel_irq_remap_ops.{supported,prepare,enable,disable,reenable} are called
- * in single-threaded environment with interrupt disabled, so no need to tabke
+ * पूर्णांकel_irq_remap_ops.अणुsupported,prepare,enable,disable,reenableपूर्ण are called
+ * in single-thपढ़ोed environment with पूर्णांकerrupt disabled, so no need to tabke
  * the dmar_global_lock.
  */
 DEFINE_RAW_SPINLOCK(irq_2_ir_lock);
-static const struct irq_domain_ops intel_ir_domain_ops;
+अटल स्थिर काष्ठा irq_करोमुख्य_ops पूर्णांकel_ir_करोमुख्य_ops;
 
-static void iommu_disable_irq_remapping(struct intel_iommu *iommu);
-static int __init parse_ioapics_under_ir(void);
+अटल व्योम iommu_disable_irq_remapping(काष्ठा पूर्णांकel_iommu *iommu);
+अटल पूर्णांक __init parse_ioapics_under_ir(व्योम);
 
-static bool ir_pre_enabled(struct intel_iommu *iommu)
-{
-	return (iommu->flags & VTD_FLAG_IRQ_REMAP_PRE_ENABLED);
-}
+अटल bool ir_pre_enabled(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	वापस (iommu->flags & VTD_FLAG_IRQ_REMAP_PRE_ENABLED);
+पूर्ण
 
-static void clear_ir_pre_enabled(struct intel_iommu *iommu)
-{
+अटल व्योम clear_ir_pre_enabled(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
 	iommu->flags &= ~VTD_FLAG_IRQ_REMAP_PRE_ENABLED;
-}
+पूर्ण
 
-static void init_ir_status(struct intel_iommu *iommu)
-{
+अटल व्योम init_ir_status(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
 	u32 gsts;
 
-	gsts = readl(iommu->reg + DMAR_GSTS_REG);
-	if (gsts & DMA_GSTS_IRES)
+	gsts = पढ़ोl(iommu->reg + DMAR_GSTS_REG);
+	अगर (gsts & DMA_GSTS_IRES)
 		iommu->flags |= VTD_FLAG_IRQ_REMAP_PRE_ENABLED;
-}
+पूर्ण
 
-static int alloc_irte(struct intel_iommu *iommu,
-		      struct irq_2_iommu *irq_iommu, u16 count)
-{
-	struct ir_table *table = iommu->ir_table;
-	unsigned int mask = 0;
-	unsigned long flags;
-	int index;
+अटल पूर्णांक alloc_irte(काष्ठा पूर्णांकel_iommu *iommu,
+		      काष्ठा irq_2_iommu *irq_iommu, u16 count)
+अणु
+	काष्ठा ir_table *table = iommu->ir_table;
+	अचिन्हित पूर्णांक mask = 0;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक index;
 
-	if (!count || !irq_iommu)
-		return -1;
+	अगर (!count || !irq_iommu)
+		वापस -1;
 
-	if (count > 1) {
-		count = __roundup_pow_of_two(count);
+	अगर (count > 1) अणु
+		count = __roundup_घात_of_two(count);
 		mask = ilog2(count);
-	}
+	पूर्ण
 
-	if (mask > ecap_max_handle_mask(iommu->ecap)) {
+	अगर (mask > ecap_max_handle_mask(iommu->ecap)) अणु
 		pr_err("Requested mask %x exceeds the max invalidation handle"
 		       " mask value %Lx\n", mask,
 		       ecap_max_handle_mask(iommu->ecap));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&irq_2_ir_lock, flags);
-	index = bitmap_find_free_region(table->bitmap,
+	index = biपंचांगap_find_मुक्त_region(table->biपंचांगap,
 					INTR_REMAP_TABLE_ENTRIES, mask);
-	if (index < 0) {
+	अगर (index < 0) अणु
 		pr_warn("IR%d: can't allocate an IRTE\n", iommu->seq_id);
-	} else {
+	पूर्ण अन्यथा अणु
 		irq_iommu->iommu = iommu;
 		irq_iommu->irte_index =  index;
 		irq_iommu->sub_handle = 0;
 		irq_iommu->irte_mask = mask;
 		irq_iommu->mode = IRQ_REMAPPING;
-	}
+	पूर्ण
 	raw_spin_unlock_irqrestore(&irq_2_ir_lock, flags);
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static int qi_flush_iec(struct intel_iommu *iommu, int index, int mask)
-{
-	struct qi_desc desc;
+अटल पूर्णांक qi_flush_iec(काष्ठा पूर्णांकel_iommu *iommu, पूर्णांक index, पूर्णांक mask)
+अणु
+	काष्ठा qi_desc desc;
 
 	desc.qw0 = QI_IEC_IIDEX(index) | QI_IEC_TYPE | QI_IEC_IM(mask)
 		   | QI_IEC_SELECTIVE;
@@ -152,19 +153,19 @@ static int qi_flush_iec(struct intel_iommu *iommu, int index, int mask)
 	desc.qw2 = 0;
 	desc.qw3 = 0;
 
-	return qi_submit_sync(iommu, &desc, 1, 0);
-}
+	वापस qi_submit_sync(iommu, &desc, 1, 0);
+पूर्ण
 
-static int modify_irte(struct irq_2_iommu *irq_iommu,
-		       struct irte *irte_modified)
-{
-	struct intel_iommu *iommu;
-	unsigned long flags;
-	struct irte *irte;
-	int rc, index;
+अटल पूर्णांक modअगरy_irte(काष्ठा irq_2_iommu *irq_iommu,
+		       काष्ठा irte *irte_modअगरied)
+अणु
+	काष्ठा पूर्णांकel_iommu *iommu;
+	अचिन्हित दीर्घ flags;
+	काष्ठा irte *irte;
+	पूर्णांक rc, index;
 
-	if (!irq_iommu)
-		return -1;
+	अगर (!irq_iommu)
+		वापस -1;
 
 	raw_spin_lock_irqsave(&irq_2_ir_lock, flags);
 
@@ -173,27 +174,27 @@ static int modify_irte(struct irq_2_iommu *irq_iommu,
 	index = irq_iommu->irte_index + irq_iommu->sub_handle;
 	irte = &iommu->ir_table->base[index];
 
-#if defined(CONFIG_HAVE_CMPXCHG_DOUBLE)
-	if ((irte->pst == 1) || (irte_modified->pst == 1)) {
+#अगर defined(CONFIG_HAVE_CMPXCHG_DOUBLE)
+	अगर ((irte->pst == 1) || (irte_modअगरied->pst == 1)) अणु
 		bool ret;
 
-		ret = cmpxchg_double(&irte->low, &irte->high,
+		ret = cmpxchg_द्विगुन(&irte->low, &irte->high,
 				     irte->low, irte->high,
-				     irte_modified->low, irte_modified->high);
+				     irte_modअगरied->low, irte_modअगरied->high);
 		/*
 		 * We use cmpxchg16 to atomically update the 128-bit IRTE,
 		 * and it cannot be updated by the hardware or other processors
-		 * behind us, so the return value of cmpxchg16 should be the
+		 * behind us, so the वापस value of cmpxchg16 should be the
 		 * same as the old value.
 		 */
 		WARN_ON(!ret);
-	} else
-#endif
-	{
-		set_64bit(&irte->low, irte_modified->low);
-		set_64bit(&irte->high, irte_modified->high);
-	}
-	__iommu_flush_cache(iommu, irte, sizeof(*irte));
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
+		set_64bit(&irte->low, irte_modअगरied->low);
+		set_64bit(&irte->high, irte_modअगरied->high);
+	पूर्ण
+	__iommu_flush_cache(iommu, irte, माप(*irte));
 
 	rc = qi_flush_iec(iommu, index, 0);
 
@@ -201,46 +202,46 @@ static int modify_irte(struct irq_2_iommu *irq_iommu,
 	irq_iommu->mode = irte->pst ? IRQ_POSTING : IRQ_REMAPPING;
 	raw_spin_unlock_irqrestore(&irq_2_ir_lock, flags);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct intel_iommu *map_hpet_to_iommu(u8 hpet_id)
-{
-	int i;
+अटल काष्ठा पूर्णांकel_iommu *map_hpet_to_iommu(u8 hpet_id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_HPET_TBS; i++) {
-		if (ir_hpet[i].id == hpet_id && ir_hpet[i].iommu)
-			return ir_hpet[i].iommu;
-	}
-	return NULL;
-}
+	क्रम (i = 0; i < MAX_HPET_TBS; i++) अणु
+		अगर (ir_hpet[i].id == hpet_id && ir_hpet[i].iommu)
+			वापस ir_hpet[i].iommu;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct intel_iommu *map_ioapic_to_iommu(int apic)
-{
-	int i;
+अटल काष्ठा पूर्णांकel_iommu *map_ioapic_to_iommu(पूर्णांक apic)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_IO_APICS; i++) {
-		if (ir_ioapic[i].id == apic && ir_ioapic[i].iommu)
-			return ir_ioapic[i].iommu;
-	}
-	return NULL;
-}
+	क्रम (i = 0; i < MAX_IO_APICS; i++) अणु
+		अगर (ir_ioapic[i].id == apic && ir_ioapic[i].iommu)
+			वापस ir_ioapic[i].iommu;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct irq_domain *map_dev_to_ir(struct pci_dev *dev)
-{
-	struct dmar_drhd_unit *drhd = dmar_find_matched_drhd_unit(dev);
+अटल काष्ठा irq_करोमुख्य *map_dev_to_ir(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा dmar_drhd_unit *drhd = dmar_find_matched_drhd_unit(dev);
 
-	return drhd ? drhd->iommu->ir_msi_domain : NULL;
-}
+	वापस drhd ? drhd->iommu->ir_msi_करोमुख्य : शून्य;
+पूर्ण
 
-static int clear_entries(struct irq_2_iommu *irq_iommu)
-{
-	struct irte *start, *entry, *end;
-	struct intel_iommu *iommu;
-	int index;
+अटल पूर्णांक clear_entries(काष्ठा irq_2_iommu *irq_iommu)
+अणु
+	काष्ठा irte *start, *entry, *end;
+	काष्ठा पूर्णांकel_iommu *iommu;
+	पूर्णांक index;
 
-	if (irq_iommu->sub_handle)
-		return 0;
+	अगर (irq_iommu->sub_handle)
+		वापस 0;
 
 	iommu = irq_iommu->iommu;
 	index = irq_iommu->irte_index;
@@ -248,591 +249,591 @@ static int clear_entries(struct irq_2_iommu *irq_iommu)
 	start = iommu->ir_table->base + index;
 	end = start + (1 << irq_iommu->irte_mask);
 
-	for (entry = start; entry < end; entry++) {
+	क्रम (entry = start; entry < end; entry++) अणु
 		set_64bit(&entry->low, 0);
 		set_64bit(&entry->high, 0);
-	}
-	bitmap_release_region(iommu->ir_table->bitmap, index,
+	पूर्ण
+	biपंचांगap_release_region(iommu->ir_table->biपंचांगap, index,
 			      irq_iommu->irte_mask);
 
-	return qi_flush_iec(iommu, index, irq_iommu->irte_mask);
-}
+	वापस qi_flush_iec(iommu, index, irq_iommu->irte_mask);
+पूर्ण
 
 /*
  * source validation type
  */
-#define SVT_NO_VERIFY		0x0  /* no verification is required */
-#define SVT_VERIFY_SID_SQ	0x1  /* verify using SID and SQ fields */
-#define SVT_VERIFY_BUS		0x2  /* verify bus of request-id */
+#घोषणा SVT_NO_VERIFY		0x0  /* no verअगरication is required */
+#घोषणा SVT_VERIFY_SID_SQ	0x1  /* verअगरy using SID and SQ fields */
+#घोषणा SVT_VERIFY_BUS		0x2  /* verअगरy bus of request-id */
 
 /*
- * source-id qualifier
+ * source-id qualअगरier
  */
-#define SQ_ALL_16	0x0  /* verify all 16 bits of request-id */
-#define SQ_13_IGNORE_1	0x1  /* verify most significant 13 bits, ignore
-			      * the third least significant bit
+#घोषणा SQ_ALL_16	0x0  /* verअगरy all 16 bits of request-id */
+#घोषणा SQ_13_IGNORE_1	0x1  /* verअगरy most signअगरicant 13 bits, ignore
+			      * the third least signअगरicant bit
 			      */
-#define SQ_13_IGNORE_2	0x2  /* verify most significant 13 bits, ignore
-			      * the second and third least significant bits
+#घोषणा SQ_13_IGNORE_2	0x2  /* verअगरy most signअगरicant 13 bits, ignore
+			      * the second and third least signअगरicant bits
 			      */
-#define SQ_13_IGNORE_3	0x3  /* verify most significant 13 bits, ignore
-			      * the least three significant bits
+#घोषणा SQ_13_IGNORE_3	0x3  /* verअगरy most signअगरicant 13 bits, ignore
+			      * the least three signअगरicant bits
 			      */
 
 /*
- * set SVT, SQ and SID fields of irte to verify
- * source ids of interrupt requests
+ * set SVT, SQ and SID fields of irte to verअगरy
+ * source ids of पूर्णांकerrupt requests
  */
-static void set_irte_sid(struct irte *irte, unsigned int svt,
-			 unsigned int sq, unsigned int sid)
-{
-	if (disable_sourceid_checking)
+अटल व्योम set_irte_sid(काष्ठा irte *irte, अचिन्हित पूर्णांक svt,
+			 अचिन्हित पूर्णांक sq, अचिन्हित पूर्णांक sid)
+अणु
+	अगर (disable_sourceid_checking)
 		svt = SVT_NO_VERIFY;
 	irte->svt = svt;
 	irte->sq = sq;
 	irte->sid = sid;
-}
+पूर्ण
 
 /*
  * Set an IRTE to match only the bus number. Interrupt requests that reference
  * this IRTE must have a requester-id whose bus number is between or equal
  * to the start_bus and end_bus arguments.
  */
-static void set_irte_verify_bus(struct irte *irte, unsigned int start_bus,
-				unsigned int end_bus)
-{
+अटल व्योम set_irte_verअगरy_bus(काष्ठा irte *irte, अचिन्हित पूर्णांक start_bus,
+				अचिन्हित पूर्णांक end_bus)
+अणु
 	set_irte_sid(irte, SVT_VERIFY_BUS, SQ_ALL_16,
 		     (start_bus << 8) | end_bus);
-}
+पूर्ण
 
-static int set_ioapic_sid(struct irte *irte, int apic)
-{
-	int i;
+अटल पूर्णांक set_ioapic_sid(काष्ठा irte *irte, पूर्णांक apic)
+अणु
+	पूर्णांक i;
 	u16 sid = 0;
 
-	if (!irte)
-		return -1;
+	अगर (!irte)
+		वापस -1;
 
-	down_read(&dmar_global_lock);
-	for (i = 0; i < MAX_IO_APICS; i++) {
-		if (ir_ioapic[i].iommu && ir_ioapic[i].id == apic) {
+	करोwn_पढ़ो(&dmar_global_lock);
+	क्रम (i = 0; i < MAX_IO_APICS; i++) अणु
+		अगर (ir_ioapic[i].iommu && ir_ioapic[i].id == apic) अणु
 			sid = (ir_ioapic[i].bus << 8) | ir_ioapic[i].devfn;
-			break;
-		}
-	}
-	up_read(&dmar_global_lock);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&dmar_global_lock);
 
-	if (sid == 0) {
+	अगर (sid == 0) अणु
 		pr_warn("Failed to set source-id of IOAPIC (%d)\n", apic);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	set_irte_sid(irte, SVT_VERIFY_SID_SQ, SQ_ALL_16, sid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_hpet_sid(struct irte *irte, u8 id)
-{
-	int i;
+अटल पूर्णांक set_hpet_sid(काष्ठा irte *irte, u8 id)
+अणु
+	पूर्णांक i;
 	u16 sid = 0;
 
-	if (!irte)
-		return -1;
+	अगर (!irte)
+		वापस -1;
 
-	down_read(&dmar_global_lock);
-	for (i = 0; i < MAX_HPET_TBS; i++) {
-		if (ir_hpet[i].iommu && ir_hpet[i].id == id) {
+	करोwn_पढ़ो(&dmar_global_lock);
+	क्रम (i = 0; i < MAX_HPET_TBS; i++) अणु
+		अगर (ir_hpet[i].iommu && ir_hpet[i].id == id) अणु
 			sid = (ir_hpet[i].bus << 8) | ir_hpet[i].devfn;
-			break;
-		}
-	}
-	up_read(&dmar_global_lock);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&dmar_global_lock);
 
-	if (sid == 0) {
+	अगर (sid == 0) अणु
 		pr_warn("Failed to set source-id of HPET block (%d)\n", id);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/*
-	 * Should really use SQ_ALL_16. Some platforms are broken.
-	 * While we figure out the right quirks for these broken platforms, use
-	 * SQ_13_IGNORE_3 for now.
+	 * Should really use SQ_ALL_16. Some platक्रमms are broken.
+	 * While we figure out the right quirks क्रम these broken platक्रमms, use
+	 * SQ_13_IGNORE_3 क्रम now.
 	 */
 	set_irte_sid(irte, SVT_VERIFY_SID_SQ, SQ_13_IGNORE_3, sid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct set_msi_sid_data {
-	struct pci_dev *pdev;
+काष्ठा set_msi_sid_data अणु
+	काष्ठा pci_dev *pdev;
 	u16 alias;
-	int count;
-	int busmatch_count;
-};
+	पूर्णांक count;
+	पूर्णांक busmatch_count;
+पूर्ण;
 
-static int set_msi_sid_cb(struct pci_dev *pdev, u16 alias, void *opaque)
-{
-	struct set_msi_sid_data *data = opaque;
+अटल पूर्णांक set_msi_sid_cb(काष्ठा pci_dev *pdev, u16 alias, व्योम *opaque)
+अणु
+	काष्ठा set_msi_sid_data *data = opaque;
 
-	if (data->count == 0 || PCI_BUS_NUM(alias) == PCI_BUS_NUM(data->alias))
+	अगर (data->count == 0 || PCI_BUS_NUM(alias) == PCI_BUS_NUM(data->alias))
 		data->busmatch_count++;
 
 	data->pdev = pdev;
 	data->alias = alias;
 	data->count++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_msi_sid(struct irte *irte, struct pci_dev *dev)
-{
-	struct set_msi_sid_data data;
+अटल पूर्णांक set_msi_sid(काष्ठा irte *irte, काष्ठा pci_dev *dev)
+अणु
+	काष्ठा set_msi_sid_data data;
 
-	if (!irte || !dev)
-		return -1;
+	अगर (!irte || !dev)
+		वापस -1;
 
 	data.count = 0;
 	data.busmatch_count = 0;
-	pci_for_each_dma_alias(dev, set_msi_sid_cb, &data);
+	pci_क्रम_each_dma_alias(dev, set_msi_sid_cb, &data);
 
 	/*
-	 * DMA alias provides us with a PCI device and alias.  The only case
-	 * where the it will return an alias on a different bus than the
-	 * device is the case of a PCIe-to-PCI bridge, where the alias is for
-	 * the subordinate bus.  In this case we can only verify the bus.
+	 * DMA alias provides us with a PCI device and alias.  The only हाल
+	 * where the it will वापस an alias on a dअगरferent bus than the
+	 * device is the हाल of a PCIe-to-PCI bridge, where the alias is क्रम
+	 * the subordinate bus.  In this हाल we can only verअगरy the bus.
 	 *
 	 * If there are multiple aliases, all with the same bus number,
-	 * then all we can do is verify the bus. This is typical in NTB
+	 * then all we can करो is verअगरy the bus. This is typical in NTB
 	 * hardware which use proxy IDs where the device will generate traffic
 	 * from multiple devfn numbers on the same bus.
 	 *
-	 * If the alias device is on a different bus than our source device
+	 * If the alias device is on a dअगरferent bus than our source device
 	 * then we have a topology based alias, use it.
 	 *
-	 * Otherwise, the alias is for a device DMA quirk and we cannot
-	 * assume that MSI uses the same requester ID.  Therefore use the
+	 * Otherwise, the alias is क्रम a device DMA quirk and we cannot
+	 * assume that MSI uses the same requester ID.  Thereक्रमe use the
 	 * original device.
 	 */
-	if (PCI_BUS_NUM(data.alias) != data.pdev->bus->number)
-		set_irte_verify_bus(irte, PCI_BUS_NUM(data.alias),
+	अगर (PCI_BUS_NUM(data.alias) != data.pdev->bus->number)
+		set_irte_verअगरy_bus(irte, PCI_BUS_NUM(data.alias),
 				    dev->bus->number);
-	else if (data.count >= 2 && data.busmatch_count == data.count)
-		set_irte_verify_bus(irte, dev->bus->number, dev->bus->number);
-	else if (data.pdev->bus->number != dev->bus->number)
+	अन्यथा अगर (data.count >= 2 && data.busmatch_count == data.count)
+		set_irte_verअगरy_bus(irte, dev->bus->number, dev->bus->number);
+	अन्यथा अगर (data.pdev->bus->number != dev->bus->number)
 		set_irte_sid(irte, SVT_VERIFY_SID_SQ, SQ_ALL_16, data.alias);
-	else
+	अन्यथा
 		set_irte_sid(irte, SVT_VERIFY_SID_SQ, SQ_ALL_16,
 			     pci_dev_id(dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iommu_load_old_irte(struct intel_iommu *iommu)
-{
-	struct irte *old_ir_table;
+अटल पूर्णांक iommu_load_old_irte(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	काष्ठा irte *old_ir_table;
 	phys_addr_t irt_phys;
-	unsigned int i;
-	size_t size;
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार size;
 	u64 irta;
 
 	/* Check whether the old ir-table has the same size as ours */
-	irta = dmar_readq(iommu->reg + DMAR_IRTA_REG);
-	if ((irta & INTR_REMAP_TABLE_REG_SIZE_MASK)
+	irta = dmar_पढ़ोq(iommu->reg + DMAR_IRTA_REG);
+	अगर ((irta & INTR_REMAP_TABLE_REG_SIZE_MASK)
 	     != INTR_REMAP_TABLE_REG_SIZE)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	irt_phys = irta & VTD_PAGE_MASK;
-	size     = INTR_REMAP_TABLE_ENTRIES*sizeof(struct irte);
+	size     = INTR_REMAP_TABLE_ENTRIES*माप(काष्ठा irte);
 
 	/* Map the old IR table */
 	old_ir_table = memremap(irt_phys, size, MEMREMAP_WB);
-	if (!old_ir_table)
-		return -ENOMEM;
+	अगर (!old_ir_table)
+		वापस -ENOMEM;
 
 	/* Copy data over */
-	memcpy(iommu->ir_table->base, old_ir_table, size);
+	स_नकल(iommu->ir_table->base, old_ir_table, size);
 
 	__iommu_flush_cache(iommu, iommu->ir_table->base, size);
 
 	/*
-	 * Now check the table for used entries and mark those as
-	 * allocated in the bitmap
+	 * Now check the table क्रम used entries and mark those as
+	 * allocated in the biपंचांगap
 	 */
-	for (i = 0; i < INTR_REMAP_TABLE_ENTRIES; i++) {
-		if (iommu->ir_table->base[i].present)
-			bitmap_set(iommu->ir_table->bitmap, i, 1);
-	}
+	क्रम (i = 0; i < INTR_REMAP_TABLE_ENTRIES; i++) अणु
+		अगर (iommu->ir_table->base[i].present)
+			biपंचांगap_set(iommu->ir_table->biपंचांगap, i, 1);
+	पूर्ण
 
 	memunmap(old_ir_table);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void iommu_set_irq_remapping(struct intel_iommu *iommu, int mode)
-{
-	unsigned long flags;
+अटल व्योम iommu_set_irq_remapping(काष्ठा पूर्णांकel_iommu *iommu, पूर्णांक mode)
+अणु
+	अचिन्हित दीर्घ flags;
 	u64 addr;
 	u32 sts;
 
-	addr = virt_to_phys((void *)iommu->ir_table->base);
+	addr = virt_to_phys((व्योम *)iommu->ir_table->base);
 
-	raw_spin_lock_irqsave(&iommu->register_lock, flags);
+	raw_spin_lock_irqsave(&iommu->रेजिस्टर_lock, flags);
 
-	dmar_writeq(iommu->reg + DMAR_IRTA_REG,
+	dmar_ग_लिखोq(iommu->reg + DMAR_IRTA_REG,
 		    (addr) | IR_X2APIC_MODE(mode) | INTR_REMAP_TABLE_REG_SIZE);
 
-	/* Set interrupt-remapping table pointer */
-	writel(iommu->gcmd | DMA_GCMD_SIRTP, iommu->reg + DMAR_GCMD_REG);
+	/* Set पूर्णांकerrupt-remapping table poपूर्णांकer */
+	ग_लिखोl(iommu->gcmd | DMA_GCMD_SIRTP, iommu->reg + DMAR_GCMD_REG);
 
 	IOMMU_WAIT_OP(iommu, DMAR_GSTS_REG,
-		      readl, (sts & DMA_GSTS_IRTPS), sts);
-	raw_spin_unlock_irqrestore(&iommu->register_lock, flags);
+		      पढ़ोl, (sts & DMA_GSTS_IRTPS), sts);
+	raw_spin_unlock_irqrestore(&iommu->रेजिस्टर_lock, flags);
 
 	/*
-	 * Global invalidation of interrupt entry cache to make sure the
+	 * Global invalidation of पूर्णांकerrupt entry cache to make sure the
 	 * hardware uses the new irq remapping table.
 	 */
 	qi_global_iec(iommu);
-}
+पूर्ण
 
-static void iommu_enable_irq_remapping(struct intel_iommu *iommu)
-{
-	unsigned long flags;
+अटल व्योम iommu_enable_irq_remapping(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 sts;
 
-	raw_spin_lock_irqsave(&iommu->register_lock, flags);
+	raw_spin_lock_irqsave(&iommu->रेजिस्टर_lock, flags);
 
-	/* Enable interrupt-remapping */
+	/* Enable पूर्णांकerrupt-remapping */
 	iommu->gcmd |= DMA_GCMD_IRE;
-	writel(iommu->gcmd, iommu->reg + DMAR_GCMD_REG);
+	ग_लिखोl(iommu->gcmd, iommu->reg + DMAR_GCMD_REG);
 	IOMMU_WAIT_OP(iommu, DMAR_GSTS_REG,
-		      readl, (sts & DMA_GSTS_IRES), sts);
+		      पढ़ोl, (sts & DMA_GSTS_IRES), sts);
 
-	/* Block compatibility-format MSIs */
-	if (sts & DMA_GSTS_CFIS) {
+	/* Block compatibility-क्रमmat MSIs */
+	अगर (sts & DMA_GSTS_CFIS) अणु
 		iommu->gcmd &= ~DMA_GCMD_CFI;
-		writel(iommu->gcmd, iommu->reg + DMAR_GCMD_REG);
+		ग_लिखोl(iommu->gcmd, iommu->reg + DMAR_GCMD_REG);
 		IOMMU_WAIT_OP(iommu, DMAR_GSTS_REG,
-			      readl, !(sts & DMA_GSTS_CFIS), sts);
-	}
+			      पढ़ोl, !(sts & DMA_GSTS_CFIS), sts);
+	पूर्ण
 
 	/*
-	 * With CFI clear in the Global Command register, we should be
-	 * protected from dangerous (i.e. compatibility) interrupts
+	 * With CFI clear in the Global Command रेजिस्टर, we should be
+	 * रक्षित from dangerous (i.e. compatibility) पूर्णांकerrupts
 	 * regardless of x2apic status.  Check just to be sure.
 	 */
-	if (sts & DMA_GSTS_CFIS)
+	अगर (sts & DMA_GSTS_CFIS)
 		WARN(1, KERN_WARNING
 			"Compatibility-format IRQs enabled despite intr remapping;\n"
 			"you are vulnerable to IRQ injection.\n");
 
-	raw_spin_unlock_irqrestore(&iommu->register_lock, flags);
-}
+	raw_spin_unlock_irqrestore(&iommu->रेजिस्टर_lock, flags);
+पूर्ण
 
-static int intel_setup_irq_remapping(struct intel_iommu *iommu)
-{
-	struct ir_table *ir_table;
-	struct fwnode_handle *fn;
-	unsigned long *bitmap;
-	struct page *pages;
+अटल पूर्णांक पूर्णांकel_setup_irq_remapping(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	काष्ठा ir_table *ir_table;
+	काष्ठा fwnode_handle *fn;
+	अचिन्हित दीर्घ *biपंचांगap;
+	काष्ठा page *pages;
 
-	if (iommu->ir_table)
-		return 0;
+	अगर (iommu->ir_table)
+		वापस 0;
 
-	ir_table = kzalloc(sizeof(struct ir_table), GFP_KERNEL);
-	if (!ir_table)
-		return -ENOMEM;
+	ir_table = kzalloc(माप(काष्ठा ir_table), GFP_KERNEL);
+	अगर (!ir_table)
+		वापस -ENOMEM;
 
 	pages = alloc_pages_node(iommu->node, GFP_KERNEL | __GFP_ZERO,
 				 INTR_REMAP_PAGE_ORDER);
-	if (!pages) {
+	अगर (!pages) अणु
 		pr_err("IR%d: failed to allocate pages of order %d\n",
 		       iommu->seq_id, INTR_REMAP_PAGE_ORDER);
-		goto out_free_table;
-	}
+		जाओ out_मुक्त_table;
+	पूर्ण
 
-	bitmap = bitmap_zalloc(INTR_REMAP_TABLE_ENTRIES, GFP_ATOMIC);
-	if (bitmap == NULL) {
+	biपंचांगap = biपंचांगap_zalloc(INTR_REMAP_TABLE_ENTRIES, GFP_ATOMIC);
+	अगर (biपंचांगap == शून्य) अणु
 		pr_err("IR%d: failed to allocate bitmap\n", iommu->seq_id);
-		goto out_free_pages;
-	}
+		जाओ out_मुक्त_pages;
+	पूर्ण
 
-	fn = irq_domain_alloc_named_id_fwnode("INTEL-IR", iommu->seq_id);
-	if (!fn)
-		goto out_free_bitmap;
+	fn = irq_करोमुख्य_alloc_named_id_fwnode("INTEL-IR", iommu->seq_id);
+	अगर (!fn)
+		जाओ out_मुक्त_biपंचांगap;
 
-	iommu->ir_domain =
-		irq_domain_create_hierarchy(arch_get_ir_parent_domain(),
+	iommu->ir_करोमुख्य =
+		irq_करोमुख्य_create_hierarchy(arch_get_ir_parent_करोमुख्य(),
 					    0, INTR_REMAP_TABLE_ENTRIES,
-					    fn, &intel_ir_domain_ops,
+					    fn, &पूर्णांकel_ir_करोमुख्य_ops,
 					    iommu);
-	if (!iommu->ir_domain) {
-		irq_domain_free_fwnode(fn);
+	अगर (!iommu->ir_करोमुख्य) अणु
+		irq_करोमुख्य_मुक्त_fwnode(fn);
 		pr_err("IR%d: failed to allocate irqdomain\n", iommu->seq_id);
-		goto out_free_bitmap;
-	}
-	iommu->ir_msi_domain =
-		arch_create_remap_msi_irq_domain(iommu->ir_domain,
+		जाओ out_मुक्त_biपंचांगap;
+	पूर्ण
+	iommu->ir_msi_करोमुख्य =
+		arch_create_remap_msi_irq_करोमुख्य(iommu->ir_करोमुख्य,
 						 "INTEL-IR-MSI",
 						 iommu->seq_id);
 
 	ir_table->base = page_address(pages);
-	ir_table->bitmap = bitmap;
+	ir_table->biपंचांगap = biपंचांगap;
 	iommu->ir_table = ir_table;
 
 	/*
-	 * If the queued invalidation is already initialized,
+	 * If the queued invalidation is alपढ़ोy initialized,
 	 * shouldn't disable it.
 	 */
-	if (!iommu->qi) {
+	अगर (!iommu->qi) अणु
 		/*
 		 * Clear previous faults.
 		 */
 		dmar_fault(-1, iommu);
 		dmar_disable_qi(iommu);
 
-		if (dmar_enable_qi(iommu)) {
+		अगर (dmar_enable_qi(iommu)) अणु
 			pr_err("Failed to enable queued invalidation\n");
-			goto out_free_bitmap;
-		}
-	}
+			जाओ out_मुक्त_biपंचांगap;
+		पूर्ण
+	पूर्ण
 
 	init_ir_status(iommu);
 
-	if (ir_pre_enabled(iommu)) {
-		if (!is_kdump_kernel()) {
+	अगर (ir_pre_enabled(iommu)) अणु
+		अगर (!is_kdump_kernel()) अणु
 			pr_warn("IRQ remapping was enabled on %s but we are not in kdump mode\n",
 				iommu->name);
 			clear_ir_pre_enabled(iommu);
 			iommu_disable_irq_remapping(iommu);
-		} else if (iommu_load_old_irte(iommu))
+		पूर्ण अन्यथा अगर (iommu_load_old_irte(iommu))
 			pr_err("Failed to copy IR table for %s from previous kernel\n",
 			       iommu->name);
-		else
+		अन्यथा
 			pr_info("Copied IR table for %s from previous kernel\n",
 				iommu->name);
-	}
+	पूर्ण
 
 	iommu_set_irq_remapping(iommu, eim_mode);
 
-	return 0;
+	वापस 0;
 
-out_free_bitmap:
-	bitmap_free(bitmap);
-out_free_pages:
-	__free_pages(pages, INTR_REMAP_PAGE_ORDER);
-out_free_table:
-	kfree(ir_table);
+out_मुक्त_biपंचांगap:
+	biपंचांगap_मुक्त(biपंचांगap);
+out_मुक्त_pages:
+	__मुक्त_pages(pages, INTR_REMAP_PAGE_ORDER);
+out_मुक्त_table:
+	kमुक्त(ir_table);
 
-	iommu->ir_table  = NULL;
+	iommu->ir_table  = शून्य;
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void intel_teardown_irq_remapping(struct intel_iommu *iommu)
-{
-	struct fwnode_handle *fn;
+अटल व्योम पूर्णांकel_tearकरोwn_irq_remapping(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	काष्ठा fwnode_handle *fn;
 
-	if (iommu && iommu->ir_table) {
-		if (iommu->ir_msi_domain) {
-			fn = iommu->ir_msi_domain->fwnode;
+	अगर (iommu && iommu->ir_table) अणु
+		अगर (iommu->ir_msi_करोमुख्य) अणु
+			fn = iommu->ir_msi_करोमुख्य->fwnode;
 
-			irq_domain_remove(iommu->ir_msi_domain);
-			irq_domain_free_fwnode(fn);
-			iommu->ir_msi_domain = NULL;
-		}
-		if (iommu->ir_domain) {
-			fn = iommu->ir_domain->fwnode;
+			irq_करोमुख्य_हटाओ(iommu->ir_msi_करोमुख्य);
+			irq_करोमुख्य_मुक्त_fwnode(fn);
+			iommu->ir_msi_करोमुख्य = शून्य;
+		पूर्ण
+		अगर (iommu->ir_करोमुख्य) अणु
+			fn = iommu->ir_करोमुख्य->fwnode;
 
-			irq_domain_remove(iommu->ir_domain);
-			irq_domain_free_fwnode(fn);
-			iommu->ir_domain = NULL;
-		}
-		free_pages((unsigned long)iommu->ir_table->base,
+			irq_करोमुख्य_हटाओ(iommu->ir_करोमुख्य);
+			irq_करोमुख्य_मुक्त_fwnode(fn);
+			iommu->ir_करोमुख्य = शून्य;
+		पूर्ण
+		मुक्त_pages((अचिन्हित दीर्घ)iommu->ir_table->base,
 			   INTR_REMAP_PAGE_ORDER);
-		bitmap_free(iommu->ir_table->bitmap);
-		kfree(iommu->ir_table);
-		iommu->ir_table = NULL;
-	}
-}
+		biपंचांगap_मुक्त(iommu->ir_table->biपंचांगap);
+		kमुक्त(iommu->ir_table);
+		iommu->ir_table = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * Disable Interrupt Remapping.
  */
-static void iommu_disable_irq_remapping(struct intel_iommu *iommu)
-{
-	unsigned long flags;
+अटल व्योम iommu_disable_irq_remapping(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 sts;
 
-	if (!ecap_ir_support(iommu->ecap))
-		return;
+	अगर (!ecap_ir_support(iommu->ecap))
+		वापस;
 
 	/*
-	 * global invalidation of interrupt entry cache before disabling
-	 * interrupt-remapping.
+	 * global invalidation of पूर्णांकerrupt entry cache beक्रमe disabling
+	 * पूर्णांकerrupt-remapping.
 	 */
 	qi_global_iec(iommu);
 
-	raw_spin_lock_irqsave(&iommu->register_lock, flags);
+	raw_spin_lock_irqsave(&iommu->रेजिस्टर_lock, flags);
 
-	sts = readl(iommu->reg + DMAR_GSTS_REG);
-	if (!(sts & DMA_GSTS_IRES))
-		goto end;
+	sts = पढ़ोl(iommu->reg + DMAR_GSTS_REG);
+	अगर (!(sts & DMA_GSTS_IRES))
+		जाओ end;
 
 	iommu->gcmd &= ~DMA_GCMD_IRE;
-	writel(iommu->gcmd, iommu->reg + DMAR_GCMD_REG);
+	ग_लिखोl(iommu->gcmd, iommu->reg + DMAR_GCMD_REG);
 
 	IOMMU_WAIT_OP(iommu, DMAR_GSTS_REG,
-		      readl, !(sts & DMA_GSTS_IRES), sts);
+		      पढ़ोl, !(sts & DMA_GSTS_IRES), sts);
 
 end:
-	raw_spin_unlock_irqrestore(&iommu->register_lock, flags);
-}
+	raw_spin_unlock_irqrestore(&iommu->रेजिस्टर_lock, flags);
+पूर्ण
 
-static int __init dmar_x2apic_optout(void)
-{
-	struct acpi_table_dmar *dmar;
-	dmar = (struct acpi_table_dmar *)dmar_tbl;
-	if (!dmar || no_x2apic_optout)
-		return 0;
-	return dmar->flags & DMAR_X2APIC_OPT_OUT;
-}
+अटल पूर्णांक __init dmar_x2apic_optout(व्योम)
+अणु
+	काष्ठा acpi_table_dmar *dmar;
+	dmar = (काष्ठा acpi_table_dmar *)dmar_tbl;
+	अगर (!dmar || no_x2apic_optout)
+		वापस 0;
+	वापस dmar->flags & DMAR_X2APIC_OPT_OUT;
+पूर्ण
 
-static void __init intel_cleanup_irq_remapping(void)
-{
-	struct dmar_drhd_unit *drhd;
-	struct intel_iommu *iommu;
+अटल व्योम __init पूर्णांकel_cleanup_irq_remapping(व्योम)
+अणु
+	काष्ठा dmar_drhd_unit *drhd;
+	काष्ठा पूर्णांकel_iommu *iommu;
 
-	for_each_iommu(iommu, drhd) {
-		if (ecap_ir_support(iommu->ecap)) {
+	क्रम_each_iommu(iommu, drhd) अणु
+		अगर (ecap_ir_support(iommu->ecap)) अणु
 			iommu_disable_irq_remapping(iommu);
-			intel_teardown_irq_remapping(iommu);
-		}
-	}
+			पूर्णांकel_tearकरोwn_irq_remapping(iommu);
+		पूर्ण
+	पूर्ण
 
-	if (x2apic_supported())
+	अगर (x2apic_supported())
 		pr_warn("Failed to enable irq remapping. You are vulnerable to irq-injection attacks.\n");
-}
+पूर्ण
 
-static int __init intel_prepare_irq_remapping(void)
-{
-	struct dmar_drhd_unit *drhd;
-	struct intel_iommu *iommu;
-	int eim = 0;
+अटल पूर्णांक __init पूर्णांकel_prepare_irq_remapping(व्योम)
+अणु
+	काष्ठा dmar_drhd_unit *drhd;
+	काष्ठा पूर्णांकel_iommu *iommu;
+	पूर्णांक eim = 0;
 
-	if (irq_remap_broken) {
+	अगर (irq_remap_broken) अणु
 		pr_warn("This system BIOS has enabled interrupt remapping\n"
 			"on a chipset that contains an erratum making that\n"
 			"feature unstable.  To maintain system stability\n"
 			"interrupt remapping is being disabled.  Please\n"
 			"contact your BIOS vendor for an update\n");
-		add_taint(TAINT_FIRMWARE_WORKAROUND, LOCKDEP_STILL_OK);
-		return -ENODEV;
-	}
+		add_taपूर्णांक(TAINT_FIRMWARE_WORKAROUND, LOCKDEP_STILL_OK);
+		वापस -ENODEV;
+	पूर्ण
 
-	if (dmar_table_init() < 0)
-		return -ENODEV;
+	अगर (dmar_table_init() < 0)
+		वापस -ENODEV;
 
-	if (intel_cap_audit(CAP_AUDIT_STATIC_IRQR, NULL))
-		return -ENODEV;
+	अगर (पूर्णांकel_cap_audit(CAP_AUDIT_STATIC_IRQR, शून्य))
+		वापस -ENODEV;
 
-	if (!dmar_ir_support())
-		return -ENODEV;
+	अगर (!dmar_ir_support())
+		वापस -ENODEV;
 
-	if (parse_ioapics_under_ir()) {
+	अगर (parse_ioapics_under_ir()) अणु
 		pr_info("Not enabling interrupt remapping\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* First make sure all IOMMUs support IRQ remapping */
-	for_each_iommu(iommu, drhd)
-		if (!ecap_ir_support(iommu->ecap))
-			goto error;
+	क्रम_each_iommu(iommu, drhd)
+		अगर (!ecap_ir_support(iommu->ecap))
+			जाओ error;
 
 	/* Detect remapping mode: lapic or x2apic */
-	if (x2apic_supported()) {
+	अगर (x2apic_supported()) अणु
 		eim = !dmar_x2apic_optout();
-		if (!eim) {
+		अगर (!eim) अणु
 			pr_info("x2apic is disabled because BIOS sets x2apic opt out bit.");
 			pr_info("Use 'intremap=no_x2apic_optout' to override the BIOS setting.\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for_each_iommu(iommu, drhd) {
-		if (eim && !ecap_eim_support(iommu->ecap)) {
+	क्रम_each_iommu(iommu, drhd) अणु
+		अगर (eim && !ecap_eim_support(iommu->ecap)) अणु
 			pr_info("%s does not support EIM\n", iommu->name);
 			eim = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	eim_mode = eim;
-	if (eim)
+	अगर (eim)
 		pr_info("Queued invalidation will be enabled to support x2apic and Intr-remapping.\n");
 
 	/* Do the initializations early */
-	for_each_iommu(iommu, drhd) {
-		if (intel_setup_irq_remapping(iommu)) {
+	क्रम_each_iommu(iommu, drhd) अणु
+		अगर (पूर्णांकel_setup_irq_remapping(iommu)) अणु
 			pr_err("Failed to setup irq remapping for %s\n",
 			       iommu->name);
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	intel_cleanup_irq_remapping();
-	return -ENODEV;
-}
+	पूर्णांकel_cleanup_irq_remapping();
+	वापस -ENODEV;
+पूर्ण
 
 /*
  * Set Posted-Interrupts capability.
  */
-static inline void set_irq_posting_cap(void)
-{
-	struct dmar_drhd_unit *drhd;
-	struct intel_iommu *iommu;
+अटल अंतरभूत व्योम set_irq_posting_cap(व्योम)
+अणु
+	काष्ठा dmar_drhd_unit *drhd;
+	काष्ठा पूर्णांकel_iommu *iommu;
 
-	if (!disable_irq_post) {
+	अगर (!disable_irq_post) अणु
 		/*
-		 * If IRTE is in posted format, the 'pda' field goes across the
+		 * If IRTE is in posted क्रमmat, the 'pda' field goes across the
 		 * 64-bit boundary, we need use cmpxchg16b to atomically update
-		 * it. We only expose posted-interrupt when X86_FEATURE_CX16
-		 * is supported. Actually, hardware platforms supporting PI
+		 * it. We only expose posted-पूर्णांकerrupt when X86_FEATURE_CX16
+		 * is supported. Actually, hardware platक्रमms supporting PI
 		 * should have X86_FEATURE_CX16 support, this has been confirmed
 		 * with Intel hardware guys.
 		 */
-		if (boot_cpu_has(X86_FEATURE_CX16))
-			intel_irq_remap_ops.capability |= 1 << IRQ_POSTING_CAP;
+		अगर (boot_cpu_has(X86_FEATURE_CX16))
+			पूर्णांकel_irq_remap_ops.capability |= 1 << IRQ_POSTING_CAP;
 
-		for_each_iommu(iommu, drhd)
-			if (!cap_pi_support(iommu->cap)) {
-				intel_irq_remap_ops.capability &=
+		क्रम_each_iommu(iommu, drhd)
+			अगर (!cap_pi_support(iommu->cap)) अणु
+				पूर्णांकel_irq_remap_ops.capability &=
 						~(1 << IRQ_POSTING_CAP);
-				break;
-			}
-	}
-}
+				अवरोध;
+			पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __init intel_enable_irq_remapping(void)
-{
-	struct dmar_drhd_unit *drhd;
-	struct intel_iommu *iommu;
+अटल पूर्णांक __init पूर्णांकel_enable_irq_remapping(व्योम)
+अणु
+	काष्ठा dmar_drhd_unit *drhd;
+	काष्ठा पूर्णांकel_iommu *iommu;
 	bool setup = false;
 
 	/*
-	 * Setup Interrupt-remapping for all the DRHD's now.
+	 * Setup Interrupt-remapping क्रम all the DRHD's now.
 	 */
-	for_each_iommu(iommu, drhd) {
-		if (!ir_pre_enabled(iommu))
+	क्रम_each_iommu(iommu, drhd) अणु
+		अगर (!ir_pre_enabled(iommu))
 			iommu_enable_irq_remapping(iommu);
 		setup = true;
-	}
+	पूर्ण
 
-	if (!setup)
-		goto error;
+	अगर (!setup)
+		जाओ error;
 
 	irq_remapping_enabled = 1;
 
@@ -840,380 +841,380 @@ static int __init intel_enable_irq_remapping(void)
 
 	pr_info("Enabled IRQ remapping in %s mode\n", eim_mode ? "x2apic" : "xapic");
 
-	return eim_mode ? IRQ_REMAP_X2APIC_MODE : IRQ_REMAP_XAPIC_MODE;
+	वापस eim_mode ? IRQ_REMAP_X2APIC_MODE : IRQ_REMAP_XAPIC_MODE;
 
 error:
-	intel_cleanup_irq_remapping();
-	return -1;
-}
+	पूर्णांकel_cleanup_irq_remapping();
+	वापस -1;
+पूर्ण
 
-static int ir_parse_one_hpet_scope(struct acpi_dmar_device_scope *scope,
-				   struct intel_iommu *iommu,
-				   struct acpi_dmar_hardware_unit *drhd)
-{
-	struct acpi_dmar_pci_path *path;
+अटल पूर्णांक ir_parse_one_hpet_scope(काष्ठा acpi_dmar_device_scope *scope,
+				   काष्ठा पूर्णांकel_iommu *iommu,
+				   काष्ठा acpi_dmar_hardware_unit *drhd)
+अणु
+	काष्ठा acpi_dmar_pci_path *path;
 	u8 bus;
-	int count, free = -1;
+	पूर्णांक count, मुक्त = -1;
 
 	bus = scope->bus;
-	path = (struct acpi_dmar_pci_path *)(scope + 1);
-	count = (scope->length - sizeof(struct acpi_dmar_device_scope))
-		/ sizeof(struct acpi_dmar_pci_path);
+	path = (काष्ठा acpi_dmar_pci_path *)(scope + 1);
+	count = (scope->length - माप(काष्ठा acpi_dmar_device_scope))
+		/ माप(काष्ठा acpi_dmar_pci_path);
 
-	while (--count > 0) {
+	जबतक (--count > 0) अणु
 		/*
 		 * Access PCI directly due to the PCI
-		 * subsystem isn't initialized yet.
+		 * subप्रणाली isn't initialized yet.
 		 */
-		bus = read_pci_config_byte(bus, path->device, path->function,
+		bus = पढ़ो_pci_config_byte(bus, path->device, path->function,
 					   PCI_SECONDARY_BUS);
 		path++;
-	}
+	पूर्ण
 
-	for (count = 0; count < MAX_HPET_TBS; count++) {
-		if (ir_hpet[count].iommu == iommu &&
-		    ir_hpet[count].id == scope->enumeration_id)
-			return 0;
-		else if (ir_hpet[count].iommu == NULL && free == -1)
-			free = count;
-	}
-	if (free == -1) {
+	क्रम (count = 0; count < MAX_HPET_TBS; count++) अणु
+		अगर (ir_hpet[count].iommu == iommu &&
+		    ir_hpet[count].id == scope->क्रमागतeration_id)
+			वापस 0;
+		अन्यथा अगर (ir_hpet[count].iommu == शून्य && मुक्त == -1)
+			मुक्त = count;
+	पूर्ण
+	अगर (मुक्त == -1) अणु
 		pr_warn("Exceeded Max HPET blocks\n");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	ir_hpet[free].iommu = iommu;
-	ir_hpet[free].id    = scope->enumeration_id;
-	ir_hpet[free].bus   = bus;
-	ir_hpet[free].devfn = PCI_DEVFN(path->device, path->function);
+	ir_hpet[मुक्त].iommu = iommu;
+	ir_hpet[मुक्त].id    = scope->क्रमागतeration_id;
+	ir_hpet[मुक्त].bus   = bus;
+	ir_hpet[मुक्त].devfn = PCI_DEVFN(path->device, path->function);
 	pr_info("HPET id %d under DRHD base 0x%Lx\n",
-		scope->enumeration_id, drhd->address);
+		scope->क्रमागतeration_id, drhd->address);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ir_parse_one_ioapic_scope(struct acpi_dmar_device_scope *scope,
-				     struct intel_iommu *iommu,
-				     struct acpi_dmar_hardware_unit *drhd)
-{
-	struct acpi_dmar_pci_path *path;
+अटल पूर्णांक ir_parse_one_ioapic_scope(काष्ठा acpi_dmar_device_scope *scope,
+				     काष्ठा पूर्णांकel_iommu *iommu,
+				     काष्ठा acpi_dmar_hardware_unit *drhd)
+अणु
+	काष्ठा acpi_dmar_pci_path *path;
 	u8 bus;
-	int count, free = -1;
+	पूर्णांक count, मुक्त = -1;
 
 	bus = scope->bus;
-	path = (struct acpi_dmar_pci_path *)(scope + 1);
-	count = (scope->length - sizeof(struct acpi_dmar_device_scope))
-		/ sizeof(struct acpi_dmar_pci_path);
+	path = (काष्ठा acpi_dmar_pci_path *)(scope + 1);
+	count = (scope->length - माप(काष्ठा acpi_dmar_device_scope))
+		/ माप(काष्ठा acpi_dmar_pci_path);
 
-	while (--count > 0) {
+	जबतक (--count > 0) अणु
 		/*
 		 * Access PCI directly due to the PCI
-		 * subsystem isn't initialized yet.
+		 * subप्रणाली isn't initialized yet.
 		 */
-		bus = read_pci_config_byte(bus, path->device, path->function,
+		bus = पढ़ो_pci_config_byte(bus, path->device, path->function,
 					   PCI_SECONDARY_BUS);
 		path++;
-	}
+	पूर्ण
 
-	for (count = 0; count < MAX_IO_APICS; count++) {
-		if (ir_ioapic[count].iommu == iommu &&
-		    ir_ioapic[count].id == scope->enumeration_id)
-			return 0;
-		else if (ir_ioapic[count].iommu == NULL && free == -1)
-			free = count;
-	}
-	if (free == -1) {
+	क्रम (count = 0; count < MAX_IO_APICS; count++) अणु
+		अगर (ir_ioapic[count].iommu == iommu &&
+		    ir_ioapic[count].id == scope->क्रमागतeration_id)
+			वापस 0;
+		अन्यथा अगर (ir_ioapic[count].iommu == शून्य && मुक्त == -1)
+			मुक्त = count;
+	पूर्ण
+	अगर (मुक्त == -1) अणु
 		pr_warn("Exceeded Max IO APICS\n");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	ir_ioapic[free].bus   = bus;
-	ir_ioapic[free].devfn = PCI_DEVFN(path->device, path->function);
-	ir_ioapic[free].iommu = iommu;
-	ir_ioapic[free].id    = scope->enumeration_id;
+	ir_ioapic[मुक्त].bus   = bus;
+	ir_ioapic[मुक्त].devfn = PCI_DEVFN(path->device, path->function);
+	ir_ioapic[मुक्त].iommu = iommu;
+	ir_ioapic[मुक्त].id    = scope->क्रमागतeration_id;
 	pr_info("IOAPIC id %d under DRHD base  0x%Lx IOMMU %d\n",
-		scope->enumeration_id, drhd->address, iommu->seq_id);
+		scope->क्रमागतeration_id, drhd->address, iommu->seq_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ir_parse_ioapic_hpet_scope(struct acpi_dmar_header *header,
-				      struct intel_iommu *iommu)
-{
-	int ret = 0;
-	struct acpi_dmar_hardware_unit *drhd;
-	struct acpi_dmar_device_scope *scope;
-	void *start, *end;
+अटल पूर्णांक ir_parse_ioapic_hpet_scope(काष्ठा acpi_dmar_header *header,
+				      काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा acpi_dmar_hardware_unit *drhd;
+	काष्ठा acpi_dmar_device_scope *scope;
+	व्योम *start, *end;
 
-	drhd = (struct acpi_dmar_hardware_unit *)header;
-	start = (void *)(drhd + 1);
-	end = ((void *)drhd) + header->length;
+	drhd = (काष्ठा acpi_dmar_hardware_unit *)header;
+	start = (व्योम *)(drhd + 1);
+	end = ((व्योम *)drhd) + header->length;
 
-	while (start < end && ret == 0) {
+	जबतक (start < end && ret == 0) अणु
 		scope = start;
-		if (scope->entry_type == ACPI_DMAR_SCOPE_TYPE_IOAPIC)
+		अगर (scope->entry_type == ACPI_DMAR_SCOPE_TYPE_IOAPIC)
 			ret = ir_parse_one_ioapic_scope(scope, iommu, drhd);
-		else if (scope->entry_type == ACPI_DMAR_SCOPE_TYPE_HPET)
+		अन्यथा अगर (scope->entry_type == ACPI_DMAR_SCOPE_TYPE_HPET)
 			ret = ir_parse_one_hpet_scope(scope, iommu, drhd);
 		start += scope->length;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ir_remove_ioapic_hpet_scope(struct intel_iommu *iommu)
-{
-	int i;
+अटल व्योम ir_हटाओ_ioapic_hpet_scope(काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_HPET_TBS; i++)
-		if (ir_hpet[i].iommu == iommu)
-			ir_hpet[i].iommu = NULL;
+	क्रम (i = 0; i < MAX_HPET_TBS; i++)
+		अगर (ir_hpet[i].iommu == iommu)
+			ir_hpet[i].iommu = शून्य;
 
-	for (i = 0; i < MAX_IO_APICS; i++)
-		if (ir_ioapic[i].iommu == iommu)
-			ir_ioapic[i].iommu = NULL;
-}
+	क्रम (i = 0; i < MAX_IO_APICS; i++)
+		अगर (ir_ioapic[i].iommu == iommu)
+			ir_ioapic[i].iommu = शून्य;
+पूर्ण
 
 /*
  * Finds the assocaition between IOAPIC's and its Interrupt-remapping
  * hardware unit.
  */
-static int __init parse_ioapics_under_ir(void)
-{
-	struct dmar_drhd_unit *drhd;
-	struct intel_iommu *iommu;
+अटल पूर्णांक __init parse_ioapics_under_ir(व्योम)
+अणु
+	काष्ठा dmar_drhd_unit *drhd;
+	काष्ठा पूर्णांकel_iommu *iommu;
 	bool ir_supported = false;
-	int ioapic_idx;
+	पूर्णांक ioapic_idx;
 
-	for_each_iommu(iommu, drhd) {
-		int ret;
+	क्रम_each_iommu(iommu, drhd) अणु
+		पूर्णांक ret;
 
-		if (!ecap_ir_support(iommu->ecap))
-			continue;
+		अगर (!ecap_ir_support(iommu->ecap))
+			जारी;
 
 		ret = ir_parse_ioapic_hpet_scope(drhd->hdr, iommu);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ir_supported = true;
-	}
+	पूर्ण
 
-	if (!ir_supported)
-		return -ENODEV;
+	अगर (!ir_supported)
+		वापस -ENODEV;
 
-	for (ioapic_idx = 0; ioapic_idx < nr_ioapics; ioapic_idx++) {
-		int ioapic_id = mpc_ioapic_id(ioapic_idx);
-		if (!map_ioapic_to_iommu(ioapic_id)) {
+	क्रम (ioapic_idx = 0; ioapic_idx < nr_ioapics; ioapic_idx++) अणु
+		पूर्णांक ioapic_id = mpc_ioapic_id(ioapic_idx);
+		अगर (!map_ioapic_to_iommu(ioapic_id)) अणु
 			pr_err(FW_BUG "ioapic %d has no mapping iommu, "
 			       "interrupt remapping will be disabled\n",
 			       ioapic_id);
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init ir_dev_scope_init(void)
-{
-	int ret;
+अटल पूर्णांक __init ir_dev_scope_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!irq_remapping_enabled)
-		return 0;
+	अगर (!irq_remapping_enabled)
+		वापस 0;
 
-	down_write(&dmar_global_lock);
+	करोwn_ग_लिखो(&dmar_global_lock);
 	ret = dmar_dev_scope_init();
-	up_write(&dmar_global_lock);
+	up_ग_लिखो(&dmar_global_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 rootfs_initcall(ir_dev_scope_init);
 
-static void disable_irq_remapping(void)
-{
-	struct dmar_drhd_unit *drhd;
-	struct intel_iommu *iommu = NULL;
+अटल व्योम disable_irq_remapping(व्योम)
+अणु
+	काष्ठा dmar_drhd_unit *drhd;
+	काष्ठा पूर्णांकel_iommu *iommu = शून्य;
 
 	/*
-	 * Disable Interrupt-remapping for all the DRHD's now.
+	 * Disable Interrupt-remapping क्रम all the DRHD's now.
 	 */
-	for_each_iommu(iommu, drhd) {
-		if (!ecap_ir_support(iommu->ecap))
-			continue;
+	क्रम_each_iommu(iommu, drhd) अणु
+		अगर (!ecap_ir_support(iommu->ecap))
+			जारी;
 
 		iommu_disable_irq_remapping(iommu);
-	}
+	पूर्ण
 
 	/*
 	 * Clear Posted-Interrupts capability.
 	 */
-	if (!disable_irq_post)
-		intel_irq_remap_ops.capability &= ~(1 << IRQ_POSTING_CAP);
-}
+	अगर (!disable_irq_post)
+		पूर्णांकel_irq_remap_ops.capability &= ~(1 << IRQ_POSTING_CAP);
+पूर्ण
 
-static int reenable_irq_remapping(int eim)
-{
-	struct dmar_drhd_unit *drhd;
+अटल पूर्णांक reenable_irq_remapping(पूर्णांक eim)
+अणु
+	काष्ठा dmar_drhd_unit *drhd;
 	bool setup = false;
-	struct intel_iommu *iommu = NULL;
+	काष्ठा पूर्णांकel_iommu *iommu = शून्य;
 
-	for_each_iommu(iommu, drhd)
-		if (iommu->qi)
+	क्रम_each_iommu(iommu, drhd)
+		अगर (iommu->qi)
 			dmar_reenable_qi(iommu);
 
 	/*
-	 * Setup Interrupt-remapping for all the DRHD's now.
+	 * Setup Interrupt-remapping क्रम all the DRHD's now.
 	 */
-	for_each_iommu(iommu, drhd) {
-		if (!ecap_ir_support(iommu->ecap))
-			continue;
+	क्रम_each_iommu(iommu, drhd) अणु
+		अगर (!ecap_ir_support(iommu->ecap))
+			जारी;
 
-		/* Set up interrupt remapping for iommu.*/
+		/* Set up पूर्णांकerrupt remapping क्रम iommu.*/
 		iommu_set_irq_remapping(iommu, eim);
 		iommu_enable_irq_remapping(iommu);
 		setup = true;
-	}
+	पूर्ण
 
-	if (!setup)
-		goto error;
+	अगर (!setup)
+		जाओ error;
 
 	set_irq_posting_cap();
 
-	return 0;
+	वापस 0;
 
 error:
 	/*
 	 * handle error condition gracefully here!
 	 */
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
- * Store the MSI remapping domain pointer in the device if enabled.
+ * Store the MSI remapping करोमुख्य poपूर्णांकer in the device अगर enabled.
  *
  * This is called from dmar_pci_bus_add_dev() so it works even when DMA
- * remapping is disabled. Only update the pointer if the device is not
- * already handled by a non default PCI/MSI interrupt domain. This protects
+ * remapping is disabled. Only update the poपूर्णांकer अगर the device is not
+ * alपढ़ोy handled by a non शेष PCI/MSI पूर्णांकerrupt करोमुख्य. This protects
  * e.g. VMD devices.
  */
-void intel_irq_remap_add_device(struct dmar_pci_notify_info *info)
-{
-	if (!irq_remapping_enabled || pci_dev_has_special_msi_domain(info->dev))
-		return;
+व्योम पूर्णांकel_irq_remap_add_device(काष्ठा dmar_pci_notअगरy_info *info)
+अणु
+	अगर (!irq_remapping_enabled || pci_dev_has_special_msi_करोमुख्य(info->dev))
+		वापस;
 
-	dev_set_msi_domain(&info->dev->dev, map_dev_to_ir(info->dev));
-}
+	dev_set_msi_करोमुख्य(&info->dev->dev, map_dev_to_ir(info->dev));
+पूर्ण
 
-static void prepare_irte(struct irte *irte, int vector, unsigned int dest)
-{
-	memset(irte, 0, sizeof(*irte));
+अटल व्योम prepare_irte(काष्ठा irte *irte, पूर्णांक vector, अचिन्हित पूर्णांक dest)
+अणु
+	स_रखो(irte, 0, माप(*irte));
 
 	irte->present = 1;
 	irte->dst_mode = apic->dest_mode_logical;
 	/*
-	 * Trigger mode in the IRTE will always be edge, and for IO-APIC, the
+	 * Trigger mode in the IRTE will always be edge, and क्रम IO-APIC, the
 	 * actual level or edge trigger will be setup in the IO-APIC
-	 * RTE. This will help simplify level triggered irq migration.
+	 * RTE. This will help simplअगरy level triggered irq migration.
 	 * For more details, see the comments (in io_apic.c) explainig IO-APIC
-	 * irq migration in the presence of interrupt-remapping.
+	 * irq migration in the presence of पूर्णांकerrupt-remapping.
 	*/
 	irte->trigger_mode = 0;
 	irte->dlvry_mode = apic->delivery_mode;
 	irte->vector = vector;
 	irte->dest_id = IRTE_DEST(dest);
-	irte->redir_hint = 1;
-}
+	irte->redir_hपूर्णांक = 1;
+पूर्ण
 
-struct irq_remap_ops intel_irq_remap_ops = {
-	.prepare		= intel_prepare_irq_remapping,
-	.enable			= intel_enable_irq_remapping,
+काष्ठा irq_remap_ops पूर्णांकel_irq_remap_ops = अणु
+	.prepare		= पूर्णांकel_prepare_irq_remapping,
+	.enable			= पूर्णांकel_enable_irq_remapping,
 	.disable		= disable_irq_remapping,
 	.reenable		= reenable_irq_remapping,
 	.enable_faulting	= enable_drhd_fault_handling,
-};
+पूर्ण;
 
-static void intel_ir_reconfigure_irte(struct irq_data *irqd, bool force)
-{
-	struct intel_ir_data *ir_data = irqd->chip_data;
-	struct irte *irte = &ir_data->irte_entry;
-	struct irq_cfg *cfg = irqd_cfg(irqd);
+अटल व्योम पूर्णांकel_ir_reconfigure_irte(काष्ठा irq_data *irqd, bool क्रमce)
+अणु
+	काष्ठा पूर्णांकel_ir_data *ir_data = irqd->chip_data;
+	काष्ठा irte *irte = &ir_data->irte_entry;
+	काष्ठा irq_cfg *cfg = irqd_cfg(irqd);
 
 	/*
 	 * Atomically updates the IRTE with the new destination, vector
-	 * and flushes the interrupt entry cache.
+	 * and flushes the पूर्णांकerrupt entry cache.
 	 */
 	irte->vector = cfg->vector;
 	irte->dest_id = IRTE_DEST(cfg->dest_apicid);
 
-	/* Update the hardware only if the interrupt is in remapped mode. */
-	if (force || ir_data->irq_2_iommu.mode == IRQ_REMAPPING)
-		modify_irte(&ir_data->irq_2_iommu, irte);
-}
+	/* Update the hardware only अगर the पूर्णांकerrupt is in remapped mode. */
+	अगर (क्रमce || ir_data->irq_2_iommu.mode == IRQ_REMAPPING)
+		modअगरy_irte(&ir_data->irq_2_iommu, irte);
+पूर्ण
 
 /*
- * Migrate the IO-APIC irq in the presence of intr-remapping.
+ * Migrate the IO-APIC irq in the presence of पूर्णांकr-remapping.
  *
  * For both level and edge triggered, irq migration is a simple atomic
  * update(of vector and cpu destination) of IRTE and flush the hardware cache.
  *
- * For level triggered, we eliminate the io-apic RTE modification (with the
- * updated vector information), by using a virtual vector (io-apic pin number).
- * Real vector that is used for interrupting cpu will be coming from
- * the interrupt-remapping table entry.
+ * For level triggered, we eliminate the io-apic RTE modअगरication (with the
+ * updated vector inक्रमmation), by using a भव vector (io-apic pin number).
+ * Real vector that is used क्रम पूर्णांकerrupting cpu will be coming from
+ * the पूर्णांकerrupt-remapping table entry.
  *
  * As the migration is a simple atomic update of IRTE, the same mechanism
- * is used to migrate MSI irq's in the presence of interrupt-remapping.
+ * is used to migrate MSI irq's in the presence of पूर्णांकerrupt-remapping.
  */
-static int
-intel_ir_set_affinity(struct irq_data *data, const struct cpumask *mask,
-		      bool force)
-{
-	struct irq_data *parent = data->parent_data;
-	struct irq_cfg *cfg = irqd_cfg(data);
-	int ret;
+अटल पूर्णांक
+पूर्णांकel_ir_set_affinity(काष्ठा irq_data *data, स्थिर काष्ठा cpumask *mask,
+		      bool क्रमce)
+अणु
+	काष्ठा irq_data *parent = data->parent_data;
+	काष्ठा irq_cfg *cfg = irqd_cfg(data);
+	पूर्णांक ret;
 
-	ret = parent->chip->irq_set_affinity(parent, mask, force);
-	if (ret < 0 || ret == IRQ_SET_MASK_OK_DONE)
-		return ret;
+	ret = parent->chip->irq_set_affinity(parent, mask, क्रमce);
+	अगर (ret < 0 || ret == IRQ_SET_MASK_OK_DONE)
+		वापस ret;
 
-	intel_ir_reconfigure_irte(data, false);
+	पूर्णांकel_ir_reconfigure_irte(data, false);
 	/*
-	 * After this point, all the interrupts will start arriving
-	 * at the new destination. So, time to cleanup the previous
+	 * After this poपूर्णांक, all the पूर्णांकerrupts will start arriving
+	 * at the new destination. So, समय to cleanup the previous
 	 * vector allocation.
 	 */
 	send_cleanup_vector(cfg);
 
-	return IRQ_SET_MASK_OK_DONE;
-}
+	वापस IRQ_SET_MASK_OK_DONE;
+पूर्ण
 
-static void intel_ir_compose_msi_msg(struct irq_data *irq_data,
-				     struct msi_msg *msg)
-{
-	struct intel_ir_data *ir_data = irq_data->chip_data;
+अटल व्योम पूर्णांकel_ir_compose_msi_msg(काष्ठा irq_data *irq_data,
+				     काष्ठा msi_msg *msg)
+अणु
+	काष्ठा पूर्णांकel_ir_data *ir_data = irq_data->chip_data;
 
 	*msg = ir_data->msi_entry;
-}
+पूर्ण
 
-static int intel_ir_set_vcpu_affinity(struct irq_data *data, void *info)
-{
-	struct intel_ir_data *ir_data = data->chip_data;
-	struct vcpu_data *vcpu_pi_info = info;
+अटल पूर्णांक पूर्णांकel_ir_set_vcpu_affinity(काष्ठा irq_data *data, व्योम *info)
+अणु
+	काष्ठा पूर्णांकel_ir_data *ir_data = data->chip_data;
+	काष्ठा vcpu_data *vcpu_pi_info = info;
 
-	/* stop posting interrupts, back to remapping mode */
-	if (!vcpu_pi_info) {
-		modify_irte(&ir_data->irq_2_iommu, &ir_data->irte_entry);
-	} else {
-		struct irte irte_pi;
+	/* stop posting पूर्णांकerrupts, back to remapping mode */
+	अगर (!vcpu_pi_info) अणु
+		modअगरy_irte(&ir_data->irq_2_iommu, &ir_data->irte_entry);
+	पूर्ण अन्यथा अणु
+		काष्ठा irte irte_pi;
 
 		/*
-		 * We are not caching the posted interrupt entry. We
-		 * copy the data from the remapped entry and modify
-		 * the fields which are relevant for posted mode. The
-		 * cached remapped entry is used for switching back to
+		 * We are not caching the posted पूर्णांकerrupt entry. We
+		 * copy the data from the remapped entry and modअगरy
+		 * the fields which are relevant क्रम posted mode. The
+		 * cached remapped entry is used क्रम चयनing back to
 		 * remapped mode.
 		 */
-		memset(&irte_pi, 0, sizeof(irte_pi));
+		स_रखो(&irte_pi, 0, माप(irte_pi));
 		dmar_copy_shared_irte(&irte_pi, &ir_data->irte_entry);
 
 		/* Update the posted mode fields */
@@ -1225,287 +1226,287 @@ static int intel_ir_set_vcpu_affinity(struct irq_data *data, void *info)
 		irte_pi.pda_h = (vcpu_pi_info->pi_desc_addr >> 32) &
 				~(-1UL << PDA_HIGH_BIT);
 
-		modify_irte(&ir_data->irq_2_iommu, &irte_pi);
-	}
+		modअगरy_irte(&ir_data->irq_2_iommu, &irte_pi);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip intel_ir_chip = {
+अटल काष्ठा irq_chip पूर्णांकel_ir_chip = अणु
 	.name			= "INTEL-IR",
 	.irq_ack		= apic_ack_irq,
-	.irq_set_affinity	= intel_ir_set_affinity,
-	.irq_compose_msi_msg	= intel_ir_compose_msi_msg,
-	.irq_set_vcpu_affinity	= intel_ir_set_vcpu_affinity,
-};
+	.irq_set_affinity	= पूर्णांकel_ir_set_affinity,
+	.irq_compose_msi_msg	= पूर्णांकel_ir_compose_msi_msg,
+	.irq_set_vcpu_affinity	= पूर्णांकel_ir_set_vcpu_affinity,
+पूर्ण;
 
-static void fill_msi_msg(struct msi_msg *msg, u32 index, u32 subhandle)
-{
-	memset(msg, 0, sizeof(*msg));
+अटल व्योम fill_msi_msg(काष्ठा msi_msg *msg, u32 index, u32 subhandle)
+अणु
+	स_रखो(msg, 0, माप(*msg));
 
 	msg->arch_addr_lo.dmar_base_address = X86_MSI_BASE_ADDRESS_LOW;
 	msg->arch_addr_lo.dmar_subhandle_valid = true;
-	msg->arch_addr_lo.dmar_format = true;
+	msg->arch_addr_lo.dmar_क्रमmat = true;
 	msg->arch_addr_lo.dmar_index_0_14 = index & 0x7FFF;
 	msg->arch_addr_lo.dmar_index_15 = !!(index & 0x8000);
 
 	msg->address_hi = X86_MSI_BASE_ADDRESS_HIGH;
 
 	msg->arch_data.dmar_subhandle = subhandle;
-}
+पूर्ण
 
-static void intel_irq_remapping_prepare_irte(struct intel_ir_data *data,
-					     struct irq_cfg *irq_cfg,
-					     struct irq_alloc_info *info,
-					     int index, int sub_handle)
-{
-	struct irte *irte = &data->irte_entry;
+अटल व्योम पूर्णांकel_irq_remapping_prepare_irte(काष्ठा पूर्णांकel_ir_data *data,
+					     काष्ठा irq_cfg *irq_cfg,
+					     काष्ठा irq_alloc_info *info,
+					     पूर्णांक index, पूर्णांक sub_handle)
+अणु
+	काष्ठा irte *irte = &data->irte_entry;
 
 	prepare_irte(irte, irq_cfg->vector, irq_cfg->dest_apicid);
 
-	switch (info->type) {
-	case X86_IRQ_ALLOC_TYPE_IOAPIC:
-		/* Set source-id of interrupt request */
+	चयन (info->type) अणु
+	हाल X86_IRQ_ALLOC_TYPE_IOAPIC:
+		/* Set source-id of पूर्णांकerrupt request */
 		set_ioapic_sid(irte, info->devid);
-		apic_printk(APIC_VERBOSE, KERN_DEBUG "IOAPIC[%d]: Set IRTE entry (P:%d FPD:%d Dst_Mode:%d Redir_hint:%d Trig_Mode:%d Dlvry_Mode:%X Avail:%X Vector:%02X Dest:%08X SID:%04X SQ:%X SVT:%X)\n",
+		apic_prपूर्णांकk(APIC_VERBOSE, KERN_DEBUG "IOAPIC[%d]: Set IRTE entry (P:%d FPD:%d Dst_Mode:%d Redir_hint:%d Trig_Mode:%d Dlvry_Mode:%X Avail:%X Vector:%02X Dest:%08X SID:%04X SQ:%X SVT:%X)\n",
 			info->devid, irte->present, irte->fpd,
-			irte->dst_mode, irte->redir_hint,
+			irte->dst_mode, irte->redir_hपूर्णांक,
 			irte->trigger_mode, irte->dlvry_mode,
 			irte->avail, irte->vector, irte->dest_id,
 			irte->sid, irte->sq, irte->svt);
 		sub_handle = info->ioapic.pin;
-		break;
-	case X86_IRQ_ALLOC_TYPE_HPET:
+		अवरोध;
+	हाल X86_IRQ_ALLOC_TYPE_HPET:
 		set_hpet_sid(irte, info->devid);
-		break;
-	case X86_IRQ_ALLOC_TYPE_PCI_MSI:
-	case X86_IRQ_ALLOC_TYPE_PCI_MSIX:
+		अवरोध;
+	हाल X86_IRQ_ALLOC_TYPE_PCI_MSI:
+	हाल X86_IRQ_ALLOC_TYPE_PCI_MSIX:
 		set_msi_sid(irte,
 			    pci_real_dma_dev(msi_desc_to_pci_dev(info->desc)));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	fill_msi_msg(&data->msi_entry, index, sub_handle);
-}
+पूर्ण
 
-static void intel_free_irq_resources(struct irq_domain *domain,
-				     unsigned int virq, unsigned int nr_irqs)
-{
-	struct irq_data *irq_data;
-	struct intel_ir_data *data;
-	struct irq_2_iommu *irq_iommu;
-	unsigned long flags;
-	int i;
-	for (i = 0; i < nr_irqs; i++) {
-		irq_data = irq_domain_get_irq_data(domain, virq  + i);
-		if (irq_data && irq_data->chip_data) {
+अटल व्योम पूर्णांकel_मुक्त_irq_resources(काष्ठा irq_करोमुख्य *करोमुख्य,
+				     अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs)
+अणु
+	काष्ठा irq_data *irq_data;
+	काष्ठा पूर्णांकel_ir_data *data;
+	काष्ठा irq_2_iommu *irq_iommu;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
+	क्रम (i = 0; i < nr_irqs; i++) अणु
+		irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, virq  + i);
+		अगर (irq_data && irq_data->chip_data) अणु
 			data = irq_data->chip_data;
 			irq_iommu = &data->irq_2_iommu;
 			raw_spin_lock_irqsave(&irq_2_ir_lock, flags);
 			clear_entries(irq_iommu);
 			raw_spin_unlock_irqrestore(&irq_2_ir_lock, flags);
-			irq_domain_reset_irq_data(irq_data);
-			kfree(data);
-		}
-	}
-}
+			irq_करोमुख्य_reset_irq_data(irq_data);
+			kमुक्त(data);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int intel_irq_remapping_alloc(struct irq_domain *domain,
-				     unsigned int virq, unsigned int nr_irqs,
-				     void *arg)
-{
-	struct intel_iommu *iommu = domain->host_data;
-	struct irq_alloc_info *info = arg;
-	struct intel_ir_data *data, *ird;
-	struct irq_data *irq_data;
-	struct irq_cfg *irq_cfg;
-	int i, ret, index;
+अटल पूर्णांक पूर्णांकel_irq_remapping_alloc(काष्ठा irq_करोमुख्य *करोमुख्य,
+				     अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs,
+				     व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_iommu *iommu = करोमुख्य->host_data;
+	काष्ठा irq_alloc_info *info = arg;
+	काष्ठा पूर्णांकel_ir_data *data, *ird;
+	काष्ठा irq_data *irq_data;
+	काष्ठा irq_cfg *irq_cfg;
+	पूर्णांक i, ret, index;
 
-	if (!info || !iommu)
-		return -EINVAL;
-	if (nr_irqs > 1 && info->type != X86_IRQ_ALLOC_TYPE_PCI_MSI &&
+	अगर (!info || !iommu)
+		वापस -EINVAL;
+	अगर (nr_irqs > 1 && info->type != X86_IRQ_ALLOC_TYPE_PCI_MSI &&
 	    info->type != X86_IRQ_ALLOC_TYPE_PCI_MSIX)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/*
-	 * With IRQ remapping enabled, don't need contiguous CPU vectors
-	 * to support multiple MSI interrupts.
+	 * With IRQ remapping enabled, करोn't need contiguous CPU vectors
+	 * to support multiple MSI पूर्णांकerrupts.
 	 */
-	if (info->type == X86_IRQ_ALLOC_TYPE_PCI_MSI)
+	अगर (info->type == X86_IRQ_ALLOC_TYPE_PCI_MSI)
 		info->flags &= ~X86_IRQ_ALLOC_CONTIGUOUS_VECTORS;
 
-	ret = irq_domain_alloc_irqs_parent(domain, virq, nr_irqs, arg);
-	if (ret < 0)
-		return ret;
+	ret = irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, nr_irqs, arg);
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = -ENOMEM;
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		goto out_free_parent;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		जाओ out_मुक्त_parent;
 
-	down_read(&dmar_global_lock);
+	करोwn_पढ़ो(&dmar_global_lock);
 	index = alloc_irte(iommu, &data->irq_2_iommu, nr_irqs);
-	up_read(&dmar_global_lock);
-	if (index < 0) {
+	up_पढ़ो(&dmar_global_lock);
+	अगर (index < 0) अणु
 		pr_warn("Failed to allocate IRTE\n");
-		kfree(data);
-		goto out_free_parent;
-	}
+		kमुक्त(data);
+		जाओ out_मुक्त_parent;
+	पूर्ण
 
-	for (i = 0; i < nr_irqs; i++) {
-		irq_data = irq_domain_get_irq_data(domain, virq + i);
+	क्रम (i = 0; i < nr_irqs; i++) अणु
+		irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, virq + i);
 		irq_cfg = irqd_cfg(irq_data);
-		if (!irq_data || !irq_cfg) {
-			if (!i)
-				kfree(data);
+		अगर (!irq_data || !irq_cfg) अणु
+			अगर (!i)
+				kमुक्त(data);
 			ret = -EINVAL;
-			goto out_free_data;
-		}
+			जाओ out_मुक्त_data;
+		पूर्ण
 
-		if (i > 0) {
-			ird = kzalloc(sizeof(*ird), GFP_KERNEL);
-			if (!ird)
-				goto out_free_data;
+		अगर (i > 0) अणु
+			ird = kzalloc(माप(*ird), GFP_KERNEL);
+			अगर (!ird)
+				जाओ out_मुक्त_data;
 			/* Initialize the common data */
 			ird->irq_2_iommu = data->irq_2_iommu;
 			ird->irq_2_iommu.sub_handle = i;
-		} else {
+		पूर्ण अन्यथा अणु
 			ird = data;
-		}
+		पूर्ण
 
 		irq_data->hwirq = (index << 16) + i;
 		irq_data->chip_data = ird;
-		irq_data->chip = &intel_ir_chip;
-		intel_irq_remapping_prepare_irte(ird, irq_cfg, info, index, i);
+		irq_data->chip = &पूर्णांकel_ir_chip;
+		पूर्णांकel_irq_remapping_prepare_irte(ird, irq_cfg, info, index, i);
 		irq_set_status_flags(virq + i, IRQ_MOVE_PCNTXT);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
-out_free_data:
-	intel_free_irq_resources(domain, virq, i);
-out_free_parent:
-	irq_domain_free_irqs_common(domain, virq, nr_irqs);
-	return ret;
-}
+out_मुक्त_data:
+	पूर्णांकel_मुक्त_irq_resources(करोमुख्य, virq, i);
+out_मुक्त_parent:
+	irq_करोमुख्य_मुक्त_irqs_common(करोमुख्य, virq, nr_irqs);
+	वापस ret;
+पूर्ण
 
-static void intel_irq_remapping_free(struct irq_domain *domain,
-				     unsigned int virq, unsigned int nr_irqs)
-{
-	intel_free_irq_resources(domain, virq, nr_irqs);
-	irq_domain_free_irqs_common(domain, virq, nr_irqs);
-}
+अटल व्योम पूर्णांकel_irq_remapping_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य,
+				     अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs)
+अणु
+	पूर्णांकel_मुक्त_irq_resources(करोमुख्य, virq, nr_irqs);
+	irq_करोमुख्य_मुक्त_irqs_common(करोमुख्य, virq, nr_irqs);
+पूर्ण
 
-static int intel_irq_remapping_activate(struct irq_domain *domain,
-					struct irq_data *irq_data, bool reserve)
-{
-	intel_ir_reconfigure_irte(irq_data, true);
-	return 0;
-}
+अटल पूर्णांक पूर्णांकel_irq_remapping_activate(काष्ठा irq_करोमुख्य *करोमुख्य,
+					काष्ठा irq_data *irq_data, bool reserve)
+अणु
+	पूर्णांकel_ir_reconfigure_irte(irq_data, true);
+	वापस 0;
+पूर्ण
 
-static void intel_irq_remapping_deactivate(struct irq_domain *domain,
-					   struct irq_data *irq_data)
-{
-	struct intel_ir_data *data = irq_data->chip_data;
-	struct irte entry;
+अटल व्योम पूर्णांकel_irq_remapping_deactivate(काष्ठा irq_करोमुख्य *करोमुख्य,
+					   काष्ठा irq_data *irq_data)
+अणु
+	काष्ठा पूर्णांकel_ir_data *data = irq_data->chip_data;
+	काष्ठा irte entry;
 
-	memset(&entry, 0, sizeof(entry));
-	modify_irte(&data->irq_2_iommu, &entry);
-}
+	स_रखो(&entry, 0, माप(entry));
+	modअगरy_irte(&data->irq_2_iommu, &entry);
+पूर्ण
 
-static int intel_irq_remapping_select(struct irq_domain *d,
-				      struct irq_fwspec *fwspec,
-				      enum irq_domain_bus_token bus_token)
-{
-	struct intel_iommu *iommu = NULL;
+अटल पूर्णांक पूर्णांकel_irq_remapping_select(काष्ठा irq_करोमुख्य *d,
+				      काष्ठा irq_fwspec *fwspec,
+				      क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
+	काष्ठा पूर्णांकel_iommu *iommu = शून्य;
 
-	if (x86_fwspec_is_ioapic(fwspec))
+	अगर (x86_fwspec_is_ioapic(fwspec))
 		iommu = map_ioapic_to_iommu(fwspec->param[0]);
-	else if (x86_fwspec_is_hpet(fwspec))
+	अन्यथा अगर (x86_fwspec_is_hpet(fwspec))
 		iommu = map_hpet_to_iommu(fwspec->param[0]);
 
-	return iommu && d == iommu->ir_domain;
-}
+	वापस iommu && d == iommu->ir_करोमुख्य;
+पूर्ण
 
-static const struct irq_domain_ops intel_ir_domain_ops = {
-	.select = intel_irq_remapping_select,
-	.alloc = intel_irq_remapping_alloc,
-	.free = intel_irq_remapping_free,
-	.activate = intel_irq_remapping_activate,
-	.deactivate = intel_irq_remapping_deactivate,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops पूर्णांकel_ir_करोमुख्य_ops = अणु
+	.select = पूर्णांकel_irq_remapping_select,
+	.alloc = पूर्णांकel_irq_remapping_alloc,
+	.मुक्त = पूर्णांकel_irq_remapping_मुक्त,
+	.activate = पूर्णांकel_irq_remapping_activate,
+	.deactivate = पूर्णांकel_irq_remapping_deactivate,
+पूर्ण;
 
 /*
  * Support of Interrupt Remapping Unit Hotplug
  */
-static int dmar_ir_add(struct dmar_drhd_unit *dmaru, struct intel_iommu *iommu)
-{
-	int ret;
-	int eim = x2apic_enabled();
+अटल पूर्णांक dmar_ir_add(काष्ठा dmar_drhd_unit *dmaru, काष्ठा पूर्णांकel_iommu *iommu)
+अणु
+	पूर्णांक ret;
+	पूर्णांक eim = x2apic_enabled();
 
-	ret = intel_cap_audit(CAP_AUDIT_HOTPLUG_IRQR, iommu);
-	if (ret)
-		return ret;
+	ret = पूर्णांकel_cap_audit(CAP_AUDIT_HOTPLUG_IRQR, iommu);
+	अगर (ret)
+		वापस ret;
 
-	if (eim && !ecap_eim_support(iommu->ecap)) {
+	अगर (eim && !ecap_eim_support(iommu->ecap)) अणु
 		pr_info("DRHD %Lx: EIM not supported by DRHD, ecap %Lx\n",
 			iommu->reg_phys, iommu->ecap);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (ir_parse_ioapic_hpet_scope(dmaru->hdr, iommu)) {
+	अगर (ir_parse_ioapic_hpet_scope(dmaru->hdr, iommu)) अणु
 		pr_warn("DRHD %Lx: failed to parse managed IOAPIC/HPET\n",
 			iommu->reg_phys);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* TODO: check all IOAPICs are covered by IOMMU */
 
 	/* Setup Interrupt-remapping now. */
-	ret = intel_setup_irq_remapping(iommu);
-	if (ret) {
+	ret = पूर्णांकel_setup_irq_remapping(iommu);
+	अगर (ret) अणु
 		pr_err("Failed to setup irq remapping for %s\n",
 		       iommu->name);
-		intel_teardown_irq_remapping(iommu);
-		ir_remove_ioapic_hpet_scope(iommu);
-	} else {
+		पूर्णांकel_tearकरोwn_irq_remapping(iommu);
+		ir_हटाओ_ioapic_hpet_scope(iommu);
+	पूर्ण अन्यथा अणु
 		iommu_enable_irq_remapping(iommu);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int dmar_ir_hotplug(struct dmar_drhd_unit *dmaru, bool insert)
-{
-	int ret = 0;
-	struct intel_iommu *iommu = dmaru->iommu;
+पूर्णांक dmar_ir_hotplug(काष्ठा dmar_drhd_unit *dmaru, bool insert)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा पूर्णांकel_iommu *iommu = dmaru->iommu;
 
-	if (!irq_remapping_enabled)
-		return 0;
-	if (iommu == NULL)
-		return -EINVAL;
-	if (!ecap_ir_support(iommu->ecap))
-		return 0;
-	if (irq_remapping_cap(IRQ_POSTING_CAP) &&
+	अगर (!irq_remapping_enabled)
+		वापस 0;
+	अगर (iommu == शून्य)
+		वापस -EINVAL;
+	अगर (!ecap_ir_support(iommu->ecap))
+		वापस 0;
+	अगर (irq_remapping_cap(IRQ_POSTING_CAP) &&
 	    !cap_pi_support(iommu->cap))
-		return -EBUSY;
+		वापस -EBUSY;
 
-	if (insert) {
-		if (!iommu->ir_table)
+	अगर (insert) अणु
+		अगर (!iommu->ir_table)
 			ret = dmar_ir_add(dmaru, iommu);
-	} else {
-		if (iommu->ir_table) {
-			if (!bitmap_empty(iommu->ir_table->bitmap,
-					  INTR_REMAP_TABLE_ENTRIES)) {
+	पूर्ण अन्यथा अणु
+		अगर (iommu->ir_table) अणु
+			अगर (!biपंचांगap_empty(iommu->ir_table->biपंचांगap,
+					  INTR_REMAP_TABLE_ENTRIES)) अणु
 				ret = -EBUSY;
-			} else {
+			पूर्ण अन्यथा अणु
 				iommu_disable_irq_remapping(iommu);
-				intel_teardown_irq_remapping(iommu);
-				ir_remove_ioapic_hpet_scope(iommu);
-			}
-		}
-	}
+				पूर्णांकel_tearकरोwn_irq_remapping(iommu);
+				ir_हटाओ_ioapic_hpet_scope(iommu);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

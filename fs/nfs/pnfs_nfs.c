@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Common NFS I/O  operations for the pnfs file based
+ * Common NFS I/O  operations क्रम the pnfs file based
  * layout drivers.
  *
  * Copyright (c) 2014, Primary Data, Inc. All rights reserved.
@@ -8,1170 +9,1170 @@
  * Tom Haynes <loghyr@primarydata.com>
  */
 
-#include <linux/nfs_fs.h>
-#include <linux/nfs_page.h>
-#include <linux/sunrpc/addr.h>
-#include <linux/module.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/nfs_page.h>
+#समावेश <linux/sunrpc/addr.h>
+#समावेश <linux/module.h>
 
-#include "nfs4session.h"
-#include "internal.h"
-#include "pnfs.h"
+#समावेश "nfs4session.h"
+#समावेश "internal.h"
+#समावेश "pnfs.h"
 
-#define NFSDBG_FACILITY		NFSDBG_PNFS
+#घोषणा NFSDBG_FACILITY		NFSDBG_PNFS
 
-void pnfs_generic_rw_release(void *data)
-{
-	struct nfs_pgio_header *hdr = data;
+व्योम pnfs_generic_rw_release(व्योम *data)
+अणु
+	काष्ठा nfs_pgio_header *hdr = data;
 
 	nfs_put_client(hdr->ds_clp);
 	hdr->mds_ops->rpc_release(data);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_generic_rw_release);
 
-/* Fake up some data that will cause nfs_commit_release to retry the writes. */
-void pnfs_generic_prepare_to_resend_writes(struct nfs_commit_data *data)
-{
-	struct nfs_writeverf *verf = data->res.verf;
+/* Fake up some data that will cause nfs_commit_release to retry the ग_लिखोs. */
+व्योम pnfs_generic_prepare_to_resend_ग_लिखोs(काष्ठा nfs_commit_data *data)
+अणु
+	काष्ठा nfs_ग_लिखोverf *verf = data->res.verf;
 
 	data->task.tk_status = 0;
-	memset(&verf->verifier, 0, sizeof(verf->verifier));
+	स_रखो(&verf->verअगरier, 0, माप(verf->verअगरier));
 	verf->committed = NFS_UNSTABLE;
-}
-EXPORT_SYMBOL_GPL(pnfs_generic_prepare_to_resend_writes);
+पूर्ण
+EXPORT_SYMBOL_GPL(pnfs_generic_prepare_to_resend_ग_लिखोs);
 
-void pnfs_generic_write_commit_done(struct rpc_task *task, void *data)
-{
-	struct nfs_commit_data *wdata = data;
+व्योम pnfs_generic_ग_लिखो_commit_करोne(काष्ठा rpc_task *task, व्योम *data)
+अणु
+	काष्ठा nfs_commit_data *wdata = data;
 
 	/* Note this may cause RPC to be resent */
-	wdata->mds_ops->rpc_call_done(task, data);
-}
-EXPORT_SYMBOL_GPL(pnfs_generic_write_commit_done);
+	wdata->mds_ops->rpc_call_करोne(task, data);
+पूर्ण
+EXPORT_SYMBOL_GPL(pnfs_generic_ग_लिखो_commit_करोne);
 
-void pnfs_generic_commit_release(void *calldata)
-{
-	struct nfs_commit_data *data = calldata;
+व्योम pnfs_generic_commit_release(व्योम *calldata)
+अणु
+	काष्ठा nfs_commit_data *data = calldata;
 
 	data->completion_ops->completion(data);
 	pnfs_put_lseg(data->lseg);
 	nfs_put_client(data->ds_clp);
 	nfs_commitdata_release(data);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_generic_commit_release);
 
-static struct pnfs_layout_segment *
-pnfs_free_bucket_lseg(struct pnfs_commit_bucket *bucket)
-{
-	if (list_empty(&bucket->committing) && list_empty(&bucket->written)) {
-		struct pnfs_layout_segment *freeme = bucket->lseg;
-		bucket->lseg = NULL;
-		return freeme;
-	}
-	return NULL;
-}
+अटल काष्ठा pnfs_layout_segment *
+pnfs_मुक्त_bucket_lseg(काष्ठा pnfs_commit_bucket *bucket)
+अणु
+	अगर (list_empty(&bucket->committing) && list_empty(&bucket->written)) अणु
+		काष्ठा pnfs_layout_segment *मुक्तme = bucket->lseg;
+		bucket->lseg = शून्य;
+		वापस मुक्तme;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-/* The generic layer is about to remove the req from the commit list.
+/* The generic layer is about to हटाओ the req from the commit list.
  * If this will make the bucket empty, it will need to put the lseg reference.
  * Note this must be called holding nfsi->commit_mutex
  */
-void
-pnfs_generic_clear_request_commit(struct nfs_page *req,
-				  struct nfs_commit_info *cinfo)
-{
-	struct pnfs_commit_bucket *bucket = NULL;
+व्योम
+pnfs_generic_clear_request_commit(काष्ठा nfs_page *req,
+				  काष्ठा nfs_commit_info *cinfo)
+अणु
+	काष्ठा pnfs_commit_bucket *bucket = शून्य;
 
-	if (!test_and_clear_bit(PG_COMMIT_TO_DS, &req->wb_flags))
-		goto out;
+	अगर (!test_and_clear_bit(PG_COMMIT_TO_DS, &req->wb_flags))
+		जाओ out;
 	cinfo->ds->nwritten--;
-	if (list_is_singular(&req->wb_list))
+	अगर (list_is_singular(&req->wb_list))
 		bucket = list_first_entry(&req->wb_list,
-					  struct pnfs_commit_bucket, written);
+					  काष्ठा pnfs_commit_bucket, written);
 out:
-	nfs_request_remove_commit_list(req, cinfo);
-	if (bucket)
-		pnfs_put_lseg(pnfs_free_bucket_lseg(bucket));
-}
+	nfs_request_हटाओ_commit_list(req, cinfo);
+	अगर (bucket)
+		pnfs_put_lseg(pnfs_मुक्त_bucket_lseg(bucket));
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_generic_clear_request_commit);
 
-struct pnfs_commit_array *
-pnfs_alloc_commit_array(size_t n, gfp_t gfp_flags)
-{
-	struct pnfs_commit_array *p;
-	struct pnfs_commit_bucket *b;
+काष्ठा pnfs_commit_array *
+pnfs_alloc_commit_array(माप_प्रकार n, gfp_t gfp_flags)
+अणु
+	काष्ठा pnfs_commit_array *p;
+	काष्ठा pnfs_commit_bucket *b;
 
-	p = kmalloc(struct_size(p, buckets, n), gfp_flags);
-	if (!p)
-		return NULL;
+	p = kदो_स्मृति(काष्ठा_size(p, buckets, n), gfp_flags);
+	अगर (!p)
+		वापस शून्य;
 	p->nbuckets = n;
 	INIT_LIST_HEAD(&p->cinfo_list);
 	INIT_LIST_HEAD(&p->lseg_list);
-	p->lseg = NULL;
-	for (b = &p->buckets[0]; n != 0; b++, n--) {
+	p->lseg = शून्य;
+	क्रम (b = &p->buckets[0]; n != 0; b++, n--) अणु
 		INIT_LIST_HEAD(&b->written);
 		INIT_LIST_HEAD(&b->committing);
-		b->lseg = NULL;
+		b->lseg = शून्य;
 		b->direct_verf.committed = NFS_INVALID_STABLE_HOW;
-	}
-	return p;
-}
+	पूर्ण
+	वापस p;
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_alloc_commit_array);
 
-void
-pnfs_free_commit_array(struct pnfs_commit_array *p)
-{
-	kfree_rcu(p, rcu);
-}
-EXPORT_SYMBOL_GPL(pnfs_free_commit_array);
+व्योम
+pnfs_मुक्त_commit_array(काष्ठा pnfs_commit_array *p)
+अणु
+	kमुक्त_rcu(p, rcu);
+पूर्ण
+EXPORT_SYMBOL_GPL(pnfs_मुक्त_commit_array);
 
-static struct pnfs_commit_array *
-pnfs_find_commit_array_by_lseg(struct pnfs_ds_commit_info *fl_cinfo,
-		struct pnfs_layout_segment *lseg)
-{
-	struct pnfs_commit_array *array;
+अटल काष्ठा pnfs_commit_array *
+pnfs_find_commit_array_by_lseg(काष्ठा pnfs_ds_commit_info *fl_cinfo,
+		काष्ठा pnfs_layout_segment *lseg)
+अणु
+	काष्ठा pnfs_commit_array *array;
 
-	list_for_each_entry_rcu(array, &fl_cinfo->commits, cinfo_list) {
-		if (array->lseg == lseg)
-			return array;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry_rcu(array, &fl_cinfo->commits, cinfo_list) अणु
+		अगर (array->lseg == lseg)
+			वापस array;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct pnfs_commit_array *
-pnfs_add_commit_array(struct pnfs_ds_commit_info *fl_cinfo,
-		struct pnfs_commit_array *new,
-		struct pnfs_layout_segment *lseg)
-{
-	struct pnfs_commit_array *array;
+काष्ठा pnfs_commit_array *
+pnfs_add_commit_array(काष्ठा pnfs_ds_commit_info *fl_cinfo,
+		काष्ठा pnfs_commit_array *new,
+		काष्ठा pnfs_layout_segment *lseg)
+अणु
+	काष्ठा pnfs_commit_array *array;
 
 	array = pnfs_find_commit_array_by_lseg(fl_cinfo, lseg);
-	if (array)
-		return array;
+	अगर (array)
+		वापस array;
 	new->lseg = lseg;
 	refcount_set(&new->refcount, 1);
 	list_add_rcu(&new->cinfo_list, &fl_cinfo->commits);
 	list_add(&new->lseg_list, &lseg->pls_commits);
-	return new;
-}
+	वापस new;
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_add_commit_array);
 
-static struct pnfs_commit_array *
-pnfs_lookup_commit_array(struct pnfs_ds_commit_info *fl_cinfo,
-		struct pnfs_layout_segment *lseg)
-{
-	struct pnfs_commit_array *array;
+अटल काष्ठा pnfs_commit_array *
+pnfs_lookup_commit_array(काष्ठा pnfs_ds_commit_info *fl_cinfo,
+		काष्ठा pnfs_layout_segment *lseg)
+अणु
+	काष्ठा pnfs_commit_array *array;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	array = pnfs_find_commit_array_by_lseg(fl_cinfo, lseg);
-	if (!array) {
-		rcu_read_unlock();
+	अगर (!array) अणु
+		rcu_पढ़ो_unlock();
 		fl_cinfo->ops->setup_ds_info(fl_cinfo, lseg);
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		array = pnfs_find_commit_array_by_lseg(fl_cinfo, lseg);
-	}
-	rcu_read_unlock();
-	return array;
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस array;
+पूर्ण
 
-static void
-pnfs_release_commit_array_locked(struct pnfs_commit_array *array)
-{
+अटल व्योम
+pnfs_release_commit_array_locked(काष्ठा pnfs_commit_array *array)
+अणु
 	list_del_rcu(&array->cinfo_list);
 	list_del(&array->lseg_list);
-	pnfs_free_commit_array(array);
-}
+	pnfs_मुक्त_commit_array(array);
+पूर्ण
 
-static void
-pnfs_put_commit_array_locked(struct pnfs_commit_array *array)
-{
-	if (refcount_dec_and_test(&array->refcount))
+अटल व्योम
+pnfs_put_commit_array_locked(काष्ठा pnfs_commit_array *array)
+अणु
+	अगर (refcount_dec_and_test(&array->refcount))
 		pnfs_release_commit_array_locked(array);
-}
+पूर्ण
 
-static void
-pnfs_put_commit_array(struct pnfs_commit_array *array, struct inode *inode)
-{
-	if (refcount_dec_and_lock(&array->refcount, &inode->i_lock)) {
+अटल व्योम
+pnfs_put_commit_array(काष्ठा pnfs_commit_array *array, काष्ठा inode *inode)
+अणु
+	अगर (refcount_dec_and_lock(&array->refcount, &inode->i_lock)) अणु
 		pnfs_release_commit_array_locked(array);
 		spin_unlock(&inode->i_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct pnfs_commit_array *
-pnfs_get_commit_array(struct pnfs_commit_array *array)
-{
-	if (refcount_inc_not_zero(&array->refcount))
-		return array;
-	return NULL;
-}
+अटल काष्ठा pnfs_commit_array *
+pnfs_get_commit_array(काष्ठा pnfs_commit_array *array)
+अणु
+	अगर (refcount_inc_not_zero(&array->refcount))
+		वापस array;
+	वापस शून्य;
+पूर्ण
 
-static void
-pnfs_remove_and_free_commit_array(struct pnfs_commit_array *array)
-{
-	array->lseg = NULL;
+अटल व्योम
+pnfs_हटाओ_and_मुक्त_commit_array(काष्ठा pnfs_commit_array *array)
+अणु
+	array->lseg = शून्य;
 	list_del_init(&array->lseg_list);
 	pnfs_put_commit_array_locked(array);
-}
+पूर्ण
 
-void
-pnfs_generic_ds_cinfo_release_lseg(struct pnfs_ds_commit_info *fl_cinfo,
-		struct pnfs_layout_segment *lseg)
-{
-	struct pnfs_commit_array *array, *tmp;
+व्योम
+pnfs_generic_ds_cinfo_release_lseg(काष्ठा pnfs_ds_commit_info *fl_cinfo,
+		काष्ठा pnfs_layout_segment *lseg)
+अणु
+	काष्ठा pnfs_commit_array *array, *पंचांगp;
 
-	list_for_each_entry_safe(array, tmp, &lseg->pls_commits, lseg_list)
-		pnfs_remove_and_free_commit_array(array);
-}
+	list_क्रम_each_entry_safe(array, पंचांगp, &lseg->pls_commits, lseg_list)
+		pnfs_हटाओ_and_मुक्त_commit_array(array);
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_generic_ds_cinfo_release_lseg);
 
-void
-pnfs_generic_ds_cinfo_destroy(struct pnfs_ds_commit_info *fl_cinfo)
-{
-	struct pnfs_commit_array *array, *tmp;
+व्योम
+pnfs_generic_ds_cinfo_destroy(काष्ठा pnfs_ds_commit_info *fl_cinfo)
+अणु
+	काष्ठा pnfs_commit_array *array, *पंचांगp;
 
-	list_for_each_entry_safe(array, tmp, &fl_cinfo->commits, cinfo_list)
-		pnfs_remove_and_free_commit_array(array);
-}
+	list_क्रम_each_entry_safe(array, पंचांगp, &fl_cinfo->commits, cinfo_list)
+		pnfs_हटाओ_and_मुक्त_commit_array(array);
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_generic_ds_cinfo_destroy);
 
 /*
- * Locks the nfs_page requests for commit and moves them to
+ * Locks the nfs_page requests क्रम commit and moves them to
  * @bucket->committing.
  */
-static int
-pnfs_bucket_scan_ds_commit_list(struct pnfs_commit_bucket *bucket,
-				struct nfs_commit_info *cinfo,
-				int max)
-{
-	struct list_head *src = &bucket->written;
-	struct list_head *dst = &bucket->committing;
-	int ret;
+अटल पूर्णांक
+pnfs_bucket_scan_ds_commit_list(काष्ठा pnfs_commit_bucket *bucket,
+				काष्ठा nfs_commit_info *cinfo,
+				पूर्णांक max)
+अणु
+	काष्ठा list_head *src = &bucket->written;
+	काष्ठा list_head *dst = &bucket->committing;
+	पूर्णांक ret;
 
-	lockdep_assert_held(&NFS_I(cinfo->inode)->commit_mutex);
+	lockdep_निश्चित_held(&NFS_I(cinfo->inode)->commit_mutex);
 	ret = nfs_scan_commit_list(src, dst, cinfo, max);
-	if (ret) {
+	अगर (ret) अणु
 		cinfo->ds->nwritten -= ret;
 		cinfo->ds->ncommitting += ret;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int pnfs_bucket_scan_array(struct nfs_commit_info *cinfo,
-				  struct pnfs_commit_bucket *buckets,
-				  unsigned int nbuckets,
-				  int max)
-{
-	unsigned int i;
-	int rv = 0, cnt;
+अटल पूर्णांक pnfs_bucket_scan_array(काष्ठा nfs_commit_info *cinfo,
+				  काष्ठा pnfs_commit_bucket *buckets,
+				  अचिन्हित पूर्णांक nbuckets,
+				  पूर्णांक max)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक rv = 0, cnt;
 
-	for (i = 0; i < nbuckets && max != 0; i++) {
+	क्रम (i = 0; i < nbuckets && max != 0; i++) अणु
 		cnt = pnfs_bucket_scan_ds_commit_list(&buckets[i], cinfo, max);
 		rv += cnt;
 		max -= cnt;
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-/* Move reqs from written to committing lists, returning count
+/* Move reqs from written to committing lists, वापसing count
  * of number moved.
  */
-int pnfs_generic_scan_commit_lists(struct nfs_commit_info *cinfo, int max)
-{
-	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
-	struct pnfs_commit_array *array;
-	int rv = 0, cnt;
+पूर्णांक pnfs_generic_scan_commit_lists(काष्ठा nfs_commit_info *cinfo, पूर्णांक max)
+अणु
+	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+	काष्ठा pnfs_commit_array *array;
+	पूर्णांक rv = 0, cnt;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(array, &fl_cinfo->commits, cinfo_list) {
-		if (!array->lseg || !pnfs_get_commit_array(array))
-			continue;
-		rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(array, &fl_cinfo->commits, cinfo_list) अणु
+		अगर (!array->lseg || !pnfs_get_commit_array(array))
+			जारी;
+		rcu_पढ़ो_unlock();
 		cnt = pnfs_bucket_scan_array(cinfo, array->buckets,
 				array->nbuckets, max);
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		pnfs_put_commit_array(array, cinfo->inode);
 		rv += cnt;
 		max -= cnt;
-		if (!max)
-			break;
-	}
-	rcu_read_unlock();
-	return rv;
-}
+		अगर (!max)
+			अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस rv;
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_generic_scan_commit_lists);
 
-static unsigned int
-pnfs_bucket_recover_commit_reqs(struct list_head *dst,
-			        struct pnfs_commit_bucket *buckets,
-				unsigned int nbuckets,
-				struct nfs_commit_info *cinfo)
-{
-	struct pnfs_commit_bucket *b;
-	struct pnfs_layout_segment *freeme;
-	unsigned int nwritten, ret = 0;
-	unsigned int i;
+अटल अचिन्हित पूर्णांक
+pnfs_bucket_recover_commit_reqs(काष्ठा list_head *dst,
+			        काष्ठा pnfs_commit_bucket *buckets,
+				अचिन्हित पूर्णांक nbuckets,
+				काष्ठा nfs_commit_info *cinfo)
+अणु
+	काष्ठा pnfs_commit_bucket *b;
+	काष्ठा pnfs_layout_segment *मुक्तme;
+	अचिन्हित पूर्णांक nwritten, ret = 0;
+	अचिन्हित पूर्णांक i;
 
 restart:
-	for (i = 0, b = buckets; i < nbuckets; i++, b++) {
+	क्रम (i = 0, b = buckets; i < nbuckets; i++, b++) अणु
 		nwritten = nfs_scan_commit_list(&b->written, dst, cinfo, 0);
-		if (!nwritten)
-			continue;
+		अगर (!nwritten)
+			जारी;
 		ret += nwritten;
-		freeme = pnfs_free_bucket_lseg(b);
-		if (freeme) {
-			pnfs_put_lseg(freeme);
-			goto restart;
-		}
-	}
-	return ret;
-}
+		मुक्तme = pnfs_मुक्त_bucket_lseg(b);
+		अगर (मुक्तme) अणु
+			pnfs_put_lseg(मुक्तme);
+			जाओ restart;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-/* Pull everything off the committing lists and dump into @dst.  */
-void pnfs_generic_recover_commit_reqs(struct list_head *dst,
-				      struct nfs_commit_info *cinfo)
-{
-	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
-	struct pnfs_commit_array *array;
-	unsigned int nwritten;
+/* Pull everything off the committing lists and dump पूर्णांकo @dst.  */
+व्योम pnfs_generic_recover_commit_reqs(काष्ठा list_head *dst,
+				      काष्ठा nfs_commit_info *cinfo)
+अणु
+	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+	काष्ठा pnfs_commit_array *array;
+	अचिन्हित पूर्णांक nwritten;
 
-	lockdep_assert_held(&NFS_I(cinfo->inode)->commit_mutex);
-	rcu_read_lock();
-	list_for_each_entry_rcu(array, &fl_cinfo->commits, cinfo_list) {
-		if (!array->lseg || !pnfs_get_commit_array(array))
-			continue;
-		rcu_read_unlock();
+	lockdep_निश्चित_held(&NFS_I(cinfo->inode)->commit_mutex);
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(array, &fl_cinfo->commits, cinfo_list) अणु
+		अगर (!array->lseg || !pnfs_get_commit_array(array))
+			जारी;
+		rcu_पढ़ो_unlock();
 		nwritten = pnfs_bucket_recover_commit_reqs(dst,
 							   array->buckets,
 							   array->nbuckets,
 							   cinfo);
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		pnfs_put_commit_array(array, cinfo->inode);
 		fl_cinfo->nwritten -= nwritten;
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_generic_recover_commit_reqs);
 
-static struct nfs_page *
-pnfs_bucket_search_commit_reqs(struct pnfs_commit_bucket *buckets,
-		unsigned int nbuckets, struct page *page)
-{
-	struct nfs_page *req;
-	struct pnfs_commit_bucket *b;
-	unsigned int i;
+अटल काष्ठा nfs_page *
+pnfs_bucket_search_commit_reqs(काष्ठा pnfs_commit_bucket *buckets,
+		अचिन्हित पूर्णांक nbuckets, काष्ठा page *page)
+अणु
+	काष्ठा nfs_page *req;
+	काष्ठा pnfs_commit_bucket *b;
+	अचिन्हित पूर्णांक i;
 
-	/* Linearly search the commit lists for each bucket until a matching
+	/* Linearly search the commit lists क्रम each bucket until a matching
 	 * request is found */
-	for (i = 0, b = buckets; i < nbuckets; i++, b++) {
-		list_for_each_entry(req, &b->written, wb_list) {
-			if (req->wb_page == page)
-				return req->wb_head;
-		}
-		list_for_each_entry(req, &b->committing, wb_list) {
-			if (req->wb_page == page)
-				return req->wb_head;
-		}
-	}
-	return NULL;
-}
+	क्रम (i = 0, b = buckets; i < nbuckets; i++, b++) अणु
+		list_क्रम_each_entry(req, &b->written, wb_list) अणु
+			अगर (req->wb_page == page)
+				वापस req->wb_head;
+		पूर्ण
+		list_क्रम_each_entry(req, &b->committing, wb_list) अणु
+			अगर (req->wb_page == page)
+				वापस req->wb_head;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-/* pnfs_generic_search_commit_reqs - Search lists in @cinfo for the head reqest
- *				   for @page
- * @cinfo - commit info for current inode
- * @page - page to search for matching head request
+/* pnfs_generic_search_commit_reqs - Search lists in @cinfo क्रम the head reqest
+ *				   क्रम @page
+ * @cinfo - commit info क्रम current inode
+ * @page - page to search क्रम matching head request
  *
- * Returns a the head request if one is found, otherwise returns NULL.
+ * Returns a the head request अगर one is found, otherwise वापसs शून्य.
  */
-struct nfs_page *
-pnfs_generic_search_commit_reqs(struct nfs_commit_info *cinfo, struct page *page)
-{
-	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
-	struct pnfs_commit_array *array;
-	struct nfs_page *req;
+काष्ठा nfs_page *
+pnfs_generic_search_commit_reqs(काष्ठा nfs_commit_info *cinfo, काष्ठा page *page)
+अणु
+	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+	काष्ठा pnfs_commit_array *array;
+	काष्ठा nfs_page *req;
 
-	list_for_each_entry(array, &fl_cinfo->commits, cinfo_list) {
+	list_क्रम_each_entry(array, &fl_cinfo->commits, cinfo_list) अणु
 		req = pnfs_bucket_search_commit_reqs(array->buckets,
 				array->nbuckets, page);
-		if (req)
-			return req;
-	}
-	return NULL;
-}
+		अगर (req)
+			वापस req;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_generic_search_commit_reqs);
 
-static struct pnfs_layout_segment *
-pnfs_bucket_get_committing(struct list_head *head,
-			   struct pnfs_commit_bucket *bucket,
-			   struct nfs_commit_info *cinfo)
-{
-	struct pnfs_layout_segment *lseg;
-	struct list_head *pos;
+अटल काष्ठा pnfs_layout_segment *
+pnfs_bucket_get_committing(काष्ठा list_head *head,
+			   काष्ठा pnfs_commit_bucket *bucket,
+			   काष्ठा nfs_commit_info *cinfo)
+अणु
+	काष्ठा pnfs_layout_segment *lseg;
+	काष्ठा list_head *pos;
 
-	list_for_each(pos, &bucket->committing)
+	list_क्रम_each(pos, &bucket->committing)
 		cinfo->ds->ncommitting--;
 	list_splice_init(&bucket->committing, head);
-	lseg = pnfs_free_bucket_lseg(bucket);
-	if (!lseg)
+	lseg = pnfs_मुक्त_bucket_lseg(bucket);
+	अगर (!lseg)
 		lseg = pnfs_get_lseg(bucket->lseg);
-	return lseg;
-}
+	वापस lseg;
+पूर्ण
 
-static struct nfs_commit_data *
-pnfs_bucket_fetch_commitdata(struct pnfs_commit_bucket *bucket,
-			     struct nfs_commit_info *cinfo)
-{
-	struct nfs_commit_data *data = nfs_commitdata_alloc(false);
+अटल काष्ठा nfs_commit_data *
+pnfs_bucket_fetch_commitdata(काष्ठा pnfs_commit_bucket *bucket,
+			     काष्ठा nfs_commit_info *cinfo)
+अणु
+	काष्ठा nfs_commit_data *data = nfs_commitdata_alloc(false);
 
-	if (!data)
-		return NULL;
+	अगर (!data)
+		वापस शून्य;
 	data->lseg = pnfs_bucket_get_committing(&data->pages, bucket, cinfo);
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static void pnfs_generic_retry_commit(struct pnfs_commit_bucket *buckets,
-				      unsigned int nbuckets,
-				      struct nfs_commit_info *cinfo,
-				      unsigned int idx)
-{
-	struct pnfs_commit_bucket *bucket;
-	struct pnfs_layout_segment *freeme;
+अटल व्योम pnfs_generic_retry_commit(काष्ठा pnfs_commit_bucket *buckets,
+				      अचिन्हित पूर्णांक nbuckets,
+				      काष्ठा nfs_commit_info *cinfo,
+				      अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा pnfs_commit_bucket *bucket;
+	काष्ठा pnfs_layout_segment *मुक्तme;
 	LIST_HEAD(pages);
 
-	for (bucket = buckets; idx < nbuckets; bucket++, idx++) {
-		if (list_empty(&bucket->committing))
-			continue;
+	क्रम (bucket = buckets; idx < nbuckets; bucket++, idx++) अणु
+		अगर (list_empty(&bucket->committing))
+			जारी;
 		mutex_lock(&NFS_I(cinfo->inode)->commit_mutex);
-		freeme = pnfs_bucket_get_committing(&pages, bucket, cinfo);
+		मुक्तme = pnfs_bucket_get_committing(&pages, bucket, cinfo);
 		mutex_unlock(&NFS_I(cinfo->inode)->commit_mutex);
-		nfs_retry_commit(&pages, freeme, cinfo, idx);
-		pnfs_put_lseg(freeme);
-	}
-}
+		nfs_retry_commit(&pages, मुक्तme, cinfo, idx);
+		pnfs_put_lseg(मुक्तme);
+	पूर्ण
+पूर्ण
 
-static unsigned int
-pnfs_bucket_alloc_ds_commits(struct list_head *list,
-			     struct pnfs_commit_bucket *buckets,
-			     unsigned int nbuckets,
-			     struct nfs_commit_info *cinfo)
-{
-	struct pnfs_commit_bucket *bucket;
-	struct nfs_commit_data *data;
-	unsigned int i;
-	unsigned int nreq = 0;
+अटल अचिन्हित पूर्णांक
+pnfs_bucket_alloc_ds_commits(काष्ठा list_head *list,
+			     काष्ठा pnfs_commit_bucket *buckets,
+			     अचिन्हित पूर्णांक nbuckets,
+			     काष्ठा nfs_commit_info *cinfo)
+अणु
+	काष्ठा pnfs_commit_bucket *bucket;
+	काष्ठा nfs_commit_data *data;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक nreq = 0;
 
-	for (i = 0, bucket = buckets; i < nbuckets; i++, bucket++) {
-		if (list_empty(&bucket->committing))
-			continue;
+	क्रम (i = 0, bucket = buckets; i < nbuckets; i++, bucket++) अणु
+		अगर (list_empty(&bucket->committing))
+			जारी;
 		mutex_lock(&NFS_I(cinfo->inode)->commit_mutex);
-		if (!list_empty(&bucket->committing)) {
+		अगर (!list_empty(&bucket->committing)) अणु
 			data = pnfs_bucket_fetch_commitdata(bucket, cinfo);
-			if (!data)
-				goto out_error;
+			अगर (!data)
+				जाओ out_error;
 			data->ds_commit_index = i;
 			list_add_tail(&data->list, list);
 			atomic_inc(&cinfo->mds->rpcs_out);
 			nreq++;
-		}
+		पूर्ण
 		mutex_unlock(&NFS_I(cinfo->inode)->commit_mutex);
-	}
-	return nreq;
+	पूर्ण
+	वापस nreq;
 out_error:
 	mutex_unlock(&NFS_I(cinfo->inode)->commit_mutex);
 	/* Clean up on error */
 	pnfs_generic_retry_commit(buckets, nbuckets, cinfo, i);
-	return nreq;
-}
+	वापस nreq;
+पूर्ण
 
-static unsigned int
-pnfs_alloc_ds_commits_list(struct list_head *list,
-			   struct pnfs_ds_commit_info *fl_cinfo,
-			   struct nfs_commit_info *cinfo)
-{
-	struct pnfs_commit_array *array;
-	unsigned int ret = 0;
+अटल अचिन्हित पूर्णांक
+pnfs_alloc_ds_commits_list(काष्ठा list_head *list,
+			   काष्ठा pnfs_ds_commit_info *fl_cinfo,
+			   काष्ठा nfs_commit_info *cinfo)
+अणु
+	काष्ठा pnfs_commit_array *array;
+	अचिन्हित पूर्णांक ret = 0;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(array, &fl_cinfo->commits, cinfo_list) {
-		if (!array->lseg || !pnfs_get_commit_array(array))
-			continue;
-		rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(array, &fl_cinfo->commits, cinfo_list) अणु
+		अगर (!array->lseg || !pnfs_get_commit_array(array))
+			जारी;
+		rcu_पढ़ो_unlock();
 		ret += pnfs_bucket_alloc_ds_commits(list, array->buckets,
 				array->nbuckets, cinfo);
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		pnfs_put_commit_array(array, cinfo->inode);
-	}
-	rcu_read_unlock();
-	return ret;
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
-/* This follows nfs_commit_list pretty closely */
-int
-pnfs_generic_commit_pagelist(struct inode *inode, struct list_head *mds_pages,
-			     int how, struct nfs_commit_info *cinfo,
-			     int (*initiate_commit)(struct nfs_commit_data *data,
-						    int how))
-{
-	struct pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
-	struct nfs_commit_data *data, *tmp;
+/* This follows nfs_commit_list pretty बंदly */
+पूर्णांक
+pnfs_generic_commit_pagelist(काष्ठा inode *inode, काष्ठा list_head *mds_pages,
+			     पूर्णांक how, काष्ठा nfs_commit_info *cinfo,
+			     पूर्णांक (*initiate_commit)(काष्ठा nfs_commit_data *data,
+						    पूर्णांक how))
+अणु
+	काष्ठा pnfs_ds_commit_info *fl_cinfo = cinfo->ds;
+	काष्ठा nfs_commit_data *data, *पंचांगp;
 	LIST_HEAD(list);
-	unsigned int nreq = 0;
+	अचिन्हित पूर्णांक nreq = 0;
 
-	if (!list_empty(mds_pages)) {
+	अगर (!list_empty(mds_pages)) अणु
 		data = nfs_commitdata_alloc(true);
 		data->ds_commit_index = -1;
 		list_splice_init(mds_pages, &data->pages);
 		list_add_tail(&data->list, &list);
 		atomic_inc(&cinfo->mds->rpcs_out);
 		nreq++;
-	}
+	पूर्ण
 
 	nreq += pnfs_alloc_ds_commits_list(&list, fl_cinfo, cinfo);
-	if (nreq == 0)
-		goto out;
+	अगर (nreq == 0)
+		जाओ out;
 
-	list_for_each_entry_safe(data, tmp, &list, list) {
+	list_क्रम_each_entry_safe(data, पंचांगp, &list, list) अणु
 		list_del(&data->list);
-		if (data->ds_commit_index < 0) {
-			nfs_init_commit(data, NULL, NULL, cinfo);
+		अगर (data->ds_commit_index < 0) अणु
+			nfs_init_commit(data, शून्य, शून्य, cinfo);
 			nfs_initiate_commit(NFS_CLIENT(inode), data,
 					    NFS_PROTO(data->inode),
 					    data->mds_ops, how,
 					    RPC_TASK_CRED_NOREF);
-		} else {
-			nfs_init_commit(data, NULL, data->lseg, cinfo);
+		पूर्ण अन्यथा अणु
+			nfs_init_commit(data, शून्य, data->lseg, cinfo);
 			initiate_commit(data, how);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	return PNFS_ATTEMPTED;
-}
+	वापस PNFS_ATTEMPTED;
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_generic_commit_pagelist);
 
 /*
  * Data server cache
  *
- * Data servers can be mapped to different device ids.
+ * Data servers can be mapped to dअगरferent device ids.
  * nfs4_pnfs_ds reference counting
  *   - set to 1 on allocation
- *   - incremented when a device id maps a data server already in the cache.
- *   - decremented when deviceid is removed from the cache.
+ *   - incremented when a device id maps a data server alपढ़ोy in the cache.
+ *   - decremented when deviceid is हटाओd from the cache.
  */
-static DEFINE_SPINLOCK(nfs4_ds_cache_lock);
-static LIST_HEAD(nfs4_data_server_cache);
+अटल DEFINE_SPINLOCK(nfs4_ds_cache_lock);
+अटल LIST_HEAD(nfs4_data_server_cache);
 
 /* Debug routines */
-static void
-print_ds(struct nfs4_pnfs_ds *ds)
-{
-	if (ds == NULL) {
-		printk(KERN_WARNING "%s NULL device\n", __func__);
-		return;
-	}
-	printk(KERN_WARNING "        ds %s\n"
+अटल व्योम
+prपूर्णांक_ds(काष्ठा nfs4_pnfs_ds *ds)
+अणु
+	अगर (ds == शून्य) अणु
+		prपूर्णांकk(KERN_WARNING "%s NULL device\n", __func__);
+		वापस;
+	पूर्ण
+	prपूर्णांकk(KERN_WARNING "        ds %s\n"
 		"        ref count %d\n"
 		"        client %p\n"
 		"        cl_exchange_flags %x\n",
 		ds->ds_remotestr,
-		refcount_read(&ds->ds_count), ds->ds_clp,
+		refcount_पढ़ो(&ds->ds_count), ds->ds_clp,
 		ds->ds_clp ? ds->ds_clp->cl_exchange_flags : 0);
-}
+पूर्ण
 
-static bool
-same_sockaddr(struct sockaddr *addr1, struct sockaddr *addr2)
-{
-	struct sockaddr_in *a, *b;
-	struct sockaddr_in6 *a6, *b6;
+अटल bool
+same_sockaddr(काष्ठा sockaddr *addr1, काष्ठा sockaddr *addr2)
+अणु
+	काष्ठा sockaddr_in *a, *b;
+	काष्ठा sockaddr_in6 *a6, *b6;
 
-	if (addr1->sa_family != addr2->sa_family)
-		return false;
+	अगर (addr1->sa_family != addr2->sa_family)
+		वापस false;
 
-	switch (addr1->sa_family) {
-	case AF_INET:
-		a = (struct sockaddr_in *)addr1;
-		b = (struct sockaddr_in *)addr2;
+	चयन (addr1->sa_family) अणु
+	हाल AF_INET:
+		a = (काष्ठा sockaddr_in *)addr1;
+		b = (काष्ठा sockaddr_in *)addr2;
 
-		if (a->sin_addr.s_addr == b->sin_addr.s_addr &&
+		अगर (a->sin_addr.s_addr == b->sin_addr.s_addr &&
 		    a->sin_port == b->sin_port)
-			return true;
-		break;
+			वापस true;
+		अवरोध;
 
-	case AF_INET6:
-		a6 = (struct sockaddr_in6 *)addr1;
-		b6 = (struct sockaddr_in6 *)addr2;
+	हाल AF_INET6:
+		a6 = (काष्ठा sockaddr_in6 *)addr1;
+		b6 = (काष्ठा sockaddr_in6 *)addr2;
 
 		/* LINKLOCAL addresses must have matching scope_id */
-		if (ipv6_addr_src_scope(&a6->sin6_addr) ==
+		अगर (ipv6_addr_src_scope(&a6->sin6_addr) ==
 		    IPV6_ADDR_SCOPE_LINKLOCAL &&
 		    a6->sin6_scope_id != b6->sin6_scope_id)
-			return false;
+			वापस false;
 
-		if (ipv6_addr_equal(&a6->sin6_addr, &b6->sin6_addr) &&
+		अगर (ipv6_addr_equal(&a6->sin6_addr, &b6->sin6_addr) &&
 		    a6->sin6_port == b6->sin6_port)
-			return true;
-		break;
+			वापस true;
+		अवरोध;
 
-	default:
-		dprintk("%s: unhandled address family: %u\n",
+	शेष:
+		dprपूर्णांकk("%s: unhandled address family: %u\n",
 			__func__, addr1->sa_family);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Checks if 'dsaddrs1' contains a subset of 'dsaddrs2'. If it does,
+ * Checks अगर 'dsaddrs1' contains a subset of 'dsaddrs2'. If it करोes,
  * declare a match.
  */
-static bool
-_same_data_server_addrs_locked(const struct list_head *dsaddrs1,
-			       const struct list_head *dsaddrs2)
-{
-	struct nfs4_pnfs_ds_addr *da1, *da2;
-	struct sockaddr *sa1, *sa2;
+अटल bool
+_same_data_server_addrs_locked(स्थिर काष्ठा list_head *dsaddrs1,
+			       स्थिर काष्ठा list_head *dsaddrs2)
+अणु
+	काष्ठा nfs4_pnfs_ds_addr *da1, *da2;
+	काष्ठा sockaddr *sa1, *sa2;
 	bool match = false;
 
-	list_for_each_entry(da1, dsaddrs1, da_node) {
-		sa1 = (struct sockaddr *)&da1->da_addr;
+	list_क्रम_each_entry(da1, dsaddrs1, da_node) अणु
+		sa1 = (काष्ठा sockaddr *)&da1->da_addr;
 		match = false;
-		list_for_each_entry(da2, dsaddrs2, da_node) {
-			sa2 = (struct sockaddr *)&da2->da_addr;
+		list_क्रम_each_entry(da2, dsaddrs2, da_node) अणु
+			sa2 = (काष्ठा sockaddr *)&da2->da_addr;
 			match = same_sockaddr(sa1, sa2);
-			if (match)
-				break;
-		}
-		if (!match)
-			break;
-	}
-	return match;
-}
+			अगर (match)
+				अवरोध;
+		पूर्ण
+		अगर (!match)
+			अवरोध;
+	पूर्ण
+	वापस match;
+पूर्ण
 
 /*
  * Lookup DS by addresses.  nfs4_ds_cache_lock is held
  */
-static struct nfs4_pnfs_ds *
-_data_server_lookup_locked(const struct list_head *dsaddrs)
-{
-	struct nfs4_pnfs_ds *ds;
+अटल काष्ठा nfs4_pnfs_ds *
+_data_server_lookup_locked(स्थिर काष्ठा list_head *dsaddrs)
+अणु
+	काष्ठा nfs4_pnfs_ds *ds;
 
-	list_for_each_entry(ds, &nfs4_data_server_cache, ds_node)
-		if (_same_data_server_addrs_locked(&ds->ds_addrs, dsaddrs))
-			return ds;
-	return NULL;
-}
+	list_क्रम_each_entry(ds, &nfs4_data_server_cache, ds_node)
+		अगर (_same_data_server_addrs_locked(&ds->ds_addrs, dsaddrs))
+			वापस ds;
+	वापस शून्य;
+पूर्ण
 
-static struct nfs4_pnfs_ds_addr *nfs4_pnfs_ds_addr_alloc(gfp_t gfp_flags)
-{
-	struct nfs4_pnfs_ds_addr *da = kzalloc(sizeof(*da), gfp_flags);
-	if (da)
+अटल काष्ठा nfs4_pnfs_ds_addr *nfs4_pnfs_ds_addr_alloc(gfp_t gfp_flags)
+अणु
+	काष्ठा nfs4_pnfs_ds_addr *da = kzalloc(माप(*da), gfp_flags);
+	अगर (da)
 		INIT_LIST_HEAD(&da->da_node);
-	return da;
-}
+	वापस da;
+पूर्ण
 
-static void nfs4_pnfs_ds_addr_free(struct nfs4_pnfs_ds_addr *da)
-{
-	kfree(da->da_remotestr);
-	kfree(da->da_netid);
-	kfree(da);
-}
+अटल व्योम nfs4_pnfs_ds_addr_मुक्त(काष्ठा nfs4_pnfs_ds_addr *da)
+अणु
+	kमुक्त(da->da_remotestr);
+	kमुक्त(da->da_netid);
+	kमुक्त(da);
+पूर्ण
 
-static void destroy_ds(struct nfs4_pnfs_ds *ds)
-{
-	struct nfs4_pnfs_ds_addr *da;
+अटल व्योम destroy_ds(काष्ठा nfs4_pnfs_ds *ds)
+अणु
+	काष्ठा nfs4_pnfs_ds_addr *da;
 
-	dprintk("--> %s\n", __func__);
-	ifdebug(FACILITY)
-		print_ds(ds);
+	dprपूर्णांकk("--> %s\n", __func__);
+	अगरdebug(FACILITY)
+		prपूर्णांक_ds(ds);
 
 	nfs_put_client(ds->ds_clp);
 
-	while (!list_empty(&ds->ds_addrs)) {
+	जबतक (!list_empty(&ds->ds_addrs)) अणु
 		da = list_first_entry(&ds->ds_addrs,
-				      struct nfs4_pnfs_ds_addr,
+				      काष्ठा nfs4_pnfs_ds_addr,
 				      da_node);
 		list_del_init(&da->da_node);
-		nfs4_pnfs_ds_addr_free(da);
-	}
+		nfs4_pnfs_ds_addr_मुक्त(da);
+	पूर्ण
 
-	kfree(ds->ds_remotestr);
-	kfree(ds);
-}
+	kमुक्त(ds->ds_remotestr);
+	kमुक्त(ds);
+पूर्ण
 
-void nfs4_pnfs_ds_put(struct nfs4_pnfs_ds *ds)
-{
-	if (refcount_dec_and_lock(&ds->ds_count,
-				&nfs4_ds_cache_lock)) {
+व्योम nfs4_pnfs_ds_put(काष्ठा nfs4_pnfs_ds *ds)
+अणु
+	अगर (refcount_dec_and_lock(&ds->ds_count,
+				&nfs4_ds_cache_lock)) अणु
 		list_del_init(&ds->ds_node);
 		spin_unlock(&nfs4_ds_cache_lock);
 		destroy_ds(ds);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs4_pnfs_ds_put);
 
 /*
- * Create a string with a human readable address and port to avoid
+ * Create a string with a human पढ़ोable address and port to aव्योम
  * complicated setup around many dprinks.
  */
-static char *
-nfs4_pnfs_remotestr(struct list_head *dsaddrs, gfp_t gfp_flags)
-{
-	struct nfs4_pnfs_ds_addr *da;
-	char *remotestr;
-	size_t len;
-	char *p;
+अटल अक्षर *
+nfs4_pnfs_remotestr(काष्ठा list_head *dsaddrs, gfp_t gfp_flags)
+अणु
+	काष्ठा nfs4_pnfs_ds_addr *da;
+	अक्षर *remotestr;
+	माप_प्रकार len;
+	अक्षर *p;
 
 	len = 3;        /* '{', '}' and eol */
-	list_for_each_entry(da, dsaddrs, da_node) {
-		len += strlen(da->da_remotestr) + 1;    /* string plus comma */
-	}
+	list_क्रम_each_entry(da, dsaddrs, da_node) अणु
+		len += म_माप(da->da_remotestr) + 1;    /* string plus comma */
+	पूर्ण
 
 	remotestr = kzalloc(len, gfp_flags);
-	if (!remotestr)
-		return NULL;
+	अगर (!remotestr)
+		वापस शून्य;
 
 	p = remotestr;
 	*(p++) = '{';
 	len--;
-	list_for_each_entry(da, dsaddrs, da_node) {
-		size_t ll = strlen(da->da_remotestr);
+	list_क्रम_each_entry(da, dsaddrs, da_node) अणु
+		माप_प्रकार ll = म_माप(da->da_remotestr);
 
-		if (ll > len)
-			goto out_err;
+		अगर (ll > len)
+			जाओ out_err;
 
-		memcpy(p, da->da_remotestr, ll);
+		स_नकल(p, da->da_remotestr, ll);
 		p += ll;
 		len -= ll;
 
-		if (len < 1)
-			goto out_err;
+		अगर (len < 1)
+			जाओ out_err;
 		(*p++) = ',';
 		len--;
-	}
-	if (len < 2)
-		goto out_err;
+	पूर्ण
+	अगर (len < 2)
+		जाओ out_err;
 	*(p++) = '}';
 	*p = '\0';
-	return remotestr;
+	वापस remotestr;
 out_err:
-	kfree(remotestr);
-	return NULL;
-}
+	kमुक्त(remotestr);
+	वापस शून्य;
+पूर्ण
 
 /*
- * Given a list of multipath struct nfs4_pnfs_ds_addr, add it to ds cache if
- * uncached and return cached struct nfs4_pnfs_ds.
+ * Given a list of multipath काष्ठा nfs4_pnfs_ds_addr, add it to ds cache अगर
+ * uncached and वापस cached काष्ठा nfs4_pnfs_ds.
  */
-struct nfs4_pnfs_ds *
-nfs4_pnfs_ds_add(struct list_head *dsaddrs, gfp_t gfp_flags)
-{
-	struct nfs4_pnfs_ds *tmp_ds, *ds = NULL;
-	char *remotestr;
+काष्ठा nfs4_pnfs_ds *
+nfs4_pnfs_ds_add(काष्ठा list_head *dsaddrs, gfp_t gfp_flags)
+अणु
+	काष्ठा nfs4_pnfs_ds *पंचांगp_ds, *ds = शून्य;
+	अक्षर *remotestr;
 
-	if (list_empty(dsaddrs)) {
-		dprintk("%s: no addresses defined\n", __func__);
-		goto out;
-	}
+	अगर (list_empty(dsaddrs)) अणु
+		dprपूर्णांकk("%s: no addresses defined\n", __func__);
+		जाओ out;
+	पूर्ण
 
-	ds = kzalloc(sizeof(*ds), gfp_flags);
-	if (!ds)
-		goto out;
+	ds = kzalloc(माप(*ds), gfp_flags);
+	अगर (!ds)
+		जाओ out;
 
-	/* this is only used for debugging, so it's ok if its NULL */
+	/* this is only used क्रम debugging, so it's ok अगर its शून्य */
 	remotestr = nfs4_pnfs_remotestr(dsaddrs, gfp_flags);
 
 	spin_lock(&nfs4_ds_cache_lock);
-	tmp_ds = _data_server_lookup_locked(dsaddrs);
-	if (tmp_ds == NULL) {
+	पंचांगp_ds = _data_server_lookup_locked(dsaddrs);
+	अगर (पंचांगp_ds == शून्य) अणु
 		INIT_LIST_HEAD(&ds->ds_addrs);
 		list_splice_init(dsaddrs, &ds->ds_addrs);
 		ds->ds_remotestr = remotestr;
 		refcount_set(&ds->ds_count, 1);
 		INIT_LIST_HEAD(&ds->ds_node);
-		ds->ds_clp = NULL;
+		ds->ds_clp = शून्य;
 		list_add(&ds->ds_node, &nfs4_data_server_cache);
-		dprintk("%s add new data server %s\n", __func__,
+		dprपूर्णांकk("%s add new data server %s\n", __func__,
 			ds->ds_remotestr);
-	} else {
-		kfree(remotestr);
-		kfree(ds);
-		refcount_inc(&tmp_ds->ds_count);
-		dprintk("%s data server %s found, inc'ed ds_count to %d\n",
-			__func__, tmp_ds->ds_remotestr,
-			refcount_read(&tmp_ds->ds_count));
-		ds = tmp_ds;
-	}
+	पूर्ण अन्यथा अणु
+		kमुक्त(remotestr);
+		kमुक्त(ds);
+		refcount_inc(&पंचांगp_ds->ds_count);
+		dprपूर्णांकk("%s data server %s found, inc'ed ds_count to %d\n",
+			__func__, पंचांगp_ds->ds_remotestr,
+			refcount_पढ़ो(&पंचांगp_ds->ds_count));
+		ds = पंचांगp_ds;
+	पूर्ण
 	spin_unlock(&nfs4_ds_cache_lock);
 out:
-	return ds;
-}
+	वापस ds;
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs4_pnfs_ds_add);
 
-static void nfs4_wait_ds_connect(struct nfs4_pnfs_ds *ds)
-{
+अटल व्योम nfs4_रुको_ds_connect(काष्ठा nfs4_pnfs_ds *ds)
+अणु
 	might_sleep();
-	wait_on_bit(&ds->ds_state, NFS4DS_CONNECTING,
+	रुको_on_bit(&ds->ds_state, NFS4DS_CONNECTING,
 			TASK_KILLABLE);
-}
+पूर्ण
 
-static void nfs4_clear_ds_conn_bit(struct nfs4_pnfs_ds *ds)
-{
-	smp_mb__before_atomic();
+अटल व्योम nfs4_clear_ds_conn_bit(काष्ठा nfs4_pnfs_ds *ds)
+अणु
+	smp_mb__beक्रमe_atomic();
 	clear_bit(NFS4DS_CONNECTING, &ds->ds_state);
 	smp_mb__after_atomic();
 	wake_up_bit(&ds->ds_state, NFS4DS_CONNECTING);
-}
+पूर्ण
 
-static struct nfs_client *(*get_v3_ds_connect)(
-			struct nfs_server *mds_srv,
-			const struct sockaddr *ds_addr,
-			int ds_addrlen,
-			int ds_proto,
-			unsigned int ds_timeo,
-			unsigned int ds_retrans);
+अटल काष्ठा nfs_client *(*get_v3_ds_connect)(
+			काष्ठा nfs_server *mds_srv,
+			स्थिर काष्ठा sockaddr *ds_addr,
+			पूर्णांक ds_addrlen,
+			पूर्णांक ds_proto,
+			अचिन्हित पूर्णांक ds_समयo,
+			अचिन्हित पूर्णांक ds_retrans);
 
-static bool load_v3_ds_connect(void)
-{
-	if (!get_v3_ds_connect) {
+अटल bool load_v3_ds_connect(व्योम)
+अणु
+	अगर (!get_v3_ds_connect) अणु
 		get_v3_ds_connect = symbol_request(nfs3_set_ds_client);
 		WARN_ON_ONCE(!get_v3_ds_connect);
-	}
+	पूर्ण
 
-	return(get_v3_ds_connect != NULL);
-}
+	वापस(get_v3_ds_connect != शून्य);
+पूर्ण
 
-void nfs4_pnfs_v3_ds_connect_unload(void)
-{
-	if (get_v3_ds_connect) {
+व्योम nfs4_pnfs_v3_ds_connect_unload(व्योम)
+अणु
+	अगर (get_v3_ds_connect) अणु
 		symbol_put(nfs3_set_ds_client);
-		get_v3_ds_connect = NULL;
-	}
-}
+		get_v3_ds_connect = शून्य;
+	पूर्ण
+पूर्ण
 
-static int _nfs4_pnfs_v3_ds_connect(struct nfs_server *mds_srv,
-				 struct nfs4_pnfs_ds *ds,
-				 unsigned int timeo,
-				 unsigned int retrans)
-{
-	struct nfs_client *clp = ERR_PTR(-EIO);
-	struct nfs4_pnfs_ds_addr *da;
-	int status = 0;
+अटल पूर्णांक _nfs4_pnfs_v3_ds_connect(काष्ठा nfs_server *mds_srv,
+				 काष्ठा nfs4_pnfs_ds *ds,
+				 अचिन्हित पूर्णांक समयo,
+				 अचिन्हित पूर्णांक retrans)
+अणु
+	काष्ठा nfs_client *clp = ERR_PTR(-EIO);
+	काष्ठा nfs4_pnfs_ds_addr *da;
+	पूर्णांक status = 0;
 
-	dprintk("--> %s DS %s\n", __func__, ds->ds_remotestr);
+	dprपूर्णांकk("--> %s DS %s\n", __func__, ds->ds_remotestr);
 
-	if (!load_v3_ds_connect())
-		goto out;
+	अगर (!load_v3_ds_connect())
+		जाओ out;
 
-	list_for_each_entry(da, &ds->ds_addrs, da_node) {
-		dprintk("%s: DS %s: trying address %s\n",
+	list_क्रम_each_entry(da, &ds->ds_addrs, da_node) अणु
+		dprपूर्णांकk("%s: DS %s: trying address %s\n",
 			__func__, ds->ds_remotestr, da->da_remotestr);
 
-		if (!IS_ERR(clp)) {
-			struct xprt_create xprt_args = {
+		अगर (!IS_ERR(clp)) अणु
+			काष्ठा xprt_create xprt_args = अणु
 				.ident = da->da_transport,
 				.net = clp->cl_net,
-				.dstaddr = (struct sockaddr *)&da->da_addr,
+				.dstaddr = (काष्ठा sockaddr *)&da->da_addr,
 				.addrlen = da->da_addrlen,
 				.servername = clp->cl_hostname,
-			};
+			पूर्ण;
 
-			if (da->da_transport != clp->cl_proto)
-				continue;
-			if (da->da_addr.ss_family != clp->cl_addr.ss_family)
-				continue;
+			अगर (da->da_transport != clp->cl_proto)
+				जारी;
+			अगर (da->da_addr.ss_family != clp->cl_addr.ss_family)
+				जारी;
 			/* Add this address as an alias */
 			rpc_clnt_add_xprt(clp->cl_rpcclient, &xprt_args,
-					rpc_clnt_test_and_add_xprt, NULL);
-			continue;
-		}
+					rpc_clnt_test_and_add_xprt, शून्य);
+			जारी;
+		पूर्ण
 		clp = get_v3_ds_connect(mds_srv,
-				(struct sockaddr *)&da->da_addr,
+				(काष्ठा sockaddr *)&da->da_addr,
 				da->da_addrlen, da->da_transport,
-				timeo, retrans);
-		if (IS_ERR(clp))
-			continue;
+				समयo, retrans);
+		अगर (IS_ERR(clp))
+			जारी;
 		clp->cl_rpcclient->cl_softerr = 0;
 		clp->cl_rpcclient->cl_softrtry = 0;
-	}
+	पूर्ण
 
-	if (IS_ERR(clp)) {
+	अगर (IS_ERR(clp)) अणु
 		status = PTR_ERR(clp);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	smp_wmb();
 	ds->ds_clp = clp;
-	dprintk("%s [new] addr: %s\n", __func__, ds->ds_remotestr);
+	dprपूर्णांकk("%s [new] addr: %s\n", __func__, ds->ds_remotestr);
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int _nfs4_pnfs_v4_ds_connect(struct nfs_server *mds_srv,
-				 struct nfs4_pnfs_ds *ds,
-				 unsigned int timeo,
-				 unsigned int retrans,
+अटल पूर्णांक _nfs4_pnfs_v4_ds_connect(काष्ठा nfs_server *mds_srv,
+				 काष्ठा nfs4_pnfs_ds *ds,
+				 अचिन्हित पूर्णांक समयo,
+				 अचिन्हित पूर्णांक retrans,
 				 u32 minor_version)
-{
-	struct nfs_client *clp = ERR_PTR(-EIO);
-	struct nfs4_pnfs_ds_addr *da;
-	int status = 0;
+अणु
+	काष्ठा nfs_client *clp = ERR_PTR(-EIO);
+	काष्ठा nfs4_pnfs_ds_addr *da;
+	पूर्णांक status = 0;
 
-	dprintk("--> %s DS %s\n", __func__, ds->ds_remotestr);
+	dprपूर्णांकk("--> %s DS %s\n", __func__, ds->ds_remotestr);
 
-	list_for_each_entry(da, &ds->ds_addrs, da_node) {
-		dprintk("%s: DS %s: trying address %s\n",
+	list_क्रम_each_entry(da, &ds->ds_addrs, da_node) अणु
+		dprपूर्णांकk("%s: DS %s: trying address %s\n",
 			__func__, ds->ds_remotestr, da->da_remotestr);
 
-		if (!IS_ERR(clp) && clp->cl_mvops->session_trunk) {
-			struct xprt_create xprt_args = {
+		अगर (!IS_ERR(clp) && clp->cl_mvops->session_trunk) अणु
+			काष्ठा xprt_create xprt_args = अणु
 				.ident = da->da_transport,
 				.net = clp->cl_net,
-				.dstaddr = (struct sockaddr *)&da->da_addr,
+				.dstaddr = (काष्ठा sockaddr *)&da->da_addr,
 				.addrlen = da->da_addrlen,
 				.servername = clp->cl_hostname,
-			};
-			struct nfs4_add_xprt_data xprtdata = {
+			पूर्ण;
+			काष्ठा nfs4_add_xprt_data xprtdata = अणु
 				.clp = clp,
-			};
-			struct rpc_add_xprt_test rpcdata = {
+			पूर्ण;
+			काष्ठा rpc_add_xprt_test rpcdata = अणु
 				.add_xprt_test = clp->cl_mvops->session_trunk,
 				.data = &xprtdata,
-			};
+			पूर्ण;
 
-			if (da->da_transport != clp->cl_proto)
-				continue;
-			if (da->da_addr.ss_family != clp->cl_addr.ss_family)
-				continue;
+			अगर (da->da_transport != clp->cl_proto)
+				जारी;
+			अगर (da->da_addr.ss_family != clp->cl_addr.ss_family)
+				जारी;
 			/**
-			* Test this address for session trunking and
+			* Test this address क्रम session trunking and
 			* add as an alias
 			*/
 			xprtdata.cred = nfs4_get_clid_cred(clp),
 			rpc_clnt_add_xprt(clp->cl_rpcclient, &xprt_args,
 					  rpc_clnt_setup_test_and_add_xprt,
 					  &rpcdata);
-			if (xprtdata.cred)
+			अगर (xprtdata.cred)
 				put_cred(xprtdata.cred);
-		} else {
+		पूर्ण अन्यथा अणु
 			clp = nfs4_set_ds_client(mds_srv,
-						(struct sockaddr *)&da->da_addr,
+						(काष्ठा sockaddr *)&da->da_addr,
 						da->da_addrlen,
-						da->da_transport, timeo,
+						da->da_transport, समयo,
 						retrans, minor_version);
-			if (IS_ERR(clp))
-				continue;
+			अगर (IS_ERR(clp))
+				जारी;
 
 			status = nfs4_init_ds_session(clp,
-					mds_srv->nfs_client->cl_lease_time);
-			if (status) {
+					mds_srv->nfs_client->cl_lease_समय);
+			अगर (status) अणु
 				nfs_put_client(clp);
 				clp = ERR_PTR(-EIO);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (IS_ERR(clp)) {
+	अगर (IS_ERR(clp)) अणु
 		status = PTR_ERR(clp);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	smp_wmb();
 	ds->ds_clp = clp;
-	dprintk("%s [new] addr: %s\n", __func__, ds->ds_remotestr);
+	dprपूर्णांकk("%s [new] addr: %s\n", __func__, ds->ds_remotestr);
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * Create an rpc connection to the nfs4_pnfs_ds data server.
  * Currently only supports IPv4 and IPv6 addresses.
- * If connection fails, make devid unavailable and return a -errno.
+ * If connection fails, make devid unavailable and वापस a -त्रुटि_सं.
  */
-int nfs4_pnfs_ds_connect(struct nfs_server *mds_srv, struct nfs4_pnfs_ds *ds,
-			  struct nfs4_deviceid_node *devid, unsigned int timeo,
-			  unsigned int retrans, u32 version, u32 minor_version)
-{
-	int err;
+पूर्णांक nfs4_pnfs_ds_connect(काष्ठा nfs_server *mds_srv, काष्ठा nfs4_pnfs_ds *ds,
+			  काष्ठा nfs4_deviceid_node *devid, अचिन्हित पूर्णांक समयo,
+			  अचिन्हित पूर्णांक retrans, u32 version, u32 minor_version)
+अणु
+	पूर्णांक err;
 
 again:
 	err = 0;
-	if (test_and_set_bit(NFS4DS_CONNECTING, &ds->ds_state) == 0) {
-		if (version == 3) {
-			err = _nfs4_pnfs_v3_ds_connect(mds_srv, ds, timeo,
+	अगर (test_and_set_bit(NFS4DS_CONNECTING, &ds->ds_state) == 0) अणु
+		अगर (version == 3) अणु
+			err = _nfs4_pnfs_v3_ds_connect(mds_srv, ds, समयo,
 						       retrans);
-		} else if (version == 4) {
-			err = _nfs4_pnfs_v4_ds_connect(mds_srv, ds, timeo,
+		पूर्ण अन्यथा अगर (version == 4) अणु
+			err = _nfs4_pnfs_v4_ds_connect(mds_srv, ds, समयo,
 						       retrans, minor_version);
-		} else {
-			dprintk("%s: unsupported DS version %d\n", __func__,
+		पूर्ण अन्यथा अणु
+			dprपूर्णांकk("%s: unsupported DS version %d\n", __func__,
 				version);
 			err = -EPROTONOSUPPORT;
-		}
+		पूर्ण
 
 		nfs4_clear_ds_conn_bit(ds);
-	} else {
-		nfs4_wait_ds_connect(ds);
+	पूर्ण अन्यथा अणु
+		nfs4_रुको_ds_connect(ds);
 
-		/* what was waited on didn't connect AND didn't mark unavail */
-		if (!ds->ds_clp && !nfs4_test_deviceid_unavailable(devid))
-			goto again;
-	}
+		/* what was रुकोed on didn't connect AND didn't mark unavail */
+		अगर (!ds->ds_clp && !nfs4_test_deviceid_unavailable(devid))
+			जाओ again;
+	पूर्ण
 
 	/*
-	 * At this point the ds->ds_clp should be ready, but it might have
+	 * At this poपूर्णांक the ds->ds_clp should be पढ़ोy, but it might have
 	 * hit an error.
 	 */
-	if (!err) {
-		if (!ds->ds_clp || !nfs_client_init_is_complete(ds->ds_clp)) {
+	अगर (!err) अणु
+		अगर (!ds->ds_clp || !nfs_client_init_is_complete(ds->ds_clp)) अणु
 			WARN_ON_ONCE(ds->ds_clp ||
 				!nfs4_test_deviceid_unavailable(devid));
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		err = nfs_client_init_status(ds->ds_clp);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs4_pnfs_ds_connect);
 
 /*
  * Currently only supports ipv4, ipv6 and one multi-path address.
  */
-struct nfs4_pnfs_ds_addr *
-nfs4_decode_mp_ds_addr(struct net *net, struct xdr_stream *xdr, gfp_t gfp_flags)
-{
-	struct nfs4_pnfs_ds_addr *da = NULL;
-	char *buf, *portstr;
+काष्ठा nfs4_pnfs_ds_addr *
+nfs4_decode_mp_ds_addr(काष्ठा net *net, काष्ठा xdr_stream *xdr, gfp_t gfp_flags)
+अणु
+	काष्ठा nfs4_pnfs_ds_addr *da = शून्य;
+	अक्षर *buf, *portstr;
 	__be16 port;
-	ssize_t nlen, rlen;
-	int tmp[2];
-	char *netid;
-	size_t len;
-	char *startsep = "";
-	char *endsep = "";
+	sमाप_प्रकार nlen, rlen;
+	पूर्णांक पंचांगp[2];
+	अक्षर *netid;
+	माप_प्रकार len;
+	अक्षर *startsep = "";
+	अक्षर *endsep = "";
 
 
 	/* r_netid */
 	nlen = xdr_stream_decode_string_dup(xdr, &netid, XDR_MAX_NETOBJ,
 					    gfp_flags);
-	if (unlikely(nlen < 0))
-		goto out_err;
+	अगर (unlikely(nlen < 0))
+		जाओ out_err;
 
 	/* r_addr: ip/ip6addr with port in dec octets - see RFC 5665 */
-	/* port is ".ABC.DEF", 8 chars max */
+	/* port is ".ABC.DEF", 8 अक्षरs max */
 	rlen = xdr_stream_decode_string_dup(xdr, &buf, INET6_ADDRSTRLEN +
 					    IPV6_SCOPE_ID_LEN + 8, gfp_flags);
-	if (unlikely(rlen < 0))
-		goto out_free_netid;
+	अगर (unlikely(rlen < 0))
+		जाओ out_मुक्त_netid;
 
 	/* replace port '.' with '-' */
-	portstr = strrchr(buf, '.');
-	if (!portstr) {
-		dprintk("%s: Failed finding expected dot in port\n",
+	portstr = म_खोजप(buf, '.');
+	अगर (!portstr) अणु
+		dprपूर्णांकk("%s: Failed finding expected dot in port\n",
 			__func__);
-		goto out_free_buf;
-	}
+		जाओ out_मुक्त_buf;
+	पूर्ण
 	*portstr = '-';
 
 	/* find '.' between address and port */
-	portstr = strrchr(buf, '.');
-	if (!portstr) {
-		dprintk("%s: Failed finding expected dot between address and "
+	portstr = म_खोजप(buf, '.');
+	अगर (!portstr) अणु
+		dprपूर्णांकk("%s: Failed finding expected dot between address and "
 			"port\n", __func__);
-		goto out_free_buf;
-	}
+		जाओ out_मुक्त_buf;
+	पूर्ण
 	*portstr = '\0';
 
 	da = nfs4_pnfs_ds_addr_alloc(gfp_flags);
-	if (unlikely(!da))
-		goto out_free_buf;
+	अगर (unlikely(!da))
+		जाओ out_मुक्त_buf;
 
-	if (!rpc_pton(net, buf, portstr-buf, (struct sockaddr *)&da->da_addr,
-		      sizeof(da->da_addr))) {
-		dprintk("%s: error parsing address %s\n", __func__, buf);
-		goto out_free_da;
-	}
+	अगर (!rpc_pton(net, buf, portstr-buf, (काष्ठा sockaddr *)&da->da_addr,
+		      माप(da->da_addr))) अणु
+		dprपूर्णांकk("%s: error parsing address %s\n", __func__, buf);
+		जाओ out_मुक्त_da;
+	पूर्ण
 
 	portstr++;
-	sscanf(portstr, "%d-%d", &tmp[0], &tmp[1]);
-	port = htons((tmp[0] << 8) | (tmp[1]));
+	माला_पूछो(portstr, "%d-%d", &पंचांगp[0], &पंचांगp[1]);
+	port = htons((पंचांगp[0] << 8) | (पंचांगp[1]));
 
-	switch (da->da_addr.ss_family) {
-	case AF_INET:
-		((struct sockaddr_in *)&da->da_addr)->sin_port = port;
-		da->da_addrlen = sizeof(struct sockaddr_in);
-		break;
+	चयन (da->da_addr.ss_family) अणु
+	हाल AF_INET:
+		((काष्ठा sockaddr_in *)&da->da_addr)->sin_port = port;
+		da->da_addrlen = माप(काष्ठा sockaddr_in);
+		अवरोध;
 
-	case AF_INET6:
-		((struct sockaddr_in6 *)&da->da_addr)->sin6_port = port;
-		da->da_addrlen = sizeof(struct sockaddr_in6);
+	हाल AF_INET6:
+		((काष्ठा sockaddr_in6 *)&da->da_addr)->sin6_port = port;
+		da->da_addrlen = माप(काष्ठा sockaddr_in6);
 		startsep = "[";
 		endsep = "]";
-		break;
+		अवरोध;
 
-	default:
-		dprintk("%s: unsupported address family: %u\n",
+	शेष:
+		dprपूर्णांकk("%s: unsupported address family: %u\n",
 			__func__, da->da_addr.ss_family);
-		goto out_free_da;
-	}
+		जाओ out_मुक्त_da;
+	पूर्ण
 
 	da->da_transport = xprt_find_transport_ident(netid);
-	if (da->da_transport < 0) {
-		dprintk("%s: ERROR: unknown r_netid \"%s\"\n",
+	अगर (da->da_transport < 0) अणु
+		dprपूर्णांकk("%s: ERROR: unknown r_netid \"%s\"\n",
 			__func__, netid);
-		goto out_free_da;
-	}
+		जाओ out_मुक्त_da;
+	पूर्ण
 
 	da->da_netid = netid;
 
-	/* save human readable address */
-	len = strlen(startsep) + strlen(buf) + strlen(endsep) + 7;
+	/* save human पढ़ोable address */
+	len = म_माप(startsep) + म_माप(buf) + म_माप(endsep) + 7;
 	da->da_remotestr = kzalloc(len, gfp_flags);
 
-	/* NULL is ok, only used for dprintk */
-	if (da->da_remotestr)
-		snprintf(da->da_remotestr, len, "%s%s%s:%u", startsep,
+	/* शून्य is ok, only used क्रम dprपूर्णांकk */
+	अगर (da->da_remotestr)
+		snम_लिखो(da->da_remotestr, len, "%s%s%s:%u", startsep,
 			 buf, endsep, ntohs(port));
 
-	dprintk("%s: Parsed DS addr %s\n", __func__, da->da_remotestr);
-	kfree(buf);
-	return da;
+	dprपूर्णांकk("%s: Parsed DS addr %s\n", __func__, da->da_remotestr);
+	kमुक्त(buf);
+	वापस da;
 
-out_free_da:
-	kfree(da);
-out_free_buf:
-	dprintk("%s: Error parsing DS addr: %s\n", __func__, buf);
-	kfree(buf);
-out_free_netid:
-	kfree(netid);
+out_मुक्त_da:
+	kमुक्त(da);
+out_मुक्त_buf:
+	dprपूर्णांकk("%s: Error parsing DS addr: %s\n", __func__, buf);
+	kमुक्त(buf);
+out_मुक्त_netid:
+	kमुक्त(netid);
 out_err:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs4_decode_mp_ds_addr);
 
-void
-pnfs_layout_mark_request_commit(struct nfs_page *req,
-				struct pnfs_layout_segment *lseg,
-				struct nfs_commit_info *cinfo,
+व्योम
+pnfs_layout_mark_request_commit(काष्ठा nfs_page *req,
+				काष्ठा pnfs_layout_segment *lseg,
+				काष्ठा nfs_commit_info *cinfo,
 				u32 ds_commit_idx)
-{
-	struct list_head *list;
-	struct pnfs_commit_array *array;
-	struct pnfs_commit_bucket *bucket;
+अणु
+	काष्ठा list_head *list;
+	काष्ठा pnfs_commit_array *array;
+	काष्ठा pnfs_commit_bucket *bucket;
 
 	mutex_lock(&NFS_I(cinfo->inode)->commit_mutex);
 	array = pnfs_lookup_commit_array(cinfo->ds, lseg);
-	if (!array || !pnfs_is_valid_lseg(lseg))
-		goto out_resched;
+	अगर (!array || !pnfs_is_valid_lseg(lseg))
+		जाओ out_resched;
 	bucket = &array->buckets[ds_commit_idx];
 	list = &bucket->written;
 	/* Non-empty buckets hold a reference on the lseg.  That ref
 	 * is normally transferred to the COMMIT call and released
-	 * there.  It could also be released if the last req is pulled
-	 * off due to a rewrite, in which case it will be done in
+	 * there.  It could also be released अगर the last req is pulled
+	 * off due to a reग_लिखो, in which हाल it will be करोne in
 	 * pnfs_common_clear_request_commit
 	 */
-	if (!bucket->lseg)
+	अगर (!bucket->lseg)
 		bucket->lseg = pnfs_get_lseg(lseg);
 	set_bit(PG_COMMIT_TO_DS, &req->wb_flags);
 	cinfo->ds->nwritten++;
@@ -1179,26 +1180,26 @@ pnfs_layout_mark_request_commit(struct nfs_page *req,
 	nfs_request_add_commit_list_locked(req, list, cinfo);
 	mutex_unlock(&NFS_I(cinfo->inode)->commit_mutex);
 	nfs_mark_page_unstable(req->wb_page, cinfo);
-	return;
+	वापस;
 out_resched:
 	mutex_unlock(&NFS_I(cinfo->inode)->commit_mutex);
-	cinfo->completion_ops->resched_write(cinfo, req);
-}
+	cinfo->completion_ops->resched_ग_लिखो(cinfo, req);
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_layout_mark_request_commit);
 
-int
-pnfs_nfs_generic_sync(struct inode *inode, bool datasync)
-{
-	int ret;
+पूर्णांक
+pnfs_nfs_generic_sync(काष्ठा inode *inode, bool datasync)
+अणु
+	पूर्णांक ret;
 
-	if (!pnfs_layoutcommit_outstanding(inode))
-		return 0;
+	अगर (!pnfs_layoutcommit_outstanding(inode))
+		वापस 0;
 	ret = nfs_commit_inode(inode, FLUSH_SYNC);
-	if (ret < 0)
-		return ret;
-	if (datasync)
-		return 0;
-	return pnfs_layoutcommit_inode(inode, true);
-}
+	अगर (ret < 0)
+		वापस ret;
+	अगर (datasync)
+		वापस 0;
+	वापस pnfs_layoutcommit_inode(inode, true);
+पूर्ण
 EXPORT_SYMBOL_GPL(pnfs_nfs_generic_sync);
 

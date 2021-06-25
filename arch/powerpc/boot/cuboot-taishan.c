@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Old U-boot compatibility for Taishan
+ * Old U-boot compatibility क्रम Taishan
  *
  * Author: Hugh Blemings <hugh@au.ibm.com>
  *
@@ -11,29 +12,29 @@
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
 
-#include "ops.h"
-#include "stdio.h"
-#include "cuboot.h"
-#include "reg.h"
-#include "dcr.h"
-#include "4xx.h"
+#समावेश "ops.h"
+#समावेश "stdio.h"
+#समावेश "cuboot.h"
+#समावेश "reg.h"
+#समावेश "dcr.h"
+#समावेश "4xx.h"
 
-#define TARGET_4xx
-#define TARGET_44x
-#define TARGET_440GX
-#include "ppcboot.h"
+#घोषणा TARGET_4xx
+#घोषणा TARGET_44x
+#घोषणा TARGET_440GX
+#समावेश "ppcboot.h"
 
-static bd_t bd;
+अटल bd_t bd;
 
 BSS_STACK(4096);
 
-static void taishan_fixups(void)
-{
-	/* FIXME: sysclk should be derived by reading the FPGA
-	   registers */
-	unsigned long sysclk = 33000000;
+अटल व्योम taishan_fixups(व्योम)
+अणु
+	/* FIXME: sysclk should be derived by पढ़ोing the FPGA
+	   रेजिस्टरs */
+	अचिन्हित दीर्घ sysclk = 33000000;
 
-	ibm440gx_fixup_clocks(sysclk, 6 * 1843200, 25000000);
+	ibm440gx_fixup_घड़ीs(sysclk, 6 * 1843200, 25000000);
 
 	ibm4xx_sdram_fixup_memsize();
 
@@ -41,14 +42,14 @@ static void taishan_fixups(void)
 	dt_fixup_mac_address_by_alias("ethernet1", bd.bi_enet1addr);
 
 	ibm4xx_fixup_ebc_ranges("/plb/opb/ebc");
-}
+पूर्ण
 
-void platform_init(unsigned long r3, unsigned long r4, unsigned long r5,
-		   unsigned long r6, unsigned long r7)
-{
+व्योम platक्रमm_init(अचिन्हित दीर्घ r3, अचिन्हित दीर्घ r4, अचिन्हित दीर्घ r5,
+		   अचिन्हित दीर्घ r6, अचिन्हित दीर्घ r7)
+अणु
 	CUBOOT_INIT();
 
-	platform_ops.fixups = taishan_fixups;
+	platक्रमm_ops.fixups = taishan_fixups;
 	fdt_init(_dtb_start);
 	serial_console_init();
-}
+पूर्ण

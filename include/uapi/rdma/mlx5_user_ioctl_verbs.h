@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,74 +31,74 @@
  * SOFTWARE.
  */
 
-#ifndef MLX5_USER_IOCTL_VERBS_H
-#define MLX5_USER_IOCTL_VERBS_H
+#अगर_अघोषित MLX5_USER_IOCTL_VERBS_H
+#घोषणा MLX5_USER_IOCTL_VERBS_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum mlx5_ib_uapi_flow_action_flags {
+क्रमागत mlx5_ib_uapi_flow_action_flags अणु
 	MLX5_IB_UAPI_FLOW_ACTION_FLAGS_REQUIRE_METADATA	= 1 << 0,
-};
+पूर्ण;
 
-enum mlx5_ib_uapi_flow_table_type {
+क्रमागत mlx5_ib_uapi_flow_table_type अणु
 	MLX5_IB_UAPI_FLOW_TABLE_TYPE_NIC_RX     = 0x0,
 	MLX5_IB_UAPI_FLOW_TABLE_TYPE_NIC_TX	= 0x1,
 	MLX5_IB_UAPI_FLOW_TABLE_TYPE_FDB	= 0x2,
 	MLX5_IB_UAPI_FLOW_TABLE_TYPE_RDMA_RX	= 0x3,
 	MLX5_IB_UAPI_FLOW_TABLE_TYPE_RDMA_TX	= 0x4,
-};
+पूर्ण;
 
-enum mlx5_ib_uapi_flow_action_packet_reformat_type {
+क्रमागत mlx5_ib_uapi_flow_action_packet_reक्रमmat_type अणु
 	MLX5_IB_UAPI_FLOW_ACTION_PACKET_REFORMAT_TYPE_L2_TUNNEL_TO_L2 = 0x0,
 	MLX5_IB_UAPI_FLOW_ACTION_PACKET_REFORMAT_TYPE_L2_TO_L2_TUNNEL = 0x1,
 	MLX5_IB_UAPI_FLOW_ACTION_PACKET_REFORMAT_TYPE_L3_TUNNEL_TO_L2 = 0x2,
 	MLX5_IB_UAPI_FLOW_ACTION_PACKET_REFORMAT_TYPE_L2_TO_L3_TUNNEL = 0x3,
-};
+पूर्ण;
 
-struct mlx5_ib_uapi_devx_async_cmd_hdr {
+काष्ठा mlx5_ib_uapi_devx_async_cmd_hdr अणु
 	__aligned_u64	wr_id;
 	__u8		out_data[];
-};
+पूर्ण;
 
-enum mlx5_ib_uapi_dm_type {
+क्रमागत mlx5_ib_uapi_dm_type अणु
 	MLX5_IB_UAPI_DM_TYPE_MEMIC,
 	MLX5_IB_UAPI_DM_TYPE_STEERING_SW_ICM,
 	MLX5_IB_UAPI_DM_TYPE_HEADER_MODIFY_SW_ICM,
-};
+पूर्ण;
 
-enum mlx5_ib_uapi_devx_create_event_channel_flags {
+क्रमागत mlx5_ib_uapi_devx_create_event_channel_flags अणु
 	MLX5_IB_UAPI_DEVX_CR_EV_CH_FLAGS_OMIT_DATA = 1 << 0,
-};
+पूर्ण;
 
-struct mlx5_ib_uapi_devx_async_event_hdr {
+काष्ठा mlx5_ib_uapi_devx_async_event_hdr अणु
 	__aligned_u64	cookie;
 	__u8		out_data[];
-};
+पूर्ण;
 
-enum mlx5_ib_uapi_pp_alloc_flags {
+क्रमागत mlx5_ib_uapi_pp_alloc_flags अणु
 	MLX5_IB_UAPI_PP_ALLOC_FLAGS_DEDICATED_INDEX = 1 << 0,
-};
+पूर्ण;
 
-enum mlx5_ib_uapi_uar_alloc_type {
+क्रमागत mlx5_ib_uapi_uar_alloc_type अणु
 	MLX5_IB_UAPI_UAR_ALLOC_TYPE_BF = 0x0,
 	MLX5_IB_UAPI_UAR_ALLOC_TYPE_NC = 0x1,
-};
+पूर्ण;
 
-enum mlx5_ib_uapi_query_port_flags {
+क्रमागत mlx5_ib_uapi_query_port_flags अणु
 	MLX5_IB_UAPI_QUERY_PORT_VPORT			= 1 << 0,
 	MLX5_IB_UAPI_QUERY_PORT_VPORT_VHCA_ID		= 1 << 1,
 	MLX5_IB_UAPI_QUERY_PORT_VPORT_STEERING_ICM_RX	= 1 << 2,
 	MLX5_IB_UAPI_QUERY_PORT_VPORT_STEERING_ICM_TX	= 1 << 3,
 	MLX5_IB_UAPI_QUERY_PORT_VPORT_REG_C0		= 1 << 4,
 	MLX5_IB_UAPI_QUERY_PORT_ESW_OWNER_VHCA_ID	= 1 << 5,
-};
+पूर्ण;
 
-struct mlx5_ib_uapi_reg {
+काष्ठा mlx5_ib_uapi_reg अणु
 	__u32 value;
 	__u32 mask;
-};
+पूर्ण;
 
-struct mlx5_ib_uapi_query_port {
+काष्ठा mlx5_ib_uapi_query_port अणु
 	__aligned_u64 flags;
 	__u16 vport;
 	__u16 vport_vhca_id;
@@ -105,8 +106,8 @@ struct mlx5_ib_uapi_query_port {
 	__u16 rsvd0;
 	__aligned_u64 vport_steering_icm_rx;
 	__aligned_u64 vport_steering_icm_tx;
-	struct mlx5_ib_uapi_reg reg_c0;
-};
+	काष्ठा mlx5_ib_uapi_reg reg_c0;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 

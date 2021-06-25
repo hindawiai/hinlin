@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Mauro Rossi <issor.oruam@gmail.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,11 +24,11 @@
  *
  */
 
-#ifndef __DAL_COMMAND_TABLE_HELPER_DCE60_H__
-#define __DAL_COMMAND_TABLE_HELPER_DCE60_H__
+#अगर_अघोषित __DAL_COMMAND_TABLE_HELPER_DCE60_H__
+#घोषणा __DAL_COMMAND_TABLE_HELPER_DCE60_H__
 
-struct command_table_helper;
+काष्ठा command_table_helper;
 
-const struct command_table_helper *dal_cmd_tbl_helper_dce60_get_table(void);
+स्थिर काष्ठा command_table_helper *dal_cmd_tbl_helper_dce60_get_table(व्योम);
 
-#endif
+#पूर्ण_अगर

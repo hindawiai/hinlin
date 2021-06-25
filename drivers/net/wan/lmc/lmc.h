@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LMC_H_
-#define _LMC_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LMC_H_
+#घोषणा _LMC_H_
 
-#include "lmc_var.h"
+#समावेश "lmc_var.h"
 
 /*
- * prototypes for everyone
+ * prototypes क्रम everyone
  */
-int lmc_probe(struct net_device * dev);
-unsigned lmc_mii_readreg(lmc_softc_t * const sc, unsigned
-      			  devaddr, unsigned regno);
-void lmc_mii_writereg(lmc_softc_t * const sc, unsigned devaddr,
-			       unsigned regno, unsigned data);
-void lmc_led_on(lmc_softc_t * const, u32);
-void lmc_led_off(lmc_softc_t * const, u32);
-unsigned lmc_mii_readreg(lmc_softc_t * const, unsigned, unsigned);
-void lmc_mii_writereg(lmc_softc_t * const, unsigned, unsigned, unsigned);
-void lmc_gpio_mkinput(lmc_softc_t * const sc, u32 bits);
-void lmc_gpio_mkoutput(lmc_softc_t * const sc, u32 bits);
+पूर्णांक lmc_probe(काष्ठा net_device * dev);
+अचिन्हित lmc_mii_पढ़ोreg(lmc_softc_t * स्थिर sc, अचिन्हित
+      			  devaddr, अचिन्हित regno);
+व्योम lmc_mii_ग_लिखोreg(lmc_softc_t * स्थिर sc, अचिन्हित devaddr,
+			       अचिन्हित regno, अचिन्हित data);
+व्योम lmc_led_on(lmc_softc_t * स्थिर, u32);
+व्योम lmc_led_off(lmc_softc_t * स्थिर, u32);
+अचिन्हित lmc_mii_पढ़ोreg(lmc_softc_t * स्थिर, अचिन्हित, अचिन्हित);
+व्योम lmc_mii_ग_लिखोreg(lmc_softc_t * स्थिर, अचिन्हित, अचिन्हित, अचिन्हित);
+व्योम lmc_gpio_mkinput(lmc_softc_t * स्थिर sc, u32 bits);
+व्योम lmc_gpio_mkoutput(lmc_softc_t * स्थिर sc, u32 bits);
 
-int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
+पूर्णांक lmc_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd);
 
-extern lmc_media_t lmc_ds3_media;
-extern lmc_media_t lmc_ssi_media;
-extern lmc_media_t lmc_t1_media;
-extern lmc_media_t lmc_hssi_media;
+बाह्य lmc_media_t lmc_ds3_media;
+बाह्य lmc_media_t lmc_ssi_media;
+बाह्य lmc_media_t lmc_t1_media;
+बाह्य lmc_media_t lmc_hssi_media;
 
-#ifdef _DBG_EVENTLOG
-static void lmcEventLog(u32 EventNum, u32 arg2, u32 arg3);
-#endif
+#अगर_घोषित _DBG_EVENTLOG
+अटल व्योम lmcEventLog(u32 EventNum, u32 arg2, u32 arg3);
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
-* OHCI HCD (Host Controller Driver) for USB.
+* OHCI HCD (Host Controller Driver) क्रम USB.
 *
 * Copyright (C) 2010 ST Microelectronics.
 * Deepak Sikri<deepak.sikri@st.com>
@@ -8,73 +9,73 @@
 * Based on various ohci-*.c drivers
 */
 
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/signal.h>
-#include <linux/usb.h>
-#include <linux/usb/hcd.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/hcd.h>
 
-#include "ohci.h"
+#समावेश "ohci.h"
 
-#define DRIVER_DESC "OHCI SPEAr driver"
+#घोषणा DRIVER_DESC "OHCI SPEAr driver"
 
-static const char hcd_name[] = "SPEAr-ohci";
-struct spear_ohci {
-	struct clk *clk;
-};
+अटल स्थिर अक्षर hcd_name[] = "SPEAr-ohci";
+काष्ठा spear_ohci अणु
+	काष्ठा clk *clk;
+पूर्ण;
 
-#define to_spear_ohci(hcd)     (struct spear_ohci *)(hcd_to_ohci(hcd)->priv)
+#घोषणा to_spear_ohci(hcd)     (काष्ठा spear_ohci *)(hcd_to_ohci(hcd)->priv)
 
-static struct hc_driver __read_mostly ohci_spear_hc_driver;
+अटल काष्ठा hc_driver __पढ़ो_mostly ohci_spear_hc_driver;
 
-static int spear_ohci_hcd_drv_probe(struct platform_device *pdev)
-{
-	const struct hc_driver *driver = &ohci_spear_hc_driver;
-	struct usb_hcd *hcd = NULL;
-	struct clk *usbh_clk;
-	struct spear_ohci *sohci_p;
-	struct resource *res;
-	int retval, irq;
+अटल पूर्णांक spear_ohci_hcd_drv_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा hc_driver *driver = &ohci_spear_hc_driver;
+	काष्ठा usb_hcd *hcd = शून्य;
+	काष्ठा clk *usbh_clk;
+	काष्ठा spear_ohci *sohci_p;
+	काष्ठा resource *res;
+	पूर्णांक retval, irq;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		retval = irq;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/*
-	 * Right now device-tree probed devices don't get dma_mask set.
-	 * Since shared usb code relies on it, set it here for now.
+	 * Right now device-tree probed devices करोn't get dma_mask set.
+	 * Since shared usb code relies on it, set it here क्रम now.
 	 * Once we have dma capability bindings this can go away.
 	 */
 	retval = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	if (retval)
-		goto fail;
+	अगर (retval)
+		जाओ fail;
 
-	usbh_clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(usbh_clk)) {
+	usbh_clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(usbh_clk)) अणु
 		dev_err(&pdev->dev, "Error getting interface clock\n");
 		retval = PTR_ERR(usbh_clk);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	hcd = usb_create_hcd(driver, &pdev->dev, dev_name(&pdev->dev));
-	if (!hcd) {
+	अगर (!hcd) अणु
 		retval = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	hcd->regs = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(hcd->regs)) {
+	अगर (IS_ERR(hcd->regs)) अणु
 		retval = PTR_ERR(hcd->regs);
-		goto err_put_hcd;
-	}
+		जाओ err_put_hcd;
+	पूर्ण
 
 	hcd->rsrc_start = pdev->resource[0].start;
 	hcd->rsrc_len = resource_size(res);
@@ -84,11 +85,11 @@ static int spear_ohci_hcd_drv_probe(struct platform_device *pdev)
 
 	clk_prepare_enable(sohci_p->clk);
 
-	retval = usb_add_hcd(hcd, platform_get_irq(pdev, 0), 0);
-	if (retval == 0) {
+	retval = usb_add_hcd(hcd, platक्रमm_get_irq(pdev, 0), 0);
+	अगर (retval == 0) अणु
 		device_wakeup_enable(hcd->self.controller);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	clk_disable_unprepare(sohci_p->clk);
 err_put_hcd:
@@ -96,101 +97,101 @@ err_put_hcd:
 fail:
 	dev_err(&pdev->dev, "init fail, %d\n", retval);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int spear_ohci_hcd_drv_remove(struct platform_device *pdev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	struct spear_ohci *sohci_p = to_spear_ohci(hcd);
+अटल पूर्णांक spear_ohci_hcd_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा spear_ohci *sohci_p = to_spear_ohci(hcd);
 
-	usb_remove_hcd(hcd);
-	if (sohci_p->clk)
+	usb_हटाओ_hcd(hcd);
+	अगर (sohci_p->clk)
 		clk_disable_unprepare(sohci_p->clk);
 
 	usb_put_hcd(hcd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if defined(CONFIG_PM)
-static int spear_ohci_hcd_drv_suspend(struct platform_device *pdev,
+#अगर defined(CONFIG_PM)
+अटल पूर्णांक spear_ohci_hcd_drv_suspend(काष्ठा platक्रमm_device *pdev,
 		pm_message_t message)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	struct ohci_hcd	*ohci = hcd_to_ohci(hcd);
-	struct spear_ohci *sohci_p = to_spear_ohci(hcd);
-	bool do_wakeup = device_may_wakeup(&pdev->dev);
-	int ret;
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा ohci_hcd	*ohci = hcd_to_ohci(hcd);
+	काष्ठा spear_ohci *sohci_p = to_spear_ohci(hcd);
+	bool करो_wakeup = device_may_wakeup(&pdev->dev);
+	पूर्णांक ret;
 
-	if (time_before(jiffies, ohci->next_statechange))
+	अगर (समय_beक्रमe(jअगरfies, ohci->next_statechange))
 		msleep(5);
-	ohci->next_statechange = jiffies;
+	ohci->next_statechange = jअगरfies;
 
-	ret = ohci_suspend(hcd, do_wakeup);
-	if (ret)
-		return ret;
+	ret = ohci_suspend(hcd, करो_wakeup);
+	अगर (ret)
+		वापस ret;
 
 	clk_disable_unprepare(sohci_p->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int spear_ohci_hcd_drv_resume(struct platform_device *dev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(dev);
-	struct ohci_hcd	*ohci = hcd_to_ohci(hcd);
-	struct spear_ohci *sohci_p = to_spear_ohci(hcd);
+अटल पूर्णांक spear_ohci_hcd_drv_resume(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(dev);
+	काष्ठा ohci_hcd	*ohci = hcd_to_ohci(hcd);
+	काष्ठा spear_ohci *sohci_p = to_spear_ohci(hcd);
 
-	if (time_before(jiffies, ohci->next_statechange))
+	अगर (समय_beक्रमe(jअगरfies, ohci->next_statechange))
 		msleep(5);
-	ohci->next_statechange = jiffies;
+	ohci->next_statechange = jअगरfies;
 
 	clk_prepare_enable(sohci_p->clk);
 	ohci_resume(hcd, false);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct of_device_id spear_ohci_id_table[] = {
-	{ .compatible = "st,spear600-ohci", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id spear_ohci_id_table[] = अणु
+	अणु .compatible = "st,spear600-ohci", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, spear_ohci_id_table);
 
-/* Driver definition to register with the platform bus */
-static struct platform_driver spear_ohci_hcd_driver = {
+/* Driver definition to रेजिस्टर with the platक्रमm bus */
+अटल काष्ठा platक्रमm_driver spear_ohci_hcd_driver = अणु
 	.probe =	spear_ohci_hcd_drv_probe,
-	.remove =	spear_ohci_hcd_drv_remove,
-#ifdef CONFIG_PM
+	.हटाओ =	spear_ohci_hcd_drv_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.suspend =	spear_ohci_hcd_drv_suspend,
 	.resume =	spear_ohci_hcd_drv_resume,
-#endif
-	.driver = {
+#पूर्ण_अगर
+	.driver = अणु
 		.name = "spear-ohci",
 		.of_match_table = spear_ohci_id_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct ohci_driver_overrides spear_overrides __initconst = {
-	.extra_priv_size = sizeof(struct spear_ohci),
-};
-static int __init ohci_spear_init(void)
-{
-	if (usb_disabled())
-		return -ENODEV;
+अटल स्थिर काष्ठा ohci_driver_overrides spear_overrides __initस्थिर = अणु
+	.extra_priv_size = माप(काष्ठा spear_ohci),
+पूर्ण;
+अटल पूर्णांक __init ohci_spear_init(व्योम)
+अणु
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
 	pr_info("%s: " DRIVER_DESC "\n", hcd_name);
 
 	ohci_init_driver(&ohci_spear_hc_driver, &spear_overrides);
-	return platform_driver_register(&spear_ohci_hcd_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&spear_ohci_hcd_driver);
+पूर्ण
 module_init(ohci_spear_init);
 
-static void __exit ohci_spear_cleanup(void)
-{
-	platform_driver_unregister(&spear_ohci_hcd_driver);
-}
-module_exit(ohci_spear_cleanup);
+अटल व्योम __निकास ohci_spear_cleanup(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&spear_ohci_hcd_driver);
+पूर्ण
+module_निकास(ohci_spear_cleanup);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Deepak Sikri");

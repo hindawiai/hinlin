@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2019 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_trace.h"
-#include "xfs_sysctl.h"
-#include "xfs_pwork.h"
-#include <linux/nmi.h>
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_trace.h"
+#समावेश "xfs_sysctl.h"
+#समावेश "xfs_pwork.h"
+#समावेश <linux/nmi.h>
 
 /*
  * Parallel Work Queue
@@ -22,11 +23,11 @@
  * Abstract away the details of running a large and "obviously" parallelizable
  * task across multiple CPUs.  Callers initialize the pwork control object with
  * a desired level of parallelization and a work function.  Next, they embed
- * struct xfs_pwork in whatever structure they use to pass work context to a
- * worker thread and queue that pwork.  The work function will be passed the
- * pwork item when it is run (from process context) and any returned error will
- * be recorded in xfs_pwork_ctl.error.  Work functions should check for errors
- * and abort if necessary; the non-zeroness of xfs_pwork_ctl.error does not
+ * काष्ठा xfs_pwork in whatever काष्ठाure they use to pass work context to a
+ * worker thपढ़ो and queue that pwork.  The work function will be passed the
+ * pwork item when it is run (from process context) and any वापसed error will
+ * be recorded in xfs_pwork_ctl.error.  Work functions should check क्रम errors
+ * and पात अगर necessary; the non-zeroness of xfs_pwork_ctl.error करोes not
  * stop workqueue item processing.
  *
  * This is the rough equivalent of the xfsprogs workqueue code, though we can't
@@ -34,88 +35,88 @@
  */
 
 /* Invoke our caller's function. */
-static void
+अटल व्योम
 xfs_pwork_work(
-	struct work_struct	*work)
-{
-	struct xfs_pwork	*pwork;
-	struct xfs_pwork_ctl	*pctl;
-	int			error;
+	काष्ठा work_काष्ठा	*work)
+अणु
+	काष्ठा xfs_pwork	*pwork;
+	काष्ठा xfs_pwork_ctl	*pctl;
+	पूर्णांक			error;
 
-	pwork = container_of(work, struct xfs_pwork, work);
+	pwork = container_of(work, काष्ठा xfs_pwork, work);
 	pctl = pwork->pctl;
 	error = pctl->work_fn(pctl->mp, pwork);
-	if (error && !pctl->error)
+	अगर (error && !pctl->error)
 		pctl->error = error;
-	if (atomic_dec_and_test(&pctl->nr_work))
-		wake_up(&pctl->poll_wait);
-}
+	अगर (atomic_dec_and_test(&pctl->nr_work))
+		wake_up(&pctl->poll_रुको);
+पूर्ण
 
 /*
- * Set up control data for parallel work.  @work_fn is the function that will
- * be called.  @tag will be written into the kernel threads.  @nr_threads is
- * the level of parallelism desired, or 0 for no limit.
+ * Set up control data क्रम parallel work.  @work_fn is the function that will
+ * be called.  @tag will be written पूर्णांकo the kernel thपढ़ोs.  @nr_thपढ़ोs is
+ * the level of parallelism desired, or 0 क्रम no limit.
  */
-int
+पूर्णांक
 xfs_pwork_init(
-	struct xfs_mount	*mp,
-	struct xfs_pwork_ctl	*pctl,
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_pwork_ctl	*pctl,
 	xfs_pwork_work_fn	work_fn,
-	const char		*tag)
-{
-	unsigned int		nr_threads = 0;
+	स्थिर अक्षर		*tag)
+अणु
+	अचिन्हित पूर्णांक		nr_thपढ़ोs = 0;
 
-#ifdef DEBUG
-	if (xfs_globals.pwork_threads >= 0)
-		nr_threads = xfs_globals.pwork_threads;
-#endif
-	trace_xfs_pwork_init(mp, nr_threads, current->pid);
+#अगर_घोषित DEBUG
+	अगर (xfs_globals.pwork_thपढ़ोs >= 0)
+		nr_thपढ़ोs = xfs_globals.pwork_thपढ़ोs;
+#पूर्ण_अगर
+	trace_xfs_pwork_init(mp, nr_thपढ़ोs, current->pid);
 
 	pctl->wq = alloc_workqueue("%s-%d",
-			WQ_UNBOUND | WQ_SYSFS | WQ_FREEZABLE, nr_threads, tag,
+			WQ_UNBOUND | WQ_SYSFS | WQ_FREEZABLE, nr_thपढ़ोs, tag,
 			current->pid);
-	if (!pctl->wq)
-		return -ENOMEM;
+	अगर (!pctl->wq)
+		वापस -ENOMEM;
 	pctl->work_fn = work_fn;
 	pctl->error = 0;
 	pctl->mp = mp;
 	atomic_set(&pctl->nr_work, 0);
-	init_waitqueue_head(&pctl->poll_wait);
+	init_रुकोqueue_head(&pctl->poll_रुको);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Queue some parallel work. */
-void
+व्योम
 xfs_pwork_queue(
-	struct xfs_pwork_ctl	*pctl,
-	struct xfs_pwork	*pwork)
-{
+	काष्ठा xfs_pwork_ctl	*pctl,
+	काष्ठा xfs_pwork	*pwork)
+अणु
 	INIT_WORK(&pwork->work, xfs_pwork_work);
 	pwork->pctl = pctl;
 	atomic_inc(&pctl->nr_work);
 	queue_work(pctl->wq, &pwork->work);
-}
+पूर्ण
 
-/* Wait for the work to finish and tear down the control structure. */
-int
+/* Wait क्रम the work to finish and tear करोwn the control काष्ठाure. */
+पूर्णांक
 xfs_pwork_destroy(
-	struct xfs_pwork_ctl	*pctl)
-{
+	काष्ठा xfs_pwork_ctl	*pctl)
+अणु
 	destroy_workqueue(pctl->wq);
-	pctl->wq = NULL;
-	return pctl->error;
-}
+	pctl->wq = शून्य;
+	वापस pctl->error;
+पूर्ण
 
 /*
- * Wait for the work to finish by polling completion status and touch the soft
- * lockup watchdog.  This is for callers such as mount which hold locks.
+ * Wait क्रम the work to finish by polling completion status and touch the soft
+ * lockup watchकरोg.  This is क्रम callers such as mount which hold locks.
  */
-void
+व्योम
 xfs_pwork_poll(
-	struct xfs_pwork_ctl	*pctl)
-{
-	while (wait_event_timeout(pctl->poll_wait,
-				atomic_read(&pctl->nr_work) == 0, HZ) == 0)
-		touch_softlockup_watchdog();
-}
+	काष्ठा xfs_pwork_ctl	*pctl)
+अणु
+	जबतक (रुको_event_समयout(pctl->poll_रुको,
+				atomic_पढ़ो(&pctl->nr_work) == 0, HZ) == 0)
+		touch_softlockup_watchकरोg();
+पूर्ण

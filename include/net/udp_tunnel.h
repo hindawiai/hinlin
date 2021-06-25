@@ -1,197 +1,198 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_UDP_TUNNEL_H
-#define __NET_UDP_TUNNEL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_UDP_TUNNEL_H
+#घोषणा __NET_UDP_TUNNEL_H
 
-#include <net/ip_tunnels.h>
-#include <net/udp.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/udp.h>
 
-#if IS_ENABLED(CONFIG_IPV6)
-#include <net/ipv6.h>
-#include <net/ipv6_stubs.h>
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+#समावेश <net/ipv6.h>
+#समावेश <net/ipv6_stubs.h>
+#पूर्ण_अगर
 
-struct udp_port_cfg {
+काष्ठा udp_port_cfg अणु
 	u8			family;
 
-	/* Used only for kernel-created sockets */
-	union {
-		struct in_addr		local_ip;
-#if IS_ENABLED(CONFIG_IPV6)
-		struct in6_addr		local_ip6;
-#endif
-	};
+	/* Used only क्रम kernel-created sockets */
+	जोड़ अणु
+		काष्ठा in_addr		local_ip;
+#अगर IS_ENABLED(CONFIG_IPV6)
+		काष्ठा in6_addr		local_ip6;
+#पूर्ण_अगर
+	पूर्ण;
 
-	union {
-		struct in_addr		peer_ip;
-#if IS_ENABLED(CONFIG_IPV6)
-		struct in6_addr		peer_ip6;
-#endif
-	};
+	जोड़ अणु
+		काष्ठा in_addr		peer_ip;
+#अगर IS_ENABLED(CONFIG_IPV6)
+		काष्ठा in6_addr		peer_ip6;
+#पूर्ण_अगर
+	पूर्ण;
 
 	__be16			local_udp_port;
 	__be16			peer_udp_port;
-	int			bind_ifindex;
-	unsigned int		use_udp_checksums:1,
+	पूर्णांक			bind_अगरindex;
+	अचिन्हित पूर्णांक		use_udp_checksums:1,
 				use_udp6_tx_checksums:1,
 				use_udp6_rx_checksums:1,
 				ipv6_v6only:1;
-};
+पूर्ण;
 
-int udp_sock_create4(struct net *net, struct udp_port_cfg *cfg,
-		     struct socket **sockp);
+पूर्णांक udp_sock_create4(काष्ठा net *net, काष्ठा udp_port_cfg *cfg,
+		     काष्ठा socket **sockp);
 
-#if IS_ENABLED(CONFIG_IPV6)
-int udp_sock_create6(struct net *net, struct udp_port_cfg *cfg,
-		     struct socket **sockp);
-#else
-static inline int udp_sock_create6(struct net *net, struct udp_port_cfg *cfg,
-				   struct socket **sockp)
-{
-	return 0;
-}
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+पूर्णांक udp_sock_create6(काष्ठा net *net, काष्ठा udp_port_cfg *cfg,
+		     काष्ठा socket **sockp);
+#अन्यथा
+अटल अंतरभूत पूर्णांक udp_sock_create6(काष्ठा net *net, काष्ठा udp_port_cfg *cfg,
+				   काष्ठा socket **sockp)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static inline int udp_sock_create(struct net *net,
-				  struct udp_port_cfg *cfg,
-				  struct socket **sockp)
-{
-	if (cfg->family == AF_INET)
-		return udp_sock_create4(net, cfg, sockp);
+अटल अंतरभूत पूर्णांक udp_sock_create(काष्ठा net *net,
+				  काष्ठा udp_port_cfg *cfg,
+				  काष्ठा socket **sockp)
+अणु
+	अगर (cfg->family == AF_INET)
+		वापस udp_sock_create4(net, cfg, sockp);
 
-	if (cfg->family == AF_INET6)
-		return udp_sock_create6(net, cfg, sockp);
+	अगर (cfg->family == AF_INET6)
+		वापस udp_sock_create6(net, cfg, sockp);
 
-	return -EPFNOSUPPORT;
-}
+	वापस -EPFNOSUPPORT;
+पूर्ण
 
-typedef int (*udp_tunnel_encap_rcv_t)(struct sock *sk, struct sk_buff *skb);
-typedef int (*udp_tunnel_encap_err_lookup_t)(struct sock *sk,
-					     struct sk_buff *skb);
-typedef void (*udp_tunnel_encap_destroy_t)(struct sock *sk);
-typedef struct sk_buff *(*udp_tunnel_gro_receive_t)(struct sock *sk,
-						    struct list_head *head,
-						    struct sk_buff *skb);
-typedef int (*udp_tunnel_gro_complete_t)(struct sock *sk, struct sk_buff *skb,
-					 int nhoff);
+प्रकार पूर्णांक (*udp_tunnel_encap_rcv_t)(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+प्रकार पूर्णांक (*udp_tunnel_encap_err_lookup_t)(काष्ठा sock *sk,
+					     काष्ठा sk_buff *skb);
+प्रकार व्योम (*udp_tunnel_encap_destroy_t)(काष्ठा sock *sk);
+प्रकार काष्ठा sk_buff *(*udp_tunnel_gro_receive_t)(काष्ठा sock *sk,
+						    काष्ठा list_head *head,
+						    काष्ठा sk_buff *skb);
+प्रकार पूर्णांक (*udp_tunnel_gro_complete_t)(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+					 पूर्णांक nhoff);
 
-struct udp_tunnel_sock_cfg {
-	void *sk_user_data;     /* user data used by encap_rcv call back */
-	/* Used for setting up udp_sock fields, see udp.h for details */
+काष्ठा udp_tunnel_sock_cfg अणु
+	व्योम *sk_user_data;     /* user data used by encap_rcv call back */
+	/* Used क्रम setting up udp_sock fields, see udp.h क्रम details */
 	__u8  encap_type;
 	udp_tunnel_encap_rcv_t encap_rcv;
 	udp_tunnel_encap_err_lookup_t encap_err_lookup;
 	udp_tunnel_encap_destroy_t encap_destroy;
 	udp_tunnel_gro_receive_t gro_receive;
 	udp_tunnel_gro_complete_t gro_complete;
-};
+पूर्ण;
 
 /* Setup the given (UDP) sock to receive UDP encapsulated packets */
-void setup_udp_tunnel_sock(struct net *net, struct socket *sock,
-			   struct udp_tunnel_sock_cfg *sock_cfg);
+व्योम setup_udp_tunnel_sock(काष्ठा net *net, काष्ठा socket *sock,
+			   काष्ठा udp_tunnel_sock_cfg *sock_cfg);
 
 /* -- List of parsable UDP tunnel types --
  *
- * Adding to this list will result in serious debate.  The main issue is
- * that this list is essentially a list of workarounds for either poorly
- * designed tunnels, or poorly designed device offloads.
+ * Adding to this list will result in serious debate.  The मुख्य issue is
+ * that this list is essentially a list of workarounds क्रम either poorly
+ * deचिन्हित tunnels, or poorly deचिन्हित device offloads.
  *
- * The parsing supported via these types should really be used for Rx
- * traffic only as the network stack will have already inserted offsets for
+ * The parsing supported via these types should really be used क्रम Rx
+ * traffic only as the network stack will have alपढ़ोy inserted offsets क्रम
  * the location of the headers in the skb.  In addition any ports that are
  * pushed should be kept within the namespace without leaking to other
  * devices such as VFs or other ports on the same device.
  *
- * It is strongly encouraged to use CHECKSUM_COMPLETE for Rx to avoid the
- * need to use this for Rx checksum offload.  It should not be necessary to
- * call this function to perform Tx offloads on outgoing traffic.
+ * It is strongly encouraged to use CHECKSUM_COMPLETE क्रम Rx to aव्योम the
+ * need to use this क्रम Rx checksum offload.  It should not be necessary to
+ * call this function to perक्रमm Tx offloads on outgoing traffic.
  */
-enum udp_parsable_tunnel_type {
+क्रमागत udp_parsable_tunnel_type अणु
 	UDP_TUNNEL_TYPE_VXLAN	  = BIT(0), /* RFC 7348 */
 	UDP_TUNNEL_TYPE_GENEVE	  = BIT(1), /* draft-ietf-nvo3-geneve */
 	UDP_TUNNEL_TYPE_VXLAN_GPE = BIT(2), /* draft-ietf-nvo3-vxlan-gpe */
-};
+पूर्ण;
 
-struct udp_tunnel_info {
-	unsigned short type;
+काष्ठा udp_tunnel_info अणु
+	अचिन्हित लघु type;
 	sa_family_t sa_family;
 	__be16 port;
 	u8 hw_priv;
-};
+पूर्ण;
 
-/* Notify network devices of offloadable types */
-void udp_tunnel_push_rx_port(struct net_device *dev, struct socket *sock,
-			     unsigned short type);
-void udp_tunnel_drop_rx_port(struct net_device *dev, struct socket *sock,
-			     unsigned short type);
-void udp_tunnel_notify_add_rx_port(struct socket *sock, unsigned short type);
-void udp_tunnel_notify_del_rx_port(struct socket *sock, unsigned short type);
+/* Notअगरy network devices of offloadable types */
+व्योम udp_tunnel_push_rx_port(काष्ठा net_device *dev, काष्ठा socket *sock,
+			     अचिन्हित लघु type);
+व्योम udp_tunnel_drop_rx_port(काष्ठा net_device *dev, काष्ठा socket *sock,
+			     अचिन्हित लघु type);
+व्योम udp_tunnel_notअगरy_add_rx_port(काष्ठा socket *sock, अचिन्हित लघु type);
+व्योम udp_tunnel_notअगरy_del_rx_port(काष्ठा socket *sock, अचिन्हित लघु type);
 
-static inline void udp_tunnel_get_rx_info(struct net_device *dev)
-{
+अटल अंतरभूत व्योम udp_tunnel_get_rx_info(काष्ठा net_device *dev)
+अणु
 	ASSERT_RTNL();
-	if (!(dev->features & NETIF_F_RX_UDP_TUNNEL_PORT))
-		return;
-	call_netdevice_notifiers(NETDEV_UDP_TUNNEL_PUSH_INFO, dev);
-}
+	अगर (!(dev->features & NETIF_F_RX_UDP_TUNNEL_PORT))
+		वापस;
+	call_netdevice_notअगरiers(NETDEV_UDP_TUNNEL_PUSH_INFO, dev);
+पूर्ण
 
-static inline void udp_tunnel_drop_rx_info(struct net_device *dev)
-{
+अटल अंतरभूत व्योम udp_tunnel_drop_rx_info(काष्ठा net_device *dev)
+अणु
 	ASSERT_RTNL();
-	if (!(dev->features & NETIF_F_RX_UDP_TUNNEL_PORT))
-		return;
-	call_netdevice_notifiers(NETDEV_UDP_TUNNEL_DROP_INFO, dev);
-}
+	अगर (!(dev->features & NETIF_F_RX_UDP_TUNNEL_PORT))
+		वापस;
+	call_netdevice_notअगरiers(NETDEV_UDP_TUNNEL_DROP_INFO, dev);
+पूर्ण
 
 /* Transmit the skb using UDP encapsulation. */
-void udp_tunnel_xmit_skb(struct rtable *rt, struct sock *sk, struct sk_buff *skb,
+व्योम udp_tunnel_xmit_skb(काष्ठा rtable *rt, काष्ठा sock *sk, काष्ठा sk_buff *skb,
 			 __be32 src, __be32 dst, __u8 tos, __u8 ttl,
 			 __be16 df, __be16 src_port, __be16 dst_port,
 			 bool xnet, bool nocheck);
 
-int udp_tunnel6_xmit_skb(struct dst_entry *dst, struct sock *sk,
-			 struct sk_buff *skb,
-			 struct net_device *dev, struct in6_addr *saddr,
-			 struct in6_addr *daddr,
+पूर्णांक udp_tunnel6_xmit_skb(काष्ठा dst_entry *dst, काष्ठा sock *sk,
+			 काष्ठा sk_buff *skb,
+			 काष्ठा net_device *dev, काष्ठा in6_addr *saddr,
+			 काष्ठा in6_addr *daddr,
 			 __u8 prio, __u8 ttl, __be32 label,
 			 __be16 src_port, __be16 dst_port, bool nocheck);
 
-void udp_tunnel_sock_release(struct socket *sock);
+व्योम udp_tunnel_sock_release(काष्ठा socket *sock);
 
-struct metadata_dst *udp_tun_rx_dst(struct sk_buff *skb, unsigned short family,
+काष्ठा metadata_dst *udp_tun_rx_dst(काष्ठा sk_buff *skb, अचिन्हित लघु family,
 				    __be16 flags, __be64 tunnel_id,
-				    int md_size);
+				    पूर्णांक md_size);
 
-#ifdef CONFIG_INET
-static inline int udp_tunnel_handle_offloads(struct sk_buff *skb, bool udp_csum)
-{
-	int type = udp_csum ? SKB_GSO_UDP_TUNNEL_CSUM : SKB_GSO_UDP_TUNNEL;
+#अगर_घोषित CONFIG_INET
+अटल अंतरभूत पूर्णांक udp_tunnel_handle_offloads(काष्ठा sk_buff *skb, bool udp_csum)
+अणु
+	पूर्णांक type = udp_csum ? SKB_GSO_UDP_TUNNEL_CSUM : SKB_GSO_UDP_TUNNEL;
 
-	return iptunnel_handle_offloads(skb, type);
-}
-#endif
+	वापस iptunnel_handle_offloads(skb, type);
+पूर्ण
+#पूर्ण_अगर
 
-static inline void udp_tunnel_encap_enable(struct socket *sock)
-{
-	struct udp_sock *up = udp_sk(sock->sk);
+अटल अंतरभूत व्योम udp_tunnel_encap_enable(काष्ठा socket *sock)
+अणु
+	काष्ठा udp_sock *up = udp_sk(sock->sk);
 
-	if (up->encap_enabled)
-		return;
+	अगर (up->encap_enabled)
+		वापस;
 
 	up->encap_enabled = 1;
-#if IS_ENABLED(CONFIG_IPV6)
-	if (sock->sk->sk_family == PF_INET6)
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अगर (sock->sk->sk_family == PF_INET6)
 		ipv6_stub->udpv6_encap_enable();
-#endif
+#पूर्ण_अगर
 	udp_encap_enable();
-}
+पूर्ण
 
-#define UDP_TUNNEL_NIC_MAX_TABLES	4
+#घोषणा UDP_TUNNEL_NIC_MAX_TABLES	4
 
-enum udp_tunnel_nic_info_flags {
+क्रमागत udp_tunnel_nic_info_flags अणु
 	/* Device callbacks may sleep */
 	UDP_TUNNEL_NIC_INFO_MAY_SLEEP	= BIT(0),
-	/* Device only supports offloads when it's open, all ports
-	 * will be removed before close and re-added after open.
+	/* Device only supports offloads when it's खोलो, all ports
+	 * will be हटाओd beक्रमe बंद and re-added after खोलो.
 	 */
 	UDP_TUNNEL_NIC_INFO_OPEN_ONLY	= BIT(1),
 	/* Device supports only IPv4 tunnels */
@@ -201,30 +202,30 @@ enum udp_tunnel_nic_info_flags {
 	 * Driver will not receive any callback associated with port 4789.
 	 */
 	UDP_TUNNEL_NIC_INFO_STATIC_IANA_VXLAN	= BIT(3),
-};
+पूर्ण;
 
-struct udp_tunnel_nic;
+काष्ठा udp_tunnel_nic;
 
-#define UDP_TUNNEL_NIC_MAX_SHARING_DEVICES	(U16_MAX / 2)
+#घोषणा UDP_TUNNEL_NIC_MAX_SHARING_DEVICES	(U16_MAX / 2)
 
-struct udp_tunnel_nic_shared {
-	struct udp_tunnel_nic *udp_tunnel_nic_info;
+काष्ठा udp_tunnel_nic_shared अणु
+	काष्ठा udp_tunnel_nic *udp_tunnel_nic_info;
 
-	struct list_head devices;
-};
+	काष्ठा list_head devices;
+पूर्ण;
 
-struct udp_tunnel_nic_shared_node {
-	struct net_device *dev;
-	struct list_head list;
-};
+काष्ठा udp_tunnel_nic_shared_node अणु
+	काष्ठा net_device *dev;
+	काष्ठा list_head list;
+पूर्ण;
 
 /**
- * struct udp_tunnel_nic_info - driver UDP tunnel offload information
- * @set_port:	callback for adding a new port
- * @unset_port:	callback for removing a port
- * @sync_table:	callback for syncing the entire port table at once
+ * काष्ठा udp_tunnel_nic_info - driver UDP tunnel offload inक्रमmation
+ * @set_port:	callback क्रम adding a new port
+ * @unset_port:	callback क्रम removing a port
+ * @sync_table:	callback क्रम syncing the entire port table at once
  * @shared:	reference to device global state (optional)
- * @flags:	device flags from enum udp_tunnel_nic_info_flags
+ * @flags:	device flags from क्रमागत udp_tunnel_nic_info_flags
  * @tables:	UDP port tables this device has
  * @tables.n_entries:		number of entries in this table
  * @tables.tunnel_types:	types of tunnels this table accepts
@@ -233,146 +234,146 @@ struct udp_tunnel_nic_shared_node {
  * or the @sync_table callback. Callbacks are invoked with rtnl lock held.
  *
  * Devices which (misguidedly) share the UDP tunnel port table across multiple
- * netdevs should allocate an instance of struct udp_tunnel_nic_shared and
- * point @shared at it.
+ * netdevs should allocate an instance of काष्ठा udp_tunnel_nic_shared and
+ * poपूर्णांक @shared at it.
  * There must never be more than %UDP_TUNNEL_NIC_MAX_SHARING_DEVICES devices
  * sharing a table.
  *
  * Known limitations:
- *  - UDP tunnel port notifications are fundamentally best-effort -
+ *  - UDP tunnel port notअगरications are fundamentally best-efक्रमt -
  *    it is likely the driver will both see skbs which use a UDP tunnel port,
- *    while not being a tunneled skb, and tunnel skbs from other ports -
- *    drivers should only use these ports for non-critical RX-side offloads,
+ *    जबतक not being a tunneled skb, and tunnel skbs from other ports -
+ *    drivers should only use these ports क्रम non-critical RX-side offloads,
  *    e.g. the checksum offload;
- *  - none of the devices care about the socket family at present, so we don't
- *    track it. Please extend this code if you care.
+ *  - none of the devices care about the socket family at present, so we करोn't
+ *    track it. Please extend this code अगर you care.
  */
-struct udp_tunnel_nic_info {
+काष्ठा udp_tunnel_nic_info अणु
 	/* one-by-one */
-	int (*set_port)(struct net_device *dev,
-			unsigned int table, unsigned int entry,
-			struct udp_tunnel_info *ti);
-	int (*unset_port)(struct net_device *dev,
-			  unsigned int table, unsigned int entry,
-			  struct udp_tunnel_info *ti);
+	पूर्णांक (*set_port)(काष्ठा net_device *dev,
+			अचिन्हित पूर्णांक table, अचिन्हित पूर्णांक entry,
+			काष्ठा udp_tunnel_info *ti);
+	पूर्णांक (*unset_port)(काष्ठा net_device *dev,
+			  अचिन्हित पूर्णांक table, अचिन्हित पूर्णांक entry,
+			  काष्ठा udp_tunnel_info *ti);
 
 	/* all at once */
-	int (*sync_table)(struct net_device *dev, unsigned int table);
+	पूर्णांक (*sync_table)(काष्ठा net_device *dev, अचिन्हित पूर्णांक table);
 
-	struct udp_tunnel_nic_shared *shared;
+	काष्ठा udp_tunnel_nic_shared *shared;
 
-	unsigned int flags;
+	अचिन्हित पूर्णांक flags;
 
-	struct udp_tunnel_nic_table_info {
-		unsigned int n_entries;
-		unsigned int tunnel_types;
-	} tables[UDP_TUNNEL_NIC_MAX_TABLES];
-};
+	काष्ठा udp_tunnel_nic_table_info अणु
+		अचिन्हित पूर्णांक n_entries;
+		अचिन्हित पूर्णांक tunnel_types;
+	पूर्ण tables[UDP_TUNNEL_NIC_MAX_TABLES];
+पूर्ण;
 
 /* UDP tunnel module dependencies
  *
  * Tunnel drivers are expected to have a hard dependency on the udp_tunnel
  * module. NIC drivers are not, they just attach their
- * struct udp_tunnel_nic_info to the netdev and wait for callbacks to come.
+ * काष्ठा udp_tunnel_nic_info to the netdev and रुको क्रम callbacks to come.
  * Loading a tunnel driver will cause the udp_tunnel module to be loaded
- * and only then will all the required state structures be allocated.
+ * and only then will all the required state काष्ठाures be allocated.
  * Since we want a weak dependency from the drivers and the core to udp_tunnel
  * we call things through the following stubs.
  */
-struct udp_tunnel_nic_ops {
-	void (*get_port)(struct net_device *dev, unsigned int table,
-			 unsigned int idx, struct udp_tunnel_info *ti);
-	void (*set_port_priv)(struct net_device *dev, unsigned int table,
-			      unsigned int idx, u8 priv);
-	void (*add_port)(struct net_device *dev, struct udp_tunnel_info *ti);
-	void (*del_port)(struct net_device *dev, struct udp_tunnel_info *ti);
-	void (*reset_ntf)(struct net_device *dev);
+काष्ठा udp_tunnel_nic_ops अणु
+	व्योम (*get_port)(काष्ठा net_device *dev, अचिन्हित पूर्णांक table,
+			 अचिन्हित पूर्णांक idx, काष्ठा udp_tunnel_info *ti);
+	व्योम (*set_port_priv)(काष्ठा net_device *dev, अचिन्हित पूर्णांक table,
+			      अचिन्हित पूर्णांक idx, u8 priv);
+	व्योम (*add_port)(काष्ठा net_device *dev, काष्ठा udp_tunnel_info *ti);
+	व्योम (*del_port)(काष्ठा net_device *dev, काष्ठा udp_tunnel_info *ti);
+	व्योम (*reset_ntf)(काष्ठा net_device *dev);
 
-	size_t (*dump_size)(struct net_device *dev, unsigned int table);
-	int (*dump_write)(struct net_device *dev, unsigned int table,
-			  struct sk_buff *skb);
-};
+	माप_प्रकार (*dump_size)(काष्ठा net_device *dev, अचिन्हित पूर्णांक table);
+	पूर्णांक (*dump_ग_लिखो)(काष्ठा net_device *dev, अचिन्हित पूर्णांक table,
+			  काष्ठा sk_buff *skb);
+पूर्ण;
 
-#ifdef CONFIG_INET
-extern const struct udp_tunnel_nic_ops *udp_tunnel_nic_ops;
-#else
-#define udp_tunnel_nic_ops	((struct udp_tunnel_nic_ops *)NULL)
-#endif
+#अगर_घोषित CONFIG_INET
+बाह्य स्थिर काष्ठा udp_tunnel_nic_ops *udp_tunnel_nic_ops;
+#अन्यथा
+#घोषणा udp_tunnel_nic_ops	((काष्ठा udp_tunnel_nic_ops *)शून्य)
+#पूर्ण_अगर
 
-static inline void
-udp_tunnel_nic_get_port(struct net_device *dev, unsigned int table,
-			unsigned int idx, struct udp_tunnel_info *ti)
-{
+अटल अंतरभूत व्योम
+udp_tunnel_nic_get_port(काष्ठा net_device *dev, अचिन्हित पूर्णांक table,
+			अचिन्हित पूर्णांक idx, काष्ठा udp_tunnel_info *ti)
+अणु
 	/* This helper is used from .sync_table, we indicate empty entries
 	 * by zero'ed @ti. Drivers which need to know the details of a port
-	 * when it gets deleted should use the .set_port / .unset_port
+	 * when it माला_लो deleted should use the .set_port / .unset_port
 	 * callbacks.
 	 * Zero out here, otherwise !CONFIG_INET causes uninitilized warnings.
 	 */
-	memset(ti, 0, sizeof(*ti));
+	स_रखो(ti, 0, माप(*ti));
 
-	if (udp_tunnel_nic_ops)
+	अगर (udp_tunnel_nic_ops)
 		udp_tunnel_nic_ops->get_port(dev, table, idx, ti);
-}
+पूर्ण
 
-static inline void
-udp_tunnel_nic_set_port_priv(struct net_device *dev, unsigned int table,
-			     unsigned int idx, u8 priv)
-{
-	if (udp_tunnel_nic_ops)
+अटल अंतरभूत व्योम
+udp_tunnel_nic_set_port_priv(काष्ठा net_device *dev, अचिन्हित पूर्णांक table,
+			     अचिन्हित पूर्णांक idx, u8 priv)
+अणु
+	अगर (udp_tunnel_nic_ops)
 		udp_tunnel_nic_ops->set_port_priv(dev, table, idx, priv);
-}
+पूर्ण
 
-static inline void
-udp_tunnel_nic_add_port(struct net_device *dev, struct udp_tunnel_info *ti)
-{
-	if (!(dev->features & NETIF_F_RX_UDP_TUNNEL_PORT))
-		return;
-	if (udp_tunnel_nic_ops)
+अटल अंतरभूत व्योम
+udp_tunnel_nic_add_port(काष्ठा net_device *dev, काष्ठा udp_tunnel_info *ti)
+अणु
+	अगर (!(dev->features & NETIF_F_RX_UDP_TUNNEL_PORT))
+		वापस;
+	अगर (udp_tunnel_nic_ops)
 		udp_tunnel_nic_ops->add_port(dev, ti);
-}
+पूर्ण
 
-static inline void
-udp_tunnel_nic_del_port(struct net_device *dev, struct udp_tunnel_info *ti)
-{
-	if (!(dev->features & NETIF_F_RX_UDP_TUNNEL_PORT))
-		return;
-	if (udp_tunnel_nic_ops)
+अटल अंतरभूत व्योम
+udp_tunnel_nic_del_port(काष्ठा net_device *dev, काष्ठा udp_tunnel_info *ti)
+अणु
+	अगर (!(dev->features & NETIF_F_RX_UDP_TUNNEL_PORT))
+		वापस;
+	अगर (udp_tunnel_nic_ops)
 		udp_tunnel_nic_ops->del_port(dev, ti);
-}
+पूर्ण
 
 /**
- * udp_tunnel_nic_reset_ntf() - device-originating reset notification
- * @dev: network interface device structure
+ * udp_tunnel_nic_reset_ntf() - device-originating reset notअगरication
+ * @dev: network पूर्णांकerface device काष्ठाure
  *
- * Called by the driver to inform the core that the entire UDP tunnel port
+ * Called by the driver to inक्रमm the core that the entire UDP tunnel port
  * state has been lost, usually due to device reset. Core will assume device
- * forgot all the ports and issue .set_port and .sync_table callbacks as
+ * क्रमgot all the ports and issue .set_port and .sync_table callbacks as
  * necessary.
  *
  * This function must be called with rtnl lock held, and will issue all
- * the callbacks before returning.
+ * the callbacks beक्रमe वापसing.
  */
-static inline void udp_tunnel_nic_reset_ntf(struct net_device *dev)
-{
-	if (udp_tunnel_nic_ops)
+अटल अंतरभूत व्योम udp_tunnel_nic_reset_ntf(काष्ठा net_device *dev)
+अणु
+	अगर (udp_tunnel_nic_ops)
 		udp_tunnel_nic_ops->reset_ntf(dev);
-}
+पूर्ण
 
-static inline size_t
-udp_tunnel_nic_dump_size(struct net_device *dev, unsigned int table)
-{
-	if (!udp_tunnel_nic_ops)
-		return 0;
-	return udp_tunnel_nic_ops->dump_size(dev, table);
-}
+अटल अंतरभूत माप_प्रकार
+udp_tunnel_nic_dump_size(काष्ठा net_device *dev, अचिन्हित पूर्णांक table)
+अणु
+	अगर (!udp_tunnel_nic_ops)
+		वापस 0;
+	वापस udp_tunnel_nic_ops->dump_size(dev, table);
+पूर्ण
 
-static inline int
-udp_tunnel_nic_dump_write(struct net_device *dev, unsigned int table,
-			  struct sk_buff *skb)
-{
-	if (!udp_tunnel_nic_ops)
-		return 0;
-	return udp_tunnel_nic_ops->dump_write(dev, table, skb);
-}
-#endif
+अटल अंतरभूत पूर्णांक
+udp_tunnel_nic_dump_ग_लिखो(काष्ठा net_device *dev, अचिन्हित पूर्णांक table,
+			  काष्ठा sk_buff *skb)
+अणु
+	अगर (!udp_tunnel_nic_ops)
+		वापस 0;
+	वापस udp_tunnel_nic_ops->dump_ग_लिखो(dev, table, skb);
+पूर्ण
+#पूर्ण_अगर

@@ -1,163 +1,164 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef XEN_OPS_H
-#define XEN_OPS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित XEN_OPS_H
+#घोषणा XEN_OPS_H
 
-#include <linux/init.h>
-#include <linux/clocksource.h>
-#include <linux/irqreturn.h>
-#include <xen/xen-ops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <xen/xen-ops.h>
 
 /* These are code, but not functions.  Defined in entry.S */
-extern const char xen_failsafe_callback[];
+बाह्य स्थिर अक्षर xen_failsafe_callback[];
 
-void xen_sysenter_target(void);
-#ifdef CONFIG_X86_64
-void xen_syscall_target(void);
-void xen_syscall32_target(void);
-#endif
+व्योम xen_sysenter_target(व्योम);
+#अगर_घोषित CONFIG_X86_64
+व्योम xen_syscall_target(व्योम);
+व्योम xen_syscall32_target(व्योम);
+#पूर्ण_अगर
 
-extern void *xen_initial_gdt;
+बाह्य व्योम *xen_initial_gdt;
 
-struct trap_info;
-void xen_copy_trap_info(struct trap_info *traps);
+काष्ठा trap_info;
+व्योम xen_copy_trap_info(काष्ठा trap_info *traps);
 
-DECLARE_PER_CPU(struct vcpu_info, xen_vcpu_info);
-DECLARE_PER_CPU(unsigned long, xen_cr3);
-DECLARE_PER_CPU(unsigned long, xen_current_cr3);
+DECLARE_PER_CPU(काष्ठा vcpu_info, xen_vcpu_info);
+DECLARE_PER_CPU(अचिन्हित दीर्घ, xen_cr3);
+DECLARE_PER_CPU(अचिन्हित दीर्घ, xen_current_cr3);
 
-extern struct start_info *xen_start_info;
-extern struct shared_info xen_dummy_shared_info;
-extern struct shared_info *HYPERVISOR_shared_info;
+बाह्य काष्ठा start_info *xen_start_info;
+बाह्य काष्ठा shared_info xen_dummy_shared_info;
+बाह्य काष्ठा shared_info *HYPERVISOR_shared_info;
 
-extern bool xen_fifo_events;
+बाह्य bool xen_fअगरo_events;
 
-void xen_setup_mfn_list_list(void);
-void xen_build_mfn_list_list(void);
-void xen_setup_machphys_mapping(void);
-void xen_setup_kernel_pagetable(pgd_t *pgd, unsigned long max_pfn);
-void __init xen_reserve_special_pages(void);
-void __init xen_pt_check_e820(void);
+व्योम xen_setup_mfn_list_list(व्योम);
+व्योम xen_build_mfn_list_list(व्योम);
+व्योम xen_setup_machphys_mapping(व्योम);
+व्योम xen_setup_kernel_pagetable(pgd_t *pgd, अचिन्हित दीर्घ max_pfn);
+व्योम __init xen_reserve_special_pages(व्योम);
+व्योम __init xen_pt_check_e820(व्योम);
 
-void xen_mm_pin_all(void);
-void xen_mm_unpin_all(void);
-#ifdef CONFIG_X86_64
-void __init xen_relocate_p2m(void);
-#endif
+व्योम xen_mm_pin_all(व्योम);
+व्योम xen_mm_unpin_all(व्योम);
+#अगर_घोषित CONFIG_X86_64
+व्योम __init xen_relocate_p2m(व्योम);
+#पूर्ण_अगर
 
 bool __init xen_is_e820_reserved(phys_addr_t start, phys_addr_t size);
-unsigned long __ref xen_chk_extra_mem(unsigned long pfn);
-void __init xen_inv_extra_mem(void);
-void __init xen_remap_memory(void);
-phys_addr_t __init xen_find_free_area(phys_addr_t size);
-char * __init xen_memory_setup(void);
-void __init xen_arch_setup(void);
-void xen_enable_sysenter(void);
-void xen_enable_syscall(void);
-void xen_vcpu_restore(void);
+अचिन्हित दीर्घ __ref xen_chk_extra_mem(अचिन्हित दीर्घ pfn);
+व्योम __init xen_inv_extra_mem(व्योम);
+व्योम __init xen_remap_memory(व्योम);
+phys_addr_t __init xen_find_मुक्त_area(phys_addr_t size);
+अक्षर * __init xen_memory_setup(व्योम);
+व्योम __init xen_arch_setup(व्योम);
+व्योम xen_enable_sysenter(व्योम);
+व्योम xen_enable_syscall(व्योम);
+व्योम xen_vcpu_restore(व्योम);
 
-void xen_hvm_init_shared_info(void);
-void xen_unplug_emulated_devices(void);
+व्योम xen_hvm_init_shared_info(व्योम);
+व्योम xen_unplug_emulated_devices(व्योम);
 
-void __init xen_build_dynamic_phys_to_machine(void);
-void __init xen_vmalloc_p2m_tree(void);
+व्योम __init xen_build_dynamic_phys_to_machine(व्योम);
+व्योम __init xen_vदो_स्मृति_p2m_tree(व्योम);
 
-void xen_init_irq_ops(void);
-void xen_setup_timer(int cpu);
-void xen_setup_runstate_info(int cpu);
-void xen_teardown_timer(int cpu);
-void xen_setup_cpu_clockevents(void);
-void xen_save_time_memory_area(void);
-void xen_restore_time_memory_area(void);
-void xen_init_time_ops(void);
-void xen_hvm_init_time_ops(void);
+व्योम xen_init_irq_ops(व्योम);
+व्योम xen_setup_समयr(पूर्णांक cpu);
+व्योम xen_setup_runstate_info(पूर्णांक cpu);
+व्योम xen_tearकरोwn_समयr(पूर्णांक cpu);
+व्योम xen_setup_cpu_घड़ीevents(व्योम);
+व्योम xen_save_समय_memory_area(व्योम);
+व्योम xen_restore_समय_memory_area(व्योम);
+व्योम xen_init_समय_ops(व्योम);
+व्योम xen_hvm_init_समय_ops(व्योम);
 
-irqreturn_t xen_debug_interrupt(int irq, void *dev_id);
+irqवापस_t xen_debug_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
 
-bool xen_vcpu_stolen(int vcpu);
+bool xen_vcpu_stolen(पूर्णांक vcpu);
 
-extern int xen_have_vcpu_info_placement;
+बाह्य पूर्णांक xen_have_vcpu_info_placement;
 
-int xen_vcpu_setup(int cpu);
-void xen_vcpu_info_reset(int cpu);
-void xen_setup_vcpu_info_placement(void);
+पूर्णांक xen_vcpu_setup(पूर्णांक cpu);
+व्योम xen_vcpu_info_reset(पूर्णांक cpu);
+व्योम xen_setup_vcpu_info_placement(व्योम);
 
-#ifdef CONFIG_SMP
-void xen_smp_init(void);
-void __init xen_hvm_smp_init(void);
+#अगर_घोषित CONFIG_SMP
+व्योम xen_smp_init(व्योम);
+व्योम __init xen_hvm_smp_init(व्योम);
 
-extern cpumask_var_t xen_cpu_initialized_map;
-#else
-static inline void xen_smp_init(void) {}
-static inline void xen_hvm_smp_init(void) {}
-#endif
+बाह्य cpumask_var_t xen_cpu_initialized_map;
+#अन्यथा
+अटल अंतरभूत व्योम xen_smp_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम xen_hvm_smp_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PARAVIRT_SPINLOCKS
-void __init xen_init_spinlocks(void);
-void xen_init_lock_cpu(int cpu);
-void xen_uninit_lock_cpu(int cpu);
-#else
-static inline void xen_init_spinlocks(void)
-{
-}
-static inline void xen_init_lock_cpu(int cpu)
-{
-}
-static inline void xen_uninit_lock_cpu(int cpu)
-{
-}
-#endif
+#अगर_घोषित CONFIG_PARAVIRT_SPINLOCKS
+व्योम __init xen_init_spinlocks(व्योम);
+व्योम xen_init_lock_cpu(पूर्णांक cpu);
+व्योम xen_uninit_lock_cpu(पूर्णांक cpu);
+#अन्यथा
+अटल अंतरभूत व्योम xen_init_spinlocks(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम xen_init_lock_cpu(पूर्णांक cpu)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम xen_uninit_lock_cpu(पूर्णांक cpu)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-struct dom0_vga_console_info;
+काष्ठा करोm0_vga_console_info;
 
-#ifdef CONFIG_XEN_DOM0
-void __init xen_init_vga(const struct dom0_vga_console_info *, size_t size);
-#else
-static inline void __init xen_init_vga(const struct dom0_vga_console_info *info,
-				       size_t size)
-{
-}
-#endif
+#अगर_घोषित CONFIG_XEN_DOM0
+व्योम __init xen_init_vga(स्थिर काष्ठा करोm0_vga_console_info *, माप_प्रकार size);
+#अन्यथा
+अटल अंतरभूत व्योम __init xen_init_vga(स्थिर काष्ठा करोm0_vga_console_info *info,
+				       माप_प्रकार size)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-void __init xen_init_apic(void);
+व्योम __init xen_init_apic(व्योम);
 
-#ifdef CONFIG_XEN_EFI
-extern void xen_efi_init(struct boot_params *boot_params);
-#else
-static inline void __init xen_efi_init(struct boot_params *boot_params)
-{
-}
-#endif
+#अगर_घोषित CONFIG_XEN_EFI
+बाह्य व्योम xen_efi_init(काष्ठा boot_params *boot_params);
+#अन्यथा
+अटल अंतरभूत व्योम __init xen_efi_init(काष्ठा boot_params *boot_params)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-__visible void xen_irq_enable_direct(void);
-__visible void xen_irq_disable_direct(void);
-__visible unsigned long xen_save_fl_direct(void);
+__visible व्योम xen_irq_enable_direct(व्योम);
+__visible व्योम xen_irq_disable_direct(व्योम);
+__visible अचिन्हित दीर्घ xen_save_fl_direct(व्योम);
 
-__visible unsigned long xen_read_cr2(void);
-__visible unsigned long xen_read_cr2_direct(void);
+__visible अचिन्हित दीर्घ xen_पढ़ो_cr2(व्योम);
+__visible अचिन्हित दीर्घ xen_पढ़ो_cr2_direct(व्योम);
 
 /* These are not functions, and cannot be called normally */
-__visible void xen_iret(void);
+__visible व्योम xen_iret(व्योम);
 
-extern int xen_panic_handler_init(void);
+बाह्य पूर्णांक xen_panic_handler_init(व्योम);
 
-int xen_cpuhp_setup(int (*cpu_up_prepare_cb)(unsigned int),
-		    int (*cpu_dead_cb)(unsigned int));
+पूर्णांक xen_cpuhp_setup(पूर्णांक (*cpu_up_prepare_cb)(अचिन्हित पूर्णांक),
+		    पूर्णांक (*cpu_dead_cb)(अचिन्हित पूर्णांक));
 
-void xen_pin_vcpu(int cpu);
+व्योम xen_pin_vcpu(पूर्णांक cpu);
 
-void xen_emergency_restart(void);
-#ifdef CONFIG_XEN_PV
-void xen_pv_pre_suspend(void);
-void xen_pv_post_suspend(int suspend_cancelled);
-#else
-static inline void xen_pv_pre_suspend(void) {}
-static inline void xen_pv_post_suspend(int suspend_cancelled) {}
-#endif
+व्योम xen_emergency_restart(व्योम);
+#अगर_घोषित CONFIG_XEN_PV
+व्योम xen_pv_pre_suspend(व्योम);
+व्योम xen_pv_post_suspend(पूर्णांक suspend_cancelled);
+#अन्यथा
+अटल अंतरभूत व्योम xen_pv_pre_suspend(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम xen_pv_post_suspend(पूर्णांक suspend_cancelled) अणुपूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_XEN_PVHVM
-void xen_hvm_post_suspend(int suspend_cancelled);
-#else
-static inline void xen_hvm_post_suspend(int suspend_cancelled) {}
-#endif
+#अगर_घोषित CONFIG_XEN_PVHVM
+व्योम xen_hvm_post_suspend(पूर्णांक suspend_cancelled);
+#अन्यथा
+अटल अंतरभूत व्योम xen_hvm_post_suspend(पूर्णांक suspend_cancelled) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* XEN_OPS_H */
+#पूर्ण_अगर /* XEN_OPS_H */

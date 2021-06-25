@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * nl802154.h
  *
  * Copyright (C) 2007, 2008, 2009 Siemens AG
  */
 
-#ifndef NL802154_H
-#define NL802154_H
+#अगर_अघोषित NL802154_H
+#घोषणा NL802154_H
 
-#define IEEE802154_NL_NAME "802.15.4 MAC"
-#define IEEE802154_MCAST_COORD_NAME "coordinator"
-#define IEEE802154_MCAST_BEACON_NAME "beacon"
+#घोषणा IEEE802154_NL_NAME "802.15.4 MAC"
+#घोषणा IEEE802154_MCAST_COORD_NAME "coordinator"
+#घोषणा IEEE802154_MCAST_BEACON_NAME "beacon"
 
-enum {
+क्रमागत अणु
 	__IEEE802154_ATTR_INVALID,
 
 	IEEE802154_ATTR_DEV_NAME,
@@ -86,17 +87,17 @@ enum {
 	IEEE802154_ATTR_PAD,
 
 	__IEEE802154_ATTR_MAX,
-};
+पूर्ण;
 
-#define IEEE802154_ATTR_MAX (__IEEE802154_ATTR_MAX - 1)
+#घोषणा IEEE802154_ATTR_MAX (__IEEE802154_ATTR_MAX - 1)
 
-extern const struct nla_policy ieee802154_policy[];
+बाह्य स्थिर काष्ठा nla_policy ieee802154_policy[];
 
 /* commands */
 /* REQ should be responded with CONF
  * and INDIC with RESP
  */
-enum {
+क्रमागत अणु
 	__IEEE802154_COMMAND_INVALID,
 
 	IEEE802154_ASSOCIATE_REQ,
@@ -155,17 +156,17 @@ enum {
 	IEEE802154_LLSEC_DEL_SECLEVEL,
 
 	__IEEE802154_CMD_MAX,
-};
+पूर्ण;
 
-#define IEEE802154_CMD_MAX (__IEEE802154_CMD_MAX - 1)
+#घोषणा IEEE802154_CMD_MAX (__IEEE802154_CMD_MAX - 1)
 
-enum {
+क्रमागत अणु
 	__IEEE802154_DEV_INVALID = -1,
 
 	IEEE802154_DEV_WPAN,
 	IEEE802154_DEV_MONITOR,
 
 	__IEEE802154_DEV_MAX,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

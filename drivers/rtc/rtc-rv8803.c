@@ -1,637 +1,638 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * RTC driver for the Micro Crystal RV8803
+ * RTC driver क्रम the Micro Crystal RV8803
  *
  * Copyright (C) 2015 Micro Crystal SA
  * Alexandre Belloni <alexandre.belloni@bootlin.com>
  *
  */
 
-#include <linux/bcd.h>
-#include <linux/bitops.h>
-#include <linux/log2.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/rtc.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/rtc.h>
 
-#define RV8803_I2C_TRY_COUNT		4
+#घोषणा RV8803_I2C_TRY_COUNT		4
 
-#define RV8803_SEC			0x00
-#define RV8803_MIN			0x01
-#define RV8803_HOUR			0x02
-#define RV8803_WEEK			0x03
-#define RV8803_DAY			0x04
-#define RV8803_MONTH			0x05
-#define RV8803_YEAR			0x06
-#define RV8803_RAM			0x07
-#define RV8803_ALARM_MIN		0x08
-#define RV8803_ALARM_HOUR		0x09
-#define RV8803_ALARM_WEEK_OR_DAY	0x0A
-#define RV8803_EXT			0x0D
-#define RV8803_FLAG			0x0E
-#define RV8803_CTRL			0x0F
+#घोषणा RV8803_SEC			0x00
+#घोषणा RV8803_MIN			0x01
+#घोषणा RV8803_HOUR			0x02
+#घोषणा RV8803_WEEK			0x03
+#घोषणा RV8803_DAY			0x04
+#घोषणा RV8803_MONTH			0x05
+#घोषणा RV8803_YEAR			0x06
+#घोषणा RV8803_RAM			0x07
+#घोषणा RV8803_ALARM_MIN		0x08
+#घोषणा RV8803_ALARM_HOUR		0x09
+#घोषणा RV8803_ALARM_WEEK_OR_DAY	0x0A
+#घोषणा RV8803_EXT			0x0D
+#घोषणा RV8803_FLAG			0x0E
+#घोषणा RV8803_CTRL			0x0F
 
-#define RV8803_EXT_WADA			BIT(6)
+#घोषणा RV8803_EXT_WADA			BIT(6)
 
-#define RV8803_FLAG_V1F			BIT(0)
-#define RV8803_FLAG_V2F			BIT(1)
-#define RV8803_FLAG_AF			BIT(3)
-#define RV8803_FLAG_TF			BIT(4)
-#define RV8803_FLAG_UF			BIT(5)
+#घोषणा RV8803_FLAG_V1F			BIT(0)
+#घोषणा RV8803_FLAG_V2F			BIT(1)
+#घोषणा RV8803_FLAG_AF			BIT(3)
+#घोषणा RV8803_FLAG_TF			BIT(4)
+#घोषणा RV8803_FLAG_UF			BIT(5)
 
-#define RV8803_CTRL_RESET		BIT(0)
+#घोषणा RV8803_CTRL_RESET		BIT(0)
 
-#define RV8803_CTRL_EIE			BIT(2)
-#define RV8803_CTRL_AIE			BIT(3)
-#define RV8803_CTRL_TIE			BIT(4)
-#define RV8803_CTRL_UIE			BIT(5)
+#घोषणा RV8803_CTRL_EIE			BIT(2)
+#घोषणा RV8803_CTRL_AIE			BIT(3)
+#घोषणा RV8803_CTRL_TIE			BIT(4)
+#घोषणा RV8803_CTRL_UIE			BIT(5)
 
-#define RX8900_BACKUP_CTRL		0x18
-#define RX8900_FLAG_SWOFF		BIT(2)
-#define RX8900_FLAG_VDETOFF		BIT(3)
+#घोषणा RX8900_BACKUP_CTRL		0x18
+#घोषणा RX8900_FLAG_SWOFF		BIT(2)
+#घोषणा RX8900_FLAG_VDETOFF		BIT(3)
 
-enum rv8803_type {
+क्रमागत rv8803_type अणु
 	rv_8803,
 	rx_8900
-};
+पूर्ण;
 
-struct rv8803_data {
-	struct i2c_client *client;
-	struct rtc_device *rtc;
-	struct mutex flags_lock;
+काष्ठा rv8803_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा rtc_device *rtc;
+	काष्ठा mutex flags_lock;
 	u8 ctrl;
-	enum rv8803_type type;
-};
+	क्रमागत rv8803_type type;
+पूर्ण;
 
-static int rv8803_read_reg(const struct i2c_client *client, u8 reg)
-{
-	int try = RV8803_I2C_TRY_COUNT;
+अटल पूर्णांक rv8803_पढ़ो_reg(स्थिर काष्ठा i2c_client *client, u8 reg)
+अणु
+	पूर्णांक try = RV8803_I2C_TRY_COUNT;
 	s32 ret;
 
 	/*
-	 * There is a 61µs window during which the RTC does not acknowledge I2C
-	 * transfers. In that case, ensure that there are multiple attempts.
+	 * There is a 61तगs winकरोw during which the RTC करोes not acknowledge I2C
+	 * transfers. In that हाल, ensure that there are multiple attempts.
 	 */
-	do
-		ret = i2c_smbus_read_byte_data(client, reg);
-	while ((ret == -ENXIO || ret == -EIO) && --try);
-	if (ret < 0)
+	करो
+		ret = i2c_smbus_पढ़ो_byte_data(client, reg);
+	जबतक ((ret == -ENXIO || ret == -EIO) && --try);
+	अगर (ret < 0)
 		dev_err(&client->dev, "Unable to read register 0x%02x\n", reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rv8803_read_regs(const struct i2c_client *client,
+अटल पूर्णांक rv8803_पढ़ो_regs(स्थिर काष्ठा i2c_client *client,
 			    u8 reg, u8 count, u8 *values)
-{
-	int try = RV8803_I2C_TRY_COUNT;
+अणु
+	पूर्णांक try = RV8803_I2C_TRY_COUNT;
 	s32 ret;
 
-	do
-		ret = i2c_smbus_read_i2c_block_data(client, reg, count, values);
-	while ((ret == -ENXIO || ret == -EIO) && --try);
-	if (ret != count) {
+	करो
+		ret = i2c_smbus_पढ़ो_i2c_block_data(client, reg, count, values);
+	जबतक ((ret == -ENXIO || ret == -EIO) && --try);
+	अगर (ret != count) अणु
 		dev_err(&client->dev,
 			"Unable to read registers 0x%02x..0x%02x\n",
 			reg, reg + count - 1);
-		return ret < 0 ? ret : -EIO;
-	}
+		वापस ret < 0 ? ret : -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rv8803_write_reg(const struct i2c_client *client, u8 reg, u8 value)
-{
-	int try = RV8803_I2C_TRY_COUNT;
+अटल पूर्णांक rv8803_ग_लिखो_reg(स्थिर काष्ठा i2c_client *client, u8 reg, u8 value)
+अणु
+	पूर्णांक try = RV8803_I2C_TRY_COUNT;
 	s32 ret;
 
-	do
-		ret = i2c_smbus_write_byte_data(client, reg, value);
-	while ((ret == -ENXIO || ret == -EIO) && --try);
-	if (ret)
+	करो
+		ret = i2c_smbus_ग_लिखो_byte_data(client, reg, value);
+	जबतक ((ret == -ENXIO || ret == -EIO) && --try);
+	अगर (ret)
 		dev_err(&client->dev, "Unable to write register 0x%02x\n", reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rv8803_write_regs(const struct i2c_client *client,
-			     u8 reg, u8 count, const u8 *values)
-{
-	int try = RV8803_I2C_TRY_COUNT;
+अटल पूर्णांक rv8803_ग_लिखो_regs(स्थिर काष्ठा i2c_client *client,
+			     u8 reg, u8 count, स्थिर u8 *values)
+अणु
+	पूर्णांक try = RV8803_I2C_TRY_COUNT;
 	s32 ret;
 
-	do
-		ret = i2c_smbus_write_i2c_block_data(client, reg, count,
+	करो
+		ret = i2c_smbus_ग_लिखो_i2c_block_data(client, reg, count,
 						     values);
-	while ((ret == -ENXIO || ret == -EIO) && --try);
-	if (ret)
+	जबतक ((ret == -ENXIO || ret == -EIO) && --try);
+	अगर (ret)
 		dev_err(&client->dev,
 			"Unable to write registers 0x%02x..0x%02x\n",
 			reg, reg + count - 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t rv8803_handle_irq(int irq, void *dev_id)
-{
-	struct i2c_client *client = dev_id;
-	struct rv8803_data *rv8803 = i2c_get_clientdata(client);
-	unsigned long events = 0;
-	int flags;
+अटल irqवापस_t rv8803_handle_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा i2c_client *client = dev_id;
+	काष्ठा rv8803_data *rv8803 = i2c_get_clientdata(client);
+	अचिन्हित दीर्घ events = 0;
+	पूर्णांक flags;
 
 	mutex_lock(&rv8803->flags_lock);
 
-	flags = rv8803_read_reg(client, RV8803_FLAG);
-	if (flags <= 0) {
+	flags = rv8803_पढ़ो_reg(client, RV8803_FLAG);
+	अगर (flags <= 0) अणु
 		mutex_unlock(&rv8803->flags_lock);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (flags & RV8803_FLAG_V1F)
+	अगर (flags & RV8803_FLAG_V1F)
 		dev_warn(&client->dev, "Voltage low, temperature compensation stopped.\n");
 
-	if (flags & RV8803_FLAG_V2F)
+	अगर (flags & RV8803_FLAG_V2F)
 		dev_warn(&client->dev, "Voltage low, data loss detected.\n");
 
-	if (flags & RV8803_FLAG_TF) {
+	अगर (flags & RV8803_FLAG_TF) अणु
 		flags &= ~RV8803_FLAG_TF;
 		rv8803->ctrl &= ~RV8803_CTRL_TIE;
 		events |= RTC_PF;
-	}
+	पूर्ण
 
-	if (flags & RV8803_FLAG_AF) {
+	अगर (flags & RV8803_FLAG_AF) अणु
 		flags &= ~RV8803_FLAG_AF;
 		rv8803->ctrl &= ~RV8803_CTRL_AIE;
 		events |= RTC_AF;
-	}
+	पूर्ण
 
-	if (flags & RV8803_FLAG_UF) {
+	अगर (flags & RV8803_FLAG_UF) अणु
 		flags &= ~RV8803_FLAG_UF;
 		rv8803->ctrl &= ~RV8803_CTRL_UIE;
 		events |= RTC_UF;
-	}
+	पूर्ण
 
-	if (events) {
+	अगर (events) अणु
 		rtc_update_irq(rv8803->rtc, 1, events);
-		rv8803_write_reg(client, RV8803_FLAG, flags);
-		rv8803_write_reg(rv8803->client, RV8803_CTRL, rv8803->ctrl);
-	}
+		rv8803_ग_लिखो_reg(client, RV8803_FLAG, flags);
+		rv8803_ग_लिखो_reg(rv8803->client, RV8803_CTRL, rv8803->ctrl);
+	पूर्ण
 
 	mutex_unlock(&rv8803->flags_lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rv8803_get_time(struct device *dev, struct rtc_time *tm)
-{
-	struct rv8803_data *rv8803 = dev_get_drvdata(dev);
+अटल पूर्णांक rv8803_get_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा rv8803_data *rv8803 = dev_get_drvdata(dev);
 	u8 date1[7];
 	u8 date2[7];
 	u8 *date = date1;
-	int ret, flags;
+	पूर्णांक ret, flags;
 
-	flags = rv8803_read_reg(rv8803->client, RV8803_FLAG);
-	if (flags < 0)
-		return flags;
+	flags = rv8803_पढ़ो_reg(rv8803->client, RV8803_FLAG);
+	अगर (flags < 0)
+		वापस flags;
 
-	if (flags & RV8803_FLAG_V2F) {
+	अगर (flags & RV8803_FLAG_V2F) अणु
 		dev_warn(dev, "Voltage low, data is invalid.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = rv8803_read_regs(rv8803->client, RV8803_SEC, 7, date);
-	if (ret)
-		return ret;
+	ret = rv8803_पढ़ो_regs(rv8803->client, RV8803_SEC, 7, date);
+	अगर (ret)
+		वापस ret;
 
-	if ((date1[RV8803_SEC] & 0x7f) == bin2bcd(59)) {
-		ret = rv8803_read_regs(rv8803->client, RV8803_SEC, 7, date2);
-		if (ret)
-			return ret;
+	अगर ((date1[RV8803_SEC] & 0x7f) == bin2bcd(59)) अणु
+		ret = rv8803_पढ़ो_regs(rv8803->client, RV8803_SEC, 7, date2);
+		अगर (ret)
+			वापस ret;
 
-		if ((date2[RV8803_SEC] & 0x7f) != bin2bcd(59))
+		अगर ((date2[RV8803_SEC] & 0x7f) != bin2bcd(59))
 			date = date2;
-	}
+	पूर्ण
 
-	tm->tm_sec  = bcd2bin(date[RV8803_SEC] & 0x7f);
-	tm->tm_min  = bcd2bin(date[RV8803_MIN] & 0x7f);
-	tm->tm_hour = bcd2bin(date[RV8803_HOUR] & 0x3f);
-	tm->tm_wday = ilog2(date[RV8803_WEEK] & 0x7f);
-	tm->tm_mday = bcd2bin(date[RV8803_DAY] & 0x3f);
-	tm->tm_mon  = bcd2bin(date[RV8803_MONTH] & 0x1f) - 1;
-	tm->tm_year = bcd2bin(date[RV8803_YEAR]) + 100;
+	पंचांग->पंचांग_sec  = bcd2bin(date[RV8803_SEC] & 0x7f);
+	पंचांग->पंचांग_min  = bcd2bin(date[RV8803_MIN] & 0x7f);
+	पंचांग->पंचांग_hour = bcd2bin(date[RV8803_HOUR] & 0x3f);
+	पंचांग->पंचांग_wday = ilog2(date[RV8803_WEEK] & 0x7f);
+	पंचांग->पंचांग_mday = bcd2bin(date[RV8803_DAY] & 0x3f);
+	पंचांग->पंचांग_mon  = bcd2bin(date[RV8803_MONTH] & 0x1f) - 1;
+	पंचांग->पंचांग_year = bcd2bin(date[RV8803_YEAR]) + 100;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rv8803_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct rv8803_data *rv8803 = dev_get_drvdata(dev);
+अटल पूर्णांक rv8803_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा rv8803_data *rv8803 = dev_get_drvdata(dev);
 	u8 date[7];
-	int ctrl, flags, ret;
+	पूर्णांक ctrl, flags, ret;
 
-	ctrl = rv8803_read_reg(rv8803->client, RV8803_CTRL);
-	if (ctrl < 0)
-		return ctrl;
+	ctrl = rv8803_पढ़ो_reg(rv8803->client, RV8803_CTRL);
+	अगर (ctrl < 0)
+		वापस ctrl;
 
-	/* Stop the clock */
-	ret = rv8803_write_reg(rv8803->client, RV8803_CTRL,
+	/* Stop the घड़ी */
+	ret = rv8803_ग_लिखो_reg(rv8803->client, RV8803_CTRL,
 			       ctrl | RV8803_CTRL_RESET);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	date[RV8803_SEC]   = bin2bcd(tm->tm_sec);
-	date[RV8803_MIN]   = bin2bcd(tm->tm_min);
-	date[RV8803_HOUR]  = bin2bcd(tm->tm_hour);
-	date[RV8803_WEEK]  = 1 << (tm->tm_wday);
-	date[RV8803_DAY]   = bin2bcd(tm->tm_mday);
-	date[RV8803_MONTH] = bin2bcd(tm->tm_mon + 1);
-	date[RV8803_YEAR]  = bin2bcd(tm->tm_year - 100);
+	date[RV8803_SEC]   = bin2bcd(पंचांग->पंचांग_sec);
+	date[RV8803_MIN]   = bin2bcd(पंचांग->पंचांग_min);
+	date[RV8803_HOUR]  = bin2bcd(पंचांग->पंचांग_hour);
+	date[RV8803_WEEK]  = 1 << (पंचांग->पंचांग_wday);
+	date[RV8803_DAY]   = bin2bcd(पंचांग->पंचांग_mday);
+	date[RV8803_MONTH] = bin2bcd(पंचांग->पंचांग_mon + 1);
+	date[RV8803_YEAR]  = bin2bcd(पंचांग->पंचांग_year - 100);
 
-	ret = rv8803_write_regs(rv8803->client, RV8803_SEC, 7, date);
-	if (ret)
-		return ret;
+	ret = rv8803_ग_लिखो_regs(rv8803->client, RV8803_SEC, 7, date);
+	अगर (ret)
+		वापस ret;
 
-	/* Restart the clock */
-	ret = rv8803_write_reg(rv8803->client, RV8803_CTRL,
+	/* Restart the घड़ी */
+	ret = rv8803_ग_लिखो_reg(rv8803->client, RV8803_CTRL,
 			       ctrl & ~RV8803_CTRL_RESET);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&rv8803->flags_lock);
 
-	flags = rv8803_read_reg(rv8803->client, RV8803_FLAG);
-	if (flags < 0) {
+	flags = rv8803_पढ़ो_reg(rv8803->client, RV8803_FLAG);
+	अगर (flags < 0) अणु
 		mutex_unlock(&rv8803->flags_lock);
-		return flags;
-	}
+		वापस flags;
+	पूर्ण
 
-	ret = rv8803_write_reg(rv8803->client, RV8803_FLAG,
+	ret = rv8803_ग_लिखो_reg(rv8803->client, RV8803_FLAG,
 			       flags & ~(RV8803_FLAG_V1F | RV8803_FLAG_V2F));
 
 	mutex_unlock(&rv8803->flags_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rv8803_get_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct rv8803_data *rv8803 = dev_get_drvdata(dev);
-	struct i2c_client *client = rv8803->client;
+अटल पूर्णांक rv8803_get_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा rv8803_data *rv8803 = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = rv8803->client;
 	u8 alarmvals[3];
-	int flags, ret;
+	पूर्णांक flags, ret;
 
-	ret = rv8803_read_regs(client, RV8803_ALARM_MIN, 3, alarmvals);
-	if (ret)
-		return ret;
+	ret = rv8803_पढ़ो_regs(client, RV8803_ALARM_MIN, 3, alarmvals);
+	अगर (ret)
+		वापस ret;
 
-	flags = rv8803_read_reg(client, RV8803_FLAG);
-	if (flags < 0)
-		return flags;
+	flags = rv8803_पढ़ो_reg(client, RV8803_FLAG);
+	अगर (flags < 0)
+		वापस flags;
 
-	alrm->time.tm_sec  = 0;
-	alrm->time.tm_min  = bcd2bin(alarmvals[0] & 0x7f);
-	alrm->time.tm_hour = bcd2bin(alarmvals[1] & 0x3f);
-	alrm->time.tm_mday = bcd2bin(alarmvals[2] & 0x3f);
+	alrm->समय.पंचांग_sec  = 0;
+	alrm->समय.पंचांग_min  = bcd2bin(alarmvals[0] & 0x7f);
+	alrm->समय.पंचांग_hour = bcd2bin(alarmvals[1] & 0x3f);
+	alrm->समय.पंचांग_mday = bcd2bin(alarmvals[2] & 0x3f);
 
 	alrm->enabled = !!(rv8803->ctrl & RV8803_CTRL_AIE);
 	alrm->pending = (flags & RV8803_FLAG_AF) && alrm->enabled;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rv8803_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rv8803_data *rv8803 = dev_get_drvdata(dev);
+अटल पूर्णांक rv8803_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rv8803_data *rv8803 = dev_get_drvdata(dev);
 	u8 alarmvals[3];
 	u8 ctrl[2];
-	int ret, err;
+	पूर्णांक ret, err;
 
 	/* The alarm has no seconds, round up to nearest minute */
-	if (alrm->time.tm_sec) {
-		time64_t alarm_time = rtc_tm_to_time64(&alrm->time);
+	अगर (alrm->समय.पंचांग_sec) अणु
+		समय64_t alarm_समय = rtc_पंचांग_to_समय64(&alrm->समय);
 
-		alarm_time += 60 - alrm->time.tm_sec;
-		rtc_time64_to_tm(alarm_time, &alrm->time);
-	}
+		alarm_समय += 60 - alrm->समय.पंचांग_sec;
+		rtc_समय64_to_पंचांग(alarm_समय, &alrm->समय);
+	पूर्ण
 
 	mutex_lock(&rv8803->flags_lock);
 
-	ret = rv8803_read_regs(client, RV8803_FLAG, 2, ctrl);
-	if (ret) {
+	ret = rv8803_पढ़ो_regs(client, RV8803_FLAG, 2, ctrl);
+	अगर (ret) अणु
 		mutex_unlock(&rv8803->flags_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	alarmvals[0] = bin2bcd(alrm->time.tm_min);
-	alarmvals[1] = bin2bcd(alrm->time.tm_hour);
-	alarmvals[2] = bin2bcd(alrm->time.tm_mday);
+	alarmvals[0] = bin2bcd(alrm->समय.पंचांग_min);
+	alarmvals[1] = bin2bcd(alrm->समय.पंचांग_hour);
+	alarmvals[2] = bin2bcd(alrm->समय.पंचांग_mday);
 
-	if (rv8803->ctrl & (RV8803_CTRL_AIE | RV8803_CTRL_UIE)) {
+	अगर (rv8803->ctrl & (RV8803_CTRL_AIE | RV8803_CTRL_UIE)) अणु
 		rv8803->ctrl &= ~(RV8803_CTRL_AIE | RV8803_CTRL_UIE);
-		err = rv8803_write_reg(rv8803->client, RV8803_CTRL,
+		err = rv8803_ग_लिखो_reg(rv8803->client, RV8803_CTRL,
 				       rv8803->ctrl);
-		if (err) {
+		अगर (err) अणु
 			mutex_unlock(&rv8803->flags_lock);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	ctrl[1] &= ~RV8803_FLAG_AF;
-	err = rv8803_write_reg(rv8803->client, RV8803_FLAG, ctrl[1]);
+	err = rv8803_ग_लिखो_reg(rv8803->client, RV8803_FLAG, ctrl[1]);
 	mutex_unlock(&rv8803->flags_lock);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = rv8803_write_regs(rv8803->client, RV8803_ALARM_MIN, 3, alarmvals);
-	if (err)
-		return err;
+	err = rv8803_ग_लिखो_regs(rv8803->client, RV8803_ALARM_MIN, 3, alarmvals);
+	अगर (err)
+		वापस err;
 
-	if (alrm->enabled) {
-		if (rv8803->rtc->uie_rtctimer.enabled)
+	अगर (alrm->enabled) अणु
+		अगर (rv8803->rtc->uie_rtस_समयr.enabled)
 			rv8803->ctrl |= RV8803_CTRL_UIE;
-		if (rv8803->rtc->aie_timer.enabled)
+		अगर (rv8803->rtc->aie_समयr.enabled)
 			rv8803->ctrl |= RV8803_CTRL_AIE;
 
-		err = rv8803_write_reg(rv8803->client, RV8803_CTRL,
+		err = rv8803_ग_लिखो_reg(rv8803->client, RV8803_CTRL,
 				       rv8803->ctrl);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rv8803_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rv8803_data *rv8803 = dev_get_drvdata(dev);
-	int ctrl, flags, err;
+अटल पूर्णांक rv8803_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rv8803_data *rv8803 = dev_get_drvdata(dev);
+	पूर्णांक ctrl, flags, err;
 
 	ctrl = rv8803->ctrl;
 
-	if (enabled) {
-		if (rv8803->rtc->uie_rtctimer.enabled)
+	अगर (enabled) अणु
+		अगर (rv8803->rtc->uie_rtस_समयr.enabled)
 			ctrl |= RV8803_CTRL_UIE;
-		if (rv8803->rtc->aie_timer.enabled)
+		अगर (rv8803->rtc->aie_समयr.enabled)
 			ctrl |= RV8803_CTRL_AIE;
-	} else {
-		if (!rv8803->rtc->uie_rtctimer.enabled)
+	पूर्ण अन्यथा अणु
+		अगर (!rv8803->rtc->uie_rtस_समयr.enabled)
 			ctrl &= ~RV8803_CTRL_UIE;
-		if (!rv8803->rtc->aie_timer.enabled)
+		अगर (!rv8803->rtc->aie_समयr.enabled)
 			ctrl &= ~RV8803_CTRL_AIE;
-	}
+	पूर्ण
 
 	mutex_lock(&rv8803->flags_lock);
-	flags = rv8803_read_reg(client, RV8803_FLAG);
-	if (flags < 0) {
+	flags = rv8803_पढ़ो_reg(client, RV8803_FLAG);
+	अगर (flags < 0) अणु
 		mutex_unlock(&rv8803->flags_lock);
-		return flags;
-	}
+		वापस flags;
+	पूर्ण
 	flags &= ~(RV8803_FLAG_AF | RV8803_FLAG_UF);
-	err = rv8803_write_reg(client, RV8803_FLAG, flags);
+	err = rv8803_ग_लिखो_reg(client, RV8803_FLAG, flags);
 	mutex_unlock(&rv8803->flags_lock);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (ctrl != rv8803->ctrl) {
+	अगर (ctrl != rv8803->ctrl) अणु
 		rv8803->ctrl = ctrl;
-		err = rv8803_write_reg(client, RV8803_CTRL, rv8803->ctrl);
-		if (err)
-			return err;
-	}
+		err = rv8803_ग_लिखो_reg(client, RV8803_CTRL, rv8803->ctrl);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rv8803_ioctl(struct device *dev, unsigned int cmd, unsigned long arg)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rv8803_data *rv8803 = dev_get_drvdata(dev);
-	unsigned int vl = 0;
-	int flags, ret = 0;
+अटल पूर्णांक rv8803_ioctl(काष्ठा device *dev, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rv8803_data *rv8803 = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक vl = 0;
+	पूर्णांक flags, ret = 0;
 
-	switch (cmd) {
-	case RTC_VL_READ:
-		flags = rv8803_read_reg(client, RV8803_FLAG);
-		if (flags < 0)
-			return flags;
+	चयन (cmd) अणु
+	हाल RTC_VL_READ:
+		flags = rv8803_पढ़ो_reg(client, RV8803_FLAG);
+		अगर (flags < 0)
+			वापस flags;
 
-		if (flags & RV8803_FLAG_V1F) {
+		अगर (flags & RV8803_FLAG_V1F) अणु
 			dev_warn(&client->dev, "Voltage low, temperature compensation stopped.\n");
 			vl = RTC_VL_ACCURACY_LOW;
-		}
+		पूर्ण
 
-		if (flags & RV8803_FLAG_V2F)
+		अगर (flags & RV8803_FLAG_V2F)
 			vl |= RTC_VL_DATA_INVALID;
 
-		return put_user(vl, (unsigned int __user *)arg);
+		वापस put_user(vl, (अचिन्हित पूर्णांक __user *)arg);
 
-	case RTC_VL_CLR:
+	हाल RTC_VL_CLR:
 		mutex_lock(&rv8803->flags_lock);
-		flags = rv8803_read_reg(client, RV8803_FLAG);
-		if (flags < 0) {
+		flags = rv8803_पढ़ो_reg(client, RV8803_FLAG);
+		अगर (flags < 0) अणु
 			mutex_unlock(&rv8803->flags_lock);
-			return flags;
-		}
+			वापस flags;
+		पूर्ण
 
 		flags &= ~RV8803_FLAG_V1F;
-		ret = rv8803_write_reg(client, RV8803_FLAG, flags);
+		ret = rv8803_ग_लिखो_reg(client, RV8803_FLAG, flags);
 		mutex_unlock(&rv8803->flags_lock);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		return 0;
+		वापस 0;
 
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-static int rv8803_nvram_write(void *priv, unsigned int offset, void *val,
-			      size_t bytes)
-{
-	return rv8803_write_reg(priv, RV8803_RAM, *(u8 *)val);
-}
+अटल पूर्णांक rv8803_nvram_ग_लिखो(व्योम *priv, अचिन्हित पूर्णांक offset, व्योम *val,
+			      माप_प्रकार bytes)
+अणु
+	वापस rv8803_ग_लिखो_reg(priv, RV8803_RAM, *(u8 *)val);
+पूर्ण
 
-static int rv8803_nvram_read(void *priv, unsigned int offset,
-			     void *val, size_t bytes)
-{
-	int ret;
+अटल पूर्णांक rv8803_nvram_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक offset,
+			     व्योम *val, माप_प्रकार bytes)
+अणु
+	पूर्णांक ret;
 
-	ret = rv8803_read_reg(priv, RV8803_RAM);
-	if (ret < 0)
-		return ret;
+	ret = rv8803_पढ़ो_reg(priv, RV8803_RAM);
+	अगर (ret < 0)
+		वापस ret;
 
 	*(u8 *)val = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops rv8803_rtc_ops = {
-	.read_time = rv8803_get_time,
-	.set_time = rv8803_set_time,
+अटल स्थिर काष्ठा rtc_class_ops rv8803_rtc_ops = अणु
+	.पढ़ो_समय = rv8803_get_समय,
+	.set_समय = rv8803_set_समय,
 	.ioctl = rv8803_ioctl,
-	.read_alarm = rv8803_get_alarm,
+	.पढ़ो_alarm = rv8803_get_alarm,
 	.set_alarm = rv8803_set_alarm,
 	.alarm_irq_enable = rv8803_alarm_irq_enable,
-};
+पूर्ण;
 
-static int rx8900_trickle_charger_init(struct rv8803_data *rv8803)
-{
-	struct i2c_client *client = rv8803->client;
-	struct device_node *node = client->dev.of_node;
-	int err;
+अटल पूर्णांक rx8900_trickle_अक्षरger_init(काष्ठा rv8803_data *rv8803)
+अणु
+	काष्ठा i2c_client *client = rv8803->client;
+	काष्ठा device_node *node = client->dev.of_node;
+	पूर्णांक err;
 	u8 flags;
 
-	if (!node)
-		return 0;
+	अगर (!node)
+		वापस 0;
 
-	if (rv8803->type != rx_8900)
-		return 0;
+	अगर (rv8803->type != rx_8900)
+		वापस 0;
 
-	err = i2c_smbus_read_byte_data(rv8803->client, RX8900_BACKUP_CTRL);
-	if (err < 0)
-		return err;
+	err = i2c_smbus_पढ़ो_byte_data(rv8803->client, RX8900_BACKUP_CTRL);
+	अगर (err < 0)
+		वापस err;
 
 	flags = ~(RX8900_FLAG_VDETOFF | RX8900_FLAG_SWOFF) & (u8)err;
 
-	if (of_property_read_bool(node, "epson,vdet-disable"))
+	अगर (of_property_पढ़ो_bool(node, "epson,vdet-disable"))
 		flags |= RX8900_FLAG_VDETOFF;
 
-	if (of_property_read_bool(node, "trickle-diode-disable"))
+	अगर (of_property_पढ़ो_bool(node, "trickle-diode-disable"))
 		flags |= RX8900_FLAG_SWOFF;
 
-	return i2c_smbus_write_byte_data(rv8803->client, RX8900_BACKUP_CTRL,
+	वापस i2c_smbus_ग_लिखो_byte_data(rv8803->client, RX8900_BACKUP_CTRL,
 					 flags);
-}
+पूर्ण
 
-static int rv8803_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	struct i2c_adapter *adapter = client->adapter;
-	struct rv8803_data *rv8803;
-	int err, flags;
-	struct nvmem_config nvmem_cfg = {
+अटल पूर्णांक rv8803_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	काष्ठा rv8803_data *rv8803;
+	पूर्णांक err, flags;
+	काष्ठा nvmem_config nvmem_cfg = अणु
 		.name = "rv8803_nvram",
 		.word_size = 1,
 		.stride = 1,
 		.size = 1,
-		.reg_read = rv8803_nvram_read,
-		.reg_write = rv8803_nvram_write,
+		.reg_पढ़ो = rv8803_nvram_पढ़ो,
+		.reg_ग_लिखो = rv8803_nvram_ग_लिखो,
 		.priv = client,
-	};
+	पूर्ण;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA |
-				     I2C_FUNC_SMBUS_I2C_BLOCK)) {
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA |
+				     I2C_FUNC_SMBUS_I2C_BLOCK)) अणु
 		dev_err(&adapter->dev, "doesn't support I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_I2C_BLOCK\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	rv8803 = devm_kzalloc(&client->dev, sizeof(struct rv8803_data),
+	rv8803 = devm_kzalloc(&client->dev, माप(काष्ठा rv8803_data),
 			      GFP_KERNEL);
-	if (!rv8803)
-		return -ENOMEM;
+	अगर (!rv8803)
+		वापस -ENOMEM;
 
 	mutex_init(&rv8803->flags_lock);
 	rv8803->client = client;
-	if (client->dev.of_node)
-		rv8803->type = (enum rv8803_type)
+	अगर (client->dev.of_node)
+		rv8803->type = (क्रमागत rv8803_type)
 			of_device_get_match_data(&client->dev);
-	else
+	अन्यथा
 		rv8803->type = id->driver_data;
 	i2c_set_clientdata(client, rv8803);
 
-	flags = rv8803_read_reg(client, RV8803_FLAG);
-	if (flags < 0)
-		return flags;
+	flags = rv8803_पढ़ो_reg(client, RV8803_FLAG);
+	अगर (flags < 0)
+		वापस flags;
 
-	if (flags & RV8803_FLAG_V1F)
+	अगर (flags & RV8803_FLAG_V1F)
 		dev_warn(&client->dev, "Voltage low, temperature compensation stopped.\n");
 
-	if (flags & RV8803_FLAG_V2F)
+	अगर (flags & RV8803_FLAG_V2F)
 		dev_warn(&client->dev, "Voltage low, data loss detected.\n");
 
-	if (flags & RV8803_FLAG_AF)
+	अगर (flags & RV8803_FLAG_AF)
 		dev_warn(&client->dev, "An alarm maybe have been missed.\n");
 
 	rv8803->rtc = devm_rtc_allocate_device(&client->dev);
-	if (IS_ERR(rv8803->rtc))
-		return PTR_ERR(rv8803->rtc);
+	अगर (IS_ERR(rv8803->rtc))
+		वापस PTR_ERR(rv8803->rtc);
 
-	if (client->irq > 0) {
-		err = devm_request_threaded_irq(&client->dev, client->irq,
-						NULL, rv8803_handle_irq,
+	अगर (client->irq > 0) अणु
+		err = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+						शून्य, rv8803_handle_irq,
 						IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 						"rv8803", client);
-		if (err) {
+		अगर (err) अणु
 			dev_warn(&client->dev, "unable to request IRQ, alarms disabled\n");
 			client->irq = 0;
-		}
-	}
-	if (!client->irq)
+		पूर्ण
+	पूर्ण
+	अगर (!client->irq)
 		clear_bit(RTC_FEATURE_ALARM, rv8803->rtc->features);
 
-	err = rv8803_write_reg(rv8803->client, RV8803_EXT, RV8803_EXT_WADA);
-	if (err)
-		return err;
+	err = rv8803_ग_लिखो_reg(rv8803->client, RV8803_EXT, RV8803_EXT_WADA);
+	अगर (err)
+		वापस err;
 
-	err = rx8900_trickle_charger_init(rv8803);
-	if (err) {
+	err = rx8900_trickle_अक्षरger_init(rv8803);
+	अगर (err) अणु
 		dev_err(&client->dev, "failed to init charger\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	rv8803->rtc->ops = &rv8803_rtc_ops;
 	rv8803->rtc->range_min = RTC_TIMESTAMP_BEGIN_2000;
 	rv8803->rtc->range_max = RTC_TIMESTAMP_END_2099;
-	err = devm_rtc_register_device(rv8803->rtc);
-	if (err)
-		return err;
+	err = devm_rtc_रेजिस्टर_device(rv8803->rtc);
+	अगर (err)
+		वापस err;
 
-	devm_rtc_nvmem_register(rv8803->rtc, &nvmem_cfg);
+	devm_rtc_nvmem_रेजिस्टर(rv8803->rtc, &nvmem_cfg);
 
 	rv8803->rtc->max_user_freq = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id rv8803_id[] = {
-	{ "rv8803", rv_8803 },
-	{ "rx8803", rv_8803 },
-	{ "rx8900", rx_8900 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id rv8803_id[] = अणु
+	अणु "rv8803", rv_8803 पूर्ण,
+	अणु "rx8803", rv_8803 पूर्ण,
+	अणु "rx8900", rx_8900 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, rv8803_id);
 
-static const __maybe_unused struct of_device_id rv8803_of_match[] = {
-	{
+अटल स्थिर __maybe_unused काष्ठा of_device_id rv8803_of_match[] = अणु
+	अणु
 		.compatible = "microcrystal,rv8803",
-		.data = (void *)rv_8803
-	},
-	{
+		.data = (व्योम *)rv_8803
+	पूर्ण,
+	अणु
 		.compatible = "epson,rx8803",
-		.data = (void *)rv_8803
-	},
-	{
+		.data = (व्योम *)rv_8803
+	पूर्ण,
+	अणु
 		.compatible = "epson,rx8900",
-		.data = (void *)rx_8900
-	},
-	{ }
-};
+		.data = (व्योम *)rx_8900
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rv8803_of_match);
 
-static struct i2c_driver rv8803_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver rv8803_driver = अणु
+	.driver = अणु
 		.name = "rtc-rv8803",
 		.of_match_table = of_match_ptr(rv8803_of_match),
-	},
+	पूर्ण,
 	.probe		= rv8803_probe,
 	.id_table	= rv8803_id,
-};
+पूर्ण;
 module_i2c_driver(rv8803_driver);
 
 MODULE_AUTHOR("Alexandre Belloni <alexandre.belloni@bootlin.com>");

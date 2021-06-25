@@ -1,284 +1,285 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#include <drm/drm_print.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "gem/i915_gem_context.h"
+#समावेश "gem/i915_gem_context.h"
 
-#include "i915_drv.h"
+#समावेश "i915_drv.h"
 
-#include "intel_breadcrumbs.h"
-#include "intel_context.h"
-#include "intel_engine.h"
-#include "intel_engine_pm.h"
-#include "intel_engine_user.h"
-#include "intel_execlists_submission.h"
-#include "intel_gt.h"
-#include "intel_gt_requests.h"
-#include "intel_gt_pm.h"
-#include "intel_lrc_reg.h"
-#include "intel_reset.h"
-#include "intel_ring.h"
-#include "uc/intel_guc_submission.h"
+#समावेश "intel_breadcrumbs.h"
+#समावेश "intel_context.h"
+#समावेश "intel_engine.h"
+#समावेश "intel_engine_pm.h"
+#समावेश "intel_engine_user.h"
+#समावेश "intel_execlists_submission.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_gt_requests.h"
+#समावेश "intel_gt_pm.h"
+#समावेश "intel_lrc_reg.h"
+#समावेश "intel_reset.h"
+#समावेश "intel_ring.h"
+#समावेश "uc/intel_guc_submission.h"
 
-/* Haswell does have the CXT_SIZE register however it does not appear to be
- * valid. Now, docs explain in dwords what is in the context object. The full
- * size is 70720 bytes, however, the power context and execlist context will
- * never be saved (power context is stored elsewhere, and execlists don't work
- * on HSW) - so the final size, including the extra state required for the
+/* Haswell करोes have the CXT_SIZE रेजिस्टर however it करोes not appear to be
+ * valid. Now, करोcs explain in dwords what is in the context object. The full
+ * size is 70720 bytes, however, the घातer context and execlist context will
+ * never be saved (घातer context is stored अन्यथाwhere, and execlists करोn't work
+ * on HSW) - so the final size, including the extra state required क्रम the
  * Resource Streamer, is 66944 bytes, which rounds to 17 pages.
  */
-#define HSW_CXT_TOTAL_SIZE		(17 * PAGE_SIZE)
+#घोषणा HSW_CXT_TOTAL_SIZE		(17 * PAGE_SIZE)
 
-#define DEFAULT_LR_CONTEXT_RENDER_SIZE	(22 * PAGE_SIZE)
-#define GEN8_LR_CONTEXT_RENDER_SIZE	(20 * PAGE_SIZE)
-#define GEN9_LR_CONTEXT_RENDER_SIZE	(22 * PAGE_SIZE)
-#define GEN10_LR_CONTEXT_RENDER_SIZE	(18 * PAGE_SIZE)
-#define GEN11_LR_CONTEXT_RENDER_SIZE	(14 * PAGE_SIZE)
+#घोषणा DEFAULT_LR_CONTEXT_RENDER_SIZE	(22 * PAGE_SIZE)
+#घोषणा GEN8_LR_CONTEXT_RENDER_SIZE	(20 * PAGE_SIZE)
+#घोषणा GEN9_LR_CONTEXT_RENDER_SIZE	(22 * PAGE_SIZE)
+#घोषणा GEN10_LR_CONTEXT_RENDER_SIZE	(18 * PAGE_SIZE)
+#घोषणा GEN11_LR_CONTEXT_RENDER_SIZE	(14 * PAGE_SIZE)
 
-#define GEN8_LR_CONTEXT_OTHER_SIZE	( 2 * PAGE_SIZE)
+#घोषणा GEN8_LR_CONTEXT_OTHER_SIZE	( 2 * PAGE_SIZE)
 
-#define MAX_MMIO_BASES 3
-struct engine_info {
-	unsigned int hw_id;
+#घोषणा MAX_MMIO_BASES 3
+काष्ठा engine_info अणु
+	अचिन्हित पूर्णांक hw_id;
 	u8 class;
 	u8 instance;
 	/* mmio bases table *must* be sorted in reverse gen order */
-	struct engine_mmio_base {
+	काष्ठा engine_mmio_base अणु
 		u32 gen : 8;
 		u32 base : 24;
-	} mmio_bases[MAX_MMIO_BASES];
-};
+	पूर्ण mmio_bases[MAX_MMIO_BASES];
+पूर्ण;
 
-static const struct engine_info intel_engines[] = {
-	[RCS0] = {
+अटल स्थिर काष्ठा engine_info पूर्णांकel_engines[] = अणु
+	[RCS0] = अणु
 		.hw_id = RCS0_HW,
 		.class = RENDER_CLASS,
 		.instance = 0,
-		.mmio_bases = {
-			{ .gen = 1, .base = RENDER_RING_BASE }
-		},
-	},
-	[BCS0] = {
+		.mmio_bases = अणु
+			अणु .gen = 1, .base = RENDER_RING_BASE पूर्ण
+		पूर्ण,
+	पूर्ण,
+	[BCS0] = अणु
 		.hw_id = BCS0_HW,
 		.class = COPY_ENGINE_CLASS,
 		.instance = 0,
-		.mmio_bases = {
-			{ .gen = 6, .base = BLT_RING_BASE }
-		},
-	},
-	[VCS0] = {
+		.mmio_bases = अणु
+			अणु .gen = 6, .base = BLT_RING_BASE पूर्ण
+		पूर्ण,
+	पूर्ण,
+	[VCS0] = अणु
 		.hw_id = VCS0_HW,
 		.class = VIDEO_DECODE_CLASS,
 		.instance = 0,
-		.mmio_bases = {
-			{ .gen = 11, .base = GEN11_BSD_RING_BASE },
-			{ .gen = 6, .base = GEN6_BSD_RING_BASE },
-			{ .gen = 4, .base = BSD_RING_BASE }
-		},
-	},
-	[VCS1] = {
+		.mmio_bases = अणु
+			अणु .gen = 11, .base = GEN11_BSD_RING_BASE पूर्ण,
+			अणु .gen = 6, .base = GEN6_BSD_RING_BASE पूर्ण,
+			अणु .gen = 4, .base = BSD_RING_BASE पूर्ण
+		पूर्ण,
+	पूर्ण,
+	[VCS1] = अणु
 		.hw_id = VCS1_HW,
 		.class = VIDEO_DECODE_CLASS,
 		.instance = 1,
-		.mmio_bases = {
-			{ .gen = 11, .base = GEN11_BSD2_RING_BASE },
-			{ .gen = 8, .base = GEN8_BSD2_RING_BASE }
-		},
-	},
-	[VCS2] = {
+		.mmio_bases = अणु
+			अणु .gen = 11, .base = GEN11_BSD2_RING_BASE पूर्ण,
+			अणु .gen = 8, .base = GEN8_BSD2_RING_BASE पूर्ण
+		पूर्ण,
+	पूर्ण,
+	[VCS2] = अणु
 		.hw_id = VCS2_HW,
 		.class = VIDEO_DECODE_CLASS,
 		.instance = 2,
-		.mmio_bases = {
-			{ .gen = 11, .base = GEN11_BSD3_RING_BASE }
-		},
-	},
-	[VCS3] = {
+		.mmio_bases = अणु
+			अणु .gen = 11, .base = GEN11_BSD3_RING_BASE पूर्ण
+		पूर्ण,
+	पूर्ण,
+	[VCS3] = अणु
 		.hw_id = VCS3_HW,
 		.class = VIDEO_DECODE_CLASS,
 		.instance = 3,
-		.mmio_bases = {
-			{ .gen = 11, .base = GEN11_BSD4_RING_BASE }
-		},
-	},
-	[VECS0] = {
+		.mmio_bases = अणु
+			अणु .gen = 11, .base = GEN11_BSD4_RING_BASE पूर्ण
+		पूर्ण,
+	पूर्ण,
+	[VECS0] = अणु
 		.hw_id = VECS0_HW,
 		.class = VIDEO_ENHANCEMENT_CLASS,
 		.instance = 0,
-		.mmio_bases = {
-			{ .gen = 11, .base = GEN11_VEBOX_RING_BASE },
-			{ .gen = 7, .base = VEBOX_RING_BASE }
-		},
-	},
-	[VECS1] = {
+		.mmio_bases = अणु
+			अणु .gen = 11, .base = GEN11_VEBOX_RING_BASE पूर्ण,
+			अणु .gen = 7, .base = VEBOX_RING_BASE पूर्ण
+		पूर्ण,
+	पूर्ण,
+	[VECS1] = अणु
 		.hw_id = VECS1_HW,
 		.class = VIDEO_ENHANCEMENT_CLASS,
 		.instance = 1,
-		.mmio_bases = {
-			{ .gen = 11, .base = GEN11_VEBOX2_RING_BASE }
-		},
-	},
-};
+		.mmio_bases = अणु
+			अणु .gen = 11, .base = GEN11_VEBOX2_RING_BASE पूर्ण
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /**
- * intel_engine_context_size() - return the size of the context for an engine
+ * पूर्णांकel_engine_context_size() - वापस the size of the context क्रम an engine
  * @gt: the gt
  * @class: engine class
  *
- * Each engine class may require a different amount of space for a context
+ * Each engine class may require a dअगरferent amount of space क्रम a context
  * image.
  *
- * Return: size (in bytes) of an engine class specific context image
+ * Return: size (in bytes) of an engine class specअगरic context image
  *
  * Note: this size includes the HWSP, which is part of the context image
- * in LRC mode, but does not include the "shared data page" used with
- * GuC submission. The caller should account for this if using the GuC.
+ * in LRC mode, but करोes not include the "shared data page" used with
+ * GuC submission. The caller should account क्रम this अगर using the GuC.
  */
-u32 intel_engine_context_size(struct intel_gt *gt, u8 class)
-{
-	struct intel_uncore *uncore = gt->uncore;
+u32 पूर्णांकel_engine_context_size(काष्ठा पूर्णांकel_gt *gt, u8 class)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
 	u32 cxt_size;
 
 	BUILD_BUG_ON(I915_GTT_PAGE_SIZE != PAGE_SIZE);
 
-	switch (class) {
-	case RENDER_CLASS:
-		switch (INTEL_GEN(gt->i915)) {
-		default:
+	चयन (class) अणु
+	हाल RENDER_CLASS:
+		चयन (INTEL_GEN(gt->i915)) अणु
+		शेष:
 			MISSING_CASE(INTEL_GEN(gt->i915));
-			return DEFAULT_LR_CONTEXT_RENDER_SIZE;
-		case 12:
-		case 11:
-			return GEN11_LR_CONTEXT_RENDER_SIZE;
-		case 10:
-			return GEN10_LR_CONTEXT_RENDER_SIZE;
-		case 9:
-			return GEN9_LR_CONTEXT_RENDER_SIZE;
-		case 8:
-			return GEN8_LR_CONTEXT_RENDER_SIZE;
-		case 7:
-			if (IS_HASWELL(gt->i915))
-				return HSW_CXT_TOTAL_SIZE;
+			वापस DEFAULT_LR_CONTEXT_RENDER_SIZE;
+		हाल 12:
+		हाल 11:
+			वापस GEN11_LR_CONTEXT_RENDER_SIZE;
+		हाल 10:
+			वापस GEN10_LR_CONTEXT_RENDER_SIZE;
+		हाल 9:
+			वापस GEN9_LR_CONTEXT_RENDER_SIZE;
+		हाल 8:
+			वापस GEN8_LR_CONTEXT_RENDER_SIZE;
+		हाल 7:
+			अगर (IS_HASWELL(gt->i915))
+				वापस HSW_CXT_TOTAL_SIZE;
 
-			cxt_size = intel_uncore_read(uncore, GEN7_CXT_SIZE);
-			return round_up(GEN7_CXT_TOTAL_SIZE(cxt_size) * 64,
+			cxt_size = पूर्णांकel_uncore_पढ़ो(uncore, GEN7_CXT_SIZE);
+			वापस round_up(GEN7_CXT_TOTAL_SIZE(cxt_size) * 64,
 					PAGE_SIZE);
-		case 6:
-			cxt_size = intel_uncore_read(uncore, CXT_SIZE);
-			return round_up(GEN6_CXT_TOTAL_SIZE(cxt_size) * 64,
+		हाल 6:
+			cxt_size = पूर्णांकel_uncore_पढ़ो(uncore, CXT_SIZE);
+			वापस round_up(GEN6_CXT_TOTAL_SIZE(cxt_size) * 64,
 					PAGE_SIZE);
-		case 5:
-		case 4:
+		हाल 5:
+		हाल 4:
 			/*
 			 * There is a discrepancy here between the size reported
-			 * by the register and the size of the context layout
-			 * in the docs. Both are described as authorative!
+			 * by the रेजिस्टर and the size of the context layout
+			 * in the करोcs. Both are described as authorative!
 			 *
 			 * The discrepancy is on the order of a few cachelines,
 			 * but the total is under one page (4k), which is our
 			 * minimum allocation anyway so it should all come
 			 * out in the wash.
 			 */
-			cxt_size = intel_uncore_read(uncore, CXT_SIZE) + 1;
+			cxt_size = पूर्णांकel_uncore_पढ़ो(uncore, CXT_SIZE) + 1;
 			drm_dbg(&gt->i915->drm,
 				"gen%d CXT_SIZE = %d bytes [0x%08x]\n",
 				INTEL_GEN(gt->i915), cxt_size * 64,
 				cxt_size - 1);
-			return round_up(cxt_size * 64, PAGE_SIZE);
-		case 3:
-		case 2:
-		/* For the special day when i810 gets merged. */
-		case 1:
-			return 0;
-		}
-		break;
-	default:
+			वापस round_up(cxt_size * 64, PAGE_SIZE);
+		हाल 3:
+		हाल 2:
+		/* For the special day when i810 माला_लो merged. */
+		हाल 1:
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	शेष:
 		MISSING_CASE(class);
 		fallthrough;
-	case VIDEO_DECODE_CLASS:
-	case VIDEO_ENHANCEMENT_CLASS:
-	case COPY_ENGINE_CLASS:
-		if (INTEL_GEN(gt->i915) < 8)
-			return 0;
-		return GEN8_LR_CONTEXT_OTHER_SIZE;
-	}
-}
+	हाल VIDEO_DECODE_CLASS:
+	हाल VIDEO_ENHANCEMENT_CLASS:
+	हाल COPY_ENGINE_CLASS:
+		अगर (INTEL_GEN(gt->i915) < 8)
+			वापस 0;
+		वापस GEN8_LR_CONTEXT_OTHER_SIZE;
+	पूर्ण
+पूर्ण
 
-static u32 __engine_mmio_base(struct drm_i915_private *i915,
-			      const struct engine_mmio_base *bases)
-{
-	int i;
+अटल u32 __engine_mmio_base(काष्ठा drm_i915_निजी *i915,
+			      स्थिर काष्ठा engine_mmio_base *bases)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_MMIO_BASES; i++)
-		if (INTEL_GEN(i915) >= bases[i].gen)
-			break;
+	क्रम (i = 0; i < MAX_MMIO_BASES; i++)
+		अगर (INTEL_GEN(i915) >= bases[i].gen)
+			अवरोध;
 
 	GEM_BUG_ON(i == MAX_MMIO_BASES);
 	GEM_BUG_ON(!bases[i].base);
 
-	return bases[i].base;
-}
+	वापस bases[i].base;
+पूर्ण
 
-static void __sprint_engine_name(struct intel_engine_cs *engine)
-{
+अटल व्योम __sprपूर्णांक_engine_name(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	/*
-	 * Before we know what the uABI name for this engine will be,
+	 * Beक्रमe we know what the uABI name क्रम this engine will be,
 	 * we still would like to keep track of this engine in the debug logs.
 	 * We throw in a ' here as a reminder that this isn't its final name.
 	 */
-	GEM_WARN_ON(snprintf(engine->name, sizeof(engine->name), "%s'%u",
-			     intel_engine_class_repr(engine->class),
-			     engine->instance) >= sizeof(engine->name));
-}
+	GEM_WARN_ON(snम_लिखो(engine->name, माप(engine->name), "%s'%u",
+			     पूर्णांकel_engine_class_repr(engine->class),
+			     engine->instance) >= माप(engine->name));
+पूर्ण
 
-void intel_engine_set_hwsp_writemask(struct intel_engine_cs *engine, u32 mask)
-{
+व्योम पूर्णांकel_engine_set_hwsp_ग_लिखोmask(काष्ठा पूर्णांकel_engine_cs *engine, u32 mask)
+अणु
 	/*
 	 * Though they added more rings on g4x/ilk, they did not add
 	 * per-engine HWSTAM until gen6.
 	 */
-	if (INTEL_GEN(engine->i915) < 6 && engine->class != RENDER_CLASS)
-		return;
+	अगर (INTEL_GEN(engine->i915) < 6 && engine->class != RENDER_CLASS)
+		वापस;
 
-	if (INTEL_GEN(engine->i915) >= 3)
+	अगर (INTEL_GEN(engine->i915) >= 3)
 		ENGINE_WRITE(engine, RING_HWSTAM, mask);
-	else
+	अन्यथा
 		ENGINE_WRITE16(engine, RING_HWSTAM, mask);
-}
+पूर्ण
 
-static void intel_engine_sanitize_mmio(struct intel_engine_cs *engine)
-{
-	/* Mask off all writes into the unknown HWSP */
-	intel_engine_set_hwsp_writemask(engine, ~0u);
-}
+अटल व्योम पूर्णांकel_engine_sanitize_mmio(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	/* Mask off all ग_लिखोs पूर्णांकo the unknown HWSP */
+	पूर्णांकel_engine_set_hwsp_ग_लिखोmask(engine, ~0u);
+पूर्ण
 
-static int intel_engine_setup(struct intel_gt *gt, enum intel_engine_id id)
-{
-	const struct engine_info *info = &intel_engines[id];
-	struct drm_i915_private *i915 = gt->i915;
-	struct intel_engine_cs *engine;
+अटल पूर्णांक पूर्णांकel_engine_setup(काष्ठा पूर्णांकel_gt *gt, क्रमागत पूर्णांकel_engine_id id)
+अणु
+	स्थिर काष्ठा engine_info *info = &पूर्णांकel_engines[id];
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा पूर्णांकel_engine_cs *engine;
 
 	BUILD_BUG_ON(MAX_ENGINE_CLASS >= BIT(GEN11_ENGINE_CLASS_WIDTH));
 	BUILD_BUG_ON(MAX_ENGINE_INSTANCE >= BIT(GEN11_ENGINE_INSTANCE_WIDTH));
 
-	if (GEM_DEBUG_WARN_ON(id >= ARRAY_SIZE(gt->engine)))
-		return -EINVAL;
+	अगर (GEM_DEBUG_WARN_ON(id >= ARRAY_SIZE(gt->engine)))
+		वापस -EINVAL;
 
-	if (GEM_DEBUG_WARN_ON(info->class > MAX_ENGINE_CLASS))
-		return -EINVAL;
+	अगर (GEM_DEBUG_WARN_ON(info->class > MAX_ENGINE_CLASS))
+		वापस -EINVAL;
 
-	if (GEM_DEBUG_WARN_ON(info->instance > MAX_ENGINE_INSTANCE))
-		return -EINVAL;
+	अगर (GEM_DEBUG_WARN_ON(info->instance > MAX_ENGINE_INSTANCE))
+		वापस -EINVAL;
 
-	if (GEM_DEBUG_WARN_ON(gt->engine_class[info->class][info->instance]))
-		return -EINVAL;
+	अगर (GEM_DEBUG_WARN_ON(gt->engine_class[info->class][info->instance]))
+		वापस -EINVAL;
 
-	engine = kzalloc(sizeof(*engine), GFP_KERNEL);
-	if (!engine)
-		return -ENOMEM;
+	engine = kzalloc(माप(*engine), GFP_KERNEL);
+	अगर (!engine)
+		वापस -ENOMEM;
 
 	BUILD_BUG_ON(BITS_PER_TYPE(engine->mask) < I915_NUM_ENGINES);
 
@@ -294,58 +295,58 @@ static int intel_engine_setup(struct intel_gt *gt, enum intel_engine_id id)
 
 	engine->class = info->class;
 	engine->instance = info->instance;
-	__sprint_engine_name(engine);
+	__sprपूर्णांक_engine_name(engine);
 
-	engine->props.heartbeat_interval_ms =
+	engine->props.heartbeat_पूर्णांकerval_ms =
 		CONFIG_DRM_I915_HEARTBEAT_INTERVAL;
-	engine->props.max_busywait_duration_ns =
+	engine->props.max_busyरुको_duration_ns =
 		CONFIG_DRM_I915_MAX_REQUEST_BUSYWAIT;
-	engine->props.preempt_timeout_ms =
+	engine->props.preempt_समयout_ms =
 		CONFIG_DRM_I915_PREEMPT_TIMEOUT;
-	engine->props.stop_timeout_ms =
+	engine->props.stop_समयout_ms =
 		CONFIG_DRM_I915_STOP_TIMEOUT;
-	engine->props.timeslice_duration_ms =
+	engine->props.बारlice_duration_ms =
 		CONFIG_DRM_I915_TIMESLICE_DURATION;
 
-	/* Override to uninterruptible for OpenCL workloads. */
-	if (INTEL_GEN(i915) == 12 && engine->class == RENDER_CLASS)
-		engine->props.preempt_timeout_ms = 0;
+	/* Override to unपूर्णांकerruptible क्रम OpenCL workloads. */
+	अगर (INTEL_GEN(i915) == 12 && engine->class == RENDER_CLASS)
+		engine->props.preempt_समयout_ms = 0;
 
-	engine->defaults = engine->props; /* never to change again */
+	engine->शेषs = engine->props; /* never to change again */
 
-	engine->context_size = intel_engine_context_size(gt, engine->class);
-	if (WARN_ON(engine->context_size > BIT(20)))
+	engine->context_size = पूर्णांकel_engine_context_size(gt, engine->class);
+	अगर (WARN_ON(engine->context_size > BIT(20)))
 		engine->context_size = 0;
-	if (engine->context_size)
+	अगर (engine->context_size)
 		DRIVER_CAPS(i915)->has_logical_contexts = true;
 
-	/* Nothing to do here, execute in order of dependencies */
-	engine->schedule = NULL;
+	/* Nothing to करो here, execute in order of dependencies */
+	engine->schedule = शून्य;
 
 	ewma__engine_latency_init(&engine->latency);
 	seqcount_init(&engine->stats.lock);
 
-	ATOMIC_INIT_NOTIFIER_HEAD(&engine->context_status_notifier);
+	ATOMIC_INIT_NOTIFIER_HEAD(&engine->context_status_notअगरier);
 
 	/* Scrub mmio state on takeover */
-	intel_engine_sanitize_mmio(engine);
+	पूर्णांकel_engine_sanitize_mmio(engine);
 
 	gt->engine_class[info->class][info->instance] = engine;
 	gt->engine[id] = engine;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __setup_engine_capabilities(struct intel_engine_cs *engine)
-{
-	struct drm_i915_private *i915 = engine->i915;
+अटल व्योम __setup_engine_capabilities(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
-	if (engine->class == VIDEO_DECODE_CLASS) {
+	अगर (engine->class == VIDEO_DECODE_CLASS) अणु
 		/*
 		 * HEVC support is present on first engine instance
-		 * before Gen11 and on all instances afterwards.
+		 * beक्रमe Gen11 and on all instances afterwards.
 		 */
-		if (INTEL_GEN(i915) >= 11 ||
+		अगर (INTEL_GEN(i915) >= 11 ||
 		    (INTEL_GEN(i915) >= 9 && engine->instance == 0))
 			engine->uabi_capabilities |=
 				I915_VIDEO_CLASS_CAPABILITY_HEVC;
@@ -354,434 +355,434 @@ static void __setup_engine_capabilities(struct intel_engine_cs *engine)
 		 * SFC block is present only on even logical engine
 		 * instances.
 		 */
-		if ((INTEL_GEN(i915) >= 11 &&
+		अगर ((INTEL_GEN(i915) >= 11 &&
 		     (engine->gt->info.vdbox_sfc_access &
 		      BIT(engine->instance))) ||
 		    (INTEL_GEN(i915) >= 9 && engine->instance == 0))
 			engine->uabi_capabilities |=
 				I915_VIDEO_AND_ENHANCE_CLASS_CAPABILITY_SFC;
-	} else if (engine->class == VIDEO_ENHANCEMENT_CLASS) {
-		if (INTEL_GEN(i915) >= 9)
+	पूर्ण अन्यथा अगर (engine->class == VIDEO_ENHANCEMENT_CLASS) अणु
+		अगर (INTEL_GEN(i915) >= 9)
 			engine->uabi_capabilities |=
 				I915_VIDEO_AND_ENHANCE_CLASS_CAPABILITY_SFC;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void intel_setup_engine_capabilities(struct intel_gt *gt)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम पूर्णांकel_setup_engine_capabilities(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	for_each_engine(engine, gt, id)
+	क्रम_each_engine(engine, gt, id)
 		__setup_engine_capabilities(engine);
-}
+पूर्ण
 
 /**
- * intel_engines_release() - free the resources allocated for Command Streamers
- * @gt: pointer to struct intel_gt
+ * पूर्णांकel_engines_release() - मुक्त the resources allocated क्रम Command Streamers
+ * @gt: poपूर्णांकer to काष्ठा पूर्णांकel_gt
  */
-void intel_engines_release(struct intel_gt *gt)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+व्योम पूर्णांकel_engines_release(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
 	/*
-	 * Before we release the resources held by engine, we must be certain
-	 * that the HW is no longer accessing them -- having the GPU scribble
-	 * to or read from a page being used for something else causes no end
+	 * Beक्रमe we release the resources held by engine, we must be certain
+	 * that the HW is no दीर्घer accessing them -- having the GPU scribble
+	 * to or पढ़ो from a page being used क्रम something अन्यथा causes no end
 	 * of fun.
 	 *
-	 * The GPU should be reset by this point, but assume the worst just
-	 * in case we aborted before completely initialising the engines.
+	 * The GPU should be reset by this poपूर्णांक, but assume the worst just
+	 * in हाल we पातed beक्रमe completely initialising the engines.
 	 */
-	GEM_BUG_ON(intel_gt_pm_is_awake(gt));
-	if (!INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
-		__intel_gt_reset(gt, ALL_ENGINES);
+	GEM_BUG_ON(पूर्णांकel_gt_pm_is_awake(gt));
+	अगर (!INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
+		__पूर्णांकel_gt_reset(gt, ALL_ENGINES);
 
-	/* Decouple the backend; but keep the layout for late GPU resets */
-	for_each_engine(engine, gt, id) {
-		if (!engine->release)
-			continue;
+	/* Decouple the backend; but keep the layout क्रम late GPU resets */
+	क्रम_each_engine(engine, gt, id) अणु
+		अगर (!engine->release)
+			जारी;
 
-		intel_wakeref_wait_for_idle(&engine->wakeref);
-		GEM_BUG_ON(intel_engine_pm_is_awake(engine));
+		पूर्णांकel_wakeref_रुको_क्रम_idle(&engine->wakeref);
+		GEM_BUG_ON(पूर्णांकel_engine_pm_is_awake(engine));
 
 		engine->release(engine);
-		engine->release = NULL;
+		engine->release = शून्य;
 
-		memset(&engine->reset, 0, sizeof(engine->reset));
-	}
-}
+		स_रखो(&engine->reset, 0, माप(engine->reset));
+	पूर्ण
+पूर्ण
 
-void intel_engine_free_request_pool(struct intel_engine_cs *engine)
-{
-	if (!engine->request_pool)
-		return;
+व्योम पूर्णांकel_engine_मुक्त_request_pool(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (!engine->request_pool)
+		वापस;
 
-	kmem_cache_free(i915_request_slab_cache(), engine->request_pool);
-}
+	kmem_cache_मुक्त(i915_request_slab_cache(), engine->request_pool);
+पूर्ण
 
-void intel_engines_free(struct intel_gt *gt)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+व्योम पूर्णांकel_engines_मुक्त(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	/* Free the requests! dma-resv keeps fences around for an eternity */
+	/* Free the requests! dma-resv keeps fences around क्रम an eternity */
 	rcu_barrier();
 
-	for_each_engine(engine, gt, id) {
-		intel_engine_free_request_pool(engine);
-		kfree(engine);
-		gt->engine[id] = NULL;
-	}
-}
+	क्रम_each_engine(engine, gt, id) अणु
+		पूर्णांकel_engine_मुक्त_request_pool(engine);
+		kमुक्त(engine);
+		gt->engine[id] = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * Determine which engines are fused off in our particular hardware.
  * Note that we have a catch-22 situation where we need to be able to access
- * the blitter forcewake domain to read the engine fuses, but at the same time
- * we need to know which engines are available on the system to know which
- * forcewake domains are present. We solve this by intializing the forcewake
- * domains based on the full engine mask in the platform capabilities before
- * calling this function and pruning the domains for fused-off engines
+ * the blitter क्रमcewake करोमुख्य to पढ़ो the engine fuses, but at the same समय
+ * we need to know which engines are available on the प्रणाली to know which
+ * क्रमcewake करोमुख्यs are present. We solve this by पूर्णांकializing the क्रमcewake
+ * करोमुख्यs based on the full engine mask in the platक्रमm capabilities beक्रमe
+ * calling this function and pruning the करोमुख्यs क्रम fused-off engines
  * afterwards.
  */
-static intel_engine_mask_t init_engine_mask(struct intel_gt *gt)
-{
-	struct drm_i915_private *i915 = gt->i915;
-	struct intel_gt_info *info = &gt->info;
-	struct intel_uncore *uncore = gt->uncore;
-	unsigned int logical_vdbox = 0;
-	unsigned int i;
+अटल पूर्णांकel_engine_mask_t init_engine_mask(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा पूर्णांकel_gt_info *info = &gt->info;
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
+	अचिन्हित पूर्णांक logical_vdbox = 0;
+	अचिन्हित पूर्णांक i;
 	u32 media_fuse;
 	u16 vdbox_mask;
 	u16 vebox_mask;
 
-	info->engine_mask = INTEL_INFO(i915)->platform_engine_mask;
+	info->engine_mask = INTEL_INFO(i915)->platक्रमm_engine_mask;
 
-	if (INTEL_GEN(i915) < 11)
-		return info->engine_mask;
+	अगर (INTEL_GEN(i915) < 11)
+		वापस info->engine_mask;
 
-	media_fuse = ~intel_uncore_read(uncore, GEN11_GT_VEBOX_VDBOX_DISABLE);
+	media_fuse = ~पूर्णांकel_uncore_पढ़ो(uncore, GEN11_GT_VEBOX_VDBOX_DISABLE);
 
 	vdbox_mask = media_fuse & GEN11_GT_VDBOX_DISABLE_MASK;
 	vebox_mask = (media_fuse & GEN11_GT_VEBOX_DISABLE_MASK) >>
 		      GEN11_GT_VEBOX_DISABLE_SHIFT;
 
-	for (i = 0; i < I915_MAX_VCS; i++) {
-		if (!HAS_ENGINE(gt, _VCS(i))) {
+	क्रम (i = 0; i < I915_MAX_VCS; i++) अणु
+		अगर (!HAS_ENGINE(gt, _VCS(i))) अणु
 			vdbox_mask &= ~BIT(i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!(BIT(i) & vdbox_mask)) {
+		अगर (!(BIT(i) & vdbox_mask)) अणु
 			info->engine_mask &= ~BIT(_VCS(i));
 			drm_dbg(&i915->drm, "vcs%u fused off\n", i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * In Gen11, only even numbered logical VDBOXes are
 		 * hooked up to an SFC (Scaler & Format Converter) unit.
 		 * In TGL each VDBOX has access to an SFC.
 		 */
-		if (INTEL_GEN(i915) >= 12 || logical_vdbox++ % 2 == 0)
+		अगर (INTEL_GEN(i915) >= 12 || logical_vdbox++ % 2 == 0)
 			gt->info.vdbox_sfc_access |= BIT(i);
-	}
+	पूर्ण
 	drm_dbg(&i915->drm, "vdbox enable: %04x, instances: %04lx\n",
 		vdbox_mask, VDBOX_MASK(gt));
 	GEM_BUG_ON(vdbox_mask != VDBOX_MASK(gt));
 
-	for (i = 0; i < I915_MAX_VECS; i++) {
-		if (!HAS_ENGINE(gt, _VECS(i))) {
+	क्रम (i = 0; i < I915_MAX_VECS; i++) अणु
+		अगर (!HAS_ENGINE(gt, _VECS(i))) अणु
 			vebox_mask &= ~BIT(i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!(BIT(i) & vebox_mask)) {
+		अगर (!(BIT(i) & vebox_mask)) अणु
 			info->engine_mask &= ~BIT(_VECS(i));
 			drm_dbg(&i915->drm, "vecs%u fused off\n", i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	drm_dbg(&i915->drm, "vebox enable: %04x, instances: %04lx\n",
 		vebox_mask, VEBOX_MASK(gt));
 	GEM_BUG_ON(vebox_mask != VEBOX_MASK(gt));
 
-	return info->engine_mask;
-}
+	वापस info->engine_mask;
+पूर्ण
 
 /**
- * intel_engines_init_mmio() - allocate and prepare the Engine Command Streamers
- * @gt: pointer to struct intel_gt
+ * पूर्णांकel_engines_init_mmio() - allocate and prepare the Engine Command Streamers
+ * @gt: poपूर्णांकer to काष्ठा पूर्णांकel_gt
  *
- * Return: non-zero if the initialization failed.
+ * Return: non-zero अगर the initialization failed.
  */
-int intel_engines_init_mmio(struct intel_gt *gt)
-{
-	struct drm_i915_private *i915 = gt->i915;
-	const unsigned int engine_mask = init_engine_mask(gt);
-	unsigned int mask = 0;
-	unsigned int i;
-	int err;
+पूर्णांक पूर्णांकel_engines_init_mmio(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	स्थिर अचिन्हित पूर्णांक engine_mask = init_engine_mask(gt);
+	अचिन्हित पूर्णांक mask = 0;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
 	drm_WARN_ON(&i915->drm, engine_mask == 0);
 	drm_WARN_ON(&i915->drm, engine_mask &
 		    GENMASK(BITS_PER_TYPE(mask) - 1, I915_NUM_ENGINES));
 
-	if (i915_inject_probe_failure(i915))
-		return -ENODEV;
+	अगर (i915_inject_probe_failure(i915))
+		वापस -ENODEV;
 
-	for (i = 0; i < ARRAY_SIZE(intel_engines); i++) {
-		if (!HAS_ENGINE(gt, i))
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(पूर्णांकel_engines); i++) अणु
+		अगर (!HAS_ENGINE(gt, i))
+			जारी;
 
-		err = intel_engine_setup(gt, i);
-		if (err)
-			goto cleanup;
+		err = पूर्णांकel_engine_setup(gt, i);
+		अगर (err)
+			जाओ cleanup;
 
 		mask |= BIT(i);
-	}
+	पूर्ण
 
 	/*
-	 * Catch failures to update intel_engines table when the new engines
-	 * are added to the driver by a warning and disabling the forgotten
+	 * Catch failures to update पूर्णांकel_engines table when the new engines
+	 * are added to the driver by a warning and disabling the क्रमgotten
 	 * engines.
 	 */
-	if (drm_WARN_ON(&i915->drm, mask != engine_mask))
+	अगर (drm_WARN_ON(&i915->drm, mask != engine_mask))
 		gt->info.engine_mask = mask;
 
 	gt->info.num_engines = hweight32(mask);
 
-	intel_gt_check_and_clear_faults(gt);
+	पूर्णांकel_gt_check_and_clear_faults(gt);
 
-	intel_setup_engine_capabilities(gt);
+	पूर्णांकel_setup_engine_capabilities(gt);
 
-	intel_uncore_prune_engine_fw_domains(gt->uncore, gt);
+	पूर्णांकel_uncore_prune_engine_fw_करोमुख्यs(gt->uncore, gt);
 
-	return 0;
+	वापस 0;
 
 cleanup:
-	intel_engines_free(gt);
-	return err;
-}
+	पूर्णांकel_engines_मुक्त(gt);
+	वापस err;
+पूर्ण
 
-void intel_engine_init_execlists(struct intel_engine_cs *engine)
-{
-	struct intel_engine_execlists * const execlists = &engine->execlists;
+व्योम पूर्णांकel_engine_init_execlists(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_engine_execlists * स्थिर execlists = &engine->execlists;
 
 	execlists->port_mask = 1;
-	GEM_BUG_ON(!is_power_of_2(execlists_num_ports(execlists)));
+	GEM_BUG_ON(!is_घातer_of_2(execlists_num_ports(execlists)));
 	GEM_BUG_ON(execlists_num_ports(execlists) > EXECLIST_MAX_PORTS);
 
-	memset(execlists->pending, 0, sizeof(execlists->pending));
+	स_रखो(execlists->pending, 0, माप(execlists->pending));
 	execlists->active =
-		memset(execlists->inflight, 0, sizeof(execlists->inflight));
+		स_रखो(execlists->inflight, 0, माप(execlists->inflight));
 
-	execlists->queue_priority_hint = INT_MIN;
+	execlists->queue_priority_hपूर्णांक = पूर्णांक_न्यून;
 	execlists->queue = RB_ROOT_CACHED;
-}
+पूर्ण
 
-static void cleanup_status_page(struct intel_engine_cs *engine)
-{
-	struct i915_vma *vma;
+अटल व्योम cleanup_status_page(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_vma *vma;
 
-	/* Prevent writes into HWSP after returning the page to the system */
-	intel_engine_set_hwsp_writemask(engine, ~0u);
+	/* Prevent ग_लिखोs पूर्णांकo HWSP after वापसing the page to the प्रणाली */
+	पूर्णांकel_engine_set_hwsp_ग_लिखोmask(engine, ~0u);
 
 	vma = fetch_and_zero(&engine->status_page.vma);
-	if (!vma)
-		return;
+	अगर (!vma)
+		वापस;
 
-	if (!HWS_NEEDS_PHYSICAL(engine->i915))
+	अगर (!HWS_NEEDS_PHYSICAL(engine->i915))
 		i915_vma_unpin(vma);
 
 	i915_gem_object_unpin_map(vma->obj);
 	i915_gem_object_put(vma->obj);
-}
+पूर्ण
 
-static int pin_ggtt_status_page(struct intel_engine_cs *engine,
-				struct i915_gem_ww_ctx *ww,
-				struct i915_vma *vma)
-{
-	unsigned int flags;
+अटल पूर्णांक pin_ggtt_status_page(काष्ठा पूर्णांकel_engine_cs *engine,
+				काष्ठा i915_gem_ww_ctx *ww,
+				काष्ठा i915_vma *vma)
+अणु
+	अचिन्हित पूर्णांक flags;
 
-	if (!HAS_LLC(engine->i915) && i915_ggtt_has_aperture(engine->gt->ggtt))
+	अगर (!HAS_LLC(engine->i915) && i915_ggtt_has_aperture(engine->gt->ggtt))
 		/*
 		 * On g33, we cannot place HWS above 256MiB, so
 		 * restrict its pinning to the low mappable arena.
-		 * Though this restriction is not documented for
+		 * Though this restriction is not करोcumented क्रम
 		 * gen4, gen5, or byt, they also behave similarly
-		 * and hang if the HWS is placed at the top of the
+		 * and hang अगर the HWS is placed at the top of the
 		 * GTT. To generalise, it appears that all !llc
-		 * platforms have issues with us placing the HWS
+		 * platक्रमms have issues with us placing the HWS
 		 * above the mappable region (even though we never
 		 * actually map it).
 		 */
 		flags = PIN_MAPPABLE;
-	else
+	अन्यथा
 		flags = PIN_HIGH;
 
-	return i915_ggtt_pin(vma, ww, 0, flags);
-}
+	वापस i915_ggtt_pin(vma, ww, 0, flags);
+पूर्ण
 
-static int init_status_page(struct intel_engine_cs *engine)
-{
-	struct drm_i915_gem_object *obj;
-	struct i915_gem_ww_ctx ww;
-	struct i915_vma *vma;
-	void *vaddr;
-	int ret;
+अटल पूर्णांक init_status_page(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_gem_ww_ctx ww;
+	काष्ठा i915_vma *vma;
+	व्योम *vaddr;
+	पूर्णांक ret;
 
-	INIT_LIST_HEAD(&engine->status_page.timelines);
+	INIT_LIST_HEAD(&engine->status_page.समयlines);
 
 	/*
-	 * Though the HWS register does support 36bit addresses, historically
-	 * we have had hangs and corruption reported due to wild writes if
+	 * Though the HWS रेजिस्टर करोes support 36bit addresses, historically
+	 * we have had hangs and corruption reported due to wild ग_लिखोs अगर
 	 * the HWS is placed above 4G. We only allow objects to be allocated
-	 * in GFP_DMA32 for i965, and no earlier physical address users had
+	 * in GFP_DMA32 क्रम i965, and no earlier physical address users had
 	 * access to more than 4G.
 	 */
-	obj = i915_gem_object_create_internal(engine->i915, PAGE_SIZE);
-	if (IS_ERR(obj)) {
+	obj = i915_gem_object_create_पूर्णांकernal(engine->i915, PAGE_SIZE);
+	अगर (IS_ERR(obj)) अणु
 		drm_err(&engine->i915->drm,
 			"Failed to allocate status page\n");
-		return PTR_ERR(obj);
-	}
+		वापस PTR_ERR(obj);
+	पूर्ण
 
 	i915_gem_object_set_cache_coherency(obj, I915_CACHE_LLC);
 
-	vma = i915_vma_instance(obj, &engine->gt->ggtt->vm, NULL);
-	if (IS_ERR(vma)) {
+	vma = i915_vma_instance(obj, &engine->gt->ggtt->vm, शून्य);
+	अगर (IS_ERR(vma)) अणु
 		ret = PTR_ERR(vma);
-		goto err_put;
-	}
+		जाओ err_put;
+	पूर्ण
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
 	ret = i915_gem_object_lock(obj, &ww);
-	if (!ret && !HWS_NEEDS_PHYSICAL(engine->i915))
+	अगर (!ret && !HWS_NEEDS_PHYSICAL(engine->i915))
 		ret = pin_ggtt_status_page(engine, &ww, vma);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	vaddr = i915_gem_object_pin_map(obj, I915_MAP_WB);
-	if (IS_ERR(vaddr)) {
+	अगर (IS_ERR(vaddr)) अणु
 		ret = PTR_ERR(vaddr);
-		goto err_unpin;
-	}
+		जाओ err_unpin;
+	पूर्ण
 
-	engine->status_page.addr = memset(vaddr, 0, PAGE_SIZE);
+	engine->status_page.addr = स_रखो(vaddr, 0, PAGE_SIZE);
 	engine->status_page.vma = vma;
 
 err_unpin:
-	if (ret)
+	अगर (ret)
 		i915_vma_unpin(vma);
 err:
-	if (ret == -EDEADLK) {
+	अगर (ret == -EDEADLK) अणु
 		ret = i915_gem_ww_ctx_backoff(&ww);
-		if (!ret)
-			goto retry;
-	}
+		अगर (!ret)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
 err_put:
-	if (ret)
+	अगर (ret)
 		i915_gem_object_put(obj);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int engine_setup_common(struct intel_engine_cs *engine)
-{
-	int err;
+अटल पूर्णांक engine_setup_common(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांक err;
 
 	init_llist_head(&engine->barrier_tasks);
 
 	err = init_status_page(engine);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	engine->breadcrumbs = intel_breadcrumbs_create(engine);
-	if (!engine->breadcrumbs) {
+	engine->bपढ़ोcrumbs = पूर्णांकel_bपढ़ोcrumbs_create(engine);
+	अगर (!engine->bपढ़ोcrumbs) अणु
 		err = -ENOMEM;
-		goto err_status;
-	}
+		जाओ err_status;
+	पूर्ण
 
-	err = intel_engine_init_cmd_parser(engine);
-	if (err)
-		goto err_cmd_parser;
+	err = पूर्णांकel_engine_init_cmd_parser(engine);
+	अगर (err)
+		जाओ err_cmd_parser;
 
-	intel_engine_init_active(engine, ENGINE_PHYSICAL);
-	intel_engine_init_execlists(engine);
-	intel_engine_init__pm(engine);
-	intel_engine_init_retire(engine);
+	पूर्णांकel_engine_init_active(engine, ENGINE_PHYSICAL);
+	पूर्णांकel_engine_init_execlists(engine);
+	पूर्णांकel_engine_init__pm(engine);
+	पूर्णांकel_engine_init_retire(engine);
 
-	/* Use the whole device by default */
+	/* Use the whole device by शेष */
 	engine->sseu =
-		intel_sseu_from_device_info(&engine->gt->info.sseu);
+		पूर्णांकel_sseu_from_device_info(&engine->gt->info.sseu);
 
-	intel_engine_init_workarounds(engine);
-	intel_engine_init_whitelist(engine);
-	intel_engine_init_ctx_wa(engine);
+	पूर्णांकel_engine_init_workarounds(engine);
+	पूर्णांकel_engine_init_whitelist(engine);
+	पूर्णांकel_engine_init_ctx_wa(engine);
 
-	if (INTEL_GEN(engine->i915) >= 12)
+	अगर (INTEL_GEN(engine->i915) >= 12)
 		engine->flags |= I915_ENGINE_HAS_RELATIVE_MMIO;
 
-	return 0;
+	वापस 0;
 
 err_cmd_parser:
-	intel_breadcrumbs_free(engine->breadcrumbs);
+	पूर्णांकel_bपढ़ोcrumbs_मुक्त(engine->bपढ़ोcrumbs);
 err_status:
 	cleanup_status_page(engine);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct measure_breadcrumb {
-	struct i915_request rq;
-	struct intel_ring ring;
+काष्ठा measure_bपढ़ोcrumb अणु
+	काष्ठा i915_request rq;
+	काष्ठा पूर्णांकel_ring ring;
 	u32 cs[2048];
-};
+पूर्ण;
 
-static int measure_breadcrumb_dw(struct intel_context *ce)
-{
-	struct intel_engine_cs *engine = ce->engine;
-	struct measure_breadcrumb *frame;
-	int dw;
+अटल पूर्णांक measure_bपढ़ोcrumb_dw(काष्ठा पूर्णांकel_context *ce)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine = ce->engine;
+	काष्ठा measure_bपढ़ोcrumb *frame;
+	पूर्णांक dw;
 
 	GEM_BUG_ON(!engine->gt->scratch);
 
-	frame = kzalloc(sizeof(*frame), GFP_KERNEL);
-	if (!frame)
-		return -ENOMEM;
+	frame = kzalloc(माप(*frame), GFP_KERNEL);
+	अगर (!frame)
+		वापस -ENOMEM;
 
 	frame->rq.engine = engine;
 	frame->rq.context = ce;
-	rcu_assign_pointer(frame->rq.timeline, ce->timeline);
-	frame->rq.hwsp_seqno = ce->timeline->hwsp_seqno;
+	rcu_assign_poपूर्णांकer(frame->rq.समयline, ce->समयline);
+	frame->rq.hwsp_seqno = ce->समयline->hwsp_seqno;
 
 	frame->ring.vaddr = frame->cs;
-	frame->ring.size = sizeof(frame->cs);
+	frame->ring.size = माप(frame->cs);
 	frame->ring.wrap =
 		BITS_PER_TYPE(frame->ring.size) - ilog2(frame->ring.size);
 	frame->ring.effective_size = frame->ring.size;
-	intel_ring_update_space(&frame->ring);
+	पूर्णांकel_ring_update_space(&frame->ring);
 	frame->rq.ring = &frame->ring;
 
-	mutex_lock(&ce->timeline->mutex);
+	mutex_lock(&ce->समयline->mutex);
 	spin_lock_irq(&engine->active.lock);
 
-	dw = engine->emit_fini_breadcrumb(&frame->rq, frame->cs) - frame->cs;
+	dw = engine->emit_fini_bपढ़ोcrumb(&frame->rq, frame->cs) - frame->cs;
 
 	spin_unlock_irq(&engine->active.lock);
-	mutex_unlock(&ce->timeline->mutex);
+	mutex_unlock(&ce->समयline->mutex);
 
 	GEM_BUG_ON(dw & 1); /* RING_TAIL must be qword aligned */
 
-	kfree(frame);
-	return dw;
-}
+	kमुक्त(frame);
+	वापस dw;
+पूर्ण
 
-void
-intel_engine_init_active(struct intel_engine_cs *engine, unsigned int subclass)
-{
+व्योम
+पूर्णांकel_engine_init_active(काष्ठा पूर्णांकel_engine_cs *engine, अचिन्हित पूर्णांक subclass)
+अणु
 	INIT_LIST_HEAD(&engine->active.requests);
 	INIT_LIST_HEAD(&engine->active.hold);
 
@@ -789,1050 +790,1050 @@ intel_engine_init_active(struct intel_engine_cs *engine, unsigned int subclass)
 	lockdep_set_subclass(&engine->active.lock, subclass);
 
 	/*
-	 * Due to an interesting quirk in lockdep's internal debug tracking,
+	 * Due to an पूर्णांकeresting quirk in lockdep's पूर्णांकernal debug tracking,
 	 * after setting a subclass we must ensure the lock is used. Otherwise,
 	 * nr_unused_locks is incremented once too often.
 	 */
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 	local_irq_disable();
 	lock_map_acquire(&engine->active.lock.dep_map);
 	lock_map_release(&engine->active.lock.dep_map);
 	local_irq_enable();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static struct intel_context *
-create_pinned_context(struct intel_engine_cs *engine,
-		      unsigned int hwsp,
-		      struct lock_class_key *key,
-		      const char *name)
-{
-	struct intel_context *ce;
-	int err;
+अटल काष्ठा पूर्णांकel_context *
+create_pinned_context(काष्ठा पूर्णांकel_engine_cs *engine,
+		      अचिन्हित पूर्णांक hwsp,
+		      काष्ठा lock_class_key *key,
+		      स्थिर अक्षर *name)
+अणु
+	काष्ठा पूर्णांकel_context *ce;
+	पूर्णांक err;
 
-	ce = intel_context_create(engine);
-	if (IS_ERR(ce))
-		return ce;
+	ce = पूर्णांकel_context_create(engine);
+	अगर (IS_ERR(ce))
+		वापस ce;
 
 	__set_bit(CONTEXT_BARRIER_BIT, &ce->flags);
-	ce->timeline = page_pack_bits(NULL, hwsp);
+	ce->समयline = page_pack_bits(शून्य, hwsp);
 
-	err = intel_context_pin(ce); /* perma-pin so it is always available */
-	if (err) {
-		intel_context_put(ce);
-		return ERR_PTR(err);
-	}
+	err = पूर्णांकel_context_pin(ce); /* perma-pin so it is always available */
+	अगर (err) अणु
+		पूर्णांकel_context_put(ce);
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	/*
-	 * Give our perma-pinned kernel timelines a separate lockdep class,
-	 * so that we can use them from within the normal user timelines
+	 * Give our perma-pinned kernel समयlines a separate lockdep class,
+	 * so that we can use them from within the normal user समयlines
 	 * should we need to inject GPU operations during their request
-	 * construction.
+	 * स्थिरruction.
 	 */
-	lockdep_set_class_and_name(&ce->timeline->mutex, key, name);
+	lockdep_set_class_and_name(&ce->समयline->mutex, key, name);
 
-	return ce;
-}
+	वापस ce;
+पूर्ण
 
-static void destroy_pinned_context(struct intel_context *ce)
-{
-	struct intel_engine_cs *engine = ce->engine;
-	struct i915_vma *hwsp = engine->status_page.vma;
+अटल व्योम destroy_pinned_context(काष्ठा पूर्णांकel_context *ce)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine = ce->engine;
+	काष्ठा i915_vma *hwsp = engine->status_page.vma;
 
-	GEM_BUG_ON(ce->timeline->hwsp_ggtt != hwsp);
+	GEM_BUG_ON(ce->समयline->hwsp_ggtt != hwsp);
 
 	mutex_lock(&hwsp->vm->mutex);
-	list_del(&ce->timeline->engine_link);
+	list_del(&ce->समयline->engine_link);
 	mutex_unlock(&hwsp->vm->mutex);
 
-	intel_context_unpin(ce);
-	intel_context_put(ce);
-}
+	पूर्णांकel_context_unpin(ce);
+	पूर्णांकel_context_put(ce);
+पूर्ण
 
-static struct intel_context *
-create_kernel_context(struct intel_engine_cs *engine)
-{
-	static struct lock_class_key kernel;
+अटल काष्ठा पूर्णांकel_context *
+create_kernel_context(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अटल काष्ठा lock_class_key kernel;
 
-	return create_pinned_context(engine, I915_GEM_HWS_SEQNO_ADDR,
+	वापस create_pinned_context(engine, I915_GEM_HWS_SEQNO_ADDR,
 				     &kernel, "kernel_context");
-}
+पूर्ण
 
 /**
- * intel_engines_init_common - initialize cengine state which might require hw access
+ * पूर्णांकel_engines_init_common - initialize cengine state which might require hw access
  * @engine: Engine to initialize.
  *
- * Initializes @engine@ structure members shared between legacy and execlists
- * submission modes which do require hardware access.
+ * Initializes @engine@ काष्ठाure members shared between legacy and execlists
+ * submission modes which करो require hardware access.
  *
- * Typcally done at later stages of submission mode specific engine setup.
+ * Typcally करोne at later stages of submission mode specअगरic engine setup.
  *
  * Returns zero on success or an error code on failure.
  */
-static int engine_init_common(struct intel_engine_cs *engine)
-{
-	struct intel_context *ce;
-	int ret;
+अटल पूर्णांक engine_init_common(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_context *ce;
+	पूर्णांक ret;
 
-	engine->set_default_submission(engine);
+	engine->set_शेष_submission(engine);
 
 	/*
-	 * We may need to do things with the shrinker which
-	 * require us to immediately switch back to the default
+	 * We may need to करो things with the shrinker which
+	 * require us to immediately चयन back to the शेष
 	 * context. This can cause a problem as pinning the
-	 * default context also requires GTT space which may not
-	 * be available. To avoid this we always pin the default
+	 * शेष context also requires GTT space which may not
+	 * be available. To aव्योम this we always pin the शेष
 	 * context.
 	 */
 	ce = create_kernel_context(engine);
-	if (IS_ERR(ce))
-		return PTR_ERR(ce);
+	अगर (IS_ERR(ce))
+		वापस PTR_ERR(ce);
 
-	ret = measure_breadcrumb_dw(ce);
-	if (ret < 0)
-		goto err_context;
+	ret = measure_bपढ़ोcrumb_dw(ce);
+	अगर (ret < 0)
+		जाओ err_context;
 
-	engine->emit_fini_breadcrumb_dw = ret;
+	engine->emit_fini_bपढ़ोcrumb_dw = ret;
 	engine->kernel_context = ce;
 
-	return 0;
+	वापस 0;
 
 err_context:
-	intel_context_put(ce);
-	return ret;
-}
+	पूर्णांकel_context_put(ce);
+	वापस ret;
+पूर्ण
 
-int intel_engines_init(struct intel_gt *gt)
-{
-	int (*setup)(struct intel_engine_cs *engine);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	int err;
+पूर्णांक पूर्णांकel_engines_init(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	पूर्णांक (*setup)(काष्ठा पूर्णांकel_engine_cs *engine);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err;
 
-	if (intel_uc_uses_guc_submission(&gt->uc))
-		setup = intel_guc_submission_setup;
-	else if (HAS_EXECLISTS(gt->i915))
-		setup = intel_execlists_submission_setup;
-	else
-		setup = intel_ring_submission_setup;
+	अगर (पूर्णांकel_uc_uses_guc_submission(&gt->uc))
+		setup = पूर्णांकel_guc_submission_setup;
+	अन्यथा अगर (HAS_EXECLISTS(gt->i915))
+		setup = पूर्णांकel_execlists_submission_setup;
+	अन्यथा
+		setup = पूर्णांकel_ring_submission_setup;
 
-	for_each_engine(engine, gt, id) {
+	क्रम_each_engine(engine, gt, id) अणु
 		err = engine_setup_common(engine);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = setup(engine);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = engine_init_common(engine);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		intel_engine_add_user(engine);
-	}
+		पूर्णांकel_engine_add_user(engine);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_engines_cleanup_common - cleans up the engine state created by
+ * पूर्णांकel_engines_cleanup_common - cleans up the engine state created by
  *                                the common initiailizers.
  * @engine: Engine to cleanup.
  *
  * This cleans up everything created by the common helpers.
  */
-void intel_engine_cleanup_common(struct intel_engine_cs *engine)
-{
+व्योम पूर्णांकel_engine_cleanup_common(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	GEM_BUG_ON(!list_empty(&engine->active.requests));
-	tasklet_kill(&engine->execlists.tasklet); /* flush the callback */
+	tasklet_समाप्त(&engine->execlists.tasklet); /* flush the callback */
 
-	intel_breadcrumbs_free(engine->breadcrumbs);
+	पूर्णांकel_bपढ़ोcrumbs_मुक्त(engine->bपढ़ोcrumbs);
 
-	intel_engine_fini_retire(engine);
-	intel_engine_cleanup_cmd_parser(engine);
+	पूर्णांकel_engine_fini_retire(engine);
+	पूर्णांकel_engine_cleanup_cmd_parser(engine);
 
-	if (engine->default_state)
-		fput(engine->default_state);
+	अगर (engine->शेष_state)
+		fput(engine->शेष_state);
 
-	if (engine->kernel_context)
+	अगर (engine->kernel_context)
 		destroy_pinned_context(engine->kernel_context);
 
 	GEM_BUG_ON(!llist_empty(&engine->barrier_tasks));
 	cleanup_status_page(engine);
 
-	intel_wa_list_free(&engine->ctx_wa_list);
-	intel_wa_list_free(&engine->wa_list);
-	intel_wa_list_free(&engine->whitelist);
-}
+	पूर्णांकel_wa_list_मुक्त(&engine->ctx_wa_list);
+	पूर्णांकel_wa_list_मुक्त(&engine->wa_list);
+	पूर्णांकel_wa_list_मुक्त(&engine->whitelist);
+पूर्ण
 
 /**
- * intel_engine_resume - re-initializes the HW state of the engine
+ * पूर्णांकel_engine_resume - re-initializes the HW state of the engine
  * @engine: Engine to resume.
  *
  * Returns zero on success or an error code on failure.
  */
-int intel_engine_resume(struct intel_engine_cs *engine)
-{
-	intel_engine_apply_workarounds(engine);
-	intel_engine_apply_whitelist(engine);
+पूर्णांक पूर्णांकel_engine_resume(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांकel_engine_apply_workarounds(engine);
+	पूर्णांकel_engine_apply_whitelist(engine);
 
-	return engine->resume(engine);
-}
+	वापस engine->resume(engine);
+पूर्ण
 
-u64 intel_engine_get_active_head(const struct intel_engine_cs *engine)
-{
-	struct drm_i915_private *i915 = engine->i915;
+u64 पूर्णांकel_engine_get_active_head(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
 	u64 acthd;
 
-	if (INTEL_GEN(i915) >= 8)
+	अगर (INTEL_GEN(i915) >= 8)
 		acthd = ENGINE_READ64(engine, RING_ACTHD, RING_ACTHD_UDW);
-	else if (INTEL_GEN(i915) >= 4)
+	अन्यथा अगर (INTEL_GEN(i915) >= 4)
 		acthd = ENGINE_READ(engine, RING_ACTHD);
-	else
+	अन्यथा
 		acthd = ENGINE_READ(engine, ACTHD);
 
-	return acthd;
-}
+	वापस acthd;
+पूर्ण
 
-u64 intel_engine_get_last_batch_head(const struct intel_engine_cs *engine)
-{
+u64 पूर्णांकel_engine_get_last_batch_head(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	u64 bbaddr;
 
-	if (INTEL_GEN(engine->i915) >= 8)
+	अगर (INTEL_GEN(engine->i915) >= 8)
 		bbaddr = ENGINE_READ64(engine, RING_BBADDR, RING_BBADDR_UDW);
-	else
+	अन्यथा
 		bbaddr = ENGINE_READ(engine, RING_BBADDR);
 
-	return bbaddr;
-}
+	वापस bbaddr;
+पूर्ण
 
-static unsigned long stop_timeout(const struct intel_engine_cs *engine)
-{
-	if (in_atomic() || irqs_disabled()) /* inside atomic preempt-reset? */
-		return 0;
+अटल अचिन्हित दीर्घ stop_समयout(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (in_atomic() || irqs_disabled()) /* inside atomic preempt-reset? */
+		वापस 0;
 
 	/*
-	 * If we are doing a normal GPU reset, we can take our time and allow
+	 * If we are करोing a normal GPU reset, we can take our समय and allow
 	 * the engine to quiesce. We've stopped submission to the engine, and
-	 * if we wait long enough an innocent context should complete and
+	 * अगर we रुको दीर्घ enough an innocent context should complete and
 	 * leave the engine idle. So they should not be caught unaware by
-	 * the forthcoming GPU reset (which usually follows the stop_cs)!
+	 * the क्रमthcoming GPU reset (which usually follows the stop_cs)!
 	 */
-	return READ_ONCE(engine->props.stop_timeout_ms);
-}
+	वापस READ_ONCE(engine->props.stop_समयout_ms);
+पूर्ण
 
-static int __intel_engine_stop_cs(struct intel_engine_cs *engine,
-				  int fast_timeout_us,
-				  int slow_timeout_ms)
-{
-	struct intel_uncore *uncore = engine->uncore;
-	const i915_reg_t mode = RING_MI_MODE(engine->mmio_base);
-	int err;
+अटल पूर्णांक __पूर्णांकel_engine_stop_cs(काष्ठा पूर्णांकel_engine_cs *engine,
+				  पूर्णांक fast_समयout_us,
+				  पूर्णांक slow_समयout_ms)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
+	स्थिर i915_reg_t mode = RING_MI_MODE(engine->mmio_base);
+	पूर्णांक err;
 
-	intel_uncore_write_fw(uncore, mode, _MASKED_BIT_ENABLE(STOP_RING));
-	err = __intel_wait_for_register_fw(engine->uncore, mode,
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, mode, _MASKED_BIT_ENABLE(STOP_RING));
+	err = __पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(engine->uncore, mode,
 					   MODE_IDLE, MODE_IDLE,
-					   fast_timeout_us,
-					   slow_timeout_ms,
-					   NULL);
+					   fast_समयout_us,
+					   slow_समयout_ms,
+					   शून्य);
 
-	/* A final mmio read to let GPU writes be hopefully flushed to memory */
-	intel_uncore_posting_read_fw(uncore, mode);
-	return err;
-}
+	/* A final mmio पढ़ो to let GPU ग_लिखोs be hopefully flushed to memory */
+	पूर्णांकel_uncore_posting_पढ़ो_fw(uncore, mode);
+	वापस err;
+पूर्ण
 
-int intel_engine_stop_cs(struct intel_engine_cs *engine)
-{
-	int err = 0;
+पूर्णांक पूर्णांकel_engine_stop_cs(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांक err = 0;
 
-	if (INTEL_GEN(engine->i915) < 3)
-		return -ENODEV;
+	अगर (INTEL_GEN(engine->i915) < 3)
+		वापस -ENODEV;
 
 	ENGINE_TRACE(engine, "\n");
-	if (__intel_engine_stop_cs(engine, 1000, stop_timeout(engine))) {
+	अगर (__पूर्णांकel_engine_stop_cs(engine, 1000, stop_समयout(engine))) अणु
 		ENGINE_TRACE(engine,
 			     "timed out on STOP_RING -> IDLE; HEAD:%04x, TAIL:%04x\n",
 			     ENGINE_READ_FW(engine, RING_HEAD) & HEAD_ADDR,
 			     ENGINE_READ_FW(engine, RING_TAIL) & TAIL_ADDR);
 
 		/*
-		 * Sometimes we observe that the idle flag is not
-		 * set even though the ring is empty. So double
-		 * check before giving up.
+		 * Someबार we observe that the idle flag is not
+		 * set even though the ring is empty. So द्विगुन
+		 * check beक्रमe giving up.
 		 */
-		if ((ENGINE_READ_FW(engine, RING_HEAD) & HEAD_ADDR) !=
+		अगर ((ENGINE_READ_FW(engine, RING_HEAD) & HEAD_ADDR) !=
 		    (ENGINE_READ_FW(engine, RING_TAIL) & TAIL_ADDR))
 			err = -ETIMEDOUT;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void intel_engine_cancel_stop_cs(struct intel_engine_cs *engine)
-{
+व्योम पूर्णांकel_engine_cancel_stop_cs(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	ENGINE_TRACE(engine, "\n");
 
 	ENGINE_WRITE_FW(engine, RING_MI_MODE, _MASKED_BIT_DISABLE(STOP_RING));
-}
+पूर्ण
 
-const char *i915_cache_level_str(struct drm_i915_private *i915, int type)
-{
-	switch (type) {
-	case I915_CACHE_NONE: return " uncached";
-	case I915_CACHE_LLC: return HAS_LLC(i915) ? " LLC" : " snooped";
-	case I915_CACHE_L3_LLC: return " L3+LLC";
-	case I915_CACHE_WT: return " WT";
-	default: return "";
-	}
-}
+स्थिर अक्षर *i915_cache_level_str(काष्ठा drm_i915_निजी *i915, पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल I915_CACHE_NONE: वापस " uncached";
+	हाल I915_CACHE_LLC: वापस HAS_LLC(i915) ? " LLC" : " snooped";
+	हाल I915_CACHE_L3_LLC: वापस " L3+LLC";
+	हाल I915_CACHE_WT: वापस " WT";
+	शेष: वापस "";
+	पूर्ण
+पूर्ण
 
-static u32
-read_subslice_reg(const struct intel_engine_cs *engine,
-		  int slice, int subslice, i915_reg_t reg)
-{
-	struct drm_i915_private *i915 = engine->i915;
-	struct intel_uncore *uncore = engine->uncore;
+अटल u32
+पढ़ो_subslice_reg(स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
+		  पूर्णांक slice, पूर्णांक subslice, i915_reg_t reg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
 	u32 mcr_mask, mcr_ss, mcr, old_mcr, val;
-	enum forcewake_domains fw_domains;
+	क्रमागत क्रमcewake_करोमुख्यs fw_करोमुख्यs;
 
-	if (INTEL_GEN(i915) >= 11) {
+	अगर (INTEL_GEN(i915) >= 11) अणु
 		mcr_mask = GEN11_MCR_SLICE_MASK | GEN11_MCR_SUBSLICE_MASK;
 		mcr_ss = GEN11_MCR_SLICE(slice) | GEN11_MCR_SUBSLICE(subslice);
-	} else {
+	पूर्ण अन्यथा अणु
 		mcr_mask = GEN8_MCR_SLICE_MASK | GEN8_MCR_SUBSLICE_MASK;
 		mcr_ss = GEN8_MCR_SLICE(slice) | GEN8_MCR_SUBSLICE(subslice);
-	}
+	पूर्ण
 
-	fw_domains = intel_uncore_forcewake_for_reg(uncore, reg,
+	fw_करोमुख्यs = पूर्णांकel_uncore_क्रमcewake_क्रम_reg(uncore, reg,
 						    FW_REG_READ);
-	fw_domains |= intel_uncore_forcewake_for_reg(uncore,
+	fw_करोमुख्यs |= पूर्णांकel_uncore_क्रमcewake_क्रम_reg(uncore,
 						     GEN8_MCR_SELECTOR,
 						     FW_REG_READ | FW_REG_WRITE);
 
 	spin_lock_irq(&uncore->lock);
-	intel_uncore_forcewake_get__locked(uncore, fw_domains);
+	पूर्णांकel_uncore_क्रमcewake_get__locked(uncore, fw_करोमुख्यs);
 
-	old_mcr = mcr = intel_uncore_read_fw(uncore, GEN8_MCR_SELECTOR);
+	old_mcr = mcr = पूर्णांकel_uncore_पढ़ो_fw(uncore, GEN8_MCR_SELECTOR);
 
 	mcr &= ~mcr_mask;
 	mcr |= mcr_ss;
-	intel_uncore_write_fw(uncore, GEN8_MCR_SELECTOR, mcr);
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, GEN8_MCR_SELECTOR, mcr);
 
-	val = intel_uncore_read_fw(uncore, reg);
+	val = पूर्णांकel_uncore_पढ़ो_fw(uncore, reg);
 
 	mcr &= ~mcr_mask;
 	mcr |= old_mcr & mcr_mask;
 
-	intel_uncore_write_fw(uncore, GEN8_MCR_SELECTOR, mcr);
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, GEN8_MCR_SELECTOR, mcr);
 
-	intel_uncore_forcewake_put__locked(uncore, fw_domains);
+	पूर्णांकel_uncore_क्रमcewake_put__locked(uncore, fw_करोमुख्यs);
 	spin_unlock_irq(&uncore->lock);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-/* NB: please notice the memset */
-void intel_engine_get_instdone(const struct intel_engine_cs *engine,
-			       struct intel_instdone *instdone)
-{
-	struct drm_i915_private *i915 = engine->i915;
-	const struct sseu_dev_info *sseu = &engine->gt->info.sseu;
-	struct intel_uncore *uncore = engine->uncore;
+/* NB: please notice the स_रखो */
+व्योम पूर्णांकel_engine_get_instकरोne(स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
+			       काष्ठा पूर्णांकel_instकरोne *instकरोne)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
+	स्थिर काष्ठा sseu_dev_info *sseu = &engine->gt->info.sseu;
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
 	u32 mmio_base = engine->mmio_base;
-	int slice;
-	int subslice;
+	पूर्णांक slice;
+	पूर्णांक subslice;
 
-	memset(instdone, 0, sizeof(*instdone));
+	स_रखो(instकरोne, 0, माप(*instकरोne));
 
-	switch (INTEL_GEN(i915)) {
-	default:
-		instdone->instdone =
-			intel_uncore_read(uncore, RING_INSTDONE(mmio_base));
+	चयन (INTEL_GEN(i915)) अणु
+	शेष:
+		instकरोne->instकरोne =
+			पूर्णांकel_uncore_पढ़ो(uncore, RING_INSTDONE(mmio_base));
 
-		if (engine->id != RCS0)
-			break;
+		अगर (engine->id != RCS0)
+			अवरोध;
 
-		instdone->slice_common =
-			intel_uncore_read(uncore, GEN7_SC_INSTDONE);
-		if (INTEL_GEN(i915) >= 12) {
-			instdone->slice_common_extra[0] =
-				intel_uncore_read(uncore, GEN12_SC_INSTDONE_EXTRA);
-			instdone->slice_common_extra[1] =
-				intel_uncore_read(uncore, GEN12_SC_INSTDONE_EXTRA2);
-		}
-		for_each_instdone_slice_subslice(i915, sseu, slice, subslice) {
-			instdone->sampler[slice][subslice] =
-				read_subslice_reg(engine, slice, subslice,
+		instकरोne->slice_common =
+			पूर्णांकel_uncore_पढ़ो(uncore, GEN7_SC_INSTDONE);
+		अगर (INTEL_GEN(i915) >= 12) अणु
+			instकरोne->slice_common_extra[0] =
+				पूर्णांकel_uncore_पढ़ो(uncore, GEN12_SC_INSTDONE_EXTRA);
+			instकरोne->slice_common_extra[1] =
+				पूर्णांकel_uncore_पढ़ो(uncore, GEN12_SC_INSTDONE_EXTRA2);
+		पूर्ण
+		क्रम_each_instकरोne_slice_subslice(i915, sseu, slice, subslice) अणु
+			instकरोne->sampler[slice][subslice] =
+				पढ़ो_subslice_reg(engine, slice, subslice,
 						  GEN7_SAMPLER_INSTDONE);
-			instdone->row[slice][subslice] =
-				read_subslice_reg(engine, slice, subslice,
+			instकरोne->row[slice][subslice] =
+				पढ़ो_subslice_reg(engine, slice, subslice,
 						  GEN7_ROW_INSTDONE);
-		}
-		break;
-	case 7:
-		instdone->instdone =
-			intel_uncore_read(uncore, RING_INSTDONE(mmio_base));
+		पूर्ण
+		अवरोध;
+	हाल 7:
+		instकरोne->instकरोne =
+			पूर्णांकel_uncore_पढ़ो(uncore, RING_INSTDONE(mmio_base));
 
-		if (engine->id != RCS0)
-			break;
+		अगर (engine->id != RCS0)
+			अवरोध;
 
-		instdone->slice_common =
-			intel_uncore_read(uncore, GEN7_SC_INSTDONE);
-		instdone->sampler[0][0] =
-			intel_uncore_read(uncore, GEN7_SAMPLER_INSTDONE);
-		instdone->row[0][0] =
-			intel_uncore_read(uncore, GEN7_ROW_INSTDONE);
+		instकरोne->slice_common =
+			पूर्णांकel_uncore_पढ़ो(uncore, GEN7_SC_INSTDONE);
+		instकरोne->sampler[0][0] =
+			पूर्णांकel_uncore_पढ़ो(uncore, GEN7_SAMPLER_INSTDONE);
+		instकरोne->row[0][0] =
+			पूर्णांकel_uncore_पढ़ो(uncore, GEN7_ROW_INSTDONE);
 
-		break;
-	case 6:
-	case 5:
-	case 4:
-		instdone->instdone =
-			intel_uncore_read(uncore, RING_INSTDONE(mmio_base));
-		if (engine->id == RCS0)
-			/* HACK: Using the wrong struct member */
-			instdone->slice_common =
-				intel_uncore_read(uncore, GEN4_INSTDONE1);
-		break;
-	case 3:
-	case 2:
-		instdone->instdone = intel_uncore_read(uncore, GEN2_INSTDONE);
-		break;
-	}
-}
+		अवरोध;
+	हाल 6:
+	हाल 5:
+	हाल 4:
+		instकरोne->instकरोne =
+			पूर्णांकel_uncore_पढ़ो(uncore, RING_INSTDONE(mmio_base));
+		अगर (engine->id == RCS0)
+			/* HACK: Using the wrong काष्ठा member */
+			instकरोne->slice_common =
+				पूर्णांकel_uncore_पढ़ो(uncore, GEN4_INSTDONE1);
+		अवरोध;
+	हाल 3:
+	हाल 2:
+		instकरोne->instकरोne = पूर्णांकel_uncore_पढ़ो(uncore, GEN2_INSTDONE);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static bool ring_is_idle(struct intel_engine_cs *engine)
-{
+अटल bool ring_is_idle(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	bool idle = true;
 
-	if (I915_SELFTEST_ONLY(!engine->mmio_base))
-		return true;
+	अगर (I915_SELFTEST_ONLY(!engine->mmio_base))
+		वापस true;
 
-	if (!intel_engine_pm_get_if_awake(engine))
-		return true;
+	अगर (!पूर्णांकel_engine_pm_get_अगर_awake(engine))
+		वापस true;
 
 	/* First check that no commands are left in the ring */
-	if ((ENGINE_READ(engine, RING_HEAD) & HEAD_ADDR) !=
+	अगर ((ENGINE_READ(engine, RING_HEAD) & HEAD_ADDR) !=
 	    (ENGINE_READ(engine, RING_TAIL) & TAIL_ADDR))
 		idle = false;
 
-	/* No bit for gen2, so assume the CS parser is idle */
-	if (INTEL_GEN(engine->i915) > 2 &&
+	/* No bit क्रम gen2, so assume the CS parser is idle */
+	अगर (INTEL_GEN(engine->i915) > 2 &&
 	    !(ENGINE_READ(engine, RING_MI_MODE) & MODE_IDLE))
 		idle = false;
 
-	intel_engine_pm_put(engine);
+	पूर्णांकel_engine_pm_put(engine);
 
-	return idle;
-}
+	वापस idle;
+पूर्ण
 
-void __intel_engine_flush_submission(struct intel_engine_cs *engine, bool sync)
-{
-	struct tasklet_struct *t = &engine->execlists.tasklet;
+व्योम __पूर्णांकel_engine_flush_submission(काष्ठा पूर्णांकel_engine_cs *engine, bool sync)
+अणु
+	काष्ठा tasklet_काष्ठा *t = &engine->execlists.tasklet;
 
-	if (!t->callback)
-		return;
+	अगर (!t->callback)
+		वापस;
 
 	local_bh_disable();
-	if (tasklet_trylock(t)) {
-		/* Must wait for any GPU reset in progress. */
-		if (__tasklet_is_enabled(t))
+	अगर (tasklet_trylock(t)) अणु
+		/* Must रुको क्रम any GPU reset in progress. */
+		अगर (__tasklet_is_enabled(t))
 			t->callback(t);
 		tasklet_unlock(t);
-	}
+	पूर्ण
 	local_bh_enable();
 
-	/* Synchronise and wait for the tasklet on another CPU */
-	if (sync)
-		tasklet_unlock_wait(t);
-}
+	/* Synchronise and रुको क्रम the tasklet on another CPU */
+	अगर (sync)
+		tasklet_unlock_रुको(t);
+पूर्ण
 
 /**
- * intel_engine_is_idle() - Report if the engine has finished process all work
- * @engine: the intel_engine_cs
+ * पूर्णांकel_engine_is_idle() - Report अगर the engine has finished process all work
+ * @engine: the पूर्णांकel_engine_cs
  *
- * Return true if there are no requests pending, nothing left to be submitted
+ * Return true अगर there are no requests pending, nothing left to be submitted
  * to hardware, and that the engine is idle.
  */
-bool intel_engine_is_idle(struct intel_engine_cs *engine)
-{
-	/* More white lies, if wedged, hw state is inconsistent */
-	if (intel_gt_is_wedged(engine->gt))
-		return true;
+bool पूर्णांकel_engine_is_idle(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	/* More white lies, अगर wedged, hw state is inconsistent */
+	अगर (पूर्णांकel_gt_is_wedged(engine->gt))
+		वापस true;
 
-	if (!intel_engine_pm_is_awake(engine))
-		return true;
+	अगर (!पूर्णांकel_engine_pm_is_awake(engine))
+		वापस true;
 
 	/* Waiting to drain ELSP? */
 	synchronize_hardirq(to_pci_dev(engine->i915->drm.dev)->irq);
-	intel_engine_flush_submission(engine);
+	पूर्णांकel_engine_flush_submission(engine);
 
-	/* ELSP is empty, but there are ready requests? E.g. after reset */
-	if (!RB_EMPTY_ROOT(&engine->execlists.queue.rb_root))
-		return false;
+	/* ELSP is empty, but there are पढ़ोy requests? E.g. after reset */
+	अगर (!RB_EMPTY_ROOT(&engine->execlists.queue.rb_root))
+		वापस false;
 
 	/* Ring stopped? */
-	return ring_is_idle(engine);
-}
+	वापस ring_is_idle(engine);
+पूर्ण
 
-bool intel_engines_are_idle(struct intel_gt *gt)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+bool पूर्णांकel_engines_are_idle(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
 	/*
 	 * If the driver is wedged, HW state may be very inconsistent and
 	 * report that it is still busy, even though we have stopped using it.
 	 */
-	if (intel_gt_is_wedged(gt))
-		return true;
+	अगर (पूर्णांकel_gt_is_wedged(gt))
+		वापस true;
 
-	/* Already parked (and passed an idleness test); must still be idle */
-	if (!READ_ONCE(gt->awake))
-		return true;
+	/* Alपढ़ोy parked (and passed an idleness test); must still be idle */
+	अगर (!READ_ONCE(gt->awake))
+		वापस true;
 
-	for_each_engine(engine, gt, id) {
-		if (!intel_engine_is_idle(engine))
-			return false;
-	}
+	क्रम_each_engine(engine, gt, id) अणु
+		अगर (!पूर्णांकel_engine_is_idle(engine))
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void intel_engines_reset_default_submission(struct intel_gt *gt)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+व्योम पूर्णांकel_engines_reset_शेष_submission(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	for_each_engine(engine, gt, id) {
-		if (engine->sanitize)
+	क्रम_each_engine(engine, gt, id) अणु
+		अगर (engine->sanitize)
 			engine->sanitize(engine);
 
-		engine->set_default_submission(engine);
-	}
-}
+		engine->set_शेष_submission(engine);
+	पूर्ण
+पूर्ण
 
-bool intel_engine_can_store_dword(struct intel_engine_cs *engine)
-{
-	switch (INTEL_GEN(engine->i915)) {
-	case 2:
-		return false; /* uses physical not virtual addresses */
-	case 3:
-		/* maybe only uses physical not virtual addresses */
-		return !(IS_I915G(engine->i915) || IS_I915GM(engine->i915));
-	case 4:
-		return !IS_I965G(engine->i915); /* who knows! */
-	case 6:
-		return engine->class != VIDEO_DECODE_CLASS; /* b0rked */
-	default:
-		return true;
-	}
-}
+bool पूर्णांकel_engine_can_store_dword(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	चयन (INTEL_GEN(engine->i915)) अणु
+	हाल 2:
+		वापस false; /* uses physical not भव addresses */
+	हाल 3:
+		/* maybe only uses physical not भव addresses */
+		वापस !(IS_I915G(engine->i915) || IS_I915GM(engine->i915));
+	हाल 4:
+		वापस !IS_I965G(engine->i915); /* who knows! */
+	हाल 6:
+		वापस engine->class != VIDEO_DECODE_CLASS; /* b0rked */
+	शेष:
+		वापस true;
+	पूर्ण
+पूर्ण
 
-static struct intel_timeline *get_timeline(struct i915_request *rq)
-{
-	struct intel_timeline *tl;
+अटल काष्ठा पूर्णांकel_समयline *get_समयline(काष्ठा i915_request *rq)
+अणु
+	काष्ठा पूर्णांकel_समयline *tl;
 
 	/*
 	 * Even though we are holding the engine->active.lock here, there
 	 * is no control over the submission queue per-se and we are
-	 * inspecting the active state at a random point in time, with an
-	 * unknown queue. Play safe and make sure the timeline remains valid.
-	 * (Only being used for pretty printing, one extra kref shouldn't
+	 * inspecting the active state at a अक्रमom poपूर्णांक in समय, with an
+	 * unknown queue. Play safe and make sure the समयline reमुख्यs valid.
+	 * (Only being used क्रम pretty prपूर्णांकing, one extra kref shouldn't
 	 * cause a camel stampede!)
 	 */
-	rcu_read_lock();
-	tl = rcu_dereference(rq->timeline);
-	if (!kref_get_unless_zero(&tl->kref))
-		tl = NULL;
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	tl = rcu_dereference(rq->समयline);
+	अगर (!kref_get_unless_zero(&tl->kref))
+		tl = शून्य;
+	rcu_पढ़ो_unlock();
 
-	return tl;
-}
+	वापस tl;
+पूर्ण
 
-static int print_ring(char *buf, int sz, struct i915_request *rq)
-{
-	int len = 0;
+अटल पूर्णांक prपूर्णांक_ring(अक्षर *buf, पूर्णांक sz, काष्ठा i915_request *rq)
+अणु
+	पूर्णांक len = 0;
 
-	if (!i915_request_signaled(rq)) {
-		struct intel_timeline *tl = get_timeline(rq);
+	अगर (!i915_request_संकेतed(rq)) अणु
+		काष्ठा पूर्णांकel_समयline *tl = get_समयline(rq);
 
-		len = scnprintf(buf, sz,
+		len = scnम_लिखो(buf, sz,
 				"ring:{start:%08x, hwsp:%08x, seqno:%08x, runtime:%llums}, ",
 				i915_ggtt_offset(rq->ring->vma),
 				tl ? tl->hwsp_offset : 0,
 				hwsp_seqno(rq),
-				DIV_ROUND_CLOSEST_ULL(intel_context_get_total_runtime_ns(rq->context),
+				DIV_ROUND_CLOSEST_ULL(पूर्णांकel_context_get_total_runसमय_ns(rq->context),
 						      1000 * 1000));
 
-		if (tl)
-			intel_timeline_put(tl);
-	}
+		अगर (tl)
+			पूर्णांकel_समयline_put(tl);
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static void hexdump(struct drm_printer *m, const void *buf, size_t len)
-{
-	const size_t rowsize = 8 * sizeof(u32);
-	const void *prev = NULL;
+अटल व्योम hexdump(काष्ठा drm_prपूर्णांकer *m, स्थिर व्योम *buf, माप_प्रकार len)
+अणु
+	स्थिर माप_प्रकार rowsize = 8 * माप(u32);
+	स्थिर व्योम *prev = शून्य;
 	bool skip = false;
-	size_t pos;
+	माप_प्रकार pos;
 
-	for (pos = 0; pos < len; pos += rowsize) {
-		char line[128];
+	क्रम (pos = 0; pos < len; pos += rowsize) अणु
+		अक्षर line[128];
 
-		if (prev && !memcmp(prev, buf + pos, rowsize)) {
-			if (!skip) {
-				drm_printf(m, "*\n");
+		अगर (prev && !स_भेद(prev, buf + pos, rowsize)) अणु
+			अगर (!skip) अणु
+				drm_म_लिखो(m, "*\n");
 				skip = true;
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
 		WARN_ON_ONCE(hex_dump_to_buffer(buf + pos, len - pos,
-						rowsize, sizeof(u32),
-						line, sizeof(line),
-						false) >= sizeof(line));
-		drm_printf(m, "[%04zx] %s\n", pos, line);
+						rowsize, माप(u32),
+						line, माप(line),
+						false) >= माप(line));
+		drm_म_लिखो(m, "[%04zx] %s\n", pos, line);
 
 		prev = buf + pos;
 		skip = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const char *repr_timer(const struct timer_list *t)
-{
-	if (!READ_ONCE(t->expires))
-		return "inactive";
+अटल स्थिर अक्षर *repr_समयr(स्थिर काष्ठा समयr_list *t)
+अणु
+	अगर (!READ_ONCE(t->expires))
+		वापस "inactive";
 
-	if (timer_pending(t))
-		return "active";
+	अगर (समयr_pending(t))
+		वापस "active";
 
-	return "expired";
-}
+	वापस "expired";
+पूर्ण
 
-static void intel_engine_print_registers(struct intel_engine_cs *engine,
-					 struct drm_printer *m)
-{
-	struct drm_i915_private *dev_priv = engine->i915;
-	struct intel_engine_execlists * const execlists = &engine->execlists;
+अटल व्योम पूर्णांकel_engine_prपूर्णांक_रेजिस्टरs(काष्ठा पूर्णांकel_engine_cs *engine,
+					 काष्ठा drm_prपूर्णांकer *m)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = engine->i915;
+	काष्ठा पूर्णांकel_engine_execlists * स्थिर execlists = &engine->execlists;
 	u64 addr;
 
-	if (engine->id == RENDER_CLASS && IS_GEN_RANGE(dev_priv, 4, 7))
-		drm_printf(m, "\tCCID: 0x%08x\n", ENGINE_READ(engine, CCID));
-	if (HAS_EXECLISTS(dev_priv)) {
-		drm_printf(m, "\tEL_STAT_HI: 0x%08x\n",
+	अगर (engine->id == RENDER_CLASS && IS_GEN_RANGE(dev_priv, 4, 7))
+		drm_म_लिखो(m, "\tCCID: 0x%08x\n", ENGINE_READ(engine, CCID));
+	अगर (HAS_EXECLISTS(dev_priv)) अणु
+		drm_म_लिखो(m, "\tEL_STAT_HI: 0x%08x\n",
 			   ENGINE_READ(engine, RING_EXECLIST_STATUS_HI));
-		drm_printf(m, "\tEL_STAT_LO: 0x%08x\n",
+		drm_म_लिखो(m, "\tEL_STAT_LO: 0x%08x\n",
 			   ENGINE_READ(engine, RING_EXECLIST_STATUS_LO));
-	}
-	drm_printf(m, "\tRING_START: 0x%08x\n",
+	पूर्ण
+	drm_म_लिखो(m, "\tRING_START: 0x%08x\n",
 		   ENGINE_READ(engine, RING_START));
-	drm_printf(m, "\tRING_HEAD:  0x%08x\n",
+	drm_म_लिखो(m, "\tRING_HEAD:  0x%08x\n",
 		   ENGINE_READ(engine, RING_HEAD) & HEAD_ADDR);
-	drm_printf(m, "\tRING_TAIL:  0x%08x\n",
+	drm_म_लिखो(m, "\tRING_TAIL:  0x%08x\n",
 		   ENGINE_READ(engine, RING_TAIL) & TAIL_ADDR);
-	drm_printf(m, "\tRING_CTL:   0x%08x%s\n",
+	drm_म_लिखो(m, "\tRING_CTL:   0x%08x%s\n",
 		   ENGINE_READ(engine, RING_CTL),
 		   ENGINE_READ(engine, RING_CTL) & (RING_WAIT | RING_WAIT_SEMAPHORE) ? " [waiting]" : "");
-	if (INTEL_GEN(engine->i915) > 2) {
-		drm_printf(m, "\tRING_MODE:  0x%08x%s\n",
+	अगर (INTEL_GEN(engine->i915) > 2) अणु
+		drm_म_लिखो(m, "\tRING_MODE:  0x%08x%s\n",
 			   ENGINE_READ(engine, RING_MI_MODE),
 			   ENGINE_READ(engine, RING_MI_MODE) & (MODE_IDLE) ? " [idle]" : "");
-	}
+	पूर्ण
 
-	if (INTEL_GEN(dev_priv) >= 6) {
-		drm_printf(m, "\tRING_IMR:   0x%08x\n",
+	अगर (INTEL_GEN(dev_priv) >= 6) अणु
+		drm_म_लिखो(m, "\tRING_IMR:   0x%08x\n",
 			   ENGINE_READ(engine, RING_IMR));
-		drm_printf(m, "\tRING_ESR:   0x%08x\n",
+		drm_म_लिखो(m, "\tRING_ESR:   0x%08x\n",
 			   ENGINE_READ(engine, RING_ESR));
-		drm_printf(m, "\tRING_EMR:   0x%08x\n",
+		drm_म_लिखो(m, "\tRING_EMR:   0x%08x\n",
 			   ENGINE_READ(engine, RING_EMR));
-		drm_printf(m, "\tRING_EIR:   0x%08x\n",
+		drm_म_लिखो(m, "\tRING_EIR:   0x%08x\n",
 			   ENGINE_READ(engine, RING_EIR));
-	}
+	पूर्ण
 
-	addr = intel_engine_get_active_head(engine);
-	drm_printf(m, "\tACTHD:  0x%08x_%08x\n",
+	addr = पूर्णांकel_engine_get_active_head(engine);
+	drm_म_लिखो(m, "\tACTHD:  0x%08x_%08x\n",
 		   upper_32_bits(addr), lower_32_bits(addr));
-	addr = intel_engine_get_last_batch_head(engine);
-	drm_printf(m, "\tBBADDR: 0x%08x_%08x\n",
+	addr = पूर्णांकel_engine_get_last_batch_head(engine);
+	drm_म_लिखो(m, "\tBBADDR: 0x%08x_%08x\n",
 		   upper_32_bits(addr), lower_32_bits(addr));
-	if (INTEL_GEN(dev_priv) >= 8)
+	अगर (INTEL_GEN(dev_priv) >= 8)
 		addr = ENGINE_READ64(engine, RING_DMA_FADD, RING_DMA_FADD_UDW);
-	else if (INTEL_GEN(dev_priv) >= 4)
+	अन्यथा अगर (INTEL_GEN(dev_priv) >= 4)
 		addr = ENGINE_READ(engine, RING_DMA_FADD);
-	else
+	अन्यथा
 		addr = ENGINE_READ(engine, DMA_FADD_I8XX);
-	drm_printf(m, "\tDMA_FADDR: 0x%08x_%08x\n",
+	drm_म_लिखो(m, "\tDMA_FADDR: 0x%08x_%08x\n",
 		   upper_32_bits(addr), lower_32_bits(addr));
-	if (INTEL_GEN(dev_priv) >= 4) {
-		drm_printf(m, "\tIPEIR: 0x%08x\n",
+	अगर (INTEL_GEN(dev_priv) >= 4) अणु
+		drm_म_लिखो(m, "\tIPEIR: 0x%08x\n",
 			   ENGINE_READ(engine, RING_IPEIR));
-		drm_printf(m, "\tIPEHR: 0x%08x\n",
+		drm_म_लिखो(m, "\tIPEHR: 0x%08x\n",
 			   ENGINE_READ(engine, RING_IPEHR));
-	} else {
-		drm_printf(m, "\tIPEIR: 0x%08x\n", ENGINE_READ(engine, IPEIR));
-		drm_printf(m, "\tIPEHR: 0x%08x\n", ENGINE_READ(engine, IPEHR));
-	}
+	पूर्ण अन्यथा अणु
+		drm_म_लिखो(m, "\tIPEIR: 0x%08x\n", ENGINE_READ(engine, IPEIR));
+		drm_म_लिखो(m, "\tIPEHR: 0x%08x\n", ENGINE_READ(engine, IPEHR));
+	पूर्ण
 
-	if (intel_engine_in_guc_submission_mode(engine)) {
-		/* nothing to print yet */
-	} else if (HAS_EXECLISTS(dev_priv)) {
-		struct i915_request * const *port, *rq;
-		const u32 *hws =
+	अगर (पूर्णांकel_engine_in_guc_submission_mode(engine)) अणु
+		/* nothing to prपूर्णांक yet */
+	पूर्ण अन्यथा अगर (HAS_EXECLISTS(dev_priv)) अणु
+		काष्ठा i915_request * स्थिर *port, *rq;
+		स्थिर u32 *hws =
 			&engine->status_page.addr[I915_HWS_CSB_BUF0_INDEX];
-		const u8 num_entries = execlists->csb_size;
-		unsigned int idx;
-		u8 read, write;
+		स्थिर u8 num_entries = execlists->csb_size;
+		अचिन्हित पूर्णांक idx;
+		u8 पढ़ो, ग_लिखो;
 
-		drm_printf(m, "\tExeclist tasklet queued? %s (%s), preempt? %s, timeslice? %s\n",
+		drm_म_लिखो(m, "\tExeclist tasklet queued? %s (%s), preempt? %s, timeslice? %s\n",
 			   yesno(test_bit(TASKLET_STATE_SCHED,
 					  &engine->execlists.tasklet.state)),
-			   enableddisabled(!atomic_read(&engine->execlists.tasklet.count)),
-			   repr_timer(&engine->execlists.preempt),
-			   repr_timer(&engine->execlists.timer));
+			   enableddisabled(!atomic_पढ़ो(&engine->execlists.tasklet.count)),
+			   repr_समयr(&engine->execlists.preempt),
+			   repr_समयr(&engine->execlists.समयr));
 
-		read = execlists->csb_head;
-		write = READ_ONCE(*execlists->csb_write);
+		पढ़ो = execlists->csb_head;
+		ग_लिखो = READ_ONCE(*execlists->csb_ग_लिखो);
 
-		drm_printf(m, "\tExeclist status: 0x%08x %08x; CSB read:%d, write:%d, entries:%d\n",
+		drm_म_लिखो(m, "\tExeclist status: 0x%08x %08x; CSB read:%d, write:%d, entries:%d\n",
 			   ENGINE_READ(engine, RING_EXECLIST_STATUS_LO),
 			   ENGINE_READ(engine, RING_EXECLIST_STATUS_HI),
-			   read, write, num_entries);
+			   पढ़ो, ग_लिखो, num_entries);
 
-		if (read >= num_entries)
-			read = 0;
-		if (write >= num_entries)
-			write = 0;
-		if (read > write)
-			write += num_entries;
-		while (read < write) {
-			idx = ++read % num_entries;
-			drm_printf(m, "\tExeclist CSB[%d]: 0x%08x, context: %d\n",
+		अगर (पढ़ो >= num_entries)
+			पढ़ो = 0;
+		अगर (ग_लिखो >= num_entries)
+			ग_लिखो = 0;
+		अगर (पढ़ो > ग_लिखो)
+			ग_लिखो += num_entries;
+		जबतक (पढ़ो < ग_लिखो) अणु
+			idx = ++पढ़ो % num_entries;
+			drm_म_लिखो(m, "\tExeclist CSB[%d]: 0x%08x, context: %d\n",
 				   idx, hws[idx * 2], hws[idx * 2 + 1]);
-		}
+		पूर्ण
 
 		execlists_active_lock_bh(execlists);
-		rcu_read_lock();
-		for (port = execlists->active; (rq = *port); port++) {
-			char hdr[160];
-			int len;
+		rcu_पढ़ो_lock();
+		क्रम (port = execlists->active; (rq = *port); port++) अणु
+			अक्षर hdr[160];
+			पूर्णांक len;
 
-			len = scnprintf(hdr, sizeof(hdr),
+			len = scnम_लिखो(hdr, माप(hdr),
 					"\t\tActive[%d]:  ccid:%08x%s%s, ",
-					(int)(port - execlists->active),
+					(पूर्णांक)(port - execlists->active),
 					rq->context->lrc.ccid,
-					intel_context_is_closed(rq->context) ? "!" : "",
-					intel_context_is_banned(rq->context) ? "*" : "");
-			len += print_ring(hdr + len, sizeof(hdr) - len, rq);
-			scnprintf(hdr + len, sizeof(hdr) - len, "rq: ");
+					पूर्णांकel_context_is_बंदd(rq->context) ? "!" : "",
+					पूर्णांकel_context_is_banned(rq->context) ? "*" : "");
+			len += prपूर्णांक_ring(hdr + len, माप(hdr) - len, rq);
+			scnम_लिखो(hdr + len, माप(hdr) - len, "rq: ");
 			i915_request_show(m, rq, hdr, 0);
-		}
-		for (port = execlists->pending; (rq = *port); port++) {
-			char hdr[160];
-			int len;
+		पूर्ण
+		क्रम (port = execlists->pending; (rq = *port); port++) अणु
+			अक्षर hdr[160];
+			पूर्णांक len;
 
-			len = scnprintf(hdr, sizeof(hdr),
+			len = scnम_लिखो(hdr, माप(hdr),
 					"\t\tPending[%d]: ccid:%08x%s%s, ",
-					(int)(port - execlists->pending),
+					(पूर्णांक)(port - execlists->pending),
 					rq->context->lrc.ccid,
-					intel_context_is_closed(rq->context) ? "!" : "",
-					intel_context_is_banned(rq->context) ? "*" : "");
-			len += print_ring(hdr + len, sizeof(hdr) - len, rq);
-			scnprintf(hdr + len, sizeof(hdr) - len, "rq: ");
+					पूर्णांकel_context_is_बंदd(rq->context) ? "!" : "",
+					पूर्णांकel_context_is_banned(rq->context) ? "*" : "");
+			len += prपूर्णांक_ring(hdr + len, माप(hdr) - len, rq);
+			scnम_लिखो(hdr + len, माप(hdr) - len, "rq: ");
 			i915_request_show(m, rq, hdr, 0);
-		}
-		rcu_read_unlock();
+		पूर्ण
+		rcu_पढ़ो_unlock();
 		execlists_active_unlock_bh(execlists);
-	} else if (INTEL_GEN(dev_priv) > 6) {
-		drm_printf(m, "\tPP_DIR_BASE: 0x%08x\n",
-			   ENGINE_READ(engine, RING_PP_DIR_BASE));
-		drm_printf(m, "\tPP_DIR_BASE_READ: 0x%08x\n",
-			   ENGINE_READ(engine, RING_PP_DIR_BASE_READ));
-		drm_printf(m, "\tPP_DIR_DCLV: 0x%08x\n",
-			   ENGINE_READ(engine, RING_PP_DIR_DCLV));
-	}
-}
+	पूर्ण अन्यथा अगर (INTEL_GEN(dev_priv) > 6) अणु
+		drm_म_लिखो(m, "\tPP_DIR_BASE: 0x%08x\n",
+			   ENGINE_READ(engine, RING_PP_सूची_BASE));
+		drm_म_लिखो(m, "\tPP_DIR_BASE_READ: 0x%08x\n",
+			   ENGINE_READ(engine, RING_PP_सूची_BASE_READ));
+		drm_म_लिखो(m, "\tPP_DIR_DCLV: 0x%08x\n",
+			   ENGINE_READ(engine, RING_PP_सूची_DCLV));
+	पूर्ण
+पूर्ण
 
-static void print_request_ring(struct drm_printer *m, struct i915_request *rq)
-{
-	void *ring;
-	int size;
+अटल व्योम prपूर्णांक_request_ring(काष्ठा drm_prपूर्णांकer *m, काष्ठा i915_request *rq)
+अणु
+	व्योम *ring;
+	पूर्णांक size;
 
-	drm_printf(m,
+	drm_म_लिखो(m,
 		   "[head %04x, postfix %04x, tail %04x, batch 0x%08x_%08x]:\n",
 		   rq->head, rq->postfix, rq->tail,
 		   rq->batch ? upper_32_bits(rq->batch->node.start) : ~0u,
 		   rq->batch ? lower_32_bits(rq->batch->node.start) : ~0u);
 
 	size = rq->tail - rq->head;
-	if (rq->tail < rq->head)
+	अगर (rq->tail < rq->head)
 		size += rq->ring->size;
 
-	ring = kmalloc(size, GFP_ATOMIC);
-	if (ring) {
-		const void *vaddr = rq->ring->vaddr;
-		unsigned int head = rq->head;
-		unsigned int len = 0;
+	ring = kदो_स्मृति(size, GFP_ATOMIC);
+	अगर (ring) अणु
+		स्थिर व्योम *vaddr = rq->ring->vaddr;
+		अचिन्हित पूर्णांक head = rq->head;
+		अचिन्हित पूर्णांक len = 0;
 
-		if (rq->tail < head) {
+		अगर (rq->tail < head) अणु
 			len = rq->ring->size - head;
-			memcpy(ring, vaddr + head, len);
+			स_नकल(ring, vaddr + head, len);
 			head = 0;
-		}
-		memcpy(ring + len, vaddr + head, size - len);
+		पूर्ण
+		स_नकल(ring + len, vaddr + head, size - len);
 
 		hexdump(m, ring, size);
-		kfree(ring);
-	}
-}
+		kमुक्त(ring);
+	पूर्ण
+पूर्ण
 
-static unsigned long list_count(struct list_head *list)
-{
-	struct list_head *pos;
-	unsigned long count = 0;
+अटल अचिन्हित दीर्घ list_count(काष्ठा list_head *list)
+अणु
+	काष्ठा list_head *pos;
+	अचिन्हित दीर्घ count = 0;
 
-	list_for_each(pos, list)
+	list_क्रम_each(pos, list)
 		count++;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static unsigned long read_ul(void *p, size_t x)
-{
-	return *(unsigned long *)(p + x);
-}
+अटल अचिन्हित दीर्घ पढ़ो_ul(व्योम *p, माप_प्रकार x)
+अणु
+	वापस *(अचिन्हित दीर्घ *)(p + x);
+पूर्ण
 
-static void print_properties(struct intel_engine_cs *engine,
-			     struct drm_printer *m)
-{
-	static const struct pmap {
-		size_t offset;
-		const char *name;
-	} props[] = {
-#define P(x) { \
-	.offset = offsetof(typeof(engine->props), x), \
+अटल व्योम prपूर्णांक_properties(काष्ठा पूर्णांकel_engine_cs *engine,
+			     काष्ठा drm_prपूर्णांकer *m)
+अणु
+	अटल स्थिर काष्ठा pmap अणु
+		माप_प्रकार offset;
+		स्थिर अक्षर *name;
+	पूर्ण props[] = अणु
+#घोषणा P(x) अणु \
+	.offset = दुरत्व(typeof(engine->props), x), \
 	.name = #x \
-}
-		P(heartbeat_interval_ms),
-		P(max_busywait_duration_ns),
-		P(preempt_timeout_ms),
-		P(stop_timeout_ms),
-		P(timeslice_duration_ms),
+पूर्ण
+		P(heartbeat_पूर्णांकerval_ms),
+		P(max_busyरुको_duration_ns),
+		P(preempt_समयout_ms),
+		P(stop_समयout_ms),
+		P(बारlice_duration_ms),
 
-		{},
-#undef P
-	};
-	const struct pmap *p;
+		अणुपूर्ण,
+#अघोषित P
+	पूर्ण;
+	स्थिर काष्ठा pmap *p;
 
-	drm_printf(m, "\tProperties:\n");
-	for (p = props; p->name; p++)
-		drm_printf(m, "\t\t%s: %lu [default %lu]\n",
+	drm_म_लिखो(m, "\tProperties:\n");
+	क्रम (p = props; p->name; p++)
+		drm_म_लिखो(m, "\t\t%s: %lu [default %lu]\n",
 			   p->name,
-			   read_ul(&engine->props, p->offset),
-			   read_ul(&engine->defaults, p->offset));
-}
+			   पढ़ो_ul(&engine->props, p->offset),
+			   पढ़ो_ul(&engine->शेषs, p->offset));
+पूर्ण
 
-void intel_engine_dump(struct intel_engine_cs *engine,
-		       struct drm_printer *m,
-		       const char *header, ...)
-{
-	struct i915_gpu_error * const error = &engine->i915->gpu_error;
-	struct i915_request *rq;
-	intel_wakeref_t wakeref;
-	unsigned long flags;
-	ktime_t dummy;
+व्योम पूर्णांकel_engine_dump(काष्ठा पूर्णांकel_engine_cs *engine,
+		       काष्ठा drm_prपूर्णांकer *m,
+		       स्थिर अक्षर *header, ...)
+अणु
+	काष्ठा i915_gpu_error * स्थिर error = &engine->i915->gpu_error;
+	काष्ठा i915_request *rq;
+	पूर्णांकel_wakeref_t wakeref;
+	अचिन्हित दीर्घ flags;
+	kसमय_प्रकार dummy;
 
-	if (header) {
-		va_list ap;
+	अगर (header) अणु
+		बहु_सूची ap;
 
-		va_start(ap, header);
-		drm_vprintf(m, header, &ap);
-		va_end(ap);
-	}
+		बहु_शुरू(ap, header);
+		drm_भ_लिखो(m, header, &ap);
+		बहु_पूर्ण(ap);
+	पूर्ण
 
-	if (intel_gt_is_wedged(engine->gt))
-		drm_printf(m, "*** WEDGED ***\n");
+	अगर (पूर्णांकel_gt_is_wedged(engine->gt))
+		drm_म_लिखो(m, "*** WEDGED ***\n");
 
-	drm_printf(m, "\tAwake? %d\n", atomic_read(&engine->wakeref.count));
-	drm_printf(m, "\tBarriers?: %s\n",
+	drm_म_लिखो(m, "\tAwake? %d\n", atomic_पढ़ो(&engine->wakeref.count));
+	drm_म_लिखो(m, "\tBarriers?: %s\n",
 		   yesno(!llist_empty(&engine->barrier_tasks)));
-	drm_printf(m, "\tLatency: %luus\n",
-		   ewma__engine_latency_read(&engine->latency));
-	if (intel_engine_supports_stats(engine))
-		drm_printf(m, "\tRuntime: %llums\n",
-			   ktime_to_ms(intel_engine_get_busy_time(engine,
+	drm_म_लिखो(m, "\tLatency: %luus\n",
+		   ewma__engine_latency_पढ़ो(&engine->latency));
+	अगर (पूर्णांकel_engine_supports_stats(engine))
+		drm_म_लिखो(m, "\tRuntime: %llums\n",
+			   kसमय_प्रकारo_ms(पूर्णांकel_engine_get_busy_समय(engine,
 								  &dummy)));
-	drm_printf(m, "\tForcewake: %x domains, %d active\n",
-		   engine->fw_domain, READ_ONCE(engine->fw_active));
+	drm_म_लिखो(m, "\tForcewake: %x domains, %d active\n",
+		   engine->fw_करोमुख्य, READ_ONCE(engine->fw_active));
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	rq = READ_ONCE(engine->heartbeat.systole);
-	if (rq)
-		drm_printf(m, "\tHeartbeat: %d ms ago\n",
-			   jiffies_to_msecs(jiffies - rq->emitted_jiffies));
-	rcu_read_unlock();
-	drm_printf(m, "\tReset count: %d (global %d)\n",
+	अगर (rq)
+		drm_म_लिखो(m, "\tHeartbeat: %d ms ago\n",
+			   jअगरfies_to_msecs(jअगरfies - rq->emitted_jअगरfies));
+	rcu_पढ़ो_unlock();
+	drm_म_लिखो(m, "\tReset count: %d (global %d)\n",
 		   i915_reset_engine_count(error, engine),
 		   i915_reset_count(error));
-	print_properties(engine, m);
+	prपूर्णांक_properties(engine, m);
 
-	drm_printf(m, "\tRequests:\n");
+	drm_म_लिखो(m, "\tRequests:\n");
 
 	spin_lock_irqsave(&engine->active.lock, flags);
-	rq = intel_engine_find_active_request(engine);
-	if (rq) {
-		struct intel_timeline *tl = get_timeline(rq);
+	rq = पूर्णांकel_engine_find_active_request(engine);
+	अगर (rq) अणु
+		काष्ठा पूर्णांकel_समयline *tl = get_समयline(rq);
 
 		i915_request_show(m, rq, "\t\tactive ", 0);
 
-		drm_printf(m, "\t\tring->start:  0x%08x\n",
+		drm_म_लिखो(m, "\t\tring->start:  0x%08x\n",
 			   i915_ggtt_offset(rq->ring->vma));
-		drm_printf(m, "\t\tring->head:   0x%08x\n",
+		drm_म_लिखो(m, "\t\tring->head:   0x%08x\n",
 			   rq->ring->head);
-		drm_printf(m, "\t\tring->tail:   0x%08x\n",
+		drm_म_लिखो(m, "\t\tring->tail:   0x%08x\n",
 			   rq->ring->tail);
-		drm_printf(m, "\t\tring->emit:   0x%08x\n",
+		drm_म_लिखो(m, "\t\tring->emit:   0x%08x\n",
 			   rq->ring->emit);
-		drm_printf(m, "\t\tring->space:  0x%08x\n",
+		drm_म_लिखो(m, "\t\tring->space:  0x%08x\n",
 			   rq->ring->space);
 
-		if (tl) {
-			drm_printf(m, "\t\tring->hwsp:   0x%08x\n",
+		अगर (tl) अणु
+			drm_म_लिखो(m, "\t\tring->hwsp:   0x%08x\n",
 				   tl->hwsp_offset);
-			intel_timeline_put(tl);
-		}
+			पूर्णांकel_समयline_put(tl);
+		पूर्ण
 
-		print_request_ring(m, rq);
+		prपूर्णांक_request_ring(m, rq);
 
-		if (rq->context->lrc_reg_state) {
-			drm_printf(m, "Logical Ring Context:\n");
+		अगर (rq->context->lrc_reg_state) अणु
+			drm_म_लिखो(m, "Logical Ring Context:\n");
 			hexdump(m, rq->context->lrc_reg_state, PAGE_SIZE);
-		}
-	}
-	drm_printf(m, "\tOn hold?: %lu\n", list_count(&engine->active.hold));
+		पूर्ण
+	पूर्ण
+	drm_म_लिखो(m, "\tOn hold?: %lu\n", list_count(&engine->active.hold));
 	spin_unlock_irqrestore(&engine->active.lock, flags);
 
-	drm_printf(m, "\tMMIO base:  0x%08x\n", engine->mmio_base);
-	wakeref = intel_runtime_pm_get_if_in_use(engine->uncore->rpm);
-	if (wakeref) {
-		intel_engine_print_registers(engine, m);
-		intel_runtime_pm_put(engine->uncore->rpm, wakeref);
-	} else {
-		drm_printf(m, "\tDevice is asleep; skipping register dump\n");
-	}
+	drm_म_लिखो(m, "\tMMIO base:  0x%08x\n", engine->mmio_base);
+	wakeref = पूर्णांकel_runसमय_pm_get_अगर_in_use(engine->uncore->rpm);
+	अगर (wakeref) अणु
+		पूर्णांकel_engine_prपूर्णांक_रेजिस्टरs(engine, m);
+		पूर्णांकel_runसमय_pm_put(engine->uncore->rpm, wakeref);
+	पूर्ण अन्यथा अणु
+		drm_म_लिखो(m, "\tDevice is asleep; skipping register dump\n");
+	पूर्ण
 
-	intel_execlists_show_requests(engine, m, i915_request_show, 8);
+	पूर्णांकel_execlists_show_requests(engine, m, i915_request_show, 8);
 
-	drm_printf(m, "HWSP:\n");
+	drm_म_लिखो(m, "HWSP:\n");
 	hexdump(m, engine->status_page.addr, PAGE_SIZE);
 
-	drm_printf(m, "Idle? %s\n", yesno(intel_engine_is_idle(engine)));
+	drm_म_लिखो(m, "Idle? %s\n", yesno(पूर्णांकel_engine_is_idle(engine)));
 
-	intel_engine_print_breadcrumbs(engine, m);
-}
+	पूर्णांकel_engine_prपूर्णांक_bपढ़ोcrumbs(engine, m);
+पूर्ण
 
-static ktime_t __intel_engine_get_busy_time(struct intel_engine_cs *engine,
-					    ktime_t *now)
-{
-	ktime_t total = engine->stats.total;
+अटल kसमय_प्रकार __पूर्णांकel_engine_get_busy_समय(काष्ठा पूर्णांकel_engine_cs *engine,
+					    kसमय_प्रकार *now)
+अणु
+	kसमय_प्रकार total = engine->stats.total;
 
 	/*
 	 * If the engine is executing something at the moment
 	 * add it to the total.
 	 */
-	*now = ktime_get();
-	if (READ_ONCE(engine->stats.active))
-		total = ktime_add(total, ktime_sub(*now, engine->stats.start));
+	*now = kसमय_get();
+	अगर (READ_ONCE(engine->stats.active))
+		total = kसमय_add(total, kसमय_sub(*now, engine->stats.start));
 
-	return total;
-}
+	वापस total;
+पूर्ण
 
 /**
- * intel_engine_get_busy_time() - Return current accumulated engine busyness
+ * पूर्णांकel_engine_get_busy_समय() - Return current accumulated engine busyness
  * @engine: engine to report on
- * @now: monotonic timestamp of sampling
+ * @now: monotonic बारtamp of sampling
  *
- * Returns accumulated time @engine was busy since engine stats were enabled.
+ * Returns accumulated समय @engine was busy since engine stats were enabled.
  */
-ktime_t intel_engine_get_busy_time(struct intel_engine_cs *engine, ktime_t *now)
-{
-	unsigned int seq;
-	ktime_t total;
+kसमय_प्रकार पूर्णांकel_engine_get_busy_समय(काष्ठा पूर्णांकel_engine_cs *engine, kसमय_प्रकार *now)
+अणु
+	अचिन्हित पूर्णांक seq;
+	kसमय_प्रकार total;
 
-	do {
-		seq = read_seqcount_begin(&engine->stats.lock);
-		total = __intel_engine_get_busy_time(engine, now);
-	} while (read_seqcount_retry(&engine->stats.lock, seq));
+	करो अणु
+		seq = पढ़ो_seqcount_begin(&engine->stats.lock);
+		total = __पूर्णांकel_engine_get_busy_समय(engine, now);
+	पूर्ण जबतक (पढ़ो_seqcount_retry(&engine->stats.lock, seq));
 
-	return total;
-}
+	वापस total;
+पूर्ण
 
-static bool match_ring(struct i915_request *rq)
-{
+अटल bool match_ring(काष्ठा i915_request *rq)
+अणु
 	u32 ring = ENGINE_READ(rq->engine, RING_START);
 
-	return ring == i915_ggtt_offset(rq->ring->vma);
-}
+	वापस ring == i915_ggtt_offset(rq->ring->vma);
+पूर्ण
 
-struct i915_request *
-intel_engine_find_active_request(struct intel_engine_cs *engine)
-{
-	struct i915_request *request, *active = NULL;
+काष्ठा i915_request *
+पूर्णांकel_engine_find_active_request(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_request *request, *active = शून्य;
 
 	/*
 	 * We are called by the error capture, reset and to dump engine
-	 * state at random points in time. In particular, note that neither is
-	 * crucially ordered with an interrupt. After a hang, the GPU is dead
-	 * and we assume that no more writes can happen (we waited long enough
-	 * for all writes that were in transaction to be flushed) - adding an
-	 * extra delay for a recent interrupt is pointless. Hence, we do
-	 * not need an engine->irq_seqno_barrier() before the seqno reads.
-	 * At all other times, we must assume the GPU is still running, but
+	 * state at अक्रमom poपूर्णांकs in समय. In particular, note that neither is
+	 * crucially ordered with an पूर्णांकerrupt. After a hang, the GPU is dead
+	 * and we assume that no more ग_लिखोs can happen (we रुकोed दीर्घ enough
+	 * क्रम all ग_लिखोs that were in transaction to be flushed) - adding an
+	 * extra delay क्रम a recent पूर्णांकerrupt is poपूर्णांकless. Hence, we करो
+	 * not need an engine->irq_seqno_barrier() beक्रमe the seqno पढ़ोs.
+	 * At all other बार, we must assume the GPU is still running, but
 	 * we only care about the snapshot of this moment.
 	 */
-	lockdep_assert_held(&engine->active.lock);
+	lockdep_निश्चित_held(&engine->active.lock);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	request = execlists_active(&engine->execlists);
-	if (request) {
-		struct intel_timeline *tl = request->context->timeline;
+	अगर (request) अणु
+		काष्ठा पूर्णांकel_समयline *tl = request->context->समयline;
 
-		list_for_each_entry_from_reverse(request, &tl->requests, link) {
-			if (__i915_request_is_complete(request))
-				break;
+		list_क्रम_each_entry_from_reverse(request, &tl->requests, link) अणु
+			अगर (__i915_request_is_complete(request))
+				अवरोध;
 
 			active = request;
-		}
-	}
-	rcu_read_unlock();
-	if (active)
-		return active;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	अगर (active)
+		वापस active;
 
-	list_for_each_entry(request, &engine->active.requests, sched.link) {
-		if (__i915_request_is_complete(request))
-			continue;
+	list_क्रम_each_entry(request, &engine->active.requests, sched.link) अणु
+		अगर (__i915_request_is_complete(request))
+			जारी;
 
-		if (!__i915_request_has_started(request))
-			continue;
+		अगर (!__i915_request_has_started(request))
+			जारी;
 
 		/* More than one preemptible request may match! */
-		if (!match_ring(request))
-			continue;
+		अगर (!match_ring(request))
+			जारी;
 
 		active = request;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return active;
-}
+	वापस active;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "mock_engine.c"
-#include "selftest_engine.c"
-#include "selftest_engine_cs.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "mock_engine.c"
+#समावेश "selftest_engine.c"
+#समावेश "selftest_engine_cs.c"
+#पूर्ण_अगर

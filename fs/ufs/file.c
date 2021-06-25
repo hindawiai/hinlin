@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/ufs/file.c
  *
@@ -12,7 +13,7 @@
  *
  * Copyright (C) 1992, 1993, 1994, 1995
  * Remy Card (card@masi.ibp.fr)
- * Laboratoire MASI - Institut Blaise Pascal
+ * Laborम_से_पre MASI - Institut Blaise Pascal
  * Universite Pierre et Marie Curie (Paris VI)
  *
  *  from
@@ -24,22 +25,22 @@
  *  ext2 fs regular file handling primitives
  */
 
-#include <linux/fs.h>
+#समावेश <linux/fs.h>
 
-#include "ufs_fs.h"
-#include "ufs.h"
+#समावेश "ufs_fs.h"
+#समावेश "ufs.h"
 
 /*
- * We have mostly NULL's here: the current defaults are ok for
- * the ufs filesystem.
+ * We have mostly शून्य's here: the current शेषs are ok क्रम
+ * the ufs fileप्रणाली.
  */
  
-const struct file_operations ufs_file_operations = {
+स्थिर काष्ठा file_operations ufs_file_operations = अणु
 	.llseek		= generic_file_llseek,
-	.read_iter	= generic_file_read_iter,
-	.write_iter	= generic_file_write_iter,
+	.पढ़ो_iter	= generic_file_पढ़ो_iter,
+	.ग_लिखो_iter	= generic_file_ग_लिखो_iter,
 	.mmap		= generic_file_mmap,
-	.open           = generic_file_open,
+	.खोलो           = generic_file_खोलो,
 	.fsync		= generic_file_fsync,
-	.splice_read	= generic_file_splice_read,
-};
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+पूर्ण;

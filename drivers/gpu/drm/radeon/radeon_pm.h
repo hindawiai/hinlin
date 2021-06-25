@@ -1,11 +1,12 @@
-/* radeon_pm.h -- Private header for radeon driver -*- linux-c -*-
+<शैली गुरु>
+/* radeon_pm.h -- Private header क्रम radeon driver -*- linux-c -*-
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,9 +22,9 @@
  *
  */
 
-#ifndef __RADEON_PM_H__
-#define __RADEON_PM_H__
+#अगर_अघोषित __RADEON_PM_H__
+#घोषणा __RADEON_PM_H__
 
-void radeon_pm_acpi_event_handler(struct radeon_device *rdev);
+व्योम radeon_pm_acpi_event_handler(काष्ठा radeon_device *rdev);
 
-#endif				/* __RADEON_PM_H__ */
+#पूर्ण_अगर				/* __RADEON_PM_H__ */

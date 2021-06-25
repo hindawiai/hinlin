@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* Integer base 2 logarithm calculation
  *
  * Copyright (C) 2006 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _TOOLS_LINUX_LOG2_H
-#define _TOOLS_LINUX_LOG2_H
+#अगर_अघोषित _TOOLS_LINUX_LOG2_H
+#घोषणा _TOOLS_LINUX_LOG2_H
 
-#include <linux/bitops.h>
-#include <linux/types.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/types.h>
 
 /*
- * non-constant log of base 2 calculators
- * - the arch may override these in asm/bitops.h if they can be implemented
+ * non-स्थिरant log of base 2 calculators
+ * - the arch may override these in यंत्र/bitops.h अगर they can be implemented
  *   more efficiently than using fls() and fls64()
- * - the arch is not required to handle n==0 if implementing the fallback
+ * - the arch is not required to handle n==0 अगर implementing the fallback
  */
-static inline __attribute__((const))
-int __ilog2_u32(u32 n)
-{
-	return fls(n) - 1;
-}
+अटल अंतरभूत __attribute__((स्थिर))
+पूर्णांक __ilog2_u32(u32 n)
+अणु
+	वापस fls(n) - 1;
+पूर्ण
 
-static inline __attribute__((const))
-int __ilog2_u64(u64 n)
-{
-	return fls64(n) - 1;
-}
+अटल अंतरभूत __attribute__((स्थिर))
+पूर्णांक __ilog2_u64(u64 n)
+अणु
+	वापस fls64(n) - 1;
+पूर्ण
 
 /*
- *  Determine whether some value is a power of two, where zero is
- * *not* considered a power of two.
+ *  Determine whether some value is a घातer of two, where zero is
+ * *not* considered a घातer of two.
  */
 
-static inline __attribute__((const))
-bool is_power_of_2(unsigned long n)
-{
-	return (n != 0 && ((n & (n - 1)) == 0));
-}
-
-/*
- * round up to nearest power of two
- */
-static inline __attribute__((const))
-unsigned long __roundup_pow_of_two(unsigned long n)
-{
-	return 1UL << fls_long(n - 1);
-}
+अटल अंतरभूत __attribute__((स्थिर))
+bool is_घातer_of_2(अचिन्हित दीर्घ n)
+अणु
+	वापस (n != 0 && ((n & (n - 1)) == 0));
+पूर्ण
 
 /*
- * round down to nearest power of two
+ * round up to nearest घातer of two
  */
-static inline __attribute__((const))
-unsigned long __rounddown_pow_of_two(unsigned long n)
-{
-	return 1UL << (fls_long(n) - 1);
-}
+अटल अंतरभूत __attribute__((स्थिर))
+अचिन्हित दीर्घ __roundup_घात_of_two(अचिन्हित दीर्घ n)
+अणु
+	वापस 1UL << fls_दीर्घ(n - 1);
+पूर्ण
+
+/*
+ * round करोwn to nearest घातer of two
+ */
+अटल अंतरभूत __attribute__((स्थिर))
+अचिन्हित दीर्घ __roundकरोwn_घात_of_two(अचिन्हित दीर्घ n)
+अणु
+	वापस 1UL << (fls_दीर्घ(n) - 1);
+पूर्ण
 
 /**
- * ilog2 - log of base 2 of 32-bit or a 64-bit unsigned value
+ * ilog2 - log of base 2 of 32-bit or a 64-bit अचिन्हित value
  * @n - parameter
  *
- * constant-capable log of base 2 calculation
- * - this can be used to initialise global variables from constant data, hence
- *   the massive ternary operator construction
+ * स्थिरant-capable log of base 2 calculation
+ * - this can be used to initialise global variables from स्थिरant data, hence
+ *   the massive ternary चालक स्थिरruction
  *
- * selects the appropriately-sized optimised version depending on sizeof(n)
+ * selects the appropriately-sized optimised version depending on माप(n)
  */
-#define ilog2(n)				\
+#घोषणा ilog2(n)				\
 (						\
-	__builtin_constant_p(n) ? (		\
+	__builtin_स्थिरant_p(n) ? (		\
 		(n) < 2 ? 0 :			\
 		(n) & (1ULL << 63) ? 63 :	\
 		(n) & (1ULL << 62) ? 62 :	\
@@ -135,41 +136,41 @@ unsigned long __rounddown_pow_of_two(unsigned long n)
 		(n) & (1ULL <<  3) ?  3 :	\
 		(n) & (1ULL <<  2) ?  2 :	\
 		1 ) :				\
-	(sizeof(n) <= 4) ?			\
+	(माप(n) <= 4) ?			\
 	__ilog2_u32(n) :			\
 	__ilog2_u64(n)				\
  )
 
 /**
- * roundup_pow_of_two - round the given value up to nearest power of two
+ * roundup_घात_of_two - round the given value up to nearest घातer of two
  * @n - parameter
  *
- * round the given value up to the nearest power of two
+ * round the given value up to the nearest घातer of two
  * - the result is undefined when n == 0
- * - this can be used to initialise global variables from constant data
+ * - this can be used to initialise global variables from स्थिरant data
  */
-#define roundup_pow_of_two(n)			\
+#घोषणा roundup_घात_of_two(n)			\
 (						\
-	__builtin_constant_p(n) ? (		\
+	__builtin_स्थिरant_p(n) ? (		\
 		(n == 1) ? 1 :			\
 		(1UL << (ilog2((n) - 1) + 1))	\
 				   ) :		\
-	__roundup_pow_of_two(n)			\
+	__roundup_घात_of_two(n)			\
  )
 
 /**
- * rounddown_pow_of_two - round the given value down to nearest power of two
+ * roundकरोwn_घात_of_two - round the given value करोwn to nearest घातer of two
  * @n - parameter
  *
- * round the given value down to the nearest power of two
+ * round the given value करोwn to the nearest घातer of two
  * - the result is undefined when n == 0
- * - this can be used to initialise global variables from constant data
+ * - this can be used to initialise global variables from स्थिरant data
  */
-#define rounddown_pow_of_two(n)			\
+#घोषणा roundकरोwn_घात_of_two(n)			\
 (						\
-	__builtin_constant_p(n) ? (		\
+	__builtin_स्थिरant_p(n) ? (		\
 		(1UL << ilog2(n))) :		\
-	__rounddown_pow_of_two(n)		\
+	__roundकरोwn_घात_of_two(n)		\
  )
 
-#endif /* _TOOLS_LINUX_LOG2_H */
+#पूर्ण_अगर /* _TOOLS_LINUX_LOG2_H */

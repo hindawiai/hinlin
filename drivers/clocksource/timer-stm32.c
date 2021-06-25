@@ -1,336 +1,337 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Maxime Coquelin 2015
- * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
+ * Author:  Maxime Coquelin <mcoquelin.sपंचांग32@gmail.com>
  *
- * Inspired by time-efm32.c from Uwe Kleine-Koenig
+ * Inspired by समय-efm32.c from Uwe Kleine-Koenig
  */
 
-#include <linux/kernel.h>
-#include <linux/clocksource.h>
-#include <linux/clockchips.h>
-#include <linux/delay.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/clk.h>
-#include <linux/reset.h>
-#include <linux/sched_clock.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/slab.h>
 
-#include "timer-of.h"
+#समावेश "timer-of.h"
 
-#define TIM_CR1		0x00
-#define TIM_DIER	0x0c
-#define TIM_SR		0x10
-#define TIM_EGR		0x14
-#define TIM_CNT		0x24
-#define TIM_PSC		0x28
-#define TIM_ARR		0x2c
-#define TIM_CCR1	0x34
+#घोषणा TIM_CR1		0x00
+#घोषणा TIM_DIER	0x0c
+#घोषणा TIM_SR		0x10
+#घोषणा TIM_EGR		0x14
+#घोषणा TIM_CNT		0x24
+#घोषणा TIM_PSC		0x28
+#घोषणा TIM_ARR		0x2c
+#घोषणा TIM_CCR1	0x34
 
-#define TIM_CR1_CEN	BIT(0)
-#define TIM_CR1_UDIS	BIT(1)
-#define TIM_CR1_OPM	BIT(3)
-#define TIM_CR1_ARPE	BIT(7)
+#घोषणा TIM_CR1_CEN	BIT(0)
+#घोषणा TIM_CR1_UDIS	BIT(1)
+#घोषणा TIM_CR1_OPM	BIT(3)
+#घोषणा TIM_CR1_ARPE	BIT(7)
 
-#define TIM_DIER_UIE	BIT(0)
-#define TIM_DIER_CC1IE	BIT(1)
+#घोषणा TIM_DIER_UIE	BIT(0)
+#घोषणा TIM_DIER_CC1IE	BIT(1)
 
-#define TIM_SR_UIF	BIT(0)
+#घोषणा TIM_SR_UIF	BIT(0)
 
-#define TIM_EGR_UG	BIT(0)
+#घोषणा TIM_EGR_UG	BIT(0)
 
-#define TIM_PSC_MAX	USHRT_MAX
-#define TIM_PSC_CLKRATE	10000
+#घोषणा TIM_PSC_MAX	अच_लघु_उच्च
+#घोषणा TIM_PSC_CLKRATE	10000
 
-struct stm32_timer_private {
-	int bits;
-};
+काष्ठा sपंचांग32_समयr_निजी अणु
+	पूर्णांक bits;
+पूर्ण;
 
 /**
- * stm32_timer_of_bits_set - set accessor helper
- * @to: a timer_of structure pointer
+ * sपंचांग32_समयr_of_bits_set - set accessor helper
+ * @to: a समयr_of काष्ठाure poपूर्णांकer
  * @bits: the number of bits (16 or 32)
  *
- * Accessor helper to set the number of bits in the timer-of private
- * structure.
+ * Accessor helper to set the number of bits in the समयr-of निजी
+ * काष्ठाure.
  *
  */
-static void stm32_timer_of_bits_set(struct timer_of *to, int bits)
-{
-	struct stm32_timer_private *pd = to->private_data;
+अटल व्योम sपंचांग32_समयr_of_bits_set(काष्ठा समयr_of *to, पूर्णांक bits)
+अणु
+	काष्ठा sपंचांग32_समयr_निजी *pd = to->निजी_data;
 
 	pd->bits = bits;
-}
+पूर्ण
 
 /**
- * stm32_timer_of_bits_get - get accessor helper
- * @to: a timer_of structure pointer
+ * sपंचांग32_समयr_of_bits_get - get accessor helper
+ * @to: a समयr_of काष्ठाure poपूर्णांकer
  *
- * Accessor helper to get the number of bits in the timer-of private
- * structure.
+ * Accessor helper to get the number of bits in the समयr-of निजी
+ * काष्ठाure.
  *
- * Returns an integer corresponding to the number of bits.
+ * Returns an पूर्णांकeger corresponding to the number of bits.
  */
-static int stm32_timer_of_bits_get(struct timer_of *to)
-{
-	struct stm32_timer_private *pd = to->private_data;
+अटल पूर्णांक sपंचांग32_समयr_of_bits_get(काष्ठा समयr_of *to)
+अणु
+	काष्ठा sपंचांग32_समयr_निजी *pd = to->निजी_data;
 
-	return pd->bits;
-}
+	वापस pd->bits;
+पूर्ण
 
-static void __iomem *stm32_timer_cnt __read_mostly;
+अटल व्योम __iomem *sपंचांग32_समयr_cnt __पढ़ो_mostly;
 
-static u64 notrace stm32_read_sched_clock(void)
-{
-	return readl_relaxed(stm32_timer_cnt);
-}
+अटल u64 notrace sपंचांग32_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	वापस पढ़ोl_relaxed(sपंचांग32_समयr_cnt);
+पूर्ण
 
-static struct delay_timer stm32_timer_delay;
+अटल काष्ठा delay_समयr sपंचांग32_समयr_delay;
 
-static unsigned long stm32_read_delay(void)
-{
-	return readl_relaxed(stm32_timer_cnt);
-}
+अटल अचिन्हित दीर्घ sपंचांग32_पढ़ो_delay(व्योम)
+अणु
+	वापस पढ़ोl_relaxed(sपंचांग32_समयr_cnt);
+पूर्ण
 
-static void stm32_clock_event_disable(struct timer_of *to)
-{
-	writel_relaxed(0, timer_of_base(to) + TIM_DIER);
-}
+अटल व्योम sपंचांग32_घड़ी_event_disable(काष्ठा समयr_of *to)
+अणु
+	ग_लिखोl_relaxed(0, समयr_of_base(to) + TIM_DIER);
+पूर्ण
 
 /**
- * stm32_timer_start - Start the counter without event
- * @to: a timer_of structure pointer
+ * sपंचांग32_समयr_start - Start the counter without event
+ * @to: a समयr_of काष्ठाure poपूर्णांकer
  *
- * Start the timer in order to have the counter reset and start
- * incrementing but disable interrupt event when there is a counter
- * overflow. By default, the counter direction is used as upcounter.
+ * Start the समयr in order to have the counter reset and start
+ * incrementing but disable पूर्णांकerrupt event when there is a counter
+ * overflow. By शेष, the counter direction is used as upcounter.
  */
-static void stm32_timer_start(struct timer_of *to)
-{
-	writel_relaxed(TIM_CR1_UDIS | TIM_CR1_CEN, timer_of_base(to) + TIM_CR1);
-}
+अटल व्योम sपंचांग32_समयr_start(काष्ठा समयr_of *to)
+अणु
+	ग_लिखोl_relaxed(TIM_CR1_UDIS | TIM_CR1_CEN, समयr_of_base(to) + TIM_CR1);
+पूर्ण
 
-static int stm32_clock_event_shutdown(struct clock_event_device *clkevt)
-{
-	struct timer_of *to = to_timer_of(clkevt);
+अटल पूर्णांक sपंचांग32_घड़ी_event_shutकरोwn(काष्ठा घड़ी_event_device *clkevt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(clkevt);
 
-	stm32_clock_event_disable(to);
+	sपंचांग32_घड़ी_event_disable(to);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_clock_event_set_next_event(unsigned long evt,
-					    struct clock_event_device *clkevt)
-{
-	struct timer_of *to = to_timer_of(clkevt);
-	unsigned long now, next;
+अटल पूर्णांक sपंचांग32_घड़ी_event_set_next_event(अचिन्हित दीर्घ evt,
+					    काष्ठा घड़ी_event_device *clkevt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(clkevt);
+	अचिन्हित दीर्घ now, next;
 
-	next = readl_relaxed(timer_of_base(to) + TIM_CNT) + evt;
-	writel_relaxed(next, timer_of_base(to) + TIM_CCR1);
-	now = readl_relaxed(timer_of_base(to) + TIM_CNT);
+	next = पढ़ोl_relaxed(समयr_of_base(to) + TIM_CNT) + evt;
+	ग_लिखोl_relaxed(next, समयr_of_base(to) + TIM_CCR1);
+	now = पढ़ोl_relaxed(समयr_of_base(to) + TIM_CNT);
 
-	if ((next - now) > evt)
-		return -ETIME;
+	अगर ((next - now) > evt)
+		वापस -ETIME;
 
-	writel_relaxed(TIM_DIER_CC1IE, timer_of_base(to) + TIM_DIER);
+	ग_लिखोl_relaxed(TIM_DIER_CC1IE, समयr_of_base(to) + TIM_DIER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_clock_event_set_periodic(struct clock_event_device *clkevt)
-{
-	struct timer_of *to = to_timer_of(clkevt);
+अटल पूर्णांक sपंचांग32_घड़ी_event_set_periodic(काष्ठा घड़ी_event_device *clkevt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(clkevt);
 
-	stm32_timer_start(to);
+	sपंचांग32_समयr_start(to);
 
-	return stm32_clock_event_set_next_event(timer_of_period(to), clkevt);
-}
+	वापस sपंचांग32_घड़ी_event_set_next_event(समयr_of_period(to), clkevt);
+पूर्ण
 
-static int stm32_clock_event_set_oneshot(struct clock_event_device *clkevt)
-{
-	struct timer_of *to = to_timer_of(clkevt);
+अटल पूर्णांक sपंचांग32_घड़ी_event_set_oneshot(काष्ठा घड़ी_event_device *clkevt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(clkevt);
 
-	stm32_timer_start(to);
+	sपंचांग32_समयr_start(to);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t stm32_clock_event_handler(int irq, void *dev_id)
-{
-	struct clock_event_device *clkevt = (struct clock_event_device *)dev_id;
-	struct timer_of *to = to_timer_of(clkevt);
+अटल irqवापस_t sपंचांग32_घड़ी_event_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *clkevt = (काष्ठा घड़ी_event_device *)dev_id;
+	काष्ठा समयr_of *to = to_समयr_of(clkevt);
 
-	writel_relaxed(0, timer_of_base(to) + TIM_SR);
+	ग_लिखोl_relaxed(0, समयr_of_base(to) + TIM_SR);
 
-	if (clockevent_state_periodic(clkevt))
-		stm32_clock_event_set_periodic(clkevt);
-	else
-		stm32_clock_event_shutdown(clkevt);
+	अगर (घड़ीevent_state_periodic(clkevt))
+		sपंचांग32_घड़ी_event_set_periodic(clkevt);
+	अन्यथा
+		sपंचांग32_घड़ी_event_shutकरोwn(clkevt);
 
 	clkevt->event_handler(clkevt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * stm32_timer_width - Sort out the timer width (32/16)
- * @to: a pointer to a timer-of structure
+ * sपंचांग32_समयr_width - Sort out the समयr width (32/16)
+ * @to: a poपूर्णांकer to a समयr-of काष्ठाure
  *
- * Write the 32-bit max value and read/return the result. If the timer
- * is 32 bits wide, the result will be UINT_MAX, otherwise it will
- * be truncated by the 16-bit register to USHRT_MAX.
+ * Write the 32-bit max value and पढ़ो/वापस the result. If the समयr
+ * is 32 bits wide, the result will be अच_पूर्णांक_उच्च, otherwise it will
+ * be truncated by the 16-bit रेजिस्टर to अच_लघु_उच्च.
  *
  */
-static void __init stm32_timer_set_width(struct timer_of *to)
-{
+अटल व्योम __init sपंचांग32_समयr_set_width(काष्ठा समयr_of *to)
+अणु
 	u32 width;
 
-	writel_relaxed(UINT_MAX, timer_of_base(to) + TIM_ARR);
+	ग_लिखोl_relaxed(अच_पूर्णांक_उच्च, समयr_of_base(to) + TIM_ARR);
 
-	width = readl_relaxed(timer_of_base(to) + TIM_ARR);
+	width = पढ़ोl_relaxed(समयr_of_base(to) + TIM_ARR);
 
-	stm32_timer_of_bits_set(to, width == UINT_MAX ? 32 : 16);
-}
+	sपंचांग32_समयr_of_bits_set(to, width == अच_पूर्णांक_उच्च ? 32 : 16);
+पूर्ण
 
 /**
- * stm32_timer_set_prescaler - Compute and set the prescaler register
- * @to: a pointer to a timer-of structure
+ * sपंचांग32_समयr_set_prescaler - Compute and set the prescaler रेजिस्टर
+ * @to: a poपूर्णांकer to a समयr-of काष्ठाure
  *
- * Depending on the timer width, compute the prescaler to always
- * target a 10MHz timer rate for 16 bits. 32-bit timers are
- * considered precise and long enough to not use the prescaler.
+ * Depending on the समयr width, compute the prescaler to always
+ * target a 10MHz समयr rate क्रम 16 bits. 32-bit समयrs are
+ * considered precise and दीर्घ enough to not use the prescaler.
  */
-static void __init stm32_timer_set_prescaler(struct timer_of *to)
-{
-	int prescaler = 1;
+अटल व्योम __init sपंचांग32_समयr_set_prescaler(काष्ठा समयr_of *to)
+अणु
+	पूर्णांक prescaler = 1;
 
-	if (stm32_timer_of_bits_get(to) != 32) {
-		prescaler = DIV_ROUND_CLOSEST(timer_of_rate(to),
+	अगर (sपंचांग32_समयr_of_bits_get(to) != 32) अणु
+		prescaler = DIV_ROUND_CLOSEST(समयr_of_rate(to),
 					      TIM_PSC_CLKRATE);
 		/*
-		 * The prescaler register is an u16, the variable
+		 * The prescaler रेजिस्टर is an u16, the variable
 		 * can't be greater than TIM_PSC_MAX, let's cap it in
-		 * this case.
+		 * this हाल.
 		 */
 		prescaler = prescaler < TIM_PSC_MAX ? prescaler : TIM_PSC_MAX;
-	}
+	पूर्ण
 
-	writel_relaxed(prescaler - 1, timer_of_base(to) + TIM_PSC);
-	writel_relaxed(TIM_EGR_UG, timer_of_base(to) + TIM_EGR);
-	writel_relaxed(0, timer_of_base(to) + TIM_SR);
+	ग_लिखोl_relaxed(prescaler - 1, समयr_of_base(to) + TIM_PSC);
+	ग_लिखोl_relaxed(TIM_EGR_UG, समयr_of_base(to) + TIM_EGR);
+	ग_लिखोl_relaxed(0, समयr_of_base(to) + TIM_SR);
 
 	/* Adjust rate and period given the prescaler value */
 	to->of_clk.rate = DIV_ROUND_CLOSEST(to->of_clk.rate, prescaler);
 	to->of_clk.period = DIV_ROUND_UP(to->of_clk.rate, HZ);
-}
+पूर्ण
 
-static int __init stm32_clocksource_init(struct timer_of *to)
-{
-        u32 bits = stm32_timer_of_bits_get(to);
-	const char *name = to->np->full_name;
+अटल पूर्णांक __init sपंचांग32_घड़ीsource_init(काष्ठा समयr_of *to)
+अणु
+        u32 bits = sपंचांग32_समयr_of_bits_get(to);
+	स्थिर अक्षर *name = to->np->full_name;
 
 	/*
-	 * This driver allows to register several timers and relies on
-	 * the generic time framework to select the right one.
-	 * However, nothing allows to do the same for the
-	 * sched_clock. We are not interested in a sched_clock for the
-	 * 16-bit timers but only for the 32-bit one, so if no 32-bit
-	 * timer is registered yet, we select this 32-bit timer as a
-	 * sched_clock.
+	 * This driver allows to रेजिस्टर several समयrs and relies on
+	 * the generic समय framework to select the right one.
+	 * However, nothing allows to करो the same क्रम the
+	 * sched_घड़ी. We are not पूर्णांकerested in a sched_घड़ी क्रम the
+	 * 16-bit समयrs but only क्रम the 32-bit one, so अगर no 32-bit
+	 * समयr is रेजिस्टरed yet, we select this 32-bit समयr as a
+	 * sched_घड़ी.
 	 */
-	if (bits == 32 && !stm32_timer_cnt) {
+	अगर (bits == 32 && !sपंचांग32_समयr_cnt) अणु
 
 		/*
 		 * Start immediately the counter as we will be using
 		 * it right after.
 		 */
-		stm32_timer_start(to);
+		sपंचांग32_समयr_start(to);
 
-		stm32_timer_cnt = timer_of_base(to) + TIM_CNT;
-		sched_clock_register(stm32_read_sched_clock, bits, timer_of_rate(to));
+		sपंचांग32_समयr_cnt = समयr_of_base(to) + TIM_CNT;
+		sched_घड़ी_रेजिस्टर(sपंचांग32_पढ़ो_sched_घड़ी, bits, समयr_of_rate(to));
 		pr_info("%s: STM32 sched_clock registered\n", name);
 
-		stm32_timer_delay.read_current_timer = stm32_read_delay;
-		stm32_timer_delay.freq = timer_of_rate(to);
-		register_current_timer_delay(&stm32_timer_delay);
+		sपंचांग32_समयr_delay.पढ़ो_current_समयr = sपंचांग32_पढ़ो_delay;
+		sपंचांग32_समयr_delay.freq = समयr_of_rate(to);
+		रेजिस्टर_current_समयr_delay(&sपंचांग32_समयr_delay);
 		pr_info("%s: STM32 delay timer registered\n", name);
-	}
+	पूर्ण
 
-	return clocksource_mmio_init(timer_of_base(to) + TIM_CNT, name,
-				     timer_of_rate(to), bits == 32 ? 250 : 100,
-				     bits, clocksource_mmio_readl_up);
-}
+	वापस घड़ीsource_mmio_init(समयr_of_base(to) + TIM_CNT, name,
+				     समयr_of_rate(to), bits == 32 ? 250 : 100,
+				     bits, घड़ीsource_mmio_पढ़ोl_up);
+पूर्ण
 
-static void __init stm32_clockevent_init(struct timer_of *to)
-{
-	u32 bits = stm32_timer_of_bits_get(to);
+अटल व्योम __init sपंचांग32_घड़ीevent_init(काष्ठा समयr_of *to)
+अणु
+	u32 bits = sपंचांग32_समयr_of_bits_get(to);
 
 	to->clkevt.name = to->np->full_name;
 	to->clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
-	to->clkevt.set_state_shutdown = stm32_clock_event_shutdown;
-	to->clkevt.set_state_periodic = stm32_clock_event_set_periodic;
-	to->clkevt.set_state_oneshot = stm32_clock_event_set_oneshot;
-	to->clkevt.tick_resume = stm32_clock_event_shutdown;
-	to->clkevt.set_next_event = stm32_clock_event_set_next_event;
+	to->clkevt.set_state_shutकरोwn = sपंचांग32_घड़ी_event_shutकरोwn;
+	to->clkevt.set_state_periodic = sपंचांग32_घड़ी_event_set_periodic;
+	to->clkevt.set_state_oneshot = sपंचांग32_घड़ी_event_set_oneshot;
+	to->clkevt.tick_resume = sपंचांग32_घड़ी_event_shutकरोwn;
+	to->clkevt.set_next_event = sपंचांग32_घड़ी_event_set_next_event;
 	to->clkevt.rating = bits == 32 ? 250 : 100;
 
-	clockevents_config_and_register(&to->clkevt, timer_of_rate(to), 0x1,
+	घड़ीevents_config_and_रेजिस्टर(&to->clkevt, समयr_of_rate(to), 0x1,
 					(1 <<  bits) - 1);
 
 	pr_info("%pOF: STM32 clockevent driver initialized (%d bits)\n",
 		to->np, bits);
-}
+पूर्ण
 
-static int __init stm32_timer_init(struct device_node *node)
-{
-	struct reset_control *rstc;
-	struct timer_of *to;
-	int ret;
+अटल पूर्णांक __init sपंचांग32_समयr_init(काष्ठा device_node *node)
+अणु
+	काष्ठा reset_control *rstc;
+	काष्ठा समयr_of *to;
+	पूर्णांक ret;
 
-	to = kzalloc(sizeof(*to), GFP_KERNEL);
-	if (!to)
-		return -ENOMEM;
+	to = kzalloc(माप(*to), GFP_KERNEL);
+	अगर (!to)
+		वापस -ENOMEM;
 
 	to->flags = TIMER_OF_IRQ | TIMER_OF_CLOCK | TIMER_OF_BASE;
-	to->of_irq.handler = stm32_clock_event_handler;
+	to->of_irq.handler = sपंचांग32_घड़ी_event_handler;
 
-	ret = timer_of_init(node, to);
-	if (ret)
-		goto err;
+	ret = समयr_of_init(node, to);
+	अगर (ret)
+		जाओ err;
 
-	to->private_data = kzalloc(sizeof(struct stm32_timer_private),
+	to->निजी_data = kzalloc(माप(काष्ठा sपंचांग32_समयr_निजी),
 				   GFP_KERNEL);
-	if (!to->private_data) {
+	अगर (!to->निजी_data) अणु
 		ret = -ENOMEM;
-		goto deinit;
-	}
+		जाओ deinit;
+	पूर्ण
 
-	rstc = of_reset_control_get(node, NULL);
-	if (!IS_ERR(rstc)) {
-		reset_control_assert(rstc);
-		reset_control_deassert(rstc);
-	}
+	rstc = of_reset_control_get(node, शून्य);
+	अगर (!IS_ERR(rstc)) अणु
+		reset_control_निश्चित(rstc);
+		reset_control_deनिश्चित(rstc);
+	पूर्ण
 
-	stm32_timer_set_width(to);
+	sपंचांग32_समयr_set_width(to);
 
-	stm32_timer_set_prescaler(to);
+	sपंचांग32_समयr_set_prescaler(to);
 
-	ret = stm32_clocksource_init(to);
-	if (ret)
-		goto deinit;
+	ret = sपंचांग32_घड़ीsource_init(to);
+	अगर (ret)
+		जाओ deinit;
 
-	stm32_clockevent_init(to);
-	return 0;
+	sपंचांग32_घड़ीevent_init(to);
+	वापस 0;
 
 deinit:
-	timer_of_cleanup(to);
+	समयr_of_cleanup(to);
 err:
-	kfree(to);
-	return ret;
-}
+	kमुक्त(to);
+	वापस ret;
+पूर्ण
 
-TIMER_OF_DECLARE(stm32, "st,stm32-timer", stm32_timer_init);
+TIMER_OF_DECLARE(sपंचांग32, "st,stm32-timer", sपंचांग32_समयr_init);

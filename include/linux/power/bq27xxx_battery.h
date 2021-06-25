@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_BQ27X00_BATTERY_H__
-#define __LINUX_BQ27X00_BATTERY_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_BQ27X00_BATTERY_H__
+#घोषणा __LINUX_BQ27X00_BATTERY_H__
 
-enum bq27xxx_chip {
+क्रमागत bq27xxx_chip अणु
 	BQ27000 = 1, /* bq27000, bq27200 */
 	BQ27010, /* bq27010, bq27210 */
 	BQ2750X, /* bq27500 deprecated alias */
@@ -34,50 +35,50 @@ enum bq27xxx_chip {
 	BQ28Z610,
 	BQ34Z100,
 	BQ78Z100,
-};
+पूर्ण;
 
-struct bq27xxx_device_info;
-struct bq27xxx_access_methods {
-	int (*read)(struct bq27xxx_device_info *di, u8 reg, bool single);
-	int (*write)(struct bq27xxx_device_info *di, u8 reg, int value, bool single);
-	int (*read_bulk)(struct bq27xxx_device_info *di, u8 reg, u8 *data, int len);
-	int (*write_bulk)(struct bq27xxx_device_info *di, u8 reg, u8 *data, int len);
-};
+काष्ठा bq27xxx_device_info;
+काष्ठा bq27xxx_access_methods अणु
+	पूर्णांक (*पढ़ो)(काष्ठा bq27xxx_device_info *di, u8 reg, bool single);
+	पूर्णांक (*ग_लिखो)(काष्ठा bq27xxx_device_info *di, u8 reg, पूर्णांक value, bool single);
+	पूर्णांक (*पढ़ो_bulk)(काष्ठा bq27xxx_device_info *di, u8 reg, u8 *data, पूर्णांक len);
+	पूर्णांक (*ग_लिखो_bulk)(काष्ठा bq27xxx_device_info *di, u8 reg, u8 *data, पूर्णांक len);
+पूर्ण;
 
-struct bq27xxx_reg_cache {
-	int temperature;
-	int time_to_empty;
-	int time_to_empty_avg;
-	int time_to_full;
-	int charge_full;
-	int cycle_count;
-	int capacity;
-	int energy;
-	int flags;
-	int health;
-};
+काष्ठा bq27xxx_reg_cache अणु
+	पूर्णांक temperature;
+	पूर्णांक समय_प्रकारo_empty;
+	पूर्णांक समय_प्रकारo_empty_avg;
+	पूर्णांक समय_प्रकारo_full;
+	पूर्णांक अक्षरge_full;
+	पूर्णांक cycle_count;
+	पूर्णांक capacity;
+	पूर्णांक energy;
+	पूर्णांक flags;
+	पूर्णांक health;
+पूर्ण;
 
-struct bq27xxx_device_info {
-	struct device *dev;
-	int id;
-	enum bq27xxx_chip chip;
+काष्ठा bq27xxx_device_info अणु
+	काष्ठा device *dev;
+	पूर्णांक id;
+	क्रमागत bq27xxx_chip chip;
 	u32 opts;
-	const char *name;
-	struct bq27xxx_dm_reg *dm_regs;
+	स्थिर अक्षर *name;
+	काष्ठा bq27xxx_dm_reg *dm_regs;
 	u32 unseal_key;
-	struct bq27xxx_access_methods bus;
-	struct bq27xxx_reg_cache cache;
-	int charge_design_full;
-	unsigned long last_update;
-	struct delayed_work work;
-	struct power_supply *bat;
-	struct list_head list;
-	struct mutex lock;
+	काष्ठा bq27xxx_access_methods bus;
+	काष्ठा bq27xxx_reg_cache cache;
+	पूर्णांक अक्षरge_design_full;
+	अचिन्हित दीर्घ last_update;
+	काष्ठा delayed_work work;
+	काष्ठा घातer_supply *bat;
+	काष्ठा list_head list;
+	काष्ठा mutex lock;
 	u8 *regs;
-};
+पूर्ण;
 
-void bq27xxx_battery_update(struct bq27xxx_device_info *di);
-int bq27xxx_battery_setup(struct bq27xxx_device_info *di);
-void bq27xxx_battery_teardown(struct bq27xxx_device_info *di);
+व्योम bq27xxx_battery_update(काष्ठा bq27xxx_device_info *di);
+पूर्णांक bq27xxx_battery_setup(काष्ठा bq27xxx_device_info *di);
+व्योम bq27xxx_battery_tearकरोwn(काष्ठा bq27xxx_device_info *di);
 
-#endif
+#पूर्ण_अगर

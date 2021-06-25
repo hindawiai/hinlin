@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2010-2011 EIA Electronics,
 //                         Pieter Beyens <pieter.beyens@eia.be>
 // Copyright (c) 2010-2011 EIA Electronics,
@@ -10,94 +11,94 @@
 // Copyright (c) 2017-2019 Pengutronix,
 //                         Oleksij Rempel <kernel@pengutronix.de>
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/can/can-ml.h>
-#include <linux/can/core.h>
-#include <linux/can/skb.h>
-#include <linux/errqueue.h>
-#include <linux/if_arp.h>
+#समावेश <linux/can/can-ml.h>
+#समावेश <linux/can/core.h>
+#समावेश <linux/can/skb.h>
+#समावेश <linux/errqueue.h>
+#समावेश <linux/अगर_arp.h>
 
-#include "j1939-priv.h"
+#समावेश "j1939-priv.h"
 
-#define J1939_MIN_NAMELEN CAN_REQUIRED_SIZE(struct sockaddr_can, can_addr.j1939)
+#घोषणा J1939_MIN_NAMELEN CAN_REQUIRED_SIZE(काष्ठा sockaddr_can, can_addr.j1939)
 
-/* conversion function between struct sock::sk_priority from linux and
+/* conversion function between काष्ठा sock::sk_priority from linux and
  * j1939 priority field
  */
-static inline priority_t j1939_prio(u32 sk_priority)
-{
+अटल अंतरभूत priority_t j1939_prio(u32 sk_priority)
+अणु
 	sk_priority = min(sk_priority, 7U);
 
-	return 7 - sk_priority;
-}
+	वापस 7 - sk_priority;
+पूर्ण
 
-static inline u32 j1939_to_sk_priority(priority_t prio)
-{
-	return 7 - prio;
-}
+अटल अंतरभूत u32 j1939_to_sk_priority(priority_t prio)
+अणु
+	वापस 7 - prio;
+पूर्ण
 
-/* function to see if pgn is to be evaluated */
-static inline bool j1939_pgn_is_valid(pgn_t pgn)
-{
-	return pgn <= J1939_PGN_MAX;
-}
+/* function to see अगर pgn is to be evaluated */
+अटल अंतरभूत bool j1939_pgn_is_valid(pgn_t pgn)
+अणु
+	वापस pgn <= J1939_PGN_MAX;
+पूर्ण
 
-/* test function to avoid non-zero DA placeholder for pdu1 pgn's */
-static inline bool j1939_pgn_is_clean_pdu(pgn_t pgn)
-{
-	if (j1939_pgn_is_pdu1(pgn))
-		return !(pgn & 0xff);
-	else
-		return true;
-}
+/* test function to aव्योम non-zero DA placeholder क्रम pdu1 pgn's */
+अटल अंतरभूत bool j1939_pgn_is_clean_pdu(pgn_t pgn)
+अणु
+	अगर (j1939_pgn_is_pdu1(pgn))
+		वापस !(pgn & 0xff);
+	अन्यथा
+		वापस true;
+पूर्ण
 
-static inline void j1939_sock_pending_add(struct sock *sk)
-{
-	struct j1939_sock *jsk = j1939_sk(sk);
+अटल अंतरभूत व्योम j1939_sock_pending_add(काष्ठा sock *sk)
+अणु
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
 
 	atomic_inc(&jsk->skb_pending);
-}
+पूर्ण
 
-static int j1939_sock_pending_get(struct sock *sk)
-{
-	struct j1939_sock *jsk = j1939_sk(sk);
+अटल पूर्णांक j1939_sock_pending_get(काष्ठा sock *sk)
+अणु
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
 
-	return atomic_read(&jsk->skb_pending);
-}
+	वापस atomic_पढ़ो(&jsk->skb_pending);
+पूर्ण
 
-void j1939_sock_pending_del(struct sock *sk)
-{
-	struct j1939_sock *jsk = j1939_sk(sk);
+व्योम j1939_sock_pending_del(काष्ठा sock *sk)
+अणु
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
 
-	/* atomic_dec_return returns the new value */
-	if (!atomic_dec_return(&jsk->skb_pending))
-		wake_up(&jsk->waitq);	/* no pending SKB's */
-}
+	/* atomic_dec_वापस वापसs the new value */
+	अगर (!atomic_dec_वापस(&jsk->skb_pending))
+		wake_up(&jsk->रुकोq);	/* no pending SKB's */
+पूर्ण
 
-static void j1939_jsk_add(struct j1939_priv *priv, struct j1939_sock *jsk)
-{
+अटल व्योम j1939_jsk_add(काष्ठा j1939_priv *priv, काष्ठा j1939_sock *jsk)
+अणु
 	jsk->state |= J1939_SOCK_BOUND;
 	j1939_priv_get(priv);
 
 	spin_lock_bh(&priv->j1939_socks_lock);
 	list_add_tail(&jsk->list, &priv->j1939_socks);
 	spin_unlock_bh(&priv->j1939_socks_lock);
-}
+पूर्ण
 
-static void j1939_jsk_del(struct j1939_priv *priv, struct j1939_sock *jsk)
-{
+अटल व्योम j1939_jsk_del(काष्ठा j1939_priv *priv, काष्ठा j1939_sock *jsk)
+अणु
 	spin_lock_bh(&priv->j1939_socks_lock);
 	list_del_init(&jsk->list);
 	spin_unlock_bh(&priv->j1939_socks_lock);
 
 	j1939_priv_put(priv);
 	jsk->state &= ~J1939_SOCK_BOUND;
-}
+पूर्ण
 
-static bool j1939_sk_queue_session(struct j1939_session *session)
-{
-	struct j1939_sock *jsk = j1939_sk(session->sk);
+अटल bool j1939_sk_queue_session(काष्ठा j1939_session *session)
+अणु
+	काष्ठा j1939_sock *jsk = j1939_sk(session->sk);
 	bool empty;
 
 	spin_lock_bh(&jsk->sk_session_queue_lock);
@@ -107,253 +108,253 @@ static bool j1939_sk_queue_session(struct j1939_session *session)
 	spin_unlock_bh(&jsk->sk_session_queue_lock);
 	j1939_sock_pending_add(&jsk->sk);
 
-	return empty;
-}
+	वापस empty;
+पूर्ण
 
-static struct
-j1939_session *j1939_sk_get_incomplete_session(struct j1939_sock *jsk)
-{
-	struct j1939_session *session = NULL;
+अटल काष्ठा
+j1939_session *j1939_sk_get_incomplete_session(काष्ठा j1939_sock *jsk)
+अणु
+	काष्ठा j1939_session *session = शून्य;
 
 	spin_lock_bh(&jsk->sk_session_queue_lock);
-	if (!list_empty(&jsk->sk_session_queue)) {
+	अगर (!list_empty(&jsk->sk_session_queue)) अणु
 		session = list_last_entry(&jsk->sk_session_queue,
-					  struct j1939_session,
+					  काष्ठा j1939_session,
 					  sk_session_queue_entry);
-		if (session->total_queued_size == session->total_message_size)
-			session = NULL;
-		else
+		अगर (session->total_queued_size == session->total_message_size)
+			session = शून्य;
+		अन्यथा
 			j1939_session_get(session);
-	}
+	पूर्ण
 	spin_unlock_bh(&jsk->sk_session_queue_lock);
 
-	return session;
-}
+	वापस session;
+पूर्ण
 
-static void j1939_sk_queue_drop_all(struct j1939_priv *priv,
-				    struct j1939_sock *jsk, int err)
-{
-	struct j1939_session *session, *tmp;
+अटल व्योम j1939_sk_queue_drop_all(काष्ठा j1939_priv *priv,
+				    काष्ठा j1939_sock *jsk, पूर्णांक err)
+अणु
+	काष्ठा j1939_session *session, *पंचांगp;
 
 	netdev_dbg(priv->ndev, "%s: err: %i\n", __func__, err);
 	spin_lock_bh(&jsk->sk_session_queue_lock);
-	list_for_each_entry_safe(session, tmp, &jsk->sk_session_queue,
-				 sk_session_queue_entry) {
+	list_क्रम_each_entry_safe(session, पंचांगp, &jsk->sk_session_queue,
+				 sk_session_queue_entry) अणु
 		list_del_init(&session->sk_session_queue_entry);
 		session->err = err;
 		j1939_session_put(session);
-	}
+	पूर्ण
 	spin_unlock_bh(&jsk->sk_session_queue_lock);
-}
+पूर्ण
 
-static void j1939_sk_queue_activate_next_locked(struct j1939_session *session)
-{
-	struct j1939_sock *jsk;
-	struct j1939_session *first;
-	int err;
+अटल व्योम j1939_sk_queue_activate_next_locked(काष्ठा j1939_session *session)
+अणु
+	काष्ठा j1939_sock *jsk;
+	काष्ठा j1939_session *first;
+	पूर्णांक err;
 
-	/* RX-Session don't have a socket (yet) */
-	if (!session->sk)
-		return;
+	/* RX-Session करोn't have a socket (yet) */
+	अगर (!session->sk)
+		वापस;
 
 	jsk = j1939_sk(session->sk);
-	lockdep_assert_held(&jsk->sk_session_queue_lock);
+	lockdep_निश्चित_held(&jsk->sk_session_queue_lock);
 
 	err = session->err;
 
 	first = list_first_entry_or_null(&jsk->sk_session_queue,
-					 struct j1939_session,
+					 काष्ठा j1939_session,
 					 sk_session_queue_entry);
 
-	/* Some else has already activated the next session */
-	if (first != session)
-		return;
+	/* Some अन्यथा has alपढ़ोy activated the next session */
+	अगर (first != session)
+		वापस;
 
 activate_next:
 	list_del_init(&first->sk_session_queue_entry);
 	j1939_session_put(first);
 	first = list_first_entry_or_null(&jsk->sk_session_queue,
-					 struct j1939_session,
+					 काष्ठा j1939_session,
 					 sk_session_queue_entry);
-	if (!first)
-		return;
+	अगर (!first)
+		वापस;
 
-	if (WARN_ON_ONCE(j1939_session_activate(first))) {
+	अगर (WARN_ON_ONCE(j1939_session_activate(first))) अणु
 		first->err = -EBUSY;
-		goto activate_next;
-	} else {
-		/* Give receiver some time (arbitrary chosen) to recover */
-		int time_ms = 0;
+		जाओ activate_next;
+	पूर्ण अन्यथा अणु
+		/* Give receiver some समय (arbitrary chosen) to recover */
+		पूर्णांक समय_ms = 0;
 
-		if (err)
-			time_ms = 10 + prandom_u32_max(16);
+		अगर (err)
+			समय_ms = 10 + pअक्रमom_u32_max(16);
 
-		j1939_tp_schedule_txtimer(first, time_ms);
-	}
-}
+		j1939_tp_schedule_txसमयr(first, समय_ms);
+	पूर्ण
+पूर्ण
 
-void j1939_sk_queue_activate_next(struct j1939_session *session)
-{
-	struct j1939_sock *jsk;
+व्योम j1939_sk_queue_activate_next(काष्ठा j1939_session *session)
+अणु
+	काष्ठा j1939_sock *jsk;
 
-	if (!session->sk)
-		return;
+	अगर (!session->sk)
+		वापस;
 
 	jsk = j1939_sk(session->sk);
 
 	spin_lock_bh(&jsk->sk_session_queue_lock);
 	j1939_sk_queue_activate_next_locked(session);
 	spin_unlock_bh(&jsk->sk_session_queue_lock);
-}
+पूर्ण
 
-static bool j1939_sk_match_dst(struct j1939_sock *jsk,
-			       const struct j1939_sk_buff_cb *skcb)
-{
-	if ((jsk->state & J1939_SOCK_PROMISC))
-		return true;
+अटल bool j1939_sk_match_dst(काष्ठा j1939_sock *jsk,
+			       स्थिर काष्ठा j1939_sk_buff_cb *skcb)
+अणु
+	अगर ((jsk->state & J1939_SOCK_PROMISC))
+		वापस true;
 
 	/* Destination address filter */
-	if (jsk->addr.src_name && skcb->addr.dst_name) {
-		if (jsk->addr.src_name != skcb->addr.dst_name)
-			return false;
-	} else {
-		/* receive (all sockets) if
+	अगर (jsk->addr.src_name && skcb->addr.dst_name) अणु
+		अगर (jsk->addr.src_name != skcb->addr.dst_name)
+			वापस false;
+	पूर्ण अन्यथा अणु
+		/* receive (all sockets) अगर
 		 * - all packages that match our bind() address
-		 * - all broadcast on a socket if SO_BROADCAST
+		 * - all broadcast on a socket अगर SO_BROADCAST
 		 *   is set
 		 */
-		if (j1939_address_is_unicast(skcb->addr.da)) {
-			if (jsk->addr.sa != skcb->addr.da)
-				return false;
-		} else if (!sock_flag(&jsk->sk, SOCK_BROADCAST)) {
+		अगर (j1939_address_is_unicast(skcb->addr.da)) अणु
+			अगर (jsk->addr.sa != skcb->addr.da)
+				वापस false;
+		पूर्ण अन्यथा अगर (!sock_flag(&jsk->sk, SOCK_BROADCAST)) अणु
 			/* receiving broadcast without SO_BROADCAST
 			 * flag is not allowed
 			 */
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
 	/* Source address filter */
-	if (jsk->state & J1939_SOCK_CONNECTED) {
-		/* receive (all sockets) if
+	अगर (jsk->state & J1939_SOCK_CONNECTED) अणु
+		/* receive (all sockets) अगर
 		 * - all packages that match our connect() name or address
 		 */
-		if (jsk->addr.dst_name && skcb->addr.src_name) {
-			if (jsk->addr.dst_name != skcb->addr.src_name)
-				return false;
-		} else {
-			if (jsk->addr.da != skcb->addr.sa)
-				return false;
-		}
-	}
+		अगर (jsk->addr.dst_name && skcb->addr.src_name) अणु
+			अगर (jsk->addr.dst_name != skcb->addr.src_name)
+				वापस false;
+		पूर्ण अन्यथा अणु
+			अगर (jsk->addr.da != skcb->addr.sa)
+				वापस false;
+		पूर्ण
+	पूर्ण
 
 	/* PGN filter */
-	if (j1939_pgn_is_valid(jsk->pgn_rx_filter) &&
+	अगर (j1939_pgn_is_valid(jsk->pgn_rx_filter) &&
 	    jsk->pgn_rx_filter != skcb->addr.pgn)
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* matches skb control buffer (addr) with a j1939 filter */
-static bool j1939_sk_match_filter(struct j1939_sock *jsk,
-				  const struct j1939_sk_buff_cb *skcb)
-{
-	const struct j1939_filter *f = jsk->filters;
-	int nfilter = jsk->nfilters;
+अटल bool j1939_sk_match_filter(काष्ठा j1939_sock *jsk,
+				  स्थिर काष्ठा j1939_sk_buff_cb *skcb)
+अणु
+	स्थिर काष्ठा j1939_filter *f = jsk->filters;
+	पूर्णांक nfilter = jsk->nfilters;
 
-	if (!nfilter)
-		/* receive all when no filters are assigned */
-		return true;
+	अगर (!nfilter)
+		/* receive all when no filters are asचिन्हित */
+		वापस true;
 
-	for (; nfilter; ++f, --nfilter) {
-		if ((skcb->addr.pgn & f->pgn_mask) != f->pgn)
-			continue;
-		if ((skcb->addr.sa & f->addr_mask) != f->addr)
-			continue;
-		if ((skcb->addr.src_name & f->name_mask) != f->name)
-			continue;
-		return true;
-	}
-	return false;
-}
+	क्रम (; nfilter; ++f, --nfilter) अणु
+		अगर ((skcb->addr.pgn & f->pgn_mask) != f->pgn)
+			जारी;
+		अगर ((skcb->addr.sa & f->addr_mask) != f->addr)
+			जारी;
+		अगर ((skcb->addr.src_name & f->name_mask) != f->name)
+			जारी;
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool j1939_sk_recv_match_one(struct j1939_sock *jsk,
-				    const struct j1939_sk_buff_cb *skcb)
-{
-	if (!(jsk->state & J1939_SOCK_BOUND))
-		return false;
+अटल bool j1939_sk_recv_match_one(काष्ठा j1939_sock *jsk,
+				    स्थिर काष्ठा j1939_sk_buff_cb *skcb)
+अणु
+	अगर (!(jsk->state & J1939_SOCK_BOUND))
+		वापस false;
 
-	if (!j1939_sk_match_dst(jsk, skcb))
-		return false;
+	अगर (!j1939_sk_match_dst(jsk, skcb))
+		वापस false;
 
-	if (!j1939_sk_match_filter(jsk, skcb))
-		return false;
+	अगर (!j1939_sk_match_filter(jsk, skcb))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void j1939_sk_recv_one(struct j1939_sock *jsk, struct sk_buff *oskb)
-{
-	const struct j1939_sk_buff_cb *oskcb = j1939_skb_to_cb(oskb);
-	struct j1939_sk_buff_cb *skcb;
-	struct sk_buff *skb;
+अटल व्योम j1939_sk_recv_one(काष्ठा j1939_sock *jsk, काष्ठा sk_buff *oskb)
+अणु
+	स्थिर काष्ठा j1939_sk_buff_cb *oskcb = j1939_skb_to_cb(oskb);
+	काष्ठा j1939_sk_buff_cb *skcb;
+	काष्ठा sk_buff *skb;
 
-	if (oskb->sk == &jsk->sk)
-		return;
+	अगर (oskb->sk == &jsk->sk)
+		वापस;
 
-	if (!j1939_sk_recv_match_one(jsk, oskcb))
-		return;
+	अगर (!j1939_sk_recv_match_one(jsk, oskcb))
+		वापस;
 
 	skb = skb_clone(oskb, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		pr_warn("skb clone failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	can_skb_set_owner(skb, oskb->sk);
 
 	skcb = j1939_skb_to_cb(skb);
 	skcb->msg_flags &= ~(MSG_DONTROUTE);
-	if (skb->sk)
+	अगर (skb->sk)
 		skcb->msg_flags |= MSG_DONTROUTE;
 
-	if (sock_queue_rcv_skb(&jsk->sk, skb) < 0)
-		kfree_skb(skb);
-}
+	अगर (sock_queue_rcv_skb(&jsk->sk, skb) < 0)
+		kमुक्त_skb(skb);
+पूर्ण
 
-bool j1939_sk_recv_match(struct j1939_priv *priv, struct j1939_sk_buff_cb *skcb)
-{
-	struct j1939_sock *jsk;
+bool j1939_sk_recv_match(काष्ठा j1939_priv *priv, काष्ठा j1939_sk_buff_cb *skcb)
+अणु
+	काष्ठा j1939_sock *jsk;
 	bool match = false;
 
 	spin_lock_bh(&priv->j1939_socks_lock);
-	list_for_each_entry(jsk, &priv->j1939_socks, list) {
+	list_क्रम_each_entry(jsk, &priv->j1939_socks, list) अणु
 		match = j1939_sk_recv_match_one(jsk, skcb);
-		if (match)
-			break;
-	}
+		अगर (match)
+			अवरोध;
+	पूर्ण
 	spin_unlock_bh(&priv->j1939_socks_lock);
 
-	return match;
-}
+	वापस match;
+पूर्ण
 
-void j1939_sk_recv(struct j1939_priv *priv, struct sk_buff *skb)
-{
-	struct j1939_sock *jsk;
+व्योम j1939_sk_recv(काष्ठा j1939_priv *priv, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा j1939_sock *jsk;
 
 	spin_lock_bh(&priv->j1939_socks_lock);
-	list_for_each_entry(jsk, &priv->j1939_socks, list) {
+	list_क्रम_each_entry(jsk, &priv->j1939_socks, list) अणु
 		j1939_sk_recv_one(jsk, skb);
-	}
+	पूर्ण
 	spin_unlock_bh(&priv->j1939_socks_lock);
-}
+पूर्ण
 
-static void j1939_sk_sock_destruct(struct sock *sk)
-{
-	struct j1939_sock *jsk = j1939_sk(sk);
+अटल व्योम j1939_sk_sock_deकाष्ठा(काष्ठा sock *sk)
+अणु
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
 
 	/* This function will be call by the generic networking code, when then
-	 * the socket is ultimately closed (sk->sk_destruct).
+	 * the socket is ultimately बंदd (sk->sk_deकाष्ठा).
 	 *
 	 * The race between
 	 * - processing a received CAN frame
@@ -361,36 +362,36 @@ static void j1939_sk_sock_destruct(struct sock *sk)
 	 *   and accessing j1939_priv
 	 * ... and ...
 	 * - closing a socket
-	 *   (j1939_can_rx_unregister -> can_rx_unregister)
+	 *   (j1939_can_rx_unरेजिस्टर -> can_rx_unरेजिस्टर)
 	 *   and calling the final j1939_priv_put()
 	 *
-	 * is avoided by calling the final j1939_priv_put() from this
+	 * is aव्योमed by calling the final j1939_priv_put() from this
 	 * RCU deferred cleanup call.
 	 */
-	if (jsk->priv) {
+	अगर (jsk->priv) अणु
 		j1939_priv_put(jsk->priv);
-		jsk->priv = NULL;
-	}
+		jsk->priv = शून्य;
+	पूर्ण
 
-	/* call generic CAN sock destruct */
-	can_sock_destruct(sk);
-}
+	/* call generic CAN sock deकाष्ठा */
+	can_sock_deकाष्ठा(sk);
+पूर्ण
 
-static int j1939_sk_init(struct sock *sk)
-{
-	struct j1939_sock *jsk = j1939_sk(sk);
+अटल पूर्णांक j1939_sk_init(काष्ठा sock *sk)
+अणु
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
 
 	/* Ensure that "sk" is first member in "struct j1939_sock", so that we
-	 * can skip it during memset().
+	 * can skip it during स_रखो().
 	 */
-	BUILD_BUG_ON(offsetof(struct j1939_sock, sk) != 0);
-	memset((void *)jsk + sizeof(jsk->sk), 0x0,
-	       sizeof(*jsk) - sizeof(jsk->sk));
+	BUILD_BUG_ON(दुरत्व(काष्ठा j1939_sock, sk) != 0);
+	स_रखो((व्योम *)jsk + माप(jsk->sk), 0x0,
+	       माप(*jsk) - माप(jsk->sk));
 
 	INIT_LIST_HEAD(&jsk->list);
-	init_waitqueue_head(&jsk->waitq);
+	init_रुकोqueue_head(&jsk->रुकोq);
 	jsk->sk.sk_priority = j1939_to_sk_priority(6);
-	jsk->sk.sk_reuse = 1; /* per default */
+	jsk->sk.sk_reuse = 1; /* per शेष */
 	jsk->addr.sa = J1939_NO_ADDR;
 	jsk->addr.da = J1939_NO_ADDR;
 	jsk->addr.pgn = J1939_NO_PGN;
@@ -398,41 +399,41 @@ static int j1939_sk_init(struct sock *sk)
 	atomic_set(&jsk->skb_pending, 0);
 	spin_lock_init(&jsk->sk_session_queue_lock);
 	INIT_LIST_HEAD(&jsk->sk_session_queue);
-	sk->sk_destruct = j1939_sk_sock_destruct;
+	sk->sk_deकाष्ठा = j1939_sk_sock_deकाष्ठा;
 	sk->sk_protocol = CAN_J1939;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int j1939_sk_sanity_check(struct sockaddr_can *addr, int len)
-{
-	if (!addr)
-		return -EDESTADDRREQ;
-	if (len < J1939_MIN_NAMELEN)
-		return -EINVAL;
-	if (addr->can_family != AF_CAN)
-		return -EINVAL;
-	if (!addr->can_ifindex)
-		return -ENODEV;
-	if (j1939_pgn_is_valid(addr->can_addr.j1939.pgn) &&
+अटल पूर्णांक j1939_sk_sanity_check(काष्ठा sockaddr_can *addr, पूर्णांक len)
+अणु
+	अगर (!addr)
+		वापस -EDESTADDRREQ;
+	अगर (len < J1939_MIN_NAMELEN)
+		वापस -EINVAL;
+	अगर (addr->can_family != AF_CAN)
+		वापस -EINVAL;
+	अगर (!addr->can_अगरindex)
+		वापस -ENODEV;
+	अगर (j1939_pgn_is_valid(addr->can_addr.j1939.pgn) &&
 	    !j1939_pgn_is_clean_pdu(addr->can_addr.j1939.pgn))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int j1939_sk_bind(struct socket *sock, struct sockaddr *uaddr, int len)
-{
-	struct sockaddr_can *addr = (struct sockaddr_can *)uaddr;
-	struct j1939_sock *jsk = j1939_sk(sock->sk);
-	struct j1939_priv *priv;
-	struct sock *sk;
-	struct net *net;
-	int ret = 0;
+अटल पूर्णांक j1939_sk_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक len)
+अणु
+	काष्ठा sockaddr_can *addr = (काष्ठा sockaddr_can *)uaddr;
+	काष्ठा j1939_sock *jsk = j1939_sk(sock->sk);
+	काष्ठा j1939_priv *priv;
+	काष्ठा sock *sk;
+	काष्ठा net *net;
+	पूर्णांक ret = 0;
 
 	ret = j1939_sk_sanity_check(addr, len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	lock_sock(sock->sk);
 
@@ -440,116 +441,116 @@ static int j1939_sk_bind(struct socket *sock, struct sockaddr *uaddr, int len)
 	sk = sock->sk;
 	net = sock_net(sk);
 
-	/* Already bound to an interface? */
-	if (jsk->state & J1939_SOCK_BOUND) {
-		/* A re-bind() to a different interface is not
+	/* Alपढ़ोy bound to an पूर्णांकerface? */
+	अगर (jsk->state & J1939_SOCK_BOUND) अणु
+		/* A re-bind() to a dअगरferent पूर्णांकerface is not
 		 * supported.
 		 */
-		if (jsk->ifindex != addr->can_ifindex) {
+		अगर (jsk->अगरindex != addr->can_अगरindex) अणु
 			ret = -EINVAL;
-			goto out_release_sock;
-		}
+			जाओ out_release_sock;
+		पूर्ण
 
 		/* drop old references */
 		j1939_jsk_del(priv, jsk);
 		j1939_local_ecu_put(priv, jsk->addr.src_name, jsk->addr.sa);
-	} else {
-		struct can_ml_priv *can_ml;
-		struct net_device *ndev;
+	पूर्ण अन्यथा अणु
+		काष्ठा can_ml_priv *can_ml;
+		काष्ठा net_device *ndev;
 
-		ndev = dev_get_by_index(net, addr->can_ifindex);
-		if (!ndev) {
+		ndev = dev_get_by_index(net, addr->can_अगरindex);
+		अगर (!ndev) अणु
 			ret = -ENODEV;
-			goto out_release_sock;
-		}
+			जाओ out_release_sock;
+		पूर्ण
 
 		can_ml = can_get_ml_priv(ndev);
-		if (!can_ml) {
+		अगर (!can_ml) अणु
 			dev_put(ndev);
 			ret = -ENODEV;
-			goto out_release_sock;
-		}
+			जाओ out_release_sock;
+		पूर्ण
 
-		if (!(ndev->flags & IFF_UP)) {
+		अगर (!(ndev->flags & IFF_UP)) अणु
 			dev_put(ndev);
 			ret = -ENETDOWN;
-			goto out_release_sock;
-		}
+			जाओ out_release_sock;
+		पूर्ण
 
 		priv = j1939_netdev_start(ndev);
 		dev_put(ndev);
-		if (IS_ERR(priv)) {
+		अगर (IS_ERR(priv)) अणु
 			ret = PTR_ERR(priv);
-			goto out_release_sock;
-		}
+			जाओ out_release_sock;
+		पूर्ण
 
-		jsk->ifindex = addr->can_ifindex;
+		jsk->अगरindex = addr->can_अगरindex;
 
 		/* the corresponding j1939_priv_put() is called via
-		 * sk->sk_destruct, which points to j1939_sk_sock_destruct()
+		 * sk->sk_deकाष्ठा, which poपूर्णांकs to j1939_sk_sock_deकाष्ठा()
 		 */
 		j1939_priv_get(priv);
 		jsk->priv = priv;
-	}
+	पूर्ण
 
-	/* set default transmit pgn */
-	if (j1939_pgn_is_valid(addr->can_addr.j1939.pgn))
+	/* set शेष transmit pgn */
+	अगर (j1939_pgn_is_valid(addr->can_addr.j1939.pgn))
 		jsk->pgn_rx_filter = addr->can_addr.j1939.pgn;
 	jsk->addr.src_name = addr->can_addr.j1939.name;
 	jsk->addr.sa = addr->can_addr.j1939.addr;
 
 	/* get new references */
 	ret = j1939_local_ecu_get(priv, jsk->addr.src_name, jsk->addr.sa);
-	if (ret) {
+	अगर (ret) अणु
 		j1939_netdev_stop(priv);
-		goto out_release_sock;
-	}
+		जाओ out_release_sock;
+	पूर्ण
 
 	j1939_jsk_add(priv, jsk);
 
  out_release_sock: /* fall through */
 	release_sock(sock->sk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int j1939_sk_connect(struct socket *sock, struct sockaddr *uaddr,
-			    int len, int flags)
-{
-	struct sockaddr_can *addr = (struct sockaddr_can *)uaddr;
-	struct j1939_sock *jsk = j1939_sk(sock->sk);
-	int ret = 0;
+अटल पूर्णांक j1939_sk_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+			    पूर्णांक len, पूर्णांक flags)
+अणु
+	काष्ठा sockaddr_can *addr = (काष्ठा sockaddr_can *)uaddr;
+	काष्ठा j1939_sock *jsk = j1939_sk(sock->sk);
+	पूर्णांक ret = 0;
 
 	ret = j1939_sk_sanity_check(addr, len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	lock_sock(sock->sk);
 
-	/* bind() before connect() is mandatory */
-	if (!(jsk->state & J1939_SOCK_BOUND)) {
+	/* bind() beक्रमe connect() is mandatory */
+	अगर (!(jsk->state & J1939_SOCK_BOUND)) अणु
 		ret = -EINVAL;
-		goto out_release_sock;
-	}
+		जाओ out_release_sock;
+	पूर्ण
 
-	/* A connect() to a different interface is not supported. */
-	if (jsk->ifindex != addr->can_ifindex) {
+	/* A connect() to a dअगरferent पूर्णांकerface is not supported. */
+	अगर (jsk->अगरindex != addr->can_अगरindex) अणु
 		ret = -EINVAL;
-		goto out_release_sock;
-	}
+		जाओ out_release_sock;
+	पूर्ण
 
-	if (!addr->can_addr.j1939.name &&
+	अगर (!addr->can_addr.j1939.name &&
 	    addr->can_addr.j1939.addr == J1939_NO_ADDR &&
-	    !sock_flag(&jsk->sk, SOCK_BROADCAST)) {
+	    !sock_flag(&jsk->sk, SOCK_BROADCAST)) अणु
 		/* broadcast, but SO_BROADCAST not set */
 		ret = -EACCES;
-		goto out_release_sock;
-	}
+		जाओ out_release_sock;
+	पूर्ण
 
 	jsk->addr.dst_name = addr->can_addr.j1939.name;
 	jsk->addr.da = addr->can_addr.j1939.addr;
 
-	if (j1939_pgn_is_valid(addr->can_addr.j1939.pgn))
+	अगर (j1939_pgn_is_valid(addr->can_addr.j1939.pgn))
 		jsk->addr.pgn = addr->can_addr.j1939.pgn;
 
 	jsk->state |= J1939_SOCK_CONNECTED;
@@ -557,43 +558,43 @@ static int j1939_sk_connect(struct socket *sock, struct sockaddr *uaddr,
  out_release_sock: /* fall through */
 	release_sock(sock->sk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void j1939_sk_sock2sockaddr_can(struct sockaddr_can *addr,
-				       const struct j1939_sock *jsk, int peer)
-{
-	/* There are two holes (2 bytes and 3 bytes) to clear to avoid
-	 * leaking kernel information to user space.
+अटल व्योम j1939_sk_sock2sockaddr_can(काष्ठा sockaddr_can *addr,
+				       स्थिर काष्ठा j1939_sock *jsk, पूर्णांक peer)
+अणु
+	/* There are two holes (2 bytes and 3 bytes) to clear to aव्योम
+	 * leaking kernel inक्रमmation to user space.
 	 */
-	memset(addr, 0, J1939_MIN_NAMELEN);
+	स_रखो(addr, 0, J1939_MIN_NAMELEN);
 
 	addr->can_family = AF_CAN;
-	addr->can_ifindex = jsk->ifindex;
+	addr->can_अगरindex = jsk->अगरindex;
 	addr->can_addr.j1939.pgn = jsk->addr.pgn;
-	if (peer) {
+	अगर (peer) अणु
 		addr->can_addr.j1939.name = jsk->addr.dst_name;
 		addr->can_addr.j1939.addr = jsk->addr.da;
-	} else {
+	पूर्ण अन्यथा अणु
 		addr->can_addr.j1939.name = jsk->addr.src_name;
 		addr->can_addr.j1939.addr = jsk->addr.sa;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int j1939_sk_getname(struct socket *sock, struct sockaddr *uaddr,
-			    int peer)
-{
-	struct sockaddr_can *addr = (struct sockaddr_can *)uaddr;
-	struct sock *sk = sock->sk;
-	struct j1939_sock *jsk = j1939_sk(sk);
-	int ret = 0;
+अटल पूर्णांक j1939_sk_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+			    पूर्णांक peer)
+अणु
+	काष्ठा sockaddr_can *addr = (काष्ठा sockaddr_can *)uaddr;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
+	पूर्णांक ret = 0;
 
 	lock_sock(sk);
 
-	if (peer && !(jsk->state & J1939_SOCK_CONNECTED)) {
+	अगर (peer && !(jsk->state & J1939_SOCK_CONNECTED)) अणु
 		ret = -EADDRNOTAVAIL;
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
 	j1939_sk_sock2sockaddr_can(addr, jsk, peer);
 	ret = J1939_MIN_NAMELEN;
@@ -601,28 +602,28 @@ static int j1939_sk_getname(struct socket *sock, struct sockaddr *uaddr,
  failure:
 	release_sock(sk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int j1939_sk_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	struct j1939_sock *jsk;
+अटल पूर्णांक j1939_sk_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा j1939_sock *jsk;
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
 	lock_sock(sk);
 	jsk = j1939_sk(sk);
 
-	if (jsk->state & J1939_SOCK_BOUND) {
-		struct j1939_priv *priv = jsk->priv;
+	अगर (jsk->state & J1939_SOCK_BOUND) अणु
+		काष्ठा j1939_priv *priv = jsk->priv;
 
-		if (wait_event_interruptible(jsk->waitq,
-					     !j1939_sock_pending_get(&jsk->sk))) {
+		अगर (रुको_event_पूर्णांकerruptible(jsk->रुकोq,
+					     !j1939_sock_pending_get(&jsk->sk))) अणु
 			j1939_cancel_active_session(priv, sk);
 			j1939_sk_queue_drop_all(priv, jsk, ESHUTDOWN);
-		}
+		पूर्ण
 
 		j1939_jsk_del(priv, jsk);
 
@@ -630,580 +631,580 @@ static int j1939_sk_release(struct socket *sock)
 				    jsk->addr.sa);
 
 		j1939_netdev_stop(priv);
-	}
+	पूर्ण
 
-	kfree(jsk->filters);
+	kमुक्त(jsk->filters);
 	sock_orphan(sk);
-	sock->sk = NULL;
+	sock->sk = शून्य;
 
 	release_sock(sk);
 	sock_put(sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int j1939_sk_setsockopt_flag(struct j1939_sock *jsk, sockptr_t optval,
-				    unsigned int optlen, int flag)
-{
-	int tmp;
+अटल पूर्णांक j1939_sk_setsockopt_flag(काष्ठा j1939_sock *jsk, sockptr_t optval,
+				    अचिन्हित पूर्णांक optlen, पूर्णांक flag)
+अणु
+	पूर्णांक पंचांगp;
 
-	if (optlen != sizeof(tmp))
-		return -EINVAL;
-	if (copy_from_sockptr(&tmp, optval, optlen))
-		return -EFAULT;
+	अगर (optlen != माप(पंचांगp))
+		वापस -EINVAL;
+	अगर (copy_from_sockptr(&पंचांगp, optval, optlen))
+		वापस -EFAULT;
 	lock_sock(&jsk->sk);
-	if (tmp)
+	अगर (पंचांगp)
 		jsk->state |= flag;
-	else
+	अन्यथा
 		jsk->state &= ~flag;
 	release_sock(&jsk->sk);
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static int j1939_sk_setsockopt(struct socket *sock, int level, int optname,
-			       sockptr_t optval, unsigned int optlen)
-{
-	struct sock *sk = sock->sk;
-	struct j1939_sock *jsk = j1939_sk(sk);
-	int tmp, count = 0, ret = 0;
-	struct j1939_filter *filters = NULL, *ofilters;
+अटल पूर्णांक j1939_sk_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+			       sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
+	पूर्णांक पंचांगp, count = 0, ret = 0;
+	काष्ठा j1939_filter *filters = शून्य, *ofilters;
 
-	if (level != SOL_CAN_J1939)
-		return -EINVAL;
+	अगर (level != SOL_CAN_J1939)
+		वापस -EINVAL;
 
-	switch (optname) {
-	case SO_J1939_FILTER:
-		if (!sockptr_is_null(optval)) {
-			struct j1939_filter *f;
-			int c;
+	चयन (optname) अणु
+	हाल SO_J1939_FILTER:
+		अगर (!sockptr_is_null(optval)) अणु
+			काष्ठा j1939_filter *f;
+			पूर्णांक c;
 
-			if (optlen % sizeof(*filters) != 0)
-				return -EINVAL;
+			अगर (optlen % माप(*filters) != 0)
+				वापस -EINVAL;
 
-			if (optlen > J1939_FILTER_MAX *
-			    sizeof(struct j1939_filter))
-				return -EINVAL;
+			अगर (optlen > J1939_FILTER_MAX *
+			    माप(काष्ठा j1939_filter))
+				वापस -EINVAL;
 
-			count = optlen / sizeof(*filters);
+			count = optlen / माप(*filters);
 			filters = memdup_sockptr(optval, optlen);
-			if (IS_ERR(filters))
-				return PTR_ERR(filters);
+			अगर (IS_ERR(filters))
+				वापस PTR_ERR(filters);
 
-			for (f = filters, c = count; c; f++, c--) {
+			क्रम (f = filters, c = count; c; f++, c--) अणु
 				f->name &= f->name_mask;
 				f->pgn &= f->pgn_mask;
 				f->addr &= f->addr_mask;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		lock_sock(&jsk->sk);
 		ofilters = jsk->filters;
 		jsk->filters = filters;
 		jsk->nfilters = count;
 		release_sock(&jsk->sk);
-		kfree(ofilters);
-		return 0;
-	case SO_J1939_PROMISC:
-		return j1939_sk_setsockopt_flag(jsk, optval, optlen,
+		kमुक्त(ofilters);
+		वापस 0;
+	हाल SO_J1939_PROMISC:
+		वापस j1939_sk_setsockopt_flag(jsk, optval, optlen,
 						J1939_SOCK_PROMISC);
-	case SO_J1939_ERRQUEUE:
+	हाल SO_J1939_ERRQUEUE:
 		ret = j1939_sk_setsockopt_flag(jsk, optval, optlen,
 					       J1939_SOCK_ERRQUEUE);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		if (!(jsk->state & J1939_SOCK_ERRQUEUE))
+		अगर (!(jsk->state & J1939_SOCK_ERRQUEUE))
 			skb_queue_purge(&sk->sk_error_queue);
-		return ret;
-	case SO_J1939_SEND_PRIO:
-		if (optlen != sizeof(tmp))
-			return -EINVAL;
-		if (copy_from_sockptr(&tmp, optval, optlen))
-			return -EFAULT;
-		if (tmp < 0 || tmp > 7)
-			return -EDOM;
-		if (tmp < 2 && !capable(CAP_NET_ADMIN))
-			return -EPERM;
+		वापस ret;
+	हाल SO_J1939_SEND_PRIO:
+		अगर (optlen != माप(पंचांगp))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&पंचांगp, optval, optlen))
+			वापस -EFAULT;
+		अगर (पंचांगp < 0 || पंचांगp > 7)
+			वापस -गलत_तर्क;
+		अगर (पंचांगp < 2 && !capable(CAP_NET_ADMIN))
+			वापस -EPERM;
 		lock_sock(&jsk->sk);
-		jsk->sk.sk_priority = j1939_to_sk_priority(tmp);
+		jsk->sk.sk_priority = j1939_to_sk_priority(पंचांगp);
 		release_sock(&jsk->sk);
-		return 0;
-	default:
-		return -ENOPROTOOPT;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
+पूर्ण
 
-static int j1939_sk_getsockopt(struct socket *sock, int level, int optname,
-			       char __user *optval, int __user *optlen)
-{
-	struct sock *sk = sock->sk;
-	struct j1939_sock *jsk = j1939_sk(sk);
-	int ret, ulen;
-	/* set defaults for using 'int' properties */
-	int tmp = 0;
-	int len = sizeof(tmp);
-	void *val = &tmp;
+अटल पूर्णांक j1939_sk_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+			       अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
+	पूर्णांक ret, ulen;
+	/* set शेषs क्रम using 'int' properties */
+	पूर्णांक पंचांगp = 0;
+	पूर्णांक len = माप(पंचांगp);
+	व्योम *val = &पंचांगp;
 
-	if (level != SOL_CAN_J1939)
-		return -EINVAL;
-	if (get_user(ulen, optlen))
-		return -EFAULT;
-	if (ulen < 0)
-		return -EINVAL;
+	अगर (level != SOL_CAN_J1939)
+		वापस -EINVAL;
+	अगर (get_user(ulen, optlen))
+		वापस -EFAULT;
+	अगर (ulen < 0)
+		वापस -EINVAL;
 
 	lock_sock(&jsk->sk);
-	switch (optname) {
-	case SO_J1939_PROMISC:
-		tmp = (jsk->state & J1939_SOCK_PROMISC) ? 1 : 0;
-		break;
-	case SO_J1939_ERRQUEUE:
-		tmp = (jsk->state & J1939_SOCK_ERRQUEUE) ? 1 : 0;
-		break;
-	case SO_J1939_SEND_PRIO:
-		tmp = j1939_prio(jsk->sk.sk_priority);
-		break;
-	default:
+	चयन (optname) अणु
+	हाल SO_J1939_PROMISC:
+		पंचांगp = (jsk->state & J1939_SOCK_PROMISC) ? 1 : 0;
+		अवरोध;
+	हाल SO_J1939_ERRQUEUE:
+		पंचांगp = (jsk->state & J1939_SOCK_ERRQUEUE) ? 1 : 0;
+		अवरोध;
+	हाल SO_J1939_SEND_PRIO:
+		पंचांगp = j1939_prio(jsk->sk.sk_priority);
+		अवरोध;
+	शेष:
 		ret = -ENOPROTOOPT;
-		goto no_copy;
-	}
+		जाओ no_copy;
+	पूर्ण
 
 	/* copy to user, based on 'len' & 'val'
 	 * but most sockopt's are 'int' properties, and have 'len' & 'val'
-	 * left unchanged, but instead modified 'tmp'
+	 * left unchanged, but instead modअगरied 'tmp'
 	 */
-	if (len > ulen)
+	अगर (len > ulen)
 		ret = -EFAULT;
-	else if (put_user(len, optlen))
+	अन्यथा अगर (put_user(len, optlen))
 		ret = -EFAULT;
-	else if (copy_to_user(optval, val, len))
+	अन्यथा अगर (copy_to_user(optval, val, len))
 		ret = -EFAULT;
-	else
+	अन्यथा
 		ret = 0;
  no_copy:
 	release_sock(&jsk->sk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int j1939_sk_recvmsg(struct socket *sock, struct msghdr *msg,
-			    size_t size, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct sk_buff *skb;
-	struct j1939_sk_buff_cb *skcb;
-	int ret = 0;
+अटल पूर्णांक j1939_sk_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			    माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sk_buff *skb;
+	काष्ठा j1939_sk_buff_cb *skcb;
+	पूर्णांक ret = 0;
 
-	if (flags & ~(MSG_DONTWAIT | MSG_ERRQUEUE))
-		return -EINVAL;
+	अगर (flags & ~(MSG_DONTWAIT | MSG_ERRQUEUE))
+		वापस -EINVAL;
 
-	if (flags & MSG_ERRQUEUE)
-		return sock_recv_errqueue(sock->sk, msg, size, SOL_CAN_J1939,
+	अगर (flags & MSG_ERRQUEUE)
+		वापस sock_recv_errqueue(sock->sk, msg, size, SOL_CAN_J1939,
 					  SCM_J1939_ERRQUEUE);
 
 	skb = skb_recv_datagram(sk, flags, 0, &ret);
-	if (!skb)
-		return ret;
+	अगर (!skb)
+		वापस ret;
 
-	if (size < skb->len)
+	अगर (size < skb->len)
 		msg->msg_flags |= MSG_TRUNC;
-	else
+	अन्यथा
 		size = skb->len;
 
-	ret = memcpy_to_msg(msg, skb->data, size);
-	if (ret < 0) {
-		skb_free_datagram(sk, skb);
-		return ret;
-	}
+	ret = स_नकल_to_msg(msg, skb->data, size);
+	अगर (ret < 0) अणु
+		skb_मुक्त_datagram(sk, skb);
+		वापस ret;
+	पूर्ण
 
 	skcb = j1939_skb_to_cb(skb);
-	if (j1939_address_is_valid(skcb->addr.da))
+	अगर (j1939_address_is_valid(skcb->addr.da))
 		put_cmsg(msg, SOL_CAN_J1939, SCM_J1939_DEST_ADDR,
-			 sizeof(skcb->addr.da), &skcb->addr.da);
+			 माप(skcb->addr.da), &skcb->addr.da);
 
-	if (skcb->addr.dst_name)
+	अगर (skcb->addr.dst_name)
 		put_cmsg(msg, SOL_CAN_J1939, SCM_J1939_DEST_NAME,
-			 sizeof(skcb->addr.dst_name), &skcb->addr.dst_name);
+			 माप(skcb->addr.dst_name), &skcb->addr.dst_name);
 
 	put_cmsg(msg, SOL_CAN_J1939, SCM_J1939_PRIO,
-		 sizeof(skcb->priority), &skcb->priority);
+		 माप(skcb->priority), &skcb->priority);
 
-	if (msg->msg_name) {
-		struct sockaddr_can *paddr = msg->msg_name;
+	अगर (msg->msg_name) अणु
+		काष्ठा sockaddr_can *paddr = msg->msg_name;
 
 		msg->msg_namelen = J1939_MIN_NAMELEN;
-		memset(msg->msg_name, 0, msg->msg_namelen);
+		स_रखो(msg->msg_name, 0, msg->msg_namelen);
 		paddr->can_family = AF_CAN;
-		paddr->can_ifindex = skb->skb_iif;
+		paddr->can_अगरindex = skb->skb_iअगर;
 		paddr->can_addr.j1939.name = skcb->addr.src_name;
 		paddr->can_addr.j1939.addr = skcb->addr.sa;
 		paddr->can_addr.j1939.pgn = skcb->addr.pgn;
-	}
+	पूर्ण
 
 	sock_recv_ts_and_drops(msg, sk, skb);
 	msg->msg_flags |= skcb->msg_flags;
-	skb_free_datagram(sk, skb);
+	skb_मुक्त_datagram(sk, skb);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static struct sk_buff *j1939_sk_alloc_skb(struct net_device *ndev,
-					  struct sock *sk,
-					  struct msghdr *msg, size_t size,
-					  int *errcode)
-{
-	struct j1939_sock *jsk = j1939_sk(sk);
-	struct j1939_sk_buff_cb *skcb;
-	struct sk_buff *skb;
-	int ret;
+अटल काष्ठा sk_buff *j1939_sk_alloc_skb(काष्ठा net_device *ndev,
+					  काष्ठा sock *sk,
+					  काष्ठा msghdr *msg, माप_प्रकार size,
+					  पूर्णांक *errcode)
+अणु
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
+	काष्ठा j1939_sk_buff_cb *skcb;
+	काष्ठा sk_buff *skb;
+	पूर्णांक ret;
 
 	skb = sock_alloc_send_skb(sk,
 				  size +
-				  sizeof(struct can_frame) -
-				  sizeof(((struct can_frame *)NULL)->data) +
-				  sizeof(struct can_skb_priv),
+				  माप(काष्ठा can_frame) -
+				  माप(((काष्ठा can_frame *)शून्य)->data) +
+				  माप(काष्ठा can_skb_priv),
 				  msg->msg_flags & MSG_DONTWAIT, &ret);
-	if (!skb)
-		goto failure;
+	अगर (!skb)
+		जाओ failure;
 
 	can_skb_reserve(skb);
-	can_skb_prv(skb)->ifindex = ndev->ifindex;
+	can_skb_prv(skb)->अगरindex = ndev->अगरindex;
 	can_skb_prv(skb)->skbcnt = 0;
-	skb_reserve(skb, offsetof(struct can_frame, data));
+	skb_reserve(skb, दुरत्व(काष्ठा can_frame, data));
 
-	ret = memcpy_from_msg(skb_put(skb, size), msg, size);
-	if (ret < 0)
-		goto free_skb;
+	ret = स_नकल_from_msg(skb_put(skb, size), msg, size);
+	अगर (ret < 0)
+		जाओ मुक्त_skb;
 
 	skb->dev = ndev;
 
 	skcb = j1939_skb_to_cb(skb);
-	memset(skcb, 0, sizeof(*skcb));
+	स_रखो(skcb, 0, माप(*skcb));
 	skcb->addr = jsk->addr;
 	skcb->priority = j1939_prio(sk->sk_priority);
 
-	if (msg->msg_name) {
-		struct sockaddr_can *addr = msg->msg_name;
+	अगर (msg->msg_name) अणु
+		काष्ठा sockaddr_can *addr = msg->msg_name;
 
-		if (addr->can_addr.j1939.name ||
-		    addr->can_addr.j1939.addr != J1939_NO_ADDR) {
+		अगर (addr->can_addr.j1939.name ||
+		    addr->can_addr.j1939.addr != J1939_NO_ADDR) अणु
 			skcb->addr.dst_name = addr->can_addr.j1939.name;
 			skcb->addr.da = addr->can_addr.j1939.addr;
-		}
-		if (j1939_pgn_is_valid(addr->can_addr.j1939.pgn))
+		पूर्ण
+		अगर (j1939_pgn_is_valid(addr->can_addr.j1939.pgn))
 			skcb->addr.pgn = addr->can_addr.j1939.pgn;
-	}
+	पूर्ण
 
 	*errcode = ret;
-	return skb;
+	वापस skb;
 
-free_skb:
-	kfree_skb(skb);
+मुक्त_skb:
+	kमुक्त_skb(skb);
 failure:
 	*errcode = ret;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static size_t j1939_sk_opt_stats_get_size(void)
-{
-	return
-		nla_total_size(sizeof(u32)) + /* J1939_NLA_BYTES_ACKED */
+अटल माप_प्रकार j1939_sk_opt_stats_get_size(व्योम)
+अणु
+	वापस
+		nla_total_size(माप(u32)) + /* J1939_NLA_BYTES_ACKED */
 		0;
-}
+पूर्ण
 
-static struct sk_buff *
-j1939_sk_get_timestamping_opt_stats(struct j1939_session *session)
-{
-	struct sk_buff *stats;
+अटल काष्ठा sk_buff *
+j1939_sk_get_बारtamping_opt_stats(काष्ठा j1939_session *session)
+अणु
+	काष्ठा sk_buff *stats;
 	u32 size;
 
 	stats = alloc_skb(j1939_sk_opt_stats_get_size(), GFP_ATOMIC);
-	if (!stats)
-		return NULL;
+	अगर (!stats)
+		वापस शून्य;
 
-	if (session->skcb.addr.type == J1939_SIMPLE)
+	अगर (session->skcb.addr.type == J1939_SIMPLE)
 		size = session->total_message_size;
-	else
+	अन्यथा
 		size = min(session->pkt.tx_acked * 7,
 			   session->total_message_size);
 
 	nla_put_u32(stats, J1939_NLA_BYTES_ACKED, size);
 
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-void j1939_sk_errqueue(struct j1939_session *session,
-		       enum j1939_sk_errqueue_type type)
-{
-	struct j1939_priv *priv = session->priv;
-	struct sock *sk = session->sk;
-	struct j1939_sock *jsk;
-	struct sock_exterr_skb *serr;
-	struct sk_buff *skb;
-	char *state = "UNK";
-	int err;
+व्योम j1939_sk_errqueue(काष्ठा j1939_session *session,
+		       क्रमागत j1939_sk_errqueue_type type)
+अणु
+	काष्ठा j1939_priv *priv = session->priv;
+	काष्ठा sock *sk = session->sk;
+	काष्ठा j1939_sock *jsk;
+	काष्ठा sock_exterr_skb *serr;
+	काष्ठा sk_buff *skb;
+	अक्षर *state = "UNK";
+	पूर्णांक err;
 
-	/* currently we have no sk for the RX session */
-	if (!sk)
-		return;
+	/* currently we have no sk क्रम the RX session */
+	अगर (!sk)
+		वापस;
 
 	jsk = j1939_sk(sk);
 
-	if (!(jsk->state & J1939_SOCK_ERRQUEUE))
-		return;
+	अगर (!(jsk->state & J1939_SOCK_ERRQUEUE))
+		वापस;
 
-	skb = j1939_sk_get_timestamping_opt_stats(session);
-	if (!skb)
-		return;
+	skb = j1939_sk_get_बारtamping_opt_stats(session);
+	अगर (!skb)
+		वापस;
 
-	skb->tstamp = ktime_get_real();
+	skb->tstamp = kसमय_get_real();
 
-	BUILD_BUG_ON(sizeof(struct sock_exterr_skb) > sizeof(skb->cb));
+	BUILD_BUG_ON(माप(काष्ठा sock_exterr_skb) > माप(skb->cb));
 
 	serr = SKB_EXT_ERR(skb);
-	memset(serr, 0, sizeof(*serr));
-	switch (type) {
-	case J1939_ERRQUEUE_ACK:
-		if (!(sk->sk_tsflags & SOF_TIMESTAMPING_TX_ACK)) {
-			kfree_skb(skb);
-			return;
-		}
+	स_रखो(serr, 0, माप(*serr));
+	चयन (type) अणु
+	हाल J1939_ERRQUEUE_ACK:
+		अगर (!(sk->sk_tsflags & SOF_TIMESTAMPING_TX_ACK)) अणु
+			kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
 
-		serr->ee.ee_errno = ENOMSG;
+		serr->ee.ee_त्रुटि_सं = ENOMSG;
 		serr->ee.ee_origin = SO_EE_ORIGIN_TIMESTAMPING;
 		serr->ee.ee_info = SCM_TSTAMP_ACK;
 		state = "ACK";
-		break;
-	case J1939_ERRQUEUE_SCHED:
-		if (!(sk->sk_tsflags & SOF_TIMESTAMPING_TX_SCHED)) {
-			kfree_skb(skb);
-			return;
-		}
+		अवरोध;
+	हाल J1939_ERRQUEUE_SCHED:
+		अगर (!(sk->sk_tsflags & SOF_TIMESTAMPING_TX_SCHED)) अणु
+			kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
 
-		serr->ee.ee_errno = ENOMSG;
+		serr->ee.ee_त्रुटि_सं = ENOMSG;
 		serr->ee.ee_origin = SO_EE_ORIGIN_TIMESTAMPING;
 		serr->ee.ee_info = SCM_TSTAMP_SCHED;
 		state = "SCH";
-		break;
-	case J1939_ERRQUEUE_ABORT:
-		serr->ee.ee_errno = session->err;
+		अवरोध;
+	हाल J1939_ERRQUEUE_ABORT:
+		serr->ee.ee_त्रुटि_सं = session->err;
 		serr->ee.ee_origin = SO_EE_ORIGIN_LOCAL;
 		serr->ee.ee_info = J1939_EE_INFO_TX_ABORT;
 		state = "ABT";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(priv->ndev, "Unknown errqueue type %i\n", type);
-	}
+	पूर्ण
 
 	serr->opt_stats = true;
-	if (sk->sk_tsflags & SOF_TIMESTAMPING_OPT_ID)
+	अगर (sk->sk_tsflags & SOF_TIMESTAMPING_OPT_ID)
 		serr->ee.ee_data = session->tskey;
 
 	netdev_dbg(session->priv->ndev, "%s: 0x%p tskey: %i, state: %s\n",
 		   __func__, session, session->tskey, state);
 	err = sock_queue_err_skb(sk, skb);
 
-	if (err)
-		kfree_skb(skb);
-};
+	अगर (err)
+		kमुक्त_skb(skb);
+पूर्ण;
 
-void j1939_sk_send_loop_abort(struct sock *sk, int err)
-{
+व्योम j1939_sk_send_loop_पात(काष्ठा sock *sk, पूर्णांक err)
+अणु
 	sk->sk_err = err;
 
 	sk->sk_error_report(sk);
-}
+पूर्ण
 
-static int j1939_sk_send_loop(struct j1939_priv *priv,  struct sock *sk,
-			      struct msghdr *msg, size_t size)
+अटल पूर्णांक j1939_sk_send_loop(काष्ठा j1939_priv *priv,  काष्ठा sock *sk,
+			      काष्ठा msghdr *msg, माप_प्रकार size)
 
-{
-	struct j1939_sock *jsk = j1939_sk(sk);
-	struct j1939_session *session = j1939_sk_get_incomplete_session(jsk);
-	struct sk_buff *skb;
-	size_t segment_size, todo_size;
-	int ret = 0;
+अणु
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
+	काष्ठा j1939_session *session = j1939_sk_get_incomplete_session(jsk);
+	काष्ठा sk_buff *skb;
+	माप_प्रकार segment_size, toकरो_size;
+	पूर्णांक ret = 0;
 
-	if (session &&
-	    session->total_message_size != session->total_queued_size + size) {
+	अगर (session &&
+	    session->total_message_size != session->total_queued_size + size) अणु
 		j1939_session_put(session);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	todo_size = size;
+	toकरो_size = size;
 
-	while (todo_size) {
-		struct j1939_sk_buff_cb *skcb;
+	जबतक (toकरो_size) अणु
+		काष्ठा j1939_sk_buff_cb *skcb;
 
-		segment_size = min_t(size_t, J1939_MAX_TP_PACKET_SIZE,
-				     todo_size);
+		segment_size = min_t(माप_प्रकार, J1939_MAX_TP_PACKET_SIZE,
+				     toकरो_size);
 
-		/* Allocate skb for one segment */
+		/* Allocate skb क्रम one segment */
 		skb = j1939_sk_alloc_skb(priv->ndev, sk, msg, segment_size,
 					 &ret);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		skcb = j1939_skb_to_cb(skb);
 
-		if (!session) {
-			/* at this point the size should be full size
+		अगर (!session) अणु
+			/* at this poपूर्णांक the size should be full size
 			 * of the session
 			 */
 			skcb->offset = 0;
 			session = j1939_tp_send(priv, skb, size);
-			if (IS_ERR(session)) {
+			अगर (IS_ERR(session)) अणु
 				ret = PTR_ERR(session);
-				goto kfree_skb;
-			}
-			if (j1939_sk_queue_session(session)) {
-				/* try to activate session if we a
+				जाओ kमुक्त_skb;
+			पूर्ण
+			अगर (j1939_sk_queue_session(session)) अणु
+				/* try to activate session अगर we a
 				 * fist in the queue
 				 */
-				if (!j1939_session_activate(session)) {
-					j1939_tp_schedule_txtimer(session, 0);
-				} else {
+				अगर (!j1939_session_activate(session)) अणु
+					j1939_tp_schedule_txसमयr(session, 0);
+				पूर्ण अन्यथा अणु
 					ret = -EBUSY;
 					session->err = ret;
 					j1939_sk_queue_drop_all(priv, jsk,
 								EBUSY);
-					break;
-				}
-			}
-		} else {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			skcb->offset = session->total_queued_size;
 			j1939_session_skb_queue(session, skb);
-		}
+		पूर्ण
 
-		todo_size -= segment_size;
+		toकरो_size -= segment_size;
 		session->total_queued_size += segment_size;
-	}
+	पूर्ण
 
-	switch (ret) {
-	case 0: /* OK */
-		if (todo_size)
+	चयन (ret) अणु
+	हाल 0: /* OK */
+		अगर (toकरो_size)
 			netdev_warn(priv->ndev,
 				    "no error found and not completely queued?! %zu\n",
-				    todo_size);
+				    toकरो_size);
 		ret = size;
-		break;
-	case -ERESTARTSYS:
+		अवरोध;
+	हाल -ERESTARTSYS:
 		ret = -EINTR;
 		fallthrough;
-	case -EAGAIN: /* OK */
-		if (todo_size != size)
-			ret = size - todo_size;
-		break;
-	default: /* ERROR */
-		break;
-	}
+	हाल -EAGAIN: /* OK */
+		अगर (toकरो_size != size)
+			ret = size - toकरो_size;
+		अवरोध;
+	शेष: /* ERROR */
+		अवरोध;
+	पूर्ण
 
-	if (session)
+	अगर (session)
 		j1939_session_put(session);
 
-	return ret;
+	वापस ret;
 
- kfree_skb:
-	kfree_skb(skb);
-	return ret;
-}
+ kमुक्त_skb:
+	kमुक्त_skb(skb);
+	वापस ret;
+पूर्ण
 
-static int j1939_sk_sendmsg(struct socket *sock, struct msghdr *msg,
-			    size_t size)
-{
-	struct sock *sk = sock->sk;
-	struct j1939_sock *jsk = j1939_sk(sk);
-	struct j1939_priv *priv;
-	int ifindex;
-	int ret;
+अटल पूर्णांक j1939_sk_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			    माप_प्रकार size)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा j1939_sock *jsk = j1939_sk(sk);
+	काष्ठा j1939_priv *priv;
+	पूर्णांक अगरindex;
+	पूर्णांक ret;
 
 	lock_sock(sock->sk);
 	/* various socket state tests */
-	if (!(jsk->state & J1939_SOCK_BOUND)) {
+	अगर (!(jsk->state & J1939_SOCK_BOUND)) अणु
 		ret = -EBADFD;
-		goto sendmsg_done;
-	}
+		जाओ sendmsg_करोne;
+	पूर्ण
 
 	priv = jsk->priv;
-	ifindex = jsk->ifindex;
+	अगरindex = jsk->अगरindex;
 
-	if (!jsk->addr.src_name && jsk->addr.sa == J1939_NO_ADDR) {
-		/* no source address assigned yet */
+	अगर (!jsk->addr.src_name && jsk->addr.sa == J1939_NO_ADDR) अणु
+		/* no source address asचिन्हित yet */
 		ret = -EBADFD;
-		goto sendmsg_done;
-	}
+		जाओ sendmsg_करोne;
+	पूर्ण
 
 	/* deal with provided destination address info */
-	if (msg->msg_name) {
-		struct sockaddr_can *addr = msg->msg_name;
+	अगर (msg->msg_name) अणु
+		काष्ठा sockaddr_can *addr = msg->msg_name;
 
-		if (msg->msg_namelen < J1939_MIN_NAMELEN) {
+		अगर (msg->msg_namelen < J1939_MIN_NAMELEN) अणु
 			ret = -EINVAL;
-			goto sendmsg_done;
-		}
+			जाओ sendmsg_करोne;
+		पूर्ण
 
-		if (addr->can_family != AF_CAN) {
+		अगर (addr->can_family != AF_CAN) अणु
 			ret = -EINVAL;
-			goto sendmsg_done;
-		}
+			जाओ sendmsg_करोne;
+		पूर्ण
 
-		if (addr->can_ifindex && addr->can_ifindex != ifindex) {
+		अगर (addr->can_अगरindex && addr->can_अगरindex != अगरindex) अणु
 			ret = -EBADFD;
-			goto sendmsg_done;
-		}
+			जाओ sendmsg_करोne;
+		पूर्ण
 
-		if (j1939_pgn_is_valid(addr->can_addr.j1939.pgn) &&
-		    !j1939_pgn_is_clean_pdu(addr->can_addr.j1939.pgn)) {
+		अगर (j1939_pgn_is_valid(addr->can_addr.j1939.pgn) &&
+		    !j1939_pgn_is_clean_pdu(addr->can_addr.j1939.pgn)) अणु
 			ret = -EINVAL;
-			goto sendmsg_done;
-		}
+			जाओ sendmsg_करोne;
+		पूर्ण
 
-		if (!addr->can_addr.j1939.name &&
+		अगर (!addr->can_addr.j1939.name &&
 		    addr->can_addr.j1939.addr == J1939_NO_ADDR &&
-		    !sock_flag(sk, SOCK_BROADCAST)) {
+		    !sock_flag(sk, SOCK_BROADCAST)) अणु
 			/* broadcast, but SO_BROADCAST not set */
 			ret = -EACCES;
-			goto sendmsg_done;
-		}
-	} else {
-		if (!jsk->addr.dst_name && jsk->addr.da == J1939_NO_ADDR &&
-		    !sock_flag(sk, SOCK_BROADCAST)) {
+			जाओ sendmsg_करोne;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!jsk->addr.dst_name && jsk->addr.da == J1939_NO_ADDR &&
+		    !sock_flag(sk, SOCK_BROADCAST)) अणु
 			/* broadcast, but SO_BROADCAST not set */
 			ret = -EACCES;
-			goto sendmsg_done;
-		}
-	}
+			जाओ sendmsg_करोne;
+		पूर्ण
+	पूर्ण
 
 	ret = j1939_sk_send_loop(priv, sk, msg, size);
 
-sendmsg_done:
+sendmsg_करोne:
 	release_sock(sock->sk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void j1939_sk_netdev_event_netdown(struct j1939_priv *priv)
-{
-	struct j1939_sock *jsk;
-	int error_code = ENETDOWN;
+व्योम j1939_sk_netdev_event_netकरोwn(काष्ठा j1939_priv *priv)
+अणु
+	काष्ठा j1939_sock *jsk;
+	पूर्णांक error_code = ENETDOWN;
 
 	spin_lock_bh(&priv->j1939_socks_lock);
-	list_for_each_entry(jsk, &priv->j1939_socks, list) {
+	list_क्रम_each_entry(jsk, &priv->j1939_socks, list) अणु
 		jsk->sk.sk_err = error_code;
-		if (!sock_flag(&jsk->sk, SOCK_DEAD))
+		अगर (!sock_flag(&jsk->sk, SOCK_DEAD))
 			jsk->sk.sk_error_report(&jsk->sk);
 
 		j1939_sk_queue_drop_all(priv, jsk, error_code);
-	}
+	पूर्ण
 	spin_unlock_bh(&priv->j1939_socks_lock);
-}
+पूर्ण
 
-static int j1939_sk_no_ioctlcmd(struct socket *sock, unsigned int cmd,
-				unsigned long arg)
-{
-	/* no ioctls for socket layer -> hand it down to NIC layer */
-	return -ENOIOCTLCMD;
-}
+अटल पूर्णांक j1939_sk_no_ioctlcmd(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg)
+अणु
+	/* no ioctls क्रम socket layer -> hand it करोwn to NIC layer */
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-static const struct proto_ops j1939_ops = {
+अटल स्थिर काष्ठा proto_ops j1939_ops = अणु
 	.family = PF_CAN,
 	.release = j1939_sk_release,
 	.bind = j1939_sk_bind,
@@ -1214,25 +1215,25 @@ static const struct proto_ops j1939_ops = {
 	.poll = datagram_poll,
 	.ioctl = j1939_sk_no_ioctlcmd,
 	.listen = sock_no_listen,
-	.shutdown = sock_no_shutdown,
+	.shutकरोwn = sock_no_shutकरोwn,
 	.setsockopt = j1939_sk_setsockopt,
-	.getsockopt = j1939_sk_getsockopt,
+	.माला_लोockopt = j1939_sk_माला_लोockopt,
 	.sendmsg = j1939_sk_sendmsg,
 	.recvmsg = j1939_sk_recvmsg,
 	.mmap = sock_no_mmap,
 	.sendpage = sock_no_sendpage,
-};
+पूर्ण;
 
-static struct proto j1939_proto __read_mostly = {
+अटल काष्ठा proto j1939_proto __पढ़ो_mostly = अणु
 	.name = "CAN_J1939",
 	.owner = THIS_MODULE,
-	.obj_size = sizeof(struct j1939_sock),
+	.obj_size = माप(काष्ठा j1939_sock),
 	.init = j1939_sk_init,
-};
+पूर्ण;
 
-const struct can_proto j1939_can_proto = {
+स्थिर काष्ठा can_proto j1939_can_proto = अणु
 	.type = SOCK_DGRAM,
 	.protocol = CAN_J1939,
 	.ops = &j1939_ops,
 	.prot = &j1939_proto,
-};
+पूर्ण;

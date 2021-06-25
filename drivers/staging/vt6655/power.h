@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
  *
- * File: power.h
+ * File: घातer.h
  *
- * Purpose: Handles 802.11 power management  functions
+ * Purpose: Handles 802.11 घातer management  functions
  *
- * Author: Lyndon Chen
+ * Author: Lynकरोn Chen
  *
  * Date: July 17, 2002
  *
  */
 
-#ifndef __POWER_H__
-#define __POWER_H__
+#अगर_अघोषित __POWER_H__
+#घोषणा __POWER_H__
 
-#include "device.h"
+#समावेश "device.h"
 
-#define C_PWBT                   1000    /* micro sec. power up before TBTT */
-#define PS_FAST_INTERVAL         1       /* Fast power saving listen interval */
-#define PS_MAX_INTERVAL          4       /* MAX power saving listen interval */
+#घोषणा C_PWBT                   1000    /* micro sec. घातer up beक्रमe TBTT */
+#घोषणा PS_FAST_INTERVAL         1       /* Fast घातer saving listen पूर्णांकerval */
+#घोषणा PS_MAX_INTERVAL          4       /* MAX घातer saving listen पूर्णांकerval */
 
-void PSvDisablePowerSaving(struct vnt_private *priv);
+व्योम PSvDisablePowerSaving(काष्ठा vnt_निजी *priv);
 
-void PSvEnablePowerSaving(struct vnt_private *priv, unsigned short wListenInterval);
+व्योम PSvEnablePowerSaving(काष्ठा vnt_निजी *priv, अचिन्हित लघु wListenInterval);
 
-bool PSbIsNextTBTTWakeUp(struct vnt_private *priv);
+bool PSbIsNextTBTTWakeUp(काष्ठा vnt_निजी *priv);
 
-#endif /* __POWER_H__ */
+#पूर्ण_अगर /* __POWER_H__ */

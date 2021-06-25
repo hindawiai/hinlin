@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * tc358767 eDP bridge driver
  *
@@ -15,698 +16,698 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_dp_helper.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_of.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_print.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_dp_helper.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/drm_probe_helper.h>
 
 /* Registers */
 
 /* Display Parallel Interface */
-#define DPIPXLFMT		0x0440
-#define VS_POL_ACTIVE_LOW		(1 << 10)
-#define HS_POL_ACTIVE_LOW		(1 << 9)
-#define DE_POL_ACTIVE_HIGH		(0 << 8)
-#define SUB_CFG_TYPE_CONFIG1		(0 << 2) /* LSB aligned */
-#define SUB_CFG_TYPE_CONFIG2		(1 << 2) /* Loosely Packed */
-#define SUB_CFG_TYPE_CONFIG3		(2 << 2) /* LSB aligned 8-bit */
-#define DPI_BPP_RGB888			(0 << 0)
-#define DPI_BPP_RGB666			(1 << 0)
-#define DPI_BPP_RGB565			(2 << 0)
+#घोषणा DPIPXLFMT		0x0440
+#घोषणा VS_POL_ACTIVE_LOW		(1 << 10)
+#घोषणा HS_POL_ACTIVE_LOW		(1 << 9)
+#घोषणा DE_POL_ACTIVE_HIGH		(0 << 8)
+#घोषणा SUB_CFG_TYPE_CONFIG1		(0 << 2) /* LSB aligned */
+#घोषणा SUB_CFG_TYPE_CONFIG2		(1 << 2) /* Loosely Packed */
+#घोषणा SUB_CFG_TYPE_CONFIG3		(2 << 2) /* LSB aligned 8-bit */
+#घोषणा DPI_BPP_RGB888			(0 << 0)
+#घोषणा DPI_BPP_RGB666			(1 << 0)
+#घोषणा DPI_BPP_RGB565			(2 << 0)
 
 /* Video Path */
-#define VPCTRL0			0x0450
-#define VSDELAY			GENMASK(31, 20)
-#define OPXLFMT_RGB666			(0 << 8)
-#define OPXLFMT_RGB888			(1 << 8)
-#define FRMSYNC_DISABLED		(0 << 4) /* Video Timing Gen Disabled */
-#define FRMSYNC_ENABLED			(1 << 4) /* Video Timing Gen Enabled */
-#define MSF_DISABLED			(0 << 0) /* Magic Square FRC disabled */
-#define MSF_ENABLED			(1 << 0) /* Magic Square FRC enabled */
-#define HTIM01			0x0454
-#define HPW			GENMASK(8, 0)
-#define HBPR			GENMASK(24, 16)
-#define HTIM02			0x0458
-#define HDISPR			GENMASK(10, 0)
-#define HFPR			GENMASK(24, 16)
-#define VTIM01			0x045c
-#define VSPR			GENMASK(7, 0)
-#define VBPR			GENMASK(23, 16)
-#define VTIM02			0x0460
-#define VFPR			GENMASK(23, 16)
-#define VDISPR			GENMASK(10, 0)
-#define VFUEN0			0x0464
-#define VFUEN				BIT(0)   /* Video Frame Timing Upload */
+#घोषणा VPCTRL0			0x0450
+#घोषणा VSDELAY			GENMASK(31, 20)
+#घोषणा OPXLFMT_RGB666			(0 << 8)
+#घोषणा OPXLFMT_RGB888			(1 << 8)
+#घोषणा FRMSYNC_DISABLED		(0 << 4) /* Video Timing Gen Disabled */
+#घोषणा FRMSYNC_ENABLED			(1 << 4) /* Video Timing Gen Enabled */
+#घोषणा MSF_DISABLED			(0 << 0) /* Magic Square FRC disabled */
+#घोषणा MSF_ENABLED			(1 << 0) /* Magic Square FRC enabled */
+#घोषणा HTIM01			0x0454
+#घोषणा HPW			GENMASK(8, 0)
+#घोषणा HBPR			GENMASK(24, 16)
+#घोषणा HTIM02			0x0458
+#घोषणा HDISPR			GENMASK(10, 0)
+#घोषणा HFPR			GENMASK(24, 16)
+#घोषणा VTIM01			0x045c
+#घोषणा VSPR			GENMASK(7, 0)
+#घोषणा VBPR			GENMASK(23, 16)
+#घोषणा VTIM02			0x0460
+#घोषणा VFPR			GENMASK(23, 16)
+#घोषणा VDISPR			GENMASK(10, 0)
+#घोषणा VFUEN0			0x0464
+#घोषणा VFUEN				BIT(0)   /* Video Frame Timing Upload */
 
 /* System */
-#define TC_IDREG		0x0500
-#define SYSSTAT			0x0508
-#define SYSCTRL			0x0510
-#define DP0_AUDSRC_NO_INPUT		(0 << 3)
-#define DP0_AUDSRC_I2S_RX		(1 << 3)
-#define DP0_VIDSRC_NO_INPUT		(0 << 0)
-#define DP0_VIDSRC_DSI_RX		(1 << 0)
-#define DP0_VIDSRC_DPI_RX		(2 << 0)
-#define DP0_VIDSRC_COLOR_BAR		(3 << 0)
-#define SYSRSTENB		0x050c
-#define ENBI2C				(1 << 0)
-#define ENBLCD0				(1 << 2)
-#define ENBBM				(1 << 3)
-#define ENBDSIRX			(1 << 4)
-#define ENBREG				(1 << 5)
-#define ENBHDCP				(1 << 8)
-#define GPIOM			0x0540
-#define GPIOC			0x0544
-#define GPIOO			0x0548
-#define GPIOI			0x054c
-#define INTCTL_G		0x0560
-#define INTSTS_G		0x0564
+#घोषणा TC_IDREG		0x0500
+#घोषणा SYSSTAT			0x0508
+#घोषणा SYSCTRL			0x0510
+#घोषणा DP0_AUDSRC_NO_INPUT		(0 << 3)
+#घोषणा DP0_AUDSRC_I2S_RX		(1 << 3)
+#घोषणा DP0_VIDSRC_NO_INPUT		(0 << 0)
+#घोषणा DP0_VIDSRC_DSI_RX		(1 << 0)
+#घोषणा DP0_VIDSRC_DPI_RX		(2 << 0)
+#घोषणा DP0_VIDSRC_COLOR_BAR		(3 << 0)
+#घोषणा SYSRSTENB		0x050c
+#घोषणा ENBI2C				(1 << 0)
+#घोषणा ENBLCD0				(1 << 2)
+#घोषणा ENBBM				(1 << 3)
+#घोषणा ENBDSIRX			(1 << 4)
+#घोषणा ENBREG				(1 << 5)
+#घोषणा ENBHDCP				(1 << 8)
+#घोषणा GPIOM			0x0540
+#घोषणा GPIOC			0x0544
+#घोषणा GPIOO			0x0548
+#घोषणा GPIOI			0x054c
+#घोषणा INTCTL_G		0x0560
+#घोषणा INTSTS_G		0x0564
 
-#define INT_SYSERR		BIT(16)
-#define INT_GPIO_H(x)		(1 << (x == 0 ? 2 : 10))
-#define INT_GPIO_LC(x)		(1 << (x == 0 ? 3 : 11))
+#घोषणा INT_SYSERR		BIT(16)
+#घोषणा INT_GPIO_H(x)		(1 << (x == 0 ? 2 : 10))
+#घोषणा INT_GPIO_LC(x)		(1 << (x == 0 ? 3 : 11))
 
-#define INT_GP0_LCNT		0x0584
-#define INT_GP1_LCNT		0x0588
+#घोषणा INT_GP0_LCNT		0x0584
+#घोषणा INT_GP1_LCNT		0x0588
 
 /* Control */
-#define DP0CTL			0x0600
-#define VID_MN_GEN			BIT(6)   /* Auto-generate M/N values */
-#define EF_EN				BIT(5)   /* Enable Enhanced Framing */
-#define VID_EN				BIT(1)   /* Video transmission enable */
-#define DP_EN				BIT(0)   /* Enable DPTX function */
+#घोषणा DP0CTL			0x0600
+#घोषणा VID_MN_GEN			BIT(6)   /* Auto-generate M/N values */
+#घोषणा EF_EN				BIT(5)   /* Enable Enhanced Framing */
+#घोषणा VID_EN				BIT(1)   /* Video transmission enable */
+#घोषणा DP_EN				BIT(0)   /* Enable DPTX function */
 
 /* Clocks */
-#define DP0_VIDMNGEN0		0x0610
-#define DP0_VIDMNGEN1		0x0614
-#define DP0_VMNGENSTATUS	0x0618
+#घोषणा DP0_VIDMNGEN0		0x0610
+#घोषणा DP0_VIDMNGEN1		0x0614
+#घोषणा DP0_VMNGENSTATUS	0x0618
 
 /* Main Channel */
-#define DP0_SECSAMPLE		0x0640
-#define DP0_VIDSYNCDELAY	0x0644
-#define VID_SYNC_DLY		GENMASK(15, 0)
-#define THRESH_DLY		GENMASK(31, 16)
+#घोषणा DP0_SECSAMPLE		0x0640
+#घोषणा DP0_VIDSYNCDELAY	0x0644
+#घोषणा VID_SYNC_DLY		GENMASK(15, 0)
+#घोषणा THRESH_DLY		GENMASK(31, 16)
 
-#define DP0_TOTALVAL		0x0648
-#define H_TOTAL			GENMASK(15, 0)
-#define V_TOTAL			GENMASK(31, 16)
-#define DP0_STARTVAL		0x064c
-#define H_START			GENMASK(15, 0)
-#define V_START			GENMASK(31, 16)
-#define DP0_ACTIVEVAL		0x0650
-#define H_ACT			GENMASK(15, 0)
-#define V_ACT			GENMASK(31, 16)
+#घोषणा DP0_TOTALVAL		0x0648
+#घोषणा H_TOTAL			GENMASK(15, 0)
+#घोषणा V_TOTAL			GENMASK(31, 16)
+#घोषणा DP0_STARTVAL		0x064c
+#घोषणा H_START			GENMASK(15, 0)
+#घोषणा V_START			GENMASK(31, 16)
+#घोषणा DP0_ACTIVEVAL		0x0650
+#घोषणा H_ACT			GENMASK(15, 0)
+#घोषणा V_ACT			GENMASK(31, 16)
 
-#define DP0_SYNCVAL		0x0654
-#define VS_WIDTH		GENMASK(30, 16)
-#define HS_WIDTH		GENMASK(14, 0)
-#define SYNCVAL_HS_POL_ACTIVE_LOW	(1 << 15)
-#define SYNCVAL_VS_POL_ACTIVE_LOW	(1 << 31)
-#define DP0_MISC		0x0658
-#define TU_SIZE_RECOMMENDED		(63) /* LSCLK cycles per TU */
-#define MAX_TU_SYMBOL		GENMASK(28, 23)
-#define TU_SIZE			GENMASK(21, 16)
-#define BPC_6				(0 << 5)
-#define BPC_8				(1 << 5)
+#घोषणा DP0_SYNCVAL		0x0654
+#घोषणा VS_WIDTH		GENMASK(30, 16)
+#घोषणा HS_WIDTH		GENMASK(14, 0)
+#घोषणा SYNCVAL_HS_POL_ACTIVE_LOW	(1 << 15)
+#घोषणा SYNCVAL_VS_POL_ACTIVE_LOW	(1 << 31)
+#घोषणा DP0_MISC		0x0658
+#घोषणा TU_SIZE_RECOMMENDED		(63) /* LSCLK cycles per TU */
+#घोषणा MAX_TU_SYMBOL		GENMASK(28, 23)
+#घोषणा TU_SIZE			GENMASK(21, 16)
+#घोषणा BPC_6				(0 << 5)
+#घोषणा BPC_8				(1 << 5)
 
 /* AUX channel */
-#define DP0_AUXCFG0		0x0660
-#define DP0_AUXCFG0_BSIZE	GENMASK(11, 8)
-#define DP0_AUXCFG0_ADDR_ONLY	BIT(4)
-#define DP0_AUXCFG1		0x0664
-#define AUX_RX_FILTER_EN		BIT(16)
+#घोषणा DP0_AUXCFG0		0x0660
+#घोषणा DP0_AUXCFG0_BSIZE	GENMASK(11, 8)
+#घोषणा DP0_AUXCFG0_ADDR_ONLY	BIT(4)
+#घोषणा DP0_AUXCFG1		0x0664
+#घोषणा AUX_RX_FILTER_EN		BIT(16)
 
-#define DP0_AUXADDR		0x0668
-#define DP0_AUXWDATA(i)		(0x066c + (i) * 4)
-#define DP0_AUXRDATA(i)		(0x067c + (i) * 4)
-#define DP0_AUXSTATUS		0x068c
-#define AUX_BYTES		GENMASK(15, 8)
-#define AUX_STATUS		GENMASK(7, 4)
-#define AUX_TIMEOUT		BIT(1)
-#define AUX_BUSY		BIT(0)
-#define DP0_AUXI2CADR		0x0698
+#घोषणा DP0_AUXADDR		0x0668
+#घोषणा DP0_AUXWDATA(i)		(0x066c + (i) * 4)
+#घोषणा DP0_AUXRDATA(i)		(0x067c + (i) * 4)
+#घोषणा DP0_AUXSTATUS		0x068c
+#घोषणा AUX_BYTES		GENMASK(15, 8)
+#घोषणा AUX_STATUS		GENMASK(7, 4)
+#घोषणा AUX_TIMEOUT		BIT(1)
+#घोषणा AUX_BUSY		BIT(0)
+#घोषणा DP0_AUXI2CADR		0x0698
 
 /* Link Training */
-#define DP0_SRCCTRL		0x06a0
-#define DP0_SRCCTRL_SCRMBLDIS		BIT(13)
-#define DP0_SRCCTRL_EN810B		BIT(12)
-#define DP0_SRCCTRL_NOTP		(0 << 8)
-#define DP0_SRCCTRL_TP1			(1 << 8)
-#define DP0_SRCCTRL_TP2			(2 << 8)
-#define DP0_SRCCTRL_LANESKEW		BIT(7)
-#define DP0_SRCCTRL_SSCG		BIT(3)
-#define DP0_SRCCTRL_LANES_1		(0 << 2)
-#define DP0_SRCCTRL_LANES_2		(1 << 2)
-#define DP0_SRCCTRL_BW27		(1 << 1)
-#define DP0_SRCCTRL_BW162		(0 << 1)
-#define DP0_SRCCTRL_AUTOCORRECT		BIT(0)
-#define DP0_LTSTAT		0x06d0
-#define LT_LOOPDONE			BIT(13)
-#define LT_STATUS_MASK			(0x1f << 8)
-#define LT_CHANNEL1_EQ_BITS		(DP_CHANNEL_EQ_BITS << 4)
-#define LT_INTERLANE_ALIGN_DONE		BIT(3)
-#define LT_CHANNEL0_EQ_BITS		(DP_CHANNEL_EQ_BITS)
-#define DP0_SNKLTCHGREQ		0x06d4
-#define DP0_LTLOOPCTRL		0x06d8
-#define DP0_SNKLTCTRL		0x06e4
+#घोषणा DP0_SRCCTRL		0x06a0
+#घोषणा DP0_SRCCTRL_SCRMBLDIS		BIT(13)
+#घोषणा DP0_SRCCTRL_EN810B		BIT(12)
+#घोषणा DP0_SRCCTRL_NOTP		(0 << 8)
+#घोषणा DP0_SRCCTRL_TP1			(1 << 8)
+#घोषणा DP0_SRCCTRL_TP2			(2 << 8)
+#घोषणा DP0_SRCCTRL_LANESKEW		BIT(7)
+#घोषणा DP0_SRCCTRL_SSCG		BIT(3)
+#घोषणा DP0_SRCCTRL_LANES_1		(0 << 2)
+#घोषणा DP0_SRCCTRL_LANES_2		(1 << 2)
+#घोषणा DP0_SRCCTRL_BW27		(1 << 1)
+#घोषणा DP0_SRCCTRL_BW162		(0 << 1)
+#घोषणा DP0_SRCCTRL_AUTOCORRECT		BIT(0)
+#घोषणा DP0_LTSTAT		0x06d0
+#घोषणा LT_LOOPDONE			BIT(13)
+#घोषणा LT_STATUS_MASK			(0x1f << 8)
+#घोषणा LT_CHANNEL1_EQ_BITS		(DP_CHANNEL_EQ_BITS << 4)
+#घोषणा LT_INTERLANE_ALIGN_DONE		BIT(3)
+#घोषणा LT_CHANNEL0_EQ_BITS		(DP_CHANNEL_EQ_BITS)
+#घोषणा DP0_SNKLTCHGREQ		0x06d4
+#घोषणा DP0_LTLOOPCTRL		0x06d8
+#घोषणा DP0_SNKLTCTRL		0x06e4
 
-#define DP1_SRCCTRL		0x07a0
+#घोषणा DP1_SRCCTRL		0x07a0
 
 /* PHY */
-#define DP_PHY_CTRL		0x0800
-#define DP_PHY_RST			BIT(28)  /* DP PHY Global Soft Reset */
-#define BGREN				BIT(25)  /* AUX PHY BGR Enable */
-#define PWR_SW_EN			BIT(24)  /* PHY Power Switch Enable */
-#define PHY_M1_RST			BIT(12)  /* Reset PHY1 Main Channel */
-#define PHY_RDY				BIT(16)  /* PHY Main Channels Ready */
-#define PHY_M0_RST			BIT(8)   /* Reset PHY0 Main Channel */
-#define PHY_2LANE			BIT(2)   /* PHY Enable 2 lanes */
-#define PHY_A0_EN			BIT(1)   /* PHY Aux Channel0 Enable */
-#define PHY_M0_EN			BIT(0)   /* PHY Main Channel0 Enable */
+#घोषणा DP_PHY_CTRL		0x0800
+#घोषणा DP_PHY_RST			BIT(28)  /* DP PHY Global Soft Reset */
+#घोषणा BGREN				BIT(25)  /* AUX PHY BGR Enable */
+#घोषणा PWR_SW_EN			BIT(24)  /* PHY Power Switch Enable */
+#घोषणा PHY_M1_RST			BIT(12)  /* Reset PHY1 Main Channel */
+#घोषणा PHY_RDY				BIT(16)  /* PHY Main Channels Ready */
+#घोषणा PHY_M0_RST			BIT(8)   /* Reset PHY0 Main Channel */
+#घोषणा PHY_2LANE			BIT(2)   /* PHY Enable 2 lanes */
+#घोषणा PHY_A0_EN			BIT(1)   /* PHY Aux Channel0 Enable */
+#घोषणा PHY_M0_EN			BIT(0)   /* PHY Main Channel0 Enable */
 
 /* PLL */
-#define DP0_PLLCTRL		0x0900
-#define DP1_PLLCTRL		0x0904	/* not defined in DS */
-#define PXL_PLLCTRL		0x0908
-#define PLLUPDATE			BIT(2)
-#define PLLBYP				BIT(1)
-#define PLLEN				BIT(0)
-#define PXL_PLLPARAM		0x0914
-#define IN_SEL_REFCLK			(0 << 14)
-#define SYS_PLLPARAM		0x0918
-#define REF_FREQ_38M4			(0 << 8) /* 38.4 MHz */
-#define REF_FREQ_19M2			(1 << 8) /* 19.2 MHz */
-#define REF_FREQ_26M			(2 << 8) /* 26 MHz */
-#define REF_FREQ_13M			(3 << 8) /* 13 MHz */
-#define SYSCLK_SEL_LSCLK		(0 << 4)
-#define LSCLK_DIV_1			(0 << 0)
-#define LSCLK_DIV_2			(1 << 0)
+#घोषणा DP0_PLLCTRL		0x0900
+#घोषणा DP1_PLLCTRL		0x0904	/* not defined in DS */
+#घोषणा PXL_PLLCTRL		0x0908
+#घोषणा PLLUPDATE			BIT(2)
+#घोषणा PLLBYP				BIT(1)
+#घोषणा PLLEN				BIT(0)
+#घोषणा PXL_PLLPARAM		0x0914
+#घोषणा IN_SEL_REFCLK			(0 << 14)
+#घोषणा SYS_PLLPARAM		0x0918
+#घोषणा REF_FREQ_38M4			(0 << 8) /* 38.4 MHz */
+#घोषणा REF_FREQ_19M2			(1 << 8) /* 19.2 MHz */
+#घोषणा REF_FREQ_26M			(2 << 8) /* 26 MHz */
+#घोषणा REF_FREQ_13M			(3 << 8) /* 13 MHz */
+#घोषणा SYSCLK_SEL_LSCLK		(0 << 4)
+#घोषणा LSCLK_DIV_1			(0 << 0)
+#घोषणा LSCLK_DIV_2			(1 << 0)
 
 /* Test & Debug */
-#define TSTCTL			0x0a00
-#define COLOR_R			GENMASK(31, 24)
-#define COLOR_G			GENMASK(23, 16)
-#define COLOR_B			GENMASK(15, 8)
-#define ENI2CFILTER		BIT(4)
-#define COLOR_BAR_MODE		GENMASK(1, 0)
-#define COLOR_BAR_MODE_BARS	2
-#define PLL_DBG			0x0a04
+#घोषणा TSTCTL			0x0a00
+#घोषणा COLOR_R			GENMASK(31, 24)
+#घोषणा COLOR_G			GENMASK(23, 16)
+#घोषणा COLOR_B			GENMASK(15, 8)
+#घोषणा ENI2CFILTER		BIT(4)
+#घोषणा COLOR_BAR_MODE		GENMASK(1, 0)
+#घोषणा COLOR_BAR_MODE_BARS	2
+#घोषणा PLL_DBG			0x0a04
 
-static bool tc_test_pattern;
+अटल bool tc_test_pattern;
 module_param_named(test, tc_test_pattern, bool, 0644);
 
-struct tc_edp_link {
+काष्ठा tc_edp_link अणु
 	u8			dpcd[DP_RECEIVER_CAP_SIZE];
-	unsigned int		rate;
+	अचिन्हित पूर्णांक		rate;
 	u8			num_lanes;
 	u8			assr;
 	bool			scrambler_dis;
-	bool			spread;
-};
+	bool			spपढ़ो;
+पूर्ण;
 
-struct tc_data {
-	struct device		*dev;
-	struct regmap		*regmap;
-	struct drm_dp_aux	aux;
+काष्ठा tc_data अणु
+	काष्ठा device		*dev;
+	काष्ठा regmap		*regmap;
+	काष्ठा drm_dp_aux	aux;
 
-	struct drm_bridge	bridge;
-	struct drm_bridge	*panel_bridge;
-	struct drm_connector	connector;
+	काष्ठा drm_bridge	bridge;
+	काष्ठा drm_bridge	*panel_bridge;
+	काष्ठा drm_connector	connector;
 
 	/* link settings */
-	struct tc_edp_link	link;
+	काष्ठा tc_edp_link	link;
 
 	/* current mode */
-	struct drm_display_mode	mode;
+	काष्ठा drm_display_mode	mode;
 
 	u32			rev;
 	u8			assr;
 
-	struct gpio_desc	*sd_gpio;
-	struct gpio_desc	*reset_gpio;
-	struct clk		*refclk;
+	काष्ठा gpio_desc	*sd_gpio;
+	काष्ठा gpio_desc	*reset_gpio;
+	काष्ठा clk		*refclk;
 
-	/* do we have IRQ */
+	/* करो we have IRQ */
 	bool			have_irq;
 
 	/* HPD pin number (0 or 1) or -ENODEV */
-	int			hpd_pin;
-};
+	पूर्णांक			hpd_pin;
+पूर्ण;
 
-static inline struct tc_data *aux_to_tc(struct drm_dp_aux *a)
-{
-	return container_of(a, struct tc_data, aux);
-}
+अटल अंतरभूत काष्ठा tc_data *aux_to_tc(काष्ठा drm_dp_aux *a)
+अणु
+	वापस container_of(a, काष्ठा tc_data, aux);
+पूर्ण
 
-static inline struct tc_data *bridge_to_tc(struct drm_bridge *b)
-{
-	return container_of(b, struct tc_data, bridge);
-}
+अटल अंतरभूत काष्ठा tc_data *bridge_to_tc(काष्ठा drm_bridge *b)
+अणु
+	वापस container_of(b, काष्ठा tc_data, bridge);
+पूर्ण
 
-static inline struct tc_data *connector_to_tc(struct drm_connector *c)
-{
-	return container_of(c, struct tc_data, connector);
-}
+अटल अंतरभूत काष्ठा tc_data *connector_to_tc(काष्ठा drm_connector *c)
+अणु
+	वापस container_of(c, काष्ठा tc_data, connector);
+पूर्ण
 
-static inline int tc_poll_timeout(struct tc_data *tc, unsigned int addr,
-				  unsigned int cond_mask,
-				  unsigned int cond_value,
-				  unsigned long sleep_us, u64 timeout_us)
-{
-	unsigned int val;
+अटल अंतरभूत पूर्णांक tc_poll_समयout(काष्ठा tc_data *tc, अचिन्हित पूर्णांक addr,
+				  अचिन्हित पूर्णांक cond_mask,
+				  अचिन्हित पूर्णांक cond_value,
+				  अचिन्हित दीर्घ sleep_us, u64 समयout_us)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	return regmap_read_poll_timeout(tc->regmap, addr, val,
+	वापस regmap_पढ़ो_poll_समयout(tc->regmap, addr, val,
 					(val & cond_mask) == cond_value,
-					sleep_us, timeout_us);
-}
+					sleep_us, समयout_us);
+पूर्ण
 
-static int tc_aux_wait_busy(struct tc_data *tc)
-{
-	return tc_poll_timeout(tc, DP0_AUXSTATUS, AUX_BUSY, 0, 100, 100000);
-}
+अटल पूर्णांक tc_aux_रुको_busy(काष्ठा tc_data *tc)
+अणु
+	वापस tc_poll_समयout(tc, DP0_AUXSTATUS, AUX_BUSY, 0, 100, 100000);
+पूर्ण
 
-static int tc_aux_write_data(struct tc_data *tc, const void *data,
-			     size_t size)
-{
-	u32 auxwdata[DP_AUX_MAX_PAYLOAD_BYTES / sizeof(u32)] = { 0 };
-	int ret, count = ALIGN(size, sizeof(u32));
+अटल पूर्णांक tc_aux_ग_लिखो_data(काष्ठा tc_data *tc, स्थिर व्योम *data,
+			     माप_प्रकार size)
+अणु
+	u32 auxwdata[DP_AUX_MAX_PAYLOAD_BYTES / माप(u32)] = अणु 0 पूर्ण;
+	पूर्णांक ret, count = ALIGN(size, माप(u32));
 
-	memcpy(auxwdata, data, size);
+	स_नकल(auxwdata, data, size);
 
-	ret = regmap_raw_write(tc->regmap, DP0_AUXWDATA(0), auxwdata, count);
-	if (ret)
-		return ret;
+	ret = regmap_raw_ग_लिखो(tc->regmap, DP0_AUXWDATA(0), auxwdata, count);
+	अगर (ret)
+		वापस ret;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int tc_aux_read_data(struct tc_data *tc, void *data, size_t size)
-{
-	u32 auxrdata[DP_AUX_MAX_PAYLOAD_BYTES / sizeof(u32)];
-	int ret, count = ALIGN(size, sizeof(u32));
+अटल पूर्णांक tc_aux_पढ़ो_data(काष्ठा tc_data *tc, व्योम *data, माप_प्रकार size)
+अणु
+	u32 auxrdata[DP_AUX_MAX_PAYLOAD_BYTES / माप(u32)];
+	पूर्णांक ret, count = ALIGN(size, माप(u32));
 
-	ret = regmap_raw_read(tc->regmap, DP0_AUXRDATA(0), auxrdata, count);
-	if (ret)
-		return ret;
+	ret = regmap_raw_पढ़ो(tc->regmap, DP0_AUXRDATA(0), auxrdata, count);
+	अगर (ret)
+		वापस ret;
 
-	memcpy(data, auxrdata, size);
+	स_नकल(data, auxrdata, size);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 tc_auxcfg0(struct drm_dp_aux_msg *msg, size_t size)
-{
+अटल u32 tc_auxcfg0(काष्ठा drm_dp_aux_msg *msg, माप_प्रकार size)
+अणु
 	u32 auxcfg0 = msg->request;
 
-	if (size)
+	अगर (size)
 		auxcfg0 |= FIELD_PREP(DP0_AUXCFG0_BSIZE, size - 1);
-	else
+	अन्यथा
 		auxcfg0 |= DP0_AUXCFG0_ADDR_ONLY;
 
-	return auxcfg0;
-}
+	वापस auxcfg0;
+पूर्ण
 
-static ssize_t tc_aux_transfer(struct drm_dp_aux *aux,
-			       struct drm_dp_aux_msg *msg)
-{
-	struct tc_data *tc = aux_to_tc(aux);
-	size_t size = min_t(size_t, DP_AUX_MAX_PAYLOAD_BYTES - 1, msg->size);
+अटल sमाप_प्रकार tc_aux_transfer(काष्ठा drm_dp_aux *aux,
+			       काष्ठा drm_dp_aux_msg *msg)
+अणु
+	काष्ठा tc_data *tc = aux_to_tc(aux);
+	माप_प्रकार size = min_t(माप_प्रकार, DP_AUX_MAX_PAYLOAD_BYTES - 1, msg->size);
 	u8 request = msg->request & ~DP_AUX_I2C_MOT;
 	u32 auxstatus;
-	int ret;
+	पूर्णांक ret;
 
-	ret = tc_aux_wait_busy(tc);
-	if (ret)
-		return ret;
+	ret = tc_aux_रुको_busy(tc);
+	अगर (ret)
+		वापस ret;
 
-	switch (request) {
-	case DP_AUX_NATIVE_READ:
-	case DP_AUX_I2C_READ:
-		break;
-	case DP_AUX_NATIVE_WRITE:
-	case DP_AUX_I2C_WRITE:
-		if (size) {
-			ret = tc_aux_write_data(tc, msg->buffer, size);
-			if (ret < 0)
-				return ret;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (request) अणु
+	हाल DP_AUX_NATIVE_READ:
+	हाल DP_AUX_I2C_READ:
+		अवरोध;
+	हाल DP_AUX_NATIVE_WRITE:
+	हाल DP_AUX_I2C_WRITE:
+		अगर (size) अणु
+			ret = tc_aux_ग_लिखो_data(tc, msg->buffer, size);
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Store address */
-	ret = regmap_write(tc->regmap, DP0_AUXADDR, msg->address);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, DP0_AUXADDR, msg->address);
+	अगर (ret)
+		वापस ret;
 	/* Start transfer */
-	ret = regmap_write(tc->regmap, DP0_AUXCFG0, tc_auxcfg0(msg, size));
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, DP0_AUXCFG0, tc_auxcfg0(msg, size));
+	अगर (ret)
+		वापस ret;
 
-	ret = tc_aux_wait_busy(tc);
-	if (ret)
-		return ret;
+	ret = tc_aux_रुको_busy(tc);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(tc->regmap, DP0_AUXSTATUS, &auxstatus);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(tc->regmap, DP0_AUXSTATUS, &auxstatus);
+	अगर (ret)
+		वापस ret;
 
-	if (auxstatus & AUX_TIMEOUT)
-		return -ETIMEDOUT;
+	अगर (auxstatus & AUX_TIMEOUT)
+		वापस -ETIMEDOUT;
 	/*
 	 * For some reason address-only DP_AUX_I2C_WRITE (MOT), still
 	 * reports 1 byte transferred in its status. To deal we that
-	 * we ignore aux_bytes field if we know that this was an
+	 * we ignore aux_bytes field अगर we know that this was an
 	 * address-only transfer
 	 */
-	if (size)
+	अगर (size)
 		size = FIELD_GET(AUX_BYTES, auxstatus);
 	msg->reply = FIELD_GET(AUX_STATUS, auxstatus);
 
-	switch (request) {
-	case DP_AUX_NATIVE_READ:
-	case DP_AUX_I2C_READ:
-		if (size)
-			return tc_aux_read_data(tc, msg->buffer, size);
-		break;
-	}
+	चयन (request) अणु
+	हाल DP_AUX_NATIVE_READ:
+	हाल DP_AUX_I2C_READ:
+		अगर (size)
+			वापस tc_aux_पढ़ो_data(tc, msg->buffer, size);
+		अवरोध;
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static const char * const training_pattern1_errors[] = {
+अटल स्थिर अक्षर * स्थिर training_pattern1_errors[] = अणु
 	"No errors",
 	"Aux write error",
 	"Aux read error",
 	"Max voltage reached error",
 	"Loop counter expired error",
 	"res", "res", "res"
-};
+पूर्ण;
 
-static const char * const training_pattern2_errors[] = {
+अटल स्थिर अक्षर * स्थिर training_pattern2_errors[] = अणु
 	"No errors",
 	"Aux write error",
 	"Aux read error",
 	"Clock recovery failed error",
 	"Loop counter expired error",
 	"res", "res", "res"
-};
+पूर्ण;
 
-static u32 tc_srcctrl(struct tc_data *tc)
-{
+अटल u32 tc_srcctrl(काष्ठा tc_data *tc)
+अणु
 	/*
 	 * No training pattern, skew lane 1 data by two LSCLK cycles with
 	 * respect to lane 0 data, AutoCorrect Mode = 0
 	 */
 	u32 reg = DP0_SRCCTRL_NOTP | DP0_SRCCTRL_LANESKEW | DP0_SRCCTRL_EN810B;
 
-	if (tc->link.scrambler_dis)
+	अगर (tc->link.scrambler_dis)
 		reg |= DP0_SRCCTRL_SCRMBLDIS;	/* Scrambler Disabled */
-	if (tc->link.spread)
-		reg |= DP0_SRCCTRL_SSCG;	/* Spread Spectrum Enable */
-	if (tc->link.num_lanes == 2)
+	अगर (tc->link.spपढ़ो)
+		reg |= DP0_SRCCTRL_SSCG;	/* Spपढ़ो Spectrum Enable */
+	अगर (tc->link.num_lanes == 2)
 		reg |= DP0_SRCCTRL_LANES_2;	/* Two Main Channel Lanes */
-	if (tc->link.rate != 162000)
+	अगर (tc->link.rate != 162000)
 		reg |= DP0_SRCCTRL_BW27;	/* 2.7 Gbps link */
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-static int tc_pllupdate(struct tc_data *tc, unsigned int pllctrl)
-{
-	int ret;
+अटल पूर्णांक tc_pllupdate(काष्ठा tc_data *tc, अचिन्हित पूर्णांक pllctrl)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_write(tc->regmap, pllctrl, PLLUPDATE | PLLEN);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, pllctrl, PLLUPDATE | PLLEN);
+	अगर (ret)
+		वापस ret;
 
-	/* Wait for PLL to lock: up to 2.09 ms, depending on refclk */
+	/* Wait क्रम PLL to lock: up to 2.09 ms, depending on refclk */
 	usleep_range(3000, 6000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tc_pxl_pll_en(struct tc_data *tc, u32 refclk, u32 pixelclock)
-{
-	int ret;
-	int i_pre, best_pre = 1;
-	int i_post, best_post = 1;
-	int div, best_div = 1;
-	int mul, best_mul = 1;
-	int delta, best_delta;
-	int ext_div[] = {1, 2, 3, 5, 7};
-	int best_pixelclock = 0;
-	int vco_hi = 0;
+अटल पूर्णांक tc_pxl_pll_en(काष्ठा tc_data *tc, u32 refclk, u32 pixelघड़ी)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i_pre, best_pre = 1;
+	पूर्णांक i_post, best_post = 1;
+	पूर्णांक भाग, best_भाग = 1;
+	पूर्णांक mul, best_mul = 1;
+	पूर्णांक delta, best_delta;
+	पूर्णांक ext_भाग[] = अणु1, 2, 3, 5, 7पूर्ण;
+	पूर्णांक best_pixelघड़ी = 0;
+	पूर्णांक vco_hi = 0;
 	u32 pxl_pllparam;
 
-	dev_dbg(tc->dev, "PLL: requested %d pixelclock, ref %d\n", pixelclock,
+	dev_dbg(tc->dev, "PLL: requested %d pixelclock, ref %d\n", pixelघड़ी,
 		refclk);
-	best_delta = pixelclock;
-	/* Loop over all possible ext_divs, skipping invalid configurations */
-	for (i_pre = 0; i_pre < ARRAY_SIZE(ext_div); i_pre++) {
+	best_delta = pixelघड़ी;
+	/* Loop over all possible ext_भागs, skipping invalid configurations */
+	क्रम (i_pre = 0; i_pre < ARRAY_SIZE(ext_भाग); i_pre++) अणु
 		/*
-		 * refclk / ext_pre_div should be in the 1 to 200 MHz range.
-		 * We don't allow any refclk > 200 MHz, only check lower bounds.
+		 * refclk / ext_pre_भाग should be in the 1 to 200 MHz range.
+		 * We करोn't allow any refclk > 200 MHz, only check lower bounds.
 		 */
-		if (refclk / ext_div[i_pre] < 1000000)
-			continue;
-		for (i_post = 0; i_post < ARRAY_SIZE(ext_div); i_post++) {
-			for (div = 1; div <= 16; div++) {
+		अगर (refclk / ext_भाग[i_pre] < 1000000)
+			जारी;
+		क्रम (i_post = 0; i_post < ARRAY_SIZE(ext_भाग); i_post++) अणु
+			क्रम (भाग = 1; भाग <= 16; भाग++) अणु
 				u32 clk;
-				u64 tmp;
+				u64 पंचांगp;
 
-				tmp = pixelclock * ext_div[i_pre] *
-				      ext_div[i_post] * div;
-				do_div(tmp, refclk);
-				mul = tmp;
+				पंचांगp = pixelघड़ी * ext_भाग[i_pre] *
+				      ext_भाग[i_post] * भाग;
+				करो_भाग(पंचांगp, refclk);
+				mul = पंचांगp;
 
 				/* Check limits */
-				if ((mul < 1) || (mul > 128))
-					continue;
+				अगर ((mul < 1) || (mul > 128))
+					जारी;
 
-				clk = (refclk / ext_div[i_pre] / div) * mul;
+				clk = (refclk / ext_भाग[i_pre] / भाग) * mul;
 				/*
-				 * refclk * mul / (ext_pre_div * pre_div)
+				 * refclk * mul / (ext_pre_भाग * pre_भाग)
 				 * should be in the 150 to 650 MHz range
 				 */
-				if ((clk > 650000000) || (clk < 150000000))
-					continue;
+				अगर ((clk > 650000000) || (clk < 150000000))
+					जारी;
 
-				clk = clk / ext_div[i_post];
-				delta = clk - pixelclock;
+				clk = clk / ext_भाग[i_post];
+				delta = clk - pixelघड़ी;
 
-				if (abs(delta) < abs(best_delta)) {
+				अगर (असल(delta) < असल(best_delta)) अणु
 					best_pre = i_pre;
 					best_post = i_post;
-					best_div = div;
+					best_भाग = भाग;
 					best_mul = mul;
 					best_delta = delta;
-					best_pixelclock = clk;
-				}
-			}
-		}
-	}
-	if (best_pixelclock == 0) {
+					best_pixelघड़ी = clk;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (best_pixelघड़ी == 0) अणु
 		dev_err(tc->dev, "Failed to calc clock for %d pixelclock\n",
-			pixelclock);
-		return -EINVAL;
-	}
+			pixelघड़ी);
+		वापस -EINVAL;
+	पूर्ण
 
-	dev_dbg(tc->dev, "PLL: got %d, delta %d\n", best_pixelclock,
+	dev_dbg(tc->dev, "PLL: got %d, delta %d\n", best_pixelघड़ी,
 		best_delta);
 	dev_dbg(tc->dev, "PLL: %d / %d / %d * %d / %d\n", refclk,
-		ext_div[best_pre], best_div, best_mul, ext_div[best_post]);
+		ext_भाग[best_pre], best_भाग, best_mul, ext_भाग[best_post]);
 
-	/* if VCO >= 300 MHz */
-	if (refclk / ext_div[best_pre] / best_div * best_mul >= 300000000)
+	/* अगर VCO >= 300 MHz */
+	अगर (refclk / ext_भाग[best_pre] / best_भाग * best_mul >= 300000000)
 		vco_hi = 1;
 	/* see DS */
-	if (best_div == 16)
-		best_div = 0;
-	if (best_mul == 128)
+	अगर (best_भाग == 16)
+		best_भाग = 0;
+	अगर (best_mul == 128)
 		best_mul = 0;
 
-	/* Power up PLL and switch to bypass */
-	ret = regmap_write(tc->regmap, PXL_PLLCTRL, PLLBYP | PLLEN);
-	if (ret)
-		return ret;
+	/* Power up PLL and चयन to bypass */
+	ret = regmap_ग_लिखो(tc->regmap, PXL_PLLCTRL, PLLBYP | PLLEN);
+	अगर (ret)
+		वापस ret;
 
 	pxl_pllparam  = vco_hi << 24; /* For PLL VCO >= 300 MHz = 1 */
-	pxl_pllparam |= ext_div[best_pre] << 20; /* External Pre-divider */
-	pxl_pllparam |= ext_div[best_post] << 16; /* External Post-divider */
+	pxl_pllparam |= ext_भाग[best_pre] << 20; /* External Pre-भागider */
+	pxl_pllparam |= ext_भाग[best_post] << 16; /* External Post-भागider */
 	pxl_pllparam |= IN_SEL_REFCLK; /* Use RefClk as PLL input */
-	pxl_pllparam |= best_div << 8; /* Divider for PLL RefClk */
-	pxl_pllparam |= best_mul; /* Multiplier for PLL */
+	pxl_pllparam |= best_भाग << 8; /* Divider क्रम PLL RefClk */
+	pxl_pllparam |= best_mul; /* Multiplier क्रम PLL */
 
-	ret = regmap_write(tc->regmap, PXL_PLLPARAM, pxl_pllparam);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, PXL_PLLPARAM, pxl_pllparam);
+	अगर (ret)
+		वापस ret;
 
 	/* Force PLL parameter update and disable bypass */
-	return tc_pllupdate(tc, PXL_PLLCTRL);
-}
+	वापस tc_pllupdate(tc, PXL_PLLCTRL);
+पूर्ण
 
-static int tc_pxl_pll_dis(struct tc_data *tc)
-{
-	/* Enable PLL bypass, power down PLL */
-	return regmap_write(tc->regmap, PXL_PLLCTRL, PLLBYP);
-}
+अटल पूर्णांक tc_pxl_pll_dis(काष्ठा tc_data *tc)
+अणु
+	/* Enable PLL bypass, घातer करोwn PLL */
+	वापस regmap_ग_लिखो(tc->regmap, PXL_PLLCTRL, PLLBYP);
+पूर्ण
 
-static int tc_stream_clock_calc(struct tc_data *tc)
-{
+अटल पूर्णांक tc_stream_घड़ी_calc(काष्ठा tc_data *tc)
+अणु
 	/*
-	 * If the Stream clock and Link Symbol clock are
+	 * If the Stream घड़ी and Link Symbol घड़ी are
 	 * asynchronous with each other, the value of M changes over
-	 * time. This way of generating link clock and stream
-	 * clock is called Asynchronous Clock mode. The value M
-	 * must change while the value N stays constant. The
+	 * समय. This way of generating link घड़ी and stream
+	 * घड़ी is called Asynchronous Clock mode. The value M
+	 * must change जबतक the value N stays स्थिरant. The
 	 * value of N in this Asynchronous Clock mode must be set
 	 * to 2^15 or 32,768.
 	 *
-	 * LSCLK = 1/10 of high speed link clock
+	 * LSCLK = 1/10 of high speed link घड़ी
 	 *
 	 * f_STRMCLK = M/N * f_LSCLK
 	 * M/N = f_STRMCLK / f_LSCLK
 	 *
 	 */
-	return regmap_write(tc->regmap, DP0_VIDMNGEN1, 32768);
-}
+	वापस regmap_ग_लिखो(tc->regmap, DP0_VIDMNGEN1, 32768);
+पूर्ण
 
-static int tc_set_syspllparam(struct tc_data *tc)
-{
-	unsigned long rate;
+अटल पूर्णांक tc_set_syspllparam(काष्ठा tc_data *tc)
+अणु
+	अचिन्हित दीर्घ rate;
 	u32 pllparam = SYSCLK_SEL_LSCLK | LSCLK_DIV_2;
 
 	rate = clk_get_rate(tc->refclk);
-	switch (rate) {
-	case 38400000:
+	चयन (rate) अणु
+	हाल 38400000:
 		pllparam |= REF_FREQ_38M4;
-		break;
-	case 26000000:
+		अवरोध;
+	हाल 26000000:
 		pllparam |= REF_FREQ_26M;
-		break;
-	case 19200000:
+		अवरोध;
+	हाल 19200000:
 		pllparam |= REF_FREQ_19M2;
-		break;
-	case 13000000:
+		अवरोध;
+	हाल 13000000:
 		pllparam |= REF_FREQ_13M;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(tc->dev, "Invalid refclk rate: %lu Hz\n", rate);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return regmap_write(tc->regmap, SYS_PLLPARAM, pllparam);
-}
+	वापस regmap_ग_लिखो(tc->regmap, SYS_PLLPARAM, pllparam);
+पूर्ण
 
-static int tc_aux_link_setup(struct tc_data *tc)
-{
-	int ret;
+अटल पूर्णांक tc_aux_link_setup(काष्ठा tc_data *tc)
+अणु
+	पूर्णांक ret;
 	u32 dp0_auxcfg1;
 
 	/* Setup DP-PHY / PLL */
 	ret = tc_set_syspllparam(tc);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	ret = regmap_write(tc->regmap, DP_PHY_CTRL,
+	ret = regmap_ग_लिखो(tc->regmap, DP_PHY_CTRL,
 			   BGREN | PWR_SW_EN | PHY_A0_EN);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 	/*
 	 * Initially PLLs are in bypass. Force PLL parameter update,
 	 * disable PLL bypass, enable PLL
 	 */
 	ret = tc_pllupdate(tc, DP0_PLLCTRL);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	ret = tc_pllupdate(tc, DP1_PLLCTRL);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	ret = tc_poll_timeout(tc, DP_PHY_CTRL, PHY_RDY, PHY_RDY, 100, 100000);
-	if (ret == -ETIMEDOUT) {
+	ret = tc_poll_समयout(tc, DP_PHY_CTRL, PHY_RDY, PHY_RDY, 100, 100000);
+	अगर (ret == -ETIMEDOUT) अणु
 		dev_err(tc->dev, "Timeout waiting for PHY to become ready");
-		return ret;
-	} else if (ret) {
-		goto err;
-	}
+		वापस ret;
+	पूर्ण अन्यथा अगर (ret) अणु
+		जाओ err;
+	पूर्ण
 
 	/* Setup AUX link */
 	dp0_auxcfg1  = AUX_RX_FILTER_EN;
 	dp0_auxcfg1 |= 0x06 << 8; /* Aux Bit Period Calculator Threshold */
 	dp0_auxcfg1 |= 0x3f << 0; /* Aux Response Timeout Timer */
 
-	ret = regmap_write(tc->regmap, DP0_AUXCFG1, dp0_auxcfg1);
-	if (ret)
-		goto err;
+	ret = regmap_ग_लिखो(tc->regmap, DP0_AUXCFG1, dp0_auxcfg1);
+	अगर (ret)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 err:
 	dev_err(tc->dev, "tc_aux_link_setup failed: %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tc_get_display_props(struct tc_data *tc)
-{
+अटल पूर्णांक tc_get_display_props(काष्ठा tc_data *tc)
+अणु
 	u8 revision, num_lanes;
-	unsigned int rate;
-	int ret;
+	अचिन्हित पूर्णांक rate;
+	पूर्णांक ret;
 	u8 reg;
 
 	/* Read DP Rx Link Capability */
-	ret = drm_dp_dpcd_read(&tc->aux, DP_DPCD_REV, tc->link.dpcd,
+	ret = drm_dp_dpcd_पढ़ो(&tc->aux, DP_DPCD_REV, tc->link.dpcd,
 			       DP_RECEIVER_CAP_SIZE);
-	if (ret < 0)
-		goto err_dpcd_read;
+	अगर (ret < 0)
+		जाओ err_dpcd_पढ़ो;
 
 	revision = tc->link.dpcd[DP_DPCD_REV];
 	rate = drm_dp_max_link_rate(tc->link.dpcd);
 	num_lanes = drm_dp_max_lane_count(tc->link.dpcd);
 
-	if (rate != 162000 && rate != 270000) {
+	अगर (rate != 162000 && rate != 270000) अणु
 		dev_dbg(tc->dev, "Falling to 2.7 Gbps rate\n");
 		rate = 270000;
-	}
+	पूर्ण
 
 	tc->link.rate = rate;
 
-	if (num_lanes > 2) {
+	अगर (num_lanes > 2) अणु
 		dev_dbg(tc->dev, "Falling to 2 lanes\n");
 		num_lanes = 2;
-	}
+	पूर्ण
 
 	tc->link.num_lanes = num_lanes;
 
-	ret = drm_dp_dpcd_readb(&tc->aux, DP_MAX_DOWNSPREAD, &reg);
-	if (ret < 0)
-		goto err_dpcd_read;
-	tc->link.spread = reg & DP_MAX_DOWNSPREAD_0_5;
+	ret = drm_dp_dpcd_पढ़ोb(&tc->aux, DP_MAX_DOWNSPREAD, &reg);
+	अगर (ret < 0)
+		जाओ err_dpcd_पढ़ो;
+	tc->link.spपढ़ो = reg & DP_MAX_DOWNSPREAD_0_5;
 
-	ret = drm_dp_dpcd_readb(&tc->aux, DP_MAIN_LINK_CHANNEL_CODING, &reg);
-	if (ret < 0)
-		goto err_dpcd_read;
+	ret = drm_dp_dpcd_पढ़ोb(&tc->aux, DP_MAIN_LINK_CHANNEL_CODING, &reg);
+	अगर (ret < 0)
+		जाओ err_dpcd_पढ़ो;
 
 	tc->link.scrambler_dis = false;
-	/* read assr */
-	ret = drm_dp_dpcd_readb(&tc->aux, DP_EDP_CONFIGURATION_SET, &reg);
-	if (ret < 0)
-		goto err_dpcd_read;
+	/* पढ़ो assr */
+	ret = drm_dp_dpcd_पढ़ोb(&tc->aux, DP_EDP_CONFIGURATION_SET, &reg);
+	अगर (ret < 0)
+		जाओ err_dpcd_पढ़ो;
 	tc->link.assr = reg & DP_ALTERNATE_SCRAMBLER_RESET_ENABLE;
 
 	dev_dbg(tc->dev, "DPCD rev: %d.%d, rate: %s, lanes: %d, framing: %s\n",
@@ -716,31 +717,31 @@ static int tc_get_display_props(struct tc_data *tc)
 		drm_dp_enhanced_frame_cap(tc->link.dpcd) ?
 		"enhanced" : "default");
 	dev_dbg(tc->dev, "Downspread: %s, scrambler: %s\n",
-		tc->link.spread ? "0.5%" : "0.0%",
+		tc->link.spपढ़ो ? "0.5%" : "0.0%",
 		tc->link.scrambler_dis ? "disabled" : "enabled");
 	dev_dbg(tc->dev, "Display ASSR: %d, TC358767 ASSR: %d\n",
 		tc->link.assr, tc->assr);
 
-	return 0;
+	वापस 0;
 
-err_dpcd_read:
+err_dpcd_पढ़ो:
 	dev_err(tc->dev, "failed to read DPCD: %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tc_set_video_mode(struct tc_data *tc,
-			     const struct drm_display_mode *mode)
-{
-	int ret;
-	int vid_sync_dly;
-	int max_tu_symbol;
+अटल पूर्णांक tc_set_video_mode(काष्ठा tc_data *tc,
+			     स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	पूर्णांक ret;
+	पूर्णांक vid_sync_dly;
+	पूर्णांक max_tu_symbol;
 
-	int left_margin = mode->htotal - mode->hsync_end;
-	int right_margin = mode->hsync_start - mode->hdisplay;
-	int hsync_len = mode->hsync_end - mode->hsync_start;
-	int upper_margin = mode->vtotal - mode->vsync_end;
-	int lower_margin = mode->vsync_start - mode->vdisplay;
-	int vsync_len = mode->vsync_end - mode->vsync_start;
+	पूर्णांक left_margin = mode->htotal - mode->hsync_end;
+	पूर्णांक right_margin = mode->hsync_start - mode->hdisplay;
+	पूर्णांक hsync_len = mode->hsync_end - mode->hsync_start;
+	पूर्णांक upper_margin = mode->vtotal - mode->vsync_end;
+	पूर्णांक lower_margin = mode->vsync_start - mode->vdisplay;
+	पूर्णांक vsync_len = mode->vsync_end - mode->vsync_start;
 	u32 dp0_syncval;
 	u32 bits_per_pixel = 24;
 	u32 in_bw, out_bw;
@@ -752,7 +753,7 @@ static int tc_set_video_mode(struct tc_data *tc,
 	 * Must be less than tu_size.
 	 */
 
-	in_bw = mode->clock * bits_per_pixel / 8;
+	in_bw = mode->घड़ी * bits_per_pixel / 8;
 	out_bw = tc->link.num_lanes * tc->link.rate;
 	max_tu_symbol = DIV_ROUND_UP(in_bw * TU_SIZE_RECOMMENDED, out_bw);
 
@@ -767,692 +768,692 @@ static int tc_set_video_mode(struct tc_data *tc,
 
 	/*
 	 * LCD Ctl Frame Size
-	 * datasheet is not clear of vsdelay in case of DPI
-	 * assume we do not need any delay when DPI is a source of
-	 * sync signals
+	 * datasheet is not clear of vsdelay in हाल of DPI
+	 * assume we करो not need any delay when DPI is a source of
+	 * sync संकेतs
 	 */
-	ret = regmap_write(tc->regmap, VPCTRL0,
+	ret = regmap_ग_लिखो(tc->regmap, VPCTRL0,
 			   FIELD_PREP(VSDELAY, 0) |
 			   OPXLFMT_RGB888 | FRMSYNC_DISABLED | MSF_DISABLED);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, HTIM01,
+	ret = regmap_ग_लिखो(tc->regmap, HTIM01,
 			   FIELD_PREP(HBPR, ALIGN(left_margin, 2)) |
 			   FIELD_PREP(HPW, ALIGN(hsync_len, 2)));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, HTIM02,
+	ret = regmap_ग_लिखो(tc->regmap, HTIM02,
 			   FIELD_PREP(HDISPR, ALIGN(mode->hdisplay, 2)) |
 			   FIELD_PREP(HFPR, ALIGN(right_margin, 2)));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, VTIM01,
+	ret = regmap_ग_लिखो(tc->regmap, VTIM01,
 			   FIELD_PREP(VBPR, upper_margin) |
 			   FIELD_PREP(VSPR, vsync_len));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, VTIM02,
+	ret = regmap_ग_लिखो(tc->regmap, VTIM02,
 			   FIELD_PREP(VFPR, lower_margin) |
 			   FIELD_PREP(VDISPR, mode->vdisplay));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, VFUEN0, VFUEN); /* update settings */
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, VFUEN0, VFUEN); /* update settings */
+	अगर (ret)
+		वापस ret;
 
 	/* Test pattern settings */
-	ret = regmap_write(tc->regmap, TSTCTL,
+	ret = regmap_ग_लिखो(tc->regmap, TSTCTL,
 			   FIELD_PREP(COLOR_R, 120) |
 			   FIELD_PREP(COLOR_G, 20) |
 			   FIELD_PREP(COLOR_B, 99) |
 			   ENI2CFILTER |
 			   FIELD_PREP(COLOR_BAR_MODE, COLOR_BAR_MODE_BARS));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* DP Main Stream Attributes */
 	vid_sync_dly = hsync_len + left_margin + mode->hdisplay;
-	ret = regmap_write(tc->regmap, DP0_VIDSYNCDELAY,
+	ret = regmap_ग_लिखो(tc->regmap, DP0_VIDSYNCDELAY,
 		 FIELD_PREP(THRESH_DLY, max_tu_symbol) |
 		 FIELD_PREP(VID_SYNC_DLY, vid_sync_dly));
 
-	ret = regmap_write(tc->regmap, DP0_TOTALVAL,
+	ret = regmap_ग_लिखो(tc->regmap, DP0_TOTALVAL,
 			   FIELD_PREP(H_TOTAL, mode->htotal) |
 			   FIELD_PREP(V_TOTAL, mode->vtotal));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, DP0_STARTVAL,
+	ret = regmap_ग_लिखो(tc->regmap, DP0_STARTVAL,
 			   FIELD_PREP(H_START, left_margin + hsync_len) |
 			   FIELD_PREP(V_START, upper_margin + vsync_len));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, DP0_ACTIVEVAL,
+	ret = regmap_ग_लिखो(tc->regmap, DP0_ACTIVEVAL,
 			   FIELD_PREP(V_ACT, mode->vdisplay) |
 			   FIELD_PREP(H_ACT, mode->hdisplay));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dp0_syncval = FIELD_PREP(VS_WIDTH, vsync_len) |
 		      FIELD_PREP(HS_WIDTH, hsync_len);
 
-	if (mode->flags & DRM_MODE_FLAG_NVSYNC)
+	अगर (mode->flags & DRM_MODE_FLAG_NVSYNC)
 		dp0_syncval |= SYNCVAL_VS_POL_ACTIVE_LOW;
 
-	if (mode->flags & DRM_MODE_FLAG_NHSYNC)
+	अगर (mode->flags & DRM_MODE_FLAG_NHSYNC)
 		dp0_syncval |= SYNCVAL_HS_POL_ACTIVE_LOW;
 
-	ret = regmap_write(tc->regmap, DP0_SYNCVAL, dp0_syncval);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, DP0_SYNCVAL, dp0_syncval);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, DPIPXLFMT,
+	ret = regmap_ग_लिखो(tc->regmap, DPIPXLFMT,
 			   VS_POL_ACTIVE_LOW | HS_POL_ACTIVE_LOW |
 			   DE_POL_ACTIVE_HIGH | SUB_CFG_TYPE_CONFIG1 |
 			   DPI_BPP_RGB888);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, DP0_MISC,
+	ret = regmap_ग_लिखो(tc->regmap, DP0_MISC,
 			   FIELD_PREP(MAX_TU_SYMBOL, max_tu_symbol) |
 			   FIELD_PREP(TU_SIZE, TU_SIZE_RECOMMENDED) |
 			   BPC_8);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tc_wait_link_training(struct tc_data *tc)
-{
+अटल पूर्णांक tc_रुको_link_training(काष्ठा tc_data *tc)
+अणु
 	u32 value;
-	int ret;
+	पूर्णांक ret;
 
-	ret = tc_poll_timeout(tc, DP0_LTSTAT, LT_LOOPDONE,
+	ret = tc_poll_समयout(tc, DP0_LTSTAT, LT_LOOPDONE,
 			      LT_LOOPDONE, 500, 100000);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(tc->dev, "Link training timeout waiting for LT_LOOPDONE!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = regmap_read(tc->regmap, DP0_LTSTAT, &value);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(tc->regmap, DP0_LTSTAT, &value);
+	अगर (ret)
+		वापस ret;
 
-	return (value >> 8) & 0x7;
-}
+	वापस (value >> 8) & 0x7;
+पूर्ण
 
-static int tc_main_link_enable(struct tc_data *tc)
-{
-	struct drm_dp_aux *aux = &tc->aux;
-	struct device *dev = tc->dev;
+अटल पूर्णांक tc_मुख्य_link_enable(काष्ठा tc_data *tc)
+अणु
+	काष्ठा drm_dp_aux *aux = &tc->aux;
+	काष्ठा device *dev = tc->dev;
 	u32 dp_phy_ctrl;
 	u32 value;
-	int ret;
-	u8 tmp[DP_LINK_STATUS_SIZE];
+	पूर्णांक ret;
+	u8 पंचांगp[DP_LINK_STATUS_SIZE];
 
 	dev_dbg(tc->dev, "link enable\n");
 
-	ret = regmap_read(tc->regmap, DP0CTL, &value);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(tc->regmap, DP0CTL, &value);
+	अगर (ret)
+		वापस ret;
 
-	if (WARN_ON(value & DP_EN)) {
-		ret = regmap_write(tc->regmap, DP0CTL, 0);
-		if (ret)
-			return ret;
-	}
+	अगर (WARN_ON(value & DP_EN)) अणु
+		ret = regmap_ग_लिखो(tc->regmap, DP0CTL, 0);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = regmap_write(tc->regmap, DP0_SRCCTRL, tc_srcctrl(tc));
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, DP0_SRCCTRL, tc_srcctrl(tc));
+	अगर (ret)
+		वापस ret;
 	/* SSCG and BW27 on DP1 must be set to the same as on DP0 */
-	ret = regmap_write(tc->regmap, DP1_SRCCTRL,
-		 (tc->link.spread ? DP0_SRCCTRL_SSCG : 0) |
+	ret = regmap_ग_लिखो(tc->regmap, DP1_SRCCTRL,
+		 (tc->link.spपढ़ो ? DP0_SRCCTRL_SSCG : 0) |
 		 ((tc->link.rate != 162000) ? DP0_SRCCTRL_BW27 : 0));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = tc_set_syspllparam(tc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Setup Main Link */
 	dp_phy_ctrl = BGREN | PWR_SW_EN | PHY_A0_EN | PHY_M0_EN;
-	if (tc->link.num_lanes == 2)
+	अगर (tc->link.num_lanes == 2)
 		dp_phy_ctrl |= PHY_2LANE;
 
-	ret = regmap_write(tc->regmap, DP_PHY_CTRL, dp_phy_ctrl);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, DP_PHY_CTRL, dp_phy_ctrl);
+	अगर (ret)
+		वापस ret;
 
 	/* PLL setup */
 	ret = tc_pllupdate(tc, DP0_PLLCTRL);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = tc_pllupdate(tc, DP1_PLLCTRL);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Reset/Enable Main Links */
 	dp_phy_ctrl |= DP_PHY_RST | PHY_M1_RST | PHY_M0_RST;
-	ret = regmap_write(tc->regmap, DP_PHY_CTRL, dp_phy_ctrl);
+	ret = regmap_ग_लिखो(tc->regmap, DP_PHY_CTRL, dp_phy_ctrl);
 	usleep_range(100, 200);
 	dp_phy_ctrl &= ~(DP_PHY_RST | PHY_M1_RST | PHY_M0_RST);
-	ret = regmap_write(tc->regmap, DP_PHY_CTRL, dp_phy_ctrl);
+	ret = regmap_ग_लिखो(tc->regmap, DP_PHY_CTRL, dp_phy_ctrl);
 
-	ret = tc_poll_timeout(tc, DP_PHY_CTRL, PHY_RDY, PHY_RDY, 500, 100000);
-	if (ret) {
+	ret = tc_poll_समयout(tc, DP_PHY_CTRL, PHY_RDY, PHY_RDY, 500, 100000);
+	अगर (ret) अणु
 		dev_err(dev, "timeout waiting for phy become ready");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Set misc: 8 bits per color */
 	ret = regmap_update_bits(tc->regmap, DP0_MISC, BPC_8, BPC_8);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * ASSR mode
 	 * on TC358767 side ASSR configured through strap pin
 	 * seems there is no way to change this setting from SW
 	 *
-	 * check is tc configured for same mode
+	 * check is tc configured क्रम same mode
 	 */
-	if (tc->assr != tc->link.assr) {
+	अगर (tc->assr != tc->link.assr) अणु
 		dev_dbg(dev, "Trying to set display to ASSR: %d\n",
 			tc->assr);
 		/* try to set ASSR on display side */
-		tmp[0] = tc->assr;
-		ret = drm_dp_dpcd_writeb(aux, DP_EDP_CONFIGURATION_SET, tmp[0]);
-		if (ret < 0)
-			goto err_dpcd_read;
-		/* read back */
-		ret = drm_dp_dpcd_readb(aux, DP_EDP_CONFIGURATION_SET, tmp);
-		if (ret < 0)
-			goto err_dpcd_read;
+		पंचांगp[0] = tc->assr;
+		ret = drm_dp_dpcd_ग_लिखोb(aux, DP_EDP_CONFIGURATION_SET, पंचांगp[0]);
+		अगर (ret < 0)
+			जाओ err_dpcd_पढ़ो;
+		/* पढ़ो back */
+		ret = drm_dp_dpcd_पढ़ोb(aux, DP_EDP_CONFIGURATION_SET, पंचांगp);
+		अगर (ret < 0)
+			जाओ err_dpcd_पढ़ो;
 
-		if (tmp[0] != tc->assr) {
+		अगर (पंचांगp[0] != tc->assr) अणु
 			dev_dbg(dev, "Failed to switch display ASSR to %d, falling back to unscrambled mode\n",
 				tc->assr);
 			/* trying with disabled scrambler */
 			tc->link.scrambler_dis = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Setup Link & DPRx Config for Training */
-	tmp[0] = drm_dp_link_rate_to_bw_code(tc->link.rate);
-	tmp[1] = tc->link.num_lanes;
+	/* Setup Link & DPRx Config क्रम Training */
+	पंचांगp[0] = drm_dp_link_rate_to_bw_code(tc->link.rate);
+	पंचांगp[1] = tc->link.num_lanes;
 
-	if (drm_dp_enhanced_frame_cap(tc->link.dpcd))
-		tmp[1] |= DP_LANE_COUNT_ENHANCED_FRAME_EN;
+	अगर (drm_dp_enhanced_frame_cap(tc->link.dpcd))
+		पंचांगp[1] |= DP_LANE_COUNT_ENHANCED_FRAME_EN;
 
-	ret = drm_dp_dpcd_write(aux, DP_LINK_BW_SET, tmp, 2);
-	if (ret < 0)
-		goto err_dpcd_write;
+	ret = drm_dp_dpcd_ग_लिखो(aux, DP_LINK_BW_SET, पंचांगp, 2);
+	अगर (ret < 0)
+		जाओ err_dpcd_ग_लिखो;
 
 	/* DOWNSPREAD_CTRL */
-	tmp[0] = tc->link.spread ? DP_SPREAD_AMP_0_5 : 0x00;
+	पंचांगp[0] = tc->link.spपढ़ो ? DP_SPREAD_AMP_0_5 : 0x00;
 	/* MAIN_LINK_CHANNEL_CODING_SET */
-	tmp[1] =  DP_SET_ANSI_8B10B;
-	ret = drm_dp_dpcd_write(aux, DP_DOWNSPREAD_CTRL, tmp, 2);
-	if (ret < 0)
-		goto err_dpcd_write;
+	पंचांगp[1] =  DP_SET_ANSI_8B10B;
+	ret = drm_dp_dpcd_ग_लिखो(aux, DP_DOWNSPREAD_CTRL, पंचांगp, 2);
+	अगर (ret < 0)
+		जाओ err_dpcd_ग_लिखो;
 
 	/* Reset voltage-swing & pre-emphasis */
-	tmp[0] = tmp[1] = DP_TRAIN_VOLTAGE_SWING_LEVEL_0 |
+	पंचांगp[0] = पंचांगp[1] = DP_TRAIN_VOLTAGE_SWING_LEVEL_0 |
 			  DP_TRAIN_PRE_EMPH_LEVEL_0;
-	ret = drm_dp_dpcd_write(aux, DP_TRAINING_LANE0_SET, tmp, 2);
-	if (ret < 0)
-		goto err_dpcd_write;
+	ret = drm_dp_dpcd_ग_लिखो(aux, DP_TRAINING_LANE0_SET, पंचांगp, 2);
+	अगर (ret < 0)
+		जाओ err_dpcd_ग_लिखो;
 
 	/* Clock-Recovery */
 
-	/* Set DPCD 0x102 for Training Pattern 1 */
-	ret = regmap_write(tc->regmap, DP0_SNKLTCTRL,
+	/* Set DPCD 0x102 क्रम Training Pattern 1 */
+	ret = regmap_ग_लिखो(tc->regmap, DP0_SNKLTCTRL,
 			   DP_LINK_SCRAMBLING_DISABLE |
 			   DP_TRAINING_PATTERN_1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, DP0_LTLOOPCTRL,
+	ret = regmap_ग_लिखो(tc->regmap, DP0_LTLOOPCTRL,
 			   (15 << 28) |	/* Defer Iteration Count */
 			   (15 << 24) |	/* Loop Iteration Count */
 			   (0xd << 0));	/* Loop Timer Delay */
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, DP0_SRCCTRL,
+	ret = regmap_ग_लिखो(tc->regmap, DP0_SRCCTRL,
 			   tc_srcctrl(tc) | DP0_SRCCTRL_SCRMBLDIS |
 			   DP0_SRCCTRL_AUTOCORRECT |
 			   DP0_SRCCTRL_TP1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Enable DP0 to start Link Training */
-	ret = regmap_write(tc->regmap, DP0CTL,
+	ret = regmap_ग_लिखो(tc->regmap, DP0CTL,
 			   (drm_dp_enhanced_frame_cap(tc->link.dpcd) ?
 				EF_EN : 0) | DP_EN);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* wait */
+	/* रुको */
 
-	ret = tc_wait_link_training(tc);
-	if (ret < 0)
-		return ret;
+	ret = tc_रुको_link_training(tc);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(tc->dev, "Link training phase 1 failed: %s\n",
 			training_pattern1_errors[ret]);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Channel Equalization */
 
-	/* Set DPCD 0x102 for Training Pattern 2 */
-	ret = regmap_write(tc->regmap, DP0_SNKLTCTRL,
+	/* Set DPCD 0x102 क्रम Training Pattern 2 */
+	ret = regmap_ग_लिखो(tc->regmap, DP0_SNKLTCTRL,
 			   DP_LINK_SCRAMBLING_DISABLE |
 			   DP_TRAINING_PATTERN_2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(tc->regmap, DP0_SRCCTRL,
+	ret = regmap_ग_लिखो(tc->regmap, DP0_SRCCTRL,
 			   tc_srcctrl(tc) | DP0_SRCCTRL_SCRMBLDIS |
 			   DP0_SRCCTRL_AUTOCORRECT |
 			   DP0_SRCCTRL_TP2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* wait */
-	ret = tc_wait_link_training(tc);
-	if (ret < 0)
-		return ret;
+	/* रुको */
+	ret = tc_रुको_link_training(tc);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(tc->dev, "Link training phase 2 failed: %s\n",
 			training_pattern2_errors[ret]);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * Toshiba's documentation suggests to first clear DPCD 0x102, then
+	 * Toshiba's करोcumentation suggests to first clear DPCD 0x102, then
 	 * clear the training pattern bit in DP0_SRCCTRL. Testing shows
-	 * that the link sometimes drops if those steps are done in that order,
-	 * but if the steps are done in reverse order, the link stays up.
+	 * that the link someबार drops अगर those steps are करोne in that order,
+	 * but अगर the steps are करोne in reverse order, the link stays up.
 	 *
-	 * So we do the steps differently than documented here.
+	 * So we करो the steps dअगरferently than करोcumented here.
 	 */
 
 	/* Clear Training Pattern, set AutoCorrect Mode = 1 */
-	ret = regmap_write(tc->regmap, DP0_SRCCTRL, tc_srcctrl(tc) |
+	ret = regmap_ग_लिखो(tc->regmap, DP0_SRCCTRL, tc_srcctrl(tc) |
 			   DP0_SRCCTRL_AUTOCORRECT);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Clear DPCD 0x102 */
-	/* Note: Can Not use DP0_SNKLTCTRL (0x06E4) short cut */
-	tmp[0] = tc->link.scrambler_dis ? DP_LINK_SCRAMBLING_DISABLE : 0x00;
-	ret = drm_dp_dpcd_writeb(aux, DP_TRAINING_PATTERN_SET, tmp[0]);
-	if (ret < 0)
-		goto err_dpcd_write;
+	/* Note: Can Not use DP0_SNKLTCTRL (0x06E4) लघु cut */
+	पंचांगp[0] = tc->link.scrambler_dis ? DP_LINK_SCRAMBLING_DISABLE : 0x00;
+	ret = drm_dp_dpcd_ग_लिखोb(aux, DP_TRAINING_PATTERN_SET, पंचांगp[0]);
+	अगर (ret < 0)
+		जाओ err_dpcd_ग_लिखो;
 
 	/* Check link status */
-	ret = drm_dp_dpcd_read_link_status(aux, tmp);
-	if (ret < 0)
-		goto err_dpcd_read;
+	ret = drm_dp_dpcd_पढ़ो_link_status(aux, पंचांगp);
+	अगर (ret < 0)
+		जाओ err_dpcd_पढ़ो;
 
 	ret = 0;
 
-	value = tmp[0] & DP_CHANNEL_EQ_BITS;
+	value = पंचांगp[0] & DP_CHANNEL_EQ_BITS;
 
-	if (value != DP_CHANNEL_EQ_BITS) {
+	अगर (value != DP_CHANNEL_EQ_BITS) अणु
 		dev_err(tc->dev, "Lane 0 failed: %x\n", value);
 		ret = -ENODEV;
-	}
+	पूर्ण
 
-	if (tc->link.num_lanes == 2) {
-		value = (tmp[0] >> 4) & DP_CHANNEL_EQ_BITS;
+	अगर (tc->link.num_lanes == 2) अणु
+		value = (पंचांगp[0] >> 4) & DP_CHANNEL_EQ_BITS;
 
-		if (value != DP_CHANNEL_EQ_BITS) {
+		अगर (value != DP_CHANNEL_EQ_BITS) अणु
 			dev_err(tc->dev, "Lane 1 failed: %x\n", value);
 			ret = -ENODEV;
-		}
+		पूर्ण
 
-		if (!(tmp[2] & DP_INTERLANE_ALIGN_DONE)) {
+		अगर (!(पंचांगp[2] & DP_INTERLANE_ALIGN_DONE)) अणु
 			dev_err(tc->dev, "Interlane align failed\n");
 			ret = -ENODEV;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ret) {
-		dev_err(dev, "0x0202 LANE0_1_STATUS:            0x%02x\n", tmp[0]);
-		dev_err(dev, "0x0203 LANE2_3_STATUS             0x%02x\n", tmp[1]);
-		dev_err(dev, "0x0204 LANE_ALIGN_STATUS_UPDATED: 0x%02x\n", tmp[2]);
-		dev_err(dev, "0x0205 SINK_STATUS:               0x%02x\n", tmp[3]);
-		dev_err(dev, "0x0206 ADJUST_REQUEST_LANE0_1:    0x%02x\n", tmp[4]);
-		dev_err(dev, "0x0207 ADJUST_REQUEST_LANE2_3:    0x%02x\n", tmp[5]);
-		return ret;
-	}
+	अगर (ret) अणु
+		dev_err(dev, "0x0202 LANE0_1_STATUS:            0x%02x\n", पंचांगp[0]);
+		dev_err(dev, "0x0203 LANE2_3_STATUS             0x%02x\n", पंचांगp[1]);
+		dev_err(dev, "0x0204 LANE_ALIGN_STATUS_UPDATED: 0x%02x\n", पंचांगp[2]);
+		dev_err(dev, "0x0205 SINK_STATUS:               0x%02x\n", पंचांगp[3]);
+		dev_err(dev, "0x0206 ADJUST_REQUEST_LANE0_1:    0x%02x\n", पंचांगp[4]);
+		dev_err(dev, "0x0207 ADJUST_REQUEST_LANE2_3:    0x%02x\n", पंचांगp[5]);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-err_dpcd_read:
+	वापस 0;
+err_dpcd_पढ़ो:
 	dev_err(tc->dev, "Failed to read DPCD: %d\n", ret);
-	return ret;
-err_dpcd_write:
+	वापस ret;
+err_dpcd_ग_लिखो:
 	dev_err(tc->dev, "Failed to write DPCD: %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tc_main_link_disable(struct tc_data *tc)
-{
-	int ret;
+अटल पूर्णांक tc_मुख्य_link_disable(काष्ठा tc_data *tc)
+अणु
+	पूर्णांक ret;
 
 	dev_dbg(tc->dev, "link disable\n");
 
-	ret = regmap_write(tc->regmap, DP0_SRCCTRL, 0);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, DP0_SRCCTRL, 0);
+	अगर (ret)
+		वापस ret;
 
-	return regmap_write(tc->regmap, DP0CTL, 0);
-}
+	वापस regmap_ग_लिखो(tc->regmap, DP0CTL, 0);
+पूर्ण
 
-static int tc_stream_enable(struct tc_data *tc)
-{
-	int ret;
+अटल पूर्णांक tc_stream_enable(काष्ठा tc_data *tc)
+अणु
+	पूर्णांक ret;
 	u32 value;
 
 	dev_dbg(tc->dev, "enable video stream\n");
 
 	/* PXL PLL setup */
-	if (tc_test_pattern) {
+	अगर (tc_test_pattern) अणु
 		ret = tc_pxl_pll_en(tc, clk_get_rate(tc->refclk),
-				    1000 * tc->mode.clock);
-		if (ret)
-			return ret;
-	}
+				    1000 * tc->mode.घड़ी);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = tc_set_video_mode(tc, &tc->mode);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Set M/N */
-	ret = tc_stream_clock_calc(tc);
-	if (ret)
-		return ret;
+	ret = tc_stream_घड़ी_calc(tc);
+	अगर (ret)
+		वापस ret;
 
 	value = VID_MN_GEN | DP_EN;
-	if (drm_dp_enhanced_frame_cap(tc->link.dpcd))
+	अगर (drm_dp_enhanced_frame_cap(tc->link.dpcd))
 		value |= EF_EN;
-	ret = regmap_write(tc->regmap, DP0CTL, value);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, DP0CTL, value);
+	अगर (ret)
+		वापस ret;
 	/*
-	 * VID_EN assertion should be delayed by at least N * LSCLK
-	 * cycles from the time VID_MN_GEN is enabled in order to
-	 * generate stable values for VID_M. LSCLK is 270 MHz or
-	 * 162 MHz, VID_N is set to 32768 in  tc_stream_clock_calc(),
+	 * VID_EN निश्चितion should be delayed by at least N * LSCLK
+	 * cycles from the समय VID_MN_GEN is enabled in order to
+	 * generate stable values क्रम VID_M. LSCLK is 270 MHz or
+	 * 162 MHz, VID_N is set to 32768 in  tc_stream_घड़ी_calc(),
 	 * so a delay of at least 203 us should suffice.
 	 */
 	usleep_range(500, 1000);
 	value |= VID_EN;
-	ret = regmap_write(tc->regmap, DP0CTL, value);
-	if (ret)
-		return ret;
-	/* Set input interface */
+	ret = regmap_ग_लिखो(tc->regmap, DP0CTL, value);
+	अगर (ret)
+		वापस ret;
+	/* Set input पूर्णांकerface */
 	value = DP0_AUDSRC_NO_INPUT;
-	if (tc_test_pattern)
+	अगर (tc_test_pattern)
 		value |= DP0_VIDSRC_COLOR_BAR;
-	else
+	अन्यथा
 		value |= DP0_VIDSRC_DPI_RX;
-	ret = regmap_write(tc->regmap, SYSCTRL, value);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(tc->regmap, SYSCTRL, value);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tc_stream_disable(struct tc_data *tc)
-{
-	int ret;
+अटल पूर्णांक tc_stream_disable(काष्ठा tc_data *tc)
+अणु
+	पूर्णांक ret;
 
 	dev_dbg(tc->dev, "disable video stream\n");
 
 	ret = regmap_update_bits(tc->regmap, DP0CTL, VID_EN, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	tc_pxl_pll_dis(tc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tc_bridge_enable(struct drm_bridge *bridge)
-{
-	struct tc_data *tc = bridge_to_tc(bridge);
-	int ret;
+अटल व्योम tc_bridge_enable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा tc_data *tc = bridge_to_tc(bridge);
+	पूर्णांक ret;
 
 	ret = tc_get_display_props(tc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(tc->dev, "failed to read display props: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ret = tc_main_link_enable(tc);
-	if (ret < 0) {
+	ret = tc_मुख्य_link_enable(tc);
+	अगर (ret < 0) अणु
 		dev_err(tc->dev, "main link enable error: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ret = tc_stream_enable(tc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(tc->dev, "main link stream start error: %d\n", ret);
-		tc_main_link_disable(tc);
-		return;
-	}
-}
+		tc_मुख्य_link_disable(tc);
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void tc_bridge_disable(struct drm_bridge *bridge)
-{
-	struct tc_data *tc = bridge_to_tc(bridge);
-	int ret;
+अटल व्योम tc_bridge_disable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा tc_data *tc = bridge_to_tc(bridge);
+	पूर्णांक ret;
 
 	ret = tc_stream_disable(tc);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(tc->dev, "main link stream stop error: %d\n", ret);
 
-	ret = tc_main_link_disable(tc);
-	if (ret < 0)
+	ret = tc_मुख्य_link_disable(tc);
+	अगर (ret < 0)
 		dev_err(tc->dev, "main link disable error: %d\n", ret);
-}
+पूर्ण
 
-static bool tc_bridge_mode_fixup(struct drm_bridge *bridge,
-				 const struct drm_display_mode *mode,
-				 struct drm_display_mode *adj)
-{
+अटल bool tc_bridge_mode_fixup(काष्ठा drm_bridge *bridge,
+				 स्थिर काष्ठा drm_display_mode *mode,
+				 काष्ठा drm_display_mode *adj)
+अणु
 	/* Fixup sync polarities, both hsync and vsync are active low */
 	adj->flags = mode->flags;
 	adj->flags |= (DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC);
 	adj->flags &= ~(DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static enum drm_mode_status tc_mode_valid(struct drm_bridge *bridge,
-					  const struct drm_display_info *info,
-					  const struct drm_display_mode *mode)
-{
-	struct tc_data *tc = bridge_to_tc(bridge);
+अटल क्रमागत drm_mode_status tc_mode_valid(काष्ठा drm_bridge *bridge,
+					  स्थिर काष्ठा drm_display_info *info,
+					  स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा tc_data *tc = bridge_to_tc(bridge);
 	u32 req, avail;
 	u32 bits_per_pixel = 24;
 
-	/* DPI interface clock limitation: upto 154 MHz */
-	if (mode->clock > 154000)
-		return MODE_CLOCK_HIGH;
+	/* DPI पूर्णांकerface घड़ी limitation: upto 154 MHz */
+	अगर (mode->घड़ी > 154000)
+		वापस MODE_CLOCK_HIGH;
 
-	req = mode->clock * bits_per_pixel / 8;
+	req = mode->घड़ी * bits_per_pixel / 8;
 	avail = tc->link.num_lanes * tc->link.rate;
 
-	if (req > avail)
-		return MODE_BAD;
+	अगर (req > avail)
+		वापस MODE_BAD;
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static void tc_bridge_mode_set(struct drm_bridge *bridge,
-			       const struct drm_display_mode *mode,
-			       const struct drm_display_mode *adj)
-{
-	struct tc_data *tc = bridge_to_tc(bridge);
+अटल व्योम tc_bridge_mode_set(काष्ठा drm_bridge *bridge,
+			       स्थिर काष्ठा drm_display_mode *mode,
+			       स्थिर काष्ठा drm_display_mode *adj)
+अणु
+	काष्ठा tc_data *tc = bridge_to_tc(bridge);
 
 	tc->mode = *mode;
-}
+पूर्ण
 
-static struct edid *tc_get_edid(struct drm_bridge *bridge,
-				struct drm_connector *connector)
-{
-	struct tc_data *tc = bridge_to_tc(bridge);
+अटल काष्ठा edid *tc_get_edid(काष्ठा drm_bridge *bridge,
+				काष्ठा drm_connector *connector)
+अणु
+	काष्ठा tc_data *tc = bridge_to_tc(bridge);
 
-	return drm_get_edid(connector, &tc->aux.ddc);
-}
+	वापस drm_get_edid(connector, &tc->aux.ddc);
+पूर्ण
 
-static int tc_connector_get_modes(struct drm_connector *connector)
-{
-	struct tc_data *tc = connector_to_tc(connector);
-	int num_modes;
-	struct edid *edid;
-	int ret;
+अटल पूर्णांक tc_connector_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा tc_data *tc = connector_to_tc(connector);
+	पूर्णांक num_modes;
+	काष्ठा edid *edid;
+	पूर्णांक ret;
 
 	ret = tc_get_display_props(tc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(tc->dev, "failed to read display props: %d\n", ret);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (tc->panel_bridge) {
+	अगर (tc->panel_bridge) अणु
 		num_modes = drm_bridge_get_modes(tc->panel_bridge, connector);
-		if (num_modes > 0)
-			return num_modes;
-	}
+		अगर (num_modes > 0)
+			वापस num_modes;
+	पूर्ण
 
 	edid = tc_get_edid(&tc->bridge, connector);
 	num_modes = drm_add_edid_modes(connector, edid);
-	kfree(edid);
+	kमुक्त(edid);
 
-	return num_modes;
-}
+	वापस num_modes;
+पूर्ण
 
-static const struct drm_connector_helper_funcs tc_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs tc_connector_helper_funcs = अणु
 	.get_modes = tc_connector_get_modes,
-};
+पूर्ण;
 
-static enum drm_connector_status tc_bridge_detect(struct drm_bridge *bridge)
-{
-	struct tc_data *tc = bridge_to_tc(bridge);
+अटल क्रमागत drm_connector_status tc_bridge_detect(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा tc_data *tc = bridge_to_tc(bridge);
 	bool conn;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(tc->regmap, GPIOI, &val);
-	if (ret)
-		return connector_status_unknown;
+	ret = regmap_पढ़ो(tc->regmap, GPIOI, &val);
+	अगर (ret)
+		वापस connector_status_unknown;
 
 	conn = val & BIT(tc->hpd_pin);
 
-	if (conn)
-		return connector_status_connected;
-	else
-		return connector_status_disconnected;
-}
+	अगर (conn)
+		वापस connector_status_connected;
+	अन्यथा
+		वापस connector_status_disconnected;
+पूर्ण
 
-static enum drm_connector_status
-tc_connector_detect(struct drm_connector *connector, bool force)
-{
-	struct tc_data *tc = connector_to_tc(connector);
+अटल क्रमागत drm_connector_status
+tc_connector_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा tc_data *tc = connector_to_tc(connector);
 
-	if (tc->hpd_pin >= 0)
-		return tc_bridge_detect(&tc->bridge);
+	अगर (tc->hpd_pin >= 0)
+		वापस tc_bridge_detect(&tc->bridge);
 
-	if (tc->panel_bridge)
-		return connector_status_connected;
-	else
-		return connector_status_unknown;
-}
+	अगर (tc->panel_bridge)
+		वापस connector_status_connected;
+	अन्यथा
+		वापस connector_status_unknown;
+पूर्ण
 
-static const struct drm_connector_funcs tc_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs tc_connector_funcs = अणु
 	.detect = tc_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = drm_connector_cleanup,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-static int tc_bridge_attach(struct drm_bridge *bridge,
-			    enum drm_bridge_attach_flags flags)
-{
-	u32 bus_format = MEDIA_BUS_FMT_RGB888_1X24;
-	struct tc_data *tc = bridge_to_tc(bridge);
-	struct drm_device *drm = bridge->dev;
-	int ret;
+अटल पूर्णांक tc_bridge_attach(काष्ठा drm_bridge *bridge,
+			    क्रमागत drm_bridge_attach_flags flags)
+अणु
+	u32 bus_क्रमmat = MEDIA_BUS_FMT_RGB888_1X24;
+	काष्ठा tc_data *tc = bridge_to_tc(bridge);
+	काष्ठा drm_device *drm = bridge->dev;
+	पूर्णांक ret;
 
-	if (tc->panel_bridge) {
+	अगर (tc->panel_bridge) अणु
 		/* If a connector is required then this driver shall create it */
 		ret = drm_bridge_attach(tc->bridge.encoder, tc->panel_bridge,
 					&tc->bridge, flags | DRM_BRIDGE_ATTACH_NO_CONNECTOR);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR)
-		return 0;
+	अगर (flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR)
+		वापस 0;
 
-	ret = drm_dp_aux_register(&tc->aux);
-	if (ret < 0)
-		return ret;
+	ret = drm_dp_aux_रेजिस्टर(&tc->aux);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Create DP/eDP connector */
 	drm_connector_helper_add(&tc->connector, &tc_connector_helper_funcs);
 	ret = drm_connector_init(drm, &tc->connector, &tc_connector_funcs, tc->bridge.type);
-	if (ret)
-		goto aux_unregister;
+	अगर (ret)
+		जाओ aux_unरेजिस्टर;
 
 	/* Don't poll if don't have HPD connected */
-	if (tc->hpd_pin >= 0) {
-		if (tc->have_irq)
+	अगर (tc->hpd_pin >= 0) अणु
+		अगर (tc->have_irq)
 			tc->connector.polled = DRM_CONNECTOR_POLL_HPD;
-		else
+		अन्यथा
 			tc->connector.polled = DRM_CONNECTOR_POLL_CONNECT |
 					       DRM_CONNECTOR_POLL_DISCONNECT;
-	}
+	पूर्ण
 
-	drm_display_info_set_bus_formats(&tc->connector.display_info,
-					 &bus_format, 1);
+	drm_display_info_set_bus_क्रमmats(&tc->connector.display_info,
+					 &bus_क्रमmat, 1);
 	tc->connector.display_info.bus_flags =
 		DRM_BUS_FLAG_DE_HIGH |
 		DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE |
 		DRM_BUS_FLAG_SYNC_DRIVE_NEGEDGE;
 	drm_connector_attach_encoder(&tc->connector, tc->bridge.encoder);
 
-	return 0;
-aux_unregister:
-	drm_dp_aux_unregister(&tc->aux);
-	return ret;
-}
+	वापस 0;
+aux_unरेजिस्टर:
+	drm_dp_aux_unरेजिस्टर(&tc->aux);
+	वापस ret;
+पूर्ण
 
-static void tc_bridge_detach(struct drm_bridge *bridge)
-{
-	drm_dp_aux_unregister(&bridge_to_tc(bridge)->aux);
-}
+अटल व्योम tc_bridge_detach(काष्ठा drm_bridge *bridge)
+अणु
+	drm_dp_aux_unरेजिस्टर(&bridge_to_tc(bridge)->aux);
+पूर्ण
 
-static const struct drm_bridge_funcs tc_bridge_funcs = {
+अटल स्थिर काष्ठा drm_bridge_funcs tc_bridge_funcs = अणु
 	.attach = tc_bridge_attach,
 	.detach = tc_bridge_detach,
 	.mode_valid = tc_mode_valid,
@@ -1462,14 +1463,14 @@ static const struct drm_bridge_funcs tc_bridge_funcs = {
 	.mode_fixup = tc_bridge_mode_fixup,
 	.detect = tc_bridge_detect,
 	.get_edid = tc_get_edid,
-};
+पूर्ण;
 
-static bool tc_readable_reg(struct device *dev, unsigned int reg)
-{
-	return reg != SYSCTRL;
-}
+अटल bool tc_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस reg != SYSCTRL;
+पूर्ण
 
-static const struct regmap_range tc_volatile_ranges[] = {
+अटल स्थिर काष्ठा regmap_range tc_अस्थिर_ranges[] = अणु
 	regmap_reg_range(DP0_AUXWDATA(0), DP0_AUXSTATUS),
 	regmap_reg_range(DP0_LTSTAT, DP0_SNKLTCHGREQ),
 	regmap_reg_range(DP_PHY_CTRL, DP_PHY_CTRL),
@@ -1477,60 +1478,60 @@ static const struct regmap_range tc_volatile_ranges[] = {
 	regmap_reg_range(VFUEN0, VFUEN0),
 	regmap_reg_range(INTSTS_G, INTSTS_G),
 	regmap_reg_range(GPIOI, GPIOI),
-};
+पूर्ण;
 
-static const struct regmap_access_table tc_volatile_table = {
-	.yes_ranges = tc_volatile_ranges,
-	.n_yes_ranges = ARRAY_SIZE(tc_volatile_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table tc_अस्थिर_table = अणु
+	.yes_ranges = tc_अस्थिर_ranges,
+	.n_yes_ranges = ARRAY_SIZE(tc_अस्थिर_ranges),
+पूर्ण;
 
-static bool tc_writeable_reg(struct device *dev, unsigned int reg)
-{
-	return (reg != TC_IDREG) &&
+अटल bool tc_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस (reg != TC_IDREG) &&
 	       (reg != DP0_LTSTAT) &&
 	       (reg != DP0_SNKLTCHGREQ);
-}
+पूर्ण
 
-static const struct regmap_config tc_regmap_config = {
+अटल स्थिर काष्ठा regmap_config tc_regmap_config = अणु
 	.name = "tc358767",
 	.reg_bits = 16,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = PLL_DBG,
+	.max_रेजिस्टर = PLL_DBG,
 	.cache_type = REGCACHE_RBTREE,
-	.readable_reg = tc_readable_reg,
-	.volatile_table = &tc_volatile_table,
-	.writeable_reg = tc_writeable_reg,
-	.reg_format_endian = REGMAP_ENDIAN_BIG,
-	.val_format_endian = REGMAP_ENDIAN_LITTLE,
-};
+	.पढ़ोable_reg = tc_पढ़ोable_reg,
+	.अस्थिर_table = &tc_अस्थिर_table,
+	.ग_लिखोable_reg = tc_ग_लिखोable_reg,
+	.reg_क्रमmat_endian = REGMAP_ENDIAN_BIG,
+	.val_क्रमmat_endian = REGMAP_ENDIAN_LITTLE,
+पूर्ण;
 
-static irqreturn_t tc_irq_handler(int irq, void *arg)
-{
-	struct tc_data *tc = arg;
+अटल irqवापस_t tc_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा tc_data *tc = arg;
 	u32 val;
-	int r;
+	पूर्णांक r;
 
-	r = regmap_read(tc->regmap, INTSTS_G, &val);
-	if (r)
-		return IRQ_NONE;
+	r = regmap_पढ़ो(tc->regmap, INTSTS_G, &val);
+	अगर (r)
+		वापस IRQ_NONE;
 
-	if (!val)
-		return IRQ_NONE;
+	अगर (!val)
+		वापस IRQ_NONE;
 
-	if (val & INT_SYSERR) {
+	अगर (val & INT_SYSERR) अणु
 		u32 stat = 0;
 
-		regmap_read(tc->regmap, SYSSTAT, &stat);
+		regmap_पढ़ो(tc->regmap, SYSSTAT, &stat);
 
 		dev_err(tc->dev, "syserr %x\n", stat);
-	}
+	पूर्ण
 
-	if (tc->hpd_pin >= 0 && tc->bridge.dev) {
+	अगर (tc->hpd_pin >= 0 && tc->bridge.dev) अणु
 		/*
 		 * H is triggered when the GPIO goes high.
 		 *
-		 * LC is triggered when the GPIO goes low and stays low for
+		 * LC is triggered when the GPIO goes low and stays low क्रम
 		 * the duration of LCNT
 		 */
 		bool h = val & INT_GPIO_H(tc->hpd_pin);
@@ -1539,126 +1540,126 @@ static irqreturn_t tc_irq_handler(int irq, void *arg)
 		dev_dbg(tc->dev, "GPIO%d: %s %s\n", tc->hpd_pin,
 			h ? "H" : "", lc ? "LC" : "");
 
-		if (h || lc)
+		अगर (h || lc)
 			drm_kms_helper_hotplug_event(tc->bridge.dev);
-	}
+	पूर्ण
 
-	regmap_write(tc->regmap, INTSTS_G, val);
+	regmap_ग_लिखो(tc->regmap, INTSTS_G, val);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int tc_probe(struct i2c_client *client, const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct drm_panel *panel;
-	struct tc_data *tc;
-	int ret;
+अटल पूर्णांक tc_probe(काष्ठा i2c_client *client, स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा drm_panel *panel;
+	काष्ठा tc_data *tc;
+	पूर्णांक ret;
 
-	tc = devm_kzalloc(dev, sizeof(*tc), GFP_KERNEL);
-	if (!tc)
-		return -ENOMEM;
+	tc = devm_kzalloc(dev, माप(*tc), GFP_KERNEL);
+	अगर (!tc)
+		वापस -ENOMEM;
 
 	tc->dev = dev;
 
 	/* port@2 is the output port */
-	ret = drm_of_find_panel_or_bridge(dev->of_node, 2, 0, &panel, NULL);
-	if (ret && ret != -ENODEV)
-		return ret;
+	ret = drm_of_find_panel_or_bridge(dev->of_node, 2, 0, &panel, शून्य);
+	अगर (ret && ret != -ENODEV)
+		वापस ret;
 
-	if (panel) {
-		struct drm_bridge *panel_bridge;
+	अगर (panel) अणु
+		काष्ठा drm_bridge *panel_bridge;
 
 		panel_bridge = devm_drm_panel_bridge_add(dev, panel);
-		if (IS_ERR(panel_bridge))
-			return PTR_ERR(panel_bridge);
+		अगर (IS_ERR(panel_bridge))
+			वापस PTR_ERR(panel_bridge);
 
 		tc->panel_bridge = panel_bridge;
 		tc->bridge.type = DRM_MODE_CONNECTOR_eDP;
-	} else {
+	पूर्ण अन्यथा अणु
 		tc->bridge.type = DRM_MODE_CONNECTOR_DisplayPort;
-	}
+	पूर्ण
 
-	/* Shut down GPIO is optional */
+	/* Shut करोwn GPIO is optional */
 	tc->sd_gpio = devm_gpiod_get_optional(dev, "shutdown", GPIOD_OUT_HIGH);
-	if (IS_ERR(tc->sd_gpio))
-		return PTR_ERR(tc->sd_gpio);
+	अगर (IS_ERR(tc->sd_gpio))
+		वापस PTR_ERR(tc->sd_gpio);
 
-	if (tc->sd_gpio) {
+	अगर (tc->sd_gpio) अणु
 		gpiod_set_value_cansleep(tc->sd_gpio, 0);
 		usleep_range(5000, 10000);
-	}
+	पूर्ण
 
 	/* Reset GPIO is optional */
 	tc->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(tc->reset_gpio))
-		return PTR_ERR(tc->reset_gpio);
+	अगर (IS_ERR(tc->reset_gpio))
+		वापस PTR_ERR(tc->reset_gpio);
 
-	if (tc->reset_gpio) {
+	अगर (tc->reset_gpio) अणु
 		gpiod_set_value_cansleep(tc->reset_gpio, 1);
 		usleep_range(5000, 10000);
-	}
+	पूर्ण
 
 	tc->refclk = devm_clk_get(dev, "ref");
-	if (IS_ERR(tc->refclk)) {
+	अगर (IS_ERR(tc->refclk)) अणु
 		ret = PTR_ERR(tc->refclk);
 		dev_err(dev, "Failed to get refclk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	tc->regmap = devm_regmap_init_i2c(client, &tc_regmap_config);
-	if (IS_ERR(tc->regmap)) {
+	अगर (IS_ERR(tc->regmap)) अणु
 		ret = PTR_ERR(tc->regmap);
 		dev_err(dev, "Failed to initialize regmap: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = of_property_read_u32(dev->of_node, "toshiba,hpd-pin",
+	ret = of_property_पढ़ो_u32(dev->of_node, "toshiba,hpd-pin",
 				   &tc->hpd_pin);
-	if (ret) {
+	अगर (ret) अणु
 		tc->hpd_pin = -ENODEV;
-	} else {
-		if (tc->hpd_pin < 0 || tc->hpd_pin > 1) {
+	पूर्ण अन्यथा अणु
+		अगर (tc->hpd_pin < 0 || tc->hpd_pin > 1) अणु
 			dev_err(dev, "failed to parse HPD number\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (client->irq > 0) {
+	अगर (client->irq > 0) अणु
 		/* enable SysErr */
-		regmap_write(tc->regmap, INTCTL_G, INT_SYSERR);
+		regmap_ग_लिखो(tc->regmap, INTCTL_G, INT_SYSERR);
 
-		ret = devm_request_threaded_irq(dev, client->irq,
-						NULL, tc_irq_handler,
+		ret = devm_request_thपढ़ोed_irq(dev, client->irq,
+						शून्य, tc_irq_handler,
 						IRQF_ONESHOT,
 						"tc358767-irq", tc);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "failed to register dp interrupt\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		tc->have_irq = true;
-	}
+	पूर्ण
 
-	ret = regmap_read(tc->regmap, TC_IDREG, &tc->rev);
-	if (ret) {
+	ret = regmap_पढ़ो(tc->regmap, TC_IDREG, &tc->rev);
+	अगर (ret) अणु
 		dev_err(tc->dev, "can not read device ID: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if ((tc->rev != 0x6601) && (tc->rev != 0x6603)) {
+	अगर ((tc->rev != 0x6601) && (tc->rev != 0x6603)) अणु
 		dev_err(tc->dev, "invalid device ID: 0x%08x\n", tc->rev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	tc->assr = (tc->rev == 0x6601); /* Enable ASSR for eDP panels */
+	tc->assr = (tc->rev == 0x6601); /* Enable ASSR क्रम eDP panels */
 
-	if (!tc->reset_gpio) {
+	अगर (!tc->reset_gpio) अणु
 		/*
 		 * If the reset pin isn't present, do a software reset. It isn't
 		 * as thorough as the hardware reset, as we can't reset the I2C
-		 * communication block for obvious reasons, but it's getting the
-		 * chip into a defined state.
+		 * communication block क्रम obvious reasons, but it's getting the
+		 * chip पूर्णांकo a defined state.
 		 */
 		regmap_update_bits(tc->regmap, SYSRSTENB,
 				ENBLCD0 | ENBBM | ENBDSIRX | ENBREG | ENBHDCP,
@@ -1667,27 +1668,27 @@ static int tc_probe(struct i2c_client *client, const struct i2c_device_id *id)
 				ENBLCD0 | ENBBM | ENBDSIRX | ENBREG | ENBHDCP,
 				ENBLCD0 | ENBBM | ENBDSIRX | ENBREG | ENBHDCP);
 		usleep_range(5000, 10000);
-	}
+	पूर्ण
 
-	if (tc->hpd_pin >= 0) {
+	अगर (tc->hpd_pin >= 0) अणु
 		u32 lcnt_reg = tc->hpd_pin == 0 ? INT_GP0_LCNT : INT_GP1_LCNT;
 		u32 h_lc = INT_GPIO_H(tc->hpd_pin) | INT_GPIO_LC(tc->hpd_pin);
 
 		/* Set LCNT to 2ms */
-		regmap_write(tc->regmap, lcnt_reg,
+		regmap_ग_लिखो(tc->regmap, lcnt_reg,
 			     clk_get_rate(tc->refclk) * 2 / 1000);
-		/* We need the "alternate" mode for HPD */
-		regmap_write(tc->regmap, GPIOM, BIT(tc->hpd_pin));
+		/* We need the "alternate" mode क्रम HPD */
+		regmap_ग_लिखो(tc->regmap, GPIOM, BIT(tc->hpd_pin));
 
-		if (tc->have_irq) {
+		अगर (tc->have_irq) अणु
 			/* enable H & LC */
 			regmap_update_bits(tc->regmap, INTCTL_G, h_lc, h_lc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = tc_aux_link_setup(tc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Register DP AUX channel */
 	tc->aux.name = "TC358767 AUX i2c adapter";
@@ -1696,7 +1697,7 @@ static int tc_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	drm_dp_aux_init(&tc->aux);
 
 	tc->bridge.funcs = &tc_bridge_funcs;
-	if (tc->hpd_pin >= 0)
+	अगर (tc->hpd_pin >= 0)
 		tc->bridge.ops |= DRM_BRIDGE_OP_DETECT;
 	tc->bridge.ops |= DRM_BRIDGE_OP_EDID;
 
@@ -1705,39 +1706,39 @@ static int tc_probe(struct i2c_client *client, const struct i2c_device_id *id)
 
 	i2c_set_clientdata(client, tc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tc_remove(struct i2c_client *client)
-{
-	struct tc_data *tc = i2c_get_clientdata(client);
+अटल पूर्णांक tc_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा tc_data *tc = i2c_get_clientdata(client);
 
-	drm_bridge_remove(&tc->bridge);
+	drm_bridge_हटाओ(&tc->bridge);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id tc358767_i2c_ids[] = {
-	{ "tc358767", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id tc358767_i2c_ids[] = अणु
+	अणु "tc358767", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, tc358767_i2c_ids);
 
-static const struct of_device_id tc358767_of_ids[] = {
-	{ .compatible = "toshiba,tc358767", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id tc358767_of_ids[] = अणु
+	अणु .compatible = "toshiba,tc358767", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tc358767_of_ids);
 
-static struct i2c_driver tc358767_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver tc358767_driver = अणु
+	.driver = अणु
 		.name = "tc358767",
 		.of_match_table = tc358767_of_ids,
-	},
+	पूर्ण,
 	.id_table = tc358767_i2c_ids,
 	.probe = tc_probe,
-	.remove	= tc_remove,
-};
+	.हटाओ	= tc_हटाओ,
+पूर्ण;
 module_i2c_driver(tc358767_driver);
 
 MODULE_AUTHOR("Andrey Gusakov <andrey.gusakov@cogentembedded.com>");

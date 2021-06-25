@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  ideapad-laptop.c - Lenovo IdeaPad ACPI Extras
  *
- *  Copyright © 2010 Intel Corporation
- *  Copyright © 2010 David Woodhouse <dwmw2@infradead.org>
+ *  Copyright तऊ 2010 Intel Corporation
+ *  Copyright तऊ 2010 David Woodhouse <dwmw2@infradead.org>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/acpi.h>
-#include <linux/backlight.h>
-#include <linux/bitops.h>
-#include <linux/bug.h>
-#include <linux/debugfs.h>
-#include <linux/device.h>
-#include <linux/dmi.h>
-#include <linux/fb.h>
-#include <linux/i8042.h>
-#include <linux/init.h>
-#include <linux/input.h>
-#include <linux/input/sparse-keymap.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/platform_profile.h>
-#include <linux/rfkill.h>
-#include <linux/seq_file.h>
-#include <linux/sysfs.h>
-#include <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/i8042.h>
+#समावेश <linux/init.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/sparse-keymap.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_profile.h>
+#समावेश <linux/rfसमाप्त.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/types.h>
 
-#include <acpi/video.h>
+#समावेश <acpi/video.h>
 
-#include <dt-bindings/leds/common.h>
+#समावेश <dt-bindings/leds/common.h>
 
-#define IDEAPAD_RFKILL_DEV_NUM	3
+#घोषणा IDEAPAD_RFKILL_DEV_NUM	3
 
-#if IS_ENABLED(CONFIG_ACPI_WMI)
-static const char *const ideapad_wmi_fnesc_events[] = {
+#अगर IS_ENABLED(CONFIG_ACPI_WMI)
+अटल स्थिर अक्षर *स्थिर ideapad_wmi_fnesc_events[] = अणु
 	"26CAB2E5-5CF1-46AE-AAC3-4A12B6BA50E6", /* Yoga 3 */
 	"56322276-8493-4CE8-A783-98C991274F5E", /* Yoga 700 */
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-enum {
+क्रमागत अणु
 	CFG_CAP_BT_BIT       = 16,
 	CFG_CAP_3G_BIT       = 17,
 	CFG_CAP_WIFI_BIT     = 18,
 	CFG_CAP_CAM_BIT      = 19,
 	CFG_CAP_TOUCHPAD_BIT = 30,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	GBMD_CONSERVATION_STATE_BIT = 5,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SBMC_CONSERVATION_ON  = 3,
 	SBMC_CONSERVATION_OFF = 5,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	HALS_KBD_BL_SUPPORT_BIT       = 4,
 	HALS_KBD_BL_STATE_BIT         = 5,
 	HALS_USB_CHARGING_SUPPORT_BIT = 6,
@@ -69,18 +70,18 @@ enum {
 	HALS_FNLOCK_SUPPORT_BIT       = 9,
 	HALS_FNLOCK_STATE_BIT         = 10,
 	HALS_HOTKEYS_PRIMARY_BIT      = 11,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SALS_KBD_BL_ON        = 0x8,
 	SALS_KBD_BL_OFF       = 0x9,
 	SALS_USB_CHARGING_ON  = 0xa,
 	SALS_USB_CHARGING_OFF = 0xb,
 	SALS_FNLOCK_ON        = 0xe,
 	SALS_FNLOCK_OFF       = 0xf,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	VPCCMD_R_VPC1 = 0x10,
 	VPCCMD_R_BL_MAX,
 	VPCCMD_R_BL,
@@ -105,735 +106,735 @@ enum {
 	VPCCMD_R_FAN = 0x2B,
 	VPCCMD_R_SPECIAL_BUTTONS = 0x31,
 	VPCCMD_W_BL_POWER = 0x33,
-};
+पूर्ण;
 
-struct ideapad_dytc_priv {
-	enum platform_profile_option current_profile;
-	struct platform_profile_handler pprof;
-	struct mutex mutex; /* protects the DYTC interface */
-	struct ideapad_private *priv;
-};
+काष्ठा ideapad_dytc_priv अणु
+	क्रमागत platक्रमm_profile_option current_profile;
+	काष्ठा platक्रमm_profile_handler pprof;
+	काष्ठा mutex mutex; /* protects the DYTC पूर्णांकerface */
+	काष्ठा ideapad_निजी *priv;
+पूर्ण;
 
-struct ideapad_rfk_priv {
-	int dev;
-	struct ideapad_private *priv;
-};
+काष्ठा ideapad_rfk_priv अणु
+	पूर्णांक dev;
+	काष्ठा ideapad_निजी *priv;
+पूर्ण;
 
-struct ideapad_private {
-	struct acpi_device *adev;
-	struct rfkill *rfk[IDEAPAD_RFKILL_DEV_NUM];
-	struct ideapad_rfk_priv rfk_priv[IDEAPAD_RFKILL_DEV_NUM];
-	struct platform_device *platform_device;
-	struct input_dev *inputdev;
-	struct backlight_device *blightdev;
-	struct ideapad_dytc_priv *dytc;
-	struct dentry *debug;
-	unsigned long cfg;
-	const char *fnesc_guid;
-	struct {
+काष्ठा ideapad_निजी अणु
+	काष्ठा acpi_device *adev;
+	काष्ठा rfसमाप्त *rfk[IDEAPAD_RFKILL_DEV_NUM];
+	काष्ठा ideapad_rfk_priv rfk_priv[IDEAPAD_RFKILL_DEV_NUM];
+	काष्ठा platक्रमm_device *platक्रमm_device;
+	काष्ठा input_dev *inputdev;
+	काष्ठा backlight_device *blightdev;
+	काष्ठा ideapad_dytc_priv *dytc;
+	काष्ठा dentry *debug;
+	अचिन्हित दीर्घ cfg;
+	स्थिर अक्षर *fnesc_guid;
+	काष्ठा अणु
 		bool conservation_mode    : 1;
 		bool dytc                 : 1;
 		bool fan_mode             : 1;
 		bool fn_lock              : 1;
-		bool hw_rfkill_switch     : 1;
+		bool hw_rfसमाप्त_चयन     : 1;
 		bool kbd_bl               : 1;
 		bool touchpad_ctrl_via_ec : 1;
-		bool usb_charging         : 1;
-	} features;
-	struct {
+		bool usb_अक्षरging         : 1;
+	पूर्ण features;
+	काष्ठा अणु
 		bool initialized;
-		struct led_classdev led;
-		unsigned int last_brightness;
-	} kbd_bl;
-};
+		काष्ठा led_classdev led;
+		अचिन्हित पूर्णांक last_brightness;
+	पूर्ण kbd_bl;
+पूर्ण;
 
-static bool no_bt_rfkill;
-module_param(no_bt_rfkill, bool, 0444);
-MODULE_PARM_DESC(no_bt_rfkill, "No rfkill for bluetooth.");
+अटल bool no_bt_rfसमाप्त;
+module_param(no_bt_rfसमाप्त, bool, 0444);
+MODULE_PARM_DESC(no_bt_rfसमाप्त, "No rfkill for bluetooth.");
 
 /*
  * ACPI Helpers
  */
-#define IDEAPAD_EC_TIMEOUT 200 /* in ms */
+#घोषणा IDEAPAD_EC_TIMEOUT 200 /* in ms */
 
-static int eval_int(acpi_handle handle, const char *name, unsigned long *res)
-{
-	unsigned long long result;
+अटल पूर्णांक eval_पूर्णांक(acpi_handle handle, स्थिर अक्षर *name, अचिन्हित दीर्घ *res)
+अणु
+	अचिन्हित दीर्घ दीर्घ result;
 	acpi_status status;
 
-	status = acpi_evaluate_integer(handle, (char *)name, NULL, &result);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	status = acpi_evaluate_पूर्णांकeger(handle, (अक्षर *)name, शून्य, &result);
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
 	*res = result;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exec_simple_method(acpi_handle handle, const char *name, unsigned long arg)
-{
-	acpi_status status = acpi_execute_simple_method(handle, (char *)name, arg);
+अटल पूर्णांक exec_simple_method(acpi_handle handle, स्थिर अक्षर *name, अचिन्हित दीर्घ arg)
+अणु
+	acpi_status status = acpi_execute_simple_method(handle, (अक्षर *)name, arg);
 
-	return ACPI_FAILURE(status) ? -EIO : 0;
-}
+	वापस ACPI_FAILURE(status) ? -EIO : 0;
+पूर्ण
 
-static int eval_gbmd(acpi_handle handle, unsigned long *res)
-{
-	return eval_int(handle, "GBMD", res);
-}
+अटल पूर्णांक eval_gbmd(acpi_handle handle, अचिन्हित दीर्घ *res)
+अणु
+	वापस eval_पूर्णांक(handle, "GBMD", res);
+पूर्ण
 
-static int exec_sbmc(acpi_handle handle, unsigned long arg)
-{
-	return exec_simple_method(handle, "SBMC", arg);
-}
+अटल पूर्णांक exec_sbmc(acpi_handle handle, अचिन्हित दीर्घ arg)
+अणु
+	वापस exec_simple_method(handle, "SBMC", arg);
+पूर्ण
 
-static int eval_hals(acpi_handle handle, unsigned long *res)
-{
-	return eval_int(handle, "HALS", res);
-}
+अटल पूर्णांक eval_hals(acpi_handle handle, अचिन्हित दीर्घ *res)
+अणु
+	वापस eval_पूर्णांक(handle, "HALS", res);
+पूर्ण
 
-static int exec_sals(acpi_handle handle, unsigned long arg)
-{
-	return exec_simple_method(handle, "SALS", arg);
-}
+अटल पूर्णांक exec_sals(acpi_handle handle, अचिन्हित दीर्घ arg)
+अणु
+	वापस exec_simple_method(handle, "SALS", arg);
+पूर्ण
 
-static int eval_int_with_arg(acpi_handle handle, const char *name, unsigned long arg, unsigned long *res)
-{
-	struct acpi_object_list params;
-	unsigned long long result;
-	union acpi_object in_obj;
+अटल पूर्णांक eval_पूर्णांक_with_arg(acpi_handle handle, स्थिर अक्षर *name, अचिन्हित दीर्घ arg, अचिन्हित दीर्घ *res)
+अणु
+	काष्ठा acpi_object_list params;
+	अचिन्हित दीर्घ दीर्घ result;
+	जोड़ acpi_object in_obj;
 	acpi_status status;
 
 	params.count = 1;
-	params.pointer = &in_obj;
+	params.poपूर्णांकer = &in_obj;
 	in_obj.type = ACPI_TYPE_INTEGER;
-	in_obj.integer.value = arg;
+	in_obj.पूर्णांकeger.value = arg;
 
-	status = acpi_evaluate_integer(handle, (char *)name, &params, &result);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	status = acpi_evaluate_पूर्णांकeger(handle, (अक्षर *)name, &params, &result);
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
-	if (res)
+	अगर (res)
 		*res = result;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int eval_dytc(acpi_handle handle, unsigned long cmd, unsigned long *res)
-{
-	return eval_int_with_arg(handle, "DYTC", cmd, res);
-}
+अटल पूर्णांक eval_dytc(acpi_handle handle, अचिन्हित दीर्घ cmd, अचिन्हित दीर्घ *res)
+अणु
+	वापस eval_पूर्णांक_with_arg(handle, "DYTC", cmd, res);
+पूर्ण
 
-static int eval_vpcr(acpi_handle handle, unsigned long cmd, unsigned long *res)
-{
-	return eval_int_with_arg(handle, "VPCR", cmd, res);
-}
+अटल पूर्णांक eval_vpcr(acpi_handle handle, अचिन्हित दीर्घ cmd, अचिन्हित दीर्घ *res)
+अणु
+	वापस eval_पूर्णांक_with_arg(handle, "VPCR", cmd, res);
+पूर्ण
 
-static int eval_vpcw(acpi_handle handle, unsigned long cmd, unsigned long data)
-{
-	struct acpi_object_list params;
-	union acpi_object in_obj[2];
+अटल पूर्णांक eval_vpcw(acpi_handle handle, अचिन्हित दीर्घ cmd, अचिन्हित दीर्घ data)
+अणु
+	काष्ठा acpi_object_list params;
+	जोड़ acpi_object in_obj[2];
 	acpi_status status;
 
 	params.count = 2;
-	params.pointer = in_obj;
+	params.poपूर्णांकer = in_obj;
 	in_obj[0].type = ACPI_TYPE_INTEGER;
-	in_obj[0].integer.value = cmd;
+	in_obj[0].पूर्णांकeger.value = cmd;
 	in_obj[1].type = ACPI_TYPE_INTEGER;
-	in_obj[1].integer.value = data;
+	in_obj[1].पूर्णांकeger.value = data;
 
-	status = acpi_evaluate_object(handle, "VPCW", &params, NULL);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	status = acpi_evaluate_object(handle, "VPCW", &params, शून्य);
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int read_ec_data(acpi_handle handle, unsigned long cmd, unsigned long *data)
-{
-	unsigned long end_jiffies, val;
-	int err;
+अटल पूर्णांक पढ़ो_ec_data(acpi_handle handle, अचिन्हित दीर्घ cmd, अचिन्हित दीर्घ *data)
+अणु
+	अचिन्हित दीर्घ end_jअगरfies, val;
+	पूर्णांक err;
 
 	err = eval_vpcw(handle, 1, cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	end_jiffies = jiffies + msecs_to_jiffies(IDEAPAD_EC_TIMEOUT) + 1;
+	end_jअगरfies = jअगरfies + msecs_to_jअगरfies(IDEAPAD_EC_TIMEOUT) + 1;
 
-	while (time_before(jiffies, end_jiffies)) {
+	जबतक (समय_beक्रमe(jअगरfies, end_jअगरfies)) अणु
 		schedule();
 
 		err = eval_vpcr(handle, 1, &val);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (val == 0)
-			return eval_vpcr(handle, 0, data);
-	}
+		अगर (val == 0)
+			वापस eval_vpcr(handle, 0, data);
+	पूर्ण
 
 	acpi_handle_err(handle, "timeout in %s\n", __func__);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int write_ec_cmd(acpi_handle handle, unsigned long cmd, unsigned long data)
-{
-	unsigned long end_jiffies, val;
-	int err;
+अटल पूर्णांक ग_लिखो_ec_cmd(acpi_handle handle, अचिन्हित दीर्घ cmd, अचिन्हित दीर्घ data)
+अणु
+	अचिन्हित दीर्घ end_jअगरfies, val;
+	पूर्णांक err;
 
 	err = eval_vpcw(handle, 0, data);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = eval_vpcw(handle, 1, cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	end_jiffies = jiffies + msecs_to_jiffies(IDEAPAD_EC_TIMEOUT) + 1;
+	end_jअगरfies = jअगरfies + msecs_to_jअगरfies(IDEAPAD_EC_TIMEOUT) + 1;
 
-	while (time_before(jiffies, end_jiffies)) {
+	जबतक (समय_beक्रमe(jअगरfies, end_jअगरfies)) अणु
 		schedule();
 
 		err = eval_vpcr(handle, 1, &val);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (val == 0)
-			return 0;
-	}
+		अगर (val == 0)
+			वापस 0;
+	पूर्ण
 
 	acpi_handle_err(handle, "timeout in %s\n", __func__);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
 /*
  * debugfs
  */
-static int debugfs_status_show(struct seq_file *s, void *data)
-{
-	struct ideapad_private *priv = s->private;
-	unsigned long value;
+अटल पूर्णांक debugfs_status_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा ideapad_निजी *priv = s->निजी;
+	अचिन्हित दीर्घ value;
 
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_BL_MAX, &value))
-		seq_printf(s, "Backlight max:  %lu\n", value);
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_BL, &value))
-		seq_printf(s, "Backlight now:  %lu\n", value);
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_BL_POWER, &value))
-		seq_printf(s, "BL power value: %s (%lu)\n", value ? "on" : "off", value);
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BL_MAX, &value))
+		seq_म_लिखो(s, "Backlight max:  %lu\n", value);
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BL, &value))
+		seq_म_लिखो(s, "Backlight now:  %lu\n", value);
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BL_POWER, &value))
+		seq_म_लिखो(s, "BL power value: %s (%lu)\n", value ? "on" : "off", value);
 
-	seq_puts(s, "=====================\n");
+	seq_माला_दो(s, "=====================\n");
 
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_RF, &value))
-		seq_printf(s, "Radio status: %s (%lu)\n", value ? "on" : "off", value);
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_WIFI, &value))
-		seq_printf(s, "Wifi status:  %s (%lu)\n", value ? "on" : "off", value);
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_BT, &value))
-		seq_printf(s, "BT status:    %s (%lu)\n", value ? "on" : "off", value);
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_3G, &value))
-		seq_printf(s, "3G status:    %s (%lu)\n", value ? "on" : "off", value);
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_RF, &value))
+		seq_म_लिखो(s, "Radio status: %s (%lu)\n", value ? "on" : "off", value);
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_WIFI, &value))
+		seq_म_लिखो(s, "Wifi status:  %s (%lu)\n", value ? "on" : "off", value);
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BT, &value))
+		seq_म_लिखो(s, "BT status:    %s (%lu)\n", value ? "on" : "off", value);
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_3G, &value))
+		seq_म_लिखो(s, "3G status:    %s (%lu)\n", value ? "on" : "off", value);
 
-	seq_puts(s, "=====================\n");
+	seq_माला_दो(s, "=====================\n");
 
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_TOUCHPAD, &value))
-		seq_printf(s, "Touchpad status: %s (%lu)\n", value ? "on" : "off", value);
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_CAMERA, &value))
-		seq_printf(s, "Camera status:   %s (%lu)\n", value ? "on" : "off", value);
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_TOUCHPAD, &value))
+		seq_म_लिखो(s, "Touchpad status: %s (%lu)\n", value ? "on" : "off", value);
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_CAMERA, &value))
+		seq_म_लिखो(s, "Camera status:   %s (%lu)\n", value ? "on" : "off", value);
 
-	seq_puts(s, "=====================\n");
+	seq_माला_दो(s, "=====================\n");
 
-	if (!eval_gbmd(priv->adev->handle, &value))
-		seq_printf(s, "GBMD: %#010lx\n", value);
-	if (!eval_hals(priv->adev->handle, &value))
-		seq_printf(s, "HALS: %#010lx\n", value);
+	अगर (!eval_gbmd(priv->adev->handle, &value))
+		seq_म_लिखो(s, "GBMD: %#010lx\n", value);
+	अगर (!eval_hals(priv->adev->handle, &value))
+		seq_म_लिखो(s, "HALS: %#010lx\n", value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(debugfs_status);
 
-static int debugfs_cfg_show(struct seq_file *s, void *data)
-{
-	struct ideapad_private *priv = s->private;
+अटल पूर्णांक debugfs_cfg_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा ideapad_निजी *priv = s->निजी;
 
-	seq_printf(s, "_CFG: %#010lx\n\n", priv->cfg);
+	seq_म_लिखो(s, "_CFG: %#010lx\n\n", priv->cfg);
 
-	seq_puts(s, "Capabilities:");
-	if (test_bit(CFG_CAP_BT_BIT, &priv->cfg))
-		seq_puts(s, " bluetooth");
-	if (test_bit(CFG_CAP_3G_BIT, &priv->cfg))
-		seq_puts(s, " 3G");
-	if (test_bit(CFG_CAP_WIFI_BIT, &priv->cfg))
-		seq_puts(s, " wifi");
-	if (test_bit(CFG_CAP_CAM_BIT, &priv->cfg))
-		seq_puts(s, " camera");
-	if (test_bit(CFG_CAP_TOUCHPAD_BIT, &priv->cfg))
-		seq_puts(s, " touchpad");
-	seq_puts(s, "\n");
+	seq_माला_दो(s, "Capabilities:");
+	अगर (test_bit(CFG_CAP_BT_BIT, &priv->cfg))
+		seq_माला_दो(s, " bluetooth");
+	अगर (test_bit(CFG_CAP_3G_BIT, &priv->cfg))
+		seq_माला_दो(s, " 3G");
+	अगर (test_bit(CFG_CAP_WIFI_BIT, &priv->cfg))
+		seq_माला_दो(s, " wifi");
+	अगर (test_bit(CFG_CAP_CAM_BIT, &priv->cfg))
+		seq_माला_दो(s, " camera");
+	अगर (test_bit(CFG_CAP_TOUCHPAD_BIT, &priv->cfg))
+		seq_माला_दो(s, " touchpad");
+	seq_माला_दो(s, "\n");
 
-	seq_puts(s, "Graphics: ");
-	switch (priv->cfg & 0x700) {
-	case 0x100:
-		seq_puts(s, "Intel");
-		break;
-	case 0x200:
-		seq_puts(s, "ATI");
-		break;
-	case 0x300:
-		seq_puts(s, "Nvidia");
-		break;
-	case 0x400:
-		seq_puts(s, "Intel and ATI");
-		break;
-	case 0x500:
-		seq_puts(s, "Intel and Nvidia");
-		break;
-	}
-	seq_puts(s, "\n");
+	seq_माला_दो(s, "Graphics: ");
+	चयन (priv->cfg & 0x700) अणु
+	हाल 0x100:
+		seq_माला_दो(s, "Intel");
+		अवरोध;
+	हाल 0x200:
+		seq_माला_दो(s, "ATI");
+		अवरोध;
+	हाल 0x300:
+		seq_माला_दो(s, "Nvidia");
+		अवरोध;
+	हाल 0x400:
+		seq_माला_दो(s, "Intel and ATI");
+		अवरोध;
+	हाल 0x500:
+		seq_माला_दो(s, "Intel and Nvidia");
+		अवरोध;
+	पूर्ण
+	seq_माला_दो(s, "\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(debugfs_cfg);
 
-static void ideapad_debugfs_init(struct ideapad_private *priv)
-{
-	struct dentry *dir;
+अटल व्योम ideapad_debugfs_init(काष्ठा ideapad_निजी *priv)
+अणु
+	काष्ठा dentry *dir;
 
-	dir = debugfs_create_dir("ideapad", NULL);
+	dir = debugfs_create_dir("ideapad", शून्य);
 	priv->debug = dir;
 
 	debugfs_create_file("cfg", 0444, dir, priv, &debugfs_cfg_fops);
 	debugfs_create_file("status", 0444, dir, priv, &debugfs_status_fops);
-}
+पूर्ण
 
-static void ideapad_debugfs_exit(struct ideapad_private *priv)
-{
-	debugfs_remove_recursive(priv->debug);
-	priv->debug = NULL;
-}
+अटल व्योम ideapad_debugfs_निकास(काष्ठा ideapad_निजी *priv)
+अणु
+	debugfs_हटाओ_recursive(priv->debug);
+	priv->debug = शून्य;
+पूर्ण
 
 /*
  * sysfs
  */
-static ssize_t camera_power_show(struct device *dev,
-				 struct device_attribute *attr,
-				 char *buf)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
-	unsigned long result;
-	int err;
+अटल sमाप_प्रकार camera_घातer_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 अक्षर *buf)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ result;
+	पूर्णांक err;
 
-	err = read_ec_data(priv->adev->handle, VPCCMD_R_CAMERA, &result);
-	if (err)
-		return err;
+	err = पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_CAMERA, &result);
+	अगर (err)
+		वापस err;
 
-	return sysfs_emit(buf, "%d\n", !!result);
-}
+	वापस sysfs_emit(buf, "%d\n", !!result);
+पूर्ण
 
-static ssize_t camera_power_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t count)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
+अटल sमाप_प्रकार camera_घातer_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
 	bool state;
-	int err;
+	पूर्णांक err;
 
 	err = kstrtobool(buf, &state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = write_ec_cmd(priv->adev->handle, VPCCMD_W_CAMERA, state);
-	if (err)
-		return err;
+	err = ग_लिखो_ec_cmd(priv->adev->handle, VPCCMD_W_CAMERA, state);
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(camera_power);
+अटल DEVICE_ATTR_RW(camera_घातer);
 
-static ssize_t conservation_mode_show(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
-	unsigned long result;
-	int err;
+अटल sमाप_प्रकार conservation_mode_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ result;
+	पूर्णांक err;
 
 	err = eval_gbmd(priv->adev->handle, &result);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return sysfs_emit(buf, "%d\n", !!test_bit(GBMD_CONSERVATION_STATE_BIT, &result));
-}
+	वापस sysfs_emit(buf, "%d\n", !!test_bit(GBMD_CONSERVATION_STATE_BIT, &result));
+पूर्ण
 
-static ssize_t conservation_mode_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf, size_t count)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
+अटल sमाप_प्रकार conservation_mode_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
 	bool state;
-	int err;
+	पूर्णांक err;
 
 	err = kstrtobool(buf, &state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = exec_sbmc(priv->adev->handle, state ? SBMC_CONSERVATION_ON : SBMC_CONSERVATION_OFF);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(conservation_mode);
+अटल DEVICE_ATTR_RW(conservation_mode);
 
-static ssize_t fan_mode_show(struct device *dev,
-			     struct device_attribute *attr,
-			     char *buf)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
-	unsigned long result;
-	int err;
+अटल sमाप_प्रकार fan_mode_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ result;
+	पूर्णांक err;
 
-	err = read_ec_data(priv->adev->handle, VPCCMD_R_FAN, &result);
-	if (err)
-		return err;
+	err = पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_FAN, &result);
+	अगर (err)
+		वापस err;
 
-	return sysfs_emit(buf, "%lu\n", result);
-}
+	वापस sysfs_emit(buf, "%lu\n", result);
+पूर्ण
 
-static ssize_t fan_mode_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
-	unsigned int state;
-	int err;
+अटल sमाप_प्रकार fan_mode_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक state;
+	पूर्णांक err;
 
-	err = kstrtouint(buf, 0, &state);
-	if (err)
-		return err;
+	err = kstrtouपूर्णांक(buf, 0, &state);
+	अगर (err)
+		वापस err;
 
-	if (state > 4 || state == 3)
-		return -EINVAL;
+	अगर (state > 4 || state == 3)
+		वापस -EINVAL;
 
-	err = write_ec_cmd(priv->adev->handle, VPCCMD_W_FAN, state);
-	if (err)
-		return err;
+	err = ग_लिखो_ec_cmd(priv->adev->handle, VPCCMD_W_FAN, state);
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(fan_mode);
+अटल DEVICE_ATTR_RW(fan_mode);
 
-static ssize_t fn_lock_show(struct device *dev,
-			    struct device_attribute *attr,
-			    char *buf)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
-	unsigned long hals;
-	int err;
+अटल sमाप_प्रकार fn_lock_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ hals;
+	पूर्णांक err;
 
 	err = eval_hals(priv->adev->handle, &hals);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return sysfs_emit(buf, "%d\n", !!test_bit(HALS_FNLOCK_STATE_BIT, &hals));
-}
+	वापस sysfs_emit(buf, "%d\n", !!test_bit(HALS_FNLOCK_STATE_BIT, &hals));
+पूर्ण
 
-static ssize_t fn_lock_store(struct device *dev,
-			     struct device_attribute *attr,
-			     const char *buf, size_t count)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
+अटल sमाप_प्रकार fn_lock_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
 	bool state;
-	int err;
+	पूर्णांक err;
 
 	err = kstrtobool(buf, &state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = exec_sals(priv->adev->handle, state ? SALS_FNLOCK_ON : SALS_FNLOCK_OFF);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(fn_lock);
+अटल DEVICE_ATTR_RW(fn_lock);
 
-static ssize_t touchpad_show(struct device *dev,
-			     struct device_attribute *attr,
-			     char *buf)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
-	unsigned long result;
-	int err;
+अटल sमाप_प्रकार touchpad_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ result;
+	पूर्णांक err;
 
-	err = read_ec_data(priv->adev->handle, VPCCMD_R_TOUCHPAD, &result);
-	if (err)
-		return err;
+	err = पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_TOUCHPAD, &result);
+	अगर (err)
+		वापस err;
 
-	return sysfs_emit(buf, "%d\n", !!result);
-}
+	वापस sysfs_emit(buf, "%d\n", !!result);
+पूर्ण
 
-static ssize_t touchpad_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
+अटल sमाप_प्रकार touchpad_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
 	bool state;
-	int err;
+	पूर्णांक err;
 
 	err = kstrtobool(buf, &state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = write_ec_cmd(priv->adev->handle, VPCCMD_W_TOUCHPAD, state);
-	if (err)
-		return err;
+	err = ग_लिखो_ec_cmd(priv->adev->handle, VPCCMD_W_TOUCHPAD, state);
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(touchpad);
+अटल DEVICE_ATTR_RW(touchpad);
 
-static ssize_t usb_charging_show(struct device *dev,
-				 struct device_attribute *attr,
-				 char *buf)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
-	unsigned long hals;
-	int err;
+अटल sमाप_प्रकार usb_अक्षरging_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 अक्षर *buf)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ hals;
+	पूर्णांक err;
 
 	err = eval_hals(priv->adev->handle, &hals);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return sysfs_emit(buf, "%d\n", !!test_bit(HALS_USB_CHARGING_STATE_BIT, &hals));
-}
+	वापस sysfs_emit(buf, "%d\n", !!test_bit(HALS_USB_CHARGING_STATE_BIT, &hals));
+पूर्ण
 
-static ssize_t usb_charging_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t count)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
+अटल sमाप_प्रकार usb_अक्षरging_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
 	bool state;
-	int err;
+	पूर्णांक err;
 
 	err = kstrtobool(buf, &state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = exec_sals(priv->adev->handle, state ? SALS_USB_CHARGING_ON : SALS_USB_CHARGING_OFF);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(usb_charging);
+अटल DEVICE_ATTR_RW(usb_अक्षरging);
 
-static struct attribute *ideapad_attributes[] = {
-	&dev_attr_camera_power.attr,
+अटल काष्ठा attribute *ideapad_attributes[] = अणु
+	&dev_attr_camera_घातer.attr,
 	&dev_attr_conservation_mode.attr,
 	&dev_attr_fan_mode.attr,
 	&dev_attr_fn_lock.attr,
 	&dev_attr_touchpad.attr,
-	&dev_attr_usb_charging.attr,
-	NULL
-};
+	&dev_attr_usb_अक्षरging.attr,
+	शून्य
+पूर्ण;
 
-static umode_t ideapad_is_visible(struct kobject *kobj,
-				  struct attribute *attr,
-				  int idx)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct ideapad_private *priv = dev_get_drvdata(dev);
+अटल umode_t ideapad_is_visible(काष्ठा kobject *kobj,
+				  काष्ठा attribute *attr,
+				  पूर्णांक idx)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
 	bool supported = true;
 
-	if (attr == &dev_attr_camera_power.attr)
+	अगर (attr == &dev_attr_camera_घातer.attr)
 		supported = test_bit(CFG_CAP_CAM_BIT, &priv->cfg);
-	else if (attr == &dev_attr_conservation_mode.attr)
+	अन्यथा अगर (attr == &dev_attr_conservation_mode.attr)
 		supported = priv->features.conservation_mode;
-	else if (attr == &dev_attr_fan_mode.attr)
+	अन्यथा अगर (attr == &dev_attr_fan_mode.attr)
 		supported = priv->features.fan_mode;
-	else if (attr == &dev_attr_fn_lock.attr)
+	अन्यथा अगर (attr == &dev_attr_fn_lock.attr)
 		supported = priv->features.fn_lock;
-	else if (attr == &dev_attr_touchpad.attr)
+	अन्यथा अगर (attr == &dev_attr_touchpad.attr)
 		supported = priv->features.touchpad_ctrl_via_ec &&
 			    test_bit(CFG_CAP_TOUCHPAD_BIT, &priv->cfg);
-	else if (attr == &dev_attr_usb_charging.attr)
-		supported = priv->features.usb_charging;
+	अन्यथा अगर (attr == &dev_attr_usb_अक्षरging.attr)
+		supported = priv->features.usb_अक्षरging;
 
-	return supported ? attr->mode : 0;
-}
+	वापस supported ? attr->mode : 0;
+पूर्ण
 
-static const struct attribute_group ideapad_attribute_group = {
+अटल स्थिर काष्ठा attribute_group ideapad_attribute_group = अणु
 	.is_visible = ideapad_is_visible,
 	.attrs = ideapad_attributes
-};
+पूर्ण;
 
 /*
- * DYTC Platform profile
+ * DYTC Platक्रमm profile
  */
-#define DYTC_CMD_QUERY        0 /* To get DYTC status - enable/revision */
-#define DYTC_CMD_SET          1 /* To enable/disable IC function mode */
-#define DYTC_CMD_GET          2 /* To get current IC function and mode */
-#define DYTC_CMD_RESET    0x1ff /* To reset back to default */
+#घोषणा DYTC_CMD_QUERY        0 /* To get DYTC status - enable/revision */
+#घोषणा DYTC_CMD_SET          1 /* To enable/disable IC function mode */
+#घोषणा DYTC_CMD_GET          2 /* To get current IC function and mode */
+#घोषणा DYTC_CMD_RESET    0x1ff /* To reset back to शेष */
 
-#define DYTC_QUERY_ENABLE_BIT 8  /* Bit        8 - 0 = disabled, 1 = enabled */
-#define DYTC_QUERY_SUBREV_BIT 16 /* Bits 16 - 27 - sub revision */
-#define DYTC_QUERY_REV_BIT    28 /* Bits 28 - 31 - revision */
+#घोषणा DYTC_QUERY_ENABLE_BIT 8  /* Bit        8 - 0 = disabled, 1 = enabled */
+#घोषणा DYTC_QUERY_SUBREV_BIT 16 /* Bits 16 - 27 - sub revision */
+#घोषणा DYTC_QUERY_REV_BIT    28 /* Bits 28 - 31 - revision */
 
-#define DYTC_GET_FUNCTION_BIT 8  /* Bits  8-11 - function setting */
-#define DYTC_GET_MODE_BIT     12 /* Bits 12-15 - mode setting */
+#घोषणा DYTC_GET_FUNCTION_BIT 8  /* Bits  8-11 - function setting */
+#घोषणा DYTC_GET_MODE_BIT     12 /* Bits 12-15 - mode setting */
 
-#define DYTC_SET_FUNCTION_BIT 12 /* Bits 12-15 - function setting */
-#define DYTC_SET_MODE_BIT     16 /* Bits 16-19 - mode setting */
-#define DYTC_SET_VALID_BIT    20 /* Bit     20 - 1 = on, 0 = off */
+#घोषणा DYTC_SET_FUNCTION_BIT 12 /* Bits 12-15 - function setting */
+#घोषणा DYTC_SET_MODE_BIT     16 /* Bits 16-19 - mode setting */
+#घोषणा DYTC_SET_VALID_BIT    20 /* Bit     20 - 1 = on, 0 = off */
 
-#define DYTC_FUNCTION_STD     0  /* Function = 0, standard mode */
-#define DYTC_FUNCTION_CQL     1  /* Function = 1, lap mode */
-#define DYTC_FUNCTION_MMC     11 /* Function = 11, desk mode */
+#घोषणा DYTC_FUNCTION_STD     0  /* Function = 0, standard mode */
+#घोषणा DYTC_FUNCTION_CQL     1  /* Function = 1, lap mode */
+#घोषणा DYTC_FUNCTION_MMC     11 /* Function = 11, desk mode */
 
-#define DYTC_MODE_PERFORM     2  /* High power mode aka performance */
-#define DYTC_MODE_LOW_POWER       3  /* Low power mode aka quiet */
-#define DYTC_MODE_BALANCE   0xF  /* Default mode aka balanced */
+#घोषणा DYTC_MODE_PERFORM     2  /* High घातer mode aka perक्रमmance */
+#घोषणा DYTC_MODE_LOW_POWER       3  /* Low घातer mode aka quiet */
+#घोषणा DYTC_MODE_BALANCE   0xF  /* Default mode aka balanced */
 
-#define DYTC_SET_COMMAND(function, mode, on) \
+#घोषणा DYTC_SET_COMMAND(function, mode, on) \
 	(DYTC_CMD_SET | (function) << DYTC_SET_FUNCTION_BIT | \
 	 (mode) << DYTC_SET_MODE_BIT | \
 	 (on) << DYTC_SET_VALID_BIT)
 
-#define DYTC_DISABLE_CQL DYTC_SET_COMMAND(DYTC_FUNCTION_CQL, DYTC_MODE_BALANCE, 0)
+#घोषणा DYTC_DISABLE_CQL DYTC_SET_COMMAND(DYTC_FUNCTION_CQL, DYTC_MODE_BALANCE, 0)
 
-#define DYTC_ENABLE_CQL DYTC_SET_COMMAND(DYTC_FUNCTION_CQL, DYTC_MODE_BALANCE, 1)
+#घोषणा DYTC_ENABLE_CQL DYTC_SET_COMMAND(DYTC_FUNCTION_CQL, DYTC_MODE_BALANCE, 1)
 
-static int convert_dytc_to_profile(int dytcmode, enum platform_profile_option *profile)
-{
-	switch (dytcmode) {
-	case DYTC_MODE_LOW_POWER:
-		*profile = PLATFORM_PROFILE_LOW_POWER;
-		break;
-	case DYTC_MODE_BALANCE:
-		*profile =  PLATFORM_PROFILE_BALANCED;
-		break;
-	case DYTC_MODE_PERFORM:
-		*profile =  PLATFORM_PROFILE_PERFORMANCE;
-		break;
-	default: /* Unknown mode */
-		return -EINVAL;
-	}
+अटल पूर्णांक convert_dytc_to_profile(पूर्णांक dytcmode, क्रमागत platक्रमm_profile_option *profile)
+अणु
+	चयन (dytcmode) अणु
+	हाल DYTC_MODE_LOW_POWER:
+		*profile = PLATFORM_PROखाता_LOW_POWER;
+		अवरोध;
+	हाल DYTC_MODE_BALANCE:
+		*profile =  PLATFORM_PROखाता_BALANCED;
+		अवरोध;
+	हाल DYTC_MODE_PERFORM:
+		*profile =  PLATFORM_PROखाता_PERFORMANCE;
+		अवरोध;
+	शेष: /* Unknown mode */
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int convert_profile_to_dytc(enum platform_profile_option profile, int *perfmode)
-{
-	switch (profile) {
-	case PLATFORM_PROFILE_LOW_POWER:
-		*perfmode = DYTC_MODE_LOW_POWER;
-		break;
-	case PLATFORM_PROFILE_BALANCED:
-		*perfmode = DYTC_MODE_BALANCE;
-		break;
-	case PLATFORM_PROFILE_PERFORMANCE:
-		*perfmode = DYTC_MODE_PERFORM;
-		break;
-	default: /* Unknown profile */
-		return -EOPNOTSUPP;
-	}
+अटल पूर्णांक convert_profile_to_dytc(क्रमागत platक्रमm_profile_option profile, पूर्णांक *perभ_शेषe)
+अणु
+	चयन (profile) अणु
+	हाल PLATFORM_PROखाता_LOW_POWER:
+		*perभ_शेषe = DYTC_MODE_LOW_POWER;
+		अवरोध;
+	हाल PLATFORM_PROखाता_BALANCED:
+		*perभ_शेषe = DYTC_MODE_BALANCE;
+		अवरोध;
+	हाल PLATFORM_PROखाता_PERFORMANCE:
+		*perभ_शेषe = DYTC_MODE_PERFORM;
+		अवरोध;
+	शेष: /* Unknown profile */
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * dytc_profile_get: Function to register with platform_profile
- * handler. Returns current platform profile.
+ * dytc_profile_get: Function to रेजिस्टर with platक्रमm_profile
+ * handler. Returns current platक्रमm profile.
  */
-static int dytc_profile_get(struct platform_profile_handler *pprof,
-			    enum platform_profile_option *profile)
-{
-	struct ideapad_dytc_priv *dytc = container_of(pprof, struct ideapad_dytc_priv, pprof);
+अटल पूर्णांक dytc_profile_get(काष्ठा platक्रमm_profile_handler *pprof,
+			    क्रमागत platक्रमm_profile_option *profile)
+अणु
+	काष्ठा ideapad_dytc_priv *dytc = container_of(pprof, काष्ठा ideapad_dytc_priv, pprof);
 
 	*profile = dytc->current_profile;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Helper function - check if we are in CQL mode and if we are
+ * Helper function - check अगर we are in CQL mode and अगर we are
  *  - disable CQL,
  *  - run the command
  *  - enable CQL
  *  If not in CQL mode, just run the command
  */
-static int dytc_cql_command(struct ideapad_private *priv, unsigned long cmd,
-			    unsigned long *output)
-{
-	int err, cmd_err, cur_funcmode;
+अटल पूर्णांक dytc_cql_command(काष्ठा ideapad_निजी *priv, अचिन्हित दीर्घ cmd,
+			    अचिन्हित दीर्घ *output)
+अणु
+	पूर्णांक err, cmd_err, cur_funcmode;
 
-	/* Determine if we are in CQL mode. This alters the commands we do */
+	/* Determine अगर we are in CQL mode. This alters the commands we करो */
 	err = eval_dytc(priv->adev->handle, DYTC_CMD_GET, output);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	cur_funcmode = (*output >> DYTC_GET_FUNCTION_BIT) & 0xF;
-	/* Check if we're OK to return immediately */
-	if (cmd == DYTC_CMD_GET && cur_funcmode != DYTC_FUNCTION_CQL)
-		return 0;
+	/* Check अगर we're OK to वापस immediately */
+	अगर (cmd == DYTC_CMD_GET && cur_funcmode != DYTC_FUNCTION_CQL)
+		वापस 0;
 
-	if (cur_funcmode == DYTC_FUNCTION_CQL) {
-		err = eval_dytc(priv->adev->handle, DYTC_DISABLE_CQL, NULL);
-		if (err)
-			return err;
-	}
+	अगर (cur_funcmode == DYTC_FUNCTION_CQL) अणु
+		err = eval_dytc(priv->adev->handle, DYTC_DISABLE_CQL, शून्य);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	cmd_err = eval_dytc(priv->adev->handle, cmd, output);
-	/* Check return condition after we've restored CQL state */
+	/* Check वापस condition after we've restored CQL state */
 
-	if (cur_funcmode == DYTC_FUNCTION_CQL) {
-		err = eval_dytc(priv->adev->handle, DYTC_ENABLE_CQL, NULL);
-		if (err)
-			return err;
-	}
+	अगर (cur_funcmode == DYTC_FUNCTION_CQL) अणु
+		err = eval_dytc(priv->adev->handle, DYTC_ENABLE_CQL, शून्य);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return cmd_err;
-}
+	वापस cmd_err;
+पूर्ण
 
 /*
- * dytc_profile_set: Function to register with platform_profile
- * handler. Sets current platform profile.
+ * dytc_profile_set: Function to रेजिस्टर with platक्रमm_profile
+ * handler. Sets current platक्रमm profile.
  */
-static int dytc_profile_set(struct platform_profile_handler *pprof,
-			    enum platform_profile_option profile)
-{
-	struct ideapad_dytc_priv *dytc = container_of(pprof, struct ideapad_dytc_priv, pprof);
-	struct ideapad_private *priv = dytc->priv;
-	unsigned long output;
-	int err;
+अटल पूर्णांक dytc_profile_set(काष्ठा platक्रमm_profile_handler *pprof,
+			    क्रमागत platक्रमm_profile_option profile)
+अणु
+	काष्ठा ideapad_dytc_priv *dytc = container_of(pprof, काष्ठा ideapad_dytc_priv, pprof);
+	काष्ठा ideapad_निजी *priv = dytc->priv;
+	अचिन्हित दीर्घ output;
+	पूर्णांक err;
 
-	err = mutex_lock_interruptible(&dytc->mutex);
-	if (err)
-		return err;
+	err = mutex_lock_पूर्णांकerruptible(&dytc->mutex);
+	अगर (err)
+		वापस err;
 
-	if (profile == PLATFORM_PROFILE_BALANCED) {
+	अगर (profile == PLATFORM_PROखाता_BALANCED) अणु
 		/* To get back to balanced mode we just issue a reset command */
-		err = eval_dytc(priv->adev->handle, DYTC_CMD_RESET, NULL);
-		if (err)
-			goto unlock;
-	} else {
-		int perfmode;
+		err = eval_dytc(priv->adev->handle, DYTC_CMD_RESET, शून्य);
+		अगर (err)
+			जाओ unlock;
+	पूर्ण अन्यथा अणु
+		पूर्णांक perभ_शेषe;
 
-		err = convert_profile_to_dytc(profile, &perfmode);
-		if (err)
-			goto unlock;
+		err = convert_profile_to_dytc(profile, &perभ_शेषe);
+		अगर (err)
+			जाओ unlock;
 
-		/* Determine if we are in CQL mode. This alters the commands we do */
-		err = dytc_cql_command(priv, DYTC_SET_COMMAND(DYTC_FUNCTION_MMC, perfmode, 1),
+		/* Determine अगर we are in CQL mode. This alters the commands we करो */
+		err = dytc_cql_command(priv, DYTC_SET_COMMAND(DYTC_FUNCTION_MMC, perभ_शेषe, 1),
 				       &output);
-		if (err)
-			goto unlock;
-	}
+		अगर (err)
+			जाओ unlock;
+	पूर्ण
 
 	/* Success - update current profile */
 	dytc->current_profile = profile;
@@ -841,56 +842,56 @@ static int dytc_profile_set(struct platform_profile_handler *pprof,
 unlock:
 	mutex_unlock(&dytc->mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void dytc_profile_refresh(struct ideapad_private *priv)
-{
-	enum platform_profile_option profile;
-	unsigned long output;
-	int err, perfmode;
+अटल व्योम dytc_profile_refresh(काष्ठा ideapad_निजी *priv)
+अणु
+	क्रमागत platक्रमm_profile_option profile;
+	अचिन्हित दीर्घ output;
+	पूर्णांक err, perभ_शेषe;
 
 	mutex_lock(&priv->dytc->mutex);
 	err = dytc_cql_command(priv, DYTC_CMD_GET, &output);
 	mutex_unlock(&priv->dytc->mutex);
-	if (err)
-		return;
+	अगर (err)
+		वापस;
 
-	perfmode = (output >> DYTC_GET_MODE_BIT) & 0xF;
+	perभ_शेषe = (output >> DYTC_GET_MODE_BIT) & 0xF;
 
-	if (convert_dytc_to_profile(perfmode, &profile))
-		return;
+	अगर (convert_dytc_to_profile(perभ_शेषe, &profile))
+		वापस;
 
-	if (profile != priv->dytc->current_profile) {
+	अगर (profile != priv->dytc->current_profile) अणु
 		priv->dytc->current_profile = profile;
-		platform_profile_notify();
-	}
-}
+		platक्रमm_profile_notअगरy();
+	पूर्ण
+पूर्ण
 
-static int ideapad_dytc_profile_init(struct ideapad_private *priv)
-{
-	int err, dytc_version;
-	unsigned long output;
+अटल पूर्णांक ideapad_dytc_profile_init(काष्ठा ideapad_निजी *priv)
+अणु
+	पूर्णांक err, dytc_version;
+	अचिन्हित दीर्घ output;
 
-	if (!priv->features.dytc)
-		return -ENODEV;
+	अगर (!priv->features.dytc)
+		वापस -ENODEV;
 
 	err = eval_dytc(priv->adev->handle, DYTC_CMD_QUERY, &output);
 	/* For all other errors we can flag the failure */
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Check DYTC is enabled and supports mode setting */
-	if (!test_bit(DYTC_QUERY_ENABLE_BIT, &output))
-		return -ENODEV;
+	अगर (!test_bit(DYTC_QUERY_ENABLE_BIT, &output))
+		वापस -ENODEV;
 
 	dytc_version = (output >> DYTC_QUERY_REV_BIT) & 0xF;
-	if (dytc_version < 5)
-		return -ENODEV;
+	अगर (dytc_version < 5)
+		वापस -ENODEV;
 
-	priv->dytc = kzalloc(sizeof(*priv->dytc), GFP_KERNEL);
-	if (!priv->dytc)
-		return -ENOMEM;
+	priv->dytc = kzalloc(माप(*priv->dytc), GFP_KERNEL);
+	अगर (!priv->dytc)
+		वापस -ENOMEM;
 
 	mutex_init(&priv->dytc->mutex);
 
@@ -899,440 +900,440 @@ static int ideapad_dytc_profile_init(struct ideapad_private *priv)
 	priv->dytc->pprof.profile_set = dytc_profile_set;
 
 	/* Setup supported modes */
-	set_bit(PLATFORM_PROFILE_LOW_POWER, priv->dytc->pprof.choices);
-	set_bit(PLATFORM_PROFILE_BALANCED, priv->dytc->pprof.choices);
-	set_bit(PLATFORM_PROFILE_PERFORMANCE, priv->dytc->pprof.choices);
+	set_bit(PLATFORM_PROखाता_LOW_POWER, priv->dytc->pprof.choices);
+	set_bit(PLATFORM_PROखाता_BALANCED, priv->dytc->pprof.choices);
+	set_bit(PLATFORM_PROखाता_PERFORMANCE, priv->dytc->pprof.choices);
 
-	/* Create platform_profile structure and register */
-	err = platform_profile_register(&priv->dytc->pprof);
-	if (err)
-		goto pp_reg_failed;
+	/* Create platक्रमm_profile काष्ठाure and रेजिस्टर */
+	err = platक्रमm_profile_रेजिस्टर(&priv->dytc->pprof);
+	अगर (err)
+		जाओ pp_reg_failed;
 
 	/* Ensure initial values are correct */
 	dytc_profile_refresh(priv);
 
-	return 0;
+	वापस 0;
 
 pp_reg_failed:
 	mutex_destroy(&priv->dytc->mutex);
-	kfree(priv->dytc);
-	priv->dytc = NULL;
+	kमुक्त(priv->dytc);
+	priv->dytc = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ideapad_dytc_profile_exit(struct ideapad_private *priv)
-{
-	if (!priv->dytc)
-		return;
+अटल व्योम ideapad_dytc_profile_निकास(काष्ठा ideapad_निजी *priv)
+अणु
+	अगर (!priv->dytc)
+		वापस;
 
-	platform_profile_remove();
+	platक्रमm_profile_हटाओ();
 	mutex_destroy(&priv->dytc->mutex);
-	kfree(priv->dytc);
+	kमुक्त(priv->dytc);
 
-	priv->dytc = NULL;
-}
+	priv->dytc = शून्य;
+पूर्ण
 
 /*
- * Rfkill
+ * Rfसमाप्त
  */
-struct ideapad_rfk_data {
-	char *name;
-	int cfgbit;
-	int opcode;
-	int type;
-};
+काष्ठा ideapad_rfk_data अणु
+	अक्षर *name;
+	पूर्णांक cfgbit;
+	पूर्णांक opcode;
+	पूर्णांक type;
+पूर्ण;
 
-static const struct ideapad_rfk_data ideapad_rfk_data[] = {
-	{ "ideapad_wlan",      CFG_CAP_WIFI_BIT, VPCCMD_W_WIFI, RFKILL_TYPE_WLAN },
-	{ "ideapad_bluetooth", CFG_CAP_BT_BIT,   VPCCMD_W_BT,   RFKILL_TYPE_BLUETOOTH },
-	{ "ideapad_3g",        CFG_CAP_3G_BIT,   VPCCMD_W_3G,   RFKILL_TYPE_WWAN },
-};
+अटल स्थिर काष्ठा ideapad_rfk_data ideapad_rfk_data[] = अणु
+	अणु "ideapad_wlan",      CFG_CAP_WIFI_BIT, VPCCMD_W_WIFI, RFKILL_TYPE_WLAN पूर्ण,
+	अणु "ideapad_bluetooth", CFG_CAP_BT_BIT,   VPCCMD_W_BT,   RFKILL_TYPE_BLUETOOTH पूर्ण,
+	अणु "ideapad_3g",        CFG_CAP_3G_BIT,   VPCCMD_W_3G,   RFKILL_TYPE_WWAN पूर्ण,
+पूर्ण;
 
-static int ideapad_rfk_set(void *data, bool blocked)
-{
-	struct ideapad_rfk_priv *priv = data;
-	int opcode = ideapad_rfk_data[priv->dev].opcode;
+अटल पूर्णांक ideapad_rfk_set(व्योम *data, bool blocked)
+अणु
+	काष्ठा ideapad_rfk_priv *priv = data;
+	पूर्णांक opcode = ideapad_rfk_data[priv->dev].opcode;
 
-	return write_ec_cmd(priv->priv->adev->handle, opcode, !blocked);
-}
+	वापस ग_लिखो_ec_cmd(priv->priv->adev->handle, opcode, !blocked);
+पूर्ण
 
-static const struct rfkill_ops ideapad_rfk_ops = {
+अटल स्थिर काष्ठा rfसमाप्त_ops ideapad_rfk_ops = अणु
 	.set_block = ideapad_rfk_set,
-};
+पूर्ण;
 
-static void ideapad_sync_rfk_state(struct ideapad_private *priv)
-{
-	unsigned long hw_blocked = 0;
-	int i;
+अटल व्योम ideapad_sync_rfk_state(काष्ठा ideapad_निजी *priv)
+अणु
+	अचिन्हित दीर्घ hw_blocked = 0;
+	पूर्णांक i;
 
-	if (priv->features.hw_rfkill_switch) {
-		if (read_ec_data(priv->adev->handle, VPCCMD_R_RF, &hw_blocked))
-			return;
+	अगर (priv->features.hw_rfसमाप्त_चयन) अणु
+		अगर (पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_RF, &hw_blocked))
+			वापस;
 		hw_blocked = !hw_blocked;
-	}
+	पूर्ण
 
-	for (i = 0; i < IDEAPAD_RFKILL_DEV_NUM; i++)
-		if (priv->rfk[i])
-			rfkill_set_hw_state(priv->rfk[i], hw_blocked);
-}
+	क्रम (i = 0; i < IDEAPAD_RFKILL_DEV_NUM; i++)
+		अगर (priv->rfk[i])
+			rfसमाप्त_set_hw_state(priv->rfk[i], hw_blocked);
+पूर्ण
 
-static int ideapad_register_rfkill(struct ideapad_private *priv, int dev)
-{
-	unsigned long rf_enabled;
-	int err;
+अटल पूर्णांक ideapad_रेजिस्टर_rfसमाप्त(काष्ठा ideapad_निजी *priv, पूर्णांक dev)
+अणु
+	अचिन्हित दीर्घ rf_enabled;
+	पूर्णांक err;
 
-	if (no_bt_rfkill && ideapad_rfk_data[dev].type == RFKILL_TYPE_BLUETOOTH) {
-		/* Force to enable bluetooth when no_bt_rfkill=1 */
-		write_ec_cmd(priv->adev->handle, ideapad_rfk_data[dev].opcode, 1);
-		return 0;
-	}
+	अगर (no_bt_rfसमाप्त && ideapad_rfk_data[dev].type == RFKILL_TYPE_BLUETOOTH) अणु
+		/* Force to enable bluetooth when no_bt_rfसमाप्त=1 */
+		ग_लिखो_ec_cmd(priv->adev->handle, ideapad_rfk_data[dev].opcode, 1);
+		वापस 0;
+	पूर्ण
 
 	priv->rfk_priv[dev].dev = dev;
 	priv->rfk_priv[dev].priv = priv;
 
-	priv->rfk[dev] = rfkill_alloc(ideapad_rfk_data[dev].name,
-				      &priv->platform_device->dev,
+	priv->rfk[dev] = rfसमाप्त_alloc(ideapad_rfk_data[dev].name,
+				      &priv->platक्रमm_device->dev,
 				      ideapad_rfk_data[dev].type,
 				      &ideapad_rfk_ops,
 				      &priv->rfk_priv[dev]);
-	if (!priv->rfk[dev])
-		return -ENOMEM;
+	अगर (!priv->rfk[dev])
+		वापस -ENOMEM;
 
-	err = read_ec_data(priv->adev->handle, ideapad_rfk_data[dev].opcode - 1, &rf_enabled);
-	if (err)
+	err = पढ़ो_ec_data(priv->adev->handle, ideapad_rfk_data[dev].opcode - 1, &rf_enabled);
+	अगर (err)
 		rf_enabled = 1;
 
-	rfkill_init_sw_state(priv->rfk[dev], !rf_enabled);
+	rfसमाप्त_init_sw_state(priv->rfk[dev], !rf_enabled);
 
-	err = rfkill_register(priv->rfk[dev]);
-	if (err)
-		rfkill_destroy(priv->rfk[dev]);
+	err = rfसमाप्त_रेजिस्टर(priv->rfk[dev]);
+	अगर (err)
+		rfसमाप्त_destroy(priv->rfk[dev]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ideapad_unregister_rfkill(struct ideapad_private *priv, int dev)
-{
-	if (!priv->rfk[dev])
-		return;
+अटल व्योम ideapad_unरेजिस्टर_rfसमाप्त(काष्ठा ideapad_निजी *priv, पूर्णांक dev)
+अणु
+	अगर (!priv->rfk[dev])
+		वापस;
 
-	rfkill_unregister(priv->rfk[dev]);
-	rfkill_destroy(priv->rfk[dev]);
-}
+	rfसमाप्त_unरेजिस्टर(priv->rfk[dev]);
+	rfसमाप्त_destroy(priv->rfk[dev]);
+पूर्ण
 
 /*
- * Platform device
+ * Platक्रमm device
  */
-static int ideapad_sysfs_init(struct ideapad_private *priv)
-{
-	return device_add_group(&priv->platform_device->dev,
+अटल पूर्णांक ideapad_sysfs_init(काष्ठा ideapad_निजी *priv)
+अणु
+	वापस device_add_group(&priv->platक्रमm_device->dev,
 				&ideapad_attribute_group);
-}
+पूर्ण
 
-static void ideapad_sysfs_exit(struct ideapad_private *priv)
-{
-	device_remove_group(&priv->platform_device->dev,
+अटल व्योम ideapad_sysfs_निकास(काष्ठा ideapad_निजी *priv)
+अणु
+	device_हटाओ_group(&priv->platक्रमm_device->dev,
 			    &ideapad_attribute_group);
-}
+पूर्ण
 
 /*
  * input device
  */
-static const struct key_entry ideapad_keymap[] = {
-	{ KE_KEY,   6, { KEY_SWITCHVIDEOMODE } },
-	{ KE_KEY,   7, { KEY_CAMERA } },
-	{ KE_KEY,   8, { KEY_MICMUTE } },
-	{ KE_KEY,  11, { KEY_F16 } },
-	{ KE_KEY,  13, { KEY_WLAN } },
-	{ KE_KEY,  16, { KEY_PROG1 } },
-	{ KE_KEY,  17, { KEY_PROG2 } },
-	{ KE_KEY,  64, { KEY_PROG3 } },
-	{ KE_KEY,  65, { KEY_PROG4 } },
-	{ KE_KEY,  66, { KEY_TOUCHPAD_OFF } },
-	{ KE_KEY,  67, { KEY_TOUCHPAD_ON } },
-	{ KE_KEY, 128, { KEY_ESC } },
-	{ KE_END },
-};
+अटल स्थिर काष्ठा key_entry ideapad_keymap[] = अणु
+	अणु KE_KEY,   6, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण,
+	अणु KE_KEY,   7, अणु KEY_CAMERA पूर्ण पूर्ण,
+	अणु KE_KEY,   8, अणु KEY_MICMUTE पूर्ण पूर्ण,
+	अणु KE_KEY,  11, अणु KEY_F16 पूर्ण पूर्ण,
+	अणु KE_KEY,  13, अणु KEY_WLAN पूर्ण पूर्ण,
+	अणु KE_KEY,  16, अणु KEY_PROG1 पूर्ण पूर्ण,
+	अणु KE_KEY,  17, अणु KEY_PROG2 पूर्ण पूर्ण,
+	अणु KE_KEY,  64, अणु KEY_PROG3 पूर्ण पूर्ण,
+	अणु KE_KEY,  65, अणु KEY_PROG4 पूर्ण पूर्ण,
+	अणु KE_KEY,  66, अणु KEY_TOUCHPAD_OFF पूर्ण पूर्ण,
+	अणु KE_KEY,  67, अणु KEY_TOUCHPAD_ON पूर्ण पूर्ण,
+	अणु KE_KEY, 128, अणु KEY_ESC पूर्ण पूर्ण,
+	अणु KE_END पूर्ण,
+पूर्ण;
 
-static int ideapad_input_init(struct ideapad_private *priv)
-{
-	struct input_dev *inputdev;
-	int err;
+अटल पूर्णांक ideapad_input_init(काष्ठा ideapad_निजी *priv)
+अणु
+	काष्ठा input_dev *inputdev;
+	पूर्णांक err;
 
 	inputdev = input_allocate_device();
-	if (!inputdev)
-		return -ENOMEM;
+	अगर (!inputdev)
+		वापस -ENOMEM;
 
 	inputdev->name = "Ideapad extra buttons";
 	inputdev->phys = "ideapad/input0";
 	inputdev->id.bustype = BUS_HOST;
-	inputdev->dev.parent = &priv->platform_device->dev;
+	inputdev->dev.parent = &priv->platक्रमm_device->dev;
 
-	err = sparse_keymap_setup(inputdev, ideapad_keymap, NULL);
-	if (err) {
-		dev_err(&priv->platform_device->dev,
+	err = sparse_keymap_setup(inputdev, ideapad_keymap, शून्य);
+	अगर (err) अणु
+		dev_err(&priv->platक्रमm_device->dev,
 			"Could not set up input device keymap: %d\n", err);
-		goto err_free_dev;
-	}
+		जाओ err_मुक्त_dev;
+	पूर्ण
 
-	err = input_register_device(inputdev);
-	if (err) {
-		dev_err(&priv->platform_device->dev,
+	err = input_रेजिस्टर_device(inputdev);
+	अगर (err) अणु
+		dev_err(&priv->platक्रमm_device->dev,
 			"Could not register input device: %d\n", err);
-		goto err_free_dev;
-	}
+		जाओ err_मुक्त_dev;
+	पूर्ण
 
 	priv->inputdev = inputdev;
 
-	return 0;
+	वापस 0;
 
-err_free_dev:
-	input_free_device(inputdev);
+err_मुक्त_dev:
+	input_मुक्त_device(inputdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ideapad_input_exit(struct ideapad_private *priv)
-{
-	input_unregister_device(priv->inputdev);
-	priv->inputdev = NULL;
-}
+अटल व्योम ideapad_input_निकास(काष्ठा ideapad_निजी *priv)
+अणु
+	input_unरेजिस्टर_device(priv->inputdev);
+	priv->inputdev = शून्य;
+पूर्ण
 
-static void ideapad_input_report(struct ideapad_private *priv,
-				 unsigned long scancode)
-{
+अटल व्योम ideapad_input_report(काष्ठा ideapad_निजी *priv,
+				 अचिन्हित दीर्घ scancode)
+अणु
 	sparse_keymap_report_event(priv->inputdev, scancode, 1, true);
-}
+पूर्ण
 
-static void ideapad_input_novokey(struct ideapad_private *priv)
-{
-	unsigned long long_pressed;
+अटल व्योम ideapad_input_novokey(काष्ठा ideapad_निजी *priv)
+अणु
+	अचिन्हित दीर्घ दीर्घ_pressed;
 
-	if (read_ec_data(priv->adev->handle, VPCCMD_R_NOVO, &long_pressed))
-		return;
+	अगर (पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_NOVO, &दीर्घ_pressed))
+		वापस;
 
-	if (long_pressed)
+	अगर (दीर्घ_pressed)
 		ideapad_input_report(priv, 17);
-	else
+	अन्यथा
 		ideapad_input_report(priv, 16);
-}
+पूर्ण
 
-static void ideapad_check_special_buttons(struct ideapad_private *priv)
-{
-	unsigned long bit, value;
+अटल व्योम ideapad_check_special_buttons(काष्ठा ideapad_निजी *priv)
+अणु
+	अचिन्हित दीर्घ bit, value;
 
-	if (read_ec_data(priv->adev->handle, VPCCMD_R_SPECIAL_BUTTONS, &value))
-		return;
+	अगर (पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_SPECIAL_BUTTONS, &value))
+		वापस;
 
-	for_each_set_bit (bit, &value, 16) {
-		switch (bit) {
-		case 6:	/* Z570 */
-		case 0:	/* Z580 */
+	क्रम_each_set_bit (bit, &value, 16) अणु
+		चयन (bit) अणु
+		हाल 6:	/* Z570 */
+		हाल 0:	/* Z580 */
 			/* Thermal Management button */
 			ideapad_input_report(priv, 65);
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			/* OneKey Theater button */
 			ideapad_input_report(priv, 64);
-			break;
-		default:
-			dev_info(&priv->platform_device->dev,
+			अवरोध;
+		शेष:
+			dev_info(&priv->platक्रमm_device->dev,
 				 "Unknown special button: %lu\n", bit);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * backlight
  */
-static int ideapad_backlight_get_brightness(struct backlight_device *blightdev)
-{
-	struct ideapad_private *priv = bl_get_data(blightdev);
-	unsigned long now;
-	int err;
+अटल पूर्णांक ideapad_backlight_get_brightness(काष्ठा backlight_device *blightdev)
+अणु
+	काष्ठा ideapad_निजी *priv = bl_get_data(blightdev);
+	अचिन्हित दीर्घ now;
+	पूर्णांक err;
 
-	err = read_ec_data(priv->adev->handle, VPCCMD_R_BL, &now);
-	if (err)
-		return err;
+	err = पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BL, &now);
+	अगर (err)
+		वापस err;
 
-	return now;
-}
+	वापस now;
+पूर्ण
 
-static int ideapad_backlight_update_status(struct backlight_device *blightdev)
-{
-	struct ideapad_private *priv = bl_get_data(blightdev);
-	int err;
+अटल पूर्णांक ideapad_backlight_update_status(काष्ठा backlight_device *blightdev)
+अणु
+	काष्ठा ideapad_निजी *priv = bl_get_data(blightdev);
+	पूर्णांक err;
 
-	err = write_ec_cmd(priv->adev->handle, VPCCMD_W_BL,
+	err = ग_लिखो_ec_cmd(priv->adev->handle, VPCCMD_W_BL,
 			   blightdev->props.brightness);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = write_ec_cmd(priv->adev->handle, VPCCMD_W_BL_POWER,
-			   blightdev->props.power != FB_BLANK_POWERDOWN);
-	if (err)
-		return err;
+	err = ग_लिखो_ec_cmd(priv->adev->handle, VPCCMD_W_BL_POWER,
+			   blightdev->props.घातer != FB_BLANK_POWERDOWN);
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct backlight_ops ideapad_backlight_ops = {
+अटल स्थिर काष्ठा backlight_ops ideapad_backlight_ops = अणु
 	.get_brightness = ideapad_backlight_get_brightness,
 	.update_status = ideapad_backlight_update_status,
-};
+पूर्ण;
 
-static int ideapad_backlight_init(struct ideapad_private *priv)
-{
-	struct backlight_device *blightdev;
-	struct backlight_properties props;
-	unsigned long max, now, power;
-	int err;
+अटल पूर्णांक ideapad_backlight_init(काष्ठा ideapad_निजी *priv)
+अणु
+	काष्ठा backlight_device *blightdev;
+	काष्ठा backlight_properties props;
+	अचिन्हित दीर्घ max, now, घातer;
+	पूर्णांक err;
 
-	err = read_ec_data(priv->adev->handle, VPCCMD_R_BL_MAX, &max);
-	if (err)
-		return err;
+	err = पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BL_MAX, &max);
+	अगर (err)
+		वापस err;
 
-	err = read_ec_data(priv->adev->handle, VPCCMD_R_BL, &now);
-	if (err)
-		return err;
+	err = पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BL, &now);
+	अगर (err)
+		वापस err;
 
-	err = read_ec_data(priv->adev->handle, VPCCMD_R_BL_POWER, &power);
-	if (err)
-		return err;
+	err = पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BL_POWER, &घातer);
+	अगर (err)
+		वापस err;
 
-	memset(&props, 0, sizeof(props));
+	स_रखो(&props, 0, माप(props));
 
 	props.max_brightness = max;
 	props.type = BACKLIGHT_PLATFORM;
 
-	blightdev = backlight_device_register("ideapad",
-					      &priv->platform_device->dev,
+	blightdev = backlight_device_रेजिस्टर("ideapad",
+					      &priv->platक्रमm_device->dev,
 					      priv,
 					      &ideapad_backlight_ops,
 					      &props);
-	if (IS_ERR(blightdev)) {
+	अगर (IS_ERR(blightdev)) अणु
 		err = PTR_ERR(blightdev);
-		dev_err(&priv->platform_device->dev,
+		dev_err(&priv->platक्रमm_device->dev,
 			"Could not register backlight device: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	priv->blightdev = blightdev;
 	blightdev->props.brightness = now;
-	blightdev->props.power = power ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
+	blightdev->props.घातer = घातer ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
 
 	backlight_update_status(blightdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ideapad_backlight_exit(struct ideapad_private *priv)
-{
-	backlight_device_unregister(priv->blightdev);
-	priv->blightdev = NULL;
-}
+अटल व्योम ideapad_backlight_निकास(काष्ठा ideapad_निजी *priv)
+अणु
+	backlight_device_unरेजिस्टर(priv->blightdev);
+	priv->blightdev = शून्य;
+पूर्ण
 
-static void ideapad_backlight_notify_power(struct ideapad_private *priv)
-{
-	struct backlight_device *blightdev = priv->blightdev;
-	unsigned long power;
+अटल व्योम ideapad_backlight_notअगरy_घातer(काष्ठा ideapad_निजी *priv)
+अणु
+	काष्ठा backlight_device *blightdev = priv->blightdev;
+	अचिन्हित दीर्घ घातer;
 
-	if (!blightdev)
-		return;
+	अगर (!blightdev)
+		वापस;
 
-	if (read_ec_data(priv->adev->handle, VPCCMD_R_BL_POWER, &power))
-		return;
+	अगर (पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BL_POWER, &घातer))
+		वापस;
 
-	blightdev->props.power = power ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
-}
+	blightdev->props.घातer = घातer ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
+पूर्ण
 
-static void ideapad_backlight_notify_brightness(struct ideapad_private *priv)
-{
-	unsigned long now;
+अटल व्योम ideapad_backlight_notअगरy_brightness(काष्ठा ideapad_निजी *priv)
+अणु
+	अचिन्हित दीर्घ now;
 
-	/* if we control brightness via acpi video driver */
-	if (!priv->blightdev)
-		read_ec_data(priv->adev->handle, VPCCMD_R_BL, &now);
-	else
-		backlight_force_update(priv->blightdev, BACKLIGHT_UPDATE_HOTKEY);
-}
+	/* अगर we control brightness via acpi video driver */
+	अगर (!priv->blightdev)
+		पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_BL, &now);
+	अन्यथा
+		backlight_क्रमce_update(priv->blightdev, BACKLIGHT_UPDATE_HOTKEY);
+पूर्ण
 
 /*
  * keyboard backlight
  */
-static int ideapad_kbd_bl_brightness_get(struct ideapad_private *priv)
-{
-	unsigned long hals;
-	int err;
+अटल पूर्णांक ideapad_kbd_bl_brightness_get(काष्ठा ideapad_निजी *priv)
+अणु
+	अचिन्हित दीर्घ hals;
+	पूर्णांक err;
 
 	err = eval_hals(priv->adev->handle, &hals);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return !!test_bit(HALS_KBD_BL_STATE_BIT, &hals);
-}
+	वापस !!test_bit(HALS_KBD_BL_STATE_BIT, &hals);
+पूर्ण
 
-static enum led_brightness ideapad_kbd_bl_led_cdev_brightness_get(struct led_classdev *led_cdev)
-{
-	struct ideapad_private *priv = container_of(led_cdev, struct ideapad_private, kbd_bl.led);
+अटल क्रमागत led_brightness ideapad_kbd_bl_led_cdev_brightness_get(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ideapad_निजी *priv = container_of(led_cdev, काष्ठा ideapad_निजी, kbd_bl.led);
 
-	return ideapad_kbd_bl_brightness_get(priv);
-}
+	वापस ideapad_kbd_bl_brightness_get(priv);
+पूर्ण
 
-static int ideapad_kbd_bl_brightness_set(struct ideapad_private *priv, unsigned int brightness)
-{
-	int err = exec_sals(priv->adev->handle, brightness ? SALS_KBD_BL_ON : SALS_KBD_BL_OFF);
+अटल पूर्णांक ideapad_kbd_bl_brightness_set(काष्ठा ideapad_निजी *priv, अचिन्हित पूर्णांक brightness)
+अणु
+	पूर्णांक err = exec_sals(priv->adev->handle, brightness ? SALS_KBD_BL_ON : SALS_KBD_BL_OFF);
 
-	if (err)
-		return err;
-
-	priv->kbd_bl.last_brightness = brightness;
-
-	return 0;
-}
-
-static int ideapad_kbd_bl_led_cdev_brightness_set(struct led_classdev *led_cdev,
-						  enum led_brightness brightness)
-{
-	struct ideapad_private *priv = container_of(led_cdev, struct ideapad_private, kbd_bl.led);
-
-	return ideapad_kbd_bl_brightness_set(priv, brightness);
-}
-
-static void ideapad_kbd_bl_notify(struct ideapad_private *priv)
-{
-	int brightness;
-
-	if (!priv->kbd_bl.initialized)
-		return;
-
-	brightness = ideapad_kbd_bl_brightness_get(priv);
-	if (brightness < 0)
-		return;
-
-	if (brightness == priv->kbd_bl.last_brightness)
-		return;
+	अगर (err)
+		वापस err;
 
 	priv->kbd_bl.last_brightness = brightness;
 
-	led_classdev_notify_brightness_hw_changed(&priv->kbd_bl.led, brightness);
-}
+	वापस 0;
+पूर्ण
 
-static int ideapad_kbd_bl_init(struct ideapad_private *priv)
-{
-	int brightness, err;
+अटल पूर्णांक ideapad_kbd_bl_led_cdev_brightness_set(काष्ठा led_classdev *led_cdev,
+						  क्रमागत led_brightness brightness)
+अणु
+	काष्ठा ideapad_निजी *priv = container_of(led_cdev, काष्ठा ideapad_निजी, kbd_bl.led);
 
-	if (!priv->features.kbd_bl)
-		return -ENODEV;
+	वापस ideapad_kbd_bl_brightness_set(priv, brightness);
+पूर्ण
 
-	if (WARN_ON(priv->kbd_bl.initialized))
-		return -EEXIST;
+अटल व्योम ideapad_kbd_bl_notअगरy(काष्ठा ideapad_निजी *priv)
+अणु
+	पूर्णांक brightness;
+
+	अगर (!priv->kbd_bl.initialized)
+		वापस;
 
 	brightness = ideapad_kbd_bl_brightness_get(priv);
-	if (brightness < 0)
-		return brightness;
+	अगर (brightness < 0)
+		वापस;
+
+	अगर (brightness == priv->kbd_bl.last_brightness)
+		वापस;
+
+	priv->kbd_bl.last_brightness = brightness;
+
+	led_classdev_notअगरy_brightness_hw_changed(&priv->kbd_bl.led, brightness);
+पूर्ण
+
+अटल पूर्णांक ideapad_kbd_bl_init(काष्ठा ideapad_निजी *priv)
+अणु
+	पूर्णांक brightness, err;
+
+	अगर (!priv->features.kbd_bl)
+		वापस -ENODEV;
+
+	अगर (WARN_ON(priv->kbd_bl.initialized))
+		वापस -EEXIST;
+
+	brightness = ideapad_kbd_bl_brightness_get(priv);
+	अगर (brightness < 0)
+		वापस brightness;
 
 	priv->kbd_bl.last_brightness = brightness;
 
@@ -1342,365 +1343,365 @@ static int ideapad_kbd_bl_init(struct ideapad_private *priv)
 	priv->kbd_bl.led.brightness_set_blocking = ideapad_kbd_bl_led_cdev_brightness_set;
 	priv->kbd_bl.led.flags                   = LED_BRIGHT_HW_CHANGED;
 
-	err = led_classdev_register(&priv->platform_device->dev, &priv->kbd_bl.led);
-	if (err)
-		return err;
+	err = led_classdev_रेजिस्टर(&priv->platक्रमm_device->dev, &priv->kbd_bl.led);
+	अगर (err)
+		वापस err;
 
 	priv->kbd_bl.initialized = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ideapad_kbd_bl_exit(struct ideapad_private *priv)
-{
-	if (!priv->kbd_bl.initialized)
-		return;
+अटल व्योम ideapad_kbd_bl_निकास(काष्ठा ideapad_निजी *priv)
+अणु
+	अगर (!priv->kbd_bl.initialized)
+		वापस;
 
 	priv->kbd_bl.initialized = false;
 
-	led_classdev_unregister(&priv->kbd_bl.led);
-}
+	led_classdev_unरेजिस्टर(&priv->kbd_bl.led);
+पूर्ण
 
 /*
- * module init/exit
+ * module init/निकास
  */
-static void ideapad_sync_touchpad_state(struct ideapad_private *priv)
-{
-	unsigned long value;
+अटल व्योम ideapad_sync_touchpad_state(काष्ठा ideapad_निजी *priv)
+अणु
+	अचिन्हित दीर्घ value;
 
-	if (!priv->features.touchpad_ctrl_via_ec)
-		return;
+	अगर (!priv->features.touchpad_ctrl_via_ec)
+		वापस;
 
-	/* Without reading from EC touchpad LED doesn't switch state */
-	if (!read_ec_data(priv->adev->handle, VPCCMD_R_TOUCHPAD, &value)) {
-		unsigned char param;
+	/* Without पढ़ोing from EC touchpad LED करोesn't चयन state */
+	अगर (!पढ़ो_ec_data(priv->adev->handle, VPCCMD_R_TOUCHPAD, &value)) अणु
+		अचिन्हित अक्षर param;
 		/*
-		 * Some IdeaPads don't really turn off touchpad - they only
-		 * switch the LED state. We (de)activate KBC AUX port to turn
+		 * Some IdeaPads करोn't really turn off touchpad - they only
+		 * चयन the LED state. We (de)activate KBC AUX port to turn
 		 * touchpad off and on. We send KEY_TOUCHPAD_OFF and
 		 * KEY_TOUCHPAD_ON to not to get out of sync with LED
 		 */
 		i8042_command(&param, value ? I8042_CMD_AUX_ENABLE : I8042_CMD_AUX_DISABLE);
 		ideapad_input_report(priv, value ? 67 : 66);
-		sysfs_notify(&priv->platform_device->dev.kobj, NULL, "touchpad");
-	}
-}
+		sysfs_notअगरy(&priv->platक्रमm_device->dev.kobj, शून्य, "touchpad");
+	पूर्ण
+पूर्ण
 
-static void ideapad_acpi_notify(acpi_handle handle, u32 event, void *data)
-{
-	struct ideapad_private *priv = data;
-	unsigned long vpc1, vpc2, bit;
+अटल व्योम ideapad_acpi_notअगरy(acpi_handle handle, u32 event, व्योम *data)
+अणु
+	काष्ठा ideapad_निजी *priv = data;
+	अचिन्हित दीर्घ vpc1, vpc2, bit;
 
-	if (read_ec_data(handle, VPCCMD_R_VPC1, &vpc1))
-		return;
+	अगर (पढ़ो_ec_data(handle, VPCCMD_R_VPC1, &vpc1))
+		वापस;
 
-	if (read_ec_data(handle, VPCCMD_R_VPC2, &vpc2))
-		return;
+	अगर (पढ़ो_ec_data(handle, VPCCMD_R_VPC2, &vpc2))
+		वापस;
 
 	vpc1 = (vpc2 << 8) | vpc1;
 
-	for_each_set_bit (bit, &vpc1, 16) {
-		switch (bit) {
-		case 13:
-		case 11:
-		case 8:
-		case 7:
-		case 6:
+	क्रम_each_set_bit (bit, &vpc1, 16) अणु
+		चयन (bit) अणु
+		हाल 13:
+		हाल 11:
+		हाल 8:
+		हाल 7:
+		हाल 6:
 			ideapad_input_report(priv, bit);
-			break;
-		case 9:
+			अवरोध;
+		हाल 9:
 			ideapad_sync_rfk_state(priv);
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			ideapad_sync_touchpad_state(priv);
-			break;
-		case 4:
-			ideapad_backlight_notify_brightness(priv);
-			break;
-		case 3:
+			अवरोध;
+		हाल 4:
+			ideapad_backlight_notअगरy_brightness(priv);
+			अवरोध;
+		हाल 3:
 			ideapad_input_novokey(priv);
-			break;
-		case 2:
-			ideapad_backlight_notify_power(priv);
-			break;
-		case 1:
+			अवरोध;
+		हाल 2:
+			ideapad_backlight_notअगरy_घातer(priv);
+			अवरोध;
+		हाल 1:
 			/*
 			 * Some IdeaPads report event 1 every ~20
-			 * seconds while on battery power; some
+			 * seconds जबतक on battery घातer; some
 			 * report this when changing to/from tablet
 			 * mode; some report this when the keyboard
 			 * backlight has changed.
 			 */
-			ideapad_kbd_bl_notify(priv);
-			break;
-		case 0:
+			ideapad_kbd_bl_notअगरy(priv);
+			अवरोध;
+		हाल 0:
 			ideapad_check_special_buttons(priv);
-			break;
-		default:
-			dev_info(&priv->platform_device->dev,
+			अवरोध;
+		शेष:
+			dev_info(&priv->platक्रमm_device->dev,
 				 "Unknown event: %lu\n", bit);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#if IS_ENABLED(CONFIG_ACPI_WMI)
-static void ideapad_wmi_notify(u32 value, void *context)
-{
-	struct ideapad_private *priv = context;
+#अगर IS_ENABLED(CONFIG_ACPI_WMI)
+अटल व्योम ideapad_wmi_notअगरy(u32 value, व्योम *context)
+अणु
+	काष्ठा ideapad_निजी *priv = context;
 
-	switch (value) {
-	case 128:
+	चयन (value) अणु
+	हाल 128:
 		ideapad_input_report(priv, value);
-		break;
-	default:
-		dev_info(&priv->platform_device->dev,
+		अवरोध;
+	शेष:
+		dev_info(&priv->platक्रमm_device->dev,
 			 "Unknown WMI event: %u\n", value);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Some ideapads have a hardware rfkill switch, but most do not have one.
- * Reading VPCCMD_R_RF always results in 0 on models without a hardware rfkill,
- * switch causing ideapad_laptop to wrongly report all radios as hw-blocked.
- * There used to be a long list of DMI ids for models without a hw rfkill
- * switch here, but that resulted in playing whack a mole.
- * More importantly wrongly reporting the wifi radio as hw-blocked, results in
- * non working wifi. Whereas not reporting it hw-blocked, when it actually is
+ * Some ideapads have a hardware rfसमाप्त चयन, but most करो not have one.
+ * Reading VPCCMD_R_RF always results in 0 on models without a hardware rfसमाप्त,
+ * चयन causing ideapad_laptop to wrongly report all radios as hw-blocked.
+ * There used to be a दीर्घ list of DMI ids क्रम models without a hw rfसमाप्त
+ * चयन here, but that resulted in playing whack a mole.
+ * More importantly wrongly reporting the wअगरi radio as hw-blocked, results in
+ * non working wअगरi. Whereas not reporting it hw-blocked, when it actually is
  * hw-blocked results in an empty SSID list, which is a much more benign
  * failure mode.
- * So the default now is the much safer option of assuming there is no
- * hardware rfkill switch. This default also actually matches most hardware,
- * since having a hw rfkill switch is quite rare on modern hardware, so this
- * also leads to a much shorter list.
+ * So the शेष now is the much safer option of assuming there is no
+ * hardware rfसमाप्त चयन. This शेष also actually matches most hardware,
+ * since having a hw rfसमाप्त चयन is quite rare on modern hardware, so this
+ * also leads to a much लघुer list.
  */
-static const struct dmi_system_id hw_rfkill_list[] = {
-	{}
-};
+अटल स्थिर काष्ठा dmi_प्रणाली_id hw_rfसमाप्त_list[] = अणु
+	अणुपूर्ण
+पूर्ण;
 
-static void ideapad_check_features(struct ideapad_private *priv)
-{
+अटल व्योम ideapad_check_features(काष्ठा ideapad_निजी *priv)
+अणु
 	acpi_handle handle = priv->adev->handle;
-	unsigned long val;
+	अचिन्हित दीर्घ val;
 
-	priv->features.hw_rfkill_switch = dmi_check_system(hw_rfkill_list);
+	priv->features.hw_rfसमाप्त_चयन = dmi_check_प्रणाली(hw_rfसमाप्त_list);
 
-	/* Most ideapads with ELAN0634 touchpad don't use EC touchpad switch */
-	priv->features.touchpad_ctrl_via_ec = !acpi_dev_present("ELAN0634", NULL, -1);
+	/* Most ideapads with ELAN0634 touchpad करोn't use EC touchpad चयन */
+	priv->features.touchpad_ctrl_via_ec = !acpi_dev_present("ELAN0634", शून्य, -1);
 
-	if (!read_ec_data(handle, VPCCMD_R_FAN, &val))
+	अगर (!पढ़ो_ec_data(handle, VPCCMD_R_FAN, &val))
 		priv->features.fan_mode = true;
 
-	if (acpi_has_method(handle, "GBMD") && acpi_has_method(handle, "SBMC"))
+	अगर (acpi_has_method(handle, "GBMD") && acpi_has_method(handle, "SBMC"))
 		priv->features.conservation_mode = true;
 
-	if (acpi_has_method(handle, "DYTC"))
+	अगर (acpi_has_method(handle, "DYTC"))
 		priv->features.dytc = true;
 
-	if (acpi_has_method(handle, "HALS") && acpi_has_method(handle, "SALS")) {
-		if (!eval_hals(handle, &val)) {
-			if (test_bit(HALS_FNLOCK_SUPPORT_BIT, &val))
+	अगर (acpi_has_method(handle, "HALS") && acpi_has_method(handle, "SALS")) अणु
+		अगर (!eval_hals(handle, &val)) अणु
+			अगर (test_bit(HALS_FNLOCK_SUPPORT_BIT, &val))
 				priv->features.fn_lock = true;
 
-			if (test_bit(HALS_KBD_BL_SUPPORT_BIT, &val))
+			अगर (test_bit(HALS_KBD_BL_SUPPORT_BIT, &val))
 				priv->features.kbd_bl = true;
 
-			if (test_bit(HALS_USB_CHARGING_SUPPORT_BIT, &val))
-				priv->features.usb_charging = true;
-		}
-	}
-}
+			अगर (test_bit(HALS_USB_CHARGING_SUPPORT_BIT, &val))
+				priv->features.usb_अक्षरging = true;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ideapad_acpi_add(struct platform_device *pdev)
-{
-	struct ideapad_private *priv;
-	struct acpi_device *adev;
+अटल पूर्णांक ideapad_acpi_add(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ideapad_निजी *priv;
+	काष्ठा acpi_device *adev;
 	acpi_status status;
-	unsigned long cfg;
-	int err, i;
+	अचिन्हित दीर्घ cfg;
+	पूर्णांक err, i;
 
 	err = acpi_bus_get_device(ACPI_HANDLE(&pdev->dev), &adev);
-	if (err)
-		return -ENODEV;
+	अगर (err)
+		वापस -ENODEV;
 
-	if (eval_int(adev->handle, "_CFG", &cfg))
-		return -ENODEV;
+	अगर (eval_पूर्णांक(adev->handle, "_CFG", &cfg))
+		वापस -ENODEV;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(&pdev->dev, priv);
 
 	priv->cfg = cfg;
 	priv->adev = adev;
-	priv->platform_device = pdev;
+	priv->platक्रमm_device = pdev;
 
 	ideapad_check_features(priv);
 
 	err = ideapad_sysfs_init(priv);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	ideapad_debugfs_init(priv);
 
 	err = ideapad_input_init(priv);
-	if (err)
-		goto input_failed;
+	अगर (err)
+		जाओ input_failed;
 
 	err = ideapad_kbd_bl_init(priv);
-	if (err) {
-		if (err != -ENODEV)
+	अगर (err) अणु
+		अगर (err != -ENODEV)
 			dev_warn(&pdev->dev, "Could not set up keyboard backlight LED: %d\n", err);
-		else
+		अन्यथा
 			dev_info(&pdev->dev, "Keyboard backlight control not available\n");
-	}
+	पूर्ण
 
 	/*
-	 * On some models without a hw-switch (the yoga 2 13 at least)
-	 * VPCCMD_W_RF must be explicitly set to 1 for the wifi to work.
+	 * On some models without a hw-चयन (the yoga 2 13 at least)
+	 * VPCCMD_W_RF must be explicitly set to 1 क्रम the wअगरi to work.
 	 */
-	if (!priv->features.hw_rfkill_switch)
-		write_ec_cmd(priv->adev->handle, VPCCMD_W_RF, 1);
+	अगर (!priv->features.hw_rfसमाप्त_चयन)
+		ग_लिखो_ec_cmd(priv->adev->handle, VPCCMD_W_RF, 1);
 
-	/* The same for Touchpad */
-	if (!priv->features.touchpad_ctrl_via_ec)
-		write_ec_cmd(priv->adev->handle, VPCCMD_W_TOUCHPAD, 1);
+	/* The same क्रम Touchpad */
+	अगर (!priv->features.touchpad_ctrl_via_ec)
+		ग_लिखो_ec_cmd(priv->adev->handle, VPCCMD_W_TOUCHPAD, 1);
 
-	for (i = 0; i < IDEAPAD_RFKILL_DEV_NUM; i++)
-		if (test_bit(ideapad_rfk_data[i].cfgbit, &priv->cfg))
-			ideapad_register_rfkill(priv, i);
+	क्रम (i = 0; i < IDEAPAD_RFKILL_DEV_NUM; i++)
+		अगर (test_bit(ideapad_rfk_data[i].cfgbit, &priv->cfg))
+			ideapad_रेजिस्टर_rfसमाप्त(priv, i);
 
 	ideapad_sync_rfk_state(priv);
 	ideapad_sync_touchpad_state(priv);
 
 	err = ideapad_dytc_profile_init(priv);
-	if (err) {
-		if (err != -ENODEV)
+	अगर (err) अणु
+		अगर (err != -ENODEV)
 			dev_warn(&pdev->dev, "Could not set up DYTC interface: %d\n", err);
-		else
+		अन्यथा
 			dev_info(&pdev->dev, "DYTC interface is not available\n");
-	}
+	पूर्ण
 
-	if (acpi_video_get_backlight_type() == acpi_backlight_vendor) {
+	अगर (acpi_video_get_backlight_type() == acpi_backlight_venकरोr) अणु
 		err = ideapad_backlight_init(priv);
-		if (err && err != -ENODEV)
-			goto backlight_failed;
-	}
+		अगर (err && err != -ENODEV)
+			जाओ backlight_failed;
+	पूर्ण
 
-	status = acpi_install_notify_handler(adev->handle,
+	status = acpi_install_notअगरy_handler(adev->handle,
 					     ACPI_DEVICE_NOTIFY,
-					     ideapad_acpi_notify, priv);
-	if (ACPI_FAILURE(status)) {
+					     ideapad_acpi_notअगरy, priv);
+	अगर (ACPI_FAILURE(status)) अणु
 		err = -EIO;
-		goto notification_failed;
-	}
+		जाओ notअगरication_failed;
+	पूर्ण
 
-#if IS_ENABLED(CONFIG_ACPI_WMI)
-	for (i = 0; i < ARRAY_SIZE(ideapad_wmi_fnesc_events); i++) {
-		status = wmi_install_notify_handler(ideapad_wmi_fnesc_events[i],
-						    ideapad_wmi_notify, priv);
-		if (ACPI_SUCCESS(status)) {
+#अगर IS_ENABLED(CONFIG_ACPI_WMI)
+	क्रम (i = 0; i < ARRAY_SIZE(ideapad_wmi_fnesc_events); i++) अणु
+		status = wmi_install_notअगरy_handler(ideapad_wmi_fnesc_events[i],
+						    ideapad_wmi_notअगरy, priv);
+		अगर (ACPI_SUCCESS(status)) अणु
 			priv->fnesc_guid = ideapad_wmi_fnesc_events[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ACPI_FAILURE(status) && status != AE_NOT_EXIST) {
+	अगर (ACPI_FAILURE(status) && status != AE_NOT_EXIST) अणु
 		err = -EIO;
-		goto notification_failed_wmi;
-	}
-#endif
+		जाओ notअगरication_failed_wmi;
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
-#if IS_ENABLED(CONFIG_ACPI_WMI)
-notification_failed_wmi:
-	acpi_remove_notify_handler(priv->adev->handle,
+#अगर IS_ENABLED(CONFIG_ACPI_WMI)
+notअगरication_failed_wmi:
+	acpi_हटाओ_notअगरy_handler(priv->adev->handle,
 				   ACPI_DEVICE_NOTIFY,
-				   ideapad_acpi_notify);
-#endif
+				   ideapad_acpi_notअगरy);
+#पूर्ण_अगर
 
-notification_failed:
-	ideapad_backlight_exit(priv);
+notअगरication_failed:
+	ideapad_backlight_निकास(priv);
 
 backlight_failed:
-	ideapad_dytc_profile_exit(priv);
+	ideapad_dytc_profile_निकास(priv);
 
-	for (i = 0; i < IDEAPAD_RFKILL_DEV_NUM; i++)
-		ideapad_unregister_rfkill(priv, i);
+	क्रम (i = 0; i < IDEAPAD_RFKILL_DEV_NUM; i++)
+		ideapad_unरेजिस्टर_rfसमाप्त(priv, i);
 
-	ideapad_kbd_bl_exit(priv);
-	ideapad_input_exit(priv);
+	ideapad_kbd_bl_निकास(priv);
+	ideapad_input_निकास(priv);
 
 input_failed:
-	ideapad_debugfs_exit(priv);
-	ideapad_sysfs_exit(priv);
+	ideapad_debugfs_निकास(priv);
+	ideapad_sysfs_निकास(priv);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ideapad_acpi_remove(struct platform_device *pdev)
-{
-	struct ideapad_private *priv = dev_get_drvdata(&pdev->dev);
-	int i;
+अटल पूर्णांक ideapad_acpi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(&pdev->dev);
+	पूर्णांक i;
 
-#if IS_ENABLED(CONFIG_ACPI_WMI)
-	if (priv->fnesc_guid)
-		wmi_remove_notify_handler(priv->fnesc_guid);
-#endif
+#अगर IS_ENABLED(CONFIG_ACPI_WMI)
+	अगर (priv->fnesc_guid)
+		wmi_हटाओ_notअगरy_handler(priv->fnesc_guid);
+#पूर्ण_अगर
 
-	acpi_remove_notify_handler(priv->adev->handle,
+	acpi_हटाओ_notअगरy_handler(priv->adev->handle,
 				   ACPI_DEVICE_NOTIFY,
-				   ideapad_acpi_notify);
+				   ideapad_acpi_notअगरy);
 
-	ideapad_backlight_exit(priv);
-	ideapad_dytc_profile_exit(priv);
+	ideapad_backlight_निकास(priv);
+	ideapad_dytc_profile_निकास(priv);
 
-	for (i = 0; i < IDEAPAD_RFKILL_DEV_NUM; i++)
-		ideapad_unregister_rfkill(priv, i);
+	क्रम (i = 0; i < IDEAPAD_RFKILL_DEV_NUM; i++)
+		ideapad_unरेजिस्टर_rfसमाप्त(priv, i);
 
-	ideapad_kbd_bl_exit(priv);
-	ideapad_input_exit(priv);
-	ideapad_debugfs_exit(priv);
-	ideapad_sysfs_exit(priv);
+	ideapad_kbd_bl_निकास(priv);
+	ideapad_input_निकास(priv);
+	ideapad_debugfs_निकास(priv);
+	ideapad_sysfs_निकास(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int ideapad_acpi_resume(struct device *dev)
-{
-	struct ideapad_private *priv = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक ideapad_acpi_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ideapad_निजी *priv = dev_get_drvdata(dev);
 
 	ideapad_sync_rfk_state(priv);
 	ideapad_sync_touchpad_state(priv);
 
-	if (priv->dytc)
+	अगर (priv->dytc)
 		dytc_profile_refresh(priv);
 
-	return 0;
-}
-#endif
-static SIMPLE_DEV_PM_OPS(ideapad_pm, NULL, ideapad_acpi_resume);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
+अटल SIMPLE_DEV_PM_OPS(ideapad_pm, शून्य, ideapad_acpi_resume);
 
-static const struct acpi_device_id ideapad_device_ids[] = {
-	{"VPC2004", 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id ideapad_device_ids[] = अणु
+	अणु"VPC2004", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, ideapad_device_ids);
 
-static struct platform_driver ideapad_acpi_driver = {
+अटल काष्ठा platक्रमm_driver ideapad_acpi_driver = अणु
 	.probe = ideapad_acpi_add,
-	.remove = ideapad_acpi_remove,
-	.driver = {
+	.हटाओ = ideapad_acpi_हटाओ,
+	.driver = अणु
 		.name   = "ideapad_acpi",
 		.pm     = &ideapad_pm,
 		.acpi_match_table = ACPI_PTR(ideapad_device_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ideapad_acpi_driver);
+module_platक्रमm_driver(ideapad_acpi_driver);
 
 MODULE_AUTHOR("David Woodhouse <dwmw2@infradead.org>");
 MODULE_DESCRIPTION("IdeaPad ACPI Extras");

@@ -1,195 +1,196 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved */
 
-#include <linux/if_bridge.h>
-#include <linux/if_vlan.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/notifier.h>
-#include <net/netevent.h>
-#include <net/switchdev.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <net/netevent.h>
+#समावेश <net/चयनdev.h>
 
-#include "prestera.h"
-#include "prestera_hw.h"
-#include "prestera_switchdev.h"
+#समावेश "prestera.h"
+#समावेश "prestera_hw.h"
+#समावेश "prestera_switchdev.h"
 
-#define PRESTERA_VID_ALL (0xffff)
+#घोषणा PRESTERA_VID_ALL (0xffff)
 
-#define PRESTERA_DEFAULT_AGEING_TIME_MS 300000
-#define PRESTERA_MAX_AGEING_TIME_MS 1000000000
-#define PRESTERA_MIN_AGEING_TIME_MS 32000
+#घोषणा PRESTERA_DEFAULT_AGEING_TIME_MS 300000
+#घोषणा PRESTERA_MAX_AGEING_TIME_MS 1000000000
+#घोषणा PRESTERA_MIN_AGEING_TIME_MS 32000
 
-struct prestera_fdb_event_work {
-	struct work_struct work;
-	struct switchdev_notifier_fdb_info fdb_info;
-	struct net_device *dev;
-	unsigned long event;
-};
+काष्ठा prestera_fdb_event_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा चयनdev_notअगरier_fdb_info fdb_info;
+	काष्ठा net_device *dev;
+	अचिन्हित दीर्घ event;
+पूर्ण;
 
-struct prestera_switchdev {
-	struct prestera_switch *sw;
-	struct list_head bridge_list;
+काष्ठा prestera_चयनdev अणु
+	काष्ठा prestera_चयन *sw;
+	काष्ठा list_head bridge_list;
 	bool bridge_8021q_exists;
-	struct notifier_block swdev_nb_blk;
-	struct notifier_block swdev_nb;
-};
+	काष्ठा notअगरier_block swdev_nb_blk;
+	काष्ठा notअगरier_block swdev_nb;
+पूर्ण;
 
-struct prestera_bridge {
-	struct list_head head;
-	struct net_device *dev;
-	struct prestera_switchdev *swdev;
-	struct list_head port_list;
+काष्ठा prestera_bridge अणु
+	काष्ठा list_head head;
+	काष्ठा net_device *dev;
+	काष्ठा prestera_चयनdev *swdev;
+	काष्ठा list_head port_list;
 	bool vlan_enabled;
 	u16 bridge_id;
-};
+पूर्ण;
 
-struct prestera_bridge_port {
-	struct list_head head;
-	struct net_device *dev;
-	struct prestera_bridge *bridge;
-	struct list_head vlan_list;
+काष्ठा prestera_bridge_port अणु
+	काष्ठा list_head head;
+	काष्ठा net_device *dev;
+	काष्ठा prestera_bridge *bridge;
+	काष्ठा list_head vlan_list;
 	refcount_t ref_count;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u8 stp_state;
-};
+पूर्ण;
 
-struct prestera_bridge_vlan {
-	struct list_head head;
-	struct list_head port_vlan_list;
+काष्ठा prestera_bridge_vlan अणु
+	काष्ठा list_head head;
+	काष्ठा list_head port_vlan_list;
 	u16 vid;
-};
+पूर्ण;
 
-struct prestera_port_vlan {
-	struct list_head br_vlan_head;
-	struct list_head port_head;
-	struct prestera_port *port;
-	struct prestera_bridge_port *br_port;
+काष्ठा prestera_port_vlan अणु
+	काष्ठा list_head br_vlan_head;
+	काष्ठा list_head port_head;
+	काष्ठा prestera_port *port;
+	काष्ठा prestera_bridge_port *br_port;
 	u16 vid;
-};
+पूर्ण;
 
-static struct workqueue_struct *swdev_wq;
+अटल काष्ठा workqueue_काष्ठा *swdev_wq;
 
-static void prestera_bridge_port_put(struct prestera_bridge_port *br_port);
+अटल व्योम prestera_bridge_port_put(काष्ठा prestera_bridge_port *br_port);
 
-static int prestera_port_vid_stp_set(struct prestera_port *port, u16 vid,
+अटल पूर्णांक prestera_port_vid_stp_set(काष्ठा prestera_port *port, u16 vid,
 				     u8 state);
 
-static struct prestera_bridge_vlan *
-prestera_bridge_vlan_create(struct prestera_bridge_port *br_port, u16 vid)
-{
-	struct prestera_bridge_vlan *br_vlan;
+अटल काष्ठा prestera_bridge_vlan *
+prestera_bridge_vlan_create(काष्ठा prestera_bridge_port *br_port, u16 vid)
+अणु
+	काष्ठा prestera_bridge_vlan *br_vlan;
 
-	br_vlan = kzalloc(sizeof(*br_vlan), GFP_KERNEL);
-	if (!br_vlan)
-		return NULL;
+	br_vlan = kzalloc(माप(*br_vlan), GFP_KERNEL);
+	अगर (!br_vlan)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&br_vlan->port_vlan_list);
 	br_vlan->vid = vid;
 	list_add(&br_vlan->head, &br_port->vlan_list);
 
-	return br_vlan;
-}
+	वापस br_vlan;
+पूर्ण
 
-static void prestera_bridge_vlan_destroy(struct prestera_bridge_vlan *br_vlan)
-{
+अटल व्योम prestera_bridge_vlan_destroy(काष्ठा prestera_bridge_vlan *br_vlan)
+अणु
 	list_del(&br_vlan->head);
 	WARN_ON(!list_empty(&br_vlan->port_vlan_list));
-	kfree(br_vlan);
-}
+	kमुक्त(br_vlan);
+पूर्ण
 
-static struct prestera_bridge_vlan *
-prestera_bridge_vlan_by_vid(struct prestera_bridge_port *br_port, u16 vid)
-{
-	struct prestera_bridge_vlan *br_vlan;
+अटल काष्ठा prestera_bridge_vlan *
+prestera_bridge_vlan_by_vid(काष्ठा prestera_bridge_port *br_port, u16 vid)
+अणु
+	काष्ठा prestera_bridge_vlan *br_vlan;
 
-	list_for_each_entry(br_vlan, &br_port->vlan_list, head) {
-		if (br_vlan->vid == vid)
-			return br_vlan;
-	}
+	list_क्रम_each_entry(br_vlan, &br_port->vlan_list, head) अणु
+		अगर (br_vlan->vid == vid)
+			वापस br_vlan;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int prestera_bridge_vlan_port_count(struct prestera_bridge *bridge,
+अटल पूर्णांक prestera_bridge_vlan_port_count(काष्ठा prestera_bridge *bridge,
 					   u16 vid)
-{
-	struct prestera_bridge_port *br_port;
-	struct prestera_bridge_vlan *br_vlan;
-	int count = 0;
+अणु
+	काष्ठा prestera_bridge_port *br_port;
+	काष्ठा prestera_bridge_vlan *br_vlan;
+	पूर्णांक count = 0;
 
-	list_for_each_entry(br_port, &bridge->port_list, head) {
-		list_for_each_entry(br_vlan, &br_port->vlan_list, head) {
-			if (br_vlan->vid == vid) {
+	list_क्रम_each_entry(br_port, &bridge->port_list, head) अणु
+		list_क्रम_each_entry(br_vlan, &br_port->vlan_list, head) अणु
+			अगर (br_vlan->vid == vid) अणु
 				count += 1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void prestera_bridge_vlan_put(struct prestera_bridge_vlan *br_vlan)
-{
-	if (list_empty(&br_vlan->port_vlan_list))
+अटल व्योम prestera_bridge_vlan_put(काष्ठा prestera_bridge_vlan *br_vlan)
+अणु
+	अगर (list_empty(&br_vlan->port_vlan_list))
 		prestera_bridge_vlan_destroy(br_vlan);
-}
+पूर्ण
 
-static struct prestera_port_vlan *
-prestera_port_vlan_by_vid(struct prestera_port *port, u16 vid)
-{
-	struct prestera_port_vlan *port_vlan;
+अटल काष्ठा prestera_port_vlan *
+prestera_port_vlan_by_vid(काष्ठा prestera_port *port, u16 vid)
+अणु
+	काष्ठा prestera_port_vlan *port_vlan;
 
-	list_for_each_entry(port_vlan, &port->vlans_list, port_head) {
-		if (port_vlan->vid == vid)
-			return port_vlan;
-	}
+	list_क्रम_each_entry(port_vlan, &port->vlans_list, port_head) अणु
+		अगर (port_vlan->vid == vid)
+			वापस port_vlan;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct prestera_port_vlan *
-prestera_port_vlan_create(struct prestera_port *port, u16 vid, bool untagged)
-{
-	struct prestera_port_vlan *port_vlan;
-	int err;
+अटल काष्ठा prestera_port_vlan *
+prestera_port_vlan_create(काष्ठा prestera_port *port, u16 vid, bool untagged)
+अणु
+	काष्ठा prestera_port_vlan *port_vlan;
+	पूर्णांक err;
 
 	port_vlan = prestera_port_vlan_by_vid(port, vid);
-	if (port_vlan)
-		return ERR_PTR(-EEXIST);
+	अगर (port_vlan)
+		वापस ERR_PTR(-EEXIST);
 
 	err = prestera_hw_vlan_port_set(port, vid, true, untagged);
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	port_vlan = kzalloc(sizeof(*port_vlan), GFP_KERNEL);
-	if (!port_vlan) {
+	port_vlan = kzalloc(माप(*port_vlan), GFP_KERNEL);
+	अगर (!port_vlan) अणु
 		err = -ENOMEM;
-		goto err_port_vlan_alloc;
-	}
+		जाओ err_port_vlan_alloc;
+	पूर्ण
 
 	port_vlan->port = port;
 	port_vlan->vid = vid;
 
 	list_add(&port_vlan->port_head, &port->vlans_list);
 
-	return port_vlan;
+	वापस port_vlan;
 
 err_port_vlan_alloc:
 	prestera_hw_vlan_port_set(port, vid, false, false);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void
-prestera_port_vlan_bridge_leave(struct prestera_port_vlan *port_vlan)
-{
+अटल व्योम
+prestera_port_vlan_bridge_leave(काष्ठा prestera_port_vlan *port_vlan)
+अणु
 	u32 fdb_flush_mode = PRESTERA_FDB_FLUSH_MODE_DYNAMIC;
-	struct prestera_port *port = port_vlan->port;
-	struct prestera_bridge_vlan *br_vlan;
-	struct prestera_bridge_port *br_port;
+	काष्ठा prestera_port *port = port_vlan->port;
+	काष्ठा prestera_bridge_vlan *br_vlan;
+	काष्ठा prestera_bridge_port *br_port;
 	bool last_port, last_vlan;
 	u16 vid = port_vlan->vid;
-	int port_count;
+	पूर्णांक port_count;
 
 	br_port = port_vlan->br_port;
 	port_count = prestera_bridge_vlan_port_count(br_port->bridge, vid);
@@ -198,60 +199,60 @@ prestera_port_vlan_bridge_leave(struct prestera_port_vlan *port_vlan)
 	last_vlan = list_is_singular(&br_port->vlan_list);
 	last_port = port_count == 1;
 
-	if (last_vlan)
+	अगर (last_vlan)
 		prestera_hw_fdb_flush_port(port, fdb_flush_mode);
-	else if (last_port)
+	अन्यथा अगर (last_port)
 		prestera_hw_fdb_flush_vlan(port->sw, vid, fdb_flush_mode);
-	else
+	अन्यथा
 		prestera_hw_fdb_flush_port_vlan(port, vid, fdb_flush_mode);
 
 	list_del(&port_vlan->br_vlan_head);
 	prestera_bridge_vlan_put(br_vlan);
 	prestera_bridge_port_put(br_port);
-	port_vlan->br_port = NULL;
-}
+	port_vlan->br_port = शून्य;
+पूर्ण
 
-static void prestera_port_vlan_destroy(struct prestera_port_vlan *port_vlan)
-{
-	struct prestera_port *port = port_vlan->port;
+अटल व्योम prestera_port_vlan_destroy(काष्ठा prestera_port_vlan *port_vlan)
+अणु
+	काष्ठा prestera_port *port = port_vlan->port;
 	u16 vid = port_vlan->vid;
 
-	if (port_vlan->br_port)
+	अगर (port_vlan->br_port)
 		prestera_port_vlan_bridge_leave(port_vlan);
 
 	prestera_hw_vlan_port_set(port, vid, false, false);
 	list_del(&port_vlan->port_head);
-	kfree(port_vlan);
-}
+	kमुक्त(port_vlan);
+पूर्ण
 
-static struct prestera_bridge *
-prestera_bridge_create(struct prestera_switchdev *swdev, struct net_device *dev)
-{
+अटल काष्ठा prestera_bridge *
+prestera_bridge_create(काष्ठा prestera_चयनdev *swdev, काष्ठा net_device *dev)
+अणु
 	bool vlan_enabled = br_vlan_enabled(dev);
-	struct prestera_bridge *bridge;
+	काष्ठा prestera_bridge *bridge;
 	u16 bridge_id;
-	int err;
+	पूर्णांक err;
 
-	if (vlan_enabled && swdev->bridge_8021q_exists) {
+	अगर (vlan_enabled && swdev->bridge_8021q_exists) अणु
 		netdev_err(dev, "Only one VLAN-aware bridge is supported\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	bridge = kzalloc(sizeof(*bridge), GFP_KERNEL);
-	if (!bridge)
-		return ERR_PTR(-ENOMEM);
+	bridge = kzalloc(माप(*bridge), GFP_KERNEL);
+	अगर (!bridge)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (vlan_enabled) {
+	अगर (vlan_enabled) अणु
 		swdev->bridge_8021q_exists = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = prestera_hw_bridge_create(swdev->sw, &bridge_id);
-		if (err) {
-			kfree(bridge);
-			return ERR_PTR(err);
-		}
+		अगर (err) अणु
+			kमुक्त(bridge);
+			वापस ERR_PTR(err);
+		पूर्ण
 
 		bridge->bridge_id = bridge_id;
-	}
+	पूर्ण
 
 	bridge->vlan_enabled = vlan_enabled;
 	bridge->swdev = swdev;
@@ -261,83 +262,83 @@ prestera_bridge_create(struct prestera_switchdev *swdev, struct net_device *dev)
 
 	list_add(&bridge->head, &swdev->bridge_list);
 
-	return bridge;
-}
+	वापस bridge;
+पूर्ण
 
-static void prestera_bridge_destroy(struct prestera_bridge *bridge)
-{
-	struct prestera_switchdev *swdev = bridge->swdev;
+अटल व्योम prestera_bridge_destroy(काष्ठा prestera_bridge *bridge)
+अणु
+	काष्ठा prestera_चयनdev *swdev = bridge->swdev;
 
 	list_del(&bridge->head);
 
-	if (bridge->vlan_enabled)
+	अगर (bridge->vlan_enabled)
 		swdev->bridge_8021q_exists = false;
-	else
+	अन्यथा
 		prestera_hw_bridge_delete(swdev->sw, bridge->bridge_id);
 
 	WARN_ON(!list_empty(&bridge->port_list));
-	kfree(bridge);
-}
+	kमुक्त(bridge);
+पूर्ण
 
-static void prestera_bridge_put(struct prestera_bridge *bridge)
-{
-	if (list_empty(&bridge->port_list))
+अटल व्योम prestera_bridge_put(काष्ठा prestera_bridge *bridge)
+अणु
+	अगर (list_empty(&bridge->port_list))
 		prestera_bridge_destroy(bridge);
-}
+पूर्ण
 
-static
-struct prestera_bridge *prestera_bridge_by_dev(struct prestera_switchdev *swdev,
-					       const struct net_device *dev)
-{
-	struct prestera_bridge *bridge;
+अटल
+काष्ठा prestera_bridge *prestera_bridge_by_dev(काष्ठा prestera_चयनdev *swdev,
+					       स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा prestera_bridge *bridge;
 
-	list_for_each_entry(bridge, &swdev->bridge_list, head)
-		if (bridge->dev == dev)
-			return bridge;
+	list_क्रम_each_entry(bridge, &swdev->bridge_list, head)
+		अगर (bridge->dev == dev)
+			वापस bridge;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct prestera_bridge_port *
-__prestera_bridge_port_by_dev(struct prestera_bridge *bridge,
-			      struct net_device *dev)
-{
-	struct prestera_bridge_port *br_port;
+अटल काष्ठा prestera_bridge_port *
+__prestera_bridge_port_by_dev(काष्ठा prestera_bridge *bridge,
+			      काष्ठा net_device *dev)
+अणु
+	काष्ठा prestera_bridge_port *br_port;
 
-	list_for_each_entry(br_port, &bridge->port_list, head) {
-		if (br_port->dev == dev)
-			return br_port;
-	}
+	list_क्रम_each_entry(br_port, &bridge->port_list, head) अणु
+		अगर (br_port->dev == dev)
+			वापस br_port;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct prestera_bridge_port *
-prestera_bridge_port_by_dev(struct prestera_switchdev *swdev,
-			    struct net_device *dev)
-{
-	struct net_device *br_dev = netdev_master_upper_dev_get(dev);
-	struct prestera_bridge *bridge;
+अटल काष्ठा prestera_bridge_port *
+prestera_bridge_port_by_dev(काष्ठा prestera_चयनdev *swdev,
+			    काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *br_dev = netdev_master_upper_dev_get(dev);
+	काष्ठा prestera_bridge *bridge;
 
-	if (!br_dev)
-		return NULL;
+	अगर (!br_dev)
+		वापस शून्य;
 
 	bridge = prestera_bridge_by_dev(swdev, br_dev);
-	if (!bridge)
-		return NULL;
+	अगर (!bridge)
+		वापस शून्य;
 
-	return __prestera_bridge_port_by_dev(bridge, dev);
-}
+	वापस __prestera_bridge_port_by_dev(bridge, dev);
+पूर्ण
 
-static struct prestera_bridge_port *
-prestera_bridge_port_create(struct prestera_bridge *bridge,
-			    struct net_device *dev)
-{
-	struct prestera_bridge_port *br_port;
+अटल काष्ठा prestera_bridge_port *
+prestera_bridge_port_create(काष्ठा prestera_bridge *bridge,
+			    काष्ठा net_device *dev)
+अणु
+	काष्ठा prestera_bridge_port *br_port;
 
-	br_port = kzalloc(sizeof(*br_port), GFP_KERNEL);
-	if (!br_port)
-		return NULL;
+	br_port = kzalloc(माप(*br_port), GFP_KERNEL);
+	अगर (!br_port)
+		वापस शून्य;
 
 	br_port->flags = BR_LEARNING | BR_FLOOD | BR_LEARNING_SYNC |
 				BR_MCAST_FLOOD;
@@ -349,633 +350,633 @@ prestera_bridge_port_create(struct prestera_bridge *bridge,
 	INIT_LIST_HEAD(&br_port->vlan_list);
 	list_add(&br_port->head, &bridge->port_list);
 
-	return br_port;
-}
+	वापस br_port;
+पूर्ण
 
-static void
-prestera_bridge_port_destroy(struct prestera_bridge_port *br_port)
-{
+अटल व्योम
+prestera_bridge_port_destroy(काष्ठा prestera_bridge_port *br_port)
+अणु
 	list_del(&br_port->head);
 	WARN_ON(!list_empty(&br_port->vlan_list));
-	kfree(br_port);
-}
+	kमुक्त(br_port);
+पूर्ण
 
-static void prestera_bridge_port_get(struct prestera_bridge_port *br_port)
-{
+अटल व्योम prestera_bridge_port_get(काष्ठा prestera_bridge_port *br_port)
+अणु
 	refcount_inc(&br_port->ref_count);
-}
+पूर्ण
 
-static void prestera_bridge_port_put(struct prestera_bridge_port *br_port)
-{
-	struct prestera_bridge *bridge = br_port->bridge;
+अटल व्योम prestera_bridge_port_put(काष्ठा prestera_bridge_port *br_port)
+अणु
+	काष्ठा prestera_bridge *bridge = br_port->bridge;
 
-	if (refcount_dec_and_test(&br_port->ref_count)) {
+	अगर (refcount_dec_and_test(&br_port->ref_count)) अणु
 		prestera_bridge_port_destroy(br_port);
 		prestera_bridge_put(bridge);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct prestera_bridge_port *
-prestera_bridge_port_add(struct prestera_bridge *bridge, struct net_device *dev)
-{
-	struct prestera_bridge_port *br_port;
+अटल काष्ठा prestera_bridge_port *
+prestera_bridge_port_add(काष्ठा prestera_bridge *bridge, काष्ठा net_device *dev)
+अणु
+	काष्ठा prestera_bridge_port *br_port;
 
 	br_port = __prestera_bridge_port_by_dev(bridge, dev);
-	if (br_port) {
+	अगर (br_port) अणु
 		prestera_bridge_port_get(br_port);
-		return br_port;
-	}
+		वापस br_port;
+	पूर्ण
 
 	br_port = prestera_bridge_port_create(bridge, dev);
-	if (!br_port)
-		return ERR_PTR(-ENOMEM);
+	अगर (!br_port)
+		वापस ERR_PTR(-ENOMEM);
 
-	return br_port;
-}
+	वापस br_port;
+पूर्ण
 
-static int
-prestera_bridge_1d_port_join(struct prestera_bridge_port *br_port)
-{
-	struct prestera_port *port = netdev_priv(br_port->dev);
-	struct prestera_bridge *bridge = br_port->bridge;
-	int err;
+अटल पूर्णांक
+prestera_bridge_1d_port_join(काष्ठा prestera_bridge_port *br_port)
+अणु
+	काष्ठा prestera_port *port = netdev_priv(br_port->dev);
+	काष्ठा prestera_bridge *bridge = br_port->bridge;
+	पूर्णांक err;
 
 	err = prestera_hw_bridge_port_add(port, bridge->bridge_id);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = prestera_hw_port_flood_set(port, br_port->flags & BR_FLOOD);
-	if (err)
-		goto err_port_flood_set;
+	अगर (err)
+		जाओ err_port_flood_set;
 
 	err = prestera_hw_port_learning_set(port, br_port->flags & BR_LEARNING);
-	if (err)
-		goto err_port_learning_set;
+	अगर (err)
+		जाओ err_port_learning_set;
 
-	return 0;
+	वापस 0;
 
 err_port_learning_set:
 	prestera_hw_port_flood_set(port, false);
 err_port_flood_set:
 	prestera_hw_bridge_port_delete(port, bridge->bridge_id);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int prestera_port_bridge_join(struct prestera_port *port,
-				     struct net_device *upper)
-{
-	struct prestera_switchdev *swdev = port->sw->swdev;
-	struct prestera_bridge_port *br_port;
-	struct prestera_bridge *bridge;
-	int err;
+अटल पूर्णांक prestera_port_bridge_join(काष्ठा prestera_port *port,
+				     काष्ठा net_device *upper)
+अणु
+	काष्ठा prestera_चयनdev *swdev = port->sw->swdev;
+	काष्ठा prestera_bridge_port *br_port;
+	काष्ठा prestera_bridge *bridge;
+	पूर्णांक err;
 
 	bridge = prestera_bridge_by_dev(swdev, upper);
-	if (!bridge) {
+	अगर (!bridge) अणु
 		bridge = prestera_bridge_create(swdev, upper);
-		if (IS_ERR(bridge))
-			return PTR_ERR(bridge);
-	}
+		अगर (IS_ERR(bridge))
+			वापस PTR_ERR(bridge);
+	पूर्ण
 
 	br_port = prestera_bridge_port_add(bridge, port->dev);
-	if (IS_ERR(br_port)) {
+	अगर (IS_ERR(br_port)) अणु
 		err = PTR_ERR(br_port);
-		goto err_brport_create;
-	}
+		जाओ err_brport_create;
+	पूर्ण
 
-	if (bridge->vlan_enabled)
-		return 0;
+	अगर (bridge->vlan_enabled)
+		वापस 0;
 
 	err = prestera_bridge_1d_port_join(br_port);
-	if (err)
-		goto err_port_join;
+	अगर (err)
+		जाओ err_port_join;
 
-	return 0;
+	वापस 0;
 
 err_port_join:
 	prestera_bridge_port_put(br_port);
 err_brport_create:
 	prestera_bridge_put(bridge);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void prestera_bridge_1q_port_leave(struct prestera_bridge_port *br_port)
-{
-	struct prestera_port *port = netdev_priv(br_port->dev);
+अटल व्योम prestera_bridge_1q_port_leave(काष्ठा prestera_bridge_port *br_port)
+अणु
+	काष्ठा prestera_port *port = netdev_priv(br_port->dev);
 
 	prestera_hw_fdb_flush_port(port, PRESTERA_FDB_FLUSH_MODE_ALL);
 	prestera_port_pvid_set(port, PRESTERA_DEFAULT_VID);
-}
+पूर्ण
 
-static void prestera_bridge_1d_port_leave(struct prestera_bridge_port *br_port)
-{
-	struct prestera_port *port = netdev_priv(br_port->dev);
+अटल व्योम prestera_bridge_1d_port_leave(काष्ठा prestera_bridge_port *br_port)
+अणु
+	काष्ठा prestera_port *port = netdev_priv(br_port->dev);
 
 	prestera_hw_fdb_flush_port(port, PRESTERA_FDB_FLUSH_MODE_ALL);
 	prestera_hw_bridge_port_delete(port, br_port->bridge->bridge_id);
-}
+पूर्ण
 
-static int prestera_port_vid_stp_set(struct prestera_port *port, u16 vid,
+अटल पूर्णांक prestera_port_vid_stp_set(काष्ठा prestera_port *port, u16 vid,
 				     u8 state)
-{
+अणु
 	u8 hw_state = state;
 
-	switch (state) {
-	case BR_STATE_DISABLED:
+	चयन (state) अणु
+	हाल BR_STATE_DISABLED:
 		hw_state = PRESTERA_STP_DISABLED;
-		break;
+		अवरोध;
 
-	case BR_STATE_BLOCKING:
-	case BR_STATE_LISTENING:
+	हाल BR_STATE_BLOCKING:
+	हाल BR_STATE_LISTENING:
 		hw_state = PRESTERA_STP_BLOCK_LISTEN;
-		break;
+		अवरोध;
 
-	case BR_STATE_LEARNING:
+	हाल BR_STATE_LEARNING:
 		hw_state = PRESTERA_STP_LEARN;
-		break;
+		अवरोध;
 
-	case BR_STATE_FORWARDING:
+	हाल BR_STATE_FORWARDING:
 		hw_state = PRESTERA_STP_FORWARD;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return prestera_hw_vlan_port_stp_set(port, vid, hw_state);
-}
+	वापस prestera_hw_vlan_port_stp_set(port, vid, hw_state);
+पूर्ण
 
-static void prestera_port_bridge_leave(struct prestera_port *port,
-				       struct net_device *upper)
-{
-	struct prestera_switchdev *swdev = port->sw->swdev;
-	struct prestera_bridge_port *br_port;
-	struct prestera_bridge *bridge;
+अटल व्योम prestera_port_bridge_leave(काष्ठा prestera_port *port,
+				       काष्ठा net_device *upper)
+अणु
+	काष्ठा prestera_चयनdev *swdev = port->sw->swdev;
+	काष्ठा prestera_bridge_port *br_port;
+	काष्ठा prestera_bridge *bridge;
 
 	bridge = prestera_bridge_by_dev(swdev, upper);
-	if (!bridge)
-		return;
+	अगर (!bridge)
+		वापस;
 
 	br_port = __prestera_bridge_port_by_dev(bridge, port->dev);
-	if (!br_port)
-		return;
+	अगर (!br_port)
+		वापस;
 
 	bridge = br_port->bridge;
 
-	if (bridge->vlan_enabled)
+	अगर (bridge->vlan_enabled)
 		prestera_bridge_1q_port_leave(br_port);
-	else
+	अन्यथा
 		prestera_bridge_1d_port_leave(br_port);
 
 	prestera_hw_port_learning_set(port, false);
 	prestera_hw_port_flood_set(port, false);
 	prestera_port_vid_stp_set(port, PRESTERA_VID_ALL, BR_STATE_FORWARDING);
 	prestera_bridge_port_put(br_port);
-}
+पूर्ण
 
-int prestera_bridge_port_event(struct net_device *dev, unsigned long event,
-			       void *ptr)
-{
-	struct netdev_notifier_changeupper_info *info = ptr;
-	struct netlink_ext_ack *extack;
-	struct prestera_port *port;
-	struct net_device *upper;
-	int err;
+पूर्णांक prestera_bridge_port_event(काष्ठा net_device *dev, अचिन्हित दीर्घ event,
+			       व्योम *ptr)
+अणु
+	काष्ठा netdev_notअगरier_changeupper_info *info = ptr;
+	काष्ठा netlink_ext_ack *extack;
+	काष्ठा prestera_port *port;
+	काष्ठा net_device *upper;
+	पूर्णांक err;
 
-	extack = netdev_notifier_info_to_extack(&info->info);
+	extack = netdev_notअगरier_info_to_extack(&info->info);
 	port = netdev_priv(dev);
 	upper = info->upper_dev;
 
-	switch (event) {
-	case NETDEV_PRECHANGEUPPER:
-		if (!netif_is_bridge_master(upper)) {
+	चयन (event) अणु
+	हाल NETDEV_PRECHANGEUPPER:
+		अगर (!netअगर_is_bridge_master(upper)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Unknown upper device type");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!info->linking)
-			break;
+		अगर (!info->linking)
+			अवरोध;
 
-		if (netdev_has_any_upper_dev(upper)) {
+		अगर (netdev_has_any_upper_dev(upper)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Upper device is already enslaved");
-			return -EINVAL;
-		}
-		break;
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
 
-	case NETDEV_CHANGEUPPER:
-		if (!netif_is_bridge_master(upper))
-			break;
+	हाल NETDEV_CHANGEUPPER:
+		अगर (!netअगर_is_bridge_master(upper))
+			अवरोध;
 
-		if (info->linking) {
+		अगर (info->linking) अणु
 			err = prestera_port_bridge_join(port, upper);
-			if (err)
-				return err;
-		} else {
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अणु
 			prestera_port_bridge_leave(port, upper);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prestera_port_attr_br_flags_set(struct prestera_port *port,
-					   struct net_device *dev,
-					   struct switchdev_brport_flags flags)
-{
-	struct prestera_bridge_port *br_port;
-	int err;
+अटल पूर्णांक prestera_port_attr_br_flags_set(काष्ठा prestera_port *port,
+					   काष्ठा net_device *dev,
+					   काष्ठा चयनdev_brport_flags flags)
+अणु
+	काष्ठा prestera_bridge_port *br_port;
+	पूर्णांक err;
 
 	br_port = prestera_bridge_port_by_dev(port->sw->swdev, dev);
-	if (!br_port)
-		return 0;
+	अगर (!br_port)
+		वापस 0;
 
-	if (flags.mask & BR_FLOOD) {
+	अगर (flags.mask & BR_FLOOD) अणु
 		err = prestera_hw_port_flood_set(port, flags.val & BR_FLOOD);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (flags.mask & BR_LEARNING) {
+	अगर (flags.mask & BR_LEARNING) अणु
 		err = prestera_hw_port_learning_set(port,
 						    flags.val & BR_LEARNING);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	memcpy(&br_port->flags, &flags.val, sizeof(flags.val));
+	स_नकल(&br_port->flags, &flags.val, माप(flags.val));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prestera_port_attr_br_ageing_set(struct prestera_port *port,
-					    unsigned long ageing_clock_t)
-{
-	unsigned long ageing_jiffies = clock_t_to_jiffies(ageing_clock_t);
-	u32 ageing_time_ms = jiffies_to_msecs(ageing_jiffies);
-	struct prestera_switch *sw = port->sw;
+अटल पूर्णांक prestera_port_attr_br_ageing_set(काष्ठा prestera_port *port,
+					    अचिन्हित दीर्घ ageing_घड़ी_प्रकार)
+अणु
+	अचिन्हित दीर्घ ageing_jअगरfies = घड़ी_प्रकार_to_jअगरfies(ageing_घड़ी_प्रकार);
+	u32 ageing_समय_ms = jअगरfies_to_msecs(ageing_jअगरfies);
+	काष्ठा prestera_चयन *sw = port->sw;
 
-	if (ageing_time_ms < PRESTERA_MIN_AGEING_TIME_MS ||
-	    ageing_time_ms > PRESTERA_MAX_AGEING_TIME_MS)
-		return -ERANGE;
+	अगर (ageing_समय_ms < PRESTERA_MIN_AGEING_TIME_MS ||
+	    ageing_समय_ms > PRESTERA_MAX_AGEING_TIME_MS)
+		वापस -दुस्फल;
 
-	return prestera_hw_switch_ageing_set(sw, ageing_time_ms);
-}
+	वापस prestera_hw_चयन_ageing_set(sw, ageing_समय_ms);
+पूर्ण
 
-static int prestera_port_attr_br_vlan_set(struct prestera_port *port,
-					  struct net_device *dev,
+अटल पूर्णांक prestera_port_attr_br_vlan_set(काष्ठा prestera_port *port,
+					  काष्ठा net_device *dev,
 					  bool vlan_enabled)
-{
-	struct prestera_switch *sw = port->sw;
-	struct prestera_bridge *bridge;
+अणु
+	काष्ठा prestera_चयन *sw = port->sw;
+	काष्ठा prestera_bridge *bridge;
 
 	bridge = prestera_bridge_by_dev(sw->swdev, dev);
-	if (WARN_ON(!bridge))
-		return -EINVAL;
+	अगर (WARN_ON(!bridge))
+		वापस -EINVAL;
 
-	if (bridge->vlan_enabled == vlan_enabled)
-		return 0;
+	अगर (bridge->vlan_enabled == vlan_enabled)
+		वापस 0;
 
 	netdev_err(bridge->dev, "VLAN filtering can't be changed for existing bridge\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int prestera_port_bridge_vlan_stp_set(struct prestera_port *port,
-					     struct prestera_bridge_vlan *br_vlan,
+अटल पूर्णांक prestera_port_bridge_vlan_stp_set(काष्ठा prestera_port *port,
+					     काष्ठा prestera_bridge_vlan *br_vlan,
 					     u8 state)
-{
-	struct prestera_port_vlan *port_vlan;
+अणु
+	काष्ठा prestera_port_vlan *port_vlan;
 
-	list_for_each_entry(port_vlan, &br_vlan->port_vlan_list, br_vlan_head) {
-		if (port_vlan->port != port)
-			continue;
+	list_क्रम_each_entry(port_vlan, &br_vlan->port_vlan_list, br_vlan_head) अणु
+		अगर (port_vlan->port != port)
+			जारी;
 
-		return prestera_port_vid_stp_set(port, br_vlan->vid, state);
-	}
+		वापस prestera_port_vid_stp_set(port, br_vlan->vid, state);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prestera_port_attr_stp_state_set(struct prestera_port *port,
-					    struct net_device *dev,
+अटल पूर्णांक prestera_port_attr_stp_state_set(काष्ठा prestera_port *port,
+					    काष्ठा net_device *dev,
 					    u8 state)
-{
-	struct prestera_bridge_port *br_port;
-	struct prestera_bridge_vlan *br_vlan;
-	int err;
+अणु
+	काष्ठा prestera_bridge_port *br_port;
+	काष्ठा prestera_bridge_vlan *br_vlan;
+	पूर्णांक err;
 	u16 vid;
 
 	br_port = prestera_bridge_port_by_dev(port->sw->swdev, dev);
-	if (!br_port)
-		return 0;
+	अगर (!br_port)
+		वापस 0;
 
-	if (!br_port->bridge->vlan_enabled) {
+	अगर (!br_port->bridge->vlan_enabled) अणु
 		vid = br_port->bridge->bridge_id;
 		err = prestera_port_vid_stp_set(port, vid, state);
-		if (err)
-			goto err_port_stp_set;
-	} else {
-		list_for_each_entry(br_vlan, &br_port->vlan_list, head) {
+		अगर (err)
+			जाओ err_port_stp_set;
+	पूर्ण अन्यथा अणु
+		list_क्रम_each_entry(br_vlan, &br_port->vlan_list, head) अणु
 			err = prestera_port_bridge_vlan_stp_set(port, br_vlan,
 								state);
-			if (err)
-				goto err_port_vlan_stp_set;
-		}
-	}
+			अगर (err)
+				जाओ err_port_vlan_stp_set;
+		पूर्ण
+	पूर्ण
 
 	br_port->stp_state = state;
 
-	return 0;
+	वापस 0;
 
 err_port_vlan_stp_set:
-	list_for_each_entry_continue_reverse(br_vlan, &br_port->vlan_list, head)
+	list_क्रम_each_entry_जारी_reverse(br_vlan, &br_port->vlan_list, head)
 		prestera_port_bridge_vlan_stp_set(port, br_vlan, br_port->stp_state);
-	return err;
+	वापस err;
 
 err_port_stp_set:
 	prestera_port_vid_stp_set(port, vid, br_port->stp_state);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int prestera_port_obj_attr_set(struct net_device *dev,
-				      const struct switchdev_attr *attr,
-				      struct netlink_ext_ack *extack)
-{
-	struct prestera_port *port = netdev_priv(dev);
-	int err = 0;
+अटल पूर्णांक prestera_port_obj_attr_set(काष्ठा net_device *dev,
+				      स्थिर काष्ठा चयनdev_attr *attr,
+				      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा prestera_port *port = netdev_priv(dev);
+	पूर्णांक err = 0;
 
-	switch (attr->id) {
-	case SWITCHDEV_ATTR_ID_PORT_STP_STATE:
+	चयन (attr->id) अणु
+	हाल SWITCHDEV_ATTR_ID_PORT_STP_STATE:
 		err = prestera_port_attr_stp_state_set(port, attr->orig_dev,
 						       attr->u.stp_state);
-		break;
-	case SWITCHDEV_ATTR_ID_PORT_PRE_BRIDGE_FLAGS:
-		if (attr->u.brport_flags.mask &
+		अवरोध;
+	हाल SWITCHDEV_ATTR_ID_PORT_PRE_BRIDGE_FLAGS:
+		अगर (attr->u.brport_flags.mask &
 		    ~(BR_LEARNING | BR_FLOOD | BR_MCAST_FLOOD))
 			err = -EINVAL;
-		break;
-	case SWITCHDEV_ATTR_ID_PORT_BRIDGE_FLAGS:
+		अवरोध;
+	हाल SWITCHDEV_ATTR_ID_PORT_BRIDGE_FLAGS:
 		err = prestera_port_attr_br_flags_set(port, attr->orig_dev,
 						      attr->u.brport_flags);
-		break;
-	case SWITCHDEV_ATTR_ID_BRIDGE_AGEING_TIME:
+		अवरोध;
+	हाल SWITCHDEV_ATTR_ID_BRIDGE_AGEING_TIME:
 		err = prestera_port_attr_br_ageing_set(port,
-						       attr->u.ageing_time);
-		break;
-	case SWITCHDEV_ATTR_ID_BRIDGE_VLAN_FILTERING:
+						       attr->u.ageing_समय);
+		अवरोध;
+	हाल SWITCHDEV_ATTR_ID_BRIDGE_VLAN_FILTERING:
 		err = prestera_port_attr_br_vlan_set(port, attr->orig_dev,
 						     attr->u.vlan_filtering);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-prestera_fdb_offload_notify(struct prestera_port *port,
-			    struct switchdev_notifier_fdb_info *info)
-{
-	struct switchdev_notifier_fdb_info send_info;
+अटल व्योम
+prestera_fdb_offload_notअगरy(काष्ठा prestera_port *port,
+			    काष्ठा चयनdev_notअगरier_fdb_info *info)
+अणु
+	काष्ठा चयनdev_notअगरier_fdb_info send_info;
 
 	send_info.addr = info->addr;
 	send_info.vid = info->vid;
 	send_info.offloaded = true;
 
-	call_switchdev_notifiers(SWITCHDEV_FDB_OFFLOADED, port->dev,
-				 &send_info.info, NULL);
-}
+	call_चयनdev_notअगरiers(SWITCHDEV_FDB_OFFLOADED, port->dev,
+				 &send_info.info, शून्य);
+पूर्ण
 
-static int prestera_port_fdb_set(struct prestera_port *port,
-				 struct switchdev_notifier_fdb_info *fdb_info,
+अटल पूर्णांक prestera_port_fdb_set(काष्ठा prestera_port *port,
+				 काष्ठा चयनdev_notअगरier_fdb_info *fdb_info,
 				 bool adding)
-{
-	struct prestera_switch *sw = port->sw;
-	struct prestera_bridge_port *br_port;
-	struct prestera_bridge *bridge;
-	int err;
+अणु
+	काष्ठा prestera_चयन *sw = port->sw;
+	काष्ठा prestera_bridge_port *br_port;
+	काष्ठा prestera_bridge *bridge;
+	पूर्णांक err;
 	u16 vid;
 
 	br_port = prestera_bridge_port_by_dev(sw->swdev, port->dev);
-	if (!br_port)
-		return -EINVAL;
+	अगर (!br_port)
+		वापस -EINVAL;
 
 	bridge = br_port->bridge;
 
-	if (bridge->vlan_enabled)
+	अगर (bridge->vlan_enabled)
 		vid = fdb_info->vid;
-	else
+	अन्यथा
 		vid = bridge->bridge_id;
 
-	if (adding)
+	अगर (adding)
 		err = prestera_hw_fdb_add(port, fdb_info->addr, vid, false);
-	else
+	अन्यथा
 		err = prestera_hw_fdb_del(port, fdb_info->addr, vid);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void prestera_fdb_event_work(struct work_struct *work)
-{
-	struct switchdev_notifier_fdb_info *fdb_info;
-	struct prestera_fdb_event_work *swdev_work;
-	struct prestera_port *port;
-	struct net_device *dev;
-	int err;
+अटल व्योम prestera_fdb_event_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा चयनdev_notअगरier_fdb_info *fdb_info;
+	काष्ठा prestera_fdb_event_work *swdev_work;
+	काष्ठा prestera_port *port;
+	काष्ठा net_device *dev;
+	पूर्णांक err;
 
-	swdev_work = container_of(work, struct prestera_fdb_event_work, work);
+	swdev_work = container_of(work, काष्ठा prestera_fdb_event_work, work);
 	dev = swdev_work->dev;
 
 	rtnl_lock();
 
 	port = prestera_port_dev_lower_find(dev);
-	if (!port)
-		goto out_unlock;
+	अगर (!port)
+		जाओ out_unlock;
 
-	switch (swdev_work->event) {
-	case SWITCHDEV_FDB_ADD_TO_DEVICE:
+	चयन (swdev_work->event) अणु
+	हाल SWITCHDEV_FDB_ADD_TO_DEVICE:
 		fdb_info = &swdev_work->fdb_info;
-		if (!fdb_info->added_by_user || fdb_info->is_local)
-			break;
+		अगर (!fdb_info->added_by_user || fdb_info->is_local)
+			अवरोध;
 
 		err = prestera_port_fdb_set(port, fdb_info, true);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
-		prestera_fdb_offload_notify(port, fdb_info);
-		break;
+		prestera_fdb_offload_notअगरy(port, fdb_info);
+		अवरोध;
 
-	case SWITCHDEV_FDB_DEL_TO_DEVICE:
+	हाल SWITCHDEV_FDB_DEL_TO_DEVICE:
 		fdb_info = &swdev_work->fdb_info;
 		prestera_port_fdb_set(port, fdb_info, false);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out_unlock:
 	rtnl_unlock();
 
-	kfree(swdev_work->fdb_info.addr);
-	kfree(swdev_work);
+	kमुक्त(swdev_work->fdb_info.addr);
+	kमुक्त(swdev_work);
 	dev_put(dev);
-}
+पूर्ण
 
-static int prestera_switchdev_event(struct notifier_block *unused,
-				    unsigned long event, void *ptr)
-{
-	struct net_device *dev = switchdev_notifier_info_to_dev(ptr);
-	struct switchdev_notifier_fdb_info *fdb_info;
-	struct switchdev_notifier_info *info = ptr;
-	struct prestera_fdb_event_work *swdev_work;
-	struct net_device *upper;
-	int err;
+अटल पूर्णांक prestera_चयनdev_event(काष्ठा notअगरier_block *unused,
+				    अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = चयनdev_notअगरier_info_to_dev(ptr);
+	काष्ठा चयनdev_notअगरier_fdb_info *fdb_info;
+	काष्ठा चयनdev_notअगरier_info *info = ptr;
+	काष्ठा prestera_fdb_event_work *swdev_work;
+	काष्ठा net_device *upper;
+	पूर्णांक err;
 
-	if (event == SWITCHDEV_PORT_ATTR_SET) {
-		err = switchdev_handle_port_attr_set(dev, ptr,
+	अगर (event == SWITCHDEV_PORT_ATTR_SET) अणु
+		err = चयनdev_handle_port_attr_set(dev, ptr,
 						     prestera_netdev_check,
 						     prestera_port_obj_attr_set);
-		return notifier_from_errno(err);
-	}
+		वापस notअगरier_from_त्रुटि_सं(err);
+	पूर्ण
 
-	if (!prestera_netdev_check(dev))
-		return NOTIFY_DONE;
+	अगर (!prestera_netdev_check(dev))
+		वापस NOTIFY_DONE;
 
 	upper = netdev_master_upper_dev_get_rcu(dev);
-	if (!upper)
-		return NOTIFY_DONE;
+	अगर (!upper)
+		वापस NOTIFY_DONE;
 
-	if (!netif_is_bridge_master(upper))
-		return NOTIFY_DONE;
+	अगर (!netअगर_is_bridge_master(upper))
+		वापस NOTIFY_DONE;
 
-	swdev_work = kzalloc(sizeof(*swdev_work), GFP_ATOMIC);
-	if (!swdev_work)
-		return NOTIFY_BAD;
+	swdev_work = kzalloc(माप(*swdev_work), GFP_ATOMIC);
+	अगर (!swdev_work)
+		वापस NOTIFY_BAD;
 
 	swdev_work->event = event;
 	swdev_work->dev = dev;
 
-	switch (event) {
-	case SWITCHDEV_FDB_ADD_TO_DEVICE:
-	case SWITCHDEV_FDB_DEL_TO_DEVICE:
+	चयन (event) अणु
+	हाल SWITCHDEV_FDB_ADD_TO_DEVICE:
+	हाल SWITCHDEV_FDB_DEL_TO_DEVICE:
 		fdb_info = container_of(info,
-					struct switchdev_notifier_fdb_info,
+					काष्ठा चयनdev_notअगरier_fdb_info,
 					info);
 
 		INIT_WORK(&swdev_work->work, prestera_fdb_event_work);
-		memcpy(&swdev_work->fdb_info, ptr,
-		       sizeof(swdev_work->fdb_info));
+		स_नकल(&swdev_work->fdb_info, ptr,
+		       माप(swdev_work->fdb_info));
 
 		swdev_work->fdb_info.addr = kzalloc(ETH_ALEN, GFP_ATOMIC);
-		if (!swdev_work->fdb_info.addr)
-			goto out_bad;
+		अगर (!swdev_work->fdb_info.addr)
+			जाओ out_bad;
 
 		ether_addr_copy((u8 *)swdev_work->fdb_info.addr,
 				fdb_info->addr);
 		dev_hold(dev);
-		break;
+		अवरोध;
 
-	default:
-		kfree(swdev_work);
-		return NOTIFY_DONE;
-	}
+	शेष:
+		kमुक्त(swdev_work);
+		वापस NOTIFY_DONE;
+	पूर्ण
 
 	queue_work(swdev_wq, &swdev_work->work);
-	return NOTIFY_DONE;
+	वापस NOTIFY_DONE;
 
 out_bad:
-	kfree(swdev_work);
-	return NOTIFY_BAD;
-}
+	kमुक्त(swdev_work);
+	वापस NOTIFY_BAD;
+पूर्ण
 
-static int
-prestera_port_vlan_bridge_join(struct prestera_port_vlan *port_vlan,
-			       struct prestera_bridge_port *br_port)
-{
-	struct prestera_port *port = port_vlan->port;
-	struct prestera_bridge_vlan *br_vlan;
+अटल पूर्णांक
+prestera_port_vlan_bridge_join(काष्ठा prestera_port_vlan *port_vlan,
+			       काष्ठा prestera_bridge_port *br_port)
+अणु
+	काष्ठा prestera_port *port = port_vlan->port;
+	काष्ठा prestera_bridge_vlan *br_vlan;
 	u16 vid = port_vlan->vid;
-	int err;
+	पूर्णांक err;
 
-	if (port_vlan->br_port)
-		return 0;
+	अगर (port_vlan->br_port)
+		वापस 0;
 
 	err = prestera_hw_port_flood_set(port, br_port->flags & BR_FLOOD);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = prestera_hw_port_learning_set(port, br_port->flags & BR_LEARNING);
-	if (err)
-		goto err_port_learning_set;
+	अगर (err)
+		जाओ err_port_learning_set;
 
 	err = prestera_port_vid_stp_set(port, vid, br_port->stp_state);
-	if (err)
-		goto err_port_vid_stp_set;
+	अगर (err)
+		जाओ err_port_vid_stp_set;
 
 	br_vlan = prestera_bridge_vlan_by_vid(br_port, vid);
-	if (!br_vlan) {
+	अगर (!br_vlan) अणु
 		br_vlan = prestera_bridge_vlan_create(br_port, vid);
-		if (!br_vlan) {
+		अगर (!br_vlan) अणु
 			err = -ENOMEM;
-			goto err_bridge_vlan_get;
-		}
-	}
+			जाओ err_bridge_vlan_get;
+		पूर्ण
+	पूर्ण
 
 	list_add(&port_vlan->br_vlan_head, &br_vlan->port_vlan_list);
 
 	prestera_bridge_port_get(br_port);
 	port_vlan->br_port = br_port;
 
-	return 0;
+	वापस 0;
 
 err_bridge_vlan_get:
 	prestera_port_vid_stp_set(port, vid, BR_STATE_FORWARDING);
 err_port_vid_stp_set:
 	prestera_hw_port_learning_set(port, false);
 err_port_learning_set:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-prestera_bridge_port_vlan_add(struct prestera_port *port,
-			      struct prestera_bridge_port *br_port,
+अटल पूर्णांक
+prestera_bridge_port_vlan_add(काष्ठा prestera_port *port,
+			      काष्ठा prestera_bridge_port *br_port,
 			      u16 vid, bool is_untagged, bool is_pvid,
-			      struct netlink_ext_ack *extack)
-{
-	struct prestera_port_vlan *port_vlan;
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा prestera_port_vlan *port_vlan;
 	u16 old_pvid = port->pvid;
 	u16 pvid;
-	int err;
+	पूर्णांक err;
 
-	if (is_pvid)
+	अगर (is_pvid)
 		pvid = vid;
-	else
+	अन्यथा
 		pvid = port->pvid == vid ? 0 : port->pvid;
 
 	port_vlan = prestera_port_vlan_by_vid(port, vid);
-	if (port_vlan && port_vlan->br_port != br_port)
-		return -EEXIST;
+	अगर (port_vlan && port_vlan->br_port != br_port)
+		वापस -EEXIST;
 
-	if (!port_vlan) {
+	अगर (!port_vlan) अणु
 		port_vlan = prestera_port_vlan_create(port, vid, is_untagged);
-		if (IS_ERR(port_vlan))
-			return PTR_ERR(port_vlan);
-	} else {
+		अगर (IS_ERR(port_vlan))
+			वापस PTR_ERR(port_vlan);
+	पूर्ण अन्यथा अणु
 		err = prestera_hw_vlan_port_set(port, vid, true, is_untagged);
-		if (err)
-			goto err_port_vlan_set;
-	}
+		अगर (err)
+			जाओ err_port_vlan_set;
+	पूर्ण
 
 	err = prestera_port_pvid_set(port, pvid);
-	if (err)
-		goto err_port_pvid_set;
+	अगर (err)
+		जाओ err_port_pvid_set;
 
 	err = prestera_port_vlan_bridge_join(port_vlan, br_port);
-	if (err)
-		goto err_port_vlan_bridge_join;
+	अगर (err)
+		जाओ err_port_vlan_bridge_join;
 
-	return 0;
+	वापस 0;
 
 err_port_vlan_bridge_join:
 	prestera_port_pvid_set(port, old_pvid);
@@ -984,141 +985,141 @@ err_port_pvid_set:
 err_port_vlan_set:
 	prestera_port_vlan_destroy(port_vlan);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-prestera_bridge_port_vlan_del(struct prestera_port *port,
-			      struct prestera_bridge_port *br_port, u16 vid)
-{
+अटल व्योम
+prestera_bridge_port_vlan_del(काष्ठा prestera_port *port,
+			      काष्ठा prestera_bridge_port *br_port, u16 vid)
+अणु
 	u16 pvid = port->pvid == vid ? 0 : port->pvid;
-	struct prestera_port_vlan *port_vlan;
+	काष्ठा prestera_port_vlan *port_vlan;
 
 	port_vlan = prestera_port_vlan_by_vid(port, vid);
-	if (WARN_ON(!port_vlan))
-		return;
+	अगर (WARN_ON(!port_vlan))
+		वापस;
 
 	prestera_port_vlan_bridge_leave(port_vlan);
 	prestera_port_pvid_set(port, pvid);
 	prestera_port_vlan_destroy(port_vlan);
-}
+पूर्ण
 
-static int prestera_port_vlans_add(struct prestera_port *port,
-				   const struct switchdev_obj_port_vlan *vlan,
-				   struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक prestera_port_vlans_add(काष्ठा prestera_port *port,
+				   स्थिर काष्ठा चयनdev_obj_port_vlan *vlan,
+				   काष्ठा netlink_ext_ack *extack)
+अणु
 	bool flag_untagged = vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED;
 	bool flag_pvid = vlan->flags & BRIDGE_VLAN_INFO_PVID;
-	struct net_device *dev = vlan->obj.orig_dev;
-	struct prestera_bridge_port *br_port;
-	struct prestera_switch *sw = port->sw;
-	struct prestera_bridge *bridge;
+	काष्ठा net_device *dev = vlan->obj.orig_dev;
+	काष्ठा prestera_bridge_port *br_port;
+	काष्ठा prestera_चयन *sw = port->sw;
+	काष्ठा prestera_bridge *bridge;
 
-	if (netif_is_bridge_master(dev))
-		return 0;
+	अगर (netअगर_is_bridge_master(dev))
+		वापस 0;
 
 	br_port = prestera_bridge_port_by_dev(sw->swdev, dev);
-	if (WARN_ON(!br_port))
-		return -EINVAL;
+	अगर (WARN_ON(!br_port))
+		वापस -EINVAL;
 
 	bridge = br_port->bridge;
-	if (!bridge->vlan_enabled)
-		return 0;
+	अगर (!bridge->vlan_enabled)
+		वापस 0;
 
-	return prestera_bridge_port_vlan_add(port, br_port,
+	वापस prestera_bridge_port_vlan_add(port, br_port,
 					     vlan->vid, flag_untagged,
 					     flag_pvid, extack);
-}
+पूर्ण
 
-static int prestera_port_obj_add(struct net_device *dev,
-				 const struct switchdev_obj *obj,
-				 struct netlink_ext_ack *extack)
-{
-	struct prestera_port *port = netdev_priv(dev);
-	const struct switchdev_obj_port_vlan *vlan;
+अटल पूर्णांक prestera_port_obj_add(काष्ठा net_device *dev,
+				 स्थिर काष्ठा चयनdev_obj *obj,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा prestera_port *port = netdev_priv(dev);
+	स्थिर काष्ठा चयनdev_obj_port_vlan *vlan;
 
-	switch (obj->id) {
-	case SWITCHDEV_OBJ_ID_PORT_VLAN:
+	चयन (obj->id) अणु
+	हाल SWITCHDEV_OBJ_ID_PORT_VLAN:
 		vlan = SWITCHDEV_OBJ_PORT_VLAN(obj);
-		return prestera_port_vlans_add(port, vlan, extack);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस prestera_port_vlans_add(port, vlan, extack);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int prestera_port_vlans_del(struct prestera_port *port,
-				   const struct switchdev_obj_port_vlan *vlan)
-{
-	struct net_device *dev = vlan->obj.orig_dev;
-	struct prestera_bridge_port *br_port;
-	struct prestera_switch *sw = port->sw;
+अटल पूर्णांक prestera_port_vlans_del(काष्ठा prestera_port *port,
+				   स्थिर काष्ठा चयनdev_obj_port_vlan *vlan)
+अणु
+	काष्ठा net_device *dev = vlan->obj.orig_dev;
+	काष्ठा prestera_bridge_port *br_port;
+	काष्ठा prestera_चयन *sw = port->sw;
 
-	if (netif_is_bridge_master(dev))
-		return -EOPNOTSUPP;
+	अगर (netअगर_is_bridge_master(dev))
+		वापस -EOPNOTSUPP;
 
 	br_port = prestera_bridge_port_by_dev(sw->swdev, dev);
-	if (WARN_ON(!br_port))
-		return -EINVAL;
+	अगर (WARN_ON(!br_port))
+		वापस -EINVAL;
 
-	if (!br_port->bridge->vlan_enabled)
-		return 0;
+	अगर (!br_port->bridge->vlan_enabled)
+		वापस 0;
 
 	prestera_bridge_port_vlan_del(port, br_port, vlan->vid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prestera_port_obj_del(struct net_device *dev,
-				 const struct switchdev_obj *obj)
-{
-	struct prestera_port *port = netdev_priv(dev);
+अटल पूर्णांक prestera_port_obj_del(काष्ठा net_device *dev,
+				 स्थिर काष्ठा चयनdev_obj *obj)
+अणु
+	काष्ठा prestera_port *port = netdev_priv(dev);
 
-	switch (obj->id) {
-	case SWITCHDEV_OBJ_ID_PORT_VLAN:
-		return prestera_port_vlans_del(port, SWITCHDEV_OBJ_PORT_VLAN(obj));
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (obj->id) अणु
+	हाल SWITCHDEV_OBJ_ID_PORT_VLAN:
+		वापस prestera_port_vlans_del(port, SWITCHDEV_OBJ_PORT_VLAN(obj));
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int prestera_switchdev_blk_event(struct notifier_block *unused,
-					unsigned long event, void *ptr)
-{
-	struct net_device *dev = switchdev_notifier_info_to_dev(ptr);
-	int err;
+अटल पूर्णांक prestera_चयनdev_blk_event(काष्ठा notअगरier_block *unused,
+					अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = चयनdev_notअगरier_info_to_dev(ptr);
+	पूर्णांक err;
 
-	switch (event) {
-	case SWITCHDEV_PORT_OBJ_ADD:
-		err = switchdev_handle_port_obj_add(dev, ptr,
+	चयन (event) अणु
+	हाल SWITCHDEV_PORT_OBJ_ADD:
+		err = चयनdev_handle_port_obj_add(dev, ptr,
 						    prestera_netdev_check,
 						    prestera_port_obj_add);
-		break;
-	case SWITCHDEV_PORT_OBJ_DEL:
-		err = switchdev_handle_port_obj_del(dev, ptr,
+		अवरोध;
+	हाल SWITCHDEV_PORT_OBJ_DEL:
+		err = चयनdev_handle_port_obj_del(dev, ptr,
 						    prestera_netdev_check,
 						    prestera_port_obj_del);
-		break;
-	case SWITCHDEV_PORT_ATTR_SET:
-		err = switchdev_handle_port_attr_set(dev, ptr,
+		अवरोध;
+	हाल SWITCHDEV_PORT_ATTR_SET:
+		err = चयनdev_handle_port_attr_set(dev, ptr,
 						     prestera_netdev_check,
 						     prestera_port_obj_attr_set);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-	return notifier_from_errno(err);
-}
+	वापस notअगरier_from_त्रुटि_सं(err);
+पूर्ण
 
-static void prestera_fdb_event(struct prestera_switch *sw,
-			       struct prestera_event *evt, void *arg)
-{
-	struct switchdev_notifier_fdb_info info;
-	struct prestera_port *port;
+अटल व्योम prestera_fdb_event(काष्ठा prestera_चयन *sw,
+			       काष्ठा prestera_event *evt, व्योम *arg)
+अणु
+	काष्ठा चयनdev_notअगरier_fdb_info info;
+	काष्ठा prestera_port *port;
 
 	port = prestera_find_port(sw, evt->fdb_evt.port_id);
-	if (!port)
-		return;
+	अगर (!port)
+		वापस;
 
 	info.addr = evt->fdb_evt.data.mac;
 	info.vid = evt->fdb_evt.vid;
@@ -1126,84 +1127,84 @@ static void prestera_fdb_event(struct prestera_switch *sw,
 
 	rtnl_lock();
 
-	switch (evt->id) {
-	case PRESTERA_FDB_EVENT_LEARNED:
-		call_switchdev_notifiers(SWITCHDEV_FDB_ADD_TO_BRIDGE,
-					 port->dev, &info.info, NULL);
-		break;
-	case PRESTERA_FDB_EVENT_AGED:
-		call_switchdev_notifiers(SWITCHDEV_FDB_DEL_TO_BRIDGE,
-					 port->dev, &info.info, NULL);
-		break;
-	}
+	चयन (evt->id) अणु
+	हाल PRESTERA_FDB_EVENT_LEARNED:
+		call_चयनdev_notअगरiers(SWITCHDEV_FDB_ADD_TO_BRIDGE,
+					 port->dev, &info.info, शून्य);
+		अवरोध;
+	हाल PRESTERA_FDB_EVENT_AGED:
+		call_चयनdev_notअगरiers(SWITCHDEV_FDB_DEL_TO_BRIDGE,
+					 port->dev, &info.info, शून्य);
+		अवरोध;
+	पूर्ण
 
 	rtnl_unlock();
-}
+पूर्ण
 
-static int prestera_fdb_init(struct prestera_switch *sw)
-{
-	int err;
+अटल पूर्णांक prestera_fdb_init(काष्ठा prestera_चयन *sw)
+अणु
+	पूर्णांक err;
 
-	err = prestera_hw_event_handler_register(sw, PRESTERA_EVENT_TYPE_FDB,
-						 prestera_fdb_event, NULL);
-	if (err)
-		return err;
+	err = prestera_hw_event_handler_रेजिस्टर(sw, PRESTERA_EVENT_TYPE_FDB,
+						 prestera_fdb_event, शून्य);
+	अगर (err)
+		वापस err;
 
-	err = prestera_hw_switch_ageing_set(sw, PRESTERA_DEFAULT_AGEING_TIME_MS);
-	if (err)
-		goto err_ageing_set;
+	err = prestera_hw_चयन_ageing_set(sw, PRESTERA_DEFAULT_AGEING_TIME_MS);
+	अगर (err)
+		जाओ err_ageing_set;
 
-	return 0;
+	वापस 0;
 
 err_ageing_set:
-	prestera_hw_event_handler_unregister(sw, PRESTERA_EVENT_TYPE_FDB,
+	prestera_hw_event_handler_unरेजिस्टर(sw, PRESTERA_EVENT_TYPE_FDB,
 					     prestera_fdb_event);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void prestera_fdb_fini(struct prestera_switch *sw)
-{
-	prestera_hw_event_handler_unregister(sw, PRESTERA_EVENT_TYPE_FDB,
+अटल व्योम prestera_fdb_fini(काष्ठा prestera_चयन *sw)
+अणु
+	prestera_hw_event_handler_unरेजिस्टर(sw, PRESTERA_EVENT_TYPE_FDB,
 					     prestera_fdb_event);
-}
+पूर्ण
 
-static int prestera_switchdev_handler_init(struct prestera_switchdev *swdev)
-{
-	int err;
+अटल पूर्णांक prestera_चयनdev_handler_init(काष्ठा prestera_चयनdev *swdev)
+अणु
+	पूर्णांक err;
 
-	swdev->swdev_nb.notifier_call = prestera_switchdev_event;
-	err = register_switchdev_notifier(&swdev->swdev_nb);
-	if (err)
-		goto err_register_swdev_notifier;
+	swdev->swdev_nb.notअगरier_call = prestera_चयनdev_event;
+	err = रेजिस्टर_चयनdev_notअगरier(&swdev->swdev_nb);
+	अगर (err)
+		जाओ err_रेजिस्टर_swdev_notअगरier;
 
-	swdev->swdev_nb_blk.notifier_call = prestera_switchdev_blk_event;
-	err = register_switchdev_blocking_notifier(&swdev->swdev_nb_blk);
-	if (err)
-		goto err_register_blk_swdev_notifier;
+	swdev->swdev_nb_blk.notअगरier_call = prestera_चयनdev_blk_event;
+	err = रेजिस्टर_चयनdev_blocking_notअगरier(&swdev->swdev_nb_blk);
+	अगर (err)
+		जाओ err_रेजिस्टर_blk_swdev_notअगरier;
 
-	return 0;
+	वापस 0;
 
-err_register_blk_swdev_notifier:
-	unregister_switchdev_notifier(&swdev->swdev_nb);
-err_register_swdev_notifier:
+err_रेजिस्टर_blk_swdev_notअगरier:
+	unरेजिस्टर_चयनdev_notअगरier(&swdev->swdev_nb);
+err_रेजिस्टर_swdev_notअगरier:
 	destroy_workqueue(swdev_wq);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void prestera_switchdev_handler_fini(struct prestera_switchdev *swdev)
-{
-	unregister_switchdev_blocking_notifier(&swdev->swdev_nb_blk);
-	unregister_switchdev_notifier(&swdev->swdev_nb);
-}
+अटल व्योम prestera_चयनdev_handler_fini(काष्ठा prestera_चयनdev *swdev)
+अणु
+	unरेजिस्टर_चयनdev_blocking_notअगरier(&swdev->swdev_nb_blk);
+	unरेजिस्टर_चयनdev_notअगरier(&swdev->swdev_nb);
+पूर्ण
 
-int prestera_switchdev_init(struct prestera_switch *sw)
-{
-	struct prestera_switchdev *swdev;
-	int err;
+पूर्णांक prestera_चयनdev_init(काष्ठा prestera_चयन *sw)
+अणु
+	काष्ठा prestera_चयनdev *swdev;
+	पूर्णांक err;
 
-	swdev = kzalloc(sizeof(*swdev), GFP_KERNEL);
-	if (!swdev)
-		return -ENOMEM;
+	swdev = kzalloc(माप(*swdev), GFP_KERNEL);
+	अगर (!swdev)
+		वापस -ENOMEM;
 
 	sw->swdev = swdev;
 	swdev->sw = sw;
@@ -1211,36 +1212,36 @@ int prestera_switchdev_init(struct prestera_switch *sw)
 	INIT_LIST_HEAD(&swdev->bridge_list);
 
 	swdev_wq = alloc_ordered_workqueue("%s_ordered", 0, "prestera_br");
-	if (!swdev_wq) {
+	अगर (!swdev_wq) अणु
 		err = -ENOMEM;
-		goto err_alloc_wq;
-	}
+		जाओ err_alloc_wq;
+	पूर्ण
 
-	err = prestera_switchdev_handler_init(swdev);
-	if (err)
-		goto err_swdev_init;
+	err = prestera_चयनdev_handler_init(swdev);
+	अगर (err)
+		जाओ err_swdev_init;
 
 	err = prestera_fdb_init(sw);
-	if (err)
-		goto err_fdb_init;
+	अगर (err)
+		जाओ err_fdb_init;
 
-	return 0;
+	वापस 0;
 
 err_fdb_init:
 err_swdev_init:
 	destroy_workqueue(swdev_wq);
 err_alloc_wq:
-	kfree(swdev);
+	kमुक्त(swdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void prestera_switchdev_fini(struct prestera_switch *sw)
-{
-	struct prestera_switchdev *swdev = sw->swdev;
+व्योम prestera_चयनdev_fini(काष्ठा prestera_चयन *sw)
+अणु
+	काष्ठा prestera_चयनdev *swdev = sw->swdev;
 
 	prestera_fdb_fini(sw);
-	prestera_switchdev_handler_fini(swdev);
+	prestera_चयनdev_handler_fini(swdev);
 	destroy_workqueue(swdev_wq);
-	kfree(swdev);
-}
+	kमुक्त(swdev);
+पूर्ण

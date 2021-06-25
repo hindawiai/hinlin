@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __VDSO_CONST_H
-#define __VDSO_CONST_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __VDSO_CONST_H
+#घोषणा __VDSO_CONST_H
 
-#include <uapi/linux/const.h>
+#समावेश <uapi/linux/स्थिर.h>
 
-#define UL(x)		(_UL(x))
-#define ULL(x)		(_ULL(x))
+#घोषणा UL(x)		(_UL(x))
+#घोषणा ULL(x)		(_ULL(x))
 
-#endif /* __VDSO_CONST_H */
+#पूर्ण_अगर /* __VDSO_CONST_H */

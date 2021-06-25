@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,196 +20,196 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Rafał Miłecki <zajec5@gmail.com>
+ * Authors: Rafaध Miधecki <zajec5@gmail.com>
  *          Alex Deucher <alexdeucher@gmail.com>
  */
 
-#include "amdgpu.h"
-#include "amdgpu_drv.h"
-#include "amdgpu_pm.h"
-#include "amdgpu_dpm.h"
-#include "atom.h"
-#include <linux/pci.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/nospec.h>
-#include <linux/pm_runtime.h>
-#include <asm/processor.h>
-#include "hwmgr.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_drv.h"
+#समावेश "amdgpu_pm.h"
+#समावेश "amdgpu_dpm.h"
+#समावेश "atom.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/nospec.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <यंत्र/processor.h>
+#समावेश "hwmgr.h"
 
-static const struct cg_flag_name clocks[] = {
-	{AMD_CG_SUPPORT_GFX_FGCG, "Graphics Fine Grain Clock Gating"},
-	{AMD_CG_SUPPORT_GFX_MGCG, "Graphics Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_GFX_MGLS, "Graphics Medium Grain memory Light Sleep"},
-	{AMD_CG_SUPPORT_GFX_CGCG, "Graphics Coarse Grain Clock Gating"},
-	{AMD_CG_SUPPORT_GFX_CGLS, "Graphics Coarse Grain memory Light Sleep"},
-	{AMD_CG_SUPPORT_GFX_CGTS, "Graphics Coarse Grain Tree Shader Clock Gating"},
-	{AMD_CG_SUPPORT_GFX_CGTS_LS, "Graphics Coarse Grain Tree Shader Light Sleep"},
-	{AMD_CG_SUPPORT_GFX_CP_LS, "Graphics Command Processor Light Sleep"},
-	{AMD_CG_SUPPORT_GFX_RLC_LS, "Graphics Run List Controller Light Sleep"},
-	{AMD_CG_SUPPORT_GFX_3D_CGCG, "Graphics 3D Coarse Grain Clock Gating"},
-	{AMD_CG_SUPPORT_GFX_3D_CGLS, "Graphics 3D Coarse Grain memory Light Sleep"},
-	{AMD_CG_SUPPORT_MC_LS, "Memory Controller Light Sleep"},
-	{AMD_CG_SUPPORT_MC_MGCG, "Memory Controller Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_SDMA_LS, "System Direct Memory Access Light Sleep"},
-	{AMD_CG_SUPPORT_SDMA_MGCG, "System Direct Memory Access Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_BIF_MGCG, "Bus Interface Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_BIF_LS, "Bus Interface Light Sleep"},
-	{AMD_CG_SUPPORT_UVD_MGCG, "Unified Video Decoder Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_VCE_MGCG, "Video Compression Engine Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_HDP_LS, "Host Data Path Light Sleep"},
-	{AMD_CG_SUPPORT_HDP_MGCG, "Host Data Path Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_DRM_MGCG, "Digital Right Management Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_DRM_LS, "Digital Right Management Light Sleep"},
-	{AMD_CG_SUPPORT_ROM_MGCG, "Rom Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_DF_MGCG, "Data Fabric Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_VCN_MGCG, "VCN Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_HDP_DS, "Host Data Path Deep Sleep"},
-	{AMD_CG_SUPPORT_HDP_SD, "Host Data Path Shutdown"},
-	{AMD_CG_SUPPORT_IH_CG, "Interrupt Handler Clock Gating"},
-	{AMD_CG_SUPPORT_JPEG_MGCG, "JPEG Medium Grain Clock Gating"},
+अटल स्थिर काष्ठा cg_flag_name घड़ीs[] = अणु
+	अणुAMD_CG_SUPPORT_GFX_FGCG, "Graphics Fine Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_MGCG, "Graphics Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_MGLS, "Graphics Medium Grain memory Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_CGCG, "Graphics Coarse Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_CGLS, "Graphics Coarse Grain memory Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_CGTS, "Graphics Coarse Grain Tree Shader Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_CGTS_LS, "Graphics Coarse Grain Tree Shader Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_CP_LS, "Graphics Command Processor Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_RLC_LS, "Graphics Run List Controller Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_3D_CGCG, "Graphics 3D Coarse Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_GFX_3D_CGLS, "Graphics 3D Coarse Grain memory Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_MC_LS, "Memory Controller Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_MC_MGCG, "Memory Controller Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_SDMA_LS, "System Direct Memory Access Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_SDMA_MGCG, "System Direct Memory Access Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_BIF_MGCG, "Bus Interface Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_BIF_LS, "Bus Interface Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_UVD_MGCG, "Unified Video Decoder Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_VCE_MGCG, "Video Compression Engine Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_HDP_LS, "Host Data Path Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_HDP_MGCG, "Host Data Path Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_DRM_MGCG, "Digital Right Management Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_DRM_LS, "Digital Right Management Light Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_ROM_MGCG, "Rom Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_DF_MGCG, "Data Fabric Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_VCN_MGCG, "VCN Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_HDP_DS, "Host Data Path Deep Sleep"पूर्ण,
+	अणुAMD_CG_SUPPORT_HDP_SD, "Host Data Path Shutdown"पूर्ण,
+	अणुAMD_CG_SUPPORT_IH_CG, "Interrupt Handler Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_JPEG_MGCG, "JPEG Medium Grain Clock Gating"पूर्ण,
 
-	{AMD_CG_SUPPORT_ATHUB_MGCG, "Address Translation Hub Medium Grain Clock Gating"},
-	{AMD_CG_SUPPORT_ATHUB_LS, "Address Translation Hub Light Sleep"},
-	{0, NULL},
-};
+	अणुAMD_CG_SUPPORT_ATHUB_MGCG, "Address Translation Hub Medium Grain Clock Gating"पूर्ण,
+	अणुAMD_CG_SUPPORT_ATHUB_LS, "Address Translation Hub Light Sleep"पूर्ण,
+	अणु0, शून्यपूर्ण,
+पूर्ण;
 
-static const struct hwmon_temp_label {
-	enum PP_HWMON_TEMP channel;
-	const char *label;
-} temp_label[] = {
-	{PP_TEMP_EDGE, "edge"},
-	{PP_TEMP_JUNCTION, "junction"},
-	{PP_TEMP_MEM, "mem"},
-};
+अटल स्थिर काष्ठा hwmon_temp_label अणु
+	क्रमागत PP_HWMON_TEMP channel;
+	स्थिर अक्षर *label;
+पूर्ण temp_label[] = अणु
+	अणुPP_TEMP_EDGE, "edge"पूर्ण,
+	अणुPP_TEMP_JUNCTION, "junction"पूर्ण,
+	अणुPP_TEMP_MEM, "mem"पूर्ण,
+पूर्ण;
 
 /**
- * DOC: power_dpm_state
+ * DOC: घातer_dpm_state
  *
- * The power_dpm_state file is a legacy interface and is only provided for
- * backwards compatibility. The amdgpu driver provides a sysfs API for adjusting
- * certain power related parameters.  The file power_dpm_state is used for this.
+ * The घातer_dpm_state file is a legacy पूर्णांकerface and is only provided क्रम
+ * backwards compatibility. The amdgpu driver provides a sysfs API क्रम adjusting
+ * certain घातer related parameters.  The file घातer_dpm_state is used क्रम this.
  * It accepts the following arguments:
  *
  * - battery
  *
  * - balanced
  *
- * - performance
+ * - perक्रमmance
  *
  * battery
  *
- * On older GPUs, the vbios provided a special power state for battery
- * operation.  Selecting battery switched to this state.  This is no
- * longer provided on newer GPUs so the option does nothing in that case.
+ * On older GPUs, the vbios provided a special घातer state क्रम battery
+ * operation.  Selecting battery चयनed to this state.  This is no
+ * दीर्घer provided on newer GPUs so the option करोes nothing in that हाल.
  *
  * balanced
  *
- * On older GPUs, the vbios provided a special power state for balanced
- * operation.  Selecting balanced switched to this state.  This is no
- * longer provided on newer GPUs so the option does nothing in that case.
+ * On older GPUs, the vbios provided a special घातer state क्रम balanced
+ * operation.  Selecting balanced चयनed to this state.  This is no
+ * दीर्घer provided on newer GPUs so the option करोes nothing in that हाल.
  *
- * performance
+ * perक्रमmance
  *
- * On older GPUs, the vbios provided a special power state for performance
- * operation.  Selecting performance switched to this state.  This is no
- * longer provided on newer GPUs so the option does nothing in that case.
+ * On older GPUs, the vbios provided a special घातer state क्रम perक्रमmance
+ * operation.  Selecting perक्रमmance चयनed to this state.  This is no
+ * दीर्घer provided on newer GPUs so the option करोes nothing in that हाल.
  *
  */
 
-static ssize_t amdgpu_get_power_dpm_state(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	enum amd_pm_state_type pm;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_घातer_dpm_state(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	क्रमागत amd_pm_state_type pm;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (pp_funcs->get_current_power_state) {
-		pm = amdgpu_dpm_get_current_power_state(adev);
-	} else {
+	अगर (pp_funcs->get_current_घातer_state) अणु
+		pm = amdgpu_dpm_get_current_घातer_state(adev);
+	पूर्ण अन्यथा अणु
 		pm = adev->pm.dpm.user_state;
-	}
+	पूर्ण
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return sysfs_emit(buf, "%s\n",
+	वापस sysfs_emit(buf, "%s\n",
 			  (pm == POWER_STATE_TYPE_BATTERY) ? "battery" :
 			  (pm == POWER_STATE_TYPE_BALANCED) ? "balanced" : "performance");
-}
+पूर्ण
 
-static ssize_t amdgpu_set_power_dpm_state(struct device *dev,
-					  struct device_attribute *attr,
-					  const char *buf,
-					  size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	enum amd_pm_state_type  state;
-	int ret;
+अटल sमाप_प्रकार amdgpu_set_घातer_dpm_state(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  स्थिर अक्षर *buf,
+					  माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	क्रमागत amd_pm_state_type  state;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	if (strncmp("battery", buf, strlen("battery")) == 0)
+	अगर (म_भेदन("battery", buf, म_माप("battery")) == 0)
 		state = POWER_STATE_TYPE_BATTERY;
-	else if (strncmp("balanced", buf, strlen("balanced")) == 0)
+	अन्यथा अगर (म_भेदन("balanced", buf, म_माप("balanced")) == 0)
 		state = POWER_STATE_TYPE_BALANCED;
-	else if (strncmp("performance", buf, strlen("performance")) == 0)
+	अन्यथा अगर (म_भेदन("performance", buf, म_माप("performance")) == 0)
 		state = POWER_STATE_TYPE_PERFORMANCE;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (is_support_sw_smu(adev)) {
+	अगर (is_support_sw_smu(adev)) अणु
 		mutex_lock(&adev->pm.mutex);
 		adev->pm.dpm.user_state = state;
 		mutex_unlock(&adev->pm.mutex);
-	} else if (adev->powerplay.pp_funcs->dispatch_tasks) {
+	पूर्ण अन्यथा अगर (adev->घातerplay.pp_funcs->dispatch_tasks) अणु
 		amdgpu_dpm_dispatch_task(adev, AMD_PP_TASK_ENABLE_USER_STATE, &state);
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_lock(&adev->pm.mutex);
 		adev->pm.dpm.user_state = state;
 		mutex_unlock(&adev->pm.mutex);
 
-		amdgpu_pm_compute_clocks(adev);
-	}
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+		amdgpu_pm_compute_घड़ीs(adev);
+	पूर्ण
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 
 /**
- * DOC: power_dpm_force_performance_level
+ * DOC: घातer_dpm_क्रमce_perक्रमmance_level
  *
- * The amdgpu driver provides a sysfs API for adjusting certain power
- * related parameters.  The file power_dpm_force_performance_level is
- * used for this.  It accepts the following arguments:
+ * The amdgpu driver provides a sysfs API क्रम adjusting certain घातer
+ * related parameters.  The file घातer_dpm_क्रमce_perक्रमmance_level is
+ * used क्रम this.  It accepts the following arguments:
  *
- * - auto
+ * - स्वतः
  *
  * - low
  *
@@ -224,449 +225,449 @@ static ssize_t amdgpu_set_power_dpm_state(struct device *dev,
  *
  * - profile_peak
  *
- * auto
+ * स्वतः
  *
- * When auto is selected, the driver will attempt to dynamically select
- * the optimal power profile for current conditions in the driver.
+ * When स्वतः is selected, the driver will attempt to dynamically select
+ * the optimal घातer profile क्रम current conditions in the driver.
  *
  * low
  *
- * When low is selected, the clocks are forced to the lowest power state.
+ * When low is selected, the घड़ीs are क्रमced to the lowest घातer state.
  *
  * high
  *
- * When high is selected, the clocks are forced to the highest power state.
+ * When high is selected, the घड़ीs are क्रमced to the highest घातer state.
  *
  * manual
  *
- * When manual is selected, the user can manually adjust which power states
- * are enabled for each clock domain via the sysfs pp_dpm_mclk, pp_dpm_sclk,
- * and pp_dpm_pcie files and adjust the power state transition heuristics
- * via the pp_power_profile_mode sysfs file.
+ * When manual is selected, the user can manually adjust which घातer states
+ * are enabled क्रम each घड़ी करोमुख्य via the sysfs pp_dpm_mclk, pp_dpm_sclk,
+ * and pp_dpm_pcie files and adjust the घातer state transition heuristics
+ * via the pp_घातer_profile_mode sysfs file.
  *
  * profile_standard
  * profile_min_sclk
  * profile_min_mclk
  * profile_peak
  *
- * When the profiling modes are selected, clock and power gating are
- * disabled and the clocks are set for different profiling cases. This
- * mode is recommended for profiling specific work loads where you do
- * not want clock or power gating for clock fluctuation to interfere
- * with your results. profile_standard sets the clocks to a fixed clock
- * level which varies from asic to asic.  profile_min_sclk forces the sclk
- * to the lowest level.  profile_min_mclk forces the mclk to the lowest level.
- * profile_peak sets all clocks (mclk, sclk, pcie) to the highest levels.
+ * When the profiling modes are selected, घड़ी and घातer gating are
+ * disabled and the घड़ीs are set क्रम dअगरferent profiling हालs. This
+ * mode is recommended क्रम profiling specअगरic work loads where you करो
+ * not want घड़ी or घातer gating क्रम घड़ी fluctuation to पूर्णांकerfere
+ * with your results. profile_standard sets the घड़ीs to a fixed घड़ी
+ * level which varies from asic to asic.  profile_min_sclk क्रमces the sclk
+ * to the lowest level.  profile_min_mclk क्रमces the mclk to the lowest level.
+ * profile_peak sets all घड़ीs (mclk, sclk, pcie) to the highest levels.
  *
  */
 
-static ssize_t amdgpu_get_power_dpm_force_performance_level(struct device *dev,
-							    struct device_attribute *attr,
-							    char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	enum amd_dpm_forced_level level = 0xff;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_घातer_dpm_क्रमce_perक्रमmance_level(काष्ठा device *dev,
+							    काष्ठा device_attribute *attr,
+							    अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	क्रमागत amd_dpm_क्रमced_level level = 0xff;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->get_performance_level)
-		level = amdgpu_dpm_get_performance_level(adev);
-	else
-		level = adev->pm.dpm.forced_level;
+	अगर (adev->घातerplay.pp_funcs->get_perक्रमmance_level)
+		level = amdgpu_dpm_get_perक्रमmance_level(adev);
+	अन्यथा
+		level = adev->pm.dpm.क्रमced_level;
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return sysfs_emit(buf, "%s\n",
+	वापस sysfs_emit(buf, "%s\n",
 			  (level == AMD_DPM_FORCED_LEVEL_AUTO) ? "auto" :
 			  (level == AMD_DPM_FORCED_LEVEL_LOW) ? "low" :
 			  (level == AMD_DPM_FORCED_LEVEL_HIGH) ? "high" :
 			  (level == AMD_DPM_FORCED_LEVEL_MANUAL) ? "manual" :
-			  (level == AMD_DPM_FORCED_LEVEL_PROFILE_STANDARD) ? "profile_standard" :
-			  (level == AMD_DPM_FORCED_LEVEL_PROFILE_MIN_SCLK) ? "profile_min_sclk" :
-			  (level == AMD_DPM_FORCED_LEVEL_PROFILE_MIN_MCLK) ? "profile_min_mclk" :
-			  (level == AMD_DPM_FORCED_LEVEL_PROFILE_PEAK) ? "profile_peak" :
+			  (level == AMD_DPM_FORCED_LEVEL_PROखाता_STANDARD) ? "profile_standard" :
+			  (level == AMD_DPM_FORCED_LEVEL_PROखाता_MIN_SCLK) ? "profile_min_sclk" :
+			  (level == AMD_DPM_FORCED_LEVEL_PROखाता_MIN_MCLK) ? "profile_min_mclk" :
+			  (level == AMD_DPM_FORCED_LEVEL_PROखाता_PEAK) ? "profile_peak" :
 			  (level == AMD_DPM_FORCED_LEVEL_PERF_DETERMINISM) ? "perf_determinism" :
 			  "unknown");
-}
+पूर्ण
 
-static ssize_t amdgpu_set_power_dpm_force_performance_level(struct device *dev,
-							    struct device_attribute *attr,
-							    const char *buf,
-							    size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	enum amd_dpm_forced_level level;
-	enum amd_dpm_forced_level current_level = 0xff;
-	int ret = 0;
+अटल sमाप_प्रकार amdgpu_set_घातer_dpm_क्रमce_perक्रमmance_level(काष्ठा device *dev,
+							    काष्ठा device_attribute *attr,
+							    स्थिर अक्षर *buf,
+							    माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	क्रमागत amd_dpm_क्रमced_level level;
+	क्रमागत amd_dpm_क्रमced_level current_level = 0xff;
+	पूर्णांक ret = 0;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	if (strncmp("low", buf, strlen("low")) == 0) {
+	अगर (म_भेदन("low", buf, म_माप("low")) == 0) अणु
 		level = AMD_DPM_FORCED_LEVEL_LOW;
-	} else if (strncmp("high", buf, strlen("high")) == 0) {
+	पूर्ण अन्यथा अगर (म_भेदन("high", buf, म_माप("high")) == 0) अणु
 		level = AMD_DPM_FORCED_LEVEL_HIGH;
-	} else if (strncmp("auto", buf, strlen("auto")) == 0) {
+	पूर्ण अन्यथा अगर (म_भेदन("auto", buf, म_माप("auto")) == 0) अणु
 		level = AMD_DPM_FORCED_LEVEL_AUTO;
-	} else if (strncmp("manual", buf, strlen("manual")) == 0) {
+	पूर्ण अन्यथा अगर (म_भेदन("manual", buf, म_माप("manual")) == 0) अणु
 		level = AMD_DPM_FORCED_LEVEL_MANUAL;
-	} else if (strncmp("profile_exit", buf, strlen("profile_exit")) == 0) {
-		level = AMD_DPM_FORCED_LEVEL_PROFILE_EXIT;
-	} else if (strncmp("profile_standard", buf, strlen("profile_standard")) == 0) {
-		level = AMD_DPM_FORCED_LEVEL_PROFILE_STANDARD;
-	} else if (strncmp("profile_min_sclk", buf, strlen("profile_min_sclk")) == 0) {
-		level = AMD_DPM_FORCED_LEVEL_PROFILE_MIN_SCLK;
-	} else if (strncmp("profile_min_mclk", buf, strlen("profile_min_mclk")) == 0) {
-		level = AMD_DPM_FORCED_LEVEL_PROFILE_MIN_MCLK;
-	} else if (strncmp("profile_peak", buf, strlen("profile_peak")) == 0) {
-		level = AMD_DPM_FORCED_LEVEL_PROFILE_PEAK;
-	} else if (strncmp("perf_determinism", buf, strlen("perf_determinism")) == 0) {
+	पूर्ण अन्यथा अगर (म_भेदन("profile_exit", buf, म_माप("profile_exit")) == 0) अणु
+		level = AMD_DPM_FORCED_LEVEL_PROखाता_EXIT;
+	पूर्ण अन्यथा अगर (म_भेदन("profile_standard", buf, म_माप("profile_standard")) == 0) अणु
+		level = AMD_DPM_FORCED_LEVEL_PROखाता_STANDARD;
+	पूर्ण अन्यथा अगर (म_भेदन("profile_min_sclk", buf, म_माप("profile_min_sclk")) == 0) अणु
+		level = AMD_DPM_FORCED_LEVEL_PROखाता_MIN_SCLK;
+	पूर्ण अन्यथा अगर (म_भेदन("profile_min_mclk", buf, म_माप("profile_min_mclk")) == 0) अणु
+		level = AMD_DPM_FORCED_LEVEL_PROखाता_MIN_MCLK;
+	पूर्ण अन्यथा अगर (म_भेदन("profile_peak", buf, म_माप("profile_peak")) == 0) अणु
+		level = AMD_DPM_FORCED_LEVEL_PROखाता_PEAK;
+	पूर्ण अन्यथा अगर (म_भेदन("perf_determinism", buf, म_माप("perf_determinism")) == 0) अणु
 		level = AMD_DPM_FORCED_LEVEL_PERF_DETERMINISM;
-	}  else {
-		return -EINVAL;
-	}
+	पूर्ण  अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (pp_funcs->get_performance_level)
-		current_level = amdgpu_dpm_get_performance_level(adev);
+	अगर (pp_funcs->get_perक्रमmance_level)
+		current_level = amdgpu_dpm_get_perक्रमmance_level(adev);
 
-	if (current_level == level) {
-		pm_runtime_mark_last_busy(ddev->dev);
-		pm_runtime_put_autosuspend(ddev->dev);
-		return count;
-	}
+	अगर (current_level == level) अणु
+		pm_runसमय_mark_last_busy(ddev->dev);
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस count;
+	पूर्ण
 
-	if (adev->asic_type == CHIP_RAVEN) {
-		if (!(adev->apu_flags & AMD_APU_IS_RAVEN2)) {
-			if (current_level != AMD_DPM_FORCED_LEVEL_MANUAL && level == AMD_DPM_FORCED_LEVEL_MANUAL)
+	अगर (adev->asic_type == CHIP_RAVEN) अणु
+		अगर (!(adev->apu_flags & AMD_APU_IS_RAVEN2)) अणु
+			अगर (current_level != AMD_DPM_FORCED_LEVEL_MANUAL && level == AMD_DPM_FORCED_LEVEL_MANUAL)
 				amdgpu_gfx_off_ctrl(adev, false);
-			else if (current_level == AMD_DPM_FORCED_LEVEL_MANUAL && level != AMD_DPM_FORCED_LEVEL_MANUAL)
+			अन्यथा अगर (current_level == AMD_DPM_FORCED_LEVEL_MANUAL && level != AMD_DPM_FORCED_LEVEL_MANUAL)
 				amdgpu_gfx_off_ctrl(adev, true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* profile_exit setting is valid only when current mode is in profile mode */
-	if (!(current_level & (AMD_DPM_FORCED_LEVEL_PROFILE_STANDARD |
-	    AMD_DPM_FORCED_LEVEL_PROFILE_MIN_SCLK |
-	    AMD_DPM_FORCED_LEVEL_PROFILE_MIN_MCLK |
-	    AMD_DPM_FORCED_LEVEL_PROFILE_PEAK)) &&
-	    (level == AMD_DPM_FORCED_LEVEL_PROFILE_EXIT)) {
+	/* profile_निकास setting is valid only when current mode is in profile mode */
+	अगर (!(current_level & (AMD_DPM_FORCED_LEVEL_PROखाता_STANDARD |
+	    AMD_DPM_FORCED_LEVEL_PROखाता_MIN_SCLK |
+	    AMD_DPM_FORCED_LEVEL_PROखाता_MIN_MCLK |
+	    AMD_DPM_FORCED_LEVEL_PROखाता_PEAK)) &&
+	    (level == AMD_DPM_FORCED_LEVEL_PROखाता_EXIT)) अणु
 		pr_err("Currently not in any profile mode!\n");
-		pm_runtime_mark_last_busy(ddev->dev);
-		pm_runtime_put_autosuspend(ddev->dev);
-		return -EINVAL;
-	}
+		pm_runसमय_mark_last_busy(ddev->dev);
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pp_funcs->force_performance_level) {
+	अगर (pp_funcs->क्रमce_perक्रमmance_level) अणु
 		mutex_lock(&adev->pm.mutex);
-		if (adev->pm.dpm.thermal_active) {
+		अगर (adev->pm.dpm.thermal_active) अणु
 			mutex_unlock(&adev->pm.mutex);
-			pm_runtime_mark_last_busy(ddev->dev);
-			pm_runtime_put_autosuspend(ddev->dev);
-			return -EINVAL;
-		}
-		ret = amdgpu_dpm_force_performance_level(adev, level);
-		if (ret) {
+			pm_runसमय_mark_last_busy(ddev->dev);
+			pm_runसमय_put_स्वतःsuspend(ddev->dev);
+			वापस -EINVAL;
+		पूर्ण
+		ret = amdgpu_dpm_क्रमce_perक्रमmance_level(adev, level);
+		अगर (ret) अणु
 			mutex_unlock(&adev->pm.mutex);
-			pm_runtime_mark_last_busy(ddev->dev);
-			pm_runtime_put_autosuspend(ddev->dev);
-			return -EINVAL;
-		} else {
-			adev->pm.dpm.forced_level = level;
-		}
+			pm_runसमय_mark_last_busy(ddev->dev);
+			pm_runसमय_put_स्वतःsuspend(ddev->dev);
+			वापस -EINVAL;
+		पूर्ण अन्यथा अणु
+			adev->pm.dpm.क्रमced_level = level;
+		पूर्ण
 		mutex_unlock(&adev->pm.mutex);
-	}
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	पूर्ण
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_get_pp_num_states(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	struct pp_states_info data;
-	int i, buf_len, ret;
+अटल sमाप_प्रकार amdgpu_get_pp_num_states(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	काष्ठा pp_states_info data;
+	पूर्णांक i, buf_len, ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (pp_funcs->get_pp_num_states) {
+	अगर (pp_funcs->get_pp_num_states) अणु
 		amdgpu_dpm_get_pp_num_states(adev, &data);
-	} else {
-		memset(&data, 0, sizeof(data));
-	}
+	पूर्ण अन्यथा अणु
+		स_रखो(&data, 0, माप(data));
+	पूर्ण
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	buf_len = snprintf(buf, PAGE_SIZE, "states: %d\n", data.nums);
-	for (i = 0; i < data.nums; i++)
-		buf_len += snprintf(buf + buf_len, PAGE_SIZE, "%d %s\n", i,
+	buf_len = snम_लिखो(buf, PAGE_SIZE, "states: %d\n", data.nums);
+	क्रम (i = 0; i < data.nums; i++)
+		buf_len += snम_लिखो(buf + buf_len, PAGE_SIZE, "%d %s\n", i,
 				(data.states[i] == POWER_STATE_TYPE_INTERNAL_BOOT) ? "boot" :
 				(data.states[i] == POWER_STATE_TYPE_BATTERY) ? "battery" :
 				(data.states[i] == POWER_STATE_TYPE_BALANCED) ? "balanced" :
 				(data.states[i] == POWER_STATE_TYPE_PERFORMANCE) ? "performance" : "default");
 
-	return buf_len;
-}
+	वापस buf_len;
+पूर्ण
 
-static ssize_t amdgpu_get_pp_cur_state(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	struct pp_states_info data = {0};
-	enum amd_pm_state_type pm = 0;
-	int i = 0, ret = 0;
+अटल sमाप_प्रकार amdgpu_get_pp_cur_state(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	काष्ठा pp_states_info data = अणु0पूर्ण;
+	क्रमागत amd_pm_state_type pm = 0;
+	पूर्णांक i = 0, ret = 0;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (pp_funcs->get_current_power_state
-		 && pp_funcs->get_pp_num_states) {
-		pm = amdgpu_dpm_get_current_power_state(adev);
+	अगर (pp_funcs->get_current_घातer_state
+		 && pp_funcs->get_pp_num_states) अणु
+		pm = amdgpu_dpm_get_current_घातer_state(adev);
 		amdgpu_dpm_get_pp_num_states(adev, &data);
-	}
+	पूर्ण
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	for (i = 0; i < data.nums; i++) {
-		if (pm == data.states[i])
-			break;
-	}
+	क्रम (i = 0; i < data.nums; i++) अणु
+		अगर (pm == data.states[i])
+			अवरोध;
+	पूर्ण
 
-	if (i == data.nums)
+	अगर (i == data.nums)
 		i = -EINVAL;
 
-	return sysfs_emit(buf, "%d\n", i);
-}
+	वापस sysfs_emit(buf, "%d\n", i);
+पूर्ण
 
-static ssize_t amdgpu_get_pp_force_state(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
+अटल sमाप_प्रकार amdgpu_get_pp_क्रमce_state(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	if (adev->pp_force_state_enabled)
-		return amdgpu_get_pp_cur_state(dev, attr, buf);
-	else
-		return sysfs_emit(buf, "\n");
-}
+	अगर (adev->pp_क्रमce_state_enabled)
+		वापस amdgpu_get_pp_cur_state(dev, attr, buf);
+	अन्यथा
+		वापस sysfs_emit(buf, "\n");
+पूर्ण
 
-static ssize_t amdgpu_set_pp_force_state(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	enum amd_pm_state_type state = 0;
-	unsigned long idx;
-	int ret;
+अटल sमाप_प्रकार amdgpu_set_pp_क्रमce_state(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	क्रमागत amd_pm_state_type state = 0;
+	अचिन्हित दीर्घ idx;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	if (strlen(buf) == 1)
-		adev->pp_force_state_enabled = false;
-	else if (is_support_sw_smu(adev))
-		adev->pp_force_state_enabled = false;
-	else if (adev->powerplay.pp_funcs->dispatch_tasks &&
-			adev->powerplay.pp_funcs->get_pp_num_states) {
-		struct pp_states_info data;
+	अगर (म_माप(buf) == 1)
+		adev->pp_क्रमce_state_enabled = false;
+	अन्यथा अगर (is_support_sw_smu(adev))
+		adev->pp_क्रमce_state_enabled = false;
+	अन्यथा अगर (adev->घातerplay.pp_funcs->dispatch_tasks &&
+			adev->घातerplay.pp_funcs->get_pp_num_states) अणु
+		काष्ठा pp_states_info data;
 
-		ret = kstrtoul(buf, 0, &idx);
-		if (ret || idx >= ARRAY_SIZE(data.states))
-			return -EINVAL;
+		ret = kम_से_अदीर्घ(buf, 0, &idx);
+		अगर (ret || idx >= ARRAY_SIZE(data.states))
+			वापस -EINVAL;
 
 		idx = array_index_nospec(idx, ARRAY_SIZE(data.states));
 
 		amdgpu_dpm_get_pp_num_states(adev, &data);
 		state = data.states[idx];
 
-		ret = pm_runtime_get_sync(ddev->dev);
-		if (ret < 0) {
-			pm_runtime_put_autosuspend(ddev->dev);
-			return ret;
-		}
+		ret = pm_runसमय_get_sync(ddev->dev);
+		अगर (ret < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(ddev->dev);
+			वापस ret;
+		पूर्ण
 
-		/* only set user selected power states */
-		if (state != POWER_STATE_TYPE_INTERNAL_BOOT &&
-		    state != POWER_STATE_TYPE_DEFAULT) {
+		/* only set user selected घातer states */
+		अगर (state != POWER_STATE_TYPE_INTERNAL_BOOT &&
+		    state != POWER_STATE_TYPE_DEFAULT) अणु
 			amdgpu_dpm_dispatch_task(adev,
 					AMD_PP_TASK_ENABLE_USER_STATE, &state);
-			adev->pp_force_state_enabled = true;
-		}
-		pm_runtime_mark_last_busy(ddev->dev);
-		pm_runtime_put_autosuspend(ddev->dev);
-	}
+			adev->pp_क्रमce_state_enabled = true;
+		पूर्ण
+		pm_runसमय_mark_last_busy(ddev->dev);
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  * DOC: pp_table
  *
- * The amdgpu driver provides a sysfs API for uploading new powerplay
- * tables.  The file pp_table is used for this.  Reading the file
- * will dump the current power play table.  Writing to the file
- * will attempt to upload a new powerplay table and re-initialize
- * powerplay using that new table.
+ * The amdgpu driver provides a sysfs API क्रम uploading new घातerplay
+ * tables.  The file pp_table is used क्रम this.  Reading the file
+ * will dump the current घातer play table.  Writing to the file
+ * will attempt to upload a new घातerplay table and re-initialize
+ * घातerplay using that new table.
  *
  */
 
-static ssize_t amdgpu_get_pp_table(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	char *table = NULL;
-	int size, ret;
+अटल sमाप_प्रकार amdgpu_get_pp_table(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	अक्षर *table = शून्य;
+	पूर्णांक size, ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->get_pp_table) {
+	अगर (adev->घातerplay.pp_funcs->get_pp_table) अणु
 		size = amdgpu_dpm_get_pp_table(adev, &table);
-		pm_runtime_mark_last_busy(ddev->dev);
-		pm_runtime_put_autosuspend(ddev->dev);
-		if (size < 0)
-			return size;
-	} else {
-		pm_runtime_mark_last_busy(ddev->dev);
-		pm_runtime_put_autosuspend(ddev->dev);
-		return 0;
-	}
+		pm_runसमय_mark_last_busy(ddev->dev);
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		अगर (size < 0)
+			वापस size;
+	पूर्ण अन्यथा अणु
+		pm_runसमय_mark_last_busy(ddev->dev);
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस 0;
+	पूर्ण
 
-	if (size >= PAGE_SIZE)
+	अगर (size >= PAGE_SIZE)
 		size = PAGE_SIZE - 1;
 
-	memcpy(buf, table, size);
+	स_नकल(buf, table, size);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t amdgpu_set_pp_table(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	int ret = 0;
+अटल sमाप_प्रकार amdgpu_set_pp_table(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	पूर्णांक ret = 0;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
 	ret = amdgpu_dpm_set_pp_table(adev, buf, count);
-	if (ret) {
-		pm_runtime_mark_last_busy(ddev->dev);
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	अगर (ret) अणु
+		pm_runसमय_mark_last_busy(ddev->dev);
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  * DOC: pp_od_clk_voltage
  *
- * The amdgpu driver provides a sysfs API for adjusting the clocks and voltages
- * in each power level within a power state.  The pp_od_clk_voltage is used for
+ * The amdgpu driver provides a sysfs API क्रम adjusting the घड़ीs and voltages
+ * in each घातer level within a घातer state.  The pp_od_clk_voltage is used क्रम
  * this.
  *
- * Note that the actual memory controller clock rate are exposed, not
- * the effective memory clock of the DRAMs. To translate it, use the
- * following formula:
+ * Note that the actual memory controller घड़ी rate are exposed, not
+ * the effective memory घड़ी of the DRAMs. To translate it, use the
+ * following क्रमmula:
  *
  * Clock conversion (Mhz):
  *
- * HBM: effective_memory_clock = memory_controller_clock * 1
+ * HBM: effective_memory_घड़ी = memory_controller_घड़ी * 1
  *
- * G5: effective_memory_clock = memory_controller_clock * 1
+ * G5: effective_memory_घड़ी = memory_controller_घड़ी * 1
  *
- * G6: effective_memory_clock = memory_controller_clock * 2
+ * G6: effective_memory_घड़ी = memory_controller_घड़ी * 2
  *
  * DRAM data rate (MT/s):
  *
- * HBM: effective_memory_clock * 2 = data_rate
+ * HBM: effective_memory_घड़ी * 2 = data_rate
  *
- * G5: effective_memory_clock * 4 = data_rate
+ * G5: effective_memory_घड़ी * 4 = data_rate
  *
- * G6: effective_memory_clock * 8 = data_rate
+ * G6: effective_memory_घड़ी * 8 = data_rate
  *
  * Bandwidth (MB/s):
  *
@@ -676,9 +677,9 @@ static ssize_t amdgpu_set_pp_table(struct device *dev,
  *
  * G5 on RX460:
  *
- * memory_controller_clock = 1750 Mhz
+ * memory_controller_घड़ी = 1750 Mhz
  *
- * effective_memory_clock = 1750 Mhz * 1 = 1750 Mhz
+ * effective_memory_घड़ी = 1750 Mhz * 1 = 1750 Mhz
  *
  * data rate = 1750 * 4 = 7000 MT/s
  *
@@ -686,9 +687,9 @@ static ssize_t amdgpu_set_pp_table(struct device *dev,
  *
  * G6 on RX5700:
  *
- * memory_controller_clock = 875 Mhz
+ * memory_controller_घड़ी = 875 Mhz
  *
- * effective_memory_clock = 875 Mhz * 2 = 1750 Mhz
+ * effective_memory_घड़ी = 875 Mhz * 2 = 1750 Mhz
  *
  * data rate = 1750 * 8 = 14000 MT/s
  *
@@ -698,323 +699,323 @@ static ssize_t amdgpu_set_pp_table(struct device *dev,
  *
  * Reading the file will display:
  *
- * - a list of engine clock levels and voltages labeled OD_SCLK
+ * - a list of engine घड़ी levels and voltages labeled OD_SCLK
  *
- * - a list of memory clock levels and voltages labeled OD_MCLK
+ * - a list of memory घड़ी levels and voltages labeled OD_MCLK
  *
- * - a list of valid ranges for sclk, mclk, and voltage labeled OD_RANGE
+ * - a list of valid ranges क्रम sclk, mclk, and voltage labeled OD_RANGE
  *
  * To manually adjust these settings, first select manual using
- * power_dpm_force_performance_level. Enter a new value for each
+ * घातer_dpm_क्रमce_perक्रमmance_level. Enter a new value क्रम each
  * level by writing a string that contains "s/m level clock voltage" to
  * the file.  E.g., "s 1 500 820" will update sclk level 1 to be 500 MHz
  * at 820 mV; "m 0 350 810" will update mclk level 0 to be 350 MHz at
- * 810 mV.  When you have edited all of the states as needed, write
+ * 810 mV.  When you have edited all of the states as needed, ग_लिखो
  * "c" (commit) to the file to commit your changes.  If you want to reset to the
- * default power levels, write "r" (reset) to the file to reset them.
+ * शेष घातer levels, ग_लिखो "r" (reset) to the file to reset them.
  *
  *
  * < For Vega20 and newer ASICs >
  *
  * Reading the file will display:
  *
- * - minimum and maximum engine clock labeled OD_SCLK
+ * - minimum and maximum engine घड़ी labeled OD_SCLK
  *
- * - minimum(not available for Vega20 and Navi1x) and maximum memory
- *   clock labeled OD_MCLK
+ * - minimum(not available क्रम Vega20 and Navi1x) and maximum memory
+ *   घड़ी labeled OD_MCLK
  *
- * - three <frequency, voltage> points labeled OD_VDDC_CURVE.
+ * - three <frequency, voltage> poपूर्णांकs labeled OD_VDDC_CURVE.
  *   They can be used to calibrate the sclk voltage curve.
  *
  * - voltage offset(in mV) applied on target voltage calculation.
- *   This is available for Sienna Cichlid, Navy Flounder and Dimgrey
+ *   This is available क्रम Sienna Cichlid, Navy Flounder and Dimgrey
  *   Cavefish. For these ASICs, the target voltage calculation can be
  *   illustrated by "voltage = voltage calculated from v/f curve +
  *   overdrive vddgfx offset"
  *
- * - a list of valid ranges for sclk, mclk, and voltage curve points
+ * - a list of valid ranges क्रम sclk, mclk, and voltage curve poपूर्णांकs
  *   labeled OD_RANGE
  *
  * To manually adjust these settings:
  *
- * - First select manual using power_dpm_force_performance_level
+ * - First select manual using घातer_dpm_क्रमce_perक्रमmance_level
  *
- * - For clock frequency setting, enter a new value by writing a
+ * - For घड़ी frequency setting, enter a new value by writing a
  *   string that contains "s/m index clock" to the file. The index
- *   should be 0 if to set minimum clock. And 1 if to set maximum
- *   clock. E.g., "s 0 500" will update minimum sclk to be 500 MHz.
+ *   should be 0 अगर to set minimum घड़ी. And 1 अगर to set maximum
+ *   घड़ी. E.g., "s 0 500" will update minimum sclk to be 500 MHz.
  *   "m 1 800" will update maximum mclk to be 800Mhz.
  *
  *   For sclk voltage curve, enter the new values by writing a
  *   string that contains "vc point clock voltage" to the file. The
- *   points are indexed by 0, 1 and 2. E.g., "vc 0 300 600" will
- *   update point1 with clock set as 300Mhz and voltage as
- *   600mV. "vc 2 1000 1000" will update point3 with clock set
+ *   poपूर्णांकs are indexed by 0, 1 and 2. E.g., "vc 0 300 600" will
+ *   update poपूर्णांक1 with घड़ी set as 300Mhz and voltage as
+ *   600mV. "vc 2 1000 1000" will update poपूर्णांक3 with घड़ी set
  *   as 1000Mhz and voltage 1000mV.
  *
- *   To update the voltage offset applied for gfxclk/voltage calculation,
+ *   To update the voltage offset applied क्रम gfxclk/voltage calculation,
  *   enter the new value by writing a string that contains "vo offset".
  *   This is supported by Sienna Cichlid, Navy Flounder and Dimgrey Cavefish.
  *   And the offset can be a positive or negative value.
  *
- * - When you have edited all of the states as needed, write "c" (commit)
+ * - When you have edited all of the states as needed, ग_लिखो "c" (commit)
  *   to the file to commit your changes
  *
- * - If you want to reset to the default power levels, write "r" (reset)
+ * - If you want to reset to the शेष घातer levels, ग_लिखो "r" (reset)
  *   to the file to reset them
  *
  */
 
-static ssize_t amdgpu_set_pp_od_clk_voltage(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	int ret;
-	uint32_t parameter_size = 0;
-	long parameter[64];
-	char buf_cpy[128];
-	char *tmp_str;
-	char *sub_str;
-	const char delimiter[3] = {' ', '\n', '\0'};
-	uint32_t type;
+अटल sमाप_प्रकार amdgpu_set_pp_od_clk_voltage(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	पूर्णांक ret;
+	uपूर्णांक32_t parameter_size = 0;
+	दीर्घ parameter[64];
+	अक्षर buf_cpy[128];
+	अक्षर *पंचांगp_str;
+	अक्षर *sub_str;
+	स्थिर अक्षर delimiter[3] = अणु' ', '\n', '\0'पूर्ण;
+	uपूर्णांक32_t type;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	if (count > 127)
-		return -EINVAL;
+	अगर (count > 127)
+		वापस -EINVAL;
 
-	if (*buf == 's')
+	अगर (*buf == 's')
 		type = PP_OD_EDIT_SCLK_VDDC_TABLE;
-	else if (*buf == 'p')
+	अन्यथा अगर (*buf == 'p')
 		type = PP_OD_EDIT_CCLK_VDDC_TABLE;
-	else if (*buf == 'm')
+	अन्यथा अगर (*buf == 'm')
 		type = PP_OD_EDIT_MCLK_VDDC_TABLE;
-	else if(*buf == 'r')
+	अन्यथा अगर(*buf == 'r')
 		type = PP_OD_RESTORE_DEFAULT_TABLE;
-	else if (*buf == 'c')
+	अन्यथा अगर (*buf == 'c')
 		type = PP_OD_COMMIT_DPM_TABLE;
-	else if (!strncmp(buf, "vc", 2))
+	अन्यथा अगर (!म_भेदन(buf, "vc", 2))
 		type = PP_OD_EDIT_VDDC_CURVE;
-	else if (!strncmp(buf, "vo", 2))
+	अन्यथा अगर (!म_भेदन(buf, "vo", 2))
 		type = PP_OD_EDIT_VDDGFX_OFFSET;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	memcpy(buf_cpy, buf, count+1);
+	स_नकल(buf_cpy, buf, count+1);
 
-	tmp_str = buf_cpy;
+	पंचांगp_str = buf_cpy;
 
-	if ((type == PP_OD_EDIT_VDDC_CURVE) ||
+	अगर ((type == PP_OD_EDIT_VDDC_CURVE) ||
 	     (type == PP_OD_EDIT_VDDGFX_OFFSET))
-		tmp_str++;
-	while (isspace(*++tmp_str));
+		पंचांगp_str++;
+	जबतक (है_खाली(*++पंचांगp_str));
 
-	while ((sub_str = strsep(&tmp_str, delimiter)) != NULL) {
-		if (strlen(sub_str) == 0)
-			continue;
-		ret = kstrtol(sub_str, 0, &parameter[parameter_size]);
-		if (ret)
-			return -EINVAL;
+	जबतक ((sub_str = strsep(&पंचांगp_str, delimiter)) != शून्य) अणु
+		अगर (म_माप(sub_str) == 0)
+			जारी;
+		ret = kम_से_दीर्घ(sub_str, 0, &parameter[parameter_size]);
+		अगर (ret)
+			वापस -EINVAL;
 		parameter_size++;
 
-		while (isspace(*tmp_str))
-			tmp_str++;
-	}
+		जबतक (है_खाली(*पंचांगp_str))
+			पंचांगp_str++;
+	पूर्ण
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->set_fine_grain_clk_vol) {
+	अगर (adev->घातerplay.pp_funcs->set_fine_grain_clk_vol) अणु
 		ret = amdgpu_dpm_set_fine_grain_clk_vol(adev, type,
 							parameter,
 							parameter_size);
-		if (ret) {
-			pm_runtime_mark_last_busy(ddev->dev);
-			pm_runtime_put_autosuspend(ddev->dev);
-			return -EINVAL;
-		}
-	}
+		अगर (ret) अणु
+			pm_runसमय_mark_last_busy(ddev->dev);
+			pm_runसमय_put_स्वतःsuspend(ddev->dev);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->odn_edit_dpm_table) {
+	अगर (adev->घातerplay.pp_funcs->odn_edit_dpm_table) अणु
 		ret = amdgpu_dpm_odn_edit_dpm_table(adev, type,
 						    parameter, parameter_size);
-		if (ret) {
-			pm_runtime_mark_last_busy(ddev->dev);
-			pm_runtime_put_autosuspend(ddev->dev);
-			return -EINVAL;
-		}
-	}
+		अगर (ret) अणु
+			pm_runसमय_mark_last_busy(ddev->dev);
+			pm_runसमय_put_स्वतःsuspend(ddev->dev);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (type == PP_OD_COMMIT_DPM_TABLE) {
-		if (adev->powerplay.pp_funcs->dispatch_tasks) {
+	अगर (type == PP_OD_COMMIT_DPM_TABLE) अणु
+		अगर (adev->घातerplay.pp_funcs->dispatch_tasks) अणु
 			amdgpu_dpm_dispatch_task(adev,
 						 AMD_PP_TASK_READJUST_POWER_STATE,
-						 NULL);
-			pm_runtime_mark_last_busy(ddev->dev);
-			pm_runtime_put_autosuspend(ddev->dev);
-			return count;
-		} else {
-			pm_runtime_mark_last_busy(ddev->dev);
-			pm_runtime_put_autosuspend(ddev->dev);
-			return -EINVAL;
-		}
-	}
+						 शून्य);
+			pm_runसमय_mark_last_busy(ddev->dev);
+			pm_runसमय_put_स्वतःsuspend(ddev->dev);
+			वापस count;
+		पूर्ण अन्यथा अणु
+			pm_runसमय_mark_last_busy(ddev->dev);
+			pm_runसमय_put_स्वतःsuspend(ddev->dev);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_get_pp_od_clk_voltage(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	ssize_t size;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_pp_od_clk_voltage(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	sमाप_प्रकार size;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->print_clock_levels) {
-		size = amdgpu_dpm_print_clock_levels(adev, OD_SCLK, buf);
-		size += amdgpu_dpm_print_clock_levels(adev, OD_MCLK, buf+size);
-		size += amdgpu_dpm_print_clock_levels(adev, OD_VDDC_CURVE, buf+size);
-		size += amdgpu_dpm_print_clock_levels(adev, OD_VDDGFX_OFFSET, buf+size);
-		size += amdgpu_dpm_print_clock_levels(adev, OD_RANGE, buf+size);
-		size += amdgpu_dpm_print_clock_levels(adev, OD_CCLK, buf+size);
-	} else {
-		size = snprintf(buf, PAGE_SIZE, "\n");
-	}
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	अगर (adev->घातerplay.pp_funcs->prपूर्णांक_घड़ी_levels) अणु
+		size = amdgpu_dpm_prपूर्णांक_घड़ी_levels(adev, OD_SCLK, buf);
+		size += amdgpu_dpm_prपूर्णांक_घड़ी_levels(adev, OD_MCLK, buf+size);
+		size += amdgpu_dpm_prपूर्णांक_घड़ी_levels(adev, OD_VDDC_CURVE, buf+size);
+		size += amdgpu_dpm_prपूर्णांक_घड़ी_levels(adev, OD_VDDGFX_OFFSET, buf+size);
+		size += amdgpu_dpm_prपूर्णांक_घड़ी_levels(adev, OD_RANGE, buf+size);
+		size += amdgpu_dpm_prपूर्णांक_घड़ी_levels(adev, OD_CCLK, buf+size);
+	पूर्ण अन्यथा अणु
+		size = snम_लिखो(buf, PAGE_SIZE, "\n");
+	पूर्ण
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
 /**
  * DOC: pp_features
  *
- * The amdgpu driver provides a sysfs API for adjusting what powerplay
- * features to be enabled. The file pp_features is used for this. And
- * this is only available for Vega10 and later dGPUs.
+ * The amdgpu driver provides a sysfs API क्रम adjusting what घातerplay
+ * features to be enabled. The file pp_features is used क्रम this. And
+ * this is only available क्रम Vega10 and later dGPUs.
  *
  * Reading back the file will show you the followings:
  * - Current ppfeature masks
- * - List of the all supported powerplay features with their naming,
- *   bitmasks and enablement status('Y'/'N' means "enabled"/"disabled").
+ * - List of the all supported घातerplay features with their naming,
+ *   biपंचांगasks and enablement status('Y'/'N' means "enabled"/"disabled").
  *
- * To manually enable or disable a specific feature, just set or clear
+ * To manually enable or disable a specअगरic feature, just set or clear
  * the corresponding bit from original ppfeature masks and input the
  * new ppfeature masks.
  */
-static ssize_t amdgpu_set_pp_features(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf,
-				      size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	uint64_t featuremask;
-	int ret;
+अटल sमाप_प्रकार amdgpu_set_pp_features(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf,
+				      माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	uपूर्णांक64_t featuremask;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
 	ret = kstrtou64(buf, 0, &featuremask);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->set_ppfeature_status) {
+	अगर (adev->घातerplay.pp_funcs->set_ppfeature_status) अणु
 		ret = amdgpu_dpm_set_ppfeature_status(adev, featuremask);
-		if (ret) {
-			pm_runtime_mark_last_busy(ddev->dev);
-			pm_runtime_put_autosuspend(ddev->dev);
-			return -EINVAL;
-		}
-	}
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+		अगर (ret) अणु
+			pm_runसमय_mark_last_busy(ddev->dev);
+			pm_runसमय_put_स्वतःsuspend(ddev->dev);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_get_pp_features(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	ssize_t size;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_pp_features(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	sमाप_प्रकार size;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->get_ppfeature_status)
+	अगर (adev->घातerplay.pp_funcs->get_ppfeature_status)
 		size = amdgpu_dpm_get_ppfeature_status(adev, buf);
-	else
-		size = snprintf(buf, PAGE_SIZE, "\n");
+	अन्यथा
+		size = snम_लिखो(buf, PAGE_SIZE, "\n");
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
 /**
  * DOC: pp_dpm_sclk pp_dpm_mclk pp_dpm_socclk pp_dpm_fclk pp_dpm_dcefclk pp_dpm_pcie
  *
- * The amdgpu driver provides a sysfs API for adjusting what power levels
- * are enabled for a given power state.  The files pp_dpm_sclk, pp_dpm_mclk,
- * pp_dpm_socclk, pp_dpm_fclk, pp_dpm_dcefclk and pp_dpm_pcie are used for
+ * The amdgpu driver provides a sysfs API क्रम adjusting what घातer levels
+ * are enabled क्रम a given घातer state.  The files pp_dpm_sclk, pp_dpm_mclk,
+ * pp_dpm_socclk, pp_dpm_fclk, pp_dpm_dcefclk and pp_dpm_pcie are used क्रम
  * this.
  *
- * pp_dpm_socclk and pp_dpm_dcefclk interfaces are only available for
+ * pp_dpm_socclk and pp_dpm_dcefclk पूर्णांकerfaces are only available क्रम
  * Vega10 and later ASICs.
- * pp_dpm_fclk interface is only available for Vega20 and later ASICs.
+ * pp_dpm_fclk पूर्णांकerface is only available क्रम Vega20 and later ASICs.
  *
- * Reading back the files will show you the available power levels within
- * the power state and the clock information for those levels.
+ * Reading back the files will show you the available घातer levels within
+ * the घातer state and the घड़ी inक्रमmation क्रम those levels.
  *
  * To manually adjust these states, first select manual using
- * power_dpm_force_performance_level.
- * Secondly, enter a new value for each level by inputing a string that
+ * घातer_dpm_क्रमce_perक्रमmance_level.
+ * Secondly, enter a new value क्रम each level by inputing a string that
  * contains " echo xx xx xx > pp_dpm_sclk/mclk/pcie"
  * E.g.,
  *
@@ -1027,782 +1028,782 @@ static ssize_t amdgpu_get_pp_features(struct device *dev,
  * NOTE: change to the dcefclk max dpm level is not supported now
  */
 
-static ssize_t amdgpu_get_pp_dpm_clock(struct device *dev,
-		enum pp_clock_type type,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	ssize_t size;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_pp_dpm_घड़ी(काष्ठा device *dev,
+		क्रमागत pp_घड़ी_प्रकारype type,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	sमाप_प्रकार size;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->print_clock_levels)
-		size = amdgpu_dpm_print_clock_levels(adev, type, buf);
-	else
-		size = snprintf(buf, PAGE_SIZE, "\n");
+	अगर (adev->घातerplay.pp_funcs->prपूर्णांक_घड़ी_levels)
+		size = amdgpu_dpm_prपूर्णांक_घड़ी_levels(adev, type, buf);
+	अन्यथा
+		size = snम_लिखो(buf, PAGE_SIZE, "\n");
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
 /*
- * Worst case: 32 bits individually specified, in octal at 12 characters
- * per line (+1 for \n).
+ * Worst हाल: 32 bits inभागidually specअगरied, in octal at 12 अक्षरacters
+ * per line (+1 क्रम \न).
  */
-#define AMDGPU_MASK_BUF_MAX	(32 * 13)
+#घोषणा AMDGPU_MASK_BUF_MAX	(32 * 13)
 
-static ssize_t amdgpu_read_mask(const char *buf, size_t count, uint32_t *mask)
-{
-	int ret;
-	unsigned long level;
-	char *sub_str = NULL;
-	char *tmp;
-	char buf_cpy[AMDGPU_MASK_BUF_MAX + 1];
-	const char delimiter[3] = {' ', '\n', '\0'};
-	size_t bytes;
+अटल sमाप_प्रकार amdgpu_पढ़ो_mask(स्थिर अक्षर *buf, माप_प्रकार count, uपूर्णांक32_t *mask)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ level;
+	अक्षर *sub_str = शून्य;
+	अक्षर *पंचांगp;
+	अक्षर buf_cpy[AMDGPU_MASK_BUF_MAX + 1];
+	स्थिर अक्षर delimiter[3] = अणु' ', '\n', '\0'पूर्ण;
+	माप_प्रकार bytes;
 
 	*mask = 0;
 
-	bytes = min(count, sizeof(buf_cpy) - 1);
-	memcpy(buf_cpy, buf, bytes);
+	bytes = min(count, माप(buf_cpy) - 1);
+	स_नकल(buf_cpy, buf, bytes);
 	buf_cpy[bytes] = '\0';
-	tmp = buf_cpy;
-	while ((sub_str = strsep(&tmp, delimiter)) != NULL) {
-		if (strlen(sub_str)) {
-			ret = kstrtoul(sub_str, 0, &level);
-			if (ret || level > 31)
-				return -EINVAL;
+	पंचांगp = buf_cpy;
+	जबतक ((sub_str = strsep(&पंचांगp, delimiter)) != शून्य) अणु
+		अगर (म_माप(sub_str)) अणु
+			ret = kम_से_अदीर्घ(sub_str, 0, &level);
+			अगर (ret || level > 31)
+				वापस -EINVAL;
 			*mask |= 1 << level;
-		} else
-			break;
-	}
+		पूर्ण अन्यथा
+			अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t amdgpu_set_pp_dpm_clock(struct device *dev,
-		enum pp_clock_type type,
-		const char *buf,
-		size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	int ret;
-	uint32_t mask = 0;
+अटल sमाप_प्रकार amdgpu_set_pp_dpm_घड़ी(काष्ठा device *dev,
+		क्रमागत pp_घड़ी_प्रकारype type,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	पूर्णांक ret;
+	uपूर्णांक32_t mask = 0;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = amdgpu_read_mask(buf, count, &mask);
-	if (ret)
-		return ret;
+	ret = amdgpu_पढ़ो_mask(buf, count, &mask);
+	अगर (ret)
+		वापस ret;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->force_clock_level)
-		ret = amdgpu_dpm_force_clock_level(adev, type, mask);
-	else
+	अगर (adev->घातerplay.pp_funcs->क्रमce_घड़ी_level)
+		ret = amdgpu_dpm_क्रमce_घड़ी_level(adev, type, mask);
+	अन्यथा
 		ret = 0;
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_get_pp_dpm_sclk(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	return amdgpu_get_pp_dpm_clock(dev, PP_SCLK, buf);
-}
+अटल sमाप_प्रकार amdgpu_get_pp_dpm_sclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस amdgpu_get_pp_dpm_घड़ी(dev, PP_SCLK, buf);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_dpm_sclk(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	return amdgpu_set_pp_dpm_clock(dev, PP_SCLK, buf, count);
-}
+अटल sमाप_प्रकार amdgpu_set_pp_dpm_sclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	वापस amdgpu_set_pp_dpm_घड़ी(dev, PP_SCLK, buf, count);
+पूर्ण
 
-static ssize_t amdgpu_get_pp_dpm_mclk(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	return amdgpu_get_pp_dpm_clock(dev, PP_MCLK, buf);
-}
+अटल sमाप_प्रकार amdgpu_get_pp_dpm_mclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस amdgpu_get_pp_dpm_घड़ी(dev, PP_MCLK, buf);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_dpm_mclk(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	return amdgpu_set_pp_dpm_clock(dev, PP_MCLK, buf, count);
-}
+अटल sमाप_प्रकार amdgpu_set_pp_dpm_mclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	वापस amdgpu_set_pp_dpm_घड़ी(dev, PP_MCLK, buf, count);
+पूर्ण
 
-static ssize_t amdgpu_get_pp_dpm_socclk(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	return amdgpu_get_pp_dpm_clock(dev, PP_SOCCLK, buf);
-}
+अटल sमाप_प्रकार amdgpu_get_pp_dpm_socclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस amdgpu_get_pp_dpm_घड़ी(dev, PP_SOCCLK, buf);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_dpm_socclk(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	return amdgpu_set_pp_dpm_clock(dev, PP_SOCCLK, buf, count);
-}
+अटल sमाप_प्रकार amdgpu_set_pp_dpm_socclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	वापस amdgpu_set_pp_dpm_घड़ी(dev, PP_SOCCLK, buf, count);
+पूर्ण
 
-static ssize_t amdgpu_get_pp_dpm_fclk(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	return amdgpu_get_pp_dpm_clock(dev, PP_FCLK, buf);
-}
+अटल sमाप_प्रकार amdgpu_get_pp_dpm_fclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस amdgpu_get_pp_dpm_घड़ी(dev, PP_FCLK, buf);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_dpm_fclk(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	return amdgpu_set_pp_dpm_clock(dev, PP_FCLK, buf, count);
-}
+अटल sमाप_प्रकार amdgpu_set_pp_dpm_fclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	वापस amdgpu_set_pp_dpm_घड़ी(dev, PP_FCLK, buf, count);
+पूर्ण
 
-static ssize_t amdgpu_get_pp_dpm_vclk(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	return amdgpu_get_pp_dpm_clock(dev, PP_VCLK, buf);
-}
+अटल sमाप_प्रकार amdgpu_get_pp_dpm_vclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस amdgpu_get_pp_dpm_घड़ी(dev, PP_VCLK, buf);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_dpm_vclk(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	return amdgpu_set_pp_dpm_clock(dev, PP_VCLK, buf, count);
-}
+अटल sमाप_प्रकार amdgpu_set_pp_dpm_vclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	वापस amdgpu_set_pp_dpm_घड़ी(dev, PP_VCLK, buf, count);
+पूर्ण
 
-static ssize_t amdgpu_get_pp_dpm_dclk(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	return amdgpu_get_pp_dpm_clock(dev, PP_DCLK, buf);
-}
+अटल sमाप_प्रकार amdgpu_get_pp_dpm_dclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस amdgpu_get_pp_dpm_घड़ी(dev, PP_DCLK, buf);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_dpm_dclk(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	return amdgpu_set_pp_dpm_clock(dev, PP_DCLK, buf, count);
-}
+अटल sमाप_प्रकार amdgpu_set_pp_dpm_dclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	वापस amdgpu_set_pp_dpm_घड़ी(dev, PP_DCLK, buf, count);
+पूर्ण
 
-static ssize_t amdgpu_get_pp_dpm_dcefclk(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	return amdgpu_get_pp_dpm_clock(dev, PP_DCEFCLK, buf);
-}
+अटल sमाप_प्रकार amdgpu_get_pp_dpm_dcefclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस amdgpu_get_pp_dpm_घड़ी(dev, PP_DCEFCLK, buf);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_dpm_dcefclk(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	return amdgpu_set_pp_dpm_clock(dev, PP_DCEFCLK, buf, count);
-}
+अटल sमाप_प्रकार amdgpu_set_pp_dpm_dcefclk(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	वापस amdgpu_set_pp_dpm_घड़ी(dev, PP_DCEFCLK, buf, count);
+पूर्ण
 
-static ssize_t amdgpu_get_pp_dpm_pcie(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	return amdgpu_get_pp_dpm_clock(dev, PP_PCIE, buf);
-}
+अटल sमाप_प्रकार amdgpu_get_pp_dpm_pcie(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस amdgpu_get_pp_dpm_घड़ी(dev, PP_PCIE, buf);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_dpm_pcie(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	return amdgpu_set_pp_dpm_clock(dev, PP_PCIE, buf, count);
-}
+अटल sमाप_प्रकार amdgpu_set_pp_dpm_pcie(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	वापस amdgpu_set_pp_dpm_घड़ी(dev, PP_PCIE, buf, count);
+पूर्ण
 
-static ssize_t amdgpu_get_pp_sclk_od(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	uint32_t value = 0;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_pp_sclk_od(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	uपूर्णांक32_t value = 0;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (is_support_sw_smu(adev))
+	अगर (is_support_sw_smu(adev))
 		value = 0;
-	else if (adev->powerplay.pp_funcs->get_sclk_od)
+	अन्यथा अगर (adev->घातerplay.pp_funcs->get_sclk_od)
 		value = amdgpu_dpm_get_sclk_od(adev);
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return sysfs_emit(buf, "%d\n", value);
-}
+	वापस sysfs_emit(buf, "%d\n", value);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_sclk_od(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	int ret;
-	long int value;
+अटल sमाप_प्रकार amdgpu_set_pp_sclk_od(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	पूर्णांक ret;
+	दीर्घ पूर्णांक value;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = kstrtol(buf, 0, &value);
+	ret = kम_से_दीर्घ(buf, 0, &value);
 
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (is_support_sw_smu(adev)) {
+	अगर (is_support_sw_smu(adev)) अणु
 		value = 0;
-	} else {
-		if (adev->powerplay.pp_funcs->set_sclk_od)
-			amdgpu_dpm_set_sclk_od(adev, (uint32_t)value);
+	पूर्ण अन्यथा अणु
+		अगर (adev->घातerplay.pp_funcs->set_sclk_od)
+			amdgpu_dpm_set_sclk_od(adev, (uपूर्णांक32_t)value);
 
-		if (adev->powerplay.pp_funcs->dispatch_tasks) {
-			amdgpu_dpm_dispatch_task(adev, AMD_PP_TASK_READJUST_POWER_STATE, NULL);
-		} else {
+		अगर (adev->घातerplay.pp_funcs->dispatch_tasks) अणु
+			amdgpu_dpm_dispatch_task(adev, AMD_PP_TASK_READJUST_POWER_STATE, शून्य);
+		पूर्ण अन्यथा अणु
 			adev->pm.dpm.current_ps = adev->pm.dpm.boot_ps;
-			amdgpu_pm_compute_clocks(adev);
-		}
-	}
+			amdgpu_pm_compute_घड़ीs(adev);
+		पूर्ण
+	पूर्ण
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_get_pp_mclk_od(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	uint32_t value = 0;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_pp_mclk_od(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	uपूर्णांक32_t value = 0;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (is_support_sw_smu(adev))
+	अगर (is_support_sw_smu(adev))
 		value = 0;
-	else if (adev->powerplay.pp_funcs->get_mclk_od)
+	अन्यथा अगर (adev->घातerplay.pp_funcs->get_mclk_od)
 		value = amdgpu_dpm_get_mclk_od(adev);
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return sysfs_emit(buf, "%d\n", value);
-}
+	वापस sysfs_emit(buf, "%d\n", value);
+पूर्ण
 
-static ssize_t amdgpu_set_pp_mclk_od(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	int ret;
-	long int value;
+अटल sमाप_प्रकार amdgpu_set_pp_mclk_od(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	पूर्णांक ret;
+	दीर्घ पूर्णांक value;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = kstrtol(buf, 0, &value);
+	ret = kम_से_दीर्घ(buf, 0, &value);
 
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (is_support_sw_smu(adev)) {
+	अगर (is_support_sw_smu(adev)) अणु
 		value = 0;
-	} else {
-		if (adev->powerplay.pp_funcs->set_mclk_od)
-			amdgpu_dpm_set_mclk_od(adev, (uint32_t)value);
+	पूर्ण अन्यथा अणु
+		अगर (adev->घातerplay.pp_funcs->set_mclk_od)
+			amdgpu_dpm_set_mclk_od(adev, (uपूर्णांक32_t)value);
 
-		if (adev->powerplay.pp_funcs->dispatch_tasks) {
-			amdgpu_dpm_dispatch_task(adev, AMD_PP_TASK_READJUST_POWER_STATE, NULL);
-		} else {
+		अगर (adev->घातerplay.pp_funcs->dispatch_tasks) अणु
+			amdgpu_dpm_dispatch_task(adev, AMD_PP_TASK_READJUST_POWER_STATE, शून्य);
+		पूर्ण अन्यथा अणु
 			adev->pm.dpm.current_ps = adev->pm.dpm.boot_ps;
-			amdgpu_pm_compute_clocks(adev);
-		}
-	}
+			amdgpu_pm_compute_घड़ीs(adev);
+		पूर्ण
+	पूर्ण
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- * DOC: pp_power_profile_mode
+ * DOC: pp_घातer_profile_mode
  *
- * The amdgpu driver provides a sysfs API for adjusting the heuristics
- * related to switching between power levels in a power state.  The file
- * pp_power_profile_mode is used for this.
+ * The amdgpu driver provides a sysfs API क्रम adjusting the heuristics
+ * related to चयनing between घातer levels in a घातer state.  The file
+ * pp_घातer_profile_mode is used क्रम this.
  *
- * Reading this file outputs a list of all of the predefined power profiles
- * and the relevant heuristics settings for that profile.
+ * Reading this file outमाला_दो a list of all of the predefined घातer profiles
+ * and the relevant heuristics settings क्रम that profile.
  *
  * To select a profile or create a custom profile, first select manual using
- * power_dpm_force_performance_level.  Writing the number of a predefined
- * profile to pp_power_profile_mode will enable those heuristics.  To
- * create a custom set of heuristics, write a string of numbers to the file
- * starting with the number of the custom profile along with a setting
- * for each heuristic parameter.  Due to differences across asic families
+ * घातer_dpm_क्रमce_perक्रमmance_level.  Writing the number of a predefined
+ * profile to pp_घातer_profile_mode will enable those heuristics.  To
+ * create a custom set of heuristics, ग_लिखो a string of numbers to the file
+ * starting with the number of the custom profile aदीर्घ with a setting
+ * क्रम each heuristic parameter.  Due to dअगरferences across asic families
  * the heuristic parameters vary from family to family.
  *
  */
 
-static ssize_t amdgpu_get_pp_power_profile_mode(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	ssize_t size;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_pp_घातer_profile_mode(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	sमाप_प्रकार size;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->get_power_profile_mode)
-		size = amdgpu_dpm_get_power_profile_mode(adev, buf);
-	else
-		size = snprintf(buf, PAGE_SIZE, "\n");
+	अगर (adev->घातerplay.pp_funcs->get_घातer_profile_mode)
+		size = amdgpu_dpm_get_घातer_profile_mode(adev, buf);
+	अन्यथा
+		size = snम_लिखो(buf, PAGE_SIZE, "\n");
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
 
-static ssize_t amdgpu_set_pp_power_profile_mode(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	int ret;
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	uint32_t parameter_size = 0;
-	long parameter[64];
-	char *sub_str, buf_cpy[128];
-	char *tmp_str;
-	uint32_t i = 0;
-	char tmp[2];
-	long int profile_mode = 0;
-	const char delimiter[3] = {' ', '\n', '\0'};
+अटल sमाप_प्रकार amdgpu_set_pp_घातer_profile_mode(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	पूर्णांक ret;
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	uपूर्णांक32_t parameter_size = 0;
+	दीर्घ parameter[64];
+	अक्षर *sub_str, buf_cpy[128];
+	अक्षर *पंचांगp_str;
+	uपूर्णांक32_t i = 0;
+	अक्षर पंचांगp[2];
+	दीर्घ पूर्णांक profile_mode = 0;
+	स्थिर अक्षर delimiter[3] = अणु' ', '\n', '\0'पूर्ण;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	tmp[0] = *(buf);
-	tmp[1] = '\0';
-	ret = kstrtol(tmp, 0, &profile_mode);
-	if (ret)
-		return -EINVAL;
+	पंचांगp[0] = *(buf);
+	पंचांगp[1] = '\0';
+	ret = kम_से_दीर्घ(पंचांगp, 0, &profile_mode);
+	अगर (ret)
+		वापस -EINVAL;
 
-	if (profile_mode == PP_SMC_POWER_PROFILE_CUSTOM) {
-		if (count < 2 || count > 127)
-			return -EINVAL;
-		while (isspace(*++buf))
+	अगर (profile_mode == PP_SMC_POWER_PROखाता_CUSTOM) अणु
+		अगर (count < 2 || count > 127)
+			वापस -EINVAL;
+		जबतक (है_खाली(*++buf))
 			i++;
-		memcpy(buf_cpy, buf, count-i);
-		tmp_str = buf_cpy;
-		while ((sub_str = strsep(&tmp_str, delimiter)) != NULL) {
-			if (strlen(sub_str) == 0)
-				continue;
-			ret = kstrtol(sub_str, 0, &parameter[parameter_size]);
-			if (ret)
-				return -EINVAL;
+		स_नकल(buf_cpy, buf, count-i);
+		पंचांगp_str = buf_cpy;
+		जबतक ((sub_str = strsep(&पंचांगp_str, delimiter)) != शून्य) अणु
+			अगर (म_माप(sub_str) == 0)
+				जारी;
+			ret = kम_से_दीर्घ(sub_str, 0, &parameter[parameter_size]);
+			अगर (ret)
+				वापस -EINVAL;
 			parameter_size++;
-			while (isspace(*tmp_str))
-				tmp_str++;
-		}
-	}
+			जबतक (है_खाली(*पंचांगp_str))
+				पंचांगp_str++;
+		पूर्ण
+	पूर्ण
 	parameter[parameter_size] = profile_mode;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->set_power_profile_mode)
-		ret = amdgpu_dpm_set_power_profile_mode(adev, parameter, parameter_size);
+	अगर (adev->घातerplay.pp_funcs->set_घातer_profile_mode)
+		ret = amdgpu_dpm_set_घातer_profile_mode(adev, parameter, parameter_size);
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	if (!ret)
-		return count;
+	अगर (!ret)
+		वापस count;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * DOC: gpu_busy_percent
  *
- * The amdgpu driver provides a sysfs API for reading how busy the GPU
- * is as a percentage.  The file gpu_busy_percent is used for this.
+ * The amdgpu driver provides a sysfs API क्रम पढ़ोing how busy the GPU
+ * is as a percentage.  The file gpu_busy_percent is used क्रम this.
  * The SMU firmware computes a percentage of load based on the
  * aggregate activity level in the IP cores.
  */
-static ssize_t amdgpu_get_gpu_busy_percent(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	int r, value, size = sizeof(value);
+अटल sमाप_प्रकार amdgpu_get_gpu_busy_percent(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	पूर्णांक r, value, size = माप(value);
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(ddev->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(ddev->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस r;
+	पूर्ण
 
-	/* read the IP busy sensor */
-	r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_GPU_LOAD,
-				   (void *)&value, &size);
+	/* पढ़ो the IP busy sensor */
+	r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_GPU_LOAD,
+				   (व्योम *)&value, &size);
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return sysfs_emit(buf, "%d\n", value);
-}
+	वापस sysfs_emit(buf, "%d\n", value);
+पूर्ण
 
 /**
  * DOC: mem_busy_percent
  *
- * The amdgpu driver provides a sysfs API for reading how busy the VRAM
- * is as a percentage.  The file mem_busy_percent is used for this.
+ * The amdgpu driver provides a sysfs API क्रम पढ़ोing how busy the VRAM
+ * is as a percentage.  The file mem_busy_percent is used क्रम this.
  * The SMU firmware computes a percentage of load based on the
  * aggregate activity level in the IP cores.
  */
-static ssize_t amdgpu_get_mem_busy_percent(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	int r, value, size = sizeof(value);
+अटल sमाप_प्रकार amdgpu_get_mem_busy_percent(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	पूर्णांक r, value, size = माप(value);
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(ddev->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(ddev->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस r;
+	पूर्ण
 
-	/* read the IP busy sensor */
-	r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_MEM_LOAD,
-				   (void *)&value, &size);
+	/* पढ़ो the IP busy sensor */
+	r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_MEM_LOAD,
+				   (व्योम *)&value, &size);
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return sysfs_emit(buf, "%d\n", value);
-}
+	वापस sysfs_emit(buf, "%d\n", value);
+पूर्ण
 
 /**
  * DOC: pcie_bw
  *
- * The amdgpu driver provides a sysfs API for estimating how much data
+ * The amdgpu driver provides a sysfs API क्रम estimating how much data
  * has been received and sent by the GPU in the last second through PCIe.
- * The file pcie_bw is used for this.
- * The Perf counters count the number of received and sent messages and return
+ * The file pcie_bw is used क्रम this.
+ * The Perf counters count the number of received and sent messages and वापस
  * those values, as well as the maximum payload size of a PCIe packet (mps).
  * Note that it is not possible to easily and quickly obtain the size of each
- * packet transmitted, so we output the max payload size (mps) to allow for
+ * packet transmitted, so we output the max payload size (mps) to allow क्रम
  * quick estimation of the PCIe bandwidth usage
  */
-static ssize_t amdgpu_get_pcie_bw(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	uint64_t count0 = 0, count1 = 0;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_pcie_bw(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	uपूर्णांक64_t count0 = 0, count1 = 0;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	if (adev->flags & AMD_IS_APU)
-		return -ENODATA;
+	अगर (adev->flags & AMD_IS_APU)
+		वापस -ENODATA;
 
-	if (!adev->asic_funcs->get_pcie_usage)
-		return -ENODATA;
+	अगर (!adev->asic_funcs->get_pcie_usage)
+		वापस -ENODATA;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
 	amdgpu_asic_get_pcie_usage(adev, &count0, &count1);
 
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return sysfs_emit(buf, "%llu %llu %i\n",
+	वापस sysfs_emit(buf, "%llu %llu %i\n",
 			  count0, count1, pcie_get_mps(adev->pdev));
-}
+पूर्ण
 
 /**
  * DOC: unique_id
  *
- * The amdgpu driver provides a sysfs API for providing a unique ID for the GPU
- * The file unique_id is used for this.
+ * The amdgpu driver provides a sysfs API क्रम providing a unique ID क्रम the GPU
+ * The file unique_id is used क्रम this.
  * This will provide a Unique ID that will persist from machine to machine
  *
- * NOTE: This will only work for GFX9 and newer. This file will be absent
+ * NOTE: This will only work क्रम GFX9 and newer. This file will be असलent
  * on unsupported ASICs (GFX8 and older)
  */
-static ssize_t amdgpu_get_unique_id(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
+अटल sमाप_प्रकार amdgpu_get_unique_id(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	if (adev->unique_id)
-		return sysfs_emit(buf, "%016llx\n", adev->unique_id);
+	अगर (adev->unique_id)
+		वापस sysfs_emit(buf, "%016llx\n", adev->unique_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * DOC: thermal_throttling_logging
  *
- * Thermal throttling pulls down the clock frequency and thus the performance.
+ * Thermal throttling pulls करोwn the घड़ी frequency and thus the perक्रमmance.
  * It's an useful mechanism to protect the chip from overheating. Since it
- * impacts performance, the user controls whether it is enabled and if so,
+ * impacts perक्रमmance, the user controls whether it is enabled and अगर so,
  * the log frequency.
  *
  * Reading back the file shows you the status(enabled or disabled) and
- * the interval(in seconds) between each thermal logging.
+ * the पूर्णांकerval(in seconds) between each thermal logging.
  *
- * Writing an integer to the file, sets a new logging interval, in seconds.
+ * Writing an पूर्णांकeger to the file, sets a new logging पूर्णांकerval, in seconds.
  * The value should be between 1 and 3600. If the value is less than 1,
  * thermal logging is disabled. Values greater than 3600 are ignored.
  */
-static ssize_t amdgpu_get_thermal_throttling_logging(struct device *dev,
-						     struct device_attribute *attr,
-						     char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
+अटल sमाप_प्रकार amdgpu_get_thermal_throttling_logging(काष्ठा device *dev,
+						     काष्ठा device_attribute *attr,
+						     अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
 
-	return sysfs_emit(buf, "%s: thermal throttling logging %s, with interval %d seconds\n",
+	वापस sysfs_emit(buf, "%s: thermal throttling logging %s, with interval %d seconds\n",
 			  adev_to_drm(adev)->unique,
-			  atomic_read(&adev->throttling_logging_enabled) ? "enabled" : "disabled",
-			  adev->throttling_logging_rs.interval / HZ + 1);
-}
+			  atomic_पढ़ो(&adev->throttling_logging_enabled) ? "enabled" : "disabled",
+			  adev->throttling_logging_rs.पूर्णांकerval / HZ + 1);
+पूर्ण
 
-static ssize_t amdgpu_set_thermal_throttling_logging(struct device *dev,
-						     struct device_attribute *attr,
-						     const char *buf,
-						     size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	long throttling_logging_interval;
-	unsigned long flags;
-	int ret = 0;
+अटल sमाप_प्रकार amdgpu_set_thermal_throttling_logging(काष्ठा device *dev,
+						     काष्ठा device_attribute *attr,
+						     स्थिर अक्षर *buf,
+						     माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	दीर्घ throttling_logging_पूर्णांकerval;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	ret = kstrtol(buf, 0, &throttling_logging_interval);
-	if (ret)
-		return ret;
+	ret = kम_से_दीर्घ(buf, 0, &throttling_logging_पूर्णांकerval);
+	अगर (ret)
+		वापस ret;
 
-	if (throttling_logging_interval > 3600)
-		return -EINVAL;
+	अगर (throttling_logging_पूर्णांकerval > 3600)
+		वापस -EINVAL;
 
-	if (throttling_logging_interval > 0) {
+	अगर (throttling_logging_पूर्णांकerval > 0) अणु
 		raw_spin_lock_irqsave(&adev->throttling_logging_rs.lock, flags);
 		/*
-		 * Reset the ratelimit timer internals.
-		 * This can effectively restart the timer.
+		 * Reset the ratelimit समयr पूर्णांकernals.
+		 * This can effectively restart the समयr.
 		 */
-		adev->throttling_logging_rs.interval =
-			(throttling_logging_interval - 1) * HZ;
+		adev->throttling_logging_rs.पूर्णांकerval =
+			(throttling_logging_पूर्णांकerval - 1) * HZ;
 		adev->throttling_logging_rs.begin = 0;
-		adev->throttling_logging_rs.printed = 0;
+		adev->throttling_logging_rs.prपूर्णांकed = 0;
 		adev->throttling_logging_rs.missed = 0;
 		raw_spin_unlock_irqrestore(&adev->throttling_logging_rs.lock, flags);
 
 		atomic_set(&adev->throttling_logging_enabled, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic_set(&adev->throttling_logging_enabled, 0);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  * DOC: gpu_metrics
  *
- * The amdgpu driver provides a sysfs API for retrieving current gpu
- * metrics data. The file gpu_metrics is used for this. Reading the
+ * The amdgpu driver provides a sysfs API क्रम retrieving current gpu
+ * metrics data. The file gpu_metrics is used क्रम this. Reading the
  * file will dump all the current gpu metrics data.
  *
  * These data include temperature, frequency, engines utilization,
- * power consume, throttler status, fan speed and cpu core statistics(
- * available for APU only). That's it will give a snapshot of all sensors
- * at the same time.
+ * घातer consume, throttler status, fan speed and cpu core statistics(
+ * available क्रम APU only). That's it will give a snapshot of all sensors
+ * at the same समय.
  */
-static ssize_t amdgpu_get_gpu_metrics(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	void *gpu_metrics;
-	ssize_t size = 0;
-	int ret;
+अटल sमाप_प्रकार amdgpu_get_gpu_metrics(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	व्योम *gpu_metrics;
+	sमाप_प्रकार size = 0;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(ddev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(ddev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(ddev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(ddev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->get_gpu_metrics)
+	अगर (adev->घातerplay.pp_funcs->get_gpu_metrics)
 		size = amdgpu_dpm_get_gpu_metrics(adev, &gpu_metrics);
 
-	if (size <= 0)
-		goto out;
+	अगर (size <= 0)
+		जाओ out;
 
-	if (size >= PAGE_SIZE)
+	अगर (size >= PAGE_SIZE)
 		size = PAGE_SIZE - 1;
 
-	memcpy(buf, gpu_metrics, size);
+	स_नकल(buf, gpu_metrics, size);
 
 out:
-	pm_runtime_mark_last_busy(ddev->dev);
-	pm_runtime_put_autosuspend(ddev->dev);
+	pm_runसमय_mark_last_busy(ddev->dev);
+	pm_runसमय_put_स्वतःsuspend(ddev->dev);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static struct amdgpu_device_attr amdgpu_device_attrs[] = {
-	AMDGPU_DEVICE_ATTR_RW(power_dpm_state,				ATTR_FLAG_BASIC|ATTR_FLAG_ONEVF),
-	AMDGPU_DEVICE_ATTR_RW(power_dpm_force_performance_level,	ATTR_FLAG_BASIC|ATTR_FLAG_ONEVF),
+अटल काष्ठा amdgpu_device_attr amdgpu_device_attrs[] = अणु
+	AMDGPU_DEVICE_ATTR_RW(घातer_dpm_state,				ATTR_FLAG_BASIC|ATTR_FLAG_ONEVF),
+	AMDGPU_DEVICE_ATTR_RW(घातer_dpm_क्रमce_perक्रमmance_level,	ATTR_FLAG_BASIC|ATTR_FLAG_ONEVF),
 	AMDGPU_DEVICE_ATTR_RO(pp_num_states,				ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RO(pp_cur_state,				ATTR_FLAG_BASIC),
-	AMDGPU_DEVICE_ATTR_RW(pp_force_state,				ATTR_FLAG_BASIC),
+	AMDGPU_DEVICE_ATTR_RW(pp_क्रमce_state,				ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RW(pp_table,					ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RW(pp_dpm_sclk,				ATTR_FLAG_BASIC|ATTR_FLAG_ONEVF),
 	AMDGPU_DEVICE_ATTR_RW(pp_dpm_mclk,				ATTR_FLAG_BASIC|ATTR_FLAG_ONEVF),
@@ -1814,7 +1815,7 @@ static struct amdgpu_device_attr amdgpu_device_attrs[] = {
 	AMDGPU_DEVICE_ATTR_RW(pp_dpm_pcie,				ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RW(pp_sclk_od,				ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RW(pp_mclk_od,				ATTR_FLAG_BASIC),
-	AMDGPU_DEVICE_ATTR_RW(pp_power_profile_mode,			ATTR_FLAG_BASIC),
+	AMDGPU_DEVICE_ATTR_RW(pp_घातer_profile_mode,			ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RW(pp_od_clk_voltage,			ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RO(gpu_busy_percent,				ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RO(mem_busy_percent,				ATTR_FLAG_BASIC),
@@ -1823,1129 +1824,1129 @@ static struct amdgpu_device_attr amdgpu_device_attrs[] = {
 	AMDGPU_DEVICE_ATTR_RO(unique_id,				ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RW(thermal_throttling_logging,		ATTR_FLAG_BASIC),
 	AMDGPU_DEVICE_ATTR_RO(gpu_metrics,				ATTR_FLAG_BASIC),
-};
+पूर्ण;
 
-static int default_attr_update(struct amdgpu_device *adev, struct amdgpu_device_attr *attr,
-			       uint32_t mask, enum amdgpu_device_attr_states *states)
-{
-	struct device_attribute *dev_attr = &attr->dev_attr;
-	const char *attr_name = dev_attr->attr.name;
-	struct pp_hwmgr *hwmgr = adev->powerplay.pp_handle;
-	enum amd_asic_type asic_type = adev->asic_type;
+अटल पूर्णांक शेष_attr_update(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_device_attr *attr,
+			       uपूर्णांक32_t mask, क्रमागत amdgpu_device_attr_states *states)
+अणु
+	काष्ठा device_attribute *dev_attr = &attr->dev_attr;
+	स्थिर अक्षर *attr_name = dev_attr->attr.name;
+	काष्ठा pp_hwmgr *hwmgr = adev->घातerplay.pp_handle;
+	क्रमागत amd_asic_type asic_type = adev->asic_type;
 
-	if (!(attr->flags & mask)) {
+	अगर (!(attr->flags & mask)) अणु
 		*states = ATTR_STATE_UNSUPPORTED;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-#define DEVICE_ATTR_IS(_name)	(!strcmp(attr_name, #_name))
+#घोषणा DEVICE_ATTR_IS(_name)	(!म_भेद(attr_name, #_name))
 
-	if (DEVICE_ATTR_IS(pp_dpm_socclk)) {
-		if (asic_type < CHIP_VEGA10)
+	अगर (DEVICE_ATTR_IS(pp_dpm_socclk)) अणु
+		अगर (asic_type < CHIP_VEGA10)
 			*states = ATTR_STATE_UNSUPPORTED;
-	} else if (DEVICE_ATTR_IS(pp_dpm_dcefclk)) {
-		if (asic_type < CHIP_VEGA10 ||
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(pp_dpm_dcefclk)) अणु
+		अगर (asic_type < CHIP_VEGA10 ||
 		    asic_type == CHIP_ARCTURUS ||
 		    asic_type == CHIP_ALDEBARAN)
 			*states = ATTR_STATE_UNSUPPORTED;
-	} else if (DEVICE_ATTR_IS(pp_dpm_fclk)) {
-		if (asic_type < CHIP_VEGA20)
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(pp_dpm_fclk)) अणु
+		अगर (asic_type < CHIP_VEGA20)
 			*states = ATTR_STATE_UNSUPPORTED;
-	} else if (DEVICE_ATTR_IS(pp_od_clk_voltage)) {
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(pp_od_clk_voltage)) अणु
 		*states = ATTR_STATE_UNSUPPORTED;
-		if ((is_support_sw_smu(adev) && adev->smu.od_enabled) ||
+		अगर ((is_support_sw_smu(adev) && adev->smu.od_enabled) ||
 		    (is_support_sw_smu(adev) && adev->smu.is_apu) ||
 			(!is_support_sw_smu(adev) && hwmgr->od_enabled))
 			*states = ATTR_STATE_SUPPORTED;
-	} else if (DEVICE_ATTR_IS(mem_busy_percent)) {
-		if (adev->flags & AMD_IS_APU || asic_type == CHIP_VEGA10)
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(mem_busy_percent)) अणु
+		अगर (adev->flags & AMD_IS_APU || asic_type == CHIP_VEGA10)
 			*states = ATTR_STATE_UNSUPPORTED;
-	} else if (DEVICE_ATTR_IS(pcie_bw)) {
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(pcie_bw)) अणु
 		/* PCIe Perf counters won't work on APU nodes */
-		if (adev->flags & AMD_IS_APU)
+		अगर (adev->flags & AMD_IS_APU)
 			*states = ATTR_STATE_UNSUPPORTED;
-	} else if (DEVICE_ATTR_IS(unique_id)) {
-		if (asic_type != CHIP_VEGA10 &&
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(unique_id)) अणु
+		अगर (asic_type != CHIP_VEGA10 &&
 		    asic_type != CHIP_VEGA20 &&
 		    asic_type != CHIP_ARCTURUS)
 			*states = ATTR_STATE_UNSUPPORTED;
-	} else if (DEVICE_ATTR_IS(pp_features)) {
-		if (adev->flags & AMD_IS_APU || asic_type < CHIP_VEGA10)
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(pp_features)) अणु
+		अगर (adev->flags & AMD_IS_APU || asic_type < CHIP_VEGA10)
 			*states = ATTR_STATE_UNSUPPORTED;
-	} else if (DEVICE_ATTR_IS(gpu_metrics)) {
-		if (asic_type < CHIP_VEGA12)
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(gpu_metrics)) अणु
+		अगर (asic_type < CHIP_VEGA12)
 			*states = ATTR_STATE_UNSUPPORTED;
-	} else if (DEVICE_ATTR_IS(pp_dpm_vclk)) {
-		if (!(asic_type == CHIP_VANGOGH))
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(pp_dpm_vclk)) अणु
+		अगर (!(asic_type == CHIP_VANGOGH))
 			*states = ATTR_STATE_UNSUPPORTED;
-	} else if (DEVICE_ATTR_IS(pp_dpm_dclk)) {
-		if (!(asic_type == CHIP_VANGOGH))
+	पूर्ण अन्यथा अगर (DEVICE_ATTR_IS(pp_dpm_dclk)) अणु
+		अगर (!(asic_type == CHIP_VANGOGH))
 			*states = ATTR_STATE_UNSUPPORTED;
-	}
+	पूर्ण
 
-	if (asic_type == CHIP_ARCTURUS) {
-		/* Arcturus does not support standalone mclk/socclk/fclk level setting */
-		if (DEVICE_ATTR_IS(pp_dpm_mclk) ||
+	अगर (asic_type == CHIP_ARCTURUS) अणु
+		/* Arcturus करोes not support standalone mclk/socclk/fclk level setting */
+		अगर (DEVICE_ATTR_IS(pp_dpm_mclk) ||
 		    DEVICE_ATTR_IS(pp_dpm_socclk) ||
-		    DEVICE_ATTR_IS(pp_dpm_fclk)) {
+		    DEVICE_ATTR_IS(pp_dpm_fclk)) अणु
 			dev_attr->attr.mode &= ~S_IWUGO;
-			dev_attr->store = NULL;
-		}
-	}
+			dev_attr->store = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (DEVICE_ATTR_IS(pp_dpm_dcefclk)) {
-		/* SMU MP1 does not support dcefclk level setting */
-		if (asic_type >= CHIP_NAVI10) {
+	अगर (DEVICE_ATTR_IS(pp_dpm_dcefclk)) अणु
+		/* SMU MP1 करोes not support dcefclk level setting */
+		अगर (asic_type >= CHIP_NAVI10) अणु
 			dev_attr->attr.mode &= ~S_IWUGO;
-			dev_attr->store = NULL;
-		}
-	}
+			dev_attr->store = शून्य;
+		पूर्ण
+	पूर्ण
 
-#undef DEVICE_ATTR_IS
+#अघोषित DEVICE_ATTR_IS
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int amdgpu_device_attr_create(struct amdgpu_device *adev,
-				     struct amdgpu_device_attr *attr,
-				     uint32_t mask, struct list_head *attr_list)
-{
-	int ret = 0;
-	struct device_attribute *dev_attr = &attr->dev_attr;
-	const char *name = dev_attr->attr.name;
-	enum amdgpu_device_attr_states attr_states = ATTR_STATE_SUPPORTED;
-	struct amdgpu_device_attr_entry *attr_entry;
+अटल पूर्णांक amdgpu_device_attr_create(काष्ठा amdgpu_device *adev,
+				     काष्ठा amdgpu_device_attr *attr,
+				     uपूर्णांक32_t mask, काष्ठा list_head *attr_list)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा device_attribute *dev_attr = &attr->dev_attr;
+	स्थिर अक्षर *name = dev_attr->attr.name;
+	क्रमागत amdgpu_device_attr_states attr_states = ATTR_STATE_SUPPORTED;
+	काष्ठा amdgpu_device_attr_entry *attr_entry;
 
-	int (*attr_update)(struct amdgpu_device *adev, struct amdgpu_device_attr *attr,
-			   uint32_t mask, enum amdgpu_device_attr_states *states) = default_attr_update;
+	पूर्णांक (*attr_update)(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_device_attr *attr,
+			   uपूर्णांक32_t mask, क्रमागत amdgpu_device_attr_states *states) = शेष_attr_update;
 
 	BUG_ON(!attr);
 
-	attr_update = attr->attr_update ? attr_update : default_attr_update;
+	attr_update = attr->attr_update ? attr_update : शेष_attr_update;
 
 	ret = attr_update(adev, attr, mask, &attr_states);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "failed to update device file %s, ret = %d\n",
 			name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (attr_states == ATTR_STATE_UNSUPPORTED)
-		return 0;
+	अगर (attr_states == ATTR_STATE_UNSUPPORTED)
+		वापस 0;
 
 	ret = device_create_file(adev->dev, dev_attr);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "failed to create device file %s, ret = %d\n",
 			name, ret);
-	}
+	पूर्ण
 
-	attr_entry = kmalloc(sizeof(*attr_entry), GFP_KERNEL);
-	if (!attr_entry)
-		return -ENOMEM;
+	attr_entry = kदो_स्मृति(माप(*attr_entry), GFP_KERNEL);
+	अगर (!attr_entry)
+		वापस -ENOMEM;
 
 	attr_entry->attr = attr;
 	INIT_LIST_HEAD(&attr_entry->entry);
 
 	list_add_tail(&attr_entry->entry, attr_list);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void amdgpu_device_attr_remove(struct amdgpu_device *adev, struct amdgpu_device_attr *attr)
-{
-	struct device_attribute *dev_attr = &attr->dev_attr;
+अटल व्योम amdgpu_device_attr_हटाओ(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_device_attr *attr)
+अणु
+	काष्ठा device_attribute *dev_attr = &attr->dev_attr;
 
-	device_remove_file(adev->dev, dev_attr);
-}
+	device_हटाओ_file(adev->dev, dev_attr);
+पूर्ण
 
-static void amdgpu_device_attr_remove_groups(struct amdgpu_device *adev,
-					     struct list_head *attr_list);
+अटल व्योम amdgpu_device_attr_हटाओ_groups(काष्ठा amdgpu_device *adev,
+					     काष्ठा list_head *attr_list);
 
-static int amdgpu_device_attr_create_groups(struct amdgpu_device *adev,
-					    struct amdgpu_device_attr *attrs,
-					    uint32_t counts,
-					    uint32_t mask,
-					    struct list_head *attr_list)
-{
-	int ret = 0;
-	uint32_t i = 0;
+अटल पूर्णांक amdgpu_device_attr_create_groups(काष्ठा amdgpu_device *adev,
+					    काष्ठा amdgpu_device_attr *attrs,
+					    uपूर्णांक32_t counts,
+					    uपूर्णांक32_t mask,
+					    काष्ठा list_head *attr_list)
+अणु
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t i = 0;
 
-	for (i = 0; i < counts; i++) {
+	क्रम (i = 0; i < counts; i++) अणु
 		ret = amdgpu_device_attr_create(adev, &attrs[i], mask, attr_list);
-		if (ret)
-			goto failed;
-	}
+		अगर (ret)
+			जाओ failed;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 failed:
-	amdgpu_device_attr_remove_groups(adev, attr_list);
+	amdgpu_device_attr_हटाओ_groups(adev, attr_list);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void amdgpu_device_attr_remove_groups(struct amdgpu_device *adev,
-					     struct list_head *attr_list)
-{
-	struct amdgpu_device_attr_entry *entry, *entry_tmp;
+अटल व्योम amdgpu_device_attr_हटाओ_groups(काष्ठा amdgpu_device *adev,
+					     काष्ठा list_head *attr_list)
+अणु
+	काष्ठा amdgpu_device_attr_entry *entry, *entry_पंचांगp;
 
-	if (list_empty(attr_list))
-		return ;
+	अगर (list_empty(attr_list))
+		वापस ;
 
-	list_for_each_entry_safe(entry, entry_tmp, attr_list, entry) {
-		amdgpu_device_attr_remove(adev, entry->attr);
+	list_क्रम_each_entry_safe(entry, entry_पंचांगp, attr_list, entry) अणु
+		amdgpu_device_attr_हटाओ(adev, entry->attr);
 		list_del(&entry->entry);
-		kfree(entry);
-	}
-}
+		kमुक्त(entry);
+	पूर्ण
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_temp(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int channel = to_sensor_dev_attr(attr)->index;
-	int r, temp = 0, size = sizeof(temp);
+अटल sमाप_प्रकार amdgpu_hwmon_show_temp(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक channel = to_sensor_dev_attr(attr)->index;
+	पूर्णांक r, temp = 0, size = माप(temp);
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	if (channel >= PP_TEMP_MAX)
-		return -EINVAL;
+	अगर (channel >= PP_TEMP_MAX)
+		वापस -EINVAL;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
-	switch (channel) {
-	case PP_TEMP_JUNCTION:
+	चयन (channel) अणु
+	हाल PP_TEMP_JUNCTION:
 		/* get current junction temperature */
-		r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_HOTSPOT_TEMP,
-					   (void *)&temp, &size);
-		break;
-	case PP_TEMP_EDGE:
+		r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_HOTSPOT_TEMP,
+					   (व्योम *)&temp, &size);
+		अवरोध;
+	हाल PP_TEMP_EDGE:
 		/* get current edge temperature */
-		r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_EDGE_TEMP,
-					   (void *)&temp, &size);
-		break;
-	case PP_TEMP_MEM:
+		r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_EDGE_TEMP,
+					   (व्योम *)&temp, &size);
+		अवरोध;
+	हाल PP_TEMP_MEM:
 		/* get current memory temperature */
-		r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_MEM_TEMP,
-					   (void *)&temp, &size);
-		break;
-	default:
+		r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_MEM_TEMP,
+					   (व्योम *)&temp, &size);
+		अवरोध;
+	शेष:
 		r = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return sysfs_emit(buf, "%d\n", temp);
-}
+	वापस sysfs_emit(buf, "%d\n", temp);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_temp_thresh(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int hyst = to_sensor_dev_attr(attr)->index;
-	int temp;
+अटल sमाप_प्रकार amdgpu_hwmon_show_temp_thresh(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक hyst = to_sensor_dev_attr(attr)->index;
+	पूर्णांक temp;
 
-	if (hyst)
+	अगर (hyst)
 		temp = adev->pm.dpm.thermal.min_temp;
-	else
+	अन्यथा
 		temp = adev->pm.dpm.thermal.max_temp;
 
-	return sysfs_emit(buf, "%d\n", temp);
-}
+	वापस sysfs_emit(buf, "%d\n", temp);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_hotspot_temp_thresh(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int hyst = to_sensor_dev_attr(attr)->index;
-	int temp;
+अटल sमाप_प्रकार amdgpu_hwmon_show_hotspot_temp_thresh(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक hyst = to_sensor_dev_attr(attr)->index;
+	पूर्णांक temp;
 
-	if (hyst)
+	अगर (hyst)
 		temp = adev->pm.dpm.thermal.min_hotspot_temp;
-	else
+	अन्यथा
 		temp = adev->pm.dpm.thermal.max_hotspot_crit_temp;
 
-	return sysfs_emit(buf, "%d\n", temp);
-}
+	वापस sysfs_emit(buf, "%d\n", temp);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_mem_temp_thresh(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int hyst = to_sensor_dev_attr(attr)->index;
-	int temp;
+अटल sमाप_प्रकार amdgpu_hwmon_show_mem_temp_thresh(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक hyst = to_sensor_dev_attr(attr)->index;
+	पूर्णांक temp;
 
-	if (hyst)
+	अगर (hyst)
 		temp = adev->pm.dpm.thermal.min_mem_temp;
-	else
+	अन्यथा
 		temp = adev->pm.dpm.thermal.max_mem_crit_temp;
 
-	return sysfs_emit(buf, "%d\n", temp);
-}
+	वापस sysfs_emit(buf, "%d\n", temp);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_temp_label(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	int channel = to_sensor_dev_attr(attr)->index;
+अटल sमाप_प्रकार amdgpu_hwmon_show_temp_label(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	पूर्णांक channel = to_sensor_dev_attr(attr)->index;
 
-	if (channel >= PP_TEMP_MAX)
-		return -EINVAL;
+	अगर (channel >= PP_TEMP_MAX)
+		वापस -EINVAL;
 
-	return sysfs_emit(buf, "%s\n", temp_label[channel].label);
-}
+	वापस sysfs_emit(buf, "%s\n", temp_label[channel].label);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_temp_emergency(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int channel = to_sensor_dev_attr(attr)->index;
-	int temp = 0;
+अटल sमाप_प्रकार amdgpu_hwmon_show_temp_emergency(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक channel = to_sensor_dev_attr(attr)->index;
+	पूर्णांक temp = 0;
 
-	if (channel >= PP_TEMP_MAX)
-		return -EINVAL;
+	अगर (channel >= PP_TEMP_MAX)
+		वापस -EINVAL;
 
-	switch (channel) {
-	case PP_TEMP_JUNCTION:
+	चयन (channel) अणु
+	हाल PP_TEMP_JUNCTION:
 		temp = adev->pm.dpm.thermal.max_hotspot_emergency_temp;
-		break;
-	case PP_TEMP_EDGE:
+		अवरोध;
+	हाल PP_TEMP_EDGE:
 		temp = adev->pm.dpm.thermal.max_edge_emergency_temp;
-		break;
-	case PP_TEMP_MEM:
+		अवरोध;
+	हाल PP_TEMP_MEM:
 		temp = adev->pm.dpm.thermal.max_mem_emergency_temp;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return sysfs_emit(buf, "%d\n", temp);
-}
+	वापस sysfs_emit(buf, "%d\n", temp);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_get_pwm1_enable(struct device *dev,
-					    struct device_attribute *attr,
-					    char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार amdgpu_hwmon_get_pwm1_enable(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
 	u32 pwm_mode = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस ret;
+	पूर्ण
 
-	if (!adev->powerplay.pp_funcs->get_fan_control_mode) {
-		pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return -EINVAL;
-	}
+	अगर (!adev->घातerplay.pp_funcs->get_fan_control_mode) अणु
+		pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस -EINVAL;
+	पूर्ण
 
 	pwm_mode = amdgpu_dpm_get_fan_control_mode(adev);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	return sprintf(buf, "%u\n", pwm_mode);
-}
+	वापस प्र_लिखो(buf, "%u\n", pwm_mode);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_set_pwm1_enable(struct device *dev,
-					    struct device_attribute *attr,
-					    const char *buf,
-					    size_t count)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int err, ret;
-	int value;
+अटल sमाप_प्रकार amdgpu_hwmon_set_pwm1_enable(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    स्थिर अक्षर *buf,
+					    माप_प्रकार count)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक err, ret;
+	पूर्णांक value;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	err = kstrtoint(buf, 10, &value);
-	if (err)
-		return err;
+	err = kstrtoपूर्णांक(buf, 10, &value);
+	अगर (err)
+		वापस err;
 
-	ret = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस ret;
+	पूर्ण
 
-	if (!adev->powerplay.pp_funcs->set_fan_control_mode) {
-		pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return -EINVAL;
-	}
+	अगर (!adev->घातerplay.pp_funcs->set_fan_control_mode) अणु
+		pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस -EINVAL;
+	पूर्ण
 
 	amdgpu_dpm_set_fan_control_mode(adev, value);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_hwmon_get_pwm1_min(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	return sprintf(buf, "%i\n", 0);
-}
+अटल sमाप_प्रकार amdgpu_hwmon_get_pwm1_min(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%i\n", 0);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_get_pwm1_max(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	return sprintf(buf, "%i\n", 255);
-}
+अटल sमाप_प्रकार amdgpu_hwmon_get_pwm1_max(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%i\n", 255);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_set_pwm1(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int err;
+अटल sमाप_प्रकार amdgpu_hwmon_set_pwm1(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक err;
 	u32 value;
 	u32 pwm_mode;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	err = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (err < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return err;
-	}
+	err = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (err < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस err;
+	पूर्ण
 
 	pwm_mode = amdgpu_dpm_get_fan_control_mode(adev);
-	if (pwm_mode != AMD_FAN_CTRL_MANUAL) {
+	अगर (pwm_mode != AMD_FAN_CTRL_MANUAL) अणु
 		pr_info("manual fan speed control should be enabled first\n");
-		pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return -EINVAL;
-	}
+		pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस -EINVAL;
+	पूर्ण
 
 	err = kstrtou32(buf, 10, &value);
-	if (err) {
-		pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return err;
-	}
+	अगर (err) अणु
+		pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस err;
+	पूर्ण
 
 	value = (value * 100) / 255;
 
-	if (adev->powerplay.pp_funcs->set_fan_speed_percent)
+	अगर (adev->घातerplay.pp_funcs->set_fan_speed_percent)
 		err = amdgpu_dpm_set_fan_speed_percent(adev, value);
-	else
+	अन्यथा
 		err = -EINVAL;
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_hwmon_get_pwm1(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int err;
+अटल sमाप_प्रकार amdgpu_hwmon_get_pwm1(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक err;
 	u32 speed = 0;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	err = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (err < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return err;
-	}
+	err = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (err < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस err;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->get_fan_speed_percent)
+	अगर (adev->घातerplay.pp_funcs->get_fan_speed_percent)
 		err = amdgpu_dpm_get_fan_speed_percent(adev, &speed);
-	else
+	अन्यथा
 		err = -EINVAL;
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	speed = (speed * 255) / 100;
 
-	return sprintf(buf, "%i\n", speed);
-}
+	वापस प्र_लिखो(buf, "%i\n", speed);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_get_fan1_input(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int err;
+अटल sमाप_प्रकार amdgpu_hwmon_get_fan1_input(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक err;
 	u32 speed = 0;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	err = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (err < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return err;
-	}
+	err = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (err < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस err;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->get_fan_speed_rpm)
+	अगर (adev->घातerplay.pp_funcs->get_fan_speed_rpm)
 		err = amdgpu_dpm_get_fan_speed_rpm(adev, &speed);
-	else
+	अन्यथा
 		err = -EINVAL;
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return sprintf(buf, "%i\n", speed);
-}
+	वापस प्र_लिखो(buf, "%i\n", speed);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_get_fan1_min(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार amdgpu_hwmon_get_fan1_min(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
 	u32 min_rpm = 0;
-	u32 size = sizeof(min_rpm);
-	int r;
+	u32 size = माप(min_rpm);
+	पूर्णांक r;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
-	r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_MIN_FAN_RPM,
-				   (void *)&min_rpm, &size);
+	r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_MIN_FAN_RPM,
+				   (व्योम *)&min_rpm, &size);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return sysfs_emit(buf, "%d\n", min_rpm);
-}
+	वापस sysfs_emit(buf, "%d\n", min_rpm);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_get_fan1_max(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार amdgpu_hwmon_get_fan1_max(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
 	u32 max_rpm = 0;
-	u32 size = sizeof(max_rpm);
-	int r;
+	u32 size = माप(max_rpm);
+	पूर्णांक r;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
-	r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_MAX_FAN_RPM,
-				   (void *)&max_rpm, &size);
+	r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_MAX_FAN_RPM,
+				   (व्योम *)&max_rpm, &size);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return sysfs_emit(buf, "%d\n", max_rpm);
-}
+	वापस sysfs_emit(buf, "%d\n", max_rpm);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_get_fan1_target(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int err;
+अटल sमाप_प्रकार amdgpu_hwmon_get_fan1_target(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक err;
 	u32 rpm = 0;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	err = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (err < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return err;
-	}
+	err = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (err < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस err;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->get_fan_speed_rpm)
+	अगर (adev->घातerplay.pp_funcs->get_fan_speed_rpm)
 		err = amdgpu_dpm_get_fan_speed_rpm(adev, &rpm);
-	else
+	अन्यथा
 		err = -EINVAL;
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return sprintf(buf, "%i\n", rpm);
-}
+	वापस प्र_लिखो(buf, "%i\n", rpm);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_set_fan1_target(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int err;
+अटल sमाप_प्रकार amdgpu_hwmon_set_fan1_target(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक err;
 	u32 value;
 	u32 pwm_mode;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	err = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (err < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return err;
-	}
+	err = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (err < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस err;
+	पूर्ण
 
 	pwm_mode = amdgpu_dpm_get_fan_control_mode(adev);
 
-	if (pwm_mode != AMD_FAN_CTRL_MANUAL) {
-		pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return -ENODATA;
-	}
+	अगर (pwm_mode != AMD_FAN_CTRL_MANUAL) अणु
+		pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस -ENODATA;
+	पूर्ण
 
 	err = kstrtou32(buf, 10, &value);
-	if (err) {
-		pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return err;
-	}
+	अगर (err) अणु
+		pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस err;
+	पूर्ण
 
-	if (adev->powerplay.pp_funcs->set_fan_speed_rpm)
+	अगर (adev->घातerplay.pp_funcs->set_fan_speed_rpm)
 		err = amdgpu_dpm_set_fan_speed_rpm(adev, value);
-	else
+	अन्यथा
 		err = -EINVAL;
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_hwmon_get_fan1_enable(struct device *dev,
-					    struct device_attribute *attr,
-					    char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार amdgpu_hwmon_get_fan1_enable(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
 	u32 pwm_mode = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	ret = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस ret;
+	पूर्ण
 
-	if (!adev->powerplay.pp_funcs->get_fan_control_mode) {
-		pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return -EINVAL;
-	}
+	अगर (!adev->घातerplay.pp_funcs->get_fan_control_mode) अणु
+		pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस -EINVAL;
+	पूर्ण
 
 	pwm_mode = amdgpu_dpm_get_fan_control_mode(adev);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	return sprintf(buf, "%i\n", pwm_mode == AMD_FAN_CTRL_AUTO ? 0 : 1);
-}
+	वापस प्र_लिखो(buf, "%i\n", pwm_mode == AMD_FAN_CTRL_AUTO ? 0 : 1);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_set_fan1_enable(struct device *dev,
-					    struct device_attribute *attr,
-					    const char *buf,
-					    size_t count)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	int err;
-	int value;
+अटल sमाप_प्रकार amdgpu_hwmon_set_fan1_enable(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    स्थिर अक्षर *buf,
+					    माप_प्रकार count)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	पूर्णांक err;
+	पूर्णांक value;
 	u32 pwm_mode;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	err = kstrtoint(buf, 10, &value);
-	if (err)
-		return err;
+	err = kstrtoपूर्णांक(buf, 10, &value);
+	अगर (err)
+		वापस err;
 
-	if (value == 0)
+	अगर (value == 0)
 		pwm_mode = AMD_FAN_CTRL_AUTO;
-	else if (value == 1)
+	अन्यथा अगर (value == 1)
 		pwm_mode = AMD_FAN_CTRL_MANUAL;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	err = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (err < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return err;
-	}
+	err = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (err < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस err;
+	पूर्ण
 
-	if (!adev->powerplay.pp_funcs->set_fan_control_mode) {
-		pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return -EINVAL;
-	}
+	अगर (!adev->घातerplay.pp_funcs->set_fan_control_mode) अणु
+		pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस -EINVAL;
+	पूर्ण
 	amdgpu_dpm_set_fan_control_mode(adev, pwm_mode);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_vddgfx(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार amdgpu_hwmon_show_vddgfx(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
 	u32 vddgfx;
-	int r, size = sizeof(vddgfx);
+	पूर्णांक r, size = माप(vddgfx);
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
 	/* get the voltage */
-	r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_VDDGFX,
-				   (void *)&vddgfx, &size);
+	r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_VDDGFX,
+				   (व्योम *)&vddgfx, &size);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return sysfs_emit(buf, "%d\n", vddgfx);
-}
+	वापस sysfs_emit(buf, "%d\n", vddgfx);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_vddgfx_label(struct device *dev,
-					      struct device_attribute *attr,
-					      char *buf)
-{
-	return sysfs_emit(buf, "vddgfx\n");
-}
+अटल sमाप_प्रकार amdgpu_hwmon_show_vddgfx_label(काष्ठा device *dev,
+					      काष्ठा device_attribute *attr,
+					      अक्षर *buf)
+अणु
+	वापस sysfs_emit(buf, "vddgfx\n");
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_vddnb(struct device *dev,
-				       struct device_attribute *attr,
-				       char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार amdgpu_hwmon_show_vddnb(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
 	u32 vddnb;
-	int r, size = sizeof(vddnb);
+	पूर्णांक r, size = माप(vddnb);
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
 	/* only APUs have vddnb */
-	if  (!(adev->flags & AMD_IS_APU))
-		return -EINVAL;
+	अगर  (!(adev->flags & AMD_IS_APU))
+		वापस -EINVAL;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
 	/* get the voltage */
-	r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_VDDNB,
-				   (void *)&vddnb, &size);
+	r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_VDDNB,
+				   (व्योम *)&vddnb, &size);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return sysfs_emit(buf, "%d\n", vddnb);
-}
+	वापस sysfs_emit(buf, "%d\n", vddnb);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_vddnb_label(struct device *dev,
-					      struct device_attribute *attr,
-					      char *buf)
-{
-	return sysfs_emit(buf, "vddnb\n");
-}
+अटल sमाप_प्रकार amdgpu_hwmon_show_vddnb_label(काष्ठा device *dev,
+					      काष्ठा device_attribute *attr,
+					      अक्षर *buf)
+अणु
+	वापस sysfs_emit(buf, "vddnb\n");
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_power_avg(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार amdgpu_hwmon_show_घातer_avg(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
 	u32 query = 0;
-	int r, size = sizeof(u32);
-	unsigned uw;
+	पूर्णांक r, size = माप(u32);
+	अचिन्हित uw;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
 	/* get the voltage */
-	r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_GPU_POWER,
-				   (void *)&query, &size);
+	r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_GPU_POWER,
+				   (व्योम *)&query, &size);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* convert to microwatts */
 	uw = (query >> 8) * 1000000 + (query & 0xff) * 1000;
 
-	return sysfs_emit(buf, "%u\n", uw);
-}
+	वापस sysfs_emit(buf, "%u\n", uw);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_power_cap_min(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	return sprintf(buf, "%i\n", 0);
-}
+अटल sमाप_प्रकार amdgpu_hwmon_show_घातer_cap_min(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%i\n", 0);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_power_cap_max(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	int limit_type = to_sensor_dev_attr(attr)->index;
-	uint32_t limit = limit_type << 24;
-	uint32_t max_limit = 0;
-	ssize_t size;
-	int r;
+अटल sमाप_प्रकार amdgpu_hwmon_show_घातer_cap_max(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	पूर्णांक limit_type = to_sensor_dev_attr(attr)->index;
+	uपूर्णांक32_t limit = limit_type << 24;
+	uपूर्णांक32_t max_limit = 0;
+	sमाप_प्रकार size;
+	पूर्णांक r;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
-	if (is_support_sw_smu(adev)) {
-		smu_get_power_limit(&adev->smu, &limit, SMU_PPT_LIMIT_MAX);
-		size = snprintf(buf, PAGE_SIZE, "%u\n", limit * 1000000);
-	} else if (pp_funcs && pp_funcs->get_power_limit) {
-		pp_funcs->get_power_limit(adev->powerplay.pp_handle,
+	अगर (is_support_sw_smu(adev)) अणु
+		smu_get_घातer_limit(&adev->smu, &limit, SMU_PPT_LIMIT_MAX);
+		size = snम_लिखो(buf, PAGE_SIZE, "%u\n", limit * 1000000);
+	पूर्ण अन्यथा अगर (pp_funcs && pp_funcs->get_घातer_limit) अणु
+		pp_funcs->get_घातer_limit(adev->घातerplay.pp_handle,
 				&limit, &max_limit, true);
-		size = snprintf(buf, PAGE_SIZE, "%u\n", max_limit * 1000000);
-	} else {
-		size = snprintf(buf, PAGE_SIZE, "\n");
-	}
+		size = snम_लिखो(buf, PAGE_SIZE, "%u\n", max_limit * 1000000);
+	पूर्ण अन्यथा अणु
+		size = snम_लिखो(buf, PAGE_SIZE, "\n");
+	पूर्ण
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_power_cap(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	int limit_type = to_sensor_dev_attr(attr)->index;
-	uint32_t limit = limit_type << 24;
-	ssize_t size;
-	int r;
+अटल sमाप_प्रकार amdgpu_hwmon_show_घातer_cap(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	पूर्णांक limit_type = to_sensor_dev_attr(attr)->index;
+	uपूर्णांक32_t limit = limit_type << 24;
+	sमाप_प्रकार size;
+	पूर्णांक r;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
-	if (is_support_sw_smu(adev)) {
-		smu_get_power_limit(&adev->smu, &limit, SMU_PPT_LIMIT_CURRENT);
-		size = snprintf(buf, PAGE_SIZE, "%u\n", limit * 1000000);
-	} else if (pp_funcs && pp_funcs->get_power_limit) {
-		pp_funcs->get_power_limit(adev->powerplay.pp_handle,
-				&limit, NULL, false);
-		size = snprintf(buf, PAGE_SIZE, "%u\n", limit * 1000000);
-	} else {
-		size = snprintf(buf, PAGE_SIZE, "\n");
-	}
+	अगर (is_support_sw_smu(adev)) अणु
+		smu_get_घातer_limit(&adev->smu, &limit, SMU_PPT_LIMIT_CURRENT);
+		size = snम_लिखो(buf, PAGE_SIZE, "%u\n", limit * 1000000);
+	पूर्ण अन्यथा अगर (pp_funcs && pp_funcs->get_घातer_limit) अणु
+		pp_funcs->get_घातer_limit(adev->घातerplay.pp_handle,
+				&limit, शून्य, false);
+		size = snम_लिखो(buf, PAGE_SIZE, "%u\n", limit * 1000000);
+	पूर्ण अन्यथा अणु
+		size = snम_लिखो(buf, PAGE_SIZE, "\n");
+	पूर्ण
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_power_cap_default(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	int limit_type = to_sensor_dev_attr(attr)->index;
-	uint32_t limit = limit_type << 24;
-	ssize_t size;
-	int r;
+अटल sमाप_प्रकार amdgpu_hwmon_show_घातer_cap_शेष(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	पूर्णांक limit_type = to_sensor_dev_attr(attr)->index;
+	uपूर्णांक32_t limit = limit_type << 24;
+	sमाप_प्रकार size;
+	पूर्णांक r;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
-	if (is_support_sw_smu(adev)) {
-		smu_get_power_limit(&adev->smu, &limit, SMU_PPT_LIMIT_DEFAULT);
-		size = snprintf(buf, PAGE_SIZE, "%u\n", limit * 1000000);
-	} else if (pp_funcs && pp_funcs->get_power_limit) {
-		pp_funcs->get_power_limit(adev->powerplay.pp_handle,
-				&limit, NULL, true);
-		size = snprintf(buf, PAGE_SIZE, "%u\n", limit * 1000000);
-	} else {
-		size = snprintf(buf, PAGE_SIZE, "\n");
-	}
+	अगर (is_support_sw_smu(adev)) अणु
+		smu_get_घातer_limit(&adev->smu, &limit, SMU_PPT_LIMIT_DEFAULT);
+		size = snम_लिखो(buf, PAGE_SIZE, "%u\n", limit * 1000000);
+	पूर्ण अन्यथा अगर (pp_funcs && pp_funcs->get_घातer_limit) अणु
+		pp_funcs->get_घातer_limit(adev->घातerplay.pp_handle,
+				&limit, शून्य, true);
+		size = snम_लिखो(buf, PAGE_SIZE, "%u\n", limit * 1000000);
+	पूर्ण अन्यथा अणु
+		size = snम_लिखो(buf, PAGE_SIZE, "\n");
+	पूर्ण
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	return size;
-}
-static ssize_t amdgpu_hwmon_show_power_label(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	int limit_type = to_sensor_dev_attr(attr)->index;
+	वापस size;
+पूर्ण
+अटल sमाप_प्रकार amdgpu_hwmon_show_घातer_label(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	पूर्णांक limit_type = to_sensor_dev_attr(attr)->index;
 
-	return sysfs_emit(buf, "%s\n",
+	वापस sysfs_emit(buf, "%s\n",
 		limit_type == SMU_FAST_PPT_LIMIT ? "fastPPT" : "slowPPT");
-}
+पूर्ण
 
-static ssize_t amdgpu_hwmon_set_power_cap(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf,
-		size_t count)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-	int limit_type = to_sensor_dev_attr(attr)->index;
-	int err;
+अटल sमाप_प्रकार amdgpu_hwmon_set_घातer_cap(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	स्थिर काष्ठा amd_pm_funcs *pp_funcs = adev->घातerplay.pp_funcs;
+	पूर्णांक limit_type = to_sensor_dev_attr(attr)->index;
+	पूर्णांक err;
 	u32 value;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	if (amdgpu_sriov_vf(adev))
-		return -EINVAL;
+	अगर (amdgpu_sriov_vf(adev))
+		वापस -EINVAL;
 
 	err = kstrtou32(buf, 10, &value);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	value = value / 1000000; /* convert to Watt */
 	value |= limit_type << 24;
 
-	err = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (err < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return err;
-	}
+	err = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (err < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस err;
+	पूर्ण
 
-	if (pp_funcs && pp_funcs->set_power_limit)
-		err = pp_funcs->set_power_limit(adev->powerplay.pp_handle, value);
-	else
+	अगर (pp_funcs && pp_funcs->set_घातer_limit)
+		err = pp_funcs->set_घातer_limit(adev->घातerplay.pp_handle, value);
+	अन्यथा
 		err = -EINVAL;
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_sclk(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	uint32_t sclk;
-	int r, size = sizeof(sclk);
+अटल sमाप_प्रकार amdgpu_hwmon_show_sclk(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	uपूर्णांक32_t sclk;
+	पूर्णांक r, size = माप(sclk);
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
-
-	/* get the sclk */
-	r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_GFX_SCLK,
-				   (void *)&sclk, &size);
-
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-
-	if (r)
-		return r;
-
-	return sysfs_emit(buf, "%u\n", sclk * 10 * 1000);
-}
-
-static ssize_t amdgpu_hwmon_show_sclk_label(struct device *dev,
-					    struct device_attribute *attr,
-					    char *buf)
-{
-	return sysfs_emit(buf, "sclk\n");
-}
-
-static ssize_t amdgpu_hwmon_show_mclk(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
-	uint32_t mclk;
-	int r, size = sizeof(mclk);
-
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
-
-	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
 
 	/* get the sclk */
-	r = amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_GFX_MCLK,
-				   (void *)&mclk, &size);
+	r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_GFX_SCLK,
+				   (व्योम *)&sclk, &size);
 
-	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return sysfs_emit(buf, "%u\n", mclk * 10 * 1000);
-}
+	वापस sysfs_emit(buf, "%u\n", sclk * 10 * 1000);
+पूर्ण
 
-static ssize_t amdgpu_hwmon_show_mclk_label(struct device *dev,
-					    struct device_attribute *attr,
-					    char *buf)
-{
-	return sysfs_emit(buf, "mclk\n");
-}
+अटल sमाप_प्रकार amdgpu_hwmon_show_sclk_label(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    अक्षर *buf)
+अणु
+	वापस sysfs_emit(buf, "sclk\n");
+पूर्ण
+
+अटल sमाप_प्रकार amdgpu_hwmon_show_mclk(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
+	uपूर्णांक32_t mclk;
+	पूर्णांक r, size = माप(mclk);
+
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
+
+	r = pm_runसमय_get_sync(adev_to_drm(adev)->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+		वापस r;
+	पूर्ण
+
+	/* get the sclk */
+	r = amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_GFX_MCLK,
+				   (व्योम *)&mclk, &size);
+
+	pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+
+	अगर (r)
+		वापस r;
+
+	वापस sysfs_emit(buf, "%u\n", mclk * 10 * 1000);
+पूर्ण
+
+अटल sमाप_प्रकार amdgpu_hwmon_show_mclk_label(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    अक्षर *buf)
+अणु
+	वापस sysfs_emit(buf, "mclk\n");
+पूर्ण
 
 /**
  * DOC: hwmon
  *
- * The amdgpu driver exposes the following sensor interfaces:
+ * The amdgpu driver exposes the following sensor पूर्णांकerfaces:
  *
  * - GPU temperature (via the on-die sensor)
  *
@@ -2953,15 +2954,15 @@ static ssize_t amdgpu_hwmon_show_mclk_label(struct device *dev,
  *
  * - Northbridge voltage (APUs only)
  *
- * - GPU power
+ * - GPU घातer
  *
  * - GPU fan
  *
- * - GPU gfx/compute engine clock
+ * - GPU gfx/compute engine घड़ी
  *
- * - GPU memory clock (dGPU only)
+ * - GPU memory घड़ी (dGPU only)
  *
- * hwmon interfaces for GPU temperature:
+ * hwmon पूर्णांकerfaces क्रम GPU temperature:
  *
  * - temp[1-3]_input: the on die GPU temperature in millidegrees Celsius
  *   - temp2_input and temp3_input are supported on SOC15 dGPUs only
@@ -2972,33 +2973,33 @@ static ssize_t amdgpu_hwmon_show_mclk_label(struct device *dev,
  * - temp[1-3]_crit: temperature critical max value in millidegrees Celsius
  *   - temp2_crit and temp3_crit are supported on SOC15 dGPUs only
  *
- * - temp[1-3]_crit_hyst: temperature hysteresis for critical limit in millidegrees Celsius
+ * - temp[1-3]_crit_hyst: temperature hysteresis क्रम critical limit in millidegrees Celsius
  *   - temp2_crit_hyst and temp3_crit_hyst are supported on SOC15 dGPUs only
  *
- * - temp[1-3]_emergency: temperature emergency max value(asic shutdown) in millidegrees Celsius
+ * - temp[1-3]_emergency: temperature emergency max value(asic shutकरोwn) in millidegrees Celsius
  *   - these are supported on SOC15 dGPUs only
  *
- * hwmon interfaces for GPU voltage:
+ * hwmon पूर्णांकerfaces क्रम GPU voltage:
  *
  * - in0_input: the voltage on the GPU in millivolts
  *
  * - in1_input: the voltage on the Northbridge in millivolts
  *
- * hwmon interfaces for GPU power:
+ * hwmon पूर्णांकerfaces क्रम GPU घातer:
  *
- * - power1_average: average power used by the GPU in microWatts
+ * - घातer1_average: average घातer used by the GPU in microWatts
  *
- * - power1_cap_min: minimum cap supported in microWatts
+ * - घातer1_cap_min: minimum cap supported in microWatts
  *
- * - power1_cap_max: maximum cap supported in microWatts
+ * - घातer1_cap_max: maximum cap supported in microWatts
  *
- * - power1_cap: selected power cap in microWatts
+ * - घातer1_cap: selected घातer cap in microWatts
  *
- * hwmon interfaces for GPU fan:
+ * hwmon पूर्णांकerfaces क्रम GPU fan:
  *
  * - pwm1: pulse width modulation fan level (0-255)
  *
- * - pwm1_enable: pulse width modulation fan control method (0: no fan speed control, 1: manual fan speed control using pwm interface, 2: automatic fan speed control)
+ * - pwm1_enable: pulse width modulation fan control method (0: no fan speed control, 1: manual fan speed control using pwm पूर्णांकerface, 2: स्वतःmatic fan speed control)
  *
  * - pwm1_min: pulse width modulation fan control minimum level (0)
  *
@@ -3014,62 +3015,62 @@ static ssize_t amdgpu_hwmon_show_mclk_label(struct device *dev,
  *
  * - fan[1-\*]_enable: Enable or disable the sensors.1: Enable 0: Disable
  *
- * hwmon interfaces for GPU clocks:
+ * hwmon पूर्णांकerfaces क्रम GPU घड़ीs:
  *
- * - freq1_input: the gfx/compute clock in hertz
+ * - freq1_input: the gfx/compute घड़ी in hertz
  *
- * - freq2_input: the memory clock in hertz
+ * - freq2_input: the memory घड़ी in hertz
  *
- * You can use hwmon tools like sensors to view this information on your system.
+ * You can use hwmon tools like sensors to view this inक्रमmation on your प्रणाली.
  *
  */
 
-static SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, amdgpu_hwmon_show_temp, NULL, PP_TEMP_EDGE);
-static SENSOR_DEVICE_ATTR(temp1_crit, S_IRUGO, amdgpu_hwmon_show_temp_thresh, NULL, 0);
-static SENSOR_DEVICE_ATTR(temp1_crit_hyst, S_IRUGO, amdgpu_hwmon_show_temp_thresh, NULL, 1);
-static SENSOR_DEVICE_ATTR(temp1_emergency, S_IRUGO, amdgpu_hwmon_show_temp_emergency, NULL, PP_TEMP_EDGE);
-static SENSOR_DEVICE_ATTR(temp2_input, S_IRUGO, amdgpu_hwmon_show_temp, NULL, PP_TEMP_JUNCTION);
-static SENSOR_DEVICE_ATTR(temp2_crit, S_IRUGO, amdgpu_hwmon_show_hotspot_temp_thresh, NULL, 0);
-static SENSOR_DEVICE_ATTR(temp2_crit_hyst, S_IRUGO, amdgpu_hwmon_show_hotspot_temp_thresh, NULL, 1);
-static SENSOR_DEVICE_ATTR(temp2_emergency, S_IRUGO, amdgpu_hwmon_show_temp_emergency, NULL, PP_TEMP_JUNCTION);
-static SENSOR_DEVICE_ATTR(temp3_input, S_IRUGO, amdgpu_hwmon_show_temp, NULL, PP_TEMP_MEM);
-static SENSOR_DEVICE_ATTR(temp3_crit, S_IRUGO, amdgpu_hwmon_show_mem_temp_thresh, NULL, 0);
-static SENSOR_DEVICE_ATTR(temp3_crit_hyst, S_IRUGO, amdgpu_hwmon_show_mem_temp_thresh, NULL, 1);
-static SENSOR_DEVICE_ATTR(temp3_emergency, S_IRUGO, amdgpu_hwmon_show_temp_emergency, NULL, PP_TEMP_MEM);
-static SENSOR_DEVICE_ATTR(temp1_label, S_IRUGO, amdgpu_hwmon_show_temp_label, NULL, PP_TEMP_EDGE);
-static SENSOR_DEVICE_ATTR(temp2_label, S_IRUGO, amdgpu_hwmon_show_temp_label, NULL, PP_TEMP_JUNCTION);
-static SENSOR_DEVICE_ATTR(temp3_label, S_IRUGO, amdgpu_hwmon_show_temp_label, NULL, PP_TEMP_MEM);
-static SENSOR_DEVICE_ATTR(pwm1, S_IRUGO | S_IWUSR, amdgpu_hwmon_get_pwm1, amdgpu_hwmon_set_pwm1, 0);
-static SENSOR_DEVICE_ATTR(pwm1_enable, S_IRUGO | S_IWUSR, amdgpu_hwmon_get_pwm1_enable, amdgpu_hwmon_set_pwm1_enable, 0);
-static SENSOR_DEVICE_ATTR(pwm1_min, S_IRUGO, amdgpu_hwmon_get_pwm1_min, NULL, 0);
-static SENSOR_DEVICE_ATTR(pwm1_max, S_IRUGO, amdgpu_hwmon_get_pwm1_max, NULL, 0);
-static SENSOR_DEVICE_ATTR(fan1_input, S_IRUGO, amdgpu_hwmon_get_fan1_input, NULL, 0);
-static SENSOR_DEVICE_ATTR(fan1_min, S_IRUGO, amdgpu_hwmon_get_fan1_min, NULL, 0);
-static SENSOR_DEVICE_ATTR(fan1_max, S_IRUGO, amdgpu_hwmon_get_fan1_max, NULL, 0);
-static SENSOR_DEVICE_ATTR(fan1_target, S_IRUGO | S_IWUSR, amdgpu_hwmon_get_fan1_target, amdgpu_hwmon_set_fan1_target, 0);
-static SENSOR_DEVICE_ATTR(fan1_enable, S_IRUGO | S_IWUSR, amdgpu_hwmon_get_fan1_enable, amdgpu_hwmon_set_fan1_enable, 0);
-static SENSOR_DEVICE_ATTR(in0_input, S_IRUGO, amdgpu_hwmon_show_vddgfx, NULL, 0);
-static SENSOR_DEVICE_ATTR(in0_label, S_IRUGO, amdgpu_hwmon_show_vddgfx_label, NULL, 0);
-static SENSOR_DEVICE_ATTR(in1_input, S_IRUGO, amdgpu_hwmon_show_vddnb, NULL, 0);
-static SENSOR_DEVICE_ATTR(in1_label, S_IRUGO, amdgpu_hwmon_show_vddnb_label, NULL, 0);
-static SENSOR_DEVICE_ATTR(power1_average, S_IRUGO, amdgpu_hwmon_show_power_avg, NULL, 0);
-static SENSOR_DEVICE_ATTR(power1_cap_max, S_IRUGO, amdgpu_hwmon_show_power_cap_max, NULL, 0);
-static SENSOR_DEVICE_ATTR(power1_cap_min, S_IRUGO, amdgpu_hwmon_show_power_cap_min, NULL, 0);
-static SENSOR_DEVICE_ATTR(power1_cap, S_IRUGO | S_IWUSR, amdgpu_hwmon_show_power_cap, amdgpu_hwmon_set_power_cap, 0);
-static SENSOR_DEVICE_ATTR(power1_cap_default, S_IRUGO, amdgpu_hwmon_show_power_cap_default, NULL, 0);
-static SENSOR_DEVICE_ATTR(power1_label, S_IRUGO, amdgpu_hwmon_show_power_label, NULL, 0);
-static SENSOR_DEVICE_ATTR(power2_average, S_IRUGO, amdgpu_hwmon_show_power_avg, NULL, 1);
-static SENSOR_DEVICE_ATTR(power2_cap_max, S_IRUGO, amdgpu_hwmon_show_power_cap_max, NULL, 1);
-static SENSOR_DEVICE_ATTR(power2_cap_min, S_IRUGO, amdgpu_hwmon_show_power_cap_min, NULL, 1);
-static SENSOR_DEVICE_ATTR(power2_cap, S_IRUGO | S_IWUSR, amdgpu_hwmon_show_power_cap, amdgpu_hwmon_set_power_cap, 1);
-static SENSOR_DEVICE_ATTR(power2_cap_default, S_IRUGO, amdgpu_hwmon_show_power_cap_default, NULL, 1);
-static SENSOR_DEVICE_ATTR(power2_label, S_IRUGO, amdgpu_hwmon_show_power_label, NULL, 1);
-static SENSOR_DEVICE_ATTR(freq1_input, S_IRUGO, amdgpu_hwmon_show_sclk, NULL, 0);
-static SENSOR_DEVICE_ATTR(freq1_label, S_IRUGO, amdgpu_hwmon_show_sclk_label, NULL, 0);
-static SENSOR_DEVICE_ATTR(freq2_input, S_IRUGO, amdgpu_hwmon_show_mclk, NULL, 0);
-static SENSOR_DEVICE_ATTR(freq2_label, S_IRUGO, amdgpu_hwmon_show_mclk_label, NULL, 0);
+अटल SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, amdgpu_hwmon_show_temp, शून्य, PP_TEMP_EDGE);
+अटल SENSOR_DEVICE_ATTR(temp1_crit, S_IRUGO, amdgpu_hwmon_show_temp_thresh, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(temp1_crit_hyst, S_IRUGO, amdgpu_hwmon_show_temp_thresh, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(temp1_emergency, S_IRUGO, amdgpu_hwmon_show_temp_emergency, शून्य, PP_TEMP_EDGE);
+अटल SENSOR_DEVICE_ATTR(temp2_input, S_IRUGO, amdgpu_hwmon_show_temp, शून्य, PP_TEMP_JUNCTION);
+अटल SENSOR_DEVICE_ATTR(temp2_crit, S_IRUGO, amdgpu_hwmon_show_hotspot_temp_thresh, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(temp2_crit_hyst, S_IRUGO, amdgpu_hwmon_show_hotspot_temp_thresh, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(temp2_emergency, S_IRUGO, amdgpu_hwmon_show_temp_emergency, शून्य, PP_TEMP_JUNCTION);
+अटल SENSOR_DEVICE_ATTR(temp3_input, S_IRUGO, amdgpu_hwmon_show_temp, शून्य, PP_TEMP_MEM);
+अटल SENSOR_DEVICE_ATTR(temp3_crit, S_IRUGO, amdgpu_hwmon_show_mem_temp_thresh, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(temp3_crit_hyst, S_IRUGO, amdgpu_hwmon_show_mem_temp_thresh, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(temp3_emergency, S_IRUGO, amdgpu_hwmon_show_temp_emergency, शून्य, PP_TEMP_MEM);
+अटल SENSOR_DEVICE_ATTR(temp1_label, S_IRUGO, amdgpu_hwmon_show_temp_label, शून्य, PP_TEMP_EDGE);
+अटल SENSOR_DEVICE_ATTR(temp2_label, S_IRUGO, amdgpu_hwmon_show_temp_label, शून्य, PP_TEMP_JUNCTION);
+अटल SENSOR_DEVICE_ATTR(temp3_label, S_IRUGO, amdgpu_hwmon_show_temp_label, शून्य, PP_TEMP_MEM);
+अटल SENSOR_DEVICE_ATTR(pwm1, S_IRUGO | S_IWUSR, amdgpu_hwmon_get_pwm1, amdgpu_hwmon_set_pwm1, 0);
+अटल SENSOR_DEVICE_ATTR(pwm1_enable, S_IRUGO | S_IWUSR, amdgpu_hwmon_get_pwm1_enable, amdgpu_hwmon_set_pwm1_enable, 0);
+अटल SENSOR_DEVICE_ATTR(pwm1_min, S_IRUGO, amdgpu_hwmon_get_pwm1_min, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(pwm1_max, S_IRUGO, amdgpu_hwmon_get_pwm1_max, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(fan1_input, S_IRUGO, amdgpu_hwmon_get_fan1_input, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(fan1_min, S_IRUGO, amdgpu_hwmon_get_fan1_min, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(fan1_max, S_IRUGO, amdgpu_hwmon_get_fan1_max, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(fan1_target, S_IRUGO | S_IWUSR, amdgpu_hwmon_get_fan1_target, amdgpu_hwmon_set_fan1_target, 0);
+अटल SENSOR_DEVICE_ATTR(fan1_enable, S_IRUGO | S_IWUSR, amdgpu_hwmon_get_fan1_enable, amdgpu_hwmon_set_fan1_enable, 0);
+अटल SENSOR_DEVICE_ATTR(in0_input, S_IRUGO, amdgpu_hwmon_show_vddgfx, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(in0_label, S_IRUGO, amdgpu_hwmon_show_vddgfx_label, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(in1_input, S_IRUGO, amdgpu_hwmon_show_vddnb, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(in1_label, S_IRUGO, amdgpu_hwmon_show_vddnb_label, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(घातer1_average, S_IRUGO, amdgpu_hwmon_show_घातer_avg, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(घातer1_cap_max, S_IRUGO, amdgpu_hwmon_show_घातer_cap_max, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(घातer1_cap_min, S_IRUGO, amdgpu_hwmon_show_घातer_cap_min, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(घातer1_cap, S_IRUGO | S_IWUSR, amdgpu_hwmon_show_घातer_cap, amdgpu_hwmon_set_घातer_cap, 0);
+अटल SENSOR_DEVICE_ATTR(घातer1_cap_शेष, S_IRUGO, amdgpu_hwmon_show_घातer_cap_शेष, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(घातer1_label, S_IRUGO, amdgpu_hwmon_show_घातer_label, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(घातer2_average, S_IRUGO, amdgpu_hwmon_show_घातer_avg, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(घातer2_cap_max, S_IRUGO, amdgpu_hwmon_show_घातer_cap_max, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(घातer2_cap_min, S_IRUGO, amdgpu_hwmon_show_घातer_cap_min, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(घातer2_cap, S_IRUGO | S_IWUSR, amdgpu_hwmon_show_घातer_cap, amdgpu_hwmon_set_घातer_cap, 1);
+अटल SENSOR_DEVICE_ATTR(घातer2_cap_शेष, S_IRUGO, amdgpu_hwmon_show_घातer_cap_शेष, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(घातer2_label, S_IRUGO, amdgpu_hwmon_show_घातer_label, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(freq1_input, S_IRUGO, amdgpu_hwmon_show_sclk, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(freq1_label, S_IRUGO, amdgpu_hwmon_show_sclk_label, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(freq2_input, S_IRUGO, amdgpu_hwmon_show_mclk, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(freq2_label, S_IRUGO, amdgpu_hwmon_show_mclk_label, शून्य, 0);
 
-static struct attribute *hwmon_attributes[] = {
+अटल काष्ठा attribute *hwmon_attributes[] = अणु
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_temp1_crit.dev_attr.attr,
 	&sensor_dev_attr_temp1_crit_hyst.dev_attr.attr,
@@ -3098,38 +3099,38 @@ static struct attribute *hwmon_attributes[] = {
 	&sensor_dev_attr_in0_label.dev_attr.attr,
 	&sensor_dev_attr_in1_input.dev_attr.attr,
 	&sensor_dev_attr_in1_label.dev_attr.attr,
-	&sensor_dev_attr_power1_average.dev_attr.attr,
-	&sensor_dev_attr_power1_cap_max.dev_attr.attr,
-	&sensor_dev_attr_power1_cap_min.dev_attr.attr,
-	&sensor_dev_attr_power1_cap.dev_attr.attr,
-	&sensor_dev_attr_power1_cap_default.dev_attr.attr,
-	&sensor_dev_attr_power1_label.dev_attr.attr,
-	&sensor_dev_attr_power2_average.dev_attr.attr,
-	&sensor_dev_attr_power2_cap_max.dev_attr.attr,
-	&sensor_dev_attr_power2_cap_min.dev_attr.attr,
-	&sensor_dev_attr_power2_cap.dev_attr.attr,
-	&sensor_dev_attr_power2_cap_default.dev_attr.attr,
-	&sensor_dev_attr_power2_label.dev_attr.attr,
+	&sensor_dev_attr_घातer1_average.dev_attr.attr,
+	&sensor_dev_attr_घातer1_cap_max.dev_attr.attr,
+	&sensor_dev_attr_घातer1_cap_min.dev_attr.attr,
+	&sensor_dev_attr_घातer1_cap.dev_attr.attr,
+	&sensor_dev_attr_घातer1_cap_शेष.dev_attr.attr,
+	&sensor_dev_attr_घातer1_label.dev_attr.attr,
+	&sensor_dev_attr_घातer2_average.dev_attr.attr,
+	&sensor_dev_attr_घातer2_cap_max.dev_attr.attr,
+	&sensor_dev_attr_घातer2_cap_min.dev_attr.attr,
+	&sensor_dev_attr_घातer2_cap.dev_attr.attr,
+	&sensor_dev_attr_घातer2_cap_शेष.dev_attr.attr,
+	&sensor_dev_attr_घातer2_label.dev_attr.attr,
 	&sensor_dev_attr_freq1_input.dev_attr.attr,
 	&sensor_dev_attr_freq1_label.dev_attr.attr,
 	&sensor_dev_attr_freq2_input.dev_attr.attr,
 	&sensor_dev_attr_freq2_label.dev_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t hwmon_attributes_visible(struct kobject *kobj,
-					struct attribute *attr, int index)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct amdgpu_device *adev = dev_get_drvdata(dev);
+अटल umode_t hwmon_attributes_visible(काष्ठा kobject *kobj,
+					काष्ठा attribute *attr, पूर्णांक index)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा amdgpu_device *adev = dev_get_drvdata(dev);
 	umode_t effective_mode = attr->mode;
 
 	/* under multi-vf mode, the hwmon attributes are all not supported */
-	if (amdgpu_sriov_vf(adev) && !amdgpu_sriov_is_pp_one_vf(adev))
-		return 0;
+	अगर (amdgpu_sriov_vf(adev) && !amdgpu_sriov_is_pp_one_vf(adev))
+		वापस 0;
 
 	/* there is no fan under pp one vf mode */
-	if (amdgpu_sriov_is_pp_one_vf(adev) &&
+	अगर (amdgpu_sriov_is_pp_one_vf(adev) &&
 	    (attr == &sensor_dev_attr_pwm1.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1_enable.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1_max.dev_attr.attr ||
@@ -3139,10 +3140,10 @@ static umode_t hwmon_attributes_visible(struct kobject *kobj,
 	     attr == &sensor_dev_attr_fan1_max.dev_attr.attr ||
 	     attr == &sensor_dev_attr_fan1_target.dev_attr.attr ||
 	     attr == &sensor_dev_attr_fan1_enable.dev_attr.attr))
-		return 0;
+		वापस 0;
 
-	/* Skip fan attributes if fan is not present */
-	if (adev->pm.no_fan && (attr == &sensor_dev_attr_pwm1.dev_attr.attr ||
+	/* Skip fan attributes अगर fan is not present */
+	अगर (adev->pm.no_fan && (attr == &sensor_dev_attr_pwm1.dev_attr.attr ||
 	    attr == &sensor_dev_attr_pwm1_enable.dev_attr.attr ||
 	    attr == &sensor_dev_attr_pwm1_max.dev_attr.attr ||
 	    attr == &sensor_dev_attr_pwm1_min.dev_attr.attr ||
@@ -3151,10 +3152,10 @@ static umode_t hwmon_attributes_visible(struct kobject *kobj,
 	    attr == &sensor_dev_attr_fan1_max.dev_attr.attr ||
 	    attr == &sensor_dev_attr_fan1_target.dev_attr.attr ||
 	    attr == &sensor_dev_attr_fan1_enable.dev_attr.attr))
-		return 0;
+		वापस 0;
 
 	/* Skip fan attributes on APU */
-	if ((adev->flags & AMD_IS_APU) &&
+	अगर ((adev->flags & AMD_IS_APU) &&
 	    (attr == &sensor_dev_attr_pwm1.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1_enable.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1_max.dev_attr.attr ||
@@ -3164,16 +3165,16 @@ static umode_t hwmon_attributes_visible(struct kobject *kobj,
 	     attr == &sensor_dev_attr_fan1_max.dev_attr.attr ||
 	     attr == &sensor_dev_attr_fan1_target.dev_attr.attr ||
 	     attr == &sensor_dev_attr_fan1_enable.dev_attr.attr))
-		return 0;
+		वापस 0;
 
 	/* Skip crit temp on APU */
-	if ((adev->flags & AMD_IS_APU) && (adev->family >= AMDGPU_FAMILY_CZ) &&
+	अगर ((adev->flags & AMD_IS_APU) && (adev->family >= AMDGPU_FAMILY_CZ) &&
 	    (attr == &sensor_dev_attr_temp1_crit.dev_attr.attr ||
 	     attr == &sensor_dev_attr_temp1_crit_hyst.dev_attr.attr))
-		return 0;
+		वापस 0;
 
-	/* Skip limit attributes if DPM is not enabled */
-	if (!adev->pm.dpm_enabled &&
+	/* Skip limit attributes अगर DPM is not enabled */
+	अगर (!adev->pm.dpm_enabled &&
 	    (attr == &sensor_dev_attr_temp1_crit.dev_attr.attr ||
 	     attr == &sensor_dev_attr_temp1_crit_hyst.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1.dev_attr.attr ||
@@ -3185,75 +3186,75 @@ static umode_t hwmon_attributes_visible(struct kobject *kobj,
 	     attr == &sensor_dev_attr_fan1_max.dev_attr.attr ||
 	     attr == &sensor_dev_attr_fan1_target.dev_attr.attr ||
 	     attr == &sensor_dev_attr_fan1_enable.dev_attr.attr))
-		return 0;
+		वापस 0;
 
-	if (!is_support_sw_smu(adev)) {
-		/* mask fan attributes if we have no bindings for this asic to expose */
-		if ((!adev->powerplay.pp_funcs->get_fan_speed_percent &&
+	अगर (!is_support_sw_smu(adev)) अणु
+		/* mask fan attributes अगर we have no bindings क्रम this asic to expose */
+		अगर ((!adev->घातerplay.pp_funcs->get_fan_speed_percent &&
 		     attr == &sensor_dev_attr_pwm1.dev_attr.attr) || /* can't query fan */
-		    (!adev->powerplay.pp_funcs->get_fan_control_mode &&
+		    (!adev->घातerplay.pp_funcs->get_fan_control_mode &&
 		     attr == &sensor_dev_attr_pwm1_enable.dev_attr.attr)) /* can't query state */
 			effective_mode &= ~S_IRUGO;
 
-		if ((!adev->powerplay.pp_funcs->set_fan_speed_percent &&
+		अगर ((!adev->घातerplay.pp_funcs->set_fan_speed_percent &&
 		     attr == &sensor_dev_attr_pwm1.dev_attr.attr) || /* can't manage fan */
-		    (!adev->powerplay.pp_funcs->set_fan_control_mode &&
+		    (!adev->घातerplay.pp_funcs->set_fan_control_mode &&
 		     attr == &sensor_dev_attr_pwm1_enable.dev_attr.attr)) /* can't manage state */
 			effective_mode &= ~S_IWUSR;
-	}
+	पूर्ण
 
-	if (((adev->family == AMDGPU_FAMILY_SI) ||
+	अगर (((adev->family == AMDGPU_FAMILY_SI) ||
 		 ((adev->flags & AMD_IS_APU) &&
 	      (adev->asic_type != CHIP_VANGOGH))) &&	/* not implemented yet */
-	    (attr == &sensor_dev_attr_power1_cap_max.dev_attr.attr ||
-	     attr == &sensor_dev_attr_power1_cap_min.dev_attr.attr||
-	     attr == &sensor_dev_attr_power1_cap.dev_attr.attr ||
-	     attr == &sensor_dev_attr_power1_cap_default.dev_attr.attr))
-		return 0;
+	    (attr == &sensor_dev_attr_घातer1_cap_max.dev_attr.attr ||
+	     attr == &sensor_dev_attr_घातer1_cap_min.dev_attr.attr||
+	     attr == &sensor_dev_attr_घातer1_cap.dev_attr.attr ||
+	     attr == &sensor_dev_attr_घातer1_cap_शेष.dev_attr.attr))
+		वापस 0;
 
-	if (((adev->family == AMDGPU_FAMILY_SI) ||
+	अगर (((adev->family == AMDGPU_FAMILY_SI) ||
 	     ((adev->flags & AMD_IS_APU) &&
 	      (adev->asic_type < CHIP_RENOIR))) &&	/* not implemented yet */
-	    (attr == &sensor_dev_attr_power1_average.dev_attr.attr))
-		return 0;
+	    (attr == &sensor_dev_attr_घातer1_average.dev_attr.attr))
+		वापस 0;
 
-	if (!is_support_sw_smu(adev)) {
-		/* hide max/min values if we can't both query and manage the fan */
-		if ((!adev->powerplay.pp_funcs->set_fan_speed_percent &&
-		     !adev->powerplay.pp_funcs->get_fan_speed_percent) &&
-		     (!adev->powerplay.pp_funcs->set_fan_speed_rpm &&
-		     !adev->powerplay.pp_funcs->get_fan_speed_rpm) &&
+	अगर (!is_support_sw_smu(adev)) अणु
+		/* hide max/min values अगर we can't both query and manage the fan */
+		अगर ((!adev->घातerplay.pp_funcs->set_fan_speed_percent &&
+		     !adev->घातerplay.pp_funcs->get_fan_speed_percent) &&
+		     (!adev->घातerplay.pp_funcs->set_fan_speed_rpm &&
+		     !adev->घातerplay.pp_funcs->get_fan_speed_rpm) &&
 		    (attr == &sensor_dev_attr_pwm1_max.dev_attr.attr ||
 		     attr == &sensor_dev_attr_pwm1_min.dev_attr.attr))
-			return 0;
+			वापस 0;
 
-		if ((!adev->powerplay.pp_funcs->set_fan_speed_rpm &&
-		     !adev->powerplay.pp_funcs->get_fan_speed_rpm) &&
+		अगर ((!adev->घातerplay.pp_funcs->set_fan_speed_rpm &&
+		     !adev->घातerplay.pp_funcs->get_fan_speed_rpm) &&
 		    (attr == &sensor_dev_attr_fan1_max.dev_attr.attr ||
 		     attr == &sensor_dev_attr_fan1_min.dev_attr.attr))
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
-	if ((adev->family == AMDGPU_FAMILY_SI ||	/* not implemented yet */
+	अगर ((adev->family == AMDGPU_FAMILY_SI ||	/* not implemented yet */
 	     adev->family == AMDGPU_FAMILY_KV) &&	/* not implemented yet */
 	    (attr == &sensor_dev_attr_in0_input.dev_attr.attr ||
 	     attr == &sensor_dev_attr_in0_label.dev_attr.attr))
-		return 0;
+		वापस 0;
 
 	/* only APUs have vddnb */
-	if (!(adev->flags & AMD_IS_APU) &&
+	अगर (!(adev->flags & AMD_IS_APU) &&
 	    (attr == &sensor_dev_attr_in1_input.dev_attr.attr ||
 	     attr == &sensor_dev_attr_in1_label.dev_attr.attr))
-		return 0;
+		वापस 0;
 
 	/* no mclk on APUs */
-	if ((adev->flags & AMD_IS_APU) &&
+	अगर ((adev->flags & AMD_IS_APU) &&
 	    (attr == &sensor_dev_attr_freq2_input.dev_attr.attr ||
 	     attr == &sensor_dev_attr_freq2_label.dev_attr.attr))
-		return 0;
+		वापस 0;
 
 	/* only SOC15 dGPUs support hotspot and mem temperatures */
-	if (((adev->flags & AMD_IS_APU) ||
+	अगर (((adev->flags & AMD_IS_APU) ||
 	     adev->asic_type < CHIP_VEGA10) &&
 	    (attr == &sensor_dev_attr_temp2_crit.dev_attr.attr ||
 	     attr == &sensor_dev_attr_temp2_crit_hyst.dev_attr.attr ||
@@ -3266,284 +3267,284 @@ static umode_t hwmon_attributes_visible(struct kobject *kobj,
 	     attr == &sensor_dev_attr_temp3_input.dev_attr.attr ||
 	     attr == &sensor_dev_attr_temp2_label.dev_attr.attr ||
 	     attr == &sensor_dev_attr_temp3_label.dev_attr.attr))
-		return 0;
+		वापस 0;
 
-	/* only Vangogh has fast PPT limit and power labels */
-	if (!(adev->asic_type == CHIP_VANGOGH) &&
-	    (attr == &sensor_dev_attr_power2_average.dev_attr.attr ||
-		 attr == &sensor_dev_attr_power2_cap_max.dev_attr.attr ||
-	     attr == &sensor_dev_attr_power2_cap_min.dev_attr.attr ||
-		 attr == &sensor_dev_attr_power2_cap.dev_attr.attr ||
-		 attr == &sensor_dev_attr_power2_cap_default.dev_attr.attr ||
-		 attr == &sensor_dev_attr_power2_label.dev_attr.attr ||
-		 attr == &sensor_dev_attr_power1_label.dev_attr.attr))
-		return 0;
+	/* only Vangogh has fast PPT limit and घातer labels */
+	अगर (!(adev->asic_type == CHIP_VANGOGH) &&
+	    (attr == &sensor_dev_attr_घातer2_average.dev_attr.attr ||
+		 attr == &sensor_dev_attr_घातer2_cap_max.dev_attr.attr ||
+	     attr == &sensor_dev_attr_घातer2_cap_min.dev_attr.attr ||
+		 attr == &sensor_dev_attr_घातer2_cap.dev_attr.attr ||
+		 attr == &sensor_dev_attr_घातer2_cap_शेष.dev_attr.attr ||
+		 attr == &sensor_dev_attr_घातer2_label.dev_attr.attr ||
+		 attr == &sensor_dev_attr_घातer1_label.dev_attr.attr))
+		वापस 0;
 
-	return effective_mode;
-}
+	वापस effective_mode;
+पूर्ण
 
-static const struct attribute_group hwmon_attrgroup = {
+अटल स्थिर काष्ठा attribute_group hwmon_attrgroup = अणु
 	.attrs = hwmon_attributes,
 	.is_visible = hwmon_attributes_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *hwmon_groups[] = {
+अटल स्थिर काष्ठा attribute_group *hwmon_groups[] = अणु
 	&hwmon_attrgroup,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-int amdgpu_pm_sysfs_init(struct amdgpu_device *adev)
-{
-	int ret;
-	uint32_t mask = 0;
+पूर्णांक amdgpu_pm_sysfs_init(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक ret;
+	uपूर्णांक32_t mask = 0;
 
-	if (adev->pm.sysfs_initialized)
-		return 0;
+	अगर (adev->pm.sysfs_initialized)
+		वापस 0;
 
-	if (adev->pm.dpm_enabled == 0)
-		return 0;
+	अगर (adev->pm.dpm_enabled == 0)
+		वापस 0;
 
 	INIT_LIST_HEAD(&adev->pm.pm_attr_list);
 
-	adev->pm.int_hwmon_dev = hwmon_device_register_with_groups(adev->dev,
+	adev->pm.पूर्णांक_hwmon_dev = hwmon_device_रेजिस्टर_with_groups(adev->dev,
 								   DRIVER_NAME, adev,
 								   hwmon_groups);
-	if (IS_ERR(adev->pm.int_hwmon_dev)) {
-		ret = PTR_ERR(adev->pm.int_hwmon_dev);
+	अगर (IS_ERR(adev->pm.पूर्णांक_hwmon_dev)) अणु
+		ret = PTR_ERR(adev->pm.पूर्णांक_hwmon_dev);
 		dev_err(adev->dev,
 			"Unable to register hwmon device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (amdgpu_virt_get_sriov_vf_mode(adev)) {
-	case SRIOV_VF_MODE_ONE_VF:
+	चयन (amdgpu_virt_get_sriov_vf_mode(adev)) अणु
+	हाल SRIOV_VF_MODE_ONE_VF:
 		mask = ATTR_FLAG_ONEVF;
-		break;
-	case SRIOV_VF_MODE_MULTI_VF:
+		अवरोध;
+	हाल SRIOV_VF_MODE_MULTI_VF:
 		mask = 0;
-		break;
-	case SRIOV_VF_MODE_BARE_METAL:
-	default:
+		अवरोध;
+	हाल SRIOV_VF_MODE_BARE_METAL:
+	शेष:
 		mask = ATTR_FLAG_MASK_ALL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ret = amdgpu_device_attr_create_groups(adev,
 					       amdgpu_device_attrs,
 					       ARRAY_SIZE(amdgpu_device_attrs),
 					       mask,
 					       &adev->pm.pm_attr_list);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	adev->pm.sysfs_initialized = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void amdgpu_pm_sysfs_fini(struct amdgpu_device *adev)
-{
-	if (adev->pm.dpm_enabled == 0)
-		return;
+व्योम amdgpu_pm_sysfs_fini(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (adev->pm.dpm_enabled == 0)
+		वापस;
 
-	if (adev->pm.int_hwmon_dev)
-		hwmon_device_unregister(adev->pm.int_hwmon_dev);
+	अगर (adev->pm.पूर्णांक_hwmon_dev)
+		hwmon_device_unरेजिस्टर(adev->pm.पूर्णांक_hwmon_dev);
 
-	amdgpu_device_attr_remove_groups(adev, &adev->pm.pm_attr_list);
-}
+	amdgpu_device_attr_हटाओ_groups(adev, &adev->pm.pm_attr_list);
+पूर्ण
 
 /*
  * Debugfs info
  */
-#if defined(CONFIG_DEBUG_FS)
+#अगर defined(CONFIG_DEBUG_FS)
 
-static void amdgpu_debugfs_prints_cpu_info(struct seq_file *m,
-					   struct amdgpu_device *adev) {
-	uint16_t *p_val;
-	uint32_t size;
-	int i;
+अटल व्योम amdgpu_debugfs_prपूर्णांकs_cpu_info(काष्ठा seq_file *m,
+					   काष्ठा amdgpu_device *adev) अणु
+	uपूर्णांक16_t *p_val;
+	uपूर्णांक32_t size;
+	पूर्णांक i;
 
-	if (is_support_cclk_dpm(adev)) {
-		p_val = kcalloc(adev->smu.cpu_core_num, sizeof(uint16_t),
+	अगर (is_support_cclk_dpm(adev)) अणु
+		p_val = kसुस्मृति(adev->smu.cpu_core_num, माप(uपूर्णांक16_t),
 				GFP_KERNEL);
 
-		if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_CPU_CLK,
-					    (void *)p_val, &size)) {
-			for (i = 0; i < adev->smu.cpu_core_num; i++)
-				seq_printf(m, "\t%u MHz (CPU%d)\n",
+		अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_CPU_CLK,
+					    (व्योम *)p_val, &size)) अणु
+			क्रम (i = 0; i < adev->smu.cpu_core_num; i++)
+				seq_म_लिखो(m, "\t%u MHz (CPU%d)\n",
 					   *(p_val + i), i);
-		}
+		पूर्ण
 
-		kfree(p_val);
-	}
-}
+		kमुक्त(p_val);
+	पूर्ण
+पूर्ण
 
-static int amdgpu_debugfs_pm_info_pp(struct seq_file *m, struct amdgpu_device *adev)
-{
-	uint32_t value;
-	uint64_t value64 = 0;
-	uint32_t query = 0;
-	int size;
+अटल पूर्णांक amdgpu_debugfs_pm_info_pp(काष्ठा seq_file *m, काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक32_t value;
+	uपूर्णांक64_t value64 = 0;
+	uपूर्णांक32_t query = 0;
+	पूर्णांक size;
 
 	/* GPU Clocks */
-	size = sizeof(value);
-	seq_printf(m, "GFX Clocks and Power:\n");
+	size = माप(value);
+	seq_म_लिखो(m, "GFX Clocks and Power:\n");
 
-	amdgpu_debugfs_prints_cpu_info(m, adev);
+	amdgpu_debugfs_prपूर्णांकs_cpu_info(m, adev);
 
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_GFX_MCLK, (void *)&value, &size))
-		seq_printf(m, "\t%u MHz (MCLK)\n", value/100);
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_GFX_SCLK, (void *)&value, &size))
-		seq_printf(m, "\t%u MHz (SCLK)\n", value/100);
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_STABLE_PSTATE_SCLK, (void *)&value, &size))
-		seq_printf(m, "\t%u MHz (PSTATE_SCLK)\n", value/100);
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_STABLE_PSTATE_MCLK, (void *)&value, &size))
-		seq_printf(m, "\t%u MHz (PSTATE_MCLK)\n", value/100);
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_VDDGFX, (void *)&value, &size))
-		seq_printf(m, "\t%u mV (VDDGFX)\n", value);
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_VDDNB, (void *)&value, &size))
-		seq_printf(m, "\t%u mV (VDDNB)\n", value);
-	size = sizeof(uint32_t);
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_GPU_POWER, (void *)&query, &size))
-		seq_printf(m, "\t%u.%u W (average GPU)\n", query >> 8, query & 0xff);
-	size = sizeof(value);
-	seq_printf(m, "\n");
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_GFX_MCLK, (व्योम *)&value, &size))
+		seq_म_लिखो(m, "\t%u MHz (MCLK)\n", value/100);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_GFX_SCLK, (व्योम *)&value, &size))
+		seq_म_लिखो(m, "\t%u MHz (SCLK)\n", value/100);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_STABLE_PSTATE_SCLK, (व्योम *)&value, &size))
+		seq_म_लिखो(m, "\t%u MHz (PSTATE_SCLK)\n", value/100);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_STABLE_PSTATE_MCLK, (व्योम *)&value, &size))
+		seq_म_लिखो(m, "\t%u MHz (PSTATE_MCLK)\n", value/100);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_VDDGFX, (व्योम *)&value, &size))
+		seq_म_लिखो(m, "\t%u mV (VDDGFX)\n", value);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_VDDNB, (व्योम *)&value, &size))
+		seq_म_लिखो(m, "\t%u mV (VDDNB)\n", value);
+	size = माप(uपूर्णांक32_t);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_GPU_POWER, (व्योम *)&query, &size))
+		seq_म_लिखो(m, "\t%u.%u W (average GPU)\n", query >> 8, query & 0xff);
+	size = माप(value);
+	seq_म_लिखो(m, "\n");
 
 	/* GPU Temp */
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_GPU_TEMP, (void *)&value, &size))
-		seq_printf(m, "GPU Temperature: %u C\n", value/1000);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_GPU_TEMP, (व्योम *)&value, &size))
+		seq_म_लिखो(m, "GPU Temperature: %u C\n", value/1000);
 
 	/* GPU Load */
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_GPU_LOAD, (void *)&value, &size))
-		seq_printf(m, "GPU Load: %u %%\n", value);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_GPU_LOAD, (व्योम *)&value, &size))
+		seq_म_लिखो(m, "GPU Load: %u %%\n", value);
 	/* MEM Load */
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_MEM_LOAD, (void *)&value, &size))
-		seq_printf(m, "MEM Load: %u %%\n", value);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_MEM_LOAD, (व्योम *)&value, &size))
+		seq_म_लिखो(m, "MEM Load: %u %%\n", value);
 
-	seq_printf(m, "\n");
+	seq_म_लिखो(m, "\n");
 
 	/* SMC feature mask */
-	if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_ENABLED_SMC_FEATURES_MASK, (void *)&value64, &size))
-		seq_printf(m, "SMC Feature Mask: 0x%016llx\n", value64);
+	अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_ENABLED_SMC_FEATURES_MASK, (व्योम *)&value64, &size))
+		seq_म_लिखो(m, "SMC Feature Mask: 0x%016llx\n", value64);
 
-	if (adev->asic_type > CHIP_VEGA20) {
-		/* VCN clocks */
-		if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_VCN_POWER_STATE, (void *)&value, &size)) {
-			if (!value) {
-				seq_printf(m, "VCN: Disabled\n");
-			} else {
-				seq_printf(m, "VCN: Enabled\n");
-				if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_UVD_DCLK, (void *)&value, &size))
-					seq_printf(m, "\t%u MHz (DCLK)\n", value/100);
-				if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_UVD_VCLK, (void *)&value, &size))
-					seq_printf(m, "\t%u MHz (VCLK)\n", value/100);
-			}
-		}
-		seq_printf(m, "\n");
-	} else {
-		/* UVD clocks */
-		if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_UVD_POWER, (void *)&value, &size)) {
-			if (!value) {
-				seq_printf(m, "UVD: Disabled\n");
-			} else {
-				seq_printf(m, "UVD: Enabled\n");
-				if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_UVD_DCLK, (void *)&value, &size))
-					seq_printf(m, "\t%u MHz (DCLK)\n", value/100);
-				if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_UVD_VCLK, (void *)&value, &size))
-					seq_printf(m, "\t%u MHz (VCLK)\n", value/100);
-			}
-		}
-		seq_printf(m, "\n");
+	अगर (adev->asic_type > CHIP_VEGA20) अणु
+		/* VCN घड़ीs */
+		अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_VCN_POWER_STATE, (व्योम *)&value, &size)) अणु
+			अगर (!value) अणु
+				seq_म_लिखो(m, "VCN: Disabled\n");
+			पूर्ण अन्यथा अणु
+				seq_म_लिखो(m, "VCN: Enabled\n");
+				अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_UVD_DCLK, (व्योम *)&value, &size))
+					seq_म_लिखो(m, "\t%u MHz (DCLK)\n", value/100);
+				अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_UVD_VCLK, (व्योम *)&value, &size))
+					seq_म_लिखो(m, "\t%u MHz (VCLK)\n", value/100);
+			पूर्ण
+		पूर्ण
+		seq_म_लिखो(m, "\n");
+	पूर्ण अन्यथा अणु
+		/* UVD घड़ीs */
+		अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_UVD_POWER, (व्योम *)&value, &size)) अणु
+			अगर (!value) अणु
+				seq_म_लिखो(m, "UVD: Disabled\n");
+			पूर्ण अन्यथा अणु
+				seq_म_लिखो(m, "UVD: Enabled\n");
+				अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_UVD_DCLK, (व्योम *)&value, &size))
+					seq_म_लिखो(m, "\t%u MHz (DCLK)\n", value/100);
+				अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_UVD_VCLK, (व्योम *)&value, &size))
+					seq_म_लिखो(m, "\t%u MHz (VCLK)\n", value/100);
+			पूर्ण
+		पूर्ण
+		seq_म_लिखो(m, "\n");
 
-		/* VCE clocks */
-		if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_VCE_POWER, (void *)&value, &size)) {
-			if (!value) {
-				seq_printf(m, "VCE: Disabled\n");
-			} else {
-				seq_printf(m, "VCE: Enabled\n");
-				if (!amdgpu_dpm_read_sensor(adev, AMDGPU_PP_SENSOR_VCE_ECCLK, (void *)&value, &size))
-					seq_printf(m, "\t%u MHz (ECCLK)\n", value/100);
-			}
-		}
-	}
+		/* VCE घड़ीs */
+		अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_VCE_POWER, (व्योम *)&value, &size)) अणु
+			अगर (!value) अणु
+				seq_म_लिखो(m, "VCE: Disabled\n");
+			पूर्ण अन्यथा अणु
+				seq_म_लिखो(m, "VCE: Enabled\n");
+				अगर (!amdgpu_dpm_पढ़ो_sensor(adev, AMDGPU_PP_SENSOR_VCE_ECCLK, (व्योम *)&value, &size))
+					seq_म_लिखो(m, "\t%u MHz (ECCLK)\n", value/100);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void amdgpu_parse_cg_state(struct seq_file *m, u32 flags)
-{
-	int i;
+अटल व्योम amdgpu_parse_cg_state(काष्ठा seq_file *m, u32 flags)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; clocks[i].flag; i++)
-		seq_printf(m, "\t%s: %s\n", clocks[i].name,
-			   (flags & clocks[i].flag) ? "On" : "Off");
-}
+	क्रम (i = 0; घड़ीs[i].flag; i++)
+		seq_म_लिखो(m, "\t%s: %s\n", घड़ीs[i].name,
+			   (flags & घड़ीs[i].flag) ? "On" : "Off");
+पूर्ण
 
-static int amdgpu_debugfs_pm_info_show(struct seq_file *m, void *unused)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)m->private;
-	struct drm_device *dev = adev_to_drm(adev);
+अटल पूर्णांक amdgpu_debugfs_pm_info_show(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)m->निजी;
+	काष्ठा drm_device *dev = adev_to_drm(adev);
 	u32 flags = 0;
-	int r;
+	पूर्णांक r;
 
-	if (amdgpu_in_reset(adev))
-		return -EPERM;
-	if (adev->in_suspend && !adev->in_runpm)
-		return -EPERM;
+	अगर (amdgpu_in_reset(adev))
+		वापस -EPERM;
+	अगर (adev->in_suspend && !adev->in_runpm)
+		वापस -EPERM;
 
-	r = pm_runtime_get_sync(dev->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(dev->dev);
-		return r;
-	}
+	r = pm_runसमय_get_sync(dev->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(dev->dev);
+		वापस r;
+	पूर्ण
 
-	if (!adev->pm.dpm_enabled) {
-		seq_printf(m, "dpm not enabled\n");
-		pm_runtime_mark_last_busy(dev->dev);
-		pm_runtime_put_autosuspend(dev->dev);
-		return 0;
-	}
+	अगर (!adev->pm.dpm_enabled) अणु
+		seq_म_लिखो(m, "dpm not enabled\n");
+		pm_runसमय_mark_last_busy(dev->dev);
+		pm_runसमय_put_स्वतःsuspend(dev->dev);
+		वापस 0;
+	पूर्ण
 
-	if (!is_support_sw_smu(adev) &&
-	    adev->powerplay.pp_funcs->debugfs_print_current_performance_level) {
+	अगर (!is_support_sw_smu(adev) &&
+	    adev->घातerplay.pp_funcs->debugfs_prपूर्णांक_current_perक्रमmance_level) अणु
 		mutex_lock(&adev->pm.mutex);
-		if (adev->powerplay.pp_funcs->debugfs_print_current_performance_level)
-			adev->powerplay.pp_funcs->debugfs_print_current_performance_level(adev, m);
-		else
-			seq_printf(m, "Debugfs support not implemented for this asic\n");
+		अगर (adev->घातerplay.pp_funcs->debugfs_prपूर्णांक_current_perक्रमmance_level)
+			adev->घातerplay.pp_funcs->debugfs_prपूर्णांक_current_perक्रमmance_level(adev, m);
+		अन्यथा
+			seq_म_लिखो(m, "Debugfs support not implemented for this asic\n");
 		mutex_unlock(&adev->pm.mutex);
 		r = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		r = amdgpu_debugfs_pm_info_pp(m, adev);
-	}
-	if (r)
-		goto out;
+	पूर्ण
+	अगर (r)
+		जाओ out;
 
-	amdgpu_device_ip_get_clockgating_state(adev, &flags);
+	amdgpu_device_ip_get_घड़ीgating_state(adev, &flags);
 
-	seq_printf(m, "Clock Gating Flags Mask: 0x%x\n", flags);
+	seq_म_लिखो(m, "Clock Gating Flags Mask: 0x%x\n", flags);
 	amdgpu_parse_cg_state(m, flags);
-	seq_printf(m, "\n");
+	seq_म_लिखो(m, "\n");
 
 out:
-	pm_runtime_mark_last_busy(dev->dev);
-	pm_runtime_put_autosuspend(dev->dev);
+	pm_runसमय_mark_last_busy(dev->dev);
+	pm_runसमय_put_स्वतःsuspend(dev->dev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(amdgpu_debugfs_pm_info);
 
-#endif
+#पूर्ण_अगर
 
-void amdgpu_debugfs_pm_init(struct amdgpu_device *adev)
-{
-#if defined(CONFIG_DEBUG_FS)
-	struct drm_minor *minor = adev_to_drm(adev)->primary;
-	struct dentry *root = minor->debugfs_root;
+व्योम amdgpu_debugfs_pm_init(काष्ठा amdgpu_device *adev)
+अणु
+#अगर defined(CONFIG_DEBUG_FS)
+	काष्ठा drm_minor *minor = adev_to_drm(adev)->primary;
+	काष्ठा dentry *root = minor->debugfs_root;
 
 	debugfs_create_file("amdgpu_pm_info", 0444, root, adev,
 			    &amdgpu_debugfs_pm_info_fops);
 
-#endif
-}
+#पूर्ण_अगर
+पूर्ण

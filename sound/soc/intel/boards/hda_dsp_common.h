@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright(c) 2019 Intel Corporation.
  */
@@ -8,22 +9,22 @@
  * Intel HDA based machine drivers.
  */
 
-#ifndef __HDA_DSP_COMMON_H
-#define __HDA_DSP_COMMON_H
+#अगर_अघोषित __HDA_DSP_COMMON_H
+#घोषणा __HDA_DSP_COMMON_H
 
-#include <sound/hda_codec.h>
-#include <sound/hda_i915.h>
-#include "../../codecs/hdac_hda.h"
+#समावेश <sound/hda_codec.h>
+#समावेश <sound/hda_i915.h>
+#समावेश "../../codecs/hdac_hda.h"
 
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_HDA_AUDIO_CODEC)
-int hda_dsp_hdmi_build_controls(struct snd_soc_card *card,
-				struct snd_soc_component *comp);
-#else
-static inline int hda_dsp_hdmi_build_controls(struct snd_soc_card *card,
-					      struct snd_soc_component *comp)
-{
-	return -EINVAL;
-}
-#endif
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_HDA_AUDIO_CODEC)
+पूर्णांक hda_dsp_hdmi_build_controls(काष्ठा snd_soc_card *card,
+				काष्ठा snd_soc_component *comp);
+#अन्यथा
+अटल अंतरभूत पूर्णांक hda_dsp_hdmi_build_controls(काष्ठा snd_soc_card *card,
+					      काष्ठा snd_soc_component *comp)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __HDA_DSP_COMMON_H */
+#पूर्ण_अगर /* __HDA_DSP_COMMON_H */

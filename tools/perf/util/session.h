@@ -1,143 +1,144 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_SESSION_H
-#define __PERF_SESSION_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_SESSION_H
+#घोषणा __PERF_SESSION_H
 
-#include "trace-event.h"
-#include "event.h"
-#include "header.h"
-#include "machine.h"
-#include "data.h"
-#include "ordered-events.h"
-#include "util/compress.h"
-#include <linux/kernel.h>
-#include <linux/rbtree.h>
-#include <linux/perf_event.h>
+#समावेश "trace-event.h"
+#समावेश "event.h"
+#समावेश "header.h"
+#समावेश "machine.h"
+#समावेश "data.h"
+#समावेश "ordered-events.h"
+#समावेश "util/compress.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/perf_event.h>
 
-struct ip_callchain;
-struct symbol;
-struct thread;
+काष्ठा ip_callchain;
+काष्ठा symbol;
+काष्ठा thपढ़ो;
 
-struct auxtrace;
-struct itrace_synth_opts;
+काष्ठा auxtrace;
+काष्ठा itrace_synth_opts;
 
-struct perf_session {
-	struct perf_header	header;
-	struct machines		machines;
-	struct evlist	*evlist;
-	struct auxtrace		*auxtrace;
-	struct itrace_synth_opts *itrace_synth_opts;
-	struct list_head	auxtrace_index;
-	struct trace_event	tevent;
-	struct perf_record_time_conv	time_conv;
+काष्ठा perf_session अणु
+	काष्ठा perf_header	header;
+	काष्ठा machines		machines;
+	काष्ठा evlist	*evlist;
+	काष्ठा auxtrace		*auxtrace;
+	काष्ठा itrace_synth_opts *itrace_synth_opts;
+	काष्ठा list_head	auxtrace_index;
+	काष्ठा trace_event	tevent;
+	काष्ठा perf_record_समय_conv	समय_conv;
 	bool			repipe;
 	bool			one_mmap;
-	void			*one_mmap_addr;
+	व्योम			*one_mmap_addr;
 	u64			one_mmap_offset;
-	struct ordered_events	ordered_events;
-	struct perf_data	*data;
-	struct perf_tool	*tool;
+	काष्ठा ordered_events	ordered_events;
+	काष्ठा perf_data	*data;
+	काष्ठा perf_tool	*tool;
 	u64			bytes_transferred;
 	u64			bytes_compressed;
-	struct zstd_data	zstd_data;
-	struct decomp		*decomp;
-	struct decomp		*decomp_last;
-};
+	काष्ठा zstd_data	zstd_data;
+	काष्ठा decomp		*decomp;
+	काष्ठा decomp		*decomp_last;
+पूर्ण;
 
-struct decomp {
-	struct decomp *next;
+काष्ठा decomp अणु
+	काष्ठा decomp *next;
 	u64 file_pos;
-	size_t mmap_len;
+	माप_प्रकार mmap_len;
 	u64 head;
-	size_t size;
-	char data[];
-};
+	माप_प्रकार size;
+	अक्षर data[];
+पूर्ण;
 
-struct perf_tool;
+काष्ठा perf_tool;
 
-struct perf_session *perf_session__new(struct perf_data *data,
-				       bool repipe, struct perf_tool *tool);
-void perf_session__delete(struct perf_session *session);
+काष्ठा perf_session *perf_session__new(काष्ठा perf_data *data,
+				       bool repipe, काष्ठा perf_tool *tool);
+व्योम perf_session__delete(काष्ठा perf_session *session);
 
-void perf_event_header__bswap(struct perf_event_header *hdr);
+व्योम perf_event_header__bswap(काष्ठा perf_event_header *hdr);
 
-int perf_session__peek_event(struct perf_session *session, off_t file_offset,
-			     void *buf, size_t buf_sz,
-			     union perf_event **event_ptr,
-			     struct perf_sample *sample);
-typedef int (*peek_events_cb_t)(struct perf_session *session,
-				union perf_event *event, u64 offset,
-				void *data);
-int perf_session__peek_events(struct perf_session *session, u64 offset,
-			      u64 size, peek_events_cb_t cb, void *data);
+पूर्णांक perf_session__peek_event(काष्ठा perf_session *session, off_t file_offset,
+			     व्योम *buf, माप_प्रकार buf_sz,
+			     जोड़ perf_event **event_ptr,
+			     काष्ठा perf_sample *sample);
+प्रकार पूर्णांक (*peek_events_cb_t)(काष्ठा perf_session *session,
+				जोड़ perf_event *event, u64 offset,
+				व्योम *data);
+पूर्णांक perf_session__peek_events(काष्ठा perf_session *session, u64 offset,
+			      u64 size, peek_events_cb_t cb, व्योम *data);
 
-int perf_session__process_events(struct perf_session *session);
+पूर्णांक perf_session__process_events(काष्ठा perf_session *session);
 
-int perf_session__queue_event(struct perf_session *s, union perf_event *event,
-			      u64 timestamp, u64 file_offset);
+पूर्णांक perf_session__queue_event(काष्ठा perf_session *s, जोड़ perf_event *event,
+			      u64 बारtamp, u64 file_offset);
 
-void perf_tool__fill_defaults(struct perf_tool *tool);
+व्योम perf_tool__fill_शेषs(काष्ठा perf_tool *tool);
 
-int perf_session__resolve_callchain(struct perf_session *session,
-				    struct evsel *evsel,
-				    struct thread *thread,
-				    struct ip_callchain *chain,
-				    struct symbol **parent);
+पूर्णांक perf_session__resolve_callchain(काष्ठा perf_session *session,
+				    काष्ठा evsel *evsel,
+				    काष्ठा thपढ़ो *thपढ़ो,
+				    काष्ठा ip_callchain *chain,
+				    काष्ठा symbol **parent);
 
-bool perf_session__has_traces(struct perf_session *session, const char *msg);
+bool perf_session__has_traces(काष्ठा perf_session *session, स्थिर अक्षर *msg);
 
-void perf_event__attr_swap(struct perf_event_attr *attr);
+व्योम perf_event__attr_swap(काष्ठा perf_event_attr *attr);
 
-int perf_session__create_kernel_maps(struct perf_session *session);
+पूर्णांक perf_session__create_kernel_maps(काष्ठा perf_session *session);
 
-void perf_session__set_id_hdr_size(struct perf_session *session);
+व्योम perf_session__set_id_hdr_size(काष्ठा perf_session *session);
 
-static inline
-struct machine *perf_session__find_machine(struct perf_session *session, pid_t pid)
-{
-	return machines__find(&session->machines, pid);
-}
+अटल अंतरभूत
+काष्ठा machine *perf_session__find_machine(काष्ठा perf_session *session, pid_t pid)
+अणु
+	वापस machines__find(&session->machines, pid);
+पूर्ण
 
-static inline
-struct machine *perf_session__findnew_machine(struct perf_session *session, pid_t pid)
-{
-	return machines__findnew(&session->machines, pid);
-}
+अटल अंतरभूत
+काष्ठा machine *perf_session__findnew_machine(काष्ठा perf_session *session, pid_t pid)
+अणु
+	वापस machines__findnew(&session->machines, pid);
+पूर्ण
 
-struct thread *perf_session__findnew(struct perf_session *session, pid_t pid);
-int perf_session__register_idle_thread(struct perf_session *session);
+काष्ठा thपढ़ो *perf_session__findnew(काष्ठा perf_session *session, pid_t pid);
+पूर्णांक perf_session__रेजिस्टर_idle_thपढ़ो(काष्ठा perf_session *session);
 
-size_t perf_session__fprintf(struct perf_session *session, FILE *fp);
+माप_प्रकार perf_session__ख_लिखो(काष्ठा perf_session *session, खाता *fp);
 
-size_t perf_session__fprintf_dsos(struct perf_session *session, FILE *fp);
+माप_प्रकार perf_session__ख_लिखो_dsos(काष्ठा perf_session *session, खाता *fp);
 
-size_t perf_session__fprintf_dsos_buildid(struct perf_session *session, FILE *fp,
-					  bool (fn)(struct dso *dso, int parm), int parm);
+माप_प्रकार perf_session__ख_लिखो_dsos_buildid(काष्ठा perf_session *session, खाता *fp,
+					  bool (fn)(काष्ठा dso *dso, पूर्णांक parm), पूर्णांक parm);
 
-size_t perf_session__fprintf_nr_events(struct perf_session *session, FILE *fp,
+माप_प्रकार perf_session__ख_लिखो_nr_events(काष्ठा perf_session *session, खाता *fp,
 				       bool skip_empty);
 
-struct evsel *perf_session__find_first_evtype(struct perf_session *session,
-					    unsigned int type);
+काष्ठा evsel *perf_session__find_first_evtype(काष्ठा perf_session *session,
+					    अचिन्हित पूर्णांक type);
 
-int perf_session__cpu_bitmap(struct perf_session *session,
-			     const char *cpu_list, unsigned long *cpu_bitmap);
+पूर्णांक perf_session__cpu_biपंचांगap(काष्ठा perf_session *session,
+			     स्थिर अक्षर *cpu_list, अचिन्हित दीर्घ *cpu_biपंचांगap);
 
-void perf_session__fprintf_info(struct perf_session *s, FILE *fp, bool full);
+व्योम perf_session__ख_लिखो_info(काष्ठा perf_session *s, खाता *fp, bool full);
 
-struct evsel_str_handler;
+काष्ठा evsel_str_handler;
 
-#define perf_session__set_tracepoints_handlers(session, array) \
-	__evlist__set_tracepoints_handlers(session->evlist, array, ARRAY_SIZE(array))
+#घोषणा perf_session__set_tracepoपूर्णांकs_handlers(session, array) \
+	__evlist__set_tracepoपूर्णांकs_handlers(session->evlist, array, ARRAY_SIZE(array))
 
-extern volatile int session_done;
+बाह्य अस्थिर पूर्णांक session_करोne;
 
-#define session_done()	READ_ONCE(session_done)
+#घोषणा session_करोne()	READ_ONCE(session_करोne)
 
-int perf_session__deliver_synth_event(struct perf_session *session,
-				      union perf_event *event,
-				      struct perf_sample *sample);
+पूर्णांक perf_session__deliver_synth_event(काष्ठा perf_session *session,
+				      जोड़ perf_event *event,
+				      काष्ठा perf_sample *sample);
 
-int perf_event__process_id_index(struct perf_session *session,
-				 union perf_event *event);
+पूर्णांक perf_event__process_id_index(काष्ठा perf_session *session,
+				 जोड़ perf_event *event);
 
-#endif /* __PERF_SESSION_H */
+#पूर्ण_अगर /* __PERF_SESSION_H */

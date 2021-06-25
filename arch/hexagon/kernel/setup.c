@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Arch related setup for Hexagon
+ * Arch related setup क्रम Hexagon
  *
  * Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/memblock.h>
-#include <linux/mmzone.h>
-#include <linux/mm.h>
-#include <linux/seq_file.h>
-#include <linux/console.h>
-#include <linux/of_fdt.h>
-#include <asm/io.h>
-#include <asm/sections.h>
-#include <asm/setup.h>
-#include <asm/processor.h>
-#include <asm/hexagon_vm.h>
-#include <asm/vm_mmu.h>
-#include <asm/time.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/console.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/hexagon_vm.h>
+#समावेश <यंत्र/vm_mmu.h>
+#समावेश <यंत्र/समय.स>
 
-char cmd_line[COMMAND_LINE_SIZE];
-static char default_command_line[COMMAND_LINE_SIZE] __initdata = CONFIG_CMDLINE;
+अक्षर cmd_line[COMMAND_LINE_SIZE];
+अटल अक्षर शेष_command_line[COMMAND_LINE_SIZE] __initdata = CONFIG_CMDLINE;
 
-int on_simulator;
+पूर्णांक on_simulator;
 
-void calibrate_delay(void)
-{
-	loops_per_jiffy = thread_freq_mhz * 1000000 / HZ;
-}
+व्योम calibrate_delay(व्योम)
+अणु
+	loops_per_jअगरfy = thपढ़ो_freq_mhz * 1000000 / HZ;
+पूर्ण
 
 /*
  * setup_arch -  high level architectural setup routine
- * @cmdline_p: pointer to pointer to command-line arguments
+ * @cmdline_p: poपूर्णांकer to poपूर्णांकer to command-line arguments
  */
 
-void __init setup_arch(char **cmdline_p)
-{
-	char *p = &external_cmdline_buffer;
+व्योम __init setup_arch(अक्षर **cmdline_p)
+अणु
+	अक्षर *p = &बाह्यal_cmdline_buffer;
 
 	/*
 	 * These will eventually be pulled in via either some hypervisor
-	 * or devicetree description.  Hardwiring for now.
+	 * or devicetree description.  Hardwiring क्रम now.
 	 */
 	pcycle_freq_mhz = 600;
-	thread_freq_mhz = 100;
+	thपढ़ो_freq_mhz = 100;
 	sleep_clk_freq = 32000;
 
 	/*
-	 * Set up event bindings to handle exceptions and interrupts.
+	 * Set up event bindings to handle exceptions and पूर्णांकerrupts.
 	 */
 	__vmsetvec(_K_VM_event_vector);
 
-	printk(KERN_INFO "PHYS_OFFSET=0x%08lx\n", PHYS_OFFSET);
+	prपूर्णांकk(KERN_INFO "PHYS_OFFSET=0x%08lx\n", PHYS_OFFSET);
 
 	/*
-	 * Simulator has a few differences from the hardware.
+	 * Simulator has a few dअगरferences from the hardware.
 	 * For now, check uninitialized-but-mapped memory
 	 * prior to invoking setup_arch_memory().
 	 */
-	if (*(int *)((unsigned long)_end + 8) == 0x1f1f1f1f)
+	अगर (*(पूर्णांक *)((अचिन्हित दीर्घ)_end + 8) == 0x1f1f1f1f)
 		on_simulator = 1;
-	else
+	अन्यथा
 		on_simulator = 0;
 
-	if (p[0] != '\0')
+	अगर (p[0] != '\0')
 		strlcpy(boot_command_line, p, COMMAND_LINE_SIZE);
-	else
-		strlcpy(boot_command_line, default_command_line,
+	अन्यथा
+		strlcpy(boot_command_line, शेष_command_line,
 			COMMAND_LINE_SIZE);
 
 	/*
 	 * boot_command_line and the value set up by setup_arch
 	 * are both picked up by the init code. If no reason to
-	 * make them different, pass the same pointer back.
+	 * make them dअगरferent, pass the same poपूर्णांकer back.
 	 */
 	strlcpy(cmd_line, boot_command_line, COMMAND_LINE_SIZE);
 	*cmdline_p = cmd_line;
@@ -83,55 +84,55 @@ void __init setup_arch(char **cmdline_p)
 
 	setup_arch_memory();
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	smp_start_cpus();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Functions for dumping CPU info via /proc
+ * Functions क्रम dumping CPU info via /proc
  * Probably should move to kernel/proc.c or something.
  */
-static void *c_start(struct seq_file *m, loff_t *pos)
-{
-	return *pos < nr_cpu_ids ? (void *)((unsigned long) *pos + 1) : NULL;
-}
+अटल व्योम *c_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	वापस *pos < nr_cpu_ids ? (व्योम *)((अचिन्हित दीर्घ) *pos + 1) : शून्य;
+पूर्ण
 
-static void *c_next(struct seq_file *m, void *v, loff_t *pos)
-{
+अटल व्योम *c_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	return c_start(m, pos);
-}
+	वापस c_start(m, pos);
+पूर्ण
 
-static void c_stop(struct seq_file *m, void *v)
-{
-}
+अटल व्योम c_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+पूर्ण
 
 /*
- * Eventually this will dump information about
+ * Eventually this will dump inक्रमmation about
  * CPU properties like ISA level, TLB size, etc.
  */
-static int show_cpuinfo(struct seq_file *m, void *v)
-{
-	int cpu = (unsigned long) v - 1;
+अटल पूर्णांक show_cpuinfo(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक cpu = (अचिन्हित दीर्घ) v - 1;
 
-#ifdef CONFIG_SMP
-	if (!cpu_online(cpu))
-		return 0;
-#endif
+#अगर_घोषित CONFIG_SMP
+	अगर (!cpu_online(cpu))
+		वापस 0;
+#पूर्ण_अगर
 
-	seq_printf(m, "processor\t: %d\n", cpu);
-	seq_printf(m, "model name\t: Hexagon Virtual Machine\n");
-	seq_printf(m, "BogoMips\t: %lu.%02lu\n",
-		(loops_per_jiffy * HZ) / 500000,
-		((loops_per_jiffy * HZ) / 5000) % 100);
-	seq_printf(m, "\n");
-	return 0;
-}
+	seq_म_लिखो(m, "processor\t: %d\n", cpu);
+	seq_म_लिखो(m, "model name\t: Hexagon Virtual Machine\n");
+	seq_म_लिखो(m, "BogoMips\t: %lu.%02lu\n",
+		(loops_per_jअगरfy * HZ) / 500000,
+		((loops_per_jअगरfy * HZ) / 5000) % 100);
+	seq_म_लिखो(m, "\n");
+	वापस 0;
+पूर्ण
 
-const struct seq_operations cpuinfo_op = {
+स्थिर काष्ठा seq_operations cpuinfo_op = अणु
 	.start  = &c_start,
 	.next   = &c_next,
 	.stop   = &c_stop,
 	.show   = &show_cpuinfo,
-};
+पूर्ण;

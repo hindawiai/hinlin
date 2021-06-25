@@ -1,220 +1,221 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * ACPI PCI HotPlug glue functions to ACPI CA subsystem
+ * ACPI PCI HotPlug glue functions to ACPI CA subप्रणाली
  *
  * Copyright (C) 2002,2003 Takayoshi Kochi (t-kochi@bq.jp.nec.com)
  * Copyright (C) 2002 Hiroshi Aono (h-aono@ap.jp.nec.com)
  * Copyright (C) 2002,2003 NEC Corporation
  * Copyright (C) 2003-2005 Matthew Wilcox (willy@infradead.org)
  * Copyright (C) 2003-2005 Hewlett Packard
- * Copyright (C) 2005 Rajesh Shah (rajesh.shah@intel.com)
+ * Copyright (C) 2005 Rajesh Shah (rajesh.shah@पूर्णांकel.com)
  * Copyright (C) 2005 Intel Corporation
  *
  * All rights reserved.
  *
- * Send feedback to <kristen.c.accardi@intel.com>
+ * Send feedback to <kristen.c.accardi@पूर्णांकel.com>
  *
  */
 
 /*
- * Lifetime rules for pci_dev:
+ * Lअगरeसमय rules क्रम pci_dev:
  *  - The one in acpiphp_bridge has its refcount elevated by pci_get_slot()
  *    when the bridge is scanned and it loses a refcount when the bridge
- *    is removed.
+ *    is हटाओd.
  *  - When a P2P bridge is present, we elevate the refcount on the subordinate
  *    bus. It loses the refcount when the the driver unloads.
  */
 
-#define pr_fmt(fmt) "acpiphp_glue: " fmt
+#घोषणा pr_fmt(fmt) "acpiphp_glue: " fmt
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/pci_hotplug.h>
-#include <linux/pci-acpi.h>
-#include <linux/pm_runtime.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_hotplug.h>
+#समावेश <linux/pci-acpi.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
 
-#include "../pci.h"
-#include "acpiphp.h"
+#समावेश "../pci.h"
+#समावेश "acpiphp.h"
 
-static LIST_HEAD(bridge_list);
-static DEFINE_MUTEX(bridge_mutex);
+अटल LIST_HEAD(bridge_list);
+अटल DEFINE_MUTEX(bridge_mutex);
 
-static int acpiphp_hotplug_notify(struct acpi_device *adev, u32 type);
-static void acpiphp_post_dock_fixup(struct acpi_device *adev);
-static void acpiphp_sanitize_bus(struct pci_bus *bus);
-static void hotplug_event(u32 type, struct acpiphp_context *context);
-static void free_bridge(struct kref *kref);
+अटल पूर्णांक acpiphp_hotplug_notअगरy(काष्ठा acpi_device *adev, u32 type);
+अटल व्योम acpiphp_post_करोck_fixup(काष्ठा acpi_device *adev);
+अटल व्योम acpiphp_sanitize_bus(काष्ठा pci_bus *bus);
+अटल व्योम hotplug_event(u32 type, काष्ठा acpiphp_context *context);
+अटल व्योम मुक्त_bridge(काष्ठा kref *kref);
 
 /**
  * acpiphp_init_context - Create hotplug context and grab a reference to it.
- * @adev: ACPI device object to create the context for.
+ * @adev: ACPI device object to create the context क्रम.
  *
  * Call under acpi_hp_context_lock.
  */
-static struct acpiphp_context *acpiphp_init_context(struct acpi_device *adev)
-{
-	struct acpiphp_context *context;
+अटल काष्ठा acpiphp_context *acpiphp_init_context(काष्ठा acpi_device *adev)
+अणु
+	काष्ठा acpiphp_context *context;
 
-	context = kzalloc(sizeof(*context), GFP_KERNEL);
-	if (!context)
-		return NULL;
+	context = kzalloc(माप(*context), GFP_KERNEL);
+	अगर (!context)
+		वापस शून्य;
 
 	context->refcount = 1;
-	context->hp.notify = acpiphp_hotplug_notify;
-	context->hp.fixup = acpiphp_post_dock_fixup;
+	context->hp.notअगरy = acpiphp_hotplug_notअगरy;
+	context->hp.fixup = acpiphp_post_करोck_fixup;
 	acpi_set_hp_context(adev, &context->hp);
-	return context;
-}
+	वापस context;
+पूर्ण
 
 /**
  * acpiphp_get_context - Get hotplug context and grab a reference to it.
- * @adev: ACPI device object to get the context for.
+ * @adev: ACPI device object to get the context क्रम.
  *
  * Call under acpi_hp_context_lock.
  */
-static struct acpiphp_context *acpiphp_get_context(struct acpi_device *adev)
-{
-	struct acpiphp_context *context;
+अटल काष्ठा acpiphp_context *acpiphp_get_context(काष्ठा acpi_device *adev)
+अणु
+	काष्ठा acpiphp_context *context;
 
-	if (!adev->hp)
-		return NULL;
+	अगर (!adev->hp)
+		वापस शून्य;
 
 	context = to_acpiphp_context(adev->hp);
 	context->refcount++;
-	return context;
-}
+	वापस context;
+पूर्ण
 
 /**
  * acpiphp_put_context - Drop a reference to ACPI hotplug context.
  * @context: ACPI hotplug context to drop a reference to.
  *
- * The context object is removed if there are no more references to it.
+ * The context object is हटाओd अगर there are no more references to it.
  *
  * Call under acpi_hp_context_lock.
  */
-static void acpiphp_put_context(struct acpiphp_context *context)
-{
-	if (--context->refcount)
-		return;
+अटल व्योम acpiphp_put_context(काष्ठा acpiphp_context *context)
+अणु
+	अगर (--context->refcount)
+		वापस;
 
 	WARN_ON(context->bridge);
-	context->hp.self->hp = NULL;
-	kfree(context);
-}
+	context->hp.self->hp = शून्य;
+	kमुक्त(context);
+पूर्ण
 
-static inline void get_bridge(struct acpiphp_bridge *bridge)
-{
+अटल अंतरभूत व्योम get_bridge(काष्ठा acpiphp_bridge *bridge)
+अणु
 	kref_get(&bridge->ref);
-}
+पूर्ण
 
-static inline void put_bridge(struct acpiphp_bridge *bridge)
-{
-	kref_put(&bridge->ref, free_bridge);
-}
+अटल अंतरभूत व्योम put_bridge(काष्ठा acpiphp_bridge *bridge)
+अणु
+	kref_put(&bridge->ref, मुक्त_bridge);
+पूर्ण
 
-static struct acpiphp_context *acpiphp_grab_context(struct acpi_device *adev)
-{
-	struct acpiphp_context *context;
+अटल काष्ठा acpiphp_context *acpiphp_grab_context(काष्ठा acpi_device *adev)
+अणु
+	काष्ठा acpiphp_context *context;
 
 	acpi_lock_hp_context();
 
 	context = acpiphp_get_context(adev);
-	if (!context)
-		goto unlock;
+	अगर (!context)
+		जाओ unlock;
 
-	if (context->func.parent->is_going_away) {
+	अगर (context->func.parent->is_going_away) अणु
 		acpiphp_put_context(context);
-		context = NULL;
-		goto unlock;
-	}
+		context = शून्य;
+		जाओ unlock;
+	पूर्ण
 
 	get_bridge(context->func.parent);
 	acpiphp_put_context(context);
 
 unlock:
 	acpi_unlock_hp_context();
-	return context;
-}
+	वापस context;
+पूर्ण
 
-static void acpiphp_let_context_go(struct acpiphp_context *context)
-{
+अटल व्योम acpiphp_let_context_go(काष्ठा acpiphp_context *context)
+अणु
 	put_bridge(context->func.parent);
-}
+पूर्ण
 
-static void free_bridge(struct kref *kref)
-{
-	struct acpiphp_context *context;
-	struct acpiphp_bridge *bridge;
-	struct acpiphp_slot *slot, *next;
-	struct acpiphp_func *func, *tmp;
+अटल व्योम मुक्त_bridge(काष्ठा kref *kref)
+अणु
+	काष्ठा acpiphp_context *context;
+	काष्ठा acpiphp_bridge *bridge;
+	काष्ठा acpiphp_slot *slot, *next;
+	काष्ठा acpiphp_func *func, *पंचांगp;
 
 	acpi_lock_hp_context();
 
-	bridge = container_of(kref, struct acpiphp_bridge, ref);
+	bridge = container_of(kref, काष्ठा acpiphp_bridge, ref);
 
-	list_for_each_entry_safe(slot, next, &bridge->slots, node) {
-		list_for_each_entry_safe(func, tmp, &slot->funcs, sibling)
+	list_क्रम_each_entry_safe(slot, next, &bridge->slots, node) अणु
+		list_क्रम_each_entry_safe(func, पंचांगp, &slot->funcs, sibling)
 			acpiphp_put_context(func_to_context(func));
 
-		kfree(slot);
-	}
+		kमुक्त(slot);
+	पूर्ण
 
 	context = bridge->context;
 	/* Root bridges will not have hotplug context. */
-	if (context) {
-		/* Release the reference taken by acpiphp_enumerate_slots(). */
+	अगर (context) अणु
+		/* Release the reference taken by acpiphp_क्रमागतerate_slots(). */
 		put_bridge(context->func.parent);
-		context->bridge = NULL;
+		context->bridge = शून्य;
 		acpiphp_put_context(context);
-	}
+	पूर्ण
 
 	put_device(&bridge->pci_bus->dev);
 	pci_dev_put(bridge->pci_dev);
-	kfree(bridge);
+	kमुक्त(bridge);
 
 	acpi_unlock_hp_context();
-}
+पूर्ण
 
 /**
- * acpiphp_post_dock_fixup - Post-dock fixups for PCI devices.
+ * acpiphp_post_करोck_fixup - Post-करोck fixups क्रम PCI devices.
  * @adev: ACPI device object corresponding to a PCI device.
  *
- * TBD - figure out a way to only call fixups for systems that require them.
+ * TBD - figure out a way to only call fixups क्रम प्रणालीs that require them.
  */
-static void acpiphp_post_dock_fixup(struct acpi_device *adev)
-{
-	struct acpiphp_context *context = acpiphp_grab_context(adev);
-	struct pci_bus *bus;
+अटल व्योम acpiphp_post_करोck_fixup(काष्ठा acpi_device *adev)
+अणु
+	काष्ठा acpiphp_context *context = acpiphp_grab_context(adev);
+	काष्ठा pci_bus *bus;
 	u32 buses;
 
-	if (!context)
-		return;
+	अगर (!context)
+		वापस;
 
 	bus = context->func.slot->bus;
-	if (!bus->self)
-		goto out;
+	अगर (!bus->self)
+		जाओ out;
 
-	/* fixup bad _DCK function that rewrites
+	/* fixup bad _DCK function that reग_लिखोs
 	 * secondary bridge on slot
 	 */
-	pci_read_config_dword(bus->self, PCI_PRIMARY_BUS, &buses);
+	pci_पढ़ो_config_dword(bus->self, PCI_PRIMARY_BUS, &buses);
 
-	if (((buses >> 8) & 0xff) != bus->busn_res.start) {
+	अगर (((buses >> 8) & 0xff) != bus->busn_res.start) अणु
 		buses = (buses & 0xff000000)
-			| ((unsigned int)(bus->primary)     <<  0)
-			| ((unsigned int)(bus->busn_res.start)   <<  8)
-			| ((unsigned int)(bus->busn_res.end) << 16);
-		pci_write_config_dword(bus->self, PCI_PRIMARY_BUS, buses);
-	}
+			| ((अचिन्हित पूर्णांक)(bus->primary)     <<  0)
+			| ((अचिन्हित पूर्णांक)(bus->busn_res.start)   <<  8)
+			| ((अचिन्हित पूर्णांक)(bus->busn_res.end) << 16);
+		pci_ग_लिखो_config_dword(bus->self, PCI_PRIMARY_BUS, buses);
+	पूर्ण
 
  out:
 	acpiphp_let_context_go(context);
-}
+पूर्ण
 
 /**
  * acpiphp_add_context - Add ACPIPHP context to an ACPI device object.
@@ -223,68 +224,68 @@ static void acpiphp_post_dock_fixup(struct acpi_device *adev)
  * @data: The object's parent ACPIPHP bridge.
  * @rv: Not used.
  */
-static acpi_status acpiphp_add_context(acpi_handle handle, u32 lvl, void *data,
-				       void **rv)
-{
-	struct acpiphp_bridge *bridge = data;
-	struct acpiphp_context *context;
-	struct acpi_device *adev;
-	struct acpiphp_slot *slot;
-	struct acpiphp_func *newfunc;
+अटल acpi_status acpiphp_add_context(acpi_handle handle, u32 lvl, व्योम *data,
+				       व्योम **rv)
+अणु
+	काष्ठा acpiphp_bridge *bridge = data;
+	काष्ठा acpiphp_context *context;
+	काष्ठा acpi_device *adev;
+	काष्ठा acpiphp_slot *slot;
+	काष्ठा acpiphp_func *newfunc;
 	acpi_status status = AE_OK;
-	unsigned long long adr;
-	int device, function;
-	struct pci_bus *pbus = bridge->pci_bus;
-	struct pci_dev *pdev = bridge->pci_dev;
+	अचिन्हित दीर्घ दीर्घ adr;
+	पूर्णांक device, function;
+	काष्ठा pci_bus *pbus = bridge->pci_bus;
+	काष्ठा pci_dev *pdev = bridge->pci_dev;
 	u32 val;
 
-	status = acpi_evaluate_integer(handle, "_ADR", NULL, &adr);
-	if (ACPI_FAILURE(status)) {
-		if (status != AE_NOT_FOUND)
+	status = acpi_evaluate_पूर्णांकeger(handle, "_ADR", शून्य, &adr);
+	अगर (ACPI_FAILURE(status)) अणु
+		अगर (status != AE_NOT_FOUND)
 			acpi_handle_warn(handle,
 				"can't evaluate _ADR (%#x)\n", status);
-		return AE_OK;
-	}
-	if (acpi_bus_get_device(handle, &adev))
-		return AE_OK;
+		वापस AE_OK;
+	पूर्ण
+	अगर (acpi_bus_get_device(handle, &adev))
+		वापस AE_OK;
 
 	device = (adr >> 16) & 0xffff;
 	function = adr & 0xffff;
 
 	acpi_lock_hp_context();
 	context = acpiphp_init_context(adev);
-	if (!context) {
+	अगर (!context) अणु
 		acpi_unlock_hp_context();
 		acpi_handle_err(handle, "No hotplug context\n");
-		return AE_NOT_EXIST;
-	}
+		वापस AE_NOT_EXIST;
+	पूर्ण
 	newfunc = &context->func;
 	newfunc->function = function;
 	newfunc->parent = bridge;
 	acpi_unlock_hp_context();
 
 	/*
-	 * If this is a dock device, its _EJ0 should be executed by the dock
-	 * notify handler after calling _DCK.
+	 * If this is a करोck device, its _EJ0 should be executed by the करोck
+	 * notअगरy handler after calling _DCK.
 	 */
-	if (!is_dock_device(adev) && acpi_has_method(handle, "_EJ0"))
+	अगर (!is_करोck_device(adev) && acpi_has_method(handle, "_EJ0"))
 		newfunc->flags = FUNC_HAS_EJ0;
 
-	if (acpi_has_method(handle, "_STA"))
+	अगर (acpi_has_method(handle, "_STA"))
 		newfunc->flags |= FUNC_HAS_STA;
 
-	/* search for objects that share the same slot */
-	list_for_each_entry(slot, &bridge->slots, node)
-		if (slot->device == device)
-			goto slot_found;
+	/* search क्रम objects that share the same slot */
+	list_क्रम_each_entry(slot, &bridge->slots, node)
+		अगर (slot->device == device)
+			जाओ slot_found;
 
-	slot = kzalloc(sizeof(struct acpiphp_slot), GFP_KERNEL);
-	if (!slot) {
+	slot = kzalloc(माप(काष्ठा acpiphp_slot), GFP_KERNEL);
+	अगर (!slot) अणु
 		acpi_lock_hp_context();
 		acpiphp_put_context(context);
 		acpi_unlock_hp_context();
-		return AE_NO_MEMORY;
-	}
+		वापस AE_NO_MEMORY;
+	पूर्ण
 
 	slot->bus = bridge->pci_bus;
 	slot->device = device;
@@ -293,66 +294,66 @@ static acpi_status acpiphp_add_context(acpi_handle handle, u32 lvl, void *data,
 	list_add_tail(&slot->node, &bridge->slots);
 
 	/*
-	 * Expose slots to user space for functions that have _EJ0 or _RMV or
-	 * are located in dock stations.  Do not expose them for devices handled
+	 * Expose slots to user space क्रम functions that have _EJ0 or _RMV or
+	 * are located in करोck stations.  Do not expose them क्रम devices handled
 	 * by the native PCIe hotplug (PCIeHP) or standard PCI hotplug
 	 * (SHPCHP), because that code is supposed to expose slots to user
-	 * space in those cases.
+	 * space in those हालs.
 	 */
-	if ((acpi_pci_check_ejectable(pbus, handle) || is_dock_device(adev))
-	    && !(pdev && hotplug_is_native(pdev))) {
-		unsigned long long sun;
-		int retval;
+	अगर ((acpi_pci_check_ejectable(pbus, handle) || is_करोck_device(adev))
+	    && !(pdev && hotplug_is_native(pdev))) अणु
+		अचिन्हित दीर्घ दीर्घ sun;
+		पूर्णांक retval;
 
 		bridge->nr_slots++;
-		status = acpi_evaluate_integer(handle, "_SUN", NULL, &sun);
-		if (ACPI_FAILURE(status))
+		status = acpi_evaluate_पूर्णांकeger(handle, "_SUN", शून्य, &sun);
+		अगर (ACPI_FAILURE(status))
 			sun = bridge->nr_slots;
 
 		pr_debug("found ACPI PCI Hotplug slot %llu at PCI %04x:%02x:%02x\n",
-		    sun, pci_domain_nr(pbus), pbus->number, device);
+		    sun, pci_करोमुख्य_nr(pbus), pbus->number, device);
 
-		retval = acpiphp_register_hotplug_slot(slot, sun);
-		if (retval) {
-			slot->slot = NULL;
+		retval = acpiphp_रेजिस्टर_hotplug_slot(slot, sun);
+		अगर (retval) अणु
+			slot->slot = शून्य;
 			bridge->nr_slots--;
-			if (retval == -EBUSY)
+			अगर (retval == -EBUSY)
 				pr_warn("Slot %llu already registered by another hotplug driver\n", sun);
-			else
+			अन्यथा
 				pr_warn("acpiphp_register_hotplug_slot failed (err code = 0x%x)\n", retval);
-		}
-		/* Even if the slot registration fails, we can still use it. */
-	}
+		पूर्ण
+		/* Even अगर the slot registration fails, we can still use it. */
+	पूर्ण
 
  slot_found:
 	newfunc->slot = slot;
 	list_add_tail(&newfunc->sibling, &slot->funcs);
 
-	if (pci_bus_read_dev_vendor_id(pbus, PCI_DEVFN(device, function),
+	अगर (pci_bus_पढ़ो_dev_venकरोr_id(pbus, PCI_DEVFN(device, function),
 				       &val, 60*1000))
 		slot->flags |= SLOT_ENABLED;
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static void cleanup_bridge(struct acpiphp_bridge *bridge)
-{
-	struct acpiphp_slot *slot;
-	struct acpiphp_func *func;
+अटल व्योम cleanup_bridge(काष्ठा acpiphp_bridge *bridge)
+अणु
+	काष्ठा acpiphp_slot *slot;
+	काष्ठा acpiphp_func *func;
 
-	list_for_each_entry(slot, &bridge->slots, node) {
-		list_for_each_entry(func, &slot->funcs, sibling) {
-			struct acpi_device *adev = func_to_acpi_device(func);
+	list_क्रम_each_entry(slot, &bridge->slots, node) अणु
+		list_क्रम_each_entry(func, &slot->funcs, sibling) अणु
+			काष्ठा acpi_device *adev = func_to_acpi_device(func);
 
 			acpi_lock_hp_context();
-			adev->hp->notify = NULL;
-			adev->hp->fixup = NULL;
+			adev->hp->notअगरy = शून्य;
+			adev->hp->fixup = शून्य;
 			acpi_unlock_hp_context();
-		}
+		पूर्ण
 		slot->flags |= SLOT_IS_GOING_AWAY;
-		if (slot->slot)
-			acpiphp_unregister_hotplug_slot(slot);
-	}
+		अगर (slot->slot)
+			acpiphp_unरेजिस्टर_hotplug_slot(slot);
+	पूर्ण
 
 	mutex_lock(&bridge_mutex);
 	list_del(&bridge->list);
@@ -361,508 +362,508 @@ static void cleanup_bridge(struct acpiphp_bridge *bridge)
 	acpi_lock_hp_context();
 	bridge->is_going_away = true;
 	acpi_unlock_hp_context();
-}
+पूर्ण
 
 /**
- * acpiphp_max_busnr - return the highest reserved bus number under the given bus.
+ * acpiphp_max_busnr - वापस the highest reserved bus number under the given bus.
  * @bus: bus to start search with
  */
-static unsigned char acpiphp_max_busnr(struct pci_bus *bus)
-{
-	struct pci_bus *tmp;
-	unsigned char max, n;
+अटल अचिन्हित अक्षर acpiphp_max_busnr(काष्ठा pci_bus *bus)
+अणु
+	काष्ठा pci_bus *पंचांगp;
+	अचिन्हित अक्षर max, n;
 
 	/*
-	 * pci_bus_max_busnr will return the highest
-	 * reserved busnr for all these children.
+	 * pci_bus_max_busnr will वापस the highest
+	 * reserved busnr क्रम all these children.
 	 * that is equivalent to the bus->subordinate
-	 * value.  We don't want to use the parent's
+	 * value.  We करोn't want to use the parent's
 	 * bus->subordinate value because it could have
 	 * padding in it.
 	 */
 	max = bus->busn_res.start;
 
-	list_for_each_entry(tmp, &bus->children, node) {
-		n = pci_bus_max_busnr(tmp);
-		if (n > max)
+	list_क्रम_each_entry(पंचांगp, &bus->children, node) अणु
+		n = pci_bus_max_busnr(पंचांगp);
+		अगर (n > max)
 			max = n;
-	}
-	return max;
-}
+	पूर्ण
+	वापस max;
+पूर्ण
 
-static void acpiphp_set_acpi_region(struct acpiphp_slot *slot)
-{
-	struct acpiphp_func *func;
+अटल व्योम acpiphp_set_acpi_region(काष्ठा acpiphp_slot *slot)
+अणु
+	काष्ठा acpiphp_func *func;
 
-	list_for_each_entry(func, &slot->funcs, sibling) {
-		/* _REG is optional, we don't care about if there is failure */
+	list_क्रम_each_entry(func, &slot->funcs, sibling) अणु
+		/* _REG is optional, we करोn't care about अगर there is failure */
 		acpi_evaluate_reg(func_to_handle(func),
 				  ACPI_ADR_SPACE_PCI_CONFIG,
 				  ACPI_REG_CONNECT);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void check_hotplug_bridge(struct acpiphp_slot *slot, struct pci_dev *dev)
-{
-	struct acpiphp_func *func;
+अटल व्योम check_hotplug_bridge(काष्ठा acpiphp_slot *slot, काष्ठा pci_dev *dev)
+अणु
+	काष्ठा acpiphp_func *func;
 
-	/* quirk, or pcie could set it already */
-	if (dev->is_hotplug_bridge)
-		return;
+	/* quirk, or pcie could set it alपढ़ोy */
+	अगर (dev->is_hotplug_bridge)
+		वापस;
 
-	list_for_each_entry(func, &slot->funcs, sibling) {
-		if (PCI_FUNC(dev->devfn) == func->function) {
+	list_क्रम_each_entry(func, &slot->funcs, sibling) अणु
+		अगर (PCI_FUNC(dev->devfn) == func->function) अणु
 			dev->is_hotplug_bridge = 1;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int acpiphp_rescan_slot(struct acpiphp_slot *slot)
-{
-	struct acpiphp_func *func;
+अटल पूर्णांक acpiphp_rescan_slot(काष्ठा acpiphp_slot *slot)
+अणु
+	काष्ठा acpiphp_func *func;
 
-	list_for_each_entry(func, &slot->funcs, sibling) {
-		struct acpi_device *adev = func_to_acpi_device(func);
+	list_क्रम_each_entry(func, &slot->funcs, sibling) अणु
+		काष्ठा acpi_device *adev = func_to_acpi_device(func);
 
 		acpi_bus_scan(adev->handle);
-		if (acpi_device_enumerated(adev))
-			acpi_device_set_power(adev, ACPI_STATE_D0);
-	}
-	return pci_scan_slot(slot->bus, PCI_DEVFN(slot->device, 0));
-}
+		अगर (acpi_device_क्रमागतerated(adev))
+			acpi_device_set_घातer(adev, ACPI_STATE_D0);
+	पूर्ण
+	वापस pci_scan_slot(slot->bus, PCI_DEVFN(slot->device, 0));
+पूर्ण
 
-static void acpiphp_native_scan_bridge(struct pci_dev *bridge)
-{
-	struct pci_bus *bus = bridge->subordinate;
-	struct pci_dev *dev;
-	int max;
+अटल व्योम acpiphp_native_scan_bridge(काष्ठा pci_dev *bridge)
+अणु
+	काष्ठा pci_bus *bus = bridge->subordinate;
+	काष्ठा pci_dev *dev;
+	पूर्णांक max;
 
-	if (!bus)
-		return;
+	अगर (!bus)
+		वापस;
 
 	max = bus->busn_res.start;
-	/* Scan already configured non-hotplug bridges */
-	for_each_pci_bridge(dev, bus) {
-		if (!hotplug_is_native(dev))
+	/* Scan alपढ़ोy configured non-hotplug bridges */
+	क्रम_each_pci_bridge(dev, bus) अणु
+		अगर (!hotplug_is_native(dev))
 			max = pci_scan_bridge(bus, dev, max, 0);
-	}
+	पूर्ण
 
 	/* Scan non-hotplug bridges that need to be reconfigured */
-	for_each_pci_bridge(dev, bus) {
-		if (hotplug_is_native(dev))
-			continue;
+	क्रम_each_pci_bridge(dev, bus) अणु
+		अगर (hotplug_is_native(dev))
+			जारी;
 
 		max = pci_scan_bridge(bus, dev, max, 1);
-		if (dev->subordinate) {
+		अगर (dev->subordinate) अणु
 			pcibios_resource_survey_bus(dev->subordinate);
 			pci_bus_size_bridges(dev->subordinate);
 			pci_bus_assign_resources(dev->subordinate);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * enable_slot - enable, configure a slot
  * @slot: slot to be enabled
- * @bridge: true if enable is for the whole bridge (not a single slot)
+ * @bridge: true अगर enable is क्रम the whole bridge (not a single slot)
  *
  * This function should be called per *physical slot*,
  * not per each slot object in ACPI namespace.
  */
-static void enable_slot(struct acpiphp_slot *slot, bool bridge)
-{
-	struct pci_dev *dev;
-	struct pci_bus *bus = slot->bus;
-	struct acpiphp_func *func;
+अटल व्योम enable_slot(काष्ठा acpiphp_slot *slot, bool bridge)
+अणु
+	काष्ठा pci_dev *dev;
+	काष्ठा pci_bus *bus = slot->bus;
+	काष्ठा acpiphp_func *func;
 
-	if (bridge && bus->self && hotplug_is_native(bus->self)) {
+	अगर (bridge && bus->self && hotplug_is_native(bus->self)) अणु
 		/*
 		 * If native hotplug is used, it will take care of hotplug
-		 * slot management and resource allocation for hotplug
-		 * bridges. However, ACPI hotplug may still be used for
+		 * slot management and resource allocation क्रम hotplug
+		 * bridges. However, ACPI hotplug may still be used क्रम
 		 * non-hotplug bridges to bring in additional devices such
 		 * as a Thunderbolt host controller.
 		 */
-		for_each_pci_bridge(dev, bus) {
-			if (PCI_SLOT(dev->devfn) == slot->device)
+		क्रम_each_pci_bridge(dev, bus) अणु
+			अगर (PCI_SLOT(dev->devfn) == slot->device)
 				acpiphp_native_scan_bridge(dev);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		LIST_HEAD(add_list);
-		int max, pass;
+		पूर्णांक max, pass;
 
 		acpiphp_rescan_slot(slot);
 		max = acpiphp_max_busnr(bus);
-		for (pass = 0; pass < 2; pass++) {
-			for_each_pci_bridge(dev, bus) {
-				if (PCI_SLOT(dev->devfn) != slot->device)
-					continue;
+		क्रम (pass = 0; pass < 2; pass++) अणु
+			क्रम_each_pci_bridge(dev, bus) अणु
+				अगर (PCI_SLOT(dev->devfn) != slot->device)
+					जारी;
 
 				max = pci_scan_bridge(bus, dev, max, pass);
-				if (pass && dev->subordinate) {
+				अगर (pass && dev->subordinate) अणु
 					check_hotplug_bridge(slot, dev);
 					pcibios_resource_survey_bus(dev->subordinate);
 					__pci_bus_size_bridges(dev->subordinate,
 							       &add_list);
-				}
-			}
-		}
-		__pci_bus_assign_resources(bus, &add_list, NULL);
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		__pci_bus_assign_resources(bus, &add_list, शून्य);
+	पूर्ण
 
 	acpiphp_sanitize_bus(bus);
 	pcie_bus_configure_settings(bus);
 	acpiphp_set_acpi_region(slot);
 
-	list_for_each_entry(dev, &bus->devices, bus_list) {
-		/* Assume that newly added devices are powered on already. */
-		if (!pci_dev_is_added(dev))
+	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
+		/* Assume that newly added devices are घातered on alपढ़ोy. */
+		अगर (!pci_dev_is_added(dev))
 			dev->current_state = PCI_D0;
-	}
+	पूर्ण
 
 	pci_bus_add_devices(bus);
 
 	slot->flags |= SLOT_ENABLED;
-	list_for_each_entry(func, &slot->funcs, sibling) {
+	list_क्रम_each_entry(func, &slot->funcs, sibling) अणु
 		dev = pci_get_slot(bus, PCI_DEVFN(slot->device,
 						  func->function));
-		if (!dev) {
-			/* Do not set SLOT_ENABLED flag if some funcs
+		अगर (!dev) अणु
+			/* Do not set SLOT_ENABLED flag अगर some funcs
 			   are not added. */
 			slot->flags &= ~SLOT_ENABLED;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		pci_dev_put(dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * disable_slot - disable a slot
  * @slot: ACPI PHP slot
  */
-static void disable_slot(struct acpiphp_slot *slot)
-{
-	struct pci_bus *bus = slot->bus;
-	struct pci_dev *dev, *prev;
-	struct acpiphp_func *func;
+अटल व्योम disable_slot(काष्ठा acpiphp_slot *slot)
+अणु
+	काष्ठा pci_bus *bus = slot->bus;
+	काष्ठा pci_dev *dev, *prev;
+	काष्ठा acpiphp_func *func;
 
 	/*
-	 * enable_slot() enumerates all functions in this device via
+	 * enable_slot() क्रमागतerates all functions in this device via
 	 * pci_scan_slot(), whether they have associated ACPI hotplug
-	 * methods (_EJ0, etc.) or not.  Therefore, we remove all functions
+	 * methods (_EJ0, etc.) or not.  Thereक्रमe, we हटाओ all functions
 	 * here.
 	 */
-	list_for_each_entry_safe_reverse(dev, prev, &bus->devices, bus_list)
-		if (PCI_SLOT(dev->devfn) == slot->device)
-			pci_stop_and_remove_bus_device(dev);
+	list_क्रम_each_entry_safe_reverse(dev, prev, &bus->devices, bus_list)
+		अगर (PCI_SLOT(dev->devfn) == slot->device)
+			pci_stop_and_हटाओ_bus_device(dev);
 
-	list_for_each_entry(func, &slot->funcs, sibling)
+	list_क्रम_each_entry(func, &slot->funcs, sibling)
 		acpi_bus_trim(func_to_acpi_device(func));
 
 	slot->flags &= ~SLOT_ENABLED;
-}
+पूर्ण
 
-static bool slot_no_hotplug(struct acpiphp_slot *slot)
-{
-	struct pci_bus *bus = slot->bus;
-	struct pci_dev *dev;
+अटल bool slot_no_hotplug(काष्ठा acpiphp_slot *slot)
+अणु
+	काष्ठा pci_bus *bus = slot->bus;
+	काष्ठा pci_dev *dev;
 
-	list_for_each_entry(dev, &bus->devices, bus_list) {
-		if (PCI_SLOT(dev->devfn) == slot->device && dev->ignore_hotplug)
-			return true;
-	}
-	return false;
-}
+	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
+		अगर (PCI_SLOT(dev->devfn) == slot->device && dev->ignore_hotplug)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
  * get_slot_status - get ACPI slot status
  * @slot: ACPI PHP slot
  *
- * If a slot has _STA for each function and if any one of them
- * returned non-zero status, return it.
+ * If a slot has _STA क्रम each function and अगर any one of them
+ * वापसed non-zero status, वापस it.
  *
- * If a slot doesn't have _STA and if any one of its functions'
- * configuration space is configured, return 0x0f as a _STA.
+ * If a slot करोesn't have _STA and if any one of its functions'
+ * configuration space is configured, वापस 0x0f as a _STA.
  *
- * Otherwise return 0.
+ * Otherwise वापस 0.
  */
-static unsigned int get_slot_status(struct acpiphp_slot *slot)
-{
-	unsigned long long sta = 0;
-	struct acpiphp_func *func;
+अटल अचिन्हित पूर्णांक get_slot_status(काष्ठा acpiphp_slot *slot)
+अणु
+	अचिन्हित दीर्घ दीर्घ sta = 0;
+	काष्ठा acpiphp_func *func;
 	u32 dvid;
 
-	list_for_each_entry(func, &slot->funcs, sibling) {
-		if (func->flags & FUNC_HAS_STA) {
+	list_क्रम_each_entry(func, &slot->funcs, sibling) अणु
+		अगर (func->flags & FUNC_HAS_STA) अणु
 			acpi_status status;
 
-			status = acpi_evaluate_integer(func_to_handle(func),
-						       "_STA", NULL, &sta);
-			if (ACPI_SUCCESS(status) && sta)
-				break;
-		} else {
-			if (pci_bus_read_dev_vendor_id(slot->bus,
+			status = acpi_evaluate_पूर्णांकeger(func_to_handle(func),
+						       "_STA", शून्य, &sta);
+			अगर (ACPI_SUCCESS(status) && sta)
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर (pci_bus_पढ़ो_dev_venकरोr_id(slot->bus,
 					PCI_DEVFN(slot->device, func->function),
-					&dvid, 0)) {
+					&dvid, 0)) अणु
 				sta = ACPI_STA_ALL;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!sta) {
+	अगर (!sta) अणु
 		/*
-		 * Check for the slot itself since it may be that the
+		 * Check क्रम the slot itself since it may be that the
 		 * ACPI slot is a device below PCIe upstream port so in
-		 * that case it may not even be reachable yet.
+		 * that हाल it may not even be reachable yet.
 		 */
-		if (pci_bus_read_dev_vendor_id(slot->bus,
-				PCI_DEVFN(slot->device, 0), &dvid, 0)) {
+		अगर (pci_bus_पढ़ो_dev_venकरोr_id(slot->bus,
+				PCI_DEVFN(slot->device, 0), &dvid, 0)) अणु
 			sta = ACPI_STA_ALL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return (unsigned int)sta;
-}
+	वापस (अचिन्हित पूर्णांक)sta;
+पूर्ण
 
-static inline bool device_status_valid(unsigned int sta)
-{
+अटल अंतरभूत bool device_status_valid(अचिन्हित पूर्णांक sta)
+अणु
 	/*
-	 * ACPI spec says that _STA may return bit 0 clear with bit 3 set
-	 * if the device is valid but does not require a device driver to be
+	 * ACPI spec says that _STA may वापस bit 0 clear with bit 3 set
+	 * अगर the device is valid but करोes not require a device driver to be
 	 * loaded (Section 6.3.7 of ACPI 5.0A).
 	 */
-	unsigned int mask = ACPI_STA_DEVICE_ENABLED | ACPI_STA_DEVICE_FUNCTIONING;
-	return (sta & mask) == mask;
-}
+	अचिन्हित पूर्णांक mask = ACPI_STA_DEVICE_ENABLED | ACPI_STA_DEVICE_FUNCTIONING;
+	वापस (sta & mask) == mask;
+पूर्ण
 
 /**
- * trim_stale_devices - remove PCI devices that are not responding.
+ * trim_stale_devices - हटाओ PCI devices that are not responding.
  * @dev: PCI device to start walking the hierarchy from.
  */
-static void trim_stale_devices(struct pci_dev *dev)
-{
-	struct acpi_device *adev = ACPI_COMPANION(&dev->dev);
-	struct pci_bus *bus = dev->subordinate;
+अटल व्योम trim_stale_devices(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा acpi_device *adev = ACPI_COMPANION(&dev->dev);
+	काष्ठा pci_bus *bus = dev->subordinate;
 	bool alive = dev->ignore_hotplug;
 
-	if (adev) {
+	अगर (adev) अणु
 		acpi_status status;
-		unsigned long long sta;
+		अचिन्हित दीर्घ दीर्घ sta;
 
-		status = acpi_evaluate_integer(adev->handle, "_STA", NULL, &sta);
+		status = acpi_evaluate_पूर्णांकeger(adev->handle, "_STA", शून्य, &sta);
 		alive = alive || (ACPI_SUCCESS(status) && device_status_valid(sta));
-	}
-	if (!alive)
+	पूर्ण
+	अगर (!alive)
 		alive = pci_device_is_present(dev);
 
-	if (!alive) {
-		pci_dev_set_disconnected(dev, NULL);
-		if (pci_has_subordinate(dev))
+	अगर (!alive) अणु
+		pci_dev_set_disconnected(dev, शून्य);
+		अगर (pci_has_subordinate(dev))
 			pci_walk_bus(dev->subordinate, pci_dev_set_disconnected,
-				     NULL);
+				     शून्य);
 
-		pci_stop_and_remove_bus_device(dev);
-		if (adev)
+		pci_stop_and_हटाओ_bus_device(dev);
+		अगर (adev)
 			acpi_bus_trim(adev);
-	} else if (bus) {
-		struct pci_dev *child, *tmp;
+	पूर्ण अन्यथा अगर (bus) अणु
+		काष्ठा pci_dev *child, *पंचांगp;
 
 		/* The device is a bridge. so check the bus below it. */
-		pm_runtime_get_sync(&dev->dev);
-		list_for_each_entry_safe_reverse(child, tmp, &bus->devices, bus_list)
+		pm_runसमय_get_sync(&dev->dev);
+		list_क्रम_each_entry_safe_reverse(child, पंचांगp, &bus->devices, bus_list)
 			trim_stale_devices(child);
 
-		pm_runtime_put(&dev->dev);
-	}
-}
+		pm_runसमय_put(&dev->dev);
+	पूर्ण
+पूर्ण
 
 /**
- * acpiphp_check_bridge - re-enumerate devices
- * @bridge: where to begin re-enumeration
+ * acpiphp_check_bridge - re-क्रमागतerate devices
+ * @bridge: where to begin re-क्रमागतeration
  *
- * Iterate over all slots under this bridge and make sure that if a
- * card is present they are enabled, and if not they are disabled.
+ * Iterate over all slots under this bridge and make sure that अगर a
+ * card is present they are enabled, and अगर not they are disabled.
  */
-static void acpiphp_check_bridge(struct acpiphp_bridge *bridge)
-{
-	struct acpiphp_slot *slot;
+अटल व्योम acpiphp_check_bridge(काष्ठा acpiphp_bridge *bridge)
+अणु
+	काष्ठा acpiphp_slot *slot;
 
-	/* Bail out if the bridge is going away. */
-	if (bridge->is_going_away)
-		return;
+	/* Bail out अगर the bridge is going away. */
+	अगर (bridge->is_going_away)
+		वापस;
 
-	if (bridge->pci_dev)
-		pm_runtime_get_sync(&bridge->pci_dev->dev);
+	अगर (bridge->pci_dev)
+		pm_runसमय_get_sync(&bridge->pci_dev->dev);
 
-	list_for_each_entry(slot, &bridge->slots, node) {
-		struct pci_bus *bus = slot->bus;
-		struct pci_dev *dev, *tmp;
+	list_क्रम_each_entry(slot, &bridge->slots, node) अणु
+		काष्ठा pci_bus *bus = slot->bus;
+		काष्ठा pci_dev *dev, *पंचांगp;
 
-		if (slot_no_hotplug(slot)) {
-			; /* do nothing */
-		} else if (device_status_valid(get_slot_status(slot))) {
-			/* remove stale devices if any */
-			list_for_each_entry_safe_reverse(dev, tmp,
+		अगर (slot_no_hotplug(slot)) अणु
+			; /* करो nothing */
+		पूर्ण अन्यथा अगर (device_status_valid(get_slot_status(slot))) अणु
+			/* हटाओ stale devices अगर any */
+			list_क्रम_each_entry_safe_reverse(dev, पंचांगp,
 							 &bus->devices, bus_list)
-				if (PCI_SLOT(dev->devfn) == slot->device)
+				अगर (PCI_SLOT(dev->devfn) == slot->device)
 					trim_stale_devices(dev);
 
 			/* configure all functions */
 			enable_slot(slot, true);
-		} else {
+		पूर्ण अन्यथा अणु
 			disable_slot(slot);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (bridge->pci_dev)
-		pm_runtime_put(&bridge->pci_dev->dev);
-}
+	अगर (bridge->pci_dev)
+		pm_runसमय_put(&bridge->pci_dev->dev);
+पूर्ण
 
 /*
- * Remove devices for which we could not assign resources, call
- * arch specific code to fix-up the bus
+ * Remove devices क्रम which we could not assign resources, call
+ * arch specअगरic code to fix-up the bus
  */
-static void acpiphp_sanitize_bus(struct pci_bus *bus)
-{
-	struct pci_dev *dev, *tmp;
-	int i;
-	unsigned long type_mask = IORESOURCE_IO | IORESOURCE_MEM;
+अटल व्योम acpiphp_sanitize_bus(काष्ठा pci_bus *bus)
+अणु
+	काष्ठा pci_dev *dev, *पंचांगp;
+	पूर्णांक i;
+	अचिन्हित दीर्घ type_mask = IORESOURCE_IO | IORESOURCE_MEM;
 
-	list_for_each_entry_safe_reverse(dev, tmp, &bus->devices, bus_list) {
-		for (i = 0; i < PCI_BRIDGE_RESOURCES; i++) {
-			struct resource *res = &dev->resource[i];
-			if ((res->flags & type_mask) && !res->start &&
-					res->end) {
+	list_क्रम_each_entry_safe_reverse(dev, पंचांगp, &bus->devices, bus_list) अणु
+		क्रम (i = 0; i < PCI_BRIDGE_RESOURCES; i++) अणु
+			काष्ठा resource *res = &dev->resource[i];
+			अगर ((res->flags & type_mask) && !res->start &&
+					res->end) अणु
 				/* Could not assign a required resources
-				 * for this device, remove it */
-				pci_stop_and_remove_bus_device(dev);
-				break;
-			}
-		}
-	}
-}
+				 * क्रम this device, हटाओ it */
+				pci_stop_and_हटाओ_bus_device(dev);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * ACPI event handlers
  */
 
-void acpiphp_check_host_bridge(struct acpi_device *adev)
-{
-	struct acpiphp_bridge *bridge = NULL;
+व्योम acpiphp_check_host_bridge(काष्ठा acpi_device *adev)
+अणु
+	काष्ठा acpiphp_bridge *bridge = शून्य;
 
 	acpi_lock_hp_context();
-	if (adev->hp) {
+	अगर (adev->hp) अणु
 		bridge = to_acpiphp_root_context(adev->hp)->root_bridge;
-		if (bridge)
+		अगर (bridge)
 			get_bridge(bridge);
-	}
+	पूर्ण
 	acpi_unlock_hp_context();
-	if (bridge) {
-		pci_lock_rescan_remove();
+	अगर (bridge) अणु
+		pci_lock_rescan_हटाओ();
 
 		acpiphp_check_bridge(bridge);
 
-		pci_unlock_rescan_remove();
+		pci_unlock_rescan_हटाओ();
 		put_bridge(bridge);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int acpiphp_disable_and_eject_slot(struct acpiphp_slot *slot);
+अटल पूर्णांक acpiphp_disable_and_eject_slot(काष्ठा acpiphp_slot *slot);
 
-static void hotplug_event(u32 type, struct acpiphp_context *context)
-{
+अटल व्योम hotplug_event(u32 type, काष्ठा acpiphp_context *context)
+अणु
 	acpi_handle handle = context->hp.self->handle;
-	struct acpiphp_func *func = &context->func;
-	struct acpiphp_slot *slot = func->slot;
-	struct acpiphp_bridge *bridge;
+	काष्ठा acpiphp_func *func = &context->func;
+	काष्ठा acpiphp_slot *slot = func->slot;
+	काष्ठा acpiphp_bridge *bridge;
 
 	acpi_lock_hp_context();
 	bridge = context->bridge;
-	if (bridge)
+	अगर (bridge)
 		get_bridge(bridge);
 
 	acpi_unlock_hp_context();
 
-	pci_lock_rescan_remove();
+	pci_lock_rescan_हटाओ();
 
-	switch (type) {
-	case ACPI_NOTIFY_BUS_CHECK:
-		/* bus re-enumerate */
+	चयन (type) अणु
+	हाल ACPI_NOTIFY_BUS_CHECK:
+		/* bus re-क्रमागतerate */
 		acpi_handle_debug(handle, "Bus check in %s()\n", __func__);
-		if (bridge)
+		अगर (bridge)
 			acpiphp_check_bridge(bridge);
-		else if (!(slot->flags & SLOT_IS_GOING_AWAY))
+		अन्यथा अगर (!(slot->flags & SLOT_IS_GOING_AWAY))
 			enable_slot(slot, false);
 
-		break;
+		अवरोध;
 
-	case ACPI_NOTIFY_DEVICE_CHECK:
+	हाल ACPI_NOTIFY_DEVICE_CHECK:
 		/* device check */
 		acpi_handle_debug(handle, "Device check in %s()\n", __func__);
-		if (bridge) {
+		अगर (bridge) अणु
 			acpiphp_check_bridge(bridge);
-		} else if (!(slot->flags & SLOT_IS_GOING_AWAY)) {
+		पूर्ण अन्यथा अगर (!(slot->flags & SLOT_IS_GOING_AWAY)) अणु
 			/*
-			 * Check if anything has changed in the slot and rescan
-			 * from the parent if that's the case.
+			 * Check अगर anything has changed in the slot and rescan
+			 * from the parent अगर that's the हाल.
 			 */
-			if (acpiphp_rescan_slot(slot))
+			अगर (acpiphp_rescan_slot(slot))
 				acpiphp_check_bridge(func->parent);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case ACPI_NOTIFY_EJECT_REQUEST:
+	हाल ACPI_NOTIFY_EJECT_REQUEST:
 		/* request device eject */
 		acpi_handle_debug(handle, "Eject request in %s()\n", __func__);
 		acpiphp_disable_and_eject_slot(slot);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	pci_unlock_rescan_remove();
-	if (bridge)
+	pci_unlock_rescan_हटाओ();
+	अगर (bridge)
 		put_bridge(bridge);
-}
+पूर्ण
 
-static int acpiphp_hotplug_notify(struct acpi_device *adev, u32 type)
-{
-	struct acpiphp_context *context;
+अटल पूर्णांक acpiphp_hotplug_notअगरy(काष्ठा acpi_device *adev, u32 type)
+अणु
+	काष्ठा acpiphp_context *context;
 
 	context = acpiphp_grab_context(adev);
-	if (!context)
-		return -ENODATA;
+	अगर (!context)
+		वापस -ENODATA;
 
 	hotplug_event(type, context);
 	acpiphp_let_context_go(context);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * acpiphp_enumerate_slots - Enumerate PCI slots for a given bus.
- * @bus: PCI bus to enumerate the slots for.
+ * acpiphp_क्रमागतerate_slots - Enumerate PCI slots क्रम a given bus.
+ * @bus: PCI bus to क्रमागतerate the slots क्रम.
  *
  * A "slot" is an object associated with a PCI device number.  All functions
- * (PCI devices) with the same bus and device number belong to the same slot.
+ * (PCI devices) with the same bus and device number beदीर्घ to the same slot.
  */
-void acpiphp_enumerate_slots(struct pci_bus *bus)
-{
-	struct acpiphp_bridge *bridge;
-	struct acpi_device *adev;
+व्योम acpiphp_क्रमागतerate_slots(काष्ठा pci_bus *bus)
+अणु
+	काष्ठा acpiphp_bridge *bridge;
+	काष्ठा acpi_device *adev;
 	acpi_handle handle;
 	acpi_status status;
 
-	if (acpiphp_disabled)
-		return;
+	अगर (acpiphp_disabled)
+		वापस;
 
 	adev = ACPI_COMPANION(bus->bridge);
-	if (!adev)
-		return;
+	अगर (!adev)
+		वापस;
 
 	handle = adev->handle;
-	bridge = kzalloc(sizeof(struct acpiphp_bridge), GFP_KERNEL);
-	if (!bridge)
-		return;
+	bridge = kzalloc(माप(काष्ठा acpiphp_bridge), GFP_KERNEL);
+	अगर (!bridge)
+		वापस;
 
 	INIT_LIST_HEAD(&bridge->slots);
 	kref_init(&bridge->ref);
@@ -870,40 +871,40 @@ void acpiphp_enumerate_slots(struct pci_bus *bus)
 	bridge->pci_bus = bus;
 
 	/*
-	 * Grab a ref to the subordinate PCI bus in case the bus is
-	 * removed via PCI core logical hotplug. The ref pins the bus
+	 * Grab a ref to the subordinate PCI bus in हाल the bus is
+	 * हटाओd via PCI core logical hotplug. The ref pins the bus
 	 * (which we access during module unload).
 	 */
 	get_device(&bus->dev);
 
 	acpi_lock_hp_context();
-	if (pci_is_root_bus(bridge->pci_bus)) {
-		struct acpiphp_root_context *root_context;
+	अगर (pci_is_root_bus(bridge->pci_bus)) अणु
+		काष्ठा acpiphp_root_context *root_context;
 
-		root_context = kzalloc(sizeof(*root_context), GFP_KERNEL);
-		if (!root_context)
-			goto err;
+		root_context = kzalloc(माप(*root_context), GFP_KERNEL);
+		अगर (!root_context)
+			जाओ err;
 
 		root_context->root_bridge = bridge;
 		acpi_set_hp_context(adev, &root_context->hp);
-	} else {
-		struct acpiphp_context *context;
+	पूर्ण अन्यथा अणु
+		काष्ठा acpiphp_context *context;
 
 		/*
-		 * This bridge should have been registered as a hotplug function
+		 * This bridge should have been रेजिस्टरed as a hotplug function
 		 * under its parent, so the context should be there, unless the
-		 * parent is going to be handled by pciehp, in which case this
-		 * bridge is not interesting to us either.
+		 * parent is going to be handled by pciehp, in which हाल this
+		 * bridge is not पूर्णांकeresting to us either.
 		 */
 		context = acpiphp_get_context(adev);
-		if (!context)
-			goto err;
+		अगर (!context)
+			जाओ err;
 
 		bridge->context = context;
 		context->bridge = bridge;
 		/* Get a reference to the parent bridge. */
 		get_bridge(context->func.parent);
-	}
+	पूर्ण
 	acpi_unlock_hp_context();
 
 	/* Must be added to the list prior to calling acpiphp_add_context(). */
@@ -911,149 +912,149 @@ void acpiphp_enumerate_slots(struct pci_bus *bus)
 	list_add(&bridge->list, &bridge_list);
 	mutex_unlock(&bridge_mutex);
 
-	/* register all slot objects under this bridge */
+	/* रेजिस्टर all slot objects under this bridge */
 	status = acpi_walk_namespace(ACPI_TYPE_DEVICE, handle, 1,
-				     acpiphp_add_context, NULL, bridge, NULL);
-	if (ACPI_FAILURE(status)) {
+				     acpiphp_add_context, शून्य, bridge, शून्य);
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_handle_err(handle, "failed to register slots\n");
 		cleanup_bridge(bridge);
 		put_bridge(bridge);
-	}
-	return;
+	पूर्ण
+	वापस;
 
  err:
 	acpi_unlock_hp_context();
 	put_device(&bus->dev);
 	pci_dev_put(bridge->pci_dev);
-	kfree(bridge);
-}
+	kमुक्त(bridge);
+पूर्ण
 
-static void acpiphp_drop_bridge(struct acpiphp_bridge *bridge)
-{
-	if (pci_is_root_bus(bridge->pci_bus)) {
-		struct acpiphp_root_context *root_context;
-		struct acpi_device *adev;
+अटल व्योम acpiphp_drop_bridge(काष्ठा acpiphp_bridge *bridge)
+अणु
+	अगर (pci_is_root_bus(bridge->pci_bus)) अणु
+		काष्ठा acpiphp_root_context *root_context;
+		काष्ठा acpi_device *adev;
 
 		acpi_lock_hp_context();
 		adev = ACPI_COMPANION(bridge->pci_bus->bridge);
 		root_context = to_acpiphp_root_context(adev->hp);
-		adev->hp = NULL;
+		adev->hp = शून्य;
 		acpi_unlock_hp_context();
-		kfree(root_context);
-	}
+		kमुक्त(root_context);
+	पूर्ण
 	cleanup_bridge(bridge);
 	put_bridge(bridge);
-}
+पूर्ण
 
 /**
- * acpiphp_remove_slots - Remove slot objects associated with a given bus.
- * @bus: PCI bus to remove the slot objects for.
+ * acpiphp_हटाओ_slots - Remove slot objects associated with a given bus.
+ * @bus: PCI bus to हटाओ the slot objects क्रम.
  */
-void acpiphp_remove_slots(struct pci_bus *bus)
-{
-	struct acpiphp_bridge *bridge;
+व्योम acpiphp_हटाओ_slots(काष्ठा pci_bus *bus)
+अणु
+	काष्ठा acpiphp_bridge *bridge;
 
-	if (acpiphp_disabled)
-		return;
+	अगर (acpiphp_disabled)
+		वापस;
 
 	mutex_lock(&bridge_mutex);
-	list_for_each_entry(bridge, &bridge_list, list)
-		if (bridge->pci_bus == bus) {
+	list_क्रम_each_entry(bridge, &bridge_list, list)
+		अगर (bridge->pci_bus == bus) अणु
 			mutex_unlock(&bridge_mutex);
 			acpiphp_drop_bridge(bridge);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 	mutex_unlock(&bridge_mutex);
-}
+पूर्ण
 
 /**
- * acpiphp_enable_slot - power on slot
+ * acpiphp_enable_slot - घातer on slot
  * @slot: ACPI PHP slot
  */
-int acpiphp_enable_slot(struct acpiphp_slot *slot)
-{
-	pci_lock_rescan_remove();
+पूर्णांक acpiphp_enable_slot(काष्ठा acpiphp_slot *slot)
+अणु
+	pci_lock_rescan_हटाओ();
 
-	if (slot->flags & SLOT_IS_GOING_AWAY) {
-		pci_unlock_rescan_remove();
-		return -ENODEV;
-	}
+	अगर (slot->flags & SLOT_IS_GOING_AWAY) अणु
+		pci_unlock_rescan_हटाओ();
+		वापस -ENODEV;
+	पूर्ण
 
 	/* configure all functions */
-	if (!(slot->flags & SLOT_ENABLED))
+	अगर (!(slot->flags & SLOT_ENABLED))
 		enable_slot(slot, false);
 
-	pci_unlock_rescan_remove();
-	return 0;
-}
+	pci_unlock_rescan_हटाओ();
+	वापस 0;
+पूर्ण
 
 /**
- * acpiphp_disable_and_eject_slot - power off and eject slot
+ * acpiphp_disable_and_eject_slot - घातer off and eject slot
  * @slot: ACPI PHP slot
  */
-static int acpiphp_disable_and_eject_slot(struct acpiphp_slot *slot)
-{
-	struct acpiphp_func *func;
+अटल पूर्णांक acpiphp_disable_and_eject_slot(काष्ठा acpiphp_slot *slot)
+अणु
+	काष्ठा acpiphp_func *func;
 
-	if (slot->flags & SLOT_IS_GOING_AWAY)
-		return -ENODEV;
+	अगर (slot->flags & SLOT_IS_GOING_AWAY)
+		वापस -ENODEV;
 
 	/* unconfigure all functions */
 	disable_slot(slot);
 
-	list_for_each_entry(func, &slot->funcs, sibling)
-		if (func->flags & FUNC_HAS_EJ0) {
+	list_क्रम_each_entry(func, &slot->funcs, sibling)
+		अगर (func->flags & FUNC_HAS_EJ0) अणु
 			acpi_handle handle = func_to_handle(func);
 
-			if (ACPI_FAILURE(acpi_evaluate_ej0(handle)))
+			अगर (ACPI_FAILURE(acpi_evaluate_ej0(handle)))
 				acpi_handle_err(handle, "_EJ0 failed\n");
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int acpiphp_disable_slot(struct acpiphp_slot *slot)
-{
-	int ret;
+पूर्णांक acpiphp_disable_slot(काष्ठा acpiphp_slot *slot)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * Acquire acpi_scan_lock to ensure that the execution of _EJ0 in
 	 * acpiphp_disable_and_eject_slot() will be synchronized properly.
 	 */
 	acpi_scan_lock_acquire();
-	pci_lock_rescan_remove();
+	pci_lock_rescan_हटाओ();
 	ret = acpiphp_disable_and_eject_slot(slot);
-	pci_unlock_rescan_remove();
+	pci_unlock_rescan_हटाओ();
 	acpi_scan_lock_release();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * slot enabled:  1
  * slot disabled: 0
  */
-u8 acpiphp_get_power_status(struct acpiphp_slot *slot)
-{
-	return (slot->flags & SLOT_ENABLED);
-}
+u8 acpiphp_get_घातer_status(काष्ठा acpiphp_slot *slot)
+अणु
+	वापस (slot->flags & SLOT_ENABLED);
+पूर्ण
 
 /*
- * latch   open:  1
- * latch closed:  0
+ * latch   खोलो:  1
+ * latch बंदd:  0
  */
-u8 acpiphp_get_latch_status(struct acpiphp_slot *slot)
-{
-	return !(get_slot_status(slot) & ACPI_STA_DEVICE_UI);
-}
+u8 acpiphp_get_latch_status(काष्ठा acpiphp_slot *slot)
+अणु
+	वापस !(get_slot_status(slot) & ACPI_STA_DEVICE_UI);
+पूर्ण
 
 /*
  * adapter presence : 1
- *          absence : 0
+ *          असलence : 0
  */
-u8 acpiphp_get_adapter_status(struct acpiphp_slot *slot)
-{
-	return !!get_slot_status(slot);
-}
+u8 acpiphp_get_adapter_status(काष्ठा acpiphp_slot *slot)
+अणु
+	वापस !!get_slot_status(slot);
+पूर्ण

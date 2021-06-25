@@ -1,184 +1,185 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_MM_H
-#define _LINUX_MM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_MM_H
+#घोषणा _LINUX_MM_H
 
-#include <linux/errno.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <linux/mmdebug.h>
-#include <linux/gfp.h>
-#include <linux/bug.h>
-#include <linux/list.h>
-#include <linux/mmzone.h>
-#include <linux/rbtree.h>
-#include <linux/atomic.h>
-#include <linux/debug_locks.h>
-#include <linux/mm_types.h>
-#include <linux/mmap_lock.h>
-#include <linux/range.h>
-#include <linux/pfn.h>
-#include <linux/percpu-refcount.h>
-#include <linux/bit_spinlock.h>
-#include <linux/shrinker.h>
-#include <linux/resource.h>
-#include <linux/page_ext.h>
-#include <linux/err.h>
-#include <linux/page-flags.h>
-#include <linux/page_ref.h>
-#include <linux/memremap.h>
-#include <linux/overflow.h>
-#include <linux/sizes.h>
-#include <linux/sched.h>
-#include <linux/pgtable.h>
-#include <linux/kasan.h>
+#समावेश <linux/mmdebug.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/debug_locks.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/mmap_lock.h>
+#समावेश <linux/range.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/percpu-refcount.h>
+#समावेश <linux/bit_spinlock.h>
+#समावेश <linux/shrinker.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/page_ext.h>
+#समावेश <linux/err.h>
+#समावेश <linux/page-flags.h>
+#समावेश <linux/page_ref.h>
+#समावेश <linux/memremap.h>
+#समावेश <linux/overflow.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/pgtable.h>
+#समावेश <linux/kasan.h>
 
-struct mempolicy;
-struct anon_vma;
-struct anon_vma_chain;
-struct file_ra_state;
-struct user_struct;
-struct writeback_control;
-struct bdi_writeback;
-struct pt_regs;
+काष्ठा mempolicy;
+काष्ठा anon_vma;
+काष्ठा anon_vma_chain;
+काष्ठा file_ra_state;
+काष्ठा user_काष्ठा;
+काष्ठा ग_लिखोback_control;
+काष्ठा bdi_ग_लिखोback;
+काष्ठा pt_regs;
 
-extern int sysctl_page_lock_unfairness;
+बाह्य पूर्णांक sysctl_page_lock_unfairness;
 
-void init_mm_internals(void);
+व्योम init_mm_पूर्णांकernals(व्योम);
 
-#ifndef CONFIG_NEED_MULTIPLE_NODES	/* Don't use mapnrs, do it properly */
-extern unsigned long max_mapnr;
+#अगर_अघोषित CONFIG_NEED_MULTIPLE_NODES	/* Don't use mapnrs, करो it properly */
+बाह्य अचिन्हित दीर्घ max_mapnr;
 
-static inline void set_max_mapnr(unsigned long limit)
-{
+अटल अंतरभूत व्योम set_max_mapnr(अचिन्हित दीर्घ limit)
+अणु
 	max_mapnr = limit;
-}
-#else
-static inline void set_max_mapnr(unsigned long limit) { }
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम set_max_mapnr(अचिन्हित दीर्घ limit) अणु पूर्ण
+#पूर्ण_अगर
 
-extern atomic_long_t _totalram_pages;
-static inline unsigned long totalram_pages(void)
-{
-	return (unsigned long)atomic_long_read(&_totalram_pages);
-}
+बाह्य atomic_दीर्घ_t _totalram_pages;
+अटल अंतरभूत अचिन्हित दीर्घ totalram_pages(व्योम)
+अणु
+	वापस (अचिन्हित दीर्घ)atomic_दीर्घ_पढ़ो(&_totalram_pages);
+पूर्ण
 
-static inline void totalram_pages_inc(void)
-{
-	atomic_long_inc(&_totalram_pages);
-}
+अटल अंतरभूत व्योम totalram_pages_inc(व्योम)
+अणु
+	atomic_दीर्घ_inc(&_totalram_pages);
+पूर्ण
 
-static inline void totalram_pages_dec(void)
-{
-	atomic_long_dec(&_totalram_pages);
-}
+अटल अंतरभूत व्योम totalram_pages_dec(व्योम)
+अणु
+	atomic_दीर्घ_dec(&_totalram_pages);
+पूर्ण
 
-static inline void totalram_pages_add(long count)
-{
-	atomic_long_add(count, &_totalram_pages);
-}
+अटल अंतरभूत व्योम totalram_pages_add(दीर्घ count)
+अणु
+	atomic_दीर्घ_add(count, &_totalram_pages);
+पूर्ण
 
-extern void * high_memory;
-extern int page_cluster;
+बाह्य व्योम * high_memory;
+बाह्य पूर्णांक page_cluster;
 
-#ifdef CONFIG_SYSCTL
-extern int sysctl_legacy_va_layout;
-#else
-#define sysctl_legacy_va_layout 0
-#endif
+#अगर_घोषित CONFIG_SYSCTL
+बाह्य पूर्णांक sysctl_legacy_va_layout;
+#अन्यथा
+#घोषणा sysctl_legacy_va_layout 0
+#पूर्ण_अगर
 
-#ifdef CONFIG_HAVE_ARCH_MMAP_RND_BITS
-extern const int mmap_rnd_bits_min;
-extern const int mmap_rnd_bits_max;
-extern int mmap_rnd_bits __read_mostly;
-#endif
-#ifdef CONFIG_HAVE_ARCH_MMAP_RND_COMPAT_BITS
-extern const int mmap_rnd_compat_bits_min;
-extern const int mmap_rnd_compat_bits_max;
-extern int mmap_rnd_compat_bits __read_mostly;
-#endif
+#अगर_घोषित CONFIG_HAVE_ARCH_MMAP_RND_BITS
+बाह्य स्थिर पूर्णांक mmap_rnd_bits_min;
+बाह्य स्थिर पूर्णांक mmap_rnd_bits_max;
+बाह्य पूर्णांक mmap_rnd_bits __पढ़ो_mostly;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_HAVE_ARCH_MMAP_RND_COMPAT_BITS
+बाह्य स्थिर पूर्णांक mmap_rnd_compat_bits_min;
+बाह्य स्थिर पूर्णांक mmap_rnd_compat_bits_max;
+बाह्य पूर्णांक mmap_rnd_compat_bits __पढ़ो_mostly;
+#पूर्ण_अगर
 
-#include <asm/page.h>
-#include <asm/processor.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/processor.h>
 
 /*
  * Architectures that support memory tagging (assigning tags to memory regions,
- * embedding these tags into addresses that point to these memory regions, and
- * checking that the memory and the pointer tags match on memory accesses)
- * redefine this macro to strip tags from pointers.
+ * embedding these tags पूर्णांकo addresses that poपूर्णांक to these memory regions, and
+ * checking that the memory and the poपूर्णांकer tags match on memory accesses)
+ * redefine this macro to strip tags from poपूर्णांकers.
  * It's defined as noop for architectures that don't support memory tagging.
  */
-#ifndef untagged_addr
-#define untagged_addr(addr) (addr)
-#endif
+#अगर_अघोषित untagged_addr
+#घोषणा untagged_addr(addr) (addr)
+#पूर्ण_अगर
 
-#ifndef __pa_symbol
-#define __pa_symbol(x)  __pa(RELOC_HIDE((unsigned long)(x), 0))
-#endif
+#अगर_अघोषित __pa_symbol
+#घोषणा __pa_symbol(x)  __pa(RELOC_HIDE((अचिन्हित दीर्घ)(x), 0))
+#पूर्ण_अगर
 
-#ifndef page_to_virt
-#define page_to_virt(x)	__va(PFN_PHYS(page_to_pfn(x)))
-#endif
+#अगर_अघोषित page_to_virt
+#घोषणा page_to_virt(x)	__va(PFN_PHYS(page_to_pfn(x)))
+#पूर्ण_अगर
 
-#ifndef lm_alias
-#define lm_alias(x)	__va(__pa_symbol(x))
-#endif
+#अगर_अघोषित lm_alias
+#घोषणा lm_alias(x)	__va(__pa_symbol(x))
+#पूर्ण_अगर
 
 /*
  * With CONFIG_CFI_CLANG, the compiler replaces function addresses in
  * instrumented C code with jump table addresses. Architectures that
- * support CFI can define this macro to return the actual function address
+ * support CFI can define this macro to वापस the actual function address
  * when needed.
  */
-#ifndef function_nocfi
-#define function_nocfi(x) (x)
-#endif
+#अगर_अघोषित function_nocfi
+#घोषणा function_nocfi(x) (x)
+#पूर्ण_अगर
 
 /*
  * To prevent common memory management code establishing
- * a zero page mapping on a read fault.
- * This macro should be defined within <asm/pgtable.h>.
- * s390 does this to prevent multiplexing of hardware bits
- * related to the physical page in case of virtualization.
+ * a zero page mapping on a पढ़ो fault.
+ * This macro should be defined within <यंत्र/pgtable.h>.
+ * s390 करोes this to prevent multiplexing of hardware bits
+ * related to the physical page in हाल of भवization.
  */
-#ifndef mm_forbids_zeropage
-#define mm_forbids_zeropage(X)	(0)
-#endif
+#अगर_अघोषित mm_क्रमbids_zeropage
+#घोषणा mm_क्रमbids_zeropage(X)	(0)
+#पूर्ण_अगर
 
 /*
- * On some architectures it is expensive to call memset() for small sizes.
+ * On some architectures it is expensive to call स_रखो() क्रम small sizes.
  * If an architecture decides to implement their own version of
- * mm_zero_struct_page they should wrap the defines below in a #ifndef and
- * define their own version of this macro in <asm/pgtable.h>
+ * mm_zero_काष्ठा_page they should wrap the defines below in a #अगर_अघोषित and
+ * define their own version of this macro in <यंत्र/pgtable.h>
  */
-#if BITS_PER_LONG == 64
-/* This function must be updated when the size of struct page grows above 80
- * or reduces below 56. The idea that compiler optimizes out switch()
- * statement, and only leaves move/store instructions. Also the compiler can
- * combine write statments if they are both assignments and can be reordered,
- * this can result in several of the writes here being dropped.
+#अगर BITS_PER_LONG == 64
+/* This function must be updated when the size of काष्ठा page grows above 80
+ * or reduces below 56. The idea that compiler optimizes out चयन()
+ * statement, and only leaves move/store inकाष्ठाions. Also the compiler can
+ * combine ग_लिखो staपंचांगents अगर they are both assignments and can be reordered,
+ * this can result in several of the ग_लिखोs here being dropped.
  */
-#define	mm_zero_struct_page(pp) __mm_zero_struct_page(pp)
-static inline void __mm_zero_struct_page(struct page *page)
-{
-	unsigned long *_pp = (void *)page;
+#घोषणा	mm_zero_काष्ठा_page(pp) __mm_zero_काष्ठा_page(pp)
+अटल अंतरभूत व्योम __mm_zero_काष्ठा_page(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ *_pp = (व्योम *)page;
 
-	 /* Check that struct page is either 56, 64, 72, or 80 bytes */
-	BUILD_BUG_ON(sizeof(struct page) & 7);
-	BUILD_BUG_ON(sizeof(struct page) < 56);
-	BUILD_BUG_ON(sizeof(struct page) > 80);
+	 /* Check that काष्ठा page is either 56, 64, 72, or 80 bytes */
+	BUILD_BUG_ON(माप(काष्ठा page) & 7);
+	BUILD_BUG_ON(माप(काष्ठा page) < 56);
+	BUILD_BUG_ON(माप(काष्ठा page) > 80);
 
-	switch (sizeof(struct page)) {
-	case 80:
+	चयन (माप(काष्ठा page)) अणु
+	हाल 80:
 		_pp[9] = 0;
 		fallthrough;
-	case 72:
+	हाल 72:
 		_pp[8] = 0;
 		fallthrough;
-	case 64:
+	हाल 64:
 		_pp[7] = 0;
 		fallthrough;
-	case 56:
+	हाल 56:
 		_pp[6] = 0;
 		_pp[5] = 0;
 		_pp[4] = 0;
@@ -186,21 +187,21 @@ static inline void __mm_zero_struct_page(struct page *page)
 		_pp[2] = 0;
 		_pp[1] = 0;
 		_pp[0] = 0;
-	}
-}
-#else
-#define mm_zero_struct_page(pp)  ((void)memset((pp), 0, sizeof(struct page)))
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा mm_zero_काष्ठा_page(pp)  ((व्योम)स_रखो((pp), 0, माप(काष्ठा page)))
+#पूर्ण_अगर
 
 /*
  * Default maximum number of active map areas, this limits the number of vmas
- * per mm struct. Users can overwrite this number by sysctl but there is a
+ * per mm काष्ठा. Users can overग_लिखो this number by sysctl but there is a
  * problem.
  *
- * When a program's coredump is generated as ELF format, a section is created
- * per a vma. In ELF, the number of sections is represented in unsigned short.
+ * When a program's coredump is generated as ELF क्रमmat, a section is created
+ * per a vma. In ELF, the number of sections is represented in अचिन्हित लघु.
  * This means the number of sections should be smaller than 65535 at coredump.
- * Because the kernel adds some informative sections to a image of program at
+ * Because the kernel adds some inक्रमmative sections to a image of program at
  * generating coredump, we need some margin. The number of extra sections is
  * 1-3 now and depends on arch. We use "5" as safe margin, here.
  *
@@ -208,269 +209,269 @@ static inline void __mm_zero_struct_page(struct page *page)
  * not a hard limit any more. Although some userspace tools can be surprised by
  * that.
  */
-#define MAPCOUNT_ELF_CORE_MARGIN	(5)
-#define DEFAULT_MAX_MAP_COUNT	(USHRT_MAX - MAPCOUNT_ELF_CORE_MARGIN)
+#घोषणा MAPCOUNT_ELF_CORE_MARGIN	(5)
+#घोषणा DEFAULT_MAX_MAP_COUNT	(अच_लघु_उच्च - MAPCOUNT_ELF_CORE_MARGIN)
 
-extern int sysctl_max_map_count;
+बाह्य पूर्णांक sysctl_max_map_count;
 
-extern unsigned long sysctl_user_reserve_kbytes;
-extern unsigned long sysctl_admin_reserve_kbytes;
+बाह्य अचिन्हित दीर्घ sysctl_user_reserve_kbytes;
+बाह्य अचिन्हित दीर्घ sysctl_admin_reserve_kbytes;
 
-extern int sysctl_overcommit_memory;
-extern int sysctl_overcommit_ratio;
-extern unsigned long sysctl_overcommit_kbytes;
+बाह्य पूर्णांक sysctl_overcommit_memory;
+बाह्य पूर्णांक sysctl_overcommit_ratio;
+बाह्य अचिन्हित दीर्घ sysctl_overcommit_kbytes;
 
-int overcommit_ratio_handler(struct ctl_table *, int, void *, size_t *,
+पूर्णांक overcommit_ratio_handler(काष्ठा ctl_table *, पूर्णांक, व्योम *, माप_प्रकार *,
 		loff_t *);
-int overcommit_kbytes_handler(struct ctl_table *, int, void *, size_t *,
+पूर्णांक overcommit_kbytes_handler(काष्ठा ctl_table *, पूर्णांक, व्योम *, माप_प्रकार *,
 		loff_t *);
-int overcommit_policy_handler(struct ctl_table *, int, void *, size_t *,
+पूर्णांक overcommit_policy_handler(काष्ठा ctl_table *, पूर्णांक, व्योम *, माप_प्रकार *,
 		loff_t *);
 /*
- * Any attempt to mark this function as static leads to build failure
+ * Any attempt to mark this function as अटल leads to build failure
  * when CONFIG_DEBUG_INFO_BTF is enabled because __add_to_page_cache_locked()
- * is referred to by BPF code. This must be visible for error injection.
+ * is referred to by BPF code. This must be visible क्रम error injection.
  */
-int __add_to_page_cache_locked(struct page *page, struct address_space *mapping,
-		pgoff_t index, gfp_t gfp, void **shadowp);
+पूर्णांक __add_to_page_cache_locked(काष्ठा page *page, काष्ठा address_space *mapping,
+		pgoff_t index, gfp_t gfp, व्योम **shaकरोwp);
 
-#define nth_page(page,n) pfn_to_page(page_to_pfn((page)) + (n))
+#घोषणा nth_page(page,n) pfn_to_page(page_to_pfn((page)) + (n))
 
-/* to align the pointer to the (next) page boundary */
-#define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE)
+/* to align the poपूर्णांकer to the (next) page boundary */
+#घोषणा PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE)
 
-/* test whether an address (unsigned long or pointer) is aligned to PAGE_SIZE */
-#define PAGE_ALIGNED(addr)	IS_ALIGNED((unsigned long)(addr), PAGE_SIZE)
+/* test whether an address (अचिन्हित दीर्घ or poपूर्णांकer) is aligned to PAGE_SIZE */
+#घोषणा PAGE_ALIGNED(addr)	IS_ALIGNED((अचिन्हित दीर्घ)(addr), PAGE_SIZE)
 
-#define lru_to_page(head) (list_entry((head)->prev, struct page, lru))
+#घोषणा lru_to_page(head) (list_entry((head)->prev, काष्ठा page, lru))
 
 /*
- * Linux kernel virtual memory manager primitives.
+ * Linux kernel भव memory manager primitives.
  * The idea being to have a "virtual" mm in the same way
- * we have a virtual fs - giving a cleaner interface to the
- * mm details, and allowing different kinds of memory mappings
+ * we have a भव fs - giving a cleaner पूर्णांकerface to the
+ * mm details, and allowing dअगरferent kinds of memory mappings
  * (from shared memory to executable loading to arbitrary
  * mmap() functions).
  */
 
-struct vm_area_struct *vm_area_alloc(struct mm_struct *);
-struct vm_area_struct *vm_area_dup(struct vm_area_struct *);
-void vm_area_free(struct vm_area_struct *);
+काष्ठा vm_area_काष्ठा *vm_area_alloc(काष्ठा mm_काष्ठा *);
+काष्ठा vm_area_काष्ठा *vm_area_dup(काष्ठा vm_area_काष्ठा *);
+व्योम vm_area_मुक्त(काष्ठा vm_area_काष्ठा *);
 
-#ifndef CONFIG_MMU
-extern struct rb_root nommu_region_tree;
-extern struct rw_semaphore nommu_region_sem;
+#अगर_अघोषित CONFIG_MMU
+बाह्य काष्ठा rb_root nommu_region_tree;
+बाह्य काष्ठा rw_semaphore nommu_region_sem;
 
-extern unsigned int kobjsize(const void *objp);
-#endif
+बाह्य अचिन्हित पूर्णांक kobjsize(स्थिर व्योम *objp);
+#पूर्ण_अगर
 
 /*
- * vm_flags in vm_area_struct, see mm_types.h.
+ * vm_flags in vm_area_काष्ठा, see mm_types.h.
  * When changing, update also include/trace/events/mmflags.h
  */
-#define VM_NONE		0x00000000
+#घोषणा VM_NONE		0x00000000
 
-#define VM_READ		0x00000001	/* currently active flags */
-#define VM_WRITE	0x00000002
-#define VM_EXEC		0x00000004
-#define VM_SHARED	0x00000008
+#घोषणा VM_READ		0x00000001	/* currently active flags */
+#घोषणा VM_WRITE	0x00000002
+#घोषणा VM_EXEC		0x00000004
+#घोषणा VM_SHARED	0x00000008
 
-/* mprotect() hardcodes VM_MAYREAD >> 4 == VM_READ, and so for r/w/x bits. */
-#define VM_MAYREAD	0x00000010	/* limits for mprotect() etc */
-#define VM_MAYWRITE	0x00000020
-#define VM_MAYEXEC	0x00000040
-#define VM_MAYSHARE	0x00000080
+/* mprotect() hardcodes VM_MAYREAD >> 4 == VM_READ, and so क्रम r/w/x bits. */
+#घोषणा VM_MAYREAD	0x00000010	/* limits क्रम mprotect() etc */
+#घोषणा VM_MAYWRITE	0x00000020
+#घोषणा VM_MAYEXEC	0x00000040
+#घोषणा VM_MAYSHARE	0x00000080
 
-#define VM_GROWSDOWN	0x00000100	/* general info on the segment */
-#define VM_UFFD_MISSING	0x00000200	/* missing pages tracking */
-#define VM_PFNMAP	0x00000400	/* Page-ranges managed without "struct page", just pure PFN */
-#define VM_DENYWRITE	0x00000800	/* ETXTBSY on write attempts.. */
-#define VM_UFFD_WP	0x00001000	/* wrprotect pages tracking */
+#घोषणा VM_GROWSDOWN	0x00000100	/* general info on the segment */
+#घोषणा VM_UFFD_MISSING	0x00000200	/* missing pages tracking */
+#घोषणा VM_PFNMAP	0x00000400	/* Page-ranges managed without "struct page", just pure PFN */
+#घोषणा VM_DENYWRITE	0x00000800	/* ETXTBSY on ग_लिखो attempts.. */
+#घोषणा VM_UFFD_WP	0x00001000	/* wrprotect pages tracking */
 
-#define VM_LOCKED	0x00002000
-#define VM_IO           0x00004000	/* Memory mapped I/O or similar */
+#घोषणा VM_LOCKED	0x00002000
+#घोषणा VM_IO           0x00004000	/* Memory mapped I/O or similar */
 
 					/* Used by sys_madvise() */
-#define VM_SEQ_READ	0x00008000	/* App will access data sequentially */
-#define VM_RAND_READ	0x00010000	/* App will not benefit from clustered reads */
+#घोषणा VM_SEQ_READ	0x00008000	/* App will access data sequentially */
+#घोषणा VM_RAND_READ	0x00010000	/* App will not benefit from clustered पढ़ोs */
 
-#define VM_DONTCOPY	0x00020000      /* Do not copy this vma on fork */
-#define VM_DONTEXPAND	0x00040000	/* Cannot expand with mremap() */
-#define VM_LOCKONFAULT	0x00080000	/* Lock the pages covered when they are faulted in */
-#define VM_ACCOUNT	0x00100000	/* Is a VM accounted object */
-#define VM_NORESERVE	0x00200000	/* should the VM suppress accounting */
-#define VM_HUGETLB	0x00400000	/* Huge TLB Page VM */
-#define VM_SYNC		0x00800000	/* Synchronous page faults */
-#define VM_ARCH_1	0x01000000	/* Architecture-specific flag */
-#define VM_WIPEONFORK	0x02000000	/* Wipe VMA contents in child. */
-#define VM_DONTDUMP	0x04000000	/* Do not include in the core dump */
+#घोषणा VM_DONTCOPY	0x00020000      /* Do not copy this vma on विभाजन */
+#घोषणा VM_DONTEXPAND	0x00040000	/* Cannot expand with mremap() */
+#घोषणा VM_LOCKONFAULT	0x00080000	/* Lock the pages covered when they are faulted in */
+#घोषणा VM_ACCOUNT	0x00100000	/* Is a VM accounted object */
+#घोषणा VM_NORESERVE	0x00200000	/* should the VM suppress accounting */
+#घोषणा VM_HUGETLB	0x00400000	/* Huge TLB Page VM */
+#घोषणा VM_SYNC		0x00800000	/* Synchronous page faults */
+#घोषणा VM_ARCH_1	0x01000000	/* Architecture-specअगरic flag */
+#घोषणा VM_WIPEONFORK	0x02000000	/* Wipe VMA contents in child. */
+#घोषणा VM_DONTDUMP	0x04000000	/* Do not include in the core dump */
 
-#ifdef CONFIG_MEM_SOFT_DIRTY
-# define VM_SOFTDIRTY	0x08000000	/* Not soft dirty clean area */
-#else
-# define VM_SOFTDIRTY	0
-#endif
+#अगर_घोषित CONFIG_MEM_SOFT_सूचीTY
+# define VM_SOFTसूचीTY	0x08000000	/* Not soft dirty clean area */
+#अन्यथा
+# define VM_SOFTसूचीTY	0
+#पूर्ण_अगर
 
-#define VM_MIXEDMAP	0x10000000	/* Can contain "struct page" and pure PFN pages */
-#define VM_HUGEPAGE	0x20000000	/* MADV_HUGEPAGE marked this vma */
-#define VM_NOHUGEPAGE	0x40000000	/* MADV_NOHUGEPAGE marked this vma */
-#define VM_MERGEABLE	0x80000000	/* KSM may merge identical pages */
+#घोषणा VM_MIXEDMAP	0x10000000	/* Can contain "struct page" and pure PFN pages */
+#घोषणा VM_HUGEPAGE	0x20000000	/* MADV_HUGEPAGE marked this vma */
+#घोषणा VM_NOHUGEPAGE	0x40000000	/* MADV_NOHUGEPAGE marked this vma */
+#घोषणा VM_MERGEABLE	0x80000000	/* KSM may merge identical pages */
 
-#ifdef CONFIG_ARCH_USES_HIGH_VMA_FLAGS
-#define VM_HIGH_ARCH_BIT_0	32	/* bit only usable on 64-bit architectures */
-#define VM_HIGH_ARCH_BIT_1	33	/* bit only usable on 64-bit architectures */
-#define VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
-#define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
-#define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
-#define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
-#define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
-#define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
-#define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
-#define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
-#endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
+#अगर_घोषित CONFIG_ARCH_USES_HIGH_VMA_FLAGS
+#घोषणा VM_HIGH_ARCH_BIT_0	32	/* bit only usable on 64-bit architectures */
+#घोषणा VM_HIGH_ARCH_BIT_1	33	/* bit only usable on 64-bit architectures */
+#घोषणा VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
+#घोषणा VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
+#घोषणा VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
+#घोषणा VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
+#घोषणा VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
+#घोषणा VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
+#घोषणा VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
+#घोषणा VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
+#पूर्ण_अगर /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
 
-#ifdef CONFIG_ARCH_HAS_PKEYS
+#अगर_घोषित CONFIG_ARCH_HAS_PKEYS
 # define VM_PKEY_SHIFT	VM_HIGH_ARCH_BIT_0
 # define VM_PKEY_BIT0	VM_HIGH_ARCH_0	/* A protection key is a 4-bit value */
 # define VM_PKEY_BIT1	VM_HIGH_ARCH_1	/* on x86 and 5-bit value on ppc64   */
 # define VM_PKEY_BIT2	VM_HIGH_ARCH_2
 # define VM_PKEY_BIT3	VM_HIGH_ARCH_3
-#ifdef CONFIG_PPC
+#अगर_घोषित CONFIG_PPC
 # define VM_PKEY_BIT4  VM_HIGH_ARCH_4
-#else
+#अन्यथा
 # define VM_PKEY_BIT4  0
-#endif
-#endif /* CONFIG_ARCH_HAS_PKEYS */
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_ARCH_HAS_PKEYS */
 
-#if defined(CONFIG_X86)
+#अगर defined(CONFIG_X86)
 # define VM_PAT		VM_ARCH_1	/* PAT reserves whole VMA at once (x86) */
-#elif defined(CONFIG_PPC)
-# define VM_SAO		VM_ARCH_1	/* Strong Access Ordering (powerpc) */
-#elif defined(CONFIG_PARISC)
+#या_अगर defined(CONFIG_PPC)
+# define VM_SAO		VM_ARCH_1	/* Strong Access Ordering (घातerpc) */
+#या_अगर defined(CONFIG_PARISC)
 # define VM_GROWSUP	VM_ARCH_1
-#elif defined(CONFIG_IA64)
+#या_अगर defined(CONFIG_IA64)
 # define VM_GROWSUP	VM_ARCH_1
-#elif defined(CONFIG_SPARC64)
-# define VM_SPARC_ADI	VM_ARCH_1	/* Uses ADI tag for access control */
+#या_अगर defined(CONFIG_SPARC64)
+# define VM_SPARC_ADI	VM_ARCH_1	/* Uses ADI tag क्रम access control */
 # define VM_ARCH_CLEAR	VM_SPARC_ADI
-#elif defined(CONFIG_ARM64)
+#या_अगर defined(CONFIG_ARM64)
 # define VM_ARM64_BTI	VM_ARCH_1	/* BTI guarded page, a.k.a. GP bit */
 # define VM_ARCH_CLEAR	VM_ARM64_BTI
-#elif !defined(CONFIG_MMU)
-# define VM_MAPPED_COPY	VM_ARCH_1	/* T if mapped copy of data (nommu mmap) */
-#endif
+#या_अगर !defined(CONFIG_MMU)
+# define VM_MAPPED_COPY	VM_ARCH_1	/* T अगर mapped copy of data (nommu mmap) */
+#पूर्ण_अगर
 
-#if defined(CONFIG_ARM64_MTE)
-# define VM_MTE		VM_HIGH_ARCH_0	/* Use Tagged memory for access control */
+#अगर defined(CONFIG_ARM64_MTE)
+# define VM_MTE		VM_HIGH_ARCH_0	/* Use Tagged memory क्रम access control */
 # define VM_MTE_ALLOWED	VM_HIGH_ARCH_1	/* Tagged memory permitted */
-#else
+#अन्यथा
 # define VM_MTE		VM_NONE
 # define VM_MTE_ALLOWED	VM_NONE
-#endif
+#पूर्ण_अगर
 
-#ifndef VM_GROWSUP
+#अगर_अघोषित VM_GROWSUP
 # define VM_GROWSUP	VM_NONE
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
+#अगर_घोषित CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
 # define VM_UFFD_MINOR_BIT	37
 # define VM_UFFD_MINOR		BIT(VM_UFFD_MINOR_BIT)	/* UFFD minor faults */
-#else /* !CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
+#अन्यथा /* !CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
 # define VM_UFFD_MINOR		VM_NONE
-#endif /* CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
+#पूर्ण_अगर /* CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
 
 /* Bits set in the VMA until the stack is in its final location */
-#define VM_STACK_INCOMPLETE_SETUP	(VM_RAND_READ | VM_SEQ_READ)
+#घोषणा VM_STACK_INCOMPLETE_SETUP	(VM_RAND_READ | VM_SEQ_READ)
 
-#define TASK_EXEC ((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0)
+#घोषणा TASK_EXEC ((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0)
 
 /* Common data flag combinations */
-#define VM_DATA_FLAGS_TSK_EXEC	(VM_READ | VM_WRITE | TASK_EXEC | \
+#घोषणा VM_DATA_FLAGS_TSK_EXEC	(VM_READ | VM_WRITE | TASK_EXEC | \
 				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
-#define VM_DATA_FLAGS_NON_EXEC	(VM_READ | VM_WRITE | VM_MAYREAD | \
+#घोषणा VM_DATA_FLAGS_NON_EXEC	(VM_READ | VM_WRITE | VM_MAYREAD | \
 				 VM_MAYWRITE | VM_MAYEXEC)
-#define VM_DATA_FLAGS_EXEC	(VM_READ | VM_WRITE | VM_EXEC | \
+#घोषणा VM_DATA_FLAGS_EXEC	(VM_READ | VM_WRITE | VM_EXEC | \
 				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
 
-#ifndef VM_DATA_DEFAULT_FLAGS		/* arch can override this */
-#define VM_DATA_DEFAULT_FLAGS  VM_DATA_FLAGS_EXEC
-#endif
+#अगर_अघोषित VM_DATA_DEFAULT_FLAGS		/* arch can override this */
+#घोषणा VM_DATA_DEFAULT_FLAGS  VM_DATA_FLAGS_EXEC
+#पूर्ण_अगर
 
-#ifndef VM_STACK_DEFAULT_FLAGS		/* arch can override this */
-#define VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
-#endif
+#अगर_अघोषित VM_STACK_DEFAULT_FLAGS		/* arch can override this */
+#घोषणा VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
+#पूर्ण_अगर
 
-#ifdef CONFIG_STACK_GROWSUP
-#define VM_STACK	VM_GROWSUP
-#else
-#define VM_STACK	VM_GROWSDOWN
-#endif
+#अगर_घोषित CONFIG_STACK_GROWSUP
+#घोषणा VM_STACK	VM_GROWSUP
+#अन्यथा
+#घोषणा VM_STACK	VM_GROWSDOWN
+#पूर्ण_अगर
 
-#define VM_STACK_FLAGS	(VM_STACK | VM_STACK_DEFAULT_FLAGS | VM_ACCOUNT)
+#घोषणा VM_STACK_FLAGS	(VM_STACK | VM_STACK_DEFAULT_FLAGS | VM_ACCOUNT)
 
 /* VMA basic access permission flags */
-#define VM_ACCESS_FLAGS (VM_READ | VM_WRITE | VM_EXEC)
+#घोषणा VM_ACCESS_FLAGS (VM_READ | VM_WRITE | VM_EXEC)
 
 
 /*
  * Special vmas that are non-mergable, non-mlock()able.
  */
-#define VM_SPECIAL (VM_IO | VM_DONTEXPAND | VM_PFNMAP | VM_MIXEDMAP)
+#घोषणा VM_SPECIAL (VM_IO | VM_DONTEXPAND | VM_PFNMAP | VM_MIXEDMAP)
 
 /* This mask prevents VMA from being scanned with khugepaged */
-#define VM_NO_KHUGEPAGED (VM_SPECIAL | VM_HUGETLB)
+#घोषणा VM_NO_KHUGEPAGED (VM_SPECIAL | VM_HUGETLB)
 
 /* This mask defines which mm->def_flags a process can inherit its parent */
-#define VM_INIT_DEF_MASK	VM_NOHUGEPAGE
+#घोषणा VM_INIT_DEF_MASK	VM_NOHUGEPAGE
 
 /* This mask is used to clear all the VMA flags used by mlock */
-#define VM_LOCKED_CLEAR_MASK	(~(VM_LOCKED | VM_LOCKONFAULT))
+#घोषणा VM_LOCKED_CLEAR_MASK	(~(VM_LOCKED | VM_LOCKONFAULT))
 
-/* Arch-specific flags to clear when updating VM flags on protection change */
-#ifndef VM_ARCH_CLEAR
+/* Arch-specअगरic flags to clear when updating VM flags on protection change */
+#अगर_अघोषित VM_ARCH_CLEAR
 # define VM_ARCH_CLEAR	VM_NONE
-#endif
-#define VM_FLAGS_CLEAR	(ARCH_VM_PKEY_FLAGS | VM_ARCH_CLEAR)
+#पूर्ण_अगर
+#घोषणा VM_FLAGS_CLEAR	(ARCH_VM_PKEY_FLAGS | VM_ARCH_CLEAR)
 
 /*
  * mapping from the currently active vm_flags protection bits (the
  * low four bits) to a page protection mask..
  */
-extern pgprot_t protection_map[16];
+बाह्य pgprot_t protection_map[16];
 
 /**
- * enum fault_flag - Fault flag definitions.
- * @FAULT_FLAG_WRITE: Fault was a write fault.
- * @FAULT_FLAG_MKWRITE: Fault was mkwrite of existing PTE.
- * @FAULT_FLAG_ALLOW_RETRY: Allow to retry the fault if blocked.
- * @FAULT_FLAG_RETRY_NOWAIT: Don't drop mmap_lock and wait when retrying.
- * @FAULT_FLAG_KILLABLE: The fault task is in SIGKILL killable region.
+ * क्रमागत fault_flag - Fault flag definitions.
+ * @FAULT_FLAG_WRITE: Fault was a ग_लिखो fault.
+ * @FAULT_FLAG_MKWRITE: Fault was mkग_लिखो of existing PTE.
+ * @FAULT_FLAG_ALLOW_RETRY: Allow to retry the fault अगर blocked.
+ * @FAULT_FLAG_RETRY_NOWAIT: Don't drop mmap_lock and रुको when retrying.
+ * @FAULT_FLAG_KILLABLE: The fault task is in SIGKILL समाप्तable region.
  * @FAULT_FLAG_TRIED: The fault has been tried once.
  * @FAULT_FLAG_USER: The fault originated in userspace.
- * @FAULT_FLAG_REMOTE: The fault is not for current task/mm.
- * @FAULT_FLAG_INSTRUCTION: The fault was during an instruction fetch.
- * @FAULT_FLAG_INTERRUPTIBLE: The fault can be interrupted by non-fatal signals.
+ * @FAULT_FLAG_REMOTE: The fault is not क्रम current task/mm.
+ * @FAULT_FLAG_INSTRUCTION: The fault was during an inकाष्ठाion fetch.
+ * @FAULT_FLAG_INTERRUPTIBLE: The fault can be पूर्णांकerrupted by non-fatal संकेतs.
  *
- * About @FAULT_FLAG_ALLOW_RETRY and @FAULT_FLAG_TRIED: we can specify
- * whether we would allow page faults to retry by specifying these two
+ * About @FAULT_FLAG_ALLOW_RETRY and @FAULT_FLAG_TRIED: we can specअगरy
+ * whether we would allow page faults to retry by specअगरying these two
  * fault flags correctly.  Currently there can be three legal combinations:
  *
  * (a) ALLOW_RETRY and !TRIED:  this means the page fault allows retry, and
  *                              this is the first try
  *
  * (b) ALLOW_RETRY and TRIED:   this means the page fault allows retry, and
- *                              we've already tried at least once
+ *                              we've alपढ़ोy tried at least once
  *
- * (c) !ALLOW_RETRY and !TRIED: this means the page fault does not allow retry
+ * (c) !ALLOW_RETRY and !TRIED: this means the page fault करोes not allow retry
  *
  * The unlisted combination (!ALLOW_RETRY && TRIED) is illegal and should never
- * be used.  Note that page faults can be allowed to retry for multiple times,
- * in which case we'll have an initial fault with flags (a) then later on
+ * be used.  Note that page faults can be allowed to retry क्रम multiple बार,
+ * in which हाल we'll have an initial fault with flags (a) then later on
  * continuous faults with flags (b).  We should always try to detect pending
- * signals before a retry to make sure the continuous page faults can still be
- * interrupted if necessary.
+ * संकेतs beक्रमe a retry to make sure the continuous page faults can still be
+ * पूर्णांकerrupted अगर necessary.
  */
-enum fault_flag {
+क्रमागत fault_flag अणु
 	FAULT_FLAG_WRITE =		1 << 0,
 	FAULT_FLAG_MKWRITE =		1 << 1,
 	FAULT_FLAG_ALLOW_RETRY =	1 << 2,
@@ -481,565 +482,565 @@ enum fault_flag {
 	FAULT_FLAG_REMOTE =		1 << 7,
 	FAULT_FLAG_INSTRUCTION =	1 << 8,
 	FAULT_FLAG_INTERRUPTIBLE =	1 << 9,
-};
+पूर्ण;
 
 /*
- * The default fault flags that should be used by most of the
- * arch-specific page fault handlers.
+ * The शेष fault flags that should be used by most of the
+ * arch-specअगरic page fault handlers.
  */
-#define FAULT_FLAG_DEFAULT  (FAULT_FLAG_ALLOW_RETRY | \
+#घोषणा FAULT_FLAG_DEFAULT  (FAULT_FLAG_ALLOW_RETRY | \
 			     FAULT_FLAG_KILLABLE | \
 			     FAULT_FLAG_INTERRUPTIBLE)
 
 /**
- * fault_flag_allow_retry_first - check ALLOW_RETRY the first time
+ * fault_flag_allow_retry_first - check ALLOW_RETRY the first समय
  * @flags: Fault flags.
  *
- * This is mostly used for places where we want to try to avoid taking
- * the mmap_lock for too long a time when waiting for another condition
- * to change, in which case we can try to be polite to release the
- * mmap_lock in the first round to avoid potential starvation of other
+ * This is mostly used क्रम places where we want to try to aव्योम taking
+ * the mmap_lock क्रम too दीर्घ a समय when रुकोing क्रम another condition
+ * to change, in which हाल we can try to be polite to release the
+ * mmap_lock in the first round to aव्योम potential starvation of other
  * processes that would also want the mmap_lock.
  *
- * Return: true if the page fault allows retry and this is the first
+ * Return: true अगर the page fault allows retry and this is the first
  * attempt of the fault handling; false otherwise.
  */
-static inline bool fault_flag_allow_retry_first(enum fault_flag flags)
-{
-	return (flags & FAULT_FLAG_ALLOW_RETRY) &&
+अटल अंतरभूत bool fault_flag_allow_retry_first(क्रमागत fault_flag flags)
+अणु
+	वापस (flags & FAULT_FLAG_ALLOW_RETRY) &&
 	    (!(flags & FAULT_FLAG_TRIED));
-}
+पूर्ण
 
-#define FAULT_FLAG_TRACE \
-	{ FAULT_FLAG_WRITE,		"WRITE" }, \
-	{ FAULT_FLAG_MKWRITE,		"MKWRITE" }, \
-	{ FAULT_FLAG_ALLOW_RETRY,	"ALLOW_RETRY" }, \
-	{ FAULT_FLAG_RETRY_NOWAIT,	"RETRY_NOWAIT" }, \
-	{ FAULT_FLAG_KILLABLE,		"KILLABLE" }, \
-	{ FAULT_FLAG_TRIED,		"TRIED" }, \
-	{ FAULT_FLAG_USER,		"USER" }, \
-	{ FAULT_FLAG_REMOTE,		"REMOTE" }, \
-	{ FAULT_FLAG_INSTRUCTION,	"INSTRUCTION" }, \
-	{ FAULT_FLAG_INTERRUPTIBLE,	"INTERRUPTIBLE" }
+#घोषणा FAULT_FLAG_TRACE \
+	अणु FAULT_FLAG_WRITE,		"WRITE" पूर्ण, \
+	अणु FAULT_FLAG_MKWRITE,		"MKWRITE" पूर्ण, \
+	अणु FAULT_FLAG_ALLOW_RETRY,	"ALLOW_RETRY" पूर्ण, \
+	अणु FAULT_FLAG_RETRY_NOWAIT,	"RETRY_NOWAIT" पूर्ण, \
+	अणु FAULT_FLAG_KILLABLE,		"KILLABLE" पूर्ण, \
+	अणु FAULT_FLAG_TRIED,		"TRIED" पूर्ण, \
+	अणु FAULT_FLAG_USER,		"USER" पूर्ण, \
+	अणु FAULT_FLAG_REMOTE,		"REMOTE" पूर्ण, \
+	अणु FAULT_FLAG_INSTRUCTION,	"INSTRUCTION" पूर्ण, \
+	अणु FAULT_FLAG_INTERRUPTIBLE,	"INTERRUPTIBLE" पूर्ण
 
 /*
  * vm_fault is filled by the pagefault handler and passed to the vma's
- * ->fault function. The vma's ->fault is responsible for returning a bitmask
+ * ->fault function. The vma's ->fault is responsible क्रम वापसing a biपंचांगask
  * of VM_FAULT_xxx flags that give details about how the fault was handled.
  *
- * MM layer fills up gfp_mask for page allocations but fault handler might
- * alter it if its implementation requires a different allocation context.
+ * MM layer fills up gfp_mask क्रम page allocations but fault handler might
+ * alter it अगर its implementation requires a dअगरferent allocation context.
  *
- * pgoff should be used in favour of virtual_address, if possible.
+ * pgoff should be used in favour of भव_address, अगर possible.
  */
-struct vm_fault {
-	const struct {
-		struct vm_area_struct *vma;	/* Target VMA */
-		gfp_t gfp_mask;			/* gfp mask to be used for allocations */
+काष्ठा vm_fault अणु
+	स्थिर काष्ठा अणु
+		काष्ठा vm_area_काष्ठा *vma;	/* Target VMA */
+		gfp_t gfp_mask;			/* gfp mask to be used क्रम allocations */
 		pgoff_t pgoff;			/* Logical page offset based on vma */
-		unsigned long address;		/* Faulting virtual address */
-	};
-	enum fault_flag flags;		/* FAULT_FLAG_xxx flags
+		अचिन्हित दीर्घ address;		/* Faulting भव address */
+	पूर्ण;
+	क्रमागत fault_flag flags;		/* FAULT_FLAG_xxx flags
 					 * XXX: should really be 'const' */
-	pmd_t *pmd;			/* Pointer to pmd entry matching
+	pmd_t *pmd;			/* Poपूर्णांकer to pmd entry matching
 					 * the 'address' */
-	pud_t *pud;			/* Pointer to pud entry matching
+	pud_t *pud;			/* Poपूर्णांकer to pud entry matching
 					 * the 'address'
 					 */
-	pte_t orig_pte;			/* Value of PTE at the time of fault */
+	pte_t orig_pte;			/* Value of PTE at the समय of fault */
 
-	struct page *cow_page;		/* Page handler may use for COW fault */
-	struct page *page;		/* ->fault handlers should return a
+	काष्ठा page *cow_page;		/* Page handler may use क्रम COW fault */
+	काष्ठा page *page;		/* ->fault handlers should वापस a
 					 * page here, unless VM_FAULT_NOPAGE
 					 * is set (which is also implied by
 					 * VM_FAULT_ERROR).
 					 */
-	/* These three entries are valid only while holding ptl lock */
-	pte_t *pte;			/* Pointer to pte entry matching
-					 * the 'address'. NULL if the page
+	/* These three entries are valid only जबतक holding ptl lock */
+	pte_t *pte;			/* Poपूर्णांकer to pte entry matching
+					 * the 'address'. शून्य अगर the page
 					 * table hasn't been allocated.
 					 */
 	spinlock_t *ptl;		/* Page table lock.
-					 * Protects pte page table if 'pte'
-					 * is not NULL, otherwise pmd.
+					 * Protects pte page table अगर 'pte'
+					 * is not शून्य, otherwise pmd.
 					 */
-	pgtable_t prealloc_pte;		/* Pre-allocated pte page table.
+	pgtable_t pपुनः_स्मृति_pte;		/* Pre-allocated pte page table.
 					 * vm_ops->map_pages() sets up a page
 					 * table from atomic context.
-					 * do_fault_around() pre-allocates
-					 * page table to avoid allocation from
+					 * करो_fault_around() pre-allocates
+					 * page table to aव्योम allocation from
 					 * atomic context.
 					 */
-};
+पूर्ण;
 
-/* page entry size for vm->huge_fault() */
-enum page_entry_size {
+/* page entry size क्रम vm->huge_fault() */
+क्रमागत page_entry_size अणु
 	PE_SIZE_PTE = 0,
 	PE_SIZE_PMD,
 	PE_SIZE_PUD,
-};
+पूर्ण;
 
 /*
- * These are the virtual MM functions - opening of an area, closing and
- * unmapping it (needed to keep files on disk up-to-date etc), pointer
+ * These are the भव MM functions - खोलोing of an area, closing and
+ * unmapping it (needed to keep files on disk up-to-date etc), poपूर्णांकer
  * to the functions called when a no-page or a wp-page exception occurs.
  */
-struct vm_operations_struct {
-	void (*open)(struct vm_area_struct * area);
-	void (*close)(struct vm_area_struct * area);
-	/* Called any time before splitting to check if it's allowed */
-	int (*may_split)(struct vm_area_struct *area, unsigned long addr);
-	int (*mremap)(struct vm_area_struct *area);
+काष्ठा vm_operations_काष्ठा अणु
+	व्योम (*खोलो)(काष्ठा vm_area_काष्ठा * area);
+	व्योम (*बंद)(काष्ठा vm_area_काष्ठा * area);
+	/* Called any समय beक्रमe splitting to check अगर it's allowed */
+	पूर्णांक (*may_split)(काष्ठा vm_area_काष्ठा *area, अचिन्हित दीर्घ addr);
+	पूर्णांक (*mremap)(काष्ठा vm_area_काष्ठा *area);
 	/*
-	 * Called by mprotect() to make driver-specific permission
-	 * checks before mprotect() is finalised.   The VMA must not
-	 * be modified.  Returns 0 if eprotect() can proceed.
+	 * Called by mprotect() to make driver-specअगरic permission
+	 * checks beक्रमe mprotect() is finalised.   The VMA must not
+	 * be modअगरied.  Returns 0 अगर eprotect() can proceed.
 	 */
-	int (*mprotect)(struct vm_area_struct *vma, unsigned long start,
-			unsigned long end, unsigned long newflags);
-	vm_fault_t (*fault)(struct vm_fault *vmf);
-	vm_fault_t (*huge_fault)(struct vm_fault *vmf,
-			enum page_entry_size pe_size);
-	vm_fault_t (*map_pages)(struct vm_fault *vmf,
+	पूर्णांक (*mprotect)(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+			अचिन्हित दीर्घ end, अचिन्हित दीर्घ newflags);
+	vm_fault_t (*fault)(काष्ठा vm_fault *vmf);
+	vm_fault_t (*huge_fault)(काष्ठा vm_fault *vmf,
+			क्रमागत page_entry_size pe_size);
+	vm_fault_t (*map_pages)(काष्ठा vm_fault *vmf,
 			pgoff_t start_pgoff, pgoff_t end_pgoff);
-	unsigned long (*pagesize)(struct vm_area_struct * area);
+	अचिन्हित दीर्घ (*pagesize)(काष्ठा vm_area_काष्ठा * area);
 
-	/* notification that a previously read-only page is about to become
-	 * writable, if an error is returned it will cause a SIGBUS */
-	vm_fault_t (*page_mkwrite)(struct vm_fault *vmf);
+	/* notअगरication that a previously पढ़ो-only page is about to become
+	 * writable, अगर an error is वापसed it will cause a SIGBUS */
+	vm_fault_t (*page_mkग_लिखो)(काष्ठा vm_fault *vmf);
 
-	/* same as page_mkwrite when using VM_PFNMAP|VM_MIXEDMAP */
-	vm_fault_t (*pfn_mkwrite)(struct vm_fault *vmf);
+	/* same as page_mkग_लिखो when using VM_PFNMAP|VM_MIXEDMAP */
+	vm_fault_t (*pfn_mkग_लिखो)(काष्ठा vm_fault *vmf);
 
 	/* called by access_process_vm when get_user_pages() fails, typically
-	 * for use by special VMAs. See also generic_access_phys() for a generic
-	 * implementation useful for any iomem mapping.
+	 * क्रम use by special VMAs. See also generic_access_phys() क्रम a generic
+	 * implementation useful क्रम any iomem mapping.
 	 */
-	int (*access)(struct vm_area_struct *vma, unsigned long addr,
-		      void *buf, int len, int write);
+	पूर्णांक (*access)(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+		      व्योम *buf, पूर्णांक len, पूर्णांक ग_लिखो);
 
 	/* Called by the /proc/PID/maps code to ask the vma whether it
-	 * has a special name.  Returning non-NULL will also cause this
+	 * has a special name.  Returning non-शून्य will also cause this
 	 * vma to be dumped unconditionally. */
-	const char *(*name)(struct vm_area_struct *vma);
+	स्थिर अक्षर *(*name)(काष्ठा vm_area_काष्ठा *vma);
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 	/*
-	 * set_policy() op must add a reference to any non-NULL @new mempolicy
-	 * to hold the policy upon return.  Caller should pass NULL @new to
-	 * remove a policy and fall back to surrounding context--i.e. do not
-	 * install a MPOL_DEFAULT policy, nor the task or system default
+	 * set_policy() op must add a reference to any non-शून्य @new mempolicy
+	 * to hold the policy upon वापस.  Caller should pass शून्य @new to
+	 * हटाओ a policy and fall back to surrounding context--i.e. करो not
+	 * install a MPOL_DEFAULT policy, nor the task or प्रणाली शेष
 	 * mempolicy.
 	 */
-	int (*set_policy)(struct vm_area_struct *vma, struct mempolicy *new);
+	पूर्णांक (*set_policy)(काष्ठा vm_area_काष्ठा *vma, काष्ठा mempolicy *new);
 
 	/*
 	 * get_policy() op must add reference [mpol_get()] to any policy at
-	 * (vma,addr) marked as MPOL_SHARED.  The shared policy infrastructure
-	 * in mm/mempolicy.c will do this automatically.
-	 * get_policy() must NOT add a ref if the policy at (vma,addr) is not
-	 * marked as MPOL_SHARED. vma policies are protected by the mmap_lock.
+	 * (vma,addr) marked as MPOL_SHARED.  The shared policy infraकाष्ठाure
+	 * in mm/mempolicy.c will करो this स्वतःmatically.
+	 * get_policy() must NOT add a ref अगर the policy at (vma,addr) is not
+	 * marked as MPOL_SHARED. vma policies are रक्षित by the mmap_lock.
 	 * If no [shared/vma] mempolicy exists at the addr, get_policy() op
-	 * must return NULL--i.e., do not "fallback" to task or system default
+	 * must वापस शून्य--i.e., करो not "fallback" to task or प्रणाली शेष
 	 * policy.
 	 */
-	struct mempolicy *(*get_policy)(struct vm_area_struct *vma,
-					unsigned long addr);
-#endif
+	काष्ठा mempolicy *(*get_policy)(काष्ठा vm_area_काष्ठा *vma,
+					अचिन्हित दीर्घ addr);
+#पूर्ण_अगर
 	/*
-	 * Called by vm_normal_page() for special PTEs to find the
-	 * page for @addr.  This is useful if the default behavior
+	 * Called by vm_normal_page() क्रम special PTEs to find the
+	 * page क्रम @addr.  This is useful अगर the शेष behavior
 	 * (using pte_page()) would not find the correct page.
 	 */
-	struct page *(*find_special_page)(struct vm_area_struct *vma,
-					  unsigned long addr);
-};
+	काष्ठा page *(*find_special_page)(काष्ठा vm_area_काष्ठा *vma,
+					  अचिन्हित दीर्घ addr);
+पूर्ण;
 
-static inline void vma_init(struct vm_area_struct *vma, struct mm_struct *mm)
-{
-	static const struct vm_operations_struct dummy_vm_ops = {};
+अटल अंतरभूत व्योम vma_init(काष्ठा vm_area_काष्ठा *vma, काष्ठा mm_काष्ठा *mm)
+अणु
+	अटल स्थिर काष्ठा vm_operations_काष्ठा dummy_vm_ops = अणुपूर्ण;
 
-	memset(vma, 0, sizeof(*vma));
+	स_रखो(vma, 0, माप(*vma));
 	vma->vm_mm = mm;
 	vma->vm_ops = &dummy_vm_ops;
 	INIT_LIST_HEAD(&vma->anon_vma_chain);
-}
+पूर्ण
 
-static inline void vma_set_anonymous(struct vm_area_struct *vma)
-{
-	vma->vm_ops = NULL;
-}
+अटल अंतरभूत व्योम vma_set_anonymous(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	vma->vm_ops = शून्य;
+पूर्ण
 
-static inline bool vma_is_anonymous(struct vm_area_struct *vma)
-{
-	return !vma->vm_ops;
-}
+अटल अंतरभूत bool vma_is_anonymous(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस !vma->vm_ops;
+पूर्ण
 
-static inline bool vma_is_temporary_stack(struct vm_area_struct *vma)
-{
-	int maybe_stack = vma->vm_flags & (VM_GROWSDOWN | VM_GROWSUP);
+अटल अंतरभूत bool vma_is_temporary_stack(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	पूर्णांक maybe_stack = vma->vm_flags & (VM_GROWSDOWN | VM_GROWSUP);
 
-	if (!maybe_stack)
-		return false;
+	अगर (!maybe_stack)
+		वापस false;
 
-	if ((vma->vm_flags & VM_STACK_INCOMPLETE_SETUP) ==
+	अगर ((vma->vm_flags & VM_STACK_INCOMPLETE_SETUP) ==
 						VM_STACK_INCOMPLETE_SETUP)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool vma_is_foreign(struct vm_area_struct *vma)
-{
-	if (!current->mm)
-		return true;
+अटल अंतरभूत bool vma_is_क्रमeign(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अगर (!current->mm)
+		वापस true;
 
-	if (current->mm != vma->vm_mm)
-		return true;
+	अगर (current->mm != vma->vm_mm)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool vma_is_accessible(struct vm_area_struct *vma)
-{
-	return vma->vm_flags & VM_ACCESS_FLAGS;
-}
+अटल अंतरभूत bool vma_is_accessible(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस vma->vm_flags & VM_ACCESS_FLAGS;
+पूर्ण
 
-#ifdef CONFIG_SHMEM
+#अगर_घोषित CONFIG_SHMEM
 /*
- * The vma_is_shmem is not inline because it is used only by slow
+ * The vma_is_shmem is not अंतरभूत because it is used only by slow
  * paths in userfault.
  */
-bool vma_is_shmem(struct vm_area_struct *vma);
-#else
-static inline bool vma_is_shmem(struct vm_area_struct *vma) { return false; }
-#endif
+bool vma_is_shmem(काष्ठा vm_area_काष्ठा *vma);
+#अन्यथा
+अटल अंतरभूत bool vma_is_shmem(काष्ठा vm_area_काष्ठा *vma) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-int vma_is_stack_for_current(struct vm_area_struct *vma);
+पूर्णांक vma_is_stack_क्रम_current(काष्ठा vm_area_काष्ठा *vma);
 
 /* flush_tlb_range() takes a vma, not a mm, and can care about flags */
-#define TLB_FLUSH_VMA(mm,flags) { .vm_mm = (mm), .vm_flags = (flags) }
+#घोषणा TLB_FLUSH_VMA(mm,flags) अणु .vm_mm = (mm), .vm_flags = (flags) पूर्ण
 
-struct mmu_gather;
-struct inode;
+काष्ठा mmu_gather;
+काष्ठा inode;
 
-#include <linux/huge_mm.h>
+#समावेश <linux/huge_mm.h>
 
 /*
- * Methods to modify the page usage count.
+ * Methods to modअगरy the page usage count.
  *
- * What counts for a page usage:
+ * What counts क्रम a page usage:
  * - cache mapping   (page->mapping)
- * - private data    (page->private)
+ * - निजी data    (page->निजी)
  * - page mapped in a task's page tables, each mapping
  *   is counted separately
  *
- * Also, many kernel routines increase the page count before a critical
- * routine so they can be sure the page doesn't go away from under them.
+ * Also, many kernel routines increase the page count beक्रमe a critical
+ * routine so they can be sure the page करोesn't go away from under them.
  */
 
 /*
- * Drop a ref, return true if the refcount fell to zero (the page has no users)
+ * Drop a ref, वापस true अगर the refcount fell to zero (the page has no users)
  */
-static inline int put_page_testzero(struct page *page)
-{
+अटल अंतरभूत पूर्णांक put_page_testzero(काष्ठा page *page)
+अणु
 	VM_BUG_ON_PAGE(page_ref_count(page) == 0, page);
-	return page_ref_dec_and_test(page);
-}
+	वापस page_ref_dec_and_test(page);
+पूर्ण
 
 /*
- * Try to grab a ref unless the page has a refcount of zero, return false if
- * that is the case.
+ * Try to grab a ref unless the page has a refcount of zero, वापस false अगर
+ * that is the हाल.
  * This can be called when MMU is off so it must not access
- * any of the virtual mappings.
+ * any of the भव mappings.
  */
-static inline int get_page_unless_zero(struct page *page)
-{
-	return page_ref_add_unless(page, 1, 0);
-}
+अटल अंतरभूत पूर्णांक get_page_unless_zero(काष्ठा page *page)
+अणु
+	वापस page_ref_add_unless(page, 1, 0);
+पूर्ण
 
-extern int page_is_ram(unsigned long pfn);
+बाह्य पूर्णांक page_is_ram(अचिन्हित दीर्घ pfn);
 
-enum {
+क्रमागत अणु
 	REGION_INTERSECTS,
 	REGION_DISJOINT,
 	REGION_MIXED,
-};
+पूर्ण;
 
-int region_intersects(resource_size_t offset, size_t size, unsigned long flags,
-		      unsigned long desc);
+पूर्णांक region_पूर्णांकersects(resource_माप_प्रकार offset, माप_प्रकार size, अचिन्हित दीर्घ flags,
+		      अचिन्हित दीर्घ desc);
 
-/* Support for virtually mapped pages */
-struct page *vmalloc_to_page(const void *addr);
-unsigned long vmalloc_to_pfn(const void *addr);
+/* Support क्रम भवly mapped pages */
+काष्ठा page *vदो_स्मृति_to_page(स्थिर व्योम *addr);
+अचिन्हित दीर्घ vदो_स्मृति_to_pfn(स्थिर व्योम *addr);
 
 /*
- * Determine if an address is within the vmalloc range
+ * Determine अगर an address is within the vदो_स्मृति range
  *
- * On nommu, vmalloc/vfree wrap through kmalloc/kfree directly, so there
+ * On nommu, vदो_स्मृति/vमुक्त wrap through kदो_स्मृति/kमुक्त directly, so there
  * is no special casing required.
  */
 
-#ifndef is_ioremap_addr
-#define is_ioremap_addr(x) is_vmalloc_addr(x)
-#endif
+#अगर_अघोषित is_ioremap_addr
+#घोषणा is_ioremap_addr(x) is_vदो_स्मृति_addr(x)
+#पूर्ण_अगर
 
-#ifdef CONFIG_MMU
-extern bool is_vmalloc_addr(const void *x);
-extern int is_vmalloc_or_module_addr(const void *x);
-#else
-static inline bool is_vmalloc_addr(const void *x)
-{
-	return false;
-}
-static inline int is_vmalloc_or_module_addr(const void *x)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित CONFIG_MMU
+बाह्य bool is_vदो_स्मृति_addr(स्थिर व्योम *x);
+बाह्य पूर्णांक is_vदो_स्मृति_or_module_addr(स्थिर व्योम *x);
+#अन्यथा
+अटल अंतरभूत bool is_vदो_स्मृति_addr(स्थिर व्योम *x)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत पूर्णांक is_vदो_स्मृति_or_module_addr(स्थिर व्योम *x)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-extern void *kvmalloc_node(size_t size, gfp_t flags, int node);
-static inline void *kvmalloc(size_t size, gfp_t flags)
-{
-	return kvmalloc_node(size, flags, NUMA_NO_NODE);
-}
-static inline void *kvzalloc_node(size_t size, gfp_t flags, int node)
-{
-	return kvmalloc_node(size, flags | __GFP_ZERO, node);
-}
-static inline void *kvzalloc(size_t size, gfp_t flags)
-{
-	return kvmalloc(size, flags | __GFP_ZERO);
-}
+बाह्य व्योम *kvदो_स्मृति_node(माप_प्रकार size, gfp_t flags, पूर्णांक node);
+अटल अंतरभूत व्योम *kvदो_स्मृति(माप_प्रकार size, gfp_t flags)
+अणु
+	वापस kvदो_स्मृति_node(size, flags, NUMA_NO_NODE);
+पूर्ण
+अटल अंतरभूत व्योम *kvzalloc_node(माप_प्रकार size, gfp_t flags, पूर्णांक node)
+अणु
+	वापस kvदो_स्मृति_node(size, flags | __GFP_ZERO, node);
+पूर्ण
+अटल अंतरभूत व्योम *kvzalloc(माप_प्रकार size, gfp_t flags)
+अणु
+	वापस kvदो_स्मृति(size, flags | __GFP_ZERO);
+पूर्ण
 
-static inline void *kvmalloc_array(size_t n, size_t size, gfp_t flags)
-{
-	size_t bytes;
+अटल अंतरभूत व्योम *kvदो_स्मृति_array(माप_प्रकार n, माप_प्रकार size, gfp_t flags)
+अणु
+	माप_प्रकार bytes;
 
-	if (unlikely(check_mul_overflow(n, size, &bytes)))
-		return NULL;
+	अगर (unlikely(check_mul_overflow(n, size, &bytes)))
+		वापस शून्य;
 
-	return kvmalloc(bytes, flags);
-}
+	वापस kvदो_स्मृति(bytes, flags);
+पूर्ण
 
-static inline void *kvcalloc(size_t n, size_t size, gfp_t flags)
-{
-	return kvmalloc_array(n, size, flags | __GFP_ZERO);
-}
+अटल अंतरभूत व्योम *kvसुस्मृति(माप_प्रकार n, माप_प्रकार size, gfp_t flags)
+अणु
+	वापस kvदो_स्मृति_array(n, size, flags | __GFP_ZERO);
+पूर्ण
 
-extern void kvfree(const void *addr);
-extern void kvfree_sensitive(const void *addr, size_t len);
+बाह्य व्योम kvमुक्त(स्थिर व्योम *addr);
+बाह्य व्योम kvमुक्त_sensitive(स्थिर व्योम *addr, माप_प्रकार len);
 
-static inline int head_compound_mapcount(struct page *head)
-{
-	return atomic_read(compound_mapcount_ptr(head)) + 1;
-}
+अटल अंतरभूत पूर्णांक head_compound_mapcount(काष्ठा page *head)
+अणु
+	वापस atomic_पढ़ो(compound_mapcount_ptr(head)) + 1;
+पूर्ण
 
 /*
- * Mapcount of compound page as a whole, does not include mapped sub-pages.
+ * Mapcount of compound page as a whole, करोes not include mapped sub-pages.
  *
- * Must be called only for compound pages or any their tail sub-pages.
+ * Must be called only क्रम compound pages or any their tail sub-pages.
  */
-static inline int compound_mapcount(struct page *page)
-{
+अटल अंतरभूत पूर्णांक compound_mapcount(काष्ठा page *page)
+अणु
 	VM_BUG_ON_PAGE(!PageCompound(page), page);
 	page = compound_head(page);
-	return head_compound_mapcount(page);
-}
+	वापस head_compound_mapcount(page);
+पूर्ण
 
 /*
  * The atomic page->_mapcount, starts from -1: so that transitions
  * both from it and to it can be tracked, using atomic_inc_and_test
  * and atomic_add_negative(-1).
  */
-static inline void page_mapcount_reset(struct page *page)
-{
+अटल अंतरभूत व्योम page_mapcount_reset(काष्ठा page *page)
+अणु
 	atomic_set(&(page)->_mapcount, -1);
-}
+पूर्ण
 
-int __page_mapcount(struct page *page);
+पूर्णांक __page_mapcount(काष्ठा page *page);
 
 /*
  * Mapcount of 0-order page; when compound sub-page, includes
  * compound_mapcount().
  *
- * Result is undefined for pages which cannot be mapped into userspace.
+ * Result is undefined क्रम pages which cannot be mapped पूर्णांकo userspace.
  * For example SLAB or special types of pages. See function page_has_type().
- * They use this place in struct page differently.
+ * They use this place in काष्ठा page dअगरferently.
  */
-static inline int page_mapcount(struct page *page)
-{
-	if (unlikely(PageCompound(page)))
-		return __page_mapcount(page);
-	return atomic_read(&page->_mapcount) + 1;
-}
+अटल अंतरभूत पूर्णांक page_mapcount(काष्ठा page *page)
+अणु
+	अगर (unlikely(PageCompound(page)))
+		वापस __page_mapcount(page);
+	वापस atomic_पढ़ो(&page->_mapcount) + 1;
+पूर्ण
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-int total_mapcount(struct page *page);
-int page_trans_huge_mapcount(struct page *page, int *total_mapcount);
-#else
-static inline int total_mapcount(struct page *page)
-{
-	return page_mapcount(page);
-}
-static inline int page_trans_huge_mapcount(struct page *page,
-					   int *total_mapcount)
-{
-	int mapcount = page_mapcount(page);
-	if (total_mapcount)
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+पूर्णांक total_mapcount(काष्ठा page *page);
+पूर्णांक page_trans_huge_mapcount(काष्ठा page *page, पूर्णांक *total_mapcount);
+#अन्यथा
+अटल अंतरभूत पूर्णांक total_mapcount(काष्ठा page *page)
+अणु
+	वापस page_mapcount(page);
+पूर्ण
+अटल अंतरभूत पूर्णांक page_trans_huge_mapcount(काष्ठा page *page,
+					   पूर्णांक *total_mapcount)
+अणु
+	पूर्णांक mapcount = page_mapcount(page);
+	अगर (total_mapcount)
 		*total_mapcount = mapcount;
-	return mapcount;
-}
-#endif
+	वापस mapcount;
+पूर्ण
+#पूर्ण_अगर
 
-static inline struct page *virt_to_head_page(const void *x)
-{
-	struct page *page = virt_to_page(x);
+अटल अंतरभूत काष्ठा page *virt_to_head_page(स्थिर व्योम *x)
+अणु
+	काष्ठा page *page = virt_to_page(x);
 
-	return compound_head(page);
-}
+	वापस compound_head(page);
+पूर्ण
 
-void __put_page(struct page *page);
+व्योम __put_page(काष्ठा page *page);
 
-void put_pages_list(struct list_head *pages);
+व्योम put_pages_list(काष्ठा list_head *pages);
 
-void split_page(struct page *page, unsigned int order);
+व्योम split_page(काष्ठा page *page, अचिन्हित पूर्णांक order);
 
 /*
- * Compound pages have a destructor function.  Provide a
- * prototype for that function and accessor functions.
+ * Compound pages have a deकाष्ठाor function.  Provide a
+ * prototype क्रम that function and accessor functions.
  * These are _only_ valid on the head of a compound page.
  */
-typedef void compound_page_dtor(struct page *);
+प्रकार व्योम compound_page_dtor(काष्ठा page *);
 
-/* Keep the enum in sync with compound_page_dtors array in mm/page_alloc.c */
-enum compound_dtor_id {
-	NULL_COMPOUND_DTOR,
+/* Keep the क्रमागत in sync with compound_page_dtors array in mm/page_alloc.c */
+क्रमागत compound_dtor_id अणु
+	शून्य_COMPOUND_DTOR,
 	COMPOUND_PAGE_DTOR,
-#ifdef CONFIG_HUGETLB_PAGE
+#अगर_घोषित CONFIG_HUGETLB_PAGE
 	HUGETLB_PAGE_DTOR,
-#endif
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 	TRANSHUGE_PAGE_DTOR,
-#endif
+#पूर्ण_अगर
 	NR_COMPOUND_DTORS,
-};
-extern compound_page_dtor * const compound_page_dtors[NR_COMPOUND_DTORS];
+पूर्ण;
+बाह्य compound_page_dtor * स्थिर compound_page_dtors[NR_COMPOUND_DTORS];
 
-static inline void set_compound_page_dtor(struct page *page,
-		enum compound_dtor_id compound_dtor)
-{
+अटल अंतरभूत व्योम set_compound_page_dtor(काष्ठा page *page,
+		क्रमागत compound_dtor_id compound_dtor)
+अणु
 	VM_BUG_ON_PAGE(compound_dtor >= NR_COMPOUND_DTORS, page);
 	page[1].compound_dtor = compound_dtor;
-}
+पूर्ण
 
-static inline void destroy_compound_page(struct page *page)
-{
+अटल अंतरभूत व्योम destroy_compound_page(काष्ठा page *page)
+अणु
 	VM_BUG_ON_PAGE(page[1].compound_dtor >= NR_COMPOUND_DTORS, page);
 	compound_page_dtors[page[1].compound_dtor](page);
-}
+पूर्ण
 
-static inline unsigned int compound_order(struct page *page)
-{
-	if (!PageHead(page))
-		return 0;
-	return page[1].compound_order;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक compound_order(काष्ठा page *page)
+अणु
+	अगर (!PageHead(page))
+		वापस 0;
+	वापस page[1].compound_order;
+पूर्ण
 
-static inline bool hpage_pincount_available(struct page *page)
-{
+अटल अंतरभूत bool hpage_pincount_available(काष्ठा page *page)
+अणु
 	/*
 	 * Can the page->hpage_pinned_refcount field be used? That field is in
 	 * the 3rd page of the compound page, so the smallest (2-page) compound
 	 * pages cannot support it.
 	 */
 	page = compound_head(page);
-	return PageCompound(page) && compound_order(page) > 1;
-}
+	वापस PageCompound(page) && compound_order(page) > 1;
+पूर्ण
 
-static inline int head_compound_pincount(struct page *head)
-{
-	return atomic_read(compound_pincount_ptr(head));
-}
+अटल अंतरभूत पूर्णांक head_compound_pincount(काष्ठा page *head)
+अणु
+	वापस atomic_पढ़ो(compound_pincount_ptr(head));
+पूर्ण
 
-static inline int compound_pincount(struct page *page)
-{
+अटल अंतरभूत पूर्णांक compound_pincount(काष्ठा page *page)
+अणु
 	VM_BUG_ON_PAGE(!hpage_pincount_available(page), page);
 	page = compound_head(page);
-	return head_compound_pincount(page);
-}
+	वापस head_compound_pincount(page);
+पूर्ण
 
-static inline void set_compound_order(struct page *page, unsigned int order)
-{
+अटल अंतरभूत व्योम set_compound_order(काष्ठा page *page, अचिन्हित पूर्णांक order)
+अणु
 	page[1].compound_order = order;
 	page[1].compound_nr = 1U << order;
-}
+पूर्ण
 
 /* Returns the number of pages in this potentially compound page. */
-static inline unsigned long compound_nr(struct page *page)
-{
-	if (!PageHead(page))
-		return 1;
-	return page[1].compound_nr;
-}
+अटल अंतरभूत अचिन्हित दीर्घ compound_nr(काष्ठा page *page)
+अणु
+	अगर (!PageHead(page))
+		वापस 1;
+	वापस page[1].compound_nr;
+पूर्ण
 
 /* Returns the number of bytes in this potentially compound page. */
-static inline unsigned long page_size(struct page *page)
-{
-	return PAGE_SIZE << compound_order(page);
-}
+अटल अंतरभूत अचिन्हित दीर्घ page_size(काष्ठा page *page)
+अणु
+	वापस PAGE_SIZE << compound_order(page);
+पूर्ण
 
-/* Returns the number of bits needed for the number of bytes in a page */
-static inline unsigned int page_shift(struct page *page)
-{
-	return PAGE_SHIFT + compound_order(page);
-}
+/* Returns the number of bits needed क्रम the number of bytes in a page */
+अटल अंतरभूत अचिन्हित पूर्णांक page_shअगरt(काष्ठा page *page)
+अणु
+	वापस PAGE_SHIFT + compound_order(page);
+पूर्ण
 
-void free_compound_page(struct page *page);
+व्योम मुक्त_compound_page(काष्ठा page *page);
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 /*
- * Do pte_mkwrite, but only if the vma says VM_WRITE.  We do this when
- * servicing faults for write access.  In the normal case, do always want
- * pte_mkwrite.  But get_user_pages can cause write faults for mappings
- * that do not have writing enabled, when used by access_process_vm.
+ * Do pte_mkग_लिखो, but only अगर the vma says VM_WRITE.  We करो this when
+ * servicing faults क्रम ग_लिखो access.  In the normal हाल, करो always want
+ * pte_mkग_लिखो.  But get_user_pages can cause ग_लिखो faults क्रम mappings
+ * that करो not have writing enabled, when used by access_process_vm.
  */
-static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
-{
-	if (likely(vma->vm_flags & VM_WRITE))
-		pte = pte_mkwrite(pte);
-	return pte;
-}
+अटल अंतरभूत pte_t maybe_mkग_लिखो(pte_t pte, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अगर (likely(vma->vm_flags & VM_WRITE))
+		pte = pte_mkग_लिखो(pte);
+	वापस pte;
+पूर्ण
 
-vm_fault_t do_set_pmd(struct vm_fault *vmf, struct page *page);
-void do_set_pte(struct vm_fault *vmf, struct page *page, unsigned long addr);
+vm_fault_t करो_set_pmd(काष्ठा vm_fault *vmf, काष्ठा page *page);
+व्योम करो_set_pte(काष्ठा vm_fault *vmf, काष्ठा page *page, अचिन्हित दीर्घ addr);
 
-vm_fault_t finish_fault(struct vm_fault *vmf);
-vm_fault_t finish_mkwrite_fault(struct vm_fault *vmf);
-#endif
+vm_fault_t finish_fault(काष्ठा vm_fault *vmf);
+vm_fault_t finish_mkग_लिखो_fault(काष्ठा vm_fault *vmf);
+#पूर्ण_अगर
 
 /*
- * Multiple processes may "see" the same page. E.g. for untouched
+ * Multiple processes may "see" the same page. E.g. क्रम untouched
  * mappings of /dev/null, all processes see the same page full of
  * zeroes, and text pages of executables and shared libraries have
  * only one copy in memory, at most, normally.
  *
  * For the non-reserved pages, page_count(page) denotes a reference count.
- *   page_count() == 0 means the page is free. page->lru is then used for
- *   freelist management in the buddy allocator.
+ *   page_count() == 0 means the page is मुक्त. page->lru is then used क्रम
+ *   मुक्तlist management in the buddy allocator.
  *   page_count() > 0  means the page has been allocated.
  *
  * Pages are allocated by the slab allocator in order to provide memory
- * to kmalloc and kmem_cache_alloc. In this case, the management of the
+ * to kदो_स्मृति and kmem_cache_alloc. In this हाल, the management of the
  * page, and the fields in 'struct page' are the responsibility of mm/slab.c
  * unless a particular usage is carefully commented. (the responsibility of
- * freeing the kmalloc memory is the caller's, of course).
+ * मुक्तing the kदो_स्मृति memory is the caller's, of course).
  *
- * A page may be used by anyone else who does a __get_free_page().
- * In this case, page_count still tracks the references, and should only
+ * A page may be used by anyone अन्यथा who करोes a __get_मुक्त_page().
+ * In this हाल, page_count still tracks the references, and should only
  * be used through the normal accessor functions. The top bits of page->flags
- * and page->virtual store page management information, but all other fields
- * are unused and could be used privately, carefully. The management of this
+ * and page->भव store page management inक्रमmation, but all other fields
+ * are unused and could be used निजीly, carefully. The management of this
  * page is the responsibility of the one who allocated it, and those who have
  * subsequently been given references to it.
  *
@@ -1047,207 +1048,207 @@ vm_fault_t finish_mkwrite_fault(struct vm_fault *vmf);
  * managed by the Linux memory manager: I/O, buffers, swapping etc.
  * The following discussion applies only to them.
  *
- * A pagecache page contains an opaque `private' member, which belongs to the
+ * A pagecache page contains an opaque `निजी' member, which beदीर्घs to the
  * page's address_space. Usually, this is the address of a circular list of
- * the page's disk buffers. PG_private must be set to tell the VM to call
- * into the filesystem to release these pages.
+ * the page's disk buffers. PG_निजी must be set to tell the VM to call
+ * पूर्णांकo the fileप्रणाली to release these pages.
  *
- * A page may belong to an inode's memory mapping. In this case, page->mapping
- * is the pointer to the inode, and page->index is the file offset of the page,
+ * A page may beदीर्घ to an inode's memory mapping. In this हाल, page->mapping
+ * is the poपूर्णांकer to the inode, and page->index is the file offset of the page,
  * in units of PAGE_SIZE.
  *
  * If pagecache pages are not associated with an inode, they are said to be
  * anonymous pages. These may become associated with the swapcache, and in that
- * case PG_swapcache is set, and page->private is an offset into the swapcache.
+ * हाल PG_swapcache is set, and page->निजी is an offset पूर्णांकo the swapcache.
  *
- * In either case (swapcache or inode backed), the pagecache itself holds one
- * reference to the page. Setting PG_private should also increment the
+ * In either हाल (swapcache or inode backed), the pagecache itself holds one
+ * reference to the page. Setting PG_निजी should also increment the
  * refcount. The each user mapping also has a reference to the page.
  *
  * The pagecache pages are stored in a per-mapping radix tree, which is
  * rooted at mapping->i_pages, and indexed by offset.
  * Where 2.4 and early 2.6 kernels kept dirty/clean pages in per-address_space
- * lists, we instead now tag pages as dirty/writeback in the radix tree.
+ * lists, we instead now tag pages as dirty/ग_लिखोback in the radix tree.
  *
  * All pagecache pages may be subject to I/O:
- * - inode pages may need to be read from disk,
- * - inode pages which have been modified and are MAP_SHARED may need
+ * - inode pages may need to be पढ़ो from disk,
+ * - inode pages which have been modअगरied and are MAP_SHARED may need
  *   to be written back to the inode on disk,
  * - anonymous pages (including MAP_PRIVATE file mappings) which have been
- *   modified may need to be swapped out to swap space and (later) to be read
- *   back into memory.
+ *   modअगरied may need to be swapped out to swap space and (later) to be पढ़ो
+ *   back पूर्णांकo memory.
  */
 
 /*
- * The zone field is never updated after free_area_init_core()
+ * The zone field is never updated after मुक्त_area_init_core()
  * sets it, so none of the operations on it need to be atomic.
  */
 
 /* Page flags: | [SECTION] | [NODE] | ZONE | [LAST_CPUPID] | ... | FLAGS | */
-#define SECTIONS_PGOFF		((sizeof(unsigned long)*8) - SECTIONS_WIDTH)
-#define NODES_PGOFF		(SECTIONS_PGOFF - NODES_WIDTH)
-#define ZONES_PGOFF		(NODES_PGOFF - ZONES_WIDTH)
-#define LAST_CPUPID_PGOFF	(ZONES_PGOFF - LAST_CPUPID_WIDTH)
-#define KASAN_TAG_PGOFF		(LAST_CPUPID_PGOFF - KASAN_TAG_WIDTH)
+#घोषणा SECTIONS_PGOFF		((माप(अचिन्हित दीर्घ)*8) - SECTIONS_WIDTH)
+#घोषणा NODES_PGOFF		(SECTIONS_PGOFF - NODES_WIDTH)
+#घोषणा ZONES_PGOFF		(NODES_PGOFF - ZONES_WIDTH)
+#घोषणा LAST_CPUPID_PGOFF	(ZONES_PGOFF - LAST_CPUPID_WIDTH)
+#घोषणा KASAN_TAG_PGOFF		(LAST_CPUPID_PGOFF - KASAN_TAG_WIDTH)
 
 /*
- * Define the bit shifts to access each section.  For non-existent
- * sections we define the shift as 0; that plus a 0 mask ensures
+ * Define the bit shअगरts to access each section.  For non-existent
+ * sections we define the shअगरt as 0; that plus a 0 mask ensures
  * the compiler will optimise away reference to them.
  */
-#define SECTIONS_PGSHIFT	(SECTIONS_PGOFF * (SECTIONS_WIDTH != 0))
-#define NODES_PGSHIFT		(NODES_PGOFF * (NODES_WIDTH != 0))
-#define ZONES_PGSHIFT		(ZONES_PGOFF * (ZONES_WIDTH != 0))
-#define LAST_CPUPID_PGSHIFT	(LAST_CPUPID_PGOFF * (LAST_CPUPID_WIDTH != 0))
-#define KASAN_TAG_PGSHIFT	(KASAN_TAG_PGOFF * (KASAN_TAG_WIDTH != 0))
+#घोषणा SECTIONS_PGSHIFT	(SECTIONS_PGOFF * (SECTIONS_WIDTH != 0))
+#घोषणा NODES_PGSHIFT		(NODES_PGOFF * (NODES_WIDTH != 0))
+#घोषणा ZONES_PGSHIFT		(ZONES_PGOFF * (ZONES_WIDTH != 0))
+#घोषणा LAST_CPUPID_PGSHIFT	(LAST_CPUPID_PGOFF * (LAST_CPUPID_WIDTH != 0))
+#घोषणा KASAN_TAG_PGSHIFT	(KASAN_TAG_PGOFF * (KASAN_TAG_WIDTH != 0))
 
-/* NODE:ZONE or SECTION:ZONE is used to ID a zone for the buddy allocator */
-#ifdef NODE_NOT_IN_PAGE_FLAGS
-#define ZONEID_SHIFT		(SECTIONS_SHIFT + ZONES_SHIFT)
-#define ZONEID_PGOFF		((SECTIONS_PGOFF < ZONES_PGOFF)? \
+/* NODE:ZONE or SECTION:ZONE is used to ID a zone क्रम the buddy allocator */
+#अगर_घोषित NODE_NOT_IN_PAGE_FLAGS
+#घोषणा ZONEID_SHIFT		(SECTIONS_SHIFT + ZONES_SHIFT)
+#घोषणा ZONEID_PGOFF		((SECTIONS_PGOFF < ZONES_PGOFF)? \
 						SECTIONS_PGOFF : ZONES_PGOFF)
-#else
-#define ZONEID_SHIFT		(NODES_SHIFT + ZONES_SHIFT)
-#define ZONEID_PGOFF		((NODES_PGOFF < ZONES_PGOFF)? \
+#अन्यथा
+#घोषणा ZONEID_SHIFT		(NODES_SHIFT + ZONES_SHIFT)
+#घोषणा ZONEID_PGOFF		((NODES_PGOFF < ZONES_PGOFF)? \
 						NODES_PGOFF : ZONES_PGOFF)
-#endif
+#पूर्ण_अगर
 
-#define ZONEID_PGSHIFT		(ZONEID_PGOFF * (ZONEID_SHIFT != 0))
+#घोषणा ZONEID_PGSHIFT		(ZONEID_PGOFF * (ZONEID_SHIFT != 0))
 
-#define ZONES_MASK		((1UL << ZONES_WIDTH) - 1)
-#define NODES_MASK		((1UL << NODES_WIDTH) - 1)
-#define SECTIONS_MASK		((1UL << SECTIONS_WIDTH) - 1)
-#define LAST_CPUPID_MASK	((1UL << LAST_CPUPID_SHIFT) - 1)
-#define KASAN_TAG_MASK		((1UL << KASAN_TAG_WIDTH) - 1)
-#define ZONEID_MASK		((1UL << ZONEID_SHIFT) - 1)
+#घोषणा ZONES_MASK		((1UL << ZONES_WIDTH) - 1)
+#घोषणा NODES_MASK		((1UL << NODES_WIDTH) - 1)
+#घोषणा SECTIONS_MASK		((1UL << SECTIONS_WIDTH) - 1)
+#घोषणा LAST_CPUPID_MASK	((1UL << LAST_CPUPID_SHIFT) - 1)
+#घोषणा KASAN_TAG_MASK		((1UL << KASAN_TAG_WIDTH) - 1)
+#घोषणा ZONEID_MASK		((1UL << ZONEID_SHIFT) - 1)
 
-static inline enum zone_type page_zonenum(const struct page *page)
-{
+अटल अंतरभूत क्रमागत zone_type page_zonक्रमागत(स्थिर काष्ठा page *page)
+अणु
 	ASSERT_EXCLUSIVE_BITS(page->flags, ZONES_MASK << ZONES_PGSHIFT);
-	return (page->flags >> ZONES_PGSHIFT) & ZONES_MASK;
-}
+	वापस (page->flags >> ZONES_PGSHIFT) & ZONES_MASK;
+पूर्ण
 
-#ifdef CONFIG_ZONE_DEVICE
-static inline bool is_zone_device_page(const struct page *page)
-{
-	return page_zonenum(page) == ZONE_DEVICE;
-}
-extern void memmap_init_zone_device(struct zone *, unsigned long,
-				    unsigned long, struct dev_pagemap *);
-#else
-static inline bool is_zone_device_page(const struct page *page)
-{
-	return false;
-}
-#endif
+#अगर_घोषित CONFIG_ZONE_DEVICE
+अटल अंतरभूत bool is_zone_device_page(स्थिर काष्ठा page *page)
+अणु
+	वापस page_zonक्रमागत(page) == ZONE_DEVICE;
+पूर्ण
+बाह्य व्योम memmap_init_zone_device(काष्ठा zone *, अचिन्हित दीर्घ,
+				    अचिन्हित दीर्घ, काष्ठा dev_pagemap *);
+#अन्यथा
+अटल अंतरभूत bool is_zone_device_page(स्थिर काष्ठा page *page)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static inline bool is_zone_movable_page(const struct page *page)
-{
-	return page_zonenum(page) == ZONE_MOVABLE;
-}
+अटल अंतरभूत bool is_zone_movable_page(स्थिर काष्ठा page *page)
+अणु
+	वापस page_zonक्रमागत(page) == ZONE_MOVABLE;
+पूर्ण
 
-#ifdef CONFIG_DEV_PAGEMAP_OPS
-void free_devmap_managed_page(struct page *page);
+#अगर_घोषित CONFIG_DEV_PAGEMAP_OPS
+व्योम मुक्त_devmap_managed_page(काष्ठा page *page);
 DECLARE_STATIC_KEY_FALSE(devmap_managed_key);
 
-static inline bool page_is_devmap_managed(struct page *page)
-{
-	if (!static_branch_unlikely(&devmap_managed_key))
-		return false;
-	if (!is_zone_device_page(page))
-		return false;
-	switch (page->pgmap->type) {
-	case MEMORY_DEVICE_PRIVATE:
-	case MEMORY_DEVICE_FS_DAX:
-		return true;
-	default:
-		break;
-	}
-	return false;
-}
+अटल अंतरभूत bool page_is_devmap_managed(काष्ठा page *page)
+अणु
+	अगर (!अटल_branch_unlikely(&devmap_managed_key))
+		वापस false;
+	अगर (!is_zone_device_page(page))
+		वापस false;
+	चयन (page->pgmap->type) अणु
+	हाल MEMORY_DEVICE_PRIVATE:
+	हाल MEMORY_DEVICE_FS_DAX:
+		वापस true;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-void put_devmap_managed_page(struct page *page);
+व्योम put_devmap_managed_page(काष्ठा page *page);
 
-#else /* CONFIG_DEV_PAGEMAP_OPS */
-static inline bool page_is_devmap_managed(struct page *page)
-{
-	return false;
-}
+#अन्यथा /* CONFIG_DEV_PAGEMAP_OPS */
+अटल अंतरभूत bool page_is_devmap_managed(काष्ठा page *page)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void put_devmap_managed_page(struct page *page)
-{
-}
-#endif /* CONFIG_DEV_PAGEMAP_OPS */
+अटल अंतरभूत व्योम put_devmap_managed_page(काष्ठा page *page)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DEV_PAGEMAP_OPS */
 
-static inline bool is_device_private_page(const struct page *page)
-{
-	return IS_ENABLED(CONFIG_DEV_PAGEMAP_OPS) &&
+अटल अंतरभूत bool is_device_निजी_page(स्थिर काष्ठा page *page)
+अणु
+	वापस IS_ENABLED(CONFIG_DEV_PAGEMAP_OPS) &&
 		IS_ENABLED(CONFIG_DEVICE_PRIVATE) &&
 		is_zone_device_page(page) &&
 		page->pgmap->type == MEMORY_DEVICE_PRIVATE;
-}
+पूर्ण
 
-static inline bool is_pci_p2pdma_page(const struct page *page)
-{
-	return IS_ENABLED(CONFIG_DEV_PAGEMAP_OPS) &&
+अटल अंतरभूत bool is_pci_p2pdma_page(स्थिर काष्ठा page *page)
+अणु
+	वापस IS_ENABLED(CONFIG_DEV_PAGEMAP_OPS) &&
 		IS_ENABLED(CONFIG_PCI_P2PDMA) &&
 		is_zone_device_page(page) &&
 		page->pgmap->type == MEMORY_DEVICE_PCI_P2PDMA;
-}
+पूर्ण
 
-/* 127: arbitrary random number, small enough to assemble well */
-#define page_ref_zero_or_close_to_overflow(page) \
-	((unsigned int) page_ref_count(page) + 127u <= 127u)
+/* 127: arbitrary अक्रमom number, small enough to assemble well */
+#घोषणा page_ref_zero_or_बंद_to_overflow(page) \
+	((अचिन्हित पूर्णांक) page_ref_count(page) + 127u <= 127u)
 
-static inline void get_page(struct page *page)
-{
+अटल अंतरभूत व्योम get_page(काष्ठा page *page)
+अणु
 	page = compound_head(page);
 	/*
 	 * Getting a normal page or the head of a compound page
-	 * requires to already have an elevated page->_refcount.
+	 * requires to alपढ़ोy have an elevated page->_refcount.
 	 */
-	VM_BUG_ON_PAGE(page_ref_zero_or_close_to_overflow(page), page);
+	VM_BUG_ON_PAGE(page_ref_zero_or_बंद_to_overflow(page), page);
 	page_ref_inc(page);
-}
+पूर्ण
 
-bool __must_check try_grab_page(struct page *page, unsigned int flags);
-__maybe_unused struct page *try_grab_compound_head(struct page *page, int refs,
-						   unsigned int flags);
+bool __must_check try_grab_page(काष्ठा page *page, अचिन्हित पूर्णांक flags);
+__maybe_unused काष्ठा page *try_grab_compound_head(काष्ठा page *page, पूर्णांक refs,
+						   अचिन्हित पूर्णांक flags);
 
 
-static inline __must_check bool try_get_page(struct page *page)
-{
+अटल अंतरभूत __must_check bool try_get_page(काष्ठा page *page)
+अणु
 	page = compound_head(page);
-	if (WARN_ON_ONCE(page_ref_count(page) <= 0))
-		return false;
+	अगर (WARN_ON_ONCE(page_ref_count(page) <= 0))
+		वापस false;
 	page_ref_inc(page);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline void put_page(struct page *page)
-{
+अटल अंतरभूत व्योम put_page(काष्ठा page *page)
+अणु
 	page = compound_head(page);
 
 	/*
 	 * For devmap managed pages we need to catch refcount transition from
-	 * 2 to 1, when refcount reach one it means the page is free and we
-	 * need to inform the device driver through callback. See
-	 * include/linux/memremap.h and HMM for details.
+	 * 2 to 1, when refcount reach one it means the page is मुक्त and we
+	 * need to inक्रमm the device driver through callback. See
+	 * include/linux/memremap.h and HMM क्रम details.
 	 */
-	if (page_is_devmap_managed(page)) {
+	अगर (page_is_devmap_managed(page)) अणु
 		put_devmap_managed_page(page);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (put_page_testzero(page))
+	अगर (put_page_testzero(page))
 		__put_page(page);
-}
+पूर्ण
 
 /*
  * GUP_PIN_COUNTING_BIAS, and the associated functions that use it, overload
  * the page's refcount so that two separate items are tracked: the original page
  * reference count, and also a new count of how many pin_user_pages() calls were
- * made against the page. ("gup-pinned" is another term for the latter).
+ * made against the page. ("gup-pinned" is another term क्रम the latter).
  *
  * With this scheme, pin_user_pages() becomes special: such pages are marked as
  * distinct from normal pages. As such, the unpin_user_page() call (and its
@@ -1255,1624 +1256,1624 @@ static inline void put_page(struct page *page)
  *
  * Choice of value:
  *
- * By making GUP_PIN_COUNTING_BIAS a power of two, debugging of page reference
+ * By making GUP_PIN_COUNTING_BIAS a घातer of two, debugging of page reference
  * counts with respect to pin_user_pages() and unpin_user_page() becomes
- * simpler, due to the fact that adding an even power of two to the page
- * refcount has the effect of using only the upper N bits, for the code that
- * counts up using the bias value. This means that the lower bits are left for
+ * simpler, due to the fact that adding an even घातer of two to the page
+ * refcount has the effect of using only the upper N bits, क्रम the code that
+ * counts up using the bias value. This means that the lower bits are left क्रम
  * the exclusive use of the original code that increments and decrements by one
  * (or at least, by much smaller values than the bias value).
  *
- * Of course, once the lower bits overflow into the upper bits (and this is
+ * Of course, once the lower bits overflow पूर्णांकo the upper bits (and this is
  * OK, because subtraction recovers the original values), then visual inspection
- * no longer suffices to directly view the separate counts. However, for normal
- * applications that don't have huge page reference counts, this won't be an
+ * no दीर्घer suffices to directly view the separate counts. However, क्रम normal
+ * applications that करोn't have huge page reference counts, this won't be an
  * issue.
  *
  * Locking: the lockless algorithm described in page_cache_get_speculative()
- * and page_cache_gup_pin_speculative() provides safe operation for
+ * and page_cache_gup_pin_speculative() provides safe operation क्रम
  * get_user_pages and page_mkclean and other calls that race to set up page
  * table entries.
  */
-#define GUP_PIN_COUNTING_BIAS (1U << 10)
+#घोषणा GUP_PIN_COUNTING_BIAS (1U << 10)
 
-void unpin_user_page(struct page *page);
-void unpin_user_pages_dirty_lock(struct page **pages, unsigned long npages,
+व्योम unpin_user_page(काष्ठा page *page);
+व्योम unpin_user_pages_dirty_lock(काष्ठा page **pages, अचिन्हित दीर्घ npages,
 				 bool make_dirty);
-void unpin_user_page_range_dirty_lock(struct page *page, unsigned long npages,
+व्योम unpin_user_page_range_dirty_lock(काष्ठा page *page, अचिन्हित दीर्घ npages,
 				      bool make_dirty);
-void unpin_user_pages(struct page **pages, unsigned long npages);
+व्योम unpin_user_pages(काष्ठा page **pages, अचिन्हित दीर्घ npages);
 
 /**
- * page_maybe_dma_pinned - Report if a page is pinned for DMA.
+ * page_maybe_dma_pinned - Report अगर a page is pinned क्रम DMA.
  * @page: The page.
  *
- * This function checks if a page has been pinned via a call to
+ * This function checks अगर a page has been pinned via a call to
  * a function in the pin_user_pages() family.
  *
- * For non-huge pages, the return value is partially fuzzy: false is not fuzzy,
+ * For non-huge pages, the वापस value is partially fuzzy: false is not fuzzy,
  * because it means "definitely not pinned for DMA", but true means "probably
- * pinned for DMA, but possibly a false positive due to having at least
+ * pinned क्रम DMA, but possibly a false positive due to having at least
  * GUP_PIN_COUNTING_BIAS worth of normal page references".
  *
- * False positives are OK, because: a) it's unlikely for a page to get that many
+ * False positives are OK, because: a) it's unlikely क्रम a page to get that many
  * refcounts, and b) all the callers of this routine are expected to be able to
  * deal gracefully with a false positive.
  *
  * For huge pages, the result will be exactly correct. That's because we have
- * more tracking data available: the 3rd struct page in the compound page is
+ * more tracking data available: the 3rd काष्ठा page in the compound page is
  * used to track the pincount (instead using of the GUP_PIN_COUNTING_BIAS
  * scheme).
  *
- * For more information, please see Documentation/core-api/pin_user_pages.rst.
+ * For more inक्रमmation, please see Documentation/core-api/pin_user_pages.rst.
  *
- * Return: True, if it is likely that the page has been "dma-pinned".
- * False, if the page is definitely not dma-pinned.
+ * Return: True, अगर it is likely that the page has been "dma-pinned".
+ * False, अगर the page is definitely not dma-pinned.
  */
-static inline bool page_maybe_dma_pinned(struct page *page)
-{
-	if (hpage_pincount_available(page))
-		return compound_pincount(page) > 0;
+अटल अंतरभूत bool page_maybe_dma_pinned(काष्ठा page *page)
+अणु
+	अगर (hpage_pincount_available(page))
+		वापस compound_pincount(page) > 0;
 
 	/*
-	 * page_ref_count() is signed. If that refcount overflows, then
-	 * page_ref_count() returns a negative value, and callers will avoid
+	 * page_ref_count() is चिन्हित. If that refcount overflows, then
+	 * page_ref_count() वापसs a negative value, and callers will aव्योम
 	 * further incrementing the refcount.
 	 *
-	 * Here, for that overflow case, use the signed bit to count a little
-	 * bit higher via unsigned math, and thus still get an accurate result.
+	 * Here, क्रम that overflow हाल, use the चिन्हित bit to count a little
+	 * bit higher via अचिन्हित math, and thus still get an accurate result.
 	 */
-	return ((unsigned int)page_ref_count(compound_head(page))) >=
+	वापस ((अचिन्हित पूर्णांक)page_ref_count(compound_head(page))) >=
 		GUP_PIN_COUNTING_BIAS;
-}
+पूर्ण
 
-static inline bool is_cow_mapping(vm_flags_t flags)
-{
-	return (flags & (VM_SHARED | VM_MAYWRITE)) == VM_MAYWRITE;
-}
+अटल अंतरभूत bool is_cow_mapping(vm_flags_t flags)
+अणु
+	वापस (flags & (VM_SHARED | VM_MAYWRITE)) == VM_MAYWRITE;
+पूर्ण
 
 /*
- * This should most likely only be called during fork() to see whether we
- * should break the cow immediately for a page on the src mm.
+ * This should most likely only be called during विभाजन() to see whether we
+ * should अवरोध the cow immediately क्रम a page on the src mm.
  */
-static inline bool page_needs_cow_for_dma(struct vm_area_struct *vma,
-					  struct page *page)
-{
-	if (!is_cow_mapping(vma->vm_flags))
-		return false;
+अटल अंतरभूत bool page_needs_cow_क्रम_dma(काष्ठा vm_area_काष्ठा *vma,
+					  काष्ठा page *page)
+अणु
+	अगर (!is_cow_mapping(vma->vm_flags))
+		वापस false;
 
-	if (!atomic_read(&vma->vm_mm->has_pinned))
-		return false;
+	अगर (!atomic_पढ़ो(&vma->vm_mm->has_pinned))
+		वापस false;
 
-	return page_maybe_dma_pinned(page);
-}
+	वापस page_maybe_dma_pinned(page);
+पूर्ण
 
-#if defined(CONFIG_SPARSEMEM) && !defined(CONFIG_SPARSEMEM_VMEMMAP)
-#define SECTION_IN_PAGE_FLAGS
-#endif
+#अगर defined(CONFIG_SPARSEMEM) && !defined(CONFIG_SPARSEMEM_VMEMMAP)
+#घोषणा SECTION_IN_PAGE_FLAGS
+#पूर्ण_अगर
 
 /*
- * The identification function is mainly used by the buddy allocator for
- * determining if two pages could be buddies. We are not really identifying
- * the zone since we could be using the section number id if we do not have
+ * The identअगरication function is मुख्यly used by the buddy allocator क्रम
+ * determining अगर two pages could be buddies. We are not really identअगरying
+ * the zone since we could be using the section number id अगर we करो not have
  * node id available in page flags.
- * We only guarantee that it will return the same value for two combinable
+ * We only guarantee that it will वापस the same value क्रम two combinable
  * pages in a zone.
  */
-static inline int page_zone_id(struct page *page)
-{
-	return (page->flags >> ZONEID_PGSHIFT) & ZONEID_MASK;
-}
+अटल अंतरभूत पूर्णांक page_zone_id(काष्ठा page *page)
+अणु
+	वापस (page->flags >> ZONEID_PGSHIFT) & ZONEID_MASK;
+पूर्ण
 
-#ifdef NODE_NOT_IN_PAGE_FLAGS
-extern int page_to_nid(const struct page *page);
-#else
-static inline int page_to_nid(const struct page *page)
-{
-	struct page *p = (struct page *)page;
+#अगर_घोषित NODE_NOT_IN_PAGE_FLAGS
+बाह्य पूर्णांक page_to_nid(स्थिर काष्ठा page *page);
+#अन्यथा
+अटल अंतरभूत पूर्णांक page_to_nid(स्थिर काष्ठा page *page)
+अणु
+	काष्ठा page *p = (काष्ठा page *)page;
 
-	return (PF_POISONED_CHECK(p)->flags >> NODES_PGSHIFT) & NODES_MASK;
-}
-#endif
+	वापस (PF_POISONED_CHECK(p)->flags >> NODES_PGSHIFT) & NODES_MASK;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_NUMA_BALANCING
-static inline int cpu_pid_to_cpupid(int cpu, int pid)
-{
-	return ((cpu & LAST__CPU_MASK) << LAST__PID_SHIFT) | (pid & LAST__PID_MASK);
-}
+#अगर_घोषित CONFIG_NUMA_BALANCING
+अटल अंतरभूत पूर्णांक cpu_pid_to_cpupid(पूर्णांक cpu, पूर्णांक pid)
+अणु
+	वापस ((cpu & LAST__CPU_MASK) << LAST__PID_SHIFT) | (pid & LAST__PID_MASK);
+पूर्ण
 
-static inline int cpupid_to_pid(int cpupid)
-{
-	return cpupid & LAST__PID_MASK;
-}
+अटल अंतरभूत पूर्णांक cpupid_to_pid(पूर्णांक cpupid)
+अणु
+	वापस cpupid & LAST__PID_MASK;
+पूर्ण
 
-static inline int cpupid_to_cpu(int cpupid)
-{
-	return (cpupid >> LAST__PID_SHIFT) & LAST__CPU_MASK;
-}
+अटल अंतरभूत पूर्णांक cpupid_to_cpu(पूर्णांक cpupid)
+अणु
+	वापस (cpupid >> LAST__PID_SHIFT) & LAST__CPU_MASK;
+पूर्ण
 
-static inline int cpupid_to_nid(int cpupid)
-{
-	return cpu_to_node(cpupid_to_cpu(cpupid));
-}
+अटल अंतरभूत पूर्णांक cpupid_to_nid(पूर्णांक cpupid)
+अणु
+	वापस cpu_to_node(cpupid_to_cpu(cpupid));
+पूर्ण
 
-static inline bool cpupid_pid_unset(int cpupid)
-{
-	return cpupid_to_pid(cpupid) == (-1 & LAST__PID_MASK);
-}
+अटल अंतरभूत bool cpupid_pid_unset(पूर्णांक cpupid)
+अणु
+	वापस cpupid_to_pid(cpupid) == (-1 & LAST__PID_MASK);
+पूर्ण
 
-static inline bool cpupid_cpu_unset(int cpupid)
-{
-	return cpupid_to_cpu(cpupid) == (-1 & LAST__CPU_MASK);
-}
+अटल अंतरभूत bool cpupid_cpu_unset(पूर्णांक cpupid)
+अणु
+	वापस cpupid_to_cpu(cpupid) == (-1 & LAST__CPU_MASK);
+पूर्ण
 
-static inline bool __cpupid_match_pid(pid_t task_pid, int cpupid)
-{
-	return (task_pid & LAST__PID_MASK) == cpupid_to_pid(cpupid);
-}
+अटल अंतरभूत bool __cpupid_match_pid(pid_t task_pid, पूर्णांक cpupid)
+अणु
+	वापस (task_pid & LAST__PID_MASK) == cpupid_to_pid(cpupid);
+पूर्ण
 
-#define cpupid_match_pid(task, cpupid) __cpupid_match_pid(task->pid, cpupid)
-#ifdef LAST_CPUPID_NOT_IN_PAGE_FLAGS
-static inline int page_cpupid_xchg_last(struct page *page, int cpupid)
-{
-	return xchg(&page->_last_cpupid, cpupid & LAST_CPUPID_MASK);
-}
+#घोषणा cpupid_match_pid(task, cpupid) __cpupid_match_pid(task->pid, cpupid)
+#अगर_घोषित LAST_CPUPID_NOT_IN_PAGE_FLAGS
+अटल अंतरभूत पूर्णांक page_cpupid_xchg_last(काष्ठा page *page, पूर्णांक cpupid)
+अणु
+	वापस xchg(&page->_last_cpupid, cpupid & LAST_CPUPID_MASK);
+पूर्ण
 
-static inline int page_cpupid_last(struct page *page)
-{
-	return page->_last_cpupid;
-}
-static inline void page_cpupid_reset_last(struct page *page)
-{
+अटल अंतरभूत पूर्णांक page_cpupid_last(काष्ठा page *page)
+अणु
+	वापस page->_last_cpupid;
+पूर्ण
+अटल अंतरभूत व्योम page_cpupid_reset_last(काष्ठा page *page)
+अणु
 	page->_last_cpupid = -1 & LAST_CPUPID_MASK;
-}
-#else
-static inline int page_cpupid_last(struct page *page)
-{
-	return (page->flags >> LAST_CPUPID_PGSHIFT) & LAST_CPUPID_MASK;
-}
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक page_cpupid_last(काष्ठा page *page)
+अणु
+	वापस (page->flags >> LAST_CPUPID_PGSHIFT) & LAST_CPUPID_MASK;
+पूर्ण
 
-extern int page_cpupid_xchg_last(struct page *page, int cpupid);
+बाह्य पूर्णांक page_cpupid_xchg_last(काष्ठा page *page, पूर्णांक cpupid);
 
-static inline void page_cpupid_reset_last(struct page *page)
-{
+अटल अंतरभूत व्योम page_cpupid_reset_last(काष्ठा page *page)
+अणु
 	page->flags |= LAST_CPUPID_MASK << LAST_CPUPID_PGSHIFT;
-}
-#endif /* LAST_CPUPID_NOT_IN_PAGE_FLAGS */
-#else /* !CONFIG_NUMA_BALANCING */
-static inline int page_cpupid_xchg_last(struct page *page, int cpupid)
-{
-	return page_to_nid(page); /* XXX */
-}
+पूर्ण
+#पूर्ण_अगर /* LAST_CPUPID_NOT_IN_PAGE_FLAGS */
+#अन्यथा /* !CONFIG_NUMA_BALANCING */
+अटल अंतरभूत पूर्णांक page_cpupid_xchg_last(काष्ठा page *page, पूर्णांक cpupid)
+अणु
+	वापस page_to_nid(page); /* XXX */
+पूर्ण
 
-static inline int page_cpupid_last(struct page *page)
-{
-	return page_to_nid(page); /* XXX */
-}
+अटल अंतरभूत पूर्णांक page_cpupid_last(काष्ठा page *page)
+अणु
+	वापस page_to_nid(page); /* XXX */
+पूर्ण
 
-static inline int cpupid_to_nid(int cpupid)
-{
-	return -1;
-}
+अटल अंतरभूत पूर्णांक cpupid_to_nid(पूर्णांक cpupid)
+अणु
+	वापस -1;
+पूर्ण
 
-static inline int cpupid_to_pid(int cpupid)
-{
-	return -1;
-}
+अटल अंतरभूत पूर्णांक cpupid_to_pid(पूर्णांक cpupid)
+अणु
+	वापस -1;
+पूर्ण
 
-static inline int cpupid_to_cpu(int cpupid)
-{
-	return -1;
-}
+अटल अंतरभूत पूर्णांक cpupid_to_cpu(पूर्णांक cpupid)
+अणु
+	वापस -1;
+पूर्ण
 
-static inline int cpu_pid_to_cpupid(int nid, int pid)
-{
-	return -1;
-}
+अटल अंतरभूत पूर्णांक cpu_pid_to_cpupid(पूर्णांक nid, पूर्णांक pid)
+अणु
+	वापस -1;
+पूर्ण
 
-static inline bool cpupid_pid_unset(int cpupid)
-{
-	return true;
-}
+अटल अंतरभूत bool cpupid_pid_unset(पूर्णांक cpupid)
+अणु
+	वापस true;
+पूर्ण
 
-static inline void page_cpupid_reset_last(struct page *page)
-{
-}
+अटल अंतरभूत व्योम page_cpupid_reset_last(काष्ठा page *page)
+अणु
+पूर्ण
 
-static inline bool cpupid_match_pid(struct task_struct *task, int cpupid)
-{
-	return false;
-}
-#endif /* CONFIG_NUMA_BALANCING */
+अटल अंतरभूत bool cpupid_match_pid(काष्ठा task_काष्ठा *task, पूर्णांक cpupid)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NUMA_BALANCING */
 
-#if defined(CONFIG_KASAN_SW_TAGS) || defined(CONFIG_KASAN_HW_TAGS)
+#अगर defined(CONFIG_KASAN_SW_TAGS) || defined(CONFIG_KASAN_HW_TAGS)
 
 /*
- * KASAN per-page tags are stored xor'ed with 0xff. This allows to avoid
- * setting tags for all pages to native kernel tag value 0xff, as the default
+ * KASAN per-page tags are stored xor'ed with 0xff. This allows to aव्योम
+ * setting tags क्रम all pages to native kernel tag value 0xff, as the शेष
  * value 0x00 maps to 0xff.
  */
 
-static inline u8 page_kasan_tag(const struct page *page)
-{
+अटल अंतरभूत u8 page_kasan_tag(स्थिर काष्ठा page *page)
+अणु
 	u8 tag = 0xff;
 
-	if (kasan_enabled()) {
+	अगर (kasan_enabled()) अणु
 		tag = (page->flags >> KASAN_TAG_PGSHIFT) & KASAN_TAG_MASK;
 		tag ^= 0xff;
-	}
+	पूर्ण
 
-	return tag;
-}
+	वापस tag;
+पूर्ण
 
-static inline void page_kasan_tag_set(struct page *page, u8 tag)
-{
-	if (kasan_enabled()) {
+अटल अंतरभूत व्योम page_kasan_tag_set(काष्ठा page *page, u8 tag)
+अणु
+	अगर (kasan_enabled()) अणु
 		tag ^= 0xff;
 		page->flags &= ~(KASAN_TAG_MASK << KASAN_TAG_PGSHIFT);
 		page->flags |= (tag & KASAN_TAG_MASK) << KASAN_TAG_PGSHIFT;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void page_kasan_tag_reset(struct page *page)
-{
-	if (kasan_enabled())
+अटल अंतरभूत व्योम page_kasan_tag_reset(काष्ठा page *page)
+अणु
+	अगर (kasan_enabled())
 		page_kasan_tag_set(page, 0xff);
-}
+पूर्ण
 
-#else /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS */
+#अन्यथा /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS */
 
-static inline u8 page_kasan_tag(const struct page *page)
-{
-	return 0xff;
-}
+अटल अंतरभूत u8 page_kasan_tag(स्थिर काष्ठा page *page)
+अणु
+	वापस 0xff;
+पूर्ण
 
-static inline void page_kasan_tag_set(struct page *page, u8 tag) { }
-static inline void page_kasan_tag_reset(struct page *page) { }
+अटल अंतरभूत व्योम page_kasan_tag_set(काष्ठा page *page, u8 tag) अणु पूर्ण
+अटल अंतरभूत व्योम page_kasan_tag_reset(काष्ठा page *page) अणु पूर्ण
 
-#endif /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS */
+#पूर्ण_अगर /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS */
 
-static inline struct zone *page_zone(const struct page *page)
-{
-	return &NODE_DATA(page_to_nid(page))->node_zones[page_zonenum(page)];
-}
+अटल अंतरभूत काष्ठा zone *page_zone(स्थिर काष्ठा page *page)
+अणु
+	वापस &NODE_DATA(page_to_nid(page))->node_zones[page_zonक्रमागत(page)];
+पूर्ण
 
-static inline pg_data_t *page_pgdat(const struct page *page)
-{
-	return NODE_DATA(page_to_nid(page));
-}
+अटल अंतरभूत pg_data_t *page_pgdat(स्थिर काष्ठा page *page)
+अणु
+	वापस NODE_DATA(page_to_nid(page));
+पूर्ण
 
-#ifdef SECTION_IN_PAGE_FLAGS
-static inline void set_page_section(struct page *page, unsigned long section)
-{
+#अगर_घोषित SECTION_IN_PAGE_FLAGS
+अटल अंतरभूत व्योम set_page_section(काष्ठा page *page, अचिन्हित दीर्घ section)
+अणु
 	page->flags &= ~(SECTIONS_MASK << SECTIONS_PGSHIFT);
 	page->flags |= (section & SECTIONS_MASK) << SECTIONS_PGSHIFT;
-}
+पूर्ण
 
-static inline unsigned long page_to_section(const struct page *page)
-{
-	return (page->flags >> SECTIONS_PGSHIFT) & SECTIONS_MASK;
-}
-#endif
+अटल अंतरभूत अचिन्हित दीर्घ page_to_section(स्थिर काष्ठा page *page)
+अणु
+	वापस (page->flags >> SECTIONS_PGSHIFT) & SECTIONS_MASK;
+पूर्ण
+#पूर्ण_अगर
 
-/* MIGRATE_CMA and ZONE_MOVABLE do not allow pin pages */
-#ifdef CONFIG_MIGRATION
-static inline bool is_pinnable_page(struct page *page)
-{
-	return !(is_zone_movable_page(page) || is_migrate_cma_page(page)) ||
+/* MIGRATE_CMA and ZONE_MOVABLE करो not allow pin pages */
+#अगर_घोषित CONFIG_MIGRATION
+अटल अंतरभूत bool is_pinnable_page(काष्ठा page *page)
+अणु
+	वापस !(is_zone_movable_page(page) || is_migrate_cma_page(page)) ||
 		is_zero_pfn(page_to_pfn(page));
-}
-#else
-static inline bool is_pinnable_page(struct page *page)
-{
-	return true;
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool is_pinnable_page(काष्ठा page *page)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-static inline void set_page_zone(struct page *page, enum zone_type zone)
-{
+अटल अंतरभूत व्योम set_page_zone(काष्ठा page *page, क्रमागत zone_type zone)
+अणु
 	page->flags &= ~(ZONES_MASK << ZONES_PGSHIFT);
 	page->flags |= (zone & ZONES_MASK) << ZONES_PGSHIFT;
-}
+पूर्ण
 
-static inline void set_page_node(struct page *page, unsigned long node)
-{
+अटल अंतरभूत व्योम set_page_node(काष्ठा page *page, अचिन्हित दीर्घ node)
+अणु
 	page->flags &= ~(NODES_MASK << NODES_PGSHIFT);
 	page->flags |= (node & NODES_MASK) << NODES_PGSHIFT;
-}
+पूर्ण
 
-static inline void set_page_links(struct page *page, enum zone_type zone,
-	unsigned long node, unsigned long pfn)
-{
+अटल अंतरभूत व्योम set_page_links(काष्ठा page *page, क्रमागत zone_type zone,
+	अचिन्हित दीर्घ node, अचिन्हित दीर्घ pfn)
+अणु
 	set_page_zone(page, zone);
 	set_page_node(page, node);
-#ifdef SECTION_IN_PAGE_FLAGS
+#अगर_घोषित SECTION_IN_PAGE_FLAGS
 	set_page_section(page, pfn_to_section_nr(pfn));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Some inline functions in vmstat.h depend on page_zone()
+ * Some अंतरभूत functions in vmस्थिति.स depend on page_zone()
  */
-#include <linux/vmstat.h>
+#समावेश <linux/vmस्थिति.स>
 
-static __always_inline void *lowmem_page_address(const struct page *page)
-{
-	return page_to_virt(page);
-}
+अटल __always_अंतरभूत व्योम *lowmem_page_address(स्थिर काष्ठा page *page)
+अणु
+	वापस page_to_virt(page);
+पूर्ण
 
-#if defined(CONFIG_HIGHMEM) && !defined(WANT_PAGE_VIRTUAL)
-#define HASHED_PAGE_VIRTUAL
-#endif
+#अगर defined(CONFIG_HIGHMEM) && !defined(WANT_PAGE_VIRTUAL)
+#घोषणा HASHED_PAGE_VIRTUAL
+#पूर्ण_अगर
 
-#if defined(WANT_PAGE_VIRTUAL)
-static inline void *page_address(const struct page *page)
-{
-	return page->virtual;
-}
-static inline void set_page_address(struct page *page, void *address)
-{
-	page->virtual = address;
-}
-#define page_address_init()  do { } while(0)
-#endif
+#अगर defined(WANT_PAGE_VIRTUAL)
+अटल अंतरभूत व्योम *page_address(स्थिर काष्ठा page *page)
+अणु
+	वापस page->भव;
+पूर्ण
+अटल अंतरभूत व्योम set_page_address(काष्ठा page *page, व्योम *address)
+अणु
+	page->भव = address;
+पूर्ण
+#घोषणा page_address_init()  करो अणु पूर्ण जबतक(0)
+#पूर्ण_अगर
 
-#if defined(HASHED_PAGE_VIRTUAL)
-void *page_address(const struct page *page);
-void set_page_address(struct page *page, void *virtual);
-void page_address_init(void);
-#endif
+#अगर defined(HASHED_PAGE_VIRTUAL)
+व्योम *page_address(स्थिर काष्ठा page *page);
+व्योम set_page_address(काष्ठा page *page, व्योम *भव);
+व्योम page_address_init(व्योम);
+#पूर्ण_अगर
 
-#if !defined(HASHED_PAGE_VIRTUAL) && !defined(WANT_PAGE_VIRTUAL)
-#define page_address(page) lowmem_page_address(page)
-#define set_page_address(page, address)  do { } while(0)
-#define page_address_init()  do { } while(0)
-#endif
+#अगर !defined(HASHED_PAGE_VIRTUAL) && !defined(WANT_PAGE_VIRTUAL)
+#घोषणा page_address(page) lowmem_page_address(page)
+#घोषणा set_page_address(page, address)  करो अणु पूर्ण जबतक(0)
+#घोषणा page_address_init()  करो अणु पूर्ण जबतक(0)
+#पूर्ण_अगर
 
-extern void *page_rmapping(struct page *page);
-extern struct anon_vma *page_anon_vma(struct page *page);
-extern struct address_space *page_mapping(struct page *page);
+बाह्य व्योम *page_rmapping(काष्ठा page *page);
+बाह्य काष्ठा anon_vma *page_anon_vma(काष्ठा page *page);
+बाह्य काष्ठा address_space *page_mapping(काष्ठा page *page);
 
-extern struct address_space *__page_file_mapping(struct page *);
+बाह्य काष्ठा address_space *__page_file_mapping(काष्ठा page *);
 
-static inline
-struct address_space *page_file_mapping(struct page *page)
-{
-	if (unlikely(PageSwapCache(page)))
-		return __page_file_mapping(page);
+अटल अंतरभूत
+काष्ठा address_space *page_file_mapping(काष्ठा page *page)
+अणु
+	अगर (unlikely(PageSwapCache(page)))
+		वापस __page_file_mapping(page);
 
-	return page->mapping;
-}
+	वापस page->mapping;
+पूर्ण
 
-extern pgoff_t __page_file_index(struct page *page);
+बाह्य pgoff_t __page_file_index(काष्ठा page *page);
 
 /*
  * Return the pagecache index of the passed page.  Regular pagecache pages
- * use ->index whereas swapcache pages use swp_offset(->private)
+ * use ->index whereas swapcache pages use swp_offset(->निजी)
  */
-static inline pgoff_t page_index(struct page *page)
-{
-	if (unlikely(PageSwapCache(page)))
-		return __page_file_index(page);
-	return page->index;
-}
+अटल अंतरभूत pgoff_t page_index(काष्ठा page *page)
+अणु
+	अगर (unlikely(PageSwapCache(page)))
+		वापस __page_file_index(page);
+	वापस page->index;
+पूर्ण
 
-bool page_mapped(struct page *page);
-struct address_space *page_mapping(struct page *page);
+bool page_mapped(काष्ठा page *page);
+काष्ठा address_space *page_mapping(काष्ठा page *page);
 
 /*
- * Return true only if the page has been allocated with
+ * Return true only अगर the page has been allocated with
  * ALLOC_NO_WATERMARKS and the low watermark was not
- * met implying that the system is under some pressure.
+ * met implying that the प्रणाली is under some pressure.
  */
-static inline bool page_is_pfmemalloc(const struct page *page)
-{
+अटल अंतरभूत bool page_is_pfmeदो_स्मृति(स्थिर काष्ठा page *page)
+अणु
 	/*
 	 * Page index cannot be this large so this must be
-	 * a pfmemalloc page.
+	 * a pfmeदो_स्मृति page.
 	 */
-	return page->index == -1UL;
-}
+	वापस page->index == -1UL;
+पूर्ण
 
 /*
  * Only to be called by the page allocator on a freshly allocated
  * page.
  */
-static inline void set_page_pfmemalloc(struct page *page)
-{
+अटल अंतरभूत व्योम set_page_pfmeदो_स्मृति(काष्ठा page *page)
+अणु
 	page->index = -1UL;
-}
+पूर्ण
 
-static inline void clear_page_pfmemalloc(struct page *page)
-{
+अटल अंतरभूत व्योम clear_page_pfmeदो_स्मृति(काष्ठा page *page)
+अणु
 	page->index = 0;
-}
+पूर्ण
 
 /*
- * Can be called by the pagefault handler when it gets a VM_FAULT_OOM.
+ * Can be called by the pagefault handler when it माला_लो a VM_FAULT_OOM.
  */
-extern void pagefault_out_of_memory(void);
+बाह्य व्योम pagefault_out_of_memory(व्योम);
 
-#define offset_in_page(p)	((unsigned long)(p) & ~PAGE_MASK)
-#define offset_in_thp(page, p)	((unsigned long)(p) & (thp_size(page) - 1))
+#घोषणा offset_in_page(p)	((अचिन्हित दीर्घ)(p) & ~PAGE_MASK)
+#घोषणा offset_in_thp(page, p)	((अचिन्हित दीर्घ)(p) & (thp_size(page) - 1))
 
 /*
- * Flags passed to show_mem() and show_free_areas() to suppress output in
+ * Flags passed to show_mem() and show_मुक्त_areas() to suppress output in
  * various contexts.
  */
-#define SHOW_MEM_FILTER_NODES		(0x0001u)	/* disallowed nodes */
+#घोषणा SHOW_MEM_FILTER_NODES		(0x0001u)	/* disallowed nodes */
 
-extern void show_free_areas(unsigned int flags, nodemask_t *nodemask);
+बाह्य व्योम show_मुक्त_areas(अचिन्हित पूर्णांक flags, nodemask_t *nodemask);
 
-#ifdef CONFIG_MMU
-extern bool can_do_mlock(void);
-#else
-static inline bool can_do_mlock(void) { return false; }
-#endif
-extern int user_shm_lock(size_t, struct user_struct *);
-extern void user_shm_unlock(size_t, struct user_struct *);
+#अगर_घोषित CONFIG_MMU
+बाह्य bool can_करो_mlock(व्योम);
+#अन्यथा
+अटल अंतरभूत bool can_करो_mlock(व्योम) अणु वापस false; पूर्ण
+#पूर्ण_अगर
+बाह्य पूर्णांक user_shm_lock(माप_प्रकार, काष्ठा user_काष्ठा *);
+बाह्य व्योम user_shm_unlock(माप_प्रकार, काष्ठा user_काष्ठा *);
 
 /*
- * Parameter block passed down to zap_pte_range in exceptional cases.
+ * Parameter block passed करोwn to zap_pte_range in exceptional हालs.
  */
-struct zap_details {
-	struct address_space *check_mapping;	/* Check page->mapping if set */
+काष्ठा zap_details अणु
+	काष्ठा address_space *check_mapping;	/* Check page->mapping अगर set */
 	pgoff_t	first_index;			/* Lowest page->index to unmap */
 	pgoff_t last_index;			/* Highest page->index to unmap */
-	struct page *single_page;		/* Locked page to be unmapped */
-};
+	काष्ठा page *single_page;		/* Locked page to be unmapped */
+पूर्ण;
 
-struct page *vm_normal_page(struct vm_area_struct *vma, unsigned long addr,
+काष्ठा page *vm_normal_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
 			     pte_t pte);
-struct page *vm_normal_page_pmd(struct vm_area_struct *vma, unsigned long addr,
+काष्ठा page *vm_normal_page_pmd(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
 				pmd_t pmd);
 
-void zap_vma_ptes(struct vm_area_struct *vma, unsigned long address,
-		  unsigned long size);
-void zap_page_range(struct vm_area_struct *vma, unsigned long address,
-		    unsigned long size);
-void unmap_vmas(struct mmu_gather *tlb, struct vm_area_struct *start_vma,
-		unsigned long start, unsigned long end);
+व्योम zap_vma_ptes(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+		  अचिन्हित दीर्घ size);
+व्योम zap_page_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+		    अचिन्हित दीर्घ size);
+व्योम unmap_vmas(काष्ठा mmu_gather *tlb, काष्ठा vm_area_काष्ठा *start_vma,
+		अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
 
-struct mmu_notifier_range;
+काष्ठा mmu_notअगरier_range;
 
-void free_pgd_range(struct mmu_gather *tlb, unsigned long addr,
-		unsigned long end, unsigned long floor, unsigned long ceiling);
-int
-copy_page_range(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma);
-int follow_invalidate_pte(struct mm_struct *mm, unsigned long address,
-			  struct mmu_notifier_range *range, pte_t **ptepp,
+व्योम मुक्त_pgd_range(काष्ठा mmu_gather *tlb, अचिन्हित दीर्घ addr,
+		अचिन्हित दीर्घ end, अचिन्हित दीर्घ न्यूनमान, अचिन्हित दीर्घ उच्चमानing);
+पूर्णांक
+copy_page_range(काष्ठा vm_area_काष्ठा *dst_vma, काष्ठा vm_area_काष्ठा *src_vma);
+पूर्णांक follow_invalidate_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address,
+			  काष्ठा mmu_notअगरier_range *range, pte_t **ptepp,
 			  pmd_t **pmdpp, spinlock_t **ptlp);
-int follow_pte(struct mm_struct *mm, unsigned long address,
+पूर्णांक follow_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address,
 	       pte_t **ptepp, spinlock_t **ptlp);
-int follow_pfn(struct vm_area_struct *vma, unsigned long address,
-	unsigned long *pfn);
-int follow_phys(struct vm_area_struct *vma, unsigned long address,
-		unsigned int flags, unsigned long *prot, resource_size_t *phys);
-int generic_access_phys(struct vm_area_struct *vma, unsigned long addr,
-			void *buf, int len, int write);
+पूर्णांक follow_pfn(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+	अचिन्हित दीर्घ *pfn);
+पूर्णांक follow_phys(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+		अचिन्हित पूर्णांक flags, अचिन्हित दीर्घ *prot, resource_माप_प्रकार *phys);
+पूर्णांक generic_access_phys(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+			व्योम *buf, पूर्णांक len, पूर्णांक ग_लिखो);
 
-extern void truncate_pagecache(struct inode *inode, loff_t new);
-extern void truncate_setsize(struct inode *inode, loff_t newsize);
-void pagecache_isize_extended(struct inode *inode, loff_t from, loff_t to);
-void truncate_pagecache_range(struct inode *inode, loff_t offset, loff_t end);
-int truncate_inode_page(struct address_space *mapping, struct page *page);
-int generic_error_remove_page(struct address_space *mapping, struct page *page);
-int invalidate_inode_page(struct page *page);
+बाह्य व्योम truncate_pagecache(काष्ठा inode *inode, loff_t new);
+बाह्य व्योम truncate_setsize(काष्ठा inode *inode, loff_t newsize);
+व्योम pagecache_isize_extended(काष्ठा inode *inode, loff_t from, loff_t to);
+व्योम truncate_pagecache_range(काष्ठा inode *inode, loff_t offset, loff_t end);
+पूर्णांक truncate_inode_page(काष्ठा address_space *mapping, काष्ठा page *page);
+पूर्णांक generic_error_हटाओ_page(काष्ठा address_space *mapping, काष्ठा page *page);
+पूर्णांक invalidate_inode_page(काष्ठा page *page);
 
-#ifdef CONFIG_MMU
-extern vm_fault_t handle_mm_fault(struct vm_area_struct *vma,
-				  unsigned long address, unsigned int flags,
-				  struct pt_regs *regs);
-extern int fixup_user_fault(struct mm_struct *mm,
-			    unsigned long address, unsigned int fault_flags,
+#अगर_घोषित CONFIG_MMU
+बाह्य vm_fault_t handle_mm_fault(काष्ठा vm_area_काष्ठा *vma,
+				  अचिन्हित दीर्घ address, अचिन्हित पूर्णांक flags,
+				  काष्ठा pt_regs *regs);
+बाह्य पूर्णांक fixup_user_fault(काष्ठा mm_काष्ठा *mm,
+			    अचिन्हित दीर्घ address, अचिन्हित पूर्णांक fault_flags,
 			    bool *unlocked);
-void unmap_mapping_page(struct page *page);
-void unmap_mapping_pages(struct address_space *mapping,
+व्योम unmap_mapping_page(काष्ठा page *page);
+व्योम unmap_mapping_pages(काष्ठा address_space *mapping,
 		pgoff_t start, pgoff_t nr, bool even_cows);
-void unmap_mapping_range(struct address_space *mapping,
-		loff_t const holebegin, loff_t const holelen, int even_cows);
-#else
-static inline vm_fault_t handle_mm_fault(struct vm_area_struct *vma,
-					 unsigned long address, unsigned int flags,
-					 struct pt_regs *regs)
-{
-	/* should never happen if there's no MMU */
+व्योम unmap_mapping_range(काष्ठा address_space *mapping,
+		loff_t स्थिर holebegin, loff_t स्थिर holelen, पूर्णांक even_cows);
+#अन्यथा
+अटल अंतरभूत vm_fault_t handle_mm_fault(काष्ठा vm_area_काष्ठा *vma,
+					 अचिन्हित दीर्घ address, अचिन्हित पूर्णांक flags,
+					 काष्ठा pt_regs *regs)
+अणु
+	/* should never happen अगर there's no MMU */
 	BUG();
-	return VM_FAULT_SIGBUS;
-}
-static inline int fixup_user_fault(struct mm_struct *mm, unsigned long address,
-		unsigned int fault_flags, bool *unlocked)
-{
-	/* should never happen if there's no MMU */
+	वापस VM_FAULT_SIGBUS;
+पूर्ण
+अटल अंतरभूत पूर्णांक fixup_user_fault(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address,
+		अचिन्हित पूर्णांक fault_flags, bool *unlocked)
+अणु
+	/* should never happen अगर there's no MMU */
 	BUG();
-	return -EFAULT;
-}
-static inline void unmap_mapping_page(struct page *page) { }
-static inline void unmap_mapping_pages(struct address_space *mapping,
-		pgoff_t start, pgoff_t nr, bool even_cows) { }
-static inline void unmap_mapping_range(struct address_space *mapping,
-		loff_t const holebegin, loff_t const holelen, int even_cows) { }
-#endif
+	वापस -EFAULT;
+पूर्ण
+अटल अंतरभूत व्योम unmap_mapping_page(काष्ठा page *page) अणु पूर्ण
+अटल अंतरभूत व्योम unmap_mapping_pages(काष्ठा address_space *mapping,
+		pgoff_t start, pgoff_t nr, bool even_cows) अणु पूर्ण
+अटल अंतरभूत व्योम unmap_mapping_range(काष्ठा address_space *mapping,
+		loff_t स्थिर holebegin, loff_t स्थिर holelen, पूर्णांक even_cows) अणु पूर्ण
+#पूर्ण_अगर
 
-static inline void unmap_shared_mapping_range(struct address_space *mapping,
-		loff_t const holebegin, loff_t const holelen)
-{
+अटल अंतरभूत व्योम unmap_shared_mapping_range(काष्ठा address_space *mapping,
+		loff_t स्थिर holebegin, loff_t स्थिर holelen)
+अणु
 	unmap_mapping_range(mapping, holebegin, holelen, 0);
-}
+पूर्ण
 
-extern int access_process_vm(struct task_struct *tsk, unsigned long addr,
-		void *buf, int len, unsigned int gup_flags);
-extern int access_remote_vm(struct mm_struct *mm, unsigned long addr,
-		void *buf, int len, unsigned int gup_flags);
-extern int __access_remote_vm(struct mm_struct *mm, unsigned long addr,
-			      void *buf, int len, unsigned int gup_flags);
+बाह्य पूर्णांक access_process_vm(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr,
+		व्योम *buf, पूर्णांक len, अचिन्हित पूर्णांक gup_flags);
+बाह्य पूर्णांक access_remote_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+		व्योम *buf, पूर्णांक len, अचिन्हित पूर्णांक gup_flags);
+बाह्य पूर्णांक __access_remote_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+			      व्योम *buf, पूर्णांक len, अचिन्हित पूर्णांक gup_flags);
 
-long get_user_pages_remote(struct mm_struct *mm,
-			    unsigned long start, unsigned long nr_pages,
-			    unsigned int gup_flags, struct page **pages,
-			    struct vm_area_struct **vmas, int *locked);
-long pin_user_pages_remote(struct mm_struct *mm,
-			   unsigned long start, unsigned long nr_pages,
-			   unsigned int gup_flags, struct page **pages,
-			   struct vm_area_struct **vmas, int *locked);
-long get_user_pages(unsigned long start, unsigned long nr_pages,
-			    unsigned int gup_flags, struct page **pages,
-			    struct vm_area_struct **vmas);
-long pin_user_pages(unsigned long start, unsigned long nr_pages,
-		    unsigned int gup_flags, struct page **pages,
-		    struct vm_area_struct **vmas);
-long get_user_pages_locked(unsigned long start, unsigned long nr_pages,
-		    unsigned int gup_flags, struct page **pages, int *locked);
-long pin_user_pages_locked(unsigned long start, unsigned long nr_pages,
-		    unsigned int gup_flags, struct page **pages, int *locked);
-long get_user_pages_unlocked(unsigned long start, unsigned long nr_pages,
-		    struct page **pages, unsigned int gup_flags);
-long pin_user_pages_unlocked(unsigned long start, unsigned long nr_pages,
-		    struct page **pages, unsigned int gup_flags);
+दीर्घ get_user_pages_remote(काष्ठा mm_काष्ठा *mm,
+			    अचिन्हित दीर्घ start, अचिन्हित दीर्घ nr_pages,
+			    अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages,
+			    काष्ठा vm_area_काष्ठा **vmas, पूर्णांक *locked);
+दीर्घ pin_user_pages_remote(काष्ठा mm_काष्ठा *mm,
+			   अचिन्हित दीर्घ start, अचिन्हित दीर्घ nr_pages,
+			   अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages,
+			   काष्ठा vm_area_काष्ठा **vmas, पूर्णांक *locked);
+दीर्घ get_user_pages(अचिन्हित दीर्घ start, अचिन्हित दीर्घ nr_pages,
+			    अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages,
+			    काष्ठा vm_area_काष्ठा **vmas);
+दीर्घ pin_user_pages(अचिन्हित दीर्घ start, अचिन्हित दीर्घ nr_pages,
+		    अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages,
+		    काष्ठा vm_area_काष्ठा **vmas);
+दीर्घ get_user_pages_locked(अचिन्हित दीर्घ start, अचिन्हित दीर्घ nr_pages,
+		    अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages, पूर्णांक *locked);
+दीर्घ pin_user_pages_locked(अचिन्हित दीर्घ start, अचिन्हित दीर्घ nr_pages,
+		    अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages, पूर्णांक *locked);
+दीर्घ get_user_pages_unlocked(अचिन्हित दीर्घ start, अचिन्हित दीर्घ nr_pages,
+		    काष्ठा page **pages, अचिन्हित पूर्णांक gup_flags);
+दीर्घ pin_user_pages_unlocked(अचिन्हित दीर्घ start, अचिन्हित दीर्घ nr_pages,
+		    काष्ठा page **pages, अचिन्हित पूर्णांक gup_flags);
 
-int get_user_pages_fast(unsigned long start, int nr_pages,
-			unsigned int gup_flags, struct page **pages);
-int pin_user_pages_fast(unsigned long start, int nr_pages,
-			unsigned int gup_flags, struct page **pages);
+पूर्णांक get_user_pages_fast(अचिन्हित दीर्घ start, पूर्णांक nr_pages,
+			अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages);
+पूर्णांक pin_user_pages_fast(अचिन्हित दीर्घ start, पूर्णांक nr_pages,
+			अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages);
 
-int account_locked_vm(struct mm_struct *mm, unsigned long pages, bool inc);
-int __account_locked_vm(struct mm_struct *mm, unsigned long pages, bool inc,
-			struct task_struct *task, bool bypass_rlim);
+पूर्णांक account_locked_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ pages, bool inc);
+पूर्णांक __account_locked_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ pages, bool inc,
+			काष्ठा task_काष्ठा *task, bool bypass_rlim);
 
-struct kvec;
-int get_kernel_pages(const struct kvec *iov, int nr_pages, int write,
-			struct page **pages);
-int get_kernel_page(unsigned long start, int write, struct page **pages);
-struct page *get_dump_page(unsigned long addr);
+काष्ठा kvec;
+पूर्णांक get_kernel_pages(स्थिर काष्ठा kvec *iov, पूर्णांक nr_pages, पूर्णांक ग_लिखो,
+			काष्ठा page **pages);
+पूर्णांक get_kernel_page(अचिन्हित दीर्घ start, पूर्णांक ग_लिखो, काष्ठा page **pages);
+काष्ठा page *get_dump_page(अचिन्हित दीर्घ addr);
 
-extern int try_to_release_page(struct page * page, gfp_t gfp_mask);
-extern void do_invalidatepage(struct page *page, unsigned int offset,
-			      unsigned int length);
+बाह्य पूर्णांक try_to_release_page(काष्ठा page * page, gfp_t gfp_mask);
+बाह्य व्योम करो_invalidatepage(काष्ठा page *page, अचिन्हित पूर्णांक offset,
+			      अचिन्हित पूर्णांक length);
 
-void __set_page_dirty(struct page *, struct address_space *, int warn);
-int __set_page_dirty_nobuffers(struct page *page);
-int __set_page_dirty_no_writeback(struct page *page);
-int redirty_page_for_writepage(struct writeback_control *wbc,
-				struct page *page);
-void account_page_dirtied(struct page *page, struct address_space *mapping);
-void account_page_cleaned(struct page *page, struct address_space *mapping,
-			  struct bdi_writeback *wb);
-int set_page_dirty(struct page *page);
-int set_page_dirty_lock(struct page *page);
-void __cancel_dirty_page(struct page *page);
-static inline void cancel_dirty_page(struct page *page)
-{
-	/* Avoid atomic ops, locking, etc. when not actually needed. */
-	if (PageDirty(page))
+व्योम __set_page_dirty(काष्ठा page *, काष्ठा address_space *, पूर्णांक warn);
+पूर्णांक __set_page_dirty_nobuffers(काष्ठा page *page);
+पूर्णांक __set_page_dirty_no_ग_लिखोback(काष्ठा page *page);
+पूर्णांक redirty_page_क्रम_ग_लिखोpage(काष्ठा ग_लिखोback_control *wbc,
+				काष्ठा page *page);
+व्योम account_page_dirtied(काष्ठा page *page, काष्ठा address_space *mapping);
+व्योम account_page_cleaned(काष्ठा page *page, काष्ठा address_space *mapping,
+			  काष्ठा bdi_ग_लिखोback *wb);
+पूर्णांक set_page_dirty(काष्ठा page *page);
+पूर्णांक set_page_dirty_lock(काष्ठा page *page);
+व्योम __cancel_dirty_page(काष्ठा page *page);
+अटल अंतरभूत व्योम cancel_dirty_page(काष्ठा page *page)
+अणु
+	/* Aव्योम atomic ops, locking, etc. when not actually needed. */
+	अगर (PageDirty(page))
 		__cancel_dirty_page(page);
-}
-int clear_page_dirty_for_io(struct page *page);
+पूर्ण
+पूर्णांक clear_page_dirty_क्रम_io(काष्ठा page *page);
 
-int get_cmdline(struct task_struct *task, char *buffer, int buflen);
+पूर्णांक get_cmdline(काष्ठा task_काष्ठा *task, अक्षर *buffer, पूर्णांक buflen);
 
-extern unsigned long move_page_tables(struct vm_area_struct *vma,
-		unsigned long old_addr, struct vm_area_struct *new_vma,
-		unsigned long new_addr, unsigned long len,
+बाह्य अचिन्हित दीर्घ move_page_tables(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ old_addr, काष्ठा vm_area_काष्ठा *new_vma,
+		अचिन्हित दीर्घ new_addr, अचिन्हित दीर्घ len,
 		bool need_rmap_locks);
 
 /*
- * Flags used by change_protection().  For now we make it a bitmap so
+ * Flags used by change_protection().  For now we make it a biपंचांगap so
  * that we can pass in multiple flags just like parameters.  However
- * for now all the callers are only use one of the flags at the same
- * time.
+ * क्रम now all the callers are only use one of the flags at the same
+ * समय.
  */
 /* Whether we should allow dirty bit accounting */
-#define  MM_CP_DIRTY_ACCT                  (1UL << 0)
-/* Whether this protection change is for NUMA hints */
-#define  MM_CP_PROT_NUMA                   (1UL << 1)
-/* Whether this change is for write protecting */
-#define  MM_CP_UFFD_WP                     (1UL << 2) /* do wp */
-#define  MM_CP_UFFD_WP_RESOLVE             (1UL << 3) /* Resolve wp */
-#define  MM_CP_UFFD_WP_ALL                 (MM_CP_UFFD_WP | \
+#घोषणा  MM_CP_सूचीTY_ACCT                  (1UL << 0)
+/* Whether this protection change is क्रम NUMA hपूर्णांकs */
+#घोषणा  MM_CP_PROT_NUMA                   (1UL << 1)
+/* Whether this change is क्रम ग_लिखो protecting */
+#घोषणा  MM_CP_UFFD_WP                     (1UL << 2) /* करो wp */
+#घोषणा  MM_CP_UFFD_WP_RESOLVE             (1UL << 3) /* Resolve wp */
+#घोषणा  MM_CP_UFFD_WP_ALL                 (MM_CP_UFFD_WP | \
 					    MM_CP_UFFD_WP_RESOLVE)
 
-extern unsigned long change_protection(struct vm_area_struct *vma, unsigned long start,
-			      unsigned long end, pgprot_t newprot,
-			      unsigned long cp_flags);
-extern int mprotect_fixup(struct vm_area_struct *vma,
-			  struct vm_area_struct **pprev, unsigned long start,
-			  unsigned long end, unsigned long newflags);
+बाह्य अचिन्हित दीर्घ change_protection(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+			      अचिन्हित दीर्घ end, pgprot_t newprot,
+			      अचिन्हित दीर्घ cp_flags);
+बाह्य पूर्णांक mprotect_fixup(काष्ठा vm_area_काष्ठा *vma,
+			  काष्ठा vm_area_काष्ठा **pprev, अचिन्हित दीर्घ start,
+			  अचिन्हित दीर्घ end, अचिन्हित दीर्घ newflags);
 
 /*
- * doesn't attempt to fault and will return short.
+ * करोesn't attempt to fault and will वापस लघु.
  */
-int get_user_pages_fast_only(unsigned long start, int nr_pages,
-			     unsigned int gup_flags, struct page **pages);
-int pin_user_pages_fast_only(unsigned long start, int nr_pages,
-			     unsigned int gup_flags, struct page **pages);
+पूर्णांक get_user_pages_fast_only(अचिन्हित दीर्घ start, पूर्णांक nr_pages,
+			     अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages);
+पूर्णांक pin_user_pages_fast_only(अचिन्हित दीर्घ start, पूर्णांक nr_pages,
+			     अचिन्हित पूर्णांक gup_flags, काष्ठा page **pages);
 
-static inline bool get_user_page_fast_only(unsigned long addr,
-			unsigned int gup_flags, struct page **pagep)
-{
-	return get_user_pages_fast_only(addr, 1, gup_flags, pagep) == 1;
-}
+अटल अंतरभूत bool get_user_page_fast_only(अचिन्हित दीर्घ addr,
+			अचिन्हित पूर्णांक gup_flags, काष्ठा page **pagep)
+अणु
+	वापस get_user_pages_fast_only(addr, 1, gup_flags, pagep) == 1;
+पूर्ण
 /*
- * per-process(per-mm_struct) statistics.
+ * per-process(per-mm_काष्ठा) statistics.
  */
-static inline unsigned long get_mm_counter(struct mm_struct *mm, int member)
-{
-	long val = atomic_long_read(&mm->rss_stat.count[member]);
+अटल अंतरभूत अचिन्हित दीर्घ get_mm_counter(काष्ठा mm_काष्ठा *mm, पूर्णांक member)
+अणु
+	दीर्घ val = atomic_दीर्घ_पढ़ो(&mm->rss_stat.count[member]);
 
-#ifdef SPLIT_RSS_COUNTING
+#अगर_घोषित SPLIT_RSS_COUNTING
 	/*
 	 * counter is updated in asynchronous manner and may go to minus.
-	 * But it's never be expected number for users.
+	 * But it's never be expected number क्रम users.
 	 */
-	if (val < 0)
+	अगर (val < 0)
 		val = 0;
-#endif
-	return (unsigned long)val;
-}
+#पूर्ण_अगर
+	वापस (अचिन्हित दीर्घ)val;
+पूर्ण
 
-void mm_trace_rss_stat(struct mm_struct *mm, int member, long count);
+व्योम mm_trace_rss_stat(काष्ठा mm_काष्ठा *mm, पूर्णांक member, दीर्घ count);
 
-static inline void add_mm_counter(struct mm_struct *mm, int member, long value)
-{
-	long count = atomic_long_add_return(value, &mm->rss_stat.count[member]);
-
-	mm_trace_rss_stat(mm, member, count);
-}
-
-static inline void inc_mm_counter(struct mm_struct *mm, int member)
-{
-	long count = atomic_long_inc_return(&mm->rss_stat.count[member]);
+अटल अंतरभूत व्योम add_mm_counter(काष्ठा mm_काष्ठा *mm, पूर्णांक member, दीर्घ value)
+अणु
+	दीर्घ count = atomic_दीर्घ_add_वापस(value, &mm->rss_stat.count[member]);
 
 	mm_trace_rss_stat(mm, member, count);
-}
+पूर्ण
 
-static inline void dec_mm_counter(struct mm_struct *mm, int member)
-{
-	long count = atomic_long_dec_return(&mm->rss_stat.count[member]);
+अटल अंतरभूत व्योम inc_mm_counter(काष्ठा mm_काष्ठा *mm, पूर्णांक member)
+अणु
+	दीर्घ count = atomic_दीर्घ_inc_वापस(&mm->rss_stat.count[member]);
 
 	mm_trace_rss_stat(mm, member, count);
-}
+पूर्ण
 
-/* Optimized variant when page is already known not to be PageAnon */
-static inline int mm_counter_file(struct page *page)
-{
-	if (PageSwapBacked(page))
-		return MM_SHMEMPAGES;
-	return MM_FILEPAGES;
-}
+अटल अंतरभूत व्योम dec_mm_counter(काष्ठा mm_काष्ठा *mm, पूर्णांक member)
+अणु
+	दीर्घ count = atomic_दीर्घ_dec_वापस(&mm->rss_stat.count[member]);
 
-static inline int mm_counter(struct page *page)
-{
-	if (PageAnon(page))
-		return MM_ANONPAGES;
-	return mm_counter_file(page);
-}
+	mm_trace_rss_stat(mm, member, count);
+पूर्ण
 
-static inline unsigned long get_mm_rss(struct mm_struct *mm)
-{
-	return get_mm_counter(mm, MM_FILEPAGES) +
+/* Optimized variant when page is alपढ़ोy known not to be PageAnon */
+अटल अंतरभूत पूर्णांक mm_counter_file(काष्ठा page *page)
+अणु
+	अगर (PageSwapBacked(page))
+		वापस MM_SHMEMPAGES;
+	वापस MM_खाताPAGES;
+पूर्ण
+
+अटल अंतरभूत पूर्णांक mm_counter(काष्ठा page *page)
+अणु
+	अगर (PageAnon(page))
+		वापस MM_ANONPAGES;
+	वापस mm_counter_file(page);
+पूर्ण
+
+अटल अंतरभूत अचिन्हित दीर्घ get_mm_rss(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस get_mm_counter(mm, MM_खाताPAGES) +
 		get_mm_counter(mm, MM_ANONPAGES) +
 		get_mm_counter(mm, MM_SHMEMPAGES);
-}
+पूर्ण
 
-static inline unsigned long get_mm_hiwater_rss(struct mm_struct *mm)
-{
-	return max(mm->hiwater_rss, get_mm_rss(mm));
-}
+अटल अंतरभूत अचिन्हित दीर्घ get_mm_hiwater_rss(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस max(mm->hiwater_rss, get_mm_rss(mm));
+पूर्ण
 
-static inline unsigned long get_mm_hiwater_vm(struct mm_struct *mm)
-{
-	return max(mm->hiwater_vm, mm->total_vm);
-}
+अटल अंतरभूत अचिन्हित दीर्घ get_mm_hiwater_vm(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस max(mm->hiwater_vm, mm->total_vm);
+पूर्ण
 
-static inline void update_hiwater_rss(struct mm_struct *mm)
-{
-	unsigned long _rss = get_mm_rss(mm);
+अटल अंतरभूत व्योम update_hiwater_rss(काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ _rss = get_mm_rss(mm);
 
-	if ((mm)->hiwater_rss < _rss)
+	अगर ((mm)->hiwater_rss < _rss)
 		(mm)->hiwater_rss = _rss;
-}
+पूर्ण
 
-static inline void update_hiwater_vm(struct mm_struct *mm)
-{
-	if (mm->hiwater_vm < mm->total_vm)
+अटल अंतरभूत व्योम update_hiwater_vm(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mm->hiwater_vm < mm->total_vm)
 		mm->hiwater_vm = mm->total_vm;
-}
+पूर्ण
 
-static inline void reset_mm_hiwater_rss(struct mm_struct *mm)
-{
+अटल अंतरभूत व्योम reset_mm_hiwater_rss(काष्ठा mm_काष्ठा *mm)
+अणु
 	mm->hiwater_rss = get_mm_rss(mm);
-}
+पूर्ण
 
-static inline void setmax_mm_hiwater_rss(unsigned long *maxrss,
-					 struct mm_struct *mm)
-{
-	unsigned long hiwater_rss = get_mm_hiwater_rss(mm);
+अटल अंतरभूत व्योम seपंचांगax_mm_hiwater_rss(अचिन्हित दीर्घ *maxrss,
+					 काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ hiwater_rss = get_mm_hiwater_rss(mm);
 
-	if (*maxrss < hiwater_rss)
+	अगर (*maxrss < hiwater_rss)
 		*maxrss = hiwater_rss;
-}
+पूर्ण
 
-#if defined(SPLIT_RSS_COUNTING)
-void sync_mm_rss(struct mm_struct *mm);
-#else
-static inline void sync_mm_rss(struct mm_struct *mm)
-{
-}
-#endif
+#अगर defined(SPLIT_RSS_COUNTING)
+व्योम sync_mm_rss(काष्ठा mm_काष्ठा *mm);
+#अन्यथा
+अटल अंतरभूत व्योम sync_mm_rss(काष्ठा mm_काष्ठा *mm)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef CONFIG_ARCH_HAS_PTE_SPECIAL
-static inline int pte_special(pte_t pte)
-{
-	return 0;
-}
+#अगर_अघोषित CONFIG_ARCH_HAS_PTE_SPECIAL
+अटल अंतरभूत पूर्णांक pte_special(pte_t pte)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline pte_t pte_mkspecial(pte_t pte)
-{
-	return pte;
-}
-#endif
+अटल अंतरभूत pte_t pte_mkspecial(pte_t pte)
+अणु
+	वापस pte;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef CONFIG_ARCH_HAS_PTE_DEVMAP
-static inline int pte_devmap(pte_t pte)
-{
-	return 0;
-}
-#endif
+#अगर_अघोषित CONFIG_ARCH_HAS_PTE_DEVMAP
+अटल अंतरभूत पूर्णांक pte_devmap(pte_t pte)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-int vma_wants_writenotify(struct vm_area_struct *vma, pgprot_t vm_page_prot);
+पूर्णांक vma_wants_ग_लिखोnotअगरy(काष्ठा vm_area_काष्ठा *vma, pgprot_t vm_page_prot);
 
-extern pte_t *__get_locked_pte(struct mm_struct *mm, unsigned long addr,
+बाह्य pte_t *__get_locked_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 			       spinlock_t **ptl);
-static inline pte_t *get_locked_pte(struct mm_struct *mm, unsigned long addr,
+अटल अंतरभूत pte_t *get_locked_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 				    spinlock_t **ptl)
-{
+अणु
 	pte_t *ptep;
 	__cond_lock(*ptl, ptep = __get_locked_pte(mm, addr, ptl));
-	return ptep;
-}
+	वापस ptep;
+पूर्ण
 
-#ifdef __PAGETABLE_P4D_FOLDED
-static inline int __p4d_alloc(struct mm_struct *mm, pgd_t *pgd,
-						unsigned long address)
-{
-	return 0;
-}
-#else
-int __p4d_alloc(struct mm_struct *mm, pgd_t *pgd, unsigned long address);
-#endif
+#अगर_घोषित __PAGETABLE_P4D_FOLDED
+अटल अंतरभूत पूर्णांक __p4d_alloc(काष्ठा mm_काष्ठा *mm, pgd_t *pgd,
+						अचिन्हित दीर्घ address)
+अणु
+	वापस 0;
+पूर्ण
+#अन्यथा
+पूर्णांक __p4d_alloc(काष्ठा mm_काष्ठा *mm, pgd_t *pgd, अचिन्हित दीर्घ address);
+#पूर्ण_अगर
 
-#if defined(__PAGETABLE_PUD_FOLDED) || !defined(CONFIG_MMU)
-static inline int __pud_alloc(struct mm_struct *mm, p4d_t *p4d,
-						unsigned long address)
-{
-	return 0;
-}
-static inline void mm_inc_nr_puds(struct mm_struct *mm) {}
-static inline void mm_dec_nr_puds(struct mm_struct *mm) {}
+#अगर defined(__PAGETABLE_PUD_FOLDED) || !defined(CONFIG_MMU)
+अटल अंतरभूत पूर्णांक __pud_alloc(काष्ठा mm_काष्ठा *mm, p4d_t *p4d,
+						अचिन्हित दीर्घ address)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम mm_inc_nr_puds(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
+अटल अंतरभूत व्योम mm_dec_nr_puds(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
 
-#else
-int __pud_alloc(struct mm_struct *mm, p4d_t *p4d, unsigned long address);
+#अन्यथा
+पूर्णांक __pud_alloc(काष्ठा mm_काष्ठा *mm, p4d_t *p4d, अचिन्हित दीर्घ address);
 
-static inline void mm_inc_nr_puds(struct mm_struct *mm)
-{
-	if (mm_pud_folded(mm))
-		return;
-	atomic_long_add(PTRS_PER_PUD * sizeof(pud_t), &mm->pgtables_bytes);
-}
+अटल अंतरभूत व्योम mm_inc_nr_puds(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mm_pud_folded(mm))
+		वापस;
+	atomic_दीर्घ_add(PTRS_PER_PUD * माप(pud_t), &mm->pgtables_bytes);
+पूर्ण
 
-static inline void mm_dec_nr_puds(struct mm_struct *mm)
-{
-	if (mm_pud_folded(mm))
-		return;
-	atomic_long_sub(PTRS_PER_PUD * sizeof(pud_t), &mm->pgtables_bytes);
-}
-#endif
+अटल अंतरभूत व्योम mm_dec_nr_puds(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mm_pud_folded(mm))
+		वापस;
+	atomic_दीर्घ_sub(PTRS_PER_PUD * माप(pud_t), &mm->pgtables_bytes);
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(__PAGETABLE_PMD_FOLDED) || !defined(CONFIG_MMU)
-static inline int __pmd_alloc(struct mm_struct *mm, pud_t *pud,
-						unsigned long address)
-{
-	return 0;
-}
+#अगर defined(__PAGETABLE_PMD_FOLDED) || !defined(CONFIG_MMU)
+अटल अंतरभूत पूर्णांक __pmd_alloc(काष्ठा mm_काष्ठा *mm, pud_t *pud,
+						अचिन्हित दीर्घ address)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mm_inc_nr_pmds(struct mm_struct *mm) {}
-static inline void mm_dec_nr_pmds(struct mm_struct *mm) {}
+अटल अंतरभूत व्योम mm_inc_nr_pmds(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
+अटल अंतरभूत व्योम mm_dec_nr_pmds(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
 
-#else
-int __pmd_alloc(struct mm_struct *mm, pud_t *pud, unsigned long address);
+#अन्यथा
+पूर्णांक __pmd_alloc(काष्ठा mm_काष्ठा *mm, pud_t *pud, अचिन्हित दीर्घ address);
 
-static inline void mm_inc_nr_pmds(struct mm_struct *mm)
-{
-	if (mm_pmd_folded(mm))
-		return;
-	atomic_long_add(PTRS_PER_PMD * sizeof(pmd_t), &mm->pgtables_bytes);
-}
+अटल अंतरभूत व्योम mm_inc_nr_pmds(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mm_pmd_folded(mm))
+		वापस;
+	atomic_दीर्घ_add(PTRS_PER_PMD * माप(pmd_t), &mm->pgtables_bytes);
+पूर्ण
 
-static inline void mm_dec_nr_pmds(struct mm_struct *mm)
-{
-	if (mm_pmd_folded(mm))
-		return;
-	atomic_long_sub(PTRS_PER_PMD * sizeof(pmd_t), &mm->pgtables_bytes);
-}
-#endif
+अटल अंतरभूत व्योम mm_dec_nr_pmds(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mm_pmd_folded(mm))
+		वापस;
+	atomic_दीर्घ_sub(PTRS_PER_PMD * माप(pmd_t), &mm->pgtables_bytes);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_MMU
-static inline void mm_pgtables_bytes_init(struct mm_struct *mm)
-{
-	atomic_long_set(&mm->pgtables_bytes, 0);
-}
+#अगर_घोषित CONFIG_MMU
+अटल अंतरभूत व्योम mm_pgtables_bytes_init(काष्ठा mm_काष्ठा *mm)
+अणु
+	atomic_दीर्घ_set(&mm->pgtables_bytes, 0);
+पूर्ण
 
-static inline unsigned long mm_pgtables_bytes(const struct mm_struct *mm)
-{
-	return atomic_long_read(&mm->pgtables_bytes);
-}
+अटल अंतरभूत अचिन्हित दीर्घ mm_pgtables_bytes(स्थिर काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस atomic_दीर्घ_पढ़ो(&mm->pgtables_bytes);
+पूर्ण
 
-static inline void mm_inc_nr_ptes(struct mm_struct *mm)
-{
-	atomic_long_add(PTRS_PER_PTE * sizeof(pte_t), &mm->pgtables_bytes);
-}
+अटल अंतरभूत व्योम mm_inc_nr_ptes(काष्ठा mm_काष्ठा *mm)
+अणु
+	atomic_दीर्घ_add(PTRS_PER_PTE * माप(pte_t), &mm->pgtables_bytes);
+पूर्ण
 
-static inline void mm_dec_nr_ptes(struct mm_struct *mm)
-{
-	atomic_long_sub(PTRS_PER_PTE * sizeof(pte_t), &mm->pgtables_bytes);
-}
-#else
+अटल अंतरभूत व्योम mm_dec_nr_ptes(काष्ठा mm_काष्ठा *mm)
+अणु
+	atomic_दीर्घ_sub(PTRS_PER_PTE * माप(pte_t), &mm->pgtables_bytes);
+पूर्ण
+#अन्यथा
 
-static inline void mm_pgtables_bytes_init(struct mm_struct *mm) {}
-static inline unsigned long mm_pgtables_bytes(const struct mm_struct *mm)
-{
-	return 0;
-}
+अटल अंतरभूत व्योम mm_pgtables_bytes_init(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
+अटल अंतरभूत अचिन्हित दीर्घ mm_pgtables_bytes(स्थिर काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mm_inc_nr_ptes(struct mm_struct *mm) {}
-static inline void mm_dec_nr_ptes(struct mm_struct *mm) {}
-#endif
+अटल अंतरभूत व्योम mm_inc_nr_ptes(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
+अटल अंतरभूत व्योम mm_dec_nr_ptes(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
+#पूर्ण_अगर
 
-int __pte_alloc(struct mm_struct *mm, pmd_t *pmd);
-int __pte_alloc_kernel(pmd_t *pmd);
+पूर्णांक __pte_alloc(काष्ठा mm_काष्ठा *mm, pmd_t *pmd);
+पूर्णांक __pte_alloc_kernel(pmd_t *pmd);
 
-#if defined(CONFIG_MMU)
+#अगर defined(CONFIG_MMU)
 
-static inline p4d_t *p4d_alloc(struct mm_struct *mm, pgd_t *pgd,
-		unsigned long address)
-{
-	return (unlikely(pgd_none(*pgd)) && __p4d_alloc(mm, pgd, address)) ?
-		NULL : p4d_offset(pgd, address);
-}
+अटल अंतरभूत p4d_t *p4d_alloc(काष्ठा mm_काष्ठा *mm, pgd_t *pgd,
+		अचिन्हित दीर्घ address)
+अणु
+	वापस (unlikely(pgd_none(*pgd)) && __p4d_alloc(mm, pgd, address)) ?
+		शून्य : p4d_offset(pgd, address);
+पूर्ण
 
-static inline pud_t *pud_alloc(struct mm_struct *mm, p4d_t *p4d,
-		unsigned long address)
-{
-	return (unlikely(p4d_none(*p4d)) && __pud_alloc(mm, p4d, address)) ?
-		NULL : pud_offset(p4d, address);
-}
+अटल अंतरभूत pud_t *pud_alloc(काष्ठा mm_काष्ठा *mm, p4d_t *p4d,
+		अचिन्हित दीर्घ address)
+अणु
+	वापस (unlikely(p4d_none(*p4d)) && __pud_alloc(mm, p4d, address)) ?
+		शून्य : pud_offset(p4d, address);
+पूर्ण
 
-static inline pmd_t *pmd_alloc(struct mm_struct *mm, pud_t *pud, unsigned long address)
-{
-	return (unlikely(pud_none(*pud)) && __pmd_alloc(mm, pud, address))?
-		NULL: pmd_offset(pud, address);
-}
-#endif /* CONFIG_MMU */
+अटल अंतरभूत pmd_t *pmd_alloc(काष्ठा mm_काष्ठा *mm, pud_t *pud, अचिन्हित दीर्घ address)
+अणु
+	वापस (unlikely(pud_none(*pud)) && __pmd_alloc(mm, pud, address))?
+		शून्य: pmd_offset(pud, address);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MMU */
 
-#if USE_SPLIT_PTE_PTLOCKS
-#if ALLOC_SPLIT_PTLOCKS
-void __init ptlock_cache_init(void);
-extern bool ptlock_alloc(struct page *page);
-extern void ptlock_free(struct page *page);
+#अगर USE_SPLIT_PTE_PTLOCKS
+#अगर ALLOC_SPLIT_PTLOCKS
+व्योम __init ptlock_cache_init(व्योम);
+बाह्य bool ptlock_alloc(काष्ठा page *page);
+बाह्य व्योम ptlock_मुक्त(काष्ठा page *page);
 
-static inline spinlock_t *ptlock_ptr(struct page *page)
-{
-	return page->ptl;
-}
-#else /* ALLOC_SPLIT_PTLOCKS */
-static inline void ptlock_cache_init(void)
-{
-}
+अटल अंतरभूत spinlock_t *ptlock_ptr(काष्ठा page *page)
+अणु
+	वापस page->ptl;
+पूर्ण
+#अन्यथा /* ALLOC_SPLIT_PTLOCKS */
+अटल अंतरभूत व्योम ptlock_cache_init(व्योम)
+अणु
+पूर्ण
 
-static inline bool ptlock_alloc(struct page *page)
-{
-	return true;
-}
+अटल अंतरभूत bool ptlock_alloc(काष्ठा page *page)
+अणु
+	वापस true;
+पूर्ण
 
-static inline void ptlock_free(struct page *page)
-{
-}
+अटल अंतरभूत व्योम ptlock_मुक्त(काष्ठा page *page)
+अणु
+पूर्ण
 
-static inline spinlock_t *ptlock_ptr(struct page *page)
-{
-	return &page->ptl;
-}
-#endif /* ALLOC_SPLIT_PTLOCKS */
+अटल अंतरभूत spinlock_t *ptlock_ptr(काष्ठा page *page)
+अणु
+	वापस &page->ptl;
+पूर्ण
+#पूर्ण_अगर /* ALLOC_SPLIT_PTLOCKS */
 
-static inline spinlock_t *pte_lockptr(struct mm_struct *mm, pmd_t *pmd)
-{
-	return ptlock_ptr(pmd_page(*pmd));
-}
+अटल अंतरभूत spinlock_t *pte_lockptr(काष्ठा mm_काष्ठा *mm, pmd_t *pmd)
+अणु
+	वापस ptlock_ptr(pmd_page(*pmd));
+पूर्ण
 
-static inline bool ptlock_init(struct page *page)
-{
+अटल अंतरभूत bool ptlock_init(काष्ठा page *page)
+अणु
 	/*
-	 * prep_new_page() initialize page->private (and therefore page->ptl)
+	 * prep_new_page() initialize page->निजी (and thereक्रमe page->ptl)
 	 * with 0. Make sure nobody took it in use in between.
 	 *
-	 * It can happen if arch try to use slab for page table allocation:
+	 * It can happen अगर arch try to use slab क्रम page table allocation:
 	 * slab code uses page->slab_cache, which share storage with page->ptl.
 	 */
-	VM_BUG_ON_PAGE(*(unsigned long *)&page->ptl, page);
-	if (!ptlock_alloc(page))
-		return false;
+	VM_BUG_ON_PAGE(*(अचिन्हित दीर्घ *)&page->ptl, page);
+	अगर (!ptlock_alloc(page))
+		वापस false;
 	spin_lock_init(ptlock_ptr(page));
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#else	/* !USE_SPLIT_PTE_PTLOCKS */
+#अन्यथा	/* !USE_SPLIT_PTE_PTLOCKS */
 /*
  * We use mm->page_table_lock to guard all pagetable pages of the mm.
  */
-static inline spinlock_t *pte_lockptr(struct mm_struct *mm, pmd_t *pmd)
-{
-	return &mm->page_table_lock;
-}
-static inline void ptlock_cache_init(void) {}
-static inline bool ptlock_init(struct page *page) { return true; }
-static inline void ptlock_free(struct page *page) {}
-#endif /* USE_SPLIT_PTE_PTLOCKS */
+अटल अंतरभूत spinlock_t *pte_lockptr(काष्ठा mm_काष्ठा *mm, pmd_t *pmd)
+अणु
+	वापस &mm->page_table_lock;
+पूर्ण
+अटल अंतरभूत व्योम ptlock_cache_init(व्योम) अणुपूर्ण
+अटल अंतरभूत bool ptlock_init(काष्ठा page *page) अणु वापस true; पूर्ण
+अटल अंतरभूत व्योम ptlock_मुक्त(काष्ठा page *page) अणुपूर्ण
+#पूर्ण_अगर /* USE_SPLIT_PTE_PTLOCKS */
 
-static inline void pgtable_init(void)
-{
+अटल अंतरभूत व्योम pgtable_init(व्योम)
+अणु
 	ptlock_cache_init();
 	pgtable_cache_init();
-}
+पूर्ण
 
-static inline bool pgtable_pte_page_ctor(struct page *page)
-{
-	if (!ptlock_init(page))
-		return false;
+अटल अंतरभूत bool pgtable_pte_page_ctor(काष्ठा page *page)
+अणु
+	अगर (!ptlock_init(page))
+		वापस false;
 	__SetPageTable(page);
 	inc_lruvec_page_state(page, NR_PAGETABLE);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline void pgtable_pte_page_dtor(struct page *page)
-{
-	ptlock_free(page);
+अटल अंतरभूत व्योम pgtable_pte_page_dtor(काष्ठा page *page)
+अणु
+	ptlock_मुक्त(page);
 	__ClearPageTable(page);
 	dec_lruvec_page_state(page, NR_PAGETABLE);
-}
+पूर्ण
 
-#define pte_offset_map_lock(mm, pmd, address, ptlp)	\
-({							\
+#घोषणा pte_offset_map_lock(mm, pmd, address, ptlp)	\
+(अणु							\
 	spinlock_t *__ptl = pte_lockptr(mm, pmd);	\
 	pte_t *__pte = pte_offset_map(pmd, address);	\
 	*(ptlp) = __ptl;				\
 	spin_lock(__ptl);				\
 	__pte;						\
-})
+पूर्ण)
 
-#define pte_unmap_unlock(pte, ptl)	do {		\
+#घोषणा pte_unmap_unlock(pte, ptl)	करो अणु		\
 	spin_unlock(ptl);				\
 	pte_unmap(pte);					\
-} while (0)
+पूर्ण जबतक (0)
 
-#define pte_alloc(mm, pmd) (unlikely(pmd_none(*(pmd))) && __pte_alloc(mm, pmd))
+#घोषणा pte_alloc(mm, pmd) (unlikely(pmd_none(*(pmd))) && __pte_alloc(mm, pmd))
 
-#define pte_alloc_map(mm, pmd, address)			\
-	(pte_alloc(mm, pmd) ? NULL : pte_offset_map(pmd, address))
+#घोषणा pte_alloc_map(mm, pmd, address)			\
+	(pte_alloc(mm, pmd) ? शून्य : pte_offset_map(pmd, address))
 
-#define pte_alloc_map_lock(mm, pmd, address, ptlp)	\
+#घोषणा pte_alloc_map_lock(mm, pmd, address, ptlp)	\
 	(pte_alloc(mm, pmd) ?			\
-		 NULL : pte_offset_map_lock(mm, pmd, address, ptlp))
+		 शून्य : pte_offset_map_lock(mm, pmd, address, ptlp))
 
-#define pte_alloc_kernel(pmd, address)			\
+#घोषणा pte_alloc_kernel(pmd, address)			\
 	((unlikely(pmd_none(*(pmd))) && __pte_alloc_kernel(pmd))? \
-		NULL: pte_offset_kernel(pmd, address))
+		शून्य: pte_offset_kernel(pmd, address))
 
-#if USE_SPLIT_PMD_PTLOCKS
+#अगर USE_SPLIT_PMD_PTLOCKS
 
-static struct page *pmd_to_page(pmd_t *pmd)
-{
-	unsigned long mask = ~(PTRS_PER_PMD * sizeof(pmd_t) - 1);
-	return virt_to_page((void *)((unsigned long) pmd & mask));
-}
+अटल काष्ठा page *pmd_to_page(pmd_t *pmd)
+अणु
+	अचिन्हित दीर्घ mask = ~(PTRS_PER_PMD * माप(pmd_t) - 1);
+	वापस virt_to_page((व्योम *)((अचिन्हित दीर्घ) pmd & mask));
+पूर्ण
 
-static inline spinlock_t *pmd_lockptr(struct mm_struct *mm, pmd_t *pmd)
-{
-	return ptlock_ptr(pmd_to_page(pmd));
-}
+अटल अंतरभूत spinlock_t *pmd_lockptr(काष्ठा mm_काष्ठा *mm, pmd_t *pmd)
+अणु
+	वापस ptlock_ptr(pmd_to_page(pmd));
+पूर्ण
 
-static inline bool pmd_ptlock_init(struct page *page)
-{
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-	page->pmd_huge_pte = NULL;
-#endif
-	return ptlock_init(page);
-}
+अटल अंतरभूत bool pmd_ptlock_init(काष्ठा page *page)
+अणु
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+	page->pmd_huge_pte = शून्य;
+#पूर्ण_अगर
+	वापस ptlock_init(page);
+पूर्ण
 
-static inline void pmd_ptlock_free(struct page *page)
-{
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+अटल अंतरभूत व्योम pmd_ptlock_मुक्त(काष्ठा page *page)
+अणु
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 	VM_BUG_ON_PAGE(page->pmd_huge_pte, page);
-#endif
-	ptlock_free(page);
-}
+#पूर्ण_अगर
+	ptlock_मुक्त(page);
+पूर्ण
 
-#define pmd_huge_pte(mm, pmd) (pmd_to_page(pmd)->pmd_huge_pte)
+#घोषणा pmd_huge_pte(mm, pmd) (pmd_to_page(pmd)->pmd_huge_pte)
 
-#else
+#अन्यथा
 
-static inline spinlock_t *pmd_lockptr(struct mm_struct *mm, pmd_t *pmd)
-{
-	return &mm->page_table_lock;
-}
+अटल अंतरभूत spinlock_t *pmd_lockptr(काष्ठा mm_काष्ठा *mm, pmd_t *pmd)
+अणु
+	वापस &mm->page_table_lock;
+पूर्ण
 
-static inline bool pmd_ptlock_init(struct page *page) { return true; }
-static inline void pmd_ptlock_free(struct page *page) {}
+अटल अंतरभूत bool pmd_ptlock_init(काष्ठा page *page) अणु वापस true; पूर्ण
+अटल अंतरभूत व्योम pmd_ptlock_मुक्त(काष्ठा page *page) अणुपूर्ण
 
-#define pmd_huge_pte(mm, pmd) ((mm)->pmd_huge_pte)
+#घोषणा pmd_huge_pte(mm, pmd) ((mm)->pmd_huge_pte)
 
-#endif
+#पूर्ण_अगर
 
-static inline spinlock_t *pmd_lock(struct mm_struct *mm, pmd_t *pmd)
-{
+अटल अंतरभूत spinlock_t *pmd_lock(काष्ठा mm_काष्ठा *mm, pmd_t *pmd)
+अणु
 	spinlock_t *ptl = pmd_lockptr(mm, pmd);
 	spin_lock(ptl);
-	return ptl;
-}
+	वापस ptl;
+पूर्ण
 
-static inline bool pgtable_pmd_page_ctor(struct page *page)
-{
-	if (!pmd_ptlock_init(page))
-		return false;
+अटल अंतरभूत bool pgtable_pmd_page_ctor(काष्ठा page *page)
+अणु
+	अगर (!pmd_ptlock_init(page))
+		वापस false;
 	__SetPageTable(page);
 	inc_lruvec_page_state(page, NR_PAGETABLE);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline void pgtable_pmd_page_dtor(struct page *page)
-{
-	pmd_ptlock_free(page);
+अटल अंतरभूत व्योम pgtable_pmd_page_dtor(काष्ठा page *page)
+अणु
+	pmd_ptlock_मुक्त(page);
 	__ClearPageTable(page);
 	dec_lruvec_page_state(page, NR_PAGETABLE);
-}
+पूर्ण
 
 /*
  * No scalability reason to split PUD locks yet, but follow the same pattern
- * as the PMD locks to make it easier if we decide to.  The VM should not be
- * considered ready to switch to split PUD locks yet; there may be places
+ * as the PMD locks to make it easier अगर we decide to.  The VM should not be
+ * considered पढ़ोy to चयन to split PUD locks yet; there may be places
  * which need to be converted from page_table_lock.
  */
-static inline spinlock_t *pud_lockptr(struct mm_struct *mm, pud_t *pud)
-{
-	return &mm->page_table_lock;
-}
+अटल अंतरभूत spinlock_t *pud_lockptr(काष्ठा mm_काष्ठा *mm, pud_t *pud)
+अणु
+	वापस &mm->page_table_lock;
+पूर्ण
 
-static inline spinlock_t *pud_lock(struct mm_struct *mm, pud_t *pud)
-{
+अटल अंतरभूत spinlock_t *pud_lock(काष्ठा mm_काष्ठा *mm, pud_t *pud)
+अणु
 	spinlock_t *ptl = pud_lockptr(mm, pud);
 
 	spin_lock(ptl);
-	return ptl;
-}
+	वापस ptl;
+पूर्ण
 
-extern void __init pagecache_init(void);
-extern void __init free_area_init_memoryless_node(int nid);
-extern void free_initmem(void);
+बाह्य व्योम __init pagecache_init(व्योम);
+बाह्य व्योम __init मुक्त_area_init_memoryless_node(पूर्णांक nid);
+बाह्य व्योम मुक्त_iniपंचांगem(व्योम);
 
 /*
  * Free reserved pages within range [PAGE_ALIGN(start), end & PAGE_MASK)
- * into the buddy system. The freed pages will be poisoned with pattern
- * "poison" if it's within range [0, UCHAR_MAX].
- * Return pages freed into the buddy system.
+ * पूर्णांकo the buddy प्रणाली. The मुक्तd pages will be poisoned with pattern
+ * "poison" अगर it's within range [0, अच_अक्षर_उच्च].
+ * Return pages मुक्तd पूर्णांकo the buddy प्रणाली.
  */
-extern unsigned long free_reserved_area(void *start, void *end,
-					int poison, const char *s);
+बाह्य अचिन्हित दीर्घ मुक्त_reserved_area(व्योम *start, व्योम *end,
+					पूर्णांक poison, स्थिर अक्षर *s);
 
-extern void adjust_managed_page_count(struct page *page, long count);
-extern void mem_init_print_info(void);
+बाह्य व्योम adjust_managed_page_count(काष्ठा page *page, दीर्घ count);
+बाह्य व्योम mem_init_prपूर्णांक_info(व्योम);
 
-extern void reserve_bootmem_region(phys_addr_t start, phys_addr_t end);
+बाह्य व्योम reserve_booपंचांगem_region(phys_addr_t start, phys_addr_t end);
 
-/* Free the reserved page into the buddy system, so it gets managed. */
-static inline void free_reserved_page(struct page *page)
-{
+/* Free the reserved page पूर्णांकo the buddy प्रणाली, so it माला_लो managed. */
+अटल अंतरभूत व्योम मुक्त_reserved_page(काष्ठा page *page)
+अणु
 	ClearPageReserved(page);
 	init_page_count(page);
-	__free_page(page);
+	__मुक्त_page(page);
 	adjust_managed_page_count(page, 1);
-}
-#define free_highmem_page(page) free_reserved_page(page)
+पूर्ण
+#घोषणा मुक्त_highmem_page(page) मुक्त_reserved_page(page)
 
-static inline void mark_page_reserved(struct page *page)
-{
+अटल अंतरभूत व्योम mark_page_reserved(काष्ठा page *page)
+अणु
 	SetPageReserved(page);
 	adjust_managed_page_count(page, -1);
-}
+पूर्ण
 
 /*
- * Default method to free all the __init memory into the buddy system.
- * The freed pages will be poisoned with pattern "poison" if it's within
- * range [0, UCHAR_MAX].
- * Return pages freed into the buddy system.
+ * Default method to मुक्त all the __init memory पूर्णांकo the buddy प्रणाली.
+ * The मुक्तd pages will be poisoned with pattern "poison" अगर it's within
+ * range [0, अच_अक्षर_उच्च].
+ * Return pages मुक्तd पूर्णांकo the buddy प्रणाली.
  */
-static inline unsigned long free_initmem_default(int poison)
-{
-	extern char __init_begin[], __init_end[];
+अटल अंतरभूत अचिन्हित दीर्घ मुक्त_iniपंचांगem_शेष(पूर्णांक poison)
+अणु
+	बाह्य अक्षर __init_begin[], __init_end[];
 
-	return free_reserved_area(&__init_begin, &__init_end,
+	वापस मुक्त_reserved_area(&__init_begin, &__init_end,
 				  poison, "unused kernel");
-}
+पूर्ण
 
-static inline unsigned long get_num_physpages(void)
-{
-	int nid;
-	unsigned long phys_pages = 0;
+अटल अंतरभूत अचिन्हित दीर्घ get_num_physpages(व्योम)
+अणु
+	पूर्णांक nid;
+	अचिन्हित दीर्घ phys_pages = 0;
 
-	for_each_online_node(nid)
+	क्रम_each_online_node(nid)
 		phys_pages += node_present_pages(nid);
 
-	return phys_pages;
-}
+	वापस phys_pages;
+पूर्ण
 
 /*
  * Using memblock node mappings, an architecture may initialise its
- * zones, allocate the backing mem_map and account for memory holes in an
+ * zones, allocate the backing mem_map and account क्रम memory holes in an
  * architecture independent manner.
  *
- * An architecture is expected to register range of page frames backed by
- * physical memory with memblock_add[_node]() before calling
- * free_area_init() passing in the PFN each zone ends at. At a basic
- * usage, an architecture is expected to do something like
+ * An architecture is expected to रेजिस्टर range of page frames backed by
+ * physical memory with memblock_add[_node]() beक्रमe calling
+ * मुक्त_area_init() passing in the PFN each zone ends at. At a basic
+ * usage, an architecture is expected to करो something like
  *
- * unsigned long max_zone_pfns[MAX_NR_ZONES] = {max_dma, max_normal_pfn,
- * 							 max_highmem_pfn};
- * for_each_valid_physical_page_range()
+ * अचिन्हित दीर्घ max_zone_pfns[MAX_NR_ZONES] = अणुmax_dma, max_normal_pfn,
+ * 							 max_highmem_pfnपूर्ण;
+ * क्रम_each_valid_physical_page_range()
  * 	memblock_add_node(base, size, nid)
- * free_area_init(max_zone_pfns);
+ * मुक्त_area_init(max_zone_pfns);
  */
-void free_area_init(unsigned long *max_zone_pfn);
-unsigned long node_map_pfn_alignment(void);
-unsigned long __absent_pages_in_range(int nid, unsigned long start_pfn,
-						unsigned long end_pfn);
-extern unsigned long absent_pages_in_range(unsigned long start_pfn,
-						unsigned long end_pfn);
-extern void get_pfn_range_for_nid(unsigned int nid,
-			unsigned long *start_pfn, unsigned long *end_pfn);
-extern unsigned long find_min_pfn_with_active_regions(void);
+व्योम मुक्त_area_init(अचिन्हित दीर्घ *max_zone_pfn);
+अचिन्हित दीर्घ node_map_pfn_alignment(व्योम);
+अचिन्हित दीर्घ __असलent_pages_in_range(पूर्णांक nid, अचिन्हित दीर्घ start_pfn,
+						अचिन्हित दीर्घ end_pfn);
+बाह्य अचिन्हित दीर्घ असलent_pages_in_range(अचिन्हित दीर्घ start_pfn,
+						अचिन्हित दीर्घ end_pfn);
+बाह्य व्योम get_pfn_range_क्रम_nid(अचिन्हित पूर्णांक nid,
+			अचिन्हित दीर्घ *start_pfn, अचिन्हित दीर्घ *end_pfn);
+बाह्य अचिन्हित दीर्घ find_min_pfn_with_active_regions(व्योम);
 
-#ifndef CONFIG_NEED_MULTIPLE_NODES
-static inline int early_pfn_to_nid(unsigned long pfn)
-{
-	return 0;
-}
-#else
+#अगर_अघोषित CONFIG_NEED_MULTIPLE_NODES
+अटल अंतरभूत पूर्णांक early_pfn_to_nid(अचिन्हित दीर्घ pfn)
+अणु
+	वापस 0;
+पूर्ण
+#अन्यथा
 /* please see mm/page_alloc.c */
-extern int __meminit early_pfn_to_nid(unsigned long pfn);
-#endif
+बाह्य पूर्णांक __meminit early_pfn_to_nid(अचिन्हित दीर्घ pfn);
+#पूर्ण_अगर
 
-extern void set_dma_reserve(unsigned long new_dma_reserve);
-extern void memmap_init_range(unsigned long, int, unsigned long,
-		unsigned long, unsigned long, enum meminit_context,
-		struct vmem_altmap *, int migratetype);
-extern void memmap_init_zone(struct zone *zone);
-extern void setup_per_zone_wmarks(void);
-extern int __meminit init_per_zone_wmark_min(void);
-extern void mem_init(void);
-extern void __init mmap_init(void);
-extern void show_mem(unsigned int flags, nodemask_t *nodemask);
-extern long si_mem_available(void);
-extern void si_meminfo(struct sysinfo * val);
-extern void si_meminfo_node(struct sysinfo *val, int nid);
-#ifdef __HAVE_ARCH_RESERVED_KERNEL_PAGES
-extern unsigned long arch_reserved_kernel_pages(void);
-#endif
+बाह्य व्योम set_dma_reserve(अचिन्हित दीर्घ new_dma_reserve);
+बाह्य व्योम memmap_init_range(अचिन्हित दीर्घ, पूर्णांक, अचिन्हित दीर्घ,
+		अचिन्हित दीर्घ, अचिन्हित दीर्घ, क्रमागत meminit_context,
+		काष्ठा vmem_alपंचांगap *, पूर्णांक migratetype);
+बाह्य व्योम memmap_init_zone(काष्ठा zone *zone);
+बाह्य व्योम setup_per_zone_wmarks(व्योम);
+बाह्य पूर्णांक __meminit init_per_zone_wmark_min(व्योम);
+बाह्य व्योम mem_init(व्योम);
+बाह्य व्योम __init mmap_init(व्योम);
+बाह्य व्योम show_mem(अचिन्हित पूर्णांक flags, nodemask_t *nodemask);
+बाह्य दीर्घ si_mem_available(व्योम);
+बाह्य व्योम si_meminfo(काष्ठा sysinfo * val);
+बाह्य व्योम si_meminfo_node(काष्ठा sysinfo *val, पूर्णांक nid);
+#अगर_घोषित __HAVE_ARCH_RESERVED_KERNEL_PAGES
+बाह्य अचिन्हित दीर्घ arch_reserved_kernel_pages(व्योम);
+#पूर्ण_अगर
 
-extern __printf(3, 4)
-void warn_alloc(gfp_t gfp_mask, nodemask_t *nodemask, const char *fmt, ...);
+बाह्य __म_लिखो(3, 4)
+व्योम warn_alloc(gfp_t gfp_mask, nodemask_t *nodemask, स्थिर अक्षर *fmt, ...);
 
-extern void setup_per_cpu_pageset(void);
+बाह्य व्योम setup_per_cpu_pageset(व्योम);
 
 /* page_alloc.c */
-extern int min_free_kbytes;
-extern int watermark_boost_factor;
-extern int watermark_scale_factor;
-extern bool arch_has_descending_max_zone_pfns(void);
+बाह्य पूर्णांक min_मुक्त_kbytes;
+बाह्य पूर्णांक watermark_boost_factor;
+बाह्य पूर्णांक watermark_scale_factor;
+बाह्य bool arch_has_descending_max_zone_pfns(व्योम);
 
 /* nommu.c */
-extern atomic_long_t mmap_pages_allocated;
-extern int nommu_shrink_inode_mappings(struct inode *, size_t, size_t);
+बाह्य atomic_दीर्घ_t mmap_pages_allocated;
+बाह्य पूर्णांक nommu_shrink_inode_mappings(काष्ठा inode *, माप_प्रकार, माप_प्रकार);
 
-/* interval_tree.c */
-void vma_interval_tree_insert(struct vm_area_struct *node,
-			      struct rb_root_cached *root);
-void vma_interval_tree_insert_after(struct vm_area_struct *node,
-				    struct vm_area_struct *prev,
-				    struct rb_root_cached *root);
-void vma_interval_tree_remove(struct vm_area_struct *node,
-			      struct rb_root_cached *root);
-struct vm_area_struct *vma_interval_tree_iter_first(struct rb_root_cached *root,
-				unsigned long start, unsigned long last);
-struct vm_area_struct *vma_interval_tree_iter_next(struct vm_area_struct *node,
-				unsigned long start, unsigned long last);
+/* पूर्णांकerval_tree.c */
+व्योम vma_पूर्णांकerval_tree_insert(काष्ठा vm_area_काष्ठा *node,
+			      काष्ठा rb_root_cached *root);
+व्योम vma_पूर्णांकerval_tree_insert_after(काष्ठा vm_area_काष्ठा *node,
+				    काष्ठा vm_area_काष्ठा *prev,
+				    काष्ठा rb_root_cached *root);
+व्योम vma_पूर्णांकerval_tree_हटाओ(काष्ठा vm_area_काष्ठा *node,
+			      काष्ठा rb_root_cached *root);
+काष्ठा vm_area_काष्ठा *vma_पूर्णांकerval_tree_iter_first(काष्ठा rb_root_cached *root,
+				अचिन्हित दीर्घ start, अचिन्हित दीर्घ last);
+काष्ठा vm_area_काष्ठा *vma_पूर्णांकerval_tree_iter_next(काष्ठा vm_area_काष्ठा *node,
+				अचिन्हित दीर्घ start, अचिन्हित दीर्घ last);
 
-#define vma_interval_tree_foreach(vma, root, start, last)		\
-	for (vma = vma_interval_tree_iter_first(root, start, last);	\
-	     vma; vma = vma_interval_tree_iter_next(vma, start, last))
+#घोषणा vma_पूर्णांकerval_tree_क्रमeach(vma, root, start, last)		\
+	क्रम (vma = vma_पूर्णांकerval_tree_iter_first(root, start, last);	\
+	     vma; vma = vma_पूर्णांकerval_tree_iter_next(vma, start, last))
 
-void anon_vma_interval_tree_insert(struct anon_vma_chain *node,
-				   struct rb_root_cached *root);
-void anon_vma_interval_tree_remove(struct anon_vma_chain *node,
-				   struct rb_root_cached *root);
-struct anon_vma_chain *
-anon_vma_interval_tree_iter_first(struct rb_root_cached *root,
-				  unsigned long start, unsigned long last);
-struct anon_vma_chain *anon_vma_interval_tree_iter_next(
-	struct anon_vma_chain *node, unsigned long start, unsigned long last);
-#ifdef CONFIG_DEBUG_VM_RB
-void anon_vma_interval_tree_verify(struct anon_vma_chain *node);
-#endif
+व्योम anon_vma_पूर्णांकerval_tree_insert(काष्ठा anon_vma_chain *node,
+				   काष्ठा rb_root_cached *root);
+व्योम anon_vma_पूर्णांकerval_tree_हटाओ(काष्ठा anon_vma_chain *node,
+				   काष्ठा rb_root_cached *root);
+काष्ठा anon_vma_chain *
+anon_vma_पूर्णांकerval_tree_iter_first(काष्ठा rb_root_cached *root,
+				  अचिन्हित दीर्घ start, अचिन्हित दीर्घ last);
+काष्ठा anon_vma_chain *anon_vma_पूर्णांकerval_tree_iter_next(
+	काष्ठा anon_vma_chain *node, अचिन्हित दीर्घ start, अचिन्हित दीर्घ last);
+#अगर_घोषित CONFIG_DEBUG_VM_RB
+व्योम anon_vma_पूर्णांकerval_tree_verअगरy(काष्ठा anon_vma_chain *node);
+#पूर्ण_अगर
 
-#define anon_vma_interval_tree_foreach(avc, root, start, last)		 \
-	for (avc = anon_vma_interval_tree_iter_first(root, start, last); \
-	     avc; avc = anon_vma_interval_tree_iter_next(avc, start, last))
+#घोषणा anon_vma_पूर्णांकerval_tree_क्रमeach(avc, root, start, last)		 \
+	क्रम (avc = anon_vma_पूर्णांकerval_tree_iter_first(root, start, last); \
+	     avc; avc = anon_vma_पूर्णांकerval_tree_iter_next(avc, start, last))
 
 /* mmap.c */
-extern int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin);
-extern int __vma_adjust(struct vm_area_struct *vma, unsigned long start,
-	unsigned long end, pgoff_t pgoff, struct vm_area_struct *insert,
-	struct vm_area_struct *expand);
-static inline int vma_adjust(struct vm_area_struct *vma, unsigned long start,
-	unsigned long end, pgoff_t pgoff, struct vm_area_struct *insert)
-{
-	return __vma_adjust(vma, start, end, pgoff, insert, NULL);
-}
-extern struct vm_area_struct *vma_merge(struct mm_struct *,
-	struct vm_area_struct *prev, unsigned long addr, unsigned long end,
-	unsigned long vm_flags, struct anon_vma *, struct file *, pgoff_t,
-	struct mempolicy *, struct vm_userfaultfd_ctx);
-extern struct anon_vma *find_mergeable_anon_vma(struct vm_area_struct *);
-extern int __split_vma(struct mm_struct *, struct vm_area_struct *,
-	unsigned long addr, int new_below);
-extern int split_vma(struct mm_struct *, struct vm_area_struct *,
-	unsigned long addr, int new_below);
-extern int insert_vm_struct(struct mm_struct *, struct vm_area_struct *);
-extern void __vma_link_rb(struct mm_struct *, struct vm_area_struct *,
-	struct rb_node **, struct rb_node *);
-extern void unlink_file_vma(struct vm_area_struct *);
-extern struct vm_area_struct *copy_vma(struct vm_area_struct **,
-	unsigned long addr, unsigned long len, pgoff_t pgoff,
+बाह्य पूर्णांक __vm_enough_memory(काष्ठा mm_काष्ठा *mm, दीर्घ pages, पूर्णांक cap_sys_admin);
+बाह्य पूर्णांक __vma_adjust(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+	अचिन्हित दीर्घ end, pgoff_t pgoff, काष्ठा vm_area_काष्ठा *insert,
+	काष्ठा vm_area_काष्ठा *expand);
+अटल अंतरभूत पूर्णांक vma_adjust(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+	अचिन्हित दीर्घ end, pgoff_t pgoff, काष्ठा vm_area_काष्ठा *insert)
+अणु
+	वापस __vma_adjust(vma, start, end, pgoff, insert, शून्य);
+पूर्ण
+बाह्य काष्ठा vm_area_काष्ठा *vma_merge(काष्ठा mm_काष्ठा *,
+	काष्ठा vm_area_काष्ठा *prev, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+	अचिन्हित दीर्घ vm_flags, काष्ठा anon_vma *, काष्ठा file *, pgoff_t,
+	काष्ठा mempolicy *, काष्ठा vm_userfaultfd_ctx);
+बाह्य काष्ठा anon_vma *find_mergeable_anon_vma(काष्ठा vm_area_काष्ठा *);
+बाह्य पूर्णांक __split_vma(काष्ठा mm_काष्ठा *, काष्ठा vm_area_काष्ठा *,
+	अचिन्हित दीर्घ addr, पूर्णांक new_below);
+बाह्य पूर्णांक split_vma(काष्ठा mm_काष्ठा *, काष्ठा vm_area_काष्ठा *,
+	अचिन्हित दीर्घ addr, पूर्णांक new_below);
+बाह्य पूर्णांक insert_vm_काष्ठा(काष्ठा mm_काष्ठा *, काष्ठा vm_area_काष्ठा *);
+बाह्य व्योम __vma_link_rb(काष्ठा mm_काष्ठा *, काष्ठा vm_area_काष्ठा *,
+	काष्ठा rb_node **, काष्ठा rb_node *);
+बाह्य व्योम unlink_file_vma(काष्ठा vm_area_काष्ठा *);
+बाह्य काष्ठा vm_area_काष्ठा *copy_vma(काष्ठा vm_area_काष्ठा **,
+	अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len, pgoff_t pgoff,
 	bool *need_rmap_locks);
-extern void exit_mmap(struct mm_struct *);
+बाह्य व्योम निकास_mmap(काष्ठा mm_काष्ठा *);
 
-static inline int check_data_rlimit(unsigned long rlim,
-				    unsigned long new,
-				    unsigned long start,
-				    unsigned long end_data,
-				    unsigned long start_data)
-{
-	if (rlim < RLIM_INFINITY) {
-		if (((new - start) + (end_data - start_data)) > rlim)
-			return -ENOSPC;
-	}
+अटल अंतरभूत पूर्णांक check_data_rlimit(अचिन्हित दीर्घ rlim,
+				    अचिन्हित दीर्घ new,
+				    अचिन्हित दीर्घ start,
+				    अचिन्हित दीर्घ end_data,
+				    अचिन्हित दीर्घ start_data)
+अणु
+	अगर (rlim < RLIM_अनन्त) अणु
+		अगर (((new - start) + (end_data - start_data)) > rlim)
+			वापस -ENOSPC;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-extern int mm_take_all_locks(struct mm_struct *mm);
-extern void mm_drop_all_locks(struct mm_struct *mm);
+बाह्य पूर्णांक mm_take_all_locks(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम mm_drop_all_locks(काष्ठा mm_काष्ठा *mm);
 
-extern void set_mm_exe_file(struct mm_struct *mm, struct file *new_exe_file);
-extern struct file *get_mm_exe_file(struct mm_struct *mm);
-extern struct file *get_task_exe_file(struct task_struct *task);
+बाह्य व्योम set_mm_exe_file(काष्ठा mm_काष्ठा *mm, काष्ठा file *new_exe_file);
+बाह्य काष्ठा file *get_mm_exe_file(काष्ठा mm_काष्ठा *mm);
+बाह्य काष्ठा file *get_task_exe_file(काष्ठा task_काष्ठा *task);
 
-extern bool may_expand_vm(struct mm_struct *, vm_flags_t, unsigned long npages);
-extern void vm_stat_account(struct mm_struct *, vm_flags_t, long npages);
+बाह्य bool may_expand_vm(काष्ठा mm_काष्ठा *, vm_flags_t, अचिन्हित दीर्घ npages);
+बाह्य व्योम vm_stat_account(काष्ठा mm_काष्ठा *, vm_flags_t, दीर्घ npages);
 
-extern bool vma_is_special_mapping(const struct vm_area_struct *vma,
-				   const struct vm_special_mapping *sm);
-extern struct vm_area_struct *_install_special_mapping(struct mm_struct *mm,
-				   unsigned long addr, unsigned long len,
-				   unsigned long flags,
-				   const struct vm_special_mapping *spec);
+बाह्य bool vma_is_special_mapping(स्थिर काष्ठा vm_area_काष्ठा *vma,
+				   स्थिर काष्ठा vm_special_mapping *sm);
+बाह्य काष्ठा vm_area_काष्ठा *_install_special_mapping(काष्ठा mm_काष्ठा *mm,
+				   अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+				   अचिन्हित दीर्घ flags,
+				   स्थिर काष्ठा vm_special_mapping *spec);
 /* This is an obsolete alternative to _install_special_mapping. */
-extern int install_special_mapping(struct mm_struct *mm,
-				   unsigned long addr, unsigned long len,
-				   unsigned long flags, struct page **pages);
+बाह्य पूर्णांक install_special_mapping(काष्ठा mm_काष्ठा *mm,
+				   अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+				   अचिन्हित दीर्घ flags, काष्ठा page **pages);
 
-unsigned long randomize_stack_top(unsigned long stack_top);
+अचिन्हित दीर्घ अक्रमomize_stack_top(अचिन्हित दीर्घ stack_top);
 
-extern unsigned long get_unmapped_area(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
+बाह्य अचिन्हित दीर्घ get_unmapped_area(काष्ठा file *, अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
 
-extern unsigned long mmap_region(struct file *file, unsigned long addr,
-	unsigned long len, vm_flags_t vm_flags, unsigned long pgoff,
-	struct list_head *uf);
-extern unsigned long do_mmap(struct file *file, unsigned long addr,
-	unsigned long len, unsigned long prot, unsigned long flags,
-	unsigned long pgoff, unsigned long *populate, struct list_head *uf);
-extern int __do_munmap(struct mm_struct *, unsigned long, size_t,
-		       struct list_head *uf, bool downgrade);
-extern int do_munmap(struct mm_struct *, unsigned long, size_t,
-		     struct list_head *uf);
-extern int do_madvise(struct mm_struct *mm, unsigned long start, size_t len_in, int behavior);
+बाह्य अचिन्हित दीर्घ mmap_region(काष्ठा file *file, अचिन्हित दीर्घ addr,
+	अचिन्हित दीर्घ len, vm_flags_t vm_flags, अचिन्हित दीर्घ pgoff,
+	काष्ठा list_head *uf);
+बाह्य अचिन्हित दीर्घ करो_mmap(काष्ठा file *file, अचिन्हित दीर्घ addr,
+	अचिन्हित दीर्घ len, अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
+	अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ *populate, काष्ठा list_head *uf);
+बाह्य पूर्णांक __करो_munmap(काष्ठा mm_काष्ठा *, अचिन्हित दीर्घ, माप_प्रकार,
+		       काष्ठा list_head *uf, bool करोwngrade);
+बाह्य पूर्णांक करो_munmap(काष्ठा mm_काष्ठा *, अचिन्हित दीर्घ, माप_प्रकार,
+		     काष्ठा list_head *uf);
+बाह्य पूर्णांक करो_madvise(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start, माप_प्रकार len_in, पूर्णांक behavior);
 
-#ifdef CONFIG_MMU
-extern int __mm_populate(unsigned long addr, unsigned long len,
-			 int ignore_errors);
-static inline void mm_populate(unsigned long addr, unsigned long len)
-{
+#अगर_घोषित CONFIG_MMU
+बाह्य पूर्णांक __mm_populate(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+			 पूर्णांक ignore_errors);
+अटल अंतरभूत व्योम mm_populate(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len)
+अणु
 	/* Ignore errors */
-	(void) __mm_populate(addr, len, 1);
-}
-#else
-static inline void mm_populate(unsigned long addr, unsigned long len) {}
-#endif
+	(व्योम) __mm_populate(addr, len, 1);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम mm_populate(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len) अणुपूर्ण
+#पूर्ण_अगर
 
 /* These take the mm semaphore themselves */
-extern int __must_check vm_brk(unsigned long, unsigned long);
-extern int __must_check vm_brk_flags(unsigned long, unsigned long, unsigned long);
-extern int vm_munmap(unsigned long, size_t);
-extern unsigned long __must_check vm_mmap(struct file *, unsigned long,
-        unsigned long, unsigned long,
-        unsigned long, unsigned long);
+बाह्य पूर्णांक __must_check vm_brk(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+बाह्य पूर्णांक __must_check vm_brk_flags(अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+बाह्य पूर्णांक vm_munmap(अचिन्हित दीर्घ, माप_प्रकार);
+बाह्य अचिन्हित दीर्घ __must_check vm_mmap(काष्ठा file *, अचिन्हित दीर्घ,
+        अचिन्हित दीर्घ, अचिन्हित दीर्घ,
+        अचिन्हित दीर्घ, अचिन्हित दीर्घ);
 
-struct vm_unmapped_area_info {
-#define VM_UNMAPPED_AREA_TOPDOWN 1
-	unsigned long flags;
-	unsigned long length;
-	unsigned long low_limit;
-	unsigned long high_limit;
-	unsigned long align_mask;
-	unsigned long align_offset;
-};
+काष्ठा vm_unmapped_area_info अणु
+#घोषणा VM_UNMAPPED_AREA_TOPDOWN 1
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ length;
+	अचिन्हित दीर्घ low_limit;
+	अचिन्हित दीर्घ high_limit;
+	अचिन्हित दीर्घ align_mask;
+	अचिन्हित दीर्घ align_offset;
+पूर्ण;
 
-extern unsigned long vm_unmapped_area(struct vm_unmapped_area_info *info);
+बाह्य अचिन्हित दीर्घ vm_unmapped_area(काष्ठा vm_unmapped_area_info *info);
 
 /* truncate.c */
-extern void truncate_inode_pages(struct address_space *, loff_t);
-extern void truncate_inode_pages_range(struct address_space *,
+बाह्य व्योम truncate_inode_pages(काष्ठा address_space *, loff_t);
+बाह्य व्योम truncate_inode_pages_range(काष्ठा address_space *,
 				       loff_t lstart, loff_t lend);
-extern void truncate_inode_pages_final(struct address_space *);
+बाह्य व्योम truncate_inode_pages_final(काष्ठा address_space *);
 
-/* generic vm_area_ops exported for stackable file systems */
-extern vm_fault_t filemap_fault(struct vm_fault *vmf);
-extern vm_fault_t filemap_map_pages(struct vm_fault *vmf,
+/* generic vm_area_ops exported क्रम stackable file प्रणालीs */
+बाह्य vm_fault_t filemap_fault(काष्ठा vm_fault *vmf);
+बाह्य vm_fault_t filemap_map_pages(काष्ठा vm_fault *vmf,
 		pgoff_t start_pgoff, pgoff_t end_pgoff);
-extern vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf);
+बाह्य vm_fault_t filemap_page_mkग_लिखो(काष्ठा vm_fault *vmf);
 
-/* mm/page-writeback.c */
-int __must_check write_one_page(struct page *page);
-void task_dirty_inc(struct task_struct *tsk);
+/* mm/page-ग_लिखोback.c */
+पूर्णांक __must_check ग_लिखो_one_page(काष्ठा page *page);
+व्योम task_dirty_inc(काष्ठा task_काष्ठा *tsk);
 
-extern unsigned long stack_guard_gap;
-/* Generic expand stack which grows the stack according to GROWS{UP,DOWN} */
-extern int expand_stack(struct vm_area_struct *vma, unsigned long address);
+बाह्य अचिन्हित दीर्घ stack_guard_gap;
+/* Generic expand stack which grows the stack according to GROWSअणुUP,DOWNपूर्ण */
+बाह्य पूर्णांक expand_stack(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address);
 
-/* CONFIG_STACK_GROWSUP still needs to grow downwards at some places */
-extern int expand_downwards(struct vm_area_struct *vma,
-		unsigned long address);
-#if VM_GROWSUP
-extern int expand_upwards(struct vm_area_struct *vma, unsigned long address);
-#else
-  #define expand_upwards(vma, address) (0)
-#endif
+/* CONFIG_STACK_GROWSUP still needs to grow करोwnwards at some places */
+बाह्य पूर्णांक expand_करोwnwards(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ address);
+#अगर VM_GROWSUP
+बाह्य पूर्णांक expand_upwards(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address);
+#अन्यथा
+  #घोषणा expand_upwards(vma, address) (0)
+#पूर्ण_अगर
 
-/* Look up the first VMA which satisfies  addr < vm_end,  NULL if none. */
-extern struct vm_area_struct * find_vma(struct mm_struct * mm, unsigned long addr);
-extern struct vm_area_struct * find_vma_prev(struct mm_struct * mm, unsigned long addr,
-					     struct vm_area_struct **pprev);
+/* Look up the first VMA which satisfies  addr < vm_end,  शून्य अगर none. */
+बाह्य काष्ठा vm_area_काष्ठा * find_vma(काष्ठा mm_काष्ठा * mm, अचिन्हित दीर्घ addr);
+बाह्य काष्ठा vm_area_काष्ठा * find_vma_prev(काष्ठा mm_काष्ठा * mm, अचिन्हित दीर्घ addr,
+					     काष्ठा vm_area_काष्ठा **pprev);
 
-/* Look up the first VMA which intersects the interval start_addr..end_addr-1,
-   NULL if none.  Assume start_addr < end_addr. */
-static inline struct vm_area_struct * find_vma_intersection(struct mm_struct * mm, unsigned long start_addr, unsigned long end_addr)
-{
-	struct vm_area_struct * vma = find_vma(mm,start_addr);
+/* Look up the first VMA which पूर्णांकersects the पूर्णांकerval start_addr..end_addr-1,
+   शून्य अगर none.  Assume start_addr < end_addr. */
+अटल अंतरभूत काष्ठा vm_area_काष्ठा * find_vma_पूर्णांकersection(काष्ठा mm_काष्ठा * mm, अचिन्हित दीर्घ start_addr, अचिन्हित दीर्घ end_addr)
+अणु
+	काष्ठा vm_area_काष्ठा * vma = find_vma(mm,start_addr);
 
-	if (vma && end_addr <= vma->vm_start)
-		vma = NULL;
-	return vma;
-}
+	अगर (vma && end_addr <= vma->vm_start)
+		vma = शून्य;
+	वापस vma;
+पूर्ण
 
-static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
-{
-	unsigned long vm_start = vma->vm_start;
+अटल अंतरभूत अचिन्हित दीर्घ vm_start_gap(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अचिन्हित दीर्घ vm_start = vma->vm_start;
 
-	if (vma->vm_flags & VM_GROWSDOWN) {
+	अगर (vma->vm_flags & VM_GROWSDOWN) अणु
 		vm_start -= stack_guard_gap;
-		if (vm_start > vma->vm_start)
+		अगर (vm_start > vma->vm_start)
 			vm_start = 0;
-	}
-	return vm_start;
-}
+	पूर्ण
+	वापस vm_start;
+पूर्ण
 
-static inline unsigned long vm_end_gap(struct vm_area_struct *vma)
-{
-	unsigned long vm_end = vma->vm_end;
+अटल अंतरभूत अचिन्हित दीर्घ vm_end_gap(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अचिन्हित दीर्घ vm_end = vma->vm_end;
 
-	if (vma->vm_flags & VM_GROWSUP) {
+	अगर (vma->vm_flags & VM_GROWSUP) अणु
 		vm_end += stack_guard_gap;
-		if (vm_end < vma->vm_end)
+		अगर (vm_end < vma->vm_end)
 			vm_end = -PAGE_SIZE;
-	}
-	return vm_end;
-}
+	पूर्ण
+	वापस vm_end;
+पूर्ण
 
-static inline unsigned long vma_pages(struct vm_area_struct *vma)
-{
-	return (vma->vm_end - vma->vm_start) >> PAGE_SHIFT;
-}
+अटल अंतरभूत अचिन्हित दीर्घ vma_pages(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस (vma->vm_end - vma->vm_start) >> PAGE_SHIFT;
+पूर्ण
 
-/* Look up the first VMA which exactly match the interval vm_start ... vm_end */
-static inline struct vm_area_struct *find_exact_vma(struct mm_struct *mm,
-				unsigned long vm_start, unsigned long vm_end)
-{
-	struct vm_area_struct *vma = find_vma(mm, vm_start);
+/* Look up the first VMA which exactly match the पूर्णांकerval vm_start ... vm_end */
+अटल अंतरभूत काष्ठा vm_area_काष्ठा *find_exact_vma(काष्ठा mm_काष्ठा *mm,
+				अचिन्हित दीर्घ vm_start, अचिन्हित दीर्घ vm_end)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = find_vma(mm, vm_start);
 
-	if (vma && (vma->vm_start != vm_start || vma->vm_end != vm_end))
-		vma = NULL;
+	अगर (vma && (vma->vm_start != vm_start || vma->vm_end != vm_end))
+		vma = शून्य;
 
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-static inline bool range_in_vma(struct vm_area_struct *vma,
-				unsigned long start, unsigned long end)
-{
-	return (vma && vma->vm_start <= start && end <= vma->vm_end);
-}
+अटल अंतरभूत bool range_in_vma(काष्ठा vm_area_काष्ठा *vma,
+				अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	वापस (vma && vma->vm_start <= start && end <= vma->vm_end);
+पूर्ण
 
-#ifdef CONFIG_MMU
-pgprot_t vm_get_page_prot(unsigned long vm_flags);
-void vma_set_page_prot(struct vm_area_struct *vma);
-#else
-static inline pgprot_t vm_get_page_prot(unsigned long vm_flags)
-{
-	return __pgprot(0);
-}
-static inline void vma_set_page_prot(struct vm_area_struct *vma)
-{
+#अगर_घोषित CONFIG_MMU
+pgprot_t vm_get_page_prot(अचिन्हित दीर्घ vm_flags);
+व्योम vma_set_page_prot(काष्ठा vm_area_काष्ठा *vma);
+#अन्यथा
+अटल अंतरभूत pgprot_t vm_get_page_prot(अचिन्हित दीर्घ vm_flags)
+अणु
+	वापस __pgprot(0);
+पूर्ण
+अटल अंतरभूत व्योम vma_set_page_prot(काष्ठा vm_area_काष्ठा *vma)
+अणु
 	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void vma_set_file(struct vm_area_struct *vma, struct file *file);
+व्योम vma_set_file(काष्ठा vm_area_काष्ठा *vma, काष्ठा file *file);
 
-#ifdef CONFIG_NUMA_BALANCING
-unsigned long change_prot_numa(struct vm_area_struct *vma,
-			unsigned long start, unsigned long end);
-#endif
+#अगर_घोषित CONFIG_NUMA_BALANCING
+अचिन्हित दीर्घ change_prot_numa(काष्ठा vm_area_काष्ठा *vma,
+			अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+#पूर्ण_अगर
 
-struct vm_area_struct *find_extend_vma(struct mm_struct *, unsigned long addr);
-int remap_pfn_range(struct vm_area_struct *, unsigned long addr,
-			unsigned long pfn, unsigned long size, pgprot_t);
-int remap_pfn_range_notrack(struct vm_area_struct *vma, unsigned long addr,
-		unsigned long pfn, unsigned long size, pgprot_t prot);
-int vm_insert_page(struct vm_area_struct *, unsigned long addr, struct page *);
-int vm_insert_pages(struct vm_area_struct *vma, unsigned long addr,
-			struct page **pages, unsigned long *num);
-int vm_map_pages(struct vm_area_struct *vma, struct page **pages,
-				unsigned long num);
-int vm_map_pages_zero(struct vm_area_struct *vma, struct page **pages,
-				unsigned long num);
-vm_fault_t vmf_insert_pfn(struct vm_area_struct *vma, unsigned long addr,
-			unsigned long pfn);
-vm_fault_t vmf_insert_pfn_prot(struct vm_area_struct *vma, unsigned long addr,
-			unsigned long pfn, pgprot_t pgprot);
-vm_fault_t vmf_insert_mixed(struct vm_area_struct *vma, unsigned long addr,
+काष्ठा vm_area_काष्ठा *find_extend_vma(काष्ठा mm_काष्ठा *, अचिन्हित दीर्घ addr);
+पूर्णांक remap_pfn_range(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ addr,
+			अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ size, pgprot_t);
+पूर्णांक remap_pfn_range_notrack(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+		अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ size, pgprot_t prot);
+पूर्णांक vm_insert_page(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ addr, काष्ठा page *);
+पूर्णांक vm_insert_pages(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+			काष्ठा page **pages, अचिन्हित दीर्घ *num);
+पूर्णांक vm_map_pages(काष्ठा vm_area_काष्ठा *vma, काष्ठा page **pages,
+				अचिन्हित दीर्घ num);
+पूर्णांक vm_map_pages_zero(काष्ठा vm_area_काष्ठा *vma, काष्ठा page **pages,
+				अचिन्हित दीर्घ num);
+vm_fault_t vmf_insert_pfn(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+			अचिन्हित दीर्घ pfn);
+vm_fault_t vmf_insert_pfn_prot(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+			अचिन्हित दीर्घ pfn, pgprot_t pgprot);
+vm_fault_t vmf_insert_mixed(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
 			pfn_t pfn);
-vm_fault_t vmf_insert_mixed_prot(struct vm_area_struct *vma, unsigned long addr,
+vm_fault_t vmf_insert_mixed_prot(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
 			pfn_t pfn, pgprot_t pgprot);
-vm_fault_t vmf_insert_mixed_mkwrite(struct vm_area_struct *vma,
-		unsigned long addr, pfn_t pfn);
-int vm_iomap_memory(struct vm_area_struct *vma, phys_addr_t start, unsigned long len);
+vm_fault_t vmf_insert_mixed_mkग_लिखो(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ addr, pfn_t pfn);
+पूर्णांक vm_iomap_memory(काष्ठा vm_area_काष्ठा *vma, phys_addr_t start, अचिन्हित दीर्घ len);
 
-static inline vm_fault_t vmf_insert_page(struct vm_area_struct *vma,
-				unsigned long addr, struct page *page)
-{
-	int err = vm_insert_page(vma, addr, page);
+अटल अंतरभूत vm_fault_t vmf_insert_page(काष्ठा vm_area_काष्ठा *vma,
+				अचिन्हित दीर्घ addr, काष्ठा page *page)
+अणु
+	पूर्णांक err = vm_insert_page(vma, addr, page);
 
-	if (err == -ENOMEM)
-		return VM_FAULT_OOM;
-	if (err < 0 && err != -EBUSY)
-		return VM_FAULT_SIGBUS;
+	अगर (err == -ENOMEM)
+		वापस VM_FAULT_OOM;
+	अगर (err < 0 && err != -EBUSY)
+		वापस VM_FAULT_SIGBUS;
 
-	return VM_FAULT_NOPAGE;
-}
+	वापस VM_FAULT_NOPAGE;
+पूर्ण
 
-#ifndef io_remap_pfn_range
-static inline int io_remap_pfn_range(struct vm_area_struct *vma,
-				     unsigned long addr, unsigned long pfn,
-				     unsigned long size, pgprot_t prot)
-{
-	return remap_pfn_range(vma, addr, pfn, size, pgprot_decrypted(prot));
-}
-#endif
+#अगर_अघोषित io_remap_pfn_range
+अटल अंतरभूत पूर्णांक io_remap_pfn_range(काष्ठा vm_area_काष्ठा *vma,
+				     अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pfn,
+				     अचिन्हित दीर्घ size, pgprot_t prot)
+अणु
+	वापस remap_pfn_range(vma, addr, pfn, size, pgprot_decrypted(prot));
+पूर्ण
+#पूर्ण_अगर
 
-static inline vm_fault_t vmf_error(int err)
-{
-	if (err == -ENOMEM)
-		return VM_FAULT_OOM;
-	return VM_FAULT_SIGBUS;
-}
+अटल अंतरभूत vm_fault_t vmf_error(पूर्णांक err)
+अणु
+	अगर (err == -ENOMEM)
+		वापस VM_FAULT_OOM;
+	वापस VM_FAULT_SIGBUS;
+पूर्ण
 
-struct page *follow_page(struct vm_area_struct *vma, unsigned long address,
-			 unsigned int foll_flags);
+काष्ठा page *follow_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+			 अचिन्हित पूर्णांक foll_flags);
 
-#define FOLL_WRITE	0x01	/* check pte is writable */
-#define FOLL_TOUCH	0x02	/* mark page accessed */
-#define FOLL_GET	0x04	/* do get_page on page */
-#define FOLL_DUMP	0x08	/* give error on hole if it would be zero */
-#define FOLL_FORCE	0x10	/* get_user_pages read/write w/o permission */
-#define FOLL_NOWAIT	0x20	/* if a disk transfer is needed, start the IO
-				 * and return without waiting upon it */
-#define FOLL_POPULATE	0x40	/* fault in page */
-#define FOLL_HWPOISON	0x100	/* check page is hwpoisoned */
-#define FOLL_NUMA	0x200	/* force NUMA hinting page fault */
-#define FOLL_MIGRATION	0x400	/* wait for page to replace migration entry */
-#define FOLL_TRIED	0x800	/* a retry, previous pass started an IO */
-#define FOLL_MLOCK	0x1000	/* lock present pages */
-#define FOLL_REMOTE	0x2000	/* we are working on non-current tsk/mm */
-#define FOLL_COW	0x4000	/* internal GUP flag */
-#define FOLL_ANON	0x8000	/* don't do file mappings */
-#define FOLL_LONGTERM	0x10000	/* mapping lifetime is indefinite: see below */
-#define FOLL_SPLIT_PMD	0x20000	/* split huge pmd before returning */
-#define FOLL_PIN	0x40000	/* pages must be released via unpin_user_page */
-#define FOLL_FAST_ONLY	0x80000	/* gup_fast: prevent fall-back to slow gup */
+#घोषणा FOLL_WRITE	0x01	/* check pte is writable */
+#घोषणा FOLL_TOUCH	0x02	/* mark page accessed */
+#घोषणा FOLL_GET	0x04	/* करो get_page on page */
+#घोषणा FOLL_DUMP	0x08	/* give error on hole अगर it would be zero */
+#घोषणा FOLL_FORCE	0x10	/* get_user_pages पढ़ो/ग_लिखो w/o permission */
+#घोषणा FOLL_NOWAIT	0x20	/* अगर a disk transfer is needed, start the IO
+				 * and वापस without रुकोing upon it */
+#घोषणा FOLL_POPULATE	0x40	/* fault in page */
+#घोषणा FOLL_HWPOISON	0x100	/* check page is hwpoisoned */
+#घोषणा FOLL_NUMA	0x200	/* क्रमce NUMA hपूर्णांकing page fault */
+#घोषणा FOLL_MIGRATION	0x400	/* रुको क्रम page to replace migration entry */
+#घोषणा FOLL_TRIED	0x800	/* a retry, previous pass started an IO */
+#घोषणा FOLL_MLOCK	0x1000	/* lock present pages */
+#घोषणा FOLL_REMOTE	0x2000	/* we are working on non-current tsk/mm */
+#घोषणा FOLL_COW	0x4000	/* पूर्णांकernal GUP flag */
+#घोषणा FOLL_ANON	0x8000	/* करोn't करो file mappings */
+#घोषणा FOLL_LONGTERM	0x10000	/* mapping lअगरeसमय is indefinite: see below */
+#घोषणा FOLL_SPLIT_PMD	0x20000	/* split huge pmd beक्रमe वापसing */
+#घोषणा FOLL_PIN	0x40000	/* pages must be released via unpin_user_page */
+#घोषणा FOLL_FAST_ONLY	0x80000	/* gup_fast: prevent fall-back to slow gup */
 
 /*
  * FOLL_PIN and FOLL_LONGTERM may be used in various combinations with each
  * other. Here is what they mean, and how to use them:
  *
- * FOLL_LONGTERM indicates that the page will be held for an indefinite time
+ * FOLL_LONGTERM indicates that the page will be held क्रम an indefinite समय
  * period _often_ under userspace control.  This is in contrast to
  * iov_iter_get_pages(), whose usages are transient.
  *
- * FIXME: For pages which are part of a filesystem, mappings are subject to the
- * lifetime enforced by the filesystem and we need guarantees that longterm
+ * FIXME: For pages which are part of a fileप्रणाली, mappings are subject to the
+ * lअगरeसमय enक्रमced by the fileप्रणाली and we need guarantees that दीर्घterm
  * users like RDMA and V4L2 only establish mappings which coordinate usage with
- * the filesystem.  Ideas for this coordination include revoking the longterm
- * pin, delaying writeback, bounce buffer page writeback, etc.  As FS DAX was
- * added after the problem with filesystems was found FS DAX VMAs are
- * specifically failed.  Filesystem pages are still subject to bugs and use of
- * FOLL_LONGTERM should be avoided on those pages.
+ * the fileप्रणाली.  Ideas क्रम this coordination include revoking the दीर्घterm
+ * pin, delaying ग_लिखोback, bounce buffer page ग_लिखोback, etc.  As FS DAX was
+ * added after the problem with fileप्रणालीs was found FS DAX VMAs are
+ * specअगरically failed.  Fileप्रणाली pages are still subject to bugs and use of
+ * FOLL_LONGTERM should be aव्योमed on those pages.
  *
  * FIXME: Also NOTE that FOLL_LONGTERM is not supported in every GUP call.
  * Currently only get_user_pages() and get_user_pages_fast() support this flag
- * and calls to get_user_pages_[un]locked are specifically not allowed.  This
+ * and calls to get_user_pages_[un]locked are specअगरically not allowed.  This
  * is due to an incompatibility with the FS DAX check and
  * FAULT_FLAG_ALLOW_RETRY.
  *
- * In the CMA case: long term pins in a CMA region would unnecessarily fragment
- * that region.  And so, CMA attempts to migrate the page before pinning, when
- * FOLL_LONGTERM is specified.
+ * In the CMA हाल: दीर्घ term pins in a CMA region would unnecessarily fragment
+ * that region.  And so, CMA attempts to migrate the page beक्रमe pinning, when
+ * FOLL_LONGTERM is specअगरied.
  *
  * FOLL_PIN indicates that a special kind of tracking (not just page->_refcount,
- * but an additional pin counting system) will be invoked. This is intended for
- * anything that gets a page reference and then touches page data (for example,
- * Direct IO). This lets the filesystem know that some non-file-system entity is
+ * but an additional pin counting प्रणाली) will be invoked. This is पूर्णांकended क्रम
+ * anything that माला_लो a page reference and then touches page data (क्रम example,
+ * Direct IO). This lets the fileप्रणाली know that some non-file-प्रणाली entity is
  * potentially changing the pages' data. In contrast to FOLL_GET (whose pages
  * are released via put_page()), FOLL_PIN pages must be released, ultimately, by
  * a call to unpin_user_page().
  *
- * FOLL_PIN is similar to FOLL_GET: both of these pin pages. They use different
+ * FOLL_PIN is similar to FOLL_GET: both of these pin pages. They use dअगरferent
  * and separate refcounting mechanisms, however, and that means that each has
  * its own acquire and release mechanisms:
  *
@@ -2880,229 +2881,229 @@ struct page *follow_page(struct vm_area_struct *vma, unsigned long address,
  *
  *     FOLL_PIN: pin_user_pages*() to acquire, and unpin_user_pages to release.
  *
- * FOLL_PIN and FOLL_GET are mutually exclusive for a given function call.
+ * FOLL_PIN and FOLL_GET are mutually exclusive क्रम a given function call.
  * (The underlying pages may experience both FOLL_GET-based and FOLL_PIN-based
- * calls applied to them, and that's perfectly OK. This is a constraint on the
+ * calls applied to them, and that's perfectly OK. This is a स्थिरraपूर्णांक on the
  * callers, not on the pages.)
  *
- * FOLL_PIN should be set internally by the pin_user_pages*() APIs, never
- * directly by the caller. That's in order to help avoid mismatches when
+ * FOLL_PIN should be set पूर्णांकernally by the pin_user_pages*() APIs, never
+ * directly by the caller. That's in order to help aव्योम mismatches when
  * releasing pages: get_user_pages*() pages must be released via put_page(),
- * while pin_user_pages*() pages must be released via unpin_user_page().
+ * जबतक pin_user_pages*() pages must be released via unpin_user_page().
  *
- * Please see Documentation/core-api/pin_user_pages.rst for more information.
+ * Please see Documentation/core-api/pin_user_pages.rst क्रम more inक्रमmation.
  */
 
-static inline int vm_fault_to_errno(vm_fault_t vm_fault, int foll_flags)
-{
-	if (vm_fault & VM_FAULT_OOM)
-		return -ENOMEM;
-	if (vm_fault & (VM_FAULT_HWPOISON | VM_FAULT_HWPOISON_LARGE))
-		return (foll_flags & FOLL_HWPOISON) ? -EHWPOISON : -EFAULT;
-	if (vm_fault & (VM_FAULT_SIGBUS | VM_FAULT_SIGSEGV))
-		return -EFAULT;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक vm_fault_to_त्रुटि_सं(vm_fault_t vm_fault, पूर्णांक foll_flags)
+अणु
+	अगर (vm_fault & VM_FAULT_OOM)
+		वापस -ENOMEM;
+	अगर (vm_fault & (VM_FAULT_HWPOISON | VM_FAULT_HWPOISON_LARGE))
+		वापस (foll_flags & FOLL_HWPOISON) ? -EHWPOISON : -EFAULT;
+	अगर (vm_fault & (VM_FAULT_SIGBUS | VM_FAULT_संक_अंश))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-typedef int (*pte_fn_t)(pte_t *pte, unsigned long addr, void *data);
-extern int apply_to_page_range(struct mm_struct *mm, unsigned long address,
-			       unsigned long size, pte_fn_t fn, void *data);
-extern int apply_to_existing_page_range(struct mm_struct *mm,
-				   unsigned long address, unsigned long size,
-				   pte_fn_t fn, void *data);
+प्रकार पूर्णांक (*pte_fn_t)(pte_t *pte, अचिन्हित दीर्घ addr, व्योम *data);
+बाह्य पूर्णांक apply_to_page_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address,
+			       अचिन्हित दीर्घ size, pte_fn_t fn, व्योम *data);
+बाह्य पूर्णांक apply_to_existing_page_range(काष्ठा mm_काष्ठा *mm,
+				   अचिन्हित दीर्घ address, अचिन्हित दीर्घ size,
+				   pte_fn_t fn, व्योम *data);
 
-extern void init_mem_debugging_and_hardening(void);
-#ifdef CONFIG_PAGE_POISONING
-extern void __kernel_poison_pages(struct page *page, int numpages);
-extern void __kernel_unpoison_pages(struct page *page, int numpages);
-extern bool _page_poisoning_enabled_early;
+बाह्य व्योम init_mem_debugging_and_hardening(व्योम);
+#अगर_घोषित CONFIG_PAGE_POISONING
+बाह्य व्योम __kernel_poison_pages(काष्ठा page *page, पूर्णांक numpages);
+बाह्य व्योम __kernel_unpoison_pages(काष्ठा page *page, पूर्णांक numpages);
+बाह्य bool _page_poisoning_enabled_early;
 DECLARE_STATIC_KEY_FALSE(_page_poisoning_enabled);
-static inline bool page_poisoning_enabled(void)
-{
-	return _page_poisoning_enabled_early;
-}
+अटल अंतरभूत bool page_poisoning_enabled(व्योम)
+अणु
+	वापस _page_poisoning_enabled_early;
+पूर्ण
 /*
  * For use in fast paths after init_mem_debugging() has run, or when a
  * false negative result is not harmful when called too early.
  */
-static inline bool page_poisoning_enabled_static(void)
-{
-	return static_branch_unlikely(&_page_poisoning_enabled);
-}
-static inline void kernel_poison_pages(struct page *page, int numpages)
-{
-	if (page_poisoning_enabled_static())
+अटल अंतरभूत bool page_poisoning_enabled_अटल(व्योम)
+अणु
+	वापस अटल_branch_unlikely(&_page_poisoning_enabled);
+पूर्ण
+अटल अंतरभूत व्योम kernel_poison_pages(काष्ठा page *page, पूर्णांक numpages)
+अणु
+	अगर (page_poisoning_enabled_अटल())
 		__kernel_poison_pages(page, numpages);
-}
-static inline void kernel_unpoison_pages(struct page *page, int numpages)
-{
-	if (page_poisoning_enabled_static())
+पूर्ण
+अटल अंतरभूत व्योम kernel_unpoison_pages(काष्ठा page *page, पूर्णांक numpages)
+अणु
+	अगर (page_poisoning_enabled_अटल())
 		__kernel_unpoison_pages(page, numpages);
-}
-#else
-static inline bool page_poisoning_enabled(void) { return false; }
-static inline bool page_poisoning_enabled_static(void) { return false; }
-static inline void __kernel_poison_pages(struct page *page, int nunmpages) { }
-static inline void kernel_poison_pages(struct page *page, int numpages) { }
-static inline void kernel_unpoison_pages(struct page *page, int numpages) { }
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool page_poisoning_enabled(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत bool page_poisoning_enabled_अटल(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम __kernel_poison_pages(काष्ठा page *page, पूर्णांक nunmpages) अणु पूर्ण
+अटल अंतरभूत व्योम kernel_poison_pages(काष्ठा page *page, पूर्णांक numpages) अणु पूर्ण
+अटल अंतरभूत व्योम kernel_unpoison_pages(काष्ठा page *page, पूर्णांक numpages) अणु पूर्ण
+#पूर्ण_अगर
 
 DECLARE_STATIC_KEY_MAYBE(CONFIG_INIT_ON_ALLOC_DEFAULT_ON, init_on_alloc);
-static inline bool want_init_on_alloc(gfp_t flags)
-{
-	if (static_branch_maybe(CONFIG_INIT_ON_ALLOC_DEFAULT_ON,
+अटल अंतरभूत bool want_init_on_alloc(gfp_t flags)
+अणु
+	अगर (अटल_branch_maybe(CONFIG_INIT_ON_ALLOC_DEFAULT_ON,
 				&init_on_alloc))
-		return true;
-	return flags & __GFP_ZERO;
-}
+		वापस true;
+	वापस flags & __GFP_ZERO;
+पूर्ण
 
-DECLARE_STATIC_KEY_MAYBE(CONFIG_INIT_ON_FREE_DEFAULT_ON, init_on_free);
-static inline bool want_init_on_free(void)
-{
-	return static_branch_maybe(CONFIG_INIT_ON_FREE_DEFAULT_ON,
-				   &init_on_free);
-}
+DECLARE_STATIC_KEY_MAYBE(CONFIG_INIT_ON_FREE_DEFAULT_ON, init_on_मुक्त);
+अटल अंतरभूत bool want_init_on_मुक्त(व्योम)
+अणु
+	वापस अटल_branch_maybe(CONFIG_INIT_ON_FREE_DEFAULT_ON,
+				   &init_on_मुक्त);
+पूर्ण
 
-extern bool _debug_pagealloc_enabled_early;
+बाह्य bool _debug_pagealloc_enabled_early;
 DECLARE_STATIC_KEY_FALSE(_debug_pagealloc_enabled);
 
-static inline bool debug_pagealloc_enabled(void)
-{
-	return IS_ENABLED(CONFIG_DEBUG_PAGEALLOC) &&
+अटल अंतरभूत bool debug_pagealloc_enabled(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_DEBUG_PAGEALLOC) &&
 		_debug_pagealloc_enabled_early;
-}
+पूर्ण
 
 /*
  * For use in fast paths after init_debug_pagealloc() has run, or when a
  * false negative result is not harmful when called too early.
  */
-static inline bool debug_pagealloc_enabled_static(void)
-{
-	if (!IS_ENABLED(CONFIG_DEBUG_PAGEALLOC))
-		return false;
+अटल अंतरभूत bool debug_pagealloc_enabled_अटल(व्योम)
+अणु
+	अगर (!IS_ENABLED(CONFIG_DEBUG_PAGEALLOC))
+		वापस false;
 
-	return static_branch_unlikely(&_debug_pagealloc_enabled);
-}
+	वापस अटल_branch_unlikely(&_debug_pagealloc_enabled);
+पूर्ण
 
-#ifdef CONFIG_DEBUG_PAGEALLOC
+#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
 /*
  * To support DEBUG_PAGEALLOC architecture must ensure that
  * __kernel_map_pages() never fails
  */
-extern void __kernel_map_pages(struct page *page, int numpages, int enable);
+बाह्य व्योम __kernel_map_pages(काष्ठा page *page, पूर्णांक numpages, पूर्णांक enable);
 
-static inline void debug_pagealloc_map_pages(struct page *page, int numpages)
-{
-	if (debug_pagealloc_enabled_static())
+अटल अंतरभूत व्योम debug_pagealloc_map_pages(काष्ठा page *page, पूर्णांक numpages)
+अणु
+	अगर (debug_pagealloc_enabled_अटल())
 		__kernel_map_pages(page, numpages, 1);
-}
+पूर्ण
 
-static inline void debug_pagealloc_unmap_pages(struct page *page, int numpages)
-{
-	if (debug_pagealloc_enabled_static())
+अटल अंतरभूत व्योम debug_pagealloc_unmap_pages(काष्ठा page *page, पूर्णांक numpages)
+अणु
+	अगर (debug_pagealloc_enabled_अटल())
 		__kernel_map_pages(page, numpages, 0);
-}
-#else	/* CONFIG_DEBUG_PAGEALLOC */
-static inline void debug_pagealloc_map_pages(struct page *page, int numpages) {}
-static inline void debug_pagealloc_unmap_pages(struct page *page, int numpages) {}
-#endif	/* CONFIG_DEBUG_PAGEALLOC */
+पूर्ण
+#अन्यथा	/* CONFIG_DEBUG_PAGEALLOC */
+अटल अंतरभूत व्योम debug_pagealloc_map_pages(काष्ठा page *page, पूर्णांक numpages) अणुपूर्ण
+अटल अंतरभूत व्योम debug_pagealloc_unmap_pages(काष्ठा page *page, पूर्णांक numpages) अणुपूर्ण
+#पूर्ण_अगर	/* CONFIG_DEBUG_PAGEALLOC */
 
-#ifdef __HAVE_ARCH_GATE_AREA
-extern struct vm_area_struct *get_gate_vma(struct mm_struct *mm);
-extern int in_gate_area_no_mm(unsigned long addr);
-extern int in_gate_area(struct mm_struct *mm, unsigned long addr);
-#else
-static inline struct vm_area_struct *get_gate_vma(struct mm_struct *mm)
-{
-	return NULL;
-}
-static inline int in_gate_area_no_mm(unsigned long addr) { return 0; }
-static inline int in_gate_area(struct mm_struct *mm, unsigned long addr)
-{
-	return 0;
-}
-#endif	/* __HAVE_ARCH_GATE_AREA */
+#अगर_घोषित __HAVE_ARCH_GATE_AREA
+बाह्य काष्ठा vm_area_काष्ठा *get_gate_vma(काष्ठा mm_काष्ठा *mm);
+बाह्य पूर्णांक in_gate_area_no_mm(अचिन्हित दीर्घ addr);
+बाह्य पूर्णांक in_gate_area(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr);
+#अन्यथा
+अटल अंतरभूत काष्ठा vm_area_काष्ठा *get_gate_vma(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत पूर्णांक in_gate_area_no_mm(अचिन्हित दीर्घ addr) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक in_gate_area(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* __HAVE_ARCH_GATE_AREA */
 
-extern bool process_shares_mm(struct task_struct *p, struct mm_struct *mm);
+बाह्य bool process_shares_mm(काष्ठा task_काष्ठा *p, काष्ठा mm_काष्ठा *mm);
 
-#ifdef CONFIG_SYSCTL
-extern int sysctl_drop_caches;
-int drop_caches_sysctl_handler(struct ctl_table *, int, void *, size_t *,
+#अगर_घोषित CONFIG_SYSCTL
+बाह्य पूर्णांक sysctl_drop_caches;
+पूर्णांक drop_caches_sysctl_handler(काष्ठा ctl_table *, पूर्णांक, व्योम *, माप_प्रकार *,
 		loff_t *);
-#endif
+#पूर्ण_अगर
 
-void drop_slab(void);
-void drop_slab_node(int nid);
+व्योम drop_slab(व्योम);
+व्योम drop_slab_node(पूर्णांक nid);
 
-#ifndef CONFIG_MMU
-#define randomize_va_space 0
-#else
-extern int randomize_va_space;
-#endif
+#अगर_अघोषित CONFIG_MMU
+#घोषणा अक्रमomize_va_space 0
+#अन्यथा
+बाह्य पूर्णांक अक्रमomize_va_space;
+#पूर्ण_अगर
 
-const char * arch_vma_name(struct vm_area_struct *vma);
-#ifdef CONFIG_MMU
-void print_vma_addr(char *prefix, unsigned long rip);
-#else
-static inline void print_vma_addr(char *prefix, unsigned long rip)
-{
-}
-#endif
+स्थिर अक्षर * arch_vma_name(काष्ठा vm_area_काष्ठा *vma);
+#अगर_घोषित CONFIG_MMU
+व्योम prपूर्णांक_vma_addr(अक्षर *prefix, अचिन्हित दीर्घ rip);
+#अन्यथा
+अटल अंतरभूत व्योम prपूर्णांक_vma_addr(अक्षर *prefix, अचिन्हित दीर्घ rip)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-void *sparse_buffer_alloc(unsigned long size);
-struct page * __populate_section_memmap(unsigned long pfn,
-		unsigned long nr_pages, int nid, struct vmem_altmap *altmap);
-pgd_t *vmemmap_pgd_populate(unsigned long addr, int node);
-p4d_t *vmemmap_p4d_populate(pgd_t *pgd, unsigned long addr, int node);
-pud_t *vmemmap_pud_populate(p4d_t *p4d, unsigned long addr, int node);
-pmd_t *vmemmap_pmd_populate(pud_t *pud, unsigned long addr, int node);
-pte_t *vmemmap_pte_populate(pmd_t *pmd, unsigned long addr, int node,
-			    struct vmem_altmap *altmap);
-void *vmemmap_alloc_block(unsigned long size, int node);
-struct vmem_altmap;
-void *vmemmap_alloc_block_buf(unsigned long size, int node,
-			      struct vmem_altmap *altmap);
-void vmemmap_verify(pte_t *, int, unsigned long, unsigned long);
-int vmemmap_populate_basepages(unsigned long start, unsigned long end,
-			       int node, struct vmem_altmap *altmap);
-int vmemmap_populate(unsigned long start, unsigned long end, int node,
-		struct vmem_altmap *altmap);
-void vmemmap_populate_print_last(void);
-#ifdef CONFIG_MEMORY_HOTPLUG
-void vmemmap_free(unsigned long start, unsigned long end,
-		struct vmem_altmap *altmap);
-#endif
-void register_page_bootmem_memmap(unsigned long section_nr, struct page *map,
-				  unsigned long nr_pages);
+व्योम *sparse_buffer_alloc(अचिन्हित दीर्घ size);
+काष्ठा page * __populate_section_memmap(अचिन्हित दीर्घ pfn,
+		अचिन्हित दीर्घ nr_pages, पूर्णांक nid, काष्ठा vmem_alपंचांगap *alपंचांगap);
+pgd_t *vmemmap_pgd_populate(अचिन्हित दीर्घ addr, पूर्णांक node);
+p4d_t *vmemmap_p4d_populate(pgd_t *pgd, अचिन्हित दीर्घ addr, पूर्णांक node);
+pud_t *vmemmap_pud_populate(p4d_t *p4d, अचिन्हित दीर्घ addr, पूर्णांक node);
+pmd_t *vmemmap_pmd_populate(pud_t *pud, अचिन्हित दीर्घ addr, पूर्णांक node);
+pte_t *vmemmap_pte_populate(pmd_t *pmd, अचिन्हित दीर्घ addr, पूर्णांक node,
+			    काष्ठा vmem_alपंचांगap *alपंचांगap);
+व्योम *vmemmap_alloc_block(अचिन्हित दीर्घ size, पूर्णांक node);
+काष्ठा vmem_alपंचांगap;
+व्योम *vmemmap_alloc_block_buf(अचिन्हित दीर्घ size, पूर्णांक node,
+			      काष्ठा vmem_alपंचांगap *alपंचांगap);
+व्योम vmemmap_verअगरy(pte_t *, पूर्णांक, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+पूर्णांक vmemmap_populate_basepages(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+			       पूर्णांक node, काष्ठा vmem_alपंचांगap *alपंचांगap);
+पूर्णांक vmemmap_populate(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end, पूर्णांक node,
+		काष्ठा vmem_alपंचांगap *alपंचांगap);
+व्योम vmemmap_populate_prपूर्णांक_last(व्योम);
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+व्योम vmemmap_मुक्त(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+		काष्ठा vmem_alपंचांगap *alपंचांगap);
+#पूर्ण_अगर
+व्योम रेजिस्टर_page_booपंचांगem_memmap(अचिन्हित दीर्घ section_nr, काष्ठा page *map,
+				  अचिन्हित दीर्घ nr_pages);
 
-enum mf_flags {
+क्रमागत mf_flags अणु
 	MF_COUNT_INCREASED = 1 << 0,
 	MF_ACTION_REQUIRED = 1 << 1,
 	MF_MUST_KILL = 1 << 2,
 	MF_SOFT_OFFLINE = 1 << 3,
-};
-extern int memory_failure(unsigned long pfn, int flags);
-extern void memory_failure_queue(unsigned long pfn, int flags);
-extern void memory_failure_queue_kick(int cpu);
-extern int unpoison_memory(unsigned long pfn);
-extern int sysctl_memory_failure_early_kill;
-extern int sysctl_memory_failure_recovery;
-extern void shake_page(struct page *p, int access);
-extern atomic_long_t num_poisoned_pages __read_mostly;
-extern int soft_offline_page(unsigned long pfn, int flags);
+पूर्ण;
+बाह्य पूर्णांक memory_failure(अचिन्हित दीर्घ pfn, पूर्णांक flags);
+बाह्य व्योम memory_failure_queue(अचिन्हित दीर्घ pfn, पूर्णांक flags);
+बाह्य व्योम memory_failure_queue_kick(पूर्णांक cpu);
+बाह्य पूर्णांक unpoison_memory(अचिन्हित दीर्घ pfn);
+बाह्य पूर्णांक sysctl_memory_failure_early_समाप्त;
+बाह्य पूर्णांक sysctl_memory_failure_recovery;
+बाह्य व्योम shake_page(काष्ठा page *p, पूर्णांक access);
+बाह्य atomic_दीर्घ_t num_poisoned_pages __पढ़ो_mostly;
+बाह्य पूर्णांक soft_offline_page(अचिन्हित दीर्घ pfn, पूर्णांक flags);
 
 
 /*
- * Error handlers for various types of pages.
+ * Error handlers क्रम various types of pages.
  */
-enum mf_result {
+क्रमागत mf_result अणु
 	MF_IGNORED,	/* Error: cannot be handled */
 	MF_FAILED,	/* Error: handling failed */
 	MF_DELAYED,	/* Will be handled later */
 	MF_RECOVERED,	/* Successfully recovered */
-};
+पूर्ण;
 
-enum mf_action_page_type {
+क्रमागत mf_action_page_type अणु
 	MF_MSG_KERNEL,
 	MF_MSG_KERNEL_HIGH_ORDER,
 	MF_MSG_SLAB,
@@ -3112,13 +3113,13 @@ enum mf_action_page_type {
 	MF_MSG_FREE_HUGE,
 	MF_MSG_NON_PMD_HUGE,
 	MF_MSG_UNMAP_FAILED,
-	MF_MSG_DIRTY_SWAPCACHE,
+	MF_MSG_सूचीTY_SWAPCACHE,
 	MF_MSG_CLEAN_SWAPCACHE,
-	MF_MSG_DIRTY_MLOCKED_LRU,
+	MF_MSG_सूचीTY_MLOCKED_LRU,
 	MF_MSG_CLEAN_MLOCKED_LRU,
-	MF_MSG_DIRTY_UNEVICTABLE_LRU,
+	MF_MSG_सूचीTY_UNEVICTABLE_LRU,
 	MF_MSG_CLEAN_UNEVICTABLE_LRU,
-	MF_MSG_DIRTY_LRU,
+	MF_MSG_सूचीTY_LRU,
 	MF_MSG_CLEAN_LRU,
 	MF_MSG_TRUNCATED_LRU,
 	MF_MSG_BUDDY,
@@ -3126,130 +3127,130 @@ enum mf_action_page_type {
 	MF_MSG_DAX,
 	MF_MSG_UNSPLIT_THP,
 	MF_MSG_UNKNOWN,
-};
+पूर्ण;
 
-#if defined(CONFIG_TRANSPARENT_HUGEPAGE) || defined(CONFIG_HUGETLBFS)
-extern void clear_huge_page(struct page *page,
-			    unsigned long addr_hint,
-			    unsigned int pages_per_huge_page);
-extern void copy_user_huge_page(struct page *dst, struct page *src,
-				unsigned long addr_hint,
-				struct vm_area_struct *vma,
-				unsigned int pages_per_huge_page);
-extern long copy_huge_page_from_user(struct page *dst_page,
-				const void __user *usr_src,
-				unsigned int pages_per_huge_page,
+#अगर defined(CONFIG_TRANSPARENT_HUGEPAGE) || defined(CONFIG_HUGETLBFS)
+बाह्य व्योम clear_huge_page(काष्ठा page *page,
+			    अचिन्हित दीर्घ addr_hपूर्णांक,
+			    अचिन्हित पूर्णांक pages_per_huge_page);
+बाह्य व्योम copy_user_huge_page(काष्ठा page *dst, काष्ठा page *src,
+				अचिन्हित दीर्घ addr_hपूर्णांक,
+				काष्ठा vm_area_काष्ठा *vma,
+				अचिन्हित पूर्णांक pages_per_huge_page);
+बाह्य दीर्घ copy_huge_page_from_user(काष्ठा page *dst_page,
+				स्थिर व्योम __user *usr_src,
+				अचिन्हित पूर्णांक pages_per_huge_page,
 				bool allow_pagefault);
 
 /**
  * vma_is_special_huge - Are transhuge page-table entries considered special?
- * @vma: Pointer to the struct vm_area_struct to consider
+ * @vma: Poपूर्णांकer to the काष्ठा vm_area_काष्ठा to consider
  *
  * Whether transhuge page-table entries are considered "special" following
  * the definition in vm_normal_page().
  *
- * Return: true if transhuge page-table entries should be considered special,
+ * Return: true अगर transhuge page-table entries should be considered special,
  * false otherwise.
  */
-static inline bool vma_is_special_huge(const struct vm_area_struct *vma)
-{
-	return vma_is_dax(vma) || (vma->vm_file &&
+अटल अंतरभूत bool vma_is_special_huge(स्थिर काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस vma_is_dax(vma) || (vma->vm_file &&
 				   (vma->vm_flags & (VM_PFNMAP | VM_MIXEDMAP)));
-}
+पूर्ण
 
-#endif /* CONFIG_TRANSPARENT_HUGEPAGE || CONFIG_HUGETLBFS */
+#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE || CONFIG_HUGETLBFS */
 
-#ifdef CONFIG_DEBUG_PAGEALLOC
-extern unsigned int _debug_guardpage_minorder;
+#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
+बाह्य अचिन्हित पूर्णांक _debug_guardpage_minorder;
 DECLARE_STATIC_KEY_FALSE(_debug_guardpage_enabled);
 
-static inline unsigned int debug_guardpage_minorder(void)
-{
-	return _debug_guardpage_minorder;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक debug_guardpage_minorder(व्योम)
+अणु
+	वापस _debug_guardpage_minorder;
+पूर्ण
 
-static inline bool debug_guardpage_enabled(void)
-{
-	return static_branch_unlikely(&_debug_guardpage_enabled);
-}
+अटल अंतरभूत bool debug_guardpage_enabled(व्योम)
+अणु
+	वापस अटल_branch_unlikely(&_debug_guardpage_enabled);
+पूर्ण
 
-static inline bool page_is_guard(struct page *page)
-{
-	if (!debug_guardpage_enabled())
-		return false;
+अटल अंतरभूत bool page_is_guard(काष्ठा page *page)
+अणु
+	अगर (!debug_guardpage_enabled())
+		वापस false;
 
-	return PageGuard(page);
-}
-#else
-static inline unsigned int debug_guardpage_minorder(void) { return 0; }
-static inline bool debug_guardpage_enabled(void) { return false; }
-static inline bool page_is_guard(struct page *page) { return false; }
-#endif /* CONFIG_DEBUG_PAGEALLOC */
+	वापस PageGuard(page);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत अचिन्हित पूर्णांक debug_guardpage_minorder(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत bool debug_guardpage_enabled(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत bool page_is_guard(काष्ठा page *page) अणु वापस false; पूर्ण
+#पूर्ण_अगर /* CONFIG_DEBUG_PAGEALLOC */
 
-#if MAX_NUMNODES > 1
-void __init setup_nr_node_ids(void);
-#else
-static inline void setup_nr_node_ids(void) {}
-#endif
+#अगर MAX_NUMNODES > 1
+व्योम __init setup_nr_node_ids(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम setup_nr_node_ids(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-extern int memcmp_pages(struct page *page1, struct page *page2);
+बाह्य पूर्णांक स_भेद_pages(काष्ठा page *page1, काष्ठा page *page2);
 
-static inline int pages_identical(struct page *page1, struct page *page2)
-{
-	return !memcmp_pages(page1, page2);
-}
+अटल अंतरभूत पूर्णांक pages_identical(काष्ठा page *page1, काष्ठा page *page2)
+अणु
+	वापस !स_भेद_pages(page1, page2);
+पूर्ण
 
-#ifdef CONFIG_MAPPING_DIRTY_HELPERS
-unsigned long clean_record_shared_mapping_range(struct address_space *mapping,
+#अगर_घोषित CONFIG_MAPPING_सूचीTY_HELPERS
+अचिन्हित दीर्घ clean_record_shared_mapping_range(काष्ठा address_space *mapping,
 						pgoff_t first_index, pgoff_t nr,
-						pgoff_t bitmap_pgoff,
-						unsigned long *bitmap,
+						pgoff_t biपंचांगap_pgoff,
+						अचिन्हित दीर्घ *biपंचांगap,
 						pgoff_t *start,
 						pgoff_t *end);
 
-unsigned long wp_shared_mapping_range(struct address_space *mapping,
+अचिन्हित दीर्घ wp_shared_mapping_range(काष्ठा address_space *mapping,
 				      pgoff_t first_index, pgoff_t nr);
-#endif
+#पूर्ण_अगर
 
-extern int sysctl_nr_trim_pages;
+बाह्य पूर्णांक sysctl_nr_trim_pages;
 
-#ifdef CONFIG_PRINTK
-void mem_dump_obj(void *object);
-#else
-static inline void mem_dump_obj(void *object) {}
-#endif
+#अगर_घोषित CONFIG_PRINTK
+व्योम mem_dump_obj(व्योम *object);
+#अन्यथा
+अटल अंतरभूत व्योम mem_dump_obj(व्योम *object) अणुपूर्ण
+#पूर्ण_अगर
 
 /**
- * seal_check_future_write - Check for F_SEAL_FUTURE_WRITE flag and handle it
+ * seal_check_future_ग_लिखो - Check क्रम F_SEAL_FUTURE_WRITE flag and handle it
  * @seals: the seals to check
  * @vma: the vma to operate on
  *
- * Check whether F_SEAL_FUTURE_WRITE is set; if so, do proper check/handling on
- * the vma flags.  Return 0 if check pass, or <0 for errors.
+ * Check whether F_SEAL_FUTURE_WRITE is set; अगर so, करो proper check/handling on
+ * the vma flags.  Return 0 अगर check pass, or <0 क्रम errors.
  */
-static inline int seal_check_future_write(int seals, struct vm_area_struct *vma)
-{
-	if (seals & F_SEAL_FUTURE_WRITE) {
+अटल अंतरभूत पूर्णांक seal_check_future_ग_लिखो(पूर्णांक seals, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अगर (seals & F_SEAL_FUTURE_WRITE) अणु
 		/*
 		 * New PROT_WRITE and MAP_SHARED mmaps are not allowed when
 		 * "future write" seal active.
 		 */
-		if ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_WRITE))
-			return -EPERM;
+		अगर ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_WRITE))
+			वापस -EPERM;
 
 		/*
 		 * Since an F_SEAL_FUTURE_WRITE sealed memfd can be mapped as
-		 * MAP_SHARED and read-only, take care to not allow mprotect to
-		 * revert protections on such mappings. Do this only for shared
-		 * mappings. For private mappings, don't need to mask
+		 * MAP_SHARED and पढ़ो-only, take care to not allow mprotect to
+		 * revert protections on such mappings. Do this only क्रम shared
+		 * mappings. For निजी mappings, करोn't need to mask
 		 * VM_MAYWRITE as we still want them to be COW-writable.
 		 */
-		if (vma->vm_flags & VM_SHARED)
+		अगर (vma->vm_flags & VM_SHARED)
 			vma->vm_flags &= ~(VM_MAYWRITE);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* __KERNEL__ */
-#endif /* _LINUX_MM_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _LINUX_MM_H */

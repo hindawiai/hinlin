@@ -1,328 +1,329 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/random.h>
-#include <linux/string.h>
-#include <linux/bitops.h>
-#include <linux/slab.h>
-#include <linux/mtd/nand-ecc-sw-hamming.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/bitops.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mtd/nand-ecc-sw-hamming.h>
 
-#include "mtd_test.h"
+#समावेश "mtd_test.h"
 
 /*
- * Test the implementation for software ECC
+ * Test the implementation क्रम software ECC
  *
- * No actual MTD device is needed, So we don't need to warry about losing
+ * No actual MTD device is needed, So we करोn't need to warry about losing
  * important data by human error.
  *
  * This covers possible patterns of corruption which can be reliably corrected
  * or detected.
  */
 
-#if IS_ENABLED(CONFIG_MTD_RAW_NAND)
+#अगर IS_ENABLED(CONFIG_MTD_RAW_न_अंकD)
 
-struct nand_ecc_test {
-	const char *name;
-	void (*prepare)(void *, void *, void *, void *, const size_t);
-	int (*verify)(void *, void *, void *, const size_t);
-};
+काष्ठा nand_ecc_test अणु
+	स्थिर अक्षर *name;
+	व्योम (*prepare)(व्योम *, व्योम *, व्योम *, व्योम *, स्थिर माप_प्रकार);
+	पूर्णांक (*verअगरy)(व्योम *, व्योम *, व्योम *, स्थिर माप_प्रकार);
+पूर्ण;
 
 /*
- * The reason for this __change_bit_le() instead of __change_bit() is to inject
+ * The reason क्रम this __change_bit_le() instead of __change_bit() is to inject
  * bit error properly within the region which is not a multiple of
- * sizeof(unsigned long) on big-endian systems
+ * माप(अचिन्हित दीर्घ) on big-endian प्रणालीs
  */
-#ifdef __LITTLE_ENDIAN
-#define __change_bit_le(nr, addr) __change_bit(nr, addr)
-#elif defined(__BIG_ENDIAN)
-#define __change_bit_le(nr, addr) \
+#अगर_घोषित __LITTLE_ENDIAN
+#घोषणा __change_bit_le(nr, addr) __change_bit(nr, addr)
+#या_अगर defined(__BIG_ENDIAN)
+#घोषणा __change_bit_le(nr, addr) \
 		__change_bit((nr) ^ ((BITS_PER_LONG - 1) & ~0x7), addr)
-#else
-#error "Unknown byte order"
-#endif
+#अन्यथा
+#त्रुटि "Unknown byte order"
+#पूर्ण_अगर
 
-static void single_bit_error_data(void *error_data, void *correct_data,
-				size_t size)
-{
-	unsigned int offset = prandom_u32() % (size * BITS_PER_BYTE);
+अटल व्योम single_bit_error_data(व्योम *error_data, व्योम *correct_data,
+				माप_प्रकार size)
+अणु
+	अचिन्हित पूर्णांक offset = pअक्रमom_u32() % (size * BITS_PER_BYTE);
 
-	memcpy(error_data, correct_data, size);
+	स_नकल(error_data, correct_data, size);
 	__change_bit_le(offset, error_data);
-}
+पूर्ण
 
-static void double_bit_error_data(void *error_data, void *correct_data,
-				size_t size)
-{
-	unsigned int offset[2];
+अटल व्योम द्विगुन_bit_error_data(व्योम *error_data, व्योम *correct_data,
+				माप_प्रकार size)
+अणु
+	अचिन्हित पूर्णांक offset[2];
 
-	offset[0] = prandom_u32() % (size * BITS_PER_BYTE);
-	do {
-		offset[1] = prandom_u32() % (size * BITS_PER_BYTE);
-	} while (offset[0] == offset[1]);
+	offset[0] = pअक्रमom_u32() % (size * BITS_PER_BYTE);
+	करो अणु
+		offset[1] = pअक्रमom_u32() % (size * BITS_PER_BYTE);
+	पूर्ण जबतक (offset[0] == offset[1]);
 
-	memcpy(error_data, correct_data, size);
+	स_नकल(error_data, correct_data, size);
 
 	__change_bit_le(offset[0], error_data);
 	__change_bit_le(offset[1], error_data);
-}
+पूर्ण
 
-static unsigned int random_ecc_bit(size_t size)
-{
-	unsigned int offset = prandom_u32() % (3 * BITS_PER_BYTE);
+अटल अचिन्हित पूर्णांक अक्रमom_ecc_bit(माप_प्रकार size)
+अणु
+	अचिन्हित पूर्णांक offset = pअक्रमom_u32() % (3 * BITS_PER_BYTE);
 
-	if (size == 256) {
+	अगर (size == 256) अणु
 		/*
-		 * Don't inject a bit error into the insignificant bits (16th
-		 * and 17th bit) in ECC code for 256 byte data block
+		 * Don't inject a bit error पूर्णांकo the insignअगरicant bits (16th
+		 * and 17th bit) in ECC code क्रम 256 byte data block
 		 */
-		while (offset == 16 || offset == 17)
-			offset = prandom_u32() % (3 * BITS_PER_BYTE);
-	}
+		जबतक (offset == 16 || offset == 17)
+			offset = pअक्रमom_u32() % (3 * BITS_PER_BYTE);
+	पूर्ण
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
-static void single_bit_error_ecc(void *error_ecc, void *correct_ecc,
-				size_t size)
-{
-	unsigned int offset = random_ecc_bit(size);
+अटल व्योम single_bit_error_ecc(व्योम *error_ecc, व्योम *correct_ecc,
+				माप_प्रकार size)
+अणु
+	अचिन्हित पूर्णांक offset = अक्रमom_ecc_bit(size);
 
-	memcpy(error_ecc, correct_ecc, 3);
+	स_नकल(error_ecc, correct_ecc, 3);
 	__change_bit_le(offset, error_ecc);
-}
+पूर्ण
 
-static void double_bit_error_ecc(void *error_ecc, void *correct_ecc,
-				size_t size)
-{
-	unsigned int offset[2];
+अटल व्योम द्विगुन_bit_error_ecc(व्योम *error_ecc, व्योम *correct_ecc,
+				माप_प्रकार size)
+अणु
+	अचिन्हित पूर्णांक offset[2];
 
-	offset[0] = random_ecc_bit(size);
-	do {
-		offset[1] = random_ecc_bit(size);
-	} while (offset[0] == offset[1]);
+	offset[0] = अक्रमom_ecc_bit(size);
+	करो अणु
+		offset[1] = अक्रमom_ecc_bit(size);
+	पूर्ण जबतक (offset[0] == offset[1]);
 
-	memcpy(error_ecc, correct_ecc, 3);
+	स_नकल(error_ecc, correct_ecc, 3);
 	__change_bit_le(offset[0], error_ecc);
 	__change_bit_le(offset[1], error_ecc);
-}
+पूर्ण
 
-static void no_bit_error(void *error_data, void *error_ecc,
-		void *correct_data, void *correct_ecc, const size_t size)
-{
-	memcpy(error_data, correct_data, size);
-	memcpy(error_ecc, correct_ecc, 3);
-}
+अटल व्योम no_bit_error(व्योम *error_data, व्योम *error_ecc,
+		व्योम *correct_data, व्योम *correct_ecc, स्थिर माप_प्रकार size)
+अणु
+	स_नकल(error_data, correct_data, size);
+	स_नकल(error_ecc, correct_ecc, 3);
+पूर्ण
 
-static int no_bit_error_verify(void *error_data, void *error_ecc,
-				void *correct_data, const size_t size)
-{
-	bool sm_order = IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_HAMMING_SMC);
-	unsigned char calc_ecc[3];
-	int ret;
+अटल पूर्णांक no_bit_error_verअगरy(व्योम *error_data, व्योम *error_ecc,
+				व्योम *correct_data, स्थिर माप_प्रकार size)
+अणु
+	bool sm_order = IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_HAMMING_SMC);
+	अचिन्हित अक्षर calc_ecc[3];
+	पूर्णांक ret;
 
 	ecc_sw_hamming_calculate(error_data, size, calc_ecc, sm_order);
 	ret = ecc_sw_hamming_correct(error_data, error_ecc, calc_ecc, size,
 				     sm_order);
-	if (ret == 0 && !memcmp(correct_data, error_data, size))
-		return 0;
+	अगर (ret == 0 && !स_भेद(correct_data, error_data, size))
+		वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void single_bit_error_in_data(void *error_data, void *error_ecc,
-		void *correct_data, void *correct_ecc, const size_t size)
-{
+अटल व्योम single_bit_error_in_data(व्योम *error_data, व्योम *error_ecc,
+		व्योम *correct_data, व्योम *correct_ecc, स्थिर माप_प्रकार size)
+अणु
 	single_bit_error_data(error_data, correct_data, size);
-	memcpy(error_ecc, correct_ecc, 3);
-}
+	स_नकल(error_ecc, correct_ecc, 3);
+पूर्ण
 
-static void single_bit_error_in_ecc(void *error_data, void *error_ecc,
-		void *correct_data, void *correct_ecc, const size_t size)
-{
-	memcpy(error_data, correct_data, size);
+अटल व्योम single_bit_error_in_ecc(व्योम *error_data, व्योम *error_ecc,
+		व्योम *correct_data, व्योम *correct_ecc, स्थिर माप_प्रकार size)
+अणु
+	स_नकल(error_data, correct_data, size);
 	single_bit_error_ecc(error_ecc, correct_ecc, size);
-}
+पूर्ण
 
-static int single_bit_error_correct(void *error_data, void *error_ecc,
-				void *correct_data, const size_t size)
-{
-	bool sm_order = IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_HAMMING_SMC);
-	unsigned char calc_ecc[3];
-	int ret;
+अटल पूर्णांक single_bit_error_correct(व्योम *error_data, व्योम *error_ecc,
+				व्योम *correct_data, स्थिर माप_प्रकार size)
+अणु
+	bool sm_order = IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_HAMMING_SMC);
+	अचिन्हित अक्षर calc_ecc[3];
+	पूर्णांक ret;
 
 	ecc_sw_hamming_calculate(error_data, size, calc_ecc, sm_order);
 	ret = ecc_sw_hamming_correct(error_data, error_ecc, calc_ecc, size,
 				     sm_order);
-	if (ret == 1 && !memcmp(correct_data, error_data, size))
-		return 0;
+	अगर (ret == 1 && !स_भेद(correct_data, error_data, size))
+		वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void double_bit_error_in_data(void *error_data, void *error_ecc,
-		void *correct_data, void *correct_ecc, const size_t size)
-{
-	double_bit_error_data(error_data, correct_data, size);
-	memcpy(error_ecc, correct_ecc, 3);
-}
+अटल व्योम द्विगुन_bit_error_in_data(व्योम *error_data, व्योम *error_ecc,
+		व्योम *correct_data, व्योम *correct_ecc, स्थिर माप_प्रकार size)
+अणु
+	द्विगुन_bit_error_data(error_data, correct_data, size);
+	स_नकल(error_ecc, correct_ecc, 3);
+पूर्ण
 
-static void single_bit_error_in_data_and_ecc(void *error_data, void *error_ecc,
-		void *correct_data, void *correct_ecc, const size_t size)
-{
+अटल व्योम single_bit_error_in_data_and_ecc(व्योम *error_data, व्योम *error_ecc,
+		व्योम *correct_data, व्योम *correct_ecc, स्थिर माप_प्रकार size)
+अणु
 	single_bit_error_data(error_data, correct_data, size);
 	single_bit_error_ecc(error_ecc, correct_ecc, size);
-}
+पूर्ण
 
-static void double_bit_error_in_ecc(void *error_data, void *error_ecc,
-		void *correct_data, void *correct_ecc, const size_t size)
-{
-	memcpy(error_data, correct_data, size);
-	double_bit_error_ecc(error_ecc, correct_ecc, size);
-}
+अटल व्योम द्विगुन_bit_error_in_ecc(व्योम *error_data, व्योम *error_ecc,
+		व्योम *correct_data, व्योम *correct_ecc, स्थिर माप_प्रकार size)
+अणु
+	स_नकल(error_data, correct_data, size);
+	द्विगुन_bit_error_ecc(error_ecc, correct_ecc, size);
+पूर्ण
 
-static int double_bit_error_detect(void *error_data, void *error_ecc,
-				void *correct_data, const size_t size)
-{
-	bool sm_order = IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_HAMMING_SMC);
-	unsigned char calc_ecc[3];
-	int ret;
+अटल पूर्णांक द्विगुन_bit_error_detect(व्योम *error_data, व्योम *error_ecc,
+				व्योम *correct_data, स्थिर माप_प्रकार size)
+अणु
+	bool sm_order = IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_HAMMING_SMC);
+	अचिन्हित अक्षर calc_ecc[3];
+	पूर्णांक ret;
 
 	ecc_sw_hamming_calculate(error_data, size, calc_ecc, sm_order);
 	ret = ecc_sw_hamming_correct(error_data, error_ecc, calc_ecc, size,
 				     sm_order);
 
-	return (ret == -EBADMSG) ? 0 : -EINVAL;
-}
+	वापस (ret == -EBADMSG) ? 0 : -EINVAL;
+पूर्ण
 
-static const struct nand_ecc_test nand_ecc_test[] = {
-	{
+अटल स्थिर काष्ठा nand_ecc_test nand_ecc_test[] = अणु
+	अणु
 		.name = "no-bit-error",
 		.prepare = no_bit_error,
-		.verify = no_bit_error_verify,
-	},
-	{
+		.verअगरy = no_bit_error_verअगरy,
+	पूर्ण,
+	अणु
 		.name = "single-bit-error-in-data-correct",
 		.prepare = single_bit_error_in_data,
-		.verify = single_bit_error_correct,
-	},
-	{
+		.verअगरy = single_bit_error_correct,
+	पूर्ण,
+	अणु
 		.name = "single-bit-error-in-ecc-correct",
 		.prepare = single_bit_error_in_ecc,
-		.verify = single_bit_error_correct,
-	},
-	{
+		.verअगरy = single_bit_error_correct,
+	पूर्ण,
+	अणु
 		.name = "double-bit-error-in-data-detect",
-		.prepare = double_bit_error_in_data,
-		.verify = double_bit_error_detect,
-	},
-	{
+		.prepare = द्विगुन_bit_error_in_data,
+		.verअगरy = द्विगुन_bit_error_detect,
+	पूर्ण,
+	अणु
 		.name = "single-bit-error-in-data-and-ecc-detect",
 		.prepare = single_bit_error_in_data_and_ecc,
-		.verify = double_bit_error_detect,
-	},
-	{
+		.verअगरy = द्विगुन_bit_error_detect,
+	पूर्ण,
+	अणु
 		.name = "double-bit-error-in-ecc-detect",
-		.prepare = double_bit_error_in_ecc,
-		.verify = double_bit_error_detect,
-	},
-};
+		.prepare = द्विगुन_bit_error_in_ecc,
+		.verअगरy = द्विगुन_bit_error_detect,
+	पूर्ण,
+पूर्ण;
 
-static void dump_data_ecc(void *error_data, void *error_ecc, void *correct_data,
-			void *correct_ecc, const size_t size)
-{
+अटल व्योम dump_data_ecc(व्योम *error_data, व्योम *error_ecc, व्योम *correct_data,
+			व्योम *correct_ecc, स्थिर माप_प्रकार size)
+अणु
 	pr_info("hexdump of error data:\n");
-	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 4,
+	prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 4,
 			error_data, size, false);
-	print_hex_dump(KERN_INFO, "hexdump of error ecc: ",
+	prपूर्णांक_hex_dump(KERN_INFO, "hexdump of error ecc: ",
 			DUMP_PREFIX_NONE, 16, 1, error_ecc, 3, false);
 
 	pr_info("hexdump of correct data:\n");
-	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 4,
+	prपूर्णांक_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 4,
 			correct_data, size, false);
-	print_hex_dump(KERN_INFO, "hexdump of correct ecc: ",
+	prपूर्णांक_hex_dump(KERN_INFO, "hexdump of correct ecc: ",
 			DUMP_PREFIX_NONE, 16, 1, correct_ecc, 3, false);
-}
+पूर्ण
 
-static int nand_ecc_test_run(const size_t size)
-{
-	bool sm_order = IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_HAMMING_SMC);
-	int i;
-	int err = 0;
-	void *error_data;
-	void *error_ecc;
-	void *correct_data;
-	void *correct_ecc;
+अटल पूर्णांक nand_ecc_test_run(स्थिर माप_प्रकार size)
+अणु
+	bool sm_order = IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_HAMMING_SMC);
+	पूर्णांक i;
+	पूर्णांक err = 0;
+	व्योम *error_data;
+	व्योम *error_ecc;
+	व्योम *correct_data;
+	व्योम *correct_ecc;
 
-	error_data = kmalloc(size, GFP_KERNEL);
-	error_ecc = kmalloc(3, GFP_KERNEL);
-	correct_data = kmalloc(size, GFP_KERNEL);
-	correct_ecc = kmalloc(3, GFP_KERNEL);
+	error_data = kदो_स्मृति(size, GFP_KERNEL);
+	error_ecc = kदो_स्मृति(3, GFP_KERNEL);
+	correct_data = kदो_स्मृति(size, GFP_KERNEL);
+	correct_ecc = kदो_स्मृति(3, GFP_KERNEL);
 
-	if (!error_data || !error_ecc || !correct_data || !correct_ecc) {
+	अगर (!error_data || !error_ecc || !correct_data || !correct_ecc) अणु
 		err = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	prandom_bytes(correct_data, size);
+	pअक्रमom_bytes(correct_data, size);
 	ecc_sw_hamming_calculate(correct_data, size, correct_ecc, sm_order);
-	for (i = 0; i < ARRAY_SIZE(nand_ecc_test); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(nand_ecc_test); i++) अणु
 		nand_ecc_test[i].prepare(error_data, error_ecc,
 				correct_data, correct_ecc, size);
-		err = nand_ecc_test[i].verify(error_data, error_ecc,
+		err = nand_ecc_test[i].verअगरy(error_data, error_ecc,
 						correct_data, size);
 
-		if (err) {
+		अगर (err) अणु
 			pr_err("not ok - %s-%zd\n",
 				nand_ecc_test[i].name, size);
 			dump_data_ecc(error_data, error_ecc,
 				correct_data, correct_ecc, size);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pr_info("ok - %s-%zd\n",
 			nand_ecc_test[i].name, size);
 
 		err = mtdtest_relax();
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 error:
-	kfree(error_data);
-	kfree(error_ecc);
-	kfree(correct_data);
-	kfree(correct_ecc);
+	kमुक्त(error_data);
+	kमुक्त(error_ecc);
+	kमुक्त(correct_data);
+	kमुक्त(correct_ecc);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#else
+#अन्यथा
 
-static int nand_ecc_test_run(const size_t size)
-{
-	return 0;
-}
+अटल पूर्णांक nand_ecc_test_run(स्थिर माप_प्रकार size)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int __init ecc_test_init(void)
-{
-	int err;
+अटल पूर्णांक __init ecc_test_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = nand_ecc_test_run(256);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return nand_ecc_test_run(512);
-}
+	वापस nand_ecc_test_run(512);
+पूर्ण
 
-static void __exit ecc_test_exit(void)
-{
-}
+अटल व्योम __निकास ecc_test_निकास(व्योम)
+अणु
+पूर्ण
 
 module_init(ecc_test_init);
-module_exit(ecc_test_exit);
+module_निकास(ecc_test_निकास);
 
 MODULE_DESCRIPTION("NAND ECC function test module");
 MODULE_AUTHOR("Akinobu Mita");

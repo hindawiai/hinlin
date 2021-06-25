@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,13 +21,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef KFD_SMI_EVENTS_H_INCLUDED
-#define KFD_SMI_EVENTS_H_INCLUDED
+#अगर_अघोषित KFD_SMI_EVENTS_H_INCLUDED
+#घोषणा KFD_SMI_EVENTS_H_INCLUDED
 
-int kfd_smi_event_open(struct kfd_dev *dev, uint32_t *fd);
-void kfd_smi_event_update_vmfault(struct kfd_dev *dev, uint16_t pasid);
-void kfd_smi_event_update_thermal_throttling(struct kfd_dev *dev,
-					     uint32_t throttle_bitmask);
-void kfd_smi_event_update_gpu_reset(struct kfd_dev *dev, bool post_reset);
+पूर्णांक kfd_smi_event_खोलो(काष्ठा kfd_dev *dev, uपूर्णांक32_t *fd);
+व्योम kfd_smi_event_update_vmfault(काष्ठा kfd_dev *dev, uपूर्णांक16_t pasid);
+व्योम kfd_smi_event_update_thermal_throttling(काष्ठा kfd_dev *dev,
+					     uपूर्णांक32_t throttle_biपंचांगask);
+व्योम kfd_smi_event_update_gpu_reset(काष्ठा kfd_dev *dev, bool post_reset);
 
-#endif
+#पूर्ण_अगर

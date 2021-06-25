@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // Copyright(c) 2020 Intel Corporation. All rights reserved.
 //
-// Authors: Ranjani Sridharan <ranjani.sridharan@linux.intel.com>
+// Authors: Ranjani Sridharan <ranjani.sridharan@linux.पूर्णांकel.com>
 //
 
 /*
- * Hardware interface for audio DSP on Tigerlake.
+ * Hardware पूर्णांकerface क्रम audio DSP on Tigerlake.
  */
 
-#include "../ops.h"
-#include "hda.h"
-#include "hda-ipc.h"
-#include "../sof-audio.h"
+#समावेश "../ops.h"
+#समावेश "hda.h"
+#समावेश "hda-ipc.h"
+#समावेश "../sof-audio.h"
 
-static const struct snd_sof_debugfs_map tgl_dsp_debugfs[] = {
-	{"hda", HDA_DSP_HDA_BAR, 0, 0x4000, SOF_DEBUGFS_ACCESS_ALWAYS},
-	{"pp", HDA_DSP_PP_BAR,  0, 0x1000, SOF_DEBUGFS_ACCESS_ALWAYS},
-	{"dsp", HDA_DSP_BAR,  0, 0x10000, SOF_DEBUGFS_ACCESS_ALWAYS},
-};
+अटल स्थिर काष्ठा snd_sof_debugfs_map tgl_dsp_debugfs[] = अणु
+	अणु"hda", HDA_DSP_HDA_BAR, 0, 0x4000, SOF_DEBUGFS_ACCESS_ALWAYSपूर्ण,
+	अणु"pp", HDA_DSP_PP_BAR,  0, 0x1000, SOF_DEBUGFS_ACCESS_ALWAYSपूर्ण,
+	अणु"dsp", HDA_DSP_BAR,  0, 0x10000, SOF_DEBUGFS_ACCESS_ALWAYSपूर्ण,
+पूर्ण;
 
 /* Tigerlake ops */
-const struct snd_sof_dsp_ops sof_tgl_ops = {
-	/* probe/remove/shutdown */
+स्थिर काष्ठा snd_sof_dsp_ops sof_tgl_ops = अणु
+	/* probe/हटाओ/shutकरोwn */
 	.probe		= hda_dsp_probe,
-	.remove		= hda_dsp_remove,
-	.shutdown	= hda_dsp_shutdown,
+	.हटाओ		= hda_dsp_हटाओ,
+	.shutकरोwn	= hda_dsp_shutकरोwn,
 
 	/* Register IO */
-	.write		= sof_io_write,
-	.read		= sof_io_read,
-	.write64	= sof_io_write64,
-	.read64		= sof_io_read64,
+	.ग_लिखो		= sof_io_ग_लिखो,
+	.पढ़ो		= sof_io_पढ़ो,
+	.ग_लिखो64	= sof_io_ग_लिखो64,
+	.पढ़ो64		= sof_io_पढ़ो64,
 
 	/* Block IO */
-	.block_read	= sof_block_read,
-	.block_write	= sof_block_write,
+	.block_पढ़ो	= sof_block_पढ़ो,
+	.block_ग_लिखो	= sof_block_ग_लिखो,
 
-	/* doorbell */
-	.irq_thread	= cnl_ipc_irq_thread,
+	/* करोorbell */
+	.irq_thपढ़ो	= cnl_ipc_irq_thपढ़ो,
 
 	/* ipc */
 	.send_msg	= cnl_ipc_send_msg,
-	.fw_ready	= sof_fw_ready,
+	.fw_पढ़ोy	= sof_fw_पढ़ोy,
 	.get_mailbox_offset = hda_dsp_ipc_get_mailbox_offset,
-	.get_window_offset = hda_dsp_ipc_get_window_offset,
+	.get_winकरोw_offset = hda_dsp_ipc_get_winकरोw_offset,
 
 	.ipc_msg_data	= hda_ipc_msg_data,
 	.ipc_pcm_params	= hda_ipc_pcm_params,
 
 	/* machine driver */
 	.machine_select = hda_machine_select,
-	.machine_register = sof_machine_register,
-	.machine_unregister = sof_machine_unregister,
+	.machine_रेजिस्टर = sof_machine_रेजिस्टर,
+	.machine_unरेजिस्टर = sof_machine_unरेजिस्टर,
 	.set_mach_params = hda_set_mach_params,
 
 	/* debug */
@@ -62,21 +63,21 @@ const struct snd_sof_dsp_ops sof_tgl_ops = {
 	.ipc_dump	= cnl_ipc_dump,
 
 	/* stream callbacks */
-	.pcm_open	= hda_dsp_pcm_open,
-	.pcm_close	= hda_dsp_pcm_close,
+	.pcm_खोलो	= hda_dsp_pcm_खोलो,
+	.pcm_बंद	= hda_dsp_pcm_बंद,
 	.pcm_hw_params	= hda_dsp_pcm_hw_params,
-	.pcm_hw_free	= hda_dsp_stream_hw_free,
+	.pcm_hw_मुक्त	= hda_dsp_stream_hw_मुक्त,
 	.pcm_trigger	= hda_dsp_pcm_trigger,
-	.pcm_pointer	= hda_dsp_pcm_pointer,
+	.pcm_poपूर्णांकer	= hda_dsp_pcm_poपूर्णांकer,
 
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_HDA_PROBES)
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_HDA_PROBES)
 	/* probe callbacks */
 	.probe_assign	= hda_probe_compr_assign,
-	.probe_free	= hda_probe_compr_free,
+	.probe_मुक्त	= hda_probe_compr_मुक्त,
 	.probe_set_params	= hda_probe_compr_set_params,
 	.probe_trigger	= hda_probe_compr_trigger,
-	.probe_pointer	= hda_probe_compr_pointer,
-#endif
+	.probe_poपूर्णांकer	= hda_probe_compr_poपूर्णांकer,
+#पूर्ण_अगर
 
 	/* firmware loading */
 	.load_firmware = snd_sof_load_firmware_raw,
@@ -85,12 +86,12 @@ const struct snd_sof_dsp_ops sof_tgl_ops = {
 	.pre_fw_run = hda_dsp_pre_fw_run,
 	.post_fw_run = hda_dsp_post_fw_run,
 
-	/* parse platform specific extended manifest */
-	.parse_platform_ext_manifest = hda_dsp_ext_man_get_cavs_config_data,
+	/* parse platक्रमm specअगरic extended manअगरest */
+	.parse_platक्रमm_ext_manअगरest = hda_dsp_ext_man_get_cavs_config_data,
 
-	/* dsp core power up/down */
-	.core_power_up = hda_dsp_enable_core,
-	.core_power_down = hda_dsp_core_reset_power_down,
+	/* dsp core घातer up/करोwn */
+	.core_घातer_up = hda_dsp_enable_core,
+	.core_घातer_करोwn = hda_dsp_core_reset_घातer_करोwn,
 
 	/* firmware run */
 	.run = hda_dsp_cl_boot_firmware_iccmax,
@@ -107,11 +108,11 @@ const struct snd_sof_dsp_ops sof_tgl_ops = {
 	/* PM */
 	.suspend		= hda_dsp_suspend,
 	.resume			= hda_dsp_resume,
-	.runtime_suspend	= hda_dsp_runtime_suspend,
-	.runtime_resume		= hda_dsp_runtime_resume,
-	.runtime_idle		= hda_dsp_runtime_idle,
+	.runसमय_suspend	= hda_dsp_runसमय_suspend,
+	.runसमय_resume		= hda_dsp_runसमय_resume,
+	.runसमय_idle		= hda_dsp_runसमय_idle,
 	.set_hw_params_upon_resume = hda_dsp_set_hw_params_upon_resume,
-	.set_power_state	= hda_dsp_set_power_state,
+	.set_घातer_state	= hda_dsp_set_घातer_state,
 
 	/* ALSA HW info flags */
 	.hw_info =	SNDRV_PCM_INFO_MMAP |
@@ -121,10 +122,10 @@ const struct snd_sof_dsp_ops sof_tgl_ops = {
 			SNDRV_PCM_INFO_NO_PERIOD_WAKEUP,
 
 	.arch_ops = &sof_xtensa_arch_ops,
-};
+पूर्ण;
 EXPORT_SYMBOL_NS(sof_tgl_ops, SND_SOC_SOF_INTEL_HDA_COMMON);
 
-const struct sof_intel_dsp_desc tgl_chip_info = {
+स्थिर काष्ठा sof_पूर्णांकel_dsp_desc tgl_chip_info = अणु
 	/* Tigerlake , Alderlake */
 	.cores_num = 4,
 	.init_core_mask = 1,
@@ -134,13 +135,13 @@ const struct sof_intel_dsp_desc tgl_chip_info = {
 	.ipc_ack = CNL_DSP_REG_HIPCIDA,
 	.ipc_ack_mask = CNL_DSP_REG_HIPCIDA_DONE,
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
-	.rom_init_timeout	= 300,
+	.rom_init_समयout	= 300,
 	.ssp_count = ICL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
-};
+पूर्ण;
 EXPORT_SYMBOL_NS(tgl_chip_info, SND_SOC_SOF_INTEL_HDA_COMMON);
 
-const struct sof_intel_dsp_desc tglh_chip_info = {
+स्थिर काष्ठा sof_पूर्णांकel_dsp_desc tglh_chip_info = अणु
 	/* Tigerlake-H */
 	.cores_num = 2,
 	.init_core_mask = 1,
@@ -150,13 +151,13 @@ const struct sof_intel_dsp_desc tglh_chip_info = {
 	.ipc_ack = CNL_DSP_REG_HIPCIDA,
 	.ipc_ack_mask = CNL_DSP_REG_HIPCIDA_DONE,
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
-	.rom_init_timeout	= 300,
+	.rom_init_समयout	= 300,
 	.ssp_count = ICL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
-};
+पूर्ण;
 EXPORT_SYMBOL_NS(tglh_chip_info, SND_SOC_SOF_INTEL_HDA_COMMON);
 
-const struct sof_intel_dsp_desc ehl_chip_info = {
+स्थिर काष्ठा sof_पूर्णांकel_dsp_desc ehl_chip_info = अणु
 	/* Elkhartlake */
 	.cores_num = 4,
 	.init_core_mask = 1,
@@ -166,13 +167,13 @@ const struct sof_intel_dsp_desc ehl_chip_info = {
 	.ipc_ack = CNL_DSP_REG_HIPCIDA,
 	.ipc_ack_mask = CNL_DSP_REG_HIPCIDA_DONE,
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
-	.rom_init_timeout	= 300,
+	.rom_init_समयout	= 300,
 	.ssp_count = ICL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
-};
+पूर्ण;
 EXPORT_SYMBOL_NS(ehl_chip_info, SND_SOC_SOF_INTEL_HDA_COMMON);
 
-const struct sof_intel_dsp_desc adls_chip_info = {
+स्थिर काष्ठा sof_पूर्णांकel_dsp_desc adls_chip_info = अणु
 	/* Alderlake-S */
 	.cores_num = 2,
 	.init_core_mask = BIT(0),
@@ -182,8 +183,8 @@ const struct sof_intel_dsp_desc adls_chip_info = {
 	.ipc_ack = CNL_DSP_REG_HIPCIDA,
 	.ipc_ack_mask = CNL_DSP_REG_HIPCIDA_DONE,
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
-	.rom_init_timeout	= 300,
+	.rom_init_समयout	= 300,
 	.ssp_count = ICL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
-};
+पूर्ण;
 EXPORT_SYMBOL_NS(adls_chip_info, SND_SOC_SOF_INTEL_HDA_COMMON);

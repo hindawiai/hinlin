@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _LINUX_QRTR_H
-#define _LINUX_QRTR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _LINUX_QRTR_H
+#घोषणा _LINUX_QRTR_H
 
-#include <linux/socket.h>
-#include <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/types.h>
 
-#define QRTR_NODE_BCAST	0xffffffffu
-#define QRTR_PORT_CTRL	0xfffffffeu
+#घोषणा QRTR_NODE_BCAST	0xffffffffu
+#घोषणा QRTR_PORT_CTRL	0xfffffffeu
 
-struct sockaddr_qrtr {
+काष्ठा sockaddr_qrtr अणु
 	__kernel_sa_family_t sq_family;
 	__u32 sq_node;
 	__u32 sq_port;
-};
+पूर्ण;
 
-enum qrtr_pkt_type {
+क्रमागत qrtr_pkt_type अणु
 	QRTR_TYPE_DATA		= 1,
 	QRTR_TYPE_HELLO		= 2,
 	QRTR_TYPE_BYE		= 3,
@@ -26,24 +27,24 @@ enum qrtr_pkt_type {
 	QRTR_TYPE_PING          = 9,
 	QRTR_TYPE_NEW_LOOKUP	= 10,
 	QRTR_TYPE_DEL_LOOKUP	= 11,
-};
+पूर्ण;
 
-struct qrtr_ctrl_pkt {
+काष्ठा qrtr_ctrl_pkt अणु
 	__le32 cmd;
 
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			__le32 service;
 			__le32 instance;
 			__le32 node;
 			__le32 port;
-		} server;
+		पूर्ण server;
 
-		struct {
+		काष्ठा अणु
 			__le32 node;
 			__le32 port;
-		} client;
-	};
-} __packed;
+		पूर्ण client;
+	पूर्ण;
+पूर्ण __packed;
 
-#endif /* _LINUX_QRTR_H */
+#पूर्ण_अगर /* _LINUX_QRTR_H */

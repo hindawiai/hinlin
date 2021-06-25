@@ -1,433 +1,434 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
 
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_wakeirq.h>
-#include <linux/rtc.h>
-#include <linux/clk.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_wakeirq.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
 
-#define SNVS_LPREGISTER_OFFSET	0x34
+#घोषणा SNVS_LPREGISTER_OFFSET	0x34
 
-/* These register offsets are relative to LP (Low Power) range */
-#define SNVS_LPCR		0x04
-#define SNVS_LPSR		0x18
-#define SNVS_LPSRTCMR		0x1c
-#define SNVS_LPSRTCLR		0x20
-#define SNVS_LPTAR		0x24
-#define SNVS_LPPGDR		0x30
+/* These रेजिस्टर offsets are relative to LP (Low Power) range */
+#घोषणा SNVS_LPCR		0x04
+#घोषणा SNVS_LPSR		0x18
+#घोषणा SNVS_LPSRTCMR		0x1c
+#घोषणा SNVS_LPSRTCLR		0x20
+#घोषणा SNVS_LPTAR		0x24
+#घोषणा SNVS_LPPGDR		0x30
 
-#define SNVS_LPCR_SRTC_ENV	(1 << 0)
-#define SNVS_LPCR_LPTA_EN	(1 << 1)
-#define SNVS_LPCR_LPWUI_EN	(1 << 3)
-#define SNVS_LPSR_LPTA		(1 << 0)
+#घोषणा SNVS_LPCR_SRTC_ENV	(1 << 0)
+#घोषणा SNVS_LPCR_LPTA_EN	(1 << 1)
+#घोषणा SNVS_LPCR_LPWUI_EN	(1 << 3)
+#घोषणा SNVS_LPSR_LPTA		(1 << 0)
 
-#define SNVS_LPPGDR_INIT	0x41736166
-#define CNTR_TO_SECS_SH		15
+#घोषणा SNVS_LPPGDR_INIT	0x41736166
+#घोषणा CNTR_TO_SECS_SH		15
 
-struct snvs_rtc_data {
-	struct rtc_device *rtc;
-	struct regmap *regmap;
-	int offset;
-	int irq;
-	struct clk *clk;
-};
+काष्ठा snvs_rtc_data अणु
+	काष्ठा rtc_device *rtc;
+	काष्ठा regmap *regmap;
+	पूर्णांक offset;
+	पूर्णांक irq;
+	काष्ठा clk *clk;
+पूर्ण;
 
-/* Read 64 bit timer register, which could be in inconsistent state */
-static u64 rtc_read_lpsrt(struct snvs_rtc_data *data)
-{
+/* Read 64 bit समयr रेजिस्टर, which could be in inconsistent state */
+अटल u64 rtc_पढ़ो_lpsrt(काष्ठा snvs_rtc_data *data)
+अणु
 	u32 msb, lsb;
 
-	regmap_read(data->regmap, data->offset + SNVS_LPSRTCMR, &msb);
-	regmap_read(data->regmap, data->offset + SNVS_LPSRTCLR, &lsb);
-	return (u64)msb << 32 | lsb;
-}
+	regmap_पढ़ो(data->regmap, data->offset + SNVS_LPSRTCMR, &msb);
+	regmap_पढ़ो(data->regmap, data->offset + SNVS_LPSRTCLR, &lsb);
+	वापस (u64)msb << 32 | lsb;
+पूर्ण
 
-/* Read the secure real time counter, taking care to deal with the cases of the
- * counter updating while being read.
+/* Read the secure real समय counter, taking care to deal with the हालs of the
+ * counter updating जबतक being पढ़ो.
  */
-static u32 rtc_read_lp_counter(struct snvs_rtc_data *data)
-{
-	u64 read1, read2;
-	unsigned int timeout = 100;
+अटल u32 rtc_पढ़ो_lp_counter(काष्ठा snvs_rtc_data *data)
+अणु
+	u64 पढ़ो1, पढ़ो2;
+	अचिन्हित पूर्णांक समयout = 100;
 
-	/* As expected, the registers might update between the read of the LSB
-	 * reg and the MSB reg.  It's also possible that one register might be
-	 * in partially modified state as well.
+	/* As expected, the रेजिस्टरs might update between the पढ़ो of the LSB
+	 * reg and the MSB reg.  It's also possible that one रेजिस्टर might be
+	 * in partially modअगरied state as well.
 	 */
-	read1 = rtc_read_lpsrt(data);
-	do {
-		read2 = read1;
-		read1 = rtc_read_lpsrt(data);
-	} while (read1 != read2 && --timeout);
-	if (!timeout)
+	पढ़ो1 = rtc_पढ़ो_lpsrt(data);
+	करो अणु
+		पढ़ो2 = पढ़ो1;
+		पढ़ो1 = rtc_पढ़ो_lpsrt(data);
+	पूर्ण जबतक (पढ़ो1 != पढ़ो2 && --समयout);
+	अगर (!समयout)
 		dev_err(&data->rtc->dev, "Timeout trying to get valid LPSRT Counter read\n");
 
 	/* Convert 47-bit counter to 32-bit raw second count */
-	return (u32) (read1 >> CNTR_TO_SECS_SH);
-}
+	वापस (u32) (पढ़ो1 >> CNTR_TO_SECS_SH);
+पूर्ण
 
-/* Just read the lsb from the counter, dealing with inconsistent state */
-static int rtc_read_lp_counter_lsb(struct snvs_rtc_data *data, u32 *lsb)
-{
+/* Just पढ़ो the lsb from the counter, dealing with inconsistent state */
+अटल पूर्णांक rtc_पढ़ो_lp_counter_lsb(काष्ठा snvs_rtc_data *data, u32 *lsb)
+अणु
 	u32 count1, count2;
-	unsigned int timeout = 100;
+	अचिन्हित पूर्णांक समयout = 100;
 
-	regmap_read(data->regmap, data->offset + SNVS_LPSRTCLR, &count1);
-	do {
+	regmap_पढ़ो(data->regmap, data->offset + SNVS_LPSRTCLR, &count1);
+	करो अणु
 		count2 = count1;
-		regmap_read(data->regmap, data->offset + SNVS_LPSRTCLR, &count1);
-	} while (count1 != count2 && --timeout);
-	if (!timeout) {
+		regmap_पढ़ो(data->regmap, data->offset + SNVS_LPSRTCLR, &count1);
+	पूर्ण जबतक (count1 != count2 && --समयout);
+	अगर (!समयout) अणु
 		dev_err(&data->rtc->dev, "Timeout trying to get valid LPSRT Counter read\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	*lsb = count1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtc_write_sync_lp(struct snvs_rtc_data *data)
-{
+अटल पूर्णांक rtc_ग_लिखो_sync_lp(काष्ठा snvs_rtc_data *data)
+अणु
 	u32 count1, count2;
 	u32 elapsed;
-	unsigned int timeout = 1000;
-	int ret;
+	अचिन्हित पूर्णांक समयout = 1000;
+	पूर्णांक ret;
 
-	ret = rtc_read_lp_counter_lsb(data, &count1);
-	if (ret)
-		return ret;
+	ret = rtc_पढ़ो_lp_counter_lsb(data, &count1);
+	अगर (ret)
+		वापस ret;
 
-	/* Wait for 3 CKIL cycles, about 61.0-91.5 µs */
-	do {
-		ret = rtc_read_lp_counter_lsb(data, &count2);
-		if (ret)
-			return ret;
+	/* Wait क्रम 3 CKIL cycles, about 61.0-91.5 तगs */
+	करो अणु
+		ret = rtc_पढ़ो_lp_counter_lsb(data, &count2);
+		अगर (ret)
+			वापस ret;
 		elapsed = count2 - count1; /* wrap around _is_ handled! */
-	} while (elapsed < 3 && --timeout);
-	if (!timeout) {
+	पूर्ण जबतक (elapsed < 3 && --समयout);
+	अगर (!समयout) अणु
 		dev_err(&data->rtc->dev, "Timeout waiting for LPSRT Counter to change\n");
-		return -ETIMEDOUT;
-	}
-	return 0;
-}
+		वापस -ETIMEDOUT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snvs_rtc_enable(struct snvs_rtc_data *data, bool enable)
-{
-	int timeout = 1000;
+अटल पूर्णांक snvs_rtc_enable(काष्ठा snvs_rtc_data *data, bool enable)
+अणु
+	पूर्णांक समयout = 1000;
 	u32 lpcr;
 
 	regmap_update_bits(data->regmap, data->offset + SNVS_LPCR, SNVS_LPCR_SRTC_ENV,
 			   enable ? SNVS_LPCR_SRTC_ENV : 0);
 
-	while (--timeout) {
-		regmap_read(data->regmap, data->offset + SNVS_LPCR, &lpcr);
+	जबतक (--समयout) अणु
+		regmap_पढ़ो(data->regmap, data->offset + SNVS_LPCR, &lpcr);
 
-		if (enable) {
-			if (lpcr & SNVS_LPCR_SRTC_ENV)
-				break;
-		} else {
-			if (!(lpcr & SNVS_LPCR_SRTC_ENV))
-				break;
-		}
-	}
+		अगर (enable) अणु
+			अगर (lpcr & SNVS_LPCR_SRTC_ENV)
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर (!(lpcr & SNVS_LPCR_SRTC_ENV))
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!timeout)
-		return -ETIMEDOUT;
+	अगर (!समयout)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snvs_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct snvs_rtc_data *data = dev_get_drvdata(dev);
-	unsigned long time;
-	int ret;
+अटल पूर्णांक snvs_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा snvs_rtc_data *data = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ समय;
+	पूर्णांक ret;
 
 	ret = clk_enable(data->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	time = rtc_read_lp_counter(data);
-	rtc_time64_to_tm(time, tm);
+	समय = rtc_पढ़ो_lp_counter(data);
+	rtc_समय64_to_पंचांग(समय, पंचांग);
 
 	clk_disable(data->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snvs_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct snvs_rtc_data *data = dev_get_drvdata(dev);
-	unsigned long time = rtc_tm_to_time64(tm);
-	int ret;
+अटल पूर्णांक snvs_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा snvs_rtc_data *data = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ समय = rtc_पंचांग_to_समय64(पंचांग);
+	पूर्णांक ret;
 
 	ret = clk_enable(data->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Disable RTC first */
 	ret = snvs_rtc_enable(data, false);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Write 32-bit time to 47-bit timer, leaving 15 LSBs blank */
-	regmap_write(data->regmap, data->offset + SNVS_LPSRTCLR, time << CNTR_TO_SECS_SH);
-	regmap_write(data->regmap, data->offset + SNVS_LPSRTCMR, time >> (32 - CNTR_TO_SECS_SH));
+	/* Write 32-bit समय to 47-bit समयr, leaving 15 LSBs blank */
+	regmap_ग_लिखो(data->regmap, data->offset + SNVS_LPSRTCLR, समय << CNTR_TO_SECS_SH);
+	regmap_ग_लिखो(data->regmap, data->offset + SNVS_LPSRTCMR, समय >> (32 - CNTR_TO_SECS_SH));
 
 	/* Enable RTC again */
 	ret = snvs_rtc_enable(data, true);
 
 	clk_disable(data->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int snvs_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct snvs_rtc_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक snvs_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा snvs_rtc_data *data = dev_get_drvdata(dev);
 	u32 lptar, lpsr;
-	int ret;
+	पूर्णांक ret;
 
 	ret = clk_enable(data->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	regmap_read(data->regmap, data->offset + SNVS_LPTAR, &lptar);
-	rtc_time64_to_tm(lptar, &alrm->time);
+	regmap_पढ़ो(data->regmap, data->offset + SNVS_LPTAR, &lptar);
+	rtc_समय64_to_पंचांग(lptar, &alrm->समय);
 
-	regmap_read(data->regmap, data->offset + SNVS_LPSR, &lpsr);
+	regmap_पढ़ो(data->regmap, data->offset + SNVS_LPSR, &lpsr);
 	alrm->pending = (lpsr & SNVS_LPSR_LPTA) ? 1 : 0;
 
 	clk_disable(data->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snvs_rtc_alarm_irq_enable(struct device *dev, unsigned int enable)
-{
-	struct snvs_rtc_data *data = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक snvs_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enable)
+अणु
+	काष्ठा snvs_rtc_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = clk_enable(data->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	regmap_update_bits(data->regmap, data->offset + SNVS_LPCR,
 			   (SNVS_LPCR_LPTA_EN | SNVS_LPCR_LPWUI_EN),
 			   enable ? (SNVS_LPCR_LPTA_EN | SNVS_LPCR_LPWUI_EN) : 0);
 
-	ret = rtc_write_sync_lp(data);
+	ret = rtc_ग_लिखो_sync_lp(data);
 
 	clk_disable(data->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int snvs_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct snvs_rtc_data *data = dev_get_drvdata(dev);
-	unsigned long time = rtc_tm_to_time64(&alrm->time);
-	int ret;
+अटल पूर्णांक snvs_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा snvs_rtc_data *data = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ समय = rtc_पंचांग_to_समय64(&alrm->समय);
+	पूर्णांक ret;
 
 	ret = clk_enable(data->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	regmap_update_bits(data->regmap, data->offset + SNVS_LPCR, SNVS_LPCR_LPTA_EN, 0);
-	ret = rtc_write_sync_lp(data);
-	if (ret)
-		return ret;
-	regmap_write(data->regmap, data->offset + SNVS_LPTAR, time);
+	ret = rtc_ग_लिखो_sync_lp(data);
+	अगर (ret)
+		वापस ret;
+	regmap_ग_लिखो(data->regmap, data->offset + SNVS_LPTAR, समय);
 
-	/* Clear alarm interrupt status bit */
-	regmap_write(data->regmap, data->offset + SNVS_LPSR, SNVS_LPSR_LPTA);
+	/* Clear alarm पूर्णांकerrupt status bit */
+	regmap_ग_लिखो(data->regmap, data->offset + SNVS_LPSR, SNVS_LPSR_LPTA);
 
 	clk_disable(data->clk);
 
-	return snvs_rtc_alarm_irq_enable(dev, alrm->enabled);
-}
+	वापस snvs_rtc_alarm_irq_enable(dev, alrm->enabled);
+पूर्ण
 
-static const struct rtc_class_ops snvs_rtc_ops = {
-	.read_time = snvs_rtc_read_time,
-	.set_time = snvs_rtc_set_time,
-	.read_alarm = snvs_rtc_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops snvs_rtc_ops = अणु
+	.पढ़ो_समय = snvs_rtc_पढ़ो_समय,
+	.set_समय = snvs_rtc_set_समय,
+	.पढ़ो_alarm = snvs_rtc_पढ़ो_alarm,
 	.set_alarm = snvs_rtc_set_alarm,
 	.alarm_irq_enable = snvs_rtc_alarm_irq_enable,
-};
+पूर्ण;
 
-static irqreturn_t snvs_rtc_irq_handler(int irq, void *dev_id)
-{
-	struct device *dev = dev_id;
-	struct snvs_rtc_data *data = dev_get_drvdata(dev);
+अटल irqवापस_t snvs_rtc_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा device *dev = dev_id;
+	काष्ठा snvs_rtc_data *data = dev_get_drvdata(dev);
 	u32 lpsr;
 	u32 events = 0;
 
 	clk_enable(data->clk);
 
-	regmap_read(data->regmap, data->offset + SNVS_LPSR, &lpsr);
+	regmap_पढ़ो(data->regmap, data->offset + SNVS_LPSR, &lpsr);
 
-	if (lpsr & SNVS_LPSR_LPTA) {
+	अगर (lpsr & SNVS_LPSR_LPTA) अणु
 		events |= (RTC_AF | RTC_IRQF);
 
 		/* RTC alarm should be one-shot */
 		snvs_rtc_alarm_irq_enable(dev, 0);
 
 		rtc_update_irq(data->rtc, 1, events);
-	}
+	पूर्ण
 
-	/* clear interrupt status */
-	regmap_write(data->regmap, data->offset + SNVS_LPSR, lpsr);
+	/* clear पूर्णांकerrupt status */
+	regmap_ग_लिखो(data->regmap, data->offset + SNVS_LPSR, lpsr);
 
 	clk_disable(data->clk);
 
-	return events ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस events ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static const struct regmap_config snvs_rtc_config = {
+अटल स्थिर काष्ठा regmap_config snvs_rtc_config = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-};
+पूर्ण;
 
-static void snvs_rtc_action(void *data)
-{
+अटल व्योम snvs_rtc_action(व्योम *data)
+अणु
 	clk_disable_unprepare(data);
-}
+पूर्ण
 
-static int snvs_rtc_probe(struct platform_device *pdev)
-{
-	struct snvs_rtc_data *data;
-	int ret;
-	void __iomem *mmio;
+अटल पूर्णांक snvs_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snvs_rtc_data *data;
+	पूर्णांक ret;
+	व्योम __iomem *mmio;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->rtc = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(data->rtc))
-		return PTR_ERR(data->rtc);
+	अगर (IS_ERR(data->rtc))
+		वापस PTR_ERR(data->rtc);
 
 	data->regmap = syscon_regmap_lookup_by_phandle(pdev->dev.of_node, "regmap");
 
-	if (IS_ERR(data->regmap)) {
+	अगर (IS_ERR(data->regmap)) अणु
 		dev_warn(&pdev->dev, "snvs rtc: you use old dts file, please update it\n");
 
-		mmio = devm_platform_ioremap_resource(pdev, 0);
-		if (IS_ERR(mmio))
-			return PTR_ERR(mmio);
+		mmio = devm_platक्रमm_ioremap_resource(pdev, 0);
+		अगर (IS_ERR(mmio))
+			वापस PTR_ERR(mmio);
 
 		data->regmap = devm_regmap_init_mmio(&pdev->dev, mmio, &snvs_rtc_config);
-	} else {
+	पूर्ण अन्यथा अणु
 		data->offset = SNVS_LPREGISTER_OFFSET;
-		of_property_read_u32(pdev->dev.of_node, "offset", &data->offset);
-	}
+		of_property_पढ़ो_u32(pdev->dev.of_node, "offset", &data->offset);
+	पूर्ण
 
-	if (IS_ERR(data->regmap)) {
+	अगर (IS_ERR(data->regmap)) अणु
 		dev_err(&pdev->dev, "Can't find snvs syscon\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	data->irq = platform_get_irq(pdev, 0);
-	if (data->irq < 0)
-		return data->irq;
+	data->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (data->irq < 0)
+		वापस data->irq;
 
 	data->clk = devm_clk_get(&pdev->dev, "snvs-rtc");
-	if (IS_ERR(data->clk)) {
-		data->clk = NULL;
-	} else {
+	अगर (IS_ERR(data->clk)) अणु
+		data->clk = शून्य;
+	पूर्ण अन्यथा अणु
 		ret = clk_prepare_enable(data->clk);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev,
 				"Could not prepare or enable the snvs clock\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = devm_add_action_or_reset(&pdev->dev, snvs_rtc_action, data->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
 	/* Initialize glitch detect */
-	regmap_write(data->regmap, data->offset + SNVS_LPPGDR, SNVS_LPPGDR_INIT);
+	regmap_ग_लिखो(data->regmap, data->offset + SNVS_LPPGDR, SNVS_LPPGDR_INIT);
 
-	/* Clear interrupt status */
-	regmap_write(data->regmap, data->offset + SNVS_LPSR, 0xffffffff);
+	/* Clear पूर्णांकerrupt status */
+	regmap_ग_लिखो(data->regmap, data->offset + SNVS_LPSR, 0xffffffff);
 
 	/* Enable RTC */
 	ret = snvs_rtc_enable(data, true);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to enable rtc %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	device_init_wakeup(&pdev->dev, true);
 	ret = dev_pm_set_wake_irq(&pdev->dev, data->irq);
-	if (ret)
+	अगर (ret)
 		dev_err(&pdev->dev, "failed to enable irq wake\n");
 
 	ret = devm_request_irq(&pdev->dev, data->irq, snvs_rtc_irq_handler,
 			       IRQF_SHARED, "rtc alarm", &pdev->dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to request irq %d: %d\n",
 			data->irq, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	data->rtc->ops = &snvs_rtc_ops;
 	data->rtc->range_max = U32_MAX;
 
-	return devm_rtc_register_device(data->rtc);
-}
+	वापस devm_rtc_रेजिस्टर_device(data->rtc);
+पूर्ण
 
-static int __maybe_unused snvs_rtc_suspend_noirq(struct device *dev)
-{
-	struct snvs_rtc_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused snvs_rtc_suspend_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा snvs_rtc_data *data = dev_get_drvdata(dev);
 
 	clk_disable(data->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused snvs_rtc_resume_noirq(struct device *dev)
-{
-	struct snvs_rtc_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused snvs_rtc_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा snvs_rtc_data *data = dev_get_drvdata(dev);
 
-	if (data->clk)
-		return clk_enable(data->clk);
+	अगर (data->clk)
+		वापस clk_enable(data->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops snvs_rtc_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops snvs_rtc_pm_ops = अणु
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(snvs_rtc_suspend_noirq, snvs_rtc_resume_noirq)
-};
+पूर्ण;
 
-static const struct of_device_id snvs_dt_ids[] = {
-	{ .compatible = "fsl,sec-v4.0-mon-rtc-lp", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id snvs_dt_ids[] = अणु
+	अणु .compatible = "fsl,sec-v4.0-mon-rtc-lp", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, snvs_dt_ids);
 
-static struct platform_driver snvs_rtc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver snvs_rtc_driver = अणु
+	.driver = अणु
 		.name	= "snvs_rtc",
 		.pm	= &snvs_rtc_pm_ops,
 		.of_match_table = snvs_dt_ids,
-	},
+	पूर्ण,
 	.probe		= snvs_rtc_probe,
-};
-module_platform_driver(snvs_rtc_driver);
+पूर्ण;
+module_platक्रमm_driver(snvs_rtc_driver);
 
 MODULE_AUTHOR("Freescale Semiconductor, Inc.");
 MODULE_DESCRIPTION("Freescale SNVS RTC Driver");

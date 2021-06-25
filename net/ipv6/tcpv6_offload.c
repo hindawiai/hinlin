@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	IPV6 GSO/GRO offload support
  *	Linux INET6 implementation
  *
  *      TCPv6 GSO/GRO support
  */
-#include <linux/indirect_call_wrapper.h>
-#include <linux/skbuff.h>
-#include <net/protocol.h>
-#include <net/tcp.h>
-#include <net/ip6_checksum.h>
-#include "ip6_offload.h"
+#समावेश <linux/indirect_call_wrapper.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/protocol.h>
+#समावेश <net/tcp.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश "ip6_offload.h"
 
-INDIRECT_CALLABLE_SCOPE
-struct sk_buff *tcp6_gro_receive(struct list_head *head, struct sk_buff *skb)
-{
+INसूचीECT_CALLABLE_SCOPE
+काष्ठा sk_buff *tcp6_gro_receive(काष्ठा list_head *head, काष्ठा sk_buff *skb)
+अणु
 	/* Don't bother verifying checksum if we're going to flush anyway. */
-	if (!NAPI_GRO_CB(skb)->flush &&
+	अगर (!NAPI_GRO_CB(skb)->flush &&
 	    skb_gro_checksum_validate(skb, IPPROTO_TCP,
-				      ip6_gro_compute_pseudo)) {
+				      ip6_gro_compute_pseuकरो)) अणु
 		NAPI_GRO_CB(skb)->flush = 1;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return tcp_gro_receive(head, skb);
-}
+	वापस tcp_gro_receive(head, skb);
+पूर्ण
 
-INDIRECT_CALLABLE_SCOPE int tcp6_gro_complete(struct sk_buff *skb, int thoff)
-{
-	const struct ipv6hdr *iph = ipv6_hdr(skb);
-	struct tcphdr *th = tcp_hdr(skb);
+INसूचीECT_CALLABLE_SCOPE पूर्णांक tcp6_gro_complete(काष्ठा sk_buff *skb, पूर्णांक thoff)
+अणु
+	स्थिर काष्ठा ipv6hdr *iph = ipv6_hdr(skb);
+	काष्ठा tcphdr *th = tcp_hdr(skb);
 
 	th->check = ~tcp_v6_check(skb->len - thoff, &iph->saddr,
 				  &iph->daddr, 0);
 	skb_shinfo(skb)->gso_type |= SKB_GSO_TCPV6;
 
-	return tcp_gro_complete(skb);
-}
+	वापस tcp_gro_complete(skb);
+पूर्ण
 
-static struct sk_buff *tcp6_gso_segment(struct sk_buff *skb,
+अटल काष्ठा sk_buff *tcp6_gso_segment(काष्ठा sk_buff *skb,
 					netdev_features_t features)
-{
-	struct tcphdr *th;
+अणु
+	काष्ठा tcphdr *th;
 
-	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_TCPV6))
-		return ERR_PTR(-EINVAL);
+	अगर (!(skb_shinfo(skb)->gso_type & SKB_GSO_TCPV6))
+		वापस ERR_PTR(-EINVAL);
 
-	if (!pskb_may_pull(skb, sizeof(*th)))
-		return ERR_PTR(-EINVAL);
+	अगर (!pskb_may_pull(skb, माप(*th)))
+		वापस ERR_PTR(-EINVAL);
 
-	if (unlikely(skb->ip_summed != CHECKSUM_PARTIAL)) {
-		const struct ipv6hdr *ipv6h = ipv6_hdr(skb);
-		struct tcphdr *th = tcp_hdr(skb);
+	अगर (unlikely(skb->ip_summed != CHECKSUM_PARTIAL)) अणु
+		स्थिर काष्ठा ipv6hdr *ipv6h = ipv6_hdr(skb);
+		काष्ठा tcphdr *th = tcp_hdr(skb);
 
-		/* Set up pseudo header, usually expect stack to have done
+		/* Set up pseuकरो header, usually expect stack to have करोne
 		 * this.
 		 */
 
 		th->check = 0;
 		skb->ip_summed = CHECKSUM_PARTIAL;
 		__tcp_v6_send_check(skb, &ipv6h->saddr, &ipv6h->daddr);
-	}
+	पूर्ण
 
-	return tcp_gso_segment(skb, features);
-}
-static const struct net_offload tcpv6_offload = {
-	.callbacks = {
+	वापस tcp_gso_segment(skb, features);
+पूर्ण
+अटल स्थिर काष्ठा net_offload tcpv6_offload = अणु
+	.callbacks = अणु
 		.gso_segment	=	tcp6_gso_segment,
 		.gro_receive	=	tcp6_gro_receive,
 		.gro_complete	=	tcp6_gro_complete,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int __init tcpv6_offload_init(void)
-{
-	return inet6_add_offload(&tcpv6_offload, IPPROTO_TCP);
-}
+पूर्णांक __init tcpv6_offload_init(व्योम)
+अणु
+	वापस inet6_add_offload(&tcpv6_offload, IPPROTO_TCP);
+पूर्ण

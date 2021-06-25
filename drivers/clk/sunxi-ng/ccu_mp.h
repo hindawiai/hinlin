@@ -1,113 +1,114 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Maxime Ripard. All rights reserved.
  */
 
-#ifndef _CCU_MP_H_
-#define _CCU_MP_H_
+#अगर_अघोषित _CCU_MP_H_
+#घोषणा _CCU_MP_H_
 
-#include <linux/bitops.h>
-#include <linux/clk-provider.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk-provider.h>
 
-#include "ccu_common.h"
-#include "ccu_div.h"
-#include "ccu_mult.h"
-#include "ccu_mux.h"
+#समावेश "ccu_common.h"
+#समावेश "ccu_div.h"
+#समावेश "ccu_mult.h"
+#समावेश "ccu_mux.h"
 
 /*
- * struct ccu_mp - Definition of an M-P clock
+ * काष्ठा ccu_mp - Definition of an M-P घड़ी
  *
- * Clocks based on the formula parent >> P / M
+ * Clocks based on the क्रमmula parent >> P / M
  */
-struct ccu_mp {
+काष्ठा ccu_mp अणु
 	u32			enable;
 
-	struct ccu_div_internal		m;
-	struct ccu_div_internal		p;
-	struct ccu_mux_internal	mux;
+	काष्ठा ccu_भाग_पूर्णांकernal		m;
+	काष्ठा ccu_भाग_पूर्णांकernal		p;
+	काष्ठा ccu_mux_पूर्णांकernal	mux;
 
-	unsigned int		fixed_post_div;
+	अचिन्हित पूर्णांक		fixed_post_भाग;
 
-	struct ccu_common	common;
-};
+	काष्ठा ccu_common	common;
+पूर्ण;
 
-#define SUNXI_CCU_MP_WITH_MUX_GATE_POSTDIV(_struct, _name, _parents, _reg, \
-					   _mshift, _mwidth,		\
-					   _pshift, _pwidth,		\
-					   _muxshift, _muxwidth,	\
-					   _gate, _postdiv, _flags)	\
-	struct ccu_mp _struct = {					\
+#घोषणा SUNXI_CCU_MP_WITH_MUX_GATE_POSTDIV(_काष्ठा, _name, _parents, _reg, \
+					   _mshअगरt, _mwidth,		\
+					   _pshअगरt, _pwidth,		\
+					   _muxshअगरt, _muxwidth,	\
+					   _gate, _postभाग, _flags)	\
+	काष्ठा ccu_mp _काष्ठा = अणु					\
 		.enable	= _gate,					\
-		.m	= _SUNXI_CCU_DIV(_mshift, _mwidth),		\
-		.p	= _SUNXI_CCU_DIV(_pshift, _pwidth),		\
-		.mux	= _SUNXI_CCU_MUX(_muxshift, _muxwidth),		\
-		.fixed_post_div	= _postdiv,				\
-		.common	= {						\
+		.m	= _SUNXI_CCU_DIV(_mshअगरt, _mwidth),		\
+		.p	= _SUNXI_CCU_DIV(_pshअगरt, _pwidth),		\
+		.mux	= _SUNXI_CCU_MUX(_muxshअगरt, _muxwidth),		\
+		.fixed_post_भाग	= _postभाग,				\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.features	= CCU_FEATURE_FIXED_POSTDIV,	\
 			.hw.init	= CLK_HW_INIT_PARENTS(_name,	\
 							      _parents, \
 							      &ccu_mp_ops, \
 							      _flags),	\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-#define SUNXI_CCU_MP_WITH_MUX_GATE(_struct, _name, _parents, _reg,	\
-				   _mshift, _mwidth,			\
-				   _pshift, _pwidth,			\
-				   _muxshift, _muxwidth,		\
+#घोषणा SUNXI_CCU_MP_WITH_MUX_GATE(_काष्ठा, _name, _parents, _reg,	\
+				   _mshअगरt, _mwidth,			\
+				   _pshअगरt, _pwidth,			\
+				   _muxshअगरt, _muxwidth,		\
 				   _gate, _flags)			\
-	struct ccu_mp _struct = {					\
+	काष्ठा ccu_mp _काष्ठा = अणु					\
 		.enable	= _gate,					\
-		.m	= _SUNXI_CCU_DIV(_mshift, _mwidth),		\
-		.p	= _SUNXI_CCU_DIV(_pshift, _pwidth),		\
-		.mux	= _SUNXI_CCU_MUX(_muxshift, _muxwidth),		\
-		.common	= {						\
+		.m	= _SUNXI_CCU_DIV(_mshअगरt, _mwidth),		\
+		.p	= _SUNXI_CCU_DIV(_pshअगरt, _pwidth),		\
+		.mux	= _SUNXI_CCU_MUX(_muxshअगरt, _muxwidth),		\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT_PARENTS(_name,	\
 							      _parents, \
 							      &ccu_mp_ops, \
 							      _flags),	\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-#define SUNXI_CCU_MP_WITH_MUX(_struct, _name, _parents, _reg,		\
-			      _mshift, _mwidth,				\
-			      _pshift, _pwidth,				\
-			      _muxshift, _muxwidth,			\
+#घोषणा SUNXI_CCU_MP_WITH_MUX(_काष्ठा, _name, _parents, _reg,		\
+			      _mshअगरt, _mwidth,				\
+			      _pshअगरt, _pwidth,				\
+			      _muxshअगरt, _muxwidth,			\
 			      _flags)					\
-	SUNXI_CCU_MP_WITH_MUX_GATE(_struct, _name, _parents, _reg,	\
-				   _mshift, _mwidth,			\
-				   _pshift, _pwidth,			\
-				   _muxshift, _muxwidth,		\
+	SUNXI_CCU_MP_WITH_MUX_GATE(_काष्ठा, _name, _parents, _reg,	\
+				   _mshअगरt, _mwidth,			\
+				   _pshअगरt, _pwidth,			\
+				   _muxshअगरt, _muxwidth,		\
 				   0, _flags)
 
-static inline struct ccu_mp *hw_to_ccu_mp(struct clk_hw *hw)
-{
-	struct ccu_common *common = hw_to_ccu_common(hw);
+अटल अंतरभूत काष्ठा ccu_mp *hw_to_ccu_mp(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_common *common = hw_to_ccu_common(hw);
 
-	return container_of(common, struct ccu_mp, common);
-}
+	वापस container_of(common, काष्ठा ccu_mp, common);
+पूर्ण
 
-extern const struct clk_ops ccu_mp_ops;
+बाह्य स्थिर काष्ठा clk_ops ccu_mp_ops;
 
 /*
- * Special class of M-P clock that supports MMC timing modes
+ * Special class of M-P घड़ी that supports MMC timing modes
  *
- * Since the MMC clock registers all follow the same layout, we can
- * simplify the macro for this particular case. In addition, as
- * switching modes also affects the output clock rate, we need to
- * have CLK_GET_RATE_NOCACHE for all these types of clocks.
+ * Since the MMC घड़ी रेजिस्टरs all follow the same layout, we can
+ * simplअगरy the macro क्रम this particular हाल. In addition, as
+ * चयनing modes also affects the output घड़ी rate, we need to
+ * have CLK_GET_RATE_NOCACHE क्रम all these types of घड़ीs.
  */
 
-#define SUNXI_CCU_MP_MMC_WITH_MUX_GATE(_struct, _name, _parents, _reg,	\
+#घोषणा SUNXI_CCU_MP_MMC_WITH_MUX_GATE(_काष्ठा, _name, _parents, _reg,	\
 				       _flags)				\
-	struct ccu_mp _struct = {					\
+	काष्ठा ccu_mp _काष्ठा = अणु					\
 		.enable	= BIT(31),					\
 		.m	= _SUNXI_CCU_DIV(0, 4),				\
 		.p	= _SUNXI_CCU_DIV(16, 2),			\
 		.mux	= _SUNXI_CCU_MUX(24, 2),			\
-		.common	= {						\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.features	= CCU_FEATURE_MMC_TIMING_SWITCH, \
 			.hw.init	= CLK_HW_INIT_PARENTS(_name,	\
@@ -115,9 +116,9 @@ extern const struct clk_ops ccu_mp_ops;
 							      &ccu_mp_mmc_ops, \
 							      CLK_GET_RATE_NOCACHE | \
 							      _flags),	\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-extern const struct clk_ops ccu_mp_mmc_ops;
+बाह्य स्थिर काष्ठा clk_ops ccu_mp_mmc_ops;
 
-#endif /* _CCU_MP_H_ */
+#पूर्ण_अगर /* _CCU_MP_H_ */

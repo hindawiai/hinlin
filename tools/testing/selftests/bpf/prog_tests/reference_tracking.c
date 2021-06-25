@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
 
-void test_reference_tracking(void)
-{
-	const char *file = "test_sk_lookup_kern.o";
-	const char *obj_name = "ref_track";
-	DECLARE_LIBBPF_OPTS(bpf_object_open_opts, open_opts,
+व्योम test_reference_tracking(व्योम)
+अणु
+	स्थिर अक्षर *file = "test_sk_lookup_kern.o";
+	स्थिर अक्षर *obj_name = "ref_track";
+	DECLARE_LIBBPF_OPTS(bpf_object_खोलो_opts, खोलो_opts,
 		.object_name = obj_name,
 		.relaxed_maps = true,
 	);
-	struct bpf_object *obj;
-	struct bpf_program *prog;
+	काष्ठा bpf_object *obj;
+	काष्ठा bpf_program *prog;
 	__u32 duration = 0;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	obj = bpf_object__open_file(file, &open_opts);
-	if (CHECK_FAIL(IS_ERR(obj)))
-		return;
+	obj = bpf_object__खोलो_file(file, &खोलो_opts);
+	अगर (CHECK_FAIL(IS_ERR(obj)))
+		वापस;
 
-	if (CHECK(strcmp(bpf_object__name(obj), obj_name), "obj_name",
+	अगर (CHECK(म_भेद(bpf_object__name(obj), obj_name), "obj_name",
 		  "wrong obj name '%s', expected '%s'\n",
 		  bpf_object__name(obj), obj_name))
-		goto cleanup;
+		जाओ cleanup;
 
-	bpf_object__for_each_program(prog, obj) {
-		const char *title;
+	bpf_object__क्रम_each_program(prog, obj) अणु
+		स्थिर अक्षर *title;
 
 		/* Ignore .text sections */
 		title = bpf_program__section_name(prog);
-		if (strstr(title, ".text") != NULL)
-			continue;
+		अगर (म_माला(title, ".text") != शून्य)
+			जारी;
 
-		if (!test__start_subtest(title))
-			continue;
+		अगर (!test__start_subtest(title))
+			जारी;
 
-		/* Expect verifier failure if test name has 'fail' */
-		if (strstr(title, "fail") != NULL) {
-			libbpf_print_fn_t old_print_fn;
+		/* Expect verअगरier failure अगर test name has 'fail' */
+		अगर (म_माला(title, "fail") != शून्य) अणु
+			libbpf_prपूर्णांक_fn_t old_prपूर्णांक_fn;
 
-			old_print_fn = libbpf_set_print(NULL);
+			old_prपूर्णांक_fn = libbpf_set_prपूर्णांक(शून्य);
 			err = !bpf_program__load(prog, "GPL", 0);
-			libbpf_set_print(old_print_fn);
-		} else {
+			libbpf_set_prपूर्णांक(old_prपूर्णांक_fn);
+		पूर्ण अन्यथा अणु
 			err = bpf_program__load(prog, "GPL", 0);
-		}
+		पूर्ण
 		CHECK(err, title, "\n");
-	}
+	पूर्ण
 
 cleanup:
-	bpf_object__close(obj);
-}
+	bpf_object__बंद(obj);
+पूर्ण

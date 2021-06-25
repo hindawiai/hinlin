@@ -1,94 +1,95 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_BUG_H
-#define _LINUX_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_BUG_H
+#घोषणा _LINUX_BUG_H
 
-#include <asm/bug.h>
-#include <linux/compiler.h>
-#include <linux/build_bug.h>
+#समावेश <यंत्र/bug.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/build_bug.h>
 
-enum bug_trap_type {
+क्रमागत bug_trap_type अणु
 	BUG_TRAP_TYPE_NONE = 0,
 	BUG_TRAP_TYPE_WARN = 1,
 	BUG_TRAP_TYPE_BUG = 2,
-};
+पूर्ण;
 
-struct pt_regs;
+काष्ठा pt_regs;
 
-#ifdef __CHECKER__
-#define MAYBE_BUILD_BUG_ON(cond) (0)
-#else /* __CHECKER__ */
+#अगर_घोषित __CHECKER__
+#घोषणा MAYBE_BUILD_BUG_ON(cond) (0)
+#अन्यथा /* __CHECKER__ */
 
-#define MAYBE_BUILD_BUG_ON(cond)			\
-	do {						\
-		if (__builtin_constant_p((cond)))       \
+#घोषणा MAYBE_BUILD_BUG_ON(cond)			\
+	करो अणु						\
+		अगर (__builtin_स्थिरant_p((cond)))       \
 			BUILD_BUG_ON(cond);             \
-		else                                    \
+		अन्यथा                                    \
 			BUG_ON(cond);                   \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#endif	/* __CHECKER__ */
+#पूर्ण_अगर	/* __CHECKER__ */
 
-#ifdef CONFIG_GENERIC_BUG
-#include <asm-generic/bug.h>
+#अगर_घोषित CONFIG_GENERIC_BUG
+#समावेश <यंत्र-generic/bug.h>
 
-static inline int is_warning_bug(const struct bug_entry *bug)
-{
-	return bug->flags & BUGFLAG_WARNING;
-}
+अटल अंतरभूत पूर्णांक is_warning_bug(स्थिर काष्ठा bug_entry *bug)
+अणु
+	वापस bug->flags & BUGFLAG_WARNING;
+पूर्ण
 
-void bug_get_file_line(struct bug_entry *bug, const char **file,
-		       unsigned int *line);
+व्योम bug_get_file_line(काष्ठा bug_entry *bug, स्थिर अक्षर **file,
+		       अचिन्हित पूर्णांक *line);
 
-struct bug_entry *find_bug(unsigned long bugaddr);
+काष्ठा bug_entry *find_bug(अचिन्हित दीर्घ bugaddr);
 
-enum bug_trap_type report_bug(unsigned long bug_addr, struct pt_regs *regs);
+क्रमागत bug_trap_type report_bug(अचिन्हित दीर्घ bug_addr, काष्ठा pt_regs *regs);
 
 /* These are defined by the architecture */
-int is_valid_bugaddr(unsigned long addr);
+पूर्णांक is_valid_bugaddr(अचिन्हित दीर्घ addr);
 
-void generic_bug_clear_once(void);
+व्योम generic_bug_clear_once(व्योम);
 
-#else	/* !CONFIG_GENERIC_BUG */
+#अन्यथा	/* !CONFIG_GENERIC_BUG */
 
-static inline void *find_bug(unsigned long bugaddr)
-{
-	return NULL;
-}
+अटल अंतरभूत व्योम *find_bug(अचिन्हित दीर्घ bugaddr)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline enum bug_trap_type report_bug(unsigned long bug_addr,
-					    struct pt_regs *regs)
-{
-	return BUG_TRAP_TYPE_BUG;
-}
+अटल अंतरभूत क्रमागत bug_trap_type report_bug(अचिन्हित दीर्घ bug_addr,
+					    काष्ठा pt_regs *regs)
+अणु
+	वापस BUG_TRAP_TYPE_BUG;
+पूर्ण
 
-struct bug_entry;
-static inline void bug_get_file_line(struct bug_entry *bug, const char **file,
-				     unsigned int *line)
-{
-	*file = NULL;
+काष्ठा bug_entry;
+अटल अंतरभूत व्योम bug_get_file_line(काष्ठा bug_entry *bug, स्थिर अक्षर **file,
+				     अचिन्हित पूर्णांक *line)
+अणु
+	*file = शून्य;
 	*line = 0;
-}
+पूर्ण
 
-static inline void generic_bug_clear_once(void) {}
+अटल अंतरभूत व्योम generic_bug_clear_once(व्योम) अणुपूर्ण
 
-#endif	/* CONFIG_GENERIC_BUG */
+#पूर्ण_अगर	/* CONFIG_GENERIC_BUG */
 
 /*
  * Since detected data corruption should stop operation on the affected
- * structures. Return value must be checked and sanely acted on by caller.
+ * काष्ठाures. Return value must be checked and sanely acted on by caller.
  */
-static inline __must_check bool check_data_corruption(bool v) { return v; }
-#define CHECK_DATA_CORRUPTION(condition, fmt, ...)			 \
-	check_data_corruption(({					 \
+अटल अंतरभूत __must_check bool check_data_corruption(bool v) अणु वापस v; पूर्ण
+#घोषणा CHECK_DATA_CORRUPTION(condition, fmt, ...)			 \
+	check_data_corruption((अणु					 \
 		bool corruption = unlikely(condition);			 \
-		if (corruption) {					 \
-			if (IS_ENABLED(CONFIG_BUG_ON_DATA_CORRUPTION)) { \
+		अगर (corruption) अणु					 \
+			अगर (IS_ENABLED(CONFIG_BUG_ON_DATA_CORRUPTION)) अणु \
 				pr_err(fmt, ##__VA_ARGS__);		 \
 				BUG();					 \
-			} else						 \
+			पूर्ण अन्यथा						 \
 				WARN(1, fmt, ##__VA_ARGS__);		 \
-		}							 \
+		पूर्ण							 \
 		corruption;						 \
-	}))
+	पूर्ण))
 
-#endif	/* _LINUX_BUG_H */
+#पूर्ण_अगर	/* _LINUX_BUG_H */

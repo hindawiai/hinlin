@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2012-2014, 2018-2021 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2017 Intel Deutschland GmbH
  */
-#include <linux/jiffies.h>
-#include <net/mac80211.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <net/mac80211.h>
 
-#include "fw/notif-wait.h"
-#include "iwl-trans.h"
-#include "fw-api.h"
-#include "time-event.h"
-#include "mvm.h"
-#include "iwl-io.h"
-#include "iwl-prph.h"
+#समावेश "fw/notif-wait.h"
+#समावेश "iwl-trans.h"
+#समावेश "fw-api.h"
+#समावेश "time-event.h"
+#समावेश "mvm.h"
+#समावेश "iwl-io.h"
+#समावेश "iwl-prph.h"
 
 /*
- * For the high priority TE use a time event type that has similar priority to
+ * For the high priority TE use a समय event type that has similar priority to
  * the FW's action scan priority.
  */
-#define IWL_MVM_ROC_TE_TYPE_NORMAL TE_P2P_DEVICE_DISCOVERABLE
-#define IWL_MVM_ROC_TE_TYPE_MGMT_TX TE_P2P_CLIENT_ASSOC
+#घोषणा IWL_MVM_ROC_TE_TYPE_NORMAL TE_P2P_DEVICE_DISCOVERABLE
+#घोषणा IWL_MVM_ROC_TE_TYPE_MGMT_TX TE_P2P_CLIENT_ASSOC
 
-void iwl_mvm_te_clear_data(struct iwl_mvm *mvm,
-			   struct iwl_mvm_time_event_data *te_data)
-{
-	lockdep_assert_held(&mvm->time_event_lock);
+व्योम iwl_mvm_te_clear_data(काष्ठा iwl_mvm *mvm,
+			   काष्ठा iwl_mvm_समय_event_data *te_data)
+अणु
+	lockdep_निश्चित_held(&mvm->समय_event_lock);
 
-	if (!te_data || !te_data->vif)
-		return;
+	अगर (!te_data || !te_data->vअगर)
+		वापस;
 
 	list_del(&te_data->list);
 	te_data->running = false;
 	te_data->uid = 0;
 	te_data->id = TE_MAX;
-	te_data->vif = NULL;
-}
+	te_data->vअगर = शून्य;
+पूर्ण
 
-void iwl_mvm_roc_done_wk(struct work_struct *wk)
-{
-	struct iwl_mvm *mvm = container_of(wk, struct iwl_mvm, roc_done_wk);
+व्योम iwl_mvm_roc_करोne_wk(काष्ठा work_काष्ठा *wk)
+अणु
+	काष्ठा iwl_mvm *mvm = container_of(wk, काष्ठा iwl_mvm, roc_करोne_wk);
 
 	/*
 	 * Clear the ROC_RUNNING /ROC_AUX_RUNNING status bit.
 	 * This will cause the TX path to drop offchannel transmissions.
-	 * That would also be done by mac80211, but it is racy, in particular
-	 * in the case that the time event actually completed in the firmware
-	 * (which is handled in iwl_mvm_te_handle_notif).
+	 * That would also be करोne by mac80211, but it is racy, in particular
+	 * in the हाल that the समय event actually completed in the firmware
+	 * (which is handled in iwl_mvm_te_handle_notअगर).
 	 */
 	clear_bit(IWL_MVM_STATUS_ROC_RUNNING, &mvm->status);
 	clear_bit(IWL_MVM_STATUS_ROC_AUX_RUNNING, &mvm->status);
@@ -54,864 +55,864 @@ void iwl_mvm_roc_done_wk(struct work_struct *wk)
 	synchronize_net();
 
 	/*
-	 * Flush the offchannel queue -- this is called when the time
-	 * event finishes or is canceled, so that frames queued for it
+	 * Flush the offchannel queue -- this is called when the समय
+	 * event finishes or is canceled, so that frames queued क्रम it
 	 * won't get stuck on the queue and be transmitted in the next
-	 * time event.
+	 * समय event.
 	 */
 
 	mutex_lock(&mvm->mutex);
-	if (test_and_clear_bit(IWL_MVM_STATUS_NEED_FLUSH_P2P, &mvm->status)) {
-		struct iwl_mvm_vif *mvmvif;
+	अगर (test_and_clear_bit(IWL_MVM_STATUS_NEED_FLUSH_P2P, &mvm->status)) अणु
+		काष्ठा iwl_mvm_vअगर *mvmvअगर;
 
 		/*
-		 * NB: access to this pointer would be racy, but the flush bit
+		 * NB: access to this poपूर्णांकer would be racy, but the flush bit
 		 * can only be set when we had a P2P-Device VIF, and we have a
 		 * flush of this work in iwl_mvm_prepare_mac_removal() so it's
 		 * not really racy.
 		 */
 
-		if (!WARN_ON(!mvm->p2p_device_vif)) {
-			mvmvif = iwl_mvm_vif_from_mac80211(mvm->p2p_device_vif);
-			iwl_mvm_flush_sta(mvm, &mvmvif->bcast_sta, true);
-		}
-	} else {
-		/* do the same in case of hot spot 2.0 */
+		अगर (!WARN_ON(!mvm->p2p_device_vअगर)) अणु
+			mvmvअगर = iwl_mvm_vअगर_from_mac80211(mvm->p2p_device_vअगर);
+			iwl_mvm_flush_sta(mvm, &mvmvअगर->bcast_sta, true);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* करो the same in हाल of hot spot 2.0 */
 		iwl_mvm_flush_sta(mvm, &mvm->aux_sta, true);
 		/* In newer version of this command an aux station is added only
-		 * in cases of dedicated tx queue and need to be removed in end
+		 * in हालs of dedicated tx queue and need to be हटाओd in end
 		 * of use */
-		if (iwl_fw_lookup_cmd_ver(mvm->fw, LONG_GROUP,
+		अगर (iwl_fw_lookup_cmd_ver(mvm->fw, LONG_GROUP,
 					  ADD_STA, 0) >= 12)
 			iwl_mvm_rm_aux_sta(mvm);
-	}
+	पूर्ण
 
 	mutex_unlock(&mvm->mutex);
-}
+पूर्ण
 
-static void iwl_mvm_roc_finished(struct iwl_mvm *mvm)
-{
+अटल व्योम iwl_mvm_roc_finished(काष्ठा iwl_mvm *mvm)
+अणु
 	/*
 	 * Of course, our status bit is just as racy as mac80211, so in
-	 * addition, fire off the work struct which will drop all frames
+	 * addition, fire off the work काष्ठा which will drop all frames
 	 * from the hardware queues that made it through the race. First
 	 * it will of course synchronize the TX path to make sure that
 	 * any *new* TX will be rejected.
 	 */
-	schedule_work(&mvm->roc_done_wk);
-}
+	schedule_work(&mvm->roc_करोne_wk);
+पूर्ण
 
-static void iwl_mvm_csa_noa_start(struct iwl_mvm *mvm)
-{
-	struct ieee80211_vif *csa_vif;
+अटल व्योम iwl_mvm_csa_noa_start(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा ieee80211_vअगर *csa_vअगर;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	csa_vif = rcu_dereference(mvm->csa_vif);
-	if (!csa_vif || !csa_vif->csa_active)
-		goto out_unlock;
+	csa_vअगर = rcu_dereference(mvm->csa_vअगर);
+	अगर (!csa_vअगर || !csa_vअगर->csa_active)
+		जाओ out_unlock;
 
 	IWL_DEBUG_TE(mvm, "CSA NOA started\n");
 
 	/*
 	 * CSA NoA is started but we still have beacons to
 	 * transmit on the current channel.
-	 * So we just do nothing here and the switch
-	 * will be performed on the last TBTT.
+	 * So we just करो nothing here and the चयन
+	 * will be perक्रमmed on the last TBTT.
 	 */
-	if (!ieee80211_beacon_cntdwn_is_complete(csa_vif)) {
+	अगर (!ieee80211_beacon_cntdwn_is_complete(csa_vअगर)) अणु
 		IWL_WARN(mvm, "CSA NOA started too early\n");
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	ieee80211_csa_finish(csa_vif);
+	ieee80211_csa_finish(csa_vअगर);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	RCU_INIT_POINTER(mvm->csa_vif, NULL);
+	RCU_INIT_POINTER(mvm->csa_vअगर, शून्य);
 
-	return;
+	वापस;
 
 out_unlock:
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static bool iwl_mvm_te_check_disconnect(struct iwl_mvm *mvm,
-					struct ieee80211_vif *vif,
-					const char *errmsg)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+अटल bool iwl_mvm_te_check_disconnect(काष्ठा iwl_mvm *mvm,
+					काष्ठा ieee80211_vअगर *vअगर,
+					स्थिर अक्षर *errmsg)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-	if (vif->type != NL80211_IFTYPE_STATION)
-		return false;
+	अगर (vअगर->type != NL80211_IFTYPE_STATION)
+		वापस false;
 
-	if (!mvmvif->csa_bcn_pending && vif->bss_conf.assoc &&
-	    vif->bss_conf.dtim_period)
-		return false;
-	if (errmsg)
+	अगर (!mvmvअगर->csa_bcn_pending && vअगर->bss_conf.assoc &&
+	    vअगर->bss_conf.dtim_period)
+		वापस false;
+	अगर (errmsg)
 		IWL_ERR(mvm, "%s\n", errmsg);
 
-	if (mvmvif->csa_bcn_pending) {
-		struct iwl_mvm_sta *mvmsta;
+	अगर (mvmvअगर->csa_bcn_pending) अणु
+		काष्ठा iwl_mvm_sta *mvmsta;
 
-		rcu_read_lock();
-		mvmsta = iwl_mvm_sta_from_staid_rcu(mvm, mvmvif->ap_sta_id);
-		if (!WARN_ON(!mvmsta))
-			iwl_mvm_sta_modify_disable_tx(mvm, mvmsta, false);
-		rcu_read_unlock();
-	}
+		rcu_पढ़ो_lock();
+		mvmsta = iwl_mvm_sta_from_staid_rcu(mvm, mvmvअगर->ap_sta_id);
+		अगर (!WARN_ON(!mvmsta))
+			iwl_mvm_sta_modअगरy_disable_tx(mvm, mvmsta, false);
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	iwl_mvm_connection_loss(mvm, vif, errmsg);
-	return true;
-}
+	iwl_mvm_connection_loss(mvm, vअगर, errmsg);
+	वापस true;
+पूर्ण
 
-static void
-iwl_mvm_te_handle_notify_csa(struct iwl_mvm *mvm,
-			     struct iwl_mvm_time_event_data *te_data,
-			     struct iwl_time_event_notif *notif)
-{
-	struct ieee80211_vif *vif = te_data->vif;
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+अटल व्योम
+iwl_mvm_te_handle_notअगरy_csa(काष्ठा iwl_mvm *mvm,
+			     काष्ठा iwl_mvm_समय_event_data *te_data,
+			     काष्ठा iwl_समय_event_notअगर *notअगर)
+अणु
+	काष्ठा ieee80211_vअगर *vअगर = te_data->vअगर;
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-	if (!notif->status)
+	अगर (!notअगर->status)
 		IWL_DEBUG_TE(mvm, "CSA time event failed to start\n");
 
-	switch (te_data->vif->type) {
-	case NL80211_IFTYPE_AP:
-		if (!notif->status)
-			mvmvif->csa_failed = true;
+	चयन (te_data->vअगर->type) अणु
+	हाल NL80211_IFTYPE_AP:
+		अगर (!notअगर->status)
+			mvmvअगर->csa_failed = true;
 		iwl_mvm_csa_noa_start(mvm);
-		break;
-	case NL80211_IFTYPE_STATION:
-		if (!notif->status) {
-			iwl_mvm_connection_loss(mvm, vif,
+		अवरोध;
+	हाल NL80211_IFTYPE_STATION:
+		अगर (!notअगर->status) अणु
+			iwl_mvm_connection_loss(mvm, vअगर,
 						"CSA TE failed to start");
-			break;
-		}
-		iwl_mvm_csa_client_absent(mvm, te_data->vif);
-		cancel_delayed_work(&mvmvif->csa_work);
-		ieee80211_chswitch_done(te_data->vif, true);
-		break;
-	default:
+			अवरोध;
+		पूर्ण
+		iwl_mvm_csa_client_असलent(mvm, te_data->vअगर);
+		cancel_delayed_work(&mvmvअगर->csa_work);
+		ieee80211_chचयन_करोne(te_data->vअगर, true);
+		अवरोध;
+	शेष:
 		/* should never happen */
 		WARN_ON_ONCE(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* we don't need it anymore */
+	/* we करोn't need it anymore */
 	iwl_mvm_te_clear_data(mvm, te_data);
-}
+पूर्ण
 
-static void iwl_mvm_te_check_trigger(struct iwl_mvm *mvm,
-				     struct iwl_time_event_notif *notif,
-				     struct iwl_mvm_time_event_data *te_data)
-{
-	struct iwl_fw_dbg_trigger_tlv *trig;
-	struct iwl_fw_dbg_trigger_time_event *te_trig;
-	int i;
+अटल व्योम iwl_mvm_te_check_trigger(काष्ठा iwl_mvm *mvm,
+				     काष्ठा iwl_समय_event_notअगर *notअगर,
+				     काष्ठा iwl_mvm_समय_event_data *te_data)
+अणु
+	काष्ठा iwl_fw_dbg_trigger_tlv *trig;
+	काष्ठा iwl_fw_dbg_trigger_समय_event *te_trig;
+	पूर्णांक i;
 
 	trig = iwl_fw_dbg_trigger_on(&mvm->fwrt,
-				     ieee80211_vif_to_wdev(te_data->vif),
+				     ieee80211_vअगर_to_wdev(te_data->vअगर),
 				     FW_DBG_TRIGGER_TIME_EVENT);
-	if (!trig)
-		return;
+	अगर (!trig)
+		वापस;
 
-	te_trig = (void *)trig->data;
+	te_trig = (व्योम *)trig->data;
 
-	for (i = 0; i < ARRAY_SIZE(te_trig->time_events); i++) {
-		u32 trig_te_id = le32_to_cpu(te_trig->time_events[i].id);
-		u32 trig_action_bitmap =
-			le32_to_cpu(te_trig->time_events[i].action_bitmap);
-		u32 trig_status_bitmap =
-			le32_to_cpu(te_trig->time_events[i].status_bitmap);
+	क्रम (i = 0; i < ARRAY_SIZE(te_trig->समय_events); i++) अणु
+		u32 trig_te_id = le32_to_cpu(te_trig->समय_events[i].id);
+		u32 trig_action_biपंचांगap =
+			le32_to_cpu(te_trig->समय_events[i].action_biपंचांगap);
+		u32 trig_status_biपंचांगap =
+			le32_to_cpu(te_trig->समय_events[i].status_biपंचांगap);
 
-		if (trig_te_id != te_data->id ||
-		    !(trig_action_bitmap & le32_to_cpu(notif->action)) ||
-		    !(trig_status_bitmap & BIT(le32_to_cpu(notif->status))))
-			continue;
+		अगर (trig_te_id != te_data->id ||
+		    !(trig_action_biपंचांगap & le32_to_cpu(notअगर->action)) ||
+		    !(trig_status_biपंचांगap & BIT(le32_to_cpu(notअगर->status))))
+			जारी;
 
 		iwl_fw_dbg_collect_trig(&mvm->fwrt, trig,
 					"Time event %d Action 0x%x received status: %d",
 					te_data->id,
-					le32_to_cpu(notif->action),
-					le32_to_cpu(notif->status));
-		break;
-	}
-}
+					le32_to_cpu(notअगर->action),
+					le32_to_cpu(notअगर->status));
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * Handles a FW notification for an event that is known to the driver.
+ * Handles a FW notअगरication क्रम an event that is known to the driver.
  *
  * @mvm: the mvm component
- * @te_data: the time event data
- * @notif: the notification data corresponding the time event data.
+ * @te_data: the समय event data
+ * @notअगर: the notअगरication data corresponding the समय event data.
  */
-static void iwl_mvm_te_handle_notif(struct iwl_mvm *mvm,
-				    struct iwl_mvm_time_event_data *te_data,
-				    struct iwl_time_event_notif *notif)
-{
-	lockdep_assert_held(&mvm->time_event_lock);
+अटल व्योम iwl_mvm_te_handle_notअगर(काष्ठा iwl_mvm *mvm,
+				    काष्ठा iwl_mvm_समय_event_data *te_data,
+				    काष्ठा iwl_समय_event_notअगर *notअगर)
+अणु
+	lockdep_निश्चित_held(&mvm->समय_event_lock);
 
 	IWL_DEBUG_TE(mvm, "Handle time event notif - UID = 0x%x action %d\n",
-		     le32_to_cpu(notif->unique_id),
-		     le32_to_cpu(notif->action));
+		     le32_to_cpu(notअगर->unique_id),
+		     le32_to_cpu(notअगर->action));
 
-	iwl_mvm_te_check_trigger(mvm, notif, te_data);
+	iwl_mvm_te_check_trigger(mvm, notअगर, te_data);
 
 	/*
-	 * The FW sends the start/end time event notifications even for events
+	 * The FW sends the start/end समय event notअगरications even क्रम events
 	 * that it fails to schedule. This is indicated in the status field of
-	 * the notification. This happens in cases that the scheduler cannot
-	 * find a schedule that can handle the event (for example requesting a
-	 * P2P Device discoveribility, while there are other higher priority
-	 * events in the system).
+	 * the notअगरication. This happens in हालs that the scheduler cannot
+	 * find a schedule that can handle the event (क्रम example requesting a
+	 * P2P Device discoveribility, जबतक there are other higher priority
+	 * events in the प्रणाली).
 	 */
-	if (!le32_to_cpu(notif->status)) {
-		const char *msg;
+	अगर (!le32_to_cpu(notअगर->status)) अणु
+		स्थिर अक्षर *msg;
 
-		if (notif->action & cpu_to_le32(TE_V2_NOTIF_HOST_EVENT_START))
+		अगर (notअगर->action & cpu_to_le32(TE_V2_NOTIF_HOST_EVENT_START))
 			msg = "Time Event start notification failure";
-		else
+		अन्यथा
 			msg = "Time Event end notification failure";
 
 		IWL_DEBUG_TE(mvm, "%s\n", msg);
 
-		if (iwl_mvm_te_check_disconnect(mvm, te_data->vif, msg)) {
+		अगर (iwl_mvm_te_check_disconnect(mvm, te_data->vअगर, msg)) अणु
 			iwl_mvm_te_clear_data(mvm, te_data);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (le32_to_cpu(notif->action) & TE_V2_NOTIF_HOST_EVENT_END) {
+	अगर (le32_to_cpu(notअगर->action) & TE_V2_NOTIF_HOST_EVENT_END) अणु
 		IWL_DEBUG_TE(mvm,
 			     "TE ended - current time %lu, estimated end %lu\n",
-			     jiffies, te_data->end_jiffies);
+			     jअगरfies, te_data->end_jअगरfies);
 
-		switch (te_data->vif->type) {
-		case NL80211_IFTYPE_P2P_DEVICE:
-			ieee80211_remain_on_channel_expired(mvm->hw);
+		चयन (te_data->vअगर->type) अणु
+		हाल NL80211_IFTYPE_P2P_DEVICE:
+			ieee80211_reमुख्य_on_channel_expired(mvm->hw);
 			set_bit(IWL_MVM_STATUS_NEED_FLUSH_P2P, &mvm->status);
 			iwl_mvm_roc_finished(mvm);
-			break;
-		case NL80211_IFTYPE_STATION:
+			अवरोध;
+		हाल NL80211_IFTYPE_STATION:
 			/*
-			 * If we are switching channel, don't disconnect
-			 * if the time event is already done. Beacons can
-			 * be delayed a bit after the switch.
+			 * If we are चयनing channel, करोn't disconnect
+			 * अगर the समय event is alपढ़ोy करोne. Beacons can
+			 * be delayed a bit after the चयन.
 			 */
-			if (te_data->id == TE_CHANNEL_SWITCH_PERIOD) {
+			अगर (te_data->id == TE_CHANNEL_SWITCH_PERIOD) अणु
 				IWL_DEBUG_TE(mvm,
 					     "No beacon heard and the CS time event is over, don't disconnect\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/*
 			 * By now, we should have finished association
 			 * and know the dtim period.
 			 */
-			iwl_mvm_te_check_disconnect(mvm, te_data->vif,
+			iwl_mvm_te_check_disconnect(mvm, te_data->vअगर,
 				"No beacon heard and the time event is over already...");
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		iwl_mvm_te_clear_data(mvm, te_data);
-	} else if (le32_to_cpu(notif->action) & TE_V2_NOTIF_HOST_EVENT_START) {
+	पूर्ण अन्यथा अगर (le32_to_cpu(notअगर->action) & TE_V2_NOTIF_HOST_EVENT_START) अणु
 		te_data->running = true;
-		te_data->end_jiffies = TU_TO_EXP_TIME(te_data->duration);
+		te_data->end_jअगरfies = TU_TO_EXP_TIME(te_data->duration);
 
-		if (te_data->vif->type == NL80211_IFTYPE_P2P_DEVICE) {
+		अगर (te_data->vअगर->type == NL80211_IFTYPE_P2P_DEVICE) अणु
 			set_bit(IWL_MVM_STATUS_ROC_RUNNING, &mvm->status);
-			ieee80211_ready_on_channel(mvm->hw);
-		} else if (te_data->id == TE_CHANNEL_SWITCH_PERIOD) {
-			iwl_mvm_te_handle_notify_csa(mvm, te_data, notif);
-		}
-	} else {
+			ieee80211_पढ़ोy_on_channel(mvm->hw);
+		पूर्ण अन्यथा अगर (te_data->id == TE_CHANNEL_SWITCH_PERIOD) अणु
+			iwl_mvm_te_handle_notअगरy_csa(mvm, te_data, notअगर);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		IWL_WARN(mvm, "Got TE with unknown action\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Handle A Aux ROC time event
+ * Handle A Aux ROC समय event
  */
-static int iwl_mvm_aux_roc_te_handle_notif(struct iwl_mvm *mvm,
-					   struct iwl_time_event_notif *notif)
-{
-	struct iwl_mvm_time_event_data *te_data, *tmp;
+अटल पूर्णांक iwl_mvm_aux_roc_te_handle_notअगर(काष्ठा iwl_mvm *mvm,
+					   काष्ठा iwl_समय_event_notअगर *notअगर)
+अणु
+	काष्ठा iwl_mvm_समय_event_data *te_data, *पंचांगp;
 	bool aux_roc_te = false;
 
-	list_for_each_entry_safe(te_data, tmp, &mvm->aux_roc_te_list, list) {
-		if (le32_to_cpu(notif->unique_id) == te_data->uid) {
+	list_क्रम_each_entry_safe(te_data, पंचांगp, &mvm->aux_roc_te_list, list) अणु
+		अगर (le32_to_cpu(notअगर->unique_id) == te_data->uid) अणु
 			aux_roc_te = true;
-			break;
-		}
-	}
-	if (!aux_roc_te) /* Not a Aux ROC time event */
-		return -EINVAL;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!aux_roc_te) /* Not a Aux ROC समय event */
+		वापस -EINVAL;
 
-	iwl_mvm_te_check_trigger(mvm, notif, te_data);
+	iwl_mvm_te_check_trigger(mvm, notअगर, te_data);
 
 	IWL_DEBUG_TE(mvm,
 		     "Aux ROC time event notification  - UID = 0x%x action %d (error = %d)\n",
-		     le32_to_cpu(notif->unique_id),
-		     le32_to_cpu(notif->action), le32_to_cpu(notif->status));
+		     le32_to_cpu(notअगर->unique_id),
+		     le32_to_cpu(notअगर->action), le32_to_cpu(notअगर->status));
 
-	if (!le32_to_cpu(notif->status) ||
-	    le32_to_cpu(notif->action) == TE_V2_NOTIF_HOST_EVENT_END) {
-		/* End TE, notify mac80211 */
-		ieee80211_remain_on_channel_expired(mvm->hw);
+	अगर (!le32_to_cpu(notअगर->status) ||
+	    le32_to_cpu(notअगर->action) == TE_V2_NOTIF_HOST_EVENT_END) अणु
+		/* End TE, notअगरy mac80211 */
+		ieee80211_reमुख्य_on_channel_expired(mvm->hw);
 		iwl_mvm_roc_finished(mvm); /* flush aux queue */
-		list_del(&te_data->list); /* remove from list */
+		list_del(&te_data->list); /* हटाओ from list */
 		te_data->running = false;
-		te_data->vif = NULL;
+		te_data->vअगर = शून्य;
 		te_data->uid = 0;
 		te_data->id = TE_MAX;
-	} else if (le32_to_cpu(notif->action) == TE_V2_NOTIF_HOST_EVENT_START) {
+	पूर्ण अन्यथा अगर (le32_to_cpu(notअगर->action) == TE_V2_NOTIF_HOST_EVENT_START) अणु
 		set_bit(IWL_MVM_STATUS_ROC_AUX_RUNNING, &mvm->status);
 		te_data->running = true;
-		ieee80211_ready_on_channel(mvm->hw); /* Start TE */
-	} else {
+		ieee80211_पढ़ोy_on_channel(mvm->hw); /* Start TE */
+	पूर्ण अन्यथा अणु
 		IWL_DEBUG_TE(mvm,
 			     "ERROR: Unknown Aux ROC Time Event (action = %d)\n",
-			     le32_to_cpu(notif->action));
-		return -EINVAL;
-	}
+			     le32_to_cpu(notअगर->action));
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The Rx handler for time event notifications
+ * The Rx handler क्रम समय event notअगरications
  */
-void iwl_mvm_rx_time_event_notif(struct iwl_mvm *mvm,
-				 struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_time_event_notif *notif = (void *)pkt->data;
-	struct iwl_mvm_time_event_data *te_data, *tmp;
+व्योम iwl_mvm_rx_समय_event_notअगर(काष्ठा iwl_mvm *mvm,
+				 काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_समय_event_notअगर *notअगर = (व्योम *)pkt->data;
+	काष्ठा iwl_mvm_समय_event_data *te_data, *पंचांगp;
 
 	IWL_DEBUG_TE(mvm, "Time event notification - UID = 0x%x action %d\n",
-		     le32_to_cpu(notif->unique_id),
-		     le32_to_cpu(notif->action));
+		     le32_to_cpu(notअगर->unique_id),
+		     le32_to_cpu(notअगर->action));
 
-	spin_lock_bh(&mvm->time_event_lock);
-	/* This time event is triggered for Aux ROC request */
-	if (!iwl_mvm_aux_roc_te_handle_notif(mvm, notif))
-		goto unlock;
+	spin_lock_bh(&mvm->समय_event_lock);
+	/* This समय event is triggered क्रम Aux ROC request */
+	अगर (!iwl_mvm_aux_roc_te_handle_notअगर(mvm, notअगर))
+		जाओ unlock;
 
-	list_for_each_entry_safe(te_data, tmp, &mvm->time_event_list, list) {
-		if (le32_to_cpu(notif->unique_id) == te_data->uid)
-			iwl_mvm_te_handle_notif(mvm, te_data, notif);
-	}
+	list_क्रम_each_entry_safe(te_data, पंचांगp, &mvm->समय_event_list, list) अणु
+		अगर (le32_to_cpu(notअगर->unique_id) == te_data->uid)
+			iwl_mvm_te_handle_notअगर(mvm, te_data, notअगर);
+	पूर्ण
 unlock:
-	spin_unlock_bh(&mvm->time_event_lock);
-}
+	spin_unlock_bh(&mvm->समय_event_lock);
+पूर्ण
 
-static bool iwl_mvm_te_notif(struct iwl_notif_wait_data *notif_wait,
-			     struct iwl_rx_packet *pkt, void *data)
-{
-	struct iwl_mvm *mvm =
-		container_of(notif_wait, struct iwl_mvm, notif_wait);
-	struct iwl_mvm_time_event_data *te_data = data;
-	struct iwl_time_event_notif *resp;
-	int resp_len = iwl_rx_packet_payload_len(pkt);
+अटल bool iwl_mvm_te_notअगर(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको,
+			     काष्ठा iwl_rx_packet *pkt, व्योम *data)
+अणु
+	काष्ठा iwl_mvm *mvm =
+		container_of(notअगर_रुको, काष्ठा iwl_mvm, notअगर_रुको);
+	काष्ठा iwl_mvm_समय_event_data *te_data = data;
+	काष्ठा iwl_समय_event_notअगर *resp;
+	पूर्णांक resp_len = iwl_rx_packet_payload_len(pkt);
 
-	if (WARN_ON(pkt->hdr.cmd != TIME_EVENT_NOTIFICATION))
-		return true;
+	अगर (WARN_ON(pkt->hdr.cmd != TIME_EVENT_NOTIFICATION))
+		वापस true;
 
-	if (WARN_ON_ONCE(resp_len != sizeof(*resp))) {
+	अगर (WARN_ON_ONCE(resp_len != माप(*resp))) अणु
 		IWL_ERR(mvm, "Invalid TIME_EVENT_NOTIFICATION response\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	resp = (void *)pkt->data;
+	resp = (व्योम *)pkt->data;
 
-	/* te_data->uid is already set in the TIME_EVENT_CMD response */
-	if (le32_to_cpu(resp->unique_id) != te_data->uid)
-		return false;
+	/* te_data->uid is alपढ़ोy set in the TIME_EVENT_CMD response */
+	अगर (le32_to_cpu(resp->unique_id) != te_data->uid)
+		वापस false;
 
 	IWL_DEBUG_TE(mvm, "TIME_EVENT_NOTIFICATION response - UID = 0x%x\n",
 		     te_data->uid);
-	if (!resp->status)
+	अगर (!resp->status)
 		IWL_ERR(mvm,
 			"TIME_EVENT_NOTIFICATION received but not executed\n");
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool iwl_mvm_time_event_response(struct iwl_notif_wait_data *notif_wait,
-					struct iwl_rx_packet *pkt, void *data)
-{
-	struct iwl_mvm *mvm =
-		container_of(notif_wait, struct iwl_mvm, notif_wait);
-	struct iwl_mvm_time_event_data *te_data = data;
-	struct iwl_time_event_resp *resp;
-	int resp_len = iwl_rx_packet_payload_len(pkt);
+अटल bool iwl_mvm_समय_event_response(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको,
+					काष्ठा iwl_rx_packet *pkt, व्योम *data)
+अणु
+	काष्ठा iwl_mvm *mvm =
+		container_of(notअगर_रुको, काष्ठा iwl_mvm, notअगर_रुको);
+	काष्ठा iwl_mvm_समय_event_data *te_data = data;
+	काष्ठा iwl_समय_event_resp *resp;
+	पूर्णांक resp_len = iwl_rx_packet_payload_len(pkt);
 
-	if (WARN_ON(pkt->hdr.cmd != TIME_EVENT_CMD))
-		return true;
+	अगर (WARN_ON(pkt->hdr.cmd != TIME_EVENT_CMD))
+		वापस true;
 
-	if (WARN_ON_ONCE(resp_len != sizeof(*resp))) {
+	अगर (WARN_ON_ONCE(resp_len != माप(*resp))) अणु
 		IWL_ERR(mvm, "Invalid TIME_EVENT_CMD response\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	resp = (void *)pkt->data;
+	resp = (व्योम *)pkt->data;
 
 	/* we should never get a response to another TIME_EVENT_CMD here */
-	if (WARN_ON_ONCE(le32_to_cpu(resp->id) != te_data->id))
-		return false;
+	अगर (WARN_ON_ONCE(le32_to_cpu(resp->id) != te_data->id))
+		वापस false;
 
 	te_data->uid = le32_to_cpu(resp->unique_id);
 	IWL_DEBUG_TE(mvm, "TIME_EVENT_CMD response - UID = 0x%x\n",
 		     te_data->uid);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int iwl_mvm_time_event_send_add(struct iwl_mvm *mvm,
-				       struct ieee80211_vif *vif,
-				       struct iwl_mvm_time_event_data *te_data,
-				       struct iwl_time_event_cmd *te_cmd)
-{
-	static const u16 time_event_response[] = { TIME_EVENT_CMD };
-	struct iwl_notification_wait wait_time_event;
-	int ret;
+अटल पूर्णांक iwl_mvm_समय_event_send_add(काष्ठा iwl_mvm *mvm,
+				       काष्ठा ieee80211_vअगर *vअगर,
+				       काष्ठा iwl_mvm_समय_event_data *te_data,
+				       काष्ठा iwl_समय_event_cmd *te_cmd)
+अणु
+	अटल स्थिर u16 समय_event_response[] = अणु TIME_EVENT_CMD पूर्ण;
+	काष्ठा iwl_notअगरication_रुको रुको_समय_event;
+	पूर्णांक ret;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
 	IWL_DEBUG_TE(mvm, "Add new TE, duration %d TU\n",
 		     le32_to_cpu(te_cmd->duration));
 
-	spin_lock_bh(&mvm->time_event_lock);
-	if (WARN_ON(te_data->id != TE_MAX)) {
-		spin_unlock_bh(&mvm->time_event_lock);
-		return -EIO;
-	}
-	te_data->vif = vif;
+	spin_lock_bh(&mvm->समय_event_lock);
+	अगर (WARN_ON(te_data->id != TE_MAX)) अणु
+		spin_unlock_bh(&mvm->समय_event_lock);
+		वापस -EIO;
+	पूर्ण
+	te_data->vअगर = vअगर;
 	te_data->duration = le32_to_cpu(te_cmd->duration);
 	te_data->id = le32_to_cpu(te_cmd->id);
-	list_add_tail(&te_data->list, &mvm->time_event_list);
-	spin_unlock_bh(&mvm->time_event_lock);
+	list_add_tail(&te_data->list, &mvm->समय_event_list);
+	spin_unlock_bh(&mvm->समय_event_lock);
 
 	/*
-	 * Use a notification wait, which really just processes the
-	 * command response and doesn't wait for anything, in order
+	 * Use a notअगरication रुको, which really just processes the
+	 * command response and करोesn't रुको क्रम anything, in order
 	 * to be able to process the response and get the UID inside
-	 * the RX path. Using CMD_WANT_SKB doesn't work because it
-	 * stores the buffer and then wakes up this thread, by which
-	 * time another notification (that the time event started)
-	 * might already be processed unsuccessfully.
+	 * the RX path. Using CMD_WANT_SKB करोesn't work because it
+	 * stores the buffer and then wakes up this thपढ़ो, by which
+	 * समय another notअगरication (that the समय event started)
+	 * might alपढ़ोy be processed unsuccessfully.
 	 */
-	iwl_init_notification_wait(&mvm->notif_wait, &wait_time_event,
-				   time_event_response,
-				   ARRAY_SIZE(time_event_response),
-				   iwl_mvm_time_event_response, te_data);
+	iwl_init_notअगरication_रुको(&mvm->notअगर_रुको, &रुको_समय_event,
+				   समय_event_response,
+				   ARRAY_SIZE(समय_event_response),
+				   iwl_mvm_समय_event_response, te_data);
 
 	ret = iwl_mvm_send_cmd_pdu(mvm, TIME_EVENT_CMD, 0,
-					    sizeof(*te_cmd), te_cmd);
-	if (ret) {
+					    माप(*te_cmd), te_cmd);
+	अगर (ret) अणु
 		IWL_ERR(mvm, "Couldn't send TIME_EVENT_CMD: %d\n", ret);
-		iwl_remove_notification(&mvm->notif_wait, &wait_time_event);
-		goto out_clear_te;
-	}
+		iwl_हटाओ_notअगरication(&mvm->notअगर_रुको, &रुको_समय_event);
+		जाओ out_clear_te;
+	पूर्ण
 
-	/* No need to wait for anything, so just pass 1 (0 isn't valid) */
-	ret = iwl_wait_notification(&mvm->notif_wait, &wait_time_event, 1);
+	/* No need to रुको क्रम anything, so just pass 1 (0 isn't valid) */
+	ret = iwl_रुको_notअगरication(&mvm->notअगर_रुको, &रुको_समय_event, 1);
 	/* should never fail */
 	WARN_ON_ONCE(ret);
 
-	if (ret) {
+	अगर (ret) अणु
  out_clear_te:
-		spin_lock_bh(&mvm->time_event_lock);
+		spin_lock_bh(&mvm->समय_event_lock);
 		iwl_mvm_te_clear_data(mvm, te_data);
-		spin_unlock_bh(&mvm->time_event_lock);
-	}
-	return ret;
-}
+		spin_unlock_bh(&mvm->समय_event_lock);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void iwl_mvm_protect_session(struct iwl_mvm *mvm,
-			     struct ieee80211_vif *vif,
+व्योम iwl_mvm_protect_session(काष्ठा iwl_mvm *mvm,
+			     काष्ठा ieee80211_vअगर *vअगर,
 			     u32 duration, u32 min_duration,
-			     u32 max_delay, bool wait_for_notif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_mvm_time_event_data *te_data = &mvmvif->time_event_data;
-	const u16 te_notif_response[] = { TIME_EVENT_NOTIFICATION };
-	struct iwl_notification_wait wait_te_notif;
-	struct iwl_time_event_cmd time_cmd = {};
+			     u32 max_delay, bool रुको_क्रम_notअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_mvm_समय_event_data *te_data = &mvmvअगर->समय_event_data;
+	स्थिर u16 te_notअगर_response[] = अणु TIME_EVENT_NOTIFICATION पूर्ण;
+	काष्ठा iwl_notअगरication_रुको रुको_te_notअगर;
+	काष्ठा iwl_समय_event_cmd समय_cmd = अणुपूर्ण;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	if (te_data->running &&
-	    time_after(te_data->end_jiffies, TU_TO_EXP_TIME(min_duration))) {
+	अगर (te_data->running &&
+	    समय_after(te_data->end_jअगरfies, TU_TO_EXP_TIME(min_duration))) अणु
 		IWL_DEBUG_TE(mvm, "We have enough time in the current TE: %u\n",
-			     jiffies_to_msecs(te_data->end_jiffies - jiffies));
-		return;
-	}
+			     jअगरfies_to_msecs(te_data->end_jअगरfies - jअगरfies));
+		वापस;
+	पूर्ण
 
-	if (te_data->running) {
+	अगर (te_data->running) अणु
 		IWL_DEBUG_TE(mvm, "extend 0x%x: only %u ms left\n",
 			     te_data->uid,
-			     jiffies_to_msecs(te_data->end_jiffies - jiffies));
+			     jअगरfies_to_msecs(te_data->end_jअगरfies - jअगरfies));
 		/*
-		 * we don't have enough time
+		 * we करोn't have enough समय
 		 * cancel the current TE and issue a new one
-		 * Of course it would be better to remove the old one only
-		 * when the new one is added, but we don't care if we are off
-		 * channel for a bit. All we need to do, is not to return
-		 * before we actually begin to be on the channel.
+		 * Of course it would be better to हटाओ the old one only
+		 * when the new one is added, but we करोn't care अगर we are off
+		 * channel क्रम a bit. All we need to करो, is not to वापस
+		 * beक्रमe we actually begin to be on the channel.
 		 */
-		iwl_mvm_stop_session_protection(mvm, vif);
-	}
+		iwl_mvm_stop_session_protection(mvm, vअगर);
+	पूर्ण
 
-	time_cmd.action = cpu_to_le32(FW_CTXT_ACTION_ADD);
-	time_cmd.id_and_color =
-		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id, mvmvif->color));
-	time_cmd.id = cpu_to_le32(TE_BSS_STA_AGGRESSIVE_ASSOC);
+	समय_cmd.action = cpu_to_le32(FW_CTXT_ACTION_ADD);
+	समय_cmd.id_and_color =
+		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id, mvmvअगर->color));
+	समय_cmd.id = cpu_to_le32(TE_BSS_STA_AGGRESSIVE_ASSOC);
 
-	time_cmd.apply_time = cpu_to_le32(0);
+	समय_cmd.apply_समय = cpu_to_le32(0);
 
-	time_cmd.max_frags = TE_V2_FRAG_NONE;
-	time_cmd.max_delay = cpu_to_le32(max_delay);
-	/* TODO: why do we need to interval = bi if it is not periodic? */
-	time_cmd.interval = cpu_to_le32(1);
-	time_cmd.duration = cpu_to_le32(duration);
-	time_cmd.repeat = 1;
-	time_cmd.policy = cpu_to_le16(TE_V2_NOTIF_HOST_EVENT_START |
+	समय_cmd.max_frags = TE_V2_FRAG_NONE;
+	समय_cmd.max_delay = cpu_to_le32(max_delay);
+	/* TODO: why करो we need to पूर्णांकerval = bi अगर it is not periodic? */
+	समय_cmd.पूर्णांकerval = cpu_to_le32(1);
+	समय_cmd.duration = cpu_to_le32(duration);
+	समय_cmd.repeat = 1;
+	समय_cmd.policy = cpu_to_le16(TE_V2_NOTIF_HOST_EVENT_START |
 				      TE_V2_NOTIF_HOST_EVENT_END |
 				      TE_V2_START_IMMEDIATELY);
 
-	if (!wait_for_notif) {
-		iwl_mvm_time_event_send_add(mvm, vif, te_data, &time_cmd);
-		return;
-	}
+	अगर (!रुको_क्रम_notअगर) अणु
+		iwl_mvm_समय_event_send_add(mvm, vअगर, te_data, &समय_cmd);
+		वापस;
+	पूर्ण
 
 	/*
-	 * Create notification_wait for the TIME_EVENT_NOTIFICATION to use
-	 * right after we send the time event
+	 * Create notअगरication_रुको क्रम the TIME_EVENT_NOTIFICATION to use
+	 * right after we send the समय event
 	 */
-	iwl_init_notification_wait(&mvm->notif_wait, &wait_te_notif,
-				   te_notif_response,
-				   ARRAY_SIZE(te_notif_response),
-				   iwl_mvm_te_notif, te_data);
+	iwl_init_notअगरication_रुको(&mvm->notअगर_रुको, &रुको_te_notअगर,
+				   te_notअगर_response,
+				   ARRAY_SIZE(te_notअगर_response),
+				   iwl_mvm_te_notअगर, te_data);
 
-	/* If TE was sent OK - wait for the notification that started */
-	if (iwl_mvm_time_event_send_add(mvm, vif, te_data, &time_cmd)) {
+	/* If TE was sent OK - रुको क्रम the notअगरication that started */
+	अगर (iwl_mvm_समय_event_send_add(mvm, vअगर, te_data, &समय_cmd)) अणु
 		IWL_ERR(mvm, "Failed to add TE to protect session\n");
-		iwl_remove_notification(&mvm->notif_wait, &wait_te_notif);
-	} else if (iwl_wait_notification(&mvm->notif_wait, &wait_te_notif,
-					 TU_TO_JIFFIES(max_delay))) {
+		iwl_हटाओ_notअगरication(&mvm->notअगर_रुको, &रुको_te_notअगर);
+	पूर्ण अन्यथा अगर (iwl_रुको_notअगरication(&mvm->notअगर_रुको, &रुको_te_notअगर,
+					 TU_TO_JIFFIES(max_delay))) अणु
 		IWL_ERR(mvm, "Failed to protect session until TE\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void iwl_mvm_cancel_session_protection(struct iwl_mvm *mvm,
-					      struct iwl_mvm_vif *mvmvif)
-{
-	struct iwl_mvm_session_prot_cmd cmd = {
+अटल व्योम iwl_mvm_cancel_session_protection(काष्ठा iwl_mvm *mvm,
+					      काष्ठा iwl_mvm_vअगर *mvmvअगर)
+अणु
+	काष्ठा iwl_mvm_session_prot_cmd cmd = अणु
 		.id_and_color =
-			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id,
-							mvmvif->color)),
+			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id,
+							mvmvअगर->color)),
 		.action = cpu_to_le32(FW_CTXT_ACTION_REMOVE),
-		.conf_id = cpu_to_le32(mvmvif->time_event_data.id),
-	};
-	int ret;
+		.conf_id = cpu_to_le32(mvmvअगर->समय_event_data.id),
+	पूर्ण;
+	पूर्णांक ret;
 
 	ret = iwl_mvm_send_cmd_pdu(mvm, iwl_cmd_id(SESSION_PROTECTION_CMD,
 						   MAC_CONF_GROUP, 0),
-				   0, sizeof(cmd), &cmd);
-	if (ret)
+				   0, माप(cmd), &cmd);
+	अगर (ret)
 		IWL_ERR(mvm,
 			"Couldn't send the SESSION_PROTECTION_CMD: %d\n", ret);
-}
+पूर्ण
 
-static bool __iwl_mvm_remove_time_event(struct iwl_mvm *mvm,
-					struct iwl_mvm_time_event_data *te_data,
+अटल bool __iwl_mvm_हटाओ_समय_event(काष्ठा iwl_mvm *mvm,
+					काष्ठा iwl_mvm_समय_event_data *te_data,
 					u32 *uid)
-{
+अणु
 	u32 id;
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(te_data->vif);
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(te_data->vअगर);
 
 	/*
-	 * It is possible that by the time we got to this point the time
-	 * event was already removed.
+	 * It is possible that by the समय we got to this poपूर्णांक the समय
+	 * event was alपढ़ोy हटाओd.
 	 */
-	spin_lock_bh(&mvm->time_event_lock);
+	spin_lock_bh(&mvm->समय_event_lock);
 
-	/* Save time event uid before clearing its data */
+	/* Save समय event uid beक्रमe clearing its data */
 	*uid = te_data->uid;
 	id = te_data->id;
 
 	/*
-	 * The clear_data function handles time events that were already removed
+	 * The clear_data function handles समय events that were alपढ़ोy हटाओd
 	 */
 	iwl_mvm_te_clear_data(mvm, te_data);
-	spin_unlock_bh(&mvm->time_event_lock);
+	spin_unlock_bh(&mvm->समय_event_lock);
 
 	/* When session protection is supported, the te_data->id field
 	 * is reused to save session protection's configuration.
 	 */
-	if (fw_has_capa(&mvm->fw->ucode_capa,
-			IWL_UCODE_TLV_CAPA_SESSION_PROT_CMD)) {
-		if (mvmvif && id < SESSION_PROTECT_CONF_MAX_ID) {
+	अगर (fw_has_capa(&mvm->fw->ucode_capa,
+			IWL_UCODE_TLV_CAPA_SESSION_PROT_CMD)) अणु
+		अगर (mvmvअगर && id < SESSION_PROTECT_CONF_MAX_ID) अणु
 			/* Session protection is still ongoing. Cancel it */
-			iwl_mvm_cancel_session_protection(mvm, mvmvif);
-			if (te_data->vif->type == NL80211_IFTYPE_P2P_DEVICE) {
+			iwl_mvm_cancel_session_protection(mvm, mvmvअगर);
+			अगर (te_data->vअगर->type == NL80211_IFTYPE_P2P_DEVICE) अणु
 				set_bit(IWL_MVM_STATUS_NEED_FLUSH_P2P, &mvm->status);
 				iwl_mvm_roc_finished(mvm);
-			}
-		}
-		return false;
-	} else {
-		/* It is possible that by the time we try to remove it, the
-		 * time event has already ended and removed. In such a case
+			पूर्ण
+		पूर्ण
+		वापस false;
+	पूर्ण अन्यथा अणु
+		/* It is possible that by the समय we try to हटाओ it, the
+		 * समय event has alपढ़ोy ended and हटाओd. In such a हाल
 		 * there is no need to send a removal command.
 		 */
-		if (id == TE_MAX) {
+		अगर (id == TE_MAX) अणु
 			IWL_DEBUG_TE(mvm, "TE 0x%x has already ended\n", *uid);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Explicit request to remove a aux roc time event. The removal of a time
- * event needs to be synchronized with the flow of a time event's end
- * notification, which also removes the time event from the op mode
- * data structures.
+ * Explicit request to हटाओ a aux roc समय event. The removal of a समय
+ * event needs to be synchronized with the flow of a समय event's end
+ * notअगरication, which also हटाओs the समय event from the op mode
+ * data काष्ठाures.
  */
-static void iwl_mvm_remove_aux_roc_te(struct iwl_mvm *mvm,
-				      struct iwl_mvm_vif *mvmvif,
-				      struct iwl_mvm_time_event_data *te_data)
-{
-	struct iwl_hs20_roc_req aux_cmd = {};
-	u16 len = sizeof(aux_cmd) - iwl_mvm_chan_info_padding(mvm);
+अटल व्योम iwl_mvm_हटाओ_aux_roc_te(काष्ठा iwl_mvm *mvm,
+				      काष्ठा iwl_mvm_vअगर *mvmvअगर,
+				      काष्ठा iwl_mvm_समय_event_data *te_data)
+अणु
+	काष्ठा iwl_hs20_roc_req aux_cmd = अणुपूर्ण;
+	u16 len = माप(aux_cmd) - iwl_mvm_chan_info_padding(mvm);
 
 	u32 uid;
-	int ret;
+	पूर्णांक ret;
 
-	if (!__iwl_mvm_remove_time_event(mvm, te_data, &uid))
-		return;
+	अगर (!__iwl_mvm_हटाओ_समय_event(mvm, te_data, &uid))
+		वापस;
 
 	aux_cmd.event_unique_id = cpu_to_le32(uid);
 	aux_cmd.action = cpu_to_le32(FW_CTXT_ACTION_REMOVE);
 	aux_cmd.id_and_color =
-		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id, mvmvif->color));
+		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id, mvmvअगर->color));
 	IWL_DEBUG_TE(mvm, "Removing BSS AUX ROC TE 0x%x\n",
 		     le32_to_cpu(aux_cmd.event_unique_id));
 	ret = iwl_mvm_send_cmd_pdu(mvm, HOT_SPOT_CMD, 0,
 				   len, &aux_cmd);
 
-	if (WARN_ON(ret))
-		return;
-}
+	अगर (WARN_ON(ret))
+		वापस;
+पूर्ण
 
 /*
- * Explicit request to remove a time event. The removal of a time event needs to
- * be synchronized with the flow of a time event's end notification, which also
- * removes the time event from the op mode data structures.
+ * Explicit request to हटाओ a समय event. The removal of a समय event needs to
+ * be synchronized with the flow of a समय event's end notअगरication, which also
+ * हटाओs the समय event from the op mode data काष्ठाures.
  */
-void iwl_mvm_remove_time_event(struct iwl_mvm *mvm,
-			       struct iwl_mvm_vif *mvmvif,
-			       struct iwl_mvm_time_event_data *te_data)
-{
-	struct iwl_time_event_cmd time_cmd = {};
+व्योम iwl_mvm_हटाओ_समय_event(काष्ठा iwl_mvm *mvm,
+			       काष्ठा iwl_mvm_vअगर *mvmvअगर,
+			       काष्ठा iwl_mvm_समय_event_data *te_data)
+अणु
+	काष्ठा iwl_समय_event_cmd समय_cmd = अणुपूर्ण;
 	u32 uid;
-	int ret;
+	पूर्णांक ret;
 
-	if (!__iwl_mvm_remove_time_event(mvm, te_data, &uid))
-		return;
+	अगर (!__iwl_mvm_हटाओ_समय_event(mvm, te_data, &uid))
+		वापस;
 
-	/* When we remove a TE, the UID is to be set in the id field */
-	time_cmd.id = cpu_to_le32(uid);
-	time_cmd.action = cpu_to_le32(FW_CTXT_ACTION_REMOVE);
-	time_cmd.id_and_color =
-		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id, mvmvif->color));
+	/* When we हटाओ a TE, the UID is to be set in the id field */
+	समय_cmd.id = cpu_to_le32(uid);
+	समय_cmd.action = cpu_to_le32(FW_CTXT_ACTION_REMOVE);
+	समय_cmd.id_and_color =
+		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id, mvmvअगर->color));
 
-	IWL_DEBUG_TE(mvm, "Removing TE 0x%x\n", le32_to_cpu(time_cmd.id));
+	IWL_DEBUG_TE(mvm, "Removing TE 0x%x\n", le32_to_cpu(समय_cmd.id));
 	ret = iwl_mvm_send_cmd_pdu(mvm, TIME_EVENT_CMD, 0,
-				   sizeof(time_cmd), &time_cmd);
-	if (ret)
+				   माप(समय_cmd), &समय_cmd);
+	अगर (ret)
 		IWL_ERR(mvm, "Couldn't remove the time event\n");
-}
+पूर्ण
 
 /*
  * When the firmware supports the session protection API,
- * this is not needed since it'll automatically remove the
+ * this is not needed since it'll स्वतःmatically हटाओ the
  * session protection after association + beacon reception.
  */
-void iwl_mvm_stop_session_protection(struct iwl_mvm *mvm,
-				     struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_mvm_time_event_data *te_data = &mvmvif->time_event_data;
+व्योम iwl_mvm_stop_session_protection(काष्ठा iwl_mvm *mvm,
+				     काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_mvm_समय_event_data *te_data = &mvmvअगर->समय_event_data;
 	u32 id;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	spin_lock_bh(&mvm->time_event_lock);
+	spin_lock_bh(&mvm->समय_event_lock);
 	id = te_data->id;
-	spin_unlock_bh(&mvm->time_event_lock);
+	spin_unlock_bh(&mvm->समय_event_lock);
 
-	if (id != TE_BSS_STA_AGGRESSIVE_ASSOC) {
+	अगर (id != TE_BSS_STA_AGGRESSIVE_ASSOC) अणु
 		IWL_DEBUG_TE(mvm,
 			     "don't remove TE with id=%u (not session protection)\n",
 			     id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	iwl_mvm_remove_time_event(mvm, mvmvif, te_data);
-}
+	iwl_mvm_हटाओ_समय_event(mvm, mvmvअगर, te_data);
+पूर्ण
 
-void iwl_mvm_rx_session_protect_notif(struct iwl_mvm *mvm,
-				      struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_mvm_session_prot_notif *notif = (void *)pkt->data;
-	struct ieee80211_vif *vif;
-	struct iwl_mvm_vif *mvmvif;
+व्योम iwl_mvm_rx_session_protect_notअगर(काष्ठा iwl_mvm *mvm,
+				      काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_mvm_session_prot_notअगर *notअगर = (व्योम *)pkt->data;
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा iwl_mvm_vअगर *mvmvअगर;
 
-	rcu_read_lock();
-	vif = iwl_mvm_rcu_dereference_vif_id(mvm, le32_to_cpu(notif->mac_id),
+	rcu_पढ़ो_lock();
+	vअगर = iwl_mvm_rcu_dereference_vअगर_id(mvm, le32_to_cpu(notअगर->mac_id),
 					     true);
 
-	if (!vif)
-		goto out_unlock;
+	अगर (!vअगर)
+		जाओ out_unlock;
 
-	mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-	/* The vif is not a P2P_DEVICE, maintain its time_event_data */
-	if (vif->type != NL80211_IFTYPE_P2P_DEVICE) {
-		struct iwl_mvm_time_event_data *te_data =
-			&mvmvif->time_event_data;
+	/* The vअगर is not a P2P_DEVICE, मुख्यtain its समय_event_data */
+	अगर (vअगर->type != NL80211_IFTYPE_P2P_DEVICE) अणु
+		काष्ठा iwl_mvm_समय_event_data *te_data =
+			&mvmvअगर->समय_event_data;
 
-		if (!le32_to_cpu(notif->status)) {
-			iwl_mvm_te_check_disconnect(mvm, vif,
+		अगर (!le32_to_cpu(notअगर->status)) अणु
+			iwl_mvm_te_check_disconnect(mvm, vअगर,
 						    "Session protection failure");
-			spin_lock_bh(&mvm->time_event_lock);
+			spin_lock_bh(&mvm->समय_event_lock);
 			iwl_mvm_te_clear_data(mvm, te_data);
-			spin_unlock_bh(&mvm->time_event_lock);
-		}
+			spin_unlock_bh(&mvm->समय_event_lock);
+		पूर्ण
 
-		if (le32_to_cpu(notif->start)) {
-			spin_lock_bh(&mvm->time_event_lock);
-			te_data->running = le32_to_cpu(notif->start);
-			te_data->end_jiffies =
+		अगर (le32_to_cpu(notअगर->start)) अणु
+			spin_lock_bh(&mvm->समय_event_lock);
+			te_data->running = le32_to_cpu(notअगर->start);
+			te_data->end_jअगरfies =
 				TU_TO_EXP_TIME(te_data->duration);
-			spin_unlock_bh(&mvm->time_event_lock);
-		} else {
+			spin_unlock_bh(&mvm->समय_event_lock);
+		पूर्ण अन्यथा अणु
 			/*
 			 * By now, we should have finished association
 			 * and know the dtim period.
 			 */
-			iwl_mvm_te_check_disconnect(mvm, vif,
+			iwl_mvm_te_check_disconnect(mvm, vअगर,
 						    "No beacon heard and the session protection is over already...");
-			spin_lock_bh(&mvm->time_event_lock);
+			spin_lock_bh(&mvm->समय_event_lock);
 			iwl_mvm_te_clear_data(mvm, te_data);
-			spin_unlock_bh(&mvm->time_event_lock);
-		}
+			spin_unlock_bh(&mvm->समय_event_lock);
+		पूर्ण
 
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (!le32_to_cpu(notif->status) || !le32_to_cpu(notif->start)) {
-		/* End TE, notify mac80211 */
-		mvmvif->time_event_data.id = SESSION_PROTECT_CONF_MAX_ID;
-		ieee80211_remain_on_channel_expired(mvm->hw);
+	अगर (!le32_to_cpu(notअगर->status) || !le32_to_cpu(notअगर->start)) अणु
+		/* End TE, notअगरy mac80211 */
+		mvmvअगर->समय_event_data.id = SESSION_PROTECT_CONF_MAX_ID;
+		ieee80211_reमुख्य_on_channel_expired(mvm->hw);
 		set_bit(IWL_MVM_STATUS_NEED_FLUSH_P2P, &mvm->status);
 		iwl_mvm_roc_finished(mvm);
-	} else if (le32_to_cpu(notif->start)) {
-		if (WARN_ON(mvmvif->time_event_data.id !=
-				le32_to_cpu(notif->conf_id)))
-			goto out_unlock;
+	पूर्ण अन्यथा अगर (le32_to_cpu(notअगर->start)) अणु
+		अगर (WARN_ON(mvmvअगर->समय_event_data.id !=
+				le32_to_cpu(notअगर->conf_id)))
+			जाओ out_unlock;
 		set_bit(IWL_MVM_STATUS_ROC_RUNNING, &mvm->status);
-		ieee80211_ready_on_channel(mvm->hw); /* Start TE */
-	}
+		ieee80211_पढ़ोy_on_channel(mvm->hw); /* Start TE */
+	पूर्ण
 
  out_unlock:
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int
-iwl_mvm_start_p2p_roc_session_protection(struct iwl_mvm *mvm,
-					 struct ieee80211_vif *vif,
-					 int duration,
-					 enum ieee80211_roc_type type)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_mvm_session_prot_cmd cmd = {
+अटल पूर्णांक
+iwl_mvm_start_p2p_roc_session_protection(काष्ठा iwl_mvm *mvm,
+					 काष्ठा ieee80211_vअगर *vअगर,
+					 पूर्णांक duration,
+					 क्रमागत ieee80211_roc_type type)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_mvm_session_prot_cmd cmd = अणु
 		.id_and_color =
-			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id,
-							mvmvif->color)),
+			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id,
+							mvmvअगर->color)),
 		.action = cpu_to_le32(FW_CTXT_ACTION_ADD),
 		.duration_tu = cpu_to_le32(MSEC_TO_TU(duration)),
-	};
+	पूर्ण;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	/* The time_event_data.id field is reused to save session
+	/* The समय_event_data.id field is reused to save session
 	 * protection's configuration.
 	 */
-	switch (type) {
-	case IEEE80211_ROC_TYPE_NORMAL:
-		mvmvif->time_event_data.id =
+	चयन (type) अणु
+	हाल IEEE80211_ROC_TYPE_NORMAL:
+		mvmvअगर->समय_event_data.id =
 			SESSION_PROTECT_CONF_P2P_DEVICE_DISCOV;
-		break;
-	case IEEE80211_ROC_TYPE_MGMT_TX:
-		mvmvif->time_event_data.id =
+		अवरोध;
+	हाल IEEE80211_ROC_TYPE_MGMT_TX:
+		mvmvअगर->समय_event_data.id =
 			SESSION_PROTECT_CONF_P2P_GO_NEGOTIATION;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ONCE(1, "Got an invalid ROC type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	cmd.conf_id = cpu_to_le32(mvmvif->time_event_data.id);
-	return iwl_mvm_send_cmd_pdu(mvm, iwl_cmd_id(SESSION_PROTECTION_CMD,
+	cmd.conf_id = cpu_to_le32(mvmvअगर->समय_event_data.id);
+	वापस iwl_mvm_send_cmd_pdu(mvm, iwl_cmd_id(SESSION_PROTECTION_CMD,
 						    MAC_CONF_GROUP, 0),
-				    0, sizeof(cmd), &cmd);
-}
+				    0, माप(cmd), &cmd);
+पूर्ण
 
-int iwl_mvm_start_p2p_roc(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
-			  int duration, enum ieee80211_roc_type type)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_mvm_time_event_data *te_data = &mvmvif->time_event_data;
-	struct iwl_time_event_cmd time_cmd = {};
+पूर्णांक iwl_mvm_start_p2p_roc(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर,
+			  पूर्णांक duration, क्रमागत ieee80211_roc_type type)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_mvm_समय_event_data *te_data = &mvmvअगर->समय_event_data;
+	काष्ठा iwl_समय_event_cmd समय_cmd = अणुपूर्ण;
 
-	lockdep_assert_held(&mvm->mutex);
-	if (te_data->running) {
+	lockdep_निश्चित_held(&mvm->mutex);
+	अगर (te_data->running) अणु
 		IWL_WARN(mvm, "P2P_DEVICE remain on channel already running\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (fw_has_capa(&mvm->fw->ucode_capa,
+	अगर (fw_has_capa(&mvm->fw->ucode_capa,
 			IWL_UCODE_TLV_CAPA_SESSION_PROT_CMD))
-		return iwl_mvm_start_p2p_roc_session_protection(mvm, vif,
+		वापस iwl_mvm_start_p2p_roc_session_protection(mvm, vअगर,
 								duration,
 								type);
 
-	time_cmd.action = cpu_to_le32(FW_CTXT_ACTION_ADD);
-	time_cmd.id_and_color =
-		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id, mvmvif->color));
+	समय_cmd.action = cpu_to_le32(FW_CTXT_ACTION_ADD);
+	समय_cmd.id_and_color =
+		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id, mvmvअगर->color));
 
-	switch (type) {
-	case IEEE80211_ROC_TYPE_NORMAL:
-		time_cmd.id = cpu_to_le32(IWL_MVM_ROC_TE_TYPE_NORMAL);
-		break;
-	case IEEE80211_ROC_TYPE_MGMT_TX:
-		time_cmd.id = cpu_to_le32(IWL_MVM_ROC_TE_TYPE_MGMT_TX);
-		break;
-	default:
+	चयन (type) अणु
+	हाल IEEE80211_ROC_TYPE_NORMAL:
+		समय_cmd.id = cpu_to_le32(IWL_MVM_ROC_TE_TYPE_NORMAL);
+		अवरोध;
+	हाल IEEE80211_ROC_TYPE_MGMT_TX:
+		समय_cmd.id = cpu_to_le32(IWL_MVM_ROC_TE_TYPE_MGMT_TX);
+		अवरोध;
+	शेष:
 		WARN_ONCE(1, "Got an invalid ROC type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	time_cmd.apply_time = cpu_to_le32(0);
-	time_cmd.interval = cpu_to_le32(1);
+	समय_cmd.apply_समय = cpu_to_le32(0);
+	समय_cmd.पूर्णांकerval = cpu_to_le32(1);
 
 	/*
 	 * The P2P Device TEs can have lower priority than other events
@@ -919,262 +920,262 @@ int iwl_mvm_start_p2p_roc(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
 	 * scheduled. To improve the chances of it being scheduled, allow them
 	 * to be fragmented, and in addition allow them to be delayed.
 	 */
-	time_cmd.max_frags = min(MSEC_TO_TU(duration)/50, TE_V2_FRAG_ENDLESS);
-	time_cmd.max_delay = cpu_to_le32(MSEC_TO_TU(duration/2));
-	time_cmd.duration = cpu_to_le32(MSEC_TO_TU(duration));
-	time_cmd.repeat = 1;
-	time_cmd.policy = cpu_to_le16(TE_V2_NOTIF_HOST_EVENT_START |
+	समय_cmd.max_frags = min(MSEC_TO_TU(duration)/50, TE_V2_FRAG_ENDLESS);
+	समय_cmd.max_delay = cpu_to_le32(MSEC_TO_TU(duration/2));
+	समय_cmd.duration = cpu_to_le32(MSEC_TO_TU(duration));
+	समय_cmd.repeat = 1;
+	समय_cmd.policy = cpu_to_le16(TE_V2_NOTIF_HOST_EVENT_START |
 				      TE_V2_NOTIF_HOST_EVENT_END |
 				      TE_V2_START_IMMEDIATELY);
 
-	return iwl_mvm_time_event_send_add(mvm, vif, te_data, &time_cmd);
-}
+	वापस iwl_mvm_समय_event_send_add(mvm, vअगर, te_data, &समय_cmd);
+पूर्ण
 
-static struct iwl_mvm_time_event_data *iwl_mvm_get_roc_te(struct iwl_mvm *mvm)
-{
-	struct iwl_mvm_time_event_data *te_data;
+अटल काष्ठा iwl_mvm_समय_event_data *iwl_mvm_get_roc_te(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा iwl_mvm_समय_event_data *te_data;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	spin_lock_bh(&mvm->time_event_lock);
+	spin_lock_bh(&mvm->समय_event_lock);
 
 	/*
-	 * Iterate over the list of time events and find the time event that is
-	 * associated with a P2P_DEVICE interface.
-	 * This assumes that a P2P_DEVICE interface can have only a single time
-	 * event at any given time and this time event coresponds to a ROC
+	 * Iterate over the list of समय events and find the समय event that is
+	 * associated with a P2P_DEVICE पूर्णांकerface.
+	 * This assumes that a P2P_DEVICE पूर्णांकerface can have only a single समय
+	 * event at any given समय and this समय event coresponds to a ROC
 	 * request
 	 */
-	list_for_each_entry(te_data, &mvm->time_event_list, list) {
-		if (te_data->vif->type == NL80211_IFTYPE_P2P_DEVICE)
-			goto out;
-	}
+	list_क्रम_each_entry(te_data, &mvm->समय_event_list, list) अणु
+		अगर (te_data->vअगर->type == NL80211_IFTYPE_P2P_DEVICE)
+			जाओ out;
+	पूर्ण
 
-	/* There can only be at most one AUX ROC time event, we just use the
-	 * list to simplify/unify code. Remove it if it exists.
+	/* There can only be at most one AUX ROC समय event, we just use the
+	 * list to simplअगरy/unअगरy code. Remove it अगर it exists.
 	 */
 	te_data = list_first_entry_or_null(&mvm->aux_roc_te_list,
-					   struct iwl_mvm_time_event_data,
+					   काष्ठा iwl_mvm_समय_event_data,
 					   list);
 out:
-	spin_unlock_bh(&mvm->time_event_lock);
-	return te_data;
-}
+	spin_unlock_bh(&mvm->समय_event_lock);
+	वापस te_data;
+पूर्ण
 
-void iwl_mvm_cleanup_roc_te(struct iwl_mvm *mvm)
-{
-	struct iwl_mvm_time_event_data *te_data;
+व्योम iwl_mvm_cleanup_roc_te(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा iwl_mvm_समय_event_data *te_data;
 	u32 uid;
 
 	te_data = iwl_mvm_get_roc_te(mvm);
-	if (te_data)
-		__iwl_mvm_remove_time_event(mvm, te_data, &uid);
-}
+	अगर (te_data)
+		__iwl_mvm_हटाओ_समय_event(mvm, te_data, &uid);
+पूर्ण
 
-void iwl_mvm_stop_roc(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif;
-	struct iwl_mvm_time_event_data *te_data;
+व्योम iwl_mvm_stop_roc(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर;
+	काष्ठा iwl_mvm_समय_event_data *te_data;
 
-	if (fw_has_capa(&mvm->fw->ucode_capa,
-			IWL_UCODE_TLV_CAPA_SESSION_PROT_CMD)) {
-		mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	अगर (fw_has_capa(&mvm->fw->ucode_capa,
+			IWL_UCODE_TLV_CAPA_SESSION_PROT_CMD)) अणु
+		mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-		if (vif->type == NL80211_IFTYPE_P2P_DEVICE) {
-			iwl_mvm_cancel_session_protection(mvm, mvmvif);
+		अगर (vअगर->type == NL80211_IFTYPE_P2P_DEVICE) अणु
+			iwl_mvm_cancel_session_protection(mvm, mvmvअगर);
 			set_bit(IWL_MVM_STATUS_NEED_FLUSH_P2P, &mvm->status);
-		} else {
-			iwl_mvm_remove_aux_roc_te(mvm, mvmvif,
-						  &mvmvif->time_event_data);
-		}
+		पूर्ण अन्यथा अणु
+			iwl_mvm_हटाओ_aux_roc_te(mvm, mvmvअगर,
+						  &mvmvअगर->समय_event_data);
+		पूर्ण
 
 		iwl_mvm_roc_finished(mvm);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	te_data = iwl_mvm_get_roc_te(mvm);
-	if (!te_data) {
+	अगर (!te_data) अणु
 		IWL_WARN(mvm, "No remain on channel event\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mvmvif = iwl_mvm_vif_from_mac80211(te_data->vif);
+	mvmvअगर = iwl_mvm_vअगर_from_mac80211(te_data->vअगर);
 
-	if (te_data->vif->type == NL80211_IFTYPE_P2P_DEVICE) {
-		iwl_mvm_remove_time_event(mvm, mvmvif, te_data);
+	अगर (te_data->vअगर->type == NL80211_IFTYPE_P2P_DEVICE) अणु
+		iwl_mvm_हटाओ_समय_event(mvm, mvmvअगर, te_data);
 		set_bit(IWL_MVM_STATUS_NEED_FLUSH_P2P, &mvm->status);
-	} else {
-		iwl_mvm_remove_aux_roc_te(mvm, mvmvif, te_data);
-	}
+	पूर्ण अन्यथा अणु
+		iwl_mvm_हटाओ_aux_roc_te(mvm, mvmvअगर, te_data);
+	पूर्ण
 
 	iwl_mvm_roc_finished(mvm);
-}
+पूर्ण
 
-void iwl_mvm_remove_csa_period(struct iwl_mvm *mvm,
-			       struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_mvm_time_event_data *te_data = &mvmvif->time_event_data;
+व्योम iwl_mvm_हटाओ_csa_period(काष्ठा iwl_mvm *mvm,
+			       काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_mvm_समय_event_data *te_data = &mvmvअगर->समय_event_data;
 	u32 id;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	spin_lock_bh(&mvm->time_event_lock);
+	spin_lock_bh(&mvm->समय_event_lock);
 	id = te_data->id;
-	spin_unlock_bh(&mvm->time_event_lock);
+	spin_unlock_bh(&mvm->समय_event_lock);
 
-	if (id != TE_CHANNEL_SWITCH_PERIOD)
-		return;
+	अगर (id != TE_CHANNEL_SWITCH_PERIOD)
+		वापस;
 
-	iwl_mvm_remove_time_event(mvm, mvmvif, te_data);
-}
+	iwl_mvm_हटाओ_समय_event(mvm, mvmvअगर, te_data);
+पूर्ण
 
-int iwl_mvm_schedule_csa_period(struct iwl_mvm *mvm,
-				struct ieee80211_vif *vif,
-				u32 duration, u32 apply_time)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_mvm_time_event_data *te_data = &mvmvif->time_event_data;
-	struct iwl_time_event_cmd time_cmd = {};
+पूर्णांक iwl_mvm_schedule_csa_period(काष्ठा iwl_mvm *mvm,
+				काष्ठा ieee80211_vअगर *vअगर,
+				u32 duration, u32 apply_समय)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_mvm_समय_event_data *te_data = &mvmvअगर->समय_event_data;
+	काष्ठा iwl_समय_event_cmd समय_cmd = अणुपूर्ण;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	if (te_data->running) {
+	अगर (te_data->running) अणु
 		u32 id;
 
-		spin_lock_bh(&mvm->time_event_lock);
+		spin_lock_bh(&mvm->समय_event_lock);
 		id = te_data->id;
-		spin_unlock_bh(&mvm->time_event_lock);
+		spin_unlock_bh(&mvm->समय_event_lock);
 
-		if (id == TE_CHANNEL_SWITCH_PERIOD) {
+		अगर (id == TE_CHANNEL_SWITCH_PERIOD) अणु
 			IWL_DEBUG_TE(mvm, "CS period is already scheduled\n");
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
 		/*
-		 * Remove the session protection time event to allow the
-		 * channel switch. If we got here, we just heard a beacon so
+		 * Remove the session protection समय event to allow the
+		 * channel चयन. If we got here, we just heard a beacon so
 		 * the session protection is not needed anymore anyway.
 		 */
-		iwl_mvm_remove_time_event(mvm, mvmvif, te_data);
-	}
+		iwl_mvm_हटाओ_समय_event(mvm, mvmvअगर, te_data);
+	पूर्ण
 
-	time_cmd.action = cpu_to_le32(FW_CTXT_ACTION_ADD);
-	time_cmd.id_and_color =
-		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id, mvmvif->color));
-	time_cmd.id = cpu_to_le32(TE_CHANNEL_SWITCH_PERIOD);
-	time_cmd.apply_time = cpu_to_le32(apply_time);
-	time_cmd.max_frags = TE_V2_FRAG_NONE;
-	time_cmd.duration = cpu_to_le32(duration);
-	time_cmd.repeat = 1;
-	time_cmd.interval = cpu_to_le32(1);
-	time_cmd.policy = cpu_to_le16(TE_V2_NOTIF_HOST_EVENT_START |
+	समय_cmd.action = cpu_to_le32(FW_CTXT_ACTION_ADD);
+	समय_cmd.id_and_color =
+		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id, mvmvअगर->color));
+	समय_cmd.id = cpu_to_le32(TE_CHANNEL_SWITCH_PERIOD);
+	समय_cmd.apply_समय = cpu_to_le32(apply_समय);
+	समय_cmd.max_frags = TE_V2_FRAG_NONE;
+	समय_cmd.duration = cpu_to_le32(duration);
+	समय_cmd.repeat = 1;
+	समय_cmd.पूर्णांकerval = cpu_to_le32(1);
+	समय_cmd.policy = cpu_to_le16(TE_V2_NOTIF_HOST_EVENT_START |
 				      TE_V2_ABSENCE);
-	if (!apply_time)
-		time_cmd.policy |= cpu_to_le16(TE_V2_START_IMMEDIATELY);
+	अगर (!apply_समय)
+		समय_cmd.policy |= cpu_to_le16(TE_V2_START_IMMEDIATELY);
 
-	return iwl_mvm_time_event_send_add(mvm, vif, te_data, &time_cmd);
-}
+	वापस iwl_mvm_समय_event_send_add(mvm, vअगर, te_data, &समय_cmd);
+पूर्ण
 
-static bool iwl_mvm_session_prot_notif(struct iwl_notif_wait_data *notif_wait,
-				       struct iwl_rx_packet *pkt, void *data)
-{
-	struct iwl_mvm *mvm =
-		container_of(notif_wait, struct iwl_mvm, notif_wait);
-	struct iwl_mvm_session_prot_notif *resp;
-	int resp_len = iwl_rx_packet_payload_len(pkt);
+अटल bool iwl_mvm_session_prot_notअगर(काष्ठा iwl_notअगर_रुको_data *notअगर_रुको,
+				       काष्ठा iwl_rx_packet *pkt, व्योम *data)
+अणु
+	काष्ठा iwl_mvm *mvm =
+		container_of(notअगर_रुको, काष्ठा iwl_mvm, notअगर_रुको);
+	काष्ठा iwl_mvm_session_prot_notअगर *resp;
+	पूर्णांक resp_len = iwl_rx_packet_payload_len(pkt);
 
-	if (WARN_ON(pkt->hdr.cmd != SESSION_PROTECTION_NOTIF ||
+	अगर (WARN_ON(pkt->hdr.cmd != SESSION_PROTECTION_NOTIF ||
 		    pkt->hdr.group_id != MAC_CONF_GROUP))
-		return true;
+		वापस true;
 
-	if (WARN_ON_ONCE(resp_len != sizeof(*resp))) {
+	अगर (WARN_ON_ONCE(resp_len != माप(*resp))) अणु
 		IWL_ERR(mvm, "Invalid SESSION_PROTECTION_NOTIF response\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	resp = (void *)pkt->data;
+	resp = (व्योम *)pkt->data;
 
-	if (!resp->status)
+	अगर (!resp->status)
 		IWL_ERR(mvm,
 			"TIME_EVENT_NOTIFICATION received but not executed\n");
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void iwl_mvm_schedule_session_protection(struct iwl_mvm *mvm,
-					 struct ieee80211_vif *vif,
+व्योम iwl_mvm_schedule_session_protection(काष्ठा iwl_mvm *mvm,
+					 काष्ठा ieee80211_vअगर *vअगर,
 					 u32 duration, u32 min_duration,
-					 bool wait_for_notif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_mvm_time_event_data *te_data = &mvmvif->time_event_data;
-	const u16 notif[] = { iwl_cmd_id(SESSION_PROTECTION_NOTIF,
-					 MAC_CONF_GROUP, 0) };
-	struct iwl_notification_wait wait_notif;
-	struct iwl_mvm_session_prot_cmd cmd = {
+					 bool रुको_क्रम_notअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_mvm_समय_event_data *te_data = &mvmvअगर->समय_event_data;
+	स्थिर u16 notअगर[] = अणु iwl_cmd_id(SESSION_PROTECTION_NOTIF,
+					 MAC_CONF_GROUP, 0) पूर्ण;
+	काष्ठा iwl_notअगरication_रुको रुको_notअगर;
+	काष्ठा iwl_mvm_session_prot_cmd cmd = अणु
 		.id_and_color =
-			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id,
-							mvmvif->color)),
+			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id,
+							mvmvअगर->color)),
 		.action = cpu_to_le32(FW_CTXT_ACTION_ADD),
 		.duration_tu = cpu_to_le32(MSEC_TO_TU(duration)),
-	};
+	पूर्ण;
 
-	/* The time_event_data.id field is reused to save session
+	/* The समय_event_data.id field is reused to save session
 	 * protection's configuration.
 	 */
-	mvmvif->time_event_data.id = SESSION_PROTECT_CONF_ASSOC;
-	cmd.conf_id = cpu_to_le32(mvmvif->time_event_data.id);
+	mvmvअगर->समय_event_data.id = SESSION_PROTECT_CONF_ASSOC;
+	cmd.conf_id = cpu_to_le32(mvmvअगर->समय_event_data.id);
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	spin_lock_bh(&mvm->time_event_lock);
-	if (te_data->running &&
-	    time_after(te_data->end_jiffies, TU_TO_EXP_TIME(min_duration))) {
+	spin_lock_bh(&mvm->समय_event_lock);
+	अगर (te_data->running &&
+	    समय_after(te_data->end_jअगरfies, TU_TO_EXP_TIME(min_duration))) अणु
 		IWL_DEBUG_TE(mvm, "We have enough time in the current TE: %u\n",
-			     jiffies_to_msecs(te_data->end_jiffies - jiffies));
-		spin_unlock_bh(&mvm->time_event_lock);
+			     jअगरfies_to_msecs(te_data->end_jअगरfies - jअगरfies));
+		spin_unlock_bh(&mvm->समय_event_lock);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iwl_mvm_te_clear_data(mvm, te_data);
 	te_data->duration = le32_to_cpu(cmd.duration_tu);
-	spin_unlock_bh(&mvm->time_event_lock);
+	spin_unlock_bh(&mvm->समय_event_lock);
 
 	IWL_DEBUG_TE(mvm, "Add new session protection, duration %d TU\n",
 		     le32_to_cpu(cmd.duration_tu));
 
-	if (!wait_for_notif) {
-		if (iwl_mvm_send_cmd_pdu(mvm,
+	अगर (!रुको_क्रम_notअगर) अणु
+		अगर (iwl_mvm_send_cmd_pdu(mvm,
 					 iwl_cmd_id(SESSION_PROTECTION_CMD,
 						    MAC_CONF_GROUP, 0),
-					 0, sizeof(cmd), &cmd)) {
+					 0, माप(cmd), &cmd)) अणु
 			IWL_ERR(mvm,
 				"Couldn't send the SESSION_PROTECTION_CMD\n");
-			spin_lock_bh(&mvm->time_event_lock);
+			spin_lock_bh(&mvm->समय_event_lock);
 			iwl_mvm_te_clear_data(mvm, te_data);
-			spin_unlock_bh(&mvm->time_event_lock);
-		}
+			spin_unlock_bh(&mvm->समय_event_lock);
+		पूर्ण
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	iwl_init_notification_wait(&mvm->notif_wait, &wait_notif,
-				   notif, ARRAY_SIZE(notif),
-				   iwl_mvm_session_prot_notif, NULL);
+	iwl_init_notअगरication_रुको(&mvm->notअगर_रुको, &रुको_notअगर,
+				   notअगर, ARRAY_SIZE(notअगर),
+				   iwl_mvm_session_prot_notअगर, शून्य);
 
-	if (iwl_mvm_send_cmd_pdu(mvm,
+	अगर (iwl_mvm_send_cmd_pdu(mvm,
 				 iwl_cmd_id(SESSION_PROTECTION_CMD,
 					    MAC_CONF_GROUP, 0),
-				 0, sizeof(cmd), &cmd)) {
+				 0, माप(cmd), &cmd)) अणु
 		IWL_ERR(mvm,
 			"Couldn't send the SESSION_PROTECTION_CMD\n");
-		iwl_remove_notification(&mvm->notif_wait, &wait_notif);
-	} else if (iwl_wait_notification(&mvm->notif_wait, &wait_notif,
-					 TU_TO_JIFFIES(100))) {
+		iwl_हटाओ_notअगरication(&mvm->notअगर_रुको, &रुको_notअगर);
+	पूर्ण अन्यथा अगर (iwl_रुको_notअगरication(&mvm->notअगर_रुको, &रुको_notअगर,
+					 TU_TO_JIFFIES(100))) अणु
 		IWL_ERR(mvm,
 			"Failed to protect session until session protection\n");
-	}
-}
+	पूर्ण
+पूर्ण

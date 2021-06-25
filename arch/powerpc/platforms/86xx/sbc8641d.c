@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * SBC8641D board specific routines
+ * SBC8641D board specअगरic routines
  *
  * Copyright 2008 Wind River Systems Inc.
  *
- * By Paul Gortmaker (see MAINTAINERS for contact information)
+ * By Paul Gorपंचांगaker (see MAINTAINERS क्रम contact inक्रमmation)
  *
  * Based largely on the 8641 HPCN support by Freescale Semiconductor Inc.
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/kdev_t.h>
-#include <linux/delay.h>
-#include <linux/seq_file.h>
-#include <linux/of_platform.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/time.h>
-#include <asm/machdep.h>
-#include <asm/pci-bridge.h>
-#include <asm/prom.h>
-#include <mm/mmu_decl.h>
-#include <asm/udbg.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <mm/mmu_decl.h>
+#समावेश <यंत्र/udbg.h>
 
-#include <asm/mpic.h>
+#समावेश <यंत्र/mpic.h>
 
-#include <sysdev/fsl_pci.h>
-#include <sysdev/fsl_soc.h>
+#समावेश <sysdev/fsl_pci.h>
+#समावेश <sysdev/fsl_soc.h>
 
-#include "mpc86xx.h"
+#समावेश "mpc86xx.h"
 
-static void __init
-sbc8641_setup_arch(void)
-{
-	if (ppc_md.progress)
+अटल व्योम __init
+sbc8641_setup_arch(व्योम)
+अणु
+	अगर (ppc_md.progress)
 		ppc_md.progress("sbc8641_setup_arch()", 0);
 
-	printk("SBC8641 board from Wind River\n");
+	prपूर्णांकk("SBC8641 board from Wind River\n");
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	mpc86xx_smp_init();
-#endif
+#पूर्ण_अगर
 
 	fsl_pci_assign_primary();
-}
+पूर्ण
 
 
-static void
-sbc8641_show_cpuinfo(struct seq_file *m)
-{
-	uint svid = mfspr(SPRN_SVR);
+अटल व्योम
+sbc8641_show_cpuinfo(काष्ठा seq_file *m)
+अणु
+	uपूर्णांक svid = mfspr(SPRN_SVR);
 
-	seq_printf(m, "Vendor\t\t: Wind River Systems\n");
+	seq_म_लिखो(m, "Vendor\t\t: Wind River Systems\n");
 
-	seq_printf(m, "SVR\t\t: 0x%x\n", svid);
-}
+	seq_म_लिखो(m, "SVR\t\t: 0x%x\n", svid);
+पूर्ण
 
 
 /*
  * Called very early, device-tree isn't unflattened
  */
-static int __init sbc8641_probe(void)
-{
-	if (of_machine_is_compatible("wind,sbc8641"))
-		return 1;	/* Looks good */
+अटल पूर्णांक __init sbc8641_probe(व्योम)
+अणु
+	अगर (of_machine_is_compatible("wind,sbc8641"))
+		वापस 1;	/* Looks good */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 machine_arch_initcall(sbc8641, mpc86xx_common_publish_devices);
 
-define_machine(sbc8641) {
+define_machine(sbc8641) अणु
 	.name			= "SBC8641D",
 	.probe			= sbc8641_probe,
 	.setup_arch		= sbc8641_setup_arch,
 	.init_IRQ		= mpc86xx_init_irq,
 	.show_cpuinfo		= sbc8641_show_cpuinfo,
 	.get_irq		= mpic_get_irq,
-	.time_init		= mpc86xx_time_init,
+	.समय_init		= mpc86xx_समय_init,
 	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= udbg_progress,
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 	.pcibios_fixup_bus	= fsl_pcibios_fixup_bus,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

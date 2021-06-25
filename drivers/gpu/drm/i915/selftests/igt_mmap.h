@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef IGT_MMAP_H
-#define IGT_MMAP_H
+#अगर_अघोषित IGT_MMAP_H
+#घोषणा IGT_MMAP_H
 
-struct drm_i915_private;
-struct drm_vma_offset_node;
+काष्ठा drm_i915_निजी;
+काष्ठा drm_vma_offset_node;
 
-unsigned long igt_mmap_node(struct drm_i915_private *i915,
-			    struct drm_vma_offset_node *node,
-			    unsigned long addr,
-			    unsigned long prot,
-			    unsigned long flags);
+अचिन्हित दीर्घ igt_mmap_node(काष्ठा drm_i915_निजी *i915,
+			    काष्ठा drm_vma_offset_node *node,
+			    अचिन्हित दीर्घ addr,
+			    अचिन्हित दीर्घ prot,
+			    अचिन्हित दीर्घ flags);
 
-#endif /* IGT_MMAP_H */
+#पूर्ण_अगर /* IGT_MMAP_H */

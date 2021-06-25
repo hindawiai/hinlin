@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2010 IBM Corporation
  * Copyright (C) 2010 Politecnico di Torino, Italy
@@ -11,11 +12,11 @@
  * See Documentation/security/keys/trusted-encrypted.rst
  */
 
-#include <linux/uaccess.h>
-#include <linux/err.h>
-#include <keys/trusted-type.h>
-#include <keys/encrypted-type.h>
-#include "encrypted.h"
+#समावेश <linux/uaccess.h>
+#समावेश <linux/err.h>
+#समावेश <keys/trusted-type.h>
+#समावेश <keys/encrypted-type.h>
+#समावेश "encrypted.h"
 
 /*
  * request_trusted_key - request the trusted key
@@ -24,20 +25,20 @@
  * manages both trusted/encrypted key-types, like the encrypted key type
  * data, trusted key type data is not visible decrypted from userspace.
  */
-struct key *request_trusted_key(const char *trusted_desc,
-				const u8 **master_key, size_t *master_keylen)
-{
-	struct trusted_key_payload *tpayload;
-	struct key *tkey;
+काष्ठा key *request_trusted_key(स्थिर अक्षर *trusted_desc,
+				स्थिर u8 **master_key, माप_प्रकार *master_keylen)
+अणु
+	काष्ठा trusted_key_payload *tpayload;
+	काष्ठा key *tkey;
 
-	tkey = request_key(&key_type_trusted, trusted_desc, NULL);
-	if (IS_ERR(tkey))
-		goto error;
+	tkey = request_key(&key_type_trusted, trusted_desc, शून्य);
+	अगर (IS_ERR(tkey))
+		जाओ error;
 
-	down_read(&tkey->sem);
+	करोwn_पढ़ो(&tkey->sem);
 	tpayload = tkey->payload.data[0];
 	*master_key = tpayload->key;
 	*master_keylen = tpayload->key_len;
 error:
-	return tkey;
-}
+	वापस tkey;
+पूर्ण

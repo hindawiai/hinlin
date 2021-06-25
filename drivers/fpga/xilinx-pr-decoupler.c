@@ -1,189 +1,190 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2017, National Instruments Corp.
  * Copyright (c) 2017, Xilinx Inc
  *
- * FPGA Bridge Driver for the Xilinx LogiCORE Partial Reconfiguration
+ * FPGA Bridge Driver क्रम the Xilinx LogiCORE Partial Reconfiguration
  * Decoupler IP Core.
  */
 
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of_device.h>
-#include <linux/module.h>
-#include <linux/fpga/fpga-bridge.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fpga/fpga-bridge.h>
 
-#define CTRL_CMD_DECOUPLE	BIT(0)
-#define CTRL_CMD_COUPLE		0
-#define CTRL_OFFSET		0
+#घोषणा CTRL_CMD_DECOUPLE	BIT(0)
+#घोषणा CTRL_CMD_COUPLE		0
+#घोषणा CTRL_OFFSET		0
 
-struct xlnx_config_data {
-	const char *name;
-};
+काष्ठा xlnx_config_data अणु
+	स्थिर अक्षर *name;
+पूर्ण;
 
-struct xlnx_pr_decoupler_data {
-	const struct xlnx_config_data *ipconfig;
-	void __iomem *io_base;
-	struct clk *clk;
-};
+काष्ठा xlnx_pr_decoupler_data अणु
+	स्थिर काष्ठा xlnx_config_data *ipconfig;
+	व्योम __iomem *io_base;
+	काष्ठा clk *clk;
+पूर्ण;
 
-static inline void xlnx_pr_decoupler_write(struct xlnx_pr_decoupler_data *d,
+अटल अंतरभूत व्योम xlnx_pr_decoupler_ग_लिखो(काष्ठा xlnx_pr_decoupler_data *d,
 					   u32 offset, u32 val)
-{
-	writel(val, d->io_base + offset);
-}
+अणु
+	ग_लिखोl(val, d->io_base + offset);
+पूर्ण
 
-static inline u32 xlnx_pr_decouple_read(const struct xlnx_pr_decoupler_data *d,
+अटल अंतरभूत u32 xlnx_pr_decouple_पढ़ो(स्थिर काष्ठा xlnx_pr_decoupler_data *d,
 					u32 offset)
-{
-	return readl(d->io_base + offset);
-}
+अणु
+	वापस पढ़ोl(d->io_base + offset);
+पूर्ण
 
-static int xlnx_pr_decoupler_enable_set(struct fpga_bridge *bridge, bool enable)
-{
-	int err;
-	struct xlnx_pr_decoupler_data *priv = bridge->priv;
+अटल पूर्णांक xlnx_pr_decoupler_enable_set(काष्ठा fpga_bridge *bridge, bool enable)
+अणु
+	पूर्णांक err;
+	काष्ठा xlnx_pr_decoupler_data *priv = bridge->priv;
 
 	err = clk_enable(priv->clk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (enable)
-		xlnx_pr_decoupler_write(priv, CTRL_OFFSET, CTRL_CMD_COUPLE);
-	else
-		xlnx_pr_decoupler_write(priv, CTRL_OFFSET, CTRL_CMD_DECOUPLE);
+	अगर (enable)
+		xlnx_pr_decoupler_ग_लिखो(priv, CTRL_OFFSET, CTRL_CMD_COUPLE);
+	अन्यथा
+		xlnx_pr_decoupler_ग_लिखो(priv, CTRL_OFFSET, CTRL_CMD_DECOUPLE);
 
 	clk_disable(priv->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xlnx_pr_decoupler_enable_show(struct fpga_bridge *bridge)
-{
-	const struct xlnx_pr_decoupler_data *priv = bridge->priv;
+अटल पूर्णांक xlnx_pr_decoupler_enable_show(काष्ठा fpga_bridge *bridge)
+अणु
+	स्थिर काष्ठा xlnx_pr_decoupler_data *priv = bridge->priv;
 	u32 status;
-	int err;
+	पूर्णांक err;
 
 	err = clk_enable(priv->clk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	status = readl(priv->io_base);
+	status = पढ़ोl(priv->io_base);
 
 	clk_disable(priv->clk);
 
-	return !status;
-}
+	वापस !status;
+पूर्ण
 
-static const struct fpga_bridge_ops xlnx_pr_decoupler_br_ops = {
+अटल स्थिर काष्ठा fpga_bridge_ops xlnx_pr_decoupler_br_ops = अणु
 	.enable_set = xlnx_pr_decoupler_enable_set,
 	.enable_show = xlnx_pr_decoupler_enable_show,
-};
+पूर्ण;
 
-static const struct xlnx_config_data decoupler_config = {
+अटल स्थिर काष्ठा xlnx_config_data decoupler_config = अणु
 	.name = "Xilinx PR Decoupler",
-};
+पूर्ण;
 
-static const struct xlnx_config_data shutdown_config = {
+अटल स्थिर काष्ठा xlnx_config_data shutकरोwn_config = अणु
 	.name = "Xilinx DFX AXI Shutdown Manager",
-};
+पूर्ण;
 
-static const struct of_device_id xlnx_pr_decoupler_of_match[] = {
-	{ .compatible = "xlnx,pr-decoupler-1.00", .data = &decoupler_config },
-	{ .compatible = "xlnx,pr-decoupler", .data = &decoupler_config },
-	{ .compatible = "xlnx,dfx-axi-shutdown-manager-1.00",
-					.data = &shutdown_config },
-	{ .compatible = "xlnx,dfx-axi-shutdown-manager",
-					.data = &shutdown_config },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id xlnx_pr_decoupler_of_match[] = अणु
+	अणु .compatible = "xlnx,pr-decoupler-1.00", .data = &decoupler_config पूर्ण,
+	अणु .compatible = "xlnx,pr-decoupler", .data = &decoupler_config पूर्ण,
+	अणु .compatible = "xlnx,dfx-axi-shutdown-manager-1.00",
+					.data = &shutकरोwn_config पूर्ण,
+	अणु .compatible = "xlnx,dfx-axi-shutdown-manager",
+					.data = &shutकरोwn_config पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, xlnx_pr_decoupler_of_match);
 
-static int xlnx_pr_decoupler_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct xlnx_pr_decoupler_data *priv;
-	struct fpga_bridge *br;
-	int err;
-	struct resource *res;
+अटल पूर्णांक xlnx_pr_decoupler_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा xlnx_pr_decoupler_data *priv;
+	काष्ठा fpga_bridge *br;
+	पूर्णांक err;
+	काष्ठा resource *res;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	if (np) {
-		const struct of_device_id *match;
+	अगर (np) अणु
+		स्थिर काष्ठा of_device_id *match;
 
 		match = of_match_node(xlnx_pr_decoupler_of_match, np);
-		if (match && match->data)
+		अगर (match && match->data)
 			priv->ipconfig = match->data;
-	}
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->io_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(priv->io_base))
-		return PTR_ERR(priv->io_base);
+	अगर (IS_ERR(priv->io_base))
+		वापस PTR_ERR(priv->io_base);
 
 	priv->clk = devm_clk_get(&pdev->dev, "aclk");
-	if (IS_ERR(priv->clk))
-		return dev_err_probe(&pdev->dev, PTR_ERR(priv->clk),
+	अगर (IS_ERR(priv->clk))
+		वापस dev_err_probe(&pdev->dev, PTR_ERR(priv->clk),
 				     "input clock not found\n");
 
 	err = clk_prepare_enable(priv->clk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "unable to enable clock\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	clk_disable(priv->clk);
 
 	br = devm_fpga_bridge_create(&pdev->dev, priv->ipconfig->name,
 				     &xlnx_pr_decoupler_br_ops, priv);
-	if (!br) {
+	अगर (!br) अणु
 		err = -ENOMEM;
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
-	platform_set_drvdata(pdev, br);
+	platक्रमm_set_drvdata(pdev, br);
 
-	err = fpga_bridge_register(br);
-	if (err) {
+	err = fpga_bridge_रेजिस्टर(br);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "unable to register %s",
 			priv->ipconfig->name);
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_clk:
 	clk_unprepare(priv->clk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xlnx_pr_decoupler_remove(struct platform_device *pdev)
-{
-	struct fpga_bridge *bridge = platform_get_drvdata(pdev);
-	struct xlnx_pr_decoupler_data *p = bridge->priv;
+अटल पूर्णांक xlnx_pr_decoupler_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fpga_bridge *bridge = platक्रमm_get_drvdata(pdev);
+	काष्ठा xlnx_pr_decoupler_data *p = bridge->priv;
 
-	fpga_bridge_unregister(bridge);
+	fpga_bridge_unरेजिस्टर(bridge);
 
 	clk_unprepare(p->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver xlnx_pr_decoupler_driver = {
+अटल काष्ठा platक्रमm_driver xlnx_pr_decoupler_driver = अणु
 	.probe = xlnx_pr_decoupler_probe,
-	.remove = xlnx_pr_decoupler_remove,
-	.driver = {
+	.हटाओ = xlnx_pr_decoupler_हटाओ,
+	.driver = अणु
 		.name = "xlnx_pr_decoupler",
 		.of_match_table = of_match_ptr(xlnx_pr_decoupler_of_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(xlnx_pr_decoupler_driver);
+module_platक्रमm_driver(xlnx_pr_decoupler_driver);
 
 MODULE_DESCRIPTION("Xilinx Partial Reconfiguration Decoupler");
 MODULE_AUTHOR("Moritz Fischer <mdf@kernel.org>");

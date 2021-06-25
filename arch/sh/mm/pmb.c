@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * arch/sh/mm/pmb.c
  *
@@ -7,87 +8,87 @@
  * Copyright (C) 2010  Matt Fleming
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/syscore_ops.h>
-#include <linux/cpu.h>
-#include <linux/module.h>
-#include <linux/bitops.h>
-#include <linux/debugfs.h>
-#include <linux/fs.h>
-#include <linux/seq_file.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/spinlock.h>
-#include <linux/vmalloc.h>
-#include <linux/pgtable.h>
-#include <asm/cacheflush.h>
-#include <linux/sizes.h>
-#include <linux/uaccess.h>
-#include <asm/page.h>
-#include <asm/mmu.h>
-#include <asm/mmu_context.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/mmu_context.h>
 
-struct pmb_entry;
+काष्ठा pmb_entry;
 
-struct pmb_entry {
-	unsigned long vpn;
-	unsigned long ppn;
-	unsigned long flags;
-	unsigned long size;
+काष्ठा pmb_entry अणु
+	अचिन्हित दीर्घ vpn;
+	अचिन्हित दीर्घ ppn;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ size;
 
 	raw_spinlock_t lock;
 
 	/*
-	 * 0 .. NR_PMB_ENTRIES for specific entry selection, or
-	 * PMB_NO_ENTRY to search for a free one
+	 * 0 .. NR_PMB_ENTRIES क्रम specअगरic entry selection, or
+	 * PMB_NO_ENTRY to search क्रम a मुक्त one
 	 */
-	int entry;
+	पूर्णांक entry;
 
-	/* Adjacent entry link for contiguous multi-entry mappings */
-	struct pmb_entry *link;
-};
+	/* Adjacent entry link क्रम contiguous multi-entry mappings */
+	काष्ठा pmb_entry *link;
+पूर्ण;
 
-static struct {
-	unsigned long size;
-	int flag;
-} pmb_sizes[] = {
-	{ .size	= SZ_512M, .flag = PMB_SZ_512M, },
-	{ .size = SZ_128M, .flag = PMB_SZ_128M, },
-	{ .size = SZ_64M,  .flag = PMB_SZ_64M,  },
-	{ .size = SZ_16M,  .flag = PMB_SZ_16M,  },
-};
+अटल काष्ठा अणु
+	अचिन्हित दीर्घ size;
+	पूर्णांक flag;
+पूर्ण pmb_sizes[] = अणु
+	अणु .size	= SZ_512M, .flag = PMB_SZ_512M, पूर्ण,
+	अणु .size = SZ_128M, .flag = PMB_SZ_128M, पूर्ण,
+	अणु .size = SZ_64M,  .flag = PMB_SZ_64M,  पूर्ण,
+	अणु .size = SZ_16M,  .flag = PMB_SZ_16M,  पूर्ण,
+पूर्ण;
 
-static void pmb_unmap_entry(struct pmb_entry *, int depth);
+अटल व्योम pmb_unmap_entry(काष्ठा pmb_entry *, पूर्णांक depth);
 
-static DEFINE_RWLOCK(pmb_rwlock);
-static struct pmb_entry pmb_entry_list[NR_PMB_ENTRIES];
-static DECLARE_BITMAP(pmb_map, NR_PMB_ENTRIES);
+अटल DEFINE_RWLOCK(pmb_rwlock);
+अटल काष्ठा pmb_entry pmb_entry_list[NR_PMB_ENTRIES];
+अटल DECLARE_BITMAP(pmb_map, NR_PMB_ENTRIES);
 
-static unsigned int pmb_iomapping_enabled;
+अटल अचिन्हित पूर्णांक pmb_iomapping_enabled;
 
-static __always_inline unsigned long mk_pmb_entry(unsigned int entry)
-{
-	return (entry & PMB_E_MASK) << PMB_E_SHIFT;
-}
+अटल __always_अंतरभूत अचिन्हित दीर्घ mk_pmb_entry(अचिन्हित पूर्णांक entry)
+अणु
+	वापस (entry & PMB_E_MASK) << PMB_E_SHIFT;
+पूर्ण
 
-static __always_inline unsigned long mk_pmb_addr(unsigned int entry)
-{
-	return mk_pmb_entry(entry) | PMB_ADDR;
-}
+अटल __always_अंतरभूत अचिन्हित दीर्घ mk_pmb_addr(अचिन्हित पूर्णांक entry)
+अणु
+	वापस mk_pmb_entry(entry) | PMB_ADDR;
+पूर्ण
 
-static __always_inline unsigned long mk_pmb_data(unsigned int entry)
-{
-	return mk_pmb_entry(entry) | PMB_DATA;
-}
+अटल __always_अंतरभूत अचिन्हित दीर्घ mk_pmb_data(अचिन्हित पूर्णांक entry)
+अणु
+	वापस mk_pmb_entry(entry) | PMB_DATA;
+पूर्ण
 
-static __always_inline unsigned int pmb_ppn_in_range(unsigned long ppn)
-{
-	return ppn >= __pa(memory_start) && ppn < __pa(memory_end);
-}
+अटल __always_अंतरभूत अचिन्हित पूर्णांक pmb_ppn_in_range(अचिन्हित दीर्घ ppn)
+अणु
+	वापस ppn >= __pa(memory_start) && ppn < __pa(memory_end);
+पूर्ण
 
 /*
  * Ensure that the PMB entries match our cache configuration.
@@ -96,173 +97,173 @@ static __always_inline unsigned int pmb_ppn_in_range(unsigned long ppn)
  * invalid, so care must be taken to manually adjust cacheable
  * translations.
  */
-static __always_inline unsigned long pmb_cache_flags(void)
-{
-	unsigned long flags = 0;
+अटल __always_अंतरभूत अचिन्हित दीर्घ pmb_cache_flags(व्योम)
+अणु
+	अचिन्हित दीर्घ flags = 0;
 
-#if defined(CONFIG_CACHE_OFF)
+#अगर defined(CONFIG_CACHE_OFF)
 	flags |= PMB_WT | PMB_UB;
-#elif defined(CONFIG_CACHE_WRITETHROUGH)
+#या_अगर defined(CONFIG_CACHE_WRITETHROUGH)
 	flags |= PMB_C | PMB_WT | PMB_UB;
-#elif defined(CONFIG_CACHE_WRITEBACK)
+#या_अगर defined(CONFIG_CACHE_WRITEBACK)
 	flags |= PMB_C;
-#endif
+#पूर्ण_अगर
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 /*
  * Convert typical pgprot value to the PMB equivalent
  */
-static inline unsigned long pgprot_to_pmb_flags(pgprot_t prot)
-{
-	unsigned long pmb_flags = 0;
+अटल अंतरभूत अचिन्हित दीर्घ pgprot_to_pmb_flags(pgprot_t prot)
+अणु
+	अचिन्हित दीर्घ pmb_flags = 0;
 	u64 flags = pgprot_val(prot);
 
-	if (flags & _PAGE_CACHABLE)
+	अगर (flags & _PAGE_CACHABLE)
 		pmb_flags |= PMB_C;
-	if (flags & _PAGE_WT)
+	अगर (flags & _PAGE_WT)
 		pmb_flags |= PMB_WT | PMB_UB;
 
-	return pmb_flags;
-}
+	वापस pmb_flags;
+पूर्ण
 
-static inline bool pmb_can_merge(struct pmb_entry *a, struct pmb_entry *b)
-{
-	return (b->vpn == (a->vpn + a->size)) &&
+अटल अंतरभूत bool pmb_can_merge(काष्ठा pmb_entry *a, काष्ठा pmb_entry *b)
+अणु
+	वापस (b->vpn == (a->vpn + a->size)) &&
 	       (b->ppn == (a->ppn + a->size)) &&
 	       (b->flags == a->flags);
-}
+पूर्ण
 
-static bool pmb_mapping_exists(unsigned long vaddr, phys_addr_t phys,
-			       unsigned long size)
-{
-	int i;
+अटल bool pmb_mapping_exists(अचिन्हित दीर्घ vaddr, phys_addr_t phys,
+			       अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक i;
 
-	read_lock(&pmb_rwlock);
+	पढ़ो_lock(&pmb_rwlock);
 
-	for (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) {
-		struct pmb_entry *pmbe, *iter;
-		unsigned long span;
+	क्रम (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) अणु
+		काष्ठा pmb_entry *pmbe, *iter;
+		अचिन्हित दीर्घ span;
 
-		if (!test_bit(i, pmb_map))
-			continue;
+		अगर (!test_bit(i, pmb_map))
+			जारी;
 
 		pmbe = &pmb_entry_list[i];
 
 		/*
-		 * See if VPN and PPN are bounded by an existing mapping.
+		 * See अगर VPN and PPN are bounded by an existing mapping.
 		 */
-		if ((vaddr < pmbe->vpn) || (vaddr >= (pmbe->vpn + pmbe->size)))
-			continue;
-		if ((phys < pmbe->ppn) || (phys >= (pmbe->ppn + pmbe->size)))
-			continue;
+		अगर ((vaddr < pmbe->vpn) || (vaddr >= (pmbe->vpn + pmbe->size)))
+			जारी;
+		अगर ((phys < pmbe->ppn) || (phys >= (pmbe->ppn + pmbe->size)))
+			जारी;
 
 		/*
-		 * Now see if we're in range of a simple mapping.
+		 * Now see अगर we're in range of a simple mapping.
 		 */
-		if (size <= pmbe->size) {
-			read_unlock(&pmb_rwlock);
-			return true;
-		}
+		अगर (size <= pmbe->size) अणु
+			पढ़ो_unlock(&pmb_rwlock);
+			वापस true;
+		पूर्ण
 
 		span = pmbe->size;
 
 		/*
-		 * Finally for sizes that involve compound mappings, walk
+		 * Finally क्रम sizes that involve compound mappings, walk
 		 * the chain.
 		 */
-		for (iter = pmbe->link; iter; iter = iter->link)
+		क्रम (iter = pmbe->link; iter; iter = iter->link)
 			span += iter->size;
 
 		/*
-		 * Nothing else to do if the range requirements are met.
+		 * Nothing अन्यथा to करो अगर the range requirements are met.
 		 */
-		if (size <= span) {
-			read_unlock(&pmb_rwlock);
-			return true;
-		}
-	}
+		अगर (size <= span) अणु
+			पढ़ो_unlock(&pmb_rwlock);
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	read_unlock(&pmb_rwlock);
-	return false;
-}
+	पढ़ो_unlock(&pmb_rwlock);
+	वापस false;
+पूर्ण
 
-static bool pmb_size_valid(unsigned long size)
-{
-	int i;
+अटल bool pmb_size_valid(अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(pmb_sizes); i++)
-		if (pmb_sizes[i].size == size)
-			return true;
+	क्रम (i = 0; i < ARRAY_SIZE(pmb_sizes); i++)
+		अगर (pmb_sizes[i].size == size)
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool pmb_addr_valid(unsigned long addr, unsigned long size)
-{
-	return (addr >= P1SEG && (addr + size - 1) < P3SEG);
-}
+अटल अंतरभूत bool pmb_addr_valid(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
+अणु
+	वापस (addr >= P1SEG && (addr + size - 1) < P3SEG);
+पूर्ण
 
-static inline bool pmb_prot_valid(pgprot_t prot)
-{
-	return (pgprot_val(prot) & _PAGE_USER) == 0;
-}
+अटल अंतरभूत bool pmb_prot_valid(pgprot_t prot)
+अणु
+	वापस (pgprot_val(prot) & _PAGE_USER) == 0;
+पूर्ण
 
-static int pmb_size_to_flags(unsigned long size)
-{
-	int i;
+अटल पूर्णांक pmb_माप_प्रकारo_flags(अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(pmb_sizes); i++)
-		if (pmb_sizes[i].size == size)
-			return pmb_sizes[i].flag;
+	क्रम (i = 0; i < ARRAY_SIZE(pmb_sizes); i++)
+		अगर (pmb_sizes[i].size == size)
+			वापस pmb_sizes[i].flag;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pmb_alloc_entry(void)
-{
-	int pos;
+अटल पूर्णांक pmb_alloc_entry(व्योम)
+अणु
+	पूर्णांक pos;
 
 	pos = find_first_zero_bit(pmb_map, NR_PMB_ENTRIES);
-	if (pos >= 0 && pos < NR_PMB_ENTRIES)
+	अगर (pos >= 0 && pos < NR_PMB_ENTRIES)
 		__set_bit(pos, pmb_map);
-	else
+	अन्यथा
 		pos = -ENOSPC;
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-static struct pmb_entry *pmb_alloc(unsigned long vpn, unsigned long ppn,
-				   unsigned long flags, int entry)
-{
-	struct pmb_entry *pmbe;
-	unsigned long irqflags;
-	void *ret = NULL;
-	int pos;
+अटल काष्ठा pmb_entry *pmb_alloc(अचिन्हित दीर्घ vpn, अचिन्हित दीर्घ ppn,
+				   अचिन्हित दीर्घ flags, पूर्णांक entry)
+अणु
+	काष्ठा pmb_entry *pmbe;
+	अचिन्हित दीर्घ irqflags;
+	व्योम *ret = शून्य;
+	पूर्णांक pos;
 
-	write_lock_irqsave(&pmb_rwlock, irqflags);
+	ग_लिखो_lock_irqsave(&pmb_rwlock, irqflags);
 
-	if (entry == PMB_NO_ENTRY) {
+	अगर (entry == PMB_NO_ENTRY) अणु
 		pos = pmb_alloc_entry();
-		if (unlikely(pos < 0)) {
+		अगर (unlikely(pos < 0)) अणु
 			ret = ERR_PTR(pos);
-			goto out;
-		}
-	} else {
-		if (__test_and_set_bit(entry, pmb_map)) {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (__test_and_set_bit(entry, pmb_map)) अणु
 			ret = ERR_PTR(-ENOSPC);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		pos = entry;
-	}
+	पूर्ण
 
-	write_unlock_irqrestore(&pmb_rwlock, irqflags);
+	ग_लिखो_unlock_irqrestore(&pmb_rwlock, irqflags);
 
 	pmbe = &pmb_entry_list[pos];
 
-	memset(pmbe, 0, sizeof(struct pmb_entry));
+	स_रखो(pmbe, 0, माप(काष्ठा pmb_entry));
 
 	raw_spin_lock_init(&pmbe->lock);
 
@@ -271,27 +272,27 @@ static struct pmb_entry *pmb_alloc(unsigned long vpn, unsigned long ppn,
 	pmbe->flags	= flags;
 	pmbe->entry	= pos;
 
-	return pmbe;
+	वापस pmbe;
 
 out:
-	write_unlock_irqrestore(&pmb_rwlock, irqflags);
-	return ret;
-}
+	ग_लिखो_unlock_irqrestore(&pmb_rwlock, irqflags);
+	वापस ret;
+पूर्ण
 
-static void pmb_free(struct pmb_entry *pmbe)
-{
+अटल व्योम pmb_मुक्त(काष्ठा pmb_entry *pmbe)
+अणु
 	__clear_bit(pmbe->entry, pmb_map);
 
 	pmbe->entry	= PMB_NO_ENTRY;
-	pmbe->link	= NULL;
-}
+	pmbe->link	= शून्य;
+पूर्ण
 
 /*
  * Must be run uncached.
  */
-static void __set_pmb_entry(struct pmb_entry *pmbe)
-{
-	unsigned long addr, data;
+अटल व्योम __set_pmb_entry(काष्ठा pmb_entry *pmbe)
+अणु
+	अचिन्हित दीर्घ addr, data;
 
 	addr = mk_pmb_addr(pmbe->entry);
 	data = mk_pmb_data(pmbe->entry);
@@ -299,53 +300,53 @@ static void __set_pmb_entry(struct pmb_entry *pmbe)
 	jump_to_uncached();
 
 	/* Set V-bit */
-	__raw_writel(pmbe->vpn | PMB_V, addr);
-	__raw_writel(pmbe->ppn | pmbe->flags | PMB_V, data);
+	__raw_ग_लिखोl(pmbe->vpn | PMB_V, addr);
+	__raw_ग_लिखोl(pmbe->ppn | pmbe->flags | PMB_V, data);
 
 	back_to_cached();
-}
+पूर्ण
 
-static void __clear_pmb_entry(struct pmb_entry *pmbe)
-{
-	unsigned long addr, data;
-	unsigned long addr_val, data_val;
+अटल व्योम __clear_pmb_entry(काष्ठा pmb_entry *pmbe)
+अणु
+	अचिन्हित दीर्घ addr, data;
+	अचिन्हित दीर्घ addr_val, data_val;
 
 	addr = mk_pmb_addr(pmbe->entry);
 	data = mk_pmb_data(pmbe->entry);
 
-	addr_val = __raw_readl(addr);
-	data_val = __raw_readl(data);
+	addr_val = __raw_पढ़ोl(addr);
+	data_val = __raw_पढ़ोl(data);
 
 	/* Clear V-bit */
-	writel_uncached(addr_val & ~PMB_V, addr);
-	writel_uncached(data_val & ~PMB_V, data);
-}
+	ग_लिखोl_uncached(addr_val & ~PMB_V, addr);
+	ग_लिखोl_uncached(data_val & ~PMB_V, data);
+पूर्ण
 
-#ifdef CONFIG_PM
-static void set_pmb_entry(struct pmb_entry *pmbe)
-{
-	unsigned long flags;
+#अगर_घोषित CONFIG_PM
+अटल व्योम set_pmb_entry(काष्ठा pmb_entry *pmbe)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&pmbe->lock, flags);
 	__set_pmb_entry(pmbe);
 	raw_spin_unlock_irqrestore(&pmbe->lock, flags);
-}
-#endif /* CONFIG_PM */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-int pmb_bolt_mapping(unsigned long vaddr, phys_addr_t phys,
-		     unsigned long size, pgprot_t prot)
-{
-	struct pmb_entry *pmbp, *pmbe;
-	unsigned long orig_addr, orig_size;
-	unsigned long flags, pmb_flags;
-	int i, mapped;
+पूर्णांक pmb_bolt_mapping(अचिन्हित दीर्घ vaddr, phys_addr_t phys,
+		     अचिन्हित दीर्घ size, pgprot_t prot)
+अणु
+	काष्ठा pmb_entry *pmbp, *pmbe;
+	अचिन्हित दीर्घ orig_addr, orig_size;
+	अचिन्हित दीर्घ flags, pmb_flags;
+	पूर्णांक i, mapped;
 
-	if (size < SZ_16M)
-		return -EINVAL;
-	if (!pmb_addr_valid(vaddr, size))
-		return -EFAULT;
-	if (pmb_mapping_exists(vaddr, phys, size))
-		return 0;
+	अगर (size < SZ_16M)
+		वापस -EINVAL;
+	अगर (!pmb_addr_valid(vaddr, size))
+		वापस -EFAULT;
+	अगर (pmb_mapping_exists(vaddr, phys, size))
+		वापस 0;
 
 	orig_addr = vaddr;
 	orig_size = size;
@@ -353,19 +354,19 @@ int pmb_bolt_mapping(unsigned long vaddr, phys_addr_t phys,
 	flush_tlb_kernel_range(vaddr, vaddr + size);
 
 	pmb_flags = pgprot_to_pmb_flags(prot);
-	pmbp = NULL;
+	pmbp = शून्य;
 
-	do {
-		for (i = mapped = 0; i < ARRAY_SIZE(pmb_sizes); i++) {
-			if (size < pmb_sizes[i].size)
-				continue;
+	करो अणु
+		क्रम (i = mapped = 0; i < ARRAY_SIZE(pmb_sizes); i++) अणु
+			अगर (size < pmb_sizes[i].size)
+				जारी;
 
 			pmbe = pmb_alloc(vaddr, phys, pmb_flags |
 					 pmb_sizes[i].flag, PMB_NO_ENTRY);
-			if (IS_ERR(pmbe)) {
+			अगर (IS_ERR(pmbe)) अणु
 				pmb_unmap_entry(pmbp, mapped);
-				return PTR_ERR(pmbe);
-			}
+				वापस PTR_ERR(pmbe);
+			पूर्ण
 
 			raw_spin_lock_irqsave(&pmbe->lock, flags);
 
@@ -379,58 +380,58 @@ int pmb_bolt_mapping(unsigned long vaddr, phys_addr_t phys,
 
 			/*
 			 * Link adjacent entries that span multiple PMB
-			 * entries for easier tear-down.
+			 * entries क्रम easier tear-करोwn.
 			 */
-			if (likely(pmbp)) {
+			अगर (likely(pmbp)) अणु
 				raw_spin_lock_nested(&pmbp->lock,
 						     SINGLE_DEPTH_NESTING);
 				pmbp->link = pmbe;
 				raw_spin_unlock(&pmbp->lock);
-			}
+			पूर्ण
 
 			pmbp = pmbe;
 
 			/*
 			 * Instead of trying smaller sizes on every
-			 * iteration (even if we succeed in allocating
+			 * iteration (even अगर we succeed in allocating
 			 * space), try using pmb_sizes[i].size again.
 			 */
 			i--;
 			mapped++;
 
 			raw_spin_unlock_irqrestore(&pmbe->lock, flags);
-		}
-	} while (size >= SZ_16M);
+		पूर्ण
+	पूर्ण जबतक (size >= SZ_16M);
 
 	flush_cache_vmap(orig_addr, orig_addr + orig_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __iomem *pmb_remap_caller(phys_addr_t phys, unsigned long size,
-			       pgprot_t prot, void *caller)
-{
-	unsigned long vaddr;
+व्योम __iomem *pmb_remap_caller(phys_addr_t phys, अचिन्हित दीर्घ size,
+			       pgprot_t prot, व्योम *caller)
+अणु
+	अचिन्हित दीर्घ vaddr;
 	phys_addr_t offset, last_addr;
 	phys_addr_t align_mask;
-	unsigned long aligned;
-	struct vm_struct *area;
-	int i, ret;
+	अचिन्हित दीर्घ aligned;
+	काष्ठा vm_काष्ठा *area;
+	पूर्णांक i, ret;
 
-	if (!pmb_iomapping_enabled)
-		return NULL;
+	अगर (!pmb_iomapping_enabled)
+		वापस शून्य;
 
 	/*
 	 * Small mappings need to go through the TLB.
 	 */
-	if (size < SZ_16M)
-		return ERR_PTR(-EINVAL);
-	if (!pmb_prot_valid(prot))
-		return ERR_PTR(-EINVAL);
+	अगर (size < SZ_16M)
+		वापस ERR_PTR(-EINVAL);
+	अगर (!pmb_prot_valid(prot))
+		वापस ERR_PTR(-EINVAL);
 
-	for (i = 0; i < ARRAY_SIZE(pmb_sizes); i++)
-		if (size >= pmb_sizes[i].size)
-			break;
+	क्रम (i = 0; i < ARRAY_SIZE(pmb_sizes); i++)
+		अगर (size >= pmb_sizes[i].size)
+			अवरोध;
 
 	last_addr = phys + size;
 	align_mask = ~(pmb_sizes[i].size - 1);
@@ -440,65 +441,65 @@ void __iomem *pmb_remap_caller(phys_addr_t phys, unsigned long size,
 
 	/*
 	 * XXX: This should really start from uncached_end, but this
-	 * causes the MMU to reset, so for now we restrict it to the
+	 * causes the MMU to reset, so क्रम now we restrict it to the
 	 * 0xb000...0xc000 range.
 	 */
 	area = __get_vm_area_caller(aligned, VM_IOREMAP, 0xb0000000,
 				    P3SEG, caller);
-	if (!area)
-		return NULL;
+	अगर (!area)
+		वापस शून्य;
 
 	area->phys_addr = phys;
-	vaddr = (unsigned long)area->addr;
+	vaddr = (अचिन्हित दीर्घ)area->addr;
 
 	ret = pmb_bolt_mapping(vaddr, phys, size, prot);
-	if (unlikely(ret != 0))
-		return ERR_PTR(ret);
+	अगर (unlikely(ret != 0))
+		वापस ERR_PTR(ret);
 
-	return (void __iomem *)(offset + (char *)vaddr);
-}
+	वापस (व्योम __iomem *)(offset + (अक्षर *)vaddr);
+पूर्ण
 
-int pmb_unmap(void __iomem *addr)
-{
-	struct pmb_entry *pmbe = NULL;
-	unsigned long vaddr = (unsigned long __force)addr;
-	int i, found = 0;
+पूर्णांक pmb_unmap(व्योम __iomem *addr)
+अणु
+	काष्ठा pmb_entry *pmbe = शून्य;
+	अचिन्हित दीर्घ vaddr = (अचिन्हित दीर्घ __क्रमce)addr;
+	पूर्णांक i, found = 0;
 
-	read_lock(&pmb_rwlock);
+	पढ़ो_lock(&pmb_rwlock);
 
-	for (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) {
-		if (test_bit(i, pmb_map)) {
+	क्रम (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) अणु
+		अगर (test_bit(i, pmb_map)) अणु
 			pmbe = &pmb_entry_list[i];
-			if (pmbe->vpn == vaddr) {
+			अगर (pmbe->vpn == vaddr) अणु
 				found = 1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	read_unlock(&pmb_rwlock);
+	पढ़ो_unlock(&pmb_rwlock);
 
-	if (found) {
+	अगर (found) अणु
 		pmb_unmap_entry(pmbe, NR_PMB_ENTRIES);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void __pmb_unmap_entry(struct pmb_entry *pmbe, int depth)
-{
-	do {
-		struct pmb_entry *pmblink = pmbe;
+अटल व्योम __pmb_unmap_entry(काष्ठा pmb_entry *pmbe, पूर्णांक depth)
+अणु
+	करो अणु
+		काष्ठा pmb_entry *pmblink = pmbe;
 
 		/*
-		 * We may be called before this pmb_entry has been
-		 * entered into the PMB table via set_pmb_entry(), but
-		 * that's OK because we've allocated a unique slot for
-		 * this entry in pmb_alloc() (even if we haven't filled
+		 * We may be called beक्रमe this pmb_entry has been
+		 * entered पूर्णांकo the PMB table via set_pmb_entry(), but
+		 * that's OK because we've allocated a unique slot क्रम
+		 * this entry in pmb_alloc() (even अगर we haven't filled
 		 * it yet).
 		 *
-		 * Therefore, calling __clear_pmb_entry() is safe as no
+		 * Thereक्रमe, calling __clear_pmb_entry() is safe as no
 		 * other mapping can be using that slot.
 		 */
 		__clear_pmb_entry(pmbe);
@@ -507,91 +508,91 @@ static void __pmb_unmap_entry(struct pmb_entry *pmbe, int depth)
 
 		pmbe = pmblink->link;
 
-		pmb_free(pmblink);
-	} while (pmbe && --depth);
-}
+		pmb_मुक्त(pmblink);
+	पूर्ण जबतक (pmbe && --depth);
+पूर्ण
 
-static void pmb_unmap_entry(struct pmb_entry *pmbe, int depth)
-{
-	unsigned long flags;
+अटल व्योम pmb_unmap_entry(काष्ठा pmb_entry *pmbe, पूर्णांक depth)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!pmbe))
-		return;
+	अगर (unlikely(!pmbe))
+		वापस;
 
-	write_lock_irqsave(&pmb_rwlock, flags);
+	ग_लिखो_lock_irqsave(&pmb_rwlock, flags);
 	__pmb_unmap_entry(pmbe, depth);
-	write_unlock_irqrestore(&pmb_rwlock, flags);
-}
+	ग_लिखो_unlock_irqrestore(&pmb_rwlock, flags);
+पूर्ण
 
-static void __init pmb_notify(void)
-{
-	int i;
+अटल व्योम __init pmb_notअगरy(व्योम)
+अणु
+	पूर्णांक i;
 
 	pr_info("PMB: boot mappings:\n");
 
-	read_lock(&pmb_rwlock);
+	पढ़ो_lock(&pmb_rwlock);
 
-	for (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) {
-		struct pmb_entry *pmbe;
+	क्रम (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) अणु
+		काष्ठा pmb_entry *pmbe;
 
-		if (!test_bit(i, pmb_map))
-			continue;
+		अगर (!test_bit(i, pmb_map))
+			जारी;
 
 		pmbe = &pmb_entry_list[i];
 
 		pr_info("       0x%08lx -> 0x%08lx [ %4ldMB %2scached ]\n",
 			pmbe->vpn >> PAGE_SHIFT, pmbe->ppn >> PAGE_SHIFT,
 			pmbe->size >> 20, (pmbe->flags & PMB_C) ? "" : "un");
-	}
+	पूर्ण
 
-	read_unlock(&pmb_rwlock);
-}
+	पढ़ो_unlock(&pmb_rwlock);
+पूर्ण
 
 /*
  * Sync our software copy of the PMB mappings with those in hardware. The
  * mappings in the hardware PMB were either set up by the bootloader or
  * very early on by the kernel.
  */
-static void __init pmb_synchronize(void)
-{
-	struct pmb_entry *pmbp = NULL;
-	int i, j;
+अटल व्योम __init pmb_synchronize(व्योम)
+अणु
+	काष्ठा pmb_entry *pmbp = शून्य;
+	पूर्णांक i, j;
 
 	/*
 	 * Run through the initial boot mappings, log the established
 	 * ones, and blow away anything that falls outside of the valid
-	 * PPN range. Specifically, we only care about existing mappings
+	 * PPN range. Specअगरically, we only care about existing mappings
 	 * that impact the cached/uncached sections.
 	 *
 	 * Note that touching these can be a bit of a minefield; the boot
 	 * loader can establish multi-page mappings with the same caching
-	 * attributes, so we need to ensure that we aren't modifying a
+	 * attributes, so we need to ensure that we aren't modअगरying a
 	 * mapping that we're presently executing from, or may execute
-	 * from in the case of straddling page boundaries.
+	 * from in the हाल of straddling page boundaries.
 	 *
 	 * In the future we will have to tidy up after the boot loader by
 	 * jumping between the cached and uncached mappings and tearing
-	 * down alternating mappings while executing from the other.
+	 * करोwn alternating mappings जबतक executing from the other.
 	 */
-	for (i = 0; i < NR_PMB_ENTRIES; i++) {
-		unsigned long addr, data;
-		unsigned long addr_val, data_val;
-		unsigned long ppn, vpn, flags;
-		unsigned long irqflags;
-		unsigned int size;
-		struct pmb_entry *pmbe;
+	क्रम (i = 0; i < NR_PMB_ENTRIES; i++) अणु
+		अचिन्हित दीर्घ addr, data;
+		अचिन्हित दीर्घ addr_val, data_val;
+		अचिन्हित दीर्घ ppn, vpn, flags;
+		अचिन्हित दीर्घ irqflags;
+		अचिन्हित पूर्णांक size;
+		काष्ठा pmb_entry *pmbe;
 
 		addr = mk_pmb_addr(i);
 		data = mk_pmb_data(i);
 
-		addr_val = __raw_readl(addr);
-		data_val = __raw_readl(data);
+		addr_val = __raw_पढ़ोl(addr);
+		data_val = __raw_पढ़ोl(data);
 
 		/*
 		 * Skip over any bogus entries
 		 */
-		if (!(data_val & PMB_V) || !(addr_val & PMB_V))
-			continue;
+		अगर (!(data_val & PMB_V) || !(addr_val & PMB_V))
+			जारी;
 
 		ppn = data_val & PMB_PFN_MASK;
 		vpn = addr_val & PMB_PFN_MASK;
@@ -599,158 +600,158 @@ static void __init pmb_synchronize(void)
 		/*
 		 * Only preserve in-range mappings.
 		 */
-		if (!pmb_ppn_in_range(ppn)) {
+		अगर (!pmb_ppn_in_range(ppn)) अणु
 			/*
 			 * Invalidate anything out of bounds.
 			 */
-			writel_uncached(addr_val & ~PMB_V, addr);
-			writel_uncached(data_val & ~PMB_V, data);
-			continue;
-		}
+			ग_लिखोl_uncached(addr_val & ~PMB_V, addr);
+			ग_लिखोl_uncached(data_val & ~PMB_V, data);
+			जारी;
+		पूर्ण
 
 		/*
-		 * Update the caching attributes if necessary
+		 * Update the caching attributes अगर necessary
 		 */
-		if (data_val & PMB_C) {
+		अगर (data_val & PMB_C) अणु
 			data_val &= ~PMB_CACHE_MASK;
 			data_val |= pmb_cache_flags();
 
-			writel_uncached(data_val, data);
-		}
+			ग_लिखोl_uncached(data_val, data);
+		पूर्ण
 
 		size = data_val & PMB_SZ_MASK;
 		flags = size | (data_val & PMB_CACHE_MASK);
 
 		pmbe = pmb_alloc(vpn, ppn, flags, i);
-		if (IS_ERR(pmbe)) {
+		अगर (IS_ERR(pmbe)) अणु
 			WARN_ON_ONCE(1);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		raw_spin_lock_irqsave(&pmbe->lock, irqflags);
 
-		for (j = 0; j < ARRAY_SIZE(pmb_sizes); j++)
-			if (pmb_sizes[j].flag == size)
+		क्रम (j = 0; j < ARRAY_SIZE(pmb_sizes); j++)
+			अगर (pmb_sizes[j].flag == size)
 				pmbe->size = pmb_sizes[j].size;
 
-		if (pmbp) {
+		अगर (pmbp) अणु
 			raw_spin_lock_nested(&pmbp->lock, SINGLE_DEPTH_NESTING);
 			/*
 			 * Compare the previous entry against the current one to
-			 * see if the entries span a contiguous mapping. If so,
+			 * see अगर the entries span a contiguous mapping. If so,
 			 * setup the entry links accordingly. Compound mappings
 			 * are later coalesced.
 			 */
-			if (pmb_can_merge(pmbp, pmbe))
+			अगर (pmb_can_merge(pmbp, pmbe))
 				pmbp->link = pmbe;
 			raw_spin_unlock(&pmbp->lock);
-		}
+		पूर्ण
 
 		pmbp = pmbe;
 
 		raw_spin_unlock_irqrestore(&pmbe->lock, irqflags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init pmb_merge(struct pmb_entry *head)
-{
-	unsigned long span, newsize;
-	struct pmb_entry *tail;
-	int i = 1, depth = 0;
+अटल व्योम __init pmb_merge(काष्ठा pmb_entry *head)
+अणु
+	अचिन्हित दीर्घ span, newsize;
+	काष्ठा pmb_entry *tail;
+	पूर्णांक i = 1, depth = 0;
 
 	span = newsize = head->size;
 
 	tail = head->link;
-	while (tail) {
+	जबतक (tail) अणु
 		span += tail->size;
 
-		if (pmb_size_valid(span)) {
+		अगर (pmb_size_valid(span)) अणु
 			newsize = span;
 			depth = i;
-		}
+		पूर्ण
 
 		/* This is the end of the line.. */
-		if (!tail->link)
-			break;
+		अगर (!tail->link)
+			अवरोध;
 
 		tail = tail->link;
 		i++;
-	}
+	पूर्ण
 
 	/*
 	 * The merged page size must be valid.
 	 */
-	if (!depth || !pmb_size_valid(newsize))
-		return;
+	अगर (!depth || !pmb_size_valid(newsize))
+		वापस;
 
 	head->flags &= ~PMB_SZ_MASK;
-	head->flags |= pmb_size_to_flags(newsize);
+	head->flags |= pmb_माप_प्रकारo_flags(newsize);
 
 	head->size = newsize;
 
 	__pmb_unmap_entry(head->link, depth);
 	__set_pmb_entry(head);
-}
+पूर्ण
 
-static void __init pmb_coalesce(void)
-{
-	unsigned long flags;
-	int i;
+अटल व्योम __init pmb_coalesce(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	write_lock_irqsave(&pmb_rwlock, flags);
+	ग_लिखो_lock_irqsave(&pmb_rwlock, flags);
 
-	for (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) {
-		struct pmb_entry *pmbe;
+	क्रम (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) अणु
+		काष्ठा pmb_entry *pmbe;
 
-		if (!test_bit(i, pmb_map))
-			continue;
+		अगर (!test_bit(i, pmb_map))
+			जारी;
 
 		pmbe = &pmb_entry_list[i];
 
 		/*
-		 * We're only interested in compound mappings
+		 * We're only पूर्णांकerested in compound mappings
 		 */
-		if (!pmbe->link)
-			continue;
+		अगर (!pmbe->link)
+			जारी;
 
 		/*
-		 * Nothing to do if it already uses the largest possible
+		 * Nothing to करो अगर it alपढ़ोy uses the largest possible
 		 * page size.
 		 */
-		if (pmbe->size == SZ_512M)
-			continue;
+		अगर (pmbe->size == SZ_512M)
+			जारी;
 
 		pmb_merge(pmbe);
-	}
+	पूर्ण
 
-	write_unlock_irqrestore(&pmb_rwlock, flags);
-}
+	ग_लिखो_unlock_irqrestore(&pmb_rwlock, flags);
+पूर्ण
 
-#ifdef CONFIG_UNCACHED_MAPPING
-static void __init pmb_resize(void)
-{
-	int i;
+#अगर_घोषित CONFIG_UNCACHED_MAPPING
+अटल व्योम __init pmb_resize(व्योम)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * If the uncached mapping was constructed by the kernel, it will
-	 * already be a reasonable size.
+	 * If the uncached mapping was स्थिरructed by the kernel, it will
+	 * alपढ़ोy be a reasonable size.
 	 */
-	if (uncached_size == SZ_16M)
-		return;
+	अगर (uncached_size == SZ_16M)
+		वापस;
 
-	read_lock(&pmb_rwlock);
+	पढ़ो_lock(&pmb_rwlock);
 
-	for (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) {
-		struct pmb_entry *pmbe;
-		unsigned long flags;
+	क्रम (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) अणु
+		काष्ठा pmb_entry *pmbe;
+		अचिन्हित दीर्घ flags;
 
-		if (!test_bit(i, pmb_map))
-			continue;
+		अगर (!test_bit(i, pmb_map))
+			जारी;
 
 		pmbe = &pmb_entry_list[i];
 
-		if (pmbe->vpn != uncached_start)
-			continue;
+		अगर (pmbe->vpn != uncached_start)
+			जारी;
 
 		/*
 		 * Found it, now resize it.
@@ -759,74 +760,74 @@ static void __init pmb_resize(void)
 
 		pmbe->size = SZ_16M;
 		pmbe->flags &= ~PMB_SZ_MASK;
-		pmbe->flags |= pmb_size_to_flags(pmbe->size);
+		pmbe->flags |= pmb_माप_प्रकारo_flags(pmbe->size);
 
 		uncached_resize(pmbe->size);
 
 		__set_pmb_entry(pmbe);
 
 		raw_spin_unlock_irqrestore(&pmbe->lock, flags);
-	}
+	पूर्ण
 
-	read_unlock(&pmb_rwlock);
-}
-#endif
+	पढ़ो_unlock(&pmb_rwlock);
+पूर्ण
+#पूर्ण_अगर
 
-static int __init early_pmb(char *p)
-{
-	if (!p)
-		return 0;
+अटल पूर्णांक __init early_pmb(अक्षर *p)
+अणु
+	अगर (!p)
+		वापस 0;
 
-	if (strstr(p, "iomap"))
+	अगर (म_माला(p, "iomap"))
 		pmb_iomapping_enabled = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("pmb", early_pmb);
 
-void __init pmb_init(void)
-{
+व्योम __init pmb_init(व्योम)
+अणु
 	/* Synchronize software state */
 	pmb_synchronize();
 
 	/* Attempt to combine compound mappings */
 	pmb_coalesce();
 
-#ifdef CONFIG_UNCACHED_MAPPING
-	/* Resize initial mappings, if necessary */
+#अगर_घोषित CONFIG_UNCACHED_MAPPING
+	/* Resize initial mappings, अगर necessary */
 	pmb_resize();
-#endif
+#पूर्ण_अगर
 
 	/* Log them */
-	pmb_notify();
+	pmb_notअगरy();
 
-	writel_uncached(0, PMB_IRMCR);
+	ग_लिखोl_uncached(0, PMB_IRMCR);
 
 	/* Flush out the TLB */
 	local_flush_tlb_all();
 	ctrl_barrier();
-}
+पूर्ण
 
-bool __in_29bit_mode(void)
-{
-        return (__raw_readl(PMB_PASCR) & PASCR_SE) == 0;
-}
+bool __in_29bit_mode(व्योम)
+अणु
+        वापस (__raw_पढ़ोl(PMB_PASCR) & PASCR_SE) == 0;
+पूर्ण
 
-static int pmb_debugfs_show(struct seq_file *file, void *iter)
-{
-	int i;
+अटल पूर्णांक pmb_debugfs_show(काष्ठा seq_file *file, व्योम *iter)
+अणु
+	पूर्णांक i;
 
-	seq_printf(file, "V: Valid, C: Cacheable, WT: Write-Through\n"
+	seq_म_लिखो(file, "V: Valid, C: Cacheable, WT: Write-Through\n"
 			 "CB: Copy-Back, B: Buffered, UB: Unbuffered\n");
-	seq_printf(file, "ety   vpn  ppn  size   flags\n");
+	seq_म_लिखो(file, "ety   vpn  ppn  size   flags\n");
 
-	for (i = 0; i < NR_PMB_ENTRIES; i++) {
-		unsigned long addr, data;
-		unsigned int size;
-		char *sz_str = NULL;
+	क्रम (i = 0; i < NR_PMB_ENTRIES; i++) अणु
+		अचिन्हित दीर्घ addr, data;
+		अचिन्हित पूर्णांक size;
+		अक्षर *sz_str = शून्य;
 
-		addr = __raw_readl(mk_pmb_addr(i));
-		data = __raw_readl(mk_pmb_data(i));
+		addr = __raw_पढ़ोl(mk_pmb_addr(i));
+		data = __raw_पढ़ोl(mk_pmb_data(i));
 
 		size = data & PMB_SZ_MASK;
 		sz_str = (size == PMB_SZ_16M)  ? " 16MB":
@@ -835,53 +836,53 @@ static int pmb_debugfs_show(struct seq_file *file, void *iter)
 					         "512MB";
 
 		/* 02: V 0x88 0x08 128MB C CB  B */
-		seq_printf(file, "%02d: %c 0x%02lx 0x%02lx %s %c %s %s\n",
+		seq_म_लिखो(file, "%02d: %c 0x%02lx 0x%02lx %s %c %s %s\n",
 			   i, ((addr & PMB_V) && (data & PMB_V)) ? 'V' : ' ',
 			   (addr >> 24) & 0xff, (data >> 24) & 0xff,
 			   sz_str, (data & PMB_C) ? 'C' : ' ',
 			   (data & PMB_WT) ? "WT" : "CB",
 			   (data & PMB_UB) ? "UB" : " B");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(pmb_debugfs);
 
-static int __init pmb_debugfs_init(void)
-{
-	debugfs_create_file("pmb", S_IFREG | S_IRUGO, arch_debugfs_dir, NULL,
+अटल पूर्णांक __init pmb_debugfs_init(व्योम)
+अणु
+	debugfs_create_file("pmb", S_IFREG | S_IRUGO, arch_debugfs_dir, शून्य,
 			    &pmb_debugfs_fops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(pmb_debugfs_init);
 
-#ifdef CONFIG_PM
-static void pmb_syscore_resume(void)
-{
-	struct pmb_entry *pmbe;
-	int i;
+#अगर_घोषित CONFIG_PM
+अटल व्योम pmb_syscore_resume(व्योम)
+अणु
+	काष्ठा pmb_entry *pmbe;
+	पूर्णांक i;
 
-	read_lock(&pmb_rwlock);
+	पढ़ो_lock(&pmb_rwlock);
 
-	for (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) {
-		if (test_bit(i, pmb_map)) {
+	क्रम (i = 0; i < ARRAY_SIZE(pmb_entry_list); i++) अणु
+		अगर (test_bit(i, pmb_map)) अणु
 			pmbe = &pmb_entry_list[i];
 			set_pmb_entry(pmbe);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	read_unlock(&pmb_rwlock);
-}
+	पढ़ो_unlock(&pmb_rwlock);
+पूर्ण
 
-static struct syscore_ops pmb_syscore_ops = {
+अटल काष्ठा syscore_ops pmb_syscore_ops = अणु
 	.resume = pmb_syscore_resume,
-};
+पूर्ण;
 
-static int __init pmb_sysdev_init(void)
-{
-	register_syscore_ops(&pmb_syscore_ops);
-	return 0;
-}
+अटल पूर्णांक __init pmb_sysdev_init(व्योम)
+अणु
+	रेजिस्टर_syscore_ops(&pmb_syscore_ops);
+	वापस 0;
+पूर्ण
 subsys_initcall(pmb_sysdev_init);
-#endif
+#पूर्ण_अगर

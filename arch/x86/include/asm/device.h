@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_DEVICE_H
-#define _ASM_X86_DEVICE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_DEVICE_H
+#घोषणा _ASM_X86_DEVICE_H
 
-struct dev_archdata {
-};
+काष्ठा dev_archdata अणु
+पूर्ण;
 
-struct pdev_archdata {
-};
+काष्ठा pdev_archdata अणु
+पूर्ण;
 
-#endif /* _ASM_X86_DEVICE_H */
+#पूर्ण_अगर /* _ASM_X86_DEVICE_H */

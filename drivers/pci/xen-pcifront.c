@@ -1,737 +1,738 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Xen PCI Frontend
  *
  * Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <xen/xenbus.h>
-#include <xen/events.h>
-#include <xen/grant_table.h>
-#include <xen/page.h>
-#include <linux/spinlock.h>
-#include <linux/pci.h>
-#include <linux/msi.h>
-#include <xen/interface/io/pciif.h>
-#include <asm/xen/pci.h>
-#include <linux/interrupt.h>
-#include <linux/atomic.h>
-#include <linux/workqueue.h>
-#include <linux/bitops.h>
-#include <linux/time.h>
-#include <linux/ktime.h>
-#include <linux/swiotlb.h>
-#include <xen/platform_pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <xen/xenbus.h>
+#समावेश <xen/events.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/page.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/msi.h>
+#समावेश <xen/पूर्णांकerface/io/pciअगर.h>
+#समावेश <यंत्र/xen/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/swiotlb.h>
+#समावेश <xen/platक्रमm_pci.h>
 
-#include <asm/xen/swiotlb-xen.h>
+#समावेश <यंत्र/xen/swiotlb-xen.h>
 
-#define INVALID_EVTCHN    (-1)
+#घोषणा INVALID_EVTCHN    (-1)
 
-struct pci_bus_entry {
-	struct list_head list;
-	struct pci_bus *bus;
-};
+काष्ठा pci_bus_entry अणु
+	काष्ठा list_head list;
+	काष्ठा pci_bus *bus;
+पूर्ण;
 
-#define _PDEVB_op_active		(0)
-#define PDEVB_op_active			(1 << (_PDEVB_op_active))
+#घोषणा _PDEVB_op_active		(0)
+#घोषणा PDEVB_op_active			(1 << (_PDEVB_op_active))
 
-struct pcifront_device {
-	struct xenbus_device *xdev;
-	struct list_head root_buses;
+काष्ठा pcअगरront_device अणु
+	काष्ठा xenbus_device *xdev;
+	काष्ठा list_head root_buses;
 
-	int evtchn;
+	पूर्णांक evtchn;
 	grant_ref_t gnt_ref;
 
-	int irq;
+	पूर्णांक irq;
 
-	/* Lock this when doing any operations in sh_info */
+	/* Lock this when करोing any operations in sh_info */
 	spinlock_t sh_info_lock;
-	struct xen_pci_sharedinfo *sh_info;
-	struct work_struct op_work;
-	unsigned long flags;
+	काष्ठा xen_pci_sharedinfo *sh_info;
+	काष्ठा work_काष्ठा op_work;
+	अचिन्हित दीर्घ flags;
 
-};
+पूर्ण;
 
-struct pcifront_sd {
-	struct pci_sysdata sd;
-	struct pcifront_device *pdev;
-};
+काष्ठा pcअगरront_sd अणु
+	काष्ठा pci_sysdata sd;
+	काष्ठा pcअगरront_device *pdev;
+पूर्ण;
 
-static inline struct pcifront_device *
-pcifront_get_pdev(struct pcifront_sd *sd)
-{
-	return sd->pdev;
-}
+अटल अंतरभूत काष्ठा pcअगरront_device *
+pcअगरront_get_pdev(काष्ठा pcअगरront_sd *sd)
+अणु
+	वापस sd->pdev;
+पूर्ण
 
-static inline void pcifront_init_sd(struct pcifront_sd *sd,
-				    unsigned int domain, unsigned int bus,
-				    struct pcifront_device *pdev)
-{
-	/* Because we do not expose that information via XenBus. */
+अटल अंतरभूत व्योम pcअगरront_init_sd(काष्ठा pcअगरront_sd *sd,
+				    अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus,
+				    काष्ठा pcअगरront_device *pdev)
+अणु
+	/* Because we करो not expose that inक्रमmation via XenBus. */
 	sd->sd.node = first_online_node;
-	sd->sd.domain = domain;
+	sd->sd.करोमुख्य = करोमुख्य;
 	sd->pdev = pdev;
-}
+पूर्ण
 
-static DEFINE_SPINLOCK(pcifront_dev_lock);
-static struct pcifront_device *pcifront_dev;
+अटल DEFINE_SPINLOCK(pcअगरront_dev_lock);
+अटल काष्ठा pcअगरront_device *pcअगरront_dev;
 
-static int errno_to_pcibios_err(int errno)
-{
-	switch (errno) {
-	case XEN_PCI_ERR_success:
-		return PCIBIOS_SUCCESSFUL;
+अटल पूर्णांक त्रुटि_सं_to_pcibios_err(पूर्णांक त्रुटि_सं)
+अणु
+	चयन (त्रुटि_सं) अणु
+	हाल XEN_PCI_ERR_success:
+		वापस PCIBIOS_SUCCESSFUL;
 
-	case XEN_PCI_ERR_dev_not_found:
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	हाल XEN_PCI_ERR_dev_not_found:
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	case XEN_PCI_ERR_invalid_offset:
-	case XEN_PCI_ERR_op_failed:
-		return PCIBIOS_BAD_REGISTER_NUMBER;
+	हाल XEN_PCI_ERR_invalid_offset:
+	हाल XEN_PCI_ERR_op_failed:
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
 
-	case XEN_PCI_ERR_not_implemented:
-		return PCIBIOS_FUNC_NOT_SUPPORTED;
+	हाल XEN_PCI_ERR_not_implemented:
+		वापस PCIBIOS_FUNC_NOT_SUPPORTED;
 
-	case XEN_PCI_ERR_access_denied:
-		return PCIBIOS_SET_FAILED;
-	}
-	return errno;
-}
+	हाल XEN_PCI_ERR_access_denied:
+		वापस PCIBIOS_SET_FAILED;
+	पूर्ण
+	वापस त्रुटि_सं;
+पूर्ण
 
-static inline void schedule_pcifront_aer_op(struct pcifront_device *pdev)
-{
-	if (test_bit(_XEN_PCIB_active, (unsigned long *)&pdev->sh_info->flags)
-		&& !test_and_set_bit(_PDEVB_op_active, &pdev->flags)) {
+अटल अंतरभूत व्योम schedule_pcअगरront_aer_op(काष्ठा pcअगरront_device *pdev)
+अणु
+	अगर (test_bit(_XEN_PCIB_active, (अचिन्हित दीर्घ *)&pdev->sh_info->flags)
+		&& !test_and_set_bit(_PDEVB_op_active, &pdev->flags)) अणु
 		dev_dbg(&pdev->xdev->dev, "schedule aer frontend job\n");
 		schedule_work(&pdev->op_work);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int do_pci_op(struct pcifront_device *pdev, struct xen_pci_op *op)
-{
-	int err = 0;
-	struct xen_pci_op *active_op = &pdev->sh_info->op;
-	unsigned long irq_flags;
+अटल पूर्णांक करो_pci_op(काष्ठा pcअगरront_device *pdev, काष्ठा xen_pci_op *op)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा xen_pci_op *active_op = &pdev->sh_info->op;
+	अचिन्हित दीर्घ irq_flags;
 	evtchn_port_t port = pdev->evtchn;
-	unsigned irq = pdev->irq;
-	s64 ns, ns_timeout;
+	अचिन्हित irq = pdev->irq;
+	s64 ns, ns_समयout;
 
 	spin_lock_irqsave(&pdev->sh_info_lock, irq_flags);
 
-	memcpy(active_op, op, sizeof(struct xen_pci_op));
+	स_नकल(active_op, op, माप(काष्ठा xen_pci_op));
 
 	/* Go */
 	wmb();
-	set_bit(_XEN_PCIF_active, (unsigned long *)&pdev->sh_info->flags);
-	notify_remote_via_evtchn(port);
+	set_bit(_XEN_PCIF_active, (अचिन्हित दीर्घ *)&pdev->sh_info->flags);
+	notअगरy_remote_via_evtchn(port);
 
 	/*
-	 * We set a poll timeout of 3 seconds but give up on return after
-	 * 2 seconds. It is better to time out too late rather than too early
-	 * (in the latter case we end up continually re-executing poll() with a
-	 * timeout in the past). 1s difference gives plenty of slack for error.
+	 * We set a poll समयout of 3 seconds but give up on वापस after
+	 * 2 seconds. It is better to समय out too late rather than too early
+	 * (in the latter हाल we end up continually re-executing poll() with a
+	 * समयout in the past). 1s dअगरference gives plenty of slack क्रम error.
 	 */
-	ns_timeout = ktime_get_ns() + 2 * (s64)NSEC_PER_SEC;
+	ns_समयout = kसमय_get_ns() + 2 * (s64)NSEC_PER_SEC;
 
 	xen_clear_irq_pending(irq);
 
-	while (test_bit(_XEN_PCIF_active,
-			(unsigned long *)&pdev->sh_info->flags)) {
-		xen_poll_irq_timeout(irq, jiffies + 3*HZ);
+	जबतक (test_bit(_XEN_PCIF_active,
+			(अचिन्हित दीर्घ *)&pdev->sh_info->flags)) अणु
+		xen_poll_irq_समयout(irq, jअगरfies + 3*HZ);
 		xen_clear_irq_pending(irq);
-		ns = ktime_get_ns();
-		if (ns > ns_timeout) {
+		ns = kसमय_get_ns();
+		अगर (ns > ns_समयout) अणु
 			dev_err(&pdev->xdev->dev,
 				"pciback not responding!!!\n");
 			clear_bit(_XEN_PCIF_active,
-				  (unsigned long *)&pdev->sh_info->flags);
+				  (अचिन्हित दीर्घ *)&pdev->sh_info->flags);
 			err = XEN_PCI_ERR_dev_not_found;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	* We might lose backend service request since we
 	* reuse same evtchn with pci_conf backend response. So re-schedule
-	* aer pcifront service.
+	* aer pcअगरront service.
 	*/
-	if (test_bit(_XEN_PCIB_active,
-			(unsigned long *)&pdev->sh_info->flags)) {
+	अगर (test_bit(_XEN_PCIB_active,
+			(अचिन्हित दीर्घ *)&pdev->sh_info->flags)) अणु
 		dev_err(&pdev->xdev->dev,
 			"schedule aer pcifront service\n");
-		schedule_pcifront_aer_op(pdev);
-	}
+		schedule_pcअगरront_aer_op(pdev);
+	पूर्ण
 
-	memcpy(op, active_op, sizeof(struct xen_pci_op));
+	स_नकल(op, active_op, माप(काष्ठा xen_pci_op));
 
 	err = op->err;
 out:
 	spin_unlock_irqrestore(&pdev->sh_info_lock, irq_flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Access to this function is spinlocked in drivers/pci/access.c */
-static int pcifront_bus_read(struct pci_bus *bus, unsigned int devfn,
-			     int where, int size, u32 *val)
-{
-	int err = 0;
-	struct xen_pci_op op = {
-		.cmd    = XEN_PCI_OP_conf_read,
-		.domain = pci_domain_nr(bus),
+अटल पूर्णांक pcअगरront_bus_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			     पूर्णांक where, पूर्णांक size, u32 *val)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा xen_pci_op op = अणु
+		.cmd    = XEN_PCI_OP_conf_पढ़ो,
+		.करोमुख्य = pci_करोमुख्य_nr(bus),
 		.bus    = bus->number,
 		.devfn  = devfn,
 		.offset = where,
 		.size   = size,
-	};
-	struct pcifront_sd *sd = bus->sysdata;
-	struct pcifront_device *pdev = pcifront_get_pdev(sd);
+	पूर्ण;
+	काष्ठा pcअगरront_sd *sd = bus->sysdata;
+	काष्ठा pcअगरront_device *pdev = pcअगरront_get_pdev(sd);
 
 	dev_dbg(&pdev->xdev->dev,
 		"read dev=%04x:%02x:%02x.%d - offset %x size %d\n",
-		pci_domain_nr(bus), bus->number, PCI_SLOT(devfn),
+		pci_करोमुख्य_nr(bus), bus->number, PCI_SLOT(devfn),
 		PCI_FUNC(devfn), where, size);
 
-	err = do_pci_op(pdev, &op);
+	err = करो_pci_op(pdev, &op);
 
-	if (likely(!err)) {
+	अगर (likely(!err)) अणु
 		dev_dbg(&pdev->xdev->dev, "read got back value %x\n",
 			op.value);
 
 		*val = op.value;
-	} else if (err == -ENODEV) {
-		/* No device here, pretend that it just returned 0 */
+	पूर्ण अन्यथा अगर (err == -ENODEV) अणु
+		/* No device here, pretend that it just वापसed 0 */
 		err = 0;
 		*val = 0;
-	}
+	पूर्ण
 
-	return errno_to_pcibios_err(err);
-}
+	वापस त्रुटि_सं_to_pcibios_err(err);
+पूर्ण
 
 /* Access to this function is spinlocked in drivers/pci/access.c */
-static int pcifront_bus_write(struct pci_bus *bus, unsigned int devfn,
-			      int where, int size, u32 val)
-{
-	struct xen_pci_op op = {
-		.cmd    = XEN_PCI_OP_conf_write,
-		.domain = pci_domain_nr(bus),
+अटल पूर्णांक pcअगरront_bus_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			      पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	काष्ठा xen_pci_op op = अणु
+		.cmd    = XEN_PCI_OP_conf_ग_लिखो,
+		.करोमुख्य = pci_करोमुख्य_nr(bus),
 		.bus    = bus->number,
 		.devfn  = devfn,
 		.offset = where,
 		.size   = size,
 		.value  = val,
-	};
-	struct pcifront_sd *sd = bus->sysdata;
-	struct pcifront_device *pdev = pcifront_get_pdev(sd);
+	पूर्ण;
+	काष्ठा pcअगरront_sd *sd = bus->sysdata;
+	काष्ठा pcअगरront_device *pdev = pcअगरront_get_pdev(sd);
 
 	dev_dbg(&pdev->xdev->dev,
 		"write dev=%04x:%02x:%02x.%d - offset %x size %d val %x\n",
-		pci_domain_nr(bus), bus->number,
+		pci_करोमुख्य_nr(bus), bus->number,
 		PCI_SLOT(devfn), PCI_FUNC(devfn), where, size, val);
 
-	return errno_to_pcibios_err(do_pci_op(pdev, &op));
-}
+	वापस त्रुटि_सं_to_pcibios_err(करो_pci_op(pdev, &op));
+पूर्ण
 
-static struct pci_ops pcifront_bus_ops = {
-	.read = pcifront_bus_read,
-	.write = pcifront_bus_write,
-};
+अटल काष्ठा pci_ops pcअगरront_bus_ops = अणु
+	.पढ़ो = pcअगरront_bus_पढ़ो,
+	.ग_लिखो = pcअगरront_bus_ग_लिखो,
+पूर्ण;
 
-#ifdef CONFIG_PCI_MSI
-static int pci_frontend_enable_msix(struct pci_dev *dev,
-				    int vector[], int nvec)
-{
-	int err;
-	int i;
-	struct xen_pci_op op = {
+#अगर_घोषित CONFIG_PCI_MSI
+अटल पूर्णांक pci_frontend_enable_msix(काष्ठा pci_dev *dev,
+				    पूर्णांक vector[], पूर्णांक nvec)
+अणु
+	पूर्णांक err;
+	पूर्णांक i;
+	काष्ठा xen_pci_op op = अणु
 		.cmd    = XEN_PCI_OP_enable_msix,
-		.domain = pci_domain_nr(dev->bus),
+		.करोमुख्य = pci_करोमुख्य_nr(dev->bus),
 		.bus = dev->bus->number,
 		.devfn = dev->devfn,
 		.value = nvec,
-	};
-	struct pcifront_sd *sd = dev->bus->sysdata;
-	struct pcifront_device *pdev = pcifront_get_pdev(sd);
-	struct msi_desc *entry;
+	पूर्ण;
+	काष्ठा pcअगरront_sd *sd = dev->bus->sysdata;
+	काष्ठा pcअगरront_device *pdev = pcअगरront_get_pdev(sd);
+	काष्ठा msi_desc *entry;
 
-	if (nvec > SH_INFO_MAX_VEC) {
+	अगर (nvec > SH_INFO_MAX_VEC) अणु
 		pci_err(dev, "too many vectors (0x%x) for PCI frontend:"
 				   " Increase SH_INFO_MAX_VEC\n", nvec);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	i = 0;
-	for_each_pci_msi_entry(entry, dev) {
+	क्रम_each_pci_msi_entry(entry, dev) अणु
 		op.msix_entries[i].entry = entry->msi_attrib.entry_nr;
-		/* Vector is useless at this point. */
+		/* Vector is useless at this poपूर्णांक. */
 		op.msix_entries[i].vector = -1;
 		i++;
-	}
+	पूर्ण
 
-	err = do_pci_op(pdev, &op);
+	err = करो_pci_op(pdev, &op);
 
-	if (likely(!err)) {
-		if (likely(!op.value)) {
+	अगर (likely(!err)) अणु
+		अगर (likely(!op.value)) अणु
 			/* we get the result */
-			for (i = 0; i < nvec; i++) {
-				if (op.msix_entries[i].vector <= 0) {
+			क्रम (i = 0; i < nvec; i++) अणु
+				अगर (op.msix_entries[i].vector <= 0) अणु
 					pci_warn(dev, "MSI-X entry %d is invalid: %d!\n",
 						i, op.msix_entries[i].vector);
 					err = -EINVAL;
 					vector[i] = -1;
-					continue;
-				}
+					जारी;
+				पूर्ण
 				vector[i] = op.msix_entries[i].vector;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			pr_info("enable msix get value %x\n", op.value);
 			err = op.value;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pci_err(dev, "enable msix get err %x\n", err);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void pci_frontend_disable_msix(struct pci_dev *dev)
-{
-	int err;
-	struct xen_pci_op op = {
+अटल व्योम pci_frontend_disable_msix(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक err;
+	काष्ठा xen_pci_op op = अणु
 		.cmd    = XEN_PCI_OP_disable_msix,
-		.domain = pci_domain_nr(dev->bus),
+		.करोमुख्य = pci_करोमुख्य_nr(dev->bus),
 		.bus = dev->bus->number,
 		.devfn = dev->devfn,
-	};
-	struct pcifront_sd *sd = dev->bus->sysdata;
-	struct pcifront_device *pdev = pcifront_get_pdev(sd);
+	पूर्ण;
+	काष्ठा pcअगरront_sd *sd = dev->bus->sysdata;
+	काष्ठा pcअगरront_device *pdev = pcअगरront_get_pdev(sd);
 
-	err = do_pci_op(pdev, &op);
+	err = करो_pci_op(pdev, &op);
 
-	/* What should do for error ? */
-	if (err)
+	/* What should करो क्रम error ? */
+	अगर (err)
 		pci_err(dev, "pci_disable_msix get err %x\n", err);
-}
+पूर्ण
 
-static int pci_frontend_enable_msi(struct pci_dev *dev, int vector[])
-{
-	int err;
-	struct xen_pci_op op = {
+अटल पूर्णांक pci_frontend_enable_msi(काष्ठा pci_dev *dev, पूर्णांक vector[])
+अणु
+	पूर्णांक err;
+	काष्ठा xen_pci_op op = अणु
 		.cmd    = XEN_PCI_OP_enable_msi,
-		.domain = pci_domain_nr(dev->bus),
+		.करोमुख्य = pci_करोमुख्य_nr(dev->bus),
 		.bus = dev->bus->number,
 		.devfn = dev->devfn,
-	};
-	struct pcifront_sd *sd = dev->bus->sysdata;
-	struct pcifront_device *pdev = pcifront_get_pdev(sd);
+	पूर्ण;
+	काष्ठा pcअगरront_sd *sd = dev->bus->sysdata;
+	काष्ठा pcअगरront_device *pdev = pcअगरront_get_pdev(sd);
 
-	err = do_pci_op(pdev, &op);
-	if (likely(!err)) {
+	err = करो_pci_op(pdev, &op);
+	अगर (likely(!err)) अणु
 		vector[0] = op.value;
-		if (op.value <= 0) {
+		अगर (op.value <= 0) अणु
 			pci_warn(dev, "MSI entry is invalid: %d!\n",
 				op.value);
 			err = -EINVAL;
 			vector[0] = -1;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pci_err(dev, "pci frontend enable msi failed for dev "
 				    "%x:%x\n", op.bus, op.devfn);
 		err = -EINVAL;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void pci_frontend_disable_msi(struct pci_dev *dev)
-{
-	int err;
-	struct xen_pci_op op = {
+अटल व्योम pci_frontend_disable_msi(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक err;
+	काष्ठा xen_pci_op op = अणु
 		.cmd    = XEN_PCI_OP_disable_msi,
-		.domain = pci_domain_nr(dev->bus),
+		.करोमुख्य = pci_करोमुख्य_nr(dev->bus),
 		.bus = dev->bus->number,
 		.devfn = dev->devfn,
-	};
-	struct pcifront_sd *sd = dev->bus->sysdata;
-	struct pcifront_device *pdev = pcifront_get_pdev(sd);
+	पूर्ण;
+	काष्ठा pcअगरront_sd *sd = dev->bus->sysdata;
+	काष्ठा pcअगरront_device *pdev = pcअगरront_get_pdev(sd);
 
-	err = do_pci_op(pdev, &op);
-	if (err == XEN_PCI_ERR_dev_not_found) {
-		/* XXX No response from backend, what shall we do? */
+	err = करो_pci_op(pdev, &op);
+	अगर (err == XEN_PCI_ERR_dev_not_found) अणु
+		/* XXX No response from backend, what shall we करो? */
 		pr_info("get no response from backend for disable MSI\n");
-		return;
-	}
-	if (err)
-		/* how can pciback notify us fail? */
+		वापस;
+	पूर्ण
+	अगर (err)
+		/* how can pciback notअगरy us fail? */
 		pr_info("get fake response from backend\n");
-}
+पूर्ण
 
-static struct xen_pci_frontend_ops pci_frontend_ops = {
+अटल काष्ठा xen_pci_frontend_ops pci_frontend_ops = अणु
 	.enable_msi = pci_frontend_enable_msi,
 	.disable_msi = pci_frontend_disable_msi,
 	.enable_msix = pci_frontend_enable_msix,
 	.disable_msix = pci_frontend_disable_msix,
-};
+पूर्ण;
 
-static void pci_frontend_registrar(int enable)
-{
-	if (enable)
+अटल व्योम pci_frontend_registrar(पूर्णांक enable)
+अणु
+	अगर (enable)
 		xen_pci_frontend = &pci_frontend_ops;
-	else
-		xen_pci_frontend = NULL;
-};
-#else
-static inline void pci_frontend_registrar(int enable) { };
-#endif /* CONFIG_PCI_MSI */
+	अन्यथा
+		xen_pci_frontend = शून्य;
+पूर्ण;
+#अन्यथा
+अटल अंतरभूत व्योम pci_frontend_registrar(पूर्णांक enable) अणु पूर्ण;
+#पूर्ण_अगर /* CONFIG_PCI_MSI */
 
-/* Claim resources for the PCI frontend as-is, backend won't allow changes */
-static int pcifront_claim_resource(struct pci_dev *dev, void *data)
-{
-	struct pcifront_device *pdev = data;
-	int i;
-	struct resource *r;
+/* Claim resources क्रम the PCI frontend as-is, backend won't allow changes */
+अटल पूर्णांक pcअगरront_claim_resource(काष्ठा pci_dev *dev, व्योम *data)
+अणु
+	काष्ठा pcअगरront_device *pdev = data;
+	पूर्णांक i;
+	काष्ठा resource *r;
 
-	for (i = 0; i < PCI_NUM_RESOURCES; i++) {
+	क्रम (i = 0; i < PCI_NUM_RESOURCES; i++) अणु
 		r = &dev->resource[i];
 
-		if (!r->parent && r->start && r->flags) {
+		अगर (!r->parent && r->start && r->flags) अणु
 			dev_info(&pdev->xdev->dev, "claiming resource %s/%d\n",
 				pci_name(dev), i);
-			if (pci_claim_resource(dev, i)) {
+			अगर (pci_claim_resource(dev, i)) अणु
 				dev_err(&pdev->xdev->dev, "Could not claim resource %s/%d! "
 					"Device offline. Try using e820_host=1 in the guest config.\n",
 					pci_name(dev), i);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcifront_scan_bus(struct pcifront_device *pdev,
-				unsigned int domain, unsigned int bus,
-				struct pci_bus *b)
-{
-	struct pci_dev *d;
-	unsigned int devfn;
+अटल पूर्णांक pcअगरront_scan_bus(काष्ठा pcअगरront_device *pdev,
+				अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus,
+				काष्ठा pci_bus *b)
+अणु
+	काष्ठा pci_dev *d;
+	अचिन्हित पूर्णांक devfn;
 
-	/* Scan the bus for functions and add.
+	/* Scan the bus क्रम functions and add.
 	 * We omit handling of PCI bridge attachment because pciback prevents
 	 * bridges from being exported.
 	 */
-	for (devfn = 0; devfn < 0x100; devfn++) {
+	क्रम (devfn = 0; devfn < 0x100; devfn++) अणु
 		d = pci_get_slot(b, devfn);
-		if (d) {
-			/* Device is already known. */
+		अगर (d) अणु
+			/* Device is alपढ़ोy known. */
 			pci_dev_put(d);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		d = pci_scan_single_device(b, devfn);
-		if (d)
+		अगर (d)
 			dev_info(&pdev->xdev->dev, "New device on "
-				 "%04x:%02x:%02x.%d found.\n", domain, bus,
+				 "%04x:%02x:%02x.%d found.\n", करोमुख्य, bus,
 				 PCI_SLOT(devfn), PCI_FUNC(devfn));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcifront_scan_root(struct pcifront_device *pdev,
-				 unsigned int domain, unsigned int bus)
-{
-	struct pci_bus *b;
+अटल पूर्णांक pcअगरront_scan_root(काष्ठा pcअगरront_device *pdev,
+				 अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus)
+अणु
+	काष्ठा pci_bus *b;
 	LIST_HEAD(resources);
-	struct pcifront_sd *sd = NULL;
-	struct pci_bus_entry *bus_entry = NULL;
-	int err = 0;
-	static struct resource busn_res = {
+	काष्ठा pcअगरront_sd *sd = शून्य;
+	काष्ठा pci_bus_entry *bus_entry = शून्य;
+	पूर्णांक err = 0;
+	अटल काष्ठा resource busn_res = अणु
 		.start = 0,
 		.end = 255,
 		.flags = IORESOURCE_BUS,
-	};
+	पूर्ण;
 
-#ifndef CONFIG_PCI_DOMAINS
-	if (domain != 0) {
+#अगर_अघोषित CONFIG_PCI_DOMAINS
+	अगर (करोमुख्य != 0) अणु
 		dev_err(&pdev->xdev->dev,
-			"PCI Root in non-zero PCI Domain! domain=%d\n", domain);
+			"PCI Root in non-zero PCI Domain! domain=%d\n", करोमुख्य);
 		dev_err(&pdev->xdev->dev,
 			"Please compile with CONFIG_PCI_DOMAINS\n");
 		err = -EINVAL;
-		goto err_out;
-	}
-#endif
+		जाओ err_out;
+	पूर्ण
+#पूर्ण_अगर
 
 	dev_info(&pdev->xdev->dev, "Creating PCI Frontend Bus %04x:%02x\n",
-		 domain, bus);
+		 करोमुख्य, bus);
 
-	bus_entry = kzalloc(sizeof(*bus_entry), GFP_KERNEL);
-	sd = kzalloc(sizeof(*sd), GFP_KERNEL);
-	if (!bus_entry || !sd) {
+	bus_entry = kzalloc(माप(*bus_entry), GFP_KERNEL);
+	sd = kzalloc(माप(*sd), GFP_KERNEL);
+	अगर (!bus_entry || !sd) अणु
 		err = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	pci_add_resource(&resources, &ioport_resource);
 	pci_add_resource(&resources, &iomem_resource);
 	pci_add_resource(&resources, &busn_res);
-	pcifront_init_sd(sd, domain, bus, pdev);
+	pcअगरront_init_sd(sd, करोमुख्य, bus, pdev);
 
-	pci_lock_rescan_remove();
+	pci_lock_rescan_हटाओ();
 
 	b = pci_scan_root_bus(&pdev->xdev->dev, bus,
-				  &pcifront_bus_ops, sd, &resources);
-	if (!b) {
+				  &pcअगरront_bus_ops, sd, &resources);
+	अगर (!b) अणु
 		dev_err(&pdev->xdev->dev,
 			"Error creating PCI Frontend Bus!\n");
 		err = -ENOMEM;
-		pci_unlock_rescan_remove();
-		pci_free_resource_list(&resources);
-		goto err_out;
-	}
+		pci_unlock_rescan_हटाओ();
+		pci_मुक्त_resource_list(&resources);
+		जाओ err_out;
+	पूर्ण
 
 	bus_entry->bus = b;
 
 	list_add(&bus_entry->list, &pdev->root_buses);
 
-	/* pci_scan_root_bus skips devices which do not have a
-	* devfn==0. The pcifront_scan_bus enumerates all devfn. */
-	err = pcifront_scan_bus(pdev, domain, bus, b);
+	/* pci_scan_root_bus skips devices which करो not have a
+	* devfn==0. The pcअगरront_scan_bus क्रमागतerates all devfn. */
+	err = pcअगरront_scan_bus(pdev, करोमुख्य, bus, b);
 
-	/* Claim resources before going "live" with our devices */
-	pci_walk_bus(b, pcifront_claim_resource, pdev);
+	/* Claim resources beक्रमe going "live" with our devices */
+	pci_walk_bus(b, pcअगरront_claim_resource, pdev);
 
-	/* Create SysFS and notify udev of the devices. Aka: "going live" */
+	/* Create SysFS and notअगरy udev of the devices. Aka: "going live" */
 	pci_bus_add_devices(b);
 
-	pci_unlock_rescan_remove();
-	return err;
+	pci_unlock_rescan_हटाओ();
+	वापस err;
 
 err_out:
-	kfree(bus_entry);
-	kfree(sd);
+	kमुक्त(bus_entry);
+	kमुक्त(sd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcifront_rescan_root(struct pcifront_device *pdev,
-				   unsigned int domain, unsigned int bus)
-{
-	int err;
-	struct pci_bus *b;
+अटल पूर्णांक pcअगरront_rescan_root(काष्ठा pcअगरront_device *pdev,
+				   अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus)
+अणु
+	पूर्णांक err;
+	काष्ठा pci_bus *b;
 
-#ifndef CONFIG_PCI_DOMAINS
-	if (domain != 0) {
+#अगर_अघोषित CONFIG_PCI_DOMAINS
+	अगर (करोमुख्य != 0) अणु
 		dev_err(&pdev->xdev->dev,
-			"PCI Root in non-zero PCI Domain! domain=%d\n", domain);
+			"PCI Root in non-zero PCI Domain! domain=%d\n", करोमुख्य);
 		dev_err(&pdev->xdev->dev,
 			"Please compile with CONFIG_PCI_DOMAINS\n");
-		return -EINVAL;
-	}
-#endif
+		वापस -EINVAL;
+	पूर्ण
+#पूर्ण_अगर
 
 	dev_info(&pdev->xdev->dev, "Rescanning PCI Frontend Bus %04x:%02x\n",
-		 domain, bus);
+		 करोमुख्य, bus);
 
-	b = pci_find_bus(domain, bus);
-	if (!b)
+	b = pci_find_bus(करोमुख्य, bus);
+	अगर (!b)
 		/* If the bus is unknown, create it. */
-		return pcifront_scan_root(pdev, domain, bus);
+		वापस pcअगरront_scan_root(pdev, करोमुख्य, bus);
 
-	err = pcifront_scan_bus(pdev, domain, bus, b);
+	err = pcअगरront_scan_bus(pdev, करोमुख्य, bus, b);
 
-	/* Claim resources before going "live" with our devices */
-	pci_walk_bus(b, pcifront_claim_resource, pdev);
+	/* Claim resources beक्रमe going "live" with our devices */
+	pci_walk_bus(b, pcअगरront_claim_resource, pdev);
 
-	/* Create SysFS and notify udev of the devices. Aka: "going live" */
+	/* Create SysFS and notअगरy udev of the devices. Aka: "going live" */
 	pci_bus_add_devices(b);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void free_root_bus_devs(struct pci_bus *bus)
-{
-	struct pci_dev *dev;
+अटल व्योम मुक्त_root_bus_devs(काष्ठा pci_bus *bus)
+अणु
+	काष्ठा pci_dev *dev;
 
-	while (!list_empty(&bus->devices)) {
-		dev = container_of(bus->devices.next, struct pci_dev,
+	जबतक (!list_empty(&bus->devices)) अणु
+		dev = container_of(bus->devices.next, काष्ठा pci_dev,
 				   bus_list);
 		pci_dbg(dev, "removing device\n");
-		pci_stop_and_remove_bus_device(dev);
-	}
-}
+		pci_stop_and_हटाओ_bus_device(dev);
+	पूर्ण
+पूर्ण
 
-static void pcifront_free_roots(struct pcifront_device *pdev)
-{
-	struct pci_bus_entry *bus_entry, *t;
+अटल व्योम pcअगरront_मुक्त_roots(काष्ठा pcअगरront_device *pdev)
+अणु
+	काष्ठा pci_bus_entry *bus_entry, *t;
 
 	dev_dbg(&pdev->xdev->dev, "cleaning up root buses\n");
 
-	pci_lock_rescan_remove();
-	list_for_each_entry_safe(bus_entry, t, &pdev->root_buses, list) {
+	pci_lock_rescan_हटाओ();
+	list_क्रम_each_entry_safe(bus_entry, t, &pdev->root_buses, list) अणु
 		list_del(&bus_entry->list);
 
-		free_root_bus_devs(bus_entry->bus);
+		मुक्त_root_bus_devs(bus_entry->bus);
 
-		kfree(bus_entry->bus->sysdata);
+		kमुक्त(bus_entry->bus->sysdata);
 
-		device_unregister(bus_entry->bus->bridge);
-		pci_remove_bus(bus_entry->bus);
+		device_unरेजिस्टर(bus_entry->bus->bridge);
+		pci_हटाओ_bus(bus_entry->bus);
 
-		kfree(bus_entry);
-	}
-	pci_unlock_rescan_remove();
-}
+		kमुक्त(bus_entry);
+	पूर्ण
+	pci_unlock_rescan_हटाओ();
+पूर्ण
 
-static pci_ers_result_t pcifront_common_process(int cmd,
-						struct pcifront_device *pdev,
+अटल pci_ers_result_t pcअगरront_common_process(पूर्णांक cmd,
+						काष्ठा pcअगरront_device *pdev,
 						pci_channel_state_t state)
-{
+अणु
 	pci_ers_result_t result;
-	struct pci_driver *pdrv;
-	int bus = pdev->sh_info->aer_op.bus;
-	int devfn = pdev->sh_info->aer_op.devfn;
-	int domain = pdev->sh_info->aer_op.domain;
-	struct pci_dev *pcidev;
-	int flag = 0;
+	काष्ठा pci_driver *pdrv;
+	पूर्णांक bus = pdev->sh_info->aer_op.bus;
+	पूर्णांक devfn = pdev->sh_info->aer_op.devfn;
+	पूर्णांक करोमुख्य = pdev->sh_info->aer_op.करोमुख्य;
+	काष्ठा pci_dev *pcidev;
+	पूर्णांक flag = 0;
 
 	dev_dbg(&pdev->xdev->dev,
 		"pcifront AER process: cmd %x (bus:%x, devfn%x)",
 		cmd, bus, devfn);
 	result = PCI_ERS_RESULT_NONE;
 
-	pcidev = pci_get_domain_bus_and_slot(domain, bus, devfn);
-	if (!pcidev || !pcidev->driver) {
+	pcidev = pci_get_करोमुख्य_bus_and_slot(करोमुख्य, bus, devfn);
+	अगर (!pcidev || !pcidev->driver) अणु
 		dev_err(&pdev->xdev->dev, "device or AER driver is NULL\n");
 		pci_dev_put(pcidev);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 	pdrv = pcidev->driver;
 
-	if (pdrv) {
-		if (pdrv->err_handler && pdrv->err_handler->error_detected) {
+	अगर (pdrv) अणु
+		अगर (pdrv->err_handler && pdrv->err_handler->error_detected) अणु
 			pci_dbg(pcidev, "trying to call AER service\n");
-			if (pcidev) {
+			अगर (pcidev) अणु
 				flag = 1;
-				switch (cmd) {
-				case XEN_PCI_OP_aer_detected:
+				चयन (cmd) अणु
+				हाल XEN_PCI_OP_aer_detected:
 					result = pdrv->err_handler->
 						 error_detected(pcidev, state);
-					break;
-				case XEN_PCI_OP_aer_mmio:
+					अवरोध;
+				हाल XEN_PCI_OP_aer_mmio:
 					result = pdrv->err_handler->
 						 mmio_enabled(pcidev);
-					break;
-				case XEN_PCI_OP_aer_slotreset:
+					अवरोध;
+				हाल XEN_PCI_OP_aer_slotreset:
 					result = pdrv->err_handler->
 						 slot_reset(pcidev);
-					break;
-				case XEN_PCI_OP_aer_resume:
+					अवरोध;
+				हाल XEN_PCI_OP_aer_resume:
 					pdrv->err_handler->resume(pcidev);
-					break;
-				default:
+					अवरोध;
+				शेष:
 					dev_err(&pdev->xdev->dev,
 						"bad request in aer recovery "
 						"operation!\n");
 
-				}
-			}
-		}
-	}
-	if (!flag)
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (!flag)
 		result = PCI_ERS_RESULT_NONE;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 
-static void pcifront_do_aer(struct work_struct *data)
-{
-	struct pcifront_device *pdev =
-		container_of(data, struct pcifront_device, op_work);
-	int cmd = pdev->sh_info->aer_op.cmd;
+अटल व्योम pcअगरront_करो_aer(काष्ठा work_काष्ठा *data)
+अणु
+	काष्ठा pcअगरront_device *pdev =
+		container_of(data, काष्ठा pcअगरront_device, op_work);
+	पूर्णांक cmd = pdev->sh_info->aer_op.cmd;
 	pci_channel_state_t state =
 		(pci_channel_state_t)pdev->sh_info->aer_op.err;
 
 	/*If a pci_conf op is in progress,
-		we have to wait until it is done before service aer op*/
+		we have to रुको until it is करोne beक्रमe service aer op*/
 	dev_dbg(&pdev->xdev->dev,
 		"pcifront service aer bus %x devfn %x\n",
 		pdev->sh_info->aer_op.bus, pdev->sh_info->aer_op.devfn);
 
-	pdev->sh_info->aer_op.err = pcifront_common_process(cmd, pdev, state);
+	pdev->sh_info->aer_op.err = pcअगरront_common_process(cmd, pdev, state);
 
 	/* Post the operation to the guest. */
 	wmb();
-	clear_bit(_XEN_PCIB_active, (unsigned long *)&pdev->sh_info->flags);
-	notify_remote_via_evtchn(pdev->evtchn);
+	clear_bit(_XEN_PCIB_active, (अचिन्हित दीर्घ *)&pdev->sh_info->flags);
+	notअगरy_remote_via_evtchn(pdev->evtchn);
 
-	/*in case of we lost an aer request in four lines time_window*/
-	smp_mb__before_atomic();
+	/*in हाल of we lost an aer request in four lines समय_winकरोw*/
+	smp_mb__beक्रमe_atomic();
 	clear_bit(_PDEVB_op_active, &pdev->flags);
 	smp_mb__after_atomic();
 
-	schedule_pcifront_aer_op(pdev);
+	schedule_pcअगरront_aer_op(pdev);
 
-}
+पूर्ण
 
-static irqreturn_t pcifront_handler_aer(int irq, void *dev)
-{
-	struct pcifront_device *pdev = dev;
-	schedule_pcifront_aer_op(pdev);
-	return IRQ_HANDLED;
-}
-static int pcifront_connect_and_init_dma(struct pcifront_device *pdev)
-{
-	int err = 0;
+अटल irqवापस_t pcअगरront_handler_aer(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा pcअगरront_device *pdev = dev;
+	schedule_pcअगरront_aer_op(pdev);
+	वापस IRQ_HANDLED;
+पूर्ण
+अटल पूर्णांक pcअगरront_connect_and_init_dma(काष्ठा pcअगरront_device *pdev)
+अणु
+	पूर्णांक err = 0;
 
-	spin_lock(&pcifront_dev_lock);
+	spin_lock(&pcअगरront_dev_lock);
 
-	if (!pcifront_dev) {
+	अगर (!pcअगरront_dev) अणु
 		dev_info(&pdev->xdev->dev, "Installing PCI frontend\n");
-		pcifront_dev = pdev;
-	} else
+		pcअगरront_dev = pdev;
+	पूर्ण अन्यथा
 		err = -EEXIST;
 
-	spin_unlock(&pcifront_dev_lock);
+	spin_unlock(&pcअगरront_dev_lock);
 
-	if (!err && !is_swiotlb_active()) {
+	अगर (!err && !is_swiotlb_active()) अणु
 		err = pci_xen_swiotlb_init_late();
-		if (err)
+		अगर (err)
 			dev_err(&pdev->xdev->dev, "Could not setup SWIOTLB!\n");
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void pcifront_disconnect(struct pcifront_device *pdev)
-{
-	spin_lock(&pcifront_dev_lock);
+अटल व्योम pcअगरront_disconnect(काष्ठा pcअगरront_device *pdev)
+अणु
+	spin_lock(&pcअगरront_dev_lock);
 
-	if (pdev == pcifront_dev) {
+	अगर (pdev == pcअगरront_dev) अणु
 		dev_info(&pdev->xdev->dev,
 			 "Disconnecting PCI Frontend Buses\n");
-		pcifront_dev = NULL;
-	}
+		pcअगरront_dev = शून्य;
+	पूर्ण
 
-	spin_unlock(&pcifront_dev_lock);
-}
-static struct pcifront_device *alloc_pdev(struct xenbus_device *xdev)
-{
-	struct pcifront_device *pdev;
+	spin_unlock(&pcअगरront_dev_lock);
+पूर्ण
+अटल काष्ठा pcअगरront_device *alloc_pdev(काष्ठा xenbus_device *xdev)
+अणु
+	काष्ठा pcअगरront_device *pdev;
 
-	pdev = kzalloc(sizeof(struct pcifront_device), GFP_KERNEL);
-	if (pdev == NULL)
-		goto out;
+	pdev = kzalloc(माप(काष्ठा pcअगरront_device), GFP_KERNEL);
+	अगर (pdev == शून्य)
+		जाओ out;
 
 	pdev->sh_info =
-	    (struct xen_pci_sharedinfo *)__get_free_page(GFP_KERNEL);
-	if (pdev->sh_info == NULL) {
-		kfree(pdev);
-		pdev = NULL;
-		goto out;
-	}
+	    (काष्ठा xen_pci_sharedinfo *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (pdev->sh_info == शून्य) अणु
+		kमुक्त(pdev);
+		pdev = शून्य;
+		जाओ out;
+	पूर्ण
 	pdev->sh_info->flags = 0;
 
-	/*Flag for registering PV AER handler*/
-	set_bit(_XEN_PCIB_AERHANDLER, (void *)&pdev->sh_info->flags);
+	/*Flag क्रम रेजिस्टरing PV AER handler*/
+	set_bit(_XEN_PCIB_AERHANDLER, (व्योम *)&pdev->sh_info->flags);
 
 	dev_set_drvdata(&xdev->dev, pdev);
 	pdev->xdev = xdev;
@@ -744,438 +745,438 @@ static struct pcifront_device *alloc_pdev(struct xenbus_device *xdev)
 	pdev->gnt_ref = INVALID_GRANT_REF;
 	pdev->irq = -1;
 
-	INIT_WORK(&pdev->op_work, pcifront_do_aer);
+	INIT_WORK(&pdev->op_work, pcअगरront_करो_aer);
 
 	dev_dbg(&xdev->dev, "Allocated pdev @ 0x%p pdev->sh_info @ 0x%p\n",
 		pdev, pdev->sh_info);
 out:
-	return pdev;
-}
+	वापस pdev;
+पूर्ण
 
-static void free_pdev(struct pcifront_device *pdev)
-{
+अटल व्योम मुक्त_pdev(काष्ठा pcअगरront_device *pdev)
+अणु
 	dev_dbg(&pdev->xdev->dev, "freeing pdev @ 0x%p\n", pdev);
 
-	pcifront_free_roots(pdev);
+	pcअगरront_मुक्त_roots(pdev);
 
 	cancel_work_sync(&pdev->op_work);
 
-	if (pdev->irq >= 0)
+	अगर (pdev->irq >= 0)
 		unbind_from_irqhandler(pdev->irq, pdev);
 
-	if (pdev->evtchn != INVALID_EVTCHN)
-		xenbus_free_evtchn(pdev->xdev, pdev->evtchn);
+	अगर (pdev->evtchn != INVALID_EVTCHN)
+		xenbus_मुक्त_evtchn(pdev->xdev, pdev->evtchn);
 
-	if (pdev->gnt_ref != INVALID_GRANT_REF)
-		gnttab_end_foreign_access(pdev->gnt_ref, 0 /* r/w page */,
-					  (unsigned long)pdev->sh_info);
-	else
-		free_page((unsigned long)pdev->sh_info);
+	अगर (pdev->gnt_ref != INVALID_GRANT_REF)
+		gnttab_end_क्रमeign_access(pdev->gnt_ref, 0 /* r/w page */,
+					  (अचिन्हित दीर्घ)pdev->sh_info);
+	अन्यथा
+		मुक्त_page((अचिन्हित दीर्घ)pdev->sh_info);
 
-	dev_set_drvdata(&pdev->xdev->dev, NULL);
+	dev_set_drvdata(&pdev->xdev->dev, शून्य);
 
-	kfree(pdev);
-}
+	kमुक्त(pdev);
+पूर्ण
 
-static int pcifront_publish_info(struct pcifront_device *pdev)
-{
-	int err = 0;
-	struct xenbus_transaction trans;
+अटल पूर्णांक pcअगरront_publish_info(काष्ठा pcअगरront_device *pdev)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा xenbus_transaction trans;
 	grant_ref_t gref;
 
 	err = xenbus_grant_ring(pdev->xdev, pdev->sh_info, 1, &gref);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
 	pdev->gnt_ref = gref;
 
 	err = xenbus_alloc_evtchn(pdev->xdev, &pdev->evtchn);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = bind_evtchn_to_irqhandler(pdev->evtchn, pcifront_handler_aer,
+	err = bind_evtchn_to_irqhandler(pdev->evtchn, pcअगरront_handler_aer,
 		0, "pcifront", pdev);
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	pdev->irq = err;
 
-do_publish:
+करो_publish:
 	err = xenbus_transaction_start(&trans);
-	if (err) {
+	अगर (err) अणु
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error writing configuration for backend "
 				 "(start transaction)");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = xenbus_printf(trans, pdev->xdev->nodename,
+	err = xenbus_म_लिखो(trans, pdev->xdev->nodename,
 			    "pci-op-ref", "%u", pdev->gnt_ref);
-	if (!err)
-		err = xenbus_printf(trans, pdev->xdev->nodename,
+	अगर (!err)
+		err = xenbus_म_लिखो(trans, pdev->xdev->nodename,
 				    "event-channel", "%u", pdev->evtchn);
-	if (!err)
-		err = xenbus_printf(trans, pdev->xdev->nodename,
+	अगर (!err)
+		err = xenbus_म_लिखो(trans, pdev->xdev->nodename,
 				    "magic", XEN_PCI_MAGIC);
 
-	if (err) {
+	अगर (err) अणु
 		xenbus_transaction_end(trans, 1);
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error writing configuration for backend");
-		goto out;
-	} else {
+		जाओ out;
+	पूर्ण अन्यथा अणु
 		err = xenbus_transaction_end(trans, 0);
-		if (err == -EAGAIN)
-			goto do_publish;
-		else if (err) {
+		अगर (err == -EAGAIN)
+			जाओ करो_publish;
+		अन्यथा अगर (err) अणु
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error completing transaction "
 					 "for backend");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	xenbus_switch_state(pdev->xdev, XenbusStateInitialised);
+	xenbus_चयन_state(pdev->xdev, XenbusStateInitialised);
 
 	dev_dbg(&pdev->xdev->dev, "publishing successful!\n");
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcifront_try_connect(struct pcifront_device *pdev)
-{
-	int err = -EFAULT;
-	int i, num_roots, len;
-	char str[64];
-	unsigned int domain, bus;
+अटल पूर्णांक pcअगरront_try_connect(काष्ठा pcअगरront_device *pdev)
+अणु
+	पूर्णांक err = -EFAULT;
+	पूर्णांक i, num_roots, len;
+	अक्षर str[64];
+	अचिन्हित पूर्णांक करोमुख्य, bus;
 
 
 	/* Only connect once */
-	if (xenbus_read_driver_state(pdev->xdev->nodename) !=
+	अगर (xenbus_पढ़ो_driver_state(pdev->xdev->nodename) !=
 	    XenbusStateInitialised)
-		goto out;
+		जाओ out;
 
-	err = pcifront_connect_and_init_dma(pdev);
-	if (err && err != -EEXIST) {
+	err = pcअगरront_connect_and_init_dma(pdev);
+	अगर (err && err != -EEXIST) अणु
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error setting up PCI Frontend");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = xenbus_scanf(XBT_NIL, pdev->xdev->otherend,
+	err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->otherend,
 			   "root_num", "%d", &num_roots);
-	if (err == -ENOENT) {
+	अगर (err == -ENOENT) अणु
 		xenbus_dev_error(pdev->xdev, err,
 				 "No PCI Roots found, trying 0000:00");
-		err = pcifront_scan_root(pdev, 0, 0);
-		if (err) {
+		err = pcअगरront_scan_root(pdev, 0, 0);
+		अगर (err) अणु
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error scanning PCI root 0000:00");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		num_roots = 0;
-	} else if (err != 1) {
-		if (err == 0)
+	पूर्ण अन्यथा अगर (err != 1) अणु
+		अगर (err == 0)
 			err = -EINVAL;
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error reading number of PCI roots");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < num_roots; i++) {
-		len = snprintf(str, sizeof(str), "root-%d", i);
-		if (unlikely(len >= (sizeof(str) - 1))) {
+	क्रम (i = 0; i < num_roots; i++) अणु
+		len = snम_लिखो(str, माप(str), "root-%d", i);
+		अगर (unlikely(len >= (माप(str) - 1))) अणु
 			err = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = xenbus_scanf(XBT_NIL, pdev->xdev->otherend, str,
-				   "%x:%x", &domain, &bus);
-		if (err != 2) {
-			if (err >= 0)
+		err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->otherend, str,
+				   "%x:%x", &करोमुख्य, &bus);
+		अगर (err != 2) अणु
+			अगर (err >= 0)
 				err = -EINVAL;
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error reading PCI root %d", i);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = pcifront_scan_root(pdev, domain, bus);
-		if (err) {
+		err = pcअगरront_scan_root(pdev, करोमुख्य, bus);
+		अगर (err) अणु
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error scanning PCI root %04x:%02x",
-					 domain, bus);
-			goto out;
-		}
-	}
+					 करोमुख्य, bus);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	err = xenbus_switch_state(pdev->xdev, XenbusStateConnected);
-
-out:
-	return err;
-}
-
-static int pcifront_try_disconnect(struct pcifront_device *pdev)
-{
-	int err = 0;
-	enum xenbus_state prev_state;
-
-
-	prev_state = xenbus_read_driver_state(pdev->xdev->nodename);
-
-	if (prev_state >= XenbusStateClosing)
-		goto out;
-
-	if (prev_state == XenbusStateConnected) {
-		pcifront_free_roots(pdev);
-		pcifront_disconnect(pdev);
-	}
-
-	err = xenbus_switch_state(pdev->xdev, XenbusStateClosed);
+	err = xenbus_चयन_state(pdev->xdev, XenbusStateConnected);
 
 out:
+	वापस err;
+पूर्ण
 
-	return err;
-}
+अटल पूर्णांक pcअगरront_try_disconnect(काष्ठा pcअगरront_device *pdev)
+अणु
+	पूर्णांक err = 0;
+	क्रमागत xenbus_state prev_state;
 
-static int pcifront_attach_devices(struct pcifront_device *pdev)
-{
-	int err = -EFAULT;
-	int i, num_roots, len;
-	unsigned int domain, bus;
-	char str[64];
 
-	if (xenbus_read_driver_state(pdev->xdev->nodename) !=
+	prev_state = xenbus_पढ़ो_driver_state(pdev->xdev->nodename);
+
+	अगर (prev_state >= XenbusStateClosing)
+		जाओ out;
+
+	अगर (prev_state == XenbusStateConnected) अणु
+		pcअगरront_मुक्त_roots(pdev);
+		pcअगरront_disconnect(pdev);
+	पूर्ण
+
+	err = xenbus_चयन_state(pdev->xdev, XenbusStateClosed);
+
+out:
+
+	वापस err;
+पूर्ण
+
+अटल पूर्णांक pcअगरront_attach_devices(काष्ठा pcअगरront_device *pdev)
+अणु
+	पूर्णांक err = -EFAULT;
+	पूर्णांक i, num_roots, len;
+	अचिन्हित पूर्णांक करोमुख्य, bus;
+	अक्षर str[64];
+
+	अगर (xenbus_पढ़ो_driver_state(pdev->xdev->nodename) !=
 	    XenbusStateReconfiguring)
-		goto out;
+		जाओ out;
 
-	err = xenbus_scanf(XBT_NIL, pdev->xdev->otherend,
+	err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->otherend,
 			   "root_num", "%d", &num_roots);
-	if (err == -ENOENT) {
+	अगर (err == -ENOENT) अणु
 		xenbus_dev_error(pdev->xdev, err,
 				 "No PCI Roots found, trying 0000:00");
-		err = pcifront_rescan_root(pdev, 0, 0);
-		if (err) {
+		err = pcअगरront_rescan_root(pdev, 0, 0);
+		अगर (err) अणु
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error scanning PCI root 0000:00");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		num_roots = 0;
-	} else if (err != 1) {
-		if (err == 0)
+	पूर्ण अन्यथा अगर (err != 1) अणु
+		अगर (err == 0)
 			err = -EINVAL;
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error reading number of PCI roots");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < num_roots; i++) {
-		len = snprintf(str, sizeof(str), "root-%d", i);
-		if (unlikely(len >= (sizeof(str) - 1))) {
+	क्रम (i = 0; i < num_roots; i++) अणु
+		len = snम_लिखो(str, माप(str), "root-%d", i);
+		अगर (unlikely(len >= (माप(str) - 1))) अणु
 			err = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = xenbus_scanf(XBT_NIL, pdev->xdev->otherend, str,
-				   "%x:%x", &domain, &bus);
-		if (err != 2) {
-			if (err >= 0)
+		err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->otherend, str,
+				   "%x:%x", &करोमुख्य, &bus);
+		अगर (err != 2) अणु
+			अगर (err >= 0)
 				err = -EINVAL;
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error reading PCI root %d", i);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = pcifront_rescan_root(pdev, domain, bus);
-		if (err) {
+		err = pcअगरront_rescan_root(pdev, करोमुख्य, bus);
+		अगर (err) अणु
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error scanning PCI root %04x:%02x",
-					 domain, bus);
-			goto out;
-		}
-	}
+					 करोमुख्य, bus);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	xenbus_switch_state(pdev->xdev, XenbusStateConnected);
+	xenbus_चयन_state(pdev->xdev, XenbusStateConnected);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcifront_detach_devices(struct pcifront_device *pdev)
-{
-	int err = 0;
-	int i, num_devs;
-	unsigned int domain, bus, slot, func;
-	struct pci_dev *pci_dev;
-	char str[64];
+अटल पूर्णांक pcअगरront_detach_devices(काष्ठा pcअगरront_device *pdev)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक i, num_devs;
+	अचिन्हित पूर्णांक करोमुख्य, bus, slot, func;
+	काष्ठा pci_dev *pci_dev;
+	अक्षर str[64];
 
-	if (xenbus_read_driver_state(pdev->xdev->nodename) !=
+	अगर (xenbus_पढ़ो_driver_state(pdev->xdev->nodename) !=
 	    XenbusStateConnected)
-		goto out;
+		जाओ out;
 
-	err = xenbus_scanf(XBT_NIL, pdev->xdev->otherend, "num_devs", "%d",
+	err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->otherend, "num_devs", "%d",
 			   &num_devs);
-	if (err != 1) {
-		if (err >= 0)
+	अगर (err != 1) अणु
+		अगर (err >= 0)
 			err = -EINVAL;
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error reading number of PCI devices");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Find devices being detached and remove them. */
-	for (i = 0; i < num_devs; i++) {
-		int l, state;
-		l = snprintf(str, sizeof(str), "state-%d", i);
-		if (unlikely(l >= (sizeof(str) - 1))) {
+	/* Find devices being detached and हटाओ them. */
+	क्रम (i = 0; i < num_devs; i++) अणु
+		पूर्णांक l, state;
+		l = snम_लिखो(str, माप(str), "state-%d", i);
+		अगर (unlikely(l >= (माप(str) - 1))) अणु
 			err = -ENOMEM;
-			goto out;
-		}
-		state = xenbus_read_unsigned(pdev->xdev->otherend, str,
+			जाओ out;
+		पूर्ण
+		state = xenbus_पढ़ो_अचिन्हित(pdev->xdev->otherend, str,
 					     XenbusStateUnknown);
 
-		if (state != XenbusStateClosing)
-			continue;
+		अगर (state != XenbusStateClosing)
+			जारी;
 
 		/* Remove device. */
-		l = snprintf(str, sizeof(str), "vdev-%d", i);
-		if (unlikely(l >= (sizeof(str) - 1))) {
+		l = snम_लिखो(str, माप(str), "vdev-%d", i);
+		अगर (unlikely(l >= (माप(str) - 1))) अणु
 			err = -ENOMEM;
-			goto out;
-		}
-		err = xenbus_scanf(XBT_NIL, pdev->xdev->otherend, str,
-				   "%x:%x:%x.%x", &domain, &bus, &slot, &func);
-		if (err != 4) {
-			if (err >= 0)
+			जाओ out;
+		पूर्ण
+		err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->otherend, str,
+				   "%x:%x:%x.%x", &करोमुख्य, &bus, &slot, &func);
+		अगर (err != 4) अणु
+			अगर (err >= 0)
 				err = -EINVAL;
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error reading PCI device %d", i);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		pci_dev = pci_get_domain_bus_and_slot(domain, bus,
+		pci_dev = pci_get_करोमुख्य_bus_and_slot(करोमुख्य, bus,
 				PCI_DEVFN(slot, func));
-		if (!pci_dev) {
+		अगर (!pci_dev) अणु
 			dev_dbg(&pdev->xdev->dev,
 				"Cannot get PCI device %04x:%02x:%02x.%d\n",
-				domain, bus, slot, func);
-			continue;
-		}
-		pci_lock_rescan_remove();
-		pci_stop_and_remove_bus_device(pci_dev);
+				करोमुख्य, bus, slot, func);
+			जारी;
+		पूर्ण
+		pci_lock_rescan_हटाओ();
+		pci_stop_and_हटाओ_bus_device(pci_dev);
 		pci_dev_put(pci_dev);
-		pci_unlock_rescan_remove();
+		pci_unlock_rescan_हटाओ();
 
 		dev_dbg(&pdev->xdev->dev,
 			"PCI device %04x:%02x:%02x.%d removed.\n",
-			domain, bus, slot, func);
-	}
+			करोमुख्य, bus, slot, func);
+	पूर्ण
 
-	err = xenbus_switch_state(pdev->xdev, XenbusStateReconfiguring);
+	err = xenbus_चयन_state(pdev->xdev, XenbusStateReconfiguring);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __ref pcifront_backend_changed(struct xenbus_device *xdev,
-						  enum xenbus_state be_state)
-{
-	struct pcifront_device *pdev = dev_get_drvdata(&xdev->dev);
+अटल व्योम __ref pcअगरront_backend_changed(काष्ठा xenbus_device *xdev,
+						  क्रमागत xenbus_state be_state)
+अणु
+	काष्ठा pcअगरront_device *pdev = dev_get_drvdata(&xdev->dev);
 
-	switch (be_state) {
-	case XenbusStateUnknown:
-	case XenbusStateInitialising:
-	case XenbusStateInitWait:
-	case XenbusStateInitialised:
-		break;
+	चयन (be_state) अणु
+	हाल XenbusStateUnknown:
+	हाल XenbusStateInitialising:
+	हाल XenbusStateInitWait:
+	हाल XenbusStateInitialised:
+		अवरोध;
 
-	case XenbusStateConnected:
-		pcifront_try_connect(pdev);
-		break;
+	हाल XenbusStateConnected:
+		pcअगरront_try_connect(pdev);
+		अवरोध;
 
-	case XenbusStateClosed:
-		if (xdev->state == XenbusStateClosed)
-			break;
+	हाल XenbusStateClosed:
+		अगर (xdev->state == XenbusStateClosed)
+			अवरोध;
 		fallthrough;	/* Missed the backend's CLOSING state */
-	case XenbusStateClosing:
+	हाल XenbusStateClosing:
 		dev_warn(&xdev->dev, "backend going away!\n");
-		pcifront_try_disconnect(pdev);
-		break;
+		pcअगरront_try_disconnect(pdev);
+		अवरोध;
 
-	case XenbusStateReconfiguring:
-		pcifront_detach_devices(pdev);
-		break;
+	हाल XenbusStateReconfiguring:
+		pcअगरront_detach_devices(pdev);
+		अवरोध;
 
-	case XenbusStateReconfigured:
-		pcifront_attach_devices(pdev);
-		break;
-	}
-}
+	हाल XenbusStateReconfigured:
+		pcअगरront_attach_devices(pdev);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int pcifront_xenbus_probe(struct xenbus_device *xdev,
-				 const struct xenbus_device_id *id)
-{
-	int err = 0;
-	struct pcifront_device *pdev = alloc_pdev(xdev);
+अटल पूर्णांक pcअगरront_xenbus_probe(काष्ठा xenbus_device *xdev,
+				 स्थिर काष्ठा xenbus_device_id *id)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा pcअगरront_device *pdev = alloc_pdev(xdev);
 
-	if (pdev == NULL) {
+	अगर (pdev == शून्य) अणु
 		err = -ENOMEM;
 		xenbus_dev_fatal(xdev, err,
 				 "Error allocating pcifront_device struct");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = pcifront_publish_info(pdev);
-	if (err)
-		free_pdev(pdev);
+	err = pcअगरront_publish_info(pdev);
+	अगर (err)
+		मुक्त_pdev(pdev);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcifront_xenbus_remove(struct xenbus_device *xdev)
-{
-	struct pcifront_device *pdev = dev_get_drvdata(&xdev->dev);
-	if (pdev)
-		free_pdev(pdev);
+अटल पूर्णांक pcअगरront_xenbus_हटाओ(काष्ठा xenbus_device *xdev)
+अणु
+	काष्ठा pcअगरront_device *pdev = dev_get_drvdata(&xdev->dev);
+	अगर (pdev)
+		मुक्त_pdev(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct xenbus_device_id xenpci_ids[] = {
-	{"pci"},
-	{""},
-};
+अटल स्थिर काष्ठा xenbus_device_id xenpci_ids[] = अणु
+	अणु"pci"पूर्ण,
+	अणु""पूर्ण,
+पूर्ण;
 
-static struct xenbus_driver xenpci_driver = {
+अटल काष्ठा xenbus_driver xenpci_driver = अणु
 	.name			= "pcifront",
 	.ids			= xenpci_ids,
-	.probe			= pcifront_xenbus_probe,
-	.remove			= pcifront_xenbus_remove,
-	.otherend_changed	= pcifront_backend_changed,
-};
+	.probe			= pcअगरront_xenbus_probe,
+	.हटाओ			= pcअगरront_xenbus_हटाओ,
+	.otherend_changed	= pcअगरront_backend_changed,
+पूर्ण;
 
-static int __init pcifront_init(void)
-{
-	if (!xen_pv_domain() || xen_initial_domain())
-		return -ENODEV;
+अटल पूर्णांक __init pcअगरront_init(व्योम)
+अणु
+	अगर (!xen_pv_करोमुख्य() || xen_initial_करोमुख्य())
+		वापस -ENODEV;
 
-	if (!xen_has_pv_devices())
-		return -ENODEV;
+	अगर (!xen_has_pv_devices())
+		वापस -ENODEV;
 
 	pci_frontend_registrar(1 /* enable */);
 
-	return xenbus_register_frontend(&xenpci_driver);
-}
+	वापस xenbus_रेजिस्टर_frontend(&xenpci_driver);
+पूर्ण
 
-static void __exit pcifront_cleanup(void)
-{
-	xenbus_unregister_driver(&xenpci_driver);
+अटल व्योम __निकास pcअगरront_cleanup(व्योम)
+अणु
+	xenbus_unरेजिस्टर_driver(&xenpci_driver);
 	pci_frontend_registrar(0 /* disable */);
-}
-module_init(pcifront_init);
-module_exit(pcifront_cleanup);
+पूर्ण
+module_init(pcअगरront_init);
+module_निकास(pcअगरront_cleanup);
 
 MODULE_DESCRIPTION("Xen PCI passthrough frontend.");
 MODULE_LICENSE("GPL");

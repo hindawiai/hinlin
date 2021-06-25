@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause) */
 /* Copyright 2015 Freescale Semiconductor Inc.
  * Copyright 2018-2019 NXP
  */
-#ifndef DPAA2_ETH_DEBUGFS_H
-#define DPAA2_ETH_DEBUGFS_H
+#अगर_अघोषित DPAA2_ETH_DEBUGFS_H
+#घोषणा DPAA2_ETH_DEBUGFS_H
 
-#include <linux/dcache.h>
+#समावेश <linux/dcache.h>
 
-struct dpaa2_eth_priv;
+काष्ठा dpaa2_eth_priv;
 
-struct dpaa2_debugfs {
-	struct dentry *dir;
-};
+काष्ठा dpaa2_debugfs अणु
+	काष्ठा dentry *dir;
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_FS
-void dpaa2_eth_dbg_init(void);
-void dpaa2_eth_dbg_exit(void);
-void dpaa2_dbg_add(struct dpaa2_eth_priv *priv);
-void dpaa2_dbg_remove(struct dpaa2_eth_priv *priv);
-#else
-static inline void dpaa2_eth_dbg_init(void) {}
-static inline void dpaa2_eth_dbg_exit(void) {}
-static inline void dpaa2_dbg_add(struct dpaa2_eth_priv *priv) {}
-static inline void dpaa2_dbg_remove(struct dpaa2_eth_priv *priv) {}
-#endif /* CONFIG_DEBUG_FS */
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम dpaa2_eth_dbg_init(व्योम);
+व्योम dpaa2_eth_dbg_निकास(व्योम);
+व्योम dpaa2_dbg_add(काष्ठा dpaa2_eth_priv *priv);
+व्योम dpaa2_dbg_हटाओ(काष्ठा dpaa2_eth_priv *priv);
+#अन्यथा
+अटल अंतरभूत व्योम dpaa2_eth_dbg_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम dpaa2_eth_dbg_निकास(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम dpaa2_dbg_add(काष्ठा dpaa2_eth_priv *priv) अणुपूर्ण
+अटल अंतरभूत व्योम dpaa2_dbg_हटाओ(काष्ठा dpaa2_eth_priv *priv) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-#endif /* DPAA2_ETH_DEBUGFS_H */
+#पूर्ण_अगर /* DPAA2_ETH_DEBUGFS_H */

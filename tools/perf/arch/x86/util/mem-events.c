@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "util/pmu.h"
-#include "map_symbol.h"
-#include "mem-events.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "util/pmu.h"
+#समावेश "map_symbol.h"
+#समावेश "mem-events.h"
 
-static char mem_loads_name[100];
-static bool mem_loads_name__init;
+अटल अक्षर mem_loads_name[100];
+अटल bool mem_loads_name__init;
 
-#define MEM_LOADS_AUX		0x8203
-#define MEM_LOADS_AUX_NAME	"{cpu/mem-loads-aux/,cpu/mem-loads,ldlat=%u/pp}:S"
+#घोषणा MEM_LOADS_AUX		0x8203
+#घोषणा MEM_LOADS_AUX_NAME	"{cpu/mem-loads-aux/,cpu/mem-loads,ldlat=%u/pp}:S"
 
-bool is_mem_loads_aux_event(struct evsel *leader)
-{
-	if (!pmu_have_event("cpu", "mem-loads-aux"))
-		return false;
+bool is_mem_loads_aux_event(काष्ठा evsel *leader)
+अणु
+	अगर (!pmu_have_event("cpu", "mem-loads-aux"))
+		वापस false;
 
-	return leader->core.attr.config == MEM_LOADS_AUX;
-}
+	वापस leader->core.attr.config == MEM_LOADS_AUX;
+पूर्ण
 
-char *perf_mem_events__name(int i)
-{
-	struct perf_mem_event *e = perf_mem_events__ptr(i);
+अक्षर *perf_mem_events__name(पूर्णांक i)
+अणु
+	काष्ठा perf_mem_event *e = perf_mem_events__ptr(i);
 
-	if (!e)
-		return NULL;
+	अगर (!e)
+		वापस शून्य;
 
-	if (i == PERF_MEM_EVENTS__LOAD) {
-		if (mem_loads_name__init)
-			return mem_loads_name;
+	अगर (i == PERF_MEM_EVENTS__LOAD) अणु
+		अगर (mem_loads_name__init)
+			वापस mem_loads_name;
 
 		mem_loads_name__init = true;
 
-		if (pmu_have_event("cpu", "mem-loads-aux")) {
-			scnprintf(mem_loads_name, sizeof(mem_loads_name),
+		अगर (pmu_have_event("cpu", "mem-loads-aux")) अणु
+			scnम_लिखो(mem_loads_name, माप(mem_loads_name),
 				  MEM_LOADS_AUX_NAME, perf_mem_events__loads_ldlat);
-		} else {
-			scnprintf(mem_loads_name, sizeof(mem_loads_name),
+		पूर्ण अन्यथा अणु
+			scnम_लिखो(mem_loads_name, माप(mem_loads_name),
 				  e->name, perf_mem_events__loads_ldlat);
-		}
-		return mem_loads_name;
-	}
+		पूर्ण
+		वापस mem_loads_name;
+	पूर्ण
 
-	return (char *)e->name;
-}
+	वापस (अक्षर *)e->name;
+पूर्ण

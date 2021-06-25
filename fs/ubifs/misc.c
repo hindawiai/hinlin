@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include "ubifs.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश "ubifs.h"
 
 /* Normal UBIFS messages */
-void ubifs_msg(const struct ubifs_info *c, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम ubअगरs_msg(स्थिर काष्ठा ubअगरs_info *c, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
@@ -16,54 +17,54 @@ void ubifs_msg(const struct ubifs_info *c, const char *fmt, ...)
 	pr_notice("UBIFS (ubi%d:%d): %pV\n",
 		  c->vi.ubi_num, c->vi.vol_id, &vaf);
 
-	va_end(args);
-}								    \
+	बहु_पूर्ण(args);
+पूर्ण								    \
 
 /* UBIFS error messages */
-void ubifs_err(const struct ubifs_info *c, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम ubअगरs_err(स्थिर काष्ठा ubअगरs_info *c, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	pr_err("UBIFS error (ubi%d:%d pid %d): %ps: %pV\n",
 	       c->vi.ubi_num, c->vi.vol_id, current->pid,
-	       __builtin_return_address(0),
+	       __builtin_वापस_address(0),
 	       &vaf);
 
-	va_end(args);
-}								    \
+	बहु_पूर्ण(args);
+पूर्ण								    \
 
 /* UBIFS warning messages */
-void ubifs_warn(const struct ubifs_info *c, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम ubअगरs_warn(स्थिर काष्ठा ubअगरs_info *c, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	pr_warn("UBIFS warning (ubi%d:%d pid %d): %ps: %pV\n",
 		c->vi.ubi_num, c->vi.vol_id, current->pid,
-		__builtin_return_address(0),
+		__builtin_वापस_address(0),
 		&vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-static char *assert_names[] = {
+अटल अक्षर *निश्चित_names[] = अणु
 	[ASSACT_REPORT] = "report",
 	[ASSACT_RO] = "read-only",
 	[ASSACT_PANIC] = "panic",
-};
+पूर्ण;
 
-const char *ubifs_assert_action_name(struct ubifs_info *c)
-{
-	return assert_names[c->assert_action];
-}
+स्थिर अक्षर *ubअगरs_निश्चित_action_name(काष्ठा ubअगरs_info *c)
+अणु
+	वापस निश्चित_names[c->निश्चित_action];
+पूर्ण

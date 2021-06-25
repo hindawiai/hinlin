@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * linux/sound/soc/codecs/tlv320aic32x4.c
  *
@@ -6,268 +7,268 @@
  *
  * Author: Javier Martin <javier.martin@vista-silicon.com>
  *
- * Based on sound/soc/codecs/wm8974 and TI driver for kernel 2.6.27.
+ * Based on sound/soc/codecs/wm8974 and TI driver क्रम kernel 2.6.27.
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/gpio.h>
-#include <linux/of_gpio.h>
-#include <linux/cdev.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/of_clk.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/cdev.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <sound/tlv320aic32x4.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-dapm.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
+#समावेश <sound/tlv320aic32x4.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
 
-#include "tlv320aic32x4.h"
+#समावेश "tlv320aic32x4.h"
 
-struct aic32x4_priv {
-	struct regmap *regmap;
-	u32 power_cfg;
+काष्ठा aic32x4_priv अणु
+	काष्ठा regmap *regmap;
+	u32 घातer_cfg;
 	u32 micpga_routing;
 	bool swapdacs;
-	int rstn_gpio;
-	const char *mclk_name;
+	पूर्णांक rstn_gpio;
+	स्थिर अक्षर *mclk_name;
 
-	struct regulator *supply_ldo;
-	struct regulator *supply_iov;
-	struct regulator *supply_dv;
-	struct regulator *supply_av;
+	काष्ठा regulator *supply_lकरो;
+	काष्ठा regulator *supply_iov;
+	काष्ठा regulator *supply_dv;
+	काष्ठा regulator *supply_av;
 
-	struct aic32x4_setup_data *setup;
-	struct device *dev;
-};
+	काष्ठा aic32x4_setup_data *setup;
+	काष्ठा device *dev;
+पूर्ण;
 
-static int aic32x4_reset_adc(struct snd_soc_dapm_widget *w,
-			     struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+अटल पूर्णांक aic32x4_reset_adc(काष्ठा snd_soc_dapm_widget *w,
+			     काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 	u32 adc_reg;
 
 	/*
-	 * Workaround: the datasheet does not mention a required programming
+	 * Workaround: the datasheet करोes not mention a required programming
 	 * sequence but experiments show the ADC needs to be reset after each
-	 * capture to avoid audible artifacts.
+	 * capture to aव्योम audible artअगरacts.
 	 */
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMD:
-		adc_reg = snd_soc_component_read(component, AIC32X4_ADCSETUP);
-		snd_soc_component_write(component, AIC32X4_ADCSETUP, adc_reg |
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMD:
+		adc_reg = snd_soc_component_पढ़ो(component, AIC32X4_ADCSETUP);
+		snd_soc_component_ग_लिखो(component, AIC32X4_ADCSETUP, adc_reg |
 					AIC32X4_LADC_EN | AIC32X4_RADC_EN);
-		snd_soc_component_write(component, AIC32X4_ADCSETUP, adc_reg);
-		break;
-	}
-	return 0;
-};
+		snd_soc_component_ग_लिखो(component, AIC32X4_ADCSETUP, adc_reg);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण;
 
-static int mic_bias_event(struct snd_soc_dapm_widget *w,
-	struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+अटल पूर्णांक mic_bias_event(काष्ठा snd_soc_dapm_widget *w,
+	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMU:
 		/* Change Mic Bias Registor */
 		snd_soc_component_update_bits(component, AIC32X4_MICBIAS,
 				AIC32x4_MICBIAS_MASK,
 				AIC32X4_MICBIAS_LDOIN |
 				AIC32X4_MICBIAS_2075V);
-		printk(KERN_DEBUG "%s: Mic Bias will be turned ON\n", __func__);
-		break;
-	case SND_SOC_DAPM_PRE_PMD:
+		prपूर्णांकk(KERN_DEBUG "%s: Mic Bias will be turned ON\n", __func__);
+		अवरोध;
+	हाल SND_SOC_DAPM_PRE_PMD:
 		snd_soc_component_update_bits(component, AIC32X4_MICBIAS,
 				AIC32x4_MICBIAS_MASK, 0);
-		printk(KERN_DEBUG "%s: Mic Bias will be turned OFF\n",
+		prपूर्णांकk(KERN_DEBUG "%s: Mic Bias will be turned OFF\n",
 				__func__);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int aic32x4_get_mfp1_gpio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक aic32x4_get_mfp1_gpio(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
 	u8 val;
 
-	val = snd_soc_component_read(component, AIC32X4_DINCTL);
+	val = snd_soc_component_पढ़ो(component, AIC32X4_DINCTL);
 
-	ucontrol->value.integer.value[0] = (val & 0x01);
+	ucontrol->value.पूर्णांकeger.value[0] = (val & 0x01);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static int aic32x4_set_mfp2_gpio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक aic32x4_set_mfp2_gpio(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
 	u8 val;
 	u8 gpio_check;
 
-	val = snd_soc_component_read(component, AIC32X4_DOUTCTL);
+	val = snd_soc_component_पढ़ो(component, AIC32X4_DOUTCTL);
 	gpio_check = (val & AIC32X4_MFP_GPIO_ENABLED);
-	if (gpio_check != AIC32X4_MFP_GPIO_ENABLED) {
-		printk(KERN_ERR "%s: MFP2 is not configure as a GPIO output\n",
+	अगर (gpio_check != AIC32X4_MFP_GPIO_ENABLED) अणु
+		prपूर्णांकk(KERN_ERR "%s: MFP2 is not configure as a GPIO output\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ucontrol->value.integer.value[0] == (val & AIC32X4_MFP2_GPIO_OUT_HIGH))
-		return 0;
+	अगर (ucontrol->value.पूर्णांकeger.value[0] == (val & AIC32X4_MFP2_GPIO_OUT_HIGH))
+		वापस 0;
 
-	if (ucontrol->value.integer.value[0])
-		val |= ucontrol->value.integer.value[0];
-	else
+	अगर (ucontrol->value.पूर्णांकeger.value[0])
+		val |= ucontrol->value.पूर्णांकeger.value[0];
+	अन्यथा
 		val &= ~AIC32X4_MFP2_GPIO_OUT_HIGH;
 
-	snd_soc_component_write(component, AIC32X4_DOUTCTL, val);
+	snd_soc_component_ग_लिखो(component, AIC32X4_DOUTCTL, val);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static int aic32x4_get_mfp3_gpio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक aic32x4_get_mfp3_gpio(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
 	u8 val;
 
-	val = snd_soc_component_read(component, AIC32X4_SCLKCTL);
+	val = snd_soc_component_पढ़ो(component, AIC32X4_SCLKCTL);
 
-	ucontrol->value.integer.value[0] = (val & 0x01);
+	ucontrol->value.पूर्णांकeger.value[0] = (val & 0x01);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static int aic32x4_set_mfp4_gpio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक aic32x4_set_mfp4_gpio(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
 	u8 val;
 	u8 gpio_check;
 
-	val = snd_soc_component_read(component, AIC32X4_MISOCTL);
+	val = snd_soc_component_पढ़ो(component, AIC32X4_MISOCTL);
 	gpio_check = (val & AIC32X4_MFP_GPIO_ENABLED);
-	if (gpio_check != AIC32X4_MFP_GPIO_ENABLED) {
-		printk(KERN_ERR "%s: MFP4 is not configure as a GPIO output\n",
+	अगर (gpio_check != AIC32X4_MFP_GPIO_ENABLED) अणु
+		prपूर्णांकk(KERN_ERR "%s: MFP4 is not configure as a GPIO output\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ucontrol->value.integer.value[0] == (val & AIC32X4_MFP5_GPIO_OUT_HIGH))
-		return 0;
+	अगर (ucontrol->value.पूर्णांकeger.value[0] == (val & AIC32X4_MFP5_GPIO_OUT_HIGH))
+		वापस 0;
 
-	if (ucontrol->value.integer.value[0])
-		val |= ucontrol->value.integer.value[0];
-	else
+	अगर (ucontrol->value.पूर्णांकeger.value[0])
+		val |= ucontrol->value.पूर्णांकeger.value[0];
+	अन्यथा
 		val &= ~AIC32X4_MFP5_GPIO_OUT_HIGH;
 
-	snd_soc_component_write(component, AIC32X4_MISOCTL, val);
+	snd_soc_component_ग_लिखो(component, AIC32X4_MISOCTL, val);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static int aic32x4_get_mfp5_gpio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक aic32x4_get_mfp5_gpio(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
 	u8 val;
 
-	val = snd_soc_component_read(component, AIC32X4_GPIOCTL);
-	ucontrol->value.integer.value[0] = ((val & 0x2) >> 1);
+	val = snd_soc_component_पढ़ो(component, AIC32X4_GPIOCTL);
+	ucontrol->value.पूर्णांकeger.value[0] = ((val & 0x2) >> 1);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static int aic32x4_set_mfp5_gpio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक aic32x4_set_mfp5_gpio(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
 	u8 val;
 	u8 gpio_check;
 
-	val = snd_soc_component_read(component, AIC32X4_GPIOCTL);
+	val = snd_soc_component_पढ़ो(component, AIC32X4_GPIOCTL);
 	gpio_check = (val & AIC32X4_MFP5_GPIO_OUTPUT);
-	if (gpio_check != AIC32X4_MFP5_GPIO_OUTPUT) {
-		printk(KERN_ERR "%s: MFP5 is not configure as a GPIO output\n",
+	अगर (gpio_check != AIC32X4_MFP5_GPIO_OUTPUT) अणु
+		prपूर्णांकk(KERN_ERR "%s: MFP5 is not configure as a GPIO output\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ucontrol->value.integer.value[0] == (val & 0x1))
-		return 0;
+	अगर (ucontrol->value.पूर्णांकeger.value[0] == (val & 0x1))
+		वापस 0;
 
-	if (ucontrol->value.integer.value[0])
-		val |= ucontrol->value.integer.value[0];
-	else
+	अगर (ucontrol->value.पूर्णांकeger.value[0])
+		val |= ucontrol->value.पूर्णांकeger.value[0];
+	अन्यथा
 		val &= 0xfe;
 
-	snd_soc_component_write(component, AIC32X4_GPIOCTL, val);
+	snd_soc_component_ग_लिखो(component, AIC32X4_GPIOCTL, val);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static const struct snd_kcontrol_new aic32x4_mfp1[] = {
-	SOC_SINGLE_BOOL_EXT("MFP1 GPIO", 0, aic32x4_get_mfp1_gpio, NULL),
-};
+अटल स्थिर काष्ठा snd_kcontrol_new aic32x4_mfp1[] = अणु
+	SOC_SINGLE_BOOL_EXT("MFP1 GPIO", 0, aic32x4_get_mfp1_gpio, शून्य),
+पूर्ण;
 
-static const struct snd_kcontrol_new aic32x4_mfp2[] = {
-	SOC_SINGLE_BOOL_EXT("MFP2 GPIO", 0, NULL, aic32x4_set_mfp2_gpio),
-};
+अटल स्थिर काष्ठा snd_kcontrol_new aic32x4_mfp2[] = अणु
+	SOC_SINGLE_BOOL_EXT("MFP2 GPIO", 0, शून्य, aic32x4_set_mfp2_gpio),
+पूर्ण;
 
-static const struct snd_kcontrol_new aic32x4_mfp3[] = {
-	SOC_SINGLE_BOOL_EXT("MFP3 GPIO", 0, aic32x4_get_mfp3_gpio, NULL),
-};
+अटल स्थिर काष्ठा snd_kcontrol_new aic32x4_mfp3[] = अणु
+	SOC_SINGLE_BOOL_EXT("MFP3 GPIO", 0, aic32x4_get_mfp3_gpio, शून्य),
+पूर्ण;
 
-static const struct snd_kcontrol_new aic32x4_mfp4[] = {
-	SOC_SINGLE_BOOL_EXT("MFP4 GPIO", 0, NULL, aic32x4_set_mfp4_gpio),
-};
+अटल स्थिर काष्ठा snd_kcontrol_new aic32x4_mfp4[] = अणु
+	SOC_SINGLE_BOOL_EXT("MFP4 GPIO", 0, शून्य, aic32x4_set_mfp4_gpio),
+पूर्ण;
 
-static const struct snd_kcontrol_new aic32x4_mfp5[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new aic32x4_mfp5[] = अणु
 	SOC_SINGLE_BOOL_EXT("MFP5 GPIO", 0, aic32x4_get_mfp5_gpio,
 		aic32x4_set_mfp5_gpio),
-};
+पूर्ण;
 
 /* 0dB min, 0.5dB steps */
-static DECLARE_TLV_DB_SCALE(tlv_step_0_5, 0, 50, 0);
+अटल DECLARE_TLV_DB_SCALE(tlv_step_0_5, 0, 50, 0);
 /* -63.5dB min, 0.5dB steps */
-static DECLARE_TLV_DB_SCALE(tlv_pcm, -6350, 50, 0);
+अटल DECLARE_TLV_DB_SCALE(tlv_pcm, -6350, 50, 0);
 /* -6dB min, 1dB steps */
-static DECLARE_TLV_DB_SCALE(tlv_driver_gain, -600, 100, 0);
+अटल DECLARE_TLV_DB_SCALE(tlv_driver_gain, -600, 100, 0);
 /* -12dB min, 0.5dB steps */
-static DECLARE_TLV_DB_SCALE(tlv_adc_vol, -1200, 50, 0);
+अटल DECLARE_TLV_DB_SCALE(tlv_adc_vol, -1200, 50, 0);
 
-static const char * const lo_cm_text[] = {
+अटल स्थिर अक्षर * स्थिर lo_cm_text[] = अणु
 	"Full Chip", "1.65V",
-};
+पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(lo_cm_enum, AIC32X4_CMMODE, 3, lo_cm_text);
+अटल SOC_ENUM_SINGLE_DECL(lo_cm_क्रमागत, AIC32X4_CMMODE, 3, lo_cm_text);
 
-static const char * const ptm_text[] = {
+अटल स्थिर अक्षर * स्थिर pपंचांग_text[] = अणु
 	"P3", "P2", "P1",
-};
+पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(l_ptm_enum, AIC32X4_LPLAYBACK, 2, ptm_text);
-static SOC_ENUM_SINGLE_DECL(r_ptm_enum, AIC32X4_RPLAYBACK, 2, ptm_text);
+अटल SOC_ENUM_SINGLE_DECL(l_pपंचांग_क्रमागत, AIC32X4_LPLAYBACK, 2, pपंचांग_text);
+अटल SOC_ENUM_SINGLE_DECL(r_pपंचांग_क्रमागत, AIC32X4_RPLAYBACK, 2, pपंचांग_text);
 
-static const struct snd_kcontrol_new aic32x4_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new aic32x4_snd_controls[] = अणु
 	SOC_DOUBLE_R_S_TLV("PCM Playback Volume", AIC32X4_LDACVOL,
 			AIC32X4_RDACVOL, 0, -0x7f, 0x30, 7, 0, tlv_pcm),
-	SOC_ENUM("DAC Left Playback PowerTune Switch", l_ptm_enum),
-	SOC_ENUM("DAC Right Playback PowerTune Switch", r_ptm_enum),
+	SOC_ENUM("DAC Left Playback PowerTune Switch", l_pपंचांग_क्रमागत),
+	SOC_ENUM("DAC Right Playback PowerTune Switch", r_pपंचांग_क्रमागत),
 	SOC_DOUBLE_R_S_TLV("HP Driver Gain Volume", AIC32X4_HPLGAIN,
 			AIC32X4_HPRGAIN, 0, -0x6, 0x1d, 5, 0,
 			tlv_driver_gain),
@@ -278,7 +279,7 @@ static const struct snd_kcontrol_new aic32x4_snd_controls[] = {
 			AIC32X4_HPRGAIN, 6, 0x01, 1),
 	SOC_DOUBLE_R("LO DAC Playback Switch", AIC32X4_LOLGAIN,
 			AIC32X4_LORGAIN, 6, 0x01, 1),
-	SOC_ENUM("LO Playback Common Mode Switch", lo_cm_enum),
+	SOC_ENUM("LO Playback Common Mode Switch", lo_cm_क्रमागत),
 	SOC_DOUBLE_R("Mic PGA Switch", AIC32X4_LMICPGAVOL,
 			AIC32X4_RMICPGAVOL, 7, 0x01, 1),
 
@@ -312,114 +313,114 @@ static const struct snd_kcontrol_new aic32x4_snd_controls[] = {
 			0, 0x1F, 0),
 	SOC_DOUBLE_R("AGC Signal Debounce", AIC32X4_LAGC7, AIC32X4_RAGC7,
 			0, 0x0F, 0),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new hpl_output_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new hpl_output_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("L_DAC Switch", AIC32X4_HPLROUTE, 3, 1, 0),
 	SOC_DAPM_SINGLE("IN1_L Switch", AIC32X4_HPLROUTE, 2, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new hpr_output_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new hpr_output_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("R_DAC Switch", AIC32X4_HPRROUTE, 3, 1, 0),
 	SOC_DAPM_SINGLE("IN1_R Switch", AIC32X4_HPRROUTE, 2, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new lol_output_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new lol_output_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("L_DAC Switch", AIC32X4_LOLROUTE, 3, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new lor_output_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new lor_output_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("R_DAC Switch", AIC32X4_LORROUTE, 3, 1, 0),
-};
+पूर्ण;
 
-static const char * const resistor_text[] = {
+अटल स्थिर अक्षर * स्थिर resistor_text[] = अणु
 	"Off", "10 kOhm", "20 kOhm", "40 kOhm",
-};
+पूर्ण;
 
 /* Left mixer pins */
-static SOC_ENUM_SINGLE_DECL(in1l_lpga_p_enum, AIC32X4_LMICPGAPIN, 6, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in2l_lpga_p_enum, AIC32X4_LMICPGAPIN, 4, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in3l_lpga_p_enum, AIC32X4_LMICPGAPIN, 2, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in1r_lpga_p_enum, AIC32X4_LMICPGAPIN, 0, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in1l_lpga_p_क्रमागत, AIC32X4_LMICPGAPIN, 6, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in2l_lpga_p_क्रमागत, AIC32X4_LMICPGAPIN, 4, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in3l_lpga_p_क्रमागत, AIC32X4_LMICPGAPIN, 2, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in1r_lpga_p_क्रमागत, AIC32X4_LMICPGAPIN, 0, resistor_text);
 
-static SOC_ENUM_SINGLE_DECL(cml_lpga_n_enum, AIC32X4_LMICPGANIN, 6, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in2r_lpga_n_enum, AIC32X4_LMICPGANIN, 4, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in3r_lpga_n_enum, AIC32X4_LMICPGANIN, 2, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(cml_lpga_n_क्रमागत, AIC32X4_LMICPGANIN, 6, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in2r_lpga_n_क्रमागत, AIC32X4_LMICPGANIN, 4, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in3r_lpga_n_क्रमागत, AIC32X4_LMICPGANIN, 2, resistor_text);
 
-static const struct snd_kcontrol_new in1l_to_lmixer_controls[] = {
-	SOC_DAPM_ENUM("IN1_L L+ Switch", in1l_lpga_p_enum),
-};
-static const struct snd_kcontrol_new in2l_to_lmixer_controls[] = {
-	SOC_DAPM_ENUM("IN2_L L+ Switch", in2l_lpga_p_enum),
-};
-static const struct snd_kcontrol_new in3l_to_lmixer_controls[] = {
-	SOC_DAPM_ENUM("IN3_L L+ Switch", in3l_lpga_p_enum),
-};
-static const struct snd_kcontrol_new in1r_to_lmixer_controls[] = {
-	SOC_DAPM_ENUM("IN1_R L+ Switch", in1r_lpga_p_enum),
-};
-static const struct snd_kcontrol_new cml_to_lmixer_controls[] = {
-	SOC_DAPM_ENUM("CM_L L- Switch", cml_lpga_n_enum),
-};
-static const struct snd_kcontrol_new in2r_to_lmixer_controls[] = {
-	SOC_DAPM_ENUM("IN2_R L- Switch", in2r_lpga_n_enum),
-};
-static const struct snd_kcontrol_new in3r_to_lmixer_controls[] = {
-	SOC_DAPM_ENUM("IN3_R L- Switch", in3r_lpga_n_enum),
-};
+अटल स्थिर काष्ठा snd_kcontrol_new in1l_to_lmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN1_L L+ Switch", in1l_lpga_p_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in2l_to_lmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN2_L L+ Switch", in2l_lpga_p_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in3l_to_lmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN3_L L+ Switch", in3l_lpga_p_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in1r_to_lmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN1_R L+ Switch", in1r_lpga_p_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new cml_to_lmixer_controls[] = अणु
+	SOC_DAPM_ENUM("CM_L L- Switch", cml_lpga_n_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in2r_to_lmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN2_R L- Switch", in2r_lpga_n_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in3r_to_lmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN3_R L- Switch", in3r_lpga_n_क्रमागत),
+पूर्ण;
 
 /*	Right mixer pins */
-static SOC_ENUM_SINGLE_DECL(in1r_rpga_p_enum, AIC32X4_RMICPGAPIN, 6, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in2r_rpga_p_enum, AIC32X4_RMICPGAPIN, 4, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in3r_rpga_p_enum, AIC32X4_RMICPGAPIN, 2, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in2l_rpga_p_enum, AIC32X4_RMICPGAPIN, 0, resistor_text);
-static SOC_ENUM_SINGLE_DECL(cmr_rpga_n_enum, AIC32X4_RMICPGANIN, 6, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in1l_rpga_n_enum, AIC32X4_RMICPGANIN, 4, resistor_text);
-static SOC_ENUM_SINGLE_DECL(in3l_rpga_n_enum, AIC32X4_RMICPGANIN, 2, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in1r_rpga_p_क्रमागत, AIC32X4_RMICPGAPIN, 6, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in2r_rpga_p_क्रमागत, AIC32X4_RMICPGAPIN, 4, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in3r_rpga_p_क्रमागत, AIC32X4_RMICPGAPIN, 2, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in2l_rpga_p_क्रमागत, AIC32X4_RMICPGAPIN, 0, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(cmr_rpga_n_क्रमागत, AIC32X4_RMICPGANIN, 6, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in1l_rpga_n_क्रमागत, AIC32X4_RMICPGANIN, 4, resistor_text);
+अटल SOC_ENUM_SINGLE_DECL(in3l_rpga_n_क्रमागत, AIC32X4_RMICPGANIN, 2, resistor_text);
 
-static const struct snd_kcontrol_new in1r_to_rmixer_controls[] = {
-	SOC_DAPM_ENUM("IN1_R R+ Switch", in1r_rpga_p_enum),
-};
-static const struct snd_kcontrol_new in2r_to_rmixer_controls[] = {
-	SOC_DAPM_ENUM("IN2_R R+ Switch", in2r_rpga_p_enum),
-};
-static const struct snd_kcontrol_new in3r_to_rmixer_controls[] = {
-	SOC_DAPM_ENUM("IN3_R R+ Switch", in3r_rpga_p_enum),
-};
-static const struct snd_kcontrol_new in2l_to_rmixer_controls[] = {
-	SOC_DAPM_ENUM("IN2_L R+ Switch", in2l_rpga_p_enum),
-};
-static const struct snd_kcontrol_new cmr_to_rmixer_controls[] = {
-	SOC_DAPM_ENUM("CM_R R- Switch", cmr_rpga_n_enum),
-};
-static const struct snd_kcontrol_new in1l_to_rmixer_controls[] = {
-	SOC_DAPM_ENUM("IN1_L R- Switch", in1l_rpga_n_enum),
-};
-static const struct snd_kcontrol_new in3l_to_rmixer_controls[] = {
-	SOC_DAPM_ENUM("IN3_L R- Switch", in3l_rpga_n_enum),
-};
+अटल स्थिर काष्ठा snd_kcontrol_new in1r_to_rmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN1_R R+ Switch", in1r_rpga_p_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in2r_to_rmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN2_R R+ Switch", in2r_rpga_p_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in3r_to_rmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN3_R R+ Switch", in3r_rpga_p_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in2l_to_rmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN2_L R+ Switch", in2l_rpga_p_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new cmr_to_rmixer_controls[] = अणु
+	SOC_DAPM_ENUM("CM_R R- Switch", cmr_rpga_n_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in1l_to_rmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN1_L R- Switch", in1l_rpga_n_क्रमागत),
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new in3l_to_rmixer_controls[] = अणु
+	SOC_DAPM_ENUM("IN3_L R- Switch", in3l_rpga_n_क्रमागत),
+पूर्ण;
 
-static const struct snd_soc_dapm_widget aic32x4_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget aic32x4_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_DAC("Left DAC", "Left Playback", AIC32X4_DACSETUP, 7, 0),
 	SND_SOC_DAPM_MIXER("HPL Output Mixer", SND_SOC_NOPM, 0, 0,
 			   &hpl_output_mixer_controls[0],
 			   ARRAY_SIZE(hpl_output_mixer_controls)),
-	SND_SOC_DAPM_PGA("HPL Power", AIC32X4_OUTPWRCTL, 5, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("HPL Power", AIC32X4_OUTPWRCTL, 5, 0, शून्य, 0),
 
 	SND_SOC_DAPM_MIXER("LOL Output Mixer", SND_SOC_NOPM, 0, 0,
 			   &lol_output_mixer_controls[0],
 			   ARRAY_SIZE(lol_output_mixer_controls)),
-	SND_SOC_DAPM_PGA("LOL Power", AIC32X4_OUTPWRCTL, 3, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("LOL Power", AIC32X4_OUTPWRCTL, 3, 0, शून्य, 0),
 
 	SND_SOC_DAPM_DAC("Right DAC", "Right Playback", AIC32X4_DACSETUP, 6, 0),
 	SND_SOC_DAPM_MIXER("HPR Output Mixer", SND_SOC_NOPM, 0, 0,
 			   &hpr_output_mixer_controls[0],
 			   ARRAY_SIZE(hpr_output_mixer_controls)),
-	SND_SOC_DAPM_PGA("HPR Power", AIC32X4_OUTPWRCTL, 4, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("HPR Power", AIC32X4_OUTPWRCTL, 4, 0, शून्य, 0),
 	SND_SOC_DAPM_MIXER("LOR Output Mixer", SND_SOC_NOPM, 0, 0,
 			   &lor_output_mixer_controls[0],
 			   ARRAY_SIZE(lor_output_mixer_controls)),
-	SND_SOC_DAPM_PGA("LOR Power", AIC32X4_OUTPWRCTL, 2, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("LOR Power", AIC32X4_OUTPWRCTL, 2, 0, शून्य, 0),
 
 	SND_SOC_DAPM_ADC("Right ADC", "Right Capture", AIC32X4_ADCSETUP, 6, 0),
 	SND_SOC_DAPM_MUX("IN1_R to Right Mixer Positive Resistor", SND_SOC_NOPM, 0, 0,
@@ -470,808 +471,808 @@ static const struct snd_soc_dapm_widget aic32x4_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("IN3_R"),
 	SND_SOC_DAPM_INPUT("CM_L"),
 	SND_SOC_DAPM_INPUT("CM_R"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route aic32x4_dapm_routes[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route aic32x4_dapm_routes[] = अणु
 	/* Left Output */
-	{"HPL Output Mixer", "L_DAC Switch", "Left DAC"},
-	{"HPL Output Mixer", "IN1_L Switch", "IN1_L"},
+	अणु"HPL Output Mixer", "L_DAC Switch", "Left DAC"पूर्ण,
+	अणु"HPL Output Mixer", "IN1_L Switch", "IN1_L"पूर्ण,
 
-	{"HPL Power", NULL, "HPL Output Mixer"},
-	{"HPL", NULL, "HPL Power"},
+	अणु"HPL Power", शून्य, "HPL Output Mixer"पूर्ण,
+	अणु"HPL", शून्य, "HPL Power"पूर्ण,
 
-	{"LOL Output Mixer", "L_DAC Switch", "Left DAC"},
+	अणु"LOL Output Mixer", "L_DAC Switch", "Left DAC"पूर्ण,
 
-	{"LOL Power", NULL, "LOL Output Mixer"},
-	{"LOL", NULL, "LOL Power"},
+	अणु"LOL Power", शून्य, "LOL Output Mixer"पूर्ण,
+	अणु"LOL", शून्य, "LOL Power"पूर्ण,
 
 	/* Right Output */
-	{"HPR Output Mixer", "R_DAC Switch", "Right DAC"},
-	{"HPR Output Mixer", "IN1_R Switch", "IN1_R"},
+	अणु"HPR Output Mixer", "R_DAC Switch", "Right DAC"पूर्ण,
+	अणु"HPR Output Mixer", "IN1_R Switch", "IN1_R"पूर्ण,
 
-	{"HPR Power", NULL, "HPR Output Mixer"},
-	{"HPR", NULL, "HPR Power"},
+	अणु"HPR Power", शून्य, "HPR Output Mixer"पूर्ण,
+	अणु"HPR", शून्य, "HPR Power"पूर्ण,
 
-	{"LOR Output Mixer", "R_DAC Switch", "Right DAC"},
+	अणु"LOR Output Mixer", "R_DAC Switch", "Right DAC"पूर्ण,
 
-	{"LOR Power", NULL, "LOR Output Mixer"},
-	{"LOR", NULL, "LOR Power"},
+	अणु"LOR Power", शून्य, "LOR Output Mixer"पूर्ण,
+	अणु"LOR", शून्य, "LOR Power"पूर्ण,
 
 	/* Right Input */
-	{"Right ADC", NULL, "IN1_R to Right Mixer Positive Resistor"},
-	{"IN1_R to Right Mixer Positive Resistor", "10 kOhm", "IN1_R"},
-	{"IN1_R to Right Mixer Positive Resistor", "20 kOhm", "IN1_R"},
-	{"IN1_R to Right Mixer Positive Resistor", "40 kOhm", "IN1_R"},
+	अणु"Right ADC", शून्य, "IN1_R to Right Mixer Positive Resistor"पूर्ण,
+	अणु"IN1_R to Right Mixer Positive Resistor", "10 kOhm", "IN1_R"पूर्ण,
+	अणु"IN1_R to Right Mixer Positive Resistor", "20 kOhm", "IN1_R"पूर्ण,
+	अणु"IN1_R to Right Mixer Positive Resistor", "40 kOhm", "IN1_R"पूर्ण,
 
-	{"Right ADC", NULL, "IN2_R to Right Mixer Positive Resistor"},
-	{"IN2_R to Right Mixer Positive Resistor", "10 kOhm", "IN2_R"},
-	{"IN2_R to Right Mixer Positive Resistor", "20 kOhm", "IN2_R"},
-	{"IN2_R to Right Mixer Positive Resistor", "40 kOhm", "IN2_R"},
+	अणु"Right ADC", शून्य, "IN2_R to Right Mixer Positive Resistor"पूर्ण,
+	अणु"IN2_R to Right Mixer Positive Resistor", "10 kOhm", "IN2_R"पूर्ण,
+	अणु"IN2_R to Right Mixer Positive Resistor", "20 kOhm", "IN2_R"पूर्ण,
+	अणु"IN2_R to Right Mixer Positive Resistor", "40 kOhm", "IN2_R"पूर्ण,
 
-	{"Right ADC", NULL, "IN3_R to Right Mixer Positive Resistor"},
-	{"IN3_R to Right Mixer Positive Resistor", "10 kOhm", "IN3_R"},
-	{"IN3_R to Right Mixer Positive Resistor", "20 kOhm", "IN3_R"},
-	{"IN3_R to Right Mixer Positive Resistor", "40 kOhm", "IN3_R"},
+	अणु"Right ADC", शून्य, "IN3_R to Right Mixer Positive Resistor"पूर्ण,
+	अणु"IN3_R to Right Mixer Positive Resistor", "10 kOhm", "IN3_R"पूर्ण,
+	अणु"IN3_R to Right Mixer Positive Resistor", "20 kOhm", "IN3_R"पूर्ण,
+	अणु"IN3_R to Right Mixer Positive Resistor", "40 kOhm", "IN3_R"पूर्ण,
 
-	{"Right ADC", NULL, "IN2_L to Right Mixer Positive Resistor"},
-	{"IN2_L to Right Mixer Positive Resistor", "10 kOhm", "IN2_L"},
-	{"IN2_L to Right Mixer Positive Resistor", "20 kOhm", "IN2_L"},
-	{"IN2_L to Right Mixer Positive Resistor", "40 kOhm", "IN2_L"},
+	अणु"Right ADC", शून्य, "IN2_L to Right Mixer Positive Resistor"पूर्ण,
+	अणु"IN2_L to Right Mixer Positive Resistor", "10 kOhm", "IN2_L"पूर्ण,
+	अणु"IN2_L to Right Mixer Positive Resistor", "20 kOhm", "IN2_L"पूर्ण,
+	अणु"IN2_L to Right Mixer Positive Resistor", "40 kOhm", "IN2_L"पूर्ण,
 
-	{"Right ADC", NULL, "CM_R to Right Mixer Negative Resistor"},
-	{"CM_R to Right Mixer Negative Resistor", "10 kOhm", "CM_R"},
-	{"CM_R to Right Mixer Negative Resistor", "20 kOhm", "CM_R"},
-	{"CM_R to Right Mixer Negative Resistor", "40 kOhm", "CM_R"},
+	अणु"Right ADC", शून्य, "CM_R to Right Mixer Negative Resistor"पूर्ण,
+	अणु"CM_R to Right Mixer Negative Resistor", "10 kOhm", "CM_R"पूर्ण,
+	अणु"CM_R to Right Mixer Negative Resistor", "20 kOhm", "CM_R"पूर्ण,
+	अणु"CM_R to Right Mixer Negative Resistor", "40 kOhm", "CM_R"पूर्ण,
 
-	{"Right ADC", NULL, "IN1_L to Right Mixer Negative Resistor"},
-	{"IN1_L to Right Mixer Negative Resistor", "10 kOhm", "IN1_L"},
-	{"IN1_L to Right Mixer Negative Resistor", "20 kOhm", "IN1_L"},
-	{"IN1_L to Right Mixer Negative Resistor", "40 kOhm", "IN1_L"},
+	अणु"Right ADC", शून्य, "IN1_L to Right Mixer Negative Resistor"पूर्ण,
+	अणु"IN1_L to Right Mixer Negative Resistor", "10 kOhm", "IN1_L"पूर्ण,
+	अणु"IN1_L to Right Mixer Negative Resistor", "20 kOhm", "IN1_L"पूर्ण,
+	अणु"IN1_L to Right Mixer Negative Resistor", "40 kOhm", "IN1_L"पूर्ण,
 
-	{"Right ADC", NULL, "IN3_L to Right Mixer Negative Resistor"},
-	{"IN3_L to Right Mixer Negative Resistor", "10 kOhm", "IN3_L"},
-	{"IN3_L to Right Mixer Negative Resistor", "20 kOhm", "IN3_L"},
-	{"IN3_L to Right Mixer Negative Resistor", "40 kOhm", "IN3_L"},
+	अणु"Right ADC", शून्य, "IN3_L to Right Mixer Negative Resistor"पूर्ण,
+	अणु"IN3_L to Right Mixer Negative Resistor", "10 kOhm", "IN3_L"पूर्ण,
+	अणु"IN3_L to Right Mixer Negative Resistor", "20 kOhm", "IN3_L"पूर्ण,
+	अणु"IN3_L to Right Mixer Negative Resistor", "40 kOhm", "IN3_L"पूर्ण,
 
 	/* Left Input */
-	{"Left ADC", NULL, "IN1_L to Left Mixer Positive Resistor"},
-	{"IN1_L to Left Mixer Positive Resistor", "10 kOhm", "IN1_L"},
-	{"IN1_L to Left Mixer Positive Resistor", "20 kOhm", "IN1_L"},
-	{"IN1_L to Left Mixer Positive Resistor", "40 kOhm", "IN1_L"},
+	अणु"Left ADC", शून्य, "IN1_L to Left Mixer Positive Resistor"पूर्ण,
+	अणु"IN1_L to Left Mixer Positive Resistor", "10 kOhm", "IN1_L"पूर्ण,
+	अणु"IN1_L to Left Mixer Positive Resistor", "20 kOhm", "IN1_L"पूर्ण,
+	अणु"IN1_L to Left Mixer Positive Resistor", "40 kOhm", "IN1_L"पूर्ण,
 
-	{"Left ADC", NULL, "IN2_L to Left Mixer Positive Resistor"},
-	{"IN2_L to Left Mixer Positive Resistor", "10 kOhm", "IN2_L"},
-	{"IN2_L to Left Mixer Positive Resistor", "20 kOhm", "IN2_L"},
-	{"IN2_L to Left Mixer Positive Resistor", "40 kOhm", "IN2_L"},
+	अणु"Left ADC", शून्य, "IN2_L to Left Mixer Positive Resistor"पूर्ण,
+	अणु"IN2_L to Left Mixer Positive Resistor", "10 kOhm", "IN2_L"पूर्ण,
+	अणु"IN2_L to Left Mixer Positive Resistor", "20 kOhm", "IN2_L"पूर्ण,
+	अणु"IN2_L to Left Mixer Positive Resistor", "40 kOhm", "IN2_L"पूर्ण,
 
-	{"Left ADC", NULL, "IN3_L to Left Mixer Positive Resistor"},
-	{"IN3_L to Left Mixer Positive Resistor", "10 kOhm", "IN3_L"},
-	{"IN3_L to Left Mixer Positive Resistor", "20 kOhm", "IN3_L"},
-	{"IN3_L to Left Mixer Positive Resistor", "40 kOhm", "IN3_L"},
+	अणु"Left ADC", शून्य, "IN3_L to Left Mixer Positive Resistor"पूर्ण,
+	अणु"IN3_L to Left Mixer Positive Resistor", "10 kOhm", "IN3_L"पूर्ण,
+	अणु"IN3_L to Left Mixer Positive Resistor", "20 kOhm", "IN3_L"पूर्ण,
+	अणु"IN3_L to Left Mixer Positive Resistor", "40 kOhm", "IN3_L"पूर्ण,
 
-	{"Left ADC", NULL, "IN1_R to Left Mixer Positive Resistor"},
-	{"IN1_R to Left Mixer Positive Resistor", "10 kOhm", "IN1_R"},
-	{"IN1_R to Left Mixer Positive Resistor", "20 kOhm", "IN1_R"},
-	{"IN1_R to Left Mixer Positive Resistor", "40 kOhm", "IN1_R"},
+	अणु"Left ADC", शून्य, "IN1_R to Left Mixer Positive Resistor"पूर्ण,
+	अणु"IN1_R to Left Mixer Positive Resistor", "10 kOhm", "IN1_R"पूर्ण,
+	अणु"IN1_R to Left Mixer Positive Resistor", "20 kOhm", "IN1_R"पूर्ण,
+	अणु"IN1_R to Left Mixer Positive Resistor", "40 kOhm", "IN1_R"पूर्ण,
 
-	{"Left ADC", NULL, "CM_L to Left Mixer Negative Resistor"},
-	{"CM_L to Left Mixer Negative Resistor", "10 kOhm", "CM_L"},
-	{"CM_L to Left Mixer Negative Resistor", "20 kOhm", "CM_L"},
-	{"CM_L to Left Mixer Negative Resistor", "40 kOhm", "CM_L"},
+	अणु"Left ADC", शून्य, "CM_L to Left Mixer Negative Resistor"पूर्ण,
+	अणु"CM_L to Left Mixer Negative Resistor", "10 kOhm", "CM_L"पूर्ण,
+	अणु"CM_L to Left Mixer Negative Resistor", "20 kOhm", "CM_L"पूर्ण,
+	अणु"CM_L to Left Mixer Negative Resistor", "40 kOhm", "CM_L"पूर्ण,
 
-	{"Left ADC", NULL, "IN2_R to Left Mixer Negative Resistor"},
-	{"IN2_R to Left Mixer Negative Resistor", "10 kOhm", "IN2_R"},
-	{"IN2_R to Left Mixer Negative Resistor", "20 kOhm", "IN2_R"},
-	{"IN2_R to Left Mixer Negative Resistor", "40 kOhm", "IN2_R"},
+	अणु"Left ADC", शून्य, "IN2_R to Left Mixer Negative Resistor"पूर्ण,
+	अणु"IN2_R to Left Mixer Negative Resistor", "10 kOhm", "IN2_R"पूर्ण,
+	अणु"IN2_R to Left Mixer Negative Resistor", "20 kOhm", "IN2_R"पूर्ण,
+	अणु"IN2_R to Left Mixer Negative Resistor", "40 kOhm", "IN2_R"पूर्ण,
 
-	{"Left ADC", NULL, "IN3_R to Left Mixer Negative Resistor"},
-	{"IN3_R to Left Mixer Negative Resistor", "10 kOhm", "IN3_R"},
-	{"IN3_R to Left Mixer Negative Resistor", "20 kOhm", "IN3_R"},
-	{"IN3_R to Left Mixer Negative Resistor", "40 kOhm", "IN3_R"},
-};
+	अणु"Left ADC", शून्य, "IN3_R to Left Mixer Negative Resistor"पूर्ण,
+	अणु"IN3_R to Left Mixer Negative Resistor", "10 kOhm", "IN3_R"पूर्ण,
+	अणु"IN3_R to Left Mixer Negative Resistor", "20 kOhm", "IN3_R"पूर्ण,
+	अणु"IN3_R to Left Mixer Negative Resistor", "40 kOhm", "IN3_R"पूर्ण,
+पूर्ण;
 
-static const struct regmap_range_cfg aic32x4_regmap_pages[] = {
-	{
+अटल स्थिर काष्ठा regmap_range_cfg aic32x4_regmap_pages[] = अणु
+	अणु
 		.selector_reg = 0,
 		.selector_mask	= 0xff,
-		.window_start = 0,
-		.window_len = 128,
+		.winकरोw_start = 0,
+		.winकरोw_len = 128,
 		.range_min = 0,
 		.range_max = AIC32X4_REFPOWERUP,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-const struct regmap_config aic32x4_regmap_config = {
-	.max_register = AIC32X4_REFPOWERUP,
+स्थिर काष्ठा regmap_config aic32x4_regmap_config = अणु
+	.max_रेजिस्टर = AIC32X4_REFPOWERUP,
 	.ranges = aic32x4_regmap_pages,
 	.num_ranges = ARRAY_SIZE(aic32x4_regmap_pages),
-};
+पूर्ण;
 EXPORT_SYMBOL(aic32x4_regmap_config);
 
-static int aic32x4_set_dai_sysclk(struct snd_soc_dai *codec_dai,
-				  int clk_id, unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct clk *mclk;
-	struct clk *pll;
+अटल पूर्णांक aic32x4_set_dai_sysclk(काष्ठा snd_soc_dai *codec_dai,
+				  पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा clk *mclk;
+	काष्ठा clk *pll;
 
 	pll = devm_clk_get(component->dev, "pll");
-	if (IS_ERR(pll))
-		return PTR_ERR(pll);
+	अगर (IS_ERR(pll))
+		वापस PTR_ERR(pll);
 
 	mclk = clk_get_parent(pll);
 
-	return clk_set_rate(mclk, freq);
-}
+	वापस clk_set_rate(mclk, freq);
+पूर्ण
 
-static int aic32x4_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	u8 iface_reg_1 = 0;
-	u8 iface_reg_2 = 0;
-	u8 iface_reg_3 = 0;
+अटल पूर्णांक aic32x4_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	u8 अगरace_reg_1 = 0;
+	u8 अगरace_reg_2 = 0;
+	u8 अगरace_reg_3 = 0;
 
-	/* set master/slave audio interface */
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
-		iface_reg_1 |= AIC32X4_BCLKMASTER | AIC32X4_WCLKMASTER;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		printk(KERN_ERR "aic32x4: invalid DAI master/slave interface\n");
-		return -EINVAL;
-	}
+	/* set master/slave audio पूर्णांकerface */
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
+		अगरace_reg_1 |= AIC32X4_BCLKMASTER | AIC32X4_WCLKMASTER;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "aic32x4: invalid DAI master/slave interface\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-		break;
-	case SND_SOC_DAIFMT_DSP_A:
-		iface_reg_1 |= (AIC32X4_DSP_MODE <<
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_A:
+		अगरace_reg_1 |= (AIC32X4_DSP_MODE <<
 				AIC32X4_IFACE1_DATATYPE_SHIFT);
-		iface_reg_3 |= AIC32X4_BCLKINV_MASK; /* invert bit clock */
-		iface_reg_2 = 0x01; /* add offset 1 */
-		break;
-	case SND_SOC_DAIFMT_DSP_B:
-		iface_reg_1 |= (AIC32X4_DSP_MODE <<
+		अगरace_reg_3 |= AIC32X4_BCLKINV_MASK; /* invert bit घड़ी */
+		अगरace_reg_2 = 0x01; /* add offset 1 */
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_B:
+		अगरace_reg_1 |= (AIC32X4_DSP_MODE <<
 				AIC32X4_IFACE1_DATATYPE_SHIFT);
-		iface_reg_3 |= AIC32X4_BCLKINV_MASK; /* invert bit clock */
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
-		iface_reg_1 |= (AIC32X4_RIGHT_JUSTIFIED_MODE <<
+		अगरace_reg_3 |= AIC32X4_BCLKINV_MASK; /* invert bit घड़ी */
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
+		अगरace_reg_1 |= (AIC32X4_RIGHT_JUSTIFIED_MODE <<
 				AIC32X4_IFACE1_DATATYPE_SHIFT);
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
-		iface_reg_1 |= (AIC32X4_LEFT_JUSTIFIED_MODE <<
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
+		अगरace_reg_1 |= (AIC32X4_LEFT_JUSTIFIED_MODE <<
 				AIC32X4_IFACE1_DATATYPE_SHIFT);
-		break;
-	default:
-		printk(KERN_ERR "aic32x4: invalid DAI interface format\n");
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "aic32x4: invalid DAI interface format\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_soc_component_update_bits(component, AIC32X4_IFACE1,
 				AIC32X4_IFACE1_DATATYPE_MASK |
-				AIC32X4_IFACE1_MASTER_MASK, iface_reg_1);
+				AIC32X4_IFACE1_MASTER_MASK, अगरace_reg_1);
 	snd_soc_component_update_bits(component, AIC32X4_IFACE2,
-				AIC32X4_DATA_OFFSET_MASK, iface_reg_2);
+				AIC32X4_DATA_OFFSET_MASK, अगरace_reg_2);
 	snd_soc_component_update_bits(component, AIC32X4_IFACE3,
-				AIC32X4_BCLKINV_MASK, iface_reg_3);
+				AIC32X4_BCLKINV_MASK, अगरace_reg_3);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aic32x4_set_aosr(struct snd_soc_component *component, u8 aosr)
-{
-	return snd_soc_component_write(component, AIC32X4_AOSR, aosr);
-}
+अटल पूर्णांक aic32x4_set_aosr(काष्ठा snd_soc_component *component, u8 aosr)
+अणु
+	वापस snd_soc_component_ग_लिखो(component, AIC32X4_AOSR, aosr);
+पूर्ण
 
-static int aic32x4_set_dosr(struct snd_soc_component *component, u16 dosr)
-{
-	snd_soc_component_write(component, AIC32X4_DOSRMSB, dosr >> 8);
-	snd_soc_component_write(component, AIC32X4_DOSRLSB,
-		      (dosr & 0xff));
+अटल पूर्णांक aic32x4_set_करोsr(काष्ठा snd_soc_component *component, u16 करोsr)
+अणु
+	snd_soc_component_ग_लिखो(component, AIC32X4_DOSRMSB, करोsr >> 8);
+	snd_soc_component_ग_लिखो(component, AIC32X4_DOSRLSB,
+		      (करोsr & 0xff));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aic32x4_set_processing_blocks(struct snd_soc_component *component,
+अटल पूर्णांक aic32x4_set_processing_blocks(काष्ठा snd_soc_component *component,
 						u8 r_block, u8 p_block)
-{
-	if (r_block > 18 || p_block > 25)
-		return -EINVAL;
+अणु
+	अगर (r_block > 18 || p_block > 25)
+		वापस -EINVAL;
 
-	snd_soc_component_write(component, AIC32X4_ADCSPB, r_block);
-	snd_soc_component_write(component, AIC32X4_DACSPB, p_block);
+	snd_soc_component_ग_लिखो(component, AIC32X4_ADCSPB, r_block);
+	snd_soc_component_ग_लिखो(component, AIC32X4_DACSPB, p_block);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aic32x4_setup_clocks(struct snd_soc_component *component,
-				unsigned int sample_rate, unsigned int channels,
-				unsigned int bit_depth)
-{
+अटल पूर्णांक aic32x4_setup_घड़ीs(काष्ठा snd_soc_component *component,
+				अचिन्हित पूर्णांक sample_rate, अचिन्हित पूर्णांक channels,
+				अचिन्हित पूर्णांक bit_depth)
+अणु
 	u8 aosr;
-	u16 dosr;
+	u16 करोsr;
 	u8 adc_resource_class, dac_resource_class;
 	u8 madc, nadc, mdac, ndac, max_nadc, min_mdac, max_ndac;
-	u8 dosr_increment;
-	u16 max_dosr, min_dosr;
-	unsigned long adc_clock_rate, dac_clock_rate;
-	int ret;
+	u8 करोsr_increment;
+	u16 max_करोsr, min_करोsr;
+	अचिन्हित दीर्घ adc_घड़ी_rate, dac_घड़ी_rate;
+	पूर्णांक ret;
 
-	struct clk_bulk_data clocks[] = {
-		{ .id = "pll" },
-		{ .id = "nadc" },
-		{ .id = "madc" },
-		{ .id = "ndac" },
-		{ .id = "mdac" },
-		{ .id = "bdiv" },
-	};
-	ret = devm_clk_bulk_get(component->dev, ARRAY_SIZE(clocks), clocks);
-	if (ret)
-		return ret;
+	काष्ठा clk_bulk_data घड़ीs[] = अणु
+		अणु .id = "pll" पूर्ण,
+		अणु .id = "nadc" पूर्ण,
+		अणु .id = "madc" पूर्ण,
+		अणु .id = "ndac" पूर्ण,
+		अणु .id = "mdac" पूर्ण,
+		अणु .id = "bdiv" पूर्ण,
+	पूर्ण;
+	ret = devm_clk_bulk_get(component->dev, ARRAY_SIZE(घड़ीs), घड़ीs);
+	अगर (ret)
+		वापस ret;
 
-	if (sample_rate <= 48000) {
+	अगर (sample_rate <= 48000) अणु
 		aosr = 128;
 		adc_resource_class = 6;
 		dac_resource_class = 8;
-		dosr_increment = 8;
+		करोsr_increment = 8;
 		aic32x4_set_processing_blocks(component, 1, 1);
-	} else if (sample_rate <= 96000) {
+	पूर्ण अन्यथा अगर (sample_rate <= 96000) अणु
 		aosr = 64;
 		adc_resource_class = 6;
 		dac_resource_class = 8;
-		dosr_increment = 4;
+		करोsr_increment = 4;
 		aic32x4_set_processing_blocks(component, 1, 9);
-	} else if (sample_rate == 192000) {
+	पूर्ण अन्यथा अगर (sample_rate == 192000) अणु
 		aosr = 32;
 		adc_resource_class = 3;
 		dac_resource_class = 4;
-		dosr_increment = 2;
+		करोsr_increment = 2;
 		aic32x4_set_processing_blocks(component, 13, 19);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(component->dev, "Sampling rate not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	madc = DIV_ROUND_UP((32 * adc_resource_class), aosr);
-	max_dosr = (AIC32X4_MAX_DOSR_FREQ / sample_rate / dosr_increment) *
-			dosr_increment;
-	min_dosr = (AIC32X4_MIN_DOSR_FREQ / sample_rate / dosr_increment) *
-			dosr_increment;
+	max_करोsr = (AIC32X4_MAX_DOSR_FREQ / sample_rate / करोsr_increment) *
+			करोsr_increment;
+	min_करोsr = (AIC32X4_MIN_DOSR_FREQ / sample_rate / करोsr_increment) *
+			करोsr_increment;
 	max_nadc = AIC32X4_MAX_CODEC_CLKIN_FREQ / (madc * aosr * sample_rate);
 
-	for (nadc = max_nadc; nadc > 0; --nadc) {
-		adc_clock_rate = nadc * madc * aosr * sample_rate;
-		for (dosr = max_dosr; dosr >= min_dosr;
-				dosr -= dosr_increment) {
-			min_mdac = DIV_ROUND_UP((32 * dac_resource_class), dosr);
+	क्रम (nadc = max_nadc; nadc > 0; --nadc) अणु
+		adc_घड़ी_rate = nadc * madc * aosr * sample_rate;
+		क्रम (करोsr = max_करोsr; करोsr >= min_करोsr;
+				करोsr -= करोsr_increment) अणु
+			min_mdac = DIV_ROUND_UP((32 * dac_resource_class), करोsr);
 			max_ndac = AIC32X4_MAX_CODEC_CLKIN_FREQ /
-					(min_mdac * dosr * sample_rate);
-			for (mdac = min_mdac; mdac <= 128; ++mdac) {
-				for (ndac = max_ndac; ndac > 0; --ndac) {
-					dac_clock_rate = ndac * mdac * dosr *
+					(min_mdac * करोsr * sample_rate);
+			क्रम (mdac = min_mdac; mdac <= 128; ++mdac) अणु
+				क्रम (ndac = max_ndac; ndac > 0; --ndac) अणु
+					dac_घड़ी_rate = ndac * mdac * करोsr *
 							sample_rate;
-					if (dac_clock_rate == adc_clock_rate) {
-						if (clk_round_rate(clocks[0].clk, dac_clock_rate) == 0)
-							continue;
+					अगर (dac_घड़ी_rate == adc_घड़ी_rate) अणु
+						अगर (clk_round_rate(घड़ीs[0].clk, dac_घड़ी_rate) == 0)
+							जारी;
 
-						clk_set_rate(clocks[0].clk,
-							dac_clock_rate);
+						clk_set_rate(घड़ीs[0].clk,
+							dac_घड़ी_rate);
 
-						clk_set_rate(clocks[1].clk,
+						clk_set_rate(घड़ीs[1].clk,
 							sample_rate * aosr *
 							madc);
-						clk_set_rate(clocks[2].clk,
+						clk_set_rate(घड़ीs[2].clk,
 							sample_rate * aosr);
 						aic32x4_set_aosr(component,
 							aosr);
 
-						clk_set_rate(clocks[3].clk,
-							sample_rate * dosr *
+						clk_set_rate(घड़ीs[3].clk,
+							sample_rate * करोsr *
 							mdac);
-						clk_set_rate(clocks[4].clk,
-							sample_rate * dosr);
-						aic32x4_set_dosr(component,
-							dosr);
+						clk_set_rate(घड़ीs[4].clk,
+							sample_rate * करोsr);
+						aic32x4_set_करोsr(component,
+							करोsr);
 
-						clk_set_rate(clocks[5].clk,
+						clk_set_rate(घड़ीs[5].clk,
 							sample_rate * channels *
 							bit_depth);
 
-						return 0;
-					}
-				}
-			}
-		}
-	}
+						वापस 0;
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	dev_err(component->dev,
 		"Could not set clocks to support sample rate.\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int aic32x4_hw_params(struct snd_pcm_substream *substream,
-				 struct snd_pcm_hw_params *params,
-				 struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct aic32x4_priv *aic32x4 = snd_soc_component_get_drvdata(component);
-	u8 iface1_reg = 0;
+अटल पूर्णांक aic32x4_hw_params(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_hw_params *params,
+				 काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा aic32x4_priv *aic32x4 = snd_soc_component_get_drvdata(component);
+	u8 अगरace1_reg = 0;
 	u8 dacsetup_reg = 0;
 
-	aic32x4_setup_clocks(component, params_rate(params),
+	aic32x4_setup_घड़ीs(component, params_rate(params),
 			     params_channels(params),
 			     params_physical_width(params));
 
-	switch (params_physical_width(params)) {
-	case 16:
-		iface1_reg |= (AIC32X4_WORD_LEN_16BITS <<
+	चयन (params_physical_width(params)) अणु
+	हाल 16:
+		अगरace1_reg |= (AIC32X4_WORD_LEN_16BITS <<
 				   AIC32X4_IFACE1_DATALEN_SHIFT);
-		break;
-	case 20:
-		iface1_reg |= (AIC32X4_WORD_LEN_20BITS <<
+		अवरोध;
+	हाल 20:
+		अगरace1_reg |= (AIC32X4_WORD_LEN_20BITS <<
 				   AIC32X4_IFACE1_DATALEN_SHIFT);
-		break;
-	case 24:
-		iface1_reg |= (AIC32X4_WORD_LEN_24BITS <<
+		अवरोध;
+	हाल 24:
+		अगरace1_reg |= (AIC32X4_WORD_LEN_24BITS <<
 				   AIC32X4_IFACE1_DATALEN_SHIFT);
-		break;
-	case 32:
-		iface1_reg |= (AIC32X4_WORD_LEN_32BITS <<
+		अवरोध;
+	हाल 32:
+		अगरace1_reg |= (AIC32X4_WORD_LEN_32BITS <<
 				   AIC32X4_IFACE1_DATALEN_SHIFT);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	snd_soc_component_update_bits(component, AIC32X4_IFACE1,
-				AIC32X4_IFACE1_DATALEN_MASK, iface1_reg);
+				AIC32X4_IFACE1_DATALEN_MASK, अगरace1_reg);
 
-	if (params_channels(params) == 1) {
+	अगर (params_channels(params) == 1) अणु
 		dacsetup_reg = AIC32X4_RDAC2LCHN | AIC32X4_LDAC2LCHN;
-	} else {
-		if (aic32x4->swapdacs)
+	पूर्ण अन्यथा अणु
+		अगर (aic32x4->swapdacs)
 			dacsetup_reg = AIC32X4_RDAC2LCHN | AIC32X4_LDAC2RCHN;
-		else
+		अन्यथा
 			dacsetup_reg = AIC32X4_LDAC2LCHN | AIC32X4_RDAC2RCHN;
-	}
+	पूर्ण
 	snd_soc_component_update_bits(component, AIC32X4_DACSETUP,
 				AIC32X4_DAC_CHAN_MASK, dacsetup_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aic32x4_mute(struct snd_soc_dai *dai, int mute, int direction)
-{
-	struct snd_soc_component *component = dai->component;
+अटल पूर्णांक aic32x4_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
 
 	snd_soc_component_update_bits(component, AIC32X4_DACMUTE,
 				AIC32X4_MUTEON, mute ? AIC32X4_MUTEON : 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aic32x4_set_bias_level(struct snd_soc_component *component,
-				  enum snd_soc_bias_level level)
-{
-	int ret;
+अटल पूर्णांक aic32x4_set_bias_level(काष्ठा snd_soc_component *component,
+				  क्रमागत snd_soc_bias_level level)
+अणु
+	पूर्णांक ret;
 
-	struct clk_bulk_data clocks[] = {
-		{ .id = "madc" },
-		{ .id = "mdac" },
-		{ .id = "bdiv" },
-	};
+	काष्ठा clk_bulk_data घड़ीs[] = अणु
+		अणु .id = "madc" पूर्ण,
+		अणु .id = "mdac" पूर्ण,
+		अणु .id = "bdiv" पूर्ण,
+	पूर्ण;
 
-	ret = devm_clk_bulk_get(component->dev, ARRAY_SIZE(clocks), clocks);
-	if (ret)
-		return ret;
+	ret = devm_clk_bulk_get(component->dev, ARRAY_SIZE(घड़ीs), घड़ीs);
+	अगर (ret)
+		वापस ret;
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-		ret = clk_bulk_prepare_enable(ARRAY_SIZE(clocks), clocks);
-		if (ret) {
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+		ret = clk_bulk_prepare_enable(ARRAY_SIZE(घड़ीs), घड़ीs);
+		अगर (ret) अणु
 			dev_err(component->dev, "Failed to enable clocks\n");
-			return ret;
-		}
-		break;
-	case SND_SOC_BIAS_PREPARE:
-		break;
-	case SND_SOC_BIAS_STANDBY:
+			वापस ret;
+		पूर्ण
+		अवरोध;
+	हाल SND_SOC_BIAS_PREPARE:
+		अवरोध;
+	हाल SND_SOC_BIAS_STANDBY:
 		/* Initial cold start */
-		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF)
-			break;
+		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF)
+			अवरोध;
 
-		clk_bulk_disable_unprepare(ARRAY_SIZE(clocks), clocks);
-		break;
-	case SND_SOC_BIAS_OFF:
-		break;
-	}
-	return 0;
-}
+		clk_bulk_disable_unprepare(ARRAY_SIZE(घड़ीs), घड़ीs);
+		अवरोध;
+	हाल SND_SOC_BIAS_OFF:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define AIC32X4_RATES	SNDRV_PCM_RATE_8000_192000
-#define AIC32X4_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE \
+#घोषणा AIC32X4_RATES	SNDRV_PCM_RATE_8000_192000
+#घोषणा AIC32X4_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE \
 			 | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S24_3LE \
 			 | SNDRV_PCM_FMTBIT_S32_LE)
 
-static const struct snd_soc_dai_ops aic32x4_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops aic32x4_ops = अणु
 	.hw_params = aic32x4_hw_params,
 	.mute_stream = aic32x4_mute,
 	.set_fmt = aic32x4_set_dai_fmt,
 	.set_sysclk = aic32x4_set_dai_sysclk,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver aic32x4_dai = {
+अटल काष्ठा snd_soc_dai_driver aic32x4_dai = अणु
 	.name = "tlv320aic32x4-hifi",
-	.playback = {
+	.playback = अणु
 			 .stream_name = "Playback",
 			 .channels_min = 1,
 			 .channels_max = 2,
 			 .rates = AIC32X4_RATES,
-			 .formats = AIC32X4_FORMATS,},
-	.capture = {
+			 .क्रमmats = AIC32X4_FORMATS,पूर्ण,
+	.capture = अणु
 			.stream_name = "Capture",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = AIC32X4_RATES,
-			.formats = AIC32X4_FORMATS,},
+			.क्रमmats = AIC32X4_FORMATS,पूर्ण,
 	.ops = &aic32x4_ops,
 	.symmetric_rate = 1,
-};
+पूर्ण;
 
-static void aic32x4_setup_gpios(struct snd_soc_component *component)
-{
-	struct aic32x4_priv *aic32x4 = snd_soc_component_get_drvdata(component);
+अटल व्योम aic32x4_setup_gpios(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा aic32x4_priv *aic32x4 = snd_soc_component_get_drvdata(component);
 
 	/* setup GPIO functions */
 	/* MFP1 */
-	if (aic32x4->setup->gpio_func[0] != AIC32X4_MFPX_DEFAULT_VALUE) {
-		snd_soc_component_write(component, AIC32X4_DINCTL,
+	अगर (aic32x4->setup->gpio_func[0] != AIC32X4_MFPX_DEFAULT_VALUE) अणु
+		snd_soc_component_ग_लिखो(component, AIC32X4_DINCTL,
 			  aic32x4->setup->gpio_func[0]);
 		snd_soc_add_component_controls(component, aic32x4_mfp1,
 			ARRAY_SIZE(aic32x4_mfp1));
-	}
+	पूर्ण
 
 	/* MFP2 */
-	if (aic32x4->setup->gpio_func[1] != AIC32X4_MFPX_DEFAULT_VALUE) {
-		snd_soc_component_write(component, AIC32X4_DOUTCTL,
+	अगर (aic32x4->setup->gpio_func[1] != AIC32X4_MFPX_DEFAULT_VALUE) अणु
+		snd_soc_component_ग_लिखो(component, AIC32X4_DOUTCTL,
 			  aic32x4->setup->gpio_func[1]);
 		snd_soc_add_component_controls(component, aic32x4_mfp2,
 			ARRAY_SIZE(aic32x4_mfp2));
-	}
+	पूर्ण
 
 	/* MFP3 */
-	if (aic32x4->setup->gpio_func[2] != AIC32X4_MFPX_DEFAULT_VALUE) {
-		snd_soc_component_write(component, AIC32X4_SCLKCTL,
+	अगर (aic32x4->setup->gpio_func[2] != AIC32X4_MFPX_DEFAULT_VALUE) अणु
+		snd_soc_component_ग_लिखो(component, AIC32X4_SCLKCTL,
 			  aic32x4->setup->gpio_func[2]);
 		snd_soc_add_component_controls(component, aic32x4_mfp3,
 			ARRAY_SIZE(aic32x4_mfp3));
-	}
+	पूर्ण
 
 	/* MFP4 */
-	if (aic32x4->setup->gpio_func[3] != AIC32X4_MFPX_DEFAULT_VALUE) {
-		snd_soc_component_write(component, AIC32X4_MISOCTL,
+	अगर (aic32x4->setup->gpio_func[3] != AIC32X4_MFPX_DEFAULT_VALUE) अणु
+		snd_soc_component_ग_लिखो(component, AIC32X4_MISOCTL,
 			  aic32x4->setup->gpio_func[3]);
 		snd_soc_add_component_controls(component, aic32x4_mfp4,
 			ARRAY_SIZE(aic32x4_mfp4));
-	}
+	पूर्ण
 
 	/* MFP5 */
-	if (aic32x4->setup->gpio_func[4] != AIC32X4_MFPX_DEFAULT_VALUE) {
-		snd_soc_component_write(component, AIC32X4_GPIOCTL,
+	अगर (aic32x4->setup->gpio_func[4] != AIC32X4_MFPX_DEFAULT_VALUE) अणु
+		snd_soc_component_ग_लिखो(component, AIC32X4_GPIOCTL,
 			  aic32x4->setup->gpio_func[4]);
 		snd_soc_add_component_controls(component, aic32x4_mfp5,
 			ARRAY_SIZE(aic32x4_mfp5));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int aic32x4_component_probe(struct snd_soc_component *component)
-{
-	struct aic32x4_priv *aic32x4 = snd_soc_component_get_drvdata(component);
-	u32 tmp_reg;
-	int ret;
+अटल पूर्णांक aic32x4_component_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा aic32x4_priv *aic32x4 = snd_soc_component_get_drvdata(component);
+	u32 पंचांगp_reg;
+	पूर्णांक ret;
 
-	struct clk_bulk_data clocks[] = {
-		{ .id = "codec_clkin" },
-		{ .id = "pll" },
-		{ .id = "bdiv" },
-		{ .id = "mdac" },
-	};
+	काष्ठा clk_bulk_data घड़ीs[] = अणु
+		अणु .id = "codec_clkin" पूर्ण,
+		अणु .id = "pll" पूर्ण,
+		अणु .id = "bdiv" पूर्ण,
+		अणु .id = "mdac" पूर्ण,
+	पूर्ण;
 
-	ret = devm_clk_bulk_get(component->dev, ARRAY_SIZE(clocks), clocks);
-	if (ret)
-		return ret;
+	ret = devm_clk_bulk_get(component->dev, ARRAY_SIZE(घड़ीs), घड़ीs);
+	अगर (ret)
+		वापस ret;
 
-	if (aic32x4->setup)
+	अगर (aic32x4->setup)
 		aic32x4_setup_gpios(component);
 
-	clk_set_parent(clocks[0].clk, clocks[1].clk);
-	clk_set_parent(clocks[2].clk, clocks[3].clk);
+	clk_set_parent(घड़ीs[0].clk, घड़ीs[1].clk);
+	clk_set_parent(घड़ीs[2].clk, घड़ीs[3].clk);
 
-	/* Power platform configuration */
-	if (aic32x4->power_cfg & AIC32X4_PWR_MICBIAS_2075_LDOIN) {
-		snd_soc_component_write(component, AIC32X4_MICBIAS,
+	/* Power platक्रमm configuration */
+	अगर (aic32x4->घातer_cfg & AIC32X4_PWR_MICBIAS_2075_LDOIN) अणु
+		snd_soc_component_ग_लिखो(component, AIC32X4_MICBIAS,
 				AIC32X4_MICBIAS_LDOIN | AIC32X4_MICBIAS_2075V);
-	}
-	if (aic32x4->power_cfg & AIC32X4_PWR_AVDD_DVDD_WEAK_DISABLE)
-		snd_soc_component_write(component, AIC32X4_PWRCFG, AIC32X4_AVDDWEAKDISABLE);
+	पूर्ण
+	अगर (aic32x4->घातer_cfg & AIC32X4_PWR_AVDD_DVDD_WEAK_DISABLE)
+		snd_soc_component_ग_लिखो(component, AIC32X4_PWRCFG, AIC32X4_AVDDWEAKDISABLE);
 
-	tmp_reg = (aic32x4->power_cfg & AIC32X4_PWR_AIC32X4_LDO_ENABLE) ?
+	पंचांगp_reg = (aic32x4->घातer_cfg & AIC32X4_PWR_AIC32X4_LDO_ENABLE) ?
 			AIC32X4_LDOCTLEN : 0;
-	snd_soc_component_write(component, AIC32X4_LDOCTL, tmp_reg);
+	snd_soc_component_ग_लिखो(component, AIC32X4_LDOCTL, पंचांगp_reg);
 
-	tmp_reg = snd_soc_component_read(component, AIC32X4_CMMODE);
-	if (aic32x4->power_cfg & AIC32X4_PWR_CMMODE_LDOIN_RANGE_18_36)
-		tmp_reg |= AIC32X4_LDOIN_18_36;
-	if (aic32x4->power_cfg & AIC32X4_PWR_CMMODE_HP_LDOIN_POWERED)
-		tmp_reg |= AIC32X4_LDOIN2HP;
-	snd_soc_component_write(component, AIC32X4_CMMODE, tmp_reg);
+	पंचांगp_reg = snd_soc_component_पढ़ो(component, AIC32X4_CMMODE);
+	अगर (aic32x4->घातer_cfg & AIC32X4_PWR_CMMODE_LDOIN_RANGE_18_36)
+		पंचांगp_reg |= AIC32X4_LDOIN_18_36;
+	अगर (aic32x4->घातer_cfg & AIC32X4_PWR_CMMODE_HP_LDOIN_POWERED)
+		पंचांगp_reg |= AIC32X4_LDOIN2HP;
+	snd_soc_component_ग_लिखो(component, AIC32X4_CMMODE, पंचांगp_reg);
 
 	/* Mic PGA routing */
-	if (aic32x4->micpga_routing & AIC32X4_MICPGA_ROUTE_LMIC_IN2R_10K)
-		snd_soc_component_write(component, AIC32X4_LMICPGANIN,
+	अगर (aic32x4->micpga_routing & AIC32X4_MICPGA_ROUTE_LMIC_IN2R_10K)
+		snd_soc_component_ग_लिखो(component, AIC32X4_LMICPGANIN,
 				AIC32X4_LMICPGANIN_IN2R_10K);
-	else
-		snd_soc_component_write(component, AIC32X4_LMICPGANIN,
+	अन्यथा
+		snd_soc_component_ग_लिखो(component, AIC32X4_LMICPGANIN,
 				AIC32X4_LMICPGANIN_CM1L_10K);
-	if (aic32x4->micpga_routing & AIC32X4_MICPGA_ROUTE_RMIC_IN1L_10K)
-		snd_soc_component_write(component, AIC32X4_RMICPGANIN,
+	अगर (aic32x4->micpga_routing & AIC32X4_MICPGA_ROUTE_RMIC_IN1L_10K)
+		snd_soc_component_ग_लिखो(component, AIC32X4_RMICPGANIN,
 				AIC32X4_RMICPGANIN_IN1L_10K);
-	else
-		snd_soc_component_write(component, AIC32X4_RMICPGANIN,
+	अन्यथा
+		snd_soc_component_ग_लिखो(component, AIC32X4_RMICPGANIN,
 				AIC32X4_RMICPGANIN_CM1R_10K);
 
 	/*
-	 * Workaround: for an unknown reason, the ADC needs to be powered up
-	 * and down for the first capture to work properly. It seems related to
-	 * a HW BUG or some kind of behavior not documented in the datasheet.
+	 * Workaround: क्रम an unknown reason, the ADC needs to be घातered up
+	 * and करोwn क्रम the first capture to work properly. It seems related to
+	 * a HW BUG or some kind of behavior not करोcumented in the datasheet.
 	 */
-	tmp_reg = snd_soc_component_read(component, AIC32X4_ADCSETUP);
-	snd_soc_component_write(component, AIC32X4_ADCSETUP, tmp_reg |
+	पंचांगp_reg = snd_soc_component_पढ़ो(component, AIC32X4_ADCSETUP);
+	snd_soc_component_ग_लिखो(component, AIC32X4_ADCSETUP, पंचांगp_reg |
 				AIC32X4_LADC_EN | AIC32X4_RADC_EN);
-	snd_soc_component_write(component, AIC32X4_ADCSETUP, tmp_reg);
+	snd_soc_component_ग_लिखो(component, AIC32X4_ADCSETUP, पंचांगp_reg);
 
 	/*
-	 * Enable the fast charging feature and ensure the needed 40ms ellapsed
-	 * before using the analog circuits.
+	 * Enable the fast अक्षरging feature and ensure the needed 40ms ellapsed
+	 * beक्रमe using the analog circuits.
 	 */
-	snd_soc_component_write(component, AIC32X4_REFPOWERUP,
+	snd_soc_component_ग_लिखो(component, AIC32X4_REFPOWERUP,
 				AIC32X4_REFPOWERUP_40MS);
 	msleep(40);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver soc_component_dev_aic32x4 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_aic32x4 = अणु
 	.probe			= aic32x4_component_probe,
 	.set_bias_level		= aic32x4_set_bias_level,
 	.controls		= aic32x4_snd_controls,
 	.num_controls		= ARRAY_SIZE(aic32x4_snd_controls),
-	.dapm_widgets		= aic32x4_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(aic32x4_dapm_widgets),
+	.dapm_widमाला_लो		= aic32x4_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(aic32x4_dapm_widमाला_लो),
 	.dapm_routes		= aic32x4_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(aic32x4_dapm_routes),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static int aic32x4_parse_dt(struct aic32x4_priv *aic32x4,
-		struct device_node *np)
-{
-	struct aic32x4_setup_data *aic32x4_setup;
-	int ret;
+अटल पूर्णांक aic32x4_parse_dt(काष्ठा aic32x4_priv *aic32x4,
+		काष्ठा device_node *np)
+अणु
+	काष्ठा aic32x4_setup_data *aic32x4_setup;
+	पूर्णांक ret;
 
-	aic32x4_setup = devm_kzalloc(aic32x4->dev, sizeof(*aic32x4_setup),
+	aic32x4_setup = devm_kzalloc(aic32x4->dev, माप(*aic32x4_setup),
 							GFP_KERNEL);
-	if (!aic32x4_setup)
-		return -ENOMEM;
+	अगर (!aic32x4_setup)
+		वापस -ENOMEM;
 
 	ret = of_property_match_string(np, "clock-names", "mclk");
-	if (ret < 0)
-		return -EINVAL;
+	अगर (ret < 0)
+		वापस -EINVAL;
 	aic32x4->mclk_name = of_clk_get_parent_name(np, ret);
 
 	aic32x4->swapdacs = false;
 	aic32x4->micpga_routing = 0;
 	aic32x4->rstn_gpio = of_get_named_gpio(np, "reset-gpios", 0);
 
-	if (of_property_read_u32_array(np, "aic32x4-gpio-func",
+	अगर (of_property_पढ़ो_u32_array(np, "aic32x4-gpio-func",
 				aic32x4_setup->gpio_func, 5) >= 0)
 		aic32x4->setup = aic32x4_setup;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aic32x4_disable_regulators(struct aic32x4_priv *aic32x4)
-{
+अटल व्योम aic32x4_disable_regulators(काष्ठा aic32x4_priv *aic32x4)
+अणु
 	regulator_disable(aic32x4->supply_iov);
 
-	if (!IS_ERR(aic32x4->supply_ldo))
-		regulator_disable(aic32x4->supply_ldo);
+	अगर (!IS_ERR(aic32x4->supply_lकरो))
+		regulator_disable(aic32x4->supply_lकरो);
 
-	if (!IS_ERR(aic32x4->supply_dv))
+	अगर (!IS_ERR(aic32x4->supply_dv))
 		regulator_disable(aic32x4->supply_dv);
 
-	if (!IS_ERR(aic32x4->supply_av))
+	अगर (!IS_ERR(aic32x4->supply_av))
 		regulator_disable(aic32x4->supply_av);
-}
+पूर्ण
 
-static int aic32x4_setup_regulators(struct device *dev,
-		struct aic32x4_priv *aic32x4)
-{
-	int ret = 0;
+अटल पूर्णांक aic32x4_setup_regulators(काष्ठा device *dev,
+		काष्ठा aic32x4_priv *aic32x4)
+अणु
+	पूर्णांक ret = 0;
 
-	aic32x4->supply_ldo = devm_regulator_get_optional(dev, "ldoin");
+	aic32x4->supply_lकरो = devm_regulator_get_optional(dev, "ldoin");
 	aic32x4->supply_iov = devm_regulator_get(dev, "iov");
 	aic32x4->supply_dv = devm_regulator_get_optional(dev, "dv");
 	aic32x4->supply_av = devm_regulator_get_optional(dev, "av");
 
-	/* Check if the regulator requirements are fulfilled */
+	/* Check अगर the regulator requirements are fulfilled */
 
-	if (IS_ERR(aic32x4->supply_iov)) {
+	अगर (IS_ERR(aic32x4->supply_iov)) अणु
 		dev_err(dev, "Missing supply 'iov'\n");
-		return PTR_ERR(aic32x4->supply_iov);
-	}
+		वापस PTR_ERR(aic32x4->supply_iov);
+	पूर्ण
 
-	if (IS_ERR(aic32x4->supply_ldo)) {
-		if (PTR_ERR(aic32x4->supply_ldo) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+	अगर (IS_ERR(aic32x4->supply_lकरो)) अणु
+		अगर (PTR_ERR(aic32x4->supply_lकरो) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 
-		if (IS_ERR(aic32x4->supply_dv)) {
+		अगर (IS_ERR(aic32x4->supply_dv)) अणु
 			dev_err(dev, "Missing supply 'dv' or 'ldoin'\n");
-			return PTR_ERR(aic32x4->supply_dv);
-		}
-		if (IS_ERR(aic32x4->supply_av)) {
+			वापस PTR_ERR(aic32x4->supply_dv);
+		पूर्ण
+		अगर (IS_ERR(aic32x4->supply_av)) अणु
 			dev_err(dev, "Missing supply 'av' or 'ldoin'\n");
-			return PTR_ERR(aic32x4->supply_av);
-		}
-	} else {
-		if (PTR_ERR(aic32x4->supply_dv) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
-		if (PTR_ERR(aic32x4->supply_av) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
-	}
+			वापस PTR_ERR(aic32x4->supply_av);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (PTR_ERR(aic32x4->supply_dv) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
+		अगर (PTR_ERR(aic32x4->supply_av) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
+	पूर्ण
 
 	ret = regulator_enable(aic32x4->supply_iov);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable regulator iov\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!IS_ERR(aic32x4->supply_ldo)) {
-		ret = regulator_enable(aic32x4->supply_ldo);
-		if (ret) {
+	अगर (!IS_ERR(aic32x4->supply_lकरो)) अणु
+		ret = regulator_enable(aic32x4->supply_lकरो);
+		अगर (ret) अणु
 			dev_err(dev, "Failed to enable regulator ldo\n");
-			goto error_ldo;
-		}
-	}
+			जाओ error_lकरो;
+		पूर्ण
+	पूर्ण
 
-	if (!IS_ERR(aic32x4->supply_dv)) {
+	अगर (!IS_ERR(aic32x4->supply_dv)) अणु
 		ret = regulator_enable(aic32x4->supply_dv);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to enable regulator dv\n");
-			goto error_dv;
-		}
-	}
+			जाओ error_dv;
+		पूर्ण
+	पूर्ण
 
-	if (!IS_ERR(aic32x4->supply_av)) {
+	अगर (!IS_ERR(aic32x4->supply_av)) अणु
 		ret = regulator_enable(aic32x4->supply_av);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to enable regulator av\n");
-			goto error_av;
-		}
-	}
+			जाओ error_av;
+		पूर्ण
+	पूर्ण
 
-	if (!IS_ERR(aic32x4->supply_ldo) && IS_ERR(aic32x4->supply_av))
-		aic32x4->power_cfg |= AIC32X4_PWR_AIC32X4_LDO_ENABLE;
+	अगर (!IS_ERR(aic32x4->supply_lकरो) && IS_ERR(aic32x4->supply_av))
+		aic32x4->घातer_cfg |= AIC32X4_PWR_AIC32X4_LDO_ENABLE;
 
-	return 0;
+	वापस 0;
 
 error_av:
-	if (!IS_ERR(aic32x4->supply_dv))
+	अगर (!IS_ERR(aic32x4->supply_dv))
 		regulator_disable(aic32x4->supply_dv);
 
 error_dv:
-	if (!IS_ERR(aic32x4->supply_ldo))
-		regulator_disable(aic32x4->supply_ldo);
+	अगर (!IS_ERR(aic32x4->supply_lकरो))
+		regulator_disable(aic32x4->supply_lकरो);
 
-error_ldo:
+error_lकरो:
 	regulator_disable(aic32x4->supply_iov);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int aic32x4_probe(struct device *dev, struct regmap *regmap)
-{
-	struct aic32x4_priv *aic32x4;
-	struct aic32x4_pdata *pdata = dev->platform_data;
-	struct device_node *np = dev->of_node;
-	int ret;
+पूर्णांक aic32x4_probe(काष्ठा device *dev, काष्ठा regmap *regmap)
+अणु
+	काष्ठा aic32x4_priv *aic32x4;
+	काष्ठा aic32x4_pdata *pdata = dev->platक्रमm_data;
+	काष्ठा device_node *np = dev->of_node;
+	पूर्णांक ret;
 
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	aic32x4 = devm_kzalloc(dev, sizeof(struct aic32x4_priv),
+	aic32x4 = devm_kzalloc(dev, माप(काष्ठा aic32x4_priv),
 				   GFP_KERNEL);
-	if (aic32x4 == NULL)
-		return -ENOMEM;
+	अगर (aic32x4 == शून्य)
+		वापस -ENOMEM;
 
 	aic32x4->dev = dev;
 	dev_set_drvdata(dev, aic32x4);
 
-	if (pdata) {
-		aic32x4->power_cfg = pdata->power_cfg;
+	अगर (pdata) अणु
+		aic32x4->घातer_cfg = pdata->घातer_cfg;
 		aic32x4->swapdacs = pdata->swapdacs;
 		aic32x4->micpga_routing = pdata->micpga_routing;
 		aic32x4->rstn_gpio = pdata->rstn_gpio;
 		aic32x4->mclk_name = "mclk";
-	} else if (np) {
+	पूर्ण अन्यथा अगर (np) अणु
 		ret = aic32x4_parse_dt(aic32x4, np);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to parse DT node\n");
-			return ret;
-		}
-	} else {
-		aic32x4->power_cfg = 0;
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		aic32x4->घातer_cfg = 0;
 		aic32x4->swapdacs = false;
 		aic32x4->micpga_routing = 0;
 		aic32x4->rstn_gpio = -1;
 		aic32x4->mclk_name = "mclk";
-	}
+	पूर्ण
 
-	if (gpio_is_valid(aic32x4->rstn_gpio)) {
+	अगर (gpio_is_valid(aic32x4->rstn_gpio)) अणु
 		ret = devm_gpio_request_one(dev, aic32x4->rstn_gpio,
 				GPIOF_OUT_INIT_LOW, "tlv320aic32x4 rstn");
-		if (ret != 0)
-			return ret;
-	}
+		अगर (ret != 0)
+			वापस ret;
+	पूर्ण
 
 	ret = aic32x4_setup_regulators(dev, aic32x4);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to setup regulators\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (gpio_is_valid(aic32x4->rstn_gpio)) {
+	अगर (gpio_is_valid(aic32x4->rstn_gpio)) अणु
 		ndelay(10);
 		gpio_set_value_cansleep(aic32x4->rstn_gpio, 1);
 		mdelay(1);
-	}
+	पूर्ण
 
-	ret = regmap_write(regmap, AIC32X4_RESET, 0x01);
-	if (ret)
-		goto err_disable_regulators;
+	ret = regmap_ग_लिखो(regmap, AIC32X4_RESET, 0x01);
+	अगर (ret)
+		जाओ err_disable_regulators;
 
-	ret = aic32x4_register_clocks(dev, aic32x4->mclk_name);
-	if (ret)
-		goto err_disable_regulators;
+	ret = aic32x4_रेजिस्टर_घड़ीs(dev, aic32x4->mclk_name);
+	अगर (ret)
+		जाओ err_disable_regulators;
 
-	ret = devm_snd_soc_register_component(dev,
+	ret = devm_snd_soc_रेजिस्टर_component(dev,
 			&soc_component_dev_aic32x4, &aic32x4_dai, 1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register component\n");
-		goto err_disable_regulators;
-	}
+		जाओ err_disable_regulators;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_disable_regulators:
 	aic32x4_disable_regulators(aic32x4);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(aic32x4_probe);
 
-int aic32x4_remove(struct device *dev)
-{
-	struct aic32x4_priv *aic32x4 = dev_get_drvdata(dev);
+पूर्णांक aic32x4_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा aic32x4_priv *aic32x4 = dev_get_drvdata(dev);
 
 	aic32x4_disable_regulators(aic32x4);
 
-	return 0;
-}
-EXPORT_SYMBOL(aic32x4_remove);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(aic32x4_हटाओ);
 
 MODULE_DESCRIPTION("ASoC tlv320aic32x4 codec driver");
 MODULE_AUTHOR("Javier Martin <javier.martin@vista-silicon.com>");

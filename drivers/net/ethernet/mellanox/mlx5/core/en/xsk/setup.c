@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#include "setup.h"
-#include "en/params.h"
-#include "en/txrx.h"
+#समावेश "setup.h"
+#समावेश "en/params.h"
+#समावेश "en/txrx.h"
 
-/* It matches XDP_UMEM_MIN_CHUNK_SIZE, but as this constant is private and may
- * change unexpectedly, and mlx5e has a minimum valid stride size for striding
+/* It matches XDP_UMEM_MIN_CHUNK_SIZE, but as this स्थिरant is निजी and may
+ * change unexpectedly, and mlx5e has a minimum valid stride size क्रम striding
  * RQ, keep this check in the driver.
  */
-#define MLX5E_MIN_XSK_CHUNK_SIZE 2048
+#घोषणा MLX5E_MIN_XSK_CHUNK_SIZE 2048
 
-bool mlx5e_validate_xsk_param(struct mlx5e_params *params,
-			      struct mlx5e_xsk_param *xsk,
-			      struct mlx5_core_dev *mdev)
-{
-	/* AF_XDP doesn't support frames larger than PAGE_SIZE. */
-	if (xsk->chunk_size > PAGE_SIZE ||
+bool mlx5e_validate_xsk_param(काष्ठा mlx5e_params *params,
+			      काष्ठा mlx5e_xsk_param *xsk,
+			      काष्ठा mlx5_core_dev *mdev)
+अणु
+	/* AF_XDP करोesn't support frames larger than PAGE_SIZE. */
+	अगर (xsk->chunk_size > PAGE_SIZE ||
 			xsk->chunk_size < MLX5E_MIN_XSK_CHUNK_SIZE)
-		return false;
+		वापस false;
 
-	/* Current MTU and XSK headroom don't allow packets to fit the frames. */
-	if (mlx5e_rx_get_min_frag_sz(params, xsk) > xsk->chunk_size)
-		return false;
+	/* Current MTU and XSK headroom करोn't allow packets to fit the frames. */
+	अगर (mlx5e_rx_get_min_frag_sz(params, xsk) > xsk->chunk_size)
+		वापस false;
 
-	/* frag_sz is different for regular and XSK RQs, so ensure that linear
+	/* frag_sz is dअगरferent क्रम regular and XSK RQs, so ensure that linear
 	 * SKB mode is possible.
 	 */
-	switch (params->rq_wq_type) {
-	case MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ:
-		return mlx5e_rx_mpwqe_is_linear_skb(mdev, params, xsk);
-	default: /* MLX5_WQ_TYPE_CYCLIC */
-		return mlx5e_rx_is_linear_skb(params, xsk);
-	}
-}
+	चयन (params->rq_wq_type) अणु
+	हाल MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ:
+		वापस mlx5e_rx_mpwqe_is_linear_skb(mdev, params, xsk);
+	शेष: /* MLX5_WQ_TYPE_CYCLIC */
+		वापस mlx5e_rx_is_linear_skb(params, xsk);
+	पूर्ण
+पूर्ण
 
-static void mlx5e_build_xsk_cparam(struct mlx5_core_dev *mdev,
-				   struct mlx5e_params *params,
-				   struct mlx5e_xsk_param *xsk,
+अटल व्योम mlx5e_build_xsk_cparam(काष्ठा mlx5_core_dev *mdev,
+				   काष्ठा mlx5e_params *params,
+				   काष्ठा mlx5e_xsk_param *xsk,
 				   u16 q_counter,
-				   struct mlx5e_channel_param *cparam)
-{
+				   काष्ठा mlx5e_channel_param *cparam)
+अणु
 	mlx5e_build_rq_param(mdev, params, xsk, q_counter, &cparam->rq);
 	mlx5e_build_xdpsq_param(mdev, params, &cparam->xdp_sq);
-}
+पूर्ण
 
-static int mlx5e_init_xsk_rq(struct mlx5e_channel *c,
-			     struct mlx5e_params *params,
-			     struct xsk_buff_pool *pool,
-			     struct mlx5e_xsk_param *xsk,
-			     struct mlx5e_rq *rq)
-{
-	struct mlx5_core_dev *mdev = c->mdev;
-	int rq_xdp_ix;
-	int err;
+अटल पूर्णांक mlx5e_init_xsk_rq(काष्ठा mlx5e_channel *c,
+			     काष्ठा mlx5e_params *params,
+			     काष्ठा xsk_buff_pool *pool,
+			     काष्ठा mlx5e_xsk_param *xsk,
+			     काष्ठा mlx5e_rq *rq)
+अणु
+	काष्ठा mlx5_core_dev *mdev = c->mdev;
+	पूर्णांक rq_xdp_ix;
+	पूर्णांक err;
 
 	rq->wq_type      = params->rq_wq_type;
 	rq->pdev         = c->pdev;
 	rq->netdev       = c->netdev;
 	rq->priv         = c->priv;
 	rq->tstamp       = c->tstamp;
-	rq->clock        = &mdev->clock;
+	rq->घड़ी        = &mdev->घड़ी;
 	rq->icosq        = &c->icosq;
 	rq->ix           = c->ix;
 	rq->mdev         = mdev;
@@ -68,188 +69,188 @@ static int mlx5e_init_xsk_rq(struct mlx5e_channel *c,
 	rq->xdpsq        = &c->rq_xdpsq;
 	rq->xsk_pool     = pool;
 	rq->stats        = &c->priv->channel_stats[c->ix].xskrq;
-	rq->ptp_cyc2time = mlx5_rq_ts_translator(mdev);
+	rq->ptp_cyc2समय = mlx5_rq_ts_translator(mdev);
 	rq_xdp_ix        = c->ix + params->num_channels * MLX5E_RQ_GROUP_XSK;
 	err = mlx5e_rq_set_handlers(rq, params, xsk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return  xdp_rxq_info_reg(&rq->xdp_rxq, rq->netdev, rq_xdp_ix, 0);
-}
+	वापस  xdp_rxq_info_reg(&rq->xdp_rxq, rq->netdev, rq_xdp_ix, 0);
+पूर्ण
 
-static int mlx5e_open_xsk_rq(struct mlx5e_channel *c, struct mlx5e_params *params,
-			     struct mlx5e_rq_param *rq_params, struct xsk_buff_pool *pool,
-			     struct mlx5e_xsk_param *xsk)
-{
-	int err;
+अटल पूर्णांक mlx5e_खोलो_xsk_rq(काष्ठा mlx5e_channel *c, काष्ठा mlx5e_params *params,
+			     काष्ठा mlx5e_rq_param *rq_params, काष्ठा xsk_buff_pool *pool,
+			     काष्ठा mlx5e_xsk_param *xsk)
+अणु
+	पूर्णांक err;
 
 	err = mlx5e_init_xsk_rq(c, params, pool, xsk, &c->xskrq);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mlx5e_open_rq(params, rq_params, xsk, cpu_to_node(c->cpu), &c->xskrq);
-}
+	वापस mlx5e_खोलो_rq(params, rq_params, xsk, cpu_to_node(c->cpu), &c->xskrq);
+पूर्ण
 
-int mlx5e_open_xsk(struct mlx5e_priv *priv, struct mlx5e_params *params,
-		   struct mlx5e_xsk_param *xsk, struct xsk_buff_pool *pool,
-		   struct mlx5e_channel *c)
-{
-	struct mlx5e_channel_param *cparam;
-	struct mlx5e_create_cq_param ccp;
-	int err;
+पूर्णांक mlx5e_खोलो_xsk(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_params *params,
+		   काष्ठा mlx5e_xsk_param *xsk, काष्ठा xsk_buff_pool *pool,
+		   काष्ठा mlx5e_channel *c)
+अणु
+	काष्ठा mlx5e_channel_param *cparam;
+	काष्ठा mlx5e_create_cq_param ccp;
+	पूर्णांक err;
 
 	mlx5e_build_create_cq_param(&ccp, c);
 
-	if (!mlx5e_validate_xsk_param(params, xsk, priv->mdev))
-		return -EINVAL;
+	अगर (!mlx5e_validate_xsk_param(params, xsk, priv->mdev))
+		वापस -EINVAL;
 
-	cparam = kvzalloc(sizeof(*cparam), GFP_KERNEL);
-	if (!cparam)
-		return -ENOMEM;
+	cparam = kvzalloc(माप(*cparam), GFP_KERNEL);
+	अगर (!cparam)
+		वापस -ENOMEM;
 
 	mlx5e_build_xsk_cparam(priv->mdev, params, xsk, priv->q_counter, cparam);
 
-	err = mlx5e_open_cq(c->priv, params->rx_cq_moderation, &cparam->rq.cqp, &ccp,
+	err = mlx5e_खोलो_cq(c->priv, params->rx_cq_moderation, &cparam->rq.cqp, &ccp,
 			    &c->xskrq.cq);
-	if (unlikely(err))
-		goto err_free_cparam;
+	अगर (unlikely(err))
+		जाओ err_मुक्त_cparam;
 
-	err = mlx5e_open_xsk_rq(c, params, &cparam->rq, pool, xsk);
-	if (unlikely(err))
-		goto err_close_rx_cq;
+	err = mlx5e_खोलो_xsk_rq(c, params, &cparam->rq, pool, xsk);
+	अगर (unlikely(err))
+		जाओ err_बंद_rx_cq;
 
-	err = mlx5e_open_cq(c->priv, params->tx_cq_moderation, &cparam->xdp_sq.cqp, &ccp,
+	err = mlx5e_खोलो_cq(c->priv, params->tx_cq_moderation, &cparam->xdp_sq.cqp, &ccp,
 			    &c->xsksq.cq);
-	if (unlikely(err))
-		goto err_close_rq;
+	अगर (unlikely(err))
+		जाओ err_बंद_rq;
 
 	/* Create a separate SQ, so that when the buff pool is disabled, we could
-	 * close this SQ safely and stop receiving CQEs. In other case, e.g., if
-	 * the XDPSQ was used instead, we might run into trouble when the buff pool
-	 * is disabled and then reenabled, but the SQ continues receiving CQEs
+	 * बंद this SQ safely and stop receiving CQEs. In other हाल, e.g., अगर
+	 * the XDPSQ was used instead, we might run पूर्णांकo trouble when the buff pool
+	 * is disabled and then reenabled, but the SQ जारीs receiving CQEs
 	 * from the old buff pool.
 	 */
-	err = mlx5e_open_xdpsq(c, params, &cparam->xdp_sq, pool, &c->xsksq, true);
-	if (unlikely(err))
-		goto err_close_tx_cq;
+	err = mlx5e_खोलो_xdpsq(c, params, &cparam->xdp_sq, pool, &c->xsksq, true);
+	अगर (unlikely(err))
+		जाओ err_बंद_tx_cq;
 
-	kvfree(cparam);
+	kvमुक्त(cparam);
 
 	set_bit(MLX5E_CHANNEL_STATE_XSK, c->state);
 
-	return 0;
+	वापस 0;
 
-err_close_tx_cq:
-	mlx5e_close_cq(&c->xsksq.cq);
+err_बंद_tx_cq:
+	mlx5e_बंद_cq(&c->xsksq.cq);
 
-err_close_rq:
-	mlx5e_close_rq(&c->xskrq);
+err_बंद_rq:
+	mlx5e_बंद_rq(&c->xskrq);
 
-err_close_rx_cq:
-	mlx5e_close_cq(&c->xskrq.cq);
+err_बंद_rx_cq:
+	mlx5e_बंद_cq(&c->xskrq.cq);
 
-err_free_cparam:
-	kvfree(cparam);
+err_मुक्त_cparam:
+	kvमुक्त(cparam);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mlx5e_close_xsk(struct mlx5e_channel *c)
-{
+व्योम mlx5e_बंद_xsk(काष्ठा mlx5e_channel *c)
+अणु
 	clear_bit(MLX5E_CHANNEL_STATE_XSK, c->state);
 	synchronize_net(); /* Sync with the XSK wakeup and with NAPI. */
 
-	mlx5e_close_rq(&c->xskrq);
-	mlx5e_close_cq(&c->xskrq.cq);
-	mlx5e_close_xdpsq(&c->xsksq);
-	mlx5e_close_cq(&c->xsksq.cq);
+	mlx5e_बंद_rq(&c->xskrq);
+	mlx5e_बंद_cq(&c->xskrq.cq);
+	mlx5e_बंद_xdpsq(&c->xsksq);
+	mlx5e_बंद_cq(&c->xsksq.cq);
 
-	memset(&c->xskrq, 0, sizeof(c->xskrq));
-	memset(&c->xsksq, 0, sizeof(c->xsksq));
-}
+	स_रखो(&c->xskrq, 0, माप(c->xskrq));
+	स_रखो(&c->xsksq, 0, माप(c->xsksq));
+पूर्ण
 
-void mlx5e_activate_xsk(struct mlx5e_channel *c)
-{
+व्योम mlx5e_activate_xsk(काष्ठा mlx5e_channel *c)
+अणु
 	set_bit(MLX5E_RQ_STATE_ENABLED, &c->xskrq.state);
 	/* TX queue is created active. */
 
 	spin_lock_bh(&c->async_icosq_lock);
 	mlx5e_trigger_irq(&c->async_icosq);
 	spin_unlock_bh(&c->async_icosq_lock);
-}
+पूर्ण
 
-void mlx5e_deactivate_xsk(struct mlx5e_channel *c)
-{
+व्योम mlx5e_deactivate_xsk(काष्ठा mlx5e_channel *c)
+अणु
 	mlx5e_deactivate_rq(&c->xskrq);
-	/* TX queue is disabled on close. */
-}
+	/* TX queue is disabled on बंद. */
+पूर्ण
 
-static int mlx5e_redirect_xsk_rqt(struct mlx5e_priv *priv, u16 ix, u32 rqn)
-{
-	struct mlx5e_redirect_rqt_param direct_rrp = {
+अटल पूर्णांक mlx5e_redirect_xsk_rqt(काष्ठा mlx5e_priv *priv, u16 ix, u32 rqn)
+अणु
+	काष्ठा mlx5e_redirect_rqt_param direct_rrp = अणु
 		.is_rss = false,
-		{
+		अणु
 			.rqn = rqn,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
 	u32 rqtn = priv->xsk_tir[ix].rqt.rqtn;
 
-	return mlx5e_redirect_rqt(priv, rqtn, 1, direct_rrp);
-}
+	वापस mlx5e_redirect_rqt(priv, rqtn, 1, direct_rrp);
+पूर्ण
 
-int mlx5e_xsk_redirect_rqt_to_channel(struct mlx5e_priv *priv, struct mlx5e_channel *c)
-{
-	return mlx5e_redirect_xsk_rqt(priv, c->ix, c->xskrq.rqn);
-}
+पूर्णांक mlx5e_xsk_redirect_rqt_to_channel(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_channel *c)
+अणु
+	वापस mlx5e_redirect_xsk_rqt(priv, c->ix, c->xskrq.rqn);
+पूर्ण
 
-int mlx5e_xsk_redirect_rqt_to_drop(struct mlx5e_priv *priv, u16 ix)
-{
-	return mlx5e_redirect_xsk_rqt(priv, ix, priv->drop_rq.rqn);
-}
+पूर्णांक mlx5e_xsk_redirect_rqt_to_drop(काष्ठा mlx5e_priv *priv, u16 ix)
+अणु
+	वापस mlx5e_redirect_xsk_rqt(priv, ix, priv->drop_rq.rqn);
+पूर्ण
 
-int mlx5e_xsk_redirect_rqts_to_channels(struct mlx5e_priv *priv, struct mlx5e_channels *chs)
-{
-	int err, i;
+पूर्णांक mlx5e_xsk_redirect_rqts_to_channels(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_channels *chs)
+अणु
+	पूर्णांक err, i;
 
-	if (!priv->xsk.refcnt)
-		return 0;
+	अगर (!priv->xsk.refcnt)
+		वापस 0;
 
-	for (i = 0; i < chs->num; i++) {
-		struct mlx5e_channel *c = chs->c[i];
+	क्रम (i = 0; i < chs->num; i++) अणु
+		काष्ठा mlx5e_channel *c = chs->c[i];
 
-		if (!test_bit(MLX5E_CHANNEL_STATE_XSK, c->state))
-			continue;
+		अगर (!test_bit(MLX5E_CHANNEL_STATE_XSK, c->state))
+			जारी;
 
 		err = mlx5e_xsk_redirect_rqt_to_channel(priv, c);
-		if (unlikely(err))
-			goto err_stop;
-	}
+		अगर (unlikely(err))
+			जाओ err_stop;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_stop:
-	for (i--; i >= 0; i--) {
-		if (!test_bit(MLX5E_CHANNEL_STATE_XSK, chs->c[i]->state))
-			continue;
+	क्रम (i--; i >= 0; i--) अणु
+		अगर (!test_bit(MLX5E_CHANNEL_STATE_XSK, chs->c[i]->state))
+			जारी;
 
 		mlx5e_xsk_redirect_rqt_to_drop(priv, i);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mlx5e_xsk_redirect_rqts_to_drop(struct mlx5e_priv *priv, struct mlx5e_channels *chs)
-{
-	int i;
+व्योम mlx5e_xsk_redirect_rqts_to_drop(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_channels *chs)
+अणु
+	पूर्णांक i;
 
-	if (!priv->xsk.refcnt)
-		return;
+	अगर (!priv->xsk.refcnt)
+		वापस;
 
-	for (i = 0; i < chs->num; i++) {
-		if (!test_bit(MLX5E_CHANNEL_STATE_XSK, chs->c[i]->state))
-			continue;
+	क्रम (i = 0; i < chs->num; i++) अणु
+		अगर (!test_bit(MLX5E_CHANNEL_STATE_XSK, chs->c[i]->state))
+			जारी;
 
 		mlx5e_xsk_redirect_rqt_to_drop(priv, i);
-	}
-}
+	पूर्ण
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copied from the kernel sources:
  *
@@ -7,8 +8,8 @@
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#ifndef __TOOLS_LINUX_ASM_BARRIER_H
-#define __TOOLS_LINUX_ASM_BARRIER_H
+#अगर_अघोषित __TOOLS_LINUX_ASM_BARRIER_H
+#घोषणा __TOOLS_LINUX_ASM_BARRIER_H
 
 /*
  * Force strict CPU ordering.
@@ -16,29 +17,29 @@
  * to devices.
  */
 
-#ifdef CONFIG_HAVE_MARCH_Z196_FEATURES
-/* Fast-BCR without checkpoint synchronization */
-#define __ASM_BARRIER "bcr 14,0\n"
-#else
-#define __ASM_BARRIER "bcr 15,0\n"
-#endif
+#अगर_घोषित CONFIG_HAVE_MARCH_Z196_FEATURES
+/* Fast-BCR without checkpoपूर्णांक synchronization */
+#घोषणा __ASM_BARRIER "bcr 14,0\n"
+#अन्यथा
+#घोषणा __ASM_BARRIER "bcr 15,0\n"
+#पूर्ण_अगर
 
-#define mb() do {  asm volatile(__ASM_BARRIER : : : "memory"); } while (0)
+#घोषणा mb() करो अणु  यंत्र अस्थिर(__ASM_BARRIER : : : "memory"); पूर्ण जबतक (0)
 
-#define rmb()				mb()
-#define wmb()				mb()
+#घोषणा rmb()				mb()
+#घोषणा wmb()				mb()
 
-#define smp_store_release(p, v)			\
-do {						\
+#घोषणा smp_store_release(p, v)			\
+करो अणु						\
 	barrier();				\
 	WRITE_ONCE(*p, v);			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define smp_load_acquire(p)			\
-({						\
+#घोषणा smp_load_acquire(p)			\
+(अणु						\
 	typeof(*p) ___p1 = READ_ONCE(*p);	\
 	barrier();				\
 	___p1;					\
-})
+पूर्ण)
 
-#endif /* __TOOLS_LIB_ASM_BARRIER_H */
+#पूर्ण_अगर /* __TOOLS_LIB_ASM_BARRIER_H */

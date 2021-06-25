@@ -1,277 +1,278 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * self test for change_page_attr.
+ * self test क्रम change_page_attr.
  *
- * Clears the a test pte bit on random pages in the direct mapping,
- * then reverts and compares page tables forwards and afterwards.
+ * Clears the a test pte bit on अक्रमom pages in the direct mapping,
+ * then reverts and compares page tables क्रमwards and afterwards.
  */
-#include <linux/memblock.h>
-#include <linux/kthread.h>
-#include <linux/random.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <asm/cacheflush.h>
-#include <asm/kdebug.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/kdebug.h>
 
 /*
- * Only print the results of the first pass:
+ * Only prपूर्णांक the results of the first pass:
  */
-static __read_mostly int print = 1;
+अटल __पढ़ो_mostly पूर्णांक prपूर्णांक = 1;
 
-enum {
+क्रमागत अणु
 	NTEST			= 3 * 100,
 	NPAGES			= 100,
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	LPS			= (1 << PMD_SHIFT),
-#elif defined(CONFIG_X86_PAE)
+#या_अगर defined(CONFIG_X86_PAE)
 	LPS			= (1 << PMD_SHIFT),
-#else
+#अन्यथा
 	LPS			= (1 << 22),
-#endif
+#पूर्ण_अगर
 	GPS			= (1<<30)
-};
+पूर्ण;
 
-#define PAGE_CPA_TEST	__pgprot(_PAGE_CPA_TEST)
+#घोषणा PAGE_CPA_TEST	__pgprot(_PAGE_CPA_TEST)
 
-static int pte_testbit(pte_t pte)
-{
-	return pte_flags(pte) & _PAGE_SOFTW1;
-}
+अटल पूर्णांक pte_testbit(pte_t pte)
+अणु
+	वापस pte_flags(pte) & _PAGE_SOFTW1;
+पूर्ण
 
-struct split_state {
-	long lpg, gpg, spg, exec;
-	long min_exec, max_exec;
-};
+काष्ठा split_state अणु
+	दीर्घ lpg, gpg, spg, exec;
+	दीर्घ min_exec, max_exec;
+पूर्ण;
 
-static int print_split(struct split_state *s)
-{
-	long i, expected, missed = 0;
-	int err = 0;
+अटल पूर्णांक prपूर्णांक_split(काष्ठा split_state *s)
+अणु
+	दीर्घ i, expected, missed = 0;
+	पूर्णांक err = 0;
 
 	s->lpg = s->gpg = s->spg = s->exec = 0;
 	s->min_exec = ~0UL;
 	s->max_exec = 0;
-	for (i = 0; i < max_pfn_mapped; ) {
-		unsigned long addr = (unsigned long)__va(i << PAGE_SHIFT);
-		unsigned int level;
+	क्रम (i = 0; i < max_pfn_mapped; ) अणु
+		अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)__va(i << PAGE_SHIFT);
+		अचिन्हित पूर्णांक level;
 		pte_t *pte;
 
 		pte = lookup_address(addr, &level);
-		if (!pte) {
+		अगर (!pte) अणु
 			missed++;
 			i++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (level == PG_LEVEL_1G && sizeof(long) == 8) {
+		अगर (level == PG_LEVEL_1G && माप(दीर्घ) == 8) अणु
 			s->gpg++;
 			i += GPS/PAGE_SIZE;
-		} else if (level == PG_LEVEL_2M) {
-			if ((pte_val(*pte) & _PAGE_PRESENT) && !(pte_val(*pte) & _PAGE_PSE)) {
-				printk(KERN_ERR
+		पूर्ण अन्यथा अगर (level == PG_LEVEL_2M) अणु
+			अगर ((pte_val(*pte) & _PAGE_PRESENT) && !(pte_val(*pte) & _PAGE_PSE)) अणु
+				prपूर्णांकk(KERN_ERR
 					"%lx level %d but not PSE %Lx\n",
 					addr, level, (u64)pte_val(*pte));
 				err = 1;
-			}
+			पूर्ण
 			s->lpg++;
 			i += LPS/PAGE_SIZE;
-		} else {
+		पूर्ण अन्यथा अणु
 			s->spg++;
 			i++;
-		}
-		if (!(pte_val(*pte) & _PAGE_NX)) {
+		पूर्ण
+		अगर (!(pte_val(*pte) & _PAGE_NX)) अणु
 			s->exec++;
-			if (addr < s->min_exec)
+			अगर (addr < s->min_exec)
 				s->min_exec = addr;
-			if (addr > s->max_exec)
+			अगर (addr > s->max_exec)
 				s->max_exec = addr;
-		}
-	}
-	if (print) {
-		printk(KERN_INFO
+		पूर्ण
+	पूर्ण
+	अगर (prपूर्णांक) अणु
+		prपूर्णांकk(KERN_INFO
 			" 4k %lu large %lu gb %lu x %lu[%lx-%lx] miss %lu\n",
 			s->spg, s->lpg, s->gpg, s->exec,
 			s->min_exec != ~0UL ? s->min_exec : 0,
 			s->max_exec, missed);
-	}
+	पूर्ण
 
 	expected = (s->gpg*GPS + s->lpg*LPS)/PAGE_SIZE + s->spg + missed;
-	if (expected != i) {
-		printk(KERN_ERR "CPA max_pfn_mapped %lu but expected %lu\n",
+	अगर (expected != i) अणु
+		prपूर्णांकk(KERN_ERR "CPA max_pfn_mapped %lu but expected %lu\n",
 			max_pfn_mapped, expected);
-		return 1;
-	}
-	return err;
-}
+		वापस 1;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static unsigned long addr[NTEST];
-static unsigned int len[NTEST];
+अटल अचिन्हित दीर्घ addr[NTEST];
+अटल अचिन्हित पूर्णांक len[NTEST];
 
-static struct page *pages[NPAGES];
-static unsigned long addrs[NPAGES];
+अटल काष्ठा page *pages[NPAGES];
+अटल अचिन्हित दीर्घ addrs[NPAGES];
 
-/* Change the global bit on random pages in the direct mapping */
-static int pageattr_test(void)
-{
-	struct split_state sa, sb, sc;
-	unsigned long *bm;
+/* Change the global bit on अक्रमom pages in the direct mapping */
+अटल पूर्णांक pageattr_test(व्योम)
+अणु
+	काष्ठा split_state sa, sb, sc;
+	अचिन्हित दीर्घ *bm;
 	pte_t *pte, pte0;
-	int failed = 0;
-	unsigned int level;
-	int i, k;
-	int err;
+	पूर्णांक failed = 0;
+	अचिन्हित पूर्णांक level;
+	पूर्णांक i, k;
+	पूर्णांक err;
 
-	if (print)
-		printk(KERN_INFO "CPA self-test:\n");
+	अगर (prपूर्णांक)
+		prपूर्णांकk(KERN_INFO "CPA self-test:\n");
 
 	bm = vzalloc((max_pfn_mapped + 7) / 8);
-	if (!bm) {
-		printk(KERN_ERR "CPA Cannot vmalloc bitmap\n");
-		return -ENOMEM;
-	}
+	अगर (!bm) अणु
+		prपूर्णांकk(KERN_ERR "CPA Cannot vmalloc bitmap\n");
+		वापस -ENOMEM;
+	पूर्ण
 
-	failed += print_split(&sa);
+	failed += prपूर्णांक_split(&sa);
 
-	for (i = 0; i < NTEST; i++) {
-		unsigned long pfn = prandom_u32() % max_pfn_mapped;
+	क्रम (i = 0; i < NTEST; i++) अणु
+		अचिन्हित दीर्घ pfn = pअक्रमom_u32() % max_pfn_mapped;
 
-		addr[i] = (unsigned long)__va(pfn << PAGE_SHIFT);
-		len[i] = prandom_u32() % NPAGES;
-		len[i] = min_t(unsigned long, len[i], max_pfn_mapped - pfn - 1);
+		addr[i] = (अचिन्हित दीर्घ)__va(pfn << PAGE_SHIFT);
+		len[i] = pअक्रमom_u32() % NPAGES;
+		len[i] = min_t(अचिन्हित दीर्घ, len[i], max_pfn_mapped - pfn - 1);
 
-		if (len[i] == 0)
+		अगर (len[i] == 0)
 			len[i] = 1;
 
-		pte = NULL;
+		pte = शून्य;
 		pte0 = pfn_pte(0, __pgprot(0)); /* shut gcc up */
 
-		for (k = 0; k < len[i]; k++) {
+		क्रम (k = 0; k < len[i]; k++) अणु
 			pte = lookup_address(addr[i] + k*PAGE_SIZE, &level);
-			if (!pte || pgprot_val(pte_pgprot(*pte)) == 0 ||
-			    !(pte_val(*pte) & _PAGE_PRESENT)) {
+			अगर (!pte || pgprot_val(pte_pgprot(*pte)) == 0 ||
+			    !(pte_val(*pte) & _PAGE_PRESENT)) अणु
 				addr[i] = 0;
-				break;
-			}
-			if (k == 0) {
+				अवरोध;
+			पूर्ण
+			अगर (k == 0) अणु
 				pte0 = *pte;
-			} else {
-				if (pgprot_val(pte_pgprot(*pte)) !=
-					pgprot_val(pte_pgprot(pte0))) {
+			पूर्ण अन्यथा अणु
+				अगर (pgprot_val(pte_pgprot(*pte)) !=
+					pgprot_val(pte_pgprot(pte0))) अणु
 					len[i] = k;
-					break;
-				}
-			}
-			if (test_bit(pfn + k, bm)) {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (test_bit(pfn + k, bm)) अणु
 				len[i] = k;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			__set_bit(pfn + k, bm);
 			addrs[k] = addr[i] + k*PAGE_SIZE;
 			pages[k] = pfn_to_page(pfn + k);
-		}
-		if (!addr[i] || !pte || !k) {
+		पूर्ण
+		अगर (!addr[i] || !pte || !k) अणु
 			addr[i] = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (i % 3) {
-		case 0:
+		चयन (i % 3) अणु
+		हाल 0:
 			err = change_page_attr_set(&addr[i], len[i], PAGE_CPA_TEST, 0);
-			break;
+			अवरोध;
 
-		case 1:
+		हाल 1:
 			err = change_page_attr_set(addrs, len[1], PAGE_CPA_TEST, 1);
-			break;
+			अवरोध;
 
-		case 2:
+		हाल 2:
 			err = cpa_set_pages_array(pages, len[i], PAGE_CPA_TEST);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 
-		if (err < 0) {
-			printk(KERN_ERR "CPA %d failed %d\n", i, err);
+		अगर (err < 0) अणु
+			prपूर्णांकk(KERN_ERR "CPA %d failed %d\n", i, err);
 			failed++;
-		}
+		पूर्ण
 
 		pte = lookup_address(addr[i], &level);
-		if (!pte || !pte_testbit(*pte) || pte_huge(*pte)) {
-			printk(KERN_ERR "CPA %lx: bad pte %Lx\n", addr[i],
+		अगर (!pte || !pte_testbit(*pte) || pte_huge(*pte)) अणु
+			prपूर्णांकk(KERN_ERR "CPA %lx: bad pte %Lx\n", addr[i],
 				pte ? (u64)pte_val(*pte) : 0ULL);
 			failed++;
-		}
-		if (level != PG_LEVEL_4K) {
-			printk(KERN_ERR "CPA %lx: unexpected level %d\n",
+		पूर्ण
+		अगर (level != PG_LEVEL_4K) अणु
+			prपूर्णांकk(KERN_ERR "CPA %lx: unexpected level %d\n",
 				addr[i], level);
 			failed++;
-		}
+		पूर्ण
 
-	}
-	vfree(bm);
+	पूर्ण
+	vमुक्त(bm);
 
-	failed += print_split(&sb);
+	failed += prपूर्णांक_split(&sb);
 
-	for (i = 0; i < NTEST; i++) {
-		if (!addr[i])
-			continue;
+	क्रम (i = 0; i < NTEST; i++) अणु
+		अगर (!addr[i])
+			जारी;
 		pte = lookup_address(addr[i], &level);
-		if (!pte) {
-			printk(KERN_ERR "CPA lookup of %lx failed\n", addr[i]);
+		अगर (!pte) अणु
+			prपूर्णांकk(KERN_ERR "CPA lookup of %lx failed\n", addr[i]);
 			failed++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		err = change_page_attr_clear(&addr[i], len[i], PAGE_CPA_TEST, 0);
-		if (err < 0) {
-			printk(KERN_ERR "CPA reverting failed: %d\n", err);
+		अगर (err < 0) अणु
+			prपूर्णांकk(KERN_ERR "CPA reverting failed: %d\n", err);
 			failed++;
-		}
+		पूर्ण
 		pte = lookup_address(addr[i], &level);
-		if (!pte || pte_testbit(*pte)) {
-			printk(KERN_ERR "CPA %lx: bad pte after revert %Lx\n",
+		अगर (!pte || pte_testbit(*pte)) अणु
+			prपूर्णांकk(KERN_ERR "CPA %lx: bad pte after revert %Lx\n",
 				addr[i], pte ? (u64)pte_val(*pte) : 0ULL);
 			failed++;
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
-	failed += print_split(&sc);
+	failed += prपूर्णांक_split(&sc);
 
-	if (failed) {
+	अगर (failed) अणु
 		WARN(1, KERN_ERR "NOT PASSED. Please report.\n");
-		return -EINVAL;
-	} else {
-		if (print)
-			printk(KERN_INFO "ok.\n");
-	}
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (prपूर्णांक)
+			prपूर्णांकk(KERN_INFO "ok.\n");
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_pageattr_test(void *__unused)
-{
-	while (!kthread_should_stop()) {
-		schedule_timeout_interruptible(HZ*30);
-		if (pageattr_test() < 0)
-			break;
-		if (print)
-			print--;
-	}
-	return 0;
-}
+अटल पूर्णांक करो_pageattr_test(व्योम *__unused)
+अणु
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		schedule_समयout_पूर्णांकerruptible(HZ*30);
+		अगर (pageattr_test() < 0)
+			अवरोध;
+		अगर (prपूर्णांक)
+			prपूर्णांक--;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int start_pageattr_test(void)
-{
-	struct task_struct *p;
+अटल पूर्णांक start_pageattr_test(व्योम)
+अणु
+	काष्ठा task_काष्ठा *p;
 
-	p = kthread_create(do_pageattr_test, NULL, "pageattr-test");
-	if (!IS_ERR(p))
+	p = kthपढ़ो_create(करो_pageattr_test, शून्य, "pageattr-test");
+	अगर (!IS_ERR(p))
 		wake_up_process(p);
-	else
+	अन्यथा
 		WARN_ON(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(start_pageattr_test);

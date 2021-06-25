@@ -1,24 +1,25 @@
+<शैली गुरु>
 /*
  * Allwinner A31 SoCs pinctrl driver.
  *
  * Copyright (C) 2014 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-sunxi.h"
+#समावेश "pinctrl-sunxi.h"
 
-static const struct sunxi_desc_pin sun6i_a31_pins[] = {
+अटल स्थिर काष्ठा sunxi_desc_pin sun6i_a31_pins[] = अणु
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -384,7 +385,7 @@ static const struct sunxi_desc_pin sun6i_a31_pins[] = {
 		  SUNXI_FUNCTION(0x2, "nand0"),		/* DQ7 */
 		  SUNXI_FUNCTION(0x3, "mmc2"),		/* D7 */
 		  SUNXI_FUNCTION(0x4, "mmc3")),		/* D7 */
-	/* Hole in pin numbering for A31s */
+	/* Hole in pin numbering क्रम A31s */
 	SUNXI_PIN_VARIANT(SUNXI_PINCTRL_PIN(C, 16), PINCTRL_SUN6I_A31,
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -824,7 +825,7 @@ static const struct sunxi_desc_pin sun6i_a31_pins[] = {
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "uart4"),		/* RX */
 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 3, 18)),	/* PG_EINT18 */
-	/* Hole; H starts at pin 9 for A31s */
+	/* Hole; H starts at pin 9 क्रम A31s */
 	SUNXI_PIN_VARIANT(SUNXI_PINCTRL_PIN(H, 0), PINCTRL_SUN6I_A31,
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -942,15 +943,15 @@ static const struct sunxi_desc_pin sun6i_a31_pins[] = {
 		/*
 		 * The SPDIF block is not referenced at all in the A31 user
 		 * manual. However it is described in the code leaked and the
-		 * configuration files supplied by vendors.
+		 * configuration files supplied by venकरोrs.
 		 */
 		  SUNXI_FUNCTION(0x3, "spdif")),        /* SPDIF IN */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(H, 28),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
-		/* Undocumented mux function - see above */
+		/* Unकरोcumented mux function - see above */
 		  SUNXI_FUNCTION(0x3, "spdif")),        /* SPDIF OUT */
-	/* 2 extra pins for A31 */
+	/* 2 extra pins क्रम A31 */
 	SUNXI_PIN_VARIANT(SUNXI_PINCTRL_PIN(H, 29), PINCTRL_SUN6I_A31,
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -959,42 +960,42 @@ static const struct sunxi_desc_pin sun6i_a31_pins[] = {
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "nand1")),	/* CE3 */
-};
+पूर्ण;
 
-static const struct sunxi_pinctrl_desc sun6i_a31_pinctrl_data = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc sun6i_a31_pinctrl_data = अणु
 	.pins = sun6i_a31_pins,
 	.npins = ARRAY_SIZE(sun6i_a31_pins),
 	.irq_banks = 4,
 	.disable_strict_mode = true,
-};
+पूर्ण;
 
-static int sun6i_a31_pinctrl_probe(struct platform_device *pdev)
-{
-	unsigned long variant =
-		(unsigned long)of_device_get_match_data(&pdev->dev);
+अटल पूर्णांक sun6i_a31_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अचिन्हित दीर्घ variant =
+		(अचिन्हित दीर्घ)of_device_get_match_data(&pdev->dev);
 
-	return sunxi_pinctrl_init_with_variant(pdev,
+	वापस sunxi_pinctrl_init_with_variant(pdev,
 					       &sun6i_a31_pinctrl_data,
 					       variant);
-}
+पूर्ण
 
-static const struct of_device_id sun6i_a31_pinctrl_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sun6i_a31_pinctrl_match[] = अणु
+	अणु
 		.compatible = "allwinner,sun6i-a31-pinctrl",
-		.data = (void *)PINCTRL_SUN6I_A31
-	},
-	{
+		.data = (व्योम *)PINCTRL_SUN6I_A31
+	पूर्ण,
+	अणु
 		.compatible = "allwinner,sun6i-a31s-pinctrl",
-		.data = (void *)PINCTRL_SUN6I_A31S
-	},
-	{}
-};
+		.data = (व्योम *)PINCTRL_SUN6I_A31S
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver sun6i_a31_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver sun6i_a31_pinctrl_driver = अणु
 	.probe	= sun6i_a31_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "sun6i-a31-pinctrl",
 		.of_match_table	= sun6i_a31_pinctrl_match,
-	},
-};
-builtin_platform_driver(sun6i_a31_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(sun6i_a31_pinctrl_driver);

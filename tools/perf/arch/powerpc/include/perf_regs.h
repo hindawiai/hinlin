@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ARCH_PERF_REGS_H
-#define ARCH_PERF_REGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ARCH_PERF_REGS_H
+#घोषणा ARCH_PERF_REGS_H
 
-#include <stdlib.h>
-#include <linux/types.h>
-#include <asm/perf_regs.h>
+#समावेश <मानककोष.स>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/perf_regs.h>
 
-void perf_regs_load(u64 *regs);
+व्योम perf_regs_load(u64 *regs);
 
-#define PERF_REGS_MASK  ((1ULL << PERF_REG_POWERPC_MAX) - 1)
-#define PERF_REGS_MAX   PERF_REG_POWERPC_MAX
-#ifdef __powerpc64__
-	#define PERF_SAMPLE_REGS_ABI	PERF_SAMPLE_REGS_ABI_64
-#else
-	#define PERF_SAMPLE_REGS_ABI	PERF_SAMPLE_REGS_ABI_32
-#endif
+#घोषणा PERF_REGS_MASK  ((1ULL << PERF_REG_POWERPC_MAX) - 1)
+#घोषणा PERF_REGS_MAX   PERF_REG_POWERPC_MAX
+#अगर_घोषित __घातerpc64__
+	#घोषणा PERF_SAMPLE_REGS_ABI	PERF_SAMPLE_REGS_ABI_64
+#अन्यथा
+	#घोषणा PERF_SAMPLE_REGS_ABI	PERF_SAMPLE_REGS_ABI_32
+#पूर्ण_अगर
 
-#define PERF_REG_IP     PERF_REG_POWERPC_NIP
-#define PERF_REG_SP     PERF_REG_POWERPC_R1
+#घोषणा PERF_REG_IP     PERF_REG_POWERPC_NIP
+#घोषणा PERF_REG_SP     PERF_REG_POWERPC_R1
 
-static const char *reg_names[] = {
+अटल स्थिर अक्षर *reg_names[] = अणु
 	[PERF_REG_POWERPC_R0] = "r0",
 	[PERF_REG_POWERPC_R1] = "r1",
 	[PERF_REG_POWERPC_R2] = "r2",
@@ -77,10 +78,10 @@ static const char *reg_names[] = {
 	[PERF_REG_POWERPC_PMC4] = "pmc4",
 	[PERF_REG_POWERPC_PMC5] = "pmc5",
 	[PERF_REG_POWERPC_PMC6] = "pmc6",
-};
+पूर्ण;
 
-static inline const char *__perf_reg_name(int id)
-{
-	return reg_names[id];
-}
-#endif /* ARCH_PERF_REGS_H */
+अटल अंतरभूत स्थिर अक्षर *__perf_reg_name(पूर्णांक id)
+अणु
+	वापस reg_names[id];
+पूर्ण
+#पूर्ण_अगर /* ARCH_PERF_REGS_H */

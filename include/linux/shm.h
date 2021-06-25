@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_SHM_H_
-#define _LINUX_SHM_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_SHM_H_
+#घोषणा _LINUX_SHM_H_
 
-#include <linux/list.h>
-#include <asm/page.h>
-#include <uapi/linux/shm.h>
-#include <asm/shmparam.h>
+#समावेश <linux/list.h>
+#समावेश <यंत्र/page.h>
+#समावेश <uapi/linux/shm.h>
+#समावेश <यंत्र/shmparam.h>
 
-struct file;
+काष्ठा file;
 
-#ifdef CONFIG_SYSVIPC
-struct sysv_shm {
-	struct list_head shm_clist;
-};
+#अगर_घोषित CONFIG_SYSVIPC
+काष्ठा sysv_shm अणु
+	काष्ठा list_head shm_clist;
+पूर्ण;
 
-long do_shmat(int shmid, char __user *shmaddr, int shmflg, unsigned long *addr,
-	      unsigned long shmlba);
-bool is_file_shm_hugepages(struct file *file);
-void exit_shm(struct task_struct *task);
-#define shm_init_task(task) INIT_LIST_HEAD(&(task)->sysvshm.shm_clist)
-#else
-struct sysv_shm {
+दीर्घ करो_shmat(पूर्णांक shmid, अक्षर __user *shmaddr, पूर्णांक shmflg, अचिन्हित दीर्घ *addr,
+	      अचिन्हित दीर्घ shmlba);
+bool is_file_shm_hugepages(काष्ठा file *file);
+व्योम निकास_shm(काष्ठा task_काष्ठा *task);
+#घोषणा shm_init_task(task) INIT_LIST_HEAD(&(task)->sysvshm.shm_clist)
+#अन्यथा
+काष्ठा sysv_shm अणु
 	/* empty */
-};
+पूर्ण;
 
-static inline long do_shmat(int shmid, char __user *shmaddr,
-			    int shmflg, unsigned long *addr,
-			    unsigned long shmlba)
-{
-	return -ENOSYS;
-}
-static inline bool is_file_shm_hugepages(struct file *file)
-{
-	return false;
-}
-static inline void exit_shm(struct task_struct *task)
-{
-}
-static inline void shm_init_task(struct task_struct *task)
-{
-}
-#endif
+अटल अंतरभूत दीर्घ करो_shmat(पूर्णांक shmid, अक्षर __user *shmaddr,
+			    पूर्णांक shmflg, अचिन्हित दीर्घ *addr,
+			    अचिन्हित दीर्घ shmlba)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+अटल अंतरभूत bool is_file_shm_hugepages(काष्ठा file *file)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत व्योम निकास_shm(काष्ठा task_काष्ठा *task)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम shm_init_task(काष्ठा task_काष्ठा *task)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_SHM_H_ */
+#पूर्ण_अगर /* _LINUX_SHM_H_ */

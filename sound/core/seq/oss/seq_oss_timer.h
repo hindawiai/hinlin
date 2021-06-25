@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OSS compatible sequencer driver
- * timer handling routines
+ * समयr handling routines
  *
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
-#ifndef __SEQ_OSS_TIMER_H
-#define __SEQ_OSS_TIMER_H
+#अगर_अघोषित __SEQ_OSS_TIMER_H
+#घोषणा __SEQ_OSS_TIMER_H
 
-#include "seq_oss_device.h"
-
-/*
- * timer information definition
- */
-struct seq_oss_timer {
-	struct seq_oss_devinfo *dp;
-	reltime_t cur_tick;
-	int realtime;
-	int running;
-	int tempo, ppq;	/* ALSA queue */
-	int oss_tempo, oss_timebase;
-};	
-
-
-struct seq_oss_timer *snd_seq_oss_timer_new(struct seq_oss_devinfo *dp);
-void snd_seq_oss_timer_delete(struct seq_oss_timer *dp);
-
-int snd_seq_oss_timer_start(struct seq_oss_timer *timer);
-int snd_seq_oss_timer_stop(struct seq_oss_timer *timer);
-int snd_seq_oss_timer_continue(struct seq_oss_timer *timer);
-int snd_seq_oss_timer_tempo(struct seq_oss_timer *timer, int value);
-#define snd_seq_oss_timer_reset  snd_seq_oss_timer_start
-
-int snd_seq_oss_timer_ioctl(struct seq_oss_timer *timer, unsigned int cmd, int __user *arg);
+#समावेश "seq_oss_device.h"
 
 /*
- * get current processed time
+ * समयr inक्रमmation definition
  */
-static inline abstime_t
-snd_seq_oss_timer_cur_tick(struct seq_oss_timer *timer)
-{
-	return timer->cur_tick;
-}
+काष्ठा seq_oss_समयr अणु
+	काष्ठा seq_oss_devinfo *dp;
+	relसमय_प्रकार cur_tick;
+	पूर्णांक realसमय;
+	पूर्णांक running;
+	पूर्णांक tempo, ppq;	/* ALSA queue */
+	पूर्णांक oss_tempo, oss_समयbase;
+पूर्ण;	
 
-#endif
+
+काष्ठा seq_oss_समयr *snd_seq_oss_समयr_new(काष्ठा seq_oss_devinfo *dp);
+व्योम snd_seq_oss_समयr_delete(काष्ठा seq_oss_समयr *dp);
+
+पूर्णांक snd_seq_oss_समयr_start(काष्ठा seq_oss_समयr *समयr);
+पूर्णांक snd_seq_oss_समयr_stop(काष्ठा seq_oss_समयr *समयr);
+पूर्णांक snd_seq_oss_समयr_जारी(काष्ठा seq_oss_समयr *समयr);
+पूर्णांक snd_seq_oss_समयr_tempo(काष्ठा seq_oss_समयr *समयr, पूर्णांक value);
+#घोषणा snd_seq_oss_समयr_reset  snd_seq_oss_समयr_start
+
+पूर्णांक snd_seq_oss_समयr_ioctl(काष्ठा seq_oss_समयr *समयr, अचिन्हित पूर्णांक cmd, पूर्णांक __user *arg);
+
+/*
+ * get current processed समय
+ */
+अटल अंतरभूत असलसमय_प्रकार
+snd_seq_oss_समयr_cur_tick(काष्ठा seq_oss_समयr *समयr)
+अणु
+	वापस समयr->cur_tick;
+पूर्ण
+
+#पूर्ण_अगर

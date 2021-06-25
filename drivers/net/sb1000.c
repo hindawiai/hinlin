@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* sb1000.c: A General Instruments SB1000 driver for linux. */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* sb1000.c: A General Instruments SB1000 driver क्रम linux. */
 /*
 	Written 1998 by Franco Venturi.
 
@@ -8,7 +9,7 @@
 	Copyright 1993 United States Government as represented by the
 	Director, National Security Agency.
 
-	This driver is for the General Instruments SB1000 (internal SURFboard)
+	This driver is क्रम the General Instruments SB1000 (पूर्णांकernal SURFboard)
 
 	The author may be reached as fventuri@mediaone.net
 
@@ -17,147 +18,147 @@
 
 	981115 Steven Hirsch <shirsch@adelphia.net>
 
-	Linus changed the timer interface.  Should work on all recent
+	Linus changed the समयr पूर्णांकerface.  Should work on all recent
 	development kernels.
 
 	980608 Steven Hirsch <shirsch@adelphia.net>
 
 	Small changes to make it work with 2.1.x kernels. Hopefully,
-	nothing major will change before official release of Linux 2.2.
+	nothing major will change beक्रमe official release of Linux 2.2.
 
 	Merged with 2.2 - Alan Cox
 */
 
-static char version[] = "sb1000.c:v1.1.2 6/01/98 (fventuri@mediaone.net)\n";
+अटल अक्षर version[] = "sb1000.c:v1.1.2 6/01/98 (fventuri@mediaone.net)\n";
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/string.h>
-#include <linux/interrupt.h>
-#include <linux/errno.h>
-#include <linux/if_cablemodem.h> /* for SIOGCM/SIOSCM stuff */
-#include <linux/in.h>
-#include <linux/ioport.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/skbuff.h>
-#include <linux/delay.h>	/* for udelay() */
-#include <linux/etherdevice.h>
-#include <linux/pnp.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
-#include <linux/gfp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अगर_cablemodem.h> /* क्रम SIOGCM/SIOSCM stuff */
+#समावेश <linux/in.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/delay.h>	/* क्रम udelay() */
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/pnp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gfp.h>
 
-#include <asm/io.h>
-#include <asm/processor.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/processor.h>
+#समावेश <linux/uaccess.h>
 
-#ifdef SB1000_DEBUG
-static int sb1000_debug = SB1000_DEBUG;
-#else
-static const int sb1000_debug = 1;
-#endif
+#अगर_घोषित SB1000_DEBUG
+अटल पूर्णांक sb1000_debug = SB1000_DEBUG;
+#अन्यथा
+अटल स्थिर पूर्णांक sb1000_debug = 1;
+#पूर्ण_अगर
 
-static const int SB1000_IO_EXTENT = 8;
+अटल स्थिर पूर्णांक SB1000_IO_EXTENT = 8;
 /* SB1000 Maximum Receive Unit */
-static const int SB1000_MRU = 1500; /* octects */
+अटल स्थिर पूर्णांक SB1000_MRU = 1500; /* octects */
 
-#define NPIDS 4
-struct sb1000_private {
-	struct sk_buff *rx_skb[NPIDS];
-	short rx_dlen[NPIDS];
-	unsigned int rx_frames;
-	short rx_error_count;
-	short rx_error_dpc_count;
-	unsigned char rx_session_id[NPIDS];
-	unsigned char rx_frame_id[NPIDS];
-	unsigned char rx_pkt_type[NPIDS];
-};
+#घोषणा NPIDS 4
+काष्ठा sb1000_निजी अणु
+	काष्ठा sk_buff *rx_skb[NPIDS];
+	लघु rx_dlen[NPIDS];
+	अचिन्हित पूर्णांक rx_frames;
+	लघु rx_error_count;
+	लघु rx_error_dpc_count;
+	अचिन्हित अक्षर rx_session_id[NPIDS];
+	अचिन्हित अक्षर rx_frame_id[NPIDS];
+	अचिन्हित अक्षर rx_pkt_type[NPIDS];
+पूर्ण;
 
-/* prototypes for Linux interface */
-extern int sb1000_probe(struct net_device *dev);
-static int sb1000_open(struct net_device *dev);
-static int sb1000_dev_ioctl (struct net_device *dev, struct ifreq *ifr, int cmd);
-static netdev_tx_t sb1000_start_xmit(struct sk_buff *skb,
-				     struct net_device *dev);
-static irqreturn_t sb1000_interrupt(int irq, void *dev_id);
-static int sb1000_close(struct net_device *dev);
+/* prototypes क्रम Linux पूर्णांकerface */
+बाह्य पूर्णांक sb1000_probe(काष्ठा net_device *dev);
+अटल पूर्णांक sb1000_खोलो(काष्ठा net_device *dev);
+अटल पूर्णांक sb1000_dev_ioctl (काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd);
+अटल netdev_tx_t sb1000_start_xmit(काष्ठा sk_buff *skb,
+				     काष्ठा net_device *dev);
+अटल irqवापस_t sb1000_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
+अटल पूर्णांक sb1000_बंद(काष्ठा net_device *dev);
 
 
-/* SB1000 hardware routines to be used during open/configuration phases */
-static int card_wait_for_busy_clear(const int ioaddr[],
-	const char* name);
-static int card_wait_for_ready(const int ioaddr[], const char* name,
-	unsigned char in[]);
-static int card_send_command(const int ioaddr[], const char* name,
-	const unsigned char out[], unsigned char in[]);
+/* SB1000 hardware routines to be used during खोलो/configuration phases */
+अटल पूर्णांक card_रुको_क्रम_busy_clear(स्थिर पूर्णांक ioaddr[],
+	स्थिर अक्षर* name);
+अटल पूर्णांक card_रुको_क्रम_पढ़ोy(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	अचिन्हित अक्षर in[]);
+अटल पूर्णांक card_send_command(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	स्थिर अचिन्हित अक्षर out[], अचिन्हित अक्षर in[]);
 
-/* SB1000 hardware routines to be used during frame rx interrupt */
-static int sb1000_wait_for_ready(const int ioaddr[], const char* name);
-static int sb1000_wait_for_ready_clear(const int ioaddr[],
-	const char* name);
-static void sb1000_send_command(const int ioaddr[], const char* name,
-	const unsigned char out[]);
-static void sb1000_read_status(const int ioaddr[], unsigned char in[]);
-static void sb1000_issue_read_command(const int ioaddr[],
-	const char* name);
+/* SB1000 hardware routines to be used during frame rx पूर्णांकerrupt */
+अटल पूर्णांक sb1000_रुको_क्रम_पढ़ोy(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name);
+अटल पूर्णांक sb1000_रुको_क्रम_पढ़ोy_clear(स्थिर पूर्णांक ioaddr[],
+	स्थिर अक्षर* name);
+अटल व्योम sb1000_send_command(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	स्थिर अचिन्हित अक्षर out[]);
+अटल व्योम sb1000_पढ़ो_status(स्थिर पूर्णांक ioaddr[], अचिन्हित अक्षर in[]);
+अटल व्योम sb1000_issue_पढ़ो_command(स्थिर पूर्णांक ioaddr[],
+	स्थिर अक्षर* name);
 
-/* SB1000 commands for open/configuration */
-static int sb1000_reset(const int ioaddr[], const char* name);
-static int sb1000_check_CRC(const int ioaddr[], const char* name);
-static inline int sb1000_start_get_set_command(const int ioaddr[],
-	const char* name);
-static int sb1000_end_get_set_command(const int ioaddr[],
-	const char* name);
-static int sb1000_activate(const int ioaddr[], const char* name);
-static int sb1000_get_firmware_version(const int ioaddr[],
-	const char* name, unsigned char version[], int do_end);
-static int sb1000_get_frequency(const int ioaddr[], const char* name,
-	int* frequency);
-static int sb1000_set_frequency(const int ioaddr[], const char* name,
-	int frequency);
-static int sb1000_get_PIDs(const int ioaddr[], const char* name,
-	short PID[]);
-static int sb1000_set_PIDs(const int ioaddr[], const char* name,
-	const short PID[]);
+/* SB1000 commands क्रम खोलो/configuration */
+अटल पूर्णांक sb1000_reset(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name);
+अटल पूर्णांक sb1000_check_CRC(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name);
+अटल अंतरभूत पूर्णांक sb1000_start_get_set_command(स्थिर पूर्णांक ioaddr[],
+	स्थिर अक्षर* name);
+अटल पूर्णांक sb1000_end_get_set_command(स्थिर पूर्णांक ioaddr[],
+	स्थिर अक्षर* name);
+अटल पूर्णांक sb1000_activate(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name);
+अटल पूर्णांक sb1000_get_firmware_version(स्थिर पूर्णांक ioaddr[],
+	स्थिर अक्षर* name, अचिन्हित अक्षर version[], पूर्णांक करो_end);
+अटल पूर्णांक sb1000_get_frequency(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	पूर्णांक* frequency);
+अटल पूर्णांक sb1000_set_frequency(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	पूर्णांक frequency);
+अटल पूर्णांक sb1000_get_PIDs(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	लघु PID[]);
+अटल पूर्णांक sb1000_set_PIDs(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	स्थिर लघु PID[]);
 
-/* SB1000 commands for frame rx interrupt */
-static int sb1000_rx(struct net_device *dev);
-static void sb1000_error_dpc(struct net_device *dev);
+/* SB1000 commands क्रम frame rx पूर्णांकerrupt */
+अटल पूर्णांक sb1000_rx(काष्ठा net_device *dev);
+अटल व्योम sb1000_error_dpc(काष्ठा net_device *dev);
 
-static const struct pnp_device_id sb1000_pnp_ids[] = {
-	{ "GIC1000", 0 },
-	{ "", 0 }
-};
+अटल स्थिर काष्ठा pnp_device_id sb1000_pnp_ids[] = अणु
+	अणु "GIC1000", 0 पूर्ण,
+	अणु "", 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pnp, sb1000_pnp_ids);
 
-static const struct net_device_ops sb1000_netdev_ops = {
-	.ndo_open		= sb1000_open,
-	.ndo_start_xmit		= sb1000_start_xmit,
-	.ndo_do_ioctl		= sb1000_dev_ioctl,
-	.ndo_stop		= sb1000_close,
-	.ndo_set_mac_address 	= eth_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops sb1000_netdev_ops = अणु
+	.nकरो_खोलो		= sb1000_खोलो,
+	.nकरो_start_xmit		= sb1000_start_xmit,
+	.nकरो_करो_ioctl		= sb1000_dev_ioctl,
+	.nकरो_stop		= sb1000_बंद,
+	.nकरो_set_mac_address 	= eth_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+पूर्ण;
 
-static int
-sb1000_probe_one(struct pnp_dev *pdev, const struct pnp_device_id *id)
-{
-	struct net_device *dev;
-	unsigned short ioaddr[2], irq;
-	unsigned int serial_number;
-	int error = -ENODEV;
+अटल पूर्णांक
+sb1000_probe_one(काष्ठा pnp_dev *pdev, स्थिर काष्ठा pnp_device_id *id)
+अणु
+	काष्ठा net_device *dev;
+	अचिन्हित लघु ioaddr[2], irq;
+	अचिन्हित पूर्णांक serial_number;
+	पूर्णांक error = -ENODEV;
 
-	if (pnp_device_attach(pdev) < 0)
-		return -ENODEV;
-	if (pnp_activate_dev(pdev) < 0)
-		goto out_detach;
+	अगर (pnp_device_attach(pdev) < 0)
+		वापस -ENODEV;
+	अगर (pnp_activate_dev(pdev) < 0)
+		जाओ out_detach;
 
-	if (!pnp_port_valid(pdev, 0) || !pnp_port_valid(pdev, 1))
-		goto out_disable;
-	if (!pnp_irq_valid(pdev, 0))
-		goto out_disable;
+	अगर (!pnp_port_valid(pdev, 0) || !pnp_port_valid(pdev, 1))
+		जाओ out_disable;
+	अगर (!pnp_irq_valid(pdev, 0))
+		जाओ out_disable;
 
 	serial_number = pdev->card->serial;
 
@@ -166,16 +167,16 @@ sb1000_probe_one(struct pnp_dev *pdev, const struct pnp_device_id *id)
 
 	irq = pnp_irq(pdev, 0);
 
-	if (!request_region(ioaddr[0], 16, "sb1000"))
-		goto out_disable;
-	if (!request_region(ioaddr[1], 16, "sb1000"))
-		goto out_release_region0;
+	अगर (!request_region(ioaddr[0], 16, "sb1000"))
+		जाओ out_disable;
+	अगर (!request_region(ioaddr[1], 16, "sb1000"))
+		जाओ out_release_region0;
 
-	dev = alloc_etherdev(sizeof(struct sb1000_private));
-	if (!dev) {
+	dev = alloc_etherdev(माप(काष्ठा sb1000_निजी));
+	अगर (!dev) अणु
 		error = -ENOMEM;
-		goto out_release_regions;
-	}
+		जाओ out_release_regions;
+	पूर्ण
 
 
 	dev->base_addr = ioaddr[0];
@@ -183,21 +184,21 @@ sb1000_probe_one(struct pnp_dev *pdev, const struct pnp_device_id *id)
 	dev->mem_start = ioaddr[1];
 	dev->irq = irq;
 
-	if (sb1000_debug > 0)
-		printk(KERN_NOTICE "%s: sb1000 at (%#3.3lx,%#3.3lx), "
+	अगर (sb1000_debug > 0)
+		prपूर्णांकk(KERN_NOTICE "%s: sb1000 at (%#3.3lx,%#3.3lx), "
 			"S/N %#8.8x, IRQ %d.\n", dev->name, dev->base_addr,
 			dev->mem_start, serial_number, dev->irq);
 
 	/*
 	 * The SB1000 is an rx-only cable modem device.  The uplink is a modem
-	 * and we do not want to arp on it.
+	 * and we करो not want to arp on it.
 	 */
 	dev->flags = IFF_POINTOPOINT|IFF_NOARP;
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
-	if (sb1000_debug > 0)
-		printk(KERN_NOTICE "%s", version);
+	अगर (sb1000_debug > 0)
+		prपूर्णांकk(KERN_NOTICE "%s", version);
 
 	dev->netdev_ops	= &sb1000_netdev_ops;
 
@@ -209,13 +210,13 @@ sb1000_probe_one(struct pnp_dev *pdev, const struct pnp_device_id *id)
 
 	pnp_set_drvdata(pdev, dev);
 
-	error = register_netdev(dev);
-	if (error)
-		goto out_free_netdev;
-	return 0;
+	error = रेजिस्टर_netdev(dev);
+	अगर (error)
+		जाओ out_मुक्त_netdev;
+	वापस 0;
 
- out_free_netdev:
-	free_netdev(dev);
+ out_मुक्त_netdev:
+	मुक्त_netdev(dev);
  out_release_regions:
 	release_region(ioaddr[1], 16);
  out_release_region0:
@@ -224,78 +225,78 @@ sb1000_probe_one(struct pnp_dev *pdev, const struct pnp_device_id *id)
 	pnp_disable_dev(pdev);
  out_detach:
 	pnp_device_detach(pdev);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void
-sb1000_remove_one(struct pnp_dev *pdev)
-{
-	struct net_device *dev = pnp_get_drvdata(pdev);
+अटल व्योम
+sb1000_हटाओ_one(काष्ठा pnp_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pnp_get_drvdata(pdev);
 
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 	release_region(dev->base_addr, 16);
 	release_region(dev->mem_start, 16);
-	free_netdev(dev);
-}
+	मुक्त_netdev(dev);
+पूर्ण
 
-static struct pnp_driver sb1000_driver = {
+अटल काष्ठा pnp_driver sb1000_driver = अणु
 	.name		= "sb1000",
 	.id_table	= sb1000_pnp_ids,
 	.probe		= sb1000_probe_one,
-	.remove		= sb1000_remove_one,
-};
+	.हटाओ		= sb1000_हटाओ_one,
+पूर्ण;
 
 
 /*
- * SB1000 hardware routines to be used during open/configuration phases
+ * SB1000 hardware routines to be used during खोलो/configuration phases
  */
 
-static const int TimeOutJiffies = (875 * HZ) / 100;
+अटल स्थिर पूर्णांक TimeOutJअगरfies = (875 * HZ) / 100;
 
-/* Card Wait For Busy Clear (cannot be used during an interrupt) */
-static int
-card_wait_for_busy_clear(const int ioaddr[], const char* name)
-{
-	unsigned char a;
-	unsigned long timeout;
+/* Card Wait For Busy Clear (cannot be used during an पूर्णांकerrupt) */
+अटल पूर्णांक
+card_रुको_क्रम_busy_clear(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name)
+अणु
+	अचिन्हित अक्षर a;
+	अचिन्हित दीर्घ समयout;
 
 	a = inb(ioaddr[0] + 7);
-	timeout = jiffies + TimeOutJiffies;
-	while (a & 0x80 || a & 0x40) {
+	समयout = jअगरfies + TimeOutJअगरfies;
+	जबतक (a & 0x80 || a & 0x40) अणु
 		/* a little sleep */
 		yield();
 
 		a = inb(ioaddr[0] + 7);
-		if (time_after_eq(jiffies, timeout)) {
-			printk(KERN_WARNING "%s: card_wait_for_busy_clear timeout\n",
+		अगर (समय_after_eq(jअगरfies, समयout)) अणु
+			prपूर्णांकk(KERN_WARNING "%s: card_wait_for_busy_clear timeout\n",
 				name);
-			return -ETIME;
-		}
-	}
+			वापस -ETIME;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Card Wait For Ready (cannot be used during an interrupt) */
-static int
-card_wait_for_ready(const int ioaddr[], const char* name, unsigned char in[])
-{
-	unsigned char a;
-	unsigned long timeout;
+/* Card Wait For Ready (cannot be used during an पूर्णांकerrupt) */
+अटल पूर्णांक
+card_रुको_क्रम_पढ़ोy(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name, अचिन्हित अक्षर in[])
+अणु
+	अचिन्हित अक्षर a;
+	अचिन्हित दीर्घ समयout;
 
 	a = inb(ioaddr[1] + 6);
-	timeout = jiffies + TimeOutJiffies;
-	while (a & 0x80 || !(a & 0x40)) {
+	समयout = jअगरfies + TimeOutJअगरfies;
+	जबतक (a & 0x80 || !(a & 0x40)) अणु
 		/* a little sleep */
 		yield();
 
 		a = inb(ioaddr[1] + 6);
-		if (time_after_eq(jiffies, timeout)) {
-			printk(KERN_WARNING "%s: card_wait_for_ready timeout\n",
+		अगर (समय_after_eq(jअगरfies, समयout)) अणु
+			prपूर्णांकk(KERN_WARNING "%s: card_wait_for_ready timeout\n",
 				name);
-			return -ETIME;
-		}
-	}
+			वापस -ETIME;
+		पूर्ण
+	पूर्ण
 
 	in[1] = inb(ioaddr[0] + 1);
 	in[2] = inb(ioaddr[0] + 2);
@@ -304,18 +305,18 @@ card_wait_for_ready(const int ioaddr[], const char* name, unsigned char in[])
 	in[0] = inb(ioaddr[0] + 5);
 	in[6] = inb(ioaddr[0] + 6);
 	in[5] = inb(ioaddr[1] + 6);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Card Send Command (cannot be used during an interrupt) */
-static int
-card_send_command(const int ioaddr[], const char* name,
-	const unsigned char out[], unsigned char in[])
-{
-	int status;
+/* Card Send Command (cannot be used during an पूर्णांकerrupt) */
+अटल पूर्णांक
+card_send_command(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	स्थिर अचिन्हित अक्षर out[], अचिन्हित अक्षर in[])
+अणु
+	पूर्णांक status;
 
-	if ((status = card_wait_for_busy_clear(ioaddr, name)))
-		return status;
+	अगर ((status = card_रुको_क्रम_busy_clear(ioaddr, name)))
+		वापस status;
 	outb(0xa0, ioaddr[0] + 6);
 	outb(out[2], ioaddr[0] + 1);
 	outb(out[3], ioaddr[0] + 2);
@@ -324,137 +325,137 @@ card_send_command(const int ioaddr[], const char* name,
 	outb(out[1], ioaddr[0] + 5);
 	outb(0xa0, ioaddr[0] + 6);
 	outb(out[0], ioaddr[0] + 7);
-	if (out[0] != 0x20 && out[0] != 0x30) {
-		if ((status = card_wait_for_ready(ioaddr, name, in)))
-			return status;
+	अगर (out[0] != 0x20 && out[0] != 0x30) अणु
+		अगर ((status = card_रुको_क्रम_पढ़ोy(ioaddr, name, in)))
+			वापस status;
 		inb(ioaddr[0] + 7);
-		if (sb1000_debug > 3)
-			printk(KERN_DEBUG "%s: card_send_command "
+		अगर (sb1000_debug > 3)
+			prपूर्णांकk(KERN_DEBUG "%s: card_send_command "
 				"out: %02x%02x%02x%02x%02x%02x  "
 				"in: %02x%02x%02x%02x%02x%02x%02x\n", name,
 				out[0], out[1], out[2], out[3], out[4], out[5],
 				in[0], in[1], in[2], in[3], in[4], in[5], in[6]);
-	} else {
-		if (sb1000_debug > 3)
-			printk(KERN_DEBUG "%s: card_send_command "
+	पूर्ण अन्यथा अणु
+		अगर (sb1000_debug > 3)
+			prपूर्णांकk(KERN_DEBUG "%s: card_send_command "
 				"out: %02x%02x%02x%02x%02x%02x\n", name,
 				out[0], out[1], out[2], out[3], out[4], out[5]);
-	}
+	पूर्ण
 
-	if (out[1] != 0x1b) {
-		if (out[0] >= 0x80 && in[0] != (out[1] | 0x80))
-			return -EIO;
-	}
-	return 0;
-}
+	अगर (out[1] != 0x1b) अणु
+		अगर (out[0] >= 0x80 && in[0] != (out[1] | 0x80))
+			वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /*
- * SB1000 hardware routines to be used during frame rx interrupt
+ * SB1000 hardware routines to be used during frame rx पूर्णांकerrupt
  */
-static const int Sb1000TimeOutJiffies = 7 * HZ;
+अटल स्थिर पूर्णांक Sb1000TimeOutJअगरfies = 7 * HZ;
 
 /* Card Wait For Ready (to be used during frame rx) */
-static int
-sb1000_wait_for_ready(const int ioaddr[], const char* name)
-{
-	unsigned long timeout;
+अटल पूर्णांक
+sb1000_रुको_क्रम_पढ़ोy(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name)
+अणु
+	अचिन्हित दीर्घ समयout;
 
-	timeout = jiffies + Sb1000TimeOutJiffies;
-	while (inb(ioaddr[1] + 6) & 0x80) {
-		if (time_after_eq(jiffies, timeout)) {
-			printk(KERN_WARNING "%s: sb1000_wait_for_ready timeout\n",
+	समयout = jअगरfies + Sb1000TimeOutJअगरfies;
+	जबतक (inb(ioaddr[1] + 6) & 0x80) अणु
+		अगर (समय_after_eq(jअगरfies, समयout)) अणु
+			prपूर्णांकk(KERN_WARNING "%s: sb1000_wait_for_ready timeout\n",
 				name);
-			return -ETIME;
-		}
-	}
-	timeout = jiffies + Sb1000TimeOutJiffies;
-	while (!(inb(ioaddr[1] + 6) & 0x40)) {
-		if (time_after_eq(jiffies, timeout)) {
-			printk(KERN_WARNING "%s: sb1000_wait_for_ready timeout\n",
+			वापस -ETIME;
+		पूर्ण
+	पूर्ण
+	समयout = jअगरfies + Sb1000TimeOutJअगरfies;
+	जबतक (!(inb(ioaddr[1] + 6) & 0x40)) अणु
+		अगर (समय_after_eq(jअगरfies, समयout)) अणु
+			prपूर्णांकk(KERN_WARNING "%s: sb1000_wait_for_ready timeout\n",
 				name);
-			return -ETIME;
-		}
-	}
+			वापस -ETIME;
+		पूर्ण
+	पूर्ण
 	inb(ioaddr[0] + 7);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Card Wait For Ready Clear (to be used during frame rx) */
-static int
-sb1000_wait_for_ready_clear(const int ioaddr[], const char* name)
-{
-	unsigned long timeout;
+अटल पूर्णांक
+sb1000_रुको_क्रम_पढ़ोy_clear(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name)
+अणु
+	अचिन्हित दीर्घ समयout;
 
-	timeout = jiffies + Sb1000TimeOutJiffies;
-	while (inb(ioaddr[1] + 6) & 0x80) {
-		if (time_after_eq(jiffies, timeout)) {
-			printk(KERN_WARNING "%s: sb1000_wait_for_ready_clear timeout\n",
+	समयout = jअगरfies + Sb1000TimeOutJअगरfies;
+	जबतक (inb(ioaddr[1] + 6) & 0x80) अणु
+		अगर (समय_after_eq(jअगरfies, समयout)) अणु
+			prपूर्णांकk(KERN_WARNING "%s: sb1000_wait_for_ready_clear timeout\n",
 				name);
-			return -ETIME;
-		}
-	}
-	timeout = jiffies + Sb1000TimeOutJiffies;
-	while (inb(ioaddr[1] + 6) & 0x40) {
-		if (time_after_eq(jiffies, timeout)) {
-			printk(KERN_WARNING "%s: sb1000_wait_for_ready_clear timeout\n",
+			वापस -ETIME;
+		पूर्ण
+	पूर्ण
+	समयout = jअगरfies + Sb1000TimeOutJअगरfies;
+	जबतक (inb(ioaddr[1] + 6) & 0x40) अणु
+		अगर (समय_after_eq(jअगरfies, समयout)) अणु
+			prपूर्णांकk(KERN_WARNING "%s: sb1000_wait_for_ready_clear timeout\n",
 				name);
-			return -ETIME;
-		}
-	}
-	return 0;
-}
+			वापस -ETIME;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Card Send Command (to be used during frame rx) */
-static void
-sb1000_send_command(const int ioaddr[], const char* name,
-	const unsigned char out[])
-{
+अटल व्योम
+sb1000_send_command(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	स्थिर अचिन्हित अक्षर out[])
+अणु
 	outb(out[2], ioaddr[0] + 1);
 	outb(out[3], ioaddr[0] + 2);
 	outb(out[4], ioaddr[0] + 3);
 	outb(out[5], ioaddr[0] + 4);
 	outb(out[1], ioaddr[0] + 5);
 	outb(out[0], ioaddr[0] + 7);
-	if (sb1000_debug > 3)
-		printk(KERN_DEBUG "%s: sb1000_send_command out: %02x%02x%02x%02x"
+	अगर (sb1000_debug > 3)
+		prपूर्णांकk(KERN_DEBUG "%s: sb1000_send_command out: %02x%02x%02x%02x"
 			"%02x%02x\n", name, out[0], out[1], out[2], out[3], out[4], out[5]);
-}
+पूर्ण
 
 /* Card Read Status (to be used during frame rx) */
-static void
-sb1000_read_status(const int ioaddr[], unsigned char in[])
-{
+अटल व्योम
+sb1000_पढ़ो_status(स्थिर पूर्णांक ioaddr[], अचिन्हित अक्षर in[])
+अणु
 	in[1] = inb(ioaddr[0] + 1);
 	in[2] = inb(ioaddr[0] + 2);
 	in[3] = inb(ioaddr[0] + 3);
 	in[4] = inb(ioaddr[0] + 4);
 	in[0] = inb(ioaddr[0] + 5);
-}
+पूर्ण
 
 /* Issue Read Command (to be used during frame rx) */
-static void
-sb1000_issue_read_command(const int ioaddr[], const char* name)
-{
-	static const unsigned char Command0[6] = {0x20, 0x00, 0x00, 0x01, 0x00, 0x00};
+अटल व्योम
+sb1000_issue_पढ़ो_command(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x20, 0x00, 0x00, 0x01, 0x00, 0x00पूर्ण;
 
-	sb1000_wait_for_ready_clear(ioaddr, name);
+	sb1000_रुको_क्रम_पढ़ोy_clear(ioaddr, name);
 	outb(0xa0, ioaddr[0] + 6);
 	sb1000_send_command(ioaddr, name, Command0);
-}
+पूर्ण
 
 
 /*
- * SB1000 commands for open/configuration
+ * SB1000 commands क्रम खोलो/configuration
  */
 /* reset SB1000 card */
-static int
-sb1000_reset(const int ioaddr[], const char* name)
-{
-	static const unsigned char Command0[6] = {0x80, 0x16, 0x00, 0x00, 0x00, 0x00};
+अटल पूर्णांक
+sb1000_reset(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x16, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	unsigned char st[7];
-	int port, status;
+	अचिन्हित अक्षर st[7];
+	पूर्णांक port, status;
 
 	port = ioaddr[1] + 6;
 	outb(0x4, port);
@@ -470,142 +471,142 @@ sb1000_reset(const int ioaddr[], const char* name)
 	inb(port);
 	udelay(0);
 
-	if ((status = card_send_command(ioaddr, name, Command0, st)))
-		return status;
-	if (st[3] != 0xf0)
-		return -EIO;
-	return 0;
-}
+	अगर ((status = card_send_command(ioaddr, name, Command0, st)))
+		वापस status;
+	अगर (st[3] != 0xf0)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
 /* check SB1000 firmware CRC */
-static int
-sb1000_check_CRC(const int ioaddr[], const char* name)
-{
-	static const unsigned char Command0[6] = {0x80, 0x1f, 0x00, 0x00, 0x00, 0x00};
+अटल पूर्णांक
+sb1000_check_CRC(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x1f, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	unsigned char st[7];
-	int status;
+	अचिन्हित अक्षर st[7];
+	पूर्णांक status;
 
 	/* check CRC */
-	if ((status = card_send_command(ioaddr, name, Command0, st)))
-		return status;
-	if (st[1] != st[3] || st[2] != st[4])
-		return -EIO;
-	return 0;
-}
+	अगर ((status = card_send_command(ioaddr, name, Command0, st)))
+		वापस status;
+	अगर (st[1] != st[3] || st[2] != st[4])
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static inline int
-sb1000_start_get_set_command(const int ioaddr[], const char* name)
-{
-	static const unsigned char Command0[6] = {0x80, 0x1b, 0x00, 0x00, 0x00, 0x00};
+अटल अंतरभूत पूर्णांक
+sb1000_start_get_set_command(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x1b, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	unsigned char st[7];
+	अचिन्हित अक्षर st[7];
 
-	return card_send_command(ioaddr, name, Command0, st);
-}
+	वापस card_send_command(ioaddr, name, Command0, st);
+पूर्ण
 
-static int
-sb1000_end_get_set_command(const int ioaddr[], const char* name)
-{
-	static const unsigned char Command0[6] = {0x80, 0x1b, 0x02, 0x00, 0x00, 0x00};
-	static const unsigned char Command1[6] = {0x20, 0x00, 0x00, 0x00, 0x00, 0x00};
+अटल पूर्णांक
+sb1000_end_get_set_command(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x1b, 0x02, 0x00, 0x00, 0x00पूर्ण;
+	अटल स्थिर अचिन्हित अक्षर Command1[6] = अणु0x20, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	unsigned char st[7];
-	int status;
+	अचिन्हित अक्षर st[7];
+	पूर्णांक status;
 
-	if ((status = card_send_command(ioaddr, name, Command0, st)))
-		return status;
-	return card_send_command(ioaddr, name, Command1, st);
-}
+	अगर ((status = card_send_command(ioaddr, name, Command0, st)))
+		वापस status;
+	वापस card_send_command(ioaddr, name, Command1, st);
+पूर्ण
 
-static int
-sb1000_activate(const int ioaddr[], const char* name)
-{
-	static const unsigned char Command0[6] = {0x80, 0x11, 0x00, 0x00, 0x00, 0x00};
-	static const unsigned char Command1[6] = {0x80, 0x16, 0x00, 0x00, 0x00, 0x00};
+अटल पूर्णांक
+sb1000_activate(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x11, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	अटल स्थिर अचिन्हित अक्षर Command1[6] = अणु0x80, 0x16, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	unsigned char st[7];
-	int status;
+	अचिन्हित अक्षर st[7];
+	पूर्णांक status;
 
 	ssleep(1);
 	status = card_send_command(ioaddr, name, Command0, st);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 	status = card_send_command(ioaddr, name, Command1, st);
-	if (status)
-		return status;
-	if (st[3] != 0xf1) {
+	अगर (status)
+		वापस status;
+	अगर (st[3] != 0xf1) अणु
 		status = sb1000_start_get_set_command(ioaddr, name);
-		if (status)
-			return status;
-		return -EIO;
-	}
+		अगर (status)
+			वापस status;
+		वापस -EIO;
+	पूर्ण
 	udelay(1000);
-	return sb1000_start_get_set_command(ioaddr, name);
-}
+	वापस sb1000_start_get_set_command(ioaddr, name);
+पूर्ण
 
 /* get SB1000 firmware version */
-static int
-sb1000_get_firmware_version(const int ioaddr[], const char* name,
-	unsigned char version[], int do_end)
-{
-	static const unsigned char Command0[6] = {0x80, 0x23, 0x00, 0x00, 0x00, 0x00};
+अटल पूर्णांक
+sb1000_get_firmware_version(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name,
+	अचिन्हित अक्षर version[], पूर्णांक करो_end)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x23, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	unsigned char st[7];
-	int status;
+	अचिन्हित अक्षर st[7];
+	पूर्णांक status;
 
-	if ((status = sb1000_start_get_set_command(ioaddr, name)))
-		return status;
-	if ((status = card_send_command(ioaddr, name, Command0, st)))
-		return status;
-	if (st[0] != 0xa3)
-		return -EIO;
+	अगर ((status = sb1000_start_get_set_command(ioaddr, name)))
+		वापस status;
+	अगर ((status = card_send_command(ioaddr, name, Command0, st)))
+		वापस status;
+	अगर (st[0] != 0xa3)
+		वापस -EIO;
 	version[0] = st[1];
 	version[1] = st[2];
-	if (do_end)
-		return sb1000_end_get_set_command(ioaddr, name);
-	else
-		return 0;
-}
+	अगर (करो_end)
+		वापस sb1000_end_get_set_command(ioaddr, name);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 /* get SB1000 frequency */
-static int
-sb1000_get_frequency(const int ioaddr[], const char* name, int* frequency)
-{
-	static const unsigned char Command0[6] = {0x80, 0x44, 0x00, 0x00, 0x00, 0x00};
+अटल पूर्णांक
+sb1000_get_frequency(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name, पूर्णांक* frequency)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x44, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	unsigned char st[7];
-	int status;
+	अचिन्हित अक्षर st[7];
+	पूर्णांक status;
 
 	udelay(1000);
-	if ((status = sb1000_start_get_set_command(ioaddr, name)))
-		return status;
-	if ((status = card_send_command(ioaddr, name, Command0, st)))
-		return status;
+	अगर ((status = sb1000_start_get_set_command(ioaddr, name)))
+		वापस status;
+	अगर ((status = card_send_command(ioaddr, name, Command0, st)))
+		वापस status;
 	*frequency = ((st[1] << 8 | st[2]) << 8 | st[3]) << 8 | st[4];
-	return sb1000_end_get_set_command(ioaddr, name);
-}
+	वापस sb1000_end_get_set_command(ioaddr, name);
+पूर्ण
 
 /* set SB1000 frequency */
-static int
-sb1000_set_frequency(const int ioaddr[], const char* name, int frequency)
-{
-	unsigned char st[7];
-	int status;
-	unsigned char Command0[6] = {0x80, 0x29, 0x00, 0x00, 0x00, 0x00};
+अटल पूर्णांक
+sb1000_set_frequency(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name, पूर्णांक frequency)
+अणु
+	अचिन्हित अक्षर st[7];
+	पूर्णांक status;
+	अचिन्हित अक्षर Command0[6] = अणु0x80, 0x29, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	const int FrequencyLowerLimit = 57000;
-	const int FrequencyUpperLimit = 804000;
+	स्थिर पूर्णांक FrequencyLowerLimit = 57000;
+	स्थिर पूर्णांक FrequencyUpperLimit = 804000;
 
-	if (frequency < FrequencyLowerLimit || frequency > FrequencyUpperLimit) {
-		printk(KERN_ERR "%s: frequency chosen (%d kHz) is not in the range "
+	अगर (frequency < FrequencyLowerLimit || frequency > FrequencyUpperLimit) अणु
+		prपूर्णांकk(KERN_ERR "%s: frequency chosen (%d kHz) is not in the range "
 			"[%d,%d] kHz\n", name, frequency, FrequencyLowerLimit,
 			FrequencyUpperLimit);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	udelay(1000);
-	if ((status = sb1000_start_get_set_command(ioaddr, name)))
-		return status;
+	अगर ((status = sb1000_start_get_set_command(ioaddr, name)))
+		वापस status;
 	Command0[5] = frequency & 0xff;
 	frequency >>= 8;
 	Command0[4] = frequency & 0xff;
@@ -613,323 +614,323 @@ sb1000_set_frequency(const int ioaddr[], const char* name, int frequency)
 	Command0[3] = frequency & 0xff;
 	frequency >>= 8;
 	Command0[2] = frequency & 0xff;
-	return card_send_command(ioaddr, name, Command0, st);
-}
+	वापस card_send_command(ioaddr, name, Command0, st);
+पूर्ण
 
 /* get SB1000 PIDs */
-static int
-sb1000_get_PIDs(const int ioaddr[], const char* name, short PID[])
-{
-	static const unsigned char Command0[6] = {0x80, 0x40, 0x00, 0x00, 0x00, 0x00};
-	static const unsigned char Command1[6] = {0x80, 0x41, 0x00, 0x00, 0x00, 0x00};
-	static const unsigned char Command2[6] = {0x80, 0x42, 0x00, 0x00, 0x00, 0x00};
-	static const unsigned char Command3[6] = {0x80, 0x43, 0x00, 0x00, 0x00, 0x00};
+अटल पूर्णांक
+sb1000_get_PIDs(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name, लघु PID[])
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x40, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	अटल स्थिर अचिन्हित अक्षर Command1[6] = अणु0x80, 0x41, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	अटल स्थिर अचिन्हित अक्षर Command2[6] = अणु0x80, 0x42, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	अटल स्थिर अचिन्हित अक्षर Command3[6] = अणु0x80, 0x43, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	unsigned char st[7];
-	int status;
+	अचिन्हित अक्षर st[7];
+	पूर्णांक status;
 
 	udelay(1000);
-	if ((status = sb1000_start_get_set_command(ioaddr, name)))
-		return status;
+	अगर ((status = sb1000_start_get_set_command(ioaddr, name)))
+		वापस status;
 
-	if ((status = card_send_command(ioaddr, name, Command0, st)))
-		return status;
+	अगर ((status = card_send_command(ioaddr, name, Command0, st)))
+		वापस status;
 	PID[0] = st[1] << 8 | st[2];
 
-	if ((status = card_send_command(ioaddr, name, Command1, st)))
-		return status;
+	अगर ((status = card_send_command(ioaddr, name, Command1, st)))
+		वापस status;
 	PID[1] = st[1] << 8 | st[2];
 
-	if ((status = card_send_command(ioaddr, name, Command2, st)))
-		return status;
+	अगर ((status = card_send_command(ioaddr, name, Command2, st)))
+		वापस status;
 	PID[2] = st[1] << 8 | st[2];
 
-	if ((status = card_send_command(ioaddr, name, Command3, st)))
-		return status;
+	अगर ((status = card_send_command(ioaddr, name, Command3, st)))
+		वापस status;
 	PID[3] = st[1] << 8 | st[2];
 
-	return sb1000_end_get_set_command(ioaddr, name);
-}
+	वापस sb1000_end_get_set_command(ioaddr, name);
+पूर्ण
 
 /* set SB1000 PIDs */
-static int
-sb1000_set_PIDs(const int ioaddr[], const char* name, const short PID[])
-{
-	static const unsigned char Command4[6] = {0x80, 0x2e, 0x00, 0x00, 0x00, 0x00};
+अटल पूर्णांक
+sb1000_set_PIDs(स्थिर पूर्णांक ioaddr[], स्थिर अक्षर* name, स्थिर लघु PID[])
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command4[6] = अणु0x80, 0x2e, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	unsigned char st[7];
-	short p;
-	int status;
-	unsigned char Command0[6] = {0x80, 0x31, 0x00, 0x00, 0x00, 0x00};
-	unsigned char Command1[6] = {0x80, 0x32, 0x00, 0x00, 0x00, 0x00};
-	unsigned char Command2[6] = {0x80, 0x33, 0x00, 0x00, 0x00, 0x00};
-	unsigned char Command3[6] = {0x80, 0x34, 0x00, 0x00, 0x00, 0x00};
+	अचिन्हित अक्षर st[7];
+	लघु p;
+	पूर्णांक status;
+	अचिन्हित अक्षर Command0[6] = अणु0x80, 0x31, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	अचिन्हित अक्षर Command1[6] = अणु0x80, 0x32, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	अचिन्हित अक्षर Command2[6] = अणु0x80, 0x33, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	अचिन्हित अक्षर Command3[6] = अणु0x80, 0x34, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
 	udelay(1000);
-	if ((status = sb1000_start_get_set_command(ioaddr, name)))
-		return status;
+	अगर ((status = sb1000_start_get_set_command(ioaddr, name)))
+		वापस status;
 
 	p = PID[0];
 	Command0[3] = p & 0xff;
 	p >>= 8;
 	Command0[2] = p & 0xff;
-	if ((status = card_send_command(ioaddr, name, Command0, st)))
-		return status;
+	अगर ((status = card_send_command(ioaddr, name, Command0, st)))
+		वापस status;
 
 	p = PID[1];
 	Command1[3] = p & 0xff;
 	p >>= 8;
 	Command1[2] = p & 0xff;
-	if ((status = card_send_command(ioaddr, name, Command1, st)))
-		return status;
+	अगर ((status = card_send_command(ioaddr, name, Command1, st)))
+		वापस status;
 
 	p = PID[2];
 	Command2[3] = p & 0xff;
 	p >>= 8;
 	Command2[2] = p & 0xff;
-	if ((status = card_send_command(ioaddr, name, Command2, st)))
-		return status;
+	अगर ((status = card_send_command(ioaddr, name, Command2, st)))
+		वापस status;
 
 	p = PID[3];
 	Command3[3] = p & 0xff;
 	p >>= 8;
 	Command3[2] = p & 0xff;
-	if ((status = card_send_command(ioaddr, name, Command3, st)))
-		return status;
+	अगर ((status = card_send_command(ioaddr, name, Command3, st)))
+		वापस status;
 
-	if ((status = card_send_command(ioaddr, name, Command4, st)))
-		return status;
-	return sb1000_end_get_set_command(ioaddr, name);
-}
+	अगर ((status = card_send_command(ioaddr, name, Command4, st)))
+		वापस status;
+	वापस sb1000_end_get_set_command(ioaddr, name);
+पूर्ण
 
 
-static void
-sb1000_print_status_buffer(const char* name, unsigned char st[],
-	unsigned char buffer[], int size)
-{
-	int i, j, k;
+अटल व्योम
+sb1000_prपूर्णांक_status_buffer(स्थिर अक्षर* name, अचिन्हित अक्षर st[],
+	अचिन्हित अक्षर buffer[], पूर्णांक size)
+अणु
+	पूर्णांक i, j, k;
 
-	printk(KERN_DEBUG "%s: status: %02x %02x\n", name, st[0], st[1]);
-	if (buffer[24] == 0x08 && buffer[25] == 0x00 && buffer[26] == 0x45) {
-		printk(KERN_DEBUG "%s: length: %d protocol: %d from: %d.%d.%d.%d:%d "
+	prपूर्णांकk(KERN_DEBUG "%s: status: %02x %02x\n", name, st[0], st[1]);
+	अगर (buffer[24] == 0x08 && buffer[25] == 0x00 && buffer[26] == 0x45) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: length: %d protocol: %d from: %d.%d.%d.%d:%d "
 			"to %d.%d.%d.%d:%d\n", name, buffer[28] << 8 | buffer[29],
 			buffer[35], buffer[38], buffer[39], buffer[40], buffer[41],
             buffer[46] << 8 | buffer[47],
 			buffer[42], buffer[43], buffer[44], buffer[45],
             buffer[48] << 8 | buffer[49]);
-	} else {
-		for (i = 0, k = 0; i < (size + 7) / 8; i++) {
-			printk(KERN_DEBUG "%s: %s", name, i ? "       " : "buffer:");
-			for (j = 0; j < 8 && k < size; j++, k++)
-				printk(" %02x", buffer[k]);
-			printk("\n");
-		}
-	}
-}
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0, k = 0; i < (size + 7) / 8; i++) अणु
+			prपूर्णांकk(KERN_DEBUG "%s: %s", name, i ? "       " : "buffer:");
+			क्रम (j = 0; j < 8 && k < size; j++, k++)
+				prपूर्णांकk(" %02x", buffer[k]);
+			prपूर्णांकk("\n");
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * SB1000 commands for frame rx interrupt
+ * SB1000 commands क्रम frame rx पूर्णांकerrupt
  */
 /* receive a single frame and assemble datagram
- * (this is the heart of the interrupt routine)
+ * (this is the heart of the पूर्णांकerrupt routine)
  */
-static int
-sb1000_rx(struct net_device *dev)
-{
+अटल पूर्णांक
+sb1000_rx(काष्ठा net_device *dev)
+अणु
 
-#define FRAMESIZE 184
-	unsigned char st[2], buffer[FRAMESIZE], session_id, frame_id;
-	short dlen;
-	int ioaddr, ns;
-	unsigned int skbsize;
-	struct sk_buff *skb;
-	struct sb1000_private *lp = netdev_priv(dev);
-	struct net_device_stats *stats = &dev->stats;
+#घोषणा FRAMESIZE 184
+	अचिन्हित अक्षर st[2], buffer[FRAMESIZE], session_id, frame_id;
+	लघु dlen;
+	पूर्णांक ioaddr, ns;
+	अचिन्हित पूर्णांक skbsize;
+	काष्ठा sk_buff *skb;
+	काष्ठा sb1000_निजी *lp = netdev_priv(dev);
+	काष्ठा net_device_stats *stats = &dev->stats;
 
-	/* SB1000 frame constants */
-	const int FrameSize = FRAMESIZE;
-	const int NewDatagramHeaderSkip = 8;
-	const int NewDatagramHeaderSize = NewDatagramHeaderSkip + 18;
-	const int NewDatagramDataSize = FrameSize - NewDatagramHeaderSize;
-	const int ContDatagramHeaderSkip = 7;
-	const int ContDatagramHeaderSize = ContDatagramHeaderSkip + 1;
-	const int ContDatagramDataSize = FrameSize - ContDatagramHeaderSize;
-	const int TrailerSize = 4;
+	/* SB1000 frame स्थिरants */
+	स्थिर पूर्णांक FrameSize = FRAMESIZE;
+	स्थिर पूर्णांक NewDatagramHeaderSkip = 8;
+	स्थिर पूर्णांक NewDatagramHeaderSize = NewDatagramHeaderSkip + 18;
+	स्थिर पूर्णांक NewDatagramDataSize = FrameSize - NewDatagramHeaderSize;
+	स्थिर पूर्णांक ContDatagramHeaderSkip = 7;
+	स्थिर पूर्णांक ContDatagramHeaderSize = ContDatagramHeaderSkip + 1;
+	स्थिर पूर्णांक ContDatagramDataSize = FrameSize - ContDatagramHeaderSize;
+	स्थिर पूर्णांक TrailerSize = 4;
 
 	ioaddr = dev->base_addr;
 
-	insw(ioaddr, (unsigned short*) st, 1);
-#ifdef XXXDEBUG
-printk("cm0: received: %02x %02x\n", st[0], st[1]);
-#endif /* XXXDEBUG */
+	insw(ioaddr, (अचिन्हित लघु*) st, 1);
+#अगर_घोषित XXXDEBUG
+prपूर्णांकk("cm0: received: %02x %02x\n", st[0], st[1]);
+#पूर्ण_अगर /* XXXDEBUG */
 	lp->rx_frames++;
 
-	/* decide if it is a good or bad frame */
-	for (ns = 0; ns < NPIDS; ns++) {
+	/* decide अगर it is a good or bad frame */
+	क्रम (ns = 0; ns < NPIDS; ns++) अणु
 		session_id = lp->rx_session_id[ns];
 		frame_id = lp->rx_frame_id[ns];
-		if (st[0] == session_id) {
-			if (st[1] == frame_id || (!frame_id && (st[1] & 0xf0) == 0x30)) {
-				goto good_frame;
-			} else if ((st[1] & 0xf0) == 0x30 && (st[0] & 0x40)) {
-				goto skipped_frame;
-			} else {
-				goto bad_frame;
-			}
-		} else if (st[0] == (session_id | 0x40)) {
-			if ((st[1] & 0xf0) == 0x30) {
-				goto skipped_frame;
-			} else {
-				goto bad_frame;
-			}
-		}
-	}
-	goto bad_frame;
+		अगर (st[0] == session_id) अणु
+			अगर (st[1] == frame_id || (!frame_id && (st[1] & 0xf0) == 0x30)) अणु
+				जाओ good_frame;
+			पूर्ण अन्यथा अगर ((st[1] & 0xf0) == 0x30 && (st[0] & 0x40)) अणु
+				जाओ skipped_frame;
+			पूर्ण अन्यथा अणु
+				जाओ bad_frame;
+			पूर्ण
+		पूर्ण अन्यथा अगर (st[0] == (session_id | 0x40)) अणु
+			अगर ((st[1] & 0xf0) == 0x30) अणु
+				जाओ skipped_frame;
+			पूर्ण अन्यथा अणु
+				जाओ bad_frame;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	जाओ bad_frame;
 
 skipped_frame:
 	stats->rx_frame_errors++;
 	skb = lp->rx_skb[ns];
-	if (sb1000_debug > 1)
-		printk(KERN_WARNING "%s: missing frame(s): got %02x %02x "
+	अगर (sb1000_debug > 1)
+		prपूर्णांकk(KERN_WARNING "%s: missing frame(s): got %02x %02x "
 			"expecting %02x %02x\n", dev->name, st[0], st[1],
 			skb ? session_id : session_id | 0x40, frame_id);
-	if (skb) {
-		dev_kfree_skb(skb);
-		skb = NULL;
-	}
+	अगर (skb) अणु
+		dev_kमुक्त_skb(skb);
+		skb = शून्य;
+	पूर्ण
 
 good_frame:
 	lp->rx_frame_id[ns] = 0x30 | ((st[1] + 1) & 0x0f);
 	/* new datagram */
-	if (st[0] & 0x40) {
+	अगर (st[0] & 0x40) अणु
 		/* get data length */
 		insw(ioaddr, buffer, NewDatagramHeaderSize / 2);
-#ifdef XXXDEBUG
-printk("cm0: IP identification: %02x%02x  fragment offset: %02x%02x\n", buffer[30], buffer[31], buffer[32], buffer[33]);
-#endif /* XXXDEBUG */
-		if (buffer[0] != NewDatagramHeaderSkip) {
-			if (sb1000_debug > 1)
-				printk(KERN_WARNING "%s: new datagram header skip error: "
+#अगर_घोषित XXXDEBUG
+prपूर्णांकk("cm0: IP identification: %02x%02x  fragment offset: %02x%02x\n", buffer[30], buffer[31], buffer[32], buffer[33]);
+#पूर्ण_अगर /* XXXDEBUG */
+		अगर (buffer[0] != NewDatagramHeaderSkip) अणु
+			अगर (sb1000_debug > 1)
+				prपूर्णांकk(KERN_WARNING "%s: new datagram header skip error: "
 					"got %02x expecting %02x\n", dev->name, buffer[0],
 					NewDatagramHeaderSkip);
 			stats->rx_length_errors++;
 			insw(ioaddr, buffer, NewDatagramDataSize / 2);
-			goto bad_frame_next;
-		}
+			जाओ bad_frame_next;
+		पूर्ण
 		dlen = ((buffer[NewDatagramHeaderSkip + 3] & 0x0f) << 8 |
 			buffer[NewDatagramHeaderSkip + 4]) - 17;
-		if (dlen > SB1000_MRU) {
-			if (sb1000_debug > 1)
-				printk(KERN_WARNING "%s: datagram length (%d) greater "
+		अगर (dlen > SB1000_MRU) अणु
+			अगर (sb1000_debug > 1)
+				prपूर्णांकk(KERN_WARNING "%s: datagram length (%d) greater "
 					"than MRU (%d)\n", dev->name, dlen, SB1000_MRU);
 			stats->rx_length_errors++;
 			insw(ioaddr, buffer, NewDatagramDataSize / 2);
-			goto bad_frame_next;
-		}
+			जाओ bad_frame_next;
+		पूर्ण
 		lp->rx_dlen[ns] = dlen;
-		/* compute size to allocate for datagram */
+		/* compute size to allocate क्रम datagram */
 		skbsize = dlen + FrameSize;
-		if ((skb = alloc_skb(skbsize, GFP_ATOMIC)) == NULL) {
-			if (sb1000_debug > 1)
-				printk(KERN_WARNING "%s: can't allocate %d bytes long "
+		अगर ((skb = alloc_skb(skbsize, GFP_ATOMIC)) == शून्य) अणु
+			अगर (sb1000_debug > 1)
+				prपूर्णांकk(KERN_WARNING "%s: can't allocate %d bytes long "
 					"skbuff\n", dev->name, skbsize);
 			stats->rx_dropped++;
 			insw(ioaddr, buffer, NewDatagramDataSize / 2);
-			goto dropped_frame;
-		}
+			जाओ dropped_frame;
+		पूर्ण
 		skb->dev = dev;
 		skb_reset_mac_header(skb);
-		skb->protocol = (unsigned short) buffer[NewDatagramHeaderSkip + 16];
+		skb->protocol = (अचिन्हित लघु) buffer[NewDatagramHeaderSkip + 16];
 		insw(ioaddr, skb_put(skb, NewDatagramDataSize),
 			NewDatagramDataSize / 2);
 		lp->rx_skb[ns] = skb;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* continuation of previous datagram */
 		insw(ioaddr, buffer, ContDatagramHeaderSize / 2);
-		if (buffer[0] != ContDatagramHeaderSkip) {
-			if (sb1000_debug > 1)
-				printk(KERN_WARNING "%s: cont datagram header skip error: "
+		अगर (buffer[0] != ContDatagramHeaderSkip) अणु
+			अगर (sb1000_debug > 1)
+				prपूर्णांकk(KERN_WARNING "%s: cont datagram header skip error: "
 					"got %02x expecting %02x\n", dev->name, buffer[0],
 					ContDatagramHeaderSkip);
 			stats->rx_length_errors++;
 			insw(ioaddr, buffer, ContDatagramDataSize / 2);
-			goto bad_frame_next;
-		}
+			जाओ bad_frame_next;
+		पूर्ण
 		skb = lp->rx_skb[ns];
 		insw(ioaddr, skb_put(skb, ContDatagramDataSize),
 			ContDatagramDataSize / 2);
 		dlen = lp->rx_dlen[ns];
-	}
-	if (skb->len < dlen + TrailerSize) {
+	पूर्ण
+	अगर (skb->len < dlen + TrailerSize) अणु
 		lp->rx_session_id[ns] &= ~0x40;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* datagram completed: send to upper level */
 	skb_trim(skb, dlen);
-	netif_rx(skb);
+	netअगर_rx(skb);
 	stats->rx_bytes+=dlen;
 	stats->rx_packets++;
-	lp->rx_skb[ns] = NULL;
+	lp->rx_skb[ns] = शून्य;
 	lp->rx_session_id[ns] |= 0x40;
-	return 0;
+	वापस 0;
 
 bad_frame:
 	insw(ioaddr, buffer, FrameSize / 2);
-	if (sb1000_debug > 1)
-		printk(KERN_WARNING "%s: frame error: got %02x %02x\n",
+	अगर (sb1000_debug > 1)
+		prपूर्णांकk(KERN_WARNING "%s: frame error: got %02x %02x\n",
 			dev->name, st[0], st[1]);
 	stats->rx_frame_errors++;
 bad_frame_next:
-	if (sb1000_debug > 2)
-		sb1000_print_status_buffer(dev->name, st, buffer, FrameSize);
+	अगर (sb1000_debug > 2)
+		sb1000_prपूर्णांक_status_buffer(dev->name, st, buffer, FrameSize);
 dropped_frame:
 	stats->rx_errors++;
-	if (ns < NPIDS) {
-		if ((skb = lp->rx_skb[ns])) {
-			dev_kfree_skb(skb);
-			lp->rx_skb[ns] = NULL;
-		}
+	अगर (ns < NPIDS) अणु
+		अगर ((skb = lp->rx_skb[ns])) अणु
+			dev_kमुक्त_skb(skb);
+			lp->rx_skb[ns] = शून्य;
+		पूर्ण
 		lp->rx_session_id[ns] |= 0x40;
-	}
-	return -1;
-}
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static void
-sb1000_error_dpc(struct net_device *dev)
-{
-	static const unsigned char Command0[6] = {0x80, 0x26, 0x00, 0x00, 0x00, 0x00};
+अटल व्योम
+sb1000_error_dpc(काष्ठा net_device *dev)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x26, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	char *name;
-	unsigned char st[5];
-	int ioaddr[2];
-	struct sb1000_private *lp = netdev_priv(dev);
-	const int ErrorDpcCounterInitialize = 200;
+	अक्षर *name;
+	अचिन्हित अक्षर st[5];
+	पूर्णांक ioaddr[2];
+	काष्ठा sb1000_निजी *lp = netdev_priv(dev);
+	स्थिर पूर्णांक ErrorDpcCounterInitialize = 200;
 
 	ioaddr[0] = dev->base_addr;
 	/* mem_start holds the second I/O address */
 	ioaddr[1] = dev->mem_start;
 	name = dev->name;
 
-	sb1000_wait_for_ready_clear(ioaddr, name);
+	sb1000_रुको_क्रम_पढ़ोy_clear(ioaddr, name);
 	sb1000_send_command(ioaddr, name, Command0);
-	sb1000_wait_for_ready(ioaddr, name);
-	sb1000_read_status(ioaddr, st);
-	if (st[1] & 0x10)
+	sb1000_रुको_क्रम_पढ़ोy(ioaddr, name);
+	sb1000_पढ़ो_status(ioaddr, st);
+	अगर (st[1] & 0x10)
 		lp->rx_error_dpc_count = ErrorDpcCounterInitialize;
-}
+पूर्ण
 
 
 /*
- * Linux interface functions
+ * Linux पूर्णांकerface functions
  */
-static int
-sb1000_open(struct net_device *dev)
-{
-	char *name;
-	int ioaddr[2], status;
-	struct sb1000_private *lp = netdev_priv(dev);
-	const unsigned short FirmwareVersion[] = {0x01, 0x01};
+अटल पूर्णांक
+sb1000_खोलो(काष्ठा net_device *dev)
+अणु
+	अक्षर *name;
+	पूर्णांक ioaddr[2], status;
+	काष्ठा sb1000_निजी *lp = netdev_priv(dev);
+	स्थिर अचिन्हित लघु FirmwareVersion[] = अणु0x01, 0x01पूर्ण;
 
 	ioaddr[0] = dev->base_addr;
 	/* mem_start holds the second I/O address */
@@ -937,17 +938,17 @@ sb1000_open(struct net_device *dev)
 	name = dev->name;
 
 	/* initialize sb1000 */
-	if ((status = sb1000_reset(ioaddr, name)))
-		return status;
+	अगर ((status = sb1000_reset(ioaddr, name)))
+		वापस status;
 	ssleep(1);
-	if ((status = sb1000_check_CRC(ioaddr, name)))
-		return status;
+	अगर ((status = sb1000_check_CRC(ioaddr, name)))
+		वापस status;
 
-	/* initialize private data before board can catch interrupts */
-	lp->rx_skb[0] = NULL;
-	lp->rx_skb[1] = NULL;
-	lp->rx_skb[2] = NULL;
-	lp->rx_skb[3] = NULL;
+	/* initialize निजी data beक्रमe board can catch पूर्णांकerrupts */
+	lp->rx_skb[0] = शून्य;
+	lp->rx_skb[1] = शून्य;
+	lp->rx_skb[2] = शून्य;
+	lp->rx_skb[3] = शून्य;
 	lp->rx_dlen[0] = 0;
 	lp->rx_dlen[1] = 0;
 	lp->rx_dlen[2] = 0;
@@ -963,96 +964,96 @@ sb1000_open(struct net_device *dev)
 	lp->rx_frame_id[1] = 0;
 	lp->rx_frame_id[2] = 0;
 	lp->rx_frame_id[3] = 0;
-	if (request_irq(dev->irq, sb1000_interrupt, 0, "sb1000", dev)) {
-		return -EAGAIN;
-	}
+	अगर (request_irq(dev->irq, sb1000_पूर्णांकerrupt, 0, "sb1000", dev)) अणु
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (sb1000_debug > 2)
-		printk(KERN_DEBUG "%s: Opening, IRQ %d\n", name, dev->irq);
+	अगर (sb1000_debug > 2)
+		prपूर्णांकk(KERN_DEBUG "%s: Opening, IRQ %d\n", name, dev->irq);
 
 	/* Activate board and check firmware version */
 	udelay(1000);
-	if ((status = sb1000_activate(ioaddr, name)))
-		return status;
+	अगर ((status = sb1000_activate(ioaddr, name)))
+		वापस status;
 	udelay(0);
-	if ((status = sb1000_get_firmware_version(ioaddr, name, version, 0)))
-		return status;
-	if (version[0] != FirmwareVersion[0] || version[1] != FirmwareVersion[1])
-		printk(KERN_WARNING "%s: found firmware version %x.%02x "
+	अगर ((status = sb1000_get_firmware_version(ioaddr, name, version, 0)))
+		वापस status;
+	अगर (version[0] != FirmwareVersion[0] || version[1] != FirmwareVersion[1])
+		prपूर्णांकk(KERN_WARNING "%s: found firmware version %x.%02x "
 			"(should be %x.%02x)\n", name, version[0], version[1],
 			FirmwareVersion[0], FirmwareVersion[1]);
 
 
-	netif_start_queue(dev);
-	return 0;					/* Always succeed */
-}
+	netअगर_start_queue(dev);
+	वापस 0;					/* Always succeed */
+पूर्ण
 
-static int sb1000_dev_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	char* name;
-	unsigned char version[2];
-	short PID[4];
-	int ioaddr[2], status, frequency;
-	unsigned int stats[5];
-	struct sb1000_private *lp = netdev_priv(dev);
+अटल पूर्णांक sb1000_dev_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	अक्षर* name;
+	अचिन्हित अक्षर version[2];
+	लघु PID[4];
+	पूर्णांक ioaddr[2], status, frequency;
+	अचिन्हित पूर्णांक stats[5];
+	काष्ठा sb1000_निजी *lp = netdev_priv(dev);
 
-	if (!(dev && dev->flags & IFF_UP))
-		return -ENODEV;
+	अगर (!(dev && dev->flags & IFF_UP))
+		वापस -ENODEV;
 
 	ioaddr[0] = dev->base_addr;
 	/* mem_start holds the second I/O address */
 	ioaddr[1] = dev->mem_start;
 	name = dev->name;
 
-	switch (cmd) {
-	case SIOCGCMSTATS:		/* get statistics */
+	चयन (cmd) अणु
+	हाल SIOCGCMSTATS:		/* get statistics */
 		stats[0] = dev->stats.rx_bytes;
 		stats[1] = lp->rx_frames;
 		stats[2] = dev->stats.rx_packets;
 		stats[3] = dev->stats.rx_errors;
 		stats[4] = dev->stats.rx_dropped;
-		if(copy_to_user(ifr->ifr_data, stats, sizeof(stats)))
-			return -EFAULT;
+		अगर(copy_to_user(अगरr->अगरr_data, stats, माप(stats)))
+			वापस -EFAULT;
 		status = 0;
-		break;
+		अवरोध;
 
-	case SIOCGCMFIRMWARE:		/* get firmware version */
-		if ((status = sb1000_get_firmware_version(ioaddr, name, version, 1)))
-			return status;
-		if(copy_to_user(ifr->ifr_data, version, sizeof(version)))
-			return -EFAULT;
-		break;
+	हाल SIOCGCMFIRMWARE:		/* get firmware version */
+		अगर ((status = sb1000_get_firmware_version(ioaddr, name, version, 1)))
+			वापस status;
+		अगर(copy_to_user(अगरr->अगरr_data, version, माप(version)))
+			वापस -EFAULT;
+		अवरोध;
 
-	case SIOCGCMFREQUENCY:		/* get frequency */
-		if ((status = sb1000_get_frequency(ioaddr, name, &frequency)))
-			return status;
-		if(put_user(frequency, (int __user *) ifr->ifr_data))
-			return -EFAULT;
-		break;
+	हाल SIOCGCMFREQUENCY:		/* get frequency */
+		अगर ((status = sb1000_get_frequency(ioaddr, name, &frequency)))
+			वापस status;
+		अगर(put_user(frequency, (पूर्णांक __user *) अगरr->अगरr_data))
+			वापस -EFAULT;
+		अवरोध;
 
-	case SIOCSCMFREQUENCY:		/* set frequency */
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
-		if(get_user(frequency, (int __user *) ifr->ifr_data))
-			return -EFAULT;
-		if ((status = sb1000_set_frequency(ioaddr, name, frequency)))
-			return status;
-		break;
+	हाल SIOCSCMFREQUENCY:		/* set frequency */
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
+		अगर(get_user(frequency, (पूर्णांक __user *) अगरr->अगरr_data))
+			वापस -EFAULT;
+		अगर ((status = sb1000_set_frequency(ioaddr, name, frequency)))
+			वापस status;
+		अवरोध;
 
-	case SIOCGCMPIDS:			/* get PIDs */
-		if ((status = sb1000_get_PIDs(ioaddr, name, PID)))
-			return status;
-		if(copy_to_user(ifr->ifr_data, PID, sizeof(PID)))
-			return -EFAULT;
-		break;
+	हाल SIOCGCMPIDS:			/* get PIDs */
+		अगर ((status = sb1000_get_PIDs(ioaddr, name, PID)))
+			वापस status;
+		अगर(copy_to_user(अगरr->अगरr_data, PID, माप(PID)))
+			वापस -EFAULT;
+		अवरोध;
 
-	case SIOCSCMPIDS:			/* set PIDs */
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
-		if(copy_from_user(PID, ifr->ifr_data, sizeof(PID)))
-			return -EFAULT;
-		if ((status = sb1000_set_PIDs(ioaddr, name, PID)))
-			return status;
+	हाल SIOCSCMPIDS:			/* set PIDs */
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
+		अगर(copy_from_user(PID, अगरr->अगरr_data, माप(PID)))
+			वापस -EFAULT;
+		अगर ((status = sb1000_set_PIDs(ioaddr, name, PID)))
+			वापस status;
 		/* set session_id, frame_id and pkt_type too */
 		lp->rx_session_id[0] = 0x50 | (PID[0] & 0x0f);
 		lp->rx_session_id[1] = 0x48;
@@ -1062,109 +1063,109 @@ static int sb1000_dev_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		lp->rx_frame_id[1] = 0;
 		lp->rx_frame_id[2] = 0;
 		lp->rx_frame_id[3] = 0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		status = -EINVAL;
-		break;
-	}
-	return status;
-}
+		अवरोध;
+	पूर्ण
+	वापस status;
+पूर्ण
 
-/* transmit function: do nothing since SB1000 can't send anything out */
-static netdev_tx_t
-sb1000_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	printk(KERN_WARNING "%s: trying to transmit!!!\n", dev->name);
+/* transmit function: करो nothing since SB1000 can't send anything out */
+अटल netdev_tx_t
+sb1000_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: trying to transmit!!!\n", dev->name);
 	/* sb1000 can't xmit datagrams */
-	dev_kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-/* SB1000 interrupt handler. */
-static irqreturn_t sb1000_interrupt(int irq, void *dev_id)
-{
-	static const unsigned char Command0[6] = {0x80, 0x2c, 0x00, 0x00, 0x00, 0x00};
-	static const unsigned char Command1[6] = {0x80, 0x2e, 0x00, 0x00, 0x00, 0x00};
+/* SB1000 पूर्णांकerrupt handler. */
+अटल irqवापस_t sb1000_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अटल स्थिर अचिन्हित अक्षर Command0[6] = अणु0x80, 0x2c, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	अटल स्थिर अचिन्हित अक्षर Command1[6] = अणु0x80, 0x2e, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-	char *name;
-	unsigned char st;
-	int ioaddr[2];
-	struct net_device *dev = dev_id;
-	struct sb1000_private *lp = netdev_priv(dev);
+	अक्षर *name;
+	अचिन्हित अक्षर st;
+	पूर्णांक ioaddr[2];
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा sb1000_निजी *lp = netdev_priv(dev);
 
-	const int MaxRxErrorCount = 6;
+	स्थिर पूर्णांक MaxRxErrorCount = 6;
 
 	ioaddr[0] = dev->base_addr;
 	/* mem_start holds the second I/O address */
 	ioaddr[1] = dev->mem_start;
 	name = dev->name;
 
-	/* is it a good interrupt? */
+	/* is it a good पूर्णांकerrupt? */
 	st = inb(ioaddr[1] + 6);
-	if (!(st & 0x08 && st & 0x20)) {
-		return IRQ_NONE;
-	}
+	अगर (!(st & 0x08 && st & 0x20)) अणु
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (sb1000_debug > 3)
-		printk(KERN_DEBUG "%s: entering interrupt\n", dev->name);
+	अगर (sb1000_debug > 3)
+		prपूर्णांकk(KERN_DEBUG "%s: entering interrupt\n", dev->name);
 
 	st = inb(ioaddr[0] + 7);
-	if (sb1000_rx(dev))
+	अगर (sb1000_rx(dev))
 		lp->rx_error_count++;
-#ifdef SB1000_DELAY
+#अगर_घोषित SB1000_DELAY
 	udelay(SB1000_DELAY);
-#endif /* SB1000_DELAY */
-	sb1000_issue_read_command(ioaddr, name);
-	if (st & 0x01) {
+#पूर्ण_अगर /* SB1000_DELAY */
+	sb1000_issue_पढ़ो_command(ioaddr, name);
+	अगर (st & 0x01) अणु
 		sb1000_error_dpc(dev);
-		sb1000_issue_read_command(ioaddr, name);
-	}
-	if (lp->rx_error_dpc_count && !(--lp->rx_error_dpc_count)) {
-		sb1000_wait_for_ready_clear(ioaddr, name);
+		sb1000_issue_पढ़ो_command(ioaddr, name);
+	पूर्ण
+	अगर (lp->rx_error_dpc_count && !(--lp->rx_error_dpc_count)) अणु
+		sb1000_रुको_क्रम_पढ़ोy_clear(ioaddr, name);
 		sb1000_send_command(ioaddr, name, Command0);
-		sb1000_wait_for_ready(ioaddr, name);
-		sb1000_issue_read_command(ioaddr, name);
-	}
-	if (lp->rx_error_count >= MaxRxErrorCount) {
-		sb1000_wait_for_ready_clear(ioaddr, name);
+		sb1000_रुको_क्रम_पढ़ोy(ioaddr, name);
+		sb1000_issue_पढ़ो_command(ioaddr, name);
+	पूर्ण
+	अगर (lp->rx_error_count >= MaxRxErrorCount) अणु
+		sb1000_रुको_क्रम_पढ़ोy_clear(ioaddr, name);
 		sb1000_send_command(ioaddr, name, Command1);
-		sb1000_wait_for_ready(ioaddr, name);
-		sb1000_issue_read_command(ioaddr, name);
+		sb1000_रुको_क्रम_पढ़ोy(ioaddr, name);
+		sb1000_issue_पढ़ो_command(ioaddr, name);
 		lp->rx_error_count = 0;
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int sb1000_close(struct net_device *dev)
-{
-	int i;
-	int ioaddr[2];
-	struct sb1000_private *lp = netdev_priv(dev);
+अटल पूर्णांक sb1000_बंद(काष्ठा net_device *dev)
+अणु
+	पूर्णांक i;
+	पूर्णांक ioaddr[2];
+	काष्ठा sb1000_निजी *lp = netdev_priv(dev);
 
-	if (sb1000_debug > 2)
-		printk(KERN_DEBUG "%s: Shutting down sb1000.\n", dev->name);
+	अगर (sb1000_debug > 2)
+		prपूर्णांकk(KERN_DEBUG "%s: Shutting down sb1000.\n", dev->name);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
 	ioaddr[0] = dev->base_addr;
 	/* mem_start holds the second I/O address */
 	ioaddr[1] = dev->mem_start;
 
-	free_irq(dev->irq, dev);
-	/* If we don't do this, we can't re-insmod it later. */
+	मुक्त_irq(dev->irq, dev);
+	/* If we करोn't do this, we can't re-insmod it later. */
 	release_region(ioaddr[1], SB1000_IO_EXTENT);
 	release_region(ioaddr[0], SB1000_IO_EXTENT);
 
-	/* free rx_skb's if needed */
-	for (i=0; i<4; i++) {
-		if (lp->rx_skb[i]) {
-			dev_kfree_skb(lp->rx_skb[i]);
-		}
-	}
-	return 0;
-}
+	/* मुक्त rx_skb's अगर needed */
+	क्रम (i=0; i<4; i++) अणु
+		अगर (lp->rx_skb[i]) अणु
+			dev_kमुक्त_skb(lp->rx_skb[i]);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 MODULE_AUTHOR("Franco Venturi <fventuri@mediaone.net>");
 MODULE_DESCRIPTION("General Instruments SB1000 driver");

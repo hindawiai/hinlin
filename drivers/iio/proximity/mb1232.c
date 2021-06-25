@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * mb1232.c - Support for MaxBotix I2CXL-MaxSonar-EZ series ultrasonic
- *   ranger with i2c interface
+ * mb1232.c - Support क्रम MaxBotix I2CXL-MaxSonar-EZ series ultrasonic
+ *   ranger with i2c पूर्णांकerface
  * actually tested with mb1232 type
  *
  * Copyright (c) 2019 Andreas Klinger <ak@it-klinger.de>
  *
  * For details about the device see:
- * https://www.maxbotix.com/documents/I2CXL-MaxSonar-EZ_Datasheet.pdf
+ * https://www.maxbotix.com/करोcuments/I2CXL-MaxSonar-EZ_Datasheet.pdf
  */
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/of_irq.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/bitops.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
 
-/* registers of MaxSonar device */
-#define MB1232_RANGE_COMMAND	0x51	/* Command for reading range */
-#define MB1232_ADDR_UNLOCK_1	0xAA	/* Command 1 for changing address */
-#define MB1232_ADDR_UNLOCK_2	0xA5	/* Command 2 for changing address */
+/* रेजिस्टरs of MaxSonar device */
+#घोषणा MB1232_RANGE_COMMAND	0x51	/* Command क्रम पढ़ोing range */
+#घोषणा MB1232_ADDR_UNLOCK_1	0xAA	/* Command 1 क्रम changing address */
+#घोषणा MB1232_ADDR_UNLOCK_2	0xA5	/* Command 2 क्रम changing address */
 
-struct mb1232_data {
-	struct i2c_client	*client;
+काष्ठा mb1232_data अणु
+	काष्ठा i2c_client	*client;
 
-	struct mutex		lock;
+	काष्ठा mutex		lock;
 
 	/*
 	 * optionally a gpio can be used to announce when ranging has
 	 * finished
 	 * since we are just using the falling trigger of it we request
-	 * only the interrupt for announcing when data is ready to be read
+	 * only the पूर्णांकerrupt क्रम announcing when data is पढ़ोy to be पढ़ो
 	 */
-	struct completion	ranging;
-	int			irqnr;
+	काष्ठा completion	ranging;
+	पूर्णांक			irqnr;
 	/* Ensure correct alignment of data to push to IIO buffer */
-	struct {
+	काष्ठा अणु
 		s16 distance;
 		s64 ts __aligned(8);
-	} scan;
-};
+	पूर्ण scan;
+पूर्ण;
 
-static irqreturn_t mb1232_handle_irq(int irq, void *dev_id)
-{
-	struct iio_dev *indio_dev = dev_id;
-	struct mb1232_data *data = iio_priv(indio_dev);
+अटल irqवापस_t mb1232_handle_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_id;
+	काष्ठा mb1232_data *data = iio_priv(indio_dev);
 
 	complete(&data->ranging);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static s16 mb1232_read_distance(struct mb1232_data *data)
-{
-	struct i2c_client *client = data->client;
-	int ret;
+अटल s16 mb1232_पढ़ो_distance(काष्ठा mb1232_data *data)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक ret;
 	s16 distance;
 	__be16 buf;
 
@@ -68,132 +69,132 @@ static s16 mb1232_read_distance(struct mb1232_data *data)
 
 	reinit_completion(&data->ranging);
 
-	ret = i2c_smbus_write_byte(client, MB1232_RANGE_COMMAND);
-	if (ret < 0) {
+	ret = i2c_smbus_ग_लिखो_byte(client, MB1232_RANGE_COMMAND);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "write command - err: %d\n", ret);
-		goto error_unlock;
-	}
+		जाओ error_unlock;
+	पूर्ण
 
-	if (data->irqnr >= 0) {
+	अगर (data->irqnr >= 0) अणु
 		/* it cannot take more than 100 ms */
-		ret = wait_for_completion_killable_timeout(&data->ranging,
+		ret = रुको_क्रम_completion_समाप्तable_समयout(&data->ranging,
 									HZ/10);
-		if (ret < 0)
-			goto error_unlock;
-		else if (ret == 0) {
+		अगर (ret < 0)
+			जाओ error_unlock;
+		अन्यथा अगर (ret == 0) अणु
 			ret = -ETIMEDOUT;
-			goto error_unlock;
-		}
-	} else {
-		/* use simple sleep if announce irq is not connected */
+			जाओ error_unlock;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* use simple sleep अगर announce irq is not connected */
 		msleep(15);
-	}
+	पूर्ण
 
-	ret = i2c_master_recv(client, (char *)&buf, sizeof(buf));
-	if (ret < 0) {
+	ret = i2c_master_recv(client, (अक्षर *)&buf, माप(buf));
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "i2c_master_recv: ret=%d\n", ret);
-		goto error_unlock;
-	}
+		जाओ error_unlock;
+	पूर्ण
 
 	distance = __be16_to_cpu(buf);
-	/* check for not returning misleading error codes */
-	if (distance < 0) {
+	/* check क्रम not वापसing misleading error codes */
+	अगर (distance < 0) अणु
 		dev_err(&client->dev, "distance=%d\n", distance);
 		ret = -EINVAL;
-		goto error_unlock;
-	}
+		जाओ error_unlock;
+	पूर्ण
 
 	mutex_unlock(&data->lock);
 
-	return distance;
+	वापस distance;
 
 error_unlock:
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t mb1232_trigger_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct mb1232_data *data = iio_priv(indio_dev);
+अटल irqवापस_t mb1232_trigger_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा mb1232_data *data = iio_priv(indio_dev);
 
-	data->scan.distance = mb1232_read_distance(data);
-	if (data->scan.distance < 0)
-		goto err;
+	data->scan.distance = mb1232_पढ़ो_distance(data);
+	अगर (data->scan.distance < 0)
+		जाओ err;
 
-	iio_push_to_buffers_with_timestamp(indio_dev, &data->scan,
-					   pf->timestamp);
+	iio_push_to_buffers_with_बारtamp(indio_dev, &data->scan,
+					   pf->बारtamp);
 
 err:
-	iio_trigger_notify_done(indio_dev->trig);
-	return IRQ_HANDLED;
-}
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mb1232_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *channel, int *val,
-			    int *val2, long mask)
-{
-	struct mb1232_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक mb1232_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक *val,
+			    पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा mb1232_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	if (channel->type != IIO_DISTANCE)
-		return -EINVAL;
+	अगर (channel->type != IIO_DISTANCE)
+		वापस -EINVAL;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		ret = mb1232_read_distance(data);
-		if (ret < 0)
-			return ret;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		ret = mb1232_पढ़ो_distance(data);
+		अगर (ret < 0)
+			वापस ret;
 		*val = ret;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		/* 1 LSB is 1 cm */
 		*val = 0;
 		*val2 = 10000;
-		return IIO_VAL_INT_PLUS_MICRO;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_chan_spec mb1232_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec mb1232_channels[] = अणु
+	अणु
 		.type = IIO_DISTANCE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
 		.scan_index = 0,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 's',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_CPU,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	IIO_CHAN_SOFT_TIMESTAMP(1),
-};
+पूर्ण;
 
-static const struct iio_info mb1232_info = {
-	.read_raw = mb1232_read_raw,
-};
+अटल स्थिर काष्ठा iio_info mb1232_info = अणु
+	.पढ़ो_raw = mb1232_पढ़ो_raw,
+पूर्ण;
 
-static int mb1232_probe(struct i2c_client *client,
-					 const struct i2c_device_id *id)
-{
-	struct iio_dev *indio_dev;
-	struct mb1232_data *data;
-	int ret;
-	struct device *dev = &client->dev;
+अटल पूर्णांक mb1232_probe(काष्ठा i2c_client *client,
+					 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा mb1232_data *data;
+	पूर्णांक ret;
+	काष्ठा device *dev = &client->dev;
 
-	if (!i2c_check_functionality(client->adapter,
+	अगर (!i2c_check_functionality(client->adapter,
 					I2C_FUNC_SMBUS_READ_BYTE |
 					I2C_FUNC_SMBUS_WRITE_BYTE))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -201,7 +202,7 @@ static int mb1232_probe(struct i2c_client *client,
 
 	indio_dev->info = &mb1232_info;
 	indio_dev->name = id->name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = mb1232_channels;
 	indio_dev->num_channels = ARRAY_SIZE(mb1232_channels);
 
@@ -210,61 +211,61 @@ static int mb1232_probe(struct i2c_client *client,
 	init_completion(&data->ranging);
 
 	data->irqnr = irq_of_parse_and_map(dev->of_node, 0);
-	if (data->irqnr <= 0) {
-		/* usage of interrupt is optional */
+	अगर (data->irqnr <= 0) अणु
+		/* usage of पूर्णांकerrupt is optional */
 		data->irqnr = -1;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = devm_request_irq(dev, data->irqnr, mb1232_handle_irq,
 				IRQF_TRIGGER_FALLING, id->name, indio_dev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "request_irq: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = devm_iio_triggered_buffer_setup(dev, indio_dev,
-			iio_pollfunc_store_time, mb1232_trigger_handler, NULL);
-	if (ret < 0) {
+			iio_pollfunc_store_समय, mb1232_trigger_handler, शून्य);
+	अगर (ret < 0) अणु
 		dev_err(dev, "setup of iio triggered buffer failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return devm_iio_device_register(dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
+पूर्ण
 
-static const struct of_device_id of_mb1232_match[] = {
-	{ .compatible = "maxbotix,mb1202", },
-	{ .compatible = "maxbotix,mb1212", },
-	{ .compatible = "maxbotix,mb1222", },
-	{ .compatible = "maxbotix,mb1232", },
-	{ .compatible = "maxbotix,mb1242", },
-	{ .compatible = "maxbotix,mb7040", },
-	{ .compatible = "maxbotix,mb7137", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_mb1232_match[] = अणु
+	अणु .compatible = "maxbotix,mb1202", पूर्ण,
+	अणु .compatible = "maxbotix,mb1212", पूर्ण,
+	अणु .compatible = "maxbotix,mb1222", पूर्ण,
+	अणु .compatible = "maxbotix,mb1232", पूर्ण,
+	अणु .compatible = "maxbotix,mb1242", पूर्ण,
+	अणु .compatible = "maxbotix,mb7040", पूर्ण,
+	अणु .compatible = "maxbotix,mb7137", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, of_mb1232_match);
 
-static const struct i2c_device_id mb1232_id[] = {
-	{ "maxbotix-mb1202", },
-	{ "maxbotix-mb1212", },
-	{ "maxbotix-mb1222", },
-	{ "maxbotix-mb1232", },
-	{ "maxbotix-mb1242", },
-	{ "maxbotix-mb7040", },
-	{ "maxbotix-mb7137", },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id mb1232_id[] = अणु
+	अणु "maxbotix-mb1202", पूर्ण,
+	अणु "maxbotix-mb1212", पूर्ण,
+	अणु "maxbotix-mb1222", पूर्ण,
+	अणु "maxbotix-mb1232", पूर्ण,
+	अणु "maxbotix-mb1242", पूर्ण,
+	अणु "maxbotix-mb7040", पूर्ण,
+	अणु "maxbotix-mb7137", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, mb1232_id);
 
-static struct i2c_driver mb1232_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver mb1232_driver = अणु
+	.driver = अणु
 		.name	= "maxbotix-mb1232",
 		.of_match_table	= of_mb1232_match,
-	},
+	पूर्ण,
 	.probe = mb1232_probe,
 	.id_table = mb1232_id,
-};
+पूर्ण;
 module_i2c_driver(mb1232_driver);
 
 MODULE_AUTHOR("Andreas Klinger <ak@it-klinger.de>");

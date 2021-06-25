@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Core MFD defines for ATC260x PMICs
+ * Core MFD defines क्रम ATC260x PMICs
  *
  * Copyright (C) 2019 Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  * Copyright (C) 2020 Cristian Ciocaltea <cristian.ciocaltea@gmail.com>
  */
 
-#ifndef __LINUX_MFD_ATC260X_CORE_H
-#define __LINUX_MFD_ATC260X_CORE_H
+#अगर_अघोषित __LINUX_MFD_ATC260X_CORE_H
+#घोषणा __LINUX_MFD_ATC260X_CORE_H
 
-#include <linux/mfd/atc260x/atc2603c.h>
-#include <linux/mfd/atc260x/atc2609a.h>
+#समावेश <linux/mfd/atc260x/atc2603c.h>
+#समावेश <linux/mfd/atc260x/atc2609a.h>
 
-enum atc260x_type {
+क्रमागत atc260x_type अणु
 	ATC2603A = 0,
 	ATC2603C,
 	ATC2609A,
-};
+पूर्ण;
 
-enum atc260x_ver {
+क्रमागत atc260x_ver अणु
 	ATC260X_A = 0,
 	ATC260X_B,
 	ATC260X_C,
@@ -27,32 +28,32 @@ enum atc260x_ver {
 	ATC260X_F,
 	ATC260X_G,
 	ATC260X_H,
-};
+पूर्ण;
 
-struct atc260x {
-	struct device *dev;
+काष्ठा atc260x अणु
+	काष्ठा device *dev;
 
-	struct regmap *regmap;
-	const struct regmap_irq_chip *regmap_irq_chip;
-	struct regmap_irq_chip_data *irq_data;
+	काष्ठा regmap *regmap;
+	स्थिर काष्ठा regmap_irq_chip *regmap_irq_chip;
+	काष्ठा regmap_irq_chip_data *irq_data;
 
-	struct mutex *regmap_mutex;	/* mutex for custom regmap locking */
+	काष्ठा mutex *regmap_mutex;	/* mutex क्रम custom regmap locking */
 
-	const struct mfd_cell *cells;
-	int nr_cells;
-	int irq;
+	स्थिर काष्ठा mfd_cell *cells;
+	पूर्णांक nr_cells;
+	पूर्णांक irq;
 
-	enum atc260x_type ic_type;
-	enum atc260x_ver ic_ver;
-	const char *type_name;
-	unsigned int rev_reg;
+	क्रमागत atc260x_type ic_type;
+	क्रमागत atc260x_ver ic_ver;
+	स्थिर अक्षर *type_name;
+	अचिन्हित पूर्णांक rev_reg;
 
-	const struct atc260x_init_regs *init_regs; /* regs for device init */
-};
+	स्थिर काष्ठा atc260x_init_regs *init_regs; /* regs क्रम device init */
+पूर्ण;
 
-struct regmap_config;
+काष्ठा regmap_config;
 
-int atc260x_match_device(struct atc260x *atc260x, struct regmap_config *regmap_cfg);
-int atc260x_device_probe(struct atc260x *atc260x);
+पूर्णांक atc260x_match_device(काष्ठा atc260x *atc260x, काष्ठा regmap_config *regmap_cfg);
+पूर्णांक atc260x_device_probe(काष्ठा atc260x *atc260x);
 
-#endif /* __LINUX_MFD_ATC260X_CORE_H */
+#पूर्ण_अगर /* __LINUX_MFD_ATC260X_CORE_H */

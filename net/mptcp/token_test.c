@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <kunit/test.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <kunit/test.h>
 
-#include "protocol.h"
+#समावेश "protocol.h"
 
-static struct mptcp_subflow_request_sock *build_req_sock(struct kunit *test)
-{
-	struct mptcp_subflow_request_sock *req;
+अटल काष्ठा mptcp_subflow_request_sock *build_req_sock(काष्ठा kunit *test)
+अणु
+	काष्ठा mptcp_subflow_request_sock *req;
 
-	req = kunit_kzalloc(test, sizeof(struct mptcp_subflow_request_sock),
+	req = kunit_kzalloc(test, माप(काष्ठा mptcp_subflow_request_sock),
 			    GFP_USER);
-	KUNIT_EXPECT_NOT_ERR_OR_NULL(test, req);
-	mptcp_token_init_request((struct request_sock *)req);
-	return req;
-}
+	KUNIT_EXPECT_NOT_ERR_OR_शून्य(test, req);
+	mptcp_token_init_request((काष्ठा request_sock *)req);
+	वापस req;
+पूर्ण
 
-static void mptcp_token_test_req_basic(struct kunit *test)
-{
-	struct mptcp_subflow_request_sock *req = build_req_sock(test);
-	struct mptcp_sock *null_msk = NULL;
+अटल व्योम mptcp_token_test_req_basic(काष्ठा kunit *test)
+अणु
+	काष्ठा mptcp_subflow_request_sock *req = build_req_sock(test);
+	काष्ठा mptcp_sock *null_msk = शून्य;
 
 	KUNIT_ASSERT_EQ(test, 0,
-			mptcp_token_new_request((struct request_sock *)req));
-	KUNIT_EXPECT_NE(test, 0, (int)req->token);
+			mptcp_token_new_request((काष्ठा request_sock *)req));
+	KUNIT_EXPECT_NE(test, 0, (पूर्णांक)req->token);
 	KUNIT_EXPECT_PTR_EQ(test, null_msk, mptcp_token_get_sock(req->token));
 
 	/* cleanup */
-	mptcp_token_destroy_request((struct request_sock *)req);
-}
+	mptcp_token_destroy_request((काष्ठा request_sock *)req);
+पूर्ण
 
-static struct inet_connection_sock *build_icsk(struct kunit *test)
-{
-	struct inet_connection_sock *icsk;
+अटल काष्ठा inet_connection_sock *build_icsk(काष्ठा kunit *test)
+अणु
+	काष्ठा inet_connection_sock *icsk;
 
-	icsk = kunit_kzalloc(test, sizeof(struct inet_connection_sock),
+	icsk = kunit_kzalloc(test, माप(काष्ठा inet_connection_sock),
 			     GFP_USER);
-	KUNIT_EXPECT_NOT_ERR_OR_NULL(test, icsk);
-	return icsk;
-}
+	KUNIT_EXPECT_NOT_ERR_OR_शून्य(test, icsk);
+	वापस icsk;
+पूर्ण
 
-static struct mptcp_subflow_context *build_ctx(struct kunit *test)
-{
-	struct mptcp_subflow_context *ctx;
+अटल काष्ठा mptcp_subflow_context *build_ctx(काष्ठा kunit *test)
+अणु
+	काष्ठा mptcp_subflow_context *ctx;
 
-	ctx = kunit_kzalloc(test, sizeof(struct mptcp_subflow_context),
+	ctx = kunit_kzalloc(test, माप(काष्ठा mptcp_subflow_context),
 			    GFP_USER);
-	KUNIT_EXPECT_NOT_ERR_OR_NULL(test, ctx);
-	return ctx;
-}
+	KUNIT_EXPECT_NOT_ERR_OR_शून्य(test, ctx);
+	वापस ctx;
+पूर्ण
 
-static struct mptcp_sock *build_msk(struct kunit *test)
-{
-	struct mptcp_sock *msk;
+अटल काष्ठा mptcp_sock *build_msk(काष्ठा kunit *test)
+अणु
+	काष्ठा mptcp_sock *msk;
 
-	msk = kunit_kzalloc(test, sizeof(struct mptcp_sock), GFP_USER);
-	KUNIT_EXPECT_NOT_ERR_OR_NULL(test, msk);
-	refcount_set(&((struct sock *)msk)->sk_refcnt, 1);
-	return msk;
-}
+	msk = kunit_kzalloc(test, माप(काष्ठा mptcp_sock), GFP_USER);
+	KUNIT_EXPECT_NOT_ERR_OR_शून्य(test, msk);
+	refcount_set(&((काष्ठा sock *)msk)->sk_refcnt, 1);
+	वापस msk;
+पूर्ण
 
-static void mptcp_token_test_msk_basic(struct kunit *test)
-{
-	struct inet_connection_sock *icsk = build_icsk(test);
-	struct mptcp_subflow_context *ctx = build_ctx(test);
-	struct mptcp_sock *msk = build_msk(test);
-	struct mptcp_sock *null_msk = NULL;
-	struct sock *sk;
+अटल व्योम mptcp_token_test_msk_basic(काष्ठा kunit *test)
+अणु
+	काष्ठा inet_connection_sock *icsk = build_icsk(test);
+	काष्ठा mptcp_subflow_context *ctx = build_ctx(test);
+	काष्ठा mptcp_sock *msk = build_msk(test);
+	काष्ठा mptcp_sock *null_msk = शून्य;
+	काष्ठा sock *sk;
 
-	rcu_assign_pointer(icsk->icsk_ulp_data, ctx);
-	ctx->conn = (struct sock *)msk;
-	sk = (struct sock *)msk;
+	rcu_assign_poपूर्णांकer(icsk->icsk_ulp_data, ctx);
+	ctx->conn = (काष्ठा sock *)msk;
+	sk = (काष्ठा sock *)msk;
 
 	KUNIT_ASSERT_EQ(test, 0,
-			mptcp_token_new_connect((struct sock *)icsk));
-	KUNIT_EXPECT_NE(test, 0, (int)ctx->token);
+			mptcp_token_new_connect((काष्ठा sock *)icsk));
+	KUNIT_EXPECT_NE(test, 0, (पूर्णांक)ctx->token);
 	KUNIT_EXPECT_EQ(test, ctx->token, msk->token);
 	KUNIT_EXPECT_PTR_EQ(test, msk, mptcp_token_get_sock(ctx->token));
-	KUNIT_EXPECT_EQ(test, 2, (int)refcount_read(&sk->sk_refcnt));
+	KUNIT_EXPECT_EQ(test, 2, (पूर्णांक)refcount_पढ़ो(&sk->sk_refcnt));
 
 	mptcp_token_destroy(msk);
 	KUNIT_EXPECT_PTR_EQ(test, null_msk, mptcp_token_get_sock(ctx->token));
-}
+पूर्ण
 
-static void mptcp_token_test_accept(struct kunit *test)
-{
-	struct mptcp_subflow_request_sock *req = build_req_sock(test);
-	struct mptcp_sock *msk = build_msk(test);
+अटल व्योम mptcp_token_test_accept(काष्ठा kunit *test)
+अणु
+	काष्ठा mptcp_subflow_request_sock *req = build_req_sock(test);
+	काष्ठा mptcp_sock *msk = build_msk(test);
 
 	KUNIT_ASSERT_EQ(test, 0,
-			mptcp_token_new_request((struct request_sock *)req));
+			mptcp_token_new_request((काष्ठा request_sock *)req));
 	msk->token = req->token;
 	mptcp_token_accept(req, msk);
 	KUNIT_EXPECT_PTR_EQ(test, msk, mptcp_token_get_sock(msk->token));
 
 	/* this is now a no-op */
-	mptcp_token_destroy_request((struct request_sock *)req);
+	mptcp_token_destroy_request((काष्ठा request_sock *)req);
 	KUNIT_EXPECT_PTR_EQ(test, msk, mptcp_token_get_sock(msk->token));
 
 	/* cleanup */
 	mptcp_token_destroy(msk);
-}
+पूर्ण
 
-static void mptcp_token_test_destroyed(struct kunit *test)
-{
-	struct mptcp_subflow_request_sock *req = build_req_sock(test);
-	struct mptcp_sock *msk = build_msk(test);
-	struct mptcp_sock *null_msk = NULL;
-	struct sock *sk;
+अटल व्योम mptcp_token_test_destroyed(काष्ठा kunit *test)
+अणु
+	काष्ठा mptcp_subflow_request_sock *req = build_req_sock(test);
+	काष्ठा mptcp_sock *msk = build_msk(test);
+	काष्ठा mptcp_sock *null_msk = शून्य;
+	काष्ठा sock *sk;
 
-	sk = (struct sock *)msk;
+	sk = (काष्ठा sock *)msk;
 
 	KUNIT_ASSERT_EQ(test, 0,
-			mptcp_token_new_request((struct request_sock *)req));
+			mptcp_token_new_request((काष्ठा request_sock *)req));
 	msk->token = req->token;
 	mptcp_token_accept(req, msk);
 
@@ -120,20 +121,20 @@ static void mptcp_token_test_destroyed(struct kunit *test)
 
 	/* cleanup */
 	mptcp_token_destroy(msk);
-}
+पूर्ण
 
-static struct kunit_case mptcp_token_test_cases[] = {
+अटल काष्ठा kunit_हाल mptcp_token_test_हालs[] = अणु
 	KUNIT_CASE(mptcp_token_test_req_basic),
 	KUNIT_CASE(mptcp_token_test_msk_basic),
 	KUNIT_CASE(mptcp_token_test_accept),
 	KUNIT_CASE(mptcp_token_test_destroyed),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static struct kunit_suite mptcp_token_suite = {
+अटल काष्ठा kunit_suite mptcp_token_suite = अणु
 	.name = "mptcp-token",
-	.test_cases = mptcp_token_test_cases,
-};
+	.test_हालs = mptcp_token_test_हालs,
+पूर्ण;
 
 kunit_test_suite(mptcp_token_suite);
 

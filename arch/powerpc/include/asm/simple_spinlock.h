@@ -1,284 +1,285 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_POWERPC_SIMPLE_SPINLOCK_H
-#define _ASM_POWERPC_SIMPLE_SPINLOCK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_POWERPC_SIMPLE_SPINLOCK_H
+#घोषणा _ASM_POWERPC_SIMPLE_SPINLOCK_H
 
 /*
  * Simple spin lock operations.
  *
  * Copyright (C) 2001-2004 Paul Mackerras <paulus@au.ibm.com>, IBM
- * Copyright (C) 2001 Anton Blanchard <anton@au.ibm.com>, IBM
+ * Copyright (C) 2001 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
  * Copyright (C) 2002 Dave Engebretsen <engebret@us.ibm.com>, IBM
- *	Rework to support virtual processors
+ *	Rework to support भव processors
  *
- * Type of int is used as a full 64b word is not necessary.
+ * Type of पूर्णांक is used as a full 64b word is not necessary.
  *
- * (the type definitions are in asm/simple_spinlock_types.h)
+ * (the type definitions are in यंत्र/simple_spinlock_types.h)
  */
-#include <linux/irqflags.h>
-#include <asm/paravirt.h>
-#include <asm/paca.h>
-#include <asm/synch.h>
-#include <asm/ppc-opcode.h>
+#समावेश <linux/irqflags.h>
+#समावेश <यंत्र/paravirt.h>
+#समावेश <यंत्र/paca.h>
+#समावेश <यंत्र/synch.h>
+#समावेश <यंत्र/ppc-opcode.h>
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 /* use 0x800000yy when locked, where yy == CPU number */
-#ifdef __BIG_ENDIAN__
-#define LOCK_TOKEN	(*(u32 *)(&get_paca()->lock_token))
-#else
-#define LOCK_TOKEN	(*(u32 *)(&get_paca()->paca_index))
-#endif
-#else
-#define LOCK_TOKEN	1
-#endif
+#अगर_घोषित __BIG_ENDIAN__
+#घोषणा LOCK_TOKEN	(*(u32 *)(&get_paca()->lock_token))
+#अन्यथा
+#घोषणा LOCK_TOKEN	(*(u32 *)(&get_paca()->paca_index))
+#पूर्ण_अगर
+#अन्यथा
+#घोषणा LOCK_TOKEN	1
+#पूर्ण_अगर
 
-static __always_inline int arch_spin_value_unlocked(arch_spinlock_t lock)
-{
-	return lock.slock == 0;
-}
+अटल __always_अंतरभूत पूर्णांक arch_spin_value_unlocked(arch_spinlock_t lock)
+अणु
+	वापस lock.slock == 0;
+पूर्ण
 
-static inline int arch_spin_is_locked(arch_spinlock_t *lock)
-{
-	return !arch_spin_value_unlocked(READ_ONCE(*lock));
-}
+अटल अंतरभूत पूर्णांक arch_spin_is_locked(arch_spinlock_t *lock)
+अणु
+	वापस !arch_spin_value_unlocked(READ_ONCE(*lock));
+पूर्ण
 
 /*
- * This returns the old value in the lock, so we succeeded
- * in getting the lock if the return value is 0.
+ * This वापसs the old value in the lock, so we succeeded
+ * in getting the lock अगर the वापस value is 0.
  */
-static inline unsigned long __arch_spin_trylock(arch_spinlock_t *lock)
-{
-	unsigned long tmp, token;
+अटल अंतरभूत अचिन्हित दीर्घ __arch_spin_trylock(arch_spinlock_t *lock)
+अणु
+	अचिन्हित दीर्घ पंचांगp, token;
 
 	token = LOCK_TOKEN;
-	__asm__ __volatile__(
-"1:	" PPC_LWARX(%0,0,%2,1) "\n\
-	cmpwi		0,%0,0\n\
-	bne-		2f\n\
-	stwcx.		%1,0,%2\n\
-	bne-		1b\n"
+	__यंत्र__ __अस्थिर__(
+"1:	" PPC_LWARX(%0,0,%2,1) "\न\
+	cmpwi		0,%0,0\न\
+	bne-		2f\न\
+	stwcx.		%1,0,%2\न\
+	bne-		1b\न"
 	PPC_ACQUIRE_BARRIER
 "2:"
-	: "=&r" (tmp)
+	: "=&r" (पंचांगp)
 	: "r" (token), "r" (&lock->slock)
 	: "cr0", "memory");
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static inline int arch_spin_trylock(arch_spinlock_t *lock)
-{
-	return __arch_spin_trylock(lock) == 0;
-}
+अटल अंतरभूत पूर्णांक arch_spin_trylock(arch_spinlock_t *lock)
+अणु
+	वापस __arch_spin_trylock(lock) == 0;
+पूर्ण
 
 /*
- * On a system with shared processors (that is, where a physical
- * processor is multiplexed between several virtual processors),
- * there is no point spinning on a lock if the holder of the lock
+ * On a प्रणाली with shared processors (that is, where a physical
+ * processor is multiplexed between several भव processors),
+ * there is no poपूर्णांक spinning on a lock अगर the holder of the lock
  * isn't currently scheduled on a physical processor.  Instead
  * we detect this situation and ask the hypervisor to give the
- * rest of our timeslice to the lock holder.
+ * rest of our बारlice to the lock holder.
  *
- * So that we can tell which virtual processor is holding a lock,
+ * So that we can tell which भव processor is holding a lock,
  * we put 0x80000000 | smp_processor_id() in the lock when it is
  * held.  Conveniently, we have a word in the paca that holds this
  * value.
  */
 
-#if defined(CONFIG_PPC_SPLPAR)
-/* We only yield to the hypervisor if we are in shared processor mode */
-void splpar_spin_yield(arch_spinlock_t *lock);
-void splpar_rw_yield(arch_rwlock_t *lock);
-#else /* SPLPAR */
-static inline void splpar_spin_yield(arch_spinlock_t *lock) {}
-static inline void splpar_rw_yield(arch_rwlock_t *lock) {}
-#endif
+#अगर defined(CONFIG_PPC_SPLPAR)
+/* We only yield to the hypervisor अगर we are in shared processor mode */
+व्योम splpar_spin_yield(arch_spinlock_t *lock);
+व्योम splpar_rw_yield(arch_rwlock_t *lock);
+#अन्यथा /* SPLPAR */
+अटल अंतरभूत व्योम splpar_spin_yield(arch_spinlock_t *lock) अणुपूर्ण
+अटल अंतरभूत व्योम splpar_rw_yield(arch_rwlock_t *lock) अणुपूर्ण
+#पूर्ण_अगर
 
-static inline void spin_yield(arch_spinlock_t *lock)
-{
-	if (is_shared_processor())
+अटल अंतरभूत व्योम spin_yield(arch_spinlock_t *lock)
+अणु
+	अगर (is_shared_processor())
 		splpar_spin_yield(lock);
-	else
+	अन्यथा
 		barrier();
-}
+पूर्ण
 
-static inline void rw_yield(arch_rwlock_t *lock)
-{
-	if (is_shared_processor())
+अटल अंतरभूत व्योम rw_yield(arch_rwlock_t *lock)
+अणु
+	अगर (is_shared_processor())
 		splpar_rw_yield(lock);
-	else
+	अन्यथा
 		barrier();
-}
+पूर्ण
 
-static inline void arch_spin_lock(arch_spinlock_t *lock)
-{
-	while (1) {
-		if (likely(__arch_spin_trylock(lock) == 0))
-			break;
-		do {
+अटल अंतरभूत व्योम arch_spin_lock(arch_spinlock_t *lock)
+अणु
+	जबतक (1) अणु
+		अगर (likely(__arch_spin_trylock(lock) == 0))
+			अवरोध;
+		करो अणु
 			HMT_low();
-			if (is_shared_processor())
+			अगर (is_shared_processor())
 				splpar_spin_yield(lock);
-		} while (unlikely(lock->slock != 0));
+		पूर्ण जबतक (unlikely(lock->slock != 0));
 		HMT_medium();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline
-void arch_spin_lock_flags(arch_spinlock_t *lock, unsigned long flags)
-{
-	unsigned long flags_dis;
+अटल अंतरभूत
+व्योम arch_spin_lock_flags(arch_spinlock_t *lock, अचिन्हित दीर्घ flags)
+अणु
+	अचिन्हित दीर्घ flags_dis;
 
-	while (1) {
-		if (likely(__arch_spin_trylock(lock) == 0))
-			break;
+	जबतक (1) अणु
+		अगर (likely(__arch_spin_trylock(lock) == 0))
+			अवरोध;
 		local_save_flags(flags_dis);
 		local_irq_restore(flags);
-		do {
+		करो अणु
 			HMT_low();
-			if (is_shared_processor())
+			अगर (is_shared_processor())
 				splpar_spin_yield(lock);
-		} while (unlikely(lock->slock != 0));
+		पूर्ण जबतक (unlikely(lock->slock != 0));
 		HMT_medium();
 		local_irq_restore(flags_dis);
-	}
-}
-#define arch_spin_lock_flags arch_spin_lock_flags
+	पूर्ण
+पूर्ण
+#घोषणा arch_spin_lock_flags arch_spin_lock_flags
 
-static inline void arch_spin_unlock(arch_spinlock_t *lock)
-{
-	__asm__ __volatile__("# arch_spin_unlock\n\t"
+अटल अंतरभूत व्योम arch_spin_unlock(arch_spinlock_t *lock)
+अणु
+	__यंत्र__ __अस्थिर__("# arch_spin_unlock\n\t"
 				PPC_RELEASE_BARRIER: : :"memory");
 	lock->slock = 0;
-}
+पूर्ण
 
 /*
- * Read-write spinlocks, allowing multiple readers
- * but only one writer.
+ * Read-ग_लिखो spinlocks, allowing multiple पढ़ोers
+ * but only one ग_लिखोr.
  *
- * NOTE! it is quite common to have readers in interrupts
- * but no interrupt writers. For those circumstances we
- * can "mix" irq-safe locks - any writer needs to get a
- * irq-safe write-lock, but readers can get non-irqsafe
- * read-locks.
+ * NOTE! it is quite common to have पढ़ोers in पूर्णांकerrupts
+ * but no पूर्णांकerrupt ग_लिखोrs. For those circumstances we
+ * can "mix" irq-safe locks - any ग_लिखोr needs to get a
+ * irq-safe ग_लिखो-lock, but पढ़ोers can get non-irqsafe
+ * पढ़ो-locks.
  */
 
-#ifdef CONFIG_PPC64
-#define __DO_SIGN_EXTEND	"extsw	%0,%0\n"
-#define WRLOCK_TOKEN		LOCK_TOKEN	/* it's negative */
-#else
-#define __DO_SIGN_EXTEND
-#define WRLOCK_TOKEN		(-1)
-#endif
+#अगर_घोषित CONFIG_PPC64
+#घोषणा __DO_SIGN_EXTEND	"extsw	%0,%0\n"
+#घोषणा WRLOCK_TOKEN		LOCK_TOKEN	/* it's negative */
+#अन्यथा
+#घोषणा __DO_SIGN_EXTEND
+#घोषणा WRLOCK_TOKEN		(-1)
+#पूर्ण_अगर
 
 /*
- * This returns the old value in the lock + 1,
- * so we got a read lock if the return value is > 0.
+ * This वापसs the old value in the lock + 1,
+ * so we got a पढ़ो lock अगर the वापस value is > 0.
  */
-static inline long __arch_read_trylock(arch_rwlock_t *rw)
-{
-	long tmp;
+अटल अंतरभूत दीर्घ __arch_पढ़ो_trylock(arch_rwlock_t *rw)
+अणु
+	दीर्घ पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 "1:	" PPC_LWARX(%0,0,%1,1) "\n"
 	__DO_SIGN_EXTEND
-"	addic.		%0,%0,1\n\
-	ble-		2f\n"
-"	stwcx.		%0,0,%1\n\
-	bne-		1b\n"
+"	addic.		%0,%0,1\न\
+	ble-		2f\न"
+"	stwcx.		%0,0,%1\न\
+	bne-		1b\न"
 	PPC_ACQUIRE_BARRIER
-"2:"	: "=&r" (tmp)
+"2:"	: "=&r" (पंचांगp)
 	: "r" (&rw->lock)
 	: "cr0", "xer", "memory");
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
 /*
- * This returns the old value in the lock,
- * so we got the write lock if the return value is 0.
+ * This वापसs the old value in the lock,
+ * so we got the ग_लिखो lock अगर the वापस value is 0.
  */
-static inline long __arch_write_trylock(arch_rwlock_t *rw)
-{
-	long tmp, token;
+अटल अंतरभूत दीर्घ __arch_ग_लिखो_trylock(arch_rwlock_t *rw)
+अणु
+	दीर्घ पंचांगp, token;
 
 	token = WRLOCK_TOKEN;
-	__asm__ __volatile__(
-"1:	" PPC_LWARX(%0,0,%2,1) "\n\
-	cmpwi		0,%0,0\n\
-	bne-		2f\n"
-"	stwcx.		%1,0,%2\n\
-	bne-		1b\n"
+	__यंत्र__ __अस्थिर__(
+"1:	" PPC_LWARX(%0,0,%2,1) "\न\
+	cmpwi		0,%0,0\न\
+	bne-		2f\न"
+"	stwcx.		%1,0,%2\न\
+	bne-		1b\न"
 	PPC_ACQUIRE_BARRIER
-"2:"	: "=&r" (tmp)
+"2:"	: "=&r" (पंचांगp)
 	: "r" (token), "r" (&rw->lock)
 	: "cr0", "memory");
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static inline void arch_read_lock(arch_rwlock_t *rw)
-{
-	while (1) {
-		if (likely(__arch_read_trylock(rw) > 0))
-			break;
-		do {
+अटल अंतरभूत व्योम arch_पढ़ो_lock(arch_rwlock_t *rw)
+अणु
+	जबतक (1) अणु
+		अगर (likely(__arch_पढ़ो_trylock(rw) > 0))
+			अवरोध;
+		करो अणु
 			HMT_low();
-			if (is_shared_processor())
+			अगर (is_shared_processor())
 				splpar_rw_yield(rw);
-		} while (unlikely(rw->lock < 0));
+		पूर्ण जबतक (unlikely(rw->lock < 0));
 		HMT_medium();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void arch_write_lock(arch_rwlock_t *rw)
-{
-	while (1) {
-		if (likely(__arch_write_trylock(rw) == 0))
-			break;
-		do {
+अटल अंतरभूत व्योम arch_ग_लिखो_lock(arch_rwlock_t *rw)
+अणु
+	जबतक (1) अणु
+		अगर (likely(__arch_ग_लिखो_trylock(rw) == 0))
+			अवरोध;
+		करो अणु
 			HMT_low();
-			if (is_shared_processor())
+			अगर (is_shared_processor())
 				splpar_rw_yield(rw);
-		} while (unlikely(rw->lock != 0));
+		पूर्ण जबतक (unlikely(rw->lock != 0));
 		HMT_medium();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int arch_read_trylock(arch_rwlock_t *rw)
-{
-	return __arch_read_trylock(rw) > 0;
-}
+अटल अंतरभूत पूर्णांक arch_पढ़ो_trylock(arch_rwlock_t *rw)
+अणु
+	वापस __arch_पढ़ो_trylock(rw) > 0;
+पूर्ण
 
-static inline int arch_write_trylock(arch_rwlock_t *rw)
-{
-	return __arch_write_trylock(rw) == 0;
-}
+अटल अंतरभूत पूर्णांक arch_ग_लिखो_trylock(arch_rwlock_t *rw)
+अणु
+	वापस __arch_ग_लिखो_trylock(rw) == 0;
+पूर्ण
 
-static inline void arch_read_unlock(arch_rwlock_t *rw)
-{
-	long tmp;
+अटल अंतरभूत व्योम arch_पढ़ो_unlock(arch_rwlock_t *rw)
+अणु
+	दीर्घ पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"# read_unlock\n\t"
 	PPC_RELEASE_BARRIER
-"1:	lwarx		%0,0,%1\n\
-	addic		%0,%0,-1\n"
-"	stwcx.		%0,0,%1\n\
+"1:	lwarx		%0,0,%1\न\
+	addic		%0,%0,-1\न"
+"	stwcx.		%0,0,%1\न\
 	bne-		1b"
-	: "=&r"(tmp)
+	: "=&r"(पंचांगp)
 	: "r"(&rw->lock)
 	: "cr0", "xer", "memory");
-}
+पूर्ण
 
-static inline void arch_write_unlock(arch_rwlock_t *rw)
-{
-	__asm__ __volatile__("# write_unlock\n\t"
+अटल अंतरभूत व्योम arch_ग_लिखो_unlock(arch_rwlock_t *rw)
+अणु
+	__यंत्र__ __अस्थिर__("# write_unlock\n\t"
 				PPC_RELEASE_BARRIER: : :"memory");
 	rw->lock = 0;
-}
+पूर्ण
 
-#define arch_spin_relax(lock)	spin_yield(lock)
-#define arch_read_relax(lock)	rw_yield(lock)
-#define arch_write_relax(lock)	rw_yield(lock)
+#घोषणा arch_spin_relax(lock)	spin_yield(lock)
+#घोषणा arch_पढ़ो_relax(lock)	rw_yield(lock)
+#घोषणा arch_ग_लिखो_relax(lock)	rw_yield(lock)
 
-#endif /* _ASM_POWERPC_SIMPLE_SPINLOCK_H */
+#पूर्ण_अगर /* _ASM_POWERPC_SIMPLE_SPINLOCK_H */

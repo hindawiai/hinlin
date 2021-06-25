@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  Copyright (C) 2002 Intersil Americas Inc.
- *            (C) 2003 Aurelien Alleaume <slts@free.fr>
+ *            (C) 2003 Aurelien Alleaume <slts@मुक्त.fr>
  *            (C) 2003 Luis R. Rodriguez <mcgrof@ruslug.rutgers.edu>
  */
 
-#ifndef _ISL_IOCTL_H
-#define _ISL_IOCTL_H
+#अगर_अघोषित _ISL_IOCTL_H
+#घोषणा _ISL_IOCTL_H
 
-#include "islpci_mgt.h"
-#include "islpci_dev.h"
+#समावेश "islpci_mgt.h"
+#समावेश "islpci_dev.h"
 
-#include <net/iw_handler.h>	/* New driver API */
+#समावेश <net/iw_handler.h>	/* New driver API */
 
-#define SUPPORTED_WIRELESS_EXT                  19
+#घोषणा SUPPORTED_WIRELESS_EXT                  19
 
-void prism54_mib_init(islpci_private *);
+व्योम prism54_mib_init(islpci_निजी *);
 
-struct iw_statistics *prism54_get_wireless_stats(struct net_device *);
-void prism54_update_stats(struct work_struct *);
+काष्ठा iw_statistics *prism54_get_wireless_stats(काष्ठा net_device *);
+व्योम prism54_update_stats(काष्ठा work_काष्ठा *);
 
-void prism54_acl_init(struct islpci_acl *);
-void prism54_acl_clean(struct islpci_acl *);
+व्योम prism54_acl_init(काष्ठा islpci_acl *);
+व्योम prism54_acl_clean(काष्ठा islpci_acl *);
 
-void prism54_process_trap(struct work_struct *);
+व्योम prism54_process_trap(काष्ठा work_काष्ठा *);
 
-void prism54_wpa_bss_ie_init(islpci_private *priv);
-void prism54_wpa_bss_ie_clean(islpci_private *priv);
+व्योम prism54_wpa_bss_ie_init(islpci_निजी *priv);
+व्योम prism54_wpa_bss_ie_clean(islpci_निजी *priv);
 
-int prism54_set_mac_address(struct net_device *, void *);
+पूर्णांक prism54_set_mac_address(काष्ठा net_device *, व्योम *);
 
-extern const struct iw_handler_def prism54_handler_def;
+बाह्य स्थिर काष्ठा iw_handler_def prism54_handler_def;
 
-#endif				/* _ISL_IOCTL_H */
+#पूर्ण_अगर				/* _ISL_IOCTL_H */

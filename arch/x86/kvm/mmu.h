@@ -1,189 +1,190 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __KVM_X86_MMU_H
-#define __KVM_X86_MMU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __KVM_X86_MMU_H
+#घोषणा __KVM_X86_MMU_H
 
-#include <linux/kvm_host.h>
-#include "kvm_cache_regs.h"
-#include "cpuid.h"
+#समावेश <linux/kvm_host.h>
+#समावेश "kvm_cache_regs.h"
+#समावेश "cpuid.h"
 
-#define PT64_PT_BITS 9
-#define PT64_ENT_PER_PAGE (1 << PT64_PT_BITS)
-#define PT32_PT_BITS 10
-#define PT32_ENT_PER_PAGE (1 << PT32_PT_BITS)
+#घोषणा PT64_PT_BITS 9
+#घोषणा PT64_ENT_PER_PAGE (1 << PT64_PT_BITS)
+#घोषणा PT32_PT_BITS 10
+#घोषणा PT32_ENT_PER_PAGE (1 << PT32_PT_BITS)
 
-#define PT_WRITABLE_SHIFT 1
-#define PT_USER_SHIFT 2
+#घोषणा PT_WRITABLE_SHIFT 1
+#घोषणा PT_USER_SHIFT 2
 
-#define PT_PRESENT_MASK (1ULL << 0)
-#define PT_WRITABLE_MASK (1ULL << PT_WRITABLE_SHIFT)
-#define PT_USER_MASK (1ULL << PT_USER_SHIFT)
-#define PT_PWT_MASK (1ULL << 3)
-#define PT_PCD_MASK (1ULL << 4)
-#define PT_ACCESSED_SHIFT 5
-#define PT_ACCESSED_MASK (1ULL << PT_ACCESSED_SHIFT)
-#define PT_DIRTY_SHIFT 6
-#define PT_DIRTY_MASK (1ULL << PT_DIRTY_SHIFT)
-#define PT_PAGE_SIZE_SHIFT 7
-#define PT_PAGE_SIZE_MASK (1ULL << PT_PAGE_SIZE_SHIFT)
-#define PT_PAT_MASK (1ULL << 7)
-#define PT_GLOBAL_MASK (1ULL << 8)
-#define PT64_NX_SHIFT 63
-#define PT64_NX_MASK (1ULL << PT64_NX_SHIFT)
+#घोषणा PT_PRESENT_MASK (1ULL << 0)
+#घोषणा PT_WRITABLE_MASK (1ULL << PT_WRITABLE_SHIFT)
+#घोषणा PT_USER_MASK (1ULL << PT_USER_SHIFT)
+#घोषणा PT_PWT_MASK (1ULL << 3)
+#घोषणा PT_PCD_MASK (1ULL << 4)
+#घोषणा PT_ACCESSED_SHIFT 5
+#घोषणा PT_ACCESSED_MASK (1ULL << PT_ACCESSED_SHIFT)
+#घोषणा PT_सूचीTY_SHIFT 6
+#घोषणा PT_सूचीTY_MASK (1ULL << PT_सूचीTY_SHIFT)
+#घोषणा PT_PAGE_SIZE_SHIFT 7
+#घोषणा PT_PAGE_SIZE_MASK (1ULL << PT_PAGE_SIZE_SHIFT)
+#घोषणा PT_PAT_MASK (1ULL << 7)
+#घोषणा PT_GLOBAL_MASK (1ULL << 8)
+#घोषणा PT64_NX_SHIFT 63
+#घोषणा PT64_NX_MASK (1ULL << PT64_NX_SHIFT)
 
-#define PT_PAT_SHIFT 7
-#define PT_DIR_PAT_SHIFT 12
-#define PT_DIR_PAT_MASK (1ULL << PT_DIR_PAT_SHIFT)
+#घोषणा PT_PAT_SHIFT 7
+#घोषणा PT_सूची_PAT_SHIFT 12
+#घोषणा PT_सूची_PAT_MASK (1ULL << PT_सूची_PAT_SHIFT)
 
-#define PT32_DIR_PSE36_SIZE 4
-#define PT32_DIR_PSE36_SHIFT 13
-#define PT32_DIR_PSE36_MASK \
-	(((1ULL << PT32_DIR_PSE36_SIZE) - 1) << PT32_DIR_PSE36_SHIFT)
+#घोषणा PT32_सूची_PSE36_SIZE 4
+#घोषणा PT32_सूची_PSE36_SHIFT 13
+#घोषणा PT32_सूची_PSE36_MASK \
+	(((1ULL << PT32_सूची_PSE36_SIZE) - 1) << PT32_सूची_PSE36_SHIFT)
 
-#define PT64_ROOT_5LEVEL 5
-#define PT64_ROOT_4LEVEL 4
-#define PT32_ROOT_LEVEL 2
-#define PT32E_ROOT_LEVEL 3
+#घोषणा PT64_ROOT_5LEVEL 5
+#घोषणा PT64_ROOT_4LEVEL 4
+#घोषणा PT32_ROOT_LEVEL 2
+#घोषणा PT32E_ROOT_LEVEL 3
 
-static __always_inline u64 rsvd_bits(int s, int e)
-{
-	BUILD_BUG_ON(__builtin_constant_p(e) && __builtin_constant_p(s) && e < s);
+अटल __always_अंतरभूत u64 rsvd_bits(पूर्णांक s, पूर्णांक e)
+अणु
+	BUILD_BUG_ON(__builtin_स्थिरant_p(e) && __builtin_स्थिरant_p(s) && e < s);
 
-	if (__builtin_constant_p(e))
+	अगर (__builtin_स्थिरant_p(e))
 		BUILD_BUG_ON(e > 63);
-	else
+	अन्यथा
 		e &= 63;
 
-	if (e < s)
-		return 0;
+	अगर (e < s)
+		वापस 0;
 
-	return ((2ULL << (e - s)) - 1) << s;
-}
+	वापस ((2ULL << (e - s)) - 1) << s;
+पूर्ण
 
-void kvm_mmu_set_mmio_spte_mask(u64 mmio_value, u64 mmio_mask, u64 access_mask);
-void kvm_mmu_set_ept_masks(bool has_ad_bits, bool has_exec_only);
+व्योम kvm_mmu_set_mmio_spte_mask(u64 mmio_value, u64 mmio_mask, u64 access_mask);
+व्योम kvm_mmu_set_ept_masks(bool has_ad_bits, bool has_exec_only);
 
-void
-reset_shadow_zero_bits_mask(struct kvm_vcpu *vcpu, struct kvm_mmu *context);
+व्योम
+reset_shaकरोw_zero_bits_mask(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_mmu *context);
 
-void kvm_init_mmu(struct kvm_vcpu *vcpu, bool reset_roots);
-void kvm_init_shadow_npt_mmu(struct kvm_vcpu *vcpu, u32 cr0, u32 cr4, u32 efer,
+व्योम kvm_init_mmu(काष्ठा kvm_vcpu *vcpu, bool reset_roots);
+व्योम kvm_init_shaकरोw_npt_mmu(काष्ठा kvm_vcpu *vcpu, u32 cr0, u32 cr4, u32 efer,
 			     gpa_t nested_cr3);
-void kvm_init_shadow_ept_mmu(struct kvm_vcpu *vcpu, bool execonly,
+व्योम kvm_init_shaकरोw_ept_mmu(काष्ठा kvm_vcpu *vcpu, bool execonly,
 			     bool accessed_dirty, gpa_t new_eptp);
-bool kvm_can_do_async_pf(struct kvm_vcpu *vcpu);
-int kvm_handle_page_fault(struct kvm_vcpu *vcpu, u64 error_code,
-				u64 fault_address, char *insn, int insn_len);
+bool kvm_can_करो_async_pf(काष्ठा kvm_vcpu *vcpu);
+पूर्णांक kvm_handle_page_fault(काष्ठा kvm_vcpu *vcpu, u64 error_code,
+				u64 fault_address, अक्षर *insn, पूर्णांक insn_len);
 
-int kvm_mmu_load(struct kvm_vcpu *vcpu);
-void kvm_mmu_unload(struct kvm_vcpu *vcpu);
-void kvm_mmu_sync_roots(struct kvm_vcpu *vcpu);
+पूर्णांक kvm_mmu_load(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_mmu_unload(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_mmu_sync_roots(काष्ठा kvm_vcpu *vcpu);
 
-static inline int kvm_mmu_reload(struct kvm_vcpu *vcpu)
-{
-	if (likely(vcpu->arch.mmu->root_hpa != INVALID_PAGE))
-		return 0;
+अटल अंतरभूत पूर्णांक kvm_mmu_reload(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (likely(vcpu->arch.mmu->root_hpa != INVALID_PAGE))
+		वापस 0;
 
-	return kvm_mmu_load(vcpu);
-}
+	वापस kvm_mmu_load(vcpu);
+पूर्ण
 
-static inline unsigned long kvm_get_pcid(struct kvm_vcpu *vcpu, gpa_t cr3)
-{
+अटल अंतरभूत अचिन्हित दीर्घ kvm_get_pcid(काष्ठा kvm_vcpu *vcpu, gpa_t cr3)
+अणु
 	BUILD_BUG_ON((X86_CR3_PCID_MASK & PAGE_MASK) != 0);
 
-	return kvm_read_cr4_bits(vcpu, X86_CR4_PCIDE)
+	वापस kvm_पढ़ो_cr4_bits(vcpu, X86_CR4_PCIDE)
 	       ? cr3 & X86_CR3_PCID_MASK
 	       : 0;
-}
+पूर्ण
 
-static inline unsigned long kvm_get_active_pcid(struct kvm_vcpu *vcpu)
-{
-	return kvm_get_pcid(vcpu, kvm_read_cr3(vcpu));
-}
+अटल अंतरभूत अचिन्हित दीर्घ kvm_get_active_pcid(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस kvm_get_pcid(vcpu, kvm_पढ़ो_cr3(vcpu));
+पूर्ण
 
-static inline void kvm_mmu_load_pgd(struct kvm_vcpu *vcpu)
-{
+अटल अंतरभूत व्योम kvm_mmu_load_pgd(काष्ठा kvm_vcpu *vcpu)
+अणु
 	u64 root_hpa = vcpu->arch.mmu->root_hpa;
 
-	if (!VALID_PAGE(root_hpa))
-		return;
+	अगर (!VALID_PAGE(root_hpa))
+		वापस;
 
-	static_call(kvm_x86_load_mmu_pgd)(vcpu, root_hpa,
-					  vcpu->arch.mmu->shadow_root_level);
-}
+	अटल_call(kvm_x86_load_mmu_pgd)(vcpu, root_hpa,
+					  vcpu->arch.mmu->shaकरोw_root_level);
+पूर्ण
 
-int kvm_tdp_page_fault(struct kvm_vcpu *vcpu, gpa_t gpa, u32 error_code,
+पूर्णांक kvm_tdp_page_fault(काष्ठा kvm_vcpu *vcpu, gpa_t gpa, u32 error_code,
 		       bool prefault);
 
-static inline int kvm_mmu_do_page_fault(struct kvm_vcpu *vcpu, gpa_t cr2_or_gpa,
+अटल अंतरभूत पूर्णांक kvm_mmu_करो_page_fault(काष्ठा kvm_vcpu *vcpu, gpa_t cr2_or_gpa,
 					u32 err, bool prefault)
-{
-#ifdef CONFIG_RETPOLINE
-	if (likely(vcpu->arch.mmu->page_fault == kvm_tdp_page_fault))
-		return kvm_tdp_page_fault(vcpu, cr2_or_gpa, err, prefault);
-#endif
-	return vcpu->arch.mmu->page_fault(vcpu, cr2_or_gpa, err, prefault);
-}
+अणु
+#अगर_घोषित CONFIG_RETPOLINE
+	अगर (likely(vcpu->arch.mmu->page_fault == kvm_tdp_page_fault))
+		वापस kvm_tdp_page_fault(vcpu, cr2_or_gpa, err, prefault);
+#पूर्ण_अगर
+	वापस vcpu->arch.mmu->page_fault(vcpu, cr2_or_gpa, err, prefault);
+पूर्ण
 
 /*
- * Currently, we have two sorts of write-protection, a) the first one
- * write-protects guest page to sync the guest modification, b) another one is
- * used to sync dirty bitmap when we do KVM_GET_DIRTY_LOG. The differences
+ * Currently, we have two sorts of ग_लिखो-protection, a) the first one
+ * ग_लिखो-protects guest page to sync the guest modअगरication, b) another one is
+ * used to sync dirty biपंचांगap when we करो KVM_GET_सूचीTY_LOG. The dअगरferences
  * between these two sorts are:
- * 1) the first case clears MMU-writable bit.
- * 2) the first case requires flushing tlb immediately avoiding corrupting
- *    shadow page table between all vcpus so it should be in the protection of
- *    mmu-lock. And the another case does not need to flush tlb until returning
- *    the dirty bitmap to userspace since it only write-protects the page
- *    logged in the bitmap, that means the page in the dirty bitmap is not
+ * 1) the first हाल clears MMU-writable bit.
+ * 2) the first हाल requires flushing tlb immediately aव्योमing corrupting
+ *    shaकरोw page table between all vcpus so it should be in the protection of
+ *    mmu-lock. And the another हाल करोes not need to flush tlb until वापसing
+ *    the dirty biपंचांगap to userspace since it only ग_लिखो-protects the page
+ *    logged in the biपंचांगap, that means the page in the dirty biपंचांगap is not
  *    missed, so it can flush tlb out of mmu-lock.
  *
- * So, there is the problem: the first case can meet the corrupted tlb caused
- * by another case which write-protects pages but without flush tlb
- * immediately. In order to making the first case be aware this problem we let
- * it flush tlb if we try to write-protect a spte whose MMU-writable bit
- * is set, it works since another case never touches MMU-writable bit.
+ * So, there is the problem: the first हाल can meet the corrupted tlb caused
+ * by another हाल which ग_लिखो-protects pages but without flush tlb
+ * immediately. In order to making the first हाल be aware this problem we let
+ * it flush tlb अगर we try to ग_लिखो-protect a spte whose MMU-writable bit
+ * is set, it works since another हाल never touches MMU-writable bit.
  *
  * Anyway, whenever a spte is updated (only permission and status bits are
  * changed) we need to check whether the spte with MMU-writable becomes
- * readonly, if that happens, we need to flush tlb. Fortunately,
- * mmu_spte_update() has already handled it perfectly.
+ * पढ़ोonly, अगर that happens, we need to flush tlb. Fortunately,
+ * mmu_spte_update() has alपढ़ोy handled it perfectly.
  *
  * The rules to use MMU-writable and PT_WRITABLE_MASK:
- * - if we want to see if it has writable tlb entry or if the spte can be
+ * - अगर we want to see अगर it has writable tlb entry or अगर the spte can be
  *   writable on the mmu mapping, check MMU-writable, this is the most
- *   case, otherwise
- * - if we fix page fault on the spte or do write-protection by dirty logging,
+ *   हाल, otherwise
+ * - अगर we fix page fault on the spte or करो ग_लिखो-protection by dirty logging,
  *   check PT_WRITABLE_MASK.
  *
- * TODO: introduce APIs to split these two cases.
+ * TODO: पूर्णांकroduce APIs to split these two हालs.
  */
-static inline bool is_writable_pte(unsigned long pte)
-{
-	return pte & PT_WRITABLE_MASK;
-}
+अटल अंतरभूत bool is_writable_pte(अचिन्हित दीर्घ pte)
+अणु
+	वापस pte & PT_WRITABLE_MASK;
+पूर्ण
 
-static inline bool is_write_protection(struct kvm_vcpu *vcpu)
-{
-	return kvm_read_cr0_bits(vcpu, X86_CR0_WP);
-}
+अटल अंतरभूत bool is_ग_लिखो_protection(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस kvm_पढ़ो_cr0_bits(vcpu, X86_CR0_WP);
+पूर्ण
 
 /*
- * Check if a given access (described through the I/D, W/R and U/S bits of a
+ * Check अगर a given access (described through the I/D, W/R and U/S bits of a
  * page fault error code pfec) causes a permission fault with the given PTE
- * access rights (in ACC_* format).
+ * access rights (in ACC_* क्रमmat).
  *
- * Return zero if the access does not fault; return the page fault error code
- * if the access faults.
+ * Return zero अगर the access करोes not fault; वापस the page fault error code
+ * अगर the access faults.
  */
-static inline u8 permission_fault(struct kvm_vcpu *vcpu, struct kvm_mmu *mmu,
-				  unsigned pte_access, unsigned pte_pkey,
-				  unsigned pfec)
-{
-	int cpl = static_call(kvm_x86_get_cpl)(vcpu);
-	unsigned long rflags = static_call(kvm_x86_get_rflags)(vcpu);
+अटल अंतरभूत u8 permission_fault(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_mmu *mmu,
+				  अचिन्हित pte_access, अचिन्हित pte_pkey,
+				  अचिन्हित pfec)
+अणु
+	पूर्णांक cpl = अटल_call(kvm_x86_get_cpl)(vcpu);
+	अचिन्हित दीर्घ rflags = अटल_call(kvm_x86_get_rflags)(vcpu);
 
 	/*
-	 * If CPL < 3, SMAP prevention are disabled if EFLAGS.AC = 1.
+	 * If CPL < 3, SMAP prevention are disabled अगर EFLAGS.AC = 1.
 	 *
 	 * If CPL = 3, SMAP applies to all supervisor-mode data accesses
 	 * (these are implicit supervisor accesses) regardless of the value
@@ -192,24 +193,24 @@ static inline u8 permission_fault(struct kvm_vcpu *vcpu, struct kvm_mmu *mmu,
 	 * This computes (cpl < 3) && (rflags & X86_EFLAGS_AC), leaving
 	 * the result in X86_EFLAGS_AC. We then insert it in place of
 	 * the PFERR_RSVD_MASK bit; this bit will always be zero in pfec,
-	 * but it will be one in index if SMAP checks are being overridden.
+	 * but it will be one in index अगर SMAP checks are being overridden.
 	 * It is important to keep this branchless.
 	 */
-	unsigned long smap = (cpl - 3) & (rflags & X86_EFLAGS_AC);
-	int index = (pfec >> 1) +
+	अचिन्हित दीर्घ smap = (cpl - 3) & (rflags & X86_EFLAGS_AC);
+	पूर्णांक index = (pfec >> 1) +
 		    (smap >> (X86_EFLAGS_AC_BIT - PFERR_RSVD_BIT + 1));
 	bool fault = (mmu->permissions[index] >> pte_access) & 1;
 	u32 errcode = PFERR_PRESENT_MASK;
 
 	WARN_ON(pfec & (PFERR_PK_MASK | PFERR_RSVD_MASK));
-	if (unlikely(mmu->pkru_mask)) {
+	अगर (unlikely(mmu->pkru_mask)) अणु
 		u32 pkru_bits, offset;
 
 		/*
-		* PKRU defines 32 bits, there are 16 domains and 2
-		* attribute bits per domain in pkru.  pte_pkey is the
-		* index of the protection domain, so pte_pkey * 2 is
-		* is the index of the first bit for the domain.
+		* PKRU defines 32 bits, there are 16 करोमुख्यs and 2
+		* attribute bits per करोमुख्य in pkru.  pte_pkey is the
+		* index of the protection करोमुख्य, so pte_pkey * 2 is
+		* is the index of the first bit क्रम the करोमुख्य.
 		*/
 		pkru_bits = (vcpu->arch.pkru >> (pte_pkey * 2)) & 3;
 
@@ -220,16 +221,16 @@ static inline u8 permission_fault(struct kvm_vcpu *vcpu, struct kvm_mmu *mmu,
 		pkru_bits &= mmu->pkru_mask >> offset;
 		errcode |= -pkru_bits & PFERR_PK_MASK;
 		fault |= (pkru_bits != 0);
-	}
+	पूर्ण
 
-	return -(u32)fault & errcode;
-}
+	वापस -(u32)fault & errcode;
+पूर्ण
 
-void kvm_zap_gfn_range(struct kvm *kvm, gfn_t gfn_start, gfn_t gfn_end);
+व्योम kvm_zap_gfn_range(काष्ठा kvm *kvm, gfn_t gfn_start, gfn_t gfn_end);
 
-int kvm_arch_write_log_dirty(struct kvm_vcpu *vcpu);
+पूर्णांक kvm_arch_ग_लिखो_log_dirty(काष्ठा kvm_vcpu *vcpu);
 
-int kvm_mmu_post_init_vm(struct kvm *kvm);
-void kvm_mmu_pre_destroy_vm(struct kvm *kvm);
+पूर्णांक kvm_mmu_post_init_vm(काष्ठा kvm *kvm);
+व्योम kvm_mmu_pre_destroy_vm(काष्ठा kvm *kvm);
 
-#endif
+#पूर्ण_अगर

@@ -1,80 +1,81 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <target/target_core_base.h>
-#include <linux/btree.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <target/target_core_base.h>
+#समावेश <linux/btree.h>
 
 /* length of ASCII WWPNs including pad */
-#define TCM_QLA2XXX_NAMELEN	32
+#घोषणा TCM_QLA2XXX_NAMELEN	32
 /*
- * Number of pre-allocated per-session tags, based upon the worst-case
+ * Number of pre-allocated per-session tags, based upon the worst-हाल
  * per port number of iocbs
  */
-#define TCM_QLA2XXX_DEFAULT_TAGS 2088
+#घोषणा TCM_QLA2XXX_DEFAULT_TAGS 2088
 
-#include "qla_target.h"
+#समावेश "qla_target.h"
 
-struct tcm_qla2xxx_nacl {
-	struct se_node_acl se_node_acl;
+काष्ठा tcm_qla2xxx_nacl अणु
+	काष्ठा se_node_acl se_node_acl;
 
-	/* From libfc struct fc_rport->port_id */
+	/* From libfc काष्ठा fc_rport->port_id */
 	u32 nport_id;
-	/* Binary World Wide unique Node Name for remote FC Initiator Nport */
+	/* Binary World Wide unique Node Name क्रम remote FC Initiator Nport */
 	u64 nport_wwnn;
-	/* ASCII formatted WWPN for FC Initiator Nport */
-	char nport_name[TCM_QLA2XXX_NAMELEN];
-	/* Pointer to fc_port */
-	struct fc_port *fc_port;
-	/* Pointer to TCM FC nexus */
-	struct se_session *nport_nexus;
-};
+	/* ASCII क्रमmatted WWPN क्रम FC Initiator Nport */
+	अक्षर nport_name[TCM_QLA2XXX_NAMELEN];
+	/* Poपूर्णांकer to fc_port */
+	काष्ठा fc_port *fc_port;
+	/* Poपूर्णांकer to TCM FC nexus */
+	काष्ठा se_session *nport_nexus;
+पूर्ण;
 
-struct tcm_qla2xxx_tpg_attrib {
-	int generate_node_acls;
-	int cache_dynamic_acls;
-	int demo_mode_write_protect;
-	int prod_mode_write_protect;
-	int demo_mode_login_only;
-	int fabric_prot_type;
-	int jam_host;
-};
+काष्ठा tcm_qla2xxx_tpg_attrib अणु
+	पूर्णांक generate_node_acls;
+	पूर्णांक cache_dynamic_acls;
+	पूर्णांक demo_mode_ग_लिखो_protect;
+	पूर्णांक prod_mode_ग_लिखो_protect;
+	पूर्णांक demo_mode_login_only;
+	पूर्णांक fabric_prot_type;
+	पूर्णांक jam_host;
+पूर्ण;
 
-struct tcm_qla2xxx_tpg {
-	/* FC lport target portal group tag for TCM */
+काष्ठा tcm_qla2xxx_tpg अणु
+	/* FC lport target portal group tag क्रम TCM */
 	u16 lport_tpgt;
 	/* Atomic bit to determine TPG active status */
 	atomic_t lport_tpg_enabled;
-	/* Pointer back to tcm_qla2xxx_lport */
-	struct tcm_qla2xxx_lport *lport;
+	/* Poपूर्णांकer back to tcm_qla2xxx_lport */
+	काष्ठा tcm_qla2xxx_lport *lport;
 	/* Used by tcm_qla2xxx_tpg_attrib_cit */
-	struct tcm_qla2xxx_tpg_attrib tpg_attrib;
+	काष्ठा tcm_qla2xxx_tpg_attrib tpg_attrib;
 	/* Returned by tcm_qla2xxx_make_tpg() */
-	struct se_portal_group se_tpg;
-};
+	काष्ठा se_portal_group se_tpg;
+पूर्ण;
 
-struct tcm_qla2xxx_fc_loopid {
-	struct se_node_acl *se_nacl;
-};
+काष्ठा tcm_qla2xxx_fc_loopid अणु
+	काष्ठा se_node_acl *se_nacl;
+पूर्ण;
 
-struct tcm_qla2xxx_lport {
-	/* Binary World Wide unique Port Name for FC Target Lport */
+काष्ठा tcm_qla2xxx_lport अणु
+	/* Binary World Wide unique Port Name क्रम FC Target Lport */
 	u64 lport_wwpn;
-	/* Binary World Wide unique Port Name for FC NPIV Target Lport */
+	/* Binary World Wide unique Port Name क्रम FC NPIV Target Lport */
 	u64 lport_npiv_wwpn;
-	/* Binary World Wide unique Node Name for FC NPIV Target Lport */
+	/* Binary World Wide unique Node Name क्रम FC NPIV Target Lport */
 	u64 lport_npiv_wwnn;
-	/* ASCII formatted WWPN for FC Target Lport */
-	char lport_name[TCM_QLA2XXX_NAMELEN];
-	/* ASCII formatted naa WWPN for VPD page 83 etc */
-	char lport_naa_name[TCM_QLA2XXX_NAMELEN];
-	/* map for fc_port pointers in 24-bit FC Port ID space */
-	struct btree_head32 lport_fcport_map;
-	/* vmalloc-ed memory for fc_port pointers for 16-bit FC loop ID */
-	struct tcm_qla2xxx_fc_loopid *lport_loopid_map;
-	/* Pointer to struct scsi_qla_host from qla2xxx LLD */
-	struct scsi_qla_host *qla_vha;
-	/* Pointer to struct qla_tgt pointer */
-	struct qla_tgt lport_qla_tgt;
-	/* Pointer to TPG=1 for non NPIV mode */
-	struct tcm_qla2xxx_tpg *tpg_1;
+	/* ASCII क्रमmatted WWPN क्रम FC Target Lport */
+	अक्षर lport_name[TCM_QLA2XXX_NAMELEN];
+	/* ASCII क्रमmatted naa WWPN क्रम VPD page 83 etc */
+	अक्षर lport_naa_name[TCM_QLA2XXX_NAMELEN];
+	/* map क्रम fc_port poपूर्णांकers in 24-bit FC Port ID space */
+	काष्ठा btree_head32 lport_fcport_map;
+	/* vदो_स्मृति-ed memory क्रम fc_port poपूर्णांकers क्रम 16-bit FC loop ID */
+	काष्ठा tcm_qla2xxx_fc_loopid *lport_loopid_map;
+	/* Poपूर्णांकer to काष्ठा scsi_qla_host from qla2xxx LLD */
+	काष्ठा scsi_qla_host *qla_vha;
+	/* Poपूर्णांकer to काष्ठा qla_tgt poपूर्णांकer */
+	काष्ठा qla_tgt lport_qla_tgt;
+	/* Poपूर्णांकer to TPG=1 क्रम non NPIV mode */
+	काष्ठा tcm_qla2xxx_tpg *tpg_1;
 	/* Returned by tcm_qla2xxx_make_lport() */
-	struct se_wwn lport_wwn;
-};
+	काष्ठा se_wwn lport_wwn;
+पूर्ण;

@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2016,2017 IBM Corporation.
  */
 
-#define pr_fmt(fmt) "xive: " fmt
+#घोषणा pr_fmt(fmt) "xive: " fmt
 
-#include <linux/types.h>
-#include <linux/irq.h>
-#include <linux/debugfs.h>
-#include <linux/smp.h>
-#include <linux/interrupt.h>
-#include <linux/seq_file.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/delay.h>
-#include <linux/cpumask.h>
-#include <linux/mm.h>
-#include <linux/kmemleak.h>
+#समावेश <linux/types.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kmemleak.h>
 
-#include <asm/machdep.h>
-#include <asm/prom.h>
-#include <asm/io.h>
-#include <asm/smp.h>
-#include <asm/irq.h>
-#include <asm/errno.h>
-#include <asm/xive.h>
-#include <asm/xive-regs.h>
-#include <asm/opal.h>
-#include <asm/kvm_ppc.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <यंत्र/xive.h>
+#समावेश <यंत्र/xive-regs.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/kvm_ppc.h>
 
-#include "xive-internal.h"
+#समावेश "xive-internal.h"
 
 
-static u32 xive_provision_size;
-static u32 *xive_provision_chips;
-static u32 xive_provision_chip_count;
-static u32 xive_queue_shift;
-static u32 xive_pool_vps = XIVE_INVALID_VP;
-static struct kmem_cache *xive_provision_cache;
-static bool xive_has_single_esc;
+अटल u32 xive_provision_size;
+अटल u32 *xive_provision_chips;
+अटल u32 xive_provision_chip_count;
+अटल u32 xive_queue_shअगरt;
+अटल u32 xive_pool_vps = XIVE_INVALID_VP;
+अटल काष्ठा kmem_cache *xive_provision_cache;
+अटल bool xive_has_single_esc;
 
-int xive_native_populate_irq_data(u32 hw_irq, struct xive_irq_data *data)
-{
+पूर्णांक xive_native_populate_irq_data(u32 hw_irq, काष्ठा xive_irq_data *data)
+अणु
 	__be64 flags, eoi_page, trig_page;
-	__be32 esb_shift, src_chip;
+	__be32 esb_shअगरt, src_chip;
 	u64 opal_flags;
 	s64 rc;
 
-	memset(data, 0, sizeof(*data));
+	स_रखो(data, 0, माप(*data));
 
 	rc = opal_xive_get_irq_info(hw_irq, &flags, &eoi_page, &trig_page,
-				    &esb_shift, &src_chip);
-	if (rc) {
+				    &esb_shअगरt, &src_chip);
+	अगर (rc) अणु
 		pr_err("opal_xive_get_irq_info(0x%x) returned %lld\n",
 		       hw_irq, rc);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	opal_flags = be64_to_cpu(flags);
-	if (opal_flags & OPAL_XIVE_IRQ_STORE_EOI)
+	अगर (opal_flags & OPAL_XIVE_IRQ_STORE_EOI)
 		data->flags |= XIVE_IRQ_FLAG_STORE_EOI;
-	if (opal_flags & OPAL_XIVE_IRQ_LSI)
+	अगर (opal_flags & OPAL_XIVE_IRQ_LSI)
 		data->flags |= XIVE_IRQ_FLAG_LSI;
 	data->eoi_page = be64_to_cpu(eoi_page);
 	data->trig_page = be64_to_cpu(trig_page);
-	data->esb_shift = be32_to_cpu(esb_shift);
+	data->esb_shअगरt = be32_to_cpu(esb_shअगरt);
 	data->src_chip = be32_to_cpu(src_chip);
 
-	data->eoi_mmio = ioremap(data->eoi_page, 1u << data->esb_shift);
-	if (!data->eoi_mmio) {
+	data->eoi_mmio = ioremap(data->eoi_page, 1u << data->esb_shअगरt);
+	अगर (!data->eoi_mmio) अणु
 		pr_err("Failed to map EOI page for irq 0x%x\n", hw_irq);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	data->hw_irq = hw_irq;
 
-	if (!data->trig_page)
-		return 0;
-	if (data->trig_page == data->eoi_page) {
+	अगर (!data->trig_page)
+		वापस 0;
+	अगर (data->trig_page == data->eoi_page) अणु
 		data->trig_mmio = data->eoi_mmio;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	data->trig_mmio = ioremap(data->trig_page, 1u << data->esb_shift);
-	if (!data->trig_mmio) {
+	data->trig_mmio = ioremap(data->trig_page, 1u << data->esb_shअगरt);
+	अगर (!data->trig_mmio) अणु
 		pr_err("Failed to map trigger page for irq 0x%x\n", hw_irq);
-		return -ENOMEM;
-	}
-	return 0;
-}
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_populate_irq_data);
 
-int xive_native_configure_irq(u32 hw_irq, u32 target, u8 prio, u32 sw_irq)
-{
+पूर्णांक xive_native_configure_irq(u32 hw_irq, u32 target, u8 prio, u32 sw_irq)
+अणु
 	s64 rc;
 
-	for (;;) {
+	क्रम (;;) अणु
 		rc = opal_xive_set_irq_config(hw_irq, target, prio, sw_irq);
-		if (rc != OPAL_BUSY)
-			break;
+		अगर (rc != OPAL_BUSY)
+			अवरोध;
 		msleep(OPAL_BUSY_DELAY_MS);
-	}
-	return rc == 0 ? 0 : -ENXIO;
-}
+	पूर्ण
+	वापस rc == 0 ? 0 : -ENXIO;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_configure_irq);
 
-static int xive_native_get_irq_config(u32 hw_irq, u32 *target, u8 *prio,
+अटल पूर्णांक xive_native_get_irq_config(u32 hw_irq, u32 *target, u8 *prio,
 				      u32 *sw_irq)
-{
+अणु
 	s64 rc;
 	__be64 vp;
 	__be32 lirq;
@@ -119,26 +120,26 @@ static int xive_native_get_irq_config(u32 hw_irq, u32 *target, u8 *prio,
 	*target = be64_to_cpu(vp);
 	*sw_irq = be32_to_cpu(lirq);
 
-	return rc == 0 ? 0 : -ENXIO;
-}
+	वापस rc == 0 ? 0 : -ENXIO;
+पूर्ण
 
-#define vp_err(vp, fmt, ...) pr_err("VP[0x%x]: " fmt, vp, ##__VA_ARGS__)
+#घोषणा vp_err(vp, fmt, ...) pr_err("VP[0x%x]: " fmt, vp, ##__VA_ARGS__)
 
-/* This can be called multiple time to change a queue configuration */
-int xive_native_configure_queue(u32 vp_id, struct xive_q *q, u8 prio,
+/* This can be called multiple समय to change a queue configuration */
+पूर्णांक xive_native_configure_queue(u32 vp_id, काष्ठा xive_q *q, u8 prio,
 				__be32 *qpage, u32 order, bool can_escalate)
-{
+अणु
 	s64 rc = 0;
 	__be64 qeoi_page_be;
 	__be32 esc_irq_be;
 	u64 flags, qpage_phys;
 
 	/* If there's an actual queue page, clean it */
-	if (order) {
-		if (WARN_ON(!qpage))
-			return -EINVAL;
+	अगर (order) अणु
+		अगर (WARN_ON(!qpage))
+			वापस -EINVAL;
 		qpage_phys = __pa(qpage);
-	} else
+	पूर्ण अन्यथा
 		qpage_phys = 0;
 
 	/* Initialize the rest of the fields */
@@ -146,457 +147,457 @@ int xive_native_configure_queue(u32 vp_id, struct xive_q *q, u8 prio,
 	q->idx = 0;
 	q->toggle = 0;
 
-	rc = opal_xive_get_queue_info(vp_id, prio, NULL, NULL,
+	rc = opal_xive_get_queue_info(vp_id, prio, शून्य, शून्य,
 				      &qeoi_page_be,
 				      &esc_irq_be,
-				      NULL);
-	if (rc) {
+				      शून्य);
+	अगर (rc) अणु
 		vp_err(vp_id, "Failed to get queue %d info : %lld\n", prio, rc);
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	q->eoi_phys = be64_to_cpu(qeoi_page_be);
 
 	/* Default flags */
 	flags = OPAL_XIVE_EQ_ALWAYS_NOTIFY | OPAL_XIVE_EQ_ENABLED;
 
 	/* Escalation needed ? */
-	if (can_escalate) {
+	अगर (can_escalate) अणु
 		q->esc_irq = be32_to_cpu(esc_irq_be);
 		flags |= OPAL_XIVE_EQ_ESCALATE;
-	}
+	पूर्ण
 
 	/* Configure and enable the queue in HW */
-	for (;;) {
+	क्रम (;;) अणु
 		rc = opal_xive_set_queue_info(vp_id, prio, qpage_phys, order, flags);
-		if (rc != OPAL_BUSY)
-			break;
+		अगर (rc != OPAL_BUSY)
+			अवरोध;
 		msleep(OPAL_BUSY_DELAY_MS);
-	}
-	if (rc) {
+	पूर्ण
+	अगर (rc) अणु
 		vp_err(vp_id, "Failed to set queue %d info: %lld\n", prio, rc);
 		rc = -EIO;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * KVM code requires all of the above to be visible before
+		 * KVM code requires all of the above to be visible beक्रमe
 		 * q->qpage is set due to how it manages IPI EOIs
 		 */
 		wmb();
 		q->qpage = qpage;
-	}
+	पूर्ण
 fail:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_configure_queue);
 
-static void __xive_native_disable_queue(u32 vp_id, struct xive_q *q, u8 prio)
-{
+अटल व्योम __xive_native_disable_queue(u32 vp_id, काष्ठा xive_q *q, u8 prio)
+अणु
 	s64 rc;
 
 	/* Disable the queue in HW */
-	for (;;) {
+	क्रम (;;) अणु
 		rc = opal_xive_set_queue_info(vp_id, prio, 0, 0, 0);
-		if (rc != OPAL_BUSY)
-			break;
+		अगर (rc != OPAL_BUSY)
+			अवरोध;
 		msleep(OPAL_BUSY_DELAY_MS);
-	}
-	if (rc)
+	पूर्ण
+	अगर (rc)
 		vp_err(vp_id, "Failed to disable queue %d : %lld\n", prio, rc);
-}
+पूर्ण
 
-void xive_native_disable_queue(u32 vp_id, struct xive_q *q, u8 prio)
-{
+व्योम xive_native_disable_queue(u32 vp_id, काष्ठा xive_q *q, u8 prio)
+अणु
 	__xive_native_disable_queue(vp_id, q, prio);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_disable_queue);
 
-static int xive_native_setup_queue(unsigned int cpu, struct xive_cpu *xc, u8 prio)
-{
-	struct xive_q *q = &xc->queue[prio];
+अटल पूर्णांक xive_native_setup_queue(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc, u8 prio)
+अणु
+	काष्ठा xive_q *q = &xc->queue[prio];
 	__be32 *qpage;
 
-	qpage = xive_queue_page_alloc(cpu, xive_queue_shift);
-	if (IS_ERR(qpage))
-		return PTR_ERR(qpage);
+	qpage = xive_queue_page_alloc(cpu, xive_queue_shअगरt);
+	अगर (IS_ERR(qpage))
+		वापस PTR_ERR(qpage);
 
-	return xive_native_configure_queue(get_hard_smp_processor_id(cpu),
-					   q, prio, qpage, xive_queue_shift, false);
-}
+	वापस xive_native_configure_queue(get_hard_smp_processor_id(cpu),
+					   q, prio, qpage, xive_queue_shअगरt, false);
+पूर्ण
 
-static void xive_native_cleanup_queue(unsigned int cpu, struct xive_cpu *xc, u8 prio)
-{
-	struct xive_q *q = &xc->queue[prio];
-	unsigned int alloc_order;
+अटल व्योम xive_native_cleanup_queue(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc, u8 prio)
+अणु
+	काष्ठा xive_q *q = &xc->queue[prio];
+	अचिन्हित पूर्णांक alloc_order;
 
 	/*
 	 * We use the variant with no iounmap as this is called on exec
 	 * from an IPI and iounmap isn't safe
 	 */
 	__xive_native_disable_queue(get_hard_smp_processor_id(cpu), q, prio);
-	alloc_order = xive_alloc_order(xive_queue_shift);
-	free_pages((unsigned long)q->qpage, alloc_order);
-	q->qpage = NULL;
-}
+	alloc_order = xive_alloc_order(xive_queue_shअगरt);
+	मुक्त_pages((अचिन्हित दीर्घ)q->qpage, alloc_order);
+	q->qpage = शून्य;
+पूर्ण
 
-static bool xive_native_match(struct device_node *node)
-{
-	return of_device_is_compatible(node, "ibm,opal-xive-vc");
-}
+अटल bool xive_native_match(काष्ठा device_node *node)
+अणु
+	वापस of_device_is_compatible(node, "ibm,opal-xive-vc");
+पूर्ण
 
-static s64 opal_xive_allocate_irq(u32 chip_id)
-{
+अटल s64 opal_xive_allocate_irq(u32 chip_id)
+अणु
 	s64 irq = opal_xive_allocate_irq_raw(chip_id);
 
 	/*
-	 * Old versions of skiboot can incorrectly return 0xffffffff to
+	 * Old versions of skiboot can incorrectly वापस 0xffffffff to
 	 * indicate no space, fix it up here.
 	 */
-	return irq == 0xffffffff ? OPAL_RESOURCE : irq;
-}
+	वापस irq == 0xffffffff ? OPAL_RESOURCE : irq;
+पूर्ण
 
-#ifdef CONFIG_SMP
-static int xive_native_get_ipi(unsigned int cpu, struct xive_cpu *xc)
-{
+#अगर_घोषित CONFIG_SMP
+अटल पूर्णांक xive_native_get_ipi(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc)
+अणु
 	s64 irq;
 
 	/* Allocate an IPI and populate info about it */
-	for (;;) {
+	क्रम (;;) अणु
 		irq = opal_xive_allocate_irq(xc->chip_id);
-		if (irq == OPAL_BUSY) {
+		अगर (irq == OPAL_BUSY) अणु
 			msleep(OPAL_BUSY_DELAY_MS);
-			continue;
-		}
-		if (irq < 0) {
+			जारी;
+		पूर्ण
+		अगर (irq < 0) अणु
 			pr_err("Failed to allocate IPI on CPU %d\n", cpu);
-			return -ENXIO;
-		}
+			वापस -ENXIO;
+		पूर्ण
 		xc->hw_ipi = irq;
-		break;
-	}
-	return 0;
-}
-#endif /* CONFIG_SMP */
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
 u32 xive_native_alloc_irq_on_chip(u32 chip_id)
-{
+अणु
 	s64 rc;
 
-	for (;;) {
+	क्रम (;;) अणु
 		rc = opal_xive_allocate_irq(chip_id);
-		if (rc != OPAL_BUSY)
-			break;
+		अगर (rc != OPAL_BUSY)
+			अवरोध;
 		msleep(OPAL_BUSY_DELAY_MS);
-	}
-	if (rc < 0)
-		return 0;
-	return rc;
-}
+	पूर्ण
+	अगर (rc < 0)
+		वापस 0;
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_alloc_irq_on_chip);
 
-void xive_native_free_irq(u32 irq)
-{
-	for (;;) {
-		s64 rc = opal_xive_free_irq(irq);
-		if (rc != OPAL_BUSY)
-			break;
+व्योम xive_native_मुक्त_irq(u32 irq)
+अणु
+	क्रम (;;) अणु
+		s64 rc = opal_xive_मुक्त_irq(irq);
+		अगर (rc != OPAL_BUSY)
+			अवरोध;
 		msleep(OPAL_BUSY_DELAY_MS);
-	}
-}
-EXPORT_SYMBOL_GPL(xive_native_free_irq);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(xive_native_मुक्त_irq);
 
-#ifdef CONFIG_SMP
-static void xive_native_put_ipi(unsigned int cpu, struct xive_cpu *xc)
-{
+#अगर_घोषित CONFIG_SMP
+अटल व्योम xive_native_put_ipi(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc)
+अणु
 	s64 rc;
 
 	/* Free the IPI */
-	if (xc->hw_ipi == XIVE_BAD_IRQ)
-		return;
-	for (;;) {
-		rc = opal_xive_free_irq(xc->hw_ipi);
-		if (rc == OPAL_BUSY) {
+	अगर (xc->hw_ipi == XIVE_BAD_IRQ)
+		वापस;
+	क्रम (;;) अणु
+		rc = opal_xive_मुक्त_irq(xc->hw_ipi);
+		अगर (rc == OPAL_BUSY) अणु
 			msleep(OPAL_BUSY_DELAY_MS);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		xc->hw_ipi = XIVE_BAD_IRQ;
-		break;
-	}
-}
-#endif /* CONFIG_SMP */
+		अवरोध;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static void xive_native_shutdown(void)
-{
+अटल व्योम xive_native_shutकरोwn(व्योम)
+अणु
 	/* Switch the XIVE to emulation mode */
 	opal_xive_reset(OPAL_XIVE_MODE_EMU);
-}
+पूर्ण
 
 /*
- * Perform an "ack" cycle on the current thread, thus
+ * Perक्रमm an "ack" cycle on the current thपढ़ो, thus
  * grabbing the pending active priorities and updating
  * the CPPR to the most favored one.
  */
-static void xive_native_update_pending(struct xive_cpu *xc)
-{
+अटल व्योम xive_native_update_pending(काष्ठा xive_cpu *xc)
+अणु
 	u8 he, cppr;
 	u16 ack;
 
-	/* Perform the acknowledge hypervisor to register cycle */
-	ack = be16_to_cpu(__raw_readw(xive_tima + TM_SPC_ACK_HV_REG));
+	/* Perक्रमm the acknowledge hypervisor to रेजिस्टर cycle */
+	ack = be16_to_cpu(__raw_पढ़ोw(xive_tima + TM_SPC_ACK_HV_REG));
 
 	/* Synchronize subsequent queue accesses */
 	mb();
 
 	/*
 	 * Grab the CPPR and the "HE" field which indicates the source
-	 * of the hypervisor interrupt (if any)
+	 * of the hypervisor पूर्णांकerrupt (अगर any)
 	 */
 	cppr = ack & 0xff;
 	he = (ack >> 8) >> 6;
-	switch(he) {
-	case TM_QW3_NSR_HE_NONE: /* Nothing to see here */
-		break;
-	case TM_QW3_NSR_HE_PHYS: /* Physical thread interrupt */
-		if (cppr == 0xff)
-			return;
+	चयन(he) अणु
+	हाल TM_QW3_NSR_HE_NONE: /* Nothing to see here */
+		अवरोध;
+	हाल TM_QW3_NSR_HE_PHYS: /* Physical thपढ़ो पूर्णांकerrupt */
+		अगर (cppr == 0xff)
+			वापस;
 		/* Mark the priority pending */
 		xc->pending_prio |= 1 << cppr;
 
 		/*
-		 * A new interrupt should never have a CPPR less favored
+		 * A new पूर्णांकerrupt should never have a CPPR less favored
 		 * than our current one.
 		 */
-		if (cppr >= xc->cppr)
+		अगर (cppr >= xc->cppr)
 			pr_err("CPU %d odd ack CPPR, got %d at %d\n",
 			       smp_processor_id(), cppr, xc->cppr);
 
 		/* Update our idea of what the CPPR is */
 		xc->cppr = cppr;
-		break;
-	case TM_QW3_NSR_HE_POOL: /* HV Pool interrupt (unused) */
-	case TM_QW3_NSR_HE_LSI:  /* Legacy FW LSI (unused) */
+		अवरोध;
+	हाल TM_QW3_NSR_HE_POOL: /* HV Pool पूर्णांकerrupt (unused) */
+	हाल TM_QW3_NSR_HE_LSI:  /* Legacy FW LSI (unused) */
 		pr_err("CPU %d got unexpected interrupt type HE=%d\n",
 		       smp_processor_id(), he);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void xive_native_prepare_cpu(unsigned int cpu, struct xive_cpu *xc)
-{
+अटल व्योम xive_native_prepare_cpu(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc)
+अणु
 	xc->chip_id = cpu_to_chip_id(cpu);
-}
+पूर्ण
 
-static void xive_native_setup_cpu(unsigned int cpu, struct xive_cpu *xc)
-{
+अटल व्योम xive_native_setup_cpu(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc)
+अणु
 	s64 rc;
 	u32 vp;
 	__be64 vp_cam_be;
 	u64 vp_cam;
 
-	if (xive_pool_vps == XIVE_INVALID_VP)
-		return;
+	अगर (xive_pool_vps == XIVE_INVALID_VP)
+		वापस;
 
-	/* Check if pool VP already active, if it is, pull it */
-	if (in_be32(xive_tima + TM_QW2_HV_POOL + TM_WORD2) & TM_QW2W2_VP)
+	/* Check अगर pool VP alपढ़ोy active, अगर it is, pull it */
+	अगर (in_be32(xive_tima + TM_QW2_HV_POOL + TM_WORD2) & TM_QW2W2_VP)
 		in_be64(xive_tima + TM_SPC_PULL_POOL_CTX);
 
 	/* Enable the pool VP */
 	vp = xive_pool_vps + cpu;
-	for (;;) {
+	क्रम (;;) अणु
 		rc = opal_xive_set_vp_info(vp, OPAL_XIVE_VP_ENABLED, 0);
-		if (rc != OPAL_BUSY)
-			break;
+		अगर (rc != OPAL_BUSY)
+			अवरोध;
 		msleep(OPAL_BUSY_DELAY_MS);
-	}
-	if (rc) {
+	पूर्ण
+	अगर (rc) अणु
 		pr_err("Failed to enable pool VP on CPU %d\n", cpu);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Grab it's CAM value */
-	rc = opal_xive_get_vp_info(vp, NULL, &vp_cam_be, NULL, NULL);
-	if (rc) {
+	rc = opal_xive_get_vp_info(vp, शून्य, &vp_cam_be, शून्य, शून्य);
+	अगर (rc) अणु
 		pr_err("Failed to get pool VP info CPU %d\n", cpu);
-		return;
-	}
+		वापस;
+	पूर्ण
 	vp_cam = be64_to_cpu(vp_cam_be);
 
 	/* Push it on the CPU (set LSMFB to 0xff to skip backlog scan) */
 	out_be32(xive_tima + TM_QW2_HV_POOL + TM_WORD0, 0xff);
 	out_be32(xive_tima + TM_QW2_HV_POOL + TM_WORD2, TM_QW2W2_VP | vp_cam);
-}
+पूर्ण
 
-static void xive_native_teardown_cpu(unsigned int cpu, struct xive_cpu *xc)
-{
+अटल व्योम xive_native_tearकरोwn_cpu(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc)
+अणु
 	s64 rc;
 	u32 vp;
 
-	if (xive_pool_vps == XIVE_INVALID_VP)
-		return;
+	अगर (xive_pool_vps == XIVE_INVALID_VP)
+		वापस;
 
 	/* Pull the pool VP from the CPU */
 	in_be64(xive_tima + TM_SPC_PULL_POOL_CTX);
 
 	/* Disable it */
 	vp = xive_pool_vps + cpu;
-	for (;;) {
+	क्रम (;;) अणु
 		rc = opal_xive_set_vp_info(vp, 0, 0);
-		if (rc != OPAL_BUSY)
-			break;
+		अगर (rc != OPAL_BUSY)
+			अवरोध;
 		msleep(OPAL_BUSY_DELAY_MS);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void xive_native_sync_source(u32 hw_irq)
-{
+व्योम xive_native_sync_source(u32 hw_irq)
+अणु
 	opal_xive_sync(XIVE_SYNC_EAS, hw_irq);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_sync_source);
 
-void xive_native_sync_queue(u32 hw_irq)
-{
+व्योम xive_native_sync_queue(u32 hw_irq)
+अणु
 	opal_xive_sync(XIVE_SYNC_QUEUE, hw_irq);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_sync_queue);
 
-static const struct xive_ops xive_native_ops = {
+अटल स्थिर काष्ठा xive_ops xive_native_ops = अणु
 	.populate_irq_data	= xive_native_populate_irq_data,
 	.configure_irq		= xive_native_configure_irq,
 	.get_irq_config		= xive_native_get_irq_config,
 	.setup_queue		= xive_native_setup_queue,
 	.cleanup_queue		= xive_native_cleanup_queue,
 	.match			= xive_native_match,
-	.shutdown		= xive_native_shutdown,
+	.shutकरोwn		= xive_native_shutकरोwn,
 	.update_pending		= xive_native_update_pending,
 	.prepare_cpu		= xive_native_prepare_cpu,
 	.setup_cpu		= xive_native_setup_cpu,
-	.teardown_cpu		= xive_native_teardown_cpu,
+	.tearकरोwn_cpu		= xive_native_tearकरोwn_cpu,
 	.sync_source		= xive_native_sync_source,
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	.get_ipi		= xive_native_get_ipi,
 	.put_ipi		= xive_native_put_ipi,
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 	.name			= "native",
-};
+पूर्ण;
 
-static bool xive_parse_provisioning(struct device_node *np)
-{
-	int rc;
+अटल bool xive_parse_provisioning(काष्ठा device_node *np)
+अणु
+	पूर्णांक rc;
 
-	if (of_property_read_u32(np, "ibm,xive-provision-page-size",
+	अगर (of_property_पढ़ो_u32(np, "ibm,xive-provision-page-size",
 				 &xive_provision_size) < 0)
-		return true;
+		वापस true;
 	rc = of_property_count_elems_of_size(np, "ibm,xive-provision-chips", 4);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		pr_err("Error %d getting provision chips array\n", rc);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	xive_provision_chip_count = rc;
-	if (rc == 0)
-		return true;
+	अगर (rc == 0)
+		वापस true;
 
-	xive_provision_chips = kcalloc(4, xive_provision_chip_count,
+	xive_provision_chips = kसुस्मृति(4, xive_provision_chip_count,
 				       GFP_KERNEL);
-	if (WARN_ON(!xive_provision_chips))
-		return false;
+	अगर (WARN_ON(!xive_provision_chips))
+		वापस false;
 
-	rc = of_property_read_u32_array(np, "ibm,xive-provision-chips",
+	rc = of_property_पढ़ो_u32_array(np, "ibm,xive-provision-chips",
 					xive_provision_chips,
 					xive_provision_chip_count);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		pr_err("Error %d reading provision chips array\n", rc);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	xive_provision_cache = kmem_cache_create("xive-provision",
 						 xive_provision_size,
 						 xive_provision_size,
-						 0, NULL);
-	if (!xive_provision_cache) {
+						 0, शून्य);
+	अगर (!xive_provision_cache) अणु
 		pr_err("Failed to allocate provision cache\n");
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void xive_native_setup_pools(void)
-{
+अटल व्योम xive_native_setup_pools(व्योम)
+अणु
 	/* Allocate a pool big enough */
 	pr_debug("XIVE: Allocating VP block for pool size %u\n", nr_cpu_ids);
 
 	xive_pool_vps = xive_native_alloc_vp_block(nr_cpu_ids);
-	if (WARN_ON(xive_pool_vps == XIVE_INVALID_VP))
+	अगर (WARN_ON(xive_pool_vps == XIVE_INVALID_VP))
 		pr_err("XIVE: Failed to allocate pool VP, KVM might not function\n");
 
 	pr_debug("XIVE: Pool VPs allocated at 0x%x for %u max CPUs\n",
 		 xive_pool_vps, nr_cpu_ids);
-}
+पूर्ण
 
-u32 xive_native_default_eq_shift(void)
-{
-	return xive_queue_shift;
-}
-EXPORT_SYMBOL_GPL(xive_native_default_eq_shift);
+u32 xive_native_शेष_eq_shअगरt(व्योम)
+अणु
+	वापस xive_queue_shअगरt;
+पूर्ण
+EXPORT_SYMBOL_GPL(xive_native_शेष_eq_shअगरt);
 
-unsigned long xive_tima_os;
+अचिन्हित दीर्घ xive_tima_os;
 EXPORT_SYMBOL_GPL(xive_tima_os);
 
-bool __init xive_native_init(void)
-{
-	struct device_node *np;
-	struct resource r;
-	void __iomem *tima;
-	struct property *prop;
+bool __init xive_native_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा resource r;
+	व्योम __iomem *tima;
+	काष्ठा property *prop;
 	u8 max_prio = 7;
-	const __be32 *p;
+	स्थिर __be32 *p;
 	u32 val, cpu;
 	s64 rc;
 
-	if (xive_cmdline_disabled)
-		return false;
+	अगर (xive_cmdline_disabled)
+		वापस false;
 
 	pr_devel("xive_native_init()\n");
-	np = of_find_compatible_node(NULL, NULL, "ibm,opal-xive-pe");
-	if (!np) {
+	np = of_find_compatible_node(शून्य, शून्य, "ibm,opal-xive-pe");
+	अगर (!np) अणु
 		pr_devel("not found !\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	pr_devel("Found %pOF\n", np);
 
-	/* Resource 1 is HV window */
-	if (of_address_to_resource(np, 1, &r)) {
+	/* Resource 1 is HV winकरोw */
+	अगर (of_address_to_resource(np, 1, &r)) अणु
 		pr_err("Failed to get thread mgmnt area resource\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	tima = ioremap(r.start, resource_size(&r));
-	if (!tima) {
+	अगर (!tima) अणु
 		pr_err("Failed to map thread mgmnt area\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Read number of priorities */
-	if (of_property_read_u32(np, "ibm,xive-#priorities", &val) == 0)
+	अगर (of_property_पढ़ो_u32(np, "ibm,xive-#priorities", &val) == 0)
 		max_prio = val - 1;
 
 	/* Iterate the EQ sizes and pick one */
-	of_property_for_each_u32(np, "ibm,xive-eq-sizes", prop, p, val) {
-		xive_queue_shift = val;
-		if (val == PAGE_SHIFT)
-			break;
-	}
+	of_property_क्रम_each_u32(np, "ibm,xive-eq-sizes", prop, p, val) अणु
+		xive_queue_shअगरt = val;
+		अगर (val == PAGE_SHIFT)
+			अवरोध;
+	पूर्ण
 
 	/* Do we support single escalation */
-	if (of_get_property(np, "single-escalation-support", NULL) != NULL)
+	अगर (of_get_property(np, "single-escalation-support", शून्य) != शून्य)
 		xive_has_single_esc = true;
 
-	/* Configure Thread Management areas for KVM */
-	for_each_possible_cpu(cpu)
+	/* Configure Thपढ़ो Management areas क्रम KVM */
+	क्रम_each_possible_cpu(cpu)
 		kvmppc_set_xive_tima(cpu, r.start, tima);
 
-	/* Resource 2 is OS window */
-	if (of_address_to_resource(np, 2, &r)) {
+	/* Resource 2 is OS winकरोw */
+	अगर (of_address_to_resource(np, 2, &r)) अणु
 		pr_err("Failed to get thread mgmnt area resource\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	xive_tima_os = r.start;
 
@@ -605,30 +606,30 @@ bool __init xive_native_init(void)
 
 	/* Switch the XIVE to exploitation mode */
 	rc = opal_xive_reset(OPAL_XIVE_MODE_EXPL);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("Switch to exploitation mode failed with error %lld\n", rc);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Setup some dummy HV pool VPs */
 	xive_native_setup_pools();
 
 	/* Initialize XIVE core with our backend */
-	if (!xive_core_init(np, &xive_native_ops, tima, TM_QW3_HV_PHYS,
-			    max_prio)) {
+	अगर (!xive_core_init(np, &xive_native_ops, tima, TM_QW3_HV_PHYS,
+			    max_prio)) अणु
 		opal_xive_reset(OPAL_XIVE_MODE_EMU);
-		return false;
-	}
-	pr_info("Using %dkB queues\n", 1 << (xive_queue_shift - 10));
-	return true;
-}
+		वापस false;
+	पूर्ण
+	pr_info("Using %dkB queues\n", 1 << (xive_queue_shअगरt - 10));
+	वापस true;
+पूर्ण
 
-static bool xive_native_provision_pages(void)
-{
+अटल bool xive_native_provision_pages(व्योम)
+अणु
 	u32 i;
-	void *p;
+	व्योम *p;
 
-	for (i = 0; i < xive_provision_chip_count; i++) {
+	क्रम (i = 0; i < xive_provision_chip_count; i++) अणु
 		u32 chip = xive_provision_chips[i];
 
 		/*
@@ -636,129 +637,129 @@ static bool xive_native_provision_pages(void)
 		 * the chip resides.
 		 */
 		p = kmem_cache_alloc(xive_provision_cache, GFP_KERNEL);
-		if (!p) {
+		अगर (!p) अणु
 			pr_err("Failed to allocate provisioning page\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 		kmemleak_ignore(p);
-		opal_xive_donate_page(chip, __pa(p));
-	}
-	return true;
-}
+		opal_xive_करोnate_page(chip, __pa(p));
+	पूर्ण
+	वापस true;
+पूर्ण
 
 u32 xive_native_alloc_vp_block(u32 max_vcpus)
-{
+अणु
 	s64 rc;
 	u32 order;
 
 	order = fls(max_vcpus) - 1;
-	if (max_vcpus > (1 << order))
+	अगर (max_vcpus > (1 << order))
 		order++;
 
 	pr_debug("VP block alloc, for max VCPUs %d use order %d\n",
 		 max_vcpus, order);
 
-	for (;;) {
+	क्रम (;;) अणु
 		rc = opal_xive_alloc_vp_block(order);
-		switch (rc) {
-		case OPAL_BUSY:
+		चयन (rc) अणु
+		हाल OPAL_BUSY:
 			msleep(OPAL_BUSY_DELAY_MS);
-			break;
-		case OPAL_XIVE_PROVISIONING:
-			if (!xive_native_provision_pages())
-				return XIVE_INVALID_VP;
-			break;
-		default:
-			if (rc < 0) {
+			अवरोध;
+		हाल OPAL_XIVE_PROVISIONING:
+			अगर (!xive_native_provision_pages())
+				वापस XIVE_INVALID_VP;
+			अवरोध;
+		शेष:
+			अगर (rc < 0) अणु
 				pr_err("OPAL failed to allocate VCPUs order %d, err %lld\n",
 				       order, rc);
-				return XIVE_INVALID_VP;
-			}
-			return rc;
-		}
-	}
-}
+				वापस XIVE_INVALID_VP;
+			पूर्ण
+			वापस rc;
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_alloc_vp_block);
 
-void xive_native_free_vp_block(u32 vp_base)
-{
+व्योम xive_native_मुक्त_vp_block(u32 vp_base)
+अणु
 	s64 rc;
 
-	if (vp_base == XIVE_INVALID_VP)
-		return;
+	अगर (vp_base == XIVE_INVALID_VP)
+		वापस;
 
-	rc = opal_xive_free_vp_block(vp_base);
-	if (rc < 0)
+	rc = opal_xive_मुक्त_vp_block(vp_base);
+	अगर (rc < 0)
 		pr_warn("OPAL error %lld freeing VP block\n", rc);
-}
-EXPORT_SYMBOL_GPL(xive_native_free_vp_block);
+पूर्ण
+EXPORT_SYMBOL_GPL(xive_native_मुक्त_vp_block);
 
-int xive_native_enable_vp(u32 vp_id, bool single_escalation)
-{
+पूर्णांक xive_native_enable_vp(u32 vp_id, bool single_escalation)
+अणु
 	s64 rc;
 	u64 flags = OPAL_XIVE_VP_ENABLED;
 
-	if (single_escalation)
+	अगर (single_escalation)
 		flags |= OPAL_XIVE_VP_SINGLE_ESCALATION;
-	for (;;) {
+	क्रम (;;) अणु
 		rc = opal_xive_set_vp_info(vp_id, flags, 0);
-		if (rc != OPAL_BUSY)
-			break;
+		अगर (rc != OPAL_BUSY)
+			अवरोध;
 		msleep(OPAL_BUSY_DELAY_MS);
-	}
-	if (rc)
+	पूर्ण
+	अगर (rc)
 		vp_err(vp_id, "Failed to enable VP : %lld\n", rc);
-	return rc ? -EIO : 0;
-}
+	वापस rc ? -EIO : 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_enable_vp);
 
-int xive_native_disable_vp(u32 vp_id)
-{
+पूर्णांक xive_native_disable_vp(u32 vp_id)
+अणु
 	s64 rc;
 
-	for (;;) {
+	क्रम (;;) अणु
 		rc = opal_xive_set_vp_info(vp_id, 0, 0);
-		if (rc != OPAL_BUSY)
-			break;
+		अगर (rc != OPAL_BUSY)
+			अवरोध;
 		msleep(OPAL_BUSY_DELAY_MS);
-	}
-	if (rc)
+	पूर्ण
+	अगर (rc)
 		vp_err(vp_id, "Failed to disable VP : %lld\n", rc);
-	return rc ? -EIO : 0;
-}
+	वापस rc ? -EIO : 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_disable_vp);
 
-int xive_native_get_vp_info(u32 vp_id, u32 *out_cam_id, u32 *out_chip_id)
-{
+पूर्णांक xive_native_get_vp_info(u32 vp_id, u32 *out_cam_id, u32 *out_chip_id)
+अणु
 	__be64 vp_cam_be;
 	__be32 vp_chip_id_be;
 	s64 rc;
 
-	rc = opal_xive_get_vp_info(vp_id, NULL, &vp_cam_be, NULL, &vp_chip_id_be);
-	if (rc) {
+	rc = opal_xive_get_vp_info(vp_id, शून्य, &vp_cam_be, शून्य, &vp_chip_id_be);
+	अगर (rc) अणु
 		vp_err(vp_id, "Failed to get VP info : %lld\n", rc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	*out_cam_id = be64_to_cpu(vp_cam_be) & 0xffffffffu;
 	*out_chip_id = be32_to_cpu(vp_chip_id_be);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_get_vp_info);
 
-bool xive_native_has_single_escalation(void)
-{
-	return xive_has_single_esc;
-}
+bool xive_native_has_single_escalation(व्योम)
+अणु
+	वापस xive_has_single_esc;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_has_single_escalation);
 
-int xive_native_get_queue_info(u32 vp_id, u32 prio,
+पूर्णांक xive_native_get_queue_info(u32 vp_id, u32 prio,
 			       u64 *out_qpage,
 			       u64 *out_qsize,
 			       u64 *out_qeoi_page,
 			       u32 *out_escalate_irq,
 			       u64 *out_qflags)
-{
+अणु
 	__be64 qpage;
 	__be64 qsize;
 	__be64 qeoi_page;
@@ -768,84 +769,84 @@ int xive_native_get_queue_info(u32 vp_id, u32 prio,
 
 	rc = opal_xive_get_queue_info(vp_id, prio, &qpage, &qsize,
 				      &qeoi_page, &escalate_irq, &qflags);
-	if (rc) {
+	अगर (rc) अणु
 		vp_err(vp_id, "failed to get queue %d info : %lld\n", prio, rc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (out_qpage)
+	अगर (out_qpage)
 		*out_qpage = be64_to_cpu(qpage);
-	if (out_qsize)
+	अगर (out_qsize)
 		*out_qsize = be32_to_cpu(qsize);
-	if (out_qeoi_page)
+	अगर (out_qeoi_page)
 		*out_qeoi_page = be64_to_cpu(qeoi_page);
-	if (out_escalate_irq)
+	अगर (out_escalate_irq)
 		*out_escalate_irq = be32_to_cpu(escalate_irq);
-	if (out_qflags)
+	अगर (out_qflags)
 		*out_qflags = be64_to_cpu(qflags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_get_queue_info);
 
-int xive_native_get_queue_state(u32 vp_id, u32 prio, u32 *qtoggle, u32 *qindex)
-{
+पूर्णांक xive_native_get_queue_state(u32 vp_id, u32 prio, u32 *qtoggle, u32 *qindex)
+अणु
 	__be32 opal_qtoggle;
 	__be32 opal_qindex;
 	s64 rc;
 
 	rc = opal_xive_get_queue_state(vp_id, prio, &opal_qtoggle,
 				       &opal_qindex);
-	if (rc) {
+	अगर (rc) अणु
 		vp_err(vp_id, "failed to get queue %d state : %lld\n", prio, rc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (qtoggle)
+	अगर (qtoggle)
 		*qtoggle = be32_to_cpu(opal_qtoggle);
-	if (qindex)
+	अगर (qindex)
 		*qindex = be32_to_cpu(opal_qindex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_get_queue_state);
 
-int xive_native_set_queue_state(u32 vp_id, u32 prio, u32 qtoggle, u32 qindex)
-{
+पूर्णांक xive_native_set_queue_state(u32 vp_id, u32 prio, u32 qtoggle, u32 qindex)
+अणु
 	s64 rc;
 
 	rc = opal_xive_set_queue_state(vp_id, prio, qtoggle, qindex);
-	if (rc) {
+	अगर (rc) अणु
 		vp_err(vp_id, "failed to set queue %d state : %lld\n", prio, rc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_set_queue_state);
 
-bool xive_native_has_queue_state_support(void)
-{
-	return opal_check_token(OPAL_XIVE_GET_QUEUE_STATE) &&
+bool xive_native_has_queue_state_support(व्योम)
+अणु
+	वापस opal_check_token(OPAL_XIVE_GET_QUEUE_STATE) &&
 		opal_check_token(OPAL_XIVE_SET_QUEUE_STATE);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_has_queue_state_support);
 
-int xive_native_get_vp_state(u32 vp_id, u64 *out_state)
-{
+पूर्णांक xive_native_get_vp_state(u32 vp_id, u64 *out_state)
+अणु
 	__be64 state;
 	s64 rc;
 
 	rc = opal_xive_get_vp_state(vp_id, &state);
-	if (rc) {
+	अगर (rc) अणु
 		vp_err(vp_id, "failed to get vp state : %lld\n", rc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (out_state)
+	अगर (out_state)
 		*out_state = be64_to_cpu(state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_native_get_vp_state);
 
-machine_arch_initcall(powernv, xive_core_debug_init);
+machine_arch_initcall(घातernv, xive_core_debug_init);

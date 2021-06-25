@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019 Cadence Design Systems Inc.
  */
 
-#ifndef __PHY_DP_H_
-#define __PHY_DP_H_
+#अगर_अघोषित __PHY_DP_H_
+#घोषणा __PHY_DP_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /**
- * struct phy_configure_opts_dp - DisplayPort PHY configuration set
+ * काष्ठा phy_configure_opts_dp - DisplayPort PHY configuration set
  *
- * This structure is used to represent the configuration state of a
+ * This काष्ठाure is used to represent the configuration state of a
  * DisplayPort phy.
  */
-struct phy_configure_opts_dp {
+काष्ठा phy_configure_opts_dp अणु
 	/**
 	 * @link_rate:
 	 *
-	 * Link Rate, in Mb/s, of the main link.
+	 * Link Rate, in Mb/s, of the मुख्य link.
 	 *
 	 * Allowed values: 1620, 2160, 2430, 2700, 3240, 4320, 5400, 8100 Mb/s
 	 */
-	unsigned int link_rate;
+	अचिन्हित पूर्णांक link_rate;
 
 	/**
 	 * @lanes:
 	 *
 	 * Number of active, consecutive, data lanes, starting from
-	 * lane 0, used for the transmissions on main link.
+	 * lane 0, used क्रम the transmissions on मुख्य link.
 	 *
 	 * Allowed values: 1, 2, 4
 	 */
-	unsigned int lanes;
+	अचिन्हित पूर्णांक lanes;
 
 	/**
 	 * @voltage:
 	 *
-	 * Voltage swing levels, as specified by DisplayPort specification,
+	 * Voltage swing levels, as specअगरied by DisplayPort specअगरication,
 	 * to be used by particular lanes. One value per lane.
-	 * voltage[0] is for lane 0, voltage[1] is for lane 1, etc.
+	 * voltage[0] is क्रम lane 0, voltage[1] is क्रम lane 1, etc.
 	 *
 	 * Maximum value: 3
 	 */
-	unsigned int voltage[4];
+	अचिन्हित पूर्णांक voltage[4];
 
 	/**
 	 * @pre:
 	 *
-	 * Pre-emphasis levels, as specified by DisplayPort specification, to be
+	 * Pre-emphasis levels, as specअगरied by DisplayPort specअगरication, to be
 	 * used by particular lanes. One value per lane.
 	 *
 	 * Maximum value: 3
 	 */
-	unsigned int pre[4];
+	अचिन्हित पूर्णांक pre[4];
 
 	/**
 	 * @ssc:
 	 *
-	 * Flag indicating, whether or not to enable spread-spectrum clocking.
+	 * Flag indicating, whether or not to enable spपढ़ो-spectrum घड़ीing.
 	 *
 	 */
 	u8 ssc : 1;
@@ -85,11 +86,11 @@ struct phy_configure_opts_dp {
 	 * @set_voltages:
 	 *
 	 * Flag indicating, whether or not reconfigure voltage swing
-	 * and pre-emphasis to requested values. Only lanes specified
+	 * and pre-emphasis to requested values. Only lanes specअगरied
 	 * by "lanes" parameter will be affected.
 	 *
 	 */
 	u8 set_voltages : 1;
-};
+पूर्ण;
 
-#endif /* __PHY_DP_H_ */
+#पूर्ण_अगर /* __PHY_DP_H_ */

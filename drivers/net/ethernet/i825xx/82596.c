@@ -1,27 +1,28 @@
-/* 82596.c: A generic 82596 ethernet driver for linux. */
+<शैली गुरु>
+/* 82596.c: A generic 82596 ethernet driver क्रम linux. */
 /*
    Based on Apricot.c
    Written 1994 by Mark Evans.
-   This driver is for the Apricot 82596 bus-master interface
+   This driver is क्रम the Apricot 82596 bus-master पूर्णांकerface
 
    Modularised 12/94 Mark Evans
 
 
-   Modified to support the 82596 ethernet chips on 680x0 VME boards.
-   by Richard Hirst <richard@sleepie.demon.co.uk>
+   Modअगरied to support the 82596 ethernet chips on 680x0 VME boards.
+   by Riअक्षरd Hirst <riअक्षरd@sleepie.demon.co.uk>
    Renamed to be 82596.c
 
    980825:  Changed to receive directly in to sk_buffs which are
-   allocated at open() time.  Eliminates copy on incoming frames
+   allocated at खोलो() समय.  Eliminates copy on incoming frames
    (small ones are still copied).  Shared data now held in a
    non-cached page, so we can run on 68060 in copyback mode.
 
    TBD:
    * look at deferring rx frames rather than discarding (as per tulip)
    * handle tx ring full as per tulip
-   * performance test to tune rx_copybreak
+   * perक्रमmance test to tune rx_copyअवरोध
 
-   Most of my modifications relate to the braindead big-endian
+   Most of my modअगरications relate to the braindead big-endian
    implementation by Intel.  When the i596 is operating in
    'big-endian' mode, it thinks a 32 bit value of 0x12345678
    should be stored as 0x56781234.  This is a real pain, when
@@ -32,7 +33,7 @@
    Written 1993 by Donald Becker.
    Copyright 1993 United States Government as represented by the Director,
    National Security Agency. This software may only be used and distributed
-   according to the terms of the GNU General Public License as modified by SRC,
+   according to the terms of the GNU General Public License as modअगरied by SRC,
    incorporated herein by reference.
 
    The author may be reached as becker@scyld.com, or C/O
@@ -40,531 +41,531 @@
 
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
-#include <linux/gfp.h>
-#include <linux/pgtable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/io.h>
-#include <asm/dma.h>
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/cacheflush.h>
 
-static char version[] __initdata =
+अटल अक्षर version[] __initdata =
 	"82596.c $Revision: 1.5 $\n";
 
-#define DRV_NAME	"82596"
+#घोषणा DRV_NAME	"82596"
 
 /* DEBUG flags
  */
 
-#define DEB_INIT	0x0001
-#define DEB_PROBE	0x0002
-#define DEB_SERIOUS	0x0004
-#define DEB_ERRORS	0x0008
-#define DEB_MULTI	0x0010
-#define DEB_TDR		0x0020
-#define DEB_OPEN	0x0040
-#define DEB_RESET	0x0080
-#define DEB_ADDCMD	0x0100
-#define DEB_STATUS	0x0200
-#define DEB_STARTTX	0x0400
-#define DEB_RXADDR	0x0800
-#define DEB_TXADDR	0x1000
-#define DEB_RXFRAME	0x2000
-#define DEB_INTS	0x4000
-#define DEB_STRUCT	0x8000
-#define DEB_ANY		0xffff
+#घोषणा DEB_INIT	0x0001
+#घोषणा DEB_PROBE	0x0002
+#घोषणा DEB_SERIOUS	0x0004
+#घोषणा DEB_ERRORS	0x0008
+#घोषणा DEB_MULTI	0x0010
+#घोषणा DEB_TDR		0x0020
+#घोषणा DEB_OPEN	0x0040
+#घोषणा DEB_RESET	0x0080
+#घोषणा DEB_ADDCMD	0x0100
+#घोषणा DEB_STATUS	0x0200
+#घोषणा DEB_STARTTX	0x0400
+#घोषणा DEB_RXADDR	0x0800
+#घोषणा DEB_TXADDR	0x1000
+#घोषणा DEB_RXFRAME	0x2000
+#घोषणा DEB_INTS	0x4000
+#घोषणा DEB_STRUCT	0x8000
+#घोषणा DEB_ANY		0xffff
 
 
-#define DEB(x,y)	if (i596_debug & (x)) y
+#घोषणा DEB(x,y)	अगर (i596_debug & (x)) y
 
 
-#if IS_ENABLED(CONFIG_MVME16x_NET)
-#define ENABLE_MVME16x_NET
-#endif
-#if IS_ENABLED(CONFIG_BVME6000_NET)
-#define ENABLE_BVME6000_NET
-#endif
+#अगर IS_ENABLED(CONFIG_MVME16x_NET)
+#घोषणा ENABLE_MVME16x_NET
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_BVME6000_NET)
+#घोषणा ENABLE_BVME6000_NET
+#पूर्ण_अगर
 
-#ifdef ENABLE_MVME16x_NET
-#include <asm/mvme16xhw.h>
-#endif
-#ifdef ENABLE_BVME6000_NET
-#include <asm/bvme6000hw.h>
-#endif
+#अगर_घोषित ENABLE_MVME16x_NET
+#समावेश <यंत्र/mvme16xhw.h>
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+#समावेश <यंत्र/bvme6000hw.h>
+#पूर्ण_अगर
 
 /*
- * Define various macros for Channel Attention, word swapping etc., dependent
+ * Define various macros क्रम Channel Attention, word swapping etc., dependent
  * on architecture.  MVME and BVME are 680x0 based, otherwise it is Intel.
  */
 
-#ifdef __mc68000__
-#define WSWAPrfd(x)  ((struct i596_rfd *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
-#define WSWAPrbd(x)  ((struct i596_rbd *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
-#define WSWAPiscp(x) ((struct i596_iscp *)(((u32)(x)<<16) | ((((u32)(x)))>>16)))
-#define WSWAPscb(x)  ((struct i596_scb *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
-#define WSWAPcmd(x)  ((struct i596_cmd *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
-#define WSWAPtbd(x)  ((struct i596_tbd *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
-#define WSWAPchar(x) ((char *)            (((u32)(x)<<16) | ((((u32)(x)))>>16)))
-#define ISCP_BUSY	0x00010000
-#else
-#error 82596.c: unknown architecture
-#endif
+#अगर_घोषित __mc68000__
+#घोषणा WSWAPrfd(x)  ((काष्ठा i596_rfd *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
+#घोषणा WSWAPrbd(x)  ((काष्ठा i596_rbd *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
+#घोषणा WSWAPiscp(x) ((काष्ठा i596_iscp *)(((u32)(x)<<16) | ((((u32)(x)))>>16)))
+#घोषणा WSWAPscb(x)  ((काष्ठा i596_scb *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
+#घोषणा WSWAPcmd(x)  ((काष्ठा i596_cmd *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
+#घोषणा WSWAPtbd(x)  ((काष्ठा i596_tbd *) (((u32)(x)<<16) | ((((u32)(x)))>>16)))
+#घोषणा WSWAPअक्षर(x) ((अक्षर *)            (((u32)(x)<<16) | ((((u32)(x)))>>16)))
+#घोषणा ISCP_BUSY	0x00010000
+#अन्यथा
+#त्रुटि 82596.c: unknown architecture
+#पूर्ण_अगर
 
 /*
- * These were the intel versions, left here for reference. There
+ * These were the पूर्णांकel versions, left here क्रम reference. There
  * are currently no x86 users of this legacy i82596 chip.
  */
-#if 0
-#define WSWAPrfd(x)     ((struct i596_rfd *)((long)x))
-#define WSWAPrbd(x)     ((struct i596_rbd *)((long)x))
-#define WSWAPiscp(x)    ((struct i596_iscp *)((long)x))
-#define WSWAPscb(x)     ((struct i596_scb *)((long)x))
-#define WSWAPcmd(x)     ((struct i596_cmd *)((long)x))
-#define WSWAPtbd(x)     ((struct i596_tbd *)((long)x))
-#define WSWAPchar(x)    ((char *)((long)x))
-#define ISCP_BUSY	0x0001
-#endif
+#अगर 0
+#घोषणा WSWAPrfd(x)     ((काष्ठा i596_rfd *)((दीर्घ)x))
+#घोषणा WSWAPrbd(x)     ((काष्ठा i596_rbd *)((दीर्घ)x))
+#घोषणा WSWAPiscp(x)    ((काष्ठा i596_iscp *)((दीर्घ)x))
+#घोषणा WSWAPscb(x)     ((काष्ठा i596_scb *)((दीर्घ)x))
+#घोषणा WSWAPcmd(x)     ((काष्ठा i596_cmd *)((दीर्घ)x))
+#घोषणा WSWAPtbd(x)     ((काष्ठा i596_tbd *)((दीर्घ)x))
+#घोषणा WSWAPअक्षर(x)    ((अक्षर *)((दीर्घ)x))
+#घोषणा ISCP_BUSY	0x0001
+#पूर्ण_अगर
 
 /*
  * The MPU_PORT command allows direct access to the 82596. With PORT access
  * the following commands are available (p5-18). The 32-bit port command
- * must be word-swapped with the most significant word written first.
+ * must be word-swapped with the most signअगरicant word written first.
  * This only applies to VME boards.
  */
-#define PORT_RESET		0x00	/* reset 82596 */
-#define PORT_SELFTEST		0x01	/* selftest */
-#define PORT_ALTSCP		0x02	/* alternate SCB address */
-#define PORT_ALTDUMP		0x03	/* Alternate DUMP address */
+#घोषणा PORT_RESET		0x00	/* reset 82596 */
+#घोषणा PORT_SELFTEST		0x01	/* selftest */
+#घोषणा PORT_ALTSCP		0x02	/* alternate SCB address */
+#घोषणा PORT_ALTDUMP		0x03	/* Alternate DUMP address */
 
-static int i596_debug = (DEB_SERIOUS|DEB_PROBE);
+अटल पूर्णांक i596_debug = (DEB_SERIOUS|DEB_PROBE);
 
 MODULE_AUTHOR("Richard Hirst");
 MODULE_DESCRIPTION("i82596 driver");
 MODULE_LICENSE("GPL");
 
-module_param(i596_debug, int, 0);
+module_param(i596_debug, पूर्णांक, 0);
 MODULE_PARM_DESC(i596_debug, "i82596 debug mask");
 
 
-/* Copy frames shorter than rx_copybreak, otherwise pass on up in
+/* Copy frames लघुer than rx_copyअवरोध, otherwise pass on up in
  * a full sized sk_buff.  Value of 100 stolen from tulip.c (!alpha).
  */
-static int rx_copybreak = 100;
+अटल पूर्णांक rx_copyअवरोध = 100;
 
-#define PKT_BUF_SZ	1536
-#define MAX_MC_CNT	64
+#घोषणा PKT_BUF_SZ	1536
+#घोषणा MAX_MC_CNT	64
 
-#define I596_TOTAL_SIZE 17
+#घोषणा I596_TOTAL_SIZE 17
 
-#define I596_NULL ((void *)0xffffffff)
+#घोषणा I596_शून्य ((व्योम *)0xffffffff)
 
-#define CMD_EOL		0x8000	/* The last command of the list, stop. */
-#define CMD_SUSP	0x4000	/* Suspend after doing cmd. */
-#define CMD_INTR	0x2000	/* Interrupt after doing cmd. */
+#घोषणा CMD_EOL		0x8000	/* The last command of the list, stop. */
+#घोषणा CMD_SUSP	0x4000	/* Suspend after करोing cmd. */
+#घोषणा CMD_INTR	0x2000	/* Interrupt after करोing cmd. */
 
-#define CMD_FLEX	0x0008	/* Enable flexible memory model */
+#घोषणा CMD_FLEX	0x0008	/* Enable flexible memory model */
 
-enum commands {
+क्रमागत commands अणु
 	CmdNOp = 0, CmdSASetup = 1, CmdConfigure = 2, CmdMulticastList = 3,
 	CmdTx = 4, CmdTDR = 5, CmdDump = 6, CmdDiagnose = 7
-};
+पूर्ण;
 
-#define STAT_C		0x8000	/* Set to 0 after execution */
-#define STAT_B		0x4000	/* Command being executed */
-#define STAT_OK		0x2000	/* Command executed ok */
-#define STAT_A		0x1000	/* Command aborted */
+#घोषणा STAT_C		0x8000	/* Set to 0 after execution */
+#घोषणा STAT_B		0x4000	/* Command being executed */
+#घोषणा STAT_OK		0x2000	/* Command executed ok */
+#घोषणा STAT_A		0x1000	/* Command पातed */
 
-#define	 CUC_START	0x0100
-#define	 CUC_RESUME	0x0200
-#define	 CUC_SUSPEND    0x0300
-#define	 CUC_ABORT	0x0400
-#define	 RX_START	0x0010
-#define	 RX_RESUME	0x0020
-#define	 RX_SUSPEND	0x0030
-#define	 RX_ABORT	0x0040
+#घोषणा	 CUC_START	0x0100
+#घोषणा	 CUC_RESUME	0x0200
+#घोषणा	 CUC_SUSPEND    0x0300
+#घोषणा	 CUC_ABORT	0x0400
+#घोषणा	 RX_START	0x0010
+#घोषणा	 RX_RESUME	0x0020
+#घोषणा	 RX_SUSPEND	0x0030
+#घोषणा	 RX_ABORT	0x0040
 
-#define TX_TIMEOUT	(HZ/20)
+#घोषणा TX_TIMEOUT	(HZ/20)
 
 
-struct i596_reg {
-	unsigned short porthi;
-	unsigned short portlo;
-	unsigned long ca;
-};
+काष्ठा i596_reg अणु
+	अचिन्हित लघु porthi;
+	अचिन्हित लघु portlo;
+	अचिन्हित दीर्घ ca;
+पूर्ण;
 
-#define EOF		0x8000
-#define SIZE_MASK	0x3fff
+#घोषणा खातापूर्ण		0x8000
+#घोषणा SIZE_MASK	0x3fff
 
-struct i596_tbd {
-	unsigned short size;
-	unsigned short pad;
-	struct i596_tbd *next;
-	char *data;
-};
+काष्ठा i596_tbd अणु
+	अचिन्हित लघु size;
+	अचिन्हित लघु pad;
+	काष्ठा i596_tbd *next;
+	अक्षर *data;
+पूर्ण;
 
-/* The command structure has two 'next' pointers; v_next is the address of
+/* The command काष्ठाure has two 'next' poपूर्णांकers; v_next is the address of
  * the next command as seen by the CPU, b_next is the address of the next
- * command as seen by the 82596.  The b_next pointer, as used by the 82596
+ * command as seen by the 82596.  The b_next poपूर्णांकer, as used by the 82596
  * always references the status field of the next command, rather than the
  * v_next field, because the 82596 is unaware of v_next.  It may seem more
- * logical to put v_next at the end of the structure, but we cannot do that
+ * logical to put v_next at the end of the काष्ठाure, but we cannot करो that
  * because the 82596 expects other fields to be there, depending on command
  * type.
  */
 
-struct i596_cmd {
-	struct i596_cmd *v_next;	/* Address from CPUs viewpoint */
-	unsigned short status;
-	unsigned short command;
-	struct i596_cmd *b_next;	/* Address from i596 viewpoint */
-};
+काष्ठा i596_cmd अणु
+	काष्ठा i596_cmd *v_next;	/* Address from CPUs viewpoपूर्णांक */
+	अचिन्हित लघु status;
+	अचिन्हित लघु command;
+	काष्ठा i596_cmd *b_next;	/* Address from i596 viewpoपूर्णांक */
+पूर्ण;
 
-struct tx_cmd {
-	struct i596_cmd cmd;
-	struct i596_tbd *tbd;
-	unsigned short size;
-	unsigned short pad;
-	struct sk_buff *skb;	/* So we can free it after tx */
-};
+काष्ठा tx_cmd अणु
+	काष्ठा i596_cmd cmd;
+	काष्ठा i596_tbd *tbd;
+	अचिन्हित लघु size;
+	अचिन्हित लघु pad;
+	काष्ठा sk_buff *skb;	/* So we can मुक्त it after tx */
+पूर्ण;
 
-struct tdr_cmd {
-	struct i596_cmd cmd;
-	unsigned short status;
-	unsigned short pad;
-};
+काष्ठा tdr_cmd अणु
+	काष्ठा i596_cmd cmd;
+	अचिन्हित लघु status;
+	अचिन्हित लघु pad;
+पूर्ण;
 
-struct mc_cmd {
-	struct i596_cmd cmd;
-	short mc_cnt;
-	char mc_addrs[MAX_MC_CNT*6];
-};
+काष्ठा mc_cmd अणु
+	काष्ठा i596_cmd cmd;
+	लघु mc_cnt;
+	अक्षर mc_addrs[MAX_MC_CNT*6];
+पूर्ण;
 
-struct sa_cmd {
-	struct i596_cmd cmd;
-	char eth_addr[8];
-};
+काष्ठा sa_cmd अणु
+	काष्ठा i596_cmd cmd;
+	अक्षर eth_addr[8];
+पूर्ण;
 
-struct cf_cmd {
-	struct i596_cmd cmd;
-	char i596_config[16];
-};
+काष्ठा cf_cmd अणु
+	काष्ठा i596_cmd cmd;
+	अक्षर i596_config[16];
+पूर्ण;
 
-struct i596_rfd {
-	unsigned short stat;
-	unsigned short cmd;
-	struct i596_rfd *b_next;	/* Address from i596 viewpoint */
-	struct i596_rbd *rbd;
-	unsigned short count;
-	unsigned short size;
-	struct i596_rfd *v_next;	/* Address from CPUs viewpoint */
-	struct i596_rfd *v_prev;
-};
+काष्ठा i596_rfd अणु
+	अचिन्हित लघु stat;
+	अचिन्हित लघु cmd;
+	काष्ठा i596_rfd *b_next;	/* Address from i596 viewpoपूर्णांक */
+	काष्ठा i596_rbd *rbd;
+	अचिन्हित लघु count;
+	अचिन्हित लघु size;
+	काष्ठा i596_rfd *v_next;	/* Address from CPUs viewpoपूर्णांक */
+	काष्ठा i596_rfd *v_prev;
+पूर्ण;
 
-struct i596_rbd {
-    unsigned short count;
-    unsigned short zero1;
-    struct i596_rbd *b_next;
-    unsigned char *b_data;		/* Address from i596 viewpoint */
-    unsigned short size;
-    unsigned short zero2;
-    struct sk_buff *skb;
-    struct i596_rbd *v_next;
-    struct i596_rbd *b_addr;		/* This rbd addr from i596 view */
-    unsigned char *v_data;		/* Address from CPUs viewpoint */
-};
+काष्ठा i596_rbd अणु
+    अचिन्हित लघु count;
+    अचिन्हित लघु zero1;
+    काष्ठा i596_rbd *b_next;
+    अचिन्हित अक्षर *b_data;		/* Address from i596 viewpoपूर्णांक */
+    अचिन्हित लघु size;
+    अचिन्हित लघु zero2;
+    काष्ठा sk_buff *skb;
+    काष्ठा i596_rbd *v_next;
+    काष्ठा i596_rbd *b_addr;		/* This rbd addr from i596 view */
+    अचिन्हित अक्षर *v_data;		/* Address from CPUs viewpoपूर्णांक */
+पूर्ण;
 
-#define TX_RING_SIZE 64
-#define RX_RING_SIZE 16
+#घोषणा TX_RING_SIZE 64
+#घोषणा RX_RING_SIZE 16
 
-struct i596_scb {
-	unsigned short status;
-	unsigned short command;
-	struct i596_cmd *cmd;
-	struct i596_rfd *rfd;
-	unsigned long crc_err;
-	unsigned long align_err;
-	unsigned long resource_err;
-	unsigned long over_err;
-	unsigned long rcvdt_err;
-	unsigned long short_err;
-	unsigned short t_on;
-	unsigned short t_off;
-};
+काष्ठा i596_scb अणु
+	अचिन्हित लघु status;
+	अचिन्हित लघु command;
+	काष्ठा i596_cmd *cmd;
+	काष्ठा i596_rfd *rfd;
+	अचिन्हित दीर्घ crc_err;
+	अचिन्हित दीर्घ align_err;
+	अचिन्हित दीर्घ resource_err;
+	अचिन्हित दीर्घ over_err;
+	अचिन्हित दीर्घ rcvdt_err;
+	अचिन्हित दीर्घ लघु_err;
+	अचिन्हित लघु t_on;
+	अचिन्हित लघु t_off;
+पूर्ण;
 
-struct i596_iscp {
-	unsigned long stat;
-	struct i596_scb *scb;
-};
+काष्ठा i596_iscp अणु
+	अचिन्हित दीर्घ stat;
+	काष्ठा i596_scb *scb;
+पूर्ण;
 
-struct i596_scp {
-	unsigned long sysbus;
-	unsigned long pad;
-	struct i596_iscp *iscp;
-};
+काष्ठा i596_scp अणु
+	अचिन्हित दीर्घ sysbus;
+	अचिन्हित दीर्घ pad;
+	काष्ठा i596_iscp *iscp;
+पूर्ण;
 
-struct i596_private {
-	volatile struct i596_scp scp;
-	volatile struct i596_iscp iscp;
-	volatile struct i596_scb scb;
-	struct sa_cmd sa_cmd;
-	struct cf_cmd cf_cmd;
-	struct tdr_cmd tdr_cmd;
-	struct mc_cmd mc_cmd;
-	unsigned long stat;
-	int last_restart __attribute__((aligned(4)));
-	struct i596_rfd *rfd_head;
-	struct i596_rbd *rbd_head;
-	struct i596_cmd *cmd_tail;
-	struct i596_cmd *cmd_head;
-	int cmd_backlog;
-	unsigned long last_cmd;
-	struct i596_rfd rfds[RX_RING_SIZE];
-	struct i596_rbd rbds[RX_RING_SIZE];
-	struct tx_cmd tx_cmds[TX_RING_SIZE];
-	struct i596_tbd tbds[TX_RING_SIZE];
-	int next_tx_cmd;
+काष्ठा i596_निजी अणु
+	अस्थिर काष्ठा i596_scp scp;
+	अस्थिर काष्ठा i596_iscp iscp;
+	अस्थिर काष्ठा i596_scb scb;
+	काष्ठा sa_cmd sa_cmd;
+	काष्ठा cf_cmd cf_cmd;
+	काष्ठा tdr_cmd tdr_cmd;
+	काष्ठा mc_cmd mc_cmd;
+	अचिन्हित दीर्घ stat;
+	पूर्णांक last_restart __attribute__((aligned(4)));
+	काष्ठा i596_rfd *rfd_head;
+	काष्ठा i596_rbd *rbd_head;
+	काष्ठा i596_cmd *cmd_tail;
+	काष्ठा i596_cmd *cmd_head;
+	पूर्णांक cmd_backlog;
+	अचिन्हित दीर्घ last_cmd;
+	काष्ठा i596_rfd rfds[RX_RING_SIZE];
+	काष्ठा i596_rbd rbds[RX_RING_SIZE];
+	काष्ठा tx_cmd tx_cmds[TX_RING_SIZE];
+	काष्ठा i596_tbd tbds[TX_RING_SIZE];
+	पूर्णांक next_tx_cmd;
 	spinlock_t lock;
-};
+पूर्ण;
 
-static char init_setup[] =
-{
+अटल अक्षर init_setup[] =
+अणु
 	0x8E,			/* length, prefetch on */
-	0xC8,			/* fifo to 8, monitor off */
-#ifdef CONFIG_VME
-	0xc0,			/* don't save bad frames */
-#else
-	0x80,			/* don't save bad frames */
-#endif
+	0xC8,			/* fअगरo to 8, monitor off */
+#अगर_घोषित CONFIG_VME
+	0xc0,			/* करोn't save bad frames */
+#अन्यथा
+	0x80,			/* करोn't save bad frames */
+#पूर्ण_अगर
 	0x2E,			/* No source address insertion, 8 byte preamble */
-	0x00,			/* priority and backoff defaults */
-	0x60,			/* interframe spacing */
-	0x00,			/* slot time LSB */
-	0xf2,			/* slot time and retries */
+	0x00,			/* priority and backoff शेषs */
+	0x60,			/* पूर्णांकerframe spacing */
+	0x00,			/* slot समय LSB */
+	0xf2,			/* slot समय and retries */
 	0x00,			/* promiscuous mode */
 	0x00,			/* collision detect */
 	0x40,			/* minimum frame length */
 	0xff,
 	0x00,
-	0x7f /*  *multi IA */ };
+	0x7f /*  *multi IA */ पूर्ण;
 
-static int i596_open(struct net_device *dev);
-static netdev_tx_t i596_start_xmit(struct sk_buff *skb, struct net_device *dev);
-static irqreturn_t i596_interrupt(int irq, void *dev_id);
-static int i596_close(struct net_device *dev);
-static void i596_add_cmd(struct net_device *dev, struct i596_cmd *cmd);
-static void i596_tx_timeout (struct net_device *dev, unsigned int txqueue);
-static void print_eth(unsigned char *buf, char *str);
-static void set_multicast_list(struct net_device *dev);
+अटल पूर्णांक i596_खोलो(काष्ठा net_device *dev);
+अटल netdev_tx_t i596_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
+अटल irqवापस_t i596_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
+अटल पूर्णांक i596_बंद(काष्ठा net_device *dev);
+अटल व्योम i596_add_cmd(काष्ठा net_device *dev, काष्ठा i596_cmd *cmd);
+अटल व्योम i596_tx_समयout (काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
+अटल व्योम prपूर्णांक_eth(अचिन्हित अक्षर *buf, अक्षर *str);
+अटल व्योम set_multicast_list(काष्ठा net_device *dev);
 
-static int rx_ring_size = RX_RING_SIZE;
-static int ticks_limit = 25;
-static int max_cmd_backlog = TX_RING_SIZE-1;
-
-
-static inline void CA(struct net_device *dev)
-{
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x) {
-		((struct i596_reg *) dev->base_addr)->ca = 1;
-	}
-#endif
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
-		volatile u32 i;
-
-		i = *(volatile u32 *) (dev->base_addr);
-	}
-#endif
-}
+अटल पूर्णांक rx_ring_size = RX_RING_SIZE;
+अटल पूर्णांक ticks_limit = 25;
+अटल पूर्णांक max_cmd_backlog = TX_RING_SIZE-1;
 
 
-static inline void MPU_PORT(struct net_device *dev, int c, volatile void *x)
-{
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x) {
-		struct i596_reg *p = (struct i596_reg *) (dev->base_addr);
+अटल अंतरभूत व्योम CA(काष्ठा net_device *dev)
+अणु
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x) अणु
+		((काष्ठा i596_reg *) dev->base_addr)->ca = 1;
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
+		अस्थिर u32 i;
+
+		i = *(अस्थिर u32 *) (dev->base_addr);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
+
+
+अटल अंतरभूत व्योम MPU_PORT(काष्ठा net_device *dev, पूर्णांक c, अस्थिर व्योम *x)
+अणु
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x) अणु
+		काष्ठा i596_reg *p = (काष्ठा i596_reg *) (dev->base_addr);
 		p->porthi = ((c) | (u32) (x)) & 0xffff;
 		p->portlo = ((c) | (u32) (x)) >> 16;
-	}
-#endif
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
 		u32 v = (u32) (c) | (u32) (x);
 		v = ((u32) (v) << 16) | ((u32) (v) >> 16);
-		*(volatile u32 *) dev->base_addr = v;
+		*(अस्थिर u32 *) dev->base_addr = v;
 		udelay(1);
-		*(volatile u32 *) dev->base_addr = v;
-	}
-#endif
-}
+		*(अस्थिर u32 *) dev->base_addr = v;
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 
-static inline int wait_istat(struct net_device *dev, struct i596_private *lp, int delcnt, char *str)
-{
-	while (--delcnt && lp->iscp.stat)
+अटल अंतरभूत पूर्णांक रुको_istat(काष्ठा net_device *dev, काष्ठा i596_निजी *lp, पूर्णांक delcnt, अक्षर *str)
+अणु
+	जबतक (--delcnt && lp->iscp.stat)
 		udelay(10);
-	if (!delcnt) {
-		printk(KERN_ERR "%s: %s, status %4.4x, cmd %4.4x.\n",
+	अगर (!delcnt) अणु
+		prपूर्णांकk(KERN_ERR "%s: %s, status %4.4x, cmd %4.4x.\n",
 		     dev->name, str, lp->scb.status, lp->scb.command);
-		return -1;
-	}
-	else
-		return 0;
-}
+		वापस -1;
+	पूर्ण
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 
-static inline int wait_cmd(struct net_device *dev, struct i596_private *lp, int delcnt, char *str)
-{
-	while (--delcnt && lp->scb.command)
+अटल अंतरभूत पूर्णांक रुको_cmd(काष्ठा net_device *dev, काष्ठा i596_निजी *lp, पूर्णांक delcnt, अक्षर *str)
+अणु
+	जबतक (--delcnt && lp->scb.command)
 		udelay(10);
-	if (!delcnt) {
-		printk(KERN_ERR "%s: %s, status %4.4x, cmd %4.4x.\n",
+	अगर (!delcnt) अणु
+		prपूर्णांकk(KERN_ERR "%s: %s, status %4.4x, cmd %4.4x.\n",
 		     dev->name, str, lp->scb.status, lp->scb.command);
-		return -1;
-	}
-	else
-		return 0;
-}
+		वापस -1;
+	पूर्ण
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 
-static inline int wait_cfg(struct net_device *dev, struct i596_cmd *cmd, int delcnt, char *str)
-{
-	volatile struct i596_cmd *c = cmd;
+अटल अंतरभूत पूर्णांक रुको_cfg(काष्ठा net_device *dev, काष्ठा i596_cmd *cmd, पूर्णांक delcnt, अक्षर *str)
+अणु
+	अस्थिर काष्ठा i596_cmd *c = cmd;
 
-	while (--delcnt && c->command)
+	जबतक (--delcnt && c->command)
 		udelay(10);
-	if (!delcnt) {
-		printk(KERN_ERR "%s: %s.\n", dev->name, str);
-		return -1;
-	}
-	else
-		return 0;
-}
+	अगर (!delcnt) अणु
+		prपूर्णांकk(KERN_ERR "%s: %s.\n", dev->name, str);
+		वापस -1;
+	पूर्ण
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 
-static void i596_display_data(struct net_device *dev)
-{
-	struct i596_private *lp = dev->ml_priv;
-	struct i596_cmd *cmd;
-	struct i596_rfd *rfd;
-	struct i596_rbd *rbd;
+अटल व्योम i596_display_data(काष्ठा net_device *dev)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	काष्ठा i596_cmd *cmd;
+	काष्ठा i596_rfd *rfd;
+	काष्ठा i596_rbd *rbd;
 
-	printk(KERN_ERR "lp and scp at %p, .sysbus = %08lx, .iscp = %p\n",
+	prपूर्णांकk(KERN_ERR "lp and scp at %p, .sysbus = %08lx, .iscp = %p\n",
 	       &lp->scp, lp->scp.sysbus, lp->scp.iscp);
-	printk(KERN_ERR "iscp at %p, iscp.stat = %08lx, .scb = %p\n",
+	prपूर्णांकk(KERN_ERR "iscp at %p, iscp.stat = %08lx, .scb = %p\n",
 	       &lp->iscp, lp->iscp.stat, lp->iscp.scb);
-	printk(KERN_ERR "scb at %p, scb.status = %04x, .command = %04x,"
+	prपूर्णांकk(KERN_ERR "scb at %p, scb.status = %04x, .command = %04x,"
 		" .cmd = %p, .rfd = %p\n",
 	       &lp->scb, lp->scb.status, lp->scb.command,
 		lp->scb.cmd, lp->scb.rfd);
-	printk(KERN_ERR "   errors: crc %lx, align %lx, resource %lx,"
+	prपूर्णांकk(KERN_ERR "   errors: crc %lx, align %lx, resource %lx,"
                " over %lx, rcvdt %lx, short %lx\n",
 		lp->scb.crc_err, lp->scb.align_err, lp->scb.resource_err,
-		lp->scb.over_err, lp->scb.rcvdt_err, lp->scb.short_err);
+		lp->scb.over_err, lp->scb.rcvdt_err, lp->scb.लघु_err);
 	cmd = lp->cmd_head;
-	while (cmd != I596_NULL) {
-		printk(KERN_ERR "cmd at %p, .status = %04x, .command = %04x, .b_next = %p\n",
+	जबतक (cmd != I596_शून्य) अणु
+		prपूर्णांकk(KERN_ERR "cmd at %p, .status = %04x, .command = %04x, .b_next = %p\n",
 		  cmd, cmd->status, cmd->command, cmd->b_next);
 		cmd = cmd->v_next;
-	}
+	पूर्ण
 	rfd = lp->rfd_head;
-	printk(KERN_ERR "rfd_head = %p\n", rfd);
-	do {
-		printk(KERN_ERR "   %p .stat %04x, .cmd %04x, b_next %p, rbd %p,"
+	prपूर्णांकk(KERN_ERR "rfd_head = %p\n", rfd);
+	करो अणु
+		prपूर्णांकk(KERN_ERR "   %p .stat %04x, .cmd %04x, b_next %p, rbd %p,"
                         " count %04x\n",
 			rfd, rfd->stat, rfd->cmd, rfd->b_next, rfd->rbd,
 			rfd->count);
 		rfd = rfd->v_next;
-	} while (rfd != lp->rfd_head);
+	पूर्ण जबतक (rfd != lp->rfd_head);
 	rbd = lp->rbd_head;
-	printk(KERN_ERR "rbd_head = %p\n", rbd);
-	do {
-		printk(KERN_ERR "   %p .count %04x, b_next %p, b_data %p, size %04x\n",
+	prपूर्णांकk(KERN_ERR "rbd_head = %p\n", rbd);
+	करो अणु
+		prपूर्णांकk(KERN_ERR "   %p .count %04x, b_next %p, b_data %p, size %04x\n",
 			rbd, rbd->count, rbd->b_next, rbd->b_data, rbd->size);
 		rbd = rbd->v_next;
-	} while (rbd != lp->rbd_head);
-}
+	पूर्ण जबतक (rbd != lp->rbd_head);
+पूर्ण
 
 
-#if defined(ENABLE_MVME16x_NET) || defined(ENABLE_BVME6000_NET)
-static irqreturn_t i596_error(int irq, void *dev_id)
-{
-	struct net_device *dev = dev_id;
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x) {
-		volatile unsigned char *pcc2 = (unsigned char *) 0xfff42000;
+#अगर defined(ENABLE_MVME16x_NET) || defined(ENABLE_BVME6000_NET)
+अटल irqवापस_t i596_error(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x) अणु
+		अस्थिर अचिन्हित अक्षर *pcc2 = (अचिन्हित अक्षर *) 0xfff42000;
 
 		pcc2[0x28] = 1;
 		pcc2[0x2b] = 0x1d;
-	}
-#endif
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
-		volatile unsigned char *ethirq = (unsigned char *) BVME_ETHIRQ_REG;
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
+		अस्थिर अचिन्हित अक्षर *ethirq = (अचिन्हित अक्षर *) BVME_ETHIRQ_REG;
 
 		*ethirq = 1;
 		*ethirq = 3;
-	}
-#endif
-	printk(KERN_ERR "%s: Error interrupt\n", dev->name);
+	पूर्ण
+#पूर्ण_अगर
+	prपूर्णांकk(KERN_ERR "%s: Error interrupt\n", dev->name);
 	i596_display_data(dev);
-	return IRQ_HANDLED;
-}
-#endif
+	वापस IRQ_HANDLED;
+पूर्ण
+#पूर्ण_अगर
 
-static inline void remove_rx_bufs(struct net_device *dev)
-{
-	struct i596_private *lp = dev->ml_priv;
-	struct i596_rbd *rbd;
-	int i;
+अटल अंतरभूत व्योम हटाओ_rx_bufs(काष्ठा net_device *dev)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	काष्ठा i596_rbd *rbd;
+	पूर्णांक i;
 
-	for (i = 0, rbd = lp->rbds; i < rx_ring_size; i++, rbd++) {
-		if (rbd->skb == NULL)
-			break;
-		dev_kfree_skb(rbd->skb);
-		rbd->skb = NULL;
-	}
-}
+	क्रम (i = 0, rbd = lp->rbds; i < rx_ring_size; i++, rbd++) अणु
+		अगर (rbd->skb == शून्य)
+			अवरोध;
+		dev_kमुक्त_skb(rbd->skb);
+		rbd->skb = शून्य;
+	पूर्ण
+पूर्ण
 
-static inline int init_rx_bufs(struct net_device *dev)
-{
-	struct i596_private *lp = dev->ml_priv;
-	int i;
-	struct i596_rfd *rfd;
-	struct i596_rbd *rbd;
+अटल अंतरभूत पूर्णांक init_rx_bufs(काष्ठा net_device *dev)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	पूर्णांक i;
+	काष्ठा i596_rfd *rfd;
+	काष्ठा i596_rbd *rbd;
 
 	/* First build the Receive Buffer Descriptor List */
 
-	for (i = 0, rbd = lp->rbds; i < rx_ring_size; i++, rbd++) {
-		struct sk_buff *skb = netdev_alloc_skb(dev, PKT_BUF_SZ);
+	क्रम (i = 0, rbd = lp->rbds; i < rx_ring_size; i++, rbd++) अणु
+		काष्ठा sk_buff *skb = netdev_alloc_skb(dev, PKT_BUF_SZ);
 
-		if (skb == NULL) {
-			remove_rx_bufs(dev);
-			return -ENOMEM;
-		}
+		अगर (skb == शून्य) अणु
+			हटाओ_rx_bufs(dev);
+			वापस -ENOMEM;
+		पूर्ण
 
 		rbd->v_next = rbd+1;
 		rbd->b_next = WSWAPrbd(virt_to_bus(rbd+1));
 		rbd->b_addr = WSWAPrbd(virt_to_bus(rbd));
 		rbd->skb = skb;
 		rbd->v_data = skb->data;
-		rbd->b_data = WSWAPchar(virt_to_bus(skb->data));
+		rbd->b_data = WSWAPअक्षर(virt_to_bus(skb->data));
 		rbd->size = PKT_BUF_SZ;
-#ifdef __mc68000__
+#अगर_घोषित __mc68000__
 		cache_clear(virt_to_phys(skb->data), PKT_BUF_SZ);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 	lp->rbd_head = lp->rbds;
 	rbd = lp->rbds + rx_ring_size - 1;
 	rbd->v_next = lp->rbds;
@@ -572,13 +573,13 @@ static inline int init_rx_bufs(struct net_device *dev)
 
 	/* Now build the Receive Frame Descriptor List */
 
-	for (i = 0, rfd = lp->rfds; i < rx_ring_size; i++, rfd++) {
-		rfd->rbd = I596_NULL;
+	क्रम (i = 0, rfd = lp->rfds; i < rx_ring_size; i++, rfd++) अणु
+		rfd->rbd = I596_शून्य;
 		rfd->v_next = rfd+1;
 		rfd->v_prev = rfd-1;
 		rfd->b_next = WSWAPrfd(virt_to_bus(rfd+1));
 		rfd->cmd = CMD_FLEX;
-	}
+	पूर्ण
 	lp->rfd_head = lp->rfds;
 	lp->scb.rfd = WSWAPrfd(virt_to_bus(lp->rfds));
 	rfd = lp->rfds;
@@ -589,270 +590,270 @@ static inline int init_rx_bufs(struct net_device *dev)
 	rfd->b_next = WSWAPrfd(virt_to_bus(lp->rfds));
 	rfd->cmd = CMD_EOL|CMD_FLEX;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void rebuild_rx_bufs(struct net_device *dev)
-{
-	struct i596_private *lp = dev->ml_priv;
-	int i;
+अटल व्योम rebuild_rx_bufs(काष्ठा net_device *dev)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	पूर्णांक i;
 
 	/* Ensure rx frame/buffer descriptors are tidy */
 
-	for (i = 0; i < rx_ring_size; i++) {
-		lp->rfds[i].rbd = I596_NULL;
+	क्रम (i = 0; i < rx_ring_size; i++) अणु
+		lp->rfds[i].rbd = I596_शून्य;
 		lp->rfds[i].cmd = CMD_FLEX;
-	}
+	पूर्ण
 	lp->rfds[rx_ring_size-1].cmd = CMD_EOL|CMD_FLEX;
 	lp->rfd_head = lp->rfds;
 	lp->scb.rfd = WSWAPrfd(virt_to_bus(lp->rfds));
 	lp->rbd_head = lp->rbds;
 	lp->rfds[0].rbd = WSWAPrbd(virt_to_bus(lp->rbds));
-}
+पूर्ण
 
 
-static int init_i596_mem(struct net_device *dev)
-{
-	struct i596_private *lp = dev->ml_priv;
-	unsigned long flags;
+अटल पूर्णांक init_i596_mem(काष्ठा net_device *dev)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	अचिन्हित दीर्घ flags;
 
-	MPU_PORT(dev, PORT_RESET, NULL);
+	MPU_PORT(dev, PORT_RESET, शून्य);
 
 	udelay(100);		/* Wait 100us - seems to help */
 
-#if defined(ENABLE_MVME16x_NET) || defined(ENABLE_BVME6000_NET)
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x) {
-		volatile unsigned char *pcc2 = (unsigned char *) 0xfff42000;
+#अगर defined(ENABLE_MVME16x_NET) || defined(ENABLE_BVME6000_NET)
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x) अणु
+		अस्थिर अचिन्हित अक्षर *pcc2 = (अचिन्हित अक्षर *) 0xfff42000;
 
-		/* Disable all ints for now */
+		/* Disable all पूर्णांकs क्रम now */
 		pcc2[0x28] = 1;
 		pcc2[0x2a] = 0x48;
 		/* Following disables snooping.  Snooping is not required
-		 * as we make appropriate use of non-cached pages for
+		 * as we make appropriate use of non-cached pages क्रम
 		 * shared data, and cache_push/cache_clear.
 		 */
 		pcc2[0x2b] = 0x08;
-	}
-#endif
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
-		volatile unsigned char *ethirq = (unsigned char *) BVME_ETHIRQ_REG;
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
+		अस्थिर अचिन्हित अक्षर *ethirq = (अचिन्हित अक्षर *) BVME_ETHIRQ_REG;
 
 		*ethirq = 1;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	/* change the scp address */
 
-	MPU_PORT(dev, PORT_ALTSCP, (void *)virt_to_bus((void *)&lp->scp));
+	MPU_PORT(dev, PORT_ALTSCP, (व्योम *)virt_to_bus((व्योम *)&lp->scp));
 
-#endif
+#पूर्ण_अगर
 
-	lp->last_cmd = jiffies;
+	lp->last_cmd = jअगरfies;
 
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x)
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x)
 		lp->scp.sysbus = 0x00000054;
-#endif
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000)
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000)
 		lp->scp.sysbus = 0x0000004c;
-#endif
+#पूर्ण_अगर
 
-	lp->scp.iscp = WSWAPiscp(virt_to_bus((void *)&lp->iscp));
-	lp->iscp.scb = WSWAPscb(virt_to_bus((void *)&lp->scb));
+	lp->scp.iscp = WSWAPiscp(virt_to_bus((व्योम *)&lp->iscp));
+	lp->iscp.scb = WSWAPscb(virt_to_bus((व्योम *)&lp->scb));
 	lp->iscp.stat = ISCP_BUSY;
 	lp->cmd_backlog = 0;
 
-	lp->cmd_head = lp->scb.cmd = I596_NULL;
+	lp->cmd_head = lp->scb.cmd = I596_शून्य;
 
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
 		lp->scb.t_on  = 7 * 25;
 		lp->scb.t_off = 1 * 25;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	DEB(DEB_INIT,printk(KERN_DEBUG "%s: starting i82596.\n", dev->name));
+	DEB(DEB_INIT,prपूर्णांकk(KERN_DEBUG "%s: starting i82596.\n", dev->name));
 
 	CA(dev);
 
-	if (wait_istat(dev,lp,1000,"initialization timed out"))
-		goto failed;
-	DEB(DEB_INIT,printk(KERN_DEBUG "%s: i82596 initialization successful\n", dev->name));
+	अगर (रुको_istat(dev,lp,1000,"initialization timed out"))
+		जाओ failed;
+	DEB(DEB_INIT,prपूर्णांकk(KERN_DEBUG "%s: i82596 initialization successful\n", dev->name));
 
 	/* Ensure rx frame/buffer descriptors are tidy */
 	rebuild_rx_bufs(dev);
 	lp->scb.command = 0;
 
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x) {
-		volatile unsigned char *pcc2 = (unsigned char *) 0xfff42000;
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x) अणु
+		अस्थिर अचिन्हित अक्षर *pcc2 = (अचिन्हित अक्षर *) 0xfff42000;
 
-		/* Enable ints, etc. now */
+		/* Enable पूर्णांकs, etc. now */
 		pcc2[0x2a] = 0x55;	/* Edge sensitive */
 		pcc2[0x2b] = 0x15;
-	}
-#endif
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
-		volatile unsigned char *ethirq = (unsigned char *) BVME_ETHIRQ_REG;
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
+		अस्थिर अचिन्हित अक्षर *ethirq = (अचिन्हित अक्षर *) BVME_ETHIRQ_REG;
 
 		*ethirq = 3;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 
-	DEB(DEB_INIT,printk(KERN_DEBUG "%s: queuing CmdConfigure\n", dev->name));
-	memcpy(lp->cf_cmd.i596_config, init_setup, 14);
+	DEB(DEB_INIT,prपूर्णांकk(KERN_DEBUG "%s: queuing CmdConfigure\n", dev->name));
+	स_नकल(lp->cf_cmd.i596_config, init_setup, 14);
 	lp->cf_cmd.cmd.command = CmdConfigure;
 	i596_add_cmd(dev, &lp->cf_cmd.cmd);
 
-	DEB(DEB_INIT,printk(KERN_DEBUG "%s: queuing CmdSASetup\n", dev->name));
-	memcpy(lp->sa_cmd.eth_addr, dev->dev_addr, ETH_ALEN);
+	DEB(DEB_INIT,prपूर्णांकk(KERN_DEBUG "%s: queuing CmdSASetup\n", dev->name));
+	स_नकल(lp->sa_cmd.eth_addr, dev->dev_addr, ETH_ALEN);
 	lp->sa_cmd.cmd.command = CmdSASetup;
 	i596_add_cmd(dev, &lp->sa_cmd.cmd);
 
-	DEB(DEB_INIT,printk(KERN_DEBUG "%s: queuing CmdTDR\n", dev->name));
+	DEB(DEB_INIT,prपूर्णांकk(KERN_DEBUG "%s: queuing CmdTDR\n", dev->name));
 	lp->tdr_cmd.cmd.command = CmdTDR;
 	i596_add_cmd(dev, &lp->tdr_cmd.cmd);
 
 	spin_lock_irqsave (&lp->lock, flags);
 
-	if (wait_cmd(dev,lp,1000,"timed out waiting to issue RX_START")) {
+	अगर (रुको_cmd(dev,lp,1000,"timed out waiting to issue RX_START")) अणु
 		spin_unlock_irqrestore (&lp->lock, flags);
-		goto failed;
-	}
-	DEB(DEB_INIT,printk(KERN_DEBUG "%s: Issuing RX_START\n", dev->name));
+		जाओ failed;
+	पूर्ण
+	DEB(DEB_INIT,prपूर्णांकk(KERN_DEBUG "%s: Issuing RX_START\n", dev->name));
 	lp->scb.command = RX_START;
 	CA(dev);
 
 	spin_unlock_irqrestore (&lp->lock, flags);
 
-	if (wait_cmd(dev,lp,1000,"RX_START not processed"))
-		goto failed;
-	DEB(DEB_INIT,printk(KERN_DEBUG "%s: Receive unit started OK\n", dev->name));
-	return 0;
+	अगर (रुको_cmd(dev,lp,1000,"RX_START not processed"))
+		जाओ failed;
+	DEB(DEB_INIT,prपूर्णांकk(KERN_DEBUG "%s: Receive unit started OK\n", dev->name));
+	वापस 0;
 
 failed:
-	printk(KERN_CRIT "%s: Failed to initialise 82596\n", dev->name);
-	MPU_PORT(dev, PORT_RESET, NULL);
-	return -1;
-}
+	prपूर्णांकk(KERN_CRIT "%s: Failed to initialise 82596\n", dev->name);
+	MPU_PORT(dev, PORT_RESET, शून्य);
+	वापस -1;
+पूर्ण
 
-static inline int i596_rx(struct net_device *dev)
-{
-	struct i596_private *lp = dev->ml_priv;
-	struct i596_rfd *rfd;
-	struct i596_rbd *rbd;
-	int frames = 0;
+अटल अंतरभूत पूर्णांक i596_rx(काष्ठा net_device *dev)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	काष्ठा i596_rfd *rfd;
+	काष्ठा i596_rbd *rbd;
+	पूर्णांक frames = 0;
 
-	DEB(DEB_RXFRAME,printk(KERN_DEBUG "i596_rx(), rfd_head %p, rbd_head %p\n",
+	DEB(DEB_RXFRAME,prपूर्णांकk(KERN_DEBUG "i596_rx(), rfd_head %p, rbd_head %p\n",
 			lp->rfd_head, lp->rbd_head));
 
 	rfd = lp->rfd_head;		/* Ref next frame to check */
 
-	while ((rfd->stat) & STAT_C) {	/* Loop while complete frames */
-		if (rfd->rbd == I596_NULL)
-			rbd = I596_NULL;
-		else if (rfd->rbd == lp->rbd_head->b_addr)
+	जबतक ((rfd->stat) & STAT_C) अणु	/* Loop जबतक complete frames */
+		अगर (rfd->rbd == I596_शून्य)
+			rbd = I596_शून्य;
+		अन्यथा अगर (rfd->rbd == lp->rbd_head->b_addr)
 			rbd = lp->rbd_head;
-		else {
-			printk(KERN_CRIT "%s: rbd chain broken!\n", dev->name);
+		अन्यथा अणु
+			prपूर्णांकk(KERN_CRIT "%s: rbd chain broken!\n", dev->name);
 			/* XXX Now what? */
-			rbd = I596_NULL;
-		}
-		DEB(DEB_RXFRAME, printk(KERN_DEBUG "  rfd %p, rfd.rbd %p, rfd.stat %04x\n",
+			rbd = I596_शून्य;
+		पूर्ण
+		DEB(DEB_RXFRAME, prपूर्णांकk(KERN_DEBUG "  rfd %p, rfd.rbd %p, rfd.stat %04x\n",
 			rfd, rfd->rbd, rfd->stat));
 
-		if (rbd != I596_NULL && ((rfd->stat) & STAT_OK)) {
+		अगर (rbd != I596_शून्य && ((rfd->stat) & STAT_OK)) अणु
 			/* a good frame */
-			int pkt_len = rbd->count & 0x3fff;
-			struct sk_buff *skb = rbd->skb;
-			int rx_in_place = 0;
+			पूर्णांक pkt_len = rbd->count & 0x3fff;
+			काष्ठा sk_buff *skb = rbd->skb;
+			पूर्णांक rx_in_place = 0;
 
-			DEB(DEB_RXADDR,print_eth(rbd->v_data, "received"));
+			DEB(DEB_RXADDR,prपूर्णांक_eth(rbd->v_data, "received"));
 			frames++;
 
-			/* Check if the packet is long enough to just accept
+			/* Check अगर the packet is दीर्घ enough to just accept
 			 * without copying to a properly sized skbuff.
 			 */
 
-			if (pkt_len > rx_copybreak) {
-				struct sk_buff *newskb;
+			अगर (pkt_len > rx_copyअवरोध) अणु
+				काष्ठा sk_buff *newskb;
 
 				/* Get fresh skbuff to replace filled one. */
 				newskb = netdev_alloc_skb(dev, PKT_BUF_SZ);
-				if (newskb == NULL) {
-					skb = NULL;	/* drop pkt */
-					goto memory_squeeze;
-				}
-				/* Pass up the skb already on the Rx ring. */
+				अगर (newskb == शून्य) अणु
+					skb = शून्य;	/* drop pkt */
+					जाओ memory_squeeze;
+				पूर्ण
+				/* Pass up the skb alपढ़ोy on the Rx ring. */
 				skb_put(skb, pkt_len);
 				rx_in_place = 1;
 				rbd->skb = newskb;
 				rbd->v_data = newskb->data;
-				rbd->b_data = WSWAPchar(virt_to_bus(newskb->data));
-#ifdef __mc68000__
+				rbd->b_data = WSWAPअक्षर(virt_to_bus(newskb->data));
+#अगर_घोषित __mc68000__
 				cache_clear(virt_to_phys(newskb->data), PKT_BUF_SZ);
-#endif
-			} else {
+#पूर्ण_अगर
+			पूर्ण अन्यथा अणु
 				skb = netdev_alloc_skb(dev, pkt_len + 2);
-			}
+			पूर्ण
 memory_squeeze:
-			if (skb == NULL) {
+			अगर (skb == शून्य) अणु
 				/* XXX tulip.c can defer packets here!! */
 				dev->stats.rx_dropped++;
-			} else {
-				if (!rx_in_place) {
+			पूर्ण अन्यथा अणु
+				अगर (!rx_in_place) अणु
 					/* 16 byte align the data fields */
 					skb_reserve(skb, 2);
 					skb_put_data(skb, rbd->v_data,
 						     pkt_len);
-				}
+				पूर्ण
 				skb->protocol=eth_type_trans(skb,dev);
 				skb->len = pkt_len;
-#ifdef __mc68000__
+#अगर_घोषित __mc68000__
 				cache_clear(virt_to_phys(rbd->skb->data),
 						pkt_len);
-#endif
-				netif_rx(skb);
+#पूर्ण_अगर
+				netअगर_rx(skb);
 				dev->stats.rx_packets++;
 				dev->stats.rx_bytes+=pkt_len;
-			}
-		}
-		else {
-			DEB(DEB_ERRORS, printk(KERN_DEBUG "%s: Error, rfd.stat = 0x%04x\n",
+			पूर्ण
+		पूर्ण
+		अन्यथा अणु
+			DEB(DEB_ERRORS, prपूर्णांकk(KERN_DEBUG "%s: Error, rfd.stat = 0x%04x\n",
 					dev->name, rfd->stat));
 			dev->stats.rx_errors++;
-			if ((rfd->stat) & 0x0001)
+			अगर ((rfd->stat) & 0x0001)
 				dev->stats.collisions++;
-			if ((rfd->stat) & 0x0080)
+			अगर ((rfd->stat) & 0x0080)
 				dev->stats.rx_length_errors++;
-			if ((rfd->stat) & 0x0100)
+			अगर ((rfd->stat) & 0x0100)
 				dev->stats.rx_over_errors++;
-			if ((rfd->stat) & 0x0200)
-				dev->stats.rx_fifo_errors++;
-			if ((rfd->stat) & 0x0400)
+			अगर ((rfd->stat) & 0x0200)
+				dev->stats.rx_fअगरo_errors++;
+			अगर ((rfd->stat) & 0x0400)
 				dev->stats.rx_frame_errors++;
-			if ((rfd->stat) & 0x0800)
+			अगर ((rfd->stat) & 0x0800)
 				dev->stats.rx_crc_errors++;
-			if ((rfd->stat) & 0x1000)
+			अगर ((rfd->stat) & 0x1000)
 				dev->stats.rx_length_errors++;
-		}
+		पूर्ण
 
-		/* Clear the buffer descriptor count and EOF + F flags */
+		/* Clear the buffer descriptor count and खातापूर्ण + F flags */
 
-		if (rbd != I596_NULL && (rbd->count & 0x4000)) {
+		अगर (rbd != I596_शून्य && (rbd->count & 0x4000)) अणु
 			rbd->count = 0;
 			lp->rbd_head = rbd->v_next;
-		}
+		पूर्ण
 
 		/* Tidy the frame descriptor, marking it as end of list */
 
-		rfd->rbd = I596_NULL;
+		rfd->rbd = I596_शून्य;
 		rfd->stat = 0;
 		rfd->cmd = CMD_EOL|CMD_FLEX;
 		rfd->count = 0;
@@ -866,218 +867,218 @@ memory_squeeze:
 		lp->scb.rfd = rfd->b_next;
 		lp->rfd_head = rfd->v_next;
 		rfd = lp->rfd_head;
-	}
+	पूर्ण
 
-	DEB(DEB_RXFRAME,printk(KERN_DEBUG "frames %d\n", frames));
+	DEB(DEB_RXFRAME,prपूर्णांकk(KERN_DEBUG "frames %d\n", frames));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void i596_cleanup_cmd(struct net_device *dev, struct i596_private *lp)
-{
-	struct i596_cmd *ptr;
+अटल व्योम i596_cleanup_cmd(काष्ठा net_device *dev, काष्ठा i596_निजी *lp)
+अणु
+	काष्ठा i596_cmd *ptr;
 
-	while (lp->cmd_head != I596_NULL) {
+	जबतक (lp->cmd_head != I596_शून्य) अणु
 		ptr = lp->cmd_head;
 		lp->cmd_head = ptr->v_next;
 		lp->cmd_backlog--;
 
-		switch ((ptr->command) & 0x7) {
-		case CmdTx:
-			{
-				struct tx_cmd *tx_cmd = (struct tx_cmd *) ptr;
-				struct sk_buff *skb = tx_cmd->skb;
+		चयन ((ptr->command) & 0x7) अणु
+		हाल CmdTx:
+			अणु
+				काष्ठा tx_cmd *tx_cmd = (काष्ठा tx_cmd *) ptr;
+				काष्ठा sk_buff *skb = tx_cmd->skb;
 
-				dev_kfree_skb(skb);
+				dev_kमुक्त_skb(skb);
 
 				dev->stats.tx_errors++;
-				dev->stats.tx_aborted_errors++;
+				dev->stats.tx_पातed_errors++;
 
-				ptr->v_next = ptr->b_next = I596_NULL;
-				tx_cmd->cmd.command = 0;  /* Mark as free */
-				break;
-			}
-		default:
-			ptr->v_next = ptr->b_next = I596_NULL;
-		}
-	}
+				ptr->v_next = ptr->b_next = I596_शून्य;
+				tx_cmd->cmd.command = 0;  /* Mark as मुक्त */
+				अवरोध;
+			पूर्ण
+		शेष:
+			ptr->v_next = ptr->b_next = I596_शून्य;
+		पूर्ण
+	पूर्ण
 
-	wait_cmd(dev,lp,100,"i596_cleanup_cmd timed out");
-	lp->scb.cmd = I596_NULL;
-}
+	रुको_cmd(dev,lp,100,"i596_cleanup_cmd timed out");
+	lp->scb.cmd = I596_शून्य;
+पूर्ण
 
-static void i596_reset(struct net_device *dev, struct i596_private *lp,
-			int ioaddr)
-{
-	unsigned long flags;
+अटल व्योम i596_reset(काष्ठा net_device *dev, काष्ठा i596_निजी *lp,
+			पूर्णांक ioaddr)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	DEB(DEB_RESET,printk(KERN_DEBUG "i596_reset\n"));
+	DEB(DEB_RESET,prपूर्णांकk(KERN_DEBUG "i596_reset\n"));
 
 	spin_lock_irqsave (&lp->lock, flags);
 
-	wait_cmd(dev,lp,100,"i596_reset timed out");
+	रुको_cmd(dev,lp,100,"i596_reset timed out");
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
 	lp->scb.command = CUC_ABORT | RX_ABORT;
 	CA(dev);
 
-	/* wait for shutdown */
-	wait_cmd(dev,lp,1000,"i596_reset 2 timed out");
+	/* रुको क्रम shutकरोwn */
+	रुको_cmd(dev,lp,1000,"i596_reset 2 timed out");
 	spin_unlock_irqrestore (&lp->lock, flags);
 
 	i596_cleanup_cmd(dev,lp);
 	i596_rx(dev);
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 	init_i596_mem(dev);
-}
+पूर्ण
 
-static void i596_add_cmd(struct net_device *dev, struct i596_cmd *cmd)
-{
-	struct i596_private *lp = dev->ml_priv;
-	int ioaddr = dev->base_addr;
-	unsigned long flags;
+अटल व्योम i596_add_cmd(काष्ठा net_device *dev, काष्ठा i596_cmd *cmd)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	पूर्णांक ioaddr = dev->base_addr;
+	अचिन्हित दीर्घ flags;
 
-	DEB(DEB_ADDCMD,printk(KERN_DEBUG "i596_add_cmd\n"));
+	DEB(DEB_ADDCMD,prपूर्णांकk(KERN_DEBUG "i596_add_cmd\n"));
 
 	cmd->status = 0;
 	cmd->command |= (CMD_EOL | CMD_INTR);
-	cmd->v_next = cmd->b_next = I596_NULL;
+	cmd->v_next = cmd->b_next = I596_शून्य;
 
 	spin_lock_irqsave (&lp->lock, flags);
 
-	if (lp->cmd_head != I596_NULL) {
+	अगर (lp->cmd_head != I596_शून्य) अणु
 		lp->cmd_tail->v_next = cmd;
 		lp->cmd_tail->b_next = WSWAPcmd(virt_to_bus(&cmd->status));
-	} else {
+	पूर्ण अन्यथा अणु
 		lp->cmd_head = cmd;
-		wait_cmd(dev,lp,100,"i596_add_cmd timed out");
+		रुको_cmd(dev,lp,100,"i596_add_cmd timed out");
 		lp->scb.cmd = WSWAPcmd(virt_to_bus(&cmd->status));
 		lp->scb.command = CUC_START;
 		CA(dev);
-	}
+	पूर्ण
 	lp->cmd_tail = cmd;
 	lp->cmd_backlog++;
 
 	spin_unlock_irqrestore (&lp->lock, flags);
 
-	if (lp->cmd_backlog > max_cmd_backlog) {
-		unsigned long tickssofar = jiffies - lp->last_cmd;
+	अगर (lp->cmd_backlog > max_cmd_backlog) अणु
+		अचिन्हित दीर्घ tickssofar = jअगरfies - lp->last_cmd;
 
-		if (tickssofar < ticks_limit)
-			return;
+		अगर (tickssofar < ticks_limit)
+			वापस;
 
-		printk(KERN_NOTICE "%s: command unit timed out, status resetting.\n", dev->name);
+		prपूर्णांकk(KERN_NOTICE "%s: command unit timed out, status resetting.\n", dev->name);
 
 		i596_reset(dev, lp, ioaddr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int i596_open(struct net_device *dev)
-{
-	int res = 0;
+अटल पूर्णांक i596_खोलो(काष्ठा net_device *dev)
+अणु
+	पूर्णांक res = 0;
 
-	DEB(DEB_OPEN,printk(KERN_DEBUG "%s: i596_open() irq %d.\n", dev->name, dev->irq));
+	DEB(DEB_OPEN,prपूर्णांकk(KERN_DEBUG "%s: i596_open() irq %d.\n", dev->name, dev->irq));
 
-	if (request_irq(dev->irq, i596_interrupt, 0, "i82596", dev)) {
-		printk(KERN_ERR "%s: IRQ %d not free\n", dev->name, dev->irq);
-		return -EAGAIN;
-	}
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x) {
-		if (request_irq(0x56, i596_error, 0, "i82596_error", dev)) {
+	अगर (request_irq(dev->irq, i596_पूर्णांकerrupt, 0, "i82596", dev)) अणु
+		prपूर्णांकk(KERN_ERR "%s: IRQ %d not free\n", dev->name, dev->irq);
+		वापस -EAGAIN;
+	पूर्ण
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x) अणु
+		अगर (request_irq(0x56, i596_error, 0, "i82596_error", dev)) अणु
 			res = -EAGAIN;
-			goto err_irq_dev;
-		}
-	}
-#endif
+			जाओ err_irq_dev;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 	res = init_rx_bufs(dev);
-	if (res)
-		goto err_irq_56;
+	अगर (res)
+		जाओ err_irq_56;
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	if (init_i596_mem(dev)) {
+	अगर (init_i596_mem(dev)) अणु
 		res = -EAGAIN;
-		goto err_queue;
-	}
+		जाओ err_queue;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_queue:
-	netif_stop_queue(dev);
-	remove_rx_bufs(dev);
+	netअगर_stop_queue(dev);
+	हटाओ_rx_bufs(dev);
 err_irq_56:
-#ifdef ENABLE_MVME16x_NET
-	free_irq(0x56, dev);
+#अगर_घोषित ENABLE_MVME16x_NET
+	मुक्त_irq(0x56, dev);
 err_irq_dev:
-#endif
-	free_irq(dev->irq, dev);
+#पूर्ण_अगर
+	मुक्त_irq(dev->irq, dev);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void i596_tx_timeout (struct net_device *dev, unsigned int txqueue)
-{
-	struct i596_private *lp = dev->ml_priv;
-	int ioaddr = dev->base_addr;
+अटल व्योम i596_tx_समयout (काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	पूर्णांक ioaddr = dev->base_addr;
 
-	/* Transmitter timeout, serious problems. */
-	DEB(DEB_ERRORS,printk(KERN_ERR "%s: transmit timed out, status resetting.\n",
+	/* Transmitter समयout, serious problems. */
+	DEB(DEB_ERRORS,prपूर्णांकk(KERN_ERR "%s: transmit timed out, status resetting.\n",
 			dev->name));
 
 	dev->stats.tx_errors++;
 
 	/* Try to restart the adaptor */
-	if (lp->last_restart == dev->stats.tx_packets) {
-		DEB(DEB_ERRORS,printk(KERN_ERR "Resetting board.\n"));
-		/* Shutdown and restart */
+	अगर (lp->last_restart == dev->stats.tx_packets) अणु
+		DEB(DEB_ERRORS,prपूर्णांकk(KERN_ERR "Resetting board.\n"));
+		/* Shutकरोwn and restart */
 		i596_reset (dev, lp, ioaddr);
-	} else {
-		/* Issue a channel attention signal */
-		DEB(DEB_ERRORS,printk(KERN_ERR "Kicking board.\n"));
+	पूर्ण अन्यथा अणु
+		/* Issue a channel attention संकेत */
+		DEB(DEB_ERRORS,prपूर्णांकk(KERN_ERR "Kicking board.\n"));
 		lp->scb.command = CUC_START | RX_START;
 		CA (dev);
 		lp->last_restart = dev->stats.tx_packets;
-	}
+	पूर्ण
 
-	netif_trans_update(dev); /* prevent tx timeout */
-	netif_wake_queue (dev);
-}
+	netअगर_trans_update(dev); /* prevent tx समयout */
+	netअगर_wake_queue (dev);
+पूर्ण
 
-static netdev_tx_t i596_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct i596_private *lp = dev->ml_priv;
-	struct tx_cmd *tx_cmd;
-	struct i596_tbd *tbd;
-	short length = skb->len;
+अटल netdev_tx_t i596_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	काष्ठा tx_cmd *tx_cmd;
+	काष्ठा i596_tbd *tbd;
+	लघु length = skb->len;
 
-	DEB(DEB_STARTTX,printk(KERN_DEBUG "%s: i596_start_xmit(%x,%p) called\n",
+	DEB(DEB_STARTTX,prपूर्णांकk(KERN_DEBUG "%s: i596_start_xmit(%x,%p) called\n",
 				dev->name, skb->len, skb->data));
 
-	if (skb->len < ETH_ZLEN) {
-		if (skb_padto(skb, ETH_ZLEN))
-			return NETDEV_TX_OK;
+	अगर (skb->len < ETH_ZLEN) अणु
+		अगर (skb_padto(skb, ETH_ZLEN))
+			वापस NETDEV_TX_OK;
 		length = ETH_ZLEN;
-	}
-	netif_stop_queue(dev);
+	पूर्ण
+	netअगर_stop_queue(dev);
 
 	tx_cmd = lp->tx_cmds + lp->next_tx_cmd;
 	tbd = lp->tbds + lp->next_tx_cmd;
 
-	if (tx_cmd->cmd.command) {
-		printk(KERN_NOTICE "%s: xmit ring full, dropping packet.\n",
+	अगर (tx_cmd->cmd.command) अणु
+		prपूर्णांकk(KERN_NOTICE "%s: xmit ring full, dropping packet.\n",
 				dev->name);
 		dev->stats.tx_dropped++;
 
-		dev_kfree_skb(skb);
-	} else {
-		if (++lp->next_tx_cmd == TX_RING_SIZE)
+		dev_kमुक्त_skb(skb);
+	पूर्ण अन्यथा अणु
+		अगर (++lp->next_tx_cmd == TX_RING_SIZE)
 			lp->next_tx_cmd = 0;
 		tx_cmd->tbd = WSWAPtbd(virt_to_bus(tbd));
-		tbd->next = I596_NULL;
+		tbd->next = I596_शून्य;
 
 		tx_cmd->cmd.command = CMD_FLEX | CmdTx;
 		tx_cmd->skb = skb;
@@ -1085,464 +1086,464 @@ static netdev_tx_t i596_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		tx_cmd->pad = 0;
 		tx_cmd->size = 0;
 		tbd->pad = 0;
-		tbd->size = EOF | length;
+		tbd->size = खातापूर्ण | length;
 
-		tbd->data = WSWAPchar(virt_to_bus(skb->data));
+		tbd->data = WSWAPअक्षर(virt_to_bus(skb->data));
 
-#ifdef __mc68000__
+#अगर_घोषित __mc68000__
 		cache_push(virt_to_phys(skb->data), length);
-#endif
-		DEB(DEB_TXADDR,print_eth(skb->data, "tx-queued"));
+#पूर्ण_अगर
+		DEB(DEB_TXADDR,prपूर्णांक_eth(skb->data, "tx-queued"));
 		i596_add_cmd(dev, &tx_cmd->cmd);
 
 		dev->stats.tx_packets++;
 		dev->stats.tx_bytes += length;
-	}
+	पूर्ण
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void print_eth(unsigned char *add, char *str)
-{
-	printk(KERN_DEBUG "i596 0x%p, %pM --> %pM %02X%02X, %s\n",
+अटल व्योम prपूर्णांक_eth(अचिन्हित अक्षर *add, अक्षर *str)
+अणु
+	prपूर्णांकk(KERN_DEBUG "i596 0x%p, %pM --> %pM %02X%02X, %s\n",
 	       add, add + 6, add, add[12], add[13], str);
-}
+पूर्ण
 
-static int io = 0x300;
-static int irq = 10;
+अटल पूर्णांक io = 0x300;
+अटल पूर्णांक irq = 10;
 
-static const struct net_device_ops i596_netdev_ops = {
-	.ndo_open 		= i596_open,
-	.ndo_stop		= i596_close,
-	.ndo_start_xmit		= i596_start_xmit,
-	.ndo_set_rx_mode	= set_multicast_list,
-	.ndo_tx_timeout		= i596_tx_timeout,
-	.ndo_set_mac_address 	= eth_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops i596_netdev_ops = अणु
+	.nकरो_खोलो 		= i596_खोलो,
+	.nकरो_stop		= i596_बंद,
+	.nकरो_start_xmit		= i596_start_xmit,
+	.nकरो_set_rx_mode	= set_multicast_list,
+	.nकरो_tx_समयout		= i596_tx_समयout,
+	.nकरो_set_mac_address 	= eth_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+पूर्ण;
 
-struct net_device * __init i82596_probe(int unit)
-{
-	struct net_device *dev;
-	int i;
-	struct i596_private *lp;
-	char eth_addr[8];
-	static int probed;
-	int err;
+काष्ठा net_device * __init i82596_probe(पूर्णांक unit)
+अणु
+	काष्ठा net_device *dev;
+	पूर्णांक i;
+	काष्ठा i596_निजी *lp;
+	अक्षर eth_addr[8];
+	अटल पूर्णांक probed;
+	पूर्णांक err;
 
-	if (probed)
-		return ERR_PTR(-ENODEV);
+	अगर (probed)
+		वापस ERR_PTR(-ENODEV);
 	probed++;
 
 	dev = alloc_etherdev(0);
-	if (!dev)
-		return ERR_PTR(-ENOMEM);
+	अगर (!dev)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (unit >= 0) {
-		sprintf(dev->name, "eth%d", unit);
+	अगर (unit >= 0) अणु
+		प्र_लिखो(dev->name, "eth%d", unit);
 		netdev_boot_setup_check(dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev->base_addr = io;
 		dev->irq = irq;
-	}
+	पूर्ण
 
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x) {
-		if (mvme16x_config & MVME16x_CONFIG_NO_ETHERNET) {
-			printk(KERN_NOTICE "Ethernet probe disabled - chip not present\n");
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x) अणु
+		अगर (mvme16x_config & MVME16x_CONFIG_NO_ETHERNET) अणु
+			prपूर्णांकk(KERN_NOTICE "Ethernet probe disabled - chip not present\n");
 			err = -ENODEV;
-			goto out;
-		}
-		memcpy(eth_addr, (void *) 0xfffc1f2c, ETH_ALEN);	/* YUCK! Get addr from NOVRAM */
+			जाओ out;
+		पूर्ण
+		स_नकल(eth_addr, (व्योम *) 0xfffc1f2c, ETH_ALEN);	/* YUCK! Get addr from NOVRAM */
 		dev->base_addr = MVME_I596_BASE;
-		dev->irq = (unsigned) MVME16x_IRQ_I596;
-		goto found;
-	}
-#endif
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
-		volatile unsigned char *rtc = (unsigned char *) BVME_RTC_BASE;
-		unsigned char msr = rtc[3];
-		int i;
+		dev->irq = (अचिन्हित) MVME16x_IRQ_I596;
+		जाओ found;
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
+		अस्थिर अचिन्हित अक्षर *rtc = (अचिन्हित अक्षर *) BVME_RTC_BASE;
+		अचिन्हित अक्षर msr = rtc[3];
+		पूर्णांक i;
 
 		rtc[3] |= 0x80;
-		for (i = 0; i < 6; i++)
+		क्रम (i = 0; i < 6; i++)
 			eth_addr[i] = rtc[i * 4 + 7];	/* Stored in RTC RAM at offset 1 */
 		rtc[3] = msr;
 		dev->base_addr = BVME_I596_BASE;
-		dev->irq = (unsigned) BVME_IRQ_I596;
-		goto found;
-	}
-#endif
+		dev->irq = (अचिन्हित) BVME_IRQ_I596;
+		जाओ found;
+	पूर्ण
+#पूर्ण_अगर
 	err = -ENODEV;
-	goto out;
+	जाओ out;
 
 found:
-	dev->mem_start = (int)__get_free_pages(GFP_ATOMIC, 0);
-	if (!dev->mem_start) {
+	dev->mem_start = (पूर्णांक)__get_मुक्त_pages(GFP_ATOMIC, 0);
+	अगर (!dev->mem_start) अणु
 		err = -ENOMEM;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
-	DEB(DEB_PROBE,printk(KERN_INFO "%s: 82596 at %#3lx,", dev->name, dev->base_addr));
+	DEB(DEB_PROBE,prपूर्णांकk(KERN_INFO "%s: 82596 at %#3lx,", dev->name, dev->base_addr));
 
-	for (i = 0; i < 6; i++)
-		DEB(DEB_PROBE,printk(" %2.2X", dev->dev_addr[i] = eth_addr[i]));
+	क्रम (i = 0; i < 6; i++)
+		DEB(DEB_PROBE,prपूर्णांकk(" %2.2X", dev->dev_addr[i] = eth_addr[i]));
 
-	DEB(DEB_PROBE,printk(" IRQ %d.\n", dev->irq));
+	DEB(DEB_PROBE,prपूर्णांकk(" IRQ %d.\n", dev->irq));
 
-	DEB(DEB_PROBE,printk(KERN_INFO "%s", version));
+	DEB(DEB_PROBE,prपूर्णांकk(KERN_INFO "%s", version));
 
-	/* The 82596-specific entries in the device structure. */
+	/* The 82596-specअगरic entries in the device काष्ठाure. */
 	dev->netdev_ops = &i596_netdev_ops;
-	dev->watchdog_timeo = TX_TIMEOUT;
+	dev->watchकरोg_समयo = TX_TIMEOUT;
 
-	dev->ml_priv = (void *)(dev->mem_start);
+	dev->ml_priv = (व्योम *)(dev->mem_start);
 
 	lp = dev->ml_priv;
-	DEB(DEB_INIT,printk(KERN_DEBUG "%s: lp at 0x%08lx (%zd bytes), "
+	DEB(DEB_INIT,prपूर्णांकk(KERN_DEBUG "%s: lp at 0x%08lx (%zd bytes), "
 			"lp->scb at 0x%08lx\n",
-			dev->name, (unsigned long)lp,
-			sizeof(struct i596_private), (unsigned long)&lp->scb));
-	memset((void *) lp, 0, sizeof(struct i596_private));
+			dev->name, (अचिन्हित दीर्घ)lp,
+			माप(काष्ठा i596_निजी), (अचिन्हित दीर्घ)&lp->scb));
+	स_रखो((व्योम *) lp, 0, माप(काष्ठा i596_निजी));
 
-#ifdef __mc68000__
-	cache_push(virt_to_phys((void *)(dev->mem_start)), 4096);
-	cache_clear(virt_to_phys((void *)(dev->mem_start)), 4096);
-	kernel_set_cachemode((void *)(dev->mem_start), 4096, IOMAP_NOCACHE_SER);
-#endif
+#अगर_घोषित __mc68000__
+	cache_push(virt_to_phys((व्योम *)(dev->mem_start)), 4096);
+	cache_clear(virt_to_phys((व्योम *)(dev->mem_start)), 4096);
+	kernel_set_cachemode((व्योम *)(dev->mem_start), 4096, IOMAP_NOCACHE_SER);
+#पूर्ण_अगर
 	lp->scb.command = 0;
-	lp->scb.cmd = I596_NULL;
-	lp->scb.rfd = I596_NULL;
+	lp->scb.cmd = I596_शून्य;
+	lp->scb.rfd = I596_शून्य;
 	spin_lock_init(&lp->lock);
 
-	err = register_netdev(dev);
-	if (err)
-		goto out2;
-	return dev;
+	err = रेजिस्टर_netdev(dev);
+	अगर (err)
+		जाओ out2;
+	वापस dev;
 out2:
-#ifdef __mc68000__
-	/* XXX This assumes default cache mode to be IOMAP_FULL_CACHING,
+#अगर_घोषित __mc68000__
+	/* XXX This assumes शेष cache mode to be IOMAP_FULL_CACHING,
 	 * XXX which may be invalid (CONFIG_060_WRITETHROUGH)
 	 */
-	kernel_set_cachemode((void *)(dev->mem_start), 4096,
+	kernel_set_cachemode((व्योम *)(dev->mem_start), 4096,
 			IOMAP_FULL_CACHING);
-#endif
-	free_page ((u32)(dev->mem_start));
+#पूर्ण_अगर
+	मुक्त_page ((u32)(dev->mem_start));
 out1:
 out:
-	free_netdev(dev);
-	return ERR_PTR(err);
-}
+	मुक्त_netdev(dev);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static irqreturn_t i596_interrupt(int irq, void *dev_id)
-{
-	struct net_device *dev = dev_id;
-	struct i596_private *lp;
-	short ioaddr;
-	unsigned short status, ack_cmd = 0;
-	int handled = 0;
+अटल irqवापस_t i596_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा i596_निजी *lp;
+	लघु ioaddr;
+	अचिन्हित लघु status, ack_cmd = 0;
+	पूर्णांक handled = 0;
 
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
-		if (*(char *) BVME_LOCAL_IRQ_STAT & BVME_ETHERR) {
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
+		अगर (*(अक्षर *) BVME_LOCAL_IRQ_STAT & BVME_ETHERR) अणु
 			i596_error(irq, dev_id);
-			return IRQ_HANDLED;
-		}
-	}
-#endif
-	if (dev == NULL) {
-		printk(KERN_ERR "i596_interrupt(): irq %d for unknown device.\n", irq);
-		return IRQ_NONE;
-	}
+			वापस IRQ_HANDLED;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	अगर (dev == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "i596_interrupt(): irq %d for unknown device.\n", irq);
+		वापस IRQ_NONE;
+	पूर्ण
 
 	ioaddr = dev->base_addr;
 	lp = dev->ml_priv;
 
 	spin_lock (&lp->lock);
 
-	wait_cmd(dev,lp,100,"i596 interrupt, timeout");
+	रुको_cmd(dev,lp,100,"i596 interrupt, timeout");
 	status = lp->scb.status;
 
-	DEB(DEB_INTS,printk(KERN_DEBUG "%s: i596 interrupt, IRQ %d, status %4.4x.\n",
+	DEB(DEB_INTS,prपूर्णांकk(KERN_DEBUG "%s: i596 interrupt, IRQ %d, status %4.4x.\n",
 			dev->name, irq, status));
 
 	ack_cmd = status & 0xf000;
 
-	if ((status & 0x8000) || (status & 0x2000)) {
-		struct i596_cmd *ptr;
+	अगर ((status & 0x8000) || (status & 0x2000)) अणु
+		काष्ठा i596_cmd *ptr;
 
 		handled = 1;
-		if ((status & 0x8000))
-			DEB(DEB_INTS,printk(KERN_DEBUG "%s: i596 interrupt completed command.\n", dev->name));
-		if ((status & 0x2000))
-			DEB(DEB_INTS,printk(KERN_DEBUG "%s: i596 interrupt command unit inactive %x.\n", dev->name, status & 0x0700));
+		अगर ((status & 0x8000))
+			DEB(DEB_INTS,prपूर्णांकk(KERN_DEBUG "%s: i596 interrupt completed command.\n", dev->name));
+		अगर ((status & 0x2000))
+			DEB(DEB_INTS,prपूर्णांकk(KERN_DEBUG "%s: i596 interrupt command unit inactive %x.\n", dev->name, status & 0x0700));
 
-		while ((lp->cmd_head != I596_NULL) && (lp->cmd_head->status & STAT_C)) {
+		जबतक ((lp->cmd_head != I596_शून्य) && (lp->cmd_head->status & STAT_C)) अणु
 			ptr = lp->cmd_head;
 
-			DEB(DEB_STATUS,printk(KERN_DEBUG "cmd_head->status = %04x, ->command = %04x\n",
+			DEB(DEB_STATUS,prपूर्णांकk(KERN_DEBUG "cmd_head->status = %04x, ->command = %04x\n",
 				       lp->cmd_head->status, lp->cmd_head->command));
 			lp->cmd_head = ptr->v_next;
 			lp->cmd_backlog--;
 
-			switch ((ptr->command) & 0x7) {
-			case CmdTx:
-			    {
-				struct tx_cmd *tx_cmd = (struct tx_cmd *) ptr;
-				struct sk_buff *skb = tx_cmd->skb;
+			चयन ((ptr->command) & 0x7) अणु
+			हाल CmdTx:
+			    अणु
+				काष्ठा tx_cmd *tx_cmd = (काष्ठा tx_cmd *) ptr;
+				काष्ठा sk_buff *skb = tx_cmd->skb;
 
-				if ((ptr->status) & STAT_OK) {
-					DEB(DEB_TXADDR,print_eth(skb->data, "tx-done"));
-				} else {
+				अगर ((ptr->status) & STAT_OK) अणु
+					DEB(DEB_TXADDR,prपूर्णांक_eth(skb->data, "tx-done"));
+				पूर्ण अन्यथा अणु
 					dev->stats.tx_errors++;
-					if ((ptr->status) & 0x0020)
+					अगर ((ptr->status) & 0x0020)
 						dev->stats.collisions++;
-					if (!((ptr->status) & 0x0040))
+					अगर (!((ptr->status) & 0x0040))
 						dev->stats.tx_heartbeat_errors++;
-					if ((ptr->status) & 0x0400)
+					अगर ((ptr->status) & 0x0400)
 						dev->stats.tx_carrier_errors++;
-					if ((ptr->status) & 0x0800)
+					अगर ((ptr->status) & 0x0800)
 						dev->stats.collisions++;
-					if ((ptr->status) & 0x1000)
-						dev->stats.tx_aborted_errors++;
-				}
+					अगर ((ptr->status) & 0x1000)
+						dev->stats.tx_पातed_errors++;
+				पूर्ण
 
 				dev_consume_skb_irq(skb);
 
-				tx_cmd->cmd.command = 0; /* Mark free */
-				break;
-			    }
-			case CmdTDR:
-			    {
-				unsigned short status = ((struct tdr_cmd *)ptr)->status;
+				tx_cmd->cmd.command = 0; /* Mark मुक्त */
+				अवरोध;
+			    पूर्ण
+			हाल CmdTDR:
+			    अणु
+				अचिन्हित लघु status = ((काष्ठा tdr_cmd *)ptr)->status;
 
-				if (status & 0x8000) {
-					DEB(DEB_TDR,printk(KERN_INFO "%s: link ok.\n", dev->name));
-				} else {
-					if (status & 0x4000)
-						printk(KERN_ERR "%s: Transceiver problem.\n", dev->name);
-					if (status & 0x2000)
-						printk(KERN_ERR "%s: Termination problem.\n", dev->name);
-					if (status & 0x1000)
-						printk(KERN_ERR "%s: Short circuit.\n", dev->name);
+				अगर (status & 0x8000) अणु
+					DEB(DEB_TDR,prपूर्णांकk(KERN_INFO "%s: link ok.\n", dev->name));
+				पूर्ण अन्यथा अणु
+					अगर (status & 0x4000)
+						prपूर्णांकk(KERN_ERR "%s: Transceiver problem.\n", dev->name);
+					अगर (status & 0x2000)
+						prपूर्णांकk(KERN_ERR "%s: Termination problem.\n", dev->name);
+					अगर (status & 0x1000)
+						prपूर्णांकk(KERN_ERR "%s: Short circuit.\n", dev->name);
 
-					DEB(DEB_TDR,printk(KERN_INFO "%s: Time %d.\n", dev->name, status & 0x07ff));
-				}
-				break;
-			    }
-			case CmdConfigure:
-			case CmdMulticastList:
-				/* Zap command so set_multicast_list() knows it is free */
+					DEB(DEB_TDR,prपूर्णांकk(KERN_INFO "%s: Time %d.\n", dev->name, status & 0x07ff));
+				पूर्ण
+				अवरोध;
+			    पूर्ण
+			हाल CmdConfigure:
+			हाल CmdMulticastList:
+				/* Zap command so set_multicast_list() knows it is मुक्त */
 				ptr->command = 0;
-				break;
-			}
-			ptr->v_next = ptr->b_next = I596_NULL;
-			lp->last_cmd = jiffies;
-		}
+				अवरोध;
+			पूर्ण
+			ptr->v_next = ptr->b_next = I596_शून्य;
+			lp->last_cmd = jअगरfies;
+		पूर्ण
 
 		ptr = lp->cmd_head;
-		while ((ptr != I596_NULL) && (ptr != lp->cmd_tail)) {
+		जबतक ((ptr != I596_शून्य) && (ptr != lp->cmd_tail)) अणु
 			ptr->command &= 0x1fff;
 			ptr = ptr->v_next;
-		}
+		पूर्ण
 
-		if ((lp->cmd_head != I596_NULL))
+		अगर ((lp->cmd_head != I596_शून्य))
 			ack_cmd |= CUC_START;
 		lp->scb.cmd = WSWAPcmd(virt_to_bus(&lp->cmd_head->status));
-	}
-	if ((status & 0x1000) || (status & 0x4000)) {
-		if ((status & 0x4000))
-			DEB(DEB_INTS,printk(KERN_DEBUG "%s: i596 interrupt received a frame.\n", dev->name));
+	पूर्ण
+	अगर ((status & 0x1000) || (status & 0x4000)) अणु
+		अगर ((status & 0x4000))
+			DEB(DEB_INTS,prपूर्णांकk(KERN_DEBUG "%s: i596 interrupt received a frame.\n", dev->name));
 		i596_rx(dev);
-		/* Only RX_START if stopped - RGH 07-07-96 */
-		if (status & 0x1000) {
-			if (netif_running(dev)) {
-				DEB(DEB_ERRORS,printk(KERN_ERR "%s: i596 interrupt receive unit inactive, status 0x%x\n", dev->name, status));
+		/* Only RX_START अगर stopped - RGH 07-07-96 */
+		अगर (status & 0x1000) अणु
+			अगर (netअगर_running(dev)) अणु
+				DEB(DEB_ERRORS,prपूर्णांकk(KERN_ERR "%s: i596 interrupt receive unit inactive, status 0x%x\n", dev->name, status));
 				ack_cmd |= RX_START;
 				dev->stats.rx_errors++;
-				dev->stats.rx_fifo_errors++;
+				dev->stats.rx_fअगरo_errors++;
 				rebuild_rx_bufs(dev);
-			}
-		}
-	}
-	wait_cmd(dev,lp,100,"i596 interrupt, timeout");
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	रुको_cmd(dev,lp,100,"i596 interrupt, timeout");
 	lp->scb.command = ack_cmd;
 
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x) {
-		/* Ack the interrupt */
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x) अणु
+		/* Ack the पूर्णांकerrupt */
 
-		volatile unsigned char *pcc2 = (unsigned char *) 0xfff42000;
+		अस्थिर अचिन्हित अक्षर *pcc2 = (अचिन्हित अक्षर *) 0xfff42000;
 
 		pcc2[0x2a] |= 0x08;
-	}
-#endif
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
-		volatile unsigned char *ethirq = (unsigned char *) BVME_ETHIRQ_REG;
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
+		अस्थिर अचिन्हित अक्षर *ethirq = (अचिन्हित अक्षर *) BVME_ETHIRQ_REG;
 
 		*ethirq = 1;
 		*ethirq = 3;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	CA(dev);
 
-	DEB(DEB_INTS,printk(KERN_DEBUG "%s: exiting interrupt.\n", dev->name));
+	DEB(DEB_INTS,prपूर्णांकk(KERN_DEBUG "%s: exiting interrupt.\n", dev->name));
 
 	spin_unlock (&lp->lock);
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static int i596_close(struct net_device *dev)
-{
-	struct i596_private *lp = dev->ml_priv;
-	unsigned long flags;
+अटल पूर्णांक i596_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	अचिन्हित दीर्घ flags;
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
-	DEB(DEB_INIT,printk(KERN_DEBUG "%s: Shutting down ethercard, status was %4.4x.\n",
+	DEB(DEB_INIT,prपूर्णांकk(KERN_DEBUG "%s: Shutting down ethercard, status was %4.4x.\n",
 		       dev->name, lp->scb.status));
 
 	spin_lock_irqsave(&lp->lock, flags);
 
-	wait_cmd(dev,lp,100,"close1 timed out");
+	रुको_cmd(dev,lp,100,"close1 timed out");
 	lp->scb.command = CUC_ABORT | RX_ABORT;
 	CA(dev);
 
-	wait_cmd(dev,lp,100,"close2 timed out");
+	रुको_cmd(dev,lp,100,"close2 timed out");
 
 	spin_unlock_irqrestore(&lp->lock, flags);
 	DEB(DEB_STRUCT,i596_display_data(dev));
 	i596_cleanup_cmd(dev,lp);
 
-#ifdef ENABLE_MVME16x_NET
-	if (MACH_IS_MVME16x) {
-		volatile unsigned char *pcc2 = (unsigned char *) 0xfff42000;
+#अगर_घोषित ENABLE_MVME16x_NET
+	अगर (MACH_IS_MVME16x) अणु
+		अस्थिर अचिन्हित अक्षर *pcc2 = (अचिन्हित अक्षर *) 0xfff42000;
 
-		/* Disable all ints */
+		/* Disable all पूर्णांकs */
 		pcc2[0x28] = 1;
 		pcc2[0x2a] = 0x40;
 		pcc2[0x2b] = 0x40;	/* Set snooping bits now! */
-	}
-#endif
-#ifdef ENABLE_BVME6000_NET
-	if (MACH_IS_BVME6000) {
-		volatile unsigned char *ethirq = (unsigned char *) BVME_ETHIRQ_REG;
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित ENABLE_BVME6000_NET
+	अगर (MACH_IS_BVME6000) अणु
+		अस्थिर अचिन्हित अक्षर *ethirq = (अचिन्हित अक्षर *) BVME_ETHIRQ_REG;
 
 		*ethirq = 1;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef ENABLE_MVME16x_NET
-	free_irq(0x56, dev);
-#endif
-	free_irq(dev->irq, dev);
-	remove_rx_bufs(dev);
+#अगर_घोषित ENABLE_MVME16x_NET
+	मुक्त_irq(0x56, dev);
+#पूर्ण_अगर
+	मुक्त_irq(dev->irq, dev);
+	हटाओ_rx_bufs(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *    Set or clear the multicast filter for this adaptor.
+ *    Set or clear the multicast filter क्रम this adaptor.
  */
 
-static void set_multicast_list(struct net_device *dev)
-{
-	struct i596_private *lp = dev->ml_priv;
-	int config = 0, cnt;
+अटल व्योम set_multicast_list(काष्ठा net_device *dev)
+अणु
+	काष्ठा i596_निजी *lp = dev->ml_priv;
+	पूर्णांक config = 0, cnt;
 
-	DEB(DEB_MULTI,printk(KERN_DEBUG "%s: set multicast list, %d entries, promisc %s, allmulti %s\n",
+	DEB(DEB_MULTI,prपूर्णांकk(KERN_DEBUG "%s: set multicast list, %d entries, promisc %s, allmulti %s\n",
 		dev->name, netdev_mc_count(dev),
 		dev->flags & IFF_PROMISC  ? "ON" : "OFF",
 		dev->flags & IFF_ALLMULTI ? "ON" : "OFF"));
 
-	if (wait_cfg(dev, &lp->cf_cmd.cmd, 1000, "config change request timed out"))
-		return;
+	अगर (रुको_cfg(dev, &lp->cf_cmd.cmd, 1000, "config change request timed out"))
+		वापस;
 
-	if ((dev->flags & IFF_PROMISC) && !(lp->cf_cmd.i596_config[8] & 0x01)) {
+	अगर ((dev->flags & IFF_PROMISC) && !(lp->cf_cmd.i596_config[8] & 0x01)) अणु
 		lp->cf_cmd.i596_config[8] |= 0x01;
 		config = 1;
-	}
-	if (!(dev->flags & IFF_PROMISC) && (lp->cf_cmd.i596_config[8] & 0x01)) {
+	पूर्ण
+	अगर (!(dev->flags & IFF_PROMISC) && (lp->cf_cmd.i596_config[8] & 0x01)) अणु
 		lp->cf_cmd.i596_config[8] &= ~0x01;
 		config = 1;
-	}
-	if ((dev->flags & IFF_ALLMULTI) && (lp->cf_cmd.i596_config[11] & 0x20)) {
+	पूर्ण
+	अगर ((dev->flags & IFF_ALLMULTI) && (lp->cf_cmd.i596_config[11] & 0x20)) अणु
 		lp->cf_cmd.i596_config[11] &= ~0x20;
 		config = 1;
-	}
-	if (!(dev->flags & IFF_ALLMULTI) && !(lp->cf_cmd.i596_config[11] & 0x20)) {
+	पूर्ण
+	अगर (!(dev->flags & IFF_ALLMULTI) && !(lp->cf_cmd.i596_config[11] & 0x20)) अणु
 		lp->cf_cmd.i596_config[11] |= 0x20;
 		config = 1;
-	}
-	if (config) {
+	पूर्ण
+	अगर (config) अणु
 		lp->cf_cmd.cmd.command = CmdConfigure;
 		i596_add_cmd(dev, &lp->cf_cmd.cmd);
-	}
+	पूर्ण
 
 	cnt = netdev_mc_count(dev);
-	if (cnt > MAX_MC_CNT)
-	{
+	अगर (cnt > MAX_MC_CNT)
+	अणु
 		cnt = MAX_MC_CNT;
-		printk(KERN_ERR "%s: Only %d multicast addresses supported",
+		prपूर्णांकk(KERN_ERR "%s: Only %d multicast addresses supported",
 			dev->name, cnt);
-	}
+	पूर्ण
 
-	if (!netdev_mc_empty(dev)) {
-		struct netdev_hw_addr *ha;
-		unsigned char *cp;
-		struct mc_cmd *cmd;
+	अगर (!netdev_mc_empty(dev)) अणु
+		काष्ठा netdev_hw_addr *ha;
+		अचिन्हित अक्षर *cp;
+		काष्ठा mc_cmd *cmd;
 
-		if (wait_cfg(dev, &lp->mc_cmd.cmd, 1000, "multicast list change request timed out"))
-			return;
+		अगर (रुको_cfg(dev, &lp->mc_cmd.cmd, 1000, "multicast list change request timed out"))
+			वापस;
 		cmd = &lp->mc_cmd;
 		cmd->cmd.command = CmdMulticastList;
 		cmd->mc_cnt = cnt * ETH_ALEN;
 		cp = cmd->mc_addrs;
-		netdev_for_each_mc_addr(ha, dev) {
-			if (!cnt--)
-				break;
-			memcpy(cp, ha->addr, ETH_ALEN);
-			if (i596_debug > 1)
-				DEB(DEB_MULTI,printk(KERN_INFO "%s: Adding address %pM\n",
+		netdev_क्रम_each_mc_addr(ha, dev) अणु
+			अगर (!cnt--)
+				अवरोध;
+			स_नकल(cp, ha->addr, ETH_ALEN);
+			अगर (i596_debug > 1)
+				DEB(DEB_MULTI,prपूर्णांकk(KERN_INFO "%s: Adding address %pM\n",
 						dev->name, cp));
 			cp += ETH_ALEN;
-		}
+		पूर्ण
 		i596_add_cmd(dev, &cmd->cmd);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef MODULE
-static struct net_device *dev_82596;
+#अगर_घोषित MODULE
+अटल काष्ठा net_device *dev_82596;
 
-static int debug = -1;
-module_param(debug, int, 0);
+अटल पूर्णांक debug = -1;
+module_param(debug, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "i82596 debug mask");
 
-int __init init_module(void)
-{
-	if (debug >= 0)
+पूर्णांक __init init_module(व्योम)
+अणु
+	अगर (debug >= 0)
 		i596_debug = debug;
 	dev_82596 = i82596_probe(-1);
-	return PTR_ERR_OR_ZERO(dev_82596);
-}
+	वापस PTR_ERR_OR_ZERO(dev_82596);
+पूर्ण
 
-void __exit cleanup_module(void)
-{
-	unregister_netdev(dev_82596);
-#ifdef __mc68000__
-	/* XXX This assumes default cache mode to be IOMAP_FULL_CACHING,
+व्योम __निकास cleanup_module(व्योम)
+अणु
+	unरेजिस्टर_netdev(dev_82596);
+#अगर_घोषित __mc68000__
+	/* XXX This assumes शेष cache mode to be IOMAP_FULL_CACHING,
 	 * XXX which may be invalid (CONFIG_060_WRITETHROUGH)
 	 */
 
-	kernel_set_cachemode((void *)(dev_82596->mem_start), 4096,
+	kernel_set_cachemode((व्योम *)(dev_82596->mem_start), 4096,
 			IOMAP_FULL_CACHING);
-#endif
-	free_page ((u32)(dev_82596->mem_start));
-	free_netdev(dev_82596);
-}
+#पूर्ण_अगर
+	मुक्त_page ((u32)(dev_82596->mem_start));
+	मुक्त_netdev(dev_82596);
+पूर्ण
 
-#endif				/* MODULE */
+#पूर्ण_अगर				/* MODULE */

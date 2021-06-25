@@ -1,205 +1,206 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (c) 2016 BayLibre, SAS.
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  *
  */
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/watchdog.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/watchकरोg.h>
 
-#define DEFAULT_TIMEOUT	30	/* seconds */
+#घोषणा DEFAULT_TIMEOUT	30	/* seconds */
 
-#define GXBB_WDT_CTRL_REG			0x0
-#define GXBB_WDT_TCNT_REG			0x8
-#define GXBB_WDT_RSET_REG			0xc
+#घोषणा GXBB_WDT_CTRL_REG			0x0
+#घोषणा GXBB_WDT_TCNT_REG			0x8
+#घोषणा GXBB_WDT_RSET_REG			0xc
 
-#define GXBB_WDT_CTRL_CLKDIV_EN			BIT(25)
-#define GXBB_WDT_CTRL_CLK_EN			BIT(24)
-#define GXBB_WDT_CTRL_EE_RESET			BIT(21)
-#define GXBB_WDT_CTRL_EN			BIT(18)
-#define GXBB_WDT_CTRL_DIV_MASK			(BIT(18) - 1)
+#घोषणा GXBB_WDT_CTRL_CLKDIV_EN			BIT(25)
+#घोषणा GXBB_WDT_CTRL_CLK_EN			BIT(24)
+#घोषणा GXBB_WDT_CTRL_EE_RESET			BIT(21)
+#घोषणा GXBB_WDT_CTRL_EN			BIT(18)
+#घोषणा GXBB_WDT_CTRL_DIV_MASK			(BIT(18) - 1)
 
-#define GXBB_WDT_TCNT_SETUP_MASK		(BIT(16) - 1)
-#define GXBB_WDT_TCNT_CNT_SHIFT			16
+#घोषणा GXBB_WDT_TCNT_SETUP_MASK		(BIT(16) - 1)
+#घोषणा GXBB_WDT_TCNT_CNT_SHIFT			16
 
-struct meson_gxbb_wdt {
-	void __iomem *reg_base;
-	struct watchdog_device wdt_dev;
-	struct clk *clk;
-};
+काष्ठा meson_gxbb_wdt अणु
+	व्योम __iomem *reg_base;
+	काष्ठा watchकरोg_device wdt_dev;
+	काष्ठा clk *clk;
+पूर्ण;
 
-static int meson_gxbb_wdt_start(struct watchdog_device *wdt_dev)
-{
-	struct meson_gxbb_wdt *data = watchdog_get_drvdata(wdt_dev);
+अटल पूर्णांक meson_gxbb_wdt_start(काष्ठा watchकरोg_device *wdt_dev)
+अणु
+	काष्ठा meson_gxbb_wdt *data = watchकरोg_get_drvdata(wdt_dev);
 
-	writel(readl(data->reg_base + GXBB_WDT_CTRL_REG) | GXBB_WDT_CTRL_EN,
+	ग_लिखोl(पढ़ोl(data->reg_base + GXBB_WDT_CTRL_REG) | GXBB_WDT_CTRL_EN,
 	       data->reg_base + GXBB_WDT_CTRL_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson_gxbb_wdt_stop(struct watchdog_device *wdt_dev)
-{
-	struct meson_gxbb_wdt *data = watchdog_get_drvdata(wdt_dev);
+अटल पूर्णांक meson_gxbb_wdt_stop(काष्ठा watchकरोg_device *wdt_dev)
+अणु
+	काष्ठा meson_gxbb_wdt *data = watchकरोg_get_drvdata(wdt_dev);
 
-	writel(readl(data->reg_base + GXBB_WDT_CTRL_REG) & ~GXBB_WDT_CTRL_EN,
+	ग_लिखोl(पढ़ोl(data->reg_base + GXBB_WDT_CTRL_REG) & ~GXBB_WDT_CTRL_EN,
 	       data->reg_base + GXBB_WDT_CTRL_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson_gxbb_wdt_ping(struct watchdog_device *wdt_dev)
-{
-	struct meson_gxbb_wdt *data = watchdog_get_drvdata(wdt_dev);
+अटल पूर्णांक meson_gxbb_wdt_ping(काष्ठा watchकरोg_device *wdt_dev)
+अणु
+	काष्ठा meson_gxbb_wdt *data = watchकरोg_get_drvdata(wdt_dev);
 
-	writel(0, data->reg_base + GXBB_WDT_RSET_REG);
+	ग_लिखोl(0, data->reg_base + GXBB_WDT_RSET_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson_gxbb_wdt_set_timeout(struct watchdog_device *wdt_dev,
-				      unsigned int timeout)
-{
-	struct meson_gxbb_wdt *data = watchdog_get_drvdata(wdt_dev);
-	unsigned long tcnt = timeout * 1000;
+अटल पूर्णांक meson_gxbb_wdt_set_समयout(काष्ठा watchकरोg_device *wdt_dev,
+				      अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा meson_gxbb_wdt *data = watchकरोg_get_drvdata(wdt_dev);
+	अचिन्हित दीर्घ tcnt = समयout * 1000;
 
-	if (tcnt > GXBB_WDT_TCNT_SETUP_MASK)
+	अगर (tcnt > GXBB_WDT_TCNT_SETUP_MASK)
 		tcnt = GXBB_WDT_TCNT_SETUP_MASK;
 
-	wdt_dev->timeout = timeout;
+	wdt_dev->समयout = समयout;
 
 	meson_gxbb_wdt_ping(wdt_dev);
 
-	writel(tcnt, data->reg_base + GXBB_WDT_TCNT_REG);
+	ग_लिखोl(tcnt, data->reg_base + GXBB_WDT_TCNT_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int meson_gxbb_wdt_get_timeleft(struct watchdog_device *wdt_dev)
-{
-	struct meson_gxbb_wdt *data = watchdog_get_drvdata(wdt_dev);
-	unsigned long reg;
+अटल अचिन्हित पूर्णांक meson_gxbb_wdt_get_समयleft(काष्ठा watchकरोg_device *wdt_dev)
+अणु
+	काष्ठा meson_gxbb_wdt *data = watchकरोg_get_drvdata(wdt_dev);
+	अचिन्हित दीर्घ reg;
 
-	reg = readl(data->reg_base + GXBB_WDT_TCNT_REG);
+	reg = पढ़ोl(data->reg_base + GXBB_WDT_TCNT_REG);
 
-	return ((reg & GXBB_WDT_TCNT_SETUP_MASK) -
+	वापस ((reg & GXBB_WDT_TCNT_SETUP_MASK) -
 		(reg >> GXBB_WDT_TCNT_CNT_SHIFT)) / 1000;
-}
+पूर्ण
 
-static const struct watchdog_ops meson_gxbb_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops meson_gxbb_wdt_ops = अणु
 	.start = meson_gxbb_wdt_start,
 	.stop = meson_gxbb_wdt_stop,
 	.ping = meson_gxbb_wdt_ping,
-	.set_timeout = meson_gxbb_wdt_set_timeout,
-	.get_timeleft = meson_gxbb_wdt_get_timeleft,
-};
+	.set_समयout = meson_gxbb_wdt_set_समयout,
+	.get_समयleft = meson_gxbb_wdt_get_समयleft,
+पूर्ण;
 
-static const struct watchdog_info meson_gxbb_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info meson_gxbb_wdt_info = अणु
 	.identity = "Meson GXBB Watchdog",
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
-};
+पूर्ण;
 
-static int __maybe_unused meson_gxbb_wdt_resume(struct device *dev)
-{
-	struct meson_gxbb_wdt *data = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused meson_gxbb_wdt_resume(काष्ठा device *dev)
+अणु
+	काष्ठा meson_gxbb_wdt *data = dev_get_drvdata(dev);
 
-	if (watchdog_active(&data->wdt_dev))
+	अगर (watchकरोg_active(&data->wdt_dev))
 		meson_gxbb_wdt_start(&data->wdt_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused meson_gxbb_wdt_suspend(struct device *dev)
-{
-	struct meson_gxbb_wdt *data = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused meson_gxbb_wdt_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा meson_gxbb_wdt *data = dev_get_drvdata(dev);
 
-	if (watchdog_active(&data->wdt_dev))
+	अगर (watchकरोg_active(&data->wdt_dev))
 		meson_gxbb_wdt_stop(&data->wdt_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops meson_gxbb_wdt_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops meson_gxbb_wdt_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(meson_gxbb_wdt_suspend, meson_gxbb_wdt_resume)
-};
+पूर्ण;
 
-static const struct of_device_id meson_gxbb_wdt_dt_ids[] = {
-	 { .compatible = "amlogic,meson-gxbb-wdt", },
-	 { /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id meson_gxbb_wdt_dt_ids[] = अणु
+	 अणु .compatible = "amlogic,meson-gxbb-wdt", पूर्ण,
+	 अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, meson_gxbb_wdt_dt_ids);
 
-static void meson_clk_disable_unprepare(void *data)
-{
+अटल व्योम meson_clk_disable_unprepare(व्योम *data)
+अणु
 	clk_disable_unprepare(data);
-}
+पूर्ण
 
-static int meson_gxbb_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct meson_gxbb_wdt *data;
-	int ret;
+अटल पूर्णांक meson_gxbb_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा meson_gxbb_wdt *data;
+	पूर्णांक ret;
 
-	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	data->reg_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(data->reg_base))
-		return PTR_ERR(data->reg_base);
+	data->reg_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(data->reg_base))
+		वापस PTR_ERR(data->reg_base);
 
-	data->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(data->clk))
-		return PTR_ERR(data->clk);
+	data->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(data->clk))
+		वापस PTR_ERR(data->clk);
 
 	ret = clk_prepare_enable(data->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = devm_add_action_or_reset(dev, meson_clk_disable_unprepare,
 				       data->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
 	data->wdt_dev.parent = dev;
 	data->wdt_dev.info = &meson_gxbb_wdt_info;
 	data->wdt_dev.ops = &meson_gxbb_wdt_ops;
 	data->wdt_dev.max_hw_heartbeat_ms = GXBB_WDT_TCNT_SETUP_MASK;
-	data->wdt_dev.min_timeout = 1;
-	data->wdt_dev.timeout = DEFAULT_TIMEOUT;
-	watchdog_set_drvdata(&data->wdt_dev, data);
+	data->wdt_dev.min_समयout = 1;
+	data->wdt_dev.समयout = DEFAULT_TIMEOUT;
+	watchकरोg_set_drvdata(&data->wdt_dev, data);
 
-	/* Setup with 1ms timebase */
-	writel(((clk_get_rate(data->clk) / 1000) & GXBB_WDT_CTRL_DIV_MASK) |
+	/* Setup with 1ms समयbase */
+	ग_लिखोl(((clk_get_rate(data->clk) / 1000) & GXBB_WDT_CTRL_DIV_MASK) |
 		GXBB_WDT_CTRL_EE_RESET |
 		GXBB_WDT_CTRL_CLK_EN |
 		GXBB_WDT_CTRL_CLKDIV_EN,
 		data->reg_base + GXBB_WDT_CTRL_REG);
 
-	meson_gxbb_wdt_set_timeout(&data->wdt_dev, data->wdt_dev.timeout);
+	meson_gxbb_wdt_set_समयout(&data->wdt_dev, data->wdt_dev.समयout);
 
-	watchdog_stop_on_reboot(&data->wdt_dev);
-	return devm_watchdog_register_device(dev, &data->wdt_dev);
-}
+	watchकरोg_stop_on_reboot(&data->wdt_dev);
+	वापस devm_watchकरोg_रेजिस्टर_device(dev, &data->wdt_dev);
+पूर्ण
 
-static struct platform_driver meson_gxbb_wdt_driver = {
+अटल काष्ठा platक्रमm_driver meson_gxbb_wdt_driver = अणु
 	.probe	= meson_gxbb_wdt_probe,
-	.driver = {
+	.driver = अणु
 		.name = "meson-gxbb-wdt",
 		.pm = &meson_gxbb_wdt_pm_ops,
 		.of_match_table	= meson_gxbb_wdt_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(meson_gxbb_wdt_driver);
+module_platक्रमm_driver(meson_gxbb_wdt_driver);
 
 MODULE_AUTHOR("Neil Armstrong <narmstrong@baylibre.com>");
 MODULE_DESCRIPTION("Amlogic Meson GXBB Watchdog timer driver");

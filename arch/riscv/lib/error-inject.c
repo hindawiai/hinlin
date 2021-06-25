@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/error-injection.h>
-#include <linux/kprobes.h>
+#समावेश <linux/error-injection.h>
+#समावेश <linux/kprobes.h>
 
-void override_function_with_return(struct pt_regs *regs)
-{
-	instruction_pointer_set(regs, regs->ra);
-}
-NOKPROBE_SYMBOL(override_function_with_return);
+व्योम override_function_with_वापस(काष्ठा pt_regs *regs)
+अणु
+	inकाष्ठाion_poपूर्णांकer_set(regs, regs->ra);
+पूर्ण
+NOKPROBE_SYMBOL(override_function_with_वापस);

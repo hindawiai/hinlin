@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2011 Richard Weinberger <richrd@nod.at>
+ * Copyright (C) 2011 Riअक्षरd Weinberger <richrd@nod.at>
  *
- * This vDSO turns all calls into a syscall so that UML can trap them.
+ * This vDSO turns all calls पूर्णांकo a syscall so that UML can trap them.
  */
 
 
-/* Disable profiling for userspace code */
-#define DISABLE_BRANCH_PROFILING
+/* Disable profiling क्रम userspace code */
+#घोषणा DISABLE_BRANCH_PROFILING
 
-#include <linux/time.h>
-#include <linux/getcpu.h>
-#include <asm/unistd.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/अ_लोpu.h>
+#समावेश <यंत्र/unistd.h>
 
-int __vdso_clock_gettime(clockid_t clock, struct __kernel_old_timespec *ts)
-{
-	long ret;
+पूर्णांक __vdso_घड़ी_समय_लो(घड़ीid_t घड़ी, काष्ठा __kernel_old_बारpec *ts)
+अणु
+	दीर्घ ret;
 
-	asm("syscall" : "=a" (ret) :
-		"0" (__NR_clock_gettime), "D" (clock), "S" (ts) : "memory");
+	यंत्र("syscall" : "=a" (ret) :
+		"0" (__NR_घड़ी_समय_लो), "D" (घड़ी), "S" (ts) : "memory");
 
-	return ret;
-}
-int clock_gettime(clockid_t, struct __kernel_old_timespec *)
+	वापस ret;
+पूर्ण
+पूर्णांक घड़ी_समय_लो(घड़ीid_t, काष्ठा __kernel_old_बारpec *)
 	__attribute__((weak, alias("__vdso_clock_gettime")));
 
-int __vdso_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz)
-{
-	long ret;
+पूर्णांक __vdso_समय_लोofday(काष्ठा __kernel_old_समयval *tv, काष्ठा समयzone *tz)
+अणु
+	दीर्घ ret;
 
-	asm("syscall" : "=a" (ret) :
-		"0" (__NR_gettimeofday), "D" (tv), "S" (tz) : "memory");
+	यंत्र("syscall" : "=a" (ret) :
+		"0" (__NR_समय_लोofday), "D" (tv), "S" (tz) : "memory");
 
-	return ret;
-}
-int gettimeofday(struct __kernel_old_timeval *, struct timezone *)
+	वापस ret;
+पूर्ण
+पूर्णांक समय_लोofday(काष्ठा __kernel_old_समयval *, काष्ठा समयzone *)
 	__attribute__((weak, alias("__vdso_gettimeofday")));
 
-__kernel_old_time_t __vdso_time(__kernel_old_time_t *t)
-{
-	long secs;
+__kernel_old_समय_प्रकार __vdso_समय(__kernel_old_समय_प्रकार *t)
+अणु
+	दीर्घ secs;
 
-	asm volatile("syscall"
+	यंत्र अस्थिर("syscall"
 		: "=a" (secs)
-		: "0" (__NR_time), "D" (t) : "cc", "r11", "cx", "memory");
+		: "0" (__NR_समय), "D" (t) : "cc", "r11", "cx", "memory");
 
-	return secs;
-}
-__kernel_old_time_t time(__kernel_old_time_t *t) __attribute__((weak, alias("__vdso_time")));
+	वापस secs;
+पूर्ण
+__kernel_old_समय_प्रकार समय(__kernel_old_समय_प्रकार *t) __attribute__((weak, alias("__vdso_time")));
 
-long
-__vdso_getcpu(unsigned *cpu, unsigned *node, struct getcpu_cache *unused)
-{
+दीर्घ
+__vdso_अ_लोpu(अचिन्हित *cpu, अचिन्हित *node, काष्ठा अ_लोpu_cache *unused)
+अणु
 	/*
-	 * UML does not support SMP, we can cheat here. :)
+	 * UML करोes not support SMP, we can cheat here. :)
 	 */
 
-	if (cpu)
+	अगर (cpu)
 		*cpu = 0;
-	if (node)
+	अगर (node)
 		*node = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-long getcpu(unsigned *cpu, unsigned *node, struct getcpu_cache *tcache)
+दीर्घ अ_लोpu(अचिन्हित *cpu, अचिन्हित *node, काष्ठा अ_लोpu_cache *tcache)
 	__attribute__((weak, alias("__vdso_getcpu")));

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#ifndef __RTW_ANDROID_H__
-#define __RTW_ANDROID_H__
+#अगर_अघोषित __RTW_ANDROID_H__
+#घोषणा __RTW_ANDROID_H__
 
-#include <linux/module.h>
-#include <linux/netdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
 
-enum ANDROID_WIFI_CMD {
+क्रमागत ANDROID_WIFI_CMD अणु
 	ANDROID_WIFI_CMD_START,
 	ANDROID_WIFI_CMD_STOP,
 	ANDROID_WIFI_CMD_SCAN_ACTIVE,
@@ -43,9 +44,9 @@ enum ANDROID_WIFI_CMD {
 	ANDROID_WIFI_CMD_WFD_SET_MAX_TPUT,
 	ANDROID_WIFI_CMD_WFD_SET_DEVTYPE,
 	ANDROID_WIFI_CMD_MAX
-};
+पूर्ण;
 
-int rtw_android_cmdstr_to_num(char *cmdstr);
-int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd);
+पूर्णांक rtw_android_cmdstr_to_num(अक्षर *cmdstr);
+पूर्णांक rtw_android_priv_cmd(काष्ठा net_device *net, काष्ठा अगरreq *अगरr, पूर्णांक cmd);
 
-#endif /* __RTW_ANDROID_H__ */
+#पूर्ण_अगर /* __RTW_ANDROID_H__ */

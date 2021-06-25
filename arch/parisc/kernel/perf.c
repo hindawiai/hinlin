@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Parisc performance counters
- *  Copyright (C) 2001 Randolph Chung <tausq@debian.org>
+ *  Parisc perक्रमmance counters
+ *  Copyright (C) 2001 Ranकरोlph Chung <tausq@debian.org>
  *
  *  This code is derived, with permission, from HP/UX sources.
  */
@@ -9,197 +10,197 @@
 /*
  *  Edited comment from original sources:
  *
- *  This driver programs the PCX-U/PCX-W performance counters
+ *  This driver programs the PCX-U/PCX-W perक्रमmance counters
  *  on the PA-RISC 2.0 chips.  The driver keeps all images now
- *  internally to the kernel to hopefully eliminate the possibility
- *  of a bad image halting the CPU.  Also, there are different
- *  images for the PCX-W and later chips vs the PCX-U chips.
+ *  पूर्णांकernally to the kernel to hopefully eliminate the possibility
+ *  of a bad image halting the CPU.  Also, there are dअगरferent
+ *  images क्रम the PCX-W and later chips vs the PCX-U chips.
  *
- *  Only 1 process is allowed to access the driver at any time,
- *  so the only protection that is needed is at open and close.
+ *  Only 1 process is allowed to access the driver at any समय,
+ *  so the only protection that is needed is at खोलो and बंद.
  *  A variable "perf_enabled" is used to hold the state of the
  *  driver.  The spinlock "perf_lock" is used to protect the
- *  modification of the state during open/close operations so
- *  multiple processes don't get into the driver simultaneously.
+ *  modअगरication of the state during खोलो/बंद operations so
+ *  multiple processes करोn't get पूर्णांकo the driver simultaneously.
  *
  *  This driver accesses the processor directly vs going through
- *  the PDC INTRIGUE calls.  This is done to eliminate bugs introduced
- *  in various PDC revisions.  The code is much more maintainable
+ *  the PDC INTRIGUE calls.  This is करोne to eliminate bugs पूर्णांकroduced
+ *  in various PDC revisions.  The code is much more मुख्यtainable
  *  and reliable this way vs having to debug on every version of PDC
  *  on every box.
  */
 
-#include <linux/capability.h>
-#include <linux/init.h>
-#include <linux/proc_fs.h>
-#include <linux/miscdevice.h>
-#include <linux/spinlock.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/init.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/spinlock.h>
 
-#include <linux/uaccess.h>
-#include <asm/perf.h>
-#include <asm/parisc-device.h>
-#include <asm/processor.h>
-#include <asm/runway.h>
-#include <asm/io.h>		/* for __raw_read() */
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/perf.h>
+#समावेश <यंत्र/parisc-device.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/runway.h>
+#समावेश <यंत्र/पन.स>		/* क्रम __raw_पढ़ो() */
 
-#include "perf_images.h"
+#समावेश "perf_images.h"
 
-#define MAX_RDR_WORDS	24
-#define PERF_VERSION	2	/* derived from hpux's PI v2 interface */
+#घोषणा MAX_RDR_WORDS	24
+#घोषणा PERF_VERSION	2	/* derived from hpux's PI v2 पूर्णांकerface */
 
 /* definition of RDR regs */
-struct rdr_tbl_ent {
-	uint16_t	width;
-	uint8_t		num_words;
-	uint8_t		write_control;
-};
+काष्ठा rdr_tbl_ent अणु
+	uपूर्णांक16_t	width;
+	uपूर्णांक8_t		num_words;
+	uपूर्णांक8_t		ग_लिखो_control;
+पूर्ण;
 
-static int perf_processor_interface __read_mostly = UNKNOWN_INTF;
-static int perf_enabled __read_mostly;
-static DEFINE_SPINLOCK(perf_lock);
-struct parisc_device *cpu_device __read_mostly;
+अटल पूर्णांक perf_processor_पूर्णांकerface __पढ़ो_mostly = UNKNOWN_INTF;
+अटल पूर्णांक perf_enabled __पढ़ो_mostly;
+अटल DEFINE_SPINLOCK(perf_lock);
+काष्ठा parisc_device *cpu_device __पढ़ो_mostly;
 
-/* RDRs to write for PCX-W */
-static const int perf_rdrs_W[] =
-	{ 0, 1, 4, 5, 6, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, -1 };
+/* RDRs to ग_लिखो क्रम PCX-W */
+अटल स्थिर पूर्णांक perf_rdrs_W[] =
+	अणु 0, 1, 4, 5, 6, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, -1 पूर्ण;
 
-/* RDRs to write for PCX-U */
-static const int perf_rdrs_U[] =
-	{ 0, 1, 4, 5, 6, 7, 16, 17, 18, 20, 21, 22, 23, 24, 25, -1 };
+/* RDRs to ग_लिखो क्रम PCX-U */
+अटल स्थिर पूर्णांक perf_rdrs_U[] =
+	अणु 0, 1, 4, 5, 6, 7, 16, 17, 18, 20, 21, 22, 23, 24, 25, -1 पूर्ण;
 
-/* RDR register descriptions for PCX-W */
-static const struct rdr_tbl_ent perf_rdr_tbl_W[] = {
-	{ 19,	1,	8 },   /* RDR 0 */
-	{ 16,	1,	16 },  /* RDR 1 */
-	{ 72,	2,	0 },   /* RDR 2 */
-	{ 81,	2,	0 },   /* RDR 3 */
-	{ 328,	6,	0 },   /* RDR 4 */
-	{ 160,	3,	0 },   /* RDR 5 */
-	{ 336,	6,	0 },   /* RDR 6 */
-	{ 164,	3,	0 },   /* RDR 7 */
-	{ 0,	0,	0 },   /* RDR 8 */
-	{ 35,	1,	0 },   /* RDR 9 */
-	{ 6,	1,	0 },   /* RDR 10 */
-	{ 18,	1,	0 },   /* RDR 11 */
-	{ 13,	1,	0 },   /* RDR 12 */
-	{ 8,	1,	0 },   /* RDR 13 */
-	{ 8,	1,	0 },   /* RDR 14 */
-	{ 8,	1,	0 },   /* RDR 15 */
-	{ 1530,	24,	0 },   /* RDR 16 */
-	{ 16,	1,	0 },   /* RDR 17 */
-	{ 4,	1,	0 },   /* RDR 18 */
-	{ 0,	0,	0 },   /* RDR 19 */
-	{ 152,	3,	24 },  /* RDR 20 */
-	{ 152,	3,	24 },  /* RDR 21 */
-	{ 233,	4,	48 },  /* RDR 22 */
-	{ 233,	4,	48 },  /* RDR 23 */
-	{ 71,	2,	0 },   /* RDR 24 */
-	{ 71,	2,	0 },   /* RDR 25 */
-	{ 11,	1,	0 },   /* RDR 26 */
-	{ 18,	1,	0 },   /* RDR 27 */
-	{ 128,	2,	0 },   /* RDR 28 */
-	{ 0,	0,	0 },   /* RDR 29 */
-	{ 16,	1,	0 },   /* RDR 30 */
-	{ 16,	1,	0 },   /* RDR 31 */
-};
+/* RDR रेजिस्टर descriptions क्रम PCX-W */
+अटल स्थिर काष्ठा rdr_tbl_ent perf_rdr_tbl_W[] = अणु
+	अणु 19,	1,	8 पूर्ण,   /* RDR 0 */
+	अणु 16,	1,	16 पूर्ण,  /* RDR 1 */
+	अणु 72,	2,	0 पूर्ण,   /* RDR 2 */
+	अणु 81,	2,	0 पूर्ण,   /* RDR 3 */
+	अणु 328,	6,	0 पूर्ण,   /* RDR 4 */
+	अणु 160,	3,	0 पूर्ण,   /* RDR 5 */
+	अणु 336,	6,	0 पूर्ण,   /* RDR 6 */
+	अणु 164,	3,	0 पूर्ण,   /* RDR 7 */
+	अणु 0,	0,	0 पूर्ण,   /* RDR 8 */
+	अणु 35,	1,	0 पूर्ण,   /* RDR 9 */
+	अणु 6,	1,	0 पूर्ण,   /* RDR 10 */
+	अणु 18,	1,	0 पूर्ण,   /* RDR 11 */
+	अणु 13,	1,	0 पूर्ण,   /* RDR 12 */
+	अणु 8,	1,	0 पूर्ण,   /* RDR 13 */
+	अणु 8,	1,	0 पूर्ण,   /* RDR 14 */
+	अणु 8,	1,	0 पूर्ण,   /* RDR 15 */
+	अणु 1530,	24,	0 पूर्ण,   /* RDR 16 */
+	अणु 16,	1,	0 पूर्ण,   /* RDR 17 */
+	अणु 4,	1,	0 पूर्ण,   /* RDR 18 */
+	अणु 0,	0,	0 पूर्ण,   /* RDR 19 */
+	अणु 152,	3,	24 पूर्ण,  /* RDR 20 */
+	अणु 152,	3,	24 पूर्ण,  /* RDR 21 */
+	अणु 233,	4,	48 पूर्ण,  /* RDR 22 */
+	अणु 233,	4,	48 पूर्ण,  /* RDR 23 */
+	अणु 71,	2,	0 पूर्ण,   /* RDR 24 */
+	अणु 71,	2,	0 पूर्ण,   /* RDR 25 */
+	अणु 11,	1,	0 पूर्ण,   /* RDR 26 */
+	अणु 18,	1,	0 पूर्ण,   /* RDR 27 */
+	अणु 128,	2,	0 पूर्ण,   /* RDR 28 */
+	अणु 0,	0,	0 पूर्ण,   /* RDR 29 */
+	अणु 16,	1,	0 पूर्ण,   /* RDR 30 */
+	अणु 16,	1,	0 पूर्ण,   /* RDR 31 */
+पूर्ण;
 
-/* RDR register descriptions for PCX-U */
-static const struct rdr_tbl_ent perf_rdr_tbl_U[] = {
-	{ 19,	1,	8 },              /* RDR 0 */
-	{ 32,	1,	16 },             /* RDR 1 */
-	{ 20,	1,	0 },              /* RDR 2 */
-	{ 0,	0,	0 },              /* RDR 3 */
-	{ 344,	6,	0 },              /* RDR 4 */
-	{ 176,	3,	0 },              /* RDR 5 */
-	{ 336,	6,	0 },              /* RDR 6 */
-	{ 0,	0,	0 },              /* RDR 7 */
-	{ 0,	0,	0 },              /* RDR 8 */
-	{ 0,	0,	0 },              /* RDR 9 */
-	{ 28,	1,	0 },              /* RDR 10 */
-	{ 33,	1,	0 },              /* RDR 11 */
-	{ 0,	0,	0 },              /* RDR 12 */
-	{ 230,	4,	0 },              /* RDR 13 */
-	{ 32,	1,	0 },              /* RDR 14 */
-	{ 128,	2,	0 },              /* RDR 15 */
-	{ 1494,	24,	0 },              /* RDR 16 */
-	{ 18,	1,	0 },              /* RDR 17 */
-	{ 4,	1,	0 },              /* RDR 18 */
-	{ 0,	0,	0 },              /* RDR 19 */
-	{ 158,	3,	24 },             /* RDR 20 */
-	{ 158,	3,	24 },             /* RDR 21 */
-	{ 194,	4,	48 },             /* RDR 22 */
-	{ 194,	4,	48 },             /* RDR 23 */
-	{ 71,	2,	0 },              /* RDR 24 */
-	{ 71,	2,	0 },              /* RDR 25 */
-	{ 28,	1,	0 },              /* RDR 26 */
-	{ 33,	1,	0 },              /* RDR 27 */
-	{ 88,	2,	0 },              /* RDR 28 */
-	{ 32,	1,	0 },              /* RDR 29 */
-	{ 24,	1,	0 },              /* RDR 30 */
-	{ 16,	1,	0 },              /* RDR 31 */
-};
+/* RDR रेजिस्टर descriptions क्रम PCX-U */
+अटल स्थिर काष्ठा rdr_tbl_ent perf_rdr_tbl_U[] = अणु
+	अणु 19,	1,	8 पूर्ण,              /* RDR 0 */
+	अणु 32,	1,	16 पूर्ण,             /* RDR 1 */
+	अणु 20,	1,	0 पूर्ण,              /* RDR 2 */
+	अणु 0,	0,	0 पूर्ण,              /* RDR 3 */
+	अणु 344,	6,	0 पूर्ण,              /* RDR 4 */
+	अणु 176,	3,	0 पूर्ण,              /* RDR 5 */
+	अणु 336,	6,	0 पूर्ण,              /* RDR 6 */
+	अणु 0,	0,	0 पूर्ण,              /* RDR 7 */
+	अणु 0,	0,	0 पूर्ण,              /* RDR 8 */
+	अणु 0,	0,	0 पूर्ण,              /* RDR 9 */
+	अणु 28,	1,	0 पूर्ण,              /* RDR 10 */
+	अणु 33,	1,	0 पूर्ण,              /* RDR 11 */
+	अणु 0,	0,	0 पूर्ण,              /* RDR 12 */
+	अणु 230,	4,	0 पूर्ण,              /* RDR 13 */
+	अणु 32,	1,	0 पूर्ण,              /* RDR 14 */
+	अणु 128,	2,	0 पूर्ण,              /* RDR 15 */
+	अणु 1494,	24,	0 पूर्ण,              /* RDR 16 */
+	अणु 18,	1,	0 पूर्ण,              /* RDR 17 */
+	अणु 4,	1,	0 पूर्ण,              /* RDR 18 */
+	अणु 0,	0,	0 पूर्ण,              /* RDR 19 */
+	अणु 158,	3,	24 पूर्ण,             /* RDR 20 */
+	अणु 158,	3,	24 पूर्ण,             /* RDR 21 */
+	अणु 194,	4,	48 पूर्ण,             /* RDR 22 */
+	अणु 194,	4,	48 पूर्ण,             /* RDR 23 */
+	अणु 71,	2,	0 पूर्ण,              /* RDR 24 */
+	अणु 71,	2,	0 पूर्ण,              /* RDR 25 */
+	अणु 28,	1,	0 पूर्ण,              /* RDR 26 */
+	अणु 33,	1,	0 पूर्ण,              /* RDR 27 */
+	अणु 88,	2,	0 पूर्ण,              /* RDR 28 */
+	अणु 32,	1,	0 पूर्ण,              /* RDR 29 */
+	अणु 24,	1,	0 पूर्ण,              /* RDR 30 */
+	अणु 16,	1,	0 पूर्ण,              /* RDR 31 */
+पूर्ण;
 
 /*
- * A non-zero write_control in the above tables is a byte offset into
+ * A non-zero ग_लिखो_control in the above tables is a byte offset पूर्णांकo
  * this array.
  */
-static const uint64_t perf_bitmasks[] = {
+अटल स्थिर uपूर्णांक64_t perf_biपंचांगasks[] = अणु
 	0x0000000000000000ul,     /* first dbl word must be zero */
-	0xfdffe00000000000ul,     /* RDR0 bitmask */
-	0x003f000000000000ul,     /* RDR1 bitmask */
-	0x00fffffffffffffful,     /* RDR20-RDR21 bitmask (152 bits) */
+	0xfdffe00000000000ul,     /* RDR0 biपंचांगask */
+	0x003f000000000000ul,     /* RDR1 biपंचांगask */
+	0x00fffffffffffffful,     /* RDR20-RDR21 biपंचांगask (152 bits) */
 	0xfffffffffffffffful,
 	0xfffffffc00000000ul,
-	0xfffffffffffffffful,     /* RDR22-RDR23 bitmask (233 bits) */
+	0xfffffffffffffffful,     /* RDR22-RDR23 biपंचांगask (233 bits) */
 	0xfffffffffffffffful,
 	0xfffffffffffffffcul,
 	0xff00000000000000ul
-};
+पूर्ण;
 
 /*
- * Write control bitmasks for Pa-8700 processor given
+ * Write control biपंचांगasks क्रम Pa-8700 processor given
  * some things have changed slightly.
  */
-static const uint64_t perf_bitmasks_piranha[] = {
+अटल स्थिर uपूर्णांक64_t perf_biपंचांगasks_piranha[] = अणु
 	0x0000000000000000ul,     /* first dbl word must be zero */
-	0xfdffe00000000000ul,     /* RDR0 bitmask */
-	0x003f000000000000ul,     /* RDR1 bitmask */
-	0x00fffffffffffffful,     /* RDR20-RDR21 bitmask (158 bits) */
+	0xfdffe00000000000ul,     /* RDR0 biपंचांगask */
+	0x003f000000000000ul,     /* RDR1 biपंचांगask */
+	0x00fffffffffffffful,     /* RDR20-RDR21 biपंचांगask (158 bits) */
 	0xfffffffffffffffful,
 	0xfffffffc00000000ul,
-	0xfffffffffffffffful,     /* RDR22-RDR23 bitmask (210 bits) */
+	0xfffffffffffffffful,     /* RDR22-RDR23 biपंचांगask (210 bits) */
 	0xfffffffffffffffful,
 	0xfffffffffffffffful,
 	0xfffc000000000000ul
-};
+पूर्ण;
 
-static const uint64_t *bitmask_array;   /* array of bitmasks to use */
+अटल स्थिर uपूर्णांक64_t *biपंचांगask_array;   /* array of biपंचांगasks to use */
 
 /******************************************************************************
  * Function Prototypes
  *****************************************************************************/
-static int perf_config(uint32_t *image_ptr);
-static int perf_release(struct inode *inode, struct file *file);
-static int perf_open(struct inode *inode, struct file *file);
-static ssize_t perf_read(struct file *file, char __user *buf, size_t cnt, loff_t *ppos);
-static ssize_t perf_write(struct file *file, const char __user *buf,
-	size_t count, loff_t *ppos);
-static long perf_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
-static void perf_start_counters(void);
-static int perf_stop_counters(uint32_t *raddr);
-static const struct rdr_tbl_ent * perf_rdr_get_entry(uint32_t rdr_num);
-static int perf_rdr_read_ubuf(uint32_t	rdr_num, uint64_t *buffer);
-static int perf_rdr_clear(uint32_t rdr_num);
-static int perf_write_image(uint64_t *memaddr);
-static void perf_rdr_write(uint32_t rdr_num, uint64_t *buffer);
+अटल पूर्णांक perf_config(uपूर्णांक32_t *image_ptr);
+अटल पूर्णांक perf_release(काष्ठा inode *inode, काष्ठा file *file);
+अटल पूर्णांक perf_खोलो(काष्ठा inode *inode, काष्ठा file *file);
+अटल sमाप_प्रकार perf_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार cnt, loff_t *ppos);
+अटल sमाप_प्रकार perf_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+	माप_प्रकार count, loff_t *ppos);
+अटल दीर्घ perf_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+अटल व्योम perf_start_counters(व्योम);
+अटल पूर्णांक perf_stop_counters(uपूर्णांक32_t *raddr);
+अटल स्थिर काष्ठा rdr_tbl_ent * perf_rdr_get_entry(uपूर्णांक32_t rdr_num);
+अटल पूर्णांक perf_rdr_पढ़ो_ubuf(uपूर्णांक32_t	rdr_num, uपूर्णांक64_t *buffer);
+अटल पूर्णांक perf_rdr_clear(uपूर्णांक32_t rdr_num);
+अटल पूर्णांक perf_ग_लिखो_image(uपूर्णांक64_t *memaddr);
+अटल व्योम perf_rdr_ग_लिखो(uपूर्णांक32_t rdr_num, uपूर्णांक64_t *buffer);
 
 /* External Assembly Routines */
-extern uint64_t perf_rdr_shift_in_W (uint32_t rdr_num, uint16_t width);
-extern uint64_t perf_rdr_shift_in_U (uint32_t rdr_num, uint16_t width);
-extern void perf_rdr_shift_out_W (uint32_t rdr_num, uint64_t buffer);
-extern void perf_rdr_shift_out_U (uint32_t rdr_num, uint64_t buffer);
-extern void perf_intrigue_enable_perf_counters (void);
-extern void perf_intrigue_disable_perf_counters (void);
+बाह्य uपूर्णांक64_t perf_rdr_shअगरt_in_W (uपूर्णांक32_t rdr_num, uपूर्णांक16_t width);
+बाह्य uपूर्णांक64_t perf_rdr_shअगरt_in_U (uपूर्णांक32_t rdr_num, uपूर्णांक16_t width);
+बाह्य व्योम perf_rdr_shअगरt_out_W (uपूर्णांक32_t rdr_num, uपूर्णांक64_t buffer);
+बाह्य व्योम perf_rdr_shअगरt_out_U (uपूर्णांक32_t rdr_num, uपूर्णांक64_t buffer);
+बाह्य व्योम perf_पूर्णांकrigue_enable_perf_counters (व्योम);
+बाह्य व्योम perf_पूर्णांकrigue_disable_perf_counters (व्योम);
 
 /******************************************************************************
  * Function Definitions
@@ -210,159 +211,159 @@ extern void perf_intrigue_disable_perf_counters (void);
  * configure:
  *
  * Configure the cpu with a given data image.  First turn off the counters,
- * then download the image, then turn the counters back on.
+ * then करोwnload the image, then turn the counters back on.
  */
-static int perf_config(uint32_t *image_ptr)
-{
-	long error;
-	uint32_t raddr[4];
+अटल पूर्णांक perf_config(uपूर्णांक32_t *image_ptr)
+अणु
+	दीर्घ error;
+	uपूर्णांक32_t raddr[4];
 
 	/* Stop the counters*/
 	error = perf_stop_counters(raddr);
-	if (error != 0) {
-		printk("perf_config: perf_stop_counters = %ld\n", error);
-		return -EINVAL;
-	}
+	अगर (error != 0) अणु
+		prपूर्णांकk("perf_config: perf_stop_counters = %ld\n", error);
+		वापस -EINVAL;
+	पूर्ण
 
-printk("Preparing to write image\n");
+prपूर्णांकk("Preparing to write image\n");
 	/* Write the image to the chip */
-	error = perf_write_image((uint64_t *)image_ptr);
-	if (error != 0) {
-		printk("perf_config: DOWNLOAD = %ld\n", error);
-		return -EINVAL;
-	}
+	error = perf_ग_लिखो_image((uपूर्णांक64_t *)image_ptr);
+	अगर (error != 0) अणु
+		prपूर्णांकk("perf_config: DOWNLOAD = %ld\n", error);
+		वापस -EINVAL;
+	पूर्ण
 
-printk("Preparing to start counters\n");
+prपूर्णांकk("Preparing to start counters\n");
 
 	/* Start the counters */
 	perf_start_counters();
 
-	return sizeof(uint32_t);
-}
+	वापस माप(uपूर्णांक32_t);
+पूर्ण
 
 /*
  * Open the device and initialize all of its memory.  The device is only
- * opened once, but can be "queried" by multiple processes that know its
+ * खोलोed once, but can be "queried" by multiple processes that know its
  * file descriptor.
  */
-static int perf_open(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक perf_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	spin_lock(&perf_lock);
-	if (perf_enabled) {
+	अगर (perf_enabled) अणु
 		spin_unlock(&perf_lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	perf_enabled = 1;
  	spin_unlock(&perf_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Close the device.
  */
-static int perf_release(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक perf_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	spin_lock(&perf_lock);
 	perf_enabled = 0;
 	spin_unlock(&perf_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Read does nothing for this driver
+ * Read करोes nothing क्रम this driver
  */
-static ssize_t perf_read(struct file *file, char __user *buf, size_t cnt, loff_t *ppos)
-{
-	return 0;
-}
+अटल sमाप_प्रकार perf_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार cnt, loff_t *ppos)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- * write:
+ * ग_लिखो:
  *
- * This routine downloads the image to the chip.  It must be
- * called on the processor that the download should happen
+ * This routine करोwnloads the image to the chip.  It must be
+ * called on the processor that the करोwnload should happen
  * on.
  */
-static ssize_t perf_write(struct file *file, const char __user *buf,
-	size_t count, loff_t *ppos)
-{
-	size_t image_size;
-	uint32_t image_type;
-	uint32_t interface_type;
-	uint32_t test;
+अटल sमाप_प्रकार perf_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+	माप_प्रकार count, loff_t *ppos)
+अणु
+	माप_प्रकार image_size;
+	uपूर्णांक32_t image_type;
+	uपूर्णांक32_t पूर्णांकerface_type;
+	uपूर्णांक32_t test;
 
-	if (perf_processor_interface == ONYX_INTF)
+	अगर (perf_processor_पूर्णांकerface == ONYX_INTF)
 		image_size = PCXU_IMAGE_SIZE;
-	else if (perf_processor_interface == CUDA_INTF)
+	अन्यथा अगर (perf_processor_पूर्णांकerface == CUDA_INTF)
 		image_size = PCXW_IMAGE_SIZE;
-	else
-		return -EFAULT;
+	अन्यथा
+		वापस -EFAULT;
 
-	if (!perfmon_capable())
-		return -EACCES;
+	अगर (!perfmon_capable())
+		वापस -EACCES;
 
-	if (count != sizeof(uint32_t))
-		return -EIO;
+	अगर (count != माप(uपूर्णांक32_t))
+		वापस -EIO;
 
-	if (copy_from_user(&image_type, buf, sizeof(uint32_t)))
-		return -EFAULT;
+	अगर (copy_from_user(&image_type, buf, माप(uपूर्णांक32_t)))
+		वापस -EFAULT;
 
-	/* Get the interface type and test type */
-   	interface_type = (image_type >> 16) & 0xffff;
+	/* Get the पूर्णांकerface type and test type */
+   	पूर्णांकerface_type = (image_type >> 16) & 0xffff;
 	test           = (image_type & 0xffff);
 
 	/* Make sure everything makes sense */
 
-	/* First check the machine type is correct for
+	/* First check the machine type is correct क्रम
 	   the requested image */
-	if (((perf_processor_interface == CUDA_INTF) &&
-			(interface_type != CUDA_INTF)) ||
-		((perf_processor_interface == ONYX_INTF) &&
-			(interface_type != ONYX_INTF)))
-		return -EINVAL;
+	अगर (((perf_processor_पूर्णांकerface == CUDA_INTF) &&
+			(पूर्णांकerface_type != CUDA_INTF)) ||
+		((perf_processor_पूर्णांकerface == ONYX_INTF) &&
+			(पूर्णांकerface_type != ONYX_INTF)))
+		वापस -EINVAL;
 
 	/* Next check to make sure the requested image
 	   is valid */
-	if (((interface_type == CUDA_INTF) &&
+	अगर (((पूर्णांकerface_type == CUDA_INTF) &&
 		       (test >= MAX_CUDA_IMAGES)) ||
-	    ((interface_type == ONYX_INTF) &&
+	    ((पूर्णांकerface_type == ONYX_INTF) &&
 		       (test >= MAX_ONYX_IMAGES)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Copy the image into the processor */
-	if (interface_type == CUDA_INTF)
-		return perf_config(cuda_images[test]);
-	else
-		return perf_config(onyx_images[test]);
+	/* Copy the image पूर्णांकo the processor */
+	अगर (पूर्णांकerface_type == CUDA_INTF)
+		वापस perf_config(cuda_images[test]);
+	अन्यथा
+		वापस perf_config(onyx_images[test]);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
  * Patch the images that need to know the IVA addresses.
  */
-static void perf_patch_images(void)
-{
-#if 0 /* FIXME!! */
+अटल व्योम perf_patch_images(व्योम)
+अणु
+#अगर 0 /* FIXME!! */
 /*
- * NOTE:  this routine is VERY specific to the current TLB image.
+ * NOTE:  this routine is VERY specअगरic to the current TLB image.
  * If the image is changed, this routine might also need to be changed.
  */
-	extern void $i_itlb_miss_2_0();
-	extern void $i_dtlb_miss_2_0();
-	extern void PA2_0_iva();
+	बाह्य व्योम $i_itlb_miss_2_0();
+	बाह्य व्योम $i_dtlb_miss_2_0();
+	बाह्य व्योम PA2_0_iva();
 
 	/*
 	 * We can only use the lower 32-bits, the upper 32-bits should be 0
 	 * anyway given this is in the kernel
 	 */
-	uint32_t itlb_addr  = (uint32_t)&($i_itlb_miss_2_0);
-	uint32_t dtlb_addr  = (uint32_t)&($i_dtlb_miss_2_0);
-	uint32_t IVAaddress = (uint32_t)&PA2_0_iva;
+	uपूर्णांक32_t itlb_addr  = (uपूर्णांक32_t)&($i_itlb_miss_2_0);
+	uपूर्णांक32_t dtlb_addr  = (uपूर्णांक32_t)&($i_dtlb_miss_2_0);
+	uपूर्णांक32_t IVAaddress = (uपूर्णांक32_t)&PA2_0_iva;
 
-	if (perf_processor_interface == ONYX_INTF) {
+	अगर (perf_processor_पूर्णांकerface == ONYX_INTF) अणु
 		/* clear last 2 bytes */
 		onyx_images[TLBMISS][15] &= 0xffffff00;
 		/* set 2 bytes */
@@ -389,8 +390,8 @@ static void perf_patch_images(void)
 		onyx_images[PANIC][16] = (IVAaddress << 8)&0xffffff00;
 
 
-	} else if (perf_processor_interface == CUDA_INTF) {
-		/* Cuda interface */
+	पूर्ण अन्यथा अगर (perf_processor_पूर्णांकerface == CUDA_INTF) अणु
+		/* Cuda पूर्णांकerface */
 		cuda_images[TLBMISS][16] =
 			(cuda_images[TLBMISS][16]&0xffff0000) |
 			((dtlb_addr >> 8)&0x0000ffff);
@@ -411,11 +412,11 @@ static void perf_patch_images(void)
 		cuda_images[BIG_CPI][17] =
 			((dtlb_addr << 24)&0xff000000) | ((itlb_addr >> 16)&0x000000ff);
 		cuda_images[BIG_CPI][18] = (itlb_addr << 16)&0xffff0000;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Unknown type */
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 
 /*
@@ -424,168 +425,168 @@ static void perf_patch_images(void)
  * must be running on the processor that you wish to change.
  */
 
-static long perf_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	long error_start;
-	uint32_t raddr[4];
-	int error = 0;
+अटल दीर्घ perf_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	दीर्घ error_start;
+	uपूर्णांक32_t raddr[4];
+	पूर्णांक error = 0;
 
-	switch (cmd) {
+	चयन (cmd) अणु
 
-	    case PA_PERF_ON:
+	    हाल PA_PERF_ON:
 			/* Start the counters */
 			perf_start_counters();
-			break;
+			अवरोध;
 
-	    case PA_PERF_OFF:
+	    हाल PA_PERF_OFF:
 			error_start = perf_stop_counters(raddr);
-			if (error_start != 0) {
-				printk(KERN_ERR "perf_off: perf_stop_counters = %ld\n", error_start);
+			अगर (error_start != 0) अणु
+				prपूर्णांकk(KERN_ERR "perf_off: perf_stop_counters = %ld\n", error_start);
 				error = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* copy out the Counters */
-			if (copy_to_user((void __user *)arg, raddr,
-					sizeof (raddr)) != 0) {
+			अगर (copy_to_user((व्योम __user *)arg, raddr,
+					माप (raddr)) != 0) अणु
 				error =  -EFAULT;
-				break;
-			}
-			break;
+				अवरोध;
+			पूर्ण
+			अवरोध;
 
-	    case PA_PERF_VERSION:
+	    हाल PA_PERF_VERSION:
   	  		/* Return the version # */
-			error = put_user(PERF_VERSION, (int *)arg);
-			break;
+			error = put_user(PERF_VERSION, (पूर्णांक *)arg);
+			अवरोध;
 
-	    default:
+	    शेष:
   	 		error = -ENOTTY;
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct file_operations perf_fops = {
+अटल स्थिर काष्ठा file_operations perf_fops = अणु
 	.llseek = no_llseek,
-	.read = perf_read,
-	.write = perf_write,
+	.पढ़ो = perf_पढ़ो,
+	.ग_लिखो = perf_ग_लिखो,
 	.unlocked_ioctl = perf_ioctl,
 	.compat_ioctl = perf_ioctl,
-	.open = perf_open,
+	.खोलो = perf_खोलो,
 	.release = perf_release
-};
+पूर्ण;
 
-static struct miscdevice perf_dev = {
+अटल काष्ठा miscdevice perf_dev = अणु
 	MISC_DYNAMIC_MINOR,
 	PA_PERF_DEV,
 	&perf_fops
-};
+पूर्ण;
 
 /*
  * Initialize the module
  */
-static int __init perf_init(void)
-{
-	int ret;
+अटल पूर्णांक __init perf_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	/* Determine correct processor interface to use */
-	bitmask_array = perf_bitmasks;
+	/* Determine correct processor पूर्णांकerface to use */
+	biपंचांगask_array = perf_biपंचांगasks;
 
-	if (boot_cpu_data.cpu_type == pcxu ||
-	    boot_cpu_data.cpu_type == pcxu_) {
-		perf_processor_interface = ONYX_INTF;
-	} else if (boot_cpu_data.cpu_type == pcxw ||
+	अगर (boot_cpu_data.cpu_type == pcxu ||
+	    boot_cpu_data.cpu_type == pcxu_) अणु
+		perf_processor_पूर्णांकerface = ONYX_INTF;
+	पूर्ण अन्यथा अगर (boot_cpu_data.cpu_type == pcxw ||
 		 boot_cpu_data.cpu_type == pcxw_ ||
 		 boot_cpu_data.cpu_type == pcxw2 ||
 		 boot_cpu_data.cpu_type == mako ||
-		 boot_cpu_data.cpu_type == mako2) {
-		perf_processor_interface = CUDA_INTF;
-		if (boot_cpu_data.cpu_type == pcxw2 ||
+		 boot_cpu_data.cpu_type == mako2) अणु
+		perf_processor_पूर्णांकerface = CUDA_INTF;
+		अगर (boot_cpu_data.cpu_type == pcxw2 ||
 		    boot_cpu_data.cpu_type == mako ||
 		    boot_cpu_data.cpu_type == mako2)
-			bitmask_array = perf_bitmasks_piranha;
-	} else {
-		perf_processor_interface = UNKNOWN_INTF;
-		printk("Performance monitoring counters not supported on this processor\n");
-		return -ENODEV;
-	}
+			biपंचांगask_array = perf_biपंचांगasks_piranha;
+	पूर्ण अन्यथा अणु
+		perf_processor_पूर्णांकerface = UNKNOWN_INTF;
+		prपूर्णांकk("Performance monitoring counters not supported on this processor\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = misc_register(&perf_dev);
-	if (ret) {
-		printk(KERN_ERR "Performance monitoring counters: "
+	ret = misc_रेजिस्टर(&perf_dev);
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR "Performance monitoring counters: "
 			"cannot register misc device.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Patch the images to match the system */
+	/* Patch the images to match the प्रणाली */
     	perf_patch_images();
 
-	/* TODO: this only lets us access the first cpu.. what to do for SMP? */
+	/* TODO: this only lets us access the first cpu.. what to करो क्रम SMP? */
 	cpu_device = per_cpu(cpu_data, 0).dev;
-	printk("Performance monitoring counters enabled for %s\n",
+	prपूर्णांकk("Performance monitoring counters enabled for %s\n",
 		per_cpu(cpu_data, 0).dev->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(perf_init);
 
 /*
- * perf_start_counters(void)
+ * perf_start_counters(व्योम)
  *
  * Start the counters.
  */
-static void perf_start_counters(void)
-{
-	/* Enable performance monitor counters */
-	perf_intrigue_enable_perf_counters();
-}
+अटल व्योम perf_start_counters(व्योम)
+अणु
+	/* Enable perक्रमmance monitor counters */
+	perf_पूर्णांकrigue_enable_perf_counters();
+पूर्ण
 
 /*
  * perf_stop_counters
  *
- * Stop the performance counters and save counts
+ * Stop the perक्रमmance counters and save counts
  * in a per_processor array.
  */
-static int perf_stop_counters(uint32_t *raddr)
-{
-	uint64_t userbuf[MAX_RDR_WORDS];
+अटल पूर्णांक perf_stop_counters(uपूर्णांक32_t *raddr)
+अणु
+	uपूर्णांक64_t userbuf[MAX_RDR_WORDS];
 
-	/* Disable performance counters */
-	perf_intrigue_disable_perf_counters();
+	/* Disable perक्रमmance counters */
+	perf_पूर्णांकrigue_disable_perf_counters();
 
-	if (perf_processor_interface == ONYX_INTF) {
-		uint64_t tmp64;
+	अगर (perf_processor_पूर्णांकerface == ONYX_INTF) अणु
+		uपूर्णांक64_t पंचांगp64;
 		/*
 		 * Read the counters
 		 */
-		if (!perf_rdr_read_ubuf(16, userbuf))
-			return -13;
+		अगर (!perf_rdr_पढ़ो_ubuf(16, userbuf))
+			वापस -13;
 
 		/* Counter0 is bits 1398 to 1429 */
-		tmp64 =  (userbuf[21] << 22) & 0x00000000ffc00000;
-		tmp64 |= (userbuf[22] >> 42) & 0x00000000003fffff;
+		पंचांगp64 =  (userbuf[21] << 22) & 0x00000000ffc00000;
+		पंचांगp64 |= (userbuf[22] >> 42) & 0x00000000003fffff;
 		/* OR sticky0 (bit 1430) to counter0 bit 32 */
-		tmp64 |= (userbuf[22] >> 10) & 0x0000000080000000;
-		raddr[0] = (uint32_t)tmp64;
+		पंचांगp64 |= (userbuf[22] >> 10) & 0x0000000080000000;
+		raddr[0] = (uपूर्णांक32_t)पंचांगp64;
 
 		/* Counter1 is bits 1431 to 1462 */
-		tmp64 =  (userbuf[22] >> 9) & 0x00000000ffffffff;
+		पंचांगp64 =  (userbuf[22] >> 9) & 0x00000000ffffffff;
 		/* OR sticky1 (bit 1463) to counter1 bit 32 */
-		tmp64 |= (userbuf[22] << 23) & 0x0000000080000000;
-		raddr[1] = (uint32_t)tmp64;
+		पंचांगp64 |= (userbuf[22] << 23) & 0x0000000080000000;
+		raddr[1] = (uपूर्णांक32_t)पंचांगp64;
 
 		/* Counter2 is bits 1464 to 1495 */
-		tmp64 =  (userbuf[22] << 24) & 0x00000000ff000000;
-		tmp64 |= (userbuf[23] >> 40) & 0x0000000000ffffff;
+		पंचांगp64 =  (userbuf[22] << 24) & 0x00000000ff000000;
+		पंचांगp64 |= (userbuf[23] >> 40) & 0x0000000000ffffff;
 		/* OR sticky2 (bit 1496) to counter2 bit 32 */
-		tmp64 |= (userbuf[23] >> 8) & 0x0000000080000000;
-		raddr[2] = (uint32_t)tmp64;
+		पंचांगp64 |= (userbuf[23] >> 8) & 0x0000000080000000;
+		raddr[2] = (uपूर्णांक32_t)पंचांगp64;
 
 		/* Counter3 is bits 1497 to 1528 */
-		tmp64 =  (userbuf[23] >> 7) & 0x00000000ffffffff;
+		पंचांगp64 =  (userbuf[23] >> 7) & 0x00000000ffffffff;
 		/* OR sticky3 (bit 1529) to counter3 bit 32 */
-		tmp64 |= (userbuf[23] << 25) & 0x0000000080000000;
-		raddr[3] = (uint32_t)tmp64;
+		पंचांगp64 |= (userbuf[23] << 25) & 0x0000000080000000;
+		raddr[3] = (uपूर्णांक32_t)पंचांगp64;
 
 		/*
 		 * Zero out the counters
@@ -595,7 +596,7 @@ static int perf_stop_counters(uint32_t *raddr)
 		 * The counters and sticky-bits comprise the last 132 bits
 		 * (1398 - 1529) of RDR16 on a U chip.  We'll zero these
 		 * out the easy way: zero out last 10 bits of dword 21,
-		 * all of dword 22 and 58 bits (plus 6 don't care bits) of
+		 * all of dword 22 and 58 bits (plus 6 करोn't care bits) of
 		 * dword 23.
 		 */
 		userbuf[21] &= 0xfffffffffffffc00ul;	/* 0 to last 10 bits */
@@ -604,17 +605,17 @@ static int perf_stop_counters(uint32_t *raddr)
 
 		/*
 		 * Write back the zeroed bytes + the image given
-		 * the read was destructive.
+		 * the पढ़ो was deकाष्ठाive.
 		 */
-		perf_rdr_write(16, userbuf);
-	} else {
+		perf_rdr_ग_लिखो(16, userbuf);
+	पूर्ण अन्यथा अणु
 
 		/*
 		 * Read RDR-15 which contains the counters and sticky bits
 		 */
-		if (!perf_rdr_read_ubuf(15, userbuf)) {
-			return -13;
-		}
+		अगर (!perf_rdr_पढ़ो_ubuf(15, userbuf)) अणु
+			वापस -13;
+		पूर्ण
 
 		/*
 		 * Clear out the counters
@@ -624,215 +625,215 @@ static int perf_stop_counters(uint32_t *raddr)
 		/*
 		 * Copy the counters 
 		 */
-		raddr[0] = (uint32_t)((userbuf[0] >> 32) & 0x00000000ffffffffUL);
-		raddr[1] = (uint32_t)(userbuf[0] & 0x00000000ffffffffUL);
-		raddr[2] = (uint32_t)((userbuf[1] >> 32) & 0x00000000ffffffffUL);
-		raddr[3] = (uint32_t)(userbuf[1] & 0x00000000ffffffffUL);
-	}
+		raddr[0] = (uपूर्णांक32_t)((userbuf[0] >> 32) & 0x00000000ffffffffUL);
+		raddr[1] = (uपूर्णांक32_t)(userbuf[0] & 0x00000000ffffffffUL);
+		raddr[2] = (uपूर्णांक32_t)((userbuf[1] >> 32) & 0x00000000ffffffffUL);
+		raddr[3] = (uपूर्णांक32_t)(userbuf[1] & 0x00000000ffffffffUL);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * perf_rdr_get_entry
  *
- * Retrieve a pointer to the description of what this
+ * Retrieve a poपूर्णांकer to the description of what this
  * RDR contains.
  */
-static const struct rdr_tbl_ent * perf_rdr_get_entry(uint32_t rdr_num)
-{
-	if (perf_processor_interface == ONYX_INTF) {
-		return &perf_rdr_tbl_U[rdr_num];
-	} else {
-		return &perf_rdr_tbl_W[rdr_num];
-	}
-}
+अटल स्थिर काष्ठा rdr_tbl_ent * perf_rdr_get_entry(uपूर्णांक32_t rdr_num)
+अणु
+	अगर (perf_processor_पूर्णांकerface == ONYX_INTF) अणु
+		वापस &perf_rdr_tbl_U[rdr_num];
+	पूर्ण अन्यथा अणु
+		वापस &perf_rdr_tbl_W[rdr_num];
+	पूर्ण
+पूर्ण
 
 /*
- * perf_rdr_read_ubuf
+ * perf_rdr_पढ़ो_ubuf
  *
- * Read the RDR value into the buffer specified.
+ * Read the RDR value पूर्णांकo the buffer specअगरied.
  */
-static int perf_rdr_read_ubuf(uint32_t	rdr_num, uint64_t *buffer)
-{
-	uint64_t	data, data_mask = 0;
-	uint32_t	width, xbits, i;
-	const struct rdr_tbl_ent *tentry;
+अटल पूर्णांक perf_rdr_पढ़ो_ubuf(uपूर्णांक32_t	rdr_num, uपूर्णांक64_t *buffer)
+अणु
+	uपूर्णांक64_t	data, data_mask = 0;
+	uपूर्णांक32_t	width, xbits, i;
+	स्थिर काष्ठा rdr_tbl_ent *tentry;
 
 	tentry = perf_rdr_get_entry(rdr_num);
-	if ((width = tentry->width) == 0)
-		return 0;
+	अगर ((width = tentry->width) == 0)
+		वापस 0;
 
 	/* Clear out buffer */
 	i = tentry->num_words;
-	while (i--) {
+	जबतक (i--) अणु
 		buffer[i] = 0;
-	}
+	पूर्ण
 
-	/* Check for bits an even number of 64 */
-	if ((xbits = width & 0x03f) != 0) {
+	/* Check क्रम bits an even number of 64 */
+	अगर ((xbits = width & 0x03f) != 0) अणु
 		data_mask = 1;
 		data_mask <<= (64 - xbits);
 		data_mask--;
-	}
+	पूर्ण
 
 	/* Grab all of the data */
 	i = tentry->num_words;
-	while (i--) {
+	जबतक (i--) अणु
 
-		if (perf_processor_interface == ONYX_INTF) {
-			data = perf_rdr_shift_in_U(rdr_num, width);
-		} else {
-			data = perf_rdr_shift_in_W(rdr_num, width);
-		}
-		if (xbits) {
+		अगर (perf_processor_पूर्णांकerface == ONYX_INTF) अणु
+			data = perf_rdr_shअगरt_in_U(rdr_num, width);
+		पूर्ण अन्यथा अणु
+			data = perf_rdr_shअगरt_in_W(rdr_num, width);
+		पूर्ण
+		अगर (xbits) अणु
 			buffer[i] |= (data << (64 - xbits));
-			if (i) {
+			अगर (i) अणु
 				buffer[i-1] |= ((data >> xbits) & data_mask);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			buffer[i] = data;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * perf_rdr_clear
  *
- * Zero out the given RDR register
+ * Zero out the given RDR रेजिस्टर
  */
-static int perf_rdr_clear(uint32_t	rdr_num)
-{
-	const struct rdr_tbl_ent *tentry;
-	int32_t		i;
+अटल पूर्णांक perf_rdr_clear(uपूर्णांक32_t	rdr_num)
+अणु
+	स्थिर काष्ठा rdr_tbl_ent *tentry;
+	पूर्णांक32_t		i;
 
 	tentry = perf_rdr_get_entry(rdr_num);
 
-	if (tentry->width == 0) {
-		return -1;
-	}
+	अगर (tentry->width == 0) अणु
+		वापस -1;
+	पूर्ण
 
 	i = tentry->num_words;
-	while (i--) {
-		if (perf_processor_interface == ONYX_INTF) {
-			perf_rdr_shift_out_U(rdr_num, 0UL);
-		} else {
-			perf_rdr_shift_out_W(rdr_num, 0UL);
-		}
-	}
+	जबतक (i--) अणु
+		अगर (perf_processor_पूर्णांकerface == ONYX_INTF) अणु
+			perf_rdr_shअगरt_out_U(rdr_num, 0UL);
+		पूर्ण अन्यथा अणु
+			perf_rdr_shअगरt_out_W(rdr_num, 0UL);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * perf_write_image
+ * perf_ग_लिखो_image
  *
  * Write the given image out to the processor
  */
-static int perf_write_image(uint64_t *memaddr)
-{
-	uint64_t buffer[MAX_RDR_WORDS];
-	uint64_t *bptr;
-	uint32_t dwords;
-	const uint32_t *intrigue_rdr;
-	const uint64_t *intrigue_bitmask;
-	uint64_t tmp64;
-	void __iomem *runway;
-	const struct rdr_tbl_ent *tentry;
-	int i;
+अटल पूर्णांक perf_ग_लिखो_image(uपूर्णांक64_t *memaddr)
+अणु
+	uपूर्णांक64_t buffer[MAX_RDR_WORDS];
+	uपूर्णांक64_t *bptr;
+	uपूर्णांक32_t dwords;
+	स्थिर uपूर्णांक32_t *पूर्णांकrigue_rdr;
+	स्थिर uपूर्णांक64_t *पूर्णांकrigue_biपंचांगask;
+	uपूर्णांक64_t पंचांगp64;
+	व्योम __iomem *runway;
+	स्थिर काष्ठा rdr_tbl_ent *tentry;
+	पूर्णांक i;
 
 	/* Clear out counters */
-	if (perf_processor_interface == ONYX_INTF) {
+	अगर (perf_processor_पूर्णांकerface == ONYX_INTF) अणु
 
 		perf_rdr_clear(16);
 
-		/* Toggle performance monitor */
-		perf_intrigue_enable_perf_counters();
-		perf_intrigue_disable_perf_counters();
+		/* Toggle perक्रमmance monitor */
+		perf_पूर्णांकrigue_enable_perf_counters();
+		perf_पूर्णांकrigue_disable_perf_counters();
 
-		intrigue_rdr = perf_rdrs_U;
-	} else {
+		पूर्णांकrigue_rdr = perf_rdrs_U;
+	पूर्ण अन्यथा अणु
 		perf_rdr_clear(15);
-		intrigue_rdr = perf_rdrs_W;
-	}
+		पूर्णांकrigue_rdr = perf_rdrs_W;
+	पूर्ण
 
 	/* Write all RDRs */
-	while (*intrigue_rdr != -1) {
-		tentry = perf_rdr_get_entry(*intrigue_rdr);
-		perf_rdr_read_ubuf(*intrigue_rdr, buffer);
+	जबतक (*पूर्णांकrigue_rdr != -1) अणु
+		tentry = perf_rdr_get_entry(*पूर्णांकrigue_rdr);
+		perf_rdr_पढ़ो_ubuf(*पूर्णांकrigue_rdr, buffer);
 		bptr   = &buffer[0];
 		dwords = tentry->num_words;
-		if (tentry->write_control) {
-			intrigue_bitmask = &bitmask_array[tentry->write_control >> 3];
-			while (dwords--) {
-				tmp64 = *intrigue_bitmask & *memaddr++;
-				tmp64 |= (~(*intrigue_bitmask++)) & *bptr;
-				*bptr++ = tmp64;
-			}
-		} else {
-			while (dwords--) {
+		अगर (tentry->ग_लिखो_control) अणु
+			पूर्णांकrigue_biपंचांगask = &biपंचांगask_array[tentry->ग_लिखो_control >> 3];
+			जबतक (dwords--) अणु
+				पंचांगp64 = *पूर्णांकrigue_biपंचांगask & *memaddr++;
+				पंचांगp64 |= (~(*पूर्णांकrigue_biपंचांगask++)) & *bptr;
+				*bptr++ = पंचांगp64;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			जबतक (dwords--) अणु
 				*bptr++ = *memaddr++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		perf_rdr_write(*intrigue_rdr, buffer);
-		intrigue_rdr++;
-	}
+		perf_rdr_ग_लिखो(*पूर्णांकrigue_rdr, buffer);
+		पूर्णांकrigue_rdr++;
+	पूर्ण
 
 	/*
 	 * Now copy out the Runway stuff which is not in RDRs
 	 */
 
-	if (cpu_device == NULL)
-	{
-		printk(KERN_ERR "write_image: cpu_device not yet initialized!\n");
-		return -1;
-	}
+	अगर (cpu_device == शून्य)
+	अणु
+		prपूर्णांकk(KERN_ERR "write_image: cpu_device not yet initialized!\n");
+		वापस -1;
+	पूर्ण
 
 	runway = ioremap(cpu_device->hpa.start, 4096);
-	if (!runway) {
+	अगर (!runway) अणु
 		pr_err("perf_write_image: ioremap failed!\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Merge intrigue bits into Runway STATUS 0 */
-	tmp64 = __raw_readq(runway + RUNWAY_STATUS) & 0xffecfffffffffffful;
-	__raw_writeq(tmp64 | (*memaddr++ & 0x0013000000000000ul),
+	/* Merge पूर्णांकrigue bits पूर्णांकo Runway STATUS 0 */
+	पंचांगp64 = __raw_पढ़ोq(runway + RUNWAY_STATUS) & 0xffecfffffffffffful;
+	__raw_ग_लिखोq(पंचांगp64 | (*memaddr++ & 0x0013000000000000ul),
 		     runway + RUNWAY_STATUS);
 
-	/* Write RUNWAY DEBUG registers */
-	for (i = 0; i < 8; i++) {
-		__raw_writeq(*memaddr++, runway + RUNWAY_DEBUG);
-	}
+	/* Write RUNWAY DEBUG रेजिस्टरs */
+	क्रम (i = 0; i < 8; i++) अणु
+		__raw_ग_लिखोq(*memaddr++, runway + RUNWAY_DEBUG);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * perf_rdr_write
+ * perf_rdr_ग_लिखो
  *
- * Write the given RDR register with the contents
+ * Write the given RDR रेजिस्टर with the contents
  * of the given buffer.
  */
-static void perf_rdr_write(uint32_t rdr_num, uint64_t *buffer)
-{
-	const struct rdr_tbl_ent *tentry;
-	int32_t		i;
+अटल व्योम perf_rdr_ग_लिखो(uपूर्णांक32_t rdr_num, uपूर्णांक64_t *buffer)
+अणु
+	स्थिर काष्ठा rdr_tbl_ent *tentry;
+	पूर्णांक32_t		i;
 
-printk("perf_rdr_write\n");
+prपूर्णांकk("perf_rdr_write\n");
 	tentry = perf_rdr_get_entry(rdr_num);
-	if (tentry->width == 0) { return; }
+	अगर (tentry->width == 0) अणु वापस; पूर्ण
 
 	i = tentry->num_words;
-	while (i--) {
-		if (perf_processor_interface == ONYX_INTF) {
-			perf_rdr_shift_out_U(rdr_num, buffer[i]);
-		} else {
-			perf_rdr_shift_out_W(rdr_num, buffer[i]);
-		}
-	}
-printk("perf_rdr_write done\n");
-}
+	जबतक (i--) अणु
+		अगर (perf_processor_पूर्णांकerface == ONYX_INTF) अणु
+			perf_rdr_shअगरt_out_U(rdr_num, buffer[i]);
+		पूर्ण अन्यथा अणु
+			perf_rdr_shअगरt_out_W(rdr_num, buffer[i]);
+		पूर्ण
+	पूर्ण
+prपूर्णांकk("perf_rdr_write done\n");
+पूर्ण

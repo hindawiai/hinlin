@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2014 Broadcom
+ * Copyright तऊ 2014 Broadcom
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,82 +23,82 @@
  */
 
 /**
- * DOC: Interrupt management for the V3D engine
+ * DOC: Interrupt management क्रम the V3D engine
  *
- * We have an interrupt status register (V3D_INTCTL) which reports
- * interrupts, and where writing 1 bits clears those interrupts.
- * There are also a pair of interrupt registers
+ * We have an पूर्णांकerrupt status रेजिस्टर (V3D_INTCTL) which reports
+ * पूर्णांकerrupts, and where writing 1 bits clears those पूर्णांकerrupts.
+ * There are also a pair of पूर्णांकerrupt रेजिस्टरs
  * (V3D_INTENA/V3D_INTDIS) where writing a 1 to their bits enables or
- * disables that specific interrupt, and 0s written are ignored
- * (reading either one returns the set of enabled interrupts).
+ * disables that specअगरic पूर्णांकerrupt, and 0s written are ignored
+ * (पढ़ोing either one वापसs the set of enabled पूर्णांकerrupts).
  *
- * When we take a binning flush done interrupt, we need to submit the
- * next frame for binning and move the finished frame to the render
- * thread.
+ * When we take a binning flush करोne पूर्णांकerrupt, we need to submit the
+ * next frame क्रम binning and move the finished frame to the render
+ * thपढ़ो.
  *
- * When we take a render frame interrupt, we need to wake the
- * processes waiting for some frame to be done, and get the next frame
- * submitted ASAP (so the hardware doesn't sit idle when there's work
- * to do).
+ * When we take a render frame पूर्णांकerrupt, we need to wake the
+ * processes रुकोing क्रम some frame to be करोne, and get the next frame
+ * submitted ASAP (so the hardware करोesn't sit idle when there's work
+ * to करो).
  *
- * When we take the binner out of memory interrupt, we need to
+ * When we take the binner out of memory पूर्णांकerrupt, we need to
  * allocate some new memory and pass it to the binner so that the
  * current job can make progress.
  */
 
-#include "vc4_drv.h"
-#include "vc4_regs.h"
+#समावेश "vc4_drv.h"
+#समावेश "vc4_regs.h"
 
-#define V3D_DRIVER_IRQS (V3D_INT_OUTOMEM | \
+#घोषणा V3D_DRIVER_IRQS (V3D_INT_OUTOMEM | \
 			 V3D_INT_FLDONE | \
 			 V3D_INT_FRDONE)
 
-DECLARE_WAIT_QUEUE_HEAD(render_wait);
+DECLARE_WAIT_QUEUE_HEAD(render_रुको);
 
-static void
-vc4_overflow_mem_work(struct work_struct *work)
-{
-	struct vc4_dev *vc4 =
-		container_of(work, struct vc4_dev, overflow_mem_work);
-	struct vc4_bo *bo;
-	int bin_bo_slot;
-	struct vc4_exec_info *exec;
-	unsigned long irqflags;
+अटल व्योम
+vc4_overflow_mem_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा vc4_dev *vc4 =
+		container_of(work, काष्ठा vc4_dev, overflow_mem_work);
+	काष्ठा vc4_bo *bo;
+	पूर्णांक bin_bo_slot;
+	काष्ठा vc4_exec_info *exec;
+	अचिन्हित दीर्घ irqflags;
 
 	mutex_lock(&vc4->bin_bo_lock);
 
-	if (!vc4->bin_bo)
-		goto complete;
+	अगर (!vc4->bin_bo)
+		जाओ complete;
 
 	bo = vc4->bin_bo;
 
 	bin_bo_slot = vc4_v3d_get_bin_slot(vc4);
-	if (bin_bo_slot < 0) {
+	अगर (bin_bo_slot < 0) अणु
 		DRM_ERROR("Couldn't allocate binner overflow mem\n");
-		goto complete;
-	}
+		जाओ complete;
+	पूर्ण
 
 	spin_lock_irqsave(&vc4->job_lock, irqflags);
 
-	if (vc4->bin_alloc_overflow) {
+	अगर (vc4->bin_alloc_overflow) अणु
 		/* If we had overflow memory allocated previously,
-		 * then that chunk will free when the current bin job
-		 * is done.  If we don't have a bin job running, then
-		 * the chunk will be done whenever the list of render
+		 * then that chunk will मुक्त when the current bin job
+		 * is करोne.  If we करोn't have a bin job running, then
+		 * the chunk will be करोne whenever the list of render
 		 * jobs has drained.
 		 */
 		exec = vc4_first_bin_job(vc4);
-		if (!exec)
+		अगर (!exec)
 			exec = vc4_last_render_job(vc4);
-		if (exec) {
+		अगर (exec) अणु
 			exec->bin_slots |= vc4->bin_alloc_overflow;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* There's nothing queued in the hardware, so
-			 * the old slot is free immediately.
+			 * the old slot is मुक्त immediately.
 			 */
 			vc4->bin_alloc_used &= ~vc4->bin_alloc_overflow;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	vc4->bin_alloc_overflow = BIT(bin_bo_slot);
 
 	V3D_WRITE(V3D_BPOA, bo->base.paddr + bin_bo_slot * vc4->bin_alloc_size);
@@ -108,198 +109,198 @@ vc4_overflow_mem_work(struct work_struct *work)
 
 complete:
 	mutex_unlock(&vc4->bin_bo_lock);
-}
+पूर्ण
 
-static void
-vc4_irq_finish_bin_job(struct drm_device *dev)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_exec_info *next, *exec = vc4_first_bin_job(vc4);
+अटल व्योम
+vc4_irq_finish_bin_job(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_exec_info *next, *exec = vc4_first_bin_job(vc4);
 
-	if (!exec)
-		return;
+	अगर (!exec)
+		वापस;
 
 	vc4_move_job_to_render(dev, exec);
 	next = vc4_first_bin_job(vc4);
 
-	/* Only submit the next job in the bin list if it matches the perfmon
-	 * attached to the one that just finished (or if both jobs don't have
+	/* Only submit the next job in the bin list अगर it matches the perfmon
+	 * attached to the one that just finished (or अगर both jobs करोn't have
 	 * perfmon attached to them).
 	 */
-	if (next && next->perfmon == exec->perfmon)
+	अगर (next && next->perfmon == exec->perfmon)
 		vc4_submit_next_bin_job(dev);
-}
+पूर्ण
 
-static void
-vc4_cancel_bin_job(struct drm_device *dev)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_exec_info *exec = vc4_first_bin_job(vc4);
+अटल व्योम
+vc4_cancel_bin_job(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_exec_info *exec = vc4_first_bin_job(vc4);
 
-	if (!exec)
-		return;
+	अगर (!exec)
+		वापस;
 
 	/* Stop the perfmon so that the next bin job can be started. */
-	if (exec->perfmon)
+	अगर (exec->perfmon)
 		vc4_perfmon_stop(vc4, exec->perfmon, false);
 
 	list_move_tail(&exec->head, &vc4->bin_job_list);
 	vc4_submit_next_bin_job(dev);
-}
+पूर्ण
 
-static void
-vc4_irq_finish_render_job(struct drm_device *dev)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_exec_info *exec = vc4_first_render_job(vc4);
-	struct vc4_exec_info *nextbin, *nextrender;
+अटल व्योम
+vc4_irq_finish_render_job(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_exec_info *exec = vc4_first_render_job(vc4);
+	काष्ठा vc4_exec_info *nextbin, *nextrender;
 
-	if (!exec)
-		return;
+	अगर (!exec)
+		वापस;
 
 	vc4->finished_seqno++;
-	list_move_tail(&exec->head, &vc4->job_done_list);
+	list_move_tail(&exec->head, &vc4->job_करोne_list);
 
 	nextbin = vc4_first_bin_job(vc4);
 	nextrender = vc4_first_render_job(vc4);
 
-	/* Only stop the perfmon if following jobs in the queue don't expect it
+	/* Only stop the perfmon अगर following jobs in the queue करोn't expect it
 	 * to be enabled.
 	 */
-	if (exec->perfmon && !nextrender &&
+	अगर (exec->perfmon && !nextrender &&
 	    (!nextbin || nextbin->perfmon != exec->perfmon))
 		vc4_perfmon_stop(vc4, exec->perfmon, true);
 
-	/* If there's a render job waiting, start it. If this is not the case
-	 * we may have to unblock the binner if it's been stalled because of
+	/* If there's a render job रुकोing, start it. If this is not the हाल
+	 * we may have to unblock the binner अगर it's been stalled because of
 	 * perfmon (this can be checked by comparing the perfmon attached to
-	 * the finished renderjob to the one attached to the next bin job: if
-	 * they don't match, this means the binner is stalled and should be
+	 * the finished renderjob to the one attached to the next bin job: अगर
+	 * they करोn't match, this means the binner is stalled and should be
 	 * restarted).
 	 */
-	if (nextrender)
+	अगर (nextrender)
 		vc4_submit_next_render_job(dev);
-	else if (nextbin && nextbin->perfmon != exec->perfmon)
+	अन्यथा अगर (nextbin && nextbin->perfmon != exec->perfmon)
 		vc4_submit_next_bin_job(dev);
 
-	if (exec->fence) {
-		dma_fence_signal_locked(exec->fence);
+	अगर (exec->fence) अणु
+		dma_fence_संकेत_locked(exec->fence);
 		dma_fence_put(exec->fence);
-		exec->fence = NULL;
-	}
+		exec->fence = शून्य;
+	पूर्ण
 
-	wake_up_all(&vc4->job_wait_queue);
-	schedule_work(&vc4->job_done_work);
-}
+	wake_up_all(&vc4->job_रुको_queue);
+	schedule_work(&vc4->job_करोne_work);
+पूर्ण
 
-irqreturn_t
-vc4_irq(int irq, void *arg)
-{
-	struct drm_device *dev = arg;
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	uint32_t intctl;
-	irqreturn_t status = IRQ_NONE;
+irqवापस_t
+vc4_irq(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा drm_device *dev = arg;
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	uपूर्णांक32_t पूर्णांकctl;
+	irqवापस_t status = IRQ_NONE;
 
 	barrier();
-	intctl = V3D_READ(V3D_INTCTL);
+	पूर्णांकctl = V3D_READ(V3D_INTCTL);
 
-	/* Acknowledge the interrupts we're handling here. The binner
-	 * last flush / render frame done interrupt will be cleared,
-	 * while OUTOMEM will stay high until the underlying cause is
+	/* Acknowledge the पूर्णांकerrupts we're handling here. The binner
+	 * last flush / render frame करोne पूर्णांकerrupt will be cleared,
+	 * जबतक OUTOMEM will stay high until the underlying cause is
 	 * cleared.
 	 */
-	V3D_WRITE(V3D_INTCTL, intctl);
+	V3D_WRITE(V3D_INTCTL, पूर्णांकctl);
 
-	if (intctl & V3D_INT_OUTOMEM) {
-		/* Disable OUTOMEM until the work is done. */
+	अगर (पूर्णांकctl & V3D_INT_OUTOMEM) अणु
+		/* Disable OUTOMEM until the work is करोne. */
 		V3D_WRITE(V3D_INTDIS, V3D_INT_OUTOMEM);
 		schedule_work(&vc4->overflow_mem_work);
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (intctl & V3D_INT_FLDONE) {
+	अगर (पूर्णांकctl & V3D_INT_FLDONE) अणु
 		spin_lock(&vc4->job_lock);
 		vc4_irq_finish_bin_job(dev);
 		spin_unlock(&vc4->job_lock);
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (intctl & V3D_INT_FRDONE) {
+	अगर (पूर्णांकctl & V3D_INT_FRDONE) अणु
 		spin_lock(&vc4->job_lock);
 		vc4_irq_finish_render_job(dev);
 		spin_unlock(&vc4->job_lock);
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void
-vc4_irq_preinstall(struct drm_device *dev)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
+व्योम
+vc4_irq_preinstall(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
 
-	if (!vc4->v3d)
-		return;
+	अगर (!vc4->v3d)
+		वापस;
 
-	init_waitqueue_head(&vc4->job_wait_queue);
+	init_रुकोqueue_head(&vc4->job_रुको_queue);
 	INIT_WORK(&vc4->overflow_mem_work, vc4_overflow_mem_work);
 
-	/* Clear any pending interrupts someone might have left around
-	 * for us.
+	/* Clear any pending पूर्णांकerrupts someone might have left around
+	 * क्रम us.
 	 */
 	V3D_WRITE(V3D_INTCTL, V3D_DRIVER_IRQS);
-}
+पूर्ण
 
-int
-vc4_irq_postinstall(struct drm_device *dev)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
+पूर्णांक
+vc4_irq_postinstall(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
 
-	if (!vc4->v3d)
-		return 0;
+	अगर (!vc4->v3d)
+		वापस 0;
 
-	/* Enable the render done interrupts. The out-of-memory interrupt is
+	/* Enable the render करोne पूर्णांकerrupts. The out-of-memory पूर्णांकerrupt is
 	 * enabled as soon as we have a binner BO allocated.
 	 */
 	V3D_WRITE(V3D_INTENA, V3D_INT_FLDONE | V3D_INT_FRDONE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-vc4_irq_uninstall(struct drm_device *dev)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
+व्योम
+vc4_irq_uninstall(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
 
-	if (!vc4->v3d)
-		return;
+	अगर (!vc4->v3d)
+		वापस;
 
-	/* Disable sending interrupts for our driver's IRQs. */
+	/* Disable sending पूर्णांकerrupts क्रम our driver's IRQs. */
 	V3D_WRITE(V3D_INTDIS, V3D_DRIVER_IRQS);
 
-	/* Clear any pending interrupts we might have left. */
+	/* Clear any pending पूर्णांकerrupts we might have left. */
 	V3D_WRITE(V3D_INTCTL, V3D_DRIVER_IRQS);
 
-	/* Finish any interrupt handler still in flight. */
+	/* Finish any पूर्णांकerrupt handler still in flight. */
 	disable_irq(dev->irq);
 
 	cancel_work_sync(&vc4->overflow_mem_work);
-}
+पूर्ण
 
-/** Reinitializes interrupt registers when a GPU reset is performed. */
-void vc4_irq_reset(struct drm_device *dev)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	unsigned long irqflags;
+/** Reinitializes पूर्णांकerrupt रेजिस्टरs when a GPU reset is perक्रमmed. */
+व्योम vc4_irq_reset(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	अचिन्हित दीर्घ irqflags;
 
 	/* Acknowledge any stale IRQs. */
 	V3D_WRITE(V3D_INTCTL, V3D_DRIVER_IRQS);
 
 	/*
-	 * Turn all our interrupts on.  Binner out of memory is the
-	 * only one we expect to trigger at this point, since we've
-	 * just come from poweron and haven't supplied any overflow
+	 * Turn all our पूर्णांकerrupts on.  Binner out of memory is the
+	 * only one we expect to trigger at this poपूर्णांक, since we've
+	 * just come from घातeron and haven't supplied any overflow
 	 * memory yet.
 	 */
 	V3D_WRITE(V3D_INTENA, V3D_DRIVER_IRQS);
@@ -308,4 +309,4 @@ void vc4_irq_reset(struct drm_device *dev)
 	vc4_cancel_bin_job(dev);
 	vc4_irq_finish_render_job(dev);
 	spin_unlock_irqrestore(&vc4->job_lock, irqflags);
-}
+पूर्ण

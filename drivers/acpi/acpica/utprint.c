@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: utprint - Formatted printing routines
+ * Module Name: utprपूर्णांक - Formatted prपूर्णांकing routines
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utprint")
 
-#define ACPI_FORMAT_SIGN            0x01
-#define ACPI_FORMAT_SIGN_PLUS       0x02
-#define ACPI_FORMAT_SIGN_PLUS_SPACE 0x04
-#define ACPI_FORMAT_ZERO            0x08
-#define ACPI_FORMAT_LEFT            0x10
-#define ACPI_FORMAT_UPPER           0x20
-#define ACPI_FORMAT_PREFIX          0x40
+#घोषणा ACPI_FORMAT_SIGN            0x01
+#घोषणा ACPI_FORMAT_SIGN_PLUS       0x02
+#घोषणा ACPI_FORMAT_SIGN_PLUS_SPACE 0x04
+#घोषणा ACPI_FORMAT_ZERO            0x08
+#घोषणा ACPI_FORMAT_LEFT            0x10
+#घोषणा ACPI_FORMAT_UPPER           0x20
+#घोषणा ACPI_FORMAT_PREFIX          0x40
 /* Local prototypes */
-static acpi_size
-acpi_ut_bound_string_length(const char *string, acpi_size count);
+अटल acpi_size
+acpi_ut_bound_string_length(स्थिर अक्षर *string, acpi_size count);
 
-static char *acpi_ut_bound_string_output(char *string, const char *end, char c);
+अटल अक्षर *acpi_ut_bound_string_output(अक्षर *string, स्थिर अक्षर *end, अक्षर c);
 
-static char *acpi_ut_format_number(char *string,
-				   char *end,
+अटल अक्षर *acpi_ut_क्रमmat_number(अक्षर *string,
+				   अक्षर *end,
 				   u64 number,
 				   u8 base, s32 width, s32 precision, u8 type);
 
-static char *acpi_ut_put_number(char *string, u64 number, u8 base, u8 upper);
+अटल अक्षर *acpi_ut_put_number(अक्षर *string, u64 number, u8 base, u8 upper);
 
 /*******************************************************************************
  *
@@ -46,19 +47,19 @@ static char *acpi_ut_put_number(char *string, u64 number, u8 base, u8 upper);
  *
  ******************************************************************************/
 
-static acpi_size
-acpi_ut_bound_string_length(const char *string, acpi_size count)
-{
+अटल acpi_size
+acpi_ut_bound_string_length(स्थिर अक्षर *string, acpi_size count)
+अणु
 	u32 length = 0;
 
-	while (*string && count) {
+	जबतक (*string && count) अणु
 		length++;
 		string++;
 		count--;
-	}
+	पूर्ण
 
-	return (length);
-}
+	वापस (length);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -68,22 +69,22 @@ acpi_ut_bound_string_length(const char *string, acpi_size count)
  *              end                 - Boundary of the string
  *              c                   - Character to be output to the string
  *
- * RETURN:      Updated position for next valid character
+ * RETURN:      Updated position क्रम next valid अक्षरacter
  *
- * DESCRIPTION: Output a character into a string with boundary check.
+ * DESCRIPTION: Output a अक्षरacter पूर्णांकo a string with boundary check.
  *
  ******************************************************************************/
 
-static char *acpi_ut_bound_string_output(char *string, const char *end, char c)
-{
+अटल अक्षर *acpi_ut_bound_string_output(अक्षर *string, स्थिर अक्षर *end, अक्षर c)
+अणु
 
-	if (string < end) {
+	अगर (string < end) अणु
 		*string = c;
-	}
+	पूर्ण
 
 	++string;
-	return (string);
-}
+	वापस (string);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -91,135 +92,135 @@ static char *acpi_ut_bound_string_output(char *string, const char *end, char c)
  *
  * PARAMETERS:  string              - Buffer to hold reverse-ordered string
  *              number              - Integer to be converted
- *              base                - Base of the integer
- *              upper               - Whether or not using upper cased digits
+ *              base                - Base of the पूर्णांकeger
+ *              upper               - Whether or not using upper हालd digits
  *
- * RETURN:      Updated position for next valid character
+ * RETURN:      Updated position क्रम next valid अक्षरacter
  *
- * DESCRIPTION: Convert an integer into a string, note that, the string holds a
+ * DESCRIPTION: Convert an पूर्णांकeger पूर्णांकo a string, note that, the string holds a
  *              reversed ordered number without the trailing zero.
  *
  ******************************************************************************/
 
-static char *acpi_ut_put_number(char *string, u64 number, u8 base, u8 upper)
-{
-	const char *digits;
+अटल अक्षर *acpi_ut_put_number(अक्षर *string, u64 number, u8 base, u8 upper)
+अणु
+	स्थिर अक्षर *digits;
 	u64 digit_index;
-	char *pos;
+	अक्षर *pos;
 
 	pos = string;
 	digits = upper ? acpi_gbl_upper_hex_digits : acpi_gbl_lower_hex_digits;
 
-	if (number == 0) {
+	अगर (number == 0) अणु
 		*(pos++) = '0';
-	} else {
-		while (number) {
-			(void)acpi_ut_divide(number, base, &number,
+	पूर्ण अन्यथा अणु
+		जबतक (number) अणु
+			(व्योम)acpi_ut_भागide(number, base, &number,
 					     &digit_index);
 			*(pos++) = digits[digit_index];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* *(Pos++) = '0'; */
-	return (pos);
-}
+	वापस (pos);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_scan_number
  *
  * PARAMETERS:  string              - String buffer
- *              number_ptr          - Where the number is returned
+ *              number_ptr          - Where the number is वापसed
  *
- * RETURN:      Updated position for next valid character
+ * RETURN:      Updated position क्रम next valid अक्षरacter
  *
- * DESCRIPTION: Scan a string for a decimal integer.
+ * DESCRIPTION: Scan a string क्रम a decimal पूर्णांकeger.
  *
  ******************************************************************************/
 
-const char *acpi_ut_scan_number(const char *string, u64 *number_ptr)
-{
+स्थिर अक्षर *acpi_ut_scan_number(स्थिर अक्षर *string, u64 *number_ptr)
+अणु
 	u64 number = 0;
 
-	while (isdigit((int)*string)) {
-		acpi_ut_short_multiply(number, 10, &number);
+	जबतक (है_अंक((पूर्णांक)*string)) अणु
+		acpi_ut_लघु_multiply(number, 10, &number);
 		number += *(string++) - '0';
-	}
+	पूर्ण
 
 	*number_ptr = number;
-	return (string);
-}
+	वापस (string);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_print_number
+ * FUNCTION:    acpi_ut_prपूर्णांक_number
  *
  * PARAMETERS:  string              - String buffer
  *              number              - The number to be converted
  *
- * RETURN:      Updated position for next valid character
+ * RETURN:      Updated position क्रम next valid अक्षरacter
  *
- * DESCRIPTION: Print a decimal integer into a string.
+ * DESCRIPTION: Prपूर्णांक a decimal पूर्णांकeger पूर्णांकo a string.
  *
  ******************************************************************************/
 
-const char *acpi_ut_print_number(char *string, u64 number)
-{
-	char ascii_string[20];
-	const char *pos1;
-	char *pos2;
+स्थिर अक्षर *acpi_ut_prपूर्णांक_number(अक्षर *string, u64 number)
+अणु
+	अक्षर ascii_string[20];
+	स्थिर अक्षर *pos1;
+	अक्षर *pos2;
 
 	pos1 = acpi_ut_put_number(ascii_string, number, 10, FALSE);
 	pos2 = string;
 
-	while (pos1 != ascii_string) {
+	जबतक (pos1 != ascii_string) अणु
 		*(pos2++) = *(--pos1);
-	}
+	पूर्ण
 
 	*pos2 = 0;
-	return (string);
-}
+	वापस (string);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_format_number
+ * FUNCTION:    acpi_ut_क्रमmat_number
  *
  * PARAMETERS:  string              - String buffer with boundary
  *              end                 - Boundary of the string
  *              number              - The number to be converted
- *              base                - Base of the integer
+ *              base                - Base of the पूर्णांकeger
  *              width               - Field width
- *              precision           - Precision of the integer
- *              type                - Special printing flags
+ *              precision           - Precision of the पूर्णांकeger
+ *              type                - Special prपूर्णांकing flags
  *
- * RETURN:      Updated position for next valid character
+ * RETURN:      Updated position क्रम next valid अक्षरacter
  *
- * DESCRIPTION: Print an integer into a string with any base and any precision.
+ * DESCRIPTION: Prपूर्णांक an पूर्णांकeger पूर्णांकo a string with any base and any precision.
  *
  ******************************************************************************/
 
-static char *acpi_ut_format_number(char *string,
-				   char *end,
+अटल अक्षर *acpi_ut_क्रमmat_number(अक्षर *string,
+				   अक्षर *end,
 				   u64 number,
 				   u8 base, s32 width, s32 precision, u8 type)
-{
-	char *pos;
-	char sign;
-	char zero;
+अणु
+	अक्षर *pos;
+	अक्षर sign;
+	अक्षर zero;
 	u8 need_prefix;
 	u8 upper;
 	s32 i;
-	char reversed_string[66];
+	अक्षर reversed_string[66];
 
 	/* Parameter validation */
 
-	if (base < 2 || base > 16) {
-		return (NULL);
-	}
+	अगर (base < 2 || base > 16) अणु
+		वापस (शून्य);
+	पूर्ण
 
-	if (type & ACPI_FORMAT_LEFT) {
+	अगर (type & ACPI_FORMAT_LEFT) अणु
 		type &= ~ACPI_FORMAT_ZERO;
-	}
+	पूर्ण
 
 	need_prefix = ((type & ACPI_FORMAT_PREFIX)
 		       && base != 10) ? TRUE : FALSE;
@@ -229,338 +230,338 @@ static char *acpi_ut_format_number(char *string,
 	/* Calculate size according to sign and prefix */
 
 	sign = '\0';
-	if (type & ACPI_FORMAT_SIGN) {
-		if ((s64)number < 0) {
+	अगर (type & ACPI_FORMAT_SIGN) अणु
+		अगर ((s64)number < 0) अणु
 			sign = '-';
 			number = -(s64)number;
 			width--;
-		} else if (type & ACPI_FORMAT_SIGN_PLUS) {
+		पूर्ण अन्यथा अगर (type & ACPI_FORMAT_SIGN_PLUS) अणु
 			sign = '+';
 			width--;
-		} else if (type & ACPI_FORMAT_SIGN_PLUS_SPACE) {
+		पूर्ण अन्यथा अगर (type & ACPI_FORMAT_SIGN_PLUS_SPACE) अणु
 			sign = ' ';
 			width--;
-		}
-	}
-	if (need_prefix) {
+		पूर्ण
+	पूर्ण
+	अगर (need_prefix) अणु
 		width--;
-		if (base == 16) {
+		अगर (base == 16) अणु
 			width--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Generate full string in reverse order */
 
 	pos = acpi_ut_put_number(reversed_string, number, base, upper);
 	i = (s32)ACPI_PTR_DIFF(pos, reversed_string);
 
-	/* Printing 100 using %2d gives "100", not "00" */
+	/* Prपूर्णांकing 100 using %2d gives "100", not "00" */
 
-	if (i > precision) {
+	अगर (i > precision) अणु
 		precision = i;
-	}
+	पूर्ण
 
 	width -= precision;
 
 	/* Output the string */
 
-	if (!(type & (ACPI_FORMAT_ZERO | ACPI_FORMAT_LEFT))) {
-		while (--width >= 0) {
+	अगर (!(type & (ACPI_FORMAT_ZERO | ACPI_FORMAT_LEFT))) अणु
+		जबतक (--width >= 0) अणु
 			string = acpi_ut_bound_string_output(string, end, ' ');
-		}
-	}
-	if (sign) {
+		पूर्ण
+	पूर्ण
+	अगर (sign) अणु
 		string = acpi_ut_bound_string_output(string, end, sign);
-	}
-	if (need_prefix) {
+	पूर्ण
+	अगर (need_prefix) अणु
 		string = acpi_ut_bound_string_output(string, end, '0');
-		if (base == 16) {
+		अगर (base == 16) अणु
 			string =
 			    acpi_ut_bound_string_output(string, end,
 							upper ? 'X' : 'x');
-		}
-	}
-	if (!(type & ACPI_FORMAT_LEFT)) {
-		while (--width >= 0) {
+		पूर्ण
+	पूर्ण
+	अगर (!(type & ACPI_FORMAT_LEFT)) अणु
+		जबतक (--width >= 0) अणु
 			string = acpi_ut_bound_string_output(string, end, zero);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	while (i <= --precision) {
+	जबतक (i <= --precision) अणु
 		string = acpi_ut_bound_string_output(string, end, '0');
-	}
-	while (--i >= 0) {
+	पूर्ण
+	जबतक (--i >= 0) अणु
 		string = acpi_ut_bound_string_output(string, end,
 						     reversed_string[i]);
-	}
-	while (--width >= 0) {
+	पूर्ण
+	जबतक (--width >= 0) अणु
 		string = acpi_ut_bound_string_output(string, end, ' ');
-	}
+	पूर्ण
 
-	return (string);
-}
+	वापस (string);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    vsnprintf
+ * FUNCTION:    vsnम_लिखो
  *
  * PARAMETERS:  string              - String with boundary
  *              size                - Boundary of the string
- *              format              - Standard printf format
+ *              क्रमmat              - Standard म_लिखो क्रमmat
  *              args                - Argument list
  *
  * RETURN:      Number of bytes actually written.
  *
- * DESCRIPTION: Formatted output to a string using argument list pointer.
+ * DESCRIPTION: Formatted output to a string using argument list poपूर्णांकer.
  *
  ******************************************************************************/
 
-int vsnprintf(char *string, acpi_size size, const char *format, va_list args)
-{
+पूर्णांक vsnम_लिखो(अक्षर *string, acpi_size size, स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
 	u8 base;
 	u8 type;
 	s32 width;
 	s32 precision;
-	char qualifier;
+	अक्षर qualअगरier;
 	u64 number;
-	char *pos;
-	char *end;
-	char c;
-	const char *s;
-	const void *p;
+	अक्षर *pos;
+	अक्षर *end;
+	अक्षर c;
+	स्थिर अक्षर *s;
+	स्थिर व्योम *p;
 	s32 length;
-	int i;
+	पूर्णांक i;
 
 	pos = string;
 
-	if (size != ACPI_UINT32_MAX) {
+	अगर (size != ACPI_UINT32_MAX) अणु
 		end = string + size;
-	} else {
-		end = ACPI_CAST_PTR(char, ACPI_UINT32_MAX);
-	}
+	पूर्ण अन्यथा अणु
+		end = ACPI_CAST_PTR(अक्षर, ACPI_UINT32_MAX);
+	पूर्ण
 
-	for (; *format; ++format) {
-		if (*format != '%') {
-			pos = acpi_ut_bound_string_output(pos, end, *format);
-			continue;
-		}
+	क्रम (; *क्रमmat; ++क्रमmat) अणु
+		अगर (*क्रमmat != '%') अणु
+			pos = acpi_ut_bound_string_output(pos, end, *क्रमmat);
+			जारी;
+		पूर्ण
 
 		type = 0;
 		base = 10;
 
 		/* Process sign */
 
-		do {
-			++format;
-			if (*format == '#') {
+		करो अणु
+			++क्रमmat;
+			अगर (*क्रमmat == '#') अणु
 				type |= ACPI_FORMAT_PREFIX;
-			} else if (*format == '0') {
+			पूर्ण अन्यथा अगर (*क्रमmat == '0') अणु
 				type |= ACPI_FORMAT_ZERO;
-			} else if (*format == '+') {
+			पूर्ण अन्यथा अगर (*क्रमmat == '+') अणु
 				type |= ACPI_FORMAT_SIGN_PLUS;
-			} else if (*format == ' ') {
+			पूर्ण अन्यथा अगर (*क्रमmat == ' ') अणु
 				type |= ACPI_FORMAT_SIGN_PLUS_SPACE;
-			} else if (*format == '-') {
+			पूर्ण अन्यथा अगर (*क्रमmat == '-') अणु
 				type |= ACPI_FORMAT_LEFT;
-			} else {
-				break;
-			}
+			पूर्ण अन्यथा अणु
+				अवरोध;
+			पूर्ण
 
-		} while (1);
+		पूर्ण जबतक (1);
 
 		/* Process width */
 
 		width = -1;
-		if (isdigit((int)*format)) {
-			format = acpi_ut_scan_number(format, &number);
+		अगर (है_अंक((पूर्णांक)*क्रमmat)) अणु
+			क्रमmat = acpi_ut_scan_number(क्रमmat, &number);
 			width = (s32)number;
-		} else if (*format == '*') {
-			++format;
-			width = va_arg(args, int);
-			if (width < 0) {
+		पूर्ण अन्यथा अगर (*क्रमmat == '*') अणु
+			++क्रमmat;
+			width = बहु_तर्क(args, पूर्णांक);
+			अगर (width < 0) अणु
 				width = -width;
 				type |= ACPI_FORMAT_LEFT;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* Process precision */
 
 		precision = -1;
-		if (*format == '.') {
-			++format;
-			if (isdigit((int)*format)) {
-				format = acpi_ut_scan_number(format, &number);
+		अगर (*क्रमmat == '.') अणु
+			++क्रमmat;
+			अगर (है_अंक((पूर्णांक)*क्रमmat)) अणु
+				क्रमmat = acpi_ut_scan_number(क्रमmat, &number);
 				precision = (s32)number;
-			} else if (*format == '*') {
-				++format;
-				precision = va_arg(args, int);
-			}
+			पूर्ण अन्यथा अगर (*क्रमmat == '*') अणु
+				++क्रमmat;
+				precision = बहु_तर्क(args, पूर्णांक);
+			पूर्ण
 
-			if (precision < 0) {
+			अगर (precision < 0) अणु
 				precision = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* Process qualifier */
+		/* Process qualअगरier */
 
-		qualifier = -1;
-		if (*format == 'h' || *format == 'l' || *format == 'L') {
-			qualifier = *format;
-			++format;
+		qualअगरier = -1;
+		अगर (*क्रमmat == 'h' || *format == 'l' || *format == 'L') अणु
+			qualअगरier = *क्रमmat;
+			++क्रमmat;
 
-			if (qualifier == 'l' && *format == 'l') {
-				qualifier = 'L';
-				++format;
-			}
-		}
+			अगर (qualअगरier == 'l' && *format == 'l') अणु
+				qualअगरier = 'L';
+				++क्रमmat;
+			पूर्ण
+		पूर्ण
 
-		switch (*format) {
-		case '%':
+		चयन (*क्रमmat) अणु
+		हाल '%':
 
 			pos = acpi_ut_bound_string_output(pos, end, '%');
-			continue;
+			जारी;
 
-		case 'c':
+		हाल 'c':
 
-			if (!(type & ACPI_FORMAT_LEFT)) {
-				while (--width > 0) {
+			अगर (!(type & ACPI_FORMAT_LEFT)) अणु
+				जबतक (--width > 0) अणु
 					pos =
 					    acpi_ut_bound_string_output(pos,
 									end,
 									' ');
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			c = (char)va_arg(args, int);
+			c = (अक्षर)बहु_तर्क(args, पूर्णांक);
 			pos = acpi_ut_bound_string_output(pos, end, c);
 
-			while (--width > 0) {
+			जबतक (--width > 0) अणु
 				pos =
 				    acpi_ut_bound_string_output(pos, end, ' ');
-			}
-			continue;
+			पूर्ण
+			जारी;
 
-		case 's':
+		हाल 's':
 
-			s = va_arg(args, char *);
-			if (!s) {
+			s = बहु_तर्क(args, अक्षर *);
+			अगर (!s) अणु
 				s = "<NULL>";
-			}
+			पूर्ण
 			length = (s32)acpi_ut_bound_string_length(s, precision);
-			if (!(type & ACPI_FORMAT_LEFT)) {
-				while (length < width--) {
+			अगर (!(type & ACPI_FORMAT_LEFT)) अणु
+				जबतक (length < width--) अणु
 					pos =
 					    acpi_ut_bound_string_output(pos,
 									end,
 									' ');
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			for (i = 0; i < length; ++i) {
+			क्रम (i = 0; i < length; ++i) अणु
 				pos = acpi_ut_bound_string_output(pos, end, *s);
 				++s;
-			}
+			पूर्ण
 
-			while (length < width--) {
+			जबतक (length < width--) अणु
 				pos =
 				    acpi_ut_bound_string_output(pos, end, ' ');
-			}
-			continue;
+			पूर्ण
+			जारी;
 
-		case 'o':
+		हाल 'o':
 
 			base = 8;
-			break;
+			अवरोध;
 
-		case 'X':
+		हाल 'X':
 
 			type |= ACPI_FORMAT_UPPER;
 			/* FALLTHROUGH */
 
-		case 'x':
+		हाल 'x':
 
 			base = 16;
-			break;
+			अवरोध;
 
-		case 'd':
-		case 'i':
+		हाल 'd':
+		हाल 'i':
 
 			type |= ACPI_FORMAT_SIGN;
 
-		case 'u':
+		हाल 'u':
 
-			break;
+			अवरोध;
 
-		case 'p':
+		हाल 'p':
 
-			if (width == -1) {
-				width = 2 * sizeof(void *);
+			अगर (width == -1) अणु
+				width = 2 * माप(व्योम *);
 				type |= ACPI_FORMAT_ZERO;
-			}
+			पूर्ण
 
-			p = va_arg(args, void *);
+			p = बहु_तर्क(args, व्योम *);
 			pos =
-			    acpi_ut_format_number(pos, end, ACPI_TO_INTEGER(p),
+			    acpi_ut_क्रमmat_number(pos, end, ACPI_TO_INTEGER(p),
 						  16, width, precision, type);
-			continue;
+			जारी;
 
-		default:
+		शेष:
 
 			pos = acpi_ut_bound_string_output(pos, end, '%');
-			if (*format) {
+			अगर (*क्रमmat) अणु
 				pos =
 				    acpi_ut_bound_string_output(pos, end,
-								*format);
-			} else {
-				--format;
-			}
-			continue;
-		}
+								*क्रमmat);
+			पूर्ण अन्यथा अणु
+				--क्रमmat;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		if (qualifier == 'L') {
-			number = va_arg(args, u64);
-			if (type & ACPI_FORMAT_SIGN) {
+		अगर (qualअगरier == 'L') अणु
+			number = बहु_तर्क(args, u64);
+			अगर (type & ACPI_FORMAT_SIGN) अणु
 				number = (s64)number;
-			}
-		} else if (qualifier == 'l') {
-			number = va_arg(args, unsigned long);
-			if (type & ACPI_FORMAT_SIGN) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (qualअगरier == 'l') अणु
+			number = बहु_तर्क(args, अचिन्हित दीर्घ);
+			अगर (type & ACPI_FORMAT_SIGN) अणु
 				number = (s32)number;
-			}
-		} else if (qualifier == 'h') {
-			number = (u16)va_arg(args, int);
-			if (type & ACPI_FORMAT_SIGN) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (qualअगरier == 'h') अणु
+			number = (u16)बहु_तर्क(args, पूर्णांक);
+			अगर (type & ACPI_FORMAT_SIGN) अणु
 				number = (s16)number;
-			}
-		} else {
-			number = va_arg(args, unsigned int);
-			if (type & ACPI_FORMAT_SIGN) {
-				number = (signed int)number;
-			}
-		}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			number = बहु_तर्क(args, अचिन्हित पूर्णांक);
+			अगर (type & ACPI_FORMAT_SIGN) अणु
+				number = (चिन्हित पूर्णांक)number;
+			पूर्ण
+		पूर्ण
 
-		pos = acpi_ut_format_number(pos, end, number, base,
+		pos = acpi_ut_क्रमmat_number(pos, end, number, base,
 					    width, precision, type);
-	}
+	पूर्ण
 
-	if (size > 0) {
-		if (pos < end) {
+	अगर (size > 0) अणु
+		अगर (pos < end) अणु
 			*pos = '\0';
-		} else {
+		पूर्ण अन्यथा अणु
 			end[-1] = '\0';
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ((int)ACPI_PTR_DIFF(pos, string));
-}
+	वापस ((पूर्णांक)ACPI_PTR_DIFF(pos, string));
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    snprintf
+ * FUNCTION:    snम_लिखो
  *
  * PARAMETERS:  string              - String with boundary
  *              size                - Boundary of the string
- *              Format, ...         - Standard printf format
+ *              Format, ...         - Standard म_लिखो क्रमmat
  *
  * RETURN:      Number of bytes actually written.
  *
@@ -568,24 +569,24 @@ int vsnprintf(char *string, acpi_size size, const char *format, va_list args)
  *
  ******************************************************************************/
 
-int snprintf(char *string, acpi_size size, const char *format, ...)
-{
-	va_list args;
-	int length;
+पूर्णांक snम_लिखो(अक्षर *string, acpi_size size, स्थिर अक्षर *क्रमmat, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक length;
 
-	va_start(args, format);
-	length = vsnprintf(string, size, format, args);
-	va_end(args);
+	बहु_शुरू(args, क्रमmat);
+	length = vsnम_लिखो(string, size, क्रमmat, args);
+	बहु_पूर्ण(args);
 
-	return (length);
-}
+	वापस (length);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    sprintf
+ * FUNCTION:    प्र_लिखो
  *
  * PARAMETERS:  string              - String with boundary
- *              Format, ...         - Standard printf format
+ *              Format, ...         - Standard म_लिखो क्रमmat
  *
  * RETURN:      Number of bytes actually written.
  *
@@ -593,106 +594,106 @@ int snprintf(char *string, acpi_size size, const char *format, ...)
  *
  ******************************************************************************/
 
-int sprintf(char *string, const char *format, ...)
-{
-	va_list args;
-	int length;
+पूर्णांक प्र_लिखो(अक्षर *string, स्थिर अक्षर *क्रमmat, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक length;
 
-	va_start(args, format);
-	length = vsnprintf(string, ACPI_UINT32_MAX, format, args);
-	va_end(args);
+	बहु_शुरू(args, क्रमmat);
+	length = vsnम_लिखो(string, ACPI_UINT32_MAX, क्रमmat, args);
+	बहु_पूर्ण(args);
 
-	return (length);
-}
+	वापस (length);
+पूर्ण
 
-#ifdef ACPI_APPLICATION
+#अगर_घोषित ACPI_APPLICATION
 /*******************************************************************************
  *
- * FUNCTION:    vprintf
+ * FUNCTION:    भ_लिखो
  *
- * PARAMETERS:  format              - Standard printf format
+ * PARAMETERS:  क्रमmat              - Standard म_लिखो क्रमmat
  *              args                - Argument list
  *
  * RETURN:      Number of bytes actually written.
  *
- * DESCRIPTION: Formatted output to stdout using argument list pointer.
+ * DESCRIPTION: Formatted output to मानक_निकास using argument list poपूर्णांकer.
  *
  ******************************************************************************/
 
-int vprintf(const char *format, va_list args)
-{
+पूर्णांक भ_लिखो(स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
 	acpi_cpu_flags flags;
-	int length;
+	पूर्णांक length;
 
-	flags = acpi_os_acquire_lock(acpi_gbl_print_lock);
-	length = vsnprintf(acpi_gbl_print_buffer,
-			   sizeof(acpi_gbl_print_buffer), format, args);
+	flags = acpi_os_acquire_lock(acpi_gbl_prपूर्णांक_lock);
+	length = vsnम_लिखो(acpi_gbl_prपूर्णांक_buffer,
+			   माप(acpi_gbl_prपूर्णांक_buffer), क्रमmat, args);
 
-	(void)fwrite(acpi_gbl_print_buffer, length, 1, ACPI_FILE_OUT);
-	acpi_os_release_lock(acpi_gbl_print_lock, flags);
+	(व्योम)ख_डालो(acpi_gbl_prपूर्णांक_buffer, length, 1, ACPI_खाता_OUT);
+	acpi_os_release_lock(acpi_gbl_prपूर्णांक_lock, flags);
 
-	return (length);
-}
+	वापस (length);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    printf
+ * FUNCTION:    म_लिखो
  *
- * PARAMETERS:  Format, ...         - Standard printf format
+ * PARAMETERS:  Format, ...         - Standard म_लिखो क्रमmat
  *
  * RETURN:      Number of bytes actually written.
  *
- * DESCRIPTION: Formatted output to stdout.
+ * DESCRIPTION: Formatted output to मानक_निकास.
  *
  ******************************************************************************/
 
-int printf(const char *format, ...)
-{
-	va_list args;
-	int length;
+पूर्णांक म_लिखो(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक length;
 
-	va_start(args, format);
-	length = vprintf(format, args);
-	va_end(args);
+	बहु_शुरू(args, क्रमmat);
+	length = भ_लिखो(क्रमmat, args);
+	बहु_पूर्ण(args);
 
-	return (length);
-}
+	वापस (length);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    vfprintf
+ * FUNCTION:    भख_लिखो
  *
  * PARAMETERS:  file                - File descriptor
- *              format              - Standard printf format
+ *              क्रमmat              - Standard म_लिखो क्रमmat
  *              args                - Argument list
  *
  * RETURN:      Number of bytes actually written.
  *
- * DESCRIPTION: Formatted output to a file using argument list pointer.
+ * DESCRIPTION: Formatted output to a file using argument list poपूर्णांकer.
  *
  ******************************************************************************/
 
-int vfprintf(FILE * file, const char *format, va_list args)
-{
+पूर्णांक भख_लिखो(खाता * file, स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
 	acpi_cpu_flags flags;
-	int length;
+	पूर्णांक length;
 
-	flags = acpi_os_acquire_lock(acpi_gbl_print_lock);
-	length = vsnprintf(acpi_gbl_print_buffer,
-			   sizeof(acpi_gbl_print_buffer), format, args);
+	flags = acpi_os_acquire_lock(acpi_gbl_prपूर्णांक_lock);
+	length = vsnम_लिखो(acpi_gbl_prपूर्णांक_buffer,
+			   माप(acpi_gbl_prपूर्णांक_buffer), क्रमmat, args);
 
-	(void)fwrite(acpi_gbl_print_buffer, length, 1, file);
-	acpi_os_release_lock(acpi_gbl_print_lock, flags);
+	(व्योम)ख_डालो(acpi_gbl_prपूर्णांक_buffer, length, 1, file);
+	acpi_os_release_lock(acpi_gbl_prपूर्णांक_lock, flags);
 
-	return (length);
-}
+	वापस (length);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    fprintf
+ * FUNCTION:    ख_लिखो
  *
  * PARAMETERS:  file                - File descriptor
- *              Format, ...         - Standard printf format
+ *              Format, ...         - Standard म_लिखो क्रमmat
  *
  * RETURN:      Number of bytes actually written.
  *
@@ -700,15 +701,15 @@ int vfprintf(FILE * file, const char *format, va_list args)
  *
  ******************************************************************************/
 
-int fprintf(FILE * file, const char *format, ...)
-{
-	va_list args;
-	int length;
+पूर्णांक ख_लिखो(खाता * file, स्थिर अक्षर *क्रमmat, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक length;
 
-	va_start(args, format);
-	length = vfprintf(file, format, args);
-	va_end(args);
+	बहु_शुरू(args, क्रमmat);
+	length = भख_लिखो(file, क्रमmat, args);
+	बहु_पूर्ण(args);
 
-	return (length);
-}
-#endif
+	वापस (length);
+पूर्ण
+#पूर्ण_अगर

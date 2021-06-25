@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _GENERIC_STATFS_H
-#define _GENERIC_STATFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _GENERIC_STATFS_H
+#घोषणा _GENERIC_STATFS_H
 
-#include <uapi/asm-generic/statfs.h>
+#समावेश <uapi/यंत्र-generic/statfs.h>
 
-typedef __kernel_fsid_t	fsid_t;
-#endif
+प्रकार __kernel_fsid_t	fsid_t;
+#पूर्ण_अगर

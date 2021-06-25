@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,133 +22,133 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-static int
-pwm_info(struct nvkm_therm *therm, int line)
-{
-	struct nvkm_subdev *subdev = &therm->subdev;
-	struct nvkm_device *device = subdev->device;
+अटल पूर्णांक
+pwm_info(काष्ठा nvkm_therm *therm, पूर्णांक line)
+अणु
+	काष्ठा nvkm_subdev *subdev = &therm->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 gpio = nvkm_rd32(device, 0x00d610 + (line * 0x04));
 
-	switch (gpio & 0x000000c0) {
-	case 0x00000000: /* normal mode, possibly pwm forced off by us */
-	case 0x00000040: /* nvio special */
-		switch (gpio & 0x0000001f) {
-		case 0x00: return 2;
-		case 0x19: return 1;
-		case 0x1c: return 0;
-		case 0x1e: return 2;
-		default:
-			break;
-		}
-	default:
-		break;
-	}
+	चयन (gpio & 0x000000c0) अणु
+	हाल 0x00000000: /* normal mode, possibly pwm क्रमced off by us */
+	हाल 0x00000040: /* nvio special */
+		चयन (gpio & 0x0000001f) अणु
+		हाल 0x00: वापस 2;
+		हाल 0x19: वापस 1;
+		हाल 0x1c: वापस 0;
+		हाल 0x1e: वापस 2;
+		शेष:
+			अवरोध;
+		पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	nvkm_error(subdev, "GPIO %d unknown PWM: %08x\n", line, gpio);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-int
-gf119_fan_pwm_ctrl(struct nvkm_therm *therm, int line, bool enable)
-{
-	struct nvkm_device *device = therm->subdev.device;
+पूर्णांक
+gf119_fan_pwm_ctrl(काष्ठा nvkm_therm *therm, पूर्णांक line, bool enable)
+अणु
+	काष्ठा nvkm_device *device = therm->subdev.device;
 	u32 data = enable ? 0x00000040 : 0x00000000;
-	int indx = pwm_info(therm, line);
-	if (indx < 0)
-		return indx;
-	else if (indx < 2)
+	पूर्णांक indx = pwm_info(therm, line);
+	अगर (indx < 0)
+		वापस indx;
+	अन्यथा अगर (indx < 2)
 		nvkm_mask(device, 0x00d610 + (line * 0x04), 0x000000c0, data);
-	/* nothing to do for indx == 2, it seems hardwired to PTHERM */
-	return 0;
-}
+	/* nothing to करो क्रम indx == 2, it seems hardwired to PTHERM */
+	वापस 0;
+पूर्ण
 
-int
-gf119_fan_pwm_get(struct nvkm_therm *therm, int line, u32 *divs, u32 *duty)
-{
-	struct nvkm_device *device = therm->subdev.device;
-	int indx = pwm_info(therm, line);
-	if (indx < 0)
-		return indx;
-	else if (indx < 2) {
-		if (nvkm_rd32(device, 0x00d610 + (line * 0x04)) & 0x00000040) {
-			*divs = nvkm_rd32(device, 0x00e114 + (indx * 8));
+पूर्णांक
+gf119_fan_pwm_get(काष्ठा nvkm_therm *therm, पूर्णांक line, u32 *भागs, u32 *duty)
+अणु
+	काष्ठा nvkm_device *device = therm->subdev.device;
+	पूर्णांक indx = pwm_info(therm, line);
+	अगर (indx < 0)
+		वापस indx;
+	अन्यथा अगर (indx < 2) अणु
+		अगर (nvkm_rd32(device, 0x00d610 + (line * 0x04)) & 0x00000040) अणु
+			*भागs = nvkm_rd32(device, 0x00e114 + (indx * 8));
 			*duty = nvkm_rd32(device, 0x00e118 + (indx * 8));
-			return 0;
-		}
-	} else if (indx == 2) {
-		*divs = nvkm_rd32(device, 0x0200d8) & 0x1fff;
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा अगर (indx == 2) अणु
+		*भागs = nvkm_rd32(device, 0x0200d8) & 0x1fff;
 		*duty = nvkm_rd32(device, 0x0200dc) & 0x1fff;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int
-gf119_fan_pwm_set(struct nvkm_therm *therm, int line, u32 divs, u32 duty)
-{
-	struct nvkm_device *device = therm->subdev.device;
-	int indx = pwm_info(therm, line);
-	if (indx < 0)
-		return indx;
-	else if (indx < 2) {
-		nvkm_wr32(device, 0x00e114 + (indx * 8), divs);
+पूर्णांक
+gf119_fan_pwm_set(काष्ठा nvkm_therm *therm, पूर्णांक line, u32 भागs, u32 duty)
+अणु
+	काष्ठा nvkm_device *device = therm->subdev.device;
+	पूर्णांक indx = pwm_info(therm, line);
+	अगर (indx < 0)
+		वापस indx;
+	अन्यथा अगर (indx < 2) अणु
+		nvkm_wr32(device, 0x00e114 + (indx * 8), भागs);
 		nvkm_wr32(device, 0x00e118 + (indx * 8), duty | 0x80000000);
-	} else if (indx == 2) {
-		nvkm_mask(device, 0x0200d8, 0x1fff, divs); /* keep the high bits */
+	पूर्ण अन्यथा अगर (indx == 2) अणु
+		nvkm_mask(device, 0x0200d8, 0x1fff, भागs); /* keep the high bits */
 		nvkm_wr32(device, 0x0200dc, duty | 0x40000000);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int
-gf119_fan_pwm_clock(struct nvkm_therm *therm, int line)
-{
-	struct nvkm_device *device = therm->subdev.device;
-	int indx = pwm_info(therm, line);
-	if (indx < 0)
-		return 0;
-	else if (indx < 2)
-		return (device->crystal * 1000) / 20;
-	else
-		return device->crystal * 1000 / 10;
-}
+पूर्णांक
+gf119_fan_pwm_घड़ी(काष्ठा nvkm_therm *therm, पूर्णांक line)
+अणु
+	काष्ठा nvkm_device *device = therm->subdev.device;
+	पूर्णांक indx = pwm_info(therm, line);
+	अगर (indx < 0)
+		वापस 0;
+	अन्यथा अगर (indx < 2)
+		वापस (device->crystal * 1000) / 20;
+	अन्यथा
+		वापस device->crystal * 1000 / 10;
+पूर्ण
 
-void
-gf119_therm_init(struct nvkm_therm *therm)
-{
-	struct nvkm_device *device = therm->subdev.device;
+व्योम
+gf119_therm_init(काष्ठा nvkm_therm *therm)
+अणु
+	काष्ठा nvkm_device *device = therm->subdev.device;
 
 	g84_sensor_setup(therm);
 
 	/* enable fan tach, count revolutions per-second */
 	nvkm_mask(device, 0x00e720, 0x00000003, 0x00000002);
-	if (therm->fan->tach.func != DCB_GPIO_UNUSED) {
+	अगर (therm->fan->tach.func != DCB_GPIO_UNUSED) अणु
 		nvkm_mask(device, 0x00d79c, 0x000000ff, therm->fan->tach.line);
 		nvkm_wr32(device, 0x00e724, device->crystal * 1000);
 		nvkm_mask(device, 0x00e720, 0x00000001, 0x00000001);
-	}
+	पूर्ण
 	nvkm_mask(device, 0x00e720, 0x00000002, 0x00000000);
-}
+पूर्ण
 
-static const struct nvkm_therm_func
-gf119_therm = {
+अटल स्थिर काष्ठा nvkm_therm_func
+gf119_therm = अणु
 	.init = gf119_therm_init,
 	.fini = g84_therm_fini,
 	.pwm_ctrl = gf119_fan_pwm_ctrl,
 	.pwm_get = gf119_fan_pwm_get,
 	.pwm_set = gf119_fan_pwm_set,
-	.pwm_clock = gf119_fan_pwm_clock,
+	.pwm_घड़ी = gf119_fan_pwm_घड़ी,
 	.temp_get = g84_temp_get,
 	.fan_sense = gt215_therm_fan_sense,
 	.program_alarms = nvkm_therm_program_alarms_polling,
-};
+पूर्ण;
 
-int
-gf119_therm_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-		struct nvkm_therm **ptherm)
-{
-	return nvkm_therm_new_(&gf119_therm, device, type, inst, ptherm);
-}
+पूर्णांक
+gf119_therm_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+		काष्ठा nvkm_therm **ptherm)
+अणु
+	वापस nvkm_therm_new_(&gf119_therm, device, type, inst, ptherm);
+पूर्ण

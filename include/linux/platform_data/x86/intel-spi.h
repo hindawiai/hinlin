@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Intel PCH/PCU SPI flash driver.
  *
  * Copyright (C) 2016, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#ifndef INTEL_SPI_PDATA_H
-#define INTEL_SPI_PDATA_H
+#अगर_अघोषित INTEL_SPI_PDATA_H
+#घोषणा INTEL_SPI_PDATA_H
 
-enum intel_spi_type {
+क्रमागत पूर्णांकel_spi_type अणु
 	INTEL_SPI_BYT = 1,
 	INTEL_SPI_LPT,
 	INTEL_SPI_BXT,
 	INTEL_SPI_CNL,
-};
+पूर्ण;
 
 /**
- * struct intel_spi_boardinfo - Board specific data for Intel SPI driver
+ * काष्ठा पूर्णांकel_spi_boardinfo - Board specअगरic data क्रम Intel SPI driver
  * @type: Type which this controller is compatible with
- * @writeable: The chip is writeable
+ * @ग_लिखोable: The chip is ग_लिखोable
  */
-struct intel_spi_boardinfo {
-	enum intel_spi_type type;
-	bool writeable;
-};
+काष्ठा पूर्णांकel_spi_boardinfo अणु
+	क्रमागत पूर्णांकel_spi_type type;
+	bool ग_लिखोable;
+पूर्ण;
 
-#endif /* INTEL_SPI_PDATA_H */
+#पूर्ण_अगर /* INTEL_SPI_PDATA_H */

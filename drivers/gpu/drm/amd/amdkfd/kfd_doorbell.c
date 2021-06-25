@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,129 +20,129 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "kfd_priv.h"
-#include <linux/mm.h>
-#include <linux/mman.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/idr.h>
+#समावेश "kfd_priv.h"
+#समावेश <linux/mm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/idr.h>
 
 /*
- * This extension supports a kernel level doorbells management for the
- * kernel queues using the first doorbell page reserved for the kernel.
+ * This extension supports a kernel level करोorbells management क्रम the
+ * kernel queues using the first करोorbell page reserved क्रम the kernel.
  */
 
 /*
- * Each device exposes a doorbell aperture, a PCI MMIO aperture that
- * receives 32-bit writes that are passed to queues as wptr values.
- * The doorbells are intended to be written by applications as part
+ * Each device exposes a करोorbell aperture, a PCI MMIO aperture that
+ * receives 32-bit ग_लिखोs that are passed to queues as wptr values.
+ * The करोorbells are पूर्णांकended to be written by applications as part
  * of queueing work on user-mode queues.
- * We assign doorbells to applications in PAGE_SIZE-sized and aligned chunks.
- * We map the doorbell address space into user-mode when a process creates
+ * We assign करोorbells to applications in PAGE_SIZE-sized and aligned chunks.
+ * We map the करोorbell address space पूर्णांकo user-mode when a process creates
  * its first queue on each device.
- * Although the mapping is done by KFD, it is equivalent to an mmap of
+ * Although the mapping is करोne by KFD, it is equivalent to an mmap of
  * the /dev/kfd with the particular device encoded in the mmap offset.
- * There will be other uses for mmap of /dev/kfd, so only a range of
- * offsets (KFD_MMAP_DOORBELL_START-END) is used for doorbells.
+ * There will be other uses क्रम mmap of /dev/kfd, so only a range of
+ * offsets (KFD_MMAP_DOORBELL_START-END) is used क्रम करोorbells.
  */
 
-/* # of doorbell bytes allocated for each process. */
-size_t kfd_doorbell_process_slice(struct kfd_dev *kfd)
-{
-	return roundup(kfd->device_info->doorbell_size *
+/* # of करोorbell bytes allocated क्रम each process. */
+माप_प्रकार kfd_करोorbell_process_slice(काष्ठा kfd_dev *kfd)
+अणु
+	वापस roundup(kfd->device_info->करोorbell_size *
 			KFD_MAX_NUM_OF_QUEUES_PER_PROCESS,
 			PAGE_SIZE);
-}
+पूर्ण
 
-/* Doorbell calculations for device init. */
-int kfd_doorbell_init(struct kfd_dev *kfd)
-{
-	size_t doorbell_start_offset;
-	size_t doorbell_aperture_size;
-	size_t doorbell_process_limit;
+/* Doorbell calculations क्रम device init. */
+पूर्णांक kfd_करोorbell_init(काष्ठा kfd_dev *kfd)
+अणु
+	माप_प्रकार करोorbell_start_offset;
+	माप_प्रकार करोorbell_aperture_size;
+	माप_प्रकार करोorbell_process_limit;
 
 	/*
 	 * We start with calculations in bytes because the input data might
 	 * only be byte-aligned.
-	 * Only after we have done the rounding can we assume any alignment.
+	 * Only after we have करोne the rounding can we assume any alignment.
 	 */
 
-	doorbell_start_offset =
-			roundup(kfd->shared_resources.doorbell_start_offset,
-					kfd_doorbell_process_slice(kfd));
+	करोorbell_start_offset =
+			roundup(kfd->shared_resources.करोorbell_start_offset,
+					kfd_करोorbell_process_slice(kfd));
 
-	doorbell_aperture_size =
-			rounddown(kfd->shared_resources.doorbell_aperture_size,
-					kfd_doorbell_process_slice(kfd));
+	करोorbell_aperture_size =
+			roundकरोwn(kfd->shared_resources.करोorbell_aperture_size,
+					kfd_करोorbell_process_slice(kfd));
 
-	if (doorbell_aperture_size > doorbell_start_offset)
-		doorbell_process_limit =
-			(doorbell_aperture_size - doorbell_start_offset) /
-						kfd_doorbell_process_slice(kfd);
-	else
-		return -ENOSPC;
+	अगर (करोorbell_aperture_size > करोorbell_start_offset)
+		करोorbell_process_limit =
+			(करोorbell_aperture_size - करोorbell_start_offset) /
+						kfd_करोorbell_process_slice(kfd);
+	अन्यथा
+		वापस -ENOSPC;
 
-	if (!kfd->max_doorbell_slices ||
-	    doorbell_process_limit < kfd->max_doorbell_slices)
-		kfd->max_doorbell_slices = doorbell_process_limit;
+	अगर (!kfd->max_करोorbell_slices ||
+	    करोorbell_process_limit < kfd->max_करोorbell_slices)
+		kfd->max_करोorbell_slices = करोorbell_process_limit;
 
-	kfd->doorbell_base = kfd->shared_resources.doorbell_physical_address +
-				doorbell_start_offset;
+	kfd->करोorbell_base = kfd->shared_resources.करोorbell_physical_address +
+				करोorbell_start_offset;
 
-	kfd->doorbell_base_dw_offset = doorbell_start_offset / sizeof(u32);
+	kfd->करोorbell_base_dw_offset = करोorbell_start_offset / माप(u32);
 
-	kfd->doorbell_kernel_ptr = ioremap(kfd->doorbell_base,
-					   kfd_doorbell_process_slice(kfd));
+	kfd->करोorbell_kernel_ptr = ioremap(kfd->करोorbell_base,
+					   kfd_करोorbell_process_slice(kfd));
 
-	if (!kfd->doorbell_kernel_ptr)
-		return -ENOMEM;
+	अगर (!kfd->करोorbell_kernel_ptr)
+		वापस -ENOMEM;
 
 	pr_debug("Doorbell initialization:\n");
 	pr_debug("doorbell base           == 0x%08lX\n",
-			(uintptr_t)kfd->doorbell_base);
+			(uपूर्णांकptr_t)kfd->करोorbell_base);
 
 	pr_debug("doorbell_base_dw_offset      == 0x%08lX\n",
-			kfd->doorbell_base_dw_offset);
+			kfd->करोorbell_base_dw_offset);
 
 	pr_debug("doorbell_process_limit  == 0x%08lX\n",
-			doorbell_process_limit);
+			करोorbell_process_limit);
 
 	pr_debug("doorbell_kernel_offset  == 0x%08lX\n",
-			(uintptr_t)kfd->doorbell_base);
+			(uपूर्णांकptr_t)kfd->करोorbell_base);
 
 	pr_debug("doorbell aperture size  == 0x%08lX\n",
-			kfd->shared_resources.doorbell_aperture_size);
+			kfd->shared_resources.करोorbell_aperture_size);
 
-	pr_debug("doorbell kernel address == %p\n", kfd->doorbell_kernel_ptr);
+	pr_debug("doorbell kernel address == %p\n", kfd->करोorbell_kernel_ptr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kfd_doorbell_fini(struct kfd_dev *kfd)
-{
-	if (kfd->doorbell_kernel_ptr)
-		iounmap(kfd->doorbell_kernel_ptr);
-}
+व्योम kfd_करोorbell_fini(काष्ठा kfd_dev *kfd)
+अणु
+	अगर (kfd->करोorbell_kernel_ptr)
+		iounmap(kfd->करोorbell_kernel_ptr);
+पूर्ण
 
-int kfd_doorbell_mmap(struct kfd_dev *dev, struct kfd_process *process,
-		      struct vm_area_struct *vma)
-{
+पूर्णांक kfd_करोorbell_mmap(काष्ठा kfd_dev *dev, काष्ठा kfd_process *process,
+		      काष्ठा vm_area_काष्ठा *vma)
+अणु
 	phys_addr_t address;
-	struct kfd_process_device *pdd;
+	काष्ठा kfd_process_device *pdd;
 
 	/*
-	 * For simplicitly we only allow mapping of the entire doorbell
+	 * For simplicitly we only allow mapping of the entire करोorbell
 	 * allocation of a single device & process.
 	 */
-	if (vma->vm_end - vma->vm_start != kfd_doorbell_process_slice(dev))
-		return -EINVAL;
+	अगर (vma->vm_end - vma->vm_start != kfd_करोorbell_process_slice(dev))
+		वापस -EINVAL;
 
 	pdd = kfd_get_process_device_data(dev, process);
-	if (!pdd)
-		return -EINVAL;
+	अगर (!pdd)
+		वापस -EINVAL;
 
-	/* Calculate physical address of doorbell */
-	address = kfd_get_process_doorbells(pdd);
+	/* Calculate physical address of करोorbell */
+	address = kfd_get_process_करोorbells(pdd);
 	vma->vm_flags |= VM_IO | VM_DONTCOPY | VM_DONTEXPAND | VM_NORESERVE |
 				VM_DONTDUMP | VM_PFNMAP;
 
@@ -152,124 +153,124 @@ int kfd_doorbell_mmap(struct kfd_dev *dev, struct kfd_process *process,
 		 "     physical address    == 0x%08llX\n"
 		 "     vm_flags            == 0x%04lX\n"
 		 "     size                == 0x%04lX\n",
-		 (unsigned long long) vma->vm_start, address, vma->vm_flags,
-		 kfd_doorbell_process_slice(dev));
+		 (अचिन्हित दीर्घ दीर्घ) vma->vm_start, address, vma->vm_flags,
+		 kfd_करोorbell_process_slice(dev));
 
 
-	return io_remap_pfn_range(vma,
+	वापस io_remap_pfn_range(vma,
 				vma->vm_start,
 				address >> PAGE_SHIFT,
-				kfd_doorbell_process_slice(dev),
+				kfd_करोorbell_process_slice(dev),
 				vma->vm_page_prot);
-}
+पूर्ण
 
 
-/* get kernel iomem pointer for a doorbell */
-void __iomem *kfd_get_kernel_doorbell(struct kfd_dev *kfd,
-					unsigned int *doorbell_off)
-{
+/* get kernel iomem poपूर्णांकer क्रम a करोorbell */
+व्योम __iomem *kfd_get_kernel_करोorbell(काष्ठा kfd_dev *kfd,
+					अचिन्हित पूर्णांक *करोorbell_off)
+अणु
 	u32 inx;
 
-	mutex_lock(&kfd->doorbell_mutex);
-	inx = find_first_zero_bit(kfd->doorbell_available_index,
+	mutex_lock(&kfd->करोorbell_mutex);
+	inx = find_first_zero_bit(kfd->करोorbell_available_index,
 					KFD_MAX_NUM_OF_QUEUES_PER_PROCESS);
 
-	__set_bit(inx, kfd->doorbell_available_index);
-	mutex_unlock(&kfd->doorbell_mutex);
+	__set_bit(inx, kfd->करोorbell_available_index);
+	mutex_unlock(&kfd->करोorbell_mutex);
 
-	if (inx >= KFD_MAX_NUM_OF_QUEUES_PER_PROCESS)
-		return NULL;
+	अगर (inx >= KFD_MAX_NUM_OF_QUEUES_PER_PROCESS)
+		वापस शून्य;
 
-	inx *= kfd->device_info->doorbell_size / sizeof(u32);
+	inx *= kfd->device_info->करोorbell_size / माप(u32);
 
 	/*
-	 * Calculating the kernel doorbell offset using the first
-	 * doorbell page.
+	 * Calculating the kernel करोorbell offset using the first
+	 * करोorbell page.
 	 */
-	*doorbell_off = kfd->doorbell_base_dw_offset + inx;
+	*करोorbell_off = kfd->करोorbell_base_dw_offset + inx;
 
 	pr_debug("Get kernel queue doorbell\n"
 			"     doorbell offset   == 0x%08X\n"
 			"     doorbell index    == 0x%x\n",
-		*doorbell_off, inx);
+		*करोorbell_off, inx);
 
-	return kfd->doorbell_kernel_ptr + inx;
-}
+	वापस kfd->करोorbell_kernel_ptr + inx;
+पूर्ण
 
-void kfd_release_kernel_doorbell(struct kfd_dev *kfd, u32 __iomem *db_addr)
-{
-	unsigned int inx;
+व्योम kfd_release_kernel_करोorbell(काष्ठा kfd_dev *kfd, u32 __iomem *db_addr)
+अणु
+	अचिन्हित पूर्णांक inx;
 
-	inx = (unsigned int)(db_addr - kfd->doorbell_kernel_ptr)
-		* sizeof(u32) / kfd->device_info->doorbell_size;
+	inx = (अचिन्हित पूर्णांक)(db_addr - kfd->करोorbell_kernel_ptr)
+		* माप(u32) / kfd->device_info->करोorbell_size;
 
-	mutex_lock(&kfd->doorbell_mutex);
-	__clear_bit(inx, kfd->doorbell_available_index);
-	mutex_unlock(&kfd->doorbell_mutex);
-}
+	mutex_lock(&kfd->करोorbell_mutex);
+	__clear_bit(inx, kfd->करोorbell_available_index);
+	mutex_unlock(&kfd->करोorbell_mutex);
+पूर्ण
 
-void write_kernel_doorbell(void __iomem *db, u32 value)
-{
-	if (db) {
-		writel(value, db);
+व्योम ग_लिखो_kernel_करोorbell(व्योम __iomem *db, u32 value)
+अणु
+	अगर (db) अणु
+		ग_लिखोl(value, db);
 		pr_debug("Writing %d to doorbell address %p\n", value, db);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void write_kernel_doorbell64(void __iomem *db, u64 value)
-{
-	if (db) {
-		WARN(((unsigned long)db & 7) != 0,
+व्योम ग_लिखो_kernel_करोorbell64(व्योम __iomem *db, u64 value)
+अणु
+	अगर (db) अणु
+		WARN(((अचिन्हित दीर्घ)db & 7) != 0,
 		     "Unaligned 64-bit doorbell");
-		writeq(value, (u64 __iomem *)db);
+		ग_लिखोq(value, (u64 __iomem *)db);
 		pr_debug("writing %llu to doorbell address %p\n", value, db);
-	}
-}
+	पूर्ण
+पूर्ण
 
-unsigned int kfd_get_doorbell_dw_offset_in_bar(struct kfd_dev *kfd,
-					struct kfd_process_device *pdd,
-					unsigned int doorbell_id)
-{
+अचिन्हित पूर्णांक kfd_get_करोorbell_dw_offset_in_bar(काष्ठा kfd_dev *kfd,
+					काष्ठा kfd_process_device *pdd,
+					अचिन्हित पूर्णांक करोorbell_id)
+अणु
 	/*
-	 * doorbell_base_dw_offset accounts for doorbells taken by KGD.
-	 * index * kfd_doorbell_process_slice/sizeof(u32) adjusts to
-	 * the process's doorbells. The offset returned is in dword
-	 * units regardless of the ASIC-dependent doorbell size.
+	 * करोorbell_base_dw_offset accounts क्रम करोorbells taken by KGD.
+	 * index * kfd_करोorbell_process_slice/माप(u32) adjusts to
+	 * the process's करोorbells. The offset वापसed is in dword
+	 * units regardless of the ASIC-dependent करोorbell size.
 	 */
-	return kfd->doorbell_base_dw_offset +
-		pdd->doorbell_index
-		* kfd_doorbell_process_slice(kfd) / sizeof(u32) +
-		doorbell_id * kfd->device_info->doorbell_size / sizeof(u32);
-}
+	वापस kfd->करोorbell_base_dw_offset +
+		pdd->करोorbell_index
+		* kfd_करोorbell_process_slice(kfd) / माप(u32) +
+		करोorbell_id * kfd->device_info->करोorbell_size / माप(u32);
+पूर्ण
 
-uint64_t kfd_get_number_elems(struct kfd_dev *kfd)
-{
-	uint64_t num_of_elems = (kfd->shared_resources.doorbell_aperture_size -
-				kfd->shared_resources.doorbell_start_offset) /
-					kfd_doorbell_process_slice(kfd) + 1;
+uपूर्णांक64_t kfd_get_number_elems(काष्ठा kfd_dev *kfd)
+अणु
+	uपूर्णांक64_t num_of_elems = (kfd->shared_resources.करोorbell_aperture_size -
+				kfd->shared_resources.करोorbell_start_offset) /
+					kfd_करोorbell_process_slice(kfd) + 1;
 
-	return num_of_elems;
+	वापस num_of_elems;
 
-}
+पूर्ण
 
-phys_addr_t kfd_get_process_doorbells(struct kfd_process_device *pdd)
-{
-	return pdd->dev->doorbell_base +
-		pdd->doorbell_index * kfd_doorbell_process_slice(pdd->dev);
-}
+phys_addr_t kfd_get_process_करोorbells(काष्ठा kfd_process_device *pdd)
+अणु
+	वापस pdd->dev->करोorbell_base +
+		pdd->करोorbell_index * kfd_करोorbell_process_slice(pdd->dev);
+पूर्ण
 
-int kfd_alloc_process_doorbells(struct kfd_dev *kfd, unsigned int *doorbell_index)
-{
-	int r = ida_simple_get(&kfd->doorbell_ida, 1, kfd->max_doorbell_slices,
+पूर्णांक kfd_alloc_process_करोorbells(काष्ठा kfd_dev *kfd, अचिन्हित पूर्णांक *करोorbell_index)
+अणु
+	पूर्णांक r = ida_simple_get(&kfd->करोorbell_ida, 1, kfd->max_करोorbell_slices,
 				GFP_KERNEL);
-	if (r > 0)
-		*doorbell_index = r;
+	अगर (r > 0)
+		*करोorbell_index = r;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void kfd_free_process_doorbells(struct kfd_dev *kfd, unsigned int doorbell_index)
-{
-	if (doorbell_index)
-		ida_simple_remove(&kfd->doorbell_ida, doorbell_index);
-}
+व्योम kfd_मुक्त_process_करोorbells(काष्ठा kfd_dev *kfd, अचिन्हित पूर्णांक करोorbell_index)
+अणु
+	अगर (करोorbell_index)
+		ida_simple_हटाओ(&kfd->करोorbell_ida, करोorbell_index);
+पूर्ण

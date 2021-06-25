@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * pSeries_lpar.c
  * Copyright (C) 2001 Todd Inglett, IBM Corporation
@@ -7,49 +8,49 @@
  */
 
 /* Enables debugging of low-level hash table routines - careful! */
-#undef DEBUG
-#define pr_fmt(fmt) "lpar: " fmt
+#अघोषित DEBUG
+#घोषणा pr_fmt(fmt) "lpar: " fmt
 
-#include <linux/kernel.h>
-#include <linux/dma-mapping.h>
-#include <linux/console.h>
-#include <linux/export.h>
-#include <linux/jump_label.h>
-#include <linux/delay.h>
-#include <linux/stop_machine.h>
-#include <linux/spinlock.h>
-#include <linux/cpuhotplug.h>
-#include <linux/workqueue.h>
-#include <linux/proc_fs.h>
-#include <linux/pgtable.h>
-#include <asm/processor.h>
-#include <asm/mmu.h>
-#include <asm/page.h>
-#include <asm/machdep.h>
-#include <asm/mmu_context.h>
-#include <asm/iommu.h>
-#include <asm/tlb.h>
-#include <asm/prom.h>
-#include <asm/cputable.h>
-#include <asm/udbg.h>
-#include <asm/smp.h>
-#include <asm/trace.h>
-#include <asm/firmware.h>
-#include <asm/plpar_wrappers.h>
-#include <asm/kexec.h>
-#include <asm/fadump.h>
-#include <asm/asm-prototypes.h>
-#include <asm/debugfs.h>
-#include <asm/dtl.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/console.h>
+#समावेश <linux/export.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/stop_machine.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/trace.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/plpar_wrappers.h>
+#समावेश <यंत्र/kexec.h>
+#समावेश <यंत्र/fadump.h>
+#समावेश <यंत्र/यंत्र-prototypes.h>
+#समावेश <यंत्र/debugfs.h>
+#समावेश <यंत्र/dtl.h>
 
-#include "pseries.h"
+#समावेश "pseries.h"
 
-/* Flag bits for H_BULK_REMOVE */
-#define HBR_REQUEST	0x4000000000000000UL
-#define HBR_RESPONSE	0x8000000000000000UL
-#define HBR_END		0xc000000000000000UL
-#define HBR_AVPN	0x0200000000000000UL
-#define HBR_ANDCOND	0x0100000000000000UL
+/* Flag bits क्रम H_BULK_REMOVE */
+#घोषणा HBR_REQUEST	0x4000000000000000UL
+#घोषणा HBR_RESPONSE	0x8000000000000000UL
+#घोषणा HBR_END		0xc000000000000000UL
+#घोषणा HBR_AVPN	0x0200000000000000UL
+#घोषणा HBR_ANDCOND	0x0100000000000000UL
 
 
 /* in hvCall.S */
@@ -58,670 +59,670 @@ EXPORT_SYMBOL(plpar_hcall9);
 EXPORT_SYMBOL(plpar_hcall_norets);
 
 /*
- * H_BLOCK_REMOVE supported block size for this page size in segment who's base
+ * H_BLOCK_REMOVE supported block size क्रम this page size in segment who's base
  * page size is that page size.
  *
  * The first index is the segment base page size, the second one is the actual
  * page size.
  */
-static int hblkrm_size[MMU_PAGE_COUNT][MMU_PAGE_COUNT] __ro_after_init;
+अटल पूर्णांक hblkrm_size[MMU_PAGE_COUNT][MMU_PAGE_COUNT] __ro_after_init;
 
 /*
- * Due to the involved complexity, and that the current hypervisor is only
- * returning this value or 0, we are limiting the support of the H_BLOCK_REMOVE
+ * Due to the involved complनिकासy, and that the current hypervisor is only
+ * वापसing this value or 0, we are limiting the support of the H_BLOCK_REMOVE
  * buffer size to 8 size block.
  */
-#define HBLKRM_SUPPORTED_BLOCK_SIZE 8
+#घोषणा HBLKRM_SUPPORTED_BLOCK_SIZE 8
 
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-static u8 dtl_mask = DTL_LOG_PREEMPT;
-#else
-static u8 dtl_mask;
-#endif
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+अटल u8 dtl_mask = DTL_LOG_PREEMPT;
+#अन्यथा
+अटल u8 dtl_mask;
+#पूर्ण_अगर
 
-void alloc_dtl_buffers(unsigned long *time_limit)
-{
-	int cpu;
-	struct paca_struct *pp;
-	struct dtl_entry *dtl;
+व्योम alloc_dtl_buffers(अचिन्हित दीर्घ *समय_limit)
+अणु
+	पूर्णांक cpu;
+	काष्ठा paca_काष्ठा *pp;
+	काष्ठा dtl_entry *dtl;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		pp = paca_ptrs[cpu];
-		if (pp->dispatch_log)
-			continue;
+		अगर (pp->dispatch_log)
+			जारी;
 		dtl = kmem_cache_alloc(dtl_cache, GFP_KERNEL);
-		if (!dtl) {
+		अगर (!dtl) अणु
 			pr_warn("Failed to allocate dispatch trace log for cpu %d\n",
 				cpu);
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
 			pr_warn("Stolen time statistics will be unreliable\n");
-#endif
-			break;
-		}
+#पूर्ण_अगर
+			अवरोध;
+		पूर्ण
 
 		pp->dtl_ridx = 0;
 		pp->dispatch_log = dtl;
 		pp->dispatch_log_end = dtl + N_DISPATCH_LOG;
 		pp->dtl_curr = dtl;
 
-		if (time_limit && time_after(jiffies, *time_limit)) {
+		अगर (समय_limit && समय_after(jअगरfies, *समय_limit)) अणु
 			cond_resched();
-			*time_limit = jiffies + HZ;
-		}
-	}
-}
+			*समय_limit = jअगरfies + HZ;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void register_dtl_buffer(int cpu)
-{
-	long ret;
-	struct paca_struct *pp;
-	struct dtl_entry *dtl;
-	int hwcpu = get_hard_smp_processor_id(cpu);
+व्योम रेजिस्टर_dtl_buffer(पूर्णांक cpu)
+अणु
+	दीर्घ ret;
+	काष्ठा paca_काष्ठा *pp;
+	काष्ठा dtl_entry *dtl;
+	पूर्णांक hwcpu = get_hard_smp_processor_id(cpu);
 
 	pp = paca_ptrs[cpu];
 	dtl = pp->dispatch_log;
-	if (dtl && dtl_mask) {
+	अगर (dtl && dtl_mask) अणु
 		pp->dtl_ridx = 0;
 		pp->dtl_curr = dtl;
 		lppaca_of(cpu).dtl_idx = 0;
 
-		/* hypervisor reads buffer length from this field */
-		dtl->enqueue_to_dispatch_time = cpu_to_be32(DISPATCH_LOG_BYTES);
-		ret = register_dtl(hwcpu, __pa(dtl));
-		if (ret)
+		/* hypervisor पढ़ोs buffer length from this field */
+		dtl->enqueue_to_dispatch_समय = cpu_to_be32(DISPATCH_LOG_BYTES);
+		ret = रेजिस्टर_dtl(hwcpu, __pa(dtl));
+		अगर (ret)
 			pr_err("WARNING: DTL registration of cpu %d (hw %d) failed with %ld\n",
 			       cpu, hwcpu, ret);
 
 		lppaca_of(cpu).dtl_enable_mask = dtl_mask;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PPC_SPLPAR
-struct dtl_worker {
-	struct delayed_work work;
-	int cpu;
-};
+#अगर_घोषित CONFIG_PPC_SPLPAR
+काष्ठा dtl_worker अणु
+	काष्ठा delayed_work work;
+	पूर्णांक cpu;
+पूर्ण;
 
-struct vcpu_dispatch_data {
-	int last_disp_cpu;
+काष्ठा vcpu_dispatch_data अणु
+	पूर्णांक last_disp_cpu;
 
-	int total_disp;
+	पूर्णांक total_disp;
 
-	int same_cpu_disp;
-	int same_chip_disp;
-	int diff_chip_disp;
-	int far_chip_disp;
+	पूर्णांक same_cpu_disp;
+	पूर्णांक same_chip_disp;
+	पूर्णांक dअगरf_chip_disp;
+	पूर्णांक far_chip_disp;
 
-	int numa_home_disp;
-	int numa_remote_disp;
-	int numa_far_disp;
-};
+	पूर्णांक numa_home_disp;
+	पूर्णांक numa_remote_disp;
+	पूर्णांक numa_far_disp;
+पूर्ण;
 
 /*
  * This represents the number of cpus in the hypervisor. Since there is no
  * architected way to discover the number of processors in the host, we
- * provision for dealing with NR_CPUS. This is currently 2048 by default, and
- * is sufficient for our purposes. This will need to be tweaked if
+ * provision क्रम dealing with NR_CPUS. This is currently 2048 by शेष, and
+ * is sufficient क्रम our purposes. This will need to be tweaked अगर
  * CONFIG_NR_CPUS is changed.
  */
-#define NR_CPUS_H	NR_CPUS
+#घोषणा NR_CPUS_H	NR_CPUS
 
 DEFINE_RWLOCK(dtl_access_lock);
-static DEFINE_PER_CPU(struct vcpu_dispatch_data, vcpu_disp_data);
-static DEFINE_PER_CPU(u64, dtl_entry_ridx);
-static DEFINE_PER_CPU(struct dtl_worker, dtl_workers);
-static enum cpuhp_state dtl_worker_state;
-static DEFINE_MUTEX(dtl_enable_mutex);
-static int vcpudispatch_stats_on __read_mostly;
-static int vcpudispatch_stats_freq = 50;
-static __be32 *vcpu_associativity, *pcpu_associativity;
+अटल DEFINE_PER_CPU(काष्ठा vcpu_dispatch_data, vcpu_disp_data);
+अटल DEFINE_PER_CPU(u64, dtl_entry_ridx);
+अटल DEFINE_PER_CPU(काष्ठा dtl_worker, dtl_workers);
+अटल क्रमागत cpuhp_state dtl_worker_state;
+अटल DEFINE_MUTEX(dtl_enable_mutex);
+अटल पूर्णांक vcpudispatch_stats_on __पढ़ो_mostly;
+अटल पूर्णांक vcpudispatch_stats_freq = 50;
+अटल __be32 *vcpu_associativity, *pcpu_associativity;
 
 
-static void free_dtl_buffers(unsigned long *time_limit)
-{
-#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-	int cpu;
-	struct paca_struct *pp;
+अटल व्योम मुक्त_dtl_buffers(अचिन्हित दीर्घ *समय_limit)
+अणु
+#अगर_अघोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+	पूर्णांक cpu;
+	काष्ठा paca_काष्ठा *pp;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		pp = paca_ptrs[cpu];
-		if (!pp->dispatch_log)
-			continue;
-		kmem_cache_free(dtl_cache, pp->dispatch_log);
+		अगर (!pp->dispatch_log)
+			जारी;
+		kmem_cache_मुक्त(dtl_cache, pp->dispatch_log);
 		pp->dtl_ridx = 0;
 		pp->dispatch_log = 0;
 		pp->dispatch_log_end = 0;
 		pp->dtl_curr = 0;
 
-		if (time_limit && time_after(jiffies, *time_limit)) {
+		अगर (समय_limit && समय_after(jअगरfies, *समय_limit)) अणु
 			cond_resched();
-			*time_limit = jiffies + HZ;
-		}
-	}
-#endif
-}
+			*समय_limit = jअगरfies + HZ;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static int init_cpu_associativity(void)
-{
-	vcpu_associativity = kcalloc(num_possible_cpus() / threads_per_core,
-			VPHN_ASSOC_BUFSIZE * sizeof(__be32), GFP_KERNEL);
-	pcpu_associativity = kcalloc(NR_CPUS_H / threads_per_core,
-			VPHN_ASSOC_BUFSIZE * sizeof(__be32), GFP_KERNEL);
+अटल पूर्णांक init_cpu_associativity(व्योम)
+अणु
+	vcpu_associativity = kसुस्मृति(num_possible_cpus() / thपढ़ोs_per_core,
+			VPHN_ASSOC_बफ_मानE * माप(__be32), GFP_KERNEL);
+	pcpu_associativity = kसुस्मृति(NR_CPUS_H / thपढ़ोs_per_core,
+			VPHN_ASSOC_बफ_मानE * माप(__be32), GFP_KERNEL);
 
-	if (!vcpu_associativity || !pcpu_associativity) {
+	अगर (!vcpu_associativity || !pcpu_associativity) अणु
 		pr_err("error allocating memory for associativity information\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void destroy_cpu_associativity(void)
-{
-	kfree(vcpu_associativity);
-	kfree(pcpu_associativity);
+अटल व्योम destroy_cpu_associativity(व्योम)
+अणु
+	kमुक्त(vcpu_associativity);
+	kमुक्त(pcpu_associativity);
 	vcpu_associativity = pcpu_associativity = 0;
-}
+पूर्ण
 
-static __be32 *__get_cpu_associativity(int cpu, __be32 *cpu_assoc, int flag)
-{
+अटल __be32 *__get_cpu_associativity(पूर्णांक cpu, __be32 *cpu_assoc, पूर्णांक flag)
+अणु
 	__be32 *assoc;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	assoc = &cpu_assoc[(int)(cpu / threads_per_core) * VPHN_ASSOC_BUFSIZE];
-	if (!assoc[0]) {
+	assoc = &cpu_assoc[(पूर्णांक)(cpu / thपढ़ोs_per_core) * VPHN_ASSOC_बफ_मानE];
+	अगर (!assoc[0]) अणु
 		rc = hcall_vphn(cpu, flag, &assoc[0]);
-		if (rc)
-			return NULL;
-	}
+		अगर (rc)
+			वापस शून्य;
+	पूर्ण
 
-	return assoc;
-}
+	वापस assoc;
+पूर्ण
 
-static __be32 *get_pcpu_associativity(int cpu)
-{
-	return __get_cpu_associativity(cpu, pcpu_associativity, VPHN_FLAG_PCPU);
-}
+अटल __be32 *get_pcpu_associativity(पूर्णांक cpu)
+अणु
+	वापस __get_cpu_associativity(cpu, pcpu_associativity, VPHN_FLAG_PCPU);
+पूर्ण
 
-static __be32 *get_vcpu_associativity(int cpu)
-{
-	return __get_cpu_associativity(cpu, vcpu_associativity, VPHN_FLAG_VCPU);
-}
+अटल __be32 *get_vcpu_associativity(पूर्णांक cpu)
+अणु
+	वापस __get_cpu_associativity(cpu, vcpu_associativity, VPHN_FLAG_VCPU);
+पूर्ण
 
-static int cpu_relative_dispatch_distance(int last_disp_cpu, int cur_disp_cpu)
-{
+अटल पूर्णांक cpu_relative_dispatch_distance(पूर्णांक last_disp_cpu, पूर्णांक cur_disp_cpu)
+अणु
 	__be32 *last_disp_cpu_assoc, *cur_disp_cpu_assoc;
 
-	if (last_disp_cpu >= NR_CPUS_H || cur_disp_cpu >= NR_CPUS_H)
-		return -EINVAL;
+	अगर (last_disp_cpu >= NR_CPUS_H || cur_disp_cpu >= NR_CPUS_H)
+		वापस -EINVAL;
 
 	last_disp_cpu_assoc = get_pcpu_associativity(last_disp_cpu);
 	cur_disp_cpu_assoc = get_pcpu_associativity(cur_disp_cpu);
 
-	if (!last_disp_cpu_assoc || !cur_disp_cpu_assoc)
-		return -EIO;
+	अगर (!last_disp_cpu_assoc || !cur_disp_cpu_assoc)
+		वापस -EIO;
 
-	return cpu_distance(last_disp_cpu_assoc, cur_disp_cpu_assoc);
-}
+	वापस cpu_distance(last_disp_cpu_assoc, cur_disp_cpu_assoc);
+पूर्ण
 
-static int cpu_home_node_dispatch_distance(int disp_cpu)
-{
+अटल पूर्णांक cpu_home_node_dispatch_distance(पूर्णांक disp_cpu)
+अणु
 	__be32 *disp_cpu_assoc, *vcpu_assoc;
-	int vcpu_id = smp_processor_id();
+	पूर्णांक vcpu_id = smp_processor_id();
 
-	if (disp_cpu >= NR_CPUS_H) {
+	अगर (disp_cpu >= NR_CPUS_H) अणु
 		pr_debug_ratelimited("vcpu dispatch cpu %d > %d\n",
 						disp_cpu, NR_CPUS_H);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	disp_cpu_assoc = get_pcpu_associativity(disp_cpu);
 	vcpu_assoc = get_vcpu_associativity(vcpu_id);
 
-	if (!disp_cpu_assoc || !vcpu_assoc)
-		return -EIO;
+	अगर (!disp_cpu_assoc || !vcpu_assoc)
+		वापस -EIO;
 
-	return cpu_distance(disp_cpu_assoc, vcpu_assoc);
-}
+	वापस cpu_distance(disp_cpu_assoc, vcpu_assoc);
+पूर्ण
 
-static void update_vcpu_disp_stat(int disp_cpu)
-{
-	struct vcpu_dispatch_data *disp;
-	int distance;
+अटल व्योम update_vcpu_disp_stat(पूर्णांक disp_cpu)
+अणु
+	काष्ठा vcpu_dispatch_data *disp;
+	पूर्णांक distance;
 
 	disp = this_cpu_ptr(&vcpu_disp_data);
-	if (disp->last_disp_cpu == -1) {
+	अगर (disp->last_disp_cpu == -1) अणु
 		disp->last_disp_cpu = disp_cpu;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	disp->total_disp++;
 
-	if (disp->last_disp_cpu == disp_cpu ||
-		(cpu_first_thread_sibling(disp->last_disp_cpu) ==
-					cpu_first_thread_sibling(disp_cpu)))
+	अगर (disp->last_disp_cpu == disp_cpu ||
+		(cpu_first_thपढ़ो_sibling(disp->last_disp_cpu) ==
+					cpu_first_thपढ़ो_sibling(disp_cpu)))
 		disp->same_cpu_disp++;
-	else {
+	अन्यथा अणु
 		distance = cpu_relative_dispatch_distance(disp->last_disp_cpu,
 								disp_cpu);
-		if (distance < 0)
+		अगर (distance < 0)
 			pr_debug_ratelimited("vcpudispatch_stats: cpu %d: error determining associativity\n",
 					smp_processor_id());
-		else {
-			switch (distance) {
-			case 0:
+		अन्यथा अणु
+			चयन (distance) अणु
+			हाल 0:
 				disp->same_chip_disp++;
-				break;
-			case 1:
-				disp->diff_chip_disp++;
-				break;
-			case 2:
+				अवरोध;
+			हाल 1:
+				disp->dअगरf_chip_disp++;
+				अवरोध;
+			हाल 2:
 				disp->far_chip_disp++;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				pr_debug_ratelimited("vcpudispatch_stats: cpu %d (%d -> %d): unexpected relative dispatch distance %d\n",
 						 smp_processor_id(),
 						 disp->last_disp_cpu,
 						 disp_cpu,
 						 distance);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	distance = cpu_home_node_dispatch_distance(disp_cpu);
-	if (distance < 0)
+	अगर (distance < 0)
 		pr_debug_ratelimited("vcpudispatch_stats: cpu %d: error determining associativity\n",
 				smp_processor_id());
-	else {
-		switch (distance) {
-		case 0:
+	अन्यथा अणु
+		चयन (distance) अणु
+		हाल 0:
 			disp->numa_home_disp++;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			disp->numa_remote_disp++;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			disp->numa_far_disp++;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_debug_ratelimited("vcpudispatch_stats: cpu %d on %d: unexpected numa dispatch distance %d\n",
 						 smp_processor_id(),
 						 disp_cpu,
 						 distance);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	disp->last_disp_cpu = disp_cpu;
-}
+पूर्ण
 
-static void process_dtl_buffer(struct work_struct *work)
-{
-	struct dtl_entry dtle;
-	u64 i = __this_cpu_read(dtl_entry_ridx);
-	struct dtl_entry *dtl = local_paca->dispatch_log + (i % N_DISPATCH_LOG);
-	struct dtl_entry *dtl_end = local_paca->dispatch_log_end;
-	struct lppaca *vpa = local_paca->lppaca_ptr;
-	struct dtl_worker *d = container_of(work, struct dtl_worker, work.work);
+अटल व्योम process_dtl_buffer(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dtl_entry dtle;
+	u64 i = __this_cpu_पढ़ो(dtl_entry_ridx);
+	काष्ठा dtl_entry *dtl = local_paca->dispatch_log + (i % N_DISPATCH_LOG);
+	काष्ठा dtl_entry *dtl_end = local_paca->dispatch_log_end;
+	काष्ठा lppaca *vpa = local_paca->lppaca_ptr;
+	काष्ठा dtl_worker *d = container_of(work, काष्ठा dtl_worker, work.work);
 
-	if (!local_paca->dispatch_log)
-		return;
+	अगर (!local_paca->dispatch_log)
+		वापस;
 
-	/* if we have been migrated away, we cancel ourself */
-	if (d->cpu != smp_processor_id()) {
+	/* अगर we have been migrated away, we cancel ourself */
+	अगर (d->cpu != smp_processor_id()) अणु
 		pr_debug("vcpudispatch_stats: cpu %d worker migrated -- canceling worker\n",
 						smp_processor_id());
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (i == be64_to_cpu(vpa->dtl_idx))
-		goto out;
+	अगर (i == be64_to_cpu(vpa->dtl_idx))
+		जाओ out;
 
-	while (i < be64_to_cpu(vpa->dtl_idx)) {
+	जबतक (i < be64_to_cpu(vpa->dtl_idx)) अणु
 		dtle = *dtl;
 		barrier();
-		if (i + N_DISPATCH_LOG < be64_to_cpu(vpa->dtl_idx)) {
+		अगर (i + N_DISPATCH_LOG < be64_to_cpu(vpa->dtl_idx)) अणु
 			/* buffer has overflowed */
 			pr_debug_ratelimited("vcpudispatch_stats: cpu %d lost %lld DTL samples\n",
 				d->cpu,
 				be64_to_cpu(vpa->dtl_idx) - N_DISPATCH_LOG - i);
 			i = be64_to_cpu(vpa->dtl_idx) - N_DISPATCH_LOG;
 			dtl = local_paca->dispatch_log + (i % N_DISPATCH_LOG);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		update_vcpu_disp_stat(be16_to_cpu(dtle.processor_id));
 		++i;
 		++dtl;
-		if (dtl == dtl_end)
+		अगर (dtl == dtl_end)
 			dtl = local_paca->dispatch_log;
-	}
+	पूर्ण
 
-	__this_cpu_write(dtl_entry_ridx, i);
+	__this_cpu_ग_लिखो(dtl_entry_ridx, i);
 
 out:
 	schedule_delayed_work_on(d->cpu, to_delayed_work(work),
 					HZ / vcpudispatch_stats_freq);
-}
+पूर्ण
 
-static int dtl_worker_online(unsigned int cpu)
-{
-	struct dtl_worker *d = &per_cpu(dtl_workers, cpu);
+अटल पूर्णांक dtl_worker_online(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा dtl_worker *d = &per_cpu(dtl_workers, cpu);
 
-	memset(d, 0, sizeof(*d));
+	स_रखो(d, 0, माप(*d));
 	INIT_DELAYED_WORK(&d->work, process_dtl_buffer);
 	d->cpu = cpu;
 
-#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+#अगर_अघोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
 	per_cpu(dtl_entry_ridx, cpu) = 0;
-	register_dtl_buffer(cpu);
-#else
+	रेजिस्टर_dtl_buffer(cpu);
+#अन्यथा
 	per_cpu(dtl_entry_ridx, cpu) = be64_to_cpu(lppaca_of(cpu).dtl_idx);
-#endif
+#पूर्ण_अगर
 
 	schedule_delayed_work_on(cpu, &d->work, HZ / vcpudispatch_stats_freq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dtl_worker_offline(unsigned int cpu)
-{
-	struct dtl_worker *d = &per_cpu(dtl_workers, cpu);
+अटल पूर्णांक dtl_worker_offline(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा dtl_worker *d = &per_cpu(dtl_workers, cpu);
 
 	cancel_delayed_work_sync(&d->work);
 
-#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-	unregister_dtl(get_hard_smp_processor_id(cpu));
-#endif
+#अगर_अघोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+	unरेजिस्टर_dtl(get_hard_smp_processor_id(cpu));
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_global_dtl_mask(u8 mask)
-{
-	int cpu;
+अटल व्योम set_global_dtl_mask(u8 mask)
+अणु
+	पूर्णांक cpu;
 
 	dtl_mask = mask;
-	for_each_present_cpu(cpu)
+	क्रम_each_present_cpu(cpu)
 		lppaca_of(cpu).dtl_enable_mask = dtl_mask;
-}
+पूर्ण
 
-static void reset_global_dtl_mask(void)
-{
-	int cpu;
+अटल व्योम reset_global_dtl_mask(व्योम)
+अणु
+	पूर्णांक cpu;
 
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
 	dtl_mask = DTL_LOG_PREEMPT;
-#else
+#अन्यथा
 	dtl_mask = 0;
-#endif
-	for_each_present_cpu(cpu)
+#पूर्ण_अगर
+	क्रम_each_present_cpu(cpu)
 		lppaca_of(cpu).dtl_enable_mask = dtl_mask;
-}
+पूर्ण
 
-static int dtl_worker_enable(unsigned long *time_limit)
-{
-	int rc = 0, state;
+अटल पूर्णांक dtl_worker_enable(अचिन्हित दीर्घ *समय_limit)
+अणु
+	पूर्णांक rc = 0, state;
 
-	if (!write_trylock(&dtl_access_lock)) {
+	अगर (!ग_लिखो_trylock(&dtl_access_lock)) अणु
 		rc = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	set_global_dtl_mask(DTL_LOG_ALL);
 
-	/* Setup dtl buffers and register those */
-	alloc_dtl_buffers(time_limit);
+	/* Setup dtl buffers and रेजिस्टर those */
+	alloc_dtl_buffers(समय_limit);
 
 	state = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "powerpc/dtl:online",
 					dtl_worker_online, dtl_worker_offline);
-	if (state < 0) {
+	अगर (state < 0) अणु
 		pr_err("vcpudispatch_stats: unable to setup workqueue for DTL processing\n");
-		free_dtl_buffers(time_limit);
+		मुक्त_dtl_buffers(समय_limit);
 		reset_global_dtl_mask();
-		write_unlock(&dtl_access_lock);
+		ग_लिखो_unlock(&dtl_access_lock);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	dtl_worker_state = state;
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void dtl_worker_disable(unsigned long *time_limit)
-{
-	cpuhp_remove_state(dtl_worker_state);
-	free_dtl_buffers(time_limit);
+अटल व्योम dtl_worker_disable(अचिन्हित दीर्घ *समय_limit)
+अणु
+	cpuhp_हटाओ_state(dtl_worker_state);
+	मुक्त_dtl_buffers(समय_limit);
 	reset_global_dtl_mask();
-	write_unlock(&dtl_access_lock);
-}
+	ग_लिखो_unlock(&dtl_access_lock);
+पूर्ण
 
-static ssize_t vcpudispatch_stats_write(struct file *file, const char __user *p,
-		size_t count, loff_t *ppos)
-{
-	unsigned long time_limit = jiffies + HZ;
-	struct vcpu_dispatch_data *disp;
-	int rc, cmd, cpu;
-	char buf[16];
+अटल sमाप_प्रकार vcpudispatch_stats_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *p,
+		माप_प्रकार count, loff_t *ppos)
+अणु
+	अचिन्हित दीर्घ समय_limit = jअगरfies + HZ;
+	काष्ठा vcpu_dispatch_data *disp;
+	पूर्णांक rc, cmd, cpu;
+	अक्षर buf[16];
 
-	if (count > 15)
-		return -EINVAL;
+	अगर (count > 15)
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, p, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, p, count))
+		वापस -EFAULT;
 
 	buf[count] = 0;
-	rc = kstrtoint(buf, 0, &cmd);
-	if (rc || cmd < 0 || cmd > 1) {
+	rc = kstrtoपूर्णांक(buf, 0, &cmd);
+	अगर (rc || cmd < 0 || cmd > 1) अणु
 		pr_err("vcpudispatch_stats: please use 0 to disable or 1 to enable dispatch statistics\n");
-		return rc ? rc : -EINVAL;
-	}
+		वापस rc ? rc : -EINVAL;
+	पूर्ण
 
 	mutex_lock(&dtl_enable_mutex);
 
-	if ((cmd == 0 && !vcpudispatch_stats_on) ||
+	अगर ((cmd == 0 && !vcpudispatch_stats_on) ||
 			(cmd == 1 && vcpudispatch_stats_on))
-		goto out;
+		जाओ out;
 
-	if (cmd) {
+	अगर (cmd) अणु
 		rc = init_cpu_associativity();
-		if (rc)
-			goto out;
+		अगर (rc)
+			जाओ out;
 
-		for_each_possible_cpu(cpu) {
+		क्रम_each_possible_cpu(cpu) अणु
 			disp = per_cpu_ptr(&vcpu_disp_data, cpu);
-			memset(disp, 0, sizeof(*disp));
+			स_रखो(disp, 0, माप(*disp));
 			disp->last_disp_cpu = -1;
-		}
+		पूर्ण
 
-		rc = dtl_worker_enable(&time_limit);
-		if (rc) {
+		rc = dtl_worker_enable(&समय_limit);
+		अगर (rc) अणु
 			destroy_cpu_associativity();
-			goto out;
-		}
-	} else {
-		dtl_worker_disable(&time_limit);
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dtl_worker_disable(&समय_limit);
 		destroy_cpu_associativity();
-	}
+	पूर्ण
 
 	vcpudispatch_stats_on = cmd;
 
 out:
 	mutex_unlock(&dtl_enable_mutex);
-	if (rc)
-		return rc;
-	return count;
-}
+	अगर (rc)
+		वापस rc;
+	वापस count;
+पूर्ण
 
-static int vcpudispatch_stats_display(struct seq_file *p, void *v)
-{
-	int cpu;
-	struct vcpu_dispatch_data *disp;
+अटल पूर्णांक vcpudispatch_stats_display(काष्ठा seq_file *p, व्योम *v)
+अणु
+	पूर्णांक cpu;
+	काष्ठा vcpu_dispatch_data *disp;
 
-	if (!vcpudispatch_stats_on) {
-		seq_puts(p, "off\n");
-		return 0;
-	}
+	अगर (!vcpudispatch_stats_on) अणु
+		seq_माला_दो(p, "off\n");
+		वापस 0;
+	पूर्ण
 
-	for_each_online_cpu(cpu) {
+	क्रम_each_online_cpu(cpu) अणु
 		disp = per_cpu_ptr(&vcpu_disp_data, cpu);
-		seq_printf(p, "cpu%d", cpu);
+		seq_म_लिखो(p, "cpu%d", cpu);
 		seq_put_decimal_ull(p, " ", disp->total_disp);
 		seq_put_decimal_ull(p, " ", disp->same_cpu_disp);
 		seq_put_decimal_ull(p, " ", disp->same_chip_disp);
-		seq_put_decimal_ull(p, " ", disp->diff_chip_disp);
+		seq_put_decimal_ull(p, " ", disp->dअगरf_chip_disp);
 		seq_put_decimal_ull(p, " ", disp->far_chip_disp);
 		seq_put_decimal_ull(p, " ", disp->numa_home_disp);
 		seq_put_decimal_ull(p, " ", disp->numa_remote_disp);
 		seq_put_decimal_ull(p, " ", disp->numa_far_disp);
-		seq_puts(p, "\n");
-	}
+		seq_माला_दो(p, "\n");
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vcpudispatch_stats_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, vcpudispatch_stats_display, NULL);
-}
+अटल पूर्णांक vcpudispatch_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, vcpudispatch_stats_display, शून्य);
+पूर्ण
 
-static const struct proc_ops vcpudispatch_stats_proc_ops = {
-	.proc_open	= vcpudispatch_stats_open,
-	.proc_read	= seq_read,
-	.proc_write	= vcpudispatch_stats_write,
+अटल स्थिर काष्ठा proc_ops vcpudispatch_stats_proc_ops = अणु
+	.proc_खोलो	= vcpudispatch_stats_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_ग_लिखो	= vcpudispatch_stats_ग_लिखो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static ssize_t vcpudispatch_stats_freq_write(struct file *file,
-		const char __user *p, size_t count, loff_t *ppos)
-{
-	int rc, freq;
-	char buf[16];
+अटल sमाप_प्रकार vcpudispatch_stats_freq_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *p, माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक rc, freq;
+	अक्षर buf[16];
 
-	if (count > 15)
-		return -EINVAL;
+	अगर (count > 15)
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, p, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, p, count))
+		वापस -EFAULT;
 
 	buf[count] = 0;
-	rc = kstrtoint(buf, 0, &freq);
-	if (rc || freq < 1 || freq > HZ) {
+	rc = kstrtoपूर्णांक(buf, 0, &freq);
+	अगर (rc || freq < 1 || freq > HZ) अणु
 		pr_err("vcpudispatch_stats_freq: please specify a frequency between 1 and %d\n",
 				HZ);
-		return rc ? rc : -EINVAL;
-	}
+		वापस rc ? rc : -EINVAL;
+	पूर्ण
 
 	vcpudispatch_stats_freq = freq;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int vcpudispatch_stats_freq_display(struct seq_file *p, void *v)
-{
-	seq_printf(p, "%d\n", vcpudispatch_stats_freq);
-	return 0;
-}
+अटल पूर्णांक vcpudispatch_stats_freq_display(काष्ठा seq_file *p, व्योम *v)
+अणु
+	seq_म_लिखो(p, "%d\n", vcpudispatch_stats_freq);
+	वापस 0;
+पूर्ण
 
-static int vcpudispatch_stats_freq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, vcpudispatch_stats_freq_display, NULL);
-}
+अटल पूर्णांक vcpudispatch_stats_freq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, vcpudispatch_stats_freq_display, शून्य);
+पूर्ण
 
-static const struct proc_ops vcpudispatch_stats_freq_proc_ops = {
-	.proc_open	= vcpudispatch_stats_freq_open,
-	.proc_read	= seq_read,
-	.proc_write	= vcpudispatch_stats_freq_write,
+अटल स्थिर काष्ठा proc_ops vcpudispatch_stats_freq_proc_ops = अणु
+	.proc_खोलो	= vcpudispatch_stats_freq_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_ग_लिखो	= vcpudispatch_stats_freq_ग_लिखो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static int __init vcpudispatch_stats_procfs_init(void)
-{
+अटल पूर्णांक __init vcpudispatch_stats_procfs_init(व्योम)
+अणु
 	/*
-	 * Avoid smp_processor_id while preemptible. All CPUs should have
-	 * the same value for lppaca_shared_proc.
+	 * Aव्योम smp_processor_id जबतक preemptible. All CPUs should have
+	 * the same value क्रम lppaca_shared_proc.
 	 */
 	preempt_disable();
-	if (!lppaca_shared_proc(get_lppaca())) {
+	अगर (!lppaca_shared_proc(get_lppaca())) अणु
 		preempt_enable();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	preempt_enable();
 
-	if (!proc_create("powerpc/vcpudispatch_stats", 0600, NULL,
+	अगर (!proc_create("powerpc/vcpudispatch_stats", 0600, शून्य,
 					&vcpudispatch_stats_proc_ops))
 		pr_err("vcpudispatch_stats: error creating procfs file\n");
-	else if (!proc_create("powerpc/vcpudispatch_stats_freq", 0600, NULL,
+	अन्यथा अगर (!proc_create("powerpc/vcpudispatch_stats_freq", 0600, शून्य,
 					&vcpudispatch_stats_freq_proc_ops))
 		pr_err("vcpudispatch_stats_freq: error creating procfs file\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 machine_device_initcall(pseries, vcpudispatch_stats_procfs_init);
-#endif /* CONFIG_PPC_SPLPAR */
+#पूर्ण_अगर /* CONFIG_PPC_SPLPAR */
 
-void vpa_init(int cpu)
-{
-	int hwcpu = get_hard_smp_processor_id(cpu);
-	unsigned long addr;
-	long ret;
+व्योम vpa_init(पूर्णांक cpu)
+अणु
+	पूर्णांक hwcpu = get_hard_smp_processor_id(cpu);
+	अचिन्हित दीर्घ addr;
+	दीर्घ ret;
 
 	/*
-	 * The spec says it "may be problematic" if CPU x registers the VPA of
-	 * CPU y. We should never do that, but wail if we ever do.
+	 * The spec says it "may be problematic" अगर CPU x रेजिस्टरs the VPA of
+	 * CPU y. We should never करो that, but wail अगर we ever करो.
 	 */
 	WARN_ON(cpu != smp_processor_id());
 
-	if (cpu_has_feature(CPU_FTR_ALTIVEC))
+	अगर (cpu_has_feature(CPU_FTR_ALTIVEC))
 		lppaca_of(cpu).vmxregs_in_use = 1;
 
-	if (cpu_has_feature(CPU_FTR_ARCH_207S))
+	अगर (cpu_has_feature(CPU_FTR_ARCH_207S))
 		lppaca_of(cpu).ebb_regs_in_use = 1;
 
 	addr = __pa(&lppaca_of(cpu));
-	ret = register_vpa(hwcpu, addr);
+	ret = रेजिस्टर_vpa(hwcpu, addr);
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("WARNING: VPA registration for cpu %d (hw %d) of area "
 		       "%lx failed with %ld\n", cpu, hwcpu, addr, ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#ifdef CONFIG_PPC_BOOK3S_64
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
 	/*
 	 * PAPR says this feature is SLB-Buffer but firmware never
-	 * reports that.  All SPLPAR support SLB shadow buffer.
+	 * reports that.  All SPLPAR support SLB shaकरोw buffer.
 	 */
-	if (!radix_enabled() && firmware_has_feature(FW_FEATURE_SPLPAR)) {
-		addr = __pa(paca_ptrs[cpu]->slb_shadow_ptr);
-		ret = register_slb_shadow(hwcpu, addr);
-		if (ret)
+	अगर (!radix_enabled() && firmware_has_feature(FW_FEATURE_SPLPAR)) अणु
+		addr = __pa(paca_ptrs[cpu]->slb_shaकरोw_ptr);
+		ret = रेजिस्टर_slb_shaकरोw(hwcpu, addr);
+		अगर (ret)
 			pr_err("WARNING: SLB shadow buffer registration for "
 			       "cpu %d (hw %d) of area %lx failed with %ld\n",
 			       cpu, hwcpu, addr, ret);
-	}
-#endif /* CONFIG_PPC_BOOK3S_64 */
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
 
 	/*
-	 * Register dispatch trace log, if one has been allocated.
+	 * Register dispatch trace log, अगर one has been allocated.
 	 */
-	register_dtl_buffer(cpu);
-}
+	रेजिस्टर_dtl_buffer(cpu);
+पूर्ण
 
-#ifdef CONFIG_PPC_BOOK3S_64
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
 
-static long pSeries_lpar_hpte_insert(unsigned long hpte_group,
-				     unsigned long vpn, unsigned long pa,
-				     unsigned long rflags, unsigned long vflags,
-				     int psize, int apsize, int ssize)
-{
-	unsigned long lpar_rc;
-	unsigned long flags;
-	unsigned long slot;
-	unsigned long hpte_v, hpte_r;
+अटल दीर्घ pSeries_lpar_hpte_insert(अचिन्हित दीर्घ hpte_group,
+				     अचिन्हित दीर्घ vpn, अचिन्हित दीर्घ pa,
+				     अचिन्हित दीर्घ rflags, अचिन्हित दीर्घ vflags,
+				     पूर्णांक psize, पूर्णांक apsize, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ lpar_rc;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ slot;
+	अचिन्हित दीर्घ hpte_v, hpte_r;
 
-	if (!(vflags & HPTE_V_BOLTED))
+	अगर (!(vflags & HPTE_V_BOLTED))
 		pr_devel("hpte_insert(group=%lx, vpn=%016lx, "
 			 "pa=%016lx, rflags=%lx, vflags=%lx, psize=%d)\n",
 			 hpte_group, vpn,  pa, rflags, vflags, psize);
@@ -729,7 +730,7 @@ static long pSeries_lpar_hpte_insert(unsigned long hpte_group,
 	hpte_v = hpte_encode_v(vpn, psize, apsize, ssize) | vflags | HPTE_V_VALID;
 	hpte_r = hpte_encode_r(pa, psize, apsize) | rflags;
 
-	if (!(vflags & HPTE_V_BOLTED))
+	अगर (!(vflags & HPTE_V_BOLTED))
 		pr_devel(" hpte_v=%016lx, hpte_r=%016lx\n", hpte_v, hpte_r);
 
 	/* Now fill in the actual HPTE */
@@ -740,157 +741,157 @@ static long pSeries_lpar_hpte_insert(unsigned long hpte_group,
 	/* Exact = 0                   */
 	flags = 0;
 
-	if (firmware_has_feature(FW_FEATURE_XCMO) && !(hpte_r & HPTE_R_N))
+	अगर (firmware_has_feature(FW_FEATURE_XCMO) && !(hpte_r & HPTE_R_N))
 		flags |= H_COALESCE_CAND;
 
 	lpar_rc = plpar_pte_enter(flags, hpte_group, hpte_v, hpte_r, &slot);
-	if (unlikely(lpar_rc == H_PTEG_FULL)) {
+	अगर (unlikely(lpar_rc == H_PTEG_FULL)) अणु
 		pr_devel("Hash table group is full\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/*
-	 * Since we try and ioremap PHBs we don't own, the pte insert
+	 * Since we try and ioremap PHBs we करोn't own, the pte insert
 	 * will fail. However we must catch the failure in hash_page
-	 * or we will loop forever, so return -2 in this case.
+	 * or we will loop क्रमever, so वापस -2 in this हाल.
 	 */
-	if (unlikely(lpar_rc != H_SUCCESS)) {
+	अगर (unlikely(lpar_rc != H_SUCCESS)) अणु
 		pr_err("Failed hash pte insert with error %ld\n", lpar_rc);
-		return -2;
-	}
-	if (!(vflags & HPTE_V_BOLTED))
+		वापस -2;
+	पूर्ण
+	अगर (!(vflags & HPTE_V_BOLTED))
 		pr_devel(" -> slot: %lu\n", slot & 7);
 
-	/* Because of iSeries, we have to pass down the secondary
+	/* Because of iSeries, we have to pass करोwn the secondary
 	 * bucket bit here as well
 	 */
-	return (slot & 7) | (!!(vflags & HPTE_V_SECONDARY) << 3);
-}
+	वापस (slot & 7) | (!!(vflags & HPTE_V_SECONDARY) << 3);
+पूर्ण
 
-static DEFINE_SPINLOCK(pSeries_lpar_tlbie_lock);
+अटल DEFINE_SPINLOCK(pSeries_lpar_tlbie_lock);
 
-static long pSeries_lpar_hpte_remove(unsigned long hpte_group)
-{
-	unsigned long slot_offset;
-	unsigned long lpar_rc;
-	int i;
-	unsigned long dummy1, dummy2;
+अटल दीर्घ pSeries_lpar_hpte_हटाओ(अचिन्हित दीर्घ hpte_group)
+अणु
+	अचिन्हित दीर्घ slot_offset;
+	अचिन्हित दीर्घ lpar_rc;
+	पूर्णांक i;
+	अचिन्हित दीर्घ dummy1, dummy2;
 
-	/* pick a random slot to start at */
+	/* pick a अक्रमom slot to start at */
 	slot_offset = mftb() & 0x7;
 
-	for (i = 0; i < HPTES_PER_GROUP; i++) {
+	क्रम (i = 0; i < HPTES_PER_GROUP; i++) अणु
 
-		/* don't remove a bolted entry */
-		lpar_rc = plpar_pte_remove(H_ANDCOND, hpte_group + slot_offset,
+		/* करोn't हटाओ a bolted entry */
+		lpar_rc = plpar_pte_हटाओ(H_ANDCOND, hpte_group + slot_offset,
 					   HPTE_V_BOLTED, &dummy1, &dummy2);
-		if (lpar_rc == H_SUCCESS)
-			return i;
+		अगर (lpar_rc == H_SUCCESS)
+			वापस i;
 
 		/*
-		 * The test for adjunct partition is performed before the
-		 * ANDCOND test.  H_RESOURCE may be returned, so we need to
-		 * check for that as well.
+		 * The test क्रम adjunct partition is perक्रमmed beक्रमe the
+		 * ANDCOND test.  H_RESOURCE may be वापसed, so we need to
+		 * check क्रम that as well.
 		 */
 		BUG_ON(lpar_rc != H_NOT_FOUND && lpar_rc != H_RESOURCE);
 
 		slot_offset++;
 		slot_offset &= 0x7;
-	}
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void manual_hpte_clear_all(void)
-{
-	unsigned long size_bytes = 1UL << ppc64_pft_size;
-	unsigned long hpte_count = size_bytes >> 4;
-	struct {
-		unsigned long pteh;
-		unsigned long ptel;
-	} ptes[4];
-	long lpar_rc;
-	unsigned long i, j;
+अटल व्योम manual_hpte_clear_all(व्योम)
+अणु
+	अचिन्हित दीर्घ size_bytes = 1UL << ppc64_pft_size;
+	अचिन्हित दीर्घ hpte_count = size_bytes >> 4;
+	काष्ठा अणु
+		अचिन्हित दीर्घ pteh;
+		अचिन्हित दीर्घ ptel;
+	पूर्ण ptes[4];
+	दीर्घ lpar_rc;
+	अचिन्हित दीर्घ i, j;
 
 	/* Read in batches of 4,
 	 * invalidate only valid entries not in the VRMA
 	 * hpte_count will be a multiple of 4
          */
-	for (i = 0; i < hpte_count; i += 4) {
-		lpar_rc = plpar_pte_read_4_raw(0, i, (void *)ptes);
-		if (lpar_rc != H_SUCCESS) {
+	क्रम (i = 0; i < hpte_count; i += 4) अणु
+		lpar_rc = plpar_pte_पढ़ो_4_raw(0, i, (व्योम *)ptes);
+		अगर (lpar_rc != H_SUCCESS) अणु
 			pr_info("Failed to read hash page table at %ld err %ld\n",
 				i, lpar_rc);
-			continue;
-		}
-		for (j = 0; j < 4; j++){
-			if ((ptes[j].pteh & HPTE_V_VRMA_MASK) ==
+			जारी;
+		पूर्ण
+		क्रम (j = 0; j < 4; j++)अणु
+			अगर ((ptes[j].pteh & HPTE_V_VRMA_MASK) ==
 				HPTE_V_VRMA_MASK)
-				continue;
-			if (ptes[j].pteh & HPTE_V_VALID)
-				plpar_pte_remove_raw(0, i + j, 0,
+				जारी;
+			अगर (ptes[j].pteh & HPTE_V_VALID)
+				plpar_pte_हटाओ_raw(0, i + j, 0,
 					&(ptes[j].pteh), &(ptes[j].ptel));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int hcall_hpte_clear_all(void)
-{
-	int rc;
+अटल पूर्णांक hcall_hpte_clear_all(व्योम)
+अणु
+	पूर्णांक rc;
 
-	do {
+	करो अणु
 		rc = plpar_hcall_norets(H_CLEAR_HPT);
-	} while (rc == H_CONTINUE);
+	पूर्ण जबतक (rc == H_CONTINUE);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pseries_hpte_clear_all(void)
-{
-	int rc;
+अटल व्योम pseries_hpte_clear_all(व्योम)
+अणु
+	पूर्णांक rc;
 
 	rc = hcall_hpte_clear_all();
-	if (rc != H_SUCCESS)
+	अगर (rc != H_SUCCESS)
 		manual_hpte_clear_all();
 
-#ifdef __LITTLE_ENDIAN__
+#अगर_घोषित __LITTLE_ENDIAN__
 	/*
 	 * Reset exceptions to big endian.
 	 *
-	 * FIXME this is a hack for kexec, we need to reset the exception
-	 * endian before starting the new kernel and this is a convenient place
-	 * to do it.
+	 * FIXME this is a hack क्रम kexec, we need to reset the exception
+	 * endian beक्रमe starting the new kernel and this is a convenient place
+	 * to करो it.
 	 *
-	 * This is also called on boot when a fadump happens. In that case we
+	 * This is also called on boot when a fadump happens. In that हाल we
 	 * must not change the exception endian mode.
 	 */
-	if (firmware_has_feature(FW_FEATURE_SET_MODE) && !is_fadump_active())
+	अगर (firmware_has_feature(FW_FEATURE_SET_MODE) && !is_fadump_active())
 		pseries_big_endian_exceptions();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * NOTE: for updatepp ops we are fortunate that the linux "newpp" bits and
- * the low 3 bits of flags happen to line up.  So no transform is needed.
+ * NOTE: क्रम updatepp ops we are क्रमtunate that the linux "newpp" bits and
+ * the low 3 bits of flags happen to line up.  So no transक्रमm is needed.
  * We can probably optimize here and assume the high bits of newpp are
- * already zero.  For now I am paranoid.
+ * alपढ़ोy zero.  For now I am paranoid.
  */
-static long pSeries_lpar_hpte_updatepp(unsigned long slot,
-				       unsigned long newpp,
-				       unsigned long vpn,
-				       int psize, int apsize,
-				       int ssize, unsigned long inv_flags)
-{
-	unsigned long lpar_rc;
-	unsigned long flags;
-	unsigned long want_v;
+अटल दीर्घ pSeries_lpar_hpte_updatepp(अचिन्हित दीर्घ slot,
+				       अचिन्हित दीर्घ newpp,
+				       अचिन्हित दीर्घ vpn,
+				       पूर्णांक psize, पूर्णांक apsize,
+				       पूर्णांक ssize, अचिन्हित दीर्घ inv_flags)
+अणु
+	अचिन्हित दीर्घ lpar_rc;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ want_v;
 
 	want_v = hpte_encode_avpn(vpn, psize, ssize);
 
 	flags = (newpp & (HPTE_R_PP | HPTE_R_N | HPTE_R_KEY_LO)) | H_AVPN;
 	flags |= (newpp & HPTE_R_KEY_HI) >> 48;
-	if (mmu_has_feature(MMU_FTR_KERNEL_RO))
-		/* Move pp0 into bit 8 (IBM 55) */
+	अगर (mmu_has_feature(MMU_FTR_KERNEL_RO))
+		/* Move pp0 पूर्णांकo bit 8 (IBM 55) */
 		flags |= (newpp & HPTE_R_PP0) >> 55;
 
 	pr_devel("    update: avpnv=%016lx, hash=%016lx, f=%lx, psize: %d ...",
@@ -898,78 +899,78 @@ static long pSeries_lpar_hpte_updatepp(unsigned long slot,
 
 	lpar_rc = plpar_pte_protect(flags, slot, want_v);
 
-	if (lpar_rc == H_NOT_FOUND) {
+	अगर (lpar_rc == H_NOT_FOUND) अणु
 		pr_devel("not found !\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pr_devel("ok\n");
 
 	BUG_ON(lpar_rc != H_SUCCESS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long __pSeries_lpar_hpte_find(unsigned long want_v, unsigned long hpte_group)
-{
-	long lpar_rc;
-	unsigned long i, j;
-	struct {
-		unsigned long pteh;
-		unsigned long ptel;
-	} ptes[4];
+अटल दीर्घ __pSeries_lpar_hpte_find(अचिन्हित दीर्घ want_v, अचिन्हित दीर्घ hpte_group)
+अणु
+	दीर्घ lpar_rc;
+	अचिन्हित दीर्घ i, j;
+	काष्ठा अणु
+		अचिन्हित दीर्घ pteh;
+		अचिन्हित दीर्घ ptel;
+	पूर्ण ptes[4];
 
-	for (i = 0; i < HPTES_PER_GROUP; i += 4, hpte_group += 4) {
+	क्रम (i = 0; i < HPTES_PER_GROUP; i += 4, hpte_group += 4) अणु
 
-		lpar_rc = plpar_pte_read_4(0, hpte_group, (void *)ptes);
-		if (lpar_rc != H_SUCCESS) {
+		lpar_rc = plpar_pte_पढ़ो_4(0, hpte_group, (व्योम *)ptes);
+		अगर (lpar_rc != H_SUCCESS) अणु
 			pr_info("Failed to read hash page table at %ld err %ld\n",
 				hpte_group, lpar_rc);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		for (j = 0; j < 4; j++) {
-			if (HPTE_V_COMPARE(ptes[j].pteh, want_v) &&
+		क्रम (j = 0; j < 4; j++) अणु
+			अगर (HPTE_V_COMPARE(ptes[j].pteh, want_v) &&
 			    (ptes[j].pteh & HPTE_V_VALID))
-				return i + j;
-		}
-	}
+				वापस i + j;
+		पूर्ण
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static long pSeries_lpar_hpte_find(unsigned long vpn, int psize, int ssize)
-{
-	long slot;
-	unsigned long hash;
-	unsigned long want_v;
-	unsigned long hpte_group;
+अटल दीर्घ pSeries_lpar_hpte_find(अचिन्हित दीर्घ vpn, पूर्णांक psize, पूर्णांक ssize)
+अणु
+	दीर्घ slot;
+	अचिन्हित दीर्घ hash;
+	अचिन्हित दीर्घ want_v;
+	अचिन्हित दीर्घ hpte_group;
 
-	hash = hpt_hash(vpn, mmu_psize_defs[psize].shift, ssize);
+	hash = hpt_hash(vpn, mmu_psize_defs[psize].shअगरt, ssize);
 	want_v = hpte_encode_avpn(vpn, psize, ssize);
 
 	/*
 	 * We try to keep bolted entries always in primary hash
-	 * But in some case we can find them in secondary too.
+	 * But in some हाल we can find them in secondary too.
 	 */
 	hpte_group = (hash & htab_hash_mask) * HPTES_PER_GROUP;
 	slot = __pSeries_lpar_hpte_find(want_v, hpte_group);
-	if (slot < 0) {
+	अगर (slot < 0) अणु
 		/* Try in secondary */
 		hpte_group = (~hash & htab_hash_mask) * HPTES_PER_GROUP;
 		slot = __pSeries_lpar_hpte_find(want_v, hpte_group);
-		if (slot < 0)
-			return -1;
-	}
-	return hpte_group + slot;
-}
+		अगर (slot < 0)
+			वापस -1;
+	पूर्ण
+	वापस hpte_group + slot;
+पूर्ण
 
-static void pSeries_lpar_hpte_updateboltedpp(unsigned long newpp,
-					     unsigned long ea,
-					     int psize, int ssize)
-{
-	unsigned long vpn;
-	unsigned long lpar_rc, slot, vsid, flags;
+अटल व्योम pSeries_lpar_hpte_updateboltedpp(अचिन्हित दीर्घ newpp,
+					     अचिन्हित दीर्घ ea,
+					     पूर्णांक psize, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ vpn;
+	अचिन्हित दीर्घ lpar_rc, slot, vsid, flags;
 
 	vsid = get_kernel_vsid(ea, ssize);
 	vpn = hpt_vpn(ea, vsid, ssize);
@@ -978,8 +979,8 @@ static void pSeries_lpar_hpte_updateboltedpp(unsigned long newpp,
 	BUG_ON(slot == -1);
 
 	flags = newpp & (HPTE_R_PP | HPTE_R_N);
-	if (mmu_has_feature(MMU_FTR_KERNEL_RO))
-		/* Move pp0 into bit 8 (IBM 55) */
+	अगर (mmu_has_feature(MMU_FTR_KERNEL_RO))
+		/* Move pp0 पूर्णांकo bit 8 (IBM 55) */
 		flags |= (newpp & HPTE_R_PP0) >> 55;
 
 	flags |= ((newpp & HPTE_R_KEY_HI) >> 48) | (newpp & HPTE_R_KEY_LO);
@@ -987,245 +988,245 @@ static void pSeries_lpar_hpte_updateboltedpp(unsigned long newpp,
 	lpar_rc = plpar_pte_protect(flags, slot, 0);
 
 	BUG_ON(lpar_rc != H_SUCCESS);
-}
+पूर्ण
 
-static void pSeries_lpar_hpte_invalidate(unsigned long slot, unsigned long vpn,
-					 int psize, int apsize,
-					 int ssize, int local)
-{
-	unsigned long want_v;
-	unsigned long lpar_rc;
-	unsigned long dummy1, dummy2;
+अटल व्योम pSeries_lpar_hpte_invalidate(अचिन्हित दीर्घ slot, अचिन्हित दीर्घ vpn,
+					 पूर्णांक psize, पूर्णांक apsize,
+					 पूर्णांक ssize, पूर्णांक local)
+अणु
+	अचिन्हित दीर्घ want_v;
+	अचिन्हित दीर्घ lpar_rc;
+	अचिन्हित दीर्घ dummy1, dummy2;
 
 	pr_devel("    inval : slot=%lx, vpn=%016lx, psize: %d, local: %d\n",
 		 slot, vpn, psize, local);
 
 	want_v = hpte_encode_avpn(vpn, psize, ssize);
-	lpar_rc = plpar_pte_remove(H_AVPN, slot, want_v, &dummy1, &dummy2);
-	if (lpar_rc == H_NOT_FOUND)
-		return;
+	lpar_rc = plpar_pte_हटाओ(H_AVPN, slot, want_v, &dummy1, &dummy2);
+	अगर (lpar_rc == H_NOT_FOUND)
+		वापस;
 
 	BUG_ON(lpar_rc != H_SUCCESS);
-}
+पूर्ण
 
 
 /*
  * As defined in the PAPR's section 14.5.4.1.8
- * The control mask doesn't include the returned reference and change bit from
+ * The control mask करोesn't include the वापसed reference and change bit from
  * the processed PTE.
  */
-#define HBLKR_AVPN		0x0100000000000000UL
-#define HBLKR_CTRL_MASK		0xf800000000000000UL
-#define HBLKR_CTRL_SUCCESS	0x8000000000000000UL
-#define HBLKR_CTRL_ERRNOTFOUND	0x8800000000000000UL
-#define HBLKR_CTRL_ERRBUSY	0xa000000000000000UL
+#घोषणा HBLKR_AVPN		0x0100000000000000UL
+#घोषणा HBLKR_CTRL_MASK		0xf800000000000000UL
+#घोषणा HBLKR_CTRL_SUCCESS	0x8000000000000000UL
+#घोषणा HBLKR_CTRL_ERRNOTFOUND	0x8800000000000000UL
+#घोषणा HBLKR_CTRL_ERRBUSY	0xa000000000000000UL
 
 /*
- * Returned true if we are supporting this block size for the specified segment
+ * Returned true अगर we are supporting this block size क्रम the specअगरied segment
  * base page size and actual page size.
  *
  * Currently, we only support 8 size block.
  */
-static inline bool is_supported_hlbkrm(int bpsize, int psize)
-{
-	return (hblkrm_size[bpsize][psize] == HBLKRM_SUPPORTED_BLOCK_SIZE);
-}
+अटल अंतरभूत bool is_supported_hlbkrm(पूर्णांक bpsize, पूर्णांक psize)
+अणु
+	वापस (hblkrm_size[bpsize][psize] == HBLKRM_SUPPORTED_BLOCK_SIZE);
+पूर्ण
 
 /**
  * H_BLOCK_REMOVE caller.
- * @idx should point to the latest @param entry set with a PTEX.
- * If PTE cannot be processed because another CPUs has already locked that
+ * @idx should poपूर्णांक to the latest @param entry set with a PTEX.
+ * If PTE cannot be processed because another CPUs has alपढ़ोy locked that
  * group, those entries are put back in @param starting at index 1.
  * If entries has to be retried and @retry_busy is set to true, these entries
- * are retried until success. If @retry_busy is set to false, the returned
+ * are retried until success. If @retry_busy is set to false, the वापसed
  * is the number of entries yet to process.
  */
-static unsigned long call_block_remove(unsigned long idx, unsigned long *param,
+अटल अचिन्हित दीर्घ call_block_हटाओ(अचिन्हित दीर्घ idx, अचिन्हित दीर्घ *param,
 				       bool retry_busy)
-{
-	unsigned long i, rc, new_idx;
-	unsigned long retbuf[PLPAR_HCALL9_BUFSIZE];
+अणु
+	अचिन्हित दीर्घ i, rc, new_idx;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL9_बफ_मानE];
 
-	if (idx < 2) {
+	अगर (idx < 2) अणु
 		pr_warn("Unexpected empty call to H_BLOCK_REMOVE");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 again:
 	new_idx = 0;
-	if (idx > PLPAR_HCALL9_BUFSIZE) {
+	अगर (idx > PLPAR_HCALL9_बफ_मानE) अणु
 		pr_err("Too many PTEs (%lu) for H_BLOCK_REMOVE", idx);
-		idx = PLPAR_HCALL9_BUFSIZE;
-	} else if (idx < PLPAR_HCALL9_BUFSIZE)
+		idx = PLPAR_HCALL9_बफ_मानE;
+	पूर्ण अन्यथा अगर (idx < PLPAR_HCALL9_बफ_मानE)
 		param[idx] = HBR_END;
 
 	rc = plpar_hcall9(H_BLOCK_REMOVE, retbuf,
 			  param[0], /* AVA */
 			  param[1],  param[2],  param[3],  param[4], /* TS0-7 */
 			  param[5],  param[6],  param[7],  param[8]);
-	if (rc == H_SUCCESS)
-		return 0;
+	अगर (rc == H_SUCCESS)
+		वापस 0;
 
 	BUG_ON(rc != H_PARTIAL);
 
 	/* Check that the unprocessed entries were 'not found' or 'busy' */
-	for (i = 0; i < idx-1; i++) {
-		unsigned long ctrl = retbuf[i] & HBLKR_CTRL_MASK;
+	क्रम (i = 0; i < idx-1; i++) अणु
+		अचिन्हित दीर्घ ctrl = retbuf[i] & HBLKR_CTRL_MASK;
 
-		if (ctrl == HBLKR_CTRL_ERRBUSY) {
+		अगर (ctrl == HBLKR_CTRL_ERRBUSY) अणु
 			param[++new_idx] = param[i+1];
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		BUG_ON(ctrl != HBLKR_CTRL_SUCCESS
 		       && ctrl != HBLKR_CTRL_ERRNOTFOUND);
-	}
+	पूर्ण
 
 	/*
-	 * If there were entries found busy, retry these entries if requested,
-	 * of if all the entries have to be retried.
+	 * If there were entries found busy, retry these entries अगर requested,
+	 * of अगर all the entries have to be retried.
 	 */
-	if (new_idx && (retry_busy || new_idx == (PLPAR_HCALL9_BUFSIZE-1))) {
+	अगर (new_idx && (retry_busy || new_idx == (PLPAR_HCALL9_बफ_मानE-1))) अणु
 		idx = new_idx + 1;
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
-	return new_idx;
-}
+	वापस new_idx;
+पूर्ण
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 /*
  * Limit iterations holding pSeries_lpar_tlbie_lock to 3. We also need
- * to make sure that we avoid bouncing the hypervisor tlbie lock.
+ * to make sure that we aव्योम bouncing the hypervisor tlbie lock.
  */
-#define PPC64_HUGE_HPTE_BATCH 12
+#घोषणा PPC64_HUGE_HPTE_BATCH 12
 
-static void hugepage_block_invalidate(unsigned long *slot, unsigned long *vpn,
-				      int count, int psize, int ssize)
-{
-	unsigned long param[PLPAR_HCALL9_BUFSIZE];
-	unsigned long shift, current_vpgb, vpgb;
-	int i, pix = 0;
+अटल व्योम hugepage_block_invalidate(अचिन्हित दीर्घ *slot, अचिन्हित दीर्घ *vpn,
+				      पूर्णांक count, पूर्णांक psize, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ param[PLPAR_HCALL9_बफ_मानE];
+	अचिन्हित दीर्घ shअगरt, current_vpgb, vpgb;
+	पूर्णांक i, pix = 0;
 
-	shift = mmu_psize_defs[psize].shift;
+	shअगरt = mmu_psize_defs[psize].shअगरt;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		/*
-		 * Shifting 3 bits more on the right to get a
-		 * 8 pages aligned virtual addresse.
+		 * Shअगरting 3 bits more on the right to get a
+		 * 8 pages aligned भव addresse.
 		 */
-		vpgb = (vpn[i] >> (shift - VPN_SHIFT + 3));
-		if (!pix || vpgb != current_vpgb) {
+		vpgb = (vpn[i] >> (shअगरt - VPN_SHIFT + 3));
+		अगर (!pix || vpgb != current_vpgb) अणु
 			/*
 			 * Need to start a new 8 pages block, flush
-			 * the current one if needed.
+			 * the current one अगर needed.
 			 */
-			if (pix)
-				(void)call_block_remove(pix, param, true);
+			अगर (pix)
+				(व्योम)call_block_हटाओ(pix, param, true);
 			current_vpgb = vpgb;
 			param[0] = hpte_encode_avpn(vpn[i], psize, ssize);
 			pix = 1;
-		}
+		पूर्ण
 
 		param[pix++] = HBR_REQUEST | HBLKR_AVPN | slot[i];
-		if (pix == PLPAR_HCALL9_BUFSIZE) {
-			pix = call_block_remove(pix, param, false);
+		अगर (pix == PLPAR_HCALL9_बफ_मानE) अणु
+			pix = call_block_हटाओ(pix, param, false);
 			/*
 			 * pix = 0 means that all the entries were
-			 * removed, we can start a new block.
+			 * हटाओd, we can start a new block.
 			 * Otherwise, this means that there are entries
-			 * to retry, and pix points to latest one, so
-			 * we should increment it and try to continue
+			 * to retry, and pix poपूर्णांकs to latest one, so
+			 * we should increment it and try to जारी
 			 * the same block.
 			 */
-			if (pix)
+			अगर (pix)
 				pix++;
-		}
-	}
-	if (pix)
-		(void)call_block_remove(pix, param, true);
-}
+		पूर्ण
+	पूर्ण
+	अगर (pix)
+		(व्योम)call_block_हटाओ(pix, param, true);
+पूर्ण
 
-static void hugepage_bulk_invalidate(unsigned long *slot, unsigned long *vpn,
-				     int count, int psize, int ssize)
-{
-	unsigned long param[PLPAR_HCALL9_BUFSIZE];
-	int i = 0, pix = 0, rc;
+अटल व्योम hugepage_bulk_invalidate(अचिन्हित दीर्घ *slot, अचिन्हित दीर्घ *vpn,
+				     पूर्णांक count, पूर्णांक psize, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ param[PLPAR_HCALL9_बफ_मानE];
+	पूर्णांक i = 0, pix = 0, rc;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 
-		if (!firmware_has_feature(FW_FEATURE_BULK_REMOVE)) {
+		अगर (!firmware_has_feature(FW_FEATURE_BULK_REMOVE)) अणु
 			pSeries_lpar_hpte_invalidate(slot[i], vpn[i], psize, 0,
 						     ssize, 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			param[pix] = HBR_REQUEST | HBR_AVPN | slot[i];
 			param[pix+1] = hpte_encode_avpn(vpn[i], psize, ssize);
 			pix += 2;
-			if (pix == 8) {
+			अगर (pix == 8) अणु
 				rc = plpar_hcall9(H_BULK_REMOVE, param,
 						  param[0], param[1], param[2],
 						  param[3], param[4], param[5],
 						  param[6], param[7]);
 				BUG_ON(rc != H_SUCCESS);
 				pix = 0;
-			}
-		}
-	}
-	if (pix) {
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (pix) अणु
 		param[pix] = HBR_END;
 		rc = plpar_hcall9(H_BULK_REMOVE, param, param[0], param[1],
 				  param[2], param[3], param[4], param[5],
 				  param[6], param[7]);
 		BUG_ON(rc != H_SUCCESS);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void __pSeries_lpar_hugepage_invalidate(unsigned long *slot,
-						      unsigned long *vpn,
-						      int count, int psize,
-						      int ssize)
-{
-	unsigned long flags = 0;
-	int lock_tlbie = !mmu_has_feature(MMU_FTR_LOCKLESS_TLBIE);
+अटल अंतरभूत व्योम __pSeries_lpar_hugepage_invalidate(अचिन्हित दीर्घ *slot,
+						      अचिन्हित दीर्घ *vpn,
+						      पूर्णांक count, पूर्णांक psize,
+						      पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक lock_tlbie = !mmu_has_feature(MMU_FTR_LOCKLESS_TLBIE);
 
-	if (lock_tlbie)
+	अगर (lock_tlbie)
 		spin_lock_irqsave(&pSeries_lpar_tlbie_lock, flags);
 
 	/* Assuming THP size is 16M */
-	if (is_supported_hlbkrm(psize, MMU_PAGE_16M))
+	अगर (is_supported_hlbkrm(psize, MMU_PAGE_16M))
 		hugepage_block_invalidate(slot, vpn, count, psize, ssize);
-	else
+	अन्यथा
 		hugepage_bulk_invalidate(slot, vpn, count, psize, ssize);
 
-	if (lock_tlbie)
+	अगर (lock_tlbie)
 		spin_unlock_irqrestore(&pSeries_lpar_tlbie_lock, flags);
-}
+पूर्ण
 
-static void pSeries_lpar_hugepage_invalidate(unsigned long vsid,
-					     unsigned long addr,
-					     unsigned char *hpte_slot_array,
-					     int psize, int ssize, int local)
-{
-	int i, index = 0;
-	unsigned long s_addr = addr;
-	unsigned int max_hpte_count, valid;
-	unsigned long vpn_array[PPC64_HUGE_HPTE_BATCH];
-	unsigned long slot_array[PPC64_HUGE_HPTE_BATCH];
-	unsigned long shift, hidx, vpn = 0, hash, slot;
+अटल व्योम pSeries_lpar_hugepage_invalidate(अचिन्हित दीर्घ vsid,
+					     अचिन्हित दीर्घ addr,
+					     अचिन्हित अक्षर *hpte_slot_array,
+					     पूर्णांक psize, पूर्णांक ssize, पूर्णांक local)
+अणु
+	पूर्णांक i, index = 0;
+	अचिन्हित दीर्घ s_addr = addr;
+	अचिन्हित पूर्णांक max_hpte_count, valid;
+	अचिन्हित दीर्घ vpn_array[PPC64_HUGE_HPTE_BATCH];
+	अचिन्हित दीर्घ slot_array[PPC64_HUGE_HPTE_BATCH];
+	अचिन्हित दीर्घ shअगरt, hidx, vpn = 0, hash, slot;
 
-	shift = mmu_psize_defs[psize].shift;
-	max_hpte_count = 1U << (PMD_SHIFT - shift);
+	shअगरt = mmu_psize_defs[psize].shअगरt;
+	max_hpte_count = 1U << (PMD_SHIFT - shअगरt);
 
-	for (i = 0; i < max_hpte_count; i++) {
+	क्रम (i = 0; i < max_hpte_count; i++) अणु
 		valid = hpte_valid(hpte_slot_array, i);
-		if (!valid)
-			continue;
+		अगर (!valid)
+			जारी;
 		hidx =  hpte_hash_index(hpte_slot_array, i);
 
 		/* get the vpn */
-		addr = s_addr + (i * (1ul << shift));
+		addr = s_addr + (i * (1ul << shअगरt));
 		vpn = hpt_vpn(addr, vsid, ssize);
-		hash = hpt_hash(vpn, shift, ssize);
-		if (hidx & _PTEIDX_SECONDARY)
+		hash = hpt_hash(vpn, shअगरt, ssize);
+		अगर (hidx & _PTEIDX_SECONDARY)
 			hash = ~hash;
 
 		slot = (hash & htab_hash_mask) * HPTES_PER_GROUP;
@@ -1233,625 +1234,625 @@ static void pSeries_lpar_hugepage_invalidate(unsigned long vsid,
 
 		slot_array[index] = slot;
 		vpn_array[index] = vpn;
-		if (index == PPC64_HUGE_HPTE_BATCH - 1) {
+		अगर (index == PPC64_HUGE_HPTE_BATCH - 1) अणु
 			/*
-			 * Now do a bluk invalidate
+			 * Now करो a bluk invalidate
 			 */
 			__pSeries_lpar_hugepage_invalidate(slot_array,
 							   vpn_array,
 							   PPC64_HUGE_HPTE_BATCH,
 							   psize, ssize);
 			index = 0;
-		} else
+		पूर्ण अन्यथा
 			index++;
-	}
-	if (index)
+	पूर्ण
+	अगर (index)
 		__pSeries_lpar_hugepage_invalidate(slot_array, vpn_array,
 						   index, psize, ssize);
-}
-#else
-static void pSeries_lpar_hugepage_invalidate(unsigned long vsid,
-					     unsigned long addr,
-					     unsigned char *hpte_slot_array,
-					     int psize, int ssize, int local)
-{
+पूर्ण
+#अन्यथा
+अटल व्योम pSeries_lpar_hugepage_invalidate(अचिन्हित दीर्घ vsid,
+					     अचिन्हित दीर्घ addr,
+					     अचिन्हित अक्षर *hpte_slot_array,
+					     पूर्णांक psize, पूर्णांक ssize, पूर्णांक local)
+अणु
 	WARN(1, "%s called without THP support\n", __func__);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int pSeries_lpar_hpte_removebolted(unsigned long ea,
-					  int psize, int ssize)
-{
-	unsigned long vpn;
-	unsigned long slot, vsid;
+अटल पूर्णांक pSeries_lpar_hpte_हटाओbolted(अचिन्हित दीर्घ ea,
+					  पूर्णांक psize, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ vpn;
+	अचिन्हित दीर्घ slot, vsid;
 
 	vsid = get_kernel_vsid(ea, ssize);
 	vpn = hpt_vpn(ea, vsid, ssize);
 
 	slot = pSeries_lpar_hpte_find(vpn, psize, ssize);
-	if (slot == -1)
-		return -ENOENT;
+	अगर (slot == -1)
+		वापस -ENOENT;
 
 	/*
-	 * lpar doesn't use the passed actual page size
+	 * lpar करोesn't use the passed actual page size
 	 */
 	pSeries_lpar_hpte_invalidate(slot, vpn, psize, 0, ssize, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static inline unsigned long compute_slot(real_pte_t pte,
-					 unsigned long vpn,
-					 unsigned long index,
-					 unsigned long shift,
-					 int ssize)
-{
-	unsigned long slot, hash, hidx;
+अटल अंतरभूत अचिन्हित दीर्घ compute_slot(real_pte_t pte,
+					 अचिन्हित दीर्घ vpn,
+					 अचिन्हित दीर्घ index,
+					 अचिन्हित दीर्घ shअगरt,
+					 पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ slot, hash, hidx;
 
-	hash = hpt_hash(vpn, shift, ssize);
+	hash = hpt_hash(vpn, shअगरt, ssize);
 	hidx = __rpte_to_hidx(pte, index);
-	if (hidx & _PTEIDX_SECONDARY)
+	अगर (hidx & _PTEIDX_SECONDARY)
 		hash = ~hash;
 	slot = (hash & htab_hash_mask) * HPTES_PER_GROUP;
 	slot += hidx & _PTEIDX_GROUP_IX;
-	return slot;
-}
+	वापस slot;
+पूर्ण
 
 /**
- * The hcall H_BLOCK_REMOVE implies that the virtual pages to processed are
+ * The hcall H_BLOCK_REMOVE implies that the भव pages to processed are
  * "all within the same naturally aligned 8 page virtual address block".
  */
-static void do_block_remove(unsigned long number, struct ppc64_tlb_batch *batch,
-			    unsigned long *param)
-{
-	unsigned long vpn;
-	unsigned long i, pix = 0;
-	unsigned long index, shift, slot, current_vpgb, vpgb;
+अटल व्योम करो_block_हटाओ(अचिन्हित दीर्घ number, काष्ठा ppc64_tlb_batch *batch,
+			    अचिन्हित दीर्घ *param)
+अणु
+	अचिन्हित दीर्घ vpn;
+	अचिन्हित दीर्घ i, pix = 0;
+	अचिन्हित दीर्घ index, shअगरt, slot, current_vpgb, vpgb;
 	real_pte_t pte;
-	int psize, ssize;
+	पूर्णांक psize, ssize;
 
 	psize = batch->psize;
 	ssize = batch->ssize;
 
-	for (i = 0; i < number; i++) {
+	क्रम (i = 0; i < number; i++) अणु
 		vpn = batch->vpn[i];
 		pte = batch->pte[i];
-		pte_iterate_hashed_subpages(pte, psize, vpn, index, shift) {
+		pte_iterate_hashed_subpages(pte, psize, vpn, index, shअगरt) अणु
 			/*
-			 * Shifting 3 bits more on the right to get a
-			 * 8 pages aligned virtual addresse.
+			 * Shअगरting 3 bits more on the right to get a
+			 * 8 pages aligned भव addresse.
 			 */
-			vpgb = (vpn >> (shift - VPN_SHIFT + 3));
-			if (!pix || vpgb != current_vpgb) {
+			vpgb = (vpn >> (shअगरt - VPN_SHIFT + 3));
+			अगर (!pix || vpgb != current_vpgb) अणु
 				/*
 				 * Need to start a new 8 pages block, flush
-				 * the current one if needed.
+				 * the current one अगर needed.
 				 */
-				if (pix)
-					(void)call_block_remove(pix, param,
+				अगर (pix)
+					(व्योम)call_block_हटाओ(pix, param,
 								true);
 				current_vpgb = vpgb;
 				param[0] = hpte_encode_avpn(vpn, psize,
 							    ssize);
 				pix = 1;
-			}
+			पूर्ण
 
-			slot = compute_slot(pte, vpn, index, shift, ssize);
+			slot = compute_slot(pte, vpn, index, shअगरt, ssize);
 			param[pix++] = HBR_REQUEST | HBLKR_AVPN | slot;
 
-			if (pix == PLPAR_HCALL9_BUFSIZE) {
-				pix = call_block_remove(pix, param, false);
+			अगर (pix == PLPAR_HCALL9_बफ_मानE) अणु
+				pix = call_block_हटाओ(pix, param, false);
 				/*
 				 * pix = 0 means that all the entries were
-				 * removed, we can start a new block.
+				 * हटाओd, we can start a new block.
 				 * Otherwise, this means that there are entries
-				 * to retry, and pix points to latest one, so
-				 * we should increment it and try to continue
+				 * to retry, and pix poपूर्णांकs to latest one, so
+				 * we should increment it and try to जारी
 				 * the same block.
 				 */
-				if (pix)
+				अगर (pix)
 					pix++;
-			}
-		} pte_iterate_hashed_end();
-	}
+			पूर्ण
+		पूर्ण pte_iterate_hashed_end();
+	पूर्ण
 
-	if (pix)
-		(void)call_block_remove(pix, param, true);
-}
+	अगर (pix)
+		(व्योम)call_block_हटाओ(pix, param, true);
+पूर्ण
 
 /*
  * TLB Block Invalidate Characteristics
  *
- * These characteristics define the size of the block the hcall H_BLOCK_REMOVE
- * is able to process for each couple segment base page size, actual page size.
+ * These अक्षरacteristics define the size of the block the hcall H_BLOCK_REMOVE
+ * is able to process क्रम each couple segment base page size, actual page size.
  *
- * The ibm,get-system-parameter properties is returning a buffer with the
+ * The ibm,get-प्रणाली-parameter properties is वापसing a buffer with the
  * following layout:
  *
  * [ 2 bytes size of the RTAS buffer (excluding these 2 bytes) ]
  * -----------------
- * TLB Block Invalidate Specifiers:
- * [ 1 byte LOG base 2 of the TLB invalidate block size being specified ]
- * [ 1 byte Number of page sizes (N) that are supported for the specified
+ * TLB Block Invalidate Specअगरiers:
+ * [ 1 byte LOG base 2 of the TLB invalidate block size being specअगरied ]
+ * [ 1 byte Number of page sizes (N) that are supported क्रम the specअगरied
  *          TLB invalidate block size ]
  * [ 1 byte Encoded segment base page size and actual page size
  *          MSB=0 means 4k segment base page size and actual page size
  *          MSB=1 the penc value in mmu_psize_def ]
  * ...
  * -----------------
- * Next TLB Block Invalidate Specifiers...
+ * Next TLB Block Invalidate Specअगरiers...
  * -----------------
  * [ 0 ]
  */
-static inline void set_hblkrm_bloc_size(int bpsize, int psize,
-					unsigned int block_size)
-{
-	if (block_size > hblkrm_size[bpsize][psize])
+अटल अंतरभूत व्योम set_hblkrm_bloc_size(पूर्णांक bpsize, पूर्णांक psize,
+					अचिन्हित पूर्णांक block_size)
+अणु
+	अगर (block_size > hblkrm_size[bpsize][psize])
 		hblkrm_size[bpsize][psize] = block_size;
-}
+पूर्ण
 
 /*
  * Decode the Encoded segment base page size and actual page size.
- * PAPR specifies:
+ * PAPR specअगरies:
  *   - bit 7 is the L bit
  *   - bits 0-5 are the penc value
  * If the L bit is 0, this means 4K segment base page size and actual page size
- * otherwise the penc value should be read.
+ * otherwise the penc value should be पढ़ो.
  */
-#define HBLKRM_L_MASK		0x80
-#define HBLKRM_PENC_MASK	0x3f
-static inline void __init check_lp_set_hblkrm(unsigned int lp,
-					      unsigned int block_size)
-{
-	unsigned int bpsize, psize;
+#घोषणा HBLKRM_L_MASK		0x80
+#घोषणा HBLKRM_PENC_MASK	0x3f
+अटल अंतरभूत व्योम __init check_lp_set_hblkrm(अचिन्हित पूर्णांक lp,
+					      अचिन्हित पूर्णांक block_size)
+अणु
+	अचिन्हित पूर्णांक bpsize, psize;
 
-	/* First, check the L bit, if not set, this means 4K */
-	if ((lp & HBLKRM_L_MASK) == 0) {
+	/* First, check the L bit, अगर not set, this means 4K */
+	अगर ((lp & HBLKRM_L_MASK) == 0) अणु
 		set_hblkrm_bloc_size(MMU_PAGE_4K, MMU_PAGE_4K, block_size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lp &= HBLKRM_PENC_MASK;
-	for (bpsize = 0; bpsize < MMU_PAGE_COUNT; bpsize++) {
-		struct mmu_psize_def *def = &mmu_psize_defs[bpsize];
+	क्रम (bpsize = 0; bpsize < MMU_PAGE_COUNT; bpsize++) अणु
+		काष्ठा mmu_psize_def *def = &mmu_psize_defs[bpsize];
 
-		for (psize = 0; psize < MMU_PAGE_COUNT; psize++) {
-			if (def->penc[psize] == lp) {
+		क्रम (psize = 0; psize < MMU_PAGE_COUNT; psize++) अणु
+			अगर (def->penc[psize] == lp) अणु
 				set_hblkrm_bloc_size(bpsize, psize, block_size);
-				return;
-			}
-		}
-	}
-}
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define SPLPAR_TLB_BIC_TOKEN		50
+#घोषणा SPLPAR_TLB_BIC_TOKEN		50
 
 /*
  * The size of the TLB Block Invalidate Characteristics is variable. But at the
  * maximum it will be the number of possible page sizes *2 + 10 bytes.
  * Currently MMU_PAGE_COUNT is 16, which means 42 bytes. Use a cache line size
- * (128 bytes) for the buffer to get plenty of space.
+ * (128 bytes) क्रम the buffer to get plenty of space.
  */
-#define SPLPAR_TLB_BIC_MAXLENGTH	128
+#घोषणा SPLPAR_TLB_BIC_MAXLENGTH	128
 
-void __init pseries_lpar_read_hblkrm_characteristics(void)
-{
-	unsigned char local_buffer[SPLPAR_TLB_BIC_MAXLENGTH];
-	int call_status, len, idx, bpsize;
+व्योम __init pseries_lpar_पढ़ो_hblkrm_अक्षरacteristics(व्योम)
+अणु
+	अचिन्हित अक्षर local_buffer[SPLPAR_TLB_BIC_MAXLENGTH];
+	पूर्णांक call_status, len, idx, bpsize;
 
-	if (!firmware_has_feature(FW_FEATURE_BLOCK_REMOVE))
-		return;
+	अगर (!firmware_has_feature(FW_FEATURE_BLOCK_REMOVE))
+		वापस;
 
 	spin_lock(&rtas_data_buf_lock);
-	memset(rtas_data_buf, 0, RTAS_DATA_BUF_SIZE);
+	स_रखो(rtas_data_buf, 0, RTAS_DATA_BUF_SIZE);
 	call_status = rtas_call(rtas_token("ibm,get-system-parameter"), 3, 1,
-				NULL,
+				शून्य,
 				SPLPAR_TLB_BIC_TOKEN,
 				__pa(rtas_data_buf),
 				RTAS_DATA_BUF_SIZE);
-	memcpy(local_buffer, rtas_data_buf, SPLPAR_TLB_BIC_MAXLENGTH);
+	स_नकल(local_buffer, rtas_data_buf, SPLPAR_TLB_BIC_MAXLENGTH);
 	local_buffer[SPLPAR_TLB_BIC_MAXLENGTH - 1] = '\0';
 	spin_unlock(&rtas_data_buf_lock);
 
-	if (call_status != 0) {
+	अगर (call_status != 0) अणु
 		pr_warn("%s %s Error calling get-system-parameter (0x%x)\n",
-			__FILE__, __func__, call_status);
-		return;
-	}
+			__खाता__, __func__, call_status);
+		वापस;
+	पूर्ण
 
 	/*
 	 * The first two (2) bytes of the data in the buffer are the length of
-	 * the returned data, not counting these first two (2) bytes.
+	 * the वापसed data, not counting these first two (2) bytes.
 	 */
 	len = be16_to_cpu(*((u16 *)local_buffer)) + 2;
-	if (len > SPLPAR_TLB_BIC_MAXLENGTH) {
+	अगर (len > SPLPAR_TLB_BIC_MAXLENGTH) अणु
 		pr_warn("%s too large returned buffer %d", __func__, len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	idx = 2;
-	while (idx < len) {
-		u8 block_shift = local_buffer[idx++];
+	जबतक (idx < len) अणु
+		u8 block_shअगरt = local_buffer[idx++];
 		u32 block_size;
-		unsigned int npsize;
+		अचिन्हित पूर्णांक npsize;
 
-		if (!block_shift)
-			break;
+		अगर (!block_shअगरt)
+			अवरोध;
 
-		block_size = 1 << block_shift;
+		block_size = 1 << block_shअगरt;
 
-		for (npsize = local_buffer[idx++];
+		क्रम (npsize = local_buffer[idx++];
 		     npsize > 0 && idx < len; npsize--)
-			check_lp_set_hblkrm((unsigned int) local_buffer[idx++],
+			check_lp_set_hblkrm((अचिन्हित पूर्णांक) local_buffer[idx++],
 					    block_size);
-	}
+	पूर्ण
 
-	for (bpsize = 0; bpsize < MMU_PAGE_COUNT; bpsize++)
-		for (idx = 0; idx < MMU_PAGE_COUNT; idx++)
-			if (hblkrm_size[bpsize][idx])
+	क्रम (bpsize = 0; bpsize < MMU_PAGE_COUNT; bpsize++)
+		क्रम (idx = 0; idx < MMU_PAGE_COUNT; idx++)
+			अगर (hblkrm_size[bpsize][idx])
 				pr_info("H_BLOCK_REMOVE supports base psize:%d psize:%d block size:%d",
 					bpsize, idx, hblkrm_size[bpsize][idx]);
-}
+पूर्ण
 
 /*
- * Take a spinlock around flushes to avoid bouncing the hypervisor tlbie
+ * Take a spinlock around flushes to aव्योम bouncing the hypervisor tlbie
  * lock.
  */
-static void pSeries_lpar_flush_hash_range(unsigned long number, int local)
-{
-	unsigned long vpn;
-	unsigned long i, pix, rc;
-	unsigned long flags = 0;
-	struct ppc64_tlb_batch *batch = this_cpu_ptr(&ppc64_tlb_batch);
-	int lock_tlbie = !mmu_has_feature(MMU_FTR_LOCKLESS_TLBIE);
-	unsigned long param[PLPAR_HCALL9_BUFSIZE];
-	unsigned long index, shift, slot;
+अटल व्योम pSeries_lpar_flush_hash_range(अचिन्हित दीर्घ number, पूर्णांक local)
+अणु
+	अचिन्हित दीर्घ vpn;
+	अचिन्हित दीर्घ i, pix, rc;
+	अचिन्हित दीर्घ flags = 0;
+	काष्ठा ppc64_tlb_batch *batch = this_cpu_ptr(&ppc64_tlb_batch);
+	पूर्णांक lock_tlbie = !mmu_has_feature(MMU_FTR_LOCKLESS_TLBIE);
+	अचिन्हित दीर्घ param[PLPAR_HCALL9_बफ_मानE];
+	अचिन्हित दीर्घ index, shअगरt, slot;
 	real_pte_t pte;
-	int psize, ssize;
+	पूर्णांक psize, ssize;
 
-	if (lock_tlbie)
+	अगर (lock_tlbie)
 		spin_lock_irqsave(&pSeries_lpar_tlbie_lock, flags);
 
-	if (is_supported_hlbkrm(batch->psize, batch->psize)) {
-		do_block_remove(number, batch, param);
-		goto out;
-	}
+	अगर (is_supported_hlbkrm(batch->psize, batch->psize)) अणु
+		करो_block_हटाओ(number, batch, param);
+		जाओ out;
+	पूर्ण
 
 	psize = batch->psize;
 	ssize = batch->ssize;
 	pix = 0;
-	for (i = 0; i < number; i++) {
+	क्रम (i = 0; i < number; i++) अणु
 		vpn = batch->vpn[i];
 		pte = batch->pte[i];
-		pte_iterate_hashed_subpages(pte, psize, vpn, index, shift) {
-			slot = compute_slot(pte, vpn, index, shift, ssize);
-			if (!firmware_has_feature(FW_FEATURE_BULK_REMOVE)) {
+		pte_iterate_hashed_subpages(pte, psize, vpn, index, shअगरt) अणु
+			slot = compute_slot(pte, vpn, index, shअगरt, ssize);
+			अगर (!firmware_has_feature(FW_FEATURE_BULK_REMOVE)) अणु
 				/*
-				 * lpar doesn't use the passed actual page size
+				 * lpar करोesn't use the passed actual page size
 				 */
 				pSeries_lpar_hpte_invalidate(slot, vpn, psize,
 							     0, ssize, local);
-			} else {
+			पूर्ण अन्यथा अणु
 				param[pix] = HBR_REQUEST | HBR_AVPN | slot;
 				param[pix+1] = hpte_encode_avpn(vpn, psize,
 								ssize);
 				pix += 2;
-				if (pix == 8) {
+				अगर (pix == 8) अणु
 					rc = plpar_hcall9(H_BULK_REMOVE, param,
 						param[0], param[1], param[2],
 						param[3], param[4], param[5],
 						param[6], param[7]);
 					BUG_ON(rc != H_SUCCESS);
 					pix = 0;
-				}
-			}
-		} pte_iterate_hashed_end();
-	}
-	if (pix) {
+				पूर्ण
+			पूर्ण
+		पूर्ण pte_iterate_hashed_end();
+	पूर्ण
+	अगर (pix) अणु
 		param[pix] = HBR_END;
 		rc = plpar_hcall9(H_BULK_REMOVE, param, param[0], param[1],
 				  param[2], param[3], param[4], param[5],
 				  param[6], param[7]);
 		BUG_ON(rc != H_SUCCESS);
-	}
+	पूर्ण
 
 out:
-	if (lock_tlbie)
+	अगर (lock_tlbie)
 		spin_unlock_irqrestore(&pSeries_lpar_tlbie_lock, flags);
-}
+पूर्ण
 
-static int __init disable_bulk_remove(char *str)
-{
-	if (strcmp(str, "off") == 0 &&
-	    firmware_has_feature(FW_FEATURE_BULK_REMOVE)) {
+अटल पूर्णांक __init disable_bulk_हटाओ(अक्षर *str)
+अणु
+	अगर (म_भेद(str, "off") == 0 &&
+	    firmware_has_feature(FW_FEATURE_BULK_REMOVE)) अणु
 		pr_info("Disabling BULK_REMOVE firmware feature");
-		powerpc_firmware_features &= ~FW_FEATURE_BULK_REMOVE;
-	}
-	return 1;
-}
+		घातerpc_firmware_features &= ~FW_FEATURE_BULK_REMOVE;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-__setup("bulk_remove=", disable_bulk_remove);
+__setup("bulk_remove=", disable_bulk_हटाओ);
 
-#define HPT_RESIZE_TIMEOUT	10000 /* ms */
+#घोषणा HPT_RESIZE_TIMEOUT	10000 /* ms */
 
-struct hpt_resize_state {
-	unsigned long shift;
-	int commit_rc;
-};
+काष्ठा hpt_resize_state अणु
+	अचिन्हित दीर्घ shअगरt;
+	पूर्णांक commit_rc;
+पूर्ण;
 
-static int pseries_lpar_resize_hpt_commit(void *data)
-{
-	struct hpt_resize_state *state = data;
+अटल पूर्णांक pseries_lpar_resize_hpt_commit(व्योम *data)
+अणु
+	काष्ठा hpt_resize_state *state = data;
 
-	state->commit_rc = plpar_resize_hpt_commit(0, state->shift);
-	if (state->commit_rc != H_SUCCESS)
-		return -EIO;
+	state->commit_rc = plpar_resize_hpt_commit(0, state->shअगरt);
+	अगर (state->commit_rc != H_SUCCESS)
+		वापस -EIO;
 
 	/* Hypervisor has transitioned the HTAB, update our globals */
-	ppc64_pft_size = state->shift;
+	ppc64_pft_size = state->shअगरt;
 	htab_size_bytes = 1UL << ppc64_pft_size;
 	htab_hash_mask = (htab_size_bytes >> 7) - 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Must be called in process context. The caller must hold the
  * cpus_lock.
  */
-static int pseries_lpar_resize_hpt(unsigned long shift)
-{
-	struct hpt_resize_state state = {
-		.shift = shift,
+अटल पूर्णांक pseries_lpar_resize_hpt(अचिन्हित दीर्घ shअगरt)
+अणु
+	काष्ठा hpt_resize_state state = अणु
+		.shअगरt = shअगरt,
 		.commit_rc = H_FUNCTION,
-	};
-	unsigned int delay, total_delay = 0;
-	int rc;
-	ktime_t t0, t1, t2;
+	पूर्ण;
+	अचिन्हित पूर्णांक delay, total_delay = 0;
+	पूर्णांक rc;
+	kसमय_प्रकार t0, t1, t2;
 
 	might_sleep();
 
-	if (!firmware_has_feature(FW_FEATURE_HPT_RESIZE))
-		return -ENODEV;
+	अगर (!firmware_has_feature(FW_FEATURE_HPT_RESIZE))
+		वापस -ENODEV;
 
-	pr_info("Attempting to resize HPT to shift %lu\n", shift);
+	pr_info("Attempting to resize HPT to shift %lu\n", shअगरt);
 
-	t0 = ktime_get();
+	t0 = kसमय_get();
 
-	rc = plpar_resize_hpt_prepare(0, shift);
-	while (H_IS_LONG_BUSY(rc)) {
-		delay = get_longbusy_msecs(rc);
+	rc = plpar_resize_hpt_prepare(0, shअगरt);
+	जबतक (H_IS_LONG_BUSY(rc)) अणु
+		delay = get_दीर्घbusy_msecs(rc);
 		total_delay += delay;
-		if (total_delay > HPT_RESIZE_TIMEOUT) {
-			/* prepare with shift==0 cancels an in-progress resize */
+		अगर (total_delay > HPT_RESIZE_TIMEOUT) अणु
+			/* prepare with shअगरt==0 cancels an in-progress resize */
 			rc = plpar_resize_hpt_prepare(0, 0);
-			if (rc != H_SUCCESS)
+			अगर (rc != H_SUCCESS)
 				pr_warn("Unexpected error %d cancelling timed out HPT resize\n",
 				       rc);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		msleep(delay);
-		rc = plpar_resize_hpt_prepare(0, shift);
-	}
+		rc = plpar_resize_hpt_prepare(0, shअगरt);
+	पूर्ण
 
-	switch (rc) {
-	case H_SUCCESS:
+	चयन (rc) अणु
+	हाल H_SUCCESS:
 		/* Continue on */
-		break;
+		अवरोध;
 
-	case H_PARAMETER:
+	हाल H_PARAMETER:
 		pr_warn("Invalid argument from H_RESIZE_HPT_PREPARE\n");
-		return -EINVAL;
-	case H_RESOURCE:
+		वापस -EINVAL;
+	हाल H_RESOURCE:
 		pr_warn("Operation not permitted from H_RESIZE_HPT_PREPARE\n");
-		return -EPERM;
-	default:
+		वापस -EPERM;
+	शेष:
 		pr_warn("Unexpected error %d from H_RESIZE_HPT_PREPARE\n", rc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	t1 = ktime_get();
+	t1 = kसमय_get();
 
 	rc = stop_machine_cpuslocked(pseries_lpar_resize_hpt_commit,
-				     &state, NULL);
+				     &state, शून्य);
 
-	t2 = ktime_get();
+	t2 = kसमय_get();
 
-	if (rc != 0) {
-		switch (state.commit_rc) {
-		case H_PTEG_FULL:
-			return -ENOSPC;
+	अगर (rc != 0) अणु
+		चयन (state.commit_rc) अणु
+		हाल H_PTEG_FULL:
+			वापस -ENOSPC;
 
-		default:
+		शेष:
 			pr_warn("Unexpected error %d from H_RESIZE_HPT_COMMIT\n",
 				state.commit_rc);
-			return -EIO;
-		};
-	}
+			वापस -EIO;
+		पूर्ण;
+	पूर्ण
 
 	pr_info("HPT resize to shift %lu complete (%lld ms / %lld ms)\n",
-		shift, (long long) ktime_ms_delta(t1, t0),
-		(long long) ktime_ms_delta(t2, t1));
+		shअगरt, (दीर्घ दीर्घ) kसमय_ms_delta(t1, t0),
+		(दीर्घ दीर्घ) kसमय_ms_delta(t2, t1));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pseries_lpar_register_process_table(unsigned long base,
-			unsigned long page_size, unsigned long table_size)
-{
-	long rc;
-	unsigned long flags = 0;
+अटल पूर्णांक pseries_lpar_रेजिस्टर_process_table(अचिन्हित दीर्घ base,
+			अचिन्हित दीर्घ page_size, अचिन्हित दीर्घ table_size)
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ flags = 0;
 
-	if (table_size)
+	अगर (table_size)
 		flags |= PROC_TABLE_NEW;
-	if (radix_enabled()) {
+	अगर (radix_enabled()) अणु
 		flags |= PROC_TABLE_RADIX;
-		if (mmu_has_feature(MMU_FTR_GTSE))
+		अगर (mmu_has_feature(MMU_FTR_GTSE))
 			flags |= PROC_TABLE_GTSE;
-	} else
+	पूर्ण अन्यथा
 		flags |= PROC_TABLE_HPT_SLB;
-	for (;;) {
+	क्रम (;;) अणु
 		rc = plpar_hcall_norets(H_REGISTER_PROC_TBL, flags, base,
 					page_size, table_size);
-		if (!H_IS_LONG_BUSY(rc))
-			break;
-		mdelay(get_longbusy_msecs(rc));
-	}
-	if (rc != H_SUCCESS) {
+		अगर (!H_IS_LONG_BUSY(rc))
+			अवरोध;
+		mdelay(get_दीर्घbusy_msecs(rc));
+	पूर्ण
+	अगर (rc != H_SUCCESS) अणु
 		pr_err("Failed to register process table (rc=%ld)\n", rc);
 		BUG();
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-void __init hpte_init_pseries(void)
-{
+व्योम __init hpte_init_pseries(व्योम)
+अणु
 	mmu_hash_ops.hpte_invalidate	 = pSeries_lpar_hpte_invalidate;
 	mmu_hash_ops.hpte_updatepp	 = pSeries_lpar_hpte_updatepp;
 	mmu_hash_ops.hpte_updateboltedpp = pSeries_lpar_hpte_updateboltedpp;
 	mmu_hash_ops.hpte_insert	 = pSeries_lpar_hpte_insert;
-	mmu_hash_ops.hpte_remove	 = pSeries_lpar_hpte_remove;
-	mmu_hash_ops.hpte_removebolted   = pSeries_lpar_hpte_removebolted;
+	mmu_hash_ops.hpte_हटाओ	 = pSeries_lpar_hpte_हटाओ;
+	mmu_hash_ops.hpte_हटाओbolted   = pSeries_lpar_hpte_हटाओbolted;
 	mmu_hash_ops.flush_hash_range	 = pSeries_lpar_flush_hash_range;
 	mmu_hash_ops.hpte_clear_all      = pseries_hpte_clear_all;
 	mmu_hash_ops.hugepage_invalidate = pSeries_lpar_hugepage_invalidate;
 
-	if (firmware_has_feature(FW_FEATURE_HPT_RESIZE))
+	अगर (firmware_has_feature(FW_FEATURE_HPT_RESIZE))
 		mmu_hash_ops.resize_hpt = pseries_lpar_resize_hpt;
 
 	/*
-	 * On POWER9, we need to do a H_REGISTER_PROC_TBL hcall
-	 * to inform the hypervisor that we wish to use the HPT.
+	 * On POWER9, we need to करो a H_REGISTER_PROC_TBL hcall
+	 * to inक्रमm the hypervisor that we wish to use the HPT.
 	 */
-	if (cpu_has_feature(CPU_FTR_ARCH_300))
-		pseries_lpar_register_process_table(0, 0, 0);
-}
+	अगर (cpu_has_feature(CPU_FTR_ARCH_300))
+		pseries_lpar_रेजिस्टर_process_table(0, 0, 0);
+पूर्ण
 
-#ifdef CONFIG_PPC_RADIX_MMU
-void radix_init_pseries(void)
-{
+#अगर_घोषित CONFIG_PPC_RADIX_MMU
+व्योम radix_init_pseries(व्योम)
+अणु
 	pr_info("Using radix MMU under hypervisor\n");
 
-	pseries_lpar_register_process_table(__pa(process_tb),
+	pseries_lpar_रेजिस्टर_process_table(__pa(process_tb),
 						0, PRTB_SIZE_SHIFT - 12);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_SMLPAR
-#define CMO_FREE_HINT_DEFAULT 1
-static int cmo_free_hint_flag = CMO_FREE_HINT_DEFAULT;
+#अगर_घोषित CONFIG_PPC_SMLPAR
+#घोषणा CMO_FREE_HINT_DEFAULT 1
+अटल पूर्णांक cmo_मुक्त_hपूर्णांक_flag = CMO_FREE_HINT_DEFAULT;
 
-static int __init cmo_free_hint(char *str)
-{
-	char *parm;
-	parm = strstrip(str);
+अटल पूर्णांक __init cmo_मुक्त_hपूर्णांक(अक्षर *str)
+अणु
+	अक्षर *parm;
+	parm = म_मालाip(str);
 
-	if (strcasecmp(parm, "no") == 0 || strcasecmp(parm, "off") == 0) {
+	अगर (strहालcmp(parm, "no") == 0 || strहालcmp(parm, "off") == 0) अणु
 		pr_info("%s: CMO free page hinting is not active.\n", __func__);
-		cmo_free_hint_flag = 0;
-		return 1;
-	}
+		cmo_मुक्त_hपूर्णांक_flag = 0;
+		वापस 1;
+	पूर्ण
 
-	cmo_free_hint_flag = 1;
+	cmo_मुक्त_hपूर्णांक_flag = 1;
 	pr_info("%s: CMO free page hinting is active.\n", __func__);
 
-	if (strcasecmp(parm, "yes") == 0 || strcasecmp(parm, "on") == 0)
-		return 1;
+	अगर (strहालcmp(parm, "yes") == 0 || strहालcmp(parm, "on") == 0)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__setup("cmo_free_hint=", cmo_free_hint);
+__setup("cmo_free_hint=", cmo_मुक्त_hपूर्णांक);
 
-static void pSeries_set_page_state(struct page *page, int order,
-				   unsigned long state)
-{
-	int i, j;
-	unsigned long cmo_page_sz, addr;
+अटल व्योम pSeries_set_page_state(काष्ठा page *page, पूर्णांक order,
+				   अचिन्हित दीर्घ state)
+अणु
+	पूर्णांक i, j;
+	अचिन्हित दीर्घ cmo_page_sz, addr;
 
 	cmo_page_sz = cmo_get_page_size();
-	addr = __pa((unsigned long)page_address(page));
+	addr = __pa((अचिन्हित दीर्घ)page_address(page));
 
-	for (i = 0; i < (1 << order); i++, addr += PAGE_SIZE) {
-		for (j = 0; j < PAGE_SIZE; j += cmo_page_sz)
+	क्रम (i = 0; i < (1 << order); i++, addr += PAGE_SIZE) अणु
+		क्रम (j = 0; j < PAGE_SIZE; j += cmo_page_sz)
 			plpar_hcall_norets(H_PAGE_INIT, state, addr + j, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void arch_free_page(struct page *page, int order)
-{
-	if (radix_enabled())
-		return;
-	if (!cmo_free_hint_flag || !firmware_has_feature(FW_FEATURE_CMO))
-		return;
+व्योम arch_मुक्त_page(काष्ठा page *page, पूर्णांक order)
+अणु
+	अगर (radix_enabled())
+		वापस;
+	अगर (!cmo_मुक्त_hपूर्णांक_flag || !firmware_has_feature(FW_FEATURE_CMO))
+		वापस;
 
 	pSeries_set_page_state(page, order, H_PAGE_SET_UNUSED);
-}
-EXPORT_SYMBOL(arch_free_page);
+पूर्ण
+EXPORT_SYMBOL(arch_मुक्त_page);
 
-#endif /* CONFIG_PPC_SMLPAR */
-#endif /* CONFIG_PPC_BOOK3S_64 */
+#पूर्ण_अगर /* CONFIG_PPC_SMLPAR */
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
 
-#ifdef CONFIG_TRACEPOINTS
-#ifdef CONFIG_JUMP_LABEL
-struct static_key hcall_tracepoint_key = STATIC_KEY_INIT;
+#अगर_घोषित CONFIG_TRACEPOINTS
+#अगर_घोषित CONFIG_JUMP_LABEL
+काष्ठा अटल_key hcall_tracepoपूर्णांक_key = STATIC_KEY_INIT;
 
-int hcall_tracepoint_regfunc(void)
-{
-	static_key_slow_inc(&hcall_tracepoint_key);
-	return 0;
-}
+पूर्णांक hcall_tracepoपूर्णांक_regfunc(व्योम)
+अणु
+	अटल_key_slow_inc(&hcall_tracepoपूर्णांक_key);
+	वापस 0;
+पूर्ण
 
-void hcall_tracepoint_unregfunc(void)
-{
-	static_key_slow_dec(&hcall_tracepoint_key);
-}
-#else
+व्योम hcall_tracepoपूर्णांक_unregfunc(व्योम)
+अणु
+	अटल_key_slow_dec(&hcall_tracepoपूर्णांक_key);
+पूर्ण
+#अन्यथा
 /*
- * We optimise our hcall path by placing hcall_tracepoint_refcount
- * directly in the TOC so we can check if the hcall tracepoints are
+ * We optimise our hcall path by placing hcall_tracepoपूर्णांक_refcount
+ * directly in the TOC so we can check अगर the hcall tracepoपूर्णांकs are
  * enabled via a single load.
  */
 
-/* NB: reg/unreg are called while guarded with the tracepoints_mutex */
-extern long hcall_tracepoint_refcount;
+/* NB: reg/unreg are called जबतक guarded with the tracepoपूर्णांकs_mutex */
+बाह्य दीर्घ hcall_tracepoपूर्णांक_refcount;
 
-int hcall_tracepoint_regfunc(void)
-{
-	hcall_tracepoint_refcount++;
-	return 0;
-}
+पूर्णांक hcall_tracepoपूर्णांक_regfunc(व्योम)
+अणु
+	hcall_tracepoपूर्णांक_refcount++;
+	वापस 0;
+पूर्ण
 
-void hcall_tracepoint_unregfunc(void)
-{
-	hcall_tracepoint_refcount--;
-}
-#endif
+व्योम hcall_tracepoपूर्णांक_unregfunc(व्योम)
+अणु
+	hcall_tracepoपूर्णांक_refcount--;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Keep track of hcall tracing depth and prevent recursion. Warn if any is
+ * Keep track of hcall tracing depth and prevent recursion. Warn अगर any is
  * detected because it may indicate a problem. This will not catch all
  * problems with tracing code making hcalls, because the tracing might have
- * been invoked from a non-hcall, so the first hcall could recurse into it
+ * been invoked from a non-hcall, so the first hcall could recurse पूर्णांकo it
  * without warning here, but this better than nothing.
  *
- * Hcalls with specific problems being traced should use the _notrace
+ * Hcalls with specअगरic problems being traced should use the _notrace
  * plpar_hcall variants.
  */
-static DEFINE_PER_CPU(unsigned int, hcall_trace_depth);
+अटल DEFINE_PER_CPU(अचिन्हित पूर्णांक, hcall_trace_depth);
 
 
-notrace void __trace_hcall_entry(unsigned long opcode, unsigned long *args)
-{
-	unsigned long flags;
-	unsigned int *depth;
+notrace व्योम __trace_hcall_entry(अचिन्हित दीर्घ opcode, अचिन्हित दीर्घ *args)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक *depth;
 
 	local_irq_save(flags);
 
 	depth = this_cpu_ptr(&hcall_trace_depth);
 
-	if (WARN_ON_ONCE(*depth))
-		goto out;
+	अगर (WARN_ON_ONCE(*depth))
+		जाओ out;
 
 	(*depth)++;
 	preempt_disable();
@@ -1860,38 +1861,38 @@ notrace void __trace_hcall_entry(unsigned long opcode, unsigned long *args)
 
 out:
 	local_irq_restore(flags);
-}
+पूर्ण
 
-notrace void __trace_hcall_exit(long opcode, long retval, unsigned long *retbuf)
-{
-	unsigned long flags;
-	unsigned int *depth;
+notrace व्योम __trace_hcall_निकास(दीर्घ opcode, दीर्घ retval, अचिन्हित दीर्घ *retbuf)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक *depth;
 
 	local_irq_save(flags);
 
 	depth = this_cpu_ptr(&hcall_trace_depth);
 
-	if (*depth) /* Don't warn again on the way out */
-		goto out;
+	अगर (*depth) /* Don't warn again on the way out */
+		जाओ out;
 
 	(*depth)++;
-	trace_hcall_exit(opcode, retval, retbuf);
+	trace_hcall_निकास(opcode, retval, retbuf);
 	preempt_enable();
 	(*depth)--;
 
 out:
 	local_irq_restore(flags);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /**
  * h_get_mpp
- * H_GET_MPP hcall returns info in 7 parms
+ * H_GET_MPP hcall वापसs info in 7 parms
  */
-int h_get_mpp(struct hvcall_mpp_data *mpp_data)
-{
-	int rc;
-	unsigned long retbuf[PLPAR_HCALL9_BUFSIZE];
+पूर्णांक h_get_mpp(काष्ठा hvcall_mpp_data *mpp_data)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL9_बफ_मानE];
 
 	rc = plpar_hcall9(H_GET_MPP, retbuf);
 
@@ -1909,14 +1910,14 @@ int h_get_mpp(struct hvcall_mpp_data *mpp_data)
 	mpp_data->loan_request = retbuf[5];
 	mpp_data->backing_mem = retbuf[6];
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(h_get_mpp);
 
-int h_get_mpp_x(struct hvcall_mpp_x_data *mpp_x_data)
-{
-	int rc;
-	unsigned long retbuf[PLPAR_HCALL9_BUFSIZE] = { 0 };
+पूर्णांक h_get_mpp_x(काष्ठा hvcall_mpp_x_data *mpp_x_data)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL9_बफ_मानE] = अणु 0 पूर्ण;
 
 	rc = plpar_hcall9(H_GET_MPP_X, retbuf);
 
@@ -1925,32 +1926,32 @@ int h_get_mpp_x(struct hvcall_mpp_x_data *mpp_x_data)
 	mpp_x_data->pool_purr_cycles = retbuf[2];
 	mpp_x_data->pool_spurr_cycles = retbuf[3];
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static unsigned long vsid_unscramble(unsigned long vsid, int ssize)
-{
-	unsigned long protovsid;
-	unsigned long va_bits = VA_BITS;
-	unsigned long modinv, vsid_modulus;
-	unsigned long max_mod_inv, tmp_modinv;
+अटल अचिन्हित दीर्घ vsid_unscramble(अचिन्हित दीर्घ vsid, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ protovsid;
+	अचिन्हित दीर्घ va_bits = VA_BITS;
+	अचिन्हित दीर्घ modinv, vsid_modulus;
+	अचिन्हित दीर्घ max_mod_inv, पंचांगp_modinv;
 
-	if (!mmu_has_feature(MMU_FTR_68_BIT_VA))
+	अगर (!mmu_has_feature(MMU_FTR_68_BIT_VA))
 		va_bits = 65;
 
-	if (ssize == MMU_SEGSIZE_256M) {
+	अगर (ssize == MMU_SEGSIZE_256M) अणु
 		modinv = VSID_MULINV_256M;
 		vsid_modulus = ((1UL << (va_bits - SID_SHIFT)) - 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		modinv = VSID_MULINV_1T;
 		vsid_modulus = ((1UL << (va_bits - SID_SHIFT_1T)) - 1);
-	}
+	पूर्ण
 
 	/*
 	 * vsid outside our range.
 	 */
-	if (vsid >= vsid_modulus)
-		return 0;
+	अगर (vsid >= vsid_modulus)
+		वापस 0;
 
 	/*
 	 * If modinv is the modular multiplicate inverse of (x % vsid_modulus)
@@ -1958,73 +1959,73 @@ static unsigned long vsid_unscramble(unsigned long vsid, int ssize)
 	 *   protovsid = (vsid * modinv) % vsid_modulus
 	 */
 
-	/* Check if (vsid * modinv) overflow (63 bits) */
+	/* Check अगर (vsid * modinv) overflow (63 bits) */
 	max_mod_inv = 0x7fffffffffffffffull / vsid;
-	if (modinv < max_mod_inv)
-		return (vsid * modinv) % vsid_modulus;
+	अगर (modinv < max_mod_inv)
+		वापस (vsid * modinv) % vsid_modulus;
 
-	tmp_modinv = modinv/max_mod_inv;
+	पंचांगp_modinv = modinv/max_mod_inv;
 	modinv %= max_mod_inv;
 
-	protovsid = (((vsid * max_mod_inv) % vsid_modulus) * tmp_modinv) % vsid_modulus;
+	protovsid = (((vsid * max_mod_inv) % vsid_modulus) * पंचांगp_modinv) % vsid_modulus;
 	protovsid = (protovsid + vsid * modinv) % vsid_modulus;
 
-	return protovsid;
-}
+	वापस protovsid;
+पूर्ण
 
-static int __init reserve_vrma_context_id(void)
-{
-	unsigned long protovsid;
+अटल पूर्णांक __init reserve_vrma_context_id(व्योम)
+अणु
+	अचिन्हित दीर्घ protovsid;
 
 	/*
-	 * Reserve context ids which map to reserved virtual addresses. For now
+	 * Reserve context ids which map to reserved भव addresses. For now
 	 * we only reserve the context id which maps to the VRMA VSID. We ignore
-	 * the addresses in "ibm,adjunct-virtual-addresses" because we don't
+	 * the addresses in "ibm,adjunct-virtual-addresses" because we करोn't
 	 * enable adjunct support via the "ibm,client-architecture-support"
-	 * interface.
+	 * पूर्णांकerface.
 	 */
 	protovsid = vsid_unscramble(VRMA_VSID, MMU_SEGSIZE_1T);
 	hash__reserve_context_id(protovsid >> ESID_BITS_1T);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_device_initcall(pseries, reserve_vrma_context_id);
 
-#ifdef CONFIG_DEBUG_FS
-/* debugfs file interface for vpa data */
-static ssize_t vpa_file_read(struct file *filp, char __user *buf, size_t len,
+#अगर_घोषित CONFIG_DEBUG_FS
+/* debugfs file पूर्णांकerface क्रम vpa data */
+अटल sमाप_प्रकार vpa_file_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार len,
 			      loff_t *pos)
-{
-	int cpu = (long)filp->private_data;
-	struct lppaca *lppaca = &lppaca_of(cpu);
+अणु
+	पूर्णांक cpu = (दीर्घ)filp->निजी_data;
+	काष्ठा lppaca *lppaca = &lppaca_of(cpu);
 
-	return simple_read_from_buffer(buf, len, pos, lppaca,
-				sizeof(struct lppaca));
-}
+	वापस simple_पढ़ो_from_buffer(buf, len, pos, lppaca,
+				माप(काष्ठा lppaca));
+पूर्ण
 
-static const struct file_operations vpa_fops = {
-	.open		= simple_open,
-	.read		= vpa_file_read,
-	.llseek		= default_llseek,
-};
+अटल स्थिर काष्ठा file_operations vpa_fops = अणु
+	.खोलो		= simple_खोलो,
+	.पढ़ो		= vpa_file_पढ़ो,
+	.llseek		= शेष_llseek,
+पूर्ण;
 
-static int __init vpa_debugfs_init(void)
-{
-	char name[16];
-	long i;
-	struct dentry *vpa_dir;
+अटल पूर्णांक __init vpa_debugfs_init(व्योम)
+अणु
+	अक्षर name[16];
+	दीर्घ i;
+	काष्ठा dentry *vpa_dir;
 
-	if (!firmware_has_feature(FW_FEATURE_SPLPAR))
-		return 0;
+	अगर (!firmware_has_feature(FW_FEATURE_SPLPAR))
+		वापस 0;
 
-	vpa_dir = debugfs_create_dir("vpa", powerpc_debugfs_root);
+	vpa_dir = debugfs_create_dir("vpa", घातerpc_debugfs_root);
 
 	/* set up the per-cpu vpa file*/
-	for_each_possible_cpu(i) {
-		sprintf(name, "cpu-%ld", i);
-		debugfs_create_file(name, 0400, vpa_dir, (void *)i, &vpa_fops);
-	}
+	क्रम_each_possible_cpu(i) अणु
+		प्र_लिखो(name, "cpu-%ld", i);
+		debugfs_create_file(name, 0400, vpa_dir, (व्योम *)i, &vpa_fops);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_arch_initcall(pseries, vpa_debugfs_init);
-#endif /* CONFIG_DEBUG_FS */
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */

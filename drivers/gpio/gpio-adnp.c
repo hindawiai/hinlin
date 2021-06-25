@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2011-2012 Avionic Design GmbH
  */
 
-#include <linux/gpio/driver.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of_irq.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
 
-#define GPIO_DDR(gpio) (0x00 << (gpio)->reg_shift)
-#define GPIO_PLR(gpio) (0x01 << (gpio)->reg_shift)
-#define GPIO_IER(gpio) (0x02 << (gpio)->reg_shift)
-#define GPIO_ISR(gpio) (0x03 << (gpio)->reg_shift)
-#define GPIO_PTR(gpio) (0x04 << (gpio)->reg_shift)
+#घोषणा GPIO_DDR(gpio) (0x00 << (gpio)->reg_shअगरt)
+#घोषणा GPIO_PLR(gpio) (0x01 << (gpio)->reg_shअगरt)
+#घोषणा GPIO_IER(gpio) (0x02 << (gpio)->reg_shअगरt)
+#घोषणा GPIO_ISR(gpio) (0x03 << (gpio)->reg_shअगरt)
+#घोषणा GPIO_PTR(gpio) (0x04 << (gpio)->reg_shअगरt)
 
-struct adnp {
-	struct i2c_client *client;
-	struct gpio_chip gpio;
-	unsigned int reg_shift;
+काष्ठा adnp अणु
+	काष्ठा i2c_client *client;
+	काष्ठा gpio_chip gpio;
+	अचिन्हित पूर्णांक reg_shअगरt;
 
-	struct mutex i2c_lock;
-	struct mutex irq_lock;
+	काष्ठा mutex i2c_lock;
+	काष्ठा mutex irq_lock;
 
 	u8 *irq_enable;
 	u8 *irq_level;
@@ -31,375 +32,375 @@ struct adnp {
 	u8 *irq_fall;
 	u8 *irq_high;
 	u8 *irq_low;
-};
+पूर्ण;
 
-static int adnp_read(struct adnp *adnp, unsigned offset, uint8_t *value)
-{
-	int err;
+अटल पूर्णांक adnp_पढ़ो(काष्ठा adnp *adnp, अचिन्हित offset, uपूर्णांक8_t *value)
+अणु
+	पूर्णांक err;
 
-	err = i2c_smbus_read_byte_data(adnp->client, offset);
-	if (err < 0) {
+	err = i2c_smbus_पढ़ो_byte_data(adnp->client, offset);
+	अगर (err < 0) अणु
 		dev_err(adnp->gpio.parent, "%s failed: %d\n",
 			"i2c_smbus_read_byte_data()", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	*value = err;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adnp_write(struct adnp *adnp, unsigned offset, uint8_t value)
-{
-	int err;
+अटल पूर्णांक adnp_ग_लिखो(काष्ठा adnp *adnp, अचिन्हित offset, uपूर्णांक8_t value)
+अणु
+	पूर्णांक err;
 
-	err = i2c_smbus_write_byte_data(adnp->client, offset, value);
-	if (err < 0) {
+	err = i2c_smbus_ग_लिखो_byte_data(adnp->client, offset, value);
+	अगर (err < 0) अणु
 		dev_err(adnp->gpio.parent, "%s failed: %d\n",
 			"i2c_smbus_write_byte_data()", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adnp_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct adnp *adnp = gpiochip_get_data(chip);
-	unsigned int reg = offset >> adnp->reg_shift;
-	unsigned int pos = offset & 7;
+अटल पूर्णांक adnp_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा adnp *adnp = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक reg = offset >> adnp->reg_shअगरt;
+	अचिन्हित पूर्णांक pos = offset & 7;
 	u8 value;
-	int err;
+	पूर्णांक err;
 
-	err = adnp_read(adnp, GPIO_PLR(adnp) + reg, &value);
-	if (err < 0)
-		return err;
+	err = adnp_पढ़ो(adnp, GPIO_PLR(adnp) + reg, &value);
+	अगर (err < 0)
+		वापस err;
 
-	return (value & BIT(pos)) ? 1 : 0;
-}
+	वापस (value & BIT(pos)) ? 1 : 0;
+पूर्ण
 
-static void __adnp_gpio_set(struct adnp *adnp, unsigned offset, int value)
-{
-	unsigned int reg = offset >> adnp->reg_shift;
-	unsigned int pos = offset & 7;
-	int err;
+अटल व्योम __adnp_gpio_set(काष्ठा adnp *adnp, अचिन्हित offset, पूर्णांक value)
+अणु
+	अचिन्हित पूर्णांक reg = offset >> adnp->reg_shअगरt;
+	अचिन्हित पूर्णांक pos = offset & 7;
+	पूर्णांक err;
 	u8 val;
 
-	err = adnp_read(adnp, GPIO_PLR(adnp) + reg, &val);
-	if (err < 0)
-		return;
+	err = adnp_पढ़ो(adnp, GPIO_PLR(adnp) + reg, &val);
+	अगर (err < 0)
+		वापस;
 
-	if (value)
+	अगर (value)
 		val |= BIT(pos);
-	else
+	अन्यथा
 		val &= ~BIT(pos);
 
-	adnp_write(adnp, GPIO_PLR(adnp) + reg, val);
-}
+	adnp_ग_लिखो(adnp, GPIO_PLR(adnp) + reg, val);
+पूर्ण
 
-static void adnp_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct adnp *adnp = gpiochip_get_data(chip);
+अटल व्योम adnp_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा adnp *adnp = gpiochip_get_data(chip);
 
 	mutex_lock(&adnp->i2c_lock);
 	__adnp_gpio_set(adnp, offset, value);
 	mutex_unlock(&adnp->i2c_lock);
-}
+पूर्ण
 
-static int adnp_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	struct adnp *adnp = gpiochip_get_data(chip);
-	unsigned int reg = offset >> adnp->reg_shift;
-	unsigned int pos = offset & 7;
+अटल पूर्णांक adnp_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा adnp *adnp = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक reg = offset >> adnp->reg_shअगरt;
+	अचिन्हित पूर्णांक pos = offset & 7;
 	u8 value;
-	int err;
+	पूर्णांक err;
 
 	mutex_lock(&adnp->i2c_lock);
 
-	err = adnp_read(adnp, GPIO_DDR(adnp) + reg, &value);
-	if (err < 0)
-		goto out;
+	err = adnp_पढ़ो(adnp, GPIO_DDR(adnp) + reg, &value);
+	अगर (err < 0)
+		जाओ out;
 
 	value &= ~BIT(pos);
 
-	err = adnp_write(adnp, GPIO_DDR(adnp) + reg, value);
-	if (err < 0)
-		goto out;
+	err = adnp_ग_लिखो(adnp, GPIO_DDR(adnp) + reg, value);
+	अगर (err < 0)
+		जाओ out;
 
-	err = adnp_read(adnp, GPIO_DDR(adnp) + reg, &value);
-	if (err < 0)
-		goto out;
+	err = adnp_पढ़ो(adnp, GPIO_DDR(adnp) + reg, &value);
+	अगर (err < 0)
+		जाओ out;
 
-	if (value & BIT(pos)) {
+	अगर (value & BIT(pos)) अणु
 		err = -EPERM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = 0;
 
 out:
 	mutex_unlock(&adnp->i2c_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int adnp_gpio_direction_output(struct gpio_chip *chip, unsigned offset,
-				      int value)
-{
-	struct adnp *adnp = gpiochip_get_data(chip);
-	unsigned int reg = offset >> adnp->reg_shift;
-	unsigned int pos = offset & 7;
-	int err;
+अटल पूर्णांक adnp_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset,
+				      पूर्णांक value)
+अणु
+	काष्ठा adnp *adnp = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक reg = offset >> adnp->reg_shअगरt;
+	अचिन्हित पूर्णांक pos = offset & 7;
+	पूर्णांक err;
 	u8 val;
 
 	mutex_lock(&adnp->i2c_lock);
 
-	err = adnp_read(adnp, GPIO_DDR(adnp) + reg, &val);
-	if (err < 0)
-		goto out;
+	err = adnp_पढ़ो(adnp, GPIO_DDR(adnp) + reg, &val);
+	अगर (err < 0)
+		जाओ out;
 
 	val |= BIT(pos);
 
-	err = adnp_write(adnp, GPIO_DDR(adnp) + reg, val);
-	if (err < 0)
-		goto out;
+	err = adnp_ग_लिखो(adnp, GPIO_DDR(adnp) + reg, val);
+	अगर (err < 0)
+		जाओ out;
 
-	err = adnp_read(adnp, GPIO_DDR(adnp) + reg, &val);
-	if (err < 0)
-		goto out;
+	err = adnp_पढ़ो(adnp, GPIO_DDR(adnp) + reg, &val);
+	अगर (err < 0)
+		जाओ out;
 
-	if (!(val & BIT(pos))) {
+	अगर (!(val & BIT(pos))) अणु
 		err = -EPERM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	__adnp_gpio_set(adnp, offset, value);
 	err = 0;
 
 out:
 	mutex_unlock(&adnp->i2c_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void adnp_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
-{
-	struct adnp *adnp = gpiochip_get_data(chip);
-	unsigned int num_regs = 1 << adnp->reg_shift, i, j;
-	int err;
+अटल व्योम adnp_gpio_dbg_show(काष्ठा seq_file *s, काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा adnp *adnp = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक num_regs = 1 << adnp->reg_shअगरt, i, j;
+	पूर्णांक err;
 
-	for (i = 0; i < num_regs; i++) {
+	क्रम (i = 0; i < num_regs; i++) अणु
 		u8 ddr, plr, ier, isr;
 
 		mutex_lock(&adnp->i2c_lock);
 
-		err = adnp_read(adnp, GPIO_DDR(adnp) + i, &ddr);
-		if (err < 0)
-			goto unlock;
+		err = adnp_पढ़ो(adnp, GPIO_DDR(adnp) + i, &ddr);
+		अगर (err < 0)
+			जाओ unlock;
 
-		err = adnp_read(adnp, GPIO_PLR(adnp) + i, &plr);
-		if (err < 0)
-			goto unlock;
+		err = adnp_पढ़ो(adnp, GPIO_PLR(adnp) + i, &plr);
+		अगर (err < 0)
+			जाओ unlock;
 
-		err = adnp_read(adnp, GPIO_IER(adnp) + i, &ier);
-		if (err < 0)
-			goto unlock;
+		err = adnp_पढ़ो(adnp, GPIO_IER(adnp) + i, &ier);
+		अगर (err < 0)
+			जाओ unlock;
 
-		err = adnp_read(adnp, GPIO_ISR(adnp) + i, &isr);
-		if (err < 0)
-			goto unlock;
+		err = adnp_पढ़ो(adnp, GPIO_ISR(adnp) + i, &isr);
+		अगर (err < 0)
+			जाओ unlock;
 
 		mutex_unlock(&adnp->i2c_lock);
 
-		for (j = 0; j < 8; j++) {
-			unsigned int bit = (i << adnp->reg_shift) + j;
-			const char *direction = "input ";
-			const char *level = "low ";
-			const char *interrupt = "disabled";
-			const char *pending = "";
+		क्रम (j = 0; j < 8; j++) अणु
+			अचिन्हित पूर्णांक bit = (i << adnp->reg_shअगरt) + j;
+			स्थिर अक्षर *direction = "input ";
+			स्थिर अक्षर *level = "low ";
+			स्थिर अक्षर *पूर्णांकerrupt = "disabled";
+			स्थिर अक्षर *pending = "";
 
-			if (ddr & BIT(j))
+			अगर (ddr & BIT(j))
 				direction = "output";
 
-			if (plr & BIT(j))
+			अगर (plr & BIT(j))
 				level = "high";
 
-			if (ier & BIT(j))
-				interrupt = "enabled ";
+			अगर (ier & BIT(j))
+				पूर्णांकerrupt = "enabled ";
 
-			if (isr & BIT(j))
+			अगर (isr & BIT(j))
 				pending = "pending";
 
-			seq_printf(s, "%2u: %s %s IRQ %s %s\n", bit,
-				   direction, level, interrupt, pending);
-		}
-	}
+			seq_म_लिखो(s, "%2u: %s %s IRQ %s %s\n", bit,
+				   direction, level, पूर्णांकerrupt, pending);
+		पूर्ण
+	पूर्ण
 
-	return;
+	वापस;
 
 unlock:
 	mutex_unlock(&adnp->i2c_lock);
-}
+पूर्ण
 
-static irqreturn_t adnp_irq(int irq, void *data)
-{
-	struct adnp *adnp = data;
-	unsigned int num_regs, i;
+अटल irqवापस_t adnp_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा adnp *adnp = data;
+	अचिन्हित पूर्णांक num_regs, i;
 
-	num_regs = 1 << adnp->reg_shift;
+	num_regs = 1 << adnp->reg_shअगरt;
 
-	for (i = 0; i < num_regs; i++) {
-		unsigned int base = i << adnp->reg_shift, bit;
+	क्रम (i = 0; i < num_regs; i++) अणु
+		अचिन्हित पूर्णांक base = i << adnp->reg_shअगरt, bit;
 		u8 changed, level, isr, ier;
-		unsigned long pending;
-		int err;
+		अचिन्हित दीर्घ pending;
+		पूर्णांक err;
 
 		mutex_lock(&adnp->i2c_lock);
 
-		err = adnp_read(adnp, GPIO_PLR(adnp) + i, &level);
-		if (err < 0) {
+		err = adnp_पढ़ो(adnp, GPIO_PLR(adnp) + i, &level);
+		अगर (err < 0) अणु
 			mutex_unlock(&adnp->i2c_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		err = adnp_read(adnp, GPIO_ISR(adnp) + i, &isr);
-		if (err < 0) {
+		err = adnp_पढ़ो(adnp, GPIO_ISR(adnp) + i, &isr);
+		अगर (err < 0) अणु
 			mutex_unlock(&adnp->i2c_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		err = adnp_read(adnp, GPIO_IER(adnp) + i, &ier);
-		if (err < 0) {
+		err = adnp_पढ़ो(adnp, GPIO_IER(adnp) + i, &ier);
+		अगर (err < 0) अणु
 			mutex_unlock(&adnp->i2c_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		mutex_unlock(&adnp->i2c_lock);
 
 		/* determine pins that changed levels */
 		changed = level ^ adnp->irq_level[i];
 
-		/* compute edge-triggered interrupts */
+		/* compute edge-triggered पूर्णांकerrupts */
 		pending = changed & ((adnp->irq_fall[i] & ~level) |
 				     (adnp->irq_rise[i] & level));
 
-		/* add in level-triggered interrupts */
+		/* add in level-triggered पूर्णांकerrupts */
 		pending |= (adnp->irq_high[i] & level) |
 			   (adnp->irq_low[i] & ~level);
 
-		/* mask out non-pending and disabled interrupts */
+		/* mask out non-pending and disabled पूर्णांकerrupts */
 		pending &= isr & ier;
 
-		for_each_set_bit(bit, &pending, 8) {
-			unsigned int child_irq;
-			child_irq = irq_find_mapping(adnp->gpio.irq.domain,
+		क्रम_each_set_bit(bit, &pending, 8) अणु
+			अचिन्हित पूर्णांक child_irq;
+			child_irq = irq_find_mapping(adnp->gpio.irq.करोमुख्य,
 						     base + bit);
 			handle_nested_irq(child_irq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void adnp_irq_mask(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct adnp *adnp = gpiochip_get_data(gc);
-	unsigned int reg = d->hwirq >> adnp->reg_shift;
-	unsigned int pos = d->hwirq & 7;
+अटल व्योम adnp_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा adnp *adnp = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक reg = d->hwirq >> adnp->reg_shअगरt;
+	अचिन्हित पूर्णांक pos = d->hwirq & 7;
 
 	adnp->irq_enable[reg] &= ~BIT(pos);
-}
+पूर्ण
 
-static void adnp_irq_unmask(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct adnp *adnp = gpiochip_get_data(gc);
-	unsigned int reg = d->hwirq >> adnp->reg_shift;
-	unsigned int pos = d->hwirq & 7;
+अटल व्योम adnp_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा adnp *adnp = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक reg = d->hwirq >> adnp->reg_shअगरt;
+	अचिन्हित पूर्णांक pos = d->hwirq & 7;
 
 	adnp->irq_enable[reg] |= BIT(pos);
-}
+पूर्ण
 
-static int adnp_irq_set_type(struct irq_data *d, unsigned int type)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct adnp *adnp = gpiochip_get_data(gc);
-	unsigned int reg = d->hwirq >> adnp->reg_shift;
-	unsigned int pos = d->hwirq & 7;
+अटल पूर्णांक adnp_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा adnp *adnp = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक reg = d->hwirq >> adnp->reg_shअगरt;
+	अचिन्हित पूर्णांक pos = d->hwirq & 7;
 
-	if (type & IRQ_TYPE_EDGE_RISING)
+	अगर (type & IRQ_TYPE_EDGE_RISING)
 		adnp->irq_rise[reg] |= BIT(pos);
-	else
+	अन्यथा
 		adnp->irq_rise[reg] &= ~BIT(pos);
 
-	if (type & IRQ_TYPE_EDGE_FALLING)
+	अगर (type & IRQ_TYPE_EDGE_FALLING)
 		adnp->irq_fall[reg] |= BIT(pos);
-	else
+	अन्यथा
 		adnp->irq_fall[reg] &= ~BIT(pos);
 
-	if (type & IRQ_TYPE_LEVEL_HIGH)
+	अगर (type & IRQ_TYPE_LEVEL_HIGH)
 		adnp->irq_high[reg] |= BIT(pos);
-	else
+	अन्यथा
 		adnp->irq_high[reg] &= ~BIT(pos);
 
-	if (type & IRQ_TYPE_LEVEL_LOW)
+	अगर (type & IRQ_TYPE_LEVEL_LOW)
 		adnp->irq_low[reg] |= BIT(pos);
-	else
+	अन्यथा
 		adnp->irq_low[reg] &= ~BIT(pos);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void adnp_irq_bus_lock(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct adnp *adnp = gpiochip_get_data(gc);
+अटल व्योम adnp_irq_bus_lock(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा adnp *adnp = gpiochip_get_data(gc);
 
 	mutex_lock(&adnp->irq_lock);
-}
+पूर्ण
 
-static void adnp_irq_bus_unlock(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct adnp *adnp = gpiochip_get_data(gc);
-	unsigned int num_regs = 1 << adnp->reg_shift, i;
+अटल व्योम adnp_irq_bus_unlock(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा adnp *adnp = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक num_regs = 1 << adnp->reg_shअगरt, i;
 
 	mutex_lock(&adnp->i2c_lock);
 
-	for (i = 0; i < num_regs; i++)
-		adnp_write(adnp, GPIO_IER(adnp) + i, adnp->irq_enable[i]);
+	क्रम (i = 0; i < num_regs; i++)
+		adnp_ग_लिखो(adnp, GPIO_IER(adnp) + i, adnp->irq_enable[i]);
 
 	mutex_unlock(&adnp->i2c_lock);
 	mutex_unlock(&adnp->irq_lock);
-}
+पूर्ण
 
-static struct irq_chip adnp_irq_chip = {
+अटल काष्ठा irq_chip adnp_irq_chip = अणु
 	.name = "gpio-adnp",
 	.irq_mask = adnp_irq_mask,
 	.irq_unmask = adnp_irq_unmask,
 	.irq_set_type = adnp_irq_set_type,
 	.irq_bus_lock = adnp_irq_bus_lock,
 	.irq_bus_sync_unlock = adnp_irq_bus_unlock,
-};
+पूर्ण;
 
-static int adnp_irq_setup(struct adnp *adnp)
-{
-	unsigned int num_regs = 1 << adnp->reg_shift, i;
-	struct gpio_chip *chip = &adnp->gpio;
-	int err;
+अटल पूर्णांक adnp_irq_setup(काष्ठा adnp *adnp)
+अणु
+	अचिन्हित पूर्णांक num_regs = 1 << adnp->reg_shअगरt, i;
+	काष्ठा gpio_chip *chip = &adnp->gpio;
+	पूर्णांक err;
 
 	mutex_init(&adnp->irq_lock);
 
 	/*
 	 * Allocate memory to keep track of the current level and trigger
-	 * modes of the interrupts. To avoid multiple allocations, a single
-	 * large buffer is allocated and pointers are setup to point at the
+	 * modes of the पूर्णांकerrupts. To aव्योम multiple allocations, a single
+	 * large buffer is allocated and poपूर्णांकers are setup to poपूर्णांक at the
 	 * corresponding offsets. For consistency, the layout of the buffer
-	 * is chosen to match the register layout of the hardware in that
-	 * each segment contains the corresponding bits for all interrupts.
+	 * is chosen to match the रेजिस्टर layout of the hardware in that
+	 * each segment contains the corresponding bits क्रम all पूर्णांकerrupts.
 	 */
-	adnp->irq_enable = devm_kcalloc(chip->parent, num_regs, 6,
+	adnp->irq_enable = devm_kसुस्मृति(chip->parent, num_regs, 6,
 					GFP_KERNEL);
-	if (!adnp->irq_enable)
-		return -ENOMEM;
+	अगर (!adnp->irq_enable)
+		वापस -ENOMEM;
 
 	adnp->irq_level = adnp->irq_enable + (num_regs * 1);
 	adnp->irq_rise = adnp->irq_enable + (num_regs * 2);
@@ -407,43 +408,43 @@ static int adnp_irq_setup(struct adnp *adnp)
 	adnp->irq_high = adnp->irq_enable + (num_regs * 4);
 	adnp->irq_low = adnp->irq_enable + (num_regs * 5);
 
-	for (i = 0; i < num_regs; i++) {
+	क्रम (i = 0; i < num_regs; i++) अणु
 		/*
 		 * Read the initial level of all pins to allow the emulation
-		 * of edge triggered interrupts.
+		 * of edge triggered पूर्णांकerrupts.
 		 */
-		err = adnp_read(adnp, GPIO_PLR(adnp) + i, &adnp->irq_level[i]);
-		if (err < 0)
-			return err;
+		err = adnp_पढ़ो(adnp, GPIO_PLR(adnp) + i, &adnp->irq_level[i]);
+		अगर (err < 0)
+			वापस err;
 
-		/* disable all interrupts */
-		err = adnp_write(adnp, GPIO_IER(adnp) + i, 0);
-		if (err < 0)
-			return err;
+		/* disable all पूर्णांकerrupts */
+		err = adnp_ग_लिखो(adnp, GPIO_IER(adnp) + i, 0);
+		अगर (err < 0)
+			वापस err;
 
 		adnp->irq_enable[i] = 0x00;
-	}
+	पूर्ण
 
-	err = devm_request_threaded_irq(chip->parent, adnp->client->irq,
-					NULL, adnp_irq,
+	err = devm_request_thपढ़ोed_irq(chip->parent, adnp->client->irq,
+					शून्य, adnp_irq,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					dev_name(chip->parent), adnp);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		dev_err(chip->parent, "can't request IRQ#%d: %d\n",
 			adnp->client->irq, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adnp_gpio_setup(struct adnp *adnp, unsigned int num_gpios,
+अटल पूर्णांक adnp_gpio_setup(काष्ठा adnp *adnp, अचिन्हित पूर्णांक num_gpios,
 			   bool is_irq_controller)
-{
-	struct gpio_chip *chip = &adnp->gpio;
-	int err;
+अणु
+	काष्ठा gpio_chip *chip = &adnp->gpio;
+	पूर्णांक err;
 
-	adnp->reg_shift = get_count_order(num_gpios) - 3;
+	adnp->reg_shअगरt = get_count_order(num_gpios) - 3;
 
 	chip->direction_input = adnp_gpio_direction_input;
 	chip->direction_output = adnp_gpio_direction_output;
@@ -451,7 +452,7 @@ static int adnp_gpio_setup(struct adnp *adnp, unsigned int num_gpios,
 	chip->set = adnp_gpio_set;
 	chip->can_sleep = true;
 
-	if (IS_ENABLED(CONFIG_DEBUG_FS))
+	अगर (IS_ENABLED(CONFIG_DEBUG_FS))
 		chip->dbg_show = adnp_gpio_dbg_show;
 
 	chip->base = -1;
@@ -461,84 +462,84 @@ static int adnp_gpio_setup(struct adnp *adnp, unsigned int num_gpios,
 	chip->of_node = chip->parent->of_node;
 	chip->owner = THIS_MODULE;
 
-	if (is_irq_controller) {
-		struct gpio_irq_chip *girq;
+	अगर (is_irq_controller) अणु
+		काष्ठा gpio_irq_chip *girq;
 
 		err = adnp_irq_setup(adnp);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		girq = &chip->irq;
 		girq->chip = &adnp_irq_chip;
 		/* This will let us handle the parent IRQ in the driver */
-		girq->parent_handler = NULL;
+		girq->parent_handler = शून्य;
 		girq->num_parents = 0;
-		girq->parents = NULL;
-		girq->default_type = IRQ_TYPE_NONE;
+		girq->parents = शून्य;
+		girq->शेष_type = IRQ_TYPE_NONE;
 		girq->handler = handle_simple_irq;
-		girq->threaded = true;
-	}
+		girq->thपढ़ोed = true;
+	पूर्ण
 
 	err = devm_gpiochip_add_data(&adnp->client->dev, chip, adnp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adnp_i2c_probe(struct i2c_client *client,
-				    const struct i2c_device_id *id)
-{
-	struct device_node *np = client->dev.of_node;
-	struct adnp *adnp;
+अटल पूर्णांक adnp_i2c_probe(काष्ठा i2c_client *client,
+				    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device_node *np = client->dev.of_node;
+	काष्ठा adnp *adnp;
 	u32 num_gpios;
-	int err;
+	पूर्णांक err;
 
-	err = of_property_read_u32(np, "nr-gpios", &num_gpios);
-	if (err < 0)
-		return err;
+	err = of_property_पढ़ो_u32(np, "nr-gpios", &num_gpios);
+	अगर (err < 0)
+		वापस err;
 
 	client->irq = irq_of_parse_and_map(np, 0);
-	if (!client->irq)
-		return -EPROBE_DEFER;
+	अगर (!client->irq)
+		वापस -EPROBE_DEFER;
 
-	adnp = devm_kzalloc(&client->dev, sizeof(*adnp), GFP_KERNEL);
-	if (!adnp)
-		return -ENOMEM;
+	adnp = devm_kzalloc(&client->dev, माप(*adnp), GFP_KERNEL);
+	अगर (!adnp)
+		वापस -ENOMEM;
 
 	mutex_init(&adnp->i2c_lock);
 	adnp->client = client;
 
 	err = adnp_gpio_setup(adnp, num_gpios,
-			of_property_read_bool(np, "interrupt-controller"));
-	if (err)
-		return err;
+			of_property_पढ़ो_bool(np, "interrupt-controller"));
+	अगर (err)
+		वापस err;
 
 	i2c_set_clientdata(client, adnp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id adnp_i2c_id[] = {
-	{ "gpio-adnp" },
-	{ },
-};
+अटल स्थिर काष्ठा i2c_device_id adnp_i2c_id[] = अणु
+	अणु "gpio-adnp" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, adnp_i2c_id);
 
-static const struct of_device_id adnp_of_match[] = {
-	{ .compatible = "ad,gpio-adnp", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id adnp_of_match[] = अणु
+	अणु .compatible = "ad,gpio-adnp", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, adnp_of_match);
 
-static struct i2c_driver adnp_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver adnp_i2c_driver = अणु
+	.driver = अणु
 		.name = "gpio-adnp",
 		.of_match_table = adnp_of_match,
-	},
+	पूर्ण,
 	.probe = adnp_i2c_probe,
 	.id_table = adnp_i2c_id,
-};
+पूर्ण;
 module_i2c_driver(adnp_i2c_driver);
 
 MODULE_DESCRIPTION("Avionic Design N-bit GPIO expander");

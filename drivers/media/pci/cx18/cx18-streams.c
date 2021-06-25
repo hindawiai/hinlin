@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  cx18 init/start/stop/exit stream functions
+ *  cx18 init/start/stop/निकास stream functions
  *
  *  Derived from ivtv-streams.c
  *
@@ -8,244 +9,244 @@
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
 
-#include "cx18-driver.h"
-#include "cx18-io.h"
-#include "cx18-fileops.h"
-#include "cx18-mailbox.h"
-#include "cx18-i2c.h"
-#include "cx18-queue.h"
-#include "cx18-ioctl.h"
-#include "cx18-streams.h"
-#include "cx18-cards.h"
-#include "cx18-scb.h"
-#include "cx18-dvb.h"
+#समावेश "cx18-driver.h"
+#समावेश "cx18-io.h"
+#समावेश "cx18-fileops.h"
+#समावेश "cx18-mailbox.h"
+#समावेश "cx18-i2c.h"
+#समावेश "cx18-queue.h"
+#समावेश "cx18-ioctl.h"
+#समावेश "cx18-streams.h"
+#समावेश "cx18-cards.h"
+#समावेश "cx18-scb.h"
+#समावेश "cx18-dvb.h"
 
-#define CX18_DSP0_INTERRUPT_MASK	0xd0004C
+#घोषणा CX18_DSP0_INTERRUPT_MASK	0xd0004C
 
-static const struct v4l2_file_operations cx18_v4l2_enc_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations cx18_v4l2_enc_fops = अणु
 	.owner = THIS_MODULE,
-	.read = cx18_v4l2_read,
-	.open = cx18_v4l2_open,
+	.पढ़ो = cx18_v4l2_पढ़ो,
+	.खोलो = cx18_v4l2_खोलो,
 	.unlocked_ioctl = video_ioctl2,
-	.release = cx18_v4l2_close,
+	.release = cx18_v4l2_बंद,
 	.poll = cx18_v4l2_enc_poll,
 	.mmap = cx18_v4l2_mmap,
-};
+पूर्ण;
 
-/* offset from 0 to register ts v4l2 minors on */
-#define CX18_V4L2_ENC_TS_OFFSET   16
-/* offset from 0 to register pcm v4l2 minors on */
-#define CX18_V4L2_ENC_PCM_OFFSET  24
-/* offset from 0 to register yuv v4l2 minors on */
-#define CX18_V4L2_ENC_YUV_OFFSET  32
+/* offset from 0 to रेजिस्टर ts v4l2 minors on */
+#घोषणा CX18_V4L2_ENC_TS_OFFSET   16
+/* offset from 0 to रेजिस्टर pcm v4l2 minors on */
+#घोषणा CX18_V4L2_ENC_PCM_OFFSET  24
+/* offset from 0 to रेजिस्टर yuv v4l2 minors on */
+#घोषणा CX18_V4L2_ENC_YUV_OFFSET  32
 
-static struct {
-	const char *name;
-	int vfl_type;
-	int num_offset;
-	int dma;
+अटल काष्ठा अणु
+	स्थिर अक्षर *name;
+	पूर्णांक vfl_type;
+	पूर्णांक num_offset;
+	पूर्णांक dma;
 	u32 caps;
-} cx18_stream_info[] = {
-	{	/* CX18_ENC_STREAM_TYPE_MPG */
+पूर्ण cx18_stream_info[] = अणु
+	अणु	/* CX18_ENC_STREAM_TYPE_MPG */
 		"encoder MPEG",
 		VFL_TYPE_VIDEO, 0,
 		PCI_DMA_FROMDEVICE,
 		V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_READWRITE |
 		V4L2_CAP_AUDIO | V4L2_CAP_TUNER
-	},
-	{	/* CX18_ENC_STREAM_TYPE_TS */
+	पूर्ण,
+	अणु	/* CX18_ENC_STREAM_TYPE_TS */
 		"TS",
 		VFL_TYPE_VIDEO, -1,
 		PCI_DMA_FROMDEVICE,
-	},
-	{	/* CX18_ENC_STREAM_TYPE_YUV */
+	पूर्ण,
+	अणु	/* CX18_ENC_STREAM_TYPE_YUV */
 		"encoder YUV",
 		VFL_TYPE_VIDEO, CX18_V4L2_ENC_YUV_OFFSET,
 		PCI_DMA_FROMDEVICE,
 		V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_READWRITE |
 		V4L2_CAP_STREAMING | V4L2_CAP_AUDIO | V4L2_CAP_TUNER
-	},
-	{	/* CX18_ENC_STREAM_TYPE_VBI */
+	पूर्ण,
+	अणु	/* CX18_ENC_STREAM_TYPE_VBI */
 		"encoder VBI",
 		VFL_TYPE_VBI, 0,
 		PCI_DMA_FROMDEVICE,
 		V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
 		V4L2_CAP_READWRITE | V4L2_CAP_TUNER
-	},
-	{	/* CX18_ENC_STREAM_TYPE_PCM */
+	पूर्ण,
+	अणु	/* CX18_ENC_STREAM_TYPE_PCM */
 		"encoder PCM audio",
 		VFL_TYPE_VIDEO, CX18_V4L2_ENC_PCM_OFFSET,
 		PCI_DMA_FROMDEVICE,
 		V4L2_CAP_TUNER | V4L2_CAP_AUDIO | V4L2_CAP_READWRITE,
-	},
-	{	/* CX18_ENC_STREAM_TYPE_IDX */
+	पूर्ण,
+	अणु	/* CX18_ENC_STREAM_TYPE_IDX */
 		"encoder IDX",
 		VFL_TYPE_VIDEO, -1,
 		PCI_DMA_FROMDEVICE,
-	},
-	{	/* CX18_ENC_STREAM_TYPE_RAD */
+	पूर्ण,
+	अणु	/* CX18_ENC_STREAM_TYPE_RAD */
 		"encoder radio",
 		VFL_TYPE_RADIO, 0,
 		PCI_DMA_NONE,
 		V4L2_CAP_RADIO | V4L2_CAP_TUNER
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
-static void cx18_dma_free(struct videobuf_queue *q,
-	struct cx18_stream *s, struct cx18_videobuf_buffer *buf)
-{
-	videobuf_waiton(q, &buf->vb, 0, 0);
-	videobuf_vmalloc_free(&buf->vb);
+अटल व्योम cx18_dma_मुक्त(काष्ठा videobuf_queue *q,
+	काष्ठा cx18_stream *s, काष्ठा cx18_videobuf_buffer *buf)
+अणु
+	videobuf_रुकोon(q, &buf->vb, 0, 0);
+	videobuf_vदो_स्मृति_मुक्त(&buf->vb);
 	buf->vb.state = VIDEOBUF_NEEDS_INIT;
-}
+पूर्ण
 
-static int cx18_prepare_buffer(struct videobuf_queue *q,
-	struct cx18_stream *s,
-	struct cx18_videobuf_buffer *buf,
-	u32 pixelformat,
-	unsigned int width, unsigned int height,
-	enum v4l2_field field)
-{
-	struct cx18 *cx = s->cx;
-	int rc = 0;
+अटल पूर्णांक cx18_prepare_buffer(काष्ठा videobuf_queue *q,
+	काष्ठा cx18_stream *s,
+	काष्ठा cx18_videobuf_buffer *buf,
+	u32 pixelक्रमmat,
+	अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height,
+	क्रमागत v4l2_field field)
+अणु
+	काष्ठा cx18 *cx = s->cx;
+	पूर्णांक rc = 0;
 
 	/* check settings */
 	buf->bytes_used = 0;
 
-	if ((width  < 48) || (height < 32))
-		return -EINVAL;
+	अगर ((width  < 48) || (height < 32))
+		वापस -EINVAL;
 
 	buf->vb.size = (width * height * 2);
-	if ((buf->vb.baddr != 0) && (buf->vb.bsize < buf->vb.size))
-		return -EINVAL;
+	अगर ((buf->vb.baddr != 0) && (buf->vb.bsize < buf->vb.size))
+		वापस -EINVAL;
 
-	/* alloc + fill struct (if changed) */
-	if (buf->vb.width != width || buf->vb.height != height ||
-	    buf->vb.field != field || s->pixelformat != pixelformat ||
-	    buf->tvnorm != cx->std) {
+	/* alloc + fill काष्ठा (अगर changed) */
+	अगर (buf->vb.width != width || buf->vb.height != height ||
+	    buf->vb.field != field || s->pixelक्रमmat != pixelक्रमmat ||
+	    buf->tvnorm != cx->std) अणु
 
 		buf->vb.width  = width;
 		buf->vb.height = height;
 		buf->vb.field  = field;
 		buf->tvnorm    = cx->std;
-		s->pixelformat = pixelformat;
+		s->pixelक्रमmat = pixelक्रमmat;
 
 		/* HM12 YUV size is (Y=(h*720) + UV=(h*(720/2)))
 		   UYUV YUV size is (Y=(h*720) + UV=(h*(720))) */
-		if (s->pixelformat == V4L2_PIX_FMT_HM12)
+		अगर (s->pixelक्रमmat == V4L2_PIX_FMT_HM12)
 			s->vb_bytes_per_frame = height * 720 * 3 / 2;
-		else
+		अन्यथा
 			s->vb_bytes_per_frame = height * 720 * 2;
-		cx18_dma_free(q, s, buf);
-	}
+		cx18_dma_मुक्त(q, s, buf);
+	पूर्ण
 
-	if ((buf->vb.baddr != 0) && (buf->vb.bsize < buf->vb.size))
-		return -EINVAL;
+	अगर ((buf->vb.baddr != 0) && (buf->vb.bsize < buf->vb.size))
+		वापस -EINVAL;
 
-	if (buf->vb.field == 0)
+	अगर (buf->vb.field == 0)
 		buf->vb.field = V4L2_FIELD_INTERLACED;
 
-	if (VIDEOBUF_NEEDS_INIT == buf->vb.state) {
+	अगर (VIDEOBUF_NEEDS_INIT == buf->vb.state) अणु
 		buf->vb.width  = width;
 		buf->vb.height = height;
 		buf->vb.field  = field;
 		buf->tvnorm    = cx->std;
-		s->pixelformat = pixelformat;
+		s->pixelक्रमmat = pixelक्रमmat;
 
 		/* HM12 YUV size is (Y=(h*720) + UV=(h*(720/2)))
 		   UYUV YUV size is (Y=(h*720) + UV=(h*(720))) */
-		if (s->pixelformat == V4L2_PIX_FMT_HM12)
+		अगर (s->pixelक्रमmat == V4L2_PIX_FMT_HM12)
 			s->vb_bytes_per_frame = height * 720 * 3 / 2;
-		else
+		अन्यथा
 			s->vb_bytes_per_frame = height * 720 * 2;
-		rc = videobuf_iolock(q, &buf->vb, NULL);
-		if (rc != 0)
-			goto fail;
-	}
+		rc = videobuf_iolock(q, &buf->vb, शून्य);
+		अगर (rc != 0)
+			जाओ fail;
+	पूर्ण
 	buf->vb.state = VIDEOBUF_PREPARED;
-	return 0;
+	वापस 0;
 
 fail:
-	cx18_dma_free(q, s, buf);
-	return rc;
+	cx18_dma_मुक्त(q, s, buf);
+	वापस rc;
 
-}
+पूर्ण
 
-/* VB_MIN_BUFSIZE is lcm(1440 * 480, 1440 * 576)
+/* VB_MIN_बफ_मानE is lcm(1440 * 480, 1440 * 576)
    1440 is a single line of 4:2:2 YUV at 720 luma samples wide
 */
-#define VB_MIN_BUFFERS 32
-#define VB_MIN_BUFSIZE 4147200
+#घोषणा VB_MIN_BUFFERS 32
+#घोषणा VB_MIN_बफ_मानE 4147200
 
-static int buffer_setup(struct videobuf_queue *q,
-	unsigned int *count, unsigned int *size)
-{
-	struct cx18_stream *s = q->priv_data;
-	struct cx18 *cx = s->cx;
+अटल पूर्णांक buffer_setup(काष्ठा videobuf_queue *q,
+	अचिन्हित पूर्णांक *count, अचिन्हित पूर्णांक *size)
+अणु
+	काष्ठा cx18_stream *s = q->priv_data;
+	काष्ठा cx18 *cx = s->cx;
 
 	*size = 2 * cx->cxhdl.width * cx->cxhdl.height;
-	if (*count == 0)
+	अगर (*count == 0)
 		*count = VB_MIN_BUFFERS;
 
-	while (*size * *count > VB_MIN_BUFFERS * VB_MIN_BUFSIZE)
+	जबतक (*size * *count > VB_MIN_BUFFERS * VB_MIN_बफ_मानE)
 		(*count)--;
 
 	q->field = V4L2_FIELD_INTERLACED;
 	q->last = V4L2_FIELD_INTERLACED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int buffer_prepare(struct videobuf_queue *q,
-	struct videobuf_buffer *vb,
-	enum v4l2_field field)
-{
-	struct cx18_videobuf_buffer *buf =
-		container_of(vb, struct cx18_videobuf_buffer, vb);
-	struct cx18_stream *s = q->priv_data;
-	struct cx18 *cx = s->cx;
+अटल पूर्णांक buffer_prepare(काष्ठा videobuf_queue *q,
+	काष्ठा videobuf_buffer *vb,
+	क्रमागत v4l2_field field)
+अणु
+	काष्ठा cx18_videobuf_buffer *buf =
+		container_of(vb, काष्ठा cx18_videobuf_buffer, vb);
+	काष्ठा cx18_stream *s = q->priv_data;
+	काष्ठा cx18 *cx = s->cx;
 
-	return cx18_prepare_buffer(q, s, buf, s->pixelformat,
+	वापस cx18_prepare_buffer(q, s, buf, s->pixelक्रमmat,
 		cx->cxhdl.width, cx->cxhdl.height, field);
-}
+पूर्ण
 
-static void buffer_release(struct videobuf_queue *q,
-	struct videobuf_buffer *vb)
-{
-	struct cx18_videobuf_buffer *buf =
-		container_of(vb, struct cx18_videobuf_buffer, vb);
-	struct cx18_stream *s = q->priv_data;
+अटल व्योम buffer_release(काष्ठा videobuf_queue *q,
+	काष्ठा videobuf_buffer *vb)
+अणु
+	काष्ठा cx18_videobuf_buffer *buf =
+		container_of(vb, काष्ठा cx18_videobuf_buffer, vb);
+	काष्ठा cx18_stream *s = q->priv_data;
 
-	cx18_dma_free(q, s, buf);
-}
+	cx18_dma_मुक्त(q, s, buf);
+पूर्ण
 
-static void buffer_queue(struct videobuf_queue *q, struct videobuf_buffer *vb)
-{
-	struct cx18_videobuf_buffer *buf =
-		container_of(vb, struct cx18_videobuf_buffer, vb);
-	struct cx18_stream *s = q->priv_data;
+अटल व्योम buffer_queue(काष्ठा videobuf_queue *q, काष्ठा videobuf_buffer *vb)
+अणु
+	काष्ठा cx18_videobuf_buffer *buf =
+		container_of(vb, काष्ठा cx18_videobuf_buffer, vb);
+	काष्ठा cx18_stream *s = q->priv_data;
 
 	buf->vb.state = VIDEOBUF_QUEUED;
 
 	list_add_tail(&buf->vb.queue, &s->vb_capture);
-}
+पूर्ण
 
-static const struct videobuf_queue_ops cx18_videobuf_qops = {
+अटल स्थिर काष्ठा videobuf_queue_ops cx18_videobuf_qops = अणु
 	.buf_setup    = buffer_setup,
 	.buf_prepare  = buffer_prepare,
 	.buf_queue    = buffer_queue,
 	.buf_release  = buffer_release,
-};
+पूर्ण;
 
-static void cx18_stream_init(struct cx18 *cx, int type)
-{
-	struct cx18_stream *s = &cx->streams[type];
+अटल व्योम cx18_stream_init(काष्ठा cx18 *cx, पूर्णांक type)
+अणु
+	काष्ठा cx18_stream *s = &cx->streams[type];
 
-	memset(s, 0, sizeof(*s));
+	स_रखो(s, 0, माप(*s));
 
 	/* initialize cx18_stream fields */
-	s->dvb = NULL;
+	s->dvb = शून्य;
 	s->cx = cx;
 	s->type = type;
 	s->name = cx18_stream_info[type].name;
@@ -259,10 +260,10 @@ static void cx18_stream_init(struct cx18 *cx, int type)
 	s->bufs_per_mdl = 1;
 	s->mdl_size = s->buf_size * s->bufs_per_mdl;
 
-	init_waitqueue_head(&s->waitq);
+	init_रुकोqueue_head(&s->रुकोq);
 	s->id = -1;
-	spin_lock_init(&s->q_free.lock);
-	cx18_queue_init(&s->q_free);
+	spin_lock_init(&s->q_मुक्त.lock);
+	cx18_queue_init(&s->q_मुक्त);
 	spin_lock_init(&s->q_busy.lock);
 	cx18_queue_init(&s->q_busy);
 	spin_lock_init(&s->q_full.lock);
@@ -273,317 +274,317 @@ static void cx18_stream_init(struct cx18 *cx, int type)
 	INIT_WORK(&s->out_work_order, cx18_out_work_handler);
 
 	INIT_LIST_HEAD(&s->vb_capture);
-	timer_setup(&s->vb_timeout, cx18_vb_timeout, 0);
+	समयr_setup(&s->vb_समयout, cx18_vb_समयout, 0);
 	spin_lock_init(&s->vb_lock);
-	if (type == CX18_ENC_STREAM_TYPE_YUV) {
+	अगर (type == CX18_ENC_STREAM_TYPE_YUV) अणु
 		spin_lock_init(&s->vbuf_q_lock);
 
 		s->vb_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		videobuf_queue_vmalloc_init(&s->vbuf_q, &cx18_videobuf_qops,
+		videobuf_queue_vदो_स्मृति_init(&s->vbuf_q, &cx18_videobuf_qops,
 			&cx->pci_dev->dev, &s->vbuf_q_lock,
 			V4L2_BUF_TYPE_VIDEO_CAPTURE,
 			V4L2_FIELD_INTERLACED,
-			sizeof(struct cx18_videobuf_buffer),
+			माप(काष्ठा cx18_videobuf_buffer),
 			s, &cx->serialize_lock);
 
-		/* Assume the previous pixel default */
-		s->pixelformat = V4L2_PIX_FMT_HM12;
+		/* Assume the previous pixel शेष */
+		s->pixelक्रमmat = V4L2_PIX_FMT_HM12;
 		s->vb_bytes_per_frame = cx->cxhdl.height * 720 * 3 / 2;
 		s->vb_bytes_per_line = 720;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cx18_prep_dev(struct cx18 *cx, int type)
-{
-	struct cx18_stream *s = &cx->streams[type];
+अटल पूर्णांक cx18_prep_dev(काष्ठा cx18 *cx, पूर्णांक type)
+अणु
+	काष्ठा cx18_stream *s = &cx->streams[type];
 	u32 cap = cx->v4l2_cap;
-	int num_offset = cx18_stream_info[type].num_offset;
-	int num = cx->instance + cx18_first_minor + num_offset;
+	पूर्णांक num_offset = cx18_stream_info[type].num_offset;
+	पूर्णांक num = cx->instance + cx18_first_minor + num_offset;
 
 	/*
 	 * These five fields are always initialized.
-	 * For analog capture related streams, if video_dev.v4l2_dev == NULL then the
+	 * For analog capture related streams, अगर video_dev.v4l2_dev == शून्य then the
 	 * stream is not in use.
-	 * For the TS stream, if dvb == NULL then the stream is not in use.
-	 * In those cases no other fields but these four can be used.
+	 * For the TS stream, अगर dvb == शून्य then the stream is not in use.
+	 * In those हालs no other fields but these four can be used.
 	 */
-	s->video_dev.v4l2_dev = NULL;
-	s->dvb = NULL;
+	s->video_dev.v4l2_dev = शून्य;
+	s->dvb = शून्य;
 	s->cx = cx;
 	s->type = type;
 	s->name = cx18_stream_info[type].name;
 
 	/* Check whether the radio is supported */
-	if (type == CX18_ENC_STREAM_TYPE_RAD && !(cap & V4L2_CAP_RADIO))
-		return 0;
+	अगर (type == CX18_ENC_STREAM_TYPE_RAD && !(cap & V4L2_CAP_RADIO))
+		वापस 0;
 
 	/* Check whether VBI is supported */
-	if (type == CX18_ENC_STREAM_TYPE_VBI &&
+	अगर (type == CX18_ENC_STREAM_TYPE_VBI &&
 	    !(cap & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)))
-		return 0;
+		वापस 0;
 
-	/* User explicitly selected 0 buffers for these streams, so don't
+	/* User explicitly selected 0 buffers क्रम these streams, so करोn't
 	   create them. */
-	if (cx18_stream_info[type].dma != PCI_DMA_NONE &&
-	    cx->stream_buffers[type] == 0) {
+	अगर (cx18_stream_info[type].dma != PCI_DMA_NONE &&
+	    cx->stream_buffers[type] == 0) अणु
 		CX18_INFO("Disabled %s device\n", cx18_stream_info[type].name);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	cx18_stream_init(cx, type);
 
-	/* Allocate the cx18_dvb struct only for the TS on cards with DTV */
-	if (type == CX18_ENC_STREAM_TYPE_TS) {
-		if (cx->card->hw_all & CX18_HW_DVB) {
-			s->dvb = kzalloc(sizeof(struct cx18_dvb), GFP_KERNEL);
-			if (s->dvb == NULL) {
+	/* Allocate the cx18_dvb काष्ठा only क्रम the TS on cards with DTV */
+	अगर (type == CX18_ENC_STREAM_TYPE_TS) अणु
+		अगर (cx->card->hw_all & CX18_HW_DVB) अणु
+			s->dvb = kzalloc(माप(काष्ठा cx18_dvb), GFP_KERNEL);
+			अगर (s->dvb == शून्य) अणु
 				CX18_ERR("Couldn't allocate cx18_dvb structure for %s\n",
 					 s->name);
-				return -ENOMEM;
-			}
-		} else {
-			/* Don't need buffers for the TS, if there is no DVB */
+				वापस -ENOMEM;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* Don't need buffers क्रम the TS, अगर there is no DVB */
 			s->buffers = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (num_offset == -1)
-		return 0;
+	अगर (num_offset == -1)
+		वापस 0;
 
-	/* initialize the v4l2 video device structure */
-	snprintf(s->video_dev.name, sizeof(s->video_dev.name), "%s %s",
+	/* initialize the v4l2 video device काष्ठाure */
+	snम_लिखो(s->video_dev.name, माप(s->video_dev.name), "%s %s",
 		 cx->v4l2_dev.name, s->name);
 
 	s->video_dev.num = num;
 	s->video_dev.v4l2_dev = &cx->v4l2_dev;
 	s->video_dev.fops = &cx18_v4l2_enc_fops;
 	s->video_dev.release = video_device_release_empty;
-	if (cx->card->video_inputs->video_type == CX18_CARD_INPUT_VID_TUNER)
+	अगर (cx->card->video_inमाला_दो->video_type == CX18_CARD_INPUT_VID_TUNER)
 		s->video_dev.tvnorms = cx->tuner_std;
-	else
+	अन्यथा
 		s->video_dev.tvnorms = V4L2_STD_ALL;
 	s->video_dev.lock = &cx->serialize_lock;
 	cx18_set_funcs(&s->video_dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Initialize v4l2 variables and register v4l2 devices */
-int cx18_streams_setup(struct cx18 *cx)
-{
-	int type, ret;
+/* Initialize v4l2 variables and रेजिस्टर v4l2 devices */
+पूर्णांक cx18_streams_setup(काष्ठा cx18 *cx)
+अणु
+	पूर्णांक type, ret;
 
 	/* Setup V4L2 Devices */
-	for (type = 0; type < CX18_MAX_STREAMS; type++) {
+	क्रम (type = 0; type < CX18_MAX_STREAMS; type++) अणु
 		/* Prepare device */
 		ret = cx18_prep_dev(cx, type);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
 		/* Allocate Stream */
 		ret = cx18_stream_alloc(&cx->streams[type]);
-		if (ret < 0)
-			break;
-	}
-	if (type == CX18_MAX_STREAMS)
-		return 0;
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
+	अगर (type == CX18_MAX_STREAMS)
+		वापस 0;
 
 	/* One or more streams could not be initialized. Clean 'em all up. */
 	cx18_streams_cleanup(cx, 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cx18_reg_dev(struct cx18 *cx, int type)
-{
-	struct cx18_stream *s = &cx->streams[type];
-	int vfl_type = cx18_stream_info[type].vfl_type;
-	const char *name;
-	int num, ret;
+अटल पूर्णांक cx18_reg_dev(काष्ठा cx18 *cx, पूर्णांक type)
+अणु
+	काष्ठा cx18_stream *s = &cx->streams[type];
+	पूर्णांक vfl_type = cx18_stream_info[type].vfl_type;
+	स्थिर अक्षर *name;
+	पूर्णांक num, ret;
 
-	if (type == CX18_ENC_STREAM_TYPE_TS && s->dvb != NULL) {
-		ret = cx18_dvb_register(s);
-		if (ret < 0) {
+	अगर (type == CX18_ENC_STREAM_TYPE_TS && s->dvb != शून्य) अणु
+		ret = cx18_dvb_रेजिस्टर(s);
+		अगर (ret < 0) अणु
 			CX18_ERR("DVB failed to register\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (s->video_dev.v4l2_dev == NULL)
-		return 0;
+	अगर (s->video_dev.v4l2_dev == शून्य)
+		वापस 0;
 
 	num = s->video_dev.num;
 	s->video_dev.device_caps = s->v4l2_dev_caps;	/* device capabilities */
 	/* card number + user defined offset + device offset */
-	if (type != CX18_ENC_STREAM_TYPE_MPG) {
-		struct cx18_stream *s_mpg = &cx->streams[CX18_ENC_STREAM_TYPE_MPG];
+	अगर (type != CX18_ENC_STREAM_TYPE_MPG) अणु
+		काष्ठा cx18_stream *s_mpg = &cx->streams[CX18_ENC_STREAM_TYPE_MPG];
 
-		if (s_mpg->video_dev.v4l2_dev)
+		अगर (s_mpg->video_dev.v4l2_dev)
 			num = s_mpg->video_dev.num
 			    + cx18_stream_info[type].num_offset;
-	}
+	पूर्ण
 	video_set_drvdata(&s->video_dev, s);
 
-	/* Register device. First try the desired minor, then any free one. */
-	ret = video_register_device_no_warn(&s->video_dev, vfl_type, num);
-	if (ret < 0) {
+	/* Register device. First try the desired minor, then any मुक्त one. */
+	ret = video_रेजिस्टर_device_no_warn(&s->video_dev, vfl_type, num);
+	अगर (ret < 0) अणु
 		CX18_ERR("Couldn't register v4l2 device for %s (device node number %d)\n",
 			s->name, num);
-		s->video_dev.v4l2_dev = NULL;
-		return ret;
-	}
+		s->video_dev.v4l2_dev = शून्य;
+		वापस ret;
+	पूर्ण
 
 	name = video_device_node_name(&s->video_dev);
 
-	switch (vfl_type) {
-	case VFL_TYPE_VIDEO:
+	चयन (vfl_type) अणु
+	हाल VFL_TYPE_VIDEO:
 		CX18_INFO("Registered device %s for %s (%d x %d.%02d kB)\n",
 			  name, s->name, cx->stream_buffers[type],
 			  cx->stream_buf_size[type] / 1024,
 			  (cx->stream_buf_size[type] * 100 / 1024) % 100);
-		break;
+		अवरोध;
 
-	case VFL_TYPE_RADIO:
+	हाल VFL_TYPE_RADIO:
 		CX18_INFO("Registered device %s for %s\n", name, s->name);
-		break;
+		अवरोध;
 
-	case VFL_TYPE_VBI:
-		if (cx->stream_buffers[type])
+	हाल VFL_TYPE_VBI:
+		अगर (cx->stream_buffers[type])
 			CX18_INFO("Registered device %s for %s (%d x %d bytes)\n",
 				  name, s->name, cx->stream_buffers[type],
 				  cx->stream_buf_size[type]);
-		else
+		अन्यथा
 			CX18_INFO("Registered device %s for %s\n",
 				name, s->name);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Register v4l2 devices */
-int cx18_streams_register(struct cx18 *cx)
-{
-	int type;
-	int err;
-	int ret = 0;
+पूर्णांक cx18_streams_रेजिस्टर(काष्ठा cx18 *cx)
+अणु
+	पूर्णांक type;
+	पूर्णांक err;
+	पूर्णांक ret = 0;
 
 	/* Register V4L2 devices */
-	for (type = 0; type < CX18_MAX_STREAMS; type++) {
+	क्रम (type = 0; type < CX18_MAX_STREAMS; type++) अणु
 		err = cx18_reg_dev(cx, type);
-		if (err && ret == 0)
+		अगर (err && ret == 0)
 			ret = err;
-	}
+	पूर्ण
 
-	if (ret == 0)
-		return 0;
+	अगर (ret == 0)
+		वापस 0;
 
 	/* One or more streams could not be initialized. Clean 'em all up. */
 	cx18_streams_cleanup(cx, 1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Unregister v4l2 devices */
-void cx18_streams_cleanup(struct cx18 *cx, int unregister)
-{
-	struct video_device *vdev;
-	int type;
+/* Unरेजिस्टर v4l2 devices */
+व्योम cx18_streams_cleanup(काष्ठा cx18 *cx, पूर्णांक unरेजिस्टर)
+अणु
+	काष्ठा video_device *vdev;
+	पूर्णांक type;
 
-	/* Teardown all streams */
-	for (type = 0; type < CX18_MAX_STREAMS; type++) {
+	/* Tearकरोwn all streams */
+	क्रम (type = 0; type < CX18_MAX_STREAMS; type++) अणु
 
-		/* The TS has a cx18_dvb structure, not a video_device */
-		if (type == CX18_ENC_STREAM_TYPE_TS) {
-			if (cx->streams[type].dvb != NULL) {
-				if (unregister)
-					cx18_dvb_unregister(&cx->streams[type]);
-				kfree(cx->streams[type].dvb);
-				cx->streams[type].dvb = NULL;
-				cx18_stream_free(&cx->streams[type]);
-			}
-			continue;
-		}
+		/* The TS has a cx18_dvb काष्ठाure, not a video_device */
+		अगर (type == CX18_ENC_STREAM_TYPE_TS) अणु
+			अगर (cx->streams[type].dvb != शून्य) अणु
+				अगर (unरेजिस्टर)
+					cx18_dvb_unरेजिस्टर(&cx->streams[type]);
+				kमुक्त(cx->streams[type].dvb);
+				cx->streams[type].dvb = शून्य;
+				cx18_stream_मुक्त(&cx->streams[type]);
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		/* No struct video_device, but can have buffers allocated */
-		if (type == CX18_ENC_STREAM_TYPE_IDX) {
+		/* No काष्ठा video_device, but can have buffers allocated */
+		अगर (type == CX18_ENC_STREAM_TYPE_IDX) अणु
 			/* If the module params didn't inhibit IDX ... */
-			if (cx->stream_buffers[type] != 0) {
+			अगर (cx->stream_buffers[type] != 0) अणु
 				cx->stream_buffers[type] = 0;
 				/*
-				 * Before calling cx18_stream_free(),
-				 * check if the IDX stream was actually set up.
+				 * Beक्रमe calling cx18_stream_मुक्त(),
+				 * check अगर the IDX stream was actually set up.
 				 * Needed, since the cx18_probe() error path
-				 * exits through here as well as normal clean up
+				 * निकासs through here as well as normal clean up
 				 */
-				if (cx->streams[type].buffers != 0)
-					cx18_stream_free(&cx->streams[type]);
-			}
-			continue;
-		}
+				अगर (cx->streams[type].buffers != 0)
+					cx18_stream_मुक्त(&cx->streams[type]);
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		/* If struct video_device exists, can have buffers allocated */
+		/* If काष्ठा video_device exists, can have buffers allocated */
 		vdev = &cx->streams[type].video_dev;
 
-		if (vdev->v4l2_dev == NULL)
-			continue;
+		अगर (vdev->v4l2_dev == शून्य)
+			जारी;
 
-		if (type == CX18_ENC_STREAM_TYPE_YUV)
-			videobuf_mmap_free(&cx->streams[type].vbuf_q);
+		अगर (type == CX18_ENC_STREAM_TYPE_YUV)
+			videobuf_mmap_मुक्त(&cx->streams[type].vbuf_q);
 
-		cx18_stream_free(&cx->streams[type]);
+		cx18_stream_मुक्त(&cx->streams[type]);
 
-		video_unregister_device(vdev);
-	}
-}
+		video_unरेजिस्टर_device(vdev);
+	पूर्ण
+पूर्ण
 
-static void cx18_vbi_setup(struct cx18_stream *s)
-{
-	struct cx18 *cx = s->cx;
-	int raw = cx18_raw_vbi(cx);
+अटल व्योम cx18_vbi_setup(काष्ठा cx18_stream *s)
+अणु
+	काष्ठा cx18 *cx = s->cx;
+	पूर्णांक raw = cx18_raw_vbi(cx);
 	u32 data[CX2341X_MBOX_MAX_DATA];
-	int lines;
+	पूर्णांक lines;
 
-	if (cx->is_60hz) {
+	अगर (cx->is_60hz) अणु
 		cx->vbi.count = 12;
 		cx->vbi.start[0] = 10;
 		cx->vbi.start[1] = 273;
-	} else {        /* PAL/SECAM */
+	पूर्ण अन्यथा अणु        /* PAL/SECAM */
 		cx->vbi.count = 18;
 		cx->vbi.start[0] = 6;
 		cx->vbi.start[1] = 318;
-	}
+	पूर्ण
 
-	/* setup VBI registers */
-	if (raw)
+	/* setup VBI रेजिस्टरs */
+	अगर (raw)
 		v4l2_subdev_call(cx->sd_av, vbi, s_raw_fmt, &cx->vbi.in.fmt.vbi);
-	else
+	अन्यथा
 		v4l2_subdev_call(cx->sd_av, vbi, s_sliced_fmt, &cx->vbi.in.fmt.sliced);
 
 	/*
 	 * Send the CX18_CPU_SET_RAW_VBI_PARAM API command to setup Encoder Raw
 	 * VBI when the first analog capture channel starts, as once it starts
 	 * (e.g. MPEG), we can't effect any change in the Encoder Raw VBI setup
-	 * (i.e. for the VBI capture channels).  We also send it for each
+	 * (i.e. क्रम the VBI capture channels).  We also send it क्रम each
 	 * analog capture channel anyway just to make sure we get the proper
 	 * behavior
 	 */
-	if (raw) {
+	अगर (raw) अणु
 		lines = cx->vbi.count * 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * For 525/60 systems, according to the VIP 2 & BT.656 std:
+		 * For 525/60 प्रणालीs, according to the VIP 2 & BT.656 std:
 		 * The EAV RP code's Field bit toggles on line 4, a few lines
-		 * after the Vertcal Blank bit has already toggled.
+		 * after the Vertcal Blank bit has alपढ़ोy toggled.
 		 * Tell the encoder to capture 21-4+1=18 lines per field,
 		 * since we want lines 10 through 21.
 		 *
-		 * For 625/50 systems, according to the VIP 2 & BT.656 std:
+		 * For 625/50 प्रणालीs, according to the VIP 2 & BT.656 std:
 		 * The EAV RP code's Field bit toggles on line 1, a few lines
-		 * after the Vertcal Blank bit has already toggled.
+		 * after the Vertcal Blank bit has alपढ़ोy toggled.
 		 * (We've actually set the digitizer so that the Field bit
 		 * toggles on line 2.) Tell the encoder to capture 23-2+1=22
 		 * lines per field, since we want lines 6 through 23.
 		 */
 		lines = cx->is_60hz ? (21 - 4 + 1) * 2 : (23 - 2 + 1) * 2;
-	}
+	पूर्ण
 
 	data[0] = s->handle;
 	/* Lines per field */
@@ -592,161 +593,161 @@ static void cx18_vbi_setup(struct cx18_stream *s)
 	data[2] = (raw ? VBI_ACTIVE_SAMPLES
 		       : (cx->is_60hz ? VBI_HBLANK_SAMPLES_60HZ
 				      : VBI_HBLANK_SAMPLES_50HZ));
-	/* Every X number of frames a VBI interrupt arrives
+	/* Every X number of frames a VBI पूर्णांकerrupt arrives
 	   (frames as in 25 or 30 fps) */
 	data[3] = 1;
 	/*
-	 * Set the SAV/EAV RP codes to look for as start/stop points
+	 * Set the SAV/EAV RP codes to look क्रम as start/stop poपूर्णांकs
 	 * when in VIP-1.1 mode
 	 */
-	if (raw) {
+	अगर (raw) अणु
 		/*
-		 * Start codes for beginning of "active" line in vertical blank
+		 * Start codes क्रम beginning of "active" line in vertical blank
 		 * 0x20 (               VerticalBlank                )
 		 * 0x60 (     EvenField VerticalBlank                )
 		 */
 		data[4] = 0x20602060;
 		/*
-		 * End codes for end of "active" raw lines and regular lines
+		 * End codes क्रम end of "active" raw lines and regular lines
 		 * 0x30 (               VerticalBlank HorizontalBlank)
 		 * 0x70 (     EvenField VerticalBlank HorizontalBlank)
 		 * 0x90 (Task                         HorizontalBlank)
 		 * 0xd0 (Task EvenField               HorizontalBlank)
 		 */
 		data[5] = 0x307090d0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * End codes for active video, we want data in the hblank region
+		 * End codes क्रम active video, we want data in the hblank region
 		 * 0xb0 (Task         0 VerticalBlank HorizontalBlank)
 		 * 0xf0 (Task EvenField VerticalBlank HorizontalBlank)
 		 *
 		 * Since the V bit is only allowed to toggle in the EAV RP code,
-		 * just before the first active region line, these two
+		 * just beक्रमe the first active region line, these two
 		 * are problematic:
 		 * 0x90 (Task                         HorizontalBlank)
 		 * 0xd0 (Task EvenField               HorizontalBlank)
 		 *
-		 * We have set the digitzer such that we don't have to worry
+		 * We have set the digitzer such that we करोn't have to worry
 		 * about these problem codes.
 		 */
 		data[4] = 0xB0F0B0F0;
 		/*
-		 * Start codes for beginning of active line in vertical blank
+		 * Start codes क्रम beginning of active line in vertical blank
 		 * 0xa0 (Task           VerticalBlank                )
 		 * 0xe0 (Task EvenField VerticalBlank                )
 		 */
 		data[5] = 0xA0E0A0E0;
-	}
+	पूर्ण
 
 	CX18_DEBUG_INFO("Setup VBI h: %d lines %x bpl %d fr %d %x %x\n",
 			data[0], data[1], data[2], data[3], data[4], data[5]);
 
 	cx18_api(cx, CX18_CPU_SET_RAW_VBI_PARAM, 6, data);
-}
+पूर्ण
 
-void cx18_stream_rotate_idx_mdls(struct cx18 *cx)
-{
-	struct cx18_stream *s = &cx->streams[CX18_ENC_STREAM_TYPE_IDX];
-	struct cx18_mdl *mdl;
+व्योम cx18_stream_rotate_idx_mdls(काष्ठा cx18 *cx)
+अणु
+	काष्ठा cx18_stream *s = &cx->streams[CX18_ENC_STREAM_TYPE_IDX];
+	काष्ठा cx18_mdl *mdl;
 
-	if (!cx18_stream_enabled(s))
-		return;
+	अगर (!cx18_stream_enabled(s))
+		वापस;
 
-	/* Return if the firmware is not running low on MDLs */
-	if ((atomic_read(&s->q_free.depth) + atomic_read(&s->q_busy.depth)) >=
+	/* Return अगर the firmware is not running low on MDLs */
+	अगर ((atomic_पढ़ो(&s->q_मुक्त.depth) + atomic_पढ़ो(&s->q_busy.depth)) >=
 					    CX18_ENC_STREAM_TYPE_IDX_FW_MDL_MIN)
-		return;
+		वापस;
 
-	/* Return if there are no MDLs to rotate back to the firmware */
-	if (atomic_read(&s->q_full.depth) < 2)
-		return;
+	/* Return अगर there are no MDLs to rotate back to the firmware */
+	अगर (atomic_पढ़ो(&s->q_full.depth) < 2)
+		वापस;
 
 	/*
 	 * Take the oldest IDX MDL still holding data, and discard its index
 	 * entries by scheduling the MDL to go back to the firmware
 	 */
 	mdl = cx18_dequeue(s, &s->q_full);
-	if (mdl != NULL)
-		cx18_enqueue(s, mdl, &s->q_free);
-}
+	अगर (mdl != शून्य)
+		cx18_enqueue(s, mdl, &s->q_मुक्त);
+पूर्ण
 
-static
-struct cx18_queue *_cx18_stream_put_mdl_fw(struct cx18_stream *s,
-					   struct cx18_mdl *mdl)
-{
-	struct cx18 *cx = s->cx;
-	struct cx18_queue *q;
+अटल
+काष्ठा cx18_queue *_cx18_stream_put_mdl_fw(काष्ठा cx18_stream *s,
+					   काष्ठा cx18_mdl *mdl)
+अणु
+	काष्ठा cx18 *cx = s->cx;
+	काष्ठा cx18_queue *q;
 
 	/* Don't give it to the firmware, if we're not running a capture */
-	if (s->handle == CX18_INVALID_TASK_HANDLE ||
+	अगर (s->handle == CX18_INVALID_TASK_HANDLE ||
 	    test_bit(CX18_F_S_STOPPING, &s->s_flags) ||
 	    !test_bit(CX18_F_S_STREAMING, &s->s_flags))
-		return cx18_enqueue(s, mdl, &s->q_free);
+		वापस cx18_enqueue(s, mdl, &s->q_मुक्त);
 
 	q = cx18_enqueue(s, mdl, &s->q_busy);
-	if (q != &s->q_busy)
-		return q; /* The firmware has the max MDLs it can handle */
+	अगर (q != &s->q_busy)
+		वापस q; /* The firmware has the max MDLs it can handle */
 
-	cx18_mdl_sync_for_device(s, mdl);
+	cx18_mdl_sync_क्रम_device(s, mdl);
 	cx18_vapi(cx, CX18_CPU_DE_SET_MDL, 5, s->handle,
-		  (void __iomem *) &cx->scb->cpu_mdl[mdl->id] - cx->enc_mem,
+		  (व्योम __iomem *) &cx->scb->cpu_mdl[mdl->id] - cx->enc_mem,
 		  s->bufs_per_mdl, mdl->id, s->mdl_size);
-	return q;
-}
+	वापस q;
+पूर्ण
 
-static
-void _cx18_stream_load_fw_queue(struct cx18_stream *s)
-{
-	struct cx18_queue *q;
-	struct cx18_mdl *mdl;
+अटल
+व्योम _cx18_stream_load_fw_queue(काष्ठा cx18_stream *s)
+अणु
+	काष्ठा cx18_queue *q;
+	काष्ठा cx18_mdl *mdl;
 
-	if (atomic_read(&s->q_free.depth) == 0 ||
-	    atomic_read(&s->q_busy.depth) >= CX18_MAX_FW_MDLS_PER_STREAM)
-		return;
+	अगर (atomic_पढ़ो(&s->q_मुक्त.depth) == 0 ||
+	    atomic_पढ़ो(&s->q_busy.depth) >= CX18_MAX_FW_MDLS_PER_STREAM)
+		वापस;
 
-	/* Move from q_free to q_busy notifying the firmware, until the limit */
-	do {
-		mdl = cx18_dequeue(s, &s->q_free);
-		if (mdl == NULL)
-			break;
+	/* Move from q_मुक्त to q_busy notअगरying the firmware, until the limit */
+	करो अणु
+		mdl = cx18_dequeue(s, &s->q_मुक्त);
+		अगर (mdl == शून्य)
+			अवरोध;
 		q = _cx18_stream_put_mdl_fw(s, mdl);
-	} while (atomic_read(&s->q_busy.depth) < CX18_MAX_FW_MDLS_PER_STREAM
+	पूर्ण जबतक (atomic_पढ़ो(&s->q_busy.depth) < CX18_MAX_FW_MDLS_PER_STREAM
 		 && q == &s->q_busy);
-}
+पूर्ण
 
-void cx18_out_work_handler(struct work_struct *work)
-{
-	struct cx18_stream *s =
-			 container_of(work, struct cx18_stream, out_work_order);
+व्योम cx18_out_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cx18_stream *s =
+			 container_of(work, काष्ठा cx18_stream, out_work_order);
 
 	_cx18_stream_load_fw_queue(s);
-}
+पूर्ण
 
-static void cx18_stream_configure_mdls(struct cx18_stream *s)
-{
+अटल व्योम cx18_stream_configure_mdls(काष्ठा cx18_stream *s)
+अणु
 	cx18_unload_queues(s);
 
-	switch (s->type) {
-	case CX18_ENC_STREAM_TYPE_YUV:
+	चयन (s->type) अणु
+	हाल CX18_ENC_STREAM_TYPE_YUV:
 		/*
 		 * Height should be a multiple of 32 lines.
-		 * Set the MDL size to the exact size needed for one frame.
+		 * Set the MDL size to the exact size needed क्रम one frame.
 		 * Use enough buffers per MDL to cover the MDL size
 		 */
-		if (s->pixelformat == V4L2_PIX_FMT_HM12)
+		अगर (s->pixelक्रमmat == V4L2_PIX_FMT_HM12)
 			s->mdl_size = 720 * s->cx->cxhdl.height * 3 / 2;
-		else
+		अन्यथा
 			s->mdl_size = 720 * s->cx->cxhdl.height * 2;
 		s->bufs_per_mdl = s->mdl_size / s->buf_size;
-		if (s->mdl_size % s->buf_size)
+		अगर (s->mdl_size % s->buf_size)
 			s->bufs_per_mdl++;
-		break;
-	case CX18_ENC_STREAM_TYPE_VBI:
+		अवरोध;
+	हाल CX18_ENC_STREAM_TYPE_VBI:
 		s->bufs_per_mdl = 1;
-		if  (cx18_raw_vbi(s->cx)) {
+		अगर  (cx18_raw_vbi(s->cx)) अणु
 			s->mdl_size = (s->cx->is_60hz ? 12 : 18)
 						       * 2 * VBI_ACTIVE_SAMPLES;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * See comment in cx18_vbi_setup() below about the
 			 * extra lines we capture in sliced VBI mode due to
@@ -755,71 +756,71 @@ static void cx18_stream_configure_mdls(struct cx18_stream *s)
 			s->mdl_size = s->cx->is_60hz
 				   ? (21 - 4 + 1) * 2 * VBI_HBLANK_SAMPLES_60HZ
 				   : (23 - 2 + 1) * 2 * VBI_HBLANK_SAMPLES_50HZ;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		s->bufs_per_mdl = 1;
 		s->mdl_size = s->buf_size * s->bufs_per_mdl;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cx18_load_queues(s);
-}
+पूर्ण
 
-int cx18_start_v4l2_encode_stream(struct cx18_stream *s)
-{
+पूर्णांक cx18_start_v4l2_encode_stream(काष्ठा cx18_stream *s)
+अणु
 	u32 data[MAX_MB_ARGUMENTS];
-	struct cx18 *cx = s->cx;
-	int captype = 0;
-	struct cx18_stream *s_idx;
+	काष्ठा cx18 *cx = s->cx;
+	पूर्णांक captype = 0;
+	काष्ठा cx18_stream *s_idx;
 
-	if (!cx18_stream_enabled(s))
-		return -EINVAL;
+	अगर (!cx18_stream_enabled(s))
+		वापस -EINVAL;
 
 	CX18_DEBUG_INFO("Start encoder stream %s\n", s->name);
 
-	switch (s->type) {
-	case CX18_ENC_STREAM_TYPE_MPG:
+	चयन (s->type) अणु
+	हाल CX18_ENC_STREAM_TYPE_MPG:
 		captype = CAPTURE_CHANNEL_TYPE_MPEG;
 		cx->mpg_data_received = cx->vbi_data_inserted = 0;
-		cx->dualwatch_jiffies = jiffies;
+		cx->dualwatch_jअगरfies = jअगरfies;
 		cx->dualwatch_stereo_mode = v4l2_ctrl_g_ctrl(cx->cxhdl.audio_mode);
 		cx->search_pack_header = 0;
-		break;
+		अवरोध;
 
-	case CX18_ENC_STREAM_TYPE_IDX:
+	हाल CX18_ENC_STREAM_TYPE_IDX:
 		captype = CAPTURE_CHANNEL_TYPE_INDEX;
-		break;
-	case CX18_ENC_STREAM_TYPE_TS:
+		अवरोध;
+	हाल CX18_ENC_STREAM_TYPE_TS:
 		captype = CAPTURE_CHANNEL_TYPE_TS;
-		break;
-	case CX18_ENC_STREAM_TYPE_YUV:
+		अवरोध;
+	हाल CX18_ENC_STREAM_TYPE_YUV:
 		captype = CAPTURE_CHANNEL_TYPE_YUV;
-		break;
-	case CX18_ENC_STREAM_TYPE_PCM:
+		अवरोध;
+	हाल CX18_ENC_STREAM_TYPE_PCM:
 		captype = CAPTURE_CHANNEL_TYPE_PCM;
-		break;
-	case CX18_ENC_STREAM_TYPE_VBI:
-#ifdef CX18_ENCODER_PARSES_SLICED
+		अवरोध;
+	हाल CX18_ENC_STREAM_TYPE_VBI:
+#अगर_घोषित CX18_ENCODER_PARSES_SLICED
 		captype = cx18_raw_vbi(cx) ?
 		     CAPTURE_CHANNEL_TYPE_VBI : CAPTURE_CHANNEL_TYPE_SLICED_VBI;
-#else
+#अन्यथा
 		/*
 		 * Currently we set things up so that Sliced VBI from the
 		 * digitizer is handled as Raw VBI by the encoder
 		 */
 		captype = CAPTURE_CHANNEL_TYPE_VBI;
-#endif
+#पूर्ण_अगर
 		cx->vbi.frame = 0;
 		cx->vbi.inserted_frame = 0;
-		memset(cx->vbi.sliced_mpeg_size,
-			0, sizeof(cx->vbi.sliced_mpeg_size));
-		break;
-	default:
-		return -EINVAL;
-	}
+		स_रखो(cx->vbi.sliced_mpeg_size,
+			0, माप(cx->vbi.sliced_mpeg_size));
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Clear Streamoff flags in case left from last capture */
+	/* Clear Streamoff flags in हाल left from last capture */
 	clear_bit(CX18_F_S_STREAMOFF, &s->s_flags);
 
 	cx18_vapi_result(cx, data, CX18_CREATE_TASK, 1, CPU_CMD_MASK_CAPTURE);
@@ -829,15 +830,15 @@ int cx18_start_v4l2_encode_stream(struct cx18_stream *s)
 	/*
 	 * For everything but CAPTURE_CHANNEL_TYPE_TS, play it safe and
 	 * set up all the parameters, as it is not obvious which parameters the
-	 * firmware shares across capture channel types and which it does not.
+	 * firmware shares across capture channel types and which it करोes not.
 	 *
 	 * Some of the cx18_vapi() calls below apply to only certain capture
 	 * channel types.  We're hoping there's no harm in calling most of them
-	 * anyway, as long as the values are all consistent.  Setting some
+	 * anyway, as दीर्घ as the values are all consistent.  Setting some
 	 * shared parameters will have no effect once an analog capture channel
 	 * has started streaming.
 	 */
-	if (captype != CAPTURE_CHANNEL_TYPE_TS) {
+	अगर (captype != CAPTURE_CHANNEL_TYPE_TS) अणु
 		cx18_vapi(cx, CX18_CPU_SET_VER_CROP_LINE, 2, s->handle, 0);
 		cx18_vapi(cx, CX18_CPU_SET_MISC_PARAMETERS, 3, s->handle, 3, 1);
 		cx18_vapi(cx, CX18_CPU_SET_MISC_PARAMETERS, 3, s->handle, 8, 0);
@@ -847,24 +848,24 @@ int cx18_start_v4l2_encode_stream(struct cx18_stream *s)
 		 * Audio related reset according to
 		 * Documentation/driver-api/media/drivers/cx2341x-devel.rst
 		 */
-		if (atomic_read(&cx->ana_capturing) == 0)
+		अगर (atomic_पढ़ो(&cx->ana_capturing) == 0)
 			cx18_vapi(cx, CX18_CPU_SET_MISC_PARAMETERS, 2,
 				  s->handle, 12);
 
 		/*
-		 * Number of lines for Field 1 & Field 2 according to
+		 * Number of lines क्रम Field 1 & Field 2 according to
 		 * Documentation/driver-api/media/drivers/cx2341x-devel.rst
-		 * Field 1 is 312 for 625 line systems in BT.656
-		 * Field 2 is 313 for 625 line systems in BT.656
+		 * Field 1 is 312 क्रम 625 line प्रणालीs in BT.656
+		 * Field 2 is 313 क्रम 625 line प्रणालीs in BT.656
 		 */
 		cx18_vapi(cx, CX18_CPU_SET_CAPTURE_LINE_NO, 3,
 			  s->handle, 312, 313);
 
-		if (cx->v4l2_cap & V4L2_CAP_VBI_CAPTURE)
+		अगर (cx->v4l2_cap & V4L2_CAP_VBI_CAPTURE)
 			cx18_vbi_setup(s);
 
 		/*
-		 * Select to receive I, P, and B frame index entries, if the
+		 * Select to receive I, P, and B frame index entries, अगर the
 		 * index stream is enabled.  Otherwise disable index entry
 		 * generation.
 		 */
@@ -872,55 +873,55 @@ int cx18_start_v4l2_encode_stream(struct cx18_stream *s)
 		cx18_vapi_result(cx, data, CX18_CPU_SET_INDEXTABLE, 2,
 				 s->handle, cx18_stream_enabled(s_idx) ? 7 : 0);
 
-		/* Call out to the common CX2341x API setup for user controls */
+		/* Call out to the common CX2341x API setup क्रम user controls */
 		cx->cxhdl.priv = s;
 		cx2341x_handler_setup(&cx->cxhdl);
 
 		/*
-		 * When starting a capture and we're set for radio,
+		 * When starting a capture and we're set क्रम radio,
 		 * ensure the video is muted, despite the user control.
 		 */
-		if (!cx->cxhdl.video_mute &&
+		अगर (!cx->cxhdl.video_mute &&
 		    test_bit(CX18_F_I_RADIO_USER, &cx->i_flags))
 			cx18_vapi(cx, CX18_CPU_SET_VIDEO_MUTE, 2, s->handle,
 			  (v4l2_ctrl_g_ctrl(cx->cxhdl.video_mute_yuv) << 8) | 1);
 
-		/* Enable the Video Format Converter for UYVY 4:2:2 support,
-		 * rather than the default HM12 Macroblovk 4:2:0 support.
+		/* Enable the Video Format Converter क्रम UYVY 4:2:2 support,
+		 * rather than the शेष HM12 Macroblovk 4:2:0 support.
 		 */
-		if (captype == CAPTURE_CHANNEL_TYPE_YUV) {
-			if (s->pixelformat == V4L2_PIX_FMT_UYVY)
+		अगर (captype == CAPTURE_CHANNEL_TYPE_YUV) अणु
+			अगर (s->pixelक्रमmat == V4L2_PIX_FMT_UYVY)
 				cx18_vapi(cx, CX18_CPU_SET_VFC_PARAM, 2,
 					s->handle, 1);
-			else
-				/* If in doubt, default to HM12 */
+			अन्यथा
+				/* If in करोubt, शेष to HM12 */
 				cx18_vapi(cx, CX18_CPU_SET_VFC_PARAM, 2,
 					s->handle, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (atomic_read(&cx->tot_capturing) == 0) {
+	अगर (atomic_पढ़ो(&cx->tot_capturing) == 0) अणु
 		cx2341x_handler_set_busy(&cx->cxhdl, 1);
 		clear_bit(CX18_F_I_EOS, &cx->i_flags);
-		cx18_write_reg(cx, 7, CX18_DSP0_INTERRUPT_MASK);
-	}
+		cx18_ग_लिखो_reg(cx, 7, CX18_DSP0_INTERRUPT_MASK);
+	पूर्ण
 
 	cx18_vapi(cx, CX18_CPU_DE_SET_MDL_ACK, 3, s->handle,
-		(void __iomem *)&cx->scb->cpu_mdl_ack[s->type][0] - cx->enc_mem,
-		(void __iomem *)&cx->scb->cpu_mdl_ack[s->type][1] - cx->enc_mem);
+		(व्योम __iomem *)&cx->scb->cpu_mdl_ack[s->type][0] - cx->enc_mem,
+		(व्योम __iomem *)&cx->scb->cpu_mdl_ack[s->type][1] - cx->enc_mem);
 
-	/* Init all the cpu_mdls for this stream */
+	/* Init all the cpu_mdls क्रम this stream */
 	cx18_stream_configure_mdls(s);
 	_cx18_stream_load_fw_queue(s);
 
 	/* begin_capture */
-	if (cx18_vapi(cx, CX18_CPU_CAPTURE_START, 1, s->handle)) {
+	अगर (cx18_vapi(cx, CX18_CPU_CAPTURE_START, 1, s->handle)) अणु
 		CX18_DEBUG_WARN("Error starting capture!\n");
-		/* Ensure we're really not capturing before releasing MDLs */
+		/* Ensure we're really not capturing beक्रमe releasing MDLs */
 		set_bit(CX18_F_S_STOPPING, &s->s_flags);
-		if (s->type == CX18_ENC_STREAM_TYPE_MPG)
+		अगर (s->type == CX18_ENC_STREAM_TYPE_MPG)
 			cx18_vapi(cx, CX18_CPU_CAPTURE_STOP, 2, s->handle, 1);
-		else
+		अन्यथा
 			cx18_vapi(cx, CX18_CPU_CAPTURE_STOP, 1, s->handle);
 		clear_bit(CX18_F_S_STREAMING, &s->s_flags);
 		/* FIXME - CX18_F_S_STREAMOFF as well? */
@@ -928,65 +929,65 @@ int cx18_start_v4l2_encode_stream(struct cx18_stream *s)
 		cx18_vapi(cx, CX18_DESTROY_TASK, 1, s->handle);
 		s->handle = CX18_INVALID_TASK_HANDLE;
 		clear_bit(CX18_F_S_STOPPING, &s->s_flags);
-		if (atomic_read(&cx->tot_capturing) == 0) {
+		अगर (atomic_पढ़ो(&cx->tot_capturing) == 0) अणु
 			set_bit(CX18_F_I_EOS, &cx->i_flags);
-			cx18_write_reg(cx, 5, CX18_DSP0_INTERRUPT_MASK);
-		}
-		return -EINVAL;
-	}
+			cx18_ग_लिखो_reg(cx, 5, CX18_DSP0_INTERRUPT_MASK);
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 
-	/* you're live! sit back and await interrupts :) */
-	if (captype != CAPTURE_CHANNEL_TYPE_TS)
+	/* you're live! sit back and aरुको पूर्णांकerrupts :) */
+	अगर (captype != CAPTURE_CHANNEL_TYPE_TS)
 		atomic_inc(&cx->ana_capturing);
 	atomic_inc(&cx->tot_capturing);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cx18_start_v4l2_encode_stream);
 
-void cx18_stop_all_captures(struct cx18 *cx)
-{
-	int i;
+व्योम cx18_stop_all_captures(काष्ठा cx18 *cx)
+अणु
+	पूर्णांक i;
 
-	for (i = CX18_MAX_STREAMS - 1; i >= 0; i--) {
-		struct cx18_stream *s = &cx->streams[i];
+	क्रम (i = CX18_MAX_STREAMS - 1; i >= 0; i--) अणु
+		काष्ठा cx18_stream *s = &cx->streams[i];
 
-		if (!cx18_stream_enabled(s))
-			continue;
-		if (test_bit(CX18_F_S_STREAMING, &s->s_flags))
+		अगर (!cx18_stream_enabled(s))
+			जारी;
+		अगर (test_bit(CX18_F_S_STREAMING, &s->s_flags))
 			cx18_stop_v4l2_encode_stream(s, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int cx18_stop_v4l2_encode_stream(struct cx18_stream *s, int gop_end)
-{
-	struct cx18 *cx = s->cx;
+पूर्णांक cx18_stop_v4l2_encode_stream(काष्ठा cx18_stream *s, पूर्णांक gop_end)
+अणु
+	काष्ठा cx18 *cx = s->cx;
 
-	if (!cx18_stream_enabled(s))
-		return -EINVAL;
+	अगर (!cx18_stream_enabled(s))
+		वापस -EINVAL;
 
 	/* This function assumes that you are allowed to stop the capture
 	   and that we are actually capturing */
 
 	CX18_DEBUG_INFO("Stop Capture\n");
 
-	if (atomic_read(&cx->tot_capturing) == 0)
-		return 0;
+	अगर (atomic_पढ़ो(&cx->tot_capturing) == 0)
+		वापस 0;
 
 	set_bit(CX18_F_S_STOPPING, &s->s_flags);
-	if (s->type == CX18_ENC_STREAM_TYPE_MPG)
+	अगर (s->type == CX18_ENC_STREAM_TYPE_MPG)
 		cx18_vapi(cx, CX18_CPU_CAPTURE_STOP, 2, s->handle, !gop_end);
-	else
+	अन्यथा
 		cx18_vapi(cx, CX18_CPU_CAPTURE_STOP, 1, s->handle);
 
-	if (s->type == CX18_ENC_STREAM_TYPE_MPG && gop_end) {
+	अगर (s->type == CX18_ENC_STREAM_TYPE_MPG && gop_end) अणु
 		CX18_INFO("ignoring gop_end: not (yet?) supported by the firmware\n");
-	}
+	पूर्ण
 
-	if (s->type != CX18_ENC_STREAM_TYPE_TS)
+	अगर (s->type != CX18_ENC_STREAM_TYPE_TS)
 		atomic_dec(&cx->ana_capturing);
 	atomic_dec(&cx->tot_capturing);
 
-	/* Clear capture and no-read bits */
+	/* Clear capture and no-पढ़ो bits */
 	clear_bit(CX18_F_S_STREAMING, &s->s_flags);
 
 	/* Tell the CX23418 it can't use our buffers anymore */
@@ -996,45 +997,45 @@ int cx18_stop_v4l2_encode_stream(struct cx18_stream *s, int gop_end)
 	s->handle = CX18_INVALID_TASK_HANDLE;
 	clear_bit(CX18_F_S_STOPPING, &s->s_flags);
 
-	if (atomic_read(&cx->tot_capturing) > 0)
-		return 0;
+	अगर (atomic_पढ़ो(&cx->tot_capturing) > 0)
+		वापस 0;
 
 	cx2341x_handler_set_busy(&cx->cxhdl, 0);
-	cx18_write_reg(cx, 5, CX18_DSP0_INTERRUPT_MASK);
-	wake_up(&s->waitq);
+	cx18_ग_लिखो_reg(cx, 5, CX18_DSP0_INTERRUPT_MASK);
+	wake_up(&s->रुकोq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cx18_stop_v4l2_encode_stream);
 
-u32 cx18_find_handle(struct cx18 *cx)
-{
-	int i;
+u32 cx18_find_handle(काष्ठा cx18 *cx)
+अणु
+	पूर्णांक i;
 
-	/* find first available handle to be used for global settings */
-	for (i = 0; i < CX18_MAX_STREAMS; i++) {
-		struct cx18_stream *s = &cx->streams[i];
+	/* find first available handle to be used क्रम global settings */
+	क्रम (i = 0; i < CX18_MAX_STREAMS; i++) अणु
+		काष्ठा cx18_stream *s = &cx->streams[i];
 
-		if (s->video_dev.v4l2_dev && (s->handle != CX18_INVALID_TASK_HANDLE))
-			return s->handle;
-	}
-	return CX18_INVALID_TASK_HANDLE;
-}
+		अगर (s->video_dev.v4l2_dev && (s->handle != CX18_INVALID_TASK_HANDLE))
+			वापस s->handle;
+	पूर्ण
+	वापस CX18_INVALID_TASK_HANDLE;
+पूर्ण
 
-struct cx18_stream *cx18_handle_to_stream(struct cx18 *cx, u32 handle)
-{
-	int i;
-	struct cx18_stream *s;
+काष्ठा cx18_stream *cx18_handle_to_stream(काष्ठा cx18 *cx, u32 handle)
+अणु
+	पूर्णांक i;
+	काष्ठा cx18_stream *s;
 
-	if (handle == CX18_INVALID_TASK_HANDLE)
-		return NULL;
+	अगर (handle == CX18_INVALID_TASK_HANDLE)
+		वापस शून्य;
 
-	for (i = 0; i < CX18_MAX_STREAMS; i++) {
+	क्रम (i = 0; i < CX18_MAX_STREAMS; i++) अणु
 		s = &cx->streams[i];
-		if (s->handle != handle)
-			continue;
-		if (cx18_stream_enabled(s))
-			return s;
-	}
-	return NULL;
-}
+		अगर (s->handle != handle)
+			जारी;
+		अगर (cx18_stream_enabled(s))
+			वापस s;
+	पूर्ण
+	वापस शून्य;
+पूर्ण

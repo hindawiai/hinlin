@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * PRU-ICSS sub-system specific definitions
+ * PRU-ICSS sub-प्रणाली specअगरic definitions
  *
  * Copyright (C) 2014-2020 Texas Instruments Incorporated - http://www.ti.com/
  *	Suman Anna <s-anna@ti.com>
  */
 
-#ifndef _PRUSS_DRIVER_H_
-#define _PRUSS_DRIVER_H_
+#अगर_अघोषित _PRUSS_DRIVER_H_
+#घोषणा _PRUSS_DRIVER_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * enum pruss_mem - PRUSS memory range identifiers
+ * क्रमागत pruss_mem - PRUSS memory range identअगरiers
  */
-enum pruss_mem {
+क्रमागत pruss_mem अणु
 	PRUSS_MEM_DRAM0 = 0,
 	PRUSS_MEM_DRAM1,
 	PRUSS_MEM_SHRD_RAM2,
 	PRUSS_MEM_MAX,
-};
+पूर्ण;
 
 /**
- * struct pruss_mem_region - PRUSS memory region structure
- * @va: kernel virtual address of the PRUSS memory region
+ * काष्ठा pruss_mem_region - PRUSS memory region काष्ठाure
+ * @va: kernel भव address of the PRUSS memory region
  * @pa: physical (bus) address of the PRUSS memory region
  * @size: size of the PRUSS memory region
  */
-struct pruss_mem_region {
-	void __iomem *va;
+काष्ठा pruss_mem_region अणु
+	व्योम __iomem *va;
 	phys_addr_t pa;
-	size_t size;
-};
+	माप_प्रकार size;
+पूर्ण;
 
 /**
- * struct pruss - PRUSS parent structure
- * @dev: pruss device pointer
- * @cfg_base: base iomap for CFG region
- * @cfg_regmap: regmap for config region
- * @mem_regions: data for each of the PRUSS memory regions
- * @core_clk_mux: clk handle for PRUSS CORE_CLK_MUX
- * @iep_clk_mux: clk handle for PRUSS IEP_CLK_MUX
+ * काष्ठा pruss - PRUSS parent काष्ठाure
+ * @dev: pruss device poपूर्णांकer
+ * @cfg_base: base iomap क्रम CFG region
+ * @cfg_regmap: regmap क्रम config region
+ * @mem_regions: data क्रम each of the PRUSS memory regions
+ * @core_clk_mux: clk handle क्रम PRUSS CORE_CLK_MUX
+ * @iep_clk_mux: clk handle क्रम PRUSS IEP_CLK_MUX
  */
-struct pruss {
-	struct device *dev;
-	void __iomem *cfg_base;
-	struct regmap *cfg_regmap;
-	struct pruss_mem_region mem_regions[PRUSS_MEM_MAX];
-	struct clk *core_clk_mux;
-	struct clk *iep_clk_mux;
-};
+काष्ठा pruss अणु
+	काष्ठा device *dev;
+	व्योम __iomem *cfg_base;
+	काष्ठा regmap *cfg_regmap;
+	काष्ठा pruss_mem_region mem_regions[PRUSS_MEM_MAX];
+	काष्ठा clk *core_clk_mux;
+	काष्ठा clk *iep_clk_mux;
+पूर्ण;
 
-#endif	/* _PRUSS_DRIVER_H_ */
+#पूर्ण_अगर	/* _PRUSS_DRIVER_H_ */

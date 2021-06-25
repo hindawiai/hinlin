@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h>
-#include <linux/errno.h>
-#include <rdma/uverbs_ioctl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <rdma/uverbs_ioctl.h>
 
-#include "rxe.h"
-#include "rxe_loc.h"
-#include "rxe_queue.h"
+#समावेश "rxe.h"
+#समावेश "rxe_loc.h"
+#समावेश "rxe_queue.h"
 
-void rxe_mmap_release(struct kref *ref)
-{
-	struct rxe_mmap_info *ip = container_of(ref,
-					struct rxe_mmap_info, ref);
-	struct rxe_dev *rxe = to_rdev(ip->context->device);
+व्योम rxe_mmap_release(काष्ठा kref *ref)
+अणु
+	काष्ठा rxe_mmap_info *ip = container_of(ref,
+					काष्ठा rxe_mmap_info, ref);
+	काष्ठा rxe_dev *rxe = to_rdev(ip->context->device);
 
 	spin_lock_bh(&rxe->pending_lock);
 
-	if (!list_empty(&ip->pending_mmaps))
+	अगर (!list_empty(&ip->pending_mmaps))
 		list_del(&ip->pending_mmaps);
 
 	spin_unlock_bh(&rxe->pending_lock);
 
-	vfree(ip->obj);		/* buf */
-	kfree(ip);
-}
+	vमुक्त(ip->obj);		/* buf */
+	kमुक्त(ip);
+पूर्ण
 
 /*
- * open and close keep track of how many times the memory region is mapped,
- * to avoid releasing it.
+ * खोलो and बंद keep track of how many बार the memory region is mapped,
+ * to aव्योम releasing it.
  */
-static void rxe_vma_open(struct vm_area_struct *vma)
-{
-	struct rxe_mmap_info *ip = vma->vm_private_data;
+अटल व्योम rxe_vma_खोलो(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा rxe_mmap_info *ip = vma->vm_निजी_data;
 
 	kref_get(&ip->ref);
-}
+पूर्ण
 
-static void rxe_vma_close(struct vm_area_struct *vma)
-{
-	struct rxe_mmap_info *ip = vma->vm_private_data;
+अटल व्योम rxe_vma_बंद(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा rxe_mmap_info *ip = vma->vm_निजी_data;
 
 	kref_put(&ip->ref, rxe_mmap_release);
-}
+पूर्ण
 
-static const struct vm_operations_struct rxe_vm_ops = {
-	.open = rxe_vma_open,
-	.close = rxe_vma_close,
-};
+अटल स्थिर काष्ठा vm_operations_काष्ठा rxe_vm_ops = अणु
+	.खोलो = rxe_vma_खोलो,
+	.बंद = rxe_vma_बंद,
+पूर्ण;
 
 /**
  * rxe_mmap - create a new mmap region
  * @context: the IB user context of the process making the mmap() call
  * @vma: the VMA to be initialized
- * Return zero if the mmap is OK. Otherwise, return an errno.
+ * Return zero अगर the mmap is OK. Otherwise, वापस an त्रुटि_सं.
  */
-int rxe_mmap(struct ib_ucontext *context, struct vm_area_struct *vma)
-{
-	struct rxe_dev *rxe = to_rdev(context->device);
-	unsigned long offset = vma->vm_pgoff << PAGE_SHIFT;
-	unsigned long size = vma->vm_end - vma->vm_start;
-	struct rxe_mmap_info *ip, *pp;
-	int ret;
+पूर्णांक rxe_mmap(काष्ठा ib_ucontext *context, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा rxe_dev *rxe = to_rdev(context->device);
+	अचिन्हित दीर्घ offset = vma->vm_pgoff << PAGE_SHIFT;
+	अचिन्हित दीर्घ size = vma->vm_end - vma->vm_start;
+	काष्ठा rxe_mmap_info *ip, *pp;
+	पूर्णांक ret;
 
 	/*
-	 * Search the device's list of objects waiting for a mmap call.
-	 * Normally, this list is very short since a call to create a
+	 * Search the device's list of objects रुकोing क्रम a mmap call.
+	 * Normally, this list is very लघु since a call to create a
 	 * CQ, QP, or SRQ is soon followed by a call to mmap().
 	 */
 	spin_lock_bh(&rxe->pending_lock);
-	list_for_each_entry_safe(ip, pp, &rxe->pending_mmaps, pending_mmaps) {
-		if (context != ip->context || (__u64)offset != ip->info.offset)
-			continue;
+	list_क्रम_each_entry_safe(ip, pp, &rxe->pending_mmaps, pending_mmaps) अणु
+		अगर (context != ip->context || (__u64)offset != ip->info.offset)
+			जारी;
 
 		/* Don't allow a mmap larger than the object. */
-		if (size > ip->info.size) {
+		अगर (size > ip->info.size) अणु
 			pr_err("mmap region is larger than the object!\n");
 			spin_unlock_bh(&rxe->pending_lock);
 			ret = -EINVAL;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		goto found_it;
-	}
+		जाओ found_it;
+	पूर्ण
 	pr_warn("unable to find pending mmap info\n");
 	spin_unlock_bh(&rxe->pending_lock);
 	ret = -EINVAL;
-	goto done;
+	जाओ करोne;
 
 found_it:
 	list_del_init(&ip->pending_mmaps);
 	spin_unlock_bh(&rxe->pending_lock);
 
-	ret = remap_vmalloc_range(vma, ip->obj, 0);
-	if (ret) {
+	ret = remap_vदो_स्मृति_range(vma, ip->obj, 0);
+	अगर (ret) अणु
 		pr_err("err %d from remap_vmalloc_range\n", ret);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	vma->vm_ops = &rxe_vm_ops;
-	vma->vm_private_data = ip;
-	rxe_vma_open(vma);
-done:
-	return ret;
-}
+	vma->vm_निजी_data = ip;
+	rxe_vma_खोलो(vma);
+करोne:
+	वापस ret;
+पूर्ण
 
 /*
- * Allocate information for rxe_mmap
+ * Allocate inक्रमmation क्रम rxe_mmap
  */
-struct rxe_mmap_info *rxe_create_mmap_info(struct rxe_dev *rxe, u32 size,
-					   struct ib_udata *udata, void *obj)
-{
-	struct rxe_mmap_info *ip;
+काष्ठा rxe_mmap_info *rxe_create_mmap_info(काष्ठा rxe_dev *rxe, u32 size,
+					   काष्ठा ib_udata *udata, व्योम *obj)
+अणु
+	काष्ठा rxe_mmap_info *ip;
 
-	if (!udata)
-		return ERR_PTR(-EINVAL);
+	अगर (!udata)
+		वापस ERR_PTR(-EINVAL);
 
-	ip = kmalloc(sizeof(*ip), GFP_KERNEL);
-	if (!ip)
-		return ERR_PTR(-ENOMEM);
+	ip = kदो_स्मृति(माप(*ip), GFP_KERNEL);
+	अगर (!ip)
+		वापस ERR_PTR(-ENOMEM);
 
 	size = PAGE_ALIGN(size);
 
 	spin_lock_bh(&rxe->mmap_offset_lock);
 
-	if (rxe->mmap_offset == 0)
+	अगर (rxe->mmap_offset == 0)
 		rxe->mmap_offset = ALIGN(PAGE_SIZE, SHMLBA);
 
 	ip->info.offset = rxe->mmap_offset;
@@ -140,10 +141,10 @@ struct rxe_mmap_info *rxe_create_mmap_info(struct rxe_dev *rxe, u32 size,
 	INIT_LIST_HEAD(&ip->pending_mmaps);
 	ip->info.size = size;
 	ip->context =
-		container_of(udata, struct uverbs_attr_bundle, driver_udata)
+		container_of(udata, काष्ठा uverbs_attr_bundle, driver_udata)
 			->context;
 	ip->obj = obj;
 	kref_init(&ip->ref);
 
-	return ip;
-}
+	वापस ip;
+पूर्ण

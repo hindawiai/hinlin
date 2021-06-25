@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/device.h>
-#include <linux/interconnect.h>
-#include <linux/interconnect-provider.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerconnect.h>
+#समावेश <linux/पूर्णांकerconnect-provider.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
 
-#include <dt-bindings/interconnect/qcom,sdm845.h>
+#समावेश <dt-bindings/पूर्णांकerconnect/qcom,sdm845.h>
 
-#include "bcm-voter.h"
-#include "icc-rpmh.h"
-#include "sdm845.h"
+#समावेश "bcm-voter.h"
+#समावेश "icc-rpmh.h"
+#समावेश "sdm845.h"
 
 DEFINE_QNODE(qhm_a1noc_cfg, SDM845_MASTER_A1NOC_CFG, 1, 4, SDM845_SLAVE_SERVICE_A1NOC);
 DEFINE_QNODE(qhm_qup1, SDM845_MASTER_BLSP_1, 1, 4, SDM845_SLAVE_A1NOC_SNOC);
-DEFINE_QNODE(qhm_tsif, SDM845_MASTER_TSIF, 1, 4, SDM845_SLAVE_A1NOC_SNOC);
+DEFINE_QNODE(qhm_tsअगर, SDM845_MASTER_TSIF, 1, 4, SDM845_SLAVE_A1NOC_SNOC);
 DEFINE_QNODE(xm_sdc2, SDM845_MASTER_SDCC_2, 1, 8, SDM845_SLAVE_A1NOC_SNOC);
 DEFINE_QNODE(xm_sdc4, SDM845_MASTER_SDCC_4, 1, 8, SDM845_SLAVE_A1NOC_SNOC);
 DEFINE_QNODE(xm_ufs_card, SDM845_MASTER_UFS_CARD, 1, 8, SDM845_SLAVE_A1NOC_SNOC);
@@ -111,7 +112,7 @@ DEFINE_QNODE(qhs_spss_cfg, SDM845_SLAVE_SPSS_CFG, 1, 4);
 DEFINE_QNODE(qhs_tcsr, SDM845_SLAVE_TCSR, 1, 4);
 DEFINE_QNODE(qhs_tlmm_north, SDM845_SLAVE_TLMM_NORTH, 1, 4);
 DEFINE_QNODE(qhs_tlmm_south, SDM845_SLAVE_TLMM_SOUTH, 1, 4);
-DEFINE_QNODE(qhs_tsif, SDM845_SLAVE_TSIF, 1, 4);
+DEFINE_QNODE(qhs_tsअगर, SDM845_SLAVE_TSIF, 1, 4);
 DEFINE_QNODE(qhs_ufs_card_cfg, SDM845_SLAVE_UFS_CARD_CFG, 1, 4);
 DEFINE_QNODE(qhs_ufs_mem_cfg, SDM845_SLAVE_UFS_MEM_CFG, 1, 4);
 DEFINE_QNODE(qhs_usb3_0, SDM845_SLAVE_USB3_0, 1, 4);
@@ -143,7 +144,7 @@ DEFINE_QNODE(qxs_pcie, SDM845_SLAVE_PCIE_0, 1, 8);
 DEFINE_QNODE(qxs_pcie_gen3, SDM845_SLAVE_PCIE_1, 1, 8);
 DEFINE_QNODE(qxs_pimem, SDM845_SLAVE_PIMEM, 1, 8);
 DEFINE_QNODE(srvc_snoc, SDM845_SLAVE_SERVICE_SNOC, 1, 4);
-DEFINE_QNODE(xs_qdss_stm, SDM845_SLAVE_QDSS_STM, 1, 4);
+DEFINE_QNODE(xs_qdss_sपंचांग, SDM845_SLAVE_QDSS_STM, 1, 4);
 DEFINE_QNODE(xs_sys_tcu_cfg, SDM845_SLAVE_TCU, 1, 8);
 
 DEFINE_QBCM(bcm_acv, "ACV", false, &ebi);
@@ -159,13 +160,13 @@ DEFINE_QBCM(bcm_mm3, "MM3", false, &qxm_camnoc_sf, &qxm_rot, &qxm_venus0, &qxm_v
 DEFINE_QBCM(bcm_sh5, "SH5", false, &qnm_apps);
 DEFINE_QBCM(bcm_sn0, "SN0", true, &qns_memnoc_sf);
 DEFINE_QBCM(bcm_ce0, "CE0", false, &qxm_crypto);
-DEFINE_QBCM(bcm_cn0, "CN0", false, &qhm_spdm, &qhm_tic, &qnm_snoc, &xm_qdss_dap, &qhs_a1_noc_cfg, &qhs_a2_noc_cfg, &qhs_aop, &qhs_aoss, &qhs_camera_cfg, &qhs_clk_ctl, &qhs_compute_dsp_cfg, &qhs_cpr_cx, &qhs_crypto0_cfg, &qhs_dcc_cfg, &qhs_ddrss_cfg, &qhs_display_cfg, &qhs_glm, &qhs_gpuss_cfg, &qhs_imem_cfg, &qhs_ipa, &qhs_mnoc_cfg, &qhs_pcie0_cfg, &qhs_pcie_gen3_cfg, &qhs_pdm, &qhs_phy_refgen_south, &qhs_pimem_cfg, &qhs_prng, &qhs_qdss_cfg, &qhs_qupv3_north, &qhs_qupv3_south, &qhs_sdc2, &qhs_sdc4, &qhs_snoc_cfg, &qhs_spdm, &qhs_spss_cfg, &qhs_tcsr, &qhs_tlmm_north, &qhs_tlmm_south, &qhs_tsif, &qhs_ufs_card_cfg, &qhs_ufs_mem_cfg, &qhs_usb3_0, &qhs_usb3_1, &qhs_venus_cfg, &qhs_vsense_ctrl_cfg, &qns_cnoc_a2noc, &srvc_cnoc);
+DEFINE_QBCM(bcm_cn0, "CN0", false, &qhm_spdm, &qhm_tic, &qnm_snoc, &xm_qdss_dap, &qhs_a1_noc_cfg, &qhs_a2_noc_cfg, &qhs_aop, &qhs_aoss, &qhs_camera_cfg, &qhs_clk_ctl, &qhs_compute_dsp_cfg, &qhs_cpr_cx, &qhs_crypto0_cfg, &qhs_dcc_cfg, &qhs_ddrss_cfg, &qhs_display_cfg, &qhs_glm, &qhs_gpuss_cfg, &qhs_imem_cfg, &qhs_ipa, &qhs_mnoc_cfg, &qhs_pcie0_cfg, &qhs_pcie_gen3_cfg, &qhs_pdm, &qhs_phy_refgen_south, &qhs_pimem_cfg, &qhs_prng, &qhs_qdss_cfg, &qhs_qupv3_north, &qhs_qupv3_south, &qhs_sdc2, &qhs_sdc4, &qhs_snoc_cfg, &qhs_spdm, &qhs_spss_cfg, &qhs_tcsr, &qhs_tlmm_north, &qhs_tlmm_south, &qhs_tsअगर, &qhs_ufs_card_cfg, &qhs_ufs_mem_cfg, &qhs_usb3_0, &qhs_usb3_1, &qhs_venus_cfg, &qhs_vsense_ctrl_cfg, &qns_cnoc_a2noc, &srvc_cnoc);
 DEFINE_QBCM(bcm_qup0, "QUP0", false, &qhm_qup1, &qhm_qup2);
 DEFINE_QBCM(bcm_sn1, "SN1", false, &qxs_imem);
 DEFINE_QBCM(bcm_sn2, "SN2", false, &qns_memnoc_gc);
 DEFINE_QBCM(bcm_sn3, "SN3", false, &qns_cnoc);
 DEFINE_QBCM(bcm_sn4, "SN4", false, &qxm_pimem);
-DEFINE_QBCM(bcm_sn5, "SN5", false, &xs_qdss_stm);
+DEFINE_QBCM(bcm_sn5, "SN5", false, &xs_qdss_sपंचांग);
 DEFINE_QBCM(bcm_sn6, "SN6", false, &qhs_apss, &srvc_snoc, &xs_sys_tcu_cfg);
 DEFINE_QBCM(bcm_sn7, "SN7", false, &qxs_pcie);
 DEFINE_QBCM(bcm_sn8, "SN8", false, &qxs_pcie_gen3);
@@ -175,14 +176,14 @@ DEFINE_QBCM(bcm_sn12, "SN12", false, &qnm_gladiator_sodv, &xm_gic);
 DEFINE_QBCM(bcm_sn14, "SN14", false, &qnm_pcie_anoc);
 DEFINE_QBCM(bcm_sn15, "SN15", false, &qnm_memnoc);
 
-static struct qcom_icc_bcm *aggre1_noc_bcms[] = {
+अटल काष्ठा qcom_icc_bcm *aggre1_noc_bcms[] = अणु
 	&bcm_sn9,
 	&bcm_qup0,
-};
+पूर्ण;
 
-static struct qcom_icc_node *aggre1_noc_nodes[] = {
+अटल काष्ठा qcom_icc_node *aggre1_noc_nodes[] = अणु
 	[MASTER_A1NOC_CFG] = &qhm_a1noc_cfg,
-	[MASTER_TSIF] = &qhm_tsif,
+	[MASTER_TSIF] = &qhm_tsअगर,
 	[MASTER_SDCC_2] = &xm_sdc2,
 	[MASTER_SDCC_4] = &xm_sdc4,
 	[MASTER_UFS_CARD] = &xm_ufs_card,
@@ -192,22 +193,22 @@ static struct qcom_icc_node *aggre1_noc_nodes[] = {
 	[SLAVE_SERVICE_A1NOC] = &srvc_aggre1_noc,
 	[SLAVE_ANOC_PCIE_A1NOC_SNOC] = &qns_pcie_a1noc_snoc,
 	[MASTER_QUP_1] = &qhm_qup1,
-};
+पूर्ण;
 
-static const struct qcom_icc_desc sdm845_aggre1_noc = {
+अटल स्थिर काष्ठा qcom_icc_desc sdm845_aggre1_noc = अणु
 	.nodes = aggre1_noc_nodes,
 	.num_nodes = ARRAY_SIZE(aggre1_noc_nodes),
 	.bcms = aggre1_noc_bcms,
 	.num_bcms = ARRAY_SIZE(aggre1_noc_bcms),
-};
+पूर्ण;
 
-static struct qcom_icc_bcm *aggre2_noc_bcms[] = {
+अटल काष्ठा qcom_icc_bcm *aggre2_noc_bcms[] = अणु
 	&bcm_ce0,
 	&bcm_sn11,
 	&bcm_qup0,
-};
+पूर्ण;
 
-static struct qcom_icc_node *aggre2_noc_nodes[] = {
+अटल काष्ठा qcom_icc_node *aggre2_noc_nodes[] = अणु
 	[MASTER_A2NOC_CFG] = &qhm_a2noc_cfg,
 	[MASTER_QDSS_BAM] = &qhm_qdss_bam,
 	[MASTER_CNOC_A2NOC] = &qnm_cnoc,
@@ -221,20 +222,20 @@ static struct qcom_icc_node *aggre2_noc_nodes[] = {
 	[SLAVE_ANOC_PCIE_SNOC] = &qns_pcie_snoc,
 	[SLAVE_SERVICE_A2NOC] = &srvc_aggre2_noc,
 	[MASTER_QUP_2] = &qhm_qup2,
-};
+पूर्ण;
 
-static const struct qcom_icc_desc sdm845_aggre2_noc = {
+अटल स्थिर काष्ठा qcom_icc_desc sdm845_aggre2_noc = अणु
 	.nodes = aggre2_noc_nodes,
 	.num_nodes = ARRAY_SIZE(aggre2_noc_nodes),
 	.bcms = aggre2_noc_bcms,
 	.num_bcms = ARRAY_SIZE(aggre2_noc_bcms),
-};
+पूर्ण;
 
-static struct qcom_icc_bcm *config_noc_bcms[] = {
+अटल काष्ठा qcom_icc_bcm *config_noc_bcms[] = अणु
 	&bcm_cn0,
-};
+पूर्ण;
 
-static struct qcom_icc_node *config_noc_nodes[] = {
+अटल काष्ठा qcom_icc_node *config_noc_nodes[] = अणु
 	[MASTER_SPDM] = &qhm_spdm,
 	[MASTER_TIC] = &qhm_tic,
 	[MASTER_SNOC_CNOC] = &qnm_snoc,
@@ -273,7 +274,7 @@ static struct qcom_icc_node *config_noc_nodes[] = {
 	[SLAVE_TCSR] = &qhs_tcsr,
 	[SLAVE_TLMM_NORTH] = &qhs_tlmm_north,
 	[SLAVE_TLMM_SOUTH] = &qhs_tlmm_south,
-	[SLAVE_TSIF] = &qhs_tsif,
+	[SLAVE_TSIF] = &qhs_tsअगर,
 	[SLAVE_UFS_CARD_CFG] = &qhs_ufs_card_cfg,
 	[SLAVE_UFS_MEM_CFG] = &qhs_ufs_mem_cfg,
 	[SLAVE_USB3_0] = &qhs_usb3_0,
@@ -282,50 +283,50 @@ static struct qcom_icc_node *config_noc_nodes[] = {
 	[SLAVE_VSENSE_CTRL_CFG] = &qhs_vsense_ctrl_cfg,
 	[SLAVE_CNOC_A2NOC] = &qns_cnoc_a2noc,
 	[SLAVE_SERVICE_CNOC] = &srvc_cnoc,
-};
+पूर्ण;
 
-static const struct qcom_icc_desc sdm845_config_noc = {
+अटल स्थिर काष्ठा qcom_icc_desc sdm845_config_noc = अणु
 	.nodes = config_noc_nodes,
 	.num_nodes = ARRAY_SIZE(config_noc_nodes),
 	.bcms = config_noc_bcms,
 	.num_bcms = ARRAY_SIZE(config_noc_bcms),
-};
+पूर्ण;
 
-static struct qcom_icc_bcm *dc_noc_bcms[] = {
-};
+अटल काष्ठा qcom_icc_bcm *dc_noc_bcms[] = अणु
+पूर्ण;
 
-static struct qcom_icc_node *dc_noc_nodes[] = {
+अटल काष्ठा qcom_icc_node *dc_noc_nodes[] = अणु
 	[MASTER_CNOC_DC_NOC] = &qhm_cnoc,
 	[SLAVE_LLCC_CFG] = &qhs_llcc,
 	[SLAVE_MEM_NOC_CFG] = &qhs_memnoc,
-};
+पूर्ण;
 
-static const struct qcom_icc_desc sdm845_dc_noc = {
+अटल स्थिर काष्ठा qcom_icc_desc sdm845_dc_noc = अणु
 	.nodes = dc_noc_nodes,
 	.num_nodes = ARRAY_SIZE(dc_noc_nodes),
 	.bcms = dc_noc_bcms,
 	.num_bcms = ARRAY_SIZE(dc_noc_bcms),
-};
+पूर्ण;
 
-static struct qcom_icc_bcm *gladiator_noc_bcms[] = {
-};
+अटल काष्ठा qcom_icc_bcm *gladiator_noc_bcms[] = अणु
+पूर्ण;
 
-static struct qcom_icc_node *gladiator_noc_nodes[] = {
+अटल काष्ठा qcom_icc_node *gladiator_noc_nodes[] = अणु
 	[MASTER_APPSS_PROC] = &acm_l3,
 	[MASTER_GNOC_CFG] = &pm_gnoc_cfg,
 	[SLAVE_GNOC_SNOC] = &qns_gladiator_sodv,
 	[SLAVE_GNOC_MEM_NOC] = &qns_gnoc_memnoc,
 	[SLAVE_SERVICE_GNOC] = &srvc_gnoc,
-};
+पूर्ण;
 
-static const struct qcom_icc_desc sdm845_gladiator_noc = {
+अटल स्थिर काष्ठा qcom_icc_desc sdm845_gladiator_noc = अणु
 	.nodes = gladiator_noc_nodes,
 	.num_nodes = ARRAY_SIZE(gladiator_noc_nodes),
 	.bcms = gladiator_noc_bcms,
 	.num_bcms = ARRAY_SIZE(gladiator_noc_bcms),
-};
+पूर्ण;
 
-static struct qcom_icc_bcm *mem_noc_bcms[] = {
+अटल काष्ठा qcom_icc_bcm *mem_noc_bcms[] = अणु
 	&bcm_mc0,
 	&bcm_acv,
 	&bcm_sh0,
@@ -333,9 +334,9 @@ static struct qcom_icc_bcm *mem_noc_bcms[] = {
 	&bcm_sh2,
 	&bcm_sh3,
 	&bcm_sh5,
-};
+पूर्ण;
 
-static struct qcom_icc_node *mem_noc_nodes[] = {
+अटल काष्ठा qcom_icc_node *mem_noc_nodes[] = अणु
 	[MASTER_TCU_0] = &acm_tcu,
 	[MASTER_MEM_NOC_CFG] = &qhm_memnoc_cfg,
 	[MASTER_GNOC_MEM_NOC] = &qnm_apps,
@@ -351,23 +352,23 @@ static struct qcom_icc_node *mem_noc_nodes[] = {
 	[SLAVE_SERVICE_MEM_NOC] = &srvc_memnoc,
 	[MASTER_LLCC] = &llcc_mc,
 	[SLAVE_EBI1] = &ebi,
-};
+पूर्ण;
 
-static const struct qcom_icc_desc sdm845_mem_noc = {
+अटल स्थिर काष्ठा qcom_icc_desc sdm845_mem_noc = अणु
 	.nodes = mem_noc_nodes,
 	.num_nodes = ARRAY_SIZE(mem_noc_nodes),
 	.bcms = mem_noc_bcms,
 	.num_bcms = ARRAY_SIZE(mem_noc_bcms),
-};
+पूर्ण;
 
-static struct qcom_icc_bcm *mmss_noc_bcms[] = {
+अटल काष्ठा qcom_icc_bcm *mmss_noc_bcms[] = अणु
 	&bcm_mm0,
 	&bcm_mm1,
 	&bcm_mm2,
 	&bcm_mm3,
-};
+पूर्ण;
 
-static struct qcom_icc_node *mmss_noc_nodes[] = {
+अटल काष्ठा qcom_icc_node *mmss_noc_nodes[] = अणु
 	[MASTER_CNOC_MNOC_CFG] = &qhm_mnoc_cfg,
 	[MASTER_CAMNOC_HF0] = &qxm_camnoc_hf0,
 	[MASTER_CAMNOC_HF1] = &qxm_camnoc_hf1,
@@ -385,16 +386,16 @@ static struct qcom_icc_node *mmss_noc_nodes[] = {
 	[MASTER_CAMNOC_HF1_UNCOMP] = &qxm_camnoc_hf1_uncomp,
 	[MASTER_CAMNOC_SF_UNCOMP] = &qxm_camnoc_sf_uncomp,
 	[SLAVE_CAMNOC_UNCOMP] = &qns_camnoc_uncomp,
-};
+पूर्ण;
 
-static const struct qcom_icc_desc sdm845_mmss_noc = {
+अटल स्थिर काष्ठा qcom_icc_desc sdm845_mmss_noc = अणु
 	.nodes = mmss_noc_nodes,
 	.num_nodes = ARRAY_SIZE(mmss_noc_nodes),
 	.bcms = mmss_noc_bcms,
 	.num_bcms = ARRAY_SIZE(mmss_noc_bcms),
-};
+पूर्ण;
 
-static struct qcom_icc_bcm *system_noc_bcms[] = {
+अटल काष्ठा qcom_icc_bcm *प्रणाली_noc_bcms[] = अणु
 	&bcm_sn0,
 	&bcm_sn1,
 	&bcm_sn2,
@@ -409,9 +410,9 @@ static struct qcom_icc_bcm *system_noc_bcms[] = {
 	&bcm_sn12,
 	&bcm_sn14,
 	&bcm_sn15,
-};
+पूर्ण;
 
-static struct qcom_icc_node *system_noc_nodes[] = {
+अटल काष्ठा qcom_icc_node *प्रणाली_noc_nodes[] = अणु
 	[MASTER_SNOC_CFG] = &qhm_snoc_cfg,
 	[MASTER_A1NOC_SNOC] = &qnm_aggre1_noc,
 	[MASTER_A2NOC_SNOC] = &qnm_aggre2_noc,
@@ -429,43 +430,43 @@ static struct qcom_icc_node *system_noc_nodes[] = {
 	[SLAVE_PCIE_1] = &qxs_pcie_gen3,
 	[SLAVE_PIMEM] = &qxs_pimem,
 	[SLAVE_SERVICE_SNOC] = &srvc_snoc,
-	[SLAVE_QDSS_STM] = &xs_qdss_stm,
+	[SLAVE_QDSS_STM] = &xs_qdss_sपंचांग,
 	[SLAVE_TCU] = &xs_sys_tcu_cfg,
-};
+पूर्ण;
 
-static const struct qcom_icc_desc sdm845_system_noc = {
-	.nodes = system_noc_nodes,
-	.num_nodes = ARRAY_SIZE(system_noc_nodes),
-	.bcms = system_noc_bcms,
-	.num_bcms = ARRAY_SIZE(system_noc_bcms),
-};
+अटल स्थिर काष्ठा qcom_icc_desc sdm845_प्रणाली_noc = अणु
+	.nodes = प्रणाली_noc_nodes,
+	.num_nodes = ARRAY_SIZE(प्रणाली_noc_nodes),
+	.bcms = प्रणाली_noc_bcms,
+	.num_bcms = ARRAY_SIZE(प्रणाली_noc_bcms),
+पूर्ण;
 
-static int qnoc_probe(struct platform_device *pdev)
-{
-	const struct qcom_icc_desc *desc;
-	struct icc_onecell_data *data;
-	struct icc_provider *provider;
-	struct qcom_icc_node **qnodes;
-	struct qcom_icc_provider *qp;
-	struct icc_node *node;
-	size_t num_nodes, i;
-	int ret;
+अटल पूर्णांक qnoc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा qcom_icc_desc *desc;
+	काष्ठा icc_onecell_data *data;
+	काष्ठा icc_provider *provider;
+	काष्ठा qcom_icc_node **qnodes;
+	काष्ठा qcom_icc_provider *qp;
+	काष्ठा icc_node *node;
+	माप_प्रकार num_nodes, i;
+	पूर्णांक ret;
 
 	desc = device_get_match_data(&pdev->dev);
-	if (!desc)
-		return -EINVAL;
+	अगर (!desc)
+		वापस -EINVAL;
 
 	qnodes = desc->nodes;
 	num_nodes = desc->num_nodes;
 
-	qp = devm_kzalloc(&pdev->dev, sizeof(*qp), GFP_KERNEL);
-	if (!qp)
-		return -ENOMEM;
+	qp = devm_kzalloc(&pdev->dev, माप(*qp), GFP_KERNEL);
+	अगर (!qp)
+		वापस -ENOMEM;
 
-	data = devm_kzalloc(&pdev->dev, struct_size(data, nodes, num_nodes),
+	data = devm_kzalloc(&pdev->dev, काष्ठा_size(data, nodes, num_nodes),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	provider = &qp->provider;
 	provider->dev = &pdev->dev;
@@ -480,92 +481,92 @@ static int qnoc_probe(struct platform_device *pdev)
 	qp->bcms = desc->bcms;
 	qp->num_bcms = desc->num_bcms;
 
-	qp->voter = of_bcm_voter_get(qp->dev, NULL);
-	if (IS_ERR(qp->voter)) {
+	qp->voter = of_bcm_voter_get(qp->dev, शून्य);
+	अगर (IS_ERR(qp->voter)) अणु
 		dev_err(&pdev->dev, "bcm_voter err:%ld\n", PTR_ERR(qp->voter));
-		return PTR_ERR(qp->voter);
-	}
+		वापस PTR_ERR(qp->voter);
+	पूर्ण
 
 	ret = icc_provider_add(provider);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "error adding interconnect provider\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < qp->num_bcms; i++)
+	क्रम (i = 0; i < qp->num_bcms; i++)
 		qcom_icc_bcm_init(qp->bcms[i], &pdev->dev);
 
-	for (i = 0; i < num_nodes; i++) {
-		size_t j;
+	क्रम (i = 0; i < num_nodes; i++) अणु
+		माप_प्रकार j;
 
-		if (!qnodes[i])
-			continue;
+		अगर (!qnodes[i])
+			जारी;
 
 		node = icc_node_create(qnodes[i]->id);
-		if (IS_ERR(node)) {
+		अगर (IS_ERR(node)) अणु
 			ret = PTR_ERR(node);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		node->name = qnodes[i]->name;
 		node->data = qnodes[i];
 		icc_node_add(node, provider);
 
-		for (j = 0; j < qnodes[i]->num_links; j++)
+		क्रम (j = 0; j < qnodes[i]->num_links; j++)
 			icc_link_create(node, qnodes[i]->links[j]);
 
 		data->nodes[i] = node;
-	}
+	पूर्ण
 	data->num_nodes = num_nodes;
 
-	platform_set_drvdata(pdev, qp);
+	platक्रमm_set_drvdata(pdev, qp);
 
-	return 0;
+	वापस 0;
 err:
-	icc_nodes_remove(provider);
+	icc_nodes_हटाओ(provider);
 	icc_provider_del(provider);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qnoc_remove(struct platform_device *pdev)
-{
-	struct qcom_icc_provider *qp = platform_get_drvdata(pdev);
+अटल पूर्णांक qnoc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_icc_provider *qp = platक्रमm_get_drvdata(pdev);
 
-	icc_nodes_remove(&qp->provider);
-	return icc_provider_del(&qp->provider);
-}
+	icc_nodes_हटाओ(&qp->provider);
+	वापस icc_provider_del(&qp->provider);
+पूर्ण
 
-static const struct of_device_id qnoc_of_match[] = {
-	{ .compatible = "qcom,sdm845-aggre1-noc",
-	  .data = &sdm845_aggre1_noc},
-	{ .compatible = "qcom,sdm845-aggre2-noc",
-	  .data = &sdm845_aggre2_noc},
-	{ .compatible = "qcom,sdm845-config-noc",
-	  .data = &sdm845_config_noc},
-	{ .compatible = "qcom,sdm845-dc-noc",
-	  .data = &sdm845_dc_noc},
-	{ .compatible = "qcom,sdm845-gladiator-noc",
-	  .data = &sdm845_gladiator_noc},
-	{ .compatible = "qcom,sdm845-mem-noc",
-	  .data = &sdm845_mem_noc},
-	{ .compatible = "qcom,sdm845-mmss-noc",
-	  .data = &sdm845_mmss_noc},
-	{ .compatible = "qcom,sdm845-system-noc",
-	  .data = &sdm845_system_noc},
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id qnoc_of_match[] = अणु
+	अणु .compatible = "qcom,sdm845-aggre1-noc",
+	  .data = &sdm845_aggre1_nocपूर्ण,
+	अणु .compatible = "qcom,sdm845-aggre2-noc",
+	  .data = &sdm845_aggre2_nocपूर्ण,
+	अणु .compatible = "qcom,sdm845-config-noc",
+	  .data = &sdm845_config_nocपूर्ण,
+	अणु .compatible = "qcom,sdm845-dc-noc",
+	  .data = &sdm845_dc_nocपूर्ण,
+	अणु .compatible = "qcom,sdm845-gladiator-noc",
+	  .data = &sdm845_gladiator_nocपूर्ण,
+	अणु .compatible = "qcom,sdm845-mem-noc",
+	  .data = &sdm845_mem_nocपूर्ण,
+	अणु .compatible = "qcom,sdm845-mmss-noc",
+	  .data = &sdm845_mmss_nocपूर्ण,
+	अणु .compatible = "qcom,sdm845-system-noc",
+	  .data = &sdm845_प्रणाली_nocपूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qnoc_of_match);
 
-static struct platform_driver qnoc_driver = {
+अटल काष्ठा platक्रमm_driver qnoc_driver = अणु
 	.probe = qnoc_probe,
-	.remove = qnoc_remove,
-	.driver = {
+	.हटाओ = qnoc_हटाओ,
+	.driver = अणु
 		.name = "qnoc-sdm845",
 		.of_match_table = qnoc_of_match,
 		.sync_state = icc_sync_state,
-	},
-};
-module_platform_driver(qnoc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(qnoc_driver);
 
 MODULE_AUTHOR("David Dai <daidavid1@codeaurora.org>");
 MODULE_DESCRIPTION("Qualcomm sdm845 NoC driver");

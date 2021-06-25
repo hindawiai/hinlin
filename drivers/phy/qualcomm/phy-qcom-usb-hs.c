@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /**
  * Copyright (C) 2016 Linaro Ltd
  */
-#include <linux/module.h>
-#include <linux/ulpi/driver.h>
-#include <linux/ulpi/regs.h>
-#include <linux/clk.h>
-#include <linux/regulator/consumer.h>
-#include <linux/of_device.h>
-#include <linux/phy/phy.h>
-#include <linux/reset.h>
-#include <linux/extcon.h>
-#include <linux/notifier.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ulpi/driver.h>
+#समावेश <linux/ulpi/regs.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/extcon.h>
+#समावेश <linux/notअगरier.h>
 
-#define ULPI_PWR_CLK_MNG_REG		0x88
+#घोषणा ULPI_PWR_CLK_MNG_REG		0x88
 # define ULPI_PWR_OTG_COMP_DISABLE	BIT(0)
 
-#define ULPI_MISC_A			0x96
+#घोषणा ULPI_MISC_A			0x96
 # define ULPI_MISC_A_VBUSVLDEXTSEL	BIT(1)
 # define ULPI_MISC_A_VBUSVLDEXT		BIT(0)
 
 
-struct ulpi_seq {
+काष्ठा ulpi_seq अणु
 	u8 addr;
 	u8 val;
-};
+पूर्ण;
 
-struct qcom_usb_hs_phy {
-	struct ulpi *ulpi;
-	struct phy *phy;
-	struct clk *ref_clk;
-	struct clk *sleep_clk;
-	struct regulator *v1p8;
-	struct regulator *v3p3;
-	struct reset_control *reset;
-	struct ulpi_seq *init_seq;
-	struct extcon_dev *vbus_edev;
-	struct notifier_block vbus_notify;
-};
+काष्ठा qcom_usb_hs_phy अणु
+	काष्ठा ulpi *ulpi;
+	काष्ठा phy *phy;
+	काष्ठा clk *ref_clk;
+	काष्ठा clk *sleep_clk;
+	काष्ठा regulator *v1p8;
+	काष्ठा regulator *v3p3;
+	काष्ठा reset_control *reset;
+	काष्ठा ulpi_seq *init_seq;
+	काष्ठा extcon_dev *vbus_edev;
+	काष्ठा notअगरier_block vbus_notअगरy;
+पूर्ण;
 
-static int qcom_usb_hs_phy_set_mode(struct phy *phy,
-				    enum phy_mode mode, int submode)
-{
-	struct qcom_usb_hs_phy *uphy = phy_get_drvdata(phy);
+अटल पूर्णांक qcom_usb_hs_phy_set_mode(काष्ठा phy *phy,
+				    क्रमागत phy_mode mode, पूर्णांक submode)
+अणु
+	काष्ठा qcom_usb_hs_phy *uphy = phy_get_drvdata(phy);
 	u8 addr;
-	int ret;
+	पूर्णांक ret;
 
-	if (!uphy->vbus_edev) {
+	अगर (!uphy->vbus_edev) अणु
 		u8 val = 0;
 
-		switch (mode) {
-		case PHY_MODE_USB_OTG:
-		case PHY_MODE_USB_HOST:
+		चयन (mode) अणु
+		हाल PHY_MODE_USB_OTG:
+		हाल PHY_MODE_USB_HOST:
 			val |= ULPI_INT_IDGRD;
 			fallthrough;
-		case PHY_MODE_USB_DEVICE:
+		हाल PHY_MODE_USB_DEVICE:
 			val |= ULPI_INT_SESS_VALID;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		ret = ulpi_write(uphy->ulpi, ULPI_USB_INT_EN_RISE, val);
-		if (ret)
-			return ret;
-		ret = ulpi_write(uphy->ulpi, ULPI_USB_INT_EN_FALL, val);
-	} else {
-		switch (mode) {
-		case PHY_MODE_USB_OTG:
-		case PHY_MODE_USB_DEVICE:
+		ret = ulpi_ग_लिखो(uphy->ulpi, ULPI_USB_INT_EN_RISE, val);
+		अगर (ret)
+			वापस ret;
+		ret = ulpi_ग_लिखो(uphy->ulpi, ULPI_USB_INT_EN_FALL, val);
+	पूर्ण अन्यथा अणु
+		चयन (mode) अणु
+		हाल PHY_MODE_USB_OTG:
+		हाल PHY_MODE_USB_DEVICE:
 			addr = ULPI_SET(ULPI_MISC_A);
-			break;
-		case PHY_MODE_USB_HOST:
+			अवरोध;
+		हाल PHY_MODE_USB_HOST:
 			addr = ULPI_CLR(ULPI_MISC_A);
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		ret = ulpi_write(uphy->ulpi, ULPI_SET(ULPI_PWR_CLK_MNG_REG),
+		ret = ulpi_ग_लिखो(uphy->ulpi, ULPI_SET(ULPI_PWR_CLK_MNG_REG),
 				 ULPI_PWR_OTG_COMP_DISABLE);
-		if (ret)
-			return ret;
-		ret = ulpi_write(uphy->ulpi, addr, ULPI_MISC_A_VBUSVLDEXTSEL);
-	}
+		अगर (ret)
+			वापस ret;
+		ret = ulpi_ग_लिखो(uphy->ulpi, addr, ULPI_MISC_A_VBUSVLDEXTSEL);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-qcom_usb_hs_phy_vbus_notifier(struct notifier_block *nb, unsigned long event,
-			      void *ptr)
-{
-	struct qcom_usb_hs_phy *uphy;
+अटल पूर्णांक
+qcom_usb_hs_phy_vbus_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
+			      व्योम *ptr)
+अणु
+	काष्ठा qcom_usb_hs_phy *uphy;
 	u8 addr;
 
-	uphy = container_of(nb, struct qcom_usb_hs_phy, vbus_notify);
+	uphy = container_of(nb, काष्ठा qcom_usb_hs_phy, vbus_notअगरy);
 
-	if (event)
+	अगर (event)
 		addr = ULPI_SET(ULPI_MISC_A);
-	else
+	अन्यथा
 		addr = ULPI_CLR(ULPI_MISC_A);
 
-	return ulpi_write(uphy->ulpi, addr, ULPI_MISC_A_VBUSVLDEXT);
-}
+	वापस ulpi_ग_लिखो(uphy->ulpi, addr, ULPI_MISC_A_VBUSVLDEXT);
+पूर्ण
 
-static int qcom_usb_hs_phy_power_on(struct phy *phy)
-{
-	struct qcom_usb_hs_phy *uphy = phy_get_drvdata(phy);
-	struct ulpi *ulpi = uphy->ulpi;
-	const struct ulpi_seq *seq;
-	int ret, state;
+अटल पूर्णांक qcom_usb_hs_phy_घातer_on(काष्ठा phy *phy)
+अणु
+	काष्ठा qcom_usb_hs_phy *uphy = phy_get_drvdata(phy);
+	काष्ठा ulpi *ulpi = uphy->ulpi;
+	स्थिर काष्ठा ulpi_seq *seq;
+	पूर्णांक ret, state;
 
 	ret = clk_prepare_enable(uphy->ref_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(uphy->sleep_clk);
-	if (ret)
-		goto err_sleep;
+	अगर (ret)
+		जाओ err_sleep;
 
 	ret = regulator_set_load(uphy->v1p8, 50000);
-	if (ret < 0)
-		goto err_1p8;
+	अगर (ret < 0)
+		जाओ err_1p8;
 
 	ret = regulator_enable(uphy->v1p8);
-	if (ret)
-		goto err_1p8;
+	अगर (ret)
+		जाओ err_1p8;
 
 	ret = regulator_set_voltage_triplet(uphy->v3p3, 3050000, 3300000,
 					    3300000);
-	if (ret)
-		goto err_3p3;
+	अगर (ret)
+		जाओ err_3p3;
 
 	ret = regulator_set_load(uphy->v3p3, 50000);
-	if (ret < 0)
-		goto err_3p3;
+	अगर (ret < 0)
+		जाओ err_3p3;
 
 	ret = regulator_enable(uphy->v3p3);
-	if (ret)
-		goto err_3p3;
+	अगर (ret)
+		जाओ err_3p3;
 
-	for (seq = uphy->init_seq; seq->addr; seq++) {
-		ret = ulpi_write(ulpi, ULPI_EXT_VENDOR_SPECIFIC + seq->addr,
+	क्रम (seq = uphy->init_seq; seq->addr; seq++) अणु
+		ret = ulpi_ग_लिखो(ulpi, ULPI_EXT_VENDOR_SPECIFIC + seq->addr,
 				 seq->val);
-		if (ret)
-			goto err_ulpi;
-	}
+		अगर (ret)
+			जाओ err_ulpi;
+	पूर्ण
 
-	if (uphy->reset) {
+	अगर (uphy->reset) अणु
 		ret = reset_control_reset(uphy->reset);
-		if (ret)
-			goto err_ulpi;
-	}
+		अगर (ret)
+			जाओ err_ulpi;
+	पूर्ण
 
-	if (uphy->vbus_edev) {
+	अगर (uphy->vbus_edev) अणु
 		state = extcon_get_state(uphy->vbus_edev, EXTCON_USB);
 		/* setup initial state */
-		qcom_usb_hs_phy_vbus_notifier(&uphy->vbus_notify, state,
+		qcom_usb_hs_phy_vbus_notअगरier(&uphy->vbus_notअगरy, state,
 					      uphy->vbus_edev);
-		ret = extcon_register_notifier(uphy->vbus_edev, EXTCON_USB,
-					       &uphy->vbus_notify);
-		if (ret)
-			goto err_ulpi;
-	}
+		ret = extcon_रेजिस्टर_notअगरier(uphy->vbus_edev, EXTCON_USB,
+					       &uphy->vbus_notअगरy);
+		अगर (ret)
+			जाओ err_ulpi;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_ulpi:
 	regulator_disable(uphy->v3p3);
 err_3p3:
@@ -174,116 +175,116 @@ err_1p8:
 	clk_disable_unprepare(uphy->sleep_clk);
 err_sleep:
 	clk_disable_unprepare(uphy->ref_clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qcom_usb_hs_phy_power_off(struct phy *phy)
-{
-	struct qcom_usb_hs_phy *uphy = phy_get_drvdata(phy);
+अटल पूर्णांक qcom_usb_hs_phy_घातer_off(काष्ठा phy *phy)
+अणु
+	काष्ठा qcom_usb_hs_phy *uphy = phy_get_drvdata(phy);
 
-	if (uphy->vbus_edev)
-		extcon_unregister_notifier(uphy->vbus_edev, EXTCON_USB,
-					   &uphy->vbus_notify);
+	अगर (uphy->vbus_edev)
+		extcon_unरेजिस्टर_notअगरier(uphy->vbus_edev, EXTCON_USB,
+					   &uphy->vbus_notअगरy);
 	regulator_disable(uphy->v3p3);
 	regulator_disable(uphy->v1p8);
 	clk_disable_unprepare(uphy->sleep_clk);
 	clk_disable_unprepare(uphy->ref_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct phy_ops qcom_usb_hs_phy_ops = {
-	.power_on = qcom_usb_hs_phy_power_on,
-	.power_off = qcom_usb_hs_phy_power_off,
+अटल स्थिर काष्ठा phy_ops qcom_usb_hs_phy_ops = अणु
+	.घातer_on = qcom_usb_hs_phy_घातer_on,
+	.घातer_off = qcom_usb_hs_phy_घातer_off,
 	.set_mode = qcom_usb_hs_phy_set_mode,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int qcom_usb_hs_phy_probe(struct ulpi *ulpi)
-{
-	struct qcom_usb_hs_phy *uphy;
-	struct phy_provider *p;
-	struct clk *clk;
-	struct regulator *reg;
-	struct reset_control *reset;
-	int size;
-	int ret;
+अटल पूर्णांक qcom_usb_hs_phy_probe(काष्ठा ulpi *ulpi)
+अणु
+	काष्ठा qcom_usb_hs_phy *uphy;
+	काष्ठा phy_provider *p;
+	काष्ठा clk *clk;
+	काष्ठा regulator *reg;
+	काष्ठा reset_control *reset;
+	पूर्णांक size;
+	पूर्णांक ret;
 
-	uphy = devm_kzalloc(&ulpi->dev, sizeof(*uphy), GFP_KERNEL);
-	if (!uphy)
-		return -ENOMEM;
+	uphy = devm_kzalloc(&ulpi->dev, माप(*uphy), GFP_KERNEL);
+	अगर (!uphy)
+		वापस -ENOMEM;
 	ulpi_set_drvdata(ulpi, uphy);
 	uphy->ulpi = ulpi;
 
 	size = of_property_count_u8_elems(ulpi->dev.of_node, "qcom,init-seq");
-	if (size < 0)
+	अगर (size < 0)
 		size = 0;
-	uphy->init_seq = devm_kmalloc_array(&ulpi->dev, (size / 2) + 1,
-					   sizeof(*uphy->init_seq), GFP_KERNEL);
-	if (!uphy->init_seq)
-		return -ENOMEM;
-	ret = of_property_read_u8_array(ulpi->dev.of_node, "qcom,init-seq",
+	uphy->init_seq = devm_kदो_स्मृति_array(&ulpi->dev, (size / 2) + 1,
+					   माप(*uphy->init_seq), GFP_KERNEL);
+	अगर (!uphy->init_seq)
+		वापस -ENOMEM;
+	ret = of_property_पढ़ो_u8_array(ulpi->dev.of_node, "qcom,init-seq",
 					(u8 *)uphy->init_seq, size);
-	if (ret && size)
-		return ret;
+	अगर (ret && size)
+		वापस ret;
 	/* NUL terminate */
 	uphy->init_seq[size / 2].addr = uphy->init_seq[size / 2].val = 0;
 
 	uphy->ref_clk = clk = devm_clk_get(&ulpi->dev, "ref");
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
 	uphy->sleep_clk = clk = devm_clk_get(&ulpi->dev, "sleep");
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
 	uphy->v1p8 = reg = devm_regulator_get(&ulpi->dev, "v1p8");
-	if (IS_ERR(reg))
-		return PTR_ERR(reg);
+	अगर (IS_ERR(reg))
+		वापस PTR_ERR(reg);
 
 	uphy->v3p3 = reg = devm_regulator_get(&ulpi->dev, "v3p3");
-	if (IS_ERR(reg))
-		return PTR_ERR(reg);
+	अगर (IS_ERR(reg))
+		वापस PTR_ERR(reg);
 
 	uphy->reset = reset = devm_reset_control_get(&ulpi->dev, "por");
-	if (IS_ERR(reset)) {
-		if (PTR_ERR(reset) == -EPROBE_DEFER)
-			return PTR_ERR(reset);
-		uphy->reset = NULL;
-	}
+	अगर (IS_ERR(reset)) अणु
+		अगर (PTR_ERR(reset) == -EPROBE_DEFER)
+			वापस PTR_ERR(reset);
+		uphy->reset = शून्य;
+	पूर्ण
 
 	uphy->phy = devm_phy_create(&ulpi->dev, ulpi->dev.of_node,
 				    &qcom_usb_hs_phy_ops);
-	if (IS_ERR(uphy->phy))
-		return PTR_ERR(uphy->phy);
+	अगर (IS_ERR(uphy->phy))
+		वापस PTR_ERR(uphy->phy);
 
 	uphy->vbus_edev = extcon_get_edev_by_phandle(&ulpi->dev, 0);
-	if (IS_ERR(uphy->vbus_edev)) {
-		if (PTR_ERR(uphy->vbus_edev) != -ENODEV)
-			return PTR_ERR(uphy->vbus_edev);
-		uphy->vbus_edev = NULL;
-	}
+	अगर (IS_ERR(uphy->vbus_edev)) अणु
+		अगर (PTR_ERR(uphy->vbus_edev) != -ENODEV)
+			वापस PTR_ERR(uphy->vbus_edev);
+		uphy->vbus_edev = शून्य;
+	पूर्ण
 
-	uphy->vbus_notify.notifier_call = qcom_usb_hs_phy_vbus_notifier;
+	uphy->vbus_notअगरy.notअगरier_call = qcom_usb_hs_phy_vbus_notअगरier;
 	phy_set_drvdata(uphy->phy, uphy);
 
-	p = devm_of_phy_provider_register(&ulpi->dev, of_phy_simple_xlate);
-	return PTR_ERR_OR_ZERO(p);
-}
+	p = devm_of_phy_provider_रेजिस्टर(&ulpi->dev, of_phy_simple_xlate);
+	वापस PTR_ERR_OR_ZERO(p);
+पूर्ण
 
-static const struct of_device_id qcom_usb_hs_phy_match[] = {
-	{ .compatible = "qcom,usb-hs-phy", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id qcom_usb_hs_phy_match[] = अणु
+	अणु .compatible = "qcom,usb-hs-phy", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qcom_usb_hs_phy_match);
 
-static struct ulpi_driver qcom_usb_hs_phy_driver = {
+अटल काष्ठा ulpi_driver qcom_usb_hs_phy_driver = अणु
 	.probe = qcom_usb_hs_phy_probe,
-	.driver = {
+	.driver = अणु
 		.name = "qcom_usb_hs_phy",
 		.of_match_table = qcom_usb_hs_phy_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_ulpi_driver(qcom_usb_hs_phy_driver);
 
 MODULE_DESCRIPTION("Qualcomm USB HS phy");

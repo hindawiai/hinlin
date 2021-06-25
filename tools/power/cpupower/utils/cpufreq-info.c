@@ -1,480 +1,481 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  (C) 2004-2009  Dominik Brodowski <linux@dominikbrodowski.de>
+ *  (C) 2004-2009  Dominik Broकरोwski <linux@करोminikbroकरोwski.de>
  */
 
 
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
+#समावेश <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <सीमा.स>
 
-#include <getopt.h>
+#समावेश <getopt.h>
 
-#include "cpufreq.h"
-#include "helpers/sysfs.h"
-#include "helpers/helpers.h"
-#include "helpers/bitmask.h"
+#समावेश "cpufreq.h"
+#समावेश "helpers/sysfs.h"
+#समावेश "helpers/helpers.h"
+#समावेश "helpers/bitmask.h"
 
-#define LINE_LEN 10
+#घोषणा LINE_LEN 10
 
-static unsigned int count_cpus(void)
-{
-	FILE *fp;
-	char value[LINE_LEN];
-	unsigned int ret = 0;
-	unsigned int cpunr = 0;
+अटल अचिन्हित पूर्णांक count_cpus(व्योम)
+अणु
+	खाता *fp;
+	अक्षर value[LINE_LEN];
+	अचिन्हित पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक cpunr = 0;
 
-	fp = fopen("/proc/stat", "r");
-	if (!fp) {
-		printf(_("Couldn't count the number of CPUs (%s: %s), assuming 1\n"), "/proc/stat", strerror(errno));
-		return 1;
-	}
+	fp = ख_खोलो("/proc/stat", "r");
+	अगर (!fp) अणु
+		म_लिखो(_("Couldn't count the number of CPUs (%s: %s), assuming 1\n"), "/proc/stat", म_त्रुटि(त्रुटि_सं));
+		वापस 1;
+	पूर्ण
 
-	while (!feof(fp)) {
-		if (!fgets(value, LINE_LEN, fp))
-			continue;
+	जबतक (!ख_पूर्ण(fp)) अणु
+		अगर (!ख_माला_लो(value, LINE_LEN, fp))
+			जारी;
 		value[LINE_LEN - 1] = '\0';
-		if (strlen(value) < (LINE_LEN - 2))
-			continue;
-		if (strstr(value, "cpu "))
-			continue;
-		if (sscanf(value, "cpu%d ", &cpunr) != 1)
-			continue;
-		if (cpunr > ret)
+		अगर (म_माप(value) < (LINE_LEN - 2))
+			जारी;
+		अगर (म_माला(value, "cpu "))
+			जारी;
+		अगर (माला_पूछो(value, "cpu%d ", &cpunr) != 1)
+			जारी;
+		अगर (cpunr > ret)
 			ret = cpunr;
-	}
-	fclose(fp);
+	पूर्ण
+	ख_बंद(fp);
 
-	/* cpu count starts from 0, on error return 1 (UP) */
-	return ret + 1;
-}
+	/* cpu count starts from 0, on error वापस 1 (UP) */
+	वापस ret + 1;
+पूर्ण
 
 
-static void proc_cpufreq_output(void)
-{
-	unsigned int cpu, nr_cpus;
-	struct cpufreq_policy *policy;
-	unsigned int min_pctg = 0;
-	unsigned int max_pctg = 0;
-	unsigned long min, max;
+अटल व्योम proc_cpufreq_output(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu, nr_cpus;
+	काष्ठा cpufreq_policy *policy;
+	अचिन्हित पूर्णांक min_pctg = 0;
+	अचिन्हित पूर्णांक max_pctg = 0;
+	अचिन्हित दीर्घ min, max;
 
-	printf(_("          minimum CPU frequency  -  maximum CPU frequency  -  governor\n"));
+	म_लिखो(_("          minimum CPU frequency  -  maximum CPU frequency  -  governor\n"));
 
 	nr_cpus = count_cpus();
-	for (cpu = 0; cpu < nr_cpus; cpu++) {
+	क्रम (cpu = 0; cpu < nr_cpus; cpu++) अणु
 		policy = cpufreq_get_policy(cpu);
-		if (!policy)
-			continue;
+		अगर (!policy)
+			जारी;
 
-		if (cpufreq_get_hardware_limits(cpu, &min, &max)) {
+		अगर (cpufreq_get_hardware_limits(cpu, &min, &max)) अणु
 			max = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			min_pctg = (policy->min * 100) / max;
 			max_pctg = (policy->max * 100) / max;
-		}
-		printf("CPU%3d    %9lu kHz (%3d %%)  -  %9lu kHz (%3d %%)  -  %s\n",
+		पूर्ण
+		म_लिखो("CPU%3d    %9lu kHz (%3d %%)  -  %9lu kHz (%3d %%)  -  %s\n",
 			cpu , policy->min, max ? min_pctg : 0, policy->max,
 			max ? max_pctg : 0, policy->governor);
 
 		cpufreq_put_policy(policy);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int no_rounding;
-static void print_speed(unsigned long speed)
-{
-	unsigned long tmp;
+अटल पूर्णांक no_rounding;
+अटल व्योम prपूर्णांक_speed(अचिन्हित दीर्घ speed)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
 
-	if (no_rounding) {
-		if (speed > 1000000)
-			printf("%u.%06u GHz", ((unsigned int) speed/1000000),
-				((unsigned int) speed%1000000));
-		else if (speed > 1000)
-			printf("%u.%03u MHz", ((unsigned int) speed/1000),
-				(unsigned int) (speed%1000));
-		else
-			printf("%lu kHz", speed);
-	} else {
-		if (speed > 1000000) {
-			tmp = speed%10000;
-			if (tmp >= 5000)
+	अगर (no_rounding) अणु
+		अगर (speed > 1000000)
+			म_लिखो("%u.%06u GHz", ((अचिन्हित पूर्णांक) speed/1000000),
+				((अचिन्हित पूर्णांक) speed%1000000));
+		अन्यथा अगर (speed > 1000)
+			म_लिखो("%u.%03u MHz", ((अचिन्हित पूर्णांक) speed/1000),
+				(अचिन्हित पूर्णांक) (speed%1000));
+		अन्यथा
+			म_लिखो("%lu kHz", speed);
+	पूर्ण अन्यथा अणु
+		अगर (speed > 1000000) अणु
+			पंचांगp = speed%10000;
+			अगर (पंचांगp >= 5000)
 				speed += 10000;
-			printf("%u.%02u GHz", ((unsigned int) speed/1000000),
-				((unsigned int) (speed%1000000)/10000));
-		} else if (speed > 100000) {
-			tmp = speed%1000;
-			if (tmp >= 500)
+			म_लिखो("%u.%02u GHz", ((अचिन्हित पूर्णांक) speed/1000000),
+				((अचिन्हित पूर्णांक) (speed%1000000)/10000));
+		पूर्ण अन्यथा अगर (speed > 100000) अणु
+			पंचांगp = speed%1000;
+			अगर (पंचांगp >= 500)
 				speed += 1000;
-			printf("%u MHz", ((unsigned int) speed/1000));
-		} else if (speed > 1000) {
-			tmp = speed%100;
-			if (tmp >= 50)
+			म_लिखो("%u MHz", ((अचिन्हित पूर्णांक) speed/1000));
+		पूर्ण अन्यथा अगर (speed > 1000) अणु
+			पंचांगp = speed%100;
+			अगर (पंचांगp >= 50)
 				speed += 100;
-			printf("%u.%01u MHz", ((unsigned int) speed/1000),
-				((unsigned int) (speed%1000)/100));
-		}
-	}
+			म_लिखो("%u.%01u MHz", ((अचिन्हित पूर्णांक) speed/1000),
+				((अचिन्हित पूर्णांक) (speed%1000)/100));
+		पूर्ण
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void print_duration(unsigned long duration)
-{
-	unsigned long tmp;
+अटल व्योम prपूर्णांक_duration(अचिन्हित दीर्घ duration)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
 
-	if (no_rounding) {
-		if (duration > 1000000)
-			printf("%u.%06u ms", ((unsigned int) duration/1000000),
-				((unsigned int) duration%1000000));
-		else if (duration > 100000)
-			printf("%u us", ((unsigned int) duration/1000));
-		else if (duration > 1000)
-			printf("%u.%03u us", ((unsigned int) duration/1000),
-				((unsigned int) duration%1000));
-		else
-			printf("%lu ns", duration);
-	} else {
-		if (duration > 1000000) {
-			tmp = duration%10000;
-			if (tmp >= 5000)
+	अगर (no_rounding) अणु
+		अगर (duration > 1000000)
+			म_लिखो("%u.%06u ms", ((अचिन्हित पूर्णांक) duration/1000000),
+				((अचिन्हित पूर्णांक) duration%1000000));
+		अन्यथा अगर (duration > 100000)
+			म_लिखो("%u us", ((अचिन्हित पूर्णांक) duration/1000));
+		अन्यथा अगर (duration > 1000)
+			म_लिखो("%u.%03u us", ((अचिन्हित पूर्णांक) duration/1000),
+				((अचिन्हित पूर्णांक) duration%1000));
+		अन्यथा
+			म_लिखो("%lu ns", duration);
+	पूर्ण अन्यथा अणु
+		अगर (duration > 1000000) अणु
+			पंचांगp = duration%10000;
+			अगर (पंचांगp >= 5000)
 				duration += 10000;
-			printf("%u.%02u ms", ((unsigned int) duration/1000000),
-				((unsigned int) (duration%1000000)/10000));
-		} else if (duration > 100000) {
-			tmp = duration%1000;
-			if (tmp >= 500)
+			म_लिखो("%u.%02u ms", ((अचिन्हित पूर्णांक) duration/1000000),
+				((अचिन्हित पूर्णांक) (duration%1000000)/10000));
+		पूर्ण अन्यथा अगर (duration > 100000) अणु
+			पंचांगp = duration%1000;
+			अगर (पंचांगp >= 500)
 				duration += 1000;
-			printf("%u us", ((unsigned int) duration / 1000));
-		} else if (duration > 1000) {
-			tmp = duration%100;
-			if (tmp >= 50)
+			म_लिखो("%u us", ((अचिन्हित पूर्णांक) duration / 1000));
+		पूर्ण अन्यथा अगर (duration > 1000) अणु
+			पंचांगp = duration%100;
+			अगर (पंचांगp >= 50)
 				duration += 100;
-			printf("%u.%01u us", ((unsigned int) duration/1000),
-				((unsigned int) (duration%1000)/100));
-		} else
-			printf("%lu ns", duration);
-	}
-	return;
-}
+			म_लिखो("%u.%01u us", ((अचिन्हित पूर्णांक) duration/1000),
+				((अचिन्हित पूर्णांक) (duration%1000)/100));
+		पूर्ण अन्यथा
+			म_लिखो("%lu ns", duration);
+	पूर्ण
+	वापस;
+पूर्ण
 
-static int get_boost_mode_x86(unsigned int cpu)
-{
-	int support, active, b_states = 0, ret, pstate_no, i;
+अटल पूर्णांक get_boost_mode_x86(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक support, active, b_states = 0, ret, pstate_no, i;
 	/* ToDo: Make this more global */
-	unsigned long pstates[MAX_HW_PSTATES] = {0,};
+	अचिन्हित दीर्घ pstates[MAX_HW_PSTATES] = अणु0,पूर्ण;
 
 	ret = cpufreq_has_boost_support(cpu, &support, &active, &b_states);
-	if (ret) {
-		printf(_("Error while evaluating Boost Capabilities"
+	अगर (ret) अणु
+		म_लिखो(_("Error while evaluating Boost Capabilities"
 				" on CPU %d -- are you root?\n"), cpu);
-		return ret;
-	}
-	/* P state changes via MSR are identified via cpuid 80000007
-	   on Intel and AMD, but we assume boost capable machines can do that
-	   if (cpuid_eax(0x80000000) >= 0x80000007
+		वापस ret;
+	पूर्ण
+	/* P state changes via MSR are identअगरied via cpuid 80000007
+	   on Intel and AMD, but we assume boost capable machines can करो that
+	   अगर (cpuid_eax(0x80000000) >= 0x80000007
 	   && (cpuid_edx(0x80000007) & (1 << 7)))
 	*/
 
-	printf(_("  boost state support:\n"));
+	म_लिखो(_("  boost state support:\n"));
 
-	printf(_("    Supported: %s\n"), support ? _("yes") : _("no"));
-	printf(_("    Active: %s\n"), active ? _("yes") : _("no"));
+	म_लिखो(_("    Supported: %s\n"), support ? _("yes") : _("no"));
+	म_लिखो(_("    Active: %s\n"), active ? _("yes") : _("no"));
 
-	if ((cpupower_cpu_info.vendor == X86_VENDOR_AMD &&
-	     cpupower_cpu_info.family >= 0x10) ||
-	     cpupower_cpu_info.vendor == X86_VENDOR_HYGON) {
+	अगर ((cpuघातer_cpu_info.venकरोr == X86_VENDOR_AMD &&
+	     cpuघातer_cpu_info.family >= 0x10) ||
+	     cpuघातer_cpu_info.venकरोr == X86_VENDOR_HYGON) अणु
 		ret = decode_pstates(cpu, b_states, pstates, &pstate_no);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		printf(_("    Boost States: %d\n"), b_states);
-		printf(_("    Total States: %d\n"), pstate_no);
-		for (i = 0; i < pstate_no; i++) {
-			if (!pstates[i])
-				continue;
-			if (i < b_states)
-				printf(_("    Pstate-Pb%d: %luMHz (boost state)"
+		म_लिखो(_("    Boost States: %d\n"), b_states);
+		म_लिखो(_("    Total States: %d\n"), pstate_no);
+		क्रम (i = 0; i < pstate_no; i++) अणु
+			अगर (!pstates[i])
+				जारी;
+			अगर (i < b_states)
+				म_लिखो(_("    Pstate-Pb%d: %luMHz (boost state)"
 					 "\n"), i, pstates[i]);
-			else
-				printf(_("    Pstate-P%d:  %luMHz\n"),
+			अन्यथा
+				म_लिखो(_("    Pstate-P%d:  %luMHz\n"),
 				       i - b_states, pstates[i]);
-		}
-	} else if (cpupower_cpu_info.caps & CPUPOWER_CAP_HAS_TURBO_RATIO) {
-		double bclk;
-		unsigned long long intel_turbo_ratio = 0;
-		unsigned int ratio;
+		पूर्ण
+	पूर्ण अन्यथा अगर (cpuघातer_cpu_info.caps & CPUPOWER_CAP_HAS_TURBO_RATIO) अणु
+		द्विगुन bclk;
+		अचिन्हित दीर्घ दीर्घ पूर्णांकel_turbo_ratio = 0;
+		अचिन्हित पूर्णांक ratio;
 
-		/* Any way to autodetect this ? */
-		if (cpupower_cpu_info.caps & CPUPOWER_CAP_IS_SNB)
+		/* Any way to स्वतःdetect this ? */
+		अगर (cpuघातer_cpu_info.caps & CPUPOWER_CAP_IS_SNB)
 			bclk = 100.00;
-		else
+		अन्यथा
 			bclk = 133.33;
-		intel_turbo_ratio = msr_intel_get_turbo_ratio(cpu);
-		dprint ("    Ratio: 0x%llx - bclk: %f\n",
-			intel_turbo_ratio, bclk);
+		पूर्णांकel_turbo_ratio = msr_पूर्णांकel_get_turbo_ratio(cpu);
+		dprपूर्णांक ("    Ratio: 0x%llx - bclk: %f\n",
+			पूर्णांकel_turbo_ratio, bclk);
 
-		ratio = (intel_turbo_ratio >> 24) & 0xFF;
-		if (ratio)
-			printf(_("    %.0f MHz max turbo 4 active cores\n"),
+		ratio = (पूर्णांकel_turbo_ratio >> 24) & 0xFF;
+		अगर (ratio)
+			म_लिखो(_("    %.0f MHz max turbo 4 active cores\n"),
 			       ratio * bclk);
 
-		ratio = (intel_turbo_ratio >> 16) & 0xFF;
-		if (ratio)
-			printf(_("    %.0f MHz max turbo 3 active cores\n"),
+		ratio = (पूर्णांकel_turbo_ratio >> 16) & 0xFF;
+		अगर (ratio)
+			म_लिखो(_("    %.0f MHz max turbo 3 active cores\n"),
 			       ratio * bclk);
 
-		ratio = (intel_turbo_ratio >> 8) & 0xFF;
-		if (ratio)
-			printf(_("    %.0f MHz max turbo 2 active cores\n"),
+		ratio = (पूर्णांकel_turbo_ratio >> 8) & 0xFF;
+		अगर (ratio)
+			म_लिखो(_("    %.0f MHz max turbo 2 active cores\n"),
 			       ratio * bclk);
 
-		ratio = (intel_turbo_ratio >> 0) & 0xFF;
-		if (ratio)
-			printf(_("    %.0f MHz max turbo 1 active cores\n"),
+		ratio = (पूर्णांकel_turbo_ratio >> 0) & 0xFF;
+		अगर (ratio)
+			म_लिखो(_("    %.0f MHz max turbo 1 active cores\n"),
 			       ratio * bclk);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* --boost / -b */
 
-static int get_boost_mode(unsigned int cpu)
-{
-	struct cpufreq_available_frequencies *freqs;
+अटल पूर्णांक get_boost_mode(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_available_frequencies *freqs;
 
-	if (cpupower_cpu_info.vendor == X86_VENDOR_AMD ||
-	    cpupower_cpu_info.vendor == X86_VENDOR_HYGON ||
-	    cpupower_cpu_info.vendor == X86_VENDOR_INTEL)
-		return get_boost_mode_x86(cpu);
+	अगर (cpuघातer_cpu_info.venकरोr == X86_VENDOR_AMD ||
+	    cpuघातer_cpu_info.venकरोr == X86_VENDOR_HYGON ||
+	    cpuघातer_cpu_info.venकरोr == X86_VENDOR_INTEL)
+		वापस get_boost_mode_x86(cpu);
 
 	freqs = cpufreq_get_boost_frequencies(cpu);
-	if (freqs) {
-		printf(_("  boost frequency steps: "));
-		while (freqs->next) {
-			print_speed(freqs->frequency);
-			printf(", ");
+	अगर (freqs) अणु
+		म_लिखो(_("  boost frequency steps: "));
+		जबतक (freqs->next) अणु
+			prपूर्णांक_speed(freqs->frequency);
+			म_लिखो(", ");
 			freqs = freqs->next;
-		}
-		print_speed(freqs->frequency);
-		printf("\n");
+		पूर्ण
+		prपूर्णांक_speed(freqs->frequency);
+		म_लिखो("\n");
 		cpufreq_put_available_frequencies(freqs);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* --freq / -f */
 
-static int get_freq_kernel(unsigned int cpu, unsigned int human)
-{
-	unsigned long freq = cpufreq_get_freq_kernel(cpu);
-	printf(_("  current CPU frequency: "));
-	if (!freq) {
-		printf(_(" Unable to call to kernel\n"));
-		return -EINVAL;
-	}
-	if (human) {
-		print_speed(freq);
-	} else
-		printf("%lu", freq);
-	printf(_(" (asserted by call to kernel)\n"));
-	return 0;
-}
+अटल पूर्णांक get_freq_kernel(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक human)
+अणु
+	अचिन्हित दीर्घ freq = cpufreq_get_freq_kernel(cpu);
+	म_लिखो(_("  current CPU frequency: "));
+	अगर (!freq) अणु
+		म_लिखो(_(" Unable to call to kernel\n"));
+		वापस -EINVAL;
+	पूर्ण
+	अगर (human) अणु
+		prपूर्णांक_speed(freq);
+	पूर्ण अन्यथा
+		म_लिखो("%lu", freq);
+	म_लिखो(_(" (asserted by call to kernel)\n"));
+	वापस 0;
+पूर्ण
 
 
 /* --hwfreq / -w */
 
-static int get_freq_hardware(unsigned int cpu, unsigned int human)
-{
-	unsigned long freq = cpufreq_get_freq_hardware(cpu);
-	printf(_("  current CPU frequency: "));
-	if (!freq) {
-		printf("Unable to call hardware\n");
-		return -EINVAL;
-	}
-	if (human) {
-		print_speed(freq);
-	} else
-		printf("%lu", freq);
-	printf(_(" (asserted by call to hardware)\n"));
-	return 0;
-}
+अटल पूर्णांक get_freq_hardware(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक human)
+अणु
+	अचिन्हित दीर्घ freq = cpufreq_get_freq_hardware(cpu);
+	म_लिखो(_("  current CPU frequency: "));
+	अगर (!freq) अणु
+		म_लिखो("Unable to call hardware\n");
+		वापस -EINVAL;
+	पूर्ण
+	अगर (human) अणु
+		prपूर्णांक_speed(freq);
+	पूर्ण अन्यथा
+		म_लिखो("%lu", freq);
+	म_लिखो(_(" (asserted by call to hardware)\n"));
+	वापस 0;
+पूर्ण
 
 /* --hwlimits / -l */
 
-static int get_hardware_limits(unsigned int cpu, unsigned int human)
-{
-	unsigned long min, max;
+अटल पूर्णांक get_hardware_limits(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक human)
+अणु
+	अचिन्हित दीर्घ min, max;
 
-	if (cpufreq_get_hardware_limits(cpu, &min, &max)) {
-		printf(_("Not Available\n"));
-		return -EINVAL;
-	}
+	अगर (cpufreq_get_hardware_limits(cpu, &min, &max)) अणु
+		म_लिखो(_("Not Available\n"));
+		वापस -EINVAL;
+	पूर्ण
 
-	if (human) {
-		printf(_("  hardware limits: "));
-		print_speed(min);
-		printf(" - ");
-		print_speed(max);
-		printf("\n");
-	} else {
-		printf("%lu %lu\n", min, max);
-	}
-	return 0;
-}
+	अगर (human) अणु
+		म_लिखो(_("  hardware limits: "));
+		prपूर्णांक_speed(min);
+		म_लिखो(" - ");
+		prपूर्णांक_speed(max);
+		म_लिखो("\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("%lu %lu\n", min, max);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* --driver / -d */
 
-static int get_driver(unsigned int cpu)
-{
-	char *driver = cpufreq_get_driver(cpu);
-	if (!driver) {
-		printf(_("  no or unknown cpufreq driver is active on this CPU\n"));
-		return -EINVAL;
-	}
-	printf("  driver: %s\n", driver);
+अटल पूर्णांक get_driver(अचिन्हित पूर्णांक cpu)
+अणु
+	अक्षर *driver = cpufreq_get_driver(cpu);
+	अगर (!driver) अणु
+		म_लिखो(_("  no or unknown cpufreq driver is active on this CPU\n"));
+		वापस -EINVAL;
+	पूर्ण
+	म_लिखो("  driver: %s\n", driver);
 	cpufreq_put_driver(driver);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* --policy / -p */
 
-static int get_policy(unsigned int cpu)
-{
-	struct cpufreq_policy *policy = cpufreq_get_policy(cpu);
-	if (!policy) {
-		printf(_("  Unable to determine current policy\n"));
-		return -EINVAL;
-	}
-	printf(_("  current policy: frequency should be within "));
-	print_speed(policy->min);
-	printf(_(" and "));
-	print_speed(policy->max);
+अटल पूर्णांक get_policy(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_policy *policy = cpufreq_get_policy(cpu);
+	अगर (!policy) अणु
+		म_लिखो(_("  Unable to determine current policy\n"));
+		वापस -EINVAL;
+	पूर्ण
+	म_लिखो(_("  current policy: frequency should be within "));
+	prपूर्णांक_speed(policy->min);
+	म_लिखो(_(" and "));
+	prपूर्णांक_speed(policy->max);
 
-	printf(".\n                  ");
-	printf(_("The governor \"%s\" may decide which speed to use\n"
+	म_लिखो(".\n                  ");
+	म_लिखो(_("The governor \"%s\" may decide which speed to use\n"
 	       "                  within this range.\n"),
 	       policy->governor);
 	cpufreq_put_policy(policy);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* --governors / -g */
 
-static int get_available_governors(unsigned int cpu)
-{
-	struct cpufreq_available_governors *governors =
+अटल पूर्णांक get_available_governors(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_available_governors *governors =
 		cpufreq_get_available_governors(cpu);
 
-	printf(_("  available cpufreq governors: "));
-	if (!governors) {
-		printf(_("Not Available\n"));
-		return -EINVAL;
-	}
+	म_लिखो(_("  available cpufreq governors: "));
+	अगर (!governors) अणु
+		म_लिखो(_("Not Available\n"));
+		वापस -EINVAL;
+	पूर्ण
 
-	while (governors->next) {
-		printf("%s ", governors->governor);
+	जबतक (governors->next) अणु
+		म_लिखो("%s ", governors->governor);
 		governors = governors->next;
-	}
-	printf("%s\n", governors->governor);
+	पूर्ण
+	म_लिखो("%s\n", governors->governor);
 	cpufreq_put_available_governors(governors);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /* --affected-cpus  / -a */
 
-static int get_affected_cpus(unsigned int cpu)
-{
-	struct cpufreq_affected_cpus *cpus = cpufreq_get_affected_cpus(cpu);
+अटल पूर्णांक get_affected_cpus(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_affected_cpus *cpus = cpufreq_get_affected_cpus(cpu);
 
-	printf(_("  CPUs which need to have their frequency coordinated by software: "));
-	if (!cpus) {
-		printf(_("Not Available\n"));
-		return -EINVAL;
-	}
+	म_लिखो(_("  CPUs which need to have their frequency coordinated by software: "));
+	अगर (!cpus) अणु
+		म_लिखो(_("Not Available\n"));
+		वापस -EINVAL;
+	पूर्ण
 
-	while (cpus->next) {
-		printf("%d ", cpus->cpu);
+	जबतक (cpus->next) अणु
+		म_लिखो("%d ", cpus->cpu);
 		cpus = cpus->next;
-	}
-	printf("%d\n", cpus->cpu);
+	पूर्ण
+	म_लिखो("%d\n", cpus->cpu);
 	cpufreq_put_affected_cpus(cpus);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* --related-cpus  / -r */
 
-static int get_related_cpus(unsigned int cpu)
-{
-	struct cpufreq_affected_cpus *cpus = cpufreq_get_related_cpus(cpu);
+अटल पूर्णांक get_related_cpus(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_affected_cpus *cpus = cpufreq_get_related_cpus(cpu);
 
-	printf(_("  CPUs which run at the same hardware frequency: "));
-	if (!cpus) {
-		printf(_("Not Available\n"));
-		return -EINVAL;
-	}
+	म_लिखो(_("  CPUs which run at the same hardware frequency: "));
+	अगर (!cpus) अणु
+		म_लिखो(_("Not Available\n"));
+		वापस -EINVAL;
+	पूर्ण
 
-	while (cpus->next) {
-		printf("%d ", cpus->cpu);
+	जबतक (cpus->next) अणु
+		म_लिखो("%d ", cpus->cpu);
 		cpus = cpus->next;
-	}
-	printf("%d\n", cpus->cpu);
+	पूर्ण
+	म_लिखो("%d\n", cpus->cpu);
 	cpufreq_put_related_cpus(cpus);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* --stats / -s */
 
-static int get_freq_stats(unsigned int cpu, unsigned int human)
-{
-	unsigned long total_trans = cpufreq_get_transitions(cpu);
-	unsigned long long total_time;
-	struct cpufreq_stats *stats = cpufreq_get_stats(cpu, &total_time);
-	while (stats) {
-		if (human) {
-			print_speed(stats->frequency);
-			printf(":%.2f%%",
-				(100.0 * stats->time_in_state) / total_time);
-		} else
-			printf("%lu:%llu",
-				stats->frequency, stats->time_in_state);
+अटल पूर्णांक get_freq_stats(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक human)
+अणु
+	अचिन्हित दीर्घ total_trans = cpufreq_get_transitions(cpu);
+	अचिन्हित दीर्घ दीर्घ total_समय;
+	काष्ठा cpufreq_stats *stats = cpufreq_get_stats(cpu, &total_समय);
+	जबतक (stats) अणु
+		अगर (human) अणु
+			prपूर्णांक_speed(stats->frequency);
+			म_लिखो(":%.2f%%",
+				(100.0 * stats->समय_in_state) / total_समय);
+		पूर्ण अन्यथा
+			म_लिखो("%lu:%llu",
+				stats->frequency, stats->समय_in_state);
 		stats = stats->next;
-		if (stats)
-			printf(", ");
-	}
+		अगर (stats)
+			म_लिखो(", ");
+	पूर्ण
 	cpufreq_put_stats(stats);
-	if (total_trans)
-		printf("  (%lu)\n", total_trans);
-	return 0;
-}
+	अगर (total_trans)
+		म_लिखो("  (%lu)\n", total_trans);
+	वापस 0;
+पूर्ण
 
 /* --latency / -y */
 
-static int get_latency(unsigned int cpu, unsigned int human)
-{
-	unsigned long latency = cpufreq_get_transition_latency(cpu);
+अटल पूर्णांक get_latency(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक human)
+अणु
+	अचिन्हित दीर्घ latency = cpufreq_get_transition_latency(cpu);
 
-	printf(_("  maximum transition latency: "));
-	if (!latency || latency == UINT_MAX) {
-		printf(_(" Cannot determine or is not supported.\n"));
-		return -EINVAL;
-	}
+	म_लिखो(_("  maximum transition latency: "));
+	अगर (!latency || latency == अच_पूर्णांक_उच्च) अणु
+		म_लिखो(_(" Cannot determine or is not supported.\n"));
+		वापस -EINVAL;
+	पूर्ण
 
-	if (human) {
-		print_duration(latency);
-		printf("\n");
-	} else
-		printf("%lu\n", latency);
-	return 0;
-}
+	अगर (human) अणु
+		prपूर्णांक_duration(latency);
+		म_लिखो("\n");
+	पूर्ण अन्यथा
+		म_लिखो("%lu\n", latency);
+	वापस 0;
+पूर्ण
 
-static void debug_output_one(unsigned int cpu)
-{
-	struct cpufreq_available_frequencies *freqs;
+अटल व्योम debug_output_one(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_available_frequencies *freqs;
 
 	get_driver(cpu);
 	get_related_cpus(cpu);
@@ -483,186 +484,186 @@ static void debug_output_one(unsigned int cpu)
 	get_hardware_limits(cpu, 1);
 
 	freqs = cpufreq_get_available_frequencies(cpu);
-	if (freqs) {
-		printf(_("  available frequency steps:  "));
-		while (freqs->next) {
-			print_speed(freqs->frequency);
-			printf(", ");
+	अगर (freqs) अणु
+		म_लिखो(_("  available frequency steps:  "));
+		जबतक (freqs->next) अणु
+			prपूर्णांक_speed(freqs->frequency);
+			म_लिखो(", ");
 			freqs = freqs->next;
-		}
-		print_speed(freqs->frequency);
-		printf("\n");
+		पूर्ण
+		prपूर्णांक_speed(freqs->frequency);
+		म_लिखो("\n");
 		cpufreq_put_available_frequencies(freqs);
-	}
+	पूर्ण
 
 	get_available_governors(cpu);
 	get_policy(cpu);
-	if (get_freq_hardware(cpu, 1) < 0)
+	अगर (get_freq_hardware(cpu, 1) < 0)
 		get_freq_kernel(cpu, 1);
 	get_boost_mode(cpu);
-}
+पूर्ण
 
-static struct option info_opts[] = {
-	{"debug",	 no_argument,		 NULL,	 'e'},
-	{"boost",	 no_argument,		 NULL,	 'b'},
-	{"freq",	 no_argument,		 NULL,	 'f'},
-	{"hwfreq",	 no_argument,		 NULL,	 'w'},
-	{"hwlimits",	 no_argument,		 NULL,	 'l'},
-	{"driver",	 no_argument,		 NULL,	 'd'},
-	{"policy",	 no_argument,		 NULL,	 'p'},
-	{"governors",	 no_argument,		 NULL,	 'g'},
-	{"related-cpus",  no_argument,	 NULL,	 'r'},
-	{"affected-cpus", no_argument,	 NULL,	 'a'},
-	{"stats",	 no_argument,		 NULL,	 's'},
-	{"latency",	 no_argument,		 NULL,	 'y'},
-	{"proc",	 no_argument,		 NULL,	 'o'},
-	{"human",	 no_argument,		 NULL,	 'm'},
-	{"no-rounding", no_argument,	 NULL,	 'n'},
-	{ },
-};
+अटल काष्ठा option info_opts[] = अणु
+	अणु"debug",	 no_argument,		 शून्य,	 'e'पूर्ण,
+	अणु"boost",	 no_argument,		 शून्य,	 'b'पूर्ण,
+	अणु"freq",	 no_argument,		 शून्य,	 'f'पूर्ण,
+	अणु"hwfreq",	 no_argument,		 शून्य,	 'w'पूर्ण,
+	अणु"hwlimits",	 no_argument,		 शून्य,	 'l'पूर्ण,
+	अणु"driver",	 no_argument,		 शून्य,	 'd'पूर्ण,
+	अणु"policy",	 no_argument,		 शून्य,	 'p'पूर्ण,
+	अणु"governors",	 no_argument,		 शून्य,	 'g'पूर्ण,
+	अणु"related-cpus",  no_argument,	 शून्य,	 'r'पूर्ण,
+	अणु"affected-cpus", no_argument,	 शून्य,	 'a'पूर्ण,
+	अणु"stats",	 no_argument,		 शून्य,	 's'पूर्ण,
+	अणु"latency",	 no_argument,		 शून्य,	 'y'पूर्ण,
+	अणु"proc",	 no_argument,		 शून्य,	 'o'पूर्ण,
+	अणु"human",	 no_argument,		 शून्य,	 'm'पूर्ण,
+	अणु"no-rounding", no_argument,	 शून्य,	 'n'पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-int cmd_freq_info(int argc, char **argv)
-{
-	extern char *optarg;
-	extern int optind, opterr, optopt;
-	int ret = 0, cont = 1;
-	unsigned int cpu = 0;
-	unsigned int human = 0;
-	int output_param = 0;
+पूर्णांक cmd_freq_info(पूर्णांक argc, अक्षर **argv)
+अणु
+	बाह्य अक्षर *optarg;
+	बाह्य पूर्णांक optind, opterr, optopt;
+	पूर्णांक ret = 0, cont = 1;
+	अचिन्हित पूर्णांक cpu = 0;
+	अचिन्हित पूर्णांक human = 0;
+	पूर्णांक output_param = 0;
 
-	do {
-		ret = getopt_long(argc, argv, "oefwldpgrasmybn", info_opts,
-				  NULL);
-		switch (ret) {
-		case '?':
+	करो अणु
+		ret = getopt_दीर्घ(argc, argv, "oefwldpgrasmybn", info_opts,
+				  शून्य);
+		चयन (ret) अणु
+		हाल '?':
 			output_param = '?';
 			cont = 0;
-			break;
-		case -1:
+			अवरोध;
+		हाल -1:
 			cont = 0;
-			break;
-		case 'b':
-		case 'o':
-		case 'a':
-		case 'r':
-		case 'g':
-		case 'p':
-		case 'd':
-		case 'l':
-		case 'w':
-		case 'f':
-		case 'e':
-		case 's':
-		case 'y':
-			if (output_param) {
+			अवरोध;
+		हाल 'b':
+		हाल 'o':
+		हाल 'a':
+		हाल 'r':
+		हाल 'g':
+		हाल 'p':
+		हाल 'd':
+		हाल 'l':
+		हाल 'w':
+		हाल 'f':
+		हाल 'e':
+		हाल 's':
+		हाल 'y':
+			अगर (output_param) अणु
 				output_param = -1;
 				cont = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			output_param = ret;
-			break;
-		case 'm':
-			if (human) {
+			अवरोध;
+		हाल 'm':
+			अगर (human) अणु
 				output_param = -1;
 				cont = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			human = 1;
-			break;
-		case 'n':
+			अवरोध;
+		हाल 'n':
 			no_rounding = 1;
-			break;
-		default:
-			fprintf(stderr, "invalid or unknown argument\n");
-			return EXIT_FAILURE;
-		}
-	} while (cont);
+			अवरोध;
+		शेष:
+			ख_लिखो(मानक_त्रुटि, "invalid or unknown argument\n");
+			वापस निकास_त्रुटि;
+		पूर्ण
+	पूर्ण जबतक (cont);
 
-	switch (output_param) {
-	case 'o':
-		if (!bitmask_isallclear(cpus_chosen)) {
-			printf(_("The argument passed to this tool can't be "
+	चयन (output_param) अणु
+	हाल 'o':
+		अगर (!biपंचांगask_isallclear(cpus_chosen)) अणु
+			म_लिखो(_("The argument passed to this tool can't be "
 				 "combined with passing a --cpu argument\n"));
-			return -EINVAL;
-		}
-		break;
-	case 0:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल 0:
 		output_param = 'e';
-	}
+	पूर्ण
 
 	ret = 0;
 
 	/* Default is: show output of CPU 0 only */
-	if (bitmask_isallclear(cpus_chosen))
-		bitmask_setbit(cpus_chosen, 0);
+	अगर (biपंचांगask_isallclear(cpus_chosen))
+		biपंचांगask_setbit(cpus_chosen, 0);
 
-	switch (output_param) {
-	case -1:
-		printf(_("You can't specify more than one --cpu parameter and/or\n"
+	चयन (output_param) अणु
+	हाल -1:
+		म_लिखो(_("You can't specify more than one --cpu parameter and/or\n"
 		       "more than one output-specific argument\n"));
-		return -EINVAL;
-	case '?':
-		printf(_("invalid or unknown argument\n"));
-		return -EINVAL;
-	case 'o':
+		वापस -EINVAL;
+	हाल '?':
+		म_लिखो(_("invalid or unknown argument\n"));
+		वापस -EINVAL;
+	हाल 'o':
 		proc_cpufreq_output();
-		return EXIT_SUCCESS;
-	}
+		वापस निकास_सफल;
+	पूर्ण
 
-	for (cpu = bitmask_first(cpus_chosen);
-	     cpu <= bitmask_last(cpus_chosen); cpu++) {
+	क्रम (cpu = biपंचांगask_first(cpus_chosen);
+	     cpu <= biपंचांगask_last(cpus_chosen); cpu++) अणु
 
-		if (!bitmask_isbitset(cpus_chosen, cpu))
-			continue;
+		अगर (!biपंचांगask_isbitset(cpus_chosen, cpu))
+			जारी;
 
-		printf(_("analyzing CPU %d:\n"), cpu);
+		म_लिखो(_("analyzing CPU %d:\n"), cpu);
 
-		if (sysfs_is_cpu_online(cpu) != 1) {
-			printf(_(" *is offline\n"));
-			printf("\n");
-			continue;
-		}
+		अगर (sysfs_is_cpu_online(cpu) != 1) अणु
+			म_लिखो(_(" *is offline\n"));
+			म_लिखो("\n");
+			जारी;
+		पूर्ण
 
-		switch (output_param) {
-		case 'b':
+		चयन (output_param) अणु
+		हाल 'b':
 			get_boost_mode(cpu);
-			break;
-		case 'e':
+			अवरोध;
+		हाल 'e':
 			debug_output_one(cpu);
-			break;
-		case 'a':
+			अवरोध;
+		हाल 'a':
 			ret = get_affected_cpus(cpu);
-			break;
-		case 'r':
+			अवरोध;
+		हाल 'r':
 			ret = get_related_cpus(cpu);
-			break;
-		case 'g':
+			अवरोध;
+		हाल 'g':
 			ret = get_available_governors(cpu);
-			break;
-		case 'p':
+			अवरोध;
+		हाल 'p':
 			ret = get_policy(cpu);
-			break;
-		case 'd':
+			अवरोध;
+		हाल 'd':
 			ret = get_driver(cpu);
-			break;
-		case 'l':
+			अवरोध;
+		हाल 'l':
 			ret = get_hardware_limits(cpu, human);
-			break;
-		case 'w':
+			अवरोध;
+		हाल 'w':
 			ret = get_freq_hardware(cpu, human);
-			break;
-		case 'f':
+			अवरोध;
+		हाल 'f':
 			ret = get_freq_kernel(cpu, human);
-			break;
-		case 's':
+			अवरोध;
+		हाल 's':
 			ret = get_freq_stats(cpu, human);
-			break;
-		case 'y':
+			अवरोध;
+		हाल 'y':
 			ret = get_latency(cpu, human);
-			break;
-		}
-		if (ret)
-			return ret;
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस ret;
+पूर्ण

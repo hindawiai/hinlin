@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,24 +21,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef _SMUMGR_H_
-#define _SMUMGR_H_
-#include <linux/types.h>
-#include "amd_powerplay.h"
-#include "hwmgr.h"
+#अगर_अघोषित _SMUMGR_H_
+#घोषणा _SMUMGR_H_
+#समावेश <linux/types.h>
+#समावेश "amd_powerplay.h"
+#समावेश "hwmgr.h"
 
-enum SMU_TABLE {
+क्रमागत SMU_TABLE अणु
 	SMU_UVD_TABLE = 0,
 	SMU_VCE_TABLE,
 	SMU_BIF_TABLE,
-};
+पूर्ण;
 
-enum SMU_TYPE {
+क्रमागत SMU_TYPE अणु
 	SMU_SoftRegisters = 0,
 	SMU_Discrete_DpmTable,
-};
+पूर्ण;
 
-enum SMU_MEMBER {
+क्रमागत SMU_MEMBER अणु
 	HandshakeDisables = 0,
 	VoltageChangeTimeout,
 	AverageGraphicsActivity,
@@ -53,10 +54,10 @@ enum SMU_MEMBER {
 	DRAM_LOG_PHY_ADDR_H,
 	DRAM_LOG_PHY_ADDR_L,
 	DRAM_LOG_BUFF_SIZE,
-};
+पूर्ण;
 
 
-enum SMU_MAC_DEFINITION {
+क्रमागत SMU_MAC_DEFINITION अणु
 	SMU_MAX_LEVELS_GRAPHICS = 0,
 	SMU_MAX_LEVELS_MEMORY,
 	SMU_MAX_LEVELS_LINK,
@@ -66,53 +67,53 @@ enum SMU_MAC_DEFINITION {
 	SMU_MAX_LEVELS_VDDCI,
 	SMU_MAX_LEVELS_MVDD,
 	SMU_UVD_MCLK_HANDSHAKE_DISABLE,
-};
+पूर्ण;
 
-enum SMU9_TABLE_ID {
+क्रमागत SMU9_TABLE_ID अणु
 	PPTABLE = 0,
 	WMTABLE,
 	AVFSTABLE,
 	TOOLSTABLE,
 	AVFSFUSETABLE
-};
+पूर्ण;
 
-enum SMU10_TABLE_ID {
+क्रमागत SMU10_TABLE_ID अणु
 	SMU10_WMTABLE = 0,
 	SMU10_CLOCKTABLE,
-};
+पूर्ण;
 
-extern int smum_download_powerplay_table(struct pp_hwmgr *hwmgr, void **table);
+बाह्य पूर्णांक smum_करोwnload_घातerplay_table(काष्ठा pp_hwmgr *hwmgr, व्योम **table);
 
-extern int smum_upload_powerplay_table(struct pp_hwmgr *hwmgr);
+बाह्य पूर्णांक smum_upload_घातerplay_table(काष्ठा pp_hwmgr *hwmgr);
 
-extern int smum_send_msg_to_smc(struct pp_hwmgr *hwmgr, uint16_t msg, uint32_t *resp);
+बाह्य पूर्णांक smum_send_msg_to_smc(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक16_t msg, uपूर्णांक32_t *resp);
 
-extern int smum_send_msg_to_smc_with_parameter(struct pp_hwmgr *hwmgr,
-					uint16_t msg, uint32_t parameter,
-					uint32_t *resp);
+बाह्य पूर्णांक smum_send_msg_to_smc_with_parameter(काष्ठा pp_hwmgr *hwmgr,
+					uपूर्णांक16_t msg, uपूर्णांक32_t parameter,
+					uपूर्णांक32_t *resp);
 
-extern int smum_update_sclk_threshold(struct pp_hwmgr *hwmgr);
+बाह्य पूर्णांक smum_update_sclk_threshold(काष्ठा pp_hwmgr *hwmgr);
 
-extern int smum_update_smc_table(struct pp_hwmgr *hwmgr, uint32_t type);
-extern int smum_process_firmware_header(struct pp_hwmgr *hwmgr);
-extern int smum_thermal_avfs_enable(struct pp_hwmgr *hwmgr);
-extern int smum_thermal_setup_fan_table(struct pp_hwmgr *hwmgr);
-extern int smum_init_smc_table(struct pp_hwmgr *hwmgr);
-extern int smum_populate_all_graphic_levels(struct pp_hwmgr *hwmgr);
-extern int smum_populate_all_memory_levels(struct pp_hwmgr *hwmgr);
-extern int smum_initialize_mc_reg_table(struct pp_hwmgr *hwmgr);
-extern uint32_t smum_get_offsetof(struct pp_hwmgr *hwmgr,
-				uint32_t type, uint32_t member);
-extern uint32_t smum_get_mac_definition(struct pp_hwmgr *hwmgr, uint32_t value);
+बाह्य पूर्णांक smum_update_smc_table(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t type);
+बाह्य पूर्णांक smum_process_firmware_header(काष्ठा pp_hwmgr *hwmgr);
+बाह्य पूर्णांक smum_thermal_avfs_enable(काष्ठा pp_hwmgr *hwmgr);
+बाह्य पूर्णांक smum_thermal_setup_fan_table(काष्ठा pp_hwmgr *hwmgr);
+बाह्य पूर्णांक smum_init_smc_table(काष्ठा pp_hwmgr *hwmgr);
+बाह्य पूर्णांक smum_populate_all_graphic_levels(काष्ठा pp_hwmgr *hwmgr);
+बाह्य पूर्णांक smum_populate_all_memory_levels(काष्ठा pp_hwmgr *hwmgr);
+बाह्य पूर्णांक smum_initialize_mc_reg_table(काष्ठा pp_hwmgr *hwmgr);
+बाह्य uपूर्णांक32_t smum_get_दुरत्व(काष्ठा pp_hwmgr *hwmgr,
+				uपूर्णांक32_t type, uपूर्णांक32_t member);
+बाह्य uपूर्णांक32_t smum_get_mac_definition(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t value);
 
-extern bool smum_is_dpm_running(struct pp_hwmgr *hwmgr);
+बाह्य bool smum_is_dpm_running(काष्ठा pp_hwmgr *hwmgr);
 
-extern bool smum_is_hw_avfs_present(struct pp_hwmgr *hwmgr);
+बाह्य bool smum_is_hw_avfs_present(काष्ठा pp_hwmgr *hwmgr);
 
-extern int smum_update_dpm_settings(struct pp_hwmgr *hwmgr, void *profile_setting);
+बाह्य पूर्णांक smum_update_dpm_settings(काष्ठा pp_hwmgr *hwmgr, व्योम *profile_setting);
 
-extern int smum_smc_table_manager(struct pp_hwmgr *hwmgr, uint8_t *table, uint16_t table_id, bool rw);
+बाह्य पूर्णांक smum_smc_table_manager(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक8_t *table, uपूर्णांक16_t table_id, bool rw);
 
-extern int smum_stop_smc(struct pp_hwmgr *hwmgr);
+बाह्य पूर्णांक smum_stop_smc(काष्ठा pp_hwmgr *hwmgr);
 
-#endif
+#पूर्ण_अगर

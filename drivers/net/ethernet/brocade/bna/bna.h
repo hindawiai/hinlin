@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Linux network driver for QLogic BR-series Converged Network Adapter.
+ * Linux network driver क्रम QLogic BR-series Converged Network Adapter.
  */
 /*
  * Copyright (c) 2005-2014 Brocade Communications Systems, Inc.
@@ -8,411 +9,411 @@
  * All rights reserved
  * www.qlogic.com
  */
-#ifndef __BNA_H__
-#define __BNA_H__
+#अगर_अघोषित __BNA_H__
+#घोषणा __BNA_H__
 
-#include "bfa_defs.h"
-#include "bfa_ioc.h"
-#include "bfi_enet.h"
-#include "bna_types.h"
+#समावेश "bfa_defs.h"
+#समावेश "bfa_ioc.h"
+#समावेश "bfi_enet.h"
+#समावेश "bna_types.h"
 
-extern const u32 bna_napi_dim_vector[][BNA_BIAS_T_MAX];
+बाह्य स्थिर u32 bna_napi_dim_vector[][BNA_BIAS_T_MAX];
 
-/*  Macros and constants  */
+/*  Macros and स्थिरants  */
 
-#define bna_is_small_rxq(_id) ((_id) & 0x1)
+#घोषणा bna_is_small_rxq(_id) ((_id) & 0x1)
 
 /*
- * input : _addr-> os dma addr in host endian format,
- * output : _bna_dma_addr-> pointer to hw dma addr
+ * input : _addr-> os dma addr in host endian क्रमmat,
+ * output : _bna_dma_addr-> poपूर्णांकer to hw dma addr
  */
-#define BNA_SET_DMA_ADDR(_addr, _bna_dma_addr)				\
-do {									\
-	u64 tmp_addr =						\
+#घोषणा BNA_SET_DMA_ADDR(_addr, _bna_dma_addr)				\
+करो अणु									\
+	u64 पंचांगp_addr =						\
 	cpu_to_be64((u64)(_addr));				\
-	(_bna_dma_addr)->msb = ((struct bna_dma_addr *)&tmp_addr)->msb; \
-	(_bna_dma_addr)->lsb = ((struct bna_dma_addr *)&tmp_addr)->lsb; \
-} while (0)
+	(_bna_dma_addr)->msb = ((काष्ठा bna_dma_addr *)&पंचांगp_addr)->msb; \
+	(_bna_dma_addr)->lsb = ((काष्ठा bna_dma_addr *)&पंचांगp_addr)->lsb; \
+पूर्ण जबतक (0)
 
 /*
- * input : _bna_dma_addr-> pointer to hw dma addr
- * output : _addr-> os dma addr in host endian format
+ * input : _bna_dma_addr-> poपूर्णांकer to hw dma addr
+ * output : _addr-> os dma addr in host endian क्रमmat
  */
-#define BNA_GET_DMA_ADDR(_bna_dma_addr, _addr)			\
-do {								\
+#घोषणा BNA_GET_DMA_ADDR(_bna_dma_addr, _addr)			\
+करो अणु								\
 	(_addr) = ((((u64)ntohl((_bna_dma_addr)->msb))) << 32)		\
 	| ((ntohl((_bna_dma_addr)->lsb) & 0xffffffff));	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define BNA_TXQ_WI_NEEDED(_vectors)	(((_vectors) + 3) >> 2)
+#घोषणा BNA_TXQ_WI_NEEDED(_vectors)	(((_vectors) + 3) >> 2)
 
-#define BNA_QE_INDX_ADD(_qe_idx, _qe_num, _q_depth)			\
+#घोषणा BNA_QE_INDX_ADD(_qe_idx, _qe_num, _q_depth)			\
 	((_qe_idx) = ((_qe_idx) + (_qe_num)) & ((_q_depth) - 1))
 
-#define BNA_QE_INDX_INC(_idx, _q_depth) BNA_QE_INDX_ADD(_idx, 1, _q_depth)
+#घोषणा BNA_QE_INDX_INC(_idx, _q_depth) BNA_QE_INDX_ADD(_idx, 1, _q_depth)
 
-#define BNA_Q_INDEX_CHANGE(_old_idx, _updated_idx, _q_depth)		\
+#घोषणा BNA_Q_INDEX_CHANGE(_old_idx, _updated_idx, _q_depth)		\
 	(((_updated_idx) - (_old_idx)) & ((_q_depth) - 1))
 
-#define BNA_QE_FREE_CNT(_q_ptr, _q_depth)				\
+#घोषणा BNA_QE_FREE_CNT(_q_ptr, _q_depth)				\
 	(((_q_ptr)->consumer_index - (_q_ptr)->producer_index - 1) &	\
 	 ((_q_depth) - 1))
-#define BNA_QE_IN_USE_CNT(_q_ptr, _q_depth)				\
+#घोषणा BNA_QE_IN_USE_CNT(_q_ptr, _q_depth)				\
 	((((_q_ptr)->producer_index - (_q_ptr)->consumer_index)) &	\
 	 (_q_depth - 1))
 
-#define BNA_LARGE_PKT_SIZE		1000
+#घोषणा BNA_LARGE_PKT_SIZE		1000
 
-#define BNA_UPDATE_PKT_CNT(_pkt, _len)					\
-do {									\
-	if ((_len) > BNA_LARGE_PKT_SIZE) {				\
+#घोषणा BNA_UPDATE_PKT_CNT(_pkt, _len)					\
+करो अणु									\
+	अगर ((_len) > BNA_LARGE_PKT_SIZE) अणु				\
 		(_pkt)->large_pkt_cnt++;				\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		(_pkt)->small_pkt_cnt++;				\
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define	call_rxf_stop_cbfn(rxf)						\
-do {									\
-	if ((rxf)->stop_cbfn) {						\
-		void (*cbfn)(struct bna_rx *);			\
-		struct bna_rx *cbarg;					\
+#घोषणा	call_rxf_stop_cbfn(rxf)						\
+करो अणु									\
+	अगर ((rxf)->stop_cbfn) अणु						\
+		व्योम (*cbfn)(काष्ठा bna_rx *);			\
+		काष्ठा bna_rx *cbarg;					\
 		cbfn = (rxf)->stop_cbfn;				\
 		cbarg = (rxf)->stop_cbarg;				\
-		(rxf)->stop_cbfn = NULL;				\
-		(rxf)->stop_cbarg = NULL;				\
+		(rxf)->stop_cbfn = शून्य;				\
+		(rxf)->stop_cbarg = शून्य;				\
 		cbfn(cbarg);						\
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define	call_rxf_start_cbfn(rxf)					\
-do {									\
-	if ((rxf)->start_cbfn) {					\
-		void (*cbfn)(struct bna_rx *);			\
-		struct bna_rx *cbarg;					\
+#घोषणा	call_rxf_start_cbfn(rxf)					\
+करो अणु									\
+	अगर ((rxf)->start_cbfn) अणु					\
+		व्योम (*cbfn)(काष्ठा bna_rx *);			\
+		काष्ठा bna_rx *cbarg;					\
 		cbfn = (rxf)->start_cbfn;				\
 		cbarg = (rxf)->start_cbarg;				\
-		(rxf)->start_cbfn = NULL;				\
-		(rxf)->start_cbarg = NULL;				\
+		(rxf)->start_cbfn = शून्य;				\
+		(rxf)->start_cbarg = शून्य;				\
 		cbfn(cbarg);						\
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define	call_rxf_cam_fltr_cbfn(rxf)					\
-do {									\
-	if ((rxf)->cam_fltr_cbfn) {					\
-		void (*cbfn)(struct bnad *, struct bna_rx *);	\
-		struct bnad *cbarg;					\
+#घोषणा	call_rxf_cam_fltr_cbfn(rxf)					\
+करो अणु									\
+	अगर ((rxf)->cam_fltr_cbfn) अणु					\
+		व्योम (*cbfn)(काष्ठा bnad *, काष्ठा bna_rx *);	\
+		काष्ठा bnad *cbarg;					\
 		cbfn = (rxf)->cam_fltr_cbfn;				\
 		cbarg = (rxf)->cam_fltr_cbarg;				\
-		(rxf)->cam_fltr_cbfn = NULL;				\
-		(rxf)->cam_fltr_cbarg = NULL;				\
+		(rxf)->cam_fltr_cbfn = शून्य;				\
+		(rxf)->cam_fltr_cbarg = शून्य;				\
 		cbfn(cbarg, rxf->rx);					\
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define is_xxx_enable(mode, bitmask, xxx) ((bitmask & xxx) && (mode & xxx))
+#घोषणा is_xxx_enable(mode, biपंचांगask, xxx) ((biपंचांगask & xxx) && (mode & xxx))
 
-#define is_xxx_disable(mode, bitmask, xxx) ((bitmask & xxx) && !(mode & xxx))
+#घोषणा is_xxx_disable(mode, biपंचांगask, xxx) ((biपंचांगask & xxx) && !(mode & xxx))
 
-#define xxx_enable(mode, bitmask, xxx)					\
-do {									\
-	bitmask |= xxx;							\
+#घोषणा xxx_enable(mode, biपंचांगask, xxx)					\
+करो अणु									\
+	biपंचांगask |= xxx;							\
 	mode |= xxx;							\
-} while (0)
+पूर्ण जबतक (0)
 
-#define xxx_disable(mode, bitmask, xxx)					\
-do {									\
-	bitmask |= xxx;							\
+#घोषणा xxx_disable(mode, biपंचांगask, xxx)					\
+करो अणु									\
+	biपंचांगask |= xxx;							\
 	mode &= ~xxx;							\
-} while (0)
+पूर्ण जबतक (0)
 
-#define xxx_inactive(mode, bitmask, xxx)				\
-do {									\
-	bitmask &= ~xxx;						\
+#घोषणा xxx_inactive(mode, biपंचांगask, xxx)				\
+करो अणु									\
+	biपंचांगask &= ~xxx;						\
 	mode &= ~xxx;							\
-} while (0)
+पूर्ण जबतक (0)
 
-#define is_promisc_enable(mode, bitmask)				\
-	is_xxx_enable(mode, bitmask, BNA_RXMODE_PROMISC)
+#घोषणा is_promisc_enable(mode, biपंचांगask)				\
+	is_xxx_enable(mode, biपंचांगask, BNA_RXMODE_PROMISC)
 
-#define is_promisc_disable(mode, bitmask)				\
-	is_xxx_disable(mode, bitmask, BNA_RXMODE_PROMISC)
+#घोषणा is_promisc_disable(mode, biपंचांगask)				\
+	is_xxx_disable(mode, biपंचांगask, BNA_RXMODE_PROMISC)
 
-#define promisc_enable(mode, bitmask)					\
-	xxx_enable(mode, bitmask, BNA_RXMODE_PROMISC)
+#घोषणा promisc_enable(mode, biपंचांगask)					\
+	xxx_enable(mode, biपंचांगask, BNA_RXMODE_PROMISC)
 
-#define promisc_disable(mode, bitmask)					\
-	xxx_disable(mode, bitmask, BNA_RXMODE_PROMISC)
+#घोषणा promisc_disable(mode, biपंचांगask)					\
+	xxx_disable(mode, biपंचांगask, BNA_RXMODE_PROMISC)
 
-#define promisc_inactive(mode, bitmask)					\
-	xxx_inactive(mode, bitmask, BNA_RXMODE_PROMISC)
+#घोषणा promisc_inactive(mode, biपंचांगask)					\
+	xxx_inactive(mode, biपंचांगask, BNA_RXMODE_PROMISC)
 
-#define is_default_enable(mode, bitmask)				\
-	is_xxx_enable(mode, bitmask, BNA_RXMODE_DEFAULT)
+#घोषणा is_शेष_enable(mode, biपंचांगask)				\
+	is_xxx_enable(mode, biपंचांगask, BNA_RXMODE_DEFAULT)
 
-#define is_default_disable(mode, bitmask)				\
-	is_xxx_disable(mode, bitmask, BNA_RXMODE_DEFAULT)
+#घोषणा is_शेष_disable(mode, biपंचांगask)				\
+	is_xxx_disable(mode, biपंचांगask, BNA_RXMODE_DEFAULT)
 
-#define default_enable(mode, bitmask)					\
-	xxx_enable(mode, bitmask, BNA_RXMODE_DEFAULT)
+#घोषणा शेष_enable(mode, biपंचांगask)					\
+	xxx_enable(mode, biपंचांगask, BNA_RXMODE_DEFAULT)
 
-#define default_disable(mode, bitmask)					\
-	xxx_disable(mode, bitmask, BNA_RXMODE_DEFAULT)
+#घोषणा शेष_disable(mode, biपंचांगask)					\
+	xxx_disable(mode, biपंचांगask, BNA_RXMODE_DEFAULT)
 
-#define default_inactive(mode, bitmask)					\
-	xxx_inactive(mode, bitmask, BNA_RXMODE_DEFAULT)
+#घोषणा शेष_inactive(mode, biपंचांगask)					\
+	xxx_inactive(mode, biपंचांगask, BNA_RXMODE_DEFAULT)
 
-#define is_allmulti_enable(mode, bitmask)				\
-	is_xxx_enable(mode, bitmask, BNA_RXMODE_ALLMULTI)
+#घोषणा is_allmulti_enable(mode, biपंचांगask)				\
+	is_xxx_enable(mode, biपंचांगask, BNA_RXMODE_ALLMULTI)
 
-#define is_allmulti_disable(mode, bitmask)				\
-	is_xxx_disable(mode, bitmask, BNA_RXMODE_ALLMULTI)
+#घोषणा is_allmulti_disable(mode, biपंचांगask)				\
+	is_xxx_disable(mode, biपंचांगask, BNA_RXMODE_ALLMULTI)
 
-#define allmulti_enable(mode, bitmask)					\
-	xxx_enable(mode, bitmask, BNA_RXMODE_ALLMULTI)
+#घोषणा allmulti_enable(mode, biपंचांगask)					\
+	xxx_enable(mode, biपंचांगask, BNA_RXMODE_ALLMULTI)
 
-#define allmulti_disable(mode, bitmask)					\
-	xxx_disable(mode, bitmask, BNA_RXMODE_ALLMULTI)
+#घोषणा allmulti_disable(mode, biपंचांगask)					\
+	xxx_disable(mode, biपंचांगask, BNA_RXMODE_ALLMULTI)
 
-#define allmulti_inactive(mode, bitmask)				\
-	xxx_inactive(mode, bitmask, BNA_RXMODE_ALLMULTI)
+#घोषणा allmulti_inactive(mode, biपंचांगask)				\
+	xxx_inactive(mode, biपंचांगask, BNA_RXMODE_ALLMULTI)
 
-#define	GET_RXQS(rxp, q0, q1)	do {					\
-	switch ((rxp)->type) {						\
-	case BNA_RXP_SINGLE:						\
+#घोषणा	GET_RXQS(rxp, q0, q1)	करो अणु					\
+	चयन ((rxp)->type) अणु						\
+	हाल BNA_RXP_SINGLE:						\
 		(q0) = rxp->rxq.single.only;				\
-		(q1) = NULL;						\
-		break;							\
-	case BNA_RXP_SLR:						\
+		(q1) = शून्य;						\
+		अवरोध;							\
+	हाल BNA_RXP_SLR:						\
 		(q0) = rxp->rxq.slr.large;				\
 		(q1) = rxp->rxq.slr.small;				\
-		break;							\
-	case BNA_RXP_HDS:						\
+		अवरोध;							\
+	हाल BNA_RXP_HDS:						\
 		(q0) = rxp->rxq.hds.data;				\
 		(q1) = rxp->rxq.hds.hdr;				\
-		break;							\
-	}								\
-} while (0)
+		अवरोध;							\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define bna_tx_rid_mask(_bna) ((_bna)->tx_mod.rid_mask)
+#घोषणा bna_tx_rid_mask(_bna) ((_bna)->tx_mod.rid_mask)
 
-#define bna_rx_rid_mask(_bna) ((_bna)->rx_mod.rid_mask)
+#घोषणा bna_rx_rid_mask(_bna) ((_bna)->rx_mod.rid_mask)
 
-#define bna_tx_from_rid(_bna, _rid, _tx)				\
-do {									\
-	struct bna_tx_mod *__tx_mod = &(_bna)->tx_mod;			\
-	struct bna_tx *__tx;						\
-	_tx = NULL;							\
-	list_for_each_entry(__tx, &__tx_mod->tx_active_q, qe) {		\
-		if (__tx->rid == (_rid)) {				\
+#घोषणा bna_tx_from_rid(_bna, _rid, _tx)				\
+करो अणु									\
+	काष्ठा bna_tx_mod *__tx_mod = &(_bna)->tx_mod;			\
+	काष्ठा bna_tx *__tx;						\
+	_tx = शून्य;							\
+	list_क्रम_each_entry(__tx, &__tx_mod->tx_active_q, qe) अणु		\
+		अगर (__tx->rid == (_rid)) अणु				\
 			(_tx) = __tx;					\
-			break;						\
-		}							\
-	}								\
-} while (0)
+			अवरोध;						\
+		पूर्ण							\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define bna_rx_from_rid(_bna, _rid, _rx)				\
-do {									\
-	struct bna_rx_mod *__rx_mod = &(_bna)->rx_mod;			\
-	struct bna_rx *__rx;						\
-	_rx = NULL;							\
-	list_for_each_entry(__rx, &__rx_mod->rx_active_q, qe) {		\
-		if (__rx->rid == (_rid)) {				\
+#घोषणा bna_rx_from_rid(_bna, _rid, _rx)				\
+करो अणु									\
+	काष्ठा bna_rx_mod *__rx_mod = &(_bna)->rx_mod;			\
+	काष्ठा bna_rx *__rx;						\
+	_rx = शून्य;							\
+	list_क्रम_each_entry(__rx, &__rx_mod->rx_active_q, qe) अणु		\
+		अगर (__rx->rid == (_rid)) अणु				\
 			(_rx) = __rx;					\
-			break;						\
-		}							\
-	}								\
-} while (0)
+			अवरोध;						\
+		पूर्ण							\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define bna_mcam_mod_free_q(_bna) (&(_bna)->mcam_mod.free_q)
+#घोषणा bna_mcam_mod_मुक्त_q(_bna) (&(_bna)->mcam_mod.मुक्त_q)
 
-#define bna_mcam_mod_del_q(_bna) (&(_bna)->mcam_mod.del_q)
+#घोषणा bna_mcam_mod_del_q(_bna) (&(_bna)->mcam_mod.del_q)
 
-#define bna_ucam_mod_free_q(_bna) (&(_bna)->ucam_mod.free_q)
+#घोषणा bna_ucam_mod_मुक्त_q(_bna) (&(_bna)->ucam_mod.मुक्त_q)
 
-#define bna_ucam_mod_del_q(_bna) (&(_bna)->ucam_mod.del_q)
+#घोषणा bna_ucam_mod_del_q(_bna) (&(_bna)->ucam_mod.del_q)
 
 /*  Inline functions  */
 
-static inline struct bna_mac *bna_mac_find(struct list_head *q, const u8 *addr)
-{
-	struct bna_mac *mac;
+अटल अंतरभूत काष्ठा bna_mac *bna_mac_find(काष्ठा list_head *q, स्थिर u8 *addr)
+अणु
+	काष्ठा bna_mac *mac;
 
-	list_for_each_entry(mac, q, qe)
-		if (ether_addr_equal(mac->addr, addr))
-			return mac;
-	return NULL;
-}
+	list_क्रम_each_entry(mac, q, qe)
+		अगर (ether_addr_equal(mac->addr, addr))
+			वापस mac;
+	वापस शून्य;
+पूर्ण
 
-#define bna_attr(_bna) (&(_bna)->ioceth.attr)
+#घोषणा bna_attr(_bna) (&(_bna)->ioceth.attr)
 
 /* Function prototypes */
 
 /* BNA */
 
 /* FW response handlers */
-void bna_bfi_stats_clr_rsp(struct bna *bna, struct bfi_msgq_mhdr *msghdr);
+व्योम bna_bfi_stats_clr_rsp(काष्ठा bna *bna, काष्ठा bfi_msgq_mhdr *msghdr);
 
-/* APIs for BNAD */
-void bna_res_req(struct bna_res_info *res_info);
-void bna_mod_res_req(struct bna *bna, struct bna_res_info *res_info);
-void bna_init(struct bna *bna, struct bnad *bnad,
-			struct bfa_pcidev *pcidev,
-			struct bna_res_info *res_info);
-void bna_mod_init(struct bna *bna, struct bna_res_info *res_info);
-void bna_uninit(struct bna *bna);
-int bna_num_txq_set(struct bna *bna, int num_txq);
-int bna_num_rxp_set(struct bna *bna, int num_rxp);
-void bna_hw_stats_get(struct bna *bna);
+/* APIs क्रम BNAD */
+व्योम bna_res_req(काष्ठा bna_res_info *res_info);
+व्योम bna_mod_res_req(काष्ठा bna *bna, काष्ठा bna_res_info *res_info);
+व्योम bna_init(काष्ठा bna *bna, काष्ठा bnad *bnad,
+			काष्ठा bfa_pcidev *pcidev,
+			काष्ठा bna_res_info *res_info);
+व्योम bna_mod_init(काष्ठा bna *bna, काष्ठा bna_res_info *res_info);
+व्योम bna_uninit(काष्ठा bna *bna);
+पूर्णांक bna_num_txq_set(काष्ठा bna *bna, पूर्णांक num_txq);
+पूर्णांक bna_num_rxp_set(काष्ठा bna *bna, पूर्णांक num_rxp);
+व्योम bna_hw_stats_get(काष्ठा bna *bna);
 
-/* APIs for RxF */
-struct bna_mac *bna_cam_mod_mac_get(struct list_head *head);
-struct bna_mcam_handle *bna_mcam_mod_handle_get(struct bna_mcam_mod *mod);
-void bna_mcam_mod_handle_put(struct bna_mcam_mod *mcam_mod,
-			  struct bna_mcam_handle *handle);
+/* APIs क्रम RxF */
+काष्ठा bna_mac *bna_cam_mod_mac_get(काष्ठा list_head *head);
+काष्ठा bna_mcam_handle *bna_mcam_mod_handle_get(काष्ठा bna_mcam_mod *mod);
+व्योम bna_mcam_mod_handle_put(काष्ठा bna_mcam_mod *mcam_mod,
+			  काष्ठा bna_mcam_handle *handle);
 
 /* MBOX */
 
-/* API for BNAD */
-void bna_mbox_handler(struct bna *bna, u32 intr_status);
+/* API क्रम BNAD */
+व्योम bna_mbox_handler(काष्ठा bna *bna, u32 पूर्णांकr_status);
 
 /* ETHPORT */
 
-/* Callbacks for RX */
-void bna_ethport_cb_rx_started(struct bna_ethport *ethport);
-void bna_ethport_cb_rx_stopped(struct bna_ethport *ethport);
+/* Callbacks क्रम RX */
+व्योम bna_ethport_cb_rx_started(काष्ठा bna_ethport *ethport);
+व्योम bna_ethport_cb_rx_stopped(काष्ठा bna_ethport *ethport);
 
 /* TX MODULE AND TX */
 
 /* FW response handelrs */
-void bna_bfi_tx_enet_start_rsp(struct bna_tx *tx,
-			       struct bfi_msgq_mhdr *msghdr);
-void bna_bfi_tx_enet_stop_rsp(struct bna_tx *tx,
-			      struct bfi_msgq_mhdr *msghdr);
-void bna_bfi_bw_update_aen(struct bna_tx_mod *tx_mod);
+व्योम bna_bfi_tx_enet_start_rsp(काष्ठा bna_tx *tx,
+			       काष्ठा bfi_msgq_mhdr *msghdr);
+व्योम bna_bfi_tx_enet_stop_rsp(काष्ठा bna_tx *tx,
+			      काष्ठा bfi_msgq_mhdr *msghdr);
+व्योम bna_bfi_bw_update_aen(काष्ठा bna_tx_mod *tx_mod);
 
-/* APIs for BNA */
-void bna_tx_mod_init(struct bna_tx_mod *tx_mod, struct bna *bna,
-		     struct bna_res_info *res_info);
-void bna_tx_mod_uninit(struct bna_tx_mod *tx_mod);
+/* APIs क्रम BNA */
+व्योम bna_tx_mod_init(काष्ठा bna_tx_mod *tx_mod, काष्ठा bna *bna,
+		     काष्ठा bna_res_info *res_info);
+व्योम bna_tx_mod_uninit(काष्ठा bna_tx_mod *tx_mod);
 
-/* APIs for ENET */
-void bna_tx_mod_start(struct bna_tx_mod *tx_mod, enum bna_tx_type type);
-void bna_tx_mod_stop(struct bna_tx_mod *tx_mod, enum bna_tx_type type);
-void bna_tx_mod_fail(struct bna_tx_mod *tx_mod);
+/* APIs क्रम ENET */
+व्योम bna_tx_mod_start(काष्ठा bna_tx_mod *tx_mod, क्रमागत bna_tx_type type);
+व्योम bna_tx_mod_stop(काष्ठा bna_tx_mod *tx_mod, क्रमागत bna_tx_type type);
+व्योम bna_tx_mod_fail(काष्ठा bna_tx_mod *tx_mod);
 
-/* APIs for BNAD */
-void bna_tx_res_req(int num_txq, int txq_depth,
-		    struct bna_res_info *res_info);
-struct bna_tx *bna_tx_create(struct bna *bna, struct bnad *bnad,
-			       struct bna_tx_config *tx_cfg,
-			       const struct bna_tx_event_cbfn *tx_cbfn,
-			       struct bna_res_info *res_info, void *priv);
-void bna_tx_destroy(struct bna_tx *tx);
-void bna_tx_enable(struct bna_tx *tx);
-void bna_tx_disable(struct bna_tx *tx, enum bna_cleanup_type type,
-		    void (*cbfn)(void *, struct bna_tx *));
-void bna_tx_cleanup_complete(struct bna_tx *tx);
-void bna_tx_coalescing_timeo_set(struct bna_tx *tx, int coalescing_timeo);
+/* APIs क्रम BNAD */
+व्योम bna_tx_res_req(पूर्णांक num_txq, पूर्णांक txq_depth,
+		    काष्ठा bna_res_info *res_info);
+काष्ठा bna_tx *bna_tx_create(काष्ठा bna *bna, काष्ठा bnad *bnad,
+			       काष्ठा bna_tx_config *tx_cfg,
+			       स्थिर काष्ठा bna_tx_event_cbfn *tx_cbfn,
+			       काष्ठा bna_res_info *res_info, व्योम *priv);
+व्योम bna_tx_destroy(काष्ठा bna_tx *tx);
+व्योम bna_tx_enable(काष्ठा bna_tx *tx);
+व्योम bna_tx_disable(काष्ठा bna_tx *tx, क्रमागत bna_cleanup_type type,
+		    व्योम (*cbfn)(व्योम *, काष्ठा bna_tx *));
+व्योम bna_tx_cleanup_complete(काष्ठा bna_tx *tx);
+व्योम bna_tx_coalescing_समयo_set(काष्ठा bna_tx *tx, पूर्णांक coalescing_समयo);
 
 /* RX MODULE, RX, RXF */
 
 /* FW response handlers */
-void bna_bfi_rx_enet_start_rsp(struct bna_rx *rx,
-			       struct bfi_msgq_mhdr *msghdr);
-void bna_bfi_rx_enet_stop_rsp(struct bna_rx *rx,
-			      struct bfi_msgq_mhdr *msghdr);
-void bna_bfi_rxf_cfg_rsp(struct bna_rxf *rxf, struct bfi_msgq_mhdr *msghdr);
-void bna_bfi_rxf_mcast_add_rsp(struct bna_rxf *rxf,
-			       struct bfi_msgq_mhdr *msghdr);
-void bna_bfi_rxf_ucast_set_rsp(struct bna_rxf *rxf,
-			       struct bfi_msgq_mhdr *msghdr);
+व्योम bna_bfi_rx_enet_start_rsp(काष्ठा bna_rx *rx,
+			       काष्ठा bfi_msgq_mhdr *msghdr);
+व्योम bna_bfi_rx_enet_stop_rsp(काष्ठा bna_rx *rx,
+			      काष्ठा bfi_msgq_mhdr *msghdr);
+व्योम bna_bfi_rxf_cfg_rsp(काष्ठा bna_rxf *rxf, काष्ठा bfi_msgq_mhdr *msghdr);
+व्योम bna_bfi_rxf_mcast_add_rsp(काष्ठा bna_rxf *rxf,
+			       काष्ठा bfi_msgq_mhdr *msghdr);
+व्योम bna_bfi_rxf_ucast_set_rsp(काष्ठा bna_rxf *rxf,
+			       काष्ठा bfi_msgq_mhdr *msghdr);
 
-/* APIs for BNA */
-void bna_rx_mod_init(struct bna_rx_mod *rx_mod, struct bna *bna,
-		     struct bna_res_info *res_info);
-void bna_rx_mod_uninit(struct bna_rx_mod *rx_mod);
+/* APIs क्रम BNA */
+व्योम bna_rx_mod_init(काष्ठा bna_rx_mod *rx_mod, काष्ठा bna *bna,
+		     काष्ठा bna_res_info *res_info);
+व्योम bna_rx_mod_uninit(काष्ठा bna_rx_mod *rx_mod);
 
-/* APIs for ENET */
-void bna_rx_mod_start(struct bna_rx_mod *rx_mod, enum bna_rx_type type);
-void bna_rx_mod_stop(struct bna_rx_mod *rx_mod, enum bna_rx_type type);
-void bna_rx_mod_fail(struct bna_rx_mod *rx_mod);
+/* APIs क्रम ENET */
+व्योम bna_rx_mod_start(काष्ठा bna_rx_mod *rx_mod, क्रमागत bna_rx_type type);
+व्योम bna_rx_mod_stop(काष्ठा bna_rx_mod *rx_mod, क्रमागत bna_rx_type type);
+व्योम bna_rx_mod_fail(काष्ठा bna_rx_mod *rx_mod);
 
-/* APIs for BNAD */
-void bna_rx_res_req(struct bna_rx_config *rx_config,
-		    struct bna_res_info *res_info);
-struct bna_rx *bna_rx_create(struct bna *bna, struct bnad *bnad,
-			       struct bna_rx_config *rx_cfg,
-			       const struct bna_rx_event_cbfn *rx_cbfn,
-			       struct bna_res_info *res_info, void *priv);
-void bna_rx_destroy(struct bna_rx *rx);
-void bna_rx_enable(struct bna_rx *rx);
-void bna_rx_disable(struct bna_rx *rx, enum bna_cleanup_type type,
-		    void (*cbfn)(void *, struct bna_rx *));
-void bna_rx_cleanup_complete(struct bna_rx *rx);
-void bna_rx_coalescing_timeo_set(struct bna_rx *rx, int coalescing_timeo);
-void bna_rx_dim_reconfig(struct bna *bna, const u32 vector[][BNA_BIAS_T_MAX]);
-void bna_rx_dim_update(struct bna_ccb *ccb);
-enum bna_cb_status bna_rx_ucast_set(struct bna_rx *rx, const u8 *ucmac);
-enum bna_cb_status bna_rx_ucast_listset(struct bna_rx *rx, int count,
-					const u8 *uclist);
-enum bna_cb_status bna_rx_mcast_add(struct bna_rx *rx, const u8 *mcmac,
-				    void (*cbfn)(struct bnad *,
-						 struct bna_rx *));
-enum bna_cb_status bna_rx_mcast_listset(struct bna_rx *rx, int count,
-					const u8 *mcmac);
-void
-bna_rx_mcast_delall(struct bna_rx *rx);
-enum bna_cb_status
-bna_rx_mode_set(struct bna_rx *rx, enum bna_rxmode rxmode,
-		enum bna_rxmode bitmask);
-void bna_rx_vlan_add(struct bna_rx *rx, int vlan_id);
-void bna_rx_vlan_del(struct bna_rx *rx, int vlan_id);
-void bna_rx_vlanfilter_enable(struct bna_rx *rx);
-void bna_rx_vlan_strip_enable(struct bna_rx *rx);
-void bna_rx_vlan_strip_disable(struct bna_rx *rx);
+/* APIs क्रम BNAD */
+व्योम bna_rx_res_req(काष्ठा bna_rx_config *rx_config,
+		    काष्ठा bna_res_info *res_info);
+काष्ठा bna_rx *bna_rx_create(काष्ठा bna *bna, काष्ठा bnad *bnad,
+			       काष्ठा bna_rx_config *rx_cfg,
+			       स्थिर काष्ठा bna_rx_event_cbfn *rx_cbfn,
+			       काष्ठा bna_res_info *res_info, व्योम *priv);
+व्योम bna_rx_destroy(काष्ठा bna_rx *rx);
+व्योम bna_rx_enable(काष्ठा bna_rx *rx);
+व्योम bna_rx_disable(काष्ठा bna_rx *rx, क्रमागत bna_cleanup_type type,
+		    व्योम (*cbfn)(व्योम *, काष्ठा bna_rx *));
+व्योम bna_rx_cleanup_complete(काष्ठा bna_rx *rx);
+व्योम bna_rx_coalescing_समयo_set(काष्ठा bna_rx *rx, पूर्णांक coalescing_समयo);
+व्योम bna_rx_dim_reconfig(काष्ठा bna *bna, स्थिर u32 vector[][BNA_BIAS_T_MAX]);
+व्योम bna_rx_dim_update(काष्ठा bna_ccb *ccb);
+क्रमागत bna_cb_status bna_rx_ucast_set(काष्ठा bna_rx *rx, स्थिर u8 *ucmac);
+क्रमागत bna_cb_status bna_rx_ucast_listset(काष्ठा bna_rx *rx, पूर्णांक count,
+					स्थिर u8 *uclist);
+क्रमागत bna_cb_status bna_rx_mcast_add(काष्ठा bna_rx *rx, स्थिर u8 *mcmac,
+				    व्योम (*cbfn)(काष्ठा bnad *,
+						 काष्ठा bna_rx *));
+क्रमागत bna_cb_status bna_rx_mcast_listset(काष्ठा bna_rx *rx, पूर्णांक count,
+					स्थिर u8 *mcmac);
+व्योम
+bna_rx_mcast_delall(काष्ठा bna_rx *rx);
+क्रमागत bna_cb_status
+bna_rx_mode_set(काष्ठा bna_rx *rx, क्रमागत bna_rxmode rxmode,
+		क्रमागत bna_rxmode biपंचांगask);
+व्योम bna_rx_vlan_add(काष्ठा bna_rx *rx, पूर्णांक vlan_id);
+व्योम bna_rx_vlan_del(काष्ठा bna_rx *rx, पूर्णांक vlan_id);
+व्योम bna_rx_vlanfilter_enable(काष्ठा bna_rx *rx);
+व्योम bna_rx_vlan_strip_enable(काष्ठा bna_rx *rx);
+व्योम bna_rx_vlan_strip_disable(काष्ठा bna_rx *rx);
 /* ENET */
 
-/* API for RX */
-int bna_enet_mtu_get(struct bna_enet *enet);
+/* API क्रम RX */
+पूर्णांक bna_enet_mtu_get(काष्ठा bna_enet *enet);
 
-/* Callbacks for TX, RX */
-void bna_enet_cb_tx_stopped(struct bna_enet *enet);
-void bna_enet_cb_rx_stopped(struct bna_enet *enet);
+/* Callbacks क्रम TX, RX */
+व्योम bna_enet_cb_tx_stopped(काष्ठा bna_enet *enet);
+व्योम bna_enet_cb_rx_stopped(काष्ठा bna_enet *enet);
 
-/* API for BNAD */
-void bna_enet_enable(struct bna_enet *enet);
-void bna_enet_disable(struct bna_enet *enet, enum bna_cleanup_type type,
-		      void (*cbfn)(void *));
-void bna_enet_pause_config(struct bna_enet *enet,
-			   struct bna_pause_config *pause_config);
-void bna_enet_mtu_set(struct bna_enet *enet, int mtu,
-		      void (*cbfn)(struct bnad *));
-void bna_enet_perm_mac_get(struct bna_enet *enet, u8 *mac);
+/* API क्रम BNAD */
+व्योम bna_enet_enable(काष्ठा bna_enet *enet);
+व्योम bna_enet_disable(काष्ठा bna_enet *enet, क्रमागत bna_cleanup_type type,
+		      व्योम (*cbfn)(व्योम *));
+व्योम bna_enet_छोड़ो_config(काष्ठा bna_enet *enet,
+			   काष्ठा bna_छोड़ो_config *छोड़ो_config);
+व्योम bna_enet_mtu_set(काष्ठा bna_enet *enet, पूर्णांक mtu,
+		      व्योम (*cbfn)(काष्ठा bnad *));
+व्योम bna_enet_perm_mac_get(काष्ठा bna_enet *enet, u8 *mac);
 
 /* IOCETH */
 
-/* APIs for BNAD */
-void bna_ioceth_enable(struct bna_ioceth *ioceth);
-void bna_ioceth_disable(struct bna_ioceth *ioceth,
-			enum bna_cleanup_type type);
+/* APIs क्रम BNAD */
+व्योम bna_ioceth_enable(काष्ठा bna_ioceth *ioceth);
+व्योम bna_ioceth_disable(काष्ठा bna_ioceth *ioceth,
+			क्रमागत bna_cleanup_type type);
 
 /* BNAD */
 
-/* Callbacks for ENET */
-void bnad_cb_ethport_link_status(struct bnad *bnad,
-			      enum bna_link_status status);
+/* Callbacks क्रम ENET */
+व्योम bnad_cb_ethport_link_status(काष्ठा bnad *bnad,
+			      क्रमागत bna_link_status status);
 
-/* Callbacks for IOCETH */
-void bnad_cb_ioceth_ready(struct bnad *bnad);
-void bnad_cb_ioceth_failed(struct bnad *bnad);
-void bnad_cb_ioceth_disabled(struct bnad *bnad);
-void bnad_cb_mbox_intr_enable(struct bnad *bnad);
-void bnad_cb_mbox_intr_disable(struct bnad *bnad);
+/* Callbacks क्रम IOCETH */
+व्योम bnad_cb_ioceth_पढ़ोy(काष्ठा bnad *bnad);
+व्योम bnad_cb_ioceth_failed(काष्ठा bnad *bnad);
+व्योम bnad_cb_ioceth_disabled(काष्ठा bnad *bnad);
+व्योम bnad_cb_mbox_पूर्णांकr_enable(काष्ठा bnad *bnad);
+व्योम bnad_cb_mbox_पूर्णांकr_disable(काष्ठा bnad *bnad);
 
-/* Callbacks for BNA */
-void bnad_cb_stats_get(struct bnad *bnad, enum bna_cb_status status,
-		       struct bna_stats *stats);
+/* Callbacks क्रम BNA */
+व्योम bnad_cb_stats_get(काष्ठा bnad *bnad, क्रमागत bna_cb_status status,
+		       काष्ठा bna_stats *stats);
 
-#endif  /* __BNA_H__ */
+#पूर्ण_अगर  /* __BNA_H__ */

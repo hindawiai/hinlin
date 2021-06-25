@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2012
  *
  * Author: Ola Lilja <ola.o.lilja@stericsson.com>,
  *         Roger Nilsson <roger.xr.nilsson@stericsson.com>
- *         for ST-Ericsson.
+ *         क्रम ST-Ericsson.
  *
  * License terms:
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
-#include <linux/platform_device.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/regulator/consumer.h>
-#include <linux/mfd/dbx500-prcmu.h>
-#include <linux/platform_data/asoc-ux500-msp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/mfd/dbx500-prcmu.h>
+#समावेश <linux/platक्रमm_data/asoc-ux500-msp.h>
 
-#include <sound/soc.h>
-#include <sound/soc-dai.h>
-#include <sound/dmaengine_pcm.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dai.h>
+#समावेश <sound/dmaengine_pcm.h>
 
-#include "ux500_msp_i2s.h"
-#include "ux500_msp_dai.h"
-#include "ux500_pcm.h"
+#समावेश "ux500_msp_i2s.h"
+#समावेश "ux500_msp_dai.h"
+#समावेश "ux500_pcm.h"
 
-static int setup_pcm_multichan(struct snd_soc_dai *dai,
-			struct ux500_msp_config *msp_config)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
-	struct msp_multichannel_config *multi =
+अटल पूर्णांक setup_pcm_multichan(काष्ठा snd_soc_dai *dai,
+			काष्ठा ux500_msp_config *msp_config)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+	काष्ठा msp_multichannel_config *multi =
 					&msp_config->multichannel_config;
 
-	if (drvdata->slots > 1) {
+	अगर (drvdata->slots > 1) अणु
 		msp_config->multichannel_configured = 1;
 
 		multi->tx_multichannel_enable = true;
@@ -55,106 +56,106 @@ static int setup_pcm_multichan(struct snd_soc_dai *dai,
 			"%s: Multichannel enabled. Slots: %d, TX: %u, RX: %u\n",
 			__func__, drvdata->slots, multi->tx_channel_0_enable,
 			multi->rx_channel_0_enable);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_frameper(struct snd_soc_dai *dai, unsigned int rate,
-			struct msp_protdesc *prot_desc)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+अटल पूर्णांक setup_frameper(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक rate,
+			काष्ठा msp_protdesc *prot_desc)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
 
-	switch (drvdata->slots) {
-	case 1:
-		switch (rate) {
-		case 8000:
+	चयन (drvdata->slots) अणु
+	हाल 1:
+		चयन (rate) अणु
+		हाल 8000:
 			prot_desc->frame_period =
 				FRAME_PER_SINGLE_SLOT_8_KHZ;
-			break;
+			अवरोध;
 
-		case 16000:
+		हाल 16000:
 			prot_desc->frame_period =
 				FRAME_PER_SINGLE_SLOT_16_KHZ;
-			break;
+			अवरोध;
 
-		case 44100:
+		हाल 44100:
 			prot_desc->frame_period =
 				FRAME_PER_SINGLE_SLOT_44_1_KHZ;
-			break;
+			अवरोध;
 
-		case 48000:
+		हाल 48000:
 			prot_desc->frame_period =
 				FRAME_PER_SINGLE_SLOT_48_KHZ;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(dai->dev,
 				"%s: Error: Unsupported sample-rate (freq = %d)!\n",
 				__func__, rate);
-			return -EINVAL;
-		}
-		break;
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		prot_desc->frame_period = FRAME_PER_2_SLOTS;
-		break;
+		अवरोध;
 
-	case 8:
+	हाल 8:
 		prot_desc->frame_period = FRAME_PER_8_SLOTS;
-		break;
+		अवरोध;
 
-	case 16:
+	हाल 16:
 		prot_desc->frame_period = FRAME_PER_16_SLOTS;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dai->dev,
 			"%s: Error: Unsupported slot-count (slots = %d)!\n",
 			__func__, drvdata->slots);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	prot_desc->clocks_per_frame =
+	prot_desc->घड़ीs_per_frame =
 			prot_desc->frame_period+1;
 
 	dev_dbg(dai->dev, "%s: Clocks per frame: %u\n",
 		__func__,
-		prot_desc->clocks_per_frame);
+		prot_desc->घड़ीs_per_frame);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_pcm_framing(struct snd_soc_dai *dai, unsigned int rate,
-			struct msp_protdesc *prot_desc)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+अटल पूर्णांक setup_pcm_framing(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक rate,
+			काष्ठा msp_protdesc *prot_desc)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
 
 	u32 frame_length = MSP_FRAME_LEN_1;
 
 	prot_desc->frame_width = 0;
 
-	switch (drvdata->slots) {
-	case 1:
+	चयन (drvdata->slots) अणु
+	हाल 1:
 		frame_length = MSP_FRAME_LEN_1;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		frame_length = MSP_FRAME_LEN_2;
-		break;
+		अवरोध;
 
-	case 8:
+	हाल 8:
 		frame_length = MSP_FRAME_LEN_8;
-		break;
+		अवरोध;
 
-	case 16:
+	हाल 16:
 		frame_length = MSP_FRAME_LEN_16;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dai->dev,
 			"%s: Error: Unsupported slot-count (slots = %d)!\n",
 			__func__, drvdata->slots);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	prot_desc->tx_frame_len_1 = frame_length;
 	prot_desc->rx_frame_len_1 = frame_length;
@@ -166,33 +167,33 @@ static int setup_pcm_framing(struct snd_soc_dai *dai, unsigned int rate,
 	prot_desc->tx_elem_len_2 = MSP_ELEM_LEN_16;
 	prot_desc->rx_elem_len_2 = MSP_ELEM_LEN_16;
 
-	return setup_frameper(dai, rate, prot_desc);
-}
+	वापस setup_frameper(dai, rate, prot_desc);
+पूर्ण
 
-static int setup_clocking(struct snd_soc_dai *dai,
-			unsigned int fmt,
-			struct ux500_msp_config *msp_config)
-{
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
+अटल पूर्णांक setup_घड़ीing(काष्ठा snd_soc_dai *dai,
+			अचिन्हित पूर्णांक fmt,
+			काष्ठा ux500_msp_config *msp_config)
+अणु
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
 
-	case SND_SOC_DAIFMT_NB_IF:
+	हाल SND_SOC_DAIFMT_NB_IF:
 		msp_config->tx_fsync_pol ^= 1 << TFSPOL_SHIFT;
 		msp_config->rx_fsync_pol ^= 1 << RFSPOL_SHIFT;
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dai->dev,
 			"%s: Error: Unsupported inversion (fmt = 0x%x)!\n",
 			__func__, fmt);
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		dev_dbg(dai->dev, "%s: Codec is master.\n", __func__);
 
 		msp_config->iodelay = 0x20;
@@ -202,9 +203,9 @@ static int setup_clocking(struct snd_soc_dai *dai,
 		msp_config->rx_clk_sel = 0;
 		msp_config->srg_clk_sel = 0x2 << SCKSEL_SHIFT;
 
-		break;
+		अवरोध;
 
-	case SND_SOC_DAIFMT_CBS_CFS:
+	हाल SND_SOC_DAIFMT_CBS_CFS:
 		dev_dbg(dai->dev, "%s: Codec is slave.\n", __func__);
 
 		msp_config->tx_clk_sel = TX_CLK_SEL_SRG;
@@ -213,22 +214,22 @@ static int setup_clocking(struct snd_soc_dai *dai,
 		msp_config->rx_fsync_sel = RX_SYNC_SRG;
 		msp_config->srg_clk_sel = 1 << SCKSEL_SHIFT;
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dai->dev, "%s: Error: Unsupported master (fmt = 0x%x)!\n",
 			__func__, fmt);
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_pcm_protdesc(struct snd_soc_dai *dai,
-				unsigned int fmt,
-				struct msp_protdesc *prot_desc)
-{
+अटल पूर्णांक setup_pcm_protdesc(काष्ठा snd_soc_dai *dai,
+				अचिन्हित पूर्णांक fmt,
+				काष्ठा msp_protdesc *prot_desc)
+अणु
 	prot_desc->rx_phase_mode = MSP_SINGLE_PHASE;
 	prot_desc->tx_phase_mode = MSP_SINGLE_PHASE;
 	prot_desc->rx_phase2_start_mode = MSP_PHASE2_START_MODE_IMEDIATE;
@@ -238,21 +239,21 @@ static int setup_pcm_protdesc(struct snd_soc_dai *dai,
 	prot_desc->tx_fsync_pol = MSP_FSYNC_POL(MSP_FSYNC_POL_ACT_HI);
 	prot_desc->rx_fsync_pol = MSP_FSYNC_POL_ACT_HI << RFSPOL_SHIFT;
 
-	if ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) == SND_SOC_DAIFMT_DSP_A) {
+	अगर ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) == SND_SOC_DAIFMT_DSP_A) अणु
 		dev_dbg(dai->dev, "%s: DSP_A.\n", __func__);
 		prot_desc->rx_clk_pol = MSP_RISING_EDGE;
 		prot_desc->tx_clk_pol = MSP_FALLING_EDGE;
 
 		prot_desc->rx_data_delay = MSP_DELAY_1;
 		prot_desc->tx_data_delay = MSP_DELAY_1;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(dai->dev, "%s: DSP_B.\n", __func__);
 		prot_desc->rx_clk_pol = MSP_FALLING_EDGE;
 		prot_desc->tx_clk_pol = MSP_RISING_EDGE;
 
 		prot_desc->rx_data_delay = MSP_DELAY_0;
 		prot_desc->tx_data_delay = MSP_DELAY_0;
-	}
+	पूर्ण
 
 	prot_desc->rx_half_word_swap = MSP_SWAP_NONE;
 	prot_desc->tx_half_word_swap = MSP_SWAP_NONE;
@@ -260,11 +261,11 @@ static int setup_pcm_protdesc(struct snd_soc_dai *dai,
 	prot_desc->expansion_mode = MSP_EXPAND_MODE_LINEAR;
 	prot_desc->frame_sync_ignore = MSP_FSYNC_IGNORE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_i2s_protdesc(struct msp_protdesc *prot_desc)
-{
+अटल पूर्णांक setup_i2s_protdesc(काष्ठा msp_protdesc *prot_desc)
+अणु
 	prot_desc->rx_phase_mode = MSP_DUAL_PHASE;
 	prot_desc->tx_phase_mode = MSP_DUAL_PHASE;
 	prot_desc->rx_phase2_start_mode = MSP_PHASE2_START_MODE_FSYNC;
@@ -295,225 +296,225 @@ static int setup_i2s_protdesc(struct msp_protdesc *prot_desc)
 	prot_desc->expansion_mode = MSP_EXPAND_MODE_LINEAR;
 	prot_desc->frame_sync_ignore = MSP_FSYNC_IGNORE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_msp_config(struct snd_pcm_substream *substream,
-			struct snd_soc_dai *dai,
-			struct ux500_msp_config *msp_config)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
-	struct msp_protdesc *prot_desc = &msp_config->protdesc;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	unsigned int fmt = drvdata->fmt;
-	int ret;
+अटल पूर्णांक setup_msp_config(काष्ठा snd_pcm_substream *substream,
+			काष्ठा snd_soc_dai *dai,
+			काष्ठा ux500_msp_config *msp_config)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+	काष्ठा msp_protdesc *prot_desc = &msp_config->protdesc;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अचिन्हित पूर्णांक fmt = drvdata->fmt;
+	पूर्णांक ret;
 
-	memset(msp_config, 0, sizeof(*msp_config));
+	स_रखो(msp_config, 0, माप(*msp_config));
 
-	msp_config->f_inputclk = drvdata->master_clk;
+	msp_config->f_inअ_दोlk = drvdata->master_clk;
 
-	msp_config->tx_fifo_config = TX_FIFO_ENABLE;
-	msp_config->rx_fifo_config = RX_FIFO_ENABLE;
+	msp_config->tx_fअगरo_config = TX_FIFO_ENABLE;
+	msp_config->rx_fअगरo_config = RX_FIFO_ENABLE;
 	msp_config->def_elem_len = 1;
 	msp_config->direction = substream->stream == SNDRV_PCM_STREAM_PLAYBACK ?
-				MSP_DIR_TX : MSP_DIR_RX;
+				MSP_सूची_TX : MSP_सूची_RX;
 	msp_config->data_size = MSP_DATA_BITS_32;
-	msp_config->frame_freq = runtime->rate;
+	msp_config->frame_freq = runसमय->rate;
 
 	dev_dbg(dai->dev, "%s: f_inputclk = %u, frame_freq = %u.\n",
-	       __func__, msp_config->f_inputclk, msp_config->frame_freq);
-	/* To avoid division by zero */
-	prot_desc->clocks_per_frame = 1;
+	       __func__, msp_config->f_inअ_दोlk, msp_config->frame_freq);
+	/* To aव्योम भागision by zero */
+	prot_desc->घड़ीs_per_frame = 1;
 
 	dev_dbg(dai->dev, "%s: rate: %u, channels: %d.\n", __func__,
-		runtime->rate, runtime->channels);
-	switch (fmt &
-		(SND_SOC_DAIFMT_FORMAT_MASK | SND_SOC_DAIFMT_MASTER_MASK)) {
-	case SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBS_CFS:
+		runसमय->rate, runसमय->channels);
+	चयन (fmt &
+		(SND_SOC_DAIFMT_FORMAT_MASK | SND_SOC_DAIFMT_MASTER_MASK)) अणु
+	हाल SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBS_CFS:
 		dev_dbg(dai->dev, "%s: SND_SOC_DAIFMT_I2S.\n", __func__);
 
-		msp_config->default_protdesc = 1;
+		msp_config->शेष_protdesc = 1;
 		msp_config->protocol = MSP_I2S_PROTOCOL;
-		break;
+		अवरोध;
 
-	case SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBM_CFM:
+	हाल SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBM_CFM:
 		dev_dbg(dai->dev, "%s: SND_SOC_DAIFMT_I2S.\n", __func__);
 
 		msp_config->data_size = MSP_DATA_BITS_16;
 		msp_config->protocol = MSP_I2S_PROTOCOL;
 
 		ret = setup_i2s_protdesc(prot_desc);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
+		अवरोध;
 
-	case SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_CBS_CFS:
-	case SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_CBM_CFM:
-	case SND_SOC_DAIFMT_DSP_B | SND_SOC_DAIFMT_CBS_CFS:
-	case SND_SOC_DAIFMT_DSP_B | SND_SOC_DAIFMT_CBM_CFM:
+	हाल SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_CBS_CFS:
+	हाल SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_CBM_CFM:
+	हाल SND_SOC_DAIFMT_DSP_B | SND_SOC_DAIFMT_CBS_CFS:
+	हाल SND_SOC_DAIFMT_DSP_B | SND_SOC_DAIFMT_CBM_CFM:
 		dev_dbg(dai->dev, "%s: PCM format.\n", __func__);
 
 		msp_config->data_size = MSP_DATA_BITS_16;
 		msp_config->protocol = MSP_PCM_PROTOCOL;
 
 		ret = setup_pcm_protdesc(dai, fmt, prot_desc);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		ret = setup_pcm_multichan(dai, msp_config);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = setup_pcm_framing(dai, runtime->rate, prot_desc);
-		if (ret < 0)
-			return ret;
+		ret = setup_pcm_framing(dai, runसमय->rate, prot_desc);
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dai->dev, "%s: Error: Unsupported format (%d)!\n",
 			__func__, fmt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return setup_clocking(dai, fmt, msp_config);
-}
+	वापस setup_घड़ीing(dai, fmt, msp_config);
+पूर्ण
 
-static int ux500_msp_dai_startup(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
-{
-	int ret = 0;
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+अटल पूर्णांक ux500_msp_dai_startup(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
 
 	dev_dbg(dai->dev, "%s: MSP %d (%s): Enter.\n", __func__, dai->id,
 		snd_pcm_stream_str(substream));
 
 	/* Enable regulator */
 	ret = regulator_enable(drvdata->reg_vape);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(drvdata->msp->dev,
 			"%s: Failed to enable regulator!\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Prepare and enable clocks */
+	/* Prepare and enable घड़ीs */
 	dev_dbg(dai->dev, "%s: Enabling MSP-clocks.\n", __func__);
 	ret = clk_prepare_enable(drvdata->pclk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(drvdata->msp->dev,
 			"%s: Failed to prepare/enable pclk!\n", __func__);
-		goto err_pclk;
-	}
+		जाओ err_pclk;
+	पूर्ण
 
 	ret = clk_prepare_enable(drvdata->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(drvdata->msp->dev,
 			"%s: Failed to prepare/enable clk!\n", __func__);
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 err_clk:
 	clk_disable_unprepare(drvdata->pclk);
 err_pclk:
 	regulator_disable(drvdata->reg_vape);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ux500_msp_dai_shutdown(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
-{
-	int ret;
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+अटल व्योम ux500_msp_dai_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	पूर्णांक ret;
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
 	bool is_playback = (substream->stream == SNDRV_PCM_STREAM_PLAYBACK);
 
 	dev_dbg(dai->dev, "%s: MSP %d (%s): Enter.\n", __func__, dai->id,
 		snd_pcm_stream_str(substream));
 
-	if (drvdata->vape_opp_constraint == 1) {
+	अगर (drvdata->vape_opp_स्थिरraपूर्णांक == 1) अणु
 		prcmu_qos_update_requirement(PRCMU_QOS_APE_OPP,
 					"ux500_msp_i2s", 50);
-		drvdata->vape_opp_constraint = 0;
-	}
+		drvdata->vape_opp_स्थिरraपूर्णांक = 0;
+	पूर्ण
 
-	if (ux500_msp_i2s_close(drvdata->msp,
-				is_playback ? MSP_DIR_TX : MSP_DIR_RX)) {
+	अगर (ux500_msp_i2s_बंद(drvdata->msp,
+				is_playback ? MSP_सूची_TX : MSP_सूची_RX)) अणु
 		dev_err(dai->dev,
 			"%s: Error: MSP %d (%s): Unable to close i2s.\n",
 			__func__, dai->id, snd_pcm_stream_str(substream));
-	}
+	पूर्ण
 
-	/* Disable and unprepare clocks */
+	/* Disable and unprepare घड़ीs */
 	clk_disable_unprepare(drvdata->clk);
 	clk_disable_unprepare(drvdata->pclk);
 
 	/* Disable regulator */
 	ret = regulator_disable(drvdata->reg_vape);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(dai->dev,
 			"%s: ERROR: Failed to disable regulator (%d)!\n",
 			__func__, ret);
-}
+पूर्ण
 
-static int ux500_msp_dai_prepare(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
-{
-	int ret = 0;
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct ux500_msp_config msp_config;
+अटल पूर्णांक ux500_msp_dai_prepare(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा ux500_msp_config msp_config;
 
 	dev_dbg(dai->dev, "%s: MSP %d (%s): Enter (rate = %d).\n", __func__,
-		dai->id, snd_pcm_stream_str(substream), runtime->rate);
+		dai->id, snd_pcm_stream_str(substream), runसमय->rate);
 
 	setup_msp_config(substream, dai, &msp_config);
 
-	ret = ux500_msp_i2s_open(drvdata->msp, &msp_config);
-	if (ret < 0) {
+	ret = ux500_msp_i2s_खोलो(drvdata->msp, &msp_config);
+	अगर (ret < 0) अणु
 		dev_err(dai->dev, "%s: Error: msp_setup failed (ret = %d)!\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Set OPP-level */
-	if ((drvdata->fmt & SND_SOC_DAIFMT_MASTER_MASK) &&
-		(drvdata->msp->f_bitclk > 19200000)) {
-		/* If the bit-clock is higher than 19.2MHz, Vape should be
-		 * run in 100% OPP. Only when bit-clock is used (MSP master)
+	अगर ((drvdata->fmt & SND_SOC_DAIFMT_MASTER_MASK) &&
+		(drvdata->msp->f_bitclk > 19200000)) अणु
+		/* If the bit-घड़ी is higher than 19.2MHz, Vape should be
+		 * run in 100% OPP. Only when bit-घड़ी is used (MSP master)
 		 */
 		prcmu_qos_update_requirement(PRCMU_QOS_APE_OPP,
 					"ux500-msp-i2s", 100);
-		drvdata->vape_opp_constraint = 1;
-	} else {
+		drvdata->vape_opp_स्थिरraपूर्णांक = 1;
+	पूर्ण अन्यथा अणु
 		prcmu_qos_update_requirement(PRCMU_QOS_APE_OPP,
 					"ux500-msp-i2s", 50);
-		drvdata->vape_opp_constraint = 0;
-	}
+		drvdata->vape_opp_स्थिरraपूर्णांक = 0;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ux500_msp_dai_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params,
-				struct snd_soc_dai *dai)
-{
-	unsigned int mask, slots_active;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+अटल पूर्णांक ux500_msp_dai_hw_params(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_hw_params *params,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	अचिन्हित पूर्णांक mask, slots_active;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
 
 	dev_dbg(dai->dev, "%s: MSP %d (%s): Enter.\n",
 			__func__, dai->id, snd_pcm_stream_str(substream));
 
-	switch (drvdata->fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-		snd_pcm_hw_constraint_minmax(runtime,
+	चयन (drvdata->fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+		snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय,
 				SNDRV_PCM_HW_PARAM_CHANNELS,
 				1, 2);
-		break;
+		अवरोध;
 
-	case SND_SOC_DAIFMT_DSP_B:
-	case SND_SOC_DAIFMT_DSP_A:
+	हाल SND_SOC_DAIFMT_DSP_B:
+	हाल SND_SOC_DAIFMT_DSP_A:
 		mask = substream->stream == SNDRV_PCM_STREAM_PLAYBACK ?
 			drvdata->tx_mask :
 			drvdata->rx_mask;
@@ -521,157 +522,157 @@ static int ux500_msp_dai_hw_params(struct snd_pcm_substream *substream,
 		slots_active = hweight32(mask);
 		dev_dbg(dai->dev, "TDM-slots active: %d", slots_active);
 
-		snd_pcm_hw_constraint_single(runtime,
+		snd_pcm_hw_स्थिरraपूर्णांक_single(runसमय,
 				SNDRV_PCM_HW_PARAM_CHANNELS,
 				slots_active);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dai->dev,
 			"%s: Error: Unsupported protocol (fmt = 0x%x)!\n",
 			__func__, drvdata->fmt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ux500_msp_dai_set_dai_fmt(struct snd_soc_dai *dai,
-				unsigned int fmt)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+अटल पूर्णांक ux500_msp_dai_set_dai_fmt(काष्ठा snd_soc_dai *dai,
+				अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
 
 	dev_dbg(dai->dev, "%s: MSP %d: Enter.\n", __func__, dai->id);
 
-	switch (fmt & (SND_SOC_DAIFMT_FORMAT_MASK |
-		SND_SOC_DAIFMT_MASTER_MASK)) {
-	case SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBS_CFS:
-	case SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBM_CFM:
-	case SND_SOC_DAIFMT_DSP_B | SND_SOC_DAIFMT_CBS_CFS:
-	case SND_SOC_DAIFMT_DSP_B | SND_SOC_DAIFMT_CBM_CFM:
-	case SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_CBS_CFS:
-	case SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_CBM_CFM:
-		break;
+	चयन (fmt & (SND_SOC_DAIFMT_FORMAT_MASK |
+		SND_SOC_DAIFMT_MASTER_MASK)) अणु
+	हाल SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBS_CFS:
+	हाल SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBM_CFM:
+	हाल SND_SOC_DAIFMT_DSP_B | SND_SOC_DAIFMT_CBS_CFS:
+	हाल SND_SOC_DAIFMT_DSP_B | SND_SOC_DAIFMT_CBM_CFM:
+	हाल SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_CBS_CFS:
+	हाल SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_CBM_CFM:
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dai->dev,
 			"%s: Error: Unsupported protocol/master (fmt = 0x%x)!\n",
 			__func__, drvdata->fmt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-	case SND_SOC_DAIFMT_NB_IF:
-	case SND_SOC_DAIFMT_IB_IF:
-		break;
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+	हाल SND_SOC_DAIFMT_NB_IF:
+	हाल SND_SOC_DAIFMT_IB_IF:
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dai->dev,
 			"%s: Error: Unsupported inversion (fmt = 0x%x)!\n",
 			__func__, drvdata->fmt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	drvdata->fmt = fmt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ux500_msp_dai_set_tdm_slot(struct snd_soc_dai *dai,
-				unsigned int tx_mask,
-				unsigned int rx_mask,
-				int slots, int slot_width)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
-	unsigned int cap;
+अटल पूर्णांक ux500_msp_dai_set_tdm_slot(काष्ठा snd_soc_dai *dai,
+				अचिन्हित पूर्णांक tx_mask,
+				अचिन्हित पूर्णांक rx_mask,
+				पूर्णांक slots, पूर्णांक slot_width)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+	अचिन्हित पूर्णांक cap;
 
-	switch (slots) {
-	case 1:
+	चयन (slots) अणु
+	हाल 1:
 		cap = 0x01;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		cap = 0x03;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		cap = 0xFF;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		cap = 0xFFFF;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dai->dev, "%s: Error: Unsupported slot-count (%d)!\n",
 			__func__, slots);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	drvdata->slots = slots;
 
-	if (!(slot_width == 16)) {
+	अगर (!(slot_width == 16)) अणु
 		dev_err(dai->dev, "%s: Error: Unsupported slot-width (%d)!\n",
 			__func__, slot_width);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	drvdata->slot_width = slot_width;
 
 	drvdata->tx_mask = tx_mask & cap;
 	drvdata->rx_mask = rx_mask & cap;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ux500_msp_dai_set_dai_sysclk(struct snd_soc_dai *dai,
-					int clk_id, unsigned int freq, int dir)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+अटल पूर्णांक ux500_msp_dai_set_dai_sysclk(काष्ठा snd_soc_dai *dai,
+					पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
 
 	dev_dbg(dai->dev, "%s: MSP %d: Enter. clk-id: %d, freq: %u.\n",
 		__func__, dai->id, clk_id, freq);
 
-	switch (clk_id) {
-	case UX500_MSP_MASTER_CLOCK:
+	चयन (clk_id) अणु
+	हाल UX500_MSP_MASTER_CLOCK:
 		drvdata->master_clk = freq;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dai->dev, "%s: MSP %d: Invalid clk-id (%d)!\n",
 			__func__, dai->id, clk_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ux500_msp_dai_trigger(struct snd_pcm_substream *substream,
-				int cmd, struct snd_soc_dai *dai)
-{
-	int ret = 0;
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+अटल पूर्णांक ux500_msp_dai_trigger(काष्ठा snd_pcm_substream *substream,
+				पूर्णांक cmd, काष्ठा snd_soc_dai *dai)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
 
 	dev_dbg(dai->dev, "%s: MSP %d (%s): Enter (msp->id = %d, cmd = %d).\n",
 		__func__, dai->id, snd_pcm_stream_str(substream),
-		(int)drvdata->msp->id, cmd);
+		(पूर्णांक)drvdata->msp->id, cmd);
 
 	ret = ux500_msp_i2s_trigger(drvdata->msp, cmd, substream->stream);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ux500_msp_dai_of_probe(struct snd_soc_dai *dai)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
-	struct snd_dmaengine_dai_dma_data *playback_dma_data;
-	struct snd_dmaengine_dai_dma_data *capture_dma_data;
+अटल पूर्णांक ux500_msp_dai_of_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+	काष्ठा snd_dmaengine_dai_dma_data *playback_dma_data;
+	काष्ठा snd_dmaengine_dai_dma_data *capture_dma_data;
 
 	playback_dma_data = devm_kzalloc(dai->dev,
-					 sizeof(*playback_dma_data),
+					 माप(*playback_dma_data),
 					 GFP_KERNEL);
-	if (!playback_dma_data)
-		return -ENOMEM;
+	अगर (!playback_dma_data)
+		वापस -ENOMEM;
 
 	capture_dma_data = devm_kzalloc(dai->dev,
-					sizeof(*capture_dma_data),
+					माप(*capture_dma_data),
 					GFP_KERNEL);
-	if (!capture_dma_data)
-		return -ENOMEM;
+	अगर (!capture_dma_data)
+		वापस -ENOMEM;
 
 	playback_dma_data->addr = drvdata->msp->playback_dma_data.tx_rx_addr;
 	capture_dma_data->addr = drvdata->msp->capture_dma_data.tx_rx_addr;
@@ -681,19 +682,19 @@ static int ux500_msp_dai_of_probe(struct snd_soc_dai *dai)
 
 	snd_soc_dai_init_dma_data(dai, playback_dma_data, capture_dma_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ux500_msp_dai_probe(struct snd_soc_dai *dai)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
-	struct msp_i2s_platform_data *pdata = dai->dev->platform_data;
-	int ret;
+अटल पूर्णांक ux500_msp_dai_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(dai->dev);
+	काष्ठा msp_i2s_platक्रमm_data *pdata = dai->dev->platक्रमm_data;
+	पूर्णांक ret;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		ret = ux500_msp_dai_of_probe(dai);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	drvdata->msp->playback_dma_data.data_size = drvdata->slot_width;
 	drvdata->msp->capture_dma_data.data_size = drvdata->slot_width;
@@ -701,57 +702,57 @@ static int ux500_msp_dai_probe(struct snd_soc_dai *dai)
 	snd_soc_dai_init_dma_data(dai,
 				  &drvdata->msp->playback_dma_data,
 				  &drvdata->msp->capture_dma_data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops ux500_msp_dai_ops[] = {
-	{
+अटल स्थिर काष्ठा snd_soc_dai_ops ux500_msp_dai_ops[] = अणु
+	अणु
 		.set_sysclk = ux500_msp_dai_set_dai_sysclk,
 		.set_fmt = ux500_msp_dai_set_dai_fmt,
 		.set_tdm_slot = ux500_msp_dai_set_tdm_slot,
 		.startup = ux500_msp_dai_startup,
-		.shutdown = ux500_msp_dai_shutdown,
+		.shutकरोwn = ux500_msp_dai_shutकरोwn,
 		.prepare = ux500_msp_dai_prepare,
 		.trigger = ux500_msp_dai_trigger,
 		.hw_params = ux500_msp_dai_hw_params,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct snd_soc_dai_driver ux500_msp_dai_drv = {
+अटल काष्ठा snd_soc_dai_driver ux500_msp_dai_drv = अणु
 	.probe                 = ux500_msp_dai_probe,
 	.playback.channels_min = UX500_MSP_MIN_CHANNELS,
 	.playback.channels_max = UX500_MSP_MAX_CHANNELS,
 	.playback.rates        = UX500_I2S_RATES,
-	.playback.formats      = UX500_I2S_FORMATS,
+	.playback.क्रमmats      = UX500_I2S_FORMATS,
 	.capture.channels_min  = UX500_MSP_MIN_CHANNELS,
 	.capture.channels_max  = UX500_MSP_MAX_CHANNELS,
 	.capture.rates         = UX500_I2S_RATES,
-	.capture.formats       = UX500_I2S_FORMATS,
+	.capture.क्रमmats       = UX500_I2S_FORMATS,
 	.ops                   = ux500_msp_dai_ops,
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver ux500_msp_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver ux500_msp_component = अणु
 	.name		= "ux500-msp",
-};
+पूर्ण;
 
 
-static int ux500_msp_drv_probe(struct platform_device *pdev)
-{
-	struct ux500_msp_i2s_drvdata *drvdata;
-	struct msp_i2s_platform_data *pdata = pdev->dev.platform_data;
-	struct device_node *np = pdev->dev.of_node;
-	int ret = 0;
+अटल पूर्णांक ux500_msp_drv_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata;
+	काष्ठा msp_i2s_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	पूर्णांक ret = 0;
 
-	if (!pdata && !np) {
+	अगर (!pdata && !np) अणु
 		dev_err(&pdev->dev, "No platform data or Device Tree found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	drvdata = devm_kzalloc(&pdev->dev,
-				sizeof(struct ux500_msp_i2s_drvdata),
+				माप(काष्ठा ux500_msp_i2s_drvdata),
 				GFP_KERNEL);
-	if (!drvdata)
-		return -ENOMEM;
+	अगर (!drvdata)
+		वापस -ENOMEM;
 
 	drvdata->fmt = 0;
 	drvdata->slots = 1;
@@ -761,95 +762,95 @@ static int ux500_msp_drv_probe(struct platform_device *pdev)
 	drvdata->master_clk = MSP_INPUT_FREQ_APB;
 
 	drvdata->reg_vape = devm_regulator_get(&pdev->dev, "v-ape");
-	if (IS_ERR(drvdata->reg_vape)) {
-		ret = (int)PTR_ERR(drvdata->reg_vape);
+	अगर (IS_ERR(drvdata->reg_vape)) अणु
+		ret = (पूर्णांक)PTR_ERR(drvdata->reg_vape);
 		dev_err(&pdev->dev,
 			"%s: ERROR: Failed to get Vape supply (%d)!\n",
 			__func__, ret);
-		return ret;
-	}
-	prcmu_qos_add_requirement(PRCMU_QOS_APE_OPP, (char *)pdev->name, 50);
+		वापस ret;
+	पूर्ण
+	prcmu_qos_add_requirement(PRCMU_QOS_APE_OPP, (अक्षर *)pdev->name, 50);
 
 	drvdata->pclk = devm_clk_get(&pdev->dev, "apb_pclk");
-	if (IS_ERR(drvdata->pclk)) {
-		ret = (int)PTR_ERR(drvdata->pclk);
+	अगर (IS_ERR(drvdata->pclk)) अणु
+		ret = (पूर्णांक)PTR_ERR(drvdata->pclk);
 		dev_err(&pdev->dev,
 			"%s: ERROR: devm_clk_get of pclk failed (%d)!\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	drvdata->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(drvdata->clk)) {
-		ret = (int)PTR_ERR(drvdata->clk);
+	drvdata->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(drvdata->clk)) अणु
+		ret = (पूर्णांक)PTR_ERR(drvdata->clk);
 		dev_err(&pdev->dev,
 			"%s: ERROR: devm_clk_get failed (%d)!\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ux500_msp_i2s_init_msp(pdev, &drvdata->msp,
-				pdev->dev.platform_data);
-	if (!drvdata->msp) {
+				pdev->dev.platक्रमm_data);
+	अगर (!drvdata->msp) अणु
 		dev_err(&pdev->dev,
 			"%s: ERROR: Failed to init MSP-struct (%d)!",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	dev_set_drvdata(&pdev->dev, drvdata);
 
-	ret = snd_soc_register_component(&pdev->dev, &ux500_msp_component,
+	ret = snd_soc_रेजिस्टर_component(&pdev->dev, &ux500_msp_component,
 					 &ux500_msp_dai_drv, 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Error: %s: Failed to register MSP%d!\n",
 			__func__, drvdata->msp->id);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ux500_pcm_register_platform(pdev);
-	if (ret < 0) {
+	ret = ux500_pcm_रेजिस्टर_platक्रमm(pdev);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev,
 			"Error: %s: Failed to register PCM platform device!\n",
 			__func__);
-		goto err_reg_plat;
-	}
+		जाओ err_reg_plat;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_reg_plat:
-	snd_soc_unregister_component(&pdev->dev);
-	return ret;
-}
+	snd_soc_unरेजिस्टर_component(&pdev->dev);
+	वापस ret;
+पूर्ण
 
-static int ux500_msp_drv_remove(struct platform_device *pdev)
-{
-	struct ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक ux500_msp_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ux500_msp_i2s_drvdata *drvdata = dev_get_drvdata(&pdev->dev);
 
-	ux500_pcm_unregister_platform(pdev);
+	ux500_pcm_unरेजिस्टर_platक्रमm(pdev);
 
-	snd_soc_unregister_component(&pdev->dev);
+	snd_soc_unरेजिस्टर_component(&pdev->dev);
 
-	prcmu_qos_remove_requirement(PRCMU_QOS_APE_OPP, "ux500_msp_i2s");
+	prcmu_qos_हटाओ_requirement(PRCMU_QOS_APE_OPP, "ux500_msp_i2s");
 
 	ux500_msp_i2s_cleanup_msp(pdev, drvdata->msp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ux500_msp_i2s_match[] = {
-	{ .compatible = "stericsson,ux500-msp-i2s", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ux500_msp_i2s_match[] = अणु
+	अणु .compatible = "stericsson,ux500-msp-i2s", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ux500_msp_i2s_match);
 
-static struct platform_driver msp_i2s_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver msp_i2s_driver = अणु
+	.driver = अणु
 		.name = "ux500-msp-i2s",
 		.of_match_table = ux500_msp_i2s_match,
-	},
+	पूर्ण,
 	.probe = ux500_msp_drv_probe,
-	.remove = ux500_msp_drv_remove,
-};
-module_platform_driver(msp_i2s_driver);
+	.हटाओ = ux500_msp_drv_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(msp_i2s_driver);
 
 MODULE_LICENSE("GPL v2");

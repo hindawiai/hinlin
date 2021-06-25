@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Time related functions for Hexagon architecture
+ * Time related functions क्रम Hexagon architecture
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/init.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/interrupt.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/ioport.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/module.h>
 
-#include <asm/timer-regs.h>
-#include <asm/hexagon_vm.h>
+#समावेश <यंत्र/समयr-regs.h>
+#समावेश <यंत्र/hexagon_vm.h>
 
 /*
- * For the clocksource we need:
+ * For the घड़ीsource we need:
  *	pcycle frequency (600MHz)
- * For the loops_per_jiffy we need:
- *	thread/cpu frequency (100MHz)
- * And for the timer, we need:
- *	sleep clock rate
+ * For the loops_per_jअगरfy we need:
+ *	thपढ़ो/cpu frequency (100MHz)
+ * And क्रम the समयr, we need:
+ *	sleep घड़ी rate
  */
 
 cycles_t	pcycle_freq_mhz;
-cycles_t	thread_freq_mhz;
+cycles_t	thपढ़ो_freq_mhz;
 cycles_t	sleep_clk_freq;
 
-static struct resource rtos_timer_resources[] = {
-	{
+अटल काष्ठा resource rtos_समयr_resources[] = अणु
+	अणु
 		.start	= RTOS_TIMER_REGS_ADDR,
 		.end	= RTOS_TIMER_REGS_ADDR+PAGE_SIZE-1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device rtos_timer_device = {
+अटल काष्ठा platक्रमm_device rtos_समयr_device = अणु
 	.name		= "rtos_timer",
 	.id		= -1,
-	.num_resources	= ARRAY_SIZE(rtos_timer_resources),
-	.resource	= rtos_timer_resources,
-};
+	.num_resources	= ARRAY_SIZE(rtos_समयr_resources),
+	.resource	= rtos_समयr_resources,
+पूर्ण;
 
-/*  A lot of this stuff should move into a platform specific section.  */
-struct adsp_hw_timer_struct {
+/*  A lot of this stuff should move पूर्णांकo a platक्रमm specअगरic section.  */
+काष्ठा adsp_hw_समयr_काष्ठा अणु
 	u32 match;   /*  Match value  */
 	u32 count;
 	u32 enable;  /*  [1] - CLR_ON_MATCH_EN, [0] - EN  */
-	u32 clear;   /*  one-shot register that clears the count  */
-};
+	u32 clear;   /*  one-shot रेजिस्टर that clears the count  */
+पूर्ण;
 
-/*  Look for "TCX0" for related constants.  */
-static __iomem struct adsp_hw_timer_struct *rtos_timer;
+/*  Look क्रम "TCX0" क्रम related स्थिरants.  */
+अटल __iomem काष्ठा adsp_hw_समयr_काष्ठा *rtos_समयr;
 
-static u64 timer_get_cycles(struct clocksource *cs)
-{
-	return (u64) __vmgettime();
-}
+अटल u64 समयr_get_cycles(काष्ठा घड़ीsource *cs)
+अणु
+	वापस (u64) __vmसमय_लो();
+पूर्ण
 
-static struct clocksource hexagon_clocksource = {
+अटल काष्ठा घड़ीsource hexagon_घड़ीsource = अणु
 	.name		= "pcycles",
 	.rating		= 250,
-	.read		= timer_get_cycles,
+	.पढ़ो		= समयr_get_cycles,
 	.mask		= CLOCKSOURCE_MASK(64),
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
-static int set_next_event(unsigned long delta, struct clock_event_device *evt)
-{
-	/*  Assuming the timer will be disabled when we enter here.  */
+अटल पूर्णांक set_next_event(अचिन्हित दीर्घ delta, काष्ठा घड़ी_event_device *evt)
+अणु
+	/*  Assuming the समयr will be disabled when we enter here.  */
 
-	iowrite32(1, &rtos_timer->clear);
-	iowrite32(0, &rtos_timer->clear);
+	ioग_लिखो32(1, &rtos_समयr->clear);
+	ioग_लिखो32(0, &rtos_समयr->clear);
 
-	iowrite32(delta, &rtos_timer->match);
-	iowrite32(1 << TIMER_ENABLE, &rtos_timer->enable);
-	return 0;
-}
+	ioग_लिखो32(delta, &rtos_समयr->match);
+	ioग_लिखो32(1 << TIMER_ENABLE, &rtos_समयr->enable);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 /*  Broadcast mechanism  */
-static void broadcast(const struct cpumask *mask)
-{
+अटल व्योम broadcast(स्थिर काष्ठा cpumask *mask)
+अणु
 	send_ipi(mask, IPI_TIMER);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-/* XXX Implement set_state_shutdown() */
-static struct clock_event_device hexagon_clockevent_dev = {
+/* XXX Implement set_state_shutकरोwn() */
+अटल काष्ठा घड़ी_event_device hexagon_घड़ीevent_dev = अणु
 	.name		= "clockevent",
 	.features	= CLOCK_EVT_FEAT_ONESHOT,
 	.rating		= 400,
 	.irq		= RTOS_TIMER_INT,
 	.set_next_event = set_next_event,
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	.broadcast	= broadcast,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_SMP
-static DEFINE_PER_CPU(struct clock_event_device, clock_events);
+#अगर_घोषित CONFIG_SMP
+अटल DEFINE_PER_CPU(काष्ठा घड़ी_event_device, घड़ी_events);
 
-void setup_percpu_clockdev(void)
-{
-	int cpu = smp_processor_id();
-	struct clock_event_device *ce_dev = &hexagon_clockevent_dev;
-	struct clock_event_device *dummy_clock_dev =
-		&per_cpu(clock_events, cpu);
+व्योम setup_percpu_घड़ीdev(व्योम)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा घड़ी_event_device *ce_dev = &hexagon_घड़ीevent_dev;
+	काष्ठा घड़ी_event_device *dummy_घड़ी_dev =
+		&per_cpu(घड़ी_events, cpu);
 
-	memcpy(dummy_clock_dev, ce_dev, sizeof(*dummy_clock_dev));
-	INIT_LIST_HEAD(&dummy_clock_dev->list);
+	स_नकल(dummy_घड़ी_dev, ce_dev, माप(*dummy_घड़ी_dev));
+	INIT_LIST_HEAD(&dummy_घड़ी_dev->list);
 
-	dummy_clock_dev->features = CLOCK_EVT_FEAT_DUMMY;
-	dummy_clock_dev->cpumask = cpumask_of(cpu);
+	dummy_घड़ी_dev->features = CLOCK_EVT_FEAT_DUMMY;
+	dummy_घड़ी_dev->cpumask = cpumask_of(cpu);
 
-	clockevents_register_device(dummy_clock_dev);
-}
+	घड़ीevents_रेजिस्टर_device(dummy_घड़ी_dev);
+पूर्ण
 
-/*  Called from smp.c for each CPU's timer ipi call  */
-void ipi_timer(void)
-{
-	int cpu = smp_processor_id();
-	struct clock_event_device *ce_dev = &per_cpu(clock_events, cpu);
+/*  Called from smp.c क्रम each CPU's समयr ipi call  */
+व्योम ipi_समयr(व्योम)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा घड़ी_event_device *ce_dev = &per_cpu(घड़ी_events, cpu);
 
 	ce_dev->event_handler(ce_dev);
-}
-#endif /* CONFIG_SMP */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static irqreturn_t timer_interrupt(int irq, void *devid)
-{
-	struct clock_event_device *ce_dev = &hexagon_clockevent_dev;
+अटल irqवापस_t समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा घड़ी_event_device *ce_dev = &hexagon_घड़ीevent_dev;
 
-	iowrite32(0, &rtos_timer->enable);
+	ioग_लिखो32(0, &rtos_समयr->enable);
 	ce_dev->event_handler(ce_dev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * time_init_deferred - called by start_kernel to set up timer/clock source
+ * समय_init_deferred - called by start_kernel to set up समयr/घड़ी source
  *
- * Install the IRQ handler for the clock, setup timers.
- * This is done late, as that way, we can use ioremap().
+ * Install the IRQ handler क्रम the घड़ी, setup समयrs.
+ * This is करोne late, as that way, we can use ioremap().
  *
- * This runs just before the delay loop is calibrated, and
- * is used for delay calibration.
+ * This runs just beक्रमe the delay loop is calibrated, and
+ * is used क्रम delay calibration.
  */
-void __init time_init_deferred(void)
-{
-	struct resource *resource = NULL;
-	struct clock_event_device *ce_dev = &hexagon_clockevent_dev;
-	unsigned long flag = IRQF_TIMER | IRQF_TRIGGER_RISING;
+व्योम __init समय_init_deferred(व्योम)
+अणु
+	काष्ठा resource *resource = शून्य;
+	काष्ठा घड़ी_event_device *ce_dev = &hexagon_घड़ीevent_dev;
+	अचिन्हित दीर्घ flag = IRQF_TIMER | IRQF_TRIGGER_RISING;
 
 	ce_dev->cpumask = cpu_all_mask;
 
-	if (!resource)
-		resource = rtos_timer_device.resource;
+	अगर (!resource)
+		resource = rtos_समयr_device.resource;
 
 	/*  ioremap here means this has to run later, after paging init  */
-	rtos_timer = ioremap(resource->start, resource_size(resource));
+	rtos_समयr = ioremap(resource->start, resource_size(resource));
 
-	if (!rtos_timer) {
+	अगर (!rtos_समयr) अणु
 		release_mem_region(resource->start, resource_size(resource));
-	}
-	clocksource_register_khz(&hexagon_clocksource, pcycle_freq_mhz * 1000);
+	पूर्ण
+	घड़ीsource_रेजिस्टर_khz(&hexagon_घड़ीsource, pcycle_freq_mhz * 1000);
 
-	/*  Note: the sim generic RTOS clock is apparently really 18750Hz  */
+	/*  Note: the sim generic RTOS घड़ी is apparently really 18750Hz  */
 
 	/*
-	 * Last arg is some guaranteed seconds for which the conversion will
+	 * Last arg is some guaranteed seconds क्रम which the conversion will
 	 * work without overflow.
 	 */
-	clockevents_calc_mult_shift(ce_dev, sleep_clk_freq, 4);
+	घड़ीevents_calc_mult_shअगरt(ce_dev, sleep_clk_freq, 4);
 
-	ce_dev->max_delta_ns = clockevent_delta2ns(0x7fffffff, ce_dev);
+	ce_dev->max_delta_ns = घड़ीevent_delta2ns(0x7fffffff, ce_dev);
 	ce_dev->max_delta_ticks = 0x7fffffff;
-	ce_dev->min_delta_ns = clockevent_delta2ns(0xf, ce_dev);
+	ce_dev->min_delta_ns = घड़ीevent_delta2ns(0xf, ce_dev);
 	ce_dev->min_delta_ticks = 0xf;
 
-#ifdef CONFIG_SMP
-	setup_percpu_clockdev();
-#endif
+#अगर_घोषित CONFIG_SMP
+	setup_percpu_घड़ीdev();
+#पूर्ण_अगर
 
-	clockevents_register_device(ce_dev);
-	if (request_irq(ce_dev->irq, timer_interrupt, flag, "rtos_timer", NULL))
+	घड़ीevents_रेजिस्टर_device(ce_dev);
+	अगर (request_irq(ce_dev->irq, समयr_पूर्णांकerrupt, flag, "rtos_timer", शून्य))
 		pr_err("Failed to register rtos_timer interrupt\n");
-}
+पूर्ण
 
-void __init time_init(void)
-{
-	late_time_init = time_init_deferred;
-}
+व्योम __init समय_init(व्योम)
+अणु
+	late_समय_init = समय_init_deferred;
+पूर्ण
 
-void __delay(unsigned long cycles)
-{
-	unsigned long long start = __vmgettime();
+व्योम __delay(अचिन्हित दीर्घ cycles)
+अणु
+	अचिन्हित दीर्घ दीर्घ start = __vmसमय_लो();
 
-	while ((__vmgettime() - start) < cycles)
+	जबतक ((__vmसमय_लो() - start) < cycles)
 		cpu_relax();
-}
+पूर्ण
 EXPORT_SYMBOL(__delay);
 
 /*
- * This could become parametric or perhaps even computed at run-time,
- * but for now we take the observed simulator jitter.
+ * This could become parametric or perhaps even computed at run-समय,
+ * but क्रम now we take the observed simulator jitter.
  */
-static long long fudgefactor = 350;  /* Maybe lower if kernel optimized. */
+अटल दीर्घ दीर्घ fudgefactor = 350;  /* Maybe lower अगर kernel optimized. */
 
-void __udelay(unsigned long usecs)
-{
-	unsigned long long start = __vmgettime();
-	unsigned long long finish = (pcycle_freq_mhz * usecs) - fudgefactor;
+व्योम __udelay(अचिन्हित दीर्घ usecs)
+अणु
+	अचिन्हित दीर्घ दीर्घ start = __vmसमय_लो();
+	अचिन्हित दीर्घ दीर्घ finish = (pcycle_freq_mhz * usecs) - fudgefactor;
 
-	while ((__vmgettime() - start) < finish)
-		cpu_relax(); /*  not sure how this improves readability  */
-}
+	जबतक ((__vmसमय_लो() - start) < finish)
+		cpu_relax(); /*  not sure how this improves पढ़ोability  */
+पूर्ण
 EXPORT_SYMBOL(__udelay);

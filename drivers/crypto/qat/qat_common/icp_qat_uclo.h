@@ -1,111 +1,112 @@
-/* SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only) */
 /* Copyright(c) 2014 - 2020 Intel Corporation */
-#ifndef __ICP_QAT_UCLO_H__
-#define __ICP_QAT_UCLO_H__
+#अगर_अघोषित __ICP_QAT_UCLO_H__
+#घोषणा __ICP_QAT_UCLO_H__
 
-#define ICP_QAT_AC_895XCC_DEV_TYPE 0x00400000
-#define ICP_QAT_AC_C62X_DEV_TYPE   0x01000000
-#define ICP_QAT_AC_C3XXX_DEV_TYPE  0x02000000
-#define ICP_QAT_AC_4XXX_A_DEV_TYPE 0x08000000
-#define ICP_QAT_UCLO_MAX_AE       12
-#define ICP_QAT_UCLO_MAX_CTX      8
-#define ICP_QAT_UCLO_MAX_UIMAGE   (ICP_QAT_UCLO_MAX_AE * ICP_QAT_UCLO_MAX_CTX)
-#define ICP_QAT_UCLO_MAX_USTORE   0x4000
-#define ICP_QAT_UCLO_MAX_XFER_REG 128
-#define ICP_QAT_UCLO_MAX_GPR_REG  128
-#define ICP_QAT_UCLO_MAX_LMEM_REG 1024
-#define ICP_QAT_UCLO_MAX_LMEM_REG_2X 1280
-#define ICP_QAT_UCLO_AE_ALL_CTX   0xff
-#define ICP_QAT_UOF_OBJID_LEN     8
-#define ICP_QAT_UOF_FID 0xc6c2
-#define ICP_QAT_UOF_MAJVER 0x4
-#define ICP_QAT_UOF_MINVER 0x11
-#define ICP_QAT_UOF_OBJS        "UOF_OBJS"
-#define ICP_QAT_UOF_STRT        "UOF_STRT"
-#define ICP_QAT_UOF_IMAG        "UOF_IMAG"
-#define ICP_QAT_UOF_IMEM        "UOF_IMEM"
-#define ICP_QAT_UOF_LOCAL_SCOPE     1
-#define ICP_QAT_UOF_INIT_EXPR               0
-#define ICP_QAT_UOF_INIT_REG                1
-#define ICP_QAT_UOF_INIT_REG_CTX            2
-#define ICP_QAT_UOF_INIT_EXPR_ENDIAN_SWAP   3
-#define ICP_QAT_SUOF_OBJ_ID_LEN             8
-#define ICP_QAT_SUOF_FID  0x53554f46
-#define ICP_QAT_SUOF_MAJVER 0x0
-#define ICP_QAT_SUOF_MINVER 0x1
-#define ICP_QAT_SUOF_OBJ_NAME_LEN 128
-#define ICP_QAT_MOF_OBJ_ID_LEN 8
-#define ICP_QAT_MOF_OBJ_CHUNKID_LEN 8
-#define ICP_QAT_MOF_FID 0x00666f6d
-#define ICP_QAT_MOF_MAJVER 0x0
-#define ICP_QAT_MOF_MINVER 0x1
-#define ICP_QAT_MOF_SYM_OBJS "SYM_OBJS"
-#define ICP_QAT_SUOF_OBJS "SUF_OBJS"
-#define ICP_QAT_SUOF_IMAG "SUF_IMAG"
-#define ICP_QAT_SIMG_AE_INIT_SEQ_LEN    (50 * sizeof(unsigned long long))
-#define ICP_QAT_SIMG_AE_INSTS_LEN       (0x4000 * sizeof(unsigned long long))
+#घोषणा ICP_QAT_AC_895XCC_DEV_TYPE 0x00400000
+#घोषणा ICP_QAT_AC_C62X_DEV_TYPE   0x01000000
+#घोषणा ICP_QAT_AC_C3XXX_DEV_TYPE  0x02000000
+#घोषणा ICP_QAT_AC_4XXX_A_DEV_TYPE 0x08000000
+#घोषणा ICP_QAT_UCLO_MAX_AE       12
+#घोषणा ICP_QAT_UCLO_MAX_CTX      8
+#घोषणा ICP_QAT_UCLO_MAX_UIMAGE   (ICP_QAT_UCLO_MAX_AE * ICP_QAT_UCLO_MAX_CTX)
+#घोषणा ICP_QAT_UCLO_MAX_USTORE   0x4000
+#घोषणा ICP_QAT_UCLO_MAX_XFER_REG 128
+#घोषणा ICP_QAT_UCLO_MAX_GPR_REG  128
+#घोषणा ICP_QAT_UCLO_MAX_LMEM_REG 1024
+#घोषणा ICP_QAT_UCLO_MAX_LMEM_REG_2X 1280
+#घोषणा ICP_QAT_UCLO_AE_ALL_CTX   0xff
+#घोषणा ICP_QAT_UOF_OBJID_LEN     8
+#घोषणा ICP_QAT_UOF_FID 0xc6c2
+#घोषणा ICP_QAT_UOF_MAJVER 0x4
+#घोषणा ICP_QAT_UOF_MINVER 0x11
+#घोषणा ICP_QAT_UOF_OBJS        "UOF_OBJS"
+#घोषणा ICP_QAT_UOF_STRT        "UOF_STRT"
+#घोषणा ICP_QAT_UOF_IMAG        "UOF_IMAG"
+#घोषणा ICP_QAT_UOF_IMEM        "UOF_IMEM"
+#घोषणा ICP_QAT_UOF_LOCAL_SCOPE     1
+#घोषणा ICP_QAT_UOF_INIT_EXPR               0
+#घोषणा ICP_QAT_UOF_INIT_REG                1
+#घोषणा ICP_QAT_UOF_INIT_REG_CTX            2
+#घोषणा ICP_QAT_UOF_INIT_EXPR_ENDIAN_SWAP   3
+#घोषणा ICP_QAT_SUOF_OBJ_ID_LEN             8
+#घोषणा ICP_QAT_SUOF_FID  0x53554f46
+#घोषणा ICP_QAT_SUOF_MAJVER 0x0
+#घोषणा ICP_QAT_SUOF_MINVER 0x1
+#घोषणा ICP_QAT_SUOF_OBJ_NAME_LEN 128
+#घोषणा ICP_QAT_MOF_OBJ_ID_LEN 8
+#घोषणा ICP_QAT_MOF_OBJ_CHUNKID_LEN 8
+#घोषणा ICP_QAT_MOF_FID 0x00666f6d
+#घोषणा ICP_QAT_MOF_MAJVER 0x0
+#घोषणा ICP_QAT_MOF_MINVER 0x1
+#घोषणा ICP_QAT_MOF_SYM_OBJS "SYM_OBJS"
+#घोषणा ICP_QAT_SUOF_OBJS "SUF_OBJS"
+#घोषणा ICP_QAT_SUOF_IMAG "SUF_IMAG"
+#घोषणा ICP_QAT_SIMG_AE_INIT_SEQ_LEN    (50 * माप(अचिन्हित दीर्घ दीर्घ))
+#घोषणा ICP_QAT_SIMG_AE_INSTS_LEN       (0x4000 * माप(अचिन्हित दीर्घ दीर्घ))
 
-#define DSS_FWSK_MODULUS_LEN    384 /* RSA3K */
-#define DSS_FWSK_EXPONENT_LEN   4
-#define DSS_FWSK_PADDING_LEN    380
-#define DSS_SIGNATURE_LEN       384 /* RSA3K */
+#घोषणा DSS_FWSK_MODULUS_LEN    384 /* RSA3K */
+#घोषणा DSS_FWSK_EXPONENT_LEN   4
+#घोषणा DSS_FWSK_PADDING_LEN    380
+#घोषणा DSS_SIGNATURE_LEN       384 /* RSA3K */
 
-#define CSS_FWSK_MODULUS_LEN    256 /* RSA2K */
-#define CSS_FWSK_EXPONENT_LEN   4
-#define CSS_FWSK_PADDING_LEN    252
-#define CSS_SIGNATURE_LEN       256 /* RSA2K */
+#घोषणा CSS_FWSK_MODULUS_LEN    256 /* RSA2K */
+#घोषणा CSS_FWSK_EXPONENT_LEN   4
+#घोषणा CSS_FWSK_PADDING_LEN    252
+#घोषणा CSS_SIGNATURE_LEN       256 /* RSA2K */
 
-#define ICP_QAT_CSS_FWSK_MODULUS_LEN(handle)	((handle)->chip_info->css_3k ? \
+#घोषणा ICP_QAT_CSS_FWSK_MODULUS_LEN(handle)	((handle)->chip_info->css_3k ? \
 						DSS_FWSK_MODULUS_LEN  : \
 						CSS_FWSK_MODULUS_LEN)
 
-#define ICP_QAT_CSS_FWSK_EXPONENT_LEN(handle)	((handle)->chip_info->css_3k ? \
+#घोषणा ICP_QAT_CSS_FWSK_EXPONENT_LEN(handle)	((handle)->chip_info->css_3k ? \
 						DSS_FWSK_EXPONENT_LEN : \
 						CSS_FWSK_EXPONENT_LEN)
 
-#define ICP_QAT_CSS_FWSK_PAD_LEN(handle)	((handle)->chip_info->css_3k ? \
+#घोषणा ICP_QAT_CSS_FWSK_PAD_LEN(handle)	((handle)->chip_info->css_3k ? \
 						DSS_FWSK_PADDING_LEN : \
 						CSS_FWSK_PADDING_LEN)
 
-#define ICP_QAT_CSS_FWSK_PUB_LEN(handle)	(ICP_QAT_CSS_FWSK_MODULUS_LEN(handle) + \
+#घोषणा ICP_QAT_CSS_FWSK_PUB_LEN(handle)	(ICP_QAT_CSS_FWSK_MODULUS_LEN(handle) + \
 						ICP_QAT_CSS_FWSK_EXPONENT_LEN(handle) + \
 						ICP_QAT_CSS_FWSK_PAD_LEN(handle))
 
-#define ICP_QAT_CSS_SIGNATURE_LEN(handle)	((handle)->chip_info->css_3k ? \
+#घोषणा ICP_QAT_CSS_SIGNATURE_LEN(handle)	((handle)->chip_info->css_3k ? \
 						DSS_SIGNATURE_LEN : \
 						CSS_SIGNATURE_LEN)
 
-#define ICP_QAT_CSS_AE_IMG_LEN     (sizeof(struct icp_qat_simg_ae_mode) + \
+#घोषणा ICP_QAT_CSS_AE_IMG_LEN     (माप(काष्ठा icp_qat_simg_ae_mode) + \
 				    ICP_QAT_SIMG_AE_INIT_SEQ_LEN +         \
 				    ICP_QAT_SIMG_AE_INSTS_LEN)
-#define ICP_QAT_CSS_AE_SIMG_LEN(handle) (sizeof(struct icp_qat_css_hdr) + \
+#घोषणा ICP_QAT_CSS_AE_SIMG_LEN(handle) (माप(काष्ठा icp_qat_css_hdr) + \
 					ICP_QAT_CSS_FWSK_PUB_LEN(handle) + \
 					ICP_QAT_CSS_SIGNATURE_LEN(handle) + \
 					ICP_QAT_CSS_AE_IMG_LEN)
-#define ICP_QAT_AE_IMG_OFFSET(handle) (sizeof(struct icp_qat_css_hdr) + \
+#घोषणा ICP_QAT_AE_IMG_OFFSET(handle) (माप(काष्ठा icp_qat_css_hdr) + \
 					ICP_QAT_CSS_FWSK_MODULUS_LEN(handle) + \
 					ICP_QAT_CSS_FWSK_EXPONENT_LEN(handle) + \
 					ICP_QAT_CSS_SIGNATURE_LEN(handle))
-#define ICP_QAT_CSS_MAX_IMAGE_LEN   0x40000
+#घोषणा ICP_QAT_CSS_MAX_IMAGE_LEN   0x40000
 
-#define ICP_QAT_CTX_MODE(ae_mode) ((ae_mode) & 0xf)
-#define ICP_QAT_NN_MODE(ae_mode) (((ae_mode) >> 0x4) & 0xf)
-#define ICP_QAT_SHARED_USTORE_MODE(ae_mode) (((ae_mode) >> 0xb) & 0x1)
-#define RELOADABLE_CTX_SHARED_MODE(ae_mode) (((ae_mode) >> 0xc) & 0x1)
+#घोषणा ICP_QAT_CTX_MODE(ae_mode) ((ae_mode) & 0xf)
+#घोषणा ICP_QAT_NN_MODE(ae_mode) (((ae_mode) >> 0x4) & 0xf)
+#घोषणा ICP_QAT_SHARED_USTORE_MODE(ae_mode) (((ae_mode) >> 0xb) & 0x1)
+#घोषणा RELOADABLE_CTX_SHARED_MODE(ae_mode) (((ae_mode) >> 0xc) & 0x1)
 
-#define ICP_QAT_LOC_MEM0_MODE(ae_mode) (((ae_mode) >> 0x8) & 0x1)
-#define ICP_QAT_LOC_MEM1_MODE(ae_mode) (((ae_mode) >> 0x9) & 0x1)
-#define ICP_QAT_LOC_MEM2_MODE(ae_mode) (((ae_mode) >> 0x6) & 0x1)
-#define ICP_QAT_LOC_MEM3_MODE(ae_mode) (((ae_mode) >> 0x7) & 0x1)
-#define ICP_QAT_LOC_TINDEX_MODE(ae_mode) (((ae_mode) >> 0xe) & 0x1)
+#घोषणा ICP_QAT_LOC_MEM0_MODE(ae_mode) (((ae_mode) >> 0x8) & 0x1)
+#घोषणा ICP_QAT_LOC_MEM1_MODE(ae_mode) (((ae_mode) >> 0x9) & 0x1)
+#घोषणा ICP_QAT_LOC_MEM2_MODE(ae_mode) (((ae_mode) >> 0x6) & 0x1)
+#घोषणा ICP_QAT_LOC_MEM3_MODE(ae_mode) (((ae_mode) >> 0x7) & 0x1)
+#घोषणा ICP_QAT_LOC_TINDEX_MODE(ae_mode) (((ae_mode) >> 0xe) & 0x1)
 
-enum icp_qat_uof_mem_region {
+क्रमागत icp_qat_uof_mem_region अणु
 	ICP_QAT_UOF_SRAM_REGION = 0x0,
 	ICP_QAT_UOF_LMEM_REGION = 0x3,
 	ICP_QAT_UOF_UMEM_REGION = 0x5
-};
+पूर्ण;
 
-enum icp_qat_uof_regtype {
+क्रमागत icp_qat_uof_regtype अणु
 	ICP_NO_DEST	= 0,
 	ICP_GPA_REL	= 1,
 	ICP_GPA_ABS	= 2,
@@ -129,456 +130,456 @@ enum icp_qat_uof_regtype {
 	ICP_NEIGH_REL	= 31,
 	ICP_LMEM2	= 61,
 	ICP_LMEM3	= 62,
-};
+पूर्ण;
 
-enum icp_qat_css_fwtype {
+क्रमागत icp_qat_css_fwtype अणु
 	CSS_AE_FIRMWARE = 0,
 	CSS_MMP_FIRMWARE = 1
-};
+पूर्ण;
 
-struct icp_qat_uclo_page {
-	struct icp_qat_uclo_encap_page *encap_page;
-	struct icp_qat_uclo_region *region;
-	unsigned int flags;
-};
+काष्ठा icp_qat_uclo_page अणु
+	काष्ठा icp_qat_uclo_encap_page *encap_page;
+	काष्ठा icp_qat_uclo_region *region;
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
-struct icp_qat_uclo_region {
-	struct icp_qat_uclo_page *loaded;
-	struct icp_qat_uclo_page *page;
-};
+काष्ठा icp_qat_uclo_region अणु
+	काष्ठा icp_qat_uclo_page *loaded;
+	काष्ठा icp_qat_uclo_page *page;
+पूर्ण;
 
-struct icp_qat_uclo_aeslice {
-	struct icp_qat_uclo_region *region;
-	struct icp_qat_uclo_page *page;
-	struct icp_qat_uclo_page *cur_page[ICP_QAT_UCLO_MAX_CTX];
-	struct icp_qat_uclo_encapme *encap_image;
-	unsigned int ctx_mask_assigned;
-	unsigned int new_uaddr[ICP_QAT_UCLO_MAX_CTX];
-};
+काष्ठा icp_qat_uclo_aeslice अणु
+	काष्ठा icp_qat_uclo_region *region;
+	काष्ठा icp_qat_uclo_page *page;
+	काष्ठा icp_qat_uclo_page *cur_page[ICP_QAT_UCLO_MAX_CTX];
+	काष्ठा icp_qat_uclo_encapme *encap_image;
+	अचिन्हित पूर्णांक ctx_mask_asचिन्हित;
+	अचिन्हित पूर्णांक new_uaddr[ICP_QAT_UCLO_MAX_CTX];
+पूर्ण;
 
-struct icp_qat_uclo_aedata {
-	unsigned int slice_num;
-	unsigned int eff_ustore_size;
-	struct icp_qat_uclo_aeslice ae_slices[ICP_QAT_UCLO_MAX_CTX];
-};
+काष्ठा icp_qat_uclo_aedata अणु
+	अचिन्हित पूर्णांक slice_num;
+	अचिन्हित पूर्णांक eff_ustore_size;
+	काष्ठा icp_qat_uclo_aeslice ae_slices[ICP_QAT_UCLO_MAX_CTX];
+पूर्ण;
 
-struct icp_qat_uof_encap_obj {
-	char *beg_uof;
-	struct icp_qat_uof_objhdr *obj_hdr;
-	struct icp_qat_uof_chunkhdr *chunk_hdr;
-	struct icp_qat_uof_varmem_seg *var_mem_seg;
-};
+काष्ठा icp_qat_uof_encap_obj अणु
+	अक्षर *beg_uof;
+	काष्ठा icp_qat_uof_objhdr *obj_hdr;
+	काष्ठा icp_qat_uof_chunkhdr *chunk_hdr;
+	काष्ठा icp_qat_uof_varmem_seg *var_mem_seg;
+पूर्ण;
 
-struct icp_qat_uclo_encap_uwblock {
-	unsigned int start_addr;
-	unsigned int words_num;
+काष्ठा icp_qat_uclo_encap_uwblock अणु
+	अचिन्हित पूर्णांक start_addr;
+	अचिन्हित पूर्णांक words_num;
 	u64 micro_words;
-};
+पूर्ण;
 
-struct icp_qat_uclo_encap_page {
-	unsigned int def_page;
-	unsigned int page_region;
-	unsigned int beg_addr_v;
-	unsigned int beg_addr_p;
-	unsigned int micro_words_num;
-	unsigned int uwblock_num;
-	struct icp_qat_uclo_encap_uwblock *uwblock;
-};
+काष्ठा icp_qat_uclo_encap_page अणु
+	अचिन्हित पूर्णांक def_page;
+	अचिन्हित पूर्णांक page_region;
+	अचिन्हित पूर्णांक beg_addr_v;
+	अचिन्हित पूर्णांक beg_addr_p;
+	अचिन्हित पूर्णांक micro_words_num;
+	अचिन्हित पूर्णांक uwblock_num;
+	काष्ठा icp_qat_uclo_encap_uwblock *uwblock;
+पूर्ण;
 
-struct icp_qat_uclo_encapme {
-	struct icp_qat_uof_image *img_ptr;
-	struct icp_qat_uclo_encap_page *page;
-	unsigned int ae_reg_num;
-	struct icp_qat_uof_ae_reg *ae_reg;
-	unsigned int init_regsym_num;
-	struct icp_qat_uof_init_regsym *init_regsym;
-	unsigned int sbreak_num;
-	struct icp_qat_uof_sbreak *sbreak;
-	unsigned int uwords_num;
-};
+काष्ठा icp_qat_uclo_encapme अणु
+	काष्ठा icp_qat_uof_image *img_ptr;
+	काष्ठा icp_qat_uclo_encap_page *page;
+	अचिन्हित पूर्णांक ae_reg_num;
+	काष्ठा icp_qat_uof_ae_reg *ae_reg;
+	अचिन्हित पूर्णांक init_regsym_num;
+	काष्ठा icp_qat_uof_init_regsym *init_regsym;
+	अचिन्हित पूर्णांक sअवरोध_num;
+	काष्ठा icp_qat_uof_sअवरोध *sअवरोध;
+	अचिन्हित पूर्णांक uwords_num;
+पूर्ण;
 
-struct icp_qat_uclo_init_mem_table {
-	unsigned int entry_num;
-	struct icp_qat_uof_initmem *init_mem;
-};
+काष्ठा icp_qat_uclo_init_mem_table अणु
+	अचिन्हित पूर्णांक entry_num;
+	काष्ठा icp_qat_uof_iniपंचांगem *init_mem;
+पूर्ण;
 
-struct icp_qat_uclo_objhdr {
-	char *file_buff;
-	unsigned int checksum;
-	unsigned int size;
-};
+काष्ठा icp_qat_uclo_objhdr अणु
+	अक्षर *file_buff;
+	अचिन्हित पूर्णांक checksum;
+	अचिन्हित पूर्णांक size;
+पूर्ण;
 
-struct icp_qat_uof_strtable {
-	unsigned int table_len;
-	unsigned int reserved;
+काष्ठा icp_qat_uof_strtable अणु
+	अचिन्हित पूर्णांक table_len;
+	अचिन्हित पूर्णांक reserved;
 	u64 strings;
-};
+पूर्ण;
 
-struct icp_qat_uclo_objhandle {
-	unsigned int prod_type;
-	unsigned int prod_rev;
-	struct icp_qat_uclo_objhdr *obj_hdr;
-	struct icp_qat_uof_encap_obj encap_uof_obj;
-	struct icp_qat_uof_strtable str_table;
-	struct icp_qat_uclo_encapme ae_uimage[ICP_QAT_UCLO_MAX_UIMAGE];
-	struct icp_qat_uclo_aedata ae_data[ICP_QAT_UCLO_MAX_AE];
-	struct icp_qat_uclo_init_mem_table init_mem_tab;
-	struct icp_qat_uof_batch_init *lm_init_tab[ICP_QAT_UCLO_MAX_AE];
-	struct icp_qat_uof_batch_init *umem_init_tab[ICP_QAT_UCLO_MAX_AE];
-	int uimage_num;
-	int uword_in_bytes;
-	int global_inited;
-	unsigned int ae_num;
-	unsigned int ustore_phy_size;
-	void *obj_buf;
+काष्ठा icp_qat_uclo_objhandle अणु
+	अचिन्हित पूर्णांक prod_type;
+	अचिन्हित पूर्णांक prod_rev;
+	काष्ठा icp_qat_uclo_objhdr *obj_hdr;
+	काष्ठा icp_qat_uof_encap_obj encap_uof_obj;
+	काष्ठा icp_qat_uof_strtable str_table;
+	काष्ठा icp_qat_uclo_encapme ae_uimage[ICP_QAT_UCLO_MAX_UIMAGE];
+	काष्ठा icp_qat_uclo_aedata ae_data[ICP_QAT_UCLO_MAX_AE];
+	काष्ठा icp_qat_uclo_init_mem_table init_mem_tab;
+	काष्ठा icp_qat_uof_batch_init *lm_init_tab[ICP_QAT_UCLO_MAX_AE];
+	काष्ठा icp_qat_uof_batch_init *umem_init_tab[ICP_QAT_UCLO_MAX_AE];
+	पूर्णांक uimage_num;
+	पूर्णांक uword_in_bytes;
+	पूर्णांक global_inited;
+	अचिन्हित पूर्णांक ae_num;
+	अचिन्हित पूर्णांक ustore_phy_size;
+	व्योम *obj_buf;
 	u64 *uword_buf;
-};
+पूर्ण;
 
-struct icp_qat_uof_uword_block {
-	unsigned int start_addr;
-	unsigned int words_num;
-	unsigned int uword_offset;
-	unsigned int reserved;
-};
+काष्ठा icp_qat_uof_uword_block अणु
+	अचिन्हित पूर्णांक start_addr;
+	अचिन्हित पूर्णांक words_num;
+	अचिन्हित पूर्णांक uword_offset;
+	अचिन्हित पूर्णांक reserved;
+पूर्ण;
 
-struct icp_qat_uof_filehdr {
-	unsigned short file_id;
-	unsigned short reserved1;
-	char min_ver;
-	char maj_ver;
-	unsigned short reserved2;
-	unsigned short max_chunks;
-	unsigned short num_chunks;
-};
+काष्ठा icp_qat_uof_filehdr अणु
+	अचिन्हित लघु file_id;
+	अचिन्हित लघु reserved1;
+	अक्षर min_ver;
+	अक्षर maj_ver;
+	अचिन्हित लघु reserved2;
+	अचिन्हित लघु max_chunks;
+	अचिन्हित लघु num_chunks;
+पूर्ण;
 
-struct icp_qat_uof_filechunkhdr {
-	char chunk_id[ICP_QAT_UOF_OBJID_LEN];
-	unsigned int checksum;
-	unsigned int offset;
-	unsigned int size;
-};
+काष्ठा icp_qat_uof_filechunkhdr अणु
+	अक्षर chunk_id[ICP_QAT_UOF_OBJID_LEN];
+	अचिन्हित पूर्णांक checksum;
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक size;
+पूर्ण;
 
-struct icp_qat_uof_objhdr {
-	unsigned int ac_dev_type;
-	unsigned short min_cpu_ver;
-	unsigned short max_cpu_ver;
-	short max_chunks;
-	short num_chunks;
-	unsigned int reserved1;
-	unsigned int reserved2;
-};
+काष्ठा icp_qat_uof_objhdr अणु
+	अचिन्हित पूर्णांक ac_dev_type;
+	अचिन्हित लघु min_cpu_ver;
+	अचिन्हित लघु max_cpu_ver;
+	लघु max_chunks;
+	लघु num_chunks;
+	अचिन्हित पूर्णांक reserved1;
+	अचिन्हित पूर्णांक reserved2;
+पूर्ण;
 
-struct icp_qat_uof_chunkhdr {
-	char chunk_id[ICP_QAT_UOF_OBJID_LEN];
-	unsigned int offset;
-	unsigned int size;
-};
+काष्ठा icp_qat_uof_chunkhdr अणु
+	अक्षर chunk_id[ICP_QAT_UOF_OBJID_LEN];
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक size;
+पूर्ण;
 
-struct icp_qat_uof_memvar_attr {
-	unsigned int offset_in_byte;
-	unsigned int value;
-};
+काष्ठा icp_qat_uof_memvar_attr अणु
+	अचिन्हित पूर्णांक offset_in_byte;
+	अचिन्हित पूर्णांक value;
+पूर्ण;
 
-struct icp_qat_uof_initmem {
-	unsigned int sym_name;
-	char region;
-	char scope;
-	unsigned short reserved1;
-	unsigned int addr;
-	unsigned int num_in_bytes;
-	unsigned int val_attr_num;
-};
+काष्ठा icp_qat_uof_iniपंचांगem अणु
+	अचिन्हित पूर्णांक sym_name;
+	अक्षर region;
+	अक्षर scope;
+	अचिन्हित लघु reserved1;
+	अचिन्हित पूर्णांक addr;
+	अचिन्हित पूर्णांक num_in_bytes;
+	अचिन्हित पूर्णांक val_attr_num;
+पूर्ण;
 
-struct icp_qat_uof_init_regsym {
-	unsigned int sym_name;
-	char init_type;
-	char value_type;
-	char reg_type;
-	unsigned char ctx;
-	unsigned int reg_addr;
-	unsigned int value;
-};
+काष्ठा icp_qat_uof_init_regsym अणु
+	अचिन्हित पूर्णांक sym_name;
+	अक्षर init_type;
+	अक्षर value_type;
+	अक्षर reg_type;
+	अचिन्हित अक्षर ctx;
+	अचिन्हित पूर्णांक reg_addr;
+	अचिन्हित पूर्णांक value;
+पूर्ण;
 
-struct icp_qat_uof_varmem_seg {
-	unsigned int sram_base;
-	unsigned int sram_size;
-	unsigned int sram_alignment;
-	unsigned int sdram_base;
-	unsigned int sdram_size;
-	unsigned int sdram_alignment;
-	unsigned int sdram1_base;
-	unsigned int sdram1_size;
-	unsigned int sdram1_alignment;
-	unsigned int scratch_base;
-	unsigned int scratch_size;
-	unsigned int scratch_alignment;
-};
+काष्ठा icp_qat_uof_varmem_seg अणु
+	अचिन्हित पूर्णांक sram_base;
+	अचिन्हित पूर्णांक sram_size;
+	अचिन्हित पूर्णांक sram_alignment;
+	अचिन्हित पूर्णांक sdram_base;
+	अचिन्हित पूर्णांक sdram_size;
+	अचिन्हित पूर्णांक sdram_alignment;
+	अचिन्हित पूर्णांक sdram1_base;
+	अचिन्हित पूर्णांक sdram1_size;
+	अचिन्हित पूर्णांक sdram1_alignment;
+	अचिन्हित पूर्णांक scratch_base;
+	अचिन्हित पूर्णांक scratch_size;
+	अचिन्हित पूर्णांक scratch_alignment;
+पूर्ण;
 
-struct icp_qat_uof_gtid {
-	char tool_id[ICP_QAT_UOF_OBJID_LEN];
-	int tool_ver;
-	unsigned int reserved1;
-	unsigned int reserved2;
-};
+काष्ठा icp_qat_uof_gtid अणु
+	अक्षर tool_id[ICP_QAT_UOF_OBJID_LEN];
+	पूर्णांक tool_ver;
+	अचिन्हित पूर्णांक reserved1;
+	अचिन्हित पूर्णांक reserved2;
+पूर्ण;
 
-struct icp_qat_uof_sbreak {
-	unsigned int page_num;
-	unsigned int virt_uaddr;
-	unsigned char sbreak_type;
-	unsigned char reg_type;
-	unsigned short reserved1;
-	unsigned int addr_offset;
-	unsigned int reg_addr;
-};
+काष्ठा icp_qat_uof_sअवरोध अणु
+	अचिन्हित पूर्णांक page_num;
+	अचिन्हित पूर्णांक virt_uaddr;
+	अचिन्हित अक्षर sअवरोध_type;
+	अचिन्हित अक्षर reg_type;
+	अचिन्हित लघु reserved1;
+	अचिन्हित पूर्णांक addr_offset;
+	अचिन्हित पूर्णांक reg_addr;
+पूर्ण;
 
-struct icp_qat_uof_code_page {
-	unsigned int page_region;
-	unsigned int page_num;
-	unsigned char def_page;
-	unsigned char reserved2;
-	unsigned short reserved1;
-	unsigned int beg_addr_v;
-	unsigned int beg_addr_p;
-	unsigned int neigh_reg_tab_offset;
-	unsigned int uc_var_tab_offset;
-	unsigned int imp_var_tab_offset;
-	unsigned int imp_expr_tab_offset;
-	unsigned int code_area_offset;
-};
+काष्ठा icp_qat_uof_code_page अणु
+	अचिन्हित पूर्णांक page_region;
+	अचिन्हित पूर्णांक page_num;
+	अचिन्हित अक्षर def_page;
+	अचिन्हित अक्षर reserved2;
+	अचिन्हित लघु reserved1;
+	अचिन्हित पूर्णांक beg_addr_v;
+	अचिन्हित पूर्णांक beg_addr_p;
+	अचिन्हित पूर्णांक neigh_reg_tab_offset;
+	अचिन्हित पूर्णांक uc_var_tab_offset;
+	अचिन्हित पूर्णांक imp_var_tab_offset;
+	अचिन्हित पूर्णांक imp_expr_tab_offset;
+	अचिन्हित पूर्णांक code_area_offset;
+पूर्ण;
 
-struct icp_qat_uof_image {
-	unsigned int img_name;
-	unsigned int ae_assigned;
-	unsigned int ctx_assigned;
-	unsigned int ac_dev_type;
-	unsigned int entry_address;
-	unsigned int fill_pattern[2];
-	unsigned int reloadable_size;
-	unsigned char sensitivity;
-	unsigned char reserved;
-	unsigned short ae_mode;
-	unsigned short max_ver;
-	unsigned short min_ver;
-	unsigned short image_attrib;
-	unsigned short reserved2;
-	unsigned short page_region_num;
-	unsigned short numpages;
-	unsigned int reg_tab_offset;
-	unsigned int init_reg_sym_tab;
-	unsigned int sbreak_tab;
-	unsigned int app_metadata;
-};
+काष्ठा icp_qat_uof_image अणु
+	अचिन्हित पूर्णांक img_name;
+	अचिन्हित पूर्णांक ae_asचिन्हित;
+	अचिन्हित पूर्णांक ctx_asचिन्हित;
+	अचिन्हित पूर्णांक ac_dev_type;
+	अचिन्हित पूर्णांक entry_address;
+	अचिन्हित पूर्णांक fill_pattern[2];
+	अचिन्हित पूर्णांक reloadable_size;
+	अचिन्हित अक्षर sensitivity;
+	अचिन्हित अक्षर reserved;
+	अचिन्हित लघु ae_mode;
+	अचिन्हित लघु max_ver;
+	अचिन्हित लघु min_ver;
+	अचिन्हित लघु image_attrib;
+	अचिन्हित लघु reserved2;
+	अचिन्हित लघु page_region_num;
+	अचिन्हित लघु numpages;
+	अचिन्हित पूर्णांक reg_tab_offset;
+	अचिन्हित पूर्णांक init_reg_sym_tab;
+	अचिन्हित पूर्णांक sअवरोध_tab;
+	अचिन्हित पूर्णांक app_metadata;
+पूर्ण;
 
-struct icp_qat_uof_objtable {
-	unsigned int entry_num;
-};
+काष्ठा icp_qat_uof_objtable अणु
+	अचिन्हित पूर्णांक entry_num;
+पूर्ण;
 
-struct icp_qat_uof_ae_reg {
-	unsigned int name;
-	unsigned int vis_name;
-	unsigned short type;
-	unsigned short addr;
-	unsigned short access_mode;
-	unsigned char visible;
-	unsigned char reserved1;
-	unsigned short ref_count;
-	unsigned short reserved2;
-	unsigned int xo_id;
-};
+काष्ठा icp_qat_uof_ae_reg अणु
+	अचिन्हित पूर्णांक name;
+	अचिन्हित पूर्णांक vis_name;
+	अचिन्हित लघु type;
+	अचिन्हित लघु addr;
+	अचिन्हित लघु access_mode;
+	अचिन्हित अक्षर visible;
+	अचिन्हित अक्षर reserved1;
+	अचिन्हित लघु ref_count;
+	अचिन्हित लघु reserved2;
+	अचिन्हित पूर्णांक xo_id;
+पूर्ण;
 
-struct icp_qat_uof_code_area {
-	unsigned int micro_words_num;
-	unsigned int uword_block_tab;
-};
+काष्ठा icp_qat_uof_code_area अणु
+	अचिन्हित पूर्णांक micro_words_num;
+	अचिन्हित पूर्णांक uword_block_tab;
+पूर्ण;
 
-struct icp_qat_uof_batch_init {
-	unsigned int ae;
-	unsigned int addr;
-	unsigned int *value;
-	unsigned int size;
-	struct icp_qat_uof_batch_init *next;
-};
+काष्ठा icp_qat_uof_batch_init अणु
+	अचिन्हित पूर्णांक ae;
+	अचिन्हित पूर्णांक addr;
+	अचिन्हित पूर्णांक *value;
+	अचिन्हित पूर्णांक size;
+	काष्ठा icp_qat_uof_batch_init *next;
+पूर्ण;
 
-struct icp_qat_suof_img_hdr {
-	char          *simg_buf;
-	unsigned long simg_len;
-	char          *css_header;
-	char          *css_key;
-	char          *css_signature;
-	char          *css_simg;
-	unsigned long simg_size;
-	unsigned int  ae_num;
-	unsigned int  ae_mask;
-	unsigned int  fw_type;
-	unsigned long simg_name;
-	unsigned long appmeta_data;
-};
+काष्ठा icp_qat_suof_img_hdr अणु
+	अक्षर          *simg_buf;
+	अचिन्हित दीर्घ simg_len;
+	अक्षर          *css_header;
+	अक्षर          *css_key;
+	अक्षर          *css_signature;
+	अक्षर          *css_simg;
+	अचिन्हित दीर्घ simg_size;
+	अचिन्हित पूर्णांक  ae_num;
+	अचिन्हित पूर्णांक  ae_mask;
+	अचिन्हित पूर्णांक  fw_type;
+	अचिन्हित दीर्घ simg_name;
+	अचिन्हित दीर्घ appmeta_data;
+पूर्ण;
 
-struct icp_qat_suof_img_tbl {
-	unsigned int num_simgs;
-	struct icp_qat_suof_img_hdr *simg_hdr;
-};
+काष्ठा icp_qat_suof_img_tbl अणु
+	अचिन्हित पूर्णांक num_simgs;
+	काष्ठा icp_qat_suof_img_hdr *simg_hdr;
+पूर्ण;
 
-struct icp_qat_suof_handle {
-	unsigned int  file_id;
-	unsigned int  check_sum;
-	char          min_ver;
-	char          maj_ver;
-	char          fw_type;
-	char          *suof_buf;
-	unsigned int  suof_size;
-	char          *sym_str;
-	unsigned int  sym_size;
-	struct icp_qat_suof_img_tbl img_table;
-};
+काष्ठा icp_qat_suof_handle अणु
+	अचिन्हित पूर्णांक  file_id;
+	अचिन्हित पूर्णांक  check_sum;
+	अक्षर          min_ver;
+	अक्षर          maj_ver;
+	अक्षर          fw_type;
+	अक्षर          *suof_buf;
+	अचिन्हित पूर्णांक  suof_size;
+	अक्षर          *sym_str;
+	अचिन्हित पूर्णांक  sym_size;
+	काष्ठा icp_qat_suof_img_tbl img_table;
+पूर्ण;
 
-struct icp_qat_fw_auth_desc {
-	unsigned int   img_len;
-	unsigned int   ae_mask;
-	unsigned int   css_hdr_high;
-	unsigned int   css_hdr_low;
-	unsigned int   img_high;
-	unsigned int   img_low;
-	unsigned int   signature_high;
-	unsigned int   signature_low;
-	unsigned int   fwsk_pub_high;
-	unsigned int   fwsk_pub_low;
-	unsigned int   img_ae_mode_data_high;
-	unsigned int   img_ae_mode_data_low;
-	unsigned int   img_ae_init_data_high;
-	unsigned int   img_ae_init_data_low;
-	unsigned int   img_ae_insts_high;
-	unsigned int   img_ae_insts_low;
-};
+काष्ठा icp_qat_fw_auth_desc अणु
+	अचिन्हित पूर्णांक   img_len;
+	अचिन्हित पूर्णांक   ae_mask;
+	अचिन्हित पूर्णांक   css_hdr_high;
+	अचिन्हित पूर्णांक   css_hdr_low;
+	अचिन्हित पूर्णांक   img_high;
+	अचिन्हित पूर्णांक   img_low;
+	अचिन्हित पूर्णांक   signature_high;
+	अचिन्हित पूर्णांक   signature_low;
+	अचिन्हित पूर्णांक   fwsk_pub_high;
+	अचिन्हित पूर्णांक   fwsk_pub_low;
+	अचिन्हित पूर्णांक   img_ae_mode_data_high;
+	अचिन्हित पूर्णांक   img_ae_mode_data_low;
+	अचिन्हित पूर्णांक   img_ae_init_data_high;
+	अचिन्हित पूर्णांक   img_ae_init_data_low;
+	अचिन्हित पूर्णांक   img_ae_insts_high;
+	अचिन्हित पूर्णांक   img_ae_insts_low;
+पूर्ण;
 
-struct icp_qat_auth_chunk {
-	struct icp_qat_fw_auth_desc fw_auth_desc;
+काष्ठा icp_qat_auth_chunk अणु
+	काष्ठा icp_qat_fw_auth_desc fw_auth_desc;
 	u64 chunk_size;
 	u64 chunk_bus_addr;
-};
+पूर्ण;
 
-struct icp_qat_css_hdr {
-	unsigned int module_type;
-	unsigned int header_len;
-	unsigned int header_ver;
-	unsigned int module_id;
-	unsigned int module_vendor;
-	unsigned int date;
-	unsigned int size;
-	unsigned int key_size;
-	unsigned int module_size;
-	unsigned int exponent_size;
-	unsigned int fw_type;
-	unsigned int reserved[21];
-};
+काष्ठा icp_qat_css_hdr अणु
+	अचिन्हित पूर्णांक module_type;
+	अचिन्हित पूर्णांक header_len;
+	अचिन्हित पूर्णांक header_ver;
+	अचिन्हित पूर्णांक module_id;
+	अचिन्हित पूर्णांक module_venकरोr;
+	अचिन्हित पूर्णांक date;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक key_size;
+	अचिन्हित पूर्णांक module_size;
+	अचिन्हित पूर्णांक exponent_size;
+	अचिन्हित पूर्णांक fw_type;
+	अचिन्हित पूर्णांक reserved[21];
+पूर्ण;
 
-struct icp_qat_simg_ae_mode {
-	unsigned int     file_id;
-	unsigned short   maj_ver;
-	unsigned short   min_ver;
-	unsigned int     dev_type;
-	unsigned short   devmax_ver;
-	unsigned short   devmin_ver;
-	unsigned int     ae_mask;
-	unsigned int     ctx_enables;
-	char             fw_type;
-	char             ctx_mode;
-	char             nn_mode;
-	char             lm0_mode;
-	char             lm1_mode;
-	char             scs_mode;
-	char             lm2_mode;
-	char             lm3_mode;
-	char             tindex_mode;
-	unsigned char    reserved[7];
-	char             simg_name[256];
-	char             appmeta_data[256];
-};
+काष्ठा icp_qat_simg_ae_mode अणु
+	अचिन्हित पूर्णांक     file_id;
+	अचिन्हित लघु   maj_ver;
+	अचिन्हित लघु   min_ver;
+	अचिन्हित पूर्णांक     dev_type;
+	अचिन्हित लघु   devmax_ver;
+	अचिन्हित लघु   devmin_ver;
+	अचिन्हित पूर्णांक     ae_mask;
+	अचिन्हित पूर्णांक     ctx_enables;
+	अक्षर             fw_type;
+	अक्षर             ctx_mode;
+	अक्षर             nn_mode;
+	अक्षर             lm0_mode;
+	अक्षर             lm1_mode;
+	अक्षर             scs_mode;
+	अक्षर             lm2_mode;
+	अक्षर             lm3_mode;
+	अक्षर             tindex_mode;
+	अचिन्हित अक्षर    reserved[7];
+	अक्षर             simg_name[256];
+	अक्षर             appmeta_data[256];
+पूर्ण;
 
-struct icp_qat_suof_filehdr {
-	unsigned int     file_id;
-	unsigned int     check_sum;
-	char             min_ver;
-	char             maj_ver;
-	char             fw_type;
-	char             reserved;
-	unsigned short   max_chunks;
-	unsigned short   num_chunks;
-};
+काष्ठा icp_qat_suof_filehdr अणु
+	अचिन्हित पूर्णांक     file_id;
+	अचिन्हित पूर्णांक     check_sum;
+	अक्षर             min_ver;
+	अक्षर             maj_ver;
+	अक्षर             fw_type;
+	अक्षर             reserved;
+	अचिन्हित लघु   max_chunks;
+	अचिन्हित लघु   num_chunks;
+पूर्ण;
 
-struct icp_qat_suof_chunk_hdr {
-	char chunk_id[ICP_QAT_SUOF_OBJ_ID_LEN];
+काष्ठा icp_qat_suof_chunk_hdr अणु
+	अक्षर chunk_id[ICP_QAT_SUOF_OBJ_ID_LEN];
 	u64 offset;
 	u64 size;
-};
+पूर्ण;
 
-struct icp_qat_suof_strtable {
-	unsigned int tab_length;
-	unsigned int strings;
-};
+काष्ठा icp_qat_suof_strtable अणु
+	अचिन्हित पूर्णांक tab_length;
+	अचिन्हित पूर्णांक strings;
+पूर्ण;
 
-struct icp_qat_suof_objhdr {
-	unsigned int img_length;
-	unsigned int reserved;
-};
+काष्ठा icp_qat_suof_objhdr अणु
+	अचिन्हित पूर्णांक img_length;
+	अचिन्हित पूर्णांक reserved;
+पूर्ण;
 
-struct icp_qat_mof_file_hdr {
-	unsigned int file_id;
-	unsigned int checksum;
-	char min_ver;
-	char maj_ver;
-	unsigned short reserved;
-	unsigned short max_chunks;
-	unsigned short num_chunks;
-};
+काष्ठा icp_qat_mof_file_hdr अणु
+	अचिन्हित पूर्णांक file_id;
+	अचिन्हित पूर्णांक checksum;
+	अक्षर min_ver;
+	अक्षर maj_ver;
+	अचिन्हित लघु reserved;
+	अचिन्हित लघु max_chunks;
+	अचिन्हित लघु num_chunks;
+पूर्ण;
 
-struct icp_qat_mof_chunkhdr {
-	char chunk_id[ICP_QAT_MOF_OBJ_ID_LEN];
+काष्ठा icp_qat_mof_chunkhdr अणु
+	अक्षर chunk_id[ICP_QAT_MOF_OBJ_ID_LEN];
 	u64 offset;
 	u64 size;
-};
+पूर्ण;
 
-struct icp_qat_mof_str_table {
-	unsigned int tab_len;
-	unsigned int strings;
-};
+काष्ठा icp_qat_mof_str_table अणु
+	अचिन्हित पूर्णांक tab_len;
+	अचिन्हित पूर्णांक strings;
+पूर्ण;
 
-struct icp_qat_mof_obj_hdr {
-	unsigned short max_chunks;
-	unsigned short num_chunks;
-	unsigned int reserved;
-};
+काष्ठा icp_qat_mof_obj_hdr अणु
+	अचिन्हित लघु max_chunks;
+	अचिन्हित लघु num_chunks;
+	अचिन्हित पूर्णांक reserved;
+पूर्ण;
 
-struct icp_qat_mof_obj_chunkhdr {
-	char chunk_id[ICP_QAT_MOF_OBJ_CHUNKID_LEN];
+काष्ठा icp_qat_mof_obj_chunkhdr अणु
+	अक्षर chunk_id[ICP_QAT_MOF_OBJ_CHUNKID_LEN];
 	u64 offset;
 	u64 size;
-	unsigned int name;
-	unsigned int reserved;
-};
+	अचिन्हित पूर्णांक name;
+	अचिन्हित पूर्णांक reserved;
+पूर्ण;
 
-struct icp_qat_mof_objhdr {
-	char *obj_name;
-	char *obj_buf;
-	unsigned int obj_size;
-};
+काष्ठा icp_qat_mof_objhdr अणु
+	अक्षर *obj_name;
+	अक्षर *obj_buf;
+	अचिन्हित पूर्णांक obj_size;
+पूर्ण;
 
-struct icp_qat_mof_table {
-	unsigned int num_objs;
-	struct icp_qat_mof_objhdr *obj_hdr;
-};
+काष्ठा icp_qat_mof_table अणु
+	अचिन्हित पूर्णांक num_objs;
+	काष्ठा icp_qat_mof_objhdr *obj_hdr;
+पूर्ण;
 
-struct icp_qat_mof_handle {
-	unsigned int file_id;
-	unsigned int checksum;
-	char min_ver;
-	char maj_ver;
-	char *mof_buf;
+काष्ठा icp_qat_mof_handle अणु
+	अचिन्हित पूर्णांक file_id;
+	अचिन्हित पूर्णांक checksum;
+	अक्षर min_ver;
+	अक्षर maj_ver;
+	अक्षर *mof_buf;
 	u32 mof_size;
-	char *sym_str;
-	unsigned int sym_size;
-	char *uobjs_hdr;
-	char *sobjs_hdr;
-	struct icp_qat_mof_table obj_table;
-};
-#endif
+	अक्षर *sym_str;
+	अचिन्हित पूर्णांक sym_size;
+	अक्षर *uobjs_hdr;
+	अक्षर *sobjs_hdr;
+	काष्ठा icp_qat_mof_table obj_table;
+पूर्ण;
+#पूर्ण_अगर

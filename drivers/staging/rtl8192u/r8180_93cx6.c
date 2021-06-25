@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  This files contains card eeprom (93c46 or 93c56) programming routines,
  *  memory is addressed by 16 bits words.
@@ -18,107 +19,107 @@
  *  project Authors.
  */
 
-#include "r8180_93cx6.h"
+#समावेश "r8180_93cx6.h"
 
-static void eprom_cs(struct net_device *dev, short bit)
-{
+अटल व्योम eprom_cs(काष्ठा net_device *dev, लघु bit)
+अणु
 	u8 cmdreg;
-	int err;
+	पूर्णांक err;
 
-	err = read_nic_byte_E(dev, EPROM_CMD, &cmdreg);
-	if (err)
-		return;
-	if (bit)
+	err = पढ़ो_nic_byte_E(dev, EPROM_CMD, &cmdreg);
+	अगर (err)
+		वापस;
+	अगर (bit)
 		/* enable EPROM */
-		write_nic_byte_E(dev, EPROM_CMD, cmdreg | EPROM_CS_BIT);
-	else
+		ग_लिखो_nic_byte_E(dev, EPROM_CMD, cmdreg | EPROM_CS_BIT);
+	अन्यथा
 		/* disable EPROM */
-		write_nic_byte_E(dev, EPROM_CMD, cmdreg & ~EPROM_CS_BIT);
+		ग_लिखो_nic_byte_E(dev, EPROM_CMD, cmdreg & ~EPROM_CS_BIT);
 
-	force_pci_posting(dev);
+	क्रमce_pci_posting(dev);
 	udelay(EPROM_DELAY);
-}
+पूर्ण
 
-static void eprom_ck_cycle(struct net_device *dev)
-{
+अटल व्योम eprom_ck_cycle(काष्ठा net_device *dev)
+अणु
 	u8 cmdreg;
-	int err;
+	पूर्णांक err;
 
-	err = read_nic_byte_E(dev, EPROM_CMD, &cmdreg);
-	if (err)
-		return;
-	write_nic_byte_E(dev, EPROM_CMD, cmdreg | EPROM_CK_BIT);
-	force_pci_posting(dev);
+	err = पढ़ो_nic_byte_E(dev, EPROM_CMD, &cmdreg);
+	अगर (err)
+		वापस;
+	ग_लिखो_nic_byte_E(dev, EPROM_CMD, cmdreg | EPROM_CK_BIT);
+	क्रमce_pci_posting(dev);
 	udelay(EPROM_DELAY);
 
-	read_nic_byte_E(dev, EPROM_CMD, &cmdreg);
-	write_nic_byte_E(dev, EPROM_CMD, cmdreg & ~EPROM_CK_BIT);
-	force_pci_posting(dev);
+	पढ़ो_nic_byte_E(dev, EPROM_CMD, &cmdreg);
+	ग_लिखो_nic_byte_E(dev, EPROM_CMD, cmdreg & ~EPROM_CK_BIT);
+	क्रमce_pci_posting(dev);
 	udelay(EPROM_DELAY);
-}
+पूर्ण
 
-static void eprom_w(struct net_device *dev, short bit)
-{
+अटल व्योम eprom_w(काष्ठा net_device *dev, लघु bit)
+अणु
 	u8 cmdreg;
-	int err;
+	पूर्णांक err;
 
-	err = read_nic_byte_E(dev, EPROM_CMD, &cmdreg);
-	if (err)
-		return;
-	if (bit)
-		write_nic_byte_E(dev, EPROM_CMD, cmdreg | EPROM_W_BIT);
-	else
-		write_nic_byte_E(dev, EPROM_CMD, cmdreg & ~EPROM_W_BIT);
+	err = पढ़ो_nic_byte_E(dev, EPROM_CMD, &cmdreg);
+	अगर (err)
+		वापस;
+	अगर (bit)
+		ग_लिखो_nic_byte_E(dev, EPROM_CMD, cmdreg | EPROM_W_BIT);
+	अन्यथा
+		ग_लिखो_nic_byte_E(dev, EPROM_CMD, cmdreg & ~EPROM_W_BIT);
 
-	force_pci_posting(dev);
+	क्रमce_pci_posting(dev);
 	udelay(EPROM_DELAY);
-}
+पूर्ण
 
-static short eprom_r(struct net_device *dev)
-{
+अटल लघु eprom_r(काष्ठा net_device *dev)
+अणु
 	u8 bit;
-	int err;
+	पूर्णांक err;
 
-	err = read_nic_byte_E(dev, EPROM_CMD, &bit);
-	if (err)
-		return err;
+	err = पढ़ो_nic_byte_E(dev, EPROM_CMD, &bit);
+	अगर (err)
+		वापस err;
 
 	udelay(EPROM_DELAY);
 
-	if (bit & EPROM_R_BIT)
-		return 1;
+	अगर (bit & EPROM_R_BIT)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void eprom_send_bits_string(struct net_device *dev, short b[], int len)
-{
-	int i;
+अटल व्योम eprom_send_bits_string(काष्ठा net_device *dev, लघु b[], पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++) {
+	क्रम (i = 0; i < len; i++) अणु
 		eprom_w(dev, b[i]);
 		eprom_ck_cycle(dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int eprom_read(struct net_device *dev, u32 addr)
-{
-	struct r8192_priv *priv = ieee80211_priv(dev);
-	short read_cmd[] = {1, 1, 0};
-	short addr_str[8];
-	int i;
-	int addr_len;
+पूर्णांक eprom_पढ़ो(काष्ठा net_device *dev, u32 addr)
+अणु
+	काष्ठा r8192_priv *priv = ieee80211_priv(dev);
+	लघु पढ़ो_cmd[] = अणु1, 1, 0पूर्ण;
+	लघु addr_str[8];
+	पूर्णांक i;
+	पूर्णांक addr_len;
 	u32 ret;
-	int err;
+	पूर्णांक err;
 
 	ret = 0;
 	/* enable EPROM programming */
-	write_nic_byte_E(dev, EPROM_CMD,
+	ग_लिखो_nic_byte_E(dev, EPROM_CMD,
 		       (EPROM_CMD_PROGRAM << EPROM_CMD_OPERATING_MODE_SHIFT));
-	force_pci_posting(dev);
+	क्रमce_pci_posting(dev);
 	udelay(EPROM_DELAY);
 
-	if (priv->epromtype == EPROM_93c56) {
+	अगर (priv->epromtype == EPROM_93c56) अणु
 		addr_str[7] = addr & 1;
 		addr_str[6] = addr & BIT(1);
 		addr_str[5] = addr & BIT(2);
@@ -128,7 +129,7 @@ int eprom_read(struct net_device *dev, u32 addr)
 		addr_str[1] = addr & BIT(6);
 		addr_str[0] = addr & BIT(7);
 		addr_len = 8;
-	} else {
+	पूर्ण अन्यथा अणु
 		addr_str[5] = addr & 1;
 		addr_str[4] = addr & BIT(1);
 		addr_str[3] = addr & BIT(2);
@@ -136,35 +137,35 @@ int eprom_read(struct net_device *dev, u32 addr)
 		addr_str[1] = addr & BIT(4);
 		addr_str[0] = addr & BIT(5);
 		addr_len = 6;
-	}
+	पूर्ण
 	eprom_cs(dev, 1);
 	eprom_ck_cycle(dev);
-	eprom_send_bits_string(dev, read_cmd, 3);
+	eprom_send_bits_string(dev, पढ़ो_cmd, 3);
 	eprom_send_bits_string(dev, addr_str, addr_len);
 
 	/*
-	 * keep chip pin D to low state while reading.
+	 * keep chip pin D to low state जबतक पढ़ोing.
 	 * I'm unsure if it is necessary, but anyway shouldn't hurt
 	 */
 	eprom_w(dev, 0);
 
-	for (i = 0; i < 16; i++) {
+	क्रम (i = 0; i < 16; i++) अणु
 		/* eeprom needs a clk cycle between writing opcode&adr
-		 * and reading data. (eeprom outs a dummy 0)
+		 * and पढ़ोing data. (eeprom outs a dummy 0)
 		 */
 		eprom_ck_cycle(dev);
 		err = eprom_r(dev);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		ret |= err << (15 - i);
-	}
+	पूर्ण
 
 	eprom_cs(dev, 0);
 	eprom_ck_cycle(dev);
 
 	/* disable EPROM programming */
-	write_nic_byte_E(dev, EPROM_CMD,
+	ग_लिखो_nic_byte_E(dev, EPROM_CMD,
 		       (EPROM_CMD_NORMAL << EPROM_CMD_OPERATING_MODE_SHIFT));
-	return ret;
-}
+	वापस ret;
+पूर्ण

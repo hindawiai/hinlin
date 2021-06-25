@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SPARC64_CHECKSUM_H
-#define __SPARC64_CHECKSUM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SPARC64_CHECKSUM_H
+#घोषणा __SPARC64_CHECKSUM_H
 
 /*  checksum.h:  IP/UDP/TCP checksum routines on the V9.
  *
@@ -12,62 +13,62 @@
  *
  * derived from:
  *	Alpha checksum c-code
- *      ix86 inline assembly
+ *      ix86 अंतरभूत assembly
  *      RFC1071 Computing the Internet Checksum
  */
 
-#include <linux/in6.h>
-#include <linux/uaccess.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/uaccess.h>
 
 /* computes the checksum of a memory block at buff, length len,
  * and adds in "sum" (32-bit)
  *
- * returns a 32-bit number suitable for feeding into itself
+ * वापसs a 32-bit number suitable क्रम feeding पूर्णांकo itself
  * or csum_tcpudp_magic
  *
  * this function must be called with even lengths, except
- * for the last fragment, which may be odd
+ * क्रम the last fragment, which may be odd
  *
  * it's best to have buff aligned on a 32-bit boundary
  */
-__wsum csum_partial(const void * buff, int len, __wsum sum);
+__wsum csum_partial(स्थिर व्योम * buff, पूर्णांक len, __wsum sum);
 
-/* the same as csum_partial, but copies from user space while it
+/* the same as csum_partial, but copies from user space जबतक it
  * checksums
  *
  * here even more important to align src and dst on a 32-bit (or even
  * better 64-bit) boundary
  */
-__wsum csum_partial_copy_nocheck(const void *src, void *dst, int len);
-__wsum csum_and_copy_from_user(const void __user *src, void *dst, int len);
-__wsum csum_and_copy_to_user(const void *src, void __user *dst, int len);
+__wsum csum_partial_copy_nocheck(स्थिर व्योम *src, व्योम *dst, पूर्णांक len);
+__wsum csum_and_copy_from_user(स्थिर व्योम __user *src, व्योम *dst, पूर्णांक len);
+__wsum csum_and_copy_to_user(स्थिर व्योम *src, व्योम __user *dst, पूर्णांक len);
 
 /* ihl is always 5 or greater, almost always is 5, and iph is word aligned
- * the majority of the time.
+ * the majority of the समय.
  */
-__sum16 ip_fast_csum(const void *iph, unsigned int ihl);
+__sum16 ip_fast_csum(स्थिर व्योम *iph, अचिन्हित पूर्णांक ihl);
 
-/* Fold a partial checksum without adding pseudo headers. */
-static inline __sum16 csum_fold(__wsum sum)
-{
-	unsigned int tmp;
+/* Fold a partial checksum without adding pseuकरो headers. */
+अटल अंतरभूत __sum16 csum_fold(__wsum sum)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 "	addcc		%0, %1, %1\n"
 "	srl		%1, 16, %1\n"
 "	addc		%1, %%g0, %1\n"
 "	xnor		%%g0, %1, %0\n"
-	: "=&r" (sum), "=r" (tmp)
-	: "0" (sum), "1" ((__force u32)sum<<16)
+	: "=&r" (sum), "=r" (पंचांगp)
+	: "0" (sum), "1" ((__क्रमce u32)sum<<16)
 	: "cc");
-	return (__force __sum16)sum;
-}
+	वापस (__क्रमce __sum16)sum;
+पूर्ण
 
-static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
+अटल अंतरभूत __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 					__u32 len, __u8 proto,
 					__wsum sum)
-{
-	__asm__ __volatile__(
+अणु
+	__यंत्र__ __अस्थिर__(
 "	addcc		%1, %0, %0\n"
 "	addccc		%2, %0, %0\n"
 "	addccc		%3, %0, %0\n"
@@ -75,27 +76,27 @@ static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 	: "=r" (sum), "=r" (saddr)
 	: "r" (daddr), "r" (proto + len), "0" (sum), "1" (saddr)
 	: "cc");
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
 /*
- * computes the checksum of the TCP/UDP pseudo-header
- * returns a 16-bit checksum, already complemented
+ * computes the checksum of the TCP/UDP pseuकरो-header
+ * वापसs a 16-bit checksum, alपढ़ोy complemented
  */
-static inline __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
+अटल अंतरभूत __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
 					__u32 len, __u8 proto,
 					__wsum sum)
-{
-	return csum_fold(csum_tcpudp_nofold(saddr,daddr,len,proto,sum));
-}
+अणु
+	वापस csum_fold(csum_tcpudp_nofold(saddr,daddr,len,proto,sum));
+पूर्ण
 
-#define _HAVE_ARCH_IPV6_CSUM
+#घोषणा _HAVE_ARCH_IPV6_CSUM
 
-static inline __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
-				      const struct in6_addr *daddr,
+अटल अंतरभूत __sum16 csum_ipv6_magic(स्थिर काष्ठा in6_addr *saddr,
+				      स्थिर काष्ठा in6_addr *daddr,
 				      __u32 len, __u8 proto, __wsum sum)
-{
-	__asm__ __volatile__ (
+अणु
+	__यंत्र__ __अस्थिर__ (
 "	addcc		%3, %4, %%g7\n"
 "	addccc		%5, %%g7, %%g7\n"
 "	lduw		[%2 + 0x0c], %%g2\n"
@@ -120,25 +121,25 @@ static inline __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
 	  "r"(htonl(proto)), "r"(sum)
 	: "g2", "g3", "g7", "cc");
 
-	return csum_fold(sum);
-}
+	वापस csum_fold(sum);
+पूर्ण
 
-/* this routine is used for miscellaneous IP-like checksums, mainly in icmp.c */
-static inline __sum16 ip_compute_csum(const void *buff, int len)
-{
-	return csum_fold(csum_partial(buff, len, 0));
-}
+/* this routine is used क्रम miscellaneous IP-like checksums, मुख्यly in icmp.c */
+अटल अंतरभूत __sum16 ip_compute_csum(स्थिर व्योम *buff, पूर्णांक len)
+अणु
+	वापस csum_fold(csum_partial(buff, len, 0));
+पूर्ण
 
-#define HAVE_ARCH_CSUM_ADD
-static inline __wsum csum_add(__wsum csum, __wsum addend)
-{
-	__asm__ __volatile__(
+#घोषणा HAVE_ARCH_CSUM_ADD
+अटल अंतरभूत __wsum csum_add(__wsum csum, __wsum addend)
+अणु
+	__यंत्र__ __अस्थिर__(
 		"addcc   %0, %1, %0\n"
 		"addx    %0, %%g0, %0"
 		: "=r" (csum)
 		: "r" (addend), "0" (csum));
 
-	return csum;
-}
+	वापस csum;
+पूर्ण
 
-#endif /* !(__SPARC64_CHECKSUM_H) */
+#पूर्ण_अगर /* !(__SPARC64_CHECKSUM_H) */

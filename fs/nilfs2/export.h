@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef NILFS_EXPORT_H
-#define NILFS_EXPORT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित NILFS_EXPORT_H
+#घोषणा NILFS_EXPORT_H
 
-#include <linux/exportfs.h>
+#समावेश <linux/exportfs.h>
 
-extern const struct export_operations nilfs_export_ops;
+बाह्य स्थिर काष्ठा export_operations nilfs_export_ops;
 
 /**
- * struct nilfs_fid - NILFS file id type
- * @cno: checkpoint number
+ * काष्ठा nilfs_fid - NILFS file id type
+ * @cno: checkpoपूर्णांक number
  * @ino: inode number
- * @gen: file generation (version) for NFS
- * @parent_gen: parent generation (version) for NFS
+ * @gen: file generation (version) क्रम NFS
+ * @parent_gen: parent generation (version) क्रम NFS
  * @parent_ino: parent inode number
  */
-struct nilfs_fid {
+काष्ठा nilfs_fid अणु
 	u64 cno;
 	u64 ino;
 	u32 gen;
 
 	u32 parent_gen;
 	u64 parent_ino;
-} __packed;
+पूर्ण __packed;
 
-#endif
+#पूर्ण_अगर

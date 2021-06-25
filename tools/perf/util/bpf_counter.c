@@ -1,752 +1,753 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /* Copyright (c) 2019 Facebook */
 
-#include <assert.h>
-#include <limits.h>
-#include <unistd.h>
-#include <sys/file.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <linux/err.h>
-#include <linux/zalloc.h>
-#include <bpf/bpf.h>
-#include <bpf/btf.h>
-#include <bpf/libbpf.h>
-#include <api/fs/fs.h>
-#include <perf/bpf_perf.h>
+#समावेश <निश्चित.स>
+#समावेश <सीमा.स>
+#समावेश <unistd.h>
+#समावेश <sys/file.h>
+#समावेश <sys/समय.स>
+#समावेश <sys/resource.h>
+#समावेश <linux/err.h>
+#समावेश <linux/zभाग.स>
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/btf.h>
+#समावेश <bpf/libbpf.h>
+#समावेश <api/fs/fs.h>
+#समावेश <perf/bpf_perf.h>
 
-#include "bpf_counter.h"
-#include "counts.h"
-#include "debug.h"
-#include "evsel.h"
-#include "evlist.h"
-#include "target.h"
-#include "cpumap.h"
-#include "thread_map.h"
+#समावेश "bpf_counter.h"
+#समावेश "counts.h"
+#समावेश "debug.h"
+#समावेश "evsel.h"
+#समावेश "evlist.h"
+#समावेश "target.h"
+#समावेश "cpumap.h"
+#समावेश "thread_map.h"
 
-#include "bpf_skel/bpf_prog_profiler.skel.h"
-#include "bpf_skel/bperf_u.h"
-#include "bpf_skel/bperf_leader.skel.h"
-#include "bpf_skel/bperf_follower.skel.h"
+#समावेश "bpf_skel/bpf_prog_profiler.skel.h"
+#समावेश "bpf_skel/bperf_u.h"
+#समावेश "bpf_skel/bperf_leader.skel.h"
+#समावेश "bpf_skel/bperf_follower.skel.h"
 
-#define ATTR_MAP_SIZE 16
+#घोषणा ATTR_MAP_SIZE 16
 
-static inline void *u64_to_ptr(__u64 ptr)
-{
-	return (void *)(unsigned long)ptr;
-}
+अटल अंतरभूत व्योम *u64_to_ptr(__u64 ptr)
+अणु
+	वापस (व्योम *)(अचिन्हित दीर्घ)ptr;
+पूर्ण
 
-static void set_max_rlimit(void)
-{
-	struct rlimit rinf = { RLIM_INFINITY, RLIM_INFINITY };
+अटल व्योम set_max_rlimit(व्योम)
+अणु
+	काष्ठा rlimit rinf = अणु RLIM_अनन्त, RLIM_अनन्त पूर्ण;
 
 	setrlimit(RLIMIT_MEMLOCK, &rinf);
-}
+पूर्ण
 
-static struct bpf_counter *bpf_counter_alloc(void)
-{
-	struct bpf_counter *counter;
+अटल काष्ठा bpf_counter *bpf_counter_alloc(व्योम)
+अणु
+	काष्ठा bpf_counter *counter;
 
-	counter = zalloc(sizeof(*counter));
-	if (counter)
+	counter = zalloc(माप(*counter));
+	अगर (counter)
 		INIT_LIST_HEAD(&counter->list);
-	return counter;
-}
+	वापस counter;
+पूर्ण
 
-static int bpf_program_profiler__destroy(struct evsel *evsel)
-{
-	struct bpf_counter *counter, *tmp;
+अटल पूर्णांक bpf_program_profiler__destroy(काष्ठा evsel *evsel)
+अणु
+	काष्ठा bpf_counter *counter, *पंचांगp;
 
-	list_for_each_entry_safe(counter, tmp,
-				 &evsel->bpf_counter_list, list) {
+	list_क्रम_each_entry_safe(counter, पंचांगp,
+				 &evsel->bpf_counter_list, list) अणु
 		list_del_init(&counter->list);
 		bpf_prog_profiler_bpf__destroy(counter->skel);
-		free(counter);
-	}
-	assert(list_empty(&evsel->bpf_counter_list));
+		मुक्त(counter);
+	पूर्ण
+	निश्चित(list_empty(&evsel->bpf_counter_list));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static char *bpf_target_prog_name(int tgt_fd)
-{
-	struct bpf_prog_info_linear *info_linear;
-	struct bpf_func_info *func_info;
-	const struct btf_type *t;
-	char *name = NULL;
-	struct btf *btf;
+अटल अक्षर *bpf_target_prog_name(पूर्णांक tgt_fd)
+अणु
+	काष्ठा bpf_prog_info_linear *info_linear;
+	काष्ठा bpf_func_info *func_info;
+	स्थिर काष्ठा btf_type *t;
+	अक्षर *name = शून्य;
+	काष्ठा btf *btf;
 
 	info_linear = bpf_program__get_prog_info_linear(
 		tgt_fd, 1UL << BPF_PROG_INFO_FUNC_INFO);
-	if (IS_ERR_OR_NULL(info_linear)) {
+	अगर (IS_ERR_OR_शून्य(info_linear)) अणु
 		pr_debug("failed to get info_linear for prog FD %d\n", tgt_fd);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (info_linear->info.btf_id == 0 ||
-	    btf__get_from_id(info_linear->info.btf_id, &btf)) {
+	अगर (info_linear->info.btf_id == 0 ||
+	    btf__get_from_id(info_linear->info.btf_id, &btf)) अणु
 		pr_debug("prog FD %d doesn't have valid btf\n", tgt_fd);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	func_info = u64_to_ptr(info_linear->info.func_info);
 	t = btf__type_by_id(btf, func_info[0].type_id);
-	if (!t) {
+	अगर (!t) अणु
 		pr_debug("btf %d doesn't have type %d\n",
 			 info_linear->info.btf_id, func_info[0].type_id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	name = strdup(btf__name_by_offset(btf, t->name_off));
 out:
-	free(info_linear);
-	return name;
-}
+	मुक्त(info_linear);
+	वापस name;
+पूर्ण
 
-static int bpf_program_profiler_load_one(struct evsel *evsel, u32 prog_id)
-{
-	struct bpf_prog_profiler_bpf *skel;
-	struct bpf_counter *counter;
-	struct bpf_program *prog;
-	char *prog_name;
-	int prog_fd;
-	int err;
+अटल पूर्णांक bpf_program_profiler_load_one(काष्ठा evsel *evsel, u32 prog_id)
+अणु
+	काष्ठा bpf_prog_profiler_bpf *skel;
+	काष्ठा bpf_counter *counter;
+	काष्ठा bpf_program *prog;
+	अक्षर *prog_name;
+	पूर्णांक prog_fd;
+	पूर्णांक err;
 
 	prog_fd = bpf_prog_get_fd_by_id(prog_id);
-	if (prog_fd < 0) {
+	अगर (prog_fd < 0) अणु
 		pr_err("Failed to open fd for bpf prog %u\n", prog_id);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	counter = bpf_counter_alloc();
-	if (!counter) {
-		close(prog_fd);
-		return -1;
-	}
+	अगर (!counter) अणु
+		बंद(prog_fd);
+		वापस -1;
+	पूर्ण
 
-	skel = bpf_prog_profiler_bpf__open();
-	if (!skel) {
+	skel = bpf_prog_profiler_bpf__खोलो();
+	अगर (!skel) अणु
 		pr_err("Failed to open bpf skeleton\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	skel->rodata->num_cpu = evsel__nr_cpus(evsel);
 
 	bpf_map__resize(skel->maps.events, evsel__nr_cpus(evsel));
-	bpf_map__resize(skel->maps.fentry_readings, 1);
-	bpf_map__resize(skel->maps.accum_readings, 1);
+	bpf_map__resize(skel->maps.fentry_पढ़ोings, 1);
+	bpf_map__resize(skel->maps.accum_पढ़ोings, 1);
 
 	prog_name = bpf_target_prog_name(prog_fd);
-	if (!prog_name) {
+	अगर (!prog_name) अणु
 		pr_err("Failed to get program name for bpf prog %u. Does it have BTF?\n", prog_id);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	bpf_object__for_each_program(prog, skel->obj) {
+	bpf_object__क्रम_each_program(prog, skel->obj) अणु
 		err = bpf_program__set_attach_target(prog, prog_fd, prog_name);
-		if (err) {
+		अगर (err) अणु
 			pr_err("bpf_program__set_attach_target failed.\n"
 			       "Does bpf prog %u have BTF?\n", prog_id);
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 	set_max_rlimit();
 	err = bpf_prog_profiler_bpf__load(skel);
-	if (err) {
+	अगर (err) अणु
 		pr_err("bpf_prog_profiler_bpf__load failed\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	assert(skel != NULL);
+	निश्चित(skel != शून्य);
 	counter->skel = skel;
 	list_add(&counter->list, &evsel->bpf_counter_list);
-	close(prog_fd);
-	return 0;
+	बंद(prog_fd);
+	वापस 0;
 err_out:
 	bpf_prog_profiler_bpf__destroy(skel);
-	free(counter);
-	close(prog_fd);
-	return -1;
-}
+	मुक्त(counter);
+	बंद(prog_fd);
+	वापस -1;
+पूर्ण
 
-static int bpf_program_profiler__load(struct evsel *evsel, struct target *target)
-{
-	char *bpf_str, *bpf_str_, *tok, *saveptr = NULL, *p;
+अटल पूर्णांक bpf_program_profiler__load(काष्ठा evsel *evsel, काष्ठा target *target)
+अणु
+	अक्षर *bpf_str, *bpf_str_, *tok, *saveptr = शून्य, *p;
 	u32 prog_id;
-	int ret;
+	पूर्णांक ret;
 
 	bpf_str_ = bpf_str = strdup(target->bpf_str);
-	if (!bpf_str)
-		return -1;
+	अगर (!bpf_str)
+		वापस -1;
 
-	while ((tok = strtok_r(bpf_str, ",", &saveptr)) != NULL) {
-		prog_id = strtoul(tok, &p, 10);
-		if (prog_id == 0 || prog_id == UINT_MAX ||
-		    (*p != '\0' && *p != ',')) {
+	जबतक ((tok = म_मोहर_r(bpf_str, ",", &saveptr)) != शून्य) अणु
+		prog_id = म_से_अदीर्घ(tok, &p, 10);
+		अगर (prog_id == 0 || prog_id == अच_पूर्णांक_उच्च ||
+		    (*p != '\0' && *p != ',')) अणु
 			pr_err("Failed to parse bpf prog ids %s\n",
 			       target->bpf_str);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		ret = bpf_program_profiler_load_one(evsel, prog_id);
-		if (ret) {
+		अगर (ret) अणु
 			bpf_program_profiler__destroy(evsel);
-			free(bpf_str_);
-			return -1;
-		}
-		bpf_str = NULL;
-	}
-	free(bpf_str_);
-	return 0;
-}
+			मुक्त(bpf_str_);
+			वापस -1;
+		पूर्ण
+		bpf_str = शून्य;
+	पूर्ण
+	मुक्त(bpf_str_);
+	वापस 0;
+पूर्ण
 
-static int bpf_program_profiler__enable(struct evsel *evsel)
-{
-	struct bpf_counter *counter;
-	int ret;
+अटल पूर्णांक bpf_program_profiler__enable(काष्ठा evsel *evsel)
+अणु
+	काष्ठा bpf_counter *counter;
+	पूर्णांक ret;
 
-	list_for_each_entry(counter, &evsel->bpf_counter_list, list) {
-		assert(counter->skel != NULL);
+	list_क्रम_each_entry(counter, &evsel->bpf_counter_list, list) अणु
+		निश्चित(counter->skel != शून्य);
 		ret = bpf_prog_profiler_bpf__attach(counter->skel);
-		if (ret) {
+		अगर (ret) अणु
 			bpf_program_profiler__destroy(evsel);
-			return ret;
-		}
-	}
-	return 0;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bpf_program_profiler__disable(struct evsel *evsel)
-{
-	struct bpf_counter *counter;
+अटल पूर्णांक bpf_program_profiler__disable(काष्ठा evsel *evsel)
+अणु
+	काष्ठा bpf_counter *counter;
 
-	list_for_each_entry(counter, &evsel->bpf_counter_list, list) {
-		assert(counter->skel != NULL);
+	list_क्रम_each_entry(counter, &evsel->bpf_counter_list, list) अणु
+		निश्चित(counter->skel != शून्य);
 		bpf_prog_profiler_bpf__detach(counter->skel);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bpf_program_profiler__read(struct evsel *evsel)
-{
-	// perf_cpu_map uses /sys/devices/system/cpu/online
-	int num_cpu = evsel__nr_cpus(evsel);
-	// BPF_MAP_TYPE_PERCPU_ARRAY uses /sys/devices/system/cpu/possible
-	// Sometimes possible > online, like on a Ryzen 3900X that has 24
-	// threads but its possible showed 0-31 -acme
-	int num_cpu_bpf = libbpf_num_possible_cpus();
-	struct bpf_perf_event_value values[num_cpu_bpf];
-	struct bpf_counter *counter;
-	int reading_map_fd;
+अटल पूर्णांक bpf_program_profiler__पढ़ो(काष्ठा evsel *evsel)
+अणु
+	// perf_cpu_map uses /sys/devices/प्रणाली/cpu/online
+	पूर्णांक num_cpu = evsel__nr_cpus(evsel);
+	// BPF_MAP_TYPE_PERCPU_ARRAY uses /sys/devices/प्रणाली/cpu/possible
+	// Someबार possible > online, like on a Ryzen 3900X that has 24
+	// thपढ़ोs but its possible showed 0-31 -acme
+	पूर्णांक num_cpu_bpf = libbpf_num_possible_cpus();
+	काष्ठा bpf_perf_event_value values[num_cpu_bpf];
+	काष्ठा bpf_counter *counter;
+	पूर्णांक पढ़ोing_map_fd;
 	__u32 key = 0;
-	int err, cpu;
+	पूर्णांक err, cpu;
 
-	if (list_empty(&evsel->bpf_counter_list))
-		return -EAGAIN;
+	अगर (list_empty(&evsel->bpf_counter_list))
+		वापस -EAGAIN;
 
-	for (cpu = 0; cpu < num_cpu; cpu++) {
+	क्रम (cpu = 0; cpu < num_cpu; cpu++) अणु
 		perf_counts(evsel->counts, cpu, 0)->val = 0;
 		perf_counts(evsel->counts, cpu, 0)->ena = 0;
 		perf_counts(evsel->counts, cpu, 0)->run = 0;
-	}
-	list_for_each_entry(counter, &evsel->bpf_counter_list, list) {
-		struct bpf_prog_profiler_bpf *skel = counter->skel;
+	पूर्ण
+	list_क्रम_each_entry(counter, &evsel->bpf_counter_list, list) अणु
+		काष्ठा bpf_prog_profiler_bpf *skel = counter->skel;
 
-		assert(skel != NULL);
-		reading_map_fd = bpf_map__fd(skel->maps.accum_readings);
+		निश्चित(skel != शून्य);
+		पढ़ोing_map_fd = bpf_map__fd(skel->maps.accum_पढ़ोings);
 
-		err = bpf_map_lookup_elem(reading_map_fd, &key, values);
-		if (err) {
+		err = bpf_map_lookup_elem(पढ़ोing_map_fd, &key, values);
+		अगर (err) अणु
 			pr_err("failed to read value\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		for (cpu = 0; cpu < num_cpu; cpu++) {
+		क्रम (cpu = 0; cpu < num_cpu; cpu++) अणु
 			perf_counts(evsel->counts, cpu, 0)->val += values[cpu].counter;
 			perf_counts(evsel->counts, cpu, 0)->ena += values[cpu].enabled;
 			perf_counts(evsel->counts, cpu, 0)->run += values[cpu].running;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bpf_program_profiler__install_pe(struct evsel *evsel, int cpu,
-					    int fd)
-{
-	struct bpf_prog_profiler_bpf *skel;
-	struct bpf_counter *counter;
-	int ret;
+अटल पूर्णांक bpf_program_profiler__install_pe(काष्ठा evsel *evsel, पूर्णांक cpu,
+					    पूर्णांक fd)
+अणु
+	काष्ठा bpf_prog_profiler_bpf *skel;
+	काष्ठा bpf_counter *counter;
+	पूर्णांक ret;
 
-	list_for_each_entry(counter, &evsel->bpf_counter_list, list) {
+	list_क्रम_each_entry(counter, &evsel->bpf_counter_list, list) अणु
 		skel = counter->skel;
-		assert(skel != NULL);
+		निश्चित(skel != शून्य);
 
 		ret = bpf_map_update_elem(bpf_map__fd(skel->maps.events),
 					  &cpu, &fd, BPF_ANY);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct bpf_counter_ops bpf_program_profiler_ops = {
+काष्ठा bpf_counter_ops bpf_program_profiler_ops = अणु
 	.load       = bpf_program_profiler__load,
 	.enable	    = bpf_program_profiler__enable,
 	.disable    = bpf_program_profiler__disable,
-	.read       = bpf_program_profiler__read,
+	.पढ़ो       = bpf_program_profiler__पढ़ो,
 	.destroy    = bpf_program_profiler__destroy,
 	.install_pe = bpf_program_profiler__install_pe,
-};
+पूर्ण;
 
-static __u32 bpf_link_get_id(int fd)
-{
-	struct bpf_link_info link_info = {0};
-	__u32 link_info_len = sizeof(link_info);
-
-	bpf_obj_get_info_by_fd(fd, &link_info, &link_info_len);
-	return link_info.id;
-}
-
-static __u32 bpf_link_get_prog_id(int fd)
-{
-	struct bpf_link_info link_info = {0};
-	__u32 link_info_len = sizeof(link_info);
+अटल __u32 bpf_link_get_id(पूर्णांक fd)
+अणु
+	काष्ठा bpf_link_info link_info = अणु0पूर्ण;
+	__u32 link_info_len = माप(link_info);
 
 	bpf_obj_get_info_by_fd(fd, &link_info, &link_info_len);
-	return link_info.prog_id;
-}
+	वापस link_info.id;
+पूर्ण
 
-static __u32 bpf_map_get_id(int fd)
-{
-	struct bpf_map_info map_info = {0};
-	__u32 map_info_len = sizeof(map_info);
+अटल __u32 bpf_link_get_prog_id(पूर्णांक fd)
+अणु
+	काष्ठा bpf_link_info link_info = अणु0पूर्ण;
+	__u32 link_info_len = माप(link_info);
+
+	bpf_obj_get_info_by_fd(fd, &link_info, &link_info_len);
+	वापस link_info.prog_id;
+पूर्ण
+
+अटल __u32 bpf_map_get_id(पूर्णांक fd)
+अणु
+	काष्ठा bpf_map_info map_info = अणु0पूर्ण;
+	__u32 map_info_len = माप(map_info);
 
 	bpf_obj_get_info_by_fd(fd, &map_info, &map_info_len);
-	return map_info.id;
-}
+	वापस map_info.id;
+पूर्ण
 
-static bool bperf_attr_map_compatible(int attr_map_fd)
-{
-	struct bpf_map_info map_info = {0};
-	__u32 map_info_len = sizeof(map_info);
-	int err;
+अटल bool bperf_attr_map_compatible(पूर्णांक attr_map_fd)
+अणु
+	काष्ठा bpf_map_info map_info = अणु0पूर्ण;
+	__u32 map_info_len = माप(map_info);
+	पूर्णांक err;
 
 	err = bpf_obj_get_info_by_fd(attr_map_fd, &map_info, &map_info_len);
 
-	if (err)
-		return false;
-	return (map_info.key_size == sizeof(struct perf_event_attr)) &&
-		(map_info.value_size == sizeof(struct perf_event_attr_map_entry));
-}
+	अगर (err)
+		वापस false;
+	वापस (map_info.key_size == माप(काष्ठा perf_event_attr)) &&
+		(map_info.value_size == माप(काष्ठा perf_event_attr_map_entry));
+पूर्ण
 
-static int bperf_lock_attr_map(struct target *target)
-{
-	char path[PATH_MAX];
-	int map_fd, err;
+अटल पूर्णांक bperf_lock_attr_map(काष्ठा target *target)
+अणु
+	अक्षर path[PATH_MAX];
+	पूर्णांक map_fd, err;
 
-	if (target->attr_map) {
-		scnprintf(path, PATH_MAX, "%s", target->attr_map);
-	} else {
-		scnprintf(path, PATH_MAX, "%s/fs/bpf/%s", sysfs__mountpoint(),
+	अगर (target->attr_map) अणु
+		scnम_लिखो(path, PATH_MAX, "%s", target->attr_map);
+	पूर्ण अन्यथा अणु
+		scnम_लिखो(path, PATH_MAX, "%s/fs/bpf/%s", sysfs__mountpoपूर्णांक(),
 			  BPF_PERF_DEFAULT_ATTR_MAP_PATH);
-	}
+	पूर्ण
 
-	if (access(path, F_OK)) {
+	अगर (access(path, F_OK)) अणु
 		map_fd = bpf_create_map(BPF_MAP_TYPE_HASH,
-					sizeof(struct perf_event_attr),
-					sizeof(struct perf_event_attr_map_entry),
+					माप(काष्ठा perf_event_attr),
+					माप(काष्ठा perf_event_attr_map_entry),
 					ATTR_MAP_SIZE, 0);
-		if (map_fd < 0)
-			return -1;
+		अगर (map_fd < 0)
+			वापस -1;
 
 		err = bpf_obj_pin(map_fd, path);
-		if (err) {
+		अगर (err) अणु
 			/* someone pinned the map in parallel? */
-			close(map_fd);
+			बंद(map_fd);
 			map_fd = bpf_obj_get(path);
-			if (map_fd < 0)
-				return -1;
-		}
-	} else {
+			अगर (map_fd < 0)
+				वापस -1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		map_fd = bpf_obj_get(path);
-		if (map_fd < 0)
-			return -1;
-	}
+		अगर (map_fd < 0)
+			वापस -1;
+	पूर्ण
 
-	if (!bperf_attr_map_compatible(map_fd)) {
-		close(map_fd);
-		return -1;
+	अगर (!bperf_attr_map_compatible(map_fd)) अणु
+		बंद(map_fd);
+		वापस -1;
 
-	}
+	पूर्ण
 	err = flock(map_fd, LOCK_EX);
-	if (err) {
-		close(map_fd);
-		return -1;
-	}
-	return map_fd;
-}
+	अगर (err) अणु
+		बंद(map_fd);
+		वापस -1;
+	पूर्ण
+	वापस map_fd;
+पूर्ण
 
 /* trigger the leader program on a cpu */
-static int bperf_trigger_reading(int prog_fd, int cpu)
-{
+अटल पूर्णांक bperf_trigger_पढ़ोing(पूर्णांक prog_fd, पूर्णांक cpu)
+अणु
 	DECLARE_LIBBPF_OPTS(bpf_test_run_opts, opts,
-			    .ctx_in = NULL,
+			    .ctx_in = शून्य,
 			    .ctx_size_in = 0,
 			    .flags = BPF_F_TEST_RUN_ON_CPU,
 			    .cpu = cpu,
 			    .retval = 0,
 		);
 
-	return bpf_prog_test_run_opts(prog_fd, &opts);
-}
+	वापस bpf_prog_test_run_opts(prog_fd, &opts);
+पूर्ण
 
-static int bperf_check_target(struct evsel *evsel,
-			      struct target *target,
-			      enum bperf_filter_type *filter_type,
+अटल पूर्णांक bperf_check_target(काष्ठा evsel *evsel,
+			      काष्ठा target *target,
+			      क्रमागत bperf_filter_type *filter_type,
 			      __u32 *filter_entry_cnt)
-{
-	if (evsel->leader->core.nr_members > 1) {
+अणु
+	अगर (evsel->leader->core.nr_members > 1) अणु
 		pr_err("bpf managed perf events do not yet support groups.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* determine filter type based on target */
-	if (target->system_wide) {
+	अगर (target->प्रणाली_wide) अणु
 		*filter_type = BPERF_FILTER_GLOBAL;
 		*filter_entry_cnt = 1;
-	} else if (target->cpu_list) {
+	पूर्ण अन्यथा अगर (target->cpu_list) अणु
 		*filter_type = BPERF_FILTER_CPU;
 		*filter_entry_cnt = perf_cpu_map__nr(evsel__cpus(evsel));
-	} else if (target->tid) {
+	पूर्ण अन्यथा अगर (target->tid) अणु
 		*filter_type = BPERF_FILTER_PID;
-		*filter_entry_cnt = perf_thread_map__nr(evsel->core.threads);
-	} else if (target->pid || evsel->evlist->workload.pid != -1) {
+		*filter_entry_cnt = perf_thपढ़ो_map__nr(evsel->core.thपढ़ोs);
+	पूर्ण अन्यथा अगर (target->pid || evsel->evlist->workload.pid != -1) अणु
 		*filter_type = BPERF_FILTER_TGID;
-		*filter_entry_cnt = perf_thread_map__nr(evsel->core.threads);
-	} else {
+		*filter_entry_cnt = perf_thपढ़ो_map__nr(evsel->core.thपढ़ोs);
+	पूर्ण अन्यथा अणु
 		pr_err("bpf managed perf events do not yet support these targets.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static	struct perf_cpu_map *all_cpu_map;
+अटल	काष्ठा perf_cpu_map *all_cpu_map;
 
-static int bperf_reload_leader_program(struct evsel *evsel, int attr_map_fd,
-				       struct perf_event_attr_map_entry *entry)
-{
-	struct bperf_leader_bpf *skel = bperf_leader_bpf__open();
-	int link_fd, diff_map_fd, err;
-	struct bpf_link *link = NULL;
+अटल पूर्णांक bperf_reload_leader_program(काष्ठा evsel *evsel, पूर्णांक attr_map_fd,
+				       काष्ठा perf_event_attr_map_entry *entry)
+अणु
+	काष्ठा bperf_leader_bpf *skel = bperf_leader_bpf__खोलो();
+	पूर्णांक link_fd, dअगरf_map_fd, err;
+	काष्ठा bpf_link *link = शून्य;
 
-	if (!skel) {
+	अगर (!skel) अणु
 		pr_err("Failed to open leader skeleton\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	bpf_map__resize(skel->maps.events, libbpf_num_possible_cpus());
 	err = bperf_leader_bpf__load(skel);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to load leader skeleton\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	link = bpf_program__attach(skel->progs.on_switch);
-	if (IS_ERR(link)) {
+	link = bpf_program__attach(skel->progs.on_चयन);
+	अगर (IS_ERR(link)) अणु
 		pr_err("Failed to attach leader program\n");
 		err = PTR_ERR(link);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	link_fd = bpf_link__fd(link);
-	diff_map_fd = bpf_map__fd(skel->maps.diff_readings);
+	dअगरf_map_fd = bpf_map__fd(skel->maps.dअगरf_पढ़ोings);
 	entry->link_id = bpf_link_get_id(link_fd);
-	entry->diff_map_id = bpf_map_get_id(diff_map_fd);
+	entry->dअगरf_map_id = bpf_map_get_id(dअगरf_map_fd);
 	err = bpf_map_update_elem(attr_map_fd, &evsel->core.attr, entry, BPF_ANY);
-	assert(err == 0);
+	निश्चित(err == 0);
 
 	evsel->bperf_leader_link_fd = bpf_link_get_fd_by_id(entry->link_id);
-	assert(evsel->bperf_leader_link_fd >= 0);
+	निश्चित(evsel->bperf_leader_link_fd >= 0);
 
 	/*
-	 * save leader_skel for install_pe, which is called within
-	 * following evsel__open_per_cpu call
+	 * save leader_skel क्रम install_pe, which is called within
+	 * following evsel__खोलो_per_cpu call
 	 */
 	evsel->leader_skel = skel;
-	evsel__open_per_cpu(evsel, all_cpu_map, -1);
+	evsel__खोलो_per_cpu(evsel, all_cpu_map, -1);
 
 out:
 	bperf_leader_bpf__destroy(skel);
 	bpf_link__destroy(link);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bperf__load(struct evsel *evsel, struct target *target)
-{
-	struct perf_event_attr_map_entry entry = {0xffffffff, 0xffffffff};
-	int attr_map_fd, diff_map_fd = -1, err;
-	enum bperf_filter_type filter_type;
+अटल पूर्णांक bperf__load(काष्ठा evsel *evsel, काष्ठा target *target)
+अणु
+	काष्ठा perf_event_attr_map_entry entry = अणु0xffffffff, 0xffffffffपूर्ण;
+	पूर्णांक attr_map_fd, dअगरf_map_fd = -1, err;
+	क्रमागत bperf_filter_type filter_type;
 	__u32 filter_entry_cnt, i;
 
-	if (bperf_check_target(evsel, target, &filter_type, &filter_entry_cnt))
-		return -1;
+	अगर (bperf_check_target(evsel, target, &filter_type, &filter_entry_cnt))
+		वापस -1;
 
-	if (!all_cpu_map) {
-		all_cpu_map = perf_cpu_map__new(NULL);
-		if (!all_cpu_map)
-			return -1;
-	}
+	अगर (!all_cpu_map) अणु
+		all_cpu_map = perf_cpu_map__new(शून्य);
+		अगर (!all_cpu_map)
+			वापस -1;
+	पूर्ण
 
 	evsel->bperf_leader_prog_fd = -1;
 	evsel->bperf_leader_link_fd = -1;
 
 	/*
-	 * Step 1: hold a fd on the leader program and the bpf_link, if
-	 * the program is not already gone, reload the program.
+	 * Step 1: hold a fd on the leader program and the bpf_link, अगर
+	 * the program is not alपढ़ोy gone, reload the program.
 	 * Use flock() to ensure exclusive access to the perf_event_attr
 	 * map.
 	 */
 	attr_map_fd = bperf_lock_attr_map(target);
-	if (attr_map_fd < 0) {
+	अगर (attr_map_fd < 0) अणु
 		pr_err("Failed to lock perf_event_attr map\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	err = bpf_map_lookup_elem(attr_map_fd, &evsel->core.attr, &entry);
-	if (err) {
+	अगर (err) अणु
 		err = bpf_map_update_elem(attr_map_fd, &evsel->core.attr, &entry, BPF_ANY);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 	evsel->bperf_leader_link_fd = bpf_link_get_fd_by_id(entry.link_id);
-	if (evsel->bperf_leader_link_fd < 0 &&
-	    bperf_reload_leader_program(evsel, attr_map_fd, &entry)) {
+	अगर (evsel->bperf_leader_link_fd < 0 &&
+	    bperf_reload_leader_program(evsel, attr_map_fd, &entry)) अणु
 		err = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/*
 	 * The bpf_link holds reference to the leader program, and the
-	 * leader program holds reference to the maps. Therefore, if
-	 * link_id is valid, diff_map_id should also be valid.
+	 * leader program holds reference to the maps. Thereक्रमe, अगर
+	 * link_id is valid, dअगरf_map_id should also be valid.
 	 */
 	evsel->bperf_leader_prog_fd = bpf_prog_get_fd_by_id(
 		bpf_link_get_prog_id(evsel->bperf_leader_link_fd));
-	assert(evsel->bperf_leader_prog_fd >= 0);
+	निश्चित(evsel->bperf_leader_prog_fd >= 0);
 
-	diff_map_fd = bpf_map_get_fd_by_id(entry.diff_map_id);
-	assert(diff_map_fd >= 0);
+	dअगरf_map_fd = bpf_map_get_fd_by_id(entry.dअगरf_map_id);
+	निश्चित(dअगरf_map_fd >= 0);
 
 	/*
-	 * bperf uses BPF_PROG_TEST_RUN to get accurate reading. Check
+	 * bperf uses BPF_PROG_TEST_RUN to get accurate पढ़ोing. Check
 	 * whether the kernel support it
 	 */
-	err = bperf_trigger_reading(evsel->bperf_leader_prog_fd, 0);
-	if (err) {
+	err = bperf_trigger_पढ़ोing(evsel->bperf_leader_prog_fd, 0);
+	अगर (err) अणु
 		pr_err("The kernel does not support test_run for raw_tp BPF programs.\n"
 		       "Therefore, --use-bpf might show inaccurate readings\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Step 2: load the follower skeleton */
-	evsel->follower_skel = bperf_follower_bpf__open();
-	if (!evsel->follower_skel) {
+	evsel->follower_skel = bperf_follower_bpf__खोलो();
+	अगर (!evsel->follower_skel) अणु
 		err = -1;
 		pr_err("Failed to open follower skeleton\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* attach fexit program to the leader program */
-	bpf_program__set_attach_target(evsel->follower_skel->progs.fexit_XXX,
+	/* attach fनिकास program to the leader program */
+	bpf_program__set_attach_target(evsel->follower_skel->progs.fनिकास_XXX,
 				       evsel->bperf_leader_prog_fd, "on_switch");
 
-	/* connect to leader diff_reading map */
-	bpf_map__reuse_fd(evsel->follower_skel->maps.diff_readings, diff_map_fd);
+	/* connect to leader dअगरf_पढ़ोing map */
+	bpf_map__reuse_fd(evsel->follower_skel->maps.dअगरf_पढ़ोings, dअगरf_map_fd);
 
-	/* set up reading map */
-	bpf_map__set_max_entries(evsel->follower_skel->maps.accum_readings,
+	/* set up पढ़ोing map */
+	bpf_map__set_max_entries(evsel->follower_skel->maps.accum_पढ़ोings,
 				 filter_entry_cnt);
 	/* set up follower filter based on target */
 	bpf_map__set_max_entries(evsel->follower_skel->maps.filter,
 				 filter_entry_cnt);
 	err = bperf_follower_bpf__load(evsel->follower_skel);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to load follower skeleton\n");
 		bperf_follower_bpf__destroy(evsel->follower_skel);
-		evsel->follower_skel = NULL;
-		goto out;
-	}
+		evsel->follower_skel = शून्य;
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < filter_entry_cnt; i++) {
-		int filter_map_fd;
+	क्रम (i = 0; i < filter_entry_cnt; i++) अणु
+		पूर्णांक filter_map_fd;
 		__u32 key;
 
-		if (filter_type == BPERF_FILTER_PID ||
+		अगर (filter_type == BPERF_FILTER_PID ||
 		    filter_type == BPERF_FILTER_TGID)
-			key = evsel->core.threads->map[i].pid;
-		else if (filter_type == BPERF_FILTER_CPU)
+			key = evsel->core.thपढ़ोs->map[i].pid;
+		अन्यथा अगर (filter_type == BPERF_FILTER_CPU)
 			key = evsel->core.cpus->map[i];
-		else
-			break;
+		अन्यथा
+			अवरोध;
 
 		filter_map_fd = bpf_map__fd(evsel->follower_skel->maps.filter);
 		bpf_map_update_elem(filter_map_fd, &key, &i, BPF_ANY);
-	}
+	पूर्ण
 
 	evsel->follower_skel->bss->type = filter_type;
 
 	err = bperf_follower_bpf__attach(evsel->follower_skel);
 
 out:
-	if (err && evsel->bperf_leader_link_fd >= 0)
-		close(evsel->bperf_leader_link_fd);
-	if (err && evsel->bperf_leader_prog_fd >= 0)
-		close(evsel->bperf_leader_prog_fd);
-	if (diff_map_fd >= 0)
-		close(diff_map_fd);
+	अगर (err && evsel->bperf_leader_link_fd >= 0)
+		बंद(evsel->bperf_leader_link_fd);
+	अगर (err && evsel->bperf_leader_prog_fd >= 0)
+		बंद(evsel->bperf_leader_prog_fd);
+	अगर (dअगरf_map_fd >= 0)
+		बंद(dअगरf_map_fd);
 
 	flock(attr_map_fd, LOCK_UN);
-	close(attr_map_fd);
+	बंद(attr_map_fd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bperf__install_pe(struct evsel *evsel, int cpu, int fd)
-{
-	struct bperf_leader_bpf *skel = evsel->leader_skel;
+अटल पूर्णांक bperf__install_pe(काष्ठा evsel *evsel, पूर्णांक cpu, पूर्णांक fd)
+अणु
+	काष्ठा bperf_leader_bpf *skel = evsel->leader_skel;
 
-	return bpf_map_update_elem(bpf_map__fd(skel->maps.events),
+	वापस bpf_map_update_elem(bpf_map__fd(skel->maps.events),
 				   &cpu, &fd, BPF_ANY);
-}
+पूर्ण
 
 /*
- * trigger the leader prog on each cpu, so the accum_reading map could get
- * the latest readings.
+ * trigger the leader prog on each cpu, so the accum_पढ़ोing map could get
+ * the latest पढ़ोings.
  */
-static int bperf_sync_counters(struct evsel *evsel)
-{
-	int num_cpu, i, cpu;
+अटल पूर्णांक bperf_sync_counters(काष्ठा evsel *evsel)
+अणु
+	पूर्णांक num_cpu, i, cpu;
 
 	num_cpu = all_cpu_map->nr;
-	for (i = 0; i < num_cpu; i++) {
+	क्रम (i = 0; i < num_cpu; i++) अणु
 		cpu = all_cpu_map->map[i];
-		bperf_trigger_reading(evsel->bperf_leader_prog_fd, cpu);
-	}
-	return 0;
-}
+		bperf_trigger_पढ़ोing(evsel->bperf_leader_prog_fd, cpu);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bperf__enable(struct evsel *evsel)
-{
+अटल पूर्णांक bperf__enable(काष्ठा evsel *evsel)
+अणु
 	evsel->follower_skel->bss->enabled = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bperf__disable(struct evsel *evsel)
-{
+अटल पूर्णांक bperf__disable(काष्ठा evsel *evsel)
+अणु
 	evsel->follower_skel->bss->enabled = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bperf__read(struct evsel *evsel)
-{
-	struct bperf_follower_bpf *skel = evsel->follower_skel;
+अटल पूर्णांक bperf__पढ़ो(काष्ठा evsel *evsel)
+अणु
+	काष्ठा bperf_follower_bpf *skel = evsel->follower_skel;
 	__u32 num_cpu_bpf = cpu__max_cpu();
-	struct bpf_perf_event_value values[num_cpu_bpf];
-	int reading_map_fd, err = 0;
+	काष्ठा bpf_perf_event_value values[num_cpu_bpf];
+	पूर्णांक पढ़ोing_map_fd, err = 0;
 	__u32 i, j, num_cpu;
 
 	bperf_sync_counters(evsel);
-	reading_map_fd = bpf_map__fd(skel->maps.accum_readings);
+	पढ़ोing_map_fd = bpf_map__fd(skel->maps.accum_पढ़ोings);
 
-	for (i = 0; i < bpf_map__max_entries(skel->maps.accum_readings); i++) {
+	क्रम (i = 0; i < bpf_map__max_entries(skel->maps.accum_पढ़ोings); i++) अणु
 		__u32 cpu;
 
-		err = bpf_map_lookup_elem(reading_map_fd, &i, values);
-		if (err)
-			goto out;
-		switch (evsel->follower_skel->bss->type) {
-		case BPERF_FILTER_GLOBAL:
-			assert(i == 0);
+		err = bpf_map_lookup_elem(पढ़ोing_map_fd, &i, values);
+		अगर (err)
+			जाओ out;
+		चयन (evsel->follower_skel->bss->type) अणु
+		हाल BPERF_FILTER_GLOBAL:
+			निश्चित(i == 0);
 
 			num_cpu = all_cpu_map->nr;
-			for (j = 0; j < num_cpu; j++) {
+			क्रम (j = 0; j < num_cpu; j++) अणु
 				cpu = all_cpu_map->map[j];
 				perf_counts(evsel->counts, cpu, 0)->val = values[cpu].counter;
 				perf_counts(evsel->counts, cpu, 0)->ena = values[cpu].enabled;
 				perf_counts(evsel->counts, cpu, 0)->run = values[cpu].running;
-			}
-			break;
-		case BPERF_FILTER_CPU:
+			पूर्ण
+			अवरोध;
+		हाल BPERF_FILTER_CPU:
 			cpu = evsel->core.cpus->map[i];
 			perf_counts(evsel->counts, i, 0)->val = values[cpu].counter;
 			perf_counts(evsel->counts, i, 0)->ena = values[cpu].enabled;
 			perf_counts(evsel->counts, i, 0)->run = values[cpu].running;
-			break;
-		case BPERF_FILTER_PID:
-		case BPERF_FILTER_TGID:
+			अवरोध;
+		हाल BPERF_FILTER_PID:
+		हाल BPERF_FILTER_TGID:
 			perf_counts(evsel->counts, 0, i)->val = 0;
 			perf_counts(evsel->counts, 0, i)->ena = 0;
 			perf_counts(evsel->counts, 0, i)->run = 0;
 
-			for (cpu = 0; cpu < num_cpu_bpf; cpu++) {
+			क्रम (cpu = 0; cpu < num_cpu_bpf; cpu++) अणु
 				perf_counts(evsel->counts, 0, i)->val += values[cpu].counter;
 				perf_counts(evsel->counts, 0, i)->ena += values[cpu].enabled;
 				perf_counts(evsel->counts, 0, i)->run += values[cpu].running;
-			}
-			break;
-		default:
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bperf__destroy(struct evsel *evsel)
-{
+अटल पूर्णांक bperf__destroy(काष्ठा evsel *evsel)
+अणु
 	bperf_follower_bpf__destroy(evsel->follower_skel);
-	close(evsel->bperf_leader_prog_fd);
-	close(evsel->bperf_leader_link_fd);
-	return 0;
-}
+	बंद(evsel->bperf_leader_prog_fd);
+	बंद(evsel->bperf_leader_link_fd);
+	वापस 0;
+पूर्ण
 
 /*
  * bperf: share hardware PMCs with BPF
  *
- * perf uses performance monitoring counters (PMC) to monitor system
- * performance. The PMCs are limited hardware resources. For example,
+ * perf uses perक्रमmance monitoring counters (PMC) to monitor प्रणाली
+ * perक्रमmance. The PMCs are limited hardware resources. For example,
  * Intel CPUs have 3x fixed PMCs and 4x programmable PMCs per cpu.
  *
- * Modern data center systems use these PMCs in many different ways:
- * system level monitoring, (maybe nested) container level monitoring, per
- * process monitoring, profiling (in sample mode), etc. In some cases,
+ * Modern data center प्रणालीs use these PMCs in many dअगरferent ways:
+ * प्रणाली level monitoring, (maybe nested) container level monitoring, per
+ * process monitoring, profiling (in sample mode), etc. In some हालs,
  * there are more active perf_events than available hardware PMCs. To allow
- * all perf_events to have a chance to run, it is necessary to do expensive
- * time multiplexing of events.
+ * all perf_events to have a chance to run, it is necessary to करो expensive
+ * समय multiplexing of events.
  *
  * On the other hand, many monitoring tools count the common metrics
- * (cycles, instructions). It is a waste to have multiple tools create
+ * (cycles, inकाष्ठाions). It is a waste to have multiple tools create
  * multiple perf_events of "cycles" and occupy multiple PMCs.
  *
  * bperf tries to reduce such wastes by allowing multiple perf_events of
- * "cycles" or "instructions" (at different scopes) to share PMUs. Instead
- * of having each perf-stat session to read its own perf_events, bperf uses
- * BPF programs to read the perf_events and aggregate readings to BPF maps.
- * Then, the perf-stat session(s) reads the values from these BPF maps.
+ * "cycles" or "instructions" (at dअगरferent scopes) to share PMUs. Instead
+ * of having each perf-stat session to पढ़ो its own perf_events, bperf uses
+ * BPF programs to पढ़ो the perf_events and aggregate पढ़ोings to BPF maps.
+ * Then, the perf-stat session(s) पढ़ोs the values from these BPF maps.
  *
  *                                ||
  *       shared progs and maps <- || -> per session progs and maps
  *                                ||
  *   ---------------              ||
  *   | perf_events |              ||
- *   ---------------       fexit  ||      -----------------
+ *   ---------------       fनिकास  ||      -----------------
  *          |             --------||----> | follower prog |
  *       --------------- /        || ---  -----------------
  * cs -> | leader prog |/         ||/        |         |
  *   --> ---------------         /||  --------------  ------------------
- *  /       |         |         / ||  | filter map |  | accum_readings |
+ *  /       |         |         / ||  | filter map |  | accum_पढ़ोings |
  * /  ------------  ------------  ||  --------------  ------------------
- * |  | prev map |  | diff map |  ||                        |
+ * |  | prev map |  | dअगरf map |  ||                        |
  * |  ------------  ------------  ||                        |
  *  \                             ||                        |
  * = \ ==================================================== | ============
@@ -759,92 +760,92 @@ static int bperf__destroy(struct evsel *evsel)
  *          \------  perf-stat ----------------------/
  *
  * The figure above shows the architecture of bperf. Note that the figure
- * is divided into 3 regions: shared progs and maps (top left), per session
+ * is भागided पूर्णांकo 3 regions: shared progs and maps (top left), per session
  * progs and maps (top right), and user space (bottom).
  *
- * The leader prog is triggered on each context switch (cs). The leader
- * prog reads perf_events and stores the difference (current_reading -
- * previous_reading) to the diff map. For the same metric, e.g. "cycles",
+ * The leader prog is triggered on each context चयन (cs). The leader
+ * prog पढ़ोs perf_events and stores the dअगरference (current_पढ़ोing -
+ * previous_पढ़ोing) to the dअगरf map. For the same metric, e.g. "cycles",
  * multiple perf-stat sessions share the same leader prog.
  *
- * Each perf-stat session creates a follower prog as fexit program to the
+ * Each perf-stat session creates a follower prog as fनिकास program to the
  * leader prog. It is possible to attach up to BPF_MAX_TRAMP_PROGS (38)
  * follower progs to the same leader prog. The follower prog checks current
- * task and processor ID to decide whether to add the value from the diff
- * map to its accumulated reading map (accum_readings).
+ * task and processor ID to decide whether to add the value from the dअगरf
+ * map to its accumulated पढ़ोing map (accum_पढ़ोings).
  *
- * Finally, perf-stat user space reads the value from accum_reading map.
+ * Finally, perf-stat user space पढ़ोs the value from accum_पढ़ोing map.
  *
- * Besides context switch, it is also necessary to trigger the leader prog
- * before perf-stat reads the value. Otherwise, the accum_reading map may
- * not have the latest reading from the perf_events. This is achieved by
+ * Besides context चयन, it is also necessary to trigger the leader prog
+ * beक्रमe perf-stat पढ़ोs the value. Otherwise, the accum_पढ़ोing map may
+ * not have the latest पढ़ोing from the perf_events. This is achieved by
  * triggering the event via sys_bpf(BPF_PROG_TEST_RUN) to each CPU.
  *
- * Comment before the definition of struct perf_event_attr_map_entry
- * describes how different sessions of perf-stat share information about
+ * Comment beक्रमe the definition of काष्ठा perf_event_attr_map_entry
+ * describes how dअगरferent sessions of perf-stat share inक्रमmation about
  * the leader prog.
  */
 
-struct bpf_counter_ops bperf_ops = {
+काष्ठा bpf_counter_ops bperf_ops = अणु
 	.load       = bperf__load,
 	.enable     = bperf__enable,
 	.disable    = bperf__disable,
-	.read       = bperf__read,
+	.पढ़ो       = bperf__पढ़ो,
 	.install_pe = bperf__install_pe,
 	.destroy    = bperf__destroy,
-};
+पूर्ण;
 
-static inline bool bpf_counter_skip(struct evsel *evsel)
-{
-	return list_empty(&evsel->bpf_counter_list) &&
-		evsel->follower_skel == NULL;
-}
+अटल अंतरभूत bool bpf_counter_skip(काष्ठा evsel *evsel)
+अणु
+	वापस list_empty(&evsel->bpf_counter_list) &&
+		evsel->follower_skel == शून्य;
+पूर्ण
 
-int bpf_counter__install_pe(struct evsel *evsel, int cpu, int fd)
-{
-	if (bpf_counter_skip(evsel))
-		return 0;
-	return evsel->bpf_counter_ops->install_pe(evsel, cpu, fd);
-}
+पूर्णांक bpf_counter__install_pe(काष्ठा evsel *evsel, पूर्णांक cpu, पूर्णांक fd)
+अणु
+	अगर (bpf_counter_skip(evsel))
+		वापस 0;
+	वापस evsel->bpf_counter_ops->install_pe(evsel, cpu, fd);
+पूर्ण
 
-int bpf_counter__load(struct evsel *evsel, struct target *target)
-{
-	if (target->bpf_str)
+पूर्णांक bpf_counter__load(काष्ठा evsel *evsel, काष्ठा target *target)
+अणु
+	अगर (target->bpf_str)
 		evsel->bpf_counter_ops = &bpf_program_profiler_ops;
-	else if (target->use_bpf || evsel->bpf_counter ||
+	अन्यथा अगर (target->use_bpf || evsel->bpf_counter ||
 		 evsel__match_bpf_counter_events(evsel->name))
 		evsel->bpf_counter_ops = &bperf_ops;
 
-	if (evsel->bpf_counter_ops)
-		return evsel->bpf_counter_ops->load(evsel, target);
-	return 0;
-}
+	अगर (evsel->bpf_counter_ops)
+		वापस evsel->bpf_counter_ops->load(evsel, target);
+	वापस 0;
+पूर्ण
 
-int bpf_counter__enable(struct evsel *evsel)
-{
-	if (bpf_counter_skip(evsel))
-		return 0;
-	return evsel->bpf_counter_ops->enable(evsel);
-}
+पूर्णांक bpf_counter__enable(काष्ठा evsel *evsel)
+अणु
+	अगर (bpf_counter_skip(evsel))
+		वापस 0;
+	वापस evsel->bpf_counter_ops->enable(evsel);
+पूर्ण
 
-int bpf_counter__disable(struct evsel *evsel)
-{
-	if (bpf_counter_skip(evsel))
-		return 0;
-	return evsel->bpf_counter_ops->disable(evsel);
-}
+पूर्णांक bpf_counter__disable(काष्ठा evsel *evsel)
+अणु
+	अगर (bpf_counter_skip(evsel))
+		वापस 0;
+	वापस evsel->bpf_counter_ops->disable(evsel);
+पूर्ण
 
-int bpf_counter__read(struct evsel *evsel)
-{
-	if (bpf_counter_skip(evsel))
-		return -EAGAIN;
-	return evsel->bpf_counter_ops->read(evsel);
-}
+पूर्णांक bpf_counter__पढ़ो(काष्ठा evsel *evsel)
+अणु
+	अगर (bpf_counter_skip(evsel))
+		वापस -EAGAIN;
+	वापस evsel->bpf_counter_ops->पढ़ो(evsel);
+पूर्ण
 
-void bpf_counter__destroy(struct evsel *evsel)
-{
-	if (bpf_counter_skip(evsel))
-		return;
+व्योम bpf_counter__destroy(काष्ठा evsel *evsel)
+अणु
+	अगर (bpf_counter_skip(evsel))
+		वापस;
 	evsel->bpf_counter_ops->destroy(evsel);
-	evsel->bpf_counter_ops = NULL;
-}
+	evsel->bpf_counter_ops = शून्य;
+पूर्ण

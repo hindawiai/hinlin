@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: BSD-3-Clause-Clear */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause-Clear */
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
-#include "core.h"
+#समावेश "core.h"
 
-#ifdef CONFIG_NL80211_TESTMODE
+#अगर_घोषित CONFIG_NL80211_TESTMODE
 
-bool ath11k_tm_event_wmi(struct ath11k *ar, u32 cmd_id, struct sk_buff *skb);
-int ath11k_tm_cmd(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		  void *data, int len);
+bool ath11k_पंचांग_event_wmi(काष्ठा ath11k *ar, u32 cmd_id, काष्ठा sk_buff *skb);
+पूर्णांक ath11k_पंचांग_cmd(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+		  व्योम *data, पूर्णांक len);
 
-#else
+#अन्यथा
 
-static inline bool ath11k_tm_event_wmi(struct ath11k *ar, u32 cmd_id,
-				       struct sk_buff *skb)
-{
-	return false;
-}
+अटल अंतरभूत bool ath11k_पंचांग_event_wmi(काष्ठा ath11k *ar, u32 cmd_id,
+				       काष्ठा sk_buff *skb)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int ath11k_tm_cmd(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif,
-				void *data, int len)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ath11k_पंचांग_cmd(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर,
+				व्योम *data, पूर्णांक len)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

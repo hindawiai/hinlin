@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#include <test_progs.h>
-#include <time.h>
-#include "test_autoload.skel.h"
+#समावेश <test_progs.h>
+#समावेश <समय.स>
+#समावेश "test_autoload.skel.h"
 
-void test_autoload(void)
-{
-	int duration = 0, err;
-	struct test_autoload* skel;
+व्योम test_स्वतःload(व्योम)
+अणु
+	पूर्णांक duration = 0, err;
+	काष्ठा test_स्वतःload* skel;
 
-	skel = test_autoload__open_and_load();
+	skel = test_स्वतःload__खोलो_and_load();
 	/* prog3 should be broken */
-	if (CHECK(skel, "skel_open_and_load", "unexpected success\n"))
-		goto cleanup;
+	अगर (CHECK(skel, "skel_open_and_load", "unexpected success\n"))
+		जाओ cleanup;
 
-	skel = test_autoload__open();
-	if (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
-		goto cleanup;
+	skel = test_स्वतःload__खोलो();
+	अगर (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
+		जाओ cleanup;
 
-	/* don't load prog3 */
-	bpf_program__set_autoload(skel->progs.prog3, false);
+	/* करोn't load prog3 */
+	bpf_program__set_स्वतःload(skel->progs.prog3, false);
 
-	err = test_autoload__load(skel);
-	if (CHECK(err, "skel_load", "failed to load skeleton: %d\n", err))
-		goto cleanup;
+	err = test_स्वतःload__load(skel);
+	अगर (CHECK(err, "skel_load", "failed to load skeleton: %d\n", err))
+		जाओ cleanup;
 
-	err = test_autoload__attach(skel);
-	if (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
-		goto cleanup;
+	err = test_स्वतःload__attach(skel);
+	अगर (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
+		जाओ cleanup;
 
 	usleep(1);
 
@@ -37,5 +38,5 @@ void test_autoload(void)
 	CHECK(skel->bss->prog3_called, "prog3", "called?!\n");
 
 cleanup:
-	test_autoload__destroy(skel);
-}
+	test_स्वतःload__destroy(skel);
+पूर्ण

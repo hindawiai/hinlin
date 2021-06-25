@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 
-#include <linux/types.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/netfilter.h>
-#include <net/netfilter/nf_conntrack_l4proto.h>
-#include <net/netfilter/nf_conntrack_timeout.h>
+#समावेश <linux/types.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/netfilter.h>
+#समावेश <net/netfilter/nf_conntrack_l4proto.h>
+#समावेश <net/netfilter/nf_conntrack_समयout.h>
 
-static const unsigned int nf_ct_generic_timeout = 600*HZ;
+अटल स्थिर अचिन्हित पूर्णांक nf_ct_generic_समयout = 600*HZ;
 
-#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
 
-#include <linux/netfilter/nfnetlink.h>
-#include <linux/netfilter/nfnetlink_cttimeout.h>
+#समावेश <linux/netfilter/nfnetlink.h>
+#समावेश <linux/netfilter/nfnetlink_ctसमयout.h>
 
-static int generic_timeout_nlattr_to_obj(struct nlattr *tb[],
-					 struct net *net, void *data)
-{
-	struct nf_generic_net *gn = nf_generic_pernet(net);
-	unsigned int *timeout = data;
+अटल पूर्णांक generic_समयout_nlattr_to_obj(काष्ठा nlattr *tb[],
+					 काष्ठा net *net, व्योम *data)
+अणु
+	काष्ठा nf_generic_net *gn = nf_generic_pernet(net);
+	अचिन्हित पूर्णांक *समयout = data;
 
-	if (!timeout)
-		timeout = &gn->timeout;
+	अगर (!समयout)
+		समयout = &gn->समयout;
 
-	if (tb[CTA_TIMEOUT_GENERIC_TIMEOUT])
-		*timeout =
+	अगर (tb[CTA_TIMEOUT_GENERIC_TIMEOUT])
+		*समयout =
 		    ntohl(nla_get_be32(tb[CTA_TIMEOUT_GENERIC_TIMEOUT])) * HZ;
-	else {
-		/* Set default generic timeout. */
-		*timeout = gn->timeout;
-	}
+	अन्यथा अणु
+		/* Set शेष generic समयout. */
+		*समयout = gn->समयout;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-generic_timeout_obj_to_nlattr(struct sk_buff *skb, const void *data)
-{
-	const unsigned int *timeout = data;
+अटल पूर्णांक
+generic_समयout_obj_to_nlattr(काष्ठा sk_buff *skb, स्थिर व्योम *data)
+अणु
+	स्थिर अचिन्हित पूर्णांक *समयout = data;
 
-	if (nla_put_be32(skb, CTA_TIMEOUT_GENERIC_TIMEOUT, htonl(*timeout / HZ)))
-		goto nla_put_failure;
+	अगर (nla_put_be32(skb, CTA_TIMEOUT_GENERIC_TIMEOUT, htonl(*समयout / HZ)))
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-        return -ENOSPC;
-}
+        वापस -ENOSPC;
+पूर्ण
 
-static const struct nla_policy
-generic_timeout_nla_policy[CTA_TIMEOUT_GENERIC_MAX+1] = {
-	[CTA_TIMEOUT_GENERIC_TIMEOUT]	= { .type = NLA_U32 },
-};
-#endif /* CONFIG_NF_CONNTRACK_TIMEOUT */
+अटल स्थिर काष्ठा nla_policy
+generic_समयout_nla_policy[CTA_TIMEOUT_GENERIC_MAX+1] = अणु
+	[CTA_TIMEOUT_GENERIC_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_TIMEOUT */
 
-void nf_conntrack_generic_init_net(struct net *net)
-{
-	struct nf_generic_net *gn = nf_generic_pernet(net);
+व्योम nf_conntrack_generic_init_net(काष्ठा net *net)
+अणु
+	काष्ठा nf_generic_net *gn = nf_generic_pernet(net);
 
-	gn->timeout = nf_ct_generic_timeout;
-}
+	gn->समयout = nf_ct_generic_समयout;
+पूर्ण
 
-const struct nf_conntrack_l4proto nf_conntrack_l4proto_generic =
-{
+स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_generic =
+अणु
 	.l4proto		= 255,
-#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
-	.ctnl_timeout		= {
-		.nlattr_to_obj	= generic_timeout_nlattr_to_obj,
-		.obj_to_nlattr	= generic_timeout_obj_to_nlattr,
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
+	.ctnl_समयout		= अणु
+		.nlattr_to_obj	= generic_समयout_nlattr_to_obj,
+		.obj_to_nlattr	= generic_समयout_obj_to_nlattr,
 		.nlattr_max	= CTA_TIMEOUT_GENERIC_MAX,
-		.obj_size	= sizeof(unsigned int),
-		.nla_policy	= generic_timeout_nla_policy,
-	},
-#endif /* CONFIG_NF_CONNTRACK_TIMEOUT */
-};
+		.obj_size	= माप(अचिन्हित पूर्णांक),
+		.nla_policy	= generic_समयout_nla_policy,
+	पूर्ण,
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_TIMEOUT */
+पूर्ण;

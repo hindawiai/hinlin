@@ -1,202 +1,203 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *
- *		SNMP MIB entries for the IP subsystem.
+ *		SNMP MIB entries क्रम the IP subप्रणाली.
  *		
  *		Alan Cox <gw4pts@gw4pts.ampr.org>
  *
- *		We don't chose to implement SNMP in the kernel (this would
- *		be silly as SNMP is a pain in the backside in places). We do
+ *		We करोn't chose to implement SNMP in the kernel (this would
+ *		be silly as SNMP is a pain in the backside in places). We करो
  *		however need to collect the MIB statistics and export them
  *		out of /proc (eventually)
  */
  
-#ifndef _SNMP_H
-#define _SNMP_H
+#अगर_अघोषित _SNMP_H
+#घोषणा _SNMP_H
 
-#include <linux/cache.h>
-#include <linux/snmp.h>
-#include <linux/smp.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/snmp.h>
+#समावेश <linux/smp.h>
 
 /*
- * Mibs are stored in array of unsigned long.
+ * Mibs are stored in array of अचिन्हित दीर्घ.
  */
 /*
- * struct snmp_mib{}
- *  - list of entries for particular API (such as /proc/net/snmp)
+ * काष्ठा snmp_mibअणुपूर्ण
+ *  - list of entries क्रम particular API (such as /proc/net/snmp)
  *  - name of entries.
  */
-struct snmp_mib {
-	const char *name;
-	int entry;
-};
+काष्ठा snmp_mib अणु
+	स्थिर अक्षर *name;
+	पूर्णांक entry;
+पूर्ण;
 
-#define SNMP_MIB_ITEM(_name,_entry)	{	\
+#घोषणा SNMP_MIB_ITEM(_name,_entry)	अणु	\
 	.name = _name,				\
 	.entry = _entry,			\
-}
+पूर्ण
 
-#define SNMP_MIB_SENTINEL {	\
-	.name = NULL,		\
+#घोषणा SNMP_MIB_SENTINEL अणु	\
+	.name = शून्य,		\
 	.entry = 0,		\
-}
+पूर्ण
 
 /*
- * We use unsigned longs for most mibs but u64 for ipstats.
+ * We use अचिन्हित दीर्घs क्रम most mibs but u64 क्रम ipstats.
  */
-#include <linux/u64_stats_sync.h>
+#समावेश <linux/u64_stats_sync.h>
 
 /* IPstats */
-#define IPSTATS_MIB_MAX	__IPSTATS_MIB_MAX
-struct ipstats_mib {
-	/* mibs[] must be first field of struct ipstats_mib */
+#घोषणा IPSTATS_MIB_MAX	__IPSTATS_MIB_MAX
+काष्ठा ipstats_mib अणु
+	/* mibs[] must be first field of काष्ठा ipstats_mib */
 	u64		mibs[IPSTATS_MIB_MAX];
-	struct u64_stats_sync syncp;
-};
+	काष्ठा u64_stats_sync syncp;
+पूर्ण;
 
 /* ICMP */
-#define ICMP_MIB_MAX	__ICMP_MIB_MAX
-struct icmp_mib {
-	unsigned long	mibs[ICMP_MIB_MAX];
-};
+#घोषणा ICMP_MIB_MAX	__ICMP_MIB_MAX
+काष्ठा icmp_mib अणु
+	अचिन्हित दीर्घ	mibs[ICMP_MIB_MAX];
+पूर्ण;
 
-#define ICMPMSG_MIB_MAX	__ICMPMSG_MIB_MAX
-struct icmpmsg_mib {
-	atomic_long_t	mibs[ICMPMSG_MIB_MAX];
-};
+#घोषणा ICMPMSG_MIB_MAX	__ICMPMSG_MIB_MAX
+काष्ठा icmpmsg_mib अणु
+	atomic_दीर्घ_t	mibs[ICMPMSG_MIB_MAX];
+पूर्ण;
 
 /* ICMP6 (IPv6-ICMP) */
-#define ICMP6_MIB_MAX	__ICMP6_MIB_MAX
+#घोषणा ICMP6_MIB_MAX	__ICMP6_MIB_MAX
 /* per network ns counters */
-struct icmpv6_mib {
-	unsigned long	mibs[ICMP6_MIB_MAX];
-};
+काष्ठा icmpv6_mib अणु
+	अचिन्हित दीर्घ	mibs[ICMP6_MIB_MAX];
+पूर्ण;
 /* per device counters, (shared on all cpus) */
-struct icmpv6_mib_device {
-	atomic_long_t	mibs[ICMP6_MIB_MAX];
-};
+काष्ठा icmpv6_mib_device अणु
+	atomic_दीर्घ_t	mibs[ICMP6_MIB_MAX];
+पूर्ण;
 
-#define ICMP6MSG_MIB_MAX  __ICMP6MSG_MIB_MAX
+#घोषणा ICMP6MSG_MIB_MAX  __ICMP6MSG_MIB_MAX
 /* per network ns counters */
-struct icmpv6msg_mib {
-	atomic_long_t	mibs[ICMP6MSG_MIB_MAX];
-};
+काष्ठा icmpv6msg_mib अणु
+	atomic_दीर्घ_t	mibs[ICMP6MSG_MIB_MAX];
+पूर्ण;
 /* per device counters, (shared on all cpus) */
-struct icmpv6msg_mib_device {
-	atomic_long_t	mibs[ICMP6MSG_MIB_MAX];
-};
+काष्ठा icmpv6msg_mib_device अणु
+	atomic_दीर्घ_t	mibs[ICMP6MSG_MIB_MAX];
+पूर्ण;
 
 
 /* TCP */
-#define TCP_MIB_MAX	__TCP_MIB_MAX
-struct tcp_mib {
-	unsigned long	mibs[TCP_MIB_MAX];
-};
+#घोषणा TCP_MIB_MAX	__TCP_MIB_MAX
+काष्ठा tcp_mib अणु
+	अचिन्हित दीर्घ	mibs[TCP_MIB_MAX];
+पूर्ण;
 
 /* UDP */
-#define UDP_MIB_MAX	__UDP_MIB_MAX
-struct udp_mib {
-	unsigned long	mibs[UDP_MIB_MAX];
-};
+#घोषणा UDP_MIB_MAX	__UDP_MIB_MAX
+काष्ठा udp_mib अणु
+	अचिन्हित दीर्घ	mibs[UDP_MIB_MAX];
+पूर्ण;
 
 /* Linux */
-#define LINUX_MIB_MAX	__LINUX_MIB_MAX
-struct linux_mib {
-	unsigned long	mibs[LINUX_MIB_MAX];
-};
+#घोषणा LINUX_MIB_MAX	__LINUX_MIB_MAX
+काष्ठा linux_mib अणु
+	अचिन्हित दीर्घ	mibs[LINUX_MIB_MAX];
+पूर्ण;
 
 /* Linux Xfrm */
-#define LINUX_MIB_XFRMMAX	__LINUX_MIB_XFRMMAX
-struct linux_xfrm_mib {
-	unsigned long	mibs[LINUX_MIB_XFRMMAX];
-};
+#घोषणा LINUX_MIB_XFRMMAX	__LINUX_MIB_XFRMMAX
+काष्ठा linux_xfrm_mib अणु
+	अचिन्हित दीर्घ	mibs[LINUX_MIB_XFRMMAX];
+पूर्ण;
 
 /* Linux TLS */
-#define LINUX_MIB_TLSMAX	__LINUX_MIB_TLSMAX
-struct linux_tls_mib {
-	unsigned long	mibs[LINUX_MIB_TLSMAX];
-};
+#घोषणा LINUX_MIB_TLSMAX	__LINUX_MIB_TLSMAX
+काष्ठा linux_tls_mib अणु
+	अचिन्हित दीर्घ	mibs[LINUX_MIB_TLSMAX];
+पूर्ण;
 
-#define DEFINE_SNMP_STAT(type, name)	\
+#घोषणा DEFINE_SNMP_STAT(type, name)	\
 	__typeof__(type) __percpu *name
-#define DEFINE_SNMP_STAT_ATOMIC(type, name)	\
+#घोषणा DEFINE_SNMP_STAT_ATOMIC(type, name)	\
 	__typeof__(type) *name
-#define DECLARE_SNMP_STAT(type, name)	\
-	extern __typeof__(type) __percpu *name
+#घोषणा DECLARE_SNMP_STAT(type, name)	\
+	बाह्य __typeof__(type) __percpu *name
 
-#define __SNMP_INC_STATS(mib, field)	\
+#घोषणा __SNMP_INC_STATS(mib, field)	\
 			__this_cpu_inc(mib->mibs[field])
 
-#define SNMP_INC_STATS_ATOMIC_LONG(mib, field)	\
-			atomic_long_inc(&mib->mibs[field])
+#घोषणा SNMP_INC_STATS_ATOMIC_LONG(mib, field)	\
+			atomic_दीर्घ_inc(&mib->mibs[field])
 
-#define SNMP_INC_STATS(mib, field)	\
+#घोषणा SNMP_INC_STATS(mib, field)	\
 			this_cpu_inc(mib->mibs[field])
 
-#define SNMP_DEC_STATS(mib, field)	\
+#घोषणा SNMP_DEC_STATS(mib, field)	\
 			this_cpu_dec(mib->mibs[field])
 
-#define __SNMP_ADD_STATS(mib, field, addend)	\
+#घोषणा __SNMP_ADD_STATS(mib, field, addend)	\
 			__this_cpu_add(mib->mibs[field], addend)
 
-#define SNMP_ADD_STATS(mib, field, addend)	\
+#घोषणा SNMP_ADD_STATS(mib, field, addend)	\
 			this_cpu_add(mib->mibs[field], addend)
-#define SNMP_UPD_PO_STATS(mib, basefield, addend)	\
-	do { \
+#घोषणा SNMP_UPD_PO_STATS(mib, basefield, addend)	\
+	करो अणु \
 		__typeof__((mib->mibs) + 0) ptr = mib->mibs;	\
 		this_cpu_inc(ptr[basefield##PKTS]);		\
 		this_cpu_add(ptr[basefield##OCTETS], addend);	\
-	} while (0)
-#define __SNMP_UPD_PO_STATS(mib, basefield, addend)	\
-	do { \
+	पूर्ण जबतक (0)
+#घोषणा __SNMP_UPD_PO_STATS(mib, basefield, addend)	\
+	करो अणु \
 		__typeof__((mib->mibs) + 0) ptr = mib->mibs;	\
 		__this_cpu_inc(ptr[basefield##PKTS]);		\
 		__this_cpu_add(ptr[basefield##OCTETS], addend);	\
-	} while (0)
+	पूर्ण जबतक (0)
 
 
-#if BITS_PER_LONG==32
+#अगर BITS_PER_LONG==32
 
-#define __SNMP_ADD_STATS64(mib, field, addend) 				\
-	do {								\
+#घोषणा __SNMP_ADD_STATS64(mib, field, addend) 				\
+	करो अणु								\
 		__typeof__(*mib) *ptr = raw_cpu_ptr(mib);		\
 		u64_stats_update_begin(&ptr->syncp);			\
 		ptr->mibs[field] += addend;				\
 		u64_stats_update_end(&ptr->syncp);			\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define SNMP_ADD_STATS64(mib, field, addend) 				\
-	do {								\
+#घोषणा SNMP_ADD_STATS64(mib, field, addend) 				\
+	करो अणु								\
 		local_bh_disable();					\
 		__SNMP_ADD_STATS64(mib, field, addend);			\
 		local_bh_enable();				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define __SNMP_INC_STATS64(mib, field) SNMP_ADD_STATS64(mib, field, 1)
-#define SNMP_INC_STATS64(mib, field) SNMP_ADD_STATS64(mib, field, 1)
-#define __SNMP_UPD_PO_STATS64(mib, basefield, addend)			\
-	do {								\
+#घोषणा __SNMP_INC_STATS64(mib, field) SNMP_ADD_STATS64(mib, field, 1)
+#घोषणा SNMP_INC_STATS64(mib, field) SNMP_ADD_STATS64(mib, field, 1)
+#घोषणा __SNMP_UPD_PO_STATS64(mib, basefield, addend)			\
+	करो अणु								\
 		__typeof__(*mib) *ptr;				\
 		ptr = raw_cpu_ptr((mib));				\
 		u64_stats_update_begin(&ptr->syncp);			\
 		ptr->mibs[basefield##PKTS]++;				\
 		ptr->mibs[basefield##OCTETS] += addend;			\
 		u64_stats_update_end(&ptr->syncp);			\
-	} while (0)
-#define SNMP_UPD_PO_STATS64(mib, basefield, addend)			\
-	do {								\
+	पूर्ण जबतक (0)
+#घोषणा SNMP_UPD_PO_STATS64(mib, basefield, addend)			\
+	करो अणु								\
 		local_bh_disable();					\
 		__SNMP_UPD_PO_STATS64(mib, basefield, addend);		\
 		local_bh_enable();				\
-	} while (0)
-#else
-#define __SNMP_INC_STATS64(mib, field)		__SNMP_INC_STATS(mib, field)
-#define SNMP_INC_STATS64(mib, field)		SNMP_INC_STATS(mib, field)
-#define SNMP_DEC_STATS64(mib, field)		SNMP_DEC_STATS(mib, field)
-#define __SNMP_ADD_STATS64(mib, field, addend)	__SNMP_ADD_STATS(mib, field, addend)
-#define SNMP_ADD_STATS64(mib, field, addend)	SNMP_ADD_STATS(mib, field, addend)
-#define SNMP_UPD_PO_STATS64(mib, basefield, addend) SNMP_UPD_PO_STATS(mib, basefield, addend)
-#define __SNMP_UPD_PO_STATS64(mib, basefield, addend) __SNMP_UPD_PO_STATS(mib, basefield, addend)
-#endif
+	पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा __SNMP_INC_STATS64(mib, field)		__SNMP_INC_STATS(mib, field)
+#घोषणा SNMP_INC_STATS64(mib, field)		SNMP_INC_STATS(mib, field)
+#घोषणा SNMP_DEC_STATS64(mib, field)		SNMP_DEC_STATS(mib, field)
+#घोषणा __SNMP_ADD_STATS64(mib, field, addend)	__SNMP_ADD_STATS(mib, field, addend)
+#घोषणा SNMP_ADD_STATS64(mib, field, addend)	SNMP_ADD_STATS(mib, field, addend)
+#घोषणा SNMP_UPD_PO_STATS64(mib, basefield, addend) SNMP_UPD_PO_STATS(mib, basefield, addend)
+#घोषणा __SNMP_UPD_PO_STATS64(mib, basefield, addend) __SNMP_UPD_PO_STATS(mib, basefield, addend)
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

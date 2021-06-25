@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Root interrupt controller for the BCM2836 (Raspberry Pi 2).
+ * Root पूर्णांकerrupt controller क्रम the BCM2836 (Raspberry Pi 2).
  *
  * Copyright 2015 Broadcom
  */
 
-#define LOCAL_CONTROL			0x000
-#define LOCAL_PRESCALER			0x008
+#घोषणा LOCAL_CONTROL			0x000
+#घोषणा LOCAL_PRESCALER			0x008
 
 /*
- * The low 2 bits identify the CPU that the GPU IRQ goes to, and the
- * next 2 bits identify the CPU that the GPU FIQ goes to.
+ * The low 2 bits identअगरy the CPU that the GPU IRQ goes to, and the
+ * next 2 bits identअगरy the CPU that the GPU FIQ goes to.
  */
-#define LOCAL_GPU_ROUTING		0x00c
-/* When setting bits 0-3, enables PMU interrupts on that CPU. */
-#define LOCAL_PM_ROUTING_SET		0x010
-/* When setting bits 0-3, disables PMU interrupts on that CPU. */
-#define LOCAL_PM_ROUTING_CLR		0x014
+#घोषणा LOCAL_GPU_ROUTING		0x00c
+/* When setting bits 0-3, enables PMU पूर्णांकerrupts on that CPU. */
+#घोषणा LOCAL_PM_ROUTING_SET		0x010
+/* When setting bits 0-3, disables PMU पूर्णांकerrupts on that CPU. */
+#घोषणा LOCAL_PM_ROUTING_CLR		0x014
 /*
- * The low 4 bits of this are the CPU's timer IRQ enables, and the
- * next 4 bits are the CPU's timer FIQ enables (which override the IRQ
+ * The low 4 bits of this are the CPU's समयr IRQ enables, and the
+ * next 4 bits are the CPU's समयr FIQ enables (which override the IRQ
  * bits).
  */
-#define LOCAL_TIMER_INT_CONTROL0	0x040
+#घोषणा LOCAL_TIMER_INT_CONTROL0	0x040
 /*
  * The low 4 bits of this are the CPU's per-mailbox IRQ enables, and
  * the next 4 bits are the CPU's per-mailbox FIQ enables (which
  * override the IRQ bits).
  */
-#define LOCAL_MAILBOX_INT_CONTROL0	0x050
+#घोषणा LOCAL_MAILBOX_INT_CONTROL0	0x050
 /*
- * The CPU's interrupt status register.  Bits are defined by the
+ * The CPU's पूर्णांकerrupt status रेजिस्टर.  Bits are defined by the
  * LOCAL_IRQ_* bits below.
  */
-#define LOCAL_IRQ_PENDING0		0x060
-/* Same status bits as above, but for FIQ. */
-#define LOCAL_FIQ_PENDING0		0x070
+#घोषणा LOCAL_IRQ_PENDING0		0x060
+/* Same status bits as above, but क्रम FIQ. */
+#घोषणा LOCAL_FIQ_PENDING0		0x070
 /*
- * Mailbox write-to-set bits.  There are 16 mailboxes, 4 per CPU, and
+ * Mailbox ग_लिखो-to-set bits.  There are 16 mailboxes, 4 per CPU, and
  * these bits are organized by mailbox number and then CPU number.  We
- * use mailbox 0 for IPIs.  The mailbox's interrupt is raised while
+ * use mailbox 0 क्रम IPIs.  The mailbox's पूर्णांकerrupt is उठाओd जबतक
  * any bit is set.
  */
-#define LOCAL_MAILBOX0_SET0		0x080
-#define LOCAL_MAILBOX3_SET0		0x08c
-/* Mailbox write-to-clear bits. */
-#define LOCAL_MAILBOX0_CLR0		0x0c0
-#define LOCAL_MAILBOX3_CLR0		0x0cc
+#घोषणा LOCAL_MAILBOX0_SET0		0x080
+#घोषणा LOCAL_MAILBOX3_SET0		0x08c
+/* Mailbox ग_लिखो-to-clear bits. */
+#घोषणा LOCAL_MAILBOX0_CLR0		0x0c0
+#घोषणा LOCAL_MAILBOX3_CLR0		0x0cc
 
-#define LOCAL_IRQ_CNTPSIRQ	0
-#define LOCAL_IRQ_CNTPNSIRQ	1
-#define LOCAL_IRQ_CNTHPIRQ	2
-#define LOCAL_IRQ_CNTVIRQ	3
-#define LOCAL_IRQ_MAILBOX0	4
-#define LOCAL_IRQ_MAILBOX1	5
-#define LOCAL_IRQ_MAILBOX2	6
-#define LOCAL_IRQ_MAILBOX3	7
-#define LOCAL_IRQ_GPU_FAST	8
-#define LOCAL_IRQ_PMU_FAST	9
-#define LAST_IRQ		LOCAL_IRQ_PMU_FAST
+#घोषणा LOCAL_IRQ_CNTPSIRQ	0
+#घोषणा LOCAL_IRQ_CNTPNSIRQ	1
+#घोषणा LOCAL_IRQ_CNTHPIRQ	2
+#घोषणा LOCAL_IRQ_CNTVIRQ	3
+#घोषणा LOCAL_IRQ_MAILBOX0	4
+#घोषणा LOCAL_IRQ_MAILBOX1	5
+#घोषणा LOCAL_IRQ_MAILBOX2	6
+#घोषणा LOCAL_IRQ_MAILBOX3	7
+#घोषणा LOCAL_IRQ_GPU_FAST	8
+#घोषणा LOCAL_IRQ_PMU_FAST	9
+#घोषणा LAST_IRQ		LOCAL_IRQ_PMU_FAST

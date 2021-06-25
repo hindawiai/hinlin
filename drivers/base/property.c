@@ -1,534 +1,535 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * property.c - Unified device property interface.
+ * property.c - Unअगरied device property पूर्णांकerface.
  *
  * Copyright (C) 2014, Intel Corporation
- * Authors: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
- *          Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Authors: Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
+ *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_graph.h>
-#include <linux/of_irq.h>
-#include <linux/property.h>
-#include <linux/etherdevice.h>
-#include <linux/phy.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/property.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/phy.h>
 
-struct fwnode_handle *dev_fwnode(struct device *dev)
-{
-	return IS_ENABLED(CONFIG_OF) && dev->of_node ?
+काष्ठा fwnode_handle *dev_fwnode(काष्ठा device *dev)
+अणु
+	वापस IS_ENABLED(CONFIG_OF) && dev->of_node ?
 		&dev->of_node->fwnode : dev->fwnode;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_fwnode);
 
 /**
- * device_property_present - check if a property of a device is present
+ * device_property_present - check अगर a property of a device is present
  * @dev: Device whose property is being checked
  * @propname: Name of the property
  *
- * Check if property @propname is present in the device firmware description.
+ * Check अगर property @propname is present in the device firmware description.
  */
-bool device_property_present(struct device *dev, const char *propname)
-{
-	return fwnode_property_present(dev_fwnode(dev), propname);
-}
+bool device_property_present(काष्ठा device *dev, स्थिर अक्षर *propname)
+अणु
+	वापस fwnode_property_present(dev_fwnode(dev), propname);
+पूर्ण
 EXPORT_SYMBOL_GPL(device_property_present);
 
 /**
- * fwnode_property_present - check if a property of a firmware node is present
+ * fwnode_property_present - check अगर a property of a firmware node is present
  * @fwnode: Firmware node whose property to check
  * @propname: Name of the property
  */
-bool fwnode_property_present(const struct fwnode_handle *fwnode,
-			     const char *propname)
-{
+bool fwnode_property_present(स्थिर काष्ठा fwnode_handle *fwnode,
+			     स्थिर अक्षर *propname)
+अणु
 	bool ret;
 
 	ret = fwnode_call_bool_op(fwnode, property_present, propname);
-	if (ret == false && !IS_ERR_OR_NULL(fwnode) &&
-	    !IS_ERR_OR_NULL(fwnode->secondary))
+	अगर (ret == false && !IS_ERR_OR_शून्य(fwnode) &&
+	    !IS_ERR_OR_शून्य(fwnode->secondary))
 		ret = fwnode_call_bool_op(fwnode->secondary, property_present,
 					 propname);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_property_present);
 
 /**
- * device_property_read_u8_array - return a u8 array property of a device
+ * device_property_पढ़ो_u8_array - वापस a u8 array property of a device
  * @dev: Device to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
- * Function reads an array of u8 properties with @propname from the device
- * firmware description and stores them to @val if found.
+ * Function पढ़ोs an array of u8 properties with @propname from the device
+ * firmware description and stores them to @val अगर found.
  *
- * Return: number of values if @val was %NULL,
- *         %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of numbers,
- *	   %-EOVERFLOW if the size of the property is not as expected.
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values अगर @val was %शून्य,
+ *         %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of numbers,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected.
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int device_property_read_u8_array(struct device *dev, const char *propname,
-				  u8 *val, size_t nval)
-{
-	return fwnode_property_read_u8_array(dev_fwnode(dev), propname, val, nval);
-}
-EXPORT_SYMBOL_GPL(device_property_read_u8_array);
+पूर्णांक device_property_पढ़ो_u8_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				  u8 *val, माप_प्रकार nval)
+अणु
+	वापस fwnode_property_पढ़ो_u8_array(dev_fwnode(dev), propname, val, nval);
+पूर्ण
+EXPORT_SYMBOL_GPL(device_property_पढ़ो_u8_array);
 
 /**
- * device_property_read_u16_array - return a u16 array property of a device
+ * device_property_पढ़ो_u16_array - वापस a u16 array property of a device
  * @dev: Device to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
- * Function reads an array of u16 properties with @propname from the device
- * firmware description and stores them to @val if found.
+ * Function पढ़ोs an array of u16 properties with @propname from the device
+ * firmware description and stores them to @val अगर found.
  *
- * Return: number of values if @val was %NULL,
- *         %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of numbers,
- *	   %-EOVERFLOW if the size of the property is not as expected.
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values अगर @val was %शून्य,
+ *         %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of numbers,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected.
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int device_property_read_u16_array(struct device *dev, const char *propname,
-				   u16 *val, size_t nval)
-{
-	return fwnode_property_read_u16_array(dev_fwnode(dev), propname, val, nval);
-}
-EXPORT_SYMBOL_GPL(device_property_read_u16_array);
+पूर्णांक device_property_पढ़ो_u16_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				   u16 *val, माप_प्रकार nval)
+अणु
+	वापस fwnode_property_पढ़ो_u16_array(dev_fwnode(dev), propname, val, nval);
+पूर्ण
+EXPORT_SYMBOL_GPL(device_property_पढ़ो_u16_array);
 
 /**
- * device_property_read_u32_array - return a u32 array property of a device
+ * device_property_पढ़ो_u32_array - वापस a u32 array property of a device
  * @dev: Device to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
- * Function reads an array of u32 properties with @propname from the device
- * firmware description and stores them to @val if found.
+ * Function पढ़ोs an array of u32 properties with @propname from the device
+ * firmware description and stores them to @val अगर found.
  *
- * Return: number of values if @val was %NULL,
- *         %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of numbers,
- *	   %-EOVERFLOW if the size of the property is not as expected.
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values अगर @val was %शून्य,
+ *         %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of numbers,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected.
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int device_property_read_u32_array(struct device *dev, const char *propname,
-				   u32 *val, size_t nval)
-{
-	return fwnode_property_read_u32_array(dev_fwnode(dev), propname, val, nval);
-}
-EXPORT_SYMBOL_GPL(device_property_read_u32_array);
+पूर्णांक device_property_पढ़ो_u32_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				   u32 *val, माप_प्रकार nval)
+अणु
+	वापस fwnode_property_पढ़ो_u32_array(dev_fwnode(dev), propname, val, nval);
+पूर्ण
+EXPORT_SYMBOL_GPL(device_property_पढ़ो_u32_array);
 
 /**
- * device_property_read_u64_array - return a u64 array property of a device
+ * device_property_पढ़ो_u64_array - वापस a u64 array property of a device
  * @dev: Device to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
- * Function reads an array of u64 properties with @propname from the device
- * firmware description and stores them to @val if found.
+ * Function पढ़ोs an array of u64 properties with @propname from the device
+ * firmware description and stores them to @val अगर found.
  *
- * Return: number of values if @val was %NULL,
- *         %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of numbers,
- *	   %-EOVERFLOW if the size of the property is not as expected.
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values अगर @val was %शून्य,
+ *         %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of numbers,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected.
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int device_property_read_u64_array(struct device *dev, const char *propname,
-				   u64 *val, size_t nval)
-{
-	return fwnode_property_read_u64_array(dev_fwnode(dev), propname, val, nval);
-}
-EXPORT_SYMBOL_GPL(device_property_read_u64_array);
+पूर्णांक device_property_पढ़ो_u64_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				   u64 *val, माप_प्रकार nval)
+अणु
+	वापस fwnode_property_पढ़ो_u64_array(dev_fwnode(dev), propname, val, nval);
+पूर्ण
+EXPORT_SYMBOL_GPL(device_property_पढ़ो_u64_array);
 
 /**
- * device_property_read_string_array - return a string array property of device
+ * device_property_पढ़ो_string_array - वापस a string array property of device
  * @dev: Device to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
- * Function reads an array of string properties with @propname from the device
- * firmware description and stores them to @val if found.
+ * Function पढ़ोs an array of string properties with @propname from the device
+ * firmware description and stores them to @val अगर found.
  *
- * Return: number of values read on success if @val is non-NULL,
- *	   number of values available on success if @val is NULL,
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO or %-EILSEQ if the property is not an array of strings,
- *	   %-EOVERFLOW if the size of the property is not as expected.
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values पढ़ो on success अगर @val is non-शून्य,
+ *	   number of values available on success अगर @val is शून्य,
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO or %-EILSEQ अगर the property is not an array of strings,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected.
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int device_property_read_string_array(struct device *dev, const char *propname,
-				      const char **val, size_t nval)
-{
-	return fwnode_property_read_string_array(dev_fwnode(dev), propname, val, nval);
-}
-EXPORT_SYMBOL_GPL(device_property_read_string_array);
+पूर्णांक device_property_पढ़ो_string_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				      स्थिर अक्षर **val, माप_प्रकार nval)
+अणु
+	वापस fwnode_property_पढ़ो_string_array(dev_fwnode(dev), propname, val, nval);
+पूर्ण
+EXPORT_SYMBOL_GPL(device_property_पढ़ो_string_array);
 
 /**
- * device_property_read_string - return a string property of a device
+ * device_property_पढ़ो_string - वापस a string property of a device
  * @dev: Device to get the property of
  * @propname: Name of the property
  * @val: The value is stored here
  *
- * Function reads property @propname from the device firmware description and
- * stores the value into @val if found. The value is checked to be a string.
+ * Function पढ़ोs property @propname from the device firmware description and
+ * stores the value पूर्णांकo @val अगर found. The value is checked to be a string.
  *
- * Return: %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO or %-EILSEQ if the property type is not a string.
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO or %-EILSEQ अगर the property type is not a string.
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int device_property_read_string(struct device *dev, const char *propname,
-				const char **val)
-{
-	return fwnode_property_read_string(dev_fwnode(dev), propname, val);
-}
-EXPORT_SYMBOL_GPL(device_property_read_string);
+पूर्णांक device_property_पढ़ो_string(काष्ठा device *dev, स्थिर अक्षर *propname,
+				स्थिर अक्षर **val)
+अणु
+	वापस fwnode_property_पढ़ो_string(dev_fwnode(dev), propname, val);
+पूर्ण
+EXPORT_SYMBOL_GPL(device_property_पढ़ो_string);
 
 /**
- * device_property_match_string - find a string in an array and return index
+ * device_property_match_string - find a string in an array and वापस index
  * @dev: Device to get the property of
  * @propname: Name of the property holding the array
- * @string: String to look for
+ * @string: String to look क्रम
  *
- * Find a given string in a string array and if it is found return the
+ * Find a given string in a string array and अगर it is found वापस the
  * index back.
  *
- * Return: %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of strings,
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of strings,
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int device_property_match_string(struct device *dev, const char *propname,
-				 const char *string)
-{
-	return fwnode_property_match_string(dev_fwnode(dev), propname, string);
-}
+पूर्णांक device_property_match_string(काष्ठा device *dev, स्थिर अक्षर *propname,
+				 स्थिर अक्षर *string)
+अणु
+	वापस fwnode_property_match_string(dev_fwnode(dev), propname, string);
+पूर्ण
 EXPORT_SYMBOL_GPL(device_property_match_string);
 
-static int fwnode_property_read_int_array(const struct fwnode_handle *fwnode,
-					  const char *propname,
-					  unsigned int elem_size, void *val,
-					  size_t nval)
-{
-	int ret;
+अटल पूर्णांक fwnode_property_पढ़ो_पूर्णांक_array(स्थिर काष्ठा fwnode_handle *fwnode,
+					  स्थिर अक्षर *propname,
+					  अचिन्हित पूर्णांक elem_size, व्योम *val,
+					  माप_प्रकार nval)
+अणु
+	पूर्णांक ret;
 
-	ret = fwnode_call_int_op(fwnode, property_read_int_array, propname,
+	ret = fwnode_call_पूर्णांक_op(fwnode, property_पढ़ो_पूर्णांक_array, propname,
 				 elem_size, val, nval);
-	if (ret == -EINVAL && !IS_ERR_OR_NULL(fwnode) &&
-	    !IS_ERR_OR_NULL(fwnode->secondary))
-		ret = fwnode_call_int_op(
-			fwnode->secondary, property_read_int_array, propname,
+	अगर (ret == -EINVAL && !IS_ERR_OR_शून्य(fwnode) &&
+	    !IS_ERR_OR_शून्य(fwnode->secondary))
+		ret = fwnode_call_पूर्णांक_op(
+			fwnode->secondary, property_पढ़ो_पूर्णांक_array, propname,
 			elem_size, val, nval);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * fwnode_property_read_u8_array - return a u8 array property of firmware node
+ * fwnode_property_पढ़ो_u8_array - वापस a u8 array property of firmware node
  * @fwnode: Firmware node to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
  * Read an array of u8 properties with @propname from @fwnode and stores them to
- * @val if found.
+ * @val अगर found.
  *
- * Return: number of values if @val was %NULL,
- *         %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of numbers,
- *	   %-EOVERFLOW if the size of the property is not as expected,
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values अगर @val was %शून्य,
+ *         %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of numbers,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected,
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int fwnode_property_read_u8_array(const struct fwnode_handle *fwnode,
-				  const char *propname, u8 *val, size_t nval)
-{
-	return fwnode_property_read_int_array(fwnode, propname, sizeof(u8),
+पूर्णांक fwnode_property_पढ़ो_u8_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				  स्थिर अक्षर *propname, u8 *val, माप_प्रकार nval)
+अणु
+	वापस fwnode_property_पढ़ो_पूर्णांक_array(fwnode, propname, माप(u8),
 					      val, nval);
-}
-EXPORT_SYMBOL_GPL(fwnode_property_read_u8_array);
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_property_पढ़ो_u8_array);
 
 /**
- * fwnode_property_read_u16_array - return a u16 array property of firmware node
+ * fwnode_property_पढ़ो_u16_array - वापस a u16 array property of firmware node
  * @fwnode: Firmware node to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
  * Read an array of u16 properties with @propname from @fwnode and store them to
- * @val if found.
+ * @val अगर found.
  *
- * Return: number of values if @val was %NULL,
- *         %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of numbers,
- *	   %-EOVERFLOW if the size of the property is not as expected,
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values अगर @val was %शून्य,
+ *         %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of numbers,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected,
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int fwnode_property_read_u16_array(const struct fwnode_handle *fwnode,
-				   const char *propname, u16 *val, size_t nval)
-{
-	return fwnode_property_read_int_array(fwnode, propname, sizeof(u16),
+पूर्णांक fwnode_property_पढ़ो_u16_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				   स्थिर अक्षर *propname, u16 *val, माप_प्रकार nval)
+अणु
+	वापस fwnode_property_पढ़ो_पूर्णांक_array(fwnode, propname, माप(u16),
 					      val, nval);
-}
-EXPORT_SYMBOL_GPL(fwnode_property_read_u16_array);
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_property_पढ़ो_u16_array);
 
 /**
- * fwnode_property_read_u32_array - return a u32 array property of firmware node
+ * fwnode_property_पढ़ो_u32_array - वापस a u32 array property of firmware node
  * @fwnode: Firmware node to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
  * Read an array of u32 properties with @propname from @fwnode store them to
- * @val if found.
+ * @val अगर found.
  *
- * Return: number of values if @val was %NULL,
- *         %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of numbers,
- *	   %-EOVERFLOW if the size of the property is not as expected,
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values अगर @val was %शून्य,
+ *         %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of numbers,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected,
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int fwnode_property_read_u32_array(const struct fwnode_handle *fwnode,
-				   const char *propname, u32 *val, size_t nval)
-{
-	return fwnode_property_read_int_array(fwnode, propname, sizeof(u32),
+पूर्णांक fwnode_property_पढ़ो_u32_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				   स्थिर अक्षर *propname, u32 *val, माप_प्रकार nval)
+अणु
+	वापस fwnode_property_पढ़ो_पूर्णांक_array(fwnode, propname, माप(u32),
 					      val, nval);
-}
-EXPORT_SYMBOL_GPL(fwnode_property_read_u32_array);
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_property_पढ़ो_u32_array);
 
 /**
- * fwnode_property_read_u64_array - return a u64 array property firmware node
+ * fwnode_property_पढ़ो_u64_array - वापस a u64 array property firmware node
  * @fwnode: Firmware node to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
  * Read an array of u64 properties with @propname from @fwnode and store them to
- * @val if found.
+ * @val अगर found.
  *
- * Return: number of values if @val was %NULL,
- *         %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of numbers,
- *	   %-EOVERFLOW if the size of the property is not as expected,
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values अगर @val was %शून्य,
+ *         %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of numbers,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected,
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int fwnode_property_read_u64_array(const struct fwnode_handle *fwnode,
-				   const char *propname, u64 *val, size_t nval)
-{
-	return fwnode_property_read_int_array(fwnode, propname, sizeof(u64),
+पूर्णांक fwnode_property_पढ़ो_u64_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				   स्थिर अक्षर *propname, u64 *val, माप_प्रकार nval)
+अणु
+	वापस fwnode_property_पढ़ो_पूर्णांक_array(fwnode, propname, माप(u64),
 					      val, nval);
-}
-EXPORT_SYMBOL_GPL(fwnode_property_read_u64_array);
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_property_पढ़ो_u64_array);
 
 /**
- * fwnode_property_read_string_array - return string array property of a node
+ * fwnode_property_पढ़ो_string_array - वापस string array property of a node
  * @fwnode: Firmware node to get the property of
  * @propname: Name of the property
- * @val: The values are stored here or %NULL to return the number of values
+ * @val: The values are stored here or %शून्य to वापस the number of values
  * @nval: Size of the @val array
  *
  * Read an string list property @propname from the given firmware node and store
- * them to @val if found.
+ * them to @val अगर found.
  *
- * Return: number of values read on success if @val is non-NULL,
- *	   number of values available on success if @val is NULL,
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO or %-EILSEQ if the property is not an array of strings,
- *	   %-EOVERFLOW if the size of the property is not as expected,
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: number of values पढ़ो on success अगर @val is non-शून्य,
+ *	   number of values available on success अगर @val is शून्य,
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO or %-EILSEQ अगर the property is not an array of strings,
+ *	   %-EOVERFLOW अगर the size of the property is not as expected,
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int fwnode_property_read_string_array(const struct fwnode_handle *fwnode,
-				      const char *propname, const char **val,
-				      size_t nval)
-{
-	int ret;
+पूर्णांक fwnode_property_पढ़ो_string_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				      स्थिर अक्षर *propname, स्थिर अक्षर **val,
+				      माप_प्रकार nval)
+अणु
+	पूर्णांक ret;
 
-	ret = fwnode_call_int_op(fwnode, property_read_string_array, propname,
+	ret = fwnode_call_पूर्णांक_op(fwnode, property_पढ़ो_string_array, propname,
 				 val, nval);
-	if (ret == -EINVAL && !IS_ERR_OR_NULL(fwnode) &&
-	    !IS_ERR_OR_NULL(fwnode->secondary))
-		ret = fwnode_call_int_op(fwnode->secondary,
-					 property_read_string_array, propname,
+	अगर (ret == -EINVAL && !IS_ERR_OR_शून्य(fwnode) &&
+	    !IS_ERR_OR_शून्य(fwnode->secondary))
+		ret = fwnode_call_पूर्णांक_op(fwnode->secondary,
+					 property_पढ़ो_string_array, propname,
 					 val, nval);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(fwnode_property_read_string_array);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_property_पढ़ो_string_array);
 
 /**
- * fwnode_property_read_string - return a string property of a firmware node
+ * fwnode_property_पढ़ो_string - वापस a string property of a firmware node
  * @fwnode: Firmware node to get the property of
  * @propname: Name of the property
  * @val: The value is stored here
  *
- * Read property @propname from the given firmware node and store the value into
- * @val if found.  The value is checked to be a string.
+ * Read property @propname from the given firmware node and store the value पूर्णांकo
+ * @val अगर found.  The value is checked to be a string.
  *
- * Return: %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO or %-EILSEQ if the property is not a string,
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO or %-EILSEQ अगर the property is not a string,
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int fwnode_property_read_string(const struct fwnode_handle *fwnode,
-				const char *propname, const char **val)
-{
-	int ret = fwnode_property_read_string_array(fwnode, propname, val, 1);
+पूर्णांक fwnode_property_पढ़ो_string(स्थिर काष्ठा fwnode_handle *fwnode,
+				स्थिर अक्षर *propname, स्थिर अक्षर **val)
+अणु
+	पूर्णांक ret = fwnode_property_पढ़ो_string_array(fwnode, propname, val, 1);
 
-	return ret < 0 ? ret : 0;
-}
-EXPORT_SYMBOL_GPL(fwnode_property_read_string);
+	वापस ret < 0 ? ret : 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_property_पढ़ो_string);
 
 /**
- * fwnode_property_match_string - find a string in an array and return index
+ * fwnode_property_match_string - find a string in an array and वापस index
  * @fwnode: Firmware node to get the property of
  * @propname: Name of the property holding the array
- * @string: String to look for
+ * @string: String to look क्रम
  *
- * Find a given string in a string array and if it is found return the
+ * Find a given string in a string array and अगर it is found वापस the
  * index back.
  *
- * Return: %0 if the property was found (success),
- *	   %-EINVAL if given arguments are not valid,
- *	   %-ENODATA if the property does not have a value,
- *	   %-EPROTO if the property is not an array of strings,
- *	   %-ENXIO if no suitable firmware interface is present.
+ * Return: %0 अगर the property was found (success),
+ *	   %-EINVAL अगर given arguments are not valid,
+ *	   %-ENODATA अगर the property करोes not have a value,
+ *	   %-EPROTO अगर the property is not an array of strings,
+ *	   %-ENXIO अगर no suitable firmware पूर्णांकerface is present.
  */
-int fwnode_property_match_string(const struct fwnode_handle *fwnode,
-	const char *propname, const char *string)
-{
-	const char **values;
-	int nval, ret;
+पूर्णांक fwnode_property_match_string(स्थिर काष्ठा fwnode_handle *fwnode,
+	स्थिर अक्षर *propname, स्थिर अक्षर *string)
+अणु
+	स्थिर अक्षर **values;
+	पूर्णांक nval, ret;
 
-	nval = fwnode_property_read_string_array(fwnode, propname, NULL, 0);
-	if (nval < 0)
-		return nval;
+	nval = fwnode_property_पढ़ो_string_array(fwnode, propname, शून्य, 0);
+	अगर (nval < 0)
+		वापस nval;
 
-	if (nval == 0)
-		return -ENODATA;
+	अगर (nval == 0)
+		वापस -ENODATA;
 
-	values = kcalloc(nval, sizeof(*values), GFP_KERNEL);
-	if (!values)
-		return -ENOMEM;
+	values = kसुस्मृति(nval, माप(*values), GFP_KERNEL);
+	अगर (!values)
+		वापस -ENOMEM;
 
-	ret = fwnode_property_read_string_array(fwnode, propname, values, nval);
-	if (ret < 0)
-		goto out;
+	ret = fwnode_property_पढ़ो_string_array(fwnode, propname, values, nval);
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = match_string(values, nval, string);
-	if (ret < 0)
+	अगर (ret < 0)
 		ret = -ENODATA;
 out:
-	kfree(values);
-	return ret;
-}
+	kमुक्त(values);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_property_match_string);
 
 /**
  * fwnode_property_get_reference_args() - Find a reference with arguments
- * @fwnode:	Firmware node where to look for the reference
+ * @fwnode:	Firmware node where to look क्रम the reference
  * @prop:	The name of the property
  * @nargs_prop:	The name of the property telling the number of
- *		arguments in the referred node. NULL if @nargs is known,
+ *		arguments in the referred node. शून्य अगर @nargs is known,
  *		otherwise @nargs is ignored. Only relevant on OF.
- * @nargs:	Number of arguments. Ignored if @nargs_prop is non-NULL.
+ * @nargs:	Number of arguments. Ignored अगर @nargs_prop is non-शून्य.
  * @index:	Index of the reference, from zero onwards.
- * @args:	Result structure with reference and integer arguments.
+ * @args:	Result काष्ठाure with reference and पूर्णांकeger arguments.
  *
  * Obtain a reference based on a named property in an fwnode, with
- * integer arguments.
+ * पूर्णांकeger arguments.
  *
- * Caller is responsible to call fwnode_handle_put() on the returned
- * args->fwnode pointer.
+ * Caller is responsible to call fwnode_handle_put() on the वापसed
+ * args->fwnode poपूर्णांकer.
  *
  * Returns: %0 on success
  *	    %-ENOENT when the index is out of bounds, the index has an empty
  *		     reference or the property was not found
  *	    %-EINVAL on parse error
  */
-int fwnode_property_get_reference_args(const struct fwnode_handle *fwnode,
-				       const char *prop, const char *nargs_prop,
-				       unsigned int nargs, unsigned int index,
-				       struct fwnode_reference_args *args)
-{
-	return fwnode_call_int_op(fwnode, get_reference_args, prop, nargs_prop,
+पूर्णांक fwnode_property_get_reference_args(स्थिर काष्ठा fwnode_handle *fwnode,
+				       स्थिर अक्षर *prop, स्थिर अक्षर *nargs_prop,
+				       अचिन्हित पूर्णांक nargs, अचिन्हित पूर्णांक index,
+				       काष्ठा fwnode_reference_args *args)
+अणु
+	वापस fwnode_call_पूर्णांक_op(fwnode, get_reference_args, prop, nargs_prop,
 				  nargs, index, args);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_property_get_reference_args);
 
 /**
  * fwnode_find_reference - Find named reference to a fwnode_handle
- * @fwnode: Firmware node where to look for the reference
+ * @fwnode: Firmware node where to look क्रम the reference
  * @name: The name of the reference
  * @index: Index of the reference
  *
  * @index can be used when the named reference holds a table of references.
  *
- * Returns pointer to the reference fwnode, or ERR_PTR. Caller is responsible to
- * call fwnode_handle_put() on the returned fwnode pointer.
+ * Returns poपूर्णांकer to the reference fwnode, or ERR_PTR. Caller is responsible to
+ * call fwnode_handle_put() on the वापसed fwnode poपूर्णांकer.
  */
-struct fwnode_handle *fwnode_find_reference(const struct fwnode_handle *fwnode,
-					    const char *name,
-					    unsigned int index)
-{
-	struct fwnode_reference_args args;
-	int ret;
+काष्ठा fwnode_handle *fwnode_find_reference(स्थिर काष्ठा fwnode_handle *fwnode,
+					    स्थिर अक्षर *name,
+					    अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा fwnode_reference_args args;
+	पूर्णांक ret;
 
-	ret = fwnode_property_get_reference_args(fwnode, name, NULL, 0, index,
+	ret = fwnode_property_get_reference_args(fwnode, name, शून्य, 0, index,
 						 &args);
-	return ret ? ERR_PTR(ret) : args.fwnode;
-}
+	वापस ret ? ERR_PTR(ret) : args.fwnode;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_find_reference);
 
 /**
- * device_remove_properties - Remove properties from a device object.
- * @dev: Device whose properties to remove.
+ * device_हटाओ_properties - Remove properties from a device object.
+ * @dev: Device whose properties to हटाओ.
  *
- * The function removes properties previously associated to the device
+ * The function हटाओs properties previously associated to the device
  * firmware node with device_add_properties(). Memory allocated to the
  * properties will also be released.
  */
-void device_remove_properties(struct device *dev)
-{
-	struct fwnode_handle *fwnode = dev_fwnode(dev);
+व्योम device_हटाओ_properties(काष्ठा device *dev)
+अणु
+	काष्ठा fwnode_handle *fwnode = dev_fwnode(dev);
 
-	if (!fwnode)
-		return;
+	अगर (!fwnode)
+		वापस;
 
-	if (is_software_node(fwnode->secondary)) {
-		fwnode_remove_software_node(fwnode->secondary);
-		set_secondary_fwnode(dev, NULL);
-	}
-}
-EXPORT_SYMBOL_GPL(device_remove_properties);
+	अगर (is_software_node(fwnode->secondary)) अणु
+		fwnode_हटाओ_software_node(fwnode->secondary);
+		set_secondary_fwnode(dev, शून्य);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(device_हटाओ_properties);
 
 /**
  * device_add_properties - Add a collection of properties to a device object.
@@ -538,59 +539,59 @@ EXPORT_SYMBOL_GPL(device_remove_properties);
  * Associate a collection of device properties represented by @properties with
  * @dev. The function takes a copy of @properties.
  *
- * WARNING: The callers should not use this function if it is known that there
- * is no real firmware node associated with @dev! In that case the callers
+ * WARNING: The callers should not use this function अगर it is known that there
+ * is no real firmware node associated with @dev! In that हाल the callers
  * should create a software node and assign it to @dev directly.
  */
-int device_add_properties(struct device *dev,
-			  const struct property_entry *properties)
-{
-	struct fwnode_handle *fwnode;
+पूर्णांक device_add_properties(काष्ठा device *dev,
+			  स्थिर काष्ठा property_entry *properties)
+अणु
+	काष्ठा fwnode_handle *fwnode;
 
-	fwnode = fwnode_create_software_node(properties, NULL);
-	if (IS_ERR(fwnode))
-		return PTR_ERR(fwnode);
+	fwnode = fwnode_create_software_node(properties, शून्य);
+	अगर (IS_ERR(fwnode))
+		वापस PTR_ERR(fwnode);
 
 	set_secondary_fwnode(dev, fwnode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(device_add_properties);
 
 /**
  * fwnode_get_name - Return the name of a node
  * @fwnode: The firmware node
  *
- * Returns a pointer to the node name.
+ * Returns a poपूर्णांकer to the node name.
  */
-const char *fwnode_get_name(const struct fwnode_handle *fwnode)
-{
-	return fwnode_call_ptr_op(fwnode, get_name);
-}
+स्थिर अक्षर *fwnode_get_name(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस fwnode_call_ptr_op(fwnode, get_name);
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_get_name);
 
 /**
- * fwnode_get_name_prefix - Return the prefix of node for printing purposes
+ * fwnode_get_name_prefix - Return the prefix of node क्रम prपूर्णांकing purposes
  * @fwnode: The firmware node
  *
- * Returns the prefix of a node, intended to be printed right before the node.
+ * Returns the prefix of a node, पूर्णांकended to be prपूर्णांकed right beक्रमe the node.
  * The prefix works also as a separator between the nodes.
  */
-const char *fwnode_get_name_prefix(const struct fwnode_handle *fwnode)
-{
-	return fwnode_call_ptr_op(fwnode, get_name_prefix);
-}
+स्थिर अक्षर *fwnode_get_name_prefix(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस fwnode_call_ptr_op(fwnode, get_name_prefix);
+पूर्ण
 
 /**
  * fwnode_get_parent - Return parent firwmare node
  * @fwnode: Firmware whose parent is retrieved
  *
- * Return parent firmware node of the given node if possible or %NULL if no
+ * Return parent firmware node of the given node अगर possible or %शून्य अगर no
  * parent was available.
  */
-struct fwnode_handle *fwnode_get_parent(const struct fwnode_handle *fwnode)
-{
-	return fwnode_call_ptr_op(fwnode, get_parent);
-}
+काष्ठा fwnode_handle *fwnode_get_parent(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस fwnode_call_ptr_op(fwnode, get_parent);
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_get_parent);
 
 /**
@@ -598,46 +599,46 @@ EXPORT_SYMBOL_GPL(fwnode_get_parent);
  * @fwnode: Firmware whose parent is retrieved
  *
  * This is like fwnode_get_parent() except that it drops the refcount
- * on the passed node, making it suitable for iterating through a
+ * on the passed node, making it suitable क्रम iterating through a
  * node's parents.
  *
- * Returns a node pointer with refcount incremented, use
- * fwnode_handle_node() on it when done.
+ * Returns a node poपूर्णांकer with refcount incremented, use
+ * fwnode_handle_node() on it when करोne.
  */
-struct fwnode_handle *fwnode_get_next_parent(struct fwnode_handle *fwnode)
-{
-	struct fwnode_handle *parent = fwnode_get_parent(fwnode);
+काष्ठा fwnode_handle *fwnode_get_next_parent(काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा fwnode_handle *parent = fwnode_get_parent(fwnode);
 
 	fwnode_handle_put(fwnode);
 
-	return parent;
-}
+	वापस parent;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_get_next_parent);
 
 /**
- * fwnode_get_next_parent_dev - Find device of closest ancestor fwnode
+ * fwnode_get_next_parent_dev - Find device of बंदst ancestor fwnode
  * @fwnode: firmware node
  *
- * Given a firmware node (@fwnode), this function finds its closest ancestor
- * firmware node that has a corresponding struct device and returns that struct
+ * Given a firmware node (@fwnode), this function finds its बंदst ancestor
+ * firmware node that has a corresponding काष्ठा device and वापसs that काष्ठा
  * device.
  *
- * The caller of this function is expected to call put_device() on the returned
- * device when they are done.
+ * The caller of this function is expected to call put_device() on the वापसed
+ * device when they are करोne.
  */
-struct device *fwnode_get_next_parent_dev(struct fwnode_handle *fwnode)
-{
-	struct device *dev = NULL;
+काष्ठा device *fwnode_get_next_parent_dev(काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा device *dev = शून्य;
 
 	fwnode_handle_get(fwnode);
-	do {
+	करो अणु
 		fwnode = fwnode_get_next_parent(fwnode);
-		if (fwnode)
+		अगर (fwnode)
 			dev = get_dev_from_fwnode(fwnode);
-	} while (fwnode && !dev);
+	पूर्ण जबतक (fwnode && !dev);
 	fwnode_handle_put(fwnode);
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
 /**
  * fwnode_count_parents - Return the number of parents a node has
@@ -645,18 +646,18 @@ struct device *fwnode_get_next_parent_dev(struct fwnode_handle *fwnode)
  *
  * Returns the number of parents a node has.
  */
-unsigned int fwnode_count_parents(const struct fwnode_handle *fwnode)
-{
-	struct fwnode_handle *__fwnode;
-	unsigned int count;
+अचिन्हित पूर्णांक fwnode_count_parents(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा fwnode_handle *__fwnode;
+	अचिन्हित पूर्णांक count;
 
 	__fwnode = fwnode_get_parent(fwnode);
 
-	for (count = 0; __fwnode; count++)
+	क्रम (count = 0; __fwnode; count++)
 		__fwnode = fwnode_get_next_parent(__fwnode);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_count_parents);
 
 /**
@@ -665,660 +666,660 @@ EXPORT_SYMBOL_GPL(fwnode_count_parents);
  * @depth: Distance of the parent from the node
  *
  * Returns the nth parent of a node. If there is no parent at the requested
- * @depth, %NULL is returned. If @depth is 0, the functionality is equivalent to
+ * @depth, %शून्य is वापसed. If @depth is 0, the functionality is equivalent to
  * fwnode_handle_get(). For @depth == 1, it is fwnode_get_parent() and so on.
  *
- * The caller is responsible for calling fwnode_handle_put() for the returned
+ * The caller is responsible क्रम calling fwnode_handle_put() क्रम the वापसed
  * node.
  */
-struct fwnode_handle *fwnode_get_nth_parent(struct fwnode_handle *fwnode,
-					    unsigned int depth)
-{
-	unsigned int i;
+काष्ठा fwnode_handle *fwnode_get_nth_parent(काष्ठा fwnode_handle *fwnode,
+					    अचिन्हित पूर्णांक depth)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	fwnode_handle_get(fwnode);
 
-	for (i = 0; i < depth && fwnode; i++)
+	क्रम (i = 0; i < depth && fwnode; i++)
 		fwnode = fwnode_get_next_parent(fwnode);
 
-	return fwnode;
-}
+	वापस fwnode;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_get_nth_parent);
 
 /**
- * fwnode_is_ancestor_of - Test if @test_ancestor is ancestor of @test_child
- * @test_ancestor: Firmware which is tested for being an ancestor
- * @test_child: Firmware which is tested for being the child
+ * fwnode_is_ancestor_of - Test अगर @test_ancestor is ancestor of @test_child
+ * @test_ancestor: Firmware which is tested क्रम being an ancestor
+ * @test_child: Firmware which is tested क्रम being the child
  *
  * A node is considered an ancestor of itself too.
  *
- * Returns true if @test_ancestor is an ancestor of @test_child.
- * Otherwise, returns false.
+ * Returns true अगर @test_ancestor is an ancestor of @test_child.
+ * Otherwise, वापसs false.
  */
-bool fwnode_is_ancestor_of(struct fwnode_handle *test_ancestor,
-				  struct fwnode_handle *test_child)
-{
-	if (!test_ancestor)
-		return false;
+bool fwnode_is_ancestor_of(काष्ठा fwnode_handle *test_ancestor,
+				  काष्ठा fwnode_handle *test_child)
+अणु
+	अगर (!test_ancestor)
+		वापस false;
 
 	fwnode_handle_get(test_child);
-	while (test_child) {
-		if (test_child == test_ancestor) {
+	जबतक (test_child) अणु
+		अगर (test_child == test_ancestor) अणु
 			fwnode_handle_put(test_child);
-			return true;
-		}
+			वापस true;
+		पूर्ण
 		test_child = fwnode_get_next_parent(test_child);
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * fwnode_get_next_child_node - Return the next child node handle for a node
- * @fwnode: Firmware node to find the next child node for.
- * @child: Handle to one of the node's child nodes or a %NULL handle.
+ * fwnode_get_next_child_node - Return the next child node handle क्रम a node
+ * @fwnode: Firmware node to find the next child node क्रम.
+ * @child: Handle to one of the node's child nodes or a %शून्य handle.
  */
-struct fwnode_handle *
-fwnode_get_next_child_node(const struct fwnode_handle *fwnode,
-			   struct fwnode_handle *child)
-{
-	return fwnode_call_ptr_op(fwnode, get_next_child_node, child);
-}
+काष्ठा fwnode_handle *
+fwnode_get_next_child_node(स्थिर काष्ठा fwnode_handle *fwnode,
+			   काष्ठा fwnode_handle *child)
+अणु
+	वापस fwnode_call_ptr_op(fwnode, get_next_child_node, child);
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_get_next_child_node);
 
 /**
  * fwnode_get_next_available_child_node - Return the next
- * available child node handle for a node
- * @fwnode: Firmware node to find the next child node for.
- * @child: Handle to one of the node's child nodes or a %NULL handle.
+ * available child node handle क्रम a node
+ * @fwnode: Firmware node to find the next child node क्रम.
+ * @child: Handle to one of the node's child nodes or a %शून्य handle.
  */
-struct fwnode_handle *
-fwnode_get_next_available_child_node(const struct fwnode_handle *fwnode,
-				     struct fwnode_handle *child)
-{
-	struct fwnode_handle *next_child = child;
+काष्ठा fwnode_handle *
+fwnode_get_next_available_child_node(स्थिर काष्ठा fwnode_handle *fwnode,
+				     काष्ठा fwnode_handle *child)
+अणु
+	काष्ठा fwnode_handle *next_child = child;
 
-	if (!fwnode)
-		return NULL;
+	अगर (!fwnode)
+		वापस शून्य;
 
-	do {
+	करो अणु
 		next_child = fwnode_get_next_child_node(fwnode, next_child);
 
-		if (!next_child || fwnode_device_is_available(next_child))
-			break;
-	} while (next_child);
+		अगर (!next_child || fwnode_device_is_available(next_child))
+			अवरोध;
+	पूर्ण जबतक (next_child);
 
-	return next_child;
-}
+	वापस next_child;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_get_next_available_child_node);
 
 /**
- * device_get_next_child_node - Return the next child node handle for a device
- * @dev: Device to find the next child node for.
+ * device_get_next_child_node - Return the next child node handle क्रम a device
+ * @dev: Device to find the next child node क्रम.
  * @child: Handle to one of the device's child nodes or a null handle.
  */
-struct fwnode_handle *device_get_next_child_node(struct device *dev,
-						 struct fwnode_handle *child)
-{
-	struct acpi_device *adev = ACPI_COMPANION(dev);
-	struct fwnode_handle *fwnode = NULL, *next;
+काष्ठा fwnode_handle *device_get_next_child_node(काष्ठा device *dev,
+						 काष्ठा fwnode_handle *child)
+अणु
+	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
+	काष्ठा fwnode_handle *fwnode = शून्य, *next;
 
-	if (dev->of_node)
+	अगर (dev->of_node)
 		fwnode = &dev->of_node->fwnode;
-	else if (adev)
+	अन्यथा अगर (adev)
 		fwnode = acpi_fwnode_handle(adev);
 
 	/* Try to find a child in primary fwnode */
 	next = fwnode_get_next_child_node(fwnode, child);
-	if (next)
-		return next;
+	अगर (next)
+		वापस next;
 
-	/* When no more children in primary, continue with secondary */
-	if (fwnode && !IS_ERR_OR_NULL(fwnode->secondary))
+	/* When no more children in primary, जारी with secondary */
+	अगर (fwnode && !IS_ERR_OR_शून्य(fwnode->secondary))
 		next = fwnode_get_next_child_node(fwnode->secondary, child);
 
-	return next;
-}
+	वापस next;
+पूर्ण
 EXPORT_SYMBOL_GPL(device_get_next_child_node);
 
 /**
  * fwnode_get_named_child_node - Return first matching named child node handle
- * @fwnode: Firmware node to find the named child node for.
+ * @fwnode: Firmware node to find the named child node क्रम.
  * @childname: String to match child node name against.
  */
-struct fwnode_handle *
-fwnode_get_named_child_node(const struct fwnode_handle *fwnode,
-			    const char *childname)
-{
-	return fwnode_call_ptr_op(fwnode, get_named_child_node, childname);
-}
+काष्ठा fwnode_handle *
+fwnode_get_named_child_node(स्थिर काष्ठा fwnode_handle *fwnode,
+			    स्थिर अक्षर *childname)
+अणु
+	वापस fwnode_call_ptr_op(fwnode, get_named_child_node, childname);
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_get_named_child_node);
 
 /**
  * device_get_named_child_node - Return first matching named child node handle
- * @dev: Device to find the named child node for.
+ * @dev: Device to find the named child node क्रम.
  * @childname: String to match child node name against.
  */
-struct fwnode_handle *device_get_named_child_node(struct device *dev,
-						  const char *childname)
-{
-	return fwnode_get_named_child_node(dev_fwnode(dev), childname);
-}
+काष्ठा fwnode_handle *device_get_named_child_node(काष्ठा device *dev,
+						  स्थिर अक्षर *childname)
+अणु
+	वापस fwnode_get_named_child_node(dev_fwnode(dev), childname);
+पूर्ण
 EXPORT_SYMBOL_GPL(device_get_named_child_node);
 
 /**
  * fwnode_handle_get - Obtain a reference to a device node
- * @fwnode: Pointer to the device node to obtain the reference to.
+ * @fwnode: Poपूर्णांकer to the device node to obtain the reference to.
  *
  * Returns the fwnode handle.
  */
-struct fwnode_handle *fwnode_handle_get(struct fwnode_handle *fwnode)
-{
-	if (!fwnode_has_op(fwnode, get))
-		return fwnode;
+काष्ठा fwnode_handle *fwnode_handle_get(काष्ठा fwnode_handle *fwnode)
+अणु
+	अगर (!fwnode_has_op(fwnode, get))
+		वापस fwnode;
 
-	return fwnode_call_ptr_op(fwnode, get);
-}
+	वापस fwnode_call_ptr_op(fwnode, get);
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_handle_get);
 
 /**
  * fwnode_handle_put - Drop reference to a device node
- * @fwnode: Pointer to the device node to drop the reference to.
+ * @fwnode: Poपूर्णांकer to the device node to drop the reference to.
  *
- * This has to be used when terminating device_for_each_child_node() iteration
- * with break or return to prevent stale device node references from being left
+ * This has to be used when terminating device_क्रम_each_child_node() iteration
+ * with अवरोध or वापस to prevent stale device node references from being left
  * behind.
  */
-void fwnode_handle_put(struct fwnode_handle *fwnode)
-{
-	fwnode_call_void_op(fwnode, put);
-}
+व्योम fwnode_handle_put(काष्ठा fwnode_handle *fwnode)
+अणु
+	fwnode_call_व्योम_op(fwnode, put);
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_handle_put);
 
 /**
- * fwnode_device_is_available - check if a device is available for use
- * @fwnode: Pointer to the fwnode of the device.
+ * fwnode_device_is_available - check अगर a device is available क्रम use
+ * @fwnode: Poपूर्णांकer to the fwnode of the device.
  *
- * For fwnode node types that don't implement the .device_is_available()
- * operation, this function returns true.
+ * For fwnode node types that करोn't implement the .device_is_available()
+ * operation, this function वापसs true.
  */
-bool fwnode_device_is_available(const struct fwnode_handle *fwnode)
-{
-	if (!fwnode_has_op(fwnode, device_is_available))
-		return true;
+bool fwnode_device_is_available(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	अगर (!fwnode_has_op(fwnode, device_is_available))
+		वापस true;
 
-	return fwnode_call_bool_op(fwnode, device_is_available);
-}
+	वापस fwnode_call_bool_op(fwnode, device_is_available);
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_device_is_available);
 
 /**
- * device_get_child_node_count - return the number of child nodes for device
- * @dev: Device to cound the child nodes for
+ * device_get_child_node_count - वापस the number of child nodes क्रम device
+ * @dev: Device to cound the child nodes क्रम
  */
-unsigned int device_get_child_node_count(struct device *dev)
-{
-	struct fwnode_handle *child;
-	unsigned int count = 0;
+अचिन्हित पूर्णांक device_get_child_node_count(काष्ठा device *dev)
+अणु
+	काष्ठा fwnode_handle *child;
+	अचिन्हित पूर्णांक count = 0;
 
-	device_for_each_child_node(dev, child)
+	device_क्रम_each_child_node(dev, child)
 		count++;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(device_get_child_node_count);
 
-bool device_dma_supported(struct device *dev)
-{
+bool device_dma_supported(काष्ठा device *dev)
+अणु
 	/* For DT, this is always supported.
 	 * For ACPI, this depends on CCA, which
 	 * is determined by the acpi_dma_supported().
 	 */
-	if (IS_ENABLED(CONFIG_OF) && dev->of_node)
-		return true;
+	अगर (IS_ENABLED(CONFIG_OF) && dev->of_node)
+		वापस true;
 
-	return acpi_dma_supported(ACPI_COMPANION(dev));
-}
+	वापस acpi_dma_supported(ACPI_COMPANION(dev));
+पूर्ण
 EXPORT_SYMBOL_GPL(device_dma_supported);
 
-enum dev_dma_attr device_get_dma_attr(struct device *dev)
-{
-	enum dev_dma_attr attr = DEV_DMA_NOT_SUPPORTED;
+क्रमागत dev_dma_attr device_get_dma_attr(काष्ठा device *dev)
+अणु
+	क्रमागत dev_dma_attr attr = DEV_DMA_NOT_SUPPORTED;
 
-	if (IS_ENABLED(CONFIG_OF) && dev->of_node) {
-		if (of_dma_is_coherent(dev->of_node))
+	अगर (IS_ENABLED(CONFIG_OF) && dev->of_node) अणु
+		अगर (of_dma_is_coherent(dev->of_node))
 			attr = DEV_DMA_COHERENT;
-		else
+		अन्यथा
 			attr = DEV_DMA_NON_COHERENT;
-	} else
+	पूर्ण अन्यथा
 		attr = acpi_get_dma_attr(ACPI_COMPANION(dev));
 
-	return attr;
-}
+	वापस attr;
+पूर्ण
 EXPORT_SYMBOL_GPL(device_get_dma_attr);
 
 /**
- * fwnode_get_phy_mode - Get phy mode for given firmware node
- * @fwnode:	Pointer to the given node
+ * fwnode_get_phy_mode - Get phy mode क्रम given firmware node
+ * @fwnode:	Poपूर्णांकer to the given node
  *
- * The function gets phy interface string from property 'phy-mode' or
- * 'phy-connection-type', and return its index in phy_modes table, or errno in
- * error case.
+ * The function माला_लो phy पूर्णांकerface string from property 'phy-mode' or
+ * 'phy-connection-type', and वापस its index in phy_modes table, or त्रुटि_सं in
+ * error हाल.
  */
-int fwnode_get_phy_mode(struct fwnode_handle *fwnode)
-{
-	const char *pm;
-	int err, i;
+पूर्णांक fwnode_get_phy_mode(काष्ठा fwnode_handle *fwnode)
+अणु
+	स्थिर अक्षर *pm;
+	पूर्णांक err, i;
 
-	err = fwnode_property_read_string(fwnode, "phy-mode", &pm);
-	if (err < 0)
-		err = fwnode_property_read_string(fwnode,
+	err = fwnode_property_पढ़ो_string(fwnode, "phy-mode", &pm);
+	अगर (err < 0)
+		err = fwnode_property_पढ़ो_string(fwnode,
 						  "phy-connection-type", &pm);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	for (i = 0; i < PHY_INTERFACE_MODE_MAX; i++)
-		if (!strcasecmp(pm, phy_modes(i)))
-			return i;
+	क्रम (i = 0; i < PHY_INTERFACE_MODE_MAX; i++)
+		अगर (!strहालcmp(pm, phy_modes(i)))
+			वापस i;
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_get_phy_mode);
 
 /**
- * device_get_phy_mode - Get phy mode for given device
- * @dev:	Pointer to the given device
+ * device_get_phy_mode - Get phy mode क्रम given device
+ * @dev:	Poपूर्णांकer to the given device
  *
- * The function gets phy interface string from property 'phy-mode' or
- * 'phy-connection-type', and return its index in phy_modes table, or errno in
- * error case.
+ * The function माला_लो phy पूर्णांकerface string from property 'phy-mode' or
+ * 'phy-connection-type', and वापस its index in phy_modes table, or त्रुटि_सं in
+ * error हाल.
  */
-int device_get_phy_mode(struct device *dev)
-{
-	return fwnode_get_phy_mode(dev_fwnode(dev));
-}
+पूर्णांक device_get_phy_mode(काष्ठा device *dev)
+अणु
+	वापस fwnode_get_phy_mode(dev_fwnode(dev));
+पूर्ण
 EXPORT_SYMBOL_GPL(device_get_phy_mode);
 
-static void *fwnode_get_mac_addr(struct fwnode_handle *fwnode,
-				 const char *name, char *addr,
-				 int alen)
-{
-	int ret = fwnode_property_read_u8_array(fwnode, name, addr, alen);
+अटल व्योम *fwnode_get_mac_addr(काष्ठा fwnode_handle *fwnode,
+				 स्थिर अक्षर *name, अक्षर *addr,
+				 पूर्णांक alen)
+अणु
+	पूर्णांक ret = fwnode_property_पढ़ो_u8_array(fwnode, name, addr, alen);
 
-	if (ret == 0 && alen == ETH_ALEN && is_valid_ether_addr(addr))
-		return addr;
-	return NULL;
-}
+	अगर (ret == 0 && alen == ETH_ALEN && is_valid_ether_addr(addr))
+		वापस addr;
+	वापस शून्य;
+पूर्ण
 
 /**
  * fwnode_get_mac_address - Get the MAC from the firmware node
- * @fwnode:	Pointer to the firmware node
+ * @fwnode:	Poपूर्णांकer to the firmware node
  * @addr:	Address of buffer to store the MAC in
- * @alen:	Length of the buffer pointed to by addr, should be ETH_ALEN
+ * @alen:	Length of the buffer poपूर्णांकed to by addr, should be ETH_ALEN
  *
- * Search the firmware node for the best MAC address to use.  'mac-address' is
+ * Search the firmware node क्रम the best MAC address to use.  'mac-address' is
  * checked first, because that is supposed to contain to "most recent" MAC
  * address. If that isn't set, then 'local-mac-address' is checked next,
- * because that is the default address.  If that isn't set, then the obsolete
+ * because that is the शेष address.  If that isn't set, then the obsolete
  * 'address' is checked, just in case we're using an old device tree.
  *
- * Note that the 'address' property is supposed to contain a virtual address of
- * the register set, but some DTS files have redefined that property to be the
+ * Note that the 'address' property is supposed to contain a भव address of
+ * the रेजिस्टर set, but some DTS files have redefined that property to be the
  * MAC address.
  *
  * All-zero MAC addresses are rejected, because those could be properties that
  * exist in the firmware tables, but were not updated by the firmware.  For
  * example, the DTS could define 'mac-address' and 'local-mac-address', with
  * zero MAC addresses.  Some older U-Boots only initialized 'local-mac-address'.
- * In this case, the real MAC is in 'local-mac-address', and 'mac-address'
+ * In this हाल, the real MAC is in 'local-mac-address', and 'mac-address'
  * exists but is all zeros.
 */
-void *fwnode_get_mac_address(struct fwnode_handle *fwnode, char *addr, int alen)
-{
-	char *res;
+व्योम *fwnode_get_mac_address(काष्ठा fwnode_handle *fwnode, अक्षर *addr, पूर्णांक alen)
+अणु
+	अक्षर *res;
 
 	res = fwnode_get_mac_addr(fwnode, "mac-address", addr, alen);
-	if (res)
-		return res;
+	अगर (res)
+		वापस res;
 
 	res = fwnode_get_mac_addr(fwnode, "local-mac-address", addr, alen);
-	if (res)
-		return res;
+	अगर (res)
+		वापस res;
 
-	return fwnode_get_mac_addr(fwnode, "address", addr, alen);
-}
+	वापस fwnode_get_mac_addr(fwnode, "address", addr, alen);
+पूर्ण
 EXPORT_SYMBOL(fwnode_get_mac_address);
 
 /**
- * device_get_mac_address - Get the MAC for a given device
- * @dev:	Pointer to the device
+ * device_get_mac_address - Get the MAC क्रम a given device
+ * @dev:	Poपूर्णांकer to the device
  * @addr:	Address of buffer to store the MAC in
- * @alen:	Length of the buffer pointed to by addr, should be ETH_ALEN
+ * @alen:	Length of the buffer poपूर्णांकed to by addr, should be ETH_ALEN
  */
-void *device_get_mac_address(struct device *dev, char *addr, int alen)
-{
-	return fwnode_get_mac_address(dev_fwnode(dev), addr, alen);
-}
+व्योम *device_get_mac_address(काष्ठा device *dev, अक्षर *addr, पूर्णांक alen)
+अणु
+	वापस fwnode_get_mac_address(dev_fwnode(dev), addr, alen);
+पूर्ण
 EXPORT_SYMBOL(device_get_mac_address);
 
 /**
  * fwnode_irq_get - Get IRQ directly from a fwnode
- * @fwnode:	Pointer to the firmware node
+ * @fwnode:	Poपूर्णांकer to the firmware node
  * @index:	Zero-based index of the IRQ
  *
  * Returns Linux IRQ number on success. Other values are determined
  * accordingly to acpi_/of_ irq_get() operation.
  */
-int fwnode_irq_get(struct fwnode_handle *fwnode, unsigned int index)
-{
-	struct device_node *of_node = to_of_node(fwnode);
-	struct resource res;
-	int ret;
+पूर्णांक fwnode_irq_get(काष्ठा fwnode_handle *fwnode, अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा device_node *of_node = to_of_node(fwnode);
+	काष्ठा resource res;
+	पूर्णांक ret;
 
-	if (IS_ENABLED(CONFIG_OF) && of_node)
-		return of_irq_get(of_node, index);
+	अगर (IS_ENABLED(CONFIG_OF) && of_node)
+		वापस of_irq_get(of_node, index);
 
 	ret = acpi_irq_get(ACPI_HANDLE_FWNODE(fwnode), index, &res);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return res.start;
-}
+	वापस res.start;
+पूर्ण
 EXPORT_SYMBOL(fwnode_irq_get);
 
 /**
- * fwnode_graph_get_next_endpoint - Get next endpoint firmware node
- * @fwnode: Pointer to the parent firmware node
- * @prev: Previous endpoint node or %NULL to get the first
+ * fwnode_graph_get_next_endpoपूर्णांक - Get next endpoपूर्णांक firmware node
+ * @fwnode: Poपूर्णांकer to the parent firmware node
+ * @prev: Previous endpoपूर्णांक node or %शून्य to get the first
  *
- * Returns an endpoint firmware node pointer or %NULL if no more endpoints
+ * Returns an endpoपूर्णांक firmware node poपूर्णांकer or %शून्य अगर no more endpoपूर्णांकs
  * are available.
  */
-struct fwnode_handle *
-fwnode_graph_get_next_endpoint(const struct fwnode_handle *fwnode,
-			       struct fwnode_handle *prev)
-{
-	return fwnode_call_ptr_op(fwnode, graph_get_next_endpoint, prev);
-}
-EXPORT_SYMBOL_GPL(fwnode_graph_get_next_endpoint);
+काष्ठा fwnode_handle *
+fwnode_graph_get_next_endpoपूर्णांक(स्थिर काष्ठा fwnode_handle *fwnode,
+			       काष्ठा fwnode_handle *prev)
+अणु
+	वापस fwnode_call_ptr_op(fwnode, graph_get_next_endpoपूर्णांक, prev);
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_graph_get_next_endpoपूर्णांक);
 
 /**
- * fwnode_graph_get_port_parent - Return the device fwnode of a port endpoint
- * @endpoint: Endpoint firmware node of the port
+ * fwnode_graph_get_port_parent - Return the device fwnode of a port endpoपूर्णांक
+ * @endpoपूर्णांक: Endpoपूर्णांक firmware node of the port
  *
- * Return: the firmware node of the device the @endpoint belongs to.
+ * Return: the firmware node of the device the @endpoपूर्णांक beदीर्घs to.
  */
-struct fwnode_handle *
-fwnode_graph_get_port_parent(const struct fwnode_handle *endpoint)
-{
-	struct fwnode_handle *port, *parent;
+काष्ठा fwnode_handle *
+fwnode_graph_get_port_parent(स्थिर काष्ठा fwnode_handle *endpoपूर्णांक)
+अणु
+	काष्ठा fwnode_handle *port, *parent;
 
-	port = fwnode_get_parent(endpoint);
+	port = fwnode_get_parent(endpoपूर्णांक);
 	parent = fwnode_call_ptr_op(port, graph_get_port_parent);
 
 	fwnode_handle_put(port);
 
-	return parent;
-}
+	वापस parent;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_graph_get_port_parent);
 
 /**
  * fwnode_graph_get_remote_port_parent - Return fwnode of a remote device
- * @fwnode: Endpoint firmware node pointing to the remote endpoint
+ * @fwnode: Endpoपूर्णांक firmware node poपूर्णांकing to the remote endpoपूर्णांक
  *
- * Extracts firmware node of a remote device the @fwnode points to.
+ * Extracts firmware node of a remote device the @fwnode poपूर्णांकs to.
  */
-struct fwnode_handle *
-fwnode_graph_get_remote_port_parent(const struct fwnode_handle *fwnode)
-{
-	struct fwnode_handle *endpoint, *parent;
+काष्ठा fwnode_handle *
+fwnode_graph_get_remote_port_parent(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा fwnode_handle *endpoपूर्णांक, *parent;
 
-	endpoint = fwnode_graph_get_remote_endpoint(fwnode);
-	parent = fwnode_graph_get_port_parent(endpoint);
+	endpoपूर्णांक = fwnode_graph_get_remote_endpoपूर्णांक(fwnode);
+	parent = fwnode_graph_get_port_parent(endpoपूर्णांक);
 
-	fwnode_handle_put(endpoint);
+	fwnode_handle_put(endpoपूर्णांक);
 
-	return parent;
-}
+	वापस parent;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_graph_get_remote_port_parent);
 
 /**
  * fwnode_graph_get_remote_port - Return fwnode of a remote port
- * @fwnode: Endpoint firmware node pointing to the remote endpoint
+ * @fwnode: Endpoपूर्णांक firmware node poपूर्णांकing to the remote endpoपूर्णांक
  *
- * Extracts firmware node of a remote port the @fwnode points to.
+ * Extracts firmware node of a remote port the @fwnode poपूर्णांकs to.
  */
-struct fwnode_handle *
-fwnode_graph_get_remote_port(const struct fwnode_handle *fwnode)
-{
-	return fwnode_get_next_parent(fwnode_graph_get_remote_endpoint(fwnode));
-}
+काष्ठा fwnode_handle *
+fwnode_graph_get_remote_port(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस fwnode_get_next_parent(fwnode_graph_get_remote_endpoपूर्णांक(fwnode));
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_graph_get_remote_port);
 
 /**
- * fwnode_graph_get_remote_endpoint - Return fwnode of a remote endpoint
- * @fwnode: Endpoint firmware node pointing to the remote endpoint
+ * fwnode_graph_get_remote_endpoपूर्णांक - Return fwnode of a remote endpoपूर्णांक
+ * @fwnode: Endpoपूर्णांक firmware node poपूर्णांकing to the remote endpoपूर्णांक
  *
- * Extracts firmware node of a remote endpoint the @fwnode points to.
+ * Extracts firmware node of a remote endpoपूर्णांक the @fwnode poपूर्णांकs to.
  */
-struct fwnode_handle *
-fwnode_graph_get_remote_endpoint(const struct fwnode_handle *fwnode)
-{
-	return fwnode_call_ptr_op(fwnode, graph_get_remote_endpoint);
-}
-EXPORT_SYMBOL_GPL(fwnode_graph_get_remote_endpoint);
+काष्ठा fwnode_handle *
+fwnode_graph_get_remote_endpoपूर्णांक(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस fwnode_call_ptr_op(fwnode, graph_get_remote_endpoपूर्णांक);
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_graph_get_remote_endpoपूर्णांक);
 
 /**
- * fwnode_graph_get_remote_node - get remote parent node for given port/endpoint
- * @fwnode: pointer to parent fwnode_handle containing graph port/endpoint
- * @port_id: identifier of the parent port node
- * @endpoint_id: identifier of the endpoint node
+ * fwnode_graph_get_remote_node - get remote parent node क्रम given port/endpoपूर्णांक
+ * @fwnode: poपूर्णांकer to parent fwnode_handle containing graph port/endpoपूर्णांक
+ * @port_id: identअगरier of the parent port node
+ * @endpoपूर्णांक_id: identअगरier of the endpoपूर्णांक node
  *
- * Return: Remote fwnode handle associated with remote endpoint node linked
- *	   to @node. Use fwnode_node_put() on it when done.
+ * Return: Remote fwnode handle associated with remote endpoपूर्णांक node linked
+ *	   to @node. Use fwnode_node_put() on it when करोne.
  */
-struct fwnode_handle *
-fwnode_graph_get_remote_node(const struct fwnode_handle *fwnode, u32 port_id,
-			     u32 endpoint_id)
-{
-	struct fwnode_handle *endpoint = NULL;
+काष्ठा fwnode_handle *
+fwnode_graph_get_remote_node(स्थिर काष्ठा fwnode_handle *fwnode, u32 port_id,
+			     u32 endpoपूर्णांक_id)
+अणु
+	काष्ठा fwnode_handle *endpoपूर्णांक = शून्य;
 
-	while ((endpoint = fwnode_graph_get_next_endpoint(fwnode, endpoint))) {
-		struct fwnode_endpoint fwnode_ep;
-		struct fwnode_handle *remote;
-		int ret;
+	जबतक ((endpoपूर्णांक = fwnode_graph_get_next_endpoपूर्णांक(fwnode, endpoपूर्णांक))) अणु
+		काष्ठा fwnode_endpoपूर्णांक fwnode_ep;
+		काष्ठा fwnode_handle *remote;
+		पूर्णांक ret;
 
-		ret = fwnode_graph_parse_endpoint(endpoint, &fwnode_ep);
-		if (ret < 0)
-			continue;
+		ret = fwnode_graph_parse_endpoपूर्णांक(endpoपूर्णांक, &fwnode_ep);
+		अगर (ret < 0)
+			जारी;
 
-		if (fwnode_ep.port != port_id || fwnode_ep.id != endpoint_id)
-			continue;
+		अगर (fwnode_ep.port != port_id || fwnode_ep.id != endpoपूर्णांक_id)
+			जारी;
 
-		remote = fwnode_graph_get_remote_port_parent(endpoint);
-		if (!remote)
-			return NULL;
+		remote = fwnode_graph_get_remote_port_parent(endpoपूर्णांक);
+		अगर (!remote)
+			वापस शून्य;
 
-		return fwnode_device_is_available(remote) ? remote : NULL;
-	}
+		वापस fwnode_device_is_available(remote) ? remote : शून्य;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_graph_get_remote_node);
 
 /**
- * fwnode_graph_get_endpoint_by_id - get endpoint by port and endpoint numbers
+ * fwnode_graph_get_endpoपूर्णांक_by_id - get endpoपूर्णांक by port and endpoपूर्णांक numbers
  * @fwnode: parent fwnode_handle containing the graph
- * @port: identifier of the port node
- * @endpoint: identifier of the endpoint node under the port node
+ * @port: identअगरier of the port node
+ * @endpoपूर्णांक: identअगरier of the endpoपूर्णांक node under the port node
  * @flags: fwnode lookup flags
  *
- * Return the fwnode handle of the local endpoint corresponding the port and
- * endpoint IDs or NULL if not found.
+ * Return the fwnode handle of the local endpoपूर्णांक corresponding the port and
+ * endpoपूर्णांक IDs or शून्य अगर not found.
  *
- * If FWNODE_GRAPH_ENDPOINT_NEXT is passed in @flags and the specified endpoint
- * has not been found, look for the closest endpoint ID greater than the
- * specified one and return the endpoint that corresponds to it, if present.
+ * If FWNODE_GRAPH_ENDPOINT_NEXT is passed in @flags and the specअगरied endpoपूर्णांक
+ * has not been found, look क्रम the बंदst endpoपूर्णांक ID greater than the
+ * specअगरied one and वापस the endpoपूर्णांक that corresponds to it, अगर present.
  *
- * Do not return endpoints that belong to disabled devices, unless
+ * Do not वापस endpoपूर्णांकs that beदीर्घ to disabled devices, unless
  * FWNODE_GRAPH_DEVICE_DISABLED is passed in @flags.
  *
- * The returned endpoint needs to be released by calling fwnode_handle_put() on
+ * The वापसed endpoपूर्णांक needs to be released by calling fwnode_handle_put() on
  * it when it is not needed any more.
  */
-struct fwnode_handle *
-fwnode_graph_get_endpoint_by_id(const struct fwnode_handle *fwnode,
-				u32 port, u32 endpoint, unsigned long flags)
-{
-	struct fwnode_handle *ep = NULL, *best_ep = NULL;
-	unsigned int best_ep_id = 0;
-	bool endpoint_next = flags & FWNODE_GRAPH_ENDPOINT_NEXT;
+काष्ठा fwnode_handle *
+fwnode_graph_get_endpoपूर्णांक_by_id(स्थिर काष्ठा fwnode_handle *fwnode,
+				u32 port, u32 endpoपूर्णांक, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा fwnode_handle *ep = शून्य, *best_ep = शून्य;
+	अचिन्हित पूर्णांक best_ep_id = 0;
+	bool endpoपूर्णांक_next = flags & FWNODE_GRAPH_ENDPOINT_NEXT;
 	bool enabled_only = !(flags & FWNODE_GRAPH_DEVICE_DISABLED);
 
-	while ((ep = fwnode_graph_get_next_endpoint(fwnode, ep))) {
-		struct fwnode_endpoint fwnode_ep = { 0 };
-		int ret;
+	जबतक ((ep = fwnode_graph_get_next_endpoपूर्णांक(fwnode, ep))) अणु
+		काष्ठा fwnode_endpoपूर्णांक fwnode_ep = अणु 0 पूर्ण;
+		पूर्णांक ret;
 
-		if (enabled_only) {
-			struct fwnode_handle *dev_node;
+		अगर (enabled_only) अणु
+			काष्ठा fwnode_handle *dev_node;
 			bool available;
 
 			dev_node = fwnode_graph_get_remote_port_parent(ep);
 			available = fwnode_device_is_available(dev_node);
 			fwnode_handle_put(dev_node);
-			if (!available)
-				continue;
-		}
+			अगर (!available)
+				जारी;
+		पूर्ण
 
-		ret = fwnode_graph_parse_endpoint(ep, &fwnode_ep);
-		if (ret < 0)
-			continue;
+		ret = fwnode_graph_parse_endpoपूर्णांक(ep, &fwnode_ep);
+		अगर (ret < 0)
+			जारी;
 
-		if (fwnode_ep.port != port)
-			continue;
+		अगर (fwnode_ep.port != port)
+			जारी;
 
-		if (fwnode_ep.id == endpoint)
-			return ep;
+		अगर (fwnode_ep.id == endpoपूर्णांक)
+			वापस ep;
 
-		if (!endpoint_next)
-			continue;
+		अगर (!endpoपूर्णांक_next)
+			जारी;
 
 		/*
-		 * If the endpoint that has just been found is not the first
-		 * matching one and the ID of the one found previously is closer
-		 * to the requested endpoint ID, skip it.
+		 * If the endpoपूर्णांक that has just been found is not the first
+		 * matching one and the ID of the one found previously is बंदr
+		 * to the requested endpoपूर्णांक ID, skip it.
 		 */
-		if (fwnode_ep.id < endpoint ||
+		अगर (fwnode_ep.id < endpoपूर्णांक ||
 		    (best_ep && best_ep_id < fwnode_ep.id))
-			continue;
+			जारी;
 
 		fwnode_handle_put(best_ep);
 		best_ep = fwnode_handle_get(ep);
 		best_ep_id = fwnode_ep.id;
-	}
+	पूर्ण
 
-	if (best_ep)
-		return best_ep;
+	अगर (best_ep)
+		वापस best_ep;
 
-	if (fwnode && !IS_ERR_OR_NULL(fwnode->secondary))
-		return fwnode_graph_get_endpoint_by_id(fwnode->secondary, port,
-						       endpoint, flags);
+	अगर (fwnode && !IS_ERR_OR_शून्य(fwnode->secondary))
+		वापस fwnode_graph_get_endpoपूर्णांक_by_id(fwnode->secondary, port,
+						       endpoपूर्णांक, flags);
 
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(fwnode_graph_get_endpoint_by_id);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_graph_get_endpoपूर्णांक_by_id);
 
 /**
- * fwnode_graph_parse_endpoint - parse common endpoint node properties
- * @fwnode: pointer to endpoint fwnode_handle
- * @endpoint: pointer to the fwnode endpoint data structure
+ * fwnode_graph_parse_endpoपूर्णांक - parse common endpoपूर्णांक node properties
+ * @fwnode: poपूर्णांकer to endpoपूर्णांक fwnode_handle
+ * @endpoपूर्णांक: poपूर्णांकer to the fwnode endpoपूर्णांक data काष्ठाure
  *
- * Parse @fwnode representing a graph endpoint node and store the
- * information in @endpoint. The caller must hold a reference to
+ * Parse @fwnode representing a graph endpoपूर्णांक node and store the
+ * inक्रमmation in @endpoपूर्णांक. The caller must hold a reference to
  * @fwnode.
  */
-int fwnode_graph_parse_endpoint(const struct fwnode_handle *fwnode,
-				struct fwnode_endpoint *endpoint)
-{
-	memset(endpoint, 0, sizeof(*endpoint));
+पूर्णांक fwnode_graph_parse_endpoपूर्णांक(स्थिर काष्ठा fwnode_handle *fwnode,
+				काष्ठा fwnode_endpoपूर्णांक *endpoपूर्णांक)
+अणु
+	स_रखो(endpoपूर्णांक, 0, माप(*endpoपूर्णांक));
 
-	return fwnode_call_int_op(fwnode, graph_parse_endpoint, endpoint);
-}
-EXPORT_SYMBOL(fwnode_graph_parse_endpoint);
+	वापस fwnode_call_पूर्णांक_op(fwnode, graph_parse_endpoपूर्णांक, endpoपूर्णांक);
+पूर्ण
+EXPORT_SYMBOL(fwnode_graph_parse_endpoपूर्णांक);
 
-const void *device_get_match_data(struct device *dev)
-{
-	return fwnode_call_ptr_op(dev_fwnode(dev), device_get_match_data, dev);
-}
+स्थिर व्योम *device_get_match_data(काष्ठा device *dev)
+अणु
+	वापस fwnode_call_ptr_op(dev_fwnode(dev), device_get_match_data, dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(device_get_match_data);
 
-static void *
-fwnode_graph_devcon_match(struct fwnode_handle *fwnode, const char *con_id,
-			  void *data, devcon_match_fn_t match)
-{
-	struct fwnode_handle *node;
-	struct fwnode_handle *ep;
-	void *ret;
+अटल व्योम *
+fwnode_graph_devcon_match(काष्ठा fwnode_handle *fwnode, स्थिर अक्षर *con_id,
+			  व्योम *data, devcon_match_fn_t match)
+अणु
+	काष्ठा fwnode_handle *node;
+	काष्ठा fwnode_handle *ep;
+	व्योम *ret;
 
-	fwnode_graph_for_each_endpoint(fwnode, ep) {
+	fwnode_graph_क्रम_each_endpoपूर्णांक(fwnode, ep) अणु
 		node = fwnode_graph_get_remote_port_parent(ep);
-		if (!fwnode_device_is_available(node))
-			continue;
+		अगर (!fwnode_device_is_available(node))
+			जारी;
 
 		ret = match(node, con_id, data);
 		fwnode_handle_put(node);
-		if (ret) {
+		अगर (ret) अणु
 			fwnode_handle_put(ep);
-			return ret;
-		}
-	}
-	return NULL;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void *
-fwnode_devcon_match(struct fwnode_handle *fwnode, const char *con_id,
-		    void *data, devcon_match_fn_t match)
-{
-	struct fwnode_handle *node;
-	void *ret;
-	int i;
+अटल व्योम *
+fwnode_devcon_match(काष्ठा fwnode_handle *fwnode, स्थिर अक्षर *con_id,
+		    व्योम *data, devcon_match_fn_t match)
+अणु
+	काष्ठा fwnode_handle *node;
+	व्योम *ret;
+	पूर्णांक i;
 
-	for (i = 0; ; i++) {
+	क्रम (i = 0; ; i++) अणु
 		node = fwnode_find_reference(fwnode, con_id, i);
-		if (IS_ERR(node))
-			break;
+		अगर (IS_ERR(node))
+			अवरोध;
 
-		ret = match(node, NULL, data);
+		ret = match(node, शून्य, data);
 		fwnode_handle_put(node);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * fwnode_connection_find_match - Find connection from a device node
  * @fwnode: Device node with the connection
- * @con_id: Identifier for the connection
- * @data: Data for the match function
+ * @con_id: Identअगरier क्रम the connection
+ * @data: Data क्रम the match function
  * @match: Function to check and convert the connection description
  *
- * Find a connection with unique identifier @con_id between @fwnode and another
+ * Find a connection with unique identअगरier @con_id between @fwnode and another
  * device node. @match will be used to convert the connection description to
- * data the caller is expecting to be returned.
+ * data the caller is expecting to be वापसed.
  */
-void *fwnode_connection_find_match(struct fwnode_handle *fwnode,
-				   const char *con_id, void *data,
+व्योम *fwnode_connection_find_match(काष्ठा fwnode_handle *fwnode,
+				   स्थिर अक्षर *con_id, व्योम *data,
 				   devcon_match_fn_t match)
-{
-	void *ret;
+अणु
+	व्योम *ret;
 
-	if (!fwnode || !match)
-		return NULL;
+	अगर (!fwnode || !match)
+		वापस शून्य;
 
 	ret = fwnode_graph_devcon_match(fwnode, con_id, data, match);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return fwnode_devcon_match(fwnode, con_id, data, match);
-}
+	वापस fwnode_devcon_match(fwnode, con_id, data, match);
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_connection_find_match);

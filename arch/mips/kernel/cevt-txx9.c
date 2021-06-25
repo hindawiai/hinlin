@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Based on linux/arch/mips/kernel/cevt-r4k.c,
  *	    linux/arch/mips/jmr3927/rbhma3100/setup.c
@@ -11,210 +12,210 @@
  * Copyright (C) 2007 MIPS Technologies, Inc.
  * Copyright (C) 2007 Ralf Baechle <ralf@linux-mips.org>
  */
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/sched_clock.h>
-#include <asm/time.h>
-#include <asm/txx9tmr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/txx9पंचांगr.h>
 
-#define TCR_BASE (TXx9_TMTCR_CCDE | TXx9_TMTCR_CRE | TXx9_TMTCR_TMODE_ITVL)
-#define TIMER_CCD	0	/* 1/2 */
-#define TIMER_CLK(imclk)	((imclk) / (2 << TIMER_CCD))
+#घोषणा TCR_BASE (TXx9_TMTCR_CCDE | TXx9_TMTCR_CRE | TXx9_TMTCR_TMODE_ITVL)
+#घोषणा TIMER_CCD	0	/* 1/2 */
+#घोषणा TIMER_CLK(imclk)	((imclk) / (2 << TIMER_CCD))
 
-struct txx9_clocksource {
-	struct clocksource cs;
-	struct txx9_tmr_reg __iomem *tmrptr;
-};
+काष्ठा txx9_घड़ीsource अणु
+	काष्ठा घड़ीsource cs;
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr;
+पूर्ण;
 
-static u64 txx9_cs_read(struct clocksource *cs)
-{
-	struct txx9_clocksource *txx9_cs =
-		container_of(cs, struct txx9_clocksource, cs);
-	return __raw_readl(&txx9_cs->tmrptr->trr);
-}
+अटल u64 txx9_cs_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	काष्ठा txx9_घड़ीsource *txx9_cs =
+		container_of(cs, काष्ठा txx9_घड़ीsource, cs);
+	वापस __raw_पढ़ोl(&txx9_cs->पंचांगrptr->trr);
+पूर्ण
 
 /* Use 1 bit smaller width to use full bits in that width */
-#define TXX9_CLOCKSOURCE_BITS (TXX9_TIMER_BITS - 1)
+#घोषणा TXX9_CLOCKSOURCE_BITS (TXX9_TIMER_BITS - 1)
 
-static struct txx9_clocksource txx9_clocksource = {
-	.cs = {
+अटल काष्ठा txx9_घड़ीsource txx9_घड़ीsource = अणु
+	.cs = अणु
 		.name		= "TXx9",
 		.rating		= 200,
-		.read		= txx9_cs_read,
+		.पढ़ो		= txx9_cs_पढ़ो,
 		.mask		= CLOCKSOURCE_MASK(TXX9_CLOCKSOURCE_BITS),
 		.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static u64 notrace txx9_read_sched_clock(void)
-{
-	return __raw_readl(&txx9_clocksource.tmrptr->trr);
-}
+अटल u64 notrace txx9_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	वापस __raw_पढ़ोl(&txx9_घड़ीsource.पंचांगrptr->trr);
+पूर्ण
 
-void __init txx9_clocksource_init(unsigned long baseaddr,
-				  unsigned int imbusclk)
-{
-	struct txx9_tmr_reg __iomem *tmrptr;
+व्योम __init txx9_घड़ीsource_init(अचिन्हित दीर्घ baseaddr,
+				  अचिन्हित पूर्णांक imbusclk)
+अणु
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr;
 
-	clocksource_register_hz(&txx9_clocksource.cs, TIMER_CLK(imbusclk));
+	घड़ीsource_रेजिस्टर_hz(&txx9_घड़ीsource.cs, TIMER_CLK(imbusclk));
 
-	tmrptr = ioremap(baseaddr, sizeof(struct txx9_tmr_reg));
-	__raw_writel(TCR_BASE, &tmrptr->tcr);
-	__raw_writel(0, &tmrptr->tisr);
-	__raw_writel(TIMER_CCD, &tmrptr->ccdr);
-	__raw_writel(TXx9_TMITMR_TZCE, &tmrptr->itmr);
-	__raw_writel(1 << TXX9_CLOCKSOURCE_BITS, &tmrptr->cpra);
-	__raw_writel(TCR_BASE | TXx9_TMTCR_TCE, &tmrptr->tcr);
-	txx9_clocksource.tmrptr = tmrptr;
+	पंचांगrptr = ioremap(baseaddr, माप(काष्ठा txx9_पंचांगr_reg));
+	__raw_ग_लिखोl(TCR_BASE, &पंचांगrptr->tcr);
+	__raw_ग_लिखोl(0, &पंचांगrptr->tisr);
+	__raw_ग_लिखोl(TIMER_CCD, &पंचांगrptr->ccdr);
+	__raw_ग_लिखोl(TXx9_TMITMR_TZCE, &पंचांगrptr->iपंचांगr);
+	__raw_ग_लिखोl(1 << TXX9_CLOCKSOURCE_BITS, &पंचांगrptr->cpra);
+	__raw_ग_लिखोl(TCR_BASE | TXx9_TMTCR_TCE, &पंचांगrptr->tcr);
+	txx9_घड़ीsource.पंचांगrptr = पंचांगrptr;
 
-	sched_clock_register(txx9_read_sched_clock, TXX9_CLOCKSOURCE_BITS,
+	sched_घड़ी_रेजिस्टर(txx9_पढ़ो_sched_घड़ी, TXX9_CLOCKSOURCE_BITS,
 			     TIMER_CLK(imbusclk));
-}
+पूर्ण
 
-struct txx9_clock_event_device {
-	struct clock_event_device cd;
-	struct txx9_tmr_reg __iomem *tmrptr;
-};
+काष्ठा txx9_घड़ी_event_device अणु
+	काष्ठा घड़ी_event_device cd;
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr;
+पूर्ण;
 
-static void txx9tmr_stop_and_clear(struct txx9_tmr_reg __iomem *tmrptr)
-{
+अटल व्योम txx9पंचांगr_stop_and_clear(काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr)
+अणु
 	/* stop and reset counter */
-	__raw_writel(TCR_BASE, &tmrptr->tcr);
-	/* clear pending interrupt */
-	__raw_writel(0, &tmrptr->tisr);
-}
+	__raw_ग_लिखोl(TCR_BASE, &पंचांगrptr->tcr);
+	/* clear pending पूर्णांकerrupt */
+	__raw_ग_लिखोl(0, &पंचांगrptr->tisr);
+पूर्ण
 
-static int txx9tmr_set_state_periodic(struct clock_event_device *evt)
-{
-	struct txx9_clock_event_device *txx9_cd =
-		container_of(evt, struct txx9_clock_event_device, cd);
-	struct txx9_tmr_reg __iomem *tmrptr = txx9_cd->tmrptr;
+अटल पूर्णांक txx9पंचांगr_set_state_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा txx9_घड़ी_event_device *txx9_cd =
+		container_of(evt, काष्ठा txx9_घड़ी_event_device, cd);
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr = txx9_cd->पंचांगrptr;
 
-	txx9tmr_stop_and_clear(tmrptr);
+	txx9पंचांगr_stop_and_clear(पंचांगrptr);
 
-	__raw_writel(TXx9_TMITMR_TIIE | TXx9_TMITMR_TZCE, &tmrptr->itmr);
-	/* start timer */
-	__raw_writel(((u64)(NSEC_PER_SEC / HZ) * evt->mult) >> evt->shift,
-		     &tmrptr->cpra);
-	__raw_writel(TCR_BASE | TXx9_TMTCR_TCE, &tmrptr->tcr);
-	return 0;
-}
+	__raw_ग_लिखोl(TXx9_TMITMR_TIIE | TXx9_TMITMR_TZCE, &पंचांगrptr->iपंचांगr);
+	/* start समयr */
+	__raw_ग_लिखोl(((u64)(NSEC_PER_SEC / HZ) * evt->mult) >> evt->shअगरt,
+		     &पंचांगrptr->cpra);
+	__raw_ग_लिखोl(TCR_BASE | TXx9_TMTCR_TCE, &पंचांगrptr->tcr);
+	वापस 0;
+पूर्ण
 
-static int txx9tmr_set_state_oneshot(struct clock_event_device *evt)
-{
-	struct txx9_clock_event_device *txx9_cd =
-		container_of(evt, struct txx9_clock_event_device, cd);
-	struct txx9_tmr_reg __iomem *tmrptr = txx9_cd->tmrptr;
+अटल पूर्णांक txx9पंचांगr_set_state_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा txx9_घड़ी_event_device *txx9_cd =
+		container_of(evt, काष्ठा txx9_घड़ी_event_device, cd);
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr = txx9_cd->पंचांगrptr;
 
-	txx9tmr_stop_and_clear(tmrptr);
-	__raw_writel(TXx9_TMITMR_TIIE, &tmrptr->itmr);
-	return 0;
-}
+	txx9पंचांगr_stop_and_clear(पंचांगrptr);
+	__raw_ग_लिखोl(TXx9_TMITMR_TIIE, &पंचांगrptr->iपंचांगr);
+	वापस 0;
+पूर्ण
 
-static int txx9tmr_set_state_shutdown(struct clock_event_device *evt)
-{
-	struct txx9_clock_event_device *txx9_cd =
-		container_of(evt, struct txx9_clock_event_device, cd);
-	struct txx9_tmr_reg __iomem *tmrptr = txx9_cd->tmrptr;
+अटल पूर्णांक txx9पंचांगr_set_state_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा txx9_घड़ी_event_device *txx9_cd =
+		container_of(evt, काष्ठा txx9_घड़ी_event_device, cd);
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr = txx9_cd->पंचांगrptr;
 
-	txx9tmr_stop_and_clear(tmrptr);
-	__raw_writel(0, &tmrptr->itmr);
-	return 0;
-}
+	txx9पंचांगr_stop_and_clear(पंचांगrptr);
+	__raw_ग_लिखोl(0, &पंचांगrptr->iपंचांगr);
+	वापस 0;
+पूर्ण
 
-static int txx9tmr_tick_resume(struct clock_event_device *evt)
-{
-	struct txx9_clock_event_device *txx9_cd =
-		container_of(evt, struct txx9_clock_event_device, cd);
-	struct txx9_tmr_reg __iomem *tmrptr = txx9_cd->tmrptr;
+अटल पूर्णांक txx9पंचांगr_tick_resume(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा txx9_घड़ी_event_device *txx9_cd =
+		container_of(evt, काष्ठा txx9_घड़ी_event_device, cd);
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr = txx9_cd->पंचांगrptr;
 
-	txx9tmr_stop_and_clear(tmrptr);
-	__raw_writel(TIMER_CCD, &tmrptr->ccdr);
-	__raw_writel(0, &tmrptr->itmr);
-	return 0;
-}
+	txx9पंचांगr_stop_and_clear(पंचांगrptr);
+	__raw_ग_लिखोl(TIMER_CCD, &पंचांगrptr->ccdr);
+	__raw_ग_लिखोl(0, &पंचांगrptr->iपंचांगr);
+	वापस 0;
+पूर्ण
 
-static int txx9tmr_set_next_event(unsigned long delta,
-				  struct clock_event_device *evt)
-{
-	struct txx9_clock_event_device *txx9_cd =
-		container_of(evt, struct txx9_clock_event_device, cd);
-	struct txx9_tmr_reg __iomem *tmrptr = txx9_cd->tmrptr;
+अटल पूर्णांक txx9पंचांगr_set_next_event(अचिन्हित दीर्घ delta,
+				  काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा txx9_घड़ी_event_device *txx9_cd =
+		container_of(evt, काष्ठा txx9_घड़ी_event_device, cd);
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr = txx9_cd->पंचांगrptr;
 
-	txx9tmr_stop_and_clear(tmrptr);
-	/* start timer */
-	__raw_writel(delta, &tmrptr->cpra);
-	__raw_writel(TCR_BASE | TXx9_TMTCR_TCE, &tmrptr->tcr);
-	return 0;
-}
+	txx9पंचांगr_stop_and_clear(पंचांगrptr);
+	/* start समयr */
+	__raw_ग_लिखोl(delta, &पंचांगrptr->cpra);
+	__raw_ग_लिखोl(TCR_BASE | TXx9_TMTCR_TCE, &पंचांगrptr->tcr);
+	वापस 0;
+पूर्ण
 
-static struct txx9_clock_event_device txx9_clock_event_device = {
-	.cd = {
+अटल काष्ठा txx9_घड़ी_event_device txx9_घड़ी_event_device = अणु
+	.cd = अणु
 		.name			= "TXx9",
 		.features		= CLOCK_EVT_FEAT_PERIODIC |
 					  CLOCK_EVT_FEAT_ONESHOT,
 		.rating			= 200,
-		.set_state_shutdown	= txx9tmr_set_state_shutdown,
-		.set_state_periodic	= txx9tmr_set_state_periodic,
-		.set_state_oneshot	= txx9tmr_set_state_oneshot,
-		.tick_resume		= txx9tmr_tick_resume,
-		.set_next_event		= txx9tmr_set_next_event,
-	},
-};
+		.set_state_shutकरोwn	= txx9पंचांगr_set_state_shutकरोwn,
+		.set_state_periodic	= txx9पंचांगr_set_state_periodic,
+		.set_state_oneshot	= txx9पंचांगr_set_state_oneshot,
+		.tick_resume		= txx9पंचांगr_tick_resume,
+		.set_next_event		= txx9पंचांगr_set_next_event,
+	पूर्ण,
+पूर्ण;
 
-static irqreturn_t txx9tmr_interrupt(int irq, void *dev_id)
-{
-	struct txx9_clock_event_device *txx9_cd = dev_id;
-	struct clock_event_device *cd = &txx9_cd->cd;
-	struct txx9_tmr_reg __iomem *tmrptr = txx9_cd->tmrptr;
+अटल irqवापस_t txx9पंचांगr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा txx9_घड़ी_event_device *txx9_cd = dev_id;
+	काष्ठा घड़ी_event_device *cd = &txx9_cd->cd;
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr = txx9_cd->पंचांगrptr;
 
-	__raw_writel(0, &tmrptr->tisr); /* ack interrupt */
+	__raw_ग_लिखोl(0, &पंचांगrptr->tisr); /* ack पूर्णांकerrupt */
 	cd->event_handler(cd);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void __init txx9_clockevent_init(unsigned long baseaddr, int irq,
-				 unsigned int imbusclk)
-{
-	struct clock_event_device *cd = &txx9_clock_event_device.cd;
-	struct txx9_tmr_reg __iomem *tmrptr;
+व्योम __init txx9_घड़ीevent_init(अचिन्हित दीर्घ baseaddr, पूर्णांक irq,
+				 अचिन्हित पूर्णांक imbusclk)
+अणु
+	काष्ठा घड़ी_event_device *cd = &txx9_घड़ी_event_device.cd;
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr;
 
-	tmrptr = ioremap(baseaddr, sizeof(struct txx9_tmr_reg));
-	txx9tmr_stop_and_clear(tmrptr);
-	__raw_writel(TIMER_CCD, &tmrptr->ccdr);
-	__raw_writel(0, &tmrptr->itmr);
-	txx9_clock_event_device.tmrptr = tmrptr;
+	पंचांगrptr = ioremap(baseaddr, माप(काष्ठा txx9_पंचांगr_reg));
+	txx9पंचांगr_stop_and_clear(पंचांगrptr);
+	__raw_ग_लिखोl(TIMER_CCD, &पंचांगrptr->ccdr);
+	__raw_ग_लिखोl(0, &पंचांगrptr->iपंचांगr);
+	txx9_घड़ी_event_device.पंचांगrptr = पंचांगrptr;
 
-	clockevent_set_clock(cd, TIMER_CLK(imbusclk));
+	घड़ीevent_set_घड़ी(cd, TIMER_CLK(imbusclk));
 	cd->max_delta_ns =
-		clockevent_delta2ns(0xffffffff >> (32 - TXX9_TIMER_BITS), cd);
+		घड़ीevent_delta2ns(0xffffffff >> (32 - TXX9_TIMER_BITS), cd);
 	cd->max_delta_ticks = 0xffffffff >> (32 - TXX9_TIMER_BITS);
-	cd->min_delta_ns = clockevent_delta2ns(0xf, cd);
+	cd->min_delta_ns = घड़ीevent_delta2ns(0xf, cd);
 	cd->min_delta_ticks = 0xf;
 	cd->irq = irq;
 	cd->cpumask = cpumask_of(0);
-	clockevents_register_device(cd);
-	if (request_irq(irq, txx9tmr_interrupt, IRQF_PERCPU | IRQF_TIMER,
-			"txx9tmr", &txx9_clock_event_device))
+	घड़ीevents_रेजिस्टर_device(cd);
+	अगर (request_irq(irq, txx9पंचांगr_पूर्णांकerrupt, IRQF_PERCPU | IRQF_TIMER,
+			"txx9tmr", &txx9_घड़ी_event_device))
 		pr_err("Failed to request irq %d (txx9tmr)\n", irq);
-	printk(KERN_INFO "TXx9: clockevent device at 0x%lx, irq %d\n",
+	prपूर्णांकk(KERN_INFO "TXx9: clockevent device at 0x%lx, irq %d\n",
 	       baseaddr, irq);
-}
+पूर्ण
 
-void __init txx9_tmr_init(unsigned long baseaddr)
-{
-	struct txx9_tmr_reg __iomem *tmrptr;
+व्योम __init txx9_पंचांगr_init(अचिन्हित दीर्घ baseaddr)
+अणु
+	काष्ठा txx9_पंचांगr_reg __iomem *पंचांगrptr;
 
-	tmrptr = ioremap(baseaddr, sizeof(struct txx9_tmr_reg));
+	पंचांगrptr = ioremap(baseaddr, माप(काष्ठा txx9_पंचांगr_reg));
 	/* Start once to make CounterResetEnable effective */
-	__raw_writel(TXx9_TMTCR_CRE | TXx9_TMTCR_TCE, &tmrptr->tcr);
+	__raw_ग_लिखोl(TXx9_TMTCR_CRE | TXx9_TMTCR_TCE, &पंचांगrptr->tcr);
 	/* Stop and reset the counter */
-	__raw_writel(TXx9_TMTCR_CRE, &tmrptr->tcr);
-	__raw_writel(0, &tmrptr->tisr);
-	__raw_writel(0xffffffff, &tmrptr->cpra);
-	__raw_writel(0, &tmrptr->itmr);
-	__raw_writel(0, &tmrptr->ccdr);
-	__raw_writel(0, &tmrptr->pgmr);
-	iounmap(tmrptr);
-}
+	__raw_ग_लिखोl(TXx9_TMTCR_CRE, &पंचांगrptr->tcr);
+	__raw_ग_लिखोl(0, &पंचांगrptr->tisr);
+	__raw_ग_लिखोl(0xffffffff, &पंचांगrptr->cpra);
+	__raw_ग_लिखोl(0, &पंचांगrptr->iपंचांगr);
+	__raw_ग_लिखोl(0, &पंचांगrptr->ccdr);
+	__raw_ग_लिखोl(0, &पंचांगrptr->pgmr);
+	iounmap(पंचांगrptr);
+पूर्ण

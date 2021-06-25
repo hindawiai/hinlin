@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Dummy stubs used when CONFIG_POSIX_TIMERS=n
  *
@@ -6,246 +7,246 @@
  * Copyright:   (C) 2016 Linaro Limited
  */
 
-#include <linux/linkage.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/errno.h>
-#include <linux/syscalls.h>
-#include <linux/ktime.h>
-#include <linux/timekeeping.h>
-#include <linux/posix-timers.h>
-#include <linux/time_namespace.h>
-#include <linux/compat.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/समयkeeping.h>
+#समावेश <linux/posix-समयrs.h>
+#समावेश <linux/समय_namespace.h>
+#समावेश <linux/compat.h>
 
-#ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
+#अगर_घोषित CONFIG_ARCH_HAS_SYSCALL_WRAPPER
 /* Architectures may override SYS_NI and COMPAT_SYS_NI */
-#include <asm/syscall_wrapper.h>
-#endif
+#समावेश <यंत्र/syscall_wrapper.h>
+#पूर्ण_अगर
 
-asmlinkage long sys_ni_posix_timers(void)
-{
+यंत्रlinkage दीर्घ sys_ni_posix_समयrs(व्योम)
+अणु
 	pr_err_once("process %d (%s) attempted a POSIX timer syscall "
 		    "while CONFIG_POSIX_TIMERS is not set\n",
 		    current->pid, current->comm);
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
-#ifndef SYS_NI
-#define SYS_NI(name)  SYSCALL_ALIAS(sys_##name, sys_ni_posix_timers)
-#endif
+#अगर_अघोषित SYS_NI
+#घोषणा SYS_NI(name)  SYSCALL_ALIAS(sys_##name, sys_ni_posix_समयrs)
+#पूर्ण_अगर
 
-#ifndef COMPAT_SYS_NI
-#define COMPAT_SYS_NI(name)  SYSCALL_ALIAS(compat_sys_##name, sys_ni_posix_timers)
-#endif
+#अगर_अघोषित COMPAT_SYS_NI
+#घोषणा COMPAT_SYS_NI(name)  SYSCALL_ALIAS(compat_sys_##name, sys_ni_posix_समयrs)
+#पूर्ण_अगर
 
-SYS_NI(timer_create);
-SYS_NI(timer_gettime);
-SYS_NI(timer_getoverrun);
-SYS_NI(timer_settime);
-SYS_NI(timer_delete);
-SYS_NI(clock_adjtime);
-SYS_NI(getitimer);
-SYS_NI(setitimer);
-SYS_NI(clock_adjtime32);
-#ifdef __ARCH_WANT_SYS_ALARM
+SYS_NI(समयr_create);
+SYS_NI(समयr_समय_लो);
+SYS_NI(समयr_getoverrun);
+SYS_NI(समयr_समय_रखो);
+SYS_NI(समयr_delete);
+SYS_NI(घड़ी_adjसमय);
+SYS_NI(getiसमयr);
+SYS_NI(setiसमयr);
+SYS_NI(घड़ी_adjसमय32);
+#अगर_घोषित __ARCH_WANT_SYS_ALARM
 SYS_NI(alarm);
-#endif
+#पूर्ण_अगर
 
 /*
- * We preserve minimal support for CLOCK_REALTIME and CLOCK_MONOTONIC
- * as it is easy to remain compatible with little code. CLOCK_BOOTTIME
- * is also included for convenience as at least systemd uses it.
+ * We preserve minimal support क्रम CLOCK_REALTIME and CLOCK_MONOTONIC
+ * as it is easy to reमुख्य compatible with little code. CLOCK_BOOTTIME
+ * is also included क्रम convenience as at least प्रणालीd uses it.
  */
 
-SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
-		const struct __kernel_timespec __user *, tp)
-{
-	struct timespec64 new_tp;
+SYSCALL_DEFINE2(घड़ी_समय_रखो, स्थिर घड़ीid_t, which_घड़ी,
+		स्थिर काष्ठा __kernel_बारpec __user *, tp)
+अणु
+	काष्ठा बारpec64 new_tp;
 
-	if (which_clock != CLOCK_REALTIME)
-		return -EINVAL;
-	if (get_timespec64(&new_tp, tp))
-		return -EFAULT;
+	अगर (which_घड़ी != CLOCK_REALTIME)
+		वापस -EINVAL;
+	अगर (get_बारpec64(&new_tp, tp))
+		वापस -EFAULT;
 
-	return do_sys_settimeofday64(&new_tp, NULL);
-}
+	वापस करो_sys_समय_रखोofday64(&new_tp, शून्य);
+पूर्ण
 
-int do_clock_gettime(clockid_t which_clock, struct timespec64 *tp)
-{
-	switch (which_clock) {
-	case CLOCK_REALTIME:
-		ktime_get_real_ts64(tp);
-		break;
-	case CLOCK_MONOTONIC:
-		ktime_get_ts64(tp);
-		timens_add_monotonic(tp);
-		break;
-	case CLOCK_BOOTTIME:
-		ktime_get_boottime_ts64(tp);
-		timens_add_boottime(tp);
-		break;
-	default:
-		return -EINVAL;
-	}
+पूर्णांक करो_घड़ी_समय_लो(घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
+अणु
+	चयन (which_घड़ी) अणु
+	हाल CLOCK_REALTIME:
+		kसमय_get_real_ts64(tp);
+		अवरोध;
+	हाल CLOCK_MONOTONIC:
+		kसमय_get_ts64(tp);
+		समयns_add_monotonic(tp);
+		अवरोध;
+	हाल CLOCK_BOOTTIME:
+		kसमय_get_bootसमय_प्रकारs64(tp);
+		समयns_add_bootसमय(tp);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
-SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
-		struct __kernel_timespec __user *, tp)
-{
-	int ret;
-	struct timespec64 kernel_tp;
+	वापस 0;
+पूर्ण
+SYSCALL_DEFINE2(घड़ी_समय_लो, स्थिर घड़ीid_t, which_घड़ी,
+		काष्ठा __kernel_बारpec __user *, tp)
+अणु
+	पूर्णांक ret;
+	काष्ठा बारpec64 kernel_tp;
 
-	ret = do_clock_gettime(which_clock, &kernel_tp);
-	if (ret)
-		return ret;
+	ret = करो_घड़ी_समय_लो(which_घड़ी, &kernel_tp);
+	अगर (ret)
+		वापस ret;
 
-	if (put_timespec64(&kernel_tp, tp))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_बारpec64(&kernel_tp, tp))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_timespec __user *, tp)
-{
-	struct timespec64 rtn_tp = {
+SYSCALL_DEFINE2(घड़ी_getres, स्थिर घड़ीid_t, which_घड़ी, काष्ठा __kernel_बारpec __user *, tp)
+अणु
+	काष्ठा बारpec64 rtn_tp = अणु
 		.tv_sec = 0,
-		.tv_nsec = hrtimer_resolution,
-	};
+		.tv_nsec = hrसमयr_resolution,
+	पूर्ण;
 
-	switch (which_clock) {
-	case CLOCK_REALTIME:
-	case CLOCK_MONOTONIC:
-	case CLOCK_BOOTTIME:
-		if (put_timespec64(&rtn_tp, tp))
-			return -EFAULT;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (which_घड़ी) अणु
+	हाल CLOCK_REALTIME:
+	हाल CLOCK_MONOTONIC:
+	हाल CLOCK_BOOTTIME:
+		अगर (put_बारpec64(&rtn_tp, tp))
+			वापस -EFAULT;
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
-		const struct __kernel_timespec __user *, rqtp,
-		struct __kernel_timespec __user *, rmtp)
-{
-	struct timespec64 t;
-	ktime_t texp;
+SYSCALL_DEFINE4(घड़ी_nanosleep, स्थिर घड़ीid_t, which_घड़ी, पूर्णांक, flags,
+		स्थिर काष्ठा __kernel_बारpec __user *, rqtp,
+		काष्ठा __kernel_बारpec __user *, rmtp)
+अणु
+	काष्ठा बारpec64 t;
+	kसमय_प्रकार texp;
 
-	switch (which_clock) {
-	case CLOCK_REALTIME:
-	case CLOCK_MONOTONIC:
-	case CLOCK_BOOTTIME:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (which_घड़ी) अणु
+	हाल CLOCK_REALTIME:
+	हाल CLOCK_MONOTONIC:
+	हाल CLOCK_BOOTTIME:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (get_timespec64(&t, rqtp))
-		return -EFAULT;
-	if (!timespec64_valid(&t))
-		return -EINVAL;
-	if (flags & TIMER_ABSTIME)
-		rmtp = NULL;
+	अगर (get_बारpec64(&t, rqtp))
+		वापस -EFAULT;
+	अगर (!बारpec64_valid(&t))
+		वापस -EINVAL;
+	अगर (flags & TIMER_ABSTIME)
+		rmtp = शून्य;
 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
 	current->restart_block.nanosleep.rmtp = rmtp;
-	texp = timespec64_to_ktime(t);
-	if (flags & TIMER_ABSTIME)
-		texp = timens_ktime_to_host(which_clock, texp);
-	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
+	texp = बारpec64_to_kसमय(t);
+	अगर (flags & TIMER_ABSTIME)
+		texp = समयns_kसमय_प्रकारo_host(which_घड़ी, texp);
+	वापस hrसमयr_nanosleep(texp, flags & TIMER_ABSTIME ?
 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
-				 which_clock);
-}
+				 which_घड़ी);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-COMPAT_SYS_NI(timer_create);
-#endif
+#अगर_घोषित CONFIG_COMPAT
+COMPAT_SYS_NI(समयr_create);
+#पूर्ण_अगर
 
-#if defined(CONFIG_COMPAT) || defined(CONFIG_ALPHA)
-COMPAT_SYS_NI(getitimer);
-COMPAT_SYS_NI(setitimer);
-#endif
+#अगर defined(CONFIG_COMPAT) || defined(CONFIG_ALPHA)
+COMPAT_SYS_NI(getiसमयr);
+COMPAT_SYS_NI(setiसमयr);
+#पूर्ण_अगर
 
-#ifdef CONFIG_COMPAT_32BIT_TIME
-SYS_NI(timer_settime32);
-SYS_NI(timer_gettime32);
+#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
+SYS_NI(समयr_समय_रखो32);
+SYS_NI(समयr_समय_लो32);
 
-SYSCALL_DEFINE2(clock_settime32, const clockid_t, which_clock,
-		struct old_timespec32 __user *, tp)
-{
-	struct timespec64 new_tp;
+SYSCALL_DEFINE2(घड़ी_समय_रखो32, स्थिर घड़ीid_t, which_घड़ी,
+		काष्ठा old_बारpec32 __user *, tp)
+अणु
+	काष्ठा बारpec64 new_tp;
 
-	if (which_clock != CLOCK_REALTIME)
-		return -EINVAL;
-	if (get_old_timespec32(&new_tp, tp))
-		return -EFAULT;
+	अगर (which_घड़ी != CLOCK_REALTIME)
+		वापस -EINVAL;
+	अगर (get_old_बारpec32(&new_tp, tp))
+		वापस -EFAULT;
 
-	return do_sys_settimeofday64(&new_tp, NULL);
-}
+	वापस करो_sys_समय_रखोofday64(&new_tp, शून्य);
+पूर्ण
 
-SYSCALL_DEFINE2(clock_gettime32, clockid_t, which_clock,
-		struct old_timespec32 __user *, tp)
-{
-	int ret;
-	struct timespec64 kernel_tp;
+SYSCALL_DEFINE2(घड़ी_समय_लो32, घड़ीid_t, which_घड़ी,
+		काष्ठा old_बारpec32 __user *, tp)
+अणु
+	पूर्णांक ret;
+	काष्ठा बारpec64 kernel_tp;
 
-	ret = do_clock_gettime(which_clock, &kernel_tp);
-	if (ret)
-		return ret;
+	ret = करो_घड़ी_समय_लो(which_घड़ी, &kernel_tp);
+	अगर (ret)
+		वापस ret;
 
-	if (put_old_timespec32(&kernel_tp, tp))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_old_बारpec32(&kernel_tp, tp))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-SYSCALL_DEFINE2(clock_getres_time32, clockid_t, which_clock,
-		struct old_timespec32 __user *, tp)
-{
-	struct timespec64 rtn_tp = {
+SYSCALL_DEFINE2(घड़ी_getres_समय32, घड़ीid_t, which_घड़ी,
+		काष्ठा old_बारpec32 __user *, tp)
+अणु
+	काष्ठा बारpec64 rtn_tp = अणु
 		.tv_sec = 0,
-		.tv_nsec = hrtimer_resolution,
-	};
+		.tv_nsec = hrसमयr_resolution,
+	पूर्ण;
 
-	switch (which_clock) {
-	case CLOCK_REALTIME:
-	case CLOCK_MONOTONIC:
-	case CLOCK_BOOTTIME:
-		if (put_old_timespec32(&rtn_tp, tp))
-			return -EFAULT;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (which_घड़ी) अणु
+	हाल CLOCK_REALTIME:
+	हाल CLOCK_MONOTONIC:
+	हाल CLOCK_BOOTTIME:
+		अगर (put_old_बारpec32(&rtn_tp, tp))
+			वापस -EFAULT;
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
-		struct old_timespec32 __user *, rqtp,
-		struct old_timespec32 __user *, rmtp)
-{
-	struct timespec64 t;
-	ktime_t texp;
+SYSCALL_DEFINE4(घड़ी_nanosleep_समय32, घड़ीid_t, which_घड़ी, पूर्णांक, flags,
+		काष्ठा old_बारpec32 __user *, rqtp,
+		काष्ठा old_बारpec32 __user *, rmtp)
+अणु
+	काष्ठा बारpec64 t;
+	kसमय_प्रकार texp;
 
-	switch (which_clock) {
-	case CLOCK_REALTIME:
-	case CLOCK_MONOTONIC:
-	case CLOCK_BOOTTIME:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (which_घड़ी) अणु
+	हाल CLOCK_REALTIME:
+	हाल CLOCK_MONOTONIC:
+	हाल CLOCK_BOOTTIME:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (get_old_timespec32(&t, rqtp))
-		return -EFAULT;
-	if (!timespec64_valid(&t))
-		return -EINVAL;
-	if (flags & TIMER_ABSTIME)
-		rmtp = NULL;
+	अगर (get_old_बारpec32(&t, rqtp))
+		वापस -EFAULT;
+	अगर (!बारpec64_valid(&t))
+		वापस -EINVAL;
+	अगर (flags & TIMER_ABSTIME)
+		rmtp = शून्य;
 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
 	current->restart_block.nanosleep.compat_rmtp = rmtp;
-	texp = timespec64_to_ktime(t);
-	if (flags & TIMER_ABSTIME)
-		texp = timens_ktime_to_host(which_clock, texp);
-	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
+	texp = बारpec64_to_kसमय(t);
+	अगर (flags & TIMER_ABSTIME)
+		texp = समयns_kसमय_प्रकारo_host(which_घड़ी, texp);
+	वापस hrसमयr_nanosleep(texp, flags & TIMER_ABSTIME ?
 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
-				 which_clock);
-}
-#endif
+				 which_घड़ी);
+पूर्ण
+#पूर्ण_अगर

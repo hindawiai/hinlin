@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018 MediaTek Inc.
  * Author: Chunhui Dai <chunhui.dai@mediatek.com>
  */
 
-#include "phy-mtk-hdmi.h"
+#समावेश "phy-mtk-hdmi.h"
 
-#define HDMI_CON0	0x00
-#define RG_HDMITX_DRV_IBIAS		0
-#define RG_HDMITX_DRV_IBIAS_MASK	(0x3f << 0)
-#define RG_HDMITX_EN_SER		12
-#define RG_HDMITX_EN_SER_MASK		(0x0f << 12)
-#define RG_HDMITX_EN_SLDO		16
-#define RG_HDMITX_EN_SLDO_MASK		(0x0f << 16)
-#define RG_HDMITX_EN_PRED		20
-#define RG_HDMITX_EN_PRED_MASK		(0x0f << 20)
-#define RG_HDMITX_EN_IMP		24
-#define RG_HDMITX_EN_IMP_MASK		(0x0f << 24)
-#define RG_HDMITX_EN_DRV		28
-#define RG_HDMITX_EN_DRV_MASK		(0x0f << 28)
+#घोषणा HDMI_CON0	0x00
+#घोषणा RG_HDMITX_DRV_IBIAS		0
+#घोषणा RG_HDMITX_DRV_IBIAS_MASK	(0x3f << 0)
+#घोषणा RG_HDMITX_EN_SER		12
+#घोषणा RG_HDMITX_EN_SER_MASK		(0x0f << 12)
+#घोषणा RG_HDMITX_EN_SLDO		16
+#घोषणा RG_HDMITX_EN_SLDO_MASK		(0x0f << 16)
+#घोषणा RG_HDMITX_EN_PRED		20
+#घोषणा RG_HDMITX_EN_PRED_MASK		(0x0f << 20)
+#घोषणा RG_HDMITX_EN_IMP		24
+#घोषणा RG_HDMITX_EN_IMP_MASK		(0x0f << 24)
+#घोषणा RG_HDMITX_EN_DRV		28
+#घोषणा RG_HDMITX_EN_DRV_MASK		(0x0f << 28)
 
-#define HDMI_CON1	0x04
-#define RG_HDMITX_PRED_IBIAS		18
-#define RG_HDMITX_PRED_IBIAS_MASK	(0x0f << 18)
-#define RG_HDMITX_PRED_IMP		(0x01 << 22)
-#define RG_HDMITX_DRV_IMP		26
-#define RG_HDMITX_DRV_IMP_MASK		(0x3f << 26)
+#घोषणा HDMI_CON1	0x04
+#घोषणा RG_HDMITX_PRED_IBIAS		18
+#घोषणा RG_HDMITX_PRED_IBIAS_MASK	(0x0f << 18)
+#घोषणा RG_HDMITX_PRED_IMP		(0x01 << 22)
+#घोषणा RG_HDMITX_DRV_IMP		26
+#घोषणा RG_HDMITX_DRV_IMP_MASK		(0x3f << 26)
 
-#define HDMI_CON2	0x08
-#define RG_HDMITX_EN_TX_CKLDO		(0x01 << 0)
-#define RG_HDMITX_EN_TX_POSDIV		(0x01 << 1)
-#define RG_HDMITX_TX_POSDIV		3
-#define RG_HDMITX_TX_POSDIV_MASK	(0x03 << 3)
-#define RG_HDMITX_EN_MBIAS		(0x01 << 6)
-#define RG_HDMITX_MBIAS_LPF_EN		(0x01 << 7)
+#घोषणा HDMI_CON2	0x08
+#घोषणा RG_HDMITX_EN_TX_CKLDO		(0x01 << 0)
+#घोषणा RG_HDMITX_EN_TX_POSDIV		(0x01 << 1)
+#घोषणा RG_HDMITX_TX_POSDIV		3
+#घोषणा RG_HDMITX_TX_POSDIV_MASK	(0x03 << 3)
+#घोषणा RG_HDMITX_EN_MBIAS		(0x01 << 6)
+#घोषणा RG_HDMITX_MBIAS_LPF_EN		(0x01 << 7)
 
-#define HDMI_CON4	0x10
-#define RG_HDMITX_RESERVE_MASK		(0xffffffff << 0)
+#घोषणा HDMI_CON4	0x10
+#घोषणा RG_HDMITX_RESERVE_MASK		(0xffffffff << 0)
 
-#define HDMI_CON6	0x18
-#define RG_HTPLL_BR			0
-#define RG_HTPLL_BR_MASK		(0x03 << 0)
-#define RG_HTPLL_BC			2
-#define RG_HTPLL_BC_MASK		(0x03 << 2)
-#define RG_HTPLL_BP			4
-#define RG_HTPLL_BP_MASK		(0x0f << 4)
-#define RG_HTPLL_IR			8
-#define RG_HTPLL_IR_MASK		(0x0f << 8)
-#define RG_HTPLL_IC			12
-#define RG_HTPLL_IC_MASK		(0x0f << 12)
-#define RG_HTPLL_POSDIV			16
-#define RG_HTPLL_POSDIV_MASK		(0x03 << 16)
-#define RG_HTPLL_PREDIV			18
-#define RG_HTPLL_PREDIV_MASK		(0x03 << 18)
-#define RG_HTPLL_FBKSEL			20
-#define RG_HTPLL_FBKSEL_MASK		(0x03 << 20)
-#define RG_HTPLL_RLH_EN			(0x01 << 22)
-#define RG_HTPLL_FBKDIV			24
-#define RG_HTPLL_FBKDIV_MASK		(0x7f << 24)
-#define RG_HTPLL_EN			(0x01 << 31)
+#घोषणा HDMI_CON6	0x18
+#घोषणा RG_HTPLL_BR			0
+#घोषणा RG_HTPLL_BR_MASK		(0x03 << 0)
+#घोषणा RG_HTPLL_BC			2
+#घोषणा RG_HTPLL_BC_MASK		(0x03 << 2)
+#घोषणा RG_HTPLL_BP			4
+#घोषणा RG_HTPLL_BP_MASK		(0x0f << 4)
+#घोषणा RG_HTPLL_IR			8
+#घोषणा RG_HTPLL_IR_MASK		(0x0f << 8)
+#घोषणा RG_HTPLL_IC			12
+#घोषणा RG_HTPLL_IC_MASK		(0x0f << 12)
+#घोषणा RG_HTPLL_POSDIV			16
+#घोषणा RG_HTPLL_POSDIV_MASK		(0x03 << 16)
+#घोषणा RG_HTPLL_PREDIV			18
+#घोषणा RG_HTPLL_PREDIV_MASK		(0x03 << 18)
+#घोषणा RG_HTPLL_FBKSEL			20
+#घोषणा RG_HTPLL_FBKSEL_MASK		(0x03 << 20)
+#घोषणा RG_HTPLL_RLH_EN			(0x01 << 22)
+#घोषणा RG_HTPLL_FBKDIV			24
+#घोषणा RG_HTPLL_FBKDIV_MASK		(0x7f << 24)
+#घोषणा RG_HTPLL_EN			(0x01 << 31)
 
-#define HDMI_CON7	0x1c
-#define RG_HTPLL_AUTOK_EN		(0x01 << 23)
-#define RG_HTPLL_DIVEN			28
-#define RG_HTPLL_DIVEN_MASK		(0x07 << 28)
+#घोषणा HDMI_CON7	0x1c
+#घोषणा RG_HTPLL_AUTOK_EN		(0x01 << 23)
+#घोषणा RG_HTPLL_DIVEN			28
+#घोषणा RG_HTPLL_DIVEN_MASK		(0x07 << 28)
 
-static int mtk_hdmi_pll_prepare(struct clk_hw *hw)
-{
-	struct mtk_hdmi_phy *hdmi_phy = to_mtk_hdmi_phy(hw);
+अटल पूर्णांक mtk_hdmi_pll_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mtk_hdmi_phy *hdmi_phy = to_mtk_hdmi_phy(hw);
 
 	mtk_hdmi_phy_set_bits(hdmi_phy, HDMI_CON7, RG_HTPLL_AUTOK_EN);
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON6, RG_HTPLL_RLH_EN);
@@ -83,12 +84,12 @@ static int mtk_hdmi_pll_prepare(struct clk_hw *hw)
 	mtk_hdmi_phy_set_bits(hdmi_phy, HDMI_CON0, RG_HDMITX_EN_PRED_MASK);
 	mtk_hdmi_phy_set_bits(hdmi_phy, HDMI_CON0, RG_HDMITX_EN_DRV_MASK);
 	usleep_range(80, 100);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_hdmi_pll_unprepare(struct clk_hw *hw)
-{
-	struct mtk_hdmi_phy *hdmi_phy = to_mtk_hdmi_phy(hw);
+अटल व्योम mtk_hdmi_pll_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mtk_hdmi_phy *hdmi_phy = to_mtk_hdmi_phy(hw);
 
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON0, RG_HDMITX_EN_DRV_MASK);
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON0, RG_HDMITX_EN_PRED_MASK);
@@ -104,26 +105,26 @@ static void mtk_hdmi_pll_unprepare(struct clk_hw *hw)
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON6, RG_HTPLL_RLH_EN);
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON7, RG_HTPLL_AUTOK_EN);
 	usleep_range(80, 100);
-}
+पूर्ण
 
-static long mtk_hdmi_pll_round_rate(struct clk_hw *hw, unsigned long rate,
-				    unsigned long *parent_rate)
-{
-	return rate;
-}
+अटल दीर्घ mtk_hdmi_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				    अचिन्हित दीर्घ *parent_rate)
+अणु
+	वापस rate;
+पूर्ण
 
-static int mtk_hdmi_pll_set_rate(struct clk_hw *hw, unsigned long rate,
-				 unsigned long parent_rate)
-{
-	struct mtk_hdmi_phy *hdmi_phy = to_mtk_hdmi_phy(hw);
-	u32 pos_div;
+अटल पूर्णांक mtk_hdmi_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा mtk_hdmi_phy *hdmi_phy = to_mtk_hdmi_phy(hw);
+	u32 pos_भाग;
 
-	if (rate <= 64000000)
-		pos_div = 3;
-	else if (rate <= 128000000)
-		pos_div = 2;
-	else
-		pos_div = 1;
+	अगर (rate <= 64000000)
+		pos_भाग = 3;
+	अन्यथा अगर (rate <= 128000000)
+		pos_भाग = 2;
+	अन्यथा
+		pos_भाग = 1;
 
 	mtk_hdmi_phy_set_bits(hdmi_phy, HDMI_CON6, RG_HTPLL_PREDIV_MASK);
 	mtk_hdmi_phy_set_bits(hdmi_phy, HDMI_CON6, RG_HTPLL_POSDIV_MASK);
@@ -132,7 +133,7 @@ static int mtk_hdmi_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 			  RG_HTPLL_IC_MASK);
 	mtk_hdmi_phy_mask(hdmi_phy, HDMI_CON6, (0x1 << RG_HTPLL_IR),
 			  RG_HTPLL_IR_MASK);
-	mtk_hdmi_phy_mask(hdmi_phy, HDMI_CON2, (pos_div << RG_HDMITX_TX_POSDIV),
+	mtk_hdmi_phy_mask(hdmi_phy, HDMI_CON2, (pos_भाग << RG_HDMITX_TX_POSDIV),
 			  RG_HDMITX_TX_POSDIV_MASK);
 	mtk_hdmi_phy_mask(hdmi_phy, HDMI_CON6, (1 << RG_HTPLL_FBKSEL),
 			  RG_HTPLL_FBKSEL_MASK);
@@ -156,52 +157,52 @@ static int mtk_hdmi_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 	mtk_hdmi_phy_mask(hdmi_phy, HDMI_CON4, 0x28, RG_HDMITX_RESERVE_MASK);
 	mtk_hdmi_phy_mask(hdmi_phy, HDMI_CON0, (0xa << RG_HDMITX_DRV_IBIAS),
 			  RG_HDMITX_DRV_IBIAS_MASK);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long mtk_hdmi_pll_recalc_rate(struct clk_hw *hw,
-					      unsigned long parent_rate)
-{
-	struct mtk_hdmi_phy *hdmi_phy = to_mtk_hdmi_phy(hw);
-	unsigned long out_rate, val;
+अटल अचिन्हित दीर्घ mtk_hdmi_pll_recalc_rate(काष्ठा clk_hw *hw,
+					      अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा mtk_hdmi_phy *hdmi_phy = to_mtk_hdmi_phy(hw);
+	अचिन्हित दीर्घ out_rate, val;
 
-	val = (readl(hdmi_phy->regs + HDMI_CON6)
+	val = (पढ़ोl(hdmi_phy->regs + HDMI_CON6)
 	       & RG_HTPLL_PREDIV_MASK) >> RG_HTPLL_PREDIV;
-	switch (val) {
-	case 0x00:
+	चयन (val) अणु
+	हाल 0x00:
 		out_rate = parent_rate;
-		break;
-	case 0x01:
+		अवरोध;
+	हाल 0x01:
 		out_rate = parent_rate / 2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		out_rate = parent_rate / 4;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	val = (readl(hdmi_phy->regs + HDMI_CON6)
+	val = (पढ़ोl(hdmi_phy->regs + HDMI_CON6)
 	       & RG_HTPLL_FBKDIV_MASK) >> RG_HTPLL_FBKDIV;
 	out_rate *= (val + 1) * 2;
-	val = (readl(hdmi_phy->regs + HDMI_CON2)
+	val = (पढ़ोl(hdmi_phy->regs + HDMI_CON2)
 	       & RG_HDMITX_TX_POSDIV_MASK);
 	out_rate >>= (val >> RG_HDMITX_TX_POSDIV);
 
-	if (readl(hdmi_phy->regs + HDMI_CON2) & RG_HDMITX_EN_TX_POSDIV)
+	अगर (पढ़ोl(hdmi_phy->regs + HDMI_CON2) & RG_HDMITX_EN_TX_POSDIV)
 		out_rate /= 5;
 
-	return out_rate;
-}
+	वापस out_rate;
+पूर्ण
 
-static const struct clk_ops mtk_hdmi_phy_pll_ops = {
+अटल स्थिर काष्ठा clk_ops mtk_hdmi_phy_pll_ops = अणु
 	.prepare = mtk_hdmi_pll_prepare,
 	.unprepare = mtk_hdmi_pll_unprepare,
 	.set_rate = mtk_hdmi_pll_set_rate,
 	.round_rate = mtk_hdmi_pll_round_rate,
 	.recalc_rate = mtk_hdmi_pll_recalc_rate,
-};
+पूर्ण;
 
-static void mtk_hdmi_phy_enable_tmds(struct mtk_hdmi_phy *hdmi_phy)
-{
+अटल व्योम mtk_hdmi_phy_enable_पंचांगds(काष्ठा mtk_hdmi_phy *hdmi_phy)
+अणु
 	mtk_hdmi_phy_set_bits(hdmi_phy, HDMI_CON7, RG_HTPLL_AUTOK_EN);
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON6, RG_HTPLL_RLH_EN);
 	mtk_hdmi_phy_set_bits(hdmi_phy, HDMI_CON6, RG_HTPLL_POSDIV_MASK);
@@ -216,10 +217,10 @@ static void mtk_hdmi_phy_enable_tmds(struct mtk_hdmi_phy *hdmi_phy)
 	mtk_hdmi_phy_set_bits(hdmi_phy, HDMI_CON0, RG_HDMITX_EN_PRED_MASK);
 	mtk_hdmi_phy_set_bits(hdmi_phy, HDMI_CON0, RG_HDMITX_EN_DRV_MASK);
 	usleep_range(80, 100);
-}
+पूर्ण
 
-static void mtk_hdmi_phy_disable_tmds(struct mtk_hdmi_phy *hdmi_phy)
-{
+अटल व्योम mtk_hdmi_phy_disable_पंचांगds(काष्ठा mtk_hdmi_phy *hdmi_phy)
+अणु
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON0, RG_HDMITX_EN_DRV_MASK);
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON0, RG_HDMITX_EN_PRED_MASK);
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON0, RG_HDMITX_EN_SER_MASK);
@@ -234,15 +235,15 @@ static void mtk_hdmi_phy_disable_tmds(struct mtk_hdmi_phy *hdmi_phy)
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON6, RG_HTPLL_RLH_EN);
 	mtk_hdmi_phy_clear_bits(hdmi_phy, HDMI_CON7, RG_HTPLL_AUTOK_EN);
 	usleep_range(80, 100);
-}
+पूर्ण
 
-struct mtk_hdmi_phy_conf mtk_hdmi_phy_2701_conf = {
+काष्ठा mtk_hdmi_phy_conf mtk_hdmi_phy_2701_conf = अणु
 	.flags = CLK_SET_RATE_GATE,
-	.pll_default_off = true,
+	.pll_शेष_off = true,
 	.hdmi_phy_clk_ops = &mtk_hdmi_phy_pll_ops,
-	.hdmi_phy_enable_tmds = mtk_hdmi_phy_enable_tmds,
-	.hdmi_phy_disable_tmds = mtk_hdmi_phy_disable_tmds,
-};
+	.hdmi_phy_enable_पंचांगds = mtk_hdmi_phy_enable_पंचांगds,
+	.hdmi_phy_disable_पंचांगds = mtk_hdmi_phy_disable_पंचांगds,
+पूर्ण;
 
 MODULE_AUTHOR("Chunhui Dai <chunhui.dai@mediatek.com>");
 MODULE_DESCRIPTION("MediaTek HDMI PHY Driver");

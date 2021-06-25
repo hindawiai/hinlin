@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BLK_STAT_H
-#define BLK_STAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BLK_STAT_H
+#घोषणा BLK_STAT_H
 
-#include <linux/kernel.h>
-#include <linux/blkdev.h>
-#include <linux/ktime.h>
-#include <linux/rcupdate.h>
-#include <linux/timer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/समयr.h>
 
 /**
- * struct blk_stat_callback - Block statistics callback.
+ * काष्ठा blk_stat_callback - Block statistics callback.
  *
- * A &struct blk_stat_callback is associated with a &struct request_queue. While
- * @timer is active, that queue's request completion latencies are sorted into
+ * A &काष्ठा blk_stat_callback is associated with a &काष्ठा request_queue. While
+ * @समयr is active, that queue's request completion latencies are sorted पूर्णांकo
  * buckets by @bucket_fn and added to a per-cpu buffer, @cpu_stat. When the
- * timer fires, @cpu_stat is flushed to @stat and @timer_fn is invoked.
+ * समयr fires, @cpu_stat is flushed to @stat and @समयr_fn is invoked.
  */
-struct blk_stat_callback {
+काष्ठा blk_stat_callback अणु
 	/*
-	 * @list: RCU list of callbacks for a &struct request_queue.
+	 * @list: RCU list of callbacks क्रम a &काष्ठा request_queue.
 	 */
-	struct list_head list;
+	काष्ठा list_head list;
 
 	/**
-	 * @timer: Timer for the next callback invocation.
+	 * @समयr: Timer क्रम the next callback invocation.
 	 */
-	struct timer_list timer;
+	काष्ठा समयr_list समयr;
 
 	/**
 	 * @cpu_stat: Per-cpu statistics buckets.
 	 */
-	struct blk_rq_stat __percpu *cpu_stat;
+	काष्ठा blk_rq_stat __percpu *cpu_stat;
 
 	/**
-	 * @bucket_fn: Given a request, returns which statistics bucket it
-	 * should be accounted under. Return -1 for no bucket for this
+	 * @bucket_fn: Given a request, वापसs which statistics bucket it
+	 * should be accounted under. Return -1 क्रम no bucket क्रम this
 	 * request.
 	 */
-	int (*bucket_fn)(const struct request *);
+	पूर्णांक (*bucket_fn)(स्थिर काष्ठा request *);
 
 	/**
 	 * @buckets: Number of statistics buckets.
 	 */
-	unsigned int buckets;
+	अचिन्हित पूर्णांक buckets;
 
 	/**
 	 * @stat: Array of statistics buckets.
 	 */
-	struct blk_rq_stat *stat;
+	काष्ठा blk_rq_stat *stat;
 
 	/**
 	 * @fn: Callback function.
 	 */
-	void (*timer_fn)(struct blk_stat_callback *);
+	व्योम (*समयr_fn)(काष्ठा blk_stat_callback *);
 
 	/**
-	 * @data: Private pointer for the user.
+	 * @data: Private poपूर्णांकer क्रम the user.
 	 */
-	void *data;
+	व्योम *data;
 
-	struct rcu_head rcu;
-};
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-struct blk_queue_stats *blk_alloc_queue_stats(void);
-void blk_free_queue_stats(struct blk_queue_stats *);
+काष्ठा blk_queue_stats *blk_alloc_queue_stats(व्योम);
+व्योम blk_मुक्त_queue_stats(काष्ठा blk_queue_stats *);
 
-void blk_stat_add(struct request *rq, u64 now);
+व्योम blk_stat_add(काष्ठा request *rq, u64 now);
 
-/* record time/size info in request but not add a callback */
-void blk_stat_enable_accounting(struct request_queue *q);
+/* record समय/size info in request but not add a callback */
+व्योम blk_stat_enable_accounting(काष्ठा request_queue *q);
 
 /**
  * blk_stat_alloc_callback() - Allocate a block statistics callback.
- * @timer_fn: Timer callback function.
+ * @समयr_fn: Timer callback function.
  * @bucket_fn: Bucket callback function.
  * @buckets: Number of statistics buckets.
- * @data: Value for the @data field of the &struct blk_stat_callback.
+ * @data: Value क्रम the @data field of the &काष्ठा blk_stat_callback.
  *
- * See &struct blk_stat_callback for details on the callback functions.
+ * See &काष्ठा blk_stat_callback क्रम details on the callback functions.
  *
- * Return: &struct blk_stat_callback on success or NULL on ENOMEM.
+ * Return: &काष्ठा blk_stat_callback on success or शून्य on ENOMEM.
  */
-struct blk_stat_callback *
-blk_stat_alloc_callback(void (*timer_fn)(struct blk_stat_callback *),
-			int (*bucket_fn)(const struct request *),
-			unsigned int buckets, void *data);
+काष्ठा blk_stat_callback *
+blk_stat_alloc_callback(व्योम (*समयr_fn)(काष्ठा blk_stat_callback *),
+			पूर्णांक (*bucket_fn)(स्थिर काष्ठा request *),
+			अचिन्हित पूर्णांक buckets, व्योम *data);
 
 /**
  * blk_stat_add_callback() - Add a block statistics callback to be run on a
@@ -92,80 +93,80 @@ blk_stat_alloc_callback(void (*timer_fn)(struct blk_stat_callback *),
  * @q: The request queue.
  * @cb: The callback.
  *
- * Note that a single &struct blk_stat_callback can only be added to a single
- * &struct request_queue.
+ * Note that a single &काष्ठा blk_stat_callback can only be added to a single
+ * &काष्ठा request_queue.
  */
-void blk_stat_add_callback(struct request_queue *q,
-			   struct blk_stat_callback *cb);
+व्योम blk_stat_add_callback(काष्ठा request_queue *q,
+			   काष्ठा blk_stat_callback *cb);
 
 /**
- * blk_stat_remove_callback() - Remove a block statistics callback from a
+ * blk_stat_हटाओ_callback() - Remove a block statistics callback from a
  * request queue.
  * @q: The request queue.
  * @cb: The callback.
  *
- * When this returns, the callback is not running on any CPUs and will not be
- * called again unless readded.
+ * When this वापसs, the callback is not running on any CPUs and will not be
+ * called again unless पढ़ोded.
  */
-void blk_stat_remove_callback(struct request_queue *q,
-			      struct blk_stat_callback *cb);
+व्योम blk_stat_हटाओ_callback(काष्ठा request_queue *q,
+			      काष्ठा blk_stat_callback *cb);
 
 /**
- * blk_stat_free_callback() - Free a block statistics callback.
+ * blk_stat_मुक्त_callback() - Free a block statistics callback.
  * @cb: The callback.
  *
- * @cb may be NULL, in which case this does nothing. If it is not NULL, @cb must
- * not be associated with a request queue. I.e., if it was previously added with
- * blk_stat_add_callback(), it must also have been removed since then with
- * blk_stat_remove_callback().
+ * @cb may be शून्य, in which हाल this करोes nothing. If it is not शून्य, @cb must
+ * not be associated with a request queue. I.e., अगर it was previously added with
+ * blk_stat_add_callback(), it must also have been हटाओd since then with
+ * blk_stat_हटाओ_callback().
  */
-void blk_stat_free_callback(struct blk_stat_callback *cb);
+व्योम blk_stat_मुक्त_callback(काष्ठा blk_stat_callback *cb);
 
 /**
- * blk_stat_is_active() - Check if a block statistics callback is currently
+ * blk_stat_is_active() - Check अगर a block statistics callback is currently
  * gathering statistics.
  * @cb: The callback.
  */
-static inline bool blk_stat_is_active(struct blk_stat_callback *cb)
-{
-	return timer_pending(&cb->timer);
-}
+अटल अंतरभूत bool blk_stat_is_active(काष्ठा blk_stat_callback *cb)
+अणु
+	वापस समयr_pending(&cb->समयr);
+पूर्ण
 
 /**
- * blk_stat_activate_nsecs() - Gather block statistics during a time window in
+ * blk_stat_activate_nsecs() - Gather block statistics during a समय winकरोw in
  * nanoseconds.
  * @cb: The callback.
- * @nsecs: Number of nanoseconds to gather statistics for.
+ * @nsecs: Number of nanoseconds to gather statistics क्रम.
  *
- * The timer callback will be called when the window expires.
+ * The समयr callback will be called when the winकरोw expires.
  */
-static inline void blk_stat_activate_nsecs(struct blk_stat_callback *cb,
+अटल अंतरभूत व्योम blk_stat_activate_nsecs(काष्ठा blk_stat_callback *cb,
 					   u64 nsecs)
-{
-	mod_timer(&cb->timer, jiffies + nsecs_to_jiffies(nsecs));
-}
+अणु
+	mod_समयr(&cb->समयr, jअगरfies + nsecs_to_jअगरfies(nsecs));
+पूर्ण
 
-static inline void blk_stat_deactivate(struct blk_stat_callback *cb)
-{
-	del_timer_sync(&cb->timer);
-}
+अटल अंतरभूत व्योम blk_stat_deactivate(काष्ठा blk_stat_callback *cb)
+अणु
+	del_समयr_sync(&cb->समयr);
+पूर्ण
 
 /**
- * blk_stat_activate_msecs() - Gather block statistics during a time window in
+ * blk_stat_activate_msecs() - Gather block statistics during a समय winकरोw in
  * milliseconds.
  * @cb: The callback.
- * @msecs: Number of milliseconds to gather statistics for.
+ * @msecs: Number of milliseconds to gather statistics क्रम.
  *
- * The timer callback will be called when the window expires.
+ * The समयr callback will be called when the winकरोw expires.
  */
-static inline void blk_stat_activate_msecs(struct blk_stat_callback *cb,
-					   unsigned int msecs)
-{
-	mod_timer(&cb->timer, jiffies + msecs_to_jiffies(msecs));
-}
+अटल अंतरभूत व्योम blk_stat_activate_msecs(काष्ठा blk_stat_callback *cb,
+					   अचिन्हित पूर्णांक msecs)
+अणु
+	mod_समयr(&cb->समयr, jअगरfies + msecs_to_jअगरfies(msecs));
+पूर्ण
 
-void blk_rq_stat_add(struct blk_rq_stat *, u64);
-void blk_rq_stat_sum(struct blk_rq_stat *, struct blk_rq_stat *);
-void blk_rq_stat_init(struct blk_rq_stat *);
+व्योम blk_rq_stat_add(काष्ठा blk_rq_stat *, u64);
+व्योम blk_rq_stat_sum(काष्ठा blk_rq_stat *, काष्ठा blk_rq_stat *);
+व्योम blk_rq_stat_init(काष्ठा blk_rq_stat *);
 
-#endif
+#पूर्ण_अगर

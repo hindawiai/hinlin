@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  Copyright IBM Corp. 2001, 2012
  *  Author(s): Robert Burroughs
@@ -8,69 +9,69 @@
  *  Hotplug & misc device support: Jochen Roehrig (roehrig@de.ibm.com)
  *  Major cleanup & driver split: Martin Schwidefsky <schwidefsky@de.ibm.com>
  *				  Ralph Wuerthner <rwuerthn@de.ibm.com>
- *  MSGTYPE restruct:		  Holger Dengler <hd@linux.vnet.ibm.com>
+ *  MSGTYPE reकाष्ठा:		  Holger Dengler <hd@linux.vnet.ibm.com>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/miscdevice.h>
-#include <linux/fs.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/compat.h>
-#include <linux/slab.h>
-#include <linux/atomic.h>
-#include <linux/uaccess.h>
-#include <linux/hw_random.h>
-#include <linux/debugfs.h>
-#include <asm/debug.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/debugfs.h>
+#समावेश <यंत्र/debug.h>
 
-#include "zcrypt_debug.h"
-#include "zcrypt_api.h"
+#समावेश "zcrypt_debug.h"
+#समावेश "zcrypt_api.h"
 
-#include "zcrypt_msgtype6.h"
-#include "zcrypt_msgtype50.h"
+#समावेश "zcrypt_msgtype6.h"
+#समावेश "zcrypt_msgtype50.h"
 
 /*
- * Device attributes common for all crypto card devices.
+ * Device attributes common क्रम all crypto card devices.
  */
 
-static ssize_t type_show(struct device *dev,
-			 struct device_attribute *attr, char *buf)
-{
-	struct zcrypt_card *zc = to_ap_card(dev)->private;
+अटल sमाप_प्रकार type_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा zcrypt_card *zc = to_ap_card(dev)->निजी;
 
-	return scnprintf(buf, PAGE_SIZE, "%s\n", zc->type_string);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", zc->type_string);
+पूर्ण
 
-static DEVICE_ATTR_RO(type);
+अटल DEVICE_ATTR_RO(type);
 
-static ssize_t online_show(struct device *dev,
-			   struct device_attribute *attr,
-			   char *buf)
-{
-	struct ap_card *ac = to_ap_card(dev);
-	struct zcrypt_card *zc = ac->private;
-	int online = ac->config && zc->online ? 1 : 0;
+अटल sमाप_प्रकार online_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा ap_card *ac = to_ap_card(dev);
+	काष्ठा zcrypt_card *zc = ac->निजी;
+	पूर्णांक online = ac->config && zc->online ? 1 : 0;
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", online);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", online);
+पूर्ण
 
-static ssize_t online_store(struct device *dev,
-			    struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
-	struct ap_card *ac = to_ap_card(dev);
-	struct zcrypt_card *zc = ac->private;
-	struct zcrypt_queue *zq;
-	int online, id;
+अटल sमाप_प्रकार online_store(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ap_card *ac = to_ap_card(dev);
+	काष्ठा zcrypt_card *zc = ac->निजी;
+	काष्ठा zcrypt_queue *zq;
+	पूर्णांक online, id;
 
-	if (sscanf(buf, "%d\n", &online) != 1 || online < 0 || online > 1)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%d\n", &online) != 1 || online < 0 || online > 1)
+		वापस -EINVAL;
 
-	if (online && !ac->config)
-		return -ENODEV;
+	अगर (online && !ac->config)
+		वापस -ENODEV;
 
 	zc->online = online;
 	id = zc->card->id;
@@ -78,84 +79,84 @@ static ssize_t online_store(struct device *dev,
 	ZCRYPT_DBF(DBF_INFO, "card=%02x online=%d\n", id, online);
 
 	spin_lock(&zcrypt_list_lock);
-	list_for_each_entry(zq, &zc->zqueues, list)
-		zcrypt_queue_force_online(zq, online);
+	list_क्रम_each_entry(zq, &zc->zqueues, list)
+		zcrypt_queue_क्रमce_online(zq, online);
 	spin_unlock(&zcrypt_list_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(online);
+अटल DEVICE_ATTR_RW(online);
 
-static ssize_t load_show(struct device *dev,
-			 struct device_attribute *attr,
-			 char *buf)
-{
-	struct zcrypt_card *zc = to_ap_card(dev)->private;
+अटल sमाप_प्रकार load_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा zcrypt_card *zc = to_ap_card(dev)->निजी;
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&zc->load));
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", atomic_पढ़ो(&zc->load));
+पूर्ण
 
-static DEVICE_ATTR_RO(load);
+अटल DEVICE_ATTR_RO(load);
 
-static struct attribute *zcrypt_card_attrs[] = {
+अटल काष्ठा attribute *zcrypt_card_attrs[] = अणु
 	&dev_attr_type.attr,
 	&dev_attr_online.attr,
 	&dev_attr_load.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group zcrypt_card_attr_group = {
+अटल स्थिर काष्ठा attribute_group zcrypt_card_attr_group = अणु
 	.attrs = zcrypt_card_attrs,
-};
+पूर्ण;
 
-struct zcrypt_card *zcrypt_card_alloc(void)
-{
-	struct zcrypt_card *zc;
+काष्ठा zcrypt_card *zcrypt_card_alloc(व्योम)
+अणु
+	काष्ठा zcrypt_card *zc;
 
-	zc = kzalloc(sizeof(struct zcrypt_card), GFP_KERNEL);
-	if (!zc)
-		return NULL;
+	zc = kzalloc(माप(काष्ठा zcrypt_card), GFP_KERNEL);
+	अगर (!zc)
+		वापस शून्य;
 	INIT_LIST_HEAD(&zc->list);
 	INIT_LIST_HEAD(&zc->zqueues);
 	kref_init(&zc->refcount);
-	return zc;
-}
+	वापस zc;
+पूर्ण
 EXPORT_SYMBOL(zcrypt_card_alloc);
 
-void zcrypt_card_free(struct zcrypt_card *zc)
-{
-	kfree(zc);
-}
-EXPORT_SYMBOL(zcrypt_card_free);
+व्योम zcrypt_card_मुक्त(काष्ठा zcrypt_card *zc)
+अणु
+	kमुक्त(zc);
+पूर्ण
+EXPORT_SYMBOL(zcrypt_card_मुक्त);
 
-static void zcrypt_card_release(struct kref *kref)
-{
-	struct zcrypt_card *zdev =
-		container_of(kref, struct zcrypt_card, refcount);
-	zcrypt_card_free(zdev);
-}
+अटल व्योम zcrypt_card_release(काष्ठा kref *kref)
+अणु
+	काष्ठा zcrypt_card *zdev =
+		container_of(kref, काष्ठा zcrypt_card, refcount);
+	zcrypt_card_मुक्त(zdev);
+पूर्ण
 
-void zcrypt_card_get(struct zcrypt_card *zc)
-{
+व्योम zcrypt_card_get(काष्ठा zcrypt_card *zc)
+अणु
 	kref_get(&zc->refcount);
-}
+पूर्ण
 EXPORT_SYMBOL(zcrypt_card_get);
 
-int zcrypt_card_put(struct zcrypt_card *zc)
-{
-	return kref_put(&zc->refcount, zcrypt_card_release);
-}
+पूर्णांक zcrypt_card_put(काष्ठा zcrypt_card *zc)
+अणु
+	वापस kref_put(&zc->refcount, zcrypt_card_release);
+पूर्ण
 EXPORT_SYMBOL(zcrypt_card_put);
 
 /**
- * zcrypt_card_register() - Register a crypto card device.
- * @zc: Pointer to a crypto card device
+ * zcrypt_card_रेजिस्टर() - Register a crypto card device.
+ * @zc: Poपूर्णांकer to a crypto card device
  *
- * Register a crypto card device. Returns 0 if successful.
+ * Register a crypto card device. Returns 0 अगर successful.
  */
-int zcrypt_card_register(struct zcrypt_card *zc)
-{
-	int rc;
+पूर्णांक zcrypt_card_रेजिस्टर(काष्ठा zcrypt_card *zc)
+अणु
+	पूर्णांक rc;
 
 	spin_lock(&zcrypt_list_lock);
 	list_add_tail(&zc->list, &zcrypt_card_list);
@@ -167,31 +168,31 @@ int zcrypt_card_register(struct zcrypt_card *zc)
 
 	rc = sysfs_create_group(&zc->card->ap_dev.device.kobj,
 				&zcrypt_card_attr_group);
-	if (rc) {
+	अगर (rc) अणु
 		spin_lock(&zcrypt_list_lock);
 		list_del_init(&zc->list);
 		spin_unlock(&zcrypt_list_lock);
-	}
+	पूर्ण
 
-	return rc;
-}
-EXPORT_SYMBOL(zcrypt_card_register);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL(zcrypt_card_रेजिस्टर);
 
 /**
- * zcrypt_card_unregister(): Unregister a crypto card device.
- * @zc: Pointer to crypto card device
+ * zcrypt_card_unरेजिस्टर(): Unरेजिस्टर a crypto card device.
+ * @zc: Poपूर्णांकer to crypto card device
  *
- * Unregister a crypto card device.
+ * Unरेजिस्टर a crypto card device.
  */
-void zcrypt_card_unregister(struct zcrypt_card *zc)
-{
+व्योम zcrypt_card_unरेजिस्टर(काष्ठा zcrypt_card *zc)
+अणु
 	ZCRYPT_DBF(DBF_INFO, "card=%02x unregister\n", zc->card->id);
 
 	spin_lock(&zcrypt_list_lock);
 	list_del_init(&zc->list);
 	spin_unlock(&zcrypt_list_lock);
-	sysfs_remove_group(&zc->card->ap_dev.device.kobj,
+	sysfs_हटाओ_group(&zc->card->ap_dev.device.kobj,
 			   &zcrypt_card_attr_group);
 	zcrypt_card_put(zc);
-}
-EXPORT_SYMBOL(zcrypt_card_unregister);
+पूर्ण
+EXPORT_SYMBOL(zcrypt_card_unरेजिस्टर);

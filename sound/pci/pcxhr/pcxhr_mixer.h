@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Driver for Digigram pcxhr compatible soundcards
+ * Driver क्रम Digigram pcxhr compatible soundcards
  *
- * include file for mixer
+ * include file क्रम mixer
  *
  * Copyright (c) 2004 by Digigram <alsa@digigram.com>
  */
 
-#ifndef __SOUND_PCXHR_MIXER_H
-#define __SOUND_PCXHR_MIXER_H
+#अगर_अघोषित __SOUND_PCXHR_MIXER_H
+#घोषणा __SOUND_PCXHR_MIXER_H
 
 /* exported */
-int pcxhr_create_mixer(struct pcxhr_mgr *mgr);
+पूर्णांक pcxhr_create_mixer(काष्ठा pcxhr_mgr *mgr);
 
-#endif /* __SOUND_PCXHR_MIXER_H */
+#पूर्ण_अगर /* __SOUND_PCXHR_MIXER_H */

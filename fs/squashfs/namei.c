@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed read only filesystem for Linux
+ * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
  *
  * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008
  * Phillip Lougher <phillip@squashfs.org.uk>
@@ -9,200 +10,200 @@
  */
 
 /*
- * This file implements code to do filename lookup in directories.
+ * This file implements code to करो filename lookup in directories.
  *
- * Like inodes, directories are packed into compressed metadata blocks, stored
+ * Like inodes, directories are packed पूर्णांकo compressed metadata blocks, stored
  * in a directory table.  Directories are accessed using the start address of
- * the metablock containing the directory and the offset into the
+ * the metablock containing the directory and the offset पूर्णांकo the
  * decompressed block (<block, offset>).
  *
  * Directories are organised in a slightly complex way, and are not simply
  * a list of file names.  The organisation takes advantage of the
- * fact that (in most cases) the inodes of the files will be in the same
- * compressed metadata block, and therefore, can share the start block.
- * Directories are therefore organised in a two level list, a directory
+ * fact that (in most हालs) the inodes of the files will be in the same
+ * compressed metadata block, and thereक्रमe, can share the start block.
+ * Directories are thereक्रमe organised in a two level list, a directory
  * header containing the shared start block value, and a sequence of directory
  * entries, each of which share the shared start block.  A new directory header
- * is written once/if the inode start block changes.  The directory
- * header/directory entry list is repeated as many times as necessary.
+ * is written once/अगर the inode start block changes.  The directory
+ * header/directory entry list is repeated as many बार as necessary.
  *
  * Directories are sorted, and can contain a directory index to speed up
  * file lookup.  Directory indexes store one entry per metablock, each entry
  * storing the index/filename mapping to the first directory header
  * in each metadata block.  Directories are sorted in alphabetical order,
- * and at lookup the index is scanned linearly looking for the first filename
- * alphabetically larger than the filename being looked up.  At this point the
+ * and at lookup the index is scanned linearly looking क्रम the first filename
+ * alphabetically larger than the filename being looked up.  At this poपूर्णांक the
  * location of the metadata block the filename is in has been found.
  * The general idea of the index is ensure only one metadata block needs to be
- * decompressed to do a lookup irrespective of the length of the directory.
- * This scheme has the advantage that it doesn't require extra memory overhead
- * and doesn't require much extra storage on disk.
+ * decompressed to करो a lookup irrespective of the length of the directory.
+ * This scheme has the advantage that it करोesn't require extra memory overhead
+ * and करोesn't require much extra storage on disk.
  */
 
-#include <linux/fs.h>
-#include <linux/vfs.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/dcache.h>
-#include <linux/xattr.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/dcache.h>
+#समावेश <linux/xattr.h>
 
-#include "squashfs_fs.h"
-#include "squashfs_fs_sb.h"
-#include "squashfs_fs_i.h"
-#include "squashfs.h"
-#include "xattr.h"
+#समावेश "squashfs_fs.h"
+#समावेश "squashfs_fs_sb.h"
+#समावेश "squashfs_fs_i.h"
+#समावेश "squashfs.h"
+#समावेश "xattr.h"
 
 /*
- * Lookup name in the directory index, returning the location of the metadata
+ * Lookup name in the directory index, वापसing the location of the metadata
  * block containing it, and the directory index this represents.
  *
- * If we get an error reading the index then return the part of the index
- * (if any) we have managed to read - the index isn't essential, just
+ * If we get an error पढ़ोing the index then वापस the part of the index
+ * (अगर any) we have managed to पढ़ो - the index isn't essential, just
  * quicker.
  */
-static int get_dir_index_using_name(struct super_block *sb,
-			u64 *next_block, int *next_offset, u64 index_start,
-			int index_offset, int i_count, const char *name,
-			int len)
-{
-	struct squashfs_sb_info *msblk = sb->s_fs_info;
-	int i, length = 0, err;
-	unsigned int size;
-	struct squashfs_dir_index *index;
-	char *str;
+अटल पूर्णांक get_dir_index_using_name(काष्ठा super_block *sb,
+			u64 *next_block, पूर्णांक *next_offset, u64 index_start,
+			पूर्णांक index_offset, पूर्णांक i_count, स्थिर अक्षर *name,
+			पूर्णांक len)
+अणु
+	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
+	पूर्णांक i, length = 0, err;
+	अचिन्हित पूर्णांक size;
+	काष्ठा squashfs_dir_index *index;
+	अक्षर *str;
 
 	TRACE("Entered get_dir_index_using_name, i_count %d\n", i_count);
 
-	index = kmalloc(sizeof(*index) + SQUASHFS_NAME_LEN * 2 + 2, GFP_KERNEL);
-	if (index == NULL) {
+	index = kदो_स्मृति(माप(*index) + SQUASHFS_NAME_LEN * 2 + 2, GFP_KERNEL);
+	अगर (index == शून्य) अणु
 		ERROR("Failed to allocate squashfs_dir_index\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	str = &index->name[SQUASHFS_NAME_LEN + 1];
-	strncpy(str, name, len);
+	म_नकलन(str, name, len);
 	str[len] = '\0';
 
-	for (i = 0; i < i_count; i++) {
-		err = squashfs_read_metadata(sb, index, &index_start,
-					&index_offset, sizeof(*index));
-		if (err < 0)
-			break;
+	क्रम (i = 0; i < i_count; i++) अणु
+		err = squashfs_पढ़ो_metadata(sb, index, &index_start,
+					&index_offset, माप(*index));
+		अगर (err < 0)
+			अवरोध;
 
 
 		size = le32_to_cpu(index->size) + 1;
-		if (size > SQUASHFS_NAME_LEN)
-			break;
+		अगर (size > SQUASHFS_NAME_LEN)
+			अवरोध;
 
-		err = squashfs_read_metadata(sb, index->name, &index_start,
+		err = squashfs_पढ़ो_metadata(sb, index->name, &index_start,
 					&index_offset, size);
-		if (err < 0)
-			break;
+		अगर (err < 0)
+			अवरोध;
 
 		index->name[size] = '\0';
 
-		if (strcmp(index->name, str) > 0)
-			break;
+		अगर (म_भेद(index->name, str) > 0)
+			अवरोध;
 
 		length = le32_to_cpu(index->index);
 		*next_block = le32_to_cpu(index->start_block) +
 					msblk->directory_table;
-	}
+	पूर्ण
 
 	*next_offset = (length + *next_offset) % SQUASHFS_METADATA_SIZE;
-	kfree(index);
+	kमुक्त(index);
 
 out:
 	/*
 	 * Return index (f_pos) of the looked up metadata block.  Translate
-	 * from internal f_pos to external f_pos which is offset by 3 because
+	 * from पूर्णांकernal f_pos to बाह्यal f_pos which is offset by 3 because
 	 * we invent "." and ".." entries which are not actually stored in the
 	 * directory.
 	 */
-	return length + 3;
-}
+	वापस length + 3;
+पूर्ण
 
 
-static struct dentry *squashfs_lookup(struct inode *dir, struct dentry *dentry,
-				 unsigned int flags)
-{
-	const unsigned char *name = dentry->d_name.name;
-	int len = dentry->d_name.len;
-	struct inode *inode = NULL;
-	struct squashfs_sb_info *msblk = dir->i_sb->s_fs_info;
-	struct squashfs_dir_header dirh;
-	struct squashfs_dir_entry *dire;
+अटल काष्ठा dentry *squashfs_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
+				 अचिन्हित पूर्णांक flags)
+अणु
+	स्थिर अचिन्हित अक्षर *name = dentry->d_name.name;
+	पूर्णांक len = dentry->d_name.len;
+	काष्ठा inode *inode = शून्य;
+	काष्ठा squashfs_sb_info *msblk = dir->i_sb->s_fs_info;
+	काष्ठा squashfs_dir_header dirh;
+	काष्ठा squashfs_dir_entry *dire;
 	u64 block = squashfs_i(dir)->start + msblk->directory_table;
-	int offset = squashfs_i(dir)->offset;
-	int err, length;
-	unsigned int dir_count, size;
+	पूर्णांक offset = squashfs_i(dir)->offset;
+	पूर्णांक err, length;
+	अचिन्हित पूर्णांक dir_count, size;
 
 	TRACE("Entered squashfs_lookup [%llx:%x]\n", block, offset);
 
-	dire = kmalloc(sizeof(*dire) + SQUASHFS_NAME_LEN + 1, GFP_KERNEL);
-	if (dire == NULL) {
+	dire = kदो_स्मृति(माप(*dire) + SQUASHFS_NAME_LEN + 1, GFP_KERNEL);
+	अगर (dire == शून्य) अणु
 		ERROR("Failed to allocate squashfs_dir_entry\n");
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	if (len > SQUASHFS_NAME_LEN) {
+	अगर (len > SQUASHFS_NAME_LEN) अणु
 		err = -ENAMETOOLONG;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	length = get_dir_index_using_name(dir->i_sb, &block, &offset,
 				squashfs_i(dir)->dir_idx_start,
 				squashfs_i(dir)->dir_idx_offset,
 				squashfs_i(dir)->dir_idx_cnt, name, len);
 
-	while (length < i_size_read(dir)) {
+	जबतक (length < i_size_पढ़ो(dir)) अणु
 		/*
 		 * Read directory header.
 		 */
-		err = squashfs_read_metadata(dir->i_sb, &dirh, &block,
-				&offset, sizeof(dirh));
-		if (err < 0)
-			goto read_failure;
+		err = squashfs_पढ़ो_metadata(dir->i_sb, &dirh, &block,
+				&offset, माप(dirh));
+		अगर (err < 0)
+			जाओ पढ़ो_failure;
 
-		length += sizeof(dirh);
+		length += माप(dirh);
 
 		dir_count = le32_to_cpu(dirh.count) + 1;
 
-		if (dir_count > SQUASHFS_DIR_COUNT)
-			goto data_error;
+		अगर (dir_count > SQUASHFS_सूची_COUNT)
+			जाओ data_error;
 
-		while (dir_count--) {
+		जबतक (dir_count--) अणु
 			/*
 			 * Read directory entry.
 			 */
-			err = squashfs_read_metadata(dir->i_sb, dire, &block,
-					&offset, sizeof(*dire));
-			if (err < 0)
-				goto read_failure;
+			err = squashfs_पढ़ो_metadata(dir->i_sb, dire, &block,
+					&offset, माप(*dire));
+			अगर (err < 0)
+				जाओ पढ़ो_failure;
 
 			size = le16_to_cpu(dire->size) + 1;
 
 			/* size should never be larger than SQUASHFS_NAME_LEN */
-			if (size > SQUASHFS_NAME_LEN)
-				goto data_error;
+			अगर (size > SQUASHFS_NAME_LEN)
+				जाओ data_error;
 
-			err = squashfs_read_metadata(dir->i_sb, dire->name,
+			err = squashfs_पढ़ो_metadata(dir->i_sb, dire->name,
 					&block, &offset, size);
-			if (err < 0)
-				goto read_failure;
+			अगर (err < 0)
+				जाओ पढ़ो_failure;
 
-			length += sizeof(*dire) + size;
+			length += माप(*dire) + size;
 
-			if (name[0] < dire->name[0])
-				goto exit_lookup;
+			अगर (name[0] < dire->name[0])
+				जाओ निकास_lookup;
 
-			if (len == size && !strncmp(name, dire->name, len)) {
-				unsigned int blk, off, ino_num;
-				long long ino;
+			अगर (len == size && !म_भेदन(name, dire->name, len)) अणु
+				अचिन्हित पूर्णांक blk, off, ino_num;
+				दीर्घ दीर्घ ino;
 				blk = le32_to_cpu(dirh.start_block);
 				off = le16_to_cpu(dire->offset);
 				ino_num = le32_to_cpu(dirh.inode_number) +
-					(short) le16_to_cpu(dire->inode_number);
+					(लघु) le16_to_cpu(dire->inode_number);
 				ino = SQUASHFS_MKINODE(blk, off);
 
 				TRACE("calling squashfs_iget for directory "
@@ -210,29 +211,29 @@ static struct dentry *squashfs_lookup(struct inode *dir, struct dentry *dentry,
 					blk, off, ino_num);
 
 				inode = squashfs_iget(dir->i_sb, ino, ino_num);
-				goto exit_lookup;
-			}
-		}
-	}
+				जाओ निकास_lookup;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-exit_lookup:
-	kfree(dire);
-	return d_splice_alias(inode, dentry);
+निकास_lookup:
+	kमुक्त(dire);
+	वापस d_splice_alias(inode, dentry);
 
 data_error:
 	err = -EIO;
 
-read_failure:
+पढ़ो_failure:
 	ERROR("Unable to read directory block [%llx:%x]\n",
 		squashfs_i(dir)->start + msblk->directory_table,
 		squashfs_i(dir)->offset);
 failed:
-	kfree(dire);
-	return ERR_PTR(err);
-}
+	kमुक्त(dire);
+	वापस ERR_PTR(err);
+पूर्ण
 
 
-const struct inode_operations squashfs_dir_inode_ops = {
+स्थिर काष्ठा inode_operations squashfs_dir_inode_ops = अणु
 	.lookup = squashfs_lookup,
 	.listxattr = squashfs_listxattr
-};
+पूर्ण;

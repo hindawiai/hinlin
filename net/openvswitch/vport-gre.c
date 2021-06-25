@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/if.h>
-#include <linux/skbuff.h>
-#include <linux/ip.h>
-#include <linux/if_tunnel.h>
-#include <linux/if_vlan.h>
-#include <linux/in.h>
-#include <linux/in_route.h>
-#include <linux/inetdevice.h>
-#include <linux/jhash.h>
-#include <linux/list.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/workqueue.h>
-#include <linux/rculist.h>
-#include <net/route.h>
-#include <net/xfrm.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/अगर_tunnel.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in_route.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/rculist.h>
+#समावेश <net/route.h>
+#समावेश <net/xfrm.h>
 
-#include <net/icmp.h>
-#include <net/ip.h>
-#include <net/ip_tunnels.h>
-#include <net/gre.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <net/protocol.h>
+#समावेश <net/icmp.h>
+#समावेश <net/ip.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/gre.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/protocol.h>
 
-#include "datapath.h"
-#include "vport.h"
-#include "vport-netdev.h"
+#समावेश "datapath.h"
+#समावेश "vport.h"
+#समावेश "vport-netdev.h"
 
-static struct vport_ops ovs_gre_vport_ops;
+अटल काष्ठा vport_ops ovs_gre_vport_ops;
 
-static struct vport *gre_tnl_create(const struct vport_parms *parms)
-{
-	struct net *net = ovs_dp_get_net(parms->dp);
-	struct net_device *dev;
-	struct vport *vport;
-	int err;
+अटल काष्ठा vport *gre_tnl_create(स्थिर काष्ठा vport_parms *parms)
+अणु
+	काष्ठा net *net = ovs_dp_get_net(parms->dp);
+	काष्ठा net_device *dev;
+	काष्ठा vport *vport;
+	पूर्णांक err;
 
 	vport = ovs_vport_alloc(0, &ovs_gre_vport_ops, parms);
-	if (IS_ERR(vport))
-		return vport;
+	अगर (IS_ERR(vport))
+		वापस vport;
 
 	rtnl_lock();
 	dev = gretap_fb_dev_create(net, parms->name, NET_NAME_USER);
-	if (IS_ERR(dev)) {
+	अगर (IS_ERR(dev)) अणु
 		rtnl_unlock();
-		ovs_vport_free(vport);
-		return ERR_CAST(dev);
-	}
+		ovs_vport_मुक्त(vport);
+		वापस ERR_CAST(dev);
+	पूर्ण
 
-	err = dev_change_flags(dev, dev->flags | IFF_UP, NULL);
-	if (err < 0) {
+	err = dev_change_flags(dev, dev->flags | IFF_UP, शून्य);
+	अगर (err < 0) अणु
 		rtnl_delete_link(dev);
 		rtnl_unlock();
-		ovs_vport_free(vport);
-		return ERR_PTR(err);
-	}
+		ovs_vport_मुक्त(vport);
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	rtnl_unlock();
-	return vport;
-}
+	वापस vport;
+पूर्ण
 
-static struct vport *gre_create(const struct vport_parms *parms)
-{
-	struct vport *vport;
+अटल काष्ठा vport *gre_create(स्थिर काष्ठा vport_parms *parms)
+अणु
+	काष्ठा vport *vport;
 
 	vport = gre_tnl_create(parms);
-	if (IS_ERR(vport))
-		return vport;
+	अगर (IS_ERR(vport))
+		वापस vport;
 
-	return ovs_netdev_link(vport, parms->name);
-}
+	वापस ovs_netdev_link(vport, parms->name);
+पूर्ण
 
-static struct vport_ops ovs_gre_vport_ops = {
+अटल काष्ठा vport_ops ovs_gre_vport_ops = अणु
 	.type		= OVS_VPORT_TYPE_GRE,
 	.create		= gre_create,
 	.send		= dev_queue_xmit,
 	.destroy	= ovs_netdev_tunnel_destroy,
-};
+पूर्ण;
 
-static int __init ovs_gre_tnl_init(void)
-{
-	return ovs_vport_ops_register(&ovs_gre_vport_ops);
-}
+अटल पूर्णांक __init ovs_gre_tnl_init(व्योम)
+अणु
+	वापस ovs_vport_ops_रेजिस्टर(&ovs_gre_vport_ops);
+पूर्ण
 
-static void __exit ovs_gre_tnl_exit(void)
-{
-	ovs_vport_ops_unregister(&ovs_gre_vport_ops);
-}
+अटल व्योम __निकास ovs_gre_tnl_निकास(व्योम)
+अणु
+	ovs_vport_ops_unरेजिस्टर(&ovs_gre_vport_ops);
+पूर्ण
 
 module_init(ovs_gre_tnl_init);
-module_exit(ovs_gre_tnl_exit);
+module_निकास(ovs_gre_tnl_निकास);
 
 MODULE_DESCRIPTION("OVS: GRE switching port");
 MODULE_LICENSE("GPL");

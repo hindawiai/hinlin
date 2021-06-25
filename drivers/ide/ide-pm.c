@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/gfp.h>
-#include <linux/ide.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/ide.h>
 
-int generic_ide_suspend(struct device *dev, pm_message_t mesg)
-{
+पूर्णांक generic_ide_suspend(काष्ठा device *dev, pm_message_t mesg)
+अणु
 	ide_drive_t *drive = to_ide_device(dev);
 	ide_drive_t *pair = ide_get_pair_dev(drive);
-	ide_hwif_t *hwif = drive->hwif;
-	struct request *rq;
-	struct ide_pm_state rqpm;
-	int ret;
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	काष्ठा request *rq;
+	काष्ठा ide_pm_state rqpm;
+	पूर्णांक ret;
 
-	if (ide_port_acpi(hwif)) {
+	अगर (ide_port_acpi(hwअगर)) अणु
 		/* call ACPI _GTM only once */
-		if ((drive->dn & 1) == 0 || pair == NULL)
-			ide_acpi_get_timing(hwif);
-	}
+		अगर ((drive->dn & 1) == 0 || pair == शून्य)
+			ide_acpi_get_timing(hwअगर);
+	पूर्ण
 
-	memset(&rqpm, 0, sizeof(rqpm));
+	स_रखो(&rqpm, 0, माप(rqpm));
 	rq = blk_get_request(drive->queue, REQ_OP_DRV_IN, 0);
 	ide_req(rq)->type = ATA_PRIV_PM_SUSPEND;
 	ide_req(rq)->special = &rqpm;
 	rqpm.pm_step = IDE_PM_START_SUSPEND;
-	if (mesg.event == PM_EVENT_PRETHAW)
+	अगर (mesg.event == PM_EVENT_PRETHAW)
 		mesg.event = PM_EVENT_FREEZE;
 	rqpm.pm_state = mesg.event;
 
-	blk_execute_rq(NULL, rq, 0);
+	blk_execute_rq(शून्य, rq, 0);
 	ret = scsi_req(rq)->result ? -EIO : 0;
 	blk_put_request(rq);
 
-	if (ret == 0 && ide_port_acpi(hwif)) {
+	अगर (ret == 0 && ide_port_acpi(hwअगर)) अणु
 		/* call ACPI _PS3 only after both devices are suspended */
-		if ((drive->dn & 1) || pair == NULL)
-			ide_acpi_set_state(hwif, 0);
-	}
+		अगर ((drive->dn & 1) || pair == शून्य)
+			ide_acpi_set_state(hwअगर, 0);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ide_pm_execute_rq(struct request *rq)
-{
-	struct request_queue *q = rq->q;
+अटल पूर्णांक ide_pm_execute_rq(काष्ठा request *rq)
+अणु
+	काष्ठा request_queue *q = rq->q;
 
-	if (unlikely(blk_queue_dying(q))) {
+	अगर (unlikely(blk_queue_dying(q))) अणु
 		rq->rq_flags |= RQF_QUIET;
 		scsi_req(rq)->result = -ENXIO;
 		blk_mq_end_request(rq, BLK_STS_OK);
-		return -ENXIO;
-	}
-	blk_execute_rq(NULL, rq, true);
+		वापस -ENXIO;
+	पूर्ण
+	blk_execute_rq(शून्य, rq, true);
 
-	return scsi_req(rq)->result ? -EIO : 0;
-}
+	वापस scsi_req(rq)->result ? -EIO : 0;
+पूर्ण
 
-int generic_ide_resume(struct device *dev)
-{
+पूर्णांक generic_ide_resume(काष्ठा device *dev)
+अणु
 	ide_drive_t *drive = to_ide_device(dev);
 	ide_drive_t *pair = ide_get_pair_dev(drive);
-	ide_hwif_t *hwif = drive->hwif;
-	struct request *rq;
-	struct ide_pm_state rqpm;
-	int err;
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	काष्ठा request *rq;
+	काष्ठा ide_pm_state rqpm;
+	पूर्णांक err;
 
 	blk_mq_start_stopped_hw_queues(drive->queue, true);
 
-	if (ide_port_acpi(hwif)) {
+	अगर (ide_port_acpi(hwअगर)) अणु
 		/* call ACPI _PS0 / _STM only once */
-		if ((drive->dn & 1) == 0 || pair == NULL) {
-			ide_acpi_set_state(hwif, 1);
-			ide_acpi_push_timing(hwif);
-		}
+		अगर ((drive->dn & 1) == 0 || pair == शून्य) अणु
+			ide_acpi_set_state(hwअगर, 1);
+			ide_acpi_push_timing(hwअगर);
+		पूर्ण
 
 		ide_acpi_exec_tfs(drive);
-	}
+	पूर्ण
 
-	memset(&rqpm, 0, sizeof(rqpm));
+	स_रखो(&rqpm, 0, माप(rqpm));
 	rq = blk_get_request(drive->queue, REQ_OP_DRV_IN, BLK_MQ_REQ_PM);
 	ide_req(rq)->type = ATA_PRIV_PM_RESUME;
 	ide_req(rq)->special = &rqpm;
@@ -86,108 +87,108 @@ int generic_ide_resume(struct device *dev)
 	err = ide_pm_execute_rq(rq);
 	blk_put_request(rq);
 
-	if (err == 0 && dev->driver) {
-		struct ide_driver *drv = to_ide_driver(dev->driver);
+	अगर (err == 0 && dev->driver) अणु
+		काष्ठा ide_driver *drv = to_ide_driver(dev->driver);
 
-		if (drv->resume)
+		अगर (drv->resume)
 			drv->resume(drive);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void ide_complete_power_step(ide_drive_t *drive, struct request *rq)
-{
-	struct ide_pm_state *pm = ide_req(rq)->special;
+व्योम ide_complete_घातer_step(ide_drive_t *drive, काष्ठा request *rq)
+अणु
+	काष्ठा ide_pm_state *pm = ide_req(rq)->special;
 
-#ifdef DEBUG_PM
-	printk(KERN_INFO "%s: complete_power_step(step: %d)\n",
+#अगर_घोषित DEBUG_PM
+	prपूर्णांकk(KERN_INFO "%s: complete_power_step(step: %d)\n",
 		drive->name, pm->pm_step);
-#endif
-	if (drive->media != ide_disk)
-		return;
+#पूर्ण_अगर
+	अगर (drive->media != ide_disk)
+		वापस;
 
-	switch (pm->pm_step) {
-	case IDE_PM_FLUSH_CACHE:	/* Suspend step 1 (flush cache) */
-		if (pm->pm_state == PM_EVENT_FREEZE)
+	चयन (pm->pm_step) अणु
+	हाल IDE_PM_FLUSH_CACHE:	/* Suspend step 1 (flush cache) */
+		अगर (pm->pm_state == PM_EVENT_FREEZE)
 			pm->pm_step = IDE_PM_COMPLETED;
-		else
+		अन्यथा
 			pm->pm_step = IDE_PM_STANDBY;
-		break;
-	case IDE_PM_STANDBY:		/* Suspend step 2 (standby) */
+		अवरोध;
+	हाल IDE_PM_STANDBY:		/* Suspend step 2 (standby) */
 		pm->pm_step = IDE_PM_COMPLETED;
-		break;
-	case IDE_PM_RESTORE_PIO:	/* Resume step 1 (restore PIO) */
+		अवरोध;
+	हाल IDE_PM_RESTORE_PIO:	/* Resume step 1 (restore PIO) */
 		pm->pm_step = IDE_PM_IDLE;
-		break;
-	case IDE_PM_IDLE:		/* Resume step 2 (idle)*/
+		अवरोध;
+	हाल IDE_PM_IDLE:		/* Resume step 2 (idle)*/
 		pm->pm_step = IDE_PM_RESTORE_DMA;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-ide_startstop_t ide_start_power_step(ide_drive_t *drive, struct request *rq)
-{
-	struct ide_pm_state *pm = ide_req(rq)->special;
-	struct ide_cmd cmd = { };
+ide_startstop_t ide_start_घातer_step(ide_drive_t *drive, काष्ठा request *rq)
+अणु
+	काष्ठा ide_pm_state *pm = ide_req(rq)->special;
+	काष्ठा ide_cmd cmd = अणु पूर्ण;
 
-	switch (pm->pm_step) {
-	case IDE_PM_FLUSH_CACHE:	/* Suspend step 1 (flush cache) */
-		if (drive->media != ide_disk)
-			break;
+	चयन (pm->pm_step) अणु
+	हाल IDE_PM_FLUSH_CACHE:	/* Suspend step 1 (flush cache) */
+		अगर (drive->media != ide_disk)
+			अवरोध;
 		/* Not supported? Switch to next step now. */
-		if (ata_id_flush_enabled(drive->id) == 0 ||
-		    (drive->dev_flags & IDE_DFLAG_WCACHE) == 0) {
-			ide_complete_power_step(drive, rq);
-			return ide_stopped;
-		}
-		if (ata_id_flush_ext_enabled(drive->id))
+		अगर (ata_id_flush_enabled(drive->id) == 0 ||
+		    (drive->dev_flags & IDE_DFLAG_WCACHE) == 0) अणु
+			ide_complete_घातer_step(drive, rq);
+			वापस ide_stopped;
+		पूर्ण
+		अगर (ata_id_flush_ext_enabled(drive->id))
 			cmd.tf.command = ATA_CMD_FLUSH_EXT;
-		else
+		अन्यथा
 			cmd.tf.command = ATA_CMD_FLUSH;
-		goto out_do_tf;
-	case IDE_PM_STANDBY:		/* Suspend step 2 (standby) */
+		जाओ out_करो_tf;
+	हाल IDE_PM_STANDBY:		/* Suspend step 2 (standby) */
 		cmd.tf.command = ATA_CMD_STANDBYNOW1;
-		goto out_do_tf;
-	case IDE_PM_RESTORE_PIO:	/* Resume step 1 (restore PIO) */
+		जाओ out_करो_tf;
+	हाल IDE_PM_RESTORE_PIO:	/* Resume step 1 (restore PIO) */
 		ide_set_max_pio(drive);
 		/*
-		 * skip IDE_PM_IDLE for ATAPI devices
+		 * skip IDE_PM_IDLE क्रम ATAPI devices
 		 */
-		if (drive->media != ide_disk)
+		अगर (drive->media != ide_disk)
 			pm->pm_step = IDE_PM_RESTORE_DMA;
-		else
-			ide_complete_power_step(drive, rq);
-		return ide_stopped;
-	case IDE_PM_IDLE:		/* Resume step 2 (idle) */
+		अन्यथा
+			ide_complete_घातer_step(drive, rq);
+		वापस ide_stopped;
+	हाल IDE_PM_IDLE:		/* Resume step 2 (idle) */
 		cmd.tf.command = ATA_CMD_IDLEIMMEDIATE;
-		goto out_do_tf;
-	case IDE_PM_RESTORE_DMA:	/* Resume step 3 (restore DMA) */
+		जाओ out_करो_tf;
+	हाल IDE_PM_RESTORE_DMA:	/* Resume step 3 (restore DMA) */
 		/*
-		 * Right now, all we do is call ide_set_dma(drive),
-		 * we could be smarter and check for current xfer_speed
-		 * in struct drive etc...
+		 * Right now, all we करो is call ide_set_dma(drive),
+		 * we could be smarter and check क्रम current xfer_speed
+		 * in काष्ठा drive etc...
 		 */
-		if (drive->hwif->dma_ops == NULL)
-			break;
+		अगर (drive->hwअगर->dma_ops == शून्य)
+			अवरोध;
 		/*
 		 * TODO: respect IDE_DFLAG_USING_DMA
 		 */
 		ide_set_dma(drive);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	pm->pm_step = IDE_PM_COMPLETED;
 
-	return ide_stopped;
+	वापस ide_stopped;
 
-out_do_tf:
+out_करो_tf:
 	cmd.valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 	cmd.valid.in.tf  = IDE_VALID_IN_TF  | IDE_VALID_DEVICE;
 	cmd.protocol = ATA_PROT_NODATA;
 
-	return do_rw_taskfile(drive, &cmd);
-}
+	वापस करो_rw_taskfile(drive, &cmd);
+पूर्ण
 
 /**
  *	ide_complete_pm_rq - end the current Power Management request
@@ -195,67 +196,67 @@ out_do_tf:
  *	@rq: request
  *
  *	This function cleans up the current PM request and stops the queue
- *	if necessary.
+ *	अगर necessary.
  */
-void ide_complete_pm_rq(ide_drive_t *drive, struct request *rq)
-{
-	struct request_queue *q = drive->queue;
-	struct ide_pm_state *pm = ide_req(rq)->special;
+व्योम ide_complete_pm_rq(ide_drive_t *drive, काष्ठा request *rq)
+अणु
+	काष्ठा request_queue *q = drive->queue;
+	काष्ठा ide_pm_state *pm = ide_req(rq)->special;
 
-	ide_complete_power_step(drive, rq);
-	if (pm->pm_step != IDE_PM_COMPLETED)
-		return;
+	ide_complete_घातer_step(drive, rq);
+	अगर (pm->pm_step != IDE_PM_COMPLETED)
+		वापस;
 
-#ifdef DEBUG_PM
-	printk("%s: completing PM request, %s\n", drive->name,
+#अगर_घोषित DEBUG_PM
+	prपूर्णांकk("%s: completing PM request, %s\n", drive->name,
 	       (ide_req(rq)->type == ATA_PRIV_PM_SUSPEND) ? "suspend" : "resume");
-#endif
-	if (ide_req(rq)->type == ATA_PRIV_PM_SUSPEND)
+#पूर्ण_अगर
+	अगर (ide_req(rq)->type == ATA_PRIV_PM_SUSPEND)
 		blk_mq_stop_hw_queues(q);
-	else
+	अन्यथा
 		drive->dev_flags &= ~IDE_DFLAG_BLOCKED;
 
-	drive->hwif->rq = NULL;
+	drive->hwअगर->rq = शून्य;
 
 	blk_mq_end_request(rq, BLK_STS_OK);
-}
+पूर्ण
 
-void ide_check_pm_state(ide_drive_t *drive, struct request *rq)
-{
-	struct ide_pm_state *pm = ide_req(rq)->special;
+व्योम ide_check_pm_state(ide_drive_t *drive, काष्ठा request *rq)
+अणु
+	काष्ठा ide_pm_state *pm = ide_req(rq)->special;
 
-	if (blk_rq_is_private(rq) &&
+	अगर (blk_rq_is_निजी(rq) &&
 	    ide_req(rq)->type == ATA_PRIV_PM_SUSPEND &&
 	    pm->pm_step == IDE_PM_START_SUSPEND)
 		/* Mark drive blocked when starting the suspend sequence. */
 		drive->dev_flags |= IDE_DFLAG_BLOCKED;
-	else if (blk_rq_is_private(rq) &&
+	अन्यथा अगर (blk_rq_is_निजी(rq) &&
 	         ide_req(rq)->type == ATA_PRIV_PM_RESUME &&
-		 pm->pm_step == IDE_PM_START_RESUME) {
+		 pm->pm_step == IDE_PM_START_RESUME) अणु
 		/*
-		 * The first thing we do on wakeup is to wait for BSY bit to
-		 * go away (with a looong timeout) as a drive on this hwif may
+		 * The first thing we करो on wakeup is to रुको क्रम BSY bit to
+		 * go away (with a looong समयout) as a drive on this hwअगर may
 		 * just be POSTing itself.
-		 * We do that before even selecting as the "other" device on
+		 * We करो that beक्रमe even selecting as the "other" device on
 		 * the bus may be broken enough to walk on our toes at this
-		 * point.
+		 * poपूर्णांक.
 		 */
-		ide_hwif_t *hwif = drive->hwif;
-		const struct ide_tp_ops *tp_ops = hwif->tp_ops;
-		struct request_queue *q = drive->queue;
-		int rc;
-#ifdef DEBUG_PM
-		printk("%s: Wakeup request inited, waiting for !BSY...\n", drive->name);
-#endif
-		rc = ide_wait_not_busy(hwif, 35000);
-		if (rc)
-			printk(KERN_WARNING "%s: bus not ready on wakeup\n", drive->name);
+		ide_hwअगर_t *hwअगर = drive->hwअगर;
+		स्थिर काष्ठा ide_tp_ops *tp_ops = hwअगर->tp_ops;
+		काष्ठा request_queue *q = drive->queue;
+		पूर्णांक rc;
+#अगर_घोषित DEBUG_PM
+		prपूर्णांकk("%s: Wakeup request inited, waiting for !BSY...\n", drive->name);
+#पूर्ण_अगर
+		rc = ide_रुको_not_busy(hwअगर, 35000);
+		अगर (rc)
+			prपूर्णांकk(KERN_WARNING "%s: bus not ready on wakeup\n", drive->name);
 		tp_ops->dev_select(drive);
-		tp_ops->write_devctl(hwif, ATA_DEVCTL_OBS);
-		rc = ide_wait_not_busy(hwif, 100000);
-		if (rc)
-			printk(KERN_WARNING "%s: drive not ready on wakeup\n", drive->name);
+		tp_ops->ग_लिखो_devctl(hwअगर, ATA_DEVCTL_OBS);
+		rc = ide_रुको_not_busy(hwअगर, 100000);
+		अगर (rc)
+			prपूर्णांकk(KERN_WARNING "%s: drive not ready on wakeup\n", drive->name);
 
 		blk_mq_start_hw_queues(q);
-	}
-}
+	पूर्ण
+पूर्ण

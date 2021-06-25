@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * cxd2880_tnrdmd_dvbt_mon.c
  * Sony CXD2880 DVB-T2/T tuner + demodulator driver
@@ -7,178 +8,178 @@
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
-#include "cxd2880_tnrdmd_mon.h"
-#include "cxd2880_tnrdmd_dvbt.h"
-#include "cxd2880_tnrdmd_dvbt_mon.h"
+#समावेश "cxd2880_tnrdmd_mon.h"
+#समावेश "cxd2880_tnrdmd_dvbt.h"
+#समावेश "cxd2880_tnrdmd_dvbt_mon.h"
 
-#include <media/dvb_math.h>
+#समावेश <media/dvb_गणित.स>
 
-static const int ref_dbm_1000[3][5] = {
-	{-93000, -91000, -90000, -89000, -88000},
-	{-87000, -85000, -84000, -83000, -82000},
-	{-82000, -80000, -78000, -77000, -76000},
-};
+अटल स्थिर पूर्णांक ref_dbm_1000[3][5] = अणु
+	अणु-93000, -91000, -90000, -89000, -88000पूर्ण,
+	अणु-87000, -85000, -84000, -83000, -82000पूर्ण,
+	अणु-82000, -80000, -78000, -77000, -76000पूर्ण,
+पूर्ण;
 
-static int is_tps_locked(struct cxd2880_tnrdmd *tnr_dmd);
+अटल पूर्णांक is_tps_locked(काष्ठा cxd2880_tnrdmd *tnr_dmd);
 
-int cxd2880_tnrdmd_dvbt_mon_sync_stat(struct cxd2880_tnrdmd
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_sync_stat(काष्ठा cxd2880_tnrdmd
 				      *tnr_dmd, u8 *sync_stat,
 				      u8 *ts_lock_stat,
 				      u8 *unlock_detected)
-{
+अणु
 	u8 rdata = 0x00;
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !sync_stat || !ts_lock_stat || !unlock_detected)
-		return -EINVAL;
+	अगर (!tnr_dmd || !sync_stat || !ts_lock_stat || !unlock_detected)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x0d);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x10, &rdata, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*unlock_detected = (rdata & 0x10) ? 1 : 0;
 	*sync_stat = rdata & 0x07;
 	*ts_lock_stat = (rdata & 0x20) ? 1 : 0;
 
-	if (*sync_stat == 0x07)
-		return -EAGAIN;
+	अगर (*sync_stat == 0x07)
+		वापस -EAGAIN;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_sync_stat_sub(struct cxd2880_tnrdmd
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_sync_stat_sub(काष्ठा cxd2880_tnrdmd
 					  *tnr_dmd, u8 *sync_stat,
 					  u8 *unlock_detected)
-{
+अणु
 	u8 ts_lock_stat = 0;
 
-	if (!tnr_dmd || !sync_stat || !unlock_detected)
-		return -EINVAL;
+	अगर (!tnr_dmd || !sync_stat || !unlock_detected)
+		वापस -EINVAL;
 
-	if (tnr_dmd->diver_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
+		वापस -EINVAL;
 
-	return cxd2880_tnrdmd_dvbt_mon_sync_stat(tnr_dmd->diver_sub,
+	वापस cxd2880_tnrdmd_dvbt_mon_sync_stat(tnr_dmd->भागer_sub,
 						 sync_stat,
 						 &ts_lock_stat,
 						 unlock_detected);
-}
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_mode_guard(struct cxd2880_tnrdmd
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_mode_guard(काष्ठा cxd2880_tnrdmd
 				       *tnr_dmd,
-				       enum cxd2880_dvbt_mode
+				       क्रमागत cxd2880_dvbt_mode
 				       *mode,
-				       enum cxd2880_dvbt_guard
+				       क्रमागत cxd2880_dvbt_guard
 				       *guard)
-{
+अणु
 	u8 rdata = 0x00;
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !mode || !guard)
-		return -EINVAL;
+	अगर (!tnr_dmd || !mode || !guard)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	ret = slvt_freeze_reg(tnr_dmd);
-	if (ret)
-		return ret;
+	ret = slvt_मुक्तze_reg(tnr_dmd);
+	अगर (ret)
+		वापस ret;
 
 	ret = is_tps_locked(tnr_dmd);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
 
-		if (tnr_dmd->diver_mode == CXD2880_TNRDMD_DIVERMODE_MAIN)
+		अगर (tnr_dmd->भागer_mode == CXD2880_TNRDMD_DIVERMODE_MAIN)
 			ret =
-			    cxd2880_tnrdmd_dvbt_mon_mode_guard(tnr_dmd->diver_sub,
+			    cxd2880_tnrdmd_dvbt_mon_mode_guard(tnr_dmd->भागer_sub,
 							       mode, guard);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x0d);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x1b, &rdata, 1);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	slvt_unfreeze_reg(tnr_dmd);
+	slvt_unमुक्तze_reg(tnr_dmd);
 
-	*mode = (enum cxd2880_dvbt_mode)((rdata >> 2) & 0x03);
-	*guard = (enum cxd2880_dvbt_guard)(rdata & 0x03);
+	*mode = (क्रमागत cxd2880_dvbt_mode)((rdata >> 2) & 0x03);
+	*guard = (क्रमागत cxd2880_dvbt_guard)(rdata & 0x03);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_carrier_offset(struct cxd2880_tnrdmd
-					   *tnr_dmd, int *offset)
-{
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_carrier_offset(काष्ठा cxd2880_tnrdmd
+					   *tnr_dmd, पूर्णांक *offset)
+अणु
 	u8 rdata[4];
 	u32 ctl_val = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !offset)
-		return -EINVAL;
+	अगर (!tnr_dmd || !offset)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	ret = slvt_freeze_reg(tnr_dmd);
-	if (ret)
-		return ret;
+	ret = slvt_मुक्तze_reg(tnr_dmd);
+	अगर (ret)
+		वापस ret;
 
 	ret = is_tps_locked(tnr_dmd);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x0d);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x1d, rdata, 4);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	slvt_unfreeze_reg(tnr_dmd);
+	slvt_unमुक्तze_reg(tnr_dmd);
 
 	ctl_val =
 	    ((rdata[0] & 0x1f) << 24) | (rdata[1] << 16) | (rdata[2] << 8) |
@@ -186,99 +187,99 @@ int cxd2880_tnrdmd_dvbt_mon_carrier_offset(struct cxd2880_tnrdmd
 	*offset = cxd2880_convert2s_complement(ctl_val, 29);
 	*offset = -1 * ((*offset) * tnr_dmd->bandwidth / 235);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_carrier_offset_sub(struct
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_carrier_offset_sub(काष्ठा
 					       cxd2880_tnrdmd
 					       *tnr_dmd,
-					       int *offset)
-{
-	if (!tnr_dmd || !offset)
-		return -EINVAL;
+					       पूर्णांक *offset)
+अणु
+	अगर (!tnr_dmd || !offset)
+		वापस -EINVAL;
 
-	if (tnr_dmd->diver_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
+		वापस -EINVAL;
 
-	return cxd2880_tnrdmd_dvbt_mon_carrier_offset(tnr_dmd->diver_sub,
+	वापस cxd2880_tnrdmd_dvbt_mon_carrier_offset(tnr_dmd->भागer_sub,
 						      offset);
-}
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_tps_info(struct cxd2880_tnrdmd
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_tps_info(काष्ठा cxd2880_tnrdmd
 				     *tnr_dmd,
-				     struct cxd2880_dvbt_tpsinfo
+				     काष्ठा cxd2880_dvbt_tpsinfo
 				     *info)
-{
+अणु
 	u8 rdata[7];
 	u8 cell_id_ok = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !info)
-		return -EINVAL;
+	अगर (!tnr_dmd || !info)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	ret = slvt_freeze_reg(tnr_dmd);
-	if (ret)
-		return ret;
+	ret = slvt_मुक्तze_reg(tnr_dmd);
+	अगर (ret)
+		वापस ret;
 
 	ret = is_tps_locked(tnr_dmd);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
 
-		if (tnr_dmd->diver_mode == CXD2880_TNRDMD_DIVERMODE_MAIN)
+		अगर (tnr_dmd->भागer_mode == CXD2880_TNRDMD_DIVERMODE_MAIN)
 			ret =
-			    cxd2880_tnrdmd_dvbt_mon_tps_info(tnr_dmd->diver_sub,
+			    cxd2880_tnrdmd_dvbt_mon_tps_info(tnr_dmd->भागer_sub,
 							     info);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x0d);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x29, rdata, 7);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x11);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0xd5, &cell_id_ok, 1);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	slvt_unfreeze_reg(tnr_dmd);
+	slvt_unमुक्तze_reg(tnr_dmd);
 
-	info->constellation =
-	    (enum cxd2880_dvbt_constellation)((rdata[0] >> 6) & 0x03);
-	info->hierarchy = (enum cxd2880_dvbt_hierarchy)((rdata[0] >> 3) & 0x07);
-	info->rate_hp = (enum cxd2880_dvbt_coderate)(rdata[0] & 0x07);
-	info->rate_lp = (enum cxd2880_dvbt_coderate)((rdata[1] >> 5) & 0x07);
-	info->guard = (enum cxd2880_dvbt_guard)((rdata[1] >> 3) & 0x03);
-	info->mode = (enum cxd2880_dvbt_mode)((rdata[1] >> 1) & 0x03);
+	info->स्थिरellation =
+	    (क्रमागत cxd2880_dvbt_स्थिरellation)((rdata[0] >> 6) & 0x03);
+	info->hierarchy = (क्रमागत cxd2880_dvbt_hierarchy)((rdata[0] >> 3) & 0x07);
+	info->rate_hp = (क्रमागत cxd2880_dvbt_coderate)(rdata[0] & 0x07);
+	info->rate_lp = (क्रमागत cxd2880_dvbt_coderate)((rdata[1] >> 5) & 0x07);
+	info->guard = (क्रमागत cxd2880_dvbt_guard)((rdata[1] >> 3) & 0x03);
+	info->mode = (क्रमागत cxd2880_dvbt_mode)((rdata[1] >> 1) & 0x03);
 	info->fnum = (rdata[2] >> 6) & 0x03;
 	info->length_indicator = rdata[2] & 0x3f;
 	info->cell_id = (rdata[3] << 8) | rdata[4];
@@ -287,330 +288,330 @@ int cxd2880_tnrdmd_dvbt_mon_tps_info(struct cxd2880_tnrdmd
 
 	info->cell_id_ok = cell_id_ok & 0x01;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_packet_error_number(struct
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_packet_error_number(काष्ठा
 						cxd2880_tnrdmd
 						*tnr_dmd,
 						u32 *pen)
-{
+अणु
 	u8 rdata[3];
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !pen)
-		return -EINVAL;
+	अगर (!tnr_dmd || !pen)
+		वापस -EINVAL;
 
-	if (tnr_dmd->diver_mode == CXD2880_TNRDMD_DIVERMODE_SUB)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode == CXD2880_TNRDMD_DIVERMODE_SUB)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x0d);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x26, rdata, 3);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!(rdata[0] & 0x01))
-		return -EAGAIN;
+	अगर (!(rdata[0] & 0x01))
+		वापस -EAGAIN;
 
 	*pen = (rdata[1] << 8) | rdata[2];
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_spectrum_sense(struct cxd2880_tnrdmd
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_spectrum_sense(काष्ठा cxd2880_tnrdmd
 					   *tnr_dmd,
-					    enum
+					    क्रमागत
 					    cxd2880_tnrdmd_spectrum_sense
 					    *sense)
-{
+अणु
 	u8 data = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !sense)
-		return -EINVAL;
+	अगर (!tnr_dmd || !sense)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	ret = slvt_freeze_reg(tnr_dmd);
-	if (ret)
-		return ret;
+	ret = slvt_मुक्तze_reg(tnr_dmd);
+	अगर (ret)
+		वापस ret;
 
 	ret = is_tps_locked(tnr_dmd);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
 
-		if (tnr_dmd->diver_mode == CXD2880_TNRDMD_DIVERMODE_MAIN)
-			ret = cxd2880_tnrdmd_dvbt_mon_spectrum_sense(tnr_dmd->diver_sub,
+		अगर (tnr_dmd->भागer_mode == CXD2880_TNRDMD_DIVERMODE_MAIN)
+			ret = cxd2880_tnrdmd_dvbt_mon_spectrum_sense(tnr_dmd->भागer_sub,
 								     sense);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x0d);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
-				     0x1c, &data, sizeof(data));
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+				     0x1c, &data, माप(data));
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	slvt_unfreeze_reg(tnr_dmd);
+	slvt_unमुक्तze_reg(tnr_dmd);
 
 	*sense =
 	    (data & 0x01) ? CXD2880_TNRDMD_SPECTRUM_INV :
 	    CXD2880_TNRDMD_SPECTRUM_NORMAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dvbt_read_snr_reg(struct cxd2880_tnrdmd *tnr_dmd,
+अटल पूर्णांक dvbt_पढ़ो_snr_reg(काष्ठा cxd2880_tnrdmd *tnr_dmd,
 			     u16 *reg_value)
-{
+अणु
 	u8 rdata[2];
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !reg_value)
-		return -EINVAL;
+	अगर (!tnr_dmd || !reg_value)
+		वापस -EINVAL;
 
-	ret = slvt_freeze_reg(tnr_dmd);
-	if (ret)
-		return ret;
+	ret = slvt_मुक्तze_reg(tnr_dmd);
+	अगर (ret)
+		वापस ret;
 
 	ret = is_tps_locked(tnr_dmd);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x0d);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x13, rdata, 2);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	slvt_unfreeze_reg(tnr_dmd);
+	slvt_unमुक्तze_reg(tnr_dmd);
 
 	*reg_value = (rdata[0] << 8) | rdata[1];
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dvbt_calc_snr(struct cxd2880_tnrdmd *tnr_dmd,
-			 u32 reg_value, int *snr)
-{
-	if (!tnr_dmd || !snr)
-		return -EINVAL;
+अटल पूर्णांक dvbt_calc_snr(काष्ठा cxd2880_tnrdmd *tnr_dmd,
+			 u32 reg_value, पूर्णांक *snr)
+अणु
+	अगर (!tnr_dmd || !snr)
+		वापस -EINVAL;
 
-	if (reg_value == 0)
-		return -EAGAIN;
+	अगर (reg_value == 0)
+		वापस -EAGAIN;
 
-	if (reg_value > 4996)
+	अगर (reg_value > 4996)
 		reg_value = 4996;
 
-	*snr = intlog10(reg_value) - intlog10(5350 - reg_value);
+	*snr = पूर्णांकlog10(reg_value) - पूर्णांकlog10(5350 - reg_value);
 	*snr = (*snr + 839) / 1678 + 28500;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_snr(struct cxd2880_tnrdmd *tnr_dmd,
-				int *snr)
-{
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_snr(काष्ठा cxd2880_tnrdmd *tnr_dmd,
+				पूर्णांक *snr)
+अणु
 	u16 reg_value = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !snr)
-		return -EINVAL;
+	अगर (!tnr_dmd || !snr)
+		वापस -EINVAL;
 
 	*snr = -1000 * 1000;
 
-	if (tnr_dmd->diver_mode == CXD2880_TNRDMD_DIVERMODE_SUB)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode == CXD2880_TNRDMD_DIVERMODE_SUB)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	if (tnr_dmd->diver_mode == CXD2880_TNRDMD_DIVERMODE_SINGLE) {
-		ret = dvbt_read_snr_reg(tnr_dmd, &reg_value);
-		if (ret)
-			return ret;
+	अगर (tnr_dmd->भागer_mode == CXD2880_TNRDMD_DIVERMODE_SINGLE) अणु
+		ret = dvbt_पढ़ो_snr_reg(tnr_dmd, &reg_value);
+		अगर (ret)
+			वापस ret;
 
 		ret = dvbt_calc_snr(tnr_dmd, reg_value, snr);
-	} else {
-		int snr_main = 0;
-		int snr_sub = 0;
+	पूर्ण अन्यथा अणु
+		पूर्णांक snr_मुख्य = 0;
+		पूर्णांक snr_sub = 0;
 
 		ret =
-		    cxd2880_tnrdmd_dvbt_mon_snr_diver(tnr_dmd, snr, &snr_main,
+		    cxd2880_tnrdmd_dvbt_mon_snr_भागer(tnr_dmd, snr, &snr_मुख्य,
 						      &snr_sub);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_snr_diver(struct cxd2880_tnrdmd
-				      *tnr_dmd, int *snr,
-				      int *snr_main, int *snr_sub)
-{
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_snr_भागer(काष्ठा cxd2880_tnrdmd
+				      *tnr_dmd, पूर्णांक *snr,
+				      पूर्णांक *snr_मुख्य, पूर्णांक *snr_sub)
+अणु
 	u16 reg_value = 0;
 	u32 reg_value_sum = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !snr || !snr_main || !snr_sub)
-		return -EINVAL;
+	अगर (!tnr_dmd || !snr || !snr_मुख्य || !snr_sub)
+		वापस -EINVAL;
 
 	*snr = -1000 * 1000;
-	*snr_main = -1000 * 1000;
+	*snr_मुख्य = -1000 * 1000;
 	*snr_sub = -1000 * 1000;
 
-	if (tnr_dmd->diver_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	ret = dvbt_read_snr_reg(tnr_dmd, &reg_value);
-	if (!ret) {
-		ret = dvbt_calc_snr(tnr_dmd, reg_value, snr_main);
-		if (ret)
+	ret = dvbt_पढ़ो_snr_reg(tnr_dmd, &reg_value);
+	अगर (!ret) अणु
+		ret = dvbt_calc_snr(tnr_dmd, reg_value, snr_मुख्य);
+		अगर (ret)
 			reg_value = 0;
-	} else if (ret == -EAGAIN) {
+	पूर्ण अन्यथा अगर (ret == -EAGAIN) अणु
 		reg_value = 0;
-	} else {
-		return ret;
-	}
+	पूर्ण अन्यथा अणु
+		वापस ret;
+	पूर्ण
 
 	reg_value_sum += reg_value;
 
-	ret = dvbt_read_snr_reg(tnr_dmd->diver_sub, &reg_value);
-	if (!ret) {
-		ret = dvbt_calc_snr(tnr_dmd->diver_sub, reg_value, snr_sub);
-		if (ret)
+	ret = dvbt_पढ़ो_snr_reg(tnr_dmd->भागer_sub, &reg_value);
+	अगर (!ret) अणु
+		ret = dvbt_calc_snr(tnr_dmd->भागer_sub, reg_value, snr_sub);
+		अगर (ret)
 			reg_value = 0;
-	} else if (ret == -EAGAIN) {
+	पूर्ण अन्यथा अगर (ret == -EAGAIN) अणु
 		reg_value = 0;
-	} else {
-		return ret;
-	}
+	पूर्ण अन्यथा अणु
+		वापस ret;
+	पूर्ण
 
 	reg_value_sum += reg_value;
 
-	return dvbt_calc_snr(tnr_dmd, reg_value_sum, snr);
-}
+	वापस dvbt_calc_snr(tnr_dmd, reg_value_sum, snr);
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_sampling_offset(struct cxd2880_tnrdmd
-					    *tnr_dmd, int *ppm)
-{
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_sampling_offset(काष्ठा cxd2880_tnrdmd
+					    *tnr_dmd, पूर्णांक *ppm)
+अणु
 	u8 ctl_val_reg[5];
 	u8 nominal_rate_reg[5];
 	u32 trl_ctl_val = 0;
 	u32 trcg_nominal_rate = 0;
-	int num;
-	int den;
-	s8 diff_upper = 0;
-	int ret;
+	पूर्णांक num;
+	पूर्णांक den;
+	s8 dअगरf_upper = 0;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !ppm)
-		return -EINVAL;
+	अगर (!tnr_dmd || !ppm)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	ret = slvt_freeze_reg(tnr_dmd);
-	if (ret)
-		return ret;
+	ret = slvt_मुक्तze_reg(tnr_dmd);
+	अगर (ret)
+		वापस ret;
 
 	ret = is_tps_locked(tnr_dmd);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x0d);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x21, ctl_val_reg,
-				     sizeof(ctl_val_reg));
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+				     माप(ctl_val_reg));
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x04);
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x60, nominal_rate_reg,
-				     sizeof(nominal_rate_reg));
-	if (ret) {
-		slvt_unfreeze_reg(tnr_dmd);
-		return ret;
-	}
+				     माप(nominal_rate_reg));
+	अगर (ret) अणु
+		slvt_unमुक्तze_reg(tnr_dmd);
+		वापस ret;
+	पूर्ण
 
-	slvt_unfreeze_reg(tnr_dmd);
+	slvt_unमुक्तze_reg(tnr_dmd);
 
-	diff_upper =
+	dअगरf_upper =
 	    (ctl_val_reg[0] & 0x7f) - (nominal_rate_reg[0] & 0x7f);
 
-	if (diff_upper < -1 || diff_upper > 1)
-		return -EAGAIN;
+	अगर (dअगरf_upper < -1 || dअगरf_upper > 1)
+		वापस -EAGAIN;
 
 	trl_ctl_val = ctl_val_reg[1] << 24;
 	trl_ctl_val |= ctl_val_reg[2] << 16;
@@ -625,16 +626,16 @@ int cxd2880_tnrdmd_dvbt_mon_sampling_offset(struct cxd2880_tnrdmd
 	trl_ctl_val >>= 1;
 	trcg_nominal_rate >>= 1;
 
-	if (diff_upper == 1)
+	अगर (dअगरf_upper == 1)
 		num =
-		    (int)((trl_ctl_val + 0x80000000u) -
+		    (पूर्णांक)((trl_ctl_val + 0x80000000u) -
 			  trcg_nominal_rate);
-	else if (diff_upper == -1)
+	अन्यथा अगर (dअगरf_upper == -1)
 		num =
-		    -(int)((trcg_nominal_rate + 0x80000000u) -
+		    -(पूर्णांक)((trcg_nominal_rate + 0x80000000u) -
 			   trl_ctl_val);
-	else
-		num = (int)(trl_ctl_val - trcg_nominal_rate);
+	अन्यथा
+		num = (पूर्णांक)(trl_ctl_val - trcg_nominal_rate);
 
 	den = (nominal_rate_reg[0] & 0x7f) << 24;
 	den |= nominal_rate_reg[1] << 16;
@@ -644,132 +645,132 @@ int cxd2880_tnrdmd_dvbt_mon_sampling_offset(struct cxd2880_tnrdmd
 
 	den >>= 1;
 
-	if (num >= 0)
+	अगर (num >= 0)
 		*ppm = (num + (den / 2)) / den;
-	else
+	अन्यथा
 		*ppm = (num - (den / 2)) / den;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_sampling_offset_sub(struct
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_sampling_offset_sub(काष्ठा
 						cxd2880_tnrdmd
-						*tnr_dmd, int *ppm)
-{
-	if (!tnr_dmd || !ppm)
-		return -EINVAL;
+						*tnr_dmd, पूर्णांक *ppm)
+अणु
+	अगर (!tnr_dmd || !ppm)
+		वापस -EINVAL;
 
-	if (tnr_dmd->diver_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
+		वापस -EINVAL;
 
-	return cxd2880_tnrdmd_dvbt_mon_sampling_offset(tnr_dmd->diver_sub, ppm);
-}
+	वापस cxd2880_tnrdmd_dvbt_mon_sampling_offset(tnr_dmd->भागer_sub, ppm);
+पूर्ण
 
-static int dvbt_calc_ssi(struct cxd2880_tnrdmd *tnr_dmd,
-			 int rf_lvl, u8 *ssi)
-{
-	struct cxd2880_dvbt_tpsinfo tps;
-	int prel;
-	int temp_ssi = 0;
-	int ret;
+अटल पूर्णांक dvbt_calc_ssi(काष्ठा cxd2880_tnrdmd *tnr_dmd,
+			 पूर्णांक rf_lvl, u8 *ssi)
+अणु
+	काष्ठा cxd2880_dvbt_tpsinfo tps;
+	पूर्णांक prel;
+	पूर्णांक temp_ssi = 0;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !ssi)
-		return -EINVAL;
+	अगर (!tnr_dmd || !ssi)
+		वापस -EINVAL;
 
 	ret = cxd2880_tnrdmd_dvbt_mon_tps_info(tnr_dmd, &tps);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (tps.constellation >= CXD2880_DVBT_CONSTELLATION_RESERVED_3 ||
+	अगर (tps.स्थिरellation >= CXD2880_DVBT_CONSTELLATION_RESERVED_3 ||
 	    tps.rate_hp >= CXD2880_DVBT_CODERATE_RESERVED_5)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	prel = rf_lvl - ref_dbm_1000[tps.constellation][tps.rate_hp];
+	prel = rf_lvl - ref_dbm_1000[tps.स्थिरellation][tps.rate_hp];
 
-	if (prel < -15000)
+	अगर (prel < -15000)
 		temp_ssi = 0;
-	else if (prel < 0)
+	अन्यथा अगर (prel < 0)
 		temp_ssi = ((2 * (prel + 15000)) + 1500) / 3000;
-	else if (prel < 20000)
+	अन्यथा अगर (prel < 20000)
 		temp_ssi = (((4 * prel) + 500) / 1000) + 10;
-	else if (prel < 35000)
+	अन्यथा अगर (prel < 35000)
 		temp_ssi = (((2 * (prel - 20000)) + 1500) / 3000) + 90;
-	else
+	अन्यथा
 		temp_ssi = 100;
 
 	*ssi = (temp_ssi > 100) ? 100 : (u8)temp_ssi;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_ssi(struct cxd2880_tnrdmd *tnr_dmd,
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_ssi(काष्ठा cxd2880_tnrdmd *tnr_dmd,
 				u8 *ssi)
-{
-	int rf_lvl = 0;
-	int ret;
+अणु
+	पूर्णांक rf_lvl = 0;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !ssi)
-		return -EINVAL;
+	अगर (!tnr_dmd || !ssi)
+		वापस -EINVAL;
 
-	if (tnr_dmd->diver_mode == CXD2880_TNRDMD_DIVERMODE_SUB)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode == CXD2880_TNRDMD_DIVERMODE_SUB)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
 	ret = cxd2880_tnrdmd_mon_rf_lvl(tnr_dmd, &rf_lvl);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return dvbt_calc_ssi(tnr_dmd, rf_lvl, ssi);
-}
+	वापस dvbt_calc_ssi(tnr_dmd, rf_lvl, ssi);
+पूर्ण
 
-int cxd2880_tnrdmd_dvbt_mon_ssi_sub(struct cxd2880_tnrdmd *tnr_dmd,
+पूर्णांक cxd2880_tnrdmd_dvbt_mon_ssi_sub(काष्ठा cxd2880_tnrdmd *tnr_dmd,
 				    u8 *ssi)
-{
-	int rf_lvl = 0;
-	int ret;
+अणु
+	पूर्णांक rf_lvl = 0;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !ssi)
-		return -EINVAL;
+	अगर (!tnr_dmd || !ssi)
+		वापस -EINVAL;
 
-	if (tnr_dmd->diver_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	if (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
-		return -EINVAL;
+	अगर (tnr_dmd->sys != CXD2880_DTV_SYS_DVBT)
+		वापस -EINVAL;
 
-	ret = cxd2880_tnrdmd_mon_rf_lvl(tnr_dmd->diver_sub, &rf_lvl);
-	if (ret)
-		return ret;
+	ret = cxd2880_tnrdmd_mon_rf_lvl(tnr_dmd->भागer_sub, &rf_lvl);
+	अगर (ret)
+		वापस ret;
 
-	return dvbt_calc_ssi(tnr_dmd, rf_lvl, ssi);
-}
+	वापस dvbt_calc_ssi(tnr_dmd, rf_lvl, ssi);
+पूर्ण
 
-static int is_tps_locked(struct cxd2880_tnrdmd *tnr_dmd)
-{
+अटल पूर्णांक is_tps_locked(काष्ठा cxd2880_tnrdmd *tnr_dmd)
+अणु
 	u8 sync = 0;
 	u8 tslock = 0;
 	u8 early_unlock = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd)
-		return -EINVAL;
+	अगर (!tnr_dmd)
+		वापस -EINVAL;
 
 	ret =
 	    cxd2880_tnrdmd_dvbt_mon_sync_stat(tnr_dmd, &sync, &tslock,
 					      &early_unlock);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (sync != 6)
-		return -EAGAIN;
+	अगर (sync != 6)
+		वापस -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

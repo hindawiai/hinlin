@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * ipmi.h
  *
- * MontaVista IPMI interface
+ * MontaVista IPMI पूर्णांकerface
  *
  * Author: MontaVista Software, Inc.
  *         Corey Minyard <minyard@mvista.com>
@@ -12,84 +13,84 @@
  *
  */
 
-#ifndef _UAPI__LINUX_IPMI_H
-#define _UAPI__LINUX_IPMI_H
+#अगर_अघोषित _UAPI__LINUX_IPMI_H
+#घोषणा _UAPI__LINUX_IPMI_H
 
-#include <linux/ipmi_msgdefs.h>
-#include <linux/compiler.h>
+#समावेश <linux/ipmi_msgdefs.h>
+#समावेश <linux/compiler.h>
 
 /*
- * This file describes an interface to an IPMI driver.  You have to
- * have a fairly good understanding of IPMI to use this, so go read
- * the specs first before actually trying to do anything.
+ * This file describes an पूर्णांकerface to an IPMI driver.  You have to
+ * have a fairly good understanding of IPMI to use this, so go पढ़ो
+ * the specs first beक्रमe actually trying to करो anything.
  *
- * With that said, this driver provides a multi-user interface to the
- * IPMI driver, and it allows multiple IPMI physical interfaces below
- * the driver.  The physical interfaces bind as a lower layer on the
- * driver.  They appear as interfaces to the application using this
- * interface.
+ * With that said, this driver provides a multi-user पूर्णांकerface to the
+ * IPMI driver, and it allows multiple IPMI physical पूर्णांकerfaces below
+ * the driver.  The physical पूर्णांकerfaces bind as a lower layer on the
+ * driver.  They appear as पूर्णांकerfaces to the application using this
+ * पूर्णांकerface.
  *
  * Multi-user means that multiple applications may use the driver,
  * send commands, receive responses, etc.  The driver keeps track of
  * commands the user sends and tracks the responses.  The responses
  * will go back to the application that send the command.  If the
- * response doesn't come back in time, the driver will return a
- * timeout error response to the application.  Asynchronous events
+ * response करोesn't come back in समय, the driver will वापस a
+ * समयout error response to the application.  Asynchronous events
  * from the BMC event queue will go to all users bound to the driver.
- * The incoming event queue in the BMC will automatically be flushed
- * if it becomes full and it is queried once a second to see if
+ * The incoming event queue in the BMC will स्वतःmatically be flushed
+ * अगर it becomes full and it is queried once a second to see अगर
  * anything is in it.  Incoming commands to the driver will get
  * delivered as commands.
  */
 
 /*
- * This is an overlay for all the address types, so it's easy to
+ * This is an overlay क्रम all the address types, so it's easy to
  * determine the actual address type.  This is kind of like addresses
- * work for sockets.
+ * work क्रम sockets.
  */
-#define IPMI_MAX_ADDR_SIZE 32
-struct ipmi_addr {
+#घोषणा IPMI_MAX_ADDR_SIZE 32
+काष्ठा ipmi_addr अणु
 	 /* Try to take these from the "Channel Medium Type" table
 	    in section 6.5 of the IPMI 1.5 manual. */
-	int   addr_type;
-	short channel;
-	char  data[IPMI_MAX_ADDR_SIZE];
-};
+	पूर्णांक   addr_type;
+	लघु channel;
+	अक्षर  data[IPMI_MAX_ADDR_SIZE];
+पूर्ण;
 
 /*
  * When the address is not used, the type will be set to this value.
- * The channel is the BMC's channel number for the channel (usually
- * 0), or IPMC_BMC_CHANNEL if communicating directly with the BMC.
+ * The channel is the BMC's channel number क्रम the channel (usually
+ * 0), or IPMC_BMC_CHANNEL अगर communicating directly with the BMC.
  */
-#define IPMI_SYSTEM_INTERFACE_ADDR_TYPE	0x0c
-struct ipmi_system_interface_addr {
-	int           addr_type;
-	short         channel;
-	unsigned char lun;
-};
+#घोषणा IPMI_SYSTEM_INTERFACE_ADDR_TYPE	0x0c
+काष्ठा ipmi_प्रणाली_पूर्णांकerface_addr अणु
+	पूर्णांक           addr_type;
+	लघु         channel;
+	अचिन्हित अक्षर lun;
+पूर्ण;
 
 /* An IPMB Address. */
-#define IPMI_IPMB_ADDR_TYPE		0x01
-/* Used for broadcast get device id as described in section 17.9 of the
+#घोषणा IPMI_IPMB_ADDR_TYPE		0x01
+/* Used क्रम broadcast get device id as described in section 17.9 of the
    IPMI 1.5 manual. */
-#define IPMI_IPMB_BROADCAST_ADDR_TYPE	0x41
-struct ipmi_ipmb_addr {
-	int           addr_type;
-	short         channel;
-	unsigned char slave_addr;
-	unsigned char lun;
-};
+#घोषणा IPMI_IPMB_BROADCAST_ADDR_TYPE	0x41
+काष्ठा ipmi_ipmb_addr अणु
+	पूर्णांक           addr_type;
+	लघु         channel;
+	अचिन्हित अक्षर slave_addr;
+	अचिन्हित अक्षर lun;
+पूर्ण;
 
 /*
- * A LAN Address.  This is an address to/from a LAN interface bridged
+ * A LAN Address.  This is an address to/from a LAN पूर्णांकerface bridged
  * by the BMC, not an address actually out on the LAN.
  *
  * A conscious decision was made here to deviate slightly from the IPMI
- * spec.  We do not use rqSWID and rsSWID like it shows in the
+ * spec.  We करो not use rqSWID and rsSWID like it shows in the
  * message.  Instead, we use remote_SWID and local_SWID.  This means
  * that any message (a request or response) from another device will
- * always have exactly the same address.  If you didn't do this,
- * requests and responses from the same device would have different
+ * always have exactly the same address.  If you didn't करो this,
+ * requests and responses from the same device would have dअगरferent
  * addresses, and that's not too cool.
  *
  * In this address, the remote_SWID is always the SWID the remote
@@ -97,32 +98,32 @@ struct ipmi_ipmb_addr {
  * local_SWID is always our SWID.  Note that having our SWID in the
  * message is a little weird, but this is required.
  */
-#define IPMI_LAN_ADDR_TYPE		0x04
-struct ipmi_lan_addr {
-	int           addr_type;
-	short         channel;
-	unsigned char privilege;
-	unsigned char session_handle;
-	unsigned char remote_SWID;
-	unsigned char local_SWID;
-	unsigned char lun;
-};
+#घोषणा IPMI_LAN_ADDR_TYPE		0x04
+काष्ठा ipmi_lan_addr अणु
+	पूर्णांक           addr_type;
+	लघु         channel;
+	अचिन्हित अक्षर privilege;
+	अचिन्हित अक्षर session_handle;
+	अचिन्हित अक्षर remote_SWID;
+	अचिन्हित अक्षर local_SWID;
+	अचिन्हित अक्षर lun;
+पूर्ण;
 
 
 /*
- * Channel for talking directly with the BMC.  When using this
- * channel, This is for the system interface address type only.  FIXME
+ * Channel क्रम talking directly with the BMC.  When using this
+ * channel, This is क्रम the प्रणाली पूर्णांकerface address type only.  FIXME
  * - is this right, or should we use -1?
  */
-#define IPMI_BMC_CHANNEL  0xf
-#define IPMI_NUM_CHANNELS 0x10
+#घोषणा IPMI_BMC_CHANNEL  0xf
+#घोषणा IPMI_NUM_CHANNELS 0x10
 
 /*
- * Used to signify an "all channel" bitmask.  This is more than the
+ * Used to signअगरy an "all channel" biपंचांगask.  This is more than the
  * actual number of channels because this is used in userland and
- * will cover us if the number of channels is extended.
+ * will cover us अगर the number of channels is extended.
  */
-#define IPMI_CHAN_ALL     (~0)
+#घोषणा IPMI_CHAN_ALL     (~0)
 
 
 /*
@@ -131,85 +132,85 @@ struct ipmi_lan_addr {
  * byte of data in the response (as the spec shows the messages laid
  * out).
  */
-struct ipmi_msg {
-	unsigned char  netfn;
-	unsigned char  cmd;
-	unsigned short data_len;
-	unsigned char  __user *data;
-};
+काष्ठा ipmi_msg अणु
+	अचिन्हित अक्षर  netfn;
+	अचिन्हित अक्षर  cmd;
+	अचिन्हित लघु data_len;
+	अचिन्हित अक्षर  __user *data;
+पूर्ण;
 
-struct kernel_ipmi_msg {
-	unsigned char  netfn;
-	unsigned char  cmd;
-	unsigned short data_len;
-	unsigned char  *data;
-};
+काष्ठा kernel_ipmi_msg अणु
+	अचिन्हित अक्षर  netfn;
+	अचिन्हित अक्षर  cmd;
+	अचिन्हित लघु data_len;
+	अचिन्हित अक्षर  *data;
+पूर्ण;
 
 /*
- * Various defines that are useful for IPMI applications.
+ * Various defines that are useful क्रम IPMI applications.
  */
-#define IPMI_INVALID_CMD_COMPLETION_CODE	0xC1
-#define IPMI_TIMEOUT_COMPLETION_CODE		0xC3
-#define IPMI_UNKNOWN_ERR_COMPLETION_CODE	0xff
+#घोषणा IPMI_INVALID_CMD_COMPLETION_CODE	0xC1
+#घोषणा IPMI_TIMEOUT_COMPLETION_CODE		0xC3
+#घोषणा IPMI_UNKNOWN_ERR_COMPLETION_CODE	0xff
 
 
 /*
- * Receive types for messages coming from the receive interface.  This
- * is used for the receive in-kernel interface and in the receive
+ * Receive types क्रम messages coming from the receive पूर्णांकerface.  This
+ * is used क्रम the receive in-kernel पूर्णांकerface and in the receive
  * IOCTL.
  *
  * The "IPMI_RESPONSE_RESPNOSE_TYPE" is a little strange sounding, but
  * it allows you to get the message results when you send a response
  * message.
  */
-#define IPMI_RESPONSE_RECV_TYPE		1 /* A response to a command */
-#define IPMI_ASYNC_EVENT_RECV_TYPE	2 /* Something from the event queue */
-#define IPMI_CMD_RECV_TYPE		3 /* A command from somewhere else */
-#define IPMI_RESPONSE_RESPONSE_TYPE	4 /* The response for
+#घोषणा IPMI_RESPONSE_RECV_TYPE		1 /* A response to a command */
+#घोषणा IPMI_ASYNC_EVENT_RECV_TYPE	2 /* Something from the event queue */
+#घोषणा IPMI_CMD_RECV_TYPE		3 /* A command from somewhere अन्यथा */
+#घोषणा IPMI_RESPONSE_RESPONSE_TYPE	4 /* The response क्रम
 					      a sent response, giving any
-					      error status for sending the
+					      error status क्रम sending the
 					      response.  When you send a
 					      response message, this will
-					      be returned. */
-#define IPMI_OEM_RECV_TYPE		5 /* The response for OEM Channels */
+					      be वापसed. */
+#घोषणा IPMI_OEM_RECV_TYPE		5 /* The response क्रम OEM Channels */
 
-/* Note that async events and received commands do not have a completion
+/* Note that async events and received commands करो not have a completion
    code as the first byte of the incoming data, unlike a response. */
 
 
 /*
- * Modes for ipmi_set_maint_mode() and the userland IOCTL.  The AUTO
- * setting is the default and means it will be set on certain
- * commands.  Hard setting it on and off will override automatic
+ * Modes क्रम ipmi_set_मुख्यt_mode() and the userland IOCTL.  The AUTO
+ * setting is the शेष and means it will be set on certain
+ * commands.  Hard setting it on and off will override स्वतःmatic
  * operation.
  */
-#define IPMI_MAINTENANCE_MODE_AUTO	0
-#define IPMI_MAINTENANCE_MODE_OFF	1
-#define IPMI_MAINTENANCE_MODE_ON	2
+#घोषणा IPMI_MAINTEन_अंकCE_MODE_AUTO	0
+#घोषणा IPMI_MAINTEन_अंकCE_MODE_OFF	1
+#घोषणा IPMI_MAINTEन_अंकCE_MODE_ON	2
 
 
 
 /*
- * The userland interface
+ * The userland पूर्णांकerface
  */
 
 /*
- * The userland interface for the IPMI driver is a standard character
- * device, with each instance of an interface registered as a minor
- * number under the major character device.
+ * The userland पूर्णांकerface क्रम the IPMI driver is a standard अक्षरacter
+ * device, with each instance of an पूर्णांकerface रेजिस्टरed as a minor
+ * number under the major अक्षरacter device.
  *
- * The read and write calls do not work, to get messages in and out
- * requires ioctl calls because of the complexity of the data.  select
- * and poll do work, so you can wait for input using the file
- * descriptor, you just can use read to get it.
+ * The पढ़ो and ग_लिखो calls करो not work, to get messages in and out
+ * requires ioctl calls because of the complनिकासy of the data.  select
+ * and poll करो work, so you can रुको क्रम input using the file
+ * descriptor, you just can use पढ़ो to get it.
  *
- * In general, you send a command down to the interface and receive
+ * In general, you send a command करोwn to the पूर्णांकerface and receive
  * responses back.  You can use the msgid value to correlate commands
  * and responses, the driver will take care of figuring out which
- * incoming messages are for which command and find the proper msgid
- * value to report.  You will only receive reponses for commands you
- * send.  Asynchronous events, however, go to all open users, so you
- * must be ready to handle these (or ignore them if you don't care).
+ * incoming messages are क्रम which command and find the proper msgid
+ * value to report.  You will only receive reponses क्रम commands you
+ * send.  Asynchronous events, however, go to all खोलो users, so you
+ * must be पढ़ोy to handle these (or ignore them अगर you करोn't care).
  *
  * The address type depends upon the channel type.  When talking
  * directly to the BMC (IPMC_BMC_CHANNEL), the address is ignored
@@ -217,213 +218,213 @@ struct kernel_ipmi_msg {
  * supply a valid IPMB address with the addr_type set properly.
  *
  * When talking to normal channels, the driver takes care of the
- * details of formatting and sending messages on that channel.  You do
- * not, for instance, have to format a send command, you just send
+ * details of क्रमmatting and sending messages on that channel.  You करो
+ * not, क्रम instance, have to क्रमmat a send command, you just send
  * whatever command you want to the channel, the driver will create
- * the send command, automatically issue receive command and get even
+ * the send command, स्वतःmatically issue receive command and get even
  * commands, and pass those up to the proper user.
  */
 
 
-/* The magic IOCTL value for this interface. */
-#define IPMI_IOC_MAGIC 'i'
+/* The magic IOCTL value क्रम this पूर्णांकerface. */
+#घोषणा IPMI_IOC_MAGIC 'i'
 
 
-/* Messages sent to the interface are this format. */
-struct ipmi_req {
-	unsigned char __user *addr; /* Address to send the message to. */
-	unsigned int  addr_len;
+/* Messages sent to the पूर्णांकerface are this क्रमmat. */
+काष्ठा ipmi_req अणु
+	अचिन्हित अक्षर __user *addr; /* Address to send the message to. */
+	अचिन्हित पूर्णांक  addr_len;
 
-	long    msgid; /* The sequence number for the message.  This
+	दीर्घ    msgid; /* The sequence number क्रम the message.  This
 			  exact value will be reported back in the
-			  response to this request if it is a command.
+			  response to this request अगर it is a command.
 			  If it is a response, this will be used as
-			  the sequence value for the response.  */
+			  the sequence value क्रम the response.  */
 
-	struct ipmi_msg msg;
-};
+	काष्ठा ipmi_msg msg;
+पूर्ण;
 /*
- * Send a message to the interfaces.  error values are:
+ * Send a message to the पूर्णांकerfaces.  error values are:
  *   - EFAULT - an address supplied was invalid.
  *   - EINVAL - The address supplied was not valid, or the command
  *              was not allowed.
  *   - EMSGSIZE - The message to was too large.
- *   - ENOMEM - Buffers could not be allocated for the command.
+ *   - ENOMEM - Buffers could not be allocated क्रम the command.
  */
-#define IPMICTL_SEND_COMMAND		_IOR(IPMI_IOC_MAGIC, 13,	\
-					     struct ipmi_req)
+#घोषणा IPMICTL_SEND_COMMAND		_IOR(IPMI_IOC_MAGIC, 13,	\
+					     काष्ठा ipmi_req)
 
-/* Messages sent to the interface with timing parameters are this
-   format. */
-struct ipmi_req_settime {
-	struct ipmi_req req;
+/* Messages sent to the पूर्णांकerface with timing parameters are this
+   क्रमmat. */
+काष्ठा ipmi_req_समय_रखो अणु
+	काष्ठा ipmi_req req;
 
-	/* See ipmi_request_settime() above for details on these
+	/* See ipmi_request_समय_रखो() above क्रम details on these
 	   values. */
-	int          retries;
-	unsigned int retry_time_ms;
-};
+	पूर्णांक          retries;
+	अचिन्हित पूर्णांक retry_समय_ms;
+पूर्ण;
 /*
- * Send a message to the interfaces with timing parameters.  error values
+ * Send a message to the पूर्णांकerfaces with timing parameters.  error values
  * are:
  *   - EFAULT - an address supplied was invalid.
  *   - EINVAL - The address supplied was not valid, or the command
  *              was not allowed.
  *   - EMSGSIZE - The message to was too large.
- *   - ENOMEM - Buffers could not be allocated for the command.
+ *   - ENOMEM - Buffers could not be allocated क्रम the command.
  */
-#define IPMICTL_SEND_COMMAND_SETTIME	_IOR(IPMI_IOC_MAGIC, 21,	\
-					     struct ipmi_req_settime)
+#घोषणा IPMICTL_SEND_COMMAND_SETTIME	_IOR(IPMI_IOC_MAGIC, 21,	\
+					     काष्ठा ipmi_req_समय_रखो)
 
-/* Messages received from the interface are this format. */
-struct ipmi_recv {
-	int     recv_type; /* Is this a command, response or an
+/* Messages received from the पूर्णांकerface are this क्रमmat. */
+काष्ठा ipmi_recv अणु
+	पूर्णांक     recv_type; /* Is this a command, response or an
 			      asyncronous event. */
 
-	unsigned char __user *addr;    /* Address the message was from is put
+	अचिन्हित अक्षर __user *addr;    /* Address the message was from is put
 				   here.  The caller must supply the
 				   memory. */
-	unsigned int  addr_len; /* The size of the address buffer.
+	अचिन्हित पूर्णांक  addr_len; /* The size of the address buffer.
 				   The caller supplies the full buffer
 				   length, this value is updated to
 				   the actual message length when the
 				   message is received. */
 
-	long    msgid; /* The sequence number specified in the request
-			  if this is a response.  If this is a command,
+	दीर्घ    msgid; /* The sequence number specअगरied in the request
+			  अगर this is a response.  If this is a command,
 			  this will be the sequence number from the
 			  command. */
 
-	struct ipmi_msg msg; /* The data field must point to a buffer.
+	काष्ठा ipmi_msg msg; /* The data field must poपूर्णांक to a buffer.
 				The data_size field must be set to the
 				size of the message buffer.  The
 				caller supplies the full buffer
 				length, this value is updated to the
 				actual message length when the message
 				is received. */
-};
+पूर्ण;
 
 /*
  * Receive a message.  error values:
  *  - EAGAIN - no messages in the queue.
  *  - EFAULT - an address supplied was invalid.
  *  - EINVAL - The address supplied was not valid.
- *  - EMSGSIZE - The message to was too large to fit into the message buffer,
+ *  - EMSGSIZE - The message to was too large to fit पूर्णांकo the message buffer,
  *               the message will be left in the buffer. */
-#define IPMICTL_RECEIVE_MSG		_IOWR(IPMI_IOC_MAGIC, 12,	\
-					      struct ipmi_recv)
+#घोषणा IPMICTL_RECEIVE_MSG		_IOWR(IPMI_IOC_MAGIC, 12,	\
+					      काष्ठा ipmi_recv)
 
 /*
- * Like RECEIVE_MSG, but if the message won't fit in the buffer, it
+ * Like RECEIVE_MSG, but अगर the message won't fit in the buffer, it
  * will truncate the contents instead of leaving the data in the
  * buffer.
  */
-#define IPMICTL_RECEIVE_MSG_TRUNC	_IOWR(IPMI_IOC_MAGIC, 11,	\
-					      struct ipmi_recv)
+#घोषणा IPMICTL_RECEIVE_MSG_TRUNC	_IOWR(IPMI_IOC_MAGIC, 11,	\
+					      काष्ठा ipmi_recv)
 
-/* Register to get commands from other entities on this interface. */
-struct ipmi_cmdspec {
-	unsigned char netfn;
-	unsigned char cmd;
-};
+/* Register to get commands from other entities on this पूर्णांकerface. */
+काष्ठा ipmi_cmdspec अणु
+	अचिन्हित अक्षर netfn;
+	अचिन्हित अक्षर cmd;
+पूर्ण;
 
 /*
- * Register to receive a specific command.  error values:
+ * Register to receive a specअगरic command.  error values:
  *   - EFAULT - an address supplied was invalid.
- *   - EBUSY - The netfn/cmd supplied was already in use.
- *   - ENOMEM - could not allocate memory for the entry.
+ *   - EBUSY - The netfn/cmd supplied was alपढ़ोy in use.
+ *   - ENOMEM - could not allocate memory क्रम the entry.
  */
-#define IPMICTL_REGISTER_FOR_CMD	_IOR(IPMI_IOC_MAGIC, 14,	\
-					     struct ipmi_cmdspec)
+#घोषणा IPMICTL_REGISTER_FOR_CMD	_IOR(IPMI_IOC_MAGIC, 14,	\
+					     काष्ठा ipmi_cmdspec)
 /*
- * Unregister a registered command.  error values:
+ * Unरेजिस्टर a रेजिस्टरed command.  error values:
  *  - EFAULT - an address supplied was invalid.
- *  - ENOENT - The netfn/cmd was not found registered for this user.
+ *  - ENOENT - The netfn/cmd was not found रेजिस्टरed क्रम this user.
  */
-#define IPMICTL_UNREGISTER_FOR_CMD	_IOR(IPMI_IOC_MAGIC, 15,	\
-					     struct ipmi_cmdspec)
+#घोषणा IPMICTL_UNREGISTER_FOR_CMD	_IOR(IPMI_IOC_MAGIC, 15,	\
+					     काष्ठा ipmi_cmdspec)
 
 /*
- * Register to get commands from other entities on specific channels.
- * This way, you can only listen on specific channels, or have messages
+ * Register to get commands from other entities on specअगरic channels.
+ * This way, you can only listen on specअगरic channels, or have messages
  * from some channels go to one place and other channels to someplace
- * else.  The chans field is a bitmask, (1 << channel) for each channel.
- * It may be IPMI_CHAN_ALL for all channels.
+ * अन्यथा.  The chans field is a biपंचांगask, (1 << channel) क्रम each channel.
+ * It may be IPMI_CHAN_ALL क्रम all channels.
  */
-struct ipmi_cmdspec_chans {
-	unsigned int netfn;
-	unsigned int cmd;
-	unsigned int chans;
-};
+काष्ठा ipmi_cmdspec_chans अणु
+	अचिन्हित पूर्णांक netfn;
+	अचिन्हित पूर्णांक cmd;
+	अचिन्हित पूर्णांक chans;
+पूर्ण;
 
 /*
- * Register to receive a specific command on specific channels.  error values:
+ * Register to receive a specअगरic command on specअगरic channels.  error values:
  *   - EFAULT - an address supplied was invalid.
- *   - EBUSY - One of the netfn/cmd/chans supplied was already in use.
- *   - ENOMEM - could not allocate memory for the entry.
+ *   - EBUSY - One of the netfn/cmd/chans supplied was alपढ़ोy in use.
+ *   - ENOMEM - could not allocate memory क्रम the entry.
  */
-#define IPMICTL_REGISTER_FOR_CMD_CHANS	_IOR(IPMI_IOC_MAGIC, 28,	\
-					     struct ipmi_cmdspec_chans)
+#घोषणा IPMICTL_REGISTER_FOR_CMD_CHANS	_IOR(IPMI_IOC_MAGIC, 28,	\
+					     काष्ठा ipmi_cmdspec_chans)
 /*
- * Unregister some netfn/cmd/chans.  error values:
+ * Unरेजिस्टर some netfn/cmd/chans.  error values:
  *  - EFAULT - an address supplied was invalid.
- *  - ENOENT - None of the netfn/cmd/chans were found registered for this user.
+ *  - ENOENT - None of the netfn/cmd/chans were found रेजिस्टरed क्रम this user.
  */
-#define IPMICTL_UNREGISTER_FOR_CMD_CHANS _IOR(IPMI_IOC_MAGIC, 29,	\
-					     struct ipmi_cmdspec_chans)
+#घोषणा IPMICTL_UNREGISTER_FOR_CMD_CHANS _IOR(IPMI_IOC_MAGIC, 29,	\
+					     काष्ठा ipmi_cmdspec_chans)
 
 /*
- * Set whether this interface receives events.  Note that the first
- * user registered for events will get all pending events for the
- * interface.  error values:
+ * Set whether this पूर्णांकerface receives events.  Note that the first
+ * user रेजिस्टरed क्रम events will get all pending events क्रम the
+ * पूर्णांकerface.  error values:
  *  - EFAULT - an address supplied was invalid.
  */
-#define IPMICTL_SET_GETS_EVENTS_CMD	_IOR(IPMI_IOC_MAGIC, 16, int)
+#घोषणा IPMICTL_SET_GETS_EVENTS_CMD	_IOR(IPMI_IOC_MAGIC, 16, पूर्णांक)
 
 /*
- * Set and get the slave address and LUN that we will use for our
- * source messages.  Note that this affects the interface, not just
- * this user, so it will affect all users of this interface.  This is
- * so some initialization code can come in and do the OEM-specific
- * things it takes to determine your address (if not the BMC) and set
- * it for everyone else.  You should probably leave the LUN alone.
+ * Set and get the slave address and LUN that we will use क्रम our
+ * source messages.  Note that this affects the पूर्णांकerface, not just
+ * this user, so it will affect all users of this पूर्णांकerface.  This is
+ * so some initialization code can come in and करो the OEM-specअगरic
+ * things it takes to determine your address (अगर not the BMC) and set
+ * it क्रम everyone अन्यथा.  You should probably leave the LUN alone.
  */
-struct ipmi_channel_lun_address_set {
-	unsigned short channel;
-	unsigned char  value;
-};
-#define IPMICTL_SET_MY_CHANNEL_ADDRESS_CMD \
-	_IOR(IPMI_IOC_MAGIC, 24, struct ipmi_channel_lun_address_set)
-#define IPMICTL_GET_MY_CHANNEL_ADDRESS_CMD \
-	_IOR(IPMI_IOC_MAGIC, 25, struct ipmi_channel_lun_address_set)
-#define IPMICTL_SET_MY_CHANNEL_LUN_CMD \
-	_IOR(IPMI_IOC_MAGIC, 26, struct ipmi_channel_lun_address_set)
-#define IPMICTL_GET_MY_CHANNEL_LUN_CMD \
-	_IOR(IPMI_IOC_MAGIC, 27, struct ipmi_channel_lun_address_set)
-/* Legacy interfaces, these only set IPMB 0. */
-#define IPMICTL_SET_MY_ADDRESS_CMD	_IOR(IPMI_IOC_MAGIC, 17, unsigned int)
-#define IPMICTL_GET_MY_ADDRESS_CMD	_IOR(IPMI_IOC_MAGIC, 18, unsigned int)
-#define IPMICTL_SET_MY_LUN_CMD		_IOR(IPMI_IOC_MAGIC, 19, unsigned int)
-#define IPMICTL_GET_MY_LUN_CMD		_IOR(IPMI_IOC_MAGIC, 20, unsigned int)
+काष्ठा ipmi_channel_lun_address_set अणु
+	अचिन्हित लघु channel;
+	अचिन्हित अक्षर  value;
+पूर्ण;
+#घोषणा IPMICTL_SET_MY_CHANNEL_ADDRESS_CMD \
+	_IOR(IPMI_IOC_MAGIC, 24, काष्ठा ipmi_channel_lun_address_set)
+#घोषणा IPMICTL_GET_MY_CHANNEL_ADDRESS_CMD \
+	_IOR(IPMI_IOC_MAGIC, 25, काष्ठा ipmi_channel_lun_address_set)
+#घोषणा IPMICTL_SET_MY_CHANNEL_LUN_CMD \
+	_IOR(IPMI_IOC_MAGIC, 26, काष्ठा ipmi_channel_lun_address_set)
+#घोषणा IPMICTL_GET_MY_CHANNEL_LUN_CMD \
+	_IOR(IPMI_IOC_MAGIC, 27, काष्ठा ipmi_channel_lun_address_set)
+/* Legacy पूर्णांकerfaces, these only set IPMB 0. */
+#घोषणा IPMICTL_SET_MY_ADDRESS_CMD	_IOR(IPMI_IOC_MAGIC, 17, अचिन्हित पूर्णांक)
+#घोषणा IPMICTL_GET_MY_ADDRESS_CMD	_IOR(IPMI_IOC_MAGIC, 18, अचिन्हित पूर्णांक)
+#घोषणा IPMICTL_SET_MY_LUN_CMD		_IOR(IPMI_IOC_MAGIC, 19, अचिन्हित पूर्णांक)
+#घोषणा IPMICTL_GET_MY_LUN_CMD		_IOR(IPMI_IOC_MAGIC, 20, अचिन्हित पूर्णांक)
 
 /*
- * Get/set the default timing values for an interface.  You shouldn't
+ * Get/set the शेष timing values क्रम an पूर्णांकerface.  You shouldn't
  * generally mess with these.
  */
-struct ipmi_timing_parms {
-	int          retries;
-	unsigned int retry_time_ms;
-};
-#define IPMICTL_SET_TIMING_PARMS_CMD	_IOR(IPMI_IOC_MAGIC, 22, \
-					     struct ipmi_timing_parms)
-#define IPMICTL_GET_TIMING_PARMS_CMD	_IOR(IPMI_IOC_MAGIC, 23, \
-					     struct ipmi_timing_parms)
+काष्ठा ipmi_timing_parms अणु
+	पूर्णांक          retries;
+	अचिन्हित पूर्णांक retry_समय_ms;
+पूर्ण;
+#घोषणा IPMICTL_SET_TIMING_PARMS_CMD	_IOR(IPMI_IOC_MAGIC, 22, \
+					     काष्ठा ipmi_timing_parms)
+#घोषणा IPMICTL_GET_TIMING_PARMS_CMD	_IOR(IPMI_IOC_MAGIC, 23, \
+					     काष्ठा ipmi_timing_parms)
 
 /*
- * Set the maintenance mode.  See ipmi_set_maintenance_mode() above
- * for a description of what this does.
+ * Set the मुख्यtenance mode.  See ipmi_set_मुख्यtenance_mode() above
+ * क्रम a description of what this करोes.
  */
-#define IPMICTL_GET_MAINTENANCE_MODE_CMD	_IOR(IPMI_IOC_MAGIC, 30, int)
-#define IPMICTL_SET_MAINTENANCE_MODE_CMD	_IOW(IPMI_IOC_MAGIC, 31, int)
+#घोषणा IPMICTL_GET_MAINTEन_अंकCE_MODE_CMD	_IOR(IPMI_IOC_MAGIC, 30, पूर्णांक)
+#घोषणा IPMICTL_SET_MAINTEन_अंकCE_MODE_CMD	_IOW(IPMI_IOC_MAGIC, 31, पूर्णांक)
 
-#endif /* _UAPI__LINUX_IPMI_H */
+#पूर्ण_अगर /* _UAPI__LINUX_IPMI_H */

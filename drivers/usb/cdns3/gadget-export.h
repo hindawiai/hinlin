@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Cadence USBSS and USBSSP DRD Driver - Gadget Export APIs.
  *
@@ -7,31 +8,31 @@
  *
  * Authors: Peter Chen <peter.chen@nxp.com>
  */
-#ifndef __LINUX_CDNS3_GADGET_EXPORT
-#define __LINUX_CDNS3_GADGET_EXPORT
+#अगर_अघोषित __LINUX_CDNS3_GADGET_EXPORT
+#घोषणा __LINUX_CDNS3_GADGET_EXPORT
 
-#if IS_ENABLED(CONFIG_USB_CDNSP_GADGET)
+#अगर IS_ENABLED(CONFIG_USB_CDNSP_GADGET)
 
-int cdnsp_gadget_init(struct cdns *cdns);
-#else
+पूर्णांक cdnsp_gadget_init(काष्ठा cdns *cdns);
+#अन्यथा
 
-static inline int cdnsp_gadget_init(struct cdns *cdns)
-{
-	return -ENXIO;
-}
+अटल अंतरभूत पूर्णांक cdnsp_gadget_init(काष्ठा cdns *cdns)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-#endif /* CONFIG_USB_CDNSP_GADGET */
+#पूर्ण_अगर /* CONFIG_USB_CDNSP_GADGET */
 
-#if IS_ENABLED(CONFIG_USB_CDNS3_GADGET)
+#अगर IS_ENABLED(CONFIG_USB_CDNS3_GADGET)
 
-int cdns3_gadget_init(struct cdns *cdns);
-#else
+पूर्णांक cdns3_gadget_init(काष्ठा cdns *cdns);
+#अन्यथा
 
-static inline int cdns3_gadget_init(struct cdns *cdns)
-{
-	return -ENXIO;
-}
+अटल अंतरभूत पूर्णांक cdns3_gadget_init(काष्ठा cdns *cdns)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-#endif /* CONFIG_USB_CDNS3_GADGET */
+#पूर्ण_अगर /* CONFIG_USB_CDNS3_GADGET */
 
-#endif /* __LINUX_CDNS3_GADGET_EXPORT */
+#पूर्ण_अगर /* __LINUX_CDNS3_GADGET_EXPORT */

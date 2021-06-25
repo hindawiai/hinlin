@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: BSD-3-Clause-Clear */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause-Clear */
 /*
  * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ATH11K_DEBUGFS_STA_H_
-#define _ATH11K_DEBUGFS_STA_H_
+#अगर_अघोषित _ATH11K_DEBUGFS_STA_H_
+#घोषणा _ATH11K_DEBUGFS_STA_H_
 
-#include <net/mac80211.h>
+#समावेश <net/mac80211.h>
 
-#include "core.h"
-#include "hal_tx.h"
+#समावेश "core.h"
+#समावेश "hal_tx.h"
 
-#ifdef CONFIG_ATH11K_DEBUGFS
+#अगर_घोषित CONFIG_ATH11K_DEBUGFS
 
-void ath11k_debugfs_sta_op_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-			       struct ieee80211_sta *sta, struct dentry *dir);
-void ath11k_debugfs_sta_add_tx_stats(struct ath11k_sta *arsta,
-				     struct ath11k_per_peer_tx_stats *peer_stats,
+व्योम ath11k_debugfs_sta_op_add(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+			       काष्ठा ieee80211_sta *sta, काष्ठा dentry *dir);
+व्योम ath11k_debugfs_sta_add_tx_stats(काष्ठा ath11k_sta *arsta,
+				     काष्ठा ath11k_per_peer_tx_stats *peer_stats,
 				     u8 legacy_rate_idx);
-void ath11k_debugfs_sta_update_txcompl(struct ath11k *ar,
-				       struct sk_buff *msdu,
-				       struct hal_tx_status *ts);
+व्योम ath11k_debugfs_sta_update_txcompl(काष्ठा ath11k *ar,
+				       काष्ठा sk_buff *msdu,
+				       काष्ठा hal_tx_status *ts);
 
-#else /* CONFIG_ATH11K_DEBUGFS */
+#अन्यथा /* CONFIG_ATH11K_DEBUGFS */
 
-#define ath11k_debugfs_sta_op_add NULL
+#घोषणा ath11k_debugfs_sta_op_add शून्य
 
-static inline void
-ath11k_debugfs_sta_add_tx_stats(struct ath11k_sta *arsta,
-				struct ath11k_per_peer_tx_stats *peer_stats,
+अटल अंतरभूत व्योम
+ath11k_debugfs_sta_add_tx_stats(काष्ठा ath11k_sta *arsta,
+				काष्ठा ath11k_per_peer_tx_stats *peer_stats,
 				u8 legacy_rate_idx)
-{
-}
+अणु
+पूर्ण
 
-static inline void ath11k_debugfs_sta_update_txcompl(struct ath11k *ar,
-						     struct sk_buff *msdu,
-						     struct hal_tx_status *ts)
-{
-}
+अटल अंतरभूत व्योम ath11k_debugfs_sta_update_txcompl(काष्ठा ath11k *ar,
+						     काष्ठा sk_buff *msdu,
+						     काष्ठा hal_tx_status *ts)
+अणु
+पूर्ण
 
-#endif /* CONFIG_ATH11K_DEBUGFS */
+#पूर्ण_अगर /* CONFIG_ATH11K_DEBUGFS */
 
-#endif /* _ATH11K_DEBUGFS_STA_H_ */
+#पूर्ण_अगर /* _ATH11K_DEBUGFS_STA_H_ */

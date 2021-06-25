@@ -1,3 +1,4 @@
+<शैली गुरु>
 
 /*
  *  linux/drivers/scsi/esas2r/esas2r_flash.c
@@ -6,30 +7,30 @@
  *  Copyright (c) 2001-2013 ATTO Technology, Inc.
  *  (mailto:linuxdrivers@attotech.com)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * NO WARRANTY
  * THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
  * LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
- * solely responsible for determining the appropriateness of using and
+ * solely responsible क्रम determining the appropriateness of using and
  * distributing the Program and assumes all risks associated with its
  * exercise of rights under this Agreement, including but not limited to
  * the risks and costs of program errors, damage to or loss of data,
- * programs or equipment, and unavailability or interruption of operations.
+ * programs or equipment, and unavailability or पूर्णांकerruption of operations.
  *
  * DISCLAIMER OF LIABILITY
  * NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -37,160 +38,160 @@
  * HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fअगरth Floor, Boston, MA  02110-1301,
  * USA.
  */
 
-#include "esas2r.h"
+#समावेश "esas2r.h"
 
 /* local macro defs */
-#define esas2r_nvramcalc_cksum(n)     \
-	(esas2r_calc_byte_cksum((u8 *)(n), sizeof(struct esas2r_sas_nvram), \
+#घोषणा esas2r_nvramcalc_cksum(n)     \
+	(esas2r_calc_byte_cksum((u8 *)(n), माप(काष्ठा esas2r_sas_nvram), \
 				SASNVR_CKSUM_SEED))
-#define esas2r_nvramcalc_xor_cksum(n)  \
+#घोषणा esas2r_nvramcalc_xor_cksum(n)  \
 	(esas2r_calc_byte_xor_cksum((u8 *)(n), \
-				    sizeof(struct esas2r_sas_nvram), 0))
+				    माप(काष्ठा esas2r_sas_nvram), 0))
 
-#define ESAS2R_FS_DRVR_VER 2
+#घोषणा ESAS2R_FS_DRVR_VER 2
 
-static struct esas2r_sas_nvram default_sas_nvram = {
-	{ 'E',	'S',  'A',  'S'			     }, /* signature          */
+अटल काष्ठा esas2r_sas_nvram शेष_sas_nvram = अणु
+	अणु 'E',	'S',  'A',  'S'			     पूर्ण, /* signature          */
 	SASNVR_VERSION,                                 /* version            */
 	0,                                              /* checksum           */
-	31,                                             /* max_lun_for_target */
+	31,                                             /* max_lun_क्रम_target */
 	SASNVR_PCILAT_MAX,                              /* pci_latency        */
 	SASNVR1_BOOT_DRVR,                              /* options1           */
 	SASNVR2_HEARTBEAT   | SASNVR2_SINGLE_BUS        /* options2           */
 	| SASNVR2_SW_MUX_CTRL,
-	SASNVR_COAL_DIS,                                /* int_coalescing     */
+	SASNVR_COAL_DIS,                                /* पूर्णांक_coalescing     */
 	SASNVR_CMDTHR_NONE,                             /* cmd_throttle       */
-	3,                                              /* dev_wait_time      */
-	1,                                              /* dev_wait_count     */
+	3,                                              /* dev_रुको_समय      */
+	1,                                              /* dev_रुको_count     */
 	0,                                              /* spin_up_delay      */
 	0,                                              /* ssp_align_rate     */
-	{ 0x50, 0x01, 0x08, 0x60,                       /* sas_addr           */
-	  0x00, 0x00, 0x00, 0x00 },
-	{ SASNVR_SPEED_AUTO },                          /* phy_speed          */
-	{ SASNVR_MUX_DISABLED },                        /* SAS multiplexing   */
-	{ 0 },                                          /* phy_flags          */
+	अणु 0x50, 0x01, 0x08, 0x60,                       /* sas_addr           */
+	  0x00, 0x00, 0x00, 0x00 पूर्ण,
+	अणु SASNVR_SPEED_AUTO पूर्ण,                          /* phy_speed          */
+	अणु SASNVR_MUX_DISABLED पूर्ण,                        /* SAS multiplexing   */
+	अणु 0 पूर्ण,                                          /* phy_flags          */
 	SASNVR_SORT_SAS_ADDR,                           /* sort_type          */
 	3,                                              /* dpm_reqcmd_lmt     */
-	3,                                              /* dpm_stndby_time    */
-	0,                                              /* dpm_active_time    */
-	{ 0 },                                          /* phy_target_id      */
+	3,                                              /* dpm_stndby_समय    */
+	0,                                              /* dpm_active_समय    */
+	अणु 0 पूर्ण,                                          /* phy_target_id      */
 	SASNVR_VSMH_DISABLED,                           /* virt_ses_mode      */
-	SASNVR_RWM_DEFAULT,                             /* read_write_mode    */
-	0,                                              /* link down timeout  */
-	{ 0 }                                           /* reserved           */
-};
+	SASNVR_RWM_DEFAULT,                             /* पढ़ो_ग_लिखो_mode    */
+	0,                                              /* link करोwn समयout  */
+	अणु 0 पूर्ण                                           /* reserved           */
+पूर्ण;
 
-static u8 cmd_to_fls_func[] = {
+अटल u8 cmd_to_fls_func[] = अणु
 	0xFF,
 	VDA_FLASH_READ,
 	VDA_FLASH_BEGINW,
 	VDA_FLASH_WRITE,
 	VDA_FLASH_COMMIT,
 	VDA_FLASH_CANCEL
-};
+पूर्ण;
 
-static u8 esas2r_calc_byte_xor_cksum(u8 *addr, u32 len, u8 seed)
-{
+अटल u8 esas2r_calc_byte_xor_cksum(u8 *addr, u32 len, u8 seed)
+अणु
 	u32 cksum = seed;
 	u8 *p = (u8 *)&cksum;
 
-	while (len) {
-		if (((uintptr_t)addr & 3) == 0)
-			break;
+	जबतक (len) अणु
+		अगर (((uपूर्णांकptr_t)addr & 3) == 0)
+			अवरोध;
 
 		cksum = cksum ^ *addr;
 		addr++;
 		len--;
-	}
-	while (len >= sizeof(u32)) {
+	पूर्ण
+	जबतक (len >= माप(u32)) अणु
 		cksum = cksum ^ *(u32 *)addr;
 		addr += 4;
 		len -= 4;
-	}
-	while (len--) {
+	पूर्ण
+	जबतक (len--) अणु
 		cksum = cksum ^ *addr;
 		addr++;
-	}
-	return p[0] ^ p[1] ^ p[2] ^ p[3];
-}
+	पूर्ण
+	वापस p[0] ^ p[1] ^ p[2] ^ p[3];
+पूर्ण
 
-static u8 esas2r_calc_byte_cksum(void *addr, u32 len, u8 seed)
-{
+अटल u8 esas2r_calc_byte_cksum(व्योम *addr, u32 len, u8 seed)
+अणु
 	u8 *p = (u8 *)addr;
 	u8 cksum = seed;
 
-	while (len--)
+	जबतक (len--)
 		cksum = cksum + p[len];
-	return cksum;
-}
+	वापस cksum;
+पूर्ण
 
-/* Interrupt callback to process FM API write requests. */
-static void esas2r_fmapi_callback(struct esas2r_adapter *a,
-				  struct esas2r_request *rq)
-{
-	struct atto_vda_flash_req *vrq = &rq->vrq->flash;
-	struct esas2r_flash_context *fc =
-		(struct esas2r_flash_context *)rq->interrupt_cx;
+/* Interrupt callback to process FM API ग_लिखो requests. */
+अटल व्योम esas2r_fmapi_callback(काष्ठा esas2r_adapter *a,
+				  काष्ठा esas2r_request *rq)
+अणु
+	काष्ठा atto_vda_flash_req *vrq = &rq->vrq->flash;
+	काष्ठा esas2r_flash_context *fc =
+		(काष्ठा esas2r_flash_context *)rq->पूर्णांकerrupt_cx;
 
-	if (rq->req_stat == RS_SUCCESS) {
-		/* Last request was successful.  See what to do now. */
-		switch (vrq->sub_func) {
-		case VDA_FLASH_BEGINW:
-			if (fc->sgc.cur_offset == NULL)
-				goto commit;
+	अगर (rq->req_stat == RS_SUCCESS) अणु
+		/* Last request was successful.  See what to करो now. */
+		चयन (vrq->sub_func) अणु
+		हाल VDA_FLASH_BEGINW:
+			अगर (fc->sgc.cur_offset == शून्य)
+				जाओ commit;
 
 			vrq->sub_func = VDA_FLASH_WRITE;
 			rq->req_stat = RS_PENDING;
-			break;
+			अवरोध;
 
-		case VDA_FLASH_WRITE:
+		हाल VDA_FLASH_WRITE:
 commit:
 			vrq->sub_func = VDA_FLASH_COMMIT;
 			rq->req_stat = RS_PENDING;
-			rq->interrupt_cb = fc->interrupt_cb;
-			break;
+			rq->पूर्णांकerrupt_cb = fc->पूर्णांकerrupt_cb;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (rq->req_stat != RS_PENDING)
+	अगर (rq->req_stat != RS_PENDING)
 		/*
-		 * All done. call the real callback to complete the FM API
-		 * request.  We should only get here if a BEGINW or WRITE
+		 * All करोne. call the real callback to complete the FM API
+		 * request.  We should only get here अगर a BEGINW or WRITE
 		 * operation failed.
 		 */
-		(*fc->interrupt_cb)(a, rq);
-}
+		(*fc->पूर्णांकerrupt_cb)(a, rq);
+पूर्ण
 
 /*
  * Build a flash request based on the flash context.  The request status
  * is filled in on an error.
  */
-static void build_flash_msg(struct esas2r_adapter *a,
-			    struct esas2r_request *rq)
-{
-	struct esas2r_flash_context *fc =
-		(struct esas2r_flash_context *)rq->interrupt_cx;
-	struct esas2r_sg_context *sgc = &fc->sgc;
+अटल व्योम build_flash_msg(काष्ठा esas2r_adapter *a,
+			    काष्ठा esas2r_request *rq)
+अणु
+	काष्ठा esas2r_flash_context *fc =
+		(काष्ठा esas2r_flash_context *)rq->पूर्णांकerrupt_cx;
+	काष्ठा esas2r_sg_context *sgc = &fc->sgc;
 	u8 cksum = 0;
 
 	/* calculate the checksum */
-	if (fc->func == VDA_FLASH_BEGINW) {
-		if (sgc->cur_offset)
+	अगर (fc->func == VDA_FLASH_BEGINW) अणु
+		अगर (sgc->cur_offset)
 			cksum = esas2r_calc_byte_xor_cksum(sgc->cur_offset,
 							   sgc->length,
 							   0);
-		rq->interrupt_cb = esas2r_fmapi_callback;
-	} else {
-		rq->interrupt_cb = fc->interrupt_cb;
-	}
+		rq->पूर्णांकerrupt_cb = esas2r_fmapi_callback;
+	पूर्ण अन्यथा अणु
+		rq->पूर्णांकerrupt_cb = fc->पूर्णांकerrupt_cb;
+	पूर्ण
 	esas2r_build_flash_req(a,
 			       rq,
 			       fc->func,
@@ -198,149 +199,149 @@ static void build_flash_msg(struct esas2r_adapter *a,
 			       fc->flsh_addr,
 			       sgc->length);
 
-	esas2r_rq_free_sg_lists(rq, a);
+	esas2r_rq_मुक्त_sg_lists(rq, a);
 
 	/*
-	 * remember the length we asked for.  we have to keep track of
-	 * the current amount done so we know how much to compare when
-	 * doing the verification phase.
+	 * remember the length we asked क्रम.  we have to keep track of
+	 * the current amount करोne so we know how much to compare when
+	 * करोing the verअगरication phase.
 	 */
 	fc->curr_len = fc->sgc.length;
 
-	if (sgc->cur_offset) {
+	अगर (sgc->cur_offset) अणु
 		/* setup the S/G context to build the S/G table  */
 		esas2r_sgc_init(sgc, a, rq, &rq->vrq->flash.data.sge[0]);
 
-		if (!esas2r_build_sg_list(a, rq, sgc)) {
+		अगर (!esas2r_build_sg_list(a, rq, sgc)) अणु
 			rq->req_stat = RS_BUSY;
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		fc->sgc.length = 0;
-	}
+	पूर्ण
 
-	/* update the flsh_addr to the next one to write to  */
+	/* update the flsh_addr to the next one to ग_लिखो to  */
 	fc->flsh_addr += fc->curr_len;
-}
+पूर्ण
 
 /* determine the method to process the flash request */
-static bool load_image(struct esas2r_adapter *a, struct esas2r_request *rq)
-{
+अटल bool load_image(काष्ठा esas2r_adapter *a, काष्ठा esas2r_request *rq)
+अणु
 	/*
-	 * assume we have more to do.  if we return with the status set to
-	 * RS_PENDING, FM API tasks will continue.
+	 * assume we have more to करो.  अगर we वापस with the status set to
+	 * RS_PENDING, FM API tasks will जारी.
 	 */
 	rq->req_stat = RS_PENDING;
-	if (test_bit(AF_DEGRADED_MODE, &a->flags))
-		/* not suppported for now */;
-	else
+	अगर (test_bit(AF_DEGRADED_MODE, &a->flags))
+		/* not suppported क्रम now */;
+	अन्यथा
 		build_flash_msg(a, rq);
 
-	return rq->req_stat == RS_PENDING;
-}
+	वापस rq->req_stat == RS_PENDING;
+पूर्ण
 
-/*  boot image fixer uppers called before downloading the image. */
-static void fix_bios(struct esas2r_adapter *a, struct esas2r_flash_img *fi)
-{
-	struct esas2r_component_header *ch = &fi->cmp_hdr[CH_IT_BIOS];
-	struct esas2r_pc_image *pi;
-	struct esas2r_boot_header *bh;
+/*  boot image fixer uppers called beक्रमe करोwnloading the image. */
+अटल व्योम fix_bios(काष्ठा esas2r_adapter *a, काष्ठा esas2r_flash_img *fi)
+अणु
+	काष्ठा esas2r_component_header *ch = &fi->cmp_hdr[CH_IT_BIOS];
+	काष्ठा esas2r_pc_image *pi;
+	काष्ठा esas2r_boot_header *bh;
 
-	pi = (struct esas2r_pc_image *)((u8 *)fi + ch->image_offset);
+	pi = (काष्ठा esas2r_pc_image *)((u8 *)fi + ch->image_offset);
 	bh =
-		(struct esas2r_boot_header *)((u8 *)pi +
+		(काष्ठा esas2r_boot_header *)((u8 *)pi +
 					      le16_to_cpu(pi->header_offset));
 	bh->device_id = cpu_to_le16(a->pcid->device);
 
-	/* Recalculate the checksum in the PNP header if there  */
-	if (pi->pnp_offset) {
+	/* Recalculate the checksum in the PNP header अगर there  */
+	अगर (pi->pnp_offset) अणु
 		u8 *pnp_header_bytes =
 			((u8 *)pi + le16_to_cpu(pi->pnp_offset));
 
-		/* Identifier - dword that starts at byte 10 */
+		/* Identअगरier - dword that starts at byte 10 */
 		*((u32 *)&pnp_header_bytes[10]) =
-			cpu_to_le32(MAKEDWORD(a->pcid->subsystem_vendor,
-					      a->pcid->subsystem_device));
+			cpu_to_le32(MAKEDWORD(a->pcid->subप्रणाली_venकरोr,
+					      a->pcid->subप्रणाली_device));
 
 		/* Checksum - byte 9 */
 		pnp_header_bytes[9] -= esas2r_calc_byte_cksum(pnp_header_bytes,
 							      32, 0);
-	}
+	पूर्ण
 
 	/* Recalculate the checksum needed by the PC */
 	pi->checksum = pi->checksum -
 		       esas2r_calc_byte_cksum((u8 *)pi, ch->length, 0);
-}
+पूर्ण
 
-static void fix_efi(struct esas2r_adapter *a, struct esas2r_flash_img *fi)
-{
-	struct esas2r_component_header *ch = &fi->cmp_hdr[CH_IT_EFI];
+अटल व्योम fix_efi(काष्ठा esas2r_adapter *a, काष्ठा esas2r_flash_img *fi)
+अणु
+	काष्ठा esas2r_component_header *ch = &fi->cmp_hdr[CH_IT_EFI];
 	u32 len = ch->length;
 	u32 offset = ch->image_offset;
-	struct esas2r_efi_image *ei;
-	struct esas2r_boot_header *bh;
+	काष्ठा esas2r_efi_image *ei;
+	काष्ठा esas2r_boot_header *bh;
 
-	while (len) {
+	जबतक (len) अणु
 		u32 thislen;
 
-		ei = (struct esas2r_efi_image *)((u8 *)fi + offset);
-		bh = (struct esas2r_boot_header *)((u8 *)ei +
+		ei = (काष्ठा esas2r_efi_image *)((u8 *)fi + offset);
+		bh = (काष्ठा esas2r_boot_header *)((u8 *)ei +
 						   le16_to_cpu(
 							   ei->header_offset));
 		bh->device_id = cpu_to_le16(a->pcid->device);
 		thislen = (u32)le16_to_cpu(bh->image_length) * 512;
 
-		if (thislen > len)
-			break;
+		अगर (thislen > len)
+			अवरोध;
 
 		len -= thislen;
 		offset += thislen;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Complete a FM API request with the specified status. */
-static bool complete_fmapi_req(struct esas2r_adapter *a,
-			       struct esas2r_request *rq, u8 fi_stat)
-{
-	struct esas2r_flash_context *fc =
-		(struct esas2r_flash_context *)rq->interrupt_cx;
-	struct esas2r_flash_img *fi = fc->fi;
+/* Complete a FM API request with the specअगरied status. */
+अटल bool complete_fmapi_req(काष्ठा esas2r_adapter *a,
+			       काष्ठा esas2r_request *rq, u8 fi_stat)
+अणु
+	काष्ठा esas2r_flash_context *fc =
+		(काष्ठा esas2r_flash_context *)rq->पूर्णांकerrupt_cx;
+	काष्ठा esas2r_flash_img *fi = fc->fi;
 
 	fi->status = fi_stat;
 	fi->driver_error = rq->req_stat;
-	rq->interrupt_cb = NULL;
+	rq->पूर्णांकerrupt_cb = शून्य;
 	rq->req_stat = RS_SUCCESS;
 
-	if (fi_stat != FI_STAT_IMG_VER)
-		memset(fc->scratch, 0, FM_BUF_SZ);
+	अगर (fi_stat != FI_STAT_IMG_VER)
+		स_रखो(fc->scratch, 0, FM_BUF_SZ);
 
 	esas2r_enable_heartbeat(a);
 	clear_bit(AF_FLASH_LOCK, &a->flags);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Process each phase of the flash download process. */
-static void fw_download_proc(struct esas2r_adapter *a,
-			     struct esas2r_request *rq)
-{
-	struct esas2r_flash_context *fc =
-		(struct esas2r_flash_context *)rq->interrupt_cx;
-	struct esas2r_flash_img *fi = fc->fi;
-	struct esas2r_component_header *ch;
+/* Process each phase of the flash करोwnload process. */
+अटल व्योम fw_करोwnload_proc(काष्ठा esas2r_adapter *a,
+			     काष्ठा esas2r_request *rq)
+अणु
+	काष्ठा esas2r_flash_context *fc =
+		(काष्ठा esas2r_flash_context *)rq->पूर्णांकerrupt_cx;
+	काष्ठा esas2r_flash_img *fi = fc->fi;
+	काष्ठा esas2r_component_header *ch;
 	u32 len;
 	u8 *p, *q;
 
-	/* If the previous operation failed, just return. */
-	if (rq->req_stat != RS_SUCCESS)
-		goto error;
+	/* If the previous operation failed, just वापस. */
+	अगर (rq->req_stat != RS_SUCCESS)
+		जाओ error;
 
 	/*
 	 * If an upload just completed and the compare length is non-zero,
-	 * then we just read back part of the image we just wrote.  verify the
-	 * section and continue reading until the entire image is verified.
+	 * then we just पढ़ो back part of the image we just wrote.  verअगरy the
+	 * section and जारी पढ़ोing until the entire image is verअगरied.
 	 */
-	if (fc->func == VDA_FLASH_READ
-	    && fc->cmp_len) {
+	अगर (fc->func == VDA_FLASH_READ
+	    && fc->cmp_len) अणु
 		ch = &fi->cmp_hdr[fc->comp_typ];
 
 		p = fc->scratch;
@@ -350,40 +351,40 @@ static void fw_download_proc(struct esas2r_adapter *a,
 		    - fc->cmp_len;              /* where we are now           */
 
 		/*
-		 * NOTE - curr_len is the exact count of bytes for the read
-		 *        even when the end is read and its not a full buffer
+		 * NOTE - curr_len is the exact count of bytes क्रम the पढ़ो
+		 *        even when the end is पढ़ो and its not a full buffer
 		 */
-		for (len = fc->curr_len; len; len--)
-			if (*p++ != *q++)
-				goto error;
+		क्रम (len = fc->curr_len; len; len--)
+			अगर (*p++ != *q++)
+				जाओ error;
 
 		fc->cmp_len -= fc->curr_len; /* # left to compare    */
 
-		/* Update fc and determine the length for the next upload */
-		if (fc->cmp_len > FM_BUF_SZ)
+		/* Update fc and determine the length क्रम the next upload */
+		अगर (fc->cmp_len > FM_BUF_SZ)
 			fc->sgc.length = FM_BUF_SZ;
-		else
+		अन्यथा
 			fc->sgc.length = fc->cmp_len;
 
 		fc->sgc.cur_offset = fc->sgc_offset +
 				     ((u8 *)fc->scratch - (u8 *)fi);
-	}
+	पूर्ण
 
 	/*
 	 * This code uses a 'while' statement since the next component may
 	 * have a length = zero.  This can happen since some components are
 	 * not required.  At the end of this 'while' we set up the length
-	 * for the next request and therefore sgc.length can be = 0.
+	 * क्रम the next request and thereक्रमe sgc.length can be = 0.
 	 */
-	while (fc->sgc.length == 0) {
+	जबतक (fc->sgc.length == 0) अणु
 		ch = &fi->cmp_hdr[fc->comp_typ];
 
-		switch (fc->task) {
-		case FMTSK_ERASE_BOOT:
+		चयन (fc->task) अणु
+		हाल FMTSK_ERASE_BOOT:
 			/* the BIOS image is written next */
 			ch = &fi->cmp_hdr[CH_IT_BIOS];
-			if (ch->length == 0)
-				goto no_bios;
+			अगर (ch->length == 0)
+				जाओ no_bios;
 
 			fc->task = FMTSK_WRTBIOS;
 			fc->func = VDA_FLASH_BEGINW;
@@ -392,12 +393,12 @@ static void fw_download_proc(struct esas2r_adapter *a,
 			fc->sgc.length = ch->length;
 			fc->sgc.cur_offset = fc->sgc_offset +
 					     ch->image_offset;
-			break;
+			अवरोध;
 
-		case FMTSK_WRTBIOS:
+		हाल FMTSK_WRTBIOS:
 			/*
-			 * The BIOS image has been written - read it and
-			 * verify it
+			 * The BIOS image has been written - पढ़ो it and
+			 * verअगरy it
 			 */
 			fc->task = FMTSK_READBIOS;
 			fc->func = VDA_FLASH_READ;
@@ -407,20 +408,20 @@ static void fw_download_proc(struct esas2r_adapter *a,
 			fc->sgc.cur_offset = fc->sgc_offset
 					     + ((u8 *)fc->scratch -
 						(u8 *)fi);
-			break;
+			अवरोध;
 
-		case FMTSK_READBIOS:
+		हाल FMTSK_READBIOS:
 no_bios:
 			/*
-			 * Mark the component header status for the image
+			 * Mark the component header status क्रम the image
 			 * completed
 			 */
 			ch->status = CH_STAT_SUCCESS;
 
 			/* The MAC image is written next */
 			ch = &fi->cmp_hdr[CH_IT_MAC];
-			if (ch->length == 0)
-				goto no_mac;
+			अगर (ch->length == 0)
+				जाओ no_mac;
 
 			fc->task = FMTSK_WRTMAC;
 			fc->func = VDA_FLASH_BEGINW;
@@ -430,10 +431,10 @@ no_bios:
 			fc->sgc.length = ch->length;
 			fc->sgc.cur_offset = fc->sgc_offset +
 					     ch->image_offset;
-			break;
+			अवरोध;
 
-		case FMTSK_WRTMAC:
-			/* The MAC image has been written - read and verify */
+		हाल FMTSK_WRTMAC:
+			/* The MAC image has been written - पढ़ो and verअगरy */
 			fc->task = FMTSK_READMAC;
 			fc->func = VDA_FLASH_READ;
 			fc->flsh_addr -= ch->length;
@@ -442,20 +443,20 @@ no_bios:
 			fc->sgc.cur_offset = fc->sgc_offset
 					     + ((u8 *)fc->scratch -
 						(u8 *)fi);
-			break;
+			अवरोध;
 
-		case FMTSK_READMAC:
+		हाल FMTSK_READMAC:
 no_mac:
 			/*
-			 * Mark the component header status for the image
+			 * Mark the component header status क्रम the image
 			 * completed
 			 */
 			ch->status = CH_STAT_SUCCESS;
 
 			/* The EFI image is written next */
 			ch = &fi->cmp_hdr[CH_IT_EFI];
-			if (ch->length == 0)
-				goto no_efi;
+			अगर (ch->length == 0)
+				जाओ no_efi;
 
 			fc->task = FMTSK_WRTEFI;
 			fc->func = VDA_FLASH_BEGINW;
@@ -466,10 +467,10 @@ no_mac:
 			fc->sgc.length = ch->length;
 			fc->sgc.cur_offset = fc->sgc_offset +
 					     ch->image_offset;
-			break;
+			अवरोध;
 
-		case FMTSK_WRTEFI:
-			/* The EFI image has been written - read and verify */
+		हाल FMTSK_WRTEFI:
+			/* The EFI image has been written - पढ़ो and verअगरy */
 			fc->task = FMTSK_READEFI;
 			fc->func = VDA_FLASH_READ;
 			fc->flsh_addr -= ch->length;
@@ -478,12 +479,12 @@ no_mac:
 			fc->sgc.cur_offset = fc->sgc_offset
 					     + ((u8 *)fc->scratch -
 						(u8 *)fi);
-			break;
+			अवरोध;
 
-		case FMTSK_READEFI:
+		हाल FMTSK_READEFI:
 no_efi:
 			/*
-			 * Mark the component header status for the image
+			 * Mark the component header status क्रम the image
 			 * completed
 			 */
 			ch->status = CH_STAT_SUCCESS;
@@ -491,8 +492,8 @@ no_efi:
 			/* The CFG image is written next */
 			ch = &fi->cmp_hdr[CH_IT_CFG];
 
-			if (ch->length == 0)
-				goto no_cfg;
+			अगर (ch->length == 0)
+				जाओ no_cfg;
 			fc->task = FMTSK_WRTCFG;
 			fc->func = VDA_FLASH_BEGINW;
 			fc->comp_typ = CH_IT_CFG;
@@ -500,10 +501,10 @@ no_efi:
 			fc->sgc.length = ch->length;
 			fc->sgc.cur_offset = fc->sgc_offset +
 					     ch->image_offset;
-			break;
+			अवरोध;
 
-		case FMTSK_WRTCFG:
-			/* The CFG image has been written - read and verify */
+		हाल FMTSK_WRTCFG:
+			/* The CFG image has been written - पढ़ो and verअगरy */
 			fc->task = FMTSK_READCFG;
 			fc->func = VDA_FLASH_READ;
 			fc->flsh_addr = FLS_OFFSET_CPYR - ch->length;
@@ -512,391 +513,391 @@ no_efi:
 			fc->sgc.cur_offset = fc->sgc_offset
 					     + ((u8 *)fc->scratch -
 						(u8 *)fi);
-			break;
+			अवरोध;
 
-		case FMTSK_READCFG:
+		हाल FMTSK_READCFG:
 no_cfg:
 			/*
-			 * Mark the component header status for the image
+			 * Mark the component header status क्रम the image
 			 * completed
 			 */
 			ch->status = CH_STAT_SUCCESS;
 
 			/*
-			 * The download is complete.  If in degraded mode,
+			 * The करोwnload is complete.  If in degraded mode,
 			 * attempt a chip reset.
 			 */
-			if (test_bit(AF_DEGRADED_MODE, &a->flags))
+			अगर (test_bit(AF_DEGRADED_MODE, &a->flags))
 				esas2r_local_reset_adapter(a);
 
 			a->flash_ver = fi->cmp_hdr[CH_IT_BIOS].version;
-			esas2r_print_flash_rev(a);
+			esas2r_prपूर्णांक_flash_rev(a);
 
 			/* Update the type of boot image on the card */
-			memcpy(a->image_type, fi->rel_version,
-			       sizeof(fi->rel_version));
+			स_नकल(a->image_type, fi->rel_version,
+			       माप(fi->rel_version));
 			complete_fmapi_req(a, rq, FI_STAT_SUCCESS);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		/* If verifying, don't try reading more than what's there */
-		if (fc->func == VDA_FLASH_READ
+		/* If verअगरying, करोn't try reading more than what's there */
+		अगर (fc->func == VDA_FLASH_READ
 		    && fc->sgc.length > fc->cmp_len)
 			fc->sgc.length = fc->cmp_len;
-	}
+	पूर्ण
 
-	/* Build the request to perform the next action */
-	if (!load_image(a, rq)) {
+	/* Build the request to perक्रमm the next action */
+	अगर (!load_image(a, rq)) अणु
 error:
-		if (fc->comp_typ < fi->num_comps) {
+		अगर (fc->comp_typ < fi->num_comps) अणु
 			ch = &fi->cmp_hdr[fc->comp_typ];
 			ch->status = CH_STAT_FAILED;
-		}
+		पूर्ण
 
 		complete_fmapi_req(a, rq, FI_STAT_FAILED);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Determine the flash image adaptyp for this adapter */
-static u8 get_fi_adap_type(struct esas2r_adapter *a)
-{
+/* Determine the flash image adaptyp क्रम this adapter */
+अटल u8 get_fi_adap_type(काष्ठा esas2r_adapter *a)
+अणु
 	u8 type;
 
-	/* use the device ID to get the correct adap_typ for this HBA */
-	switch (a->pcid->device) {
-	case ATTO_DID_INTEL_IOP348:
+	/* use the device ID to get the correct adap_typ क्रम this HBA */
+	चयन (a->pcid->device) अणु
+	हाल ATTO_DID_INTEL_IOP348:
 		type = FI_AT_SUN_LAKE;
-		break;
+		अवरोध;
 
-	case ATTO_DID_MV_88RC9580:
-	case ATTO_DID_MV_88RC9580TS:
-	case ATTO_DID_MV_88RC9580TSE:
-	case ATTO_DID_MV_88RC9580TL:
+	हाल ATTO_DID_MV_88RC9580:
+	हाल ATTO_DID_MV_88RC9580TS:
+	हाल ATTO_DID_MV_88RC9580TSE:
+	हाल ATTO_DID_MV_88RC9580TL:
 		type = FI_AT_MV_9580;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		type = FI_AT_UNKNWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return type;
-}
+	वापस type;
+पूर्ण
 
-/* Size of config + copyright + flash_ver images, 0 for failure. */
-static u32 chk_cfg(u8 *cfg, u32 length, u32 *flash_ver)
-{
+/* Size of config + copyright + flash_ver images, 0 क्रम failure. */
+अटल u32 chk_cfg(u8 *cfg, u32 length, u32 *flash_ver)
+अणु
 	u16 *pw = (u16 *)cfg - 1;
 	u32 sz = 0;
 	u32 len = length;
 
-	if (len == 0)
+	अगर (len == 0)
 		len = FM_BUF_SZ;
 
-	if (flash_ver)
+	अगर (flash_ver)
 		*flash_ver = 0;
 
-	while (true) {
+	जबतक (true) अणु
 		u16 type;
 		u16 size;
 
 		type = le16_to_cpu(*pw--);
 		size = le16_to_cpu(*pw--);
 
-		if (type != FBT_CPYR
+		अगर (type != FBT_CPYR
 		    && type != FBT_SETUP
 		    && type != FBT_FLASH_VER)
-			break;
+			अवरोध;
 
-		if (type == FBT_FLASH_VER
+		अगर (type == FBT_FLASH_VER
 		    && flash_ver)
 			*flash_ver = le32_to_cpu(*(u32 *)(pw - 1));
 
-		sz += size + (2 * sizeof(u16));
-		pw -= size / sizeof(u16);
+		sz += size + (2 * माप(u16));
+		pw -= size / माप(u16);
 
-		if (sz > len - (2 * sizeof(u16)))
-			break;
-	}
+		अगर (sz > len - (2 * माप(u16)))
+			अवरोध;
+	पूर्ण
 
-	/* See if we are comparing the size to the specified length */
-	if (length && sz != length)
-		return 0;
+	/* See अगर we are comparing the size to the specअगरied length */
+	अगर (length && sz != length)
+		वापस 0;
 
-	return sz;
-}
+	वापस sz;
+पूर्ण
 
-/* Verify that the boot image is valid */
-static u8 chk_boot(u8 *boot_img, u32 length)
-{
-	struct esas2r_boot_image *bi = (struct esas2r_boot_image *)boot_img;
+/* Verअगरy that the boot image is valid */
+अटल u8 chk_boot(u8 *boot_img, u32 length)
+अणु
+	काष्ठा esas2r_boot_image *bi = (काष्ठा esas2r_boot_image *)boot_img;
 	u16 hdroffset = le16_to_cpu(bi->header_offset);
-	struct esas2r_boot_header *bh;
+	काष्ठा esas2r_boot_header *bh;
 
-	if (bi->signature != le16_to_cpu(0xaa55)
-	    || (long)hdroffset >
-	    (long)(65536L - sizeof(struct esas2r_boot_header))
+	अगर (bi->signature != le16_to_cpu(0xaa55)
+	    || (दीर्घ)hdroffset >
+	    (दीर्घ)(65536L - माप(काष्ठा esas2r_boot_header))
 	    || (hdroffset & 3)
-	    || (hdroffset < sizeof(struct esas2r_boot_image))
-	    || ((u32)hdroffset + sizeof(struct esas2r_boot_header) > length))
-		return 0xff;
+	    || (hdroffset < माप(काष्ठा esas2r_boot_image))
+	    || ((u32)hdroffset + माप(काष्ठा esas2r_boot_header) > length))
+		वापस 0xff;
 
-	bh = (struct esas2r_boot_header *)((char *)bi + hdroffset);
+	bh = (काष्ठा esas2r_boot_header *)((अक्षर *)bi + hdroffset);
 
-	if (bh->signature[0] != 'P'
+	अगर (bh->signature[0] != 'P'
 	    || bh->signature[1] != 'C'
 	    || bh->signature[2] != 'I'
 	    || bh->signature[3] != 'R'
-	    || le16_to_cpu(bh->struct_length) <
-	    (u16)sizeof(struct esas2r_boot_header)
+	    || le16_to_cpu(bh->काष्ठा_length) <
+	    (u16)माप(काष्ठा esas2r_boot_header)
 	    || bh->class_code[2] != 0x01
 	    || bh->class_code[1] != 0x04
 	    || bh->class_code[0] != 0x00
 	    || (bh->code_type != CODE_TYPE_PC
 		&& bh->code_type != CODE_TYPE_OPEN
 		&& bh->code_type != CODE_TYPE_EFI))
-		return 0xff;
+		वापस 0xff;
 
-	return bh->code_type;
-}
+	वापस bh->code_type;
+पूर्ण
 
 /* The sum of all the WORDS of the image */
-static u16 calc_fi_checksum(struct esas2r_flash_context *fc)
-{
-	struct esas2r_flash_img *fi = fc->fi;
+अटल u16 calc_fi_checksum(काष्ठा esas2r_flash_context *fc)
+अणु
+	काष्ठा esas2r_flash_img *fi = fc->fi;
 	u16 cksum;
 	u32 len;
 	u16 *pw;
 
-	for (len = (fi->length - fc->fi_hdr_len) / 2,
+	क्रम (len = (fi->length - fc->fi_hdr_len) / 2,
 	     pw = (u16 *)((u8 *)fi + fc->fi_hdr_len),
 	     cksum = 0;
 	     len;
 	     len--, pw++)
 		cksum = cksum + le16_to_cpu(*pw);
 
-	return cksum;
-}
+	वापस cksum;
+पूर्ण
 
 /*
- * Verify the flash image structure.  The following verifications will
- * be performed:
- *              1)  verify the fi_version is correct
- *              2)  verify the checksum of the entire image.
+ * Verअगरy the flash image काष्ठाure.  The following verअगरications will
+ * be perक्रमmed:
+ *              1)  verअगरy the fi_version is correct
+ *              2)  verअगरy the checksum of the entire image.
  *              3)  validate the adap_typ, action and length fields.
  *              4)  validate each component header. check the img_type and
  *                  length fields
  *              5)  validate each component image.  validate signatures and
  *                  local checksums
  */
-static bool verify_fi(struct esas2r_adapter *a,
-		      struct esas2r_flash_context *fc)
-{
-	struct esas2r_flash_img *fi = fc->fi;
+अटल bool verअगरy_fi(काष्ठा esas2r_adapter *a,
+		      काष्ठा esas2r_flash_context *fc)
+अणु
+	काष्ठा esas2r_flash_img *fi = fc->fi;
 	u8 type;
 	bool imgerr;
 	u16 i;
 	u32 len;
-	struct esas2r_component_header *ch;
+	काष्ठा esas2r_component_header *ch;
 
-	/* Verify the length - length must even since we do a word checksum */
+	/* Verअगरy the length - length must even since we करो a word checksum */
 	len = fi->length;
 
-	if ((len & 1)
-	    || len < fc->fi_hdr_len) {
+	अगर ((len & 1)
+	    || len < fc->fi_hdr_len) अणु
 		fi->status = FI_STAT_LENGTH;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* Get adapter type and verify type in flash image */
+	/* Get adapter type and verअगरy type in flash image */
 	type = get_fi_adap_type(a);
-	if ((type == FI_AT_UNKNWN) || (fi->adap_typ != type)) {
+	अगर ((type == FI_AT_UNKNWN) || (fi->adap_typ != type)) अणु
 		fi->status = FI_STAT_ADAPTYP;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/*
-	 * Loop through each component and verify the img_type and length
-	 * fields.  Keep a running count of the sizes sooze we can verify total
+	 * Loop through each component and verअगरy the img_type and length
+	 * fields.  Keep a running count of the sizes sooze we can verअगरy total
 	 * size to additive size.
 	 */
 	imgerr = false;
 
-	for (i = 0, len = 0, ch = fi->cmp_hdr;
+	क्रम (i = 0, len = 0, ch = fi->cmp_hdr;
 	     i < fi->num_comps;
-	     i++, ch++) {
+	     i++, ch++) अणु
 		bool cmperr = false;
 
 		/*
-		 * Verify that the component header has the same index as the
+		 * Verअगरy that the component header has the same index as the
 		 * image type.  The headers must be ordered correctly
 		 */
-		if (i != ch->img_type) {
+		अगर (i != ch->img_type) अणु
 			imgerr = true;
 			ch->status = CH_STAT_INVALID;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (ch->img_type) {
-		case CH_IT_BIOS:
+		चयन (ch->img_type) अणु
+		हाल CH_IT_BIOS:
 			type = CODE_TYPE_PC;
-			break;
+			अवरोध;
 
-		case CH_IT_MAC:
+		हाल CH_IT_MAC:
 			type = CODE_TYPE_OPEN;
-			break;
+			अवरोध;
 
-		case CH_IT_EFI:
+		हाल CH_IT_EFI:
 			type = CODE_TYPE_EFI;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (ch->img_type) {
-		case CH_IT_FW:
-		case CH_IT_NVR:
-			break;
+		चयन (ch->img_type) अणु
+		हाल CH_IT_FW:
+		हाल CH_IT_NVR:
+			अवरोध;
 
-		case CH_IT_BIOS:
-		case CH_IT_MAC:
-		case CH_IT_EFI:
-			if (ch->length & 0x1ff)
+		हाल CH_IT_BIOS:
+		हाल CH_IT_MAC:
+		हाल CH_IT_EFI:
+			अगर (ch->length & 0x1ff)
 				cmperr = true;
 
-			/* Test if component image is present  */
-			if (ch->length == 0)
-				break;
+			/* Test अगर component image is present  */
+			अगर (ch->length == 0)
+				अवरोध;
 
-			/* Image is present - verify the image */
-			if (chk_boot((u8 *)fi + ch->image_offset, ch->length)
+			/* Image is present - verअगरy the image */
+			अगर (chk_boot((u8 *)fi + ch->image_offset, ch->length)
 			    != type)
 				cmperr = true;
 
-			break;
+			अवरोध;
 
-		case CH_IT_CFG:
+		हाल CH_IT_CFG:
 
-			/* Test if component image is present */
-			if (ch->length == 0) {
+			/* Test अगर component image is present */
+			अगर (ch->length == 0) अणु
 				cmperr = true;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			/* Image is present - verify the image */
-			if (!chk_cfg((u8 *)fi + ch->image_offset + ch->length,
-				     ch->length, NULL))
+			/* Image is present - verअगरy the image */
+			अगर (!chk_cfg((u8 *)fi + ch->image_offset + ch->length,
+				     ch->length, शून्य))
 				cmperr = true;
 
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 
 			fi->status = FI_STAT_UNKNOWN;
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (cmperr) {
+		अगर (cmperr) अणु
 			imgerr = true;
 			ch->status = CH_STAT_INVALID;
-		} else {
+		पूर्ण अन्यथा अणु
 			ch->status = CH_STAT_PENDING;
 			len += ch->length;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (imgerr) {
+	अगर (imgerr) अणु
 		fi->status = FI_STAT_MISSING;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Compare fi->length to the sum of ch->length fields */
-	if (len != fi->length - fc->fi_hdr_len) {
+	अगर (len != fi->length - fc->fi_hdr_len) अणु
 		fi->status = FI_STAT_LENGTH;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Compute the checksum - it should come out zero */
-	if (fi->checksum != calc_fi_checksum(fc)) {
+	अगर (fi->checksum != calc_fi_checksum(fc)) अणु
 		fi->status = FI_STAT_CHKSUM;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* Fill in the FS IOCTL response data from a completed request. */
-static void esas2r_complete_fs_ioctl(struct esas2r_adapter *a,
-				     struct esas2r_request *rq)
-{
-	struct esas2r_ioctl_fs *fs =
-		(struct esas2r_ioctl_fs *)rq->interrupt_cx;
+अटल व्योम esas2r_complete_fs_ioctl(काष्ठा esas2r_adapter *a,
+				     काष्ठा esas2r_request *rq)
+अणु
+	काष्ठा esas2r_ioctl_fs *fs =
+		(काष्ठा esas2r_ioctl_fs *)rq->पूर्णांकerrupt_cx;
 
-	if (rq->vrq->flash.sub_func == VDA_FLASH_COMMIT)
+	अगर (rq->vrq->flash.sub_func == VDA_FLASH_COMMIT)
 		esas2r_enable_heartbeat(a);
 
 	fs->driver_error = rq->req_stat;
 
-	if (fs->driver_error == RS_SUCCESS)
+	अगर (fs->driver_error == RS_SUCCESS)
 		fs->status = ATTO_STS_SUCCESS;
-	else
+	अन्यथा
 		fs->status = ATTO_STS_FAILED;
-}
+पूर्ण
 
 /* Prepare an FS IOCTL request to be sent to the firmware. */
-bool esas2r_process_fs_ioctl(struct esas2r_adapter *a,
-			     struct esas2r_ioctl_fs *fs,
-			     struct esas2r_request *rq,
-			     struct esas2r_sg_context *sgc)
-{
+bool esas2r_process_fs_ioctl(काष्ठा esas2r_adapter *a,
+			     काष्ठा esas2r_ioctl_fs *fs,
+			     काष्ठा esas2r_request *rq,
+			     काष्ठा esas2r_sg_context *sgc)
+अणु
 	u8 cmdcnt = (u8)ARRAY_SIZE(cmd_to_fls_func);
-	struct esas2r_ioctlfs_command *fsc = &fs->command;
+	काष्ठा esas2r_ioctlfs_command *fsc = &fs->command;
 	u8 func = 0;
 	u32 datalen;
 
 	fs->status = ATTO_STS_FAILED;
 	fs->driver_error = RS_PENDING;
 
-	if (fs->version > ESAS2R_FS_VER) {
+	अगर (fs->version > ESAS2R_FS_VER) अणु
 		fs->status = ATTO_STS_INV_VERSION;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (fsc->command >= cmdcnt) {
+	अगर (fsc->command >= cmdcnt) अणु
 		fs->status = ATTO_STS_INV_FUNC;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	func = cmd_to_fls_func[fsc->command];
-	if (func == 0xFF) {
+	अगर (func == 0xFF) अणु
 		fs->status = ATTO_STS_INV_FUNC;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (fsc->command != ESAS2R_FS_CMD_CANCEL) {
-		if ((a->pcid->device != ATTO_DID_MV_88RC9580
+	अगर (fsc->command != ESAS2R_FS_CMD_CANCEL) अणु
+		अगर ((a->pcid->device != ATTO_DID_MV_88RC9580
 		     || fs->adap_type != ESAS2R_FS_AT_ESASRAID2)
 		    && (a->pcid->device != ATTO_DID_MV_88RC9580TS
 			|| fs->adap_type != ESAS2R_FS_AT_TSSASRAID2)
 		    && (a->pcid->device != ATTO_DID_MV_88RC9580TSE
 			|| fs->adap_type != ESAS2R_FS_AT_TSSASRAID2E)
 		    && (a->pcid->device != ATTO_DID_MV_88RC9580TL
-			|| fs->adap_type != ESAS2R_FS_AT_TLSASHBA)) {
+			|| fs->adap_type != ESAS2R_FS_AT_TLSASHBA)) अणु
 			fs->status = ATTO_STS_INV_ADAPTER;
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (fs->driver_ver > ESAS2R_FS_DRVR_VER) {
+		अगर (fs->driver_ver > ESAS2R_FS_DRVR_VER) अणु
 			fs->status = ATTO_STS_INV_DRVR_VER;
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	if (test_bit(AF_DEGRADED_MODE, &a->flags)) {
+	अगर (test_bit(AF_DEGRADED_MODE, &a->flags)) अणु
 		fs->status = ATTO_STS_DEGRADED;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	rq->interrupt_cb = esas2r_complete_fs_ioctl;
-	rq->interrupt_cx = fs;
+	rq->पूर्णांकerrupt_cb = esas2r_complete_fs_ioctl;
+	rq->पूर्णांकerrupt_cx = fs;
 	datalen = le32_to_cpu(fsc->length);
 	esas2r_build_flash_req(a,
 			       rq,
@@ -905,141 +906,141 @@ bool esas2r_process_fs_ioctl(struct esas2r_adapter *a,
 			       le32_to_cpu(fsc->flash_addr),
 			       datalen);
 
-	if (func == VDA_FLASH_WRITE
-	    || func == VDA_FLASH_READ) {
-		if (datalen == 0) {
+	अगर (func == VDA_FLASH_WRITE
+	    || func == VDA_FLASH_READ) अणु
+		अगर (datalen == 0) अणु
 			fs->status = ATTO_STS_INV_FUNC;
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		esas2r_sgc_init(sgc, a, rq, rq->vrq->flash.data.sge);
 		sgc->length = datalen;
 
-		if (!esas2r_build_sg_list(a, rq, sgc)) {
+		अगर (!esas2r_build_sg_list(a, rq, sgc)) अणु
 			fs->status = ATTO_STS_OUT_OF_RSRC;
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	if (func == VDA_FLASH_COMMIT)
+	अगर (func == VDA_FLASH_COMMIT)
 		esas2r_disable_heartbeat(a);
 
 	esas2r_start_request(a, rq);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool esas2r_flash_access(struct esas2r_adapter *a, u32 function)
-{
-	u32 starttime;
-	u32 timeout;
-	u32 intstat;
-	u32 doorbell;
+अटल bool esas2r_flash_access(काष्ठा esas2r_adapter *a, u32 function)
+अणु
+	u32 startसमय;
+	u32 समयout;
+	u32 पूर्णांकstat;
+	u32 करोorbell;
 
-	/* Disable chip interrupts awhile */
-	if (function == DRBL_FLASH_REQ)
-		esas2r_disable_chip_interrupts(a);
+	/* Disable chip पूर्णांकerrupts aजबतक */
+	अगर (function == DRBL_FLASH_REQ)
+		esas2r_disable_chip_पूर्णांकerrupts(a);
 
 	/* Issue the request to the firmware */
-	esas2r_write_register_dword(a, MU_DOORBELL_IN, function);
+	esas2r_ग_लिखो_रेजिस्टर_dword(a, MU_DOORBELL_IN, function);
 
-	/* Now wait for the firmware to process it */
-	starttime = jiffies_to_msecs(jiffies);
+	/* Now रुको क्रम the firmware to process it */
+	startसमय = jअगरfies_to_msecs(jअगरfies);
 
-	if (test_bit(AF_CHPRST_PENDING, &a->flags) ||
+	अगर (test_bit(AF_CHPRST_PENDING, &a->flags) ||
 	    test_bit(AF_DISC_PENDING, &a->flags))
-		timeout = 40000;
-	else
-		timeout = 5000;
+		समयout = 40000;
+	अन्यथा
+		समयout = 5000;
 
-	while (true) {
-		intstat = esas2r_read_register_dword(a, MU_INT_STATUS_OUT);
+	जबतक (true) अणु
+		पूर्णांकstat = esas2r_पढ़ो_रेजिस्टर_dword(a, MU_INT_STATUS_OUT);
 
-		if (intstat & MU_INTSTAT_DRBL) {
-			/* Got a doorbell interrupt.  Check for the function */
-			doorbell =
-				esas2r_read_register_dword(a, MU_DOORBELL_OUT);
-			esas2r_write_register_dword(a, MU_DOORBELL_OUT,
-						    doorbell);
-			if (doorbell & function)
-				break;
-		}
+		अगर (पूर्णांकstat & MU_INTSTAT_DRBL) अणु
+			/* Got a करोorbell पूर्णांकerrupt.  Check क्रम the function */
+			करोorbell =
+				esas2r_पढ़ो_रेजिस्टर_dword(a, MU_DOORBELL_OUT);
+			esas2r_ग_लिखो_रेजिस्टर_dword(a, MU_DOORBELL_OUT,
+						    करोorbell);
+			अगर (करोorbell & function)
+				अवरोध;
+		पूर्ण
 
-		schedule_timeout_interruptible(msecs_to_jiffies(100));
+		schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(100));
 
-		if ((jiffies_to_msecs(jiffies) - starttime) > timeout) {
+		अगर ((jअगरfies_to_msecs(jअगरfies) - startसमय) > समयout) अणु
 			/*
 			 * Iimeout.  If we were requesting flash access,
-			 * indicate we are done so the firmware knows we gave
+			 * indicate we are करोne so the firmware knows we gave
 			 * up.  If this was a REQ, we also need to re-enable
-			 * chip interrupts.
+			 * chip पूर्णांकerrupts.
 			 */
-			if (function == DRBL_FLASH_REQ) {
+			अगर (function == DRBL_FLASH_REQ) अणु
 				esas2r_hdebug("flash access timeout");
-				esas2r_write_register_dword(a, MU_DOORBELL_IN,
+				esas2r_ग_लिखो_रेजिस्टर_dword(a, MU_DOORBELL_IN,
 							    DRBL_FLASH_DONE);
-				esas2r_enable_chip_interrupts(a);
-			} else {
+				esas2r_enable_chip_पूर्णांकerrupts(a);
+			पूर्ण अन्यथा अणु
 				esas2r_hdebug("flash release timeout");
-			}
+			पूर्ण
 
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	/* if we're done, re-enable chip interrupts */
-	if (function == DRBL_FLASH_DONE)
-		esas2r_enable_chip_interrupts(a);
+	/* अगर we're करोne, re-enable chip पूर्णांकerrupts */
+	अगर (function == DRBL_FLASH_DONE)
+		esas2r_enable_chip_पूर्णांकerrupts(a);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#define WINDOW_SIZE ((signed int)MW_DATA_WINDOW_SIZE)
+#घोषणा WINDOW_SIZE ((चिन्हित पूर्णांक)MW_DATA_WINDOW_SIZE)
 
-bool esas2r_read_flash_block(struct esas2r_adapter *a,
-			     void *to,
+bool esas2r_पढ़ो_flash_block(काष्ठा esas2r_adapter *a,
+			     व्योम *to,
 			     u32 from,
 			     u32 size)
-{
+अणु
 	u8 *end = (u8 *)to;
 
 	/* Try to acquire access to the flash */
-	if (!esas2r_flash_access(a, DRBL_FLASH_REQ))
-		return false;
+	अगर (!esas2r_flash_access(a, DRBL_FLASH_REQ))
+		वापस false;
 
-	while (size) {
+	जबतक (size) अणु
 		u32 len;
 		u32 offset;
 		u32 iatvr;
 
-		if (test_bit(AF2_SERIAL_FLASH, &a->flags2))
+		अगर (test_bit(AF2_SERIAL_FLASH, &a->flags2))
 			iatvr = MW_DATA_ADDR_SER_FLASH + (from & -WINDOW_SIZE);
-		else
+		अन्यथा
 			iatvr = MW_DATA_ADDR_PAR_FLASH + (from & -WINDOW_SIZE);
 
-		esas2r_map_data_window(a, iatvr);
+		esas2r_map_data_winकरोw(a, iatvr);
 		offset = from & (WINDOW_SIZE - 1);
 		len = size;
 
-		if (len > WINDOW_SIZE - offset)
+		अगर (len > WINDOW_SIZE - offset)
 			len = WINDOW_SIZE - offset;
 
 		from += len;
 		size -= len;
 
-		while (len--) {
-			*end++ = esas2r_read_data_byte(a, offset);
+		जबतक (len--) अणु
+			*end++ = esas2r_पढ़ो_data_byte(a, offset);
 			offset++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Release flash access */
 	esas2r_flash_access(a, DRBL_FLASH_DONE);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool esas2r_read_flash_rev(struct esas2r_adapter *a)
-{
+bool esas2r_पढ़ो_flash_rev(काष्ठा esas2r_adapter *a)
+अणु
 	u8 bytes[256];
 	u16 *pw;
 	u16 *pwstart;
@@ -1047,256 +1048,256 @@ bool esas2r_read_flash_rev(struct esas2r_adapter *a)
 	u16 size;
 	u32 sz;
 
-	sz = sizeof(bytes);
+	sz = माप(bytes);
 	pw = (u16 *)(bytes + sz);
 	pwstart = (u16 *)bytes + 2;
 
-	if (!esas2r_read_flash_block(a, bytes, FLS_OFFSET_CPYR - sz, sz))
-		goto invalid_rev;
+	अगर (!esas2r_पढ़ो_flash_block(a, bytes, FLS_OFFSET_CPYR - sz, sz))
+		जाओ invalid_rev;
 
-	while (pw >= pwstart) {
+	जबतक (pw >= pwstart) अणु
 		pw--;
 		type = le16_to_cpu(*pw);
 		pw--;
 		size = le16_to_cpu(*pw);
 		pw -= size / 2;
 
-		if (type == FBT_CPYR
+		अगर (type == FBT_CPYR
 		    || type == FBT_SETUP
 		    || pw < pwstart)
-			continue;
+			जारी;
 
-		if (type == FBT_FLASH_VER)
+		अगर (type == FBT_FLASH_VER)
 			a->flash_ver = le32_to_cpu(*(u32 *)pw);
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 invalid_rev:
-	return esas2r_print_flash_rev(a);
-}
+	वापस esas2r_prपूर्णांक_flash_rev(a);
+पूर्ण
 
-bool esas2r_print_flash_rev(struct esas2r_adapter *a)
-{
+bool esas2r_prपूर्णांक_flash_rev(काष्ठा esas2r_adapter *a)
+अणु
 	u16 year = LOWORD(a->flash_ver);
 	u8 day = LOBYTE(HIWORD(a->flash_ver));
 	u8 month = HIBYTE(HIWORD(a->flash_ver));
 
-	if (day == 0
+	अगर (day == 0
 	    || month == 0
 	    || day > 31
 	    || month > 12
 	    || year < 2006
-	    || year > 9999) {
-		strcpy(a->flash_rev, "not found");
+	    || year > 9999) अणु
+		म_नकल(a->flash_rev, "not found");
 		a->flash_ver = 0;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	sprintf(a->flash_rev, "%02d/%02d/%04d", month, day, year);
+	प्र_लिखो(a->flash_rev, "%02d/%02d/%04d", month, day, year);
 	esas2r_hdebug("flash version: %s", a->flash_rev);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Find the type of boot image type that is currently in the flash.
  * The chip only has a 64 KB PCI-e expansion ROM
- * size so only one image can be flashed at a time.
+ * size so only one image can be flashed at a समय.
  */
-bool esas2r_read_image_type(struct esas2r_adapter *a)
-{
+bool esas2r_पढ़ो_image_type(काष्ठा esas2r_adapter *a)
+अणु
 	u8 bytes[256];
-	struct esas2r_boot_image *bi;
-	struct esas2r_boot_header *bh;
+	काष्ठा esas2r_boot_image *bi;
+	काष्ठा esas2r_boot_header *bh;
 	u32 sz;
 	u32 len;
 	u32 offset;
 
-	/* Start at the base of the boot images and look for a valid image */
-	sz = sizeof(bytes);
+	/* Start at the base of the boot images and look क्रम a valid image */
+	sz = माप(bytes);
 	len = FLS_LENGTH_BOOT;
 	offset = 0;
 
-	while (true) {
-		if (!esas2r_read_flash_block(a, bytes, FLS_OFFSET_BOOT +
+	जबतक (true) अणु
+		अगर (!esas2r_पढ़ो_flash_block(a, bytes, FLS_OFFSET_BOOT +
 					     offset,
 					     sz))
-			goto invalid_rev;
+			जाओ invalid_rev;
 
-		bi = (struct esas2r_boot_image *)bytes;
-		bh = (struct esas2r_boot_header *)((u8 *)bi +
+		bi = (काष्ठा esas2r_boot_image *)bytes;
+		bh = (काष्ठा esas2r_boot_header *)((u8 *)bi +
 						   le16_to_cpu(
 							   bi->header_offset));
-		if (bi->signature != cpu_to_le16(0xAA55))
-			goto invalid_rev;
+		अगर (bi->signature != cpu_to_le16(0xAA55))
+			जाओ invalid_rev;
 
-		if (bh->code_type == CODE_TYPE_PC) {
-			strcpy(a->image_type, "BIOS");
+		अगर (bh->code_type == CODE_TYPE_PC) अणु
+			म_नकल(a->image_type, "BIOS");
 
-			return true;
-		} else if (bh->code_type == CODE_TYPE_EFI) {
-			struct esas2r_efi_image *ei;
+			वापस true;
+		पूर्ण अन्यथा अगर (bh->code_type == CODE_TYPE_EFI) अणु
+			काष्ठा esas2r_efi_image *ei;
 
 			/*
 			 * So we have an EFI image.  There are several types
 			 * so see which architecture we have.
 			 */
-			ei = (struct esas2r_efi_image *)bytes;
+			ei = (काष्ठा esas2r_efi_image *)bytes;
 
-			switch (le16_to_cpu(ei->machine_type)) {
-			case EFI_MACHINE_IA32:
-				strcpy(a->image_type, "EFI 32-bit");
-				return true;
+			चयन (le16_to_cpu(ei->machine_type)) अणु
+			हाल EFI_MACHINE_IA32:
+				म_नकल(a->image_type, "EFI 32-bit");
+				वापस true;
 
-			case EFI_MACHINE_IA64:
-				strcpy(a->image_type, "EFI itanium");
-				return true;
+			हाल EFI_MACHINE_IA64:
+				म_नकल(a->image_type, "EFI itanium");
+				वापस true;
 
-			case EFI_MACHINE_X64:
-				strcpy(a->image_type, "EFI 64-bit");
-				return true;
+			हाल EFI_MACHINE_X64:
+				म_नकल(a->image_type, "EFI 64-bit");
+				वापस true;
 
-			case EFI_MACHINE_EBC:
-				strcpy(a->image_type, "EFI EBC");
-				return true;
+			हाल EFI_MACHINE_EBC:
+				म_नकल(a->image_type, "EFI EBC");
+				वापस true;
 
-			default:
-				goto invalid_rev;
-			}
-		} else {
+			शेष:
+				जाओ invalid_rev;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			u32 thislen;
 
 			/* jump to the next image */
 			thislen = (u32)le16_to_cpu(bh->image_length) * 512;
-			if (thislen == 0
+			अगर (thislen == 0
 			    || thislen + offset > len
 			    || bh->indicator == INDICATOR_LAST)
-				break;
+				अवरोध;
 
 			offset += thislen;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 invalid_rev:
-	strcpy(a->image_type, "no boot images");
-	return false;
-}
+	म_नकल(a->image_type, "no boot images");
+	वापस false;
+पूर्ण
 
 /*
  *  Read and validate current NVRAM parameters by accessing
- *  physical NVRAM directly.  if currently stored parameters are
- *  invalid, use the defaults.
+ *  physical NVRAM directly.  अगर currently stored parameters are
+ *  invalid, use the शेषs.
  */
-bool esas2r_nvram_read_direct(struct esas2r_adapter *a)
-{
+bool esas2r_nvram_पढ़ो_direct(काष्ठा esas2r_adapter *a)
+अणु
 	bool result;
 
-	if (down_interruptible(&a->nvram_semaphore))
-		return false;
+	अगर (करोwn_पूर्णांकerruptible(&a->nvram_semaphore))
+		वापस false;
 
-	if (!esas2r_read_flash_block(a, a->nvram, FLS_OFFSET_NVR,
-				     sizeof(struct esas2r_sas_nvram))) {
+	अगर (!esas2r_पढ़ो_flash_block(a, a->nvram, FLS_OFFSET_NVR,
+				     माप(काष्ठा esas2r_sas_nvram))) अणु
 		esas2r_hdebug("NVRAM read failed, using defaults");
 		up(&a->nvram_semaphore);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	result = esas2r_nvram_validate(a);
 
 	up(&a->nvram_semaphore);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /* Interrupt callback to process NVRAM completions. */
-static void esas2r_nvram_callback(struct esas2r_adapter *a,
-				  struct esas2r_request *rq)
-{
-	struct atto_vda_flash_req *vrq = &rq->vrq->flash;
+अटल व्योम esas2r_nvram_callback(काष्ठा esas2r_adapter *a,
+				  काष्ठा esas2r_request *rq)
+अणु
+	काष्ठा atto_vda_flash_req *vrq = &rq->vrq->flash;
 
-	if (rq->req_stat == RS_SUCCESS) {
-		/* last request was successful.  see what to do now. */
+	अगर (rq->req_stat == RS_SUCCESS) अणु
+		/* last request was successful.  see what to करो now. */
 
-		switch (vrq->sub_func) {
-		case VDA_FLASH_BEGINW:
+		चयन (vrq->sub_func) अणु
+		हाल VDA_FLASH_BEGINW:
 			vrq->sub_func = VDA_FLASH_WRITE;
 			rq->req_stat = RS_PENDING;
-			break;
+			अवरोध;
 
-		case VDA_FLASH_WRITE:
+		हाल VDA_FLASH_WRITE:
 			vrq->sub_func = VDA_FLASH_COMMIT;
 			rq->req_stat = RS_PENDING;
-			break;
+			अवरोध;
 
-		case VDA_FLASH_READ:
+		हाल VDA_FLASH_READ:
 			esas2r_nvram_validate(a);
-			break;
+			अवरोध;
 
-		case VDA_FLASH_COMMIT:
-		default:
-			break;
-		}
-	}
+		हाल VDA_FLASH_COMMIT:
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (rq->req_stat != RS_PENDING) {
+	अगर (rq->req_stat != RS_PENDING) अणु
 		/* update the NVRAM state */
-		if (rq->req_stat == RS_SUCCESS)
+		अगर (rq->req_stat == RS_SUCCESS)
 			set_bit(AF_NVR_VALID, &a->flags);
-		else
+		अन्यथा
 			clear_bit(AF_NVR_VALID, &a->flags);
 
 		esas2r_enable_heartbeat(a);
 
 		up(&a->nvram_semaphore);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Write the contents of nvram to the adapter's physical NVRAM.
  * The cached copy of the NVRAM is also updated.
  */
-bool esas2r_nvram_write(struct esas2r_adapter *a, struct esas2r_request *rq,
-			struct esas2r_sas_nvram *nvram)
-{
-	struct esas2r_sas_nvram *n = nvram;
+bool esas2r_nvram_ग_लिखो(काष्ठा esas2r_adapter *a, काष्ठा esas2r_request *rq,
+			काष्ठा esas2r_sas_nvram *nvram)
+अणु
+	काष्ठा esas2r_sas_nvram *n = nvram;
 	u8 sas_address_bytes[8];
 	u32 *sas_address_dwords = (u32 *)&sas_address_bytes[0];
-	struct atto_vda_flash_req *vrq = &rq->vrq->flash;
+	काष्ठा atto_vda_flash_req *vrq = &rq->vrq->flash;
 
-	if (test_bit(AF_DEGRADED_MODE, &a->flags))
-		return false;
+	अगर (test_bit(AF_DEGRADED_MODE, &a->flags))
+		वापस false;
 
-	if (down_interruptible(&a->nvram_semaphore))
-		return false;
+	अगर (करोwn_पूर्णांकerruptible(&a->nvram_semaphore))
+		वापस false;
 
-	if (n == NULL)
+	अगर (n == शून्य)
 		n = a->nvram;
 
 	/* check the validity of the settings */
-	if (n->version > SASNVR_VERSION) {
+	अगर (n->version > SASNVR_VERSION) अणु
 		up(&a->nvram_semaphore);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	memcpy(&sas_address_bytes[0], n->sas_addr, 8);
+	स_नकल(&sas_address_bytes[0], n->sas_addr, 8);
 
-	if (sas_address_bytes[0] != 0x50
+	अगर (sas_address_bytes[0] != 0x50
 	    || sas_address_bytes[1] != 0x01
 	    || sas_address_bytes[2] != 0x08
 	    || (sas_address_bytes[3] & 0xF0) != 0x60
-	    || ((sas_address_bytes[3] & 0x0F) | sas_address_dwords[1]) == 0) {
+	    || ((sas_address_bytes[3] & 0x0F) | sas_address_dwords[1]) == 0) अणु
 		up(&a->nvram_semaphore);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (n->spin_up_delay > SASNVR_SPINUP_MAX)
+	अगर (n->spin_up_delay > SASNVR_SPINUP_MAX)
 		n->spin_up_delay = SASNVR_SPINUP_MAX;
 
 	n->version = SASNVR_VERSION;
 	n->checksum = n->checksum - esas2r_nvramcalc_cksum(n);
-	memcpy(a->nvram, n, sizeof(struct esas2r_sas_nvram));
+	स_नकल(a->nvram, n, माप(काष्ठा esas2r_sas_nvram));
 
-	/* write the NVRAM */
+	/* ग_लिखो the NVRAM */
 	n = a->nvram;
 	esas2r_disable_heartbeat(a);
 
@@ -1305,143 +1306,143 @@ bool esas2r_nvram_write(struct esas2r_adapter *a, struct esas2r_request *rq,
 			       VDA_FLASH_BEGINW,
 			       esas2r_nvramcalc_xor_cksum(n),
 			       FLS_OFFSET_NVR,
-			       sizeof(struct esas2r_sas_nvram));
+			       माप(काष्ठा esas2r_sas_nvram));
 
-	if (test_bit(AF_LEGACY_SGE_MODE, &a->flags)) {
+	अगर (test_bit(AF_LEGACY_SGE_MODE, &a->flags)) अणु
 
 		vrq->data.sge[0].length =
 			cpu_to_le32(SGE_LAST |
-				    sizeof(struct esas2r_sas_nvram));
+				    माप(काष्ठा esas2r_sas_nvram));
 		vrq->data.sge[0].address = cpu_to_le64(
 			a->uncached_phys + (u64)((u8 *)n - a->uncached));
-	} else {
+	पूर्ण अन्यथा अणु
 		vrq->data.prde[0].ctl_len =
-			cpu_to_le32(sizeof(struct esas2r_sas_nvram));
+			cpu_to_le32(माप(काष्ठा esas2r_sas_nvram));
 		vrq->data.prde[0].address = cpu_to_le64(
 			a->uncached_phys
 			+ (u64)((u8 *)n - a->uncached));
-	}
-	rq->interrupt_cb = esas2r_nvram_callback;
+	पूर्ण
+	rq->पूर्णांकerrupt_cb = esas2r_nvram_callback;
 	esas2r_start_request(a, rq);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* Validate the cached NVRAM.  if the NVRAM is invalid, load the defaults. */
-bool esas2r_nvram_validate(struct esas2r_adapter *a)
-{
-	struct esas2r_sas_nvram *n = a->nvram;
+/* Validate the cached NVRAM.  अगर the NVRAM is invalid, load the शेषs. */
+bool esas2r_nvram_validate(काष्ठा esas2r_adapter *a)
+अणु
+	काष्ठा esas2r_sas_nvram *n = a->nvram;
 	bool rslt = false;
 
-	if (n->signature[0] != 'E'
+	अगर (n->signature[0] != 'E'
 	    || n->signature[1] != 'S'
 	    || n->signature[2] != 'A'
-	    || n->signature[3] != 'S') {
+	    || n->signature[3] != 'S') अणु
 		esas2r_hdebug("invalid NVRAM signature");
-	} else if (esas2r_nvramcalc_cksum(n)) {
+	पूर्ण अन्यथा अगर (esas2r_nvramcalc_cksum(n)) अणु
 		esas2r_hdebug("invalid NVRAM checksum");
-	} else if (n->version > SASNVR_VERSION) {
+	पूर्ण अन्यथा अगर (n->version > SASNVR_VERSION) अणु
 		esas2r_hdebug("invalid NVRAM version");
-	} else {
+	पूर्ण अन्यथा अणु
 		set_bit(AF_NVR_VALID, &a->flags);
 		rslt = true;
-	}
+	पूर्ण
 
-	if (rslt == false) {
+	अगर (rslt == false) अणु
 		esas2r_hdebug("using defaults");
-		esas2r_nvram_set_defaults(a);
-	}
+		esas2r_nvram_set_शेषs(a);
+	पूर्ण
 
-	return rslt;
-}
+	वापस rslt;
+पूर्ण
 
 /*
- * Set the cached NVRAM to defaults.  note that this function sets the default
+ * Set the cached NVRAM to शेषs.  note that this function sets the शेष
  * NVRAM when it has been determined that the physical NVRAM is invalid.
- * In this case, the SAS address is fabricated.
+ * In this हाल, the SAS address is fabricated.
  */
-void esas2r_nvram_set_defaults(struct esas2r_adapter *a)
-{
-	struct esas2r_sas_nvram *n = a->nvram;
-	u32 time = jiffies_to_msecs(jiffies);
+व्योम esas2r_nvram_set_शेषs(काष्ठा esas2r_adapter *a)
+अणु
+	काष्ठा esas2r_sas_nvram *n = a->nvram;
+	u32 समय = jअगरfies_to_msecs(jअगरfies);
 
 	clear_bit(AF_NVR_VALID, &a->flags);
-	*n = default_sas_nvram;
+	*n = शेष_sas_nvram;
 	n->sas_addr[3] |= 0x0F;
-	n->sas_addr[4] = HIBYTE(LOWORD(time));
-	n->sas_addr[5] = LOBYTE(LOWORD(time));
+	n->sas_addr[4] = HIBYTE(LOWORD(समय));
+	n->sas_addr[5] = LOBYTE(LOWORD(समय));
 	n->sas_addr[6] = a->pcid->bus->number;
 	n->sas_addr[7] = a->pcid->devfn;
-}
+पूर्ण
 
-void esas2r_nvram_get_defaults(struct esas2r_adapter *a,
-			       struct esas2r_sas_nvram *nvram)
-{
+व्योम esas2r_nvram_get_शेषs(काष्ठा esas2r_adapter *a,
+			       काष्ठा esas2r_sas_nvram *nvram)
+अणु
 	u8 sas_addr[8];
 
 	/*
-	 * in case we are copying the defaults into the adapter, copy the SAS
+	 * in हाल we are copying the शेषs पूर्णांकo the adapter, copy the SAS
 	 * address out first.
 	 */
-	memcpy(&sas_addr[0], a->nvram->sas_addr, 8);
-	*nvram = default_sas_nvram;
-	memcpy(&nvram->sas_addr[0], &sas_addr[0], 8);
-}
+	स_नकल(&sas_addr[0], a->nvram->sas_addr, 8);
+	*nvram = शेष_sas_nvram;
+	स_नकल(&nvram->sas_addr[0], &sas_addr[0], 8);
+पूर्ण
 
-bool esas2r_fm_api(struct esas2r_adapter *a, struct esas2r_flash_img *fi,
-		   struct esas2r_request *rq, struct esas2r_sg_context *sgc)
-{
-	struct esas2r_flash_context *fc = &a->flash_context;
+bool esas2r_fm_api(काष्ठा esas2r_adapter *a, काष्ठा esas2r_flash_img *fi,
+		   काष्ठा esas2r_request *rq, काष्ठा esas2r_sg_context *sgc)
+अणु
+	काष्ठा esas2r_flash_context *fc = &a->flash_context;
 	u8 j;
-	struct esas2r_component_header *ch;
+	काष्ठा esas2r_component_header *ch;
 
-	if (test_and_set_bit(AF_FLASH_LOCK, &a->flags)) {
-		/* flag was already set */
+	अगर (test_and_set_bit(AF_FLASH_LOCK, &a->flags)) अणु
+		/* flag was alपढ़ोy set */
 		fi->status = FI_STAT_BUSY;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	memcpy(&fc->sgc, sgc, sizeof(struct esas2r_sg_context));
+	स_नकल(&fc->sgc, sgc, माप(काष्ठा esas2r_sg_context));
 	sgc = &fc->sgc;
 	fc->fi = fi;
 	fc->sgc_offset = sgc->cur_offset;
 	rq->req_stat = RS_SUCCESS;
-	rq->interrupt_cx = fc;
+	rq->पूर्णांकerrupt_cx = fc;
 
-	switch (fi->fi_version) {
-	case FI_VERSION_1:
-		fc->scratch = ((struct esas2r_flash_img *)fi)->scratch_buf;
+	चयन (fi->fi_version) अणु
+	हाल FI_VERSION_1:
+		fc->scratch = ((काष्ठा esas2r_flash_img *)fi)->scratch_buf;
 		fc->num_comps = FI_NUM_COMPS_V1;
-		fc->fi_hdr_len = sizeof(struct esas2r_flash_img);
-		break;
+		fc->fi_hdr_len = माप(काष्ठा esas2r_flash_img);
+		अवरोध;
 
-	default:
-		return complete_fmapi_req(a, rq, FI_STAT_IMG_VER);
-	}
+	शेष:
+		वापस complete_fmapi_req(a, rq, FI_STAT_IMG_VER);
+	पूर्ण
 
-	if (test_bit(AF_DEGRADED_MODE, &a->flags))
-		return complete_fmapi_req(a, rq, FI_STAT_DEGRADED);
+	अगर (test_bit(AF_DEGRADED_MODE, &a->flags))
+		वापस complete_fmapi_req(a, rq, FI_STAT_DEGRADED);
 
-	switch (fi->action) {
-	case FI_ACT_DOWN: /* Download the components */
-		/* Verify the format of the flash image */
-		if (!verify_fi(a, fc))
-			return complete_fmapi_req(a, rq, fi->status);
+	चयन (fi->action) अणु
+	हाल FI_ACT_DOWN: /* Download the components */
+		/* Verअगरy the क्रमmat of the flash image */
+		अगर (!verअगरy_fi(a, fc))
+			वापस complete_fmapi_req(a, rq, fi->status);
 
 		/* Adjust the BIOS fields that are dependent on the HBA */
 		ch = &fi->cmp_hdr[CH_IT_BIOS];
 
-		if (ch->length)
+		अगर (ch->length)
 			fix_bios(a, fi);
 
 		/* Adjust the EFI fields that are dependent on the HBA */
 		ch = &fi->cmp_hdr[CH_IT_EFI];
 
-		if (ch->length)
+		अगर (ch->length)
 			fix_efi(a, fi);
 
 		/*
-		 * Since the image was just modified, compute the checksum on
-		 * the modified image.  First update the CRC for the composite
+		 * Since the image was just modअगरied, compute the checksum on
+		 * the modअगरied image.  First update the CRC क्रम the composite
 		 * expansion ROM image.
 		 */
 		fi->checksum = calc_fi_checksum(fc);
@@ -1449,32 +1450,32 @@ bool esas2r_fm_api(struct esas2r_adapter *a, struct esas2r_flash_img *fi,
 		/* Disable the heartbeat */
 		esas2r_disable_heartbeat(a);
 
-		/* Now start up the download sequence */
+		/* Now start up the करोwnload sequence */
 		fc->task = FMTSK_ERASE_BOOT;
 		fc->func = VDA_FLASH_BEGINW;
 		fc->comp_typ = CH_IT_CFG;
 		fc->flsh_addr = FLS_OFFSET_BOOT;
 		fc->sgc.length = FLS_LENGTH_BOOT;
-		fc->sgc.cur_offset = NULL;
+		fc->sgc.cur_offset = शून्य;
 
 		/* Setup the callback address */
-		fc->interrupt_cb = fw_download_proc;
-		break;
+		fc->पूर्णांकerrupt_cb = fw_करोwnload_proc;
+		अवरोध;
 
-	case FI_ACT_UPSZ: /* Get upload sizes */
+	हाल FI_ACT_UPSZ: /* Get upload sizes */
 		fi->adap_typ = get_fi_adap_type(a);
 		fi->flags = 0;
 		fi->num_comps = fc->num_comps;
 		fi->length = fc->fi_hdr_len;
 
 		/* Report the type of boot image in the rel_version string */
-		memcpy(fi->rel_version, a->image_type,
-		       sizeof(fi->rel_version));
+		स_नकल(fi->rel_version, a->image_type,
+		       माप(fi->rel_version));
 
 		/* Build the component headers */
-		for (j = 0, ch = fi->cmp_hdr;
+		क्रम (j = 0, ch = fi->cmp_hdr;
 		     j < fi->num_comps;
-		     j++, ch++) {
+		     j++, ch++) अणु
 			ch->img_type = j;
 			ch->status = CH_STAT_PENDING;
 			ch->length = 0;
@@ -1482,9 +1483,9 @@ bool esas2r_fm_api(struct esas2r_adapter *a, struct esas2r_flash_img *fi,
 			ch->image_offset = 0;
 			ch->pad[0] = 0;
 			ch->pad[1] = 0;
-		}
+		पूर्ण
 
-		if (a->flash_ver != 0) {
+		अगर (a->flash_ver != 0) अणु
 			fi->cmp_hdr[CH_IT_BIOS].version =
 				fi->cmp_hdr[CH_IT_MAC].version =
 					fi->cmp_hdr[CH_IT_EFI].version =
@@ -1497,26 +1498,26 @@ bool esas2r_fm_api(struct esas2r_adapter *a, struct esas2r_flash_img *fi,
 						fi->cmp_hdr[CH_IT_CFG].status =
 							CH_STAT_SUCCESS;
 
-			return complete_fmapi_req(a, rq, FI_STAT_SUCCESS);
-		}
+			वापस complete_fmapi_req(a, rq, FI_STAT_SUCCESS);
+		पूर्ण
 
 		fallthrough;
 
-	case FI_ACT_UP: /* Upload the components */
-	default:
-		return complete_fmapi_req(a, rq, FI_STAT_INVALID);
-	}
+	हाल FI_ACT_UP: /* Upload the components */
+	शेष:
+		वापस complete_fmapi_req(a, rq, FI_STAT_INVALID);
+	पूर्ण
 
 	/*
-	 * If we make it here, fc has been setup to do the first task.  Call
-	 * load_image to format the request, start it, and get out.  The
-	 * interrupt code will call the callback when the first message is
+	 * If we make it here, fc has been setup to करो the first task.  Call
+	 * load_image to क्रमmat the request, start it, and get out.  The
+	 * पूर्णांकerrupt code will call the callback when the first message is
 	 * complete.
 	 */
-	if (!load_image(a, rq))
-		return complete_fmapi_req(a, rq, FI_STAT_FAILED);
+	अगर (!load_image(a, rq))
+		वापस complete_fmapi_req(a, rq, FI_STAT_FAILED);
 
 	esas2r_start_request(a, rq);
 
-	return true;
-}
+	वापस true;
+पूर्ण

@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2018, Intel Corporation. */
 
 /* Intel(R) Ethernet Connection E800 Series Linux Driver */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <generated/utsrelease.h>
-#include "ice.h"
-#include "ice_base.h"
-#include "ice_lib.h"
-#include "ice_fltr.h"
-#include "ice_dcb_lib.h"
-#include "ice_dcb_nl.h"
-#include "ice_devlink.h"
+#समावेश <generated/utsrelease.h>
+#समावेश "ice.h"
+#समावेश "ice_base.h"
+#समावेश "ice_lib.h"
+#समावेश "ice_fltr.h"
+#समावेश "ice_dcb_lib.h"
+#समावेश "ice_dcb_nl.h"
+#समावेश "ice_devlink.h"
 
-#define DRV_SUMMARY	"Intel(R) Ethernet Connection E800 Series Linux Driver"
-static const char ice_driver_string[] = DRV_SUMMARY;
-static const char ice_copyright[] = "Copyright (c) 2018, Intel Corporation.";
+#घोषणा DRV_SUMMARY	"Intel(R) Ethernet Connection E800 Series Linux Driver"
+अटल स्थिर अक्षर ice_driver_string[] = DRV_SUMMARY;
+अटल स्थिर अक्षर ice_copyright[] = "Copyright (c) 2018, Intel Corporation.";
 
 /* DDP Package file located in firmware search paths (e.g. /lib/firmware/) */
-#define ICE_DDP_PKG_PATH	"intel/ice/ddp/"
-#define ICE_DDP_PKG_FILE	ICE_DDP_PKG_PATH "ice.pkg"
+#घोषणा ICE_DDP_PKG_PATH	"intel/ice/ddp/"
+#घोषणा ICE_DDP_PKG_खाता	ICE_DDP_PKG_PATH "ice.pkg"
 
 MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
 MODULE_DESCRIPTION(DRV_SUMMARY);
 MODULE_LICENSE("GPL v2");
-MODULE_FIRMWARE(ICE_DDP_PKG_FILE);
+MODULE_FIRMWARE(ICE_DDP_PKG_खाता);
 
-static int debug = -1;
-module_param(debug, int, 0644);
-#ifndef CONFIG_DYNAMIC_DEBUG
+अटल पूर्णांक debug = -1;
+module_param(debug, पूर्णांक, 0644);
+#अगर_अघोषित CONFIG_DYNAMIC_DEBUG
 MODULE_PARM_DESC(debug, "netif level (0=none,...,16=all), hw debug_mask (0x8XXXXXXX)");
-#else
+#अन्यथा
 MODULE_PARM_DESC(debug, "netif level (0=none,...,16=all)");
-#endif /* !CONFIG_DYNAMIC_DEBUG */
+#पूर्ण_अगर /* !CONFIG_DYNAMIC_DEBUG */
 
-static struct workqueue_struct *ice_wq;
-static const struct net_device_ops ice_netdev_safe_mode_ops;
-static const struct net_device_ops ice_netdev_ops;
-static int ice_vsi_open(struct ice_vsi *vsi);
+अटल काष्ठा workqueue_काष्ठा *ice_wq;
+अटल स्थिर काष्ठा net_device_ops ice_netdev_safe_mode_ops;
+अटल स्थिर काष्ठा net_device_ops ice_netdev_ops;
+अटल पूर्णांक ice_vsi_खोलो(काष्ठा ice_vsi *vsi);
 
-static void ice_rebuild(struct ice_pf *pf, enum ice_reset_req reset_type);
+अटल व्योम ice_rebuild(काष्ठा ice_pf *pf, क्रमागत ice_reset_req reset_type);
 
-static void ice_vsi_release_all(struct ice_pf *pf);
+अटल व्योम ice_vsi_release_all(काष्ठा ice_pf *pf);
 
-bool netif_is_ice(struct net_device *dev)
-{
-	return dev && (dev->netdev_ops == &ice_netdev_ops);
-}
+bool netअगर_is_ice(काष्ठा net_device *dev)
+अणु
+	वापस dev && (dev->netdev_ops == &ice_netdev_ops);
+पूर्ण
 
 /**
- * ice_get_tx_pending - returns number of Tx descriptors not processed
+ * ice_get_tx_pending - वापसs number of Tx descriptors not processed
  * @ring: the ring of descriptors
  */
-static u16 ice_get_tx_pending(struct ice_ring *ring)
-{
+अटल u16 ice_get_tx_pending(काष्ठा ice_ring *ring)
+अणु
 	u16 head, tail;
 
 	head = ring->next_to_clean;
 	tail = ring->next_to_use;
 
-	if (head != tail)
-		return (head < tail) ?
+	अगर (head != tail)
+		वापस (head < tail) ?
 			tail - head : (tail + ring->count - head);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_check_for_hang_subtask - check for and recover hung queues
- * @pf: pointer to PF struct
+ * ice_check_क्रम_hang_subtask - check क्रम and recover hung queues
+ * @pf: poपूर्णांकer to PF काष्ठा
  */
-static void ice_check_for_hang_subtask(struct ice_pf *pf)
-{
-	struct ice_vsi *vsi = NULL;
-	struct ice_hw *hw;
-	unsigned int i;
-	int packets;
+अटल व्योम ice_check_क्रम_hang_subtask(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_vsi *vsi = शून्य;
+	काष्ठा ice_hw *hw;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक packets;
 	u32 v;
 
-	ice_for_each_vsi(pf, v)
-		if (pf->vsi[v] && pf->vsi[v]->type == ICE_VSI_PF) {
+	ice_क्रम_each_vsi(pf, v)
+		अगर (pf->vsi[v] && pf->vsi[v]->type == ICE_VSI_PF) अणु
 			vsi = pf->vsi[v];
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (!vsi || test_bit(ICE_VSI_DOWN, vsi->state))
-		return;
+	अगर (!vsi || test_bit(ICE_VSI_DOWN, vsi->state))
+		वापस;
 
-	if (!(vsi->netdev && netif_carrier_ok(vsi->netdev)))
-		return;
+	अगर (!(vsi->netdev && netअगर_carrier_ok(vsi->netdev)))
+		वापस;
 
 	hw = &vsi->back->hw;
 
-	for (i = 0; i < vsi->num_txq; i++) {
-		struct ice_ring *tx_ring = vsi->tx_rings[i];
+	क्रम (i = 0; i < vsi->num_txq; i++) अणु
+		काष्ठा ice_ring *tx_ring = vsi->tx_rings[i];
 
-		if (tx_ring && tx_ring->desc) {
+		अगर (tx_ring && tx_ring->desc) अणु
 			/* If packet counter has not changed the queue is
-			 * likely stalled, so force an interrupt for this
+			 * likely stalled, so क्रमce an पूर्णांकerrupt क्रम this
 			 * queue.
 			 *
-			 * prev_pkt would be negative if there was no
+			 * prev_pkt would be negative अगर there was no
 			 * pending work.
 			 */
-			packets = tx_ring->stats.pkts & INT_MAX;
-			if (tx_ring->tx_stats.prev_pkt == packets) {
-				/* Trigger sw interrupt to revive the queue */
-				ice_trigger_sw_intr(hw, tx_ring->q_vector);
-				continue;
-			}
+			packets = tx_ring->stats.pkts & पूर्णांक_उच्च;
+			अगर (tx_ring->tx_stats.prev_pkt == packets) अणु
+				/* Trigger sw पूर्णांकerrupt to revive the queue */
+				ice_trigger_sw_पूर्णांकr(hw, tx_ring->q_vector);
+				जारी;
+			पूर्ण
 
-			/* Memory barrier between read of packet count and call
+			/* Memory barrier between पढ़ो of packet count and call
 			 * to ice_get_tx_pending()
 			 */
 			smp_rmb();
 			tx_ring->tx_stats.prev_pkt =
 			    ice_get_tx_pending(tx_ring) ? packets : -1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * ice_init_mac_fltr - Set initial MAC filters
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  *
- * Set initial set of MAC filters for PF VSI; configure filters for permanent
+ * Set initial set of MAC filters क्रम PF VSI; configure filters क्रम permanent
  * address and broadcast address. If an error is encountered, netdevice will be
- * unregistered.
+ * unरेजिस्टरed.
  */
-static int ice_init_mac_fltr(struct ice_pf *pf)
-{
-	enum ice_status status;
-	struct ice_vsi *vsi;
+अटल पूर्णांक ice_init_mac_fltr(काष्ठा ice_pf *pf)
+अणु
+	क्रमागत ice_status status;
+	काष्ठा ice_vsi *vsi;
 	u8 *perm_addr;
 
-	vsi = ice_get_main_vsi(pf);
-	if (!vsi)
-		return -EINVAL;
+	vsi = ice_get_मुख्य_vsi(pf);
+	अगर (!vsi)
+		वापस -EINVAL;
 
 	perm_addr = vsi->port_info->mac.perm_addr;
 	status = ice_fltr_add_mac_and_broadcast(vsi, perm_addr, ICE_FWD_TO_VSI);
-	if (status)
-		return -EIO;
+	अगर (status)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_add_mac_to_sync_list - creates list of MAC addresses to be synced
@@ -153,20 +154,20 @@ static int ice_init_mac_fltr(struct ice_pf *pf)
  *
  * This is a callback function which is called by the in kernel device sync
  * functions (like __dev_uc_sync, __dev_mc_sync, etc). This function only
- * populates the tmp_sync_list, which is later used by ice_add_mac to add the
+ * populates the पंचांगp_sync_list, which is later used by ice_add_mac to add the
  * MAC filters from the hardware.
  */
-static int ice_add_mac_to_sync_list(struct net_device *netdev, const u8 *addr)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
+अटल पूर्णांक ice_add_mac_to_sync_list(काष्ठा net_device *netdev, स्थिर u8 *addr)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
 
-	if (ice_fltr_add_mac_to_list(vsi, &vsi->tmp_sync_list, addr,
+	अगर (ice_fltr_add_mac_to_list(vsi, &vsi->पंचांगp_sync_list, addr,
 				     ICE_FWD_TO_VSI))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_add_mac_to_unsync_list - creates list of MAC addresses to be unsynced
@@ -175,66 +176,66 @@ static int ice_add_mac_to_sync_list(struct net_device *netdev, const u8 *addr)
  *
  * This is a callback function which is called by the in kernel device unsync
  * functions (like __dev_uc_unsync, __dev_mc_unsync, etc). This function only
- * populates the tmp_unsync_list, which is later used by ice_remove_mac to
+ * populates the पंचांगp_unsync_list, which is later used by ice_हटाओ_mac to
  * delete the MAC filters from the hardware.
  */
-static int ice_add_mac_to_unsync_list(struct net_device *netdev, const u8 *addr)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
+अटल पूर्णांक ice_add_mac_to_unsync_list(काष्ठा net_device *netdev, स्थिर u8 *addr)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
 
-	if (ice_fltr_add_mac_to_list(vsi, &vsi->tmp_unsync_list, addr,
+	अगर (ice_fltr_add_mac_to_list(vsi, &vsi->पंचांगp_unsync_list, addr,
 				     ICE_FWD_TO_VSI))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_vsi_fltr_changed - check if filter state changed
+ * ice_vsi_fltr_changed - check अगर filter state changed
  * @vsi: VSI to be checked
  *
- * returns true if filter state has changed, false otherwise.
+ * वापसs true अगर filter state has changed, false otherwise.
  */
-static bool ice_vsi_fltr_changed(struct ice_vsi *vsi)
-{
-	return test_bit(ICE_VSI_UMAC_FLTR_CHANGED, vsi->state) ||
+अटल bool ice_vsi_fltr_changed(काष्ठा ice_vsi *vsi)
+अणु
+	वापस test_bit(ICE_VSI_UMAC_FLTR_CHANGED, vsi->state) ||
 	       test_bit(ICE_VSI_MMAC_FLTR_CHANGED, vsi->state) ||
 	       test_bit(ICE_VSI_VLAN_FLTR_CHANGED, vsi->state);
-}
+पूर्ण
 
 /**
- * ice_cfg_promisc - Enable or disable promiscuous mode for a given PF
+ * ice_cfg_promisc - Enable or disable promiscuous mode क्रम a given PF
  * @vsi: the VSI being configured
  * @promisc_m: mask of promiscuous config bits
  * @set_promisc: enable or disable promisc flag request
  *
  */
-static int ice_cfg_promisc(struct ice_vsi *vsi, u8 promisc_m, bool set_promisc)
-{
-	struct ice_hw *hw = &vsi->back->hw;
-	enum ice_status status = 0;
+अटल पूर्णांक ice_cfg_promisc(काष्ठा ice_vsi *vsi, u8 promisc_m, bool set_promisc)
+अणु
+	काष्ठा ice_hw *hw = &vsi->back->hw;
+	क्रमागत ice_status status = 0;
 
-	if (vsi->type != ICE_VSI_PF)
-		return 0;
+	अगर (vsi->type != ICE_VSI_PF)
+		वापस 0;
 
-	if (vsi->num_vlan > 1) {
+	अगर (vsi->num_vlan > 1) अणु
 		status = ice_set_vlan_vsi_promisc(hw, vsi->idx, promisc_m,
 						  set_promisc);
-	} else {
-		if (set_promisc)
+	पूर्ण अन्यथा अणु
+		अगर (set_promisc)
 			status = ice_set_vsi_promisc(hw, vsi->idx, promisc_m,
 						     0);
-		else
+		अन्यथा
 			status = ice_clear_vsi_promisc(hw, vsi->idx, promisc_m,
 						       0);
-	}
+	पूर्ण
 
-	if (status)
-		return -EIO;
+	अगर (status)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_vsi_sync_fltr - Update the VSI filter list to the HW
@@ -242,256 +243,256 @@ static int ice_cfg_promisc(struct ice_vsi *vsi, u8 promisc_m, bool set_promisc)
  *
  * Push any outstanding VSI filter changes through the AdminQ.
  */
-static int ice_vsi_sync_fltr(struct ice_vsi *vsi)
-{
-	struct device *dev = ice_pf_to_dev(vsi->back);
-	struct net_device *netdev = vsi->netdev;
-	bool promisc_forced_on = false;
-	struct ice_pf *pf = vsi->back;
-	struct ice_hw *hw = &pf->hw;
-	enum ice_status status = 0;
+अटल पूर्णांक ice_vsi_sync_fltr(काष्ठा ice_vsi *vsi)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(vsi->back);
+	काष्ठा net_device *netdev = vsi->netdev;
+	bool promisc_क्रमced_on = false;
+	काष्ठा ice_pf *pf = vsi->back;
+	काष्ठा ice_hw *hw = &pf->hw;
+	क्रमागत ice_status status = 0;
 	u32 changed_flags = 0;
 	u8 promisc_m;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (!vsi->netdev)
-		return -EINVAL;
+	अगर (!vsi->netdev)
+		वापस -EINVAL;
 
-	while (test_and_set_bit(ICE_CFG_BUSY, vsi->state))
+	जबतक (test_and_set_bit(ICE_CFG_BUSY, vsi->state))
 		usleep_range(1000, 2000);
 
 	changed_flags = vsi->current_netdev_flags ^ vsi->netdev->flags;
 	vsi->current_netdev_flags = vsi->netdev->flags;
 
-	INIT_LIST_HEAD(&vsi->tmp_sync_list);
-	INIT_LIST_HEAD(&vsi->tmp_unsync_list);
+	INIT_LIST_HEAD(&vsi->पंचांगp_sync_list);
+	INIT_LIST_HEAD(&vsi->पंचांगp_unsync_list);
 
-	if (ice_vsi_fltr_changed(vsi)) {
+	अगर (ice_vsi_fltr_changed(vsi)) अणु
 		clear_bit(ICE_VSI_UMAC_FLTR_CHANGED, vsi->state);
 		clear_bit(ICE_VSI_MMAC_FLTR_CHANGED, vsi->state);
 		clear_bit(ICE_VSI_VLAN_FLTR_CHANGED, vsi->state);
 
 		/* grab the netdev's addr_list_lock */
-		netif_addr_lock_bh(netdev);
+		netअगर_addr_lock_bh(netdev);
 		__dev_uc_sync(netdev, ice_add_mac_to_sync_list,
 			      ice_add_mac_to_unsync_list);
 		__dev_mc_sync(netdev, ice_add_mac_to_sync_list,
 			      ice_add_mac_to_unsync_list);
 		/* our temp lists are populated. release lock */
-		netif_addr_unlock_bh(netdev);
-	}
+		netअगर_addr_unlock_bh(netdev);
+	पूर्ण
 
 	/* Remove MAC addresses in the unsync list */
-	status = ice_fltr_remove_mac_list(vsi, &vsi->tmp_unsync_list);
-	ice_fltr_free_list(dev, &vsi->tmp_unsync_list);
-	if (status) {
+	status = ice_fltr_हटाओ_mac_list(vsi, &vsi->पंचांगp_unsync_list);
+	ice_fltr_मुक्त_list(dev, &vsi->पंचांगp_unsync_list);
+	अगर (status) अणु
 		netdev_err(netdev, "Failed to delete MAC filters\n");
-		/* if we failed because of alloc failures, just bail */
-		if (status == ICE_ERR_NO_MEMORY) {
+		/* अगर we failed because of alloc failures, just bail */
+		अगर (status == ICE_ERR_NO_MEMORY) अणु
 			err = -ENOMEM;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Add MAC addresses in the sync list */
-	status = ice_fltr_add_mac_list(vsi, &vsi->tmp_sync_list);
-	ice_fltr_free_list(dev, &vsi->tmp_sync_list);
-	/* If filter is added successfully or already exists, do not go into
-	 * 'if' condition and report it as error. Instead continue processing
+	status = ice_fltr_add_mac_list(vsi, &vsi->पंचांगp_sync_list);
+	ice_fltr_मुक्त_list(dev, &vsi->पंचांगp_sync_list);
+	/* If filter is added successfully or alपढ़ोy exists, करो not go पूर्णांकo
+	 * 'if' condition and report it as error. Instead जारी processing
 	 * rest of the function.
 	 */
-	if (status && status != ICE_ERR_ALREADY_EXISTS) {
+	अगर (status && status != ICE_ERR_ALREADY_EXISTS) अणु
 		netdev_err(netdev, "Failed to add MAC filters\n");
-		/* If there is no more space for new umac filters, VSI
-		 * should go into promiscuous mode. There should be some
-		 * space reserved for promiscuous filters.
+		/* If there is no more space क्रम new umac filters, VSI
+		 * should go पूर्णांकo promiscuous mode. There should be some
+		 * space reserved क्रम promiscuous filters.
 		 */
-		if (hw->adminq.sq_last_status == ICE_AQ_RC_ENOSPC &&
+		अगर (hw->adminq.sq_last_status == ICE_AQ_RC_ENOSPC &&
 		    !test_and_set_bit(ICE_FLTR_OVERFLOW_PROMISC,
-				      vsi->state)) {
-			promisc_forced_on = true;
+				      vsi->state)) अणु
+			promisc_क्रमced_on = true;
 			netdev_warn(netdev, "Reached MAC filter limit, forcing promisc mode on VSI %d\n",
 				    vsi->vsi_num);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -EIO;
-			goto out;
-		}
-	}
-	/* check for changes in promiscuous modes */
-	if (changed_flags & IFF_ALLMULTI) {
-		if (vsi->current_netdev_flags & IFF_ALLMULTI) {
-			if (vsi->num_vlan > 1)
+			जाओ out;
+		पूर्ण
+	पूर्ण
+	/* check क्रम changes in promiscuous modes */
+	अगर (changed_flags & IFF_ALLMULTI) अणु
+		अगर (vsi->current_netdev_flags & IFF_ALLMULTI) अणु
+			अगर (vsi->num_vlan > 1)
 				promisc_m = ICE_MCAST_VLAN_PROMISC_BITS;
-			else
+			अन्यथा
 				promisc_m = ICE_MCAST_PROMISC_BITS;
 
 			err = ice_cfg_promisc(vsi, promisc_m, true);
-			if (err) {
+			अगर (err) अणु
 				netdev_err(netdev, "Error setting Multicast promiscuous mode on VSI %i\n",
 					   vsi->vsi_num);
 				vsi->current_netdev_flags &= ~IFF_ALLMULTI;
-				goto out_promisc;
-			}
-		} else {
+				जाओ out_promisc;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* !(vsi->current_netdev_flags & IFF_ALLMULTI) */
-			if (vsi->num_vlan > 1)
+			अगर (vsi->num_vlan > 1)
 				promisc_m = ICE_MCAST_VLAN_PROMISC_BITS;
-			else
+			अन्यथा
 				promisc_m = ICE_MCAST_PROMISC_BITS;
 
 			err = ice_cfg_promisc(vsi, promisc_m, false);
-			if (err) {
+			अगर (err) अणु
 				netdev_err(netdev, "Error clearing Multicast promiscuous mode on VSI %i\n",
 					   vsi->vsi_num);
 				vsi->current_netdev_flags |= IFF_ALLMULTI;
-				goto out_promisc;
-			}
-		}
-	}
+				जाओ out_promisc;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (((changed_flags & IFF_PROMISC) || promisc_forced_on) ||
-	    test_bit(ICE_VSI_PROMISC_CHANGED, vsi->state)) {
+	अगर (((changed_flags & IFF_PROMISC) || promisc_क्रमced_on) ||
+	    test_bit(ICE_VSI_PROMISC_CHANGED, vsi->state)) अणु
 		clear_bit(ICE_VSI_PROMISC_CHANGED, vsi->state);
-		if (vsi->current_netdev_flags & IFF_PROMISC) {
+		अगर (vsi->current_netdev_flags & IFF_PROMISC) अणु
 			/* Apply Rx filter rule to get traffic from wire */
-			if (!ice_is_dflt_vsi_in_use(pf->first_sw)) {
+			अगर (!ice_is_dflt_vsi_in_use(pf->first_sw)) अणु
 				err = ice_set_dflt_vsi(pf->first_sw, vsi);
-				if (err && err != -EEXIST) {
+				अगर (err && err != -EEXIST) अणु
 					netdev_err(netdev, "Error %d setting default VSI %i Rx rule\n",
 						   err, vsi->vsi_num);
 					vsi->current_netdev_flags &=
 						~IFF_PROMISC;
-					goto out_promisc;
-				}
+					जाओ out_promisc;
+				पूर्ण
 				ice_cfg_vlan_pruning(vsi, false, false);
-			}
-		} else {
-			/* Clear Rx filter to remove traffic from wire */
-			if (ice_is_vsi_dflt_vsi(pf->first_sw, vsi)) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* Clear Rx filter to हटाओ traffic from wire */
+			अगर (ice_is_vsi_dflt_vsi(pf->first_sw, vsi)) अणु
 				err = ice_clear_dflt_vsi(pf->first_sw);
-				if (err) {
+				अगर (err) अणु
 					netdev_err(netdev, "Error %d clearing default VSI %i Rx rule\n",
 						   err, vsi->vsi_num);
 					vsi->current_netdev_flags |=
 						IFF_PROMISC;
-					goto out_promisc;
-				}
-				if (vsi->num_vlan > 1)
+					जाओ out_promisc;
+				पूर्ण
+				अगर (vsi->num_vlan > 1)
 					ice_cfg_vlan_pruning(vsi, true, false);
-			}
-		}
-	}
-	goto exit;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	जाओ निकास;
 
 out_promisc:
 	set_bit(ICE_VSI_PROMISC_CHANGED, vsi->state);
-	goto exit;
+	जाओ निकास;
 out:
-	/* if something went wrong then set the changed flag so we try again */
+	/* अगर something went wrong then set the changed flag so we try again */
 	set_bit(ICE_VSI_UMAC_FLTR_CHANGED, vsi->state);
 	set_bit(ICE_VSI_MMAC_FLTR_CHANGED, vsi->state);
-exit:
+निकास:
 	clear_bit(ICE_CFG_BUSY, vsi->state);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_sync_fltr_subtask - Sync the VSI filter list with HW
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  */
-static void ice_sync_fltr_subtask(struct ice_pf *pf)
-{
-	int v;
+अटल व्योम ice_sync_fltr_subtask(काष्ठा ice_pf *pf)
+अणु
+	पूर्णांक v;
 
-	if (!pf || !(test_bit(ICE_FLAG_FLTR_SYNC, pf->flags)))
-		return;
+	अगर (!pf || !(test_bit(ICE_FLAG_FLTR_SYNC, pf->flags)))
+		वापस;
 
 	clear_bit(ICE_FLAG_FLTR_SYNC, pf->flags);
 
-	ice_for_each_vsi(pf, v)
-		if (pf->vsi[v] && ice_vsi_fltr_changed(pf->vsi[v]) &&
-		    ice_vsi_sync_fltr(pf->vsi[v])) {
+	ice_क्रम_each_vsi(pf, v)
+		अगर (pf->vsi[v] && ice_vsi_fltr_changed(pf->vsi[v]) &&
+		    ice_vsi_sync_fltr(pf->vsi[v])) अणु
 			/* come back and try again later */
 			set_bit(ICE_FLAG_FLTR_SYNC, pf->flags);
-			break;
-		}
-}
+			अवरोध;
+		पूर्ण
+पूर्ण
 
 /**
  * ice_pf_dis_all_vsi - Pause all VSIs on a PF
  * @pf: the PF
- * @locked: is the rtnl_lock already held
+ * @locked: is the rtnl_lock alपढ़ोy held
  */
-static void ice_pf_dis_all_vsi(struct ice_pf *pf, bool locked)
-{
-	int node;
-	int v;
+अटल व्योम ice_pf_dis_all_vsi(काष्ठा ice_pf *pf, bool locked)
+अणु
+	पूर्णांक node;
+	पूर्णांक v;
 
-	ice_for_each_vsi(pf, v)
-		if (pf->vsi[v])
+	ice_क्रम_each_vsi(pf, v)
+		अगर (pf->vsi[v])
 			ice_dis_vsi(pf->vsi[v], locked);
 
-	for (node = 0; node < ICE_MAX_PF_AGG_NODES; node++)
+	क्रम (node = 0; node < ICE_MAX_PF_AGG_NODES; node++)
 		pf->pf_agg_node[node].num_vsis = 0;
 
-	for (node = 0; node < ICE_MAX_VF_AGG_NODES; node++)
+	क्रम (node = 0; node < ICE_MAX_VF_AGG_NODES; node++)
 		pf->vf_agg_node[node].num_vsis = 0;
-}
+पूर्ण
 
 /**
- * ice_prepare_for_reset - prep for the core to reset
- * @pf: board private structure
+ * ice_prepare_क्रम_reset - prep क्रम the core to reset
+ * @pf: board निजी काष्ठाure
  *
- * Inform or close all dependent features in prep for reset.
+ * Inक्रमm or बंद all dependent features in prep क्रम reset.
  */
-static void
-ice_prepare_for_reset(struct ice_pf *pf)
-{
-	struct ice_hw *hw = &pf->hw;
-	unsigned int i;
+अटल व्योम
+ice_prepare_क्रम_reset(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
+	अचिन्हित पूर्णांक i;
 
-	/* already prepared for reset */
-	if (test_bit(ICE_PREPARED_FOR_RESET, pf->state))
-		return;
+	/* alपढ़ोy prepared क्रम reset */
+	अगर (test_bit(ICE_PREPARED_FOR_RESET, pf->state))
+		वापस;
 
-	/* Notify VFs of impending reset */
-	if (ice_check_sq_alive(hw, &hw->mailboxq))
-		ice_vc_notify_reset(pf);
+	/* Notअगरy VFs of impending reset */
+	अगर (ice_check_sq_alive(hw, &hw->mailboxq))
+		ice_vc_notअगरy_reset(pf);
 
 	/* Disable VFs until reset is completed */
-	ice_for_each_vf(pf, i)
+	ice_क्रम_each_vf(pf, i)
 		ice_set_vf_state_qs_dis(&pf->vf[i]);
 
 	/* clear SW filtering DB */
 	ice_clear_hw_tbls(hw);
-	/* disable the VSIs and their queues that are not already DOWN */
+	/* disable the VSIs and their queues that are not alपढ़ोy DOWN */
 	ice_pf_dis_all_vsi(pf, false);
 
-	if (hw->port_info)
+	अगर (hw->port_info)
 		ice_sched_clear_port(hw->port_info);
 
-	ice_shutdown_all_ctrlq(hw);
+	ice_shutकरोwn_all_ctrlq(hw);
 
 	set_bit(ICE_PREPARED_FOR_RESET, pf->state);
-}
+पूर्ण
 
 /**
- * ice_do_reset - Initiate one of many types of resets
- * @pf: board private structure
+ * ice_करो_reset - Initiate one of many types of resets
+ * @pf: board निजी काष्ठाure
  * @reset_type: reset type requested
- * before this function was called.
+ * beक्रमe this function was called.
  */
-static void ice_do_reset(struct ice_pf *pf, enum ice_reset_req reset_type)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
+अटल व्योम ice_करो_reset(काष्ठा ice_pf *pf, क्रमागत ice_reset_req reset_type)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
 
 	dev_dbg(dev, "reset_type 0x%x requested\n", reset_type);
 
-	ice_prepare_for_reset(pf);
+	ice_prepare_क्रम_reset(pf);
 
 	/* trigger the reset */
-	if (ice_reset(hw, reset_type)) {
+	अगर (ice_reset(hw, reset_type)) अणु
 		dev_err(dev, "reset %d failed\n", reset_type);
 		set_bit(ICE_RESET_FAILED, pf->state);
 		clear_bit(ICE_RESET_OICR_RECV, pf->state);
@@ -499,62 +500,62 @@ static void ice_do_reset(struct ice_pf *pf, enum ice_reset_req reset_type)
 		clear_bit(ICE_PFR_REQ, pf->state);
 		clear_bit(ICE_CORER_REQ, pf->state);
 		clear_bit(ICE_GLOBR_REQ, pf->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* PFR is a bit of a special case because it doesn't result in an OICR
-	 * interrupt. So for PFR, rebuild after the reset and clear the reset-
+	/* PFR is a bit of a special हाल because it करोesn't result in an OICR
+	 * पूर्णांकerrupt. So क्रम PFR, rebuild after the reset and clear the reset-
 	 * associated state bits.
 	 */
-	if (reset_type == ICE_RESET_PFR) {
+	अगर (reset_type == ICE_RESET_PFR) अणु
 		pf->pfr_count++;
 		ice_rebuild(pf, reset_type);
 		clear_bit(ICE_PREPARED_FOR_RESET, pf->state);
 		clear_bit(ICE_PFR_REQ, pf->state);
 		ice_reset_all_vfs(pf, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ice_reset_subtask - Set up for resetting the device and driver
- * @pf: board private structure
+ * ice_reset_subtask - Set up क्रम resetting the device and driver
+ * @pf: board निजी काष्ठाure
  */
-static void ice_reset_subtask(struct ice_pf *pf)
-{
-	enum ice_reset_req reset_type = ICE_RESET_INVAL;
+अटल व्योम ice_reset_subtask(काष्ठा ice_pf *pf)
+अणु
+	क्रमागत ice_reset_req reset_type = ICE_RESET_INVAL;
 
 	/* When a CORER/GLOBR/EMPR is about to happen, the hardware triggers an
-	 * OICR interrupt. The OICR handler (ice_misc_intr) determines what type
+	 * OICR पूर्णांकerrupt. The OICR handler (ice_misc_पूर्णांकr) determines what type
 	 * of reset is pending and sets bits in pf->state indicating the reset
-	 * type and ICE_RESET_OICR_RECV. So, if the latter bit is set
-	 * prepare for pending reset if not already (for PF software-initiated
-	 * global resets the software should already be prepared for it as
-	 * indicated by ICE_PREPARED_FOR_RESET; for global resets initiated
+	 * type and ICE_RESET_OICR_RECV. So, अगर the latter bit is set
+	 * prepare क्रम pending reset अगर not alपढ़ोy (क्रम PF software-initiated
+	 * global resets the software should alपढ़ोy be prepared क्रम it as
+	 * indicated by ICE_PREPARED_FOR_RESET; क्रम global resets initiated
 	 * by firmware or software on other PFs, that bit is not set so prepare
-	 * for the reset now), poll for reset done, rebuild and return.
+	 * क्रम the reset now), poll क्रम reset करोne, rebuild and वापस.
 	 */
-	if (test_bit(ICE_RESET_OICR_RECV, pf->state)) {
-		/* Perform the largest reset requested */
-		if (test_and_clear_bit(ICE_CORER_RECV, pf->state))
+	अगर (test_bit(ICE_RESET_OICR_RECV, pf->state)) अणु
+		/* Perक्रमm the largest reset requested */
+		अगर (test_and_clear_bit(ICE_CORER_RECV, pf->state))
 			reset_type = ICE_RESET_CORER;
-		if (test_and_clear_bit(ICE_GLOBR_RECV, pf->state))
+		अगर (test_and_clear_bit(ICE_GLOBR_RECV, pf->state))
 			reset_type = ICE_RESET_GLOBR;
-		if (test_and_clear_bit(ICE_EMPR_RECV, pf->state))
+		अगर (test_and_clear_bit(ICE_EMPR_RECV, pf->state))
 			reset_type = ICE_RESET_EMPR;
-		/* return if no valid reset type requested */
-		if (reset_type == ICE_RESET_INVAL)
-			return;
-		ice_prepare_for_reset(pf);
+		/* वापस अगर no valid reset type requested */
+		अगर (reset_type == ICE_RESET_INVAL)
+			वापस;
+		ice_prepare_क्रम_reset(pf);
 
-		/* make sure we are ready to rebuild */
-		if (ice_check_reset(&pf->hw)) {
+		/* make sure we are पढ़ोy to rebuild */
+		अगर (ice_check_reset(&pf->hw)) अणु
 			set_bit(ICE_RESET_FAILED, pf->state);
-		} else {
-			/* done with reset. start rebuild */
+		पूर्ण अन्यथा अणु
+			/* करोne with reset. start rebuild */
 			pf->hw.reset_ongoing = false;
 			ice_rebuild(pf, reset_type);
 			/* clear bit to resume normal operations, but
-			 * ICE_NEEDS_RESTART bit is set in case rebuild failed
+			 * ICE_NEEDS_RESTART bit is set in हाल rebuild failed
 			 */
 			clear_bit(ICE_RESET_OICR_RECV, pf->state);
 			clear_bit(ICE_PREPARED_FOR_RESET, pf->state);
@@ -562,243 +563,243 @@ static void ice_reset_subtask(struct ice_pf *pf)
 			clear_bit(ICE_CORER_REQ, pf->state);
 			clear_bit(ICE_GLOBR_REQ, pf->state);
 			ice_reset_all_vfs(pf, true);
-		}
+		पूर्ण
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* No pending resets to finish processing. Check for new resets */
-	if (test_bit(ICE_PFR_REQ, pf->state))
+	/* No pending resets to finish processing. Check क्रम new resets */
+	अगर (test_bit(ICE_PFR_REQ, pf->state))
 		reset_type = ICE_RESET_PFR;
-	if (test_bit(ICE_CORER_REQ, pf->state))
+	अगर (test_bit(ICE_CORER_REQ, pf->state))
 		reset_type = ICE_RESET_CORER;
-	if (test_bit(ICE_GLOBR_REQ, pf->state))
+	अगर (test_bit(ICE_GLOBR_REQ, pf->state))
 		reset_type = ICE_RESET_GLOBR;
-	/* If no valid reset type requested just return */
-	if (reset_type == ICE_RESET_INVAL)
-		return;
+	/* If no valid reset type requested just वापस */
+	अगर (reset_type == ICE_RESET_INVAL)
+		वापस;
 
-	/* reset if not already down or busy */
-	if (!test_bit(ICE_DOWN, pf->state) &&
-	    !test_bit(ICE_CFG_BUSY, pf->state)) {
-		ice_do_reset(pf, reset_type);
-	}
-}
+	/* reset अगर not alपढ़ोy करोwn or busy */
+	अगर (!test_bit(ICE_DOWN, pf->state) &&
+	    !test_bit(ICE_CFG_BUSY, pf->state)) अणु
+		ice_करो_reset(pf, reset_type);
+	पूर्ण
+पूर्ण
 
 /**
- * ice_print_topo_conflict - print topology conflict message
+ * ice_prपूर्णांक_topo_conflict - prपूर्णांक topology conflict message
  * @vsi: the VSI whose topology status is being checked
  */
-static void ice_print_topo_conflict(struct ice_vsi *vsi)
-{
-	switch (vsi->port_info->phy.link_info.topo_media_conflict) {
-	case ICE_AQ_LINK_TOPO_CONFLICT:
-	case ICE_AQ_LINK_MEDIA_CONFLICT:
-	case ICE_AQ_LINK_TOPO_UNREACH_PRT:
-	case ICE_AQ_LINK_TOPO_UNDRUTIL_PRT:
-	case ICE_AQ_LINK_TOPO_UNDRUTIL_MEDIA:
+अटल व्योम ice_prपूर्णांक_topo_conflict(काष्ठा ice_vsi *vsi)
+अणु
+	चयन (vsi->port_info->phy.link_info.topo_media_conflict) अणु
+	हाल ICE_AQ_LINK_TOPO_CONFLICT:
+	हाल ICE_AQ_LINK_MEDIA_CONFLICT:
+	हाल ICE_AQ_LINK_TOPO_UNREACH_PRT:
+	हाल ICE_AQ_LINK_TOPO_UNDRUTIL_PRT:
+	हाल ICE_AQ_LINK_TOPO_UNDRUTIL_MEDIA:
 		netdev_info(vsi->netdev, "Potential misconfiguration of the Ethernet port detected. If it was not intended, please use the Intel (R) Ethernet Port Configuration Tool to address the issue.\n");
-		break;
-	case ICE_AQ_LINK_TOPO_UNSUPP_MEDIA:
+		अवरोध;
+	हाल ICE_AQ_LINK_TOPO_UNSUPP_MEDIA:
 		netdev_info(vsi->netdev, "Rx/Tx is disabled on this device because an unsupported module type was detected. Refer to the Intel(R) Ethernet Adapters and Devices User Guide for a list of supported modules.\n");
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * ice_print_link_msg - print link up or down message
+ * ice_prपूर्णांक_link_msg - prपूर्णांक link up or करोwn message
  * @vsi: the VSI whose link status is being queried
- * @isup: boolean for if the link is now up or down
+ * @isup: boolean क्रम अगर the link is now up or करोwn
  */
-void ice_print_link_msg(struct ice_vsi *vsi, bool isup)
-{
-	struct ice_aqc_get_phy_caps_data *caps;
-	const char *an_advertised;
-	enum ice_status status;
-	const char *fec_req;
-	const char *speed;
-	const char *fec;
-	const char *fc;
-	const char *an;
+व्योम ice_prपूर्णांक_link_msg(काष्ठा ice_vsi *vsi, bool isup)
+अणु
+	काष्ठा ice_aqc_get_phy_caps_data *caps;
+	स्थिर अक्षर *an_advertised;
+	क्रमागत ice_status status;
+	स्थिर अक्षर *fec_req;
+	स्थिर अक्षर *speed;
+	स्थिर अक्षर *fec;
+	स्थिर अक्षर *fc;
+	स्थिर अक्षर *an;
 
-	if (!vsi)
-		return;
+	अगर (!vsi)
+		वापस;
 
-	if (vsi->current_isup == isup)
-		return;
+	अगर (vsi->current_isup == isup)
+		वापस;
 
 	vsi->current_isup = isup;
 
-	if (!isup) {
+	अगर (!isup) अणु
 		netdev_info(vsi->netdev, "NIC Link is Down\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (vsi->port_info->phy.link_info.link_speed) {
-	case ICE_AQ_LINK_SPEED_100GB:
+	चयन (vsi->port_info->phy.link_info.link_speed) अणु
+	हाल ICE_AQ_LINK_SPEED_100GB:
 		speed = "100 G";
-		break;
-	case ICE_AQ_LINK_SPEED_50GB:
+		अवरोध;
+	हाल ICE_AQ_LINK_SPEED_50GB:
 		speed = "50 G";
-		break;
-	case ICE_AQ_LINK_SPEED_40GB:
+		अवरोध;
+	हाल ICE_AQ_LINK_SPEED_40GB:
 		speed = "40 G";
-		break;
-	case ICE_AQ_LINK_SPEED_25GB:
+		अवरोध;
+	हाल ICE_AQ_LINK_SPEED_25GB:
 		speed = "25 G";
-		break;
-	case ICE_AQ_LINK_SPEED_20GB:
+		अवरोध;
+	हाल ICE_AQ_LINK_SPEED_20GB:
 		speed = "20 G";
-		break;
-	case ICE_AQ_LINK_SPEED_10GB:
+		अवरोध;
+	हाल ICE_AQ_LINK_SPEED_10GB:
 		speed = "10 G";
-		break;
-	case ICE_AQ_LINK_SPEED_5GB:
+		अवरोध;
+	हाल ICE_AQ_LINK_SPEED_5GB:
 		speed = "5 G";
-		break;
-	case ICE_AQ_LINK_SPEED_2500MB:
+		अवरोध;
+	हाल ICE_AQ_LINK_SPEED_2500MB:
 		speed = "2.5 G";
-		break;
-	case ICE_AQ_LINK_SPEED_1000MB:
+		अवरोध;
+	हाल ICE_AQ_LINK_SPEED_1000MB:
 		speed = "1 G";
-		break;
-	case ICE_AQ_LINK_SPEED_100MB:
+		अवरोध;
+	हाल ICE_AQ_LINK_SPEED_100MB:
 		speed = "100 M";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		speed = "Unknown ";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (vsi->port_info->fc.current_mode) {
-	case ICE_FC_FULL:
+	चयन (vsi->port_info->fc.current_mode) अणु
+	हाल ICE_FC_FULL:
 		fc = "Rx/Tx";
-		break;
-	case ICE_FC_TX_PAUSE:
+		अवरोध;
+	हाल ICE_FC_TX_PAUSE:
 		fc = "Tx";
-		break;
-	case ICE_FC_RX_PAUSE:
+		अवरोध;
+	हाल ICE_FC_RX_PAUSE:
 		fc = "Rx";
-		break;
-	case ICE_FC_NONE:
+		अवरोध;
+	हाल ICE_FC_NONE:
 		fc = "None";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fc = "Unknown";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Get FEC mode based on negotiated link info */
-	switch (vsi->port_info->phy.link_info.fec_info) {
-	case ICE_AQ_LINK_25G_RS_528_FEC_EN:
-	case ICE_AQ_LINK_25G_RS_544_FEC_EN:
+	चयन (vsi->port_info->phy.link_info.fec_info) अणु
+	हाल ICE_AQ_LINK_25G_RS_528_FEC_EN:
+	हाल ICE_AQ_LINK_25G_RS_544_FEC_EN:
 		fec = "RS-FEC";
-		break;
-	case ICE_AQ_LINK_25G_KR_FEC_EN:
+		अवरोध;
+	हाल ICE_AQ_LINK_25G_KR_FEC_EN:
 		fec = "FC-FEC/BASE-R";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fec = "NONE";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* check if autoneg completed, might be false due to not supported */
-	if (vsi->port_info->phy.link_info.an_info & ICE_AQ_AN_COMPLETED)
+	/* check अगर स्वतःneg completed, might be false due to not supported */
+	अगर (vsi->port_info->phy.link_info.an_info & ICE_AQ_AN_COMPLETED)
 		an = "True";
-	else
+	अन्यथा
 		an = "False";
 
 	/* Get FEC mode requested based on PHY caps last SW configuration */
-	caps = kzalloc(sizeof(*caps), GFP_KERNEL);
-	if (!caps) {
+	caps = kzalloc(माप(*caps), GFP_KERNEL);
+	अगर (!caps) अणु
 		fec_req = "Unknown";
 		an_advertised = "Unknown";
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	status = ice_aq_get_phy_caps(vsi->port_info, false,
-				     ICE_AQC_REPORT_ACTIVE_CFG, caps, NULL);
-	if (status)
+				     ICE_AQC_REPORT_ACTIVE_CFG, caps, शून्य);
+	अगर (status)
 		netdev_info(vsi->netdev, "Get phy capability failed.\n");
 
 	an_advertised = ice_is_phy_caps_an_enabled(caps) ? "On" : "Off";
 
-	if (caps->link_fec_options & ICE_AQC_PHY_FEC_25G_RS_528_REQ ||
+	अगर (caps->link_fec_options & ICE_AQC_PHY_FEC_25G_RS_528_REQ ||
 	    caps->link_fec_options & ICE_AQC_PHY_FEC_25G_RS_544_REQ)
 		fec_req = "RS-FEC";
-	else if (caps->link_fec_options & ICE_AQC_PHY_FEC_10G_KR_40G_KR4_REQ ||
+	अन्यथा अगर (caps->link_fec_options & ICE_AQC_PHY_FEC_10G_KR_40G_KR4_REQ ||
 		 caps->link_fec_options & ICE_AQC_PHY_FEC_25G_KR_REQ)
 		fec_req = "FC-FEC/BASE-R";
-	else
+	अन्यथा
 		fec_req = "NONE";
 
-	kfree(caps);
+	kमुक्त(caps);
 
-done:
+करोne:
 	netdev_info(vsi->netdev, "NIC Link is up %sbps Full Duplex, Requested FEC: %s, Negotiated FEC: %s, Autoneg Advertised: %s, Autoneg Negotiated: %s, Flow Control: %s\n",
 		    speed, fec_req, fec, an_advertised, an, fc);
-	ice_print_topo_conflict(vsi);
-}
+	ice_prपूर्णांक_topo_conflict(vsi);
+पूर्ण
 
 /**
  * ice_vsi_link_event - update the VSI's netdev
  * @vsi: the VSI on which the link event occurred
- * @link_up: whether or not the VSI needs to be set up or down
+ * @link_up: whether or not the VSI needs to be set up or करोwn
  */
-static void ice_vsi_link_event(struct ice_vsi *vsi, bool link_up)
-{
-	if (!vsi)
-		return;
+अटल व्योम ice_vsi_link_event(काष्ठा ice_vsi *vsi, bool link_up)
+अणु
+	अगर (!vsi)
+		वापस;
 
-	if (test_bit(ICE_VSI_DOWN, vsi->state) || !vsi->netdev)
-		return;
+	अगर (test_bit(ICE_VSI_DOWN, vsi->state) || !vsi->netdev)
+		वापस;
 
-	if (vsi->type == ICE_VSI_PF) {
-		if (link_up == netif_carrier_ok(vsi->netdev))
-			return;
+	अगर (vsi->type == ICE_VSI_PF) अणु
+		अगर (link_up == netअगर_carrier_ok(vsi->netdev))
+			वापस;
 
-		if (link_up) {
-			netif_carrier_on(vsi->netdev);
-			netif_tx_wake_all_queues(vsi->netdev);
-		} else {
-			netif_carrier_off(vsi->netdev);
-			netif_tx_stop_all_queues(vsi->netdev);
-		}
-	}
-}
+		अगर (link_up) अणु
+			netअगर_carrier_on(vsi->netdev);
+			netअगर_tx_wake_all_queues(vsi->netdev);
+		पूर्ण अन्यथा अणु
+			netअगर_carrier_off(vsi->netdev);
+			netअगर_tx_stop_all_queues(vsi->netdev);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * ice_set_dflt_mib - send a default config MIB to the FW
- * @pf: private PF struct
+ * ice_set_dflt_mib - send a शेष config MIB to the FW
+ * @pf: निजी PF काष्ठा
  *
- * This function sends a default configuration MIB to the FW.
+ * This function sends a शेष configuration MIB to the FW.
  *
- * If this function errors out at any point, the driver is still able to
- * function.  The main impact is that LFC may not operate as expected.
- * Therefore an error state in this function should be treated with a DBG
- * message and continue on with driver rebuild/reenable.
+ * If this function errors out at any poपूर्णांक, the driver is still able to
+ * function.  The मुख्य impact is that LFC may not operate as expected.
+ * Thereक्रमe an error state in this function should be treated with a DBG
+ * message and जारी on with driver rebuild/reenable.
  */
-static void ice_set_dflt_mib(struct ice_pf *pf)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	u8 mib_type, *buf, *lldpmib = NULL;
+अटल व्योम ice_set_dflt_mib(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	u8 mib_type, *buf, *lldpmib = शून्य;
 	u16 len, typelen, offset = 0;
-	struct ice_lldp_org_tlv *tlv;
-	struct ice_hw *hw = &pf->hw;
+	काष्ठा ice_lldp_org_tlv *tlv;
+	काष्ठा ice_hw *hw = &pf->hw;
 	u32 ouisubtype;
 
 	mib_type = SET_LOCAL_MIB_TYPE_LOCAL_MIB;
 	lldpmib = kzalloc(ICE_LLDPDU_SIZE, GFP_KERNEL);
-	if (!lldpmib) {
+	अगर (!lldpmib) अणु
 		dev_dbg(dev, "%s Failed to allocate MIB memory\n",
 			__func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Add ETS CFG TLV */
-	tlv = (struct ice_lldp_org_tlv *)lldpmib;
+	tlv = (काष्ठा ice_lldp_org_tlv *)lldpmib;
 	typelen = ((ICE_TLV_TYPE_ORG << ICE_LLDP_TLV_TYPE_S) |
 		   ICE_IEEE_ETS_TLV_LEN);
 	tlv->typelen = htons(typelen);
@@ -816,8 +817,8 @@ static void ice_set_dflt_mib(struct ice_pf *pf)
 	buf[5] = 0x64;
 	len = (typelen & ICE_LLDP_TLV_LEN_M) >> ICE_LLDP_TLV_LEN_S;
 	offset += len + 2;
-	tlv = (struct ice_lldp_org_tlv *)
-		((char *)tlv + sizeof(tlv->typelen) + len);
+	tlv = (काष्ठा ice_lldp_org_tlv *)
+		((अक्षर *)tlv + माप(tlv->typelen) + len);
 
 	/* Add ETS REC TLV */
 	buf = tlv->tlvinfo;
@@ -834,8 +835,8 @@ static void ice_set_dflt_mib(struct ice_pf *pf)
 	 */
 	buf[5] = 0x64;
 	offset += len + 2;
-	tlv = (struct ice_lldp_org_tlv *)
-		((char *)tlv + sizeof(tlv->typelen) + len);
+	tlv = (काष्ठा ice_lldp_org_tlv *)
+		((अक्षर *)tlv + माप(tlv->typelen) + len);
 
 	/* Add PFC CFG TLV */
 	typelen = ((ICE_TLV_TYPE_ORG << ICE_LLDP_TLV_TYPE_S) |
@@ -851,29 +852,29 @@ static void ice_set_dflt_mib(struct ice_pf *pf)
 	len = (typelen & ICE_LLDP_TLV_LEN_M) >> ICE_LLDP_TLV_LEN_S;
 	offset += len + 2;
 
-	if (ice_aq_set_lldp_mib(hw, mib_type, (void *)lldpmib, offset, NULL))
+	अगर (ice_aq_set_lldp_mib(hw, mib_type, (व्योम *)lldpmib, offset, शून्य))
 		dev_dbg(dev, "%s Failed to set default LLDP MIB\n", __func__);
 
-	kfree(lldpmib);
-}
+	kमुक्त(lldpmib);
+पूर्ण
 
 /**
  * ice_link_event - process the link event
  * @pf: PF that the link event is associated with
- * @pi: port_info for the port that the link event is associated with
- * @link_up: true if the physical link is up and false if it is down
+ * @pi: port_info क्रम the port that the link event is associated with
+ * @link_up: true अगर the physical link is up and false अगर it is करोwn
  * @link_speed: current link speed received from the link event
  *
  * Returns 0 on success and negative on failure
  */
-static int
-ice_link_event(struct ice_pf *pf, struct ice_port_info *pi, bool link_up,
+अटल पूर्णांक
+ice_link_event(काष्ठा ice_pf *pf, काष्ठा ice_port_info *pi, bool link_up,
 	       u16 link_speed)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_phy_info *phy_info;
-	enum ice_status status;
-	struct ice_vsi *vsi;
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_phy_info *phy_info;
+	क्रमागत ice_status status;
+	काष्ठा ice_vsi *vsi;
 	u16 old_link_speed;
 	bool old_link;
 
@@ -883,587 +884,587 @@ ice_link_event(struct ice_pf *pf, struct ice_port_info *pi, bool link_up,
 	old_link = !!(phy_info->link_info_old.link_info & ICE_AQ_LINK_UP);
 	old_link_speed = phy_info->link_info_old.link_speed;
 
-	/* update the link info structures and re-enable link events,
-	 * don't bail on failure due to other book keeping needed
+	/* update the link info काष्ठाures and re-enable link events,
+	 * करोn't bail on failure due to other book keeping needed
 	 */
 	status = ice_update_link_info(pi);
-	if (status)
+	अगर (status)
 		dev_dbg(dev, "Failed to update link status on port %d, err %s aq_err %s\n",
 			pi->lport, ice_stat_str(status),
 			ice_aq_str(pi->hw->adminq.sq_last_status));
 
-	/* Check if the link state is up after updating link info, and treat
+	/* Check अगर the link state is up after updating link info, and treat
 	 * this event as an UP event since the link is actually UP now.
 	 */
-	if (phy_info->link_info.link_info & ICE_AQ_LINK_UP)
+	अगर (phy_info->link_info.link_info & ICE_AQ_LINK_UP)
 		link_up = true;
 
-	vsi = ice_get_main_vsi(pf);
-	if (!vsi || !vsi->port_info)
-		return -EINVAL;
+	vsi = ice_get_मुख्य_vsi(pf);
+	अगर (!vsi || !vsi->port_info)
+		वापस -EINVAL;
 
-	/* turn off PHY if media was removed */
-	if (!test_bit(ICE_FLAG_NO_MEDIA, pf->flags) &&
-	    !(pi->phy.link_info.link_info & ICE_AQ_MEDIA_AVAILABLE)) {
+	/* turn off PHY अगर media was हटाओd */
+	अगर (!test_bit(ICE_FLAG_NO_MEDIA, pf->flags) &&
+	    !(pi->phy.link_info.link_info & ICE_AQ_MEDIA_AVAILABLE)) अणु
 		set_bit(ICE_FLAG_NO_MEDIA, pf->flags);
 		ice_set_link(vsi, false);
-	}
+	पूर्ण
 
-	/* if the old link up/down and speed is the same as the new */
-	if (link_up == old_link && link_speed == old_link_speed)
-		return 0;
+	/* अगर the old link up/करोwn and speed is the same as the new */
+	अगर (link_up == old_link && link_speed == old_link_speed)
+		वापस 0;
 
-	if (ice_is_dcb_active(pf)) {
-		if (test_bit(ICE_FLAG_DCB_ENA, pf->flags))
+	अगर (ice_is_dcb_active(pf)) अणु
+		अगर (test_bit(ICE_FLAG_DCB_ENA, pf->flags))
 			ice_dcb_rebuild(pf);
-	} else {
-		if (link_up)
+	पूर्ण अन्यथा अणु
+		अगर (link_up)
 			ice_set_dflt_mib(pf);
-	}
+	पूर्ण
 	ice_vsi_link_event(vsi, link_up);
-	ice_print_link_msg(vsi, link_up);
+	ice_prपूर्णांक_link_msg(vsi, link_up);
 
-	ice_vc_notify_link_state(pf);
+	ice_vc_notअगरy_link_state(pf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_watchdog_subtask - periodic tasks not using event driven scheduling
- * @pf: board private structure
+ * ice_watchकरोg_subtask - periodic tasks not using event driven scheduling
+ * @pf: board निजी काष्ठाure
  */
-static void ice_watchdog_subtask(struct ice_pf *pf)
-{
-	int i;
+अटल व्योम ice_watchकरोg_subtask(काष्ठा ice_pf *pf)
+अणु
+	पूर्णांक i;
 
-	/* if interface is down do nothing */
-	if (test_bit(ICE_DOWN, pf->state) ||
+	/* अगर पूर्णांकerface is करोwn करो nothing */
+	अगर (test_bit(ICE_DOWN, pf->state) ||
 	    test_bit(ICE_CFG_BUSY, pf->state))
-		return;
+		वापस;
 
-	/* make sure we don't do these things too often */
-	if (time_before(jiffies,
-			pf->serv_tmr_prev + pf->serv_tmr_period))
-		return;
+	/* make sure we करोn't करो these things too often */
+	अगर (समय_beक्रमe(jअगरfies,
+			pf->serv_पंचांगr_prev + pf->serv_पंचांगr_period))
+		वापस;
 
-	pf->serv_tmr_prev = jiffies;
+	pf->serv_पंचांगr_prev = jअगरfies;
 
-	/* Update the stats for active netdevs so the network stack
+	/* Update the stats क्रम active netdevs so the network stack
 	 * can look at updated numbers whenever it cares to
 	 */
 	ice_update_pf_stats(pf);
-	ice_for_each_vsi(pf, i)
-		if (pf->vsi[i] && pf->vsi[i]->netdev)
+	ice_क्रम_each_vsi(pf, i)
+		अगर (pf->vsi[i] && pf->vsi[i]->netdev)
 			ice_update_vsi_stats(pf->vsi[i]);
-}
+पूर्ण
 
 /**
  * ice_init_link_events - enable/initialize link events
- * @pi: pointer to the port_info instance
+ * @pi: poपूर्णांकer to the port_info instance
  *
  * Returns -EIO on failure, 0 on success
  */
-static int ice_init_link_events(struct ice_port_info *pi)
-{
+अटल पूर्णांक ice_init_link_events(काष्ठा ice_port_info *pi)
+अणु
 	u16 mask;
 
 	mask = ~((u16)(ICE_AQ_LINK_EVENT_UPDOWN | ICE_AQ_LINK_EVENT_MEDIA_NA |
 		       ICE_AQ_LINK_EVENT_MODULE_QUAL_FAIL));
 
-	if (ice_aq_set_event_mask(pi->hw, pi->lport, mask, NULL)) {
+	अगर (ice_aq_set_event_mask(pi->hw, pi->lport, mask, शून्य)) अणु
 		dev_dbg(ice_hw_to_dev(pi->hw), "Failed to set link event mask for port %d\n",
 			pi->lport);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (ice_aq_get_link_info(pi, true, NULL, NULL)) {
+	अगर (ice_aq_get_link_info(pi, true, शून्य, शून्य)) अणु
 		dev_dbg(ice_hw_to_dev(pi->hw), "Failed to enable link events for port %d\n",
 			pi->lport);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_handle_link_event - handle link event via ARQ
  * @pf: PF that the link event is associated with
- * @event: event structure containing link status info
+ * @event: event काष्ठाure containing link status info
  */
-static int
-ice_handle_link_event(struct ice_pf *pf, struct ice_rq_event_info *event)
-{
-	struct ice_aqc_get_link_status_data *link_data;
-	struct ice_port_info *port_info;
-	int status;
+अटल पूर्णांक
+ice_handle_link_event(काष्ठा ice_pf *pf, काष्ठा ice_rq_event_info *event)
+अणु
+	काष्ठा ice_aqc_get_link_status_data *link_data;
+	काष्ठा ice_port_info *port_info;
+	पूर्णांक status;
 
-	link_data = (struct ice_aqc_get_link_status_data *)event->msg_buf;
+	link_data = (काष्ठा ice_aqc_get_link_status_data *)event->msg_buf;
 	port_info = pf->hw.port_info;
-	if (!port_info)
-		return -EINVAL;
+	अगर (!port_info)
+		वापस -EINVAL;
 
 	status = ice_link_event(pf, port_info,
 				!!(link_data->link_info & ICE_AQ_LINK_UP),
 				le16_to_cpu(link_data->link_speed));
-	if (status)
+	अगर (status)
 		dev_dbg(ice_pf_to_dev(pf), "Could not process link event, error %d\n",
 			status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-enum ice_aq_task_state {
+क्रमागत ice_aq_task_state अणु
 	ICE_AQ_TASK_WAITING = 0,
 	ICE_AQ_TASK_COMPLETE,
 	ICE_AQ_TASK_CANCELED,
-};
+पूर्ण;
 
-struct ice_aq_task {
-	struct hlist_node entry;
+काष्ठा ice_aq_task अणु
+	काष्ठा hlist_node entry;
 
 	u16 opcode;
-	struct ice_rq_event_info *event;
-	enum ice_aq_task_state state;
-};
+	काष्ठा ice_rq_event_info *event;
+	क्रमागत ice_aq_task_state state;
+पूर्ण;
 
 /**
- * ice_aq_wait_for_event - Wait for an AdminQ event from firmware
- * @pf: pointer to the PF private structure
- * @opcode: the opcode to wait for
- * @timeout: how long to wait, in jiffies
- * @event: storage for the event info
+ * ice_aq_रुको_क्रम_event - Wait क्रम an AdminQ event from firmware
+ * @pf: poपूर्णांकer to the PF निजी काष्ठाure
+ * @opcode: the opcode to रुको क्रम
+ * @समयout: how दीर्घ to रुको, in jअगरfies
+ * @event: storage क्रम the event info
  *
- * Waits for a specific AdminQ completion event on the ARQ for a given PF. The
- * current thread will be put to sleep until the specified event occurs or
- * until the given timeout is reached.
+ * Waits क्रम a specअगरic AdminQ completion event on the ARQ क्रम a given PF. The
+ * current thपढ़ो will be put to sleep until the specअगरied event occurs or
+ * until the given समयout is reached.
  *
  * To obtain only the descriptor contents, pass an event without an allocated
  * msg_buf. If the complete data buffer is desired, allocate the
- * event->msg_buf with enough space ahead of time.
+ * event->msg_buf with enough space ahead of समय.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-int ice_aq_wait_for_event(struct ice_pf *pf, u16 opcode, unsigned long timeout,
-			  struct ice_rq_event_info *event)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_aq_task *task;
-	unsigned long start;
-	long ret;
-	int err;
+पूर्णांक ice_aq_रुको_क्रम_event(काष्ठा ice_pf *pf, u16 opcode, अचिन्हित दीर्घ समयout,
+			  काष्ठा ice_rq_event_info *event)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_aq_task *task;
+	अचिन्हित दीर्घ start;
+	दीर्घ ret;
+	पूर्णांक err;
 
-	task = kzalloc(sizeof(*task), GFP_KERNEL);
-	if (!task)
-		return -ENOMEM;
+	task = kzalloc(माप(*task), GFP_KERNEL);
+	अगर (!task)
+		वापस -ENOMEM;
 
 	INIT_HLIST_NODE(&task->entry);
 	task->opcode = opcode;
 	task->event = event;
 	task->state = ICE_AQ_TASK_WAITING;
 
-	spin_lock_bh(&pf->aq_wait_lock);
-	hlist_add_head(&task->entry, &pf->aq_wait_list);
-	spin_unlock_bh(&pf->aq_wait_lock);
+	spin_lock_bh(&pf->aq_रुको_lock);
+	hlist_add_head(&task->entry, &pf->aq_रुको_list);
+	spin_unlock_bh(&pf->aq_रुको_lock);
 
-	start = jiffies;
+	start = jअगरfies;
 
-	ret = wait_event_interruptible_timeout(pf->aq_wait_queue, task->state,
-					       timeout);
-	switch (task->state) {
-	case ICE_AQ_TASK_WAITING:
+	ret = रुको_event_पूर्णांकerruptible_समयout(pf->aq_रुको_queue, task->state,
+					       समयout);
+	चयन (task->state) अणु
+	हाल ICE_AQ_TASK_WAITING:
 		err = ret < 0 ? ret : -ETIMEDOUT;
-		break;
-	case ICE_AQ_TASK_CANCELED:
+		अवरोध;
+	हाल ICE_AQ_TASK_CANCELED:
 		err = ret < 0 ? ret : -ECANCELED;
-		break;
-	case ICE_AQ_TASK_COMPLETE:
+		अवरोध;
+	हाल ICE_AQ_TASK_COMPLETE:
 		err = ret < 0 ? ret : 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "Unexpected AdminQ wait task state %u", task->state);
 		err = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dev_dbg(dev, "Waited %u msecs (max %u msecs) for firmware response to op 0x%04x\n",
-		jiffies_to_msecs(jiffies - start),
-		jiffies_to_msecs(timeout),
+		jअगरfies_to_msecs(jअगरfies - start),
+		jअगरfies_to_msecs(समयout),
 		opcode);
 
-	spin_lock_bh(&pf->aq_wait_lock);
+	spin_lock_bh(&pf->aq_रुको_lock);
 	hlist_del(&task->entry);
-	spin_unlock_bh(&pf->aq_wait_lock);
-	kfree(task);
+	spin_unlock_bh(&pf->aq_रुको_lock);
+	kमुक्त(task);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ice_aq_check_events - Check if any thread is waiting for an AdminQ event
- * @pf: pointer to the PF private structure
+ * ice_aq_check_events - Check अगर any thपढ़ो is रुकोing क्रम an AdminQ event
+ * @pf: poपूर्णांकer to the PF निजी काष्ठाure
  * @opcode: the opcode of the event
  * @event: the event to check
  *
- * Loops over the current list of pending threads waiting for an AdminQ event.
- * For each matching task, copy the contents of the event into the task
- * structure and wake up the thread.
+ * Loops over the current list of pending thपढ़ोs रुकोing क्रम an AdminQ event.
+ * For each matching task, copy the contents of the event पूर्णांकo the task
+ * काष्ठाure and wake up the thपढ़ो.
  *
- * If multiple threads wait for the same opcode, they will all be woken up.
+ * If multiple thपढ़ोs रुको क्रम the same opcode, they will all be woken up.
  *
- * Note that event->msg_buf will only be duplicated if the event has a buffer
- * with enough space already allocated. Otherwise, only the descriptor and
+ * Note that event->msg_buf will only be duplicated अगर the event has a buffer
+ * with enough space alपढ़ोy allocated. Otherwise, only the descriptor and
  * message length will be copied.
  *
- * Returns: true if an event was found, false otherwise
+ * Returns: true अगर an event was found, false otherwise
  */
-static void ice_aq_check_events(struct ice_pf *pf, u16 opcode,
-				struct ice_rq_event_info *event)
-{
-	struct ice_aq_task *task;
+अटल व्योम ice_aq_check_events(काष्ठा ice_pf *pf, u16 opcode,
+				काष्ठा ice_rq_event_info *event)
+अणु
+	काष्ठा ice_aq_task *task;
 	bool found = false;
 
-	spin_lock_bh(&pf->aq_wait_lock);
-	hlist_for_each_entry(task, &pf->aq_wait_list, entry) {
-		if (task->state || task->opcode != opcode)
-			continue;
+	spin_lock_bh(&pf->aq_रुको_lock);
+	hlist_क्रम_each_entry(task, &pf->aq_रुको_list, entry) अणु
+		अगर (task->state || task->opcode != opcode)
+			जारी;
 
-		memcpy(&task->event->desc, &event->desc, sizeof(event->desc));
+		स_नकल(&task->event->desc, &event->desc, माप(event->desc));
 		task->event->msg_len = event->msg_len;
 
-		/* Only copy the data buffer if a destination was set */
-		if (task->event->msg_buf &&
-		    task->event->buf_len > event->buf_len) {
-			memcpy(task->event->msg_buf, event->msg_buf,
+		/* Only copy the data buffer अगर a destination was set */
+		अगर (task->event->msg_buf &&
+		    task->event->buf_len > event->buf_len) अणु
+			स_नकल(task->event->msg_buf, event->msg_buf,
 			       event->buf_len);
 			task->event->buf_len = event->buf_len;
-		}
+		पूर्ण
 
 		task->state = ICE_AQ_TASK_COMPLETE;
 		found = true;
-	}
-	spin_unlock_bh(&pf->aq_wait_lock);
+	पूर्ण
+	spin_unlock_bh(&pf->aq_रुको_lock);
 
-	if (found)
-		wake_up(&pf->aq_wait_queue);
-}
+	अगर (found)
+		wake_up(&pf->aq_रुको_queue);
+पूर्ण
 
 /**
- * ice_aq_cancel_waiting_tasks - Immediately cancel all waiting tasks
- * @pf: the PF private structure
+ * ice_aq_cancel_रुकोing_tasks - Immediately cancel all रुकोing tasks
+ * @pf: the PF निजी काष्ठाure
  *
- * Set all waiting tasks to ICE_AQ_TASK_CANCELED, and wake up their threads.
- * This will then cause ice_aq_wait_for_event to exit with -ECANCELED.
+ * Set all रुकोing tasks to ICE_AQ_TASK_CANCELED, and wake up their thपढ़ोs.
+ * This will then cause ice_aq_रुको_क्रम_event to निकास with -ECANCELED.
  */
-static void ice_aq_cancel_waiting_tasks(struct ice_pf *pf)
-{
-	struct ice_aq_task *task;
+अटल व्योम ice_aq_cancel_रुकोing_tasks(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_aq_task *task;
 
-	spin_lock_bh(&pf->aq_wait_lock);
-	hlist_for_each_entry(task, &pf->aq_wait_list, entry)
+	spin_lock_bh(&pf->aq_रुको_lock);
+	hlist_क्रम_each_entry(task, &pf->aq_रुको_list, entry)
 		task->state = ICE_AQ_TASK_CANCELED;
-	spin_unlock_bh(&pf->aq_wait_lock);
+	spin_unlock_bh(&pf->aq_रुको_lock);
 
-	wake_up(&pf->aq_wait_queue);
-}
+	wake_up(&pf->aq_रुको_queue);
+पूर्ण
 
 /**
  * __ice_clean_ctrlq - helper function to clean controlq rings
- * @pf: ptr to struct ice_pf
- * @q_type: specific Control queue type
+ * @pf: ptr to काष्ठा ice_pf
+ * @q_type: specअगरic Control queue type
  */
-static int __ice_clean_ctrlq(struct ice_pf *pf, enum ice_ctl_q q_type)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_rq_event_info event;
-	struct ice_hw *hw = &pf->hw;
-	struct ice_ctl_q_info *cq;
+अटल पूर्णांक __ice_clean_ctrlq(काष्ठा ice_pf *pf, क्रमागत ice_ctl_q q_type)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_rq_event_info event;
+	काष्ठा ice_hw *hw = &pf->hw;
+	काष्ठा ice_ctl_q_info *cq;
 	u16 pending, i = 0;
-	const char *qtype;
+	स्थिर अक्षर *qtype;
 	u32 oldval, val;
 
-	/* Do not clean control queue if/when PF reset fails */
-	if (test_bit(ICE_RESET_FAILED, pf->state))
-		return 0;
+	/* Do not clean control queue अगर/when PF reset fails */
+	अगर (test_bit(ICE_RESET_FAILED, pf->state))
+		वापस 0;
 
-	switch (q_type) {
-	case ICE_CTL_Q_ADMIN:
+	चयन (q_type) अणु
+	हाल ICE_CTL_Q_ADMIN:
 		cq = &hw->adminq;
 		qtype = "Admin";
-		break;
-	case ICE_CTL_Q_MAILBOX:
+		अवरोध;
+	हाल ICE_CTL_Q_MAILBOX:
 		cq = &hw->mailboxq;
 		qtype = "Mailbox";
 		/* we are going to try to detect a malicious VF, so set the
 		 * state to begin detection
 		 */
 		hw->mbx_snapshot.mbx_buf.state = ICE_MAL_VF_DETECT_STATE_NEW_SNAPSHOT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_warn(dev, "Unknown control queue type 0x%x\n", q_type);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* check for error indications - PF_xx_AxQLEN register layout for
-	 * FW/MBX/SB are identical so just use defines for PF_FW_AxQLEN.
+	/* check क्रम error indications - PF_xx_AxQLEN रेजिस्टर layout क्रम
+	 * FW/MBX/SB are identical so just use defines क्रम PF_FW_AxQLEN.
 	 */
 	val = rd32(hw, cq->rq.len);
-	if (val & (PF_FW_ARQLEN_ARQVFE_M | PF_FW_ARQLEN_ARQOVFL_M |
-		   PF_FW_ARQLEN_ARQCRIT_M)) {
+	अगर (val & (PF_FW_ARQLEN_ARQVFE_M | PF_FW_ARQLEN_ARQOVFL_M |
+		   PF_FW_ARQLEN_ARQCRIT_M)) अणु
 		oldval = val;
-		if (val & PF_FW_ARQLEN_ARQVFE_M)
+		अगर (val & PF_FW_ARQLEN_ARQVFE_M)
 			dev_dbg(dev, "%s Receive Queue VF Error detected\n",
 				qtype);
-		if (val & PF_FW_ARQLEN_ARQOVFL_M) {
+		अगर (val & PF_FW_ARQLEN_ARQOVFL_M) अणु
 			dev_dbg(dev, "%s Receive Queue Overflow Error detected\n",
 				qtype);
-		}
-		if (val & PF_FW_ARQLEN_ARQCRIT_M)
+		पूर्ण
+		अगर (val & PF_FW_ARQLEN_ARQCRIT_M)
 			dev_dbg(dev, "%s Receive Queue Critical Error detected\n",
 				qtype);
 		val &= ~(PF_FW_ARQLEN_ARQVFE_M | PF_FW_ARQLEN_ARQOVFL_M |
 			 PF_FW_ARQLEN_ARQCRIT_M);
-		if (oldval != val)
+		अगर (oldval != val)
 			wr32(hw, cq->rq.len, val);
-	}
+	पूर्ण
 
 	val = rd32(hw, cq->sq.len);
-	if (val & (PF_FW_ATQLEN_ATQVFE_M | PF_FW_ATQLEN_ATQOVFL_M |
-		   PF_FW_ATQLEN_ATQCRIT_M)) {
+	अगर (val & (PF_FW_ATQLEN_ATQVFE_M | PF_FW_ATQLEN_ATQOVFL_M |
+		   PF_FW_ATQLEN_ATQCRIT_M)) अणु
 		oldval = val;
-		if (val & PF_FW_ATQLEN_ATQVFE_M)
+		अगर (val & PF_FW_ATQLEN_ATQVFE_M)
 			dev_dbg(dev, "%s Send Queue VF Error detected\n",
 				qtype);
-		if (val & PF_FW_ATQLEN_ATQOVFL_M) {
+		अगर (val & PF_FW_ATQLEN_ATQOVFL_M) अणु
 			dev_dbg(dev, "%s Send Queue Overflow Error detected\n",
 				qtype);
-		}
-		if (val & PF_FW_ATQLEN_ATQCRIT_M)
+		पूर्ण
+		अगर (val & PF_FW_ATQLEN_ATQCRIT_M)
 			dev_dbg(dev, "%s Send Queue Critical Error detected\n",
 				qtype);
 		val &= ~(PF_FW_ATQLEN_ATQVFE_M | PF_FW_ATQLEN_ATQOVFL_M |
 			 PF_FW_ATQLEN_ATQCRIT_M);
-		if (oldval != val)
+		अगर (oldval != val)
 			wr32(hw, cq->sq.len, val);
-	}
+	पूर्ण
 
 	event.buf_len = cq->rq_buf_size;
 	event.msg_buf = kzalloc(event.buf_len, GFP_KERNEL);
-	if (!event.msg_buf)
-		return 0;
+	अगर (!event.msg_buf)
+		वापस 0;
 
-	do {
-		enum ice_status ret;
+	करो अणु
+		क्रमागत ice_status ret;
 		u16 opcode;
 
 		ret = ice_clean_rq_elem(hw, cq, &event, &pending);
-		if (ret == ICE_ERR_AQ_NO_WORK)
-			break;
-		if (ret) {
+		अगर (ret == ICE_ERR_AQ_NO_WORK)
+			अवरोध;
+		अगर (ret) अणु
 			dev_err(dev, "%s Receive Queue event error %s\n", qtype,
 				ice_stat_str(ret));
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		opcode = le16_to_cpu(event.desc.opcode);
 
-		/* Notify any thread that might be waiting for this event */
+		/* Notअगरy any thपढ़ो that might be रुकोing क्रम this event */
 		ice_aq_check_events(pf, opcode, &event);
 
-		switch (opcode) {
-		case ice_aqc_opc_get_link_status:
-			if (ice_handle_link_event(pf, &event))
+		चयन (opcode) अणु
+		हाल ice_aqc_opc_get_link_status:
+			अगर (ice_handle_link_event(pf, &event))
 				dev_err(dev, "Could not handle link event\n");
-			break;
-		case ice_aqc_opc_event_lan_overflow:
+			अवरोध;
+		हाल ice_aqc_opc_event_lan_overflow:
 			ice_vf_lan_overflow_event(pf, &event);
-			break;
-		case ice_mbx_opc_send_msg_to_pf:
-			if (!ice_is_malicious_vf(pf, &event, i, pending))
+			अवरोध;
+		हाल ice_mbx_opc_send_msg_to_pf:
+			अगर (!ice_is_malicious_vf(pf, &event, i, pending))
 				ice_vc_process_vf_msg(pf, &event);
-			break;
-		case ice_aqc_opc_fw_logging:
+			अवरोध;
+		हाल ice_aqc_opc_fw_logging:
 			ice_output_fw_log(hw, &event.desc, event.msg_buf);
-			break;
-		case ice_aqc_opc_lldp_set_mib_change:
+			अवरोध;
+		हाल ice_aqc_opc_lldp_set_mib_change:
 			ice_dcb_process_lldp_set_mib_change(pf, &event);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_dbg(dev, "%s Receive Queue unknown event 0x%04x ignored\n",
 				qtype, opcode);
-			break;
-		}
-	} while (pending && (i++ < ICE_DFLT_IRQ_WORK));
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (pending && (i++ < ICE_DFLT_IRQ_WORK));
 
-	kfree(event.msg_buf);
+	kमुक्त(event.msg_buf);
 
-	return pending && (i == ICE_DFLT_IRQ_WORK);
-}
+	वापस pending && (i == ICE_DFLT_IRQ_WORK);
+पूर्ण
 
 /**
- * ice_ctrlq_pending - check if there is a difference between ntc and ntu
- * @hw: pointer to hardware info
- * @cq: control queue information
+ * ice_ctrlq_pending - check अगर there is a dअगरference between ntc and ntu
+ * @hw: poपूर्णांकer to hardware info
+ * @cq: control queue inक्रमmation
  *
- * returns true if there are pending messages in a queue, false if there aren't
+ * वापसs true अगर there are pending messages in a queue, false अगर there aren't
  */
-static bool ice_ctrlq_pending(struct ice_hw *hw, struct ice_ctl_q_info *cq)
-{
+अटल bool ice_ctrlq_pending(काष्ठा ice_hw *hw, काष्ठा ice_ctl_q_info *cq)
+अणु
 	u16 ntu;
 
 	ntu = (u16)(rd32(hw, cq->rq.head) & cq->rq.head_mask);
-	return cq->rq.next_to_clean != ntu;
-}
+	वापस cq->rq.next_to_clean != ntu;
+पूर्ण
 
 /**
  * ice_clean_adminq_subtask - clean the AdminQ rings
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  */
-static void ice_clean_adminq_subtask(struct ice_pf *pf)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल व्योम ice_clean_adminq_subtask(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 
-	if (!test_bit(ICE_ADMINQ_EVENT_PENDING, pf->state))
-		return;
+	अगर (!test_bit(ICE_ADMINQ_EVENT_PENDING, pf->state))
+		वापस;
 
-	if (__ice_clean_ctrlq(pf, ICE_CTL_Q_ADMIN))
-		return;
+	अगर (__ice_clean_ctrlq(pf, ICE_CTL_Q_ADMIN))
+		वापस;
 
 	clear_bit(ICE_ADMINQ_EVENT_PENDING, pf->state);
 
 	/* There might be a situation where new messages arrive to a control
 	 * queue between processing the last message and clearing the
-	 * EVENT_PENDING bit. So before exiting, check queue head again (using
-	 * ice_ctrlq_pending) and process new messages if any.
+	 * EVENT_PENDING bit. So beक्रमe निकासing, check queue head again (using
+	 * ice_ctrlq_pending) and process new messages अगर any.
 	 */
-	if (ice_ctrlq_pending(hw, &hw->adminq))
+	अगर (ice_ctrlq_pending(hw, &hw->adminq))
 		__ice_clean_ctrlq(pf, ICE_CTL_Q_ADMIN);
 
 	ice_flush(hw);
-}
+पूर्ण
 
 /**
  * ice_clean_mailboxq_subtask - clean the MailboxQ rings
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  */
-static void ice_clean_mailboxq_subtask(struct ice_pf *pf)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल व्योम ice_clean_mailboxq_subtask(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 
-	if (!test_bit(ICE_MAILBOXQ_EVENT_PENDING, pf->state))
-		return;
+	अगर (!test_bit(ICE_MAILBOXQ_EVENT_PENDING, pf->state))
+		वापस;
 
-	if (__ice_clean_ctrlq(pf, ICE_CTL_Q_MAILBOX))
-		return;
+	अगर (__ice_clean_ctrlq(pf, ICE_CTL_Q_MAILBOX))
+		वापस;
 
 	clear_bit(ICE_MAILBOXQ_EVENT_PENDING, pf->state);
 
-	if (ice_ctrlq_pending(hw, &hw->mailboxq))
+	अगर (ice_ctrlq_pending(hw, &hw->mailboxq))
 		__ice_clean_ctrlq(pf, ICE_CTL_Q_MAILBOX);
 
 	ice_flush(hw);
-}
+पूर्ण
 
 /**
  * ice_service_task_schedule - schedule the service task to wake up
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  *
- * If not already scheduled, this puts the task into the work queue.
+ * If not alपढ़ोy scheduled, this माला_दो the task पूर्णांकo the work queue.
  */
-void ice_service_task_schedule(struct ice_pf *pf)
-{
-	if (!test_bit(ICE_SERVICE_DIS, pf->state) &&
+व्योम ice_service_task_schedule(काष्ठा ice_pf *pf)
+अणु
+	अगर (!test_bit(ICE_SERVICE_DIS, pf->state) &&
 	    !test_and_set_bit(ICE_SERVICE_SCHED, pf->state) &&
 	    !test_bit(ICE_NEEDS_RESTART, pf->state))
 		queue_work(ice_wq, &pf->serv_task);
-}
+पूर्ण
 
 /**
  * ice_service_task_complete - finish up the service task
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  */
-static void ice_service_task_complete(struct ice_pf *pf)
-{
+अटल व्योम ice_service_task_complete(काष्ठा ice_pf *pf)
+अणु
 	WARN_ON(!test_bit(ICE_SERVICE_SCHED, pf->state));
 
-	/* force memory (pf->state) to sync before next service task */
-	smp_mb__before_atomic();
+	/* क्रमce memory (pf->state) to sync beक्रमe next service task */
+	smp_mb__beक्रमe_atomic();
 	clear_bit(ICE_SERVICE_SCHED, pf->state);
-}
+पूर्ण
 
 /**
  * ice_service_task_stop - stop service task and cancel works
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  *
- * Return 0 if the ICE_SERVICE_DIS bit was not already set,
+ * Return 0 अगर the ICE_SERVICE_DIS bit was not alपढ़ोy set,
  * 1 otherwise.
  */
-static int ice_service_task_stop(struct ice_pf *pf)
-{
-	int ret;
+अटल पूर्णांक ice_service_task_stop(काष्ठा ice_pf *pf)
+अणु
+	पूर्णांक ret;
 
 	ret = test_and_set_bit(ICE_SERVICE_DIS, pf->state);
 
-	if (pf->serv_tmr.function)
-		del_timer_sync(&pf->serv_tmr);
-	if (pf->serv_task.func)
+	अगर (pf->serv_पंचांगr.function)
+		del_समयr_sync(&pf->serv_पंचांगr);
+	अगर (pf->serv_task.func)
 		cancel_work_sync(&pf->serv_task);
 
 	clear_bit(ICE_SERVICE_SCHED, pf->state);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ice_service_task_restart - restart service task and schedule works
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  *
- * This function is needed for suspend and resume works (e.g WoL scenario)
+ * This function is needed क्रम suspend and resume works (e.g WoL scenario)
  */
-static void ice_service_task_restart(struct ice_pf *pf)
-{
+अटल व्योम ice_service_task_restart(काष्ठा ice_pf *pf)
+अणु
 	clear_bit(ICE_SERVICE_DIS, pf->state);
 	ice_service_task_schedule(pf);
-}
+पूर्ण
 
 /**
- * ice_service_timer - timer callback to schedule service task
- * @t: pointer to timer_list
+ * ice_service_समयr - समयr callback to schedule service task
+ * @t: poपूर्णांकer to समयr_list
  */
-static void ice_service_timer(struct timer_list *t)
-{
-	struct ice_pf *pf = from_timer(pf, t, serv_tmr);
+अटल व्योम ice_service_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ice_pf *pf = from_समयr(pf, t, serv_पंचांगr);
 
-	mod_timer(&pf->serv_tmr, round_jiffies(pf->serv_tmr_period + jiffies));
+	mod_समयr(&pf->serv_पंचांगr, round_jअगरfies(pf->serv_पंचांगr_period + jअगरfies));
 	ice_service_task_schedule(pf);
-}
+पूर्ण
 
 /**
  * ice_handle_mdd_event - handle malicious driver detect event
- * @pf: pointer to the PF structure
+ * @pf: poपूर्णांकer to the PF काष्ठाure
  *
- * Called from service task. OICR interrupt handler indicates MDD event.
+ * Called from service task. OICR पूर्णांकerrupt handler indicates MDD event.
  * VF MDD logging is guarded by net_ratelimit. Additional PF and VF log
- * messages are wrapped by netif_msg_[rx|tx]_err. Since VF Rx MDD events
+ * messages are wrapped by netअगर_msg_[rx|tx]_err. Since VF Rx MDD events
  * disable the queue, the PF can be configured to reset the VF using ethtool
- * private flag mdd-auto-reset-vf.
+ * निजी flag mdd-स्वतः-reset-vf.
  */
-static void ice_handle_mdd_event(struct ice_pf *pf)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
-	unsigned int i;
+अटल व्योम ice_handle_mdd_event(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
+	अचिन्हित पूर्णांक i;
 	u32 reg;
 
-	if (!test_and_clear_bit(ICE_MDD_EVENT_PENDING, pf->state)) {
-		/* Since the VF MDD event logging is rate limited, check if
+	अगर (!test_and_clear_bit(ICE_MDD_EVENT_PENDING, pf->state)) अणु
+		/* Since the VF MDD event logging is rate limited, check अगर
 		 * there are pending MDD events.
 		 */
-		ice_print_vfs_mdd_events(pf);
-		return;
-	}
+		ice_prपूर्णांक_vfs_mdd_events(pf);
+		वापस;
+	पूर्ण
 
 	/* find what triggered an MDD event */
 	reg = rd32(hw, GL_MDET_TX_PQM);
-	if (reg & GL_MDET_TX_PQM_VALID_M) {
+	अगर (reg & GL_MDET_TX_PQM_VALID_M) अणु
 		u8 pf_num = (reg & GL_MDET_TX_PQM_PF_NUM_M) >>
 				GL_MDET_TX_PQM_PF_NUM_S;
 		u16 vf_num = (reg & GL_MDET_TX_PQM_VF_NUM_M) >>
@@ -1473,14 +1474,14 @@ static void ice_handle_mdd_event(struct ice_pf *pf)
 		u16 queue = ((reg & GL_MDET_TX_PQM_QNUM_M) >>
 				GL_MDET_TX_PQM_QNUM_S);
 
-		if (netif_msg_tx_err(pf))
+		अगर (netअगर_msg_tx_err(pf))
 			dev_info(dev, "Malicious Driver Detection event %d on TX queue %d PF# %d VF# %d\n",
 				 event, queue, pf_num, vf_num);
 		wr32(hw, GL_MDET_TX_PQM, 0xffffffff);
-	}
+	पूर्ण
 
 	reg = rd32(hw, GL_MDET_TX_TCLAN);
-	if (reg & GL_MDET_TX_TCLAN_VALID_M) {
+	अगर (reg & GL_MDET_TX_TCLAN_VALID_M) अणु
 		u8 pf_num = (reg & GL_MDET_TX_TCLAN_PF_NUM_M) >>
 				GL_MDET_TX_TCLAN_PF_NUM_S;
 		u16 vf_num = (reg & GL_MDET_TX_TCLAN_VF_NUM_M) >>
@@ -1490,14 +1491,14 @@ static void ice_handle_mdd_event(struct ice_pf *pf)
 		u16 queue = ((reg & GL_MDET_TX_TCLAN_QNUM_M) >>
 				GL_MDET_TX_TCLAN_QNUM_S);
 
-		if (netif_msg_tx_err(pf))
+		अगर (netअगर_msg_tx_err(pf))
 			dev_info(dev, "Malicious Driver Detection event %d on TX queue %d PF# %d VF# %d\n",
 				 event, queue, pf_num, vf_num);
 		wr32(hw, GL_MDET_TX_TCLAN, 0xffffffff);
-	}
+	पूर्ण
 
 	reg = rd32(hw, GL_MDET_RX);
-	if (reg & GL_MDET_RX_VALID_M) {
+	अगर (reg & GL_MDET_RX_VALID_M) अणु
 		u8 pf_num = (reg & GL_MDET_RX_PF_NUM_M) >>
 				GL_MDET_RX_PF_NUM_S;
 		u16 vf_num = (reg & GL_MDET_RX_VF_NUM_M) >>
@@ -1507,100 +1508,100 @@ static void ice_handle_mdd_event(struct ice_pf *pf)
 		u16 queue = ((reg & GL_MDET_RX_QNUM_M) >>
 				GL_MDET_RX_QNUM_S);
 
-		if (netif_msg_rx_err(pf))
+		अगर (netअगर_msg_rx_err(pf))
 			dev_info(dev, "Malicious Driver Detection event %d on RX queue %d PF# %d VF# %d\n",
 				 event, queue, pf_num, vf_num);
 		wr32(hw, GL_MDET_RX, 0xffffffff);
-	}
+	पूर्ण
 
-	/* check to see if this PF caused an MDD event */
+	/* check to see अगर this PF caused an MDD event */
 	reg = rd32(hw, PF_MDET_TX_PQM);
-	if (reg & PF_MDET_TX_PQM_VALID_M) {
+	अगर (reg & PF_MDET_TX_PQM_VALID_M) अणु
 		wr32(hw, PF_MDET_TX_PQM, 0xFFFF);
-		if (netif_msg_tx_err(pf))
+		अगर (netअगर_msg_tx_err(pf))
 			dev_info(dev, "Malicious Driver Detection event TX_PQM detected on PF\n");
-	}
+	पूर्ण
 
 	reg = rd32(hw, PF_MDET_TX_TCLAN);
-	if (reg & PF_MDET_TX_TCLAN_VALID_M) {
+	अगर (reg & PF_MDET_TX_TCLAN_VALID_M) अणु
 		wr32(hw, PF_MDET_TX_TCLAN, 0xFFFF);
-		if (netif_msg_tx_err(pf))
+		अगर (netअगर_msg_tx_err(pf))
 			dev_info(dev, "Malicious Driver Detection event TX_TCLAN detected on PF\n");
-	}
+	पूर्ण
 
 	reg = rd32(hw, PF_MDET_RX);
-	if (reg & PF_MDET_RX_VALID_M) {
+	अगर (reg & PF_MDET_RX_VALID_M) अणु
 		wr32(hw, PF_MDET_RX, 0xFFFF);
-		if (netif_msg_rx_err(pf))
+		अगर (netअगर_msg_rx_err(pf))
 			dev_info(dev, "Malicious Driver Detection event RX detected on PF\n");
-	}
+	पूर्ण
 
-	/* Check to see if one of the VFs caused an MDD event, and then
-	 * increment counters and set print pending
+	/* Check to see अगर one of the VFs caused an MDD event, and then
+	 * increment counters and set prपूर्णांक pending
 	 */
-	ice_for_each_vf(pf, i) {
-		struct ice_vf *vf = &pf->vf[i];
+	ice_क्रम_each_vf(pf, i) अणु
+		काष्ठा ice_vf *vf = &pf->vf[i];
 
 		reg = rd32(hw, VP_MDET_TX_PQM(i));
-		if (reg & VP_MDET_TX_PQM_VALID_M) {
+		अगर (reg & VP_MDET_TX_PQM_VALID_M) अणु
 			wr32(hw, VP_MDET_TX_PQM(i), 0xFFFF);
 			vf->mdd_tx_events.count++;
 			set_bit(ICE_MDD_VF_PRINT_PENDING, pf->state);
-			if (netif_msg_tx_err(pf))
+			अगर (netअगर_msg_tx_err(pf))
 				dev_info(dev, "Malicious Driver Detection event TX_PQM detected on VF %d\n",
 					 i);
-		}
+		पूर्ण
 
 		reg = rd32(hw, VP_MDET_TX_TCLAN(i));
-		if (reg & VP_MDET_TX_TCLAN_VALID_M) {
+		अगर (reg & VP_MDET_TX_TCLAN_VALID_M) अणु
 			wr32(hw, VP_MDET_TX_TCLAN(i), 0xFFFF);
 			vf->mdd_tx_events.count++;
 			set_bit(ICE_MDD_VF_PRINT_PENDING, pf->state);
-			if (netif_msg_tx_err(pf))
+			अगर (netअगर_msg_tx_err(pf))
 				dev_info(dev, "Malicious Driver Detection event TX_TCLAN detected on VF %d\n",
 					 i);
-		}
+		पूर्ण
 
 		reg = rd32(hw, VP_MDET_TX_TDPU(i));
-		if (reg & VP_MDET_TX_TDPU_VALID_M) {
+		अगर (reg & VP_MDET_TX_TDPU_VALID_M) अणु
 			wr32(hw, VP_MDET_TX_TDPU(i), 0xFFFF);
 			vf->mdd_tx_events.count++;
 			set_bit(ICE_MDD_VF_PRINT_PENDING, pf->state);
-			if (netif_msg_tx_err(pf))
+			अगर (netअगर_msg_tx_err(pf))
 				dev_info(dev, "Malicious Driver Detection event TX_TDPU detected on VF %d\n",
 					 i);
-		}
+		पूर्ण
 
 		reg = rd32(hw, VP_MDET_RX(i));
-		if (reg & VP_MDET_RX_VALID_M) {
+		अगर (reg & VP_MDET_RX_VALID_M) अणु
 			wr32(hw, VP_MDET_RX(i), 0xFFFF);
 			vf->mdd_rx_events.count++;
 			set_bit(ICE_MDD_VF_PRINT_PENDING, pf->state);
-			if (netif_msg_rx_err(pf))
+			अगर (netअगर_msg_rx_err(pf))
 				dev_info(dev, "Malicious Driver Detection event RX detected on VF %d\n",
 					 i);
 
 			/* Since the queue is disabled on VF Rx MDD events, the
 			 * PF can be configured to reset the VF through ethtool
-			 * private flag mdd-auto-reset-vf.
+			 * निजी flag mdd-स्वतः-reset-vf.
 			 */
-			if (test_bit(ICE_FLAG_MDD_AUTO_RESET_VF, pf->flags)) {
+			अगर (test_bit(ICE_FLAG_MDD_AUTO_RESET_VF, pf->flags)) अणु
 				/* VF MDD event counters will be cleared by
-				 * reset, so print the event prior to reset.
+				 * reset, so prपूर्णांक the event prior to reset.
 				 */
-				ice_print_vf_rx_mdd_event(vf);
+				ice_prपूर्णांक_vf_rx_mdd_event(vf);
 				ice_reset_vf(&pf->vf[i], false);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	ice_print_vfs_mdd_events(pf);
-}
+	ice_prपूर्णांक_vfs_mdd_events(pf);
+पूर्ण
 
 /**
- * ice_force_phys_link_state - Force the physical link state
- * @vsi: VSI to force the physical link state to up/down
- * @link_up: true/false indicates to set the physical link to up/down
+ * ice_क्रमce_phys_link_state - Force the physical link state
+ * @vsi: VSI to क्रमce the physical link state to up/करोwn
+ * @link_up: true/false indicates to set the physical link to up/करोwn
  *
  * Force the physical link state by getting the current PHY capabilities from
  * hardware and setting the PHY config based on the determined capabilities. If
@@ -1609,179 +1610,179 @@ static void ice_handle_mdd_event(struct ice_pf *pf)
  *
  * Returns 0 on success, negative on failure
  */
-static int ice_force_phys_link_state(struct ice_vsi *vsi, bool link_up)
-{
-	struct ice_aqc_get_phy_caps_data *pcaps;
-	struct ice_aqc_set_phy_cfg_data *cfg;
-	struct ice_port_info *pi;
-	struct device *dev;
-	int retcode;
+अटल पूर्णांक ice_क्रमce_phys_link_state(काष्ठा ice_vsi *vsi, bool link_up)
+अणु
+	काष्ठा ice_aqc_get_phy_caps_data *pcaps;
+	काष्ठा ice_aqc_set_phy_cfg_data *cfg;
+	काष्ठा ice_port_info *pi;
+	काष्ठा device *dev;
+	पूर्णांक retcode;
 
-	if (!vsi || !vsi->port_info || !vsi->back)
-		return -EINVAL;
-	if (vsi->type != ICE_VSI_PF)
-		return 0;
+	अगर (!vsi || !vsi->port_info || !vsi->back)
+		वापस -EINVAL;
+	अगर (vsi->type != ICE_VSI_PF)
+		वापस 0;
 
 	dev = ice_pf_to_dev(vsi->back);
 
 	pi = vsi->port_info;
 
-	pcaps = kzalloc(sizeof(*pcaps), GFP_KERNEL);
-	if (!pcaps)
-		return -ENOMEM;
+	pcaps = kzalloc(माप(*pcaps), GFP_KERNEL);
+	अगर (!pcaps)
+		वापस -ENOMEM;
 
 	retcode = ice_aq_get_phy_caps(pi, false, ICE_AQC_REPORT_ACTIVE_CFG, pcaps,
-				      NULL);
-	if (retcode) {
+				      शून्य);
+	अगर (retcode) अणु
 		dev_err(dev, "Failed to get phy capabilities, VSI %d error %d\n",
 			vsi->vsi_num, retcode);
 		retcode = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* No change in link */
-	if (link_up == !!(pcaps->caps & ICE_AQC_PHY_EN_LINK) &&
+	अगर (link_up == !!(pcaps->caps & ICE_AQC_PHY_EN_LINK) &&
 	    link_up == !!(pi->phy.link_info.link_info & ICE_AQ_LINK_UP))
-		goto out;
+		जाओ out;
 
 	/* Use the current user PHY configuration. The current user PHY
 	 * configuration is initialized during probe from PHY capabilities
 	 * software mode, and updated on set PHY configuration.
 	 */
-	cfg = kmemdup(&pi->phy.curr_user_phy_cfg, sizeof(*cfg), GFP_KERNEL);
-	if (!cfg) {
+	cfg = kmemdup(&pi->phy.curr_user_phy_cfg, माप(*cfg), GFP_KERNEL);
+	अगर (!cfg) अणु
 		retcode = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	cfg->caps |= ICE_AQ_PHY_ENA_AUTO_LINK_UPDT;
-	if (link_up)
+	अगर (link_up)
 		cfg->caps |= ICE_AQ_PHY_ENA_LINK;
-	else
+	अन्यथा
 		cfg->caps &= ~ICE_AQ_PHY_ENA_LINK;
 
-	retcode = ice_aq_set_phy_cfg(&vsi->back->hw, pi, cfg, NULL);
-	if (retcode) {
+	retcode = ice_aq_set_phy_cfg(&vsi->back->hw, pi, cfg, शून्य);
+	अगर (retcode) अणु
 		dev_err(dev, "Failed to set phy config, VSI %d error %d\n",
 			vsi->vsi_num, retcode);
 		retcode = -EIO;
-	}
+	पूर्ण
 
-	kfree(cfg);
+	kमुक्त(cfg);
 out:
-	kfree(pcaps);
-	return retcode;
-}
+	kमुक्त(pcaps);
+	वापस retcode;
+पूर्ण
 
 /**
  * ice_init_nvm_phy_type - Initialize the NVM PHY type
- * @pi: port info structure
+ * @pi: port info काष्ठाure
  *
- * Initialize nvm_phy_type_[low|high] for link lenient mode support
+ * Initialize nvm_phy_type_[low|high] क्रम link lenient mode support
  */
-static int ice_init_nvm_phy_type(struct ice_port_info *pi)
-{
-	struct ice_aqc_get_phy_caps_data *pcaps;
-	struct ice_pf *pf = pi->hw->back;
-	enum ice_status status;
-	int err = 0;
+अटल पूर्णांक ice_init_nvm_phy_type(काष्ठा ice_port_info *pi)
+अणु
+	काष्ठा ice_aqc_get_phy_caps_data *pcaps;
+	काष्ठा ice_pf *pf = pi->hw->back;
+	क्रमागत ice_status status;
+	पूर्णांक err = 0;
 
-	pcaps = kzalloc(sizeof(*pcaps), GFP_KERNEL);
-	if (!pcaps)
-		return -ENOMEM;
+	pcaps = kzalloc(माप(*pcaps), GFP_KERNEL);
+	अगर (!pcaps)
+		वापस -ENOMEM;
 
 	status = ice_aq_get_phy_caps(pi, false, ICE_AQC_REPORT_TOPO_CAP_NO_MEDIA, pcaps,
-				     NULL);
+				     शून्य);
 
-	if (status) {
+	अगर (status) अणु
 		dev_err(ice_pf_to_dev(pf), "Get PHY capability failed.\n");
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pf->nvm_phy_type_hi = pcaps->phy_type_high;
 	pf->nvm_phy_type_lo = pcaps->phy_type_low;
 
 out:
-	kfree(pcaps);
-	return err;
-}
+	kमुक्त(pcaps);
+	वापस err;
+पूर्ण
 
 /**
- * ice_init_link_dflt_override - Initialize link default override
- * @pi: port info structure
+ * ice_init_link_dflt_override - Initialize link शेष override
+ * @pi: port info काष्ठाure
  *
- * Initialize link default override and PHY total port shutdown during probe
+ * Initialize link शेष override and PHY total port shutकरोwn during probe
  */
-static void ice_init_link_dflt_override(struct ice_port_info *pi)
-{
-	struct ice_link_default_override_tlv *ldo;
-	struct ice_pf *pf = pi->hw->back;
+अटल व्योम ice_init_link_dflt_override(काष्ठा ice_port_info *pi)
+अणु
+	काष्ठा ice_link_शेष_override_tlv *lकरो;
+	काष्ठा ice_pf *pf = pi->hw->back;
 
-	ldo = &pf->link_dflt_override;
-	if (ice_get_link_default_override(ldo, pi))
-		return;
+	lकरो = &pf->link_dflt_override;
+	अगर (ice_get_link_शेष_override(lकरो, pi))
+		वापस;
 
-	if (!(ldo->options & ICE_LINK_OVERRIDE_PORT_DIS))
-		return;
+	अगर (!(lकरो->options & ICE_LINK_OVERRIDE_PORT_DIS))
+		वापस;
 
-	/* Enable Total Port Shutdown (override/replace link-down-on-close
-	 * ethtool private flag) for ports with Port Disable bit set.
+	/* Enable Total Port Shutकरोwn (override/replace link-करोwn-on-बंद
+	 * ethtool निजी flag) क्रम ports with Port Disable bit set.
 	 */
 	set_bit(ICE_FLAG_TOTAL_PORT_SHUTDOWN_ENA, pf->flags);
 	set_bit(ICE_FLAG_LINK_DOWN_ON_CLOSE_ENA, pf->flags);
-}
+पूर्ण
 
 /**
- * ice_init_phy_cfg_dflt_override - Initialize PHY cfg default override settings
- * @pi: port info structure
+ * ice_init_phy_cfg_dflt_override - Initialize PHY cfg शेष override settings
+ * @pi: port info काष्ठाure
  *
- * If default override is enabled, initialize the user PHY cfg speed and FEC
- * settings using the default override mask from the NVM.
+ * If शेष override is enabled, initialize the user PHY cfg speed and FEC
+ * settings using the शेष override mask from the NVM.
  *
- * The PHY should only be configured with the default override settings the
- * first time media is available. The ICE_LINK_DEFAULT_OVERRIDE_PENDING state
- * is used to indicate that the user PHY cfg default override is initialized
- * and the PHY has not been configured with the default override settings. The
- * state is set here, and cleared in ice_configure_phy the first time the PHY is
+ * The PHY should only be configured with the शेष override settings the
+ * first समय media is available. The ICE_LINK_DEFAULT_OVERRIDE_PENDING state
+ * is used to indicate that the user PHY cfg शेष override is initialized
+ * and the PHY has not been configured with the शेष override settings. The
+ * state is set here, and cleared in ice_configure_phy the first समय the PHY is
  * configured.
  *
- * This function should be called only if the FW doesn't support default
+ * This function should be called only अगर the FW करोesn't support शेष
  * configuration mode, as reported by ice_fw_supports_report_dflt_cfg.
  */
-static void ice_init_phy_cfg_dflt_override(struct ice_port_info *pi)
-{
-	struct ice_link_default_override_tlv *ldo;
-	struct ice_aqc_set_phy_cfg_data *cfg;
-	struct ice_phy_info *phy = &pi->phy;
-	struct ice_pf *pf = pi->hw->back;
+अटल व्योम ice_init_phy_cfg_dflt_override(काष्ठा ice_port_info *pi)
+अणु
+	काष्ठा ice_link_शेष_override_tlv *lकरो;
+	काष्ठा ice_aqc_set_phy_cfg_data *cfg;
+	काष्ठा ice_phy_info *phy = &pi->phy;
+	काष्ठा ice_pf *pf = pi->hw->back;
 
-	ldo = &pf->link_dflt_override;
+	lकरो = &pf->link_dflt_override;
 
-	/* If link default override is enabled, use to mask NVM PHY capabilities
-	 * for speed and FEC default configuration.
+	/* If link शेष override is enabled, use to mask NVM PHY capabilities
+	 * क्रम speed and FEC शेष configuration.
 	 */
 	cfg = &phy->curr_user_phy_cfg;
 
-	if (ldo->phy_type_low || ldo->phy_type_high) {
+	अगर (lकरो->phy_type_low || lकरो->phy_type_high) अणु
 		cfg->phy_type_low = pf->nvm_phy_type_lo &
-				    cpu_to_le64(ldo->phy_type_low);
+				    cpu_to_le64(lकरो->phy_type_low);
 		cfg->phy_type_high = pf->nvm_phy_type_hi &
-				     cpu_to_le64(ldo->phy_type_high);
-	}
-	cfg->link_fec_opt = ldo->fec_options;
+				     cpu_to_le64(lकरो->phy_type_high);
+	पूर्ण
+	cfg->link_fec_opt = lकरो->fec_options;
 	phy->curr_user_fec_req = ICE_FEC_AUTO;
 
 	set_bit(ICE_LINK_DEFAULT_OVERRIDE_PENDING, pf->state);
-}
+पूर्ण
 
 /**
  * ice_init_phy_user_cfg - Initialize the PHY user configuration
- * @pi: port info structure
+ * @pi: port info काष्ठाure
  *
  * Initialize the current user PHY configuration, speed, FEC, and FC requested
- * mode to default. The PHY defaults are from get PHY capabilities topology
- * with media so call when media is first available. An error is returned if
+ * mode to शेष. The PHY शेषs are from get PHY capabilities topology
+ * with media so call when media is first available. An error is वापसed अगर
  * called when media is not available. The PHY initialization completed state is
  * set here.
  *
@@ -1789,54 +1790,54 @@ static void ice_init_phy_cfg_dflt_override(struct ice_port_info *pi)
  * configuration. The user PHY configuration is updated on set PHY
  * configuration. Returns 0 on success, negative on failure
  */
-static int ice_init_phy_user_cfg(struct ice_port_info *pi)
-{
-	struct ice_aqc_get_phy_caps_data *pcaps;
-	struct ice_phy_info *phy = &pi->phy;
-	struct ice_pf *pf = pi->hw->back;
-	enum ice_status status;
-	int err = 0;
+अटल पूर्णांक ice_init_phy_user_cfg(काष्ठा ice_port_info *pi)
+अणु
+	काष्ठा ice_aqc_get_phy_caps_data *pcaps;
+	काष्ठा ice_phy_info *phy = &pi->phy;
+	काष्ठा ice_pf *pf = pi->hw->back;
+	क्रमागत ice_status status;
+	पूर्णांक err = 0;
 
-	if (!(phy->link_info.link_info & ICE_AQ_MEDIA_AVAILABLE))
-		return -EIO;
+	अगर (!(phy->link_info.link_info & ICE_AQ_MEDIA_AVAILABLE))
+		वापस -EIO;
 
-	pcaps = kzalloc(sizeof(*pcaps), GFP_KERNEL);
-	if (!pcaps)
-		return -ENOMEM;
+	pcaps = kzalloc(माप(*pcaps), GFP_KERNEL);
+	अगर (!pcaps)
+		वापस -ENOMEM;
 
-	if (ice_fw_supports_report_dflt_cfg(pi->hw))
+	अगर (ice_fw_supports_report_dflt_cfg(pi->hw))
 		status = ice_aq_get_phy_caps(pi, false, ICE_AQC_REPORT_DFLT_CFG,
-					     pcaps, NULL);
-	else
+					     pcaps, शून्य);
+	अन्यथा
 		status = ice_aq_get_phy_caps(pi, false, ICE_AQC_REPORT_TOPO_CAP_MEDIA,
-					     pcaps, NULL);
-	if (status) {
+					     pcaps, शून्य);
+	अगर (status) अणु
 		dev_err(ice_pf_to_dev(pf), "Get PHY capability failed.\n");
 		err = -EIO;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	ice_copy_phy_caps_to_cfg(pi, pcaps, &pi->phy.curr_user_phy_cfg);
 
-	/* check if lenient mode is supported and enabled */
-	if (ice_fw_supports_link_override(pi->hw) &&
-	    !(pcaps->module_compliance_enforcement &
-	      ICE_AQC_MOD_ENFORCE_STRICT_MODE)) {
+	/* check अगर lenient mode is supported and enabled */
+	अगर (ice_fw_supports_link_override(pi->hw) &&
+	    !(pcaps->module_compliance_enक्रमcement &
+	      ICE_AQC_MOD_ENFORCE_STRICT_MODE)) अणु
 		set_bit(ICE_FLAG_LINK_LENIENT_MODE_ENA, pf->flags);
 
-		/* if the FW supports default PHY configuration mode, then the driver
-		 * does not have to apply link override settings. If not,
+		/* अगर the FW supports शेष PHY configuration mode, then the driver
+		 * करोes not have to apply link override settings. If not,
 		 * initialize user PHY configuration with link override values
 		 */
-		if (!ice_fw_supports_report_dflt_cfg(pi->hw) &&
-		    (pf->link_dflt_override.options & ICE_LINK_OVERRIDE_EN)) {
+		अगर (!ice_fw_supports_report_dflt_cfg(pi->hw) &&
+		    (pf->link_dflt_override.options & ICE_LINK_OVERRIDE_EN)) अणु
 			ice_init_phy_cfg_dflt_override(pi);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* if link default override is not enabled, set user flow control and
-	 * FEC settings based on what get_phy_caps returned
+	/* अगर link शेष override is not enabled, set user flow control and
+	 * FEC settings based on what get_phy_caps वापसed
 	 */
 	phy->curr_user_fec_req = ice_caps_to_fec_mode(pcaps->caps,
 						      pcaps->link_fec_options);
@@ -1846,93 +1847,93 @@ out:
 	phy->curr_user_speed_req = ICE_AQ_LINK_SPEED_M;
 	set_bit(ICE_PHY_INIT_COMPLETE, pf->state);
 err_out:
-	kfree(pcaps);
-	return err;
-}
+	kमुक्त(pcaps);
+	वापस err;
+पूर्ण
 
 /**
  * ice_configure_phy - configure PHY
  * @vsi: VSI of PHY
  *
  * Set the PHY configuration. If the current PHY configuration is the same as
- * the curr_user_phy_cfg, then do nothing to avoid link flap. Otherwise
- * configure the based get PHY capabilities for topology with media.
+ * the curr_user_phy_cfg, then करो nothing to aव्योम link flap. Otherwise
+ * configure the based get PHY capabilities क्रम topology with media.
  */
-static int ice_configure_phy(struct ice_vsi *vsi)
-{
-	struct device *dev = ice_pf_to_dev(vsi->back);
-	struct ice_port_info *pi = vsi->port_info;
-	struct ice_aqc_get_phy_caps_data *pcaps;
-	struct ice_aqc_set_phy_cfg_data *cfg;
-	struct ice_phy_info *phy = &pi->phy;
-	struct ice_pf *pf = vsi->back;
-	enum ice_status status;
-	int err = 0;
+अटल पूर्णांक ice_configure_phy(काष्ठा ice_vsi *vsi)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(vsi->back);
+	काष्ठा ice_port_info *pi = vsi->port_info;
+	काष्ठा ice_aqc_get_phy_caps_data *pcaps;
+	काष्ठा ice_aqc_set_phy_cfg_data *cfg;
+	काष्ठा ice_phy_info *phy = &pi->phy;
+	काष्ठा ice_pf *pf = vsi->back;
+	क्रमागत ice_status status;
+	पूर्णांक err = 0;
 
 	/* Ensure we have media as we cannot configure a medialess port */
-	if (!(phy->link_info.link_info & ICE_AQ_MEDIA_AVAILABLE))
-		return -EPERM;
+	अगर (!(phy->link_info.link_info & ICE_AQ_MEDIA_AVAILABLE))
+		वापस -EPERM;
 
-	ice_print_topo_conflict(vsi);
+	ice_prपूर्णांक_topo_conflict(vsi);
 
-	if (phy->link_info.topo_media_conflict == ICE_AQ_LINK_TOPO_UNSUPP_MEDIA)
-		return -EPERM;
+	अगर (phy->link_info.topo_media_conflict == ICE_AQ_LINK_TOPO_UNSUPP_MEDIA)
+		वापस -EPERM;
 
-	if (test_bit(ICE_FLAG_LINK_DOWN_ON_CLOSE_ENA, pf->flags))
-		return ice_force_phys_link_state(vsi, true);
+	अगर (test_bit(ICE_FLAG_LINK_DOWN_ON_CLOSE_ENA, pf->flags))
+		वापस ice_क्रमce_phys_link_state(vsi, true);
 
-	pcaps = kzalloc(sizeof(*pcaps), GFP_KERNEL);
-	if (!pcaps)
-		return -ENOMEM;
+	pcaps = kzalloc(माप(*pcaps), GFP_KERNEL);
+	अगर (!pcaps)
+		वापस -ENOMEM;
 
 	/* Get current PHY config */
 	status = ice_aq_get_phy_caps(pi, false, ICE_AQC_REPORT_ACTIVE_CFG, pcaps,
-				     NULL);
-	if (status) {
+				     शून्य);
+	अगर (status) अणु
 		dev_err(dev, "Failed to get PHY configuration, VSI %d error %s\n",
 			vsi->vsi_num, ice_stat_str(status));
 		err = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* If PHY enable link is configured and configuration has not changed,
-	 * there's nothing to do
+	 * there's nothing to करो
 	 */
-	if (pcaps->caps & ICE_AQC_PHY_EN_LINK &&
+	अगर (pcaps->caps & ICE_AQC_PHY_EN_LINK &&
 	    ice_phy_caps_equals_cfg(pcaps, &phy->curr_user_phy_cfg))
-		goto done;
+		जाओ करोne;
 
-	/* Use PHY topology as baseline for configuration */
-	memset(pcaps, 0, sizeof(*pcaps));
-	if (ice_fw_supports_report_dflt_cfg(pi->hw))
+	/* Use PHY topology as baseline क्रम configuration */
+	स_रखो(pcaps, 0, माप(*pcaps));
+	अगर (ice_fw_supports_report_dflt_cfg(pi->hw))
 		status = ice_aq_get_phy_caps(pi, false, ICE_AQC_REPORT_DFLT_CFG,
-					     pcaps, NULL);
-	else
+					     pcaps, शून्य);
+	अन्यथा
 		status = ice_aq_get_phy_caps(pi, false, ICE_AQC_REPORT_TOPO_CAP_MEDIA,
-					     pcaps, NULL);
-	if (status) {
+					     pcaps, शून्य);
+	अगर (status) अणु
 		dev_err(dev, "Failed to get PHY caps, VSI %d error %s\n",
 			vsi->vsi_num, ice_stat_str(status));
 		err = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	cfg = kzalloc(sizeof(*cfg), GFP_KERNEL);
-	if (!cfg) {
+	cfg = kzalloc(माप(*cfg), GFP_KERNEL);
+	अगर (!cfg) अणु
 		err = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	ice_copy_phy_caps_to_cfg(pi, pcaps, cfg);
 
-	/* Speed - If default override pending, use curr_user_phy_cfg set in
-	 * ice_init_phy_user_cfg_ldo.
+	/* Speed - If शेष override pending, use curr_user_phy_cfg set in
+	 * ice_init_phy_user_cfg_lकरो.
 	 */
-	if (test_and_clear_bit(ICE_LINK_DEFAULT_OVERRIDE_PENDING,
-			       vsi->back->state)) {
+	अगर (test_and_clear_bit(ICE_LINK_DEFAULT_OVERRIDE_PENDING,
+			       vsi->back->state)) अणु
 		cfg->phy_type_low = phy->curr_user_phy_cfg.phy_type_low;
 		cfg->phy_type_high = phy->curr_user_phy_cfg.phy_type_high;
-	} else {
+	पूर्ण अन्यथा अणु
 		u64 phy_low = 0, phy_high = 0;
 
 		ice_update_phy_type(&phy_low, &phy_high,
@@ -1940,23 +1941,23 @@ static int ice_configure_phy(struct ice_vsi *vsi)
 		cfg->phy_type_low = pcaps->phy_type_low & cpu_to_le64(phy_low);
 		cfg->phy_type_high = pcaps->phy_type_high &
 				     cpu_to_le64(phy_high);
-	}
+	पूर्ण
 
 	/* Can't provide what was requested; use PHY capabilities */
-	if (!cfg->phy_type_low && !cfg->phy_type_high) {
+	अगर (!cfg->phy_type_low && !cfg->phy_type_high) अणु
 		cfg->phy_type_low = pcaps->phy_type_low;
 		cfg->phy_type_high = pcaps->phy_type_high;
-	}
+	पूर्ण
 
 	/* FEC */
 	ice_cfg_phy_fec(pi, cfg, phy->curr_user_fec_req);
 
 	/* Can't provide what was requested; use PHY capabilities */
-	if (cfg->link_fec_opt !=
-	    (cfg->link_fec_opt & pcaps->link_fec_options)) {
+	अगर (cfg->link_fec_opt !=
+	    (cfg->link_fec_opt & pcaps->link_fec_options)) अणु
 		cfg->caps |= pcaps->caps & ICE_AQC_PHY_EN_AUTO_FEC;
 		cfg->link_fec_opt = pcaps->link_fec_options;
-	}
+	पूर्ण
 
 	/* Flow Control - always supported; no need to check against
 	 * capabilities
@@ -1966,100 +1967,100 @@ static int ice_configure_phy(struct ice_vsi *vsi)
 	/* Enable link and link update */
 	cfg->caps |= ICE_AQ_PHY_ENA_AUTO_LINK_UPDT | ICE_AQ_PHY_ENA_LINK;
 
-	status = ice_aq_set_phy_cfg(&pf->hw, pi, cfg, NULL);
-	if (status) {
+	status = ice_aq_set_phy_cfg(&pf->hw, pi, cfg, शून्य);
+	अगर (status) अणु
 		dev_err(dev, "Failed to set phy config, VSI %d error %s\n",
 			vsi->vsi_num, ice_stat_str(status));
 		err = -EIO;
-	}
+	पूर्ण
 
-	kfree(cfg);
-done:
-	kfree(pcaps);
-	return err;
-}
+	kमुक्त(cfg);
+करोne:
+	kमुक्त(pcaps);
+	वापस err;
+पूर्ण
 
 /**
- * ice_check_media_subtask - Check for media
- * @pf: pointer to PF struct
+ * ice_check_media_subtask - Check क्रम media
+ * @pf: poपूर्णांकer to PF काष्ठा
  *
- * If media is available, then initialize PHY user configuration if it is not
- * been, and configure the PHY if the interface is up.
+ * If media is available, then initialize PHY user configuration अगर it is not
+ * been, and configure the PHY अगर the पूर्णांकerface is up.
  */
-static void ice_check_media_subtask(struct ice_pf *pf)
-{
-	struct ice_port_info *pi;
-	struct ice_vsi *vsi;
-	int err;
+अटल व्योम ice_check_media_subtask(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_port_info *pi;
+	काष्ठा ice_vsi *vsi;
+	पूर्णांक err;
 
-	/* No need to check for media if it's already present */
-	if (!test_bit(ICE_FLAG_NO_MEDIA, pf->flags))
-		return;
+	/* No need to check क्रम media अगर it's alपढ़ोy present */
+	अगर (!test_bit(ICE_FLAG_NO_MEDIA, pf->flags))
+		वापस;
 
-	vsi = ice_get_main_vsi(pf);
-	if (!vsi)
-		return;
+	vsi = ice_get_मुख्य_vsi(pf);
+	अगर (!vsi)
+		वापस;
 
-	/* Refresh link info and check if media is present */
+	/* Refresh link info and check अगर media is present */
 	pi = vsi->port_info;
 	err = ice_update_link_info(pi);
-	if (err)
-		return;
+	अगर (err)
+		वापस;
 
-	if (pi->phy.link_info.link_info & ICE_AQ_MEDIA_AVAILABLE) {
-		if (!test_bit(ICE_PHY_INIT_COMPLETE, pf->state))
+	अगर (pi->phy.link_info.link_info & ICE_AQ_MEDIA_AVAILABLE) अणु
+		अगर (!test_bit(ICE_PHY_INIT_COMPLETE, pf->state))
 			ice_init_phy_user_cfg(pi);
 
 		/* PHY settings are reset on media insertion, reconfigure
 		 * PHY to preserve settings.
 		 */
-		if (test_bit(ICE_VSI_DOWN, vsi->state) &&
+		अगर (test_bit(ICE_VSI_DOWN, vsi->state) &&
 		    test_bit(ICE_FLAG_LINK_DOWN_ON_CLOSE_ENA, vsi->back->flags))
-			return;
+			वापस;
 
 		err = ice_configure_phy(vsi);
-		if (!err)
+		अगर (!err)
 			clear_bit(ICE_FLAG_NO_MEDIA, pf->flags);
 
 		/* A Link Status Event will be generated; the event handler
-		 * will complete bringing the interface up
+		 * will complete bringing the पूर्णांकerface up
 		 */
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ice_service_task - manage and run subtasks
- * @work: pointer to work_struct contained by the PF struct
+ * @work: poपूर्णांकer to work_काष्ठा contained by the PF काष्ठा
  */
-static void ice_service_task(struct work_struct *work)
-{
-	struct ice_pf *pf = container_of(work, struct ice_pf, serv_task);
-	unsigned long start_time = jiffies;
+अटल व्योम ice_service_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ice_pf *pf = container_of(work, काष्ठा ice_pf, serv_task);
+	अचिन्हित दीर्घ start_समय = jअगरfies;
 
 	/* subtasks */
 
 	/* process reset requests first */
 	ice_reset_subtask(pf);
 
-	/* bail if a reset/recovery cycle is pending or rebuild failed */
-	if (ice_is_reset_in_progress(pf->state) ||
+	/* bail अगर a reset/recovery cycle is pending or rebuild failed */
+	अगर (ice_is_reset_in_progress(pf->state) ||
 	    test_bit(ICE_SUSPENDED, pf->state) ||
-	    test_bit(ICE_NEEDS_RESTART, pf->state)) {
+	    test_bit(ICE_NEEDS_RESTART, pf->state)) अणु
 		ice_service_task_complete(pf);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ice_clean_adminq_subtask(pf);
 	ice_check_media_subtask(pf);
-	ice_check_for_hang_subtask(pf);
+	ice_check_क्रम_hang_subtask(pf);
 	ice_sync_fltr_subtask(pf);
 	ice_handle_mdd_event(pf);
-	ice_watchdog_subtask(pf);
+	ice_watchकरोg_subtask(pf);
 
-	if (ice_is_safe_mode(pf)) {
+	अगर (ice_is_safe_mode(pf)) अणु
 		ice_service_task_complete(pf);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ice_process_vflr_event(pf);
 	ice_clean_mailboxq_subtask(pf);
@@ -2069,25 +2070,25 @@ static void ice_service_task(struct work_struct *work)
 	/* Clear ICE_SERVICE_SCHED flag to allow scheduling next event */
 	ice_service_task_complete(pf);
 
-	/* If the tasks have taken longer than one service timer period
-	 * or there is more work to be done, reset the service timer to
+	/* If the tasks have taken दीर्घer than one service समयr period
+	 * or there is more work to be करोne, reset the service समयr to
 	 * schedule the service task now.
 	 */
-	if (time_after(jiffies, (start_time + pf->serv_tmr_period)) ||
+	अगर (समय_after(jअगरfies, (start_समय + pf->serv_पंचांगr_period)) ||
 	    test_bit(ICE_MDD_EVENT_PENDING, pf->state) ||
 	    test_bit(ICE_VFLR_EVENT_PENDING, pf->state) ||
 	    test_bit(ICE_MAILBOXQ_EVENT_PENDING, pf->state) ||
 	    test_bit(ICE_FD_VF_FLUSH_CTX, pf->state) ||
 	    test_bit(ICE_ADMINQ_EVENT_PENDING, pf->state))
-		mod_timer(&pf->serv_tmr, jiffies);
-}
+		mod_समयr(&pf->serv_पंचांगr, jअगरfies);
+पूर्ण
 
 /**
  * ice_set_ctrlq_len - helper function to set controlq length
- * @hw: pointer to the HW instance
+ * @hw: poपूर्णांकer to the HW instance
  */
-static void ice_set_ctrlq_len(struct ice_hw *hw)
-{
+अटल व्योम ice_set_ctrlq_len(काष्ठा ice_hw *hw)
+अणु
 	hw->adminq.num_rq_entries = ICE_AQ_LEN;
 	hw->adminq.num_sq_entries = ICE_AQ_LEN;
 	hw->adminq.rq_buf_size = ICE_AQ_MAX_BUF_LEN;
@@ -2096,242 +2097,242 @@ static void ice_set_ctrlq_len(struct ice_hw *hw)
 	hw->mailboxq.num_sq_entries = ICE_MBXSQ_LEN;
 	hw->mailboxq.rq_buf_size = ICE_MBXQ_MAX_BUF_LEN;
 	hw->mailboxq.sq_buf_size = ICE_MBXQ_MAX_BUF_LEN;
-}
+पूर्ण
 
 /**
  * ice_schedule_reset - schedule a reset
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  * @reset: reset being requested
  */
-int ice_schedule_reset(struct ice_pf *pf, enum ice_reset_req reset)
-{
-	struct device *dev = ice_pf_to_dev(pf);
+पूर्णांक ice_schedule_reset(काष्ठा ice_pf *pf, क्रमागत ice_reset_req reset)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
 
-	/* bail out if earlier reset has failed */
-	if (test_bit(ICE_RESET_FAILED, pf->state)) {
+	/* bail out अगर earlier reset has failed */
+	अगर (test_bit(ICE_RESET_FAILED, pf->state)) अणु
 		dev_dbg(dev, "earlier reset has failed\n");
-		return -EIO;
-	}
-	/* bail if reset/recovery already in progress */
-	if (ice_is_reset_in_progress(pf->state)) {
+		वापस -EIO;
+	पूर्ण
+	/* bail अगर reset/recovery alपढ़ोy in progress */
+	अगर (ice_is_reset_in_progress(pf->state)) अणु
 		dev_dbg(dev, "Reset already in progress\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	switch (reset) {
-	case ICE_RESET_PFR:
+	चयन (reset) अणु
+	हाल ICE_RESET_PFR:
 		set_bit(ICE_PFR_REQ, pf->state);
-		break;
-	case ICE_RESET_CORER:
+		अवरोध;
+	हाल ICE_RESET_CORER:
 		set_bit(ICE_CORER_REQ, pf->state);
-		break;
-	case ICE_RESET_GLOBR:
+		अवरोध;
+	हाल ICE_RESET_GLOBR:
 		set_bit(ICE_GLOBR_REQ, pf->state);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	ice_service_task_schedule(pf);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_irq_affinity_notify - Callback for affinity changes
- * @notify: context as to what irq was changed
+ * ice_irq_affinity_notअगरy - Callback क्रम affinity changes
+ * @notअगरy: context as to what irq was changed
  * @mask: the new affinity mask
  *
- * This is a callback function used by the irq_set_affinity_notifier function
- * so that we may register to receive changes to the irq affinity masks.
+ * This is a callback function used by the irq_set_affinity_notअगरier function
+ * so that we may रेजिस्टर to receive changes to the irq affinity masks.
  */
-static void
-ice_irq_affinity_notify(struct irq_affinity_notify *notify,
-			const cpumask_t *mask)
-{
-	struct ice_q_vector *q_vector =
-		container_of(notify, struct ice_q_vector, affinity_notify);
+अटल व्योम
+ice_irq_affinity_notअगरy(काष्ठा irq_affinity_notअगरy *notअगरy,
+			स्थिर cpumask_t *mask)
+अणु
+	काष्ठा ice_q_vector *q_vector =
+		container_of(notअगरy, काष्ठा ice_q_vector, affinity_notअगरy);
 
 	cpumask_copy(&q_vector->affinity_mask, mask);
-}
+पूर्ण
 
 /**
- * ice_irq_affinity_release - Callback for affinity notifier release
- * @ref: internal core kernel usage
+ * ice_irq_affinity_release - Callback क्रम affinity notअगरier release
+ * @ref: पूर्णांकernal core kernel usage
  *
- * This is a callback function used by the irq_set_affinity_notifier function
- * to inform the current notification subscriber that they will no longer
- * receive notifications.
+ * This is a callback function used by the irq_set_affinity_notअगरier function
+ * to inक्रमm the current notअगरication subscriber that they will no दीर्घer
+ * receive notअगरications.
  */
-static void ice_irq_affinity_release(struct kref __always_unused *ref) {}
+अटल व्योम ice_irq_affinity_release(काष्ठा kref __always_unused *ref) अणुपूर्ण
 
 /**
- * ice_vsi_ena_irq - Enable IRQ for the given VSI
+ * ice_vsi_ena_irq - Enable IRQ क्रम the given VSI
  * @vsi: the VSI being configured
  */
-static int ice_vsi_ena_irq(struct ice_vsi *vsi)
-{
-	struct ice_hw *hw = &vsi->back->hw;
-	int i;
+अटल पूर्णांक ice_vsi_ena_irq(काष्ठा ice_vsi *vsi)
+अणु
+	काष्ठा ice_hw *hw = &vsi->back->hw;
+	पूर्णांक i;
 
-	ice_for_each_q_vector(vsi, i)
+	ice_क्रम_each_q_vector(vsi, i)
 		ice_irq_dynamic_ena(hw, vsi, vsi->q_vectors[i]);
 
 	ice_flush(hw);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_vsi_req_irq_msix - get MSI-X vectors from the OS for the VSI
+ * ice_vsi_req_irq_msix - get MSI-X vectors from the OS क्रम the VSI
  * @vsi: the VSI being configured
- * @basename: name for the vector
+ * @basename: name क्रम the vector
  */
-static int ice_vsi_req_irq_msix(struct ice_vsi *vsi, char *basename)
-{
-	int q_vectors = vsi->num_q_vectors;
-	struct ice_pf *pf = vsi->back;
-	int base = vsi->base_vector;
-	struct device *dev;
-	int rx_int_idx = 0;
-	int tx_int_idx = 0;
-	int vector, err;
-	int irq_num;
+अटल पूर्णांक ice_vsi_req_irq_msix(काष्ठा ice_vsi *vsi, अक्षर *basename)
+अणु
+	पूर्णांक q_vectors = vsi->num_q_vectors;
+	काष्ठा ice_pf *pf = vsi->back;
+	पूर्णांक base = vsi->base_vector;
+	काष्ठा device *dev;
+	पूर्णांक rx_पूर्णांक_idx = 0;
+	पूर्णांक tx_पूर्णांक_idx = 0;
+	पूर्णांक vector, err;
+	पूर्णांक irq_num;
 
 	dev = ice_pf_to_dev(pf);
-	for (vector = 0; vector < q_vectors; vector++) {
-		struct ice_q_vector *q_vector = vsi->q_vectors[vector];
+	क्रम (vector = 0; vector < q_vectors; vector++) अणु
+		काष्ठा ice_q_vector *q_vector = vsi->q_vectors[vector];
 
 		irq_num = pf->msix_entries[base + vector].vector;
 
-		if (q_vector->tx.ring && q_vector->rx.ring) {
-			snprintf(q_vector->name, sizeof(q_vector->name) - 1,
-				 "%s-%s-%d", basename, "TxRx", rx_int_idx++);
-			tx_int_idx++;
-		} else if (q_vector->rx.ring) {
-			snprintf(q_vector->name, sizeof(q_vector->name) - 1,
-				 "%s-%s-%d", basename, "rx", rx_int_idx++);
-		} else if (q_vector->tx.ring) {
-			snprintf(q_vector->name, sizeof(q_vector->name) - 1,
-				 "%s-%s-%d", basename, "tx", tx_int_idx++);
-		} else {
+		अगर (q_vector->tx.ring && q_vector->rx.ring) अणु
+			snम_लिखो(q_vector->name, माप(q_vector->name) - 1,
+				 "%s-%s-%d", basename, "TxRx", rx_पूर्णांक_idx++);
+			tx_पूर्णांक_idx++;
+		पूर्ण अन्यथा अगर (q_vector->rx.ring) अणु
+			snम_लिखो(q_vector->name, माप(q_vector->name) - 1,
+				 "%s-%s-%d", basename, "rx", rx_पूर्णांक_idx++);
+		पूर्ण अन्यथा अगर (q_vector->tx.ring) अणु
+			snम_लिखो(q_vector->name, माप(q_vector->name) - 1,
+				 "%s-%s-%d", basename, "tx", tx_पूर्णांक_idx++);
+		पूर्ण अन्यथा अणु
 			/* skip this unused q_vector */
-			continue;
-		}
-		if (vsi->type == ICE_VSI_CTRL && vsi->vf_id != ICE_INVAL_VFID)
+			जारी;
+		पूर्ण
+		अगर (vsi->type == ICE_VSI_CTRL && vsi->vf_id != ICE_INVAL_VFID)
 			err = devm_request_irq(dev, irq_num, vsi->irq_handler,
 					       IRQF_SHARED, q_vector->name,
 					       q_vector);
-		else
+		अन्यथा
 			err = devm_request_irq(dev, irq_num, vsi->irq_handler,
 					       0, q_vector->name, q_vector);
-		if (err) {
+		अगर (err) अणु
 			netdev_err(vsi->netdev, "MSIX request_irq failed, error: %d\n",
 				   err);
-			goto free_q_irqs;
-		}
+			जाओ मुक्त_q_irqs;
+		पूर्ण
 
-		/* register for affinity change notifications */
-		if (!IS_ENABLED(CONFIG_RFS_ACCEL)) {
-			struct irq_affinity_notify *affinity_notify;
+		/* रेजिस्टर क्रम affinity change notअगरications */
+		अगर (!IS_ENABLED(CONFIG_RFS_ACCEL)) अणु
+			काष्ठा irq_affinity_notअगरy *affinity_notअगरy;
 
-			affinity_notify = &q_vector->affinity_notify;
-			affinity_notify->notify = ice_irq_affinity_notify;
-			affinity_notify->release = ice_irq_affinity_release;
-			irq_set_affinity_notifier(irq_num, affinity_notify);
-		}
+			affinity_notअगरy = &q_vector->affinity_notअगरy;
+			affinity_notअगरy->notअगरy = ice_irq_affinity_notअगरy;
+			affinity_notअगरy->release = ice_irq_affinity_release;
+			irq_set_affinity_notअगरier(irq_num, affinity_notअगरy);
+		पूर्ण
 
-		/* assign the mask for this irq */
-		irq_set_affinity_hint(irq_num, &q_vector->affinity_mask);
-	}
+		/* assign the mask क्रम this irq */
+		irq_set_affinity_hपूर्णांक(irq_num, &q_vector->affinity_mask);
+	पूर्ण
 
-	vsi->irqs_ready = true;
-	return 0;
+	vsi->irqs_पढ़ोy = true;
+	वापस 0;
 
-free_q_irqs:
-	while (vector) {
+मुक्त_q_irqs:
+	जबतक (vector) अणु
 		vector--;
 		irq_num = pf->msix_entries[base + vector].vector;
-		if (!IS_ENABLED(CONFIG_RFS_ACCEL))
-			irq_set_affinity_notifier(irq_num, NULL);
-		irq_set_affinity_hint(irq_num, NULL);
-		devm_free_irq(dev, irq_num, &vsi->q_vectors[vector]);
-	}
-	return err;
-}
+		अगर (!IS_ENABLED(CONFIG_RFS_ACCEL))
+			irq_set_affinity_notअगरier(irq_num, शून्य);
+		irq_set_affinity_hपूर्णांक(irq_num, शून्य);
+		devm_मुक्त_irq(dev, irq_num, &vsi->q_vectors[vector]);
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /**
- * ice_xdp_alloc_setup_rings - Allocate and setup Tx rings for XDP
+ * ice_xdp_alloc_setup_rings - Allocate and setup Tx rings क्रम XDP
  * @vsi: VSI to setup Tx rings used by XDP
  *
  * Return 0 on success and negative value on error
  */
-static int ice_xdp_alloc_setup_rings(struct ice_vsi *vsi)
-{
-	struct device *dev = ice_pf_to_dev(vsi->back);
-	int i;
+अटल पूर्णांक ice_xdp_alloc_setup_rings(काष्ठा ice_vsi *vsi)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(vsi->back);
+	पूर्णांक i;
 
-	for (i = 0; i < vsi->num_xdp_txq; i++) {
+	क्रम (i = 0; i < vsi->num_xdp_txq; i++) अणु
 		u16 xdp_q_idx = vsi->alloc_txq + i;
-		struct ice_ring *xdp_ring;
+		काष्ठा ice_ring *xdp_ring;
 
-		xdp_ring = kzalloc(sizeof(*xdp_ring), GFP_KERNEL);
+		xdp_ring = kzalloc(माप(*xdp_ring), GFP_KERNEL);
 
-		if (!xdp_ring)
-			goto free_xdp_rings;
+		अगर (!xdp_ring)
+			जाओ मुक्त_xdp_rings;
 
 		xdp_ring->q_index = xdp_q_idx;
 		xdp_ring->reg_idx = vsi->txq_map[xdp_q_idx];
 		xdp_ring->ring_active = false;
 		xdp_ring->vsi = vsi;
-		xdp_ring->netdev = NULL;
+		xdp_ring->netdev = शून्य;
 		xdp_ring->dev = dev;
 		xdp_ring->count = vsi->num_tx_desc;
 		WRITE_ONCE(vsi->xdp_rings[i], xdp_ring);
-		if (ice_setup_tx_ring(xdp_ring))
-			goto free_xdp_rings;
+		अगर (ice_setup_tx_ring(xdp_ring))
+			जाओ मुक्त_xdp_rings;
 		ice_set_ring_xdp(xdp_ring);
 		xdp_ring->xsk_pool = ice_xsk_pool(xdp_ring);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_xdp_rings:
-	for (; i >= 0; i--)
-		if (vsi->xdp_rings[i] && vsi->xdp_rings[i]->desc)
-			ice_free_tx_ring(vsi->xdp_rings[i]);
-	return -ENOMEM;
-}
+मुक्त_xdp_rings:
+	क्रम (; i >= 0; i--)
+		अगर (vsi->xdp_rings[i] && vsi->xdp_rings[i]->desc)
+			ice_मुक्त_tx_ring(vsi->xdp_rings[i]);
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * ice_vsi_assign_bpf_prog - set or clear bpf prog pointer on VSI
+ * ice_vsi_assign_bpf_prog - set or clear bpf prog poपूर्णांकer on VSI
  * @vsi: VSI to set the bpf prog on
- * @prog: the bpf prog pointer
+ * @prog: the bpf prog poपूर्णांकer
  */
-static void ice_vsi_assign_bpf_prog(struct ice_vsi *vsi, struct bpf_prog *prog)
-{
-	struct bpf_prog *old_prog;
-	int i;
+अटल व्योम ice_vsi_assign_bpf_prog(काष्ठा ice_vsi *vsi, काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा bpf_prog *old_prog;
+	पूर्णांक i;
 
 	old_prog = xchg(&vsi->xdp_prog, prog);
-	if (old_prog)
+	अगर (old_prog)
 		bpf_prog_put(old_prog);
 
-	ice_for_each_rxq(vsi, i)
+	ice_क्रम_each_rxq(vsi, i)
 		WRITE_ONCE(vsi->rx_rings[i]->xdp_prog, vsi->xdp_prog);
-}
+पूर्ण
 
 /**
- * ice_prepare_xdp_rings - Allocate, configure and setup Tx rings for XDP
+ * ice_prepare_xdp_rings - Allocate, configure and setup Tx rings क्रम XDP
  * @vsi: VSI to bring up Tx rings used by XDP
- * @prog: bpf program that will be assigned to VSI
+ * @prog: bpf program that will be asचिन्हित to VSI
  *
  * Return 0 on success and negative value on error
  */
-int ice_prepare_xdp_rings(struct ice_vsi *vsi, struct bpf_prog *prog)
-{
-	u16 max_txqs[ICE_MAX_TRAFFIC_CLASS] = { 0 };
-	int xdp_rings_rem = vsi->num_xdp_txq;
-	struct ice_pf *pf = vsi->back;
-	struct ice_qs_cfg xdp_qs_cfg = {
+पूर्णांक ice_prepare_xdp_rings(काष्ठा ice_vsi *vsi, काष्ठा bpf_prog *prog)
+अणु
+	u16 max_txqs[ICE_MAX_TRAFFIC_CLASS] = अणु 0 पूर्ण;
+	पूर्णांक xdp_rings_rem = vsi->num_xdp_txq;
+	काष्ठा ice_pf *pf = vsi->back;
+	काष्ठा ice_qs_cfg xdp_qs_cfg = अणु
 		.qs_mutex = &pf->avail_q_mutex,
 		.pf_map = pf->avail_txqs,
 		.pf_map_size = pf->max_pf_txqs,
@@ -2340,272 +2341,272 @@ int ice_prepare_xdp_rings(struct ice_vsi *vsi, struct bpf_prog *prog)
 		.vsi_map = vsi->txq_map,
 		.vsi_map_offset = vsi->alloc_txq,
 		.mapping_mode = ICE_VSI_MAP_CONTIG
-	};
-	enum ice_status status;
-	struct device *dev;
-	int i, v_idx;
+	पूर्ण;
+	क्रमागत ice_status status;
+	काष्ठा device *dev;
+	पूर्णांक i, v_idx;
 
 	dev = ice_pf_to_dev(pf);
-	vsi->xdp_rings = devm_kcalloc(dev, vsi->num_xdp_txq,
-				      sizeof(*vsi->xdp_rings), GFP_KERNEL);
-	if (!vsi->xdp_rings)
-		return -ENOMEM;
+	vsi->xdp_rings = devm_kसुस्मृति(dev, vsi->num_xdp_txq,
+				      माप(*vsi->xdp_rings), GFP_KERNEL);
+	अगर (!vsi->xdp_rings)
+		वापस -ENOMEM;
 
 	vsi->xdp_mapping_mode = xdp_qs_cfg.mapping_mode;
-	if (__ice_vsi_get_qs(&xdp_qs_cfg))
-		goto err_map_xdp;
+	अगर (__ice_vsi_get_qs(&xdp_qs_cfg))
+		जाओ err_map_xdp;
 
-	if (ice_xdp_alloc_setup_rings(vsi))
-		goto clear_xdp_rings;
+	अगर (ice_xdp_alloc_setup_rings(vsi))
+		जाओ clear_xdp_rings;
 
 	/* follow the logic from ice_vsi_map_rings_to_vectors */
-	ice_for_each_q_vector(vsi, v_idx) {
-		struct ice_q_vector *q_vector = vsi->q_vectors[v_idx];
-		int xdp_rings_per_v, q_id, q_base;
+	ice_क्रम_each_q_vector(vsi, v_idx) अणु
+		काष्ठा ice_q_vector *q_vector = vsi->q_vectors[v_idx];
+		पूर्णांक xdp_rings_per_v, q_id, q_base;
 
 		xdp_rings_per_v = DIV_ROUND_UP(xdp_rings_rem,
 					       vsi->num_q_vectors - v_idx);
 		q_base = vsi->num_xdp_txq - xdp_rings_rem;
 
-		for (q_id = q_base; q_id < (q_base + xdp_rings_per_v); q_id++) {
-			struct ice_ring *xdp_ring = vsi->xdp_rings[q_id];
+		क्रम (q_id = q_base; q_id < (q_base + xdp_rings_per_v); q_id++) अणु
+			काष्ठा ice_ring *xdp_ring = vsi->xdp_rings[q_id];
 
 			xdp_ring->q_vector = q_vector;
 			xdp_ring->next = q_vector->tx.ring;
 			q_vector->tx.ring = xdp_ring;
-		}
+		पूर्ण
 		xdp_rings_rem -= xdp_rings_per_v;
-	}
+	पूर्ण
 
-	/* omit the scheduler update if in reset path; XDP queues will be
-	 * taken into account at the end of ice_vsi_rebuild, where
+	/* omit the scheduler update अगर in reset path; XDP queues will be
+	 * taken पूर्णांकo account at the end of ice_vsi_rebuild, where
 	 * ice_cfg_vsi_lan is being called
 	 */
-	if (ice_is_reset_in_progress(pf->state))
-		return 0;
+	अगर (ice_is_reset_in_progress(pf->state))
+		वापस 0;
 
 	/* tell the Tx scheduler that right now we have
 	 * additional queues
 	 */
-	for (i = 0; i < vsi->tc_cfg.numtc; i++)
+	क्रम (i = 0; i < vsi->tc_cfg.numtc; i++)
 		max_txqs[i] = vsi->num_txq + vsi->num_xdp_txq;
 
 	status = ice_cfg_vsi_lan(vsi->port_info, vsi->idx, vsi->tc_cfg.ena_tc,
 				 max_txqs);
-	if (status) {
+	अगर (status) अणु
 		dev_err(dev, "Failed VSI LAN queue config for XDP, error: %s\n",
 			ice_stat_str(status));
-		goto clear_xdp_rings;
-	}
+		जाओ clear_xdp_rings;
+	पूर्ण
 	ice_vsi_assign_bpf_prog(vsi, prog);
 
-	return 0;
+	वापस 0;
 clear_xdp_rings:
-	for (i = 0; i < vsi->num_xdp_txq; i++)
-		if (vsi->xdp_rings[i]) {
-			kfree_rcu(vsi->xdp_rings[i], rcu);
-			vsi->xdp_rings[i] = NULL;
-		}
+	क्रम (i = 0; i < vsi->num_xdp_txq; i++)
+		अगर (vsi->xdp_rings[i]) अणु
+			kमुक्त_rcu(vsi->xdp_rings[i], rcu);
+			vsi->xdp_rings[i] = शून्य;
+		पूर्ण
 
 err_map_xdp:
 	mutex_lock(&pf->avail_q_mutex);
-	for (i = 0; i < vsi->num_xdp_txq; i++) {
+	क्रम (i = 0; i < vsi->num_xdp_txq; i++) अणु
 		clear_bit(vsi->txq_map[i + vsi->alloc_txq], pf->avail_txqs);
 		vsi->txq_map[i + vsi->alloc_txq] = ICE_INVAL_Q_INDEX;
-	}
+	पूर्ण
 	mutex_unlock(&pf->avail_q_mutex);
 
-	devm_kfree(dev, vsi->xdp_rings);
-	return -ENOMEM;
-}
+	devm_kमुक्त(dev, vsi->xdp_rings);
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * ice_destroy_xdp_rings - undo the configuration made by ice_prepare_xdp_rings
- * @vsi: VSI to remove XDP rings
+ * ice_destroy_xdp_rings - unकरो the configuration made by ice_prepare_xdp_rings
+ * @vsi: VSI to हटाओ XDP rings
  *
- * Detach XDP rings from irq vectors, clean up the PF bitmap and free
+ * Detach XDP rings from irq vectors, clean up the PF biपंचांगap and मुक्त
  * resources
  */
-int ice_destroy_xdp_rings(struct ice_vsi *vsi)
-{
-	u16 max_txqs[ICE_MAX_TRAFFIC_CLASS] = { 0 };
-	struct ice_pf *pf = vsi->back;
-	int i, v_idx;
+पूर्णांक ice_destroy_xdp_rings(काष्ठा ice_vsi *vsi)
+अणु
+	u16 max_txqs[ICE_MAX_TRAFFIC_CLASS] = अणु 0 पूर्ण;
+	काष्ठा ice_pf *pf = vsi->back;
+	पूर्णांक i, v_idx;
 
-	/* q_vectors are freed in reset path so there's no point in detaching
-	 * rings; in case of rebuild being triggered not from reset bits
+	/* q_vectors are मुक्तd in reset path so there's no poपूर्णांक in detaching
+	 * rings; in हाल of rebuild being triggered not from reset bits
 	 * in pf->state won't be set, so additionally check first q_vector
-	 * against NULL
+	 * against शून्य
 	 */
-	if (ice_is_reset_in_progress(pf->state) || !vsi->q_vectors[0])
-		goto free_qmap;
+	अगर (ice_is_reset_in_progress(pf->state) || !vsi->q_vectors[0])
+		जाओ मुक्त_qmap;
 
-	ice_for_each_q_vector(vsi, v_idx) {
-		struct ice_q_vector *q_vector = vsi->q_vectors[v_idx];
-		struct ice_ring *ring;
+	ice_क्रम_each_q_vector(vsi, v_idx) अणु
+		काष्ठा ice_q_vector *q_vector = vsi->q_vectors[v_idx];
+		काष्ठा ice_ring *ring;
 
-		ice_for_each_ring(ring, q_vector->tx)
-			if (!ring->tx_buf || !ice_ring_is_xdp(ring))
-				break;
+		ice_क्रम_each_ring(ring, q_vector->tx)
+			अगर (!ring->tx_buf || !ice_ring_is_xdp(ring))
+				अवरोध;
 
 		/* restore the value of last node prior to XDP setup */
 		q_vector->tx.ring = ring;
-	}
+	पूर्ण
 
-free_qmap:
+मुक्त_qmap:
 	mutex_lock(&pf->avail_q_mutex);
-	for (i = 0; i < vsi->num_xdp_txq; i++) {
+	क्रम (i = 0; i < vsi->num_xdp_txq; i++) अणु
 		clear_bit(vsi->txq_map[i + vsi->alloc_txq], pf->avail_txqs);
 		vsi->txq_map[i + vsi->alloc_txq] = ICE_INVAL_Q_INDEX;
-	}
+	पूर्ण
 	mutex_unlock(&pf->avail_q_mutex);
 
-	for (i = 0; i < vsi->num_xdp_txq; i++)
-		if (vsi->xdp_rings[i]) {
-			if (vsi->xdp_rings[i]->desc)
-				ice_free_tx_ring(vsi->xdp_rings[i]);
-			kfree_rcu(vsi->xdp_rings[i], rcu);
-			vsi->xdp_rings[i] = NULL;
-		}
+	क्रम (i = 0; i < vsi->num_xdp_txq; i++)
+		अगर (vsi->xdp_rings[i]) अणु
+			अगर (vsi->xdp_rings[i]->desc)
+				ice_मुक्त_tx_ring(vsi->xdp_rings[i]);
+			kमुक्त_rcu(vsi->xdp_rings[i], rcu);
+			vsi->xdp_rings[i] = शून्य;
+		पूर्ण
 
-	devm_kfree(ice_pf_to_dev(pf), vsi->xdp_rings);
-	vsi->xdp_rings = NULL;
+	devm_kमुक्त(ice_pf_to_dev(pf), vsi->xdp_rings);
+	vsi->xdp_rings = शून्य;
 
-	if (ice_is_reset_in_progress(pf->state) || !vsi->q_vectors[0])
-		return 0;
+	अगर (ice_is_reset_in_progress(pf->state) || !vsi->q_vectors[0])
+		वापस 0;
 
-	ice_vsi_assign_bpf_prog(vsi, NULL);
+	ice_vsi_assign_bpf_prog(vsi, शून्य);
 
-	/* notify Tx scheduler that we destroyed XDP queues and bring
+	/* notअगरy Tx scheduler that we destroyed XDP queues and bring
 	 * back the old number of child nodes
 	 */
-	for (i = 0; i < vsi->tc_cfg.numtc; i++)
+	क्रम (i = 0; i < vsi->tc_cfg.numtc; i++)
 		max_txqs[i] = vsi->num_txq;
 
 	/* change number of XDP Tx queues to 0 */
 	vsi->num_xdp_txq = 0;
 
-	return ice_cfg_vsi_lan(vsi->port_info, vsi->idx, vsi->tc_cfg.ena_tc,
+	वापस ice_cfg_vsi_lan(vsi->port_info, vsi->idx, vsi->tc_cfg.ena_tc,
 			       max_txqs);
-}
+पूर्ण
 
 /**
  * ice_vsi_rx_napi_schedule - Schedule napi on RX queues from VSI
  * @vsi: VSI to schedule napi on
  */
-static void ice_vsi_rx_napi_schedule(struct ice_vsi *vsi)
-{
-	int i;
+अटल व्योम ice_vsi_rx_napi_schedule(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक i;
 
-	ice_for_each_rxq(vsi, i) {
-		struct ice_ring *rx_ring = vsi->rx_rings[i];
+	ice_क्रम_each_rxq(vsi, i) अणु
+		काष्ठा ice_ring *rx_ring = vsi->rx_rings[i];
 
-		if (rx_ring->xsk_pool)
+		अगर (rx_ring->xsk_pool)
 			napi_schedule(&rx_ring->q_vector->napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ice_xdp_setup_prog - Add or remove XDP eBPF program
- * @vsi: VSI to setup XDP for
+ * ice_xdp_setup_prog - Add or हटाओ XDP eBPF program
+ * @vsi: VSI to setup XDP क्रम
  * @prog: XDP program
  * @extack: netlink extended ack
  */
-static int
-ice_xdp_setup_prog(struct ice_vsi *vsi, struct bpf_prog *prog,
-		   struct netlink_ext_ack *extack)
-{
-	int frame_size = vsi->netdev->mtu + ICE_ETH_PKT_HDR_PAD;
-	bool if_running = netif_running(vsi->netdev);
-	int ret = 0, xdp_ring_err = 0;
+अटल पूर्णांक
+ice_xdp_setup_prog(काष्ठा ice_vsi *vsi, काष्ठा bpf_prog *prog,
+		   काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक frame_size = vsi->netdev->mtu + ICE_ETH_PKT_HDR_PAD;
+	bool अगर_running = netअगर_running(vsi->netdev);
+	पूर्णांक ret = 0, xdp_ring_err = 0;
 
-	if (frame_size > vsi->rx_buf_len) {
+	अगर (frame_size > vsi->rx_buf_len) अणु
 		NL_SET_ERR_MSG_MOD(extack, "MTU too large for loading XDP");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	/* need to stop netdev while setting up the program for Rx rings */
-	if (if_running && !test_and_set_bit(ICE_VSI_DOWN, vsi->state)) {
-		ret = ice_down(vsi);
-		if (ret) {
+	/* need to stop netdev जबतक setting up the program क्रम Rx rings */
+	अगर (अगर_running && !test_and_set_bit(ICE_VSI_DOWN, vsi->state)) अणु
+		ret = ice_करोwn(vsi);
+		अगर (ret) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Preparing device for XDP attach failed");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (!ice_is_xdp_ena_vsi(vsi) && prog) {
+	अगर (!ice_is_xdp_ena_vsi(vsi) && prog) अणु
 		vsi->num_xdp_txq = vsi->alloc_rxq;
 		xdp_ring_err = ice_prepare_xdp_rings(vsi, prog);
-		if (xdp_ring_err)
+		अगर (xdp_ring_err)
 			NL_SET_ERR_MSG_MOD(extack, "Setting up XDP Tx resources failed");
-	} else if (ice_is_xdp_ena_vsi(vsi) && !prog) {
+	पूर्ण अन्यथा अगर (ice_is_xdp_ena_vsi(vsi) && !prog) अणु
 		xdp_ring_err = ice_destroy_xdp_rings(vsi);
-		if (xdp_ring_err)
+		अगर (xdp_ring_err)
 			NL_SET_ERR_MSG_MOD(extack, "Freeing XDP Tx resources failed");
-	} else {
+	पूर्ण अन्यथा अणु
 		ice_vsi_assign_bpf_prog(vsi, prog);
-	}
+	पूर्ण
 
-	if (if_running)
+	अगर (अगर_running)
 		ret = ice_up(vsi);
 
-	if (!ret && prog)
+	अगर (!ret && prog)
 		ice_vsi_rx_napi_schedule(vsi);
 
-	return (ret || xdp_ring_err) ? -ENOMEM : 0;
-}
+	वापस (ret || xdp_ring_err) ? -ENOMEM : 0;
+पूर्ण
 
 /**
- * ice_xdp_safe_mode - XDP handler for safe mode
+ * ice_xdp_safe_mode - XDP handler क्रम safe mode
  * @dev: netdevice
  * @xdp: XDP command
  */
-static int ice_xdp_safe_mode(struct net_device __always_unused *dev,
-			     struct netdev_bpf *xdp)
-{
+अटल पूर्णांक ice_xdp_safe_mode(काष्ठा net_device __always_unused *dev,
+			     काष्ठा netdev_bpf *xdp)
+अणु
 	NL_SET_ERR_MSG_MOD(xdp->extack,
 			   "Please provide working DDP firmware package in order to use XDP\n"
 			   "Refer to Documentation/networking/device_drivers/ethernet/intel/ice.rst");
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 /**
  * ice_xdp - implements XDP handler
  * @dev: netdevice
  * @xdp: XDP command
  */
-static int ice_xdp(struct net_device *dev, struct netdev_bpf *xdp)
-{
-	struct ice_netdev_priv *np = netdev_priv(dev);
-	struct ice_vsi *vsi = np->vsi;
+अटल पूर्णांक ice_xdp(काष्ठा net_device *dev, काष्ठा netdev_bpf *xdp)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(dev);
+	काष्ठा ice_vsi *vsi = np->vsi;
 
-	if (vsi->type != ICE_VSI_PF) {
+	अगर (vsi->type != ICE_VSI_PF) अणु
 		NL_SET_ERR_MSG_MOD(xdp->extack, "XDP can be loaded only on PF VSI");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (xdp->command) {
-	case XDP_SETUP_PROG:
-		return ice_xdp_setup_prog(vsi, xdp->prog, xdp->extack);
-	case XDP_SETUP_XSK_POOL:
-		return ice_xsk_pool_setup(vsi, xdp->xsk.pool,
+	चयन (xdp->command) अणु
+	हाल XDP_SETUP_PROG:
+		वापस ice_xdp_setup_prog(vsi, xdp->prog, xdp->extack);
+	हाल XDP_SETUP_XSK_POOL:
+		वापस ice_xsk_pool_setup(vsi, xdp->xsk.pool,
 					  xdp->xsk.queue_id);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /**
- * ice_ena_misc_vector - enable the non-queue interrupts
- * @pf: board private structure
+ * ice_ena_misc_vector - enable the non-queue पूर्णांकerrupts
+ * @pf: board निजी काष्ठाure
  */
-static void ice_ena_misc_vector(struct ice_pf *pf)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल व्योम ice_ena_misc_vector(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 	u32 val;
 
-	/* Disable anti-spoof detection interrupt to prevent spurious event
-	 * interrupts during a function reset. Anti-spoof functionally is
+	/* Disable anti-spoof detection पूर्णांकerrupt to prevent spurious event
+	 * पूर्णांकerrupts during a function reset. Anti-spoof functionally is
 	 * still supported.
 	 */
 	val = rd32(hw, GL_MDCK_TX_TDPU);
@@ -2614,7 +2615,7 @@ static void ice_ena_misc_vector(struct ice_pf *pf)
 
 	/* clear things first */
 	wr32(hw, PFINT_OICR_ENA, 0);	/* disable all */
-	rd32(hw, PFINT_OICR);		/* read to clear */
+	rd32(hw, PFINT_OICR);		/* पढ़ो to clear */
 
 	val = (PFINT_OICR_ECC_ERR_M |
 	       PFINT_OICR_MAL_DETECT_M |
@@ -2626,22 +2627,22 @@ static void ice_ena_misc_vector(struct ice_pf *pf)
 
 	wr32(hw, PFINT_OICR_ENA, val);
 
-	/* SW_ITR_IDX = 0, but don't change INTENA */
+	/* SW_ITR_IDX = 0, but करोn't change INTENA */
 	wr32(hw, GLINT_DYN_CTL(pf->oicr_idx),
 	     GLINT_DYN_CTL_SW_ITR_INDX_M | GLINT_DYN_CTL_INTENA_MSK_M);
-}
+पूर्ण
 
 /**
- * ice_misc_intr - misc interrupt handler
- * @irq: interrupt number
- * @data: pointer to a q_vector
+ * ice_misc_पूर्णांकr - misc पूर्णांकerrupt handler
+ * @irq: पूर्णांकerrupt number
+ * @data: poपूर्णांकer to a q_vector
  */
-static irqreturn_t ice_misc_intr(int __always_unused irq, void *data)
-{
-	struct ice_pf *pf = (struct ice_pf *)data;
-	struct ice_hw *hw = &pf->hw;
-	irqreturn_t ret = IRQ_NONE;
-	struct device *dev;
+अटल irqवापस_t ice_misc_पूर्णांकr(पूर्णांक __always_unused irq, व्योम *data)
+अणु
+	काष्ठा ice_pf *pf = (काष्ठा ice_pf *)data;
+	काष्ठा ice_hw *hw = &pf->hw;
+	irqवापस_t ret = IRQ_NONE;
+	काष्ठा device *dev;
 	u32 oicr, ena_mask;
 
 	dev = ice_pf_to_dev(pf);
@@ -2651,29 +2652,29 @@ static irqreturn_t ice_misc_intr(int __always_unused irq, void *data)
 	oicr = rd32(hw, PFINT_OICR);
 	ena_mask = rd32(hw, PFINT_OICR_ENA);
 
-	if (oicr & PFINT_OICR_SWINT_M) {
+	अगर (oicr & PFINT_OICR_SWINT_M) अणु
 		ena_mask &= ~PFINT_OICR_SWINT_M;
-		pf->sw_int_count++;
-	}
+		pf->sw_पूर्णांक_count++;
+	पूर्ण
 
-	if (oicr & PFINT_OICR_MAL_DETECT_M) {
+	अगर (oicr & PFINT_OICR_MAL_DETECT_M) अणु
 		ena_mask &= ~PFINT_OICR_MAL_DETECT_M;
 		set_bit(ICE_MDD_EVENT_PENDING, pf->state);
-	}
-	if (oicr & PFINT_OICR_VFLR_M) {
-		/* disable any further VFLR event notifications */
-		if (test_bit(ICE_VF_RESETS_DISABLED, pf->state)) {
+	पूर्ण
+	अगर (oicr & PFINT_OICR_VFLR_M) अणु
+		/* disable any further VFLR event notअगरications */
+		अगर (test_bit(ICE_VF_RESETS_DISABLED, pf->state)) अणु
 			u32 reg = rd32(hw, PFINT_OICR_ENA);
 
 			reg &= ~PFINT_OICR_VFLR_M;
 			wr32(hw, PFINT_OICR_ENA, reg);
-		} else {
+		पूर्ण अन्यथा अणु
 			ena_mask &= ~PFINT_OICR_VFLR_M;
 			set_bit(ICE_VFLR_EVENT_PENDING, pf->state);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (oicr & PFINT_OICR_GRST_M) {
+	अगर (oicr & PFINT_OICR_GRST_M) अणु
 		u32 reset;
 
 		/* we have a reset warning */
@@ -2681,80 +2682,80 @@ static irqreturn_t ice_misc_intr(int __always_unused irq, void *data)
 		reset = (rd32(hw, GLGEN_RSTAT) & GLGEN_RSTAT_RESET_TYPE_M) >>
 			GLGEN_RSTAT_RESET_TYPE_S;
 
-		if (reset == ICE_RESET_CORER)
+		अगर (reset == ICE_RESET_CORER)
 			pf->corer_count++;
-		else if (reset == ICE_RESET_GLOBR)
+		अन्यथा अगर (reset == ICE_RESET_GLOBR)
 			pf->globr_count++;
-		else if (reset == ICE_RESET_EMPR)
+		अन्यथा अगर (reset == ICE_RESET_EMPR)
 			pf->empr_count++;
-		else
+		अन्यथा
 			dev_dbg(dev, "Invalid reset type %d\n", reset);
 
-		/* If a reset cycle isn't already in progress, we set a bit in
+		/* If a reset cycle isn't alपढ़ोy in progress, we set a bit in
 		 * pf->state so that the service task can start a reset/rebuild.
 		 * We also make note of which reset happened so that peer
-		 * devices/drivers can be informed.
+		 * devices/drivers can be inक्रमmed.
 		 */
-		if (!test_and_set_bit(ICE_RESET_OICR_RECV, pf->state)) {
-			if (reset == ICE_RESET_CORER)
+		अगर (!test_and_set_bit(ICE_RESET_OICR_RECV, pf->state)) अणु
+			अगर (reset == ICE_RESET_CORER)
 				set_bit(ICE_CORER_RECV, pf->state);
-			else if (reset == ICE_RESET_GLOBR)
+			अन्यथा अगर (reset == ICE_RESET_GLOBR)
 				set_bit(ICE_GLOBR_RECV, pf->state);
-			else
+			अन्यथा
 				set_bit(ICE_EMPR_RECV, pf->state);
 
-			/* There are couple of different bits at play here.
+			/* There are couple of dअगरferent bits at play here.
 			 * hw->reset_ongoing indicates whether the hardware is
-			 * in reset. This is set to true when a reset interrupt
+			 * in reset. This is set to true when a reset पूर्णांकerrupt
 			 * is received and set back to false after the driver
 			 * has determined that the hardware is out of reset.
 			 *
 			 * ICE_RESET_OICR_RECV in pf->state indicates
-			 * that a post reset rebuild is required before the
+			 * that a post reset rebuild is required beक्रमe the
 			 * driver is operational again. This is set above.
 			 *
 			 * As this is the start of the reset/rebuild cycle, set
 			 * both to indicate that.
 			 */
 			hw->reset_ongoing = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (oicr & PFINT_OICR_HMC_ERR_M) {
+	अगर (oicr & PFINT_OICR_HMC_ERR_M) अणु
 		ena_mask &= ~PFINT_OICR_HMC_ERR_M;
 		dev_dbg(dev, "HMC Error interrupt - info 0x%x, data 0x%x\n",
 			rd32(hw, PFHMC_ERRORINFO),
 			rd32(hw, PFHMC_ERRORDATA));
-	}
+	पूर्ण
 
-	/* Report any remaining unexpected interrupts */
+	/* Report any reमुख्यing unexpected पूर्णांकerrupts */
 	oicr &= ena_mask;
-	if (oicr) {
+	अगर (oicr) अणु
 		dev_dbg(dev, "unhandled interrupt oicr=0x%08x\n", oicr);
 		/* If a critical error is pending there is no choice but to
 		 * reset the device.
 		 */
-		if (oicr & (PFINT_OICR_PE_CRITERR_M |
+		अगर (oicr & (PFINT_OICR_PE_CRITERR_M |
 			    PFINT_OICR_PCI_EXCEPTION_M |
-			    PFINT_OICR_ECC_ERR_M)) {
+			    PFINT_OICR_ECC_ERR_M)) अणु
 			set_bit(ICE_PFR_REQ, pf->state);
 			ice_service_task_schedule(pf);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ret = IRQ_HANDLED;
 
 	ice_service_task_schedule(pf);
-	ice_irq_dynamic_ena(hw, NULL, NULL);
+	ice_irq_dynamic_ena(hw, शून्य, शून्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ice_dis_ctrlq_interrupts - disable control queue interrupts
- * @hw: pointer to HW structure
+ * ice_dis_ctrlq_पूर्णांकerrupts - disable control queue पूर्णांकerrupts
+ * @hw: poपूर्णांकer to HW काष्ठाure
  */
-static void ice_dis_ctrlq_interrupts(struct ice_hw *hw)
-{
+अटल व्योम ice_dis_ctrlq_पूर्णांकerrupts(काष्ठा ice_hw *hw)
+अणु
 	/* disable Admin queue Interrupt causes */
 	wr32(hw, PFINT_FW_CTL,
 	     rd32(hw, PFINT_FW_CTL) & ~PFINT_FW_CTL_CAUSE_ENA_M);
@@ -2768,39 +2769,39 @@ static void ice_dis_ctrlq_interrupts(struct ice_hw *hw)
 	     rd32(hw, PFINT_OICR_CTL) & ~PFINT_OICR_CTL_CAUSE_ENA_M);
 
 	ice_flush(hw);
-}
+पूर्ण
 
 /**
- * ice_free_irq_msix_misc - Unroll misc vector setup
- * @pf: board private structure
+ * ice_मुक्त_irq_msix_misc - Unroll misc vector setup
+ * @pf: board निजी काष्ठाure
  */
-static void ice_free_irq_msix_misc(struct ice_pf *pf)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल व्योम ice_मुक्त_irq_msix_misc(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 
-	ice_dis_ctrlq_interrupts(hw);
+	ice_dis_ctrlq_पूर्णांकerrupts(hw);
 
-	/* disable OICR interrupt */
+	/* disable OICR पूर्णांकerrupt */
 	wr32(hw, PFINT_OICR_ENA, 0);
 	ice_flush(hw);
 
-	if (pf->msix_entries) {
+	अगर (pf->msix_entries) अणु
 		synchronize_irq(pf->msix_entries[pf->oicr_idx].vector);
-		devm_free_irq(ice_pf_to_dev(pf),
+		devm_मुक्त_irq(ice_pf_to_dev(pf),
 			      pf->msix_entries[pf->oicr_idx].vector, pf);
-	}
+	पूर्ण
 
 	pf->num_avail_sw_msix += 1;
-	ice_free_res(pf->irq_tracker, pf->oicr_idx, ICE_RES_MISC_VEC_ID);
-}
+	ice_मुक्त_res(pf->irq_tracker, pf->oicr_idx, ICE_RES_MISC_VEC_ID);
+पूर्ण
 
 /**
- * ice_ena_ctrlq_interrupts - enable control queue interrupts
- * @hw: pointer to HW structure
- * @reg_idx: HW vector index to associate the control queue interrupts with
+ * ice_ena_ctrlq_पूर्णांकerrupts - enable control queue पूर्णांकerrupts
+ * @hw: poपूर्णांकer to HW काष्ठाure
+ * @reg_idx: HW vector index to associate the control queue पूर्णांकerrupts with
  */
-static void ice_ena_ctrlq_interrupts(struct ice_hw *hw, u16 reg_idx)
-{
+अटल व्योम ice_ena_ctrlq_पूर्णांकerrupts(काष्ठा ice_hw *hw, u16 reg_idx)
+अणु
 	u32 val;
 
 	val = ((reg_idx & PFINT_OICR_CTL_MSIX_INDX_M) |
@@ -2818,121 +2819,121 @@ static void ice_ena_ctrlq_interrupts(struct ice_hw *hw, u16 reg_idx)
 	wr32(hw, PFINT_MBX_CTL, val);
 
 	ice_flush(hw);
-}
+पूर्ण
 
 /**
  * ice_req_irq_msix_misc - Setup the misc vector to handle non queue events
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  *
- * This sets up the handler for MSIX 0, which is used to manage the
- * non-queue interrupts, e.g. AdminQ and errors. This is not used
- * when in MSI or Legacy interrupt mode.
+ * This sets up the handler क्रम MSIX 0, which is used to manage the
+ * non-queue पूर्णांकerrupts, e.g. AdminQ and errors. This is not used
+ * when in MSI or Legacy पूर्णांकerrupt mode.
  */
-static int ice_req_irq_msix_misc(struct ice_pf *pf)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
-	int oicr_idx, err = 0;
+अटल पूर्णांक ice_req_irq_msix_misc(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
+	पूर्णांक oicr_idx, err = 0;
 
-	if (!pf->int_name[0])
-		snprintf(pf->int_name, sizeof(pf->int_name) - 1, "%s-%s:misc",
+	अगर (!pf->पूर्णांक_name[0])
+		snम_लिखो(pf->पूर्णांक_name, माप(pf->पूर्णांक_name) - 1, "%s-%s:misc",
 			 dev_driver_string(dev), dev_name(dev));
 
-	/* Do not request IRQ but do enable OICR interrupt since settings are
+	/* Do not request IRQ but करो enable OICR पूर्णांकerrupt since settings are
 	 * lost during reset. Note that this function is called only during
-	 * rebuild path and not while reset is in progress.
+	 * rebuild path and not जबतक reset is in progress.
 	 */
-	if (ice_is_reset_in_progress(pf->state))
-		goto skip_req_irq;
+	अगर (ice_is_reset_in_progress(pf->state))
+		जाओ skip_req_irq;
 
-	/* reserve one vector in irq_tracker for misc interrupts */
+	/* reserve one vector in irq_tracker क्रम misc पूर्णांकerrupts */
 	oicr_idx = ice_get_res(pf, pf->irq_tracker, 1, ICE_RES_MISC_VEC_ID);
-	if (oicr_idx < 0)
-		return oicr_idx;
+	अगर (oicr_idx < 0)
+		वापस oicr_idx;
 
 	pf->num_avail_sw_msix -= 1;
 	pf->oicr_idx = (u16)oicr_idx;
 
 	err = devm_request_irq(dev, pf->msix_entries[pf->oicr_idx].vector,
-			       ice_misc_intr, 0, pf->int_name, pf);
-	if (err) {
+			       ice_misc_पूर्णांकr, 0, pf->पूर्णांक_name, pf);
+	अगर (err) अणु
 		dev_err(dev, "devm_request_irq for %s failed: %d\n",
-			pf->int_name, err);
-		ice_free_res(pf->irq_tracker, 1, ICE_RES_MISC_VEC_ID);
+			pf->पूर्णांक_name, err);
+		ice_मुक्त_res(pf->irq_tracker, 1, ICE_RES_MISC_VEC_ID);
 		pf->num_avail_sw_msix += 1;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 skip_req_irq:
 	ice_ena_misc_vector(pf);
 
-	ice_ena_ctrlq_interrupts(hw, pf->oicr_idx);
+	ice_ena_ctrlq_पूर्णांकerrupts(hw, pf->oicr_idx);
 	wr32(hw, GLINT_ITR(ICE_RX_ITR, pf->oicr_idx),
 	     ITR_REG_ALIGN(ICE_ITR_8K) >> ICE_ITR_GRAN_S);
 
 	ice_flush(hw);
-	ice_irq_dynamic_ena(hw, NULL, NULL);
+	ice_irq_dynamic_ena(hw, शून्य, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_napi_add - register NAPI handler for the VSI
- * @vsi: VSI for which NAPI handler is to be registered
+ * ice_napi_add - रेजिस्टर NAPI handler क्रम the VSI
+ * @vsi: VSI क्रम which NAPI handler is to be रेजिस्टरed
  *
  * This function is only called in the driver's load path. Registering the NAPI
- * handler is done in ice_vsi_alloc_q_vector() for all other cases (i.e. resume,
+ * handler is करोne in ice_vsi_alloc_q_vector() क्रम all other हालs (i.e. resume,
  * reset/rebuild, etc.)
  */
-static void ice_napi_add(struct ice_vsi *vsi)
-{
-	int v_idx;
+अटल व्योम ice_napi_add(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक v_idx;
 
-	if (!vsi->netdev)
-		return;
+	अगर (!vsi->netdev)
+		वापस;
 
-	ice_for_each_q_vector(vsi, v_idx)
-		netif_napi_add(vsi->netdev, &vsi->q_vectors[v_idx]->napi,
+	ice_क्रम_each_q_vector(vsi, v_idx)
+		netअगर_napi_add(vsi->netdev, &vsi->q_vectors[v_idx]->napi,
 			       ice_napi_poll, NAPI_POLL_WEIGHT);
-}
+पूर्ण
 
 /**
- * ice_set_ops - set netdev and ethtools ops for the given netdev
+ * ice_set_ops - set netdev and ethtools ops क्रम the given netdev
  * @netdev: netdev instance
  */
-static void ice_set_ops(struct net_device *netdev)
-{
-	struct ice_pf *pf = ice_netdev_to_pf(netdev);
+अटल व्योम ice_set_ops(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ice_pf *pf = ice_netdev_to_pf(netdev);
 
-	if (ice_is_safe_mode(pf)) {
+	अगर (ice_is_safe_mode(pf)) अणु
 		netdev->netdev_ops = &ice_netdev_safe_mode_ops;
 		ice_set_ethtool_safe_mode_ops(netdev);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	netdev->netdev_ops = &ice_netdev_ops;
 	netdev->udp_tunnel_nic_info = &pf->hw.udp_tunnel_nic;
 	ice_set_ethtool_ops(netdev);
-}
+पूर्ण
 
 /**
- * ice_set_netdev_features - set features for the given netdev
+ * ice_set_netdev_features - set features क्रम the given netdev
  * @netdev: netdev instance
  */
-static void ice_set_netdev_features(struct net_device *netdev)
-{
-	struct ice_pf *pf = ice_netdev_to_pf(netdev);
+अटल व्योम ice_set_netdev_features(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ice_pf *pf = ice_netdev_to_pf(netdev);
 	netdev_features_t csumo_features;
 	netdev_features_t vlano_features;
 	netdev_features_t dflt_features;
 	netdev_features_t tso_features;
 
-	if (ice_is_safe_mode(pf)) {
+	अगर (ice_is_safe_mode(pf)) अणु
 		/* safe mode */
 		netdev->features = NETIF_F_SG | NETIF_F_HIGHDMA;
 		netdev->hw_features = netdev->features;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dflt_features = NETIF_F_SG	|
 			NETIF_F_HIGHDMA	|
@@ -2966,35 +2967,35 @@ static void ice_set_netdev_features(struct net_device *netdev)
 	netdev->hw_features = dflt_features | csumo_features |
 			      vlano_features | tso_features;
 
-	/* add support for HW_CSUM on packets with MPLS header */
+	/* add support क्रम HW_CSUM on packets with MPLS header */
 	netdev->mpls_features =  NETIF_F_HW_CSUM;
 
 	/* enable features */
 	netdev->features |= netdev->hw_features;
-	/* encap and VLAN devices inherit default, csumo and tso features */
+	/* encap and VLAN devices inherit शेष, csumo and tso features */
 	netdev->hw_enc_features |= dflt_features | csumo_features |
 				   tso_features;
 	netdev->vlan_features |= dflt_features | csumo_features |
 				 tso_features;
-}
+पूर्ण
 
 /**
- * ice_cfg_netdev - Allocate, configure and register a netdev
+ * ice_cfg_netdev - Allocate, configure and रेजिस्टर a netdev
  * @vsi: the VSI associated with the new netdev
  *
  * Returns 0 on success, negative value on failure
  */
-static int ice_cfg_netdev(struct ice_vsi *vsi)
-{
-	struct ice_pf *pf = vsi->back;
-	struct ice_netdev_priv *np;
-	struct net_device *netdev;
+अटल पूर्णांक ice_cfg_netdev(काष्ठा ice_vsi *vsi)
+अणु
+	काष्ठा ice_pf *pf = vsi->back;
+	काष्ठा ice_netdev_priv *np;
+	काष्ठा net_device *netdev;
 	u8 mac_addr[ETH_ALEN];
 
-	netdev = alloc_etherdev_mqs(sizeof(*np), vsi->alloc_txq,
+	netdev = alloc_etherdev_mqs(माप(*np), vsi->alloc_txq,
 				    vsi->alloc_rxq);
-	if (!netdev)
-		return -ENOMEM;
+	अगर (!netdev)
+		वापस -ENOMEM;
 
 	set_bit(ICE_VSI_NETDEV_ALLOCD, vsi->state);
 	vsi->netdev = netdev;
@@ -3005,306 +3006,306 @@ static int ice_cfg_netdev(struct ice_vsi *vsi)
 
 	ice_set_ops(netdev);
 
-	if (vsi->type == ICE_VSI_PF) {
+	अगर (vsi->type == ICE_VSI_PF) अणु
 		SET_NETDEV_DEV(netdev, ice_pf_to_dev(pf));
 		ether_addr_copy(mac_addr, vsi->port_info->mac.perm_addr);
 		ether_addr_copy(netdev->dev_addr, mac_addr);
 		ether_addr_copy(netdev->perm_addr, mac_addr);
-	}
+	पूर्ण
 
 	netdev->priv_flags |= IFF_UNICAST_FLT;
 
-	/* Setup netdev TC information */
+	/* Setup netdev TC inक्रमmation */
 	ice_vsi_cfg_netdev_tc(vsi, vsi->tc_cfg.ena_tc);
 
-	/* setup watchdog timeout value to be 5 second */
-	netdev->watchdog_timeo = 5 * HZ;
+	/* setup watchकरोg समयout value to be 5 second */
+	netdev->watchकरोg_समयo = 5 * HZ;
 
 	netdev->min_mtu = ETH_MIN_MTU;
 	netdev->max_mtu = ICE_MAX_MTU;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_fill_rss_lut - Fill the RSS lookup table with default values
+ * ice_fill_rss_lut - Fill the RSS lookup table with शेष values
  * @lut: Lookup table
  * @rss_table_size: Lookup table size
- * @rss_size: Range of queue number for hashing
+ * @rss_size: Range of queue number क्रम hashing
  */
-void ice_fill_rss_lut(u8 *lut, u16 rss_table_size, u16 rss_size)
-{
+व्योम ice_fill_rss_lut(u8 *lut, u16 rss_table_size, u16 rss_size)
+अणु
 	u16 i;
 
-	for (i = 0; i < rss_table_size; i++)
+	क्रम (i = 0; i < rss_table_size; i++)
 		lut[i] = i % rss_size;
-}
+पूर्ण
 
 /**
  * ice_pf_vsi_setup - Set up a PF VSI
- * @pf: board private structure
- * @pi: pointer to the port_info instance
+ * @pf: board निजी काष्ठाure
+ * @pi: poपूर्णांकer to the port_info instance
  *
- * Returns pointer to the successfully allocated VSI software struct
- * on success, otherwise returns NULL on failure.
+ * Returns poपूर्णांकer to the successfully allocated VSI software काष्ठा
+ * on success, otherwise वापसs शून्य on failure.
  */
-static struct ice_vsi *
-ice_pf_vsi_setup(struct ice_pf *pf, struct ice_port_info *pi)
-{
-	return ice_vsi_setup(pf, pi, ICE_VSI_PF, ICE_INVAL_VFID);
-}
+अटल काष्ठा ice_vsi *
+ice_pf_vsi_setup(काष्ठा ice_pf *pf, काष्ठा ice_port_info *pi)
+अणु
+	वापस ice_vsi_setup(pf, pi, ICE_VSI_PF, ICE_INVAL_VFID);
+पूर्ण
 
 /**
  * ice_ctrl_vsi_setup - Set up a control VSI
- * @pf: board private structure
- * @pi: pointer to the port_info instance
+ * @pf: board निजी काष्ठाure
+ * @pi: poपूर्णांकer to the port_info instance
  *
- * Returns pointer to the successfully allocated VSI software struct
- * on success, otherwise returns NULL on failure.
+ * Returns poपूर्णांकer to the successfully allocated VSI software काष्ठा
+ * on success, otherwise वापसs शून्य on failure.
  */
-static struct ice_vsi *
-ice_ctrl_vsi_setup(struct ice_pf *pf, struct ice_port_info *pi)
-{
-	return ice_vsi_setup(pf, pi, ICE_VSI_CTRL, ICE_INVAL_VFID);
-}
+अटल काष्ठा ice_vsi *
+ice_ctrl_vsi_setup(काष्ठा ice_pf *pf, काष्ठा ice_port_info *pi)
+अणु
+	वापस ice_vsi_setup(pf, pi, ICE_VSI_CTRL, ICE_INVAL_VFID);
+पूर्ण
 
 /**
  * ice_lb_vsi_setup - Set up a loopback VSI
- * @pf: board private structure
- * @pi: pointer to the port_info instance
+ * @pf: board निजी काष्ठाure
+ * @pi: poपूर्णांकer to the port_info instance
  *
- * Returns pointer to the successfully allocated VSI software struct
- * on success, otherwise returns NULL on failure.
+ * Returns poपूर्णांकer to the successfully allocated VSI software काष्ठा
+ * on success, otherwise वापसs शून्य on failure.
  */
-struct ice_vsi *
-ice_lb_vsi_setup(struct ice_pf *pf, struct ice_port_info *pi)
-{
-	return ice_vsi_setup(pf, pi, ICE_VSI_LB, ICE_INVAL_VFID);
-}
+काष्ठा ice_vsi *
+ice_lb_vsi_setup(काष्ठा ice_pf *pf, काष्ठा ice_port_info *pi)
+अणु
+	वापस ice_vsi_setup(pf, pi, ICE_VSI_LB, ICE_INVAL_VFID);
+पूर्ण
 
 /**
  * ice_vlan_rx_add_vid - Add a VLAN ID filter to HW offload
- * @netdev: network interface to be adjusted
+ * @netdev: network पूर्णांकerface to be adjusted
  * @proto: unused protocol
  * @vid: VLAN ID to be added
  *
- * net_device_ops implementation for adding VLAN IDs
+ * net_device_ops implementation क्रम adding VLAN IDs
  */
-static int
-ice_vlan_rx_add_vid(struct net_device *netdev, __always_unused __be16 proto,
+अटल पूर्णांक
+ice_vlan_rx_add_vid(काष्ठा net_device *netdev, __always_unused __be16 proto,
 		    u16 vid)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
-	int ret;
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
+	पूर्णांक ret;
 
-	/* VLAN 0 is added by default during load/reset */
-	if (!vid)
-		return 0;
+	/* VLAN 0 is added by शेष during load/reset */
+	अगर (!vid)
+		वापस 0;
 
 	/* Enable VLAN pruning when a VLAN other than 0 is added */
-	if (!ice_vsi_is_vlan_pruning_ena(vsi)) {
+	अगर (!ice_vsi_is_vlan_pruning_ena(vsi)) अणु
 		ret = ice_cfg_vlan_pruning(vsi, true, false);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* Add a switch rule for this VLAN ID so its corresponding VLAN tagged
-	 * packets aren't pruned by the device's internal switch on Rx
+	/* Add a चयन rule क्रम this VLAN ID so its corresponding VLAN tagged
+	 * packets aren't pruned by the device's पूर्णांकernal चयन on Rx
 	 */
 	ret = ice_vsi_add_vlan(vsi, vid, ICE_FWD_TO_VSI);
-	if (!ret)
+	अगर (!ret)
 		set_bit(ICE_VSI_VLAN_FLTR_CHANGED, vsi->state);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ice_vlan_rx_kill_vid - Remove a VLAN ID filter from HW offload
- * @netdev: network interface to be adjusted
+ * ice_vlan_rx_समाप्त_vid - Remove a VLAN ID filter from HW offload
+ * @netdev: network पूर्णांकerface to be adjusted
  * @proto: unused protocol
- * @vid: VLAN ID to be removed
+ * @vid: VLAN ID to be हटाओd
  *
- * net_device_ops implementation for removing VLAN IDs
+ * net_device_ops implementation क्रम removing VLAN IDs
  */
-static int
-ice_vlan_rx_kill_vid(struct net_device *netdev, __always_unused __be16 proto,
+अटल पूर्णांक
+ice_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev, __always_unused __be16 proto,
 		     u16 vid)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
-	int ret;
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
+	पूर्णांक ret;
 
-	/* don't allow removal of VLAN 0 */
-	if (!vid)
-		return 0;
+	/* करोn't allow removal of VLAN 0 */
+	अगर (!vid)
+		वापस 0;
 
-	/* Make sure ice_vsi_kill_vlan is successful before updating VLAN
-	 * information
+	/* Make sure ice_vsi_समाप्त_vlan is successful beक्रमe updating VLAN
+	 * inक्रमmation
 	 */
-	ret = ice_vsi_kill_vlan(vsi, vid);
-	if (ret)
-		return ret;
+	ret = ice_vsi_समाप्त_vlan(vsi, vid);
+	अगर (ret)
+		वापस ret;
 
 	/* Disable pruning when VLAN 0 is the only VLAN rule */
-	if (vsi->num_vlan == 1 && ice_vsi_is_vlan_pruning_ena(vsi))
+	अगर (vsi->num_vlan == 1 && ice_vsi_is_vlan_pruning_ena(vsi))
 		ret = ice_cfg_vlan_pruning(vsi, false, false);
 
 	set_bit(ICE_VSI_VLAN_FLTR_CHANGED, vsi->state);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ice_setup_pf_sw - Setup the HW switch on startup or after reset
- * @pf: board private structure
+ * ice_setup_pf_sw - Setup the HW चयन on startup or after reset
+ * @pf: board निजी काष्ठाure
  *
  * Returns 0 on success, negative value on failure
  */
-static int ice_setup_pf_sw(struct ice_pf *pf)
-{
-	struct ice_vsi *vsi;
-	int status = 0;
+अटल पूर्णांक ice_setup_pf_sw(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_vsi *vsi;
+	पूर्णांक status = 0;
 
-	if (ice_is_reset_in_progress(pf->state))
-		return -EBUSY;
+	अगर (ice_is_reset_in_progress(pf->state))
+		वापस -EBUSY;
 
 	vsi = ice_pf_vsi_setup(pf, pf->hw.port_info);
-	if (!vsi)
-		return -ENOMEM;
+	अगर (!vsi)
+		वापस -ENOMEM;
 
 	status = ice_cfg_netdev(vsi);
-	if (status) {
+	अगर (status) अणु
 		status = -ENODEV;
-		goto unroll_vsi_setup;
-	}
-	/* netdev has to be configured before setting frame size */
+		जाओ unroll_vsi_setup;
+	पूर्ण
+	/* netdev has to be configured beक्रमe setting frame size */
 	ice_vsi_cfg_frame_size(vsi);
 
-	/* Setup DCB netlink interface */
+	/* Setup DCB netlink पूर्णांकerface */
 	ice_dcbnl_setup(vsi);
 
-	/* registering the NAPI handler requires both the queues and
-	 * netdev to be created, which are done in ice_pf_vsi_setup()
+	/* रेजिस्टरing the NAPI handler requires both the queues and
+	 * netdev to be created, which are करोne in ice_pf_vsi_setup()
 	 * and ice_cfg_netdev() respectively
 	 */
 	ice_napi_add(vsi);
 
 	status = ice_set_cpu_rx_rmap(vsi);
-	if (status) {
+	अगर (status) अणु
 		dev_err(ice_pf_to_dev(pf), "Failed to set CPU Rx map VSI %d error %d\n",
 			vsi->vsi_num, status);
 		status = -EINVAL;
-		goto unroll_napi_add;
-	}
+		जाओ unroll_napi_add;
+	पूर्ण
 	status = ice_init_mac_fltr(pf);
-	if (status)
-		goto free_cpu_rx_map;
+	अगर (status)
+		जाओ मुक्त_cpu_rx_map;
 
-	return status;
+	वापस status;
 
-free_cpu_rx_map:
-	ice_free_cpu_rx_rmap(vsi);
+मुक्त_cpu_rx_map:
+	ice_मुक्त_cpu_rx_rmap(vsi);
 
 unroll_napi_add:
-	if (vsi) {
+	अगर (vsi) अणु
 		ice_napi_del(vsi);
-		if (vsi->netdev) {
+		अगर (vsi->netdev) अणु
 			clear_bit(ICE_VSI_NETDEV_ALLOCD, vsi->state);
-			free_netdev(vsi->netdev);
-			vsi->netdev = NULL;
-		}
-	}
+			मुक्त_netdev(vsi->netdev);
+			vsi->netdev = शून्य;
+		पूर्ण
+	पूर्ण
 
 unroll_vsi_setup:
 	ice_vsi_release(vsi);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
  * ice_get_avail_q_count - Get count of queues in use
- * @pf_qmap: bitmap to get queue use count from
- * @lock: pointer to a mutex that protects access to pf_qmap
- * @size: size of the bitmap
+ * @pf_qmap: biपंचांगap to get queue use count from
+ * @lock: poपूर्णांकer to a mutex that protects access to pf_qmap
+ * @size: size of the biपंचांगap
  */
-static u16
-ice_get_avail_q_count(unsigned long *pf_qmap, struct mutex *lock, u16 size)
-{
-	unsigned long bit;
+अटल u16
+ice_get_avail_q_count(अचिन्हित दीर्घ *pf_qmap, काष्ठा mutex *lock, u16 size)
+अणु
+	अचिन्हित दीर्घ bit;
 	u16 count = 0;
 
 	mutex_lock(lock);
-	for_each_clear_bit(bit, pf_qmap, size)
+	क्रम_each_clear_bit(bit, pf_qmap, size)
 		count++;
 	mutex_unlock(lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  * ice_get_avail_txq_count - Get count of Tx queues in use
- * @pf: pointer to an ice_pf instance
+ * @pf: poपूर्णांकer to an ice_pf instance
  */
-u16 ice_get_avail_txq_count(struct ice_pf *pf)
-{
-	return ice_get_avail_q_count(pf->avail_txqs, &pf->avail_q_mutex,
+u16 ice_get_avail_txq_count(काष्ठा ice_pf *pf)
+अणु
+	वापस ice_get_avail_q_count(pf->avail_txqs, &pf->avail_q_mutex,
 				     pf->max_pf_txqs);
-}
+पूर्ण
 
 /**
  * ice_get_avail_rxq_count - Get count of Rx queues in use
- * @pf: pointer to an ice_pf instance
+ * @pf: poपूर्णांकer to an ice_pf instance
  */
-u16 ice_get_avail_rxq_count(struct ice_pf *pf)
-{
-	return ice_get_avail_q_count(pf->avail_rxqs, &pf->avail_q_mutex,
+u16 ice_get_avail_rxq_count(काष्ठा ice_pf *pf)
+अणु
+	वापस ice_get_avail_q_count(pf->avail_rxqs, &pf->avail_q_mutex,
 				     pf->max_pf_rxqs);
-}
+पूर्ण
 
 /**
- * ice_deinit_pf - Unrolls initialziations done by ice_init_pf
- * @pf: board private structure to initialize
+ * ice_deinit_pf - Unrolls initialziations करोne by ice_init_pf
+ * @pf: board निजी काष्ठाure to initialize
  */
-static void ice_deinit_pf(struct ice_pf *pf)
-{
+अटल व्योम ice_deinit_pf(काष्ठा ice_pf *pf)
+अणु
 	ice_service_task_stop(pf);
 	mutex_destroy(&pf->sw_mutex);
 	mutex_destroy(&pf->tc_mutex);
 	mutex_destroy(&pf->avail_q_mutex);
 
-	if (pf->avail_txqs) {
-		bitmap_free(pf->avail_txqs);
-		pf->avail_txqs = NULL;
-	}
+	अगर (pf->avail_txqs) अणु
+		biपंचांगap_मुक्त(pf->avail_txqs);
+		pf->avail_txqs = शून्य;
+	पूर्ण
 
-	if (pf->avail_rxqs) {
-		bitmap_free(pf->avail_rxqs);
-		pf->avail_rxqs = NULL;
-	}
-}
+	अगर (pf->avail_rxqs) अणु
+		biपंचांगap_मुक्त(pf->avail_rxqs);
+		pf->avail_rxqs = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * ice_set_pf_caps - set PFs capability flags
- * @pf: pointer to the PF instance
+ * @pf: poपूर्णांकer to the PF instance
  */
-static void ice_set_pf_caps(struct ice_pf *pf)
-{
-	struct ice_hw_func_caps *func_caps = &pf->hw.func_caps;
+अटल व्योम ice_set_pf_caps(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_hw_func_caps *func_caps = &pf->hw.func_caps;
 
 	clear_bit(ICE_FLAG_DCB_CAPABLE, pf->flags);
-	if (func_caps->common_cap.dcb)
+	अगर (func_caps->common_cap.dcb)
 		set_bit(ICE_FLAG_DCB_CAPABLE, pf->flags);
 	clear_bit(ICE_FLAG_SRIOV_CAPABLE, pf->flags);
-	if (func_caps->common_cap.sr_iov_1_1) {
+	अगर (func_caps->common_cap.sr_iov_1_1) अणु
 		set_bit(ICE_FLAG_SRIOV_CAPABLE, pf->flags);
-		pf->num_vfs_supported = min_t(int, func_caps->num_allocd_vfs,
+		pf->num_vfs_supported = min_t(पूर्णांक, func_caps->num_allocd_vfs,
 					      ICE_MAX_VF_COUNT);
-	}
+	पूर्ण
 	clear_bit(ICE_FLAG_RSS_ENA, pf->flags);
-	if (func_caps->common_cap.rss_table_size)
+	अगर (func_caps->common_cap.rss_table_size)
 		set_bit(ICE_FLAG_RSS_ENA, pf->flags);
 
 	clear_bit(ICE_FLAG_FD_ENA, pf->flags);
-	if (func_caps->fd_fltr_guar > 0 || func_caps->fd_fltr_best_effort > 0) {
+	अगर (func_caps->fd_fltr_guar > 0 || func_caps->fd_fltr_best_efक्रमt > 0) अणु
 		u16 unused;
 
 		/* ctrl_vsi_idx will be set to a valid value when flow director
@@ -3312,227 +3313,227 @@ static void ice_set_pf_caps(struct ice_pf *pf)
 		 */
 		pf->ctrl_vsi_idx = ICE_NO_VSI;
 		set_bit(ICE_FLAG_FD_ENA, pf->flags);
-		/* force guaranteed filter pool for PF */
+		/* क्रमce guaranteed filter pool क्रम PF */
 		ice_alloc_fd_guar_item(&pf->hw, &unused,
 				       func_caps->fd_fltr_guar);
-		/* force shared filter pool for PF */
+		/* क्रमce shared filter pool क्रम PF */
 		ice_alloc_fd_shrd_item(&pf->hw, &unused,
-				       func_caps->fd_fltr_best_effort);
-	}
+				       func_caps->fd_fltr_best_efक्रमt);
+	पूर्ण
 
 	pf->max_pf_txqs = func_caps->common_cap.num_txq;
 	pf->max_pf_rxqs = func_caps->common_cap.num_rxq;
-}
+पूर्ण
 
 /**
- * ice_init_pf - Initialize general software structures (struct ice_pf)
- * @pf: board private structure to initialize
+ * ice_init_pf - Initialize general software काष्ठाures (काष्ठा ice_pf)
+ * @pf: board निजी काष्ठाure to initialize
  */
-static int ice_init_pf(struct ice_pf *pf)
-{
+अटल पूर्णांक ice_init_pf(काष्ठा ice_pf *pf)
+अणु
 	ice_set_pf_caps(pf);
 
 	mutex_init(&pf->sw_mutex);
 	mutex_init(&pf->tc_mutex);
 
-	INIT_HLIST_HEAD(&pf->aq_wait_list);
-	spin_lock_init(&pf->aq_wait_lock);
-	init_waitqueue_head(&pf->aq_wait_queue);
+	INIT_HLIST_HEAD(&pf->aq_रुको_list);
+	spin_lock_init(&pf->aq_रुको_lock);
+	init_रुकोqueue_head(&pf->aq_रुको_queue);
 
-	/* setup service timer and periodic service task */
-	timer_setup(&pf->serv_tmr, ice_service_timer, 0);
-	pf->serv_tmr_period = HZ;
+	/* setup service समयr and periodic service task */
+	समयr_setup(&pf->serv_पंचांगr, ice_service_समयr, 0);
+	pf->serv_पंचांगr_period = HZ;
 	INIT_WORK(&pf->serv_task, ice_service_task);
 	clear_bit(ICE_SERVICE_SCHED, pf->state);
 
 	mutex_init(&pf->avail_q_mutex);
-	pf->avail_txqs = bitmap_zalloc(pf->max_pf_txqs, GFP_KERNEL);
-	if (!pf->avail_txqs)
-		return -ENOMEM;
+	pf->avail_txqs = biपंचांगap_zalloc(pf->max_pf_txqs, GFP_KERNEL);
+	अगर (!pf->avail_txqs)
+		वापस -ENOMEM;
 
-	pf->avail_rxqs = bitmap_zalloc(pf->max_pf_rxqs, GFP_KERNEL);
-	if (!pf->avail_rxqs) {
-		devm_kfree(ice_pf_to_dev(pf), pf->avail_txqs);
-		pf->avail_txqs = NULL;
-		return -ENOMEM;
-	}
+	pf->avail_rxqs = biपंचांगap_zalloc(pf->max_pf_rxqs, GFP_KERNEL);
+	अगर (!pf->avail_rxqs) अणु
+		devm_kमुक्त(ice_pf_to_dev(pf), pf->avail_txqs);
+		pf->avail_txqs = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_ena_msix_range - Request a range of MSIX vectors from the OS
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  *
  * compute the number of MSIX vectors required (v_budget) and request from
  * the OS. Return the number of vectors reserved or negative on failure
  */
-static int ice_ena_msix_range(struct ice_pf *pf)
-{
-	int v_left, v_actual, v_other, v_budget = 0;
-	struct device *dev = ice_pf_to_dev(pf);
-	int needed, err, i;
+अटल पूर्णांक ice_ena_msix_range(काष्ठा ice_pf *pf)
+अणु
+	पूर्णांक v_left, v_actual, v_other, v_budget = 0;
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	पूर्णांक needed, err, i;
 
 	v_left = pf->hw.func_caps.common_cap.num_msix_vectors;
 
-	/* reserve for LAN miscellaneous handler */
+	/* reserve क्रम LAN miscellaneous handler */
 	needed = ICE_MIN_LAN_OICR_MSIX;
-	if (v_left < needed)
-		goto no_hw_vecs_left_err;
+	अगर (v_left < needed)
+		जाओ no_hw_vecs_left_err;
 	v_budget += needed;
 	v_left -= needed;
 
-	/* reserve for flow director */
-	if (test_bit(ICE_FLAG_FD_ENA, pf->flags)) {
-		needed = ICE_FDIR_MSIX;
-		if (v_left < needed)
-			goto no_hw_vecs_left_err;
+	/* reserve क्रम flow director */
+	अगर (test_bit(ICE_FLAG_FD_ENA, pf->flags)) अणु
+		needed = ICE_Fसूची_MSIX;
+		अगर (v_left < needed)
+			जाओ no_hw_vecs_left_err;
 		v_budget += needed;
 		v_left -= needed;
-	}
+	पूर्ण
 
-	/* total used for non-traffic vectors */
+	/* total used क्रम non-traffic vectors */
 	v_other = v_budget;
 
-	/* reserve vectors for LAN traffic */
-	needed = min_t(int, num_online_cpus(), v_left);
-	if (v_left < needed)
-		goto no_hw_vecs_left_err;
+	/* reserve vectors क्रम LAN traffic */
+	needed = min_t(पूर्णांक, num_online_cpus(), v_left);
+	अगर (v_left < needed)
+		जाओ no_hw_vecs_left_err;
 	pf->num_lan_msix = needed;
 	v_budget += needed;
 	v_left -= needed;
 
-	pf->msix_entries = devm_kcalloc(dev, v_budget,
-					sizeof(*pf->msix_entries), GFP_KERNEL);
-	if (!pf->msix_entries) {
+	pf->msix_entries = devm_kसुस्मृति(dev, v_budget,
+					माप(*pf->msix_entries), GFP_KERNEL);
+	अगर (!pf->msix_entries) अणु
 		err = -ENOMEM;
-		goto exit_err;
-	}
+		जाओ निकास_err;
+	पूर्ण
 
-	for (i = 0; i < v_budget; i++)
+	क्रम (i = 0; i < v_budget; i++)
 		pf->msix_entries[i].entry = i;
 
 	/* actually reserve the vectors */
 	v_actual = pci_enable_msix_range(pf->pdev, pf->msix_entries,
 					 ICE_MIN_MSIX, v_budget);
-	if (v_actual < 0) {
+	अगर (v_actual < 0) अणु
 		dev_err(dev, "unable to reserve MSI-X vectors\n");
 		err = v_actual;
-		goto msix_err;
-	}
+		जाओ msix_err;
+	पूर्ण
 
-	if (v_actual < v_budget) {
+	अगर (v_actual < v_budget) अणु
 		dev_warn(dev, "not enough OS MSI-X vectors. requested = %d, obtained = %d\n",
 			 v_budget, v_actual);
 
-		if (v_actual < ICE_MIN_MSIX) {
-			/* error if we can't get minimum vectors */
+		अगर (v_actual < ICE_MIN_MSIX) अणु
+			/* error अगर we can't get minimum vectors */
 			pci_disable_msix(pf->pdev);
-			err = -ERANGE;
-			goto msix_err;
-		} else {
-			int v_traffic = v_actual - v_other;
+			err = -दुस्फल;
+			जाओ msix_err;
+		पूर्ण अन्यथा अणु
+			पूर्णांक v_traffic = v_actual - v_other;
 
-			if (v_actual == ICE_MIN_MSIX ||
+			अगर (v_actual == ICE_MIN_MSIX ||
 			    v_traffic < ICE_MIN_LAN_TXRX_MSIX)
 				pf->num_lan_msix = ICE_MIN_LAN_TXRX_MSIX;
-			else
+			अन्यथा
 				pf->num_lan_msix = v_traffic;
 
 			dev_notice(dev, "Enabled %d MSI-X vectors for LAN traffic.\n",
 				   pf->num_lan_msix);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return v_actual;
+	वापस v_actual;
 
 msix_err:
-	devm_kfree(dev, pf->msix_entries);
-	goto exit_err;
+	devm_kमुक्त(dev, pf->msix_entries);
+	जाओ निकास_err;
 
 no_hw_vecs_left_err:
 	dev_err(dev, "not enough device MSI-X vectors. requested = %d, available = %d\n",
 		needed, v_left);
-	err = -ERANGE;
-exit_err:
+	err = -दुस्फल;
+निकास_err:
 	pf->num_lan_msix = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ice_dis_msix - Disable MSI-X interrupt setup in OS
- * @pf: board private structure
+ * ice_dis_msix - Disable MSI-X पूर्णांकerrupt setup in OS
+ * @pf: board निजी काष्ठाure
  */
-static void ice_dis_msix(struct ice_pf *pf)
-{
+अटल व्योम ice_dis_msix(काष्ठा ice_pf *pf)
+अणु
 	pci_disable_msix(pf->pdev);
-	devm_kfree(ice_pf_to_dev(pf), pf->msix_entries);
-	pf->msix_entries = NULL;
-}
+	devm_kमुक्त(ice_pf_to_dev(pf), pf->msix_entries);
+	pf->msix_entries = शून्य;
+पूर्ण
 
 /**
- * ice_clear_interrupt_scheme - Undo things done by ice_init_interrupt_scheme
- * @pf: board private structure
+ * ice_clear_पूर्णांकerrupt_scheme - Unकरो things करोne by ice_init_पूर्णांकerrupt_scheme
+ * @pf: board निजी काष्ठाure
  */
-static void ice_clear_interrupt_scheme(struct ice_pf *pf)
-{
+अटल व्योम ice_clear_पूर्णांकerrupt_scheme(काष्ठा ice_pf *pf)
+अणु
 	ice_dis_msix(pf);
 
-	if (pf->irq_tracker) {
-		devm_kfree(ice_pf_to_dev(pf), pf->irq_tracker);
-		pf->irq_tracker = NULL;
-	}
-}
+	अगर (pf->irq_tracker) अणु
+		devm_kमुक्त(ice_pf_to_dev(pf), pf->irq_tracker);
+		pf->irq_tracker = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * ice_init_interrupt_scheme - Determine proper interrupt scheme
- * @pf: board private structure to initialize
+ * ice_init_पूर्णांकerrupt_scheme - Determine proper पूर्णांकerrupt scheme
+ * @pf: board निजी काष्ठाure to initialize
  */
-static int ice_init_interrupt_scheme(struct ice_pf *pf)
-{
-	int vectors;
+अटल पूर्णांक ice_init_पूर्णांकerrupt_scheme(काष्ठा ice_pf *pf)
+अणु
+	पूर्णांक vectors;
 
 	vectors = ice_ena_msix_range(pf);
 
-	if (vectors < 0)
-		return vectors;
+	अगर (vectors < 0)
+		वापस vectors;
 
 	/* set up vector assignment tracking */
 	pf->irq_tracker = devm_kzalloc(ice_pf_to_dev(pf),
-				       struct_size(pf->irq_tracker, list, vectors),
+				       काष्ठा_size(pf->irq_tracker, list, vectors),
 				       GFP_KERNEL);
-	if (!pf->irq_tracker) {
+	अगर (!pf->irq_tracker) अणु
 		ice_dis_msix(pf);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* populate SW interrupts pool with number of OS granted IRQs. */
+	/* populate SW पूर्णांकerrupts pool with number of OS granted IRQs. */
 	pf->num_avail_sw_msix = (u16)vectors;
 	pf->irq_tracker->num_entries = (u16)vectors;
 	pf->irq_tracker->end = pf->irq_tracker->num_entries;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_is_wol_supported - check if WoL is supported
- * @hw: pointer to hardware info
+ * ice_is_wol_supported - check अगर WoL is supported
+ * @hw: poपूर्णांकer to hardware info
  *
- * Check if WoL is supported based on the HW configuration.
- * Returns true if NVM supports and enables WoL for this port, false otherwise
+ * Check अगर WoL is supported based on the HW configuration.
+ * Returns true अगर NVM supports and enables WoL क्रम this port, false otherwise
  */
-bool ice_is_wol_supported(struct ice_hw *hw)
-{
+bool ice_is_wol_supported(काष्ठा ice_hw *hw)
+अणु
 	u16 wol_ctrl;
 
 	/* A bit set to 1 in the NVM Software Reserved Word 2 (WoL control
 	 * word) indicates WoL is not supported on the corresponding PF ID.
 	 */
-	if (ice_read_sr_word(hw, ICE_SR_NVM_WOL_CFG, &wol_ctrl))
-		return false;
+	अगर (ice_पढ़ो_sr_word(hw, ICE_SR_NVM_WOL_CFG, &wol_ctrl))
+		वापस false;
 
-	return !(BIT(hw->port_info->lport) & wol_ctrl);
-}
+	वापस !(BIT(hw->port_info->lport) & wol_ctrl);
+पूर्ण
 
 /**
  * ice_vsi_recfg_qs - Change the number of queues on a VSI
@@ -3540,45 +3541,45 @@ bool ice_is_wol_supported(struct ice_hw *hw)
  * @new_rx: new number of Rx queues
  * @new_tx: new number of Tx queues
  *
- * Only change the number of queues if new_tx, or new_rx is non-0.
+ * Only change the number of queues अगर new_tx, or new_rx is non-0.
  *
  * Returns 0 on success.
  */
-int ice_vsi_recfg_qs(struct ice_vsi *vsi, int new_rx, int new_tx)
-{
-	struct ice_pf *pf = vsi->back;
-	int err = 0, timeout = 50;
+पूर्णांक ice_vsi_recfg_qs(काष्ठा ice_vsi *vsi, पूर्णांक new_rx, पूर्णांक new_tx)
+अणु
+	काष्ठा ice_pf *pf = vsi->back;
+	पूर्णांक err = 0, समयout = 50;
 
-	if (!new_rx && !new_tx)
-		return -EINVAL;
+	अगर (!new_rx && !new_tx)
+		वापस -EINVAL;
 
-	while (test_and_set_bit(ICE_CFG_BUSY, pf->state)) {
-		timeout--;
-		if (!timeout)
-			return -EBUSY;
+	जबतक (test_and_set_bit(ICE_CFG_BUSY, pf->state)) अणु
+		समयout--;
+		अगर (!समयout)
+			वापस -EBUSY;
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
-	if (new_tx)
+	अगर (new_tx)
 		vsi->req_txq = (u16)new_tx;
-	if (new_rx)
+	अगर (new_rx)
 		vsi->req_rxq = (u16)new_rx;
 
-	/* set for the next time the netdev is started */
-	if (!netif_running(vsi->netdev)) {
+	/* set क्रम the next समय the netdev is started */
+	अगर (!netअगर_running(vsi->netdev)) अणु
 		ice_vsi_rebuild(vsi, false);
 		dev_dbg(ice_pf_to_dev(pf), "Link is down, queue count change happens when link is brought up\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	ice_vsi_close(vsi);
+	ice_vsi_बंद(vsi);
 	ice_vsi_rebuild(vsi, false);
 	ice_pf_dcb_recfg(pf);
-	ice_vsi_open(vsi);
-done:
+	ice_vsi_खोलो(vsi);
+करोne:
 	clear_bit(ICE_CFG_BUSY, pf->state);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_set_safe_mode_vlan_cfg - configure PF VSI to allow all VLANs in safe mode
@@ -3587,19 +3588,19 @@ done:
  * No VLAN offloads/filtering are advertised in safe mode so make sure the PF
  * VSI can still Tx/Rx VLAN tagged packets.
  */
-static void ice_set_safe_mode_vlan_cfg(struct ice_pf *pf)
-{
-	struct ice_vsi *vsi = ice_get_main_vsi(pf);
-	struct ice_vsi_ctx *ctxt;
-	enum ice_status status;
-	struct ice_hw *hw;
+अटल व्योम ice_set_safe_mode_vlan_cfg(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_vsi *vsi = ice_get_मुख्य_vsi(pf);
+	काष्ठा ice_vsi_ctx *ctxt;
+	क्रमागत ice_status status;
+	काष्ठा ice_hw *hw;
 
-	if (!vsi)
-		return;
+	अगर (!vsi)
+		वापस;
 
-	ctxt = kzalloc(sizeof(*ctxt), GFP_KERNEL);
-	if (!ctxt)
-		return;
+	ctxt = kzalloc(माप(*ctxt), GFP_KERNEL);
+	अगर (!ctxt)
+		वापस;
 
 	hw = &pf->hw;
 	ctxt->info = vsi->info;
@@ -3616,71 +3617,71 @@ static void ice_set_safe_mode_vlan_cfg(struct ice_pf *pf)
 	/* disable VLAN pruning and keep all other settings */
 	ctxt->info.sw_flags2 &= ~ICE_AQ_VSI_SW_FLAG_RX_VLAN_PRUNE_ENA;
 
-	/* allow all VLANs on Tx and don't strip on Rx */
+	/* allow all VLANs on Tx and करोn't strip on Rx */
 	ctxt->info.vlan_flags = ICE_AQ_VSI_VLAN_MODE_ALL |
 		ICE_AQ_VSI_VLAN_EMOD_NOTHING;
 
-	status = ice_update_vsi(hw, vsi->idx, ctxt, NULL);
-	if (status) {
+	status = ice_update_vsi(hw, vsi->idx, ctxt, शून्य);
+	अगर (status) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "Failed to update VSI for safe mode VLANs, err %s aq_err %s\n",
 			ice_stat_str(status),
 			ice_aq_str(hw->adminq.sq_last_status));
-	} else {
+	पूर्ण अन्यथा अणु
 		vsi->info.sec_flags = ctxt->info.sec_flags;
 		vsi->info.sw_flags2 = ctxt->info.sw_flags2;
 		vsi->info.vlan_flags = ctxt->info.vlan_flags;
-	}
+	पूर्ण
 
-	kfree(ctxt);
-}
+	kमुक्त(ctxt);
+पूर्ण
 
 /**
  * ice_log_pkg_init - log result of DDP package load
- * @hw: pointer to hardware info
+ * @hw: poपूर्णांकer to hardware info
  * @status: status of package load
  */
-static void
-ice_log_pkg_init(struct ice_hw *hw, enum ice_status *status)
-{
-	struct ice_pf *pf = (struct ice_pf *)hw->back;
-	struct device *dev = ice_pf_to_dev(pf);
+अटल व्योम
+ice_log_pkg_init(काष्ठा ice_hw *hw, क्रमागत ice_status *status)
+अणु
+	काष्ठा ice_pf *pf = (काष्ठा ice_pf *)hw->back;
+	काष्ठा device *dev = ice_pf_to_dev(pf);
 
-	switch (*status) {
-	case ICE_SUCCESS:
-		/* The package download AdminQ command returned success because
-		 * this download succeeded or ICE_ERR_AQ_NO_WORK since there is
-		 * already a package loaded on the device.
+	चयन (*status) अणु
+	हाल ICE_SUCCESS:
+		/* The package करोwnload AdminQ command वापसed success because
+		 * this करोwnload succeeded or ICE_ERR_AQ_NO_WORK since there is
+		 * alपढ़ोy a package loaded on the device.
 		 */
-		if (hw->pkg_ver.major == hw->active_pkg_ver.major &&
+		अगर (hw->pkg_ver.major == hw->active_pkg_ver.major &&
 		    hw->pkg_ver.minor == hw->active_pkg_ver.minor &&
 		    hw->pkg_ver.update == hw->active_pkg_ver.update &&
 		    hw->pkg_ver.draft == hw->active_pkg_ver.draft &&
-		    !memcmp(hw->pkg_name, hw->active_pkg_name,
-			    sizeof(hw->pkg_name))) {
-			if (hw->pkg_dwnld_status == ICE_AQ_RC_EEXIST)
+		    !स_भेद(hw->pkg_name, hw->active_pkg_name,
+			    माप(hw->pkg_name))) अणु
+			अगर (hw->pkg_dwnld_status == ICE_AQ_RC_EEXIST)
 				dev_info(dev, "DDP package already present on device: %s version %d.%d.%d.%d\n",
 					 hw->active_pkg_name,
 					 hw->active_pkg_ver.major,
 					 hw->active_pkg_ver.minor,
 					 hw->active_pkg_ver.update,
 					 hw->active_pkg_ver.draft);
-			else
+			अन्यथा
 				dev_info(dev, "The DDP package was successfully loaded: %s version %d.%d.%d.%d\n",
 					 hw->active_pkg_name,
 					 hw->active_pkg_ver.major,
 					 hw->active_pkg_ver.minor,
 					 hw->active_pkg_ver.update,
 					 hw->active_pkg_ver.draft);
-		} else if (hw->active_pkg_ver.major != ICE_PKG_SUPP_VER_MAJ ||
-			   hw->active_pkg_ver.minor != ICE_PKG_SUPP_VER_MNR) {
+		पूर्ण अन्यथा अगर (hw->active_pkg_ver.major != ICE_PKG_SUPP_VER_MAJ ||
+			   hw->active_pkg_ver.minor != ICE_PKG_SUPP_VER_MNR) अणु
 			dev_err(dev, "The device has a DDP package that is not supported by the driver.  The device has package '%s' version %d.%d.x.x.  The driver requires version %d.%d.x.x.  Entering Safe Mode.\n",
 				hw->active_pkg_name,
 				hw->active_pkg_ver.major,
 				hw->active_pkg_ver.minor,
 				ICE_PKG_SUPP_VER_MAJ, ICE_PKG_SUPP_VER_MNR);
 			*status = ICE_ERR_NOT_SUPPORTED;
-		} else if (hw->active_pkg_ver.major == ICE_PKG_SUPP_VER_MAJ &&
-			   hw->active_pkg_ver.minor == ICE_PKG_SUPP_VER_MNR) {
+		पूर्ण अन्यथा अगर (hw->active_pkg_ver.major == ICE_PKG_SUPP_VER_MAJ &&
+			   hw->active_pkg_ver.minor == ICE_PKG_SUPP_VER_MNR) अणु
 			dev_info(dev, "The driver could not load the DDP package file because a compatible DDP package is already present on the device.  The device has package '%s' version %d.%d.%d.%d.  The package file found by the driver: '%s' version %d.%d.%d.%d.\n",
 				 hw->active_pkg_name,
 				 hw->active_pkg_ver.major,
@@ -3692,353 +3693,353 @@ ice_log_pkg_init(struct ice_hw *hw, enum ice_status *status)
 				 hw->pkg_ver.minor,
 				 hw->pkg_ver.update,
 				 hw->pkg_ver.draft);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "An unknown error occurred when loading the DDP package, please reboot the system.  If the problem persists, update the NVM.  Entering Safe Mode.\n");
 			*status = ICE_ERR_NOT_SUPPORTED;
-		}
-		break;
-	case ICE_ERR_FW_DDP_MISMATCH:
+		पूर्ण
+		अवरोध;
+	हाल ICE_ERR_FW_DDP_MISMATCH:
 		dev_err(dev, "The firmware loaded on the device is not compatible with the DDP package.  Please update the device's NVM.  Entering safe mode.\n");
-		break;
-	case ICE_ERR_BUF_TOO_SHORT:
-	case ICE_ERR_CFG:
+		अवरोध;
+	हाल ICE_ERR_BUF_TOO_SHORT:
+	हाल ICE_ERR_CFG:
 		dev_err(dev, "The DDP package file is invalid. Entering Safe Mode.\n");
-		break;
-	case ICE_ERR_NOT_SUPPORTED:
+		अवरोध;
+	हाल ICE_ERR_NOT_SUPPORTED:
 		/* Package File version not supported */
-		if (hw->pkg_ver.major > ICE_PKG_SUPP_VER_MAJ ||
+		अगर (hw->pkg_ver.major > ICE_PKG_SUPP_VER_MAJ ||
 		    (hw->pkg_ver.major == ICE_PKG_SUPP_VER_MAJ &&
 		     hw->pkg_ver.minor > ICE_PKG_SUPP_VER_MNR))
 			dev_err(dev, "The DDP package file version is higher than the driver supports.  Please use an updated driver.  Entering Safe Mode.\n");
-		else if (hw->pkg_ver.major < ICE_PKG_SUPP_VER_MAJ ||
+		अन्यथा अगर (hw->pkg_ver.major < ICE_PKG_SUPP_VER_MAJ ||
 			 (hw->pkg_ver.major == ICE_PKG_SUPP_VER_MAJ &&
 			  hw->pkg_ver.minor < ICE_PKG_SUPP_VER_MNR))
 			dev_err(dev, "The DDP package file version is lower than the driver supports.  The driver requires version %d.%d.x.x.  Please use an updated DDP Package file.  Entering Safe Mode.\n",
 				ICE_PKG_SUPP_VER_MAJ, ICE_PKG_SUPP_VER_MNR);
-		break;
-	case ICE_ERR_AQ_ERROR:
-		switch (hw->pkg_dwnld_status) {
-		case ICE_AQ_RC_ENOSEC:
-		case ICE_AQ_RC_EBADSIG:
+		अवरोध;
+	हाल ICE_ERR_AQ_ERROR:
+		चयन (hw->pkg_dwnld_status) अणु
+		हाल ICE_AQ_RC_ENOSEC:
+		हाल ICE_AQ_RC_EBADSIG:
 			dev_err(dev, "The DDP package could not be loaded because its signature is not valid.  Please use a valid DDP Package.  Entering Safe Mode.\n");
-			return;
-		case ICE_AQ_RC_ESVN:
+			वापस;
+		हाल ICE_AQ_RC_ESVN:
 			dev_err(dev, "The DDP Package could not be loaded because its security revision is too low.  Please use an updated DDP Package.  Entering Safe Mode.\n");
-			return;
-		case ICE_AQ_RC_EBADMAN:
-		case ICE_AQ_RC_EBADBUF:
+			वापस;
+		हाल ICE_AQ_RC_EBADMAN:
+		हाल ICE_AQ_RC_EBADBUF:
 			dev_err(dev, "An error occurred on the device while loading the DDP package.  The device will be reset.\n");
-			/* poll for reset to complete */
-			if (ice_check_reset(hw))
+			/* poll क्रम reset to complete */
+			अगर (ice_check_reset(hw))
 				dev_err(dev, "Error resetting device. Please reload the driver\n");
-			return;
-		default:
-			break;
-		}
+			वापस;
+		शेष:
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		dev_err(dev, "An unknown error (%d) occurred when loading the DDP package.  Entering Safe Mode.\n",
 			*status);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * ice_load_pkg - load/reload the DDP Package file
- * @firmware: firmware structure when firmware requested or NULL for reload
- * @pf: pointer to the PF instance
+ * @firmware: firmware काष्ठाure when firmware requested or शून्य क्रम reload
+ * @pf: poपूर्णांकer to the PF instance
  *
  * Called on probe and post CORER/GLOBR rebuild to load DDP Package and
  * initialize HW tables.
  */
-static void
-ice_load_pkg(const struct firmware *firmware, struct ice_pf *pf)
-{
-	enum ice_status status = ICE_ERR_PARAM;
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
+अटल व्योम
+ice_load_pkg(स्थिर काष्ठा firmware *firmware, काष्ठा ice_pf *pf)
+अणु
+	क्रमागत ice_status status = ICE_ERR_PARAM;
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
 
 	/* Load DDP Package */
-	if (firmware && !hw->pkg_copy) {
+	अगर (firmware && !hw->pkg_copy) अणु
 		status = ice_copy_and_init_pkg(hw, firmware->data,
 					       firmware->size);
 		ice_log_pkg_init(hw, &status);
-	} else if (!firmware && hw->pkg_copy) {
+	पूर्ण अन्यथा अगर (!firmware && hw->pkg_copy) अणु
 		/* Reload package during rebuild after CORER/GLOBR reset */
 		status = ice_init_pkg(hw, hw->pkg_copy, hw->pkg_size);
 		ice_log_pkg_init(hw, &status);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "The DDP package file failed to load. Entering Safe Mode.\n");
-	}
+	पूर्ण
 
-	if (status) {
+	अगर (status) अणु
 		/* Safe Mode */
 		clear_bit(ICE_FLAG_ADV_FEATURES, pf->flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Successful download package is the precondition for advanced
+	/* Successful करोwnload package is the precondition क्रम advanced
 	 * features, hence setting the ICE_FLAG_ADV_FEATURES flag
 	 */
 	set_bit(ICE_FLAG_ADV_FEATURES, pf->flags);
-}
+पूर्ण
 
 /**
- * ice_verify_cacheline_size - verify driver's assumption of 64 Byte cache lines
- * @pf: pointer to the PF structure
+ * ice_verअगरy_cacheline_size - verअगरy driver's assumption of 64 Byte cache lines
+ * @pf: poपूर्णांकer to the PF काष्ठाure
  *
- * There is no error returned here because the driver should be able to handle
- * 128 Byte cache lines, so we only print a warning in case issues are seen,
- * specifically with Tx.
+ * There is no error वापसed here because the driver should be able to handle
+ * 128 Byte cache lines, so we only prपूर्णांक a warning in हाल issues are seen,
+ * specअगरically with Tx.
  */
-static void ice_verify_cacheline_size(struct ice_pf *pf)
-{
-	if (rd32(&pf->hw, GLPCI_CNF2) & GLPCI_CNF2_CACHELINE_SIZE_M)
+अटल व्योम ice_verअगरy_cacheline_size(काष्ठा ice_pf *pf)
+अणु
+	अगर (rd32(&pf->hw, GLPCI_CNF2) & GLPCI_CNF2_CACHELINE_SIZE_M)
 		dev_warn(ice_pf_to_dev(pf), "%d Byte cache line assumption is invalid, driver may have Tx timeouts!\n",
 			 ICE_CACHE_LINE_BYTES);
-}
+पूर्ण
 
 /**
  * ice_send_version - update firmware with driver version
- * @pf: PF struct
+ * @pf: PF काष्ठा
  *
- * Returns ICE_SUCCESS on success, else error code
+ * Returns ICE_SUCCESS on success, अन्यथा error code
  */
-static enum ice_status ice_send_version(struct ice_pf *pf)
-{
-	struct ice_driver_ver dv;
+अटल क्रमागत ice_status ice_send_version(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_driver_ver dv;
 
 	dv.major_ver = 0xff;
 	dv.minor_ver = 0xff;
 	dv.build_ver = 0xff;
 	dv.subbuild_ver = 0;
-	strscpy((char *)dv.driver_string, UTS_RELEASE,
-		sizeof(dv.driver_string));
-	return ice_aq_send_driver_ver(&pf->hw, &dv, NULL);
-}
+	strscpy((अक्षर *)dv.driver_string, UTS_RELEASE,
+		माप(dv.driver_string));
+	वापस ice_aq_send_driver_ver(&pf->hw, &dv, शून्य);
+पूर्ण
 
 /**
  * ice_init_fdir - Initialize flow director VSI and configuration
- * @pf: pointer to the PF instance
+ * @pf: poपूर्णांकer to the PF instance
  *
- * returns 0 on success, negative on error
+ * वापसs 0 on success, negative on error
  */
-static int ice_init_fdir(struct ice_pf *pf)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_vsi *ctrl_vsi;
-	int err;
+अटल पूर्णांक ice_init_fdir(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_vsi *ctrl_vsi;
+	पूर्णांक err;
 
 	/* Side Band Flow Director needs to have a control VSI.
 	 * Allocate it and store it in the PF.
 	 */
 	ctrl_vsi = ice_ctrl_vsi_setup(pf, pf->hw.port_info);
-	if (!ctrl_vsi) {
+	अगर (!ctrl_vsi) अणु
 		dev_dbg(dev, "could not create control VSI\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	err = ice_vsi_open_ctrl(ctrl_vsi);
-	if (err) {
+	err = ice_vsi_खोलो_ctrl(ctrl_vsi);
+	अगर (err) अणु
 		dev_dbg(dev, "could not open control VSI\n");
-		goto err_vsi_open;
-	}
+		जाओ err_vsi_खोलो;
+	पूर्ण
 
 	mutex_init(&pf->hw.fdir_fltr_lock);
 
 	err = ice_fdir_create_dflt_rules(pf);
-	if (err)
-		goto err_fdir_rule;
+	अगर (err)
+		जाओ err_fdir_rule;
 
-	return 0;
+	वापस 0;
 
 err_fdir_rule:
 	ice_fdir_release_flows(&pf->hw);
-	ice_vsi_close(ctrl_vsi);
-err_vsi_open:
+	ice_vsi_बंद(ctrl_vsi);
+err_vsi_खोलो:
 	ice_vsi_release(ctrl_vsi);
-	if (pf->ctrl_vsi_idx != ICE_NO_VSI) {
-		pf->vsi[pf->ctrl_vsi_idx] = NULL;
+	अगर (pf->ctrl_vsi_idx != ICE_NO_VSI) अणु
+		pf->vsi[pf->ctrl_vsi_idx] = शून्य;
 		pf->ctrl_vsi_idx = ICE_NO_VSI;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /**
- * ice_get_opt_fw_name - return optional firmware file name or NULL
- * @pf: pointer to the PF instance
+ * ice_get_opt_fw_name - वापस optional firmware file name or शून्य
+ * @pf: poपूर्णांकer to the PF instance
  */
-static char *ice_get_opt_fw_name(struct ice_pf *pf)
-{
-	/* Optional firmware name same as default with additional dash
-	 * followed by a EUI-64 identifier (PCIe Device Serial Number)
+अटल अक्षर *ice_get_opt_fw_name(काष्ठा ice_pf *pf)
+अणु
+	/* Optional firmware name same as शेष with additional dash
+	 * followed by a EUI-64 identअगरier (PCIe Device Serial Number)
 	 */
-	struct pci_dev *pdev = pf->pdev;
-	char *opt_fw_filename;
+	काष्ठा pci_dev *pdev = pf->pdev;
+	अक्षर *opt_fw_filename;
 	u64 dsn;
 
 	/* Determine the name of the optional file using the DSN (two
 	 * dwords following the start of the DSN Capability).
 	 */
 	dsn = pci_get_dsn(pdev);
-	if (!dsn)
-		return NULL;
+	अगर (!dsn)
+		वापस शून्य;
 
 	opt_fw_filename = kzalloc(NAME_MAX, GFP_KERNEL);
-	if (!opt_fw_filename)
-		return NULL;
+	अगर (!opt_fw_filename)
+		वापस शून्य;
 
-	snprintf(opt_fw_filename, NAME_MAX, "%sice-%016llx.pkg",
+	snम_लिखो(opt_fw_filename, NAME_MAX, "%sice-%016llx.pkg",
 		 ICE_DDP_PKG_PATH, dsn);
 
-	return opt_fw_filename;
-}
+	वापस opt_fw_filename;
+पूर्ण
 
 /**
  * ice_request_fw - Device initialization routine
- * @pf: pointer to the PF instance
+ * @pf: poपूर्णांकer to the PF instance
  */
-static void ice_request_fw(struct ice_pf *pf)
-{
-	char *opt_fw_filename = ice_get_opt_fw_name(pf);
-	const struct firmware *firmware = NULL;
-	struct device *dev = ice_pf_to_dev(pf);
-	int err = 0;
+अटल व्योम ice_request_fw(काष्ठा ice_pf *pf)
+अणु
+	अक्षर *opt_fw_filename = ice_get_opt_fw_name(pf);
+	स्थिर काष्ठा firmware *firmware = शून्य;
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	पूर्णांक err = 0;
 
-	/* optional device-specific DDP (if present) overrides the default DDP
-	 * package file. kernel logs a debug message if the file doesn't exist,
-	 * and warning messages for other errors.
+	/* optional device-specअगरic DDP (अगर present) overrides the शेष DDP
+	 * package file. kernel logs a debug message अगर the file करोesn't exist,
+	 * and warning messages क्रम other errors.
 	 */
-	if (opt_fw_filename) {
+	अगर (opt_fw_filename) अणु
 		err = firmware_request_nowarn(&firmware, opt_fw_filename, dev);
-		if (err) {
-			kfree(opt_fw_filename);
-			goto dflt_pkg_load;
-		}
+		अगर (err) अणु
+			kमुक्त(opt_fw_filename);
+			जाओ dflt_pkg_load;
+		पूर्ण
 
-		/* request for firmware was successful. Download to device */
+		/* request क्रम firmware was successful. Download to device */
 		ice_load_pkg(firmware, pf);
-		kfree(opt_fw_filename);
+		kमुक्त(opt_fw_filename);
 		release_firmware(firmware);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 dflt_pkg_load:
-	err = request_firmware(&firmware, ICE_DDP_PKG_FILE, dev);
-	if (err) {
+	err = request_firmware(&firmware, ICE_DDP_PKG_खाता, dev);
+	अगर (err) अणु
 		dev_err(dev, "The DDP package file was not found or could not be read. Entering Safe Mode\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* request for firmware was successful. Download to device */
+	/* request क्रम firmware was successful. Download to device */
 	ice_load_pkg(firmware, pf);
 	release_firmware(firmware);
-}
+पूर्ण
 
 /**
- * ice_print_wake_reason - show the wake up cause in the log
- * @pf: pointer to the PF struct
+ * ice_prपूर्णांक_wake_reason - show the wake up cause in the log
+ * @pf: poपूर्णांकer to the PF काष्ठा
  */
-static void ice_print_wake_reason(struct ice_pf *pf)
-{
+अटल व्योम ice_prपूर्णांक_wake_reason(काष्ठा ice_pf *pf)
+अणु
 	u32 wus = pf->wakeup_reason;
-	const char *wake_str;
+	स्थिर अक्षर *wake_str;
 
-	/* if no wake event, nothing to print */
-	if (!wus)
-		return;
+	/* अगर no wake event, nothing to prपूर्णांक */
+	अगर (!wus)
+		वापस;
 
-	if (wus & PFPM_WUS_LNKC_M)
+	अगर (wus & PFPM_WUS_LNKC_M)
 		wake_str = "Link\n";
-	else if (wus & PFPM_WUS_MAG_M)
+	अन्यथा अगर (wus & PFPM_WUS_MAG_M)
 		wake_str = "Magic Packet\n";
-	else if (wus & PFPM_WUS_MNG_M)
+	अन्यथा अगर (wus & PFPM_WUS_MNG_M)
 		wake_str = "Management\n";
-	else if (wus & PFPM_WUS_FW_RST_WK_M)
+	अन्यथा अगर (wus & PFPM_WUS_FW_RST_WK_M)
 		wake_str = "Firmware Reset\n";
-	else
+	अन्यथा
 		wake_str = "Unknown\n";
 
 	dev_info(ice_pf_to_dev(pf), "Wake reason: %s", wake_str);
-}
+पूर्ण
 
 /**
- * ice_register_netdev - register netdev and devlink port
- * @pf: pointer to the PF struct
+ * ice_रेजिस्टर_netdev - रेजिस्टर netdev and devlink port
+ * @pf: poपूर्णांकer to the PF काष्ठा
  */
-static int ice_register_netdev(struct ice_pf *pf)
-{
-	struct ice_vsi *vsi;
-	int err = 0;
+अटल पूर्णांक ice_रेजिस्टर_netdev(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_vsi *vsi;
+	पूर्णांक err = 0;
 
-	vsi = ice_get_main_vsi(pf);
-	if (!vsi || !vsi->netdev)
-		return -EIO;
+	vsi = ice_get_मुख्य_vsi(pf);
+	अगर (!vsi || !vsi->netdev)
+		वापस -EIO;
 
-	err = register_netdev(vsi->netdev);
-	if (err)
-		goto err_register_netdev;
+	err = रेजिस्टर_netdev(vsi->netdev);
+	अगर (err)
+		जाओ err_रेजिस्टर_netdev;
 
 	set_bit(ICE_VSI_NETDEV_REGISTERED, vsi->state);
-	netif_carrier_off(vsi->netdev);
-	netif_tx_stop_all_queues(vsi->netdev);
+	netअगर_carrier_off(vsi->netdev);
+	netअगर_tx_stop_all_queues(vsi->netdev);
 	err = ice_devlink_create_port(vsi);
-	if (err)
-		goto err_devlink_create;
+	अगर (err)
+		जाओ err_devlink_create;
 
 	devlink_port_type_eth_set(&vsi->devlink_port, vsi->netdev);
 
-	return 0;
+	वापस 0;
 err_devlink_create:
-	unregister_netdev(vsi->netdev);
+	unरेजिस्टर_netdev(vsi->netdev);
 	clear_bit(ICE_VSI_NETDEV_REGISTERED, vsi->state);
-err_register_netdev:
-	free_netdev(vsi->netdev);
-	vsi->netdev = NULL;
+err_रेजिस्टर_netdev:
+	मुक्त_netdev(vsi->netdev);
+	vsi->netdev = शून्य;
 	clear_bit(ICE_VSI_NETDEV_ALLOCD, vsi->state);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_probe - Device initialization routine
- * @pdev: PCI device information struct
+ * @pdev: PCI device inक्रमmation काष्ठा
  * @ent: entry in ice_pci_tbl
  *
  * Returns 0 on success, negative on failure
  */
-static int
-ice_probe(struct pci_dev *pdev, const struct pci_device_id __always_unused *ent)
-{
-	struct device *dev = &pdev->dev;
-	struct ice_pf *pf;
-	struct ice_hw *hw;
-	int i, err;
+अटल पूर्णांक
+ice_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id __always_unused *ent)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ice_pf *pf;
+	काष्ठा ice_hw *hw;
+	पूर्णांक i, err;
 
 	/* this driver uses devres, see
 	 * Documentation/driver-api/driver-model/devres.rst
 	 */
 	err = pcim_enable_device(pdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = pcim_iomap_regions(pdev, BIT(ICE_BAR0), dev_driver_string(dev));
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "BAR0 I/O map error %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	pf = ice_allocate_pf(dev);
-	if (!pf)
-		return -ENOMEM;
+	अगर (!pf)
+		वापस -ENOMEM;
 
-	/* set up for high or low DMA */
+	/* set up क्रम high or low DMA */
 	err = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64));
-	if (err)
+	अगर (err)
 		err = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "DMA configuration failed: 0x%x\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	pci_enable_pcie_error_reporting(pdev);
 	pci_set_master(pdev);
@@ -4054,56 +4055,56 @@ ice_probe(struct pci_dev *pdev, const struct pci_device_id __always_unused *ent)
 	pci_save_state(pdev);
 
 	hw->back = pf;
-	hw->vendor_id = pdev->vendor;
+	hw->venकरोr_id = pdev->venकरोr;
 	hw->device_id = pdev->device;
-	pci_read_config_byte(pdev, PCI_REVISION_ID, &hw->revision_id);
-	hw->subsystem_vendor_id = pdev->subsystem_vendor;
-	hw->subsystem_device_id = pdev->subsystem_device;
+	pci_पढ़ो_config_byte(pdev, PCI_REVISION_ID, &hw->revision_id);
+	hw->subप्रणाली_venकरोr_id = pdev->subप्रणाली_venकरोr;
+	hw->subप्रणाली_device_id = pdev->subप्रणाली_device;
 	hw->bus.device = PCI_SLOT(pdev->devfn);
 	hw->bus.func = PCI_FUNC(pdev->devfn);
 	ice_set_ctrlq_len(hw);
 
-	pf->msg_enable = netif_msg_init(debug, ICE_DFLT_NETIF_M);
+	pf->msg_enable = netअगर_msg_init(debug, ICE_DFLT_NETIF_M);
 
-	err = ice_devlink_register(pf);
-	if (err) {
+	err = ice_devlink_रेजिस्टर(pf);
+	अगर (err) अणु
 		dev_err(dev, "ice_devlink_register failed: %d\n", err);
-		goto err_exit_unroll;
-	}
+		जाओ err_निकास_unroll;
+	पूर्ण
 
-#ifndef CONFIG_DYNAMIC_DEBUG
-	if (debug < -1)
+#अगर_अघोषित CONFIG_DYNAMIC_DEBUG
+	अगर (debug < -1)
 		hw->debug_mask = debug;
-#endif
+#पूर्ण_अगर
 
 	err = ice_init_hw(hw);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "ice_init_hw failed: %d\n", err);
 		err = -EIO;
-		goto err_exit_unroll;
-	}
+		जाओ err_निकास_unroll;
+	पूर्ण
 
 	ice_request_fw(pf);
 
-	/* if ice_request_fw fails, ICE_FLAG_ADV_FEATURES bit won't be
-	 * set in pf->state, which will cause ice_is_safe_mode to return
+	/* अगर ice_request_fw fails, ICE_FLAG_ADV_FEATURES bit won't be
+	 * set in pf->state, which will cause ice_is_safe_mode to वापस
 	 * true
 	 */
-	if (ice_is_safe_mode(pf)) {
+	अगर (ice_is_safe_mode(pf)) अणु
 		dev_err(dev, "Package download failed. Advanced features disabled - Device now in Safe Mode\n");
-		/* we already got function/device capabilities but these don't
-		 * reflect what the driver needs to do in safe mode. Instead of
+		/* we alपढ़ोy got function/device capabilities but these करोn't
+		 * reflect what the driver needs to करो in safe mode. Instead of
 		 * adding conditional logic everywhere to ignore these
 		 * device/function capabilities, override them.
 		 */
 		ice_set_safe_mode_caps(hw);
-	}
+	पूर्ण
 
 	err = ice_init_pf(pf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "ice_init_pf failed: %d\n", err);
-		goto err_init_pf_unroll;
-	}
+		जाओ err_init_pf_unroll;
+	पूर्ण
 
 	ice_devlink_init_regions(pf);
 
@@ -4112,177 +4113,177 @@ ice_probe(struct pci_dev *pdev, const struct pci_device_id __always_unused *ent)
 	pf->hw.udp_tunnel_nic.flags = UDP_TUNNEL_NIC_INFO_MAY_SLEEP;
 	pf->hw.udp_tunnel_nic.shared = &pf->hw.udp_tunnel_shared;
 	i = 0;
-	if (pf->hw.tnl.valid_count[TNL_VXLAN]) {
+	अगर (pf->hw.tnl.valid_count[TNL_VXLAN]) अणु
 		pf->hw.udp_tunnel_nic.tables[i].n_entries =
 			pf->hw.tnl.valid_count[TNL_VXLAN];
 		pf->hw.udp_tunnel_nic.tables[i].tunnel_types =
 			UDP_TUNNEL_TYPE_VXLAN;
 		i++;
-	}
-	if (pf->hw.tnl.valid_count[TNL_GENEVE]) {
+	पूर्ण
+	अगर (pf->hw.tnl.valid_count[TNL_GENEVE]) अणु
 		pf->hw.udp_tunnel_nic.tables[i].n_entries =
 			pf->hw.tnl.valid_count[TNL_GENEVE];
 		pf->hw.udp_tunnel_nic.tables[i].tunnel_types =
 			UDP_TUNNEL_TYPE_GENEVE;
 		i++;
-	}
+	पूर्ण
 
 	pf->num_alloc_vsi = hw->func_caps.guar_num_vsi;
-	if (!pf->num_alloc_vsi) {
+	अगर (!pf->num_alloc_vsi) अणु
 		err = -EIO;
-		goto err_init_pf_unroll;
-	}
-	if (pf->num_alloc_vsi > UDP_TUNNEL_NIC_MAX_SHARING_DEVICES) {
+		जाओ err_init_pf_unroll;
+	पूर्ण
+	अगर (pf->num_alloc_vsi > UDP_TUNNEL_NIC_MAX_SHARING_DEVICES) अणु
 		dev_warn(&pf->pdev->dev,
 			 "limiting the VSI count due to UDP tunnel limitation %d > %d\n",
 			 pf->num_alloc_vsi, UDP_TUNNEL_NIC_MAX_SHARING_DEVICES);
 		pf->num_alloc_vsi = UDP_TUNNEL_NIC_MAX_SHARING_DEVICES;
-	}
+	पूर्ण
 
-	pf->vsi = devm_kcalloc(dev, pf->num_alloc_vsi, sizeof(*pf->vsi),
+	pf->vsi = devm_kसुस्मृति(dev, pf->num_alloc_vsi, माप(*pf->vsi),
 			       GFP_KERNEL);
-	if (!pf->vsi) {
+	अगर (!pf->vsi) अणु
 		err = -ENOMEM;
-		goto err_init_pf_unroll;
-	}
+		जाओ err_init_pf_unroll;
+	पूर्ण
 
-	err = ice_init_interrupt_scheme(pf);
-	if (err) {
+	err = ice_init_पूर्णांकerrupt_scheme(pf);
+	अगर (err) अणु
 		dev_err(dev, "ice_init_interrupt_scheme failed: %d\n", err);
 		err = -EIO;
-		goto err_init_vsi_unroll;
-	}
+		जाओ err_init_vsi_unroll;
+	पूर्ण
 
-	/* In case of MSIX we are going to setup the misc vector right here
-	 * to handle admin queue events etc. In case of legacy and MSI
+	/* In हाल of MSIX we are going to setup the misc vector right here
+	 * to handle admin queue events etc. In हाल of legacy and MSI
 	 * the misc functionality and queue processing is combined in
-	 * the same vector and that gets setup at open.
+	 * the same vector and that माला_लो setup at खोलो.
 	 */
 	err = ice_req_irq_msix_misc(pf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "setup of misc vector failed: %d\n", err);
-		goto err_init_interrupt_unroll;
-	}
+		जाओ err_init_पूर्णांकerrupt_unroll;
+	पूर्ण
 
-	/* create switch struct for the switch element created by FW on boot */
-	pf->first_sw = devm_kzalloc(dev, sizeof(*pf->first_sw), GFP_KERNEL);
-	if (!pf->first_sw) {
+	/* create चयन काष्ठा क्रम the चयन element created by FW on boot */
+	pf->first_sw = devm_kzalloc(dev, माप(*pf->first_sw), GFP_KERNEL);
+	अगर (!pf->first_sw) अणु
 		err = -ENOMEM;
-		goto err_msix_misc_unroll;
-	}
+		जाओ err_msix_misc_unroll;
+	पूर्ण
 
-	if (hw->evb_veb)
+	अगर (hw->evb_veb)
 		pf->first_sw->bridge_mode = BRIDGE_MODE_VEB;
-	else
+	अन्यथा
 		pf->first_sw->bridge_mode = BRIDGE_MODE_VEPA;
 
 	pf->first_sw->pf = pf;
 
-	/* record the sw_id available for later use */
+	/* record the sw_id available क्रम later use */
 	pf->first_sw->sw_id = hw->port_info->sw_id;
 
 	err = ice_setup_pf_sw(pf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "probe failed due to setup PF switch: %d\n", err);
-		goto err_alloc_sw_unroll;
-	}
+		जाओ err_alloc_sw_unroll;
+	पूर्ण
 
 	clear_bit(ICE_SERVICE_DIS, pf->state);
 
 	/* tell the firmware we are up */
 	err = ice_send_version(pf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "probe failed sending driver version %s. error: %d\n",
 			UTS_RELEASE, err);
-		goto err_send_version_unroll;
-	}
+		जाओ err_send_version_unroll;
+	पूर्ण
 
-	/* since everything is good, start the service timer */
-	mod_timer(&pf->serv_tmr, round_jiffies(jiffies + pf->serv_tmr_period));
+	/* since everything is good, start the service समयr */
+	mod_समयr(&pf->serv_पंचांगr, round_jअगरfies(jअगरfies + pf->serv_पंचांगr_period));
 
 	err = ice_init_link_events(pf->hw.port_info);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "ice_init_link_events failed: %d\n", err);
-		goto err_send_version_unroll;
-	}
+		जाओ err_send_version_unroll;
+	पूर्ण
 
-	/* not a fatal error if this fails */
+	/* not a fatal error अगर this fails */
 	err = ice_init_nvm_phy_type(pf->hw.port_info);
-	if (err)
+	अगर (err)
 		dev_err(dev, "ice_init_nvm_phy_type failed: %d\n", err);
 
-	/* not a fatal error if this fails */
+	/* not a fatal error अगर this fails */
 	err = ice_update_link_info(pf->hw.port_info);
-	if (err)
+	अगर (err)
 		dev_err(dev, "ice_update_link_info failed: %d\n", err);
 
 	ice_init_link_dflt_override(pf->hw.port_info);
 
-	/* if media available, initialize PHY settings */
-	if (pf->hw.port_info->phy.link_info.link_info &
-	    ICE_AQ_MEDIA_AVAILABLE) {
-		/* not a fatal error if this fails */
+	/* अगर media available, initialize PHY settings */
+	अगर (pf->hw.port_info->phy.link_info.link_info &
+	    ICE_AQ_MEDIA_AVAILABLE) अणु
+		/* not a fatal error अगर this fails */
 		err = ice_init_phy_user_cfg(pf->hw.port_info);
-		if (err)
+		अगर (err)
 			dev_err(dev, "ice_init_phy_user_cfg failed: %d\n", err);
 
-		if (!test_bit(ICE_FLAG_LINK_DOWN_ON_CLOSE_ENA, pf->flags)) {
-			struct ice_vsi *vsi = ice_get_main_vsi(pf);
+		अगर (!test_bit(ICE_FLAG_LINK_DOWN_ON_CLOSE_ENA, pf->flags)) अणु
+			काष्ठा ice_vsi *vsi = ice_get_मुख्य_vsi(pf);
 
-			if (vsi)
+			अगर (vsi)
 				ice_configure_phy(vsi);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		set_bit(ICE_FLAG_NO_MEDIA, pf->flags);
-	}
+	पूर्ण
 
-	ice_verify_cacheline_size(pf);
+	ice_verअगरy_cacheline_size(pf);
 
-	/* Save wakeup reason register for later use */
+	/* Save wakeup reason रेजिस्टर क्रम later use */
 	pf->wakeup_reason = rd32(hw, PFPM_WUS);
 
-	/* check for a power management event */
-	ice_print_wake_reason(pf);
+	/* check क्रम a घातer management event */
+	ice_prपूर्णांक_wake_reason(pf);
 
 	/* clear wake status, all bits */
 	wr32(hw, PFPM_WUS, U32_MAX);
 
-	/* Disable WoL at init, wait for user to enable */
+	/* Disable WoL at init, रुको क्रम user to enable */
 	device_set_wakeup_enable(dev, false);
 
-	if (ice_is_safe_mode(pf)) {
+	अगर (ice_is_safe_mode(pf)) अणु
 		ice_set_safe_mode_vlan_cfg(pf);
-		goto probe_done;
-	}
+		जाओ probe_करोne;
+	पूर्ण
 
 	/* initialize DDP driven features */
 
 	/* Note: Flow director init failure is non-fatal to load */
-	if (ice_init_fdir(pf))
+	अगर (ice_init_fdir(pf))
 		dev_err(dev, "could not initialize flow director\n");
 
 	/* Note: DCB init failure is non-fatal to load */
-	if (ice_init_pf_dcb(pf, false)) {
+	अगर (ice_init_pf_dcb(pf, false)) अणु
 		clear_bit(ICE_FLAG_DCB_CAPABLE, pf->flags);
 		clear_bit(ICE_FLAG_DCB_ENA, pf->flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		ice_cfg_lldp_mib_change(&pf->hw, true);
-	}
+	पूर्ण
 
-	if (ice_init_lag(pf))
+	अगर (ice_init_lag(pf))
 		dev_warn(dev, "Failed to init link aggregation support\n");
 
-	/* print PCI link speed and width */
-	pcie_print_link_status(pf->pdev);
+	/* prपूर्णांक PCI link speed and width */
+	pcie_prपूर्णांक_link_status(pf->pdev);
 
-probe_done:
-	err = ice_register_netdev(pf);
-	if (err)
-		goto err_netdev_reg;
+probe_करोne:
+	err = ice_रेजिस्टर_netdev(pf);
+	अगर (err)
+		जाओ err_netdev_reg;
 
-	/* ready to go, so clear down state bit */
+	/* पढ़ोy to go, so clear करोwn state bit */
 	clear_bit(ICE_DOWN, pf->state);
-	return 0;
+	वापस 0;
 
 err_netdev_reg:
 err_send_version_unroll:
@@ -4290,33 +4291,33 @@ err_send_version_unroll:
 err_alloc_sw_unroll:
 	set_bit(ICE_SERVICE_DIS, pf->state);
 	set_bit(ICE_DOWN, pf->state);
-	devm_kfree(dev, pf->first_sw);
+	devm_kमुक्त(dev, pf->first_sw);
 err_msix_misc_unroll:
-	ice_free_irq_msix_misc(pf);
-err_init_interrupt_unroll:
-	ice_clear_interrupt_scheme(pf);
+	ice_मुक्त_irq_msix_misc(pf);
+err_init_पूर्णांकerrupt_unroll:
+	ice_clear_पूर्णांकerrupt_scheme(pf);
 err_init_vsi_unroll:
-	devm_kfree(dev, pf->vsi);
+	devm_kमुक्त(dev, pf->vsi);
 err_init_pf_unroll:
 	ice_deinit_pf(pf);
 	ice_devlink_destroy_regions(pf);
 	ice_deinit_hw(hw);
-err_exit_unroll:
-	ice_devlink_unregister(pf);
+err_निकास_unroll:
+	ice_devlink_unरेजिस्टर(pf);
 	pci_disable_pcie_error_reporting(pdev);
 	pci_disable_device(pdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_set_wake - enable or disable Wake on LAN
- * @pf: pointer to the PF struct
+ * @pf: poपूर्णांकer to the PF काष्ठा
  *
- * Simple helper for WoL control
+ * Simple helper क्रम WoL control
  */
-static void ice_set_wake(struct ice_pf *pf)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल व्योम ice_set_wake(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 	bool wol = pf->wol_ena;
 
 	/* clear wake state, otherwise new wake events won't fire */
@@ -4327,864 +4328,864 @@ static void ice_set_wake(struct ice_pf *pf)
 
 	/* set magic packet filter enabled */
 	wr32(hw, PFPM_WUFC, wol ? PFPM_WUFC_MAG_M : 0);
-}
+पूर्ण
 
 /**
  * ice_setup_mc_magic_wake - setup device to wake on multicast magic packet
- * @pf: pointer to the PF struct
+ * @pf: poपूर्णांकer to the PF काष्ठा
  *
  * Issue firmware command to enable multicast magic wake, making
- * sure that any locally administered address (LAA) is used for
- * wake, and that PF reset doesn't undo the LAA.
+ * sure that any locally administered address (LAA) is used क्रम
+ * wake, and that PF reset करोesn't unकरो the LAA.
  */
-static void ice_setup_mc_magic_wake(struct ice_pf *pf)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
-	enum ice_status status;
+अटल व्योम ice_setup_mc_magic_wake(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
+	क्रमागत ice_status status;
 	u8 mac_addr[ETH_ALEN];
-	struct ice_vsi *vsi;
+	काष्ठा ice_vsi *vsi;
 	u8 flags;
 
-	if (!pf->wol_ena)
-		return;
+	अगर (!pf->wol_ena)
+		वापस;
 
-	vsi = ice_get_main_vsi(pf);
-	if (!vsi)
-		return;
+	vsi = ice_get_मुख्य_vsi(pf);
+	अगर (!vsi)
+		वापस;
 
-	/* Get current MAC address in case it's an LAA */
-	if (vsi->netdev)
+	/* Get current MAC address in हाल it's an LAA */
+	अगर (vsi->netdev)
 		ether_addr_copy(mac_addr, vsi->netdev->dev_addr);
-	else
+	अन्यथा
 		ether_addr_copy(mac_addr, vsi->port_info->mac.perm_addr);
 
 	flags = ICE_AQC_MAN_MAC_WR_MC_MAG_EN |
 		ICE_AQC_MAN_MAC_UPDATE_LAA_WOL |
 		ICE_AQC_MAN_MAC_WR_WOL_LAA_PFR_KEEP;
 
-	status = ice_aq_manage_mac_write(hw, mac_addr, flags, NULL);
-	if (status)
+	status = ice_aq_manage_mac_ग_लिखो(hw, mac_addr, flags, शून्य);
+	अगर (status)
 		dev_err(dev, "Failed to enable Multicast Magic Packet wake, err %s aq_err %s\n",
 			ice_stat_str(status),
 			ice_aq_str(hw->adminq.sq_last_status));
-}
+पूर्ण
 
 /**
- * ice_remove - Device removal routine
- * @pdev: PCI device information struct
+ * ice_हटाओ - Device removal routine
+ * @pdev: PCI device inक्रमmation काष्ठा
  */
-static void ice_remove(struct pci_dev *pdev)
-{
-	struct ice_pf *pf = pci_get_drvdata(pdev);
-	int i;
+अटल व्योम ice_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ice_pf *pf = pci_get_drvdata(pdev);
+	पूर्णांक i;
 
-	if (!pf)
-		return;
+	अगर (!pf)
+		वापस;
 
-	for (i = 0; i < ICE_MAX_RESET_WAIT; i++) {
-		if (!ice_is_reset_in_progress(pf->state))
-			break;
+	क्रम (i = 0; i < ICE_MAX_RESET_WAIT; i++) अणु
+		अगर (!ice_is_reset_in_progress(pf->state))
+			अवरोध;
 		msleep(100);
-	}
+	पूर्ण
 
-	if (test_bit(ICE_FLAG_SRIOV_ENA, pf->flags)) {
+	अगर (test_bit(ICE_FLAG_SRIOV_ENA, pf->flags)) अणु
 		set_bit(ICE_VF_RESETS_DISABLED, pf->state);
-		ice_free_vfs(pf);
-	}
+		ice_मुक्त_vfs(pf);
+	पूर्ण
 
 	set_bit(ICE_DOWN, pf->state);
 	ice_service_task_stop(pf);
 
-	ice_aq_cancel_waiting_tasks(pf);
+	ice_aq_cancel_रुकोing_tasks(pf);
 
 	mutex_destroy(&(&pf->hw)->fdir_fltr_lock);
 	ice_deinit_lag(pf);
-	if (!ice_is_safe_mode(pf))
-		ice_remove_arfs(pf);
+	अगर (!ice_is_safe_mode(pf))
+		ice_हटाओ_arfs(pf);
 	ice_setup_mc_magic_wake(pf);
 	ice_vsi_release_all(pf);
 	ice_set_wake(pf);
-	ice_free_irq_msix_misc(pf);
-	ice_for_each_vsi(pf, i) {
-		if (!pf->vsi[i])
-			continue;
-		ice_vsi_free_q_vectors(pf->vsi[i]);
-	}
+	ice_मुक्त_irq_msix_misc(pf);
+	ice_क्रम_each_vsi(pf, i) अणु
+		अगर (!pf->vsi[i])
+			जारी;
+		ice_vsi_मुक्त_q_vectors(pf->vsi[i]);
+	पूर्ण
 	ice_deinit_pf(pf);
 	ice_devlink_destroy_regions(pf);
 	ice_deinit_hw(&pf->hw);
-	ice_devlink_unregister(pf);
+	ice_devlink_unरेजिस्टर(pf);
 
 	/* Issue a PFR as part of the prescribed driver unload flow.  Do not
-	 * do it via ice_schedule_reset() since there is no need to rebuild
-	 * and the service task is already stopped.
+	 * करो it via ice_schedule_reset() since there is no need to rebuild
+	 * and the service task is alपढ़ोy stopped.
 	 */
 	ice_reset(&pf->hw, ICE_RESET_PFR);
-	pci_wait_for_pending_transaction(pdev);
-	ice_clear_interrupt_scheme(pf);
+	pci_रुको_क्रम_pending_transaction(pdev);
+	ice_clear_पूर्णांकerrupt_scheme(pf);
 	pci_disable_pcie_error_reporting(pdev);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
 /**
- * ice_shutdown - PCI callback for shutting down device
- * @pdev: PCI device information struct
+ * ice_shutकरोwn - PCI callback क्रम shutting करोwn device
+ * @pdev: PCI device inक्रमmation काष्ठा
  */
-static void ice_shutdown(struct pci_dev *pdev)
-{
-	struct ice_pf *pf = pci_get_drvdata(pdev);
+अटल व्योम ice_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ice_pf *pf = pci_get_drvdata(pdev);
 
-	ice_remove(pdev);
+	ice_हटाओ(pdev);
 
-	if (system_state == SYSTEM_POWER_OFF) {
+	अगर (प्रणाली_state == SYSTEM_POWER_OFF) अणु
 		pci_wake_from_d3(pdev, pf->wol_ena);
-		pci_set_power_state(pdev, PCI_D3hot);
-	}
-}
+		pci_set_घातer_state(pdev, PCI_D3hot);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /**
- * ice_prepare_for_shutdown - prep for PCI shutdown
- * @pf: board private structure
+ * ice_prepare_क्रम_shutकरोwn - prep क्रम PCI shutकरोwn
+ * @pf: board निजी काष्ठाure
  *
- * Inform or close all dependent features in prep for PCI device shutdown
+ * Inक्रमm or बंद all dependent features in prep क्रम PCI device shutकरोwn
  */
-static void ice_prepare_for_shutdown(struct ice_pf *pf)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल व्योम ice_prepare_क्रम_shutकरोwn(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 	u32 v;
 
-	/* Notify VFs of impending reset */
-	if (ice_check_sq_alive(hw, &hw->mailboxq))
-		ice_vc_notify_reset(pf);
+	/* Notअगरy VFs of impending reset */
+	अगर (ice_check_sq_alive(hw, &hw->mailboxq))
+		ice_vc_notअगरy_reset(pf);
 
 	dev_dbg(ice_pf_to_dev(pf), "Tearing down internal switch for shutdown\n");
 
-	/* disable the VSIs and their queues that are not already DOWN */
+	/* disable the VSIs and their queues that are not alपढ़ोy DOWN */
 	ice_pf_dis_all_vsi(pf, false);
 
-	ice_for_each_vsi(pf, v)
-		if (pf->vsi[v])
+	ice_क्रम_each_vsi(pf, v)
+		अगर (pf->vsi[v])
 			pf->vsi[v]->vsi_num = 0;
 
-	ice_shutdown_all_ctrlq(hw);
-}
+	ice_shutकरोwn_all_ctrlq(hw);
+पूर्ण
 
 /**
- * ice_reinit_interrupt_scheme - Reinitialize interrupt scheme
- * @pf: board private structure to reinitialize
+ * ice_reinit_पूर्णांकerrupt_scheme - Reinitialize पूर्णांकerrupt scheme
+ * @pf: board निजी काष्ठाure to reinitialize
  *
- * This routine reinitialize interrupt scheme that was cleared during
- * power management suspend callback.
+ * This routine reinitialize पूर्णांकerrupt scheme that was cleared during
+ * घातer management suspend callback.
  *
  * This should be called during resume routine to re-allocate the q_vectors
- * and reacquire interrupts.
+ * and reacquire पूर्णांकerrupts.
  */
-static int ice_reinit_interrupt_scheme(struct ice_pf *pf)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	int ret, v;
+अटल पूर्णांक ice_reinit_पूर्णांकerrupt_scheme(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	पूर्णांक ret, v;
 
 	/* Since we clear MSIX flag during suspend, we need to
 	 * set it back during resume...
 	 */
 
-	ret = ice_init_interrupt_scheme(pf);
-	if (ret) {
+	ret = ice_init_पूर्णांकerrupt_scheme(pf);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to re-initialize interrupt %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Remap vectors and rings, after successful re-init interrupts */
-	ice_for_each_vsi(pf, v) {
-		if (!pf->vsi[v])
-			continue;
+	/* Remap vectors and rings, after successful re-init पूर्णांकerrupts */
+	ice_क्रम_each_vsi(pf, v) अणु
+		अगर (!pf->vsi[v])
+			जारी;
 
 		ret = ice_vsi_alloc_q_vectors(pf->vsi[v]);
-		if (ret)
-			goto err_reinit;
+		अगर (ret)
+			जाओ err_reinit;
 		ice_vsi_map_rings_to_vectors(pf->vsi[v]);
-	}
+	पूर्ण
 
 	ret = ice_req_irq_msix_misc(pf);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Setting up misc vector failed after device suspend %d\n",
 			ret);
-		goto err_reinit;
-	}
+		जाओ err_reinit;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_reinit:
-	while (v--)
-		if (pf->vsi[v])
-			ice_vsi_free_q_vectors(pf->vsi[v]);
+	जबतक (v--)
+		अगर (pf->vsi[v])
+			ice_vsi_मुक्त_q_vectors(pf->vsi[v]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ice_suspend
- * @dev: generic device information structure
+ * @dev: generic device inक्रमmation काष्ठाure
  *
  * Power Management callback to quiesce the device and prepare
- * for D3 transition.
+ * क्रम D3 transition.
  */
-static int __maybe_unused ice_suspend(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct ice_pf *pf;
-	int disabled, v;
+अटल पूर्णांक __maybe_unused ice_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा ice_pf *pf;
+	पूर्णांक disabled, v;
 
 	pf = pci_get_drvdata(pdev);
 
-	if (!ice_pf_state_is_nominal(pf)) {
+	अगर (!ice_pf_state_is_nominal(pf)) अणु
 		dev_err(dev, "Device is not ready, no need to suspend it\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Stop watchdog tasks until resume completion.
+	/* Stop watchकरोg tasks until resume completion.
 	 * Even though it is most likely that the service task is
-	 * disabled if the device is suspended or down, the service task's
-	 * state is controlled by a different state bit, and we should
-	 * store and honor whatever state that bit is in at this point.
+	 * disabled अगर the device is suspended or करोwn, the service task's
+	 * state is controlled by a dअगरferent state bit, and we should
+	 * store and honor whatever state that bit is in at this poपूर्णांक.
 	 */
 	disabled = ice_service_task_stop(pf);
 
-	/* Already suspended?, then there is nothing to do */
-	if (test_and_set_bit(ICE_SUSPENDED, pf->state)) {
-		if (!disabled)
+	/* Alपढ़ोy suspended?, then there is nothing to करो */
+	अगर (test_and_set_bit(ICE_SUSPENDED, pf->state)) अणु
+		अगर (!disabled)
 			ice_service_task_restart(pf);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (test_bit(ICE_DOWN, pf->state) ||
-	    ice_is_reset_in_progress(pf->state)) {
+	अगर (test_bit(ICE_DOWN, pf->state) ||
+	    ice_is_reset_in_progress(pf->state)) अणु
 		dev_err(dev, "can't suspend device in reset or already down\n");
-		if (!disabled)
+		अगर (!disabled)
 			ice_service_task_restart(pf);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ice_setup_mc_magic_wake(pf);
 
-	ice_prepare_for_shutdown(pf);
+	ice_prepare_क्रम_shutकरोwn(pf);
 
 	ice_set_wake(pf);
 
-	/* Free vectors, clear the interrupt scheme and release IRQs
-	 * for proper hibernation, especially with large number of CPUs.
+	/* Free vectors, clear the पूर्णांकerrupt scheme and release IRQs
+	 * क्रम proper hibernation, especially with large number of CPUs.
 	 * Otherwise hibernation might fail when mapping all the vectors back
 	 * to CPU0.
 	 */
-	ice_free_irq_msix_misc(pf);
-	ice_for_each_vsi(pf, v) {
-		if (!pf->vsi[v])
-			continue;
-		ice_vsi_free_q_vectors(pf->vsi[v]);
-	}
-	ice_free_cpu_rx_rmap(ice_get_main_vsi(pf));
-	ice_clear_interrupt_scheme(pf);
+	ice_मुक्त_irq_msix_misc(pf);
+	ice_क्रम_each_vsi(pf, v) अणु
+		अगर (!pf->vsi[v])
+			जारी;
+		ice_vsi_मुक्त_q_vectors(pf->vsi[v]);
+	पूर्ण
+	ice_मुक्त_cpu_rx_rmap(ice_get_मुख्य_vsi(pf));
+	ice_clear_पूर्णांकerrupt_scheme(pf);
 
 	pci_save_state(pdev);
 	pci_wake_from_d3(pdev, pf->wol_ena);
-	pci_set_power_state(pdev, PCI_D3hot);
-	return 0;
-}
+	pci_set_घातer_state(pdev, PCI_D3hot);
+	वापस 0;
+पूर्ण
 
 /**
- * ice_resume - PM callback for waking up from D3
- * @dev: generic device information structure
+ * ice_resume - PM callback क्रम waking up from D3
+ * @dev: generic device inक्रमmation काष्ठाure
  */
-static int __maybe_unused ice_resume(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	enum ice_reset_req reset_type;
-	struct ice_pf *pf;
-	struct ice_hw *hw;
-	int ret;
+अटल पूर्णांक __maybe_unused ice_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	क्रमागत ice_reset_req reset_type;
+	काष्ठा ice_pf *pf;
+	काष्ठा ice_hw *hw;
+	पूर्णांक ret;
 
-	pci_set_power_state(pdev, PCI_D0);
+	pci_set_घातer_state(pdev, PCI_D0);
 	pci_restore_state(pdev);
 	pci_save_state(pdev);
 
-	if (!pci_device_is_present(pdev))
-		return -ENODEV;
+	अगर (!pci_device_is_present(pdev))
+		वापस -ENODEV;
 
 	ret = pci_enable_device_mem(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot enable device after suspend\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pf = pci_get_drvdata(pdev);
 	hw = &pf->hw;
 
 	pf->wakeup_reason = rd32(hw, PFPM_WUS);
-	ice_print_wake_reason(pf);
+	ice_prपूर्णांक_wake_reason(pf);
 
-	/* We cleared the interrupt scheme when we suspended, so we need to
+	/* We cleared the पूर्णांकerrupt scheme when we suspended, so we need to
 	 * restore it now to resume device functionality.
 	 */
-	ret = ice_reinit_interrupt_scheme(pf);
-	if (ret)
+	ret = ice_reinit_पूर्णांकerrupt_scheme(pf);
+	अगर (ret)
 		dev_err(dev, "Cannot restore interrupt scheme: %d\n", ret);
 
 	clear_bit(ICE_DOWN, pf->state);
-	/* Now perform PF reset and rebuild */
+	/* Now perक्रमm PF reset and rebuild */
 	reset_type = ICE_RESET_PFR;
-	/* re-enable service task for reset, but allow reset to schedule it */
+	/* re-enable service task क्रम reset, but allow reset to schedule it */
 	clear_bit(ICE_SERVICE_DIS, pf->state);
 
-	if (ice_schedule_reset(pf, reset_type))
+	अगर (ice_schedule_reset(pf, reset_type))
 		dev_err(dev, "Reset during resume failed.\n");
 
 	clear_bit(ICE_SUSPENDED, pf->state);
 	ice_service_task_restart(pf);
 
 	/* Restart the service task */
-	mod_timer(&pf->serv_tmr, round_jiffies(jiffies + pf->serv_tmr_period));
+	mod_समयr(&pf->serv_पंचांगr, round_jअगरfies(jअगरfies + pf->serv_पंचांगr_period));
 
-	return 0;
-}
-#endif /* CONFIG_PM */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
 /**
  * ice_pci_err_detected - warning that PCI error has been detected
- * @pdev: PCI device information struct
+ * @pdev: PCI device inक्रमmation काष्ठा
  * @err: the type of PCI error
  *
  * Called to warn that something happened on the PCI bus and the error handling
  * is in progress.  Allows the driver to gracefully prepare/handle PCI errors.
  */
-static pci_ers_result_t
-ice_pci_err_detected(struct pci_dev *pdev, pci_channel_state_t err)
-{
-	struct ice_pf *pf = pci_get_drvdata(pdev);
+अटल pci_ers_result_t
+ice_pci_err_detected(काष्ठा pci_dev *pdev, pci_channel_state_t err)
+अणु
+	काष्ठा ice_pf *pf = pci_get_drvdata(pdev);
 
-	if (!pf) {
+	अगर (!pf) अणु
 		dev_err(&pdev->dev, "%s: unrecoverable device error %d\n",
 			__func__, err);
-		return PCI_ERS_RESULT_DISCONNECT;
-	}
+		वापस PCI_ERS_RESULT_DISCONNECT;
+	पूर्ण
 
-	if (!test_bit(ICE_SUSPENDED, pf->state)) {
+	अगर (!test_bit(ICE_SUSPENDED, pf->state)) अणु
 		ice_service_task_stop(pf);
 
-		if (!test_bit(ICE_PREPARED_FOR_RESET, pf->state)) {
+		अगर (!test_bit(ICE_PREPARED_FOR_RESET, pf->state)) अणु
 			set_bit(ICE_PFR_REQ, pf->state);
-			ice_prepare_for_reset(pf);
-		}
-	}
+			ice_prepare_क्रम_reset(pf);
+		पूर्ण
+	पूर्ण
 
-	return PCI_ERS_RESULT_NEED_RESET;
-}
+	वापस PCI_ERS_RESULT_NEED_RESET;
+पूर्ण
 
 /**
  * ice_pci_err_slot_reset - a PCI slot reset has just happened
- * @pdev: PCI device information struct
+ * @pdev: PCI device inक्रमmation काष्ठा
  *
- * Called to determine if the driver can recover from the PCI slot reset by
- * using a register read to determine if the device is recoverable.
+ * Called to determine अगर the driver can recover from the PCI slot reset by
+ * using a रेजिस्टर पढ़ो to determine अगर the device is recoverable.
  */
-static pci_ers_result_t ice_pci_err_slot_reset(struct pci_dev *pdev)
-{
-	struct ice_pf *pf = pci_get_drvdata(pdev);
+अटल pci_ers_result_t ice_pci_err_slot_reset(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ice_pf *pf = pci_get_drvdata(pdev);
 	pci_ers_result_t result;
-	int err;
+	पूर्णांक err;
 	u32 reg;
 
 	err = pci_enable_device_mem(pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Cannot re-enable PCI device after reset, error %d\n",
 			err);
 		result = PCI_ERS_RESULT_DISCONNECT;
-	} else {
+	पूर्ण अन्यथा अणु
 		pci_set_master(pdev);
 		pci_restore_state(pdev);
 		pci_save_state(pdev);
 		pci_wake_from_d3(pdev, false);
 
-		/* Check for life */
+		/* Check क्रम lअगरe */
 		reg = rd32(&pf->hw, GLGEN_RTRIG);
-		if (!reg)
+		अगर (!reg)
 			result = PCI_ERS_RESULT_RECOVERED;
-		else
+		अन्यथा
 			result = PCI_ERS_RESULT_DISCONNECT;
-	}
+	पूर्ण
 
 	err = pci_aer_clear_nonfatal_status(pdev);
-	if (err)
+	अगर (err)
 		dev_dbg(&pdev->dev, "pci_aer_clear_nonfatal_status() failed, error %d\n",
 			err);
-		/* non-fatal, continue */
+		/* non-fatal, जारी */
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * ice_pci_err_resume - restart operations after PCI error recovery
- * @pdev: PCI device information struct
+ * @pdev: PCI device inक्रमmation काष्ठा
  *
  * Called to allow the driver to bring things back up after PCI error and/or
  * reset recovery have finished
  */
-static void ice_pci_err_resume(struct pci_dev *pdev)
-{
-	struct ice_pf *pf = pci_get_drvdata(pdev);
+अटल व्योम ice_pci_err_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ice_pf *pf = pci_get_drvdata(pdev);
 
-	if (!pf) {
+	अगर (!pf) अणु
 		dev_err(&pdev->dev, "%s failed, device is unrecoverable\n",
 			__func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (test_bit(ICE_SUSPENDED, pf->state)) {
+	अगर (test_bit(ICE_SUSPENDED, pf->state)) अणु
 		dev_dbg(&pdev->dev, "%s failed to resume normal operations!\n",
 			__func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ice_restore_all_vfs_msi_state(pdev);
 
-	ice_do_reset(pf, ICE_RESET_PFR);
+	ice_करो_reset(pf, ICE_RESET_PFR);
 	ice_service_task_restart(pf);
-	mod_timer(&pf->serv_tmr, round_jiffies(jiffies + pf->serv_tmr_period));
-}
+	mod_समयr(&pf->serv_पंचांगr, round_jअगरfies(jअगरfies + pf->serv_पंचांगr_period));
+पूर्ण
 
 /**
- * ice_pci_err_reset_prepare - prepare device driver for PCI reset
- * @pdev: PCI device information struct
+ * ice_pci_err_reset_prepare - prepare device driver क्रम PCI reset
+ * @pdev: PCI device inक्रमmation काष्ठा
  */
-static void ice_pci_err_reset_prepare(struct pci_dev *pdev)
-{
-	struct ice_pf *pf = pci_get_drvdata(pdev);
+अटल व्योम ice_pci_err_reset_prepare(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ice_pf *pf = pci_get_drvdata(pdev);
 
-	if (!test_bit(ICE_SUSPENDED, pf->state)) {
+	अगर (!test_bit(ICE_SUSPENDED, pf->state)) अणु
 		ice_service_task_stop(pf);
 
-		if (!test_bit(ICE_PREPARED_FOR_RESET, pf->state)) {
+		अगर (!test_bit(ICE_PREPARED_FOR_RESET, pf->state)) अणु
 			set_bit(ICE_PFR_REQ, pf->state);
-			ice_prepare_for_reset(pf);
-		}
-	}
-}
+			ice_prepare_क्रम_reset(pf);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * ice_pci_err_reset_done - PCI reset done, device driver reset can begin
- * @pdev: PCI device information struct
+ * ice_pci_err_reset_करोne - PCI reset करोne, device driver reset can begin
+ * @pdev: PCI device inक्रमmation काष्ठा
  */
-static void ice_pci_err_reset_done(struct pci_dev *pdev)
-{
+अटल व्योम ice_pci_err_reset_करोne(काष्ठा pci_dev *pdev)
+अणु
 	ice_pci_err_resume(pdev);
-}
+पूर्ण
 
 /* ice_pci_tbl - PCI Device ID Table
  *
  * Wildcard entries (PCI_ANY_ID) should come last
  * Last entry must be all 0s
  *
- * { Vendor ID, Device ID, SubVendor ID, SubDevice ID,
- *   Class, Class Mask, private data (not used) }
+ * अणु Venकरोr ID, Device ID, SubVenकरोr ID, SubDevice ID,
+ *   Class, Class Mask, निजी data (not used) पूर्ण
  */
-static const struct pci_device_id ice_pci_tbl[] = {
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E810C_BACKPLANE), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E810C_QSFP), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E810C_SFP), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E810_XXV_SFP), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_BACKPLANE), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_QSFP), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_SFP), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_10G_BASE_T), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_SGMII), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_BACKPLANE), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_QSFP), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_SFP), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_10G_BASE_T), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_SGMII), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E822L_BACKPLANE), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E822L_SFP), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E822L_10G_BASE_T), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E822L_SGMII), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_BACKPLANE), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_SFP), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_10G_BASE_T), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_1GBE), 0 },
-	{ PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_QSFP), 0 },
+अटल स्थिर काष्ठा pci_device_id ice_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E810C_BACKPLANE), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E810C_QSFP), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E810C_SFP), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E810_XXV_SFP), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_BACKPLANE), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_QSFP), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_SFP), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_10G_BASE_T), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823C_SGMII), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_BACKPLANE), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_QSFP), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_SFP), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_10G_BASE_T), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E822C_SGMII), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E822L_BACKPLANE), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E822L_SFP), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E822L_10G_BASE_T), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E822L_SGMII), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_BACKPLANE), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_SFP), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_10G_BASE_T), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_1GBE), 0 पूर्ण,
+	अणु PCI_VDEVICE(INTEL, ICE_DEV_ID_E823L_QSFP), 0 पूर्ण,
 	/* required last entry */
-	{ 0, }
-};
+	अणु 0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, ice_pci_tbl);
 
-static __maybe_unused SIMPLE_DEV_PM_OPS(ice_pm_ops, ice_suspend, ice_resume);
+अटल __maybe_unused SIMPLE_DEV_PM_OPS(ice_pm_ops, ice_suspend, ice_resume);
 
-static const struct pci_error_handlers ice_pci_err_handler = {
+अटल स्थिर काष्ठा pci_error_handlers ice_pci_err_handler = अणु
 	.error_detected = ice_pci_err_detected,
 	.slot_reset = ice_pci_err_slot_reset,
 	.reset_prepare = ice_pci_err_reset_prepare,
-	.reset_done = ice_pci_err_reset_done,
+	.reset_करोne = ice_pci_err_reset_करोne,
 	.resume = ice_pci_err_resume
-};
+पूर्ण;
 
-static struct pci_driver ice_driver = {
+अटल काष्ठा pci_driver ice_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = ice_pci_tbl,
 	.probe = ice_probe,
-	.remove = ice_remove,
-#ifdef CONFIG_PM
+	.हटाओ = ice_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.driver.pm = &ice_pm_ops,
-#endif /* CONFIG_PM */
-	.shutdown = ice_shutdown,
+#पूर्ण_अगर /* CONFIG_PM */
+	.shutकरोwn = ice_shutकरोwn,
 	.sriov_configure = ice_sriov_configure,
 	.err_handler = &ice_pci_err_handler
-};
+पूर्ण;
 
 /**
  * ice_module_init - Driver registration routine
  *
  * ice_module_init is the first routine called when the driver is
- * loaded. All it does is register with the PCI subsystem.
+ * loaded. All it करोes is रेजिस्टर with the PCI subप्रणाली.
  */
-static int __init ice_module_init(void)
-{
-	int status;
+अटल पूर्णांक __init ice_module_init(व्योम)
+अणु
+	पूर्णांक status;
 
 	pr_info("%s\n", ice_driver_string);
 	pr_info("%s\n", ice_copyright);
 
 	ice_wq = alloc_workqueue("%s", WQ_MEM_RECLAIM, 0, KBUILD_MODNAME);
-	if (!ice_wq) {
+	अगर (!ice_wq) अणु
 		pr_err("Failed to create workqueue\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	status = pci_register_driver(&ice_driver);
-	if (status) {
+	status = pci_रेजिस्टर_driver(&ice_driver);
+	अगर (status) अणु
 		pr_err("failed to register PCI driver, err %d\n", status);
 		destroy_workqueue(ice_wq);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 module_init(ice_module_init);
 
 /**
- * ice_module_exit - Driver exit cleanup routine
+ * ice_module_निकास - Driver निकास cleanup routine
  *
- * ice_module_exit is called just before the driver is removed
+ * ice_module_निकास is called just beक्रमe the driver is हटाओd
  * from memory.
  */
-static void __exit ice_module_exit(void)
-{
-	pci_unregister_driver(&ice_driver);
+अटल व्योम __निकास ice_module_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&ice_driver);
 	destroy_workqueue(ice_wq);
 	pr_info("module unloaded\n");
-}
-module_exit(ice_module_exit);
+पूर्ण
+module_निकास(ice_module_निकास);
 
 /**
  * ice_set_mac_address - NDO callback to set MAC address
- * @netdev: network interface device structure
- * @pi: pointer to an address structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @pi: poपूर्णांकer to an address काष्ठाure
  *
  * Returns 0 on success, negative on failure
  */
-static int ice_set_mac_address(struct net_device *netdev, void *pi)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
-	struct ice_pf *pf = vsi->back;
-	struct ice_hw *hw = &pf->hw;
-	struct sockaddr *addr = pi;
-	enum ice_status status;
+अटल पूर्णांक ice_set_mac_address(काष्ठा net_device *netdev, व्योम *pi)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
+	काष्ठा ice_pf *pf = vsi->back;
+	काष्ठा ice_hw *hw = &pf->hw;
+	काष्ठा sockaddr *addr = pi;
+	क्रमागत ice_status status;
 	u8 flags = 0;
-	int err = 0;
+	पूर्णांक err = 0;
 	u8 *mac;
 
 	mac = (u8 *)addr->sa_data;
 
-	if (!is_valid_ether_addr(mac))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(mac))
+		वापस -EADDRNOTAVAIL;
 
-	if (ether_addr_equal(netdev->dev_addr, mac)) {
+	अगर (ether_addr_equal(netdev->dev_addr, mac)) अणु
 		netdev_warn(netdev, "already using mac %pM\n", mac);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (test_bit(ICE_DOWN, pf->state) ||
-	    ice_is_reset_in_progress(pf->state)) {
+	अगर (test_bit(ICE_DOWN, pf->state) ||
+	    ice_is_reset_in_progress(pf->state)) अणु
 		netdev_err(netdev, "can't set mac %pM. device not ready\n",
 			   mac);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Clean up old MAC filter. Not an error if old filter doesn't exist */
-	status = ice_fltr_remove_mac(vsi, netdev->dev_addr, ICE_FWD_TO_VSI);
-	if (status && status != ICE_ERR_DOES_NOT_EXIST) {
+	/* Clean up old MAC filter. Not an error अगर old filter करोesn't exist */
+	status = ice_fltr_हटाओ_mac(vsi, netdev->dev_addr, ICE_FWD_TO_VSI);
+	अगर (status && status != ICE_ERR_DOES_NOT_EXIST) अणु
 		err = -EADDRNOTAVAIL;
-		goto err_update_filters;
-	}
+		जाओ err_update_filters;
+	पूर्ण
 
-	/* Add filter for new MAC. If filter exists, return success */
+	/* Add filter क्रम new MAC. If filter exists, वापस success */
 	status = ice_fltr_add_mac(vsi, mac, ICE_FWD_TO_VSI);
-	if (status == ICE_ERR_ALREADY_EXISTS) {
-		/* Although this MAC filter is already present in hardware it's
-		 * possible in some cases (e.g. bonding) that dev_addr was
-		 * modified outside of the driver and needs to be restored back
+	अगर (status == ICE_ERR_ALREADY_EXISTS) अणु
+		/* Although this MAC filter is alपढ़ोy present in hardware it's
+		 * possible in some हालs (e.g. bonding) that dev_addr was
+		 * modअगरied outside of the driver and needs to be restored back
 		 * to this value.
 		 */
-		memcpy(netdev->dev_addr, mac, netdev->addr_len);
+		स_नकल(netdev->dev_addr, mac, netdev->addr_len);
 		netdev_dbg(netdev, "filter for MAC %pM already exists\n", mac);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* error if the new filter addition failed */
-	if (status)
+	/* error अगर the new filter addition failed */
+	अगर (status)
 		err = -EADDRNOTAVAIL;
 
 err_update_filters:
-	if (err) {
+	अगर (err) अणु
 		netdev_err(netdev, "can't set MAC %pM. filter update failed\n",
 			   mac);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* change the netdev's MAC address */
-	memcpy(netdev->dev_addr, mac, netdev->addr_len);
+	स_नकल(netdev->dev_addr, mac, netdev->addr_len);
 	netdev_dbg(vsi->netdev, "updated MAC address to %pM\n",
 		   netdev->dev_addr);
 
-	/* write new MAC address to the firmware */
+	/* ग_लिखो new MAC address to the firmware */
 	flags = ICE_AQC_MAN_MAC_UPDATE_LAA_WOL;
-	status = ice_aq_manage_mac_write(hw, mac, flags, NULL);
-	if (status) {
+	status = ice_aq_manage_mac_ग_लिखो(hw, mac, flags, शून्य);
+	अगर (status) अणु
 		netdev_err(netdev, "can't set MAC %pM. write to firmware failed error %s\n",
 			   mac, ice_stat_str(status));
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * ice_set_rx_mode - NDO callback to set the netdev filters
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  */
-static void ice_set_rx_mode(struct net_device *netdev)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
+अटल व्योम ice_set_rx_mode(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
 
-	if (!vsi)
-		return;
+	अगर (!vsi)
+		वापस;
 
 	/* Set the flags to synchronize filters
-	 * ndo_set_rx_mode may be triggered even without a change in netdev
+	 * nकरो_set_rx_mode may be triggered even without a change in netdev
 	 * flags
 	 */
 	set_bit(ICE_VSI_UMAC_FLTR_CHANGED, vsi->state);
 	set_bit(ICE_VSI_MMAC_FLTR_CHANGED, vsi->state);
 	set_bit(ICE_FLAG_FLTR_SYNC, vsi->back->flags);
 
-	/* schedule our worker thread which will take care of
+	/* schedule our worker thपढ़ो which will take care of
 	 * applying the new filter changes
 	 */
 	ice_service_task_schedule(vsi->back);
-}
+पूर्ण
 
 /**
  * ice_set_tx_maxrate - NDO callback to set the maximum per-queue bitrate
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @queue_index: Queue ID
  * @maxrate: maximum bandwidth in Mbps
  */
-static int
-ice_set_tx_maxrate(struct net_device *netdev, int queue_index, u32 maxrate)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
-	enum ice_status status;
+अटल पूर्णांक
+ice_set_tx_maxrate(काष्ठा net_device *netdev, पूर्णांक queue_index, u32 maxrate)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
+	क्रमागत ice_status status;
 	u16 q_handle;
 	u8 tc;
 
 	/* Validate maxrate requested is within permitted range */
-	if (maxrate && (maxrate > (ICE_SCHED_MAX_BW / 1000))) {
+	अगर (maxrate && (maxrate > (ICE_SCHED_MAX_BW / 1000))) अणु
 		netdev_err(netdev, "Invalid max rate %d specified for the queue %d\n",
 			   maxrate, queue_index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	q_handle = vsi->tx_rings[queue_index]->q_handle;
 	tc = ice_dcb_get_tc(vsi, queue_index);
 
-	/* Set BW back to default, when user set maxrate to 0 */
-	if (!maxrate)
+	/* Set BW back to शेष, when user set maxrate to 0 */
+	अगर (!maxrate)
 		status = ice_cfg_q_bw_dflt_lmt(vsi->port_info, vsi->idx, tc,
 					       q_handle, ICE_MAX_BW);
-	else
+	अन्यथा
 		status = ice_cfg_q_bw_lmt(vsi->port_info, vsi->idx, tc,
 					  q_handle, ICE_MAX_BW, maxrate * 1000);
-	if (status) {
+	अगर (status) अणु
 		netdev_err(netdev, "Unable to set Tx max rate, error %s\n",
 			   ice_stat_str(status));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_fdb_add - add an entry to the hardware database
  * @ndm: the input from the stack
- * @tb: pointer to array of nladdr (unused)
- * @dev: the net device pointer
+ * @tb: poपूर्णांकer to array of nladdr (unused)
+ * @dev: the net device poपूर्णांकer
  * @addr: the MAC address entry being added
  * @vid: VLAN ID
- * @flags: instructions from stack about fdb operation
+ * @flags: inकाष्ठाions from stack about fdb operation
  * @extack: netlink extended ack
  */
-static int
-ice_fdb_add(struct ndmsg *ndm, struct nlattr __always_unused *tb[],
-	    struct net_device *dev, const unsigned char *addr, u16 vid,
-	    u16 flags, struct netlink_ext_ack __always_unused *extack)
-{
-	int err;
+अटल पूर्णांक
+ice_fdb_add(काष्ठा ndmsg *ndm, काष्ठा nlattr __always_unused *tb[],
+	    काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr, u16 vid,
+	    u16 flags, काष्ठा netlink_ext_ack __always_unused *extack)
+अणु
+	पूर्णांक err;
 
-	if (vid) {
+	अगर (vid) अणु
 		netdev_err(dev, "VLANs aren't supported yet for dev_uc|mc_add()\n");
-		return -EINVAL;
-	}
-	if (ndm->ndm_state && !(ndm->ndm_state & NUD_PERMANENT)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (ndm->ndm_state && !(ndm->ndm_state & NUD_PERMANENT)) अणु
 		netdev_err(dev, "FDB only supports static addresses\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (is_unicast_ether_addr(addr) || is_link_local_ether_addr(addr))
+	अगर (is_unicast_ether_addr(addr) || is_link_local_ether_addr(addr))
 		err = dev_uc_add_excl(dev, addr);
-	else if (is_multicast_ether_addr(addr))
+	अन्यथा अगर (is_multicast_ether_addr(addr))
 		err = dev_mc_add_excl(dev, addr);
-	else
+	अन्यथा
 		err = -EINVAL;
 
-	/* Only return duplicate errors if NLM_F_EXCL is set */
-	if (err == -EEXIST && !(flags & NLM_F_EXCL))
+	/* Only वापस duplicate errors अगर NLM_F_EXCL is set */
+	अगर (err == -EEXIST && !(flags & NLM_F_EXCL))
 		err = 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_fdb_del - delete an entry from the hardware database
  * @ndm: the input from the stack
- * @tb: pointer to array of nladdr (unused)
- * @dev: the net device pointer
+ * @tb: poपूर्णांकer to array of nladdr (unused)
+ * @dev: the net device poपूर्णांकer
  * @addr: the MAC address entry being added
  * @vid: VLAN ID
  */
-static int
-ice_fdb_del(struct ndmsg *ndm, __always_unused struct nlattr *tb[],
-	    struct net_device *dev, const unsigned char *addr,
+अटल पूर्णांक
+ice_fdb_del(काष्ठा ndmsg *ndm, __always_unused काष्ठा nlattr *tb[],
+	    काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr,
 	    __always_unused u16 vid)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
-	if (ndm->ndm_state & NUD_PERMANENT) {
+	अगर (ndm->ndm_state & NUD_PERMANENT) अणु
 		netdev_err(dev, "FDB only supports static addresses\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (is_unicast_ether_addr(addr))
+	अगर (is_unicast_ether_addr(addr))
 		err = dev_uc_del(dev, addr);
-	else if (is_multicast_ether_addr(addr))
+	अन्यथा अगर (is_multicast_ether_addr(addr))
 		err = dev_mc_del(dev, addr);
-	else
+	अन्यथा
 		err = -EINVAL;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_set_features - set the netdev feature flags
  * @netdev: ptr to the netdev being adjusted
  * @features: the feature set that the stack is suggesting
  */
-static int
-ice_set_features(struct net_device *netdev, netdev_features_t features)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
-	struct ice_pf *pf = vsi->back;
-	int ret = 0;
+अटल पूर्णांक
+ice_set_features(काष्ठा net_device *netdev, netdev_features_t features)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
+	काष्ठा ice_pf *pf = vsi->back;
+	पूर्णांक ret = 0;
 
 	/* Don't set any netdev advanced features with device in Safe Mode */
-	if (ice_is_safe_mode(vsi->back)) {
+	अगर (ice_is_safe_mode(vsi->back)) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "Device is in Safe Mode - not enabling advanced netdev features\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Do not change setting during reset */
-	if (ice_is_reset_in_progress(pf->state)) {
+	अगर (ice_is_reset_in_progress(pf->state)) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "Device is resetting, changing advanced netdev features temporarily unavailable.\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/* Multiple features can be changed in one call so keep features in
-	 * separate if/else statements to guarantee each feature is checked
+	 * separate अगर/अन्यथा statements to guarantee each feature is checked
 	 */
-	if (features & NETIF_F_RXHASH && !(netdev->features & NETIF_F_RXHASH))
+	अगर (features & NETIF_F_RXHASH && !(netdev->features & NETIF_F_RXHASH))
 		ice_vsi_manage_rss_lut(vsi, true);
-	else if (!(features & NETIF_F_RXHASH) &&
+	अन्यथा अगर (!(features & NETIF_F_RXHASH) &&
 		 netdev->features & NETIF_F_RXHASH)
 		ice_vsi_manage_rss_lut(vsi, false);
 
-	if ((features & NETIF_F_HW_VLAN_CTAG_RX) &&
+	अगर ((features & NETIF_F_HW_VLAN_CTAG_RX) &&
 	    !(netdev->features & NETIF_F_HW_VLAN_CTAG_RX))
 		ret = ice_vsi_manage_vlan_stripping(vsi, true);
-	else if (!(features & NETIF_F_HW_VLAN_CTAG_RX) &&
+	अन्यथा अगर (!(features & NETIF_F_HW_VLAN_CTAG_RX) &&
 		 (netdev->features & NETIF_F_HW_VLAN_CTAG_RX))
 		ret = ice_vsi_manage_vlan_stripping(vsi, false);
 
-	if ((features & NETIF_F_HW_VLAN_CTAG_TX) &&
+	अगर ((features & NETIF_F_HW_VLAN_CTAG_TX) &&
 	    !(netdev->features & NETIF_F_HW_VLAN_CTAG_TX))
 		ret = ice_vsi_manage_vlan_insertion(vsi);
-	else if (!(features & NETIF_F_HW_VLAN_CTAG_TX) &&
+	अन्यथा अगर (!(features & NETIF_F_HW_VLAN_CTAG_TX) &&
 		 (netdev->features & NETIF_F_HW_VLAN_CTAG_TX))
 		ret = ice_vsi_manage_vlan_insertion(vsi);
 
-	if ((features & NETIF_F_HW_VLAN_CTAG_FILTER) &&
+	अगर ((features & NETIF_F_HW_VLAN_CTAG_FILTER) &&
 	    !(netdev->features & NETIF_F_HW_VLAN_CTAG_FILTER))
 		ret = ice_cfg_vlan_pruning(vsi, true, false);
-	else if (!(features & NETIF_F_HW_VLAN_CTAG_FILTER) &&
+	अन्यथा अगर (!(features & NETIF_F_HW_VLAN_CTAG_FILTER) &&
 		 (netdev->features & NETIF_F_HW_VLAN_CTAG_FILTER))
 		ret = ice_cfg_vlan_pruning(vsi, false, false);
 
-	if ((features & NETIF_F_NTUPLE) &&
-	    !(netdev->features & NETIF_F_NTUPLE)) {
+	अगर ((features & NETIF_F_NTUPLE) &&
+	    !(netdev->features & NETIF_F_NTUPLE)) अणु
 		ice_vsi_manage_fdir(vsi, true);
 		ice_init_arfs(vsi);
-	} else if (!(features & NETIF_F_NTUPLE) &&
-		 (netdev->features & NETIF_F_NTUPLE)) {
+	पूर्ण अन्यथा अगर (!(features & NETIF_F_NTUPLE) &&
+		 (netdev->features & NETIF_F_NTUPLE)) अणु
 		ice_vsi_manage_fdir(vsi, false);
 		ice_clear_arfs(vsi);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ice_vsi_vlan_setup - Setup VLAN offload properties on a VSI
- * @vsi: VSI to setup VLAN properties for
+ * @vsi: VSI to setup VLAN properties क्रम
  */
-static int ice_vsi_vlan_setup(struct ice_vsi *vsi)
-{
-	int ret = 0;
+अटल पूर्णांक ice_vsi_vlan_setup(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक ret = 0;
 
-	if (vsi->netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
+	अगर (vsi->netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
 		ret = ice_vsi_manage_vlan_stripping(vsi, true);
-	if (vsi->netdev->features & NETIF_F_HW_VLAN_CTAG_TX)
+	अगर (vsi->netdev->features & NETIF_F_HW_VLAN_CTAG_TX)
 		ret = ice_vsi_manage_vlan_insertion(vsi);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ice_vsi_cfg - Setup the VSI
@@ -5192,141 +5193,141 @@ static int ice_vsi_vlan_setup(struct ice_vsi *vsi)
  *
  * Return 0 on success and negative value on error
  */
-int ice_vsi_cfg(struct ice_vsi *vsi)
-{
-	int err;
+पूर्णांक ice_vsi_cfg(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक err;
 
-	if (vsi->netdev) {
+	अगर (vsi->netdev) अणु
 		ice_set_rx_mode(vsi->netdev);
 
 		err = ice_vsi_vlan_setup(vsi);
 
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 	ice_vsi_cfg_dcb_rings(vsi);
 
 	err = ice_vsi_cfg_lan_txqs(vsi);
-	if (!err && ice_is_xdp_ena_vsi(vsi))
+	अगर (!err && ice_is_xdp_ena_vsi(vsi))
 		err = ice_vsi_cfg_xdp_txqs(vsi);
-	if (!err)
+	अगर (!err)
 		err = ice_vsi_cfg_rxqs(vsi);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* THEORY OF MODERATION:
- * The below code creates custom DIM profiles for use by this driver, because
- * the ice driver hardware works differently than the hardware that DIMLIB was
- * originally made for. ice hardware doesn't have packet count limits that
- * can trigger an interrupt, but it *does* have interrupt rate limit support,
+ * The below code creates custom DIM profiles क्रम use by this driver, because
+ * the ice driver hardware works dअगरferently than the hardware that DIMLIB was
+ * originally made क्रम. ice hardware करोesn't have packet count limits that
+ * can trigger an पूर्णांकerrupt, but it *करोes* have पूर्णांकerrupt rate limit support,
  * and this code adds that capability to be used by the driver when it's using
- * DIMLIB. The DIMLIB code was always designed to be a suggestion to the driver
- * for how to "respond" to traffic and interrupts, so this driver uses a
- * slightly different set of moderation parameters to get best performance.
+ * DIMLIB. The DIMLIB code was always deचिन्हित to be a suggestion to the driver
+ * क्रम how to "respond" to traffic and पूर्णांकerrupts, so this driver uses a
+ * slightly dअगरferent set of moderation parameters to get best perक्रमmance.
  */
-struct ice_dim {
-	/* the throttle rate for interrupts, basically worst case delay before
-	 * an initial interrupt fires, value is stored in microseconds.
+काष्ठा ice_dim अणु
+	/* the throttle rate क्रम पूर्णांकerrupts, basically worst हाल delay beक्रमe
+	 * an initial पूर्णांकerrupt fires, value is stored in microseconds.
 	 */
 	u16 itr;
-	/* the rate limit for interrupts, which can cap a delay from a small
-	 * ITR at a certain amount of interrupts per second. f.e. a 2us ITR
-	 * could yield as much as 500,000 interrupts per second, but with a
-	 * 10us rate limit, it limits to 100,000 interrupts per second. Value
+	/* the rate limit क्रम पूर्णांकerrupts, which can cap a delay from a small
+	 * ITR at a certain amount of पूर्णांकerrupts per second. f.e. a 2us ITR
+	 * could yield as much as 500,000 पूर्णांकerrupts per second, but with a
+	 * 10us rate limit, it limits to 100,000 पूर्णांकerrupts per second. Value
 	 * is stored in microseconds.
 	 */
-	u16 intrl;
-};
+	u16 पूर्णांकrl;
+पूर्ण;
 
-/* Make a different profile for Rx that doesn't allow quite so aggressive
- * moderation at the high end (it maxes out at 128us or about 8k interrupts a
+/* Make a dअगरferent profile क्रम Rx that करोesn't allow quite so aggressive
+ * moderation at the high end (it maxes out at 128us or about 8k पूर्णांकerrupts a
  * second. The INTRL/rate parameters here are only useful to cap small ITR
- * values, which is why for larger ITR's - like 128, which can only generate
- * 8k interrupts per second, there is no point to rate limit and the values
- * are set to zero. The rate limit values do affect latency, and so must
+ * values, which is why क्रम larger ITR's - like 128, which can only generate
+ * 8k पूर्णांकerrupts per second, there is no poपूर्णांक to rate limit and the values
+ * are set to zero. The rate limit values करो affect latency, and so must
  * be reasonably small so to not impact latency sensitive tests.
  */
-static const struct ice_dim rx_profile[] = {
-	{2, 10},
-	{8, 16},
-	{32, 0},
-	{96, 0},
-	{128, 0}
-};
+अटल स्थिर काष्ठा ice_dim rx_profile[] = अणु
+	अणु2, 10पूर्ण,
+	अणु8, 16पूर्ण,
+	अणु32, 0पूर्ण,
+	अणु96, 0पूर्ण,
+	अणु128, 0पूर्ण
+पूर्ण;
 
 /* The transmit profile, which has the same sorts of values
- * as the previous struct
+ * as the previous काष्ठा
  */
-static const struct ice_dim tx_profile[] = {
-	{2, 10},
-	{8, 16},
-	{64, 0},
-	{128, 0},
-	{256, 0}
-};
+अटल स्थिर काष्ठा ice_dim tx_profile[] = अणु
+	अणु2, 10पूर्ण,
+	अणु8, 16पूर्ण,
+	अणु64, 0पूर्ण,
+	अणु128, 0पूर्ण,
+	अणु256, 0पूर्ण
+पूर्ण;
 
-static void ice_tx_dim_work(struct work_struct *work)
-{
-	struct ice_ring_container *rc;
-	struct ice_q_vector *q_vector;
-	struct dim *dim;
-	u16 itr, intrl;
+अटल व्योम ice_tx_dim_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ice_ring_container *rc;
+	काष्ठा ice_q_vector *q_vector;
+	काष्ठा dim *dim;
+	u16 itr, पूर्णांकrl;
 
-	dim = container_of(work, struct dim, work);
-	rc = container_of(dim, struct ice_ring_container, dim);
-	q_vector = container_of(rc, struct ice_q_vector, tx);
+	dim = container_of(work, काष्ठा dim, work);
+	rc = container_of(dim, काष्ठा ice_ring_container, dim);
+	q_vector = container_of(rc, काष्ठा ice_q_vector, tx);
 
-	if (dim->profile_ix >= ARRAY_SIZE(tx_profile))
+	अगर (dim->profile_ix >= ARRAY_SIZE(tx_profile))
 		dim->profile_ix = ARRAY_SIZE(tx_profile) - 1;
 
 	/* look up the values in our local table */
 	itr = tx_profile[dim->profile_ix].itr;
-	intrl = tx_profile[dim->profile_ix].intrl;
+	पूर्णांकrl = tx_profile[dim->profile_ix].पूर्णांकrl;
 
-	ice_write_itr(rc, itr);
-	ice_write_intrl(q_vector, intrl);
+	ice_ग_लिखो_itr(rc, itr);
+	ice_ग_लिखो_पूर्णांकrl(q_vector, पूर्णांकrl);
 
 	dim->state = DIM_START_MEASURE;
-}
+पूर्ण
 
-static void ice_rx_dim_work(struct work_struct *work)
-{
-	struct ice_ring_container *rc;
-	struct ice_q_vector *q_vector;
-	struct dim *dim;
-	u16 itr, intrl;
+अटल व्योम ice_rx_dim_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ice_ring_container *rc;
+	काष्ठा ice_q_vector *q_vector;
+	काष्ठा dim *dim;
+	u16 itr, पूर्णांकrl;
 
-	dim = container_of(work, struct dim, work);
-	rc = container_of(dim, struct ice_ring_container, dim);
-	q_vector = container_of(rc, struct ice_q_vector, rx);
+	dim = container_of(work, काष्ठा dim, work);
+	rc = container_of(dim, काष्ठा ice_ring_container, dim);
+	q_vector = container_of(rc, काष्ठा ice_q_vector, rx);
 
-	if (dim->profile_ix >= ARRAY_SIZE(rx_profile))
+	अगर (dim->profile_ix >= ARRAY_SIZE(rx_profile))
 		dim->profile_ix = ARRAY_SIZE(rx_profile) - 1;
 
 	/* look up the values in our local table */
 	itr = rx_profile[dim->profile_ix].itr;
-	intrl = rx_profile[dim->profile_ix].intrl;
+	पूर्णांकrl = rx_profile[dim->profile_ix].पूर्णांकrl;
 
-	ice_write_itr(rc, itr);
-	ice_write_intrl(q_vector, intrl);
+	ice_ग_लिखो_itr(rc, itr);
+	ice_ग_लिखो_पूर्णांकrl(q_vector, पूर्णांकrl);
 
 	dim->state = DIM_START_MEASURE;
-}
+पूर्ण
 
 /**
- * ice_napi_enable_all - Enable NAPI for all q_vectors in the VSI
+ * ice_napi_enable_all - Enable NAPI क्रम all q_vectors in the VSI
  * @vsi: the VSI being configured
  */
-static void ice_napi_enable_all(struct ice_vsi *vsi)
-{
-	int q_idx;
+अटल व्योम ice_napi_enable_all(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक q_idx;
 
-	if (!vsi->netdev)
-		return;
+	अगर (!vsi->netdev)
+		वापस;
 
-	ice_for_each_q_vector(vsi, q_idx) {
-		struct ice_q_vector *q_vector = vsi->q_vectors[q_idx];
+	ice_क्रम_each_q_vector(vsi, q_idx) अणु
+		काष्ठा ice_q_vector *q_vector = vsi->q_vectors[q_idx];
 
 		INIT_WORK(&q_vector->tx.dim.work, ice_tx_dim_work);
 		q_vector->tx.dim.mode = DIM_CQ_PERIOD_MODE_START_FROM_EQE;
@@ -5334,10 +5335,10 @@ static void ice_napi_enable_all(struct ice_vsi *vsi)
 		INIT_WORK(&q_vector->rx.dim.work, ice_rx_dim_work);
 		q_vector->rx.dim.mode = DIM_CQ_PERIOD_MODE_START_FROM_EQE;
 
-		if (q_vector->rx.ring || q_vector->tx.ring)
+		अगर (q_vector->rx.ring || q_vector->tx.ring)
 			napi_enable(&q_vector->napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ice_up_complete - Finish the last steps of bringing up a connection
@@ -5345,10 +5346,10 @@ static void ice_napi_enable_all(struct ice_vsi *vsi)
  *
  * Return 0 on success and negative value on error
  */
-static int ice_up_complete(struct ice_vsi *vsi)
-{
-	struct ice_pf *pf = vsi->back;
-	int err;
+अटल पूर्णांक ice_up_complete(काष्ठा ice_vsi *vsi)
+अणु
+	काष्ठा ice_pf *pf = vsi->back;
+	पूर्णांक err;
 
 	ice_vsi_cfg_msix(vsi);
 
@@ -5357,65 +5358,65 @@ static int ice_up_complete(struct ice_vsi *vsi)
 	 * programmed using ice_vsi_cfg_txqs
 	 */
 	err = ice_vsi_start_all_rx_rings(vsi);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	clear_bit(ICE_VSI_DOWN, vsi->state);
 	ice_napi_enable_all(vsi);
 	ice_vsi_ena_irq(vsi);
 
-	if (vsi->port_info &&
+	अगर (vsi->port_info &&
 	    (vsi->port_info->phy.link_info.link_info & ICE_AQ_LINK_UP) &&
-	    vsi->netdev) {
-		ice_print_link_msg(vsi, true);
-		netif_tx_start_all_queues(vsi->netdev);
-		netif_carrier_on(vsi->netdev);
-	}
+	    vsi->netdev) अणु
+		ice_prपूर्णांक_link_msg(vsi, true);
+		netअगर_tx_start_all_queues(vsi->netdev);
+		netअगर_carrier_on(vsi->netdev);
+	पूर्ण
 
 	ice_service_task_schedule(pf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_up - Bring the connection back up after being down
+ * ice_up - Bring the connection back up after being करोwn
  * @vsi: VSI being configured
  */
-int ice_up(struct ice_vsi *vsi)
-{
-	int err;
+पूर्णांक ice_up(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक err;
 
 	err = ice_vsi_cfg(vsi);
-	if (!err)
+	अगर (!err)
 		err = ice_up_complete(vsi);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_fetch_u64_stats_per_ring - get packets and bytes stats per ring
- * @ring: Tx or Rx ring to read stats from
+ * @ring: Tx or Rx ring to पढ़ो stats from
  * @pkts: packets stats counter
  * @bytes: bytes stats counter
  *
  * This function fetches stats from the ring considering the atomic operations
- * that needs to be performed to read u64 values in 32 bit machine.
+ * that needs to be perक्रमmed to पढ़ो u64 values in 32 bit machine.
  */
-static void
-ice_fetch_u64_stats_per_ring(struct ice_ring *ring, u64 *pkts, u64 *bytes)
-{
-	unsigned int start;
+अटल व्योम
+ice_fetch_u64_stats_per_ring(काष्ठा ice_ring *ring, u64 *pkts, u64 *bytes)
+अणु
+	अचिन्हित पूर्णांक start;
 	*pkts = 0;
 	*bytes = 0;
 
-	if (!ring)
-		return;
-	do {
+	अगर (!ring)
+		वापस;
+	करो अणु
 		start = u64_stats_fetch_begin_irq(&ring->syncp);
 		*pkts = ring->stats.pkts;
 		*bytes = ring->stats.bytes;
-	} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
-}
+	पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
+पूर्ण
 
 /**
  * ice_update_vsi_tx_ring_stats - Update VSI Tx ring stats counters
@@ -5423,15 +5424,15 @@ ice_fetch_u64_stats_per_ring(struct ice_ring *ring, u64 *pkts, u64 *bytes)
  * @rings: rings to work on
  * @count: number of rings
  */
-static void
-ice_update_vsi_tx_ring_stats(struct ice_vsi *vsi, struct ice_ring **rings,
+अटल व्योम
+ice_update_vsi_tx_ring_stats(काष्ठा ice_vsi *vsi, काष्ठा ice_ring **rings,
 			     u16 count)
-{
-	struct rtnl_link_stats64 *vsi_stats = &vsi->net_stats;
+अणु
+	काष्ठा rtnl_link_stats64 *vsi_stats = &vsi->net_stats;
 	u16 i;
 
-	for (i = 0; i < count; i++) {
-		struct ice_ring *ring;
+	क्रम (i = 0; i < count; i++) अणु
+		काष्ठा ice_ring *ring;
 		u64 pkts, bytes;
 
 		ring = READ_ONCE(rings[i]);
@@ -5441,19 +5442,19 @@ ice_update_vsi_tx_ring_stats(struct ice_vsi *vsi, struct ice_ring **rings,
 		vsi->tx_restart += ring->tx_stats.restart_q;
 		vsi->tx_busy += ring->tx_stats.tx_busy;
 		vsi->tx_linearize += ring->tx_stats.tx_linearize;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ice_update_vsi_ring_stats - Update VSI stats counters
  * @vsi: the VSI to be updated
  */
-static void ice_update_vsi_ring_stats(struct ice_vsi *vsi)
-{
-	struct rtnl_link_stats64 *vsi_stats = &vsi->net_stats;
-	struct ice_ring *ring;
+अटल व्योम ice_update_vsi_ring_stats(काष्ठा ice_vsi *vsi)
+अणु
+	काष्ठा rtnl_link_stats64 *vsi_stats = &vsi->net_stats;
+	काष्ठा ice_ring *ring;
 	u64 pkts, bytes;
-	int i;
+	पूर्णांक i;
 
 	/* reset netdev stats */
 	vsi_stats->tx_packets = 0;
@@ -5468,42 +5469,42 @@ static void ice_update_vsi_ring_stats(struct ice_vsi *vsi)
 	vsi->rx_buf_failed = 0;
 	vsi->rx_page_failed = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	/* update Tx rings counters */
 	ice_update_vsi_tx_ring_stats(vsi, vsi->tx_rings, vsi->num_txq);
 
 	/* update Rx rings counters */
-	ice_for_each_rxq(vsi, i) {
+	ice_क्रम_each_rxq(vsi, i) अणु
 		ring = READ_ONCE(vsi->rx_rings[i]);
 		ice_fetch_u64_stats_per_ring(ring, &pkts, &bytes);
 		vsi_stats->rx_packets += pkts;
 		vsi_stats->rx_bytes += bytes;
 		vsi->rx_buf_failed += ring->rx_stats.alloc_buf_failed;
 		vsi->rx_page_failed += ring->rx_stats.alloc_page_failed;
-	}
+	पूर्ण
 
 	/* update XDP Tx rings counters */
-	if (ice_is_xdp_ena_vsi(vsi))
+	अगर (ice_is_xdp_ena_vsi(vsi))
 		ice_update_vsi_tx_ring_stats(vsi, vsi->xdp_rings,
 					     vsi->num_xdp_txq);
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
  * ice_update_vsi_stats - Update VSI stats counters
  * @vsi: the VSI to be updated
  */
-void ice_update_vsi_stats(struct ice_vsi *vsi)
-{
-	struct rtnl_link_stats64 *cur_ns = &vsi->net_stats;
-	struct ice_eth_stats *cur_es = &vsi->eth_stats;
-	struct ice_pf *pf = vsi->back;
+व्योम ice_update_vsi_stats(काष्ठा ice_vsi *vsi)
+अणु
+	काष्ठा rtnl_link_stats64 *cur_ns = &vsi->net_stats;
+	काष्ठा ice_eth_stats *cur_es = &vsi->eth_stats;
+	काष्ठा ice_pf *pf = vsi->back;
 
-	if (test_bit(ICE_VSI_DOWN, vsi->state) ||
+	अगर (test_bit(ICE_VSI_DOWN, vsi->state) ||
 	    test_bit(ICE_CFG_BUSY, pf->state))
-		return;
+		वापस;
 
 	/* get stats as recorded by Tx/Rx rings */
 	ice_update_vsi_ring_stats(vsi);
@@ -5516,8 +5517,8 @@ void ice_update_vsi_stats(struct ice_vsi *vsi)
 	cur_ns->tx_dropped = cur_es->tx_discards;
 	cur_ns->multicast = cur_es->rx_multicast;
 
-	/* update some more netdev stats if this is main VSI */
-	if (vsi->type == ICE_VSI_PF) {
+	/* update some more netdev stats अगर this is मुख्य VSI */
+	अगर (vsi->type == ICE_VSI_PF) अणु
 		cur_ns->rx_crc_errors = pf->stats.crc_errors;
 		cur_ns->rx_errors = pf->stats.crc_errors +
 				    pf->stats.illegal_bytes +
@@ -5530,17 +5531,17 @@ void ice_update_vsi_stats(struct ice_vsi *vsi)
 		cur_ns->rx_length_errors = pf->stats.rx_len_errors;
 		/* record drops from the port level */
 		cur_ns->rx_missed_errors = pf->stats.eth.rx_discards;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ice_update_pf_stats - Update PF port stats counters
  * @pf: PF whose stats needs to be updated
  */
-void ice_update_pf_stats(struct ice_pf *pf)
-{
-	struct ice_hw_port_stats *prev_ps, *cur_ps;
-	struct ice_hw *hw = &pf->hw;
+व्योम ice_update_pf_stats(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_hw_port_stats *prev_ps, *cur_ps;
+	काष्ठा ice_hw *hw = &pf->hw;
 	u16 fd_ctr_base;
 	u8 port;
 
@@ -5585,8 +5586,8 @@ void ice_update_pf_stats(struct ice_pf *pf)
 			  &cur_ps->eth.tx_broadcast);
 
 	ice_stat_update32(hw, GLPRT_TDOLD(port), pf->stat_prev_loaded,
-			  &prev_ps->tx_dropped_link_down,
-			  &cur_ps->tx_dropped_link_down);
+			  &prev_ps->tx_dropped_link_करोwn,
+			  &cur_ps->tx_dropped_link_करोwn);
 
 	ice_stat_update40(hw, GLPRT_PRC64L(port), pf->stat_prev_loaded,
 			  &prev_ps->rx_size_64, &cur_ps->rx_size_64);
@@ -5682,39 +5683,39 @@ void ice_update_pf_stats(struct ice_pf *pf)
 	cur_ps->fd_sb_status = test_bit(ICE_FLAG_FD_ENA, pf->flags) ? 1 : 0;
 
 	pf->stat_prev_loaded = true;
-}
+पूर्ण
 
 /**
- * ice_get_stats64 - get statistics for network device structure
- * @netdev: network interface device structure
- * @stats: main device statistics structure
+ * ice_get_stats64 - get statistics क्रम network device काष्ठाure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @stats: मुख्य device statistics काष्ठाure
  */
-static
-void ice_get_stats64(struct net_device *netdev, struct rtnl_link_stats64 *stats)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct rtnl_link_stats64 *vsi_stats;
-	struct ice_vsi *vsi = np->vsi;
+अटल
+व्योम ice_get_stats64(काष्ठा net_device *netdev, काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा rtnl_link_stats64 *vsi_stats;
+	काष्ठा ice_vsi *vsi = np->vsi;
 
 	vsi_stats = &vsi->net_stats;
 
-	if (!vsi->num_txq || !vsi->num_rxq)
-		return;
+	अगर (!vsi->num_txq || !vsi->num_rxq)
+		वापस;
 
 	/* netdev packet/byte stats come from ring counter. These are obtained
-	 * by summing up ring counters (done by ice_update_vsi_ring_stats).
-	 * But, only call the update routine and read the registers if VSI is
-	 * not down.
+	 * by summing up ring counters (करोne by ice_update_vsi_ring_stats).
+	 * But, only call the update routine and पढ़ो the रेजिस्टरs अगर VSI is
+	 * not करोwn.
 	 */
-	if (!test_bit(ICE_VSI_DOWN, vsi->state))
+	अगर (!test_bit(ICE_VSI_DOWN, vsi->state))
 		ice_update_vsi_ring_stats(vsi);
 	stats->tx_packets = vsi_stats->tx_packets;
 	stats->tx_bytes = vsi_stats->tx_bytes;
 	stats->rx_packets = vsi_stats->rx_packets;
 	stats->rx_bytes = vsi_stats->rx_bytes;
 
-	/* The rest of the stats can be read from the hardware but instead we
-	 * just return values that the watchdog task has already obtained from
+	/* The rest of the stats can be पढ़ो from the hardware but instead we
+	 * just वापस values that the watchकरोg task has alपढ़ोy obtained from
 	 * the hardware.
 	 */
 	stats->multicast = vsi_stats->multicast;
@@ -5724,87 +5725,87 @@ void ice_get_stats64(struct net_device *netdev, struct rtnl_link_stats64 *stats)
 	stats->rx_dropped = vsi_stats->rx_dropped;
 	stats->rx_crc_errors = vsi_stats->rx_crc_errors;
 	stats->rx_length_errors = vsi_stats->rx_length_errors;
-}
+पूर्ण
 
 /**
- * ice_napi_disable_all - Disable NAPI for all q_vectors in the VSI
+ * ice_napi_disable_all - Disable NAPI क्रम all q_vectors in the VSI
  * @vsi: VSI having NAPI disabled
  */
-static void ice_napi_disable_all(struct ice_vsi *vsi)
-{
-	int q_idx;
+अटल व्योम ice_napi_disable_all(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक q_idx;
 
-	if (!vsi->netdev)
-		return;
+	अगर (!vsi->netdev)
+		वापस;
 
-	ice_for_each_q_vector(vsi, q_idx) {
-		struct ice_q_vector *q_vector = vsi->q_vectors[q_idx];
+	ice_क्रम_each_q_vector(vsi, q_idx) अणु
+		काष्ठा ice_q_vector *q_vector = vsi->q_vectors[q_idx];
 
-		if (q_vector->rx.ring || q_vector->tx.ring)
+		अगर (q_vector->rx.ring || q_vector->tx.ring)
 			napi_disable(&q_vector->napi);
 
 		cancel_work_sync(&q_vector->tx.dim.work);
 		cancel_work_sync(&q_vector->rx.dim.work);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ice_down - Shutdown the connection
+ * ice_करोwn - Shutकरोwn the connection
  * @vsi: The VSI being stopped
  */
-int ice_down(struct ice_vsi *vsi)
-{
-	int i, tx_err, rx_err, link_err = 0;
+पूर्णांक ice_करोwn(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक i, tx_err, rx_err, link_err = 0;
 
 	/* Caller of this function is expected to set the
 	 * vsi->state ICE_DOWN bit
 	 */
-	if (vsi->netdev) {
-		netif_carrier_off(vsi->netdev);
-		netif_tx_disable(vsi->netdev);
-	}
+	अगर (vsi->netdev) अणु
+		netअगर_carrier_off(vsi->netdev);
+		netअगर_tx_disable(vsi->netdev);
+	पूर्ण
 
 	ice_vsi_dis_irq(vsi);
 
 	tx_err = ice_vsi_stop_lan_tx_rings(vsi, ICE_NO_RESET, 0);
-	if (tx_err)
+	अगर (tx_err)
 		netdev_err(vsi->netdev, "Failed stop Tx rings, VSI %d error %d\n",
 			   vsi->vsi_num, tx_err);
-	if (!tx_err && ice_is_xdp_ena_vsi(vsi)) {
+	अगर (!tx_err && ice_is_xdp_ena_vsi(vsi)) अणु
 		tx_err = ice_vsi_stop_xdp_tx_rings(vsi);
-		if (tx_err)
+		अगर (tx_err)
 			netdev_err(vsi->netdev, "Failed stop XDP rings, VSI %d error %d\n",
 				   vsi->vsi_num, tx_err);
-	}
+	पूर्ण
 
 	rx_err = ice_vsi_stop_all_rx_rings(vsi);
-	if (rx_err)
+	अगर (rx_err)
 		netdev_err(vsi->netdev, "Failed stop Rx rings, VSI %d error %d\n",
 			   vsi->vsi_num, rx_err);
 
 	ice_napi_disable_all(vsi);
 
-	if (test_bit(ICE_FLAG_LINK_DOWN_ON_CLOSE_ENA, vsi->back->flags)) {
-		link_err = ice_force_phys_link_state(vsi, false);
-		if (link_err)
+	अगर (test_bit(ICE_FLAG_LINK_DOWN_ON_CLOSE_ENA, vsi->back->flags)) अणु
+		link_err = ice_क्रमce_phys_link_state(vsi, false);
+		अगर (link_err)
 			netdev_err(vsi->netdev, "Failed to set physical link down, VSI %d error %d\n",
 				   vsi->vsi_num, link_err);
-	}
+	पूर्ण
 
-	ice_for_each_txq(vsi, i)
+	ice_क्रम_each_txq(vsi, i)
 		ice_clean_tx_ring(vsi->tx_rings[i]);
 
-	ice_for_each_rxq(vsi, i)
+	ice_क्रम_each_rxq(vsi, i)
 		ice_clean_rx_ring(vsi->rx_rings[i]);
 
-	if (tx_err || rx_err || link_err) {
+	अगर (tx_err || rx_err || link_err) अणु
 		netdev_err(vsi->netdev, "Failed to close VSI 0x%04X on switch 0x%04X\n",
 			   vsi->vsi_num, vsi->vsw->sw_id);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_vsi_setup_tx_rings - Allocate VSI Tx queue resources
@@ -5812,30 +5813,30 @@ int ice_down(struct ice_vsi *vsi)
  *
  * Return 0 on success, negative on failure
  */
-int ice_vsi_setup_tx_rings(struct ice_vsi *vsi)
-{
-	int i, err = 0;
+पूर्णांक ice_vsi_setup_tx_rings(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक i, err = 0;
 
-	if (!vsi->num_txq) {
+	अगर (!vsi->num_txq) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "VSI %d has 0 Tx queues\n",
 			vsi->vsi_num);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ice_for_each_txq(vsi, i) {
-		struct ice_ring *ring = vsi->tx_rings[i];
+	ice_क्रम_each_txq(vsi, i) अणु
+		काष्ठा ice_ring *ring = vsi->tx_rings[i];
 
-		if (!ring)
-			return -EINVAL;
+		अगर (!ring)
+			वापस -EINVAL;
 
 		ring->netdev = vsi->netdev;
 		err = ice_setup_tx_ring(ring);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_vsi_setup_rx_rings - Allocate VSI Rx queue resources
@@ -5843,204 +5844,204 @@ int ice_vsi_setup_tx_rings(struct ice_vsi *vsi)
  *
  * Return 0 on success, negative on failure
  */
-int ice_vsi_setup_rx_rings(struct ice_vsi *vsi)
-{
-	int i, err = 0;
+पूर्णांक ice_vsi_setup_rx_rings(काष्ठा ice_vsi *vsi)
+अणु
+	पूर्णांक i, err = 0;
 
-	if (!vsi->num_rxq) {
+	अगर (!vsi->num_rxq) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "VSI %d has 0 Rx queues\n",
 			vsi->vsi_num);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ice_for_each_rxq(vsi, i) {
-		struct ice_ring *ring = vsi->rx_rings[i];
+	ice_क्रम_each_rxq(vsi, i) अणु
+		काष्ठा ice_ring *ring = vsi->rx_rings[i];
 
-		if (!ring)
-			return -EINVAL;
+		अगर (!ring)
+			वापस -EINVAL;
 
 		ring->netdev = vsi->netdev;
 		err = ice_setup_rx_ring(ring);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ice_vsi_open_ctrl - open control VSI for use
- * @vsi: the VSI to open
+ * ice_vsi_खोलो_ctrl - खोलो control VSI क्रम use
+ * @vsi: the VSI to खोलो
  *
  * Initialization of the Control VSI
  *
  * Returns 0 on success, negative value on error
  */
-int ice_vsi_open_ctrl(struct ice_vsi *vsi)
-{
-	char int_name[ICE_INT_NAME_STR_LEN];
-	struct ice_pf *pf = vsi->back;
-	struct device *dev;
-	int err;
+पूर्णांक ice_vsi_खोलो_ctrl(काष्ठा ice_vsi *vsi)
+अणु
+	अक्षर पूर्णांक_name[ICE_INT_NAME_STR_LEN];
+	काष्ठा ice_pf *pf = vsi->back;
+	काष्ठा device *dev;
+	पूर्णांक err;
 
 	dev = ice_pf_to_dev(pf);
 	/* allocate descriptors */
 	err = ice_vsi_setup_tx_rings(vsi);
-	if (err)
-		goto err_setup_tx;
+	अगर (err)
+		जाओ err_setup_tx;
 
 	err = ice_vsi_setup_rx_rings(vsi);
-	if (err)
-		goto err_setup_rx;
+	अगर (err)
+		जाओ err_setup_rx;
 
 	err = ice_vsi_cfg(vsi);
-	if (err)
-		goto err_setup_rx;
+	अगर (err)
+		जाओ err_setup_rx;
 
-	snprintf(int_name, sizeof(int_name) - 1, "%s-%s:ctrl",
+	snम_लिखो(पूर्णांक_name, माप(पूर्णांक_name) - 1, "%s-%s:ctrl",
 		 dev_driver_string(dev), dev_name(dev));
-	err = ice_vsi_req_irq_msix(vsi, int_name);
-	if (err)
-		goto err_setup_rx;
+	err = ice_vsi_req_irq_msix(vsi, पूर्णांक_name);
+	अगर (err)
+		जाओ err_setup_rx;
 
 	ice_vsi_cfg_msix(vsi);
 
 	err = ice_vsi_start_all_rx_rings(vsi);
-	if (err)
-		goto err_up_complete;
+	अगर (err)
+		जाओ err_up_complete;
 
 	clear_bit(ICE_VSI_DOWN, vsi->state);
 	ice_vsi_ena_irq(vsi);
 
-	return 0;
+	वापस 0;
 
 err_up_complete:
-	ice_down(vsi);
+	ice_करोwn(vsi);
 err_setup_rx:
-	ice_vsi_free_rx_rings(vsi);
+	ice_vsi_मुक्त_rx_rings(vsi);
 err_setup_tx:
-	ice_vsi_free_tx_rings(vsi);
+	ice_vsi_मुक्त_tx_rings(vsi);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ice_vsi_open - Called when a network interface is made active
- * @vsi: the VSI to open
+ * ice_vsi_खोलो - Called when a network पूर्णांकerface is made active
+ * @vsi: the VSI to खोलो
  *
  * Initialization of the VSI
  *
  * Returns 0 on success, negative value on error
  */
-static int ice_vsi_open(struct ice_vsi *vsi)
-{
-	char int_name[ICE_INT_NAME_STR_LEN];
-	struct ice_pf *pf = vsi->back;
-	int err;
+अटल पूर्णांक ice_vsi_खोलो(काष्ठा ice_vsi *vsi)
+अणु
+	अक्षर पूर्णांक_name[ICE_INT_NAME_STR_LEN];
+	काष्ठा ice_pf *pf = vsi->back;
+	पूर्णांक err;
 
 	/* allocate descriptors */
 	err = ice_vsi_setup_tx_rings(vsi);
-	if (err)
-		goto err_setup_tx;
+	अगर (err)
+		जाओ err_setup_tx;
 
 	err = ice_vsi_setup_rx_rings(vsi);
-	if (err)
-		goto err_setup_rx;
+	अगर (err)
+		जाओ err_setup_rx;
 
 	err = ice_vsi_cfg(vsi);
-	if (err)
-		goto err_setup_rx;
+	अगर (err)
+		जाओ err_setup_rx;
 
-	snprintf(int_name, sizeof(int_name) - 1, "%s-%s",
+	snम_लिखो(पूर्णांक_name, माप(पूर्णांक_name) - 1, "%s-%s",
 		 dev_driver_string(ice_pf_to_dev(pf)), vsi->netdev->name);
-	err = ice_vsi_req_irq_msix(vsi, int_name);
-	if (err)
-		goto err_setup_rx;
+	err = ice_vsi_req_irq_msix(vsi, पूर्णांक_name);
+	अगर (err)
+		जाओ err_setup_rx;
 
-	/* Notify the stack of the actual queue counts. */
-	err = netif_set_real_num_tx_queues(vsi->netdev, vsi->num_txq);
-	if (err)
-		goto err_set_qs;
+	/* Notअगरy the stack of the actual queue counts. */
+	err = netअगर_set_real_num_tx_queues(vsi->netdev, vsi->num_txq);
+	अगर (err)
+		जाओ err_set_qs;
 
-	err = netif_set_real_num_rx_queues(vsi->netdev, vsi->num_rxq);
-	if (err)
-		goto err_set_qs;
+	err = netअगर_set_real_num_rx_queues(vsi->netdev, vsi->num_rxq);
+	अगर (err)
+		जाओ err_set_qs;
 
 	err = ice_up_complete(vsi);
-	if (err)
-		goto err_up_complete;
+	अगर (err)
+		जाओ err_up_complete;
 
-	return 0;
+	वापस 0;
 
 err_up_complete:
-	ice_down(vsi);
+	ice_करोwn(vsi);
 err_set_qs:
-	ice_vsi_free_irq(vsi);
+	ice_vsi_मुक्त_irq(vsi);
 err_setup_rx:
-	ice_vsi_free_rx_rings(vsi);
+	ice_vsi_मुक्त_rx_rings(vsi);
 err_setup_tx:
-	ice_vsi_free_tx_rings(vsi);
+	ice_vsi_मुक्त_tx_rings(vsi);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_vsi_release_all - Delete all VSIs
- * @pf: PF from which all VSIs are being removed
+ * @pf: PF from which all VSIs are being हटाओd
  */
-static void ice_vsi_release_all(struct ice_pf *pf)
-{
-	int err, i;
+अटल व्योम ice_vsi_release_all(काष्ठा ice_pf *pf)
+अणु
+	पूर्णांक err, i;
 
-	if (!pf->vsi)
-		return;
+	अगर (!pf->vsi)
+		वापस;
 
-	ice_for_each_vsi(pf, i) {
-		if (!pf->vsi[i])
-			continue;
+	ice_क्रम_each_vsi(pf, i) अणु
+		अगर (!pf->vsi[i])
+			जारी;
 
 		err = ice_vsi_release(pf->vsi[i]);
-		if (err)
+		अगर (err)
 			dev_dbg(ice_pf_to_dev(pf), "Failed to release pf->vsi[%d], err %d, vsi_num = %d\n",
 				i, err, pf->vsi[i]->vsi_num);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ice_vsi_rebuild_by_type - Rebuild VSI of a given type
- * @pf: pointer to the PF instance
+ * @pf: poपूर्णांकer to the PF instance
  * @type: VSI type to rebuild
  *
  * Iterates through the pf->vsi array and rebuilds VSIs of the requested type
  */
-static int ice_vsi_rebuild_by_type(struct ice_pf *pf, enum ice_vsi_type type)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	enum ice_status status;
-	int i, err;
+अटल पूर्णांक ice_vsi_rebuild_by_type(काष्ठा ice_pf *pf, क्रमागत ice_vsi_type type)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	क्रमागत ice_status status;
+	पूर्णांक i, err;
 
-	ice_for_each_vsi(pf, i) {
-		struct ice_vsi *vsi = pf->vsi[i];
+	ice_क्रम_each_vsi(pf, i) अणु
+		काष्ठा ice_vsi *vsi = pf->vsi[i];
 
-		if (!vsi || vsi->type != type)
-			continue;
+		अगर (!vsi || vsi->type != type)
+			जारी;
 
 		/* rebuild the VSI */
 		err = ice_vsi_rebuild(vsi, true);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "rebuild VSI failed, err %d, VSI index %d, type %s\n",
 				err, vsi->idx, ice_vsi_type_str(type));
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		/* replay filters for the VSI */
+		/* replay filters क्रम the VSI */
 		status = ice_replay_vsi(&pf->hw, vsi->idx);
-		if (status) {
+		अगर (status) अणु
 			dev_err(dev, "replay VSI failed, status %s, VSI index %d, type %s\n",
 				ice_stat_str(status), vsi->idx,
 				ice_vsi_type_str(type));
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		/* Re-map HW VSI number, using VSI handle that has been
 		 * previously validated in ice_replay_vsi() call above
@@ -6049,403 +6050,403 @@ static int ice_vsi_rebuild_by_type(struct ice_pf *pf, enum ice_vsi_type type)
 
 		/* enable the VSI */
 		err = ice_ena_vsi(vsi, false);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "enable VSI failed, err %d, VSI index %d, type %s\n",
 				err, vsi->idx, ice_vsi_type_str(type));
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		dev_info(dev, "VSI rebuilt. VSI index %d, type %s\n", vsi->idx,
 			 ice_vsi_type_str(type));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_update_pf_netdev_link - Update PF netdev link status
- * @pf: pointer to the PF instance
+ * @pf: poपूर्णांकer to the PF instance
  */
-static void ice_update_pf_netdev_link(struct ice_pf *pf)
-{
+अटल व्योम ice_update_pf_netdev_link(काष्ठा ice_pf *pf)
+अणु
 	bool link_up;
-	int i;
+	पूर्णांक i;
 
-	ice_for_each_vsi(pf, i) {
-		struct ice_vsi *vsi = pf->vsi[i];
+	ice_क्रम_each_vsi(pf, i) अणु
+		काष्ठा ice_vsi *vsi = pf->vsi[i];
 
-		if (!vsi || vsi->type != ICE_VSI_PF)
-			return;
+		अगर (!vsi || vsi->type != ICE_VSI_PF)
+			वापस;
 
 		ice_get_link_status(pf->vsi[i]->port_info, &link_up);
-		if (link_up) {
-			netif_carrier_on(pf->vsi[i]->netdev);
-			netif_tx_wake_all_queues(pf->vsi[i]->netdev);
-		} else {
-			netif_carrier_off(pf->vsi[i]->netdev);
-			netif_tx_stop_all_queues(pf->vsi[i]->netdev);
-		}
-	}
-}
+		अगर (link_up) अणु
+			netअगर_carrier_on(pf->vsi[i]->netdev);
+			netअगर_tx_wake_all_queues(pf->vsi[i]->netdev);
+		पूर्ण अन्यथा अणु
+			netअगर_carrier_off(pf->vsi[i]->netdev);
+			netअगर_tx_stop_all_queues(pf->vsi[i]->netdev);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * ice_rebuild - rebuild after reset
  * @pf: PF to rebuild
  * @reset_type: type of reset
  *
- * Do not rebuild VF VSI in this flow because that is already handled via
- * ice_reset_all_vfs(). This is because requirements for resetting a VF after a
- * PFR/CORER/GLOBER/etc. are different than the normal flow. Also, we don't want
+ * Do not rebuild VF VSI in this flow because that is alपढ़ोy handled via
+ * ice_reset_all_vfs(). This is because requirements क्रम resetting a VF after a
+ * PFR/CORER/GLOBER/etc. are dअगरferent than the normal flow. Also, we करोn't want
  * to reset/rebuild all the VF VSI twice.
  */
-static void ice_rebuild(struct ice_pf *pf, enum ice_reset_req reset_type)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
-	enum ice_status ret;
-	int err;
+अटल व्योम ice_rebuild(काष्ठा ice_pf *pf, क्रमागत ice_reset_req reset_type)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
+	क्रमागत ice_status ret;
+	पूर्णांक err;
 
-	if (test_bit(ICE_DOWN, pf->state))
-		goto clear_recovery;
+	अगर (test_bit(ICE_DOWN, pf->state))
+		जाओ clear_recovery;
 
 	dev_dbg(dev, "rebuilding PF after reset_type=%d\n", reset_type);
 
 	ret = ice_init_all_ctrlq(hw);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "control queues init failed %s\n",
 			ice_stat_str(ret));
-		goto err_init_ctrlq;
-	}
+		जाओ err_init_ctrlq;
+	पूर्ण
 
-	/* if DDP was previously loaded successfully */
-	if (!ice_is_safe_mode(pf)) {
+	/* अगर DDP was previously loaded successfully */
+	अगर (!ice_is_safe_mode(pf)) अणु
 		/* reload the SW DB of filter tables */
-		if (reset_type == ICE_RESET_PFR)
+		अगर (reset_type == ICE_RESET_PFR)
 			ice_fill_blk_tbls(hw);
-		else
+		अन्यथा
 			/* Reload DDP Package after CORER/GLOBR reset */
-			ice_load_pkg(NULL, pf);
-	}
+			ice_load_pkg(शून्य, pf);
+	पूर्ण
 
 	ret = ice_clear_pf_cfg(hw);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "clear PF configuration failed %s\n",
 			ice_stat_str(ret));
-		goto err_init_ctrlq;
-	}
+		जाओ err_init_ctrlq;
+	पूर्ण
 
-	if (pf->first_sw->dflt_vsi_ena)
+	अगर (pf->first_sw->dflt_vsi_ena)
 		dev_info(dev, "Clearing default VSI, re-enable after reset completes\n");
-	/* clear the default VSI configuration if it exists */
-	pf->first_sw->dflt_vsi = NULL;
+	/* clear the शेष VSI configuration अगर it exists */
+	pf->first_sw->dflt_vsi = शून्य;
 	pf->first_sw->dflt_vsi_ena = false;
 
 	ice_clear_pxe_mode(hw);
 
 	ret = ice_get_caps(hw);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "ice_get_caps failed %s\n", ice_stat_str(ret));
-		goto err_init_ctrlq;
-	}
+		जाओ err_init_ctrlq;
+	पूर्ण
 
-	ret = ice_aq_set_mac_cfg(hw, ICE_AQ_SET_MAC_FRAME_SIZE_MAX, NULL);
-	if (ret) {
+	ret = ice_aq_set_mac_cfg(hw, ICE_AQ_SET_MAC_FRAME_SIZE_MAX, शून्य);
+	अगर (ret) अणु
 		dev_err(dev, "set_mac_cfg failed %s\n", ice_stat_str(ret));
-		goto err_init_ctrlq;
-	}
+		जाओ err_init_ctrlq;
+	पूर्ण
 
 	err = ice_sched_init_port(hw->port_info);
-	if (err)
-		goto err_sched_init_port;
+	अगर (err)
+		जाओ err_sched_init_port;
 
 	/* start misc vector */
 	err = ice_req_irq_msix_misc(pf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "misc vector setup failed: %d\n", err);
-		goto err_sched_init_port;
-	}
+		जाओ err_sched_init_port;
+	पूर्ण
 
-	if (test_bit(ICE_FLAG_FD_ENA, pf->flags)) {
+	अगर (test_bit(ICE_FLAG_FD_ENA, pf->flags)) अणु
 		wr32(hw, PFQF_FD_ENA, PFQF_FD_ENA_FD_ENA_M);
-		if (!rd32(hw, PFQF_FD_SIZE)) {
-			u16 unused, guar, b_effort;
+		अगर (!rd32(hw, PFQF_FD_SIZE)) अणु
+			u16 unused, guar, b_efक्रमt;
 
 			guar = hw->func_caps.fd_fltr_guar;
-			b_effort = hw->func_caps.fd_fltr_best_effort;
+			b_efक्रमt = hw->func_caps.fd_fltr_best_efक्रमt;
 
-			/* force guaranteed filter pool for PF */
+			/* क्रमce guaranteed filter pool क्रम PF */
 			ice_alloc_fd_guar_item(hw, &unused, guar);
-			/* force shared filter pool for PF */
-			ice_alloc_fd_shrd_item(hw, &unused, b_effort);
-		}
-	}
+			/* क्रमce shared filter pool क्रम PF */
+			ice_alloc_fd_shrd_item(hw, &unused, b_efक्रमt);
+		पूर्ण
+	पूर्ण
 
-	if (test_bit(ICE_FLAG_DCB_ENA, pf->flags))
+	अगर (test_bit(ICE_FLAG_DCB_ENA, pf->flags))
 		ice_dcb_rebuild(pf);
 
 	/* rebuild PF VSI */
 	err = ice_vsi_rebuild_by_type(pf, ICE_VSI_PF);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "PF VSI rebuild failed: %d\n", err);
-		goto err_vsi_rebuild;
-	}
+		जाओ err_vsi_rebuild;
+	पूर्ण
 
 	/* If Flow Director is active */
-	if (test_bit(ICE_FLAG_FD_ENA, pf->flags)) {
+	अगर (test_bit(ICE_FLAG_FD_ENA, pf->flags)) अणु
 		err = ice_vsi_rebuild_by_type(pf, ICE_VSI_CTRL);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "control VSI rebuild failed: %d\n", err);
-			goto err_vsi_rebuild;
-		}
+			जाओ err_vsi_rebuild;
+		पूर्ण
 
 		/* replay HW Flow Director recipes */
-		if (hw->fdir_prof)
+		अगर (hw->fdir_prof)
 			ice_fdir_replay_flows(hw);
 
 		/* replay Flow Director filters */
 		ice_fdir_replay_fltrs(pf);
 
 		ice_rebuild_arfs(pf);
-	}
+	पूर्ण
 
 	ice_update_pf_netdev_link(pf);
 
 	/* tell the firmware we are up */
 	ret = ice_send_version(pf);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Rebuild failed due to error sending driver version: %s\n",
 			ice_stat_str(ret));
-		goto err_vsi_rebuild;
-	}
+		जाओ err_vsi_rebuild;
+	पूर्ण
 
 	ice_replay_post(hw);
 
-	/* if we get here, reset flow is successful */
+	/* अगर we get here, reset flow is successful */
 	clear_bit(ICE_RESET_FAILED, pf->state);
-	return;
+	वापस;
 
 err_vsi_rebuild:
 err_sched_init_port:
 	ice_sched_cleanup_all(hw);
 err_init_ctrlq:
-	ice_shutdown_all_ctrlq(hw);
+	ice_shutकरोwn_all_ctrlq(hw);
 	set_bit(ICE_RESET_FAILED, pf->state);
 clear_recovery:
 	/* set this bit in PF state to control service task scheduling */
 	set_bit(ICE_NEEDS_RESTART, pf->state);
 	dev_err(dev, "Rebuild failed, unload and reload driver\n");
-}
+पूर्ण
 
 /**
- * ice_max_xdp_frame_size - returns the maximum allowed frame size for XDP
- * @vsi: Pointer to VSI structure
+ * ice_max_xdp_frame_size - वापसs the maximum allowed frame size क्रम XDP
+ * @vsi: Poपूर्णांकer to VSI काष्ठाure
  */
-static int ice_max_xdp_frame_size(struct ice_vsi *vsi)
-{
-	if (PAGE_SIZE >= 8192 || test_bit(ICE_FLAG_LEGACY_RX, vsi->back->flags))
-		return ICE_RXBUF_2048 - XDP_PACKET_HEADROOM;
-	else
-		return ICE_RXBUF_3072;
-}
+अटल पूर्णांक ice_max_xdp_frame_size(काष्ठा ice_vsi *vsi)
+अणु
+	अगर (PAGE_SIZE >= 8192 || test_bit(ICE_FLAG_LEGACY_RX, vsi->back->flags))
+		वापस ICE_RXBUF_2048 - XDP_PACKET_HEADROOM;
+	अन्यथा
+		वापस ICE_RXBUF_3072;
+पूर्ण
 
 /**
  * ice_change_mtu - NDO callback to change the MTU
- * @netdev: network interface device structure
- * @new_mtu: new value for maximum frame size
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @new_mtu: new value क्रम maximum frame size
  *
  * Returns 0 on success, negative on failure
  */
-static int ice_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
-	struct ice_pf *pf = vsi->back;
+अटल पूर्णांक ice_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
+	काष्ठा ice_pf *pf = vsi->back;
 	u8 count = 0;
 
-	if (new_mtu == (int)netdev->mtu) {
+	अगर (new_mtu == (पूर्णांक)netdev->mtu) अणु
 		netdev_warn(netdev, "MTU is already %u\n", netdev->mtu);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (ice_is_xdp_ena_vsi(vsi)) {
-		int frame_size = ice_max_xdp_frame_size(vsi);
+	अगर (ice_is_xdp_ena_vsi(vsi)) अणु
+		पूर्णांक frame_size = ice_max_xdp_frame_size(vsi);
 
-		if (new_mtu + ICE_ETH_PKT_HDR_PAD > frame_size) {
+		अगर (new_mtu + ICE_ETH_PKT_HDR_PAD > frame_size) अणु
 			netdev_err(netdev, "max MTU for XDP usage is %d\n",
 				   frame_size - ICE_ETH_PKT_HDR_PAD);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* if a reset is in progress, wait for some time for it to complete */
-	do {
-		if (ice_is_reset_in_progress(pf->state)) {
+	/* अगर a reset is in progress, रुको क्रम some समय क्रम it to complete */
+	करो अणु
+		अगर (ice_is_reset_in_progress(pf->state)) अणु
 			count++;
 			usleep_range(1000, 2000);
-		} else {
-			break;
-		}
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
 
-	} while (count < 100);
+	पूर्ण जबतक (count < 100);
 
-	if (count == 100) {
+	अगर (count == 100) अणु
 		netdev_err(netdev, "can't change MTU. Device is busy\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	netdev->mtu = (unsigned int)new_mtu;
+	netdev->mtu = (अचिन्हित पूर्णांक)new_mtu;
 
-	/* if VSI is up, bring it down and then back up */
-	if (!test_and_set_bit(ICE_VSI_DOWN, vsi->state)) {
-		int err;
+	/* अगर VSI is up, bring it करोwn and then back up */
+	अगर (!test_and_set_bit(ICE_VSI_DOWN, vsi->state)) अणु
+		पूर्णांक err;
 
-		err = ice_down(vsi);
-		if (err) {
+		err = ice_करोwn(vsi);
+		अगर (err) अणु
 			netdev_err(netdev, "change MTU if_down err %d\n", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		err = ice_up(vsi);
-		if (err) {
+		अगर (err) अणु
 			netdev_err(netdev, "change MTU if_up err %d\n", err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	netdev_dbg(netdev, "changed MTU to %d\n", new_mtu);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_aq_str - convert AQ err code to a string
  * @aq_err: the AQ error code to convert
  */
-const char *ice_aq_str(enum ice_aq_err aq_err)
-{
-	switch (aq_err) {
-	case ICE_AQ_RC_OK:
-		return "OK";
-	case ICE_AQ_RC_EPERM:
-		return "ICE_AQ_RC_EPERM";
-	case ICE_AQ_RC_ENOENT:
-		return "ICE_AQ_RC_ENOENT";
-	case ICE_AQ_RC_ENOMEM:
-		return "ICE_AQ_RC_ENOMEM";
-	case ICE_AQ_RC_EBUSY:
-		return "ICE_AQ_RC_EBUSY";
-	case ICE_AQ_RC_EEXIST:
-		return "ICE_AQ_RC_EEXIST";
-	case ICE_AQ_RC_EINVAL:
-		return "ICE_AQ_RC_EINVAL";
-	case ICE_AQ_RC_ENOSPC:
-		return "ICE_AQ_RC_ENOSPC";
-	case ICE_AQ_RC_ENOSYS:
-		return "ICE_AQ_RC_ENOSYS";
-	case ICE_AQ_RC_EMODE:
-		return "ICE_AQ_RC_EMODE";
-	case ICE_AQ_RC_ENOSEC:
-		return "ICE_AQ_RC_ENOSEC";
-	case ICE_AQ_RC_EBADSIG:
-		return "ICE_AQ_RC_EBADSIG";
-	case ICE_AQ_RC_ESVN:
-		return "ICE_AQ_RC_ESVN";
-	case ICE_AQ_RC_EBADMAN:
-		return "ICE_AQ_RC_EBADMAN";
-	case ICE_AQ_RC_EBADBUF:
-		return "ICE_AQ_RC_EBADBUF";
-	}
+स्थिर अक्षर *ice_aq_str(क्रमागत ice_aq_err aq_err)
+अणु
+	चयन (aq_err) अणु
+	हाल ICE_AQ_RC_OK:
+		वापस "OK";
+	हाल ICE_AQ_RC_EPERM:
+		वापस "ICE_AQ_RC_EPERM";
+	हाल ICE_AQ_RC_ENOENT:
+		वापस "ICE_AQ_RC_ENOENT";
+	हाल ICE_AQ_RC_ENOMEM:
+		वापस "ICE_AQ_RC_ENOMEM";
+	हाल ICE_AQ_RC_EBUSY:
+		वापस "ICE_AQ_RC_EBUSY";
+	हाल ICE_AQ_RC_EEXIST:
+		वापस "ICE_AQ_RC_EEXIST";
+	हाल ICE_AQ_RC_EINVAL:
+		वापस "ICE_AQ_RC_EINVAL";
+	हाल ICE_AQ_RC_ENOSPC:
+		वापस "ICE_AQ_RC_ENOSPC";
+	हाल ICE_AQ_RC_ENOSYS:
+		वापस "ICE_AQ_RC_ENOSYS";
+	हाल ICE_AQ_RC_EMODE:
+		वापस "ICE_AQ_RC_EMODE";
+	हाल ICE_AQ_RC_ENOSEC:
+		वापस "ICE_AQ_RC_ENOSEC";
+	हाल ICE_AQ_RC_EBADSIG:
+		वापस "ICE_AQ_RC_EBADSIG";
+	हाल ICE_AQ_RC_ESVN:
+		वापस "ICE_AQ_RC_ESVN";
+	हाल ICE_AQ_RC_EBADMAN:
+		वापस "ICE_AQ_RC_EBADMAN";
+	हाल ICE_AQ_RC_EBADBUF:
+		वापस "ICE_AQ_RC_EBADBUF";
+	पूर्ण
 
-	return "ICE_AQ_RC_UNKNOWN";
-}
+	वापस "ICE_AQ_RC_UNKNOWN";
+पूर्ण
 
 /**
  * ice_stat_str - convert status err code to a string
  * @stat_err: the status error code to convert
  */
-const char *ice_stat_str(enum ice_status stat_err)
-{
-	switch (stat_err) {
-	case ICE_SUCCESS:
-		return "OK";
-	case ICE_ERR_PARAM:
-		return "ICE_ERR_PARAM";
-	case ICE_ERR_NOT_IMPL:
-		return "ICE_ERR_NOT_IMPL";
-	case ICE_ERR_NOT_READY:
-		return "ICE_ERR_NOT_READY";
-	case ICE_ERR_NOT_SUPPORTED:
-		return "ICE_ERR_NOT_SUPPORTED";
-	case ICE_ERR_BAD_PTR:
-		return "ICE_ERR_BAD_PTR";
-	case ICE_ERR_INVAL_SIZE:
-		return "ICE_ERR_INVAL_SIZE";
-	case ICE_ERR_DEVICE_NOT_SUPPORTED:
-		return "ICE_ERR_DEVICE_NOT_SUPPORTED";
-	case ICE_ERR_RESET_FAILED:
-		return "ICE_ERR_RESET_FAILED";
-	case ICE_ERR_FW_API_VER:
-		return "ICE_ERR_FW_API_VER";
-	case ICE_ERR_NO_MEMORY:
-		return "ICE_ERR_NO_MEMORY";
-	case ICE_ERR_CFG:
-		return "ICE_ERR_CFG";
-	case ICE_ERR_OUT_OF_RANGE:
-		return "ICE_ERR_OUT_OF_RANGE";
-	case ICE_ERR_ALREADY_EXISTS:
-		return "ICE_ERR_ALREADY_EXISTS";
-	case ICE_ERR_NVM:
-		return "ICE_ERR_NVM";
-	case ICE_ERR_NVM_CHECKSUM:
-		return "ICE_ERR_NVM_CHECKSUM";
-	case ICE_ERR_BUF_TOO_SHORT:
-		return "ICE_ERR_BUF_TOO_SHORT";
-	case ICE_ERR_NVM_BLANK_MODE:
-		return "ICE_ERR_NVM_BLANK_MODE";
-	case ICE_ERR_IN_USE:
-		return "ICE_ERR_IN_USE";
-	case ICE_ERR_MAX_LIMIT:
-		return "ICE_ERR_MAX_LIMIT";
-	case ICE_ERR_RESET_ONGOING:
-		return "ICE_ERR_RESET_ONGOING";
-	case ICE_ERR_HW_TABLE:
-		return "ICE_ERR_HW_TABLE";
-	case ICE_ERR_DOES_NOT_EXIST:
-		return "ICE_ERR_DOES_NOT_EXIST";
-	case ICE_ERR_FW_DDP_MISMATCH:
-		return "ICE_ERR_FW_DDP_MISMATCH";
-	case ICE_ERR_AQ_ERROR:
-		return "ICE_ERR_AQ_ERROR";
-	case ICE_ERR_AQ_TIMEOUT:
-		return "ICE_ERR_AQ_TIMEOUT";
-	case ICE_ERR_AQ_FULL:
-		return "ICE_ERR_AQ_FULL";
-	case ICE_ERR_AQ_NO_WORK:
-		return "ICE_ERR_AQ_NO_WORK";
-	case ICE_ERR_AQ_EMPTY:
-		return "ICE_ERR_AQ_EMPTY";
-	case ICE_ERR_AQ_FW_CRITICAL:
-		return "ICE_ERR_AQ_FW_CRITICAL";
-	}
+स्थिर अक्षर *ice_stat_str(क्रमागत ice_status stat_err)
+अणु
+	चयन (stat_err) अणु
+	हाल ICE_SUCCESS:
+		वापस "OK";
+	हाल ICE_ERR_PARAM:
+		वापस "ICE_ERR_PARAM";
+	हाल ICE_ERR_NOT_IMPL:
+		वापस "ICE_ERR_NOT_IMPL";
+	हाल ICE_ERR_NOT_READY:
+		वापस "ICE_ERR_NOT_READY";
+	हाल ICE_ERR_NOT_SUPPORTED:
+		वापस "ICE_ERR_NOT_SUPPORTED";
+	हाल ICE_ERR_BAD_PTR:
+		वापस "ICE_ERR_BAD_PTR";
+	हाल ICE_ERR_INVAL_SIZE:
+		वापस "ICE_ERR_INVAL_SIZE";
+	हाल ICE_ERR_DEVICE_NOT_SUPPORTED:
+		वापस "ICE_ERR_DEVICE_NOT_SUPPORTED";
+	हाल ICE_ERR_RESET_FAILED:
+		वापस "ICE_ERR_RESET_FAILED";
+	हाल ICE_ERR_FW_API_VER:
+		वापस "ICE_ERR_FW_API_VER";
+	हाल ICE_ERR_NO_MEMORY:
+		वापस "ICE_ERR_NO_MEMORY";
+	हाल ICE_ERR_CFG:
+		वापस "ICE_ERR_CFG";
+	हाल ICE_ERR_OUT_OF_RANGE:
+		वापस "ICE_ERR_OUT_OF_RANGE";
+	हाल ICE_ERR_ALREADY_EXISTS:
+		वापस "ICE_ERR_ALREADY_EXISTS";
+	हाल ICE_ERR_NVM:
+		वापस "ICE_ERR_NVM";
+	हाल ICE_ERR_NVM_CHECKSUM:
+		वापस "ICE_ERR_NVM_CHECKSUM";
+	हाल ICE_ERR_BUF_TOO_SHORT:
+		वापस "ICE_ERR_BUF_TOO_SHORT";
+	हाल ICE_ERR_NVM_BLANK_MODE:
+		वापस "ICE_ERR_NVM_BLANK_MODE";
+	हाल ICE_ERR_IN_USE:
+		वापस "ICE_ERR_IN_USE";
+	हाल ICE_ERR_MAX_LIMIT:
+		वापस "ICE_ERR_MAX_LIMIT";
+	हाल ICE_ERR_RESET_ONGOING:
+		वापस "ICE_ERR_RESET_ONGOING";
+	हाल ICE_ERR_HW_TABLE:
+		वापस "ICE_ERR_HW_TABLE";
+	हाल ICE_ERR_DOES_NOT_EXIST:
+		वापस "ICE_ERR_DOES_NOT_EXIST";
+	हाल ICE_ERR_FW_DDP_MISMATCH:
+		वापस "ICE_ERR_FW_DDP_MISMATCH";
+	हाल ICE_ERR_AQ_ERROR:
+		वापस "ICE_ERR_AQ_ERROR";
+	हाल ICE_ERR_AQ_TIMEOUT:
+		वापस "ICE_ERR_AQ_TIMEOUT";
+	हाल ICE_ERR_AQ_FULL:
+		वापस "ICE_ERR_AQ_FULL";
+	हाल ICE_ERR_AQ_NO_WORK:
+		वापस "ICE_ERR_AQ_NO_WORK";
+	हाल ICE_ERR_AQ_EMPTY:
+		वापस "ICE_ERR_AQ_EMPTY";
+	हाल ICE_ERR_AQ_FW_CRITICAL:
+		वापस "ICE_ERR_AQ_FW_CRITICAL";
+	पूर्ण
 
-	return "ICE_ERR_UNKNOWN";
-}
+	वापस "ICE_ERR_UNKNOWN";
+पूर्ण
 
 /**
  * ice_set_rss_lut - Set RSS LUT
- * @vsi: Pointer to VSI structure
+ * @vsi: Poपूर्णांकer to VSI काष्ठाure
  * @lut: Lookup table
  * @lut_size: Lookup table size
  *
  * Returns 0 on success, negative on failure
  */
-int ice_set_rss_lut(struct ice_vsi *vsi, u8 *lut, u16 lut_size)
-{
-	struct ice_aq_get_set_rss_lut_params params = {};
-	struct ice_hw *hw = &vsi->back->hw;
-	enum ice_status status;
+पूर्णांक ice_set_rss_lut(काष्ठा ice_vsi *vsi, u8 *lut, u16 lut_size)
+अणु
+	काष्ठा ice_aq_get_set_rss_lut_params params = अणुपूर्ण;
+	काष्ठा ice_hw *hw = &vsi->back->hw;
+	क्रमागत ice_status status;
 
-	if (!lut)
-		return -EINVAL;
+	अगर (!lut)
+		वापस -EINVAL;
 
 	params.vsi_handle = vsi->idx;
 	params.lut_size = lut_size;
@@ -6453,58 +6454,58 @@ int ice_set_rss_lut(struct ice_vsi *vsi, u8 *lut, u16 lut_size)
 	params.lut = lut;
 
 	status = ice_aq_set_rss_lut(hw, &params);
-	if (status) {
+	अगर (status) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "Cannot set RSS lut, err %s aq_err %s\n",
 			ice_stat_str(status),
 			ice_aq_str(hw->adminq.sq_last_status));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_set_rss_key - Set RSS key
- * @vsi: Pointer to the VSI structure
+ * @vsi: Poपूर्णांकer to the VSI काष्ठाure
  * @seed: RSS hash seed
  *
  * Returns 0 on success, negative on failure
  */
-int ice_set_rss_key(struct ice_vsi *vsi, u8 *seed)
-{
-	struct ice_hw *hw = &vsi->back->hw;
-	enum ice_status status;
+पूर्णांक ice_set_rss_key(काष्ठा ice_vsi *vsi, u8 *seed)
+अणु
+	काष्ठा ice_hw *hw = &vsi->back->hw;
+	क्रमागत ice_status status;
 
-	if (!seed)
-		return -EINVAL;
+	अगर (!seed)
+		वापस -EINVAL;
 
-	status = ice_aq_set_rss_key(hw, vsi->idx, (struct ice_aqc_get_set_rss_keys *)seed);
-	if (status) {
+	status = ice_aq_set_rss_key(hw, vsi->idx, (काष्ठा ice_aqc_get_set_rss_keys *)seed);
+	अगर (status) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "Cannot set RSS key, err %s aq_err %s\n",
 			ice_stat_str(status),
 			ice_aq_str(hw->adminq.sq_last_status));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_get_rss_lut - Get RSS LUT
- * @vsi: Pointer to VSI structure
+ * @vsi: Poपूर्णांकer to VSI काष्ठाure
  * @lut: Buffer to store the lookup table entries
  * @lut_size: Size of buffer to store the lookup table entries
  *
  * Returns 0 on success, negative on failure
  */
-int ice_get_rss_lut(struct ice_vsi *vsi, u8 *lut, u16 lut_size)
-{
-	struct ice_aq_get_set_rss_lut_params params = {};
-	struct ice_hw *hw = &vsi->back->hw;
-	enum ice_status status;
+पूर्णांक ice_get_rss_lut(काष्ठा ice_vsi *vsi, u8 *lut, u16 lut_size)
+अणु
+	काष्ठा ice_aq_get_set_rss_lut_params params = अणुपूर्ण;
+	काष्ठा ice_hw *hw = &vsi->back->hw;
+	क्रमागत ice_status status;
 
-	if (!lut)
-		return -EINVAL;
+	अगर (!lut)
+		वापस -EINVAL;
 
 	params.vsi_handle = vsi->idx;
 	params.lut_size = lut_size;
@@ -6512,41 +6513,41 @@ int ice_get_rss_lut(struct ice_vsi *vsi, u8 *lut, u16 lut_size)
 	params.lut = lut;
 
 	status = ice_aq_get_rss_lut(hw, &params);
-	if (status) {
+	अगर (status) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "Cannot get RSS lut, err %s aq_err %s\n",
 			ice_stat_str(status),
 			ice_aq_str(hw->adminq.sq_last_status));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_get_rss_key - Get RSS key
- * @vsi: Pointer to VSI structure
+ * @vsi: Poपूर्णांकer to VSI काष्ठाure
  * @seed: Buffer to store the key in
  *
  * Returns 0 on success, negative on failure
  */
-int ice_get_rss_key(struct ice_vsi *vsi, u8 *seed)
-{
-	struct ice_hw *hw = &vsi->back->hw;
-	enum ice_status status;
+पूर्णांक ice_get_rss_key(काष्ठा ice_vsi *vsi, u8 *seed)
+अणु
+	काष्ठा ice_hw *hw = &vsi->back->hw;
+	क्रमागत ice_status status;
 
-	if (!seed)
-		return -EINVAL;
+	अगर (!seed)
+		वापस -EINVAL;
 
-	status = ice_aq_get_rss_key(hw, vsi->idx, (struct ice_aqc_get_set_rss_keys *)seed);
-	if (status) {
+	status = ice_aq_get_rss_key(hw, vsi->idx, (काष्ठा ice_aqc_get_set_rss_keys *)seed);
+	अगर (status) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "Cannot get RSS key, err %s aq_err %s\n",
 			ice_stat_str(status),
 			ice_aq_str(hw->adminq.sq_last_status));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_bridge_getlink - Get the hardware bridge mode
@@ -6559,67 +6560,67 @@ int ice_get_rss_key(struct ice_vsi *vsi, u8 *seed)
  *
  * Return the bridge mode (VEB/VEPA)
  */
-static int
-ice_bridge_getlink(struct sk_buff *skb, u32 pid, u32 seq,
-		   struct net_device *dev, u32 filter_mask, int nlflags)
-{
-	struct ice_netdev_priv *np = netdev_priv(dev);
-	struct ice_vsi *vsi = np->vsi;
-	struct ice_pf *pf = vsi->back;
+अटल पूर्णांक
+ice_bridge_getlink(काष्ठा sk_buff *skb, u32 pid, u32 seq,
+		   काष्ठा net_device *dev, u32 filter_mask, पूर्णांक nlflags)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(dev);
+	काष्ठा ice_vsi *vsi = np->vsi;
+	काष्ठा ice_pf *pf = vsi->back;
 	u16 bmode;
 
 	bmode = pf->first_sw->bridge_mode;
 
-	return ndo_dflt_bridge_getlink(skb, pid, seq, dev, bmode, 0, 0, nlflags,
-				       filter_mask, NULL);
-}
+	वापस nकरो_dflt_bridge_getlink(skb, pid, seq, dev, bmode, 0, 0, nlflags,
+				       filter_mask, शून्य);
+पूर्ण
 
 /**
- * ice_vsi_update_bridge_mode - Update VSI for switching bridge mode (VEB/VEPA)
- * @vsi: Pointer to VSI structure
+ * ice_vsi_update_bridge_mode - Update VSI क्रम चयनing bridge mode (VEB/VEPA)
+ * @vsi: Poपूर्णांकer to VSI काष्ठाure
  * @bmode: Hardware bridge mode (VEB/VEPA)
  *
  * Returns 0 on success, negative on failure
  */
-static int ice_vsi_update_bridge_mode(struct ice_vsi *vsi, u16 bmode)
-{
-	struct ice_aqc_vsi_props *vsi_props;
-	struct ice_hw *hw = &vsi->back->hw;
-	struct ice_vsi_ctx *ctxt;
-	enum ice_status status;
-	int ret = 0;
+अटल पूर्णांक ice_vsi_update_bridge_mode(काष्ठा ice_vsi *vsi, u16 bmode)
+अणु
+	काष्ठा ice_aqc_vsi_props *vsi_props;
+	काष्ठा ice_hw *hw = &vsi->back->hw;
+	काष्ठा ice_vsi_ctx *ctxt;
+	क्रमागत ice_status status;
+	पूर्णांक ret = 0;
 
 	vsi_props = &vsi->info;
 
-	ctxt = kzalloc(sizeof(*ctxt), GFP_KERNEL);
-	if (!ctxt)
-		return -ENOMEM;
+	ctxt = kzalloc(माप(*ctxt), GFP_KERNEL);
+	अगर (!ctxt)
+		वापस -ENOMEM;
 
 	ctxt->info = vsi->info;
 
-	if (bmode == BRIDGE_MODE_VEB)
+	अगर (bmode == BRIDGE_MODE_VEB)
 		/* change from VEPA to VEB mode */
 		ctxt->info.sw_flags |= ICE_AQ_VSI_SW_FLAG_ALLOW_LB;
-	else
+	अन्यथा
 		/* change from VEB to VEPA mode */
 		ctxt->info.sw_flags &= ~ICE_AQ_VSI_SW_FLAG_ALLOW_LB;
 	ctxt->info.valid_sections = cpu_to_le16(ICE_AQ_VSI_PROP_SW_VALID);
 
-	status = ice_update_vsi(hw, vsi->idx, ctxt, NULL);
-	if (status) {
+	status = ice_update_vsi(hw, vsi->idx, ctxt, शून्य);
+	अगर (status) अणु
 		dev_err(ice_pf_to_dev(vsi->back), "update VSI for bridge mode failed, bmode = %d err %s aq_err %s\n",
 			bmode, ice_stat_str(status),
 			ice_aq_str(hw->adminq.sq_last_status));
 		ret = -EIO;
-		goto out;
-	}
-	/* Update sw flags for book keeping */
+		जाओ out;
+	पूर्ण
+	/* Update sw flags क्रम book keeping */
 	vsi_props->sw_flags = ctxt->info.sw_flags;
 
 out:
-	kfree(ctxt);
-	return ret;
-}
+	kमुक्त(ctxt);
+	वापस ret;
+पूर्ण
 
 /**
  * ice_bridge_setlink - Set the hardware bridge mode
@@ -6628,362 +6629,362 @@ out:
  * @flags: bridge setlink flags
  * @extack: netlink extended ack
  *
- * Sets the bridge mode (VEB/VEPA) of the switch to which the netdev (VSI) is
- * hooked up to. Iterates through the PF VSI list and sets the loopback mode (if
- * not already set for all VSIs connected to this switch. And also update the
- * unicast switch filter rules for the corresponding switch of the netdev.
+ * Sets the bridge mode (VEB/VEPA) of the चयन to which the netdev (VSI) is
+ * hooked up to. Iterates through the PF VSI list and sets the loopback mode (अगर
+ * not alपढ़ोy set क्रम all VSIs connected to this चयन. And also update the
+ * unicast चयन filter rules क्रम the corresponding चयन of the netdev.
  */
-static int
-ice_bridge_setlink(struct net_device *dev, struct nlmsghdr *nlh,
+अटल पूर्णांक
+ice_bridge_setlink(काष्ठा net_device *dev, काष्ठा nlmsghdr *nlh,
 		   u16 __always_unused flags,
-		   struct netlink_ext_ack __always_unused *extack)
-{
-	struct ice_netdev_priv *np = netdev_priv(dev);
-	struct ice_pf *pf = np->vsi->back;
-	struct nlattr *attr, *br_spec;
-	struct ice_hw *hw = &pf->hw;
-	enum ice_status status;
-	struct ice_sw *pf_sw;
-	int rem, v, err = 0;
+		   काष्ठा netlink_ext_ack __always_unused *extack)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(dev);
+	काष्ठा ice_pf *pf = np->vsi->back;
+	काष्ठा nlattr *attr, *br_spec;
+	काष्ठा ice_hw *hw = &pf->hw;
+	क्रमागत ice_status status;
+	काष्ठा ice_sw *pf_sw;
+	पूर्णांक rem, v, err = 0;
 
 	pf_sw = pf->first_sw;
 	/* find the attribute in the netlink message */
-	br_spec = nlmsg_find_attr(nlh, sizeof(struct ifinfomsg), IFLA_AF_SPEC);
+	br_spec = nlmsg_find_attr(nlh, माप(काष्ठा अगरinfomsg), IFLA_AF_SPEC);
 
-	nla_for_each_nested(attr, br_spec, rem) {
+	nla_क्रम_each_nested(attr, br_spec, rem) अणु
 		__u16 mode;
 
-		if (nla_type(attr) != IFLA_BRIDGE_MODE)
-			continue;
+		अगर (nla_type(attr) != IFLA_BRIDGE_MODE)
+			जारी;
 		mode = nla_get_u16(attr);
-		if (mode != BRIDGE_MODE_VEPA && mode != BRIDGE_MODE_VEB)
-			return -EINVAL;
-		/* Continue  if bridge mode is not being flipped */
-		if (mode == pf_sw->bridge_mode)
-			continue;
+		अगर (mode != BRIDGE_MODE_VEPA && mode != BRIDGE_MODE_VEB)
+			वापस -EINVAL;
+		/* Continue  अगर bridge mode is not being flipped */
+		अगर (mode == pf_sw->bridge_mode)
+			जारी;
 		/* Iterates through the PF VSI list and update the loopback
 		 * mode of the VSI
 		 */
-		ice_for_each_vsi(pf, v) {
-			if (!pf->vsi[v])
-				continue;
+		ice_क्रम_each_vsi(pf, v) अणु
+			अगर (!pf->vsi[v])
+				जारी;
 			err = ice_vsi_update_bridge_mode(pf->vsi[v], mode);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
 		hw->evb_veb = (mode == BRIDGE_MODE_VEB);
-		/* Update the unicast switch filter rules for the corresponding
-		 * switch of the netdev
+		/* Update the unicast चयन filter rules क्रम the corresponding
+		 * चयन of the netdev
 		 */
 		status = ice_update_sw_rule_bridge_mode(hw);
-		if (status) {
+		अगर (status) अणु
 			netdev_err(dev, "switch rule update failed, mode = %d err %s aq_err %s\n",
 				   mode, ice_stat_str(status),
 				   ice_aq_str(hw->adminq.sq_last_status));
 			/* revert hw->evb_veb */
 			hw->evb_veb = (pf_sw->bridge_mode == BRIDGE_MODE_VEB);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		pf_sw->bridge_mode = mode;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_tx_timeout - Respond to a Tx Hang
- * @netdev: network interface device structure
+ * ice_tx_समयout - Respond to a Tx Hang
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @txqueue: Tx queue
  */
-static void ice_tx_timeout(struct net_device *netdev, unsigned int txqueue)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_ring *tx_ring = NULL;
-	struct ice_vsi *vsi = np->vsi;
-	struct ice_pf *pf = vsi->back;
+अटल व्योम ice_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_ring *tx_ring = शून्य;
+	काष्ठा ice_vsi *vsi = np->vsi;
+	काष्ठा ice_pf *pf = vsi->back;
 	u32 i;
 
-	pf->tx_timeout_count++;
+	pf->tx_समयout_count++;
 
-	/* Check if PFC is enabled for the TC to which the queue belongs
-	 * to. If yes then Tx timeout is not caused by a hung queue, no
+	/* Check अगर PFC is enabled क्रम the TC to which the queue beदीर्घs
+	 * to. If yes then Tx समयout is not caused by a hung queue, no
 	 * need to reset and rebuild
 	 */
-	if (ice_is_pfc_causing_hung_q(pf, txqueue)) {
+	अगर (ice_is_pfc_causing_hung_q(pf, txqueue)) अणु
 		dev_info(ice_pf_to_dev(pf), "Fake Tx hang detected on queue %u, timeout caused by PFC storm\n",
 			 txqueue);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* now that we have an index, find the tx_ring struct */
-	for (i = 0; i < vsi->num_txq; i++)
-		if (vsi->tx_rings[i] && vsi->tx_rings[i]->desc)
-			if (txqueue == vsi->tx_rings[i]->q_index) {
+	/* now that we have an index, find the tx_ring काष्ठा */
+	क्रम (i = 0; i < vsi->num_txq; i++)
+		अगर (vsi->tx_rings[i] && vsi->tx_rings[i]->desc)
+			अगर (txqueue == vsi->tx_rings[i]->q_index) अणु
 				tx_ring = vsi->tx_rings[i];
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-	/* Reset recovery level if enough time has elapsed after last timeout.
-	 * Also ensure no new reset action happens before next timeout period.
+	/* Reset recovery level अगर enough समय has elapsed after last समयout.
+	 * Also ensure no new reset action happens beक्रमe next समयout period.
 	 */
-	if (time_after(jiffies, (pf->tx_timeout_last_recovery + HZ * 20)))
-		pf->tx_timeout_recovery_level = 1;
-	else if (time_before(jiffies, (pf->tx_timeout_last_recovery +
-				       netdev->watchdog_timeo)))
-		return;
+	अगर (समय_after(jअगरfies, (pf->tx_समयout_last_recovery + HZ * 20)))
+		pf->tx_समयout_recovery_level = 1;
+	अन्यथा अगर (समय_beक्रमe(jअगरfies, (pf->tx_समयout_last_recovery +
+				       netdev->watchकरोg_समयo)))
+		वापस;
 
-	if (tx_ring) {
-		struct ice_hw *hw = &pf->hw;
+	अगर (tx_ring) अणु
+		काष्ठा ice_hw *hw = &pf->hw;
 		u32 head, val = 0;
 
 		head = (rd32(hw, QTX_COMM_HEAD(vsi->txq_map[txqueue])) &
 			QTX_COMM_HEAD_HEAD_M) >> QTX_COMM_HEAD_HEAD_S;
-		/* Read interrupt register */
+		/* Read पूर्णांकerrupt रेजिस्टर */
 		val = rd32(hw, GLINT_DYN_CTL(tx_ring->q_vector->reg_idx));
 
 		netdev_info(netdev, "tx_timeout: VSI_num: %d, Q %u, NTC: 0x%x, HW_HEAD: 0x%x, NTU: 0x%x, INT: 0x%x\n",
 			    vsi->vsi_num, txqueue, tx_ring->next_to_clean,
 			    head, tx_ring->next_to_use, val);
-	}
+	पूर्ण
 
-	pf->tx_timeout_last_recovery = jiffies;
+	pf->tx_समयout_last_recovery = jअगरfies;
 	netdev_info(netdev, "tx_timeout recovery level %d, txqueue %u\n",
-		    pf->tx_timeout_recovery_level, txqueue);
+		    pf->tx_समयout_recovery_level, txqueue);
 
-	switch (pf->tx_timeout_recovery_level) {
-	case 1:
+	चयन (pf->tx_समयout_recovery_level) अणु
+	हाल 1:
 		set_bit(ICE_PFR_REQ, pf->state);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		set_bit(ICE_CORER_REQ, pf->state);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		set_bit(ICE_GLOBR_REQ, pf->state);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(netdev, "tx_timeout recovery unsuccessful, device is in unrecoverable state.\n");
 		set_bit(ICE_DOWN, pf->state);
 		set_bit(ICE_VSI_NEEDS_RESTART, vsi->state);
 		set_bit(ICE_SERVICE_DIS, pf->state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ice_service_task_schedule(pf);
-	pf->tx_timeout_recovery_level++;
-}
+	pf->tx_समयout_recovery_level++;
+पूर्ण
 
 /**
- * ice_open - Called when a network interface becomes active
- * @netdev: network interface device structure
+ * ice_खोलो - Called when a network पूर्णांकerface becomes active
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
- * The open entry point is called when a network interface is made
- * active by the system (IFF_UP). At this point all resources needed
- * for transmit and receive operations are allocated, the interrupt
- * handler is registered with the OS, the netdev watchdog is enabled,
- * and the stack is notified that the interface is ready.
+ * The खोलो entry poपूर्णांक is called when a network पूर्णांकerface is made
+ * active by the प्रणाली (IFF_UP). At this poपूर्णांक all resources needed
+ * क्रम transmit and receive operations are allocated, the पूर्णांकerrupt
+ * handler is रेजिस्टरed with the OS, the netdev watchकरोg is enabled,
+ * and the stack is notअगरied that the पूर्णांकerface is पढ़ोy.
  *
  * Returns 0 on success, negative value on failure
  */
-int ice_open(struct net_device *netdev)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_pf *pf = np->vsi->back;
+पूर्णांक ice_खोलो(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_pf *pf = np->vsi->back;
 
-	if (ice_is_reset_in_progress(pf->state)) {
+	अगर (ice_is_reset_in_progress(pf->state)) अणु
 		netdev_err(netdev, "can't open net device while reset is in progress");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return ice_open_internal(netdev);
-}
+	वापस ice_खोलो_पूर्णांकernal(netdev);
+पूर्ण
 
 /**
- * ice_open_internal - Called when a network interface becomes active
- * @netdev: network interface device structure
+ * ice_खोलो_पूर्णांकernal - Called when a network पूर्णांकerface becomes active
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
- * Internal ice_open implementation. Should not be used directly except for ice_open and reset
+ * Internal ice_खोलो implementation. Should not be used directly except क्रम ice_खोलो and reset
  * handling routine
  *
  * Returns 0 on success, negative value on failure
  */
-int ice_open_internal(struct net_device *netdev)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
-	struct ice_pf *pf = vsi->back;
-	struct ice_port_info *pi;
-	enum ice_status status;
-	int err;
+पूर्णांक ice_खोलो_पूर्णांकernal(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
+	काष्ठा ice_pf *pf = vsi->back;
+	काष्ठा ice_port_info *pi;
+	क्रमागत ice_status status;
+	पूर्णांक err;
 
-	if (test_bit(ICE_NEEDS_RESTART, pf->state)) {
+	अगर (test_bit(ICE_NEEDS_RESTART, pf->state)) अणु
 		netdev_err(netdev, "driver needs to be unloaded and reloaded\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	netif_carrier_off(netdev);
+	netअगर_carrier_off(netdev);
 
 	pi = vsi->port_info;
 	status = ice_update_link_info(pi);
-	if (status) {
+	अगर (status) अणु
 		netdev_err(netdev, "Failed to get link info, error %s\n",
 			   ice_stat_str(status));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	/* Set PHY if there is media, otherwise, turn off PHY */
-	if (pi->phy.link_info.link_info & ICE_AQ_MEDIA_AVAILABLE) {
+	/* Set PHY अगर there is media, otherwise, turn off PHY */
+	अगर (pi->phy.link_info.link_info & ICE_AQ_MEDIA_AVAILABLE) अणु
 		clear_bit(ICE_FLAG_NO_MEDIA, pf->flags);
-		if (!test_bit(ICE_PHY_INIT_COMPLETE, pf->state)) {
+		अगर (!test_bit(ICE_PHY_INIT_COMPLETE, pf->state)) अणु
 			err = ice_init_phy_user_cfg(pi);
-			if (err) {
+			अगर (err) अणु
 				netdev_err(netdev, "Failed to initialize PHY settings, error %d\n",
 					   err);
-				return err;
-			}
-		}
+				वापस err;
+			पूर्ण
+		पूर्ण
 
 		err = ice_configure_phy(vsi);
-		if (err) {
+		अगर (err) अणु
 			netdev_err(netdev, "Failed to set physical link up, error %d\n",
 				   err);
-			return err;
-		}
-	} else {
+			वापस err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		set_bit(ICE_FLAG_NO_MEDIA, pf->flags);
 		ice_set_link(vsi, false);
-	}
+	पूर्ण
 
-	err = ice_vsi_open(vsi);
-	if (err)
+	err = ice_vsi_खोलो(vsi);
+	अगर (err)
 		netdev_err(netdev, "Failed to open VSI 0x%04X on switch 0x%04X\n",
 			   vsi->vsi_num, vsi->vsw->sw_id);
 
-	/* Update existing tunnels information */
+	/* Update existing tunnels inक्रमmation */
 	udp_tunnel_get_rx_info(netdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ice_stop - Disables a network interface
- * @netdev: network interface device structure
+ * ice_stop - Disables a network पूर्णांकerface
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
- * The stop entry point is called when an interface is de-activated by the OS,
+ * The stop entry poपूर्णांक is called when an पूर्णांकerface is de-activated by the OS,
  * and the netdevice enters the DOWN state. The hardware is still under the
- * driver's control, but the netdev interface is disabled.
+ * driver's control, but the netdev पूर्णांकerface is disabled.
  *
  * Returns success only - not allowed to fail
  */
-int ice_stop(struct net_device *netdev)
-{
-	struct ice_netdev_priv *np = netdev_priv(netdev);
-	struct ice_vsi *vsi = np->vsi;
-	struct ice_pf *pf = vsi->back;
+पूर्णांक ice_stop(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ice_netdev_priv *np = netdev_priv(netdev);
+	काष्ठा ice_vsi *vsi = np->vsi;
+	काष्ठा ice_pf *pf = vsi->back;
 
-	if (ice_is_reset_in_progress(pf->state)) {
+	अगर (ice_is_reset_in_progress(pf->state)) अणु
 		netdev_err(netdev, "can't stop net device while reset is in progress");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	ice_vsi_close(vsi);
+	ice_vsi_बंद(vsi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_features_check - Validate encapsulated packet conforms to limits
+ * ice_features_check - Validate encapsulated packet conक्रमms to limits
  * @skb: skb buffer
  * @netdev: This port's netdev
  * @features: Offload features that the stack believes apply
  */
-static netdev_features_t
-ice_features_check(struct sk_buff *skb,
-		   struct net_device __always_unused *netdev,
+अटल netdev_features_t
+ice_features_check(काष्ठा sk_buff *skb,
+		   काष्ठा net_device __always_unused *netdev,
 		   netdev_features_t features)
-{
-	size_t len;
+अणु
+	माप_प्रकार len;
 
-	/* No point in doing any of this if neither checksum nor GSO are
-	 * being requested for this frame. We can rule out both by just
-	 * checking for CHECKSUM_PARTIAL
+	/* No poपूर्णांक in करोing any of this अगर neither checksum nor GSO are
+	 * being requested क्रम this frame. We can rule out both by just
+	 * checking क्रम CHECKSUM_PARTIAL
 	 */
-	if (skb->ip_summed != CHECKSUM_PARTIAL)
-		return features;
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
+		वापस features;
 
-	/* We cannot support GSO if the MSS is going to be less than
-	 * 64 bytes. If it is then we need to drop support for GSO.
+	/* We cannot support GSO अगर the MSS is going to be less than
+	 * 64 bytes. If it is then we need to drop support क्रम GSO.
 	 */
-	if (skb_is_gso(skb) && (skb_shinfo(skb)->gso_size < 64))
+	अगर (skb_is_gso(skb) && (skb_shinfo(skb)->gso_size < 64))
 		features &= ~NETIF_F_GSO_MASK;
 
 	len = skb_network_header(skb) - skb->data;
-	if (len > ICE_TXD_MACLEN_MAX || len & 0x1)
-		goto out_rm_features;
+	अगर (len > ICE_TXD_MACLEN_MAX || len & 0x1)
+		जाओ out_rm_features;
 
 	len = skb_transport_header(skb) - skb_network_header(skb);
-	if (len > ICE_TXD_IPLEN_MAX || len & 0x1)
-		goto out_rm_features;
+	अगर (len > ICE_TXD_IPLEN_MAX || len & 0x1)
+		जाओ out_rm_features;
 
-	if (skb->encapsulation) {
+	अगर (skb->encapsulation) अणु
 		len = skb_inner_network_header(skb) - skb_transport_header(skb);
-		if (len > ICE_TXD_L4LEN_MAX || len & 0x1)
-			goto out_rm_features;
+		अगर (len > ICE_TXD_L4LEN_MAX || len & 0x1)
+			जाओ out_rm_features;
 
 		len = skb_inner_transport_header(skb) -
 		      skb_inner_network_header(skb);
-		if (len > ICE_TXD_IPLEN_MAX || len & 0x1)
-			goto out_rm_features;
-	}
+		अगर (len > ICE_TXD_IPLEN_MAX || len & 0x1)
+			जाओ out_rm_features;
+	पूर्ण
 
-	return features;
+	वापस features;
 out_rm_features:
-	return features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
-}
+	वापस features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
+पूर्ण
 
-static const struct net_device_ops ice_netdev_safe_mode_ops = {
-	.ndo_open = ice_open,
-	.ndo_stop = ice_stop,
-	.ndo_start_xmit = ice_start_xmit,
-	.ndo_set_mac_address = ice_set_mac_address,
-	.ndo_validate_addr = eth_validate_addr,
-	.ndo_change_mtu = ice_change_mtu,
-	.ndo_get_stats64 = ice_get_stats64,
-	.ndo_tx_timeout = ice_tx_timeout,
-	.ndo_bpf = ice_xdp_safe_mode,
-};
+अटल स्थिर काष्ठा net_device_ops ice_netdev_safe_mode_ops = अणु
+	.nकरो_खोलो = ice_खोलो,
+	.nकरो_stop = ice_stop,
+	.nकरो_start_xmit = ice_start_xmit,
+	.nकरो_set_mac_address = ice_set_mac_address,
+	.nकरो_validate_addr = eth_validate_addr,
+	.nकरो_change_mtu = ice_change_mtu,
+	.nकरो_get_stats64 = ice_get_stats64,
+	.nकरो_tx_समयout = ice_tx_समयout,
+	.nकरो_bpf = ice_xdp_safe_mode,
+पूर्ण;
 
-static const struct net_device_ops ice_netdev_ops = {
-	.ndo_open = ice_open,
-	.ndo_stop = ice_stop,
-	.ndo_start_xmit = ice_start_xmit,
-	.ndo_features_check = ice_features_check,
-	.ndo_set_rx_mode = ice_set_rx_mode,
-	.ndo_set_mac_address = ice_set_mac_address,
-	.ndo_validate_addr = eth_validate_addr,
-	.ndo_change_mtu = ice_change_mtu,
-	.ndo_get_stats64 = ice_get_stats64,
-	.ndo_set_tx_maxrate = ice_set_tx_maxrate,
-	.ndo_set_vf_spoofchk = ice_set_vf_spoofchk,
-	.ndo_set_vf_mac = ice_set_vf_mac,
-	.ndo_get_vf_config = ice_get_vf_cfg,
-	.ndo_set_vf_trust = ice_set_vf_trust,
-	.ndo_set_vf_vlan = ice_set_vf_port_vlan,
-	.ndo_set_vf_link_state = ice_set_vf_link_state,
-	.ndo_get_vf_stats = ice_get_vf_stats,
-	.ndo_vlan_rx_add_vid = ice_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid = ice_vlan_rx_kill_vid,
-	.ndo_set_features = ice_set_features,
-	.ndo_bridge_getlink = ice_bridge_getlink,
-	.ndo_bridge_setlink = ice_bridge_setlink,
-	.ndo_fdb_add = ice_fdb_add,
-	.ndo_fdb_del = ice_fdb_del,
-#ifdef CONFIG_RFS_ACCEL
-	.ndo_rx_flow_steer = ice_rx_flow_steer,
-#endif
-	.ndo_tx_timeout = ice_tx_timeout,
-	.ndo_bpf = ice_xdp,
-	.ndo_xdp_xmit = ice_xdp_xmit,
-	.ndo_xsk_wakeup = ice_xsk_wakeup,
-};
+अटल स्थिर काष्ठा net_device_ops ice_netdev_ops = अणु
+	.nकरो_खोलो = ice_खोलो,
+	.nकरो_stop = ice_stop,
+	.nकरो_start_xmit = ice_start_xmit,
+	.nकरो_features_check = ice_features_check,
+	.nकरो_set_rx_mode = ice_set_rx_mode,
+	.nकरो_set_mac_address = ice_set_mac_address,
+	.nकरो_validate_addr = eth_validate_addr,
+	.nकरो_change_mtu = ice_change_mtu,
+	.nकरो_get_stats64 = ice_get_stats64,
+	.nकरो_set_tx_maxrate = ice_set_tx_maxrate,
+	.nकरो_set_vf_spoofchk = ice_set_vf_spoofchk,
+	.nकरो_set_vf_mac = ice_set_vf_mac,
+	.nकरो_get_vf_config = ice_get_vf_cfg,
+	.nकरो_set_vf_trust = ice_set_vf_trust,
+	.nकरो_set_vf_vlan = ice_set_vf_port_vlan,
+	.nकरो_set_vf_link_state = ice_set_vf_link_state,
+	.nकरो_get_vf_stats = ice_get_vf_stats,
+	.nकरो_vlan_rx_add_vid = ice_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid = ice_vlan_rx_समाप्त_vid,
+	.nकरो_set_features = ice_set_features,
+	.nकरो_bridge_getlink = ice_bridge_getlink,
+	.nकरो_bridge_setlink = ice_bridge_setlink,
+	.nकरो_fdb_add = ice_fdb_add,
+	.nकरो_fdb_del = ice_fdb_del,
+#अगर_घोषित CONFIG_RFS_ACCEL
+	.nकरो_rx_flow_steer = ice_rx_flow_steer,
+#पूर्ण_अगर
+	.nकरो_tx_समयout = ice_tx_समयout,
+	.nकरो_bpf = ice_xdp,
+	.nकरो_xdp_xmit = ice_xdp_xmit,
+	.nकरो_xsk_wakeup = ice_xsk_wakeup,
+पूर्ण;

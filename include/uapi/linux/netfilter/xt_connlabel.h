@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 
-#ifndef _UAPI_XT_CONNLABEL_H
-#define _UAPI_XT_CONNLABEL_H
+#अगर_अघोषित _UAPI_XT_CONNLABEL_H
+#घोषणा _UAPI_XT_CONNLABEL_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define XT_CONNLABEL_MAXBIT 127
-enum xt_connlabel_mtopts {
+#घोषणा XT_CONNLABEL_MAXBIT 127
+क्रमागत xt_connlabel_mtopts अणु
 	XT_CONNLABEL_OP_INVERT = 1 << 0,
 	XT_CONNLABEL_OP_SET    = 1 << 1,
-};
+पूर्ण;
 
-struct xt_connlabel_mtinfo {
+काष्ठा xt_connlabel_mtinfo अणु
 	__u16 bit;
 	__u16 options;
-};
+पूर्ण;
 
-#endif /* _UAPI_XT_CONNLABEL_H */
+#पूर्ण_अगर /* _UAPI_XT_CONNLABEL_H */

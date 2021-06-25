@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Copyright (C) 2003,2004 Aurelien Alleaume <slts@free.fr>
+ *  Copyright (C) 2003,2004 Aurelien Alleaume <slts@मुक्त.fr>
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
 
-#include "prismcompat.h"
-#include "islpci_dev.h"
-#include "islpci_mgt.h"
-#include "isl_oid.h"
-#include "oid_mgt.h"
-#include "isl_ioctl.h"
+#समावेश "prismcompat.h"
+#समावेश "islpci_dev.h"
+#समावेश "islpci_mgt.h"
+#समावेश "isl_oid.h"
+#समावेश "oid_mgt.h"
+#समावेश "isl_ioctl.h"
 
 /* to convert between channel and freq */
-static const int frequency_list_bg[] = { 2412, 2417, 2422, 2427, 2432,
+अटल स्थिर पूर्णांक frequency_list_bg[] = अणु 2412, 2417, 2422, 2427, 2432,
 	2437, 2442, 2447, 2452, 2457, 2462, 2467, 2472, 2484
-};
+पूर्ण;
 
-int
-channel_of_freq(int f)
-{
-	int c = 0;
+पूर्णांक
+channel_of_freq(पूर्णांक f)
+अणु
+	पूर्णांक c = 0;
 
-	if ((f >= 2412) && (f <= 2484)) {
-		while ((c < 14) && (f != frequency_list_bg[c]))
+	अगर ((f >= 2412) && (f <= 2484)) अणु
+		जबतक ((c < 14) && (f != frequency_list_bg[c]))
 			c++;
-		return (c >= 14) ? 0 : ++c;
-	} else if ((f >= (int) 5000) && (f <= (int) 6000)) {
-		return ( (f - 5000) / 5 );
-	} else
-		return 0;
-}
+		वापस (c >= 14) ? 0 : ++c;
+	पूर्ण अन्यथा अगर ((f >= (पूर्णांक) 5000) && (f <= (पूर्णांक) 6000)) अणु
+		वापस ( (f - 5000) / 5 );
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-#define OID_STRUCT(name,oid,s,t) [name] = {oid, 0, sizeof(s), t}
-#define OID_STRUCT_C(name,oid,s,t) OID_STRUCT(name,oid,s,t | OID_FLAG_CACHED)
-#define OID_U32(name,oid) OID_STRUCT(name,oid,u32,OID_TYPE_U32)
-#define OID_U32_C(name,oid) OID_STRUCT_C(name,oid,u32,OID_TYPE_U32)
-#define OID_STRUCT_MLME(name,oid) OID_STRUCT(name,oid,struct obj_mlme,OID_TYPE_MLME)
-#define OID_STRUCT_MLMEEX(name,oid) OID_STRUCT(name,oid,struct obj_mlmeex,OID_TYPE_MLMEEX)
+#घोषणा OID_STRUCT(name,oid,s,t) [name] = अणुoid, 0, माप(s), tपूर्ण
+#घोषणा OID_STRUCT_C(name,oid,s,t) OID_STRUCT(name,oid,s,t | OID_FLAG_CACHED)
+#घोषणा OID_U32(name,oid) OID_STRUCT(name,oid,u32,OID_TYPE_U32)
+#घोषणा OID_U32_C(name,oid) OID_STRUCT_C(name,oid,u32,OID_TYPE_U32)
+#घोषणा OID_STRUCT_MLME(name,oid) OID_STRUCT(name,oid,काष्ठा obj_mlme,OID_TYPE_MLME)
+#घोषणा OID_STRUCT_MLMEEX(name,oid) OID_STRUCT(name,oid,काष्ठा obj_mlmeex,OID_TYPE_MLMEEX)
 
-#define OID_UNKNOWN(name,oid) OID_STRUCT(name,oid,0,0)
+#घोषणा OID_UNKNOWN(name,oid) OID_STRUCT(name,oid,0,0)
 
-struct oid_t isl_oid[] = {
+काष्ठा oid_t isl_oid[] = अणु
 	OID_STRUCT(GEN_OID_MACADDRESS, 0x00000000, u8[6], OID_TYPE_ADDR),
 	OID_U32(GEN_OID_LINKSTATE, 0x00000001),
 	OID_UNKNOWN(GEN_OID_WATCHDOG, 0x00000002),
@@ -53,12 +54,12 @@ struct oid_t isl_oid[] = {
 	/* 802.11 */
 	OID_U32_C(DOT11_OID_BSSTYPE, 0x10000000),
 	OID_STRUCT_C(DOT11_OID_BSSID, 0x10000001, u8[6], OID_TYPE_RAW),
-	OID_STRUCT_C(DOT11_OID_SSID, 0x10000002, struct obj_ssid,
+	OID_STRUCT_C(DOT11_OID_SSID, 0x10000002, काष्ठा obj_ssid,
 		     OID_TYPE_SSID),
 	OID_U32(DOT11_OID_STATE, 0x10000003),
 	OID_U32(DOT11_OID_AID, 0x10000004),
 	OID_STRUCT(DOT11_OID_COUNTRYSTRING, 0x10000005, u8[4], OID_TYPE_RAW),
-	OID_STRUCT_C(DOT11_OID_SSIDOVERRIDE, 0x10000006, struct obj_ssid,
+	OID_STRUCT_C(DOT11_OID_SSIDOVERRIDE, 0x10000006, काष्ठा obj_ssid,
 		     OID_TYPE_SSID),
 
 	OID_U32(DOT11_OID_MEDIUMLIMIT, 0x11000000),
@@ -73,8 +74,8 @@ struct oid_t isl_oid[] = {
 	OID_U32_C(DOT11_OID_PRIVACYINVOKED, 0x12000001),
 	OID_U32_C(DOT11_OID_EXUNENCRYPTED, 0x12000002),
 	OID_U32_C(DOT11_OID_DEFKEYID, 0x12000003),
-	[DOT11_OID_DEFKEYX] = {0x12000004, 3, sizeof (struct obj_key),
-			       OID_FLAG_CACHED | OID_TYPE_KEY},	/* DOT11_OID_DEFKEY1,...DOT11_OID_DEFKEY4 */
+	[DOT11_OID_DEFKEYX] = अणु0x12000004, 3, माप (काष्ठा obj_key),
+			       OID_FLAG_CACHED | OID_TYPE_KEYपूर्ण,	/* DOT11_OID_DEFKEY1,...DOT11_OID_DEFKEY4 */
 	OID_UNKNOWN(DOT11_OID_STAKEY, 0x12000008),
 	OID_U32(DOT11_OID_REKEYTHRESHOLD, 0x12000009),
 	OID_UNKNOWN(DOT11_OID_STASC, 0x1200000a),
@@ -101,7 +102,7 @@ struct oid_t isl_oid[] = {
 	OID_UNKNOWN(DOT11_OID_ALOFT_RSSIGRAPH, 0x1d000005),
 	OID_UNKNOWN(DOT11_OID_ALOFT_CONFIG, 0x1d000006),
 
-	[DOT11_OID_VDCFX] = {0x1b000000, 7, 0, 0},
+	[DOT11_OID_VDCFX] = अणु0x1b000000, 7, 0, 0पूर्ण,
 	OID_U32(DOT11_OID_MAXFRAMEBURST, 0x1b000008),
 
 	OID_U32(DOT11_OID_PSM, 0x14000000),
@@ -112,7 +113,7 @@ struct oid_t isl_oid[] = {
 	OID_U32(DOT11_OID_BRIDGELOCAL, 0x15000000),
 	OID_U32(DOT11_OID_CLIENTS, 0x15000001),
 	OID_U32(DOT11_OID_CLIENTSASSOCIATED, 0x15000002),
-	[DOT11_OID_CLIENTX] = {0x15000003, 2006, 0, 0},	/* DOT11_OID_CLIENTX,...DOT11_OID_CLIENT2007 */
+	[DOT11_OID_CLIENTX] = अणु0x15000003, 2006, 0, 0पूर्ण,	/* DOT11_OID_CLIENTX,...DOT11_OID_CLIENT2007 */
 
 	OID_STRUCT(DOT11_OID_CLIENTFIND, 0x150007DB, u8[6], OID_TYPE_ADDR),
 	OID_STRUCT(DOT11_OID_WDSLINKADD, 0x150007DC, u8[6], OID_TYPE_ADDR),
@@ -158,8 +159,8 @@ struct oid_t isl_oid[] = {
 		   u8[IWMAX_BITRATES + 1], OID_TYPE_RAW),
 	OID_U32_C(DOT11_OID_FREQUENCY, 0x17000011),
 	[DOT11_OID_SUPPORTEDFREQUENCIES] =
-	    {0x17000012, 0, sizeof (struct obj_frequencies)
-	     + sizeof (u16) * IWMAX_FREQ, OID_TYPE_FREQUENCIES},
+	    अणु0x17000012, 0, माप (काष्ठा obj_frequencies)
+	     + माप (u16) * IWMAX_FREQ, OID_TYPE_FREQUENCIESपूर्ण,
 
 	OID_U32(DOT11_OID_NOISEFLOOR, 0x17000013),
 	OID_STRUCT(DOT11_OID_FREQUENCYACTIVITY, 0x17000014, u8[IWMAX_FREQ + 1],
@@ -168,7 +169,7 @@ struct oid_t isl_oid[] = {
 	OID_U32(DOT11_OID_NONERPPROTECTION, 0x17000016),
 	OID_U32(DOT11_OID_SLOTSETTINGS, 0x17000017),
 	OID_U32(DOT11_OID_NONERPTIMEOUT, 0x17000018),
-	OID_U32(DOT11_OID_PROFILES, 0x17000019),
+	OID_U32(DOT11_OID_PROखाताS, 0x17000019),
 	OID_STRUCT(DOT11_OID_EXTENDEDRATES, 0x17000020,
 		   u8[IWMAX_BITRATES + 1], OID_TYPE_RAW),
 
@@ -191,19 +192,19 @@ struct oid_t isl_oid[] = {
 	OID_U32(DOT11_OID_STATIMEOUT, 0x19000000),
 	OID_U32_C(DOT11_OID_MLMEAUTOLEVEL, 0x19000001),
 	OID_U32(DOT11_OID_BSSTIMEOUT, 0x19000002),
-	[DOT11_OID_ATTACHMENT] = {0x19000003, 0,
-		sizeof(struct obj_attachment), OID_TYPE_ATTACH},
-	OID_STRUCT_C(DOT11_OID_PSMBUFFER, 0x19000004, struct obj_buffer,
+	[DOT11_OID_ATTACHMENT] = अणु0x19000003, 0,
+		माप(काष्ठा obj_attachment), OID_TYPE_ATTACHपूर्ण,
+	OID_STRUCT_C(DOT11_OID_PSMBUFFER, 0x19000004, काष्ठा obj_buffer,
 		     OID_TYPE_BUFFER),
 
 	OID_U32(DOT11_OID_BSSS, 0x1C000000),
-	[DOT11_OID_BSSX] = {0x1C000001, 63, sizeof (struct obj_bss),
-			    OID_TYPE_BSS},	/*DOT11_OID_BSS1,...,DOT11_OID_BSS64 */
-	OID_STRUCT(DOT11_OID_BSSFIND, 0x1C000042, struct obj_bss, OID_TYPE_BSS),
-	[DOT11_OID_BSSLIST] = {0x1C000043, 0, sizeof (struct
+	[DOT11_OID_BSSX] = अणु0x1C000001, 63, माप (काष्ठा obj_bss),
+			    OID_TYPE_BSSपूर्ण,	/*DOT11_OID_BSS1,...,DOT11_OID_BSS64 */
+	OID_STRUCT(DOT11_OID_BSSFIND, 0x1C000042, काष्ठा obj_bss, OID_TYPE_BSS),
+	[DOT11_OID_BSSLIST] = अणु0x1C000043, 0, माप (काष्ठा
 						      obj_bsslist) +
-			       sizeof (struct obj_bss[IWMAX_BSS]),
-			       OID_TYPE_BSSLIST},
+			       माप (काष्ठा obj_bss[IWMAX_BSS]),
+			       OID_TYPE_BSSLISTपूर्ण,
 
 	OID_UNKNOWN(OID_INL_TUNNEL, 0xFF020000),
 	OID_UNKNOWN(OID_INL_MEMADDR, 0xFF020001),
@@ -218,259 +219,259 @@ struct oid_t isl_oid[] = {
 	OID_U32(OID_INL_PHYCAPABILITIES, 0xFF02000D),
 	OID_U32_C(OID_INL_OUTPUTPOWER, 0xFF02000F),
 
-};
+पूर्ण;
 
-int
-mgt_init(islpci_private *priv)
-{
-	int i;
+पूर्णांक
+mgt_init(islpci_निजी *priv)
+अणु
+	पूर्णांक i;
 
-	priv->mib = kcalloc(OID_NUM_LAST, sizeof (void *), GFP_KERNEL);
-	if (!priv->mib)
-		return -ENOMEM;
+	priv->mib = kसुस्मृति(OID_NUM_LAST, माप (व्योम *), GFP_KERNEL);
+	अगर (!priv->mib)
+		वापस -ENOMEM;
 
 	/* Alloc the cache */
-	for (i = 0; i < OID_NUM_LAST; i++) {
-		if (isl_oid[i].flags & OID_FLAG_CACHED) {
-			priv->mib[i] = kcalloc(isl_oid[i].size,
+	क्रम (i = 0; i < OID_NUM_LAST; i++) अणु
+		अगर (isl_oid[i].flags & OID_FLAG_CACHED) अणु
+			priv->mib[i] = kसुस्मृति(isl_oid[i].size,
 					       (isl_oid[i].range + 1),
 					       GFP_KERNEL);
-			if (!priv->mib[i])
-				return -ENOMEM;
-		} else
-			priv->mib[i] = NULL;
-	}
+			अगर (!priv->mib[i])
+				वापस -ENOMEM;
+		पूर्ण अन्यथा
+			priv->mib[i] = शून्य;
+	पूर्ण
 
 	init_rwsem(&priv->mib_sem);
 	prism54_mib_init(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-mgt_clean(islpci_private *priv)
-{
-	int i;
+व्योम
+mgt_clean(islpci_निजी *priv)
+अणु
+	पूर्णांक i;
 
-	if (!priv->mib)
-		return;
-	for (i = 0; i < OID_NUM_LAST; i++) {
-		kfree(priv->mib[i]);
-		priv->mib[i] = NULL;
-	}
-	kfree(priv->mib);
-	priv->mib = NULL;
-}
+	अगर (!priv->mib)
+		वापस;
+	क्रम (i = 0; i < OID_NUM_LAST; i++) अणु
+		kमुक्त(priv->mib[i]);
+		priv->mib[i] = शून्य;
+	पूर्ण
+	kमुक्त(priv->mib);
+	priv->mib = शून्य;
+पूर्ण
 
-void
-mgt_le_to_cpu(int type, void *data)
-{
-	switch (type) {
-	case OID_TYPE_U32:
+व्योम
+mgt_le_to_cpu(पूर्णांक type, व्योम *data)
+अणु
+	चयन (type) अणु
+	हाल OID_TYPE_U32:
 		*(u32 *) data = le32_to_cpu(*(u32 *) data);
-		break;
-	case OID_TYPE_BUFFER:{
-			struct obj_buffer *buff = data;
+		अवरोध;
+	हाल OID_TYPE_BUFFER:अणु
+			काष्ठा obj_buffer *buff = data;
 			buff->size = le32_to_cpu(buff->size);
 			buff->addr = le32_to_cpu(buff->addr);
-			break;
-		}
-	case OID_TYPE_BSS:{
-			struct obj_bss *bss = data;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_BSS:अणु
+			काष्ठा obj_bss *bss = data;
 			bss->age = le16_to_cpu(bss->age);
 			bss->channel = le16_to_cpu(bss->channel);
 			bss->capinfo = le16_to_cpu(bss->capinfo);
 			bss->rates = le16_to_cpu(bss->rates);
 			bss->basic_rates = le16_to_cpu(bss->basic_rates);
-			break;
-		}
-	case OID_TYPE_BSSLIST:{
-			struct obj_bsslist *list = data;
-			int i;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_BSSLIST:अणु
+			काष्ठा obj_bsslist *list = data;
+			पूर्णांक i;
 			list->nr = le32_to_cpu(list->nr);
-			for (i = 0; i < list->nr; i++)
+			क्रम (i = 0; i < list->nr; i++)
 				mgt_le_to_cpu(OID_TYPE_BSS, &list->bsslist[i]);
-			break;
-		}
-	case OID_TYPE_FREQUENCIES:{
-			struct obj_frequencies *freq = data;
-			int i;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_FREQUENCIES:अणु
+			काष्ठा obj_frequencies *freq = data;
+			पूर्णांक i;
 			freq->nr = le16_to_cpu(freq->nr);
-			for (i = 0; i < freq->nr; i++)
+			क्रम (i = 0; i < freq->nr; i++)
 				freq->mhz[i] = le16_to_cpu(freq->mhz[i]);
-			break;
-		}
-	case OID_TYPE_MLME:{
-			struct obj_mlme *mlme = data;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_MLME:अणु
+			काष्ठा obj_mlme *mlme = data;
 			mlme->id = le16_to_cpu(mlme->id);
 			mlme->state = le16_to_cpu(mlme->state);
 			mlme->code = le16_to_cpu(mlme->code);
-			break;
-		}
-	case OID_TYPE_MLMEEX:{
-			struct obj_mlmeex *mlme = data;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_MLMEEX:अणु
+			काष्ठा obj_mlmeex *mlme = data;
 			mlme->id = le16_to_cpu(mlme->id);
 			mlme->state = le16_to_cpu(mlme->state);
 			mlme->code = le16_to_cpu(mlme->code);
 			mlme->size = le16_to_cpu(mlme->size);
-			break;
-		}
-	case OID_TYPE_ATTACH:{
-			struct obj_attachment *attach = data;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_ATTACH:अणु
+			काष्ठा obj_attachment *attach = data;
 			attach->id = le16_to_cpu(attach->id);
 			attach->size = le16_to_cpu(attach->size);
-			break;
-	}
-	case OID_TYPE_SSID:
-	case OID_TYPE_KEY:
-	case OID_TYPE_ADDR:
-	case OID_TYPE_RAW:
-		break;
-	default:
+			अवरोध;
+	पूर्ण
+	हाल OID_TYPE_SSID:
+	हाल OID_TYPE_KEY:
+	हाल OID_TYPE_ADDR:
+	हाल OID_TYPE_RAW:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-mgt_cpu_to_le(int type, void *data)
-{
-	switch (type) {
-	case OID_TYPE_U32:
+अटल व्योम
+mgt_cpu_to_le(पूर्णांक type, व्योम *data)
+अणु
+	चयन (type) अणु
+	हाल OID_TYPE_U32:
 		*(u32 *) data = cpu_to_le32(*(u32 *) data);
-		break;
-	case OID_TYPE_BUFFER:{
-			struct obj_buffer *buff = data;
+		अवरोध;
+	हाल OID_TYPE_BUFFER:अणु
+			काष्ठा obj_buffer *buff = data;
 			buff->size = cpu_to_le32(buff->size);
 			buff->addr = cpu_to_le32(buff->addr);
-			break;
-		}
-	case OID_TYPE_BSS:{
-			struct obj_bss *bss = data;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_BSS:अणु
+			काष्ठा obj_bss *bss = data;
 			bss->age = cpu_to_le16(bss->age);
 			bss->channel = cpu_to_le16(bss->channel);
 			bss->capinfo = cpu_to_le16(bss->capinfo);
 			bss->rates = cpu_to_le16(bss->rates);
 			bss->basic_rates = cpu_to_le16(bss->basic_rates);
-			break;
-		}
-	case OID_TYPE_BSSLIST:{
-			struct obj_bsslist *list = data;
-			int i;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_BSSLIST:अणु
+			काष्ठा obj_bsslist *list = data;
+			पूर्णांक i;
 			list->nr = cpu_to_le32(list->nr);
-			for (i = 0; i < list->nr; i++)
+			क्रम (i = 0; i < list->nr; i++)
 				mgt_cpu_to_le(OID_TYPE_BSS, &list->bsslist[i]);
-			break;
-		}
-	case OID_TYPE_FREQUENCIES:{
-			struct obj_frequencies *freq = data;
-			int i;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_FREQUENCIES:अणु
+			काष्ठा obj_frequencies *freq = data;
+			पूर्णांक i;
 			freq->nr = cpu_to_le16(freq->nr);
-			for (i = 0; i < freq->nr; i++)
+			क्रम (i = 0; i < freq->nr; i++)
 				freq->mhz[i] = cpu_to_le16(freq->mhz[i]);
-			break;
-		}
-	case OID_TYPE_MLME:{
-			struct obj_mlme *mlme = data;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_MLME:अणु
+			काष्ठा obj_mlme *mlme = data;
 			mlme->id = cpu_to_le16(mlme->id);
 			mlme->state = cpu_to_le16(mlme->state);
 			mlme->code = cpu_to_le16(mlme->code);
-			break;
-		}
-	case OID_TYPE_MLMEEX:{
-			struct obj_mlmeex *mlme = data;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_MLMEEX:अणु
+			काष्ठा obj_mlmeex *mlme = data;
 			mlme->id = cpu_to_le16(mlme->id);
 			mlme->state = cpu_to_le16(mlme->state);
 			mlme->code = cpu_to_le16(mlme->code);
 			mlme->size = cpu_to_le16(mlme->size);
-			break;
-		}
-	case OID_TYPE_ATTACH:{
-			struct obj_attachment *attach = data;
+			अवरोध;
+		पूर्ण
+	हाल OID_TYPE_ATTACH:अणु
+			काष्ठा obj_attachment *attach = data;
 			attach->id = cpu_to_le16(attach->id);
 			attach->size = cpu_to_le16(attach->size);
-			break;
-	}
-	case OID_TYPE_SSID:
-	case OID_TYPE_KEY:
-	case OID_TYPE_ADDR:
-	case OID_TYPE_RAW:
-		break;
-	default:
+			अवरोध;
+	पूर्ण
+	हाल OID_TYPE_SSID:
+	हाल OID_TYPE_KEY:
+	हाल OID_TYPE_ADDR:
+	हाल OID_TYPE_RAW:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Note : data is modified during this function */
+/* Note : data is modअगरied during this function */
 
-int
-mgt_set_request(islpci_private *priv, enum oid_num_t n, int extra, void *data)
-{
-	int ret = 0;
-	struct islpci_mgmtframe *response = NULL;
-	int response_op = PIMFOR_OP_ERROR;
-	int dlen;
-	void *cache, *_data = data;
+पूर्णांक
+mgt_set_request(islpci_निजी *priv, क्रमागत oid_num_t n, पूर्णांक extra, व्योम *data)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा islpci_mgmtframe *response = शून्य;
+	पूर्णांक response_op = PIMFOR_OP_ERROR;
+	पूर्णांक dlen;
+	व्योम *cache, *_data = data;
 	u32 oid;
 
 	BUG_ON(n >= OID_NUM_LAST);
 	BUG_ON(extra > isl_oid[n].range);
 
-	if (!priv->mib)
-		/* memory has been freed */
-		return -1;
+	अगर (!priv->mib)
+		/* memory has been मुक्तd */
+		वापस -1;
 
 	dlen = isl_oid[n].size;
 	cache = priv->mib[n];
 	cache += (cache ? extra * dlen : 0);
 	oid = isl_oid[n].oid + extra;
 
-	if (_data == NULL)
+	अगर (_data == शून्य)
 		/* we are requested to re-set a cached value */
 		_data = cache;
-	else
+	अन्यथा
 		mgt_cpu_to_le(isl_oid[n].flags & OID_FLAG_TYPE, _data);
-	/* If we are going to write to the cache, we don't want anyone to read
-	 * it -> acquire write lock.
-	 * Else we could acquire a read lock to be sure we don't bother the
-	 * commit process (which takes a write lock). But I'm not sure if it's
+	/* If we are going to ग_लिखो to the cache, we करोn't want anyone to पढ़ो
+	 * it -> acquire ग_लिखो lock.
+	 * Else we could acquire a पढ़ो lock to be sure we करोn't bother the
+	 * commit process (which takes a ग_लिखो lock). But I'm not sure if it's
 	 * needed.
 	 */
-	if (cache)
-		down_write(&priv->mib_sem);
+	अगर (cache)
+		करोwn_ग_लिखो(&priv->mib_sem);
 
-	if (islpci_get_state(priv) >= PRV_STATE_READY) {
+	अगर (islpci_get_state(priv) >= PRV_STATE_READY) अणु
 		ret = islpci_mgt_transaction(priv->ndev, PIMFOR_OP_SET, oid,
 					     _data, dlen, &response);
-		if (!ret) {
+		अगर (!ret) अणु
 			response_op = response->header->operation;
 			islpci_mgt_release(response);
-		}
-		if (ret || response_op == PIMFOR_OP_ERROR)
+		पूर्ण
+		अगर (ret || response_op == PIMFOR_OP_ERROR)
 			ret = -EIO;
-	} else if (!cache)
+	पूर्ण अन्यथा अगर (!cache)
 		ret = -EIO;
 
-	if (cache) {
-		if (!ret && data)
-			memcpy(cache, _data, dlen);
-		up_write(&priv->mib_sem);
-	}
+	अगर (cache) अणु
+		अगर (!ret && data)
+			स_नकल(cache, _data, dlen);
+		up_ग_लिखो(&priv->mib_sem);
+	पूर्ण
 
 	/* re-set given data to what it was */
-	if (data)
+	अगर (data)
 		mgt_le_to_cpu(isl_oid[n].flags & OID_FLAG_TYPE, data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* None of these are cached */
-int
-mgt_set_varlen(islpci_private *priv, enum oid_num_t n, void *data, int extra_len)
-{
-	int ret = 0;
-	struct islpci_mgmtframe *response;
-	int response_op = PIMFOR_OP_ERROR;
-	int dlen;
+पूर्णांक
+mgt_set_varlen(islpci_निजी *priv, क्रमागत oid_num_t n, व्योम *data, पूर्णांक extra_len)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा islpci_mgmtframe *response;
+	पूर्णांक response_op = PIMFOR_OP_ERROR;
+	पूर्णांक dlen;
 	u32 oid;
 
 	BUG_ON(n >= OID_NUM_LAST);
@@ -480,46 +481,46 @@ mgt_set_varlen(islpci_private *priv, enum oid_num_t n, void *data, int extra_len
 
 	mgt_cpu_to_le(isl_oid[n].flags & OID_FLAG_TYPE, data);
 
-	if (islpci_get_state(priv) >= PRV_STATE_READY) {
+	अगर (islpci_get_state(priv) >= PRV_STATE_READY) अणु
 		ret = islpci_mgt_transaction(priv->ndev, PIMFOR_OP_SET, oid,
 					     data, dlen + extra_len, &response);
-		if (!ret) {
+		अगर (!ret) अणु
 			response_op = response->header->operation;
 			islpci_mgt_release(response);
-		}
-		if (ret || response_op == PIMFOR_OP_ERROR)
+		पूर्ण
+		अगर (ret || response_op == PIMFOR_OP_ERROR)
 			ret = -EIO;
-	} else
+	पूर्ण अन्यथा
 		ret = -EIO;
 
 	/* re-set given data to what it was */
-	if (data)
+	अगर (data)
 		mgt_le_to_cpu(isl_oid[n].flags & OID_FLAG_TYPE, data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-mgt_get_request(islpci_private *priv, enum oid_num_t n, int extra, void *data,
-		union oid_res_t *res)
-{
+पूर्णांक
+mgt_get_request(islpci_निजी *priv, क्रमागत oid_num_t n, पूर्णांक extra, व्योम *data,
+		जोड़ oid_res_t *res)
+अणु
 
-	int ret = -EIO;
-	int reslen = 0;
-	struct islpci_mgmtframe *response = NULL;
+	पूर्णांक ret = -EIO;
+	पूर्णांक reslen = 0;
+	काष्ठा islpci_mgmtframe *response = शून्य;
 
-	int dlen;
-	void *cache, *_res = NULL;
+	पूर्णांक dlen;
+	व्योम *cache, *_res = शून्य;
 	u32 oid;
 
 	BUG_ON(n >= OID_NUM_LAST);
 	BUG_ON(extra > isl_oid[n].range);
 
-	res->ptr = NULL;
+	res->ptr = शून्य;
 
-	if (!priv->mib)
-		/* memory has been freed */
-		return -1;
+	अगर (!priv->mib)
+		/* memory has been मुक्तd */
+		वापस -1;
 
 	dlen = isl_oid[n].size;
 	cache = priv->mib[n];
@@ -527,122 +528,122 @@ mgt_get_request(islpci_private *priv, enum oid_num_t n, int extra, void *data,
 	oid = isl_oid[n].oid + extra;
 	reslen = dlen;
 
-	if (cache)
-		down_read(&priv->mib_sem);
+	अगर (cache)
+		करोwn_पढ़ो(&priv->mib_sem);
 
-	if (islpci_get_state(priv) >= PRV_STATE_READY) {
+	अगर (islpci_get_state(priv) >= PRV_STATE_READY) अणु
 		ret = islpci_mgt_transaction(priv->ndev, PIMFOR_OP_GET,
 					     oid, data, dlen, &response);
-		if (ret || !response ||
-		    response->header->operation == PIMFOR_OP_ERROR) {
-			if (response)
+		अगर (ret || !response ||
+		    response->header->operation == PIMFOR_OP_ERROR) अणु
+			अगर (response)
 				islpci_mgt_release(response);
 			ret = -EIO;
-		}
-		if (!ret) {
+		पूर्ण
+		अगर (!ret) अणु
 			_res = response->data;
 			reslen = response->header->length;
-		}
-	} else if (cache) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (cache) अणु
 		_res = cache;
 		ret = 0;
-	}
-	if ((isl_oid[n].flags & OID_FLAG_TYPE) == OID_TYPE_U32)
+	पूर्ण
+	अगर ((isl_oid[n].flags & OID_FLAG_TYPE) == OID_TYPE_U32)
 		res->u = ret ? 0 : le32_to_cpu(*(u32 *) _res);
-	else {
-		res->ptr = kmalloc(reslen, GFP_KERNEL);
-		BUG_ON(res->ptr == NULL);
-		if (ret)
-			memset(res->ptr, 0, reslen);
-		else {
-			memcpy(res->ptr, _res, reslen);
+	अन्यथा अणु
+		res->ptr = kदो_स्मृति(reslen, GFP_KERNEL);
+		BUG_ON(res->ptr == शून्य);
+		अगर (ret)
+			स_रखो(res->ptr, 0, reslen);
+		अन्यथा अणु
+			स_नकल(res->ptr, _res, reslen);
 			mgt_le_to_cpu(isl_oid[n].flags & OID_FLAG_TYPE,
 				      res->ptr);
-		}
-	}
-	if (cache)
-		up_read(&priv->mib_sem);
+		पूर्ण
+	पूर्ण
+	अगर (cache)
+		up_पढ़ो(&priv->mib_sem);
 
-	if (response && !ret)
+	अगर (response && !ret)
 		islpci_mgt_release(response);
 
-	if (reslen > isl_oid[n].size)
-		printk(KERN_DEBUG
+	अगर (reslen > isl_oid[n].size)
+		prपूर्णांकk(KERN_DEBUG
 		       "mgt_get_request(0x%x): received data length was bigger "
 		       "than expected (%d > %d). Memory is probably corrupted...",
 		       oid, reslen, isl_oid[n].size);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* lock outside */
-int
-mgt_commit_list(islpci_private *priv, enum oid_num_t *l, int n)
-{
-	int i, ret = 0;
-	struct islpci_mgmtframe *response;
+पूर्णांक
+mgt_commit_list(islpci_निजी *priv, क्रमागत oid_num_t *l, पूर्णांक n)
+अणु
+	पूर्णांक i, ret = 0;
+	काष्ठा islpci_mgmtframe *response;
 
-	for (i = 0; i < n; i++) {
-		struct oid_t *t = &(isl_oid[l[i]]);
-		void *data = priv->mib[l[i]];
-		int j = 0;
+	क्रम (i = 0; i < n; i++) अणु
+		काष्ठा oid_t *t = &(isl_oid[l[i]]);
+		व्योम *data = priv->mib[l[i]];
+		पूर्णांक j = 0;
 		u32 oid = t->oid;
-		BUG_ON(data == NULL);
-		while (j <= t->range) {
-			int r = islpci_mgt_transaction(priv->ndev, PIMFOR_OP_SET,
+		BUG_ON(data == शून्य);
+		जबतक (j <= t->range) अणु
+			पूर्णांक r = islpci_mgt_transaction(priv->ndev, PIMFOR_OP_SET,
 						      oid, data, t->size,
 						      &response);
-			if (response) {
+			अगर (response) अणु
 				r |= (response->header->operation == PIMFOR_OP_ERROR);
 				islpci_mgt_release(response);
-			}
-			if (r)
-				printk(KERN_ERR "%s: mgt_commit_list: failure. "
+			पूर्ण
+			अगर (r)
+				prपूर्णांकk(KERN_ERR "%s: mgt_commit_list: failure. "
 					"oid=%08x err=%d\n",
 					priv->ndev->name, oid, r);
 			ret |= r;
 			j++;
 			oid++;
 			data += t->size;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* Lock outside */
 
-void
-mgt_set(islpci_private *priv, enum oid_num_t n, void *data)
-{
+व्योम
+mgt_set(islpci_निजी *priv, क्रमागत oid_num_t n, व्योम *data)
+अणु
 	BUG_ON(n >= OID_NUM_LAST);
-	BUG_ON(priv->mib[n] == NULL);
+	BUG_ON(priv->mib[n] == शून्य);
 
-	memcpy(priv->mib[n], data, isl_oid[n].size);
+	स_नकल(priv->mib[n], data, isl_oid[n].size);
 	mgt_cpu_to_le(isl_oid[n].flags & OID_FLAG_TYPE, priv->mib[n]);
-}
+पूर्ण
 
-void
-mgt_get(islpci_private *priv, enum oid_num_t n, void *res)
-{
+व्योम
+mgt_get(islpci_निजी *priv, क्रमागत oid_num_t n, व्योम *res)
+अणु
 	BUG_ON(n >= OID_NUM_LAST);
-	BUG_ON(priv->mib[n] == NULL);
-	BUG_ON(res == NULL);
+	BUG_ON(priv->mib[n] == शून्य);
+	BUG_ON(res == शून्य);
 
-	memcpy(res, priv->mib[n], isl_oid[n].size);
+	स_नकल(res, priv->mib[n], isl_oid[n].size);
 	mgt_le_to_cpu(isl_oid[n].flags & OID_FLAG_TYPE, res);
-}
+पूर्ण
 
 /* Commits the cache. Lock outside. */
 
-static enum oid_num_t commit_part1[] = {
+अटल क्रमागत oid_num_t commit_part1[] = अणु
 	OID_INL_CONFIG,
 	OID_INL_MODE,
 	DOT11_OID_BSSTYPE,
 	DOT11_OID_CHANNEL,
 	DOT11_OID_MLMEAUTOLEVEL
-};
+पूर्ण;
 
-static enum oid_num_t commit_part2[] = {
+अटल क्रमागत oid_num_t commit_part2[] = अणु
 	DOT11_OID_SSID,
 	DOT11_OID_PSMBUFFER,
 	DOT11_OID_AUTHENABLE,
@@ -655,78 +656,78 @@ static enum oid_num_t commit_part2[] = {
 	/* Do not initialize this - fw < 1.0.4.3 rejects it
 	OID_INL_OUTPUTPOWER,
 	*/
-};
+पूर्ण;
 
 /* update the MAC addr. */
-static int
-mgt_update_addr(islpci_private *priv)
-{
-	struct islpci_mgmtframe *res;
-	int ret;
+अटल पूर्णांक
+mgt_update_addr(islpci_निजी *priv)
+अणु
+	काष्ठा islpci_mgmtframe *res;
+	पूर्णांक ret;
 
 	ret = islpci_mgt_transaction(priv->ndev, PIMFOR_OP_GET,
-				     isl_oid[GEN_OID_MACADDRESS].oid, NULL,
+				     isl_oid[GEN_OID_MACADDRESS].oid, शून्य,
 				     isl_oid[GEN_OID_MACADDRESS].size, &res);
 
-	if ((ret == 0) && res && (res->header->operation != PIMFOR_OP_ERROR))
-		memcpy(priv->ndev->dev_addr, res->data, ETH_ALEN);
-	else
+	अगर ((ret == 0) && res && (res->header->operation != PIMFOR_OP_ERROR))
+		स_नकल(priv->ndev->dev_addr, res->data, ETH_ALEN);
+	अन्यथा
 		ret = -EIO;
-	if (res)
+	अगर (res)
 		islpci_mgt_release(res);
 
-	if (ret)
-		printk(KERN_ERR "%s: mgt_update_addr: failure\n", priv->ndev->name);
-	return ret;
-}
+	अगर (ret)
+		prपूर्णांकk(KERN_ERR "%s: mgt_update_addr: failure\n", priv->ndev->name);
+	वापस ret;
+पूर्ण
 
-int
-mgt_commit(islpci_private *priv)
-{
-	int rvalue;
-	enum oid_num_t u;
+पूर्णांक
+mgt_commit(islpci_निजी *priv)
+अणु
+	पूर्णांक rvalue;
+	क्रमागत oid_num_t u;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT)
-		return 0;
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT)
+		वापस 0;
 
 	rvalue = mgt_commit_list(priv, commit_part1, ARRAY_SIZE(commit_part1));
 
-	if (priv->iw_mode != IW_MODE_MONITOR)
+	अगर (priv->iw_mode != IW_MODE_MONITOR)
 		rvalue |= mgt_commit_list(priv, commit_part2, ARRAY_SIZE(commit_part2));
 
 	u = OID_INL_MODE;
 	rvalue |= mgt_commit_list(priv, &u, 1);
 	rvalue |= mgt_update_addr(priv);
 
-	if (rvalue) {
+	अगर (rvalue) अणु
 		/* some request have failed. The device might be in an
 		   incoherent state. We should reset it ! */
-		printk(KERN_DEBUG "%s: mgt_commit: failure\n", priv->ndev->name);
-	}
-	return rvalue;
-}
+		prपूर्णांकk(KERN_DEBUG "%s: mgt_commit: failure\n", priv->ndev->name);
+	पूर्ण
+	वापस rvalue;
+पूर्ण
 
 /* The following OIDs need to be "unlatched":
  *
  * MEDIUMLIMIT,BEACONPERIOD,DTIMPERIOD,ATIMWINDOW,LISTENINTERVAL
  * FREQUENCY,EXTENDEDRATES.
  *
- * The way to do this is to set ESSID. Note though that they may get
- * unlatch before though by setting another OID. */
-#if 0
-void
-mgt_unlatch_all(islpci_private *priv)
-{
+ * The way to करो this is to set ESSID. Note though that they may get
+ * unlatch beक्रमe though by setting another OID. */
+#अगर 0
+व्योम
+mgt_unlatch_all(islpci_निजी *priv)
+अणु
 	u32 u;
-	int rvalue = 0;
+	पूर्णांक rvalue = 0;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT)
-		return;
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT)
+		वापस;
 
 	u = DOT11_OID_SSID;
 	rvalue = mgt_commit_list(priv, &u, 1);
-	/* Necessary if in MANUAL RUN mode? */
-#if 0
+	/* Necessary अगर in MANUAL RUN mode? */
+#अगर 0
 	u = OID_INL_MODE;
 	rvalue |= mgt_commit_list(priv, &u, 1);
 
@@ -735,75 +736,75 @@ mgt_unlatch_all(islpci_private *priv)
 
 	u = OID_INL_MODE;
 	rvalue |= mgt_commit_list(priv, &u, 1);
-#endif
+#पूर्ण_अगर
 
-	if (rvalue)
-		printk(KERN_DEBUG "%s: Unlatching OIDs failed\n", priv->ndev->name);
-}
-#endif
+	अगर (rvalue)
+		prपूर्णांकk(KERN_DEBUG "%s: Unlatching OIDs failed\n", priv->ndev->name);
+पूर्ण
+#पूर्ण_अगर
 
-/* This will tell you if you are allowed to answer a mlme(ex) request .*/
+/* This will tell you अगर you are allowed to answer a mlme(ex) request .*/
 
-int
-mgt_mlme_answer(islpci_private *priv)
-{
-	u32 mlmeautolevel;
-	/* Acquire a read lock because if we are in a mode change, it's
-	 * possible to answer true, while the card is leaving master to managed
+पूर्णांक
+mgt_mlme_answer(islpci_निजी *priv)
+अणु
+	u32 mlmeस्वतःlevel;
+	/* Acquire a पढ़ो lock because अगर we are in a mode change, it's
+	 * possible to answer true, जबतक the card is leaving master to managed
 	 * mode. Answering to a mlme in this situation could hang the card.
 	 */
-	down_read(&priv->mib_sem);
-	mlmeautolevel =
+	करोwn_पढ़ो(&priv->mib_sem);
+	mlmeस्वतःlevel =
 	    le32_to_cpu(*(u32 *) priv->mib[DOT11_OID_MLMEAUTOLEVEL]);
-	up_read(&priv->mib_sem);
+	up_पढ़ो(&priv->mib_sem);
 
-	return ((priv->iw_mode == IW_MODE_MASTER) &&
-		(mlmeautolevel >= DOT11_MLME_INTERMEDIATE));
-}
+	वापस ((priv->iw_mode == IW_MODE_MASTER) &&
+		(mlmeस्वतःlevel >= DOT11_MLME_INTERMEDIATE));
+पूर्ण
 
-enum oid_num_t
+क्रमागत oid_num_t
 mgt_oidtonum(u32 oid)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < OID_NUM_LAST; i++)
-		if (isl_oid[i].oid == oid)
-			return i;
+	क्रम (i = 0; i < OID_NUM_LAST; i++)
+		अगर (isl_oid[i].oid == oid)
+			वापस i;
 
-	printk(KERN_DEBUG "looking for an unknown oid 0x%x", oid);
+	prपूर्णांकk(KERN_DEBUG "looking for an unknown oid 0x%x", oid);
 
-	return OID_NUM_LAST;
-}
+	वापस OID_NUM_LAST;
+पूर्ण
 
-int
-mgt_response_to_str(enum oid_num_t n, union oid_res_t *r, char *str)
-{
-	switch (isl_oid[n].flags & OID_FLAG_TYPE) {
-	case OID_TYPE_U32:
-		return scnprintf(str, PRIV_STR_SIZE, "%u\n", r->u);
-	case OID_TYPE_BUFFER:{
-			struct obj_buffer *buff = r->ptr;
-			return scnprintf(str, PRIV_STR_SIZE,
+पूर्णांक
+mgt_response_to_str(क्रमागत oid_num_t n, जोड़ oid_res_t *r, अक्षर *str)
+अणु
+	चयन (isl_oid[n].flags & OID_FLAG_TYPE) अणु
+	हाल OID_TYPE_U32:
+		वापस scnम_लिखो(str, PRIV_STR_SIZE, "%u\n", r->u);
+	हाल OID_TYPE_BUFFER:अणु
+			काष्ठा obj_buffer *buff = r->ptr;
+			वापस scnम_लिखो(str, PRIV_STR_SIZE,
 					"size=%u\naddr=0x%X\n", buff->size,
 					buff->addr);
-		}
-		break;
-	case OID_TYPE_BSS:{
-			struct obj_bss *bss = r->ptr;
-			return scnprintf(str, PRIV_STR_SIZE,
+		पूर्ण
+		अवरोध;
+	हाल OID_TYPE_BSS:अणु
+			काष्ठा obj_bss *bss = r->ptr;
+			वापस scnम_लिखो(str, PRIV_STR_SIZE,
 					"age=%u\nchannel=%u\n"
 					"capinfo=0x%X\nrates=0x%X\n"
 					"basic_rates=0x%X\n", bss->age,
 					bss->channel, bss->capinfo,
 					bss->rates, bss->basic_rates);
-		}
-		break;
-	case OID_TYPE_BSSLIST:{
-			struct obj_bsslist *list = r->ptr;
-			int i, k;
-			k = scnprintf(str, PRIV_STR_SIZE, "nr=%u\n", list->nr);
-			for (i = 0; i < list->nr; i++)
-				k += scnprintf(str + k, PRIV_STR_SIZE - k,
+		पूर्ण
+		अवरोध;
+	हाल OID_TYPE_BSSLIST:अणु
+			काष्ठा obj_bsslist *list = r->ptr;
+			पूर्णांक i, k;
+			k = scnम_लिखो(str, PRIV_STR_SIZE, "nr=%u\n", list->nr);
+			क्रम (i = 0; i < list->nr; i++)
+				k += scnम_लिखो(str + k, PRIV_STR_SIZE - k,
 					      "bss[%u] :\nage=%u\nchannel=%u\n"
 					      "capinfo=0x%X\nrates=0x%X\n"
 					      "basic_rates=0x%X\n",
@@ -812,78 +813,78 @@ mgt_response_to_str(enum oid_num_t n, union oid_res_t *r, char *str)
 					      list->bsslist[i].capinfo,
 					      list->bsslist[i].rates,
 					      list->bsslist[i].basic_rates);
-			return k;
-		}
-		break;
-	case OID_TYPE_FREQUENCIES:{
-			struct obj_frequencies *freq = r->ptr;
-			int i, t;
-			printk("nr : %u\n", freq->nr);
-			t = scnprintf(str, PRIV_STR_SIZE, "nr=%u\n", freq->nr);
-			for (i = 0; i < freq->nr; i++)
-				t += scnprintf(str + t, PRIV_STR_SIZE - t,
+			वापस k;
+		पूर्ण
+		अवरोध;
+	हाल OID_TYPE_FREQUENCIES:अणु
+			काष्ठा obj_frequencies *freq = r->ptr;
+			पूर्णांक i, t;
+			prपूर्णांकk("nr : %u\n", freq->nr);
+			t = scnम_लिखो(str, PRIV_STR_SIZE, "nr=%u\n", freq->nr);
+			क्रम (i = 0; i < freq->nr; i++)
+				t += scnम_लिखो(str + t, PRIV_STR_SIZE - t,
 					      "mhz[%u]=%u\n", i, freq->mhz[i]);
-			return t;
-		}
-		break;
-	case OID_TYPE_MLME:{
-			struct obj_mlme *mlme = r->ptr;
-			return scnprintf(str, PRIV_STR_SIZE,
+			वापस t;
+		पूर्ण
+		अवरोध;
+	हाल OID_TYPE_MLME:अणु
+			काष्ठा obj_mlme *mlme = r->ptr;
+			वापस scnम_लिखो(str, PRIV_STR_SIZE,
 					"id=0x%X\nstate=0x%X\ncode=0x%X\n",
 					mlme->id, mlme->state, mlme->code);
-		}
-		break;
-	case OID_TYPE_MLMEEX:{
-			struct obj_mlmeex *mlme = r->ptr;
-			return scnprintf(str, PRIV_STR_SIZE,
+		पूर्ण
+		अवरोध;
+	हाल OID_TYPE_MLMEEX:अणु
+			काष्ठा obj_mlmeex *mlme = r->ptr;
+			वापस scnम_लिखो(str, PRIV_STR_SIZE,
 					"id=0x%X\nstate=0x%X\n"
 					"code=0x%X\nsize=0x%X\n", mlme->id,
 					mlme->state, mlme->code, mlme->size);
-		}
-		break;
-	case OID_TYPE_ATTACH:{
-			struct obj_attachment *attach = r->ptr;
-			return scnprintf(str, PRIV_STR_SIZE,
+		पूर्ण
+		अवरोध;
+	हाल OID_TYPE_ATTACH:अणु
+			काष्ठा obj_attachment *attach = r->ptr;
+			वापस scnम_लिखो(str, PRIV_STR_SIZE,
 					"id=%d\nsize=%d\n",
 					attach->id,
 					attach->size);
-		}
-		break;
-	case OID_TYPE_SSID:{
-			struct obj_ssid *ssid = r->ptr;
-			return scnprintf(str, PRIV_STR_SIZE,
+		पूर्ण
+		अवरोध;
+	हाल OID_TYPE_SSID:अणु
+			काष्ठा obj_ssid *ssid = r->ptr;
+			वापस scnम_लिखो(str, PRIV_STR_SIZE,
 					"length=%u\noctets=%.*s\n",
 					ssid->length, ssid->length,
 					ssid->octets);
-		}
-		break;
-	case OID_TYPE_KEY:{
-			struct obj_key *key = r->ptr;
-			int t, i;
-			t = scnprintf(str, PRIV_STR_SIZE,
+		पूर्ण
+		अवरोध;
+	हाल OID_TYPE_KEY:अणु
+			काष्ठा obj_key *key = r->ptr;
+			पूर्णांक t, i;
+			t = scnम_लिखो(str, PRIV_STR_SIZE,
 				     "type=0x%X\nlength=0x%X\nkey=0x",
 				     key->type, key->length);
-			for (i = 0; i < key->length; i++)
-				t += scnprintf(str + t, PRIV_STR_SIZE - t,
+			क्रम (i = 0; i < key->length; i++)
+				t += scnम_लिखो(str + t, PRIV_STR_SIZE - t,
 					      "%02X:", key->key[i]);
-			t += scnprintf(str + t, PRIV_STR_SIZE - t, "\n");
-			return t;
-		}
-		break;
-	case OID_TYPE_RAW:
-	case OID_TYPE_ADDR:{
-			unsigned char *buff = r->ptr;
-			int t, i;
-			t = scnprintf(str, PRIV_STR_SIZE, "hex data=");
-			for (i = 0; i < isl_oid[n].size; i++)
-				t += scnprintf(str + t, PRIV_STR_SIZE - t,
+			t += scnम_लिखो(str + t, PRIV_STR_SIZE - t, "\n");
+			वापस t;
+		पूर्ण
+		अवरोध;
+	हाल OID_TYPE_RAW:
+	हाल OID_TYPE_ADDR:अणु
+			अचिन्हित अक्षर *buff = r->ptr;
+			पूर्णांक t, i;
+			t = scnम_लिखो(str, PRIV_STR_SIZE, "hex data=");
+			क्रम (i = 0; i < isl_oid[n].size; i++)
+				t += scnम_लिखो(str + t, PRIV_STR_SIZE - t,
 					      "%02X:", buff[i]);
-			t += scnprintf(str + t, PRIV_STR_SIZE - t, "\n");
-			return t;
-		}
-		break;
-	default:
+			t += scnम_लिखो(str + t, PRIV_STR_SIZE - t, "\n");
+			वापस t;
+		पूर्ण
+		अवरोध;
+	शेष:
 		BUG();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण

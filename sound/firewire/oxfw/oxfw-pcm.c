@@ -1,450 +1,451 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * oxfw_pcm.c - a part of driver for OXFW970/971 based devices
+ * oxfw_pcm.c - a part of driver क्रम OXFW970/971 based devices
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
-#include "oxfw.h"
+#समावेश "oxfw.h"
 
-static int hw_rule_rate(struct snd_pcm_hw_params *params,
-			struct snd_pcm_hw_rule *rule)
-{
-	u8 **formats = rule->private;
-	struct snd_interval *r =
-		hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
-	const struct snd_interval *c =
-		hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	struct snd_interval t = {
-		.min = UINT_MAX, .max = 0, .integer = 1
-	};
-	struct snd_oxfw_stream_formation formation;
-	int i, err;
+अटल पूर्णांक hw_rule_rate(काष्ठा snd_pcm_hw_params *params,
+			काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	u8 **क्रमmats = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *r =
+		hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
+	स्थिर काष्ठा snd_पूर्णांकerval *c =
+		hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	काष्ठा snd_पूर्णांकerval t = अणु
+		.min = अच_पूर्णांक_उच्च, .max = 0, .पूर्णांकeger = 1
+	पूर्ण;
+	काष्ठा snd_oxfw_stream_क्रमmation क्रमmation;
+	पूर्णांक i, err;
 
-	for (i = 0; i < SND_OXFW_STREAM_FORMAT_ENTRIES; i++) {
-		if (formats[i] == NULL)
-			continue;
+	क्रम (i = 0; i < SND_OXFW_STREAM_FORMAT_ENTRIES; i++) अणु
+		अगर (क्रमmats[i] == शून्य)
+			जारी;
 
-		err = snd_oxfw_stream_parse_format(formats[i], &formation);
-		if (err < 0)
-			continue;
-		if (!snd_interval_test(c, formation.pcm))
-			continue;
+		err = snd_oxfw_stream_parse_क्रमmat(क्रमmats[i], &क्रमmation);
+		अगर (err < 0)
+			जारी;
+		अगर (!snd_पूर्णांकerval_test(c, क्रमmation.pcm))
+			जारी;
 
-		t.min = min(t.min, formation.rate);
-		t.max = max(t.max, formation.rate);
+		t.min = min(t.min, क्रमmation.rate);
+		t.max = max(t.max, क्रमmation.rate);
 
-	}
-	return snd_interval_refine(r, &t);
-}
+	पूर्ण
+	वापस snd_पूर्णांकerval_refine(r, &t);
+पूर्ण
 
-static int hw_rule_channels(struct snd_pcm_hw_params *params,
-			    struct snd_pcm_hw_rule *rule)
-{
-	u8 **formats = rule->private;
-	struct snd_interval *c =
-		hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	const struct snd_interval *r =
-		hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_RATE);
-	struct snd_oxfw_stream_formation formation;
-	int i, j, err;
-	unsigned int count, list[SND_OXFW_STREAM_FORMAT_ENTRIES] = {0};
+अटल पूर्णांक hw_rule_channels(काष्ठा snd_pcm_hw_params *params,
+			    काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	u8 **क्रमmats = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *c =
+		hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	स्थिर काष्ठा snd_पूर्णांकerval *r =
+		hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_RATE);
+	काष्ठा snd_oxfw_stream_क्रमmation क्रमmation;
+	पूर्णांक i, j, err;
+	अचिन्हित पूर्णांक count, list[SND_OXFW_STREAM_FORMAT_ENTRIES] = अणु0पूर्ण;
 
 	count = 0;
-	for (i = 0; i < SND_OXFW_STREAM_FORMAT_ENTRIES; i++) {
-		if (formats[i] == NULL)
-			break;
+	क्रम (i = 0; i < SND_OXFW_STREAM_FORMAT_ENTRIES; i++) अणु
+		अगर (क्रमmats[i] == शून्य)
+			अवरोध;
 
-		err = snd_oxfw_stream_parse_format(formats[i], &formation);
-		if (err < 0)
-			continue;
-		if (!snd_interval_test(r, formation.rate))
-			continue;
-		if (list[count] == formation.pcm)
-			continue;
+		err = snd_oxfw_stream_parse_क्रमmat(क्रमmats[i], &क्रमmation);
+		अगर (err < 0)
+			जारी;
+		अगर (!snd_पूर्णांकerval_test(r, क्रमmation.rate))
+			जारी;
+		अगर (list[count] == क्रमmation.pcm)
+			जारी;
 
-		for (j = 0; j < ARRAY_SIZE(list); j++) {
-			if (list[j] == formation.pcm)
-				break;
-		}
-		if (j == ARRAY_SIZE(list)) {
-			list[count] = formation.pcm;
-			if (++count == ARRAY_SIZE(list))
-				break;
-		}
-	}
+		क्रम (j = 0; j < ARRAY_SIZE(list); j++) अणु
+			अगर (list[j] == क्रमmation.pcm)
+				अवरोध;
+		पूर्ण
+		अगर (j == ARRAY_SIZE(list)) अणु
+			list[count] = क्रमmation.pcm;
+			अगर (++count == ARRAY_SIZE(list))
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return snd_interval_list(c, count, list, 0);
-}
+	वापस snd_पूर्णांकerval_list(c, count, list, 0);
+पूर्ण
 
-static void limit_channels_and_rates(struct snd_pcm_hardware *hw, u8 **formats)
-{
-	struct snd_oxfw_stream_formation formation;
-	int i, err;
+अटल व्योम limit_channels_and_rates(काष्ठा snd_pcm_hardware *hw, u8 **क्रमmats)
+अणु
+	काष्ठा snd_oxfw_stream_क्रमmation क्रमmation;
+	पूर्णांक i, err;
 
-	hw->channels_min = UINT_MAX;
+	hw->channels_min = अच_पूर्णांक_उच्च;
 	hw->channels_max = 0;
 
-	hw->rate_min = UINT_MAX;
+	hw->rate_min = अच_पूर्णांक_उच्च;
 	hw->rate_max = 0;
 	hw->rates = 0;
 
-	for (i = 0; i < SND_OXFW_STREAM_FORMAT_ENTRIES; i++) {
-		if (formats[i] == NULL)
-			break;
+	क्रम (i = 0; i < SND_OXFW_STREAM_FORMAT_ENTRIES; i++) अणु
+		अगर (क्रमmats[i] == शून्य)
+			अवरोध;
 
-		err = snd_oxfw_stream_parse_format(formats[i], &formation);
-		if (err < 0)
-			continue;
+		err = snd_oxfw_stream_parse_क्रमmat(क्रमmats[i], &क्रमmation);
+		अगर (err < 0)
+			जारी;
 
-		hw->channels_min = min(hw->channels_min, formation.pcm);
-		hw->channels_max = max(hw->channels_max, formation.pcm);
+		hw->channels_min = min(hw->channels_min, क्रमmation.pcm);
+		hw->channels_max = max(hw->channels_max, क्रमmation.pcm);
 
-		hw->rate_min = min(hw->rate_min, formation.rate);
-		hw->rate_max = max(hw->rate_max, formation.rate);
-		hw->rates |= snd_pcm_rate_to_rate_bit(formation.rate);
-	}
-}
+		hw->rate_min = min(hw->rate_min, क्रमmation.rate);
+		hw->rate_max = max(hw->rate_max, क्रमmation.rate);
+		hw->rates |= snd_pcm_rate_to_rate_bit(क्रमmation.rate);
+	पूर्ण
+पूर्ण
 
-static int init_hw_params(struct snd_oxfw *oxfw,
-			  struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	u8 **formats;
-	struct amdtp_stream *stream;
-	int err;
+अटल पूर्णांक init_hw_params(काष्ठा snd_oxfw *oxfw,
+			  काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	u8 **क्रमmats;
+	काष्ठा amdtp_stream *stream;
+	पूर्णांक err;
 
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
-		runtime->hw.formats = AM824_IN_PCM_FORMAT_BITS;
+	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
+		runसमय->hw.क्रमmats = AM824_IN_PCM_FORMAT_BITS;
 		stream = &oxfw->tx_stream;
-		formats = oxfw->tx_stream_formats;
-	} else {
-		runtime->hw.formats = AM824_OUT_PCM_FORMAT_BITS;
+		क्रमmats = oxfw->tx_stream_क्रमmats;
+	पूर्ण अन्यथा अणु
+		runसमय->hw.क्रमmats = AM824_OUT_PCM_FORMAT_BITS;
 		stream = &oxfw->rx_stream;
-		formats = oxfw->rx_stream_formats;
-	}
+		क्रमmats = oxfw->rx_stream_क्रमmats;
+	पूर्ण
 
-	limit_channels_and_rates(&runtime->hw, formats);
+	limit_channels_and_rates(&runसमय->hw, क्रमmats);
 
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
-				  hw_rule_channels, formats,
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+				  hw_rule_channels, क्रमmats,
 				  SNDRV_PCM_HW_PARAM_RATE, -1);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
-				  hw_rule_rate, formats,
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE,
+				  hw_rule_rate, क्रमmats,
 				  SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
-	err = amdtp_am824_add_pcm_hw_constraints(stream, runtime);
+	err = amdtp_am824_add_pcm_hw_स्थिरraपूर्णांकs(stream, runसमय);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int limit_to_current_params(struct snd_pcm_substream *substream)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
-	struct snd_oxfw_stream_formation formation;
-	enum avc_general_plug_dir dir;
-	int err;
+अटल पूर्णांक limit_to_current_params(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
+	काष्ठा snd_oxfw_stream_क्रमmation क्रमmation;
+	क्रमागत avc_general_plug_dir dir;
+	पूर्णांक err;
 
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
-		dir = AVC_GENERAL_PLUG_DIR_OUT;
-	else
-		dir = AVC_GENERAL_PLUG_DIR_IN;
+	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+		dir = AVC_GENERAL_PLUG_सूची_OUT;
+	अन्यथा
+		dir = AVC_GENERAL_PLUG_सूची_IN;
 
-	err = snd_oxfw_stream_get_current_formation(oxfw, dir, &formation);
-	if (err < 0)
-		goto end;
+	err = snd_oxfw_stream_get_current_क्रमmation(oxfw, dir, &क्रमmation);
+	अगर (err < 0)
+		जाओ end;
 
-	substream->runtime->hw.channels_min = formation.pcm;
-	substream->runtime->hw.channels_max = formation.pcm;
-	substream->runtime->hw.rate_min = formation.rate;
-	substream->runtime->hw.rate_max = formation.rate;
+	substream->runसमय->hw.channels_min = क्रमmation.pcm;
+	substream->runसमय->hw.channels_max = क्रमmation.pcm;
+	substream->runसमय->hw.rate_min = क्रमmation.rate;
+	substream->runसमय->hw.rate_max = क्रमmation.rate;
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_open(struct snd_pcm_substream *substream)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
-	struct amdtp_domain *d = &oxfw->domain;
-	int err;
+अटल पूर्णांक pcm_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
+	काष्ठा amdtp_करोमुख्य *d = &oxfw->करोमुख्य;
+	पूर्णांक err;
 
 	err = snd_oxfw_stream_lock_try(oxfw);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = init_hw_params(oxfw, substream);
-	if (err < 0)
-		goto err_locked;
+	अगर (err < 0)
+		जाओ err_locked;
 
 	mutex_lock(&oxfw->mutex);
 
-	// When source of clock is not internal or any stream is reserved for
+	// When source of घड़ी is not पूर्णांकernal or any stream is reserved क्रम
 	// transmission of PCM frames, the available sampling rate is limited
 	// at current one.
-	if (oxfw->substreams_count > 0 && d->events_per_period > 0) {
-		unsigned int frames_per_period = d->events_per_period;
-		unsigned int frames_per_buffer = d->events_per_buffer;
+	अगर (oxfw->substreams_count > 0 && d->events_per_period > 0) अणु
+		अचिन्हित पूर्णांक frames_per_period = d->events_per_period;
+		अचिन्हित पूर्णांक frames_per_buffer = d->events_per_buffer;
 
 		err = limit_to_current_params(substream);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			mutex_unlock(&oxfw->mutex);
-			goto err_locked;
-		}
+			जाओ err_locked;
+		पूर्ण
 
-		if (frames_per_period > 0) {
-			err = snd_pcm_hw_constraint_minmax(substream->runtime,
+		अगर (frames_per_period > 0) अणु
+			err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(substream->runसमय,
 					SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
 					frames_per_period, frames_per_period);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				mutex_unlock(&oxfw->mutex);
-				goto err_locked;
-			}
+				जाओ err_locked;
+			पूर्ण
 
-			err = snd_pcm_hw_constraint_minmax(substream->runtime,
+			err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(substream->runसमय,
 					SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
 					frames_per_buffer, frames_per_buffer);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				mutex_unlock(&oxfw->mutex);
-				goto err_locked;
-			}
-		}
-	}
+				जाओ err_locked;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&oxfw->mutex);
 
 	snd_pcm_set_sync(substream);
 
-	return 0;
+	वापस 0;
 err_locked:
 	snd_oxfw_stream_lock_release(oxfw);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_close(struct snd_pcm_substream *substream)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
+अटल पूर्णांक pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
 
 	snd_oxfw_stream_lock_release(oxfw);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm_capture_hw_params(struct snd_pcm_substream *substream,
-				 struct snd_pcm_hw_params *hw_params)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
-	int err = 0;
+अटल पूर्णांक pcm_capture_hw_params(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
+	पूर्णांक err = 0;
 
-	if (substream->runtime->status->state == SNDRV_PCM_STATE_OPEN) {
-		unsigned int rate = params_rate(hw_params);
-		unsigned int channels = params_channels(hw_params);
-		unsigned int frames_per_period = params_period_size(hw_params);
-		unsigned int frames_per_buffer = params_buffer_size(hw_params);
+	अगर (substream->runसमय->status->state == SNDRV_PCM_STATE_OPEN) अणु
+		अचिन्हित पूर्णांक rate = params_rate(hw_params);
+		अचिन्हित पूर्णांक channels = params_channels(hw_params);
+		अचिन्हित पूर्णांक frames_per_period = params_period_size(hw_params);
+		अचिन्हित पूर्णांक frames_per_buffer = params_buffer_size(hw_params);
 
 		mutex_lock(&oxfw->mutex);
 		err = snd_oxfw_stream_reserve_duplex(oxfw, &oxfw->tx_stream,
 					rate, channels, frames_per_period,
 					frames_per_buffer);
-		if (err >= 0)
+		अगर (err >= 0)
 			++oxfw->substreams_count;
 		mutex_unlock(&oxfw->mutex);
-	}
+	पूर्ण
 
-	return err;
-}
-static int pcm_playback_hw_params(struct snd_pcm_substream *substream,
-				  struct snd_pcm_hw_params *hw_params)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
-	int err = 0;
+	वापस err;
+पूर्ण
+अटल पूर्णांक pcm_playback_hw_params(काष्ठा snd_pcm_substream *substream,
+				  काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
+	पूर्णांक err = 0;
 
-	if (substream->runtime->status->state == SNDRV_PCM_STATE_OPEN) {
-		unsigned int rate = params_rate(hw_params);
-		unsigned int channels = params_channels(hw_params);
-		unsigned int frames_per_period = params_period_size(hw_params);
-		unsigned int frames_per_buffer = params_buffer_size(hw_params);
+	अगर (substream->runसमय->status->state == SNDRV_PCM_STATE_OPEN) अणु
+		अचिन्हित पूर्णांक rate = params_rate(hw_params);
+		अचिन्हित पूर्णांक channels = params_channels(hw_params);
+		अचिन्हित पूर्णांक frames_per_period = params_period_size(hw_params);
+		अचिन्हित पूर्णांक frames_per_buffer = params_buffer_size(hw_params);
 
 		mutex_lock(&oxfw->mutex);
 		err = snd_oxfw_stream_reserve_duplex(oxfw, &oxfw->rx_stream,
 					rate, channels, frames_per_period,
 					frames_per_buffer);
-		if (err >= 0)
+		अगर (err >= 0)
 			++oxfw->substreams_count;
 		mutex_unlock(&oxfw->mutex);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_capture_hw_free(struct snd_pcm_substream *substream)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
+अटल पूर्णांक pcm_capture_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
 
 	mutex_lock(&oxfw->mutex);
 
-	if (substream->runtime->status->state != SNDRV_PCM_STATE_OPEN)
+	अगर (substream->runसमय->status->state != SNDRV_PCM_STATE_OPEN)
 		--oxfw->substreams_count;
 
 	snd_oxfw_stream_stop_duplex(oxfw);
 
 	mutex_unlock(&oxfw->mutex);
 
-	return 0;
-}
-static int pcm_playback_hw_free(struct snd_pcm_substream *substream)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक pcm_playback_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
 
 	mutex_lock(&oxfw->mutex);
 
-	if (substream->runtime->status->state != SNDRV_PCM_STATE_OPEN)
+	अगर (substream->runसमय->status->state != SNDRV_PCM_STATE_OPEN)
 		--oxfw->substreams_count;
 
 	snd_oxfw_stream_stop_duplex(oxfw);
 
 	mutex_unlock(&oxfw->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm_capture_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
-	int err;
+अटल पूर्णांक pcm_capture_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
+	पूर्णांक err;
 
 	mutex_lock(&oxfw->mutex);
 	err = snd_oxfw_stream_start_duplex(oxfw);
 	mutex_unlock(&oxfw->mutex);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
 	amdtp_stream_pcm_prepare(&oxfw->tx_stream);
 end:
-	return err;
-}
-static int pcm_playback_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
-	int err;
+	वापस err;
+पूर्ण
+अटल पूर्णांक pcm_playback_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
+	पूर्णांक err;
 
 	mutex_lock(&oxfw->mutex);
 	err = snd_oxfw_stream_start_duplex(oxfw);
 	mutex_unlock(&oxfw->mutex);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
 	amdtp_stream_pcm_prepare(&oxfw->rx_stream);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_capture_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
-	struct snd_pcm_substream *pcm;
+अटल पूर्णांक pcm_capture_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
+	काष्ठा snd_pcm_substream *pcm;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		pcm = substream;
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-		pcm = NULL;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		pcm = शून्य;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	amdtp_stream_pcm_trigger(&oxfw->tx_stream, pcm);
-	return 0;
-}
-static int pcm_playback_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
-	struct snd_pcm_substream *pcm;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक pcm_playback_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
+	काष्ठा snd_pcm_substream *pcm;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		pcm = substream;
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-		pcm = NULL;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		pcm = शून्य;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	amdtp_stream_pcm_trigger(&oxfw->rx_stream, pcm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static snd_pcm_uframes_t pcm_capture_pointer(struct snd_pcm_substream *sbstm)
-{
-	struct snd_oxfw *oxfw = sbstm->private_data;
+अटल snd_pcm_uframes_t pcm_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *sbsपंचांग)
+अणु
+	काष्ठा snd_oxfw *oxfw = sbsपंचांग->निजी_data;
 
-	return amdtp_domain_stream_pcm_pointer(&oxfw->domain, &oxfw->tx_stream);
-}
-static snd_pcm_uframes_t pcm_playback_pointer(struct snd_pcm_substream *sbstm)
-{
-	struct snd_oxfw *oxfw = sbstm->private_data;
+	वापस amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(&oxfw->करोमुख्य, &oxfw->tx_stream);
+पूर्ण
+अटल snd_pcm_uframes_t pcm_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *sbsपंचांग)
+अणु
+	काष्ठा snd_oxfw *oxfw = sbsपंचांग->निजी_data;
 
-	return amdtp_domain_stream_pcm_pointer(&oxfw->domain, &oxfw->rx_stream);
-}
+	वापस amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(&oxfw->करोमुख्य, &oxfw->rx_stream);
+पूर्ण
 
-static int pcm_capture_ack(struct snd_pcm_substream *substream)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
+अटल पूर्णांक pcm_capture_ack(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
 
-	return amdtp_domain_stream_pcm_ack(&oxfw->domain, &oxfw->tx_stream);
-}
+	वापस amdtp_करोमुख्य_stream_pcm_ack(&oxfw->करोमुख्य, &oxfw->tx_stream);
+पूर्ण
 
-static int pcm_playback_ack(struct snd_pcm_substream *substream)
-{
-	struct snd_oxfw *oxfw = substream->private_data;
+अटल पूर्णांक pcm_playback_ack(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_oxfw *oxfw = substream->निजी_data;
 
-	return amdtp_domain_stream_pcm_ack(&oxfw->domain, &oxfw->rx_stream);
-}
+	वापस amdtp_करोमुख्य_stream_pcm_ack(&oxfw->करोमुख्य, &oxfw->rx_stream);
+पूर्ण
 
-int snd_oxfw_create_pcm(struct snd_oxfw *oxfw)
-{
-	static const struct snd_pcm_ops capture_ops = {
-		.open      = pcm_open,
-		.close     = pcm_close,
+पूर्णांक snd_oxfw_create_pcm(काष्ठा snd_oxfw *oxfw)
+अणु
+	अटल स्थिर काष्ठा snd_pcm_ops capture_ops = अणु
+		.खोलो      = pcm_खोलो,
+		.बंद     = pcm_बंद,
 		.hw_params = pcm_capture_hw_params,
-		.hw_free   = pcm_capture_hw_free,
+		.hw_मुक्त   = pcm_capture_hw_मुक्त,
 		.prepare   = pcm_capture_prepare,
 		.trigger   = pcm_capture_trigger,
-		.pointer   = pcm_capture_pointer,
+		.poपूर्णांकer   = pcm_capture_poपूर्णांकer,
 		.ack       = pcm_capture_ack,
-	};
-	static const struct snd_pcm_ops playback_ops = {
-		.open      = pcm_open,
-		.close     = pcm_close,
+	पूर्ण;
+	अटल स्थिर काष्ठा snd_pcm_ops playback_ops = अणु
+		.खोलो      = pcm_खोलो,
+		.बंद     = pcm_बंद,
 		.hw_params = pcm_playback_hw_params,
-		.hw_free   = pcm_playback_hw_free,
+		.hw_मुक्त   = pcm_playback_hw_मुक्त,
 		.prepare   = pcm_playback_prepare,
 		.trigger   = pcm_playback_trigger,
-		.pointer   = pcm_playback_pointer,
+		.poपूर्णांकer   = pcm_playback_poपूर्णांकer,
 		.ack       = pcm_playback_ack,
-	};
-	struct snd_pcm *pcm;
-	unsigned int cap = 0;
-	int err;
+	पूर्ण;
+	काष्ठा snd_pcm *pcm;
+	अचिन्हित पूर्णांक cap = 0;
+	पूर्णांक err;
 
-	if (oxfw->has_output)
+	अगर (oxfw->has_output)
 		cap = 1;
 
 	err = snd_pcm_new(oxfw->card, oxfw->card->driver, 0, 1, cap, &pcm);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	pcm->private_data = oxfw;
-	strcpy(pcm->name, oxfw->card->shortname);
+	pcm->निजी_data = oxfw;
+	म_नकल(pcm->name, oxfw->card->लघुname);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &playback_ops);
-	if (cap > 0)
+	अगर (cap > 0)
 		snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &capture_ops);
-	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, NULL, 0, 0);
+	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, शून्य, 0, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

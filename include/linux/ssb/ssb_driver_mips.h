@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_SSB_MIPSCORE_H_
-#define LINUX_SSB_MIPSCORE_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_SSB_MIPSCORE_H_
+#घोषणा LINUX_SSB_MIPSCORE_H_
 
-#ifdef CONFIG_SSB_DRIVER_MIPS
+#अगर_घोषित CONFIG_SSB_DRIVER_MIPS
 
-struct ssb_device;
+काष्ठा ssb_device;
 
-struct ssb_serial_port {
-	void *regs;
-	unsigned long clockspeed;
-	unsigned int irq;
-	unsigned int baud_base;
-	unsigned int reg_shift;
-};
+काष्ठा ssb_serial_port अणु
+	व्योम *regs;
+	अचिन्हित दीर्घ घड़ीspeed;
+	अचिन्हित पूर्णांक irq;
+	अचिन्हित पूर्णांक baud_base;
+	अचिन्हित पूर्णांक reg_shअगरt;
+पूर्ण;
 
-struct ssb_pflash {
+काष्ठा ssb_pflash अणु
 	bool present;
 	u8 buswidth;
-	u32 window;
-	u32 window_size;
-};
+	u32 winकरोw;
+	u32 winकरोw_size;
+पूर्ण;
 
-#ifdef CONFIG_SSB_SFLASH
-struct ssb_sflash {
+#अगर_घोषित CONFIG_SSB_SFLASH
+काष्ठा ssb_sflash अणु
 	bool present;
-	u32 window;
+	u32 winकरोw;
 	u32 blocksize;
 	u16 numblocks;
 	u32 size;
 
-	void *priv;
-};
-#endif
+	व्योम *priv;
+पूर्ण;
+#पूर्ण_अगर
 
-struct ssb_mipscore {
-	struct ssb_device *dev;
+काष्ठा ssb_mipscore अणु
+	काष्ठा ssb_device *dev;
 
-	int nr_serial_ports;
-	struct ssb_serial_port serial_ports[4];
+	पूर्णांक nr_serial_ports;
+	काष्ठा ssb_serial_port serial_ports[4];
 
-	struct ssb_pflash pflash;
-#ifdef CONFIG_SSB_SFLASH
-	struct ssb_sflash sflash;
-#endif
-};
+	काष्ठा ssb_pflash pflash;
+#अगर_घोषित CONFIG_SSB_SFLASH
+	काष्ठा ssb_sflash sflash;
+#पूर्ण_अगर
+पूर्ण;
 
-extern void ssb_mipscore_init(struct ssb_mipscore *mcore);
-extern u32 ssb_cpu_clock(struct ssb_mipscore *mcore);
+बाह्य व्योम ssb_mipscore_init(काष्ठा ssb_mipscore *mcore);
+बाह्य u32 ssb_cpu_घड़ी(काष्ठा ssb_mipscore *mcore);
 
-extern unsigned int ssb_mips_irq(struct ssb_device *dev);
+बाह्य अचिन्हित पूर्णांक ssb_mips_irq(काष्ठा ssb_device *dev);
 
 
-#else /* CONFIG_SSB_DRIVER_MIPS */
+#अन्यथा /* CONFIG_SSB_DRIVER_MIPS */
 
-struct ssb_mipscore {
-};
+काष्ठा ssb_mipscore अणु
+पूर्ण;
 
-static inline
-void ssb_mipscore_init(struct ssb_mipscore *mcore)
-{
-}
+अटल अंतरभूत
+व्योम ssb_mipscore_init(काष्ठा ssb_mipscore *mcore)
+अणु
+पूर्ण
 
-static inline unsigned int ssb_mips_irq(struct ssb_device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ssb_mips_irq(काष्ठा ssb_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_SSB_DRIVER_MIPS */
+#पूर्ण_अगर /* CONFIG_SSB_DRIVER_MIPS */
 
-#endif /* LINUX_SSB_MIPSCORE_H_ */
+#पूर्ण_अगर /* LINUX_SSB_MIPSCORE_H_ */

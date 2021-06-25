@@ -1,292 +1,293 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2012-2019, Intel Corporation. All rights reserved.
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/sched/signal.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/interrupt.h>
-#include <linux/mei_cl_bus.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mei_cl_bus.h>
 
-#include "mei_dev.h"
-#include "client.h"
+#समावेश "mei_dev.h"
+#समावेश "client.h"
 
-#define to_mei_cl_driver(d) container_of(d, struct mei_cl_driver, driver)
+#घोषणा to_mei_cl_driver(d) container_of(d, काष्ठा mei_cl_driver, driver)
 
 /**
- * __mei_cl_send - internal client send (write)
+ * __mei_cl_send - पूर्णांकernal client send (ग_लिखो)
  *
  * @cl: host client
  * @buf: buffer to send
  * @length: buffer length
- * @vtag: virtual tag
+ * @vtag: भव tag
  * @mode: sending mode
  *
  * Return: written size bytes or < 0 on error
  */
-ssize_t __mei_cl_send(struct mei_cl *cl, u8 *buf, size_t length, u8 vtag,
-		      unsigned int mode)
-{
-	struct mei_device *bus;
-	struct mei_cl_cb *cb;
-	ssize_t rets;
+sमाप_प्रकार __mei_cl_send(काष्ठा mei_cl *cl, u8 *buf, माप_प्रकार length, u8 vtag,
+		      अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा mei_device *bus;
+	काष्ठा mei_cl_cb *cb;
+	sमाप_प्रकार rets;
 
-	if (WARN_ON(!cl || !cl->dev))
-		return -ENODEV;
+	अगर (WARN_ON(!cl || !cl->dev))
+		वापस -ENODEV;
 
 	bus = cl->dev;
 
 	mutex_lock(&bus->device_lock);
-	if (bus->dev_state != MEI_DEV_ENABLED &&
-	    bus->dev_state != MEI_DEV_POWERING_DOWN) {
+	अगर (bus->dev_state != MEI_DEV_ENABLED &&
+	    bus->dev_state != MEI_DEV_POWERING_DOWN) अणु
 		rets = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!mei_cl_is_connected(cl)) {
+	अगर (!mei_cl_is_connected(cl)) अणु
 		rets = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Check if we have an ME client device */
-	if (!mei_me_cl_is_active(cl->me_cl)) {
+	/* Check अगर we have an ME client device */
+	अगर (!mei_me_cl_is_active(cl->me_cl)) अणु
 		rets = -ENOTTY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (vtag) {
-		/* Check if vtag is supported by client */
+	अगर (vtag) अणु
+		/* Check अगर vtag is supported by client */
 		rets = mei_cl_vt_support_check(cl);
-		if (rets)
-			goto out;
-	}
+		अगर (rets)
+			जाओ out;
+	पूर्ण
 
-	if (length > mei_cl_mtu(cl)) {
+	अगर (length > mei_cl_mtu(cl)) अणु
 		rets = -EFBIG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (cl->tx_cb_queued >= bus->tx_queue_limit) {
+	जबतक (cl->tx_cb_queued >= bus->tx_queue_limit) अणु
 		mutex_unlock(&bus->device_lock);
-		rets = wait_event_interruptible(cl->tx_wait,
+		rets = रुको_event_पूर्णांकerruptible(cl->tx_रुको,
 				cl->writing_state == MEI_WRITE_COMPLETE ||
 				(!mei_cl_is_connected(cl)));
 		mutex_lock(&bus->device_lock);
-		if (rets) {
-			if (signal_pending(current))
+		अगर (rets) अणु
+			अगर (संकेत_pending(current))
 				rets = -EINTR;
-			goto out;
-		}
-		if (!mei_cl_is_connected(cl)) {
+			जाओ out;
+		पूर्ण
+		अगर (!mei_cl_is_connected(cl)) अणु
 			rets = -ENODEV;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	cb = mei_cl_alloc_cb(cl, length, MEI_FOP_WRITE, NULL);
-	if (!cb) {
+	cb = mei_cl_alloc_cb(cl, length, MEI_FOP_WRITE, शून्य);
+	अगर (!cb) अणु
 		rets = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	cb->vtag = vtag;
 
-	cb->internal = !!(mode & MEI_CL_IO_TX_INTERNAL);
+	cb->पूर्णांकernal = !!(mode & MEI_CL_IO_TX_INTERNAL);
 	cb->blocking = !!(mode & MEI_CL_IO_TX_BLOCKING);
-	memcpy(cb->buf.data, buf, length);
+	स_नकल(cb->buf.data, buf, length);
 
-	rets = mei_cl_write(cl, cb);
+	rets = mei_cl_ग_लिखो(cl, cb);
 
 out:
 	mutex_unlock(&bus->device_lock);
 
-	return rets;
-}
+	वापस rets;
+पूर्ण
 
 /**
- * __mei_cl_recv - internal client receive (read)
+ * __mei_cl_recv - पूर्णांकernal client receive (पढ़ो)
  *
  * @cl: host client
  * @buf: buffer to receive
  * @length: buffer length
  * @mode: io mode
- * @vtag: virtual tag
- * @timeout: recv timeout, 0 for infinite timeout
+ * @vtag: भव tag
+ * @समयout: recv समयout, 0 क्रम infinite समयout
  *
- * Return: read size in bytes of < 0 on error
+ * Return: पढ़ो size in bytes of < 0 on error
  */
-ssize_t __mei_cl_recv(struct mei_cl *cl, u8 *buf, size_t length, u8 *vtag,
-		      unsigned int mode, unsigned long timeout)
-{
-	struct mei_device *bus;
-	struct mei_cl_cb *cb;
-	size_t r_length;
-	ssize_t rets;
+sमाप_प्रकार __mei_cl_recv(काष्ठा mei_cl *cl, u8 *buf, माप_प्रकार length, u8 *vtag,
+		      अचिन्हित पूर्णांक mode, अचिन्हित दीर्घ समयout)
+अणु
+	काष्ठा mei_device *bus;
+	काष्ठा mei_cl_cb *cb;
+	माप_प्रकार r_length;
+	sमाप_प्रकार rets;
 	bool nonblock = !!(mode & MEI_CL_IO_RX_NONBLOCK);
 
-	if (WARN_ON(!cl || !cl->dev))
-		return -ENODEV;
+	अगर (WARN_ON(!cl || !cl->dev))
+		वापस -ENODEV;
 
 	bus = cl->dev;
 
 	mutex_lock(&bus->device_lock);
-	if (bus->dev_state != MEI_DEV_ENABLED &&
-	    bus->dev_state != MEI_DEV_POWERING_DOWN) {
+	अगर (bus->dev_state != MEI_DEV_ENABLED &&
+	    bus->dev_state != MEI_DEV_POWERING_DOWN) अणु
 		rets = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cb = mei_cl_read_cb(cl, NULL);
-	if (cb)
-		goto copy;
+	cb = mei_cl_पढ़ो_cb(cl, शून्य);
+	अगर (cb)
+		जाओ copy;
 
-	rets = mei_cl_read_start(cl, length, NULL);
-	if (rets && rets != -EBUSY)
-		goto out;
+	rets = mei_cl_पढ़ो_start(cl, length, शून्य);
+	अगर (rets && rets != -EBUSY)
+		जाओ out;
 
-	if (nonblock) {
+	अगर (nonblock) अणु
 		rets = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* wait on event only if there is no other waiter */
+	/* रुको on event only अगर there is no other रुकोer */
 	/* synchronized under device mutex */
-	if (!waitqueue_active(&cl->rx_wait)) {
+	अगर (!रुकोqueue_active(&cl->rx_रुको)) अणु
 
 		mutex_unlock(&bus->device_lock);
 
-		if (timeout) {
-			rets = wait_event_interruptible_timeout
-					(cl->rx_wait,
-					mei_cl_read_cb(cl, NULL) ||
+		अगर (समयout) अणु
+			rets = रुको_event_पूर्णांकerruptible_समयout
+					(cl->rx_रुको,
+					mei_cl_पढ़ो_cb(cl, शून्य) ||
 					(!mei_cl_is_connected(cl)),
-					msecs_to_jiffies(timeout));
-			if (rets == 0)
-				return -ETIME;
-			if (rets < 0) {
-				if (signal_pending(current))
-					return -EINTR;
-				return -ERESTARTSYS;
-			}
-		} else {
-			if (wait_event_interruptible
-					(cl->rx_wait,
-					mei_cl_read_cb(cl, NULL) ||
-					(!mei_cl_is_connected(cl)))) {
-				if (signal_pending(current))
-					return -EINTR;
-				return -ERESTARTSYS;
-			}
-		}
+					msecs_to_jअगरfies(समयout));
+			अगर (rets == 0)
+				वापस -ETIME;
+			अगर (rets < 0) अणु
+				अगर (संकेत_pending(current))
+					वापस -EINTR;
+				वापस -ERESTARTSYS;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (रुको_event_पूर्णांकerruptible
+					(cl->rx_रुको,
+					mei_cl_पढ़ो_cb(cl, शून्य) ||
+					(!mei_cl_is_connected(cl)))) अणु
+				अगर (संकेत_pending(current))
+					वापस -EINTR;
+				वापस -ERESTARTSYS;
+			पूर्ण
+		पूर्ण
 
 		mutex_lock(&bus->device_lock);
 
-		if (!mei_cl_is_connected(cl)) {
+		अगर (!mei_cl_is_connected(cl)) अणु
 			rets = -ENODEV;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	cb = mei_cl_read_cb(cl, NULL);
-	if (!cb) {
+	cb = mei_cl_पढ़ो_cb(cl, शून्य);
+	अगर (!cb) अणु
 		rets = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 copy:
-	if (cb->status) {
+	अगर (cb->status) अणु
 		rets = cb->status;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	r_length = min_t(size_t, length, cb->buf_idx);
-	memcpy(buf, cb->buf.data, r_length);
+	r_length = min_t(माप_प्रकार, length, cb->buf_idx);
+	स_नकल(buf, cb->buf.data, r_length);
 	rets = r_length;
-	if (vtag)
+	अगर (vtag)
 		*vtag = cb->vtag;
 
-free:
+मुक्त:
 	mei_cl_del_rd_completed(cl, cb);
 out:
 	mutex_unlock(&bus->device_lock);
 
-	return rets;
-}
+	वापस rets;
+पूर्ण
 
 /**
- * mei_cldev_send_vtag - me device send with vtag  (write)
+ * mei_cldev_send_vtag - me device send with vtag  (ग_लिखो)
  *
  * @cldev: me client device
  * @buf: buffer to send
  * @length: buffer length
- * @vtag: virtual tag
+ * @vtag: भव tag
  *
  * Return:
  *  * written size in bytes
  *  * < 0 on error
  */
 
-ssize_t mei_cldev_send_vtag(struct mei_cl_device *cldev, u8 *buf, size_t length,
+sमाप_प्रकार mei_cldev_send_vtag(काष्ठा mei_cl_device *cldev, u8 *buf, माप_प्रकार length,
 			    u8 vtag)
-{
-	struct mei_cl *cl = cldev->cl;
+अणु
+	काष्ठा mei_cl *cl = cldev->cl;
 
-	return __mei_cl_send(cl, buf, length, vtag, MEI_CL_IO_TX_BLOCKING);
-}
+	वापस __mei_cl_send(cl, buf, length, vtag, MEI_CL_IO_TX_BLOCKING);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_send_vtag);
 
 /**
- * mei_cldev_recv_vtag - client receive with vtag (read)
+ * mei_cldev_recv_vtag - client receive with vtag (पढ़ो)
  *
  * @cldev: me client device
  * @buf: buffer to receive
  * @length: buffer length
- * @vtag: virtual tag
+ * @vtag: भव tag
  *
  * Return:
- * * read size in bytes
+ * * पढ़ो size in bytes
  * *  < 0 on error
  */
 
-ssize_t mei_cldev_recv_vtag(struct mei_cl_device *cldev, u8 *buf, size_t length,
+sमाप_प्रकार mei_cldev_recv_vtag(काष्ठा mei_cl_device *cldev, u8 *buf, माप_प्रकार length,
 			    u8 *vtag)
-{
-	struct mei_cl *cl = cldev->cl;
+अणु
+	काष्ठा mei_cl *cl = cldev->cl;
 
-	return __mei_cl_recv(cl, buf, length, vtag, 0, 0);
-}
+	वापस __mei_cl_recv(cl, buf, length, vtag, 0, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_recv_vtag);
 
 /**
- * mei_cldev_recv_nonblock_vtag - non block client receive with vtag (read)
+ * mei_cldev_recv_nonblock_vtag - non block client receive with vtag (पढ़ो)
  *
  * @cldev: me client device
  * @buf: buffer to receive
  * @length: buffer length
- * @vtag: virtual tag
+ * @vtag: भव tag
  *
  * Return:
- * * read size in bytes
- * * -EAGAIN if function will block.
+ * * पढ़ो size in bytes
+ * * -EAGAIN अगर function will block.
  * * < 0 on other error
  */
-ssize_t mei_cldev_recv_nonblock_vtag(struct mei_cl_device *cldev, u8 *buf,
-				     size_t length, u8 *vtag)
-{
-	struct mei_cl *cl = cldev->cl;
+sमाप_प्रकार mei_cldev_recv_nonblock_vtag(काष्ठा mei_cl_device *cldev, u8 *buf,
+				     माप_प्रकार length, u8 *vtag)
+अणु
+	काष्ठा mei_cl *cl = cldev->cl;
 
-	return __mei_cl_recv(cl, buf, length, vtag, MEI_CL_IO_RX_NONBLOCK, 0);
-}
+	वापस __mei_cl_recv(cl, buf, length, vtag, MEI_CL_IO_RX_NONBLOCK, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_recv_nonblock_vtag);
 
 /**
- * mei_cldev_send - me device send  (write)
+ * mei_cldev_send - me device send  (ग_लिखो)
  *
  * @cldev: me client device
  * @buf: buffer to send
@@ -296,215 +297,215 @@ EXPORT_SYMBOL_GPL(mei_cldev_recv_nonblock_vtag);
  *  * written size in bytes
  *  * < 0 on error
  */
-ssize_t mei_cldev_send(struct mei_cl_device *cldev, u8 *buf, size_t length)
-{
-	return mei_cldev_send_vtag(cldev, buf, length, 0);
-}
+sमाप_प्रकार mei_cldev_send(काष्ठा mei_cl_device *cldev, u8 *buf, माप_प्रकार length)
+अणु
+	वापस mei_cldev_send_vtag(cldev, buf, length, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_send);
 
 /**
- * mei_cldev_recv - client receive (read)
+ * mei_cldev_recv - client receive (पढ़ो)
  *
  * @cldev: me client device
  * @buf: buffer to receive
  * @length: buffer length
  *
- * Return: read size in bytes of < 0 on error
+ * Return: पढ़ो size in bytes of < 0 on error
  */
-ssize_t mei_cldev_recv(struct mei_cl_device *cldev, u8 *buf, size_t length)
-{
-	return mei_cldev_recv_vtag(cldev, buf, length, NULL);
-}
+sमाप_प्रकार mei_cldev_recv(काष्ठा mei_cl_device *cldev, u8 *buf, माप_प्रकार length)
+अणु
+	वापस mei_cldev_recv_vtag(cldev, buf, length, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_recv);
 
 /**
- * mei_cldev_recv_nonblock - non block client receive (read)
+ * mei_cldev_recv_nonblock - non block client receive (पढ़ो)
  *
  * @cldev: me client device
  * @buf: buffer to receive
  * @length: buffer length
  *
- * Return: read size in bytes of < 0 on error
- *         -EAGAIN if function will block.
+ * Return: पढ़ो size in bytes of < 0 on error
+ *         -EAGAIN अगर function will block.
  */
-ssize_t mei_cldev_recv_nonblock(struct mei_cl_device *cldev, u8 *buf,
-				size_t length)
-{
-	return mei_cldev_recv_nonblock_vtag(cldev, buf, length, NULL);
-}
+sमाप_प्रकार mei_cldev_recv_nonblock(काष्ठा mei_cl_device *cldev, u8 *buf,
+				माप_प्रकार length)
+अणु
+	वापस mei_cldev_recv_nonblock_vtag(cldev, buf, length, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_recv_nonblock);
 
 /**
- * mei_cl_bus_rx_work - dispatch rx event for a bus device
+ * mei_cl_bus_rx_work - dispatch rx event क्रम a bus device
  *
  * @work: work
  */
-static void mei_cl_bus_rx_work(struct work_struct *work)
-{
-	struct mei_cl_device *cldev;
-	struct mei_device *bus;
+अटल व्योम mei_cl_bus_rx_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mei_cl_device *cldev;
+	काष्ठा mei_device *bus;
 
-	cldev = container_of(work, struct mei_cl_device, rx_work);
+	cldev = container_of(work, काष्ठा mei_cl_device, rx_work);
 
 	bus = cldev->bus;
 
-	if (cldev->rx_cb)
+	अगर (cldev->rx_cb)
 		cldev->rx_cb(cldev);
 
 	mutex_lock(&bus->device_lock);
-	if (mei_cl_is_connected(cldev->cl))
-		mei_cl_read_start(cldev->cl, mei_cl_mtu(cldev->cl), NULL);
+	अगर (mei_cl_is_connected(cldev->cl))
+		mei_cl_पढ़ो_start(cldev->cl, mei_cl_mtu(cldev->cl), शून्य);
 	mutex_unlock(&bus->device_lock);
-}
+पूर्ण
 
 /**
- * mei_cl_bus_notif_work - dispatch FW notif event for a bus device
+ * mei_cl_bus_notअगर_work - dispatch FW notअगर event क्रम a bus device
  *
  * @work: work
  */
-static void mei_cl_bus_notif_work(struct work_struct *work)
-{
-	struct mei_cl_device *cldev;
+अटल व्योम mei_cl_bus_notअगर_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mei_cl_device *cldev;
 
-	cldev = container_of(work, struct mei_cl_device, notif_work);
+	cldev = container_of(work, काष्ठा mei_cl_device, notअगर_work);
 
-	if (cldev->notif_cb)
-		cldev->notif_cb(cldev);
-}
+	अगर (cldev->notअगर_cb)
+		cldev->notअगर_cb(cldev);
+पूर्ण
 
 /**
- * mei_cl_bus_notify_event - schedule notify cb on bus client
+ * mei_cl_bus_notअगरy_event - schedule notअगरy cb on bus client
  *
  * @cl: host client
  *
- * Return: true if event was scheduled
- *         false if the client is not waiting for event
+ * Return: true अगर event was scheduled
+ *         false अगर the client is not रुकोing क्रम event
  */
-bool mei_cl_bus_notify_event(struct mei_cl *cl)
-{
-	struct mei_cl_device *cldev = cl->cldev;
+bool mei_cl_bus_notअगरy_event(काष्ठा mei_cl *cl)
+अणु
+	काष्ठा mei_cl_device *cldev = cl->cldev;
 
-	if (!cldev || !cldev->notif_cb)
-		return false;
+	अगर (!cldev || !cldev->notअगर_cb)
+		वापस false;
 
-	if (!cl->notify_ev)
-		return false;
+	अगर (!cl->notअगरy_ev)
+		वापस false;
 
-	schedule_work(&cldev->notif_work);
+	schedule_work(&cldev->notअगर_work);
 
-	cl->notify_ev = false;
+	cl->notअगरy_ev = false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * mei_cl_bus_rx_event - schedule rx event
  *
  * @cl: host client
  *
- * Return: true if event was scheduled
- *         false if the client is not waiting for event
+ * Return: true अगर event was scheduled
+ *         false अगर the client is not रुकोing क्रम event
  */
-bool mei_cl_bus_rx_event(struct mei_cl *cl)
-{
-	struct mei_cl_device *cldev = cl->cldev;
+bool mei_cl_bus_rx_event(काष्ठा mei_cl *cl)
+अणु
+	काष्ठा mei_cl_device *cldev = cl->cldev;
 
-	if (!cldev || !cldev->rx_cb)
-		return false;
+	अगर (!cldev || !cldev->rx_cb)
+		वापस false;
 
 	schedule_work(&cldev->rx_work);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * mei_cldev_register_rx_cb - register Rx event callback
+ * mei_cldev_रेजिस्टर_rx_cb - रेजिस्टर Rx event callback
  *
  * @cldev: me client devices
  * @rx_cb: callback function
  *
  * Return: 0 on success
- *         -EALREADY if an callback is already registered
+ *         -EALREADY अगर an callback is alपढ़ोy रेजिस्टरed
  *         <0 on other errors
  */
-int mei_cldev_register_rx_cb(struct mei_cl_device *cldev, mei_cldev_cb_t rx_cb)
-{
-	struct mei_device *bus = cldev->bus;
-	int ret;
+पूर्णांक mei_cldev_रेजिस्टर_rx_cb(काष्ठा mei_cl_device *cldev, mei_cldev_cb_t rx_cb)
+अणु
+	काष्ठा mei_device *bus = cldev->bus;
+	पूर्णांक ret;
 
-	if (!rx_cb)
-		return -EINVAL;
-	if (cldev->rx_cb)
-		return -EALREADY;
+	अगर (!rx_cb)
+		वापस -EINVAL;
+	अगर (cldev->rx_cb)
+		वापस -EALREADY;
 
 	cldev->rx_cb = rx_cb;
 	INIT_WORK(&cldev->rx_work, mei_cl_bus_rx_work);
 
 	mutex_lock(&bus->device_lock);
-	if (mei_cl_is_connected(cldev->cl))
-		ret = mei_cl_read_start(cldev->cl, mei_cl_mtu(cldev->cl), NULL);
-	else
+	अगर (mei_cl_is_connected(cldev->cl))
+		ret = mei_cl_पढ़ो_start(cldev->cl, mei_cl_mtu(cldev->cl), शून्य);
+	अन्यथा
 		ret = -ENODEV;
 	mutex_unlock(&bus->device_lock);
-	if (ret && ret != -EBUSY) {
+	अगर (ret && ret != -EBUSY) अणु
 		cancel_work_sync(&cldev->rx_work);
-		cldev->rx_cb = NULL;
-		return ret;
-	}
+		cldev->rx_cb = शून्य;
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mei_cldev_register_rx_cb);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mei_cldev_रेजिस्टर_rx_cb);
 
 /**
- * mei_cldev_register_notif_cb - register FW notification event callback
+ * mei_cldev_रेजिस्टर_notअगर_cb - रेजिस्टर FW notअगरication event callback
  *
  * @cldev: me client devices
- * @notif_cb: callback function
+ * @notअगर_cb: callback function
  *
  * Return: 0 on success
- *         -EALREADY if an callback is already registered
+ *         -EALREADY अगर an callback is alपढ़ोy रेजिस्टरed
  *         <0 on other errors
  */
-int mei_cldev_register_notif_cb(struct mei_cl_device *cldev,
-				mei_cldev_cb_t notif_cb)
-{
-	struct mei_device *bus = cldev->bus;
-	int ret;
+पूर्णांक mei_cldev_रेजिस्टर_notअगर_cb(काष्ठा mei_cl_device *cldev,
+				mei_cldev_cb_t notअगर_cb)
+अणु
+	काष्ठा mei_device *bus = cldev->bus;
+	पूर्णांक ret;
 
-	if (!notif_cb)
-		return -EINVAL;
+	अगर (!notअगर_cb)
+		वापस -EINVAL;
 
-	if (cldev->notif_cb)
-		return -EALREADY;
+	अगर (cldev->notअगर_cb)
+		वापस -EALREADY;
 
-	cldev->notif_cb = notif_cb;
-	INIT_WORK(&cldev->notif_work, mei_cl_bus_notif_work);
+	cldev->notअगर_cb = notअगर_cb;
+	INIT_WORK(&cldev->notअगर_work, mei_cl_bus_notअगर_work);
 
 	mutex_lock(&bus->device_lock);
-	ret = mei_cl_notify_request(cldev->cl, NULL, 1);
+	ret = mei_cl_notअगरy_request(cldev->cl, शून्य, 1);
 	mutex_unlock(&bus->device_lock);
-	if (ret) {
-		cancel_work_sync(&cldev->notif_work);
-		cldev->notif_cb = NULL;
-		return ret;
-	}
+	अगर (ret) अणु
+		cancel_work_sync(&cldev->notअगर_work);
+		cldev->notअगर_cb = शून्य;
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mei_cldev_register_notif_cb);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mei_cldev_रेजिस्टर_notअगर_cb);
 
 /**
  * mei_cldev_get_drvdata - driver data getter
  *
  * @cldev: mei client device
  *
- * Return: driver private data
+ * Return: driver निजी data
  */
-void *mei_cldev_get_drvdata(const struct mei_cl_device *cldev)
-{
-	return dev_get_drvdata(&cldev->dev);
-}
+व्योम *mei_cldev_get_drvdata(स्थिर काष्ठा mei_cl_device *cldev)
+अणु
+	वापस dev_get_drvdata(&cldev->dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_get_drvdata);
 
 /**
@@ -513,36 +514,36 @@ EXPORT_SYMBOL_GPL(mei_cldev_get_drvdata);
  * @cldev: mei client device
  * @data: data to store
  */
-void mei_cldev_set_drvdata(struct mei_cl_device *cldev, void *data)
-{
+व्योम mei_cldev_set_drvdata(काष्ठा mei_cl_device *cldev, व्योम *data)
+अणु
 	dev_set_drvdata(&cldev->dev, data);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_set_drvdata);
 
 /**
- * mei_cldev_uuid - return uuid of the underlying me client
+ * mei_cldev_uuid - वापस uuid of the underlying me client
  *
  * @cldev: mei client device
  *
  * Return: me client uuid
  */
-const uuid_le *mei_cldev_uuid(const struct mei_cl_device *cldev)
-{
-	return mei_me_cl_uuid(cldev->me_cl);
-}
+स्थिर uuid_le *mei_cldev_uuid(स्थिर काष्ठा mei_cl_device *cldev)
+अणु
+	वापस mei_me_cl_uuid(cldev->me_cl);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_uuid);
 
 /**
- * mei_cldev_ver - return protocol version of the underlying me client
+ * mei_cldev_ver - वापस protocol version of the underlying me client
  *
  * @cldev: mei client device
  *
  * Return: me client protocol version
  */
-u8 mei_cldev_ver(const struct mei_cl_device *cldev)
-{
-	return mei_me_cl_ver(cldev->me_cl);
-}
+u8 mei_cldev_ver(स्थिर काष्ठा mei_cl_device *cldev)
+अणु
+	वापस mei_me_cl_ver(cldev->me_cl);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_ver);
 
 /**
@@ -550,12 +551,12 @@ EXPORT_SYMBOL_GPL(mei_cldev_ver);
  *
  * @cldev: mei client device
  *
- * Return: true if me client is initialized and connected
+ * Return: true अगर me client is initialized and connected
  */
-bool mei_cldev_enabled(struct mei_cl_device *cldev)
-{
-	return mei_cl_is_connected(cldev->cl);
-}
+bool mei_cldev_enabled(काष्ठा mei_cl_device *cldev)
+अणु
+	वापस mei_cl_is_connected(cldev->cl);
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_enabled);
 
 /**
@@ -564,36 +565,36 @@ EXPORT_SYMBOL_GPL(mei_cldev_enabled);
  *
  * @cldev: mei client device
  *
- * Return: true on success; false if the module was removed.
+ * Return: true on success; false अगर the module was हटाओd.
  */
-static bool mei_cl_bus_module_get(struct mei_cl_device *cldev)
-{
-	return try_module_get(cldev->bus->dev->driver->owner);
-}
+अटल bool mei_cl_bus_module_get(काष्ठा mei_cl_device *cldev)
+अणु
+	वापस try_module_get(cldev->bus->dev->driver->owner);
+पूर्ण
 
 /**
  * mei_cl_bus_module_put -  release the underlying hw module.
  *
  * @cldev: mei client device
  */
-static void mei_cl_bus_module_put(struct mei_cl_device *cldev)
-{
+अटल व्योम mei_cl_bus_module_put(काष्ठा mei_cl_device *cldev)
+अणु
 	module_put(cldev->bus->dev->driver->owner);
-}
+पूर्ण
 
 /**
  * mei_cl_bus_vtag - get bus vtag entry wrapper
- *     The tag for bus client is always first.
+ *     The tag क्रम bus client is always first.
  *
  * @cl: host client
  *
- * Return: bus vtag or NULL
+ * Return: bus vtag or शून्य
  */
-static inline struct mei_cl_vtag *mei_cl_bus_vtag(struct mei_cl *cl)
-{
-	return list_first_entry_or_null(&cl->vtag_map,
-					struct mei_cl_vtag, list);
-}
+अटल अंतरभूत काष्ठा mei_cl_vtag *mei_cl_bus_vtag(काष्ठा mei_cl *cl)
+अणु
+	वापस list_first_entry_or_null(&cl->vtag_map,
+					काष्ठा mei_cl_vtag, list);
+पूर्ण
 
 /**
  * mei_cl_bus_vtag_alloc - add bus client entry to vtag map
@@ -602,46 +603,46 @@ static inline struct mei_cl_vtag *mei_cl_bus_vtag(struct mei_cl *cl)
  *
  * Return:
  * * 0 on success
- * * -ENOMEM if memory allocation failed
+ * * -ENOMEM अगर memory allocation failed
  */
-static int mei_cl_bus_vtag_alloc(struct mei_cl_device *cldev)
-{
-	struct mei_cl *cl = cldev->cl;
-	struct mei_cl_vtag *cl_vtag;
+अटल पूर्णांक mei_cl_bus_vtag_alloc(काष्ठा mei_cl_device *cldev)
+अणु
+	काष्ठा mei_cl *cl = cldev->cl;
+	काष्ठा mei_cl_vtag *cl_vtag;
 
 	/*
-	 * Bail out if the client does not supports vtags
-	 * or has already allocated one
+	 * Bail out अगर the client करोes not supports vtags
+	 * or has alपढ़ोy allocated one
 	 */
-	if (mei_cl_vt_support_check(cl) || mei_cl_bus_vtag(cl))
-		return 0;
+	अगर (mei_cl_vt_support_check(cl) || mei_cl_bus_vtag(cl))
+		वापस 0;
 
-	cl_vtag = mei_cl_vtag_alloc(NULL, 0);
-	if (IS_ERR(cl_vtag))
-		return -ENOMEM;
+	cl_vtag = mei_cl_vtag_alloc(शून्य, 0);
+	अगर (IS_ERR(cl_vtag))
+		वापस -ENOMEM;
 
 	list_add_tail(&cl_vtag->list, &cl->vtag_map);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_cl_bus_vtag_free - remove the bus entry from vtag map
+ * mei_cl_bus_vtag_मुक्त - हटाओ the bus entry from vtag map
  *
  * @cldev: me client device
  */
-static void mei_cl_bus_vtag_free(struct mei_cl_device *cldev)
-{
-	struct mei_cl *cl = cldev->cl;
-	struct mei_cl_vtag *cl_vtag;
+अटल व्योम mei_cl_bus_vtag_मुक्त(काष्ठा mei_cl_device *cldev)
+अणु
+	काष्ठा mei_cl *cl = cldev->cl;
+	काष्ठा mei_cl_vtag *cl_vtag;
 
 	cl_vtag = mei_cl_bus_vtag(cl);
-	if (!cl_vtag)
-		return;
+	अगर (!cl_vtag)
+		वापस;
 
 	list_del(&cl_vtag->list);
-	kfree(cl_vtag);
-}
+	kमुक्त(cl_vtag);
+पूर्ण
 
 /**
  * mei_cldev_enable - enable me client device
@@ -651,115 +652,115 @@ static void mei_cl_bus_vtag_free(struct mei_cl_device *cldev)
  *
  * Return: 0 on success and < 0 on error
  */
-int mei_cldev_enable(struct mei_cl_device *cldev)
-{
-	struct mei_device *bus = cldev->bus;
-	struct mei_cl *cl;
-	int ret;
+पूर्णांक mei_cldev_enable(काष्ठा mei_cl_device *cldev)
+अणु
+	काष्ठा mei_device *bus = cldev->bus;
+	काष्ठा mei_cl *cl;
+	पूर्णांक ret;
 
 	cl = cldev->cl;
 
 	mutex_lock(&bus->device_lock);
-	if (cl->state == MEI_FILE_UNINITIALIZED) {
+	अगर (cl->state == MEI_खाता_UNINITIALIZED) अणु
 		ret = mei_cl_link(cl);
-		if (ret)
-			goto out;
-		/* update pointers */
+		अगर (ret)
+			जाओ out;
+		/* update poपूर्णांकers */
 		cl->cldev = cldev;
-	}
+	पूर्ण
 
-	if (mei_cl_is_connected(cl)) {
+	अगर (mei_cl_is_connected(cl)) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!mei_me_cl_is_active(cldev->me_cl)) {
+	अगर (!mei_me_cl_is_active(cldev->me_cl)) अणु
 		dev_err(&cldev->dev, "me client is not active\n");
 		ret = -ENOTTY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = mei_cl_bus_vtag_alloc(cldev);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	ret = mei_cl_connect(cl, cldev->me_cl, NULL);
-	if (ret < 0) {
+	ret = mei_cl_connect(cl, cldev->me_cl, शून्य);
+	अगर (ret < 0) अणु
 		dev_err(&cldev->dev, "cannot connect\n");
-		mei_cl_bus_vtag_free(cldev);
-	}
+		mei_cl_bus_vtag_मुक्त(cldev);
+	पूर्ण
 
 out:
 	mutex_unlock(&bus->device_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_enable);
 
 /**
- * mei_cldev_unregister_callbacks - internal wrapper for unregistering
+ * mei_cldev_unरेजिस्टर_callbacks - पूर्णांकernal wrapper क्रम unरेजिस्टरing
  *  callbacks.
  *
  * @cldev: client device
  */
-static void mei_cldev_unregister_callbacks(struct mei_cl_device *cldev)
-{
-	if (cldev->rx_cb) {
+अटल व्योम mei_cldev_unरेजिस्टर_callbacks(काष्ठा mei_cl_device *cldev)
+अणु
+	अगर (cldev->rx_cb) अणु
 		cancel_work_sync(&cldev->rx_work);
-		cldev->rx_cb = NULL;
-	}
+		cldev->rx_cb = शून्य;
+	पूर्ण
 
-	if (cldev->notif_cb) {
-		cancel_work_sync(&cldev->notif_work);
-		cldev->notif_cb = NULL;
-	}
-}
+	अगर (cldev->notअगर_cb) अणु
+		cancel_work_sync(&cldev->notअगर_work);
+		cldev->notअगर_cb = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * mei_cldev_disable - disable me client device
- *     disconnect form the me client
+ *     disconnect क्रमm the me client
  *
  * @cldev: me client device
  *
  * Return: 0 on success and < 0 on error
  */
-int mei_cldev_disable(struct mei_cl_device *cldev)
-{
-	struct mei_device *bus;
-	struct mei_cl *cl;
-	int err;
+पूर्णांक mei_cldev_disable(काष्ठा mei_cl_device *cldev)
+अणु
+	काष्ठा mei_device *bus;
+	काष्ठा mei_cl *cl;
+	पूर्णांक err;
 
-	if (!cldev)
-		return -ENODEV;
+	अगर (!cldev)
+		वापस -ENODEV;
 
 	cl = cldev->cl;
 
 	bus = cldev->bus;
 
-	mei_cldev_unregister_callbacks(cldev);
+	mei_cldev_unरेजिस्टर_callbacks(cldev);
 
 	mutex_lock(&bus->device_lock);
 
-	mei_cl_bus_vtag_free(cldev);
+	mei_cl_bus_vtag_मुक्त(cldev);
 
-	if (!mei_cl_is_connected(cl)) {
+	अगर (!mei_cl_is_connected(cl)) अणु
 		dev_dbg(bus->dev, "Already disconnected\n");
 		err = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = mei_cl_disconnect(cl);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(bus->dev, "Could not disconnect from the ME client\n");
 
 out:
-	/* Flush queues and remove any pending read */
-	mei_cl_flush_queues(cl, NULL);
+	/* Flush queues and हटाओ any pending पढ़ो */
+	mei_cl_flush_queues(cl, शून्य);
 	mei_cl_unlink(cl);
 
 	mutex_unlock(&bus->device_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mei_cldev_disable);
 
 /**
@@ -768,14 +769,14 @@ EXPORT_SYMBOL_GPL(mei_cldev_disable);
  * @cldev: me client device
  * @cldrv: me client driver
  *
- * Return: id on success; NULL if no id is matching
+ * Return: id on success; शून्य अगर no id is matching
  */
-static const
-struct mei_cl_device_id *mei_cl_device_find(struct mei_cl_device *cldev,
-					    struct mei_cl_driver *cldrv)
-{
-	const struct mei_cl_device_id *id;
-	const uuid_le *uuid;
+अटल स्थिर
+काष्ठा mei_cl_device_id *mei_cl_device_find(काष्ठा mei_cl_device *cldev,
+					    काष्ठा mei_cl_driver *cldrv)
+अणु
+	स्थिर काष्ठा mei_cl_device_id *id;
+	स्थिर uuid_le *uuid;
 	u8 version;
 	bool match;
 
@@ -783,27 +784,27 @@ struct mei_cl_device_id *mei_cl_device_find(struct mei_cl_device *cldev,
 	version = mei_me_cl_ver(cldev->me_cl);
 
 	id = cldrv->id_table;
-	while (uuid_le_cmp(NULL_UUID_LE, id->uuid)) {
-		if (!uuid_le_cmp(*uuid, id->uuid)) {
+	जबतक (uuid_le_cmp(शून्य_UUID_LE, id->uuid)) अणु
+		अगर (!uuid_le_cmp(*uuid, id->uuid)) अणु
 			match = true;
 
-			if (cldev->name[0])
-				if (strncmp(cldev->name, id->name,
-					    sizeof(id->name)))
+			अगर (cldev->name[0])
+				अगर (म_भेदन(cldev->name, id->name,
+					    माप(id->name)))
 					match = false;
 
-			if (id->version != MEI_CL_VERSION_ANY)
-				if (id->version != version)
+			अगर (id->version != MEI_CL_VERSION_ANY)
+				अगर (id->version != version)
 					match = false;
-			if (match)
-				return id;
-		}
+			अगर (match)
+				वापस id;
+		पूर्ण
 
 		id++;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * mei_cl_device_match  - device match function
@@ -811,29 +812,29 @@ struct mei_cl_device_id *mei_cl_device_find(struct mei_cl_device *cldev,
  * @dev: device
  * @drv: driver
  *
- * Return:  1 if matching device was found 0 otherwise
+ * Return:  1 अगर matching device was found 0 otherwise
  */
-static int mei_cl_device_match(struct device *dev, struct device_driver *drv)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
-	struct mei_cl_driver *cldrv = to_mei_cl_driver(drv);
-	const struct mei_cl_device_id *found_id;
+अटल पूर्णांक mei_cl_device_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
+	काष्ठा mei_cl_driver *cldrv = to_mei_cl_driver(drv);
+	स्थिर काष्ठा mei_cl_device_id *found_id;
 
-	if (!cldev)
-		return 0;
+	अगर (!cldev)
+		वापस 0;
 
-	if (!cldev->do_match)
-		return 0;
+	अगर (!cldev->करो_match)
+		वापस 0;
 
-	if (!cldrv || !cldrv->id_table)
-		return 0;
+	अगर (!cldrv || !cldrv->id_table)
+		वापस 0;
 
 	found_id = mei_cl_device_find(cldev, cldrv);
-	if (found_id)
-		return 1;
+	अगर (found_id)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * mei_cl_device_probe - bus probe function
@@ -842,146 +843,146 @@ static int mei_cl_device_match(struct device *dev, struct device_driver *drv)
  *
  * Return:  0 on success; < 0 otherwise
  */
-static int mei_cl_device_probe(struct device *dev)
-{
-	struct mei_cl_device *cldev;
-	struct mei_cl_driver *cldrv;
-	const struct mei_cl_device_id *id;
-	int ret;
+अटल पूर्णांक mei_cl_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा mei_cl_device *cldev;
+	काष्ठा mei_cl_driver *cldrv;
+	स्थिर काष्ठा mei_cl_device_id *id;
+	पूर्णांक ret;
 
 	cldev = to_mei_cl_device(dev);
 	cldrv = to_mei_cl_driver(dev->driver);
 
-	if (!cldev)
-		return 0;
+	अगर (!cldev)
+		वापस 0;
 
-	if (!cldrv || !cldrv->probe)
-		return -ENODEV;
+	अगर (!cldrv || !cldrv->probe)
+		वापस -ENODEV;
 
 	id = mei_cl_device_find(cldev, cldrv);
-	if (!id)
-		return -ENODEV;
+	अगर (!id)
+		वापस -ENODEV;
 
-	if (!mei_cl_bus_module_get(cldev)) {
+	अगर (!mei_cl_bus_module_get(cldev)) अणु
 		dev_err(&cldev->dev, "get hw module failed");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = cldrv->probe(cldev, id);
-	if (ret) {
+	अगर (ret) अणु
 		mei_cl_bus_module_put(cldev);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	__module_get(THIS_MODULE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_cl_device_remove - remove device from the bus
+ * mei_cl_device_हटाओ - हटाओ device from the bus
  *
  * @dev: device
  *
  * Return:  0 on success; < 0 otherwise
  */
-static int mei_cl_device_remove(struct device *dev)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
-	struct mei_cl_driver *cldrv = to_mei_cl_driver(dev->driver);
+अटल पूर्णांक mei_cl_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
+	काष्ठा mei_cl_driver *cldrv = to_mei_cl_driver(dev->driver);
 
-	if (cldrv->remove)
-		cldrv->remove(cldev);
+	अगर (cldrv->हटाओ)
+		cldrv->हटाओ(cldev);
 
-	mei_cldev_unregister_callbacks(cldev);
+	mei_cldev_unरेजिस्टर_callbacks(cldev);
 
 	mei_cl_bus_module_put(cldev);
 	module_put(THIS_MODULE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t name_show(struct device *dev, struct device_attribute *a,
-			     char *buf)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *a,
+			     अक्षर *buf)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%s", cldev->name);
-}
-static DEVICE_ATTR_RO(name);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%s", cldev->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t uuid_show(struct device *dev, struct device_attribute *a,
-			     char *buf)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
-	const uuid_le *uuid = mei_me_cl_uuid(cldev->me_cl);
+अटल sमाप_प्रकार uuid_show(काष्ठा device *dev, काष्ठा device_attribute *a,
+			     अक्षर *buf)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
+	स्थिर uuid_le *uuid = mei_me_cl_uuid(cldev->me_cl);
 
-	return sprintf(buf, "%pUl", uuid);
-}
-static DEVICE_ATTR_RO(uuid);
+	वापस प्र_लिखो(buf, "%pUl", uuid);
+पूर्ण
+अटल DEVICE_ATTR_RO(uuid);
 
-static ssize_t version_show(struct device *dev, struct device_attribute *a,
-			     char *buf)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
+अटल sमाप_प्रकार version_show(काष्ठा device *dev, काष्ठा device_attribute *a,
+			     अक्षर *buf)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
 	u8 version = mei_me_cl_ver(cldev->me_cl);
 
-	return sprintf(buf, "%02X", version);
-}
-static DEVICE_ATTR_RO(version);
+	वापस प्र_लिखो(buf, "%02X", version);
+पूर्ण
+अटल DEVICE_ATTR_RO(version);
 
-static ssize_t modalias_show(struct device *dev, struct device_attribute *a,
-			     char *buf)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
-	const uuid_le *uuid = mei_me_cl_uuid(cldev->me_cl);
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *a,
+			     अक्षर *buf)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
+	स्थिर uuid_le *uuid = mei_me_cl_uuid(cldev->me_cl);
 	u8 version = mei_me_cl_ver(cldev->me_cl);
 
-	return scnprintf(buf, PAGE_SIZE, "mei:%s:%pUl:%02X:",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "mei:%s:%pUl:%02X:",
 			 cldev->name, uuid, version);
-}
-static DEVICE_ATTR_RO(modalias);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static ssize_t max_conn_show(struct device *dev, struct device_attribute *a,
-			     char *buf)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
+अटल sमाप_प्रकार max_conn_show(काष्ठा device *dev, काष्ठा device_attribute *a,
+			     अक्षर *buf)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
 	u8 maxconn = mei_me_cl_max_conn(cldev->me_cl);
 
-	return sprintf(buf, "%d", maxconn);
-}
-static DEVICE_ATTR_RO(max_conn);
+	वापस प्र_लिखो(buf, "%d", maxconn);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_conn);
 
-static ssize_t fixed_show(struct device *dev, struct device_attribute *a,
-			  char *buf)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
+अटल sमाप_प्रकार fixed_show(काष्ठा device *dev, काष्ठा device_attribute *a,
+			  अक्षर *buf)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
 	u8 fixed = mei_me_cl_fixed(cldev->me_cl);
 
-	return sprintf(buf, "%d", fixed);
-}
-static DEVICE_ATTR_RO(fixed);
+	वापस प्र_लिखो(buf, "%d", fixed);
+पूर्ण
+अटल DEVICE_ATTR_RO(fixed);
 
-static ssize_t vtag_show(struct device *dev, struct device_attribute *a,
-			 char *buf)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
+अटल sमाप_प्रकार vtag_show(काष्ठा device *dev, काष्ठा device_attribute *a,
+			 अक्षर *buf)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
 	bool vt = mei_me_cl_vt(cldev->me_cl);
 
-	return sprintf(buf, "%d", vt);
-}
-static DEVICE_ATTR_RO(vtag);
+	वापस प्र_लिखो(buf, "%d", vt);
+पूर्ण
+अटल DEVICE_ATTR_RO(vtag);
 
-static ssize_t max_len_show(struct device *dev, struct device_attribute *a,
-			    char *buf)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
+अटल sमाप_प्रकार max_len_show(काष्ठा device *dev, काष्ठा device_attribute *a,
+			    अक्षर *buf)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
 	u32 maxlen = mei_me_cl_max_len(cldev->me_cl);
 
-	return sprintf(buf, "%u", maxlen);
-}
-static DEVICE_ATTR_RO(max_len);
+	वापस प्र_लिखो(buf, "%u", maxlen);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_len);
 
-static struct attribute *mei_cldev_attrs[] = {
+अटल काष्ठा attribute *mei_cldev_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_uuid.attr,
 	&dev_attr_version.attr,
@@ -990,8 +991,8 @@ static struct attribute *mei_cldev_attrs[] = {
 	&dev_attr_fixed.attr,
 	&dev_attr_vtag.attr,
 	&dev_attr_max_len.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(mei_cldev);
 
 /**
@@ -1002,82 +1003,82 @@ ATTRIBUTE_GROUPS(mei_cldev);
  *
  * Return: 0 on success -ENOMEM on when add_uevent_var fails
  */
-static int mei_cl_device_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
-	const uuid_le *uuid = mei_me_cl_uuid(cldev->me_cl);
+अटल पूर्णांक mei_cl_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
+	स्थिर uuid_le *uuid = mei_me_cl_uuid(cldev->me_cl);
 	u8 version = mei_me_cl_ver(cldev->me_cl);
 
-	if (add_uevent_var(env, "MEI_CL_VERSION=%d", version))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MEI_CL_VERSION=%d", version))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "MEI_CL_UUID=%pUl", uuid))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MEI_CL_UUID=%pUl", uuid))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "MEI_CL_NAME=%s", cldev->name))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MEI_CL_NAME=%s", cldev->name))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "MODALIAS=mei:%s:%pUl:%02X:",
+	अगर (add_uevent_var(env, "MODALIAS=mei:%s:%pUl:%02X:",
 			   cldev->name, uuid, version))
-		return -ENOMEM;
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct bus_type mei_cl_bus_type = {
+अटल काष्ठा bus_type mei_cl_bus_type = अणु
 	.name		= "mei",
 	.dev_groups	= mei_cldev_groups,
 	.match		= mei_cl_device_match,
 	.probe		= mei_cl_device_probe,
-	.remove		= mei_cl_device_remove,
+	.हटाओ		= mei_cl_device_हटाओ,
 	.uevent		= mei_cl_device_uevent,
-};
+पूर्ण;
 
-static struct mei_device *mei_dev_bus_get(struct mei_device *bus)
-{
-	if (bus)
+अटल काष्ठा mei_device *mei_dev_bus_get(काष्ठा mei_device *bus)
+अणु
+	अगर (bus)
 		get_device(bus->dev);
 
-	return bus;
-}
+	वापस bus;
+पूर्ण
 
-static void mei_dev_bus_put(struct mei_device *bus)
-{
-	if (bus)
+अटल व्योम mei_dev_bus_put(काष्ठा mei_device *bus)
+अणु
+	अगर (bus)
 		put_device(bus->dev);
-}
+पूर्ण
 
-static void mei_cl_bus_dev_release(struct device *dev)
-{
-	struct mei_cl_device *cldev = to_mei_cl_device(dev);
+अटल व्योम mei_cl_bus_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा mei_cl_device *cldev = to_mei_cl_device(dev);
 
-	if (!cldev)
-		return;
+	अगर (!cldev)
+		वापस;
 
 	mei_me_cl_put(cldev->me_cl);
 	mei_dev_bus_put(cldev->bus);
 	mei_cl_unlink(cldev->cl);
-	kfree(cldev->cl);
-	kfree(cldev);
-}
+	kमुक्त(cldev->cl);
+	kमुक्त(cldev);
+पूर्ण
 
-static const struct device_type mei_cl_device_type = {
+अटल स्थिर काष्ठा device_type mei_cl_device_type = अणु
 	.release = mei_cl_bus_dev_release,
-};
+पूर्ण;
 
 /**
- * mei_cl_bus_set_name - set device name for me client device
+ * mei_cl_bus_set_name - set device name क्रम me client device
  *  <controller>-<client device>
  *  Example: 0000:00:16.0-55213584-9a29-4916-badf-0fb7ed682aeb
  *
  * @cldev: me client device
  */
-static inline void mei_cl_bus_set_name(struct mei_cl_device *cldev)
-{
+अटल अंतरभूत व्योम mei_cl_bus_set_name(काष्ठा mei_cl_device *cldev)
+अणु
 	dev_set_name(&cldev->dev, "%s-%pUl",
 		     dev_name(cldev->bus->dev),
 		     mei_me_cl_uuid(cldev->me_cl));
-}
+पूर्ण
 
 /**
  * mei_cl_bus_dev_alloc - initialize and allocate mei client device
@@ -1085,23 +1086,23 @@ static inline void mei_cl_bus_set_name(struct mei_cl_device *cldev)
  * @bus: mei device
  * @me_cl: me client
  *
- * Return: allocated device structur or NULL on allocation failure
+ * Return: allocated device काष्ठाur or शून्य on allocation failure
  */
-static struct mei_cl_device *mei_cl_bus_dev_alloc(struct mei_device *bus,
-						  struct mei_me_client *me_cl)
-{
-	struct mei_cl_device *cldev;
-	struct mei_cl *cl;
+अटल काष्ठा mei_cl_device *mei_cl_bus_dev_alloc(काष्ठा mei_device *bus,
+						  काष्ठा mei_me_client *me_cl)
+अणु
+	काष्ठा mei_cl_device *cldev;
+	काष्ठा mei_cl *cl;
 
-	cldev = kzalloc(sizeof(*cldev), GFP_KERNEL);
-	if (!cldev)
-		return NULL;
+	cldev = kzalloc(माप(*cldev), GFP_KERNEL);
+	अगर (!cldev)
+		वापस शून्य;
 
 	cl = mei_cl_allocate(bus);
-	if (!cl) {
-		kfree(cldev);
-		return NULL;
-	}
+	अगर (!cl) अणु
+		kमुक्त(cldev);
+		वापस शून्य;
+	पूर्ण
 
 	device_initialize(&cldev->dev);
 	cldev->dev.parent = bus->dev;
@@ -1114,8 +1115,8 @@ static struct mei_cl_device *mei_cl_bus_dev_alloc(struct mei_device *bus,
 	cldev->is_added   = 0;
 	INIT_LIST_HEAD(&cldev->bus_list);
 
-	return cldev;
-}
+	वापस cldev;
+पूर्ण
 
 /**
  * mei_cl_bus_dev_setup - setup me client device
@@ -1124,20 +1125,20 @@ static struct mei_cl_device *mei_cl_bus_dev_alloc(struct mei_device *bus,
  * @bus: mei device
  * @cldev: me client device
  *
- * Return: true if the device is eligible for enumeration
+ * Return: true अगर the device is eligible क्रम क्रमागतeration
  */
-static bool mei_cl_bus_dev_setup(struct mei_device *bus,
-				 struct mei_cl_device *cldev)
-{
-	cldev->do_match = 1;
+अटल bool mei_cl_bus_dev_setup(काष्ठा mei_device *bus,
+				 काष्ठा mei_cl_device *cldev)
+अणु
+	cldev->करो_match = 1;
 	mei_cl_bus_dev_fixup(cldev);
 
 	/* the device name can change during fix up */
-	if (cldev->do_match)
+	अगर (cldev->करो_match)
 		mei_cl_bus_set_name(cldev);
 
-	return cldev->do_match == 1;
-}
+	वापस cldev->करो_match == 1;
+पूर्ण
 
 /**
  * mei_cl_bus_dev_add - add me client devices
@@ -1146,30 +1147,30 @@ static bool mei_cl_bus_dev_setup(struct mei_device *bus,
  *
  * Return: 0 on success; < 0 on failre
  */
-static int mei_cl_bus_dev_add(struct mei_cl_device *cldev)
-{
-	int ret;
+अटल पूर्णांक mei_cl_bus_dev_add(काष्ठा mei_cl_device *cldev)
+अणु
+	पूर्णांक ret;
 
 	dev_dbg(cldev->bus->dev, "adding %pUL:%02X\n",
 		mei_me_cl_uuid(cldev->me_cl),
 		mei_me_cl_ver(cldev->me_cl));
 	ret = device_add(&cldev->dev);
-	if (!ret)
+	अगर (!ret)
 		cldev->is_added = 1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * mei_cl_bus_dev_stop - stop the driver
  *
  * @cldev: me client device
  */
-static void mei_cl_bus_dev_stop(struct mei_cl_device *cldev)
-{
-	if (cldev->is_added)
+अटल व्योम mei_cl_bus_dev_stop(काष्ठा mei_cl_device *cldev)
+अणु
+	अगर (cldev->is_added)
 		device_release_driver(&cldev->dev);
-}
+पूर्ण
 
 /**
  * mei_cl_bus_dev_destroy - destroy me client devices object
@@ -1178,13 +1179,13 @@ static void mei_cl_bus_dev_stop(struct mei_cl_device *cldev)
  *
  * Locking: called under "dev->cl_bus_lock" lock
  */
-static void mei_cl_bus_dev_destroy(struct mei_cl_device *cldev)
-{
+अटल व्योम mei_cl_bus_dev_destroy(काष्ठा mei_cl_device *cldev)
+अणु
 
 	WARN_ON(!mutex_is_locked(&cldev->bus->cl_bus_lock));
 
-	if (!cldev->is_added)
-		return;
+	अगर (!cldev->is_added)
+		वापस;
 
 	device_del(&cldev->dev);
 
@@ -1192,33 +1193,33 @@ static void mei_cl_bus_dev_destroy(struct mei_cl_device *cldev)
 
 	cldev->is_added = 0;
 	put_device(&cldev->dev);
-}
+पूर्ण
 
 /**
- * mei_cl_bus_remove_device - remove a devices form the bus
+ * mei_cl_bus_हटाओ_device - हटाओ a devices क्रमm the bus
  *
  * @cldev: me client device
  */
-static void mei_cl_bus_remove_device(struct mei_cl_device *cldev)
-{
+अटल व्योम mei_cl_bus_हटाओ_device(काष्ठा mei_cl_device *cldev)
+अणु
 	mei_cl_bus_dev_stop(cldev);
 	mei_cl_bus_dev_destroy(cldev);
-}
+पूर्ण
 
 /**
- * mei_cl_bus_remove_devices - remove all devices form the bus
+ * mei_cl_bus_हटाओ_devices - हटाओ all devices क्रमm the bus
  *
  * @bus: mei device
  */
-void mei_cl_bus_remove_devices(struct mei_device *bus)
-{
-	struct mei_cl_device *cldev, *next;
+व्योम mei_cl_bus_हटाओ_devices(काष्ठा mei_device *bus)
+अणु
+	काष्ठा mei_cl_device *cldev, *next;
 
 	mutex_lock(&bus->cl_bus_lock);
-	list_for_each_entry_safe(cldev, next, &bus->device_list, bus_list)
-		mei_cl_bus_remove_device(cldev);
+	list_क्रम_each_entry_safe(cldev, next, &bus->device_list, bus_list)
+		mei_cl_bus_हटाओ_device(cldev);
 	mutex_unlock(&bus->cl_bus_lock);
-}
+पूर्ण
 
 
 /**
@@ -1230,109 +1231,109 @@ void mei_cl_bus_remove_devices(struct mei_device *bus)
  *
  * Locking: called under "dev->cl_bus_lock" lock
  */
-static void mei_cl_bus_dev_init(struct mei_device *bus,
-				struct mei_me_client *me_cl)
-{
-	struct mei_cl_device *cldev;
+अटल व्योम mei_cl_bus_dev_init(काष्ठा mei_device *bus,
+				काष्ठा mei_me_client *me_cl)
+अणु
+	काष्ठा mei_cl_device *cldev;
 
 	WARN_ON(!mutex_is_locked(&bus->cl_bus_lock));
 
 	dev_dbg(bus->dev, "initializing %pUl", mei_me_cl_uuid(me_cl));
 
-	if (me_cl->bus_added)
-		return;
+	अगर (me_cl->bus_added)
+		वापस;
 
 	cldev = mei_cl_bus_dev_alloc(bus, me_cl);
-	if (!cldev)
-		return;
+	अगर (!cldev)
+		वापस;
 
 	me_cl->bus_added = true;
 	list_add_tail(&cldev->bus_list, &bus->device_list);
 
-}
+पूर्ण
 
 /**
  * mei_cl_bus_rescan - scan me clients list and add create
- *    devices for eligible clients
+ *    devices क्रम eligible clients
  *
  * @bus: mei device
  */
-static void mei_cl_bus_rescan(struct mei_device *bus)
-{
-	struct mei_cl_device *cldev, *n;
-	struct mei_me_client *me_cl;
+अटल व्योम mei_cl_bus_rescan(काष्ठा mei_device *bus)
+अणु
+	काष्ठा mei_cl_device *cldev, *n;
+	काष्ठा mei_me_client *me_cl;
 
 	mutex_lock(&bus->cl_bus_lock);
 
-	down_read(&bus->me_clients_rwsem);
-	list_for_each_entry(me_cl, &bus->me_clients, list)
+	करोwn_पढ़ो(&bus->me_clients_rwsem);
+	list_क्रम_each_entry(me_cl, &bus->me_clients, list)
 		mei_cl_bus_dev_init(bus, me_cl);
-	up_read(&bus->me_clients_rwsem);
+	up_पढ़ो(&bus->me_clients_rwsem);
 
-	list_for_each_entry_safe(cldev, n, &bus->device_list, bus_list) {
+	list_क्रम_each_entry_safe(cldev, n, &bus->device_list, bus_list) अणु
 
-		if (!mei_me_cl_is_active(cldev->me_cl)) {
-			mei_cl_bus_remove_device(cldev);
-			continue;
-		}
+		अगर (!mei_me_cl_is_active(cldev->me_cl)) अणु
+			mei_cl_bus_हटाओ_device(cldev);
+			जारी;
+		पूर्ण
 
-		if (cldev->is_added)
-			continue;
+		अगर (cldev->is_added)
+			जारी;
 
-		if (mei_cl_bus_dev_setup(bus, cldev))
+		अगर (mei_cl_bus_dev_setup(bus, cldev))
 			mei_cl_bus_dev_add(cldev);
-		else {
+		अन्यथा अणु
 			list_del_init(&cldev->bus_list);
 			put_device(&cldev->dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&bus->cl_bus_lock);
 
 	dev_dbg(bus->dev, "rescan end");
-}
+पूर्ण
 
-void mei_cl_bus_rescan_work(struct work_struct *work)
-{
-	struct mei_device *bus =
-		container_of(work, struct mei_device, bus_rescan_work);
+व्योम mei_cl_bus_rescan_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mei_device *bus =
+		container_of(work, काष्ठा mei_device, bus_rescan_work);
 
 	mei_cl_bus_rescan(bus);
-}
+पूर्ण
 
-int __mei_cldev_driver_register(struct mei_cl_driver *cldrv,
-				struct module *owner)
-{
-	int err;
+पूर्णांक __mei_cldev_driver_रेजिस्टर(काष्ठा mei_cl_driver *cldrv,
+				काष्ठा module *owner)
+अणु
+	पूर्णांक err;
 
 	cldrv->driver.name = cldrv->name;
 	cldrv->driver.owner = owner;
 	cldrv->driver.bus = &mei_cl_bus_type;
 
-	err = driver_register(&cldrv->driver);
-	if (err)
-		return err;
+	err = driver_रेजिस्टर(&cldrv->driver);
+	अगर (err)
+		वापस err;
 
 	pr_debug("mei: driver [%s] registered\n", cldrv->driver.name);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(__mei_cldev_driver_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(__mei_cldev_driver_रेजिस्टर);
 
-void mei_cldev_driver_unregister(struct mei_cl_driver *cldrv)
-{
-	driver_unregister(&cldrv->driver);
+व्योम mei_cldev_driver_unरेजिस्टर(काष्ठा mei_cl_driver *cldrv)
+अणु
+	driver_unरेजिस्टर(&cldrv->driver);
 
 	pr_debug("mei: driver [%s] unregistered\n", cldrv->driver.name);
-}
-EXPORT_SYMBOL_GPL(mei_cldev_driver_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(mei_cldev_driver_unरेजिस्टर);
 
 
-int __init mei_cl_bus_init(void)
-{
-	return bus_register(&mei_cl_bus_type);
-}
+पूर्णांक __init mei_cl_bus_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&mei_cl_bus_type);
+पूर्ण
 
-void __exit mei_cl_bus_exit(void)
-{
-	bus_unregister(&mei_cl_bus_type);
-}
+व्योम __निकास mei_cl_bus_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&mei_cl_bus_type);
+पूर्ण

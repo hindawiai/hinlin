@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * sc-ip22.c: Indy cache management functions.
  *
  * Copyright (C) 1997, 2001 Ralf Baechle (ralf@gnu.org),
  * derived from r4xx0.c by David S. Miller (davem@davemloft.net).
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
 
-#include <asm/bcache.h>
-#include <asm/page.h>
-#include <asm/bootinfo.h>
-#include <asm/sgi/ip22.h>
-#include <asm/sgi/mc.h>
+#समावेश <यंत्र/bcache.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/sgi/ip22.h>
+#समावेश <यंत्र/sgi/mc.h>
 
-/* Secondary cache size in bytes, if present.  */
-static unsigned long scache_size;
+/* Secondary cache size in bytes, अगर present.  */
+अटल अचिन्हित दीर्घ scache_size;
 
-#undef DEBUG_CACHE
+#अघोषित DEBUG_CACHE
 
-#define SC_SIZE 0x00080000
-#define SC_LINE 32
-#define CI_MASK (SC_SIZE - SC_LINE)
-#define SC_INDEX(n) ((n) & CI_MASK)
+#घोषणा SC_SIZE 0x00080000
+#घोषणा SC_LINE 32
+#घोषणा CI_MASK (SC_SIZE - SC_LINE)
+#घोषणा SC_INDEX(n) ((n) & CI_MASK)
 
-static inline void indy_sc_wipe(unsigned long first, unsigned long last)
-{
-	unsigned long tmp;
+अटल अंतरभूत व्योम indy_sc_wipe(अचिन्हित दीर्घ first, अचिन्हित दीर्घ last)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	.set	push			# indy_sc_wipe		\n"
 	"	.set	noreorder					\n"
 	"	.set	mips3						\n"
@@ -65,18 +66,18 @@ static inline void indy_sc_wipe(unsigned long first, unsigned long last)
 	"	nop							\n"
 	"	nop							\n"
 	"	.set	pop						\n"
-	: "=r" (first), "=r" (last), "=&r" (tmp)
+	: "=r" (first), "=r" (last), "=&r" (पंचांगp)
 	: "0" (first), "1" (last));
-}
+पूर्ण
 
-static void indy_sc_wback_invalidate(unsigned long addr, unsigned long size)
-{
-	unsigned long first_line, last_line;
-	unsigned long flags;
+अटल व्योम indy_sc_wback_invalidate(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
+अणु
+	अचिन्हित दीर्घ first_line, last_line;
+	अचिन्हित दीर्घ flags;
 
-#ifdef DEBUG_CACHE
-	printk("indy_sc_wback_invalidate[%08lx,%08lx]", addr, size);
-#endif
+#अगर_घोषित DEBUG_CACHE
+	prपूर्णांकk("indy_sc_wback_invalidate[%08lx,%08lx]", addr, size);
+#पूर्ण_अगर
 
 	/* Catch bad driver code */
 	BUG_ON(size == 0);
@@ -86,26 +87,26 @@ static void indy_sc_wback_invalidate(unsigned long addr, unsigned long size)
 	last_line = SC_INDEX(addr + size - 1);
 
 	local_irq_save(flags);
-	if (first_line <= last_line) {
+	अगर (first_line <= last_line) अणु
 		indy_sc_wipe(first_line, last_line);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	indy_sc_wipe(first_line, SC_SIZE - SC_LINE);
 	indy_sc_wipe(0, last_line);
 out:
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static void indy_sc_enable(void)
-{
-	unsigned long addr, tmp1, tmp2;
+अटल व्योम indy_sc_enable(व्योम)
+अणु
+	अचिन्हित दीर्घ addr, पंचांगp1, पंचांगp2;
 
 	/* This is really cool... */
-#ifdef DEBUG_CACHE
-	printk("Enabling R4600 SCACHE\n");
-#endif
-	__asm__ __volatile__(
+#अगर_घोषित DEBUG_CACHE
+	prपूर्णांकk("Enabling R4600 SCACHE\n");
+#पूर्ण_अगर
+	__यंत्र__ __अस्थिर__(
 	".set\tpush\n\t"
 	".set\tnoreorder\n\t"
 	".set\tmips3\n\t"
@@ -125,17 +126,17 @@ static void indy_sc_enable(void)
 	"mtc0\t%2, $12\n\t"
 	"nop; nop; nop; nop;\n\t"
 	".set\tpop"
-	: "=r" (tmp1), "=r" (tmp2), "=r" (addr));
-}
+	: "=r" (पंचांगp1), "=r" (पंचांगp2), "=r" (addr));
+पूर्ण
 
-static void indy_sc_disable(void)
-{
-	unsigned long tmp1, tmp2, tmp3;
+अटल व्योम indy_sc_disable(व्योम)
+अणु
+	अचिन्हित दीर्घ पंचांगp1, पंचांगp2, पंचांगp3;
 
-#ifdef DEBUG_CACHE
-	printk("Disabling R4600 SCACHE\n");
-#endif
-	__asm__ __volatile__(
+#अगर_घोषित DEBUG_CACHE
+	prपूर्णांकk("Disabling R4600 SCACHE\n");
+#पूर्ण_अगर
+	__यंत्र__ __अस्थिर__(
 	".set\tpush\n\t"
 	".set\tnoreorder\n\t"
 	".set\tmips3\n\t"
@@ -155,36 +156,36 @@ static void indy_sc_disable(void)
 	"mtc0\t%2, $12\n\t"
 	"nop; nop; nop; nop\n\t"
 	".set\tpop"
-	: "=r" (tmp1), "=r" (tmp2), "=r" (tmp3));
-}
+	: "=r" (पंचांगp1), "=r" (पंचांगp2), "=r" (पंचांगp3));
+पूर्ण
 
-static inline int __init indy_sc_probe(void)
-{
-	unsigned int size = ip22_eeprom_read(&sgimc->eeprom, 17);
-	if (size == 0)
-		return 0;
+अटल अंतरभूत पूर्णांक __init indy_sc_probe(व्योम)
+अणु
+	अचिन्हित पूर्णांक size = ip22_eeprom_पढ़ो(&sgimc->eeprom, 17);
+	अगर (size == 0)
+		वापस 0;
 
 	size <<= PAGE_SHIFT;
-	printk(KERN_INFO "R4600/R5000 SCACHE size %dK, linesize 32 bytes.\n",
+	prपूर्णांकk(KERN_INFO "R4600/R5000 SCACHE size %dK, linesize 32 bytes.\n",
 	       size >> 10);
 	scache_size = size;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* XXX Check with wje if the Indy caches can differentiate between
-   writeback + invalidate and just invalidate.	*/
-static struct bcache_ops indy_sc_ops = {
+/* XXX Check with wje अगर the Indy caches can dअगरferentiate between
+   ग_लिखोback + invalidate and just invalidate.	*/
+अटल काष्ठा bcache_ops indy_sc_ops = अणु
 	.bc_enable = indy_sc_enable,
 	.bc_disable = indy_sc_disable,
 	.bc_wback_inv = indy_sc_wback_invalidate,
 	.bc_inv = indy_sc_wback_invalidate
-};
+पूर्ण;
 
-void indy_sc_init(void)
-{
-	if (indy_sc_probe()) {
+व्योम indy_sc_init(व्योम)
+अणु
+	अगर (indy_sc_probe()) अणु
 		indy_sc_enable();
 		bcops = &indy_sc_ops;
-	}
-}
+	पूर्ण
+पूर्ण

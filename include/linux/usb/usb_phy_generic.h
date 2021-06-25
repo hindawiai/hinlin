@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_USB_NOP_XCEIV_H
-#define __LINUX_USB_NOP_XCEIV_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_USB_NOP_XCEIV_H
+#घोषणा __LINUX_USB_NOP_XCEIV_H
 
-#include <linux/usb/otg.h>
+#समावेश <linux/usb/otg.h>
 
-#if IS_ENABLED(CONFIG_NOP_USB_XCEIV)
-/* sometimes transceivers are accessed only through e.g. ULPI */
-extern struct platform_device *usb_phy_generic_register(void);
-extern void usb_phy_generic_unregister(struct platform_device *);
-#else
-static inline struct platform_device *usb_phy_generic_register(void)
-{
-	return NULL;
-}
+#अगर IS_ENABLED(CONFIG_NOP_USB_XCEIV)
+/* someबार transceivers are accessed only through e.g. ULPI */
+बाह्य काष्ठा platक्रमm_device *usb_phy_generic_रेजिस्टर(व्योम);
+बाह्य व्योम usb_phy_generic_unरेजिस्टर(काष्ठा platक्रमm_device *);
+#अन्यथा
+अटल अंतरभूत काष्ठा platक्रमm_device *usb_phy_generic_रेजिस्टर(व्योम)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void usb_phy_generic_unregister(struct platform_device *pdev)
-{
-}
-#endif
+अटल अंतरभूत व्योम usb_phy_generic_unरेजिस्टर(काष्ठा platक्रमm_device *pdev)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __LINUX_USB_NOP_XCEIV_H */
+#पूर्ण_अगर /* __LINUX_USB_NOP_XCEIV_H */

@@ -1,65 +1,66 @@
+<शैली गुरु>
 /*
- * drivers/video/fb_ddc.c - DDC/EDID read support.
+ * drivers/video/fb_ddc.c - DDC/EDID पढ़ो support.
  *
  *  Copyright (C) 2006 Dennis Munsie <dmunsie@cecropia.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/fb.h>
-#include <linux/i2c-algo-bit.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/i2c-algo-bit.h>
+#समावेश <linux/slab.h>
 
-#include "../edid.h"
+#समावेश "../edid.h"
 
-#define DDC_ADDR	0x50
+#घोषणा DDC_ADDR	0x50
 
-static unsigned char *fb_do_probe_ddc_edid(struct i2c_adapter *adapter)
-{
-	unsigned char start = 0x0;
-	unsigned char *buf = kmalloc(EDID_LENGTH, GFP_KERNEL);
-	struct i2c_msg msgs[] = {
-		{
+अटल अचिन्हित अक्षर *fb_करो_probe_ddc_edid(काष्ठा i2c_adapter *adapter)
+अणु
+	अचिन्हित अक्षर start = 0x0;
+	अचिन्हित अक्षर *buf = kदो_स्मृति(EDID_LENGTH, GFP_KERNEL);
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr	= DDC_ADDR,
 			.flags	= 0,
 			.len	= 1,
 			.buf	= &start,
-		}, {
+		पूर्ण, अणु
 			.addr	= DDC_ADDR,
 			.flags	= I2C_M_RD,
 			.len	= EDID_LENGTH,
 			.buf	= buf,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	if (!buf) {
+	अगर (!buf) अणु
 		dev_warn(&adapter->dev, "unable to allocate memory for EDID "
 			 "block.\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (i2c_transfer(adapter, msgs, 2) == 2)
-		return buf;
+	अगर (i2c_transfer(adapter, msgs, 2) == 2)
+		वापस buf;
 
 	dev_warn(&adapter->dev, "unable to read EDID block.\n");
-	kfree(buf);
-	return NULL;
-}
+	kमुक्त(buf);
+	वापस शून्य;
+पूर्ण
 
-unsigned char *fb_ddc_read(struct i2c_adapter *adapter)
-{
-	struct i2c_algo_bit_data *algo_data = adapter->algo_data;
-	unsigned char *edid = NULL;
-	int i, j;
+अचिन्हित अक्षर *fb_ddc_पढ़ो(काष्ठा i2c_adapter *adapter)
+अणु
+	काष्ठा i2c_algo_bit_data *algo_data = adapter->algo_data;
+	अचिन्हित अक्षर *edid = शून्य;
+	पूर्णांक i, j;
 
 	algo_data->setscl(algo_data->data, 1);
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		/* For some old monitors we need the
 		 * following process to initialize/stop DDC
 		 */
@@ -67,17 +68,17 @@ unsigned char *fb_ddc_read(struct i2c_adapter *adapter)
 		msleep(13);
 
 		algo_data->setscl(algo_data->data, 1);
-		if (algo_data->getscl) {
-			for (j = 0; j < 5; j++) {
+		अगर (algo_data->माला_लोcl) अणु
+			क्रम (j = 0; j < 5; j++) अणु
 				msleep(10);
-				if (algo_data->getscl(algo_data->data))
-					break;
-			}
-			if (j == 5)
-				continue;
-		} else {
+				अगर (algo_data->माला_लोcl(algo_data->data))
+					अवरोध;
+			पूर्ण
+			अगर (j == 5)
+				जारी;
+		पूर्ण अन्यथा अणु
 			udelay(algo_data->udelay);
-		}
+		पूर्ण
 
 		algo_data->setsda(algo_data->data, 0);
 		msleep(15);
@@ -87,40 +88,40 @@ unsigned char *fb_ddc_read(struct i2c_adapter *adapter)
 		msleep(15);
 
 		/* Do the real work */
-		edid = fb_do_probe_ddc_edid(adapter);
+		edid = fb_करो_probe_ddc_edid(adapter);
 		algo_data->setsda(algo_data->data, 0);
 		algo_data->setscl(algo_data->data, 0);
 		msleep(15);
 
 		algo_data->setscl(algo_data->data, 1);
-		if (algo_data->getscl) {
-			for (j = 0; j < 10; j++) {
+		अगर (algo_data->माला_लोcl) अणु
+			क्रम (j = 0; j < 10; j++) अणु
 				msleep(10);
-				if (algo_data->getscl(algo_data->data))
-					break;
-			}
-		} else {
+				अगर (algo_data->माला_लोcl(algo_data->data))
+					अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			udelay(algo_data->udelay);
-		}
+		पूर्ण
 
 		algo_data->setsda(algo_data->data, 1);
 		msleep(15);
 		algo_data->setscl(algo_data->data, 0);
 		algo_data->setsda(algo_data->data, 0);
-		if (edid)
-			break;
-	}
-	/* Release the DDC lines when done or the Apple Cinema HD display
-	 * will switch off
+		अगर (edid)
+			अवरोध;
+	पूर्ण
+	/* Release the DDC lines when करोne or the Apple Cinema HD display
+	 * will चयन off
 	 */
 	algo_data->setsda(algo_data->data, 1);
 	algo_data->setscl(algo_data->data, 1);
 
 	adapter->class |= I2C_CLASS_DDC;
-	return edid;
-}
+	वापस edid;
+पूर्ण
 
-EXPORT_SYMBOL_GPL(fb_ddc_read);
+EXPORT_SYMBOL_GPL(fb_ddc_पढ़ो);
 
 MODULE_AUTHOR("Dennis Munsie <dmunsie@cecropia.com>");
 MODULE_DESCRIPTION("DDC/EDID reading support");

@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_VFS_H
-#define _LINUX_VFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_VFS_H
+#घोषणा _LINUX_VFS_H
 
-#include <linux/statfs.h>
+#समावेश <linux/statfs.h>
 
-#endif
+#पूर्ण_अगर

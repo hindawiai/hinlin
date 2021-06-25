@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef SELFTEST_LIBRAPL_H
-#define SELFTEST_LIBRAPL_H
+#अगर_अघोषित SELFTEST_LIBRAPL_H
+#घोषणा SELFTEST_LIBRAPL_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-u64 librapl_energy_uJ(void);
+u64 librapl_energy_uJ(व्योम);
 
-#endif /* SELFTEST_LIBRAPL_H */
+#पूर्ण_अगर /* SELFTEST_LIBRAPL_H */

@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <linux/init.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/task_stack.h>
-#include <linux/sched/task.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/sched/task.h>
 
-#include <as-layout.h>
-#include <kern.h>
-#include <os.h>
-#include <skas.h>
+#समावेश <as-layout.h>
+#समावेश <kern.h>
+#समावेश <os.h>
+#समावेश <skas.h>
 
-extern void start_kernel(void);
+बाह्य व्योम start_kernel(व्योम);
 
-static int __init start_kernel_proc(void *unused)
-{
-	int pid;
+अटल पूर्णांक __init start_kernel_proc(व्योम *unused)
+अणु
+	पूर्णांक pid;
 
-	block_signals_trace();
+	block_संकेतs_trace();
 	pid = os_getpid();
 
 	cpu_tasks[0].pid = pid;
 	cpu_tasks[0].task = current;
 
 	start_kernel();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-extern int userspace_pid[];
+बाह्य पूर्णांक userspace_pid[];
 
-extern char cpu0_irqstack[];
+बाह्य अक्षर cpu0_irqstack[];
 
-int __init start_uml(void)
-{
-	stack_protections((unsigned long) &cpu0_irqstack);
+पूर्णांक __init start_uml(व्योम)
+अणु
+	stack_protections((अचिन्हित दीर्घ) &cpu0_irqstack);
 	set_sigstack(cpu0_irqstack, THREAD_SIZE);
 
-	init_new_thread_signals();
+	init_new_thपढ़ो_संकेतs();
 
-	init_task.thread.request.u.thread.proc = start_kernel_proc;
-	init_task.thread.request.u.thread.arg = NULL;
-	return start_idle_thread(task_stack_page(&init_task),
-				 &init_task.thread.switch_buf);
-}
+	init_task.thपढ़ो.request.u.thपढ़ो.proc = start_kernel_proc;
+	init_task.thपढ़ो.request.u.thपढ़ो.arg = शून्य;
+	वापस start_idle_thपढ़ो(task_stack_page(&init_task),
+				 &init_task.thपढ़ो.चयन_buf);
+पूर्ण
 
-unsigned long current_stub_stack(void)
-{
-	if (current->mm == NULL)
-		return 0;
+अचिन्हित दीर्घ current_stub_stack(व्योम)
+अणु
+	अगर (current->mm == शून्य)
+		वापस 0;
 
-	return current->mm->context.id.stack;
-}
+	वापस current->mm->context.id.stack;
+पूर्ण

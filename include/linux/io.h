@@ -1,169 +1,170 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2006 PathScale, Inc.  All Rights Reserved.
  */
 
-#ifndef _LINUX_IO_H
-#define _LINUX_IO_H
+#अगर_अघोषित _LINUX_IO_H
+#घोषणा _LINUX_IO_H
 
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/bug.h>
-#include <linux/err.h>
-#include <asm/io.h>
-#include <asm/page.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/err.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/page.h>
 
-struct device;
-struct resource;
+काष्ठा device;
+काष्ठा resource;
 
-__visible void __iowrite32_copy(void __iomem *to, const void *from, size_t count);
-void __ioread32_copy(void *to, const void __iomem *from, size_t count);
-void __iowrite64_copy(void __iomem *to, const void *from, size_t count);
+__visible व्योम __ioग_लिखो32_copy(व्योम __iomem *to, स्थिर व्योम *from, माप_प्रकार count);
+व्योम __ioपढ़ो32_copy(व्योम *to, स्थिर व्योम __iomem *from, माप_प्रकार count);
+व्योम __ioग_लिखो64_copy(व्योम __iomem *to, स्थिर व्योम *from, माप_प्रकार count);
 
-#ifdef CONFIG_MMU
-int ioremap_page_range(unsigned long addr, unsigned long end,
+#अगर_घोषित CONFIG_MMU
+पूर्णांक ioremap_page_range(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
 		       phys_addr_t phys_addr, pgprot_t prot);
-#else
-static inline int ioremap_page_range(unsigned long addr, unsigned long end,
+#अन्यथा
+अटल अंतरभूत पूर्णांक ioremap_page_range(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
 				     phys_addr_t phys_addr, pgprot_t prot)
-{
-	return 0;
-}
-#endif
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Managed iomap interface
+ * Managed iomap पूर्णांकerface
  */
-#ifdef CONFIG_HAS_IOPORT_MAP
-void __iomem * devm_ioport_map(struct device *dev, unsigned long port,
-			       unsigned int nr);
-void devm_ioport_unmap(struct device *dev, void __iomem *addr);
-#else
-static inline void __iomem *devm_ioport_map(struct device *dev,
-					     unsigned long port,
-					     unsigned int nr)
-{
-	return NULL;
-}
+#अगर_घोषित CONFIG_HAS_IOPORT_MAP
+व्योम __iomem * devm_ioport_map(काष्ठा device *dev, अचिन्हित दीर्घ port,
+			       अचिन्हित पूर्णांक nr);
+व्योम devm_ioport_unmap(काष्ठा device *dev, व्योम __iomem *addr);
+#अन्यथा
+अटल अंतरभूत व्योम __iomem *devm_ioport_map(काष्ठा device *dev,
+					     अचिन्हित दीर्घ port,
+					     अचिन्हित पूर्णांक nr)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void devm_ioport_unmap(struct device *dev, void __iomem *addr)
-{
-}
-#endif
+अटल अंतरभूत व्योम devm_ioport_unmap(काष्ठा device *dev, व्योम __iomem *addr)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#define IOMEM_ERR_PTR(err) (__force void __iomem *)ERR_PTR(err)
+#घोषणा IOMEM_ERR_PTR(err) (__क्रमce व्योम __iomem *)ERR_PTR(err)
 
-void __iomem *devm_ioremap(struct device *dev, resource_size_t offset,
-			   resource_size_t size);
-void __iomem *devm_ioremap_uc(struct device *dev, resource_size_t offset,
-				   resource_size_t size);
-void __iomem *devm_ioremap_wc(struct device *dev, resource_size_t offset,
-				   resource_size_t size);
-void __iomem *devm_ioremap_np(struct device *dev, resource_size_t offset,
-				   resource_size_t size);
-void devm_iounmap(struct device *dev, void __iomem *addr);
-int check_signature(const volatile void __iomem *io_addr,
-			const unsigned char *signature, int length);
-void devm_ioremap_release(struct device *dev, void *res);
+व्योम __iomem *devm_ioremap(काष्ठा device *dev, resource_माप_प्रकार offset,
+			   resource_माप_प्रकार size);
+व्योम __iomem *devm_ioremap_uc(काष्ठा device *dev, resource_माप_प्रकार offset,
+				   resource_माप_प्रकार size);
+व्योम __iomem *devm_ioremap_wc(काष्ठा device *dev, resource_माप_प्रकार offset,
+				   resource_माप_प्रकार size);
+व्योम __iomem *devm_ioremap_np(काष्ठा device *dev, resource_माप_प्रकार offset,
+				   resource_माप_प्रकार size);
+व्योम devm_iounmap(काष्ठा device *dev, व्योम __iomem *addr);
+पूर्णांक check_signature(स्थिर अस्थिर व्योम __iomem *io_addr,
+			स्थिर अचिन्हित अक्षर *signature, पूर्णांक length);
+व्योम devm_ioremap_release(काष्ठा device *dev, व्योम *res);
 
-void *devm_memremap(struct device *dev, resource_size_t offset,
-		size_t size, unsigned long flags);
-void devm_memunmap(struct device *dev, void *addr);
+व्योम *devm_memremap(काष्ठा device *dev, resource_माप_प्रकार offset,
+		माप_प्रकार size, अचिन्हित दीर्घ flags);
+व्योम devm_memunmap(काष्ठा device *dev, व्योम *addr);
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 /*
- * The PCI specifications (Rev 3.0, 3.2.5 "Transaction Ordering and
- * Posting") mandate non-posted configuration transactions. This default
+ * The PCI specअगरications (Rev 3.0, 3.2.5 "Transaction Ordering and
+ * Posting") mandate non-posted configuration transactions. This शेष
  * implementation attempts to use the ioremap_np() API to provide this
  * on arches that support it, and falls back to ioremap() on those that
- * don't. Overriding this function is deprecated; arches that properly
+ * करोn't. Overriding this function is deprecated; arches that properly
  * support non-posted accesses should implement ioremap_np() instead, which
- * this default implementation can then use to return mappings compliant with
- * the PCI specification.
+ * this शेष implementation can then use to वापस mappings compliant with
+ * the PCI specअगरication.
  */
-#ifndef pci_remap_cfgspace
-#define pci_remap_cfgspace pci_remap_cfgspace
-static inline void __iomem *pci_remap_cfgspace(phys_addr_t offset,
-					       size_t size)
-{
-	return ioremap_np(offset, size) ?: ioremap(offset, size);
-}
-#endif
-#endif
+#अगर_अघोषित pci_remap_cfgspace
+#घोषणा pci_remap_cfgspace pci_remap_cfgspace
+अटल अंतरभूत व्योम __iomem *pci_remap_cfgspace(phys_addr_t offset,
+					       माप_प्रकार size)
+अणु
+	वापस ioremap_np(offset, size) ?: ioremap(offset, size);
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर
 
 /*
- * Some systems do not have legacy ISA devices.
- * /dev/port is not a valid interface on these systems.
- * So for those archs, <asm/io.h> should define the following symbol.
+ * Some प्रणालीs करो not have legacy ISA devices.
+ * /dev/port is not a valid पूर्णांकerface on these प्रणालीs.
+ * So क्रम those archs, <यंत्र/पन.स> should define the following symbol.
  */
-#ifndef arch_has_dev_port
-#define arch_has_dev_port()     (1)
-#endif
+#अगर_अघोषित arch_has_dev_port
+#घोषणा arch_has_dev_port()     (1)
+#पूर्ण_अगर
 
 /*
- * Some systems (x86 without PAT) have a somewhat reliable way to mark a
+ * Some प्रणालीs (x86 without PAT) have a somewhat reliable way to mark a
  * physical address range such that uncached mappings will actually
- * end up write-combining.  This facility should be used in conjunction
- * with pgprot_writecombine, ioremap-wc, or set_memory_wc, since it has
- * no effect if the per-page mechanisms are functional.
+ * end up ग_लिखो-combining.  This facility should be used in conjunction
+ * with pgprot_ग_लिखोcombine, ioremap-wc, or set_memory_wc, since it has
+ * no effect अगर the per-page mechanisms are functional.
  * (On x86 without PAT, these functions manipulate MTRRs.)
  *
  * arch_phys_del_wc(0) or arch_phys_del_wc(any error code) is guaranteed
  * to have no effect.
  */
-#ifndef arch_phys_wc_add
-static inline int __must_check arch_phys_wc_add(unsigned long base,
-						unsigned long size)
-{
-	return 0;  /* It worked (i.e. did nothing). */
-}
+#अगर_अघोषित arch_phys_wc_add
+अटल अंतरभूत पूर्णांक __must_check arch_phys_wc_add(अचिन्हित दीर्घ base,
+						अचिन्हित दीर्घ size)
+अणु
+	वापस 0;  /* It worked (i.e. did nothing). */
+पूर्ण
 
-static inline void arch_phys_wc_del(int handle)
-{
-}
+अटल अंतरभूत व्योम arch_phys_wc_del(पूर्णांक handle)
+अणु
+पूर्ण
 
-#define arch_phys_wc_add arch_phys_wc_add
-#ifndef arch_phys_wc_index
-static inline int arch_phys_wc_index(int handle)
-{
-	return -1;
-}
-#define arch_phys_wc_index arch_phys_wc_index
-#endif
-#endif
+#घोषणा arch_phys_wc_add arch_phys_wc_add
+#अगर_अघोषित arch_phys_wc_index
+अटल अंतरभूत पूर्णांक arch_phys_wc_index(पूर्णांक handle)
+अणु
+	वापस -1;
+पूर्ण
+#घोषणा arch_phys_wc_index arch_phys_wc_index
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-enum {
-	/* See memremap() kernel-doc for usage description... */
+क्रमागत अणु
+	/* See memremap() kernel-करोc क्रम usage description... */
 	MEMREMAP_WB = 1 << 0,
 	MEMREMAP_WT = 1 << 1,
 	MEMREMAP_WC = 1 << 2,
 	MEMREMAP_ENC = 1 << 3,
 	MEMREMAP_DEC = 1 << 4,
-};
+पूर्ण;
 
-void *memremap(resource_size_t offset, size_t size, unsigned long flags);
-void memunmap(void *addr);
+व्योम *memremap(resource_माप_प्रकार offset, माप_प्रकार size, अचिन्हित दीर्घ flags);
+व्योम memunmap(व्योम *addr);
 
 /*
- * On x86 PAT systems we have memory tracking that keeps track of
- * the allowed mappings on memory ranges. This tracking works for
+ * On x86 PAT प्रणालीs we have memory tracking that keeps track of
+ * the allowed mappings on memory ranges. This tracking works क्रम
  * all the in-kernel mapping APIs (ioremap*), but where the user
- * wishes to map a range from a physical device into user memory
+ * wishes to map a range from a physical device पूर्णांकo user memory
  * the tracking won't be updated. This API is to be used by
- * drivers which remap physical device pages into userspace,
+ * drivers which remap physical device pages पूर्णांकo userspace,
  * and wants to make sure they are mapped WC and not UC.
  */
-#ifndef arch_io_reserve_memtype_wc
-static inline int arch_io_reserve_memtype_wc(resource_size_t base,
-					     resource_size_t size)
-{
-	return 0;
-}
+#अगर_अघोषित arch_io_reserve_memtype_wc
+अटल अंतरभूत पूर्णांक arch_io_reserve_memtype_wc(resource_माप_प्रकार base,
+					     resource_माप_प्रकार size)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void arch_io_free_memtype_wc(resource_size_t base,
-					   resource_size_t size)
-{
-}
-#endif
+अटल अंतरभूत व्योम arch_io_मुक्त_memtype_wc(resource_माप_प्रकार base,
+					   resource_माप_प्रकार size)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_IO_H */
+#पूर्ण_अगर /* _LINUX_IO_H */

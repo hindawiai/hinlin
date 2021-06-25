@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019 Facebook */
-#include <test_progs.h>
-#include "fentry_test.skel.h"
+#समावेश <test_progs.h>
+#समावेश "fentry_test.skel.h"
 
-static int fentry_test(struct fentry_test *fentry_skel)
-{
-	int err, prog_fd, i;
+अटल पूर्णांक fentry_test(काष्ठा fentry_test *fentry_skel)
+अणु
+	पूर्णांक err, prog_fd, i;
 	__u32 duration = 0, retval;
-	struct bpf_link *link;
+	काष्ठा bpf_link *link;
 	__u64 *result;
 
 	err = fentry_test__attach(fentry_skel);
-	if (!ASSERT_OK(err, "fentry_attach"))
-		return err;
+	अगर (!ASSERT_OK(err, "fentry_attach"))
+		वापस err;
 
-	/* Check that already linked program can't be attached again. */
+	/* Check that alपढ़ोy linked program can't be attached again. */
 	link = bpf_program__attach(fentry_skel->progs.test1);
-	if (!ASSERT_ERR_PTR(link, "fentry_attach_link"))
-		return -1;
+	अगर (!ASSERT_ERR_PTR(link, "fentry_attach_link"))
+		वापस -1;
 
 	prog_fd = bpf_program__fd(fentry_skel->progs.test1);
-	err = bpf_prog_test_run(prog_fd, 1, NULL, 0,
-				NULL, NULL, &retval, &duration);
+	err = bpf_prog_test_run(prog_fd, 1, शून्य, 0,
+				शून्य, शून्य, &retval, &duration);
 	ASSERT_OK(err, "test_run");
 	ASSERT_EQ(retval, 0, "test_run");
 
 	result = (__u64 *)fentry_skel->bss;
-	for (i = 0; i < sizeof(*fentry_skel->bss) / sizeof(__u64); i++) {
-		if (!ASSERT_EQ(result[i], 1, "fentry_result"))
-			return -1;
-	}
+	क्रम (i = 0; i < माप(*fentry_skel->bss) / माप(__u64); i++) अणु
+		अगर (!ASSERT_EQ(result[i], 1, "fentry_result"))
+			वापस -1;
+	पूर्ण
 
 	fentry_test__detach(fentry_skel);
 
-	/* zero results for re-attach test */
-	memset(fentry_skel->bss, 0, sizeof(*fentry_skel->bss));
-	return 0;
-}
+	/* zero results क्रम re-attach test */
+	स_रखो(fentry_skel->bss, 0, माप(*fentry_skel->bss));
+	वापस 0;
+पूर्ण
 
-void test_fentry_test(void)
-{
-	struct fentry_test *fentry_skel = NULL;
-	int err;
+व्योम test_fentry_test(व्योम)
+अणु
+	काष्ठा fentry_test *fentry_skel = शून्य;
+	पूर्णांक err;
 
-	fentry_skel = fentry_test__open_and_load();
-	if (!ASSERT_OK_PTR(fentry_skel, "fentry_skel_load"))
-		goto cleanup;
+	fentry_skel = fentry_test__खोलो_and_load();
+	अगर (!ASSERT_OK_PTR(fentry_skel, "fentry_skel_load"))
+		जाओ cleanup;
 
 	err = fentry_test(fentry_skel);
-	if (!ASSERT_OK(err, "fentry_first_attach"))
-		goto cleanup;
+	अगर (!ASSERT_OK(err, "fentry_first_attach"))
+		जाओ cleanup;
 
 	err = fentry_test(fentry_skel);
 	ASSERT_OK(err, "fentry_second_attach");
 
 cleanup:
 	fentry_test__destroy(fentry_skel);
-}
+पूर्ण

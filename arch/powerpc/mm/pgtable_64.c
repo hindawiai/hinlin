@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  This file contains pgtable related functions for 64-bit machines.
+ *  This file contains pgtable related functions क्रम 64-bit machines.
  *
  *  Derived from arch/ppc64/mm/init.c
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  *
- *  Modifications by Paul Mackerras (PowerMac) (paulus@samba.org)
+ *  Modअगरications by Paul Mackerras (PowerMac) (paulus@samba.org)
  *  and Cort Dougan (PReP) (cort@cs.nmt.edu)
  *    Copyright (C) 1996 Paul Mackerras
  *
@@ -13,146 +14,146 @@
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  *
  *  Dave Engebretsen <engebret@us.ibm.com>
- *      Rework for PPC64 port.
+ *      Rework क्रम PPC64 port.
  */
 
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/export.h>
-#include <linux/types.h>
-#include <linux/mman.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/stddef.h>
-#include <linux/vmalloc.h>
-#include <linux/slab.h>
-#include <linux/hugetlb.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/export.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hugetlb.h>
 
-#include <asm/page.h>
-#include <asm/prom.h>
-#include <asm/mmu_context.h>
-#include <asm/mmu.h>
-#include <asm/smp.h>
-#include <asm/machdep.h>
-#include <asm/tlb.h>
-#include <asm/processor.h>
-#include <asm/cputable.h>
-#include <asm/sections.h>
-#include <asm/firmware.h>
-#include <asm/dma.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/dma.h>
 
-#include <mm/mmu_decl.h>
+#समावेश <mm/mmu_decl.h>
 
 
-#ifdef CONFIG_PPC_BOOK3S_64
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
 /*
- * partition table and process table for ISA 3.0
+ * partition table and process table क्रम ISA 3.0
  */
-struct prtb_entry *process_tb;
-struct patb_entry *partition_tb;
+काष्ठा prtb_entry *process_tb;
+काष्ठा patb_entry *partition_tb;
 /*
  * page table size
  */
-unsigned long __pte_index_size;
+अचिन्हित दीर्घ __pte_index_size;
 EXPORT_SYMBOL(__pte_index_size);
-unsigned long __pmd_index_size;
+अचिन्हित दीर्घ __pmd_index_size;
 EXPORT_SYMBOL(__pmd_index_size);
-unsigned long __pud_index_size;
+अचिन्हित दीर्घ __pud_index_size;
 EXPORT_SYMBOL(__pud_index_size);
-unsigned long __pgd_index_size;
+अचिन्हित दीर्घ __pgd_index_size;
 EXPORT_SYMBOL(__pgd_index_size);
-unsigned long __pud_cache_index;
+अचिन्हित दीर्घ __pud_cache_index;
 EXPORT_SYMBOL(__pud_cache_index);
-unsigned long __pte_table_size;
+अचिन्हित दीर्घ __pte_table_size;
 EXPORT_SYMBOL(__pte_table_size);
-unsigned long __pmd_table_size;
+अचिन्हित दीर्घ __pmd_table_size;
 EXPORT_SYMBOL(__pmd_table_size);
-unsigned long __pud_table_size;
+अचिन्हित दीर्घ __pud_table_size;
 EXPORT_SYMBOL(__pud_table_size);
-unsigned long __pgd_table_size;
+अचिन्हित दीर्घ __pgd_table_size;
 EXPORT_SYMBOL(__pgd_table_size);
-unsigned long __pmd_val_bits;
+अचिन्हित दीर्घ __pmd_val_bits;
 EXPORT_SYMBOL(__pmd_val_bits);
-unsigned long __pud_val_bits;
+अचिन्हित दीर्घ __pud_val_bits;
 EXPORT_SYMBOL(__pud_val_bits);
-unsigned long __pgd_val_bits;
+अचिन्हित दीर्घ __pgd_val_bits;
 EXPORT_SYMBOL(__pgd_val_bits);
-unsigned long __kernel_virt_start;
+अचिन्हित दीर्घ __kernel_virt_start;
 EXPORT_SYMBOL(__kernel_virt_start);
-unsigned long __vmalloc_start;
-EXPORT_SYMBOL(__vmalloc_start);
-unsigned long __vmalloc_end;
-EXPORT_SYMBOL(__vmalloc_end);
-unsigned long __kernel_io_start;
+अचिन्हित दीर्घ __vदो_स्मृति_start;
+EXPORT_SYMBOL(__vदो_स्मृति_start);
+अचिन्हित दीर्घ __vदो_स्मृति_end;
+EXPORT_SYMBOL(__vदो_स्मृति_end);
+अचिन्हित दीर्घ __kernel_io_start;
 EXPORT_SYMBOL(__kernel_io_start);
-unsigned long __kernel_io_end;
-struct page *vmemmap;
+अचिन्हित दीर्घ __kernel_io_end;
+काष्ठा page *vmemmap;
 EXPORT_SYMBOL(vmemmap);
-unsigned long __pte_frag_nr;
+अचिन्हित दीर्घ __pte_frag_nr;
 EXPORT_SYMBOL(__pte_frag_nr);
-unsigned long __pte_frag_size_shift;
-EXPORT_SYMBOL(__pte_frag_size_shift);
-#endif
+अचिन्हित दीर्घ __pte_frag_size_shअगरt;
+EXPORT_SYMBOL(__pte_frag_size_shअगरt);
+#पूर्ण_अगर
 
-#ifndef __PAGETABLE_PUD_FOLDED
+#अगर_अघोषित __PAGETABLE_PUD_FOLDED
 /* 4 level page table */
-struct page *p4d_page(p4d_t p4d)
-{
-	if (p4d_is_leaf(p4d)) {
+काष्ठा page *p4d_page(p4d_t p4d)
+अणु
+	अगर (p4d_is_leaf(p4d)) अणु
 		VM_WARN_ON(!p4d_huge(p4d));
-		return pte_page(p4d_pte(p4d));
-	}
-	return virt_to_page(p4d_page_vaddr(p4d));
-}
-#endif
+		वापस pte_page(p4d_pte(p4d));
+	पूर्ण
+	वापस virt_to_page(p4d_page_vaddr(p4d));
+पूर्ण
+#पूर्ण_अगर
 
-struct page *pud_page(pud_t pud)
-{
-	if (pud_is_leaf(pud)) {
+काष्ठा page *pud_page(pud_t pud)
+अणु
+	अगर (pud_is_leaf(pud)) अणु
 		VM_WARN_ON(!pud_huge(pud));
-		return pte_page(pud_pte(pud));
-	}
-	return virt_to_page(pud_page_vaddr(pud));
-}
+		वापस pte_page(pud_pte(pud));
+	पूर्ण
+	वापस virt_to_page(pud_page_vaddr(pud));
+पूर्ण
 
 /*
- * For hugepage we have pfn in the pmd, we use PTE_RPN_SHIFT bits for flags
- * For PTE page, we have a PTE_FRAG_SIZE (4K) aligned virtual address.
+ * For hugepage we have pfn in the pmd, we use PTE_RPN_SHIFT bits क्रम flags
+ * For PTE page, we have a PTE_FRAG_SIZE (4K) aligned भव address.
  */
-struct page *pmd_page(pmd_t pmd)
-{
-	if (pmd_is_leaf(pmd)) {
+काष्ठा page *pmd_page(pmd_t pmd)
+अणु
+	अगर (pmd_is_leaf(pmd)) अणु
 		VM_WARN_ON(!(pmd_large(pmd) || pmd_huge(pmd)));
-		return pte_page(pmd_pte(pmd));
-	}
-	return virt_to_page(pmd_page_vaddr(pmd));
-}
+		वापस pte_page(pmd_pte(pmd));
+	पूर्ण
+	वापस virt_to_page(pmd_page_vaddr(pmd));
+पूर्ण
 
-#ifdef CONFIG_STRICT_KERNEL_RWX
-void mark_rodata_ro(void)
-{
-	if (!mmu_has_feature(MMU_FTR_KERNEL_RO)) {
+#अगर_घोषित CONFIG_STRICT_KERNEL_RWX
+व्योम mark_rodata_ro(व्योम)
+अणु
+	अगर (!mmu_has_feature(MMU_FTR_KERNEL_RO)) अणु
 		pr_warn("Warning: Unable to mark rodata read only on this CPU.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (radix_enabled())
+	अगर (radix_enabled())
 		radix__mark_rodata_ro();
-	else
+	अन्यथा
 		hash__mark_rodata_ro();
 
-	// mark_initmem_nx() should have already run by now
+	// mark_iniपंचांगem_nx() should have alपढ़ोy run by now
 	ptdump_check_wx();
-}
+पूर्ण
 
-void mark_initmem_nx(void)
-{
-	if (radix_enabled())
-		radix__mark_initmem_nx();
-	else
-		hash__mark_initmem_nx();
-}
-#endif
+व्योम mark_iniपंचांगem_nx(व्योम)
+अणु
+	अगर (radix_enabled())
+		radix__mark_iniपंचांगem_nx();
+	अन्यथा
+		hash__mark_iniपंचांगem_nx();
+पूर्ण
+#पूर्ण_अगर

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI__SPARC_SIGINFO_H
-#define _UAPI__SPARC_SIGINFO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI__SPARC_SIGINFO_H
+#घोषणा _UAPI__SPARC_SIGINFO_H
 
-#if defined(__sparc__) && defined(__arch64__)
+#अगर defined(__sparc__) && defined(__arch64__)
 
-#define __ARCH_SI_BAND_T int
+#घोषणा __ARCH_SI_BAND_T पूर्णांक
 
-#endif /* defined(__sparc__) && defined(__arch64__) */
-
-
-#define __ARCH_SI_TRAPNO
-
-#include <asm-generic/siginfo.h>
+#पूर्ण_अगर /* defined(__sparc__) && defined(__arch64__) */
 
 
-#define SI_NOINFO	32767		/* no information in siginfo_t */
+#घोषणा __ARCH_SI_TRAPNO
 
-#endif /* _UAPI__SPARC_SIGINFO_H */
+#समावेश <यंत्र-generic/siginfo.h>
+
+
+#घोषणा SI_NOINFO	32767		/* no inक्रमmation in siginfo_t */
+
+#पूर्ण_अगर /* _UAPI__SPARC_SIGINFO_H */

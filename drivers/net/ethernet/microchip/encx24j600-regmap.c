@@ -1,302 +1,303 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Register map access API - ENCX24J600 support
  *
- * Copyright 2015 Gridpoint
+ * Copyright 2015 Gridpoपूर्णांक
  *
- * Author: Jon Ringle <jringle@gridpoint.com>
+ * Author: Jon Ringle <jringle@gridpoपूर्णांक.com>
  */
 
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
 
-#include "encx24j600_hw.h"
+#समावेश "encx24j600_hw.h"
 
-static int encx24j600_switch_bank(struct encx24j600_context *ctx,
-				  int bank)
-{
-	int ret = 0;
-	int bank_opcode = BANK_SELECT(bank);
+अटल पूर्णांक encx24j600_चयन_bank(काष्ठा encx24j600_context *ctx,
+				  पूर्णांक bank)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक bank_opcode = BANK_SELECT(bank);
 
-	ret = spi_write(ctx->spi, &bank_opcode, 1);
-	if (ret == 0)
+	ret = spi_ग_लिखो(ctx->spi, &bank_opcode, 1);
+	अगर (ret == 0)
 		ctx->bank = bank;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int encx24j600_cmdn(struct encx24j600_context *ctx, u8 opcode,
-			   const void *buf, size_t len)
-{
-	struct spi_message m;
-	struct spi_transfer t[2] = { { .tx_buf = &opcode, .len = 1, },
-				     { .tx_buf = buf, .len = len }, };
+अटल पूर्णांक encx24j600_cmdn(काष्ठा encx24j600_context *ctx, u8 opcode,
+			   स्थिर व्योम *buf, माप_प्रकार len)
+अणु
+	काष्ठा spi_message m;
+	काष्ठा spi_transfer t[2] = अणु अणु .tx_buf = &opcode, .len = 1, पूर्ण,
+				     अणु .tx_buf = buf, .len = len पूर्ण, पूर्ण;
 	spi_message_init(&m);
 	spi_message_add_tail(&t[0], &m);
 	spi_message_add_tail(&t[1], &m);
 
-	return spi_sync(ctx->spi, &m);
-}
+	वापस spi_sync(ctx->spi, &m);
+पूर्ण
 
-static void regmap_lock_mutex(void *context)
-{
-	struct encx24j600_context *ctx = context;
+अटल व्योम regmap_lock_mutex(व्योम *context)
+अणु
+	काष्ठा encx24j600_context *ctx = context;
 
 	mutex_lock(&ctx->mutex);
-}
+पूर्ण
 
-static void regmap_unlock_mutex(void *context)
-{
-	struct encx24j600_context *ctx = context;
+अटल व्योम regmap_unlock_mutex(व्योम *context)
+अणु
+	काष्ठा encx24j600_context *ctx = context;
 
 	mutex_unlock(&ctx->mutex);
-}
+पूर्ण
 
-static int regmap_encx24j600_sfr_read(void *context, u8 reg, u8 *val,
-				      size_t len)
-{
-	struct encx24j600_context *ctx = context;
+अटल पूर्णांक regmap_encx24j600_sfr_पढ़ो(व्योम *context, u8 reg, u8 *val,
+				      माप_प्रकार len)
+अणु
+	काष्ठा encx24j600_context *ctx = context;
 	u8 banked_reg = reg & ADDR_MASK;
 	u8 bank = ((reg & BANK_MASK) >> BANK_SHIFT);
 	u8 cmd = RCRU;
-	int ret = 0;
-	int i = 0;
+	पूर्णांक ret = 0;
+	पूर्णांक i = 0;
 	u8 tx_buf[2];
 
-	if (reg < 0x80) {
+	अगर (reg < 0x80) अणु
 		cmd = RCRCODE | banked_reg;
-		if ((banked_reg < 0x16) && (ctx->bank != bank))
-			ret = encx24j600_switch_bank(ctx, bank);
-		if (unlikely(ret))
-			return ret;
-	} else {
-		/* Translate registers that are more effecient using
+		अगर ((banked_reg < 0x16) && (ctx->bank != bank))
+			ret = encx24j600_चयन_bank(ctx, bank);
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		/* Translate रेजिस्टरs that are more effecient using
 		 * 3-byte SPI commands
 		 */
-		switch (reg) {
-		case EGPRDPT:
-			cmd = RGPRDPT; break;
-		case EGPWRPT:
-			cmd = RGPWRPT; break;
-		case ERXRDPT:
-			cmd = RRXRDPT; break;
-		case ERXWRPT:
-			cmd = RRXWRPT; break;
-		case EUDARDPT:
-			cmd = RUDARDPT; break;
-		case EUDAWRPT:
-			cmd = RUDAWRPT; break;
-		case EGPDATA:
-		case ERXDATA:
-		case EUDADATA:
-		default:
-			return -EINVAL;
-		}
-	}
+		चयन (reg) अणु
+		हाल EGPRDPT:
+			cmd = RGPRDPT; अवरोध;
+		हाल EGPWRPT:
+			cmd = RGPWRPT; अवरोध;
+		हाल ERXRDPT:
+			cmd = RRXRDPT; अवरोध;
+		हाल ERXWRPT:
+			cmd = RRXWRPT; अवरोध;
+		हाल EUDARDPT:
+			cmd = RUDARDPT; अवरोध;
+		हाल EUDAWRPT:
+			cmd = RUDAWRPT; अवरोध;
+		हाल EGPDATA:
+		हाल ERXDATA:
+		हाल EUDADATA:
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	tx_buf[i++] = cmd;
-	if (cmd == RCRU)
+	अगर (cmd == RCRU)
 		tx_buf[i++] = reg;
 
-	ret = spi_write_then_read(ctx->spi, tx_buf, i, val, len);
+	ret = spi_ग_लिखो_then_पढ़ो(ctx->spi, tx_buf, i, val, len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int regmap_encx24j600_sfr_update(struct encx24j600_context *ctx,
-					u8 reg, u8 *val, size_t len,
+अटल पूर्णांक regmap_encx24j600_sfr_update(काष्ठा encx24j600_context *ctx,
+					u8 reg, u8 *val, माप_प्रकार len,
 					u8 unbanked_cmd, u8 banked_code)
-{
+अणु
 	u8 banked_reg = reg & ADDR_MASK;
 	u8 bank = ((reg & BANK_MASK) >> BANK_SHIFT);
 	u8 cmd = unbanked_cmd;
-	struct spi_message m;
-	struct spi_transfer t[3] = { { .tx_buf = &cmd, .len = sizeof(cmd), },
-				     { .tx_buf = &reg, .len = sizeof(reg), },
-				     { .tx_buf = val, .len = len }, };
+	काष्ठा spi_message m;
+	काष्ठा spi_transfer t[3] = अणु अणु .tx_buf = &cmd, .len = माप(cmd), पूर्ण,
+				     अणु .tx_buf = &reg, .len = माप(reg), पूर्ण,
+				     अणु .tx_buf = val, .len = len पूर्ण, पूर्ण;
 
-	if (reg < 0x80) {
-		int ret = 0;
+	अगर (reg < 0x80) अणु
+		पूर्णांक ret = 0;
 
 		cmd = banked_code | banked_reg;
-		if ((banked_reg < 0x16) && (ctx->bank != bank))
-			ret = encx24j600_switch_bank(ctx, bank);
-		if (unlikely(ret))
-			return ret;
-	} else {
-		/* Translate registers that are more effecient using
+		अगर ((banked_reg < 0x16) && (ctx->bank != bank))
+			ret = encx24j600_चयन_bank(ctx, bank);
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		/* Translate रेजिस्टरs that are more effecient using
 		 * 3-byte SPI commands
 		 */
-		switch (reg) {
-		case EGPRDPT:
-			cmd = WGPRDPT; break;
-		case EGPWRPT:
-			cmd = WGPWRPT; break;
-		case ERXRDPT:
-			cmd = WRXRDPT; break;
-		case ERXWRPT:
-			cmd = WRXWRPT; break;
-		case EUDARDPT:
-			cmd = WUDARDPT; break;
-		case EUDAWRPT:
-			cmd = WUDAWRPT; break;
-		case EGPDATA:
-		case ERXDATA:
-		case EUDADATA:
-		default:
-			return -EINVAL;
-		}
-	}
+		चयन (reg) अणु
+		हाल EGPRDPT:
+			cmd = WGPRDPT; अवरोध;
+		हाल EGPWRPT:
+			cmd = WGPWRPT; अवरोध;
+		हाल ERXRDPT:
+			cmd = WRXRDPT; अवरोध;
+		हाल ERXWRPT:
+			cmd = WRXWRPT; अवरोध;
+		हाल EUDARDPT:
+			cmd = WUDARDPT; अवरोध;
+		हाल EUDAWRPT:
+			cmd = WUDAWRPT; अवरोध;
+		हाल EGPDATA:
+		हाल ERXDATA:
+		हाल EUDADATA:
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t[0], &m);
 
-	if (cmd == unbanked_cmd) {
+	अगर (cmd == unbanked_cmd) अणु
 		t[1].tx_buf = &reg;
 		spi_message_add_tail(&t[1], &m);
-	}
+	पूर्ण
 
 	spi_message_add_tail(&t[2], &m);
-	return spi_sync(ctx->spi, &m);
-}
+	वापस spi_sync(ctx->spi, &m);
+पूर्ण
 
-static int regmap_encx24j600_sfr_write(void *context, u8 reg, u8 *val,
-				       size_t len)
-{
-	struct encx24j600_context *ctx = context;
+अटल पूर्णांक regmap_encx24j600_sfr_ग_लिखो(व्योम *context, u8 reg, u8 *val,
+				       माप_प्रकार len)
+अणु
+	काष्ठा encx24j600_context *ctx = context;
 
-	return regmap_encx24j600_sfr_update(ctx, reg, val, len, WCRU, WCRCODE);
-}
+	वापस regmap_encx24j600_sfr_update(ctx, reg, val, len, WCRU, WCRCODE);
+पूर्ण
 
-static int regmap_encx24j600_sfr_set_bits(struct encx24j600_context *ctx,
+अटल पूर्णांक regmap_encx24j600_sfr_set_bits(काष्ठा encx24j600_context *ctx,
 					  u8 reg, u8 val)
-{
-	return regmap_encx24j600_sfr_update(ctx, reg, &val, 1, BFSU, BFSCODE);
-}
+अणु
+	वापस regmap_encx24j600_sfr_update(ctx, reg, &val, 1, BFSU, BFSCODE);
+पूर्ण
 
-static int regmap_encx24j600_sfr_clr_bits(struct encx24j600_context *ctx,
+अटल पूर्णांक regmap_encx24j600_sfr_clr_bits(काष्ठा encx24j600_context *ctx,
 					  u8 reg, u8 val)
-{
-	return regmap_encx24j600_sfr_update(ctx, reg, &val, 1, BFCU, BFCCODE);
-}
+अणु
+	वापस regmap_encx24j600_sfr_update(ctx, reg, &val, 1, BFCU, BFCCODE);
+पूर्ण
 
-static int regmap_encx24j600_reg_update_bits(void *context, unsigned int reg,
-					     unsigned int mask,
-					     unsigned int val)
-{
-	struct encx24j600_context *ctx = context;
+अटल पूर्णांक regmap_encx24j600_reg_update_bits(व्योम *context, अचिन्हित पूर्णांक reg,
+					     अचिन्हित पूर्णांक mask,
+					     अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा encx24j600_context *ctx = context;
 
-	int ret = 0;
-	unsigned int set_mask = mask & val;
-	unsigned int clr_mask = mask & ~val;
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक set_mask = mask & val;
+	अचिन्हित पूर्णांक clr_mask = mask & ~val;
 
-	if ((reg >= 0x40 && reg < 0x6c) || reg >= 0x80)
-		return -EINVAL;
+	अगर ((reg >= 0x40 && reg < 0x6c) || reg >= 0x80)
+		वापस -EINVAL;
 
-	if (set_mask & 0xff)
+	अगर (set_mask & 0xff)
 		ret = regmap_encx24j600_sfr_set_bits(ctx, reg, set_mask);
 
 	set_mask = (set_mask & 0xff00) >> 8;
 
-	if ((set_mask & 0xff) && (ret == 0))
+	अगर ((set_mask & 0xff) && (ret == 0))
 		ret = regmap_encx24j600_sfr_set_bits(ctx, reg + 1, set_mask);
 
-	if ((clr_mask & 0xff) && (ret == 0))
+	अगर ((clr_mask & 0xff) && (ret == 0))
 		ret = regmap_encx24j600_sfr_clr_bits(ctx, reg, clr_mask);
 
 	clr_mask = (clr_mask & 0xff00) >> 8;
 
-	if ((clr_mask & 0xff) && (ret == 0))
+	अगर ((clr_mask & 0xff) && (ret == 0))
 		ret = regmap_encx24j600_sfr_clr_bits(ctx, reg + 1, clr_mask);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int regmap_encx24j600_spi_write(void *context, u8 reg, const u8 *data,
-				size_t count)
-{
-	struct encx24j600_context *ctx = context;
+पूर्णांक regmap_encx24j600_spi_ग_लिखो(व्योम *context, u8 reg, स्थिर u8 *data,
+				माप_प्रकार count)
+अणु
+	काष्ठा encx24j600_context *ctx = context;
 
-	if (reg < 0xc0)
-		return encx24j600_cmdn(ctx, reg, data, count);
+	अगर (reg < 0xc0)
+		वापस encx24j600_cmdn(ctx, reg, data, count);
 
 	/* SPI 1-byte command. Ignore data */
-	return spi_write(ctx->spi, &reg, 1);
-}
-EXPORT_SYMBOL_GPL(regmap_encx24j600_spi_write);
+	वापस spi_ग_लिखो(ctx->spi, &reg, 1);
+पूर्ण
+EXPORT_SYMBOL_GPL(regmap_encx24j600_spi_ग_लिखो);
 
-int regmap_encx24j600_spi_read(void *context, u8 reg, u8 *data, size_t count)
-{
-	struct encx24j600_context *ctx = context;
+पूर्णांक regmap_encx24j600_spi_पढ़ो(व्योम *context, u8 reg, u8 *data, माप_प्रकार count)
+अणु
+	काष्ठा encx24j600_context *ctx = context;
 
-	if (reg == RBSEL && count > 1)
+	अगर (reg == RBSEL && count > 1)
 		count = 1;
 
-	return spi_write_then_read(ctx->spi, &reg, sizeof(reg), data, count);
-}
-EXPORT_SYMBOL_GPL(regmap_encx24j600_spi_read);
+	वापस spi_ग_लिखो_then_पढ़ो(ctx->spi, &reg, माप(reg), data, count);
+पूर्ण
+EXPORT_SYMBOL_GPL(regmap_encx24j600_spi_पढ़ो);
 
-static int regmap_encx24j600_write(void *context, const void *data,
-				   size_t len)
-{
-	u8 *dout = (u8 *)data;
-	u8 reg = dout[0];
-	++dout;
+अटल पूर्णांक regmap_encx24j600_ग_लिखो(व्योम *context, स्थिर व्योम *data,
+				   माप_प्रकार len)
+अणु
+	u8 *करोut = (u8 *)data;
+	u8 reg = करोut[0];
+	++करोut;
 	--len;
 
-	if (reg > 0xa0)
-		return regmap_encx24j600_spi_write(context, reg, dout, len);
+	अगर (reg > 0xa0)
+		वापस regmap_encx24j600_spi_ग_लिखो(context, reg, करोut, len);
 
-	if (len > 2)
-		return -EINVAL;
+	अगर (len > 2)
+		वापस -EINVAL;
 
-	return regmap_encx24j600_sfr_write(context, reg, dout, len);
-}
+	वापस regmap_encx24j600_sfr_ग_लिखो(context, reg, करोut, len);
+पूर्ण
 
-static int regmap_encx24j600_read(void *context,
-				  const void *reg_buf, size_t reg_size,
-				  void *val, size_t val_size)
-{
-	u8 reg = *(const u8 *)reg_buf;
+अटल पूर्णांक regmap_encx24j600_पढ़ो(व्योम *context,
+				  स्थिर व्योम *reg_buf, माप_प्रकार reg_size,
+				  व्योम *val, माप_प्रकार val_size)
+अणु
+	u8 reg = *(स्थिर u8 *)reg_buf;
 
-	if (reg_size != 1) {
+	अगर (reg_size != 1) अणु
 		pr_err("%s: reg=%02x reg_size=%zu\n", __func__, reg, reg_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (reg > 0xa0)
-		return regmap_encx24j600_spi_read(context, reg, val, val_size);
+	अगर (reg > 0xa0)
+		वापस regmap_encx24j600_spi_पढ़ो(context, reg, val, val_size);
 
-	if (val_size > 2) {
+	अगर (val_size > 2) अणु
 		pr_err("%s: reg=%02x val_size=%zu\n", __func__, reg, val_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return regmap_encx24j600_sfr_read(context, reg, val, val_size);
-}
+	वापस regmap_encx24j600_sfr_पढ़ो(context, reg, val, val_size);
+पूर्ण
 
-static bool encx24j600_regmap_readable(struct device *dev, unsigned int reg)
-{
-	if ((reg < 0x36) ||
+अटल bool encx24j600_regmap_पढ़ोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	अगर ((reg < 0x36) ||
 	    ((reg >= 0x40) && (reg < 0x4c)) ||
 	    ((reg >= 0x52) && (reg < 0x56)) ||
 	    ((reg >= 0x60) && (reg < 0x66)) ||
 	    ((reg >= 0x68) && (reg < 0x80)) ||
 	    ((reg >= 0x86) && (reg < 0x92)) ||
 	    (reg == 0xc8))
-		return true;
-	else
-		return false;
-}
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static bool encx24j600_regmap_writeable(struct device *dev, unsigned int reg)
-{
-	if ((reg < 0x12) ||
+अटल bool encx24j600_regmap_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	अगर ((reg < 0x12) ||
 	    ((reg >= 0x14) && (reg < 0x1a)) ||
 	    ((reg >= 0x1c) && (reg < 0x36)) ||
 	    ((reg >= 0x40) && (reg < 0x4c)) ||
@@ -306,205 +307,205 @@ static bool encx24j600_regmap_writeable(struct device *dev, unsigned int reg)
 	    ((reg >= 0x86) && (reg < 0x92)) ||
 	    ((reg >= 0xc0) && (reg < 0xc8)) ||
 	    ((reg >= 0xca) && (reg < 0xf0)))
-		return true;
-	else
-		return false;
-}
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static bool encx24j600_regmap_volatile(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case ERXHEAD:
-	case EDMACS:
-	case ETXSTAT:
-	case ETXWIRE:
-	case ECON1:	/* Can be modified via single byte cmds */
-	case ECON2:	/* Can be modified via single byte cmds */
-	case ESTAT:
-	case EIR:	/* Can be modified via single byte cmds */
-	case MIRD:
-	case MISTAT:
-		return true;
-	default:
-		break;
-	}
+अटल bool encx24j600_regmap_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल ERXHEAD:
+	हाल EDMACS:
+	हाल ETXSTAT:
+	हाल ETXWIRE:
+	हाल ECON1:	/* Can be modअगरied via single byte cmds */
+	हाल ECON2:	/* Can be modअगरied via single byte cmds */
+	हाल ESTAT:
+	हाल EIR:	/* Can be modअगरied via single byte cmds */
+	हाल MIRD:
+	हाल MISTAT:
+		वापस true;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool encx24j600_regmap_precious(struct device *dev, unsigned int reg)
-{
+अटल bool encx24j600_regmap_precious(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
 	/* single byte cmds are precious */
-	if (((reg >= 0xc0) && (reg < 0xc8)) ||
+	अगर (((reg >= 0xc0) && (reg < 0xc8)) ||
 	    ((reg >= 0xca) && (reg < 0xf0)))
-		return true;
-	else
-		return false;
-}
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static int regmap_encx24j600_phy_reg_read(void *context, unsigned int reg,
-					  unsigned int *val)
-{
-	struct encx24j600_context *ctx = context;
-	int ret;
-	unsigned int mistat;
+अटल पूर्णांक regmap_encx24j600_phy_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
+					  अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा encx24j600_context *ctx = context;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक mistat;
 
 	reg = MIREGADR_VAL | (reg & PHREG_MASK);
-	ret = regmap_write(ctx->regmap, MIREGADR, reg);
-	if (unlikely(ret))
-		goto err_out;
+	ret = regmap_ग_लिखो(ctx->regmap, MIREGADR, reg);
+	अगर (unlikely(ret))
+		जाओ err_out;
 
-	ret = regmap_write(ctx->regmap, MICMD, MIIRD);
-	if (unlikely(ret))
-		goto err_out;
+	ret = regmap_ग_लिखो(ctx->regmap, MICMD, MIIRD);
+	अगर (unlikely(ret))
+		जाओ err_out;
 
 	usleep_range(26, 100);
-	while ((ret = regmap_read(ctx->regmap, MISTAT, &mistat) != 0) &&
+	जबतक ((ret = regmap_पढ़ो(ctx->regmap, MISTAT, &mistat) != 0) &&
 	       (mistat & BUSY))
 		cpu_relax();
 
-	if (unlikely(ret))
-		goto err_out;
+	अगर (unlikely(ret))
+		जाओ err_out;
 
-	ret = regmap_write(ctx->regmap, MICMD, 0);
-	if (unlikely(ret))
-		goto err_out;
+	ret = regmap_ग_लिखो(ctx->regmap, MICMD, 0);
+	अगर (unlikely(ret))
+		जाओ err_out;
 
-	ret = regmap_read(ctx->regmap, MIRD, val);
+	ret = regmap_पढ़ो(ctx->regmap, MIRD, val);
 
 err_out:
-	if (ret)
+	अगर (ret)
 		pr_err("%s: error %d reading reg %02x\n", __func__, ret,
 		       reg & PHREG_MASK);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int regmap_encx24j600_phy_reg_write(void *context, unsigned int reg,
-					   unsigned int val)
-{
-	struct encx24j600_context *ctx = context;
-	int ret;
-	unsigned int mistat;
+अटल पूर्णांक regmap_encx24j600_phy_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
+					   अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा encx24j600_context *ctx = context;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक mistat;
 
 	reg = MIREGADR_VAL | (reg & PHREG_MASK);
-	ret = regmap_write(ctx->regmap, MIREGADR, reg);
-	if (unlikely(ret))
-		goto err_out;
+	ret = regmap_ग_लिखो(ctx->regmap, MIREGADR, reg);
+	अगर (unlikely(ret))
+		जाओ err_out;
 
-	ret = regmap_write(ctx->regmap, MIWR, val);
-	if (unlikely(ret))
-		goto err_out;
+	ret = regmap_ग_लिखो(ctx->regmap, MIWR, val);
+	अगर (unlikely(ret))
+		जाओ err_out;
 
 	usleep_range(26, 100);
-	while ((ret = regmap_read(ctx->regmap, MISTAT, &mistat) != 0) &&
+	जबतक ((ret = regmap_पढ़ो(ctx->regmap, MISTAT, &mistat) != 0) &&
 	       (mistat & BUSY))
 		cpu_relax();
 
 err_out:
-	if (ret)
+	अगर (ret)
 		pr_err("%s: error %d writing reg %02x=%04x\n", __func__, ret,
 		       reg & PHREG_MASK, val);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool encx24j600_phymap_readable(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case PHCON1:
-	case PHSTAT1:
-	case PHANA:
-	case PHANLPA:
-	case PHANE:
-	case PHCON2:
-	case PHSTAT2:
-	case PHSTAT3:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool encx24j600_phymap_पढ़ोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल PHCON1:
+	हाल PHSTAT1:
+	हाल PHANA:
+	हाल PHANLPA:
+	हाल PHANE:
+	हाल PHCON2:
+	हाल PHSTAT2:
+	हाल PHSTAT3:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool encx24j600_phymap_writeable(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case PHCON1:
-	case PHCON2:
-	case PHANA:
-		return true;
-	case PHSTAT1:
-	case PHSTAT2:
-	case PHSTAT3:
-	case PHANLPA:
-	case PHANE:
-	default:
-		return false;
-	}
-}
+अटल bool encx24j600_phymap_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल PHCON1:
+	हाल PHCON2:
+	हाल PHANA:
+		वापस true;
+	हाल PHSTAT1:
+	हाल PHSTAT2:
+	हाल PHSTAT3:
+	हाल PHANLPA:
+	हाल PHANE:
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool encx24j600_phymap_volatile(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case PHSTAT1:
-	case PHSTAT2:
-	case PHSTAT3:
-	case PHANLPA:
-	case PHANE:
-	case PHCON2:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool encx24j600_phymap_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल PHSTAT1:
+	हाल PHSTAT2:
+	हाल PHSTAT3:
+	हाल PHANLPA:
+	हाल PHANE:
+	हाल PHCON2:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static struct regmap_config regcfg = {
+अटल काष्ठा regmap_config regcfg = अणु
 	.name = "reg",
 	.reg_bits = 8,
 	.val_bits = 16,
-	.max_register = 0xee,
+	.max_रेजिस्टर = 0xee,
 	.reg_stride = 2,
 	.cache_type = REGCACHE_RBTREE,
-	.val_format_endian = REGMAP_ENDIAN_LITTLE,
-	.readable_reg = encx24j600_regmap_readable,
-	.writeable_reg = encx24j600_regmap_writeable,
-	.volatile_reg = encx24j600_regmap_volatile,
+	.val_क्रमmat_endian = REGMAP_ENDIAN_LITTLE,
+	.पढ़ोable_reg = encx24j600_regmap_पढ़ोable,
+	.ग_लिखोable_reg = encx24j600_regmap_ग_लिखोable,
+	.अस्थिर_reg = encx24j600_regmap_अस्थिर,
 	.precious_reg = encx24j600_regmap_precious,
 	.lock = regmap_lock_mutex,
 	.unlock = regmap_unlock_mutex,
-};
+पूर्ण;
 
-static struct regmap_bus regmap_encx24j600 = {
-	.write = regmap_encx24j600_write,
-	.read = regmap_encx24j600_read,
+अटल काष्ठा regmap_bus regmap_encx24j600 = अणु
+	.ग_लिखो = regmap_encx24j600_ग_लिखो,
+	.पढ़ो = regmap_encx24j600_पढ़ो,
 	.reg_update_bits = regmap_encx24j600_reg_update_bits,
-};
+पूर्ण;
 
-static struct regmap_config phycfg = {
+अटल काष्ठा regmap_config phycfg = अणु
 	.name = "phy",
 	.reg_bits = 8,
 	.val_bits = 16,
-	.max_register = 0x1f,
+	.max_रेजिस्टर = 0x1f,
 	.cache_type = REGCACHE_RBTREE,
-	.val_format_endian = REGMAP_ENDIAN_LITTLE,
-	.readable_reg = encx24j600_phymap_readable,
-	.writeable_reg = encx24j600_phymap_writeable,
-	.volatile_reg = encx24j600_phymap_volatile,
-};
+	.val_क्रमmat_endian = REGMAP_ENDIAN_LITTLE,
+	.पढ़ोable_reg = encx24j600_phymap_पढ़ोable,
+	.ग_लिखोable_reg = encx24j600_phymap_ग_लिखोable,
+	.अस्थिर_reg = encx24j600_phymap_अस्थिर,
+पूर्ण;
 
-static struct regmap_bus phymap_encx24j600 = {
-	.reg_write = regmap_encx24j600_phy_reg_write,
-	.reg_read = regmap_encx24j600_phy_reg_read,
-};
+अटल काष्ठा regmap_bus phymap_encx24j600 = अणु
+	.reg_ग_लिखो = regmap_encx24j600_phy_reg_ग_लिखो,
+	.reg_पढ़ो = regmap_encx24j600_phy_reg_पढ़ो,
+पूर्ण;
 
-void devm_regmap_init_encx24j600(struct device *dev,
-				 struct encx24j600_context *ctx)
-{
+व्योम devm_regmap_init_encx24j600(काष्ठा device *dev,
+				 काष्ठा encx24j600_context *ctx)
+अणु
 	mutex_init(&ctx->mutex);
 	regcfg.lock_arg = ctx;
 	ctx->regmap = devm_regmap_init(dev, &regmap_encx24j600, ctx, &regcfg);
 	ctx->phymap = devm_regmap_init(dev, &phymap_encx24j600, ctx, &phycfg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_regmap_init_encx24j600);
 
 MODULE_LICENSE("GPL");

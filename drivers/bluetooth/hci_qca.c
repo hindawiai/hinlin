@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Bluetooth Software UART Qualcomm protocol
  *
- *  HCI_IBS (HCI In-Band Sleep) is Qualcomm's power management
+ *  HCI_IBS (HCI In-Band Sleep) is Qualcomm's घातer management
  *  protocol extension to H4.
  *
  *  Copyright (C) 2007 Texas Instruments, Inc.
@@ -12,65 +13,65 @@
  *  This file is based on hci_ll.c, which was...
  *  Written by Ohad Ben-Cohen <ohad@bencohen.org>
  *  which was in turn based on hci_h4.c, which was written
- *  by Maxim Krasnyansky and Marcel Holtmann.
+ *  by Maxim Krasnyansky and Marcel Holपंचांगann.
  */
 
-#include <linux/kernel.h>
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/debugfs.h>
-#include <linux/delay.h>
-#include <linux/devcoredump.h>
-#include <linux/device.h>
-#include <linux/gpio/consumer.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/acpi.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/serdev.h>
-#include <linux/mutex.h>
-#include <asm/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/devcoredump.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/serdev.h>
+#समावेश <linux/mutex.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
 
-#include "hci_uart.h"
-#include "btqca.h"
+#समावेश "hci_uart.h"
+#समावेश "btqca.h"
 
 /* HCI_IBS protocol messages */
-#define HCI_IBS_SLEEP_IND	0xFE
-#define HCI_IBS_WAKE_IND	0xFD
-#define HCI_IBS_WAKE_ACK	0xFC
-#define HCI_MAX_IBS_SIZE	10
+#घोषणा HCI_IBS_SLEEP_IND	0xFE
+#घोषणा HCI_IBS_WAKE_IND	0xFD
+#घोषणा HCI_IBS_WAKE_ACK	0xFC
+#घोषणा HCI_MAX_IBS_SIZE	10
 
-#define IBS_WAKE_RETRANS_TIMEOUT_MS	100
-#define IBS_BTSOC_TX_IDLE_TIMEOUT_MS	200
-#define IBS_HOST_TX_IDLE_TIMEOUT_MS	2000
-#define CMD_TRANS_TIMEOUT_MS		100
-#define MEMDUMP_TIMEOUT_MS		8000
-#define IBS_DISABLE_SSR_TIMEOUT_MS \
+#घोषणा IBS_WAKE_RETRANS_TIMEOUT_MS	100
+#घोषणा IBS_BTSOC_TX_IDLE_TIMEOUT_MS	200
+#घोषणा IBS_HOST_TX_IDLE_TIMEOUT_MS	2000
+#घोषणा CMD_TRANS_TIMEOUT_MS		100
+#घोषणा MEMDUMP_TIMEOUT_MS		8000
+#घोषणा IBS_DISABLE_SSR_TIMEOUT_MS \
 	(MEMDUMP_TIMEOUT_MS + FW_DOWNLOAD_TIMEOUT_MS)
-#define FW_DOWNLOAD_TIMEOUT_MS		3000
+#घोषणा FW_DOWNLOAD_TIMEOUT_MS		3000
 
 /* susclk rate */
-#define SUSCLK_RATE_32KHZ	32768
+#घोषणा SUSCLK_RATE_32KHZ	32768
 
 /* Controller debug log header */
-#define QCA_DEBUG_HANDLE	0x2EDC
+#घोषणा QCA_DEBUG_HANDLE	0x2EDC
 
 /* max retry count when init fails */
-#define MAX_INIT_RETRIES 3
+#घोषणा MAX_INIT_RETRIES 3
 
 /* Controller dump header */
-#define QCA_SSR_DUMP_HANDLE		0x0108
-#define QCA_DUMP_PACKET_SIZE		255
-#define QCA_LAST_SEQUENCE_NUM		0xFFFF
-#define QCA_CRASHBYTE_PACKET_LEN	1096
-#define QCA_MEMDUMP_BYTE		0xFB
+#घोषणा QCA_SSR_DUMP_HANDLE		0x0108
+#घोषणा QCA_DUMP_PACKET_SIZE		255
+#घोषणा QCA_LAST_SEQUENCE_NUM		0xFFFF
+#घोषणा QCA_CRASHBYTE_PACKET_LEN	1096
+#घोषणा QCA_MEMDUMP_BYTE		0xFB
 
-enum qca_flags {
+क्रमागत qca_flags अणु
 	QCA_IBS_DISABLED,
 	QCA_DROP_VENDOR_EVENT,
 	QCA_SUSPENDING,
@@ -79,92 +80,92 @@ enum qca_flags {
 	QCA_SSR_TRIGGERED,
 	QCA_BT_OFF,
 	QCA_ROM_FW
-};
+पूर्ण;
 
-enum qca_capabilities {
+क्रमागत qca_capabilities अणु
 	QCA_CAP_WIDEBAND_SPEECH = BIT(0),
 	QCA_CAP_VALID_LE_STATES = BIT(1),
-};
+पूर्ण;
 
 /* HCI_IBS transmit side sleep protocol states */
-enum tx_ibs_states {
+क्रमागत tx_ibs_states अणु
 	HCI_IBS_TX_ASLEEP,
 	HCI_IBS_TX_WAKING,
 	HCI_IBS_TX_AWAKE,
-};
+पूर्ण;
 
 /* HCI_IBS receive side sleep protocol states */
-enum rx_states {
+क्रमागत rx_states अणु
 	HCI_IBS_RX_ASLEEP,
 	HCI_IBS_RX_AWAKE,
-};
+पूर्ण;
 
-/* HCI_IBS transmit and receive side clock state vote */
-enum hci_ibs_clock_state_vote {
+/* HCI_IBS transmit and receive side घड़ी state vote */
+क्रमागत hci_ibs_घड़ी_state_vote अणु
 	HCI_IBS_VOTE_STATS_UPDATE,
 	HCI_IBS_TX_VOTE_CLOCK_ON,
 	HCI_IBS_TX_VOTE_CLOCK_OFF,
 	HCI_IBS_RX_VOTE_CLOCK_ON,
 	HCI_IBS_RX_VOTE_CLOCK_OFF,
-};
+पूर्ण;
 
 /* Controller memory dump states */
-enum qca_memdump_states {
+क्रमागत qca_memdump_states अणु
 	QCA_MEMDUMP_IDLE,
 	QCA_MEMDUMP_COLLECTING,
 	QCA_MEMDUMP_COLLECTED,
 	QCA_MEMDUMP_TIMEOUT,
-};
+पूर्ण;
 
-struct qca_memdump_data {
-	char *memdump_buf_head;
-	char *memdump_buf_tail;
+काष्ठा qca_memdump_data अणु
+	अक्षर *memdump_buf_head;
+	अक्षर *memdump_buf_tail;
 	u32 current_seq_no;
 	u32 received_dump;
 	u32 ram_dump_size;
-};
+पूर्ण;
 
-struct qca_memdump_event_hdr {
+काष्ठा qca_memdump_event_hdr अणु
 	__u8    evt;
 	__u8    plen;
 	__u16   opcode;
 	__u16   seq_no;
 	__u8    reserved;
-} __packed;
+पूर्ण __packed;
 
 
-struct qca_dump_size {
+काष्ठा qca_dump_size अणु
 	u32 dump_size;
-} __packed;
+पूर्ण __packed;
 
-struct qca_data {
-	struct hci_uart *hu;
-	struct sk_buff *rx_skb;
-	struct sk_buff_head txq;
-	struct sk_buff_head tx_wait_q;	/* HCI_IBS wait queue	*/
-	struct sk_buff_head rx_memdump_q;	/* Memdump wait queue	*/
+काष्ठा qca_data अणु
+	काष्ठा hci_uart *hu;
+	काष्ठा sk_buff *rx_skb;
+	काष्ठा sk_buff_head txq;
+	काष्ठा sk_buff_head tx_रुको_q;	/* HCI_IBS रुको queue	*/
+	काष्ठा sk_buff_head rx_memdump_q;	/* Memdump रुको queue	*/
 	spinlock_t hci_ibs_lock;	/* HCI_IBS state lock	*/
-	u8 tx_ibs_state;	/* HCI_IBS transmit side power state*/
-	u8 rx_ibs_state;	/* HCI_IBS receive side power state */
-	bool tx_vote;		/* Clock must be on for TX */
-	bool rx_vote;		/* Clock must be on for RX */
-	struct timer_list tx_idle_timer;
+	u8 tx_ibs_state;	/* HCI_IBS transmit side घातer state*/
+	u8 rx_ibs_state;	/* HCI_IBS receive side घातer state */
+	bool tx_vote;		/* Clock must be on क्रम TX */
+	bool rx_vote;		/* Clock must be on क्रम RX */
+	काष्ठा समयr_list tx_idle_समयr;
 	u32 tx_idle_delay;
-	struct timer_list wake_retrans_timer;
+	काष्ठा समयr_list wake_retrans_समयr;
 	u32 wake_retrans;
-	struct workqueue_struct *workqueue;
-	struct work_struct ws_awake_rx;
-	struct work_struct ws_awake_device;
-	struct work_struct ws_rx_vote_off;
-	struct work_struct ws_tx_vote_off;
-	struct work_struct ctrl_memdump_evt;
-	struct delayed_work ctrl_memdump_timeout;
-	struct qca_memdump_data *qca_memdump;
-	unsigned long flags;
-	struct completion drop_ev_comp;
-	wait_queue_head_t suspend_wait_q;
-	enum qca_memdump_states memdump_state;
-	struct mutex hci_memdump_lock;
+	काष्ठा workqueue_काष्ठा *workqueue;
+	काष्ठा work_काष्ठा ws_awake_rx;
+	काष्ठा work_काष्ठा ws_awake_device;
+	काष्ठा work_काष्ठा ws_rx_vote_off;
+	काष्ठा work_काष्ठा ws_tx_vote_off;
+	काष्ठा work_काष्ठा ctrl_memdump_evt;
+	काष्ठा delayed_work ctrl_memdump_समयout;
+	काष्ठा qca_memdump_data *qca_memdump;
+	अचिन्हित दीर्घ flags;
+	काष्ठा completion drop_ev_comp;
+	रुको_queue_head_t suspend_रुको_q;
+	क्रमागत qca_memdump_states memdump_state;
+	काष्ठा mutex hci_memdump_lock;
 
 	/* For debugging purpose */
 	u64 ibs_sent_wacks;
@@ -173,7 +174,7 @@ struct qca_data {
 	u64 ibs_recv_wacks;
 	u64 ibs_recv_slps;
 	u64 ibs_recv_wakes;
-	u64 vote_last_jif;
+	u64 vote_last_jअगर;
 	u32 vote_on_ms;
 	u32 vote_off_ms;
 	u64 tx_votes_on;
@@ -182,240 +183,240 @@ struct qca_data {
 	u64 rx_votes_off;
 	u64 votes_on;
 	u64 votes_off;
-};
+पूर्ण;
 
-enum qca_speed_type {
+क्रमागत qca_speed_type अणु
 	QCA_INIT_SPEED = 1,
 	QCA_OPER_SPEED
-};
+पूर्ण;
 
 /*
- * Voltage regulator information required for configuring the
+ * Voltage regulator inक्रमmation required क्रम configuring the
  * QCA Bluetooth chipset
  */
-struct qca_vreg {
-	const char *name;
-	unsigned int load_uA;
-};
+काष्ठा qca_vreg अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक load_uA;
+पूर्ण;
 
-struct qca_device_data {
-	enum qca_btsoc_type soc_type;
-	struct qca_vreg *vregs;
-	size_t num_vregs;
-	uint32_t capabilities;
-};
+काष्ठा qca_device_data अणु
+	क्रमागत qca_btsoc_type soc_type;
+	काष्ठा qca_vreg *vregs;
+	माप_प्रकार num_vregs;
+	uपूर्णांक32_t capabilities;
+पूर्ण;
 
 /*
- * Platform data for the QCA Bluetooth power driver.
+ * Platक्रमm data क्रम the QCA Bluetooth घातer driver.
  */
-struct qca_power {
-	struct device *dev;
-	struct regulator_bulk_data *vreg_bulk;
-	int num_vregs;
+काष्ठा qca_घातer अणु
+	काष्ठा device *dev;
+	काष्ठा regulator_bulk_data *vreg_bulk;
+	पूर्णांक num_vregs;
 	bool vregs_on;
-};
+पूर्ण;
 
-struct qca_serdev {
-	struct hci_uart	 serdev_hu;
-	struct gpio_desc *bt_en;
-	struct clk	 *susclk;
-	enum qca_btsoc_type btsoc_type;
-	struct qca_power *bt_power;
+काष्ठा qca_serdev अणु
+	काष्ठा hci_uart	 serdev_hu;
+	काष्ठा gpio_desc *bt_en;
+	काष्ठा clk	 *susclk;
+	क्रमागत qca_btsoc_type btsoc_type;
+	काष्ठा qca_घातer *bt_घातer;
 	u32 init_speed;
 	u32 oper_speed;
-	const char *firmware_name;
-};
+	स्थिर अक्षर *firmware_name;
+पूर्ण;
 
-static int qca_regulator_enable(struct qca_serdev *qcadev);
-static void qca_regulator_disable(struct qca_serdev *qcadev);
-static void qca_power_shutdown(struct hci_uart *hu);
-static int qca_power_off(struct hci_dev *hdev);
-static void qca_controller_memdump(struct work_struct *work);
+अटल पूर्णांक qca_regulator_enable(काष्ठा qca_serdev *qcadev);
+अटल व्योम qca_regulator_disable(काष्ठा qca_serdev *qcadev);
+अटल व्योम qca_घातer_shutकरोwn(काष्ठा hci_uart *hu);
+अटल पूर्णांक qca_घातer_off(काष्ठा hci_dev *hdev);
+अटल व्योम qca_controller_memdump(काष्ठा work_काष्ठा *work);
 
-static enum qca_btsoc_type qca_soc_type(struct hci_uart *hu)
-{
-	enum qca_btsoc_type soc_type;
+अटल क्रमागत qca_btsoc_type qca_soc_type(काष्ठा hci_uart *hu)
+अणु
+	क्रमागत qca_btsoc_type soc_type;
 
-	if (hu->serdev) {
-		struct qca_serdev *qsd = serdev_device_get_drvdata(hu->serdev);
+	अगर (hu->serdev) अणु
+		काष्ठा qca_serdev *qsd = serdev_device_get_drvdata(hu->serdev);
 
 		soc_type = qsd->btsoc_type;
-	} else {
+	पूर्ण अन्यथा अणु
 		soc_type = QCA_ROME;
-	}
+	पूर्ण
 
-	return soc_type;
-}
+	वापस soc_type;
+पूर्ण
 
-static const char *qca_get_firmware_name(struct hci_uart *hu)
-{
-	if (hu->serdev) {
-		struct qca_serdev *qsd = serdev_device_get_drvdata(hu->serdev);
+अटल स्थिर अक्षर *qca_get_firmware_name(काष्ठा hci_uart *hu)
+अणु
+	अगर (hu->serdev) अणु
+		काष्ठा qca_serdev *qsd = serdev_device_get_drvdata(hu->serdev);
 
-		return qsd->firmware_name;
-	} else {
-		return NULL;
-	}
-}
+		वापस qsd->firmware_name;
+	पूर्ण अन्यथा अणु
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static void __serial_clock_on(struct tty_struct *tty)
-{
-	/* TODO: Some chipset requires to enable UART clock on client
-	 * side to save power consumption or manual work is required.
-	 * Please put your code to control UART clock here if needed
+अटल व्योम __serial_घड़ी_on(काष्ठा tty_काष्ठा *tty)
+अणु
+	/* TODO: Some chipset requires to enable UART घड़ी on client
+	 * side to save घातer consumption or manual work is required.
+	 * Please put your code to control UART घड़ी here अगर needed
 	 */
-}
+पूर्ण
 
-static void __serial_clock_off(struct tty_struct *tty)
-{
-	/* TODO: Some chipset requires to disable UART clock on client
-	 * side to save power consumption or manual work is required.
-	 * Please put your code to control UART clock off here if needed
+अटल व्योम __serial_घड़ी_off(काष्ठा tty_काष्ठा *tty)
+अणु
+	/* TODO: Some chipset requires to disable UART घड़ी on client
+	 * side to save घातer consumption or manual work is required.
+	 * Please put your code to control UART घड़ी off here अगर needed
 	 */
-}
+पूर्ण
 
-/* serial_clock_vote needs to be called with the ibs lock held */
-static void serial_clock_vote(unsigned long vote, struct hci_uart *hu)
-{
-	struct qca_data *qca = hu->priv;
-	unsigned int diff;
+/* serial_घड़ी_vote needs to be called with the ibs lock held */
+अटल व्योम serial_घड़ी_vote(अचिन्हित दीर्घ vote, काष्ठा hci_uart *hu)
+अणु
+	काष्ठा qca_data *qca = hu->priv;
+	अचिन्हित पूर्णांक dअगरf;
 
 	bool old_vote = (qca->tx_vote | qca->rx_vote);
 	bool new_vote;
 
-	switch (vote) {
-	case HCI_IBS_VOTE_STATS_UPDATE:
-		diff = jiffies_to_msecs(jiffies - qca->vote_last_jif);
+	चयन (vote) अणु
+	हाल HCI_IBS_VOTE_STATS_UPDATE:
+		dअगरf = jअगरfies_to_msecs(jअगरfies - qca->vote_last_jअगर);
 
-		if (old_vote)
-			qca->vote_off_ms += diff;
-		else
-			qca->vote_on_ms += diff;
-		return;
+		अगर (old_vote)
+			qca->vote_off_ms += dअगरf;
+		अन्यथा
+			qca->vote_on_ms += dअगरf;
+		वापस;
 
-	case HCI_IBS_TX_VOTE_CLOCK_ON:
+	हाल HCI_IBS_TX_VOTE_CLOCK_ON:
 		qca->tx_vote = true;
 		qca->tx_votes_on++;
-		break;
+		अवरोध;
 
-	case HCI_IBS_RX_VOTE_CLOCK_ON:
+	हाल HCI_IBS_RX_VOTE_CLOCK_ON:
 		qca->rx_vote = true;
 		qca->rx_votes_on++;
-		break;
+		अवरोध;
 
-	case HCI_IBS_TX_VOTE_CLOCK_OFF:
+	हाल HCI_IBS_TX_VOTE_CLOCK_OFF:
 		qca->tx_vote = false;
 		qca->tx_votes_off++;
-		break;
+		अवरोध;
 
-	case HCI_IBS_RX_VOTE_CLOCK_OFF:
+	हाल HCI_IBS_RX_VOTE_CLOCK_OFF:
 		qca->rx_vote = false;
 		qca->rx_votes_off++;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BT_ERR("Voting irregularity");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	new_vote = qca->rx_vote | qca->tx_vote;
 
-	if (new_vote != old_vote) {
-		if (new_vote)
-			__serial_clock_on(hu->tty);
-		else
-			__serial_clock_off(hu->tty);
+	अगर (new_vote != old_vote) अणु
+		अगर (new_vote)
+			__serial_घड़ी_on(hu->tty);
+		अन्यथा
+			__serial_घड़ी_off(hu->tty);
 
 		BT_DBG("Vote serial clock %s(%s)", new_vote ? "true" : "false",
 		       vote ? "true" : "false");
 
-		diff = jiffies_to_msecs(jiffies - qca->vote_last_jif);
+		dअगरf = jअगरfies_to_msecs(jअगरfies - qca->vote_last_jअगर);
 
-		if (new_vote) {
+		अगर (new_vote) अणु
 			qca->votes_on++;
-			qca->vote_off_ms += diff;
-		} else {
+			qca->vote_off_ms += dअगरf;
+		पूर्ण अन्यथा अणु
 			qca->votes_off++;
-			qca->vote_on_ms += diff;
-		}
-		qca->vote_last_jif = jiffies;
-	}
-}
+			qca->vote_on_ms += dअगरf;
+		पूर्ण
+		qca->vote_last_jअगर = jअगरfies;
+	पूर्ण
+पूर्ण
 
 /* Builds and sends an HCI_IBS command packet.
  * These are very simple packets with only 1 cmd byte.
  */
-static int send_hci_ibs_cmd(u8 cmd, struct hci_uart *hu)
-{
-	int err = 0;
-	struct sk_buff *skb = NULL;
-	struct qca_data *qca = hu->priv;
+अटल पूर्णांक send_hci_ibs_cmd(u8 cmd, काष्ठा hci_uart *hu)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा qca_data *qca = hu->priv;
 
 	BT_DBG("hu %p send hci ibs cmd 0x%x", hu, cmd);
 
 	skb = bt_skb_alloc(1, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		BT_ERR("Failed to allocate memory for HCI_IBS packet");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Assign HCI_IBS type */
 	skb_put_u8(skb, cmd);
 
 	skb_queue_tail(&qca->txq, skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void qca_wq_awake_device(struct work_struct *work)
-{
-	struct qca_data *qca = container_of(work, struct qca_data,
+अटल व्योम qca_wq_awake_device(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qca_data *qca = container_of(work, काष्ठा qca_data,
 					    ws_awake_device);
-	struct hci_uart *hu = qca->hu;
-	unsigned long retrans_delay;
-	unsigned long flags;
+	काष्ठा hci_uart *hu = qca->hu;
+	अचिन्हित दीर्घ retrans_delay;
+	अचिन्हित दीर्घ flags;
 
 	BT_DBG("hu %p wq awake device", hu);
 
-	/* Vote for serial clock */
-	serial_clock_vote(HCI_IBS_TX_VOTE_CLOCK_ON, hu);
+	/* Vote क्रम serial घड़ी */
+	serial_घड़ी_vote(HCI_IBS_TX_VOTE_CLOCK_ON, hu);
 
 	spin_lock_irqsave(&qca->hci_ibs_lock, flags);
 
 	/* Send wake indication to device */
-	if (send_hci_ibs_cmd(HCI_IBS_WAKE_IND, hu) < 0)
+	अगर (send_hci_ibs_cmd(HCI_IBS_WAKE_IND, hu) < 0)
 		BT_ERR("Failed to send WAKE to device");
 
 	qca->ibs_sent_wakes++;
 
-	/* Start retransmit timer */
-	retrans_delay = msecs_to_jiffies(qca->wake_retrans);
-	mod_timer(&qca->wake_retrans_timer, jiffies + retrans_delay);
+	/* Start retransmit समयr */
+	retrans_delay = msecs_to_jअगरfies(qca->wake_retrans);
+	mod_समयr(&qca->wake_retrans_समयr, jअगरfies + retrans_delay);
 
 	spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
 
 	/* Actually send the packets */
 	hci_uart_tx_wakeup(hu);
-}
+पूर्ण
 
-static void qca_wq_awake_rx(struct work_struct *work)
-{
-	struct qca_data *qca = container_of(work, struct qca_data,
+अटल व्योम qca_wq_awake_rx(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qca_data *qca = container_of(work, काष्ठा qca_data,
 					    ws_awake_rx);
-	struct hci_uart *hu = qca->hu;
-	unsigned long flags;
+	काष्ठा hci_uart *hu = qca->hu;
+	अचिन्हित दीर्घ flags;
 
 	BT_DBG("hu %p wq awake rx", hu);
 
-	serial_clock_vote(HCI_IBS_RX_VOTE_CLOCK_ON, hu);
+	serial_घड़ी_vote(HCI_IBS_RX_VOTE_CLOCK_ON, hu);
 
 	spin_lock_irqsave(&qca->hci_ibs_lock, flags);
 	qca->rx_ibs_state = HCI_IBS_RX_AWAKE;
 
 	/* Always acknowledge device wake up,
-	 * sending IBS message doesn't count as TX ON.
+	 * sending IBS message करोesn't count as TX ON.
 	 */
-	if (send_hci_ibs_cmd(HCI_IBS_WAKE_ACK, hu) < 0)
+	अगर (send_hci_ibs_cmd(HCI_IBS_WAKE_ACK, hu) < 0)
 		BT_ERR("Failed to acknowledge device wake up");
 
 	qca->ibs_sent_wacks++;
@@ -424,74 +425,74 @@ static void qca_wq_awake_rx(struct work_struct *work)
 
 	/* Actually send the packets */
 	hci_uart_tx_wakeup(hu);
-}
+पूर्ण
 
-static void qca_wq_serial_rx_clock_vote_off(struct work_struct *work)
-{
-	struct qca_data *qca = container_of(work, struct qca_data,
+अटल व्योम qca_wq_serial_rx_घड़ी_vote_off(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qca_data *qca = container_of(work, काष्ठा qca_data,
 					    ws_rx_vote_off);
-	struct hci_uart *hu = qca->hu;
+	काष्ठा hci_uart *hu = qca->hu;
 
 	BT_DBG("hu %p rx clock vote off", hu);
 
-	serial_clock_vote(HCI_IBS_RX_VOTE_CLOCK_OFF, hu);
-}
+	serial_घड़ी_vote(HCI_IBS_RX_VOTE_CLOCK_OFF, hu);
+पूर्ण
 
-static void qca_wq_serial_tx_clock_vote_off(struct work_struct *work)
-{
-	struct qca_data *qca = container_of(work, struct qca_data,
+अटल व्योम qca_wq_serial_tx_घड़ी_vote_off(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qca_data *qca = container_of(work, काष्ठा qca_data,
 					    ws_tx_vote_off);
-	struct hci_uart *hu = qca->hu;
+	काष्ठा hci_uart *hu = qca->hu;
 
 	BT_DBG("hu %p tx clock vote off", hu);
 
 	/* Run HCI tx handling unlocked */
 	hci_uart_tx_wakeup(hu);
 
-	/* Now that message queued to tty driver, vote for tty clocks off.
-	 * It is up to the tty driver to pend the clocks off until tx done.
+	/* Now that message queued to tty driver, vote क्रम tty घड़ीs off.
+	 * It is up to the tty driver to pend the घड़ीs off until tx करोne.
 	 */
-	serial_clock_vote(HCI_IBS_TX_VOTE_CLOCK_OFF, hu);
-}
+	serial_घड़ी_vote(HCI_IBS_TX_VOTE_CLOCK_OFF, hu);
+पूर्ण
 
-static void hci_ibs_tx_idle_timeout(struct timer_list *t)
-{
-	struct qca_data *qca = from_timer(qca, t, tx_idle_timer);
-	struct hci_uart *hu = qca->hu;
-	unsigned long flags;
+अटल व्योम hci_ibs_tx_idle_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा qca_data *qca = from_समयr(qca, t, tx_idle_समयr);
+	काष्ठा hci_uart *hu = qca->hu;
+	अचिन्हित दीर्घ flags;
 
 	BT_DBG("hu %p idle timeout in %d state", hu, qca->tx_ibs_state);
 
 	spin_lock_irqsave_nested(&qca->hci_ibs_lock,
 				 flags, SINGLE_DEPTH_NESTING);
 
-	switch (qca->tx_ibs_state) {
-	case HCI_IBS_TX_AWAKE:
+	चयन (qca->tx_ibs_state) अणु
+	हाल HCI_IBS_TX_AWAKE:
 		/* TX_IDLE, go to SLEEP */
-		if (send_hci_ibs_cmd(HCI_IBS_SLEEP_IND, hu) < 0) {
+		अगर (send_hci_ibs_cmd(HCI_IBS_SLEEP_IND, hu) < 0) अणु
 			BT_ERR("Failed to send SLEEP to device");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		qca->tx_ibs_state = HCI_IBS_TX_ASLEEP;
 		qca->ibs_sent_slps++;
 		queue_work(qca->workqueue, &qca->ws_tx_vote_off);
-		break;
+		अवरोध;
 
-	case HCI_IBS_TX_ASLEEP:
-	case HCI_IBS_TX_WAKING:
-	default:
+	हाल HCI_IBS_TX_ASLEEP:
+	हाल HCI_IBS_TX_WAKING:
+	शेष:
 		BT_ERR("Spurious timeout tx state %d", qca->tx_ibs_state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
-}
+पूर्ण
 
-static void hci_ibs_wake_retrans_timeout(struct timer_list *t)
-{
-	struct qca_data *qca = from_timer(qca, t, wake_retrans_timer);
-	struct hci_uart *hu = qca->hu;
-	unsigned long flags, retrans_delay;
+अटल व्योम hci_ibs_wake_retrans_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा qca_data *qca = from_समयr(qca, t, wake_retrans_समयr);
+	काष्ठा hci_uart *hu = qca->hu;
+	अचिन्हित दीर्घ flags, retrans_delay;
 	bool retransmit = false;
 
 	BT_DBG("hu %p wake retransmit timeout in %d state",
@@ -501,94 +502,94 @@ static void hci_ibs_wake_retrans_timeout(struct timer_list *t)
 				 flags, SINGLE_DEPTH_NESTING);
 
 	/* Don't retransmit the HCI_IBS_WAKE_IND when suspending. */
-	if (test_bit(QCA_SUSPENDING, &qca->flags)) {
+	अगर (test_bit(QCA_SUSPENDING, &qca->flags)) अणु
 		spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (qca->tx_ibs_state) {
-	case HCI_IBS_TX_WAKING:
+	चयन (qca->tx_ibs_state) अणु
+	हाल HCI_IBS_TX_WAKING:
 		/* No WAKE_ACK, retransmit WAKE */
 		retransmit = true;
-		if (send_hci_ibs_cmd(HCI_IBS_WAKE_IND, hu) < 0) {
+		अगर (send_hci_ibs_cmd(HCI_IBS_WAKE_IND, hu) < 0) अणु
 			BT_ERR("Failed to acknowledge device wake up");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		qca->ibs_sent_wakes++;
-		retrans_delay = msecs_to_jiffies(qca->wake_retrans);
-		mod_timer(&qca->wake_retrans_timer, jiffies + retrans_delay);
-		break;
+		retrans_delay = msecs_to_jअगरfies(qca->wake_retrans);
+		mod_समयr(&qca->wake_retrans_समयr, jअगरfies + retrans_delay);
+		अवरोध;
 
-	case HCI_IBS_TX_ASLEEP:
-	case HCI_IBS_TX_AWAKE:
-	default:
+	हाल HCI_IBS_TX_ASLEEP:
+	हाल HCI_IBS_TX_AWAKE:
+	शेष:
 		BT_ERR("Spurious timeout tx state %d", qca->tx_ibs_state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
 
-	if (retransmit)
+	अगर (retransmit)
 		hci_uart_tx_wakeup(hu);
-}
+पूर्ण
 
 
-static void qca_controller_memdump_timeout(struct work_struct *work)
-{
-	struct qca_data *qca = container_of(work, struct qca_data,
-					ctrl_memdump_timeout.work);
-	struct hci_uart *hu = qca->hu;
+अटल व्योम qca_controller_memdump_समयout(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qca_data *qca = container_of(work, काष्ठा qca_data,
+					ctrl_memdump_समयout.work);
+	काष्ठा hci_uart *hu = qca->hu;
 
 	mutex_lock(&qca->hci_memdump_lock);
-	if (test_bit(QCA_MEMDUMP_COLLECTION, &qca->flags)) {
+	अगर (test_bit(QCA_MEMDUMP_COLLECTION, &qca->flags)) अणु
 		qca->memdump_state = QCA_MEMDUMP_TIMEOUT;
-		if (!test_bit(QCA_HW_ERROR_EVENT, &qca->flags)) {
+		अगर (!test_bit(QCA_HW_ERROR_EVENT, &qca->flags)) अणु
 			/* Inject hw error event to reset the device
 			 * and driver.
 			 */
 			hci_reset_dev(hu->hdev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&qca->hci_memdump_lock);
-}
+पूर्ण
 
 
 /* Initialize protocol */
-static int qca_open(struct hci_uart *hu)
-{
-	struct qca_serdev *qcadev;
-	struct qca_data *qca;
+अटल पूर्णांक qca_खोलो(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा qca_serdev *qcadev;
+	काष्ठा qca_data *qca;
 
 	BT_DBG("hu %p qca_open", hu);
 
-	if (!hci_uart_has_flow_control(hu))
-		return -EOPNOTSUPP;
+	अगर (!hci_uart_has_flow_control(hu))
+		वापस -EOPNOTSUPP;
 
-	qca = kzalloc(sizeof(struct qca_data), GFP_KERNEL);
-	if (!qca)
-		return -ENOMEM;
+	qca = kzalloc(माप(काष्ठा qca_data), GFP_KERNEL);
+	अगर (!qca)
+		वापस -ENOMEM;
 
 	skb_queue_head_init(&qca->txq);
-	skb_queue_head_init(&qca->tx_wait_q);
+	skb_queue_head_init(&qca->tx_रुको_q);
 	skb_queue_head_init(&qca->rx_memdump_q);
 	spin_lock_init(&qca->hci_ibs_lock);
 	mutex_init(&qca->hci_memdump_lock);
 	qca->workqueue = alloc_ordered_workqueue("qca_wq", 0);
-	if (!qca->workqueue) {
+	अगर (!qca->workqueue) अणु
 		BT_ERR("QCA Workqueue not initialized properly");
-		kfree(qca);
-		return -ENOMEM;
-	}
+		kमुक्त(qca);
+		वापस -ENOMEM;
+	पूर्ण
 
 	INIT_WORK(&qca->ws_awake_rx, qca_wq_awake_rx);
 	INIT_WORK(&qca->ws_awake_device, qca_wq_awake_device);
-	INIT_WORK(&qca->ws_rx_vote_off, qca_wq_serial_rx_clock_vote_off);
-	INIT_WORK(&qca->ws_tx_vote_off, qca_wq_serial_tx_clock_vote_off);
+	INIT_WORK(&qca->ws_rx_vote_off, qca_wq_serial_rx_घड़ी_vote_off);
+	INIT_WORK(&qca->ws_tx_vote_off, qca_wq_serial_tx_घड़ी_vote_off);
 	INIT_WORK(&qca->ctrl_memdump_evt, qca_controller_memdump);
-	INIT_DELAYED_WORK(&qca->ctrl_memdump_timeout,
-			  qca_controller_memdump_timeout);
-	init_waitqueue_head(&qca->suspend_wait_q);
+	INIT_DELAYED_WORK(&qca->ctrl_memdump_समयout,
+			  qca_controller_memdump_समयout);
+	init_रुकोqueue_head(&qca->suspend_रुको_q);
 
 	qca->hu = hu;
 	init_completion(&qca->drop_ev_comp);
@@ -597,45 +598,45 @@ static int qca_open(struct hci_uart *hu)
 	qca->tx_ibs_state = HCI_IBS_TX_ASLEEP;
 	qca->rx_ibs_state = HCI_IBS_RX_ASLEEP;
 
-	qca->vote_last_jif = jiffies;
+	qca->vote_last_jअगर = jअगरfies;
 
 	hu->priv = qca;
 
-	if (hu->serdev) {
+	अगर (hu->serdev) अणु
 		qcadev = serdev_device_get_drvdata(hu->serdev);
 
-		if (qca_is_wcn399x(qcadev->btsoc_type))
+		अगर (qca_is_wcn399x(qcadev->btsoc_type))
 			hu->init_speed = qcadev->init_speed;
 
-		if (qcadev->oper_speed)
+		अगर (qcadev->oper_speed)
 			hu->oper_speed = qcadev->oper_speed;
-	}
+	पूर्ण
 
-	timer_setup(&qca->wake_retrans_timer, hci_ibs_wake_retrans_timeout, 0);
+	समयr_setup(&qca->wake_retrans_समयr, hci_ibs_wake_retrans_समयout, 0);
 	qca->wake_retrans = IBS_WAKE_RETRANS_TIMEOUT_MS;
 
-	timer_setup(&qca->tx_idle_timer, hci_ibs_tx_idle_timeout, 0);
+	समयr_setup(&qca->tx_idle_समयr, hci_ibs_tx_idle_समयout, 0);
 	qca->tx_idle_delay = IBS_HOST_TX_IDLE_TIMEOUT_MS;
 
 	BT_DBG("HCI_UART_QCA open, tx_idle_delay=%u, wake_retrans=%u",
 	       qca->tx_idle_delay, qca->wake_retrans);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qca_debugfs_init(struct hci_dev *hdev)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	struct qca_data *qca = hu->priv;
-	struct dentry *ibs_dir;
+अटल व्योम qca_debugfs_init(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	काष्ठा qca_data *qca = hu->priv;
+	काष्ठा dentry *ibs_dir;
 	umode_t mode;
 
-	if (!hdev->debugfs)
-		return;
+	अगर (!hdev->debugfs)
+		वापस;
 
 	ibs_dir = debugfs_create_dir("ibs", hdev->debugfs);
 
-	/* read only */
+	/* पढ़ो only */
 	mode = 0444;
 	debugfs_create_u8("tx_ibs_state", mode, ibs_dir, &qca->tx_ibs_state);
 	debugfs_create_u8("rx_ibs_state", mode, ibs_dir, &qca->rx_ibs_state);
@@ -662,58 +663,58 @@ static void qca_debugfs_init(struct hci_dev *hdev)
 	debugfs_create_u32("vote_on_ms", mode, ibs_dir, &qca->vote_on_ms);
 	debugfs_create_u32("vote_off_ms", mode, ibs_dir, &qca->vote_off_ms);
 
-	/* read/write */
+	/* पढ़ो/ग_लिखो */
 	mode = 0644;
 	debugfs_create_u32("wake_retrans", mode, ibs_dir, &qca->wake_retrans);
 	debugfs_create_u32("tx_idle_delay", mode, ibs_dir,
 			   &qca->tx_idle_delay);
-}
+पूर्ण
 
 /* Flush protocol data */
-static int qca_flush(struct hci_uart *hu)
-{
-	struct qca_data *qca = hu->priv;
+अटल पूर्णांक qca_flush(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा qca_data *qca = hu->priv;
 
 	BT_DBG("hu %p qca flush", hu);
 
-	skb_queue_purge(&qca->tx_wait_q);
+	skb_queue_purge(&qca->tx_रुको_q);
 	skb_queue_purge(&qca->txq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Close protocol */
-static int qca_close(struct hci_uart *hu)
-{
-	struct qca_data *qca = hu->priv;
+अटल पूर्णांक qca_बंद(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा qca_data *qca = hu->priv;
 
 	BT_DBG("hu %p qca close", hu);
 
-	serial_clock_vote(HCI_IBS_VOTE_STATS_UPDATE, hu);
+	serial_घड़ी_vote(HCI_IBS_VOTE_STATS_UPDATE, hu);
 
-	skb_queue_purge(&qca->tx_wait_q);
+	skb_queue_purge(&qca->tx_रुको_q);
 	skb_queue_purge(&qca->txq);
 	skb_queue_purge(&qca->rx_memdump_q);
-	del_timer(&qca->tx_idle_timer);
-	del_timer(&qca->wake_retrans_timer);
+	del_समयr(&qca->tx_idle_समयr);
+	del_समयr(&qca->wake_retrans_समयr);
 	destroy_workqueue(qca->workqueue);
-	qca->hu = NULL;
+	qca->hu = शून्य;
 
-	kfree_skb(qca->rx_skb);
+	kमुक्त_skb(qca->rx_skb);
 
-	hu->priv = NULL;
+	hu->priv = शून्य;
 
-	kfree(qca);
+	kमुक्त(qca);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Called upon a wake-up-indication from the device.
  */
-static void device_want_to_wakeup(struct hci_uart *hu)
-{
-	unsigned long flags;
-	struct qca_data *qca = hu->priv;
+अटल व्योम device_want_to_wakeup(काष्ठा hci_uart *hu)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा qca_data *qca = hu->priv;
 
 	BT_DBG("hu %p want to wake up", hu);
 
@@ -722,50 +723,50 @@ static void device_want_to_wakeup(struct hci_uart *hu)
 	qca->ibs_recv_wakes++;
 
 	/* Don't wake the rx up when suspending. */
-	if (test_bit(QCA_SUSPENDING, &qca->flags)) {
+	अगर (test_bit(QCA_SUSPENDING, &qca->flags)) अणु
 		spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (qca->rx_ibs_state) {
-	case HCI_IBS_RX_ASLEEP:
-		/* Make sure clock is on - we may have turned clock off since
-		 * receiving the wake up indicator awake rx clock.
+	चयन (qca->rx_ibs_state) अणु
+	हाल HCI_IBS_RX_ASLEEP:
+		/* Make sure घड़ी is on - we may have turned घड़ी off since
+		 * receiving the wake up indicator awake rx घड़ी.
 		 */
 		queue_work(qca->workqueue, &qca->ws_awake_rx);
 		spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
-		return;
+		वापस;
 
-	case HCI_IBS_RX_AWAKE:
+	हाल HCI_IBS_RX_AWAKE:
 		/* Always acknowledge device wake up,
-		 * sending IBS message doesn't count as TX ON.
+		 * sending IBS message करोesn't count as TX ON.
 		 */
-		if (send_hci_ibs_cmd(HCI_IBS_WAKE_ACK, hu) < 0) {
+		अगर (send_hci_ibs_cmd(HCI_IBS_WAKE_ACK, hu) < 0) अणु
 			BT_ERR("Failed to acknowledge device wake up");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		qca->ibs_sent_wacks++;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* Any other state is illegal */
 		BT_ERR("Received HCI_IBS_WAKE_IND in rx state %d",
 		       qca->rx_ibs_state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
 
 	/* Actually send the packets */
 	hci_uart_tx_wakeup(hu);
-}
+पूर्ण
 
 /* Called upon a sleep-indication from the device.
  */
-static void device_want_to_sleep(struct hci_uart *hu)
-{
-	unsigned long flags;
-	struct qca_data *qca = hu->priv;
+अटल व्योम device_want_to_sleep(काष्ठा hci_uart *hu)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा qca_data *qca = hu->priv;
 
 	BT_DBG("hu %p want to sleep in %d state", hu, qca->rx_ibs_state);
 
@@ -773,36 +774,36 @@ static void device_want_to_sleep(struct hci_uart *hu)
 
 	qca->ibs_recv_slps++;
 
-	switch (qca->rx_ibs_state) {
-	case HCI_IBS_RX_AWAKE:
+	चयन (qca->rx_ibs_state) अणु
+	हाल HCI_IBS_RX_AWAKE:
 		/* Update state */
 		qca->rx_ibs_state = HCI_IBS_RX_ASLEEP;
-		/* Vote off rx clock under workqueue */
+		/* Vote off rx घड़ी under workqueue */
 		queue_work(qca->workqueue, &qca->ws_rx_vote_off);
-		break;
+		अवरोध;
 
-	case HCI_IBS_RX_ASLEEP:
-		break;
+	हाल HCI_IBS_RX_ASLEEP:
+		अवरोध;
 
-	default:
+	शेष:
 		/* Any other state is illegal */
 		BT_ERR("Received HCI_IBS_SLEEP_IND in rx state %d",
 		       qca->rx_ibs_state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	wake_up_interruptible(&qca->suspend_wait_q);
+	wake_up_पूर्णांकerruptible(&qca->suspend_रुको_q);
 
 	spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
-}
+पूर्ण
 
 /* Called upon wake-up-acknowledgement from the device
  */
-static void device_woke_up(struct hci_uart *hu)
-{
-	unsigned long flags, idle_delay;
-	struct qca_data *qca = hu->priv;
-	struct sk_buff *skb = NULL;
+अटल व्योम device_woke_up(काष्ठा hci_uart *hu)
+अणु
+	अचिन्हित दीर्घ flags, idle_delay;
+	काष्ठा qca_data *qca = hu->priv;
+	काष्ठा sk_buff *skb = शून्य;
 
 	BT_DBG("hu %p woke up", hu);
 
@@ -811,286 +812,286 @@ static void device_woke_up(struct hci_uart *hu)
 	qca->ibs_recv_wacks++;
 
 	/* Don't react to the wake-up-acknowledgment when suspending. */
-	if (test_bit(QCA_SUSPENDING, &qca->flags)) {
+	अगर (test_bit(QCA_SUSPENDING, &qca->flags)) अणु
 		spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (qca->tx_ibs_state) {
-	case HCI_IBS_TX_AWAKE:
-		/* Expect one if we send 2 WAKEs */
+	चयन (qca->tx_ibs_state) अणु
+	हाल HCI_IBS_TX_AWAKE:
+		/* Expect one अगर we send 2 WAKEs */
 		BT_DBG("Received HCI_IBS_WAKE_ACK in tx state %d",
 		       qca->tx_ibs_state);
-		break;
+		अवरोध;
 
-	case HCI_IBS_TX_WAKING:
+	हाल HCI_IBS_TX_WAKING:
 		/* Send pending packets */
-		while ((skb = skb_dequeue(&qca->tx_wait_q)))
+		जबतक ((skb = skb_dequeue(&qca->tx_रुको_q)))
 			skb_queue_tail(&qca->txq, skb);
 
-		/* Switch timers and change state to HCI_IBS_TX_AWAKE */
-		del_timer(&qca->wake_retrans_timer);
-		idle_delay = msecs_to_jiffies(qca->tx_idle_delay);
-		mod_timer(&qca->tx_idle_timer, jiffies + idle_delay);
+		/* Switch समयrs and change state to HCI_IBS_TX_AWAKE */
+		del_समयr(&qca->wake_retrans_समयr);
+		idle_delay = msecs_to_jअगरfies(qca->tx_idle_delay);
+		mod_समयr(&qca->tx_idle_समयr, jअगरfies + idle_delay);
 		qca->tx_ibs_state = HCI_IBS_TX_AWAKE;
-		break;
+		अवरोध;
 
-	case HCI_IBS_TX_ASLEEP:
-	default:
+	हाल HCI_IBS_TX_ASLEEP:
+	शेष:
 		BT_ERR("Received HCI_IBS_WAKE_ACK in tx state %d",
 		       qca->tx_ibs_state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
 
 	/* Actually send the packets */
 	hci_uart_tx_wakeup(hu);
-}
+पूर्ण
 
-/* Enqueue frame for transmittion (padding, crc, etc) may be called from
+/* Enqueue frame क्रम transmittion (padding, crc, etc) may be called from
  * two simultaneous tasklets.
  */
-static int qca_enqueue(struct hci_uart *hu, struct sk_buff *skb)
-{
-	unsigned long flags = 0, idle_delay;
-	struct qca_data *qca = hu->priv;
+अटल पूर्णांक qca_enqueue(काष्ठा hci_uart *hu, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित दीर्घ flags = 0, idle_delay;
+	काष्ठा qca_data *qca = hu->priv;
 
 	BT_DBG("hu %p qca enq skb %p tx_ibs_state %d", hu, skb,
 	       qca->tx_ibs_state);
 
-	if (test_bit(QCA_SSR_TRIGGERED, &qca->flags)) {
+	अगर (test_bit(QCA_SSR_TRIGGERED, &qca->flags)) अणु
 		/* As SSR is in progress, ignore the packets */
 		bt_dev_dbg(hu->hdev, "SSR is in progress");
-		kfree_skb(skb);
-		return 0;
-	}
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
 	/* Prepend skb with frame type */
-	memcpy(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
+	स_नकल(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
 
 	spin_lock_irqsave(&qca->hci_ibs_lock, flags);
 
-	/* Don't go to sleep in middle of patch download or
+	/* Don't go to sleep in middle of patch करोwnload or
 	 * Out-Of-Band(GPIOs control) sleep is selected.
 	 * Don't wake the device up when suspending.
 	 */
-	if (test_bit(QCA_IBS_DISABLED, &qca->flags) ||
-	    test_bit(QCA_SUSPENDING, &qca->flags)) {
+	अगर (test_bit(QCA_IBS_DISABLED, &qca->flags) ||
+	    test_bit(QCA_SUSPENDING, &qca->flags)) अणु
 		skb_queue_tail(&qca->txq, skb);
 		spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Act according to current state */
-	switch (qca->tx_ibs_state) {
-	case HCI_IBS_TX_AWAKE:
+	चयन (qca->tx_ibs_state) अणु
+	हाल HCI_IBS_TX_AWAKE:
 		BT_DBG("Device awake, sending normally");
 		skb_queue_tail(&qca->txq, skb);
-		idle_delay = msecs_to_jiffies(qca->tx_idle_delay);
-		mod_timer(&qca->tx_idle_timer, jiffies + idle_delay);
-		break;
+		idle_delay = msecs_to_jअगरfies(qca->tx_idle_delay);
+		mod_समयr(&qca->tx_idle_समयr, jअगरfies + idle_delay);
+		अवरोध;
 
-	case HCI_IBS_TX_ASLEEP:
+	हाल HCI_IBS_TX_ASLEEP:
 		BT_DBG("Device asleep, waking up and queueing packet");
-		/* Save packet for later */
-		skb_queue_tail(&qca->tx_wait_q, skb);
+		/* Save packet क्रम later */
+		skb_queue_tail(&qca->tx_रुको_q, skb);
 
 		qca->tx_ibs_state = HCI_IBS_TX_WAKING;
 		/* Schedule a work queue to wake up device */
 		queue_work(qca->workqueue, &qca->ws_awake_device);
-		break;
+		अवरोध;
 
-	case HCI_IBS_TX_WAKING:
+	हाल HCI_IBS_TX_WAKING:
 		BT_DBG("Device waking up, queueing packet");
-		/* Transient state; just keep packet for later */
-		skb_queue_tail(&qca->tx_wait_q, skb);
-		break;
+		/* Transient state; just keep packet क्रम later */
+		skb_queue_tail(&qca->tx_रुको_q, skb);
+		अवरोध;
 
-	default:
+	शेष:
 		BT_ERR("Illegal tx state: %d (losing packet)",
 		       qca->tx_ibs_state);
-		kfree_skb(skb);
-		break;
-	}
+		kमुक्त_skb(skb);
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qca_ibs_sleep_ind(struct hci_dev *hdev, struct sk_buff *skb)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
+अटल पूर्णांक qca_ibs_sleep_ind(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
 
 	BT_DBG("hu %p recv hci ibs cmd 0x%x", hu, HCI_IBS_SLEEP_IND);
 
 	device_want_to_sleep(hu);
 
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int qca_ibs_wake_ind(struct hci_dev *hdev, struct sk_buff *skb)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
+अटल पूर्णांक qca_ibs_wake_ind(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
 
 	BT_DBG("hu %p recv hci ibs cmd 0x%x", hu, HCI_IBS_WAKE_IND);
 
 	device_want_to_wakeup(hu);
 
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int qca_ibs_wake_ack(struct hci_dev *hdev, struct sk_buff *skb)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
+अटल पूर्णांक qca_ibs_wake_ack(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
 
 	BT_DBG("hu %p recv hci ibs cmd 0x%x", hu, HCI_IBS_WAKE_ACK);
 
 	device_woke_up(hu);
 
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int qca_recv_acl_data(struct hci_dev *hdev, struct sk_buff *skb)
-{
+अटल पूर्णांक qca_recv_acl_data(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
 	/* We receive debug logs from chip as an ACL packets.
 	 * Instead of sending the data to ACL to decode the
 	 * received data, we are pushing them to the above layers
 	 * as a diagnostic packet.
 	 */
-	if (get_unaligned_le16(skb->data) == QCA_DEBUG_HANDLE)
-		return hci_recv_diag(hdev, skb);
+	अगर (get_unaligned_le16(skb->data) == QCA_DEBUG_HANDLE)
+		वापस hci_recv_diag(hdev, skb);
 
-	return hci_recv_frame(hdev, skb);
-}
+	वापस hci_recv_frame(hdev, skb);
+पूर्ण
 
-static void qca_controller_memdump(struct work_struct *work)
-{
-	struct qca_data *qca = container_of(work, struct qca_data,
+अटल व्योम qca_controller_memdump(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qca_data *qca = container_of(work, काष्ठा qca_data,
 					    ctrl_memdump_evt);
-	struct hci_uart *hu = qca->hu;
-	struct sk_buff *skb;
-	struct qca_memdump_event_hdr *cmd_hdr;
-	struct qca_memdump_data *qca_memdump = qca->qca_memdump;
-	struct qca_dump_size *dump;
-	char *memdump_buf;
-	char nullBuff[QCA_DUMP_PACKET_SIZE] = { 0 };
+	काष्ठा hci_uart *hu = qca->hu;
+	काष्ठा sk_buff *skb;
+	काष्ठा qca_memdump_event_hdr *cmd_hdr;
+	काष्ठा qca_memdump_data *qca_memdump = qca->qca_memdump;
+	काष्ठा qca_dump_size *dump;
+	अक्षर *memdump_buf;
+	अक्षर nullBuff[QCA_DUMP_PACKET_SIZE] = अणु 0 पूर्ण;
 	u16 seq_no;
 	u32 dump_size;
 	u32 rx_size;
-	enum qca_btsoc_type soc_type = qca_soc_type(hu);
+	क्रमागत qca_btsoc_type soc_type = qca_soc_type(hu);
 
-	while ((skb = skb_dequeue(&qca->rx_memdump_q))) {
+	जबतक ((skb = skb_dequeue(&qca->rx_memdump_q))) अणु
 
 		mutex_lock(&qca->hci_memdump_lock);
-		/* Skip processing the received packets if timeout detected
+		/* Skip processing the received packets अगर समयout detected
 		 * or memdump collection completed.
 		 */
-		if (qca->memdump_state == QCA_MEMDUMP_TIMEOUT ||
-		    qca->memdump_state == QCA_MEMDUMP_COLLECTED) {
+		अगर (qca->memdump_state == QCA_MEMDUMP_TIMEOUT ||
+		    qca->memdump_state == QCA_MEMDUMP_COLLECTED) अणु
 			mutex_unlock(&qca->hci_memdump_lock);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (!qca_memdump) {
-			qca_memdump = kzalloc(sizeof(struct qca_memdump_data),
+		अगर (!qca_memdump) अणु
+			qca_memdump = kzalloc(माप(काष्ठा qca_memdump_data),
 					      GFP_ATOMIC);
-			if (!qca_memdump) {
+			अगर (!qca_memdump) अणु
 				mutex_unlock(&qca->hci_memdump_lock);
-				return;
-			}
+				वापस;
+			पूर्ण
 
 			qca->qca_memdump = qca_memdump;
-		}
+		पूर्ण
 
 		qca->memdump_state = QCA_MEMDUMP_COLLECTING;
-		cmd_hdr = (void *) skb->data;
+		cmd_hdr = (व्योम *) skb->data;
 		seq_no = __le16_to_cpu(cmd_hdr->seq_no);
-		skb_pull(skb, sizeof(struct qca_memdump_event_hdr));
+		skb_pull(skb, माप(काष्ठा qca_memdump_event_hdr));
 
-		if (!seq_no) {
+		अगर (!seq_no) अणु
 
 			/* This is the first frame of memdump packet from
 			 * the controller, Disable IBS to recevie dump
-			 * with out any interruption, ideally time required for
+			 * with out any पूर्णांकerruption, ideally समय required क्रम
 			 * the controller to send the dump is 8 seconds. let us
-			 * start timer to handle this asynchronous activity.
+			 * start समयr to handle this asynchronous activity.
 			 */
 			set_bit(QCA_IBS_DISABLED, &qca->flags);
 			set_bit(QCA_MEMDUMP_COLLECTION, &qca->flags);
-			dump = (void *) skb->data;
+			dump = (व्योम *) skb->data;
 			dump_size = __le32_to_cpu(dump->dump_size);
-			if (!(dump_size)) {
+			अगर (!(dump_size)) अणु
 				bt_dev_err(hu->hdev, "Rx invalid memdump size");
-				kfree(qca_memdump);
-				kfree_skb(skb);
-				qca->qca_memdump = NULL;
+				kमुक्त(qca_memdump);
+				kमुक्त_skb(skb);
+				qca->qca_memdump = शून्य;
 				mutex_unlock(&qca->hci_memdump_lock);
-				return;
-			}
+				वापस;
+			पूर्ण
 
 			bt_dev_info(hu->hdev, "QCA collecting dump of size:%u",
 				    dump_size);
 			queue_delayed_work(qca->workqueue,
-					   &qca->ctrl_memdump_timeout,
-					   msecs_to_jiffies(MEMDUMP_TIMEOUT_MS)
+					   &qca->ctrl_memdump_समयout,
+					   msecs_to_jअगरfies(MEMDUMP_TIMEOUT_MS)
 					  );
 
-			skb_pull(skb, sizeof(dump_size));
-			memdump_buf = vmalloc(dump_size);
+			skb_pull(skb, माप(dump_size));
+			memdump_buf = vदो_स्मृति(dump_size);
 			qca_memdump->ram_dump_size = dump_size;
 			qca_memdump->memdump_buf_head = memdump_buf;
 			qca_memdump->memdump_buf_tail = memdump_buf;
-		}
+		पूर्ण
 
 		memdump_buf = qca_memdump->memdump_buf_tail;
 
-		/* If sequence no 0 is missed then there is no point in
+		/* If sequence no 0 is missed then there is no poपूर्णांक in
 		 * accepting the other sequences.
 		 */
-		if (!memdump_buf) {
+		अगर (!memdump_buf) अणु
 			bt_dev_err(hu->hdev, "QCA: Discarding other packets");
-			kfree(qca_memdump);
-			kfree_skb(skb);
-			qca->qca_memdump = NULL;
+			kमुक्त(qca_memdump);
+			kमुक्त_skb(skb);
+			qca->qca_memdump = शून्य;
 			mutex_unlock(&qca->hci_memdump_lock);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/* There could be chance of missing some packets from
-		 * the controller. In such cases let us store the dummy
+		 * the controller. In such हालs let us store the dummy
 		 * packets in the buffer.
 		 */
-		/* For QCA6390, controller does not lost packets but
-		 * sequence number field of packet sometimes has error
-		 * bits, so skip this checking for missing packet.
+		/* For QCA6390, controller करोes not lost packets but
+		 * sequence number field of packet someबार has error
+		 * bits, so skip this checking क्रम missing packet.
 		 */
-		while ((seq_no > qca_memdump->current_seq_no + 1) &&
+		जबतक ((seq_no > qca_memdump->current_seq_no + 1) &&
 		       (soc_type != QCA_QCA6390) &&
-		       seq_no != QCA_LAST_SEQUENCE_NUM) {
+		       seq_no != QCA_LAST_SEQUENCE_NUM) अणु
 			bt_dev_err(hu->hdev, "QCA controller missed packet:%d",
 				   qca_memdump->current_seq_no);
 			rx_size = qca_memdump->received_dump;
 			rx_size += QCA_DUMP_PACKET_SIZE;
-			if (rx_size > qca_memdump->ram_dump_size) {
+			अगर (rx_size > qca_memdump->ram_dump_size) अणु
 				bt_dev_err(hu->hdev,
 					   "QCA memdump received %d, no space for missed packet",
 					   qca_memdump->received_dump);
-				break;
-			}
-			memcpy(memdump_buf, nullBuff, QCA_DUMP_PACKET_SIZE);
+				अवरोध;
+			पूर्ण
+			स_नकल(memdump_buf, nullBuff, QCA_DUMP_PACKET_SIZE);
 			memdump_buf = memdump_buf + QCA_DUMP_PACKET_SIZE;
 			qca_memdump->received_dump += QCA_DUMP_PACKET_SIZE;
 			qca_memdump->current_seq_no++;
-		}
+		पूर्ण
 
 		rx_size = qca_memdump->received_dump + skb->len;
-		if (rx_size <= qca_memdump->ram_dump_size) {
-			if ((seq_no != QCA_LAST_SEQUENCE_NUM) &&
+		अगर (rx_size <= qca_memdump->ram_dump_size) अणु
+			अगर ((seq_no != QCA_LAST_SEQUENCE_NUM) &&
 			    (seq_no != qca_memdump->current_seq_no))
 				bt_dev_err(hu->hdev,
 					   "QCA memdump unexpected packet %d",
@@ -1098,20 +1099,20 @@ static void qca_controller_memdump(struct work_struct *work)
 			bt_dev_dbg(hu->hdev,
 				   "QCA memdump packet %d with length %d",
 				   seq_no, skb->len);
-			memcpy(memdump_buf, (unsigned char *)skb->data,
+			स_नकल(memdump_buf, (अचिन्हित अक्षर *)skb->data,
 			       skb->len);
 			memdump_buf = memdump_buf + skb->len;
 			qca_memdump->memdump_buf_tail = memdump_buf;
 			qca_memdump->current_seq_no = seq_no + 1;
 			qca_memdump->received_dump += skb->len;
-		} else {
+		पूर्ण अन्यथा अणु
 			bt_dev_err(hu->hdev,
 				   "QCA memdump received %d, no space for packet %d",
 				   qca_memdump->received_dump, seq_no);
-		}
+		पूर्ण
 		qca->qca_memdump = qca_memdump;
-		kfree_skb(skb);
-		if (seq_no == QCA_LAST_SEQUENCE_NUM) {
+		kमुक्त_skb(skb);
+		अगर (seq_no == QCA_LAST_SEQUENCE_NUM) अणु
 			bt_dev_info(hu->hdev,
 				    "QCA memdump Done, received %d, total %d",
 				    qca_memdump->received_dump,
@@ -1119,571 +1120,571 @@ static void qca_controller_memdump(struct work_struct *work)
 			memdump_buf = qca_memdump->memdump_buf_head;
 			dev_coredumpv(&hu->serdev->dev, memdump_buf,
 				      qca_memdump->received_dump, GFP_KERNEL);
-			cancel_delayed_work(&qca->ctrl_memdump_timeout);
-			kfree(qca->qca_memdump);
-			qca->qca_memdump = NULL;
+			cancel_delayed_work(&qca->ctrl_memdump_समयout);
+			kमुक्त(qca->qca_memdump);
+			qca->qca_memdump = शून्य;
 			qca->memdump_state = QCA_MEMDUMP_COLLECTED;
 			clear_bit(QCA_MEMDUMP_COLLECTION, &qca->flags);
-		}
+		पूर्ण
 
 		mutex_unlock(&qca->hci_memdump_lock);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-static int qca_controller_memdump_event(struct hci_dev *hdev,
-					struct sk_buff *skb)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	struct qca_data *qca = hu->priv;
+अटल पूर्णांक qca_controller_memdump_event(काष्ठा hci_dev *hdev,
+					काष्ठा sk_buff *skb)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	काष्ठा qca_data *qca = hu->priv;
 
 	set_bit(QCA_SSR_TRIGGERED, &qca->flags);
 	skb_queue_tail(&qca->rx_memdump_q, skb);
 	queue_work(qca->workqueue, &qca->ctrl_memdump_evt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qca_recv_event(struct hci_dev *hdev, struct sk_buff *skb)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	struct qca_data *qca = hu->priv;
+अटल पूर्णांक qca_recv_event(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	काष्ठा qca_data *qca = hu->priv;
 
-	if (test_bit(QCA_DROP_VENDOR_EVENT, &qca->flags)) {
-		struct hci_event_hdr *hdr = (void *)skb->data;
+	अगर (test_bit(QCA_DROP_VENDOR_EVENT, &qca->flags)) अणु
+		काष्ठा hci_event_hdr *hdr = (व्योम *)skb->data;
 
-		/* For the WCN3990 the vendor command for a baudrate change
+		/* For the WCN3990 the venकरोr command क्रम a baudrate change
 		 * isn't sent as synchronous HCI command, because the
-		 * controller sends the corresponding vendor event with the
+		 * controller sends the corresponding venकरोr event with the
 		 * new baudrate. The event is received and properly decoded
 		 * after changing the baudrate of the host port. It needs to
-		 * be dropped, otherwise it can be misinterpreted as
-		 * response to a later firmware download command (also a
-		 * vendor command).
+		 * be dropped, otherwise it can be misपूर्णांकerpreted as
+		 * response to a later firmware करोwnload command (also a
+		 * venकरोr command).
 		 */
 
-		if (hdr->evt == HCI_EV_VENDOR)
+		अगर (hdr->evt == HCI_EV_VENDOR)
 			complete(&qca->drop_ev_comp);
 
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/* We receive chip memory dump as an event packet, With a dedicated
 	 * handler followed by a hardware error event. When this event is
-	 * received we store dump into a file before closing hci. This
+	 * received we store dump पूर्णांकo a file beक्रमe closing hci. This
 	 * dump will help in triaging the issues.
 	 */
-	if ((skb->data[0] == HCI_VENDOR_PKT) &&
+	अगर ((skb->data[0] == HCI_VENDOR_PKT) &&
 	    (get_unaligned_be16(skb->data + 2) == QCA_SSR_DUMP_HANDLE))
-		return qca_controller_memdump_event(hdev, skb);
+		वापस qca_controller_memdump_event(hdev, skb);
 
-	return hci_recv_frame(hdev, skb);
-}
+	वापस hci_recv_frame(hdev, skb);
+पूर्ण
 
-#define QCA_IBS_SLEEP_IND_EVENT \
+#घोषणा QCA_IBS_SLEEP_IND_EVENT \
 	.type = HCI_IBS_SLEEP_IND, \
 	.hlen = 0, \
 	.loff = 0, \
 	.lsize = 0, \
 	.maxlen = HCI_MAX_IBS_SIZE
 
-#define QCA_IBS_WAKE_IND_EVENT \
+#घोषणा QCA_IBS_WAKE_IND_EVENT \
 	.type = HCI_IBS_WAKE_IND, \
 	.hlen = 0, \
 	.loff = 0, \
 	.lsize = 0, \
 	.maxlen = HCI_MAX_IBS_SIZE
 
-#define QCA_IBS_WAKE_ACK_EVENT \
+#घोषणा QCA_IBS_WAKE_ACK_EVENT \
 	.type = HCI_IBS_WAKE_ACK, \
 	.hlen = 0, \
 	.loff = 0, \
 	.lsize = 0, \
 	.maxlen = HCI_MAX_IBS_SIZE
 
-static const struct h4_recv_pkt qca_recv_pkts[] = {
-	{ H4_RECV_ACL,             .recv = qca_recv_acl_data },
-	{ H4_RECV_SCO,             .recv = hci_recv_frame    },
-	{ H4_RECV_EVENT,           .recv = qca_recv_event    },
-	{ QCA_IBS_WAKE_IND_EVENT,  .recv = qca_ibs_wake_ind  },
-	{ QCA_IBS_WAKE_ACK_EVENT,  .recv = qca_ibs_wake_ack  },
-	{ QCA_IBS_SLEEP_IND_EVENT, .recv = qca_ibs_sleep_ind },
-};
+अटल स्थिर काष्ठा h4_recv_pkt qca_recv_pkts[] = अणु
+	अणु H4_RECV_ACL,             .recv = qca_recv_acl_data पूर्ण,
+	अणु H4_RECV_SCO,             .recv = hci_recv_frame    पूर्ण,
+	अणु H4_RECV_EVENT,           .recv = qca_recv_event    पूर्ण,
+	अणु QCA_IBS_WAKE_IND_EVENT,  .recv = qca_ibs_wake_ind  पूर्ण,
+	अणु QCA_IBS_WAKE_ACK_EVENT,  .recv = qca_ibs_wake_ack  पूर्ण,
+	अणु QCA_IBS_SLEEP_IND_EVENT, .recv = qca_ibs_sleep_ind पूर्ण,
+पूर्ण;
 
-static int qca_recv(struct hci_uart *hu, const void *data, int count)
-{
-	struct qca_data *qca = hu->priv;
+अटल पूर्णांक qca_recv(काष्ठा hci_uart *hu, स्थिर व्योम *data, पूर्णांक count)
+अणु
+	काष्ठा qca_data *qca = hu->priv;
 
-	if (!test_bit(HCI_UART_REGISTERED, &hu->flags))
-		return -EUNATCH;
+	अगर (!test_bit(HCI_UART_REGISTERED, &hu->flags))
+		वापस -EUNATCH;
 
 	qca->rx_skb = h4_recv_buf(hu->hdev, qca->rx_skb, data, count,
 				  qca_recv_pkts, ARRAY_SIZE(qca_recv_pkts));
-	if (IS_ERR(qca->rx_skb)) {
-		int err = PTR_ERR(qca->rx_skb);
+	अगर (IS_ERR(qca->rx_skb)) अणु
+		पूर्णांक err = PTR_ERR(qca->rx_skb);
 		bt_dev_err(hu->hdev, "Frame reassembly failed (%d)", err);
-		qca->rx_skb = NULL;
-		return err;
-	}
+		qca->rx_skb = शून्य;
+		वापस err;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct sk_buff *qca_dequeue(struct hci_uart *hu)
-{
-	struct qca_data *qca = hu->priv;
+अटल काष्ठा sk_buff *qca_dequeue(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा qca_data *qca = hu->priv;
 
-	return skb_dequeue(&qca->txq);
-}
+	वापस skb_dequeue(&qca->txq);
+पूर्ण
 
-static uint8_t qca_get_baudrate_value(int speed)
-{
-	switch (speed) {
-	case 9600:
-		return QCA_BAUDRATE_9600;
-	case 19200:
-		return QCA_BAUDRATE_19200;
-	case 38400:
-		return QCA_BAUDRATE_38400;
-	case 57600:
-		return QCA_BAUDRATE_57600;
-	case 115200:
-		return QCA_BAUDRATE_115200;
-	case 230400:
-		return QCA_BAUDRATE_230400;
-	case 460800:
-		return QCA_BAUDRATE_460800;
-	case 500000:
-		return QCA_BAUDRATE_500000;
-	case 921600:
-		return QCA_BAUDRATE_921600;
-	case 1000000:
-		return QCA_BAUDRATE_1000000;
-	case 2000000:
-		return QCA_BAUDRATE_2000000;
-	case 3000000:
-		return QCA_BAUDRATE_3000000;
-	case 3200000:
-		return QCA_BAUDRATE_3200000;
-	case 3500000:
-		return QCA_BAUDRATE_3500000;
-	default:
-		return QCA_BAUDRATE_115200;
-	}
-}
+अटल uपूर्णांक8_t qca_get_baudrate_value(पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल 9600:
+		वापस QCA_BAUDRATE_9600;
+	हाल 19200:
+		वापस QCA_BAUDRATE_19200;
+	हाल 38400:
+		वापस QCA_BAUDRATE_38400;
+	हाल 57600:
+		वापस QCA_BAUDRATE_57600;
+	हाल 115200:
+		वापस QCA_BAUDRATE_115200;
+	हाल 230400:
+		वापस QCA_BAUDRATE_230400;
+	हाल 460800:
+		वापस QCA_BAUDRATE_460800;
+	हाल 500000:
+		वापस QCA_BAUDRATE_500000;
+	हाल 921600:
+		वापस QCA_BAUDRATE_921600;
+	हाल 1000000:
+		वापस QCA_BAUDRATE_1000000;
+	हाल 2000000:
+		वापस QCA_BAUDRATE_2000000;
+	हाल 3000000:
+		वापस QCA_BAUDRATE_3000000;
+	हाल 3200000:
+		वापस QCA_BAUDRATE_3200000;
+	हाल 3500000:
+		वापस QCA_BAUDRATE_3500000;
+	शेष:
+		वापस QCA_BAUDRATE_115200;
+	पूर्ण
+पूर्ण
 
-static int qca_set_baudrate(struct hci_dev *hdev, uint8_t baudrate)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	struct qca_data *qca = hu->priv;
-	struct sk_buff *skb;
-	u8 cmd[] = { 0x01, 0x48, 0xFC, 0x01, 0x00 };
+अटल पूर्णांक qca_set_baudrate(काष्ठा hci_dev *hdev, uपूर्णांक8_t baudrate)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	काष्ठा qca_data *qca = hu->priv;
+	काष्ठा sk_buff *skb;
+	u8 cmd[] = अणु 0x01, 0x48, 0xFC, 0x01, 0x00 पूर्ण;
 
-	if (baudrate > QCA_BAUDRATE_3200000)
-		return -EINVAL;
+	अगर (baudrate > QCA_BAUDRATE_3200000)
+		वापस -EINVAL;
 
 	cmd[4] = baudrate;
 
-	skb = bt_skb_alloc(sizeof(cmd), GFP_KERNEL);
-	if (!skb) {
+	skb = bt_skb_alloc(माप(cmd), GFP_KERNEL);
+	अगर (!skb) अणु
 		bt_dev_err(hdev, "Failed to allocate baudrate packet");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Assign commands to change baudrate and packet type. */
-	skb_put_data(skb, cmd, sizeof(cmd));
+	skb_put_data(skb, cmd, माप(cmd));
 	hci_skb_pkt_type(skb) = HCI_COMMAND_PKT;
 
 	skb_queue_tail(&qca->txq, skb);
 	hci_uart_tx_wakeup(hu);
 
-	/* Wait for the baudrate change request to be sent */
+	/* Wait क्रम the baudrate change request to be sent */
 
-	while (!skb_queue_empty(&qca->txq))
+	जबतक (!skb_queue_empty(&qca->txq))
 		usleep_range(100, 200);
 
-	if (hu->serdev)
-		serdev_device_wait_until_sent(hu->serdev,
-		      msecs_to_jiffies(CMD_TRANS_TIMEOUT_MS));
+	अगर (hu->serdev)
+		serdev_device_रुको_until_sent(hu->serdev,
+		      msecs_to_jअगरfies(CMD_TRANS_TIMEOUT_MS));
 
-	/* Give the controller time to process the request */
-	if (qca_is_wcn399x(qca_soc_type(hu)))
+	/* Give the controller समय to process the request */
+	अगर (qca_is_wcn399x(qca_soc_type(hu)))
 		usleep_range(1000, 10000);
-	else
+	अन्यथा
 		msleep(300);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void host_set_baudrate(struct hci_uart *hu, unsigned int speed)
-{
-	if (hu->serdev)
+अटल अंतरभूत व्योम host_set_baudrate(काष्ठा hci_uart *hu, अचिन्हित पूर्णांक speed)
+अणु
+	अगर (hu->serdev)
 		serdev_device_set_baudrate(hu->serdev, speed);
-	else
+	अन्यथा
 		hci_uart_set_baudrate(hu, speed);
-}
+पूर्ण
 
-static int qca_send_power_pulse(struct hci_uart *hu, bool on)
-{
-	int ret;
-	int timeout = msecs_to_jiffies(CMD_TRANS_TIMEOUT_MS);
+अटल पूर्णांक qca_send_घातer_pulse(काष्ठा hci_uart *hu, bool on)
+अणु
+	पूर्णांक ret;
+	पूर्णांक समयout = msecs_to_jअगरfies(CMD_TRANS_TIMEOUT_MS);
 	u8 cmd = on ? QCA_WCN3990_POWERON_PULSE : QCA_WCN3990_POWEROFF_PULSE;
 
-	/* These power pulses are single byte command which are sent
-	 * at required baudrate to wcn3990. On wcn3990, we have an external
-	 * circuit at Tx pin which decodes the pulse sent at specific baudrate.
-	 * For example, wcn3990 supports RF COEX antenna for both Wi-Fi/BT
-	 * and also we use the same power inputs to turn on and off for
-	 * Wi-Fi/BT. Powering up the power sources will not enable BT, until
-	 * we send a power on pulse at 115200 bps. This algorithm will help to
-	 * save power. Disabling hardware flow control is mandatory while
-	 * sending power pulses to SoC.
+	/* These घातer pulses are single byte command which are sent
+	 * at required baudrate to wcn3990. On wcn3990, we have an बाह्यal
+	 * circuit at Tx pin which decodes the pulse sent at specअगरic baudrate.
+	 * For example, wcn3990 supports RF COEX antenna क्रम both Wi-Fi/BT
+	 * and also we use the same घातer inमाला_दो to turn on and off क्रम
+	 * Wi-Fi/BT. Powering up the घातer sources will not enable BT, until
+	 * we send a घातer on pulse at 115200 bps. This algorithm will help to
+	 * save घातer. Disabling hardware flow control is mandatory जबतक
+	 * sending घातer pulses to SoC.
 	 */
 	bt_dev_dbg(hu->hdev, "sending power pulse %02x to controller", cmd);
 
-	serdev_device_write_flush(hu->serdev);
+	serdev_device_ग_लिखो_flush(hu->serdev);
 	hci_uart_set_flow_control(hu, true);
-	ret = serdev_device_write_buf(hu->serdev, &cmd, sizeof(cmd));
-	if (ret < 0) {
+	ret = serdev_device_ग_लिखो_buf(hu->serdev, &cmd, माप(cmd));
+	अगर (ret < 0) अणु
 		bt_dev_err(hu->hdev, "failed to send power pulse %02x", cmd);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	serdev_device_wait_until_sent(hu->serdev, timeout);
+	serdev_device_रुको_until_sent(hu->serdev, समयout);
 	hci_uart_set_flow_control(hu, false);
 
-	/* Give to controller time to boot/shutdown */
-	if (on)
+	/* Give to controller समय to boot/shutकरोwn */
+	अगर (on)
 		msleep(100);
-	else
+	अन्यथा
 		usleep_range(1000, 10000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int qca_get_speed(struct hci_uart *hu,
-				  enum qca_speed_type speed_type)
-{
-	unsigned int speed = 0;
+अटल अचिन्हित पूर्णांक qca_get_speed(काष्ठा hci_uart *hu,
+				  क्रमागत qca_speed_type speed_type)
+अणु
+	अचिन्हित पूर्णांक speed = 0;
 
-	if (speed_type == QCA_INIT_SPEED) {
-		if (hu->init_speed)
+	अगर (speed_type == QCA_INIT_SPEED) अणु
+		अगर (hu->init_speed)
 			speed = hu->init_speed;
-		else if (hu->proto->init_speed)
+		अन्यथा अगर (hu->proto->init_speed)
 			speed = hu->proto->init_speed;
-	} else {
-		if (hu->oper_speed)
+	पूर्ण अन्यथा अणु
+		अगर (hu->oper_speed)
 			speed = hu->oper_speed;
-		else if (hu->proto->oper_speed)
+		अन्यथा अगर (hu->proto->oper_speed)
 			speed = hu->proto->oper_speed;
-	}
+	पूर्ण
 
-	return speed;
-}
+	वापस speed;
+पूर्ण
 
-static int qca_check_speeds(struct hci_uart *hu)
-{
-	if (qca_is_wcn399x(qca_soc_type(hu))) {
-		if (!qca_get_speed(hu, QCA_INIT_SPEED) &&
+अटल पूर्णांक qca_check_speeds(काष्ठा hci_uart *hu)
+अणु
+	अगर (qca_is_wcn399x(qca_soc_type(hu))) अणु
+		अगर (!qca_get_speed(hu, QCA_INIT_SPEED) &&
 		    !qca_get_speed(hu, QCA_OPER_SPEED))
-			return -EINVAL;
-	} else {
-		if (!qca_get_speed(hu, QCA_INIT_SPEED) ||
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (!qca_get_speed(hu, QCA_INIT_SPEED) ||
 		    !qca_get_speed(hu, QCA_OPER_SPEED))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qca_set_speed(struct hci_uart *hu, enum qca_speed_type speed_type)
-{
-	unsigned int speed, qca_baudrate;
-	struct qca_data *qca = hu->priv;
-	int ret = 0;
+अटल पूर्णांक qca_set_speed(काष्ठा hci_uart *hu, क्रमागत qca_speed_type speed_type)
+अणु
+	अचिन्हित पूर्णांक speed, qca_baudrate;
+	काष्ठा qca_data *qca = hu->priv;
+	पूर्णांक ret = 0;
 
-	if (speed_type == QCA_INIT_SPEED) {
+	अगर (speed_type == QCA_INIT_SPEED) अणु
 		speed = qca_get_speed(hu, QCA_INIT_SPEED);
-		if (speed)
+		अगर (speed)
 			host_set_baudrate(hu, speed);
-	} else {
-		enum qca_btsoc_type soc_type = qca_soc_type(hu);
+	पूर्ण अन्यथा अणु
+		क्रमागत qca_btsoc_type soc_type = qca_soc_type(hu);
 
 		speed = qca_get_speed(hu, QCA_OPER_SPEED);
-		if (!speed)
-			return 0;
+		अगर (!speed)
+			वापस 0;
 
-		/* Disable flow control for wcn3990 to deassert RTS while
+		/* Disable flow control क्रम wcn3990 to deनिश्चित RTS जबतक
 		 * changing the baudrate of chip and host.
 		 */
-		if (qca_is_wcn399x(soc_type))
+		अगर (qca_is_wcn399x(soc_type))
 			hci_uart_set_flow_control(hu, true);
 
-		if (soc_type == QCA_WCN3990) {
+		अगर (soc_type == QCA_WCN3990) अणु
 			reinit_completion(&qca->drop_ev_comp);
 			set_bit(QCA_DROP_VENDOR_EVENT, &qca->flags);
-		}
+		पूर्ण
 
 		qca_baudrate = qca_get_baudrate_value(speed);
 		bt_dev_dbg(hu->hdev, "Set UART speed to %d", speed);
 		ret = qca_set_baudrate(hu->hdev, qca_baudrate);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
 		host_set_baudrate(hu, speed);
 
 error:
-		if (qca_is_wcn399x(soc_type))
+		अगर (qca_is_wcn399x(soc_type))
 			hci_uart_set_flow_control(hu, false);
 
-		if (soc_type == QCA_WCN3990) {
-			/* Wait for the controller to send the vendor event
-			 * for the baudrate change command.
+		अगर (soc_type == QCA_WCN3990) अणु
+			/* Wait क्रम the controller to send the venकरोr event
+			 * क्रम the baudrate change command.
 			 */
-			if (!wait_for_completion_timeout(&qca->drop_ev_comp,
-						 msecs_to_jiffies(100))) {
+			अगर (!रुको_क्रम_completion_समयout(&qca->drop_ev_comp,
+						 msecs_to_jअगरfies(100))) अणु
 				bt_dev_err(hu->hdev,
 					   "Failed to change controller baudrate\n");
 				ret = -ETIMEDOUT;
-			}
+			पूर्ण
 
 			clear_bit(QCA_DROP_VENDOR_EVENT, &qca->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qca_send_crashbuffer(struct hci_uart *hu)
-{
-	struct qca_data *qca = hu->priv;
-	struct sk_buff *skb;
+अटल पूर्णांक qca_send_crashbuffer(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा qca_data *qca = hu->priv;
+	काष्ठा sk_buff *skb;
 
 	skb = bt_skb_alloc(QCA_CRASHBYTE_PACKET_LEN, GFP_KERNEL);
-	if (!skb) {
+	अगर (!skb) अणु
 		bt_dev_err(hu->hdev, "Failed to allocate memory for skb packet");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* We forcefully crash the controller, by sending 0xfb byte for
-	 * 1024 times. We also might have chance of losing data, To be
+	/* We क्रमcefully crash the controller, by sending 0xfb byte क्रम
+	 * 1024 बार. We also might have chance of losing data, To be
 	 * on safer side we send 1096 bytes to the SoC.
 	 */
-	memset(skb_put(skb, QCA_CRASHBYTE_PACKET_LEN), QCA_MEMDUMP_BYTE,
+	स_रखो(skb_put(skb, QCA_CRASHBYTE_PACKET_LEN), QCA_MEMDUMP_BYTE,
 	       QCA_CRASHBYTE_PACKET_LEN);
 	hci_skb_pkt_type(skb) = HCI_COMMAND_PKT;
 	bt_dev_info(hu->hdev, "crash the soc to collect controller dump");
 	skb_queue_tail(&qca->txq, skb);
 	hci_uart_tx_wakeup(hu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qca_wait_for_dump_collection(struct hci_dev *hdev)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	struct qca_data *qca = hu->priv;
+अटल व्योम qca_रुको_क्रम_dump_collection(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	काष्ठा qca_data *qca = hu->priv;
 
-	wait_on_bit_timeout(&qca->flags, QCA_MEMDUMP_COLLECTION,
+	रुको_on_bit_समयout(&qca->flags, QCA_MEMDUMP_COLLECTION,
 			    TASK_UNINTERRUPTIBLE, MEMDUMP_TIMEOUT_MS);
 
 	clear_bit(QCA_MEMDUMP_COLLECTION, &qca->flags);
-}
+पूर्ण
 
-static void qca_hw_error(struct hci_dev *hdev, u8 code)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	struct qca_data *qca = hu->priv;
+अटल व्योम qca_hw_error(काष्ठा hci_dev *hdev, u8 code)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	काष्ठा qca_data *qca = hu->priv;
 
 	set_bit(QCA_SSR_TRIGGERED, &qca->flags);
 	set_bit(QCA_HW_ERROR_EVENT, &qca->flags);
 	bt_dev_info(hdev, "mem_dump_status: %d", qca->memdump_state);
 
-	if (qca->memdump_state == QCA_MEMDUMP_IDLE) {
-		/* If hardware error event received for other than QCA
+	अगर (qca->memdump_state == QCA_MEMDUMP_IDLE) अणु
+		/* If hardware error event received क्रम other than QCA
 		 * soc memory dump event, then we need to crash the SOC
-		 * and wait here for 8 seconds to get the dump packets.
-		 * This will block main thread to be on hold until we
+		 * and रुको here क्रम 8 seconds to get the dump packets.
+		 * This will block मुख्य thपढ़ो to be on hold until we
 		 * collect dump.
 		 */
 		set_bit(QCA_MEMDUMP_COLLECTION, &qca->flags);
 		qca_send_crashbuffer(hu);
-		qca_wait_for_dump_collection(hdev);
-	} else if (qca->memdump_state == QCA_MEMDUMP_COLLECTING) {
-		/* Let us wait here until memory dump collected or
-		 * memory dump timer expired.
+		qca_रुको_क्रम_dump_collection(hdev);
+	पूर्ण अन्यथा अगर (qca->memdump_state == QCA_MEMDUMP_COLLECTING) अणु
+		/* Let us रुको here until memory dump collected or
+		 * memory dump समयr expired.
 		 */
 		bt_dev_info(hdev, "waiting for dump to complete");
-		qca_wait_for_dump_collection(hdev);
-	}
+		qca_रुको_क्रम_dump_collection(hdev);
+	पूर्ण
 
 	mutex_lock(&qca->hci_memdump_lock);
-	if (qca->memdump_state != QCA_MEMDUMP_COLLECTED) {
+	अगर (qca->memdump_state != QCA_MEMDUMP_COLLECTED) अणु
 		bt_dev_err(hu->hdev, "clearing allocated memory due to memdump timeout");
-		if (qca->qca_memdump) {
-			vfree(qca->qca_memdump->memdump_buf_head);
-			kfree(qca->qca_memdump);
-			qca->qca_memdump = NULL;
-		}
+		अगर (qca->qca_memdump) अणु
+			vमुक्त(qca->qca_memdump->memdump_buf_head);
+			kमुक्त(qca->qca_memdump);
+			qca->qca_memdump = शून्य;
+		पूर्ण
 		qca->memdump_state = QCA_MEMDUMP_TIMEOUT;
-		cancel_delayed_work(&qca->ctrl_memdump_timeout);
-	}
+		cancel_delayed_work(&qca->ctrl_memdump_समयout);
+	पूर्ण
 	mutex_unlock(&qca->hci_memdump_lock);
 
-	if (qca->memdump_state == QCA_MEMDUMP_TIMEOUT ||
-	    qca->memdump_state == QCA_MEMDUMP_COLLECTED) {
+	अगर (qca->memdump_state == QCA_MEMDUMP_TIMEOUT ||
+	    qca->memdump_state == QCA_MEMDUMP_COLLECTED) अणु
 		cancel_work_sync(&qca->ctrl_memdump_evt);
 		skb_queue_purge(&qca->rx_memdump_q);
-	}
+	पूर्ण
 
 	clear_bit(QCA_HW_ERROR_EVENT, &qca->flags);
-}
+पूर्ण
 
-static void qca_cmd_timeout(struct hci_dev *hdev)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	struct qca_data *qca = hu->priv;
+अटल व्योम qca_cmd_समयout(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	काष्ठा qca_data *qca = hu->priv;
 
 	set_bit(QCA_SSR_TRIGGERED, &qca->flags);
-	if (qca->memdump_state == QCA_MEMDUMP_IDLE) {
+	अगर (qca->memdump_state == QCA_MEMDUMP_IDLE) अणु
 		set_bit(QCA_MEMDUMP_COLLECTION, &qca->flags);
 		qca_send_crashbuffer(hu);
-		qca_wait_for_dump_collection(hdev);
-	} else if (qca->memdump_state == QCA_MEMDUMP_COLLECTING) {
-		/* Let us wait here until memory dump collected or
-		 * memory dump timer expired.
+		qca_रुको_क्रम_dump_collection(hdev);
+	पूर्ण अन्यथा अगर (qca->memdump_state == QCA_MEMDUMP_COLLECTING) अणु
+		/* Let us रुको here until memory dump collected or
+		 * memory dump समयr expired.
 		 */
 		bt_dev_info(hdev, "waiting for dump to complete");
-		qca_wait_for_dump_collection(hdev);
-	}
+		qca_रुको_क्रम_dump_collection(hdev);
+	पूर्ण
 
 	mutex_lock(&qca->hci_memdump_lock);
-	if (qca->memdump_state != QCA_MEMDUMP_COLLECTED) {
+	अगर (qca->memdump_state != QCA_MEMDUMP_COLLECTED) अणु
 		qca->memdump_state = QCA_MEMDUMP_TIMEOUT;
-		if (!test_bit(QCA_HW_ERROR_EVENT, &qca->flags)) {
+		अगर (!test_bit(QCA_HW_ERROR_EVENT, &qca->flags)) अणु
 			/* Inject hw error event to reset the device
 			 * and driver.
 			 */
 			hci_reset_dev(hu->hdev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&qca->hci_memdump_lock);
-}
+पूर्ण
 
-static bool qca_prevent_wake(struct hci_dev *hdev)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
+अटल bool qca_prevent_wake(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
 	bool wakeup;
 
-	/* UART driver handles the interrupt from BT SoC.So we need to use
+	/* UART driver handles the पूर्णांकerrupt from BT SoC.So we need to use
 	 * device handle of UART driver to get the status of device may wakeup.
 	 */
 	wakeup = device_may_wakeup(hu->serdev->ctrl->dev.parent);
 	bt_dev_dbg(hu->hdev, "wakeup status : %d", wakeup);
 
-	return !wakeup;
-}
+	वापस !wakeup;
+पूर्ण
 
-static int qca_wcn3990_init(struct hci_uart *hu)
-{
-	struct qca_serdev *qcadev;
-	int ret;
+अटल पूर्णांक qca_wcn3990_init(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा qca_serdev *qcadev;
+	पूर्णांक ret;
 
-	/* Check for vregs status, may be hci down has turned
+	/* Check क्रम vregs status, may be hci करोwn has turned
 	 * off the voltage regulator.
 	 */
 	qcadev = serdev_device_get_drvdata(hu->serdev);
-	if (!qcadev->bt_power->vregs_on) {
-		serdev_device_close(hu->serdev);
+	अगर (!qcadev->bt_घातer->vregs_on) अणु
+		serdev_device_बंद(hu->serdev);
 		ret = qca_regulator_enable(qcadev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = serdev_device_open(hu->serdev);
-		if (ret) {
+		ret = serdev_device_खोलो(hu->serdev);
+		अगर (ret) अणु
 			bt_dev_err(hu->hdev, "failed to open port");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* Forcefully enable wcn3990 to enter in to boot mode. */
 	host_set_baudrate(hu, 2400);
-	ret = qca_send_power_pulse(hu, false);
-	if (ret)
-		return ret;
+	ret = qca_send_घातer_pulse(hu, false);
+	अगर (ret)
+		वापस ret;
 
 	qca_set_speed(hu, QCA_INIT_SPEED);
-	ret = qca_send_power_pulse(hu, true);
-	if (ret)
-		return ret;
+	ret = qca_send_घातer_pulse(hu, true);
+	अगर (ret)
+		वापस ret;
 
-	/* Now the device is in ready state to communicate with host.
-	 * To sync host with device we need to reopen port.
+	/* Now the device is in पढ़ोy state to communicate with host.
+	 * To sync host with device we need to reखोलो port.
 	 * Without this, we will have RTS and CTS synchronization
 	 * issues.
 	 */
-	serdev_device_close(hu->serdev);
-	ret = serdev_device_open(hu->serdev);
-	if (ret) {
+	serdev_device_बंद(hu->serdev);
+	ret = serdev_device_खोलो(hu->serdev);
+	अगर (ret) अणु
 		bt_dev_err(hu->hdev, "failed to open port");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	hci_uart_set_flow_control(hu, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qca_power_on(struct hci_dev *hdev)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	enum qca_btsoc_type soc_type = qca_soc_type(hu);
-	struct qca_serdev *qcadev;
-	struct qca_data *qca = hu->priv;
-	int ret = 0;
+अटल पूर्णांक qca_घातer_on(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	क्रमागत qca_btsoc_type soc_type = qca_soc_type(hu);
+	काष्ठा qca_serdev *qcadev;
+	काष्ठा qca_data *qca = hu->priv;
+	पूर्णांक ret = 0;
 
-	/* Non-serdev device usually is powered by external power
-	 * and don't need additional action in driver for power on
+	/* Non-serdev device usually is घातered by बाह्यal घातer
+	 * and करोn't need additional action in driver क्रम घातer on
 	 */
-	if (!hu->serdev)
-		return 0;
+	अगर (!hu->serdev)
+		वापस 0;
 
-	if (qca_is_wcn399x(soc_type)) {
+	अगर (qca_is_wcn399x(soc_type)) अणु
 		ret = qca_wcn3990_init(hu);
-	} else {
+	पूर्ण अन्यथा अणु
 		qcadev = serdev_device_get_drvdata(hu->serdev);
-		if (qcadev->bt_en) {
+		अगर (qcadev->bt_en) अणु
 			gpiod_set_value_cansleep(qcadev->bt_en, 1);
-			/* Controller needs time to bootup. */
+			/* Controller needs समय to bootup. */
 			msleep(150);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	clear_bit(QCA_BT_OFF, &qca->flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qca_setup(struct hci_uart *hu)
-{
-	struct hci_dev *hdev = hu->hdev;
-	struct qca_data *qca = hu->priv;
-	unsigned int speed, qca_baudrate = QCA_BAUDRATE_115200;
-	unsigned int retries = 0;
-	enum qca_btsoc_type soc_type = qca_soc_type(hu);
-	const char *firmware_name = qca_get_firmware_name(hu);
-	int ret;
-	struct qca_btsoc_version ver;
+अटल पूर्णांक qca_setup(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा hci_dev *hdev = hu->hdev;
+	काष्ठा qca_data *qca = hu->priv;
+	अचिन्हित पूर्णांक speed, qca_baudrate = QCA_BAUDRATE_115200;
+	अचिन्हित पूर्णांक retries = 0;
+	क्रमागत qca_btsoc_type soc_type = qca_soc_type(hu);
+	स्थिर अक्षर *firmware_name = qca_get_firmware_name(hu);
+	पूर्णांक ret;
+	काष्ठा qca_btsoc_version ver;
 
 	ret = qca_check_speeds(hu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	clear_bit(QCA_ROM_FW, &qca->flags);
-	/* Patch downloading has to be done without IBS mode */
+	/* Patch करोwnloading has to be करोne without IBS mode */
 	set_bit(QCA_IBS_DISABLED, &qca->flags);
 
-	/* Enable controller to do both LE scan and BR/EDR inquiry
+	/* Enable controller to करो both LE scan and BR/EDR inquiry
 	 * simultaneously.
 	 */
 	set_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY, &hdev->quirks);
@@ -1694,151 +1695,151 @@ static int qca_setup(struct hci_uart *hu)
 	qca->memdump_state = QCA_MEMDUMP_IDLE;
 
 retry:
-	ret = qca_power_on(hdev);
-	if (ret)
-		goto out;
+	ret = qca_घातer_on(hdev);
+	अगर (ret)
+		जाओ out;
 
 	clear_bit(QCA_SSR_TRIGGERED, &qca->flags);
 
-	if (qca_is_wcn399x(soc_type)) {
+	अगर (qca_is_wcn399x(soc_type)) अणु
 		set_bit(HCI_QUIRK_USE_BDADDR_PROPERTY, &hdev->quirks);
 
-		ret = qca_read_soc_version(hdev, &ver, soc_type);
-		if (ret)
-			goto out;
-	} else {
+		ret = qca_पढ़ो_soc_version(hdev, &ver, soc_type);
+		अगर (ret)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		qca_set_speed(hu, QCA_INIT_SPEED);
-	}
+	पूर्ण
 
-	/* Setup user speed if needed */
+	/* Setup user speed अगर needed */
 	speed = qca_get_speed(hu, QCA_OPER_SPEED);
-	if (speed) {
+	अगर (speed) अणु
 		ret = qca_set_speed(hu, QCA_OPER_SPEED);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		qca_baudrate = qca_get_baudrate_value(speed);
-	}
+	पूर्ण
 
-	if (!qca_is_wcn399x(soc_type)) {
-		/* Get QCA version information */
-		ret = qca_read_soc_version(hdev, &ver, soc_type);
-		if (ret)
-			goto out;
-	}
+	अगर (!qca_is_wcn399x(soc_type)) अणु
+		/* Get QCA version inक्रमmation */
+		ret = qca_पढ़ो_soc_version(hdev, &ver, soc_type);
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	/* Setup patch / NVM configurations */
 	ret = qca_uart_setup(hdev, qca_baudrate, soc_type, ver,
 			firmware_name);
-	if (!ret) {
+	अगर (!ret) अणु
 		clear_bit(QCA_IBS_DISABLED, &qca->flags);
 		qca_debugfs_init(hdev);
 		hu->hdev->hw_error = qca_hw_error;
-		hu->hdev->cmd_timeout = qca_cmd_timeout;
+		hu->hdev->cmd_समयout = qca_cmd_समयout;
 		hu->hdev->prevent_wake = qca_prevent_wake;
-	} else if (ret == -ENOENT) {
+	पूर्ण अन्यथा अगर (ret == -ENOENT) अणु
 		/* No patch/nvm-config found, run with original fw/config */
 		set_bit(QCA_ROM_FW, &qca->flags);
 		ret = 0;
-	} else if (ret == -EAGAIN) {
+	पूर्ण अन्यथा अगर (ret == -EAGAIN) अणु
 		/*
-		 * Userspace firmware loader will return -EAGAIN in case no
+		 * Userspace firmware loader will वापस -EAGAIN in हाल no
 		 * patch/nvm-config is found, so run with original fw/config.
 		 */
 		set_bit(QCA_ROM_FW, &qca->flags);
 		ret = 0;
-	}
+	पूर्ण
 
 out:
-	if (ret && retries < MAX_INIT_RETRIES) {
+	अगर (ret && retries < MAX_INIT_RETRIES) अणु
 		bt_dev_warn(hdev, "Retry BT power ON:%d", retries);
-		qca_power_shutdown(hu);
-		if (hu->serdev) {
-			serdev_device_close(hu->serdev);
-			ret = serdev_device_open(hu->serdev);
-			if (ret) {
+		qca_घातer_shutकरोwn(hu);
+		अगर (hu->serdev) अणु
+			serdev_device_बंद(hu->serdev);
+			ret = serdev_device_खोलो(hu->serdev);
+			अगर (ret) अणु
 				bt_dev_err(hdev, "failed to open port");
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 		retries++;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	/* Setup bdaddr */
-	if (soc_type == QCA_ROME)
+	अगर (soc_type == QCA_ROME)
 		hu->hdev->set_bdaddr = qca_set_bdaddr_rome;
-	else
+	अन्यथा
 		hu->hdev->set_bdaddr = qca_set_bdaddr;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct hci_uart_proto qca_proto = {
+अटल स्थिर काष्ठा hci_uart_proto qca_proto = अणु
 	.id		= HCI_UART_QCA,
 	.name		= "QCA",
 	.manufacturer	= 29,
 	.init_speed	= 115200,
 	.oper_speed	= 3000000,
-	.open		= qca_open,
-	.close		= qca_close,
+	.खोलो		= qca_खोलो,
+	.बंद		= qca_बंद,
 	.flush		= qca_flush,
 	.setup		= qca_setup,
 	.recv		= qca_recv,
 	.enqueue	= qca_enqueue,
 	.dequeue	= qca_dequeue,
-};
+पूर्ण;
 
-static const struct qca_device_data qca_soc_data_wcn3990 = {
+अटल स्थिर काष्ठा qca_device_data qca_soc_data_wcn3990 = अणु
 	.soc_type = QCA_WCN3990,
-	.vregs = (struct qca_vreg []) {
-		{ "vddio", 15000  },
-		{ "vddxo", 80000  },
-		{ "vddrf", 300000 },
-		{ "vddch0", 450000 },
-	},
+	.vregs = (काष्ठा qca_vreg []) अणु
+		अणु "vddio", 15000  पूर्ण,
+		अणु "vddxo", 80000  पूर्ण,
+		अणु "vddrf", 300000 पूर्ण,
+		अणु "vddch0", 450000 पूर्ण,
+	पूर्ण,
 	.num_vregs = 4,
-};
+पूर्ण;
 
-static const struct qca_device_data qca_soc_data_wcn3991 = {
+अटल स्थिर काष्ठा qca_device_data qca_soc_data_wcn3991 = अणु
 	.soc_type = QCA_WCN3991,
-	.vregs = (struct qca_vreg []) {
-		{ "vddio", 15000  },
-		{ "vddxo", 80000  },
-		{ "vddrf", 300000 },
-		{ "vddch0", 450000 },
-	},
+	.vregs = (काष्ठा qca_vreg []) अणु
+		अणु "vddio", 15000  पूर्ण,
+		अणु "vddxo", 80000  पूर्ण,
+		अणु "vddrf", 300000 पूर्ण,
+		अणु "vddch0", 450000 पूर्ण,
+	पूर्ण,
 	.num_vregs = 4,
 	.capabilities = QCA_CAP_WIDEBAND_SPEECH | QCA_CAP_VALID_LE_STATES,
-};
+पूर्ण;
 
-static const struct qca_device_data qca_soc_data_wcn3998 = {
+अटल स्थिर काष्ठा qca_device_data qca_soc_data_wcn3998 = अणु
 	.soc_type = QCA_WCN3998,
-	.vregs = (struct qca_vreg []) {
-		{ "vddio", 10000  },
-		{ "vddxo", 80000  },
-		{ "vddrf", 300000 },
-		{ "vddch0", 450000 },
-	},
+	.vregs = (काष्ठा qca_vreg []) अणु
+		अणु "vddio", 10000  पूर्ण,
+		अणु "vddxo", 80000  पूर्ण,
+		अणु "vddrf", 300000 पूर्ण,
+		अणु "vddch0", 450000 पूर्ण,
+	पूर्ण,
 	.num_vregs = 4,
-};
+पूर्ण;
 
-static const struct qca_device_data qca_soc_data_qca6390 = {
+अटल स्थिर काष्ठा qca_device_data qca_soc_data_qca6390 = अणु
 	.soc_type = QCA_QCA6390,
 	.num_vregs = 0,
-};
+पूर्ण;
 
-static void qca_power_shutdown(struct hci_uart *hu)
-{
-	struct qca_serdev *qcadev;
-	struct qca_data *qca = hu->priv;
-	unsigned long flags;
-	enum qca_btsoc_type soc_type = qca_soc_type(hu);
+अटल व्योम qca_घातer_shutकरोwn(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा qca_serdev *qcadev;
+	काष्ठा qca_data *qca = hu->priv;
+	अचिन्हित दीर्घ flags;
+	क्रमागत qca_btsoc_type soc_type = qca_soc_type(hu);
 
 	qcadev = serdev_device_get_drvdata(hu->serdev);
 
-	/* From this point we go into power off state. But serial port is
-	 * still open, stop queueing the IBS data and flush all the buffered
+	/* From this poपूर्णांक we go पूर्णांकo घातer off state. But serial port is
+	 * still खोलो, stop queueing the IBS data and flush all the buffered
 	 * data in skb's.
 	 */
 	spin_lock_irqsave(&qca->hci_ibs_lock, flags);
@@ -1846,315 +1847,315 @@ static void qca_power_shutdown(struct hci_uart *hu)
 	qca_flush(hu);
 	spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
 
-	/* Non-serdev device usually is powered by external power
-	 * and don't need additional action in driver for power down
+	/* Non-serdev device usually is घातered by बाह्यal घातer
+	 * and करोn't need additional action in driver क्रम घातer करोwn
 	 */
-	if (!hu->serdev)
-		return;
+	अगर (!hu->serdev)
+		वापस;
 
-	if (qca_is_wcn399x(soc_type)) {
+	अगर (qca_is_wcn399x(soc_type)) अणु
 		host_set_baudrate(hu, 2400);
-		qca_send_power_pulse(hu, false);
+		qca_send_घातer_pulse(hu, false);
 		qca_regulator_disable(qcadev);
-	} else if (qcadev->bt_en) {
+	पूर्ण अन्यथा अगर (qcadev->bt_en) अणु
 		gpiod_set_value_cansleep(qcadev->bt_en, 0);
-	}
+	पूर्ण
 
 	set_bit(QCA_BT_OFF, &qca->flags);
-}
+पूर्ण
 
-static int qca_power_off(struct hci_dev *hdev)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	struct qca_data *qca = hu->priv;
-	enum qca_btsoc_type soc_type = qca_soc_type(hu);
+अटल पूर्णांक qca_घातer_off(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	काष्ठा qca_data *qca = hu->priv;
+	क्रमागत qca_btsoc_type soc_type = qca_soc_type(hu);
 
-	hu->hdev->hw_error = NULL;
-	hu->hdev->cmd_timeout = NULL;
+	hu->hdev->hw_error = शून्य;
+	hu->hdev->cmd_समयout = शून्य;
 
-	/* Stop sending shutdown command if soc crashes. */
-	if (soc_type != QCA_ROME
-		&& qca->memdump_state == QCA_MEMDUMP_IDLE) {
-		qca_send_pre_shutdown_cmd(hdev);
+	/* Stop sending shutकरोwn command अगर soc crashes. */
+	अगर (soc_type != QCA_ROME
+		&& qca->memdump_state == QCA_MEMDUMP_IDLE) अणु
+		qca_send_pre_shutकरोwn_cmd(hdev);
 		usleep_range(8000, 10000);
-	}
+	पूर्ण
 
-	qca_power_shutdown(hu);
-	return 0;
-}
+	qca_घातer_shutकरोwn(hu);
+	वापस 0;
+पूर्ण
 
-static int qca_regulator_enable(struct qca_serdev *qcadev)
-{
-	struct qca_power *power = qcadev->bt_power;
-	int ret;
+अटल पूर्णांक qca_regulator_enable(काष्ठा qca_serdev *qcadev)
+अणु
+	काष्ठा qca_घातer *घातer = qcadev->bt_घातer;
+	पूर्णांक ret;
 
-	/* Already enabled */
-	if (power->vregs_on)
-		return 0;
+	/* Alपढ़ोy enabled */
+	अगर (घातer->vregs_on)
+		वापस 0;
 
-	BT_DBG("enabling %d regulators)", power->num_vregs);
+	BT_DBG("enabling %d regulators)", घातer->num_vregs);
 
-	ret = regulator_bulk_enable(power->num_vregs, power->vreg_bulk);
-	if (ret)
-		return ret;
+	ret = regulator_bulk_enable(घातer->num_vregs, घातer->vreg_bulk);
+	अगर (ret)
+		वापस ret;
 
-	power->vregs_on = true;
+	घातer->vregs_on = true;
 
 	ret = clk_prepare_enable(qcadev->susclk);
-	if (ret)
+	अगर (ret)
 		qca_regulator_disable(qcadev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qca_regulator_disable(struct qca_serdev *qcadev)
-{
-	struct qca_power *power;
+अटल व्योम qca_regulator_disable(काष्ठा qca_serdev *qcadev)
+अणु
+	काष्ठा qca_घातer *घातer;
 
-	if (!qcadev)
-		return;
+	अगर (!qcadev)
+		वापस;
 
-	power = qcadev->bt_power;
+	घातer = qcadev->bt_घातer;
 
-	/* Already disabled? */
-	if (!power->vregs_on)
-		return;
+	/* Alपढ़ोy disabled? */
+	अगर (!घातer->vregs_on)
+		वापस;
 
-	regulator_bulk_disable(power->num_vregs, power->vreg_bulk);
-	power->vregs_on = false;
+	regulator_bulk_disable(घातer->num_vregs, घातer->vreg_bulk);
+	घातer->vregs_on = false;
 
 	clk_disable_unprepare(qcadev->susclk);
-}
+पूर्ण
 
-static int qca_init_regulators(struct qca_power *qca,
-				const struct qca_vreg *vregs, size_t num_vregs)
-{
-	struct regulator_bulk_data *bulk;
-	int ret;
-	int i;
+अटल पूर्णांक qca_init_regulators(काष्ठा qca_घातer *qca,
+				स्थिर काष्ठा qca_vreg *vregs, माप_प्रकार num_vregs)
+अणु
+	काष्ठा regulator_bulk_data *bulk;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	bulk = devm_kcalloc(qca->dev, num_vregs, sizeof(*bulk), GFP_KERNEL);
-	if (!bulk)
-		return -ENOMEM;
+	bulk = devm_kसुस्मृति(qca->dev, num_vregs, माप(*bulk), GFP_KERNEL);
+	अगर (!bulk)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_vregs; i++)
+	क्रम (i = 0; i < num_vregs; i++)
 		bulk[i].supply = vregs[i].name;
 
 	ret = devm_regulator_bulk_get(qca->dev, num_vregs, bulk);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	for (i = 0; i < num_vregs; i++) {
+	क्रम (i = 0; i < num_vregs; i++) अणु
 		ret = regulator_set_load(bulk[i].consumer, vregs[i].load_uA);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	qca->vreg_bulk = bulk;
 	qca->num_vregs = num_vregs;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qca_serdev_probe(struct serdev_device *serdev)
-{
-	struct qca_serdev *qcadev;
-	struct hci_dev *hdev;
-	const struct qca_device_data *data;
-	int err;
-	bool power_ctrl_enabled = true;
+अटल पूर्णांक qca_serdev_probe(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा qca_serdev *qcadev;
+	काष्ठा hci_dev *hdev;
+	स्थिर काष्ठा qca_device_data *data;
+	पूर्णांक err;
+	bool घातer_ctrl_enabled = true;
 
-	qcadev = devm_kzalloc(&serdev->dev, sizeof(*qcadev), GFP_KERNEL);
-	if (!qcadev)
-		return -ENOMEM;
+	qcadev = devm_kzalloc(&serdev->dev, माप(*qcadev), GFP_KERNEL);
+	अगर (!qcadev)
+		वापस -ENOMEM;
 
 	qcadev->serdev_hu.serdev = serdev;
 	data = device_get_match_data(&serdev->dev);
 	serdev_device_set_drvdata(serdev, qcadev);
-	device_property_read_string(&serdev->dev, "firmware-name",
+	device_property_पढ़ो_string(&serdev->dev, "firmware-name",
 					 &qcadev->firmware_name);
-	device_property_read_u32(&serdev->dev, "max-speed",
+	device_property_पढ़ो_u32(&serdev->dev, "max-speed",
 				 &qcadev->oper_speed);
-	if (!qcadev->oper_speed)
+	अगर (!qcadev->oper_speed)
 		BT_DBG("UART will pick default operating speed");
 
-	if (data && qca_is_wcn399x(data->soc_type)) {
+	अगर (data && qca_is_wcn399x(data->soc_type)) अणु
 		qcadev->btsoc_type = data->soc_type;
-		qcadev->bt_power = devm_kzalloc(&serdev->dev,
-						sizeof(struct qca_power),
+		qcadev->bt_घातer = devm_kzalloc(&serdev->dev,
+						माप(काष्ठा qca_घातer),
 						GFP_KERNEL);
-		if (!qcadev->bt_power)
-			return -ENOMEM;
+		अगर (!qcadev->bt_घातer)
+			वापस -ENOMEM;
 
-		qcadev->bt_power->dev = &serdev->dev;
-		err = qca_init_regulators(qcadev->bt_power, data->vregs,
+		qcadev->bt_घातer->dev = &serdev->dev;
+		err = qca_init_regulators(qcadev->bt_घातer, data->vregs,
 					  data->num_vregs);
-		if (err) {
+		अगर (err) अणु
 			BT_ERR("Failed to init regulators:%d", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		qcadev->bt_power->vregs_on = false;
+		qcadev->bt_घातer->vregs_on = false;
 
-		qcadev->susclk = devm_clk_get_optional(&serdev->dev, NULL);
-		if (IS_ERR(qcadev->susclk)) {
+		qcadev->susclk = devm_clk_get_optional(&serdev->dev, शून्य);
+		अगर (IS_ERR(qcadev->susclk)) अणु
 			dev_err(&serdev->dev, "failed to acquire clk\n");
-			return PTR_ERR(qcadev->susclk);
-		}
+			वापस PTR_ERR(qcadev->susclk);
+		पूर्ण
 
-		err = hci_uart_register_device(&qcadev->serdev_hu, &qca_proto);
-		if (err) {
+		err = hci_uart_रेजिस्टर_device(&qcadev->serdev_hu, &qca_proto);
+		अगर (err) अणु
 			BT_ERR("wcn3990 serdev registration failed");
-			return err;
-		}
-	} else {
-		if (data)
+			वापस err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (data)
 			qcadev->btsoc_type = data->soc_type;
-		else
+		अन्यथा
 			qcadev->btsoc_type = QCA_ROME;
 
 		qcadev->bt_en = devm_gpiod_get_optional(&serdev->dev, "enable",
 					       GPIOD_OUT_LOW);
-		if (!qcadev->bt_en) {
+		अगर (!qcadev->bt_en) अणु
 			dev_warn(&serdev->dev, "failed to acquire enable gpio\n");
-			power_ctrl_enabled = false;
-		}
+			घातer_ctrl_enabled = false;
+		पूर्ण
 
-		qcadev->susclk = devm_clk_get_optional(&serdev->dev, NULL);
-		if (IS_ERR(qcadev->susclk)) {
+		qcadev->susclk = devm_clk_get_optional(&serdev->dev, शून्य);
+		अगर (IS_ERR(qcadev->susclk)) अणु
 			dev_warn(&serdev->dev, "failed to acquire clk\n");
-			return PTR_ERR(qcadev->susclk);
-		}
+			वापस PTR_ERR(qcadev->susclk);
+		पूर्ण
 		err = clk_set_rate(qcadev->susclk, SUSCLK_RATE_32KHZ);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = clk_prepare_enable(qcadev->susclk);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		err = hci_uart_register_device(&qcadev->serdev_hu, &qca_proto);
-		if (err) {
+		err = hci_uart_रेजिस्टर_device(&qcadev->serdev_hu, &qca_proto);
+		अगर (err) अणु
 			BT_ERR("Rome serdev registration failed");
 			clk_disable_unprepare(qcadev->susclk);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	hdev = qcadev->serdev_hu.hdev;
 
-	if (power_ctrl_enabled) {
+	अगर (घातer_ctrl_enabled) अणु
 		set_bit(HCI_QUIRK_NON_PERSISTENT_SETUP, &hdev->quirks);
-		hdev->shutdown = qca_power_off;
-	}
+		hdev->shutकरोwn = qca_घातer_off;
+	पूर्ण
 
-	if (data) {
+	अगर (data) अणु
 		/* Wideband speech support must be set per driver since it can't
 		 * be queried via hci. Same with the valid le states quirk.
 		 */
-		if (data->capabilities & QCA_CAP_WIDEBAND_SPEECH)
+		अगर (data->capabilities & QCA_CAP_WIDEBAND_SPEECH)
 			set_bit(HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED,
 				&hdev->quirks);
 
-		if (data->capabilities & QCA_CAP_VALID_LE_STATES)
+		अगर (data->capabilities & QCA_CAP_VALID_LE_STATES)
 			set_bit(HCI_QUIRK_VALID_LE_STATES, &hdev->quirks);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qca_serdev_remove(struct serdev_device *serdev)
-{
-	struct qca_serdev *qcadev = serdev_device_get_drvdata(serdev);
-	struct qca_power *power = qcadev->bt_power;
+अटल व्योम qca_serdev_हटाओ(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा qca_serdev *qcadev = serdev_device_get_drvdata(serdev);
+	काष्ठा qca_घातer *घातer = qcadev->bt_घातer;
 
-	if (qca_is_wcn399x(qcadev->btsoc_type) && power->vregs_on)
-		qca_power_shutdown(&qcadev->serdev_hu);
-	else if (qcadev->susclk)
+	अगर (qca_is_wcn399x(qcadev->btsoc_type) && घातer->vregs_on)
+		qca_घातer_shutकरोwn(&qcadev->serdev_hu);
+	अन्यथा अगर (qcadev->susclk)
 		clk_disable_unprepare(qcadev->susclk);
 
-	hci_uart_unregister_device(&qcadev->serdev_hu);
-}
+	hci_uart_unरेजिस्टर_device(&qcadev->serdev_hu);
+पूर्ण
 
-static void qca_serdev_shutdown(struct device *dev)
-{
-	int ret;
-	int timeout = msecs_to_jiffies(CMD_TRANS_TIMEOUT_MS);
-	struct serdev_device *serdev = to_serdev_device(dev);
-	struct qca_serdev *qcadev = serdev_device_get_drvdata(serdev);
-	const u8 ibs_wake_cmd[] = { 0xFD };
-	const u8 edl_reset_soc_cmd[] = { 0x01, 0x00, 0xFC, 0x01, 0x05 };
+अटल व्योम qca_serdev_shutकरोwn(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	पूर्णांक समयout = msecs_to_jअगरfies(CMD_TRANS_TIMEOUT_MS);
+	काष्ठा serdev_device *serdev = to_serdev_device(dev);
+	काष्ठा qca_serdev *qcadev = serdev_device_get_drvdata(serdev);
+	स्थिर u8 ibs_wake_cmd[] = अणु 0xFD पूर्ण;
+	स्थिर u8 edl_reset_soc_cmd[] = अणु 0x01, 0x00, 0xFC, 0x01, 0x05 पूर्ण;
 
-	if (qcadev->btsoc_type == QCA_QCA6390) {
-		serdev_device_write_flush(serdev);
-		ret = serdev_device_write_buf(serdev, ibs_wake_cmd,
-					      sizeof(ibs_wake_cmd));
-		if (ret < 0) {
+	अगर (qcadev->btsoc_type == QCA_QCA6390) अणु
+		serdev_device_ग_लिखो_flush(serdev);
+		ret = serdev_device_ग_लिखो_buf(serdev, ibs_wake_cmd,
+					      माप(ibs_wake_cmd));
+		अगर (ret < 0) अणु
 			BT_ERR("QCA send IBS_WAKE_IND error: %d", ret);
-			return;
-		}
-		serdev_device_wait_until_sent(serdev, timeout);
+			वापस;
+		पूर्ण
+		serdev_device_रुको_until_sent(serdev, समयout);
 		usleep_range(8000, 10000);
 
-		serdev_device_write_flush(serdev);
-		ret = serdev_device_write_buf(serdev, edl_reset_soc_cmd,
-					      sizeof(edl_reset_soc_cmd));
-		if (ret < 0) {
+		serdev_device_ग_लिखो_flush(serdev);
+		ret = serdev_device_ग_लिखो_buf(serdev, edl_reset_soc_cmd,
+					      माप(edl_reset_soc_cmd));
+		अगर (ret < 0) अणु
 			BT_ERR("QCA send EDL_RESET_REQ error: %d", ret);
-			return;
-		}
-		serdev_device_wait_until_sent(serdev, timeout);
+			वापस;
+		पूर्ण
+		serdev_device_रुको_until_sent(serdev, समयout);
 		usleep_range(8000, 10000);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __maybe_unused qca_suspend(struct device *dev)
-{
-	struct serdev_device *serdev = to_serdev_device(dev);
-	struct qca_serdev *qcadev = serdev_device_get_drvdata(serdev);
-	struct hci_uart *hu = &qcadev->serdev_hu;
-	struct qca_data *qca = hu->priv;
-	unsigned long flags;
+अटल पूर्णांक __maybe_unused qca_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा serdev_device *serdev = to_serdev_device(dev);
+	काष्ठा qca_serdev *qcadev = serdev_device_get_drvdata(serdev);
+	काष्ठा hci_uart *hu = &qcadev->serdev_hu;
+	काष्ठा qca_data *qca = hu->priv;
+	अचिन्हित दीर्घ flags;
 	bool tx_pending = false;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u8 cmd;
-	u32 wait_timeout = 0;
+	u32 रुको_समयout = 0;
 
 	set_bit(QCA_SUSPENDING, &qca->flags);
 
-	/* if BT SoC is running with default firmware then it does not
+	/* अगर BT SoC is running with शेष firmware then it करोes not
 	 * support in-band sleep
 	 */
-	if (test_bit(QCA_ROM_FW, &qca->flags))
-		return 0;
+	अगर (test_bit(QCA_ROM_FW, &qca->flags))
+		वापस 0;
 
 	/* During SSR after memory dump collection, controller will be
-	 * powered off and then powered on.If controller is powered off
-	 * during SSR then we should wait until SSR is completed.
+	 * घातered off and then घातered on.If controller is घातered off
+	 * during SSR then we should रुको until SSR is completed.
 	 */
-	if (test_bit(QCA_BT_OFF, &qca->flags) &&
+	अगर (test_bit(QCA_BT_OFF, &qca->flags) &&
 	    !test_bit(QCA_SSR_TRIGGERED, &qca->flags))
-		return 0;
+		वापस 0;
 
-	if (test_bit(QCA_IBS_DISABLED, &qca->flags) ||
-	    test_bit(QCA_SSR_TRIGGERED, &qca->flags)) {
-		wait_timeout = test_bit(QCA_SSR_TRIGGERED, &qca->flags) ?
+	अगर (test_bit(QCA_IBS_DISABLED, &qca->flags) ||
+	    test_bit(QCA_SSR_TRIGGERED, &qca->flags)) अणु
+		रुको_समयout = test_bit(QCA_SSR_TRIGGERED, &qca->flags) ?
 					IBS_DISABLE_SSR_TIMEOUT_MS :
 					FW_DOWNLOAD_TIMEOUT_MS;
 
-		/* QCA_IBS_DISABLED flag is set to true, During FW download
+		/* QCA_IBS_DISABLED flag is set to true, During FW करोwnload
 		 * and during memory dump collection. It is reset to false,
-		 * After FW download complete.
+		 * After FW करोwnload complete.
 		 */
-		wait_on_bit_timeout(&qca->flags, QCA_IBS_DISABLED,
-			    TASK_UNINTERRUPTIBLE, msecs_to_jiffies(wait_timeout));
+		रुको_on_bit_समयout(&qca->flags, QCA_IBS_DISABLED,
+			    TASK_UNINTERRUPTIBLE, msecs_to_jअगरfies(रुको_समयout));
 
-		if (test_bit(QCA_IBS_DISABLED, &qca->flags)) {
+		अगर (test_bit(QCA_IBS_DISABLED, &qca->flags)) अणु
 			bt_dev_err(hu->hdev, "SSR or FW download time out");
 			ret = -ETIMEDOUT;
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	cancel_work_sync(&qca->ws_awake_device);
 	cancel_work_sync(&qca->ws_awake_rx);
@@ -2162,127 +2163,127 @@ static int __maybe_unused qca_suspend(struct device *dev)
 	spin_lock_irqsave_nested(&qca->hci_ibs_lock,
 				 flags, SINGLE_DEPTH_NESTING);
 
-	switch (qca->tx_ibs_state) {
-	case HCI_IBS_TX_WAKING:
-		del_timer(&qca->wake_retrans_timer);
+	चयन (qca->tx_ibs_state) अणु
+	हाल HCI_IBS_TX_WAKING:
+		del_समयr(&qca->wake_retrans_समयr);
 		fallthrough;
-	case HCI_IBS_TX_AWAKE:
-		del_timer(&qca->tx_idle_timer);
+	हाल HCI_IBS_TX_AWAKE:
+		del_समयr(&qca->tx_idle_समयr);
 
-		serdev_device_write_flush(hu->serdev);
+		serdev_device_ग_लिखो_flush(hu->serdev);
 		cmd = HCI_IBS_SLEEP_IND;
-		ret = serdev_device_write_buf(hu->serdev, &cmd, sizeof(cmd));
+		ret = serdev_device_ग_लिखो_buf(hu->serdev, &cmd, माप(cmd));
 
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			BT_ERR("Failed to send SLEEP to device");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		qca->tx_ibs_state = HCI_IBS_TX_ASLEEP;
 		qca->ibs_sent_slps++;
 		tx_pending = true;
-		break;
+		अवरोध;
 
-	case HCI_IBS_TX_ASLEEP:
-		break;
+	हाल HCI_IBS_TX_ASLEEP:
+		अवरोध;
 
-	default:
+	शेष:
 		BT_ERR("Spurious tx state %d", qca->tx_ibs_state);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&qca->hci_ibs_lock, flags);
 
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
-	if (tx_pending) {
-		serdev_device_wait_until_sent(hu->serdev,
-					      msecs_to_jiffies(CMD_TRANS_TIMEOUT_MS));
-		serial_clock_vote(HCI_IBS_TX_VOTE_CLOCK_OFF, hu);
-	}
+	अगर (tx_pending) अणु
+		serdev_device_रुको_until_sent(hu->serdev,
+					      msecs_to_jअगरfies(CMD_TRANS_TIMEOUT_MS));
+		serial_घड़ी_vote(HCI_IBS_TX_VOTE_CLOCK_OFF, hu);
+	पूर्ण
 
-	/* Wait for HCI_IBS_SLEEP_IND sent by device to indicate its Tx is going
-	 * to sleep, so that the packet does not wake the system later.
+	/* Wait क्रम HCI_IBS_SLEEP_IND sent by device to indicate its Tx is going
+	 * to sleep, so that the packet करोes not wake the प्रणाली later.
 	 */
-	ret = wait_event_interruptible_timeout(qca->suspend_wait_q,
+	ret = रुको_event_पूर्णांकerruptible_समयout(qca->suspend_रुको_q,
 			qca->rx_ibs_state == HCI_IBS_RX_ASLEEP,
-			msecs_to_jiffies(IBS_BTSOC_TX_IDLE_TIMEOUT_MS));
-	if (ret == 0) {
+			msecs_to_jअगरfies(IBS_BTSOC_TX_IDLE_TIMEOUT_MS));
+	अगर (ret == 0) अणु
 		ret = -ETIMEDOUT;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
 	clear_bit(QCA_SUSPENDING, &qca->flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused qca_resume(struct device *dev)
-{
-	struct serdev_device *serdev = to_serdev_device(dev);
-	struct qca_serdev *qcadev = serdev_device_get_drvdata(serdev);
-	struct hci_uart *hu = &qcadev->serdev_hu;
-	struct qca_data *qca = hu->priv;
+अटल पूर्णांक __maybe_unused qca_resume(काष्ठा device *dev)
+अणु
+	काष्ठा serdev_device *serdev = to_serdev_device(dev);
+	काष्ठा qca_serdev *qcadev = serdev_device_get_drvdata(serdev);
+	काष्ठा hci_uart *hu = &qcadev->serdev_hu;
+	काष्ठा qca_data *qca = hu->priv;
 
 	clear_bit(QCA_SUSPENDING, &qca->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(qca_pm_ops, qca_suspend, qca_resume);
+अटल SIMPLE_DEV_PM_OPS(qca_pm_ops, qca_suspend, qca_resume);
 
-#ifdef CONFIG_OF
-static const struct of_device_id qca_bluetooth_of_match[] = {
-	{ .compatible = "qcom,qca6174-bt" },
-	{ .compatible = "qcom,qca6390-bt", .data = &qca_soc_data_qca6390},
-	{ .compatible = "qcom,qca9377-bt" },
-	{ .compatible = "qcom,wcn3990-bt", .data = &qca_soc_data_wcn3990},
-	{ .compatible = "qcom,wcn3991-bt", .data = &qca_soc_data_wcn3991},
-	{ .compatible = "qcom,wcn3998-bt", .data = &qca_soc_data_wcn3998},
-	{ /* sentinel */ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id qca_bluetooth_of_match[] = अणु
+	अणु .compatible = "qcom,qca6174-bt" पूर्ण,
+	अणु .compatible = "qcom,qca6390-bt", .data = &qca_soc_data_qca6390पूर्ण,
+	अणु .compatible = "qcom,qca9377-bt" पूर्ण,
+	अणु .compatible = "qcom,wcn3990-bt", .data = &qca_soc_data_wcn3990पूर्ण,
+	अणु .compatible = "qcom,wcn3991-bt", .data = &qca_soc_data_wcn3991पूर्ण,
+	अणु .compatible = "qcom,wcn3998-bt", .data = &qca_soc_data_wcn3998पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qca_bluetooth_of_match);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id qca_bluetooth_acpi_match[] = {
-	{ "QCOM6390", (kernel_ulong_t)&qca_soc_data_qca6390 },
-	{ "DLA16390", (kernel_ulong_t)&qca_soc_data_qca6390 },
-	{ "DLB16390", (kernel_ulong_t)&qca_soc_data_qca6390 },
-	{ "DLB26390", (kernel_ulong_t)&qca_soc_data_qca6390 },
-	{ },
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id qca_bluetooth_acpi_match[] = अणु
+	अणु "QCOM6390", (kernel_uदीर्घ_t)&qca_soc_data_qca6390 पूर्ण,
+	अणु "DLA16390", (kernel_uदीर्घ_t)&qca_soc_data_qca6390 पूर्ण,
+	अणु "DLB16390", (kernel_uदीर्घ_t)&qca_soc_data_qca6390 पूर्ण,
+	अणु "DLB26390", (kernel_uदीर्घ_t)&qca_soc_data_qca6390 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, qca_bluetooth_acpi_match);
-#endif
+#पूर्ण_अगर
 
 
-static struct serdev_device_driver qca_serdev_driver = {
+अटल काष्ठा serdev_device_driver qca_serdev_driver = अणु
 	.probe = qca_serdev_probe,
-	.remove = qca_serdev_remove,
-	.driver = {
+	.हटाओ = qca_serdev_हटाओ,
+	.driver = अणु
 		.name = "hci_uart_qca",
 		.of_match_table = of_match_ptr(qca_bluetooth_of_match),
 		.acpi_match_table = ACPI_PTR(qca_bluetooth_acpi_match),
-		.shutdown = qca_serdev_shutdown,
+		.shutकरोwn = qca_serdev_shutकरोwn,
 		.pm = &qca_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int __init qca_init(void)
-{
-	serdev_device_driver_register(&qca_serdev_driver);
+पूर्णांक __init qca_init(व्योम)
+अणु
+	serdev_device_driver_रेजिस्टर(&qca_serdev_driver);
 
-	return hci_uart_register_proto(&qca_proto);
-}
+	वापस hci_uart_रेजिस्टर_proto(&qca_proto);
+पूर्ण
 
-int __exit qca_deinit(void)
-{
-	serdev_device_driver_unregister(&qca_serdev_driver);
+पूर्णांक __निकास qca_deinit(व्योम)
+अणु
+	serdev_device_driver_unरेजिस्टर(&qca_serdev_driver);
 
-	return hci_uart_unregister_proto(&qca_proto);
-}
+	वापस hci_uart_unरेजिस्टर_proto(&qca_proto);
+पूर्ण

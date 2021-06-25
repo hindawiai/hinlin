@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OMAP3 Voltage Processor (VP) data
  *
@@ -12,48 +13,48 @@
  * Paul Walmsley
  */
 
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-#include "prm-regbits-34xx.h"
-#include "voltage.h"
+#समावेश "prm-regbits-34xx.h"
+#समावेश "voltage.h"
 
-#include "vp.h"
-#include "prm2xxx_3xxx.h"
+#समावेश "vp.h"
+#समावेश "prm2xxx_3xxx.h"
 
-static const struct omap_vp_ops omap3_vp_ops = {
-	.check_txdone = omap_prm_vp_check_txdone,
-	.clear_txdone = omap_prm_vp_clear_txdone,
-};
+अटल स्थिर काष्ठा omap_vp_ops omap3_vp_ops = अणु
+	.check_txकरोne = omap_prm_vp_check_txकरोne,
+	.clear_txकरोne = omap_prm_vp_clear_txकरोne,
+पूर्ण;
 
 /*
  * VP data common to 34xx/36xx chips
- * XXX This stuff presumably belongs in the vp3xxx.c or vp.c file.
+ * XXX This stuff presumably beदीर्घs in the vp3xxx.c or vp.c file.
  */
-static const struct omap_vp_common omap3_vp_common = {
+अटल स्थिर काष्ठा omap_vp_common omap3_vp_common = अणु
 	.vpconfig_erroroffset_mask = OMAP3430_ERROROFFSET_MASK,
 	.vpconfig_errorgain_mask = OMAP3430_ERRORGAIN_MASK,
 	.vpconfig_initvoltage_mask = OMAP3430_INITVOLTAGE_MASK,
-	.vpconfig_timeouten = OMAP3430_TIMEOUTEN_MASK,
+	.vpconfig_समयouten = OMAP3430_TIMEOUTEN_MASK,
 	.vpconfig_initvdd = OMAP3430_INITVDD_MASK,
-	.vpconfig_forceupdate = OMAP3430_FORCEUPDATE_MASK,
+	.vpconfig_क्रमceupdate = OMAP3430_FORCEUPDATE_MASK,
 	.vpconfig_vpenable = OMAP3430_VPENABLE_MASK,
-	.vstepmin_smpswaittimemin_shift = OMAP3430_SMPSWAITTIMEMIN_SHIFT,
-	.vstepmax_smpswaittimemax_shift = OMAP3430_SMPSWAITTIMEMAX_SHIFT,
-	.vstepmin_stepmin_shift = OMAP3430_VSTEPMIN_SHIFT,
-	.vstepmax_stepmax_shift = OMAP3430_VSTEPMAX_SHIFT,
-	.vlimitto_vddmin_shift = OMAP3430_VDDMIN_SHIFT,
-	.vlimitto_vddmax_shift = OMAP3430_VDDMAX_SHIFT,
-	.vlimitto_timeout_shift = OMAP3430_TIMEOUT_SHIFT,
+	.vstepmin_smpsरुकोसमयmin_shअगरt = OMAP3430_SMPSWAITTIMEMIN_SHIFT,
+	.vstepmax_smpsरुकोसमयmax_shअगरt = OMAP3430_SMPSWAITTIMEMAX_SHIFT,
+	.vstepmin_stepmin_shअगरt = OMAP3430_VSTEPMIN_SHIFT,
+	.vstepmax_stepmax_shअगरt = OMAP3430_VSTEPMAX_SHIFT,
+	.vlimitto_vddmin_shअगरt = OMAP3430_VDDMIN_SHIFT,
+	.vlimitto_vddmax_shअगरt = OMAP3430_VDDMAX_SHIFT,
+	.vlimitto_समयout_shअगरt = OMAP3430_TIMEOUT_SHIFT,
 	.vpvoltage_mask = OMAP3430_VPVOLTAGE_MASK,
 
 	.ops = &omap3_vp_ops,
-};
+पूर्ण;
 
-struct omap_vp_instance omap3_vp_mpu = {
+काष्ठा omap_vp_instance omap3_vp_mpu = अणु
 	.id = OMAP3_VP_VDD_MPU_ID,
 	.common = &omap3_vp_common,
 	.vpconfig = OMAP3_PRM_VP1_CONFIG_OFFSET,
@@ -62,9 +63,9 @@ struct omap_vp_instance omap3_vp_mpu = {
 	.vlimitto = OMAP3_PRM_VP1_VLIMITTO_OFFSET,
 	.vstatus = OMAP3_PRM_VP1_STATUS_OFFSET,
 	.voltage = OMAP3_PRM_VP1_VOLTAGE_OFFSET,
-};
+पूर्ण;
 
-struct omap_vp_instance omap3_vp_core = {
+काष्ठा omap_vp_instance omap3_vp_core = अणु
 	.id = OMAP3_VP_VDD_CORE_ID,
 	.common = &omap3_vp_common,
 	.vpconfig = OMAP3_PRM_VP2_CONFIG_OFFSET,
@@ -73,14 +74,14 @@ struct omap_vp_instance omap3_vp_core = {
 	.vlimitto = OMAP3_PRM_VP2_VLIMITTO_OFFSET,
 	.vstatus = OMAP3_PRM_VP2_STATUS_OFFSET,
 	.voltage = OMAP3_PRM_VP2_VOLTAGE_OFFSET,
-};
+पूर्ण;
 
-struct omap_vp_param omap3_mpu_vp_data = {
+काष्ठा omap_vp_param omap3_mpu_vp_data = अणु
 	.vddmin			= OMAP3430_VP1_VLIMITTO_VDDMIN,
 	.vddmax			= OMAP3430_VP1_VLIMITTO_VDDMAX,
-};
+पूर्ण;
 
-struct omap_vp_param omap3_core_vp_data = {
+काष्ठा omap_vp_param omap3_core_vp_data = अणु
 	.vddmin			= OMAP3430_VP2_VLIMITTO_VDDMIN,
 	.vddmax			= OMAP3430_VP2_VLIMITTO_VDDMAX,
-};
+पूर्ण;

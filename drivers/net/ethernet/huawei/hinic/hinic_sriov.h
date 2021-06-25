@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Huawei HiNIC PCI Express Linux driver
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
-#ifndef HINIC_SRIOV_H
-#define HINIC_SRIOV_H
+#अगर_अघोषित HINIC_SRIOV_H
+#घोषणा HINIC_SRIOV_H
 
-#include "hinic_hw_dev.h"
+#समावेश "hinic_hw_dev.h"
 
-#define OS_VF_ID_TO_HW(os_vf_id) ((os_vf_id) + 1)
-#define HW_VF_ID_TO_OS(hw_vf_id) ((hw_vf_id) - 1)
+#घोषणा OS_VF_ID_TO_HW(os_vf_id) ((os_vf_id) + 1)
+#घोषणा HW_VF_ID_TO_OS(hw_vf_id) ((hw_vf_id) - 1)
 
-enum hinic_sriov_state {
+क्रमागत hinic_sriov_state अणु
 	HINIC_SRIOV_DISABLE,
 	HINIC_SRIOV_ENABLE,
 	HINIC_FUNC_REMOVE,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	HINIC_IFLA_VF_LINK_STATE_AUTO,	/* link state of the uplink */
 	HINIC_IFLA_VF_LINK_STATE_ENABLE,	/* link always up */
-	HINIC_IFLA_VF_LINK_STATE_DISABLE,	/* link always down */
-};
+	HINIC_IFLA_VF_LINK_STATE_DISABLE,	/* link always करोwn */
+पूर्ण;
 
-struct hinic_sriov_info {
-	struct pci_dev *pdev;
-	struct hinic_hwdev *hwdev;
+काष्ठा hinic_sriov_info अणु
+	काष्ठा pci_dev *pdev;
+	काष्ठा hinic_hwdev *hwdev;
 	bool sriov_enabled;
-	unsigned int num_vfs;
-	unsigned long state;
-};
+	अचिन्हित पूर्णांक num_vfs;
+	अचिन्हित दीर्घ state;
+पूर्ण;
 
-struct vf_data_storage {
+काष्ठा vf_data_storage अणु
 	u8 vf_mac_addr[ETH_ALEN];
-	bool registered;
+	bool रेजिस्टरed;
 	bool pf_set_mac;
 	u16 pf_vlan;
 	u8 pf_qos;
 	u32 max_rate;
 	u32 min_rate;
 
-	bool link_forced;
-	bool link_up;		/* only valid if VF link is forced */
+	bool link_क्रमced;
+	bool link_up;		/* only valid अगर VF link is क्रमced */
 	bool spoofchk;
 	bool trust;
-};
+पूर्ण;
 
-struct hinic_register_vf {
+काष्ठा hinic_रेजिस्टर_vf अणु
 	u8	status;
 	u8	version;
 	u8	rsvd0[6];
-};
+पूर्ण;
 
-struct hinic_port_mac_update {
+काष्ठा hinic_port_mac_update अणु
 	u8	status;
 	u8	version;
 	u8	rsvd0[6];
@@ -63,9 +64,9 @@ struct hinic_port_mac_update {
 	u8	old_mac[ETH_ALEN];
 	u16	rsvd2;
 	u8	new_mac[ETH_ALEN];
-};
+पूर्ण;
 
-struct hinic_vf_vlan_config {
+काष्ठा hinic_vf_vlan_config अणु
 	u8 status;
 	u8 version;
 	u8 rsvd0[6];
@@ -74,36 +75,36 @@ struct hinic_vf_vlan_config {
 	u16 vlan_id;
 	u8  qos;
 	u8  rsvd1[7];
-};
+पूर्ण;
 
-int hinic_ndo_set_vf_mac(struct net_device *netdev, int vf, u8 *mac);
+पूर्णांक hinic_nकरो_set_vf_mac(काष्ठा net_device *netdev, पूर्णांक vf, u8 *mac);
 
-int hinic_ndo_set_vf_vlan(struct net_device *netdev, int vf, u16 vlan, u8 qos,
+पूर्णांक hinic_nकरो_set_vf_vlan(काष्ठा net_device *netdev, पूर्णांक vf, u16 vlan, u8 qos,
 			  __be16 vlan_proto);
 
-int hinic_ndo_get_vf_config(struct net_device *netdev,
-			    int vf, struct ifla_vf_info *ivi);
+पूर्णांक hinic_nकरो_get_vf_config(काष्ठा net_device *netdev,
+			    पूर्णांक vf, काष्ठा अगरla_vf_info *ivi);
 
-int hinic_ndo_set_vf_trust(struct net_device *netdev, int vf, bool setting);
+पूर्णांक hinic_nकरो_set_vf_trust(काष्ठा net_device *netdev, पूर्णांक vf, bool setting);
 
-int hinic_ndo_set_vf_bw(struct net_device *netdev,
-			int vf, int min_tx_rate, int max_tx_rate);
+पूर्णांक hinic_nकरो_set_vf_bw(काष्ठा net_device *netdev,
+			पूर्णांक vf, पूर्णांक min_tx_rate, पूर्णांक max_tx_rate);
 
-int hinic_ndo_set_vf_spoofchk(struct net_device *netdev, int vf, bool setting);
+पूर्णांक hinic_nकरो_set_vf_spoofchk(काष्ठा net_device *netdev, पूर्णांक vf, bool setting);
 
-int hinic_ndo_set_vf_link_state(struct net_device *netdev, int vf_id, int link);
+पूर्णांक hinic_nकरो_set_vf_link_state(काष्ठा net_device *netdev, पूर्णांक vf_id, पूर्णांक link);
 
-void hinic_notify_all_vfs_link_changed(struct hinic_hwdev *hwdev,
+व्योम hinic_notअगरy_all_vfs_link_changed(काष्ठा hinic_hwdev *hwdev,
 				       u8 link_status);
 
-int hinic_pci_sriov_disable(struct pci_dev *dev);
+पूर्णांक hinic_pci_sriov_disable(काष्ठा pci_dev *dev);
 
-int hinic_pci_sriov_enable(struct pci_dev *dev, int num_vfs);
+पूर्णांक hinic_pci_sriov_enable(काष्ठा pci_dev *dev, पूर्णांक num_vfs);
 
-int hinic_vf_func_init(struct hinic_hwdev *hwdev);
+पूर्णांक hinic_vf_func_init(काष्ठा hinic_hwdev *hwdev);
 
-void hinic_vf_func_free(struct hinic_hwdev *hwdev);
+व्योम hinic_vf_func_मुक्त(काष्ठा hinic_hwdev *hwdev);
 
-int hinic_pci_sriov_configure(struct pci_dev *dev, int num_vfs);
+पूर्णांक hinic_pci_sriov_configure(काष्ठा pci_dev *dev, पूर्णांक num_vfs);
 
-#endif
+#पूर्ण_अगर

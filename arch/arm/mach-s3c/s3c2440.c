@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2004-2006 Simtec Electronics
 //   Ben Dooks <ben@simtec.co.uk>
 //
 // Samsung S3C2440 Mobile CPU support
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/timer.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/serial_core.h>
-#include <linux/device.h>
-#include <linux/syscore_ops.h>
-#include <linux/gpio.h>
-#include <linux/clk.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/device.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
 
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-#include <asm/mach/irq.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/irq.h>
 
-#include <asm/irq.h>
+#समावेश <यंत्र/irq.h>
 
-#include "devs.h"
-#include "cpu.h"
-#include "pm.h"
+#समावेश "devs.h"
+#समावेश "cpu.h"
+#समावेश "pm.h"
 
-#include "gpio-core.h"
-#include "gpio-cfg.h"
-#include "gpio-cfg-helpers.h"
-#include "gpio-samsung.h"
+#समावेश "gpio-core.h"
+#समावेश "gpio-cfg.h"
+#समावेश "gpio-cfg-helpers.h"
+#समावेश "gpio-samsung.h"
 
-#include "s3c24xx.h"
+#समावेश "s3c24xx.h"
 
-static struct device s3c2440_dev = {
+अटल काष्ठा device s3c2440_dev = अणु
 	.bus		= &s3c2440_subsys,
-};
+पूर्ण;
 
-int __init s3c2440_init(void)
-{
-	printk("S3C2440: Initialising architecture\n");
+पूर्णांक __init s3c2440_init(व्योम)
+अणु
+	prपूर्णांकk("S3C2440: Initialising architecture\n");
 
-	/* change irq for watchdog */
+	/* change irq क्रम watchकरोg */
 
 	s3c_device_wdt.resource[1].start = IRQ_S3C2440_WDT;
 	s3c_device_wdt.resource[1].end   = IRQ_S3C2440_WDT;
 
-	/* register suspend/resume handlers */
+	/* रेजिस्टर suspend/resume handlers */
 
-#ifdef CONFIG_PM_SLEEP
-	register_syscore_ops(&s3c2410_pm_syscore_ops);
-	register_syscore_ops(&s3c24xx_irq_syscore_ops);
-	register_syscore_ops(&s3c244x_pm_syscore_ops);
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+	रेजिस्टर_syscore_ops(&s3c2410_pm_syscore_ops);
+	रेजिस्टर_syscore_ops(&s3c24xx_irq_syscore_ops);
+	रेजिस्टर_syscore_ops(&s3c244x_pm_syscore_ops);
+#पूर्ण_अगर
 
-	/* register our system device for everything else */
+	/* रेजिस्टर our प्रणाली device क्रम everything अन्यथा */
 
-	return device_register(&s3c2440_dev);
-}
+	वापस device_रेजिस्टर(&s3c2440_dev);
+पूर्ण
 
-void __init s3c2440_map_io(void)
-{
+व्योम __init s3c2440_map_io(व्योम)
+अणु
 	s3c244x_map_io();
 
-	s3c24xx_gpiocfg_default.set_pull = s3c24xx_gpio_setpull_1up;
-	s3c24xx_gpiocfg_default.get_pull = s3c24xx_gpio_getpull_1up;
-}
+	s3c24xx_gpiocfg_शेष.set_pull = s3c24xx_gpio_setpull_1up;
+	s3c24xx_gpiocfg_शेष.get_pull = s3c24xx_gpio_getpull_1up;
+पूर्ण

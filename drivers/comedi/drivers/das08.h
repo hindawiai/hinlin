@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * das08.h
  *
- * Header for common DAS08 support (used by ISA/PCI/PCMCIA drivers)
+ * Header क्रम common DAS08 support (used by ISA/PCI/PCMCIA drivers)
  *
- * Copyright (C) 2003 Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Copyright (C) 2003 Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  */
 
-#ifndef _DAS08_H
-#define _DAS08_H
+#अगर_अघोषित _DAS08_H
+#घोषणा _DAS08_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct comedi_device;
+काष्ठा comedi_device;
 
-/* different ways ai data is encoded in first two registers */
-enum das08_ai_encoding { das08_encode12, das08_encode16, das08_pcm_encode12 };
-/* types of ai range table used by different boards */
-enum das08_lrange {
+/* dअगरferent ways ai data is encoded in first two रेजिस्टरs */
+क्रमागत das08_ai_encoding अणु das08_encode12, das08_encode16, das08_pcm_encode12 पूर्ण;
+/* types of ai range table used by dअगरferent boards */
+क्रमागत das08_lrange अणु
 	das08_pg_none, das08_bipolar5, das08_pgh, das08_pgl, das08_pgm
-};
+पूर्ण;
 
-struct das08_board_struct {
-	const char *name;
-	bool is_jr;		/* true for 'JR' boards */
-	unsigned int ai_nbits;
-	enum das08_lrange ai_pg;
-	enum das08_ai_encoding ai_encoding;
-	unsigned int ao_nbits;
-	unsigned int di_nchan;
-	unsigned int do_nchan;
-	unsigned int i8255_offset;
-	unsigned int i8254_offset;
-	unsigned int iosize;	/* number of ioports used */
-};
+काष्ठा das08_board_काष्ठा अणु
+	स्थिर अक्षर *name;
+	bool is_jr;		/* true क्रम 'JR' boards */
+	अचिन्हित पूर्णांक ai_nbits;
+	क्रमागत das08_lrange ai_pg;
+	क्रमागत das08_ai_encoding ai_encoding;
+	अचिन्हित पूर्णांक ao_nbits;
+	अचिन्हित पूर्णांक di_nchan;
+	अचिन्हित पूर्णांक करो_nchan;
+	अचिन्हित पूर्णांक i8255_offset;
+	अचिन्हित पूर्णांक i8254_offset;
+	अचिन्हित पूर्णांक iosize;	/* number of ioports used */
+पूर्ण;
 
-struct das08_private_struct {
-	/* bits for do/mux register on boards without separate do register */
-	unsigned int do_mux_bits;
-	const unsigned int *pg_gainlist;
-};
+काष्ठा das08_निजी_काष्ठा अणु
+	/* bits क्रम करो/mux रेजिस्टर on boards without separate करो रेजिस्टर */
+	अचिन्हित पूर्णांक करो_mux_bits;
+	स्थिर अचिन्हित पूर्णांक *pg_gainlist;
+पूर्ण;
 
-int das08_common_attach(struct comedi_device *dev, unsigned long iobase);
+पूर्णांक das08_common_attach(काष्ठा comedi_device *dev, अचिन्हित दीर्घ iobase);
 
-#endif /* _DAS08_H */
+#पूर्ण_अगर /* _DAS08_H */

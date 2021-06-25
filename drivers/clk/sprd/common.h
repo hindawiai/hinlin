@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 //
-// Spreadtrum clock infrastructure
+// Spपढ़ोtrum घड़ी infraकाष्ठाure
 //
-// Copyright (C) 2017 Spreadtrum, Inc.
-// Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
+// Copyright (C) 2017 Spपढ़ोtrum, Inc.
+// Author: Chunyan Zhang <chunyan.zhang@spपढ़ोtrum.com>
 
-#ifndef _SPRD_CLK_COMMON_H_
-#define _SPRD_CLK_COMMON_H_
+#अगर_अघोषित _SPRD_CLK_COMMON_H_
+#घोषणा _SPRD_CLK_COMMON_H_
 
-#include <linux/clk-provider.h>
-#include <linux/of_platform.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regmap.h>
 
-struct device_node;
+काष्ठा device_node;
 
-struct sprd_clk_common {
-	struct regmap	*regmap;
+काष्ठा sprd_clk_common अणु
+	काष्ठा regmap	*regmap;
 	u32		reg;
-	struct clk_hw	hw;
-};
+	काष्ठा clk_hw	hw;
+पूर्ण;
 
-struct sprd_clk_desc {
-	struct sprd_clk_common		**clk_clks;
-	unsigned long			num_clk_clks;
-	struct clk_hw_onecell_data      *hw_clks;
-};
+काष्ठा sprd_clk_desc अणु
+	काष्ठा sprd_clk_common		**clk_clks;
+	अचिन्हित दीर्घ			num_clk_clks;
+	काष्ठा clk_hw_onecell_data      *hw_clks;
+पूर्ण;
 
-static inline struct sprd_clk_common *
-	hw_to_sprd_clk_common(const struct clk_hw *hw)
-{
-	return container_of(hw, struct sprd_clk_common, hw);
-}
-int sprd_clk_regmap_init(struct platform_device *pdev,
-			 const struct sprd_clk_desc *desc);
-int sprd_clk_probe(struct device *dev, struct clk_hw_onecell_data *clkhw);
+अटल अंतरभूत काष्ठा sprd_clk_common *
+	hw_to_sprd_clk_common(स्थिर काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा sprd_clk_common, hw);
+पूर्ण
+पूर्णांक sprd_clk_regmap_init(काष्ठा platक्रमm_device *pdev,
+			 स्थिर काष्ठा sprd_clk_desc *desc);
+पूर्णांक sprd_clk_probe(काष्ठा device *dev, काष्ठा clk_hw_onecell_data *clkhw);
 
-#endif /* _SPRD_CLK_COMMON_H_ */
+#पूर्ण_अगर /* _SPRD_CLK_COMMON_H_ */

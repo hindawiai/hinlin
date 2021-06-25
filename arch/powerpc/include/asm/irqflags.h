@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * IRQ flags handling
  */
-#ifndef _ASM_IRQFLAGS_H
-#define _ASM_IRQFLAGS_H
+#अगर_अघोषित _ASM_IRQFLAGS_H
+#घोषणा _ASM_IRQFLAGS_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 /*
- * Get definitions for arch_local_save_flags(x), etc.
+ * Get definitions क्रम arch_local_save_flags(x), etc.
  */
-#include <asm/hw_irq.h>
+#समावेश <यंत्र/hw_irq.h>
 
-#else
-#ifdef CONFIG_TRACE_IRQFLAGS
-#ifdef CONFIG_IRQSOFF_TRACER
+#अन्यथा
+#अगर_घोषित CONFIG_TRACE_IRQFLAGS
+#अगर_घोषित CONFIG_IRQSOFF_TRACER
 /*
  * Since the ftrace irqsoff latency trace checks CALLER_ADDR1,
- * which is the stack frame here, we need to force a stack frame
- * in case we came from user space.
+ * which is the stack frame here, we need to क्रमce a stack frame
+ * in हाल we came from user space.
  */
-#define TRACE_WITH_FRAME_BUFFER(func)		\
+#घोषणा TRACE_WITH_FRAME_BUFFER(func)		\
 	mflr	r0;				\
 	stdu	r1, -STACK_FRAME_OVERHEAD(r1);	\
 	std	r0, 16(r1);			\
@@ -27,26 +28,26 @@
 	bl func;				\
 	ld	r1, 0(r1);			\
 	ld	r1, 0(r1);
-#else
-#define TRACE_WITH_FRAME_BUFFER(func)		\
+#अन्यथा
+#घोषणा TRACE_WITH_FRAME_BUFFER(func)		\
 	bl func;
-#endif
+#पूर्ण_अगर
 
 /*
- * These are calls to C code, so the caller must be prepared for volatiles to
+ * These are calls to C code, so the caller must be prepared क्रम अस्थिरs to
  * be clobbered.
  */
-#define TRACE_ENABLE_INTS	TRACE_WITH_FRAME_BUFFER(trace_hardirqs_on)
-#define TRACE_DISABLE_INTS	TRACE_WITH_FRAME_BUFFER(trace_hardirqs_off)
+#घोषणा TRACE_ENABLE_INTS	TRACE_WITH_FRAME_BUFFER(trace_hardirqs_on)
+#घोषणा TRACE_DISABLE_INTS	TRACE_WITH_FRAME_BUFFER(trace_hardirqs_off)
 
 /*
- * This is used by assembly code to soft-disable interrupts first and
+ * This is used by assembly code to soft-disable पूर्णांकerrupts first and
  * reconcile irq state.
  *
- * NB: This may call C code, so the caller must be prepared for volatiles to
+ * NB: This may call C code, so the caller must be prepared क्रम अस्थिरs to
  * be clobbered.
  */
-#define RECONCILE_IRQ_STATE(__rA, __rB)		\
+#घोषणा RECONCILE_IRQ_STATE(__rA, __rB)		\
 	lbz	__rA,PACAIRQSOFTMASK(r13);	\
 	lbz	__rB,PACAIRQHAPPENED(r13);	\
 	andi.	__rA,__rA,IRQS_DISABLED;	\
@@ -58,17 +59,17 @@
 	TRACE_DISABLE_INTS;			\
 44:
 
-#else
-#define TRACE_ENABLE_INTS
-#define TRACE_DISABLE_INTS
+#अन्यथा
+#घोषणा TRACE_ENABLE_INTS
+#घोषणा TRACE_DISABLE_INTS
 
-#define RECONCILE_IRQ_STATE(__rA, __rB)		\
+#घोषणा RECONCILE_IRQ_STATE(__rA, __rB)		\
 	lbz	__rA,PACAIRQHAPPENED(r13);	\
 	li	__rB,IRQS_DISABLED;		\
 	ori	__rA,__rA,PACA_IRQ_HARD_DIS;	\
 	stb	__rB,PACAIRQSOFTMASK(r13);	\
 	stb	__rA,PACAIRQHAPPENED(r13)
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

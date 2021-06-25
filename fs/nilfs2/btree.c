@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * btree.c - NILFS B-tree.
  *
@@ -7,164 +8,164 @@
  * Written by Koji Sato.
  */
 
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/pagevec.h>
-#include "nilfs.h"
-#include "page.h"
-#include "btnode.h"
-#include "btree.h"
-#include "alloc.h"
-#include "dat.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pagevec.h>
+#समावेश "nilfs.h"
+#समावेश "page.h"
+#समावेश "btnode.h"
+#समावेश "btree.h"
+#समावेश "alloc.h"
+#समावेश "dat.h"
 
-static void __nilfs_btree_init(struct nilfs_bmap *bmap);
+अटल व्योम __nilfs_btree_init(काष्ठा nilfs_bmap *bmap);
 
-static struct nilfs_btree_path *nilfs_btree_alloc_path(void)
-{
-	struct nilfs_btree_path *path;
-	int level = NILFS_BTREE_LEVEL_DATA;
+अटल काष्ठा nilfs_btree_path *nilfs_btree_alloc_path(व्योम)
+अणु
+	काष्ठा nilfs_btree_path *path;
+	पूर्णांक level = NILFS_BTREE_LEVEL_DATA;
 
 	path = kmem_cache_alloc(nilfs_btree_path_cache, GFP_NOFS);
-	if (path == NULL)
-		goto out;
+	अगर (path == शून्य)
+		जाओ out;
 
-	for (; level < NILFS_BTREE_LEVEL_MAX; level++) {
-		path[level].bp_bh = NULL;
-		path[level].bp_sib_bh = NULL;
+	क्रम (; level < NILFS_BTREE_LEVEL_MAX; level++) अणु
+		path[level].bp_bh = शून्य;
+		path[level].bp_sib_bh = शून्य;
 		path[level].bp_index = 0;
 		path[level].bp_oldreq.bpr_ptr = NILFS_BMAP_INVALID_PTR;
 		path[level].bp_newreq.bpr_ptr = NILFS_BMAP_INVALID_PTR;
-		path[level].bp_op = NULL;
-	}
+		path[level].bp_op = शून्य;
+	पूर्ण
 
 out:
-	return path;
-}
+	वापस path;
+पूर्ण
 
-static void nilfs_btree_free_path(struct nilfs_btree_path *path)
-{
-	int level = NILFS_BTREE_LEVEL_DATA;
+अटल व्योम nilfs_btree_मुक्त_path(काष्ठा nilfs_btree_path *path)
+अणु
+	पूर्णांक level = NILFS_BTREE_LEVEL_DATA;
 
-	for (; level < NILFS_BTREE_LEVEL_MAX; level++)
-		brelse(path[level].bp_bh);
+	क्रम (; level < NILFS_BTREE_LEVEL_MAX; level++)
+		brअन्यथा(path[level].bp_bh);
 
-	kmem_cache_free(nilfs_btree_path_cache, path);
-}
+	kmem_cache_मुक्त(nilfs_btree_path_cache, path);
+पूर्ण
 
 /*
  * B-tree node operations
  */
-static int nilfs_btree_get_new_block(const struct nilfs_bmap *btree,
-				     __u64 ptr, struct buffer_head **bhp)
-{
-	struct address_space *btnc = &NILFS_BMAP_I(btree)->i_btnode_cache;
-	struct buffer_head *bh;
+अटल पूर्णांक nilfs_btree_get_new_block(स्थिर काष्ठा nilfs_bmap *btree,
+				     __u64 ptr, काष्ठा buffer_head **bhp)
+अणु
+	काष्ठा address_space *btnc = &NILFS_BMAP_I(btree)->i_btnode_cache;
+	काष्ठा buffer_head *bh;
 
 	bh = nilfs_btnode_create_block(btnc, ptr);
-	if (!bh)
-		return -ENOMEM;
+	अगर (!bh)
+		वापस -ENOMEM;
 
-	set_buffer_nilfs_volatile(bh);
+	set_buffer_nilfs_अस्थिर(bh);
 	*bhp = bh;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_btree_node_get_flags(const struct nilfs_btree_node *node)
-{
-	return node->bn_flags;
-}
+अटल पूर्णांक nilfs_btree_node_get_flags(स्थिर काष्ठा nilfs_btree_node *node)
+अणु
+	वापस node->bn_flags;
+पूर्ण
 
-static void
-nilfs_btree_node_set_flags(struct nilfs_btree_node *node, int flags)
-{
+अटल व्योम
+nilfs_btree_node_set_flags(काष्ठा nilfs_btree_node *node, पूर्णांक flags)
+अणु
 	node->bn_flags = flags;
-}
+पूर्ण
 
-static int nilfs_btree_node_root(const struct nilfs_btree_node *node)
-{
-	return nilfs_btree_node_get_flags(node) & NILFS_BTREE_NODE_ROOT;
-}
+अटल पूर्णांक nilfs_btree_node_root(स्थिर काष्ठा nilfs_btree_node *node)
+अणु
+	वापस nilfs_btree_node_get_flags(node) & NILFS_BTREE_NODE_ROOT;
+पूर्ण
 
-static int nilfs_btree_node_get_level(const struct nilfs_btree_node *node)
-{
-	return node->bn_level;
-}
+अटल पूर्णांक nilfs_btree_node_get_level(स्थिर काष्ठा nilfs_btree_node *node)
+अणु
+	वापस node->bn_level;
+पूर्ण
 
-static void
-nilfs_btree_node_set_level(struct nilfs_btree_node *node, int level)
-{
+अटल व्योम
+nilfs_btree_node_set_level(काष्ठा nilfs_btree_node *node, पूर्णांक level)
+अणु
 	node->bn_level = level;
-}
+पूर्ण
 
-static int nilfs_btree_node_get_nchildren(const struct nilfs_btree_node *node)
-{
-	return le16_to_cpu(node->bn_nchildren);
-}
+अटल पूर्णांक nilfs_btree_node_get_nchildren(स्थिर काष्ठा nilfs_btree_node *node)
+अणु
+	वापस le16_to_cpu(node->bn_nchildren);
+पूर्ण
 
-static void
-nilfs_btree_node_set_nchildren(struct nilfs_btree_node *node, int nchildren)
-{
+अटल व्योम
+nilfs_btree_node_set_nchildren(काष्ठा nilfs_btree_node *node, पूर्णांक nchildren)
+अणु
 	node->bn_nchildren = cpu_to_le16(nchildren);
-}
+पूर्ण
 
-static int nilfs_btree_node_size(const struct nilfs_bmap *btree)
-{
-	return i_blocksize(btree->b_inode);
-}
+अटल पूर्णांक nilfs_btree_node_size(स्थिर काष्ठा nilfs_bmap *btree)
+अणु
+	वापस i_blocksize(btree->b_inode);
+पूर्ण
 
-static int nilfs_btree_nchildren_per_block(const struct nilfs_bmap *btree)
-{
-	return btree->b_nchildren_per_block;
-}
+अटल पूर्णांक nilfs_btree_nchildren_per_block(स्थिर काष्ठा nilfs_bmap *btree)
+अणु
+	वापस btree->b_nchildren_per_block;
+पूर्ण
 
-static __le64 *
-nilfs_btree_node_dkeys(const struct nilfs_btree_node *node)
-{
-	return (__le64 *)((char *)(node + 1) +
+अटल __le64 *
+nilfs_btree_node_dkeys(स्थिर काष्ठा nilfs_btree_node *node)
+अणु
+	वापस (__le64 *)((अक्षर *)(node + 1) +
 			  (nilfs_btree_node_root(node) ?
 			   0 : NILFS_BTREE_NODE_EXTRA_PAD_SIZE));
-}
+पूर्ण
 
-static __le64 *
-nilfs_btree_node_dptrs(const struct nilfs_btree_node *node, int ncmax)
-{
-	return (__le64 *)(nilfs_btree_node_dkeys(node) + ncmax);
-}
+अटल __le64 *
+nilfs_btree_node_dptrs(स्थिर काष्ठा nilfs_btree_node *node, पूर्णांक ncmax)
+अणु
+	वापस (__le64 *)(nilfs_btree_node_dkeys(node) + ncmax);
+पूर्ण
 
-static __u64
-nilfs_btree_node_get_key(const struct nilfs_btree_node *node, int index)
-{
-	return le64_to_cpu(*(nilfs_btree_node_dkeys(node) + index));
-}
+अटल __u64
+nilfs_btree_node_get_key(स्थिर काष्ठा nilfs_btree_node *node, पूर्णांक index)
+अणु
+	वापस le64_to_cpu(*(nilfs_btree_node_dkeys(node) + index));
+पूर्ण
 
-static void
-nilfs_btree_node_set_key(struct nilfs_btree_node *node, int index, __u64 key)
-{
+अटल व्योम
+nilfs_btree_node_set_key(काष्ठा nilfs_btree_node *node, पूर्णांक index, __u64 key)
+अणु
 	*(nilfs_btree_node_dkeys(node) + index) = cpu_to_le64(key);
-}
+पूर्ण
 
-static __u64
-nilfs_btree_node_get_ptr(const struct nilfs_btree_node *node, int index,
-			 int ncmax)
-{
-	return le64_to_cpu(*(nilfs_btree_node_dptrs(node, ncmax) + index));
-}
+अटल __u64
+nilfs_btree_node_get_ptr(स्थिर काष्ठा nilfs_btree_node *node, पूर्णांक index,
+			 पूर्णांक ncmax)
+अणु
+	वापस le64_to_cpu(*(nilfs_btree_node_dptrs(node, ncmax) + index));
+पूर्ण
 
-static void
-nilfs_btree_node_set_ptr(struct nilfs_btree_node *node, int index, __u64 ptr,
-			 int ncmax)
-{
+अटल व्योम
+nilfs_btree_node_set_ptr(काष्ठा nilfs_btree_node *node, पूर्णांक index, __u64 ptr,
+			 पूर्णांक ncmax)
+अणु
 	*(nilfs_btree_node_dptrs(node, ncmax) + index) = cpu_to_le64(ptr);
-}
+पूर्ण
 
-static void nilfs_btree_node_init(struct nilfs_btree_node *node, int flags,
-				  int level, int nchildren, int ncmax,
-				  const __u64 *keys, const __u64 *ptrs)
-{
+अटल व्योम nilfs_btree_node_init(काष्ठा nilfs_btree_node *node, पूर्णांक flags,
+				  पूर्णांक level, पूर्णांक nchildren, पूर्णांक ncmax,
+				  स्थिर __u64 *keys, स्थिर __u64 *ptrs)
+अणु
 	__le64 *dkeys;
 	__le64 *dptrs;
-	int i;
+	पूर्णांक i;
 
 	nilfs_btree_node_set_flags(node, flags);
 	nilfs_btree_node_set_level(node, level);
@@ -172,20 +173,20 @@ static void nilfs_btree_node_init(struct nilfs_btree_node *node, int flags,
 
 	dkeys = nilfs_btree_node_dkeys(node);
 	dptrs = nilfs_btree_node_dptrs(node, ncmax);
-	for (i = 0; i < nchildren; i++) {
+	क्रम (i = 0; i < nchildren; i++) अणु
 		dkeys[i] = cpu_to_le64(keys[i]);
 		dptrs[i] = cpu_to_le64(ptrs[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Assume the buffer heads corresponding to left and right are locked. */
-static void nilfs_btree_node_move_left(struct nilfs_btree_node *left,
-				       struct nilfs_btree_node *right,
-				       int n, int lncmax, int rncmax)
-{
+अटल व्योम nilfs_btree_node_move_left(काष्ठा nilfs_btree_node *left,
+				       काष्ठा nilfs_btree_node *right,
+				       पूर्णांक n, पूर्णांक lncmax, पूर्णांक rncmax)
+अणु
 	__le64 *ldkeys, *rdkeys;
 	__le64 *ldptrs, *rdptrs;
-	int lnchildren, rnchildren;
+	पूर्णांक lnchildren, rnchildren;
 
 	ldkeys = nilfs_btree_node_dkeys(left);
 	ldptrs = nilfs_btree_node_dptrs(left, lncmax);
@@ -195,25 +196,25 @@ static void nilfs_btree_node_move_left(struct nilfs_btree_node *left,
 	rdptrs = nilfs_btree_node_dptrs(right, rncmax);
 	rnchildren = nilfs_btree_node_get_nchildren(right);
 
-	memcpy(ldkeys + lnchildren, rdkeys, n * sizeof(*rdkeys));
-	memcpy(ldptrs + lnchildren, rdptrs, n * sizeof(*rdptrs));
-	memmove(rdkeys, rdkeys + n, (rnchildren - n) * sizeof(*rdkeys));
-	memmove(rdptrs, rdptrs + n, (rnchildren - n) * sizeof(*rdptrs));
+	स_नकल(ldkeys + lnchildren, rdkeys, n * माप(*rdkeys));
+	स_नकल(ldptrs + lnchildren, rdptrs, n * माप(*rdptrs));
+	स_हटाओ(rdkeys, rdkeys + n, (rnchildren - n) * माप(*rdkeys));
+	स_हटाओ(rdptrs, rdptrs + n, (rnchildren - n) * माप(*rdptrs));
 
 	lnchildren += n;
 	rnchildren -= n;
 	nilfs_btree_node_set_nchildren(left, lnchildren);
 	nilfs_btree_node_set_nchildren(right, rnchildren);
-}
+पूर्ण
 
 /* Assume that the buffer heads corresponding to left and right are locked. */
-static void nilfs_btree_node_move_right(struct nilfs_btree_node *left,
-					struct nilfs_btree_node *right,
-					int n, int lncmax, int rncmax)
-{
+अटल व्योम nilfs_btree_node_move_right(काष्ठा nilfs_btree_node *left,
+					काष्ठा nilfs_btree_node *right,
+					पूर्णांक n, पूर्णांक lncmax, पूर्णांक rncmax)
+अणु
 	__le64 *ldkeys, *rdkeys;
 	__le64 *ldptrs, *rdptrs;
-	int lnchildren, rnchildren;
+	पूर्णांक lnchildren, rnchildren;
 
 	ldkeys = nilfs_btree_node_dkeys(left);
 	ldptrs = nilfs_btree_node_dptrs(left, lncmax);
@@ -223,611 +224,611 @@ static void nilfs_btree_node_move_right(struct nilfs_btree_node *left,
 	rdptrs = nilfs_btree_node_dptrs(right, rncmax);
 	rnchildren = nilfs_btree_node_get_nchildren(right);
 
-	memmove(rdkeys + n, rdkeys, rnchildren * sizeof(*rdkeys));
-	memmove(rdptrs + n, rdptrs, rnchildren * sizeof(*rdptrs));
-	memcpy(rdkeys, ldkeys + lnchildren - n, n * sizeof(*rdkeys));
-	memcpy(rdptrs, ldptrs + lnchildren - n, n * sizeof(*rdptrs));
+	स_हटाओ(rdkeys + n, rdkeys, rnchildren * माप(*rdkeys));
+	स_हटाओ(rdptrs + n, rdptrs, rnchildren * माप(*rdptrs));
+	स_नकल(rdkeys, ldkeys + lnchildren - n, n * माप(*rdkeys));
+	स_नकल(rdptrs, ldptrs + lnchildren - n, n * माप(*rdptrs));
 
 	lnchildren -= n;
 	rnchildren += n;
 	nilfs_btree_node_set_nchildren(left, lnchildren);
 	nilfs_btree_node_set_nchildren(right, rnchildren);
-}
+पूर्ण
 
 /* Assume that the buffer head corresponding to node is locked. */
-static void nilfs_btree_node_insert(struct nilfs_btree_node *node, int index,
-				    __u64 key, __u64 ptr, int ncmax)
-{
+अटल व्योम nilfs_btree_node_insert(काष्ठा nilfs_btree_node *node, पूर्णांक index,
+				    __u64 key, __u64 ptr, पूर्णांक ncmax)
+अणु
 	__le64 *dkeys;
 	__le64 *dptrs;
-	int nchildren;
+	पूर्णांक nchildren;
 
 	dkeys = nilfs_btree_node_dkeys(node);
 	dptrs = nilfs_btree_node_dptrs(node, ncmax);
 	nchildren = nilfs_btree_node_get_nchildren(node);
-	if (index < nchildren) {
-		memmove(dkeys + index + 1, dkeys + index,
-			(nchildren - index) * sizeof(*dkeys));
-		memmove(dptrs + index + 1, dptrs + index,
-			(nchildren - index) * sizeof(*dptrs));
-	}
+	अगर (index < nchildren) अणु
+		स_हटाओ(dkeys + index + 1, dkeys + index,
+			(nchildren - index) * माप(*dkeys));
+		स_हटाओ(dptrs + index + 1, dptrs + index,
+			(nchildren - index) * माप(*dptrs));
+	पूर्ण
 	dkeys[index] = cpu_to_le64(key);
 	dptrs[index] = cpu_to_le64(ptr);
 	nchildren++;
 	nilfs_btree_node_set_nchildren(node, nchildren);
-}
+पूर्ण
 
 /* Assume that the buffer head corresponding to node is locked. */
-static void nilfs_btree_node_delete(struct nilfs_btree_node *node, int index,
-				    __u64 *keyp, __u64 *ptrp, int ncmax)
-{
+अटल व्योम nilfs_btree_node_delete(काष्ठा nilfs_btree_node *node, पूर्णांक index,
+				    __u64 *keyp, __u64 *ptrp, पूर्णांक ncmax)
+अणु
 	__u64 key;
 	__u64 ptr;
 	__le64 *dkeys;
 	__le64 *dptrs;
-	int nchildren;
+	पूर्णांक nchildren;
 
 	dkeys = nilfs_btree_node_dkeys(node);
 	dptrs = nilfs_btree_node_dptrs(node, ncmax);
 	key = le64_to_cpu(dkeys[index]);
 	ptr = le64_to_cpu(dptrs[index]);
 	nchildren = nilfs_btree_node_get_nchildren(node);
-	if (keyp != NULL)
+	अगर (keyp != शून्य)
 		*keyp = key;
-	if (ptrp != NULL)
+	अगर (ptrp != शून्य)
 		*ptrp = ptr;
 
-	if (index < nchildren - 1) {
-		memmove(dkeys + index, dkeys + index + 1,
-			(nchildren - index - 1) * sizeof(*dkeys));
-		memmove(dptrs + index, dptrs + index + 1,
-			(nchildren - index - 1) * sizeof(*dptrs));
-	}
+	अगर (index < nchildren - 1) अणु
+		स_हटाओ(dkeys + index, dkeys + index + 1,
+			(nchildren - index - 1) * माप(*dkeys));
+		स_हटाओ(dptrs + index, dptrs + index + 1,
+			(nchildren - index - 1) * माप(*dptrs));
+	पूर्ण
 	nchildren--;
 	nilfs_btree_node_set_nchildren(node, nchildren);
-}
+पूर्ण
 
-static int nilfs_btree_node_lookup(const struct nilfs_btree_node *node,
-				   __u64 key, int *indexp)
-{
+अटल पूर्णांक nilfs_btree_node_lookup(स्थिर काष्ठा nilfs_btree_node *node,
+				   __u64 key, पूर्णांक *indexp)
+अणु
 	__u64 nkey;
-	int index, low, high, s;
+	पूर्णांक index, low, high, s;
 
 	/* binary search */
 	low = 0;
 	high = nilfs_btree_node_get_nchildren(node) - 1;
 	index = 0;
 	s = 0;
-	while (low <= high) {
+	जबतक (low <= high) अणु
 		index = (low + high) / 2;
 		nkey = nilfs_btree_node_get_key(node, index);
-		if (nkey == key) {
+		अगर (nkey == key) अणु
 			s = 0;
-			goto out;
-		} else if (nkey < key) {
+			जाओ out;
+		पूर्ण अन्यथा अगर (nkey < key) अणु
 			low = index + 1;
 			s = -1;
-		} else {
+		पूर्ण अन्यथा अणु
 			high = index - 1;
 			s = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* adjust index */
-	if (nilfs_btree_node_get_level(node) > NILFS_BTREE_LEVEL_NODE_MIN) {
-		if (s > 0 && index > 0)
+	अगर (nilfs_btree_node_get_level(node) > NILFS_BTREE_LEVEL_NODE_MIN) अणु
+		अगर (s > 0 && index > 0)
 			index--;
-	} else if (s < 0)
+	पूर्ण अन्यथा अगर (s < 0)
 		index++;
 
  out:
 	*indexp = index;
 
-	return s == 0;
-}
+	वापस s == 0;
+पूर्ण
 
 /**
- * nilfs_btree_node_broken - verify consistency of btree node
+ * nilfs_btree_node_broken - verअगरy consistency of btree node
  * @node: btree node block to be examined
  * @size: node size (in bytes)
  * @inode: host inode of btree
  * @blocknr: block number
  *
- * Return Value: If node is broken, 1 is returned. Otherwise, 0 is returned.
+ * Return Value: If node is broken, 1 is वापसed. Otherwise, 0 is वापसed.
  */
-static int nilfs_btree_node_broken(const struct nilfs_btree_node *node,
-				   size_t size, struct inode *inode,
+अटल पूर्णांक nilfs_btree_node_broken(स्थिर काष्ठा nilfs_btree_node *node,
+				   माप_प्रकार size, काष्ठा inode *inode,
 				   sector_t blocknr)
-{
-	int level, flags, nchildren;
-	int ret = 0;
+अणु
+	पूर्णांक level, flags, nchildren;
+	पूर्णांक ret = 0;
 
 	level = nilfs_btree_node_get_level(node);
 	flags = nilfs_btree_node_get_flags(node);
 	nchildren = nilfs_btree_node_get_nchildren(node);
 
-	if (unlikely(level < NILFS_BTREE_LEVEL_NODE_MIN ||
+	अगर (unlikely(level < NILFS_BTREE_LEVEL_NODE_MIN ||
 		     level >= NILFS_BTREE_LEVEL_MAX ||
 		     (flags & NILFS_BTREE_NODE_ROOT) ||
 		     nchildren < 0 ||
-		     nchildren > NILFS_BTREE_NODE_NCHILDREN_MAX(size))) {
+		     nchildren > NILFS_BTREE_NODE_NCHILDREN_MAX(size))) अणु
 		nilfs_crit(inode->i_sb,
 			   "bad btree node (ino=%lu, blocknr=%llu): level = %d, flags = 0x%x, nchildren = %d",
-			   inode->i_ino, (unsigned long long)blocknr, level,
+			   inode->i_ino, (अचिन्हित दीर्घ दीर्घ)blocknr, level,
 			   flags, nchildren);
 		ret = 1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
- * nilfs_btree_root_broken - verify consistency of btree root node
+ * nilfs_btree_root_broken - verअगरy consistency of btree root node
  * @node: btree root node to be examined
  * @inode: host inode of btree
  *
- * Return Value: If node is broken, 1 is returned. Otherwise, 0 is returned.
+ * Return Value: If node is broken, 1 is वापसed. Otherwise, 0 is वापसed.
  */
-static int nilfs_btree_root_broken(const struct nilfs_btree_node *node,
-				   struct inode *inode)
-{
-	int level, flags, nchildren;
-	int ret = 0;
+अटल पूर्णांक nilfs_btree_root_broken(स्थिर काष्ठा nilfs_btree_node *node,
+				   काष्ठा inode *inode)
+अणु
+	पूर्णांक level, flags, nchildren;
+	पूर्णांक ret = 0;
 
 	level = nilfs_btree_node_get_level(node);
 	flags = nilfs_btree_node_get_flags(node);
 	nchildren = nilfs_btree_node_get_nchildren(node);
 
-	if (unlikely(level < NILFS_BTREE_LEVEL_NODE_MIN ||
+	अगर (unlikely(level < NILFS_BTREE_LEVEL_NODE_MIN ||
 		     level >= NILFS_BTREE_LEVEL_MAX ||
 		     nchildren < 0 ||
-		     nchildren > NILFS_BTREE_ROOT_NCHILDREN_MAX)) {
+		     nchildren > NILFS_BTREE_ROOT_NCHILDREN_MAX)) अणु
 		nilfs_crit(inode->i_sb,
 			   "bad btree root (ino=%lu): level = %d, flags = 0x%x, nchildren = %d",
 			   inode->i_ino, level, flags, nchildren);
 		ret = 1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int nilfs_btree_broken_node_block(struct buffer_head *bh)
-{
-	struct inode *inode;
-	int ret;
+पूर्णांक nilfs_btree_broken_node_block(काष्ठा buffer_head *bh)
+अणु
+	काष्ठा inode *inode;
+	पूर्णांक ret;
 
-	if (buffer_nilfs_checked(bh))
-		return 0;
+	अगर (buffer_nilfs_checked(bh))
+		वापस 0;
 
 	inode = bh->b_page->mapping->host;
-	ret = nilfs_btree_node_broken((struct nilfs_btree_node *)bh->b_data,
+	ret = nilfs_btree_node_broken((काष्ठा nilfs_btree_node *)bh->b_data,
 				      bh->b_size, inode, bh->b_blocknr);
-	if (likely(!ret))
+	अगर (likely(!ret))
 		set_buffer_nilfs_checked(bh);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct nilfs_btree_node *
-nilfs_btree_get_root(const struct nilfs_bmap *btree)
-{
-	return (struct nilfs_btree_node *)btree->b_u.u_data;
-}
+अटल काष्ठा nilfs_btree_node *
+nilfs_btree_get_root(स्थिर काष्ठा nilfs_bmap *btree)
+अणु
+	वापस (काष्ठा nilfs_btree_node *)btree->b_u.u_data;
+पूर्ण
 
-static struct nilfs_btree_node *
-nilfs_btree_get_nonroot_node(const struct nilfs_btree_path *path, int level)
-{
-	return (struct nilfs_btree_node *)path[level].bp_bh->b_data;
-}
+अटल काष्ठा nilfs_btree_node *
+nilfs_btree_get_nonroot_node(स्थिर काष्ठा nilfs_btree_path *path, पूर्णांक level)
+अणु
+	वापस (काष्ठा nilfs_btree_node *)path[level].bp_bh->b_data;
+पूर्ण
 
-static struct nilfs_btree_node *
-nilfs_btree_get_sib_node(const struct nilfs_btree_path *path, int level)
-{
-	return (struct nilfs_btree_node *)path[level].bp_sib_bh->b_data;
-}
+अटल काष्ठा nilfs_btree_node *
+nilfs_btree_get_sib_node(स्थिर काष्ठा nilfs_btree_path *path, पूर्णांक level)
+अणु
+	वापस (काष्ठा nilfs_btree_node *)path[level].bp_sib_bh->b_data;
+पूर्ण
 
-static int nilfs_btree_height(const struct nilfs_bmap *btree)
-{
-	return nilfs_btree_node_get_level(nilfs_btree_get_root(btree)) + 1;
-}
+अटल पूर्णांक nilfs_btree_height(स्थिर काष्ठा nilfs_bmap *btree)
+अणु
+	वापस nilfs_btree_node_get_level(nilfs_btree_get_root(btree)) + 1;
+पूर्ण
 
-static struct nilfs_btree_node *
-nilfs_btree_get_node(const struct nilfs_bmap *btree,
-		     const struct nilfs_btree_path *path,
-		     int level, int *ncmaxp)
-{
-	struct nilfs_btree_node *node;
+अटल काष्ठा nilfs_btree_node *
+nilfs_btree_get_node(स्थिर काष्ठा nilfs_bmap *btree,
+		     स्थिर काष्ठा nilfs_btree_path *path,
+		     पूर्णांक level, पूर्णांक *ncmaxp)
+अणु
+	काष्ठा nilfs_btree_node *node;
 
-	if (level == nilfs_btree_height(btree) - 1) {
+	अगर (level == nilfs_btree_height(btree) - 1) अणु
 		node = nilfs_btree_get_root(btree);
 		*ncmaxp = NILFS_BTREE_ROOT_NCHILDREN_MAX;
-	} else {
+	पूर्ण अन्यथा अणु
 		node = nilfs_btree_get_nonroot_node(path, level);
 		*ncmaxp = nilfs_btree_nchildren_per_block(btree);
-	}
-	return node;
-}
+	पूर्ण
+	वापस node;
+पूर्ण
 
-static int nilfs_btree_bad_node(const struct nilfs_bmap *btree,
-				struct nilfs_btree_node *node, int level)
-{
-	if (unlikely(nilfs_btree_node_get_level(node) != level)) {
+अटल पूर्णांक nilfs_btree_bad_node(स्थिर काष्ठा nilfs_bmap *btree,
+				काष्ठा nilfs_btree_node *node, पूर्णांक level)
+अणु
+	अगर (unlikely(nilfs_btree_node_get_level(node) != level)) अणु
 		dump_stack();
 		nilfs_crit(btree->b_inode->i_sb,
 			   "btree level mismatch (ino=%lu): %d != %d",
 			   btree->b_inode->i_ino,
 			   nilfs_btree_node_get_level(node), level);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct nilfs_btree_readahead_info {
-	struct nilfs_btree_node *node;	/* parent node */
-	int max_ra_blocks;		/* max nof blocks to read ahead */
-	int index;			/* current index on the parent node */
-	int ncmax;			/* nof children in the parent node */
-};
+काष्ठा nilfs_btree_पढ़ोahead_info अणु
+	काष्ठा nilfs_btree_node *node;	/* parent node */
+	पूर्णांक max_ra_blocks;		/* max nof blocks to पढ़ो ahead */
+	पूर्णांक index;			/* current index on the parent node */
+	पूर्णांक ncmax;			/* nof children in the parent node */
+पूर्ण;
 
-static int __nilfs_btree_get_block(const struct nilfs_bmap *btree, __u64 ptr,
-				   struct buffer_head **bhp,
-				   const struct nilfs_btree_readahead_info *ra)
-{
-	struct address_space *btnc = &NILFS_BMAP_I(btree)->i_btnode_cache;
-	struct buffer_head *bh, *ra_bh;
+अटल पूर्णांक __nilfs_btree_get_block(स्थिर काष्ठा nilfs_bmap *btree, __u64 ptr,
+				   काष्ठा buffer_head **bhp,
+				   स्थिर काष्ठा nilfs_btree_पढ़ोahead_info *ra)
+अणु
+	काष्ठा address_space *btnc = &NILFS_BMAP_I(btree)->i_btnode_cache;
+	काष्ठा buffer_head *bh, *ra_bh;
 	sector_t submit_ptr = 0;
-	int ret;
+	पूर्णांक ret;
 
 	ret = nilfs_btnode_submit_block(btnc, ptr, 0, REQ_OP_READ, 0, &bh,
 					&submit_ptr);
-	if (ret) {
-		if (ret != -EEXIST)
-			return ret;
-		goto out_check;
-	}
+	अगर (ret) अणु
+		अगर (ret != -EEXIST)
+			वापस ret;
+		जाओ out_check;
+	पूर्ण
 
-	if (ra) {
-		int i, n;
+	अगर (ra) अणु
+		पूर्णांक i, n;
 		__u64 ptr2;
 
-		/* read ahead sibling nodes */
-		for (n = ra->max_ra_blocks, i = ra->index + 1;
-		     n > 0 && i < ra->ncmax; n--, i++) {
+		/* पढ़ो ahead sibling nodes */
+		क्रम (n = ra->max_ra_blocks, i = ra->index + 1;
+		     n > 0 && i < ra->ncmax; n--, i++) अणु
 			ptr2 = nilfs_btree_node_get_ptr(ra->node, i, ra->ncmax);
 
 			ret = nilfs_btnode_submit_block(btnc, ptr2, 0,
 							REQ_OP_READ, REQ_RAHEAD,
 							&ra_bh, &submit_ptr);
-			if (likely(!ret || ret == -EEXIST))
-				brelse(ra_bh);
-			else if (ret != -EBUSY)
-				break;
-			if (!buffer_locked(bh))
-				goto out_no_wait;
-		}
-	}
+			अगर (likely(!ret || ret == -EEXIST))
+				brअन्यथा(ra_bh);
+			अन्यथा अगर (ret != -EBUSY)
+				अवरोध;
+			अगर (!buffer_locked(bh))
+				जाओ out_no_रुको;
+		पूर्ण
+	पूर्ण
 
-	wait_on_buffer(bh);
+	रुको_on_buffer(bh);
 
- out_no_wait:
-	if (!buffer_uptodate(bh)) {
+ out_no_रुको:
+	अगर (!buffer_uptodate(bh)) अणु
 		nilfs_err(btree->b_inode->i_sb,
 			  "I/O error reading b-tree node block (ino=%lu, blocknr=%llu)",
-			  btree->b_inode->i_ino, (unsigned long long)ptr);
-		brelse(bh);
-		return -EIO;
-	}
+			  btree->b_inode->i_ino, (अचिन्हित दीर्घ दीर्घ)ptr);
+		brअन्यथा(bh);
+		वापस -EIO;
+	पूर्ण
 
  out_check:
-	if (nilfs_btree_broken_node_block(bh)) {
+	अगर (nilfs_btree_broken_node_block(bh)) अणु
 		clear_buffer_uptodate(bh);
-		brelse(bh);
-		return -EINVAL;
-	}
+		brअन्यथा(bh);
+		वापस -EINVAL;
+	पूर्ण
 
 	*bhp = bh;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_btree_get_block(const struct nilfs_bmap *btree, __u64 ptr,
-				   struct buffer_head **bhp)
-{
-	return __nilfs_btree_get_block(btree, ptr, bhp, NULL);
-}
+अटल पूर्णांक nilfs_btree_get_block(स्थिर काष्ठा nilfs_bmap *btree, __u64 ptr,
+				   काष्ठा buffer_head **bhp)
+अणु
+	वापस __nilfs_btree_get_block(btree, ptr, bhp, शून्य);
+पूर्ण
 
-static int nilfs_btree_do_lookup(const struct nilfs_bmap *btree,
-				 struct nilfs_btree_path *path,
-				 __u64 key, __u64 *ptrp, int minlevel,
-				 int readahead)
-{
-	struct nilfs_btree_node *node;
-	struct nilfs_btree_readahead_info p, *ra;
+अटल पूर्णांक nilfs_btree_करो_lookup(स्थिर काष्ठा nilfs_bmap *btree,
+				 काष्ठा nilfs_btree_path *path,
+				 __u64 key, __u64 *ptrp, पूर्णांक minlevel,
+				 पूर्णांक पढ़ोahead)
+अणु
+	काष्ठा nilfs_btree_node *node;
+	काष्ठा nilfs_btree_पढ़ोahead_info p, *ra;
 	__u64 ptr;
-	int level, index, found, ncmax, ret;
+	पूर्णांक level, index, found, ncmax, ret;
 
 	node = nilfs_btree_get_root(btree);
 	level = nilfs_btree_node_get_level(node);
-	if (level < minlevel || nilfs_btree_node_get_nchildren(node) <= 0)
-		return -ENOENT;
+	अगर (level < minlevel || nilfs_btree_node_get_nchildren(node) <= 0)
+		वापस -ENOENT;
 
 	found = nilfs_btree_node_lookup(node, key, &index);
 	ptr = nilfs_btree_node_get_ptr(node, index,
 				       NILFS_BTREE_ROOT_NCHILDREN_MAX);
-	path[level].bp_bh = NULL;
+	path[level].bp_bh = शून्य;
 	path[level].bp_index = index;
 
 	ncmax = nilfs_btree_nchildren_per_block(btree);
 
-	while (--level >= minlevel) {
-		ra = NULL;
-		if (level == NILFS_BTREE_LEVEL_NODE_MIN && readahead) {
+	जबतक (--level >= minlevel) अणु
+		ra = शून्य;
+		अगर (level == NILFS_BTREE_LEVEL_NODE_MIN && पढ़ोahead) अणु
 			p.node = nilfs_btree_get_node(btree, path, level + 1,
 						      &p.ncmax);
 			p.index = index;
 			p.max_ra_blocks = 7;
 			ra = &p;
-		}
+		पूर्ण
 		ret = __nilfs_btree_get_block(btree, ptr, &path[level].bp_bh,
 					      ra);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		node = nilfs_btree_get_nonroot_node(path, level);
-		if (nilfs_btree_bad_node(btree, node, level))
-			return -EINVAL;
-		if (!found)
+		अगर (nilfs_btree_bad_node(btree, node, level))
+			वापस -EINVAL;
+		अगर (!found)
 			found = nilfs_btree_node_lookup(node, key, &index);
-		else
+		अन्यथा
 			index = 0;
-		if (index < ncmax) {
+		अगर (index < ncmax) अणु
 			ptr = nilfs_btree_node_get_ptr(node, index, ncmax);
-		} else {
+		पूर्ण अन्यथा अणु
 			WARN_ON(found || level != NILFS_BTREE_LEVEL_NODE_MIN);
 			/* insert */
 			ptr = NILFS_BMAP_INVALID_PTR;
-		}
+		पूर्ण
 		path[level].bp_index = index;
-	}
-	if (!found)
-		return -ENOENT;
+	पूर्ण
+	अगर (!found)
+		वापस -ENOENT;
 
-	if (ptrp != NULL)
+	अगर (ptrp != शून्य)
 		*ptrp = ptr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_btree_do_lookup_last(const struct nilfs_bmap *btree,
-				      struct nilfs_btree_path *path,
+अटल पूर्णांक nilfs_btree_करो_lookup_last(स्थिर काष्ठा nilfs_bmap *btree,
+				      काष्ठा nilfs_btree_path *path,
 				      __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node;
+अणु
+	काष्ठा nilfs_btree_node *node;
 	__u64 ptr;
-	int index, level, ncmax, ret;
+	पूर्णांक index, level, ncmax, ret;
 
 	node = nilfs_btree_get_root(btree);
 	index = nilfs_btree_node_get_nchildren(node) - 1;
-	if (index < 0)
-		return -ENOENT;
+	अगर (index < 0)
+		वापस -ENOENT;
 	level = nilfs_btree_node_get_level(node);
 	ptr = nilfs_btree_node_get_ptr(node, index,
 				       NILFS_BTREE_ROOT_NCHILDREN_MAX);
-	path[level].bp_bh = NULL;
+	path[level].bp_bh = शून्य;
 	path[level].bp_index = index;
 	ncmax = nilfs_btree_nchildren_per_block(btree);
 
-	for (level--; level > 0; level--) {
+	क्रम (level--; level > 0; level--) अणु
 		ret = nilfs_btree_get_block(btree, ptr, &path[level].bp_bh);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		node = nilfs_btree_get_nonroot_node(path, level);
-		if (nilfs_btree_bad_node(btree, node, level))
-			return -EINVAL;
+		अगर (nilfs_btree_bad_node(btree, node, level))
+			वापस -EINVAL;
 		index = nilfs_btree_node_get_nchildren(node) - 1;
 		ptr = nilfs_btree_node_get_ptr(node, index, ncmax);
 		path[level].bp_index = index;
-	}
+	पूर्ण
 
-	if (keyp != NULL)
+	अगर (keyp != शून्य)
 		*keyp = nilfs_btree_node_get_key(node, index);
-	if (ptrp != NULL)
+	अगर (ptrp != शून्य)
 		*ptrp = ptr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * nilfs_btree_get_next_key - get next valid key from btree path array
- * @btree: bmap struct of btree
- * @path: array of nilfs_btree_path struct
+ * @btree: bmap काष्ठा of btree
+ * @path: array of nilfs_btree_path काष्ठा
  * @minlevel: start level
  * @nextkey: place to store the next valid key
  *
- * Return Value: If a next key was found, 0 is returned. Otherwise,
- * -ENOENT is returned.
+ * Return Value: If a next key was found, 0 is वापसed. Otherwise,
+ * -ENOENT is वापसed.
  */
-static int nilfs_btree_get_next_key(const struct nilfs_bmap *btree,
-				    const struct nilfs_btree_path *path,
-				    int minlevel, __u64 *nextkey)
-{
-	struct nilfs_btree_node *node;
-	int maxlevel = nilfs_btree_height(btree) - 1;
-	int index, next_adj, level;
+अटल पूर्णांक nilfs_btree_get_next_key(स्थिर काष्ठा nilfs_bmap *btree,
+				    स्थिर काष्ठा nilfs_btree_path *path,
+				    पूर्णांक minlevel, __u64 *nextkey)
+अणु
+	काष्ठा nilfs_btree_node *node;
+	पूर्णांक maxlevel = nilfs_btree_height(btree) - 1;
+	पूर्णांक index, next_adj, level;
 
-	/* Next index is already set to bp_index for leaf nodes. */
+	/* Next index is alपढ़ोy set to bp_index क्रम leaf nodes. */
 	next_adj = 0;
-	for (level = minlevel; level <= maxlevel; level++) {
-		if (level == maxlevel)
+	क्रम (level = minlevel; level <= maxlevel; level++) अणु
+		अगर (level == maxlevel)
 			node = nilfs_btree_get_root(btree);
-		else
+		अन्यथा
 			node = nilfs_btree_get_nonroot_node(path, level);
 
 		index = path[level].bp_index + next_adj;
-		if (index < nilfs_btree_node_get_nchildren(node)) {
+		अगर (index < nilfs_btree_node_get_nchildren(node)) अणु
 			/* Next key is in this node */
 			*nextkey = nilfs_btree_node_get_key(node, index);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		/* For non-leaf nodes, next index is stored at bp_index + 1. */
 		next_adj = 1;
-	}
-	return -ENOENT;
-}
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-static int nilfs_btree_lookup(const struct nilfs_bmap *btree,
-			      __u64 key, int level, __u64 *ptrp)
-{
-	struct nilfs_btree_path *path;
-	int ret;
+अटल पूर्णांक nilfs_btree_lookup(स्थिर काष्ठा nilfs_bmap *btree,
+			      __u64 key, पूर्णांक level, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_path *path;
+	पूर्णांक ret;
 
 	path = nilfs_btree_alloc_path();
-	if (path == NULL)
-		return -ENOMEM;
+	अगर (path == शून्य)
+		वापस -ENOMEM;
 
-	ret = nilfs_btree_do_lookup(btree, path, key, ptrp, level, 0);
+	ret = nilfs_btree_करो_lookup(btree, path, key, ptrp, level, 0);
 
-	nilfs_btree_free_path(path);
+	nilfs_btree_मुक्त_path(path);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nilfs_btree_lookup_contig(const struct nilfs_bmap *btree,
+अटल पूर्णांक nilfs_btree_lookup_contig(स्थिर काष्ठा nilfs_bmap *btree,
 				     __u64 key, __u64 *ptrp,
-				     unsigned int maxblocks)
-{
-	struct nilfs_btree_path *path;
-	struct nilfs_btree_node *node;
-	struct inode *dat = NULL;
+				     अचिन्हित पूर्णांक maxblocks)
+अणु
+	काष्ठा nilfs_btree_path *path;
+	काष्ठा nilfs_btree_node *node;
+	काष्ठा inode *dat = शून्य;
 	__u64 ptr, ptr2;
 	sector_t blocknr;
-	int level = NILFS_BTREE_LEVEL_NODE_MIN;
-	int ret, cnt, index, maxlevel, ncmax;
-	struct nilfs_btree_readahead_info p;
+	पूर्णांक level = NILFS_BTREE_LEVEL_NODE_MIN;
+	पूर्णांक ret, cnt, index, maxlevel, ncmax;
+	काष्ठा nilfs_btree_पढ़ोahead_info p;
 
 	path = nilfs_btree_alloc_path();
-	if (path == NULL)
-		return -ENOMEM;
+	अगर (path == शून्य)
+		वापस -ENOMEM;
 
-	ret = nilfs_btree_do_lookup(btree, path, key, &ptr, level, 1);
-	if (ret < 0)
-		goto out;
+	ret = nilfs_btree_करो_lookup(btree, path, key, &ptr, level, 1);
+	अगर (ret < 0)
+		जाओ out;
 
-	if (NILFS_BMAP_USE_VBN(btree)) {
+	अगर (NILFS_BMAP_USE_VBN(btree)) अणु
 		dat = nilfs_bmap_get_dat(btree);
 		ret = nilfs_dat_translate(dat, ptr, &blocknr);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 		ptr = blocknr;
-	}
+	पूर्ण
 	cnt = 1;
-	if (cnt == maxblocks)
-		goto end;
+	अगर (cnt == maxblocks)
+		जाओ end;
 
 	maxlevel = nilfs_btree_height(btree) - 1;
 	node = nilfs_btree_get_node(btree, path, level, &ncmax);
 	index = path[level].bp_index + 1;
-	for (;;) {
-		while (index < nilfs_btree_node_get_nchildren(node)) {
-			if (nilfs_btree_node_get_key(node, index) !=
+	क्रम (;;) अणु
+		जबतक (index < nilfs_btree_node_get_nchildren(node)) अणु
+			अगर (nilfs_btree_node_get_key(node, index) !=
 			    key + cnt)
-				goto end;
+				जाओ end;
 			ptr2 = nilfs_btree_node_get_ptr(node, index, ncmax);
-			if (dat) {
+			अगर (dat) अणु
 				ret = nilfs_dat_translate(dat, ptr2, &blocknr);
-				if (ret < 0)
-					goto out;
+				अगर (ret < 0)
+					जाओ out;
 				ptr2 = blocknr;
-			}
-			if (ptr2 != ptr + cnt || ++cnt == maxblocks)
-				goto end;
+			पूर्ण
+			अगर (ptr2 != ptr + cnt || ++cnt == maxblocks)
+				जाओ end;
 			index++;
-			continue;
-		}
-		if (level == maxlevel)
-			break;
+			जारी;
+		पूर्ण
+		अगर (level == maxlevel)
+			अवरोध;
 
 		/* look-up right sibling node */
 		p.node = nilfs_btree_get_node(btree, path, level + 1, &p.ncmax);
 		p.index = path[level + 1].bp_index + 1;
 		p.max_ra_blocks = 7;
-		if (p.index >= nilfs_btree_node_get_nchildren(p.node) ||
+		अगर (p.index >= nilfs_btree_node_get_nchildren(p.node) ||
 		    nilfs_btree_node_get_key(p.node, p.index) != key + cnt)
-			break;
+			अवरोध;
 		ptr2 = nilfs_btree_node_get_ptr(p.node, p.index, p.ncmax);
 		path[level + 1].bp_index = p.index;
 
-		brelse(path[level].bp_bh);
-		path[level].bp_bh = NULL;
+		brअन्यथा(path[level].bp_bh);
+		path[level].bp_bh = शून्य;
 
 		ret = __nilfs_btree_get_block(btree, ptr2, &path[level].bp_bh,
 					      &p);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 		node = nilfs_btree_get_nonroot_node(path, level);
 		ncmax = nilfs_btree_nchildren_per_block(btree);
 		index = 0;
 		path[level].bp_index = index;
-	}
+	पूर्ण
  end:
 	*ptrp = ptr;
 	ret = cnt;
  out:
-	nilfs_btree_free_path(path);
-	return ret;
-}
+	nilfs_btree_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
-static void nilfs_btree_promote_key(struct nilfs_bmap *btree,
-				    struct nilfs_btree_path *path,
-				    int level, __u64 key)
-{
-	if (level < nilfs_btree_height(btree) - 1) {
-		do {
+अटल व्योम nilfs_btree_promote_key(काष्ठा nilfs_bmap *btree,
+				    काष्ठा nilfs_btree_path *path,
+				    पूर्णांक level, __u64 key)
+अणु
+	अगर (level < nilfs_btree_height(btree) - 1) अणु
+		करो अणु
 			nilfs_btree_node_set_key(
 				nilfs_btree_get_nonroot_node(path, level),
 				path[level].bp_index, key);
-			if (!buffer_dirty(path[level].bp_bh))
+			अगर (!buffer_dirty(path[level].bp_bh))
 				mark_buffer_dirty(path[level].bp_bh);
-		} while ((path[level].bp_index == 0) &&
+		पूर्ण जबतक ((path[level].bp_index == 0) &&
 			 (++level < nilfs_btree_height(btree) - 1));
-	}
+	पूर्ण
 
 	/* root */
-	if (level == nilfs_btree_height(btree) - 1) {
+	अगर (level == nilfs_btree_height(btree) - 1) अणु
 		nilfs_btree_node_set_key(nilfs_btree_get_root(btree),
 					 path[level].bp_index, key);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nilfs_btree_do_insert(struct nilfs_bmap *btree,
-				  struct nilfs_btree_path *path,
-				  int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node;
-	int ncblk;
+अटल व्योम nilfs_btree_करो_insert(काष्ठा nilfs_bmap *btree,
+				  काष्ठा nilfs_btree_path *path,
+				  पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *node;
+	पूर्णांक ncblk;
 
-	if (level < nilfs_btree_height(btree) - 1) {
+	अगर (level < nilfs_btree_height(btree) - 1) अणु
 		node = nilfs_btree_get_nonroot_node(path, level);
 		ncblk = nilfs_btree_nchildren_per_block(btree);
 		nilfs_btree_node_insert(node, path[level].bp_index,
 					*keyp, *ptrp, ncblk);
-		if (!buffer_dirty(path[level].bp_bh))
+		अगर (!buffer_dirty(path[level].bp_bh))
 			mark_buffer_dirty(path[level].bp_bh);
 
-		if (path[level].bp_index == 0)
+		अगर (path[level].bp_index == 0)
 			nilfs_btree_promote_key(btree, path, level + 1,
 						nilfs_btree_node_get_key(node,
 									 0));
-	} else {
+	पूर्ण अन्यथा अणु
 		node = nilfs_btree_get_root(btree);
 		nilfs_btree_node_insert(node, path[level].bp_index,
 					*keyp, *ptrp,
 					NILFS_BTREE_ROOT_NCHILDREN_MAX);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nilfs_btree_carry_left(struct nilfs_bmap *btree,
-				   struct nilfs_btree_path *path,
-				   int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node, *left;
-	int nchildren, lnchildren, n, move, ncblk;
+अटल व्योम nilfs_btree_carry_left(काष्ठा nilfs_bmap *btree,
+				   काष्ठा nilfs_btree_path *path,
+				   पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *node, *left;
+	पूर्णांक nchildren, lnchildren, n, move, ncblk;
 
 	node = nilfs_btree_get_nonroot_node(path, level);
 	left = nilfs_btree_get_sib_node(path, level);
@@ -837,43 +838,43 @@ static void nilfs_btree_carry_left(struct nilfs_bmap *btree,
 	move = 0;
 
 	n = (nchildren + lnchildren + 1) / 2 - lnchildren;
-	if (n > path[level].bp_index) {
-		/* move insert point */
+	अगर (n > path[level].bp_index) अणु
+		/* move insert poपूर्णांक */
 		n--;
 		move = 1;
-	}
+	पूर्ण
 
 	nilfs_btree_node_move_left(left, node, n, ncblk, ncblk);
 
-	if (!buffer_dirty(path[level].bp_bh))
+	अगर (!buffer_dirty(path[level].bp_bh))
 		mark_buffer_dirty(path[level].bp_bh);
-	if (!buffer_dirty(path[level].bp_sib_bh))
+	अगर (!buffer_dirty(path[level].bp_sib_bh))
 		mark_buffer_dirty(path[level].bp_sib_bh);
 
 	nilfs_btree_promote_key(btree, path, level + 1,
 				nilfs_btree_node_get_key(node, 0));
 
-	if (move) {
-		brelse(path[level].bp_bh);
+	अगर (move) अणु
+		brअन्यथा(path[level].bp_bh);
 		path[level].bp_bh = path[level].bp_sib_bh;
-		path[level].bp_sib_bh = NULL;
+		path[level].bp_sib_bh = शून्य;
 		path[level].bp_index += lnchildren;
 		path[level + 1].bp_index--;
-	} else {
-		brelse(path[level].bp_sib_bh);
-		path[level].bp_sib_bh = NULL;
+	पूर्ण अन्यथा अणु
+		brअन्यथा(path[level].bp_sib_bh);
+		path[level].bp_sib_bh = शून्य;
 		path[level].bp_index -= n;
-	}
+	पूर्ण
 
-	nilfs_btree_do_insert(btree, path, level, keyp, ptrp);
-}
+	nilfs_btree_करो_insert(btree, path, level, keyp, ptrp);
+पूर्ण
 
-static void nilfs_btree_carry_right(struct nilfs_bmap *btree,
-				    struct nilfs_btree_path *path,
-				    int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node, *right;
-	int nchildren, rnchildren, n, move, ncblk;
+अटल व्योम nilfs_btree_carry_right(काष्ठा nilfs_bmap *btree,
+				    काष्ठा nilfs_btree_path *path,
+				    पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *node, *right;
+	पूर्णांक nchildren, rnchildren, n, move, ncblk;
 
 	node = nilfs_btree_get_nonroot_node(path, level);
 	right = nilfs_btree_get_sib_node(path, level);
@@ -883,17 +884,17 @@ static void nilfs_btree_carry_right(struct nilfs_bmap *btree,
 	move = 0;
 
 	n = (nchildren + rnchildren + 1) / 2 - rnchildren;
-	if (n > nchildren - path[level].bp_index) {
-		/* move insert point */
+	अगर (n > nchildren - path[level].bp_index) अणु
+		/* move insert poपूर्णांक */
 		n--;
 		move = 1;
-	}
+	पूर्ण
 
 	nilfs_btree_node_move_right(node, right, n, ncblk, ncblk);
 
-	if (!buffer_dirty(path[level].bp_bh))
+	अगर (!buffer_dirty(path[level].bp_bh))
 		mark_buffer_dirty(path[level].bp_bh);
-	if (!buffer_dirty(path[level].bp_sib_bh))
+	अगर (!buffer_dirty(path[level].bp_sib_bh))
 		mark_buffer_dirty(path[level].bp_sib_bh);
 
 	path[level + 1].bp_index++;
@@ -901,26 +902,26 @@ static void nilfs_btree_carry_right(struct nilfs_bmap *btree,
 				nilfs_btree_node_get_key(right, 0));
 	path[level + 1].bp_index--;
 
-	if (move) {
-		brelse(path[level].bp_bh);
+	अगर (move) अणु
+		brअन्यथा(path[level].bp_bh);
 		path[level].bp_bh = path[level].bp_sib_bh;
-		path[level].bp_sib_bh = NULL;
+		path[level].bp_sib_bh = शून्य;
 		path[level].bp_index -= nilfs_btree_node_get_nchildren(node);
 		path[level + 1].bp_index++;
-	} else {
-		brelse(path[level].bp_sib_bh);
-		path[level].bp_sib_bh = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		brअन्यथा(path[level].bp_sib_bh);
+		path[level].bp_sib_bh = शून्य;
+	पूर्ण
 
-	nilfs_btree_do_insert(btree, path, level, keyp, ptrp);
-}
+	nilfs_btree_करो_insert(btree, path, level, keyp, ptrp);
+पूर्ण
 
-static void nilfs_btree_split(struct nilfs_bmap *btree,
-			      struct nilfs_btree_path *path,
-			      int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node, *right;
-	int nchildren, n, move, ncblk;
+अटल व्योम nilfs_btree_split(काष्ठा nilfs_bmap *btree,
+			      काष्ठा nilfs_btree_path *path,
+			      पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *node, *right;
+	पूर्णांक nchildren, n, move, ncblk;
 
 	node = nilfs_btree_get_nonroot_node(path, level);
 	right = nilfs_btree_get_sib_node(path, level);
@@ -929,19 +930,19 @@ static void nilfs_btree_split(struct nilfs_bmap *btree,
 	move = 0;
 
 	n = (nchildren + 1) / 2;
-	if (n > nchildren - path[level].bp_index) {
+	अगर (n > nchildren - path[level].bp_index) अणु
 		n--;
 		move = 1;
-	}
+	पूर्ण
 
 	nilfs_btree_node_move_right(node, right, n, ncblk, ncblk);
 
-	if (!buffer_dirty(path[level].bp_bh))
+	अगर (!buffer_dirty(path[level].bp_bh))
 		mark_buffer_dirty(path[level].bp_bh);
-	if (!buffer_dirty(path[level].bp_sib_bh))
+	अगर (!buffer_dirty(path[level].bp_sib_bh))
 		mark_buffer_dirty(path[level].bp_sib_bh);
 
-	if (move) {
+	अगर (move) अणु
 		path[level].bp_index -= nilfs_btree_node_get_nchildren(node);
 		nilfs_btree_node_insert(right, path[level].bp_index,
 					*keyp, *ptrp, ncblk);
@@ -949,28 +950,28 @@ static void nilfs_btree_split(struct nilfs_bmap *btree,
 		*keyp = nilfs_btree_node_get_key(right, 0);
 		*ptrp = path[level].bp_newreq.bpr_ptr;
 
-		brelse(path[level].bp_bh);
+		brअन्यथा(path[level].bp_bh);
 		path[level].bp_bh = path[level].bp_sib_bh;
-		path[level].bp_sib_bh = NULL;
-	} else {
-		nilfs_btree_do_insert(btree, path, level, keyp, ptrp);
+		path[level].bp_sib_bh = शून्य;
+	पूर्ण अन्यथा अणु
+		nilfs_btree_करो_insert(btree, path, level, keyp, ptrp);
 
 		*keyp = nilfs_btree_node_get_key(right, 0);
 		*ptrp = path[level].bp_newreq.bpr_ptr;
 
-		brelse(path[level].bp_sib_bh);
-		path[level].bp_sib_bh = NULL;
-	}
+		brअन्यथा(path[level].bp_sib_bh);
+		path[level].bp_sib_bh = शून्य;
+	पूर्ण
 
 	path[level + 1].bp_index++;
-}
+पूर्ण
 
-static void nilfs_btree_grow(struct nilfs_bmap *btree,
-			     struct nilfs_btree_path *path,
-			     int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *root, *child;
-	int n, ncblk;
+अटल व्योम nilfs_btree_grow(काष्ठा nilfs_bmap *btree,
+			     काष्ठा nilfs_btree_path *path,
+			     पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *root, *child;
+	पूर्णांक n, ncblk;
 
 	root = nilfs_btree_get_root(btree);
 	child = nilfs_btree_get_sib_node(path, level);
@@ -982,190 +983,190 @@ static void nilfs_btree_grow(struct nilfs_bmap *btree,
 				    NILFS_BTREE_ROOT_NCHILDREN_MAX, ncblk);
 	nilfs_btree_node_set_level(root, level + 1);
 
-	if (!buffer_dirty(path[level].bp_sib_bh))
+	अगर (!buffer_dirty(path[level].bp_sib_bh))
 		mark_buffer_dirty(path[level].bp_sib_bh);
 
 	path[level].bp_bh = path[level].bp_sib_bh;
-	path[level].bp_sib_bh = NULL;
+	path[level].bp_sib_bh = शून्य;
 
-	nilfs_btree_do_insert(btree, path, level, keyp, ptrp);
+	nilfs_btree_करो_insert(btree, path, level, keyp, ptrp);
 
 	*keyp = nilfs_btree_node_get_key(child, 0);
 	*ptrp = path[level].bp_newreq.bpr_ptr;
-}
+पूर्ण
 
-static __u64 nilfs_btree_find_near(const struct nilfs_bmap *btree,
-				   const struct nilfs_btree_path *path)
-{
-	struct nilfs_btree_node *node;
-	int level, ncmax;
+अटल __u64 nilfs_btree_find_near(स्थिर काष्ठा nilfs_bmap *btree,
+				   स्थिर काष्ठा nilfs_btree_path *path)
+अणु
+	काष्ठा nilfs_btree_node *node;
+	पूर्णांक level, ncmax;
 
-	if (path == NULL)
-		return NILFS_BMAP_INVALID_PTR;
+	अगर (path == शून्य)
+		वापस NILFS_BMAP_INVALID_PTR;
 
 	/* left sibling */
 	level = NILFS_BTREE_LEVEL_NODE_MIN;
-	if (path[level].bp_index > 0) {
+	अगर (path[level].bp_index > 0) अणु
 		node = nilfs_btree_get_node(btree, path, level, &ncmax);
-		return nilfs_btree_node_get_ptr(node,
+		वापस nilfs_btree_node_get_ptr(node,
 						path[level].bp_index - 1,
 						ncmax);
-	}
+	पूर्ण
 
 	/* parent */
 	level = NILFS_BTREE_LEVEL_NODE_MIN + 1;
-	if (level <= nilfs_btree_height(btree) - 1) {
+	अगर (level <= nilfs_btree_height(btree) - 1) अणु
 		node = nilfs_btree_get_node(btree, path, level, &ncmax);
-		return nilfs_btree_node_get_ptr(node, path[level].bp_index,
+		वापस nilfs_btree_node_get_ptr(node, path[level].bp_index,
 						ncmax);
-	}
+	पूर्ण
 
-	return NILFS_BMAP_INVALID_PTR;
-}
+	वापस NILFS_BMAP_INVALID_PTR;
+पूर्ण
 
-static __u64 nilfs_btree_find_target_v(const struct nilfs_bmap *btree,
-				       const struct nilfs_btree_path *path,
+अटल __u64 nilfs_btree_find_target_v(स्थिर काष्ठा nilfs_bmap *btree,
+				       स्थिर काष्ठा nilfs_btree_path *path,
 				       __u64 key)
-{
+अणु
 	__u64 ptr;
 
 	ptr = nilfs_bmap_find_target_seq(btree, key);
-	if (ptr != NILFS_BMAP_INVALID_PTR)
+	अगर (ptr != NILFS_BMAP_INVALID_PTR)
 		/* sequential access */
-		return ptr;
+		वापस ptr;
 
 	ptr = nilfs_btree_find_near(btree, path);
-	if (ptr != NILFS_BMAP_INVALID_PTR)
+	अगर (ptr != NILFS_BMAP_INVALID_PTR)
 		/* near */
-		return ptr;
+		वापस ptr;
 
 	/* block group */
-	return nilfs_bmap_find_target_in_group(btree);
-}
+	वापस nilfs_bmap_find_target_in_group(btree);
+पूर्ण
 
-static int nilfs_btree_prepare_insert(struct nilfs_bmap *btree,
-				      struct nilfs_btree_path *path,
-				      int *levelp, __u64 key, __u64 ptr,
-				      struct nilfs_bmap_stats *stats)
-{
-	struct buffer_head *bh;
-	struct nilfs_btree_node *node, *parent, *sib;
+अटल पूर्णांक nilfs_btree_prepare_insert(काष्ठा nilfs_bmap *btree,
+				      काष्ठा nilfs_btree_path *path,
+				      पूर्णांक *levelp, __u64 key, __u64 ptr,
+				      काष्ठा nilfs_bmap_stats *stats)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा nilfs_btree_node *node, *parent, *sib;
 	__u64 sibptr;
-	int pindex, level, ncmax, ncblk, ret;
-	struct inode *dat = NULL;
+	पूर्णांक pindex, level, ncmax, ncblk, ret;
+	काष्ठा inode *dat = शून्य;
 
 	stats->bs_nblocks = 0;
 	level = NILFS_BTREE_LEVEL_DATA;
 
-	/* allocate a new ptr for data block */
-	if (NILFS_BMAP_USE_VBN(btree)) {
+	/* allocate a new ptr क्रम data block */
+	अगर (NILFS_BMAP_USE_VBN(btree)) अणु
 		path[level].bp_newreq.bpr_ptr =
 			nilfs_btree_find_target_v(btree, path, key);
 		dat = nilfs_bmap_get_dat(btree);
-	}
+	पूर्ण
 
 	ret = nilfs_bmap_prepare_alloc_ptr(btree, &path[level].bp_newreq, dat);
-	if (ret < 0)
-		goto err_out_data;
+	अगर (ret < 0)
+		जाओ err_out_data;
 
 	ncblk = nilfs_btree_nchildren_per_block(btree);
 
-	for (level = NILFS_BTREE_LEVEL_NODE_MIN;
+	क्रम (level = NILFS_BTREE_LEVEL_NODE_MIN;
 	     level < nilfs_btree_height(btree) - 1;
-	     level++) {
+	     level++) अणु
 		node = nilfs_btree_get_nonroot_node(path, level);
-		if (nilfs_btree_node_get_nchildren(node) < ncblk) {
-			path[level].bp_op = nilfs_btree_do_insert;
+		अगर (nilfs_btree_node_get_nchildren(node) < ncblk) अणु
+			path[level].bp_op = nilfs_btree_करो_insert;
 			stats->bs_nblocks++;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		parent = nilfs_btree_get_node(btree, path, level + 1, &ncmax);
 		pindex = path[level + 1].bp_index;
 
 		/* left sibling */
-		if (pindex > 0) {
+		अगर (pindex > 0) अणु
 			sibptr = nilfs_btree_node_get_ptr(parent, pindex - 1,
 							  ncmax);
 			ret = nilfs_btree_get_block(btree, sibptr, &bh);
-			if (ret < 0)
-				goto err_out_child_node;
-			sib = (struct nilfs_btree_node *)bh->b_data;
-			if (nilfs_btree_node_get_nchildren(sib) < ncblk) {
+			अगर (ret < 0)
+				जाओ err_out_child_node;
+			sib = (काष्ठा nilfs_btree_node *)bh->b_data;
+			अगर (nilfs_btree_node_get_nchildren(sib) < ncblk) अणु
 				path[level].bp_sib_bh = bh;
 				path[level].bp_op = nilfs_btree_carry_left;
 				stats->bs_nblocks++;
-				goto out;
-			} else {
-				brelse(bh);
-			}
-		}
+				जाओ out;
+			पूर्ण अन्यथा अणु
+				brअन्यथा(bh);
+			पूर्ण
+		पूर्ण
 
 		/* right sibling */
-		if (pindex < nilfs_btree_node_get_nchildren(parent) - 1) {
+		अगर (pindex < nilfs_btree_node_get_nchildren(parent) - 1) अणु
 			sibptr = nilfs_btree_node_get_ptr(parent, pindex + 1,
 							  ncmax);
 			ret = nilfs_btree_get_block(btree, sibptr, &bh);
-			if (ret < 0)
-				goto err_out_child_node;
-			sib = (struct nilfs_btree_node *)bh->b_data;
-			if (nilfs_btree_node_get_nchildren(sib) < ncblk) {
+			अगर (ret < 0)
+				जाओ err_out_child_node;
+			sib = (काष्ठा nilfs_btree_node *)bh->b_data;
+			अगर (nilfs_btree_node_get_nchildren(sib) < ncblk) अणु
 				path[level].bp_sib_bh = bh;
 				path[level].bp_op = nilfs_btree_carry_right;
 				stats->bs_nblocks++;
-				goto out;
-			} else {
-				brelse(bh);
-			}
-		}
+				जाओ out;
+			पूर्ण अन्यथा अणु
+				brअन्यथा(bh);
+			पूर्ण
+		पूर्ण
 
 		/* split */
 		path[level].bp_newreq.bpr_ptr =
 			path[level - 1].bp_newreq.bpr_ptr + 1;
 		ret = nilfs_bmap_prepare_alloc_ptr(btree,
 						   &path[level].bp_newreq, dat);
-		if (ret < 0)
-			goto err_out_child_node;
+		अगर (ret < 0)
+			जाओ err_out_child_node;
 		ret = nilfs_btree_get_new_block(btree,
 						path[level].bp_newreq.bpr_ptr,
 						&bh);
-		if (ret < 0)
-			goto err_out_curr_node;
+		अगर (ret < 0)
+			जाओ err_out_curr_node;
 
 		stats->bs_nblocks++;
 
-		sib = (struct nilfs_btree_node *)bh->b_data;
-		nilfs_btree_node_init(sib, 0, level, 0, ncblk, NULL, NULL);
+		sib = (काष्ठा nilfs_btree_node *)bh->b_data;
+		nilfs_btree_node_init(sib, 0, level, 0, ncblk, शून्य, शून्य);
 		path[level].bp_sib_bh = bh;
 		path[level].bp_op = nilfs_btree_split;
-	}
+	पूर्ण
 
 	/* root */
 	node = nilfs_btree_get_root(btree);
-	if (nilfs_btree_node_get_nchildren(node) <
-	    NILFS_BTREE_ROOT_NCHILDREN_MAX) {
-		path[level].bp_op = nilfs_btree_do_insert;
+	अगर (nilfs_btree_node_get_nchildren(node) <
+	    NILFS_BTREE_ROOT_NCHILDREN_MAX) अणु
+		path[level].bp_op = nilfs_btree_करो_insert;
 		stats->bs_nblocks++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* grow */
 	path[level].bp_newreq.bpr_ptr = path[level - 1].bp_newreq.bpr_ptr + 1;
 	ret = nilfs_bmap_prepare_alloc_ptr(btree, &path[level].bp_newreq, dat);
-	if (ret < 0)
-		goto err_out_child_node;
+	अगर (ret < 0)
+		जाओ err_out_child_node;
 	ret = nilfs_btree_get_new_block(btree, path[level].bp_newreq.bpr_ptr,
 					&bh);
-	if (ret < 0)
-		goto err_out_curr_node;
+	अगर (ret < 0)
+		जाओ err_out_curr_node;
 
-	nilfs_btree_node_init((struct nilfs_btree_node *)bh->b_data,
-			      0, level, 0, ncblk, NULL, NULL);
+	nilfs_btree_node_init((काष्ठा nilfs_btree_node *)bh->b_data,
+			      0, level, 0, ncblk, शून्य, शून्य);
 	path[level].bp_sib_bh = bh;
 	path[level].bp_op = nilfs_btree_grow;
 
 	level++;
-	path[level].bp_op = nilfs_btree_do_insert;
+	path[level].bp_op = nilfs_btree_करो_insert;
 
 	/* a newly-created node block and a data block are added */
 	stats->bs_nblocks += 2;
@@ -1173,111 +1174,111 @@ static int nilfs_btree_prepare_insert(struct nilfs_bmap *btree,
 	/* success */
  out:
 	*levelp = level;
-	return ret;
+	वापस ret;
 
 	/* error */
  err_out_curr_node:
-	nilfs_bmap_abort_alloc_ptr(btree, &path[level].bp_newreq, dat);
+	nilfs_bmap_पात_alloc_ptr(btree, &path[level].bp_newreq, dat);
  err_out_child_node:
-	for (level--; level > NILFS_BTREE_LEVEL_DATA; level--) {
+	क्रम (level--; level > NILFS_BTREE_LEVEL_DATA; level--) अणु
 		nilfs_btnode_delete(path[level].bp_sib_bh);
-		nilfs_bmap_abort_alloc_ptr(btree, &path[level].bp_newreq, dat);
+		nilfs_bmap_पात_alloc_ptr(btree, &path[level].bp_newreq, dat);
 
-	}
+	पूर्ण
 
-	nilfs_bmap_abort_alloc_ptr(btree, &path[level].bp_newreq, dat);
+	nilfs_bmap_पात_alloc_ptr(btree, &path[level].bp_newreq, dat);
  err_out_data:
 	*levelp = level;
 	stats->bs_nblocks = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nilfs_btree_commit_insert(struct nilfs_bmap *btree,
-				      struct nilfs_btree_path *path,
-				      int maxlevel, __u64 key, __u64 ptr)
-{
-	struct inode *dat = NULL;
-	int level;
+अटल व्योम nilfs_btree_commit_insert(काष्ठा nilfs_bmap *btree,
+				      काष्ठा nilfs_btree_path *path,
+				      पूर्णांक maxlevel, __u64 key, __u64 ptr)
+अणु
+	काष्ठा inode *dat = शून्य;
+	पूर्णांक level;
 
-	set_buffer_nilfs_volatile((struct buffer_head *)((unsigned long)ptr));
+	set_buffer_nilfs_अस्थिर((काष्ठा buffer_head *)((अचिन्हित दीर्घ)ptr));
 	ptr = path[NILFS_BTREE_LEVEL_DATA].bp_newreq.bpr_ptr;
-	if (NILFS_BMAP_USE_VBN(btree)) {
+	अगर (NILFS_BMAP_USE_VBN(btree)) अणु
 		nilfs_bmap_set_target_v(btree, key, ptr);
 		dat = nilfs_bmap_get_dat(btree);
-	}
+	पूर्ण
 
-	for (level = NILFS_BTREE_LEVEL_NODE_MIN; level <= maxlevel; level++) {
+	क्रम (level = NILFS_BTREE_LEVEL_NODE_MIN; level <= maxlevel; level++) अणु
 		nilfs_bmap_commit_alloc_ptr(btree,
 					    &path[level - 1].bp_newreq, dat);
 		path[level].bp_op(btree, path, level, &key, &ptr);
-	}
+	पूर्ण
 
-	if (!nilfs_bmap_dirty(btree))
+	अगर (!nilfs_bmap_dirty(btree))
 		nilfs_bmap_set_dirty(btree);
-}
+पूर्ण
 
-static int nilfs_btree_insert(struct nilfs_bmap *btree, __u64 key, __u64 ptr)
-{
-	struct nilfs_btree_path *path;
-	struct nilfs_bmap_stats stats;
-	int level, ret;
+अटल पूर्णांक nilfs_btree_insert(काष्ठा nilfs_bmap *btree, __u64 key, __u64 ptr)
+अणु
+	काष्ठा nilfs_btree_path *path;
+	काष्ठा nilfs_bmap_stats stats;
+	पूर्णांक level, ret;
 
 	path = nilfs_btree_alloc_path();
-	if (path == NULL)
-		return -ENOMEM;
+	अगर (path == शून्य)
+		वापस -ENOMEM;
 
-	ret = nilfs_btree_do_lookup(btree, path, key, NULL,
+	ret = nilfs_btree_करो_lookup(btree, path, key, शून्य,
 				    NILFS_BTREE_LEVEL_NODE_MIN, 0);
-	if (ret != -ENOENT) {
-		if (ret == 0)
+	अगर (ret != -ENOENT) अणु
+		अगर (ret == 0)
 			ret = -EEXIST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = nilfs_btree_prepare_insert(btree, path, &level, key, ptr, &stats);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 	nilfs_btree_commit_insert(btree, path, level, key, ptr);
 	nilfs_inode_add_blocks(btree->b_inode, stats.bs_nblocks);
 
  out:
-	nilfs_btree_free_path(path);
-	return ret;
-}
+	nilfs_btree_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
-static void nilfs_btree_do_delete(struct nilfs_bmap *btree,
-				  struct nilfs_btree_path *path,
-				  int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node;
-	int ncblk;
+अटल व्योम nilfs_btree_करो_delete(काष्ठा nilfs_bmap *btree,
+				  काष्ठा nilfs_btree_path *path,
+				  पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *node;
+	पूर्णांक ncblk;
 
-	if (level < nilfs_btree_height(btree) - 1) {
+	अगर (level < nilfs_btree_height(btree) - 1) अणु
 		node = nilfs_btree_get_nonroot_node(path, level);
 		ncblk = nilfs_btree_nchildren_per_block(btree);
 		nilfs_btree_node_delete(node, path[level].bp_index,
 					keyp, ptrp, ncblk);
-		if (!buffer_dirty(path[level].bp_bh))
+		अगर (!buffer_dirty(path[level].bp_bh))
 			mark_buffer_dirty(path[level].bp_bh);
-		if (path[level].bp_index == 0)
+		अगर (path[level].bp_index == 0)
 			nilfs_btree_promote_key(btree, path, level + 1,
 				nilfs_btree_node_get_key(node, 0));
-	} else {
+	पूर्ण अन्यथा अणु
 		node = nilfs_btree_get_root(btree);
 		nilfs_btree_node_delete(node, path[level].bp_index,
 					keyp, ptrp,
 					NILFS_BTREE_ROOT_NCHILDREN_MAX);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nilfs_btree_borrow_left(struct nilfs_bmap *btree,
-				    struct nilfs_btree_path *path,
-				    int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node, *left;
-	int nchildren, lnchildren, n, ncblk;
+अटल व्योम nilfs_btree_borrow_left(काष्ठा nilfs_bmap *btree,
+				    काष्ठा nilfs_btree_path *path,
+				    पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *node, *left;
+	पूर्णांक nchildren, lnchildren, n, ncblk;
 
-	nilfs_btree_do_delete(btree, path, level, keyp, ptrp);
+	nilfs_btree_करो_delete(btree, path, level, keyp, ptrp);
 
 	node = nilfs_btree_get_nonroot_node(path, level);
 	left = nilfs_btree_get_sib_node(path, level);
@@ -1289,27 +1290,27 @@ static void nilfs_btree_borrow_left(struct nilfs_bmap *btree,
 
 	nilfs_btree_node_move_right(left, node, n, ncblk, ncblk);
 
-	if (!buffer_dirty(path[level].bp_bh))
+	अगर (!buffer_dirty(path[level].bp_bh))
 		mark_buffer_dirty(path[level].bp_bh);
-	if (!buffer_dirty(path[level].bp_sib_bh))
+	अगर (!buffer_dirty(path[level].bp_sib_bh))
 		mark_buffer_dirty(path[level].bp_sib_bh);
 
 	nilfs_btree_promote_key(btree, path, level + 1,
 				nilfs_btree_node_get_key(node, 0));
 
-	brelse(path[level].bp_sib_bh);
-	path[level].bp_sib_bh = NULL;
+	brअन्यथा(path[level].bp_sib_bh);
+	path[level].bp_sib_bh = शून्य;
 	path[level].bp_index += n;
-}
+पूर्ण
 
-static void nilfs_btree_borrow_right(struct nilfs_bmap *btree,
-				     struct nilfs_btree_path *path,
-				     int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node, *right;
-	int nchildren, rnchildren, n, ncblk;
+अटल व्योम nilfs_btree_borrow_right(काष्ठा nilfs_bmap *btree,
+				     काष्ठा nilfs_btree_path *path,
+				     पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *node, *right;
+	पूर्णांक nchildren, rnchildren, n, ncblk;
 
-	nilfs_btree_do_delete(btree, path, level, keyp, ptrp);
+	nilfs_btree_करो_delete(btree, path, level, keyp, ptrp);
 
 	node = nilfs_btree_get_nonroot_node(path, level);
 	right = nilfs_btree_get_sib_node(path, level);
@@ -1321,9 +1322,9 @@ static void nilfs_btree_borrow_right(struct nilfs_bmap *btree,
 
 	nilfs_btree_node_move_left(node, right, n, ncblk, ncblk);
 
-	if (!buffer_dirty(path[level].bp_bh))
+	अगर (!buffer_dirty(path[level].bp_bh))
 		mark_buffer_dirty(path[level].bp_bh);
-	if (!buffer_dirty(path[level].bp_sib_bh))
+	अगर (!buffer_dirty(path[level].bp_sib_bh))
 		mark_buffer_dirty(path[level].bp_sib_bh);
 
 	path[level + 1].bp_index++;
@@ -1331,18 +1332,18 @@ static void nilfs_btree_borrow_right(struct nilfs_bmap *btree,
 				nilfs_btree_node_get_key(right, 0));
 	path[level + 1].bp_index--;
 
-	brelse(path[level].bp_sib_bh);
-	path[level].bp_sib_bh = NULL;
-}
+	brअन्यथा(path[level].bp_sib_bh);
+	path[level].bp_sib_bh = शून्य;
+पूर्ण
 
-static void nilfs_btree_concat_left(struct nilfs_bmap *btree,
-				    struct nilfs_btree_path *path,
-				    int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node, *left;
-	int n, ncblk;
+अटल व्योम nilfs_btree_concat_left(काष्ठा nilfs_bmap *btree,
+				    काष्ठा nilfs_btree_path *path,
+				    पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *node, *left;
+	पूर्णांक n, ncblk;
 
-	nilfs_btree_do_delete(btree, path, level, keyp, ptrp);
+	nilfs_btree_करो_delete(btree, path, level, keyp, ptrp);
 
 	node = nilfs_btree_get_nonroot_node(path, level);
 	left = nilfs_btree_get_sib_node(path, level);
@@ -1352,23 +1353,23 @@ static void nilfs_btree_concat_left(struct nilfs_bmap *btree,
 
 	nilfs_btree_node_move_left(left, node, n, ncblk, ncblk);
 
-	if (!buffer_dirty(path[level].bp_sib_bh))
+	अगर (!buffer_dirty(path[level].bp_sib_bh))
 		mark_buffer_dirty(path[level].bp_sib_bh);
 
 	nilfs_btnode_delete(path[level].bp_bh);
 	path[level].bp_bh = path[level].bp_sib_bh;
-	path[level].bp_sib_bh = NULL;
+	path[level].bp_sib_bh = शून्य;
 	path[level].bp_index += nilfs_btree_node_get_nchildren(left);
-}
+पूर्ण
 
-static void nilfs_btree_concat_right(struct nilfs_bmap *btree,
-				     struct nilfs_btree_path *path,
-				     int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *node, *right;
-	int n, ncblk;
+अटल व्योम nilfs_btree_concat_right(काष्ठा nilfs_bmap *btree,
+				     काष्ठा nilfs_btree_path *path,
+				     पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *node, *right;
+	पूर्णांक n, ncblk;
 
-	nilfs_btree_do_delete(btree, path, level, keyp, ptrp);
+	nilfs_btree_करो_delete(btree, path, level, keyp, ptrp);
 
 	node = nilfs_btree_get_nonroot_node(path, level);
 	right = nilfs_btree_get_sib_node(path, level);
@@ -1378,28 +1379,28 @@ static void nilfs_btree_concat_right(struct nilfs_bmap *btree,
 
 	nilfs_btree_node_move_left(node, right, n, ncblk, ncblk);
 
-	if (!buffer_dirty(path[level].bp_bh))
+	अगर (!buffer_dirty(path[level].bp_bh))
 		mark_buffer_dirty(path[level].bp_bh);
 
 	nilfs_btnode_delete(path[level].bp_sib_bh);
-	path[level].bp_sib_bh = NULL;
+	path[level].bp_sib_bh = शून्य;
 	path[level + 1].bp_index++;
-}
+पूर्ण
 
-static void nilfs_btree_shrink(struct nilfs_bmap *btree,
-			       struct nilfs_btree_path *path,
-			       int level, __u64 *keyp, __u64 *ptrp)
-{
-	struct nilfs_btree_node *root, *child;
-	int n, ncblk;
+अटल व्योम nilfs_btree_shrink(काष्ठा nilfs_bmap *btree,
+			       काष्ठा nilfs_btree_path *path,
+			       पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+	काष्ठा nilfs_btree_node *root, *child;
+	पूर्णांक n, ncblk;
 
-	nilfs_btree_do_delete(btree, path, level, keyp, ptrp);
+	nilfs_btree_करो_delete(btree, path, level, keyp, ptrp);
 
 	root = nilfs_btree_get_root(btree);
 	child = nilfs_btree_get_nonroot_node(path, level);
 	ncblk = nilfs_btree_nchildren_per_block(btree);
 
-	nilfs_btree_node_delete(root, 0, NULL, NULL,
+	nilfs_btree_node_delete(root, 0, शून्य, शून्य,
 				NILFS_BTREE_ROOT_NCHILDREN_MAX);
 	nilfs_btree_node_set_level(root, level);
 	n = nilfs_btree_node_get_nchildren(child);
@@ -1407,120 +1408,120 @@ static void nilfs_btree_shrink(struct nilfs_bmap *btree,
 				   NILFS_BTREE_ROOT_NCHILDREN_MAX, ncblk);
 
 	nilfs_btnode_delete(path[level].bp_bh);
-	path[level].bp_bh = NULL;
-}
+	path[level].bp_bh = शून्य;
+पूर्ण
 
-static void nilfs_btree_nop(struct nilfs_bmap *btree,
-			    struct nilfs_btree_path *path,
-			    int level, __u64 *keyp, __u64 *ptrp)
-{
-}
+अटल व्योम nilfs_btree_nop(काष्ठा nilfs_bmap *btree,
+			    काष्ठा nilfs_btree_path *path,
+			    पूर्णांक level, __u64 *keyp, __u64 *ptrp)
+अणु
+पूर्ण
 
-static int nilfs_btree_prepare_delete(struct nilfs_bmap *btree,
-				      struct nilfs_btree_path *path,
-				      int *levelp,
-				      struct nilfs_bmap_stats *stats,
-				      struct inode *dat)
-{
-	struct buffer_head *bh;
-	struct nilfs_btree_node *node, *parent, *sib;
+अटल पूर्णांक nilfs_btree_prepare_delete(काष्ठा nilfs_bmap *btree,
+				      काष्ठा nilfs_btree_path *path,
+				      पूर्णांक *levelp,
+				      काष्ठा nilfs_bmap_stats *stats,
+				      काष्ठा inode *dat)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा nilfs_btree_node *node, *parent, *sib;
 	__u64 sibptr;
-	int pindex, dindex, level, ncmin, ncmax, ncblk, ret;
+	पूर्णांक pindex, dindex, level, ncmin, ncmax, ncblk, ret;
 
 	ret = 0;
 	stats->bs_nblocks = 0;
 	ncmin = NILFS_BTREE_NODE_NCHILDREN_MIN(nilfs_btree_node_size(btree));
 	ncblk = nilfs_btree_nchildren_per_block(btree);
 
-	for (level = NILFS_BTREE_LEVEL_NODE_MIN, dindex = path[level].bp_index;
+	क्रम (level = NILFS_BTREE_LEVEL_NODE_MIN, dindex = path[level].bp_index;
 	     level < nilfs_btree_height(btree) - 1;
-	     level++) {
+	     level++) अणु
 		node = nilfs_btree_get_nonroot_node(path, level);
 		path[level].bp_oldreq.bpr_ptr =
 			nilfs_btree_node_get_ptr(node, dindex, ncblk);
 		ret = nilfs_bmap_prepare_end_ptr(btree,
 						 &path[level].bp_oldreq, dat);
-		if (ret < 0)
-			goto err_out_child_node;
+		अगर (ret < 0)
+			जाओ err_out_child_node;
 
-		if (nilfs_btree_node_get_nchildren(node) > ncmin) {
-			path[level].bp_op = nilfs_btree_do_delete;
+		अगर (nilfs_btree_node_get_nchildren(node) > ncmin) अणु
+			path[level].bp_op = nilfs_btree_करो_delete;
 			stats->bs_nblocks++;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		parent = nilfs_btree_get_node(btree, path, level + 1, &ncmax);
 		pindex = path[level + 1].bp_index;
 		dindex = pindex;
 
-		if (pindex > 0) {
+		अगर (pindex > 0) अणु
 			/* left sibling */
 			sibptr = nilfs_btree_node_get_ptr(parent, pindex - 1,
 							  ncmax);
 			ret = nilfs_btree_get_block(btree, sibptr, &bh);
-			if (ret < 0)
-				goto err_out_curr_node;
-			sib = (struct nilfs_btree_node *)bh->b_data;
-			if (nilfs_btree_node_get_nchildren(sib) > ncmin) {
+			अगर (ret < 0)
+				जाओ err_out_curr_node;
+			sib = (काष्ठा nilfs_btree_node *)bh->b_data;
+			अगर (nilfs_btree_node_get_nchildren(sib) > ncmin) अणु
 				path[level].bp_sib_bh = bh;
 				path[level].bp_op = nilfs_btree_borrow_left;
 				stats->bs_nblocks++;
-				goto out;
-			} else {
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				path[level].bp_sib_bh = bh;
 				path[level].bp_op = nilfs_btree_concat_left;
 				stats->bs_nblocks++;
-				/* continue; */
-			}
-		} else if (pindex <
-			   nilfs_btree_node_get_nchildren(parent) - 1) {
+				/* जारी; */
+			पूर्ण
+		पूर्ण अन्यथा अगर (pindex <
+			   nilfs_btree_node_get_nchildren(parent) - 1) अणु
 			/* right sibling */
 			sibptr = nilfs_btree_node_get_ptr(parent, pindex + 1,
 							  ncmax);
 			ret = nilfs_btree_get_block(btree, sibptr, &bh);
-			if (ret < 0)
-				goto err_out_curr_node;
-			sib = (struct nilfs_btree_node *)bh->b_data;
-			if (nilfs_btree_node_get_nchildren(sib) > ncmin) {
+			अगर (ret < 0)
+				जाओ err_out_curr_node;
+			sib = (काष्ठा nilfs_btree_node *)bh->b_data;
+			अगर (nilfs_btree_node_get_nchildren(sib) > ncmin) अणु
 				path[level].bp_sib_bh = bh;
 				path[level].bp_op = nilfs_btree_borrow_right;
 				stats->bs_nblocks++;
-				goto out;
-			} else {
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				path[level].bp_sib_bh = bh;
 				path[level].bp_op = nilfs_btree_concat_right;
 				stats->bs_nblocks++;
 				/*
 				 * When merging right sibling node
-				 * into the current node, pointer to
+				 * पूर्णांकo the current node, poपूर्णांकer to
 				 * the right sibling node must be
-				 * terminated instead.  The adjustment
-				 * below is required for that.
+				 * terminated instead.  The adjusपंचांगent
+				 * below is required क्रम that.
 				 */
 				dindex = pindex + 1;
-				/* continue; */
-			}
-		} else {
+				/* जारी; */
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* no siblings */
 			/* the only child of the root node */
 			WARN_ON(level != nilfs_btree_height(btree) - 2);
-			if (nilfs_btree_node_get_nchildren(node) - 1 <=
-			    NILFS_BTREE_ROOT_NCHILDREN_MAX) {
+			अगर (nilfs_btree_node_get_nchildren(node) - 1 <=
+			    NILFS_BTREE_ROOT_NCHILDREN_MAX) अणु
 				path[level].bp_op = nilfs_btree_shrink;
 				stats->bs_nblocks += 2;
 				level++;
 				path[level].bp_op = nilfs_btree_nop;
-				goto shrink_root_child;
-			} else {
-				path[level].bp_op = nilfs_btree_do_delete;
+				जाओ shrink_root_child;
+			पूर्ण अन्यथा अणु
+				path[level].bp_op = nilfs_btree_करो_delete;
 				stats->bs_nblocks++;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* child of the root node is deleted */
-	path[level].bp_op = nilfs_btree_do_delete;
+	path[level].bp_op = nilfs_btree_करो_delete;
 	stats->bs_nblocks++;
 
 shrink_root_child:
@@ -1530,298 +1531,298 @@ shrink_root_child:
 					 NILFS_BTREE_ROOT_NCHILDREN_MAX);
 
 	ret = nilfs_bmap_prepare_end_ptr(btree, &path[level].bp_oldreq, dat);
-	if (ret < 0)
-		goto err_out_child_node;
+	अगर (ret < 0)
+		जाओ err_out_child_node;
 
 	/* success */
  out:
 	*levelp = level;
-	return ret;
+	वापस ret;
 
 	/* error */
  err_out_curr_node:
-	nilfs_bmap_abort_end_ptr(btree, &path[level].bp_oldreq, dat);
+	nilfs_bmap_पात_end_ptr(btree, &path[level].bp_oldreq, dat);
  err_out_child_node:
-	for (level--; level >= NILFS_BTREE_LEVEL_NODE_MIN; level--) {
-		brelse(path[level].bp_sib_bh);
-		nilfs_bmap_abort_end_ptr(btree, &path[level].bp_oldreq, dat);
-	}
+	क्रम (level--; level >= NILFS_BTREE_LEVEL_NODE_MIN; level--) अणु
+		brअन्यथा(path[level].bp_sib_bh);
+		nilfs_bmap_पात_end_ptr(btree, &path[level].bp_oldreq, dat);
+	पूर्ण
 	*levelp = level;
 	stats->bs_nblocks = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nilfs_btree_commit_delete(struct nilfs_bmap *btree,
-				      struct nilfs_btree_path *path,
-				      int maxlevel, struct inode *dat)
-{
-	int level;
+अटल व्योम nilfs_btree_commit_delete(काष्ठा nilfs_bmap *btree,
+				      काष्ठा nilfs_btree_path *path,
+				      पूर्णांक maxlevel, काष्ठा inode *dat)
+अणु
+	पूर्णांक level;
 
-	for (level = NILFS_BTREE_LEVEL_NODE_MIN; level <= maxlevel; level++) {
+	क्रम (level = NILFS_BTREE_LEVEL_NODE_MIN; level <= maxlevel; level++) अणु
 		nilfs_bmap_commit_end_ptr(btree, &path[level].bp_oldreq, dat);
-		path[level].bp_op(btree, path, level, NULL, NULL);
-	}
+		path[level].bp_op(btree, path, level, शून्य, शून्य);
+	पूर्ण
 
-	if (!nilfs_bmap_dirty(btree))
+	अगर (!nilfs_bmap_dirty(btree))
 		nilfs_bmap_set_dirty(btree);
-}
+पूर्ण
 
-static int nilfs_btree_delete(struct nilfs_bmap *btree, __u64 key)
+अटल पूर्णांक nilfs_btree_delete(काष्ठा nilfs_bmap *btree, __u64 key)
 
-{
-	struct nilfs_btree_path *path;
-	struct nilfs_bmap_stats stats;
-	struct inode *dat;
-	int level, ret;
+अणु
+	काष्ठा nilfs_btree_path *path;
+	काष्ठा nilfs_bmap_stats stats;
+	काष्ठा inode *dat;
+	पूर्णांक level, ret;
 
 	path = nilfs_btree_alloc_path();
-	if (path == NULL)
-		return -ENOMEM;
+	अगर (path == शून्य)
+		वापस -ENOMEM;
 
-	ret = nilfs_btree_do_lookup(btree, path, key, NULL,
+	ret = nilfs_btree_करो_lookup(btree, path, key, शून्य,
 				    NILFS_BTREE_LEVEL_NODE_MIN, 0);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 
-	dat = NILFS_BMAP_USE_VBN(btree) ? nilfs_bmap_get_dat(btree) : NULL;
+	dat = NILFS_BMAP_USE_VBN(btree) ? nilfs_bmap_get_dat(btree) : शून्य;
 
 	ret = nilfs_btree_prepare_delete(btree, path, &level, &stats, dat);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 	nilfs_btree_commit_delete(btree, path, level, dat);
 	nilfs_inode_sub_blocks(btree->b_inode, stats.bs_nblocks);
 
 out:
-	nilfs_btree_free_path(path);
-	return ret;
-}
+	nilfs_btree_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
-static int nilfs_btree_seek_key(const struct nilfs_bmap *btree, __u64 start,
+अटल पूर्णांक nilfs_btree_seek_key(स्थिर काष्ठा nilfs_bmap *btree, __u64 start,
 				__u64 *keyp)
-{
-	struct nilfs_btree_path *path;
-	const int minlevel = NILFS_BTREE_LEVEL_NODE_MIN;
-	int ret;
+अणु
+	काष्ठा nilfs_btree_path *path;
+	स्थिर पूर्णांक minlevel = NILFS_BTREE_LEVEL_NODE_MIN;
+	पूर्णांक ret;
 
 	path = nilfs_btree_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	ret = nilfs_btree_do_lookup(btree, path, start, NULL, minlevel, 0);
-	if (!ret)
+	ret = nilfs_btree_करो_lookup(btree, path, start, शून्य, minlevel, 0);
+	अगर (!ret)
 		*keyp = start;
-	else if (ret == -ENOENT)
+	अन्यथा अगर (ret == -ENOENT)
 		ret = nilfs_btree_get_next_key(btree, path, minlevel, keyp);
 
-	nilfs_btree_free_path(path);
-	return ret;
-}
+	nilfs_btree_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
-static int nilfs_btree_last_key(const struct nilfs_bmap *btree, __u64 *keyp)
-{
-	struct nilfs_btree_path *path;
-	int ret;
+अटल पूर्णांक nilfs_btree_last_key(स्थिर काष्ठा nilfs_bmap *btree, __u64 *keyp)
+अणु
+	काष्ठा nilfs_btree_path *path;
+	पूर्णांक ret;
 
 	path = nilfs_btree_alloc_path();
-	if (path == NULL)
-		return -ENOMEM;
+	अगर (path == शून्य)
+		वापस -ENOMEM;
 
-	ret = nilfs_btree_do_lookup_last(btree, path, keyp, NULL);
+	ret = nilfs_btree_करो_lookup_last(btree, path, keyp, शून्य);
 
-	nilfs_btree_free_path(path);
+	nilfs_btree_मुक्त_path(path);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nilfs_btree_check_delete(struct nilfs_bmap *btree, __u64 key)
-{
-	struct buffer_head *bh;
-	struct nilfs_btree_node *root, *node;
-	__u64 maxkey, nextmaxkey;
+अटल पूर्णांक nilfs_btree_check_delete(काष्ठा nilfs_bmap *btree, __u64 key)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा nilfs_btree_node *root, *node;
+	__u64 maxkey, nexपंचांगaxkey;
 	__u64 ptr;
-	int nchildren, ret;
+	पूर्णांक nchildren, ret;
 
 	root = nilfs_btree_get_root(btree);
-	switch (nilfs_btree_height(btree)) {
-	case 2:
-		bh = NULL;
+	चयन (nilfs_btree_height(btree)) अणु
+	हाल 2:
+		bh = शून्य;
 		node = root;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		nchildren = nilfs_btree_node_get_nchildren(root);
-		if (nchildren > 1)
-			return 0;
+		अगर (nchildren > 1)
+			वापस 0;
 		ptr = nilfs_btree_node_get_ptr(root, nchildren - 1,
 					       NILFS_BTREE_ROOT_NCHILDREN_MAX);
 		ret = nilfs_btree_get_block(btree, ptr, &bh);
-		if (ret < 0)
-			return ret;
-		node = (struct nilfs_btree_node *)bh->b_data;
-		break;
-	default:
-		return 0;
-	}
+		अगर (ret < 0)
+			वापस ret;
+		node = (काष्ठा nilfs_btree_node *)bh->b_data;
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	nchildren = nilfs_btree_node_get_nchildren(node);
 	maxkey = nilfs_btree_node_get_key(node, nchildren - 1);
-	nextmaxkey = (nchildren > 1) ?
+	nexपंचांगaxkey = (nchildren > 1) ?
 		nilfs_btree_node_get_key(node, nchildren - 2) : 0;
-	if (bh != NULL)
-		brelse(bh);
+	अगर (bh != शून्य)
+		brअन्यथा(bh);
 
-	return (maxkey == key) && (nextmaxkey < NILFS_BMAP_LARGE_LOW);
-}
+	वापस (maxkey == key) && (nexपंचांगaxkey < NILFS_BMAP_LARGE_LOW);
+पूर्ण
 
-static int nilfs_btree_gather_data(struct nilfs_bmap *btree,
-				   __u64 *keys, __u64 *ptrs, int nitems)
-{
-	struct buffer_head *bh;
-	struct nilfs_btree_node *node, *root;
+अटल पूर्णांक nilfs_btree_gather_data(काष्ठा nilfs_bmap *btree,
+				   __u64 *keys, __u64 *ptrs, पूर्णांक nitems)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा nilfs_btree_node *node, *root;
 	__le64 *dkeys;
 	__le64 *dptrs;
 	__u64 ptr;
-	int nchildren, ncmax, i, ret;
+	पूर्णांक nchildren, ncmax, i, ret;
 
 	root = nilfs_btree_get_root(btree);
-	switch (nilfs_btree_height(btree)) {
-	case 2:
-		bh = NULL;
+	चयन (nilfs_btree_height(btree)) अणु
+	हाल 2:
+		bh = शून्य;
 		node = root;
 		ncmax = NILFS_BTREE_ROOT_NCHILDREN_MAX;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		nchildren = nilfs_btree_node_get_nchildren(root);
 		WARN_ON(nchildren > 1);
 		ptr = nilfs_btree_node_get_ptr(root, nchildren - 1,
 					       NILFS_BTREE_ROOT_NCHILDREN_MAX);
 		ret = nilfs_btree_get_block(btree, ptr, &bh);
-		if (ret < 0)
-			return ret;
-		node = (struct nilfs_btree_node *)bh->b_data;
+		अगर (ret < 0)
+			वापस ret;
+		node = (काष्ठा nilfs_btree_node *)bh->b_data;
 		ncmax = nilfs_btree_nchildren_per_block(btree);
-		break;
-	default:
-		node = NULL;
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		node = शून्य;
+		वापस -EINVAL;
+	पूर्ण
 
 	nchildren = nilfs_btree_node_get_nchildren(node);
-	if (nchildren < nitems)
+	अगर (nchildren < nitems)
 		nitems = nchildren;
 	dkeys = nilfs_btree_node_dkeys(node);
 	dptrs = nilfs_btree_node_dptrs(node, ncmax);
-	for (i = 0; i < nitems; i++) {
+	क्रम (i = 0; i < nitems; i++) अणु
 		keys[i] = le64_to_cpu(dkeys[i]);
 		ptrs[i] = le64_to_cpu(dptrs[i]);
-	}
+	पूर्ण
 
-	if (bh != NULL)
-		brelse(bh);
+	अगर (bh != शून्य)
+		brअन्यथा(bh);
 
-	return nitems;
-}
+	वापस nitems;
+पूर्ण
 
-static int
-nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *btree, __u64 key,
-				       union nilfs_bmap_ptr_req *dreq,
-				       union nilfs_bmap_ptr_req *nreq,
-				       struct buffer_head **bhp,
-				       struct nilfs_bmap_stats *stats)
-{
-	struct buffer_head *bh;
-	struct inode *dat = NULL;
-	int ret;
+अटल पूर्णांक
+nilfs_btree_prepare_convert_and_insert(काष्ठा nilfs_bmap *btree, __u64 key,
+				       जोड़ nilfs_bmap_ptr_req *dreq,
+				       जोड़ nilfs_bmap_ptr_req *nreq,
+				       काष्ठा buffer_head **bhp,
+				       काष्ठा nilfs_bmap_stats *stats)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा inode *dat = शून्य;
+	पूर्णांक ret;
 
 	stats->bs_nblocks = 0;
 
-	/* for data */
+	/* क्रम data */
 	/* cannot find near ptr */
-	if (NILFS_BMAP_USE_VBN(btree)) {
-		dreq->bpr_ptr = nilfs_btree_find_target_v(btree, NULL, key);
+	अगर (NILFS_BMAP_USE_VBN(btree)) अणु
+		dreq->bpr_ptr = nilfs_btree_find_target_v(btree, शून्य, key);
 		dat = nilfs_bmap_get_dat(btree);
-	}
+	पूर्ण
 
 	ret = nilfs_bmap_prepare_alloc_ptr(btree, dreq, dat);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	*bhp = NULL;
+	*bhp = शून्य;
 	stats->bs_nblocks++;
-	if (nreq != NULL) {
+	अगर (nreq != शून्य) अणु
 		nreq->bpr_ptr = dreq->bpr_ptr + 1;
 		ret = nilfs_bmap_prepare_alloc_ptr(btree, nreq, dat);
-		if (ret < 0)
-			goto err_out_dreq;
+		अगर (ret < 0)
+			जाओ err_out_dreq;
 
 		ret = nilfs_btree_get_new_block(btree, nreq->bpr_ptr, &bh);
-		if (ret < 0)
-			goto err_out_nreq;
+		अगर (ret < 0)
+			जाओ err_out_nreq;
 
 		*bhp = bh;
 		stats->bs_nblocks++;
-	}
+	पूर्ण
 
 	/* success */
-	return 0;
+	वापस 0;
 
 	/* error */
  err_out_nreq:
-	nilfs_bmap_abort_alloc_ptr(btree, nreq, dat);
+	nilfs_bmap_पात_alloc_ptr(btree, nreq, dat);
  err_out_dreq:
-	nilfs_bmap_abort_alloc_ptr(btree, dreq, dat);
+	nilfs_bmap_पात_alloc_ptr(btree, dreq, dat);
 	stats->bs_nblocks = 0;
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static void
-nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *btree,
+अटल व्योम
+nilfs_btree_commit_convert_and_insert(काष्ठा nilfs_bmap *btree,
 				      __u64 key, __u64 ptr,
-				      const __u64 *keys, const __u64 *ptrs,
-				      int n,
-				      union nilfs_bmap_ptr_req *dreq,
-				      union nilfs_bmap_ptr_req *nreq,
-				      struct buffer_head *bh)
-{
-	struct nilfs_btree_node *node;
-	struct inode *dat;
-	__u64 tmpptr;
-	int ncblk;
+				      स्थिर __u64 *keys, स्थिर __u64 *ptrs,
+				      पूर्णांक n,
+				      जोड़ nilfs_bmap_ptr_req *dreq,
+				      जोड़ nilfs_bmap_ptr_req *nreq,
+				      काष्ठा buffer_head *bh)
+अणु
+	काष्ठा nilfs_btree_node *node;
+	काष्ठा inode *dat;
+	__u64 पंचांगpptr;
+	पूर्णांक ncblk;
 
-	/* free resources */
-	if (btree->b_ops->bop_clear != NULL)
+	/* मुक्त resources */
+	अगर (btree->b_ops->bop_clear != शून्य)
 		btree->b_ops->bop_clear(btree);
 
-	/* ptr must be a pointer to a buffer head. */
-	set_buffer_nilfs_volatile((struct buffer_head *)((unsigned long)ptr));
+	/* ptr must be a poपूर्णांकer to a buffer head. */
+	set_buffer_nilfs_अस्थिर((काष्ठा buffer_head *)((अचिन्हित दीर्घ)ptr));
 
 	/* convert and insert */
-	dat = NILFS_BMAP_USE_VBN(btree) ? nilfs_bmap_get_dat(btree) : NULL;
+	dat = NILFS_BMAP_USE_VBN(btree) ? nilfs_bmap_get_dat(btree) : शून्य;
 	__nilfs_btree_init(btree);
-	if (nreq != NULL) {
+	अगर (nreq != शून्य) अणु
 		nilfs_bmap_commit_alloc_ptr(btree, dreq, dat);
 		nilfs_bmap_commit_alloc_ptr(btree, nreq, dat);
 
 		/* create child node at level 1 */
-		node = (struct nilfs_btree_node *)bh->b_data;
+		node = (काष्ठा nilfs_btree_node *)bh->b_data;
 		ncblk = nilfs_btree_nchildren_per_block(btree);
 		nilfs_btree_node_init(node, 0, 1, n, ncblk, keys, ptrs);
 		nilfs_btree_node_insert(node, n, key, dreq->bpr_ptr, ncblk);
-		if (!buffer_dirty(bh))
+		अगर (!buffer_dirty(bh))
 			mark_buffer_dirty(bh);
-		if (!nilfs_bmap_dirty(btree))
+		अगर (!nilfs_bmap_dirty(btree))
 			nilfs_bmap_set_dirty(btree);
 
-		brelse(bh);
+		brअन्यथा(bh);
 
 		/* create root node at level 2 */
 		node = nilfs_btree_get_root(btree);
-		tmpptr = nreq->bpr_ptr;
+		पंचांगpptr = nreq->bpr_ptr;
 		nilfs_btree_node_init(node, NILFS_BTREE_NODE_ROOT, 2, 1,
 				      NILFS_BTREE_ROOT_NCHILDREN_MAX,
-				      &keys[0], &tmpptr);
-	} else {
+				      &keys[0], &पंचांगpptr);
+	पूर्ण अन्यथा अणु
 		nilfs_bmap_commit_alloc_ptr(btree, dreq, dat);
 
 		/* create root node at level 1 */
@@ -1831,13 +1832,13 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *btree,
 				      keys, ptrs);
 		nilfs_btree_node_insert(node, n, key, dreq->bpr_ptr,
 					NILFS_BTREE_ROOT_NCHILDREN_MAX);
-		if (!nilfs_bmap_dirty(btree))
+		अगर (!nilfs_bmap_dirty(btree))
 			nilfs_bmap_set_dirty(btree);
-	}
+	पूर्ण
 
-	if (NILFS_BMAP_USE_VBN(btree))
+	अगर (NILFS_BMAP_USE_VBN(btree))
 		nilfs_bmap_set_target_v(btree, key, dreq->bpr_ptr);
-}
+पूर्ण
 
 /**
  * nilfs_btree_convert_and_insert -
@@ -1848,56 +1849,56 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *btree,
  * @ptrs:
  * @n:
  */
-int nilfs_btree_convert_and_insert(struct nilfs_bmap *btree,
+पूर्णांक nilfs_btree_convert_and_insert(काष्ठा nilfs_bmap *btree,
 				   __u64 key, __u64 ptr,
-				   const __u64 *keys, const __u64 *ptrs, int n)
-{
-	struct buffer_head *bh = NULL;
-	union nilfs_bmap_ptr_req dreq, nreq, *di, *ni;
-	struct nilfs_bmap_stats stats;
-	int ret;
+				   स्थिर __u64 *keys, स्थिर __u64 *ptrs, पूर्णांक n)
+अणु
+	काष्ठा buffer_head *bh = शून्य;
+	जोड़ nilfs_bmap_ptr_req dreq, nreq, *di, *ni;
+	काष्ठा nilfs_bmap_stats stats;
+	पूर्णांक ret;
 
-	if (n + 1 <= NILFS_BTREE_ROOT_NCHILDREN_MAX) {
+	अगर (n + 1 <= NILFS_BTREE_ROOT_NCHILDREN_MAX) अणु
 		di = &dreq;
-		ni = NULL;
-	} else if ((n + 1) <= NILFS_BTREE_NODE_NCHILDREN_MAX(
-			   nilfs_btree_node_size(btree))) {
+		ni = शून्य;
+	पूर्ण अन्यथा अगर ((n + 1) <= NILFS_BTREE_NODE_NCHILDREN_MAX(
+			   nilfs_btree_node_size(btree))) अणु
 		di = &dreq;
 		ni = &nreq;
-	} else {
-		di = NULL;
-		ni = NULL;
+	पूर्ण अन्यथा अणु
+		di = शून्य;
+		ni = शून्य;
 		BUG();
-	}
+	पूर्ण
 
 	ret = nilfs_btree_prepare_convert_and_insert(btree, key, di, ni, &bh,
 						     &stats);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	nilfs_btree_commit_convert_and_insert(btree, key, ptr, keys, ptrs, n,
 					      di, ni, bh);
 	nilfs_inode_add_blocks(btree->b_inode, stats.bs_nblocks);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_btree_propagate_p(struct nilfs_bmap *btree,
-				   struct nilfs_btree_path *path,
-				   int level,
-				   struct buffer_head *bh)
-{
-	while ((++level < nilfs_btree_height(btree) - 1) &&
+अटल पूर्णांक nilfs_btree_propagate_p(काष्ठा nilfs_bmap *btree,
+				   काष्ठा nilfs_btree_path *path,
+				   पूर्णांक level,
+				   काष्ठा buffer_head *bh)
+अणु
+	जबतक ((++level < nilfs_btree_height(btree) - 1) &&
 	       !buffer_dirty(path[level].bp_bh))
 		mark_buffer_dirty(path[level].bp_bh);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_btree_prepare_update_v(struct nilfs_bmap *btree,
-					struct nilfs_btree_path *path,
-					int level, struct inode *dat)
-{
-	struct nilfs_btree_node *parent;
-	int ncmax, ret;
+अटल पूर्णांक nilfs_btree_prepare_update_v(काष्ठा nilfs_bmap *btree,
+					काष्ठा nilfs_btree_path *path,
+					पूर्णांक level, काष्ठा inode *dat)
+अणु
+	काष्ठा nilfs_btree_node *parent;
+	पूर्णांक ncmax, ret;
 
 	parent = nilfs_btree_get_node(btree, path, level + 1, &ncmax);
 	path[level].bp_oldreq.bpr_ptr =
@@ -1906,446 +1907,446 @@ static int nilfs_btree_prepare_update_v(struct nilfs_bmap *btree,
 	path[level].bp_newreq.bpr_ptr = path[level].bp_oldreq.bpr_ptr + 1;
 	ret = nilfs_dat_prepare_update(dat, &path[level].bp_oldreq.bpr_req,
 				       &path[level].bp_newreq.bpr_req);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (buffer_nilfs_node(path[level].bp_bh)) {
+	अगर (buffer_nilfs_node(path[level].bp_bh)) अणु
 		path[level].bp_ctxt.oldkey = path[level].bp_oldreq.bpr_ptr;
 		path[level].bp_ctxt.newkey = path[level].bp_newreq.bpr_ptr;
 		path[level].bp_ctxt.bh = path[level].bp_bh;
 		ret = nilfs_btnode_prepare_change_key(
 			&NILFS_BMAP_I(btree)->i_btnode_cache,
 			&path[level].bp_ctxt);
-		if (ret < 0) {
-			nilfs_dat_abort_update(dat,
+		अगर (ret < 0) अणु
+			nilfs_dat_पात_update(dat,
 					       &path[level].bp_oldreq.bpr_req,
 					       &path[level].bp_newreq.bpr_req);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nilfs_btree_commit_update_v(struct nilfs_bmap *btree,
-					struct nilfs_btree_path *path,
-					int level, struct inode *dat)
-{
-	struct nilfs_btree_node *parent;
-	int ncmax;
+अटल व्योम nilfs_btree_commit_update_v(काष्ठा nilfs_bmap *btree,
+					काष्ठा nilfs_btree_path *path,
+					पूर्णांक level, काष्ठा inode *dat)
+अणु
+	काष्ठा nilfs_btree_node *parent;
+	पूर्णांक ncmax;
 
 	nilfs_dat_commit_update(dat, &path[level].bp_oldreq.bpr_req,
 				&path[level].bp_newreq.bpr_req,
 				btree->b_ptr_type == NILFS_BMAP_PTR_VS);
 
-	if (buffer_nilfs_node(path[level].bp_bh)) {
+	अगर (buffer_nilfs_node(path[level].bp_bh)) अणु
 		nilfs_btnode_commit_change_key(
 			&NILFS_BMAP_I(btree)->i_btnode_cache,
 			&path[level].bp_ctxt);
 		path[level].bp_bh = path[level].bp_ctxt.bh;
-	}
-	set_buffer_nilfs_volatile(path[level].bp_bh);
+	पूर्ण
+	set_buffer_nilfs_अस्थिर(path[level].bp_bh);
 
 	parent = nilfs_btree_get_node(btree, path, level + 1, &ncmax);
 	nilfs_btree_node_set_ptr(parent, path[level + 1].bp_index,
 				 path[level].bp_newreq.bpr_ptr, ncmax);
-}
+पूर्ण
 
-static void nilfs_btree_abort_update_v(struct nilfs_bmap *btree,
-				       struct nilfs_btree_path *path,
-				       int level, struct inode *dat)
-{
-	nilfs_dat_abort_update(dat, &path[level].bp_oldreq.bpr_req,
+अटल व्योम nilfs_btree_पात_update_v(काष्ठा nilfs_bmap *btree,
+				       काष्ठा nilfs_btree_path *path,
+				       पूर्णांक level, काष्ठा inode *dat)
+अणु
+	nilfs_dat_पात_update(dat, &path[level].bp_oldreq.bpr_req,
 			       &path[level].bp_newreq.bpr_req);
-	if (buffer_nilfs_node(path[level].bp_bh))
-		nilfs_btnode_abort_change_key(
+	अगर (buffer_nilfs_node(path[level].bp_bh))
+		nilfs_btnode_पात_change_key(
 			&NILFS_BMAP_I(btree)->i_btnode_cache,
 			&path[level].bp_ctxt);
-}
+पूर्ण
 
-static int nilfs_btree_prepare_propagate_v(struct nilfs_bmap *btree,
-					   struct nilfs_btree_path *path,
-					   int minlevel, int *maxlevelp,
-					   struct inode *dat)
-{
-	int level, ret;
+अटल पूर्णांक nilfs_btree_prepare_propagate_v(काष्ठा nilfs_bmap *btree,
+					   काष्ठा nilfs_btree_path *path,
+					   पूर्णांक minlevel, पूर्णांक *maxlevelp,
+					   काष्ठा inode *dat)
+अणु
+	पूर्णांक level, ret;
 
 	level = minlevel;
-	if (!buffer_nilfs_volatile(path[level].bp_bh)) {
+	अगर (!buffer_nilfs_अस्थिर(path[level].bp_bh)) अणु
 		ret = nilfs_btree_prepare_update_v(btree, path, level, dat);
-		if (ret < 0)
-			return ret;
-	}
-	while ((++level < nilfs_btree_height(btree) - 1) &&
-	       !buffer_dirty(path[level].bp_bh)) {
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
+	जबतक ((++level < nilfs_btree_height(btree) - 1) &&
+	       !buffer_dirty(path[level].bp_bh)) अणु
 
-		WARN_ON(buffer_nilfs_volatile(path[level].bp_bh));
+		WARN_ON(buffer_nilfs_अस्थिर(path[level].bp_bh));
 		ret = nilfs_btree_prepare_update_v(btree, path, level, dat);
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
 	/* success */
 	*maxlevelp = level - 1;
-	return 0;
+	वापस 0;
 
 	/* error */
  out:
-	while (--level > minlevel)
-		nilfs_btree_abort_update_v(btree, path, level, dat);
-	if (!buffer_nilfs_volatile(path[level].bp_bh))
-		nilfs_btree_abort_update_v(btree, path, level, dat);
-	return ret;
-}
+	जबतक (--level > minlevel)
+		nilfs_btree_पात_update_v(btree, path, level, dat);
+	अगर (!buffer_nilfs_अस्थिर(path[level].bp_bh))
+		nilfs_btree_पात_update_v(btree, path, level, dat);
+	वापस ret;
+पूर्ण
 
-static void nilfs_btree_commit_propagate_v(struct nilfs_bmap *btree,
-					   struct nilfs_btree_path *path,
-					   int minlevel, int maxlevel,
-					   struct buffer_head *bh,
-					   struct inode *dat)
-{
-	int level;
+अटल व्योम nilfs_btree_commit_propagate_v(काष्ठा nilfs_bmap *btree,
+					   काष्ठा nilfs_btree_path *path,
+					   पूर्णांक minlevel, पूर्णांक maxlevel,
+					   काष्ठा buffer_head *bh,
+					   काष्ठा inode *dat)
+अणु
+	पूर्णांक level;
 
-	if (!buffer_nilfs_volatile(path[minlevel].bp_bh))
+	अगर (!buffer_nilfs_अस्थिर(path[minlevel].bp_bh))
 		nilfs_btree_commit_update_v(btree, path, minlevel, dat);
 
-	for (level = minlevel + 1; level <= maxlevel; level++)
+	क्रम (level = minlevel + 1; level <= maxlevel; level++)
 		nilfs_btree_commit_update_v(btree, path, level, dat);
-}
+पूर्ण
 
-static int nilfs_btree_propagate_v(struct nilfs_bmap *btree,
-				   struct nilfs_btree_path *path,
-				   int level, struct buffer_head *bh)
-{
-	int maxlevel = 0, ret;
-	struct nilfs_btree_node *parent;
-	struct inode *dat = nilfs_bmap_get_dat(btree);
+अटल पूर्णांक nilfs_btree_propagate_v(काष्ठा nilfs_bmap *btree,
+				   काष्ठा nilfs_btree_path *path,
+				   पूर्णांक level, काष्ठा buffer_head *bh)
+अणु
+	पूर्णांक maxlevel = 0, ret;
+	काष्ठा nilfs_btree_node *parent;
+	काष्ठा inode *dat = nilfs_bmap_get_dat(btree);
 	__u64 ptr;
-	int ncmax;
+	पूर्णांक ncmax;
 
 	get_bh(bh);
 	path[level].bp_bh = bh;
 	ret = nilfs_btree_prepare_propagate_v(btree, path, level, &maxlevel,
 					      dat);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (buffer_nilfs_volatile(path[level].bp_bh)) {
+	अगर (buffer_nilfs_अस्थिर(path[level].bp_bh)) अणु
 		parent = nilfs_btree_get_node(btree, path, level + 1, &ncmax);
 		ptr = nilfs_btree_node_get_ptr(parent,
 					       path[level + 1].bp_index,
 					       ncmax);
 		ret = nilfs_dat_mark_dirty(dat, ptr);
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
 	nilfs_btree_commit_propagate_v(btree, path, level, maxlevel, bh, dat);
 
  out:
-	brelse(path[level].bp_bh);
-	path[level].bp_bh = NULL;
-	return ret;
-}
+	brअन्यथा(path[level].bp_bh);
+	path[level].bp_bh = शून्य;
+	वापस ret;
+पूर्ण
 
-static int nilfs_btree_propagate(struct nilfs_bmap *btree,
-				 struct buffer_head *bh)
-{
-	struct nilfs_btree_path *path;
-	struct nilfs_btree_node *node;
+अटल पूर्णांक nilfs_btree_propagate(काष्ठा nilfs_bmap *btree,
+				 काष्ठा buffer_head *bh)
+अणु
+	काष्ठा nilfs_btree_path *path;
+	काष्ठा nilfs_btree_node *node;
 	__u64 key;
-	int level, ret;
+	पूर्णांक level, ret;
 
 	WARN_ON(!buffer_dirty(bh));
 
 	path = nilfs_btree_alloc_path();
-	if (path == NULL)
-		return -ENOMEM;
+	अगर (path == शून्य)
+		वापस -ENOMEM;
 
-	if (buffer_nilfs_node(bh)) {
-		node = (struct nilfs_btree_node *)bh->b_data;
+	अगर (buffer_nilfs_node(bh)) अणु
+		node = (काष्ठा nilfs_btree_node *)bh->b_data;
 		key = nilfs_btree_node_get_key(node, 0);
 		level = nilfs_btree_node_get_level(node);
-	} else {
+	पूर्ण अन्यथा अणु
 		key = nilfs_bmap_data_get_key(btree, bh);
 		level = NILFS_BTREE_LEVEL_DATA;
-	}
+	पूर्ण
 
-	ret = nilfs_btree_do_lookup(btree, path, key, NULL, level + 1, 0);
-	if (ret < 0) {
-		if (unlikely(ret == -ENOENT))
+	ret = nilfs_btree_करो_lookup(btree, path, key, शून्य, level + 1, 0);
+	अगर (ret < 0) अणु
+		अगर (unlikely(ret == -ENOENT))
 			nilfs_crit(btree->b_inode->i_sb,
 				   "writing node/leaf block does not appear in b-tree (ino=%lu) at key=%llu, level=%d",
 				   btree->b_inode->i_ino,
-				   (unsigned long long)key, level);
-		goto out;
-	}
+				   (अचिन्हित दीर्घ दीर्घ)key, level);
+		जाओ out;
+	पूर्ण
 
 	ret = NILFS_BMAP_USE_VBN(btree) ?
 		nilfs_btree_propagate_v(btree, path, level, bh) :
 		nilfs_btree_propagate_p(btree, path, level, bh);
 
  out:
-	nilfs_btree_free_path(path);
+	nilfs_btree_मुक्त_path(path);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nilfs_btree_propagate_gc(struct nilfs_bmap *btree,
-				    struct buffer_head *bh)
-{
-	return nilfs_dat_mark_dirty(nilfs_bmap_get_dat(btree), bh->b_blocknr);
-}
+अटल पूर्णांक nilfs_btree_propagate_gc(काष्ठा nilfs_bmap *btree,
+				    काष्ठा buffer_head *bh)
+अणु
+	वापस nilfs_dat_mark_dirty(nilfs_bmap_get_dat(btree), bh->b_blocknr);
+पूर्ण
 
-static void nilfs_btree_add_dirty_buffer(struct nilfs_bmap *btree,
-					 struct list_head *lists,
-					 struct buffer_head *bh)
-{
-	struct list_head *head;
-	struct buffer_head *cbh;
-	struct nilfs_btree_node *node, *cnode;
+अटल व्योम nilfs_btree_add_dirty_buffer(काष्ठा nilfs_bmap *btree,
+					 काष्ठा list_head *lists,
+					 काष्ठा buffer_head *bh)
+अणु
+	काष्ठा list_head *head;
+	काष्ठा buffer_head *cbh;
+	काष्ठा nilfs_btree_node *node, *cnode;
 	__u64 key, ckey;
-	int level;
+	पूर्णांक level;
 
 	get_bh(bh);
-	node = (struct nilfs_btree_node *)bh->b_data;
+	node = (काष्ठा nilfs_btree_node *)bh->b_data;
 	key = nilfs_btree_node_get_key(node, 0);
 	level = nilfs_btree_node_get_level(node);
-	if (level < NILFS_BTREE_LEVEL_NODE_MIN ||
-	    level >= NILFS_BTREE_LEVEL_MAX) {
+	अगर (level < NILFS_BTREE_LEVEL_NODE_MIN ||
+	    level >= NILFS_BTREE_LEVEL_MAX) अणु
 		dump_stack();
 		nilfs_warn(btree->b_inode->i_sb,
 			   "invalid btree level: %d (key=%llu, ino=%lu, blocknr=%llu)",
-			   level, (unsigned long long)key,
+			   level, (अचिन्हित दीर्घ दीर्घ)key,
 			   btree->b_inode->i_ino,
-			   (unsigned long long)bh->b_blocknr);
-		return;
-	}
+			   (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+		वापस;
+	पूर्ण
 
-	list_for_each(head, &lists[level]) {
-		cbh = list_entry(head, struct buffer_head, b_assoc_buffers);
-		cnode = (struct nilfs_btree_node *)cbh->b_data;
+	list_क्रम_each(head, &lists[level]) अणु
+		cbh = list_entry(head, काष्ठा buffer_head, b_assoc_buffers);
+		cnode = (काष्ठा nilfs_btree_node *)cbh->b_data;
 		ckey = nilfs_btree_node_get_key(cnode, 0);
-		if (key < ckey)
-			break;
-	}
+		अगर (key < ckey)
+			अवरोध;
+	पूर्ण
 	list_add_tail(&bh->b_assoc_buffers, head);
-}
+पूर्ण
 
-static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *btree,
-					     struct list_head *listp)
-{
-	struct address_space *btcache = &NILFS_BMAP_I(btree)->i_btnode_cache;
-	struct list_head lists[NILFS_BTREE_LEVEL_MAX];
-	struct pagevec pvec;
-	struct buffer_head *bh, *head;
+अटल व्योम nilfs_btree_lookup_dirty_buffers(काष्ठा nilfs_bmap *btree,
+					     काष्ठा list_head *listp)
+अणु
+	काष्ठा address_space *btcache = &NILFS_BMAP_I(btree)->i_btnode_cache;
+	काष्ठा list_head lists[NILFS_BTREE_LEVEL_MAX];
+	काष्ठा pagevec pvec;
+	काष्ठा buffer_head *bh, *head;
 	pgoff_t index = 0;
-	int level, i;
+	पूर्णांक level, i;
 
-	for (level = NILFS_BTREE_LEVEL_NODE_MIN;
+	क्रम (level = NILFS_BTREE_LEVEL_NODE_MIN;
 	     level < NILFS_BTREE_LEVEL_MAX;
 	     level++)
 		INIT_LIST_HEAD(&lists[level]);
 
 	pagevec_init(&pvec);
 
-	while (pagevec_lookup_tag(&pvec, btcache, &index,
-					PAGECACHE_TAG_DIRTY)) {
-		for (i = 0; i < pagevec_count(&pvec); i++) {
+	जबतक (pagevec_lookup_tag(&pvec, btcache, &index,
+					PAGECACHE_TAG_सूचीTY)) अणु
+		क्रम (i = 0; i < pagevec_count(&pvec); i++) अणु
 			bh = head = page_buffers(pvec.pages[i]);
-			do {
-				if (buffer_dirty(bh))
+			करो अणु
+				अगर (buffer_dirty(bh))
 					nilfs_btree_add_dirty_buffer(btree,
 								     lists, bh);
-			} while ((bh = bh->b_this_page) != head);
-		}
+			पूर्ण जबतक ((bh = bh->b_this_page) != head);
+		पूर्ण
 		pagevec_release(&pvec);
 		cond_resched();
-	}
+	पूर्ण
 
-	for (level = NILFS_BTREE_LEVEL_NODE_MIN;
+	क्रम (level = NILFS_BTREE_LEVEL_NODE_MIN;
 	     level < NILFS_BTREE_LEVEL_MAX;
 	     level++)
 		list_splice_tail(&lists[level], listp);
-}
+पूर्ण
 
-static int nilfs_btree_assign_p(struct nilfs_bmap *btree,
-				struct nilfs_btree_path *path,
-				int level,
-				struct buffer_head **bh,
+अटल पूर्णांक nilfs_btree_assign_p(काष्ठा nilfs_bmap *btree,
+				काष्ठा nilfs_btree_path *path,
+				पूर्णांक level,
+				काष्ठा buffer_head **bh,
 				sector_t blocknr,
-				union nilfs_binfo *binfo)
-{
-	struct nilfs_btree_node *parent;
+				जोड़ nilfs_binfo *binfo)
+अणु
+	काष्ठा nilfs_btree_node *parent;
 	__u64 key;
 	__u64 ptr;
-	int ncmax, ret;
+	पूर्णांक ncmax, ret;
 
 	parent = nilfs_btree_get_node(btree, path, level + 1, &ncmax);
 	ptr = nilfs_btree_node_get_ptr(parent, path[level + 1].bp_index,
 				       ncmax);
-	if (buffer_nilfs_node(*bh)) {
+	अगर (buffer_nilfs_node(*bh)) अणु
 		path[level].bp_ctxt.oldkey = ptr;
 		path[level].bp_ctxt.newkey = blocknr;
 		path[level].bp_ctxt.bh = *bh;
 		ret = nilfs_btnode_prepare_change_key(
 			&NILFS_BMAP_I(btree)->i_btnode_cache,
 			&path[level].bp_ctxt);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		nilfs_btnode_commit_change_key(
 			&NILFS_BMAP_I(btree)->i_btnode_cache,
 			&path[level].bp_ctxt);
 		*bh = path[level].bp_ctxt.bh;
-	}
+	पूर्ण
 
 	nilfs_btree_node_set_ptr(parent, path[level + 1].bp_index, blocknr,
 				 ncmax);
 
 	key = nilfs_btree_node_get_key(parent, path[level + 1].bp_index);
-	/* on-disk format */
+	/* on-disk क्रमmat */
 	binfo->bi_dat.bi_blkoff = cpu_to_le64(key);
 	binfo->bi_dat.bi_level = level;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_btree_assign_v(struct nilfs_bmap *btree,
-				struct nilfs_btree_path *path,
-				int level,
-				struct buffer_head **bh,
+अटल पूर्णांक nilfs_btree_assign_v(काष्ठा nilfs_bmap *btree,
+				काष्ठा nilfs_btree_path *path,
+				पूर्णांक level,
+				काष्ठा buffer_head **bh,
 				sector_t blocknr,
-				union nilfs_binfo *binfo)
-{
-	struct nilfs_btree_node *parent;
-	struct inode *dat = nilfs_bmap_get_dat(btree);
+				जोड़ nilfs_binfo *binfo)
+अणु
+	काष्ठा nilfs_btree_node *parent;
+	काष्ठा inode *dat = nilfs_bmap_get_dat(btree);
 	__u64 key;
 	__u64 ptr;
-	union nilfs_bmap_ptr_req req;
-	int ncmax, ret;
+	जोड़ nilfs_bmap_ptr_req req;
+	पूर्णांक ncmax, ret;
 
 	parent = nilfs_btree_get_node(btree, path, level + 1, &ncmax);
 	ptr = nilfs_btree_node_get_ptr(parent, path[level + 1].bp_index,
 				       ncmax);
 	req.bpr_ptr = ptr;
 	ret = nilfs_dat_prepare_start(dat, &req.bpr_req);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	nilfs_dat_commit_start(dat, &req.bpr_req, blocknr);
 
 	key = nilfs_btree_node_get_key(parent, path[level + 1].bp_index);
-	/* on-disk format */
+	/* on-disk क्रमmat */
 	binfo->bi_v.bi_vblocknr = cpu_to_le64(ptr);
 	binfo->bi_v.bi_blkoff = cpu_to_le64(key);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_btree_assign(struct nilfs_bmap *btree,
-			      struct buffer_head **bh,
+अटल पूर्णांक nilfs_btree_assign(काष्ठा nilfs_bmap *btree,
+			      काष्ठा buffer_head **bh,
 			      sector_t blocknr,
-			      union nilfs_binfo *binfo)
-{
-	struct nilfs_btree_path *path;
-	struct nilfs_btree_node *node;
+			      जोड़ nilfs_binfo *binfo)
+अणु
+	काष्ठा nilfs_btree_path *path;
+	काष्ठा nilfs_btree_node *node;
 	__u64 key;
-	int level, ret;
+	पूर्णांक level, ret;
 
 	path = nilfs_btree_alloc_path();
-	if (path == NULL)
-		return -ENOMEM;
+	अगर (path == शून्य)
+		वापस -ENOMEM;
 
-	if (buffer_nilfs_node(*bh)) {
-		node = (struct nilfs_btree_node *)(*bh)->b_data;
+	अगर (buffer_nilfs_node(*bh)) अणु
+		node = (काष्ठा nilfs_btree_node *)(*bh)->b_data;
 		key = nilfs_btree_node_get_key(node, 0);
 		level = nilfs_btree_node_get_level(node);
-	} else {
+	पूर्ण अन्यथा अणु
 		key = nilfs_bmap_data_get_key(btree, *bh);
 		level = NILFS_BTREE_LEVEL_DATA;
-	}
+	पूर्ण
 
-	ret = nilfs_btree_do_lookup(btree, path, key, NULL, level + 1, 0);
-	if (ret < 0) {
+	ret = nilfs_btree_करो_lookup(btree, path, key, शून्य, level + 1, 0);
+	अगर (ret < 0) अणु
 		WARN_ON(ret == -ENOENT);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = NILFS_BMAP_USE_VBN(btree) ?
 		nilfs_btree_assign_v(btree, path, level, bh, blocknr, binfo) :
 		nilfs_btree_assign_p(btree, path, level, bh, blocknr, binfo);
 
  out:
-	nilfs_btree_free_path(path);
+	nilfs_btree_मुक्त_path(path);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nilfs_btree_assign_gc(struct nilfs_bmap *btree,
-				 struct buffer_head **bh,
+अटल पूर्णांक nilfs_btree_assign_gc(काष्ठा nilfs_bmap *btree,
+				 काष्ठा buffer_head **bh,
 				 sector_t blocknr,
-				 union nilfs_binfo *binfo)
-{
-	struct nilfs_btree_node *node;
+				 जोड़ nilfs_binfo *binfo)
+अणु
+	काष्ठा nilfs_btree_node *node;
 	__u64 key;
-	int ret;
+	पूर्णांक ret;
 
 	ret = nilfs_dat_move(nilfs_bmap_get_dat(btree), (*bh)->b_blocknr,
 			     blocknr);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (buffer_nilfs_node(*bh)) {
-		node = (struct nilfs_btree_node *)(*bh)->b_data;
+	अगर (buffer_nilfs_node(*bh)) अणु
+		node = (काष्ठा nilfs_btree_node *)(*bh)->b_data;
 		key = nilfs_btree_node_get_key(node, 0);
-	} else
+	पूर्ण अन्यथा
 		key = nilfs_bmap_data_get_key(btree, *bh);
 
-	/* on-disk format */
+	/* on-disk क्रमmat */
 	binfo->bi_v.bi_vblocknr = cpu_to_le64((*bh)->b_blocknr);
 	binfo->bi_v.bi_blkoff = cpu_to_le64(key);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_btree_mark(struct nilfs_bmap *btree, __u64 key, int level)
-{
-	struct buffer_head *bh;
-	struct nilfs_btree_path *path;
+अटल पूर्णांक nilfs_btree_mark(काष्ठा nilfs_bmap *btree, __u64 key, पूर्णांक level)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा nilfs_btree_path *path;
 	__u64 ptr;
-	int ret;
+	पूर्णांक ret;
 
 	path = nilfs_btree_alloc_path();
-	if (path == NULL)
-		return -ENOMEM;
+	अगर (path == शून्य)
+		वापस -ENOMEM;
 
-	ret = nilfs_btree_do_lookup(btree, path, key, &ptr, level + 1, 0);
-	if (ret < 0) {
+	ret = nilfs_btree_करो_lookup(btree, path, key, &ptr, level + 1, 0);
+	अगर (ret < 0) अणु
 		WARN_ON(ret == -ENOENT);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = nilfs_btree_get_block(btree, ptr, &bh);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		WARN_ON(ret == -ENOENT);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!buffer_dirty(bh))
+	अगर (!buffer_dirty(bh))
 		mark_buffer_dirty(bh);
-	brelse(bh);
-	if (!nilfs_bmap_dirty(btree))
+	brअन्यथा(bh);
+	अगर (!nilfs_bmap_dirty(btree))
 		nilfs_bmap_set_dirty(btree);
 
  out:
-	nilfs_btree_free_path(path);
-	return ret;
-}
+	nilfs_btree_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
-static const struct nilfs_bmap_operations nilfs_btree_ops = {
+अटल स्थिर काष्ठा nilfs_bmap_operations nilfs_btree_ops = अणु
 	.bop_lookup		=	nilfs_btree_lookup,
 	.bop_lookup_contig	=	nilfs_btree_lookup_contig,
 	.bop_insert		=	nilfs_btree_insert,
 	.bop_delete		=	nilfs_btree_delete,
-	.bop_clear		=	NULL,
+	.bop_clear		=	शून्य,
 
 	.bop_propagate		=	nilfs_btree_propagate,
 
@@ -2357,54 +2358,54 @@ static const struct nilfs_bmap_operations nilfs_btree_ops = {
 	.bop_seek_key		=	nilfs_btree_seek_key,
 	.bop_last_key		=	nilfs_btree_last_key,
 
-	.bop_check_insert	=	NULL,
+	.bop_check_insert	=	शून्य,
 	.bop_check_delete	=	nilfs_btree_check_delete,
 	.bop_gather_data	=	nilfs_btree_gather_data,
-};
+पूर्ण;
 
-static const struct nilfs_bmap_operations nilfs_btree_ops_gc = {
-	.bop_lookup		=	NULL,
-	.bop_lookup_contig	=	NULL,
-	.bop_insert		=	NULL,
-	.bop_delete		=	NULL,
-	.bop_clear		=	NULL,
+अटल स्थिर काष्ठा nilfs_bmap_operations nilfs_btree_ops_gc = अणु
+	.bop_lookup		=	शून्य,
+	.bop_lookup_contig	=	शून्य,
+	.bop_insert		=	शून्य,
+	.bop_delete		=	शून्य,
+	.bop_clear		=	शून्य,
 
 	.bop_propagate		=	nilfs_btree_propagate_gc,
 
 	.bop_lookup_dirty_buffers =	nilfs_btree_lookup_dirty_buffers,
 
 	.bop_assign		=	nilfs_btree_assign_gc,
-	.bop_mark		=	NULL,
+	.bop_mark		=	शून्य,
 
-	.bop_seek_key		=	NULL,
-	.bop_last_key		=	NULL,
+	.bop_seek_key		=	शून्य,
+	.bop_last_key		=	शून्य,
 
-	.bop_check_insert	=	NULL,
-	.bop_check_delete	=	NULL,
-	.bop_gather_data	=	NULL,
-};
+	.bop_check_insert	=	शून्य,
+	.bop_check_delete	=	शून्य,
+	.bop_gather_data	=	शून्य,
+पूर्ण;
 
-static void __nilfs_btree_init(struct nilfs_bmap *bmap)
-{
+अटल व्योम __nilfs_btree_init(काष्ठा nilfs_bmap *bmap)
+अणु
 	bmap->b_ops = &nilfs_btree_ops;
 	bmap->b_nchildren_per_block =
 		NILFS_BTREE_NODE_NCHILDREN_MAX(nilfs_btree_node_size(bmap));
-}
+पूर्ण
 
-int nilfs_btree_init(struct nilfs_bmap *bmap)
-{
-	int ret = 0;
+पूर्णांक nilfs_btree_init(काष्ठा nilfs_bmap *bmap)
+अणु
+	पूर्णांक ret = 0;
 
 	__nilfs_btree_init(bmap);
 
-	if (nilfs_btree_root_broken(nilfs_btree_get_root(bmap), bmap->b_inode))
+	अगर (nilfs_btree_root_broken(nilfs_btree_get_root(bmap), bmap->b_inode))
 		ret = -EIO;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void nilfs_btree_init_gc(struct nilfs_bmap *bmap)
-{
+व्योम nilfs_btree_init_gc(काष्ठा nilfs_bmap *bmap)
+अणु
 	bmap->b_ops = &nilfs_btree_ops_gc;
 	bmap->b_nchildren_per_block =
 		NILFS_BTREE_NODE_NCHILDREN_MAX(nilfs_btree_node_size(bmap));
-}
+पूर्ण

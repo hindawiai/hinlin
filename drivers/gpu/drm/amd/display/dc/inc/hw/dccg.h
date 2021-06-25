@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,27 +24,27 @@
  *
  */
 
-#ifndef __DAL_DCCG_H__
-#define __DAL_DCCG_H__
+#अगर_अघोषित __DAL_DCCG_H__
+#घोषणा __DAL_DCCG_H__
 
-#include "dc_types.h"
-#include "hw_shared.h"
+#समावेश "dc_types.h"
+#समावेश "hw_shared.h"
 
-struct dccg {
-	struct dc_context *ctx;
-	const struct dccg_funcs *funcs;
-	int pipe_dppclk_khz[MAX_PIPES];
-	int ref_dppclk;
-};
+काष्ठा dccg अणु
+	काष्ठा dc_context *ctx;
+	स्थिर काष्ठा dccg_funcs *funcs;
+	पूर्णांक pipe_dppclk_khz[MAX_PIPES];
+	पूर्णांक ref_dppclk;
+पूर्ण;
 
-struct dccg_funcs {
-	void (*update_dpp_dto)(struct dccg *dccg,
-			int dpp_inst,
-			int req_dppclk);
-	void (*get_dccg_ref_freq)(struct dccg *dccg,
-			unsigned int xtalin_freq_inKhz,
-			unsigned int *dccg_ref_freq_inKhz);
-	void (*dccg_init)(struct dccg *dccg);
-};
+काष्ठा dccg_funcs अणु
+	व्योम (*update_dpp_dto)(काष्ठा dccg *dccg,
+			पूर्णांक dpp_inst,
+			पूर्णांक req_dppclk);
+	व्योम (*get_dccg_ref_freq)(काष्ठा dccg *dccg,
+			अचिन्हित पूर्णांक xtalin_freq_inKhz,
+			अचिन्हित पूर्णांक *dccg_ref_freq_inKhz);
+	व्योम (*dccg_init)(काष्ठा dccg *dccg);
+पूर्ण;
 
-#endif //__DAL_DCCG_H__
+#पूर्ण_अगर //__DAL_DCCG_H__

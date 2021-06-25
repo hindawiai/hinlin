@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // Copyright 2019 NXP
 //
 // Author: Daniel Baluta <daniel.baluta@nxp.com>
 //
 
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/pm_runtime.h>
-#include <sound/sof.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <sound/sof.h>
 
-#include "ops.h"
+#समावेश "ops.h"
 
-extern struct snd_sof_dsp_ops sof_imx8_ops;
-extern struct snd_sof_dsp_ops sof_imx8x_ops;
-extern struct snd_sof_dsp_ops sof_imx8m_ops;
+बाह्य काष्ठा snd_sof_dsp_ops sof_imx8_ops;
+बाह्य काष्ठा snd_sof_dsp_ops sof_imx8x_ops;
+बाह्य काष्ठा snd_sof_dsp_ops sof_imx8m_ops;
 
-/* platform specific devices */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_IMX8)
-static struct sof_dev_desc sof_of_imx8qxp_desc = {
-	.default_fw_path = "imx/sof",
-	.default_tplg_path = "imx/sof-tplg",
-	.default_fw_filename = "sof-imx8x.ri",
+/* platक्रमm specअगरic devices */
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_IMX8)
+अटल काष्ठा sof_dev_desc sof_of_imx8qxp_desc = अणु
+	.शेष_fw_path = "imx/sof",
+	.शेष_tplg_path = "imx/sof-tplg",
+	.शेष_fw_filename = "sof-imx8x.ri",
 	.nocodec_tplg_filename = "sof-imx8-nocodec.tplg",
 	.ops = &sof_imx8x_ops,
-};
+पूर्ण;
 
-static struct sof_dev_desc sof_of_imx8qm_desc = {
-	.default_fw_path = "imx/sof",
-	.default_tplg_path = "imx/sof-tplg",
-	.default_fw_filename = "sof-imx8.ri",
+अटल काष्ठा sof_dev_desc sof_of_imx8qm_desc = अणु
+	.शेष_fw_path = "imx/sof",
+	.शेष_tplg_path = "imx/sof-tplg",
+	.शेष_fw_filename = "sof-imx8.ri",
 	.nocodec_tplg_filename = "sof-imx8-nocodec.tplg",
 	.ops = &sof_imx8_ops,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_IMX8M)
-static struct sof_dev_desc sof_of_imx8mp_desc = {
-	.default_fw_path = "imx/sof",
-	.default_tplg_path = "imx/sof-tplg",
-	.default_fw_filename = "sof-imx8m.ri",
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_IMX8M)
+अटल काष्ठा sof_dev_desc sof_of_imx8mp_desc = अणु
+	.शेष_fw_path = "imx/sof",
+	.शेष_tplg_path = "imx/sof-tplg",
+	.शेष_fw_filename = "sof-imx8m.ri",
 	.nocodec_tplg_filename = "sof-imx8-nocodec.tplg",
 	.ops = &sof_imx8m_ops,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static const struct dev_pm_ops sof_of_pm = {
+अटल स्थिर काष्ठा dev_pm_ops sof_of_pm = अणु
 	.prepare = snd_sof_prepare,
 	.complete = snd_sof_complete,
 	SET_SYSTEM_SLEEP_PM_OPS(snd_sof_suspend, snd_sof_resume)
-	SET_RUNTIME_PM_OPS(snd_sof_runtime_suspend, snd_sof_runtime_resume,
-			   NULL)
-};
+	SET_RUNTIME_PM_OPS(snd_sof_runसमय_suspend, snd_sof_runसमय_resume,
+			   शून्य)
+पूर्ण;
 
-static void sof_of_probe_complete(struct device *dev)
-{
-	/* allow runtime_pm */
-	pm_runtime_set_autosuspend_delay(dev, SND_SOF_SUSPEND_DELAY_MS);
-	pm_runtime_use_autosuspend(dev);
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
+अटल व्योम sof_of_probe_complete(काष्ठा device *dev)
+अणु
+	/* allow runसमय_pm */
+	pm_runसमय_set_स्वतःsuspend_delay(dev, SND_SOF_SUSPEND_DELAY_MS);
+	pm_runसमय_use_स्वतःsuspend(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
 
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
-}
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
+पूर्ण
 
-static int sof_of_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	const struct sof_dev_desc *desc;
-	struct snd_sof_pdata *sof_pdata;
-	const struct snd_sof_dsp_ops *ops;
+अटल पूर्णांक sof_of_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर काष्ठा sof_dev_desc *desc;
+	काष्ठा snd_sof_pdata *sof_pdata;
+	स्थिर काष्ठा snd_sof_dsp_ops *ops;
 
 	dev_info(&pdev->dev, "DT DSP detected");
 
-	sof_pdata = devm_kzalloc(dev, sizeof(*sof_pdata), GFP_KERNEL);
-	if (!sof_pdata)
-		return -ENOMEM;
+	sof_pdata = devm_kzalloc(dev, माप(*sof_pdata), GFP_KERNEL);
+	अगर (!sof_pdata)
+		वापस -ENOMEM;
 
 	desc = device_get_match_data(dev);
-	if (!desc)
-		return -ENODEV;
+	अगर (!desc)
+		वापस -ENODEV;
 
-	/* get ops for platform */
+	/* get ops क्रम platक्रमm */
 	ops = desc->ops;
-	if (!ops) {
+	अगर (!ops) अणु
 		dev_err(dev, "error: no matching DT descriptor ops\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	sof_pdata->desc = desc;
 	sof_pdata->dev = &pdev->dev;
-	sof_pdata->fw_filename = desc->default_fw_filename;
+	sof_pdata->fw_filename = desc->शेष_fw_filename;
 
-	/* TODO: read alternate fw and tplg filenames from DT */
-	sof_pdata->fw_filename_prefix = sof_pdata->desc->default_fw_path;
-	sof_pdata->tplg_filename_prefix = sof_pdata->desc->default_tplg_path;
+	/* TODO: पढ़ो alternate fw and tplg filenames from DT */
+	sof_pdata->fw_filename_prefix = sof_pdata->desc->शेष_fw_path;
+	sof_pdata->tplg_filename_prefix = sof_pdata->desc->शेष_tplg_path;
 
-	/* set callback to be called on successful device probe to enable runtime_pm */
+	/* set callback to be called on successful device probe to enable runसमय_pm */
 	sof_pdata->sof_probe_complete = sof_of_probe_complete;
 
-	/* call sof helper for DSP hardware probe */
-	return snd_sof_device_probe(dev, sof_pdata);
-}
+	/* call sof helper क्रम DSP hardware probe */
+	वापस snd_sof_device_probe(dev, sof_pdata);
+पूर्ण
 
-static int sof_of_remove(struct platform_device *pdev)
-{
-	pm_runtime_disable(&pdev->dev);
+अटल पूर्णांक sof_of_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_disable(&pdev->dev);
 
-	/* call sof helper for DSP hardware remove */
-	snd_sof_device_remove(&pdev->dev);
+	/* call sof helper क्रम DSP hardware हटाओ */
+	snd_sof_device_हटाओ(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sof_of_ids[] = {
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_IMX8)
-	{ .compatible = "fsl,imx8qxp-dsp", .data = &sof_of_imx8qxp_desc},
-	{ .compatible = "fsl,imx8qm-dsp", .data = &sof_of_imx8qm_desc},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_IMX8M)
-	{ .compatible = "fsl,imx8mp-dsp", .data = &sof_of_imx8mp_desc},
-#endif
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sof_of_ids[] = अणु
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_IMX8)
+	अणु .compatible = "fsl,imx8qxp-dsp", .data = &sof_of_imx8qxp_descपूर्ण,
+	अणु .compatible = "fsl,imx8qm-dsp", .data = &sof_of_imx8qm_descपूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_IMX8M)
+	अणु .compatible = "fsl,imx8mp-dsp", .data = &sof_of_imx8mp_descपूर्ण,
+#पूर्ण_अगर
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sof_of_ids);
 
 /* DT driver definition */
-static struct platform_driver snd_sof_of_driver = {
+अटल काष्ठा platक्रमm_driver snd_sof_of_driver = अणु
 	.probe = sof_of_probe,
-	.remove = sof_of_remove,
-	.driver = {
+	.हटाओ = sof_of_हटाओ,
+	.driver = अणु
 		.name = "sof-audio-of",
 		.pm = &sof_of_pm,
 		.of_match_table = sof_of_ids,
-	},
-};
-module_platform_driver(snd_sof_of_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(snd_sof_of_driver);
 
 MODULE_LICENSE("Dual BSD/GPL");

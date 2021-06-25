@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Industrial I/O in kernel access map interface.
+ * Industrial I/O in kernel access map पूर्णांकerface.
  *
  * Copyright (c) 2011 Jonathan Cameron
  */
 
-#ifndef _IIO_INKERN_H_
-#define _IIO_INKERN_H_
+#अगर_अघोषित _IIO_INKERN_H_
+#घोषणा _IIO_INKERN_H_
 
-struct iio_dev;
-struct iio_map;
+काष्ठा iio_dev;
+काष्ठा iio_map;
 
 /**
- * iio_map_array_register() - tell the core about inkernel consumers
+ * iio_map_array_रेजिस्टर() - tell the core about inkernel consumers
  * @indio_dev:	provider device
- * @map:	array of mappings specifying association of channel with client
+ * @map:	array of mappings specअगरying association of channel with client
  */
-int iio_map_array_register(struct iio_dev *indio_dev,
-			   struct iio_map *map);
+पूर्णांक iio_map_array_रेजिस्टर(काष्ठा iio_dev *indio_dev,
+			   काष्ठा iio_map *map);
 
 /**
- * iio_map_array_unregister() - tell the core to remove consumer mappings for
+ * iio_map_array_unरेजिस्टर() - tell the core to हटाओ consumer mappings क्रम
  *				the given provider device
  * @indio_dev:	provider device
  */
-int iio_map_array_unregister(struct iio_dev *indio_dev);
+पूर्णांक iio_map_array_unरेजिस्टर(काष्ठा iio_dev *indio_dev);
 
-#endif
+#पूर्ण_अगर

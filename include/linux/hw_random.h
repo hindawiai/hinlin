@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
-	Hardware Random Number Generator
+	Hardware Ranकरोm Number Generator
 
-	Please read Documentation/admin-guide/hw_random.rst for details on use.
+	Please पढ़ो Documentation/admin-guide/hw_अक्रमom.rst क्रम details on use.
 
 	----------------------------------------------------------
 	This software may be used and distributed according to the terms
@@ -9,58 +10,58 @@
 
  */
 
-#ifndef LINUX_HWRANDOM_H_
-#define LINUX_HWRANDOM_H_
+#अगर_अघोषित LINUX_HWRANDOM_H_
+#घोषणा LINUX_HWRANDOM_H_
 
-#include <linux/completion.h>
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/kref.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kref.h>
 
 /**
- * struct hwrng - Hardware Random Number Generator driver
+ * काष्ठा hwrng - Hardware Ranकरोm Number Generator driver
  * @name:		Unique RNG name.
- * @init:		Initialization callback (can be NULL).
- * @cleanup:		Cleanup callback (can be NULL).
- * @data_present:	Callback to determine if data is available
- *			on the RNG. If NULL, it is assumed that
+ * @init:		Initialization callback (can be शून्य).
+ * @cleanup:		Cleanup callback (can be शून्य).
+ * @data_present:	Callback to determine अगर data is available
+ *			on the RNG. If शून्य, it is assumed that
  *			there is always data available.  *OBSOLETE*
- * @data_read:		Read data from the RNG device.
- *			Returns the number of lower random bytes in "data".
- *			Must not be NULL.    *OBSOLETE*
- * @read:		New API. drivers can fill up to max bytes of data
- *			into the buffer. The buffer is aligned for any type
+ * @data_पढ़ो:		Read data from the RNG device.
+ *			Returns the number of lower अक्रमom bytes in "data".
+ *			Must not be शून्य.    *OBSOLETE*
+ * @पढ़ो:		New API. drivers can fill up to max bytes of data
+ *			पूर्णांकo the buffer. The buffer is aligned क्रम any type
  *			and max is a multiple of 4 and >= 32 bytes.
- * @priv:		Private data, for use by the RNG driver.
+ * @priv:		Private data, क्रम use by the RNG driver.
  * @quality:		Estimation of true entropy in RNG's bitstream
  *			(in bits of entropy per 1024 bits of input;
- *			valid values: 1 to 1024, or 0 for unknown).
+ *			valid values: 1 to 1024, or 0 क्रम unknown).
  */
-struct hwrng {
-	const char *name;
-	int (*init)(struct hwrng *rng);
-	void (*cleanup)(struct hwrng *rng);
-	int (*data_present)(struct hwrng *rng, int wait);
-	int (*data_read)(struct hwrng *rng, u32 *data);
-	int (*read)(struct hwrng *rng, void *data, size_t max, bool wait);
-	unsigned long priv;
-	unsigned short quality;
+काष्ठा hwrng अणु
+	स्थिर अक्षर *name;
+	पूर्णांक (*init)(काष्ठा hwrng *rng);
+	व्योम (*cleanup)(काष्ठा hwrng *rng);
+	पूर्णांक (*data_present)(काष्ठा hwrng *rng, पूर्णांक रुको);
+	पूर्णांक (*data_पढ़ो)(काष्ठा hwrng *rng, u32 *data);
+	पूर्णांक (*पढ़ो)(काष्ठा hwrng *rng, व्योम *data, माप_प्रकार max, bool रुको);
+	अचिन्हित दीर्घ priv;
+	अचिन्हित लघु quality;
 
-	/* internal. */
-	struct list_head list;
-	struct kref ref;
-	struct completion cleanup_done;
-};
+	/* पूर्णांकernal. */
+	काष्ठा list_head list;
+	काष्ठा kref ref;
+	काष्ठा completion cleanup_करोne;
+पूर्ण;
 
-struct device;
+काष्ठा device;
 
-/** Register a new Hardware Random Number Generator driver. */
-extern int hwrng_register(struct hwrng *rng);
-extern int devm_hwrng_register(struct device *dev, struct hwrng *rng);
-/** Unregister a Hardware Random Number Generator driver. */
-extern void hwrng_unregister(struct hwrng *rng);
-extern void devm_hwrng_unregister(struct device *dve, struct hwrng *rng);
-/** Feed random bits into the pool. */
-extern void add_hwgenerator_randomness(const char *buffer, size_t count, size_t entropy);
+/** Register a new Hardware Ranकरोm Number Generator driver. */
+बाह्य पूर्णांक hwrng_रेजिस्टर(काष्ठा hwrng *rng);
+बाह्य पूर्णांक devm_hwrng_रेजिस्टर(काष्ठा device *dev, काष्ठा hwrng *rng);
+/** Unरेजिस्टर a Hardware Ranकरोm Number Generator driver. */
+बाह्य व्योम hwrng_unरेजिस्टर(काष्ठा hwrng *rng);
+बाह्य व्योम devm_hwrng_unरेजिस्टर(काष्ठा device *dve, काष्ठा hwrng *rng);
+/** Feed अक्रमom bits पूर्णांकo the pool. */
+बाह्य व्योम add_hwgenerator_अक्रमomness(स्थिर अक्षर *buffer, माप_प्रकार count, माप_प्रकार entropy);
 
-#endif /* LINUX_HWRANDOM_H_ */
+#पूर्ण_अगर /* LINUX_HWRANDOM_H_ */

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * linux/include/asm-generic/pci.h
+ * linux/include/यंत्र-generic/pci.h
  *
  *  Copyright (C) 2003 Russell King
  */
-#ifndef _ASM_GENERIC_PCI_H
-#define _ASM_GENERIC_PCI_H
+#अगर_अघोषित _ASM_GENERIC_PCI_H
+#घोषणा _ASM_GENERIC_PCI_H
 
-#ifndef HAVE_ARCH_PCI_GET_LEGACY_IDE_IRQ
-static inline int pci_get_legacy_ide_irq(struct pci_dev *dev, int channel)
-{
-	return channel ? 15 : 14;
-}
-#endif /* HAVE_ARCH_PCI_GET_LEGACY_IDE_IRQ */
+#अगर_अघोषित HAVE_ARCH_PCI_GET_LEGACY_IDE_IRQ
+अटल अंतरभूत पूर्णांक pci_get_legacy_ide_irq(काष्ठा pci_dev *dev, पूर्णांक channel)
+अणु
+	वापस channel ? 15 : 14;
+पूर्ण
+#पूर्ण_अगर /* HAVE_ARCH_PCI_GET_LEGACY_IDE_IRQ */
 
-#endif /* _ASM_GENERIC_PCI_H */
+#पूर्ण_अगर /* _ASM_GENERIC_PCI_H */

@@ -1,237 +1,238 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/perf_event.h>
-#include <linux/export.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/jiffies.h>
-#include <asm/apicdef.h>
-#include <asm/nmi.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/perf_event.h>
+#समावेश <linux/export.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <यंत्र/apicdef.h>
+#समावेश <यंत्र/nmi.h>
 
-#include "../perf_event.h"
+#समावेश "../perf_event.h"
 
-static DEFINE_PER_CPU(unsigned long, perf_nmi_tstamp);
-static unsigned long perf_nmi_window;
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, perf_nmi_tstamp);
+अटल अचिन्हित दीर्घ perf_nmi_winकरोw;
 
 /* AMD Event 0xFFF: Merge.  Used with Large Increment per Cycle events */
-#define AMD_MERGE_EVENT ((0xFULL << 32) | 0xFFULL)
-#define AMD_MERGE_EVENT_ENABLE (AMD_MERGE_EVENT | ARCH_PERFMON_EVENTSEL_ENABLE)
+#घोषणा AMD_MERGE_EVENT ((0xFULL << 32) | 0xFFULL)
+#घोषणा AMD_MERGE_EVENT_ENABLE (AMD_MERGE_EVENT | ARCH_PERFMON_EVENTSEL_ENABLE)
 
-static __initconst const u64 amd_hw_cache_event_ids
+अटल __initस्थिर स्थिर u64 amd_hw_cache_event_ids
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
 				[PERF_COUNT_HW_CACHE_RESULT_MAX] =
-{
- [ C(L1D) ] = {
-	[ C(OP_READ) ] = {
+अणु
+ [ C(L1D) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x0040, /* Data Cache Accesses        */
 		[ C(RESULT_MISS)   ] = 0x0141, /* Data Cache Misses          */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x0267, /* Data Prefetcher :attempts  */
 		[ C(RESULT_MISS)   ] = 0x0167, /* Data Prefetcher :cancelled */
-	},
- },
- [ C(L1I ) ] = {
-	[ C(OP_READ) ] = {
-		[ C(RESULT_ACCESS) ] = 0x0080, /* Instruction cache fetches  */
-		[ C(RESULT_MISS)   ] = 0x0081, /* Instruction cache misses   */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+ पूर्ण,
+ [ C(L1I ) ] = अणु
+	[ C(OP_READ) ] = अणु
+		[ C(RESULT_ACCESS) ] = 0x0080, /* Inकाष्ठाion cache fetches  */
+		[ C(RESULT_MISS)   ] = 0x0081, /* Inकाष्ठाion cache misses   */
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
-	[ C(OP_PREFETCH) ] = {
-		[ C(RESULT_ACCESS) ] = 0x014B, /* Prefetch Instructions :Load */
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
+		[ C(RESULT_ACCESS) ] = 0x014B, /* Prefetch Inकाष्ठाions :Load */
 		[ C(RESULT_MISS)   ] = 0,
-	},
- },
- [ C(LL  ) ] = {
-	[ C(OP_READ) ] = {
+	पूर्ण,
+ पूर्ण,
+ [ C(LL  ) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x037D, /* Requests to L2 Cache :IC+DC */
 		[ C(RESULT_MISS)   ] = 0x037E, /* L2 Cache Misses : IC+DC     */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x017F, /* L2 Fill/Writeback           */
 		[ C(RESULT_MISS)   ] = 0,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-	},
- },
- [ C(DTLB) ] = {
-	[ C(OP_READ) ] = {
+	पूर्ण,
+ पूर्ण,
+ [ C(DTLB) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x0040, /* Data Cache Accesses        */
 		[ C(RESULT_MISS)   ] = 0x0746, /* L1_DTLB_AND_L2_DLTB_MISS.ALL */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-	},
- },
- [ C(ITLB) ] = {
-	[ C(OP_READ) ] = {
-		[ C(RESULT_ACCESS) ] = 0x0080, /* Instruction fecthes        */
+	पूर्ण,
+ पूर्ण,
+ [ C(ITLB) ] = अणु
+	[ C(OP_READ) ] = अणु
+		[ C(RESULT_ACCESS) ] = 0x0080, /* Inकाष्ठाion fecthes        */
 		[ C(RESULT_MISS)   ] = 0x0385, /* L1_ITLB_AND_L2_ITLB_MISS.ALL */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
- },
- [ C(BPU ) ] = {
-	[ C(OP_READ) ] = {
+	पूर्ण,
+ पूर्ण,
+ [ C(BPU ) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x00c2, /* Retired Branch Instr.      */
 		[ C(RESULT_MISS)   ] = 0x00c3, /* Retired Mispredicted BI    */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
- },
- [ C(NODE) ] = {
-	[ C(OP_READ) ] = {
+	पूर्ण,
+ पूर्ण,
+ [ C(NODE) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0xb8e9, /* CPU Request to Memory, l+r */
 		[ C(RESULT_MISS)   ] = 0x98e9, /* CPU Request to Memory, r   */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
- },
-};
+	पूर्ण,
+ पूर्ण,
+पूर्ण;
 
-static __initconst const u64 amd_hw_cache_event_ids_f17h
+अटल __initस्थिर स्थिर u64 amd_hw_cache_event_ids_f17h
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
-[C(L1D)] = {
-	[C(OP_READ)] = {
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
+[C(L1D)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0040, /* Data Cache Accesses */
 		[C(RESULT_MISS)]   = 0xc860, /* L2$ access from DC Miss */
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = 0,
 		[C(RESULT_MISS)]   = 0,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = 0xff5a, /* h/w prefetch DC Fills */
 		[C(RESULT_MISS)]   = 0,
-	},
-},
-[C(L1I)] = {
-	[C(OP_READ)] = {
-		[C(RESULT_ACCESS)] = 0x0080, /* Instruction cache fetches  */
-		[C(RESULT_MISS)]   = 0x0081, /* Instruction cache misses   */
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+पूर्ण,
+[C(L1I)] = अणु
+	[C(OP_READ)] = अणु
+		[C(RESULT_ACCESS)] = 0x0080, /* Inकाष्ठाion cache fetches  */
+		[C(RESULT_MISS)]   = 0x0081, /* Inकाष्ठाion cache misses   */
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)]   = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = 0,
 		[C(RESULT_MISS)]   = 0,
-	},
-},
-[C(LL)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(LL)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0,
 		[C(RESULT_MISS)]   = 0,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = 0,
 		[C(RESULT_MISS)]   = 0,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = 0,
 		[C(RESULT_MISS)]   = 0,
-	},
-},
-[C(DTLB)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(DTLB)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0xff45, /* All L2 DTLB accesses */
 		[C(RESULT_MISS)]   = 0xf045, /* L2 DTLB misses (PT walks) */
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = 0,
 		[C(RESULT_MISS)]   = 0,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = 0,
 		[C(RESULT_MISS)]   = 0,
-	},
-},
-[C(ITLB)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(ITLB)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0084, /* L1 ITLB misses, L2 ITLB hits */
 		[C(RESULT_MISS)]   = 0xff85, /* L1 ITLB misses, L2 misses */
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)]   = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)]   = -1,
-	},
-},
-[C(BPU)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(BPU)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x00c2, /* Retired Branch Instr.      */
 		[C(RESULT_MISS)]   = 0x00c3, /* Retired Mispredicted BI    */
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)]   = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)]   = -1,
-	},
-},
-[C(NODE)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(NODE)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0,
 		[C(RESULT_MISS)]   = 0,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)]   = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)]   = -1,
-	},
-},
-};
+	पूर्ण,
+पूर्ण,
+पूर्ण;
 
 /*
- * AMD Performance Monitor K7 and later, up to and including Family 16h:
+ * AMD Perक्रमmance Monitor K7 and later, up to and including Family 16h:
  */
-static const u64 amd_perfmon_event_map[PERF_COUNT_HW_MAX] =
-{
+अटल स्थिर u64 amd_perfmon_event_map[PERF_COUNT_HW_MAX] =
+अणु
 	[PERF_COUNT_HW_CPU_CYCLES]		= 0x0076,
 	[PERF_COUNT_HW_INSTRUCTIONS]		= 0x00c0,
 	[PERF_COUNT_HW_CACHE_REFERENCES]	= 0x077d,
@@ -240,13 +241,13 @@ static const u64 amd_perfmon_event_map[PERF_COUNT_HW_MAX] =
 	[PERF_COUNT_HW_BRANCH_MISSES]		= 0x00c3,
 	[PERF_COUNT_HW_STALLED_CYCLES_FRONTEND]	= 0x00d0, /* "Decoder empty" event */
 	[PERF_COUNT_HW_STALLED_CYCLES_BACKEND]	= 0x00d1, /* "Dispatch stalls" event */
-};
+पूर्ण;
 
 /*
- * AMD Performance Monitor Family 17h and later:
+ * AMD Perक्रमmance Monitor Family 17h and later:
  */
-static const u64 amd_f17h_perfmon_event_map[PERF_COUNT_HW_MAX] =
-{
+अटल स्थिर u64 amd_f17h_perfmon_event_map[PERF_COUNT_HW_MAX] =
+अणु
 	[PERF_COUNT_HW_CPU_CYCLES]		= 0x0076,
 	[PERF_COUNT_HW_INSTRUCTIONS]		= 0x00c0,
 	[PERF_COUNT_HW_CACHE_REFERENCES]	= 0xff60,
@@ -255,157 +256,157 @@ static const u64 amd_f17h_perfmon_event_map[PERF_COUNT_HW_MAX] =
 	[PERF_COUNT_HW_BRANCH_MISSES]		= 0x00c3,
 	[PERF_COUNT_HW_STALLED_CYCLES_FRONTEND]	= 0x0287,
 	[PERF_COUNT_HW_STALLED_CYCLES_BACKEND]	= 0x0187,
-};
+पूर्ण;
 
-static u64 amd_pmu_event_map(int hw_event)
-{
-	if (boot_cpu_data.x86 >= 0x17)
-		return amd_f17h_perfmon_event_map[hw_event];
+अटल u64 amd_pmu_event_map(पूर्णांक hw_event)
+अणु
+	अगर (boot_cpu_data.x86 >= 0x17)
+		वापस amd_f17h_perfmon_event_map[hw_event];
 
-	return amd_perfmon_event_map[hw_event];
-}
+	वापस amd_perfmon_event_map[hw_event];
+पूर्ण
 
 /*
  * Previously calculated offsets
  */
-static unsigned int event_offsets[X86_PMC_IDX_MAX] __read_mostly;
-static unsigned int count_offsets[X86_PMC_IDX_MAX] __read_mostly;
+अटल अचिन्हित पूर्णांक event_offsets[X86_PMC_IDX_MAX] __पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक count_offsets[X86_PMC_IDX_MAX] __पढ़ो_mostly;
 
 /*
  * Legacy CPUs:
  *   4 counters starting at 0xc0010000 each offset by 1
  *
- * CPUs with core performance counter extensions:
+ * CPUs with core perक्रमmance counter extensions:
  *   6 counters starting at 0xc0010200 each offset by 2
  */
-static inline int amd_pmu_addr_offset(int index, bool eventsel)
-{
-	int offset;
+अटल अंतरभूत पूर्णांक amd_pmu_addr_offset(पूर्णांक index, bool eventsel)
+अणु
+	पूर्णांक offset;
 
-	if (!index)
-		return index;
+	अगर (!index)
+		वापस index;
 
-	if (eventsel)
+	अगर (eventsel)
 		offset = event_offsets[index];
-	else
+	अन्यथा
 		offset = count_offsets[index];
 
-	if (offset)
-		return offset;
+	अगर (offset)
+		वापस offset;
 
-	if (!boot_cpu_has(X86_FEATURE_PERFCTR_CORE))
+	अगर (!boot_cpu_has(X86_FEATURE_PERFCTR_CORE))
 		offset = index;
-	else
+	अन्यथा
 		offset = index << 1;
 
-	if (eventsel)
+	अगर (eventsel)
 		event_offsets[index] = offset;
-	else
+	अन्यथा
 		count_offsets[index] = offset;
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
 /*
  * AMD64 events are detected based on their event codes.
  */
-static inline unsigned int amd_get_event_code(struct hw_perf_event *hwc)
-{
-	return ((hwc->config >> 24) & 0x0f00) | (hwc->config & 0x00ff);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक amd_get_event_code(काष्ठा hw_perf_event *hwc)
+अणु
+	वापस ((hwc->config >> 24) & 0x0f00) | (hwc->config & 0x00ff);
+पूर्ण
 
-static inline bool amd_is_pair_event_code(struct hw_perf_event *hwc)
-{
-	if (!(x86_pmu.flags & PMU_FL_PAIR))
-		return false;
+अटल अंतरभूत bool amd_is_pair_event_code(काष्ठा hw_perf_event *hwc)
+अणु
+	अगर (!(x86_pmu.flags & PMU_FL_PAIR))
+		वापस false;
 
-	switch (amd_get_event_code(hwc)) {
-	case 0x003:	return true;	/* Retired SSE/AVX FLOPs */
-	default:	return false;
-	}
-}
+	चयन (amd_get_event_code(hwc)) अणु
+	हाल 0x003:	वापस true;	/* Retired SSE/AVX FLOPs */
+	शेष:	वापस false;
+	पूर्ण
+पूर्ण
 
-static int amd_core_hw_config(struct perf_event *event)
-{
-	if (event->attr.exclude_host && event->attr.exclude_guest)
+अटल पूर्णांक amd_core_hw_config(काष्ठा perf_event *event)
+अणु
+	अगर (event->attr.exclude_host && event->attr.exclude_guest)
 		/*
 		 * When HO == GO == 1 the hardware treats that as GO == HO == 0
-		 * and will count in both modes. We don't want to count in that
-		 * case so we emulate no-counting by setting US = OS = 0.
+		 * and will count in both modes. We करोn't want to count in that
+		 * हाल so we emulate no-counting by setting US = OS = 0.
 		 */
 		event->hw.config &= ~(ARCH_PERFMON_EVENTSEL_USR |
 				      ARCH_PERFMON_EVENTSEL_OS);
-	else if (event->attr.exclude_host)
+	अन्यथा अगर (event->attr.exclude_host)
 		event->hw.config |= AMD64_EVENTSEL_GUESTONLY;
-	else if (event->attr.exclude_guest)
+	अन्यथा अगर (event->attr.exclude_guest)
 		event->hw.config |= AMD64_EVENTSEL_HOSTONLY;
 
-	if ((x86_pmu.flags & PMU_FL_PAIR) && amd_is_pair_event_code(&event->hw))
+	अगर ((x86_pmu.flags & PMU_FL_PAIR) && amd_is_pair_event_code(&event->hw))
 		event->hw.flags |= PERF_X86_EVENT_PAIR;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int amd_is_nb_event(struct hw_perf_event *hwc)
-{
-	return (hwc->config & 0xe0) == 0xe0;
-}
+अटल अंतरभूत पूर्णांक amd_is_nb_event(काष्ठा hw_perf_event *hwc)
+अणु
+	वापस (hwc->config & 0xe0) == 0xe0;
+पूर्ण
 
-static inline int amd_has_nb(struct cpu_hw_events *cpuc)
-{
-	struct amd_nb *nb = cpuc->amd_nb;
+अटल अंतरभूत पूर्णांक amd_has_nb(काष्ठा cpu_hw_events *cpuc)
+अणु
+	काष्ठा amd_nb *nb = cpuc->amd_nb;
 
-	return nb && nb->nb_id != -1;
-}
+	वापस nb && nb->nb_id != -1;
+पूर्ण
 
-static int amd_pmu_hw_config(struct perf_event *event)
-{
-	int ret;
+अटल पूर्णांक amd_pmu_hw_config(काष्ठा perf_event *event)
+अणु
+	पूर्णांक ret;
 
 	/* pass precise event sampling to ibs: */
-	if (event->attr.precise_ip && get_ibs_caps())
-		return -ENOENT;
+	अगर (event->attr.precise_ip && get_ibs_caps())
+		वापस -ENOENT;
 
-	if (has_branch_stack(event))
-		return -EOPNOTSUPP;
+	अगर (has_branch_stack(event))
+		वापस -EOPNOTSUPP;
 
 	ret = x86_pmu_hw_config(event);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (event->attr.type == PERF_TYPE_RAW)
+	अगर (event->attr.type == PERF_TYPE_RAW)
 		event->hw.config |= event->attr.config & AMD64_RAW_EVENT_MASK;
 
-	return amd_core_hw_config(event);
-}
+	वापस amd_core_hw_config(event);
+पूर्ण
 
-static void __amd_put_nb_event_constraints(struct cpu_hw_events *cpuc,
-					   struct perf_event *event)
-{
-	struct amd_nb *nb = cpuc->amd_nb;
-	int i;
+अटल व्योम __amd_put_nb_event_स्थिरraपूर्णांकs(काष्ठा cpu_hw_events *cpuc,
+					   काष्ठा perf_event *event)
+अणु
+	काष्ठा amd_nb *nb = cpuc->amd_nb;
+	पूर्णांक i;
 
 	/*
 	 * need to scan whole list because event may not have
-	 * been assigned during scheduling
+	 * been asचिन्हित during scheduling
 	 *
 	 * no race condition possible because event can only
-	 * be removed on one CPU at a time AND PMU is disabled
+	 * be हटाओd on one CPU at a समय AND PMU is disabled
 	 * when we come here
 	 */
-	for (i = 0; i < x86_pmu.num_counters; i++) {
-		if (cmpxchg(nb->owners + i, event, NULL) == event)
-			break;
-	}
-}
+	क्रम (i = 0; i < x86_pmu.num_counters; i++) अणु
+		अगर (cmpxchg(nb->owners + i, event, शून्य) == event)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
  /*
-  * AMD64 NorthBridge events need special treatment because
+  * AMD64 NorthBridge events need special treaपंचांगent because
   * counter access needs to be synchronized across all cores
   * of a package. Refer to BKDG section 3.12
   *
   * NB events are events measuring L3 cache, Hypertransport
-  * traffic. They are identified by an event code >= 0xe00.
+  * traffic. They are identअगरied by an event code >= 0xe00.
   * They measure events on the NorthBride which is shared
   * by all cores on a package. NB events are counted on a
   * shared set of counters. When a NB event is programmed
@@ -415,302 +416,302 @@ static void __amd_put_nb_event_constraints(struct cpu_hw_events *cpuc,
   *
   * We implement the synchronization such that no two cores
   * can be measuring NB events using the same counters. Thus,
-  * we maintain a per-NB allocation table. The available slot
-  * is propagated using the event_constraint structure.
+  * we मुख्यtain a per-NB allocation table. The available slot
+  * is propagated using the event_स्थिरraपूर्णांक काष्ठाure.
   *
-  * We provide only one choice for each NB event based on
+  * We provide only one choice क्रम each NB event based on
   * the fact that only NB events have restrictions. Consequently,
-  * if a counter is available, there is a guarantee the NB event
-  * will be assigned to it. If no slot is available, an empty
-  * constraint is returned and scheduling will eventually fail
-  * for this event.
+  * अगर a counter is available, there is a guarantee the NB event
+  * will be asचिन्हित to it. If no slot is available, an empty
+  * स्थिरraपूर्णांक is वापसed and scheduling will eventually fail
+  * क्रम this event.
   *
-  * Note that all cores attached the same NB compete for the same
+  * Note that all cores attached the same NB compete क्रम the same
   * counters to host NB events, this is why we use atomic ops. Some
   * multi-chip CPUs may have more than one NB.
   *
   * Given that resources are allocated (cmpxchg), they must be
-  * eventually freed for others to use. This is accomplished by
-  * calling __amd_put_nb_event_constraints()
+  * eventually मुक्तd क्रम others to use. This is accomplished by
+  * calling __amd_put_nb_event_स्थिरraपूर्णांकs()
   *
   * Non NB events are not impacted by this restriction.
   */
-static struct event_constraint *
-__amd_get_nb_event_constraints(struct cpu_hw_events *cpuc, struct perf_event *event,
-			       struct event_constraint *c)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct amd_nb *nb = cpuc->amd_nb;
-	struct perf_event *old;
-	int idx, new = -1;
+अटल काष्ठा event_स्थिरraपूर्णांक *
+__amd_get_nb_event_स्थिरraपूर्णांकs(काष्ठा cpu_hw_events *cpuc, काष्ठा perf_event *event,
+			       काष्ठा event_स्थिरraपूर्णांक *c)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा amd_nb *nb = cpuc->amd_nb;
+	काष्ठा perf_event *old;
+	पूर्णांक idx, new = -1;
 
-	if (!c)
-		c = &unconstrained;
+	अगर (!c)
+		c = &unस्थिरrained;
 
-	if (cpuc->is_fake)
-		return c;
+	अगर (cpuc->is_fake)
+		वापस c;
 
 	/*
-	 * detect if already present, if so reuse
+	 * detect अगर alपढ़ोy present, अगर so reuse
 	 *
 	 * cannot merge with actual allocation
 	 * because of possible holes
 	 *
-	 * event can already be present yet not assigned (in hwc->idx)
+	 * event can alपढ़ोy be present yet not asचिन्हित (in hwc->idx)
 	 * because of successive calls to x86_schedule_events() from
 	 * hw_perf_group_sched_in() without hw_perf_enable()
 	 */
-	for_each_set_bit(idx, c->idxmsk, x86_pmu.num_counters) {
-		if (new == -1 || hwc->idx == idx)
-			/* assign free slot, prefer hwc->idx */
-			old = cmpxchg(nb->owners + idx, NULL, event);
-		else if (nb->owners[idx] == event)
-			/* event already present */
+	क्रम_each_set_bit(idx, c->idxmsk, x86_pmu.num_counters) अणु
+		अगर (new == -1 || hwc->idx == idx)
+			/* assign मुक्त slot, prefer hwc->idx */
+			old = cmpxchg(nb->owners + idx, शून्य, event);
+		अन्यथा अगर (nb->owners[idx] == event)
+			/* event alपढ़ोy present */
 			old = event;
-		else
-			continue;
+		अन्यथा
+			जारी;
 
-		if (old && old != event)
-			continue;
+		अगर (old && old != event)
+			जारी;
 
 		/* reassign to this slot */
-		if (new != -1)
-			cmpxchg(nb->owners + new, event, NULL);
+		अगर (new != -1)
+			cmpxchg(nb->owners + new, event, शून्य);
 		new = idx;
 
-		/* already present, reuse */
-		if (old == event)
-			break;
-	}
+		/* alपढ़ोy present, reuse */
+		अगर (old == event)
+			अवरोध;
+	पूर्ण
 
-	if (new == -1)
-		return &emptyconstraint;
+	अगर (new == -1)
+		वापस &emptyस्थिरraपूर्णांक;
 
-	return &nb->event_constraints[new];
-}
+	वापस &nb->event_स्थिरraपूर्णांकs[new];
+पूर्ण
 
-static struct amd_nb *amd_alloc_nb(int cpu)
-{
-	struct amd_nb *nb;
-	int i;
+अटल काष्ठा amd_nb *amd_alloc_nb(पूर्णांक cpu)
+अणु
+	काष्ठा amd_nb *nb;
+	पूर्णांक i;
 
-	nb = kzalloc_node(sizeof(struct amd_nb), GFP_KERNEL, cpu_to_node(cpu));
-	if (!nb)
-		return NULL;
+	nb = kzalloc_node(माप(काष्ठा amd_nb), GFP_KERNEL, cpu_to_node(cpu));
+	अगर (!nb)
+		वापस शून्य;
 
 	nb->nb_id = -1;
 
 	/*
-	 * initialize all possible NB constraints
+	 * initialize all possible NB स्थिरraपूर्णांकs
 	 */
-	for (i = 0; i < x86_pmu.num_counters; i++) {
-		__set_bit(i, nb->event_constraints[i].idxmsk);
-		nb->event_constraints[i].weight = 1;
-	}
-	return nb;
-}
+	क्रम (i = 0; i < x86_pmu.num_counters; i++) अणु
+		__set_bit(i, nb->event_स्थिरraपूर्णांकs[i].idxmsk);
+		nb->event_स्थिरraपूर्णांकs[i].weight = 1;
+	पूर्ण
+	वापस nb;
+पूर्ण
 
-static int amd_pmu_cpu_prepare(int cpu)
-{
-	struct cpu_hw_events *cpuc = &per_cpu(cpu_hw_events, cpu);
+अटल पूर्णांक amd_pmu_cpu_prepare(पूर्णांक cpu)
+अणु
+	काष्ठा cpu_hw_events *cpuc = &per_cpu(cpu_hw_events, cpu);
 
 	WARN_ON_ONCE(cpuc->amd_nb);
 
-	if (!x86_pmu.amd_nb_constraints)
-		return 0;
+	अगर (!x86_pmu.amd_nb_स्थिरraपूर्णांकs)
+		वापस 0;
 
 	cpuc->amd_nb = amd_alloc_nb(cpu);
-	if (!cpuc->amd_nb)
-		return -ENOMEM;
+	अगर (!cpuc->amd_nb)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void amd_pmu_cpu_starting(int cpu)
-{
-	struct cpu_hw_events *cpuc = &per_cpu(cpu_hw_events, cpu);
-	void **onln = &cpuc->kfree_on_online[X86_PERF_KFREE_SHARED];
-	struct amd_nb *nb;
-	int i, nb_id;
+अटल व्योम amd_pmu_cpu_starting(पूर्णांक cpu)
+अणु
+	काष्ठा cpu_hw_events *cpuc = &per_cpu(cpu_hw_events, cpu);
+	व्योम **onln = &cpuc->kमुक्त_on_online[X86_PERF_KFREE_SHARED];
+	काष्ठा amd_nb *nb;
+	पूर्णांक i, nb_id;
 
 	cpuc->perf_ctr_virt_mask = AMD64_EVENTSEL_HOSTONLY;
 
-	if (!x86_pmu.amd_nb_constraints)
-		return;
+	अगर (!x86_pmu.amd_nb_स्थिरraपूर्णांकs)
+		वापस;
 
 	nb_id = topology_die_id(cpu);
 	WARN_ON_ONCE(nb_id == BAD_APICID);
 
-	for_each_online_cpu(i) {
+	क्रम_each_online_cpu(i) अणु
 		nb = per_cpu(cpu_hw_events, i).amd_nb;
-		if (WARN_ON_ONCE(!nb))
-			continue;
+		अगर (WARN_ON_ONCE(!nb))
+			जारी;
 
-		if (nb->nb_id == nb_id) {
+		अगर (nb->nb_id == nb_id) अणु
 			*onln = cpuc->amd_nb;
 			cpuc->amd_nb = nb;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	cpuc->amd_nb->nb_id = nb_id;
 	cpuc->amd_nb->refcnt++;
-}
+पूर्ण
 
-static void amd_pmu_cpu_dead(int cpu)
-{
-	struct cpu_hw_events *cpuhw;
+अटल व्योम amd_pmu_cpu_dead(पूर्णांक cpu)
+अणु
+	काष्ठा cpu_hw_events *cpuhw;
 
-	if (!x86_pmu.amd_nb_constraints)
-		return;
+	अगर (!x86_pmu.amd_nb_स्थिरraपूर्णांकs)
+		वापस;
 
 	cpuhw = &per_cpu(cpu_hw_events, cpu);
 
-	if (cpuhw->amd_nb) {
-		struct amd_nb *nb = cpuhw->amd_nb;
+	अगर (cpuhw->amd_nb) अणु
+		काष्ठा amd_nb *nb = cpuhw->amd_nb;
 
-		if (nb->nb_id == -1 || --nb->refcnt == 0)
-			kfree(nb);
+		अगर (nb->nb_id == -1 || --nb->refcnt == 0)
+			kमुक्त(nb);
 
-		cpuhw->amd_nb = NULL;
-	}
-}
+		cpuhw->amd_nb = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * When a PMC counter overflows, an NMI is used to process the event and
  * reset the counter. NMI latency can result in the counter being updated
- * before the NMI can run, which can result in what appear to be spurious
- * NMIs. This function is intended to wait for the NMI to run and reset
- * the counter to avoid possible unhandled NMI messages.
+ * beक्रमe the NMI can run, which can result in what appear to be spurious
+ * NMIs. This function is पूर्णांकended to रुको क्रम the NMI to run and reset
+ * the counter to aव्योम possible unhandled NMI messages.
  */
-#define OVERFLOW_WAIT_COUNT	50
+#घोषणा OVERFLOW_WAIT_COUNT	50
 
-static void amd_pmu_wait_on_overflow(int idx)
-{
-	unsigned int i;
+अटल व्योम amd_pmu_रुको_on_overflow(पूर्णांक idx)
+अणु
+	अचिन्हित पूर्णांक i;
 	u64 counter;
 
 	/*
-	 * Wait for the counter to be reset if it has overflowed. This loop
-	 * should exit very, very quickly, but just in case, don't wait
-	 * forever...
+	 * Wait क्रम the counter to be reset अगर it has overflowed. This loop
+	 * should निकास very, very quickly, but just in हाल, करोn't रुको
+	 * क्रमever...
 	 */
-	for (i = 0; i < OVERFLOW_WAIT_COUNT; i++) {
+	क्रम (i = 0; i < OVERFLOW_WAIT_COUNT; i++) अणु
 		rdmsrl(x86_pmu_event_addr(idx), counter);
-		if (counter & (1ULL << (x86_pmu.cntval_bits - 1)))
-			break;
+		अगर (counter & (1ULL << (x86_pmu.cntval_bits - 1)))
+			अवरोध;
 
 		/* Might be in IRQ context, so can't sleep */
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void amd_pmu_disable_all(void)
-{
-	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	int idx;
+अटल व्योम amd_pmu_disable_all(व्योम)
+अणु
+	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	पूर्णांक idx;
 
 	x86_pmu_disable_all();
 
 	/*
 	 * This shouldn't be called from NMI context, but add a safeguard here
-	 * to return, since if we're in NMI context we can't wait for an NMI
+	 * to वापस, since अगर we're in NMI context we can't रुको क्रम an NMI
 	 * to reset an overflowed counter value.
 	 */
-	if (in_nmi())
-		return;
+	अगर (in_nmi())
+		वापस;
 
 	/*
-	 * Check each counter for overflow and wait for it to be reset by the
-	 * NMI if it has overflowed. This relies on the fact that all active
+	 * Check each counter क्रम overflow and रुको क्रम it to be reset by the
+	 * NMI अगर it has overflowed. This relies on the fact that all active
 	 * counters are always enabled when this function is called and
 	 * ARCH_PERFMON_EVENTSEL_INT is always set.
 	 */
-	for (idx = 0; idx < x86_pmu.num_counters; idx++) {
-		if (!test_bit(idx, cpuc->active_mask))
-			continue;
+	क्रम (idx = 0; idx < x86_pmu.num_counters; idx++) अणु
+		अगर (!test_bit(idx, cpuc->active_mask))
+			जारी;
 
-		amd_pmu_wait_on_overflow(idx);
-	}
-}
+		amd_pmu_रुको_on_overflow(idx);
+	पूर्ण
+पूर्ण
 
-static void amd_pmu_disable_event(struct perf_event *event)
-{
+अटल व्योम amd_pmu_disable_event(काष्ठा perf_event *event)
+अणु
 	x86_pmu_disable_event(event);
 
 	/*
 	 * This can be called from NMI context (via x86_pmu_stop). The counter
 	 * may have overflowed, but either way, we'll never see it get reset
-	 * by the NMI if we're already in the NMI. And the NMI latency support
+	 * by the NMI अगर we're alपढ़ोy in the NMI. And the NMI latency support
 	 * below will take care of any pending NMI that might have been
 	 * generated by the overflow.
 	 */
-	if (in_nmi())
-		return;
+	अगर (in_nmi())
+		वापस;
 
-	amd_pmu_wait_on_overflow(event->hw.idx);
-}
+	amd_pmu_रुको_on_overflow(event->hw.idx);
+पूर्ण
 
 /*
- * Because of NMI latency, if multiple PMC counters are active or other sources
+ * Because of NMI latency, अगर multiple PMC counters are active or other sources
  * of NMIs are received, the perf NMI handler can handle one or more overflowed
  * PMC counters outside of the NMI associated with the PMC overflow. If the NMI
- * doesn't arrive at the LAPIC in time to become a pending NMI, then the kernel
- * back-to-back NMI support won't be active. This PMC handler needs to take into
+ * करोesn't arrive at the LAPIC in समय to become a pending NMI, then the kernel
+ * back-to-back NMI support won't be active. This PMC handler needs to take पूर्णांकo
  * account that this can occur, otherwise this could result in unknown NMI
- * messages being issued. Examples of this is PMC overflow while in the NMI
- * handler when multiple PMCs are active or PMC overflow while handling some
+ * messages being issued. Examples of this is PMC overflow जबतक in the NMI
+ * handler when multiple PMCs are active or PMC overflow जबतक handling some
  * other source of an NMI.
  *
- * Attempt to mitigate this by creating an NMI window in which un-handled NMIs
- * received during this window will be claimed. This prevents extending the
- * window past when it is possible that latent NMIs should be received. The
- * per-CPU perf_nmi_tstamp will be set to the window end time whenever perf has
+ * Attempt to mitigate this by creating an NMI winकरोw in which un-handled NMIs
+ * received during this winकरोw will be claimed. This prevents extending the
+ * winकरोw past when it is possible that latent NMIs should be received. The
+ * per-CPU perf_nmi_tstamp will be set to the winकरोw end समय whenever perf has
  * handled a counter. When an un-handled NMI is received, it will be claimed
- * only if arriving within that window.
+ * only अगर arriving within that winकरोw.
  */
-static int amd_pmu_handle_irq(struct pt_regs *regs)
-{
-	int handled;
+अटल पूर्णांक amd_pmu_handle_irq(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक handled;
 
 	/* Process any counter overflows */
 	handled = x86_pmu_handle_irq(regs);
 
 	/*
-	 * If a counter was handled, record a timestamp such that un-handled
-	 * NMIs will be claimed if arriving within that window.
+	 * If a counter was handled, record a बारtamp such that un-handled
+	 * NMIs will be claimed अगर arriving within that winकरोw.
 	 */
-	if (handled) {
-		this_cpu_write(perf_nmi_tstamp, jiffies + perf_nmi_window);
+	अगर (handled) अणु
+		this_cpu_ग_लिखो(perf_nmi_tstamp, jअगरfies + perf_nmi_winकरोw);
 
-		return handled;
-	}
+		वापस handled;
+	पूर्ण
 
-	if (time_after(jiffies, this_cpu_read(perf_nmi_tstamp)))
-		return NMI_DONE;
+	अगर (समय_after(jअगरfies, this_cpu_पढ़ो(perf_nmi_tstamp)))
+		वापस NMI_DONE;
 
-	return NMI_HANDLED;
-}
+	वापस NMI_HANDLED;
+पूर्ण
 
-static struct event_constraint *
-amd_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
-			  struct perf_event *event)
-{
+अटल काष्ठा event_स्थिरraपूर्णांक *
+amd_get_event_स्थिरraपूर्णांकs(काष्ठा cpu_hw_events *cpuc, पूर्णांक idx,
+			  काष्ठा perf_event *event)
+अणु
 	/*
-	 * if not NB event or no NB, then no constraints
+	 * अगर not NB event or no NB, then no स्थिरraपूर्णांकs
 	 */
-	if (!(amd_has_nb(cpuc) && amd_is_nb_event(&event->hw)))
-		return &unconstrained;
+	अगर (!(amd_has_nb(cpuc) && amd_is_nb_event(&event->hw)))
+		वापस &unस्थिरrained;
 
-	return __amd_get_nb_event_constraints(cpuc, event, NULL);
-}
+	वापस __amd_get_nb_event_स्थिरraपूर्णांकs(cpuc, event, शून्य);
+पूर्ण
 
-static void amd_put_event_constraints(struct cpu_hw_events *cpuc,
-				      struct perf_event *event)
-{
-	if (amd_has_nb(cpuc) && amd_is_nb_event(&event->hw))
-		__amd_put_nb_event_constraints(cpuc, event);
-}
+अटल व्योम amd_put_event_स्थिरraपूर्णांकs(काष्ठा cpu_hw_events *cpuc,
+				      काष्ठा perf_event *event)
+अणु
+	अगर (amd_has_nb(cpuc) && amd_is_nb_event(&event->hw))
+		__amd_put_nb_event_स्थिरraपूर्णांकs(cpuc, event);
+पूर्ण
 
 PMU_FORMAT_ATTR(event,	"config:0-7,32-35");
 PMU_FORMAT_ATTR(umask,	"config:8-15"	);
@@ -718,27 +719,27 @@ PMU_FORMAT_ATTR(edge,	"config:18"	);
 PMU_FORMAT_ATTR(inv,	"config:23"	);
 PMU_FORMAT_ATTR(cmask,	"config:24-31"	);
 
-static struct attribute *amd_format_attr[] = {
-	&format_attr_event.attr,
-	&format_attr_umask.attr,
-	&format_attr_edge.attr,
-	&format_attr_inv.attr,
-	&format_attr_cmask.attr,
-	NULL,
-};
+अटल काष्ठा attribute *amd_क्रमmat_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	&क्रमmat_attr_umask.attr,
+	&क्रमmat_attr_edge.attr,
+	&क्रमmat_attr_inv.attr,
+	&क्रमmat_attr_cmask.attr,
+	शून्य,
+पूर्ण;
 
 /* AMD Family 15h */
 
-#define AMD_EVENT_TYPE_MASK	0x000000F0ULL
+#घोषणा AMD_EVENT_TYPE_MASK	0x000000F0ULL
 
-#define AMD_EVENT_FP		0x00000000ULL ... 0x00000010ULL
-#define AMD_EVENT_LS		0x00000020ULL ... 0x00000030ULL
-#define AMD_EVENT_DC		0x00000040ULL ... 0x00000050ULL
-#define AMD_EVENT_CU		0x00000060ULL ... 0x00000070ULL
-#define AMD_EVENT_IC_DE		0x00000080ULL ... 0x00000090ULL
-#define AMD_EVENT_EX_LS		0x000000C0ULL
-#define AMD_EVENT_DE		0x000000D0ULL
-#define AMD_EVENT_NB		0x000000E0ULL ... 0x000000F0ULL
+#घोषणा AMD_EVENT_FP		0x00000000ULL ... 0x00000010ULL
+#घोषणा AMD_EVENT_LS		0x00000020ULL ... 0x00000030ULL
+#घोषणा AMD_EVENT_DC		0x00000040ULL ... 0x00000050ULL
+#घोषणा AMD_EVENT_CU		0x00000060ULL ... 0x00000070ULL
+#घोषणा AMD_EVENT_IC_DE		0x00000080ULL ... 0x00000090ULL
+#घोषणा AMD_EVENT_EX_LS		0x000000C0ULL
+#घोषणा AMD_EVENT_DE		0x000000D0ULL
+#घोषणा AMD_EVENT_NB		0x000000E0ULL ... 0x000000F0ULL
 
 /*
  * AMD family 15h event code/PMC mappings:
@@ -791,121 +792,121 @@ static struct attribute *amd_format_attr[] = {
  * 0x1D8	EX	PERF_CTL[5:0]
  *
  * (*)  depending on the umask all FPU counters may be used
- * (**) only one unitmask enabled at a time
+ * (**) only one uniपंचांगask enabled at a समय
  */
 
-static struct event_constraint amd_f15_PMC0  = EVENT_CONSTRAINT(0, 0x01, 0);
-static struct event_constraint amd_f15_PMC20 = EVENT_CONSTRAINT(0, 0x07, 0);
-static struct event_constraint amd_f15_PMC3  = EVENT_CONSTRAINT(0, 0x08, 0);
-static struct event_constraint amd_f15_PMC30 = EVENT_CONSTRAINT_OVERLAP(0, 0x09, 0);
-static struct event_constraint amd_f15_PMC50 = EVENT_CONSTRAINT(0, 0x3F, 0);
-static struct event_constraint amd_f15_PMC53 = EVENT_CONSTRAINT(0, 0x38, 0);
+अटल काष्ठा event_स्थिरraपूर्णांक amd_f15_PMC0  = EVENT_CONSTRAINT(0, 0x01, 0);
+अटल काष्ठा event_स्थिरraपूर्णांक amd_f15_PMC20 = EVENT_CONSTRAINT(0, 0x07, 0);
+अटल काष्ठा event_स्थिरraपूर्णांक amd_f15_PMC3  = EVENT_CONSTRAINT(0, 0x08, 0);
+अटल काष्ठा event_स्थिरraपूर्णांक amd_f15_PMC30 = EVENT_CONSTRAINT_OVERLAP(0, 0x09, 0);
+अटल काष्ठा event_स्थिरraपूर्णांक amd_f15_PMC50 = EVENT_CONSTRAINT(0, 0x3F, 0);
+अटल काष्ठा event_स्थिरraपूर्णांक amd_f15_PMC53 = EVENT_CONSTRAINT(0, 0x38, 0);
 
-static struct event_constraint *
-amd_get_event_constraints_f15h(struct cpu_hw_events *cpuc, int idx,
-			       struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	unsigned int event_code = amd_get_event_code(hwc);
+अटल काष्ठा event_स्थिरraपूर्णांक *
+amd_get_event_स्थिरraपूर्णांकs_f15h(काष्ठा cpu_hw_events *cpuc, पूर्णांक idx,
+			       काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	अचिन्हित पूर्णांक event_code = amd_get_event_code(hwc);
 
-	switch (event_code & AMD_EVENT_TYPE_MASK) {
-	case AMD_EVENT_FP:
-		switch (event_code) {
-		case 0x000:
-			if (!(hwc->config & 0x0000F000ULL))
-				break;
-			if (!(hwc->config & 0x00000F00ULL))
-				break;
-			return &amd_f15_PMC3;
-		case 0x004:
-			if (hweight_long(hwc->config & ARCH_PERFMON_EVENTSEL_UMASK) <= 1)
-				break;
-			return &amd_f15_PMC3;
-		case 0x003:
-		case 0x00B:
-		case 0x00D:
-			return &amd_f15_PMC3;
-		}
-		return &amd_f15_PMC53;
-	case AMD_EVENT_LS:
-	case AMD_EVENT_DC:
-	case AMD_EVENT_EX_LS:
-		switch (event_code) {
-		case 0x023:
-		case 0x043:
-		case 0x045:
-		case 0x046:
-		case 0x054:
-		case 0x055:
-			return &amd_f15_PMC20;
-		case 0x02D:
-			return &amd_f15_PMC3;
-		case 0x02E:
-			return &amd_f15_PMC30;
-		case 0x031:
-			if (hweight_long(hwc->config & ARCH_PERFMON_EVENTSEL_UMASK) <= 1)
-				return &amd_f15_PMC20;
-			return &emptyconstraint;
-		case 0x1C0:
-			return &amd_f15_PMC53;
-		default:
-			return &amd_f15_PMC50;
-		}
-	case AMD_EVENT_CU:
-	case AMD_EVENT_IC_DE:
-	case AMD_EVENT_DE:
-		switch (event_code) {
-		case 0x08F:
-		case 0x187:
-		case 0x188:
-			return &amd_f15_PMC0;
-		case 0x0DB ... 0x0DF:
-		case 0x1D6:
-		case 0x1D8:
-			return &amd_f15_PMC50;
-		default:
-			return &amd_f15_PMC20;
-		}
-	case AMD_EVENT_NB:
+	चयन (event_code & AMD_EVENT_TYPE_MASK) अणु
+	हाल AMD_EVENT_FP:
+		चयन (event_code) अणु
+		हाल 0x000:
+			अगर (!(hwc->config & 0x0000F000ULL))
+				अवरोध;
+			अगर (!(hwc->config & 0x00000F00ULL))
+				अवरोध;
+			वापस &amd_f15_PMC3;
+		हाल 0x004:
+			अगर (hweight_दीर्घ(hwc->config & ARCH_PERFMON_EVENTSEL_UMASK) <= 1)
+				अवरोध;
+			वापस &amd_f15_PMC3;
+		हाल 0x003:
+		हाल 0x00B:
+		हाल 0x00D:
+			वापस &amd_f15_PMC3;
+		पूर्ण
+		वापस &amd_f15_PMC53;
+	हाल AMD_EVENT_LS:
+	हाल AMD_EVENT_DC:
+	हाल AMD_EVENT_EX_LS:
+		चयन (event_code) अणु
+		हाल 0x023:
+		हाल 0x043:
+		हाल 0x045:
+		हाल 0x046:
+		हाल 0x054:
+		हाल 0x055:
+			वापस &amd_f15_PMC20;
+		हाल 0x02D:
+			वापस &amd_f15_PMC3;
+		हाल 0x02E:
+			वापस &amd_f15_PMC30;
+		हाल 0x031:
+			अगर (hweight_दीर्घ(hwc->config & ARCH_PERFMON_EVENTSEL_UMASK) <= 1)
+				वापस &amd_f15_PMC20;
+			वापस &emptyस्थिरraपूर्णांक;
+		हाल 0x1C0:
+			वापस &amd_f15_PMC53;
+		शेष:
+			वापस &amd_f15_PMC50;
+		पूर्ण
+	हाल AMD_EVENT_CU:
+	हाल AMD_EVENT_IC_DE:
+	हाल AMD_EVENT_DE:
+		चयन (event_code) अणु
+		हाल 0x08F:
+		हाल 0x187:
+		हाल 0x188:
+			वापस &amd_f15_PMC0;
+		हाल 0x0DB ... 0x0DF:
+		हाल 0x1D6:
+		हाल 0x1D8:
+			वापस &amd_f15_PMC50;
+		शेष:
+			वापस &amd_f15_PMC20;
+		पूर्ण
+	हाल AMD_EVENT_NB:
 		/* moved to uncore.c */
-		return &emptyconstraint;
-	default:
-		return &emptyconstraint;
-	}
-}
+		वापस &emptyस्थिरraपूर्णांक;
+	शेष:
+		वापस &emptyस्थिरraपूर्णांक;
+	पूर्ण
+पूर्ण
 
-static struct event_constraint pair_constraint;
+अटल काष्ठा event_स्थिरraपूर्णांक pair_स्थिरraपूर्णांक;
 
-static struct event_constraint *
-amd_get_event_constraints_f17h(struct cpu_hw_events *cpuc, int idx,
-			       struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल काष्ठा event_स्थिरraपूर्णांक *
+amd_get_event_स्थिरraपूर्णांकs_f17h(काष्ठा cpu_hw_events *cpuc, पूर्णांक idx,
+			       काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
-	if (amd_is_pair_event_code(hwc))
-		return &pair_constraint;
+	अगर (amd_is_pair_event_code(hwc))
+		वापस &pair_स्थिरraपूर्णांक;
 
-	return &unconstrained;
-}
+	वापस &unस्थिरrained;
+पूर्ण
 
-static void amd_put_event_constraints_f17h(struct cpu_hw_events *cpuc,
-					   struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम amd_put_event_स्थिरraपूर्णांकs_f17h(काष्ठा cpu_hw_events *cpuc,
+					   काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
-	if (is_counter_pair(hwc))
+	अगर (is_counter_pair(hwc))
 		--cpuc->n_pair;
-}
+पूर्ण
 
-static ssize_t amd_event_sysfs_show(char *page, u64 config)
-{
+अटल sमाप_प्रकार amd_event_sysfs_show(अक्षर *page, u64 config)
+अणु
 	u64 event = (config & ARCH_PERFMON_EVENTSEL_EVENT) |
 		    (config & AMD64_EVENTSEL_EVENT) >> 24;
 
-	return x86_event_sysfs_show(page, config, event);
-}
+	वापस x86_event_sysfs_show(page, config, event);
+पूर्ण
 
-static __initconst const struct x86_pmu amd_pmu = {
+अटल __initस्थिर स्थिर काष्ठा x86_pmu amd_pmu = अणु
 	.name			= "AMD",
 	.handle_irq		= amd_pmu_handle_irq,
 	.disable_all		= amd_pmu_disable_all,
@@ -925,32 +926,32 @@ static __initconst const struct x86_pmu amd_pmu = {
 	.apic			= 1,
 	/* use highest bit to detect overflow */
 	.max_period		= (1ULL << 47) - 1,
-	.get_event_constraints	= amd_get_event_constraints,
-	.put_event_constraints	= amd_put_event_constraints,
+	.get_event_स्थिरraपूर्णांकs	= amd_get_event_स्थिरraपूर्णांकs,
+	.put_event_स्थिरraपूर्णांकs	= amd_put_event_स्थिरraपूर्णांकs,
 
-	.format_attrs		= amd_format_attr,
+	.क्रमmat_attrs		= amd_क्रमmat_attr,
 	.events_sysfs_show	= amd_event_sysfs_show,
 
 	.cpu_prepare		= amd_pmu_cpu_prepare,
 	.cpu_starting		= amd_pmu_cpu_starting,
 	.cpu_dead		= amd_pmu_cpu_dead,
 
-	.amd_nb_constraints	= 1,
-};
+	.amd_nb_स्थिरraपूर्णांकs	= 1,
+पूर्ण;
 
-static int __init amd_core_pmu_init(void)
-{
+अटल पूर्णांक __init amd_core_pmu_init(व्योम)
+अणु
 	u64 even_ctr_mask = 0ULL;
-	int i;
+	पूर्णांक i;
 
-	if (!boot_cpu_has(X86_FEATURE_PERFCTR_CORE))
-		return 0;
+	अगर (!boot_cpu_has(X86_FEATURE_PERFCTR_CORE))
+		वापस 0;
 
-	/* Avoid calculating the value each time in the NMI handler */
-	perf_nmi_window = msecs_to_jiffies(100);
+	/* Aव्योम calculating the value each समय in the NMI handler */
+	perf_nmi_winकरोw = msecs_to_jअगरfies(100);
 
 	/*
-	 * If core performance counter extensions exists, we must use
+	 * If core perक्रमmance counter extensions exists, we must use
 	 * MSR_F15H_PERF_CTL/MSR_F15H_PERF_CTR msrs. See also
 	 * amd_pmu_addr_offset().
 	 */
@@ -958,91 +959,91 @@ static int __init amd_core_pmu_init(void)
 	x86_pmu.perfctr		= MSR_F15H_PERF_CTR;
 	x86_pmu.num_counters	= AMD64_NUM_COUNTERS_CORE;
 	/*
-	 * AMD Core perfctr has separate MSRs for the NB events, see
+	 * AMD Core perfctr has separate MSRs क्रम the NB events, see
 	 * the amd/uncore.c driver.
 	 */
-	x86_pmu.amd_nb_constraints = 0;
+	x86_pmu.amd_nb_स्थिरraपूर्णांकs = 0;
 
-	if (boot_cpu_data.x86 == 0x15) {
+	अगर (boot_cpu_data.x86 == 0x15) अणु
 		pr_cont("Fam15h ");
-		x86_pmu.get_event_constraints = amd_get_event_constraints_f15h;
-	}
-	if (boot_cpu_data.x86 >= 0x17) {
+		x86_pmu.get_event_स्थिरraपूर्णांकs = amd_get_event_स्थिरraपूर्णांकs_f15h;
+	पूर्ण
+	अगर (boot_cpu_data.x86 >= 0x17) अणु
 		pr_cont("Fam17h+ ");
 		/*
-		 * Family 17h and compatibles have constraints for Large
-		 * Increment per Cycle events: they may only be assigned an
+		 * Family 17h and compatibles have स्थिरraपूर्णांकs क्रम Large
+		 * Increment per Cycle events: they may only be asचिन्हित an
 		 * even numbered counter that has a consecutive adjacent odd
 		 * numbered counter following it.
 		 */
-		for (i = 0; i < x86_pmu.num_counters - 1; i += 2)
+		क्रम (i = 0; i < x86_pmu.num_counters - 1; i += 2)
 			even_ctr_mask |= 1 << i;
 
-		pair_constraint = (struct event_constraint)
+		pair_स्थिरraपूर्णांक = (काष्ठा event_स्थिरraपूर्णांक)
 				    __EVENT_CONSTRAINT(0, even_ctr_mask, 0,
 				    x86_pmu.num_counters / 2, 0,
 				    PERF_X86_EVENT_PAIR);
 
-		x86_pmu.get_event_constraints = amd_get_event_constraints_f17h;
-		x86_pmu.put_event_constraints = amd_put_event_constraints_f17h;
+		x86_pmu.get_event_स्थिरraपूर्णांकs = amd_get_event_स्थिरraपूर्णांकs_f17h;
+		x86_pmu.put_event_स्थिरraपूर्णांकs = amd_put_event_स्थिरraपूर्णांकs_f17h;
 		x86_pmu.perf_ctr_pair_en = AMD_MERGE_EVENT_ENABLE;
 		x86_pmu.flags |= PMU_FL_PAIR;
-	}
+	पूर्ण
 
 	pr_cont("core perfctr, ");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__init int amd_pmu_init(void)
-{
-	int ret;
+__init पूर्णांक amd_pmu_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	/* Performance-monitoring supported from K7 and later: */
-	if (boot_cpu_data.x86 < 6)
-		return -ENODEV;
+	/* Perक्रमmance-monitoring supported from K7 and later: */
+	अगर (boot_cpu_data.x86 < 6)
+		वापस -ENODEV;
 
 	x86_pmu = amd_pmu;
 
 	ret = amd_core_pmu_init();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (num_possible_cpus() == 1) {
+	अगर (num_possible_cpus() == 1) अणु
 		/*
-		 * No point in allocating data structures to serialize
+		 * No poपूर्णांक in allocating data काष्ठाures to serialize
 		 * against other CPUs, when there is only the one CPU.
 		 */
-		x86_pmu.amd_nb_constraints = 0;
-	}
+		x86_pmu.amd_nb_स्थिरraपूर्णांकs = 0;
+	पूर्ण
 
-	if (boot_cpu_data.x86 >= 0x17)
-		memcpy(hw_cache_event_ids, amd_hw_cache_event_ids_f17h, sizeof(hw_cache_event_ids));
-	else
-		memcpy(hw_cache_event_ids, amd_hw_cache_event_ids, sizeof(hw_cache_event_ids));
+	अगर (boot_cpu_data.x86 >= 0x17)
+		स_नकल(hw_cache_event_ids, amd_hw_cache_event_ids_f17h, माप(hw_cache_event_ids));
+	अन्यथा
+		स_नकल(hw_cache_event_ids, amd_hw_cache_event_ids, माप(hw_cache_event_ids));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void amd_pmu_enable_virt(void)
-{
-	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+व्योम amd_pmu_enable_virt(व्योम)
+अणु
+	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
 
 	cpuc->perf_ctr_virt_mask = 0;
 
 	/* Reload all events */
 	amd_pmu_disable_all();
 	x86_pmu_enable_all(0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(amd_pmu_enable_virt);
 
-void amd_pmu_disable_virt(void)
-{
-	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+व्योम amd_pmu_disable_virt(व्योम)
+अणु
+	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
 
 	/*
 	 * We only mask out the Host-only bit so that host-only counting works
 	 * when SVM is disabled. If someone sets up a guest-only counter when
-	 * SVM is disabled the Guest-only bits still gets set and the counter
+	 * SVM is disabled the Guest-only bits still माला_लो set and the counter
 	 * will not count anything.
 	 */
 	cpuc->perf_ctr_virt_mask = AMD64_EVENTSEL_HOSTONLY;
@@ -1050,5 +1051,5 @@ void amd_pmu_disable_virt(void)
 	/* Reload all events */
 	amd_pmu_disable_all();
 	x86_pmu_enable_all(0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(amd_pmu_disable_virt);

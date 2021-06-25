@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2012-2019 ARM Limited (or its affiliates). */
 
-/* \file cc_driver.h
+/* \पile cc_driver.h
  * ARM CryptoCell Linux Crypto Driver
  */
 
-#ifndef __CC_DRIVER_H__
-#define __CC_DRIVER_H__
+#अगर_अघोषित __CC_DRIVER_H__
+#घोषणा __CC_DRIVER_H__
 
-#ifdef COMP_IN_WQ
-#include <linux/workqueue.h>
-#else
-#include <linux/interrupt.h>
-#endif
-#include <linux/dma-mapping.h>
-#include <crypto/algapi.h>
-#include <crypto/internal/skcipher.h>
-#include <crypto/aes.h>
-#include <crypto/sha1.h>
-#include <crypto/sha2.h>
-#include <crypto/aead.h>
-#include <crypto/authenc.h>
-#include <crypto/hash.h>
-#include <crypto/skcipher.h>
-#include <linux/clk.h>
-#include <linux/platform_device.h>
+#अगर_घोषित COMP_IN_WQ
+#समावेश <linux/workqueue.h>
+#अन्यथा
+#समावेश <linux/पूर्णांकerrupt.h>
+#पूर्ण_अगर
+#समावेश <linux/dma-mapping.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/sha1.h>
+#समावेश <crypto/sha2.h>
+#समावेश <crypto/aead.h>
+#समावेश <crypto/authenc.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/skcipher.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "cc_host_regs.h"
-#include "cc_crypto_ctx.h"
-#include "cc_hw_queue_defs.h"
-#include "cc_sram_mgr.h"
+#समावेश "cc_host_regs.h"
+#समावेश "cc_crypto_ctx.h"
+#समावेश "cc_hw_queue_defs.h"
+#समावेश "cc_sram_mgr.h"
 
-extern bool cc_dump_desc;
-extern bool cc_dump_bytes;
+बाह्य bool cc_dump_desc;
+बाह्य bool cc_dump_bytes;
 
-#define DRV_MODULE_VERSION "5.0"
+#घोषणा DRV_MODULE_VERSION "5.0"
 
-enum cc_hw_rev {
+क्रमागत cc_hw_rev अणु
 	CC_HW_REV_630 = 630,
 	CC_HW_REV_710 = 710,
 	CC_HW_REV_712 = 712,
 	CC_HW_REV_713 = 713
-};
+पूर्ण;
 
-enum cc_std_body {
+क्रमागत cc_std_body अणु
 	CC_STD_NIST = 0x1,
 	CC_STD_OSCCA = 0x2,
 	CC_STD_ALL = 0x3
-};
+पूर्ण;
 
-#define CC_PINS_FULL	0x0
-#define CC_PINS_SLIM	0x9F
+#घोषणा CC_PINS_FULL	0x0
+#घोषणा CC_PINS_SLIM	0x9F
 
 /* Maximum DMA mask supported by IP */
-#define DMA_BIT_MASK_LEN 48
+#घोषणा DMA_BIT_MASK_LEN 48
 
-#define CC_AXI_IRQ_MASK ((1 << CC_AXIM_CFG_BRESPMASK_BIT_SHIFT) | \
+#घोषणा CC_AXI_IRQ_MASK ((1 << CC_AXIM_CFG_BRESPMASK_BIT_SHIFT) | \
 			  (1 << CC_AXIM_CFG_RRESPMASK_BIT_SHIFT) | \
 			  (1 << CC_AXIM_CFG_INFLTMASK_BIT_SHIFT) | \
 			  (1 << CC_AXIM_CFG_COMPMASK_BIT_SHIFT))
 
-#define CC_AXI_ERR_IRQ_MASK BIT(CC_HOST_IRR_AXI_ERR_INT_BIT_SHIFT)
+#घोषणा CC_AXI_ERR_IRQ_MASK BIT(CC_HOST_IRR_AXI_ERR_INT_BIT_SHIFT)
 
-#define CC_COMP_IRQ_MASK BIT(CC_HOST_IRR_AXIM_COMP_INT_BIT_SHIFT)
+#घोषणा CC_COMP_IRQ_MASK BIT(CC_HOST_IRR_AXIM_COMP_INT_BIT_SHIFT)
 
-#define CC_SECURITY_DISABLED_MASK BIT(CC_SECURITY_DISABLED_VALUE_BIT_SHIFT)
+#घोषणा CC_SECURITY_DISABLED_MASK BIT(CC_SECURITY_DISABLED_VALUE_BIT_SHIFT)
 
-#define CC_NVM_IS_IDLE_MASK BIT(CC_NVM_IS_IDLE_VALUE_BIT_SHIFT)
+#घोषणा CC_NVM_IS_IDLE_MASK BIT(CC_NVM_IS_IDLE_VALUE_BIT_SHIFT)
 
-#define AXIM_MON_COMP_VALUE CC_GENMASK(CC_AXIM_MON_COMP_VALUE)
+#घोषणा AXIM_MON_COMP_VALUE CC_GENMASK(CC_AXIM_MON_COMP_VALUE)
 
-#define CC_CPP_AES_ABORT_MASK ( \
+#घोषणा CC_CPP_AES_ABORT_MASK ( \
 	BIT(CC_HOST_IMR_REE_OP_ABORTED_AES_0_MASK_BIT_SHIFT) | \
 	BIT(CC_HOST_IMR_REE_OP_ABORTED_AES_1_MASK_BIT_SHIFT) | \
 	BIT(CC_HOST_IMR_REE_OP_ABORTED_AES_2_MASK_BIT_SHIFT) | \
@@ -80,7 +81,7 @@ enum cc_std_body {
 	BIT(CC_HOST_IMR_REE_OP_ABORTED_AES_6_MASK_BIT_SHIFT) | \
 	BIT(CC_HOST_IMR_REE_OP_ABORTED_AES_7_MASK_BIT_SHIFT))
 
-#define CC_CPP_SM4_ABORT_MASK ( \
+#घोषणा CC_CPP_SM4_ABORT_MASK ( \
 	BIT(CC_HOST_IMR_REE_OP_ABORTED_SM_0_MASK_BIT_SHIFT) | \
 	BIT(CC_HOST_IMR_REE_OP_ABORTED_SM_1_MASK_BIT_SHIFT) | \
 	BIT(CC_HOST_IMR_REE_OP_ABORTED_SM_2_MASK_BIT_SHIFT) | \
@@ -91,145 +92,145 @@ enum cc_std_body {
 	BIT(CC_HOST_IMR_REE_OP_ABORTED_SM_7_MASK_BIT_SHIFT))
 
 /* Register name mangling macro */
-#define CC_REG(reg_name) CC_ ## reg_name ## _REG_OFFSET
+#घोषणा CC_REG(reg_name) CC_ ## reg_name ## _REG_OFFSET
 
-/* TEE FIPS status interrupt */
-#define CC_GPR0_IRQ_MASK BIT(CC_HOST_IRR_GPR0_BIT_SHIFT)
+/* TEE FIPS status पूर्णांकerrupt */
+#घोषणा CC_GPR0_IRQ_MASK BIT(CC_HOST_IRR_GPR0_BIT_SHIFT)
 
-#define CC_CRA_PRIO 400
+#घोषणा CC_CRA_PRIO 400
 
-#define MIN_HW_QUEUE_SIZE 50 /* Minimum size required for proper function */
+#घोषणा MIN_HW_QUEUE_SIZE 50 /* Minimum size required क्रम proper function */
 
-#define MAX_REQUEST_QUEUE_SIZE 4096
-#define MAX_MLLI_BUFF_SIZE 2080
+#घोषणा MAX_REQUEST_QUEUE_SIZE 4096
+#घोषणा MAX_MLLI_BUFF_SIZE 2080
 
-/* Definitions for HW descriptors DIN/DOUT fields */
-#define NS_BIT 1
-#define AXI_ID 0
+/* Definitions क्रम HW descriptors DIN/DOUT fields */
+#घोषणा NS_BIT 1
+#घोषणा AXI_ID 0
 /* AXI_ID is not actually the AXI ID of the transaction but the value of AXI_ID
  * field in the HW descriptor. The DMA engine +8 that value.
  */
 
-struct cc_cpp_req {
+काष्ठा cc_cpp_req अणु
 	bool is_cpp;
-	enum cc_cpp_alg alg;
+	क्रमागत cc_cpp_alg alg;
 	u8 slot;
-};
+पूर्ण;
 
-#define CC_MAX_IVGEN_DMA_ADDRESSES	3
-struct cc_crypto_req {
-	void (*user_cb)(struct device *dev, void *req, int err);
-	void *user_arg;
-	struct completion seq_compl; /* request completion */
-	struct cc_cpp_req cpp;
-};
+#घोषणा CC_MAX_IVGEN_DMA_ADDRESSES	3
+काष्ठा cc_crypto_req अणु
+	व्योम (*user_cb)(काष्ठा device *dev, व्योम *req, पूर्णांक err);
+	व्योम *user_arg;
+	काष्ठा completion seq_compl; /* request completion */
+	काष्ठा cc_cpp_req cpp;
+पूर्ण;
 
 /**
- * struct cc_drvdata - driver private data context
- * @cc_base:	virt address of the CC registers
- * @irq:	bitmap indicating source of last interrupt
+ * काष्ठा cc_drvdata - driver निजी data context
+ * @cc_base:	virt address of the CC रेजिस्टरs
+ * @irq:	biपंचांगap indicating source of last पूर्णांकerrupt
  */
-struct cc_drvdata {
-	void __iomem *cc_base;
-	int irq;
-	struct completion hw_queue_avail; /* wait for HW queue availability */
-	struct platform_device *plat_dev;
+काष्ठा cc_drvdata अणु
+	व्योम __iomem *cc_base;
+	पूर्णांक irq;
+	काष्ठा completion hw_queue_avail; /* रुको क्रम HW queue availability */
+	काष्ठा platक्रमm_device *plat_dev;
 	u32 mlli_sram_addr;
-	struct dma_pool *mlli_buffs_pool;
-	struct list_head alg_list;
-	void *hash_handle;
-	void *aead_handle;
-	void *request_mgr_handle;
-	void *fips_handle;
-	u32 sram_free_offset;	/* offset to non-allocated area in SRAM */
-	struct dentry *dir;	/* for debugfs */
-	struct clk *clk;
+	काष्ठा dma_pool *mlli_buffs_pool;
+	काष्ठा list_head alg_list;
+	व्योम *hash_handle;
+	व्योम *aead_handle;
+	व्योम *request_mgr_handle;
+	व्योम *fips_handle;
+	u32 sram_मुक्त_offset;	/* offset to non-allocated area in SRAM */
+	काष्ठा dentry *dir;	/* क्रम debugfs */
+	काष्ठा clk *clk;
 	bool coherent;
-	char *hw_rev_name;
-	enum cc_hw_rev hw_rev;
+	अक्षर *hw_rev_name;
+	क्रमागत cc_hw_rev hw_rev;
 	u32 axim_mon_offset;
 	u32 sig_offset;
 	u32 ver_offset;
-	int std_bodies;
+	पूर्णांक std_bodies;
 	bool sec_disabled;
 	u32 comp_mask;
 	u32 cache_params;
-	u32 ace_const;
-};
+	u32 ace_स्थिर;
+पूर्ण;
 
-struct cc_crypto_alg {
-	struct list_head entry;
-	int cipher_mode;
-	int flow_mode; /* Note: currently, refers to the cipher mode only. */
-	int auth_mode;
-	struct cc_drvdata *drvdata;
-	struct skcipher_alg skcipher_alg;
-	struct aead_alg aead_alg;
-};
+काष्ठा cc_crypto_alg अणु
+	काष्ठा list_head entry;
+	पूर्णांक cipher_mode;
+	पूर्णांक flow_mode; /* Note: currently, refers to the cipher mode only. */
+	पूर्णांक auth_mode;
+	काष्ठा cc_drvdata *drvdata;
+	काष्ठा skcipher_alg skcipher_alg;
+	काष्ठा aead_alg aead_alg;
+पूर्ण;
 
-struct cc_alg_template {
-	char name[CRYPTO_MAX_ALG_NAME];
-	char driver_name[CRYPTO_MAX_ALG_NAME];
-	unsigned int blocksize;
-	union {
-		struct skcipher_alg skcipher;
-		struct aead_alg aead;
-	} template_u;
-	int cipher_mode;
-	int flow_mode; /* Note: currently, refers to the cipher mode only. */
-	int auth_mode;
+काष्ठा cc_alg_ढाँचा अणु
+	अक्षर name[CRYPTO_MAX_ALG_NAME];
+	अक्षर driver_name[CRYPTO_MAX_ALG_NAME];
+	अचिन्हित पूर्णांक blocksize;
+	जोड़ अणु
+		काष्ठा skcipher_alg skcipher;
+		काष्ठा aead_alg aead;
+	पूर्ण ढाँचा_u;
+	पूर्णांक cipher_mode;
+	पूर्णांक flow_mode; /* Note: currently, refers to the cipher mode only. */
+	पूर्णांक auth_mode;
 	u32 min_hw_rev;
-	enum cc_std_body std_body;
+	क्रमागत cc_std_body std_body;
 	bool sec_func;
-	unsigned int data_unit;
-	struct cc_drvdata *drvdata;
-};
+	अचिन्हित पूर्णांक data_unit;
+	काष्ठा cc_drvdata *drvdata;
+पूर्ण;
 
-struct async_gen_req_ctx {
+काष्ठा async_gen_req_ctx अणु
 	dma_addr_t iv_dma_addr;
 	u8 *iv;
-	enum drv_crypto_direction op_type;
-};
+	क्रमागत drv_crypto_direction op_type;
+पूर्ण;
 
-static inline struct device *drvdata_to_dev(struct cc_drvdata *drvdata)
-{
-	return &drvdata->plat_dev->dev;
-}
+अटल अंतरभूत काष्ठा device *drvdata_to_dev(काष्ठा cc_drvdata *drvdata)
+अणु
+	वापस &drvdata->plat_dev->dev;
+पूर्ण
 
-void __dump_byte_array(const char *name, const u8 *buf, size_t len);
-static inline void dump_byte_array(const char *name, const u8 *the_array,
-				   size_t size)
-{
-	if (cc_dump_bytes)
+व्योम __dump_byte_array(स्थिर अक्षर *name, स्थिर u8 *buf, माप_प्रकार len);
+अटल अंतरभूत व्योम dump_byte_array(स्थिर अक्षर *name, स्थिर u8 *the_array,
+				   माप_प्रकार size)
+अणु
+	अगर (cc_dump_bytes)
 		__dump_byte_array(name, the_array, size);
-}
+पूर्ण
 
-bool cc_wait_for_reset_completion(struct cc_drvdata *drvdata);
-int init_cc_regs(struct cc_drvdata *drvdata);
-void fini_cc_regs(struct cc_drvdata *drvdata);
-unsigned int cc_get_default_hash_len(struct cc_drvdata *drvdata);
+bool cc_रुको_क्रम_reset_completion(काष्ठा cc_drvdata *drvdata);
+पूर्णांक init_cc_regs(काष्ठा cc_drvdata *drvdata);
+व्योम fini_cc_regs(काष्ठा cc_drvdata *drvdata);
+अचिन्हित पूर्णांक cc_get_शेष_hash_len(काष्ठा cc_drvdata *drvdata);
 
-static inline void cc_iowrite(struct cc_drvdata *drvdata, u32 reg, u32 val)
-{
-	iowrite32(val, (drvdata->cc_base + reg));
-}
+अटल अंतरभूत व्योम cc_ioग_लिखो(काष्ठा cc_drvdata *drvdata, u32 reg, u32 val)
+अणु
+	ioग_लिखो32(val, (drvdata->cc_base + reg));
+पूर्ण
 
-static inline u32 cc_ioread(struct cc_drvdata *drvdata, u32 reg)
-{
-	return ioread32(drvdata->cc_base + reg);
-}
+अटल अंतरभूत u32 cc_ioपढ़ो(काष्ठा cc_drvdata *drvdata, u32 reg)
+अणु
+	वापस ioपढ़ो32(drvdata->cc_base + reg);
+पूर्ण
 
-static inline gfp_t cc_gfp_flags(struct crypto_async_request *req)
-{
-	return (req->flags & CRYPTO_TFM_REQ_MAY_SLEEP) ?
+अटल अंतरभूत gfp_t cc_gfp_flags(काष्ठा crypto_async_request *req)
+अणु
+	वापस (req->flags & CRYPTO_TFM_REQ_MAY_SLEEP) ?
 			GFP_KERNEL : GFP_ATOMIC;
-}
+पूर्ण
 
-static inline void set_queue_last_ind(struct cc_drvdata *drvdata,
-				      struct cc_hw_desc *pdesc)
-{
-	if (drvdata->hw_rev >= CC_HW_REV_712)
+अटल अंतरभूत व्योम set_queue_last_ind(काष्ठा cc_drvdata *drvdata,
+				      काष्ठा cc_hw_desc *pdesc)
+अणु
+	अगर (drvdata->hw_rev >= CC_HW_REV_712)
 		set_queue_last_ind_bit(pdesc);
-}
+पूर्ण
 
-#endif /*__CC_DRIVER_H__*/
+#पूर्ण_अगर /*__CC_DRIVER_H__*/

@@ -1,77 +1,78 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * vsp1_histo.h  --  R-Car VSP1 Histogram API
  *
  * Copyright (C) 2016 Renesas Electronics Corporation
- * Copyright (C) 2016 Laurent Pinchart
+ * Copyright (C) 2016 Laurent Pinअक्षरt
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
-#ifndef __VSP1_HISTO_H__
-#define __VSP1_HISTO_H__
+#अगर_अघोषित __VSP1_HISTO_H__
+#घोषणा __VSP1_HISTO_H__
 
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
 
-#include <media/media-entity.h>
-#include <media/v4l2-dev.h>
-#include <media/videobuf2-v4l2.h>
+#समावेश <media/media-entity.h>
+#समावेश <media/v4l2-dev.h>
+#समावेश <media/videobuf2-v4l2.h>
 
-#include "vsp1_entity.h"
+#समावेश "vsp1_entity.h"
 
-struct vsp1_device;
+काष्ठा vsp1_device;
 
-#define HISTO_PAD_SINK				0
-#define HISTO_PAD_SOURCE			1
+#घोषणा HISTO_PAD_SINK				0
+#घोषणा HISTO_PAD_SOURCE			1
 
-struct vsp1_histogram_buffer {
-	struct vb2_v4l2_buffer buf;
-	struct list_head queue;
-	void *addr;
-};
+काष्ठा vsp1_histogram_buffer अणु
+	काष्ठा vb2_v4l2_buffer buf;
+	काष्ठा list_head queue;
+	व्योम *addr;
+पूर्ण;
 
-struct vsp1_histogram {
-	struct vsp1_entity entity;
-	struct video_device video;
-	struct media_pad pad;
+काष्ठा vsp1_histogram अणु
+	काष्ठा vsp1_entity entity;
+	काष्ठा video_device video;
+	काष्ठा media_pad pad;
 
-	const u32 *formats;
-	unsigned int num_formats;
-	size_t data_size;
-	u32 meta_format;
+	स्थिर u32 *क्रमmats;
+	अचिन्हित पूर्णांक num_क्रमmats;
+	माप_प्रकार data_size;
+	u32 meta_क्रमmat;
 
-	struct mutex lock;
-	struct vb2_queue queue;
+	काष्ठा mutex lock;
+	काष्ठा vb2_queue queue;
 
 	spinlock_t irqlock;
-	struct list_head irqqueue;
+	काष्ठा list_head irqqueue;
 
-	wait_queue_head_t wait_queue;
-	bool readout;
-};
+	रुको_queue_head_t रुको_queue;
+	bool पढ़ोout;
+पूर्ण;
 
-static inline struct vsp1_histogram *vdev_to_histo(struct video_device *vdev)
-{
-	return container_of(vdev, struct vsp1_histogram, video);
-}
+अटल अंतरभूत काष्ठा vsp1_histogram *vdev_to_histo(काष्ठा video_device *vdev)
+अणु
+	वापस container_of(vdev, काष्ठा vsp1_histogram, video);
+पूर्ण
 
-static inline struct vsp1_histogram *subdev_to_histo(struct v4l2_subdev *subdev)
-{
-	return container_of(subdev, struct vsp1_histogram, entity.subdev);
-}
+अटल अंतरभूत काष्ठा vsp1_histogram *subdev_to_histo(काष्ठा v4l2_subdev *subdev)
+अणु
+	वापस container_of(subdev, काष्ठा vsp1_histogram, entity.subdev);
+पूर्ण
 
-int vsp1_histogram_init(struct vsp1_device *vsp1, struct vsp1_histogram *histo,
-			enum vsp1_entity_type type, const char *name,
-			const struct vsp1_entity_operations *ops,
-			const unsigned int *formats, unsigned int num_formats,
-			size_t data_size, u32 meta_format);
-void vsp1_histogram_destroy(struct vsp1_entity *entity);
+पूर्णांक vsp1_histogram_init(काष्ठा vsp1_device *vsp1, काष्ठा vsp1_histogram *histo,
+			क्रमागत vsp1_entity_type type, स्थिर अक्षर *name,
+			स्थिर काष्ठा vsp1_entity_operations *ops,
+			स्थिर अचिन्हित पूर्णांक *क्रमmats, अचिन्हित पूर्णांक num_क्रमmats,
+			माप_प्रकार data_size, u32 meta_क्रमmat);
+व्योम vsp1_histogram_destroy(काष्ठा vsp1_entity *entity);
 
-struct vsp1_histogram_buffer *
-vsp1_histogram_buffer_get(struct vsp1_histogram *histo);
-void vsp1_histogram_buffer_complete(struct vsp1_histogram *histo,
-				    struct vsp1_histogram_buffer *buf,
-				    size_t size);
+काष्ठा vsp1_histogram_buffer *
+vsp1_histogram_buffer_get(काष्ठा vsp1_histogram *histo);
+व्योम vsp1_histogram_buffer_complete(काष्ठा vsp1_histogram *histo,
+				    काष्ठा vsp1_histogram_buffer *buf,
+				    माप_प्रकार size);
 
-#endif /* __VSP1_HISTO_H__ */
+#पूर्ण_अगर /* __VSP1_HISTO_H__ */

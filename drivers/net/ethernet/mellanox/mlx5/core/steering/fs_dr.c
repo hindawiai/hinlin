@@ -1,690 +1,691 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies */
 
-#include "mlx5_core.h"
-#include "fs_core.h"
-#include "fs_cmd.h"
-#include "mlx5dr.h"
-#include "fs_dr.h"
+#समावेश "mlx5_core.h"
+#समावेश "fs_core.h"
+#समावेश "fs_cmd.h"
+#समावेश "mlx5dr.h"
+#समावेश "fs_dr.h"
 
-static bool mlx5_dr_is_fw_table(u32 flags)
-{
-	if (flags & MLX5_FLOW_TABLE_TERMINATION)
-		return true;
+अटल bool mlx5_dr_is_fw_table(u32 flags)
+अणु
+	अगर (flags & MLX5_FLOW_TABLE_TERMINATION)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int mlx5_cmd_dr_update_root_ft(struct mlx5_flow_root_namespace *ns,
-				      struct mlx5_flow_table *ft,
+अटल पूर्णांक mlx5_cmd_dr_update_root_ft(काष्ठा mlx5_flow_root_namespace *ns,
+				      काष्ठा mlx5_flow_table *ft,
 				      u32 underlay_qpn,
 				      bool disconnect)
-{
-	return mlx5_fs_cmd_get_fw_cmds()->update_root_ft(ns, ft, underlay_qpn,
+अणु
+	वापस mlx5_fs_cmd_get_fw_cmds()->update_root_ft(ns, ft, underlay_qpn,
 							 disconnect);
-}
+पूर्ण
 
-static int set_miss_action(struct mlx5_flow_root_namespace *ns,
-			   struct mlx5_flow_table *ft,
-			   struct mlx5_flow_table *next_ft)
-{
-	struct mlx5dr_action *old_miss_action;
-	struct mlx5dr_action *action = NULL;
-	struct mlx5dr_table *next_tbl;
-	int err;
+अटल पूर्णांक set_miss_action(काष्ठा mlx5_flow_root_namespace *ns,
+			   काष्ठा mlx5_flow_table *ft,
+			   काष्ठा mlx5_flow_table *next_ft)
+अणु
+	काष्ठा mlx5dr_action *old_miss_action;
+	काष्ठा mlx5dr_action *action = शून्य;
+	काष्ठा mlx5dr_table *next_tbl;
+	पूर्णांक err;
 
-	next_tbl = next_ft ? next_ft->fs_dr_table.dr_table : NULL;
-	if (next_tbl) {
+	next_tbl = next_ft ? next_ft->fs_dr_table.dr_table : शून्य;
+	अगर (next_tbl) अणु
 		action = mlx5dr_action_create_dest_table(next_tbl);
-		if (!action)
-			return -EINVAL;
-	}
+		अगर (!action)
+			वापस -EINVAL;
+	पूर्ण
 	old_miss_action = ft->fs_dr_table.miss_action;
 	err = mlx5dr_table_set_miss_action(ft->fs_dr_table.dr_table, action);
-	if (err && action) {
+	अगर (err && action) अणु
 		err = mlx5dr_action_destroy(action);
-		if (err) {
-			action = NULL;
+		अगर (err) अणु
+			action = शून्य;
 			mlx5_core_err(ns->dev, "Failed to destroy action (%d)\n",
 				      err);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ft->fs_dr_table.miss_action = action;
-	if (old_miss_action) {
+	अगर (old_miss_action) अणु
 		err = mlx5dr_action_destroy(old_miss_action);
-		if (err)
+		अगर (err)
 			mlx5_core_err(ns->dev, "Failed to destroy action (%d)\n",
 				      err);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx5_cmd_dr_create_flow_table(struct mlx5_flow_root_namespace *ns,
-					 struct mlx5_flow_table *ft,
-					 unsigned int log_size,
-					 struct mlx5_flow_table *next_ft)
-{
-	struct mlx5dr_table *tbl;
+अटल पूर्णांक mlx5_cmd_dr_create_flow_table(काष्ठा mlx5_flow_root_namespace *ns,
+					 काष्ठा mlx5_flow_table *ft,
+					 अचिन्हित पूर्णांक log_size,
+					 काष्ठा mlx5_flow_table *next_ft)
+अणु
+	काष्ठा mlx5dr_table *tbl;
 	u32 flags;
-	int err;
+	पूर्णांक err;
 
-	if (mlx5_dr_is_fw_table(ft->flags))
-		return mlx5_fs_cmd_get_fw_cmds()->create_flow_table(ns, ft,
+	अगर (mlx5_dr_is_fw_table(ft->flags))
+		वापस mlx5_fs_cmd_get_fw_cmds()->create_flow_table(ns, ft,
 								    log_size,
 								    next_ft);
 	flags = ft->flags;
-	/* turn off encap/decap if not supported for sw-str by fw */
-	if (!MLX5_CAP_FLOWTABLE(ns->dev, sw_owner_reformat_supported))
+	/* turn off encap/decap अगर not supported क्रम sw-str by fw */
+	अगर (!MLX5_CAP_FLOWTABLE(ns->dev, sw_owner_reक्रमmat_supported))
 		flags = ft->flags & ~(MLX5_FLOW_TABLE_TUNNEL_EN_REFORMAT |
 				      MLX5_FLOW_TABLE_TUNNEL_EN_DECAP);
 
-	tbl = mlx5dr_table_create(ns->fs_dr_domain.dr_domain, ft->level, flags);
-	if (!tbl) {
+	tbl = mlx5dr_table_create(ns->fs_dr_करोमुख्य.dr_करोमुख्य, ft->level, flags);
+	अगर (!tbl) अणु
 		mlx5_core_err(ns->dev, "Failed creating dr flow_table\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ft->fs_dr_table.dr_table = tbl;
 	ft->id = mlx5dr_table_get_id(tbl);
 
-	if (next_ft) {
+	अगर (next_ft) अणु
 		err = set_miss_action(ns, ft, next_ft);
-		if (err) {
+		अगर (err) अणु
 			mlx5dr_table_destroy(tbl);
-			ft->fs_dr_table.dr_table = NULL;
-			return err;
-		}
-	}
+			ft->fs_dr_table.dr_table = शून्य;
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5_cmd_dr_destroy_flow_table(struct mlx5_flow_root_namespace *ns,
-					  struct mlx5_flow_table *ft)
-{
-	struct mlx5dr_action *action = ft->fs_dr_table.miss_action;
-	int err;
+अटल पूर्णांक mlx5_cmd_dr_destroy_flow_table(काष्ठा mlx5_flow_root_namespace *ns,
+					  काष्ठा mlx5_flow_table *ft)
+अणु
+	काष्ठा mlx5dr_action *action = ft->fs_dr_table.miss_action;
+	पूर्णांक err;
 
-	if (mlx5_dr_is_fw_table(ft->flags))
-		return mlx5_fs_cmd_get_fw_cmds()->destroy_flow_table(ns, ft);
+	अगर (mlx5_dr_is_fw_table(ft->flags))
+		वापस mlx5_fs_cmd_get_fw_cmds()->destroy_flow_table(ns, ft);
 
 	err = mlx5dr_table_destroy(ft->fs_dr_table.dr_table);
-	if (err) {
+	अगर (err) अणु
 		mlx5_core_err(ns->dev, "Failed to destroy flow_table (%d)\n",
 			      err);
-		return err;
-	}
-	if (action) {
+		वापस err;
+	पूर्ण
+	अगर (action) अणु
 		err = mlx5dr_action_destroy(action);
-		if (err) {
+		अगर (err) अणु
 			mlx5_core_err(ns->dev, "Failed to destroy action(%d)\n",
 				      err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx5_cmd_dr_modify_flow_table(struct mlx5_flow_root_namespace *ns,
-					 struct mlx5_flow_table *ft,
-					 struct mlx5_flow_table *next_ft)
-{
-	return set_miss_action(ns, ft, next_ft);
-}
+अटल पूर्णांक mlx5_cmd_dr_modअगरy_flow_table(काष्ठा mlx5_flow_root_namespace *ns,
+					 काष्ठा mlx5_flow_table *ft,
+					 काष्ठा mlx5_flow_table *next_ft)
+अणु
+	वापस set_miss_action(ns, ft, next_ft);
+पूर्ण
 
-static int mlx5_cmd_dr_create_flow_group(struct mlx5_flow_root_namespace *ns,
-					 struct mlx5_flow_table *ft,
+अटल पूर्णांक mlx5_cmd_dr_create_flow_group(काष्ठा mlx5_flow_root_namespace *ns,
+					 काष्ठा mlx5_flow_table *ft,
 					 u32 *in,
-					 struct mlx5_flow_group *fg)
-{
-	struct mlx5dr_matcher *matcher;
+					 काष्ठा mlx5_flow_group *fg)
+अणु
+	काष्ठा mlx5dr_matcher *matcher;
 	u32 priority = MLX5_GET(create_flow_group_in, in,
 				start_flow_index);
 	u8 match_criteria_enable = MLX5_GET(create_flow_group_in,
 					    in,
 					    match_criteria_enable);
-	struct mlx5dr_match_parameters mask;
+	काष्ठा mlx5dr_match_parameters mask;
 
-	if (mlx5_dr_is_fw_table(ft->flags))
-		return mlx5_fs_cmd_get_fw_cmds()->create_flow_group(ns, ft, in,
+	अगर (mlx5_dr_is_fw_table(ft->flags))
+		वापस mlx5_fs_cmd_get_fw_cmds()->create_flow_group(ns, ft, in,
 								    fg);
 
 	mask.match_buf = MLX5_ADDR_OF(create_flow_group_in,
 				      in, match_criteria);
-	mask.match_sz = sizeof(fg->mask.match_criteria);
+	mask.match_sz = माप(fg->mask.match_criteria);
 
 	matcher = mlx5dr_matcher_create(ft->fs_dr_table.dr_table,
 					priority,
 					match_criteria_enable,
 					&mask);
-	if (!matcher) {
+	अगर (!matcher) अणु
 		mlx5_core_err(ns->dev, "Failed creating matcher\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	fg->fs_dr_matcher.dr_matcher = matcher;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5_cmd_dr_destroy_flow_group(struct mlx5_flow_root_namespace *ns,
-					  struct mlx5_flow_table *ft,
-					  struct mlx5_flow_group *fg)
-{
-	if (mlx5_dr_is_fw_table(ft->flags))
-		return mlx5_fs_cmd_get_fw_cmds()->destroy_flow_group(ns, ft, fg);
+अटल पूर्णांक mlx5_cmd_dr_destroy_flow_group(काष्ठा mlx5_flow_root_namespace *ns,
+					  काष्ठा mlx5_flow_table *ft,
+					  काष्ठा mlx5_flow_group *fg)
+अणु
+	अगर (mlx5_dr_is_fw_table(ft->flags))
+		वापस mlx5_fs_cmd_get_fw_cmds()->destroy_flow_group(ns, ft, fg);
 
-	return mlx5dr_matcher_destroy(fg->fs_dr_matcher.dr_matcher);
-}
+	वापस mlx5dr_matcher_destroy(fg->fs_dr_matcher.dr_matcher);
+पूर्ण
 
-static struct mlx5dr_action *create_vport_action(struct mlx5dr_domain *domain,
-						 struct mlx5_flow_rule *dst)
-{
-	struct mlx5_flow_destination *dest_attr = &dst->dest_attr;
+अटल काष्ठा mlx5dr_action *create_vport_action(काष्ठा mlx5dr_करोमुख्य *करोमुख्य,
+						 काष्ठा mlx5_flow_rule *dst)
+अणु
+	काष्ठा mlx5_flow_destination *dest_attr = &dst->dest_attr;
 
-	return mlx5dr_action_create_dest_vport(domain, dest_attr->vport.num,
+	वापस mlx5dr_action_create_dest_vport(करोमुख्य, dest_attr->vport.num,
 					       dest_attr->vport.flags &
 					       MLX5_FLOW_DEST_VPORT_VHCA_ID,
 					       dest_attr->vport.vhca_id);
-}
+पूर्ण
 
-static struct mlx5dr_action *create_ft_action(struct mlx5dr_domain *domain,
-					      struct mlx5_flow_rule *dst)
-{
-	struct mlx5_flow_table *dest_ft = dst->dest_attr.ft;
+अटल काष्ठा mlx5dr_action *create_ft_action(काष्ठा mlx5dr_करोमुख्य *करोमुख्य,
+					      काष्ठा mlx5_flow_rule *dst)
+अणु
+	काष्ठा mlx5_flow_table *dest_ft = dst->dest_attr.ft;
 
-	if (mlx5_dr_is_fw_table(dest_ft->flags))
-		return mlx5dr_action_create_dest_flow_fw_table(domain, dest_ft);
-	return mlx5dr_action_create_dest_table(dest_ft->fs_dr_table.dr_table);
-}
+	अगर (mlx5_dr_is_fw_table(dest_ft->flags))
+		वापस mlx5dr_action_create_dest_flow_fw_table(करोमुख्य, dest_ft);
+	वापस mlx5dr_action_create_dest_table(dest_ft->fs_dr_table.dr_table);
+पूर्ण
 
-static struct mlx5dr_action *create_action_push_vlan(struct mlx5dr_domain *domain,
-						     struct mlx5_fs_vlan *vlan)
-{
+अटल काष्ठा mlx5dr_action *create_action_push_vlan(काष्ठा mlx5dr_करोमुख्य *करोमुख्य,
+						     काष्ठा mlx5_fs_vlan *vlan)
+अणु
 	u16 n_ethtype = vlan->ethtype;
 	u8  prio = vlan->prio;
 	u16 vid = vlan->vid;
 	u32 vlan_hdr;
 
 	vlan_hdr = (u32)n_ethtype << 16 | (u32)(prio) << 12 |  (u32)vid;
-	return mlx5dr_action_create_push_vlan(domain, htonl(vlan_hdr));
-}
+	वापस mlx5dr_action_create_push_vlan(करोमुख्य, htonl(vlan_hdr));
+पूर्ण
 
-static bool contain_vport_reformat_action(struct mlx5_flow_rule *dst)
-{
-	return dst->dest_attr.type == MLX5_FLOW_DESTINATION_TYPE_VPORT &&
+अटल bool contain_vport_reक्रमmat_action(काष्ठा mlx5_flow_rule *dst)
+अणु
+	वापस dst->dest_attr.type == MLX5_FLOW_DESTINATION_TYPE_VPORT &&
 		dst->dest_attr.vport.flags & MLX5_FLOW_DEST_VPORT_REFORMAT_ID;
-}
+पूर्ण
 
-#define MLX5_FLOW_CONTEXT_ACTION_MAX  20
-static int mlx5_cmd_dr_create_fte(struct mlx5_flow_root_namespace *ns,
-				  struct mlx5_flow_table *ft,
-				  struct mlx5_flow_group *group,
-				  struct fs_fte *fte)
-{
-	struct mlx5dr_domain *domain = ns->fs_dr_domain.dr_domain;
-	struct mlx5dr_action_dest *term_actions;
-	struct mlx5dr_match_parameters params;
-	struct mlx5_core_dev *dev = ns->dev;
-	struct mlx5dr_action **fs_dr_actions;
-	struct mlx5dr_action *tmp_action;
-	struct mlx5dr_action **actions;
+#घोषणा MLX5_FLOW_CONTEXT_ACTION_MAX  20
+अटल पूर्णांक mlx5_cmd_dr_create_fte(काष्ठा mlx5_flow_root_namespace *ns,
+				  काष्ठा mlx5_flow_table *ft,
+				  काष्ठा mlx5_flow_group *group,
+				  काष्ठा fs_fte *fte)
+अणु
+	काष्ठा mlx5dr_करोमुख्य *करोमुख्य = ns->fs_dr_करोमुख्य.dr_करोमुख्य;
+	काष्ठा mlx5dr_action_dest *term_actions;
+	काष्ठा mlx5dr_match_parameters params;
+	काष्ठा mlx5_core_dev *dev = ns->dev;
+	काष्ठा mlx5dr_action **fs_dr_actions;
+	काष्ठा mlx5dr_action *पंचांगp_action;
+	काष्ठा mlx5dr_action **actions;
 	bool delay_encap_set = false;
-	struct mlx5dr_rule *rule;
-	struct mlx5_flow_rule *dst;
-	int fs_dr_num_actions = 0;
-	int num_term_actions = 0;
-	int num_actions = 0;
-	size_t match_sz;
-	int err = 0;
-	int i;
+	काष्ठा mlx5dr_rule *rule;
+	काष्ठा mlx5_flow_rule *dst;
+	पूर्णांक fs_dr_num_actions = 0;
+	पूर्णांक num_term_actions = 0;
+	पूर्णांक num_actions = 0;
+	माप_प्रकार match_sz;
+	पूर्णांक err = 0;
+	पूर्णांक i;
 
-	if (mlx5_dr_is_fw_table(ft->flags))
-		return mlx5_fs_cmd_get_fw_cmds()->create_fte(ns, ft, group, fte);
+	अगर (mlx5_dr_is_fw_table(ft->flags))
+		वापस mlx5_fs_cmd_get_fw_cmds()->create_fte(ns, ft, group, fte);
 
-	actions = kcalloc(MLX5_FLOW_CONTEXT_ACTION_MAX, sizeof(*actions),
+	actions = kसुस्मृति(MLX5_FLOW_CONTEXT_ACTION_MAX, माप(*actions),
 			  GFP_KERNEL);
-	if (!actions) {
+	अगर (!actions) अणु
 		err = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	fs_dr_actions = kcalloc(MLX5_FLOW_CONTEXT_ACTION_MAX,
-				sizeof(*fs_dr_actions), GFP_KERNEL);
-	if (!fs_dr_actions) {
+	fs_dr_actions = kसुस्मृति(MLX5_FLOW_CONTEXT_ACTION_MAX,
+				माप(*fs_dr_actions), GFP_KERNEL);
+	अगर (!fs_dr_actions) अणु
 		err = -ENOMEM;
-		goto free_actions_alloc;
-	}
+		जाओ मुक्त_actions_alloc;
+	पूर्ण
 
-	term_actions = kcalloc(MLX5_FLOW_CONTEXT_ACTION_MAX,
-			       sizeof(*term_actions), GFP_KERNEL);
-	if (!term_actions) {
+	term_actions = kसुस्मृति(MLX5_FLOW_CONTEXT_ACTION_MAX,
+			       माप(*term_actions), GFP_KERNEL);
+	अगर (!term_actions) अणु
 		err = -ENOMEM;
-		goto free_fs_dr_actions_alloc;
-	}
+		जाओ मुक्त_fs_dr_actions_alloc;
+	पूर्ण
 
-	match_sz = sizeof(fte->val);
+	match_sz = माप(fte->val);
 
-	/* Drop reformat action bit if destination vport set with reformat */
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST) {
-		list_for_each_entry(dst, &fte->node.children, node.list) {
-			if (!contain_vport_reformat_action(dst))
-				continue;
+	/* Drop reक्रमmat action bit अगर destination vport set with reक्रमmat */
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST) अणु
+		list_क्रम_each_entry(dst, &fte->node.children, node.list) अणु
+			अगर (!contain_vport_reक्रमmat_action(dst))
+				जारी;
 
 			fte->action.action &= ~MLX5_FLOW_CONTEXT_ACTION_PACKET_REFORMAT;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* The order of the actions are must to be keep, only the following
 	 * order is supported by SW steering:
-	 * TX: modify header -> push vlan -> encap
-	 * RX: decap -> pop vlan -> modify header
+	 * TX: modअगरy header -> push vlan -> encap
+	 * RX: decap -> pop vlan -> modअगरy header
 	 */
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_DECAP) {
-		enum mlx5dr_action_reformat_type decap_type =
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_DECAP) अणु
+		क्रमागत mlx5dr_action_reक्रमmat_type decap_type =
 			DR_ACTION_REFORMAT_TYP_TNL_L2_TO_L2;
 
-		tmp_action = mlx5dr_action_create_packet_reformat(domain,
+		पंचांगp_action = mlx5dr_action_create_packet_reक्रमmat(करोमुख्य,
 								  decap_type, 0,
-								  NULL);
-		if (!tmp_action) {
+								  शून्य);
+		अगर (!पंचांगp_action) अणु
 			err = -ENOMEM;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		actions[num_actions++] = tmp_action;
-	}
+			जाओ मुक्त_actions;
+		पूर्ण
+		fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+		actions[num_actions++] = पंचांगp_action;
+	पूर्ण
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_PACKET_REFORMAT) {
-		bool is_decap = fte->action.pkt_reformat->reformat_type ==
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_PACKET_REFORMAT) अणु
+		bool is_decap = fte->action.pkt_reक्रमmat->reक्रमmat_type ==
 			MLX5_REFORMAT_TYPE_L3_TUNNEL_TO_L2;
 
-		if (is_decap)
+		अगर (is_decap)
 			actions[num_actions++] =
-				fte->action.pkt_reformat->action.dr_action;
-		else
+				fte->action.pkt_reक्रमmat->action.dr_action;
+		अन्यथा
 			delay_encap_set = true;
-	}
+	पूर्ण
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_POP) {
-		tmp_action =
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_POP) अणु
+		पंचांगp_action =
 			mlx5dr_action_create_pop_vlan();
-		if (!tmp_action) {
+		अगर (!पंचांगp_action) अणु
 			err = -ENOMEM;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		actions[num_actions++] = tmp_action;
-	}
+			जाओ मुक्त_actions;
+		पूर्ण
+		fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+		actions[num_actions++] = पंचांगp_action;
+	पूर्ण
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_POP_2) {
-		tmp_action =
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_POP_2) अणु
+		पंचांगp_action =
 			mlx5dr_action_create_pop_vlan();
-		if (!tmp_action) {
+		अगर (!पंचांगp_action) अणु
 			err = -ENOMEM;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		actions[num_actions++] = tmp_action;
-	}
+			जाओ मुक्त_actions;
+		पूर्ण
+		fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+		actions[num_actions++] = पंचांगp_action;
+	पूर्ण
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_MOD_HDR)
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_MOD_HDR)
 		actions[num_actions++] =
-			fte->action.modify_hdr->action.dr_action;
+			fte->action.modअगरy_hdr->action.dr_action;
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH) {
-		tmp_action = create_action_push_vlan(domain, &fte->action.vlan[0]);
-		if (!tmp_action) {
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH) अणु
+		पंचांगp_action = create_action_push_vlan(करोमुख्य, &fte->action.vlan[0]);
+		अगर (!पंचांगp_action) अणु
 			err = -ENOMEM;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		actions[num_actions++] = tmp_action;
-	}
+			जाओ मुक्त_actions;
+		पूर्ण
+		fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+		actions[num_actions++] = पंचांगp_action;
+	पूर्ण
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2) {
-		tmp_action = create_action_push_vlan(domain, &fte->action.vlan[1]);
-		if (!tmp_action) {
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2) अणु
+		पंचांगp_action = create_action_push_vlan(करोमुख्य, &fte->action.vlan[1]);
+		अगर (!पंचांगp_action) अणु
 			err = -ENOMEM;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		actions[num_actions++] = tmp_action;
-	}
+			जाओ मुक्त_actions;
+		पूर्ण
+		fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+		actions[num_actions++] = पंचांगp_action;
+	पूर्ण
 
-	if (delay_encap_set)
+	अगर (delay_encap_set)
 		actions[num_actions++] =
-			fte->action.pkt_reformat->action.dr_action;
+			fte->action.pkt_reक्रमmat->action.dr_action;
 
 	/* The order of the actions below is not important */
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_DROP) {
-		tmp_action = mlx5dr_action_create_drop();
-		if (!tmp_action) {
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_DROP) अणु
+		पंचांगp_action = mlx5dr_action_create_drop();
+		अगर (!पंचांगp_action) अणु
 			err = -ENOMEM;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		term_actions[num_term_actions++].dest = tmp_action;
-	}
+			जाओ मुक्त_actions;
+		पूर्ण
+		fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+		term_actions[num_term_actions++].dest = पंचांगp_action;
+	पूर्ण
 
-	if (fte->flow_context.flow_tag) {
-		tmp_action =
+	अगर (fte->flow_context.flow_tag) अणु
+		पंचांगp_action =
 			mlx5dr_action_create_tag(fte->flow_context.flow_tag);
-		if (!tmp_action) {
+		अगर (!पंचांगp_action) अणु
 			err = -ENOMEM;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		actions[num_actions++] = tmp_action;
-	}
+			जाओ मुक्त_actions;
+		पूर्ण
+		fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+		actions[num_actions++] = पंचांगp_action;
+	पूर्ण
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST) {
-		list_for_each_entry(dst, &fte->node.children, node.list) {
-			enum mlx5_flow_destination_type type = dst->dest_attr.type;
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST) अणु
+		list_क्रम_each_entry(dst, &fte->node.children, node.list) अणु
+			क्रमागत mlx5_flow_destination_type type = dst->dest_attr.type;
 			u32 ft_id;
 
-			if (num_actions == MLX5_FLOW_CONTEXT_ACTION_MAX ||
-			    num_term_actions >= MLX5_FLOW_CONTEXT_ACTION_MAX) {
+			अगर (num_actions == MLX5_FLOW_CONTEXT_ACTION_MAX ||
+			    num_term_actions >= MLX5_FLOW_CONTEXT_ACTION_MAX) अणु
 				err = -ENOSPC;
-				goto free_actions;
-			}
+				जाओ मुक्त_actions;
+			पूर्ण
 
-			if (type == MLX5_FLOW_DESTINATION_TYPE_COUNTER)
-				continue;
+			अगर (type == MLX5_FLOW_DESTINATION_TYPE_COUNTER)
+				जारी;
 
-			switch (type) {
-			case MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE:
-				tmp_action = create_ft_action(domain, dst);
-				if (!tmp_action) {
+			चयन (type) अणु
+			हाल MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE:
+				पंचांगp_action = create_ft_action(करोमुख्य, dst);
+				अगर (!पंचांगp_action) अणु
 					err = -ENOMEM;
-					goto free_actions;
-				}
-				fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-				term_actions[num_term_actions++].dest = tmp_action;
-				break;
-			case MLX5_FLOW_DESTINATION_TYPE_VPORT:
-				tmp_action = create_vport_action(domain, dst);
-				if (!tmp_action) {
+					जाओ मुक्त_actions;
+				पूर्ण
+				fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+				term_actions[num_term_actions++].dest = पंचांगp_action;
+				अवरोध;
+			हाल MLX5_FLOW_DESTINATION_TYPE_VPORT:
+				पंचांगp_action = create_vport_action(करोमुख्य, dst);
+				अगर (!पंचांगp_action) अणु
 					err = -ENOMEM;
-					goto free_actions;
-				}
-				fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-				term_actions[num_term_actions].dest = tmp_action;
+					जाओ मुक्त_actions;
+				पूर्ण
+				fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+				term_actions[num_term_actions].dest = पंचांगp_action;
 
-				if (dst->dest_attr.vport.flags &
+				अगर (dst->dest_attr.vport.flags &
 				    MLX5_FLOW_DEST_VPORT_REFORMAT_ID)
-					term_actions[num_term_actions].reformat =
-						dst->dest_attr.vport.pkt_reformat->action.dr_action;
+					term_actions[num_term_actions].reक्रमmat =
+						dst->dest_attr.vport.pkt_reक्रमmat->action.dr_action;
 
 				num_term_actions++;
-				break;
-			case MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE_NUM:
+				अवरोध;
+			हाल MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE_NUM:
 				ft_id = dst->dest_attr.ft_num;
-				tmp_action = mlx5dr_action_create_dest_table_num(domain,
+				पंचांगp_action = mlx5dr_action_create_dest_table_num(करोमुख्य,
 										 ft_id);
-				if (!tmp_action) {
+				अगर (!पंचांगp_action) अणु
 					err = -ENOMEM;
-					goto free_actions;
-				}
-				fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-				term_actions[num_term_actions++].dest = tmp_action;
-				break;
-			default:
+					जाओ मुक्त_actions;
+				पूर्ण
+				fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+				term_actions[num_term_actions++].dest = पंचांगp_action;
+				अवरोध;
+			शेष:
 				err = -EOPNOTSUPP;
-				goto free_actions;
-			}
-		}
-	}
+				जाओ मुक्त_actions;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_COUNT) {
-		list_for_each_entry(dst, &fte->node.children, node.list) {
+	अगर (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_COUNT) अणु
+		list_क्रम_each_entry(dst, &fte->node.children, node.list) अणु
 			u32 id;
 
-			if (dst->dest_attr.type !=
+			अगर (dst->dest_attr.type !=
 			    MLX5_FLOW_DESTINATION_TYPE_COUNTER)
-				continue;
+				जारी;
 
-			if (num_actions == MLX5_FLOW_CONTEXT_ACTION_MAX) {
+			अगर (num_actions == MLX5_FLOW_CONTEXT_ACTION_MAX) अणु
 				err = -ENOSPC;
-				goto free_actions;
-			}
+				जाओ मुक्त_actions;
+			पूर्ण
 
 			id = dst->dest_attr.counter_id;
-			tmp_action =
+			पंचांगp_action =
 				mlx5dr_action_create_flow_counter(id);
-			if (!tmp_action) {
+			अगर (!पंचांगp_action) अणु
 				err = -ENOMEM;
-				goto free_actions;
-			}
+				जाओ मुक्त_actions;
+			पूर्ण
 
-			fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-			actions[num_actions++] = tmp_action;
-		}
-	}
+			fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+			actions[num_actions++] = पंचांगp_action;
+		पूर्ण
+	पूर्ण
 
 	params.match_sz = match_sz;
 	params.match_buf = (u64 *)fte->val;
-	if (num_term_actions == 1) {
-		if (term_actions->reformat)
-			actions[num_actions++] = term_actions->reformat;
+	अगर (num_term_actions == 1) अणु
+		अगर (term_actions->reक्रमmat)
+			actions[num_actions++] = term_actions->reक्रमmat;
 
 		actions[num_actions++] = term_actions->dest;
-	} else if (num_term_actions > 1) {
-		tmp_action = mlx5dr_action_create_mult_dest_tbl(domain,
+	पूर्ण अन्यथा अगर (num_term_actions > 1) अणु
+		पंचांगp_action = mlx5dr_action_create_mult_dest_tbl(करोमुख्य,
 								term_actions,
 								num_term_actions);
-		if (!tmp_action) {
+		अगर (!पंचांगp_action) अणु
 			err = -EOPNOTSUPP;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		actions[num_actions++] = tmp_action;
-	}
+			जाओ मुक्त_actions;
+		पूर्ण
+		fs_dr_actions[fs_dr_num_actions++] = पंचांगp_action;
+		actions[num_actions++] = पंचांगp_action;
+	पूर्ण
 
 	rule = mlx5dr_rule_create(group->fs_dr_matcher.dr_matcher,
 				  &params,
 				  num_actions,
 				  actions,
 				  fte->flow_context.flow_source);
-	if (!rule) {
+	अगर (!rule) अणु
 		err = -EINVAL;
-		goto free_actions;
-	}
+		जाओ मुक्त_actions;
+	पूर्ण
 
-	kfree(term_actions);
-	kfree(actions);
+	kमुक्त(term_actions);
+	kमुक्त(actions);
 
 	fte->fs_dr_rule.dr_rule = rule;
 	fte->fs_dr_rule.num_actions = fs_dr_num_actions;
 	fte->fs_dr_rule.dr_actions = fs_dr_actions;
 
-	return 0;
+	वापस 0;
 
-free_actions:
+मुक्त_actions:
 	/* Free in reverse order to handle action dependencies */
-	for (i = fs_dr_num_actions - 1; i >= 0; i--)
-		if (!IS_ERR_OR_NULL(fs_dr_actions[i]))
+	क्रम (i = fs_dr_num_actions - 1; i >= 0; i--)
+		अगर (!IS_ERR_OR_शून्य(fs_dr_actions[i]))
 			mlx5dr_action_destroy(fs_dr_actions[i]);
 
-	kfree(term_actions);
-free_fs_dr_actions_alloc:
-	kfree(fs_dr_actions);
-free_actions_alloc:
-	kfree(actions);
+	kमुक्त(term_actions);
+मुक्त_fs_dr_actions_alloc:
+	kमुक्त(fs_dr_actions);
+मुक्त_actions_alloc:
+	kमुक्त(actions);
 out_err:
 	mlx5_core_err(dev, "Failed to create dr rule err(%d)\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx5_cmd_dr_packet_reformat_alloc(struct mlx5_flow_root_namespace *ns,
-					     int reformat_type,
-					     size_t size,
-					     void *reformat_data,
-					     enum mlx5_flow_namespace_type namespace,
-					     struct mlx5_pkt_reformat *pkt_reformat)
-{
-	struct mlx5dr_domain *dr_domain = ns->fs_dr_domain.dr_domain;
-	struct mlx5dr_action *action;
-	int dr_reformat;
+अटल पूर्णांक mlx5_cmd_dr_packet_reक्रमmat_alloc(काष्ठा mlx5_flow_root_namespace *ns,
+					     पूर्णांक reक्रमmat_type,
+					     माप_प्रकार size,
+					     व्योम *reक्रमmat_data,
+					     क्रमागत mlx5_flow_namespace_type namespace,
+					     काष्ठा mlx5_pkt_reक्रमmat *pkt_reक्रमmat)
+अणु
+	काष्ठा mlx5dr_करोमुख्य *dr_करोमुख्य = ns->fs_dr_करोमुख्य.dr_करोमुख्य;
+	काष्ठा mlx5dr_action *action;
+	पूर्णांक dr_reक्रमmat;
 
-	switch (reformat_type) {
-	case MLX5_REFORMAT_TYPE_L2_TO_VXLAN:
-	case MLX5_REFORMAT_TYPE_L2_TO_NVGRE:
-	case MLX5_REFORMAT_TYPE_L2_TO_L2_TUNNEL:
-		dr_reformat = DR_ACTION_REFORMAT_TYP_L2_TO_TNL_L2;
-		break;
-	case MLX5_REFORMAT_TYPE_L3_TUNNEL_TO_L2:
-		dr_reformat = DR_ACTION_REFORMAT_TYP_TNL_L3_TO_L2;
-		break;
-	case MLX5_REFORMAT_TYPE_L2_TO_L3_TUNNEL:
-		dr_reformat = DR_ACTION_REFORMAT_TYP_L2_TO_TNL_L3;
-		break;
-	default:
+	चयन (reक्रमmat_type) अणु
+	हाल MLX5_REFORMAT_TYPE_L2_TO_VXLAN:
+	हाल MLX5_REFORMAT_TYPE_L2_TO_NVGRE:
+	हाल MLX5_REFORMAT_TYPE_L2_TO_L2_TUNNEL:
+		dr_reक्रमmat = DR_ACTION_REFORMAT_TYP_L2_TO_TNL_L2;
+		अवरोध;
+	हाल MLX5_REFORMAT_TYPE_L3_TUNNEL_TO_L2:
+		dr_reक्रमmat = DR_ACTION_REFORMAT_TYP_TNL_L3_TO_L2;
+		अवरोध;
+	हाल MLX5_REFORMAT_TYPE_L2_TO_L3_TUNNEL:
+		dr_reक्रमmat = DR_ACTION_REFORMAT_TYP_L2_TO_TNL_L3;
+		अवरोध;
+	शेष:
 		mlx5_core_err(ns->dev, "Packet-reformat not supported(%d)\n",
-			      reformat_type);
-		return -EOPNOTSUPP;
-	}
+			      reक्रमmat_type);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	action = mlx5dr_action_create_packet_reformat(dr_domain,
-						      dr_reformat,
+	action = mlx5dr_action_create_packet_reक्रमmat(dr_करोमुख्य,
+						      dr_reक्रमmat,
 						      size,
-						      reformat_data);
-	if (!action) {
+						      reक्रमmat_data);
+	अगर (!action) अणु
 		mlx5_core_err(ns->dev, "Failed allocating packet-reformat action\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pkt_reformat->action.dr_action = action;
+	pkt_reक्रमmat->action.dr_action = action;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mlx5_cmd_dr_packet_reformat_dealloc(struct mlx5_flow_root_namespace *ns,
-						struct mlx5_pkt_reformat *pkt_reformat)
-{
-	mlx5dr_action_destroy(pkt_reformat->action.dr_action);
-}
+अटल व्योम mlx5_cmd_dr_packet_reक्रमmat_dealloc(काष्ठा mlx5_flow_root_namespace *ns,
+						काष्ठा mlx5_pkt_reक्रमmat *pkt_reक्रमmat)
+अणु
+	mlx5dr_action_destroy(pkt_reक्रमmat->action.dr_action);
+पूर्ण
 
-static int mlx5_cmd_dr_modify_header_alloc(struct mlx5_flow_root_namespace *ns,
+अटल पूर्णांक mlx5_cmd_dr_modअगरy_header_alloc(काष्ठा mlx5_flow_root_namespace *ns,
 					   u8 namespace, u8 num_actions,
-					   void *modify_actions,
-					   struct mlx5_modify_hdr *modify_hdr)
-{
-	struct mlx5dr_domain *dr_domain = ns->fs_dr_domain.dr_domain;
-	struct mlx5dr_action *action;
-	size_t actions_sz;
+					   व्योम *modअगरy_actions,
+					   काष्ठा mlx5_modअगरy_hdr *modअगरy_hdr)
+अणु
+	काष्ठा mlx5dr_करोमुख्य *dr_करोमुख्य = ns->fs_dr_करोमुख्य.dr_करोमुख्य;
+	काष्ठा mlx5dr_action *action;
+	माप_प्रकार actions_sz;
 
-	actions_sz = MLX5_UN_SZ_BYTES(set_add_copy_action_in_auto) *
+	actions_sz = MLX5_UN_SZ_BYTES(set_add_copy_action_in_स्वतः) *
 		num_actions;
-	action = mlx5dr_action_create_modify_header(dr_domain, 0,
+	action = mlx5dr_action_create_modअगरy_header(dr_करोमुख्य, 0,
 						    actions_sz,
-						    modify_actions);
-	if (!action) {
+						    modअगरy_actions);
+	अगर (!action) अणु
 		mlx5_core_err(ns->dev, "Failed allocating modify-header action\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	modify_hdr->action.dr_action = action;
+	modअगरy_hdr->action.dr_action = action;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mlx5_cmd_dr_modify_header_dealloc(struct mlx5_flow_root_namespace *ns,
-					      struct mlx5_modify_hdr *modify_hdr)
-{
-	mlx5dr_action_destroy(modify_hdr->action.dr_action);
-}
+अटल व्योम mlx5_cmd_dr_modअगरy_header_dealloc(काष्ठा mlx5_flow_root_namespace *ns,
+					      काष्ठा mlx5_modअगरy_hdr *modअगरy_hdr)
+अणु
+	mlx5dr_action_destroy(modअगरy_hdr->action.dr_action);
+पूर्ण
 
-static int mlx5_cmd_dr_update_fte(struct mlx5_flow_root_namespace *ns,
-				  struct mlx5_flow_table *ft,
-				  struct mlx5_flow_group *group,
-				  int modify_mask,
-				  struct fs_fte *fte)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक mlx5_cmd_dr_update_fte(काष्ठा mlx5_flow_root_namespace *ns,
+				  काष्ठा mlx5_flow_table *ft,
+				  काष्ठा mlx5_flow_group *group,
+				  पूर्णांक modअगरy_mask,
+				  काष्ठा fs_fte *fte)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int mlx5_cmd_dr_delete_fte(struct mlx5_flow_root_namespace *ns,
-				  struct mlx5_flow_table *ft,
-				  struct fs_fte *fte)
-{
-	struct mlx5_fs_dr_rule *rule = &fte->fs_dr_rule;
-	int err;
-	int i;
+अटल पूर्णांक mlx5_cmd_dr_delete_fte(काष्ठा mlx5_flow_root_namespace *ns,
+				  काष्ठा mlx5_flow_table *ft,
+				  काष्ठा fs_fte *fte)
+अणु
+	काष्ठा mlx5_fs_dr_rule *rule = &fte->fs_dr_rule;
+	पूर्णांक err;
+	पूर्णांक i;
 
-	if (mlx5_dr_is_fw_table(ft->flags))
-		return mlx5_fs_cmd_get_fw_cmds()->delete_fte(ns, ft, fte);
+	अगर (mlx5_dr_is_fw_table(ft->flags))
+		वापस mlx5_fs_cmd_get_fw_cmds()->delete_fte(ns, ft, fte);
 
 	err = mlx5dr_rule_destroy(rule->dr_rule);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Free in reverse order to handle action dependencies */
-	for (i = rule->num_actions - 1; i >= 0; i--)
-		if (!IS_ERR_OR_NULL(rule->dr_actions[i]))
+	क्रम (i = rule->num_actions - 1; i >= 0; i--)
+		अगर (!IS_ERR_OR_शून्य(rule->dr_actions[i]))
 			mlx5dr_action_destroy(rule->dr_actions[i]);
 
-	kfree(rule->dr_actions);
-	return 0;
-}
+	kमुक्त(rule->dr_actions);
+	वापस 0;
+पूर्ण
 
-static int mlx5_cmd_dr_set_peer(struct mlx5_flow_root_namespace *ns,
-				struct mlx5_flow_root_namespace *peer_ns)
-{
-	struct mlx5dr_domain *peer_domain = NULL;
+अटल पूर्णांक mlx5_cmd_dr_set_peer(काष्ठा mlx5_flow_root_namespace *ns,
+				काष्ठा mlx5_flow_root_namespace *peer_ns)
+अणु
+	काष्ठा mlx5dr_करोमुख्य *peer_करोमुख्य = शून्य;
 
-	if (peer_ns)
-		peer_domain = peer_ns->fs_dr_domain.dr_domain;
-	mlx5dr_domain_set_peer(ns->fs_dr_domain.dr_domain,
-			       peer_domain);
-	return 0;
-}
+	अगर (peer_ns)
+		peer_करोमुख्य = peer_ns->fs_dr_करोमुख्य.dr_करोमुख्य;
+	mlx5dr_करोमुख्य_set_peer(ns->fs_dr_करोमुख्य.dr_करोमुख्य,
+			       peer_करोमुख्य);
+	वापस 0;
+पूर्ण
 
-static int mlx5_cmd_dr_create_ns(struct mlx5_flow_root_namespace *ns)
-{
-	ns->fs_dr_domain.dr_domain =
-		mlx5dr_domain_create(ns->dev,
+अटल पूर्णांक mlx5_cmd_dr_create_ns(काष्ठा mlx5_flow_root_namespace *ns)
+अणु
+	ns->fs_dr_करोमुख्य.dr_करोमुख्य =
+		mlx5dr_करोमुख्य_create(ns->dev,
 				     MLX5DR_DOMAIN_TYPE_FDB);
-	if (!ns->fs_dr_domain.dr_domain) {
+	अगर (!ns->fs_dr_करोमुख्य.dr_करोमुख्य) अणु
 		mlx5_core_err(ns->dev, "Failed to create dr flow namespace\n");
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mlx5_cmd_dr_destroy_ns(struct mlx5_flow_root_namespace *ns)
-{
-	return mlx5dr_domain_destroy(ns->fs_dr_domain.dr_domain);
-}
+अटल पूर्णांक mlx5_cmd_dr_destroy_ns(काष्ठा mlx5_flow_root_namespace *ns)
+अणु
+	वापस mlx5dr_करोमुख्य_destroy(ns->fs_dr_करोमुख्य.dr_करोमुख्य);
+पूर्ण
 
-bool mlx5_fs_dr_is_supported(struct mlx5_core_dev *dev)
-{
-	return mlx5dr_is_supported(dev);
-}
+bool mlx5_fs_dr_is_supported(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस mlx5dr_is_supported(dev);
+पूर्ण
 
-static const struct mlx5_flow_cmds mlx5_flow_cmds_dr = {
+अटल स्थिर काष्ठा mlx5_flow_cmds mlx5_flow_cmds_dr = अणु
 	.create_flow_table = mlx5_cmd_dr_create_flow_table,
 	.destroy_flow_table = mlx5_cmd_dr_destroy_flow_table,
-	.modify_flow_table = mlx5_cmd_dr_modify_flow_table,
+	.modअगरy_flow_table = mlx5_cmd_dr_modअगरy_flow_table,
 	.create_flow_group = mlx5_cmd_dr_create_flow_group,
 	.destroy_flow_group = mlx5_cmd_dr_destroy_flow_group,
 	.create_fte = mlx5_cmd_dr_create_fte,
 	.update_fte = mlx5_cmd_dr_update_fte,
 	.delete_fte = mlx5_cmd_dr_delete_fte,
 	.update_root_ft = mlx5_cmd_dr_update_root_ft,
-	.packet_reformat_alloc = mlx5_cmd_dr_packet_reformat_alloc,
-	.packet_reformat_dealloc = mlx5_cmd_dr_packet_reformat_dealloc,
-	.modify_header_alloc = mlx5_cmd_dr_modify_header_alloc,
-	.modify_header_dealloc = mlx5_cmd_dr_modify_header_dealloc,
+	.packet_reक्रमmat_alloc = mlx5_cmd_dr_packet_reक्रमmat_alloc,
+	.packet_reक्रमmat_dealloc = mlx5_cmd_dr_packet_reक्रमmat_dealloc,
+	.modअगरy_header_alloc = mlx5_cmd_dr_modअगरy_header_alloc,
+	.modअगरy_header_dealloc = mlx5_cmd_dr_modअगरy_header_dealloc,
 	.set_peer = mlx5_cmd_dr_set_peer,
 	.create_ns = mlx5_cmd_dr_create_ns,
 	.destroy_ns = mlx5_cmd_dr_destroy_ns,
-};
+पूर्ण;
 
-const struct mlx5_flow_cmds *mlx5_fs_cmd_get_dr_cmds(void)
-{
-		return &mlx5_flow_cmds_dr;
-}
+स्थिर काष्ठा mlx5_flow_cmds *mlx5_fs_cmd_get_dr_cmds(व्योम)
+अणु
+		वापस &mlx5_flow_cmds_dr;
+पूर्ण

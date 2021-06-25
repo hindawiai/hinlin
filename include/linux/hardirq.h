@@ -1,153 +1,154 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_HARDIRQ_H
-#define LINUX_HARDIRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_HARसूचीQ_H
+#घोषणा LINUX_HARसूचीQ_H
 
-#include <linux/context_tracking_state.h>
-#include <linux/preempt.h>
-#include <linux/lockdep.h>
-#include <linux/ftrace_irq.h>
-#include <linux/sched.h>
-#include <linux/vtime.h>
-#include <asm/hardirq.h>
+#समावेश <linux/context_tracking_state.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/ftrace_irq.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/vसमय.स>
+#समावेश <यंत्र/hardirq.h>
 
-extern void synchronize_irq(unsigned int irq);
-extern bool synchronize_hardirq(unsigned int irq);
+बाह्य व्योम synchronize_irq(अचिन्हित पूर्णांक irq);
+बाह्य bool synchronize_hardirq(अचिन्हित पूर्णांक irq);
 
-#ifdef CONFIG_NO_HZ_FULL
-void __rcu_irq_enter_check_tick(void);
-#else
-static inline void __rcu_irq_enter_check_tick(void) { }
-#endif
+#अगर_घोषित CONFIG_NO_HZ_FULL
+व्योम __rcu_irq_enter_check_tick(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम __rcu_irq_enter_check_tick(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-static __always_inline void rcu_irq_enter_check_tick(void)
-{
-	if (context_tracking_enabled())
+अटल __always_अंतरभूत व्योम rcu_irq_enter_check_tick(व्योम)
+अणु
+	अगर (context_tracking_enabled())
 		__rcu_irq_enter_check_tick();
-}
+पूर्ण
 
 /*
- * It is safe to do non-atomic ops on ->hardirq_context,
+ * It is safe to करो non-atomic ops on ->hardirq_context,
  * because NMI handlers may not preempt and the ops are
- * always balanced, so the interrupted value of ->hardirq_context
+ * always balanced, so the पूर्णांकerrupted value of ->hardirq_context
  * will always be restored.
  */
-#define __irq_enter()					\
-	do {						\
-		preempt_count_add(HARDIRQ_OFFSET);	\
+#घोषणा __irq_enter()					\
+	करो अणु						\
+		preempt_count_add(HARसूचीQ_OFFSET);	\
 		lockdep_hardirq_enter();		\
 		account_hardirq_enter(current);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
 /*
- * Like __irq_enter() without time accounting for fast
- * interrupts, e.g. reschedule IPI where time accounting
- * is more expensive than the actual interrupt.
+ * Like __irq_enter() without समय accounting क्रम fast
+ * पूर्णांकerrupts, e.g. reschedule IPI where समय accounting
+ * is more expensive than the actual पूर्णांकerrupt.
  */
-#define __irq_enter_raw()				\
-	do {						\
-		preempt_count_add(HARDIRQ_OFFSET);	\
+#घोषणा __irq_enter_raw()				\
+	करो अणु						\
+		preempt_count_add(HARसूचीQ_OFFSET);	\
 		lockdep_hardirq_enter();		\
-	} while (0)
+	पूर्ण जबतक (0)
 
 /*
- * Enter irq context (on NO_HZ, update jiffies):
+ * Enter irq context (on NO_HZ, update jअगरfies):
  */
-void irq_enter(void);
+व्योम irq_enter(व्योम);
 /*
- * Like irq_enter(), but RCU is already watching.
+ * Like irq_enter(), but RCU is alपढ़ोy watching.
  */
-void irq_enter_rcu(void);
+व्योम irq_enter_rcu(व्योम);
 
 /*
  * Exit irq context without processing softirqs:
  */
-#define __irq_exit()					\
-	do {						\
-		account_hardirq_exit(current);		\
-		lockdep_hardirq_exit();			\
-		preempt_count_sub(HARDIRQ_OFFSET);	\
-	} while (0)
+#घोषणा __irq_निकास()					\
+	करो अणु						\
+		account_hardirq_निकास(current);		\
+		lockdep_hardirq_निकास();			\
+		preempt_count_sub(HARसूचीQ_OFFSET);	\
+	पूर्ण जबतक (0)
 
 /*
- * Like __irq_exit() without time accounting
+ * Like __irq_निकास() without समय accounting
  */
-#define __irq_exit_raw()				\
-	do {						\
-		lockdep_hardirq_exit();			\
-		preempt_count_sub(HARDIRQ_OFFSET);	\
-	} while (0)
+#घोषणा __irq_निकास_raw()				\
+	करो अणु						\
+		lockdep_hardirq_निकास();			\
+		preempt_count_sub(HARसूचीQ_OFFSET);	\
+	पूर्ण जबतक (0)
 
 /*
- * Exit irq context and process softirqs if needed:
+ * Exit irq context and process softirqs अगर needed:
  */
-void irq_exit(void);
+व्योम irq_निकास(व्योम);
 
 /*
- * Like irq_exit(), but return with RCU watching.
+ * Like irq_निकास(), but वापस with RCU watching.
  */
-void irq_exit_rcu(void);
+व्योम irq_निकास_rcu(व्योम);
 
-#ifndef arch_nmi_enter
-#define arch_nmi_enter()	do { } while (0)
-#define arch_nmi_exit()		do { } while (0)
-#endif
+#अगर_अघोषित arch_nmi_enter
+#घोषणा arch_nmi_enter()	करो अणु पूर्ण जबतक (0)
+#घोषणा arch_nmi_निकास()		करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifdef CONFIG_TINY_RCU
-static inline void rcu_nmi_enter(void) { }
-static inline void rcu_nmi_exit(void) { }
-#else
-extern void rcu_nmi_enter(void);
-extern void rcu_nmi_exit(void);
-#endif
+#अगर_घोषित CONFIG_TINY_RCU
+अटल अंतरभूत व्योम rcu_nmi_enter(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम rcu_nmi_निकास(व्योम) अणु पूर्ण
+#अन्यथा
+बाह्य व्योम rcu_nmi_enter(व्योम);
+बाह्य व्योम rcu_nmi_निकास(व्योम);
+#पूर्ण_अगर
 
 /*
  * NMI vs Tracing
  * --------------
  *
  * We must not land in a tracer until (or after) we've changed preempt_count
- * such that in_nmi() becomes true. To that effect all NMI C entry points must
+ * such that in_nmi() becomes true. To that effect all NMI C entry poपूर्णांकs must
  * be marked 'notrace' and call nmi_enter() as soon as possible.
  */
 
 /*
- * nmi_enter() can nest up to 15 times; see NMI_BITS.
+ * nmi_enter() can nest up to 15 बार; see NMI_BITS.
  */
-#define __nmi_enter()						\
-	do {							\
+#घोषणा __nmi_enter()						\
+	करो अणु							\
 		lockdep_off();					\
 		arch_nmi_enter();				\
-		printk_nmi_enter();				\
+		prपूर्णांकk_nmi_enter();				\
 		BUG_ON(in_nmi() == NMI_MASK);			\
-		__preempt_count_add(NMI_OFFSET + HARDIRQ_OFFSET);	\
-	} while (0)
+		__preempt_count_add(NMI_OFFSET + HARसूचीQ_OFFSET);	\
+	पूर्ण जबतक (0)
 
-#define nmi_enter()						\
-	do {							\
+#घोषणा nmi_enter()						\
+	करो अणु							\
 		__nmi_enter();					\
 		lockdep_hardirq_enter();			\
 		rcu_nmi_enter();				\
 		instrumentation_begin();			\
 		ftrace_nmi_enter();				\
 		instrumentation_end();				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define __nmi_exit()						\
-	do {							\
+#घोषणा __nmi_निकास()						\
+	करो अणु							\
 		BUG_ON(!in_nmi());				\
-		__preempt_count_sub(NMI_OFFSET + HARDIRQ_OFFSET);	\
-		printk_nmi_exit();				\
-		arch_nmi_exit();				\
+		__preempt_count_sub(NMI_OFFSET + HARसूचीQ_OFFSET);	\
+		prपूर्णांकk_nmi_निकास();				\
+		arch_nmi_निकास();				\
 		lockdep_on();					\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define nmi_exit()						\
-	do {							\
+#घोषणा nmi_निकास()						\
+	करो अणु							\
 		instrumentation_begin();			\
-		ftrace_nmi_exit();				\
+		ftrace_nmi_निकास();				\
 		instrumentation_end();				\
-		rcu_nmi_exit();					\
-		lockdep_hardirq_exit();				\
-		__nmi_exit();					\
-	} while (0)
+		rcu_nmi_निकास();					\
+		lockdep_hardirq_निकास();				\
+		__nmi_निकास();					\
+	पूर्ण जबतक (0)
 
-#endif /* LINUX_HARDIRQ_H */
+#पूर्ण_अगर /* LINUX_HARसूचीQ_H */

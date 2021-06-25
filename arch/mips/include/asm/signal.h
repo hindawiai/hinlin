@@ -1,35 +1,36 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1995, 96, 97, 98, 99, 2003 by Ralf Baechle
  * Copyright (C) 1999 Silicon Graphics, Inc.
  */
-#ifndef _ASM_SIGNAL_H
-#define _ASM_SIGNAL_H
+#अगर_अघोषित _ASM_SIGNAL_H
+#घोषणा _ASM_SIGNAL_H
 
-#include <uapi/asm/signal.h>
+#समावेश <uapi/यंत्र/संकेत.स>
 
-#ifdef CONFIG_MIPS32_O32
-extern struct mips_abi mips_abi_32;
+#अगर_घोषित CONFIG_MIPS32_O32
+बाह्य काष्ठा mips_abi mips_abi_32;
 
-#define sig_uses_siginfo(ka, abi)                               \
+#घोषणा sig_uses_siginfo(ka, abi)                               \
 	((abi != &mips_abi_32) ? 1 :                            \
 		((ka)->sa.sa_flags & SA_SIGINFO))
-#else
-#define sig_uses_siginfo(ka, abi)                               \
+#अन्यथा
+#घोषणा sig_uses_siginfo(ka, abi)                               \
 	(IS_ENABLED(CONFIG_64BIT) ? 1 :                     \
 		(IS_ENABLED(CONFIG_TRAD_SIGNALS) ?          \
 			((ka)->sa.sa_flags & SA_SIGINFO) : 1) )
-#endif
+#पूर्ण_अगर
 
-#include <asm/sigcontext.h>
-#include <asm/siginfo.h>
+#समावेश <यंत्र/sigcontext.h>
+#समावेश <यंत्र/siginfo.h>
 
-#define __ARCH_HAS_IRIX_SIGACTION
+#घोषणा __ARCH_HAS_IRIX_SIGACTION
 
-extern int protected_save_fp_context(void __user *sc);
-extern int protected_restore_fp_context(void __user *sc);
+बाह्य पूर्णांक रक्षित_save_fp_context(व्योम __user *sc);
+बाह्य पूर्णांक रक्षित_restore_fp_context(व्योम __user *sc);
 
-#endif /* _ASM_SIGNAL_H */
+#पूर्ण_अगर /* _ASM_SIGNAL_H */

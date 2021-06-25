@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2018 Rockchip Electronics Co. Ltd.
  */
 
-#ifndef _ROCKCHIP_PCM_H
-#define _ROCKCHIP_PCM_H
+#अगर_अघोषित _ROCKCHIP_PCM_H
+#घोषणा _ROCKCHIP_PCM_H
 
-int rockchip_pcm_platform_register(struct device *dev);
+पूर्णांक rockchip_pcm_platक्रमm_रेजिस्टर(काष्ठा device *dev);
 
-#endif
+#पूर्ण_अगर

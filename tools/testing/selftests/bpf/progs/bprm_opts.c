@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  * Copyright 2020 Google LLC.
  */
 
-#include <linux/bpf.h>
-#include <errno.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <linux/bpf.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct {
-	__uint(type, BPF_MAP_TYPE_TASK_STORAGE);
-	__uint(map_flags, BPF_F_NO_PREALLOC);
-	__type(key, int);
-	__type(value, int);
-} secure_exec_task_map SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_TASK_STORAGE);
+	__uपूर्णांक(map_flags, BPF_F_NO_PREALLOC);
+	__type(key, पूर्णांक);
+	__type(value, पूर्णांक);
+पूर्ण secure_exec_task_map SEC(".maps");
 
 SEC("lsm/bprm_creds_for_exec")
-int BPF_PROG(secure_exec, struct linux_binprm *bprm)
-{
-	int *secureexec;
+पूर्णांक BPF_PROG(secure_exec, काष्ठा linux_binprm *bprm)
+अणु
+	पूर्णांक *secureexec;
 
 	secureexec = bpf_task_storage_get(&secure_exec_task_map,
 				   bpf_get_current_task_btf(), 0,
 				   BPF_LOCAL_STORAGE_GET_F_CREATE);
 
-	if (secureexec && *secureexec)
+	अगर (secureexec && *secureexec)
 		bpf_bprm_opts_set(bprm, BPF_F_BPRM_SECUREEXEC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

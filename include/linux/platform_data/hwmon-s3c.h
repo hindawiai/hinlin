@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2005 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
  *	http://armlinux.simtec.co.uk/
  *
- * S3C - HWMon interface for ADC
+ * S3C - HWMon पूर्णांकerface क्रम ADC
 */
 
-#ifndef __HWMON_S3C_H__
-#define __HWMON_S3C_H__
+#अगर_अघोषित __HWMON_S3C_H__
+#घोषणा __HWMON_S3C_H__
 
 /**
  * s3c_hwmon_chcfg - channel configuration
  * @name: The name to give this channel.
- * @mult: Multiply the ADC value read by this.
- * @div: Divide the value from the ADC by this.
+ * @mult: Multiply the ADC value पढ़ो by this.
+ * @भाग: Divide the value from the ADC by this.
  *
- * The value read from the ADC is converted to a value that
- * hwmon expects (mV) by result = (value_read * @mult) / @div.
+ * The value पढ़ो from the ADC is converted to a value that
+ * hwmon expects (mV) by result = (value_पढ़ो * @mult) / @भाग.
  */
-struct s3c_hwmon_chcfg {
-	const char	*name;
-	unsigned int	mult;
-	unsigned int	div;
-};
+काष्ठा s3c_hwmon_chcfg अणु
+	स्थिर अक्षर	*name;
+	अचिन्हित पूर्णांक	mult;
+	अचिन्हित पूर्णांक	भाग;
+पूर्ण;
 
 /**
- * s3c_hwmon_pdata - HWMON platform data
- * @in: One configuration for each possible channel used.
+ * s3c_hwmon_pdata - HWMON platक्रमm data
+ * @in: One configuration क्रम each possible channel used.
  */
-struct s3c_hwmon_pdata {
-	struct s3c_hwmon_chcfg	*in[8];
-};
+काष्ठा s3c_hwmon_pdata अणु
+	काष्ठा s3c_hwmon_chcfg	*in[8];
+पूर्ण;
 
 /**
- * s3c_hwmon_set_platdata - Set platform data for S3C HWMON device
- * @pd: Platform data to register to device.
+ * s3c_hwmon_set_platdata - Set platक्रमm data क्रम S3C HWMON device
+ * @pd: Platक्रमm data to रेजिस्टर to device.
  *
- * Register the given platform data for use with the S3C HWMON device.
- * The call will copy the platform data, so the board definitions can
- * make the structure itself __initdata.
+ * Register the given platक्रमm data क्रम use with the S3C HWMON device.
+ * The call will copy the platक्रमm data, so the board definitions can
+ * make the काष्ठाure itself __initdata.
  */
-extern void __init s3c_hwmon_set_platdata(struct s3c_hwmon_pdata *pd);
+बाह्य व्योम __init s3c_hwmon_set_platdata(काष्ठा s3c_hwmon_pdata *pd);
 
-#endif /* __HWMON_S3C_H__ */
+#पूर्ण_अगर /* __HWMON_S3C_H__ */

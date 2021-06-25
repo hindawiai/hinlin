@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * GNSS receiver support
  *
  * Copyright (C) 2018 Johan Hovold <johan@kernel.org>
  */
 
-#ifndef _LINUX_GNSS_H
-#define _LINUX_GNSS_H
+#अगर_अघोषित _LINUX_GNSS_H
+#घोषणा _LINUX_GNSS_H
 
-#include <linux/cdev.h>
-#include <linux/device.h>
-#include <linux/kfifo.h>
-#include <linux/mutex.h>
-#include <linux/rwsem.h>
-#include <linux/types.h>
-#include <linux/wait.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/types.h>
+#समावेश <linux/रुको.h>
 
-struct gnss_device;
+काष्ठा gnss_device;
 
-enum gnss_type {
+क्रमागत gnss_type अणु
 	GNSS_TYPE_NMEA = 0,
 	GNSS_TYPE_SIRF,
 	GNSS_TYPE_UBX,
 	GNSS_TYPE_MTK,
 
 	GNSS_TYPE_COUNT
-};
+पूर्ण;
 
-struct gnss_operations {
-	int (*open)(struct gnss_device *gdev);
-	void (*close)(struct gnss_device *gdev);
-	int (*write_raw)(struct gnss_device *gdev, const unsigned char *buf,
-				size_t count);
-};
+काष्ठा gnss_operations अणु
+	पूर्णांक (*खोलो)(काष्ठा gnss_device *gdev);
+	व्योम (*बंद)(काष्ठा gnss_device *gdev);
+	पूर्णांक (*ग_लिखो_raw)(काष्ठा gnss_device *gdev, स्थिर अचिन्हित अक्षर *buf,
+				माप_प्रकार count);
+पूर्ण;
 
-struct gnss_device {
-	struct device dev;
-	struct cdev cdev;
-	int id;
+काष्ठा gnss_device अणु
+	काष्ठा device dev;
+	काष्ठा cdev cdev;
+	पूर्णांक id;
 
-	enum gnss_type type;
-	unsigned long flags;
+	क्रमागत gnss_type type;
+	अचिन्हित दीर्घ flags;
 
-	struct rw_semaphore rwsem;
-	const struct gnss_operations *ops;
-	unsigned int count;
-	unsigned int disconnected:1;
+	काष्ठा rw_semaphore rwsem;
+	स्थिर काष्ठा gnss_operations *ops;
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक disconnected:1;
 
-	struct mutex read_mutex;
-	struct kfifo read_fifo;
-	wait_queue_head_t read_queue;
+	काष्ठा mutex पढ़ो_mutex;
+	काष्ठा kfअगरo पढ़ो_fअगरo;
+	रुको_queue_head_t पढ़ो_queue;
 
-	struct mutex write_mutex;
-	char *write_buf;
-};
+	काष्ठा mutex ग_लिखो_mutex;
+	अक्षर *ग_लिखो_buf;
+पूर्ण;
 
-struct gnss_device *gnss_allocate_device(struct device *parent);
-void gnss_put_device(struct gnss_device *gdev);
-int gnss_register_device(struct gnss_device *gdev);
-void gnss_deregister_device(struct gnss_device *gdev);
+काष्ठा gnss_device *gnss_allocate_device(काष्ठा device *parent);
+व्योम gnss_put_device(काष्ठा gnss_device *gdev);
+पूर्णांक gnss_रेजिस्टर_device(काष्ठा gnss_device *gdev);
+व्योम gnss_deरेजिस्टर_device(काष्ठा gnss_device *gdev);
 
-int gnss_insert_raw(struct gnss_device *gdev, const unsigned char *buf,
-			size_t count);
+पूर्णांक gnss_insert_raw(काष्ठा gnss_device *gdev, स्थिर अचिन्हित अक्षर *buf,
+			माप_प्रकार count);
 
-static inline void gnss_set_drvdata(struct gnss_device *gdev, void *data)
-{
+अटल अंतरभूत व्योम gnss_set_drvdata(काष्ठा gnss_device *gdev, व्योम *data)
+अणु
 	dev_set_drvdata(&gdev->dev, data);
-}
+पूर्ण
 
-static inline void *gnss_get_drvdata(struct gnss_device *gdev)
-{
-	return dev_get_drvdata(&gdev->dev);
-}
+अटल अंतरभूत व्योम *gnss_get_drvdata(काष्ठा gnss_device *gdev)
+अणु
+	वापस dev_get_drvdata(&gdev->dev);
+पूर्ण
 
-#endif /* _LINUX_GNSS_H */
+#पूर्ण_अगर /* _LINUX_GNSS_H */

@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Intel Atom platform clocks driver for BayTrail and CherryTrail SoCs
+ * Intel Atom platक्रमm घड़ीs driver क्रम BayTrail and CherryTrail SoCs
  *
  * Copyright (C) 2016, Intel Corporation
- * Author: Irina Tirdea <irina.tirdea@intel.com>
+ * Author: Irina Tirdea <irina.tirdea@पूर्णांकel.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/platform_data/x86/clk-pmc-atom.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_data/x86/clk-pmc-atom.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#define PLT_CLK_NAME_BASE	"pmc_plt_clk"
+#घोषणा PLT_CLK_NAME_BASE	"pmc_plt_clk"
 
-#define PMC_CLK_CTL_OFFSET		0x60
-#define PMC_CLK_CTL_SIZE		4
-#define PMC_CLK_NUM			6
-#define PMC_CLK_CTL_GATED_ON_D3		0x0
-#define PMC_CLK_CTL_FORCE_ON		0x1
-#define PMC_CLK_CTL_FORCE_OFF		0x2
-#define PMC_CLK_CTL_RESERVED		0x3
-#define PMC_MASK_CLK_CTL		GENMASK(1, 0)
-#define PMC_MASK_CLK_FREQ		BIT(2)
-#define PMC_CLK_FREQ_XTAL		(0 << 2)	/* 25 MHz */
-#define PMC_CLK_FREQ_PLL		(1 << 2)	/* 19.2 MHz */
+#घोषणा PMC_CLK_CTL_OFFSET		0x60
+#घोषणा PMC_CLK_CTL_SIZE		4
+#घोषणा PMC_CLK_NUM			6
+#घोषणा PMC_CLK_CTL_GATED_ON_D3		0x0
+#घोषणा PMC_CLK_CTL_FORCE_ON		0x1
+#घोषणा PMC_CLK_CTL_FORCE_OFF		0x2
+#घोषणा PMC_CLK_CTL_RESERVED		0x3
+#घोषणा PMC_MASK_CLK_CTL		GENMASK(1, 0)
+#घोषणा PMC_MASK_CLK_FREQ		BIT(2)
+#घोषणा PMC_CLK_FREQ_XTAL		(0 << 2)	/* 25 MHz */
+#घोषणा PMC_CLK_FREQ_PLL		(1 << 2)	/* 19.2 MHz */
 
-struct clk_plt_fixed {
-	struct clk_hw *clk;
-	struct clk_lookup *lookup;
-};
+काष्ठा clk_plt_fixed अणु
+	काष्ठा clk_hw *clk;
+	काष्ठा clk_lookup *lookup;
+पूर्ण;
 
-struct clk_plt {
-	struct clk_hw hw;
-	void __iomem *reg;
-	struct clk_lookup *lookup;
-	/* protect access to PMC registers */
+काष्ठा clk_plt अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *reg;
+	काष्ठा clk_lookup *lookup;
+	/* protect access to PMC रेजिस्टरs */
 	spinlock_t lock;
-};
+पूर्ण;
 
-#define to_clk_plt(_hw) container_of(_hw, struct clk_plt, hw)
+#घोषणा to_clk_plt(_hw) container_of(_hw, काष्ठा clk_plt, hw)
 
-struct clk_plt_data {
-	struct clk_plt_fixed **parents;
+काष्ठा clk_plt_data अणु
+	काष्ठा clk_plt_fixed **parents;
 	u8 nparents;
-	struct clk_plt *clks[PMC_CLK_NUM];
-	struct clk_lookup *mclk_lookup;
-	struct clk_lookup *ether_clk_lookup;
-};
+	काष्ठा clk_plt *clks[PMC_CLK_NUM];
+	काष्ठा clk_lookup *mclk_lookup;
+	काष्ठा clk_lookup *ether_clk_lookup;
+पूर्ण;
 
 /* Return an index in parent table */
-static inline int plt_reg_to_parent(int reg)
-{
-	switch (reg & PMC_MASK_CLK_FREQ) {
-	default:
-	case PMC_CLK_FREQ_XTAL:
-		return 0;
-	case PMC_CLK_FREQ_PLL:
-		return 1;
-	}
-}
+अटल अंतरभूत पूर्णांक plt_reg_to_parent(पूर्णांक reg)
+अणु
+	चयन (reg & PMC_MASK_CLK_FREQ) अणु
+	शेष:
+	हाल PMC_CLK_FREQ_XTAL:
+		वापस 0;
+	हाल PMC_CLK_FREQ_PLL:
+		वापस 1;
+	पूर्ण
+पूर्ण
 
 /* Return clk index of parent */
-static inline int plt_parent_to_reg(int index)
-{
-	switch (index) {
-	default:
-	case 0:
-		return PMC_CLK_FREQ_XTAL;
-	case 1:
-		return PMC_CLK_FREQ_PLL;
-	}
-}
+अटल अंतरभूत पूर्णांक plt_parent_to_reg(पूर्णांक index)
+अणु
+	चयन (index) अणु
+	शेष:
+	हाल 0:
+		वापस PMC_CLK_FREQ_XTAL;
+	हाल 1:
+		वापस PMC_CLK_FREQ_PLL;
+	पूर्ण
+पूर्ण
 
 /* Abstract status in simpler enabled/disabled value */
-static inline int plt_reg_to_enabled(int reg)
-{
-	switch (reg & PMC_MASK_CLK_CTL) {
-	case PMC_CLK_CTL_GATED_ON_D3:
-	case PMC_CLK_CTL_FORCE_ON:
-		return 1;	/* enabled */
-	case PMC_CLK_CTL_FORCE_OFF:
-	case PMC_CLK_CTL_RESERVED:
-	default:
-		return 0;	/* disabled */
-	}
-}
+अटल अंतरभूत पूर्णांक plt_reg_to_enabled(पूर्णांक reg)
+अणु
+	चयन (reg & PMC_MASK_CLK_CTL) अणु
+	हाल PMC_CLK_CTL_GATED_ON_D3:
+	हाल PMC_CLK_CTL_FORCE_ON:
+		वापस 1;	/* enabled */
+	हाल PMC_CLK_CTL_FORCE_OFF:
+	हाल PMC_CLK_CTL_RESERVED:
+	शेष:
+		वापस 0;	/* disabled */
+	पूर्ण
+पूर्ण
 
-static void plt_clk_reg_update(struct clk_plt *clk, u32 mask, u32 val)
-{
-	u32 tmp;
-	unsigned long flags;
+अटल व्योम plt_clk_reg_update(काष्ठा clk_plt *clk, u32 mask, u32 val)
+अणु
+	u32 पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&clk->lock, flags);
 
-	tmp = readl(clk->reg);
-	tmp = (tmp & ~mask) | (val & mask);
-	writel(tmp, clk->reg);
+	पंचांगp = पढ़ोl(clk->reg);
+	पंचांगp = (पंचांगp & ~mask) | (val & mask);
+	ग_लिखोl(पंचांगp, clk->reg);
 
 	spin_unlock_irqrestore(&clk->lock, flags);
-}
+पूर्ण
 
-static int plt_clk_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_plt *clk = to_clk_plt(hw);
+अटल पूर्णांक plt_clk_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_plt *clk = to_clk_plt(hw);
 
 	plt_clk_reg_update(clk, PMC_MASK_CLK_FREQ, plt_parent_to_reg(index));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 plt_clk_get_parent(struct clk_hw *hw)
-{
-	struct clk_plt *clk = to_clk_plt(hw);
+अटल u8 plt_clk_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_plt *clk = to_clk_plt(hw);
 	u32 value;
 
-	value = readl(clk->reg);
+	value = पढ़ोl(clk->reg);
 
-	return plt_reg_to_parent(value);
-}
+	वापस plt_reg_to_parent(value);
+पूर्ण
 
-static int plt_clk_enable(struct clk_hw *hw)
-{
-	struct clk_plt *clk = to_clk_plt(hw);
+अटल पूर्णांक plt_clk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_plt *clk = to_clk_plt(hw);
 
 	plt_clk_reg_update(clk, PMC_MASK_CLK_CTL, PMC_CLK_CTL_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void plt_clk_disable(struct clk_hw *hw)
-{
-	struct clk_plt *clk = to_clk_plt(hw);
+अटल व्योम plt_clk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_plt *clk = to_clk_plt(hw);
 
 	plt_clk_reg_update(clk, PMC_MASK_CLK_CTL, PMC_CLK_CTL_FORCE_OFF);
-}
+पूर्ण
 
-static int plt_clk_is_enabled(struct clk_hw *hw)
-{
-	struct clk_plt *clk = to_clk_plt(hw);
+अटल पूर्णांक plt_clk_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_plt *clk = to_clk_plt(hw);
 	u32 value;
 
-	value = readl(clk->reg);
+	value = पढ़ोl(clk->reg);
 
-	return plt_reg_to_enabled(value);
-}
+	वापस plt_reg_to_enabled(value);
+पूर्ण
 
-static const struct clk_ops plt_clk_ops = {
+अटल स्थिर काष्ठा clk_ops plt_clk_ops = अणु
 	.enable = plt_clk_enable,
 	.disable = plt_clk_disable,
 	.is_enabled = plt_clk_is_enabled,
 	.get_parent = plt_clk_get_parent,
 	.set_parent = plt_clk_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
-};
+पूर्ण;
 
-static struct clk_plt *plt_clk_register(struct platform_device *pdev, int id,
-					const struct pmc_clk_data *pmc_data,
-					const char **parent_names,
-					int num_parents)
-{
-	struct clk_plt *pclk;
-	struct clk_init_data init;
-	int ret;
+अटल काष्ठा clk_plt *plt_clk_रेजिस्टर(काष्ठा platक्रमm_device *pdev, पूर्णांक id,
+					स्थिर काष्ठा pmc_clk_data *pmc_data,
+					स्थिर अक्षर **parent_names,
+					पूर्णांक num_parents)
+अणु
+	काष्ठा clk_plt *pclk;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	pclk = devm_kzalloc(&pdev->dev, sizeof(*pclk), GFP_KERNEL);
-	if (!pclk)
-		return ERR_PTR(-ENOMEM);
+	pclk = devm_kzalloc(&pdev->dev, माप(*pclk), GFP_KERNEL);
+	अगर (!pclk)
+		वापस ERR_PTR(-ENOMEM);
 
-	init.name =  kasprintf(GFP_KERNEL, "%s_%d", PLT_CLK_NAME_BASE, id);
+	init.name =  kaप्र_लिखो(GFP_KERNEL, "%s_%d", PLT_CLK_NAME_BASE, id);
 	init.ops = &plt_clk_ops;
 	init.flags = 0;
 	init.parent_names = parent_names;
@@ -181,210 +182,210 @@ static struct clk_plt *plt_clk_register(struct platform_device *pdev, int id,
 	spin_lock_init(&pclk->lock);
 
 	/*
-	 * On some systems, the pmc_plt_clocks already enabled by the
-	 * firmware are being marked as critical to avoid them being
-	 * gated by the clock framework.
+	 * On some प्रणालीs, the pmc_plt_घड़ीs alपढ़ोy enabled by the
+	 * firmware are being marked as critical to aव्योम them being
+	 * gated by the घड़ी framework.
 	 */
-	if (pmc_data->critical && plt_clk_is_enabled(&pclk->hw))
+	अगर (pmc_data->critical && plt_clk_is_enabled(&pclk->hw))
 		init.flags |= CLK_IS_CRITICAL;
 
-	ret = devm_clk_hw_register(&pdev->dev, &pclk->hw);
-	if (ret) {
+	ret = devm_clk_hw_रेजिस्टर(&pdev->dev, &pclk->hw);
+	अगर (ret) अणु
 		pclk = ERR_PTR(ret);
-		goto err_free_init;
-	}
+		जाओ err_मुक्त_init;
+	पूर्ण
 
-	pclk->lookup = clkdev_hw_create(&pclk->hw, init.name, NULL);
-	if (!pclk->lookup) {
+	pclk->lookup = clkdev_hw_create(&pclk->hw, init.name, शून्य);
+	अगर (!pclk->lookup) अणु
 		pclk = ERR_PTR(-ENOMEM);
-		goto err_free_init;
-	}
+		जाओ err_मुक्त_init;
+	पूर्ण
 
-err_free_init:
-	kfree(init.name);
-	return pclk;
-}
+err_मुक्त_init:
+	kमुक्त(init.name);
+	वापस pclk;
+पूर्ण
 
-static void plt_clk_unregister(struct clk_plt *pclk)
-{
+अटल व्योम plt_clk_unरेजिस्टर(काष्ठा clk_plt *pclk)
+अणु
 	clkdev_drop(pclk->lookup);
-}
+पूर्ण
 
-static struct clk_plt_fixed *plt_clk_register_fixed_rate(struct platform_device *pdev,
-						 const char *name,
-						 const char *parent_name,
-						 unsigned long fixed_rate)
-{
-	struct clk_plt_fixed *pclk;
+अटल काष्ठा clk_plt_fixed *plt_clk_रेजिस्टर_fixed_rate(काष्ठा platक्रमm_device *pdev,
+						 स्थिर अक्षर *name,
+						 स्थिर अक्षर *parent_name,
+						 अचिन्हित दीर्घ fixed_rate)
+अणु
+	काष्ठा clk_plt_fixed *pclk;
 
-	pclk = devm_kzalloc(&pdev->dev, sizeof(*pclk), GFP_KERNEL);
-	if (!pclk)
-		return ERR_PTR(-ENOMEM);
+	pclk = devm_kzalloc(&pdev->dev, माप(*pclk), GFP_KERNEL);
+	अगर (!pclk)
+		वापस ERR_PTR(-ENOMEM);
 
-	pclk->clk = clk_hw_register_fixed_rate(&pdev->dev, name, parent_name,
+	pclk->clk = clk_hw_रेजिस्टर_fixed_rate(&pdev->dev, name, parent_name,
 					       0, fixed_rate);
-	if (IS_ERR(pclk->clk))
-		return ERR_CAST(pclk->clk);
+	अगर (IS_ERR(pclk->clk))
+		वापस ERR_CAST(pclk->clk);
 
-	pclk->lookup = clkdev_hw_create(pclk->clk, name, NULL);
-	if (!pclk->lookup) {
-		clk_hw_unregister_fixed_rate(pclk->clk);
-		return ERR_PTR(-ENOMEM);
-	}
+	pclk->lookup = clkdev_hw_create(pclk->clk, name, शून्य);
+	अगर (!pclk->lookup) अणु
+		clk_hw_unरेजिस्टर_fixed_rate(pclk->clk);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	return pclk;
-}
+	वापस pclk;
+पूर्ण
 
-static void plt_clk_unregister_fixed_rate(struct clk_plt_fixed *pclk)
-{
+अटल व्योम plt_clk_unरेजिस्टर_fixed_rate(काष्ठा clk_plt_fixed *pclk)
+अणु
 	clkdev_drop(pclk->lookup);
-	clk_hw_unregister_fixed_rate(pclk->clk);
-}
+	clk_hw_unरेजिस्टर_fixed_rate(pclk->clk);
+पूर्ण
 
-static void plt_clk_unregister_fixed_rate_loop(struct clk_plt_data *data,
-					       unsigned int i)
-{
-	while (i--)
-		plt_clk_unregister_fixed_rate(data->parents[i]);
-}
+अटल व्योम plt_clk_unरेजिस्टर_fixed_rate_loop(काष्ठा clk_plt_data *data,
+					       अचिन्हित पूर्णांक i)
+अणु
+	जबतक (i--)
+		plt_clk_unरेजिस्टर_fixed_rate(data->parents[i]);
+पूर्ण
 
-static void plt_clk_free_parent_names_loop(const char **parent_names,
-					   unsigned int i)
-{
-	while (i--)
-		kfree_const(parent_names[i]);
-	kfree(parent_names);
-}
+अटल व्योम plt_clk_मुक्त_parent_names_loop(स्थिर अक्षर **parent_names,
+					   अचिन्हित पूर्णांक i)
+अणु
+	जबतक (i--)
+		kमुक्त_स्थिर(parent_names[i]);
+	kमुक्त(parent_names);
+पूर्ण
 
-static void plt_clk_unregister_loop(struct clk_plt_data *data,
-				    unsigned int i)
-{
-	while (i--)
-		plt_clk_unregister(data->clks[i]);
-}
+अटल व्योम plt_clk_unरेजिस्टर_loop(काष्ठा clk_plt_data *data,
+				    अचिन्हित पूर्णांक i)
+अणु
+	जबतक (i--)
+		plt_clk_unरेजिस्टर(data->clks[i]);
+पूर्ण
 
-static const char **plt_clk_register_parents(struct platform_device *pdev,
-					     struct clk_plt_data *data,
-					     const struct pmc_clk *clks)
-{
-	const char **parent_names;
-	unsigned int i;
-	int err;
-	int nparents = 0;
+अटल स्थिर अक्षर **plt_clk_रेजिस्टर_parents(काष्ठा platक्रमm_device *pdev,
+					     काष्ठा clk_plt_data *data,
+					     स्थिर काष्ठा pmc_clk *clks)
+अणु
+	स्थिर अक्षर **parent_names;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
+	पूर्णांक nparents = 0;
 
 	data->nparents = 0;
-	while (clks[nparents].name)
+	जबतक (clks[nparents].name)
 		nparents++;
 
-	data->parents = devm_kcalloc(&pdev->dev, nparents,
-				     sizeof(*data->parents), GFP_KERNEL);
-	if (!data->parents)
-		return ERR_PTR(-ENOMEM);
+	data->parents = devm_kसुस्मृति(&pdev->dev, nparents,
+				     माप(*data->parents), GFP_KERNEL);
+	अगर (!data->parents)
+		वापस ERR_PTR(-ENOMEM);
 
-	parent_names = kcalloc(nparents, sizeof(*parent_names),
+	parent_names = kसुस्मृति(nparents, माप(*parent_names),
 			       GFP_KERNEL);
-	if (!parent_names)
-		return ERR_PTR(-ENOMEM);
+	अगर (!parent_names)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (i = 0; i < nparents; i++) {
+	क्रम (i = 0; i < nparents; i++) अणु
 		data->parents[i] =
-			plt_clk_register_fixed_rate(pdev, clks[i].name,
+			plt_clk_रेजिस्टर_fixed_rate(pdev, clks[i].name,
 						    clks[i].parent_name,
 						    clks[i].freq);
-		if (IS_ERR(data->parents[i])) {
+		अगर (IS_ERR(data->parents[i])) अणु
 			err = PTR_ERR(data->parents[i]);
-			goto err_unreg;
-		}
-		parent_names[i] = kstrdup_const(clks[i].name, GFP_KERNEL);
-	}
+			जाओ err_unreg;
+		पूर्ण
+		parent_names[i] = kstrdup_स्थिर(clks[i].name, GFP_KERNEL);
+	पूर्ण
 
 	data->nparents = nparents;
-	return parent_names;
+	वापस parent_names;
 
 err_unreg:
-	plt_clk_unregister_fixed_rate_loop(data, i);
-	plt_clk_free_parent_names_loop(parent_names, i);
-	return ERR_PTR(err);
-}
+	plt_clk_unरेजिस्टर_fixed_rate_loop(data, i);
+	plt_clk_मुक्त_parent_names_loop(parent_names, i);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void plt_clk_unregister_parents(struct clk_plt_data *data)
-{
-	plt_clk_unregister_fixed_rate_loop(data, data->nparents);
-}
+अटल व्योम plt_clk_unरेजिस्टर_parents(काष्ठा clk_plt_data *data)
+अणु
+	plt_clk_unरेजिस्टर_fixed_rate_loop(data, data->nparents);
+पूर्ण
 
-static int plt_clk_probe(struct platform_device *pdev)
-{
-	const struct pmc_clk_data *pmc_data;
-	const char **parent_names;
-	struct clk_plt_data *data;
-	unsigned int i;
-	int err;
+अटल पूर्णांक plt_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा pmc_clk_data *pmc_data;
+	स्थिर अक्षर **parent_names;
+	काष्ठा clk_plt_data *data;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
 	pmc_data = dev_get_platdata(&pdev->dev);
-	if (!pmc_data || !pmc_data->clks)
-		return -EINVAL;
+	अगर (!pmc_data || !pmc_data->clks)
+		वापस -EINVAL;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	parent_names = plt_clk_register_parents(pdev, data, pmc_data->clks);
-	if (IS_ERR(parent_names))
-		return PTR_ERR(parent_names);
+	parent_names = plt_clk_रेजिस्टर_parents(pdev, data, pmc_data->clks);
+	अगर (IS_ERR(parent_names))
+		वापस PTR_ERR(parent_names);
 
-	for (i = 0; i < PMC_CLK_NUM; i++) {
-		data->clks[i] = plt_clk_register(pdev, i, pmc_data,
+	क्रम (i = 0; i < PMC_CLK_NUM; i++) अणु
+		data->clks[i] = plt_clk_रेजिस्टर(pdev, i, pmc_data,
 						 parent_names, data->nparents);
-		if (IS_ERR(data->clks[i])) {
+		अगर (IS_ERR(data->clks[i])) अणु
 			err = PTR_ERR(data->clks[i]);
-			goto err_unreg_clk_plt;
-		}
-	}
-	data->mclk_lookup = clkdev_hw_create(&data->clks[3]->hw, "mclk", NULL);
-	if (!data->mclk_lookup) {
+			जाओ err_unreg_clk_plt;
+		पूर्ण
+	पूर्ण
+	data->mclk_lookup = clkdev_hw_create(&data->clks[3]->hw, "mclk", शून्य);
+	अगर (!data->mclk_lookup) अणु
 		err = -ENOMEM;
-		goto err_unreg_clk_plt;
-	}
+		जाओ err_unreg_clk_plt;
+	पूर्ण
 
 	data->ether_clk_lookup = clkdev_hw_create(&data->clks[4]->hw,
-						  "ether_clk", NULL);
-	if (!data->ether_clk_lookup) {
+						  "ether_clk", शून्य);
+	अगर (!data->ether_clk_lookup) अणु
 		err = -ENOMEM;
-		goto err_drop_mclk;
-	}
+		जाओ err_drop_mclk;
+	पूर्ण
 
-	plt_clk_free_parent_names_loop(parent_names, data->nparents);
+	plt_clk_मुक्त_parent_names_loop(parent_names, data->nparents);
 
-	platform_set_drvdata(pdev, data);
-	return 0;
+	platक्रमm_set_drvdata(pdev, data);
+	वापस 0;
 
 err_drop_mclk:
 	clkdev_drop(data->mclk_lookup);
 err_unreg_clk_plt:
-	plt_clk_unregister_loop(data, i);
-	plt_clk_unregister_parents(data);
-	plt_clk_free_parent_names_loop(parent_names, data->nparents);
-	return err;
-}
+	plt_clk_unरेजिस्टर_loop(data, i);
+	plt_clk_unरेजिस्टर_parents(data);
+	plt_clk_मुक्त_parent_names_loop(parent_names, data->nparents);
+	वापस err;
+पूर्ण
 
-static int plt_clk_remove(struct platform_device *pdev)
-{
-	struct clk_plt_data *data;
+अटल पूर्णांक plt_clk_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_plt_data *data;
 
-	data = platform_get_drvdata(pdev);
+	data = platक्रमm_get_drvdata(pdev);
 
 	clkdev_drop(data->ether_clk_lookup);
 	clkdev_drop(data->mclk_lookup);
-	plt_clk_unregister_loop(data, PMC_CLK_NUM);
-	plt_clk_unregister_parents(data);
-	return 0;
-}
+	plt_clk_unरेजिस्टर_loop(data, PMC_CLK_NUM);
+	plt_clk_unरेजिस्टर_parents(data);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver plt_clk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver plt_clk_driver = अणु
+	.driver = अणु
 		.name = "clk-pmc-atom",
-	},
+	पूर्ण,
 	.probe = plt_clk_probe,
-	.remove = plt_clk_remove,
-};
-builtin_platform_driver(plt_clk_driver);
+	.हटाओ = plt_clk_हटाओ,
+पूर्ण;
+builtin_platक्रमm_driver(plt_clk_driver);

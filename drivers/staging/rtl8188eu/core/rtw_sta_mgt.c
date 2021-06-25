@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#define _RTW_STA_MGT_C_
+#घोषणा _RTW_STA_MGT_C_
 
-#include <osdep_service.h>
-#include <drv_types.h>
-#include <recv_osdep.h>
-#include <xmit_osdep.h>
-#include <mlme_osdep.h>
-#include <sta_info.h>
-#include <linux/vmalloc.h>
+#समावेश <osdep_service.h>
+#समावेश <drv_types.h>
+#समावेश <recv_osdep.h>
+#समावेश <xmit_osdep.h>
+#समावेश <mlme_osdep.h>
+#समावेश <sta_info.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-static void _rtw_init_stainfo(struct sta_info *psta)
-{
-	memset((u8 *)psta, 0, sizeof(struct sta_info));
+अटल व्योम _rtw_init_stainfo(काष्ठा sta_info *psta)
+अणु
+	स_रखो((u8 *)psta, 0, माप(काष्ठा sta_info));
 
 	spin_lock_init(&psta->lock);
 	INIT_LIST_HEAD(&psta->list);
@@ -27,7 +28,7 @@ static void _rtw_init_stainfo(struct sta_info *psta)
 	_rtw_init_sta_xmit_priv(&psta->sta_xmitpriv);
 	_rtw_init_sta_recv_priv(&psta->sta_recvpriv);
 
-#ifdef CONFIG_88EU_AP_MODE
+#अगर_घोषित CONFIG_88EU_AP_MODE
 
 	INIT_LIST_HEAD(&psta->asoc_list);
 
@@ -42,8 +43,8 @@ static void _rtw_init_stainfo(struct sta_info *psta)
 	psta->bpairwise_key_installed = false;
 
 	psta->nonerp_set = 0;
-	psta->no_short_slot_time_set = 0;
-	psta->no_short_preamble_set = 0;
+	psta->no_लघु_slot_समय_set = 0;
+	psta->no_लघु_preamble_set = 0;
 	psta->no_ht_gf_set = 0;
 	psta->no_ht_set = 0;
 	psta->ht_20mhz_set = 0;
@@ -52,23 +53,23 @@ static void _rtw_init_stainfo(struct sta_info *psta)
 
 	psta->keep_alive_trycnt = 0;
 
-#endif	/*  CONFIG_88EU_AP_MODE */
-}
+#पूर्ण_अगर	/*  CONFIG_88EU_AP_MODE */
+पूर्ण
 
-u32 _rtw_init_sta_priv(struct sta_priv *pstapriv)
-{
-	struct sta_info *psta;
+u32 _rtw_init_sta_priv(काष्ठा sta_priv *pstapriv)
+अणु
+	काष्ठा sta_info *psta;
 	s32 i;
 
-	pstapriv->pallocated_stainfo_buf = vzalloc(sizeof(struct sta_info) * NUM_STA + 4);
+	pstapriv->pallocated_stainfo_buf = vzalloc(माप(काष्ठा sta_info) * NUM_STA + 4);
 
-	if (!pstapriv->pallocated_stainfo_buf)
-		return _FAIL;
+	अगर (!pstapriv->pallocated_stainfo_buf)
+		वापस _FAIL;
 
 	pstapriv->pstainfo_buf = pstapriv->pallocated_stainfo_buf + 4 -
-		((size_t)(pstapriv->pallocated_stainfo_buf) & 3);
+		((माप_प्रकार)(pstapriv->pallocated_stainfo_buf) & 3);
 
-	_rtw_init_queue(&pstapriv->free_sta_queue);
+	_rtw_init_queue(&pstapriv->मुक्त_sta_queue);
 
 	spin_lock_init(&pstapriv->sta_hash_lock);
 
@@ -76,23 +77,23 @@ u32 _rtw_init_sta_priv(struct sta_priv *pstapriv)
 	_rtw_init_queue(&pstapriv->sleep_q);
 	_rtw_init_queue(&pstapriv->wakeup_q);
 
-	psta = (struct sta_info *)(pstapriv->pstainfo_buf);
+	psta = (काष्ठा sta_info *)(pstapriv->pstainfo_buf);
 
-	for (i = 0; i < NUM_STA; i++) {
+	क्रम (i = 0; i < NUM_STA; i++) अणु
 		_rtw_init_stainfo(psta);
 
 		INIT_LIST_HEAD(&pstapriv->sta_hash[i]);
 
 		list_add_tail(&psta->list,
-			      get_list_head(&pstapriv->free_sta_queue));
+			      get_list_head(&pstapriv->मुक्त_sta_queue));
 
 		psta++;
-	}
+	पूर्ण
 
-#ifdef CONFIG_88EU_AP_MODE
+#अगर_घोषित CONFIG_88EU_AP_MODE
 
-	pstapriv->sta_dz_bitmap = 0;
-	pstapriv->tim_bitmap = 0;
+	pstapriv->sta_dz_biपंचांगap = 0;
+	pstapriv->tim_biपंचांगap = 0;
 
 	INIT_LIST_HEAD(&pstapriv->asoc_list);
 	INIT_LIST_HEAD(&pstapriv->auth_list);
@@ -105,96 +106,96 @@ u32 _rtw_init_sta_priv(struct sta_priv *pstapriv)
 	pstapriv->assoc_to = 3;
 	pstapriv->expire_to = 3; /*  3*2 = 6 sec */
 	pstapriv->max_num_sta = NUM_STA;
-#endif
+#पूर्ण_अगर
 
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
-inline int rtw_stainfo_offset(struct sta_priv *stapriv, struct sta_info *sta)
-{
-	int offset = (((u8 *)sta) - stapriv->pstainfo_buf) / sizeof(struct sta_info);
+अंतरभूत पूर्णांक rtw_stainfo_offset(काष्ठा sta_priv *stapriv, काष्ठा sta_info *sta)
+अणु
+	पूर्णांक offset = (((u8 *)sta) - stapriv->pstainfo_buf) / माप(काष्ठा sta_info);
 
-	if (!stainfo_offset_valid(offset))
+	अगर (!stainfo_offset_valid(offset))
 		DBG_88E("%s invalid offset(%d), out of range!!!", __func__, offset);
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
-inline struct sta_info *rtw_get_stainfo_by_offset(struct sta_priv *stapriv, int offset)
-{
-	if (!stainfo_offset_valid(offset))
+अंतरभूत काष्ठा sta_info *rtw_get_stainfo_by_offset(काष्ठा sta_priv *stapriv, पूर्णांक offset)
+अणु
+	अगर (!stainfo_offset_valid(offset))
 		DBG_88E("%s invalid offset(%d), out of range!!!", __func__, offset);
 
-	return (struct sta_info *)(stapriv->pstainfo_buf + offset * sizeof(struct sta_info));
-}
+	वापस (काष्ठा sta_info *)(stapriv->pstainfo_buf + offset * माप(काष्ठा sta_info));
+पूर्ण
 
-u32 _rtw_free_sta_priv(struct sta_priv *pstapriv)
-{
-	struct list_head *phead, *plist;
-	struct sta_info *psta = NULL;
-	struct recv_reorder_ctrl *preorder_ctrl;
-	int index;
+u32 _rtw_मुक्त_sta_priv(काष्ठा sta_priv *pstapriv)
+अणु
+	काष्ठा list_head *phead, *plist;
+	काष्ठा sta_info *psta = शून्य;
+	काष्ठा recv_reorder_ctrl *preorder_ctrl;
+	पूर्णांक index;
 
-	if (!pstapriv)
-		return _SUCCESS;
+	अगर (!pstapriv)
+		वापस _SUCCESS;
 
-	/* delete all reordering_ctrl_timer */
+	/* delete all reordering_ctrl_समयr */
 	spin_lock_bh(&pstapriv->sta_hash_lock);
-	for (index = 0; index < NUM_STA; index++) {
+	क्रम (index = 0; index < NUM_STA; index++) अणु
 		phead = &pstapriv->sta_hash[index];
 		plist = phead->next;
 
-		while (phead != plist) {
-			int i;
+		जबतक (phead != plist) अणु
+			पूर्णांक i;
 
-			psta = container_of(plist, struct sta_info, hash_list);
+			psta = container_of(plist, काष्ठा sta_info, hash_list);
 			plist = plist->next;
 
-			for (i = 0; i < 16; i++) {
+			क्रम (i = 0; i < 16; i++) अणु
 				preorder_ctrl = &psta->recvreorder_ctrl[i];
-				del_timer_sync(&preorder_ctrl->reordering_ctrl_timer);
-			}
-		}
-	}
+				del_समयr_sync(&preorder_ctrl->reordering_ctrl_समयr);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&pstapriv->sta_hash_lock);
 
-	vfree(pstapriv->pallocated_stainfo_buf);
+	vमुक्त(pstapriv->pallocated_stainfo_buf);
 
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
-struct sta_info *rtw_alloc_stainfo(struct sta_priv *pstapriv, u8 *hwaddr)
-{
+काष्ठा sta_info *rtw_alloc_stainfo(काष्ठा sta_priv *pstapriv, u8 *hwaddr)
+अणु
 	s32 index;
-	struct list_head *phash_list;
-	struct sta_info *psta;
-	struct __queue *pfree_sta_queue;
-	struct recv_reorder_ctrl *preorder_ctrl;
-	int i = 0;
+	काष्ठा list_head *phash_list;
+	काष्ठा sta_info *psta;
+	काष्ठा __queue *pमुक्त_sta_queue;
+	काष्ठा recv_reorder_ctrl *preorder_ctrl;
+	पूर्णांक i = 0;
 	u16 wRxSeqInitialValue = 0xffff;
 
-	pfree_sta_queue = &pstapriv->free_sta_queue;
+	pमुक्त_sta_queue = &pstapriv->मुक्त_sta_queue;
 
-	spin_lock_bh(&pfree_sta_queue->lock);
-	psta = list_first_entry_or_null(&pfree_sta_queue->queue,
-					struct sta_info, list);
-	if (!psta) {
-		spin_unlock_bh(&pfree_sta_queue->lock);
-		return NULL;
-	}
+	spin_lock_bh(&pमुक्त_sta_queue->lock);
+	psta = list_first_entry_or_null(&pमुक्त_sta_queue->queue,
+					काष्ठा sta_info, list);
+	अगर (!psta) अणु
+		spin_unlock_bh(&pमुक्त_sta_queue->lock);
+		वापस शून्य;
+	पूर्ण
 
 	list_del_init(&psta->list);
-	spin_unlock_bh(&pfree_sta_queue->lock);
+	spin_unlock_bh(&pमुक्त_sta_queue->lock);
 	_rtw_init_stainfo(psta);
-	memcpy(psta->hwaddr, hwaddr, ETH_ALEN);
-	index = wifi_mac_hash(hwaddr);
+	स_नकल(psta->hwaddr, hwaddr, ETH_ALEN);
+	index = wअगरi_mac_hash(hwaddr);
 	RT_TRACE(_module_rtl871x_sta_mgt_c_, _drv_info_,
 		 ("%s: index=%x", __func__, index));
-	if (index >= NUM_STA) {
+	अगर (index >= NUM_STA) अणु
 		RT_TRACE(_module_rtl871x_sta_mgt_c_, _drv_err_,
 			 ("ERROR => %s: index >= NUM_STA", __func__));
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	phash_list = &pstapriv->sta_hash[index];
 
 	spin_lock_bh(&pstapriv->sta_hash_lock);
@@ -204,24 +205,24 @@ struct sta_info *rtw_alloc_stainfo(struct sta_priv *pstapriv, u8 *hwaddr)
 
 	/* Commented by Albert 2009/08/13
 	 * For the SMC router, the sequence number of first packet of
-	 * WPS handshake will be 0. In this case, this packet will be
-	 * dropped by recv_decache function if we use the 0x00 as the
-	 * default value for tid_rxseq variable. So, we initialize the
+	 * WPS handshake will be 0. In this हाल, this packet will be
+	 * dropped by recv_decache function अगर we use the 0x00 as the
+	 * शेष value क्रम tid_rxseq variable. So, we initialize the
 	 * tid_rxseq variable as the 0xffff.
 	 */
 
-	for (i = 0; i < 16; i++)
-		memcpy(&psta->sta_recvpriv.rxcache.tid_rxseq[i],
+	क्रम (i = 0; i < 16; i++)
+		स_नकल(&psta->sta_recvpriv.rxcache.tid_rxseq[i],
 		       &wRxSeqInitialValue, 2);
 
 	RT_TRACE(_module_rtl871x_sta_mgt_c_, _drv_info_,
 		 ("alloc number_%d stainfo  with hwaddr = %pM\n",
 		  pstapriv->asoc_sta_count, hwaddr));
 
-	init_addba_retry_timer(pstapriv->padapter, psta);
+	init_addba_retry_समयr(pstapriv->padapter, psta);
 
-	/* for A-MPDU Rx reordering buffer control */
-	for (i = 0; i < 16; i++) {
+	/* क्रम A-MPDU Rx reordering buffer control */
+	क्रम (i = 0; i < 16; i++) अणु
 		preorder_ctrl = &psta->recvreorder_ctrl[i];
 
 		preorder_ctrl->padapter = pstapriv->padapter;
@@ -234,54 +235,54 @@ struct sta_info *rtw_alloc_stainfo(struct sta_priv *pstapriv, u8 *hwaddr)
 
 		_rtw_init_queue(&preorder_ctrl->pending_recvframe_queue);
 
-		rtw_init_recv_timer(preorder_ctrl);
-	}
+		rtw_init_recv_समयr(preorder_ctrl);
+	पूर्ण
 
-	/* init for DM */
+	/* init क्रम DM */
 	psta->rssi_stat.UndecoratedSmoothedPWDB = -1;
 	psta->rssi_stat.UndecoratedSmoothedCCK = -1;
 
-	/* init for the sequence number of received management frame */
+	/* init क्रम the sequence number of received management frame */
 	psta->RxMgmtFrameSeqNum = 0xffff;
 
-	return psta;
-}
+	वापस psta;
+पूर्ण
 
 /*  using pstapriv->sta_hash_lock to protect */
-u32 rtw_free_stainfo(struct adapter *padapter, struct sta_info *psta)
-{
-	int i;
-	struct __queue *pfree_sta_queue;
-	struct recv_reorder_ctrl *preorder_ctrl;
-	struct sta_xmit_priv *pstaxmitpriv;
-	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	struct sta_priv *pstapriv = &padapter->stapriv;
+u32 rtw_मुक्त_stainfo(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
+अणु
+	पूर्णांक i;
+	काष्ठा __queue *pमुक्त_sta_queue;
+	काष्ठा recv_reorder_ctrl *preorder_ctrl;
+	काष्ठा sta_xmit_priv *pstaxmitpriv;
+	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
 
-	if (!psta)
-		goto exit;
+	अगर (!psta)
+		जाओ निकास;
 
-	pfree_sta_queue = &pstapriv->free_sta_queue;
+	pमुक्त_sta_queue = &pstapriv->मुक्त_sta_queue;
 
 	pstaxmitpriv = &psta->sta_xmitpriv;
 
 	spin_lock_bh(&pxmitpriv->lock);
 
-	rtw_free_xmitframe_queue(pxmitpriv, &psta->sleep_q);
+	rtw_मुक्त_xmitframe_queue(pxmitpriv, &psta->sleep_q);
 	psta->sleepq_len = 0;
 
-	rtw_free_xmitframe_queue(pxmitpriv, &pstaxmitpriv->vo_q.sta_pending);
+	rtw_मुक्त_xmitframe_queue(pxmitpriv, &pstaxmitpriv->vo_q.sta_pending);
 
 	list_del_init(&pstaxmitpriv->vo_q.tx_pending);
 
-	rtw_free_xmitframe_queue(pxmitpriv, &pstaxmitpriv->vi_q.sta_pending);
+	rtw_मुक्त_xmitframe_queue(pxmitpriv, &pstaxmitpriv->vi_q.sta_pending);
 
 	list_del_init(&pstaxmitpriv->vi_q.tx_pending);
 
-	rtw_free_xmitframe_queue(pxmitpriv, &pstaxmitpriv->bk_q.sta_pending);
+	rtw_मुक्त_xmitframe_queue(pxmitpriv, &pstaxmitpriv->bk_q.sta_pending);
 
 	list_del_init(&pstaxmitpriv->bk_q.tx_pending);
 
-	rtw_free_xmitframe_queue(pxmitpriv, &pstaxmitpriv->be_q.sta_pending);
+	rtw_मुक्त_xmitframe_queue(pxmitpriv, &pstaxmitpriv->be_q.sta_pending);
 
 	list_del_init(&pstaxmitpriv->be_q.tx_pending);
 
@@ -299,20 +300,20 @@ u32 rtw_free_stainfo(struct adapter *padapter, struct sta_info *psta)
 	_rtw_init_sta_xmit_priv(&psta->sta_xmitpriv);
 	_rtw_init_sta_recv_priv(&psta->sta_recvpriv);
 
-	del_timer_sync(&psta->addba_retry_timer);
+	del_समयr_sync(&psta->addba_retry_समयr);
 
-	/* for A-MPDU Rx reordering buffer control, cancel
-	 * reordering_ctrl_timer
+	/* क्रम A-MPDU Rx reordering buffer control, cancel
+	 * reordering_ctrl_समयr
 	 */
-	for (i = 0; i < 16; i++) {
-		struct list_head *phead, *plist;
-		struct recv_frame *prframe;
-		struct __queue *ppending_recvframe_queue;
-		struct __queue *pfree_recv_queue = &padapter->recvpriv.free_recv_queue;
+	क्रम (i = 0; i < 16; i++) अणु
+		काष्ठा list_head *phead, *plist;
+		काष्ठा recv_frame *prframe;
+		काष्ठा __queue *ppending_recvframe_queue;
+		काष्ठा __queue *pमुक्त_recv_queue = &padapter->recvpriv.मुक्त_recv_queue;
 
 		preorder_ctrl = &psta->recvreorder_ctrl[i];
 
-		del_timer_sync(&preorder_ctrl->reordering_ctrl_timer);
+		del_समयr_sync(&preorder_ctrl->reordering_ctrl_समयr);
 
 		ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
 
@@ -321,29 +322,29 @@ u32 rtw_free_stainfo(struct adapter *padapter, struct sta_info *psta)
 		phead = get_list_head(ppending_recvframe_queue);
 		plist = phead->next;
 
-		while (!list_empty(phead)) {
-			prframe = container_of(plist, struct recv_frame, list);
+		जबतक (!list_empty(phead)) अणु
+			prframe = container_of(plist, काष्ठा recv_frame, list);
 
 			plist = plist->next;
 
 			list_del_init(&prframe->list);
 
-			rtw_free_recvframe(prframe, pfree_recv_queue);
-		}
+			rtw_मुक्त_recvframe(prframe, pमुक्त_recv_queue);
+		पूर्ण
 
 		spin_unlock_bh(&ppending_recvframe_queue->lock);
-	}
+	पूर्ण
 
-	if (!(psta->state & WIFI_AP_STATE))
+	अगर (!(psta->state & WIFI_AP_STATE))
 		rtw_hal_set_odm_var(padapter, HAL_ODM_STA_INFO, psta, false);
 
-#ifdef CONFIG_88EU_AP_MODE
+#अगर_घोषित CONFIG_88EU_AP_MODE
 
 	spin_lock_bh(&pstapriv->auth_list_lock);
-	if (!list_empty(&psta->auth_list)) {
+	अगर (!list_empty(&psta->auth_list)) अणु
 		list_del_init(&psta->auth_list);
 		pstapriv->auth_list_cnt--;
-	}
+	पूर्ण
 	spin_unlock_bh(&pstapriv->auth_list_lock);
 
 	psta->expire_to = 0;
@@ -358,159 +359,159 @@ u32 rtw_free_stainfo(struct adapter *padapter, struct sta_info *psta)
 	psta->uapsd_vo = 0;
 	psta->has_legacy_ac = 0;
 
-	pstapriv->sta_dz_bitmap &= ~BIT(psta->aid);
-	pstapriv->tim_bitmap &= ~BIT(psta->aid);
+	pstapriv->sta_dz_biपंचांगap &= ~BIT(psta->aid);
+	pstapriv->tim_biपंचांगap &= ~BIT(psta->aid);
 
-	if ((psta->aid > 0) && (pstapriv->sta_aid[psta->aid - 1] == psta)) {
-		pstapriv->sta_aid[psta->aid - 1] = NULL;
+	अगर ((psta->aid > 0) && (pstapriv->sta_aid[psta->aid - 1] == psta)) अणु
+		pstapriv->sta_aid[psta->aid - 1] = शून्य;
 		psta->aid = 0;
-	}
+	पूर्ण
 
 	psta->under_exist_checking = 0;
 
-#endif	/*  CONFIG_88EU_AP_MODE */
+#पूर्ण_अगर	/*  CONFIG_88EU_AP_MODE */
 
-	spin_lock_bh(&pfree_sta_queue->lock);
-	list_add_tail(&psta->list, get_list_head(pfree_sta_queue));
-	spin_unlock_bh(&pfree_sta_queue->lock);
+	spin_lock_bh(&pमुक्त_sta_queue->lock);
+	list_add_tail(&psta->list, get_list_head(pमुक्त_sta_queue));
+	spin_unlock_bh(&pमुक्त_sta_queue->lock);
 
-exit:
+निकास:
 
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
-/*  free all stainfo which in sta_hash[all] */
-void rtw_free_all_stainfo(struct adapter *padapter)
-{
-	struct list_head *plist, *phead;
+/*  मुक्त all stainfo which in sta_hash[all] */
+व्योम rtw_मुक्त_all_stainfo(काष्ठा adapter *padapter)
+अणु
+	काष्ठा list_head *plist, *phead;
 	s32 index;
-	struct sta_info *psta = NULL;
-	struct sta_priv *pstapriv = &padapter->stapriv;
-	struct sta_info *pbcmc_stainfo = rtw_get_bcmc_stainfo(padapter);
+	काष्ठा sta_info *psta = शून्य;
+	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+	काष्ठा sta_info *pbcmc_stainfo = rtw_get_bcmc_stainfo(padapter);
 
-	if (pstapriv->asoc_sta_count == 1)
-		return;
+	अगर (pstapriv->asoc_sta_count == 1)
+		वापस;
 
 	spin_lock_bh(&pstapriv->sta_hash_lock);
 
-	for (index = 0; index < NUM_STA; index++) {
+	क्रम (index = 0; index < NUM_STA; index++) अणु
 		phead = &pstapriv->sta_hash[index];
 		plist = phead->next;
 
-		while (phead != plist) {
-			psta = container_of(plist, struct sta_info, hash_list);
+		जबतक (phead != plist) अणु
+			psta = container_of(plist, काष्ठा sta_info, hash_list);
 
 			plist = plist->next;
 
-			if (pbcmc_stainfo != psta)
-				rtw_free_stainfo(padapter, psta);
-		}
-	}
+			अगर (pbcmc_stainfo != psta)
+				rtw_मुक्त_stainfo(padapter, psta);
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&pstapriv->sta_hash_lock);
-}
+पूर्ण
 
 /* any station allocated can be searched by hash list */
-struct sta_info *rtw_get_stainfo(struct sta_priv *pstapriv, u8 *hwaddr)
-{
-	struct list_head *plist, *phead;
-	struct sta_info *psta = NULL;
+काष्ठा sta_info *rtw_get_stainfo(काष्ठा sta_priv *pstapriv, u8 *hwaddr)
+अणु
+	काष्ठा list_head *plist, *phead;
+	काष्ठा sta_info *psta = शून्य;
 	u32 index;
 	u8 *addr;
-	u8 bc_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+	u8 bc_addr[ETH_ALEN] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
 
-	if (!hwaddr)
-		return NULL;
+	अगर (!hwaddr)
+		वापस शून्य;
 
-	if (is_multicast_ether_addr(hwaddr))
+	अगर (is_multicast_ether_addr(hwaddr))
 		addr = bc_addr;
-	else
+	अन्यथा
 		addr = hwaddr;
 
-	index = wifi_mac_hash(addr);
+	index = wअगरi_mac_hash(addr);
 
 	spin_lock_bh(&pstapriv->sta_hash_lock);
 
 	phead = &pstapriv->sta_hash[index];
 	plist = phead->next;
 
-	while (phead != plist) {
-		psta = container_of(plist, struct sta_info, hash_list);
+	जबतक (phead != plist) अणु
+		psta = container_of(plist, काष्ठा sta_info, hash_list);
 
-		if (!memcmp(psta->hwaddr, addr, ETH_ALEN)) {
-			/*  if found the matched address */
-			break;
-		}
-		psta = NULL;
+		अगर (!स_भेद(psta->hwaddr, addr, ETH_ALEN)) अणु
+			/*  अगर found the matched address */
+			अवरोध;
+		पूर्ण
+		psta = शून्य;
 		plist = plist->next;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&pstapriv->sta_hash_lock);
-	return psta;
-}
+	वापस psta;
+पूर्ण
 
-u32 rtw_init_bcmc_stainfo(struct adapter *padapter)
-{
-	struct sta_info *psta;
-	u8 bc_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct sta_priv *pstapriv = &padapter->stapriv;
+u32 rtw_init_bcmc_stainfo(काष्ठा adapter *padapter)
+अणु
+	काष्ठा sta_info *psta;
+	u8 bc_addr[ETH_ALEN] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
 
 	psta = rtw_alloc_stainfo(pstapriv, bc_addr);
 
-	if (!psta) {
+	अगर (!psta) अणु
 		RT_TRACE(_module_rtl871x_sta_mgt_c_, _drv_err_,
 			 ("rtw_alloc_stainfo fail"));
-		return _FAIL;
-	}
+		वापस _FAIL;
+	पूर्ण
 
-	/*  default broadcast & multicast use macid 1 */
+	/*  शेष broadcast & multicast use macid 1 */
 	psta->mac_id = 1;
 
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
-struct sta_info *rtw_get_bcmc_stainfo(struct adapter *padapter)
-{
-	struct sta_priv *pstapriv = &padapter->stapriv;
-	u8 bc_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+काष्ठा sta_info *rtw_get_bcmc_stainfo(काष्ठा adapter *padapter)
+अणु
+	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+	u8 bc_addr[ETH_ALEN] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
 
-	return rtw_get_stainfo(pstapriv, bc_addr);
-}
+	वापस rtw_get_stainfo(pstapriv, bc_addr);
+पूर्ण
 
-bool rtw_access_ctrl(struct adapter *padapter, u8 *mac_addr)
-{
+bool rtw_access_ctrl(काष्ठा adapter *padapter, u8 *mac_addr)
+अणु
 	bool res = true;
-#ifdef CONFIG_88EU_AP_MODE
-	struct list_head *plist, *phead;
-	struct rtw_wlan_acl_node *paclnode;
+#अगर_घोषित CONFIG_88EU_AP_MODE
+	काष्ठा list_head *plist, *phead;
+	काष्ठा rtw_wlan_acl_node *paclnode;
 	bool match = false;
-	struct sta_priv *pstapriv = &padapter->stapriv;
-	struct wlan_acl_pool *pacl_list = &pstapriv->acl_list;
-	struct __queue *pacl_node_q = &pacl_list->acl_node_q;
+	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+	काष्ठा wlan_acl_pool *pacl_list = &pstapriv->acl_list;
+	काष्ठा __queue *pacl_node_q = &pacl_list->acl_node_q;
 
 	spin_lock_bh(&pacl_node_q->lock);
 	phead = get_list_head(pacl_node_q);
 	plist = phead->next;
-	while (phead != plist) {
-		paclnode = container_of(plist, struct rtw_wlan_acl_node, list);
+	जबतक (phead != plist) अणु
+		paclnode = container_of(plist, काष्ठा rtw_wlan_acl_node, list);
 		plist = plist->next;
 
-		if (!memcmp(paclnode->addr, mac_addr, ETH_ALEN)) {
-			if (paclnode->valid) {
+		अगर (!स_भेद(paclnode->addr, mac_addr, ETH_ALEN)) अणु
+			अगर (paclnode->valid) अणु
 				match = true;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&pacl_node_q->lock);
 
-	if (pacl_list->mode == 1)/* accept unless in deny list */
+	अगर (pacl_list->mode == 1)/* accept unless in deny list */
 		res = !match;
-	else if (pacl_list->mode == 2)/* deny unless in accept list */
+	अन्यथा अगर (pacl_list->mode == 2)/* deny unless in accept list */
 		res = match;
-	else
+	अन्यथा
 		res = true;
 
-#endif
+#पूर्ण_अगर
 
-	return res;
-}
+	वापस res;
+पूर्ण

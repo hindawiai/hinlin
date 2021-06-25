@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * remote processor messaging bus
  *
@@ -9,16 +10,16 @@
  * Brian Swetland <swetland@google.com>
  */
 
-#define pr_fmt(fmt) "%s: " fmt, __func__
+#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/rpmsg.h>
-#include <linux/of_device.h>
-#include <linux/pm_domain.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/rpmsg.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/slab.h>
 
-#include "rpmsg_internal.h"
+#समावेश "rpmsg_internal.h"
 
 /**
  * rpmsg_create_channel() - create a new rpmsg channel
@@ -26,20 +27,20 @@
  * @rpdev: rpmsg device
  * @chinfo: channel_info to bind
  *
- * Returns a pointer to the new rpmsg device on success, or NULL on error.
+ * Returns a poपूर्णांकer to the new rpmsg device on success, or शून्य on error.
  */
-struct rpmsg_device *rpmsg_create_channel(struct rpmsg_device *rpdev,
-					  struct rpmsg_channel_info *chinfo)
-{
-	if (WARN_ON(!rpdev))
-		return NULL;
-	if (!rpdev->ops || !rpdev->ops->create_channel) {
+काष्ठा rpmsg_device *rpmsg_create_channel(काष्ठा rpmsg_device *rpdev,
+					  काष्ठा rpmsg_channel_info *chinfo)
+अणु
+	अगर (WARN_ON(!rpdev))
+		वापस शून्य;
+	अगर (!rpdev->ops || !rpdev->ops->create_channel) अणु
 		dev_err(&rpdev->dev, "no create_channel ops found\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return rpdev->ops->create_channel(rpdev, chinfo);
-}
+	वापस rpdev->ops->create_channel(rpdev, chinfo);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_create_channel);
 
 /**
@@ -50,147 +51,147 @@ EXPORT_SYMBOL(rpmsg_create_channel);
  *
  * Returns 0 on success or an appropriate error value.
  */
-int rpmsg_release_channel(struct rpmsg_device *rpdev,
-			  struct rpmsg_channel_info *chinfo)
-{
-	if (WARN_ON(!rpdev))
-		return -EINVAL;
-	if (!rpdev->ops || !rpdev->ops->release_channel) {
+पूर्णांक rpmsg_release_channel(काष्ठा rpmsg_device *rpdev,
+			  काष्ठा rpmsg_channel_info *chinfo)
+अणु
+	अगर (WARN_ON(!rpdev))
+		वापस -EINVAL;
+	अगर (!rpdev->ops || !rpdev->ops->release_channel) अणु
 		dev_err(&rpdev->dev, "no release_channel ops found\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	return rpdev->ops->release_channel(rpdev, chinfo);
-}
+	वापस rpdev->ops->release_channel(rpdev, chinfo);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_release_channel);
 
 /**
- * rpmsg_create_ept() - create a new rpmsg_endpoint
+ * rpmsg_create_ept() - create a new rpmsg_endpoपूर्णांक
  * @rpdev: rpmsg channel device
  * @cb: rx callback handler
- * @priv: private data for the driver's use
+ * @priv: निजी data क्रम the driver's use
  * @chinfo: channel_info with the local rpmsg address to bind with @cb
  *
- * Every rpmsg address in the system is bound to an rx callback (so when
+ * Every rpmsg address in the प्रणाली is bound to an rx callback (so when
  * inbound messages arrive, they are dispatched by the rpmsg bus using the
- * appropriate callback handler) by means of an rpmsg_endpoint struct.
+ * appropriate callback handler) by means of an rpmsg_endpoपूर्णांक काष्ठा.
  *
- * This function allows drivers to create such an endpoint, and by that,
- * bind a callback, and possibly some private data too, to an rpmsg address
+ * This function allows drivers to create such an endpoपूर्णांक, and by that,
+ * bind a callback, and possibly some निजी data too, to an rpmsg address
  * (either one that is known in advance, or one that will be dynamically
- * assigned for them).
+ * asचिन्हित क्रम them).
  *
- * Simple rpmsg drivers need not call rpmsg_create_ept, because an endpoint
- * is already created for them when they are probed by the rpmsg bus
- * (using the rx callback provided when they registered to the rpmsg bus).
+ * Simple rpmsg drivers need not call rpmsg_create_ept, because an endpoपूर्णांक
+ * is alपढ़ोy created क्रम them when they are probed by the rpmsg bus
+ * (using the rx callback provided when they रेजिस्टरed to the rpmsg bus).
  *
- * So things should just work for simple drivers: they already have an
- * endpoint, their rx callback is bound to their rpmsg address, and when
+ * So things should just work क्रम simple drivers: they alपढ़ोy have an
+ * endpoपूर्णांक, their rx callback is bound to their rpmsg address, and when
  * relevant inbound messages arrive (i.e. messages which their dst address
  * equals to the src address of their rpmsg channel), the driver's handler
  * is invoked to process it.
  *
  * That said, more complicated drivers might need to allocate
- * additional rpmsg addresses, and bind them to different rx callbacks.
+ * additional rpmsg addresses, and bind them to dअगरferent rx callbacks.
  * To accomplish that, those drivers need to call this function.
  *
- * Drivers should provide their @rpdev channel (so the new endpoint would belong
- * to the same remote processor their channel belongs to), an rx callback
- * function, an optional private data (which is provided back when the
+ * Drivers should provide their @rpdev channel (so the new endpoपूर्णांक would beदीर्घ
+ * to the same remote processor their channel beदीर्घs to), an rx callback
+ * function, an optional निजी data (which is provided back when the
  * rx callback is invoked), and an address they want to bind with the
  * callback. If @addr is RPMSG_ADDR_ANY, then rpmsg_create_ept will
  * dynamically assign them an available rpmsg address (drivers should have
  * a very good reason why not to always use RPMSG_ADDR_ANY here).
  *
- * Returns a pointer to the endpoint on success, or NULL on error.
+ * Returns a poपूर्णांकer to the endpoपूर्णांक on success, or शून्य on error.
  */
-struct rpmsg_endpoint *rpmsg_create_ept(struct rpmsg_device *rpdev,
-					rpmsg_rx_cb_t cb, void *priv,
-					struct rpmsg_channel_info chinfo)
-{
-	if (WARN_ON(!rpdev))
-		return NULL;
+काष्ठा rpmsg_endpoपूर्णांक *rpmsg_create_ept(काष्ठा rpmsg_device *rpdev,
+					rpmsg_rx_cb_t cb, व्योम *priv,
+					काष्ठा rpmsg_channel_info chinfo)
+अणु
+	अगर (WARN_ON(!rpdev))
+		वापस शून्य;
 
-	return rpdev->ops->create_ept(rpdev, cb, priv, chinfo);
-}
+	वापस rpdev->ops->create_ept(rpdev, cb, priv, chinfo);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_create_ept);
 
 /**
- * rpmsg_destroy_ept() - destroy an existing rpmsg endpoint
+ * rpmsg_destroy_ept() - destroy an existing rpmsg endpoपूर्णांक
  * @ept: endpoing to destroy
  *
- * Should be used by drivers to destroy an rpmsg endpoint previously
- * created with rpmsg_create_ept(). As with other types of "free" NULL
+ * Should be used by drivers to destroy an rpmsg endpoपूर्णांक previously
+ * created with rpmsg_create_ept(). As with other types of "free" शून्य
  * is a valid parameter.
  */
-void rpmsg_destroy_ept(struct rpmsg_endpoint *ept)
-{
-	if (ept && ept->ops)
+व्योम rpmsg_destroy_ept(काष्ठा rpmsg_endpoपूर्णांक *ept)
+अणु
+	अगर (ept && ept->ops)
 		ept->ops->destroy_ept(ept);
-}
+पूर्ण
 EXPORT_SYMBOL(rpmsg_destroy_ept);
 
 /**
  * rpmsg_send() - send a message across to the remote processor
- * @ept: the rpmsg endpoint
+ * @ept: the rpmsg endpoपूर्णांक
  * @data: payload of message
  * @len: length of payload
  *
- * This function sends @data of length @len on the @ept endpoint.
+ * This function sends @data of length @len on the @ept endpoपूर्णांक.
  * The message will be sent to the remote processor which the @ept
- * endpoint belongs to, using @ept's address and its associated rpmsg
+ * endpoपूर्णांक beदीर्घs to, using @ept's address and its associated rpmsg
  * device destination addresses.
- * In case there are no TX buffers available, the function will block until
- * one becomes available, or a timeout of 15 seconds elapses. When the latter
- * happens, -ERESTARTSYS is returned.
+ * In हाल there are no TX buffers available, the function will block until
+ * one becomes available, or a समयout of 15 seconds elapses. When the latter
+ * happens, -ERESTARTSYS is वापसed.
  *
- * Can only be called from process context (for now).
+ * Can only be called from process context (क्रम now).
  *
  * Returns 0 on success and an appropriate error value on failure.
  */
-int rpmsg_send(struct rpmsg_endpoint *ept, void *data, int len)
-{
-	if (WARN_ON(!ept))
-		return -EINVAL;
-	if (!ept->ops->send)
-		return -ENXIO;
+पूर्णांक rpmsg_send(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
+अणु
+	अगर (WARN_ON(!ept))
+		वापस -EINVAL;
+	अगर (!ept->ops->send)
+		वापस -ENXIO;
 
-	return ept->ops->send(ept, data, len);
-}
+	वापस ept->ops->send(ept, data, len);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_send);
 
 /**
- * rpmsg_sendto() - send a message across to the remote processor, specify dst
- * @ept: the rpmsg endpoint
+ * rpmsg_sendto() - send a message across to the remote processor, specअगरy dst
+ * @ept: the rpmsg endpoपूर्णांक
  * @data: payload of message
  * @len: length of payload
  * @dst: destination address
  *
  * This function sends @data of length @len to the remote @dst address.
  * The message will be sent to the remote processor which the @ept
- * endpoint belongs to, using @ept's address as source.
- * In case there are no TX buffers available, the function will block until
- * one becomes available, or a timeout of 15 seconds elapses. When the latter
- * happens, -ERESTARTSYS is returned.
+ * endpoपूर्णांक beदीर्घs to, using @ept's address as source.
+ * In हाल there are no TX buffers available, the function will block until
+ * one becomes available, or a समयout of 15 seconds elapses. When the latter
+ * happens, -ERESTARTSYS is वापसed.
  *
- * Can only be called from process context (for now).
+ * Can only be called from process context (क्रम now).
  *
  * Returns 0 on success and an appropriate error value on failure.
  */
-int rpmsg_sendto(struct rpmsg_endpoint *ept, void *data, int len, u32 dst)
-{
-	if (WARN_ON(!ept))
-		return -EINVAL;
-	if (!ept->ops->sendto)
-		return -ENXIO;
+पूर्णांक rpmsg_sendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len, u32 dst)
+अणु
+	अगर (WARN_ON(!ept))
+		वापस -EINVAL;
+	अगर (!ept->ops->sendto)
+		वापस -ENXIO;
 
-	return ept->ops->sendto(ept, data, len, dst);
-}
+	वापस ept->ops->sendto(ept, data, len, dst);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_sendto);
 
 /**
  * rpmsg_send_offchannel() - send a message using explicit src/dst addresses
- * @ept: the rpmsg endpoint
+ * @ept: the rpmsg endpoपूर्णांक
  * @src: source address
  * @dst: destination address
  * @data: payload of message
@@ -199,106 +200,106 @@ EXPORT_SYMBOL(rpmsg_sendto);
  * This function sends @data of length @len to the remote @dst address,
  * and uses @src as the source address.
  * The message will be sent to the remote processor which the @ept
- * endpoint belongs to.
- * In case there are no TX buffers available, the function will block until
- * one becomes available, or a timeout of 15 seconds elapses. When the latter
- * happens, -ERESTARTSYS is returned.
+ * endpoपूर्णांक beदीर्घs to.
+ * In हाल there are no TX buffers available, the function will block until
+ * one becomes available, or a समयout of 15 seconds elapses. When the latter
+ * happens, -ERESTARTSYS is वापसed.
  *
- * Can only be called from process context (for now).
+ * Can only be called from process context (क्रम now).
  *
  * Returns 0 on success and an appropriate error value on failure.
  */
-int rpmsg_send_offchannel(struct rpmsg_endpoint *ept, u32 src, u32 dst,
-			  void *data, int len)
-{
-	if (WARN_ON(!ept))
-		return -EINVAL;
-	if (!ept->ops->send_offchannel)
-		return -ENXIO;
+पूर्णांक rpmsg_send_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src, u32 dst,
+			  व्योम *data, पूर्णांक len)
+अणु
+	अगर (WARN_ON(!ept))
+		वापस -EINVAL;
+	अगर (!ept->ops->send_offchannel)
+		वापस -ENXIO;
 
-	return ept->ops->send_offchannel(ept, src, dst, data, len);
-}
+	वापस ept->ops->send_offchannel(ept, src, dst, data, len);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_send_offchannel);
 
 /**
  * rpmsg_trysend() - send a message across to the remote processor
- * @ept: the rpmsg endpoint
+ * @ept: the rpmsg endpoपूर्णांक
  * @data: payload of message
  * @len: length of payload
  *
- * This function sends @data of length @len on the @ept endpoint.
+ * This function sends @data of length @len on the @ept endpoपूर्णांक.
  * The message will be sent to the remote processor which the @ept
- * endpoint belongs to, using @ept's address as source and its associated
+ * endpoपूर्णांक beदीर्घs to, using @ept's address as source and its associated
  * rpdev's address as destination.
- * In case there are no TX buffers available, the function will immediately
- * return -ENOMEM without waiting until one becomes available.
+ * In हाल there are no TX buffers available, the function will immediately
+ * वापस -ENOMEM without रुकोing until one becomes available.
  *
- * Can only be called from process context (for now).
+ * Can only be called from process context (क्रम now).
  *
  * Returns 0 on success and an appropriate error value on failure.
  */
-int rpmsg_trysend(struct rpmsg_endpoint *ept, void *data, int len)
-{
-	if (WARN_ON(!ept))
-		return -EINVAL;
-	if (!ept->ops->trysend)
-		return -ENXIO;
+पूर्णांक rpmsg_trysend(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
+अणु
+	अगर (WARN_ON(!ept))
+		वापस -EINVAL;
+	अगर (!ept->ops->trysend)
+		वापस -ENXIO;
 
-	return ept->ops->trysend(ept, data, len);
-}
+	वापस ept->ops->trysend(ept, data, len);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_trysend);
 
 /**
- * rpmsg_trysendto() - send a message across to the remote processor, specify dst
- * @ept: the rpmsg endpoint
+ * rpmsg_trysendto() - send a message across to the remote processor, specअगरy dst
+ * @ept: the rpmsg endpoपूर्णांक
  * @data: payload of message
  * @len: length of payload
  * @dst: destination address
  *
  * This function sends @data of length @len to the remote @dst address.
  * The message will be sent to the remote processor which the @ept
- * endpoint belongs to, using @ept's address as source.
- * In case there are no TX buffers available, the function will immediately
- * return -ENOMEM without waiting until one becomes available.
+ * endpoपूर्णांक beदीर्घs to, using @ept's address as source.
+ * In हाल there are no TX buffers available, the function will immediately
+ * वापस -ENOMEM without रुकोing until one becomes available.
  *
- * Can only be called from process context (for now).
+ * Can only be called from process context (क्रम now).
  *
  * Returns 0 on success and an appropriate error value on failure.
  */
-int rpmsg_trysendto(struct rpmsg_endpoint *ept, void *data, int len, u32 dst)
-{
-	if (WARN_ON(!ept))
-		return -EINVAL;
-	if (!ept->ops->trysendto)
-		return -ENXIO;
+पूर्णांक rpmsg_trysendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len, u32 dst)
+अणु
+	अगर (WARN_ON(!ept))
+		वापस -EINVAL;
+	अगर (!ept->ops->trysendto)
+		वापस -ENXIO;
 
-	return ept->ops->trysendto(ept, data, len, dst);
-}
+	वापस ept->ops->trysendto(ept, data, len, dst);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_trysendto);
 
 /**
- * rpmsg_poll() - poll the endpoint's send buffers
- * @ept:	the rpmsg endpoint
- * @filp:	file for poll_wait()
- * @wait:	poll_table for poll_wait()
+ * rpmsg_poll() - poll the endpoपूर्णांक's send buffers
+ * @ept:	the rpmsg endpoपूर्णांक
+ * @filp:	file क्रम poll_रुको()
+ * @रुको:	poll_table क्रम poll_रुको()
  *
- * Returns mask representing the current state of the endpoint's send buffers
+ * Returns mask representing the current state of the endpoपूर्णांक's send buffers
  */
-__poll_t rpmsg_poll(struct rpmsg_endpoint *ept, struct file *filp,
-			poll_table *wait)
-{
-	if (WARN_ON(!ept))
-		return 0;
-	if (!ept->ops->poll)
-		return 0;
+__poll_t rpmsg_poll(काष्ठा rpmsg_endpoपूर्णांक *ept, काष्ठा file *filp,
+			poll_table *रुको)
+अणु
+	अगर (WARN_ON(!ept))
+		वापस 0;
+	अगर (!ept->ops->poll)
+		वापस 0;
 
-	return ept->ops->poll(ept, filp, wait);
-}
+	वापस ept->ops->poll(ept, filp, रुको);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_poll);
 
 /**
  * rpmsg_trysend_offchannel() - send a message using explicit src/dst addresses
- * @ept: the rpmsg endpoint
+ * @ept: the rpmsg endpoपूर्णांक
  * @src: source address
  * @dst: destination address
  * @data: payload of message
@@ -307,342 +308,342 @@ EXPORT_SYMBOL(rpmsg_poll);
  * This function sends @data of length @len to the remote @dst address,
  * and uses @src as the source address.
  * The message will be sent to the remote processor which the @ept
- * endpoint belongs to.
- * In case there are no TX buffers available, the function will immediately
- * return -ENOMEM without waiting until one becomes available.
+ * endpoपूर्णांक beदीर्घs to.
+ * In हाल there are no TX buffers available, the function will immediately
+ * वापस -ENOMEM without रुकोing until one becomes available.
  *
- * Can only be called from process context (for now).
+ * Can only be called from process context (क्रम now).
  *
  * Returns 0 on success and an appropriate error value on failure.
  */
-int rpmsg_trysend_offchannel(struct rpmsg_endpoint *ept, u32 src, u32 dst,
-			     void *data, int len)
-{
-	if (WARN_ON(!ept))
-		return -EINVAL;
-	if (!ept->ops->trysend_offchannel)
-		return -ENXIO;
+पूर्णांक rpmsg_trysend_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src, u32 dst,
+			     व्योम *data, पूर्णांक len)
+अणु
+	अगर (WARN_ON(!ept))
+		वापस -EINVAL;
+	अगर (!ept->ops->trysend_offchannel)
+		वापस -ENXIO;
 
-	return ept->ops->trysend_offchannel(ept, src, dst, data, len);
-}
+	वापस ept->ops->trysend_offchannel(ept, src, dst, data, len);
+पूर्ण
 EXPORT_SYMBOL(rpmsg_trysend_offchannel);
 
 /*
- * match a rpmsg channel with a channel info struct.
- * this is used to make sure we're not creating rpmsg devices for channels
- * that already exist.
+ * match a rpmsg channel with a channel info काष्ठा.
+ * this is used to make sure we're not creating rpmsg devices क्रम channels
+ * that alपढ़ोy exist.
  */
-static int rpmsg_device_match(struct device *dev, void *data)
-{
-	struct rpmsg_channel_info *chinfo = data;
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
+अटल पूर्णांक rpmsg_device_match(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा rpmsg_channel_info *chinfo = data;
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
 
-	if (chinfo->src != RPMSG_ADDR_ANY && chinfo->src != rpdev->src)
-		return 0;
+	अगर (chinfo->src != RPMSG_ADDR_ANY && chinfo->src != rpdev->src)
+		वापस 0;
 
-	if (chinfo->dst != RPMSG_ADDR_ANY && chinfo->dst != rpdev->dst)
-		return 0;
+	अगर (chinfo->dst != RPMSG_ADDR_ANY && chinfo->dst != rpdev->dst)
+		वापस 0;
 
-	if (strncmp(chinfo->name, rpdev->id.name, RPMSG_NAME_SIZE))
-		return 0;
+	अगर (म_भेदन(chinfo->name, rpdev->id.name, RPMSG_NAME_SIZE))
+		वापस 0;
 
 	/* found a match ! */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-struct device *rpmsg_find_device(struct device *parent,
-				 struct rpmsg_channel_info *chinfo)
-{
-	return device_find_child(parent, chinfo, rpmsg_device_match);
+काष्ठा device *rpmsg_find_device(काष्ठा device *parent,
+				 काष्ठा rpmsg_channel_info *chinfo)
+अणु
+	वापस device_find_child(parent, chinfo, rpmsg_device_match);
 
-}
+पूर्ण
 EXPORT_SYMBOL(rpmsg_find_device);
 
 /* sysfs show configuration fields */
-#define rpmsg_show_attr(field, path, format_string)			\
-static ssize_t								\
-field##_show(struct device *dev,					\
-			struct device_attribute *attr, char *buf)	\
-{									\
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);		\
+#घोषणा rpmsg_show_attr(field, path, क्रमmat_string)			\
+अटल sमाप_प्रकार								\
+field##_show(काष्ठा device *dev,					\
+			काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु									\
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);		\
 									\
-	return sprintf(buf, format_string, rpdev->path);		\
-}									\
-static DEVICE_ATTR_RO(field);
+	वापस प्र_लिखो(buf, क्रमmat_string, rpdev->path);		\
+पूर्ण									\
+अटल DEVICE_ATTR_RO(field);
 
-#define rpmsg_string_attr(field, member)				\
-static ssize_t								\
-field##_store(struct device *dev, struct device_attribute *attr,	\
-	      const char *buf, size_t sz)				\
-{									\
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);		\
-	char *new, *old;						\
+#घोषणा rpmsg_string_attr(field, member)				\
+अटल sमाप_प्रकार								\
+field##_store(काष्ठा device *dev, काष्ठा device_attribute *attr,	\
+	      स्थिर अक्षर *buf, माप_प्रकार sz)				\
+अणु									\
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);		\
+	अक्षर *new, *old;						\
 									\
 	new = kstrndup(buf, sz, GFP_KERNEL);				\
-	if (!new)							\
-		return -ENOMEM;						\
-	new[strcspn(new, "\n")] = '\0';					\
+	अगर (!new)							\
+		वापस -ENOMEM;						\
+	new[म_खोज(new, "\n")] = '\0';					\
 									\
 	device_lock(dev);						\
 	old = rpdev->member;						\
-	if (strlen(new)) {						\
+	अगर (म_माप(new)) अणु						\
 		rpdev->member = new;					\
-	} else {							\
-		kfree(new);						\
-		rpdev->member = NULL;					\
-	}								\
+	पूर्ण अन्यथा अणु							\
+		kमुक्त(new);						\
+		rpdev->member = शून्य;					\
+	पूर्ण								\
 	device_unlock(dev);						\
 									\
-	kfree(old);							\
+	kमुक्त(old);							\
 									\
-	return sz;							\
-}									\
-static ssize_t								\
-field##_show(struct device *dev,					\
-	     struct device_attribute *attr, char *buf)			\
-{									\
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);		\
+	वापस sz;							\
+पूर्ण									\
+अटल sमाप_प्रकार								\
+field##_show(काष्ठा device *dev,					\
+	     काष्ठा device_attribute *attr, अक्षर *buf)			\
+अणु									\
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);		\
 									\
-	return sprintf(buf, "%s\n", rpdev->member);			\
-}									\
-static DEVICE_ATTR_RW(field)
+	वापस प्र_लिखो(buf, "%s\n", rpdev->member);			\
+पूर्ण									\
+अटल DEVICE_ATTR_RW(field)
 
-/* for more info, see Documentation/ABI/testing/sysfs-bus-rpmsg */
+/* क्रम more info, see Documentation/ABI/testing/sysfs-bus-rpmsg */
 rpmsg_show_attr(name, id.name, "%s\n");
 rpmsg_show_attr(src, src, "0x%x\n");
 rpmsg_show_attr(dst, dst, "0x%x\n");
 rpmsg_show_attr(announce, announce ? "true" : "false", "%s\n");
 rpmsg_string_attr(driver_override, driver_override);
 
-static ssize_t modalias_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
-	ssize_t len;
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
+	sमाप_प्रकार len;
 
 	len = of_device_modalias(dev, buf, PAGE_SIZE);
-	if (len != -ENODEV)
-		return len;
+	अगर (len != -ENODEV)
+		वापस len;
 
-	return sprintf(buf, RPMSG_DEVICE_MODALIAS_FMT "\n", rpdev->id.name);
-}
-static DEVICE_ATTR_RO(modalias);
+	वापस प्र_लिखो(buf, RPMSG_DEVICE_MODALIAS_FMT "\n", rpdev->id.name);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static struct attribute *rpmsg_dev_attrs[] = {
+अटल काष्ठा attribute *rpmsg_dev_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_modalias.attr,
 	&dev_attr_dst.attr,
 	&dev_attr_src.attr,
 	&dev_attr_announce.attr,
 	&dev_attr_driver_override.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(rpmsg_dev);
 
 /* rpmsg devices and drivers are matched using the service name */
-static inline int rpmsg_id_match(const struct rpmsg_device *rpdev,
-				  const struct rpmsg_device_id *id)
-{
-	return strncmp(id->name, rpdev->id.name, RPMSG_NAME_SIZE) == 0;
-}
+अटल अंतरभूत पूर्णांक rpmsg_id_match(स्थिर काष्ठा rpmsg_device *rpdev,
+				  स्थिर काष्ठा rpmsg_device_id *id)
+अणु
+	वापस म_भेदन(id->name, rpdev->id.name, RPMSG_NAME_SIZE) == 0;
+पूर्ण
 
 /* match rpmsg channel and rpmsg driver */
-static int rpmsg_dev_match(struct device *dev, struct device_driver *drv)
-{
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
-	struct rpmsg_driver *rpdrv = to_rpmsg_driver(drv);
-	const struct rpmsg_device_id *ids = rpdrv->id_table;
-	unsigned int i;
+अटल पूर्णांक rpmsg_dev_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
+	काष्ठा rpmsg_driver *rpdrv = to_rpmsg_driver(drv);
+	स्थिर काष्ठा rpmsg_device_id *ids = rpdrv->id_table;
+	अचिन्हित पूर्णांक i;
 
-	if (rpdev->driver_override)
-		return !strcmp(rpdev->driver_override, drv->name);
+	अगर (rpdev->driver_override)
+		वापस !म_भेद(rpdev->driver_override, drv->name);
 
-	if (ids)
-		for (i = 0; ids[i].name[0]; i++)
-			if (rpmsg_id_match(rpdev, &ids[i]))
-				return 1;
+	अगर (ids)
+		क्रम (i = 0; ids[i].name[0]; i++)
+			अगर (rpmsg_id_match(rpdev, &ids[i]))
+				वापस 1;
 
-	return of_driver_match_device(dev, drv);
-}
+	वापस of_driver_match_device(dev, drv);
+पूर्ण
 
-static int rpmsg_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
-	int ret;
+अटल पूर्णांक rpmsg_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
+	पूर्णांक ret;
 
 	ret = of_device_uevent_modalias(dev, env);
-	if (ret != -ENODEV)
-		return ret;
+	अगर (ret != -ENODEV)
+		वापस ret;
 
-	return add_uevent_var(env, "MODALIAS=" RPMSG_DEVICE_MODALIAS_FMT,
+	वापस add_uevent_var(env, "MODALIAS=" RPMSG_DEVICE_MODALIAS_FMT,
 					rpdev->id.name);
-}
+पूर्ण
 
 /*
  * when an rpmsg driver is probed with a channel, we seamlessly create
- * it an endpoint, binding its rx callback to a unique local rpmsg
+ * it an endpoपूर्णांक, binding its rx callback to a unique local rpmsg
  * address.
  *
- * if we need to, we also announce about this channel to the remote
- * processor (needed in case the driver is exposing an rpmsg service).
+ * अगर we need to, we also announce about this channel to the remote
+ * processor (needed in हाल the driver is exposing an rpmsg service).
  */
-static int rpmsg_dev_probe(struct device *dev)
-{
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
-	struct rpmsg_driver *rpdrv = to_rpmsg_driver(rpdev->dev.driver);
-	struct rpmsg_channel_info chinfo = {};
-	struct rpmsg_endpoint *ept = NULL;
-	int err;
+अटल पूर्णांक rpmsg_dev_probe(काष्ठा device *dev)
+अणु
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
+	काष्ठा rpmsg_driver *rpdrv = to_rpmsg_driver(rpdev->dev.driver);
+	काष्ठा rpmsg_channel_info chinfo = अणुपूर्ण;
+	काष्ठा rpmsg_endpoपूर्णांक *ept = शून्य;
+	पूर्णांक err;
 
-	err = dev_pm_domain_attach(dev, true);
-	if (err)
-		goto out;
+	err = dev_pm_करोमुख्य_attach(dev, true);
+	अगर (err)
+		जाओ out;
 
-	if (rpdrv->callback) {
-		strncpy(chinfo.name, rpdev->id.name, RPMSG_NAME_SIZE);
+	अगर (rpdrv->callback) अणु
+		म_नकलन(chinfo.name, rpdev->id.name, RPMSG_NAME_SIZE);
 		chinfo.src = rpdev->src;
 		chinfo.dst = RPMSG_ADDR_ANY;
 
-		ept = rpmsg_create_ept(rpdev, rpdrv->callback, NULL, chinfo);
-		if (!ept) {
+		ept = rpmsg_create_ept(rpdev, rpdrv->callback, शून्य, chinfo);
+		अगर (!ept) अणु
 			dev_err(dev, "failed to create endpoint\n");
 			err = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		rpdev->ept = ept;
 		rpdev->src = ept->addr;
-	}
+	पूर्ण
 
 	err = rpdrv->probe(rpdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "%s: failed: %d\n", __func__, err);
-		if (ept)
+		अगर (ept)
 			rpmsg_destroy_ept(ept);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ept && rpdev->ops->announce_create)
+	अगर (ept && rpdev->ops->announce_create)
 		err = rpdev->ops->announce_create(rpdev);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rpmsg_dev_remove(struct device *dev)
-{
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
-	struct rpmsg_driver *rpdrv = to_rpmsg_driver(rpdev->dev.driver);
-	int err = 0;
+अटल पूर्णांक rpmsg_dev_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
+	काष्ठा rpmsg_driver *rpdrv = to_rpmsg_driver(rpdev->dev.driver);
+	पूर्णांक err = 0;
 
-	if (rpdev->ops->announce_destroy)
+	अगर (rpdev->ops->announce_destroy)
 		err = rpdev->ops->announce_destroy(rpdev);
 
-	if (rpdrv->remove)
-		rpdrv->remove(rpdev);
+	अगर (rpdrv->हटाओ)
+		rpdrv->हटाओ(rpdev);
 
-	dev_pm_domain_detach(dev, true);
+	dev_pm_करोमुख्य_detach(dev, true);
 
-	if (rpdev->ept)
+	अगर (rpdev->ept)
 		rpmsg_destroy_ept(rpdev->ept);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct bus_type rpmsg_bus = {
+अटल काष्ठा bus_type rpmsg_bus = अणु
 	.name		= "rpmsg",
 	.match		= rpmsg_dev_match,
 	.dev_groups	= rpmsg_dev_groups,
 	.uevent		= rpmsg_uevent,
 	.probe		= rpmsg_dev_probe,
-	.remove		= rpmsg_dev_remove,
-};
+	.हटाओ		= rpmsg_dev_हटाओ,
+पूर्ण;
 
-int rpmsg_register_device(struct rpmsg_device *rpdev)
-{
-	struct device *dev = &rpdev->dev;
-	int ret;
+पूर्णांक rpmsg_रेजिस्टर_device(काष्ठा rpmsg_device *rpdev)
+अणु
+	काष्ठा device *dev = &rpdev->dev;
+	पूर्णांक ret;
 
 	dev_set_name(&rpdev->dev, "%s.%s.%d.%d", dev_name(dev->parent),
 		     rpdev->id.name, rpdev->src, rpdev->dst);
 
 	rpdev->dev.bus = &rpmsg_bus;
 
-	ret = device_register(&rpdev->dev);
-	if (ret) {
+	ret = device_रेजिस्टर(&rpdev->dev);
+	अगर (ret) अणु
 		dev_err(dev, "device_register failed: %d\n", ret);
 		put_device(&rpdev->dev);
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(rpmsg_register_device);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(rpmsg_रेजिस्टर_device);
 
 /*
  * find an existing channel using its name + address properties,
  * and destroy it
  */
-int rpmsg_unregister_device(struct device *parent,
-			    struct rpmsg_channel_info *chinfo)
-{
-	struct device *dev;
+पूर्णांक rpmsg_unरेजिस्टर_device(काष्ठा device *parent,
+			    काष्ठा rpmsg_channel_info *chinfo)
+अणु
+	काष्ठा device *dev;
 
 	dev = rpmsg_find_device(parent, chinfo);
-	if (!dev)
-		return -EINVAL;
+	अगर (!dev)
+		वापस -EINVAL;
 
-	device_unregister(dev);
+	device_unरेजिस्टर(dev);
 
 	put_device(dev);
 
-	return 0;
-}
-EXPORT_SYMBOL(rpmsg_unregister_device);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(rpmsg_unरेजिस्टर_device);
 
 /**
- * __register_rpmsg_driver() - register an rpmsg driver with the rpmsg bus
- * @rpdrv: pointer to a struct rpmsg_driver
+ * __रेजिस्टर_rpmsg_driver() - रेजिस्टर an rpmsg driver with the rpmsg bus
+ * @rpdrv: poपूर्णांकer to a काष्ठा rpmsg_driver
  * @owner: owning module/driver
  *
  * Returns 0 on success, and an appropriate error value on failure.
  */
-int __register_rpmsg_driver(struct rpmsg_driver *rpdrv, struct module *owner)
-{
+पूर्णांक __रेजिस्टर_rpmsg_driver(काष्ठा rpmsg_driver *rpdrv, काष्ठा module *owner)
+अणु
 	rpdrv->drv.bus = &rpmsg_bus;
 	rpdrv->drv.owner = owner;
-	return driver_register(&rpdrv->drv);
-}
-EXPORT_SYMBOL(__register_rpmsg_driver);
+	वापस driver_रेजिस्टर(&rpdrv->drv);
+पूर्ण
+EXPORT_SYMBOL(__रेजिस्टर_rpmsg_driver);
 
 /**
- * unregister_rpmsg_driver() - unregister an rpmsg driver from the rpmsg bus
- * @rpdrv: pointer to a struct rpmsg_driver
+ * unरेजिस्टर_rpmsg_driver() - unरेजिस्टर an rpmsg driver from the rpmsg bus
+ * @rpdrv: poपूर्णांकer to a काष्ठा rpmsg_driver
  *
  * Returns 0 on success, and an appropriate error value on failure.
  */
-void unregister_rpmsg_driver(struct rpmsg_driver *rpdrv)
-{
-	driver_unregister(&rpdrv->drv);
-}
-EXPORT_SYMBOL(unregister_rpmsg_driver);
+व्योम unरेजिस्टर_rpmsg_driver(काष्ठा rpmsg_driver *rpdrv)
+अणु
+	driver_unरेजिस्टर(&rpdrv->drv);
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_rpmsg_driver);
 
 
-static int __init rpmsg_init(void)
-{
-	int ret;
+अटल पूर्णांक __init rpmsg_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = bus_register(&rpmsg_bus);
-	if (ret)
+	ret = bus_रेजिस्टर(&rpmsg_bus);
+	अगर (ret)
 		pr_err("failed to register rpmsg bus: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 postcore_initcall(rpmsg_init);
 
-static void __exit rpmsg_fini(void)
-{
-	bus_unregister(&rpmsg_bus);
-}
-module_exit(rpmsg_fini);
+अटल व्योम __निकास rpmsg_fini(व्योम)
+अणु
+	bus_unरेजिस्टर(&rpmsg_bus);
+पूर्ण
+module_निकास(rpmsg_fini);
 
 MODULE_DESCRIPTION("remote processor messaging bus");
 MODULE_LICENSE("GPL v2");

@@ -1,109 +1,110 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_STACKTRACE_H
-#define __LINUX_STACKTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_STACKTRACE_H
+#घोषणा __LINUX_STACKTRACE_H
 
-#include <linux/types.h>
-#include <asm/errno.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/त्रुटिसं.स>
 
-struct task_struct;
-struct pt_regs;
+काष्ठा task_काष्ठा;
+काष्ठा pt_regs;
 
-#ifdef CONFIG_STACKTRACE
-void stack_trace_print(const unsigned long *trace, unsigned int nr_entries,
-		       int spaces);
-int stack_trace_snprint(char *buf, size_t size, const unsigned long *entries,
-			unsigned int nr_entries, int spaces);
-unsigned int stack_trace_save(unsigned long *store, unsigned int size,
-			      unsigned int skipnr);
-unsigned int stack_trace_save_tsk(struct task_struct *task,
-				  unsigned long *store, unsigned int size,
-				  unsigned int skipnr);
-unsigned int stack_trace_save_regs(struct pt_regs *regs, unsigned long *store,
-				   unsigned int size, unsigned int skipnr);
-unsigned int stack_trace_save_user(unsigned long *store, unsigned int size);
+#अगर_घोषित CONFIG_STACKTRACE
+व्योम stack_trace_prपूर्णांक(स्थिर अचिन्हित दीर्घ *trace, अचिन्हित पूर्णांक nr_entries,
+		       पूर्णांक spaces);
+पूर्णांक stack_trace_snprपूर्णांक(अक्षर *buf, माप_प्रकार size, स्थिर अचिन्हित दीर्घ *entries,
+			अचिन्हित पूर्णांक nr_entries, पूर्णांक spaces);
+अचिन्हित पूर्णांक stack_trace_save(अचिन्हित दीर्घ *store, अचिन्हित पूर्णांक size,
+			      अचिन्हित पूर्णांक skipnr);
+अचिन्हित पूर्णांक stack_trace_save_tsk(काष्ठा task_काष्ठा *task,
+				  अचिन्हित दीर्घ *store, अचिन्हित पूर्णांक size,
+				  अचिन्हित पूर्णांक skipnr);
+अचिन्हित पूर्णांक stack_trace_save_regs(काष्ठा pt_regs *regs, अचिन्हित दीर्घ *store,
+				   अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक skipnr);
+अचिन्हित पूर्णांक stack_trace_save_user(अचिन्हित दीर्घ *store, अचिन्हित पूर्णांक size);
 
-/* Internal interfaces. Do not use in generic code */
-#ifdef CONFIG_ARCH_STACKWALK
+/* Internal पूर्णांकerfaces. Do not use in generic code */
+#अगर_घोषित CONFIG_ARCH_STACKWALK
 
 /**
- * stack_trace_consume_fn - Callback for arch_stack_walk()
- * @cookie:	Caller supplied pointer handed back by arch_stack_walk()
+ * stack_trace_consume_fn - Callback क्रम arch_stack_walk()
+ * @cookie:	Caller supplied poपूर्णांकer handed back by arch_stack_walk()
  * @addr:	The stack entry address to consume
  *
- * Return:	True, if the entry was consumed or skipped
- *		False, if there is no space left to store
+ * Return:	True, अगर the entry was consumed or skipped
+ *		False, अगर there is no space left to store
  */
-typedef bool (*stack_trace_consume_fn)(void *cookie, unsigned long addr);
+प्रकार bool (*stack_trace_consume_fn)(व्योम *cookie, अचिन्हित दीर्घ addr);
 /**
- * arch_stack_walk - Architecture specific function to walk the stack
- * @consume_entry:	Callback which is invoked by the architecture code for
+ * arch_stack_walk - Architecture specअगरic function to walk the stack
+ * @consume_entry:	Callback which is invoked by the architecture code क्रम
  *			each entry.
- * @cookie:		Caller supplied pointer which is handed back to
+ * @cookie:		Caller supplied poपूर्णांकer which is handed back to
  *			@consume_entry
- * @task:		Pointer to a task struct, can be NULL
- * @regs:		Pointer to registers, can be NULL
+ * @task:		Poपूर्णांकer to a task काष्ठा, can be शून्य
+ * @regs:		Poपूर्णांकer to रेजिस्टरs, can be शून्य
  *
  * ============ ======= ============================================
  * task	        regs
  * ============ ======= ============================================
- * task		NULL	Stack trace from task (can be current)
- * current	regs	Stack trace starting on regs->stackpointer
+ * task		शून्य	Stack trace from task (can be current)
+ * current	regs	Stack trace starting on regs->stackpoपूर्णांकer
  * ============ ======= ============================================
  */
-void arch_stack_walk(stack_trace_consume_fn consume_entry, void *cookie,
-		     struct task_struct *task, struct pt_regs *regs);
+व्योम arch_stack_walk(stack_trace_consume_fn consume_entry, व्योम *cookie,
+		     काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs);
 
 /**
- * arch_stack_walk_reliable - Architecture specific function to walk the
+ * arch_stack_walk_reliable - Architecture specअगरic function to walk the
  *			      stack reliably
  *
- * @consume_entry:	Callback which is invoked by the architecture code for
+ * @consume_entry:	Callback which is invoked by the architecture code क्रम
  *			each entry.
- * @cookie:		Caller supplied pointer which is handed back to
+ * @cookie:		Caller supplied poपूर्णांकer which is handed back to
  *			@consume_entry
- * @task:		Pointer to a task struct, can be NULL
+ * @task:		Poपूर्णांकer to a task काष्ठा, can be शून्य
  *
- * This function returns an error if it detects any unreliable
+ * This function वापसs an error अगर it detects any unreliable
  * features of the stack. Otherwise it guarantees that the stack
  * trace is reliable.
  *
  * If the task is not 'current', the caller *must* ensure the task is
  * inactive and its stack is pinned.
  */
-int arch_stack_walk_reliable(stack_trace_consume_fn consume_entry, void *cookie,
-			     struct task_struct *task);
+पूर्णांक arch_stack_walk_reliable(stack_trace_consume_fn consume_entry, व्योम *cookie,
+			     काष्ठा task_काष्ठा *task);
 
-void arch_stack_walk_user(stack_trace_consume_fn consume_entry, void *cookie,
-			  const struct pt_regs *regs);
+व्योम arch_stack_walk_user(stack_trace_consume_fn consume_entry, व्योम *cookie,
+			  स्थिर काष्ठा pt_regs *regs);
 
-#else /* CONFIG_ARCH_STACKWALK */
-struct stack_trace {
-	unsigned int nr_entries, max_entries;
-	unsigned long *entries;
-	unsigned int skip;	/* input argument: How many entries to skip */
-};
+#अन्यथा /* CONFIG_ARCH_STACKWALK */
+काष्ठा stack_trace अणु
+	अचिन्हित पूर्णांक nr_entries, max_entries;
+	अचिन्हित दीर्घ *entries;
+	अचिन्हित पूर्णांक skip;	/* input argument: How many entries to skip */
+पूर्ण;
 
-extern void save_stack_trace(struct stack_trace *trace);
-extern void save_stack_trace_regs(struct pt_regs *regs,
-				  struct stack_trace *trace);
-extern void save_stack_trace_tsk(struct task_struct *tsk,
-				struct stack_trace *trace);
-extern int save_stack_trace_tsk_reliable(struct task_struct *tsk,
-					 struct stack_trace *trace);
-extern void save_stack_trace_user(struct stack_trace *trace);
-#endif /* !CONFIG_ARCH_STACKWALK */
-#endif /* CONFIG_STACKTRACE */
+बाह्य व्योम save_stack_trace(काष्ठा stack_trace *trace);
+बाह्य व्योम save_stack_trace_regs(काष्ठा pt_regs *regs,
+				  काष्ठा stack_trace *trace);
+बाह्य व्योम save_stack_trace_tsk(काष्ठा task_काष्ठा *tsk,
+				काष्ठा stack_trace *trace);
+बाह्य पूर्णांक save_stack_trace_tsk_reliable(काष्ठा task_काष्ठा *tsk,
+					 काष्ठा stack_trace *trace);
+बाह्य व्योम save_stack_trace_user(काष्ठा stack_trace *trace);
+#पूर्ण_अगर /* !CONFIG_ARCH_STACKWALK */
+#पूर्ण_अगर /* CONFIG_STACKTRACE */
 
-#if defined(CONFIG_STACKTRACE) && defined(CONFIG_HAVE_RELIABLE_STACKTRACE)
-int stack_trace_save_tsk_reliable(struct task_struct *tsk, unsigned long *store,
-				  unsigned int size);
-#else
-static inline int stack_trace_save_tsk_reliable(struct task_struct *tsk,
-						unsigned long *store,
-						unsigned int size)
-{
-	return -ENOSYS;
-}
-#endif
+#अगर defined(CONFIG_STACKTRACE) && defined(CONFIG_HAVE_RELIABLE_STACKTRACE)
+पूर्णांक stack_trace_save_tsk_reliable(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ *store,
+				  अचिन्हित पूर्णांक size);
+#अन्यथा
+अटल अंतरभूत पूर्णांक stack_trace_save_tsk_reliable(काष्ठा task_काष्ठा *tsk,
+						अचिन्हित दीर्घ *store,
+						अचिन्हित पूर्णांक size)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __LINUX_STACKTRACE_H */
+#पूर्ण_अगर /* __LINUX_STACKTRACE_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2005, 2012 IBM Corporation
  *
@@ -10,125 +11,125 @@
  *	Kylene Hall <kjhall@us.ibm.com>
  *	Nayna Jain <nayna@linux.vnet.ibm.com>
  *
- * Access to the event log created by a system's firmware / BIOS
+ * Access to the event log created by a प्रणाली's firmware / BIOS
  */
 
-#include <linux/seq_file.h>
-#include <linux/fs.h>
-#include <linux/security.h>
-#include <linux/module.h>
-#include <linux/tpm_eventlog.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/security.h>
+#समावेश <linux/module.h>
+#समावेश <linux/tpm_eventlog.h>
 
-#include "../tpm.h"
-#include "common.h"
+#समावेश "../tpm.h"
+#समावेश "common.h"
 
-static int tpm_bios_measurements_open(struct inode *inode,
-					    struct file *file)
-{
-	int err;
-	struct seq_file *seq;
-	struct tpm_chip_seqops *chip_seqops;
-	const struct seq_operations *seqops;
-	struct tpm_chip *chip;
+अटल पूर्णांक tpm_bios_measurements_खोलो(काष्ठा inode *inode,
+					    काष्ठा file *file)
+अणु
+	पूर्णांक err;
+	काष्ठा seq_file *seq;
+	काष्ठा tpm_chip_seqops *chip_seqops;
+	स्थिर काष्ठा seq_operations *seqops;
+	काष्ठा tpm_chip *chip;
 
 	inode_lock(inode);
-	if (!inode->i_private) {
+	अगर (!inode->i_निजी) अणु
 		inode_unlock(inode);
-		return -ENODEV;
-	}
-	chip_seqops = (struct tpm_chip_seqops *)inode->i_private;
+		वापस -ENODEV;
+	पूर्ण
+	chip_seqops = (काष्ठा tpm_chip_seqops *)inode->i_निजी;
 	seqops = chip_seqops->seqops;
 	chip = chip_seqops->chip;
 	get_device(&chip->dev);
 	inode_unlock(inode);
 
-	/* now register seq file */
-	err = seq_open(file, seqops);
-	if (!err) {
-		seq = file->private_data;
-		seq->private = chip;
-	}
+	/* now रेजिस्टर seq file */
+	err = seq_खोलो(file, seqops);
+	अगर (!err) अणु
+		seq = file->निजी_data;
+		seq->निजी = chip;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tpm_bios_measurements_release(struct inode *inode,
-					 struct file *file)
-{
-	struct seq_file *seq = (struct seq_file *)file->private_data;
-	struct tpm_chip *chip = (struct tpm_chip *)seq->private;
+अटल पूर्णांक tpm_bios_measurements_release(काष्ठा inode *inode,
+					 काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = (काष्ठा seq_file *)file->निजी_data;
+	काष्ठा tpm_chip *chip = (काष्ठा tpm_chip *)seq->निजी;
 
 	put_device(&chip->dev);
 
-	return seq_release(inode, file);
-}
+	वापस seq_release(inode, file);
+पूर्ण
 
-static const struct file_operations tpm_bios_measurements_ops = {
+अटल स्थिर काष्ठा file_operations tpm_bios_measurements_ops = अणु
 	.owner = THIS_MODULE,
-	.open = tpm_bios_measurements_open,
-	.read = seq_read,
+	.खोलो = tpm_bios_measurements_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = tpm_bios_measurements_release,
-};
+पूर्ण;
 
-static int tpm_read_log(struct tpm_chip *chip)
-{
-	int rc;
+अटल पूर्णांक tpm_पढ़ो_log(काष्ठा tpm_chip *chip)
+अणु
+	पूर्णांक rc;
 
-	if (chip->log.bios_event_log != NULL) {
+	अगर (chip->log.bios_event_log != शून्य) अणु
 		dev_dbg(&chip->dev,
 			"%s: ERROR - event log already initialized\n",
 			__func__);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	rc = tpm_read_log_acpi(chip);
-	if (rc != -ENODEV)
-		return rc;
+	rc = tpm_पढ़ो_log_acpi(chip);
+	अगर (rc != -ENODEV)
+		वापस rc;
 
-	rc = tpm_read_log_efi(chip);
-	if (rc != -ENODEV)
-		return rc;
+	rc = tpm_पढ़ो_log_efi(chip);
+	अगर (rc != -ENODEV)
+		वापस rc;
 
-	return tpm_read_log_of(chip);
-}
+	वापस tpm_पढ़ो_log_of(chip);
+पूर्ण
 
 /*
  * tpm_bios_log_setup() - Read the event log from the firmware
  * @chip: TPM chip to use.
  *
  * If an event log is found then the securityfs files are setup to
- * export it to userspace, otherwise nothing is done.
+ * export it to userspace, otherwise nothing is करोne.
  */
-void tpm_bios_log_setup(struct tpm_chip *chip)
-{
-	const char *name = dev_name(&chip->dev);
-	unsigned int cnt;
-	int log_version;
-	int rc = 0;
+व्योम tpm_bios_log_setup(काष्ठा tpm_chip *chip)
+अणु
+	स्थिर अक्षर *name = dev_name(&chip->dev);
+	अचिन्हित पूर्णांक cnt;
+	पूर्णांक log_version;
+	पूर्णांक rc = 0;
 
-	if (chip->flags & TPM_CHIP_FLAG_VIRTUAL)
-		return;
+	अगर (chip->flags & TPM_CHIP_FLAG_VIRTUAL)
+		वापस;
 
-	rc = tpm_read_log(chip);
-	if (rc < 0)
-		return;
+	rc = tpm_पढ़ो_log(chip);
+	अगर (rc < 0)
+		वापस;
 	log_version = rc;
 
 	cnt = 0;
-	chip->bios_dir[cnt] = securityfs_create_dir(name, NULL);
-	/* NOTE: securityfs_create_dir can return ENODEV if securityfs is
-	 * compiled out. The caller should ignore the ENODEV return code.
+	chip->bios_dir[cnt] = securityfs_create_dir(name, शून्य);
+	/* NOTE: securityfs_create_dir can वापस ENODEV अगर securityfs is
+	 * compiled out. The caller should ignore the ENODEV वापस code.
 	 */
-	if (IS_ERR(chip->bios_dir[cnt]))
-		goto err;
+	अगर (IS_ERR(chip->bios_dir[cnt]))
+		जाओ err;
 	cnt++;
 
 	chip->bin_log_seqops.chip = chip;
-	if (log_version == EFI_TCG2_EVENT_LOG_FORMAT_TCG_2)
+	अगर (log_version == EFI_TCG2_EVENT_LOG_FORMAT_TCG_2)
 		chip->bin_log_seqops.seqops =
 			&tpm2_binary_b_measurements_seqops;
-	else
+	अन्यथा
 		chip->bin_log_seqops.seqops =
 			&tpm1_binary_b_measurements_seqops;
 
@@ -136,13 +137,13 @@ void tpm_bios_log_setup(struct tpm_chip *chip)
 	chip->bios_dir[cnt] =
 	    securityfs_create_file("binary_bios_measurements",
 				   0440, chip->bios_dir[0],
-				   (void *)&chip->bin_log_seqops,
+				   (व्योम *)&chip->bin_log_seqops,
 				   &tpm_bios_measurements_ops);
-	if (IS_ERR(chip->bios_dir[cnt]))
-		goto err;
+	अगर (IS_ERR(chip->bios_dir[cnt]))
+		जाओ err;
 	cnt++;
 
-	if (!(chip->flags & TPM_CHIP_FLAG_TPM2)) {
+	अगर (!(chip->flags & TPM_CHIP_FLAG_TPM2)) अणु
 
 		chip->ascii_log_seqops.chip = chip;
 		chip->ascii_log_seqops.seqops =
@@ -151,39 +152,39 @@ void tpm_bios_log_setup(struct tpm_chip *chip)
 		chip->bios_dir[cnt] =
 			securityfs_create_file("ascii_bios_measurements",
 					       0440, chip->bios_dir[0],
-					       (void *)&chip->ascii_log_seqops,
+					       (व्योम *)&chip->ascii_log_seqops,
 					       &tpm_bios_measurements_ops);
-		if (IS_ERR(chip->bios_dir[cnt]))
-			goto err;
+		अगर (IS_ERR(chip->bios_dir[cnt]))
+			जाओ err;
 		cnt++;
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 err:
-	chip->bios_dir[cnt] = NULL;
-	tpm_bios_log_teardown(chip);
-	return;
-}
+	chip->bios_dir[cnt] = शून्य;
+	tpm_bios_log_tearकरोwn(chip);
+	वापस;
+पूर्ण
 
-void tpm_bios_log_teardown(struct tpm_chip *chip)
-{
-	int i;
-	struct inode *inode;
+व्योम tpm_bios_log_tearकरोwn(काष्ठा tpm_chip *chip)
+अणु
+	पूर्णांक i;
+	काष्ठा inode *inode;
 
-	/* securityfs_remove currently doesn't take care of handling sync
-	 * between removal and opening of pseudo files. To handle this, a
-	 * workaround is added by making i_private = NULL here during removal
-	 * and to check it during open(), both within inode_lock()/unlock().
-	 * This design ensures that open() either safely gets kref or fails.
+	/* securityfs_हटाओ currently करोesn't take care of handling sync
+	 * between removal and खोलोing of pseuकरो files. To handle this, a
+	 * workaround is added by making i_निजी = शून्य here during removal
+	 * and to check it during खोलो(), both within inode_lock()/unlock().
+	 * This design ensures that खोलो() either safely माला_लो kref or fails.
 	 */
-	for (i = (TPM_NUM_EVENT_LOG_FILES - 1); i >= 0; i--) {
-		if (chip->bios_dir[i]) {
+	क्रम (i = (TPM_NUM_EVENT_LOG_खाताS - 1); i >= 0; i--) अणु
+		अगर (chip->bios_dir[i]) अणु
 			inode = d_inode(chip->bios_dir[i]);
 			inode_lock(inode);
-			inode->i_private = NULL;
+			inode->i_निजी = शून्य;
 			inode_unlock(inode);
-			securityfs_remove(chip->bios_dir[i]);
-		}
-	}
-}
+			securityfs_हटाओ(chip->bios_dir[i]);
+		पूर्ण
+	पूर्ण
+पूर्ण

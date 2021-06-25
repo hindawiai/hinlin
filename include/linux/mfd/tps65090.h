@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Core driver interface for TI TPS65090 PMIC family
+ * Core driver पूर्णांकerface क्रम TI TPS65090 PMIC family
  *
  * Copyright (C) 2012 NVIDIA Corporation
  */
 
-#ifndef __LINUX_MFD_TPS65090_H
-#define __LINUX_MFD_TPS65090_H
+#अगर_अघोषित __LINUX_MFD_TPS65090_H
+#घोषणा __LINUX_MFD_TPS65090_H
 
-#include <linux/irq.h>
-#include <linux/regmap.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/regmap.h>
 
 /* TPS65090 IRQs */
-enum {
+क्रमागत अणु
 	TPS65090_IRQ_INTERRUPT,
 	TPS65090_IRQ_VAC_STATUS_CHANGE,
 	TPS65090_IRQ_VSYS_STATUS_CHANGE,
@@ -29,10 +30,10 @@ enum {
 	TPS65090_IRQ_OVERLOAD_FET5,
 	TPS65090_IRQ_OVERLOAD_FET6,
 	TPS65090_IRQ_OVERLOAD_FET7,
-};
+पूर्ण;
 
 /* TPS65090 Regulator ID */
-enum {
+क्रमागत अणु
 	TPS65090_REGULATOR_DCDC1,
 	TPS65090_REGULATOR_DCDC2,
 	TPS65090_REGULATOR_DCDC3,
@@ -46,104 +47,104 @@ enum {
 	TPS65090_REGULATOR_LDO1,
 	TPS65090_REGULATOR_LDO2,
 
-	/* Last entry for maximum ID */
+	/* Last entry क्रम maximum ID */
 	TPS65090_REGULATOR_MAX,
-};
+पूर्ण;
 
 /* Register addresses */
-#define TPS65090_REG_INTR_STS	0x00
-#define TPS65090_REG_INTR_STS2	0x01
-#define TPS65090_REG_INTR_MASK	0x02
-#define TPS65090_REG_INTR_MASK2	0x03
-#define TPS65090_REG_CG_CTRL0	0x04
-#define TPS65090_REG_CG_CTRL1	0x05
-#define TPS65090_REG_CG_CTRL2	0x06
-#define TPS65090_REG_CG_CTRL3	0x07
-#define TPS65090_REG_CG_CTRL4	0x08
-#define TPS65090_REG_CG_CTRL5	0x09
-#define TPS65090_REG_CG_STATUS1	0x0a
-#define TPS65090_REG_CG_STATUS2	0x0b
-#define TPS65090_REG_AD_OUT1	0x17
-#define TPS65090_REG_AD_OUT2	0x18
+#घोषणा TPS65090_REG_INTR_STS	0x00
+#घोषणा TPS65090_REG_INTR_STS2	0x01
+#घोषणा TPS65090_REG_INTR_MASK	0x02
+#घोषणा TPS65090_REG_INTR_MASK2	0x03
+#घोषणा TPS65090_REG_CG_CTRL0	0x04
+#घोषणा TPS65090_REG_CG_CTRL1	0x05
+#घोषणा TPS65090_REG_CG_CTRL2	0x06
+#घोषणा TPS65090_REG_CG_CTRL3	0x07
+#घोषणा TPS65090_REG_CG_CTRL4	0x08
+#घोषणा TPS65090_REG_CG_CTRL5	0x09
+#घोषणा TPS65090_REG_CG_STATUS1	0x0a
+#घोषणा TPS65090_REG_CG_STATUS2	0x0b
+#घोषणा TPS65090_REG_AD_OUT1	0x17
+#घोषणा TPS65090_REG_AD_OUT2	0x18
 
-#define TPS65090_MAX_REG	TPS65090_REG_AD_OUT2
-#define TPS65090_NUM_REGS	(TPS65090_MAX_REG + 1)
+#घोषणा TPS65090_MAX_REG	TPS65090_REG_AD_OUT2
+#घोषणा TPS65090_NUM_REGS	(TPS65090_MAX_REG + 1)
 
-struct gpio_desc;
+काष्ठा gpio_desc;
 
-struct tps65090 {
-	struct device		*dev;
-	struct regmap		*rmap;
-	struct regmap_irq_chip_data *irq_data;
-};
+काष्ठा tps65090 अणु
+	काष्ठा device		*dev;
+	काष्ठा regmap		*rmap;
+	काष्ठा regmap_irq_chip_data *irq_data;
+पूर्ण;
 
 /*
- * struct tps65090_regulator_plat_data
+ * काष्ठा tps65090_regulator_plat_data
  *
  * @reg_init_data: The regulator init data.
- * @enable_ext_control: Enable extrenal control or not. Only available for
+ * @enable_ext_control: Enable extrenal control or not. Only available क्रम
  *     DCDC1, DCDC2 and DCDC3.
- * @gpiod: Gpio descriptor if external control is enabled and controlled through
+ * @gpiod: Gpio descriptor अगर बाह्यal control is enabled and controlled through
  *     gpio
- * @overcurrent_wait_valid: True if the overcurrent_wait should be applied.
- * @overcurrent_wait: Value to set as the overcurrent wait time.  This is the
- *     actual bitfield value, not a time in ms (valid value are 0 - 3).
+ * @overcurrent_रुको_valid: True अगर the overcurrent_रुको should be applied.
+ * @overcurrent_रुको: Value to set as the overcurrent रुको समय.  This is the
+ *     actual bitfield value, not a समय in ms (valid value are 0 - 3).
  */
-struct tps65090_regulator_plat_data {
-	struct regulator_init_data *reg_init_data;
+काष्ठा tps65090_regulator_plat_data अणु
+	काष्ठा regulator_init_data *reg_init_data;
 	bool enable_ext_control;
-	struct gpio_desc *gpiod;
-	bool overcurrent_wait_valid;
-	int overcurrent_wait;
-};
+	काष्ठा gpio_desc *gpiod;
+	bool overcurrent_रुको_valid;
+	पूर्णांक overcurrent_रुको;
+पूर्ण;
 
-struct tps65090_platform_data {
-	int irq_base;
+काष्ठा tps65090_platक्रमm_data अणु
+	पूर्णांक irq_base;
 
-	char **supplied_to;
-	size_t num_supplicants;
-	int enable_low_current_chrg;
+	अक्षर **supplied_to;
+	माप_प्रकार num_supplicants;
+	पूर्णांक enable_low_current_chrg;
 
-	struct tps65090_regulator_plat_data *reg_pdata[TPS65090_REGULATOR_MAX];
-};
+	काष्ठा tps65090_regulator_plat_data *reg_pdata[TPS65090_REGULATOR_MAX];
+पूर्ण;
 
 /*
- * NOTE: the functions below are not intended for use outside
+ * NOTE: the functions below are not पूर्णांकended क्रम use outside
  * of the TPS65090 sub-device drivers
  */
-static inline int tps65090_write(struct device *dev, int reg, uint8_t val)
-{
-	struct tps65090 *tps = dev_get_drvdata(dev);
+अटल अंतरभूत पूर्णांक tps65090_ग_लिखो(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t val)
+अणु
+	काष्ठा tps65090 *tps = dev_get_drvdata(dev);
 
-	return regmap_write(tps->rmap, reg, val);
-}
+	वापस regmap_ग_लिखो(tps->rmap, reg, val);
+पूर्ण
 
-static inline int tps65090_read(struct device *dev, int reg, uint8_t *val)
-{
-	struct tps65090 *tps = dev_get_drvdata(dev);
-	unsigned int temp_val;
-	int ret;
+अटल अंतरभूत पूर्णांक tps65090_पढ़ो(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t *val)
+अणु
+	काष्ठा tps65090 *tps = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक temp_val;
+	पूर्णांक ret;
 
-	ret = regmap_read(tps->rmap, reg, &temp_val);
-	if (!ret)
+	ret = regmap_पढ़ो(tps->rmap, reg, &temp_val);
+	अगर (!ret)
 		*val = temp_val;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int tps65090_set_bits(struct device *dev, int reg,
-		uint8_t bit_num)
-{
-	struct tps65090 *tps = dev_get_drvdata(dev);
+अटल अंतरभूत पूर्णांक tps65090_set_bits(काष्ठा device *dev, पूर्णांक reg,
+		uपूर्णांक8_t bit_num)
+अणु
+	काष्ठा tps65090 *tps = dev_get_drvdata(dev);
 
-	return regmap_update_bits(tps->rmap, reg, BIT(bit_num), ~0u);
-}
+	वापस regmap_update_bits(tps->rmap, reg, BIT(bit_num), ~0u);
+पूर्ण
 
-static inline int tps65090_clr_bits(struct device *dev, int reg,
-		uint8_t bit_num)
-{
-	struct tps65090 *tps = dev_get_drvdata(dev);
+अटल अंतरभूत पूर्णांक tps65090_clr_bits(काष्ठा device *dev, पूर्णांक reg,
+		uपूर्णांक8_t bit_num)
+अणु
+	काष्ठा tps65090 *tps = dev_get_drvdata(dev);
 
-	return regmap_update_bits(tps->rmap, reg, BIT(bit_num), 0u);
-}
+	वापस regmap_update_bits(tps->rmap, reg, BIT(bit_num), 0u);
+पूर्ण
 
-#endif /*__LINUX_MFD_TPS65090_H */
+#पूर्ण_अगर /*__LINUX_MFD_TPS65090_H */

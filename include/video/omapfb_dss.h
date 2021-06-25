@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2016 Texas Instruments, Inc.
  */
 
-#ifndef __OMAPFB_DSS_H
-#define __OMAPFB_DSS_H
+#अगर_अघोषित __OMAPFB_DSS_H
+#घोषणा __OMAPFB_DSS_H
 
-#include <linux/list.h>
-#include <linux/kobject.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/platform_data/omapdss.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_data/omapdss.h>
 
-#include <video/videomode.h>
+#समावेश <video/videomode.h>
 
-#define DISPC_IRQ_FRAMEDONE		(1 << 0)
-#define DISPC_IRQ_VSYNC			(1 << 1)
-#define DISPC_IRQ_EVSYNC_EVEN		(1 << 2)
-#define DISPC_IRQ_EVSYNC_ODD		(1 << 3)
-#define DISPC_IRQ_ACBIAS_COUNT_STAT	(1 << 4)
-#define DISPC_IRQ_PROG_LINE_NUM		(1 << 5)
-#define DISPC_IRQ_GFX_FIFO_UNDERFLOW	(1 << 6)
-#define DISPC_IRQ_GFX_END_WIN		(1 << 7)
-#define DISPC_IRQ_PAL_GAMMA_MASK	(1 << 8)
-#define DISPC_IRQ_OCP_ERR		(1 << 9)
-#define DISPC_IRQ_VID1_FIFO_UNDERFLOW	(1 << 10)
-#define DISPC_IRQ_VID1_END_WIN		(1 << 11)
-#define DISPC_IRQ_VID2_FIFO_UNDERFLOW	(1 << 12)
-#define DISPC_IRQ_VID2_END_WIN		(1 << 13)
-#define DISPC_IRQ_SYNC_LOST		(1 << 14)
-#define DISPC_IRQ_SYNC_LOST_DIGIT	(1 << 15)
-#define DISPC_IRQ_WAKEUP		(1 << 16)
-#define DISPC_IRQ_SYNC_LOST2		(1 << 17)
-#define DISPC_IRQ_VSYNC2		(1 << 18)
-#define DISPC_IRQ_VID3_END_WIN		(1 << 19)
-#define DISPC_IRQ_VID3_FIFO_UNDERFLOW	(1 << 20)
-#define DISPC_IRQ_ACBIAS_COUNT_STAT2	(1 << 21)
-#define DISPC_IRQ_FRAMEDONE2		(1 << 22)
-#define DISPC_IRQ_FRAMEDONEWB		(1 << 23)
-#define DISPC_IRQ_FRAMEDONETV		(1 << 24)
-#define DISPC_IRQ_WBBUFFEROVERFLOW	(1 << 25)
-#define DISPC_IRQ_WBUNCOMPLETEERROR	(1 << 26)
-#define DISPC_IRQ_SYNC_LOST3		(1 << 27)
-#define DISPC_IRQ_VSYNC3		(1 << 28)
-#define DISPC_IRQ_ACBIAS_COUNT_STAT3	(1 << 29)
-#define DISPC_IRQ_FRAMEDONE3		(1 << 30)
+#घोषणा DISPC_IRQ_FRAMEDONE		(1 << 0)
+#घोषणा DISPC_IRQ_VSYNC			(1 << 1)
+#घोषणा DISPC_IRQ_EVSYNC_EVEN		(1 << 2)
+#घोषणा DISPC_IRQ_EVSYNC_ODD		(1 << 3)
+#घोषणा DISPC_IRQ_ACBIAS_COUNT_STAT	(1 << 4)
+#घोषणा DISPC_IRQ_PROG_LINE_NUM		(1 << 5)
+#घोषणा DISPC_IRQ_GFX_FIFO_UNDERFLOW	(1 << 6)
+#घोषणा DISPC_IRQ_GFX_END_WIN		(1 << 7)
+#घोषणा DISPC_IRQ_PAL_GAMMA_MASK	(1 << 8)
+#घोषणा DISPC_IRQ_OCP_ERR		(1 << 9)
+#घोषणा DISPC_IRQ_VID1_FIFO_UNDERFLOW	(1 << 10)
+#घोषणा DISPC_IRQ_VID1_END_WIN		(1 << 11)
+#घोषणा DISPC_IRQ_VID2_FIFO_UNDERFLOW	(1 << 12)
+#घोषणा DISPC_IRQ_VID2_END_WIN		(1 << 13)
+#घोषणा DISPC_IRQ_SYNC_LOST		(1 << 14)
+#घोषणा DISPC_IRQ_SYNC_LOST_DIGIT	(1 << 15)
+#घोषणा DISPC_IRQ_WAKEUP		(1 << 16)
+#घोषणा DISPC_IRQ_SYNC_LOST2		(1 << 17)
+#घोषणा DISPC_IRQ_VSYNC2		(1 << 18)
+#घोषणा DISPC_IRQ_VID3_END_WIN		(1 << 19)
+#घोषणा DISPC_IRQ_VID3_FIFO_UNDERFLOW	(1 << 20)
+#घोषणा DISPC_IRQ_ACBIAS_COUNT_STAT2	(1 << 21)
+#घोषणा DISPC_IRQ_FRAMEDONE2		(1 << 22)
+#घोषणा DISPC_IRQ_FRAMEDONEWB		(1 << 23)
+#घोषणा DISPC_IRQ_FRAMEDONETV		(1 << 24)
+#घोषणा DISPC_IRQ_WBBUFFEROVERFLOW	(1 << 25)
+#घोषणा DISPC_IRQ_WBUNCOMPLETEERROR	(1 << 26)
+#घोषणा DISPC_IRQ_SYNC_LOST3		(1 << 27)
+#घोषणा DISPC_IRQ_VSYNC3		(1 << 28)
+#घोषणा DISPC_IRQ_ACBIAS_COUNT_STAT3	(1 << 29)
+#घोषणा DISPC_IRQ_FRAMEDONE3		(1 << 30)
 
-struct omap_dss_device;
-struct omap_overlay_manager;
-struct dss_lcd_mgr_config;
-struct snd_aes_iec958;
-struct snd_cea_861_aud_if;
-struct hdmi_avi_infoframe;
+काष्ठा omap_dss_device;
+काष्ठा omap_overlay_manager;
+काष्ठा dss_lcd_mgr_config;
+काष्ठा snd_aes_iec958;
+काष्ठा snd_cea_861_aud_अगर;
+काष्ठा hdmi_avi_infoframe;
 
-enum omap_display_type {
+क्रमागत omap_display_type अणु
 	OMAP_DISPLAY_TYPE_NONE		= 0,
 	OMAP_DISPLAY_TYPE_DPI		= 1 << 0,
 	OMAP_DISPLAY_TYPE_DBI		= 1 << 1,
@@ -62,25 +63,25 @@ enum omap_display_type {
 	OMAP_DISPLAY_TYPE_VENC		= 1 << 4,
 	OMAP_DISPLAY_TYPE_HDMI		= 1 << 5,
 	OMAP_DISPLAY_TYPE_DVI		= 1 << 6,
-};
+पूर्ण;
 
-enum omap_plane {
+क्रमागत omap_plane अणु
 	OMAP_DSS_GFX	= 0,
 	OMAP_DSS_VIDEO1	= 1,
 	OMAP_DSS_VIDEO2	= 2,
 	OMAP_DSS_VIDEO3	= 3,
 	OMAP_DSS_WB	= 4,
-};
+पूर्ण;
 
-enum omap_channel {
+क्रमागत omap_channel अणु
 	OMAP_DSS_CHANNEL_LCD	= 0,
 	OMAP_DSS_CHANNEL_DIGIT	= 1,
 	OMAP_DSS_CHANNEL_LCD2	= 2,
 	OMAP_DSS_CHANNEL_LCD3	= 3,
 	OMAP_DSS_CHANNEL_WB	= 4,
-};
+पूर्ण;
 
-enum omap_color_mode {
+क्रमागत omap_color_mode अणु
 	OMAP_DSS_COLOR_CLUT1	= 1 << 0,  /* BITMAP 1 */
 	OMAP_DSS_COLOR_CLUT2	= 1 << 1,  /* BITMAP 2 */
 	OMAP_DSS_COLOR_CLUT4	= 1 << 2,  /* BITMAP 4 */
@@ -95,86 +96,86 @@ enum omap_color_mode {
 	OMAP_DSS_COLOR_ARGB32	= 1 << 11, /* ARGB32 */
 	OMAP_DSS_COLOR_RGBA32	= 1 << 12, /* RGBA32 */
 	OMAP_DSS_COLOR_RGBX32	= 1 << 13, /* RGBx32 */
-	OMAP_DSS_COLOR_NV12		= 1 << 14, /* NV12 format: YUV 4:2:0 */
+	OMAP_DSS_COLOR_NV12		= 1 << 14, /* NV12 क्रमmat: YUV 4:2:0 */
 	OMAP_DSS_COLOR_RGBA16		= 1 << 15, /* RGBA16 - 4444 */
 	OMAP_DSS_COLOR_RGBX16		= 1 << 16, /* RGBx16 - 4444 */
 	OMAP_DSS_COLOR_ARGB16_1555	= 1 << 17, /* ARGB16 - 1555 */
 	OMAP_DSS_COLOR_XRGB16_1555	= 1 << 18, /* xRGB16 - 1555 */
-};
+पूर्ण;
 
-enum omap_dss_load_mode {
+क्रमागत omap_dss_load_mode अणु
 	OMAP_DSS_LOAD_CLUT_AND_FRAME	= 0,
 	OMAP_DSS_LOAD_CLUT_ONLY		= 1,
 	OMAP_DSS_LOAD_FRAME_ONLY	= 2,
 	OMAP_DSS_LOAD_CLUT_ONCE_FRAME	= 3,
-};
+पूर्ण;
 
-enum omap_dss_trans_key_type {
+क्रमागत omap_dss_trans_key_type अणु
 	OMAP_DSS_COLOR_KEY_GFX_DST = 0,
 	OMAP_DSS_COLOR_KEY_VID_SRC = 1,
-};
+पूर्ण;
 
-enum omap_dss_signal_level {
+क्रमागत omap_dss_संकेत_level अणु
 	OMAPDSS_SIG_ACTIVE_LOW,
 	OMAPDSS_SIG_ACTIVE_HIGH,
-};
+पूर्ण;
 
-enum omap_dss_signal_edge {
+क्रमागत omap_dss_संकेत_edge अणु
 	OMAPDSS_DRIVE_SIG_FALLING_EDGE,
 	OMAPDSS_DRIVE_SIG_RISING_EDGE,
-};
+पूर्ण;
 
-enum omap_dss_venc_type {
+क्रमागत omap_dss_venc_type अणु
 	OMAP_DSS_VENC_TYPE_COMPOSITE,
 	OMAP_DSS_VENC_TYPE_SVIDEO,
-};
+पूर्ण;
 
-enum omap_dss_dsi_pixel_format {
+क्रमागत omap_dss_dsi_pixel_क्रमmat अणु
 	OMAP_DSS_DSI_FMT_RGB888,
 	OMAP_DSS_DSI_FMT_RGB666,
 	OMAP_DSS_DSI_FMT_RGB666_PACKED,
 	OMAP_DSS_DSI_FMT_RGB565,
-};
+पूर्ण;
 
-enum omap_dss_dsi_mode {
+क्रमागत omap_dss_dsi_mode अणु
 	OMAP_DSS_DSI_CMD_MODE = 0,
 	OMAP_DSS_DSI_VIDEO_MODE,
-};
+पूर्ण;
 
-enum omap_display_caps {
+क्रमागत omap_display_caps अणु
 	OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE	= 1 << 0,
 	OMAP_DSS_DISPLAY_CAP_TEAR_ELIM		= 1 << 1,
-};
+पूर्ण;
 
-enum omap_dss_display_state {
+क्रमागत omap_dss_display_state अणु
 	OMAP_DSS_DISPLAY_DISABLED = 0,
 	OMAP_DSS_DISPLAY_ACTIVE,
-};
+पूर्ण;
 
-enum omap_dss_rotation_type {
+क्रमागत omap_dss_rotation_type अणु
 	OMAP_DSS_ROT_DMA	= 1 << 0,
 	OMAP_DSS_ROT_VRFB	= 1 << 1,
 	OMAP_DSS_ROT_TILER	= 1 << 2,
-};
+पूर्ण;
 
-/* clockwise rotation angle */
-enum omap_dss_rotation_angle {
+/* घड़ीwise rotation angle */
+क्रमागत omap_dss_rotation_angle अणु
 	OMAP_DSS_ROT_0   = 0,
 	OMAP_DSS_ROT_90  = 1,
 	OMAP_DSS_ROT_180 = 2,
 	OMAP_DSS_ROT_270 = 3,
-};
+पूर्ण;
 
-enum omap_overlay_caps {
+क्रमागत omap_overlay_caps अणु
 	OMAP_DSS_OVL_CAP_SCALE = 1 << 0,
 	OMAP_DSS_OVL_CAP_GLOBAL_ALPHA = 1 << 1,
 	OMAP_DSS_OVL_CAP_PRE_MULT_ALPHA = 1 << 2,
 	OMAP_DSS_OVL_CAP_ZORDER = 1 << 3,
 	OMAP_DSS_OVL_CAP_POS = 1 << 4,
 	OMAP_DSS_OVL_CAP_REPLICATION = 1 << 5,
-};
+पूर्ण;
 
-enum omap_dss_output_id {
+क्रमागत omap_dss_output_id अणु
 	OMAP_DSS_OUTPUT_DPI	= 1 << 0,
 	OMAP_DSS_OUTPUT_DBI	= 1 << 1,
 	OMAP_DSS_OUTPUT_SDI	= 1 << 2,
@@ -182,24 +183,24 @@ enum omap_dss_output_id {
 	OMAP_DSS_OUTPUT_DSI2	= 1 << 4,
 	OMAP_DSS_OUTPUT_VENC	= 1 << 5,
 	OMAP_DSS_OUTPUT_HDMI	= 1 << 6,
-};
+पूर्ण;
 
 /* DSI */
 
-enum omap_dss_dsi_trans_mode {
+क्रमागत omap_dss_dsi_trans_mode अणु
 	/* Sync Pulses: both sync start and end packets sent */
 	OMAP_DSS_DSI_PULSE_MODE,
 	/* Sync Events: only sync start packets sent */
 	OMAP_DSS_DSI_EVENT_MODE,
-	/* Burst: only sync start packets sent, pixels are time compressed */
+	/* Burst: only sync start packets sent, pixels are समय compressed */
 	OMAP_DSS_DSI_BURST_MODE,
-};
+पूर्ण;
 
-struct omap_dss_dsi_videomode_timings {
-	unsigned long hsclk;
+काष्ठा omap_dss_dsi_videomode_timings अणु
+	अचिन्हित दीर्घ hsclk;
 
-	unsigned ndl;
-	unsigned bitspp;
+	अचिन्हित ndl;
+	अचिन्हित bitspp;
 
 	/* pixels */
 	u16 hact;
@@ -207,210 +208,210 @@ struct omap_dss_dsi_videomode_timings {
 	u16 vact;
 
 	/* DSI video mode blanking data */
-	/* Unit: byte clock cycles */
+	/* Unit: byte घड़ी cycles */
 	u16 hss;
 	u16 hsa;
 	u16 hse;
 	u16 hfp;
 	u16 hbp;
-	/* Unit: line clocks */
+	/* Unit: line घड़ीs */
 	u16 vsa;
 	u16 vfp;
 	u16 vbp;
 
 	/* DSI blanking modes */
-	int blanking_mode;
-	int hsa_blanking_mode;
-	int hbp_blanking_mode;
-	int hfp_blanking_mode;
+	पूर्णांक blanking_mode;
+	पूर्णांक hsa_blanking_mode;
+	पूर्णांक hbp_blanking_mode;
+	पूर्णांक hfp_blanking_mode;
 
-	enum omap_dss_dsi_trans_mode trans_mode;
-
-	bool ddr_clk_always_on;
-	int window_sync;
-};
-
-struct omap_dss_dsi_config {
-	enum omap_dss_dsi_mode mode;
-	enum omap_dss_dsi_pixel_format pixel_format;
-	const struct omap_video_timings *timings;
-
-	unsigned long hs_clk_min, hs_clk_max;
-	unsigned long lp_clk_min, lp_clk_max;
+	क्रमागत omap_dss_dsi_trans_mode trans_mode;
 
 	bool ddr_clk_always_on;
-	enum omap_dss_dsi_trans_mode trans_mode;
-};
+	पूर्णांक winकरोw_sync;
+पूर्ण;
 
-struct omap_video_timings {
+काष्ठा omap_dss_dsi_config अणु
+	क्रमागत omap_dss_dsi_mode mode;
+	क्रमागत omap_dss_dsi_pixel_क्रमmat pixel_क्रमmat;
+	स्थिर काष्ठा omap_video_timings *timings;
+
+	अचिन्हित दीर्घ hs_clk_min, hs_clk_max;
+	अचिन्हित दीर्घ lp_clk_min, lp_clk_max;
+
+	bool ddr_clk_always_on;
+	क्रमागत omap_dss_dsi_trans_mode trans_mode;
+पूर्ण;
+
+काष्ठा omap_video_timings अणु
 	/* Unit: pixels */
 	u16 x_res;
 	/* Unit: pixels */
 	u16 y_res;
 	/* Unit: Hz */
-	u32 pixelclock;
-	/* Unit: pixel clocks */
+	u32 pixelघड़ी;
+	/* Unit: pixel घड़ीs */
 	u16 hsw;	/* Horizontal synchronization pulse width */
-	/* Unit: pixel clocks */
+	/* Unit: pixel घड़ीs */
 	u16 hfp;	/* Horizontal front porch */
-	/* Unit: pixel clocks */
+	/* Unit: pixel घड़ीs */
 	u16 hbp;	/* Horizontal back porch */
-	/* Unit: line clocks */
+	/* Unit: line घड़ीs */
 	u16 vsw;	/* Vertical synchronization pulse width */
-	/* Unit: line clocks */
+	/* Unit: line घड़ीs */
 	u16 vfp;	/* Vertical front porch */
-	/* Unit: line clocks */
+	/* Unit: line घड़ीs */
 	u16 vbp;	/* Vertical back porch */
 
 	/* Vsync logic level */
-	enum omap_dss_signal_level vsync_level;
+	क्रमागत omap_dss_संकेत_level vsync_level;
 	/* Hsync logic level */
-	enum omap_dss_signal_level hsync_level;
+	क्रमागत omap_dss_संकेत_level hsync_level;
 	/* Interlaced or Progressive timings */
-	bool interlace;
-	/* Pixel clock edge to drive LCD data */
-	enum omap_dss_signal_edge data_pclk_edge;
+	bool पूर्णांकerlace;
+	/* Pixel घड़ी edge to drive LCD data */
+	क्रमागत omap_dss_संकेत_edge data_pclk_edge;
 	/* Data enable logic level */
-	enum omap_dss_signal_level de_level;
-	/* Pixel clock edges to drive HSYNC and VSYNC signals */
-	enum omap_dss_signal_edge sync_pclk_edge;
+	क्रमागत omap_dss_संकेत_level de_level;
+	/* Pixel घड़ी edges to drive HSYNC and VSYNC संकेतs */
+	क्रमागत omap_dss_संकेत_edge sync_pclk_edge;
 
-	bool double_pixel;
-};
+	bool द्विगुन_pixel;
+पूर्ण;
 
-/* Hardcoded timings for tv modes. Venc only uses these to
- * identify the mode, and does not actually use the configs
+/* Hardcoded timings क्रम tv modes. Venc only uses these to
+ * identअगरy the mode, and करोes not actually use the configs
  * itself. However, the configs should be something that
  * a normal monitor can also show */
-extern const struct omap_video_timings omap_dss_pal_timings;
-extern const struct omap_video_timings omap_dss_ntsc_timings;
+बाह्य स्थिर काष्ठा omap_video_timings omap_dss_pal_timings;
+बाह्य स्थिर काष्ठा omap_video_timings omap_dss_ntsc_timings;
 
-struct omap_dss_cpr_coefs {
+काष्ठा omap_dss_cpr_coefs अणु
 	s16 rr, rg, rb;
 	s16 gr, gg, gb;
 	s16 br, bg, bb;
-};
+पूर्ण;
 
-struct omap_overlay_info {
+काष्ठा omap_overlay_info अणु
 	dma_addr_t paddr;
-	dma_addr_t p_uv_addr;  /* for NV12 format */
+	dma_addr_t p_uv_addr;  /* क्रम NV12 क्रमmat */
 	u16 screen_width;
 	u16 width;
 	u16 height;
-	enum omap_color_mode color_mode;
+	क्रमागत omap_color_mode color_mode;
 	u8 rotation;
-	enum omap_dss_rotation_type rotation_type;
+	क्रमागत omap_dss_rotation_type rotation_type;
 	bool mirror;
 
 	u16 pos_x;
 	u16 pos_y;
-	u16 out_width;	/* if 0, out_width == width */
-	u16 out_height;	/* if 0, out_height == height */
+	u16 out_width;	/* अगर 0, out_width == width */
+	u16 out_height;	/* अगर 0, out_height == height */
 	u8 global_alpha;
 	u8 pre_mult_alpha;
 	u8 zorder;
-};
+पूर्ण;
 
-struct omap_overlay {
-	struct kobject kobj;
-	struct list_head list;
+काष्ठा omap_overlay अणु
+	काष्ठा kobject kobj;
+	काष्ठा list_head list;
 
-	/* static fields */
-	const char *name;
-	enum omap_plane id;
-	enum omap_color_mode supported_modes;
-	enum omap_overlay_caps caps;
+	/* अटल fields */
+	स्थिर अक्षर *name;
+	क्रमागत omap_plane id;
+	क्रमागत omap_color_mode supported_modes;
+	क्रमागत omap_overlay_caps caps;
 
 	/* dynamic fields */
-	struct omap_overlay_manager *manager;
+	काष्ठा omap_overlay_manager *manager;
 
 	/*
-	 * The following functions do not block:
+	 * The following functions करो not block:
 	 *
 	 * is_enabled
 	 * set_overlay_info
 	 * get_overlay_info
 	 *
 	 * The rest of the functions may block and cannot be called from
-	 * interrupt context
+	 * पूर्णांकerrupt context
 	 */
 
-	int (*enable)(struct omap_overlay *ovl);
-	int (*disable)(struct omap_overlay *ovl);
-	bool (*is_enabled)(struct omap_overlay *ovl);
+	पूर्णांक (*enable)(काष्ठा omap_overlay *ovl);
+	पूर्णांक (*disable)(काष्ठा omap_overlay *ovl);
+	bool (*is_enabled)(काष्ठा omap_overlay *ovl);
 
-	int (*set_manager)(struct omap_overlay *ovl,
-		struct omap_overlay_manager *mgr);
-	int (*unset_manager)(struct omap_overlay *ovl);
+	पूर्णांक (*set_manager)(काष्ठा omap_overlay *ovl,
+		काष्ठा omap_overlay_manager *mgr);
+	पूर्णांक (*unset_manager)(काष्ठा omap_overlay *ovl);
 
-	int (*set_overlay_info)(struct omap_overlay *ovl,
-			struct omap_overlay_info *info);
-	void (*get_overlay_info)(struct omap_overlay *ovl,
-			struct omap_overlay_info *info);
+	पूर्णांक (*set_overlay_info)(काष्ठा omap_overlay *ovl,
+			काष्ठा omap_overlay_info *info);
+	व्योम (*get_overlay_info)(काष्ठा omap_overlay *ovl,
+			काष्ठा omap_overlay_info *info);
 
-	int (*wait_for_go)(struct omap_overlay *ovl);
+	पूर्णांक (*रुको_क्रम_go)(काष्ठा omap_overlay *ovl);
 
-	struct omap_dss_device *(*get_device)(struct omap_overlay *ovl);
-};
+	काष्ठा omap_dss_device *(*get_device)(काष्ठा omap_overlay *ovl);
+पूर्ण;
 
-struct omap_overlay_manager_info {
-	u32 default_color;
+काष्ठा omap_overlay_manager_info अणु
+	u32 शेष_color;
 
-	enum omap_dss_trans_key_type trans_key_type;
+	क्रमागत omap_dss_trans_key_type trans_key_type;
 	u32 trans_key;
 	bool trans_enabled;
 
 	bool partial_alpha_enabled;
 
 	bool cpr_enable;
-	struct omap_dss_cpr_coefs cpr_coefs;
-};
+	काष्ठा omap_dss_cpr_coefs cpr_coefs;
+पूर्ण;
 
-struct omap_overlay_manager {
-	struct kobject kobj;
+काष्ठा omap_overlay_manager अणु
+	काष्ठा kobject kobj;
 
-	/* static fields */
-	const char *name;
-	enum omap_channel id;
-	struct list_head overlays;
-	enum omap_display_type supported_displays;
-	enum omap_dss_output_id supported_outputs;
+	/* अटल fields */
+	स्थिर अक्षर *name;
+	क्रमागत omap_channel id;
+	काष्ठा list_head overlays;
+	क्रमागत omap_display_type supported_displays;
+	क्रमागत omap_dss_output_id supported_outमाला_दो;
 
 	/* dynamic fields */
-	struct omap_dss_device *output;
+	काष्ठा omap_dss_device *output;
 
 	/*
-	 * The following functions do not block:
+	 * The following functions करो not block:
 	 *
 	 * set_manager_info
 	 * get_manager_info
 	 * apply
 	 *
 	 * The rest of the functions may block and cannot be called from
-	 * interrupt context
+	 * पूर्णांकerrupt context
 	 */
 
-	int (*set_output)(struct omap_overlay_manager *mgr,
-		struct omap_dss_device *output);
-	int (*unset_output)(struct omap_overlay_manager *mgr);
+	पूर्णांक (*set_output)(काष्ठा omap_overlay_manager *mgr,
+		काष्ठा omap_dss_device *output);
+	पूर्णांक (*unset_output)(काष्ठा omap_overlay_manager *mgr);
 
-	int (*set_manager_info)(struct omap_overlay_manager *mgr,
-			struct omap_overlay_manager_info *info);
-	void (*get_manager_info)(struct omap_overlay_manager *mgr,
-			struct omap_overlay_manager_info *info);
+	पूर्णांक (*set_manager_info)(काष्ठा omap_overlay_manager *mgr,
+			काष्ठा omap_overlay_manager_info *info);
+	व्योम (*get_manager_info)(काष्ठा omap_overlay_manager *mgr,
+			काष्ठा omap_overlay_manager_info *info);
 
-	int (*apply)(struct omap_overlay_manager *mgr);
-	int (*wait_for_go)(struct omap_overlay_manager *mgr);
-	int (*wait_for_vsync)(struct omap_overlay_manager *mgr);
+	पूर्णांक (*apply)(काष्ठा omap_overlay_manager *mgr);
+	पूर्णांक (*रुको_क्रम_go)(काष्ठा omap_overlay_manager *mgr);
+	पूर्णांक (*रुको_क्रम_vsync)(काष्ठा omap_overlay_manager *mgr);
 
-	struct omap_dss_device *(*get_device)(struct omap_overlay_manager *mgr);
-};
+	काष्ठा omap_dss_device *(*get_device)(काष्ठा omap_overlay_manager *mgr);
+पूर्ण;
 
 /* 22 pins means 1 clk lane and 10 data lanes */
-#define OMAP_DSS_MAX_DSI_PINS 22
+#घोषणा OMAP_DSS_MAX_DSI_PINS 22
 
-struct omap_dsi_pin_config {
-	int num_pins;
+काष्ठा omap_dsi_pin_config अणु
+	पूर्णांक num_pins;
 	/*
 	 * pin numbers in the following order:
 	 * clk+, clk-
@@ -418,457 +419,457 @@ struct omap_dsi_pin_config {
 	 * data2+, data2-
 	 * ...
 	 */
-	int pins[OMAP_DSS_MAX_DSI_PINS];
-};
+	पूर्णांक pins[OMAP_DSS_MAX_DSI_PINS];
+पूर्ण;
 
-struct omap_dss_writeback_info {
+काष्ठा omap_dss_ग_लिखोback_info अणु
 	u32 paddr;
 	u32 p_uv_addr;
 	u16 buf_width;
 	u16 width;
 	u16 height;
-	enum omap_color_mode color_mode;
+	क्रमागत omap_color_mode color_mode;
 	u8 rotation;
-	enum omap_dss_rotation_type rotation_type;
+	क्रमागत omap_dss_rotation_type rotation_type;
 	bool mirror;
 	u8 pre_mult_alpha;
-};
+पूर्ण;
 
-struct omapdss_dpi_ops {
-	int (*connect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
-	void (*disconnect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
+काष्ठा omapdss_dpi_ops अणु
+	पूर्णांक (*connect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
+	व्योम (*disconnect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
 
-	int (*enable)(struct omap_dss_device *dssdev);
-	void (*disable)(struct omap_dss_device *dssdev);
+	पूर्णांक (*enable)(काष्ठा omap_dss_device *dssdev);
+	व्योम (*disable)(काष्ठा omap_dss_device *dssdev);
 
-	int (*check_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*set_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*get_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
+	पूर्णांक (*check_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*set_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*get_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
 
-	void (*set_data_lines)(struct omap_dss_device *dssdev, int data_lines);
-};
+	व्योम (*set_data_lines)(काष्ठा omap_dss_device *dssdev, पूर्णांक data_lines);
+पूर्ण;
 
-struct omapdss_sdi_ops {
-	int (*connect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
-	void (*disconnect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
+काष्ठा omapdss_sdi_ops अणु
+	पूर्णांक (*connect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
+	व्योम (*disconnect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
 
-	int (*enable)(struct omap_dss_device *dssdev);
-	void (*disable)(struct omap_dss_device *dssdev);
+	पूर्णांक (*enable)(काष्ठा omap_dss_device *dssdev);
+	व्योम (*disable)(काष्ठा omap_dss_device *dssdev);
 
-	int (*check_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*set_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*get_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
+	पूर्णांक (*check_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*set_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*get_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
 
-	void (*set_datapairs)(struct omap_dss_device *dssdev, int datapairs);
-};
+	व्योम (*set_datapairs)(काष्ठा omap_dss_device *dssdev, पूर्णांक datapairs);
+पूर्ण;
 
-struct omapdss_dvi_ops {
-	int (*connect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
-	void (*disconnect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
+काष्ठा omapdss_dvi_ops अणु
+	पूर्णांक (*connect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
+	व्योम (*disconnect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
 
-	int (*enable)(struct omap_dss_device *dssdev);
-	void (*disable)(struct omap_dss_device *dssdev);
+	पूर्णांक (*enable)(काष्ठा omap_dss_device *dssdev);
+	व्योम (*disable)(काष्ठा omap_dss_device *dssdev);
 
-	int (*check_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*set_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*get_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-};
+	पूर्णांक (*check_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*set_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*get_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+पूर्ण;
 
-struct omapdss_atv_ops {
-	int (*connect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
-	void (*disconnect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
+काष्ठा omapdss_atv_ops अणु
+	पूर्णांक (*connect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
+	व्योम (*disconnect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
 
-	int (*enable)(struct omap_dss_device *dssdev);
-	void (*disable)(struct omap_dss_device *dssdev);
+	पूर्णांक (*enable)(काष्ठा omap_dss_device *dssdev);
+	व्योम (*disable)(काष्ठा omap_dss_device *dssdev);
 
-	int (*check_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*set_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*get_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
+	पूर्णांक (*check_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*set_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*get_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
 
-	void (*set_type)(struct omap_dss_device *dssdev,
-		enum omap_dss_venc_type type);
-	void (*invert_vid_out_polarity)(struct omap_dss_device *dssdev,
+	व्योम (*set_type)(काष्ठा omap_dss_device *dssdev,
+		क्रमागत omap_dss_venc_type type);
+	व्योम (*invert_vid_out_polarity)(काष्ठा omap_dss_device *dssdev,
 		bool invert_polarity);
 
-	int (*set_wss)(struct omap_dss_device *dssdev, u32 wss);
-	u32 (*get_wss)(struct omap_dss_device *dssdev);
-};
+	पूर्णांक (*set_wss)(काष्ठा omap_dss_device *dssdev, u32 wss);
+	u32 (*get_wss)(काष्ठा omap_dss_device *dssdev);
+पूर्ण;
 
-struct omapdss_hdmi_ops {
-	int (*connect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
-	void (*disconnect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
+काष्ठा omapdss_hdmi_ops अणु
+	पूर्णांक (*connect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
+	व्योम (*disconnect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
 
-	int (*enable)(struct omap_dss_device *dssdev);
-	void (*disable)(struct omap_dss_device *dssdev);
+	पूर्णांक (*enable)(काष्ठा omap_dss_device *dssdev);
+	व्योम (*disable)(काष्ठा omap_dss_device *dssdev);
 
-	int (*check_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*set_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*get_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
+	पूर्णांक (*check_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*set_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*get_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
 
-	int (*read_edid)(struct omap_dss_device *dssdev, u8 *buf, int len);
-	bool (*detect)(struct omap_dss_device *dssdev);
+	पूर्णांक (*पढ़ो_edid)(काष्ठा omap_dss_device *dssdev, u8 *buf, पूर्णांक len);
+	bool (*detect)(काष्ठा omap_dss_device *dssdev);
 
-	int (*set_hdmi_mode)(struct omap_dss_device *dssdev, bool hdmi_mode);
-	int (*set_infoframe)(struct omap_dss_device *dssdev,
-		const struct hdmi_avi_infoframe *avi);
-};
+	पूर्णांक (*set_hdmi_mode)(काष्ठा omap_dss_device *dssdev, bool hdmi_mode);
+	पूर्णांक (*set_infoframe)(काष्ठा omap_dss_device *dssdev,
+		स्थिर काष्ठा hdmi_avi_infoframe *avi);
+पूर्ण;
 
-struct omapdss_dsi_ops {
-	int (*connect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
-	void (*disconnect)(struct omap_dss_device *dssdev,
-			struct omap_dss_device *dst);
+काष्ठा omapdss_dsi_ops अणु
+	पूर्णांक (*connect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
+	व्योम (*disconnect)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_dss_device *dst);
 
-	int (*enable)(struct omap_dss_device *dssdev);
-	void (*disable)(struct omap_dss_device *dssdev, bool disconnect_lanes,
+	पूर्णांक (*enable)(काष्ठा omap_dss_device *dssdev);
+	व्योम (*disable)(काष्ठा omap_dss_device *dssdev, bool disconnect_lanes,
 			bool enter_ulps);
 
 	/* bus configuration */
-	int (*set_config)(struct omap_dss_device *dssdev,
-			const struct omap_dss_dsi_config *cfg);
-	int (*configure_pins)(struct omap_dss_device *dssdev,
-			const struct omap_dsi_pin_config *pin_cfg);
+	पूर्णांक (*set_config)(काष्ठा omap_dss_device *dssdev,
+			स्थिर काष्ठा omap_dss_dsi_config *cfg);
+	पूर्णांक (*configure_pins)(काष्ठा omap_dss_device *dssdev,
+			स्थिर काष्ठा omap_dsi_pin_config *pin_cfg);
 
-	void (*enable_hs)(struct omap_dss_device *dssdev, int channel,
+	व्योम (*enable_hs)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel,
 			bool enable);
-	int (*enable_te)(struct omap_dss_device *dssdev, bool enable);
+	पूर्णांक (*enable_te)(काष्ठा omap_dss_device *dssdev, bool enable);
 
-	int (*update)(struct omap_dss_device *dssdev, int channel,
-			void (*callback)(int, void *), void *data);
+	पूर्णांक (*update)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel,
+			व्योम (*callback)(पूर्णांक, व्योम *), व्योम *data);
 
-	void (*bus_lock)(struct omap_dss_device *dssdev);
-	void (*bus_unlock)(struct omap_dss_device *dssdev);
+	व्योम (*bus_lock)(काष्ठा omap_dss_device *dssdev);
+	व्योम (*bus_unlock)(काष्ठा omap_dss_device *dssdev);
 
-	int (*enable_video_output)(struct omap_dss_device *dssdev, int channel);
-	void (*disable_video_output)(struct omap_dss_device *dssdev,
-			int channel);
+	पूर्णांक (*enable_video_output)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel);
+	व्योम (*disable_video_output)(काष्ठा omap_dss_device *dssdev,
+			पूर्णांक channel);
 
-	int (*request_vc)(struct omap_dss_device *dssdev, int *channel);
-	int (*set_vc_id)(struct omap_dss_device *dssdev, int channel,
-			int vc_id);
-	void (*release_vc)(struct omap_dss_device *dssdev, int channel);
+	पूर्णांक (*request_vc)(काष्ठा omap_dss_device *dssdev, पूर्णांक *channel);
+	पूर्णांक (*set_vc_id)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel,
+			पूर्णांक vc_id);
+	व्योम (*release_vc)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel);
 
 	/* data transfer */
-	int (*dcs_write)(struct omap_dss_device *dssdev, int channel,
-			u8 *data, int len);
-	int (*dcs_write_nosync)(struct omap_dss_device *dssdev, int channel,
-			u8 *data, int len);
-	int (*dcs_read)(struct omap_dss_device *dssdev, int channel, u8 dcs_cmd,
-			u8 *data, int len);
+	पूर्णांक (*dcs_ग_लिखो)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel,
+			u8 *data, पूर्णांक len);
+	पूर्णांक (*dcs_ग_लिखो_nosync)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel,
+			u8 *data, पूर्णांक len);
+	पूर्णांक (*dcs_पढ़ो)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel, u8 dcs_cmd,
+			u8 *data, पूर्णांक len);
 
-	int (*gen_write)(struct omap_dss_device *dssdev, int channel,
-			u8 *data, int len);
-	int (*gen_write_nosync)(struct omap_dss_device *dssdev, int channel,
-			u8 *data, int len);
-	int (*gen_read)(struct omap_dss_device *dssdev, int channel,
-			u8 *reqdata, int reqlen,
-			u8 *data, int len);
+	पूर्णांक (*gen_ग_लिखो)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel,
+			u8 *data, पूर्णांक len);
+	पूर्णांक (*gen_ग_लिखो_nosync)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel,
+			u8 *data, पूर्णांक len);
+	पूर्णांक (*gen_पढ़ो)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel,
+			u8 *reqdata, पूर्णांक reqlen,
+			u8 *data, पूर्णांक len);
 
-	int (*bta_sync)(struct omap_dss_device *dssdev, int channel);
+	पूर्णांक (*bta_sync)(काष्ठा omap_dss_device *dssdev, पूर्णांक channel);
 
-	int (*set_max_rx_packet_size)(struct omap_dss_device *dssdev,
-			int channel, u16 plen);
-};
+	पूर्णांक (*set_max_rx_packet_size)(काष्ठा omap_dss_device *dssdev,
+			पूर्णांक channel, u16 plen);
+पूर्ण;
 
-struct omap_dss_device {
-	struct kobject kobj;
-	struct device *dev;
+काष्ठा omap_dss_device अणु
+	काष्ठा kobject kobj;
+	काष्ठा device *dev;
 
-	struct module *owner;
+	काष्ठा module *owner;
 
-	struct list_head panel_list;
+	काष्ठा list_head panel_list;
 
-	/* alias in the form of "display%d" */
-	char alias[16];
+	/* alias in the क्रमm of "display%d" */
+	अक्षर alias[16];
 
-	enum omap_display_type type;
-	enum omap_display_type output_type;
+	क्रमागत omap_display_type type;
+	क्रमागत omap_display_type output_type;
 
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u8 data_lines;
-		} dpi;
+		पूर्ण dpi;
 
-		struct {
+		काष्ठा अणु
 			u8 datapairs;
-		} sdi;
+		पूर्ण sdi;
 
-		struct {
-			int module;
-		} dsi;
+		काष्ठा अणु
+			पूर्णांक module;
+		पूर्ण dsi;
 
-		struct {
-			enum omap_dss_venc_type type;
+		काष्ठा अणु
+			क्रमागत omap_dss_venc_type type;
 			bool invert_polarity;
-		} venc;
-	} phy;
+		पूर्ण venc;
+	पूर्ण phy;
 
-	struct {
-		struct omap_video_timings timings;
+	काष्ठा अणु
+		काष्ठा omap_video_timings timings;
 
-		enum omap_dss_dsi_pixel_format dsi_pix_fmt;
-		enum omap_dss_dsi_mode dsi_mode;
-	} panel;
+		क्रमागत omap_dss_dsi_pixel_क्रमmat dsi_pix_fmt;
+		क्रमागत omap_dss_dsi_mode dsi_mode;
+	पूर्ण panel;
 
-	struct {
+	काष्ठा अणु
 		u8 pixel_size;
-	} ctrl;
+	पूर्ण ctrl;
 
-	const char *name;
+	स्थिर अक्षर *name;
 
 	/* used to match device to driver */
-	const char *driver_name;
+	स्थिर अक्षर *driver_name;
 
-	void *data;
+	व्योम *data;
 
-	struct omap_dss_driver *driver;
+	काष्ठा omap_dss_driver *driver;
 
-	union {
-		const struct omapdss_dpi_ops *dpi;
-		const struct omapdss_sdi_ops *sdi;
-		const struct omapdss_dvi_ops *dvi;
-		const struct omapdss_hdmi_ops *hdmi;
-		const struct omapdss_atv_ops *atv;
-		const struct omapdss_dsi_ops *dsi;
-	} ops;
+	जोड़ अणु
+		स्थिर काष्ठा omapdss_dpi_ops *dpi;
+		स्थिर काष्ठा omapdss_sdi_ops *sdi;
+		स्थिर काष्ठा omapdss_dvi_ops *dvi;
+		स्थिर काष्ठा omapdss_hdmi_ops *hdmi;
+		स्थिर काष्ठा omapdss_atv_ops *atv;
+		स्थिर काष्ठा omapdss_dsi_ops *dsi;
+	पूर्ण ops;
 
-	/* helper variable for driver suspend/resume */
+	/* helper variable क्रम driver suspend/resume */
 	bool activate_after_resume;
 
-	enum omap_display_caps caps;
+	क्रमागत omap_display_caps caps;
 
-	struct omap_dss_device *src;
+	काष्ठा omap_dss_device *src;
 
-	enum omap_dss_display_state state;
+	क्रमागत omap_dss_display_state state;
 
-	/* OMAP DSS output specific fields */
+	/* OMAP DSS output specअगरic fields */
 
-	struct list_head list;
+	काष्ठा list_head list;
 
-	/* DISPC channel for this output */
-	enum omap_channel dispc_channel;
+	/* DISPC channel क्रम this output */
+	क्रमागत omap_channel dispc_channel;
 	bool dispc_channel_connected;
 
 	/* output instance */
-	enum omap_dss_output_id id;
+	क्रमागत omap_dss_output_id id;
 
 	/* the port number in the DT node */
-	int port_num;
+	पूर्णांक port_num;
 
 	/* dynamic fields */
-	struct omap_overlay_manager *manager;
+	काष्ठा omap_overlay_manager *manager;
 
-	struct omap_dss_device *dst;
-};
+	काष्ठा omap_dss_device *dst;
+पूर्ण;
 
-struct omap_dss_driver {
-	int (*probe)(struct omap_dss_device *);
-	void (*remove)(struct omap_dss_device *);
+काष्ठा omap_dss_driver अणु
+	पूर्णांक (*probe)(काष्ठा omap_dss_device *);
+	व्योम (*हटाओ)(काष्ठा omap_dss_device *);
 
-	int (*connect)(struct omap_dss_device *dssdev);
-	void (*disconnect)(struct omap_dss_device *dssdev);
+	पूर्णांक (*connect)(काष्ठा omap_dss_device *dssdev);
+	व्योम (*disconnect)(काष्ठा omap_dss_device *dssdev);
 
-	int (*enable)(struct omap_dss_device *display);
-	void (*disable)(struct omap_dss_device *display);
-	int (*run_test)(struct omap_dss_device *display, int test);
+	पूर्णांक (*enable)(काष्ठा omap_dss_device *display);
+	व्योम (*disable)(काष्ठा omap_dss_device *display);
+	पूर्णांक (*run_test)(काष्ठा omap_dss_device *display, पूर्णांक test);
 
-	int (*update)(struct omap_dss_device *dssdev,
+	पूर्णांक (*update)(काष्ठा omap_dss_device *dssdev,
 			       u16 x, u16 y, u16 w, u16 h);
-	int (*sync)(struct omap_dss_device *dssdev);
+	पूर्णांक (*sync)(काष्ठा omap_dss_device *dssdev);
 
-	int (*enable_te)(struct omap_dss_device *dssdev, bool enable);
-	int (*get_te)(struct omap_dss_device *dssdev);
+	पूर्णांक (*enable_te)(काष्ठा omap_dss_device *dssdev, bool enable);
+	पूर्णांक (*get_te)(काष्ठा omap_dss_device *dssdev);
 
-	u8 (*get_rotate)(struct omap_dss_device *dssdev);
-	int (*set_rotate)(struct omap_dss_device *dssdev, u8 rotate);
+	u8 (*get_rotate)(काष्ठा omap_dss_device *dssdev);
+	पूर्णांक (*set_rotate)(काष्ठा omap_dss_device *dssdev, u8 rotate);
 
-	bool (*get_mirror)(struct omap_dss_device *dssdev);
-	int (*set_mirror)(struct omap_dss_device *dssdev, bool enable);
+	bool (*get_mirror)(काष्ठा omap_dss_device *dssdev);
+	पूर्णांक (*set_mirror)(काष्ठा omap_dss_device *dssdev, bool enable);
 
-	int (*memory_read)(struct omap_dss_device *dssdev,
-			void *buf, size_t size,
+	पूर्णांक (*memory_पढ़ो)(काष्ठा omap_dss_device *dssdev,
+			व्योम *buf, माप_प्रकार size,
 			u16 x, u16 y, u16 w, u16 h);
 
-	void (*get_resolution)(struct omap_dss_device *dssdev,
+	व्योम (*get_resolution)(काष्ठा omap_dss_device *dssdev,
 			u16 *xres, u16 *yres);
-	void (*get_dimensions)(struct omap_dss_device *dssdev,
+	व्योम (*get_dimensions)(काष्ठा omap_dss_device *dssdev,
 			u32 *width, u32 *height);
-	int (*get_recommended_bpp)(struct omap_dss_device *dssdev);
+	पूर्णांक (*get_recommended_bpp)(काष्ठा omap_dss_device *dssdev);
 
-	int (*check_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*set_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
-	void (*get_timings)(struct omap_dss_device *dssdev,
-			struct omap_video_timings *timings);
+	पूर्णांक (*check_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*set_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
+	व्योम (*get_timings)(काष्ठा omap_dss_device *dssdev,
+			काष्ठा omap_video_timings *timings);
 
-	int (*set_wss)(struct omap_dss_device *dssdev, u32 wss);
-	u32 (*get_wss)(struct omap_dss_device *dssdev);
+	पूर्णांक (*set_wss)(काष्ठा omap_dss_device *dssdev, u32 wss);
+	u32 (*get_wss)(काष्ठा omap_dss_device *dssdev);
 
-	int (*read_edid)(struct omap_dss_device *dssdev, u8 *buf, int len);
-	bool (*detect)(struct omap_dss_device *dssdev);
+	पूर्णांक (*पढ़ो_edid)(काष्ठा omap_dss_device *dssdev, u8 *buf, पूर्णांक len);
+	bool (*detect)(काष्ठा omap_dss_device *dssdev);
 
-	int (*set_hdmi_mode)(struct omap_dss_device *dssdev, bool hdmi_mode);
-	int (*set_hdmi_infoframe)(struct omap_dss_device *dssdev,
-		const struct hdmi_avi_infoframe *avi);
-};
+	पूर्णांक (*set_hdmi_mode)(काष्ठा omap_dss_device *dssdev, bool hdmi_mode);
+	पूर्णांक (*set_hdmi_infoframe)(काष्ठा omap_dss_device *dssdev,
+		स्थिर काष्ठा hdmi_avi_infoframe *avi);
+पूर्ण;
 
-#define for_each_dss_dev(d) while ((d = omap_dss_get_next_device(d)) != NULL)
+#घोषणा क्रम_each_dss_dev(d) जबतक ((d = omap_dss_get_next_device(d)) != शून्य)
 
-typedef void (*omap_dispc_isr_t) (void *arg, u32 mask);
+प्रकार व्योम (*omap_dispc_isr_t) (व्योम *arg, u32 mask);
 
-#if IS_ENABLED(CONFIG_FB_OMAP2)
+#अगर IS_ENABLED(CONFIG_FB_OMAP2)
 
-enum omapdss_version omapdss_get_version(void);
-bool omapdss_is_initialized(void);
+क्रमागत omapdss_version omapdss_get_version(व्योम);
+bool omapdss_is_initialized(व्योम);
 
-int omap_dss_register_driver(struct omap_dss_driver *);
-void omap_dss_unregister_driver(struct omap_dss_driver *);
+पूर्णांक omap_dss_रेजिस्टर_driver(काष्ठा omap_dss_driver *);
+व्योम omap_dss_unरेजिस्टर_driver(काष्ठा omap_dss_driver *);
 
-int omapdss_register_display(struct omap_dss_device *dssdev);
-void omapdss_unregister_display(struct omap_dss_device *dssdev);
+पूर्णांक omapdss_रेजिस्टर_display(काष्ठा omap_dss_device *dssdev);
+व्योम omapdss_unरेजिस्टर_display(काष्ठा omap_dss_device *dssdev);
 
-struct omap_dss_device *omap_dss_get_device(struct omap_dss_device *dssdev);
-void omap_dss_put_device(struct omap_dss_device *dssdev);
-struct omap_dss_device *omap_dss_get_next_device(struct omap_dss_device *from);
-struct omap_dss_device *omap_dss_find_device(void *data,
-		int (*match)(struct omap_dss_device *dssdev, void *data));
-const char *omapdss_get_default_display_name(void);
+काष्ठा omap_dss_device *omap_dss_get_device(काष्ठा omap_dss_device *dssdev);
+व्योम omap_dss_put_device(काष्ठा omap_dss_device *dssdev);
+काष्ठा omap_dss_device *omap_dss_get_next_device(काष्ठा omap_dss_device *from);
+काष्ठा omap_dss_device *omap_dss_find_device(व्योम *data,
+		पूर्णांक (*match)(काष्ठा omap_dss_device *dssdev, व्योम *data));
+स्थिर अक्षर *omapdss_get_शेष_display_name(व्योम);
 
-void videomode_to_omap_video_timings(const struct videomode *vm,
-		struct omap_video_timings *ovt);
-void omap_video_timings_to_videomode(const struct omap_video_timings *ovt,
-		struct videomode *vm);
+व्योम videomode_to_omap_video_timings(स्थिर काष्ठा videomode *vm,
+		काष्ठा omap_video_timings *ovt);
+व्योम omap_video_timings_to_videomode(स्थिर काष्ठा omap_video_timings *ovt,
+		काष्ठा videomode *vm);
 
-int dss_feat_get_num_mgrs(void);
-int dss_feat_get_num_ovls(void);
-enum omap_color_mode dss_feat_get_supported_color_modes(enum omap_plane plane);
+पूर्णांक dss_feat_get_num_mgrs(व्योम);
+पूर्णांक dss_feat_get_num_ovls(व्योम);
+क्रमागत omap_color_mode dss_feat_get_supported_color_modes(क्रमागत omap_plane plane);
 
 
 
-int omap_dss_get_num_overlay_managers(void);
-struct omap_overlay_manager *omap_dss_get_overlay_manager(int num);
+पूर्णांक omap_dss_get_num_overlay_managers(व्योम);
+काष्ठा omap_overlay_manager *omap_dss_get_overlay_manager(पूर्णांक num);
 
-int omap_dss_get_num_overlays(void);
-struct omap_overlay *omap_dss_get_overlay(int num);
+पूर्णांक omap_dss_get_num_overlays(व्योम);
+काष्ठा omap_overlay *omap_dss_get_overlay(पूर्णांक num);
 
-int omapdss_register_output(struct omap_dss_device *output);
-void omapdss_unregister_output(struct omap_dss_device *output);
-struct omap_dss_device *omap_dss_get_output(enum omap_dss_output_id id);
-struct omap_dss_device *omap_dss_find_output(const char *name);
-struct omap_dss_device *omap_dss_find_output_by_port_node(struct device_node *port);
-int omapdss_output_set_device(struct omap_dss_device *out,
-		struct omap_dss_device *dssdev);
-int omapdss_output_unset_device(struct omap_dss_device *out);
+पूर्णांक omapdss_रेजिस्टर_output(काष्ठा omap_dss_device *output);
+व्योम omapdss_unरेजिस्टर_output(काष्ठा omap_dss_device *output);
+काष्ठा omap_dss_device *omap_dss_get_output(क्रमागत omap_dss_output_id id);
+काष्ठा omap_dss_device *omap_dss_find_output(स्थिर अक्षर *name);
+काष्ठा omap_dss_device *omap_dss_find_output_by_port_node(काष्ठा device_node *port);
+पूर्णांक omapdss_output_set_device(काष्ठा omap_dss_device *out,
+		काष्ठा omap_dss_device *dssdev);
+पूर्णांक omapdss_output_unset_device(काष्ठा omap_dss_device *out);
 
-struct omap_dss_device *omapdss_find_output_from_display(struct omap_dss_device *dssdev);
-struct omap_overlay_manager *omapdss_find_mgr_from_display(struct omap_dss_device *dssdev);
+काष्ठा omap_dss_device *omapdss_find_output_from_display(काष्ठा omap_dss_device *dssdev);
+काष्ठा omap_overlay_manager *omapdss_find_mgr_from_display(काष्ठा omap_dss_device *dssdev);
 
-void omapdss_default_get_resolution(struct omap_dss_device *dssdev,
+व्योम omapdss_शेष_get_resolution(काष्ठा omap_dss_device *dssdev,
 		u16 *xres, u16 *yres);
-int omapdss_default_get_recommended_bpp(struct omap_dss_device *dssdev);
-void omapdss_default_get_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings);
+पूर्णांक omapdss_शेष_get_recommended_bpp(काष्ठा omap_dss_device *dssdev);
+व्योम omapdss_शेष_get_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings);
 
-int omap_dispc_register_isr(omap_dispc_isr_t isr, void *arg, u32 mask);
-int omap_dispc_unregister_isr(omap_dispc_isr_t isr, void *arg, u32 mask);
+पूर्णांक omap_dispc_रेजिस्टर_isr(omap_dispc_isr_t isr, व्योम *arg, u32 mask);
+पूर्णांक omap_dispc_unरेजिस्टर_isr(omap_dispc_isr_t isr, व्योम *arg, u32 mask);
 
-int omapdss_compat_init(void);
-void omapdss_compat_uninit(void);
+पूर्णांक omapdss_compat_init(व्योम);
+व्योम omapdss_compat_uninit(व्योम);
 
-static inline bool omapdss_device_is_connected(struct omap_dss_device *dssdev)
-{
-	return dssdev->src;
-}
+अटल अंतरभूत bool omapdss_device_is_connected(काष्ठा omap_dss_device *dssdev)
+अणु
+	वापस dssdev->src;
+पूर्ण
 
-static inline bool omapdss_device_is_enabled(struct omap_dss_device *dssdev)
-{
-	return dssdev->state == OMAP_DSS_DISPLAY_ACTIVE;
-}
+अटल अंतरभूत bool omapdss_device_is_enabled(काष्ठा omap_dss_device *dssdev)
+अणु
+	वापस dssdev->state == OMAP_DSS_DISPLAY_ACTIVE;
+पूर्ण
 
-struct device_node *
-omapdss_of_get_next_port(const struct device_node *parent,
-			 struct device_node *prev);
+काष्ठा device_node *
+omapdss_of_get_next_port(स्थिर काष्ठा device_node *parent,
+			 काष्ठा device_node *prev);
 
-struct device_node *
-omapdss_of_get_next_endpoint(const struct device_node *parent,
-			     struct device_node *prev);
+काष्ठा device_node *
+omapdss_of_get_next_endpoपूर्णांक(स्थिर काष्ठा device_node *parent,
+			     काष्ठा device_node *prev);
 
-struct device_node *
-omapdss_of_get_first_endpoint(const struct device_node *parent);
+काष्ठा device_node *
+omapdss_of_get_first_endpoपूर्णांक(स्थिर काष्ठा device_node *parent);
 
-struct omap_dss_device *
-omapdss_of_find_source_for_first_ep(struct device_node *node);
-#else
+काष्ठा omap_dss_device *
+omapdss_of_find_source_क्रम_first_ep(काष्ठा device_node *node);
+#अन्यथा
 
-static inline enum omapdss_version omapdss_get_version(void)
-{ return OMAPDSS_VER_UNKNOWN; };
+अटल अंतरभूत क्रमागत omapdss_version omapdss_get_version(व्योम)
+अणु वापस OMAPDSS_VER_UNKNOWN; पूर्ण;
 
-static inline bool omapdss_is_initialized(void)
-{ return false; };
+अटल अंतरभूत bool omapdss_is_initialized(व्योम)
+अणु वापस false; पूर्ण;
 
-static inline int omap_dispc_register_isr(omap_dispc_isr_t isr,
-					  void *arg, u32 mask)
-{ return 0; };
+अटल अंतरभूत पूर्णांक omap_dispc_रेजिस्टर_isr(omap_dispc_isr_t isr,
+					  व्योम *arg, u32 mask)
+अणु वापस 0; पूर्ण;
 
-static inline int omap_dispc_unregister_isr(omap_dispc_isr_t isr,
-					    void *arg, u32 mask)
-{ return 0; };
+अटल अंतरभूत पूर्णांक omap_dispc_unरेजिस्टर_isr(omap_dispc_isr_t isr,
+					    व्योम *arg, u32 mask)
+अणु वापस 0; पूर्ण;
 
-static inline struct omap_dss_device
-*omap_dss_get_device(struct omap_dss_device *dssdev)
-{ return NULL; };
+अटल अंतरभूत काष्ठा omap_dss_device
+*omap_dss_get_device(काष्ठा omap_dss_device *dssdev)
+अणु वापस शून्य; पूर्ण;
 
-static inline struct omap_dss_device
-*omap_dss_get_next_device(struct omap_dss_device *from)
-{return NULL; };
+अटल अंतरभूत काष्ठा omap_dss_device
+*omap_dss_get_next_device(काष्ठा omap_dss_device *from)
+अणुवापस शून्य; पूर्ण;
 
-static inline void omap_dss_put_device(struct omap_dss_device *dssdev) {};
+अटल अंतरभूत व्योम omap_dss_put_device(काष्ठा omap_dss_device *dssdev) अणुपूर्ण;
 
-static inline int omapdss_compat_init(void)
-{ return 0; };
+अटल अंतरभूत पूर्णांक omapdss_compat_init(व्योम)
+अणु वापस 0; पूर्ण;
 
-static inline void omapdss_compat_uninit(void) {};
+अटल अंतरभूत व्योम omapdss_compat_uninit(व्योम) अणुपूर्ण;
 
-static inline int omap_dss_get_num_overlay_managers(void)
-{ return 0; };
+अटल अंतरभूत पूर्णांक omap_dss_get_num_overlay_managers(व्योम)
+अणु वापस 0; पूर्ण;
 
-static inline struct omap_overlay_manager *omap_dss_get_overlay_manager(int num)
-{ return NULL; };
+अटल अंतरभूत काष्ठा omap_overlay_manager *omap_dss_get_overlay_manager(पूर्णांक num)
+अणु वापस शून्य; पूर्ण;
 
-static inline int omap_dss_get_num_overlays(void)
-{ return 0; };
+अटल अंतरभूत पूर्णांक omap_dss_get_num_overlays(व्योम)
+अणु वापस 0; पूर्ण;
 
-static inline struct omap_overlay *omap_dss_get_overlay(int num)
-{ return NULL; };
-
-
-#endif /* FB_OMAP2 */
+अटल अंतरभूत काष्ठा omap_overlay *omap_dss_get_overlay(पूर्णांक num)
+अणु वापस शून्य; पूर्ण;
 
 
-#endif /* __OMAPFB_DSS_H */
+#पूर्ण_अगर /* FB_OMAP2 */
+
+
+#पूर्ण_अगर /* __OMAPFB_DSS_H */

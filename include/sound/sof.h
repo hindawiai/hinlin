@@ -1,105 +1,106 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * Copyright(c) 2018 Intel Corporation. All rights reserved.
  *
- * Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
+ * Author: Liam Girdwood <liam.r.girdwood@linux.पूर्णांकel.com>
  */
 
-#ifndef __INCLUDE_SOUND_SOF_H
-#define __INCLUDE_SOUND_SOF_H
+#अगर_अघोषित __INCLUDE_SOUND_SOF_H
+#घोषणा __INCLUDE_SOUND_SOF_H
 
-#include <linux/pci.h>
-#include <sound/soc.h>
-#include <sound/soc-acpi.h>
+#समावेश <linux/pci.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-acpi.h>
 
-struct snd_sof_dsp_ops;
+काष्ठा snd_sof_dsp_ops;
 
 /*
- * SOF Platform data.
+ * SOF Platक्रमm data.
  */
-struct snd_sof_pdata {
-	const struct firmware *fw;
-	const char *name;
-	const char *platform;
+काष्ठा snd_sof_pdata अणु
+	स्थिर काष्ठा firmware *fw;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *platक्रमm;
 
-	struct device *dev;
+	काष्ठा device *dev;
 
-	/* indicate how many first bytes shouldn't be loaded into DSP memory. */
-	size_t fw_offset;
+	/* indicate how many first bytes shouldn't be loaded पूर्णांकo DSP memory. */
+	माप_प्रकार fw_offset;
 
 	/*
-	 * notification callback used if the hardware initialization
-	 * can take time or is handled in a workqueue. This callback
-	 * can be used by the caller to e.g. enable runtime_pm
+	 * notअगरication callback used अगर the hardware initialization
+	 * can take समय or is handled in a workqueue. This callback
+	 * can be used by the caller to e.g. enable runसमय_pm
 	 * or limit functionality until all low-level inits are
 	 * complete.
 	 */
-	void (*sof_probe_complete)(struct device *dev);
+	व्योम (*sof_probe_complete)(काष्ठा device *dev);
 
 	/* descriptor */
-	const struct sof_dev_desc *desc;
+	स्थिर काष्ठा sof_dev_desc *desc;
 
 	/* firmware and topology filenames */
-	const char *fw_filename_prefix;
-	const char *fw_filename;
-	const char *tplg_filename_prefix;
-	const char *tplg_filename;
+	स्थिर अक्षर *fw_filename_prefix;
+	स्थिर अक्षर *fw_filename;
+	स्थिर अक्षर *tplg_filename_prefix;
+	स्थिर अक्षर *tplg_filename;
 
 	/* machine */
-	struct platform_device *pdev_mach;
-	const struct snd_soc_acpi_mach *machine;
+	काष्ठा platक्रमm_device *pdev_mach;
+	स्थिर काष्ठा snd_soc_acpi_mach *machine;
 
-	void *hw_pdata;
-};
+	व्योम *hw_pdata;
+पूर्ण;
 
 /*
- * Descriptor used for setting up SOF platform data. This is used when
- * ACPI/PCI data is missing or mapped differently.
+ * Descriptor used क्रम setting up SOF platक्रमm data. This is used when
+ * ACPI/PCI data is missing or mapped dअगरferently.
  */
-struct sof_dev_desc {
+काष्ठा sof_dev_desc अणु
 	/* list of machines using this configuration */
-	struct snd_soc_acpi_mach *machines;
+	काष्ठा snd_soc_acpi_mach *machines;
 
 	/* alternate list of machines using this configuration */
-	struct snd_soc_acpi_mach *alt_machines;
+	काष्ठा snd_soc_acpi_mach *alt_machines;
 
 	bool use_acpi_target_states;
 
-	/* Platform resource indexes in BAR / ACPI resources. */
-	/* Must set to -1 if not used - add new items to end */
-	int resindex_lpe_base;
-	int resindex_pcicfg_base;
-	int resindex_imr_base;
-	int irqindex_host_ipc;
-	int resindex_dma_base;
+	/* Platक्रमm resource indexes in BAR / ACPI resources. */
+	/* Must set to -1 अगर not used - add new items to end */
+	पूर्णांक resindex_lpe_base;
+	पूर्णांक resindex_pcicfg_base;
+	पूर्णांक resindex_imr_base;
+	पूर्णांक irqindex_host_ipc;
+	पूर्णांक resindex_dma_base;
 
 	/* DMA only valid when resindex_dma_base != -1*/
-	int dma_engine;
-	int dma_size;
+	पूर्णांक dma_engine;
+	पूर्णांक dma_size;
 
-	/* IPC timeouts in ms */
-	int ipc_timeout;
-	int boot_timeout;
+	/* IPC समयouts in ms */
+	पूर्णांक ipc_समयout;
+	पूर्णांक boot_समयout;
 
-	/* chip information for dsp */
-	const void *chip_info;
+	/* chip inक्रमmation क्रम dsp */
+	स्थिर व्योम *chip_info;
 
-	/* defaults for no codec mode */
-	const char *nocodec_tplg_filename;
+	/* शेषs क्रम no codec mode */
+	स्थिर अक्षर *nocodec_tplg_filename;
 
-	/* defaults paths for firmware and topology files */
-	const char *default_fw_path;
-	const char *default_tplg_path;
+	/* शेषs paths क्रम firmware and topology files */
+	स्थिर अक्षर *शेष_fw_path;
+	स्थिर अक्षर *शेष_tplg_path;
 
-	/* default firmware name */
-	const char *default_fw_filename;
+	/* शेष firmware name */
+	स्थिर अक्षर *शेष_fw_filename;
 
-	const struct snd_sof_dsp_ops *ops;
-};
+	स्थिर काष्ठा snd_sof_dsp_ops *ops;
+पूर्ण;
 
-int sof_dai_get_mclk(struct snd_soc_pcm_runtime *rtd);
+पूर्णांक sof_dai_get_mclk(काष्ठा snd_soc_pcm_runसमय *rtd);
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Xilinx Video DMA
  *
@@ -6,27 +7,27 @@
  * Copyright (C) 2013-2015 Xilinx, Inc.
  *
  * Contacts: Hyun Kwon <hyun.kwon@xilinx.com>
- *           Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ *           Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#ifndef __XILINX_VIP_DMA_H__
-#define __XILINX_VIP_DMA_H__
+#अगर_अघोषित __XILINX_VIP_DMA_H__
+#घोषणा __XILINX_VIP_DMA_H__
 
-#include <linux/dmaengine.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/videodev2.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/videodev2.h>
 
-#include <media/media-entity.h>
-#include <media/v4l2-dev.h>
-#include <media/videobuf2-v4l2.h>
+#समावेश <media/media-entity.h>
+#समावेश <media/v4l2-dev.h>
+#समावेश <media/videobuf2-v4l2.h>
 
-struct dma_chan;
-struct xvip_composite_device;
-struct xvip_video_format;
+काष्ठा dma_chan;
+काष्ठा xvip_composite_device;
+काष्ठा xvip_video_क्रमmat;
 
 /**
- * struct xvip_pipeline - Xilinx Video IP pipeline structure
+ * काष्ठा xvip_pipeline - Xilinx Video IP pipeline काष्ठाure
  * @pipe: media pipeline
  * @lock: protects the pipeline @stream_count
  * @use_count: number of DMA engines using the pipeline
@@ -34,71 +35,71 @@ struct xvip_video_format;
  * @num_dmas: number of DMA engines in the pipeline
  * @output: DMA engine at the output of the pipeline
  */
-struct xvip_pipeline {
-	struct media_pipeline pipe;
+काष्ठा xvip_pipeline अणु
+	काष्ठा media_pipeline pipe;
 
-	struct mutex lock;
-	unsigned int use_count;
-	unsigned int stream_count;
+	काष्ठा mutex lock;
+	अचिन्हित पूर्णांक use_count;
+	अचिन्हित पूर्णांक stream_count;
 
-	unsigned int num_dmas;
-	struct xvip_dma *output;
-};
+	अचिन्हित पूर्णांक num_dmas;
+	काष्ठा xvip_dma *output;
+पूर्ण;
 
-static inline struct xvip_pipeline *to_xvip_pipeline(struct media_entity *e)
-{
-	return container_of(e->pipe, struct xvip_pipeline, pipe);
-}
+अटल अंतरभूत काष्ठा xvip_pipeline *to_xvip_pipeline(काष्ठा media_entity *e)
+अणु
+	वापस container_of(e->pipe, काष्ठा xvip_pipeline, pipe);
+पूर्ण
 
 /**
- * struct xvip_dma - Video DMA channel
+ * काष्ठा xvip_dma - Video DMA channel
  * @list: list entry in a composite device dmas list
  * @video: V4L2 video device associated with the DMA channel
- * @pad: media pad for the video device entity
- * @xdev: composite device the DMA channel belongs to
- * @pipe: pipeline belonging to the DMA channel
- * @port: composite device DT node port number for the DMA channel
- * @lock: protects the @format, @fmtinfo and @queue fields
- * @format: active V4L2 pixel format
- * @fmtinfo: format information corresponding to the active @format
+ * @pad: media pad क्रम the video device entity
+ * @xdev: composite device the DMA channel beदीर्घs to
+ * @pipe: pipeline beदीर्घing to the DMA channel
+ * @port: composite device DT node port number क्रम the DMA channel
+ * @lock: protects the @क्रमmat, @fmtinfo and @queue fields
+ * @क्रमmat: active V4L2 pixel क्रमmat
+ * @fmtinfo: क्रमmat inक्रमmation corresponding to the active @क्रमmat
  * @queue: vb2 buffers queue
  * @sequence: V4L2 buffers sequence number
  * @queued_bufs: list of queued buffers
  * @queued_lock: protects the buf_queued list
  * @dma: DMA engine channel
  * @align: transfer alignment required by the DMA channel (in bytes)
- * @xt: dma interleaved template for dma configuration
- * @sgl: data chunk structure for dma_interleaved_template
+ * @xt: dma पूर्णांकerleaved ढाँचा क्रम dma configuration
+ * @sgl: data chunk काष्ठाure क्रम dma_पूर्णांकerleaved_ढाँचा
  */
-struct xvip_dma {
-	struct list_head list;
-	struct video_device video;
-	struct media_pad pad;
+काष्ठा xvip_dma अणु
+	काष्ठा list_head list;
+	काष्ठा video_device video;
+	काष्ठा media_pad pad;
 
-	struct xvip_composite_device *xdev;
-	struct xvip_pipeline pipe;
-	unsigned int port;
+	काष्ठा xvip_composite_device *xdev;
+	काष्ठा xvip_pipeline pipe;
+	अचिन्हित पूर्णांक port;
 
-	struct mutex lock;
-	struct v4l2_pix_format format;
-	const struct xvip_video_format *fmtinfo;
+	काष्ठा mutex lock;
+	काष्ठा v4l2_pix_क्रमmat क्रमmat;
+	स्थिर काष्ठा xvip_video_क्रमmat *fmtinfo;
 
-	struct vb2_queue queue;
-	unsigned int sequence;
+	काष्ठा vb2_queue queue;
+	अचिन्हित पूर्णांक sequence;
 
-	struct list_head queued_bufs;
+	काष्ठा list_head queued_bufs;
 	spinlock_t queued_lock;
 
-	struct dma_chan *dma;
-	unsigned int align;
-	struct dma_interleaved_template xt;
-	struct data_chunk sgl[1];
-};
+	काष्ठा dma_chan *dma;
+	अचिन्हित पूर्णांक align;
+	काष्ठा dma_पूर्णांकerleaved_ढाँचा xt;
+	काष्ठा data_chunk sgl[1];
+पूर्ण;
 
-#define to_xvip_dma(vdev)	container_of(vdev, struct xvip_dma, video)
+#घोषणा to_xvip_dma(vdev)	container_of(vdev, काष्ठा xvip_dma, video)
 
-int xvip_dma_init(struct xvip_composite_device *xdev, struct xvip_dma *dma,
-		  enum v4l2_buf_type type, unsigned int port);
-void xvip_dma_cleanup(struct xvip_dma *dma);
+पूर्णांक xvip_dma_init(काष्ठा xvip_composite_device *xdev, काष्ठा xvip_dma *dma,
+		  क्रमागत v4l2_buf_type type, अचिन्हित पूर्णांक port);
+व्योम xvip_dma_cleanup(काष्ठा xvip_dma *dma);
 
-#endif /* __XILINX_VIP_DMA_H__ */
+#पूर्ण_अगर /* __XILINX_VIP_DMA_H__ */

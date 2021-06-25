@@ -1,212 +1,213 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright 2019 Google LLC
  */
 
-#ifndef __LINUX_BLK_CRYPTO_INTERNAL_H
-#define __LINUX_BLK_CRYPTO_INTERNAL_H
+#अगर_अघोषित __LINUX_BLK_CRYPTO_INTERNAL_H
+#घोषणा __LINUX_BLK_CRYPTO_INTERNAL_H
 
-#include <linux/bio.h>
-#include <linux/blkdev.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/blkdev.h>
 
 /* Represents a crypto mode supported by blk-crypto  */
-struct blk_crypto_mode {
-	const char *cipher_str; /* crypto API name (for fallback case) */
-	unsigned int keysize; /* key size in bytes */
-	unsigned int ivsize; /* iv size in bytes */
-};
+काष्ठा blk_crypto_mode अणु
+	स्थिर अक्षर *cipher_str; /* crypto API name (क्रम fallback हाल) */
+	अचिन्हित पूर्णांक keysize; /* key size in bytes */
+	अचिन्हित पूर्णांक ivsize; /* iv size in bytes */
+पूर्ण;
 
-extern const struct blk_crypto_mode blk_crypto_modes[];
+बाह्य स्थिर काष्ठा blk_crypto_mode blk_crypto_modes[];
 
-#ifdef CONFIG_BLK_INLINE_ENCRYPTION
+#अगर_घोषित CONFIG_BLK_INLINE_ENCRYPTION
 
-void bio_crypt_dun_increment(u64 dun[BLK_CRYPTO_DUN_ARRAY_SIZE],
-			     unsigned int inc);
+व्योम bio_crypt_dun_increment(u64 dun[BLK_CRYPTO_DUN_ARRAY_SIZE],
+			     अचिन्हित पूर्णांक inc);
 
-bool bio_crypt_rq_ctx_compatible(struct request *rq, struct bio *bio);
+bool bio_crypt_rq_ctx_compatible(काष्ठा request *rq, काष्ठा bio *bio);
 
-bool bio_crypt_ctx_mergeable(struct bio_crypt_ctx *bc1, unsigned int bc1_bytes,
-			     struct bio_crypt_ctx *bc2);
+bool bio_crypt_ctx_mergeable(काष्ठा bio_crypt_ctx *bc1, अचिन्हित पूर्णांक bc1_bytes,
+			     काष्ठा bio_crypt_ctx *bc2);
 
-static inline bool bio_crypt_ctx_back_mergeable(struct request *req,
-						struct bio *bio)
-{
-	return bio_crypt_ctx_mergeable(req->crypt_ctx, blk_rq_bytes(req),
+अटल अंतरभूत bool bio_crypt_ctx_back_mergeable(काष्ठा request *req,
+						काष्ठा bio *bio)
+अणु
+	वापस bio_crypt_ctx_mergeable(req->crypt_ctx, blk_rq_bytes(req),
 				       bio->bi_crypt_context);
-}
+पूर्ण
 
-static inline bool bio_crypt_ctx_front_mergeable(struct request *req,
-						 struct bio *bio)
-{
-	return bio_crypt_ctx_mergeable(bio->bi_crypt_context,
+अटल अंतरभूत bool bio_crypt_ctx_front_mergeable(काष्ठा request *req,
+						 काष्ठा bio *bio)
+अणु
+	वापस bio_crypt_ctx_mergeable(bio->bi_crypt_context,
 				       bio->bi_iter.bi_size, req->crypt_ctx);
-}
+पूर्ण
 
-static inline bool bio_crypt_ctx_merge_rq(struct request *req,
-					  struct request *next)
-{
-	return bio_crypt_ctx_mergeable(req->crypt_ctx, blk_rq_bytes(req),
+अटल अंतरभूत bool bio_crypt_ctx_merge_rq(काष्ठा request *req,
+					  काष्ठा request *next)
+अणु
+	वापस bio_crypt_ctx_mergeable(req->crypt_ctx, blk_rq_bytes(req),
 				       next->crypt_ctx);
-}
+पूर्ण
 
-static inline void blk_crypto_rq_set_defaults(struct request *rq)
-{
-	rq->crypt_ctx = NULL;
-	rq->crypt_keyslot = NULL;
-}
+अटल अंतरभूत व्योम blk_crypto_rq_set_शेषs(काष्ठा request *rq)
+अणु
+	rq->crypt_ctx = शून्य;
+	rq->crypt_keyslot = शून्य;
+पूर्ण
 
-static inline bool blk_crypto_rq_is_encrypted(struct request *rq)
-{
-	return rq->crypt_ctx;
-}
+अटल अंतरभूत bool blk_crypto_rq_is_encrypted(काष्ठा request *rq)
+अणु
+	वापस rq->crypt_ctx;
+पूर्ण
 
-#else /* CONFIG_BLK_INLINE_ENCRYPTION */
+#अन्यथा /* CONFIG_BLK_INLINE_ENCRYPTION */
 
-static inline bool bio_crypt_rq_ctx_compatible(struct request *rq,
-					       struct bio *bio)
-{
-	return true;
-}
+अटल अंतरभूत bool bio_crypt_rq_ctx_compatible(काष्ठा request *rq,
+					       काष्ठा bio *bio)
+अणु
+	वापस true;
+पूर्ण
 
-static inline bool bio_crypt_ctx_front_mergeable(struct request *req,
-						 struct bio *bio)
-{
-	return true;
-}
+अटल अंतरभूत bool bio_crypt_ctx_front_mergeable(काष्ठा request *req,
+						 काष्ठा bio *bio)
+अणु
+	वापस true;
+पूर्ण
 
-static inline bool bio_crypt_ctx_back_mergeable(struct request *req,
-						struct bio *bio)
-{
-	return true;
-}
+अटल अंतरभूत bool bio_crypt_ctx_back_mergeable(काष्ठा request *req,
+						काष्ठा bio *bio)
+अणु
+	वापस true;
+पूर्ण
 
-static inline bool bio_crypt_ctx_merge_rq(struct request *req,
-					  struct request *next)
-{
-	return true;
-}
+अटल अंतरभूत bool bio_crypt_ctx_merge_rq(काष्ठा request *req,
+					  काष्ठा request *next)
+अणु
+	वापस true;
+पूर्ण
 
-static inline void blk_crypto_rq_set_defaults(struct request *rq) { }
+अटल अंतरभूत व्योम blk_crypto_rq_set_शेषs(काष्ठा request *rq) अणु पूर्ण
 
-static inline bool blk_crypto_rq_is_encrypted(struct request *rq)
-{
-	return false;
-}
+अटल अंतरभूत bool blk_crypto_rq_is_encrypted(काष्ठा request *rq)
+अणु
+	वापस false;
+पूर्ण
 
-#endif /* CONFIG_BLK_INLINE_ENCRYPTION */
+#पूर्ण_अगर /* CONFIG_BLK_INLINE_ENCRYPTION */
 
-void __bio_crypt_advance(struct bio *bio, unsigned int bytes);
-static inline void bio_crypt_advance(struct bio *bio, unsigned int bytes)
-{
-	if (bio_has_crypt_ctx(bio))
+व्योम __bio_crypt_advance(काष्ठा bio *bio, अचिन्हित पूर्णांक bytes);
+अटल अंतरभूत व्योम bio_crypt_advance(काष्ठा bio *bio, अचिन्हित पूर्णांक bytes)
+अणु
+	अगर (bio_has_crypt_ctx(bio))
 		__bio_crypt_advance(bio, bytes);
-}
+पूर्ण
 
-void __bio_crypt_free_ctx(struct bio *bio);
-static inline void bio_crypt_free_ctx(struct bio *bio)
-{
-	if (bio_has_crypt_ctx(bio))
-		__bio_crypt_free_ctx(bio);
-}
+व्योम __bio_crypt_मुक्त_ctx(काष्ठा bio *bio);
+अटल अंतरभूत व्योम bio_crypt_मुक्त_ctx(काष्ठा bio *bio)
+अणु
+	अगर (bio_has_crypt_ctx(bio))
+		__bio_crypt_मुक्त_ctx(bio);
+पूर्ण
 
-static inline void bio_crypt_do_front_merge(struct request *rq,
-					    struct bio *bio)
-{
-#ifdef CONFIG_BLK_INLINE_ENCRYPTION
-	if (bio_has_crypt_ctx(bio))
-		memcpy(rq->crypt_ctx->bc_dun, bio->bi_crypt_context->bc_dun,
-		       sizeof(rq->crypt_ctx->bc_dun));
-#endif
-}
+अटल अंतरभूत व्योम bio_crypt_करो_front_merge(काष्ठा request *rq,
+					    काष्ठा bio *bio)
+अणु
+#अगर_घोषित CONFIG_BLK_INLINE_ENCRYPTION
+	अगर (bio_has_crypt_ctx(bio))
+		स_नकल(rq->crypt_ctx->bc_dun, bio->bi_crypt_context->bc_dun,
+		       माप(rq->crypt_ctx->bc_dun));
+#पूर्ण_अगर
+पूर्ण
 
-bool __blk_crypto_bio_prep(struct bio **bio_ptr);
-static inline bool blk_crypto_bio_prep(struct bio **bio_ptr)
-{
-	if (bio_has_crypt_ctx(*bio_ptr))
-		return __blk_crypto_bio_prep(bio_ptr);
-	return true;
-}
+bool __blk_crypto_bio_prep(काष्ठा bio **bio_ptr);
+अटल अंतरभूत bool blk_crypto_bio_prep(काष्ठा bio **bio_ptr)
+अणु
+	अगर (bio_has_crypt_ctx(*bio_ptr))
+		वापस __blk_crypto_bio_prep(bio_ptr);
+	वापस true;
+पूर्ण
 
-blk_status_t __blk_crypto_init_request(struct request *rq);
-static inline blk_status_t blk_crypto_init_request(struct request *rq)
-{
-	if (blk_crypto_rq_is_encrypted(rq))
-		return __blk_crypto_init_request(rq);
-	return BLK_STS_OK;
-}
+blk_status_t __blk_crypto_init_request(काष्ठा request *rq);
+अटल अंतरभूत blk_status_t blk_crypto_init_request(काष्ठा request *rq)
+अणु
+	अगर (blk_crypto_rq_is_encrypted(rq))
+		वापस __blk_crypto_init_request(rq);
+	वापस BLK_STS_OK;
+पूर्ण
 
-void __blk_crypto_free_request(struct request *rq);
-static inline void blk_crypto_free_request(struct request *rq)
-{
-	if (blk_crypto_rq_is_encrypted(rq))
-		__blk_crypto_free_request(rq);
-}
+व्योम __blk_crypto_मुक्त_request(काष्ठा request *rq);
+अटल अंतरभूत व्योम blk_crypto_मुक्त_request(काष्ठा request *rq)
+अणु
+	अगर (blk_crypto_rq_is_encrypted(rq))
+		__blk_crypto_मुक्त_request(rq);
+पूर्ण
 
-int __blk_crypto_rq_bio_prep(struct request *rq, struct bio *bio,
+पूर्णांक __blk_crypto_rq_bio_prep(काष्ठा request *rq, काष्ठा bio *bio,
 			     gfp_t gfp_mask);
 /**
  * blk_crypto_rq_bio_prep - Prepare a request's crypt_ctx when its first bio
  *			    is inserted
  * @rq: The request to prepare
- * @bio: The first bio being inserted into the request
+ * @bio: The first bio being inserted पूर्णांकo the request
  * @gfp_mask: Memory allocation flags
  *
- * Return: 0 on success, -ENOMEM if out of memory.  -ENOMEM is only possible if
- *	   @gfp_mask doesn't include %__GFP_DIRECT_RECLAIM.
+ * Return: 0 on success, -ENOMEM अगर out of memory.  -ENOMEM is only possible अगर
+ *	   @gfp_mask करोesn't include %__GFP_सूचीECT_RECLAIM.
  */
-static inline int blk_crypto_rq_bio_prep(struct request *rq, struct bio *bio,
+अटल अंतरभूत पूर्णांक blk_crypto_rq_bio_prep(काष्ठा request *rq, काष्ठा bio *bio,
 					 gfp_t gfp_mask)
-{
-	if (bio_has_crypt_ctx(bio))
-		return __blk_crypto_rq_bio_prep(rq, bio, gfp_mask);
-	return 0;
-}
+अणु
+	अगर (bio_has_crypt_ctx(bio))
+		वापस __blk_crypto_rq_bio_prep(rq, bio, gfp_mask);
+	वापस 0;
+पूर्ण
 
 /**
  * blk_crypto_insert_cloned_request - Prepare a cloned request to be inserted
- *				      into a request queue.
+ *				      पूर्णांकo a request queue.
  * @rq: the request being queued
  *
  * Return: BLK_STS_OK on success, nonzero on error.
  */
-static inline blk_status_t blk_crypto_insert_cloned_request(struct request *rq)
-{
+अटल अंतरभूत blk_status_t blk_crypto_insert_cloned_request(काष्ठा request *rq)
+अणु
 
-	if (blk_crypto_rq_is_encrypted(rq))
-		return blk_crypto_init_request(rq);
-	return BLK_STS_OK;
-}
+	अगर (blk_crypto_rq_is_encrypted(rq))
+		वापस blk_crypto_init_request(rq);
+	वापस BLK_STS_OK;
+पूर्ण
 
-#ifdef CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK
+#अगर_घोषित CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK
 
-int blk_crypto_fallback_start_using_mode(enum blk_crypto_mode_num mode_num);
+पूर्णांक blk_crypto_fallback_start_using_mode(क्रमागत blk_crypto_mode_num mode_num);
 
-bool blk_crypto_fallback_bio_prep(struct bio **bio_ptr);
+bool blk_crypto_fallback_bio_prep(काष्ठा bio **bio_ptr);
 
-int blk_crypto_fallback_evict_key(const struct blk_crypto_key *key);
+पूर्णांक blk_crypto_fallback_evict_key(स्थिर काष्ठा blk_crypto_key *key);
 
-#else /* CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK */
+#अन्यथा /* CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK */
 
-static inline int
-blk_crypto_fallback_start_using_mode(enum blk_crypto_mode_num mode_num)
-{
+अटल अंतरभूत पूर्णांक
+blk_crypto_fallback_start_using_mode(क्रमागत blk_crypto_mode_num mode_num)
+अणु
 	pr_warn_once("crypto API fallback is disabled\n");
-	return -ENOPKG;
-}
+	वापस -ENOPKG;
+पूर्ण
 
-static inline bool blk_crypto_fallback_bio_prep(struct bio **bio_ptr)
-{
+अटल अंतरभूत bool blk_crypto_fallback_bio_prep(काष्ठा bio **bio_ptr)
+अणु
 	pr_warn_once("crypto API fallback disabled; failing request.\n");
 	(*bio_ptr)->bi_status = BLK_STS_NOTSUPP;
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline int
-blk_crypto_fallback_evict_key(const struct blk_crypto_key *key)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+blk_crypto_fallback_evict_key(स्थिर काष्ठा blk_crypto_key *key)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK */
+#पूर्ण_अगर /* CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK */
 
-#endif /* __LINUX_BLK_CRYPTO_INTERNAL_H */
+#पूर्ण_अगर /* __LINUX_BLK_CRYPTO_INTERNAL_H */

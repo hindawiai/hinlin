@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  HID driver for Asus notebook built-in keyboard.
+ *  HID driver क्रम Asus notebook built-in keyboard.
  *  Fixes small logical maximum to match usage maximum.
  *
  *  Currently supported devices are:
@@ -13,7 +14,7 @@
  *  Copyright (c) 2010 Johnathon Harris <jmharris@gmail.com>
  *  Copyright (c) 2011 Jiri Kosina
  *
- *  This module has been updated to add support for Asus i2c touchpad.
+ *  This module has been updated to add support क्रम Asus i2c touchpad.
  *
  *  Copyright (c) 2016 Brendan McGrath <redmcg@redmandi.dyndns.org>
  *  Copyright (c) 2016 Victor Vlasenko <victor.vlasenko@sysgears.com>
@@ -23,15 +24,15 @@
 /*
  */
 
-#include <linux/dmi.h>
-#include <linux/hid.h>
-#include <linux/module.h>
-#include <linux/platform_data/x86/asus-wmi.h>
-#include <linux/input/mt.h>
-#include <linux/usb.h> /* For to_usb_interface for T100 touchpad intf check */
-#include <linux/power_supply.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/x86/asus-wmi.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/usb.h> /* For to_usb_पूर्णांकerface क्रम T100 touchpad पूर्णांकf check */
+#समावेश <linux/घातer_supply.h>
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
 MODULE_AUTHOR("Yusuke Fujimaki <usk.fujimaki@gmail.com>");
 MODULE_AUTHOR("Brendan McGrath <redmcg@redmandi.dyndns.org>");
@@ -39,104 +40,104 @@ MODULE_AUTHOR("Victor Vlasenko <victor.vlasenko@sysgears.com>");
 MODULE_AUTHOR("Frederik Wenigwieser <frederik.wenigwieser@gmail.com>");
 MODULE_DESCRIPTION("Asus HID Keyboard and TouchPad");
 
-#define T100_TPAD_INTF 2
-#define MEDION_E1239T_TPAD_INTF 1
+#घोषणा T100_TPAD_INTF 2
+#घोषणा MEDION_E1239T_TPAD_INTF 1
 
-#define E1239T_TP_TOGGLE_REPORT_ID 0x05
-#define T100CHI_MOUSE_REPORT_ID 0x06
-#define FEATURE_REPORT_ID 0x0d
-#define INPUT_REPORT_ID 0x5d
-#define FEATURE_KBD_REPORT_ID 0x5a
-#define FEATURE_KBD_REPORT_SIZE 16
-#define FEATURE_KBD_LED_REPORT_ID1 0x5d
-#define FEATURE_KBD_LED_REPORT_ID2 0x5e
+#घोषणा E1239T_TP_TOGGLE_REPORT_ID 0x05
+#घोषणा T100CHI_MOUSE_REPORT_ID 0x06
+#घोषणा FEATURE_REPORT_ID 0x0d
+#घोषणा INPUT_REPORT_ID 0x5d
+#घोषणा FEATURE_KBD_REPORT_ID 0x5a
+#घोषणा FEATURE_KBD_REPORT_SIZE 16
+#घोषणा FEATURE_KBD_LED_REPORT_ID1 0x5d
+#घोषणा FEATURE_KBD_LED_REPORT_ID2 0x5e
 
-#define SUPPORT_KBD_BACKLIGHT BIT(0)
+#घोषणा SUPPORT_KBD_BACKLIGHT BIT(0)
 
-#define MAX_TOUCH_MAJOR 8
-#define MAX_PRESSURE 128
+#घोषणा MAX_TOUCH_MAJOR 8
+#घोषणा MAX_PRESSURE 128
 
-#define BTN_LEFT_MASK 0x01
-#define CONTACT_TOOL_TYPE_MASK 0x80
-#define CONTACT_X_MSB_MASK 0xf0
-#define CONTACT_Y_MSB_MASK 0x0f
-#define CONTACT_TOUCH_MAJOR_MASK 0x07
-#define CONTACT_PRESSURE_MASK 0x7f
+#घोषणा BTN_LEFT_MASK 0x01
+#घोषणा CONTACT_TOOL_TYPE_MASK 0x80
+#घोषणा CONTACT_X_MSB_MASK 0xf0
+#घोषणा CONTACT_Y_MSB_MASK 0x0f
+#घोषणा CONTACT_TOUCH_MAJOR_MASK 0x07
+#घोषणा CONTACT_PRESSURE_MASK 0x7f
 
-#define	BATTERY_REPORT_ID	(0x03)
-#define	BATTERY_REPORT_SIZE	(1 + 8)
-#define	BATTERY_LEVEL_MAX	((u8)255)
-#define	BATTERY_STAT_DISCONNECT	(0)
-#define	BATTERY_STAT_CHARGING	(1)
-#define	BATTERY_STAT_FULL	(2)
+#घोषणा	BATTERY_REPORT_ID	(0x03)
+#घोषणा	BATTERY_REPORT_SIZE	(1 + 8)
+#घोषणा	BATTERY_LEVEL_MAX	((u8)255)
+#घोषणा	BATTERY_STAT_DISCONNECT	(0)
+#घोषणा	BATTERY_STAT_CHARGING	(1)
+#घोषणा	BATTERY_STAT_FULL	(2)
 
-#define QUIRK_FIX_NOTEBOOK_REPORT	BIT(0)
-#define QUIRK_NO_INIT_REPORTS		BIT(1)
-#define QUIRK_SKIP_INPUT_MAPPING	BIT(2)
-#define QUIRK_IS_MULTITOUCH		BIT(3)
-#define QUIRK_NO_CONSUMER_USAGES	BIT(4)
-#define QUIRK_USE_KBD_BACKLIGHT		BIT(5)
-#define QUIRK_T100_KEYBOARD		BIT(6)
-#define QUIRK_T100CHI			BIT(7)
-#define QUIRK_G752_KEYBOARD		BIT(8)
-#define QUIRK_T90CHI			BIT(9)
-#define QUIRK_MEDION_E1239T		BIT(10)
-#define QUIRK_ROG_NKEY_KEYBOARD		BIT(11)
+#घोषणा QUIRK_FIX_NOTEBOOK_REPORT	BIT(0)
+#घोषणा QUIRK_NO_INIT_REPORTS		BIT(1)
+#घोषणा QUIRK_SKIP_INPUT_MAPPING	BIT(2)
+#घोषणा QUIRK_IS_MULTITOUCH		BIT(3)
+#घोषणा QUIRK_NO_CONSUMER_USAGES	BIT(4)
+#घोषणा QUIRK_USE_KBD_BACKLIGHT		BIT(5)
+#घोषणा QUIRK_T100_KEYBOARD		BIT(6)
+#घोषणा QUIRK_T100CHI			BIT(7)
+#घोषणा QUIRK_G752_KEYBOARD		BIT(8)
+#घोषणा QUIRK_T90CHI			BIT(9)
+#घोषणा QUIRK_MEDION_E1239T		BIT(10)
+#घोषणा QUIRK_ROG_NKEY_KEYBOARD		BIT(11)
 
-#define I2C_KEYBOARD_QUIRKS			(QUIRK_FIX_NOTEBOOK_REPORT | \
+#घोषणा I2C_KEYBOARD_QUIRKS			(QUIRK_FIX_NOTEBOOK_REPORT | \
 						 QUIRK_NO_INIT_REPORTS | \
 						 QUIRK_NO_CONSUMER_USAGES)
-#define I2C_TOUCHPAD_QUIRKS			(QUIRK_NO_INIT_REPORTS | \
+#घोषणा I2C_TOUCHPAD_QUIRKS			(QUIRK_NO_INIT_REPORTS | \
 						 QUIRK_SKIP_INPUT_MAPPING | \
 						 QUIRK_IS_MULTITOUCH)
 
-#define TRKID_SGN       ((TRKID_MAX + 1) >> 1)
+#घोषणा TRKID_SGN       ((TRKID_MAX + 1) >> 1)
 
-struct asus_kbd_leds {
-	struct led_classdev cdev;
-	struct hid_device *hdev;
-	struct work_struct work;
-	unsigned int brightness;
-	bool removed;
-};
+काष्ठा asus_kbd_leds अणु
+	काष्ठा led_classdev cdev;
+	काष्ठा hid_device *hdev;
+	काष्ठा work_काष्ठा work;
+	अचिन्हित पूर्णांक brightness;
+	bool हटाओd;
+पूर्ण;
 
-struct asus_touchpad_info {
-	int max_x;
-	int max_y;
-	int res_x;
-	int res_y;
-	int contact_size;
-	int max_contacts;
-	int report_size;
-};
+काष्ठा asus_touchpad_info अणु
+	पूर्णांक max_x;
+	पूर्णांक max_y;
+	पूर्णांक res_x;
+	पूर्णांक res_y;
+	पूर्णांक contact_size;
+	पूर्णांक max_contacts;
+	पूर्णांक report_size;
+पूर्ण;
 
-struct asus_drvdata {
-	unsigned long quirks;
-	struct hid_device *hdev;
-	struct input_dev *input;
-	struct input_dev *tp_kbd_input;
-	struct asus_kbd_leds *kbd_backlight;
-	const struct asus_touchpad_info *tp;
+काष्ठा asus_drvdata अणु
+	अचिन्हित दीर्घ quirks;
+	काष्ठा hid_device *hdev;
+	काष्ठा input_dev *input;
+	काष्ठा input_dev *tp_kbd_input;
+	काष्ठा asus_kbd_leds *kbd_backlight;
+	स्थिर काष्ठा asus_touchpad_info *tp;
 	bool enable_backlight;
-	struct power_supply *battery;
-	struct power_supply_desc battery_desc;
-	int battery_capacity;
-	int battery_stat;
+	काष्ठा घातer_supply *battery;
+	काष्ठा घातer_supply_desc battery_desc;
+	पूर्णांक battery_capacity;
+	पूर्णांक battery_stat;
 	bool battery_in_query;
-	unsigned long battery_next_query;
-};
+	अचिन्हित दीर्घ battery_next_query;
+पूर्ण;
 
-static int asus_report_battery(struct asus_drvdata *, u8 *, int);
+अटल पूर्णांक asus_report_battery(काष्ठा asus_drvdata *, u8 *, पूर्णांक);
 
-static const struct asus_touchpad_info asus_i2c_tp = {
+अटल स्थिर काष्ठा asus_touchpad_info asus_i2c_tp = अणु
 	.max_x = 2794,
 	.max_y = 1758,
 	.contact_size = 5,
 	.max_contacts = 5,
 	.report_size = 28 /* 2 byte header + 5 * 5 + 1 byte footer */,
-};
+पूर्ण;
 
-static const struct asus_touchpad_info asus_t100ta_tp = {
+अटल स्थिर काष्ठा asus_touchpad_info asus_t100ta_tp = अणु
 	.max_x = 2240,
 	.max_y = 1120,
 	.res_x = 30, /* units/mm */
@@ -144,9 +145,9 @@ static const struct asus_touchpad_info asus_t100ta_tp = {
 	.contact_size = 5,
 	.max_contacts = 5,
 	.report_size = 28 /* 2 byte header + 5 * 5 + 1 byte footer */,
-};
+पूर्ण;
 
-static const struct asus_touchpad_info asus_t100ha_tp = {
+अटल स्थिर काष्ठा asus_touchpad_info asus_t100ha_tp = अणु
 	.max_x = 2640,
 	.max_y = 1320,
 	.res_x = 30, /* units/mm */
@@ -154,9 +155,9 @@ static const struct asus_touchpad_info asus_t100ha_tp = {
 	.contact_size = 5,
 	.max_contacts = 5,
 	.report_size = 28 /* 2 byte header + 5 * 5 + 1 byte footer */,
-};
+पूर्ण;
 
-static const struct asus_touchpad_info asus_t200ta_tp = {
+अटल स्थिर काष्ठा asus_touchpad_info asus_t200ta_tp = अणु
 	.max_x = 3120,
 	.max_y = 1716,
 	.res_x = 30, /* units/mm */
@@ -164,9 +165,9 @@ static const struct asus_touchpad_info asus_t200ta_tp = {
 	.contact_size = 5,
 	.max_contacts = 5,
 	.report_size = 28 /* 2 byte header + 5 * 5 + 1 byte footer */,
-};
+पूर्ण;
 
-static const struct asus_touchpad_info asus_t100chi_tp = {
+अटल स्थिर काष्ठा asus_touchpad_info asus_t100chi_tp = अणु
 	.max_x = 2640,
 	.max_y = 1320,
 	.res_x = 31, /* units/mm */
@@ -174,9 +175,9 @@ static const struct asus_touchpad_info asus_t100chi_tp = {
 	.contact_size = 3,
 	.max_contacts = 4,
 	.report_size = 15 /* 2 byte header + 3 * 4 + 1 byte footer */,
-};
+पूर्ण;
 
-static const struct asus_touchpad_info medion_e1239t_tp = {
+अटल स्थिर काष्ठा asus_touchpad_info medion_e1239t_tp = अणु
 	.max_x = 2640,
 	.max_y = 1380,
 	.res_x = 29, /* units/mm */
@@ -184,91 +185,91 @@ static const struct asus_touchpad_info medion_e1239t_tp = {
 	.contact_size = 5,
 	.max_contacts = 5,
 	.report_size = 32 /* 2 byte header + 5 * 5 + 5 byte footer */,
-};
+पूर्ण;
 
-static void asus_report_contact_down(struct asus_drvdata *drvdat,
-		int toolType, u8 *data)
-{
-	struct input_dev *input = drvdat->input;
-	int touch_major, pressure, x, y;
+अटल व्योम asus_report_contact_करोwn(काष्ठा asus_drvdata *drvdat,
+		पूर्णांक toolType, u8 *data)
+अणु
+	काष्ठा input_dev *input = drvdat->input;
+	पूर्णांक touch_major, pressure, x, y;
 
 	x = (data[0] & CONTACT_X_MSB_MASK) << 4 | data[1];
 	y = drvdat->tp->max_y - ((data[0] & CONTACT_Y_MSB_MASK) << 8 | data[2]);
 
-	input_report_abs(input, ABS_MT_POSITION_X, x);
-	input_report_abs(input, ABS_MT_POSITION_Y, y);
+	input_report_असल(input, ABS_MT_POSITION_X, x);
+	input_report_असल(input, ABS_MT_POSITION_Y, y);
 
-	if (drvdat->tp->contact_size < 5)
-		return;
+	अगर (drvdat->tp->contact_size < 5)
+		वापस;
 
-	if (toolType == MT_TOOL_PALM) {
+	अगर (toolType == MT_TOOL_PALM) अणु
 		touch_major = MAX_TOUCH_MAJOR;
 		pressure = MAX_PRESSURE;
-	} else {
+	पूर्ण अन्यथा अणु
 		touch_major = (data[3] >> 4) & CONTACT_TOUCH_MAJOR_MASK;
 		pressure = data[4] & CONTACT_PRESSURE_MASK;
-	}
+	पूर्ण
 
-	input_report_abs(input, ABS_MT_TOUCH_MAJOR, touch_major);
-	input_report_abs(input, ABS_MT_PRESSURE, pressure);
-}
+	input_report_असल(input, ABS_MT_TOUCH_MAJOR, touch_major);
+	input_report_असल(input, ABS_MT_PRESSURE, pressure);
+पूर्ण
 
-/* Required for Synaptics Palm Detection */
-static void asus_report_tool_width(struct asus_drvdata *drvdat)
-{
-	struct input_mt *mt = drvdat->input->mt;
-	struct input_mt_slot *oldest;
-	int oldid, count, i;
+/* Required क्रम Synaptics Palm Detection */
+अटल व्योम asus_report_tool_width(काष्ठा asus_drvdata *drvdat)
+अणु
+	काष्ठा input_mt *mt = drvdat->input->mt;
+	काष्ठा input_mt_slot *oldest;
+	पूर्णांक oldid, count, i;
 
-	if (drvdat->tp->contact_size < 5)
-		return;
+	अगर (drvdat->tp->contact_size < 5)
+		वापस;
 
-	oldest = NULL;
+	oldest = शून्य;
 	oldid = mt->trkid;
 	count = 0;
 
-	for (i = 0; i < mt->num_slots; ++i) {
-		struct input_mt_slot *ps = &mt->slots[i];
-		int id = input_mt_get_value(ps, ABS_MT_TRACKING_ID);
+	क्रम (i = 0; i < mt->num_slots; ++i) अणु
+		काष्ठा input_mt_slot *ps = &mt->slots[i];
+		पूर्णांक id = input_mt_get_value(ps, ABS_MT_TRACKING_ID);
 
-		if (id < 0)
-			continue;
-		if ((id - oldid) & TRKID_SGN) {
+		अगर (id < 0)
+			जारी;
+		अगर ((id - oldid) & TRKID_SGN) अणु
 			oldest = ps;
 			oldid = id;
-		}
+		पूर्ण
 		count++;
-	}
+	पूर्ण
 
-	if (oldest) {
-		input_report_abs(drvdat->input, ABS_TOOL_WIDTH,
+	अगर (oldest) अणु
+		input_report_असल(drvdat->input, ABS_TOOL_WIDTH,
 			input_mt_get_value(oldest, ABS_MT_TOUCH_MAJOR));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int asus_report_input(struct asus_drvdata *drvdat, u8 *data, int size)
-{
-	int i, toolType = MT_TOOL_FINGER;
+अटल पूर्णांक asus_report_input(काष्ठा asus_drvdata *drvdat, u8 *data, पूर्णांक size)
+अणु
+	पूर्णांक i, toolType = MT_TOOL_FINGER;
 	u8 *contactData = data + 2;
 
-	if (size != drvdat->tp->report_size)
-		return 0;
+	अगर (size != drvdat->tp->report_size)
+		वापस 0;
 
-	for (i = 0; i < drvdat->tp->max_contacts; i++) {
-		bool down = !!(data[1] & BIT(i+3));
+	क्रम (i = 0; i < drvdat->tp->max_contacts; i++) अणु
+		bool करोwn = !!(data[1] & BIT(i+3));
 
-		if (drvdat->tp->contact_size >= 5)
+		अगर (drvdat->tp->contact_size >= 5)
 			toolType = contactData[3] & CONTACT_TOOL_TYPE_MASK ?
 						MT_TOOL_PALM : MT_TOOL_FINGER;
 
 		input_mt_slot(drvdat->input, i);
-		input_mt_report_slot_state(drvdat->input, toolType, down);
+		input_mt_report_slot_state(drvdat->input, toolType, करोwn);
 
-		if (down) {
-			asus_report_contact_down(drvdat, toolType, contactData);
+		अगर (करोwn) अणु
+			asus_report_contact_करोwn(drvdat, toolType, contactData);
 			contactData += drvdat->tp->contact_size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	input_report_key(drvdat->input, BTN_LEFT, data[1] & BTN_LEFT_MASK);
 	asus_report_tool_width(drvdat);
@@ -276,300 +277,300 @@ static int asus_report_input(struct asus_drvdata *drvdat, u8 *data, int size)
 	input_mt_sync_frame(drvdat->input);
 	input_sync(drvdat->input);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int asus_e1239t_event(struct asus_drvdata *drvdat, u8 *data, int size)
-{
-	if (size != 3)
-		return 0;
+अटल पूर्णांक asus_e1239t_event(काष्ठा asus_drvdata *drvdat, u8 *data, पूर्णांक size)
+अणु
+	अगर (size != 3)
+		वापस 0;
 
 	/* Handle broken mute key which only sends press events */
-	if (!drvdat->tp &&
-	    data[0] == 0x02 && data[1] == 0xe2 && data[2] == 0x00) {
+	अगर (!drvdat->tp &&
+	    data[0] == 0x02 && data[1] == 0xe2 && data[2] == 0x00) अणु
 		input_report_key(drvdat->input, KEY_MUTE, 1);
 		input_sync(drvdat->input);
 		input_report_key(drvdat->input, KEY_MUTE, 0);
 		input_sync(drvdat->input);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Handle custom touchpad toggle key which only sends press events */
-	if (drvdat->tp_kbd_input &&
-	    data[0] == 0x05 && data[1] == 0x02 && data[2] == 0x28) {
+	अगर (drvdat->tp_kbd_input &&
+	    data[0] == 0x05 && data[1] == 0x02 && data[2] == 0x28) अणु
 		input_report_key(drvdat->tp_kbd_input, KEY_F21, 1);
 		input_sync(drvdat->tp_kbd_input);
 		input_report_key(drvdat->tp_kbd_input, KEY_F21, 0);
 		input_sync(drvdat->tp_kbd_input);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int asus_event(struct hid_device *hdev, struct hid_field *field,
-		      struct hid_usage *usage, __s32 value)
-{
-	if ((usage->hid & HID_USAGE_PAGE) == 0xff310000 &&
+अटल पूर्णांक asus_event(काष्ठा hid_device *hdev, काष्ठा hid_field *field,
+		      काष्ठा hid_usage *usage, __s32 value)
+अणु
+	अगर ((usage->hid & HID_USAGE_PAGE) == 0xff310000 &&
 	    (usage->hid & HID_USAGE) != 0x00 &&
-	    (usage->hid & HID_USAGE) != 0xff && !usage->type) {
+	    (usage->hid & HID_USAGE) != 0xff && !usage->type) अणु
 		hid_warn(hdev, "Unmapped Asus vendor usagepage code 0x%02x\n",
 			 usage->hid & HID_USAGE);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int asus_raw_event(struct hid_device *hdev,
-		struct hid_report *report, u8 *data, int size)
-{
-	struct asus_drvdata *drvdata = hid_get_drvdata(hdev);
+अटल पूर्णांक asus_raw_event(काष्ठा hid_device *hdev,
+		काष्ठा hid_report *report, u8 *data, पूर्णांक size)
+अणु
+	काष्ठा asus_drvdata *drvdata = hid_get_drvdata(hdev);
 
-	if (drvdata->battery && data[0] == BATTERY_REPORT_ID)
-		return asus_report_battery(drvdata, data, size);
+	अगर (drvdata->battery && data[0] == BATTERY_REPORT_ID)
+		वापस asus_report_battery(drvdata, data, size);
 
-	if (drvdata->tp && data[0] == INPUT_REPORT_ID)
-		return asus_report_input(drvdata, data, size);
+	अगर (drvdata->tp && data[0] == INPUT_REPORT_ID)
+		वापस asus_report_input(drvdata, data, size);
 
-	if (drvdata->quirks & QUIRK_MEDION_E1239T)
-		return asus_e1239t_event(drvdata, data, size);
+	अगर (drvdata->quirks & QUIRK_MEDION_E1239T)
+		वापस asus_e1239t_event(drvdata, data, size);
 
-	if (drvdata->quirks & QUIRK_USE_KBD_BACKLIGHT) {
+	अगर (drvdata->quirks & QUIRK_USE_KBD_BACKLIGHT) अणु
 		/*
 		 * Skip these report ID, the device emits a continuous stream associated
 		 * with the AURA mode it is in which looks like an 'echo'.
 		*/
-		if (report->id == FEATURE_KBD_LED_REPORT_ID1 ||
-				report->id == FEATURE_KBD_LED_REPORT_ID2) {
-			return -1;
+		अगर (report->id == FEATURE_KBD_LED_REPORT_ID1 ||
+				report->id == FEATURE_KBD_LED_REPORT_ID2) अणु
+			वापस -1;
 		/* Additional report filtering */
-		} else if (report->id == FEATURE_KBD_REPORT_ID) {
+		पूर्ण अन्यथा अगर (report->id == FEATURE_KBD_REPORT_ID) अणु
 			/*
 			 * G14 and G15 send these codes on some keypresses with no
-			 * discernable reason for doing so. We'll filter them out to avoid
+			 * discernable reason क्रम करोing so. We'll filter them out to aव्योम
 			 * unmapped warning messages later.
 			*/
-			if (data[1] == 0xea || data[1] == 0xec || data[1] == 0x02 ||
-					data[1] == 0x8a || data[1] == 0x9e) {
-				return -1;
-			}
-		}
-		if (drvdata->quirks & QUIRK_ROG_NKEY_KEYBOARD) {
+			अगर (data[1] == 0xea || data[1] == 0xec || data[1] == 0x02 ||
+					data[1] == 0x8a || data[1] == 0x9e) अणु
+				वापस -1;
+			पूर्ण
+		पूर्ण
+		अगर (drvdata->quirks & QUIRK_ROG_NKEY_KEYBOARD) अणु
 			/*
 			 * G713 and G733 send these codes on some keypresses, depending on
-			 * the key pressed it can trigger a shutdown event if not caught.
+			 * the key pressed it can trigger a shutकरोwn event अगर not caught.
 			*/
-			if(data[0] == 0x02 && data[1] == 0x30) {
-				return -1;
-			}
-		}
+			अगर(data[0] == 0x02 && data[1] == 0x30) अणु
+				वापस -1;
+			पूर्ण
+		पूर्ण
 
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int asus_kbd_set_report(struct hid_device *hdev, u8 *buf, size_t buf_size)
-{
-	unsigned char *dmabuf;
-	int ret;
+अटल पूर्णांक asus_kbd_set_report(काष्ठा hid_device *hdev, u8 *buf, माप_प्रकार buf_size)
+अणु
+	अचिन्हित अक्षर *dmabuf;
+	पूर्णांक ret;
 
 	dmabuf = kmemdup(buf, buf_size, GFP_KERNEL);
-	if (!dmabuf)
-		return -ENOMEM;
+	अगर (!dmabuf)
+		वापस -ENOMEM;
 
 	/*
 	 * The report ID should be set from the incoming buffer due to LED and key
-	 * interfaces having different pages
+	 * पूर्णांकerfaces having dअगरferent pages
 	*/
 	ret = hid_hw_raw_request(hdev, buf[0], dmabuf,
 				 buf_size, HID_FEATURE_REPORT,
 				 HID_REQ_SET_REPORT);
-	kfree(dmabuf);
+	kमुक्त(dmabuf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int asus_kbd_init(struct hid_device *hdev)
-{
-	u8 buf[] = { FEATURE_KBD_REPORT_ID, 0x41, 0x53, 0x55, 0x53, 0x20, 0x54,
-		     0x65, 0x63, 0x68, 0x2e, 0x49, 0x6e, 0x63, 0x2e, 0x00 };
-	int ret;
+अटल पूर्णांक asus_kbd_init(काष्ठा hid_device *hdev)
+अणु
+	u8 buf[] = अणु FEATURE_KBD_REPORT_ID, 0x41, 0x53, 0x55, 0x53, 0x20, 0x54,
+		     0x65, 0x63, 0x68, 0x2e, 0x49, 0x6e, 0x63, 0x2e, 0x00 पूर्ण;
+	पूर्णांक ret;
 
-	ret = asus_kbd_set_report(hdev, buf, sizeof(buf));
-	if (ret < 0)
+	ret = asus_kbd_set_report(hdev, buf, माप(buf));
+	अगर (ret < 0)
 		hid_err(hdev, "Asus failed to send init command: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int asus_kbd_get_functions(struct hid_device *hdev,
-				  unsigned char *kbd_func)
-{
-	u8 buf[] = { FEATURE_KBD_REPORT_ID, 0x05, 0x20, 0x31, 0x00, 0x08 };
-	u8 *readbuf;
-	int ret;
+अटल पूर्णांक asus_kbd_get_functions(काष्ठा hid_device *hdev,
+				  अचिन्हित अक्षर *kbd_func)
+अणु
+	u8 buf[] = अणु FEATURE_KBD_REPORT_ID, 0x05, 0x20, 0x31, 0x00, 0x08 पूर्ण;
+	u8 *पढ़ोbuf;
+	पूर्णांक ret;
 
-	ret = asus_kbd_set_report(hdev, buf, sizeof(buf));
-	if (ret < 0) {
+	ret = asus_kbd_set_report(hdev, buf, माप(buf));
+	अगर (ret < 0) अणु
 		hid_err(hdev, "Asus failed to send configuration command: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	readbuf = kzalloc(FEATURE_KBD_REPORT_SIZE, GFP_KERNEL);
-	if (!readbuf)
-		return -ENOMEM;
+	पढ़ोbuf = kzalloc(FEATURE_KBD_REPORT_SIZE, GFP_KERNEL);
+	अगर (!पढ़ोbuf)
+		वापस -ENOMEM;
 
-	ret = hid_hw_raw_request(hdev, FEATURE_KBD_REPORT_ID, readbuf,
+	ret = hid_hw_raw_request(hdev, FEATURE_KBD_REPORT_ID, पढ़ोbuf,
 				 FEATURE_KBD_REPORT_SIZE, HID_FEATURE_REPORT,
 				 HID_REQ_GET_REPORT);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		hid_err(hdev, "Asus failed to request functions: %d\n", ret);
-		kfree(readbuf);
-		return ret;
-	}
+		kमुक्त(पढ़ोbuf);
+		वापस ret;
+	पूर्ण
 
-	*kbd_func = readbuf[6];
+	*kbd_func = पढ़ोbuf[6];
 
-	kfree(readbuf);
-	return ret;
-}
+	kमुक्त(पढ़ोbuf);
+	वापस ret;
+पूर्ण
 
-static int rog_nkey_led_init(struct hid_device *hdev)
-{
-	u8 buf_init_start[] = { FEATURE_KBD_LED_REPORT_ID1, 0xB9 };
-	u8 buf_init2[] = { FEATURE_KBD_LED_REPORT_ID1, 0x41, 0x53, 0x55, 0x53, 0x20,
-				0x54, 0x65, 0x63, 0x68, 0x2e, 0x49, 0x6e, 0x63, 0x2e, 0x00 };
-	u8 buf_init3[] = { FEATURE_KBD_LED_REPORT_ID1,
-						0x05, 0x20, 0x31, 0x00, 0x08 };
-	int ret;
+अटल पूर्णांक rog_nkey_led_init(काष्ठा hid_device *hdev)
+अणु
+	u8 buf_init_start[] = अणु FEATURE_KBD_LED_REPORT_ID1, 0xB9 पूर्ण;
+	u8 buf_init2[] = अणु FEATURE_KBD_LED_REPORT_ID1, 0x41, 0x53, 0x55, 0x53, 0x20,
+				0x54, 0x65, 0x63, 0x68, 0x2e, 0x49, 0x6e, 0x63, 0x2e, 0x00 पूर्ण;
+	u8 buf_init3[] = अणु FEATURE_KBD_LED_REPORT_ID1,
+						0x05, 0x20, 0x31, 0x00, 0x08 पूर्ण;
+	पूर्णांक ret;
 
 	hid_info(hdev, "Asus initialise N-KEY Device");
 	/* The first message is an init start */
-	ret = asus_kbd_set_report(hdev, buf_init_start, sizeof(buf_init_start));
-	if (ret < 0) {
+	ret = asus_kbd_set_report(hdev, buf_init_start, माप(buf_init_start));
+	अगर (ret < 0) अणु
 		hid_warn(hdev, "Asus failed to send init start command: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/* Followed by a string */
-	ret = asus_kbd_set_report(hdev, buf_init2, sizeof(buf_init2));
-	if (ret < 0) {
+	ret = asus_kbd_set_report(hdev, buf_init2, माप(buf_init2));
+	अगर (ret < 0) अणु
 		hid_warn(hdev, "Asus failed to send init command 1.0: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/* Followed by a string */
-	ret = asus_kbd_set_report(hdev, buf_init3, sizeof(buf_init3));
-	if (ret < 0) {
+	ret = asus_kbd_set_report(hdev, buf_init3, माप(buf_init3));
+	अगर (ret < 0) अणु
 		hid_warn(hdev, "Asus failed to send init command 1.1: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* begin second report ID with same data */
 	buf_init2[0] = FEATURE_KBD_LED_REPORT_ID2;
 	buf_init3[0] = FEATURE_KBD_LED_REPORT_ID2;
 
-	ret = asus_kbd_set_report(hdev, buf_init2, sizeof(buf_init2));
-	if (ret < 0) {
+	ret = asus_kbd_set_report(hdev, buf_init2, माप(buf_init2));
+	अगर (ret < 0) अणु
 		hid_warn(hdev, "Asus failed to send init command 2.0: %d\n", ret);
-		return ret;
-	}
-	ret = asus_kbd_set_report(hdev, buf_init3, sizeof(buf_init3));
-	if (ret < 0)
+		वापस ret;
+	पूर्ण
+	ret = asus_kbd_set_report(hdev, buf_init3, माप(buf_init3));
+	अगर (ret < 0)
 		hid_warn(hdev, "Asus failed to send init command 2.1: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void asus_kbd_backlight_set(struct led_classdev *led_cdev,
-				   enum led_brightness brightness)
-{
-	struct asus_kbd_leds *led = container_of(led_cdev, struct asus_kbd_leds,
+अटल व्योम asus_kbd_backlight_set(काष्ठा led_classdev *led_cdev,
+				   क्रमागत led_brightness brightness)
+अणु
+	काष्ठा asus_kbd_leds *led = container_of(led_cdev, काष्ठा asus_kbd_leds,
 						 cdev);
-	if (led->brightness == brightness)
-		return;
+	अगर (led->brightness == brightness)
+		वापस;
 
 	led->brightness = brightness;
 	schedule_work(&led->work);
-}
+पूर्ण
 
-static enum led_brightness asus_kbd_backlight_get(struct led_classdev *led_cdev)
-{
-	struct asus_kbd_leds *led = container_of(led_cdev, struct asus_kbd_leds,
+अटल क्रमागत led_brightness asus_kbd_backlight_get(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा asus_kbd_leds *led = container_of(led_cdev, काष्ठा asus_kbd_leds,
 						 cdev);
 
-	return led->brightness;
-}
+	वापस led->brightness;
+पूर्ण
 
-static void asus_kbd_backlight_work(struct work_struct *work)
-{
-	struct asus_kbd_leds *led = container_of(work, struct asus_kbd_leds, work);
-	u8 buf[] = { FEATURE_KBD_REPORT_ID, 0xba, 0xc5, 0xc4, 0x00 };
-	int ret;
+अटल व्योम asus_kbd_backlight_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा asus_kbd_leds *led = container_of(work, काष्ठा asus_kbd_leds, work);
+	u8 buf[] = अणु FEATURE_KBD_REPORT_ID, 0xba, 0xc5, 0xc4, 0x00 पूर्ण;
+	पूर्णांक ret;
 
-	if (led->removed)
-		return;
+	अगर (led->हटाओd)
+		वापस;
 
 	buf[4] = led->brightness;
 
-	ret = asus_kbd_set_report(led->hdev, buf, sizeof(buf));
-	if (ret < 0)
+	ret = asus_kbd_set_report(led->hdev, buf, माप(buf));
+	अगर (ret < 0)
 		hid_err(led->hdev, "Asus failed to set keyboard backlight: %d\n", ret);
-}
+पूर्ण
 
 /* WMI-based keyboard backlight LED control (via asus-wmi driver) takes
  * precedence. We only activate HID-based backlight control when the
  * WMI control is not available.
  */
-static bool asus_kbd_wmi_led_control_present(struct hid_device *hdev)
-{
+अटल bool asus_kbd_wmi_led_control_present(काष्ठा hid_device *hdev)
+अणु
 	u32 value;
-	int ret;
+	पूर्णांक ret;
 
-	if (!IS_ENABLED(CONFIG_ASUS_WMI))
-		return false;
+	अगर (!IS_ENABLED(CONFIG_ASUS_WMI))
+		वापस false;
 
 	ret = asus_wmi_evaluate_method(ASUS_WMI_METHODID_DSTS,
 				       ASUS_WMI_DEVID_KBD_BACKLIGHT, 0, &value);
 	hid_dbg(hdev, "WMI backlight check: rc %d value %x", ret, value);
-	if (ret)
-		return false;
+	अगर (ret)
+		वापस false;
 
-	return !!(value & ASUS_WMI_DSTS_PRESENCE_BIT);
-}
+	वापस !!(value & ASUS_WMI_DSTS_PRESENCE_BIT);
+पूर्ण
 
-static int asus_kbd_register_leds(struct hid_device *hdev)
-{
-	struct asus_drvdata *drvdata = hid_get_drvdata(hdev);
-	unsigned char kbd_func;
-	int ret;
+अटल पूर्णांक asus_kbd_रेजिस्टर_leds(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा asus_drvdata *drvdata = hid_get_drvdata(hdev);
+	अचिन्हित अक्षर kbd_func;
+	पूर्णांक ret;
 
-	if (drvdata->quirks & QUIRK_ROG_NKEY_KEYBOARD) {
+	अगर (drvdata->quirks & QUIRK_ROG_NKEY_KEYBOARD) अणु
 		ret = rog_nkey_led_init(hdev);
-		if (ret < 0)
-			return ret;
-	} else {
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		/* Initialize keyboard */
 		ret = asus_kbd_init(hdev);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		/* Get keyboard functions */
 		ret = asus_kbd_get_functions(hdev, &kbd_func);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		/* Check for backlight support */
-		if (!(kbd_func & SUPPORT_KBD_BACKLIGHT))
-			return -ENODEV;
-	}
+		/* Check क्रम backlight support */
+		अगर (!(kbd_func & SUPPORT_KBD_BACKLIGHT))
+			वापस -ENODEV;
+	पूर्ण
 
 	drvdata->kbd_backlight = devm_kzalloc(&hdev->dev,
-					      sizeof(struct asus_kbd_leds),
+					      माप(काष्ठा asus_kbd_leds),
 					      GFP_KERNEL);
-	if (!drvdata->kbd_backlight)
-		return -ENOMEM;
+	अगर (!drvdata->kbd_backlight)
+		वापस -ENOMEM;
 
-	drvdata->kbd_backlight->removed = false;
+	drvdata->kbd_backlight->हटाओd = false;
 	drvdata->kbd_backlight->brightness = 0;
 	drvdata->kbd_backlight->hdev = hdev;
 	drvdata->kbd_backlight->cdev.name = "asus::kbd_backlight";
@@ -578,140 +579,140 @@ static int asus_kbd_register_leds(struct hid_device *hdev)
 	drvdata->kbd_backlight->cdev.brightness_get = asus_kbd_backlight_get;
 	INIT_WORK(&drvdata->kbd_backlight->work, asus_kbd_backlight_work);
 
-	ret = devm_led_classdev_register(&hdev->dev, &drvdata->kbd_backlight->cdev);
-	if (ret < 0) {
+	ret = devm_led_classdev_रेजिस्टर(&hdev->dev, &drvdata->kbd_backlight->cdev);
+	अगर (ret < 0) अणु
 		/* No need to have this still around */
-		devm_kfree(&hdev->dev, drvdata->kbd_backlight);
-	}
+		devm_kमुक्त(&hdev->dev, drvdata->kbd_backlight);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * [0]       REPORT_ID (same value defined in report descriptor)
  * [1]	     rest battery level. range [0..255]
  * [2]..[7]  Bluetooth hardware address (MAC address)
- * [8]       charging status
- *            = 0 : AC offline / discharging
- *            = 1 : AC online  / charging
- *            = 2 : AC online  / fully charged
+ * [8]       अक्षरging status
+ *            = 0 : AC offline / disअक्षरging
+ *            = 1 : AC online  / अक्षरging
+ *            = 2 : AC online  / fully अक्षरged
  */
-static int asus_parse_battery(struct asus_drvdata *drvdata, u8 *data, int size)
-{
+अटल पूर्णांक asus_parse_battery(काष्ठा asus_drvdata *drvdata, u8 *data, पूर्णांक size)
+अणु
 	u8 sts;
 	u8 lvl;
-	int val;
+	पूर्णांक val;
 
 	lvl = data[1];
 	sts = data[8];
 
-	drvdata->battery_capacity = ((int)lvl * 100) / (int)BATTERY_LEVEL_MAX;
+	drvdata->battery_capacity = ((पूर्णांक)lvl * 100) / (पूर्णांक)BATTERY_LEVEL_MAX;
 
-	switch (sts) {
-	case BATTERY_STAT_CHARGING:
+	चयन (sts) अणु
+	हाल BATTERY_STAT_CHARGING:
 		val = POWER_SUPPLY_STATUS_CHARGING;
-		break;
-	case BATTERY_STAT_FULL:
+		अवरोध;
+	हाल BATTERY_STAT_FULL:
 		val = POWER_SUPPLY_STATUS_FULL;
-		break;
-	case BATTERY_STAT_DISCONNECT:
-	default:
+		अवरोध;
+	हाल BATTERY_STAT_DISCONNECT:
+	शेष:
 		val = POWER_SUPPLY_STATUS_DISCHARGING;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	drvdata->battery_stat = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int asus_report_battery(struct asus_drvdata *drvdata, u8 *data, int size)
-{
-	/* notify only the autonomous event by device */
-	if ((drvdata->battery_in_query == false) &&
+अटल पूर्णांक asus_report_battery(काष्ठा asus_drvdata *drvdata, u8 *data, पूर्णांक size)
+अणु
+	/* notअगरy only the स्वतःnomous event by device */
+	अगर ((drvdata->battery_in_query == false) &&
 			 (size == BATTERY_REPORT_SIZE))
-		power_supply_changed(drvdata->battery);
+		घातer_supply_changed(drvdata->battery);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int asus_battery_query(struct asus_drvdata *drvdata)
-{
+अटल पूर्णांक asus_battery_query(काष्ठा asus_drvdata *drvdata)
+अणु
 	u8 *buf;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	buf = kmalloc(BATTERY_REPORT_SIZE, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(BATTERY_REPORT_SIZE, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	drvdata->battery_in_query = true;
 	ret = hid_hw_raw_request(drvdata->hdev, BATTERY_REPORT_ID,
 				buf, BATTERY_REPORT_SIZE,
 				HID_INPUT_REPORT, HID_REQ_GET_REPORT);
 	drvdata->battery_in_query = false;
-	if (ret == BATTERY_REPORT_SIZE)
+	अगर (ret == BATTERY_REPORT_SIZE)
 		ret = asus_parse_battery(drvdata, buf, BATTERY_REPORT_SIZE);
-	else
+	अन्यथा
 		ret = -ENODATA;
 
-	kfree(buf);
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum power_supply_property asus_battery_props[] = {
+अटल क्रमागत घातer_supply_property asus_battery_props[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_CAPACITY,
 	POWER_SUPPLY_PROP_SCOPE,
 	POWER_SUPPLY_PROP_MODEL_NAME,
-};
+पूर्ण;
 
-#define	QUERY_MIN_INTERVAL	(60 * HZ)	/* 60[sec] */
+#घोषणा	QUERY_MIN_INTERVAL	(60 * HZ)	/* 60[sec] */
 
-static int asus_battery_get_property(struct power_supply *psy,
-				enum power_supply_property psp,
-				union power_supply_propval *val)
-{
-	struct asus_drvdata *drvdata = power_supply_get_drvdata(psy);
-	int ret = 0;
+अटल पूर्णांक asus_battery_get_property(काष्ठा घातer_supply *psy,
+				क्रमागत घातer_supply_property psp,
+				जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा asus_drvdata *drvdata = घातer_supply_get_drvdata(psy);
+	पूर्णांक ret = 0;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-	case POWER_SUPPLY_PROP_CAPACITY:
-		if (time_before(drvdata->battery_next_query, jiffies)) {
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+	हाल POWER_SUPPLY_PROP_CAPACITY:
+		अगर (समय_beक्रमe(drvdata->battery_next_query, jअगरfies)) अणु
 			drvdata->battery_next_query =
-					 jiffies + QUERY_MIN_INTERVAL;
+					 jअगरfies + QUERY_MIN_INTERVAL;
 			ret = asus_battery_query(drvdata);
-			if (ret)
-				return ret;
-		}
-		if (psp == POWER_SUPPLY_PROP_STATUS)
-			val->intval = drvdata->battery_stat;
-		else
-			val->intval = drvdata->battery_capacity;
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = 1;
-		break;
-	case POWER_SUPPLY_PROP_SCOPE:
-		val->intval = POWER_SUPPLY_SCOPE_DEVICE;
-		break;
-	case POWER_SUPPLY_PROP_MODEL_NAME:
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+		अगर (psp == POWER_SUPPLY_PROP_STATUS)
+			val->पूर्णांकval = drvdata->battery_stat;
+		अन्यथा
+			val->पूर्णांकval = drvdata->battery_capacity;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		val->पूर्णांकval = 1;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_SCOPE:
+		val->पूर्णांकval = POWER_SUPPLY_SCOPE_DEVICE;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = drvdata->hdev->name;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int asus_battery_probe(struct hid_device *hdev)
-{
-	struct asus_drvdata *drvdata = hid_get_drvdata(hdev);
-	struct power_supply_config pscfg = { .drv_data = drvdata };
-	int ret = 0;
+अटल पूर्णांक asus_battery_probe(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा asus_drvdata *drvdata = hid_get_drvdata(hdev);
+	काष्ठा घातer_supply_config pscfg = अणु .drv_data = drvdata पूर्ण;
+	पूर्णांक ret = 0;
 
 	drvdata->battery_capacity = 0;
 	drvdata->battery_stat = POWER_SUPPLY_STATUS_UNKNOWN;
@@ -721,73 +722,73 @@ static int asus_battery_probe(struct hid_device *hdev)
 	drvdata->battery_desc.num_properties = ARRAY_SIZE(asus_battery_props);
 	drvdata->battery_desc.get_property = asus_battery_get_property;
 	drvdata->battery_desc.type = POWER_SUPPLY_TYPE_BATTERY;
-	drvdata->battery_desc.use_for_apm = 0;
-	drvdata->battery_desc.name = devm_kasprintf(&hdev->dev, GFP_KERNEL,
+	drvdata->battery_desc.use_क्रम_apm = 0;
+	drvdata->battery_desc.name = devm_kaप्र_लिखो(&hdev->dev, GFP_KERNEL,
 					"asus-keyboard-%s-battery",
-					strlen(hdev->uniq) ?
+					म_माप(hdev->uniq) ?
 					hdev->uniq : dev_name(&hdev->dev));
-	if (!drvdata->battery_desc.name)
-		return -ENOMEM;
+	अगर (!drvdata->battery_desc.name)
+		वापस -ENOMEM;
 
-	drvdata->battery_next_query = jiffies;
+	drvdata->battery_next_query = jअगरfies;
 
-	drvdata->battery = devm_power_supply_register(&hdev->dev,
+	drvdata->battery = devm_घातer_supply_रेजिस्टर(&hdev->dev,
 				&(drvdata->battery_desc), &pscfg);
-	if (IS_ERR(drvdata->battery)) {
+	अगर (IS_ERR(drvdata->battery)) अणु
 		ret = PTR_ERR(drvdata->battery);
-		drvdata->battery = NULL;
+		drvdata->battery = शून्य;
 		hid_err(hdev, "Unable to register battery device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	power_supply_powers(drvdata->battery, &hdev->dev);
+	घातer_supply_घातers(drvdata->battery, &hdev->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int asus_input_configured(struct hid_device *hdev, struct hid_input *hi)
-{
-	struct input_dev *input = hi->input;
-	struct asus_drvdata *drvdata = hid_get_drvdata(hdev);
+अटल पूर्णांक asus_input_configured(काष्ठा hid_device *hdev, काष्ठा hid_input *hi)
+अणु
+	काष्ठा input_dev *input = hi->input;
+	काष्ठा asus_drvdata *drvdata = hid_get_drvdata(hdev);
 
 	/* T100CHI uses MULTI_INPUT, bind the touchpad to the mouse hid_input */
-	if (drvdata->quirks & QUIRK_T100CHI &&
+	अगर (drvdata->quirks & QUIRK_T100CHI &&
 	    hi->report->id != T100CHI_MOUSE_REPORT_ID)
-		return 0;
+		वापस 0;
 
-	/* Handle MULTI_INPUT on E1239T mouse/touchpad USB interface */
-	if (drvdata->tp && (drvdata->quirks & QUIRK_MEDION_E1239T)) {
-		switch (hi->report->id) {
-		case E1239T_TP_TOGGLE_REPORT_ID:
+	/* Handle MULTI_INPUT on E1239T mouse/touchpad USB पूर्णांकerface */
+	अगर (drvdata->tp && (drvdata->quirks & QUIRK_MEDION_E1239T)) अणु
+		चयन (hi->report->id) अणु
+		हाल E1239T_TP_TOGGLE_REPORT_ID:
 			input_set_capability(input, EV_KEY, KEY_F21);
 			input->name = "Asus Touchpad Keys";
 			drvdata->tp_kbd_input = input;
-			return 0;
-		case INPUT_REPORT_ID:
-			break; /* Touchpad report, handled below */
-		default:
-			return 0; /* Ignore other reports */
-		}
-	}
+			वापस 0;
+		हाल INPUT_REPORT_ID:
+			अवरोध; /* Touchpad report, handled below */
+		शेष:
+			वापस 0; /* Ignore other reports */
+		पूर्ण
+	पूर्ण
 
-	if (drvdata->tp) {
-		int ret;
+	अगर (drvdata->tp) अणु
+		पूर्णांक ret;
 
-		input_set_abs_params(input, ABS_MT_POSITION_X, 0,
+		input_set_असल_params(input, ABS_MT_POSITION_X, 0,
 				     drvdata->tp->max_x, 0, 0);
-		input_set_abs_params(input, ABS_MT_POSITION_Y, 0,
+		input_set_असल_params(input, ABS_MT_POSITION_Y, 0,
 				     drvdata->tp->max_y, 0, 0);
-		input_abs_set_res(input, ABS_MT_POSITION_X, drvdata->tp->res_x);
-		input_abs_set_res(input, ABS_MT_POSITION_Y, drvdata->tp->res_y);
+		input_असल_set_res(input, ABS_MT_POSITION_X, drvdata->tp->res_x);
+		input_असल_set_res(input, ABS_MT_POSITION_Y, drvdata->tp->res_y);
 
-		if (drvdata->tp->contact_size >= 5) {
-			input_set_abs_params(input, ABS_TOOL_WIDTH, 0,
+		अगर (drvdata->tp->contact_size >= 5) अणु
+			input_set_असल_params(input, ABS_TOOL_WIDTH, 0,
 					     MAX_TOUCH_MAJOR, 0, 0);
-			input_set_abs_params(input, ABS_MT_TOUCH_MAJOR, 0,
+			input_set_असल_params(input, ABS_MT_TOUCH_MAJOR, 0,
 					     MAX_TOUCH_MAJOR, 0, 0);
-			input_set_abs_params(input, ABS_MT_PRESSURE, 0,
+			input_set_असल_params(input, ABS_MT_PRESSURE, 0,
 					      MAX_PRESSURE, 0, 0);
-		}
+		पूर्ण
 
 		__set_bit(BTN_LEFT, input->keybit);
 		__set_bit(INPUT_PROP_BUTTONPAD, input->propbit);
@@ -795,368 +796,368 @@ static int asus_input_configured(struct hid_device *hdev, struct hid_input *hi)
 		ret = input_mt_init_slots(input, drvdata->tp->max_contacts,
 					  INPUT_MT_POINTER);
 
-		if (ret) {
+		अगर (ret) अणु
 			hid_err(hdev, "Asus input mt init slots failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	drvdata->input = input;
 
-	if (drvdata->enable_backlight &&
+	अगर (drvdata->enable_backlight &&
 	    !asus_kbd_wmi_led_control_present(hdev) &&
-	    asus_kbd_register_leds(hdev))
+	    asus_kbd_रेजिस्टर_leds(hdev))
 		hid_warn(hdev, "Failed to initialize backlight.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define asus_map_key_clear(c)	hid_map_usage_clear(hi, usage, bit, \
+#घोषणा asus_map_key_clear(c)	hid_map_usage_clear(hi, usage, bit, \
 						    max, EV_KEY, (c))
-static int asus_input_mapping(struct hid_device *hdev,
-		struct hid_input *hi, struct hid_field *field,
-		struct hid_usage *usage, unsigned long **bit,
-		int *max)
-{
-	struct asus_drvdata *drvdata = hid_get_drvdata(hdev);
+अटल पूर्णांक asus_input_mapping(काष्ठा hid_device *hdev,
+		काष्ठा hid_input *hi, काष्ठा hid_field *field,
+		काष्ठा hid_usage *usage, अचिन्हित दीर्घ **bit,
+		पूर्णांक *max)
+अणु
+	काष्ठा asus_drvdata *drvdata = hid_get_drvdata(hdev);
 
-	if (drvdata->quirks & QUIRK_SKIP_INPUT_MAPPING) {
+	अगर (drvdata->quirks & QUIRK_SKIP_INPUT_MAPPING) अणु
 		/* Don't map anything from the HID report.
-		 * We do it all manually in asus_input_configured
+		 * We करो it all manually in asus_input_configured
 		 */
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/*
 	 * Ignore a bunch of bogus collections in the T100CHI descriptor.
-	 * This avoids a bunch of non-functional hid_input devices getting
+	 * This aव्योमs a bunch of non-functional hid_input devices getting
 	 * created because of the T100CHI using HID_QUIRK_MULTI_INPUT.
 	 */
-	if ((drvdata->quirks & (QUIRK_T100CHI | QUIRK_T90CHI)) &&
+	अगर ((drvdata->quirks & (QUIRK_T100CHI | QUIRK_T90CHI)) &&
 	    (field->application == (HID_UP_GENDESK | 0x0080) ||
 	     field->application == HID_GD_MOUSE ||
 	     usage->hid == (HID_UP_GENDEVCTRLS | 0x0024) ||
 	     usage->hid == (HID_UP_GENDEVCTRLS | 0x0025) ||
 	     usage->hid == (HID_UP_GENDEVCTRLS | 0x0026)))
-		return -1;
+		वापस -1;
 
-	/* ASUS-specific keyboard hotkeys and led backlight */
-	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_ASUSVENDOR) {
-		switch (usage->hid & HID_USAGE) {
-		case 0x10: asus_map_key_clear(KEY_BRIGHTNESSDOWN);	break;
-		case 0x20: asus_map_key_clear(KEY_BRIGHTNESSUP);		break;
-		case 0x35: asus_map_key_clear(KEY_DISPLAY_OFF);		break;
-		case 0x6c: asus_map_key_clear(KEY_SLEEP);		break;
-		case 0x7c: asus_map_key_clear(KEY_MICMUTE);		break;
-		case 0x82: asus_map_key_clear(KEY_CAMERA);		break;
-		case 0x88: asus_map_key_clear(KEY_RFKILL);			break;
-		case 0xb5: asus_map_key_clear(KEY_CALC);			break;
-		case 0xc4: asus_map_key_clear(KEY_KBDILLUMUP);		break;
-		case 0xc5: asus_map_key_clear(KEY_KBDILLUMDOWN);		break;
+	/* ASUS-specअगरic keyboard hotkeys and led backlight */
+	अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_ASUSVENDOR) अणु
+		चयन (usage->hid & HID_USAGE) अणु
+		हाल 0x10: asus_map_key_clear(KEY_BRIGHTNESSDOWN);	अवरोध;
+		हाल 0x20: asus_map_key_clear(KEY_BRIGHTNESSUP);		अवरोध;
+		हाल 0x35: asus_map_key_clear(KEY_DISPLAY_OFF);		अवरोध;
+		हाल 0x6c: asus_map_key_clear(KEY_SLEEP);		अवरोध;
+		हाल 0x7c: asus_map_key_clear(KEY_MICMUTE);		अवरोध;
+		हाल 0x82: asus_map_key_clear(KEY_CAMERA);		अवरोध;
+		हाल 0x88: asus_map_key_clear(KEY_RFKILL);			अवरोध;
+		हाल 0xb5: asus_map_key_clear(KEY_CALC);			अवरोध;
+		हाल 0xc4: asus_map_key_clear(KEY_KBDILLUMUP);		अवरोध;
+		हाल 0xc5: asus_map_key_clear(KEY_KBDILLUMDOWN);		अवरोध;
 
 		/* ASUS touchpad toggle */
-		case 0x6b: asus_map_key_clear(KEY_F21);			break;
+		हाल 0x6b: asus_map_key_clear(KEY_F21);			अवरोध;
 
 		/* ROG key */
-		case 0x38: asus_map_key_clear(KEY_PROG1);		break;
+		हाल 0x38: asus_map_key_clear(KEY_PROG1);		अवरोध;
 
 		/* Fn+C ASUS Splendid */
-		case 0xba: asus_map_key_clear(KEY_PROG2);		break;
+		हाल 0xba: asus_map_key_clear(KEY_PROG2);		अवरोध;
 
 		/* Fn+Space Power4Gear Hybrid */
-		case 0x5c: asus_map_key_clear(KEY_PROG3);		break;
+		हाल 0x5c: asus_map_key_clear(KEY_PROG3);		अवरोध;
 
 		/* Fn+F5 "fan" symbol on FX503VD */
-		case 0x99: asus_map_key_clear(KEY_PROG4);		break;
+		हाल 0x99: asus_map_key_clear(KEY_PROG4);		अवरोध;
 
 		/* Fn+F5 "fan" symbol on N-Key keyboard */
-		case 0xae: asus_map_key_clear(KEY_PROG4);		break;
+		हाल 0xae: asus_map_key_clear(KEY_PROG4);		अवरोध;
 
 		/* Fn+Ret "Calc" symbol on N-Key keyboard */
-		case 0x92: asus_map_key_clear(KEY_CALC);		break;
+		हाल 0x92: asus_map_key_clear(KEY_CALC);		अवरोध;
 
 		/* Fn+Left Aura mode previous on N-Key keyboard */
-		case 0xb2: asus_map_key_clear(KEY_PROG2);		break;
+		हाल 0xb2: asus_map_key_clear(KEY_PROG2);		अवरोध;
 
 		/* Fn+Right Aura mode next on N-Key keyboard */
-		case 0xb3: asus_map_key_clear(KEY_PROG3);		break;
+		हाल 0xb3: asus_map_key_clear(KEY_PROG3);		अवरोध;
 
-		default:
+		शेष:
 			/* ASUS lazily declares 256 usages, ignore the rest,
-			 * as some make the keyboard appear as a pointer device. */
-			return -1;
-		}
+			 * as some make the keyboard appear as a poपूर्णांकer device. */
+			वापस -1;
+		पूर्ण
 
 		/*
 		 * Check and enable backlight only on devices with UsagePage ==
-		 * 0xff31 to avoid initializing the keyboard firmware multiple
-		 * times on devices with multiple HID descriptors but same
+		 * 0xff31 to aव्योम initializing the keyboard firmware multiple
+		 * बार on devices with multiple HID descriptors but same
 		 * PID/VID.
 		 */
-		if (drvdata->quirks & QUIRK_USE_KBD_BACKLIGHT)
+		अगर (drvdata->quirks & QUIRK_USE_KBD_BACKLIGHT)
 			drvdata->enable_backlight = true;
 
 		set_bit(EV_REP, hi->input->evbit);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_MSVENDOR) {
-		switch (usage->hid & HID_USAGE) {
-		case 0xff01: asus_map_key_clear(BTN_1);	break;
-		case 0xff02: asus_map_key_clear(BTN_2);	break;
-		case 0xff03: asus_map_key_clear(BTN_3);	break;
-		case 0xff04: asus_map_key_clear(BTN_4);	break;
-		case 0xff05: asus_map_key_clear(BTN_5);	break;
-		case 0xff06: asus_map_key_clear(BTN_6);	break;
-		case 0xff07: asus_map_key_clear(BTN_7);	break;
-		case 0xff08: asus_map_key_clear(BTN_8);	break;
-		case 0xff09: asus_map_key_clear(BTN_9);	break;
-		case 0xff0a: asus_map_key_clear(BTN_A);	break;
-		case 0xff0b: asus_map_key_clear(BTN_B);	break;
-		case 0x00f1: asus_map_key_clear(KEY_WLAN);	break;
-		case 0x00f2: asus_map_key_clear(KEY_BRIGHTNESSDOWN);	break;
-		case 0x00f3: asus_map_key_clear(KEY_BRIGHTNESSUP);	break;
-		case 0x00f4: asus_map_key_clear(KEY_DISPLAY_OFF);	break;
-		case 0x00f7: asus_map_key_clear(KEY_CAMERA);	break;
-		case 0x00f8: asus_map_key_clear(KEY_PROG1);	break;
-		default:
-			return 0;
-		}
+	अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_MSVENDOR) अणु
+		चयन (usage->hid & HID_USAGE) अणु
+		हाल 0xff01: asus_map_key_clear(BTN_1);	अवरोध;
+		हाल 0xff02: asus_map_key_clear(BTN_2);	अवरोध;
+		हाल 0xff03: asus_map_key_clear(BTN_3);	अवरोध;
+		हाल 0xff04: asus_map_key_clear(BTN_4);	अवरोध;
+		हाल 0xff05: asus_map_key_clear(BTN_5);	अवरोध;
+		हाल 0xff06: asus_map_key_clear(BTN_6);	अवरोध;
+		हाल 0xff07: asus_map_key_clear(BTN_7);	अवरोध;
+		हाल 0xff08: asus_map_key_clear(BTN_8);	अवरोध;
+		हाल 0xff09: asus_map_key_clear(BTN_9);	अवरोध;
+		हाल 0xff0a: asus_map_key_clear(BTN_A);	अवरोध;
+		हाल 0xff0b: asus_map_key_clear(BTN_B);	अवरोध;
+		हाल 0x00f1: asus_map_key_clear(KEY_WLAN);	अवरोध;
+		हाल 0x00f2: asus_map_key_clear(KEY_BRIGHTNESSDOWN);	अवरोध;
+		हाल 0x00f3: asus_map_key_clear(KEY_BRIGHTNESSUP);	अवरोध;
+		हाल 0x00f4: asus_map_key_clear(KEY_DISPLAY_OFF);	अवरोध;
+		हाल 0x00f7: asus_map_key_clear(KEY_CAMERA);	अवरोध;
+		हाल 0x00f8: asus_map_key_clear(KEY_PROG1);	अवरोध;
+		शेष:
+			वापस 0;
+		पूर्ण
 
 		set_bit(EV_REP, hi->input->evbit);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (drvdata->quirks & QUIRK_NO_CONSUMER_USAGES &&
-		(usage->hid & HID_USAGE_PAGE) == HID_UP_CONSUMER) {
-		switch (usage->hid & HID_USAGE) {
-		case 0xe2: /* Mute */
-		case 0xe9: /* Volume up */
-		case 0xea: /* Volume down */
-			return 0;
-		default:
+	अगर (drvdata->quirks & QUIRK_NO_CONSUMER_USAGES &&
+		(usage->hid & HID_USAGE_PAGE) == HID_UP_CONSUMER) अणु
+		चयन (usage->hid & HID_USAGE) अणु
+		हाल 0xe2: /* Mute */
+		हाल 0xe9: /* Volume up */
+		हाल 0xea: /* Volume करोwn */
+			वापस 0;
+		शेष:
 			/* Ignore dummy Consumer usages which make the
-			 * keyboard incorrectly appear as a pointer device.
+			 * keyboard incorrectly appear as a poपूर्णांकer device.
 			 */
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * The mute button is broken and only sends press events, we
-	 * deal with this in our raw_event handler, so do not map it.
+	 * deal with this in our raw_event handler, so करो not map it.
 	 */
-	if ((drvdata->quirks & QUIRK_MEDION_E1239T) &&
-	    usage->hid == (HID_UP_CONSUMER | 0xe2)) {
+	अगर ((drvdata->quirks & QUIRK_MEDION_E1239T) &&
+	    usage->hid == (HID_UP_CONSUMER | 0xe2)) अणु
 		input_set_capability(hi->input, EV_KEY, KEY_MUTE);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int asus_start_multitouch(struct hid_device *hdev)
-{
-	int ret;
-	static const unsigned char buf[] = {
+अटल पूर्णांक asus_start_multitouch(काष्ठा hid_device *hdev)
+अणु
+	पूर्णांक ret;
+	अटल स्थिर अचिन्हित अक्षर buf[] = अणु
 		FEATURE_REPORT_ID, 0x00, 0x03, 0x01, 0x00
-	};
-	unsigned char *dmabuf = kmemdup(buf, sizeof(buf), GFP_KERNEL);
+	पूर्ण;
+	अचिन्हित अक्षर *dmabuf = kmemdup(buf, माप(buf), GFP_KERNEL);
 
-	if (!dmabuf) {
+	अगर (!dmabuf) अणु
 		ret = -ENOMEM;
 		hid_err(hdev, "Asus failed to alloc dma buf: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = hid_hw_raw_request(hdev, dmabuf[0], dmabuf, sizeof(buf),
+	ret = hid_hw_raw_request(hdev, dmabuf[0], dmabuf, माप(buf),
 					HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 
-	kfree(dmabuf);
+	kमुक्त(dmabuf);
 
-	if (ret != sizeof(buf)) {
+	अगर (ret != माप(buf)) अणु
 		hid_err(hdev, "Asus failed to start multitouch: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused asus_reset_resume(struct hid_device *hdev)
-{
-	struct asus_drvdata *drvdata = hid_get_drvdata(hdev);
+अटल पूर्णांक __maybe_unused asus_reset_resume(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा asus_drvdata *drvdata = hid_get_drvdata(hdev);
 
-	if (drvdata->tp)
-		return asus_start_multitouch(hdev);
+	अगर (drvdata->tp)
+		वापस asus_start_multitouch(hdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int asus_probe(struct hid_device *hdev, const struct hid_device_id *id)
-{
-	int ret;
-	struct asus_drvdata *drvdata;
+अटल पूर्णांक asus_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा asus_drvdata *drvdata;
 
-	drvdata = devm_kzalloc(&hdev->dev, sizeof(*drvdata), GFP_KERNEL);
-	if (drvdata == NULL) {
+	drvdata = devm_kzalloc(&hdev->dev, माप(*drvdata), GFP_KERNEL);
+	अगर (drvdata == शून्य) अणु
 		hid_err(hdev, "Can't alloc Asus descriptor\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	hid_set_drvdata(hdev, drvdata);
 
 	drvdata->quirks = id->driver_data;
 
 	/*
-	 * T90CHI's keyboard dock returns same ID values as T100CHI's dock.
-	 * Thus, identify T90CHI dock with product name string.
+	 * T90CHI's keyboard dock returns same ID values as T100CHI's करोck.
+	 * Thus, identअगरy T90CHI करोck with product name string.
 	 */
-	if (strstr(hdev->name, "T90CHI")) {
+	अगर (म_माला(hdev->name, "T90CHI")) अणु
 		drvdata->quirks &= ~QUIRK_T100CHI;
 		drvdata->quirks |= QUIRK_T90CHI;
-	}
+	पूर्ण
 
-	if (drvdata->quirks & QUIRK_IS_MULTITOUCH)
+	अगर (drvdata->quirks & QUIRK_IS_MULTITOUCH)
 		drvdata->tp = &asus_i2c_tp;
 
-	if ((drvdata->quirks & QUIRK_T100_KEYBOARD) &&
-	    hid_is_using_ll_driver(hdev, &usb_hid_driver)) {
-		struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+	अगर ((drvdata->quirks & QUIRK_T100_KEYBOARD) &&
+	    hid_is_using_ll_driver(hdev, &usb_hid_driver)) अणु
+		काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
 
-		if (intf->altsetting->desc.bInterfaceNumber == T100_TPAD_INTF) {
+		अगर (पूर्णांकf->altsetting->desc.bInterfaceNumber == T100_TPAD_INTF) अणु
 			drvdata->quirks = QUIRK_SKIP_INPUT_MAPPING;
 			/*
 			 * The T100HA uses the same USB-ids as the T100TAF and
-			 * the T200TA uses the same USB-ids as the T100TA, while
-			 * both have different max x/y values as the T100TA[F].
+			 * the T200TA uses the same USB-ids as the T100TA, जबतक
+			 * both have dअगरferent max x/y values as the T100TA[F].
 			 */
-			if (dmi_match(DMI_PRODUCT_NAME, "T100HAN"))
+			अगर (dmi_match(DMI_PRODUCT_NAME, "T100HAN"))
 				drvdata->tp = &asus_t100ha_tp;
-			else if (dmi_match(DMI_PRODUCT_NAME, "T200TA"))
+			अन्यथा अगर (dmi_match(DMI_PRODUCT_NAME, "T200TA"))
 				drvdata->tp = &asus_t200ta_tp;
-			else
+			अन्यथा
 				drvdata->tp = &asus_t100ta_tp;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (drvdata->quirks & QUIRK_T100CHI) {
+	अगर (drvdata->quirks & QUIRK_T100CHI) अणु
 		/*
-		 * All functionality is on a single HID interface and for
+		 * All functionality is on a single HID पूर्णांकerface and क्रम
 		 * userspace the touchpad must be a separate input_dev.
 		 */
 		hdev->quirks |= HID_QUIRK_MULTI_INPUT;
 		drvdata->tp = &asus_t100chi_tp;
-	}
+	पूर्ण
 
-	if ((drvdata->quirks & QUIRK_MEDION_E1239T) &&
-	    hid_is_using_ll_driver(hdev, &usb_hid_driver)) {
-		struct usb_host_interface *alt =
-			to_usb_interface(hdev->dev.parent)->altsetting;
+	अगर ((drvdata->quirks & QUIRK_MEDION_E1239T) &&
+	    hid_is_using_ll_driver(hdev, &usb_hid_driver)) अणु
+		काष्ठा usb_host_पूर्णांकerface *alt =
+			to_usb_पूर्णांकerface(hdev->dev.parent)->altsetting;
 
-		if (alt->desc.bInterfaceNumber == MEDION_E1239T_TPAD_INTF) {
-			/* For separate input-devs for tp and tp toggle key */
+		अगर (alt->desc.bInterfaceNumber == MEDION_E1239T_TPAD_INTF) अणु
+			/* For separate input-devs क्रम tp and tp toggle key */
 			hdev->quirks |= HID_QUIRK_MULTI_INPUT;
 			drvdata->quirks |= QUIRK_SKIP_INPUT_MAPPING;
 			drvdata->tp = &medion_e1239t_tp;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (drvdata->quirks & QUIRK_NO_INIT_REPORTS)
+	अगर (drvdata->quirks & QUIRK_NO_INIT_REPORTS)
 		hdev->quirks |= HID_QUIRK_NO_INIT_REPORTS;
 
 	drvdata->hdev = hdev;
 
-	if (drvdata->quirks & (QUIRK_T100CHI | QUIRK_T90CHI)) {
+	अगर (drvdata->quirks & (QUIRK_T100CHI | QUIRK_T90CHI)) अणु
 		ret = asus_battery_probe(hdev);
-		if (ret) {
+		अगर (ret) अणु
 			hid_err(hdev,
 			    "Asus hid battery_probe failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = hid_parse(hdev);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "Asus hid parse failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "Asus hw start failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!drvdata->input) {
+	अगर (!drvdata->input) अणु
 		hid_err(hdev, "Asus input not registered\n");
 		ret = -ENOMEM;
-		goto err_stop_hw;
-	}
+		जाओ err_stop_hw;
+	पूर्ण
 
-	if (drvdata->tp) {
+	अगर (drvdata->tp) अणु
 		drvdata->input->name = "Asus TouchPad";
-	} else {
+	पूर्ण अन्यथा अणु
 		drvdata->input->name = "Asus Keyboard";
-	}
+	पूर्ण
 
-	if (drvdata->tp) {
+	अगर (drvdata->tp) अणु
 		ret = asus_start_multitouch(hdev);
-		if (ret)
-			goto err_stop_hw;
-	}
+		अगर (ret)
+			जाओ err_stop_hw;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_stop_hw:
 	hid_hw_stop(hdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void asus_remove(struct hid_device *hdev)
-{
-	struct asus_drvdata *drvdata = hid_get_drvdata(hdev);
+अटल व्योम asus_हटाओ(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा asus_drvdata *drvdata = hid_get_drvdata(hdev);
 
-	if (drvdata->kbd_backlight) {
-		drvdata->kbd_backlight->removed = true;
+	अगर (drvdata->kbd_backlight) अणु
+		drvdata->kbd_backlight->हटाओd = true;
 		cancel_work_sync(&drvdata->kbd_backlight->work);
-	}
+	पूर्ण
 
 	hid_hw_stop(hdev);
-}
+पूर्ण
 
-static const __u8 asus_g752_fixed_rdesc[] = {
+अटल स्थिर __u8 asus_g752_fixed_rdesc[] = अणु
         0x19, 0x00,			/*   Usage Minimum (0x00)       */
         0x2A, 0xFF, 0x00,		/*   Usage Maximum (0xFF)       */
-};
+पूर्ण;
 
-static __u8 *asus_report_fixup(struct hid_device *hdev, __u8 *rdesc,
-		unsigned int *rsize)
-{
-	struct asus_drvdata *drvdata = hid_get_drvdata(hdev);
+अटल __u8 *asus_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
+		अचिन्हित पूर्णांक *rsize)
+अणु
+	काष्ठा asus_drvdata *drvdata = hid_get_drvdata(hdev);
 
-	if (drvdata->quirks & QUIRK_FIX_NOTEBOOK_REPORT &&
-			*rsize >= 56 && rdesc[54] == 0x25 && rdesc[55] == 0x65) {
+	अगर (drvdata->quirks & QUIRK_FIX_NOTEBOOK_REPORT &&
+			*rsize >= 56 && rdesc[54] == 0x25 && rdesc[55] == 0x65) अणु
 		hid_info(hdev, "Fixing up Asus notebook report descriptor\n");
 		rdesc[55] = 0xdd;
-	}
-	/* For the T100TA/T200TA keyboard dock */
-	if (drvdata->quirks & QUIRK_T100_KEYBOARD &&
+	पूर्ण
+	/* For the T100TA/T200TA keyboard करोck */
+	अगर (drvdata->quirks & QUIRK_T100_KEYBOARD &&
 		 (*rsize == 76 || *rsize == 101) &&
-		 rdesc[73] == 0x81 && rdesc[74] == 0x01) {
+		 rdesc[73] == 0x81 && rdesc[74] == 0x01) अणु
 		hid_info(hdev, "Fixing up Asus T100 keyb report descriptor\n");
 		rdesc[74] &= ~HID_MAIN_ITEM_CONSTANT;
-	}
-	/* For the T100CHI/T90CHI keyboard dock */
-	if (drvdata->quirks & (QUIRK_T100CHI | QUIRK_T90CHI)) {
-		int rsize_orig;
-		int offs;
+	पूर्ण
+	/* For the T100CHI/T90CHI keyboard करोck */
+	अगर (drvdata->quirks & (QUIRK_T100CHI | QUIRK_T90CHI)) अणु
+		पूर्णांक rsize_orig;
+		पूर्णांक offs;
 
-		if (drvdata->quirks & QUIRK_T100CHI) {
+		अगर (drvdata->quirks & QUIRK_T100CHI) अणु
 			rsize_orig = 403;
 			offs = 388;
-		} else {
+		पूर्ण अन्यथा अणु
 			rsize_orig = 306;
 			offs = 291;
-		}
+		पूर्ण
 
 		/*
 		 * Change Usage (76h) to Usage Minimum (00h), Usage Maximum
@@ -1164,107 +1165,107 @@ static __u8 *asus_report_fixup(struct hid_device *hdev, __u8 *rdesc,
 		 * Note the descriptor has a bogus 0 byte at the end so we
 		 * only need 1 extra byte.
 		 */
-		if (*rsize == rsize_orig &&
-			rdesc[offs] == 0x09 && rdesc[offs + 1] == 0x76) {
+		अगर (*rsize == rsize_orig &&
+			rdesc[offs] == 0x09 && rdesc[offs + 1] == 0x76) अणु
 			*rsize = rsize_orig + 1;
 			rdesc = kmemdup(rdesc, *rsize, GFP_KERNEL);
-			if (!rdesc)
-				return NULL;
+			अगर (!rdesc)
+				वापस शून्य;
 
 			hid_info(hdev, "Fixing up %s keyb report descriptor\n",
 				drvdata->quirks & QUIRK_T100CHI ?
 				"T100CHI" : "T90CHI");
-			memmove(rdesc + offs + 4, rdesc + offs + 2, 12);
+			स_हटाओ(rdesc + offs + 4, rdesc + offs + 2, 12);
 			rdesc[offs] = 0x19;
 			rdesc[offs + 1] = 0x00;
 			rdesc[offs + 2] = 0x29;
 			rdesc[offs + 3] = 0xff;
 			rdesc[offs + 14] = 0x00;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (drvdata->quirks & QUIRK_G752_KEYBOARD &&
-		 *rsize == 75 && rdesc[61] == 0x15 && rdesc[62] == 0x00) {
+	अगर (drvdata->quirks & QUIRK_G752_KEYBOARD &&
+		 *rsize == 75 && rdesc[61] == 0x15 && rdesc[62] == 0x00) अणु
 		/* report is missing usage mninum and maximum */
 		__u8 *new_rdesc;
-		size_t new_size = *rsize + sizeof(asus_g752_fixed_rdesc);
+		माप_प्रकार new_size = *rsize + माप(asus_g752_fixed_rdesc);
 
 		new_rdesc = devm_kzalloc(&hdev->dev, new_size, GFP_KERNEL);
-		if (new_rdesc == NULL)
-			return rdesc;
+		अगर (new_rdesc == शून्य)
+			वापस rdesc;
 
 		hid_info(hdev, "Fixing up Asus G752 keyb report descriptor\n");
 		/* copy the valid part */
-		memcpy(new_rdesc, rdesc, 61);
+		स_नकल(new_rdesc, rdesc, 61);
 		/* insert missing part */
-		memcpy(new_rdesc + 61, asus_g752_fixed_rdesc, sizeof(asus_g752_fixed_rdesc));
-		/* copy remaining data */
-		memcpy(new_rdesc + 61 + sizeof(asus_g752_fixed_rdesc), rdesc + 61, *rsize - 61);
+		स_नकल(new_rdesc + 61, asus_g752_fixed_rdesc, माप(asus_g752_fixed_rdesc));
+		/* copy reमुख्यing data */
+		स_नकल(new_rdesc + 61 + माप(asus_g752_fixed_rdesc), rdesc + 61, *rsize - 61);
 
 		*rsize = new_size;
 		rdesc = new_rdesc;
-	}
+	पूर्ण
 
-	return rdesc;
-}
+	वापस rdesc;
+पूर्ण
 
-static const struct hid_device_id asus_devices[] = {
-	{ HID_I2C_DEVICE(USB_VENDOR_ID_ASUSTEK,
-		USB_DEVICE_ID_ASUSTEK_I2C_KEYBOARD), I2C_KEYBOARD_QUIRKS},
-	{ HID_I2C_DEVICE(USB_VENDOR_ID_ASUSTEK,
-		USB_DEVICE_ID_ASUSTEK_I2C_TOUCHPAD), I2C_TOUCHPAD_QUIRKS },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
-		USB_DEVICE_ID_ASUSTEK_ROG_KEYBOARD1), QUIRK_USE_KBD_BACKLIGHT },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
-		USB_DEVICE_ID_ASUSTEK_ROG_KEYBOARD2), QUIRK_USE_KBD_BACKLIGHT },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
-		USB_DEVICE_ID_ASUSTEK_ROG_KEYBOARD3), QUIRK_G752_KEYBOARD },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
+अटल स्थिर काष्ठा hid_device_id asus_devices[] = अणु
+	अणु HID_I2C_DEVICE(USB_VENDOR_ID_ASUSTEK,
+		USB_DEVICE_ID_ASUSTEK_I2C_KEYBOARD), I2C_KEYBOARD_QUIRKSपूर्ण,
+	अणु HID_I2C_DEVICE(USB_VENDOR_ID_ASUSTEK,
+		USB_DEVICE_ID_ASUSTEK_I2C_TOUCHPAD), I2C_TOUCHPAD_QUIRKS पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
+		USB_DEVICE_ID_ASUSTEK_ROG_KEYBOARD1), QUIRK_USE_KBD_BACKLIGHT पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
+		USB_DEVICE_ID_ASUSTEK_ROG_KEYBOARD2), QUIRK_USE_KBD_BACKLIGHT पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
+		USB_DEVICE_ID_ASUSTEK_ROG_KEYBOARD3), QUIRK_G752_KEYBOARD पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
 		USB_DEVICE_ID_ASUSTEK_FX503VD_KEYBOARD),
-	  QUIRK_USE_KBD_BACKLIGHT },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
+	  QUIRK_USE_KBD_BACKLIGHT पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
 	    USB_DEVICE_ID_ASUSTEK_ROG_NKEY_KEYBOARD),
-	  QUIRK_USE_KBD_BACKLIGHT | QUIRK_ROG_NKEY_KEYBOARD },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
+	  QUIRK_USE_KBD_BACKLIGHT | QUIRK_ROG_NKEY_KEYBOARD पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
 	    USB_DEVICE_ID_ASUSTEK_ROG_NKEY_KEYBOARD2),
-	  QUIRK_USE_KBD_BACKLIGHT | QUIRK_ROG_NKEY_KEYBOARD },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
+	  QUIRK_USE_KBD_BACKLIGHT | QUIRK_ROG_NKEY_KEYBOARD पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
 		USB_DEVICE_ID_ASUSTEK_T100TA_KEYBOARD),
-	  QUIRK_T100_KEYBOARD | QUIRK_NO_CONSUMER_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
+	  QUIRK_T100_KEYBOARD | QUIRK_NO_CONSUMER_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ASUSTEK,
 		USB_DEVICE_ID_ASUSTEK_T100TAF_KEYBOARD),
-	  QUIRK_T100_KEYBOARD | QUIRK_NO_CONSUMER_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_CHICONY, USB_DEVICE_ID_ASUS_AK1D) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_TURBOX, USB_DEVICE_ID_ASUS_MD_5110) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_JESS, USB_DEVICE_ID_ASUS_MD_5112) },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_ASUSTEK,
-		USB_DEVICE_ID_ASUSTEK_T100CHI_KEYBOARD), QUIRK_T100CHI },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ITE, USB_DEVICE_ID_ITE_MEDION_E1239T),
-		QUIRK_MEDION_E1239T },
+	  QUIRK_T100_KEYBOARD | QUIRK_NO_CONSUMER_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_CHICONY, USB_DEVICE_ID_ASUS_AK1D) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_TURBOX, USB_DEVICE_ID_ASUS_MD_5110) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_JESS, USB_DEVICE_ID_ASUS_MD_5112) पूर्ण,
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_ASUSTEK,
+		USB_DEVICE_ID_ASUSTEK_T100CHI_KEYBOARD), QUIRK_T100CHI पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ITE, USB_DEVICE_ID_ITE_MEDION_E1239T),
+		QUIRK_MEDION_E1239T पूर्ण,
 	/*
 	 * Note bind to the HID_GROUP_GENERIC group, so that we only bind to the keyboard
-	 * part, while letting hid-multitouch.c handle the touchpad.
+	 * part, जबतक letting hid-multitouch.c handle the touchpad.
 	 */
-	{ HID_DEVICE(BUS_USB, HID_GROUP_GENERIC,
-		USB_VENDOR_ID_ASUSTEK, USB_DEVICE_ID_ASUSTEK_T101HA_KEYBOARD) },
-	{ }
-};
+	अणु HID_DEVICE(BUS_USB, HID_GROUP_GENERIC,
+		USB_VENDOR_ID_ASUSTEK, USB_DEVICE_ID_ASUSTEK_T101HA_KEYBOARD) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, asus_devices);
 
-static struct hid_driver asus_driver = {
+अटल काष्ठा hid_driver asus_driver = अणु
 	.name			= "asus",
 	.id_table		= asus_devices,
 	.report_fixup		= asus_report_fixup,
 	.probe                  = asus_probe,
-	.remove			= asus_remove,
+	.हटाओ			= asus_हटाओ,
 	.input_mapping          = asus_input_mapping,
 	.input_configured       = asus_input_configured,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.reset_resume           = asus_reset_resume,
-#endif
+#पूर्ण_अगर
 	.event			= asus_event,
 	.raw_event		= asus_raw_event
-};
+पूर्ण;
 module_hid_driver(asus_driver);
 
 MODULE_LICENSE("GPL");

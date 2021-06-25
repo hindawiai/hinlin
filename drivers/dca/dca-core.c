@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright(c) 2007 - 2009 Intel Corporation. All rights reserved.
  */
 
 /*
- * This driver supports an interface for DCA clients and providers to meet.
+ * This driver supports an पूर्णांकerface क्रम DCA clients and providers to meet.
  */
 
-#include <linux/kernel.h>
-#include <linux/notifier.h>
-#include <linux/device.h>
-#include <linux/dca.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dca.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#define DCA_VERSION "1.12.1"
+#घोषणा DCA_VERSION "1.12.1"
 
 MODULE_VERSION(DCA_VERSION);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Intel Corporation");
 
-static DEFINE_RAW_SPINLOCK(dca_lock);
+अटल DEFINE_RAW_SPINLOCK(dca_lock);
 
-static LIST_HEAD(dca_domains);
+अटल LIST_HEAD(dca_करोमुख्यs);
 
-static BLOCKING_NOTIFIER_HEAD(dca_provider_chain);
+अटल BLOCKING_NOTIFIER_HEAD(dca_provider_chain);
 
-static int dca_providers_blocked;
+अटल पूर्णांक dca_providers_blocked;
 
-static struct pci_bus *dca_pci_rc_from_dev(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct pci_bus *bus = pdev->bus;
+अटल काष्ठा pci_bus *dca_pci_rc_from_dev(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा pci_bus *bus = pdev->bus;
 
-	while (bus->parent)
+	जबतक (bus->parent)
 		bus = bus->parent;
 
-	return bus;
-}
+	वापस bus;
+पूर्ण
 
-static struct dca_domain *dca_allocate_domain(struct pci_bus *rc)
-{
-	struct dca_domain *domain;
+अटल काष्ठा dca_करोमुख्य *dca_allocate_करोमुख्य(काष्ठा pci_bus *rc)
+अणु
+	काष्ठा dca_करोमुख्य *करोमुख्य;
 
-	domain = kzalloc(sizeof(*domain), GFP_NOWAIT);
-	if (!domain)
-		return NULL;
+	करोमुख्य = kzalloc(माप(*करोमुख्य), GFP_NOWAIT);
+	अगर (!करोमुख्य)
+		वापस शून्य;
 
-	INIT_LIST_HEAD(&domain->dca_providers);
-	domain->pci_rc = rc;
+	INIT_LIST_HEAD(&करोमुख्य->dca_providers);
+	करोमुख्य->pci_rc = rc;
 
-	return domain;
-}
+	वापस करोमुख्य;
+पूर्ण
 
-static void dca_free_domain(struct dca_domain *domain)
-{
-	list_del(&domain->node);
-	kfree(domain);
-}
+अटल व्योम dca_मुक्त_करोमुख्य(काष्ठा dca_करोमुख्य *करोमुख्य)
+अणु
+	list_del(&करोमुख्य->node);
+	kमुक्त(करोमुख्य);
+पूर्ण
 
-static int dca_provider_ioat_ver_3_0(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
+अटल पूर्णांक dca_provider_ioat_ver_3_0(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
 
-	return ((pdev->vendor == PCI_VENDOR_ID_INTEL) &&
+	वापस ((pdev->venकरोr == PCI_VENDOR_ID_INTEL) &&
 		((pdev->device == PCI_DEVICE_ID_INTEL_IOAT_TBG0) ||
 		(pdev->device == PCI_DEVICE_ID_INTEL_IOAT_TBG1) ||
 		(pdev->device == PCI_DEVICE_ID_INTEL_IOAT_TBG2) ||
@@ -72,386 +73,386 @@ static int dca_provider_ioat_ver_3_0(struct device *dev)
 		(pdev->device == PCI_DEVICE_ID_INTEL_IOAT_TBG5) ||
 		(pdev->device == PCI_DEVICE_ID_INTEL_IOAT_TBG6) ||
 		(pdev->device == PCI_DEVICE_ID_INTEL_IOAT_TBG7)));
-}
+पूर्ण
 
-static void unregister_dca_providers(void)
-{
-	struct dca_provider *dca, *_dca;
-	struct list_head unregistered_providers;
-	struct dca_domain *domain;
-	unsigned long flags;
+अटल व्योम unरेजिस्टर_dca_providers(व्योम)
+अणु
+	काष्ठा dca_provider *dca, *_dca;
+	काष्ठा list_head unरेजिस्टरed_providers;
+	काष्ठा dca_करोमुख्य *करोमुख्य;
+	अचिन्हित दीर्घ flags;
 
-	blocking_notifier_call_chain(&dca_provider_chain,
-				     DCA_PROVIDER_REMOVE, NULL);
+	blocking_notअगरier_call_chain(&dca_provider_chain,
+				     DCA_PROVIDER_REMOVE, शून्य);
 
-	INIT_LIST_HEAD(&unregistered_providers);
+	INIT_LIST_HEAD(&unरेजिस्टरed_providers);
 
 	raw_spin_lock_irqsave(&dca_lock, flags);
 
-	if (list_empty(&dca_domains)) {
+	अगर (list_empty(&dca_करोमुख्यs)) अणु
 		raw_spin_unlock_irqrestore(&dca_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* at this point only one domain in the list is expected */
-	domain = list_first_entry(&dca_domains, struct dca_domain, node);
+	/* at this poपूर्णांक only one करोमुख्य in the list is expected */
+	करोमुख्य = list_first_entry(&dca_करोमुख्यs, काष्ठा dca_करोमुख्य, node);
 
-	list_for_each_entry_safe(dca, _dca, &domain->dca_providers, node)
-		list_move(&dca->node, &unregistered_providers);
+	list_क्रम_each_entry_safe(dca, _dca, &करोमुख्य->dca_providers, node)
+		list_move(&dca->node, &unरेजिस्टरed_providers);
 
-	dca_free_domain(domain);
+	dca_मुक्त_करोमुख्य(करोमुख्य);
 
 	raw_spin_unlock_irqrestore(&dca_lock, flags);
 
-	list_for_each_entry_safe(dca, _dca, &unregistered_providers, node) {
-		dca_sysfs_remove_provider(dca);
+	list_क्रम_each_entry_safe(dca, _dca, &unरेजिस्टरed_providers, node) अणु
+		dca_sysfs_हटाओ_provider(dca);
 		list_del(&dca->node);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct dca_domain *dca_find_domain(struct pci_bus *rc)
-{
-	struct dca_domain *domain;
+अटल काष्ठा dca_करोमुख्य *dca_find_करोमुख्य(काष्ठा pci_bus *rc)
+अणु
+	काष्ठा dca_करोमुख्य *करोमुख्य;
 
-	list_for_each_entry(domain, &dca_domains, node)
-		if (domain->pci_rc == rc)
-			return domain;
+	list_क्रम_each_entry(करोमुख्य, &dca_करोमुख्यs, node)
+		अगर (करोमुख्य->pci_rc == rc)
+			वापस करोमुख्य;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct dca_domain *dca_get_domain(struct device *dev)
-{
-	struct pci_bus *rc;
-	struct dca_domain *domain;
+अटल काष्ठा dca_करोमुख्य *dca_get_करोमुख्य(काष्ठा device *dev)
+अणु
+	काष्ठा pci_bus *rc;
+	काष्ठा dca_करोमुख्य *करोमुख्य;
 
 	rc = dca_pci_rc_from_dev(dev);
-	domain = dca_find_domain(rc);
+	करोमुख्य = dca_find_करोमुख्य(rc);
 
-	if (!domain) {
-		if (dca_provider_ioat_ver_3_0(dev) && !list_empty(&dca_domains))
+	अगर (!करोमुख्य) अणु
+		अगर (dca_provider_ioat_ver_3_0(dev) && !list_empty(&dca_करोमुख्यs))
 			dca_providers_blocked = 1;
-	}
+	पूर्ण
 
-	return domain;
-}
+	वापस करोमुख्य;
+पूर्ण
 
-static struct dca_provider *dca_find_provider_by_dev(struct device *dev)
-{
-	struct dca_provider *dca;
-	struct pci_bus *rc;
-	struct dca_domain *domain;
+अटल काष्ठा dca_provider *dca_find_provider_by_dev(काष्ठा device *dev)
+अणु
+	काष्ठा dca_provider *dca;
+	काष्ठा pci_bus *rc;
+	काष्ठा dca_करोमुख्य *करोमुख्य;
 
-	if (dev) {
+	अगर (dev) अणु
 		rc = dca_pci_rc_from_dev(dev);
-		domain = dca_find_domain(rc);
-		if (!domain)
-			return NULL;
-	} else {
-		if (!list_empty(&dca_domains))
-			domain = list_first_entry(&dca_domains,
-						  struct dca_domain,
+		करोमुख्य = dca_find_करोमुख्य(rc);
+		अगर (!करोमुख्य)
+			वापस शून्य;
+	पूर्ण अन्यथा अणु
+		अगर (!list_empty(&dca_करोमुख्यs))
+			करोमुख्य = list_first_entry(&dca_करोमुख्यs,
+						  काष्ठा dca_करोमुख्य,
 						  node);
-		else
-			return NULL;
-	}
+		अन्यथा
+			वापस शून्य;
+	पूर्ण
 
-	list_for_each_entry(dca, &domain->dca_providers, node)
-		if ((!dev) || (dca->ops->dev_managed(dca, dev)))
-			return dca;
+	list_क्रम_each_entry(dca, &करोमुख्य->dca_providers, node)
+		अगर ((!dev) || (dca->ops->dev_managed(dca, dev)))
+			वापस dca;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * dca_add_requester - add a dca client to the list
  * @dev - the device that wants dca service
  */
-int dca_add_requester(struct device *dev)
-{
-	struct dca_provider *dca;
-	int err, slot = -ENODEV;
-	unsigned long flags;
-	struct pci_bus *pci_rc;
-	struct dca_domain *domain;
+पूर्णांक dca_add_requester(काष्ठा device *dev)
+अणु
+	काष्ठा dca_provider *dca;
+	पूर्णांक err, slot = -ENODEV;
+	अचिन्हित दीर्घ flags;
+	काष्ठा pci_bus *pci_rc;
+	काष्ठा dca_करोमुख्य *करोमुख्य;
 
-	if (!dev)
-		return -EFAULT;
+	अगर (!dev)
+		वापस -EFAULT;
 
 	raw_spin_lock_irqsave(&dca_lock, flags);
 
-	/* check if the requester has not been added already */
+	/* check अगर the requester has not been added alपढ़ोy */
 	dca = dca_find_provider_by_dev(dev);
-	if (dca) {
+	अगर (dca) अणु
 		raw_spin_unlock_irqrestore(&dca_lock, flags);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
 	pci_rc = dca_pci_rc_from_dev(dev);
-	domain = dca_find_domain(pci_rc);
-	if (!domain) {
+	करोमुख्य = dca_find_करोमुख्य(pci_rc);
+	अगर (!करोमुख्य) अणु
 		raw_spin_unlock_irqrestore(&dca_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	list_for_each_entry(dca, &domain->dca_providers, node) {
+	list_क्रम_each_entry(dca, &करोमुख्य->dca_providers, node) अणु
 		slot = dca->ops->add_requester(dca, dev);
-		if (slot >= 0)
-			break;
-	}
+		अगर (slot >= 0)
+			अवरोध;
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&dca_lock, flags);
 
-	if (slot < 0)
-		return slot;
+	अगर (slot < 0)
+		वापस slot;
 
 	err = dca_sysfs_add_req(dca, dev, slot);
-	if (err) {
+	अगर (err) अणु
 		raw_spin_lock_irqsave(&dca_lock, flags);
-		if (dca == dca_find_provider_by_dev(dev))
-			dca->ops->remove_requester(dca, dev);
+		अगर (dca == dca_find_provider_by_dev(dev))
+			dca->ops->हटाओ_requester(dca, dev);
 		raw_spin_unlock_irqrestore(&dca_lock, flags);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(dca_add_requester);
 
 /**
- * dca_remove_requester - remove a dca client from the list
+ * dca_हटाओ_requester - हटाओ a dca client from the list
  * @dev - the device that wants dca service
  */
-int dca_remove_requester(struct device *dev)
-{
-	struct dca_provider *dca;
-	int slot;
-	unsigned long flags;
+पूर्णांक dca_हटाओ_requester(काष्ठा device *dev)
+अणु
+	काष्ठा dca_provider *dca;
+	पूर्णांक slot;
+	अचिन्हित दीर्घ flags;
 
-	if (!dev)
-		return -EFAULT;
+	अगर (!dev)
+		वापस -EFAULT;
 
 	raw_spin_lock_irqsave(&dca_lock, flags);
 	dca = dca_find_provider_by_dev(dev);
-	if (!dca) {
+	अगर (!dca) अणु
 		raw_spin_unlock_irqrestore(&dca_lock, flags);
-		return -ENODEV;
-	}
-	slot = dca->ops->remove_requester(dca, dev);
+		वापस -ENODEV;
+	पूर्ण
+	slot = dca->ops->हटाओ_requester(dca, dev);
 	raw_spin_unlock_irqrestore(&dca_lock, flags);
 
-	if (slot < 0)
-		return slot;
+	अगर (slot < 0)
+		वापस slot;
 
-	dca_sysfs_remove_req(dca, slot);
+	dca_sysfs_हटाओ_req(dca, slot);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(dca_remove_requester);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(dca_हटाओ_requester);
 
 /**
- * dca_common_get_tag - return the dca tag (serves both new and old api)
+ * dca_common_get_tag - वापस the dca tag (serves both new and old api)
  * @dev - the device that wants dca service
- * @cpu - the cpuid as returned by get_cpu()
+ * @cpu - the cpuid as वापसed by get_cpu()
  */
-static u8 dca_common_get_tag(struct device *dev, int cpu)
-{
-	struct dca_provider *dca;
+अटल u8 dca_common_get_tag(काष्ठा device *dev, पूर्णांक cpu)
+अणु
+	काष्ठा dca_provider *dca;
 	u8 tag;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&dca_lock, flags);
 
 	dca = dca_find_provider_by_dev(dev);
-	if (!dca) {
+	अगर (!dca) अणु
 		raw_spin_unlock_irqrestore(&dca_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	tag = dca->ops->get_tag(dca, dev, cpu);
 
 	raw_spin_unlock_irqrestore(&dca_lock, flags);
-	return tag;
-}
+	वापस tag;
+पूर्ण
 
 /**
- * dca3_get_tag - return the dca tag to the requester device
- *                for the given cpu (new api)
+ * dca3_get_tag - वापस the dca tag to the requester device
+ *                क्रम the given cpu (new api)
  * @dev - the device that wants dca service
- * @cpu - the cpuid as returned by get_cpu()
+ * @cpu - the cpuid as वापसed by get_cpu()
  */
-u8 dca3_get_tag(struct device *dev, int cpu)
-{
-	if (!dev)
-		return -EFAULT;
+u8 dca3_get_tag(काष्ठा device *dev, पूर्णांक cpu)
+अणु
+	अगर (!dev)
+		वापस -EFAULT;
 
-	return dca_common_get_tag(dev, cpu);
-}
+	वापस dca_common_get_tag(dev, cpu);
+पूर्ण
 EXPORT_SYMBOL_GPL(dca3_get_tag);
 
 /**
- * dca_get_tag - return the dca tag for the given cpu (old api)
- * @cpu - the cpuid as returned by get_cpu()
+ * dca_get_tag - वापस the dca tag क्रम the given cpu (old api)
+ * @cpu - the cpuid as वापसed by get_cpu()
  */
-u8 dca_get_tag(int cpu)
-{
-	struct device *dev = NULL;
+u8 dca_get_tag(पूर्णांक cpu)
+अणु
+	काष्ठा device *dev = शून्य;
 
-	return dca_common_get_tag(dev, cpu);
-}
+	वापस dca_common_get_tag(dev, cpu);
+पूर्ण
 EXPORT_SYMBOL_GPL(dca_get_tag);
 
 /**
- * alloc_dca_provider - get data struct for describing a dca provider
- * @ops - pointer to struct of dca operation function pointers
- * @priv_size - size of extra mem to be added for provider's needs
+ * alloc_dca_provider - get data काष्ठा क्रम describing a dca provider
+ * @ops - poपूर्णांकer to काष्ठा of dca operation function poपूर्णांकers
+ * @priv_size - size of extra mem to be added क्रम provider's needs
  */
-struct dca_provider *alloc_dca_provider(const struct dca_ops *ops,
-					int priv_size)
-{
-	struct dca_provider *dca;
-	int alloc_size;
+काष्ठा dca_provider *alloc_dca_provider(स्थिर काष्ठा dca_ops *ops,
+					पूर्णांक priv_size)
+अणु
+	काष्ठा dca_provider *dca;
+	पूर्णांक alloc_size;
 
-	alloc_size = (sizeof(*dca) + priv_size);
+	alloc_size = (माप(*dca) + priv_size);
 	dca = kzalloc(alloc_size, GFP_KERNEL);
-	if (!dca)
-		return NULL;
+	अगर (!dca)
+		वापस शून्य;
 	dca->ops = ops;
 
-	return dca;
-}
+	वापस dca;
+पूर्ण
 EXPORT_SYMBOL_GPL(alloc_dca_provider);
 
 /**
- * free_dca_provider - release the dca provider data struct
- * @ops - pointer to struct of dca operation function pointers
- * @priv_size - size of extra mem to be added for provider's needs
+ * मुक्त_dca_provider - release the dca provider data काष्ठा
+ * @ops - poपूर्णांकer to काष्ठा of dca operation function poपूर्णांकers
+ * @priv_size - size of extra mem to be added क्रम provider's needs
  */
-void free_dca_provider(struct dca_provider *dca)
-{
-	kfree(dca);
-}
-EXPORT_SYMBOL_GPL(free_dca_provider);
+व्योम मुक्त_dca_provider(काष्ठा dca_provider *dca)
+अणु
+	kमुक्त(dca);
+पूर्ण
+EXPORT_SYMBOL_GPL(मुक्त_dca_provider);
 
 /**
- * register_dca_provider - register a dca provider
- * @dca - struct created by alloc_dca_provider()
+ * रेजिस्टर_dca_provider - रेजिस्टर a dca provider
+ * @dca - काष्ठा created by alloc_dca_provider()
  * @dev - device providing dca services
  */
-int register_dca_provider(struct dca_provider *dca, struct device *dev)
-{
-	int err;
-	unsigned long flags;
-	struct dca_domain *domain, *newdomain = NULL;
+पूर्णांक रेजिस्टर_dca_provider(काष्ठा dca_provider *dca, काष्ठा device *dev)
+अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags;
+	काष्ठा dca_करोमुख्य *करोमुख्य, *newकरोमुख्य = शून्य;
 
 	raw_spin_lock_irqsave(&dca_lock, flags);
-	if (dca_providers_blocked) {
+	अगर (dca_providers_blocked) अणु
 		raw_spin_unlock_irqrestore(&dca_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	raw_spin_unlock_irqrestore(&dca_lock, flags);
 
 	err = dca_sysfs_add_provider(dca, dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	raw_spin_lock_irqsave(&dca_lock, flags);
-	domain = dca_get_domain(dev);
-	if (!domain) {
-		struct pci_bus *rc;
+	करोमुख्य = dca_get_करोमुख्य(dev);
+	अगर (!करोमुख्य) अणु
+		काष्ठा pci_bus *rc;
 
-		if (dca_providers_blocked) {
+		अगर (dca_providers_blocked) अणु
 			raw_spin_unlock_irqrestore(&dca_lock, flags);
-			dca_sysfs_remove_provider(dca);
-			unregister_dca_providers();
-			return -ENODEV;
-		}
+			dca_sysfs_हटाओ_provider(dca);
+			unरेजिस्टर_dca_providers();
+			वापस -ENODEV;
+		पूर्ण
 
 		raw_spin_unlock_irqrestore(&dca_lock, flags);
 		rc = dca_pci_rc_from_dev(dev);
-		newdomain = dca_allocate_domain(rc);
-		if (!newdomain)
-			return -ENODEV;
+		newकरोमुख्य = dca_allocate_करोमुख्य(rc);
+		अगर (!newकरोमुख्य)
+			वापस -ENODEV;
 		raw_spin_lock_irqsave(&dca_lock, flags);
 		/* Recheck, we might have raced after dropping the lock */
-		domain = dca_get_domain(dev);
-		if (!domain) {
-			domain = newdomain;
-			newdomain = NULL;
-			list_add(&domain->node, &dca_domains);
-		}
-	}
-	list_add(&dca->node, &domain->dca_providers);
+		करोमुख्य = dca_get_करोमुख्य(dev);
+		अगर (!करोमुख्य) अणु
+			करोमुख्य = newकरोमुख्य;
+			newकरोमुख्य = शून्य;
+			list_add(&करोमुख्य->node, &dca_करोमुख्यs);
+		पूर्ण
+	पूर्ण
+	list_add(&dca->node, &करोमुख्य->dca_providers);
 	raw_spin_unlock_irqrestore(&dca_lock, flags);
 
-	blocking_notifier_call_chain(&dca_provider_chain,
-				     DCA_PROVIDER_ADD, NULL);
-	kfree(newdomain);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(register_dca_provider);
+	blocking_notअगरier_call_chain(&dca_provider_chain,
+				     DCA_PROVIDER_ADD, शून्य);
+	kमुक्त(newकरोमुख्य);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_dca_provider);
 
 /**
- * unregister_dca_provider - remove a dca provider
- * @dca - struct created by alloc_dca_provider()
+ * unरेजिस्टर_dca_provider - हटाओ a dca provider
+ * @dca - काष्ठा created by alloc_dca_provider()
  */
-void unregister_dca_provider(struct dca_provider *dca, struct device *dev)
-{
-	unsigned long flags;
-	struct pci_bus *pci_rc;
-	struct dca_domain *domain;
+व्योम unरेजिस्टर_dca_provider(काष्ठा dca_provider *dca, काष्ठा device *dev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा pci_bus *pci_rc;
+	काष्ठा dca_करोमुख्य *करोमुख्य;
 
-	blocking_notifier_call_chain(&dca_provider_chain,
-				     DCA_PROVIDER_REMOVE, NULL);
+	blocking_notअगरier_call_chain(&dca_provider_chain,
+				     DCA_PROVIDER_REMOVE, शून्य);
 
 	raw_spin_lock_irqsave(&dca_lock, flags);
 
-	if (list_empty(&dca_domains)) {
+	अगर (list_empty(&dca_करोमुख्यs)) अणु
 		raw_spin_unlock_irqrestore(&dca_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	list_del(&dca->node);
 
 	pci_rc = dca_pci_rc_from_dev(dev);
-	domain = dca_find_domain(pci_rc);
-	if (list_empty(&domain->dca_providers))
-		dca_free_domain(domain);
+	करोमुख्य = dca_find_करोमुख्य(pci_rc);
+	अगर (list_empty(&करोमुख्य->dca_providers))
+		dca_मुक्त_करोमुख्य(करोमुख्य);
 
 	raw_spin_unlock_irqrestore(&dca_lock, flags);
 
-	dca_sysfs_remove_provider(dca);
-}
-EXPORT_SYMBOL_GPL(unregister_dca_provider);
+	dca_sysfs_हटाओ_provider(dca);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_dca_provider);
 
 /**
- * dca_register_notify - register a client's notifier callback
+ * dca_रेजिस्टर_notअगरy - रेजिस्टर a client's notअगरier callback
  */
-void dca_register_notify(struct notifier_block *nb)
-{
-	blocking_notifier_chain_register(&dca_provider_chain, nb);
-}
-EXPORT_SYMBOL_GPL(dca_register_notify);
+व्योम dca_रेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb)
+अणु
+	blocking_notअगरier_chain_रेजिस्टर(&dca_provider_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(dca_रेजिस्टर_notअगरy);
 
 /**
- * dca_unregister_notify - remove a client's notifier callback
+ * dca_unरेजिस्टर_notअगरy - हटाओ a client's notअगरier callback
  */
-void dca_unregister_notify(struct notifier_block *nb)
-{
-	blocking_notifier_chain_unregister(&dca_provider_chain, nb);
-}
-EXPORT_SYMBOL_GPL(dca_unregister_notify);
+व्योम dca_unरेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb)
+अणु
+	blocking_notअगरier_chain_unरेजिस्टर(&dca_provider_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(dca_unरेजिस्टर_notअगरy);
 
-static int __init dca_init(void)
-{
+अटल पूर्णांक __init dca_init(व्योम)
+अणु
 	pr_info("dca service started, version %s\n", DCA_VERSION);
-	return dca_sysfs_init();
-}
+	वापस dca_sysfs_init();
+पूर्ण
 
-static void __exit dca_exit(void)
-{
-	dca_sysfs_exit();
-}
+अटल व्योम __निकास dca_निकास(व्योम)
+अणु
+	dca_sysfs_निकास();
+पूर्ण
 
 arch_initcall(dca_init);
-module_exit(dca_exit);
+module_निकास(dca_निकास);
 

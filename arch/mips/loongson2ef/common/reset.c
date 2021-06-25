@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) 2007 Lemote, Inc. & Institute of Computing Technology
@@ -6,68 +7,68 @@
  * Copyright (C) 2009 Lemote, Inc.
  * Author: Zhangjin Wu, wuzhangjin@gmail.com
  */
-#include <linux/init.h>
-#include <linux/pm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pm.h>
 
-#include <asm/idle.h>
-#include <asm/reboot.h>
+#समावेश <यंत्र/idle.h>
+#समावेश <यंत्र/reboot.h>
 
-#include <loongson.h>
+#समावेश <loongson.h>
 
-static inline void loongson_reboot(void)
-{
-#ifndef CONFIG_CPU_JUMP_WORKAROUNDS
-	((void (*)(void))ioremap(LOONGSON_BOOT_BASE, 4)) ();
-#else
-	void (*func)(void);
+अटल अंतरभूत व्योम loongson_reboot(व्योम)
+अणु
+#अगर_अघोषित CONFIG_CPU_JUMP_WORKAROUNDS
+	((व्योम (*)(व्योम))ioremap(LOONGSON_BOOT_BASE, 4)) ();
+#अन्यथा
+	व्योम (*func)(व्योम);
 
-	func = (void *)ioremap(LOONGSON_BOOT_BASE, 4);
+	func = (व्योम *)ioremap(LOONGSON_BOOT_BASE, 4);
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	.set	noat						\n"
 	"	jr	%[func]						\n"
 	"	.set	at						\n"
-	: /* No outputs */
+	: /* No outमाला_दो */
 	: [func] "r" (func));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void loongson_restart(char *command)
-{
-	/* do preparation for reboot */
+अटल व्योम loongson_restart(अक्षर *command)
+अणु
+	/* करो preparation क्रम reboot */
 	mach_prepare_reboot();
 
 	/* reboot via jumping to boot base address */
 	loongson_reboot();
-}
+पूर्ण
 
-static void loongson_poweroff(void)
-{
-	mach_prepare_shutdown();
+अटल व्योम loongson_घातeroff(व्योम)
+अणु
+	mach_prepare_shutकरोwn();
 
 	/*
-	 * It needs a wait loop here, but mips/kernel/reset.c already calls
-	 * a generic delay loop, machine_hang(), so simply return.
+	 * It needs a रुको loop here, but mips/kernel/reset.c alपढ़ोy calls
+	 * a generic delay loop, machine_hang(), so simply वापस.
 	 */
-	return;
-}
+	वापस;
+पूर्ण
 
-static void loongson_halt(void)
-{
+अटल व्योम loongson_halt(व्योम)
+अणु
 	pr_notice("\n\n** You can safely turn off the power now **\n\n");
-	while (1) {
-		if (cpu_wait)
-			cpu_wait();
-	}
-}
+	जबतक (1) अणु
+		अगर (cpu_रुको)
+			cpu_रुको();
+	पूर्ण
+पूर्ण
 
-static int __init mips_reboot_setup(void)
-{
+अटल पूर्णांक __init mips_reboot_setup(व्योम)
+अणु
 	_machine_restart = loongson_restart;
 	_machine_halt = loongson_halt;
-	pm_power_off = loongson_poweroff;
+	pm_घातer_off = loongson_घातeroff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 arch_initcall(mips_reboot_setup);

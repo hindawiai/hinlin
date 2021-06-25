@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_TIME_H
-#define _ASM_X86_TIME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_TIME_H
+#घोषणा _ASM_X86_TIME_H
 
-#include <linux/clocksource.h>
-#include <asm/mc146818rtc.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <यंत्र/mc146818rtc.h>
 
-extern void hpet_time_init(void);
-extern void time_init(void);
-extern bool pit_timer_init(void);
+बाह्य व्योम hpet_समय_init(व्योम);
+बाह्य व्योम समय_init(व्योम);
+बाह्य bool pit_समयr_init(व्योम);
 
-extern struct clock_event_device *global_clock_event;
+बाह्य काष्ठा घड़ी_event_device *global_घड़ी_event;
 
-#endif /* _ASM_X86_TIME_H */
+#पूर्ण_अगर /* _ASM_X86_TIME_H */

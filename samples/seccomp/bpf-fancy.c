@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Seccomp BPF example using a macro-based generator.
  *
  * Copyright (c) 2012 The Chromium OS Authors <chromium-os-dev@chromium.org>
  * Author: Will Drewry <wad@chromium.org>
  *
- * The code may be used by anyone for any purpose,
- * and can serve as a starting point for developing
+ * The code may be used by anyone क्रम any purpose,
+ * and can serve as a starting poपूर्णांक क्रम developing
  * applications using prctl(PR_ATTACH_SECCOMP_FILTER).
  */
 
-#include <linux/filter.h>
-#include <linux/seccomp.h>
-#include <linux/unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/prctl.h>
-#include <unistd.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/seccomp.h>
+#समावेश <linux/unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <sys/prctl.h>
+#समावेश <unistd.h>
 
-#include "bpf-helper.h"
+#समावेश "bpf-helper.h"
 
-#ifndef PR_SET_NO_NEW_PRIVS
-#define PR_SET_NO_NEW_PRIVS 38
-#endif
+#अगर_अघोषित PR_SET_NO_NEW_PRIVS
+#घोषणा PR_SET_NO_NEW_PRIVS 38
+#पूर्ण_अगर
 
-int main(int argc, char **argv)
-{
-	struct bpf_labels l = {
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा bpf_labels l = अणु
 		.count = 0,
-	};
-	static const char msg1[] = "Please type something: ";
-	static const char msg2[] = "You typed: ";
-	char buf[256];
-	struct sock_filter filter[] = {
-		/* TODO: LOAD_SYSCALL_NR(arch) and enforce an arch */
+	पूर्ण;
+	अटल स्थिर अक्षर msg1[] = "Please type something: ";
+	अटल स्थिर अक्षर msg2[] = "You typed: ";
+	अक्षर buf[256];
+	काष्ठा sock_filter filter[] = अणु
+		/* TODO: LOAD_SYSCALL_NR(arch) and enक्रमce an arch */
 		LOAD_SYSCALL_NR,
-		SYSCALL(__NR_exit, ALLOW),
-		SYSCALL(__NR_exit_group, ALLOW),
-		SYSCALL(__NR_write, JUMP(&l, write_fd)),
-		SYSCALL(__NR_read, JUMP(&l, read)),
-		DENY,  /* Don't passthrough into a label */
+		SYSCALL(__NR_निकास, ALLOW),
+		SYSCALL(__NR_निकास_group, ALLOW),
+		SYSCALL(__NR_ग_लिखो, JUMP(&l, ग_लिखो_fd)),
+		SYSCALL(__NR_पढ़ो, JUMP(&l, पढ़ो)),
+		DENY,  /* Don't passthrough पूर्णांकo a label */
 
-		LABEL(&l, read),
+		LABEL(&l, पढ़ो),
 		ARG(0),
-		JNE(STDIN_FILENO, DENY),
+		JNE(STDIN_खाताNO, DENY),
 		ARG(1),
-		JNE((unsigned long)buf, DENY),
+		JNE((अचिन्हित दीर्घ)buf, DENY),
 		ARG(2),
-		JGE(sizeof(buf), DENY),
+		JGE(माप(buf), DENY),
 		ALLOW,
 
-		LABEL(&l, write_fd),
+		LABEL(&l, ग_लिखो_fd),
 		ARG(0),
-		JEQ(STDOUT_FILENO, JUMP(&l, write_buf)),
-		JEQ(STDERR_FILENO, JUMP(&l, write_buf)),
+		JEQ(STDOUT_खाताNO, JUMP(&l, ग_लिखो_buf)),
+		JEQ(STDERR_खाताNO, JUMP(&l, ग_लिखो_buf)),
 		DENY,
 
-		LABEL(&l, write_buf),
+		LABEL(&l, ग_लिखो_buf),
 		ARG(1),
-		JEQ((unsigned long)msg1, JUMP(&l, msg1_len)),
-		JEQ((unsigned long)msg2, JUMP(&l, msg2_len)),
-		JEQ((unsigned long)buf, JUMP(&l, buf_len)),
+		JEQ((अचिन्हित दीर्घ)msg1, JUMP(&l, msg1_len)),
+		JEQ((अचिन्हित दीर्घ)msg2, JUMP(&l, msg2_len)),
+		JEQ((अचिन्हित दीर्घ)buf, JUMP(&l, buf_len)),
 		DENY,
 
 		LABEL(&l, msg1_len),
 		ARG(2),
-		JLT(sizeof(msg1), ALLOW),
+		JLT(माप(msg1), ALLOW),
 		DENY,
 
 		LABEL(&l, msg2_len),
 		ARG(2),
-		JLT(sizeof(msg2), ALLOW),
+		JLT(माप(msg2), ALLOW),
 		DENY,
 
 		LABEL(&l, buf_len),
 		ARG(2),
-		JLT(sizeof(buf), ALLOW),
+		JLT(माप(buf), ALLOW),
 		DENY,
-	};
-	struct sock_fprog prog = {
+	पूर्ण;
+	काष्ठा sock_fprog prog = अणु
 		.filter = filter,
-		.len = (unsigned short)(sizeof(filter)/sizeof(filter[0])),
-	};
-	ssize_t bytes;
-	bpf_resolve_jumps(&l, filter, sizeof(filter)/sizeof(*filter));
+		.len = (अचिन्हित लघु)(माप(filter)/माप(filter[0])),
+	पूर्ण;
+	sमाप_प्रकार bytes;
+	bpf_resolve_jumps(&l, filter, माप(filter)/माप(*filter));
 
-	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-		perror("prctl(NO_NEW_PRIVS)");
-		return 1;
-	}
+	अगर (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) अणु
+		लिखो_त्रुटि("prctl(NO_NEW_PRIVS)");
+		वापस 1;
+	पूर्ण
 
-	if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog)) {
-		perror("prctl(SECCOMP)");
-		return 1;
-	}
-	syscall(__NR_write, STDOUT_FILENO, msg1, strlen(msg1));
-	bytes = syscall(__NR_read, STDIN_FILENO, buf, sizeof(buf)-1);
+	अगर (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog)) अणु
+		लिखो_त्रुटि("prctl(SECCOMP)");
+		वापस 1;
+	पूर्ण
+	syscall(__NR_ग_लिखो, STDOUT_खाताNO, msg1, म_माप(msg1));
+	bytes = syscall(__NR_पढ़ो, STDIN_खाताNO, buf, माप(buf)-1);
 	bytes = (bytes > 0 ? bytes : 0);
-	syscall(__NR_write, STDERR_FILENO, msg2, strlen(msg2));
-	syscall(__NR_write, STDERR_FILENO, buf, bytes);
-	/* Now get killed */
-	syscall(__NR_write, STDERR_FILENO, msg2, strlen(msg2)+2);
-	return 0;
-}
+	syscall(__NR_ग_लिखो, STDERR_खाताNO, msg2, म_माप(msg2));
+	syscall(__NR_ग_लिखो, STDERR_खाताNO, buf, bytes);
+	/* Now get समाप्तed */
+	syscall(__NR_ग_लिखो, STDERR_खाताNO, msg2, म_माप(msg2)+2);
+	वापस 0;
+पूर्ण

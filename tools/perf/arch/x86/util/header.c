@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <sys/types.h>
-#include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <regex.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <sys/types.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <regex.h>
 
-#include "../../../util/debug.h"
-#include "../../../util/header.h"
+#समावेश "../../../util/debug.h"
+#समावेश "../../../util/header.h"
 
-static inline void
-cpuid(unsigned int op, unsigned int *a, unsigned int *b, unsigned int *c,
-      unsigned int *d)
-{
-	__asm__ __volatile__ (".byte 0x53\n\tcpuid\n\t"
+अटल अंतरभूत व्योम
+cpuid(अचिन्हित पूर्णांक op, अचिन्हित पूर्णांक *a, अचिन्हित पूर्णांक *b, अचिन्हित पूर्णांक *c,
+      अचिन्हित पूर्णांक *d)
+अणु
+	__यंत्र__ __अस्थिर__ (".byte 0x53\n\tcpuid\n\t"
 			      "movl %%ebx, %%esi\n\t.byte 0x5b"
 			: "=a" (*a),
 			"=S" (*b),
 			"=c" (*c),
 			"=d" (*d)
 			: "a" (op));
-}
+पूर्ण
 
-static int
-__get_cpuid(char *buffer, size_t sz, const char *fmt)
-{
-	unsigned int a, b, c, d, lvl;
-	int family = -1, model = -1, step = -1;
-	int nb;
-	char vendor[16];
+अटल पूर्णांक
+__get_cpuid(अक्षर *buffer, माप_प्रकार sz, स्थिर अक्षर *fmt)
+अणु
+	अचिन्हित पूर्णांक a, b, c, d, lvl;
+	पूर्णांक family = -1, model = -1, step = -1;
+	पूर्णांक nb;
+	अक्षर venकरोr[16];
 
 	cpuid(0, &lvl, &b, &c, &d);
-	strncpy(&vendor[0], (char *)(&b), 4);
-	strncpy(&vendor[4], (char *)(&d), 4);
-	strncpy(&vendor[8], (char *)(&c), 4);
-	vendor[12] = '\0';
+	म_नकलन(&venकरोr[0], (अक्षर *)(&b), 4);
+	म_नकलन(&venकरोr[4], (अक्षर *)(&d), 4);
+	म_नकलन(&venकरोr[8], (अक्षर *)(&c), 4);
+	venकरोr[12] = '\0';
 
-	if (lvl >= 1) {
+	अगर (lvl >= 1) अणु
 		cpuid(1, &a, &b, &c, &d);
 
 		family = (a >> 8) & 0xf;  /* bits 11 - 8 */
@@ -45,100 +46,100 @@ __get_cpuid(char *buffer, size_t sz, const char *fmt)
 		step   = a & 0xf;
 
 		/* extended family */
-		if (family == 0xf)
+		अगर (family == 0xf)
 			family += (a >> 20) & 0xff;
 
 		/* extended model */
-		if (family >= 0x6)
+		अगर (family >= 0x6)
 			model += ((a >> 16) & 0xf) << 4;
-	}
-	nb = scnprintf(buffer, sz, fmt, vendor, family, model, step);
+	पूर्ण
+	nb = scnम_लिखो(buffer, sz, fmt, venकरोr, family, model, step);
 
-	/* look for end marker to ensure the entire data fit */
-	if (strchr(buffer, '$')) {
+	/* look क्रम end marker to ensure the entire data fit */
+	अगर (म_अक्षर(buffer, '$')) अणु
 		buffer[nb-1] = '\0';
-		return 0;
-	}
-	return ENOBUFS;
-}
+		वापस 0;
+	पूर्ण
+	वापस ENOBUFS;
+पूर्ण
 
-int
-get_cpuid(char *buffer, size_t sz)
-{
-	return __get_cpuid(buffer, sz, "%s,%u,%u,%u$");
-}
+पूर्णांक
+get_cpuid(अक्षर *buffer, माप_प्रकार sz)
+अणु
+	वापस __get_cpuid(buffer, sz, "%s,%u,%u,%u$");
+पूर्ण
 
-char *
-get_cpuid_str(struct perf_pmu *pmu __maybe_unused)
-{
-	char *buf = malloc(128);
+अक्षर *
+get_cpuid_str(काष्ठा perf_pmu *pmu __maybe_unused)
+अणु
+	अक्षर *buf = दो_स्मृति(128);
 
-	if (buf && __get_cpuid(buf, 128, "%s-%u-%X-%X$") < 0) {
-		free(buf);
-		return NULL;
-	}
-	return buf;
-}
+	अगर (buf && __get_cpuid(buf, 128, "%s-%u-%X-%X$") < 0) अणु
+		मुक्त(buf);
+		वापस शून्य;
+	पूर्ण
+	वापस buf;
+पूर्ण
 
-/* Full CPUID format for x86 is vendor-family-model-stepping */
-static bool is_full_cpuid(const char *id)
-{
-	const char *tmp = id;
-	int count = 0;
+/* Full CPUID क्रमmat क्रम x86 is venकरोr-family-model-stepping */
+अटल bool is_full_cpuid(स्थिर अक्षर *id)
+अणु
+	स्थिर अक्षर *पंचांगp = id;
+	पूर्णांक count = 0;
 
-	while ((tmp = strchr(tmp, '-')) != NULL) {
+	जबतक ((पंचांगp = म_अक्षर(पंचांगp, '-')) != शून्य) अणु
 		count++;
-		tmp++;
-	}
+		पंचांगp++;
+	पूर्ण
 
-	if (count == 3)
-		return true;
+	अगर (count == 3)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int strcmp_cpuid_str(const char *mapcpuid, const char *id)
-{
+पूर्णांक म_भेद_cpuid_str(स्थिर अक्षर *mapcpuid, स्थिर अक्षर *id)
+अणु
 	regex_t re;
 	regmatch_t pmatch[1];
-	int match;
+	पूर्णांक match;
 	bool full_mapcpuid = is_full_cpuid(mapcpuid);
 	bool full_cpuid = is_full_cpuid(id);
 
 	/*
-	 * Full CPUID format is required to identify a platform.
-	 * Error out if the cpuid string is incomplete.
+	 * Full CPUID क्रमmat is required to identअगरy a platक्रमm.
+	 * Error out अगर the cpuid string is incomplete.
 	 */
-	if (full_mapcpuid && !full_cpuid) {
+	अगर (full_mapcpuid && !full_cpuid) अणु
 		pr_info("Invalid CPUID %s. Full CPUID is required, "
 			"vendor-family-model-stepping\n", id);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (regcomp(&re, mapcpuid, REG_EXTENDED) != 0) {
+	अगर (regcomp(&re, mapcpuid, REG_EXTENDED) != 0) अणु
 		/* Warn unable to generate match particular string. */
 		pr_info("Invalid regular expression %s\n", mapcpuid);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	match = !regexec(&re, id, 1, pmatch, 0);
-	regfree(&re);
-	if (match) {
-		size_t match_len = (pmatch[0].rm_eo - pmatch[0].rm_so);
-		size_t cpuid_len;
+	regमुक्त(&re);
+	अगर (match) अणु
+		माप_प्रकार match_len = (pmatch[0].rm_eo - pmatch[0].rm_so);
+		माप_प्रकार cpuid_len;
 
-		/* If the full CPUID format isn't required,
+		/* If the full CPUID क्रमmat isn't required,
 		 * ignoring the stepping.
 		 */
-		if (!full_mapcpuid && full_cpuid)
-			cpuid_len = strrchr(id, '-') - id;
-		else
-			cpuid_len = strlen(id);
+		अगर (!full_mapcpuid && full_cpuid)
+			cpuid_len = म_खोजप(id, '-') - id;
+		अन्यथा
+			cpuid_len = म_माप(id);
 
-		/* Verify the entire string matched. */
-		if (match_len == cpuid_len)
-			return 0;
-	}
+		/* Verअगरy the entire string matched. */
+		अगर (match_len == cpuid_len)
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण

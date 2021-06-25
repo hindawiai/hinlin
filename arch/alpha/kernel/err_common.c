@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/err_common.c
  *
  *	Copyright (C) 2000 Jeff Wiedemeier (Compaq Computer Corporation)
  *
- *	Error handling code supporting Alpha systems
+ *	Error handling code supporting Alpha प्रणालीs
  */
 
-#include <linux/init.h>
-#include <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
 
-#include <asm/io.h>
-#include <asm/hwrpb.h>
-#include <asm/smp.h>
-#include <asm/err_common.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/hwrpb.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/err_common.h>
 
-#include "err_impl.h"
-#include "proto.h"
+#समावेश "err_impl.h"
+#समावेश "proto.h"
 
 /*
- * err_print_prefix -- error handling print routines should prefix
- * all prints with this
+ * err_prपूर्णांक_prefix -- error handling prपूर्णांक routines should prefix
+ * all prपूर्णांकs with this
  */
-char *err_print_prefix = KERN_NOTICE;
+अक्षर *err_prपूर्णांक_prefix = KERN_NOTICE;
 
 
 /*
  * Generic
  */
-void
-mchk_dump_mem(void *data, size_t length, char **annotation)
-{
-	unsigned long *ldata = data;
-	size_t i;
+व्योम
+mchk_dump_mem(व्योम *data, माप_प्रकार length, अक्षर **annotation)
+अणु
+	अचिन्हित दीर्घ *ldata = data;
+	माप_प्रकार i;
 	
-	for (i = 0; (i * sizeof(*ldata)) < length; i++) {
-		if (annotation && !annotation[i]) 
-			annotation = NULL;
-		printk("%s    %08x: %016lx    %s\n",
-		       err_print_prefix,
-		       (unsigned)(i * sizeof(*ldata)), ldata[i],
+	क्रम (i = 0; (i * माप(*ldata)) < length; i++) अणु
+		अगर (annotation && !annotation[i]) 
+			annotation = शून्य;
+		prपूर्णांकk("%s    %08x: %016lx    %s\n",
+		       err_prपूर्णांक_prefix,
+		       (अचिन्हित)(i * माप(*ldata)), ldata[i],
 		       annotation ? annotation[i] : "");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-mchk_dump_logout_frame(struct el_common *mchk_header)
-{
-	printk("%s  -- Frame Header --\n"
+व्योम
+mchk_dump_logout_frame(काष्ठा el_common *mchk_header)
+अणु
+	prपूर्णांकk("%s  -- Frame Header --\n"
 	         "    Frame Size:   %d (0x%x) bytes\n"
 	         "    Flags:        %s%s\n"
 	         "    MCHK Code:    0x%x\n"
@@ -55,7 +56,7 @@ mchk_dump_logout_frame(struct el_common *mchk_header)
 	         "    Proc Offset:  0x%08x\n"
 	         "    Sys Offset:   0x%08x\n"
   	         "  -- Processor Region --\n",
-	       err_print_prefix, 
+	       err_prपूर्णांक_prefix, 
 	       mchk_header->size, mchk_header->size,
 	       mchk_header->retry ? "RETRY " : "", 
   	         mchk_header->err2 ? "SECOND_ERR " : "",
@@ -64,258 +65,258 @@ mchk_dump_logout_frame(struct el_common *mchk_header)
 	       mchk_header->proc_offset,
 	       mchk_header->sys_offset);
 
-	mchk_dump_mem((void *)
-		      ((unsigned long)mchk_header + mchk_header->proc_offset),
+	mchk_dump_mem((व्योम *)
+		      ((अचिन्हित दीर्घ)mchk_header + mchk_header->proc_offset),
 		      mchk_header->sys_offset - mchk_header->proc_offset,
-		      NULL);
+		      शून्य);
 	
-	printk("%s  -- System Region --\n", err_print_prefix);
-	mchk_dump_mem((void *)
-		      ((unsigned long)mchk_header + mchk_header->sys_offset),
+	prपूर्णांकk("%s  -- System Region --\n", err_prपूर्णांक_prefix);
+	mchk_dump_mem((व्योम *)
+		      ((अचिन्हित दीर्घ)mchk_header + mchk_header->sys_offset),
 		      mchk_header->size - mchk_header->sys_offset,
-		      NULL);
-	printk("%s  -- End of Frame --\n", err_print_prefix);
-}
+		      शून्य);
+	prपूर्णांकk("%s  -- End of Frame --\n", err_prपूर्णांक_prefix);
+पूर्ण
 
 
 /*
  * Console Data Log
  */
 /* Data */
-static struct el_subpacket_handler *subpacket_handler_list = NULL;
-static struct el_subpacket_annotation *subpacket_annotation_list = NULL;
+अटल काष्ठा el_subpacket_handler *subpacket_handler_list = शून्य;
+अटल काष्ठा el_subpacket_annotation *subpacket_annotation_list = शून्य;
 
-static struct el_subpacket *
-el_process_header_subpacket(struct el_subpacket *header)
-{
-	union el_timestamp timestamp;
-	char *name = "UNKNOWN EVENT";
-	int packet_count = 0;
-	int length = 0;
+अटल काष्ठा el_subpacket *
+el_process_header_subpacket(काष्ठा el_subpacket *header)
+अणु
+	जोड़ el_बारtamp बारtamp;
+	अक्षर *name = "UNKNOWN EVENT";
+	पूर्णांक packet_count = 0;
+	पूर्णांक length = 0;
 
-	if (header->class != EL_CLASS__HEADER) {
-		printk("%s** Unexpected header CLASS %d TYPE %d, aborting\n",
-		       err_print_prefix,
+	अगर (header->class != EL_CLASS__HEADER) अणु
+		prपूर्णांकk("%s** Unexpected header CLASS %d TYPE %d, aborting\n",
+		       err_prपूर्णांक_prefix,
 		       header->class, header->type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	switch(header->type) {
-	case EL_TYPE__HEADER__SYSTEM_ERROR_FRAME:
+	चयन(header->type) अणु
+	हाल EL_TYPE__HEADER__SYSTEM_ERROR_FRAME:
 		name = "SYSTEM ERROR";
 		length = header->by_type.sys_err.frame_length;
 		packet_count = 
 			header->by_type.sys_err.frame_packet_count;
-		timestamp.as_int = 0;
-		break;
-	case EL_TYPE__HEADER__SYSTEM_EVENT_FRAME:
+		बारtamp.as_पूर्णांक = 0;
+		अवरोध;
+	हाल EL_TYPE__HEADER__SYSTEM_EVENT_FRAME:
 		name = "SYSTEM EVENT";
 		length = header->by_type.sys_event.frame_length;
 		packet_count = 
 			header->by_type.sys_event.frame_packet_count;
-		timestamp = header->by_type.sys_event.timestamp;
-		break;
-	case EL_TYPE__HEADER__HALT_FRAME:
+		बारtamp = header->by_type.sys_event.बारtamp;
+		अवरोध;
+	हाल EL_TYPE__HEADER__HALT_FRAME:
 		name = "ERROR HALT";
 		length = header->by_type.err_halt.frame_length;
 		packet_count = 
 			header->by_type.err_halt.frame_packet_count;
-		timestamp = header->by_type.err_halt.timestamp;
-		break;
-	case EL_TYPE__HEADER__LOGOUT_FRAME:
+		बारtamp = header->by_type.err_halt.बारtamp;
+		अवरोध;
+	हाल EL_TYPE__HEADER__LOGOUT_FRAME:
 		name = "LOGOUT FRAME";
 		length = header->by_type.logout_header.frame_length;
 		packet_count = 1;
-		timestamp.as_int = 0;
-		break;
-	default: /* Unknown */
-		printk("%s** Unknown header - CLASS %d TYPE %d, aborting\n",
-		       err_print_prefix,
+		बारtamp.as_पूर्णांक = 0;
+		अवरोध;
+	शेष: /* Unknown */
+		prपूर्णांकk("%s** Unknown header - CLASS %d TYPE %d, aborting\n",
+		       err_prपूर्णांक_prefix,
 		       header->class, header->type);
-		return NULL;		
-	}
+		वापस शून्य;		
+	पूर्ण
 
-	printk("%s*** %s:\n"
+	prपूर्णांकk("%s*** %s:\n"
 	         "  CLASS %d, TYPE %d\n", 
-	       err_print_prefix,
+	       err_prपूर्णांक_prefix,
 	       name,
 	       header->class, header->type);
-	el_print_timestamp(&timestamp);
+	el_prपूर्णांक_बारtamp(&बारtamp);
 	
 	/*
 	 * Process the subpackets
 	 */
 	el_process_subpackets(header, packet_count);
 
-	/* return the next header */
-	header = (struct el_subpacket *)
-		((unsigned long)header + header->length + length);
-	return header;
-}
+	/* वापस the next header */
+	header = (काष्ठा el_subpacket *)
+		((अचिन्हित दीर्घ)header + header->length + length);
+	वापस header;
+पूर्ण
 
-static struct el_subpacket *
-el_process_subpacket_reg(struct el_subpacket *header)
-{
-	struct el_subpacket *next = NULL;
-	struct el_subpacket_handler *h = subpacket_handler_list;
+अटल काष्ठा el_subpacket *
+el_process_subpacket_reg(काष्ठा el_subpacket *header)
+अणु
+	काष्ठा el_subpacket *next = शून्य;
+	काष्ठा el_subpacket_handler *h = subpacket_handler_list;
 
-	for (; h && h->class != header->class; h = h->next);
-	if (h) next = h->handler(header);
+	क्रम (; h && h->class != header->class; h = h->next);
+	अगर (h) next = h->handler(header);
 
-	return next;
-}
+	वापस next;
+पूर्ण
 
-void
-el_print_timestamp(union el_timestamp *timestamp)
-{
-	if (timestamp->as_int)
-		printk("%s  TIMESTAMP: %d/%d/%02d %d:%02d:%0d\n", 
-		       err_print_prefix,
-		       timestamp->b.month, timestamp->b.day,
-		       timestamp->b.year, timestamp->b.hour,
-		       timestamp->b.minute, timestamp->b.second);
-}
+व्योम
+el_prपूर्णांक_बारtamp(जोड़ el_बारtamp *बारtamp)
+अणु
+	अगर (बारtamp->as_पूर्णांक)
+		prपूर्णांकk("%s  TIMESTAMP: %d/%d/%02d %d:%02d:%0d\n", 
+		       err_prपूर्णांक_prefix,
+		       बारtamp->b.month, बारtamp->b.day,
+		       बारtamp->b.year, बारtamp->b.hour,
+		       बारtamp->b.minute, बारtamp->b.second);
+पूर्ण
 
-void
-el_process_subpackets(struct el_subpacket *header, int packet_count)
-{
-	struct el_subpacket *subpacket;
-	int i;
+व्योम
+el_process_subpackets(काष्ठा el_subpacket *header, पूर्णांक packet_count)
+अणु
+	काष्ठा el_subpacket *subpacket;
+	पूर्णांक i;
 
-	subpacket = (struct el_subpacket *)
-		((unsigned long)header + header->length);
+	subpacket = (काष्ठा el_subpacket *)
+		((अचिन्हित दीर्घ)header + header->length);
 
-	for (i = 0; subpacket && i < packet_count; i++) {
-		printk("%sPROCESSING SUBPACKET %d\n", err_print_prefix, i);
+	क्रम (i = 0; subpacket && i < packet_count; i++) अणु
+		prपूर्णांकk("%sPROCESSING SUBPACKET %d\n", err_prपूर्णांक_prefix, i);
 		subpacket = el_process_subpacket(subpacket);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct el_subpacket *
-el_process_subpacket(struct el_subpacket *header)
-{
-	struct el_subpacket *next = NULL;
+काष्ठा el_subpacket *
+el_process_subpacket(काष्ठा el_subpacket *header)
+अणु
+	काष्ठा el_subpacket *next = शून्य;
 
-	switch(header->class) {
-	case EL_CLASS__TERMINATION:
+	चयन(header->class) अणु
+	हाल EL_CLASS__TERMINATION:
 		/* Termination packet, there are no more */
-		break;
-	case EL_CLASS__HEADER: 
+		अवरोध;
+	हाल EL_CLASS__HEADER: 
 		next = el_process_header_subpacket(header);
-		break;
-	default:
-		if (NULL == (next = el_process_subpacket_reg(header))) {
-			printk("%s** Unexpected header CLASS %d TYPE %d"
+		अवरोध;
+	शेष:
+		अगर (शून्य == (next = el_process_subpacket_reg(header))) अणु
+			prपूर्णांकk("%s** Unexpected header CLASS %d TYPE %d"
 			       " -- aborting.\n",
-			       err_print_prefix,
+			       err_prपूर्णांक_prefix,
 			       header->class, header->type);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return next;
-}
+	वापस next;
+पूर्ण
 
-void 
-el_annotate_subpacket(struct el_subpacket *header)
-{
-	struct el_subpacket_annotation *a;
-	char **annotation = NULL;
+व्योम 
+el_annotate_subpacket(काष्ठा el_subpacket *header)
+अणु
+	काष्ठा el_subpacket_annotation *a;
+	अक्षर **annotation = शून्य;
 
-	for (a = subpacket_annotation_list; a; a = a->next) {
-		if (a->class == header->class &&
+	क्रम (a = subpacket_annotation_list; a; a = a->next) अणु
+		अगर (a->class == header->class &&
 		    a->type == header->type &&
-		    a->revision == header->revision) {
+		    a->revision == header->revision) अणु
 			/*
 			 * We found the annotation
 			 */
 			annotation = a->annotation;
-			printk("%s  %s\n", err_print_prefix, a->description);
-			break;
-		}
-	}
+			prपूर्णांकk("%s  %s\n", err_prपूर्णांक_prefix, a->description);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mchk_dump_mem(header, header->length, annotation);
-}
+पूर्ण
 
-static void __init
-cdl_process_console_data_log(int cpu, struct percpu_struct *pcpu)
-{
-	struct el_subpacket *header = (struct el_subpacket *)
+अटल व्योम __init
+cdl_process_console_data_log(पूर्णांक cpu, काष्ठा percpu_काष्ठा *pcpu)
+अणु
+	काष्ठा el_subpacket *header = (काष्ठा el_subpacket *)
 		(IDENT_ADDR | pcpu->console_data_log_pa);
-	int err;
+	पूर्णांक err;
 
-	printk("%s******* CONSOLE DATA LOG FOR CPU %d. *******\n"
+	prपूर्णांकk("%s******* CONSOLE DATA LOG FOR CPU %d. *******\n"
 	         "*** Error(s) were logged on a previous boot\n",
-	       err_print_prefix, cpu);
+	       err_prपूर्णांक_prefix, cpu);
 	
-	for (err = 0; header && (header->class != EL_CLASS__TERMINATION); err++)
+	क्रम (err = 0; header && (header->class != EL_CLASS__TERMINATION); err++)
 		header = el_process_subpacket(header);
 
 	/* let the console know it's ok to clear the error(s) at restart */
 	pcpu->console_data_log_pa = 0;
 
-	printk("%s*** %d total error(s) logged\n"
+	prपूर्णांकk("%s*** %d total error(s) logged\n"
 	         "**** END OF CONSOLE DATA LOG FOR CPU %d ****\n", 
-	       err_print_prefix, err, cpu);
-}
+	       err_prपूर्णांक_prefix, err, cpu);
+पूर्ण
 
-void __init
-cdl_check_console_data_log(void)
-{
-	struct percpu_struct *pcpu;
-	unsigned long cpu;
+व्योम __init
+cdl_check_console_data_log(व्योम)
+अणु
+	काष्ठा percpu_काष्ठा *pcpu;
+	अचिन्हित दीर्घ cpu;
 
-	for (cpu = 0; cpu < hwrpb->nr_processors; cpu++) {
-		pcpu = (struct percpu_struct *)
-			((unsigned long)hwrpb + hwrpb->processor_offset 
+	क्रम (cpu = 0; cpu < hwrpb->nr_processors; cpu++) अणु
+		pcpu = (काष्ठा percpu_काष्ठा *)
+			((अचिन्हित दीर्घ)hwrpb + hwrpb->processor_offset 
 			 + cpu * hwrpb->processor_size);
-		if (pcpu->console_data_log_pa)
+		अगर (pcpu->console_data_log_pa)
 			cdl_process_console_data_log(cpu, pcpu);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-int __init
-cdl_register_subpacket_annotation(struct el_subpacket_annotation *new)
-{
-	struct el_subpacket_annotation *a = subpacket_annotation_list;
+पूर्णांक __init
+cdl_रेजिस्टर_subpacket_annotation(काष्ठा el_subpacket_annotation *new)
+अणु
+	काष्ठा el_subpacket_annotation *a = subpacket_annotation_list;
 
-	if (a == NULL) subpacket_annotation_list = new;
-	else {
-		for (; a->next != NULL; a = a->next) {
-			if ((a->class == new->class && a->type == new->type) ||
-			    a == new) {
-				printk("Attempted to re-register "
+	अगर (a == शून्य) subpacket_annotation_list = new;
+	अन्यथा अणु
+		क्रम (; a->next != शून्य; a = a->next) अणु
+			अगर ((a->class == new->class && a->type == new->type) ||
+			    a == new) अणु
+				prपूर्णांकk("Attempted to re-register "
 				       "subpacket annotation\n");
-				return -EINVAL;
-			}
-		}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 		a->next = new;
-	}
-	new->next = NULL;
+	पूर्ण
+	new->next = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init
-cdl_register_subpacket_handler(struct el_subpacket_handler *new)
-{
-	struct el_subpacket_handler *h = subpacket_handler_list;
+पूर्णांक __init
+cdl_रेजिस्टर_subpacket_handler(काष्ठा el_subpacket_handler *new)
+अणु
+	काष्ठा el_subpacket_handler *h = subpacket_handler_list;
 
-	if (h == NULL) subpacket_handler_list = new;
-	else {
-		for (; h->next != NULL; h = h->next) {
-			if (h->class == new->class || h == new) {
-				printk("Attempted to re-register "
+	अगर (h == शून्य) subpacket_handler_list = new;
+	अन्यथा अणु
+		क्रम (; h->next != शून्य; h = h->next) अणु
+			अगर (h->class == new->class || h == new) अणु
+				prपूर्णांकk("Attempted to re-register "
 				       "subpacket handler\n");
-				return -EINVAL;
-			}
-		}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 		h->next = new;
-	}
-	new->next = NULL;
+	पूर्ण
+	new->next = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

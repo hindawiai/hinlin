@@ -1,24 +1,25 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2004 Microtronix Datacom Ltd
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#ifndef _ASM_NIOS2_STRING_H
-#define _ASM_NIOS2_STRING_H
+#अगर_अघोषित _ASM_NIOS2_STRING_H
+#घोषणा _ASM_NIOS2_STRING_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#define __HAVE_ARCH_MEMSET
-#define __HAVE_ARCH_MEMCPY
-#define __HAVE_ARCH_MEMMOVE
+#घोषणा __HAVE_ARCH_MEMSET
+#घोषणा __HAVE_ARCH_MEMCPY
+#घोषणा __HAVE_ARCH_MEMMOVE
 
-extern void *memset(void *s, int c, size_t count);
-extern void *memcpy(void *d, const void *s, size_t count);
-extern void *memmove(void *d, const void *s, size_t count);
+बाह्य व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार count);
+बाह्य व्योम *स_नकल(व्योम *d, स्थिर व्योम *s, माप_प्रकार count);
+बाह्य व्योम *स_हटाओ(व्योम *d, स्थिर व्योम *s, माप_प्रकार count);
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* _ASM_NIOS2_STRING_H */
+#पूर्ण_अगर /* _ASM_NIOS2_STRING_H */

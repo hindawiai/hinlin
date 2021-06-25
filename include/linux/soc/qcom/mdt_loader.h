@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __QCOM_MDT_LOADER_H__
-#define __QCOM_MDT_LOADER_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __QCOM_MDT_LOADER_H__
+#घोषणा __QCOM_MDT_LOADER_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define QCOM_MDT_TYPE_MASK	(7 << 24)
-#define QCOM_MDT_TYPE_HASH	(2 << 24)
-#define QCOM_MDT_RELOCATABLE	BIT(27)
+#घोषणा QCOM_MDT_TYPE_MASK	(7 << 24)
+#घोषणा QCOM_MDT_TYPE_HASH	(2 << 24)
+#घोषणा QCOM_MDT_RELOCATABLE	BIT(27)
 
-struct device;
-struct firmware;
+काष्ठा device;
+काष्ठा firmware;
 
-#if IS_ENABLED(CONFIG_QCOM_MDT_LOADER)
+#अगर IS_ENABLED(CONFIG_QCOM_MDT_LOADER)
 
-ssize_t qcom_mdt_get_size(const struct firmware *fw);
-int qcom_mdt_load(struct device *dev, const struct firmware *fw,
-		  const char *fw_name, int pas_id, void *mem_region,
-		  phys_addr_t mem_phys, size_t mem_size,
+sमाप_प्रकार qcom_mdt_get_size(स्थिर काष्ठा firmware *fw);
+पूर्णांक qcom_mdt_load(काष्ठा device *dev, स्थिर काष्ठा firmware *fw,
+		  स्थिर अक्षर *fw_name, पूर्णांक pas_id, व्योम *mem_region,
+		  phys_addr_t mem_phys, माप_प्रकार mem_size,
 		  phys_addr_t *reloc_base);
 
-int qcom_mdt_load_no_init(struct device *dev, const struct firmware *fw,
-			  const char *fw_name, int pas_id, void *mem_region,
-			  phys_addr_t mem_phys, size_t mem_size,
+पूर्णांक qcom_mdt_load_no_init(काष्ठा device *dev, स्थिर काष्ठा firmware *fw,
+			  स्थिर अक्षर *fw_name, पूर्णांक pas_id, व्योम *mem_region,
+			  phys_addr_t mem_phys, माप_प्रकार mem_size,
 			  phys_addr_t *reloc_base);
-void *qcom_mdt_read_metadata(const struct firmware *fw, size_t *data_len);
+व्योम *qcom_mdt_पढ़ो_metadata(स्थिर काष्ठा firmware *fw, माप_प्रकार *data_len);
 
-#else /* !IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
+#अन्यथा /* !IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
 
-static inline ssize_t qcom_mdt_get_size(const struct firmware *fw)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत sमाप_प्रकार qcom_mdt_get_size(स्थिर काष्ठा firmware *fw)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int qcom_mdt_load(struct device *dev, const struct firmware *fw,
-				const char *fw_name, int pas_id,
-				void *mem_region, phys_addr_t mem_phys,
-				size_t mem_size, phys_addr_t *reloc_base)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक qcom_mdt_load(काष्ठा device *dev, स्थिर काष्ठा firmware *fw,
+				स्थिर अक्षर *fw_name, पूर्णांक pas_id,
+				व्योम *mem_region, phys_addr_t mem_phys,
+				माप_प्रकार mem_size, phys_addr_t *reloc_base)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int qcom_mdt_load_no_init(struct device *dev,
-					const struct firmware *fw,
-					const char *fw_name, int pas_id,
-					void *mem_region, phys_addr_t mem_phys,
-					size_t mem_size,
+अटल अंतरभूत पूर्णांक qcom_mdt_load_no_init(काष्ठा device *dev,
+					स्थिर काष्ठा firmware *fw,
+					स्थिर अक्षर *fw_name, पूर्णांक pas_id,
+					व्योम *mem_region, phys_addr_t mem_phys,
+					माप_प्रकार mem_size,
 					phys_addr_t *reloc_base)
-{
-	return -ENODEV;
-}
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline void *qcom_mdt_read_metadata(const struct firmware *fw,
-					   size_t *data_len)
-{
-	return ERR_PTR(-ENODEV);
-}
+अटल अंतरभूत व्योम *qcom_mdt_पढ़ो_metadata(स्थिर काष्ठा firmware *fw,
+					   माप_प्रकार *data_len)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-#endif /* !IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
+#पूर्ण_अगर /* !IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
 
-#endif
+#पूर्ण_अगर

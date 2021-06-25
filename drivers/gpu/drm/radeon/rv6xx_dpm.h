@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,19 +23,19 @@
  * Authors: Alex Deucher
  */
 
-#ifndef __RV6XX_DPM_H__
-#define __RV6XX_DPM_H__
+#अगर_अघोषित __RV6XX_DPM_H__
+#घोषणा __RV6XX_DPM_H__
 
-#include "r600_dpm.h"
+#समावेश "r600_dpm.h"
 
 /* Represents a single SCLK step. */
-struct rv6xx_sclk_stepping
-{
+काष्ठा rv6xx_sclk_stepping
+अणु
     u32 vco_frequency;
-    u32 post_divider;
-};
+    u32 post_भागider;
+पूर्ण;
 
-struct rv6xx_pm_hw_state {
+काष्ठा rv6xx_pm_hw_state अणु
 	u32 sclks[R600_PM_NUMBER_OF_ACTIVITY_LEVELS];
 	u32 mclks[R600_PM_NUMBER_OF_MCLKS];
 	u16 vddc[R600_PM_NUMBER_OF_VOLTAGE_LEVELS];
@@ -51,9 +52,9 @@ struct rv6xx_pm_hw_state {
 	u8 low_vddc_index;
 	u8 rp[R600_PM_NUMBER_OF_ACTIVITY_LEVELS];
 	u8 lp[R600_PM_NUMBER_OF_ACTIVITY_LEVELS];
-};
+पूर्ण;
 
-struct rv6xx_power_info {
+काष्ठा rv6xx_घातer_info अणु
 	/* flags */
 	bool voltage_control;
 	bool sclk_ss;
@@ -62,34 +63,34 @@ struct rv6xx_power_info {
 	bool dynamic_pcie_gen2;
 	bool thermal_protection;
 	bool display_gap;
-	bool gfx_clock_gating;
+	bool gfx_घड़ी_gating;
 	/* clk values */
-	u32 fb_div_scale;
-	u32 spll_ref_div;
-	u32 mpll_ref_div;
+	u32 fb_भाग_scale;
+	u32 spll_ref_भाग;
+	u32 mpll_ref_भाग;
 	u32 bsu;
 	u32 bsp;
 	/* */
-	u32 active_auto_throttle_sources;
-	/* current power state */
+	u32 active_स्वतः_throttle_sources;
+	/* current घातer state */
 	u32 restricted_levels;
-	struct rv6xx_pm_hw_state hw;
-};
+	काष्ठा rv6xx_pm_hw_state hw;
+पूर्ण;
 
-struct rv6xx_pl {
+काष्ठा rv6xx_pl अणु
 	u32 sclk;
 	u32 mclk;
 	u16 vddc;
 	u32 flags;
-};
+पूर्ण;
 
-struct rv6xx_ps {
-	struct rv6xx_pl high;
-	struct rv6xx_pl medium;
-	struct rv6xx_pl low;
-};
+काष्ठा rv6xx_ps अणु
+	काष्ठा rv6xx_pl high;
+	काष्ठा rv6xx_pl medium;
+	काष्ठा rv6xx_pl low;
+पूर्ण;
 
-#define RV6XX_DEFAULT_VCLK_FREQ  40000 /* 10 khz */
-#define RV6XX_DEFAULT_DCLK_FREQ  30000 /* 10 khz */
+#घोषणा RV6XX_DEFAULT_VCLK_FREQ  40000 /* 10 khz */
+#घोषणा RV6XX_DEFAULT_DCLK_FREQ  30000 /* 10 khz */
 
-#endif
+#पूर्ण_अगर

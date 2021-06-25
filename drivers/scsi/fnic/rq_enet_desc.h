@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,44 +16,44 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _RQ_ENET_DESC_H_
-#define _RQ_ENET_DESC_H_
+#अगर_अघोषित _RQ_ENET_DESC_H_
+#घोषणा _RQ_ENET_DESC_H_
 
 /* Ethernet receive queue descriptor: 16B */
-struct rq_enet_desc {
+काष्ठा rq_enet_desc अणु
 	__le64 address;
 	__le16 length_type;
 	u8 reserved[6];
-};
+पूर्ण;
 
-enum rq_enet_type_types {
+क्रमागत rq_enet_type_types अणु
 	RQ_ENET_TYPE_ONLY_SOP = 0,
 	RQ_ENET_TYPE_NOT_SOP = 1,
 	RQ_ENET_TYPE_RESV2 = 2,
 	RQ_ENET_TYPE_RESV3 = 3,
-};
+पूर्ण;
 
-#define RQ_ENET_ADDR_BITS		64
-#define RQ_ENET_LEN_BITS		14
-#define RQ_ENET_LEN_MASK		((1 << RQ_ENET_LEN_BITS) - 1)
-#define RQ_ENET_TYPE_BITS		2
-#define RQ_ENET_TYPE_MASK		((1 << RQ_ENET_TYPE_BITS) - 1)
+#घोषणा RQ_ENET_ADDR_BITS		64
+#घोषणा RQ_ENET_LEN_BITS		14
+#घोषणा RQ_ENET_LEN_MASK		((1 << RQ_ENET_LEN_BITS) - 1)
+#घोषणा RQ_ENET_TYPE_BITS		2
+#घोषणा RQ_ENET_TYPE_MASK		((1 << RQ_ENET_TYPE_BITS) - 1)
 
-static inline void rq_enet_desc_enc(struct rq_enet_desc *desc,
+अटल अंतरभूत व्योम rq_enet_desc_enc(काष्ठा rq_enet_desc *desc,
 	u64 address, u8 type, u16 length)
-{
+अणु
 	desc->address = cpu_to_le64(address);
 	desc->length_type = cpu_to_le16((length & RQ_ENET_LEN_MASK) |
 		((type & RQ_ENET_TYPE_MASK) << RQ_ENET_LEN_BITS));
-}
+पूर्ण
 
-static inline void rq_enet_desc_dec(struct rq_enet_desc *desc,
+अटल अंतरभूत व्योम rq_enet_desc_dec(काष्ठा rq_enet_desc *desc,
 	u64 *address, u8 *type, u16 *length)
-{
+अणु
 	*address = le64_to_cpu(desc->address);
 	*length = le16_to_cpu(desc->length_type) & RQ_ENET_LEN_MASK;
 	*type = (u8)((le16_to_cpu(desc->length_type) >> RQ_ENET_LEN_BITS) &
 		RQ_ENET_TYPE_MASK);
-}
+पूर्ण
 
-#endif /* _RQ_ENET_DESC_H_ */
+#पूर्ण_अगर /* _RQ_ENET_DESC_H_ */

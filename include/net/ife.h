@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_IFE_H
-#define __NET_IFE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_IFE_H
+#घोषणा __NET_IFE_H
 
-#include <linux/etherdevice.h>
-#include <linux/rtnetlink.h>
-#include <uapi/linux/ife.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <uapi/linux/अगरe.h>
 
-#if IS_ENABLED(CONFIG_NET_IFE)
+#अगर IS_ENABLED(CONFIG_NET_IFE)
 
-void *ife_encode(struct sk_buff *skb, u16 metalen);
-void *ife_decode(struct sk_buff *skb, u16 *metalen);
+व्योम *अगरe_encode(काष्ठा sk_buff *skb, u16 metalen);
+व्योम *अगरe_decode(काष्ठा sk_buff *skb, u16 *metalen);
 
-void *ife_tlv_meta_decode(void *skbdata, const void *ifehdr_end, u16 *attrtype,
+व्योम *अगरe_tlv_meta_decode(व्योम *skbdata, स्थिर व्योम *अगरehdr_end, u16 *attrtype,
 			  u16 *dlen, u16 *totlen);
-int ife_tlv_meta_encode(void *skbdata, u16 attrtype, u16 dlen,
-			const void *dval);
+पूर्णांक अगरe_tlv_meta_encode(व्योम *skbdata, u16 attrtype, u16 dlen,
+			स्थिर व्योम *dval);
 
-void *ife_tlv_meta_next(void *skbdata);
+व्योम *अगरe_tlv_meta_next(व्योम *skbdata);
 
-#else
+#अन्यथा
 
-static inline void *ife_encode(struct sk_buff *skb, u16 metalen)
-{
-	return NULL;
-}
+अटल अंतरभूत व्योम *अगरe_encode(काष्ठा sk_buff *skb, u16 metalen)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void *ife_decode(struct sk_buff *skb, u16 *metalen)
-{
-	return NULL;
-}
+अटल अंतरभूत व्योम *अगरe_decode(काष्ठा sk_buff *skb, u16 *metalen)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void *ife_tlv_meta_decode(void *skbdata, u16 *attrtype, u16 *dlen,
+अटल अंतरभूत व्योम *अगरe_tlv_meta_decode(व्योम *skbdata, u16 *attrtype, u16 *dlen,
 					u16 *totlen)
-{
-	return NULL;
-}
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int ife_tlv_meta_encode(void *skbdata, u16 attrtype, u16 dlen,
-			const void *dval)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक अगरe_tlv_meta_encode(व्योम *skbdata, u16 attrtype, u16 dlen,
+			स्थिर व्योम *dval)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void *ife_tlv_meta_next(void *skbdata)
-{
-	return NULL;
-}
+अटल अंतरभूत व्योम *अगरe_tlv_meta_next(व्योम *skbdata)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __NET_IFE_H */
+#पूर्ण_अगर /* __NET_IFE_H */

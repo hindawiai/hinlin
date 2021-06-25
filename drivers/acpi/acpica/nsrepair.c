@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: nsrepair - Repair for objects returned by predefined methods
+ * Module Name: nsrepair - Repair क्रम objects वापसed by predefined methods
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acnamesp.h"
-#include "acinterp.h"
-#include "acpredef.h"
-#include "amlresrc.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
+#समावेश "acinterp.h"
+#समावेश "acpredef.h"
+#समावेश "amlresrc.h"
 
-#define _COMPONENT          ACPI_NAMESPACE
+#घोषणा _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("nsrepair")
 
 /*******************************************************************************
  *
- * This module attempts to repair or convert objects returned by the
+ * This module attempts to repair or convert objects वापसed by the
  * predefined methods to an object type that is expected, as per the ACPI
- * specification. The need for this code is dictated by the many machines that
- * return incorrect types for the standard predefined methods. Performing these
- * conversions here, in one place, eliminates the need for individual ACPI
- * device drivers to do the same. Note: Most of these conversions are different
- * than the internal object conversion routines used for implicit object
+ * specअगरication. The need क्रम this code is dictated by the many machines that
+ * वापस incorrect types क्रम the standard predefined methods. Perक्रमming these
+ * conversions here, in one place, eliminates the need क्रम inभागidual ACPI
+ * device drivers to करो the same. Note: Most of these conversions are dअगरferent
+ * than the पूर्णांकernal object conversion routines used क्रम implicit object
  * conversion.
  *
- * The following conversions can be performed as necessary:
+ * The following conversions can be perक्रमmed as necessary:
  *
  * Integer -> String
  * Integer -> Buffer
@@ -40,149 +41,149 @@ ACPI_MODULE_NAME("nsrepair")
  * Package -> Package of one Package
  *
  * Additional conversions that are available:
- *  Convert a null return or zero return value to an end_tag descriptor
+ *  Convert a null वापस or zero वापस value to an end_tag descriptor
  *  Convert an ASCII string to a Unicode buffer
  *
  * An incorrect standalone object is wrapped with required outer package
  *
  * Additional possible repairs:
- * Required package elements that are NULL replaced by Integer/String/Buffer
+ * Required package elements that are शून्य replaced by Integer/String/Buffer
  *
  ******************************************************************************/
 /* Local prototypes */
-static const struct acpi_simple_repair_info *acpi_ns_match_simple_repair(struct
+अटल स्थिर काष्ठा acpi_simple_repair_info *acpi_ns_match_simple_repair(काष्ठा
 									 acpi_namespace_node
 									 *node,
 									 u32
-									 return_btype,
+									 वापस_btype,
 									 u32
 									 package_index);
 
 /*
- * Special but simple repairs for some names.
+ * Special but simple repairs क्रम some names.
  *
  * 2nd argument: Unexpected types that can be repaired
  */
-static const struct acpi_simple_repair_info acpi_object_repair_info[] = {
+अटल स्थिर काष्ठा acpi_simple_repair_info acpi_object_repair_info[] = अणु
 	/* Resource descriptor conversions */
 
-	{"_CRS",
+	अणु"_CRS",
 	 ACPI_RTYPE_INTEGER | ACPI_RTYPE_STRING | ACPI_RTYPE_BUFFER |
 	 ACPI_RTYPE_NONE,
 	 ACPI_NOT_PACKAGE_ELEMENT,
-	 acpi_ns_convert_to_resource},
-	{"_DMA",
+	 acpi_ns_convert_to_resourceपूर्ण,
+	अणु"_DMA",
 	 ACPI_RTYPE_INTEGER | ACPI_RTYPE_STRING | ACPI_RTYPE_BUFFER |
 	 ACPI_RTYPE_NONE,
 	 ACPI_NOT_PACKAGE_ELEMENT,
-	 acpi_ns_convert_to_resource},
-	{"_PRS",
+	 acpi_ns_convert_to_resourceपूर्ण,
+	अणु"_PRS",
 	 ACPI_RTYPE_INTEGER | ACPI_RTYPE_STRING | ACPI_RTYPE_BUFFER |
 	 ACPI_RTYPE_NONE,
 	 ACPI_NOT_PACKAGE_ELEMENT,
-	 acpi_ns_convert_to_resource},
+	 acpi_ns_convert_to_resourceपूर्ण,
 
 	/* Object reference conversions */
 
-	{"_DEP", ACPI_RTYPE_STRING, ACPI_ALL_PACKAGE_ELEMENTS,
-	 acpi_ns_convert_to_reference},
+	अणु"_DEP", ACPI_RTYPE_STRING, ACPI_ALL_PACKAGE_ELEMENTS,
+	 acpi_ns_convert_to_referenceपूर्ण,
 
 	/* Unicode conversions */
 
-	{"_MLS", ACPI_RTYPE_STRING, 1,
-	 acpi_ns_convert_to_unicode},
-	{"_STR", ACPI_RTYPE_STRING | ACPI_RTYPE_BUFFER,
+	अणु"_MLS", ACPI_RTYPE_STRING, 1,
+	 acpi_ns_convert_to_unicodeपूर्ण,
+	अणु"_STR", ACPI_RTYPE_STRING | ACPI_RTYPE_BUFFER,
 	 ACPI_NOT_PACKAGE_ELEMENT,
-	 acpi_ns_convert_to_unicode},
-	{{0, 0, 0, 0}, 0, 0, NULL}	/* Table terminator */
-};
+	 acpi_ns_convert_to_unicodeपूर्ण,
+	अणुअणु0, 0, 0, 0पूर्ण, 0, 0, शून्यपूर्ण	/* Table terminator */
+पूर्ण;
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_simple_repair
  *
- * PARAMETERS:  info                - Method execution information block
+ * PARAMETERS:  info                - Method execution inक्रमmation block
  *              expected_btypes     - Object types expected
- *              package_index       - Index of object within parent package (if
+ *              package_index       - Index of object within parent package (अगर
  *                                    applicable - ACPI_NOT_PACKAGE_ELEMENT
  *                                    otherwise)
- *              return_object_ptr   - Pointer to the object returned from the
+ *              वापस_object_ptr   - Poपूर्णांकer to the object वापसed from the
  *                                    evaluation of a method or object
  *
- * RETURN:      Status. AE_OK if repair was successful.
+ * RETURN:      Status. AE_OK अगर repair was successful.
  *
- * DESCRIPTION: Attempt to repair/convert a return object of a type that was
+ * DESCRIPTION: Attempt to repair/convert a वापस object of a type that was
  *              not expected.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_simple_repair(struct acpi_evaluate_info *info,
+acpi_ns_simple_repair(काष्ठा acpi_evaluate_info *info,
 		      u32 expected_btypes,
 		      u32 package_index,
-		      union acpi_operand_object **return_object_ptr)
-{
-	union acpi_operand_object *return_object = *return_object_ptr;
-	union acpi_operand_object *new_object = NULL;
+		      जोड़ acpi_opeअक्रम_object **वापस_object_ptr)
+अणु
+	जोड़ acpi_opeअक्रम_object *वापस_object = *वापस_object_ptr;
+	जोड़ acpi_opeअक्रम_object *new_object = शून्य;
 	acpi_status status;
-	const struct acpi_simple_repair_info *predefined;
+	स्थिर काष्ठा acpi_simple_repair_info *predefined;
 
 	ACPI_FUNCTION_NAME(ns_simple_repair);
 
 	/*
-	 * Special repairs for certain names that are in the repair table.
-	 * Check if this name is in the list of repairable names.
+	 * Special repairs क्रम certain names that are in the repair table.
+	 * Check अगर this name is in the list of repairable names.
 	 */
 	predefined = acpi_ns_match_simple_repair(info->node,
-						 info->return_btype,
+						 info->वापस_btype,
 						 package_index);
-	if (predefined) {
-		if (!return_object) {
+	अगर (predefined) अणु
+		अगर (!वापस_object) अणु
 			ACPI_WARN_PREDEFINED((AE_INFO, info->full_pathname,
 					      ACPI_WARN_ALWAYS,
 					      "Missing expected return value"));
-		}
+		पूर्ण
 
-		status = predefined->object_converter(info->node, return_object,
+		status = predefined->object_converter(info->node, वापस_object,
 						      &new_object);
-		if (ACPI_FAILURE(status)) {
+		अगर (ACPI_FAILURE(status)) अणु
 
 			/* A fatal error occurred during a conversion */
 
 			ACPI_EXCEPTION((AE_INFO, status,
 					"During return object analysis"));
-			return (status);
-		}
-		if (new_object) {
-			goto object_repaired;
-		}
-	}
+			वापस (status);
+		पूर्ण
+		अगर (new_object) अणु
+			जाओ object_repaired;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Do not perform simple object repair unless the return type is not
+	 * Do not perक्रमm simple object repair unless the वापस type is not
 	 * expected.
 	 */
-	if (info->return_btype & expected_btypes) {
-		return (AE_OK);
-	}
+	अगर (info->वापस_btype & expected_btypes) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	/*
-	 * At this point, we know that the type of the returned object was not
-	 * one of the expected types for this predefined name. Attempt to
+	 * At this poपूर्णांक, we know that the type of the वापसed object was not
+	 * one of the expected types क्रम this predefined name. Attempt to
 	 * repair the object by converting it to one of the expected object
-	 * types for this predefined name.
+	 * types क्रम this predefined name.
 	 */
 
 	/*
-	 * If there is no return value, check if we require a return value for
-	 * this predefined name. Either one return value is expected, or none,
-	 * for both methods and other objects.
+	 * If there is no वापस value, check अगर we require a वापस value क्रम
+	 * this predefined name. Either one वापस value is expected, or none,
+	 * क्रम both methods and other objects.
 	 *
-	 * Try to fix if there was no return object. Warning if failed to fix.
+	 * Try to fix अगर there was no वापस object. Warning अगर failed to fix.
 	 */
-	if (!return_object) {
-		if (expected_btypes && (!(expected_btypes & ACPI_RTYPE_NONE))) {
-			if (package_index != ACPI_NOT_PACKAGE_ELEMENT) {
+	अगर (!वापस_object) अणु
+		अगर (expected_btypes && (!(expected_btypes & ACPI_RTYPE_NONE))) अणु
+			अगर (package_index != ACPI_NOT_PACKAGE_ELEMENT) अणु
 				ACPI_WARN_PREDEFINED((AE_INFO,
 						      info->full_pathname,
 						      ACPI_WARN_ALWAYS,
@@ -192,215 +193,215 @@ acpi_ns_simple_repair(struct acpi_evaluate_info *info,
 				    acpi_ns_repair_null_element(info,
 								expected_btypes,
 								package_index,
-								return_object_ptr);
-				if (ACPI_SUCCESS(status)) {
-					return (AE_OK);	/* Repair was successful */
-				}
-			} else {
+								वापस_object_ptr);
+				अगर (ACPI_SUCCESS(status)) अणु
+					वापस (AE_OK);	/* Repair was successful */
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				ACPI_WARN_PREDEFINED((AE_INFO,
 						      info->full_pathname,
 						      ACPI_WARN_ALWAYS,
 						      "Missing expected return value"));
-			}
+			पूर्ण
 
-			return (AE_AML_NO_RETURN_VALUE);
-		}
-	}
+			वापस (AE_AML_NO_RETURN_VALUE);
+		पूर्ण
+	पूर्ण
 
-	if (expected_btypes & ACPI_RTYPE_INTEGER) {
-		status = acpi_ns_convert_to_integer(return_object, &new_object);
-		if (ACPI_SUCCESS(status)) {
-			goto object_repaired;
-		}
-	}
-	if (expected_btypes & ACPI_RTYPE_STRING) {
-		status = acpi_ns_convert_to_string(return_object, &new_object);
-		if (ACPI_SUCCESS(status)) {
-			goto object_repaired;
-		}
-	}
-	if (expected_btypes & ACPI_RTYPE_BUFFER) {
-		status = acpi_ns_convert_to_buffer(return_object, &new_object);
-		if (ACPI_SUCCESS(status)) {
-			goto object_repaired;
-		}
-	}
-	if (expected_btypes & ACPI_RTYPE_PACKAGE) {
+	अगर (expected_btypes & ACPI_RTYPE_INTEGER) अणु
+		status = acpi_ns_convert_to_पूर्णांकeger(वापस_object, &new_object);
+		अगर (ACPI_SUCCESS(status)) अणु
+			जाओ object_repaired;
+		पूर्ण
+	पूर्ण
+	अगर (expected_btypes & ACPI_RTYPE_STRING) अणु
+		status = acpi_ns_convert_to_string(वापस_object, &new_object);
+		अगर (ACPI_SUCCESS(status)) अणु
+			जाओ object_repaired;
+		पूर्ण
+	पूर्ण
+	अगर (expected_btypes & ACPI_RTYPE_BUFFER) अणु
+		status = acpi_ns_convert_to_buffer(वापस_object, &new_object);
+		अगर (ACPI_SUCCESS(status)) अणु
+			जाओ object_repaired;
+		पूर्ण
+	पूर्ण
+	अगर (expected_btypes & ACPI_RTYPE_PACKAGE) अणु
 		/*
 		 * A package is expected. We will wrap the existing object with a
-		 * new package object. It is often the case that if a variable-length
+		 * new package object. It is often the हाल that अगर a variable-length
 		 * package is required, but there is only a single object needed, the
-		 * BIOS will return that object instead of wrapping it with a Package
+		 * BIOS will वापस that object instead of wrapping it with a Package
 		 * object. Note: after the wrapping, the package will be validated
-		 * for correct contents (expected object type or types).
+		 * क्रम correct contents (expected object type or types).
 		 */
 		status =
-		    acpi_ns_wrap_with_package(info, return_object, &new_object);
-		if (ACPI_SUCCESS(status)) {
+		    acpi_ns_wrap_with_package(info, वापस_object, &new_object);
+		अगर (ACPI_SUCCESS(status)) अणु
 			/*
 			 * The original object just had its reference count
-			 * incremented for being inserted into the new package.
+			 * incremented क्रम being inserted पूर्णांकo the new package.
 			 */
-			*return_object_ptr = new_object;	/* New Package object */
-			info->return_flags |= ACPI_OBJECT_REPAIRED;
-			return (AE_OK);
-		}
-	}
+			*वापस_object_ptr = new_object;	/* New Package object */
+			info->वापस_flags |= ACPI_OBJECT_REPAIRED;
+			वापस (AE_OK);
+		पूर्ण
+	पूर्ण
 
 	/* We cannot repair this object */
 
-	return (AE_AML_OPERAND_TYPE);
+	वापस (AE_AML_OPERAND_TYPE);
 
 object_repaired:
 
 	/* Object was successfully repaired */
 
-	if (package_index != ACPI_NOT_PACKAGE_ELEMENT) {
+	अगर (package_index != ACPI_NOT_PACKAGE_ELEMENT) अणु
 
 		/* Update reference count of new object */
 
-		if (!(info->return_flags & ACPI_OBJECT_WRAPPED)) {
+		अगर (!(info->वापस_flags & ACPI_OBJECT_WRAPPED)) अणु
 			new_object->common.reference_count =
-			    return_object->common.reference_count;
-		}
+			    वापस_object->common.reference_count;
+		पूर्ण
 
 		ACPI_DEBUG_PRINT((ACPI_DB_REPAIR,
 				  "%s: Converted %s to expected %s at Package index %u\n",
 				  info->full_pathname,
-				  acpi_ut_get_object_type_name(return_object),
+				  acpi_ut_get_object_type_name(वापस_object),
 				  acpi_ut_get_object_type_name(new_object),
 				  package_index));
-	} else {
+	पूर्ण अन्यथा अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_REPAIR,
 				  "%s: Converted %s to expected %s\n",
 				  info->full_pathname,
-				  acpi_ut_get_object_type_name(return_object),
+				  acpi_ut_get_object_type_name(वापस_object),
 				  acpi_ut_get_object_type_name(new_object)));
-	}
+	पूर्ण
 
-	/* Delete old object, install the new return object */
+	/* Delete old object, install the new वापस object */
 
-	acpi_ut_remove_reference(return_object);
-	*return_object_ptr = new_object;
-	info->return_flags |= ACPI_OBJECT_REPAIRED;
-	return (AE_OK);
-}
+	acpi_ut_हटाओ_reference(वापस_object);
+	*वापस_object_ptr = new_object;
+	info->वापस_flags |= ACPI_OBJECT_REPAIRED;
+	वापस (AE_OK);
+पूर्ण
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_ns_match_simple_repair
  *
- * PARAMETERS:  node                - Namespace node for the method/object
- *              return_btype        - Object type that was returned
- *              package_index       - Index of object within parent package (if
+ * PARAMETERS:  node                - Namespace node क्रम the method/object
+ *              वापस_btype        - Object type that was वापसed
+ *              package_index       - Index of object within parent package (अगर
  *                                    applicable - ACPI_NOT_PACKAGE_ELEMENT
  *                                    otherwise)
  *
- * RETURN:      Pointer to entry in repair table. NULL indicates not found.
+ * RETURN:      Poपूर्णांकer to entry in repair table. शून्य indicates not found.
  *
  * DESCRIPTION: Check an object name against the repairable object list.
  *
  *****************************************************************************/
 
-static const struct acpi_simple_repair_info *acpi_ns_match_simple_repair(struct
+अटल स्थिर काष्ठा acpi_simple_repair_info *acpi_ns_match_simple_repair(काष्ठा
 									 acpi_namespace_node
 									 *node,
 									 u32
-									 return_btype,
+									 वापस_btype,
 									 u32
 									 package_index)
-{
-	const struct acpi_simple_repair_info *this_name;
+अणु
+	स्थिर काष्ठा acpi_simple_repair_info *this_name;
 
-	/* Search info table for a repairable predefined method/object name */
+	/* Search info table क्रम a repairable predefined method/object name */
 
 	this_name = acpi_object_repair_info;
-	while (this_name->object_converter) {
-		if (ACPI_COMPARE_NAMESEG(node->name.ascii, this_name->name)) {
+	जबतक (this_name->object_converter) अणु
+		अगर (ACPI_COMPARE_NAMESEG(node->name.ascii, this_name->name)) अणु
 
-			/* Check if we can actually repair this name/type combination */
+			/* Check अगर we can actually repair this name/type combination */
 
-			if ((return_btype & this_name->unexpected_btypes) &&
+			अगर ((वापस_btype & this_name->unexpected_btypes) &&
 			    (this_name->package_index ==
 			     ACPI_ALL_PACKAGE_ELEMENTS
-			     || package_index == this_name->package_index)) {
-				return (this_name);
-			}
+			     || package_index == this_name->package_index)) अणु
+				वापस (this_name);
+			पूर्ण
 
-			return (NULL);
-		}
+			वापस (शून्य);
+		पूर्ण
 
 		this_name++;
-	}
+	पूर्ण
 
-	return (NULL);		/* Name was not found in the repair table */
-}
+	वापस (शून्य);		/* Name was not found in the repair table */
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_repair_null_element
  *
- * PARAMETERS:  info                - Method execution information block
+ * PARAMETERS:  info                - Method execution inक्रमmation block
  *              expected_btypes     - Object types expected
- *              package_index       - Index of object within parent package (if
+ *              package_index       - Index of object within parent package (अगर
  *                                    applicable - ACPI_NOT_PACKAGE_ELEMENT
  *                                    otherwise)
- *              return_object_ptr   - Pointer to the object returned from the
+ *              वापस_object_ptr   - Poपूर्णांकer to the object वापसed from the
  *                                    evaluation of a method or object
  *
- * RETURN:      Status. AE_OK if repair was successful.
+ * RETURN:      Status. AE_OK अगर repair was successful.
  *
- * DESCRIPTION: Attempt to repair a NULL element of a returned Package object.
+ * DESCRIPTION: Attempt to repair a शून्य element of a वापसed Package object.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_repair_null_element(struct acpi_evaluate_info *info,
+acpi_ns_repair_null_element(काष्ठा acpi_evaluate_info *info,
 			    u32 expected_btypes,
 			    u32 package_index,
-			    union acpi_operand_object **return_object_ptr)
-{
-	union acpi_operand_object *return_object = *return_object_ptr;
-	union acpi_operand_object *new_object;
+			    जोड़ acpi_opeअक्रम_object **वापस_object_ptr)
+अणु
+	जोड़ acpi_opeअक्रम_object *वापस_object = *वापस_object_ptr;
+	जोड़ acpi_opeअक्रम_object *new_object;
 
 	ACPI_FUNCTION_NAME(ns_repair_null_element);
 
-	/* No repair needed if return object is non-NULL */
+	/* No repair needed अगर वापस object is non-शून्य */
 
-	if (return_object) {
-		return (AE_OK);
-	}
+	अगर (वापस_object) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	/*
-	 * Attempt to repair a NULL element of a Package object. This applies to
-	 * predefined names that return a fixed-length package and each element
-	 * is required. It does not apply to variable-length packages where NULL
+	 * Attempt to repair a शून्य element of a Package object. This applies to
+	 * predefined names that वापस a fixed-length package and each element
+	 * is required. It करोes not apply to variable-length packages where शून्य
 	 * elements are allowed, especially at the end of the package.
 	 */
-	if (expected_btypes & ACPI_RTYPE_INTEGER) {
+	अगर (expected_btypes & ACPI_RTYPE_INTEGER) अणु
 
-		/* Need an integer - create a zero-value integer */
+		/* Need an पूर्णांकeger - create a zero-value पूर्णांकeger */
 
-		new_object = acpi_ut_create_integer_object((u64)0);
-	} else if (expected_btypes & ACPI_RTYPE_STRING) {
+		new_object = acpi_ut_create_पूर्णांकeger_object((u64)0);
+	पूर्ण अन्यथा अगर (expected_btypes & ACPI_RTYPE_STRING) अणु
 
-		/* Need a string - create a NULL string */
+		/* Need a string - create a शून्य string */
 
 		new_object = acpi_ut_create_string_object(0);
-	} else if (expected_btypes & ACPI_RTYPE_BUFFER) {
+	पूर्ण अन्यथा अगर (expected_btypes & ACPI_RTYPE_BUFFER) अणु
 
 		/* Need a buffer - create a zero-length buffer */
 
 		new_object = acpi_ut_create_buffer_object(0);
-	} else {
-		/* Error for all other expected types */
+	पूर्ण अन्यथा अणु
+		/* Error क्रम all other expected types */
 
-		return (AE_AML_OPERAND_TYPE);
-	}
+		वापस (AE_AML_OPERAND_TYPE);
+	पूर्ण
 
-	if (!new_object) {
-		return (AE_NO_MEMORY);
-	}
+	अगर (!new_object) अणु
+		वापस (AE_NO_MEMORY);
+	पूर्ण
 
 	/* Set the reference count according to the parent Package object */
 
@@ -413,62 +414,62 @@ acpi_ns_repair_null_element(struct acpi_evaluate_info *info,
 			  acpi_ut_get_object_type_name(new_object),
 			  package_index));
 
-	*return_object_ptr = new_object;
-	info->return_flags |= ACPI_OBJECT_REPAIRED;
-	return (AE_OK);
-}
+	*वापस_object_ptr = new_object;
+	info->वापस_flags |= ACPI_OBJECT_REPAIRED;
+	वापस (AE_OK);
+पूर्ण
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_ns_remove_null_elements
+ * FUNCTION:    acpi_ns_हटाओ_null_elements
  *
- * PARAMETERS:  info                - Method execution information block
- *              package_type        - An acpi_return_package_types value
+ * PARAMETERS:  info                - Method execution inक्रमmation block
+ *              package_type        - An acpi_वापस_package_types value
  *              obj_desc            - A Package object
  *
  * RETURN:      None.
  *
- * DESCRIPTION: Remove all NULL package elements from packages that contain
+ * DESCRIPTION: Remove all शून्य package elements from packages that contain
  *              a variable number of subpackages. For these types of
- *              packages, NULL elements can be safely removed.
+ *              packages, शून्य elements can be safely हटाओd.
  *
  *****************************************************************************/
 
-void
-acpi_ns_remove_null_elements(struct acpi_evaluate_info *info,
+व्योम
+acpi_ns_हटाओ_null_elements(काष्ठा acpi_evaluate_info *info,
 			     u8 package_type,
-			     union acpi_operand_object *obj_desc)
-{
-	union acpi_operand_object **source;
-	union acpi_operand_object **dest;
+			     जोड़ acpi_opeअक्रम_object *obj_desc)
+अणु
+	जोड़ acpi_opeअक्रम_object **source;
+	जोड़ acpi_opeअक्रम_object **dest;
 	u32 count;
 	u32 new_count;
 	u32 i;
 
-	ACPI_FUNCTION_NAME(ns_remove_null_elements);
+	ACPI_FUNCTION_NAME(ns_हटाओ_null_elements);
 
 	/*
-	 * We can safely remove all NULL elements from these package types:
+	 * We can safely हटाओ all शून्य elements from these package types:
 	 * PTYPE1_VAR packages contain a variable number of simple data types.
 	 * PTYPE2 packages contain a variable number of subpackages.
 	 */
-	switch (package_type) {
-	case ACPI_PTYPE1_VAR:
-	case ACPI_PTYPE2:
-	case ACPI_PTYPE2_COUNT:
-	case ACPI_PTYPE2_PKG_COUNT:
-	case ACPI_PTYPE2_FIXED:
-	case ACPI_PTYPE2_MIN:
-	case ACPI_PTYPE2_REV_FIXED:
-	case ACPI_PTYPE2_FIX_VAR:
-		break;
+	चयन (package_type) अणु
+	हाल ACPI_PTYPE1_VAR:
+	हाल ACPI_PTYPE2:
+	हाल ACPI_PTYPE2_COUNT:
+	हाल ACPI_PTYPE2_PKG_COUNT:
+	हाल ACPI_PTYPE2_FIXED:
+	हाल ACPI_PTYPE2_MIN:
+	हाल ACPI_PTYPE2_REV_FIXED:
+	हाल ACPI_PTYPE2_FIX_VAR:
+		अवरोध;
 
-	default:
-	case ACPI_PTYPE2_VAR_VAR:
-	case ACPI_PTYPE1_FIXED:
-	case ACPI_PTYPE1_OPTION:
-		return;
-	}
+	शेष:
+	हाल ACPI_PTYPE2_VAR_VAR:
+	हाल ACPI_PTYPE1_FIXED:
+	हाल ACPI_PTYPE1_OPTION:
+		वापस;
+	पूर्ण
 
 	count = obj_desc->package.count;
 	new_count = count;
@@ -476,45 +477,45 @@ acpi_ns_remove_null_elements(struct acpi_evaluate_info *info,
 	source = obj_desc->package.elements;
 	dest = source;
 
-	/* Examine all elements of the package object, remove nulls */
+	/* Examine all elements of the package object, हटाओ nulls */
 
-	for (i = 0; i < count; i++) {
-		if (!*source) {
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (!*source) अणु
 			new_count--;
-		} else {
+		पूर्ण अन्यथा अणु
 			*dest = *source;
 			dest++;
-		}
+		पूर्ण
 
 		source++;
-	}
+	पूर्ण
 
-	/* Update parent package if any null elements were removed */
+	/* Update parent package अगर any null elements were हटाओd */
 
-	if (new_count < count) {
+	अगर (new_count < count) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_REPAIR,
 				  "%s: Found and removed %u NULL elements\n",
 				  info->full_pathname, (count - new_count)));
 
-		/* NULL terminate list and update the package count */
+		/* शून्य terminate list and update the package count */
 
-		*dest = NULL;
+		*dest = शून्य;
 		obj_desc->package.count = new_count;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_wrap_with_package
  *
- * PARAMETERS:  info                - Method execution information block
- *              original_object     - Pointer to the object to repair.
- *              obj_desc_ptr        - The new package object is returned here
+ * PARAMETERS:  info                - Method execution inक्रमmation block
+ *              original_object     - Poपूर्णांकer to the object to repair.
+ *              obj_desc_ptr        - The new package object is वापसed here
  *
  * RETURN:      Status, new object in *obj_desc_ptr
  *
  * DESCRIPTION: Repair a common problem with objects that are defined to
- *              return a variable-length Package of sub-objects. If there is
+ *              वापस a variable-length Package of sub-objects. If there is
  *              only one sub-object, some BIOS code mistakenly simply declares
  *              the single object instead of a Package with one sub-object.
  *              This function attempts to repair this error by wrapping a
@@ -528,11 +529,11 @@ acpi_ns_remove_null_elements(struct acpi_evaluate_info *info,
  ******************************************************************************/
 
 acpi_status
-acpi_ns_wrap_with_package(struct acpi_evaluate_info *info,
-			  union acpi_operand_object *original_object,
-			  union acpi_operand_object **obj_desc_ptr)
-{
-	union acpi_operand_object *pkg_obj_desc;
+acpi_ns_wrap_with_package(काष्ठा acpi_evaluate_info *info,
+			  जोड़ acpi_opeअक्रम_object *original_object,
+			  जोड़ acpi_opeअक्रम_object **obj_desc_ptr)
+अणु
+	जोड़ acpi_opeअक्रम_object *pkg_obj_desc;
 
 	ACPI_FUNCTION_NAME(ns_wrap_with_package);
 
@@ -541,9 +542,9 @@ acpi_ns_wrap_with_package(struct acpi_evaluate_info *info,
 	 * package will have a single element, the lone sub-object.
 	 */
 	pkg_obj_desc = acpi_ut_create_package_object(1);
-	if (!pkg_obj_desc) {
-		return (AE_NO_MEMORY);
-	}
+	अगर (!pkg_obj_desc) अणु
+		वापस (AE_NO_MEMORY);
+	पूर्ण
 
 	pkg_obj_desc->package.elements[0] = original_object;
 
@@ -552,9 +553,9 @@ acpi_ns_wrap_with_package(struct acpi_evaluate_info *info,
 			  info->full_pathname,
 			  acpi_ut_get_object_type_name(original_object)));
 
-	/* Return the new object in the object pointer */
+	/* Return the new object in the object poपूर्णांकer */
 
 	*obj_desc_ptr = pkg_obj_desc;
-	info->return_flags |= ACPI_OBJECT_REPAIRED | ACPI_OBJECT_WRAPPED;
-	return (AE_OK);
-}
+	info->वापस_flags |= ACPI_OBJECT_REPAIRED | ACPI_OBJECT_WRAPPED;
+	वापस (AE_OK);
+पूर्ण

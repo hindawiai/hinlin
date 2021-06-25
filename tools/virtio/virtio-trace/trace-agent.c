@@ -1,268 +1,269 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Guest agent for virtio-trace
+ * Guest agent क्रम virtio-trace
  *
  * Copyright (C) 2012 Hitachi, Ltd.
  * Created by Yoshihiro Yunomae <yoshihiro.yunomae.ez@hitachi.com>
  *            Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
  */
 
-#define _GNU_SOURCE
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include "trace-agent.h"
+#घोषणा _GNU_SOURCE
+#समावेश <सीमा.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश "trace-agent.h"
 
-#define PAGE_SIZE		(sysconf(_SC_PAGE_SIZE))
-#define PIPE_DEF_BUFS		16
-#define PIPE_MIN_SIZE		(PAGE_SIZE*PIPE_DEF_BUFS)
-#define PIPE_MAX_SIZE		(1024*1024)
-#define READ_PATH_FMT	\
+#घोषणा PAGE_SIZE		(sysconf(_SC_PAGE_SIZE))
+#घोषणा PIPE_DEF_BUFS		16
+#घोषणा PIPE_MIN_SIZE		(PAGE_SIZE*PIPE_DEF_BUFS)
+#घोषणा PIPE_MAX_SIZE		(1024*1024)
+#घोषणा READ_PATH_FMT	\
 		"/sys/kernel/debug/tracing/per_cpu/cpu%d/trace_pipe_raw"
-#define WRITE_PATH_FMT		"/dev/virtio-ports/trace-path-cpu%d"
-#define CTL_PATH		"/dev/virtio-ports/agent-ctl-path"
+#घोषणा WRITE_PATH_FMT		"/dev/virtio-ports/trace-path-cpu%d"
+#घोषणा CTL_PATH		"/dev/virtio-ports/agent-ctl-path"
 
-pthread_mutex_t mutex_notify = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond_wakeup = PTHREAD_COND_INITIALIZER;
+pthपढ़ो_mutex_t mutex_notअगरy = PTHREAD_MUTEX_INITIALIZER;
+pthपढ़ो_cond_t cond_wakeup = PTHREAD_COND_INITIALIZER;
 
-static int get_total_cpus(void)
-{
-	int nr_cpus = (int)sysconf(_SC_NPROCESSORS_CONF);
+अटल पूर्णांक get_total_cpus(व्योम)
+अणु
+	पूर्णांक nr_cpus = (पूर्णांक)sysconf(_SC_NPROCESSORS_CONF);
 
-	if (nr_cpus <= 0) {
+	अगर (nr_cpus <= 0) अणु
 		pr_err("Could not read cpus\n");
-		goto error;
-	} else if (nr_cpus > MAX_CPUS) {
-		pr_err("Exceed max cpus(%d)\n", (int)MAX_CPUS);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण अन्यथा अगर (nr_cpus > MAX_CPUS) अणु
+		pr_err("Exceed max cpus(%d)\n", (पूर्णांक)MAX_CPUS);
+		जाओ error;
+	पूर्ण
 
-	return nr_cpus;
+	वापस nr_cpus;
 
 error:
-	exit(EXIT_FAILURE);
-}
+	निकास(निकास_त्रुटि);
+पूर्ण
 
-static void *agent_info_new(void)
-{
-	struct agent_info *s;
-	int i;
+अटल व्योम *agent_info_new(व्योम)
+अणु
+	काष्ठा agent_info *s;
+	पूर्णांक i;
 
-	s = zalloc(sizeof(struct agent_info));
-	if (s == NULL) {
+	s = zalloc(माप(काष्ठा agent_info));
+	अगर (s == शून्य) अणु
 		pr_err("agent_info zalloc error\n");
-		exit(EXIT_FAILURE);
-	}
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 	s->pipe_size = PIPE_INIT;
-	s->use_stdout = false;
+	s->use_मानक_निकास = false;
 	s->cpus = get_total_cpus();
 	s->ctl_fd = -1;
 
-	/* read/write threads init */
-	for (i = 0; i < s->cpus; i++)
-		s->rw_ti[i] = rw_thread_info_new();
+	/* पढ़ो/ग_लिखो thपढ़ोs init */
+	क्रम (i = 0; i < s->cpus; i++)
+		s->rw_ti[i] = rw_thपढ़ो_info_new();
 
-	return s;
-}
+	वापस s;
+पूर्ण
 
-static unsigned long parse_size(const char *arg)
-{
-	unsigned long value, round;
-	char *ptr;
+अटल अचिन्हित दीर्घ parse_size(स्थिर अक्षर *arg)
+अणु
+	अचिन्हित दीर्घ value, round;
+	अक्षर *ptr;
 
-	value = strtoul(arg, &ptr, 10);
-	switch (*ptr) {
-	case 'K': case 'k':
+	value = म_से_अदीर्घ(arg, &ptr, 10);
+	चयन (*ptr) अणु
+	हाल 'K': case 'k':
 		value <<= 10;
-		break;
-	case 'M': case 'm':
+		अवरोध;
+	हाल 'M': case 'm':
 		value <<= 20;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (value > PIPE_MAX_SIZE) {
+	अगर (value > PIPE_MAX_SIZE) अणु
 		pr_err("Pipe size must be less than 1MB\n");
-		goto error;
-	} else if (value < PIPE_MIN_SIZE) {
+		जाओ error;
+	पूर्ण अन्यथा अगर (value < PIPE_MIN_SIZE) अणु
 		pr_err("Pipe size must be over 64KB\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* Align buffer size with page unit */
 	round = value & (PAGE_SIZE - 1);
 	value = value - round;
 
-	return value;
+	वापस value;
 error:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void usage(char const *prg)
-{
+अटल व्योम usage(अक्षर स्थिर *prg)
+अणु
 	pr_err("usage: %s [-h] [-o] [-s <size of pipe>]\n", prg);
-}
+पूर्ण
 
-static const char *make_path(int cpu_num, bool this_is_write_path)
-{
-	int ret;
-	char *buf;
+अटल स्थिर अक्षर *make_path(पूर्णांक cpu_num, bool this_is_ग_लिखो_path)
+अणु
+	पूर्णांक ret;
+	अक्षर *buf;
 
 	buf = zalloc(PATH_MAX);
-	if (buf == NULL) {
+	अगर (buf == शून्य) अणु
 		pr_err("Could not allocate buffer\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (this_is_write_path)
-		/* write(output) path */
-		ret = snprintf(buf, PATH_MAX, WRITE_PATH_FMT, cpu_num);
-	else
-		/* read(input) path */
-		ret = snprintf(buf, PATH_MAX, READ_PATH_FMT, cpu_num);
+	अगर (this_is_ग_लिखो_path)
+		/* ग_लिखो(output) path */
+		ret = snम_लिखो(buf, PATH_MAX, WRITE_PATH_FMT, cpu_num);
+	अन्यथा
+		/* पढ़ो(input) path */
+		ret = snम_लिखो(buf, PATH_MAX, READ_PATH_FMT, cpu_num);
 
-	if (ret <= 0) {
+	अगर (ret <= 0) अणु
 		pr_err("Failed to generate %s path(CPU#%d):%d\n",
-			this_is_write_path ? "read" : "write", cpu_num, ret);
-		goto error;
-	}
+			this_is_ग_लिखो_path ? "read" : "write", cpu_num, ret);
+		जाओ error;
+	पूर्ण
 
-	return buf;
+	वापस buf;
 
 error:
-	free(buf);
-	return NULL;
-}
+	मुक्त(buf);
+	वापस शून्य;
+पूर्ण
 
-static const char *make_input_path(int cpu_num)
-{
-	return make_path(cpu_num, false);
-}
+अटल स्थिर अक्षर *make_input_path(पूर्णांक cpu_num)
+अणु
+	वापस make_path(cpu_num, false);
+पूर्ण
 
-static const char *make_output_path(int cpu_num)
-{
-	return make_path(cpu_num, true);
-}
+अटल स्थिर अक्षर *make_output_path(पूर्णांक cpu_num)
+अणु
+	वापस make_path(cpu_num, true);
+पूर्ण
 
-static void *agent_info_init(struct agent_info *s)
-{
-	int cpu;
-	const char *in_path = NULL;
-	const char *out_path = NULL;
+अटल व्योम *agent_info_init(काष्ठा agent_info *s)
+अणु
+	पूर्णांक cpu;
+	स्थिर अक्षर *in_path = शून्य;
+	स्थिर अक्षर *out_path = शून्य;
 
-	/* init read/write threads */
-	for (cpu = 0; cpu < s->cpus; cpu++) {
-		/* set read(input) path per read/write thread */
+	/* init पढ़ो/ग_लिखो thपढ़ोs */
+	क्रम (cpu = 0; cpu < s->cpus; cpu++) अणु
+		/* set पढ़ो(input) path per पढ़ो/ग_लिखो thपढ़ो */
 		in_path = make_input_path(cpu);
-		if (in_path == NULL)
-			goto error;
+		अगर (in_path == शून्य)
+			जाओ error;
 
-		/* set write(output) path per read/write thread*/
-		if (!s->use_stdout) {
+		/* set ग_लिखो(output) path per पढ़ो/ग_लिखो thपढ़ो*/
+		अगर (!s->use_मानक_निकास) अणु
 			out_path = make_output_path(cpu);
-			if (out_path == NULL)
-				goto error;
-		} else
-			/* stdout mode */
+			अगर (out_path == शून्य)
+				जाओ error;
+		पूर्ण अन्यथा
+			/* मानक_निकास mode */
 			pr_debug("stdout mode\n");
 
-		rw_thread_init(cpu, in_path, out_path, s->use_stdout,
+		rw_thपढ़ो_init(cpu, in_path, out_path, s->use_मानक_निकास,
 						s->pipe_size, s->rw_ti[cpu]);
-	}
+	पूर्ण
 
-	/* init controller of read/write threads */
-	s->ctl_fd = rw_ctl_init((const char *)CTL_PATH);
+	/* init controller of पढ़ो/ग_लिखो thपढ़ोs */
+	s->ctl_fd = rw_ctl_init((स्थिर अक्षर *)CTL_PATH);
 
-	return NULL;
+	वापस शून्य;
 
 error:
-	exit(EXIT_FAILURE);
-}
+	निकास(निकास_त्रुटि);
+पूर्ण
 
-static void *parse_args(int argc, char *argv[], struct agent_info *s)
-{
-	int cmd;
-	unsigned long size;
+अटल व्योम *parse_args(पूर्णांक argc, अक्षर *argv[], काष्ठा agent_info *s)
+अणु
+	पूर्णांक cmd;
+	अचिन्हित दीर्घ size;
 
-	while ((cmd = getopt(argc, argv, "hos:")) != -1) {
-		switch (cmd) {
-		/* stdout mode */
-		case 'o':
-			s->use_stdout = true;
-			break;
+	जबतक ((cmd = getopt(argc, argv, "hos:")) != -1) अणु
+		चयन (cmd) अणु
+		/* मानक_निकास mode */
+		हाल 'o':
+			s->use_मानक_निकास = true;
+			अवरोध;
 		/* size of pipe */
-		case 's':
+		हाल 's':
 			size = parse_size(optarg);
-			if (size == 0)
-				goto error;
+			अगर (size == 0)
+				जाओ error;
 			s->pipe_size = size;
-			break;
-		case 'h':
-		default:
+			अवरोध;
+		हाल 'h':
+		शेष:
 			usage(argv[0]);
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	agent_info_init(s);
 
-	return NULL;
+	वापस शून्य;
 
 error:
-	exit(EXIT_FAILURE);
-}
+	निकास(निकास_त्रुटि);
+पूर्ण
 
-static void agent_main_loop(struct agent_info *s)
-{
-	int cpu;
-	pthread_t rw_thread_per_cpu[MAX_CPUS];
+अटल व्योम agent_मुख्य_loop(काष्ठा agent_info *s)
+अणु
+	पूर्णांक cpu;
+	pthपढ़ो_t rw_thपढ़ो_per_cpu[MAX_CPUS];
 
-	/* Start all read/write threads */
-	for (cpu = 0; cpu < s->cpus; cpu++)
-		rw_thread_per_cpu[cpu] = rw_thread_run(s->rw_ti[cpu]);
+	/* Start all पढ़ो/ग_लिखो thपढ़ोs */
+	क्रम (cpu = 0; cpu < s->cpus; cpu++)
+		rw_thपढ़ो_per_cpu[cpu] = rw_thपढ़ो_run(s->rw_ti[cpu]);
 
 	rw_ctl_loop(s->ctl_fd);
 
-	/* Finish all read/write threads */
-	for (cpu = 0; cpu < s->cpus; cpu++) {
-		int ret;
+	/* Finish all पढ़ो/ग_लिखो thपढ़ोs */
+	क्रम (cpu = 0; cpu < s->cpus; cpu++) अणु
+		पूर्णांक ret;
 
-		ret = pthread_join(rw_thread_per_cpu[cpu], NULL);
-		if (ret != 0) {
+		ret = pthपढ़ो_join(rw_thपढ़ो_per_cpu[cpu], शून्य);
+		अगर (ret != 0) अणु
 			pr_err("pthread_join() error:%d (cpu %d)\n", ret, cpu);
-			exit(EXIT_FAILURE);
-		}
-	}
-}
+			निकास(निकास_त्रुटि);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void agent_info_free(struct agent_info *s)
-{
-	int i;
+अटल व्योम agent_info_मुक्त(काष्ठा agent_info *s)
+अणु
+	पूर्णांक i;
 
-	close(s->ctl_fd);
-	for (i = 0; i < s->cpus; i++) {
-		close(s->rw_ti[i]->in_fd);
-		close(s->rw_ti[i]->out_fd);
-		close(s->rw_ti[i]->read_pipe);
-		close(s->rw_ti[i]->write_pipe);
-		free(s->rw_ti[i]);
-	}
-	free(s);
-}
+	बंद(s->ctl_fd);
+	क्रम (i = 0; i < s->cpus; i++) अणु
+		बंद(s->rw_ti[i]->in_fd);
+		बंद(s->rw_ti[i]->out_fd);
+		बंद(s->rw_ti[i]->पढ़ो_pipe);
+		बंद(s->rw_ti[i]->ग_लिखो_pipe);
+		मुक्त(s->rw_ti[i]);
+	पूर्ण
+	मुक्त(s);
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	struct agent_info *s = NULL;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	काष्ठा agent_info *s = शून्य;
 
 	s = agent_info_new();
 	parse_args(argc, argv, s);
 
-	agent_main_loop(s);
+	agent_मुख्य_loop(s);
 
-	agent_info_free(s);
+	agent_info_मुक्त(s);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

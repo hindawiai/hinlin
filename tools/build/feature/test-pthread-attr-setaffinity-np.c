@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdint.h>
-#include <pthread.h>
-#include <sched.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानक_निवेशt.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <sched.h>
 
-int main(void)
-{
-	int ret = 0;
-	pthread_attr_t thread_attr;
+पूर्णांक मुख्य(व्योम)
+अणु
+	पूर्णांक ret = 0;
+	pthपढ़ो_attr_t thपढ़ो_attr;
 	cpu_set_t cs;
 
-	pthread_attr_init(&thread_attr);
+	pthपढ़ो_attr_init(&thपढ़ो_attr);
 	CPU_ZERO(&cs);
 
-	ret = pthread_attr_setaffinity_np(&thread_attr, sizeof(cs), &cs);
+	ret = pthपढ़ो_attr_setaffinity_np(&thपढ़ो_attr, माप(cs), &cs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

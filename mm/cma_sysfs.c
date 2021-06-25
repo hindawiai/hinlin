@@ -1,112 +1,113 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * CMA SysFS Interface
  *
  * Copyright (c) 2021 Minchan Kim <minchan@kernel.org>
  */
 
-#include <linux/cma.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
+#समावेश <linux/cma.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
 
-#include "cma.h"
+#समावेश "cma.h"
 
-#define CMA_ATTR_RO(_name) \
-	static struct kobj_attribute _name##_attr = __ATTR_RO(_name)
+#घोषणा CMA_ATTR_RO(_name) \
+	अटल काष्ठा kobj_attribute _name##_attr = __ATTR_RO(_name)
 
-void cma_sysfs_account_success_pages(struct cma *cma, unsigned long nr_pages)
-{
+व्योम cma_sysfs_account_success_pages(काष्ठा cma *cma, अचिन्हित दीर्घ nr_pages)
+अणु
 	atomic64_add(nr_pages, &cma->nr_pages_succeeded);
-}
+पूर्ण
 
-void cma_sysfs_account_fail_pages(struct cma *cma, unsigned long nr_pages)
-{
+व्योम cma_sysfs_account_fail_pages(काष्ठा cma *cma, अचिन्हित दीर्घ nr_pages)
+अणु
 	atomic64_add(nr_pages, &cma->nr_pages_failed);
-}
+पूर्ण
 
-static inline struct cma *cma_from_kobj(struct kobject *kobj)
-{
-	return container_of(kobj, struct cma_kobject, kobj)->cma;
-}
+अटल अंतरभूत काष्ठा cma *cma_from_kobj(काष्ठा kobject *kobj)
+अणु
+	वापस container_of(kobj, काष्ठा cma_kobject, kobj)->cma;
+पूर्ण
 
-static ssize_t alloc_pages_success_show(struct kobject *kobj,
-					struct kobj_attribute *attr, char *buf)
-{
-	struct cma *cma = cma_from_kobj(kobj);
+अटल sमाप_प्रकार alloc_pages_success_show(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा cma *cma = cma_from_kobj(kobj);
 
-	return sysfs_emit(buf, "%llu\n",
-			  atomic64_read(&cma->nr_pages_succeeded));
-}
+	वापस sysfs_emit(buf, "%llu\n",
+			  atomic64_पढ़ो(&cma->nr_pages_succeeded));
+पूर्ण
 CMA_ATTR_RO(alloc_pages_success);
 
-static ssize_t alloc_pages_fail_show(struct kobject *kobj,
-				     struct kobj_attribute *attr, char *buf)
-{
-	struct cma *cma = cma_from_kobj(kobj);
+अटल sमाप_प्रकार alloc_pages_fail_show(काष्ठा kobject *kobj,
+				     काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा cma *cma = cma_from_kobj(kobj);
 
-	return sysfs_emit(buf, "%llu\n", atomic64_read(&cma->nr_pages_failed));
-}
+	वापस sysfs_emit(buf, "%llu\n", atomic64_पढ़ो(&cma->nr_pages_failed));
+पूर्ण
 CMA_ATTR_RO(alloc_pages_fail);
 
-static void cma_kobj_release(struct kobject *kobj)
-{
-	struct cma *cma = cma_from_kobj(kobj);
-	struct cma_kobject *cma_kobj = cma->cma_kobj;
+अटल व्योम cma_kobj_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा cma *cma = cma_from_kobj(kobj);
+	काष्ठा cma_kobject *cma_kobj = cma->cma_kobj;
 
-	kfree(cma_kobj);
-	cma->cma_kobj = NULL;
-}
+	kमुक्त(cma_kobj);
+	cma->cma_kobj = शून्य;
+पूर्ण
 
-static struct attribute *cma_attrs[] = {
+अटल काष्ठा attribute *cma_attrs[] = अणु
 	&alloc_pages_success_attr.attr,
 	&alloc_pages_fail_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(cma);
 
-static struct kobj_type cma_ktype = {
+अटल काष्ठा kobj_type cma_ktype = अणु
 	.release = cma_kobj_release,
 	.sysfs_ops = &kobj_sysfs_ops,
-	.default_groups = cma_groups,
-};
+	.शेष_groups = cma_groups,
+पूर्ण;
 
-static int __init cma_sysfs_init(void)
-{
-	struct kobject *cma_kobj_root;
-	struct cma_kobject *cma_kobj;
-	struct cma *cma;
-	int i, err;
+अटल पूर्णांक __init cma_sysfs_init(व्योम)
+अणु
+	काष्ठा kobject *cma_kobj_root;
+	काष्ठा cma_kobject *cma_kobj;
+	काष्ठा cma *cma;
+	पूर्णांक i, err;
 
 	cma_kobj_root = kobject_create_and_add("cma", mm_kobj);
-	if (!cma_kobj_root)
-		return -ENOMEM;
+	अगर (!cma_kobj_root)
+		वापस -ENOMEM;
 
-	for (i = 0; i < cma_area_count; i++) {
-		cma_kobj = kzalloc(sizeof(*cma_kobj), GFP_KERNEL);
-		if (!cma_kobj) {
+	क्रम (i = 0; i < cma_area_count; i++) अणु
+		cma_kobj = kzalloc(माप(*cma_kobj), GFP_KERNEL);
+		अगर (!cma_kobj) अणु
 			err = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		cma = &cma_areas[i];
 		cma->cma_kobj = cma_kobj;
 		cma_kobj->cma = cma;
 		err = kobject_init_and_add(&cma_kobj->kobj, &cma_ktype,
 					   cma_kobj_root, "%s", cma->name);
-		if (err) {
+		अगर (err) अणु
 			kobject_put(&cma_kobj->kobj);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out:
-	while (--i >= 0) {
+	जबतक (--i >= 0) अणु
 		cma = &cma_areas[i];
 		kobject_put(&cma->cma_kobj->kobj);
-	}
+	पूर्ण
 	kobject_put(cma_kobj_root);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 subsys_initcall(cma_sysfs_init);

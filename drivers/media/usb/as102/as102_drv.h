@@ -1,74 +1,75 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Abilis Systems Single DVB-T Receiver
  * Copyright (C) 2008 Pierrick Hascoet <pierrick.hascoet@abilis.com>
  */
 
-#ifndef _AS102_DRV_H
-#define _AS102_DRV_H
-#include <linux/usb.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include <media/dmxdev.h>
-#include "as10x_handle.h"
-#include "as10x_cmd.h"
-#include "as102_usb_drv.h"
+#अगर_अघोषित _AS102_DRV_H
+#घोषणा _AS102_DRV_H
+#समावेश <linux/usb.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dmxdev.h>
+#समावेश "as10x_handle.h"
+#समावेश "as10x_cmd.h"
+#समावेश "as102_usb_drv.h"
 
-#define DRIVER_FULL_NAME "Abilis Systems as10x usb driver"
-#define DRIVER_NAME "as10x_usb"
+#घोषणा DRIVER_FULL_NAME "Abilis Systems as10x usb driver"
+#घोषणा DRIVER_NAME "as10x_usb"
 
-#define debug	as102_debug
-extern struct usb_driver as102_usb_driver;
-extern int elna_enable;
+#घोषणा debug	as102_debug
+बाह्य काष्ठा usb_driver as102_usb_driver;
+बाह्य पूर्णांक elna_enable;
 
-#define AS102_DEVICE_MAJOR	192
+#घोषणा AS102_DEVICE_MAJOR	192
 
-#define AS102_USB_BUF_SIZE	512
-#define MAX_STREAM_URB		32
+#घोषणा AS102_USB_BUF_SIZE	512
+#घोषणा MAX_STREAM_URB		32
 
-struct as10x_bus_adapter_t {
-	struct usb_device *usb_dev;
+काष्ठा as10x_bus_adapter_t अणु
+	काष्ठा usb_device *usb_dev;
 	/* bus token lock */
-	struct mutex lock;
-	/* low level interface for bus adapter */
-	union as10x_bus_token_t {
+	काष्ठा mutex lock;
+	/* low level पूर्णांकerface क्रम bus adapter */
+	जोड़ as10x_bus_token_t अणु
 		/* usb token */
-		struct as10x_usb_token_cmd_t usb;
-	} token;
+		काष्ठा as10x_usb_token_cmd_t usb;
+	पूर्ण token;
 
 	/* token cmd xfer id */
-	uint16_t cmd_xid;
+	uपूर्णांक16_t cmd_xid;
 
-	/* as10x command and response for dvb interface*/
-	struct as10x_cmd_t *cmd, *rsp;
+	/* as10x command and response क्रम dvb पूर्णांकerface*/
+	काष्ठा as10x_cmd_t *cmd, *rsp;
 
-	/* bus adapter private ops callback */
-	const struct as102_priv_ops_t *ops;
-};
+	/* bus adapter निजी ops callback */
+	स्थिर काष्ठा as102_priv_ops_t *ops;
+पूर्ण;
 
-struct as102_dev_t {
-	const char *name;
-	struct as10x_bus_adapter_t bus_adap;
-	struct list_head device_entry;
-	struct kref kref;
-	uint8_t elna_cfg;
+काष्ठा as102_dev_t अणु
+	स्थिर अक्षर *name;
+	काष्ठा as10x_bus_adapter_t bus_adap;
+	काष्ठा list_head device_entry;
+	काष्ठा kref kref;
+	uपूर्णांक8_t elna_cfg;
 
-	struct dvb_adapter dvb_adap;
-	struct dvb_frontend *dvb_fe;
-	struct dvb_demux dvb_dmx;
-	struct dmxdev dvb_dmxdev;
+	काष्ठा dvb_adapter dvb_adap;
+	काष्ठा dvb_frontend *dvb_fe;
+	काष्ठा dvb_demux dvb_dmx;
+	काष्ठा dmxdev dvb_dmxdev;
 
-	/* timer handle to trig ts stream download */
-	struct timer_list timer_handle;
+	/* समयr handle to trig ts stream करोwnload */
+	काष्ठा समयr_list समयr_handle;
 
-	struct mutex sem;
+	काष्ठा mutex sem;
 	dma_addr_t dma_addr;
-	void *stream;
-	int streaming;
-	struct urb *stream_urb[MAX_STREAM_URB];
-};
+	व्योम *stream;
+	पूर्णांक streaming;
+	काष्ठा urb *stream_urb[MAX_STREAM_URB];
+पूर्ण;
 
-int as102_dvb_register(struct as102_dev_t *dev);
-void as102_dvb_unregister(struct as102_dev_t *dev);
+पूर्णांक as102_dvb_रेजिस्टर(काष्ठा as102_dev_t *dev);
+व्योम as102_dvb_unरेजिस्टर(काष्ठा as102_dev_t *dev);
 
-#endif
+#पूर्ण_अगर

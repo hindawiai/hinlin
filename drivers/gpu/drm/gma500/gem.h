@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /**************************************************************************
  * Copyright (c) 2014 Patrik Jakobsson
  * All Rights Reserved.
  *
  **************************************************************************/
 
-#ifndef _GEM_H
-#define _GEM_H
+#अगर_अघोषित _GEM_H
+#घोषणा _GEM_H
 
-struct drm_device;
+काष्ठा drm_device;
 
-extern const struct drm_gem_object_funcs psb_gem_object_funcs;
+बाह्य स्थिर काष्ठा drm_gem_object_funcs psb_gem_object_funcs;
 
-extern int psb_gem_create(struct drm_file *file, struct drm_device *dev,
-			  u64 size, u32 *handlep, int stolen, u32 align);
+बाह्य पूर्णांक psb_gem_create(काष्ठा drm_file *file, काष्ठा drm_device *dev,
+			  u64 size, u32 *handlep, पूर्णांक stolen, u32 align);
 
-#endif
+#पूर्ण_अगर

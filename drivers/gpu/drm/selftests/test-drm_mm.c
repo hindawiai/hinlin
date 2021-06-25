@@ -1,338 +1,339 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Test cases for the drm_mm range manager
+ * Test हालs क्रम the drm_mm range manager
  */
 
-#define pr_fmt(fmt) "drm_mm: " fmt
+#घोषणा pr_fmt(fmt) "drm_mm: " fmt
 
-#include <linux/module.h>
-#include <linux/prime_numbers.h>
-#include <linux/slab.h>
-#include <linux/random.h>
-#include <linux/vmalloc.h>
-#include <linux/ktime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/prime_numbers.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/kसमय.स>
 
-#include <drm/drm_mm.h>
+#समावेश <drm/drm_mm.h>
 
-#include "../lib/drm_random.h"
+#समावेश "../lib/drm_random.h"
 
-#define TESTS "drm_mm_selftests.h"
-#include "drm_selftest.h"
+#घोषणा TESTS "drm_mm_selftests.h"
+#समावेश "drm_selftest.h"
 
-static unsigned int random_seed;
-static unsigned int max_iterations = 8192;
-static unsigned int max_prime = 128;
+अटल अचिन्हित पूर्णांक अक्रमom_seed;
+अटल अचिन्हित पूर्णांक max_iterations = 8192;
+अटल अचिन्हित पूर्णांक max_prime = 128;
 
-enum {
+क्रमागत अणु
 	BEST,
 	BOTTOMUP,
 	TOPDOWN,
 	EVICT,
-};
+पूर्ण;
 
-static const struct insert_mode {
-	const char *name;
-	enum drm_mm_insert_mode mode;
-} insert_modes[] = {
-	[BEST] = { "best", DRM_MM_INSERT_BEST },
-	[BOTTOMUP] = { "bottom-up", DRM_MM_INSERT_LOW },
-	[TOPDOWN] = { "top-down", DRM_MM_INSERT_HIGH },
-	[EVICT] = { "evict", DRM_MM_INSERT_EVICT },
-	{}
-}, evict_modes[] = {
-	{ "bottom-up", DRM_MM_INSERT_LOW },
-	{ "top-down", DRM_MM_INSERT_HIGH },
-	{}
-};
+अटल स्थिर काष्ठा insert_mode अणु
+	स्थिर अक्षर *name;
+	क्रमागत drm_mm_insert_mode mode;
+पूर्ण insert_modes[] = अणु
+	[BEST] = अणु "best", DRM_MM_INSERT_BEST पूर्ण,
+	[BOTTOMUP] = अणु "bottom-up", DRM_MM_INSERT_LOW पूर्ण,
+	[TOPDOWN] = अणु "top-down", DRM_MM_INSERT_HIGH पूर्ण,
+	[EVICT] = अणु "evict", DRM_MM_INSERT_EVICT पूर्ण,
+	अणुपूर्ण
+पूर्ण, evict_modes[] = अणु
+	अणु "bottom-up", DRM_MM_INSERT_LOW पूर्ण,
+	अणु "top-down", DRM_MM_INSERT_HIGH पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int igt_sanitycheck(void *ignored)
-{
+अटल पूर्णांक igt_sanitycheck(व्योम *ignored)
+अणु
 	pr_info("%s - ok!\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool assert_no_holes(const struct drm_mm *mm)
-{
-	struct drm_mm_node *hole;
+अटल bool निश्चित_no_holes(स्थिर काष्ठा drm_mm *mm)
+अणु
+	काष्ठा drm_mm_node *hole;
 	u64 hole_start, __always_unused hole_end;
-	unsigned long count;
+	अचिन्हित दीर्घ count;
 
 	count = 0;
-	drm_mm_for_each_hole(hole, mm, hole_start, hole_end)
+	drm_mm_क्रम_each_hole(hole, mm, hole_start, hole_end)
 		count++;
-	if (count) {
+	अगर (count) अणु
 		pr_err("Expected to find no holes (after reserve), found %lu instead\n", count);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	drm_mm_for_each_node(hole, mm) {
-		if (drm_mm_hole_follows(hole)) {
+	drm_mm_क्रम_each_node(hole, mm) अणु
+		अगर (drm_mm_hole_follows(hole)) अणु
 			pr_err("Hole follows node, expected none!\n");
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool assert_one_hole(const struct drm_mm *mm, u64 start, u64 end)
-{
-	struct drm_mm_node *hole;
+अटल bool निश्चित_one_hole(स्थिर काष्ठा drm_mm *mm, u64 start, u64 end)
+अणु
+	काष्ठा drm_mm_node *hole;
 	u64 hole_start, hole_end;
-	unsigned long count;
+	अचिन्हित दीर्घ count;
 	bool ok = true;
 
-	if (end <= start)
-		return true;
+	अगर (end <= start)
+		वापस true;
 
 	count = 0;
-	drm_mm_for_each_hole(hole, mm, hole_start, hole_end) {
-		if (start != hole_start || end != hole_end) {
-			if (ok)
+	drm_mm_क्रम_each_hole(hole, mm, hole_start, hole_end) अणु
+		अगर (start != hole_start || end != hole_end) अणु
+			अगर (ok)
 				pr_err("empty mm has incorrect hole, found (%llx, %llx), expect (%llx, %llx)\n",
 				       hole_start, hole_end,
 				       start, end);
 			ok = false;
-		}
+		पूर्ण
 		count++;
-	}
-	if (count != 1) {
+	पूर्ण
+	अगर (count != 1) अणु
 		pr_err("Expected to find one hole, found %lu instead\n", count);
 		ok = false;
-	}
+	पूर्ण
 
-	return ok;
-}
+	वापस ok;
+पूर्ण
 
-static bool assert_continuous(const struct drm_mm *mm, u64 size)
-{
-	struct drm_mm_node *node, *check, *found;
-	unsigned long n;
+अटल bool निश्चित_continuous(स्थिर काष्ठा drm_mm *mm, u64 size)
+अणु
+	काष्ठा drm_mm_node *node, *check, *found;
+	अचिन्हित दीर्घ n;
 	u64 addr;
 
-	if (!assert_no_holes(mm))
-		return false;
+	अगर (!निश्चित_no_holes(mm))
+		वापस false;
 
 	n = 0;
 	addr = 0;
-	drm_mm_for_each_node(node, mm) {
-		if (node->start != addr) {
+	drm_mm_क्रम_each_node(node, mm) अणु
+		अगर (node->start != addr) अणु
 			pr_err("node[%ld] list out of order, expected %llx found %llx\n",
 			       n, addr, node->start);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (node->size != size) {
+		अगर (node->size != size) अणु
 			pr_err("node[%ld].size incorrect, expected %llx, found %llx\n",
 			       n, size, node->size);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (drm_mm_hole_follows(node)) {
+		अगर (drm_mm_hole_follows(node)) अणु
 			pr_err("node[%ld] is followed by a hole!\n", n);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		found = NULL;
-		drm_mm_for_each_node_in_range(check, mm, addr, addr + size) {
-			if (node != check) {
+		found = शून्य;
+		drm_mm_क्रम_each_node_in_range(check, mm, addr, addr + size) अणु
+			अगर (node != check) अणु
 				pr_err("lookup return wrong node, expected start %llx, found %llx\n",
 				       node->start, check->start);
-				return false;
-			}
+				वापस false;
+			पूर्ण
 			found = check;
-		}
-		if (!found) {
+		पूर्ण
+		अगर (!found) अणु
 			pr_err("lookup failed for node %llx + %llx\n",
 			       addr, size);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		addr += size;
 		n++;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static u64 misalignment(struct drm_mm_node *node, u64 alignment)
-{
+अटल u64 misalignment(काष्ठा drm_mm_node *node, u64 alignment)
+अणु
 	u64 rem;
 
-	if (!alignment)
-		return 0;
+	अगर (!alignment)
+		वापस 0;
 
-	div64_u64_rem(node->start, alignment, &rem);
-	return rem;
-}
+	भाग64_u64_rem(node->start, alignment, &rem);
+	वापस rem;
+पूर्ण
 
-static bool assert_node(struct drm_mm_node *node, struct drm_mm *mm,
-			u64 size, u64 alignment, unsigned long color)
-{
+अटल bool निश्चित_node(काष्ठा drm_mm_node *node, काष्ठा drm_mm *mm,
+			u64 size, u64 alignment, अचिन्हित दीर्घ color)
+अणु
 	bool ok = true;
 
-	if (!drm_mm_node_allocated(node) || node->mm != mm) {
+	अगर (!drm_mm_node_allocated(node) || node->mm != mm) अणु
 		pr_err("node not allocated\n");
 		ok = false;
-	}
+	पूर्ण
 
-	if (node->size != size) {
+	अगर (node->size != size) अणु
 		pr_err("node has wrong size, found %llu, expected %llu\n",
 		       node->size, size);
 		ok = false;
-	}
+	पूर्ण
 
-	if (misalignment(node, alignment)) {
+	अगर (misalignment(node, alignment)) अणु
 		pr_err("node is misaligned, start %llx rem %llu, expected alignment %llu\n",
 		       node->start, misalignment(node, alignment), alignment);
 		ok = false;
-	}
+	पूर्ण
 
-	if (node->color != color) {
+	अगर (node->color != color) अणु
 		pr_err("node has wrong color, found %lu, expected %lu\n",
 		       node->color, color);
 		ok = false;
-	}
+	पूर्ण
 
-	return ok;
-}
+	वापस ok;
+पूर्ण
 
-#define show_mm(mm) do { \
-	struct drm_printer __p = drm_debug_printer(__func__); \
-	drm_mm_print((mm), &__p); } while (0)
+#घोषणा show_mm(mm) करो अणु \
+	काष्ठा drm_prपूर्णांकer __p = drm_debug_prपूर्णांकer(__func__); \
+	drm_mm_prपूर्णांक((mm), &__p); पूर्ण जबतक (0)
 
-static int igt_init(void *ignored)
-{
-	const unsigned int size = 4096;
-	struct drm_mm mm;
-	struct drm_mm_node tmp;
-	int ret = -EINVAL;
+अटल पूर्णांक igt_init(व्योम *ignored)
+अणु
+	स्थिर अचिन्हित पूर्णांक size = 4096;
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node पंचांगp;
+	पूर्णांक ret = -EINVAL;
 
-	/* Start with some simple checks on initialising the struct drm_mm */
-	memset(&mm, 0, sizeof(mm));
-	if (drm_mm_initialized(&mm)) {
+	/* Start with some simple checks on initialising the काष्ठा drm_mm */
+	स_रखो(&mm, 0, माप(mm));
+	अगर (drm_mm_initialized(&mm)) अणु
 		pr_err("zeroed mm claims to be initialized\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memset(&mm, 0xff, sizeof(mm));
+	स_रखो(&mm, 0xff, माप(mm));
 	drm_mm_init(&mm, 0, size);
-	if (!drm_mm_initialized(&mm)) {
+	अगर (!drm_mm_initialized(&mm)) अणु
 		pr_err("mm claims not to be initialized\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!drm_mm_clean(&mm)) {
+	अगर (!drm_mm_clean(&mm)) अणु
 		pr_err("mm not empty on creation\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* After creation, it should all be one massive hole */
-	if (!assert_one_hole(&mm, 0, size)) {
+	अगर (!निश्चित_one_hole(&mm, 0, size)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memset(&tmp, 0, sizeof(tmp));
-	tmp.start = 0;
-	tmp.size = size;
-	ret = drm_mm_reserve_node(&mm, &tmp);
-	if (ret) {
+	स_रखो(&पंचांगp, 0, माप(पंचांगp));
+	पंचांगp.start = 0;
+	पंचांगp.size = size;
+	ret = drm_mm_reserve_node(&mm, &पंचांगp);
+	अगर (ret) अणु
 		pr_err("failed to reserve whole drm_mm\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* After filling the range entirely, there should be no holes */
-	if (!assert_no_holes(&mm)) {
+	अगर (!निश्चित_no_holes(&mm)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* And then after emptying it again, the massive hole should be back */
-	drm_mm_remove_node(&tmp);
-	if (!assert_one_hole(&mm, 0, size)) {
+	drm_mm_हटाओ_node(&पंचांगp);
+	अगर (!निश्चित_one_hole(&mm, 0, size)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	if (ret)
+	अगर (ret)
 		show_mm(&mm);
-	drm_mm_takedown(&mm);
-	return ret;
-}
+	drm_mm_takeकरोwn(&mm);
+	वापस ret;
+पूर्ण
 
-static int igt_debug(void *ignored)
-{
-	struct drm_mm mm;
-	struct drm_mm_node nodes[2];
-	int ret;
+अटल पूर्णांक igt_debug(व्योम *ignored)
+अणु
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node nodes[2];
+	पूर्णांक ret;
 
 	/* Create a small drm_mm with a couple of nodes and a few holes, and
-	 * check that the debug iterator doesn't explode over a trivial drm_mm.
+	 * check that the debug iterator करोesn't explode over a trivial drm_mm.
 	 */
 
 	drm_mm_init(&mm, 0, 4096);
 
-	memset(nodes, 0, sizeof(nodes));
+	स_रखो(nodes, 0, माप(nodes));
 	nodes[0].start = 512;
 	nodes[0].size = 1024;
 	ret = drm_mm_reserve_node(&mm, &nodes[0]);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to reserve node[0] {start=%lld, size=%lld)\n",
 		       nodes[0].start, nodes[0].size);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	nodes[1].size = 1024;
 	nodes[1].start = 4096 - 512 - nodes[1].size;
 	ret = drm_mm_reserve_node(&mm, &nodes[1]);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to reserve node[1] {start=%lld, size=%lld)\n",
 		       nodes[1].start, nodes[1].size);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	show_mm(&mm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct drm_mm_node *set_node(struct drm_mm_node *node,
+अटल काष्ठा drm_mm_node *set_node(काष्ठा drm_mm_node *node,
 				    u64 start, u64 size)
-{
+अणु
 	node->start = start;
 	node->size = size;
-	return node;
-}
+	वापस node;
+पूर्ण
 
-static bool expect_reserve_fail(struct drm_mm *mm, struct drm_mm_node *node)
-{
-	int err;
+अटल bool expect_reserve_fail(काष्ठा drm_mm *mm, काष्ठा drm_mm_node *node)
+अणु
+	पूर्णांक err;
 
 	err = drm_mm_reserve_node(mm, node);
-	if (likely(err == -ENOSPC))
-		return true;
+	अगर (likely(err == -ENOSPC))
+		वापस true;
 
-	if (!err) {
+	अगर (!err) अणु
 		pr_err("impossible reserve succeeded, node %llu + %llu\n",
 		       node->start, node->size);
-		drm_mm_remove_node(node);
-	} else {
+		drm_mm_हटाओ_node(node);
+	पूर्ण अन्यथा अणु
 		pr_err("impossible reserve failed with wrong error %d [expected %d], node %llu + %llu\n",
 		       err, -ENOSPC, node->start, node->size);
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool check_reserve_boundaries(struct drm_mm *mm,
-				     unsigned int count,
+अटल bool check_reserve_boundaries(काष्ठा drm_mm *mm,
+				     अचिन्हित पूर्णांक count,
 				     u64 size)
-{
-	const struct boundary {
+अणु
+	स्थिर काष्ठा boundary अणु
 		u64 start, size;
-		const char *name;
-	} boundaries[] = {
-#define B(st, sz) { (st), (sz), "{ " #st ", " #sz "}" }
+		स्थिर अक्षर *name;
+	पूर्ण boundaries[] = अणु
+#घोषणा B(st, sz) अणु (st), (sz), "{ " #st ", " #sz "}" पूर्ण
 		B(0, 0),
 		B(-size, 0),
 		B(size, 0),
@@ -350,537 +351,537 @@ static bool check_reserve_boundaries(struct drm_mm *mm,
 		B((count+1)*size, size),
 		B((count+1)*size, -size),
 		B((count+1)*size, -2*size),
-#undef B
-	};
-	struct drm_mm_node tmp = {};
-	int n;
+#अघोषित B
+	पूर्ण;
+	काष्ठा drm_mm_node पंचांगp = अणुपूर्ण;
+	पूर्णांक n;
 
-	for (n = 0; n < ARRAY_SIZE(boundaries); n++) {
-		if (!expect_reserve_fail(mm,
-					 set_node(&tmp,
+	क्रम (n = 0; n < ARRAY_SIZE(boundaries); n++) अणु
+		अगर (!expect_reserve_fail(mm,
+					 set_node(&पंचांगp,
 						  boundaries[n].start,
-						  boundaries[n].size))) {
+						  boundaries[n].size))) अणु
 			pr_err("boundary[%d:%s] failed, count=%u, size=%lld\n",
 			       n, boundaries[n].name, count, size);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int __igt_reserve(unsigned int count, u64 size)
-{
-	DRM_RND_STATE(prng, random_seed);
-	struct drm_mm mm;
-	struct drm_mm_node tmp, *nodes, *node, *next;
-	unsigned int *order, n, m, o = 0;
-	int ret, err;
+अटल पूर्णांक __igt_reserve(अचिन्हित पूर्णांक count, u64 size)
+अणु
+	DRM_RND_STATE(prng, अक्रमom_seed);
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node पंचांगp, *nodes, *node, *next;
+	अचिन्हित पूर्णांक *order, n, m, o = 0;
+	पूर्णांक ret, err;
 
 	/* For exercising drm_mm_reserve_node(), we want to check that
 	 * reservations outside of the drm_mm range are rejected, and to
-	 * overlapping and otherwise already occupied ranges. Afterwards,
-	 * the tree and nodes should be intact.
+	 * overlapping and otherwise alपढ़ोy occupied ranges. Afterwards,
+	 * the tree and nodes should be पूर्णांकact.
 	 */
 
 	DRM_MM_BUG_ON(!count);
 	DRM_MM_BUG_ON(!size);
 
 	ret = -ENOMEM;
-	order = drm_random_order(count, &prng);
-	if (!order)
-		goto err;
+	order = drm_अक्रमom_order(count, &prng);
+	अगर (!order)
+		जाओ err;
 
-	nodes = vzalloc(array_size(count, sizeof(*nodes)));
-	if (!nodes)
-		goto err_order;
+	nodes = vzalloc(array_size(count, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err_order;
 
 	ret = -EINVAL;
 	drm_mm_init(&mm, 0, count * size);
 
-	if (!check_reserve_boundaries(&mm, count, size))
-		goto out;
+	अगर (!check_reserve_boundaries(&mm, count, size))
+		जाओ out;
 
-	for (n = 0; n < count; n++) {
+	क्रम (n = 0; n < count; n++) अणु
 		nodes[n].start = order[n] * size;
 		nodes[n].size = size;
 
 		err = drm_mm_reserve_node(&mm, &nodes[n]);
-		if (err) {
+		अगर (err) अणु
 			pr_err("reserve failed, step %d, start %llu\n",
 			       n, nodes[n].start);
 			ret = err;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!drm_mm_node_allocated(&nodes[n])) {
+		अगर (!drm_mm_node_allocated(&nodes[n])) अणु
 			pr_err("reserved node not allocated! step %d, start %llu\n",
 			       n, nodes[n].start);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!expect_reserve_fail(&mm, &nodes[n]))
-			goto out;
-	}
+		अगर (!expect_reserve_fail(&mm, &nodes[n]))
+			जाओ out;
+	पूर्ण
 
-	/* After random insertion the nodes should be in order */
-	if (!assert_continuous(&mm, size))
-		goto out;
+	/* After अक्रमom insertion the nodes should be in order */
+	अगर (!निश्चित_continuous(&mm, size))
+		जाओ out;
 
 	/* Repeated use should then fail */
-	drm_random_reorder(order, count, &prng);
-	for (n = 0; n < count; n++) {
-		if (!expect_reserve_fail(&mm,
-					 set_node(&tmp, order[n] * size, 1)))
-			goto out;
+	drm_अक्रमom_reorder(order, count, &prng);
+	क्रम (n = 0; n < count; n++) अणु
+		अगर (!expect_reserve_fail(&mm,
+					 set_node(&पंचांगp, order[n] * size, 1)))
+			जाओ out;
 
 		/* Remove and reinsert should work */
-		drm_mm_remove_node(&nodes[order[n]]);
+		drm_mm_हटाओ_node(&nodes[order[n]]);
 		err = drm_mm_reserve_node(&mm, &nodes[order[n]]);
-		if (err) {
+		अगर (err) अणु
 			pr_err("reserve failed, step %d, start %llu\n",
 			       n, nodes[n].start);
 			ret = err;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (!assert_continuous(&mm, size))
-		goto out;
+	अगर (!निश्चित_continuous(&mm, size))
+		जाओ out;
 
 	/* Overlapping use should then fail */
-	for (n = 0; n < count; n++) {
-		if (!expect_reserve_fail(&mm, set_node(&tmp, 0, size*count)))
-			goto out;
-	}
-	for (n = 0; n < count; n++) {
-		if (!expect_reserve_fail(&mm,
-					 set_node(&tmp,
+	क्रम (n = 0; n < count; n++) अणु
+		अगर (!expect_reserve_fail(&mm, set_node(&पंचांगp, 0, size*count)))
+			जाओ out;
+	पूर्ण
+	क्रम (n = 0; n < count; n++) अणु
+		अगर (!expect_reserve_fail(&mm,
+					 set_node(&पंचांगp,
 						  size * n,
 						  size * (count - n))))
-			goto out;
-	}
+			जाओ out;
+	पूर्ण
 
 	/* Remove several, reinsert, check full */
-	for_each_prime_number(n, min(max_prime, count)) {
-		for (m = 0; m < n; m++) {
+	क्रम_each_prime_number(n, min(max_prime, count)) अणु
+		क्रम (m = 0; m < n; m++) अणु
 			node = &nodes[order[(o + m) % count]];
-			drm_mm_remove_node(node);
-		}
+			drm_mm_हटाओ_node(node);
+		पूर्ण
 
-		for (m = 0; m < n; m++) {
+		क्रम (m = 0; m < n; m++) अणु
 			node = &nodes[order[(o + m) % count]];
 			err = drm_mm_reserve_node(&mm, node);
-			if (err) {
+			अगर (err) अणु
 				pr_err("reserve failed, step %d/%d, start %llu\n",
 				       m, n, node->start);
 				ret = err;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		o += n;
 
-		if (!assert_continuous(&mm, size))
-			goto out;
-	}
+		अगर (!निश्चित_continuous(&mm, size))
+			जाओ out;
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	vfree(nodes);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	vमुक्त(nodes);
 err_order:
-	kfree(order);
+	kमुक्त(order);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int igt_reserve(void *ignored)
-{
-	const unsigned int count = min_t(unsigned int, BIT(10), max_iterations);
-	int n, ret;
+अटल पूर्णांक igt_reserve(व्योम *ignored)
+अणु
+	स्थिर अचिन्हित पूर्णांक count = min_t(अचिन्हित पूर्णांक, BIT(10), max_iterations);
+	पूर्णांक n, ret;
 
-	for_each_prime_number_from(n, 1, 54) {
+	क्रम_each_prime_number_from(n, 1, 54) अणु
 		u64 size = BIT_ULL(n);
 
 		ret = __igt_reserve(count, size - 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_reserve(count, size);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_reserve(count, size + 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		cond_resched();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool expect_insert(struct drm_mm *mm, struct drm_mm_node *node,
-			  u64 size, u64 alignment, unsigned long color,
-			  const struct insert_mode *mode)
-{
-	int err;
+अटल bool expect_insert(काष्ठा drm_mm *mm, काष्ठा drm_mm_node *node,
+			  u64 size, u64 alignment, अचिन्हित दीर्घ color,
+			  स्थिर काष्ठा insert_mode *mode)
+अणु
+	पूर्णांक err;
 
 	err = drm_mm_insert_node_generic(mm, node,
 					 size, alignment, color,
 					 mode->mode);
-	if (err) {
+	अगर (err) अणु
 		pr_err("insert (size=%llu, alignment=%llu, color=%lu, mode=%s) failed with err=%d\n",
 		       size, alignment, color, mode->name, err);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!assert_node(node, mm, size, alignment, color)) {
-		drm_mm_remove_node(node);
-		return false;
-	}
+	अगर (!निश्चित_node(node, mm, size, alignment, color)) अणु
+		drm_mm_हटाओ_node(node);
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool expect_insert_fail(struct drm_mm *mm, u64 size)
-{
-	struct drm_mm_node tmp = {};
-	int err;
+अटल bool expect_insert_fail(काष्ठा drm_mm *mm, u64 size)
+अणु
+	काष्ठा drm_mm_node पंचांगp = अणुपूर्ण;
+	पूर्णांक err;
 
-	err = drm_mm_insert_node(mm, &tmp, size);
-	if (likely(err == -ENOSPC))
-		return true;
+	err = drm_mm_insert_node(mm, &पंचांगp, size);
+	अगर (likely(err == -ENOSPC))
+		वापस true;
 
-	if (!err) {
+	अगर (!err) अणु
 		pr_err("impossible insert succeeded, node %llu + %llu\n",
-		       tmp.start, tmp.size);
-		drm_mm_remove_node(&tmp);
-	} else {
+		       पंचांगp.start, पंचांगp.size);
+		drm_mm_हटाओ_node(&पंचांगp);
+	पूर्ण अन्यथा अणु
 		pr_err("impossible insert failed with wrong error %d [expected %d], size %llu\n",
 		       err, -ENOSPC, size);
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int __igt_insert(unsigned int count, u64 size, bool replace)
-{
-	DRM_RND_STATE(prng, random_seed);
-	const struct insert_mode *mode;
-	struct drm_mm mm;
-	struct drm_mm_node *nodes, *node, *next;
-	unsigned int *order, n, m, o = 0;
-	int ret;
+अटल पूर्णांक __igt_insert(अचिन्हित पूर्णांक count, u64 size, bool replace)
+अणु
+	DRM_RND_STATE(prng, अक्रमom_seed);
+	स्थिर काष्ठा insert_mode *mode;
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node *nodes, *node, *next;
+	अचिन्हित पूर्णांक *order, n, m, o = 0;
+	पूर्णांक ret;
 
-	/* Fill a range with lots of nodes, check it doesn't fail too early */
+	/* Fill a range with lots of nodes, check it करोesn't fail too early */
 
 	DRM_MM_BUG_ON(!count);
 	DRM_MM_BUG_ON(!size);
 
 	ret = -ENOMEM;
-	nodes = vmalloc(array_size(count, sizeof(*nodes)));
-	if (!nodes)
-		goto err;
+	nodes = vदो_स्मृति(array_size(count, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err;
 
-	order = drm_random_order(count, &prng);
-	if (!order)
-		goto err_nodes;
+	order = drm_अक्रमom_order(count, &prng);
+	अगर (!order)
+		जाओ err_nodes;
 
 	ret = -EINVAL;
 	drm_mm_init(&mm, 0, count * size);
 
-	for (mode = insert_modes; mode->name; mode++) {
-		for (n = 0; n < count; n++) {
-			struct drm_mm_node tmp;
+	क्रम (mode = insert_modes; mode->name; mode++) अणु
+		क्रम (n = 0; n < count; n++) अणु
+			काष्ठा drm_mm_node पंचांगp;
 
-			node = replace ? &tmp : &nodes[n];
-			memset(node, 0, sizeof(*node));
-			if (!expect_insert(&mm, node, size, 0, n, mode)) {
+			node = replace ? &पंचांगp : &nodes[n];
+			स_रखो(node, 0, माप(*node));
+			अगर (!expect_insert(&mm, node, size, 0, n, mode)) अणु
 				pr_err("%s insert failed, size %llu step %d\n",
 				       mode->name, size, n);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (replace) {
-				drm_mm_replace_node(&tmp, &nodes[n]);
-				if (drm_mm_node_allocated(&tmp)) {
+			अगर (replace) अणु
+				drm_mm_replace_node(&पंचांगp, &nodes[n]);
+				अगर (drm_mm_node_allocated(&पंचांगp)) अणु
 					pr_err("replaced old-node still allocated! step %d\n",
 					       n);
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
-				if (!assert_node(&nodes[n], &mm, size, 0, n)) {
+				अगर (!निश्चित_node(&nodes[n], &mm, size, 0, n)) अणु
 					pr_err("replaced node did not inherit parameters, size %llu step %d\n",
 					       size, n);
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
-				if (tmp.start != nodes[n].start) {
+				अगर (पंचांगp.start != nodes[n].start) अणु
 					pr_err("replaced node mismatch location expected [%llx + %llx], found [%llx + %llx]\n",
-					       tmp.start, size,
+					       पंचांगp.start, size,
 					       nodes[n].start, nodes[n].size);
-					goto out;
-				}
-			}
-		}
+					जाओ out;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		/* After random insertion the nodes should be in order */
-		if (!assert_continuous(&mm, size))
-			goto out;
+		/* After अक्रमom insertion the nodes should be in order */
+		अगर (!निश्चित_continuous(&mm, size))
+			जाओ out;
 
 		/* Repeated use should then fail */
-		if (!expect_insert_fail(&mm, size))
-			goto out;
+		अगर (!expect_insert_fail(&mm, size))
+			जाओ out;
 
 		/* Remove one and reinsert, as the only hole it should refill itself */
-		for (n = 0; n < count; n++) {
+		क्रम (n = 0; n < count; n++) अणु
 			u64 addr = nodes[n].start;
 
-			drm_mm_remove_node(&nodes[n]);
-			if (!expect_insert(&mm, &nodes[n], size, 0, n, mode)) {
+			drm_mm_हटाओ_node(&nodes[n]);
+			अगर (!expect_insert(&mm, &nodes[n], size, 0, n, mode)) अणु
 				pr_err("%s reinsert failed, size %llu step %d\n",
 				       mode->name, size, n);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (nodes[n].start != addr) {
+			अगर (nodes[n].start != addr) अणु
 				pr_err("%s reinsert node moved, step %d, expected %llx, found %llx\n",
 				       mode->name, n, addr, nodes[n].start);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (!assert_continuous(&mm, size))
-				goto out;
-		}
+			अगर (!निश्चित_continuous(&mm, size))
+				जाओ out;
+		पूर्ण
 
 		/* Remove several, reinsert, check full */
-		for_each_prime_number(n, min(max_prime, count)) {
-			for (m = 0; m < n; m++) {
+		क्रम_each_prime_number(n, min(max_prime, count)) अणु
+			क्रम (m = 0; m < n; m++) अणु
 				node = &nodes[order[(o + m) % count]];
-				drm_mm_remove_node(node);
-			}
+				drm_mm_हटाओ_node(node);
+			पूर्ण
 
-			for (m = 0; m < n; m++) {
+			क्रम (m = 0; m < n; m++) अणु
 				node = &nodes[order[(o + m) % count]];
-				if (!expect_insert(&mm, node, size, 0, n, mode)) {
+				अगर (!expect_insert(&mm, node, size, 0, n, mode)) अणु
 					pr_err("%s multiple reinsert failed, size %llu step %d\n",
 					       mode->name, size, n);
-					goto out;
-				}
-			}
+					जाओ out;
+				पूर्ण
+			पूर्ण
 
 			o += n;
 
-			if (!assert_continuous(&mm, size))
-				goto out;
+			अगर (!निश्चित_continuous(&mm, size))
+				जाओ out;
 
-			if (!expect_insert_fail(&mm, size))
-				goto out;
-		}
+			अगर (!expect_insert_fail(&mm, size))
+				जाओ out;
+		पूर्ण
 
-		drm_mm_for_each_node_safe(node, next, &mm)
-			drm_mm_remove_node(node);
+		drm_mm_क्रम_each_node_safe(node, next, &mm)
+			drm_mm_हटाओ_node(node);
 		DRM_MM_BUG_ON(!drm_mm_clean(&mm));
 
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	kfree(order);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	kमुक्त(order);
 err_nodes:
-	vfree(nodes);
+	vमुक्त(nodes);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int igt_insert(void *ignored)
-{
-	const unsigned int count = min_t(unsigned int, BIT(10), max_iterations);
-	unsigned int n;
-	int ret;
+अटल पूर्णांक igt_insert(व्योम *ignored)
+अणु
+	स्थिर अचिन्हित पूर्णांक count = min_t(अचिन्हित पूर्णांक, BIT(10), max_iterations);
+	अचिन्हित पूर्णांक n;
+	पूर्णांक ret;
 
-	for_each_prime_number_from(n, 1, 54) {
+	क्रम_each_prime_number_from(n, 1, 54) अणु
 		u64 size = BIT_ULL(n);
 
 		ret = __igt_insert(count, size - 1, false);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_insert(count, size, false);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_insert(count, size + 1, false);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		cond_resched();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igt_replace(void *ignored)
-{
-	const unsigned int count = min_t(unsigned int, BIT(10), max_iterations);
-	unsigned int n;
-	int ret;
+अटल पूर्णांक igt_replace(व्योम *ignored)
+अणु
+	स्थिर अचिन्हित पूर्णांक count = min_t(अचिन्हित पूर्णांक, BIT(10), max_iterations);
+	अचिन्हित पूर्णांक n;
+	पूर्णांक ret;
 
 	/* Reuse igt_insert to exercise replacement by inserting a dummy node,
-	 * then replacing it with the intended node. We want to check that
-	 * the tree is intact and all the information we need is carried
+	 * then replacing it with the पूर्णांकended node. We want to check that
+	 * the tree is पूर्णांकact and all the inक्रमmation we need is carried
 	 * across to the target node.
 	 */
 
-	for_each_prime_number_from(n, 1, 54) {
+	क्रम_each_prime_number_from(n, 1, 54) अणु
 		u64 size = BIT_ULL(n);
 
 		ret = __igt_insert(count, size - 1, true);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_insert(count, size, true);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_insert(count, size + 1, true);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		cond_resched();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool expect_insert_in_range(struct drm_mm *mm, struct drm_mm_node *node,
-				   u64 size, u64 alignment, unsigned long color,
+अटल bool expect_insert_in_range(काष्ठा drm_mm *mm, काष्ठा drm_mm_node *node,
+				   u64 size, u64 alignment, अचिन्हित दीर्घ color,
 				   u64 range_start, u64 range_end,
-				   const struct insert_mode *mode)
-{
-	int err;
+				   स्थिर काष्ठा insert_mode *mode)
+अणु
+	पूर्णांक err;
 
 	err = drm_mm_insert_node_in_range(mm, node,
 					  size, alignment, color,
 					  range_start, range_end,
 					  mode->mode);
-	if (err) {
+	अगर (err) अणु
 		pr_err("insert (size=%llu, alignment=%llu, color=%lu, mode=%s) nto range [%llx, %llx] failed with err=%d\n",
 		       size, alignment, color, mode->name,
 		       range_start, range_end, err);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!assert_node(node, mm, size, alignment, color)) {
-		drm_mm_remove_node(node);
-		return false;
-	}
+	अगर (!निश्चित_node(node, mm, size, alignment, color)) अणु
+		drm_mm_हटाओ_node(node);
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool expect_insert_in_range_fail(struct drm_mm *mm,
+अटल bool expect_insert_in_range_fail(काष्ठा drm_mm *mm,
 					u64 size,
 					u64 range_start,
 					u64 range_end)
-{
-	struct drm_mm_node tmp = {};
-	int err;
+अणु
+	काष्ठा drm_mm_node पंचांगp = अणुपूर्ण;
+	पूर्णांक err;
 
-	err = drm_mm_insert_node_in_range(mm, &tmp,
+	err = drm_mm_insert_node_in_range(mm, &पंचांगp,
 					  size, 0, 0,
 					  range_start, range_end,
 					  0);
-	if (likely(err == -ENOSPC))
-		return true;
+	अगर (likely(err == -ENOSPC))
+		वापस true;
 
-	if (!err) {
+	अगर (!err) अणु
 		pr_err("impossible insert succeeded, node %llx + %llu, range [%llx, %llx]\n",
-		       tmp.start, tmp.size, range_start, range_end);
-		drm_mm_remove_node(&tmp);
-	} else {
+		       पंचांगp.start, पंचांगp.size, range_start, range_end);
+		drm_mm_हटाओ_node(&पंचांगp);
+	पूर्ण अन्यथा अणु
 		pr_err("impossible insert failed with wrong error %d [expected %d], size %llu, range [%llx, %llx]\n",
 		       err, -ENOSPC, size, range_start, range_end);
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool assert_contiguous_in_range(struct drm_mm *mm,
+अटल bool निश्चित_contiguous_in_range(काष्ठा drm_mm *mm,
 				       u64 size,
 				       u64 start,
 				       u64 end)
-{
-	struct drm_mm_node *node;
-	unsigned int n;
+अणु
+	काष्ठा drm_mm_node *node;
+	अचिन्हित पूर्णांक n;
 
-	if (!expect_insert_in_range_fail(mm, size, start, end))
-		return false;
+	अगर (!expect_insert_in_range_fail(mm, size, start, end))
+		वापस false;
 
-	n = div64_u64(start + size - 1, size);
-	drm_mm_for_each_node(node, mm) {
-		if (node->start < start || node->start + node->size > end) {
+	n = भाग64_u64(start + size - 1, size);
+	drm_mm_क्रम_each_node(node, mm) अणु
+		अगर (node->start < start || node->start + node->size > end) अणु
 			pr_err("node %d out of range, address [%llx + %llu], range [%llx, %llx]\n",
 			       n, node->start, node->start + node->size, start, end);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (node->start != n * size) {
+		अगर (node->start != n * size) अणु
 			pr_err("node %d out of order, expected start %llx, found %llx\n",
 			       n, n * size, node->start);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (node->size != size) {
+		अगर (node->size != size) अणु
 			pr_err("node %d has wrong size, expected size %llx, found %llx\n",
 			       n, size, node->size);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (drm_mm_hole_follows(node) &&
-		    drm_mm_hole_node_end(node) < end) {
+		अगर (drm_mm_hole_follows(node) &&
+		    drm_mm_hole_node_end(node) < end) अणु
 			pr_err("node %d is followed by a hole!\n", n);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		n++;
-	}
+	पूर्ण
 
-	if (start > 0) {
-		node = __drm_mm_interval_first(mm, 0, start - 1);
-		if (drm_mm_node_allocated(node)) {
+	अगर (start > 0) अणु
+		node = __drm_mm_पूर्णांकerval_first(mm, 0, start - 1);
+		अगर (drm_mm_node_allocated(node)) अणु
 			pr_err("node before start: node=%llx+%llu, start=%llx\n",
 			       node->start, node->size, start);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	if (end < U64_MAX) {
-		node = __drm_mm_interval_first(mm, end, U64_MAX);
-		if (drm_mm_node_allocated(node)) {
+	अगर (end < U64_MAX) अणु
+		node = __drm_mm_पूर्णांकerval_first(mm, end, U64_MAX);
+		अगर (drm_mm_node_allocated(node)) अणु
 			pr_err("node after end: node=%llx+%llu, end=%llx\n",
 			       node->start, node->size, end);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int __igt_insert_range(unsigned int count, u64 size, u64 start, u64 end)
-{
-	const struct insert_mode *mode;
-	struct drm_mm mm;
-	struct drm_mm_node *nodes, *node, *next;
-	unsigned int n, start_n, end_n;
-	int ret;
+अटल पूर्णांक __igt_insert_range(अचिन्हित पूर्णांक count, u64 size, u64 start, u64 end)
+अणु
+	स्थिर काष्ठा insert_mode *mode;
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node *nodes, *node, *next;
+	अचिन्हित पूर्णांक n, start_n, end_n;
+	पूर्णांक ret;
 
 	DRM_MM_BUG_ON(!count);
 	DRM_MM_BUG_ON(!size);
@@ -891,395 +892,395 @@ static int __igt_insert_range(unsigned int count, u64 size, u64 start, u64 end)
 	 */
 
 	ret = -ENOMEM;
-	nodes = vzalloc(array_size(count, sizeof(*nodes)));
-	if (!nodes)
-		goto err;
+	nodes = vzalloc(array_size(count, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err;
 
 	ret = -EINVAL;
 	drm_mm_init(&mm, 0, count * size);
 
-	start_n = div64_u64(start + size - 1, size);
-	end_n = div64_u64(end - size, size);
+	start_n = भाग64_u64(start + size - 1, size);
+	end_n = भाग64_u64(end - size, size);
 
-	for (mode = insert_modes; mode->name; mode++) {
-		for (n = start_n; n <= end_n; n++) {
-			if (!expect_insert_in_range(&mm, &nodes[n],
+	क्रम (mode = insert_modes; mode->name; mode++) अणु
+		क्रम (n = start_n; n <= end_n; n++) अणु
+			अगर (!expect_insert_in_range(&mm, &nodes[n],
 						    size, size, n,
-						    start, end, mode)) {
+						    start, end, mode)) अणु
 				pr_err("%s insert failed, size %llu, step %d [%d, %d], range [%llx, %llx]\n",
 				       mode->name, size, n,
 				       start_n, end_n,
 				       start, end);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		if (!assert_contiguous_in_range(&mm, size, start, end)) {
+		अगर (!निश्चित_contiguous_in_range(&mm, size, start, end)) अणु
 			pr_err("%s: range [%llx, %llx] not full after initialisation, size=%llu\n",
 			       mode->name, start, end, size);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* Remove one and reinsert, it should refill itself */
-		for (n = start_n; n <= end_n; n++) {
+		क्रम (n = start_n; n <= end_n; n++) अणु
 			u64 addr = nodes[n].start;
 
-			drm_mm_remove_node(&nodes[n]);
-			if (!expect_insert_in_range(&mm, &nodes[n],
+			drm_mm_हटाओ_node(&nodes[n]);
+			अगर (!expect_insert_in_range(&mm, &nodes[n],
 						    size, size, n,
-						    start, end, mode)) {
+						    start, end, mode)) अणु
 				pr_err("%s reinsert failed, step %d\n", mode->name, n);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (nodes[n].start != addr) {
+			अगर (nodes[n].start != addr) अणु
 				pr_err("%s reinsert node moved, step %d, expected %llx, found %llx\n",
 				       mode->name, n, addr, nodes[n].start);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		if (!assert_contiguous_in_range(&mm, size, start, end)) {
+		अगर (!निश्चित_contiguous_in_range(&mm, size, start, end)) अणु
 			pr_err("%s: range [%llx, %llx] not full after reinsertion, size=%llu\n",
 			       mode->name, start, end, size);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		drm_mm_for_each_node_safe(node, next, &mm)
-			drm_mm_remove_node(node);
+		drm_mm_क्रम_each_node_safe(node, next, &mm)
+			drm_mm_हटाओ_node(node);
 		DRM_MM_BUG_ON(!drm_mm_clean(&mm));
 
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	vfree(nodes);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	vमुक्त(nodes);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int insert_outside_range(void)
-{
-	struct drm_mm mm;
-	const unsigned int start = 1024;
-	const unsigned int end = 2048;
-	const unsigned int size = end - start;
+अटल पूर्णांक insert_outside_range(व्योम)
+अणु
+	काष्ठा drm_mm mm;
+	स्थिर अचिन्हित पूर्णांक start = 1024;
+	स्थिर अचिन्हित पूर्णांक end = 2048;
+	स्थिर अचिन्हित पूर्णांक size = end - start;
 
 	drm_mm_init(&mm, start, size);
 
-	if (!expect_insert_in_range_fail(&mm, 1, 0, start))
-		return -EINVAL;
+	अगर (!expect_insert_in_range_fail(&mm, 1, 0, start))
+		वापस -EINVAL;
 
-	if (!expect_insert_in_range_fail(&mm, size,
+	अगर (!expect_insert_in_range_fail(&mm, size,
 					 start - size/2, start + (size+1)/2))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!expect_insert_in_range_fail(&mm, size,
+	अगर (!expect_insert_in_range_fail(&mm, size,
 					 end - (size+1)/2, end + size/2))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!expect_insert_in_range_fail(&mm, 1, end, end + size))
-		return -EINVAL;
+	अगर (!expect_insert_in_range_fail(&mm, 1, end, end + size))
+		वापस -EINVAL;
 
-	drm_mm_takedown(&mm);
-	return 0;
-}
+	drm_mm_takeकरोwn(&mm);
+	वापस 0;
+पूर्ण
 
-static int igt_insert_range(void *ignored)
-{
-	const unsigned int count = min_t(unsigned int, BIT(13), max_iterations);
-	unsigned int n;
-	int ret;
+अटल पूर्णांक igt_insert_range(व्योम *ignored)
+अणु
+	स्थिर अचिन्हित पूर्णांक count = min_t(अचिन्हित पूर्णांक, BIT(13), max_iterations);
+	अचिन्हित पूर्णांक n;
+	पूर्णांक ret;
 
 	/* Check that requests outside the bounds of drm_mm are rejected. */
 	ret = insert_outside_range();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for_each_prime_number_from(n, 1, 50) {
-		const u64 size = BIT_ULL(n);
-		const u64 max = count * size;
+	क्रम_each_prime_number_from(n, 1, 50) अणु
+		स्थिर u64 size = BIT_ULL(n);
+		स्थिर u64 max = count * size;
 
 		ret = __igt_insert_range(count, size, 0, max);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_insert_range(count, size, 1, max);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_insert_range(count, size, 0, max - 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_insert_range(count, size, 0, max/2);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_insert_range(count, size, max/2, max);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = __igt_insert_range(count, size, max/4+1, 3*max/4-1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		cond_resched();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prepare_igt_frag(struct drm_mm *mm,
-			    struct drm_mm_node *nodes,
-			    unsigned int num_insert,
-			    const struct insert_mode *mode)
-{
-	unsigned int size = 4096;
-	unsigned int i;
+अटल पूर्णांक prepare_igt_frag(काष्ठा drm_mm *mm,
+			    काष्ठा drm_mm_node *nodes,
+			    अचिन्हित पूर्णांक num_insert,
+			    स्थिर काष्ठा insert_mode *mode)
+अणु
+	अचिन्हित पूर्णांक size = 4096;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num_insert; i++) {
-		if (!expect_insert(mm, &nodes[i], size, 0, i,
-				   mode) != 0) {
+	क्रम (i = 0; i < num_insert; i++) अणु
+		अगर (!expect_insert(mm, &nodes[i], size, 0, i,
+				   mode) != 0) अणु
 			pr_err("%s insert failed\n", mode->name);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* introduce fragmentation by freeing every other node */
-	for (i = 0; i < num_insert; i++) {
-		if (i % 2 == 0)
-			drm_mm_remove_node(&nodes[i]);
-	}
+	/* पूर्णांकroduce fragmentation by मुक्तing every other node */
+	क्रम (i = 0; i < num_insert; i++) अणु
+		अगर (i % 2 == 0)
+			drm_mm_हटाओ_node(&nodes[i]);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static u64 get_insert_time(struct drm_mm *mm,
-			   unsigned int num_insert,
-			   struct drm_mm_node *nodes,
-			   const struct insert_mode *mode)
-{
-	unsigned int size = 8192;
-	ktime_t start;
-	unsigned int i;
+अटल u64 get_insert_समय(काष्ठा drm_mm *mm,
+			   अचिन्हित पूर्णांक num_insert,
+			   काष्ठा drm_mm_node *nodes,
+			   स्थिर काष्ठा insert_mode *mode)
+अणु
+	अचिन्हित पूर्णांक size = 8192;
+	kसमय_प्रकार start;
+	अचिन्हित पूर्णांक i;
 
-	start = ktime_get();
-	for (i = 0; i < num_insert; i++) {
-		if (!expect_insert(mm, &nodes[i], size, 0, i, mode) != 0) {
+	start = kसमय_get();
+	क्रम (i = 0; i < num_insert; i++) अणु
+		अगर (!expect_insert(mm, &nodes[i], size, 0, i, mode) != 0) अणु
 			pr_err("%s insert failed\n", mode->name);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return ktime_to_ns(ktime_sub(ktime_get(), start));
-}
+	वापस kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), start));
+पूर्ण
 
-static int igt_frag(void *ignored)
-{
-	struct drm_mm mm;
-	const struct insert_mode *mode;
-	struct drm_mm_node *nodes, *node, *next;
-	unsigned int insert_size = 10000;
-	unsigned int scale_factor = 4;
-	int ret = -EINVAL;
+अटल पूर्णांक igt_frag(व्योम *ignored)
+अणु
+	काष्ठा drm_mm mm;
+	स्थिर काष्ठा insert_mode *mode;
+	काष्ठा drm_mm_node *nodes, *node, *next;
+	अचिन्हित पूर्णांक insert_size = 10000;
+	अचिन्हित पूर्णांक scale_factor = 4;
+	पूर्णांक ret = -EINVAL;
 
-	/* We need 4 * insert_size nodes to hold intermediate allocated
+	/* We need 4 * insert_size nodes to hold पूर्णांकermediate allocated
 	 * drm_mm nodes.
-	 * 1 times for prepare_igt_frag()
-	 * 1 times for get_insert_time()
-	 * 2 times for get_insert_time()
+	 * 1 बार क्रम prepare_igt_frag()
+	 * 1 बार क्रम get_insert_समय()
+	 * 2 बार क्रम get_insert_समय()
 	 */
-	nodes = vzalloc(array_size(insert_size * 4, sizeof(*nodes)));
-	if (!nodes)
-		return -ENOMEM;
+	nodes = vzalloc(array_size(insert_size * 4, माप(*nodes)));
+	अगर (!nodes)
+		वापस -ENOMEM;
 
 	/* For BOTTOMUP and TOPDOWN, we first fragment the
-	 * address space using prepare_igt_frag() and then try to verify
+	 * address space using prepare_igt_frag() and then try to verअगरy
 	 * that that insertions scale quadratically from 10k to 20k insertions
 	 */
 	drm_mm_init(&mm, 1, U64_MAX - 2);
-	for (mode = insert_modes; mode->name; mode++) {
-		u64 insert_time1, insert_time2;
+	क्रम (mode = insert_modes; mode->name; mode++) अणु
+		u64 insert_समय1, insert_समय2;
 
-		if (mode->mode != DRM_MM_INSERT_LOW &&
+		अगर (mode->mode != DRM_MM_INSERT_LOW &&
 		    mode->mode != DRM_MM_INSERT_HIGH)
-			continue;
+			जारी;
 
 		ret = prepare_igt_frag(&mm, nodes, insert_size, mode);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
-		insert_time1 = get_insert_time(&mm, insert_size,
+		insert_समय1 = get_insert_समय(&mm, insert_size,
 					       nodes + insert_size, mode);
-		if (insert_time1 == 0)
-			goto err;
+		अगर (insert_समय1 == 0)
+			जाओ err;
 
-		insert_time2 = get_insert_time(&mm, (insert_size * 2),
+		insert_समय2 = get_insert_समय(&mm, (insert_size * 2),
 					       nodes + insert_size * 2, mode);
-		if (insert_time2 == 0)
-			goto err;
+		अगर (insert_समय2 == 0)
+			जाओ err;
 
 		pr_info("%s fragmented insert of %u and %u insertions took %llu and %llu nsecs\n",
 			mode->name, insert_size, insert_size * 2,
-			insert_time1, insert_time2);
+			insert_समय1, insert_समय2);
 
-		if (insert_time2 > (scale_factor * insert_time1)) {
+		अगर (insert_समय2 > (scale_factor * insert_समय1)) अणु
 			pr_err("%s fragmented insert took %llu nsecs more\n",
 			       mode->name,
-			       insert_time2 - (scale_factor * insert_time1));
-			goto err;
-		}
+			       insert_समय2 - (scale_factor * insert_समय1));
+			जाओ err;
+		पूर्ण
 
-		drm_mm_for_each_node_safe(node, next, &mm)
-			drm_mm_remove_node(node);
-	}
+		drm_mm_क्रम_each_node_safe(node, next, &mm)
+			drm_mm_हटाओ_node(node);
+	पूर्ण
 
 	ret = 0;
 err:
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	vfree(nodes);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	vमुक्त(nodes);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int igt_align(void *ignored)
-{
-	const struct insert_mode *mode;
-	const unsigned int max_count = min(8192u, max_prime);
-	struct drm_mm mm;
-	struct drm_mm_node *nodes, *node, *next;
-	unsigned int prime;
-	int ret = -EINVAL;
+अटल पूर्णांक igt_align(व्योम *ignored)
+अणु
+	स्थिर काष्ठा insert_mode *mode;
+	स्थिर अचिन्हित पूर्णांक max_count = min(8192u, max_prime);
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node *nodes, *node, *next;
+	अचिन्हित पूर्णांक prime;
+	पूर्णांक ret = -EINVAL;
 
 	/* For each of the possible insertion modes, we pick a few
 	 * arbitrary alignments and check that the inserted node
 	 * meets our requirements.
 	 */
 
-	nodes = vzalloc(array_size(max_count, sizeof(*nodes)));
-	if (!nodes)
-		goto err;
+	nodes = vzalloc(array_size(max_count, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err;
 
 	drm_mm_init(&mm, 1, U64_MAX - 2);
 
-	for (mode = insert_modes; mode->name; mode++) {
-		unsigned int i = 0;
+	क्रम (mode = insert_modes; mode->name; mode++) अणु
+		अचिन्हित पूर्णांक i = 0;
 
-		for_each_prime_number_from(prime, 1, max_count) {
+		क्रम_each_prime_number_from(prime, 1, max_count) अणु
 			u64 size = next_prime_number(prime);
 
-			if (!expect_insert(&mm, &nodes[i],
+			अगर (!expect_insert(&mm, &nodes[i],
 					   size, prime, i,
-					   mode)) {
+					   mode)) अणु
 				pr_err("%s insert failed with alignment=%d",
 				       mode->name, prime);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			i++;
-		}
+		पूर्ण
 
-		drm_mm_for_each_node_safe(node, next, &mm)
-			drm_mm_remove_node(node);
+		drm_mm_क्रम_each_node_safe(node, next, &mm)
+			drm_mm_हटाओ_node(node);
 		DRM_MM_BUG_ON(!drm_mm_clean(&mm));
 
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	vfree(nodes);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	vमुक्त(nodes);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int igt_align_pot(int max)
-{
-	struct drm_mm mm;
-	struct drm_mm_node *node, *next;
-	int bit;
-	int ret = -EINVAL;
+अटल पूर्णांक igt_align_pot(पूर्णांक max)
+अणु
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node *node, *next;
+	पूर्णांक bit;
+	पूर्णांक ret = -EINVAL;
 
 	/* Check that we can align to the full u64 address space */
 
 	drm_mm_init(&mm, 1, U64_MAX - 2);
 
-	for (bit = max - 1; bit; bit--) {
+	क्रम (bit = max - 1; bit; bit--) अणु
 		u64 align, size;
 
-		node = kzalloc(sizeof(*node), GFP_KERNEL);
-		if (!node) {
+		node = kzalloc(माप(*node), GFP_KERNEL);
+		अगर (!node) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		align = BIT_ULL(bit);
 		size = BIT_ULL(bit-1) + 1;
-		if (!expect_insert(&mm, node,
+		अगर (!expect_insert(&mm, node,
 				   size, align, bit,
-				   &insert_modes[0])) {
+				   &insert_modes[0])) अणु
 			pr_err("insert failed with alignment=%llx [%d]",
 			       align, bit);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, next, &mm) {
-		drm_mm_remove_node(node);
-		kfree(node);
-	}
-	drm_mm_takedown(&mm);
-	return ret;
-}
+	drm_mm_क्रम_each_node_safe(node, next, &mm) अणु
+		drm_mm_हटाओ_node(node);
+		kमुक्त(node);
+	पूर्ण
+	drm_mm_takeकरोwn(&mm);
+	वापस ret;
+पूर्ण
 
-static int igt_align32(void *ignored)
-{
-	return igt_align_pot(32);
-}
+अटल पूर्णांक igt_align32(व्योम *ignored)
+अणु
+	वापस igt_align_pot(32);
+पूर्ण
 
-static int igt_align64(void *ignored)
-{
-	return igt_align_pot(64);
-}
+अटल पूर्णांक igt_align64(व्योम *ignored)
+अणु
+	वापस igt_align_pot(64);
+पूर्ण
 
-static void show_scan(const struct drm_mm_scan *scan)
-{
+अटल व्योम show_scan(स्थिर काष्ठा drm_mm_scan *scan)
+अणु
 	pr_info("scan: hit [%llx, %llx], size=%lld, align=%lld, color=%ld\n",
 		scan->hit_start, scan->hit_end,
 		scan->size, scan->alignment, scan->color);
-}
+पूर्ण
 
-static void show_holes(const struct drm_mm *mm, int count)
-{
+अटल व्योम show_holes(स्थिर काष्ठा drm_mm *mm, पूर्णांक count)
+अणु
 	u64 hole_start, hole_end;
-	struct drm_mm_node *hole;
+	काष्ठा drm_mm_node *hole;
 
-	drm_mm_for_each_hole(hole, mm, hole_start, hole_end) {
-		struct drm_mm_node *next = list_next_entry(hole, node_list);
-		const char *node1 = NULL, *node2 = NULL;
+	drm_mm_क्रम_each_hole(hole, mm, hole_start, hole_end) अणु
+		काष्ठा drm_mm_node *next = list_next_entry(hole, node_list);
+		स्थिर अक्षर *node1 = शून्य, *node2 = शून्य;
 
-		if (drm_mm_node_allocated(hole))
-			node1 = kasprintf(GFP_KERNEL,
+		अगर (drm_mm_node_allocated(hole))
+			node1 = kaप्र_लिखो(GFP_KERNEL,
 					  "[%llx + %lld, color=%ld], ",
 					  hole->start, hole->size, hole->color);
 
-		if (drm_mm_node_allocated(next))
-			node2 = kasprintf(GFP_KERNEL,
+		अगर (drm_mm_node_allocated(next))
+			node2 = kaप्र_लिखो(GFP_KERNEL,
 					  ", [%llx + %lld, color=%ld]",
 					  next->start, next->size, next->color);
 
@@ -1288,758 +1289,758 @@ static void show_holes(const struct drm_mm *mm, int count)
 			hole_start, hole_end, hole_end - hole_start,
 			node2);
 
-		kfree(node2);
-		kfree(node1);
+		kमुक्त(node2);
+		kमुक्त(node1);
 
-		if (!--count)
-			break;
-	}
-}
+		अगर (!--count)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-struct evict_node {
-	struct drm_mm_node node;
-	struct list_head link;
-};
+काष्ठा evict_node अणु
+	काष्ठा drm_mm_node node;
+	काष्ठा list_head link;
+पूर्ण;
 
-static bool evict_nodes(struct drm_mm_scan *scan,
-			struct evict_node *nodes,
-			unsigned int *order,
-			unsigned int count,
+अटल bool evict_nodes(काष्ठा drm_mm_scan *scan,
+			काष्ठा evict_node *nodes,
+			अचिन्हित पूर्णांक *order,
+			अचिन्हित पूर्णांक count,
 			bool use_color,
-			struct list_head *evict_list)
-{
-	struct evict_node *e, *en;
-	unsigned int i;
+			काष्ठा list_head *evict_list)
+अणु
+	काष्ठा evict_node *e, *en;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		e = &nodes[order ? order[i] : i];
 		list_add(&e->link, evict_list);
-		if (drm_mm_scan_add_block(scan, &e->node))
-			break;
-	}
-	list_for_each_entry_safe(e, en, evict_list, link) {
-		if (!drm_mm_scan_remove_block(scan, &e->node))
+		अगर (drm_mm_scan_add_block(scan, &e->node))
+			अवरोध;
+	पूर्ण
+	list_क्रम_each_entry_safe(e, en, evict_list, link) अणु
+		अगर (!drm_mm_scan_हटाओ_block(scan, &e->node))
 			list_del(&e->link);
-	}
-	if (list_empty(evict_list)) {
+	पूर्ण
+	अगर (list_empty(evict_list)) अणु
 		pr_err("Failed to find eviction: size=%lld [avail=%d], align=%lld (color=%lu)\n",
 		       scan->size, count, scan->alignment, scan->color);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	list_for_each_entry(e, evict_list, link)
-		drm_mm_remove_node(&e->node);
+	list_क्रम_each_entry(e, evict_list, link)
+		drm_mm_हटाओ_node(&e->node);
 
-	if (use_color) {
-		struct drm_mm_node *node;
+	अगर (use_color) अणु
+		काष्ठा drm_mm_node *node;
 
-		while ((node = drm_mm_scan_color_evict(scan))) {
+		जबतक ((node = drm_mm_scan_color_evict(scan))) अणु
 			e = container_of(node, typeof(*e), node);
-			drm_mm_remove_node(&e->node);
+			drm_mm_हटाओ_node(&e->node);
 			list_add(&e->link, evict_list);
-		}
-	} else {
-		if (drm_mm_scan_color_evict(scan)) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (drm_mm_scan_color_evict(scan)) अणु
 			pr_err("drm_mm_scan_color_evict unexpectedly reported overlapping nodes!\n");
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool evict_nothing(struct drm_mm *mm,
-			  unsigned int total_size,
-			  struct evict_node *nodes)
-{
-	struct drm_mm_scan scan;
+अटल bool evict_nothing(काष्ठा drm_mm *mm,
+			  अचिन्हित पूर्णांक total_size,
+			  काष्ठा evict_node *nodes)
+अणु
+	काष्ठा drm_mm_scan scan;
 	LIST_HEAD(evict_list);
-	struct evict_node *e;
-	struct drm_mm_node *node;
-	unsigned int n;
+	काष्ठा evict_node *e;
+	काष्ठा drm_mm_node *node;
+	अचिन्हित पूर्णांक n;
 
 	drm_mm_scan_init(&scan, mm, 1, 0, 0, 0);
-	for (n = 0; n < total_size; n++) {
+	क्रम (n = 0; n < total_size; n++) अणु
 		e = &nodes[n];
 		list_add(&e->link, &evict_list);
 		drm_mm_scan_add_block(&scan, &e->node);
-	}
-	list_for_each_entry(e, &evict_list, link)
-		drm_mm_scan_remove_block(&scan, &e->node);
+	पूर्ण
+	list_क्रम_each_entry(e, &evict_list, link)
+		drm_mm_scan_हटाओ_block(&scan, &e->node);
 
-	for (n = 0; n < total_size; n++) {
+	क्रम (n = 0; n < total_size; n++) अणु
 		e = &nodes[n];
 
-		if (!drm_mm_node_allocated(&e->node)) {
+		अगर (!drm_mm_node_allocated(&e->node)) अणु
 			pr_err("node[%d] no longer allocated!\n", n);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		e->link.next = NULL;
-	}
+		e->link.next = शून्य;
+	पूर्ण
 
-	drm_mm_for_each_node(node, mm) {
+	drm_mm_क्रम_each_node(node, mm) अणु
 		e = container_of(node, typeof(*e), node);
 		e->link.next = &e->link;
-	}
+	पूर्ण
 
-	for (n = 0; n < total_size; n++) {
+	क्रम (n = 0; n < total_size; n++) अणु
 		e = &nodes[n];
 
-		if (!e->link.next) {
+		अगर (!e->link.next) अणु
 			pr_err("node[%d] no longer connected!\n", n);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return assert_continuous(mm, nodes[0].node.size);
-}
+	वापस निश्चित_continuous(mm, nodes[0].node.size);
+पूर्ण
 
-static bool evict_everything(struct drm_mm *mm,
-			     unsigned int total_size,
-			     struct evict_node *nodes)
-{
-	struct drm_mm_scan scan;
+अटल bool evict_everything(काष्ठा drm_mm *mm,
+			     अचिन्हित पूर्णांक total_size,
+			     काष्ठा evict_node *nodes)
+अणु
+	काष्ठा drm_mm_scan scan;
 	LIST_HEAD(evict_list);
-	struct evict_node *e;
-	unsigned int n;
-	int err;
+	काष्ठा evict_node *e;
+	अचिन्हित पूर्णांक n;
+	पूर्णांक err;
 
 	drm_mm_scan_init(&scan, mm, total_size, 0, 0, 0);
-	for (n = 0; n < total_size; n++) {
+	क्रम (n = 0; n < total_size; n++) अणु
 		e = &nodes[n];
 		list_add(&e->link, &evict_list);
-		if (drm_mm_scan_add_block(&scan, &e->node))
-			break;
-	}
+		अगर (drm_mm_scan_add_block(&scan, &e->node))
+			अवरोध;
+	पूर्ण
 
 	err = 0;
-	list_for_each_entry(e, &evict_list, link) {
-		if (!drm_mm_scan_remove_block(&scan, &e->node)) {
-			if (!err) {
+	list_क्रम_each_entry(e, &evict_list, link) अणु
+		अगर (!drm_mm_scan_हटाओ_block(&scan, &e->node)) अणु
+			अगर (!err) अणु
 				pr_err("Node %lld not marked for eviction!\n",
 				       e->node.start);
 				err = -EINVAL;
-			}
-		}
-	}
-	if (err)
-		return false;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (err)
+		वापस false;
 
-	list_for_each_entry(e, &evict_list, link)
-		drm_mm_remove_node(&e->node);
+	list_क्रम_each_entry(e, &evict_list, link)
+		drm_mm_हटाओ_node(&e->node);
 
-	if (!assert_one_hole(mm, 0, total_size))
-		return false;
+	अगर (!निश्चित_one_hole(mm, 0, total_size))
+		वापस false;
 
-	list_for_each_entry(e, &evict_list, link) {
+	list_क्रम_each_entry(e, &evict_list, link) अणु
 		err = drm_mm_reserve_node(mm, &e->node);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Failed to reinsert node after eviction: start=%llx\n",
 			       e->node.start);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return assert_continuous(mm, nodes[0].node.size);
-}
+	वापस निश्चित_continuous(mm, nodes[0].node.size);
+पूर्ण
 
-static int evict_something(struct drm_mm *mm,
+अटल पूर्णांक evict_something(काष्ठा drm_mm *mm,
 			   u64 range_start, u64 range_end,
-			   struct evict_node *nodes,
-			   unsigned int *order,
-			   unsigned int count,
-			   unsigned int size,
-			   unsigned int alignment,
-			   const struct insert_mode *mode)
-{
-	struct drm_mm_scan scan;
+			   काष्ठा evict_node *nodes,
+			   अचिन्हित पूर्णांक *order,
+			   अचिन्हित पूर्णांक count,
+			   अचिन्हित पूर्णांक size,
+			   अचिन्हित पूर्णांक alignment,
+			   स्थिर काष्ठा insert_mode *mode)
+अणु
+	काष्ठा drm_mm_scan scan;
 	LIST_HEAD(evict_list);
-	struct evict_node *e;
-	struct drm_mm_node tmp;
-	int err;
+	काष्ठा evict_node *e;
+	काष्ठा drm_mm_node पंचांगp;
+	पूर्णांक err;
 
 	drm_mm_scan_init_with_range(&scan, mm,
 				    size, alignment, 0,
 				    range_start, range_end,
 				    mode->mode);
-	if (!evict_nodes(&scan,
+	अगर (!evict_nodes(&scan,
 			 nodes, order, count, false,
 			 &evict_list))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	memset(&tmp, 0, sizeof(tmp));
-	err = drm_mm_insert_node_generic(mm, &tmp, size, alignment, 0,
+	स_रखो(&पंचांगp, 0, माप(पंचांगp));
+	err = drm_mm_insert_node_generic(mm, &पंचांगp, size, alignment, 0,
 					 DRM_MM_INSERT_EVICT);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to insert into eviction hole: size=%d, align=%d\n",
 		       size, alignment);
 		show_scan(&scan);
 		show_holes(mm, 3);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (tmp.start < range_start || tmp.start + tmp.size > range_end) {
+	अगर (पंचांगp.start < range_start || पंचांगp.start + पंचांगp.size > range_end) अणु
 		pr_err("Inserted [address=%llu + %llu] did not fit into the request range [%llu, %llu]\n",
-		       tmp.start, tmp.size, range_start, range_end);
+		       पंचांगp.start, पंचांगp.size, range_start, range_end);
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	if (!assert_node(&tmp, mm, size, alignment, 0) ||
-	    drm_mm_hole_follows(&tmp)) {
+	अगर (!निश्चित_node(&पंचांगp, mm, size, alignment, 0) ||
+	    drm_mm_hole_follows(&पंचांगp)) अणु
 		pr_err("Inserted did not fill the eviction hole: size=%lld [%d], align=%d [rem=%lld], start=%llx, hole-follows?=%d\n",
-		       tmp.size, size,
-		       alignment, misalignment(&tmp, alignment),
-		       tmp.start, drm_mm_hole_follows(&tmp));
+		       पंचांगp.size, size,
+		       alignment, misalignment(&पंचांगp, alignment),
+		       पंचांगp.start, drm_mm_hole_follows(&पंचांगp));
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	drm_mm_remove_node(&tmp);
-	if (err)
-		return err;
+	drm_mm_हटाओ_node(&पंचांगp);
+	अगर (err)
+		वापस err;
 
-	list_for_each_entry(e, &evict_list, link) {
+	list_क्रम_each_entry(e, &evict_list, link) अणु
 		err = drm_mm_reserve_node(mm, &e->node);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Failed to reinsert node after eviction: start=%llx\n",
 			       e->node.start);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (!assert_continuous(mm, nodes[0].node.size)) {
+	अगर (!निश्चित_continuous(mm, nodes[0].node.size)) अणु
 		pr_err("range is no longer continuous\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igt_evict(void *ignored)
-{
-	DRM_RND_STATE(prng, random_seed);
-	const unsigned int size = 8192;
-	const struct insert_mode *mode;
-	struct drm_mm mm;
-	struct evict_node *nodes;
-	struct drm_mm_node *node, *next;
-	unsigned int *order, n;
-	int ret, err;
+अटल पूर्णांक igt_evict(व्योम *ignored)
+अणु
+	DRM_RND_STATE(prng, अक्रमom_seed);
+	स्थिर अचिन्हित पूर्णांक size = 8192;
+	स्थिर काष्ठा insert_mode *mode;
+	काष्ठा drm_mm mm;
+	काष्ठा evict_node *nodes;
+	काष्ठा drm_mm_node *node, *next;
+	अचिन्हित पूर्णांक *order, n;
+	पूर्णांक ret, err;
 
 	/* Here we populate a full drm_mm and then try and insert a new node
-	 * by evicting other nodes in a random order. The drm_mm_scan should
-	 * pick the first matching hole it finds from the random list. We
-	 * repeat that for different allocation strategies, alignments and
+	 * by evicting other nodes in a अक्रमom order. The drm_mm_scan should
+	 * pick the first matching hole it finds from the अक्रमom list. We
+	 * repeat that क्रम dअगरferent allocation strategies, alignments and
 	 * sizes to try and stress the hole finder.
 	 */
 
 	ret = -ENOMEM;
-	nodes = vzalloc(array_size(size, sizeof(*nodes)));
-	if (!nodes)
-		goto err;
+	nodes = vzalloc(array_size(size, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err;
 
-	order = drm_random_order(size, &prng);
-	if (!order)
-		goto err_nodes;
+	order = drm_अक्रमom_order(size, &prng);
+	अगर (!order)
+		जाओ err_nodes;
 
 	ret = -EINVAL;
 	drm_mm_init(&mm, 0, size);
-	for (n = 0; n < size; n++) {
+	क्रम (n = 0; n < size; n++) अणु
 		err = drm_mm_insert_node(&mm, &nodes[n].node, 1);
-		if (err) {
+		अगर (err) अणु
 			pr_err("insert failed, step %d\n", n);
 			ret = err;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* First check that using the scanner doesn't break the mm */
-	if (!evict_nothing(&mm, size, nodes)) {
+	/* First check that using the scanner करोesn't अवरोध the mm */
+	अगर (!evict_nothing(&mm, size, nodes)) अणु
 		pr_err("evict_nothing() failed\n");
-		goto out;
-	}
-	if (!evict_everything(&mm, size, nodes)) {
+		जाओ out;
+	पूर्ण
+	अगर (!evict_everything(&mm, size, nodes)) अणु
 		pr_err("evict_everything() failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (mode = evict_modes; mode->name; mode++) {
-		for (n = 1; n <= size; n <<= 1) {
-			drm_random_reorder(order, size, &prng);
+	क्रम (mode = evict_modes; mode->name; mode++) अणु
+		क्रम (n = 1; n <= size; n <<= 1) अणु
+			drm_अक्रमom_reorder(order, size, &prng);
 			err = evict_something(&mm, 0, U64_MAX,
 					      nodes, order, size,
 					      n, 1,
 					      mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_something(size=%u) failed\n",
 				       mode->name, n);
 				ret = err;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		for (n = 1; n < size; n <<= 1) {
-			drm_random_reorder(order, size, &prng);
+		क्रम (n = 1; n < size; n <<= 1) अणु
+			drm_अक्रमom_reorder(order, size, &prng);
 			err = evict_something(&mm, 0, U64_MAX,
 					      nodes, order, size,
 					      size/2, n,
 					      mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_something(size=%u, alignment=%u) failed\n",
 				       mode->name, size/2, n);
 				ret = err;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		for_each_prime_number_from(n, 1, min(size, max_prime)) {
-			unsigned int nsize = (size - n + 1) / 2;
+		क्रम_each_prime_number_from(n, 1, min(size, max_prime)) अणु
+			अचिन्हित पूर्णांक nsize = (size - n + 1) / 2;
 
 			DRM_MM_BUG_ON(!nsize);
 
-			drm_random_reorder(order, size, &prng);
+			drm_अक्रमom_reorder(order, size, &prng);
 			err = evict_something(&mm, 0, U64_MAX,
 					      nodes, order, size,
 					      nsize, n,
 					      mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_something(size=%u, alignment=%u) failed\n",
 				       mode->name, nsize, n);
 				ret = err;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	kfree(order);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	kमुक्त(order);
 err_nodes:
-	vfree(nodes);
+	vमुक्त(nodes);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int igt_evict_range(void *ignored)
-{
-	DRM_RND_STATE(prng, random_seed);
-	const unsigned int size = 8192;
-	const unsigned int range_size = size / 2;
-	const unsigned int range_start = size / 4;
-	const unsigned int range_end = range_start + range_size;
-	const struct insert_mode *mode;
-	struct drm_mm mm;
-	struct evict_node *nodes;
-	struct drm_mm_node *node, *next;
-	unsigned int *order, n;
-	int ret, err;
+अटल पूर्णांक igt_evict_range(व्योम *ignored)
+अणु
+	DRM_RND_STATE(prng, अक्रमom_seed);
+	स्थिर अचिन्हित पूर्णांक size = 8192;
+	स्थिर अचिन्हित पूर्णांक range_size = size / 2;
+	स्थिर अचिन्हित पूर्णांक range_start = size / 4;
+	स्थिर अचिन्हित पूर्णांक range_end = range_start + range_size;
+	स्थिर काष्ठा insert_mode *mode;
+	काष्ठा drm_mm mm;
+	काष्ठा evict_node *nodes;
+	काष्ठा drm_mm_node *node, *next;
+	अचिन्हित पूर्णांक *order, n;
+	पूर्णांक ret, err;
 
 	/* Like igt_evict() but now we are limiting the search to a
 	 * small portion of the full drm_mm.
 	 */
 
 	ret = -ENOMEM;
-	nodes = vzalloc(array_size(size, sizeof(*nodes)));
-	if (!nodes)
-		goto err;
+	nodes = vzalloc(array_size(size, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err;
 
-	order = drm_random_order(size, &prng);
-	if (!order)
-		goto err_nodes;
+	order = drm_अक्रमom_order(size, &prng);
+	अगर (!order)
+		जाओ err_nodes;
 
 	ret = -EINVAL;
 	drm_mm_init(&mm, 0, size);
-	for (n = 0; n < size; n++) {
+	क्रम (n = 0; n < size; n++) अणु
 		err = drm_mm_insert_node(&mm, &nodes[n].node, 1);
-		if (err) {
+		अगर (err) अणु
 			pr_err("insert failed, step %d\n", n);
 			ret = err;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	for (mode = evict_modes; mode->name; mode++) {
-		for (n = 1; n <= range_size; n <<= 1) {
-			drm_random_reorder(order, size, &prng);
+	क्रम (mode = evict_modes; mode->name; mode++) अणु
+		क्रम (n = 1; n <= range_size; n <<= 1) अणु
+			drm_अक्रमom_reorder(order, size, &prng);
 			err = evict_something(&mm, range_start, range_end,
 					      nodes, order, size,
 					      n, 1,
 					      mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_something(size=%u) failed with range [%u, %u]\n",
 				       mode->name, n, range_start, range_end);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		for (n = 1; n <= range_size; n <<= 1) {
-			drm_random_reorder(order, size, &prng);
+		क्रम (n = 1; n <= range_size; n <<= 1) अणु
+			drm_अक्रमom_reorder(order, size, &prng);
 			err = evict_something(&mm, range_start, range_end,
 					      nodes, order, size,
 					      range_size/2, n,
 					      mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_something(size=%u, alignment=%u) failed with range [%u, %u]\n",
 				       mode->name, range_size/2, n, range_start, range_end);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		for_each_prime_number_from(n, 1, min(range_size, max_prime)) {
-			unsigned int nsize = (range_size - n + 1) / 2;
+		क्रम_each_prime_number_from(n, 1, min(range_size, max_prime)) अणु
+			अचिन्हित पूर्णांक nsize = (range_size - n + 1) / 2;
 
 			DRM_MM_BUG_ON(!nsize);
 
-			drm_random_reorder(order, size, &prng);
+			drm_अक्रमom_reorder(order, size, &prng);
 			err = evict_something(&mm, range_start, range_end,
 					      nodes, order, size,
 					      nsize, n,
 					      mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_something(size=%u, alignment=%u) failed with range [%u, %u]\n",
 				       mode->name, nsize, n, range_start, range_end);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	kfree(order);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	kमुक्त(order);
 err_nodes:
-	vfree(nodes);
+	vमुक्त(nodes);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int node_index(const struct drm_mm_node *node)
-{
-	return div64_u64(node->start, node->size);
-}
+अटल अचिन्हित पूर्णांक node_index(स्थिर काष्ठा drm_mm_node *node)
+अणु
+	वापस भाग64_u64(node->start, node->size);
+पूर्ण
 
-static int igt_topdown(void *ignored)
-{
-	const struct insert_mode *topdown = &insert_modes[TOPDOWN];
-	DRM_RND_STATE(prng, random_seed);
-	const unsigned int count = 8192;
-	unsigned int size;
-	unsigned long *bitmap;
-	struct drm_mm mm;
-	struct drm_mm_node *nodes, *node, *next;
-	unsigned int *order, n, m, o = 0;
-	int ret;
+अटल पूर्णांक igt_topकरोwn(व्योम *ignored)
+अणु
+	स्थिर काष्ठा insert_mode *topकरोwn = &insert_modes[TOPDOWN];
+	DRM_RND_STATE(prng, अक्रमom_seed);
+	स्थिर अचिन्हित पूर्णांक count = 8192;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित दीर्घ *biपंचांगap;
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node *nodes, *node, *next;
+	अचिन्हित पूर्णांक *order, n, m, o = 0;
+	पूर्णांक ret;
 
-	/* When allocating top-down, we expect to be returned a node
+	/* When allocating top-करोwn, we expect to be वापसed a node
 	 * from a suitable hole at the top of the drm_mm. We check that
-	 * the returned node does match the highest available slot.
+	 * the वापसed node करोes match the highest available slot.
 	 */
 
 	ret = -ENOMEM;
-	nodes = vzalloc(array_size(count, sizeof(*nodes)));
-	if (!nodes)
-		goto err;
+	nodes = vzalloc(array_size(count, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err;
 
-	bitmap = bitmap_zalloc(count, GFP_KERNEL);
-	if (!bitmap)
-		goto err_nodes;
+	biपंचांगap = biपंचांगap_zalloc(count, GFP_KERNEL);
+	अगर (!biपंचांगap)
+		जाओ err_nodes;
 
-	order = drm_random_order(count, &prng);
-	if (!order)
-		goto err_bitmap;
+	order = drm_अक्रमom_order(count, &prng);
+	अगर (!order)
+		जाओ err_biपंचांगap;
 
 	ret = -EINVAL;
-	for (size = 1; size <= 64; size <<= 1) {
+	क्रम (size = 1; size <= 64; size <<= 1) अणु
 		drm_mm_init(&mm, 0, size*count);
-		for (n = 0; n < count; n++) {
-			if (!expect_insert(&mm, &nodes[n],
+		क्रम (n = 0; n < count; n++) अणु
+			अगर (!expect_insert(&mm, &nodes[n],
 					   size, 0, n,
-					   topdown)) {
+					   topकरोwn)) अणु
 				pr_err("insert failed, size %u step %d\n", size, n);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (drm_mm_hole_follows(&nodes[n])) {
+			अगर (drm_mm_hole_follows(&nodes[n])) अणु
 				pr_err("hole after topdown insert %d, start=%llx\n, size=%u",
 				       n, nodes[n].start, size);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (!assert_one_hole(&mm, 0, size*(count - n - 1)))
-				goto out;
-		}
+			अगर (!निश्चित_one_hole(&mm, 0, size*(count - n - 1)))
+				जाओ out;
+		पूर्ण
 
-		if (!assert_continuous(&mm, size))
-			goto out;
+		अगर (!निश्चित_continuous(&mm, size))
+			जाओ out;
 
-		drm_random_reorder(order, count, &prng);
-		for_each_prime_number_from(n, 1, min(count, max_prime)) {
-			for (m = 0; m < n; m++) {
+		drm_अक्रमom_reorder(order, count, &prng);
+		क्रम_each_prime_number_from(n, 1, min(count, max_prime)) अणु
+			क्रम (m = 0; m < n; m++) अणु
 				node = &nodes[order[(o + m) % count]];
-				drm_mm_remove_node(node);
-				__set_bit(node_index(node), bitmap);
-			}
+				drm_mm_हटाओ_node(node);
+				__set_bit(node_index(node), biपंचांगap);
+			पूर्ण
 
-			for (m = 0; m < n; m++) {
-				unsigned int last;
+			क्रम (m = 0; m < n; m++) अणु
+				अचिन्हित पूर्णांक last;
 
 				node = &nodes[order[(o + m) % count]];
-				if (!expect_insert(&mm, node,
+				अगर (!expect_insert(&mm, node,
 						   size, 0, 0,
-						   topdown)) {
+						   topकरोwn)) अणु
 					pr_err("insert failed, step %d/%d\n", m, n);
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
-				if (drm_mm_hole_follows(node)) {
+				अगर (drm_mm_hole_follows(node)) अणु
 					pr_err("hole after topdown insert %d/%d, start=%llx\n",
 					       m, n, node->start);
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
-				last = find_last_bit(bitmap, count);
-				if (node_index(node) != last) {
+				last = find_last_bit(biपंचांगap, count);
+				अगर (node_index(node) != last) अणु
 					pr_err("node %d/%d, size %d, not inserted into upmost hole, expected %d, found %d\n",
 					       m, n, size, last, node_index(node));
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
-				__clear_bit(last, bitmap);
-			}
+				__clear_bit(last, biपंचांगap);
+			पूर्ण
 
-			DRM_MM_BUG_ON(find_first_bit(bitmap, count) != count);
+			DRM_MM_BUG_ON(find_first_bit(biपंचांगap, count) != count);
 
 			o += n;
-		}
+		पूर्ण
 
-		drm_mm_for_each_node_safe(node, next, &mm)
-			drm_mm_remove_node(node);
+		drm_mm_क्रम_each_node_safe(node, next, &mm)
+			drm_mm_हटाओ_node(node);
 		DRM_MM_BUG_ON(!drm_mm_clean(&mm));
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	kfree(order);
-err_bitmap:
-	bitmap_free(bitmap);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	kमुक्त(order);
+err_biपंचांगap:
+	biपंचांगap_मुक्त(biपंचांगap);
 err_nodes:
-	vfree(nodes);
+	vमुक्त(nodes);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int igt_bottomup(void *ignored)
-{
-	const struct insert_mode *bottomup = &insert_modes[BOTTOMUP];
-	DRM_RND_STATE(prng, random_seed);
-	const unsigned int count = 8192;
-	unsigned int size;
-	unsigned long *bitmap;
-	struct drm_mm mm;
-	struct drm_mm_node *nodes, *node, *next;
-	unsigned int *order, n, m, o = 0;
-	int ret;
+अटल पूर्णांक igt_bottomup(व्योम *ignored)
+अणु
+	स्थिर काष्ठा insert_mode *bottomup = &insert_modes[BOTTOMUP];
+	DRM_RND_STATE(prng, अक्रमom_seed);
+	स्थिर अचिन्हित पूर्णांक count = 8192;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित दीर्घ *biपंचांगap;
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node *nodes, *node, *next;
+	अचिन्हित पूर्णांक *order, n, m, o = 0;
+	पूर्णांक ret;
 
-	/* Like igt_topdown, but instead of searching for the last hole,
-	 * we search for the first.
+	/* Like igt_topकरोwn, but instead of searching क्रम the last hole,
+	 * we search क्रम the first.
 	 */
 
 	ret = -ENOMEM;
-	nodes = vzalloc(array_size(count, sizeof(*nodes)));
-	if (!nodes)
-		goto err;
+	nodes = vzalloc(array_size(count, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err;
 
-	bitmap = bitmap_zalloc(count, GFP_KERNEL);
-	if (!bitmap)
-		goto err_nodes;
+	biपंचांगap = biपंचांगap_zalloc(count, GFP_KERNEL);
+	अगर (!biपंचांगap)
+		जाओ err_nodes;
 
-	order = drm_random_order(count, &prng);
-	if (!order)
-		goto err_bitmap;
+	order = drm_अक्रमom_order(count, &prng);
+	अगर (!order)
+		जाओ err_biपंचांगap;
 
 	ret = -EINVAL;
-	for (size = 1; size <= 64; size <<= 1) {
+	क्रम (size = 1; size <= 64; size <<= 1) अणु
 		drm_mm_init(&mm, 0, size*count);
-		for (n = 0; n < count; n++) {
-			if (!expect_insert(&mm, &nodes[n],
+		क्रम (n = 0; n < count; n++) अणु
+			अगर (!expect_insert(&mm, &nodes[n],
 					   size, 0, n,
-					   bottomup)) {
+					   bottomup)) अणु
 				pr_err("bottomup insert failed, size %u step %d\n", size, n);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (!assert_one_hole(&mm, size*(n + 1), size*count))
-				goto out;
-		}
+			अगर (!निश्चित_one_hole(&mm, size*(n + 1), size*count))
+				जाओ out;
+		पूर्ण
 
-		if (!assert_continuous(&mm, size))
-			goto out;
+		अगर (!निश्चित_continuous(&mm, size))
+			जाओ out;
 
-		drm_random_reorder(order, count, &prng);
-		for_each_prime_number_from(n, 1, min(count, max_prime)) {
-			for (m = 0; m < n; m++) {
+		drm_अक्रमom_reorder(order, count, &prng);
+		क्रम_each_prime_number_from(n, 1, min(count, max_prime)) अणु
+			क्रम (m = 0; m < n; m++) अणु
 				node = &nodes[order[(o + m) % count]];
-				drm_mm_remove_node(node);
-				__set_bit(node_index(node), bitmap);
-			}
+				drm_mm_हटाओ_node(node);
+				__set_bit(node_index(node), biपंचांगap);
+			पूर्ण
 
-			for (m = 0; m < n; m++) {
-				unsigned int first;
+			क्रम (m = 0; m < n; m++) अणु
+				अचिन्हित पूर्णांक first;
 
 				node = &nodes[order[(o + m) % count]];
-				if (!expect_insert(&mm, node,
+				अगर (!expect_insert(&mm, node,
 						   size, 0, 0,
-						   bottomup)) {
+						   bottomup)) अणु
 					pr_err("insert failed, step %d/%d\n", m, n);
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
-				first = find_first_bit(bitmap, count);
-				if (node_index(node) != first) {
+				first = find_first_bit(biपंचांगap, count);
+				अगर (node_index(node) != first) अणु
 					pr_err("node %d/%d not inserted into bottom hole, expected %d, found %d\n",
 					       m, n, first, node_index(node));
-					goto out;
-				}
-				__clear_bit(first, bitmap);
-			}
+					जाओ out;
+				पूर्ण
+				__clear_bit(first, biपंचांगap);
+			पूर्ण
 
-			DRM_MM_BUG_ON(find_first_bit(bitmap, count) != count);
+			DRM_MM_BUG_ON(find_first_bit(biपंचांगap, count) != count);
 
 			o += n;
-		}
+		पूर्ण
 
-		drm_mm_for_each_node_safe(node, next, &mm)
-			drm_mm_remove_node(node);
+		drm_mm_क्रम_each_node_safe(node, next, &mm)
+			drm_mm_हटाओ_node(node);
 		DRM_MM_BUG_ON(!drm_mm_clean(&mm));
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	kfree(order);
-err_bitmap:
-	bitmap_free(bitmap);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	kमुक्त(order);
+err_biपंचांगap:
+	biपंचांगap_मुक्त(biपंचांगap);
 err_nodes:
-	vfree(nodes);
+	vमुक्त(nodes);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __igt_once(unsigned int mode)
-{
-	struct drm_mm mm;
-	struct drm_mm_node rsvd_lo, rsvd_hi, node;
-	int err;
+अटल पूर्णांक __igt_once(अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node rsvd_lo, rsvd_hi, node;
+	पूर्णांक err;
 
 	drm_mm_init(&mm, 0, 7);
 
-	memset(&rsvd_lo, 0, sizeof(rsvd_lo));
+	स_रखो(&rsvd_lo, 0, माप(rsvd_lo));
 	rsvd_lo.start = 1;
 	rsvd_lo.size = 1;
 	err = drm_mm_reserve_node(&mm, &rsvd_lo);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Could not reserve low node\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	memset(&rsvd_hi, 0, sizeof(rsvd_hi));
+	स_रखो(&rsvd_hi, 0, माप(rsvd_hi));
 	rsvd_hi.start = 5;
 	rsvd_hi.size = 1;
 	err = drm_mm_reserve_node(&mm, &rsvd_hi);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Could not reserve low node\n");
-		goto err_lo;
-	}
+		जाओ err_lo;
+	पूर्ण
 
-	if (!drm_mm_hole_follows(&rsvd_lo) || !drm_mm_hole_follows(&rsvd_hi)) {
+	अगर (!drm_mm_hole_follows(&rsvd_lo) || !drm_mm_hole_follows(&rsvd_hi)) अणु
 		pr_err("Expected a hole after lo and high nodes!\n");
 		err = -EINVAL;
-		goto err_hi;
-	}
+		जाओ err_hi;
+	पूर्ण
 
-	memset(&node, 0, sizeof(node));
+	स_रखो(&node, 0, माप(node));
 	err = drm_mm_insert_node_generic(&mm, &node, 2, 0, 0, mode);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Could not insert the node into the available hole!\n");
 		err = -EINVAL;
-		goto err_hi;
-	}
+		जाओ err_hi;
+	पूर्ण
 
-	drm_mm_remove_node(&node);
+	drm_mm_हटाओ_node(&node);
 err_hi:
-	drm_mm_remove_node(&rsvd_hi);
+	drm_mm_हटाओ_node(&rsvd_hi);
 err_lo:
-	drm_mm_remove_node(&rsvd_lo);
+	drm_mm_हटाओ_node(&rsvd_lo);
 err:
-	drm_mm_takedown(&mm);
-	return err;
-}
+	drm_mm_takeकरोwn(&mm);
+	वापस err;
+पूर्ण
 
-static int igt_lowest(void *ignored)
-{
-	return __igt_once(DRM_MM_INSERT_LOW);
-}
+अटल पूर्णांक igt_lowest(व्योम *ignored)
+अणु
+	वापस __igt_once(DRM_MM_INSERT_LOW);
+पूर्ण
 
-static int igt_highest(void *ignored)
-{
-	return __igt_once(DRM_MM_INSERT_HIGH);
-}
+अटल पूर्णांक igt_highest(व्योम *ignored)
+अणु
+	वापस __igt_once(DRM_MM_INSERT_HIGH);
+पूर्ण
 
-static void separate_adjacent_colors(const struct drm_mm_node *node,
-				     unsigned long color,
+अटल व्योम separate_adjacent_colors(स्थिर काष्ठा drm_mm_node *node,
+				     अचिन्हित दीर्घ color,
 				     u64 *start,
 				     u64 *end)
-{
-	if (drm_mm_node_allocated(node) && node->color != color)
+अणु
+	अगर (drm_mm_node_allocated(node) && node->color != color)
 		++*start;
 
 	node = list_next_entry(node, node_list);
-	if (drm_mm_node_allocated(node) && node->color != color)
+	अगर (drm_mm_node_allocated(node) && node->color != color)
 		--*end;
-}
+पूर्ण
 
-static bool colors_abutt(const struct drm_mm_node *node)
-{
-	if (!drm_mm_hole_follows(node) &&
-	    drm_mm_node_allocated(list_next_entry(node, node_list))) {
+अटल bool colors_abutt(स्थिर काष्ठा drm_mm_node *node)
+अणु
+	अगर (!drm_mm_hole_follows(node) &&
+	    drm_mm_node_allocated(list_next_entry(node, node_list))) अणु
 		pr_err("colors abutt; %ld [%llx + %llx] is next to %ld [%llx + %llx]!\n",
 		       node->color, node->start, node->size,
 		       list_next_entry(node, node_list)->color,
 		       list_next_entry(node, node_list)->start,
 		       list_next_entry(node, node_list)->size);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int igt_color(void *ignored)
-{
-	const unsigned int count = min(4096u, max_iterations);
-	const struct insert_mode *mode;
-	struct drm_mm mm;
-	struct drm_mm_node *node, *nn;
-	unsigned int n;
-	int ret = -EINVAL, err;
+अटल पूर्णांक igt_color(व्योम *ignored)
+अणु
+	स्थिर अचिन्हित पूर्णांक count = min(4096u, max_iterations);
+	स्थिर काष्ठा insert_mode *mode;
+	काष्ठा drm_mm mm;
+	काष्ठा drm_mm_node *node, *nn;
+	अचिन्हित पूर्णांक n;
+	पूर्णांक ret = -EINVAL, err;
 
-	/* Color adjustment complicates everything. First we just check
-	 * that when we insert a node we apply any color_adjustment callback.
+	/* Color adjusपंचांगent complicates everything. First we just check
+	 * that when we insert a node we apply any color_adjusपंचांगent callback.
 	 * The callback we use should ensure that there is a gap between
 	 * any two nodes, and so after each insertion we check that those
 	 * holes are inserted and that they are preserved.
@@ -2047,441 +2048,441 @@ static int igt_color(void *ignored)
 
 	drm_mm_init(&mm, 0, U64_MAX);
 
-	for (n = 1; n <= count; n++) {
-		node = kzalloc(sizeof(*node), GFP_KERNEL);
-		if (!node) {
+	क्रम (n = 1; n <= count; n++) अणु
+		node = kzalloc(माप(*node), GFP_KERNEL);
+		अगर (!node) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!expect_insert(&mm, node,
+		अगर (!expect_insert(&mm, node,
 				   n, 0, n,
-				   &insert_modes[0])) {
+				   &insert_modes[0])) अणु
 			pr_err("insert failed, step %d\n", n);
-			kfree(node);
-			goto out;
-		}
-	}
+			kमुक्त(node);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	drm_mm_for_each_node_safe(node, nn, &mm) {
-		if (node->color != node->size) {
+	drm_mm_क्रम_each_node_safe(node, nn, &mm) अणु
+		अगर (node->color != node->size) अणु
 			pr_err("invalid color stored: expected %lld, found %ld\n",
 			       node->size, node->color);
 
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		drm_mm_remove_node(node);
-		kfree(node);
-	}
+		drm_mm_हटाओ_node(node);
+		kमुक्त(node);
+	पूर्ण
 
 	/* Now, let's start experimenting with applying a color callback */
 	mm.color_adjust = separate_adjacent_colors;
-	for (mode = insert_modes; mode->name; mode++) {
+	क्रम (mode = insert_modes; mode->name; mode++) अणु
 		u64 last;
 
-		node = kzalloc(sizeof(*node), GFP_KERNEL);
-		if (!node) {
+		node = kzalloc(माप(*node), GFP_KERNEL);
+		अगर (!node) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		node->size = 1 + 2*count;
 		node->color = node->size;
 
 		err = drm_mm_reserve_node(&mm, node);
-		if (err) {
+		अगर (err) अणु
 			pr_err("initial reserve failed!\n");
 			ret = err;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		last = node->start + node->size;
 
-		for (n = 1; n <= count; n++) {
-			int rem;
+		क्रम (n = 1; n <= count; n++) अणु
+			पूर्णांक rem;
 
-			node = kzalloc(sizeof(*node), GFP_KERNEL);
-			if (!node) {
+			node = kzalloc(माप(*node), GFP_KERNEL);
+			अगर (!node) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			node->start = last;
 			node->size = n + count;
 			node->color = node->size;
 
 			err = drm_mm_reserve_node(&mm, node);
-			if (err != -ENOSPC) {
+			अगर (err != -ENOSPC) अणु
 				pr_err("reserve %d did not report color overlap! err=%d\n",
 				       n, err);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			node->start += n + 1;
 			rem = misalignment(node, n + count);
 			node->start += n + count - rem;
 
 			err = drm_mm_reserve_node(&mm, node);
-			if (err) {
+			अगर (err) अणु
 				pr_err("reserve %d failed, err=%d\n", n, err);
 				ret = err;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			last = node->start + node->size;
-		}
+		पूर्ण
 
-		for (n = 1; n <= count; n++) {
-			node = kzalloc(sizeof(*node), GFP_KERNEL);
-			if (!node) {
+		क्रम (n = 1; n <= count; n++) अणु
+			node = kzalloc(माप(*node), GFP_KERNEL);
+			अगर (!node) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (!expect_insert(&mm, node,
+			अगर (!expect_insert(&mm, node,
 					   n, n, n,
-					   mode)) {
+					   mode)) अणु
 				pr_err("%s insert failed, step %d\n",
 				       mode->name, n);
-				kfree(node);
-				goto out;
-			}
-		}
+				kमुक्त(node);
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		drm_mm_for_each_node_safe(node, nn, &mm) {
+		drm_mm_क्रम_each_node_safe(node, nn, &mm) अणु
 			u64 rem;
 
-			if (node->color != node->size) {
+			अगर (node->color != node->size) अणु
 				pr_err("%s invalid color stored: expected %lld, found %ld\n",
 				       mode->name, node->size, node->color);
 
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (colors_abutt(node))
-				goto out;
+			अगर (colors_abutt(node))
+				जाओ out;
 
-			div64_u64_rem(node->start, node->size, &rem);
-			if (rem) {
+			भाग64_u64_rem(node->start, node->size, &rem);
+			अगर (rem) अणु
 				pr_err("%s colored node misaligned, start=%llx expected alignment=%lld [rem=%lld]\n",
 				       mode->name, node->start, node->size, rem);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			drm_mm_remove_node(node);
-			kfree(node);
-		}
+			drm_mm_हटाओ_node(node);
+			kमुक्त(node);
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	drm_mm_for_each_node_safe(node, nn, &mm) {
-		drm_mm_remove_node(node);
-		kfree(node);
-	}
-	drm_mm_takedown(&mm);
-	return ret;
-}
+	drm_mm_क्रम_each_node_safe(node, nn, &mm) अणु
+		drm_mm_हटाओ_node(node);
+		kमुक्त(node);
+	पूर्ण
+	drm_mm_takeकरोwn(&mm);
+	वापस ret;
+पूर्ण
 
-static int evict_color(struct drm_mm *mm,
+अटल पूर्णांक evict_color(काष्ठा drm_mm *mm,
 		       u64 range_start, u64 range_end,
-		       struct evict_node *nodes,
-		       unsigned int *order,
-		       unsigned int count,
-		       unsigned int size,
-		       unsigned int alignment,
-		       unsigned long color,
-		       const struct insert_mode *mode)
-{
-	struct drm_mm_scan scan;
+		       काष्ठा evict_node *nodes,
+		       अचिन्हित पूर्णांक *order,
+		       अचिन्हित पूर्णांक count,
+		       अचिन्हित पूर्णांक size,
+		       अचिन्हित पूर्णांक alignment,
+		       अचिन्हित दीर्घ color,
+		       स्थिर काष्ठा insert_mode *mode)
+अणु
+	काष्ठा drm_mm_scan scan;
 	LIST_HEAD(evict_list);
-	struct evict_node *e;
-	struct drm_mm_node tmp;
-	int err;
+	काष्ठा evict_node *e;
+	काष्ठा drm_mm_node पंचांगp;
+	पूर्णांक err;
 
 	drm_mm_scan_init_with_range(&scan, mm,
 				    size, alignment, color,
 				    range_start, range_end,
 				    mode->mode);
-	if (!evict_nodes(&scan,
+	अगर (!evict_nodes(&scan,
 			 nodes, order, count, true,
 			 &evict_list))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	memset(&tmp, 0, sizeof(tmp));
-	err = drm_mm_insert_node_generic(mm, &tmp, size, alignment, color,
+	स_रखो(&पंचांगp, 0, माप(पंचांगp));
+	err = drm_mm_insert_node_generic(mm, &पंचांगp, size, alignment, color,
 					 DRM_MM_INSERT_EVICT);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to insert into eviction hole: size=%d, align=%d, color=%lu, err=%d\n",
 		       size, alignment, color, err);
 		show_scan(&scan);
 		show_holes(mm, 3);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (tmp.start < range_start || tmp.start + tmp.size > range_end) {
+	अगर (पंचांगp.start < range_start || पंचांगp.start + पंचांगp.size > range_end) अणु
 		pr_err("Inserted [address=%llu + %llu] did not fit into the request range [%llu, %llu]\n",
-		       tmp.start, tmp.size, range_start, range_end);
+		       पंचांगp.start, पंचांगp.size, range_start, range_end);
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	if (colors_abutt(&tmp))
+	अगर (colors_abutt(&पंचांगp))
 		err = -EINVAL;
 
-	if (!assert_node(&tmp, mm, size, alignment, color)) {
+	अगर (!निश्चित_node(&पंचांगp, mm, size, alignment, color)) अणु
 		pr_err("Inserted did not fit the eviction hole: size=%lld [%d], align=%d [rem=%lld], start=%llx\n",
-		       tmp.size, size,
-		       alignment, misalignment(&tmp, alignment), tmp.start);
+		       पंचांगp.size, size,
+		       alignment, misalignment(&पंचांगp, alignment), पंचांगp.start);
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	drm_mm_remove_node(&tmp);
-	if (err)
-		return err;
+	drm_mm_हटाओ_node(&पंचांगp);
+	अगर (err)
+		वापस err;
 
-	list_for_each_entry(e, &evict_list, link) {
+	list_क्रम_each_entry(e, &evict_list, link) अणु
 		err = drm_mm_reserve_node(mm, &e->node);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Failed to reinsert node after eviction: start=%llx\n",
 			       e->node.start);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	cond_resched();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igt_color_evict(void *ignored)
-{
-	DRM_RND_STATE(prng, random_seed);
-	const unsigned int total_size = min(8192u, max_iterations);
-	const struct insert_mode *mode;
-	unsigned long color = 0;
-	struct drm_mm mm;
-	struct evict_node *nodes;
-	struct drm_mm_node *node, *next;
-	unsigned int *order, n;
-	int ret, err;
+अटल पूर्णांक igt_color_evict(व्योम *ignored)
+अणु
+	DRM_RND_STATE(prng, अक्रमom_seed);
+	स्थिर अचिन्हित पूर्णांक total_size = min(8192u, max_iterations);
+	स्थिर काष्ठा insert_mode *mode;
+	अचिन्हित दीर्घ color = 0;
+	काष्ठा drm_mm mm;
+	काष्ठा evict_node *nodes;
+	काष्ठा drm_mm_node *node, *next;
+	अचिन्हित पूर्णांक *order, n;
+	पूर्णांक ret, err;
 
-	/* Check that the drm_mm_scan also honours color adjustment when
-	 * choosing its victims to create a hole. Our color_adjust does not
-	 * allow two nodes to be placed together without an intervening hole
+	/* Check that the drm_mm_scan also honours color adjusपंचांगent when
+	 * choosing its victims to create a hole. Our color_adjust करोes not
+	 * allow two nodes to be placed together without an पूर्णांकervening hole
 	 * enlarging the set of victims that must be evicted.
 	 */
 
 	ret = -ENOMEM;
-	nodes = vzalloc(array_size(total_size, sizeof(*nodes)));
-	if (!nodes)
-		goto err;
+	nodes = vzalloc(array_size(total_size, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err;
 
-	order = drm_random_order(total_size, &prng);
-	if (!order)
-		goto err_nodes;
+	order = drm_अक्रमom_order(total_size, &prng);
+	अगर (!order)
+		जाओ err_nodes;
 
 	ret = -EINVAL;
 	drm_mm_init(&mm, 0, 2*total_size - 1);
 	mm.color_adjust = separate_adjacent_colors;
-	for (n = 0; n < total_size; n++) {
-		if (!expect_insert(&mm, &nodes[n].node,
+	क्रम (n = 0; n < total_size; n++) अणु
+		अगर (!expect_insert(&mm, &nodes[n].node,
 				   1, 0, color++,
-				   &insert_modes[0])) {
+				   &insert_modes[0])) अणु
 			pr_err("insert failed, step %d\n", n);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	for (mode = evict_modes; mode->name; mode++) {
-		for (n = 1; n <= total_size; n <<= 1) {
-			drm_random_reorder(order, total_size, &prng);
+	क्रम (mode = evict_modes; mode->name; mode++) अणु
+		क्रम (n = 1; n <= total_size; n <<= 1) अणु
+			drm_अक्रमom_reorder(order, total_size, &prng);
 			err = evict_color(&mm, 0, U64_MAX,
 					  nodes, order, total_size,
 					  n, 1, color++,
 					  mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_color(size=%u) failed\n",
 				       mode->name, n);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		for (n = 1; n < total_size; n <<= 1) {
-			drm_random_reorder(order, total_size, &prng);
+		क्रम (n = 1; n < total_size; n <<= 1) अणु
+			drm_अक्रमom_reorder(order, total_size, &prng);
 			err = evict_color(&mm, 0, U64_MAX,
 					  nodes, order, total_size,
 					  total_size/2, n, color++,
 					  mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_color(size=%u, alignment=%u) failed\n",
 				       mode->name, total_size/2, n);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		for_each_prime_number_from(n, 1, min(total_size, max_prime)) {
-			unsigned int nsize = (total_size - n + 1) / 2;
+		क्रम_each_prime_number_from(n, 1, min(total_size, max_prime)) अणु
+			अचिन्हित पूर्णांक nsize = (total_size - n + 1) / 2;
 
 			DRM_MM_BUG_ON(!nsize);
 
-			drm_random_reorder(order, total_size, &prng);
+			drm_अक्रमom_reorder(order, total_size, &prng);
 			err = evict_color(&mm, 0, U64_MAX,
 					  nodes, order, total_size,
 					  nsize, n, color++,
 					  mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_color(size=%u, alignment=%u) failed\n",
 				       mode->name, nsize, n);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	if (ret)
+	अगर (ret)
 		show_mm(&mm);
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	kfree(order);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	kमुक्त(order);
 err_nodes:
-	vfree(nodes);
+	vमुक्त(nodes);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int igt_color_evict_range(void *ignored)
-{
-	DRM_RND_STATE(prng, random_seed);
-	const unsigned int total_size = 8192;
-	const unsigned int range_size = total_size / 2;
-	const unsigned int range_start = total_size / 4;
-	const unsigned int range_end = range_start + range_size;
-	const struct insert_mode *mode;
-	unsigned long color = 0;
-	struct drm_mm mm;
-	struct evict_node *nodes;
-	struct drm_mm_node *node, *next;
-	unsigned int *order, n;
-	int ret, err;
+अटल पूर्णांक igt_color_evict_range(व्योम *ignored)
+अणु
+	DRM_RND_STATE(prng, अक्रमom_seed);
+	स्थिर अचिन्हित पूर्णांक total_size = 8192;
+	स्थिर अचिन्हित पूर्णांक range_size = total_size / 2;
+	स्थिर अचिन्हित पूर्णांक range_start = total_size / 4;
+	स्थिर अचिन्हित पूर्णांक range_end = range_start + range_size;
+	स्थिर काष्ठा insert_mode *mode;
+	अचिन्हित दीर्घ color = 0;
+	काष्ठा drm_mm mm;
+	काष्ठा evict_node *nodes;
+	काष्ठा drm_mm_node *node, *next;
+	अचिन्हित पूर्णांक *order, n;
+	पूर्णांक ret, err;
 
 	/* Like igt_color_evict(), but limited to small portion of the full
 	 * drm_mm range.
 	 */
 
 	ret = -ENOMEM;
-	nodes = vzalloc(array_size(total_size, sizeof(*nodes)));
-	if (!nodes)
-		goto err;
+	nodes = vzalloc(array_size(total_size, माप(*nodes)));
+	अगर (!nodes)
+		जाओ err;
 
-	order = drm_random_order(total_size, &prng);
-	if (!order)
-		goto err_nodes;
+	order = drm_अक्रमom_order(total_size, &prng);
+	अगर (!order)
+		जाओ err_nodes;
 
 	ret = -EINVAL;
 	drm_mm_init(&mm, 0, 2*total_size - 1);
 	mm.color_adjust = separate_adjacent_colors;
-	for (n = 0; n < total_size; n++) {
-		if (!expect_insert(&mm, &nodes[n].node,
+	क्रम (n = 0; n < total_size; n++) अणु
+		अगर (!expect_insert(&mm, &nodes[n].node,
 				   1, 0, color++,
-				   &insert_modes[0])) {
+				   &insert_modes[0])) अणु
 			pr_err("insert failed, step %d\n", n);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	for (mode = evict_modes; mode->name; mode++) {
-		for (n = 1; n <= range_size; n <<= 1) {
-			drm_random_reorder(order, range_size, &prng);
+	क्रम (mode = evict_modes; mode->name; mode++) अणु
+		क्रम (n = 1; n <= range_size; n <<= 1) अणु
+			drm_अक्रमom_reorder(order, range_size, &prng);
 			err = evict_color(&mm, range_start, range_end,
 					  nodes, order, total_size,
 					  n, 1, color++,
 					  mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_color(size=%u) failed for range [%x, %x]\n",
 				       mode->name, n, range_start, range_end);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		for (n = 1; n < range_size; n <<= 1) {
-			drm_random_reorder(order, total_size, &prng);
+		क्रम (n = 1; n < range_size; n <<= 1) अणु
+			drm_अक्रमom_reorder(order, total_size, &prng);
 			err = evict_color(&mm, range_start, range_end,
 					  nodes, order, total_size,
 					  range_size/2, n, color++,
 					  mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_color(size=%u, alignment=%u) failed for range [%x, %x]\n",
 				       mode->name, total_size/2, n, range_start, range_end);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		for_each_prime_number_from(n, 1, min(range_size, max_prime)) {
-			unsigned int nsize = (range_size - n + 1) / 2;
+		क्रम_each_prime_number_from(n, 1, min(range_size, max_prime)) अणु
+			अचिन्हित पूर्णांक nsize = (range_size - n + 1) / 2;
 
 			DRM_MM_BUG_ON(!nsize);
 
-			drm_random_reorder(order, total_size, &prng);
+			drm_अक्रमom_reorder(order, total_size, &prng);
 			err = evict_color(&mm, range_start, range_end,
 					  nodes, order, total_size,
 					  nsize, n, color++,
 					  mode);
-			if (err) {
+			अगर (err) अणु
 				pr_err("%s evict_color(size=%u, alignment=%u) failed for range [%x, %x]\n",
 				       mode->name, nsize, n, range_start, range_end);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	if (ret)
+	अगर (ret)
 		show_mm(&mm);
-	drm_mm_for_each_node_safe(node, next, &mm)
-		drm_mm_remove_node(node);
-	drm_mm_takedown(&mm);
-	kfree(order);
+	drm_mm_क्रम_each_node_safe(node, next, &mm)
+		drm_mm_हटाओ_node(node);
+	drm_mm_takeकरोwn(&mm);
+	kमुक्त(order);
 err_nodes:
-	vfree(nodes);
+	vमुक्त(nodes);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#include "drm_selftest.c"
+#समावेश "drm_selftest.c"
 
-static int __init test_drm_mm_init(void)
-{
-	int err;
+अटल पूर्णांक __init test_drm_mm_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	while (!random_seed)
-		random_seed = get_random_int();
+	जबतक (!अक्रमom_seed)
+		अक्रमom_seed = get_अक्रमom_पूर्णांक();
 
 	pr_info("Testing DRM range manager (struct drm_mm), with random_seed=0x%x max_iterations=%u max_prime=%u\n",
-		random_seed, max_iterations, max_prime);
-	err = run_selftests(selftests, ARRAY_SIZE(selftests), NULL);
+		अक्रमom_seed, max_iterations, max_prime);
+	err = run_selftests(selftests, ARRAY_SIZE(selftests), शून्य);
 
-	return err > 0 ? 0 : err;
-}
+	वापस err > 0 ? 0 : err;
+पूर्ण
 
-static void __exit test_drm_mm_exit(void)
-{
-}
+अटल व्योम __निकास test_drm_mm_निकास(व्योम)
+अणु
+पूर्ण
 
 module_init(test_drm_mm_init);
-module_exit(test_drm_mm_exit);
+module_निकास(test_drm_mm_निकास);
 
-module_param(random_seed, uint, 0400);
-module_param(max_iterations, uint, 0400);
-module_param(max_prime, uint, 0400);
+module_param(अक्रमom_seed, uपूर्णांक, 0400);
+module_param(max_iterations, uपूर्णांक, 0400);
+module_param(max_prime, uपूर्णांक, 0400);
 
 MODULE_AUTHOR("Intel Corporation");
 MODULE_LICENSE("GPL");

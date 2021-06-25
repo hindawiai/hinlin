@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/fs/lockd/clntlock.c
  *
- * Lock handling for the client side NLM implementation
+ * Lock handling क्रम the client side NLM implementation
  *
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/time.h>
-#include <linux/nfs_fs.h>
-#include <linux/sunrpc/addr.h>
-#include <linux/sunrpc/svc.h>
-#include <linux/lockd/lockd.h>
-#include <linux/kthread.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/sunrpc/addr.h>
+#समावेश <linux/sunrpc/svc.h>
+#समावेश <linux/lockd/lockd.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#define NLMDBG_FACILITY		NLMDBG_CLIENT
+#घोषणा NLMDBG_FACILITY		NLMDBG_CLIENT
 
 /*
  * Local function prototypes
  */
-static int			reclaimer(void *ptr);
+अटल पूर्णांक			reclaimer(व्योम *ptr);
 
 /*
  * The following functions handle blocking and granting from the
@@ -32,140 +33,140 @@ static int			reclaimer(void *ptr);
 /*
  * This is the representation of a blocked client lock.
  */
-struct nlm_wait {
-	struct list_head	b_list;		/* linked list */
-	wait_queue_head_t	b_wait;		/* where to wait on */
-	struct nlm_host *	b_host;
-	struct file_lock *	b_lock;		/* local file lock */
-	unsigned short		b_reclaim;	/* got to reclaim lock */
+काष्ठा nlm_रुको अणु
+	काष्ठा list_head	b_list;		/* linked list */
+	रुको_queue_head_t	b_रुको;		/* where to रुको on */
+	काष्ठा nlm_host *	b_host;
+	काष्ठा file_lock *	b_lock;		/* local file lock */
+	अचिन्हित लघु		b_reclaim;	/* got to reclaim lock */
 	__be32			b_status;	/* grant callback status */
-};
+पूर्ण;
 
-static LIST_HEAD(nlm_blocked);
-static DEFINE_SPINLOCK(nlm_blocked_lock);
+अटल LIST_HEAD(nlm_blocked);
+अटल DEFINE_SPINLOCK(nlm_blocked_lock);
 
 /**
- * nlmclnt_init - Set up per-NFS mount point lockd data structures
- * @nlm_init: pointer to arguments structure
+ * nlmclnt_init - Set up per-NFS mount poपूर्णांक lockd data काष्ठाures
+ * @nlm_init: poपूर्णांकer to arguments काष्ठाure
  *
- * Returns pointer to an appropriate nlm_host struct,
+ * Returns poपूर्णांकer to an appropriate nlm_host काष्ठा,
  * or an ERR_PTR value.
  */
-struct nlm_host *nlmclnt_init(const struct nlmclnt_initdata *nlm_init)
-{
-	struct nlm_host *host;
+काष्ठा nlm_host *nlmclnt_init(स्थिर काष्ठा nlmclnt_initdata *nlm_init)
+अणु
+	काष्ठा nlm_host *host;
 	u32 nlm_version = (nlm_init->nfs_version == 2) ? 1 : 4;
-	int status;
+	पूर्णांक status;
 
 	status = lockd_up(nlm_init->net, nlm_init->cred);
-	if (status < 0)
-		return ERR_PTR(status);
+	अगर (status < 0)
+		वापस ERR_PTR(status);
 
 	host = nlmclnt_lookup_host(nlm_init->address, nlm_init->addrlen,
 				   nlm_init->protocol, nlm_version,
 				   nlm_init->hostname, nlm_init->noresvport,
 				   nlm_init->net, nlm_init->cred);
-	if (host == NULL)
-		goto out_nohost;
-	if (host->h_rpcclnt == NULL && nlm_bind_host(host) == NULL)
-		goto out_nobind;
+	अगर (host == शून्य)
+		जाओ out_nohost;
+	अगर (host->h_rpcclnt == शून्य && nlm_bind_host(host) == शून्य)
+		जाओ out_nobind;
 
 	host->h_nlmclnt_ops = nlm_init->nlmclnt_ops;
-	return host;
+	वापस host;
 out_nobind:
 	nlmclnt_release_host(host);
 out_nohost:
-	lockd_down(nlm_init->net);
-	return ERR_PTR(-ENOLCK);
-}
+	lockd_करोwn(nlm_init->net);
+	वापस ERR_PTR(-ENOLCK);
+पूर्ण
 EXPORT_SYMBOL_GPL(nlmclnt_init);
 
 /**
- * nlmclnt_done - Release resources allocated by nlmclnt_init()
- * @host: nlm_host structure reserved by nlmclnt_init()
+ * nlmclnt_करोne - Release resources allocated by nlmclnt_init()
+ * @host: nlm_host काष्ठाure reserved by nlmclnt_init()
  *
  */
-void nlmclnt_done(struct nlm_host *host)
-{
-	struct net *net = host->net;
+व्योम nlmclnt_करोne(काष्ठा nlm_host *host)
+अणु
+	काष्ठा net *net = host->net;
 
 	nlmclnt_release_host(host);
-	lockd_down(net);
-}
-EXPORT_SYMBOL_GPL(nlmclnt_done);
+	lockd_करोwn(net);
+पूर्ण
+EXPORT_SYMBOL_GPL(nlmclnt_करोne);
 
 /*
- * Queue up a lock for blocking so that the GRANTED request can see it
+ * Queue up a lock क्रम blocking so that the GRANTED request can see it
  */
-struct nlm_wait *nlmclnt_prepare_block(struct nlm_host *host, struct file_lock *fl)
-{
-	struct nlm_wait *block;
+काष्ठा nlm_रुको *nlmclnt_prepare_block(काष्ठा nlm_host *host, काष्ठा file_lock *fl)
+अणु
+	काष्ठा nlm_रुको *block;
 
-	block = kmalloc(sizeof(*block), GFP_KERNEL);
-	if (block != NULL) {
+	block = kदो_स्मृति(माप(*block), GFP_KERNEL);
+	अगर (block != शून्य) अणु
 		block->b_host = host;
 		block->b_lock = fl;
-		init_waitqueue_head(&block->b_wait);
+		init_रुकोqueue_head(&block->b_रुको);
 		block->b_status = nlm_lck_blocked;
 
 		spin_lock(&nlm_blocked_lock);
 		list_add(&block->b_list, &nlm_blocked);
 		spin_unlock(&nlm_blocked_lock);
-	}
-	return block;
-}
+	पूर्ण
+	वापस block;
+पूर्ण
 
-void nlmclnt_finish_block(struct nlm_wait *block)
-{
-	if (block == NULL)
-		return;
+व्योम nlmclnt_finish_block(काष्ठा nlm_रुको *block)
+अणु
+	अगर (block == शून्य)
+		वापस;
 	spin_lock(&nlm_blocked_lock);
 	list_del(&block->b_list);
 	spin_unlock(&nlm_blocked_lock);
-	kfree(block);
-}
+	kमुक्त(block);
+पूर्ण
 
 /*
  * Block on a lock
  */
-int nlmclnt_block(struct nlm_wait *block, struct nlm_rqst *req, long timeout)
-{
-	long ret;
+पूर्णांक nlmclnt_block(काष्ठा nlm_रुको *block, काष्ठा nlm_rqst *req, दीर्घ समयout)
+अणु
+	दीर्घ ret;
 
-	/* A borken server might ask us to block even if we didn't
+	/* A borken server might ask us to block even अगर we didn't
 	 * request it. Just say no!
 	 */
-	if (block == NULL)
-		return -EAGAIN;
+	अगर (block == शून्य)
+		वापस -EAGAIN;
 
-	/* Go to sleep waiting for GRANT callback. Some servers seem
+	/* Go to sleep रुकोing क्रम GRANT callback. Some servers seem
 	 * to lose callbacks, however, so we're going to poll from
-	 * time to time just to make sure.
+	 * समय to समय just to make sure.
 	 *
 	 * For now, the retry frequency is pretty high; normally 
-	 * a 1 minute timeout would do. See the comment before
-	 * nlmclnt_lock for an explanation.
+	 * a 1 minute समयout would करो. See the comment beक्रमe
+	 * nlmclnt_lock क्रम an explanation.
 	 */
-	ret = wait_event_interruptible_timeout(block->b_wait,
+	ret = रुको_event_पूर्णांकerruptible_समयout(block->b_रुको,
 			block->b_status != nlm_lck_blocked,
-			timeout);
-	if (ret < 0)
-		return -ERESTARTSYS;
+			समयout);
+	अगर (ret < 0)
+		वापस -ERESTARTSYS;
 	/* Reset the lock status after a server reboot so we resend */
-	if (block->b_status == nlm_lck_denied_grace_period)
+	अगर (block->b_status == nlm_lck_denied_grace_period)
 		block->b_status = nlm_lck_blocked;
 	req->a_res.status = block->b_status;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * The server lockd has called us back to tell us the lock was granted
  */
-__be32 nlmclnt_grant(const struct sockaddr *addr, const struct nlm_lock *lock)
-{
-	const struct file_lock *fl = &lock->fl;
-	const struct nfs_fh *fh = &lock->fh;
-	struct nlm_wait	*block;
+__be32 nlmclnt_grant(स्थिर काष्ठा sockaddr *addr, स्थिर काष्ठा nlm_lock *lock)
+अणु
+	स्थिर काष्ठा file_lock *fl = &lock->fl;
+	स्थिर काष्ठा nfs_fh *fh = &lock->fh;
+	काष्ठा nlm_रुको	*block;
 	__be32 res = nlm_lck_denied;
 
 	/*
@@ -173,33 +174,33 @@ __be32 nlmclnt_grant(const struct sockaddr *addr, const struct nlm_lock *lock)
 	 * Warning: must not use cookie to match it!
 	 */
 	spin_lock(&nlm_blocked_lock);
-	list_for_each_entry(block, &nlm_blocked, b_list) {
-		struct file_lock *fl_blocked = block->b_lock;
+	list_क्रम_each_entry(block, &nlm_blocked, b_list) अणु
+		काष्ठा file_lock *fl_blocked = block->b_lock;
 
-		if (fl_blocked->fl_start != fl->fl_start)
-			continue;
-		if (fl_blocked->fl_end != fl->fl_end)
-			continue;
+		अगर (fl_blocked->fl_start != fl->fl_start)
+			जारी;
+		अगर (fl_blocked->fl_end != fl->fl_end)
+			जारी;
 		/*
-		 * Careful! The NLM server will return the 32-bit "pid" that
-		 * we put on the wire: in this case the lockowner "pid".
+		 * Careful! The NLM server will वापस the 32-bit "pid" that
+		 * we put on the wire: in this हाल the lockowner "pid".
 		 */
-		if (fl_blocked->fl_u.nfs_fl.owner->pid != lock->svid)
-			continue;
-		if (!rpc_cmp_addr(nlm_addr(block->b_host), addr))
-			continue;
-		if (nfs_compare_fh(NFS_FH(locks_inode(fl_blocked->fl_file)), fh) != 0)
-			continue;
-		/* Alright, we found a lock. Set the return status
+		अगर (fl_blocked->fl_u.nfs_fl.owner->pid != lock->svid)
+			जारी;
+		अगर (!rpc_cmp_addr(nlm_addr(block->b_host), addr))
+			जारी;
+		अगर (nfs_compare_fh(NFS_FH(locks_inode(fl_blocked->fl_file)), fh) != 0)
+			जारी;
+		/* Alright, we found a lock. Set the वापस status
 		 * and wake up the caller
 		 */
 		block->b_status = nlm_granted;
-		wake_up(&block->b_wait);
+		wake_up(&block->b_रुको);
 		res = nlm_granted;
-	}
+	पूर्ण
 	spin_unlock(&nlm_blocked_lock);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
  * The following procedures deal with the recovery of locks after a
@@ -207,93 +208,93 @@ __be32 nlmclnt_grant(const struct sockaddr *addr, const struct nlm_lock *lock)
  */
 
 /*
- * Reclaim all locks on server host. We do this by spawning a separate
- * reclaimer thread.
+ * Reclaim all locks on server host. We करो this by spawning a separate
+ * reclaimer thपढ़ो.
  */
-void
-nlmclnt_recovery(struct nlm_host *host)
-{
-	struct task_struct *task;
+व्योम
+nlmclnt_recovery(काष्ठा nlm_host *host)
+अणु
+	काष्ठा task_काष्ठा *task;
 
-	if (!host->h_reclaiming++) {
+	अगर (!host->h_reclaiming++) अणु
 		nlm_get_host(host);
-		task = kthread_run(reclaimer, host, "%s-reclaim", host->h_name);
-		if (IS_ERR(task))
-			printk(KERN_ERR "lockd: unable to spawn reclaimer "
+		task = kthपढ़ो_run(reclaimer, host, "%s-reclaim", host->h_name);
+		अगर (IS_ERR(task))
+			prपूर्णांकk(KERN_ERR "lockd: unable to spawn reclaimer "
 				"thread. Locks for %s won't be reclaimed! "
 				"(%ld)\n", host->h_name, PTR_ERR(task));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-reclaimer(void *ptr)
-{
-	struct nlm_host	  *host = (struct nlm_host *) ptr;
-	struct nlm_wait	  *block;
-	struct nlm_rqst   *req;
-	struct file_lock *fl, *next;
+अटल पूर्णांक
+reclaimer(व्योम *ptr)
+अणु
+	काष्ठा nlm_host	  *host = (काष्ठा nlm_host *) ptr;
+	काष्ठा nlm_रुको	  *block;
+	काष्ठा nlm_rqst   *req;
+	काष्ठा file_lock *fl, *next;
 	u32 nsmstate;
-	struct net *net = host->net;
+	काष्ठा net *net = host->net;
 
-	req = kmalloc(sizeof(*req), GFP_KERNEL);
-	if (!req)
-		return 0;
+	req = kदो_स्मृति(माप(*req), GFP_KERNEL);
+	अगर (!req)
+		वापस 0;
 
-	allow_signal(SIGKILL);
+	allow_संकेत(SIGKILL);
 
-	down_write(&host->h_rwsem);
-	lockd_up(net, NULL);	/* note: this cannot fail as lockd is already running */
+	करोwn_ग_लिखो(&host->h_rwsem);
+	lockd_up(net, शून्य);	/* note: this cannot fail as lockd is alपढ़ोy running */
 
-	dprintk("lockd: reclaiming locks for host %s\n", host->h_name);
+	dprपूर्णांकk("lockd: reclaiming locks for host %s\n", host->h_name);
 
 restart:
 	nsmstate = host->h_nsmstate;
 
-	/* Force a portmap getport - the peer's lockd will
-	 * most likely end up on a different port.
+	/* Force a porपंचांगap getport - the peer's lockd will
+	 * most likely end up on a dअगरferent port.
 	 */
-	host->h_nextrebind = jiffies;
+	host->h_nextrebind = jअगरfies;
 	nlm_rebind_host(host);
 
 	/* First, reclaim all locks that have been granted. */
 	list_splice_init(&host->h_granted, &host->h_reclaim);
-	list_for_each_entry_safe(fl, next, &host->h_reclaim, fl_u.nfs_fl.list) {
+	list_क्रम_each_entry_safe(fl, next, &host->h_reclaim, fl_u.nfs_fl.list) अणु
 		list_del_init(&fl->fl_u.nfs_fl.list);
 
 		/*
-		 * sending this thread a SIGKILL will result in any unreclaimed
-		 * locks being removed from the h_granted list. This means that
-		 * the kernel will not attempt to reclaim them again if a new
-		 * reclaimer thread is spawned for this host.
+		 * sending this thपढ़ो a SIGKILL will result in any unreclaimed
+		 * locks being हटाओd from the h_granted list. This means that
+		 * the kernel will not attempt to reclaim them again अगर a new
+		 * reclaimer thपढ़ो is spawned क्रम this host.
 		 */
-		if (signalled())
-			continue;
-		if (nlmclnt_reclaim(host, fl, req) != 0)
-			continue;
+		अगर (संकेतled())
+			जारी;
+		अगर (nlmclnt_reclaim(host, fl, req) != 0)
+			जारी;
 		list_add_tail(&fl->fl_u.nfs_fl.list, &host->h_granted);
-		if (host->h_nsmstate != nsmstate) {
+		अगर (host->h_nsmstate != nsmstate) अणु
 			/* Argh! The server rebooted again! */
-			goto restart;
-		}
-	}
+			जाओ restart;
+		पूर्ण
+	पूर्ण
 
 	host->h_reclaiming = 0;
-	up_write(&host->h_rwsem);
-	dprintk("NLM: done reclaiming locks for host %s\n", host->h_name);
+	up_ग_लिखो(&host->h_rwsem);
+	dprपूर्णांकk("NLM: done reclaiming locks for host %s\n", host->h_name);
 
 	/* Now, wake up all processes that sleep on a blocked lock */
 	spin_lock(&nlm_blocked_lock);
-	list_for_each_entry(block, &nlm_blocked, b_list) {
-		if (block->b_host == host) {
+	list_क्रम_each_entry(block, &nlm_blocked, b_list) अणु
+		अगर (block->b_host == host) अणु
 			block->b_status = nlm_lck_denied_grace_period;
-			wake_up(&block->b_wait);
-		}
-	}
+			wake_up(&block->b_रुको);
+		पूर्ण
+	पूर्ण
 	spin_unlock(&nlm_blocked_lock);
 
 	/* Release host handle after use */
 	nlmclnt_release_host(host);
-	lockd_down(net);
-	kfree(req);
-	return 0;
-}
+	lockd_करोwn(net);
+	kमुक्त(req);
+	वापस 0;
+पूर्ण

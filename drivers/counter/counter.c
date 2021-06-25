@@ -1,345 +1,346 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Generic Counter interface
+ * Generic Counter पूर्णांकerface
  * Copyright (C) 2018 William Breathitt Gray
  */
-#include <linux/counter.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/fs.h>
-#include <linux/gfp.h>
-#include <linux/idr.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/sysfs.h>
-#include <linux/types.h>
+#समावेश <linux/counter.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/types.h>
 
-const char *const counter_count_direction_str[2] = {
-	[COUNTER_COUNT_DIRECTION_FORWARD] = "forward",
-	[COUNTER_COUNT_DIRECTION_BACKWARD] = "backward"
-};
+स्थिर अक्षर *स्थिर counter_count_direction_str[2] = अणु
+	[COUNTER_COUNT_सूचीECTION_FORWARD] = "forward",
+	[COUNTER_COUNT_सूचीECTION_BACKWARD] = "backward"
+पूर्ण;
 EXPORT_SYMBOL_GPL(counter_count_direction_str);
 
-const char *const counter_count_mode_str[4] = {
+स्थिर अक्षर *स्थिर counter_count_mode_str[4] = अणु
 	[COUNTER_COUNT_MODE_NORMAL] = "normal",
 	[COUNTER_COUNT_MODE_RANGE_LIMIT] = "range limit",
 	[COUNTER_COUNT_MODE_NON_RECYCLE] = "non-recycle",
 	[COUNTER_COUNT_MODE_MODULO_N] = "modulo-n"
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(counter_count_mode_str);
 
-ssize_t counter_signal_enum_read(struct counter_device *counter,
-				 struct counter_signal *signal, void *priv,
-				 char *buf)
-{
-	const struct counter_signal_enum_ext *const e = priv;
-	int err;
-	size_t index;
+sमाप_प्रकार counter_संकेत_क्रमागत_पढ़ो(काष्ठा counter_device *counter,
+				 काष्ठा counter_संकेत *संकेत, व्योम *priv,
+				 अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_संकेत_क्रमागत_ext *स्थिर e = priv;
+	पूर्णांक err;
+	माप_प्रकार index;
 
-	if (!e->get)
-		return -EINVAL;
+	अगर (!e->get)
+		वापस -EINVAL;
 
-	err = e->get(counter, signal, &index);
-	if (err)
-		return err;
+	err = e->get(counter, संकेत, &index);
+	अगर (err)
+		वापस err;
 
-	if (index >= e->num_items)
-		return -EINVAL;
+	अगर (index >= e->num_items)
+		वापस -EINVAL;
 
-	return sprintf(buf, "%s\n", e->items[index]);
-}
-EXPORT_SYMBOL_GPL(counter_signal_enum_read);
+	वापस प्र_लिखो(buf, "%s\n", e->items[index]);
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_संकेत_क्रमागत_पढ़ो);
 
-ssize_t counter_signal_enum_write(struct counter_device *counter,
-				  struct counter_signal *signal, void *priv,
-				  const char *buf, size_t len)
-{
-	const struct counter_signal_enum_ext *const e = priv;
-	ssize_t index;
-	int err;
+sमाप_प्रकार counter_संकेत_क्रमागत_ग_लिखो(काष्ठा counter_device *counter,
+				  काष्ठा counter_संकेत *संकेत, व्योम *priv,
+				  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	स्थिर काष्ठा counter_संकेत_क्रमागत_ext *स्थिर e = priv;
+	sमाप_प्रकार index;
+	पूर्णांक err;
 
-	if (!e->set)
-		return -EINVAL;
+	अगर (!e->set)
+		वापस -EINVAL;
 
 	index = __sysfs_match_string(e->items, e->num_items, buf);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
-	err = e->set(counter, signal, index);
-	if (err)
-		return err;
+	err = e->set(counter, संकेत, index);
+	अगर (err)
+		वापस err;
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(counter_signal_enum_write);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_संकेत_क्रमागत_ग_लिखो);
 
-ssize_t counter_signal_enum_available_read(struct counter_device *counter,
-					   struct counter_signal *signal,
-					   void *priv, char *buf)
-{
-	const struct counter_signal_enum_ext *const e = priv;
-	size_t i;
-	size_t len = 0;
+sमाप_प्रकार counter_संकेत_क्रमागत_available_पढ़ो(काष्ठा counter_device *counter,
+					   काष्ठा counter_संकेत *संकेत,
+					   व्योम *priv, अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_संकेत_क्रमागत_ext *स्थिर e = priv;
+	माप_प्रकार i;
+	माप_प्रकार len = 0;
 
-	if (!e->num_items)
-		return 0;
+	अगर (!e->num_items)
+		वापस 0;
 
-	for (i = 0; i < e->num_items; i++)
-		len += sprintf(buf + len, "%s\n", e->items[i]);
+	क्रम (i = 0; i < e->num_items; i++)
+		len += प्र_लिखो(buf + len, "%s\n", e->items[i]);
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(counter_signal_enum_available_read);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_संकेत_क्रमागत_available_पढ़ो);
 
-ssize_t counter_count_enum_read(struct counter_device *counter,
-				struct counter_count *count, void *priv,
-				char *buf)
-{
-	const struct counter_count_enum_ext *const e = priv;
-	int err;
-	size_t index;
+sमाप_प्रकार counter_count_क्रमागत_पढ़ो(काष्ठा counter_device *counter,
+				काष्ठा counter_count *count, व्योम *priv,
+				अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_count_क्रमागत_ext *स्थिर e = priv;
+	पूर्णांक err;
+	माप_प्रकार index;
 
-	if (!e->get)
-		return -EINVAL;
+	अगर (!e->get)
+		वापस -EINVAL;
 
 	err = e->get(counter, count, &index);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (index >= e->num_items)
-		return -EINVAL;
+	अगर (index >= e->num_items)
+		वापस -EINVAL;
 
-	return sprintf(buf, "%s\n", e->items[index]);
-}
-EXPORT_SYMBOL_GPL(counter_count_enum_read);
+	वापस प्र_लिखो(buf, "%s\n", e->items[index]);
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_count_क्रमागत_पढ़ो);
 
-ssize_t counter_count_enum_write(struct counter_device *counter,
-				 struct counter_count *count, void *priv,
-				 const char *buf, size_t len)
-{
-	const struct counter_count_enum_ext *const e = priv;
-	ssize_t index;
-	int err;
+sमाप_प्रकार counter_count_क्रमागत_ग_लिखो(काष्ठा counter_device *counter,
+				 काष्ठा counter_count *count, व्योम *priv,
+				 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	स्थिर काष्ठा counter_count_क्रमागत_ext *स्थिर e = priv;
+	sमाप_प्रकार index;
+	पूर्णांक err;
 
-	if (!e->set)
-		return -EINVAL;
+	अगर (!e->set)
+		वापस -EINVAL;
 
 	index = __sysfs_match_string(e->items, e->num_items, buf);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
 	err = e->set(counter, count, index);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(counter_count_enum_write);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_count_क्रमागत_ग_लिखो);
 
-ssize_t counter_count_enum_available_read(struct counter_device *counter,
-					  struct counter_count *count,
-					  void *priv, char *buf)
-{
-	const struct counter_count_enum_ext *const e = priv;
-	size_t i;
-	size_t len = 0;
+sमाप_प्रकार counter_count_क्रमागत_available_पढ़ो(काष्ठा counter_device *counter,
+					  काष्ठा counter_count *count,
+					  व्योम *priv, अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_count_क्रमागत_ext *स्थिर e = priv;
+	माप_प्रकार i;
+	माप_प्रकार len = 0;
 
-	if (!e->num_items)
-		return 0;
+	अगर (!e->num_items)
+		वापस 0;
 
-	for (i = 0; i < e->num_items; i++)
-		len += sprintf(buf + len, "%s\n", e->items[i]);
+	क्रम (i = 0; i < e->num_items; i++)
+		len += प्र_लिखो(buf + len, "%s\n", e->items[i]);
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(counter_count_enum_available_read);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_count_क्रमागत_available_पढ़ो);
 
-ssize_t counter_device_enum_read(struct counter_device *counter, void *priv,
-				 char *buf)
-{
-	const struct counter_device_enum_ext *const e = priv;
-	int err;
-	size_t index;
+sमाप_प्रकार counter_device_क्रमागत_पढ़ो(काष्ठा counter_device *counter, व्योम *priv,
+				 अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_device_क्रमागत_ext *स्थिर e = priv;
+	पूर्णांक err;
+	माप_प्रकार index;
 
-	if (!e->get)
-		return -EINVAL;
+	अगर (!e->get)
+		वापस -EINVAL;
 
 	err = e->get(counter, &index);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (index >= e->num_items)
-		return -EINVAL;
+	अगर (index >= e->num_items)
+		वापस -EINVAL;
 
-	return sprintf(buf, "%s\n", e->items[index]);
-}
-EXPORT_SYMBOL_GPL(counter_device_enum_read);
+	वापस प्र_लिखो(buf, "%s\n", e->items[index]);
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_device_क्रमागत_पढ़ो);
 
-ssize_t counter_device_enum_write(struct counter_device *counter, void *priv,
-				  const char *buf, size_t len)
-{
-	const struct counter_device_enum_ext *const e = priv;
-	ssize_t index;
-	int err;
+sमाप_प्रकार counter_device_क्रमागत_ग_लिखो(काष्ठा counter_device *counter, व्योम *priv,
+				  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	स्थिर काष्ठा counter_device_क्रमागत_ext *स्थिर e = priv;
+	sमाप_प्रकार index;
+	पूर्णांक err;
 
-	if (!e->set)
-		return -EINVAL;
+	अगर (!e->set)
+		वापस -EINVAL;
 
 	index = __sysfs_match_string(e->items, e->num_items, buf);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
 	err = e->set(counter, index);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(counter_device_enum_write);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_device_क्रमागत_ग_लिखो);
 
-ssize_t counter_device_enum_available_read(struct counter_device *counter,
-					   void *priv, char *buf)
-{
-	const struct counter_device_enum_ext *const e = priv;
-	size_t i;
-	size_t len = 0;
+sमाप_प्रकार counter_device_क्रमागत_available_पढ़ो(काष्ठा counter_device *counter,
+					   व्योम *priv, अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_device_क्रमागत_ext *स्थिर e = priv;
+	माप_प्रकार i;
+	माप_प्रकार len = 0;
 
-	if (!e->num_items)
-		return 0;
+	अगर (!e->num_items)
+		वापस 0;
 
-	for (i = 0; i < e->num_items; i++)
-		len += sprintf(buf + len, "%s\n", e->items[i]);
+	क्रम (i = 0; i < e->num_items; i++)
+		len += प्र_लिखो(buf + len, "%s\n", e->items[i]);
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(counter_device_enum_available_read);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_device_क्रमागत_available_पढ़ो);
 
-struct counter_attr_parm {
-	struct counter_device_attr_group *group;
-	const char *prefix;
-	const char *name;
-	ssize_t (*show)(struct device *dev, struct device_attribute *attr,
-			char *buf);
-	ssize_t (*store)(struct device *dev, struct device_attribute *attr,
-			 const char *buf, size_t len);
-	void *component;
-};
+काष्ठा counter_attr_parm अणु
+	काष्ठा counter_device_attr_group *group;
+	स्थिर अक्षर *prefix;
+	स्थिर अक्षर *name;
+	sमाप_प्रकार (*show)(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			अक्षर *buf);
+	sमाप_प्रकार (*store)(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार len);
+	व्योम *component;
+पूर्ण;
 
-struct counter_device_attr {
-	struct device_attribute dev_attr;
-	struct list_head l;
-	void *component;
-};
+काष्ठा counter_device_attr अणु
+	काष्ठा device_attribute dev_attr;
+	काष्ठा list_head l;
+	व्योम *component;
+पूर्ण;
 
-static int counter_attribute_create(const struct counter_attr_parm *const parm)
-{
-	struct counter_device_attr *counter_attr;
-	struct device_attribute *dev_attr;
-	int err;
-	struct list_head *const attr_list = &parm->group->attr_list;
+अटल पूर्णांक counter_attribute_create(स्थिर काष्ठा counter_attr_parm *स्थिर parm)
+अणु
+	काष्ठा counter_device_attr *counter_attr;
+	काष्ठा device_attribute *dev_attr;
+	पूर्णांक err;
+	काष्ठा list_head *स्थिर attr_list = &parm->group->attr_list;
 
 	/* Allocate a Counter device attribute */
-	counter_attr = kzalloc(sizeof(*counter_attr), GFP_KERNEL);
-	if (!counter_attr)
-		return -ENOMEM;
+	counter_attr = kzalloc(माप(*counter_attr), GFP_KERNEL);
+	अगर (!counter_attr)
+		वापस -ENOMEM;
 	dev_attr = &counter_attr->dev_attr;
 
 	sysfs_attr_init(&dev_attr->attr);
 
 	/* Configure device attribute */
-	dev_attr->attr.name = kasprintf(GFP_KERNEL, "%s%s", parm->prefix,
+	dev_attr->attr.name = kaप्र_लिखो(GFP_KERNEL, "%s%s", parm->prefix,
 					parm->name);
-	if (!dev_attr->attr.name) {
+	अगर (!dev_attr->attr.name) अणु
 		err = -ENOMEM;
-		goto err_free_counter_attr;
-	}
-	if (parm->show) {
+		जाओ err_मुक्त_counter_attr;
+	पूर्ण
+	अगर (parm->show) अणु
 		dev_attr->attr.mode |= 0444;
 		dev_attr->show = parm->show;
-	}
-	if (parm->store) {
+	पूर्ण
+	अगर (parm->store) अणु
 		dev_attr->attr.mode |= 0200;
 		dev_attr->store = parm->store;
-	}
+	पूर्ण
 
 	/* Store associated Counter component with attribute */
 	counter_attr->component = parm->component;
 
-	/* Keep track of the attribute for later cleanup */
+	/* Keep track of the attribute क्रम later cleanup */
 	list_add(&counter_attr->l, attr_list);
 	parm->group->num_attr++;
 
-	return 0;
+	वापस 0;
 
-err_free_counter_attr:
-	kfree(counter_attr);
-	return err;
-}
+err_मुक्त_counter_attr:
+	kमुक्त(counter_attr);
+	वापस err;
+पूर्ण
 
-#define to_counter_attr(_dev_attr) \
-	container_of(_dev_attr, struct counter_device_attr, dev_attr)
+#घोषणा to_counter_attr(_dev_attr) \
+	container_of(_dev_attr, काष्ठा counter_device_attr, dev_attr)
 
-struct counter_signal_unit {
-	struct counter_signal *signal;
-};
+काष्ठा counter_संकेत_unit अणु
+	काष्ठा counter_संकेत *संकेत;
+पूर्ण;
 
-static const char *const counter_signal_value_str[] = {
+अटल स्थिर अक्षर *स्थिर counter_संकेत_value_str[] = अणु
 	[COUNTER_SIGNAL_LOW] = "low",
 	[COUNTER_SIGNAL_HIGH] = "high"
-};
+पूर्ण;
 
-static ssize_t counter_signal_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct counter_device *const counter = dev_get_drvdata(dev);
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_signal_unit *const component = devattr->component;
-	struct counter_signal *const signal = component->signal;
-	int err;
-	enum counter_signal_value val;
+अटल sमाप_प्रकार counter_संकेत_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा counter_device *स्थिर counter = dev_get_drvdata(dev);
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_संकेत_unit *स्थिर component = devattr->component;
+	काष्ठा counter_संकेत *स्थिर संकेत = component->संकेत;
+	पूर्णांक err;
+	क्रमागत counter_संकेत_value val;
 
-	err = counter->ops->signal_read(counter, signal, &val);
-	if (err)
-		return err;
+	err = counter->ops->संकेत_पढ़ो(counter, संकेत, &val);
+	अगर (err)
+		वापस err;
 
-	return sprintf(buf, "%s\n", counter_signal_value_str[val]);
-}
+	वापस प्र_लिखो(buf, "%s\n", counter_संकेत_value_str[val]);
+पूर्ण
 
-struct counter_name_unit {
-	const char *name;
-};
+काष्ठा counter_name_unit अणु
+	स्थिर अक्षर *name;
+पूर्ण;
 
-static ssize_t counter_device_attr_name_show(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	const struct counter_name_unit *const comp = to_counter_attr(attr)->component;
+अटल sमाप_प्रकार counter_device_attr_name_show(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_name_unit *स्थिर comp = to_counter_attr(attr)->component;
 
-	return sprintf(buf, "%s\n", comp->name);
-}
+	वापस प्र_लिखो(buf, "%s\n", comp->name);
+पूर्ण
 
-static int counter_name_attribute_create(
-	struct counter_device_attr_group *const group,
-	const char *const name)
-{
-	struct counter_name_unit *name_comp;
-	struct counter_attr_parm parm;
-	int err;
+अटल पूर्णांक counter_name_attribute_create(
+	काष्ठा counter_device_attr_group *स्थिर group,
+	स्थिर अक्षर *स्थिर name)
+अणु
+	काष्ठा counter_name_unit *name_comp;
+	काष्ठा counter_attr_parm parm;
+	पूर्णांक err;
 
-	/* Skip if no name */
-	if (!name)
-		return 0;
+	/* Skip अगर no name */
+	अगर (!name)
+		वापस 0;
 
 	/* Allocate name attribute component */
-	name_comp = kmalloc(sizeof(*name_comp), GFP_KERNEL);
-	if (!name_comp)
-		return -ENOMEM;
+	name_comp = kदो_स्मृति(माप(*name_comp), GFP_KERNEL);
+	अगर (!name_comp)
+		वापस -ENOMEM;
 	name_comp->name = name;
 
 	/* Allocate Signal name attribute */
@@ -347,309 +348,309 @@ static int counter_name_attribute_create(
 	parm.prefix = "";
 	parm.name = "name";
 	parm.show = counter_device_attr_name_show;
-	parm.store = NULL;
+	parm.store = शून्य;
 	parm.component = name_comp;
 	err = counter_attribute_create(&parm);
-	if (err)
-		goto err_free_name_comp;
+	अगर (err)
+		जाओ err_मुक्त_name_comp;
 
-	return 0;
+	वापस 0;
 
-err_free_name_comp:
-	kfree(name_comp);
-	return err;
-}
+err_मुक्त_name_comp:
+	kमुक्त(name_comp);
+	वापस err;
+पूर्ण
 
-struct counter_signal_ext_unit {
-	struct counter_signal *signal;
-	const struct counter_signal_ext *ext;
-};
+काष्ठा counter_संकेत_ext_unit अणु
+	काष्ठा counter_संकेत *संकेत;
+	स्थिर काष्ठा counter_संकेत_ext *ext;
+पूर्ण;
 
-static ssize_t counter_signal_ext_show(struct device *dev,
-				       struct device_attribute *attr, char *buf)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_signal_ext_unit *const comp = devattr->component;
-	const struct counter_signal_ext *const ext = comp->ext;
+अटल sमाप_प्रकार counter_संकेत_ext_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_संकेत_ext_unit *स्थिर comp = devattr->component;
+	स्थिर काष्ठा counter_संकेत_ext *स्थिर ext = comp->ext;
 
-	return ext->read(dev_get_drvdata(dev), comp->signal, ext->priv, buf);
-}
+	वापस ext->पढ़ो(dev_get_drvdata(dev), comp->संकेत, ext->priv, buf);
+पूर्ण
 
-static ssize_t counter_signal_ext_store(struct device *dev,
-					struct device_attribute *attr,
-					const char *buf, size_t len)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_signal_ext_unit *const comp = devattr->component;
-	const struct counter_signal_ext *const ext = comp->ext;
+अटल sमाप_प्रकार counter_संकेत_ext_store(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_संकेत_ext_unit *स्थिर comp = devattr->component;
+	स्थिर काष्ठा counter_संकेत_ext *स्थिर ext = comp->ext;
 
-	return ext->write(dev_get_drvdata(dev), comp->signal, ext->priv, buf,
+	वापस ext->ग_लिखो(dev_get_drvdata(dev), comp->संकेत, ext->priv, buf,
 		len);
-}
+पूर्ण
 
-static void counter_device_attr_list_free(struct list_head *attr_list)
-{
-	struct counter_device_attr *p, *n;
+अटल व्योम counter_device_attr_list_मुक्त(काष्ठा list_head *attr_list)
+अणु
+	काष्ठा counter_device_attr *p, *n;
 
-	list_for_each_entry_safe(p, n, attr_list, l) {
-		/* free attribute name and associated component memory */
-		kfree(p->dev_attr.attr.name);
-		kfree(p->component);
+	list_क्रम_each_entry_safe(p, n, attr_list, l) अणु
+		/* मुक्त attribute name and associated component memory */
+		kमुक्त(p->dev_attr.attr.name);
+		kमुक्त(p->component);
 		list_del(&p->l);
-		kfree(p);
-	}
-}
+		kमुक्त(p);
+	पूर्ण
+पूर्ण
 
-static int counter_signal_ext_register(
-	struct counter_device_attr_group *const group,
-	struct counter_signal *const signal)
-{
-	const size_t num_ext = signal->num_ext;
-	size_t i;
-	const struct counter_signal_ext *ext;
-	struct counter_signal_ext_unit *signal_ext_comp;
-	struct counter_attr_parm parm;
-	int err;
+अटल पूर्णांक counter_संकेत_ext_रेजिस्टर(
+	काष्ठा counter_device_attr_group *स्थिर group,
+	काष्ठा counter_संकेत *स्थिर संकेत)
+अणु
+	स्थिर माप_प्रकार num_ext = संकेत->num_ext;
+	माप_प्रकार i;
+	स्थिर काष्ठा counter_संकेत_ext *ext;
+	काष्ठा counter_संकेत_ext_unit *संकेत_ext_comp;
+	काष्ठा counter_attr_parm parm;
+	पूर्णांक err;
 
-	/* Create an attribute for each extension */
-	for (i = 0 ; i < num_ext; i++) {
-		ext = signal->ext + i;
+	/* Create an attribute क्रम each extension */
+	क्रम (i = 0 ; i < num_ext; i++) अणु
+		ext = संकेत->ext + i;
 
-		/* Allocate signal_ext attribute component */
-		signal_ext_comp = kmalloc(sizeof(*signal_ext_comp), GFP_KERNEL);
-		if (!signal_ext_comp) {
+		/* Allocate संकेत_ext attribute component */
+		संकेत_ext_comp = kदो_स्मृति(माप(*संकेत_ext_comp), GFP_KERNEL);
+		अगर (!संकेत_ext_comp) अणु
 			err = -ENOMEM;
-			goto err_free_attr_list;
-		}
-		signal_ext_comp->signal = signal;
-		signal_ext_comp->ext = ext;
+			जाओ err_मुक्त_attr_list;
+		पूर्ण
+		संकेत_ext_comp->संकेत = संकेत;
+		संकेत_ext_comp->ext = ext;
 
 		/* Allocate a Counter device attribute */
 		parm.group = group;
 		parm.prefix = "";
 		parm.name = ext->name;
-		parm.show = (ext->read) ? counter_signal_ext_show : NULL;
-		parm.store = (ext->write) ? counter_signal_ext_store : NULL;
-		parm.component = signal_ext_comp;
+		parm.show = (ext->पढ़ो) ? counter_संकेत_ext_show : शून्य;
+		parm.store = (ext->ग_लिखो) ? counter_संकेत_ext_store : शून्य;
+		parm.component = संकेत_ext_comp;
 		err = counter_attribute_create(&parm);
-		if (err) {
-			kfree(signal_ext_comp);
-			goto err_free_attr_list;
-		}
-	}
+		अगर (err) अणु
+			kमुक्त(संकेत_ext_comp);
+			जाओ err_मुक्त_attr_list;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_attr_list:
-	counter_device_attr_list_free(&group->attr_list);
-	return err;
-}
+err_मुक्त_attr_list:
+	counter_device_attr_list_मुक्त(&group->attr_list);
+	वापस err;
+पूर्ण
 
-static int counter_signal_attributes_create(
-	struct counter_device_attr_group *const group,
-	const struct counter_device *const counter,
-	struct counter_signal *const signal)
-{
-	struct counter_signal_unit *signal_comp;
-	struct counter_attr_parm parm;
-	int err;
+अटल पूर्णांक counter_संकेत_attributes_create(
+	काष्ठा counter_device_attr_group *स्थिर group,
+	स्थिर काष्ठा counter_device *स्थिर counter,
+	काष्ठा counter_संकेत *स्थिर संकेत)
+अणु
+	काष्ठा counter_संकेत_unit *संकेत_comp;
+	काष्ठा counter_attr_parm parm;
+	पूर्णांक err;
 
 	/* Allocate Signal attribute component */
-	signal_comp = kmalloc(sizeof(*signal_comp), GFP_KERNEL);
-	if (!signal_comp)
-		return -ENOMEM;
-	signal_comp->signal = signal;
+	संकेत_comp = kदो_स्मृति(माप(*संकेत_comp), GFP_KERNEL);
+	अगर (!संकेत_comp)
+		वापस -ENOMEM;
+	संकेत_comp->संकेत = संकेत;
 
-	/* Create main Signal attribute */
+	/* Create मुख्य Signal attribute */
 	parm.group = group;
 	parm.prefix = "";
 	parm.name = "signal";
-	parm.show = (counter->ops->signal_read) ? counter_signal_show : NULL;
-	parm.store = NULL;
-	parm.component = signal_comp;
+	parm.show = (counter->ops->संकेत_पढ़ो) ? counter_संकेत_show : शून्य;
+	parm.store = शून्य;
+	parm.component = संकेत_comp;
 	err = counter_attribute_create(&parm);
-	if (err) {
-		kfree(signal_comp);
-		return err;
-	}
+	अगर (err) अणु
+		kमुक्त(संकेत_comp);
+		वापस err;
+	पूर्ण
 
 	/* Create Signal name attribute */
-	err = counter_name_attribute_create(group, signal->name);
-	if (err)
-		goto err_free_attr_list;
+	err = counter_name_attribute_create(group, संकेत->name);
+	अगर (err)
+		जाओ err_मुक्त_attr_list;
 
 	/* Register Signal extension attributes */
-	err = counter_signal_ext_register(group, signal);
-	if (err)
-		goto err_free_attr_list;
+	err = counter_संकेत_ext_रेजिस्टर(group, संकेत);
+	अगर (err)
+		जाओ err_मुक्त_attr_list;
 
-	return 0;
+	वापस 0;
 
-err_free_attr_list:
-	counter_device_attr_list_free(&group->attr_list);
-	return err;
-}
+err_मुक्त_attr_list:
+	counter_device_attr_list_मुक्त(&group->attr_list);
+	वापस err;
+पूर्ण
 
-static int counter_signals_register(
-	struct counter_device_attr_group *const groups_list,
-	const struct counter_device *const counter)
-{
-	const size_t num_signals = counter->num_signals;
-	size_t i;
-	struct counter_signal *signal;
-	const char *name;
-	int err;
+अटल पूर्णांक counter_संकेतs_रेजिस्टर(
+	काष्ठा counter_device_attr_group *स्थिर groups_list,
+	स्थिर काष्ठा counter_device *स्थिर counter)
+अणु
+	स्थिर माप_प्रकार num_संकेतs = counter->num_संकेतs;
+	माप_प्रकार i;
+	काष्ठा counter_संकेत *संकेत;
+	स्थिर अक्षर *name;
+	पूर्णांक err;
 
 	/* Register each Signal */
-	for (i = 0; i < num_signals; i++) {
-		signal = counter->signals + i;
+	क्रम (i = 0; i < num_संकेतs; i++) अणु
+		संकेत = counter->संकेतs + i;
 
 		/* Generate Signal attribute directory name */
-		name = kasprintf(GFP_KERNEL, "signal%d", signal->id);
-		if (!name) {
+		name = kaप्र_लिखो(GFP_KERNEL, "signal%d", संकेत->id);
+		अगर (!name) अणु
 			err = -ENOMEM;
-			goto err_free_attr_groups;
-		}
+			जाओ err_मुक्त_attr_groups;
+		पूर्ण
 		groups_list[i].attr_group.name = name;
 
 		/* Create all attributes associated with Signal */
-		err = counter_signal_attributes_create(groups_list + i, counter,
-						       signal);
-		if (err)
-			goto err_free_attr_groups;
-	}
+		err = counter_संकेत_attributes_create(groups_list + i, counter,
+						       संकेत);
+		अगर (err)
+			जाओ err_मुक्त_attr_groups;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_attr_groups:
-	do {
-		kfree(groups_list[i].attr_group.name);
-		counter_device_attr_list_free(&groups_list[i].attr_list);
-	} while (i--);
-	return err;
-}
+err_मुक्त_attr_groups:
+	करो अणु
+		kमुक्त(groups_list[i].attr_group.name);
+		counter_device_attr_list_मुक्त(&groups_list[i].attr_list);
+	पूर्ण जबतक (i--);
+	वापस err;
+पूर्ण
 
-static const char *const counter_synapse_action_str[] = {
+अटल स्थिर अक्षर *स्थिर counter_synapse_action_str[] = अणु
 	[COUNTER_SYNAPSE_ACTION_NONE] = "none",
 	[COUNTER_SYNAPSE_ACTION_RISING_EDGE] = "rising edge",
 	[COUNTER_SYNAPSE_ACTION_FALLING_EDGE] = "falling edge",
 	[COUNTER_SYNAPSE_ACTION_BOTH_EDGES] = "both edges"
-};
+पूर्ण;
 
-struct counter_action_unit {
-	struct counter_synapse *synapse;
-	struct counter_count *count;
-};
+काष्ठा counter_action_unit अणु
+	काष्ठा counter_synapse *synapse;
+	काष्ठा counter_count *count;
+पूर्ण;
 
-static ssize_t counter_action_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	int err;
-	struct counter_device *const counter = dev_get_drvdata(dev);
-	const struct counter_action_unit *const component = devattr->component;
-	struct counter_count *const count = component->count;
-	struct counter_synapse *const synapse = component->synapse;
-	size_t action_index;
-	enum counter_synapse_action action;
+अटल sमाप_प्रकार counter_action_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	पूर्णांक err;
+	काष्ठा counter_device *स्थिर counter = dev_get_drvdata(dev);
+	स्थिर काष्ठा counter_action_unit *स्थिर component = devattr->component;
+	काष्ठा counter_count *स्थिर count = component->count;
+	काष्ठा counter_synapse *स्थिर synapse = component->synapse;
+	माप_प्रकार action_index;
+	क्रमागत counter_synapse_action action;
 
 	err = counter->ops->action_get(counter, count, synapse, &action_index);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	synapse->action = action_index;
 
 	action = synapse->actions_list[action_index];
-	return sprintf(buf, "%s\n", counter_synapse_action_str[action]);
-}
+	वापस प्र_लिखो(buf, "%s\n", counter_synapse_action_str[action]);
+पूर्ण
 
-static ssize_t counter_action_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t len)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_action_unit *const component = devattr->component;
-	struct counter_synapse *const synapse = component->synapse;
-	size_t action_index;
-	const size_t num_actions = synapse->num_actions;
-	enum counter_synapse_action action;
-	int err;
-	struct counter_device *const counter = dev_get_drvdata(dev);
-	struct counter_count *const count = component->count;
+अटल sमाप_प्रकार counter_action_store(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_action_unit *स्थिर component = devattr->component;
+	काष्ठा counter_synapse *स्थिर synapse = component->synapse;
+	माप_प्रकार action_index;
+	स्थिर माप_प्रकार num_actions = synapse->num_actions;
+	क्रमागत counter_synapse_action action;
+	पूर्णांक err;
+	काष्ठा counter_device *स्थिर counter = dev_get_drvdata(dev);
+	काष्ठा counter_count *स्थिर count = component->count;
 
 	/* Find requested action mode */
-	for (action_index = 0; action_index < num_actions; action_index++) {
+	क्रम (action_index = 0; action_index < num_actions; action_index++) अणु
 		action = synapse->actions_list[action_index];
-		if (sysfs_streq(buf, counter_synapse_action_str[action]))
-			break;
-	}
+		अगर (sysfs_streq(buf, counter_synapse_action_str[action]))
+			अवरोध;
+	पूर्ण
 	/* If requested action mode not found */
-	if (action_index >= num_actions)
-		return -EINVAL;
+	अगर (action_index >= num_actions)
+		वापस -EINVAL;
 
 	err = counter->ops->action_set(counter, count, synapse, action_index);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	synapse->action = action_index;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-struct counter_action_avail_unit {
-	const enum counter_synapse_action *actions_list;
-	size_t num_actions;
-};
+काष्ठा counter_action_avail_unit अणु
+	स्थिर क्रमागत counter_synapse_action *actions_list;
+	माप_प्रकार num_actions;
+पूर्ण;
 
-static ssize_t counter_synapse_action_available_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_action_avail_unit *const component = devattr->component;
-	size_t i;
-	enum counter_synapse_action action;
-	ssize_t len = 0;
+अटल sमाप_प्रकार counter_synapse_action_available_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_action_avail_unit *स्थिर component = devattr->component;
+	माप_प्रकार i;
+	क्रमागत counter_synapse_action action;
+	sमाप_प्रकार len = 0;
 
-	for (i = 0; i < component->num_actions; i++) {
+	क्रम (i = 0; i < component->num_actions; i++) अणु
 		action = component->actions_list[i];
-		len += sprintf(buf + len, "%s\n",
+		len += प्र_लिखो(buf + len, "%s\n",
 			       counter_synapse_action_str[action]);
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int counter_synapses_register(
-	struct counter_device_attr_group *const group,
-	const struct counter_device *const counter,
-	struct counter_count *const count, const char *const count_attr_name)
-{
-	size_t i;
-	struct counter_synapse *synapse;
-	const char *prefix;
-	struct counter_action_unit *action_comp;
-	struct counter_attr_parm parm;
-	int err;
-	struct counter_action_avail_unit *avail_comp;
+अटल पूर्णांक counter_synapses_रेजिस्टर(
+	काष्ठा counter_device_attr_group *स्थिर group,
+	स्थिर काष्ठा counter_device *स्थिर counter,
+	काष्ठा counter_count *स्थिर count, स्थिर अक्षर *स्थिर count_attr_name)
+अणु
+	माप_प्रकार i;
+	काष्ठा counter_synapse *synapse;
+	स्थिर अक्षर *prefix;
+	काष्ठा counter_action_unit *action_comp;
+	काष्ठा counter_attr_parm parm;
+	पूर्णांक err;
+	काष्ठा counter_action_avail_unit *avail_comp;
 
 	/* Register each Synapse */
-	for (i = 0; i < count->num_synapses; i++) {
+	क्रम (i = 0; i < count->num_synapses; i++) अणु
 		synapse = count->synapses + i;
 
 		/* Generate attribute prefix */
-		prefix = kasprintf(GFP_KERNEL, "signal%d_",
-				   synapse->signal->id);
-		if (!prefix) {
+		prefix = kaप्र_लिखो(GFP_KERNEL, "signal%d_",
+				   synapse->संकेत->id);
+		अगर (!prefix) अणु
 			err = -ENOMEM;
-			goto err_free_attr_list;
-		}
+			जाओ err_मुक्त_attr_list;
+		पूर्ण
 
 		/* Allocate action attribute component */
-		action_comp = kmalloc(sizeof(*action_comp), GFP_KERNEL);
-		if (!action_comp) {
+		action_comp = kदो_स्मृति(माप(*action_comp), GFP_KERNEL);
+		अगर (!action_comp) अणु
 			err = -ENOMEM;
-			goto err_free_prefix;
-		}
+			जाओ err_मुक्त_prefix;
+		पूर्ण
 		action_comp->synapse = synapse;
 		action_comp->count = count;
 
@@ -657,21 +658,21 @@ static int counter_synapses_register(
 		parm.group = group;
 		parm.prefix = prefix;
 		parm.name = "action";
-		parm.show = (counter->ops->action_get) ? counter_action_show : NULL;
-		parm.store = (counter->ops->action_set) ? counter_action_store : NULL;
+		parm.show = (counter->ops->action_get) ? counter_action_show : शून्य;
+		parm.store = (counter->ops->action_set) ? counter_action_store : शून्य;
 		parm.component = action_comp;
 		err = counter_attribute_create(&parm);
-		if (err) {
-			kfree(action_comp);
-			goto err_free_prefix;
-		}
+		अगर (err) अणु
+			kमुक्त(action_comp);
+			जाओ err_मुक्त_prefix;
+		पूर्ण
 
 		/* Allocate action available attribute component */
-		avail_comp = kmalloc(sizeof(*avail_comp), GFP_KERNEL);
-		if (!avail_comp) {
+		avail_comp = kदो_स्मृति(माप(*avail_comp), GFP_KERNEL);
+		अगर (!avail_comp) अणु
 			err = -ENOMEM;
-			goto err_free_prefix;
-		}
+			जाओ err_मुक्त_prefix;
+		पूर्ण
 		avail_comp->actions_list = synapse->actions_list;
 		avail_comp->num_actions = synapse->num_actions;
 
@@ -680,181 +681,181 @@ static int counter_synapses_register(
 		parm.prefix = prefix;
 		parm.name = "action_available";
 		parm.show = counter_synapse_action_available_show;
-		parm.store = NULL;
+		parm.store = शून्य;
 		parm.component = avail_comp;
 		err = counter_attribute_create(&parm);
-		if (err) {
-			kfree(avail_comp);
-			goto err_free_prefix;
-		}
+		अगर (err) अणु
+			kमुक्त(avail_comp);
+			जाओ err_मुक्त_prefix;
+		पूर्ण
 
-		kfree(prefix);
-	}
+		kमुक्त(prefix);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_prefix:
-	kfree(prefix);
-err_free_attr_list:
-	counter_device_attr_list_free(&group->attr_list);
-	return err;
-}
+err_मुक्त_prefix:
+	kमुक्त(prefix);
+err_मुक्त_attr_list:
+	counter_device_attr_list_मुक्त(&group->attr_list);
+	वापस err;
+पूर्ण
 
-struct counter_count_unit {
-	struct counter_count *count;
-};
+काष्ठा counter_count_unit अणु
+	काष्ठा counter_count *count;
+पूर्ण;
 
-static ssize_t counter_count_show(struct device *dev,
-				  struct device_attribute *attr,
-				  char *buf)
-{
-	struct counter_device *const counter = dev_get_drvdata(dev);
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_count_unit *const component = devattr->component;
-	struct counter_count *const count = component->count;
-	int err;
-	unsigned long val;
+अटल sमाप_प्रकार counter_count_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  अक्षर *buf)
+अणु
+	काष्ठा counter_device *स्थिर counter = dev_get_drvdata(dev);
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_count_unit *स्थिर component = devattr->component;
+	काष्ठा counter_count *स्थिर count = component->count;
+	पूर्णांक err;
+	अचिन्हित दीर्घ val;
 
-	err = counter->ops->count_read(counter, count, &val);
-	if (err)
-		return err;
+	err = counter->ops->count_पढ़ो(counter, count, &val);
+	अगर (err)
+		वापस err;
 
-	return sprintf(buf, "%lu\n", val);
-}
+	वापस प्र_लिखो(buf, "%lu\n", val);
+पूर्ण
 
-static ssize_t counter_count_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t len)
-{
-	struct counter_device *const counter = dev_get_drvdata(dev);
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_count_unit *const component = devattr->component;
-	struct counter_count *const count = component->count;
-	int err;
-	unsigned long val;
+अटल sमाप_प्रकार counter_count_store(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा counter_device *स्थिर counter = dev_get_drvdata(dev);
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_count_unit *स्थिर component = devattr->component;
+	काष्ठा counter_count *स्थिर count = component->count;
+	पूर्णांक err;
+	अचिन्हित दीर्घ val;
 
-	err = kstrtoul(buf, 0, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 0, &val);
+	अगर (err)
+		वापस err;
 
-	err = counter->ops->count_write(counter, count, val);
-	if (err)
-		return err;
+	err = counter->ops->count_ग_लिखो(counter, count, val);
+	अगर (err)
+		वापस err;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const char *const counter_count_function_str[] = {
+अटल स्थिर अक्षर *स्थिर counter_count_function_str[] = अणु
 	[COUNTER_COUNT_FUNCTION_INCREASE] = "increase",
 	[COUNTER_COUNT_FUNCTION_DECREASE] = "decrease",
-	[COUNTER_COUNT_FUNCTION_PULSE_DIRECTION] = "pulse-direction",
+	[COUNTER_COUNT_FUNCTION_PULSE_सूचीECTION] = "pulse-direction",
 	[COUNTER_COUNT_FUNCTION_QUADRATURE_X1_A] = "quadrature x1 a",
 	[COUNTER_COUNT_FUNCTION_QUADRATURE_X1_B] = "quadrature x1 b",
 	[COUNTER_COUNT_FUNCTION_QUADRATURE_X2_A] = "quadrature x2 a",
 	[COUNTER_COUNT_FUNCTION_QUADRATURE_X2_B] = "quadrature x2 b",
 	[COUNTER_COUNT_FUNCTION_QUADRATURE_X4] = "quadrature x4"
-};
+पूर्ण;
 
-static ssize_t counter_function_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	int err;
-	struct counter_device *const counter = dev_get_drvdata(dev);
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_count_unit *const component = devattr->component;
-	struct counter_count *const count = component->count;
-	size_t func_index;
-	enum counter_count_function function;
+अटल sमाप_प्रकार counter_function_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक err;
+	काष्ठा counter_device *स्थिर counter = dev_get_drvdata(dev);
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_count_unit *स्थिर component = devattr->component;
+	काष्ठा counter_count *स्थिर count = component->count;
+	माप_प्रकार func_index;
+	क्रमागत counter_count_function function;
 
 	err = counter->ops->function_get(counter, count, &func_index);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	count->function = func_index;
 
 	function = count->functions_list[func_index];
-	return sprintf(buf, "%s\n", counter_count_function_str[function]);
-}
+	वापस प्र_लिखो(buf, "%s\n", counter_count_function_str[function]);
+पूर्ण
 
-static ssize_t counter_function_store(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t len)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_count_unit *const component = devattr->component;
-	struct counter_count *const count = component->count;
-	const size_t num_functions = count->num_functions;
-	size_t func_index;
-	enum counter_count_function function;
-	int err;
-	struct counter_device *const counter = dev_get_drvdata(dev);
+अटल sमाप_प्रकार counter_function_store(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_count_unit *स्थिर component = devattr->component;
+	काष्ठा counter_count *स्थिर count = component->count;
+	स्थिर माप_प्रकार num_functions = count->num_functions;
+	माप_प्रकार func_index;
+	क्रमागत counter_count_function function;
+	पूर्णांक err;
+	काष्ठा counter_device *स्थिर counter = dev_get_drvdata(dev);
 
 	/* Find requested Count function mode */
-	for (func_index = 0; func_index < num_functions; func_index++) {
+	क्रम (func_index = 0; func_index < num_functions; func_index++) अणु
 		function = count->functions_list[func_index];
-		if (sysfs_streq(buf, counter_count_function_str[function]))
-			break;
-	}
-	/* Return error if requested Count function mode not found */
-	if (func_index >= num_functions)
-		return -EINVAL;
+		अगर (sysfs_streq(buf, counter_count_function_str[function]))
+			अवरोध;
+	पूर्ण
+	/* Return error अगर requested Count function mode not found */
+	अगर (func_index >= num_functions)
+		वापस -EINVAL;
 
 	err = counter->ops->function_set(counter, count, func_index);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	count->function = func_index;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-struct counter_count_ext_unit {
-	struct counter_count *count;
-	const struct counter_count_ext *ext;
-};
+काष्ठा counter_count_ext_unit अणु
+	काष्ठा counter_count *count;
+	स्थिर काष्ठा counter_count_ext *ext;
+पूर्ण;
 
-static ssize_t counter_count_ext_show(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_count_ext_unit *const comp = devattr->component;
-	const struct counter_count_ext *const ext = comp->ext;
+अटल sमाप_प्रकार counter_count_ext_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_count_ext_unit *स्थिर comp = devattr->component;
+	स्थिर काष्ठा counter_count_ext *स्थिर ext = comp->ext;
 
-	return ext->read(dev_get_drvdata(dev), comp->count, ext->priv, buf);
-}
+	वापस ext->पढ़ो(dev_get_drvdata(dev), comp->count, ext->priv, buf);
+पूर्ण
 
-static ssize_t counter_count_ext_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf, size_t len)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_count_ext_unit *const comp = devattr->component;
-	const struct counter_count_ext *const ext = comp->ext;
+अटल sमाप_प्रकार counter_count_ext_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_count_ext_unit *स्थिर comp = devattr->component;
+	स्थिर काष्ठा counter_count_ext *स्थिर ext = comp->ext;
 
-	return ext->write(dev_get_drvdata(dev), comp->count, ext->priv, buf,
+	वापस ext->ग_लिखो(dev_get_drvdata(dev), comp->count, ext->priv, buf,
 		len);
-}
+पूर्ण
 
-static int counter_count_ext_register(
-	struct counter_device_attr_group *const group,
-	struct counter_count *const count)
-{
-	size_t i;
-	const struct counter_count_ext *ext;
-	struct counter_count_ext_unit *count_ext_comp;
-	struct counter_attr_parm parm;
-	int err;
+अटल पूर्णांक counter_count_ext_रेजिस्टर(
+	काष्ठा counter_device_attr_group *स्थिर group,
+	काष्ठा counter_count *स्थिर count)
+अणु
+	माप_प्रकार i;
+	स्थिर काष्ठा counter_count_ext *ext;
+	काष्ठा counter_count_ext_unit *count_ext_comp;
+	काष्ठा counter_attr_parm parm;
+	पूर्णांक err;
 
-	/* Create an attribute for each extension */
-	for (i = 0 ; i < count->num_ext; i++) {
+	/* Create an attribute क्रम each extension */
+	क्रम (i = 0 ; i < count->num_ext; i++) अणु
 		ext = count->ext + i;
 
 		/* Allocate count_ext attribute component */
-		count_ext_comp = kmalloc(sizeof(*count_ext_comp), GFP_KERNEL);
-		if (!count_ext_comp) {
+		count_ext_comp = kदो_स्मृति(माप(*count_ext_comp), GFP_KERNEL);
+		अगर (!count_ext_comp) अणु
 			err = -ENOMEM;
-			goto err_free_attr_list;
-		}
+			जाओ err_मुक्त_attr_list;
+		पूर्ण
 		count_ext_comp->count = count;
 		count_ext_comp->ext = ext;
 
@@ -862,105 +863,105 @@ static int counter_count_ext_register(
 		parm.group = group;
 		parm.prefix = "";
 		parm.name = ext->name;
-		parm.show = (ext->read) ? counter_count_ext_show : NULL;
-		parm.store = (ext->write) ? counter_count_ext_store : NULL;
+		parm.show = (ext->पढ़ो) ? counter_count_ext_show : शून्य;
+		parm.store = (ext->ग_लिखो) ? counter_count_ext_store : शून्य;
 		parm.component = count_ext_comp;
 		err = counter_attribute_create(&parm);
-		if (err) {
-			kfree(count_ext_comp);
-			goto err_free_attr_list;
-		}
-	}
+		अगर (err) अणु
+			kमुक्त(count_ext_comp);
+			जाओ err_मुक्त_attr_list;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_attr_list:
-	counter_device_attr_list_free(&group->attr_list);
-	return err;
-}
+err_मुक्त_attr_list:
+	counter_device_attr_list_मुक्त(&group->attr_list);
+	वापस err;
+पूर्ण
 
-struct counter_func_avail_unit {
-	const enum counter_count_function *functions_list;
-	size_t num_functions;
-};
+काष्ठा counter_func_avail_unit अणु
+	स्थिर क्रमागत counter_count_function *functions_list;
+	माप_प्रकार num_functions;
+पूर्ण;
 
-static ssize_t counter_count_function_available_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_func_avail_unit *const component = devattr->component;
-	const enum counter_count_function *const func_list = component->functions_list;
-	const size_t num_functions = component->num_functions;
-	size_t i;
-	enum counter_count_function function;
-	ssize_t len = 0;
+अटल sमाप_प्रकार counter_count_function_available_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_func_avail_unit *स्थिर component = devattr->component;
+	स्थिर क्रमागत counter_count_function *स्थिर func_list = component->functions_list;
+	स्थिर माप_प्रकार num_functions = component->num_functions;
+	माप_प्रकार i;
+	क्रमागत counter_count_function function;
+	sमाप_प्रकार len = 0;
 
-	for (i = 0; i < num_functions; i++) {
+	क्रम (i = 0; i < num_functions; i++) अणु
 		function = func_list[i];
-		len += sprintf(buf + len, "%s\n",
+		len += प्र_लिखो(buf + len, "%s\n",
 			       counter_count_function_str[function]);
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int counter_count_attributes_create(
-	struct counter_device_attr_group *const group,
-	const struct counter_device *const counter,
-	struct counter_count *const count)
-{
-	struct counter_count_unit *count_comp;
-	struct counter_attr_parm parm;
-	int err;
-	struct counter_count_unit *func_comp;
-	struct counter_func_avail_unit *avail_comp;
+अटल पूर्णांक counter_count_attributes_create(
+	काष्ठा counter_device_attr_group *स्थिर group,
+	स्थिर काष्ठा counter_device *स्थिर counter,
+	काष्ठा counter_count *स्थिर count)
+अणु
+	काष्ठा counter_count_unit *count_comp;
+	काष्ठा counter_attr_parm parm;
+	पूर्णांक err;
+	काष्ठा counter_count_unit *func_comp;
+	काष्ठा counter_func_avail_unit *avail_comp;
 
 	/* Allocate count attribute component */
-	count_comp = kmalloc(sizeof(*count_comp), GFP_KERNEL);
-	if (!count_comp)
-		return -ENOMEM;
+	count_comp = kदो_स्मृति(माप(*count_comp), GFP_KERNEL);
+	अगर (!count_comp)
+		वापस -ENOMEM;
 	count_comp->count = count;
 
-	/* Create main Count attribute */
+	/* Create मुख्य Count attribute */
 	parm.group = group;
 	parm.prefix = "";
 	parm.name = "count";
-	parm.show = (counter->ops->count_read) ? counter_count_show : NULL;
-	parm.store = (counter->ops->count_write) ? counter_count_store : NULL;
+	parm.show = (counter->ops->count_पढ़ो) ? counter_count_show : शून्य;
+	parm.store = (counter->ops->count_ग_लिखो) ? counter_count_store : शून्य;
 	parm.component = count_comp;
 	err = counter_attribute_create(&parm);
-	if (err) {
-		kfree(count_comp);
-		return err;
-	}
+	अगर (err) अणु
+		kमुक्त(count_comp);
+		वापस err;
+	पूर्ण
 
 	/* Allocate function attribute component */
-	func_comp = kmalloc(sizeof(*func_comp), GFP_KERNEL);
-	if (!func_comp) {
+	func_comp = kदो_स्मृति(माप(*func_comp), GFP_KERNEL);
+	अगर (!func_comp) अणु
 		err = -ENOMEM;
-		goto err_free_attr_list;
-	}
+		जाओ err_मुक्त_attr_list;
+	पूर्ण
 	func_comp->count = count;
 
 	/* Create Count function attribute */
 	parm.group = group;
 	parm.prefix = "";
 	parm.name = "function";
-	parm.show = (counter->ops->function_get) ? counter_function_show : NULL;
-	parm.store = (counter->ops->function_set) ? counter_function_store : NULL;
+	parm.show = (counter->ops->function_get) ? counter_function_show : शून्य;
+	parm.store = (counter->ops->function_set) ? counter_function_store : शून्य;
 	parm.component = func_comp;
 	err = counter_attribute_create(&parm);
-	if (err) {
-		kfree(func_comp);
-		goto err_free_attr_list;
-	}
+	अगर (err) अणु
+		kमुक्त(func_comp);
+		जाओ err_मुक्त_attr_list;
+	पूर्ण
 
 	/* Allocate function available attribute component */
-	avail_comp = kmalloc(sizeof(*avail_comp), GFP_KERNEL);
-	if (!avail_comp) {
+	avail_comp = kदो_स्मृति(माप(*avail_comp), GFP_KERNEL);
+	अगर (!avail_comp) अणु
 		err = -ENOMEM;
-		goto err_free_attr_list;
-	}
+		जाओ err_मुक्त_attr_list;
+	पूर्ण
 	avail_comp->functions_list = count->functions_list;
 	avail_comp->num_functions = count->num_functions;
 
@@ -969,161 +970,161 @@ static int counter_count_attributes_create(
 	parm.prefix = "";
 	parm.name = "function_available";
 	parm.show = counter_count_function_available_show;
-	parm.store = NULL;
+	parm.store = शून्य;
 	parm.component = avail_comp;
 	err = counter_attribute_create(&parm);
-	if (err) {
-		kfree(avail_comp);
-		goto err_free_attr_list;
-	}
+	अगर (err) अणु
+		kमुक्त(avail_comp);
+		जाओ err_मुक्त_attr_list;
+	पूर्ण
 
 	/* Create Count name attribute */
 	err = counter_name_attribute_create(group, count->name);
-	if (err)
-		goto err_free_attr_list;
+	अगर (err)
+		जाओ err_मुक्त_attr_list;
 
 	/* Register Count extension attributes */
-	err = counter_count_ext_register(group, count);
-	if (err)
-		goto err_free_attr_list;
+	err = counter_count_ext_रेजिस्टर(group, count);
+	अगर (err)
+		जाओ err_मुक्त_attr_list;
 
-	return 0;
+	वापस 0;
 
-err_free_attr_list:
-	counter_device_attr_list_free(&group->attr_list);
-	return err;
-}
+err_मुक्त_attr_list:
+	counter_device_attr_list_मुक्त(&group->attr_list);
+	वापस err;
+पूर्ण
 
-static int counter_counts_register(
-	struct counter_device_attr_group *const groups_list,
-	const struct counter_device *const counter)
-{
-	size_t i;
-	struct counter_count *count;
-	const char *name;
-	int err;
+अटल पूर्णांक counter_counts_रेजिस्टर(
+	काष्ठा counter_device_attr_group *स्थिर groups_list,
+	स्थिर काष्ठा counter_device *स्थिर counter)
+अणु
+	माप_प्रकार i;
+	काष्ठा counter_count *count;
+	स्थिर अक्षर *name;
+	पूर्णांक err;
 
 	/* Register each Count */
-	for (i = 0; i < counter->num_counts; i++) {
+	क्रम (i = 0; i < counter->num_counts; i++) अणु
 		count = counter->counts + i;
 
 		/* Generate Count attribute directory name */
-		name = kasprintf(GFP_KERNEL, "count%d", count->id);
-		if (!name) {
+		name = kaप्र_लिखो(GFP_KERNEL, "count%d", count->id);
+		अगर (!name) अणु
 			err = -ENOMEM;
-			goto err_free_attr_groups;
-		}
+			जाओ err_मुक्त_attr_groups;
+		पूर्ण
 		groups_list[i].attr_group.name = name;
 
 		/* Register the Synapses associated with each Count */
-		err = counter_synapses_register(groups_list + i, counter, count,
+		err = counter_synapses_रेजिस्टर(groups_list + i, counter, count,
 						name);
-		if (err)
-			goto err_free_attr_groups;
+		अगर (err)
+			जाओ err_मुक्त_attr_groups;
 
 		/* Create all attributes associated with Count */
 		err = counter_count_attributes_create(groups_list + i, counter,
 						      count);
-		if (err)
-			goto err_free_attr_groups;
-	}
+		अगर (err)
+			जाओ err_मुक्त_attr_groups;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_attr_groups:
-	do {
-		kfree(groups_list[i].attr_group.name);
-		counter_device_attr_list_free(&groups_list[i].attr_list);
-	} while (i--);
-	return err;
-}
+err_मुक्त_attr_groups:
+	करो अणु
+		kमुक्त(groups_list[i].attr_group.name);
+		counter_device_attr_list_मुक्त(&groups_list[i].attr_list);
+	पूर्ण जबतक (i--);
+	वापस err;
+पूर्ण
 
-struct counter_size_unit {
-	size_t size;
-};
+काष्ठा counter_size_unit अणु
+	माप_प्रकार size;
+पूर्ण;
 
-static ssize_t counter_device_attr_size_show(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	const struct counter_size_unit *const comp = to_counter_attr(attr)->component;
+अटल sमाप_प्रकार counter_device_attr_size_show(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_size_unit *स्थिर comp = to_counter_attr(attr)->component;
 
-	return sprintf(buf, "%zu\n", comp->size);
-}
+	वापस प्र_लिखो(buf, "%zu\n", comp->size);
+पूर्ण
 
-static int counter_size_attribute_create(
-	struct counter_device_attr_group *const group,
-	const size_t size, const char *const name)
-{
-	struct counter_size_unit *size_comp;
-	struct counter_attr_parm parm;
-	int err;
+अटल पूर्णांक counter_size_attribute_create(
+	काष्ठा counter_device_attr_group *स्थिर group,
+	स्थिर माप_प्रकार size, स्थिर अक्षर *स्थिर name)
+अणु
+	काष्ठा counter_size_unit *size_comp;
+	काष्ठा counter_attr_parm parm;
+	पूर्णांक err;
 
 	/* Allocate size attribute component */
-	size_comp = kmalloc(sizeof(*size_comp), GFP_KERNEL);
-	if (!size_comp)
-		return -ENOMEM;
+	size_comp = kदो_स्मृति(माप(*size_comp), GFP_KERNEL);
+	अगर (!size_comp)
+		वापस -ENOMEM;
 	size_comp->size = size;
 
 	parm.group = group;
 	parm.prefix = "";
 	parm.name = name;
 	parm.show = counter_device_attr_size_show;
-	parm.store = NULL;
+	parm.store = शून्य;
 	parm.component = size_comp;
 	err = counter_attribute_create(&parm);
-	if (err)
-		goto err_free_size_comp;
+	अगर (err)
+		जाओ err_मुक्त_size_comp;
 
-	return 0;
+	वापस 0;
 
-err_free_size_comp:
-	kfree(size_comp);
-	return err;
-}
+err_मुक्त_size_comp:
+	kमुक्त(size_comp);
+	वापस err;
+पूर्ण
 
-struct counter_ext_unit {
-	const struct counter_device_ext *ext;
-};
+काष्ठा counter_ext_unit अणु
+	स्थिर काष्ठा counter_device_ext *ext;
+पूर्ण;
 
-static ssize_t counter_device_ext_show(struct device *dev,
-				       struct device_attribute *attr, char *buf)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_ext_unit *const component = devattr->component;
-	const struct counter_device_ext *const ext = component->ext;
+अटल sमाप_प्रकार counter_device_ext_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_ext_unit *स्थिर component = devattr->component;
+	स्थिर काष्ठा counter_device_ext *स्थिर ext = component->ext;
 
-	return ext->read(dev_get_drvdata(dev), ext->priv, buf);
-}
+	वापस ext->पढ़ो(dev_get_drvdata(dev), ext->priv, buf);
+पूर्ण
 
-static ssize_t counter_device_ext_store(struct device *dev,
-					struct device_attribute *attr,
-					const char *buf, size_t len)
-{
-	const struct counter_device_attr *const devattr = to_counter_attr(attr);
-	const struct counter_ext_unit *const component = devattr->component;
-	const struct counter_device_ext *const ext = component->ext;
+अटल sमाप_प्रकार counter_device_ext_store(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	स्थिर काष्ठा counter_device_attr *स्थिर devattr = to_counter_attr(attr);
+	स्थिर काष्ठा counter_ext_unit *स्थिर component = devattr->component;
+	स्थिर काष्ठा counter_device_ext *स्थिर ext = component->ext;
 
-	return ext->write(dev_get_drvdata(dev), ext->priv, buf, len);
-}
+	वापस ext->ग_लिखो(dev_get_drvdata(dev), ext->priv, buf, len);
+पूर्ण
 
-static int counter_device_ext_register(
-	struct counter_device_attr_group *const group,
-	struct counter_device *const counter)
-{
-	size_t i;
-	struct counter_ext_unit *ext_comp;
-	struct counter_attr_parm parm;
-	int err;
+अटल पूर्णांक counter_device_ext_रेजिस्टर(
+	काष्ठा counter_device_attr_group *स्थिर group,
+	काष्ठा counter_device *स्थिर counter)
+अणु
+	माप_प्रकार i;
+	काष्ठा counter_ext_unit *ext_comp;
+	काष्ठा counter_attr_parm parm;
+	पूर्णांक err;
 
-	/* Create an attribute for each extension */
-	for (i = 0 ; i < counter->num_ext; i++) {
+	/* Create an attribute क्रम each extension */
+	क्रम (i = 0 ; i < counter->num_ext; i++) अणु
 		/* Allocate extension attribute component */
-		ext_comp = kmalloc(sizeof(*ext_comp), GFP_KERNEL);
-		if (!ext_comp) {
+		ext_comp = kदो_स्मृति(माप(*ext_comp), GFP_KERNEL);
+		अगर (!ext_comp) अणु
 			err = -ENOMEM;
-			goto err_free_attr_list;
-		}
+			जाओ err_मुक्त_attr_list;
+		पूर्ण
 
 		ext_comp->ext = counter->ext + i;
 
@@ -1131,365 +1132,365 @@ static int counter_device_ext_register(
 		parm.group = group;
 		parm.prefix = "";
 		parm.name = counter->ext[i].name;
-		parm.show = (counter->ext[i].read) ? counter_device_ext_show : NULL;
-		parm.store = (counter->ext[i].write) ? counter_device_ext_store : NULL;
+		parm.show = (counter->ext[i].पढ़ो) ? counter_device_ext_show : शून्य;
+		parm.store = (counter->ext[i].ग_लिखो) ? counter_device_ext_store : शून्य;
 		parm.component = ext_comp;
 		err = counter_attribute_create(&parm);
-		if (err) {
-			kfree(ext_comp);
-			goto err_free_attr_list;
-		}
-	}
+		अगर (err) अणु
+			kमुक्त(ext_comp);
+			जाओ err_मुक्त_attr_list;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_attr_list:
-	counter_device_attr_list_free(&group->attr_list);
-	return err;
-}
+err_मुक्त_attr_list:
+	counter_device_attr_list_मुक्त(&group->attr_list);
+	वापस err;
+पूर्ण
 
-static int counter_global_attr_register(
-	struct counter_device_attr_group *const group,
-	struct counter_device *const counter)
-{
-	int err;
+अटल पूर्णांक counter_global_attr_रेजिस्टर(
+	काष्ठा counter_device_attr_group *स्थिर group,
+	काष्ठा counter_device *स्थिर counter)
+अणु
+	पूर्णांक err;
 
 	/* Create name attribute */
 	err = counter_name_attribute_create(group, counter->name);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Create num_counts attribute */
 	err = counter_size_attribute_create(group, counter->num_counts,
 					    "num_counts");
-	if (err)
-		goto err_free_attr_list;
+	अगर (err)
+		जाओ err_मुक्त_attr_list;
 
-	/* Create num_signals attribute */
-	err = counter_size_attribute_create(group, counter->num_signals,
+	/* Create num_संकेतs attribute */
+	err = counter_size_attribute_create(group, counter->num_संकेतs,
 					    "num_signals");
-	if (err)
-		goto err_free_attr_list;
+	अगर (err)
+		जाओ err_मुक्त_attr_list;
 
 	/* Register Counter device extension attributes */
-	err = counter_device_ext_register(group, counter);
-	if (err)
-		goto err_free_attr_list;
+	err = counter_device_ext_रेजिस्टर(group, counter);
+	अगर (err)
+		जाओ err_मुक्त_attr_list;
 
-	return 0;
+	वापस 0;
 
-err_free_attr_list:
-	counter_device_attr_list_free(&group->attr_list);
-	return err;
-}
+err_मुक्त_attr_list:
+	counter_device_attr_list_मुक्त(&group->attr_list);
+	वापस err;
+पूर्ण
 
-static void counter_device_groups_list_free(
-	struct counter_device_attr_group *const groups_list,
-	const size_t num_groups)
-{
-	struct counter_device_attr_group *group;
-	size_t i;
+अटल व्योम counter_device_groups_list_मुक्त(
+	काष्ठा counter_device_attr_group *स्थिर groups_list,
+	स्थिर माप_प्रकार num_groups)
+अणु
+	काष्ठा counter_device_attr_group *group;
+	माप_प्रकार i;
 
-	/* loop through all attribute groups (signals, counts, global, etc.) */
-	for (i = 0; i < num_groups; i++) {
+	/* loop through all attribute groups (संकेतs, counts, global, etc.) */
+	क्रम (i = 0; i < num_groups; i++) अणु
 		group = groups_list + i;
 
-		/* free all attribute group and associated attributes memory */
-		kfree(group->attr_group.name);
-		kfree(group->attr_group.attrs);
-		counter_device_attr_list_free(&group->attr_list);
-	}
+		/* मुक्त all attribute group and associated attributes memory */
+		kमुक्त(group->attr_group.name);
+		kमुक्त(group->attr_group.attrs);
+		counter_device_attr_list_मुक्त(&group->attr_list);
+	पूर्ण
 
-	kfree(groups_list);
-}
+	kमुक्त(groups_list);
+पूर्ण
 
-static int counter_device_groups_list_prepare(
-	struct counter_device *const counter)
-{
-	const size_t total_num_groups =
-		counter->num_signals + counter->num_counts + 1;
-	struct counter_device_attr_group *groups_list;
-	size_t i;
-	int err;
-	size_t num_groups = 0;
+अटल पूर्णांक counter_device_groups_list_prepare(
+	काष्ठा counter_device *स्थिर counter)
+अणु
+	स्थिर माप_प्रकार total_num_groups =
+		counter->num_संकेतs + counter->num_counts + 1;
+	काष्ठा counter_device_attr_group *groups_list;
+	माप_प्रकार i;
+	पूर्णांक err;
+	माप_प्रकार num_groups = 0;
 
-	/* Allocate space for attribute groups (signals, counts, and ext) */
-	groups_list = kcalloc(total_num_groups, sizeof(*groups_list),
+	/* Allocate space क्रम attribute groups (संकेतs, counts, and ext) */
+	groups_list = kसुस्मृति(total_num_groups, माप(*groups_list),
 			      GFP_KERNEL);
-	if (!groups_list)
-		return -ENOMEM;
+	अगर (!groups_list)
+		वापस -ENOMEM;
 
 	/* Initialize attribute lists */
-	for (i = 0; i < total_num_groups; i++)
+	क्रम (i = 0; i < total_num_groups; i++)
 		INIT_LIST_HEAD(&groups_list[i].attr_list);
 
 	/* Register Signals */
-	err = counter_signals_register(groups_list, counter);
-	if (err)
-		goto err_free_groups_list;
-	num_groups += counter->num_signals;
+	err = counter_संकेतs_रेजिस्टर(groups_list, counter);
+	अगर (err)
+		जाओ err_मुक्त_groups_list;
+	num_groups += counter->num_संकेतs;
 
 	/* Register Counts and respective Synapses */
-	err = counter_counts_register(groups_list + num_groups, counter);
-	if (err)
-		goto err_free_groups_list;
+	err = counter_counts_रेजिस्टर(groups_list + num_groups, counter);
+	अगर (err)
+		जाओ err_मुक्त_groups_list;
 	num_groups += counter->num_counts;
 
 	/* Register Counter global attributes */
-	err = counter_global_attr_register(groups_list + num_groups, counter);
-	if (err)
-		goto err_free_groups_list;
+	err = counter_global_attr_रेजिस्टर(groups_list + num_groups, counter);
+	अगर (err)
+		जाओ err_मुक्त_groups_list;
 	num_groups++;
 
 	/* Store groups_list in device_state */
 	counter->device_state->groups_list = groups_list;
 	counter->device_state->num_groups = num_groups;
 
-	return 0;
+	वापस 0;
 
-err_free_groups_list:
-	counter_device_groups_list_free(groups_list, num_groups);
-	return err;
-}
+err_मुक्त_groups_list:
+	counter_device_groups_list_मुक्त(groups_list, num_groups);
+	वापस err;
+पूर्ण
 
-static int counter_device_groups_prepare(
-	struct counter_device_state *const device_state)
-{
-	size_t i, j;
-	struct counter_device_attr_group *group;
-	int err;
-	struct counter_device_attr *p;
+अटल पूर्णांक counter_device_groups_prepare(
+	काष्ठा counter_device_state *स्थिर device_state)
+अणु
+	माप_प्रकार i, j;
+	काष्ठा counter_device_attr_group *group;
+	पूर्णांक err;
+	काष्ठा counter_device_attr *p;
 
-	/* Allocate attribute groups for association with device */
-	device_state->groups = kcalloc(device_state->num_groups + 1,
-				       sizeof(*device_state->groups),
+	/* Allocate attribute groups क्रम association with device */
+	device_state->groups = kसुस्मृति(device_state->num_groups + 1,
+				       माप(*device_state->groups),
 				       GFP_KERNEL);
-	if (!device_state->groups)
-		return -ENOMEM;
+	अगर (!device_state->groups)
+		वापस -ENOMEM;
 
-	/* Prepare each group of attributes for association */
-	for (i = 0; i < device_state->num_groups; i++) {
+	/* Prepare each group of attributes क्रम association */
+	क्रम (i = 0; i < device_state->num_groups; i++) अणु
 		group = device_state->groups_list + i;
 
-		/* Allocate space for attribute pointers in attribute group */
-		group->attr_group.attrs = kcalloc(group->num_attr + 1,
-			sizeof(*group->attr_group.attrs), GFP_KERNEL);
-		if (!group->attr_group.attrs) {
+		/* Allocate space क्रम attribute poपूर्णांकers in attribute group */
+		group->attr_group.attrs = kसुस्मृति(group->num_attr + 1,
+			माप(*group->attr_group.attrs), GFP_KERNEL);
+		अगर (!group->attr_group.attrs) अणु
 			err = -ENOMEM;
-			goto err_free_groups;
-		}
+			जाओ err_मुक्त_groups;
+		पूर्ण
 
-		/* Add attribute pointers to attribute group */
+		/* Add attribute poपूर्णांकers to attribute group */
 		j = 0;
-		list_for_each_entry(p, &group->attr_list, l)
+		list_क्रम_each_entry(p, &group->attr_list, l)
 			group->attr_group.attrs[j++] = &p->dev_attr.attr;
 
 		/* Group attributes in attribute group */
 		device_state->groups[i] = &group->attr_group;
-	}
+	पूर्ण
 	/* Associate attributes with device */
 	device_state->dev.groups = device_state->groups;
 
-	return 0;
+	वापस 0;
 
-err_free_groups:
-	do {
+err_मुक्त_groups:
+	करो अणु
 		group = device_state->groups_list + i;
-		kfree(group->attr_group.attrs);
-		group->attr_group.attrs = NULL;
-	} while (i--);
-	kfree(device_state->groups);
-	return err;
-}
+		kमुक्त(group->attr_group.attrs);
+		group->attr_group.attrs = शून्य;
+	पूर्ण जबतक (i--);
+	kमुक्त(device_state->groups);
+	वापस err;
+पूर्ण
 
-/* Provides a unique ID for each counter device */
-static DEFINE_IDA(counter_ida);
+/* Provides a unique ID क्रम each counter device */
+अटल DEFINE_IDA(counter_ida);
 
-static void counter_device_release(struct device *dev)
-{
-	struct counter_device *const counter = dev_get_drvdata(dev);
-	struct counter_device_state *const device_state = counter->device_state;
+अटल व्योम counter_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा counter_device *स्थिर counter = dev_get_drvdata(dev);
+	काष्ठा counter_device_state *स्थिर device_state = counter->device_state;
 
-	kfree(device_state->groups);
-	counter_device_groups_list_free(device_state->groups_list,
+	kमुक्त(device_state->groups);
+	counter_device_groups_list_मुक्त(device_state->groups_list,
 					device_state->num_groups);
-	ida_simple_remove(&counter_ida, device_state->id);
-	kfree(device_state);
-}
+	ida_simple_हटाओ(&counter_ida, device_state->id);
+	kमुक्त(device_state);
+पूर्ण
 
-static struct device_type counter_device_type = {
+अटल काष्ठा device_type counter_device_type = अणु
 	.name = "counter_device",
 	.release = counter_device_release
-};
+पूर्ण;
 
-static struct bus_type counter_bus_type = {
+अटल काष्ठा bus_type counter_bus_type = अणु
 	.name = "counter"
-};
+पूर्ण;
 
 /**
- * counter_register - register Counter to the system
- * @counter:	pointer to Counter to register
+ * counter_रेजिस्टर - रेजिस्टर Counter to the प्रणाली
+ * @counter:	poपूर्णांकer to Counter to रेजिस्टर
  *
- * This function registers a Counter to the system. A sysfs "counter" directory
+ * This function रेजिस्टरs a Counter to the प्रणाली. A sysfs "counter" directory
  * will be created and populated with sysfs attributes correlating with the
  * Counter Signals, Synapses, and Counts respectively.
  */
-int counter_register(struct counter_device *const counter)
-{
-	struct counter_device_state *device_state;
-	int err;
+पूर्णांक counter_रेजिस्टर(काष्ठा counter_device *स्थिर counter)
+अणु
+	काष्ठा counter_device_state *device_state;
+	पूर्णांक err;
 
-	/* Allocate internal state container for Counter device */
-	device_state = kzalloc(sizeof(*device_state), GFP_KERNEL);
-	if (!device_state)
-		return -ENOMEM;
+	/* Allocate पूर्णांकernal state container क्रम Counter device */
+	device_state = kzalloc(माप(*device_state), GFP_KERNEL);
+	अगर (!device_state)
+		वापस -ENOMEM;
 	counter->device_state = device_state;
 
 	/* Acquire unique ID */
 	device_state->id = ida_simple_get(&counter_ida, 0, 0, GFP_KERNEL);
-	if (device_state->id < 0) {
+	अगर (device_state->id < 0) अणु
 		err = device_state->id;
-		goto err_free_device_state;
-	}
+		जाओ err_मुक्त_device_state;
+	पूर्ण
 
-	/* Configure device structure for Counter */
+	/* Configure device काष्ठाure क्रम Counter */
 	device_state->dev.type = &counter_device_type;
 	device_state->dev.bus = &counter_bus_type;
-	if (counter->parent) {
+	अगर (counter->parent) अणु
 		device_state->dev.parent = counter->parent;
 		device_state->dev.of_node = counter->parent->of_node;
-	}
+	पूर्ण
 	dev_set_name(&device_state->dev, "counter%d", device_state->id);
 	device_initialize(&device_state->dev);
 	dev_set_drvdata(&device_state->dev, counter);
 
 	/* Prepare device attributes */
 	err = counter_device_groups_list_prepare(counter);
-	if (err)
-		goto err_free_id;
+	अगर (err)
+		जाओ err_मुक्त_id;
 
 	/* Organize device attributes to groups and match to device */
 	err = counter_device_groups_prepare(device_state);
-	if (err)
-		goto err_free_groups_list;
+	अगर (err)
+		जाओ err_मुक्त_groups_list;
 
-	/* Add device to system */
+	/* Add device to प्रणाली */
 	err = device_add(&device_state->dev);
-	if (err)
-		goto err_free_groups;
+	अगर (err)
+		जाओ err_मुक्त_groups;
 
-	return 0;
+	वापस 0;
 
-err_free_groups:
-	kfree(device_state->groups);
-err_free_groups_list:
-	counter_device_groups_list_free(device_state->groups_list,
+err_मुक्त_groups:
+	kमुक्त(device_state->groups);
+err_मुक्त_groups_list:
+	counter_device_groups_list_मुक्त(device_state->groups_list,
 					device_state->num_groups);
-err_free_id:
-	ida_simple_remove(&counter_ida, device_state->id);
-err_free_device_state:
-	kfree(device_state);
-	return err;
-}
-EXPORT_SYMBOL_GPL(counter_register);
+err_मुक्त_id:
+	ida_simple_हटाओ(&counter_ida, device_state->id);
+err_मुक्त_device_state:
+	kमुक्त(device_state);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_रेजिस्टर);
 
 /**
- * counter_unregister - unregister Counter from the system
- * @counter:	pointer to Counter to unregister
+ * counter_unरेजिस्टर - unरेजिस्टर Counter from the प्रणाली
+ * @counter:	poपूर्णांकer to Counter to unरेजिस्टर
  *
- * The Counter is unregistered from the system; all allocated memory is freed.
+ * The Counter is unरेजिस्टरed from the प्रणाली; all allocated memory is मुक्तd.
  */
-void counter_unregister(struct counter_device *const counter)
-{
-	if (counter)
+व्योम counter_unरेजिस्टर(काष्ठा counter_device *स्थिर counter)
+अणु
+	अगर (counter)
 		device_del(&counter->device_state->dev);
-}
-EXPORT_SYMBOL_GPL(counter_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(counter_unरेजिस्टर);
 
-static void devm_counter_unreg(struct device *dev, void *res)
-{
-	counter_unregister(*(struct counter_device **)res);
-}
+अटल व्योम devm_counter_unreg(काष्ठा device *dev, व्योम *res)
+अणु
+	counter_unरेजिस्टर(*(काष्ठा counter_device **)res);
+पूर्ण
 
 /**
- * devm_counter_register - Resource-managed counter_register
- * @dev:	device to allocate counter_device for
- * @counter:	pointer to Counter to register
+ * devm_counter_रेजिस्टर - Resource-managed counter_रेजिस्टर
+ * @dev:	device to allocate counter_device क्रम
+ * @counter:	poपूर्णांकer to Counter to रेजिस्टर
  *
- * Managed counter_register. The Counter registered with this function is
- * automatically unregistered on driver detach. This function calls
- * counter_register internally. Refer to that function for more information.
+ * Managed counter_रेजिस्टर. The Counter रेजिस्टरed with this function is
+ * स्वतःmatically unरेजिस्टरed on driver detach. This function calls
+ * counter_रेजिस्टर पूर्णांकernally. Refer to that function क्रम more inक्रमmation.
  *
- * If an Counter registered with this function needs to be unregistered
- * separately, devm_counter_unregister must be used.
+ * If an Counter रेजिस्टरed with this function needs to be unरेजिस्टरed
+ * separately, devm_counter_unरेजिस्टर must be used.
  *
  * RETURNS:
  * 0 on success, negative error number on failure.
  */
-int devm_counter_register(struct device *dev,
-			  struct counter_device *const counter)
-{
-	struct counter_device **ptr;
-	int ret;
+पूर्णांक devm_counter_रेजिस्टर(काष्ठा device *dev,
+			  काष्ठा counter_device *स्थिर counter)
+अणु
+	काष्ठा counter_device **ptr;
+	पूर्णांक ret;
 
-	ptr = devres_alloc(devm_counter_unreg, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	ptr = devres_alloc(devm_counter_unreg, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस -ENOMEM;
 
-	ret = counter_register(counter);
-	if (!ret) {
+	ret = counter_रेजिस्टर(counter);
+	अगर (!ret) अणु
 		*ptr = counter;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(devm_counter_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_counter_रेजिस्टर);
 
-static int devm_counter_match(struct device *dev, void *res, void *data)
-{
-	struct counter_device **r = res;
+अटल पूर्णांक devm_counter_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा counter_device **r = res;
 
-	if (!r || !*r) {
+	अगर (!r || !*r) अणु
 		WARN_ON(!r || !*r);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return *r == data;
-}
+	वापस *r == data;
+पूर्ण
 
 /**
- * devm_counter_unregister - Resource-managed counter_unregister
- * @dev:	device this counter_device belongs to
- * @counter:	pointer to Counter associated with the device
+ * devm_counter_unरेजिस्टर - Resource-managed counter_unरेजिस्टर
+ * @dev:	device this counter_device beदीर्घs to
+ * @counter:	poपूर्णांकer to Counter associated with the device
  *
- * Unregister Counter registered with devm_counter_register.
+ * Unरेजिस्टर Counter रेजिस्टरed with devm_counter_रेजिस्टर.
  */
-void devm_counter_unregister(struct device *dev,
-			     struct counter_device *const counter)
-{
-	int rc;
+व्योम devm_counter_unरेजिस्टर(काष्ठा device *dev,
+			     काष्ठा counter_device *स्थिर counter)
+अणु
+	पूर्णांक rc;
 
 	rc = devres_release(dev, devm_counter_unreg, devm_counter_match,
 			    counter);
 	WARN_ON(rc);
-}
-EXPORT_SYMBOL_GPL(devm_counter_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_counter_unरेजिस्टर);
 
-static int __init counter_init(void)
-{
-	return bus_register(&counter_bus_type);
-}
+अटल पूर्णांक __init counter_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&counter_bus_type);
+पूर्ण
 
-static void __exit counter_exit(void)
-{
-	bus_unregister(&counter_bus_type);
-}
+अटल व्योम __निकास counter_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&counter_bus_type);
+पूर्ण
 
 subsys_initcall(counter_init);
-module_exit(counter_exit);
+module_निकास(counter_निकास);
 
 MODULE_AUTHOR("William Breathitt Gray <vilhelm.gray@gmail.com>");
 MODULE_DESCRIPTION("Generic Counter interface");

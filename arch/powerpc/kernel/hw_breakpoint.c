@@ -1,152 +1,153 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * HW_breakpoint: a unified kernel/user-space hardware breakpoint facility,
- * using the CPU's debug registers. Derived from
+ * HW_अवरोधpoपूर्णांक: a unअगरied kernel/user-space hardware अवरोधpoपूर्णांक facility,
+ * using the CPU's debug रेजिस्टरs. Derived from
  * "arch/x86/kernel/hw_breakpoint.c"
  *
  * Copyright 2010 IBM Corporation
  * Author: K.Prasad <prasad@linux.vnet.ibm.com>
  */
 
-#include <linux/hw_breakpoint.h>
-#include <linux/notifier.h>
-#include <linux/kprobes.h>
-#include <linux/percpu.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/smp.h>
-#include <linux/debugfs.h>
-#include <linux/init.h>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/init.h>
 
-#include <asm/hw_breakpoint.h>
-#include <asm/processor.h>
-#include <asm/sstep.h>
-#include <asm/debug.h>
-#include <asm/debugfs.h>
-#include <asm/hvcall.h>
-#include <asm/inst.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/hw_अवरोधpoपूर्णांक.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/sstep.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/debugfs.h>
+#समावेश <यंत्र/hvcall.h>
+#समावेश <यंत्र/inst.h>
+#समावेश <linux/uaccess.h>
 
 /*
- * Stores the breakpoints currently in use on each breakpoint address
- * register for every cpu
+ * Stores the अवरोधpoपूर्णांकs currently in use on each अवरोधpoपूर्णांक address
+ * रेजिस्टर क्रम every cpu
  */
-static DEFINE_PER_CPU(struct perf_event *, bp_per_reg[HBP_NUM_MAX]);
+अटल DEFINE_PER_CPU(काष्ठा perf_event *, bp_per_reg[HBP_NUM_MAX]);
 
 /*
- * Returns total number of data or instruction breakpoints available.
+ * Returns total number of data or inकाष्ठाion अवरोधpoपूर्णांकs available.
  */
-int hw_breakpoint_slots(int type)
-{
-	if (type == TYPE_DATA)
-		return nr_wp_slots();
-	return 0;		/* no instruction breakpoints available */
-}
+पूर्णांक hw_अवरोधpoपूर्णांक_slots(पूर्णांक type)
+अणु
+	अगर (type == TYPE_DATA)
+		वापस nr_wp_slots();
+	वापस 0;		/* no inकाष्ठाion अवरोधpoपूर्णांकs available */
+पूर्ण
 
-static bool single_step_pending(void)
-{
-	int i;
+अटल bool single_step_pending(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (current->thread.last_hit_ubp[i])
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (current->thपढ़ो.last_hit_ubp[i])
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
- * Install a perf counter breakpoint.
+ * Install a perf counter अवरोधpoपूर्णांक.
  *
- * We seek a free debug address register and use it for this
- * breakpoint.
+ * We seek a मुक्त debug address रेजिस्टर and use it क्रम this
+ * अवरोधpoपूर्णांक.
  *
  * Atomic: we hold the counter->ctx->lock and we only handle variables
- * and registers local to this cpu.
+ * and रेजिस्टरs local to this cpu.
  */
-int arch_install_hw_breakpoint(struct perf_event *bp)
-{
-	struct arch_hw_breakpoint *info = counter_arch_bp(bp);
-	struct perf_event **slot;
-	int i;
+पूर्णांक arch_install_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info = counter_arch_bp(bp);
+	काष्ठा perf_event **slot;
+	पूर्णांक i;
 
-	for (i = 0; i < nr_wp_slots(); i++) {
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
 		slot = this_cpu_ptr(&bp_per_reg[i]);
-		if (!*slot) {
+		अगर (!*slot) अणु
 			*slot = bp;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (WARN_ONCE(i == nr_wp_slots(), "Can't find any breakpoint slot"))
-		return -EBUSY;
+	अगर (WARN_ONCE(i == nr_wp_slots(), "Can't find any breakpoint slot"))
+		वापस -EBUSY;
 
 	/*
-	 * Do not install DABR values if the instruction must be single-stepped.
-	 * If so, DABR will be populated in single_step_dabr_instruction().
+	 * Do not install DABR values अगर the inकाष्ठाion must be single-stepped.
+	 * If so, DABR will be populated in single_step_dabr_inकाष्ठाion().
 	 */
-	if (!single_step_pending())
-		__set_breakpoint(i, info);
+	अगर (!single_step_pending())
+		__set_अवरोधpoपूर्णांक(i, info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Uninstall the breakpoint contained in the given counter.
+ * Uninstall the अवरोधpoपूर्णांक contained in the given counter.
  *
- * First we search the debug address register it uses and then we disable
+ * First we search the debug address रेजिस्टर it uses and then we disable
  * it.
  *
  * Atomic: we hold the counter->ctx->lock and we only handle variables
- * and registers local to this cpu.
+ * and रेजिस्टरs local to this cpu.
  */
-void arch_uninstall_hw_breakpoint(struct perf_event *bp)
-{
-	struct arch_hw_breakpoint null_brk = {0};
-	struct perf_event **slot;
-	int i;
+व्योम arch_uninstall_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक null_brk = अणु0पूर्ण;
+	काष्ठा perf_event **slot;
+	पूर्णांक i;
 
-	for (i = 0; i < nr_wp_slots(); i++) {
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
 		slot = this_cpu_ptr(&bp_per_reg[i]);
-		if (*slot == bp) {
-			*slot = NULL;
-			break;
-		}
-	}
+		अगर (*slot == bp) अणु
+			*slot = शून्य;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (WARN_ONCE(i == nr_wp_slots(), "Can't find any breakpoint slot"))
-		return;
+	अगर (WARN_ONCE(i == nr_wp_slots(), "Can't find any breakpoint slot"))
+		वापस;
 
-	__set_breakpoint(i, &null_brk);
-}
+	__set_अवरोधpoपूर्णांक(i, &null_brk);
+पूर्ण
 
-static bool is_ptrace_bp(struct perf_event *bp)
-{
-	return bp->overflow_handler == ptrace_triggered;
-}
+अटल bool is_ptrace_bp(काष्ठा perf_event *bp)
+अणु
+	वापस bp->overflow_handler == ptrace_triggered;
+पूर्ण
 
-struct breakpoint {
-	struct list_head list;
-	struct perf_event *bp;
+काष्ठा अवरोधpoपूर्णांक अणु
+	काष्ठा list_head list;
+	काष्ठा perf_event *bp;
 	bool ptrace_bp;
-};
+पूर्ण;
 
-static DEFINE_PER_CPU(struct breakpoint *, cpu_bps[HBP_NUM_MAX]);
-static LIST_HEAD(task_bps);
+अटल DEFINE_PER_CPU(काष्ठा अवरोधpoपूर्णांक *, cpu_bps[HBP_NUM_MAX]);
+अटल LIST_HEAD(task_bps);
 
-static struct breakpoint *alloc_breakpoint(struct perf_event *bp)
-{
-	struct breakpoint *tmp;
+अटल काष्ठा अवरोधpoपूर्णांक *alloc_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
+	काष्ठा अवरोधpoपूर्णांक *पंचांगp;
 
-	tmp = kzalloc(sizeof(*tmp), GFP_KERNEL);
-	if (!tmp)
-		return ERR_PTR(-ENOMEM);
-	tmp->bp = bp;
-	tmp->ptrace_bp = is_ptrace_bp(bp);
-	return tmp;
-}
+	पंचांगp = kzalloc(माप(*पंचांगp), GFP_KERNEL);
+	अगर (!पंचांगp)
+		वापस ERR_PTR(-ENOMEM);
+	पंचांगp->bp = bp;
+	पंचांगp->ptrace_bp = is_ptrace_bp(bp);
+	वापस पंचांगp;
+पूर्ण
 
-static bool bp_addr_range_overlap(struct perf_event *bp1, struct perf_event *bp2)
-{
+अटल bool bp_addr_range_overlap(काष्ठा perf_event *bp1, काष्ठा perf_event *bp2)
+अणु
 	__u64 bp1_saddr, bp1_eaddr, bp2_saddr, bp2_eaddr;
 
 	bp1_saddr = ALIGN_DOWN(bp1->attr.bp_addr, HW_BREAKPOINT_SIZE);
@@ -154,243 +155,243 @@ static bool bp_addr_range_overlap(struct perf_event *bp1, struct perf_event *bp2
 	bp2_saddr = ALIGN_DOWN(bp2->attr.bp_addr, HW_BREAKPOINT_SIZE);
 	bp2_eaddr = ALIGN(bp2->attr.bp_addr + bp2->attr.bp_len, HW_BREAKPOINT_SIZE);
 
-	return (bp1_saddr < bp2_eaddr && bp1_eaddr > bp2_saddr);
-}
+	वापस (bp1_saddr < bp2_eaddr && bp1_eaddr > bp2_saddr);
+पूर्ण
 
-static bool alternate_infra_bp(struct breakpoint *b, struct perf_event *bp)
-{
-	return is_ptrace_bp(bp) ? !b->ptrace_bp : b->ptrace_bp;
-}
+अटल bool alternate_infra_bp(काष्ठा अवरोधpoपूर्णांक *b, काष्ठा perf_event *bp)
+अणु
+	वापस is_ptrace_bp(bp) ? !b->ptrace_bp : b->ptrace_bp;
+पूर्ण
 
-static bool can_co_exist(struct breakpoint *b, struct perf_event *bp)
-{
-	return !(alternate_infra_bp(b, bp) && bp_addr_range_overlap(b->bp, bp));
-}
+अटल bool can_co_exist(काष्ठा अवरोधpoपूर्णांक *b, काष्ठा perf_event *bp)
+अणु
+	वापस !(alternate_infra_bp(b, bp) && bp_addr_range_overlap(b->bp, bp));
+पूर्ण
 
-static int task_bps_add(struct perf_event *bp)
-{
-	struct breakpoint *tmp;
+अटल पूर्णांक task_bps_add(काष्ठा perf_event *bp)
+अणु
+	काष्ठा अवरोधpoपूर्णांक *पंचांगp;
 
-	tmp = alloc_breakpoint(bp);
-	if (IS_ERR(tmp))
-		return PTR_ERR(tmp);
+	पंचांगp = alloc_अवरोधpoपूर्णांक(bp);
+	अगर (IS_ERR(पंचांगp))
+		वापस PTR_ERR(पंचांगp);
 
-	list_add(&tmp->list, &task_bps);
-	return 0;
-}
+	list_add(&पंचांगp->list, &task_bps);
+	वापस 0;
+पूर्ण
 
-static void task_bps_remove(struct perf_event *bp)
-{
-	struct list_head *pos, *q;
+अटल व्योम task_bps_हटाओ(काष्ठा perf_event *bp)
+अणु
+	काष्ठा list_head *pos, *q;
 
-	list_for_each_safe(pos, q, &task_bps) {
-		struct breakpoint *tmp = list_entry(pos, struct breakpoint, list);
+	list_क्रम_each_safe(pos, q, &task_bps) अणु
+		काष्ठा अवरोधpoपूर्णांक *पंचांगp = list_entry(pos, काष्ठा अवरोधpoपूर्णांक, list);
 
-		if (tmp->bp == bp) {
-			list_del(&tmp->list);
-			kfree(tmp);
-			break;
-		}
-	}
-}
-
-/*
- * If any task has breakpoint from alternate infrastructure,
- * return true. Otherwise return false.
- */
-static bool all_task_bps_check(struct perf_event *bp)
-{
-	struct breakpoint *tmp;
-
-	list_for_each_entry(tmp, &task_bps, list) {
-		if (!can_co_exist(tmp, bp))
-			return true;
-	}
-	return false;
-}
+		अगर (पंचांगp->bp == bp) अणु
+			list_del(&पंचांगp->list);
+			kमुक्त(पंचांगp);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * If same task has breakpoint from alternate infrastructure,
- * return true. Otherwise return false.
+ * If any task has अवरोधpoपूर्णांक from alternate infraकाष्ठाure,
+ * वापस true. Otherwise वापस false.
  */
-static bool same_task_bps_check(struct perf_event *bp)
-{
-	struct breakpoint *tmp;
+अटल bool all_task_bps_check(काष्ठा perf_event *bp)
+अणु
+	काष्ठा अवरोधpoपूर्णांक *पंचांगp;
 
-	list_for_each_entry(tmp, &task_bps, list) {
-		if (tmp->bp->hw.target == bp->hw.target &&
-		    !can_co_exist(tmp, bp))
-			return true;
-	}
-	return false;
-}
+	list_क्रम_each_entry(पंचांगp, &task_bps, list) अणु
+		अगर (!can_co_exist(पंचांगp, bp))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int cpu_bps_add(struct perf_event *bp)
-{
-	struct breakpoint **cpu_bp;
-	struct breakpoint *tmp;
-	int i = 0;
+/*
+ * If same task has अवरोधpoपूर्णांक from alternate infraकाष्ठाure,
+ * वापस true. Otherwise वापस false.
+ */
+अटल bool same_task_bps_check(काष्ठा perf_event *bp)
+अणु
+	काष्ठा अवरोधpoपूर्णांक *पंचांगp;
 
-	tmp = alloc_breakpoint(bp);
-	if (IS_ERR(tmp))
-		return PTR_ERR(tmp);
+	list_क्रम_each_entry(पंचांगp, &task_bps, list) अणु
+		अगर (पंचांगp->bp->hw.target == bp->hw.target &&
+		    !can_co_exist(पंचांगp, bp))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
+
+अटल पूर्णांक cpu_bps_add(काष्ठा perf_event *bp)
+अणु
+	काष्ठा अवरोधpoपूर्णांक **cpu_bp;
+	काष्ठा अवरोधpoपूर्णांक *पंचांगp;
+	पूर्णांक i = 0;
+
+	पंचांगp = alloc_अवरोधpoपूर्णांक(bp);
+	अगर (IS_ERR(पंचांगp))
+		वापस PTR_ERR(पंचांगp);
 
 	cpu_bp = per_cpu_ptr(cpu_bps, bp->cpu);
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (!cpu_bp[i]) {
-			cpu_bp[i] = tmp;
-			break;
-		}
-	}
-	return 0;
-}
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (!cpu_bp[i]) अणु
+			cpu_bp[i] = पंचांगp;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void cpu_bps_remove(struct perf_event *bp)
-{
-	struct breakpoint **cpu_bp;
-	int i = 0;
+अटल व्योम cpu_bps_हटाओ(काष्ठा perf_event *bp)
+अणु
+	काष्ठा अवरोधpoपूर्णांक **cpu_bp;
+	पूर्णांक i = 0;
 
 	cpu_bp = per_cpu_ptr(cpu_bps, bp->cpu);
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (!cpu_bp[i])
-			continue;
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (!cpu_bp[i])
+			जारी;
 
-		if (cpu_bp[i]->bp == bp) {
-			kfree(cpu_bp[i]);
-			cpu_bp[i] = NULL;
-			break;
-		}
-	}
-}
+		अगर (cpu_bp[i]->bp == bp) अणु
+			kमुक्त(cpu_bp[i]);
+			cpu_bp[i] = शून्य;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool cpu_bps_check(int cpu, struct perf_event *bp)
-{
-	struct breakpoint **cpu_bp;
-	int i;
+अटल bool cpu_bps_check(पूर्णांक cpu, काष्ठा perf_event *bp)
+अणु
+	काष्ठा अवरोधpoपूर्णांक **cpu_bp;
+	पूर्णांक i;
 
 	cpu_bp = per_cpu_ptr(cpu_bps, cpu);
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (cpu_bp[i] && !can_co_exist(cpu_bp[i], bp))
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (cpu_bp[i] && !can_co_exist(cpu_bp[i], bp))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool all_cpu_bps_check(struct perf_event *bp)
-{
-	int cpu;
+अटल bool all_cpu_bps_check(काष्ठा perf_event *bp)
+अणु
+	पूर्णांक cpu;
 
-	for_each_online_cpu(cpu) {
-		if (cpu_bps_check(cpu, bp))
-			return true;
-	}
-	return false;
-}
+	क्रम_each_online_cpu(cpu) अणु
+		अगर (cpu_bps_check(cpu, bp))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
- * We don't use any locks to serialize accesses to cpu_bps or task_bps
- * because are already inside nr_bp_mutex.
+ * We करोn't use any locks to serialize accesses to cpu_bps or task_bps
+ * because are alपढ़ोy inside nr_bp_mutex.
  */
-int arch_reserve_bp_slot(struct perf_event *bp)
-{
-	int ret;
+पूर्णांक arch_reserve_bp_slot(काष्ठा perf_event *bp)
+अणु
+	पूर्णांक ret;
 
-	/* ptrace breakpoint */
-	if (is_ptrace_bp(bp)) {
-		if (all_cpu_bps_check(bp))
-			return -ENOSPC;
+	/* ptrace अवरोधpoपूर्णांक */
+	अगर (is_ptrace_bp(bp)) अणु
+		अगर (all_cpu_bps_check(bp))
+			वापस -ENOSPC;
 
-		if (same_task_bps_check(bp))
-			return -ENOSPC;
+		अगर (same_task_bps_check(bp))
+			वापस -ENOSPC;
 
-		return task_bps_add(bp);
-	}
+		वापस task_bps_add(bp);
+	पूर्ण
 
-	/* perf breakpoint */
-	if (is_kernel_addr(bp->attr.bp_addr))
-		return 0;
+	/* perf अवरोधpoपूर्णांक */
+	अगर (is_kernel_addr(bp->attr.bp_addr))
+		वापस 0;
 
-	if (bp->hw.target && bp->cpu == -1) {
-		if (same_task_bps_check(bp))
-			return -ENOSPC;
+	अगर (bp->hw.target && bp->cpu == -1) अणु
+		अगर (same_task_bps_check(bp))
+			वापस -ENOSPC;
 
-		return task_bps_add(bp);
-	} else if (!bp->hw.target && bp->cpu != -1) {
-		if (all_task_bps_check(bp))
-			return -ENOSPC;
+		वापस task_bps_add(bp);
+	पूर्ण अन्यथा अगर (!bp->hw.target && bp->cpu != -1) अणु
+		अगर (all_task_bps_check(bp))
+			वापस -ENOSPC;
 
-		return cpu_bps_add(bp);
-	}
+		वापस cpu_bps_add(bp);
+	पूर्ण
 
-	if (same_task_bps_check(bp))
-		return -ENOSPC;
+	अगर (same_task_bps_check(bp))
+		वापस -ENOSPC;
 
 	ret = cpu_bps_add(bp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = task_bps_add(bp);
-	if (ret)
-		cpu_bps_remove(bp);
+	अगर (ret)
+		cpu_bps_हटाओ(bp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void arch_release_bp_slot(struct perf_event *bp)
-{
-	if (!is_kernel_addr(bp->attr.bp_addr)) {
-		if (bp->hw.target)
-			task_bps_remove(bp);
-		if (bp->cpu != -1)
-			cpu_bps_remove(bp);
-	}
-}
+व्योम arch_release_bp_slot(काष्ठा perf_event *bp)
+अणु
+	अगर (!is_kernel_addr(bp->attr.bp_addr)) अणु
+		अगर (bp->hw.target)
+			task_bps_हटाओ(bp);
+		अगर (bp->cpu != -1)
+			cpu_bps_हटाओ(bp);
+	पूर्ण
+पूर्ण
 
 /*
- * Perform cleanup of arch-specific counters during unregistration
+ * Perक्रमm cleanup of arch-specअगरic counters during unregistration
  * of the perf-event
  */
-void arch_unregister_hw_breakpoint(struct perf_event *bp)
-{
+व्योम arch_unरेजिस्टर_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
 	/*
-	 * If the breakpoint is unregistered between a hw_breakpoint_handler()
-	 * and the single_step_dabr_instruction(), then cleanup the breakpoint
-	 * restoration variables to prevent dangling pointers.
+	 * If the अवरोधpoपूर्णांक is unरेजिस्टरed between a hw_अवरोधpoपूर्णांक_handler()
+	 * and the single_step_dabr_inकाष्ठाion(), then cleanup the अवरोधpoपूर्णांक
+	 * restoration variables to prevent dangling poपूर्णांकers.
 	 * FIXME, this should not be using bp->ctx at all! Sayeth peterz.
 	 */
-	if (bp->ctx && bp->ctx->task && bp->ctx->task != ((void *)-1L)) {
-		int i;
+	अगर (bp->ctx && bp->ctx->task && bp->ctx->task != ((व्योम *)-1L)) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < nr_wp_slots(); i++) {
-			if (bp->ctx->task->thread.last_hit_ubp[i] == bp)
-				bp->ctx->task->thread.last_hit_ubp[i] = NULL;
-		}
-	}
-}
+		क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+			अगर (bp->ctx->task->thपढ़ो.last_hit_ubp[i] == bp)
+				bp->ctx->task->thपढ़ो.last_hit_ubp[i] = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Check for virtual address in kernel space.
+ * Check क्रम भव address in kernel space.
  */
-int arch_check_bp_in_kernelspace(struct arch_hw_breakpoint *hw)
-{
-	return is_kernel_addr(hw->address);
-}
+पूर्णांक arch_check_bp_in_kernelspace(काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
+	वापस is_kernel_addr(hw->address);
+पूर्ण
 
-int arch_bp_generic_fields(int type, int *gen_bp_type)
-{
+पूर्णांक arch_bp_generic_fields(पूर्णांक type, पूर्णांक *gen_bp_type)
+अणु
 	*gen_bp_type = 0;
-	if (type & HW_BRK_TYPE_READ)
+	अगर (type & HW_BRK_TYPE_READ)
 		*gen_bp_type |= HW_BREAKPOINT_R;
-	if (type & HW_BRK_TYPE_WRITE)
+	अगर (type & HW_BRK_TYPE_WRITE)
 		*gen_bp_type |= HW_BREAKPOINT_W;
-	if (*gen_bp_type == 0)
-		return -EINVAL;
-	return 0;
-}
+	अगर (*gen_bp_type == 0)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /*
- * Watchpoint match range is always doubleword(8 bytes) aligned on
- * powerpc. If the given range is crossing doubleword boundary, we
- * need to increase the length such that next doubleword also get
+ * Watchpoपूर्णांक match range is always द्विगुनword(8 bytes) aligned on
+ * घातerpc. If the given range is crossing द्विगुनword boundary, we
+ * need to increase the length such that next द्विगुनword also get
  * covered. Ex,
  *
  *          address   len = 6 bytes
@@ -400,174 +401,174 @@ int arch_bp_generic_fields(int type, int *gen_bp_type)
  *   |---------------|---------------|
  *    <---8 bytes--->
  *
- * In this case, we should configure hw as:
+ * In this हाल, we should configure hw as:
  *   start_addr = address & ~(HW_BREAKPOINT_SIZE - 1)
  *   len = 16 bytes
  *
  * @start_addr is inclusive but @end_addr is exclusive.
  */
-static int hw_breakpoint_validate_len(struct arch_hw_breakpoint *hw)
-{
+अटल पूर्णांक hw_अवरोधpoपूर्णांक_validate_len(काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
 	u16 max_len = DABR_MAX_LEN;
 	u16 hw_len;
-	unsigned long start_addr, end_addr;
+	अचिन्हित दीर्घ start_addr, end_addr;
 
 	start_addr = ALIGN_DOWN(hw->address, HW_BREAKPOINT_SIZE);
 	end_addr = ALIGN(hw->address + hw->len, HW_BREAKPOINT_SIZE);
 	hw_len = end_addr - start_addr;
 
-	if (dawr_enabled()) {
+	अगर (dawr_enabled()) अणु
 		max_len = DAWR_MAX_LEN;
 		/* DAWR region can't cross 512 bytes boundary on p10 predecessors */
-		if (!cpu_has_feature(CPU_FTR_ARCH_31) &&
+		अगर (!cpu_has_feature(CPU_FTR_ARCH_31) &&
 		    (ALIGN_DOWN(start_addr, SZ_512) != ALIGN_DOWN(end_addr - 1, SZ_512)))
-			return -EINVAL;
-	} else if (IS_ENABLED(CONFIG_PPC_8xx)) {
+			वापस -EINVAL;
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_PPC_8xx)) अणु
 		/* 8xx can setup a range without limitation */
 		max_len = U16_MAX;
-	}
+	पूर्ण
 
-	if (hw_len > max_len)
-		return -EINVAL;
+	अगर (hw_len > max_len)
+		वापस -EINVAL;
 
 	hw->hw_len = hw_len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Validate the arch-specific HW Breakpoint register settings
+ * Validate the arch-specअगरic HW Breakpoपूर्णांक रेजिस्टर settings
  */
-int hw_breakpoint_arch_parse(struct perf_event *bp,
-			     const struct perf_event_attr *attr,
-			     struct arch_hw_breakpoint *hw)
-{
-	int ret = -EINVAL;
+पूर्णांक hw_अवरोधpoपूर्णांक_arch_parse(काष्ठा perf_event *bp,
+			     स्थिर काष्ठा perf_event_attr *attr,
+			     काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!bp || !attr->bp_len)
-		return ret;
+	अगर (!bp || !attr->bp_len)
+		वापस ret;
 
 	hw->type = HW_BRK_TYPE_TRANSLATE;
-	if (attr->bp_type & HW_BREAKPOINT_R)
+	अगर (attr->bp_type & HW_BREAKPOINT_R)
 		hw->type |= HW_BRK_TYPE_READ;
-	if (attr->bp_type & HW_BREAKPOINT_W)
+	अगर (attr->bp_type & HW_BREAKPOINT_W)
 		hw->type |= HW_BRK_TYPE_WRITE;
-	if (hw->type == HW_BRK_TYPE_TRANSLATE)
-		/* must set alteast read or write */
-		return ret;
-	if (!attr->exclude_user)
+	अगर (hw->type == HW_BRK_TYPE_TRANSLATE)
+		/* must set alteast पढ़ो or ग_लिखो */
+		वापस ret;
+	अगर (!attr->exclude_user)
 		hw->type |= HW_BRK_TYPE_USER;
-	if (!attr->exclude_kernel)
+	अगर (!attr->exclude_kernel)
 		hw->type |= HW_BRK_TYPE_KERNEL;
-	if (!attr->exclude_hv)
+	अगर (!attr->exclude_hv)
 		hw->type |= HW_BRK_TYPE_HYP;
 	hw->address = attr->bp_addr;
 	hw->len = attr->bp_len;
 
-	if (!ppc_breakpoint_available())
-		return -ENODEV;
+	अगर (!ppc_अवरोधpoपूर्णांक_available())
+		वापस -ENODEV;
 
-	return hw_breakpoint_validate_len(hw);
-}
+	वापस hw_अवरोधpoपूर्णांक_validate_len(hw);
+पूर्ण
 
 /*
- * Restores the breakpoint on the debug registers.
- * Invoke this function if it is known that the execution context is
+ * Restores the अवरोधpoपूर्णांक on the debug रेजिस्टरs.
+ * Invoke this function अगर it is known that the execution context is
  * about to change to cause loss of MSR_SE settings.
  */
-void thread_change_pc(struct task_struct *tsk, struct pt_regs *regs)
-{
-	struct arch_hw_breakpoint *info;
-	int i;
+व्योम thपढ़ो_change_pc(काष्ठा task_काष्ठा *tsk, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info;
+	पूर्णांक i;
 
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (unlikely(tsk->thread.last_hit_ubp[i]))
-			goto reset;
-	}
-	return;
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (unlikely(tsk->thपढ़ो.last_hit_ubp[i]))
+			जाओ reset;
+	पूर्ण
+	वापस;
 
 reset:
 	regs->msr &= ~MSR_SE;
-	for (i = 0; i < nr_wp_slots(); i++) {
-		info = counter_arch_bp(__this_cpu_read(bp_per_reg[i]));
-		__set_breakpoint(i, info);
-		tsk->thread.last_hit_ubp[i] = NULL;
-	}
-}
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		info = counter_arch_bp(__this_cpu_पढ़ो(bp_per_reg[i]));
+		__set_अवरोधpoपूर्णांक(i, info);
+		tsk->thपढ़ो.last_hit_ubp[i] = शून्य;
+	पूर्ण
+पूर्ण
 
-static bool is_larx_stcx_instr(int type)
-{
-	return type == LARX || type == STCX;
-}
+अटल bool is_larx_stcx_instr(पूर्णांक type)
+अणु
+	वापस type == LARX || type == STCX;
+पूर्ण
 
-static bool is_octword_vsx_instr(int type, int size)
-{
-	return ((type == LOAD_VSX || type == STORE_VSX) && size == 32);
-}
+अटल bool is_octword_vsx_instr(पूर्णांक type, पूर्णांक size)
+अणु
+	वापस ((type == LOAD_VSX || type == STORE_VSX) && size == 32);
+पूर्ण
 
 /*
- * We've failed in reliably handling the hw-breakpoint. Unregister
+ * We've failed in reliably handling the hw-अवरोधpoपूर्णांक. Unरेजिस्टर
  * it and throw a warning message to let the user know about it.
  */
-static void handler_error(struct perf_event *bp, struct arch_hw_breakpoint *info)
-{
+अटल व्योम handler_error(काष्ठा perf_event *bp, काष्ठा arch_hw_अवरोधpoपूर्णांक *info)
+अणु
 	WARN(1, "Unable to handle hardware breakpoint. Breakpoint at 0x%lx will be disabled.",
 	     info->address);
 	perf_event_disable_inatomic(bp);
-}
+पूर्ण
 
-static void larx_stcx_err(struct perf_event *bp, struct arch_hw_breakpoint *info)
-{
-	printk_ratelimited("Breakpoint hit on instruction that can't be emulated. Breakpoint at 0x%lx will be disabled.\n",
+अटल व्योम larx_stcx_err(काष्ठा perf_event *bp, काष्ठा arch_hw_अवरोधpoपूर्णांक *info)
+अणु
+	prपूर्णांकk_ratelimited("Breakpoint hit on instruction that can't be emulated. Breakpoint at 0x%lx will be disabled.\n",
 			   info->address);
 	perf_event_disable_inatomic(bp);
-}
+पूर्ण
 
-static bool stepping_handler(struct pt_regs *regs, struct perf_event **bp,
-			     struct arch_hw_breakpoint **info, int *hit,
-			     struct ppc_inst instr)
-{
-	int i;
-	int stepped;
+अटल bool stepping_handler(काष्ठा pt_regs *regs, काष्ठा perf_event **bp,
+			     काष्ठा arch_hw_अवरोधpoपूर्णांक **info, पूर्णांक *hit,
+			     काष्ठा ppc_inst instr)
+अणु
+	पूर्णांक i;
+	पूर्णांक stepped;
 
-	/* Do not emulate user-space instructions, instead single-step them */
-	if (user_mode(regs)) {
-		for (i = 0; i < nr_wp_slots(); i++) {
-			if (!hit[i])
-				continue;
-			current->thread.last_hit_ubp[i] = bp[i];
-			info[i] = NULL;
-		}
+	/* Do not emulate user-space inकाष्ठाions, instead single-step them */
+	अगर (user_mode(regs)) अणु
+		क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+			अगर (!hit[i])
+				जारी;
+			current->thपढ़ो.last_hit_ubp[i] = bp[i];
+			info[i] = शून्य;
+		पूर्ण
 		regs->msr |= MSR_SE;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	stepped = emulate_step(regs, instr);
-	if (!stepped) {
-		for (i = 0; i < nr_wp_slots(); i++) {
-			if (!hit[i])
-				continue;
+	अगर (!stepped) अणु
+		क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+			अगर (!hit[i])
+				जारी;
 			handler_error(bp[i], info[i]);
-			info[i] = NULL;
-		}
-		return false;
-	}
-	return true;
-}
+			info[i] = शून्य;
+		पूर्ण
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void handle_p10dd1_spurious_exception(struct arch_hw_breakpoint **info,
-					     int *hit, unsigned long ea)
-{
-	int i;
-	unsigned long hw_end_addr;
+अटल व्योम handle_p10dd1_spurious_exception(काष्ठा arch_hw_अवरोधpoपूर्णांक **info,
+					     पूर्णांक *hit, अचिन्हित दीर्घ ea)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ hw_end_addr;
 
 	/*
 	 * Handle spurious exception only when any bp_per_reg is set.
 	 * Otherwise this might be created by xmon and not actually a
 	 * spurious exception.
 	 */
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (!info[i])
-			continue;
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (!info[i])
+			जारी;
 
 		hw_end_addr = ALIGN(info[i]->address + info[i]->len, HW_BREAKPOINT_SIZE);
 
@@ -575,181 +576,181 @@ static void handle_p10dd1_spurious_exception(struct arch_hw_breakpoint **info,
 		 * Ending address of DAWR range is less than starting
 		 * address of op.
 		 */
-		if ((hw_end_addr - 1) >= ea)
-			continue;
+		अगर ((hw_end_addr - 1) >= ea)
+			जारी;
 
 		/*
 		 * Those addresses need to be in the same or in two
 		 * consecutive 512B blocks;
 		 */
-		if (((hw_end_addr - 1) >> 10) != (ea >> 10))
-			continue;
+		अगर (((hw_end_addr - 1) >> 10) != (ea >> 10))
+			जारी;
 
 		/*
 		 * 'op address + 64B' generates an address that has a
-		 * carry into bit 52 (crosses 2K boundary).
+		 * carry पूर्णांकo bit 52 (crosses 2K boundary).
 		 */
-		if ((ea & 0x800) == ((ea + 64) & 0x800))
-			continue;
+		अगर ((ea & 0x800) == ((ea + 64) & 0x800))
+			जारी;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (i == nr_wp_slots())
-		return;
+	अगर (i == nr_wp_slots())
+		वापस;
 
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (info[i]) {
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (info[i]) अणु
 			hit[i] = 1;
 			info[i]->type |= HW_BRK_TYPE_EXTRANEOUS_IRQ;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int hw_breakpoint_handler(struct die_args *args)
-{
+पूर्णांक hw_अवरोधpoपूर्णांक_handler(काष्ठा die_args *args)
+अणु
 	bool err = false;
-	int rc = NOTIFY_STOP;
-	struct perf_event *bp[HBP_NUM_MAX] = { NULL };
-	struct pt_regs *regs = args->regs;
-	struct arch_hw_breakpoint *info[HBP_NUM_MAX] = { NULL };
-	int i;
-	int hit[HBP_NUM_MAX] = {0};
-	int nr_hit = 0;
+	पूर्णांक rc = NOTIFY_STOP;
+	काष्ठा perf_event *bp[HBP_NUM_MAX] = अणु शून्य पूर्ण;
+	काष्ठा pt_regs *regs = args->regs;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info[HBP_NUM_MAX] = अणु शून्य पूर्ण;
+	पूर्णांक i;
+	पूर्णांक hit[HBP_NUM_MAX] = अणु0पूर्ण;
+	पूर्णांक nr_hit = 0;
 	bool ptrace_bp = false;
-	struct ppc_inst instr = ppc_inst(0);
-	int type = 0;
-	int size = 0;
-	unsigned long ea;
+	काष्ठा ppc_inst instr = ppc_inst(0);
+	पूर्णांक type = 0;
+	पूर्णांक size = 0;
+	अचिन्हित दीर्घ ea;
 
-	/* Disable breakpoints during exception handling */
-	hw_breakpoint_disable();
+	/* Disable अवरोधpoपूर्णांकs during exception handling */
+	hw_अवरोधpoपूर्णांक_disable();
 
 	/*
 	 * The counter may be concurrently released but that can only
 	 * occur from a call_rcu() path. We can then safely fetch
-	 * the breakpoint, use its callback, touch its counter
-	 * while we are in an rcu_read_lock() path.
+	 * the अवरोधpoपूर्णांक, use its callback, touch its counter
+	 * जबतक we are in an rcu_पढ़ो_lock() path.
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	if (!IS_ENABLED(CONFIG_PPC_8xx))
+	अगर (!IS_ENABLED(CONFIG_PPC_8xx))
 		wp_get_instr_detail(regs, &instr, &type, &size, &ea);
 
-	for (i = 0; i < nr_wp_slots(); i++) {
-		bp[i] = __this_cpu_read(bp_per_reg[i]);
-		if (!bp[i])
-			continue;
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		bp[i] = __this_cpu_पढ़ो(bp_per_reg[i]);
+		अगर (!bp[i])
+			जारी;
 
 		info[i] = counter_arch_bp(bp[i]);
 		info[i]->type &= ~HW_BRK_TYPE_EXTRANEOUS_IRQ;
 
-		if (wp_check_constraints(regs, instr, ea, type, size, info[i])) {
-			if (!IS_ENABLED(CONFIG_PPC_8xx) &&
-			    ppc_inst_equal(instr, ppc_inst(0))) {
+		अगर (wp_check_स्थिरraपूर्णांकs(regs, instr, ea, type, size, info[i])) अणु
+			अगर (!IS_ENABLED(CONFIG_PPC_8xx) &&
+			    ppc_inst_equal(instr, ppc_inst(0))) अणु
 				handler_error(bp[i], info[i]);
-				info[i] = NULL;
+				info[i] = शून्य;
 				err = 1;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (is_ptrace_bp(bp[i]))
+			अगर (is_ptrace_bp(bp[i]))
 				ptrace_bp = true;
 			hit[i] = 1;
 			nr_hit++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (err)
-		goto reset;
+	अगर (err)
+		जाओ reset;
 
-	if (!nr_hit) {
-		/* Workaround for Power10 DD1 */
-		if (!IS_ENABLED(CONFIG_PPC_8xx) && mfspr(SPRN_PVR) == 0x800100 &&
-		    is_octword_vsx_instr(type, size)) {
+	अगर (!nr_hit) अणु
+		/* Workaround क्रम Power10 DD1 */
+		अगर (!IS_ENABLED(CONFIG_PPC_8xx) && mfspr(SPRN_PVR) == 0x800100 &&
+		    is_octword_vsx_instr(type, size)) अणु
 			handle_p10dd1_spurious_exception(info, hit, ea);
-		} else {
+		पूर्ण अन्यथा अणु
 			rc = NOTIFY_DONE;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Return early after invoking user-callback function without restoring
-	 * DABR if the breakpoint is from ptrace which always operates in
-	 * one-shot mode. The ptrace-ed process will receive the SIGTRAP signal
-	 * generated in do_dabr().
+	 * DABR अगर the अवरोधpoपूर्णांक is from ptrace which always operates in
+	 * one-shot mode. The ptrace-ed process will receive the SIGTRAP संकेत
+	 * generated in करो_dabr().
 	 */
-	if (ptrace_bp) {
-		for (i = 0; i < nr_wp_slots(); i++) {
-			if (!hit[i])
-				continue;
+	अगर (ptrace_bp) अणु
+		क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+			अगर (!hit[i])
+				जारी;
 			perf_bp_event(bp[i], regs);
-			info[i] = NULL;
-		}
+			info[i] = शून्य;
+		पूर्ण
 		rc = NOTIFY_DONE;
-		goto reset;
-	}
+		जाओ reset;
+	पूर्ण
 
-	if (!IS_ENABLED(CONFIG_PPC_8xx)) {
-		if (is_larx_stcx_instr(type)) {
-			for (i = 0; i < nr_wp_slots(); i++) {
-				if (!hit[i])
-					continue;
+	अगर (!IS_ENABLED(CONFIG_PPC_8xx)) अणु
+		अगर (is_larx_stcx_instr(type)) अणु
+			क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+				अगर (!hit[i])
+					जारी;
 				larx_stcx_err(bp[i], info[i]);
-				info[i] = NULL;
-			}
-			goto reset;
-		}
+				info[i] = शून्य;
+			पूर्ण
+			जाओ reset;
+		पूर्ण
 
-		if (!stepping_handler(regs, bp, info, hit, instr))
-			goto reset;
-	}
+		अगर (!stepping_handler(regs, bp, info, hit, instr))
+			जाओ reset;
+	पूर्ण
 
 	/*
 	 * As a policy, the callback is invoked in a 'trigger-after-execute'
 	 * fashion
 	 */
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (!hit[i])
-			continue;
-		if (!(info[i]->type & HW_BRK_TYPE_EXTRANEOUS_IRQ))
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (!hit[i])
+			जारी;
+		अगर (!(info[i]->type & HW_BRK_TYPE_EXTRANEOUS_IRQ))
 			perf_bp_event(bp[i], regs);
-	}
+	पूर्ण
 
 reset:
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (!info[i])
-			continue;
-		__set_breakpoint(i, info[i]);
-	}
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (!info[i])
+			जारी;
+		__set_अवरोधpoपूर्णांक(i, info[i]);
+	पूर्ण
 
 out:
-	rcu_read_unlock();
-	return rc;
-}
-NOKPROBE_SYMBOL(hw_breakpoint_handler);
+	rcu_पढ़ो_unlock();
+	वापस rc;
+पूर्ण
+NOKPROBE_SYMBOL(hw_अवरोधpoपूर्णांक_handler);
 
 /*
  * Handle single-step exceptions following a DABR hit.
  */
-static int single_step_dabr_instruction(struct die_args *args)
-{
-	struct pt_regs *regs = args->regs;
-	struct perf_event *bp = NULL;
-	struct arch_hw_breakpoint *info;
-	int i;
+अटल पूर्णांक single_step_dabr_inकाष्ठाion(काष्ठा die_args *args)
+अणु
+	काष्ठा pt_regs *regs = args->regs;
+	काष्ठा perf_event *bp = शून्य;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info;
+	पूर्णांक i;
 	bool found = false;
 
 	/*
-	 * Check if we are single-stepping as a result of a
-	 * previous HW Breakpoint exception
+	 * Check अगर we are single-stepping as a result of a
+	 * previous HW Breakpoपूर्णांक exception
 	 */
-	for (i = 0; i < nr_wp_slots(); i++) {
-		bp = current->thread.last_hit_ubp[i];
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		bp = current->thपढ़ो.last_hit_ubp[i];
 
-		if (!bp)
-			continue;
+		अगर (!bp)
+			जारी;
 
 		found = true;
 		info = counter_arch_bp(bp);
@@ -759,86 +760,86 @@ static int single_step_dabr_instruction(struct die_args *args)
 		 * single stepping handler to confirm to 'trigger-after-execute'
 		 * semantics
 		 */
-		if (!(info->type & HW_BRK_TYPE_EXTRANEOUS_IRQ))
+		अगर (!(info->type & HW_BRK_TYPE_EXTRANEOUS_IRQ))
 			perf_bp_event(bp, regs);
-		current->thread.last_hit_ubp[i] = NULL;
-	}
+		current->thपढ़ो.last_hit_ubp[i] = शून्य;
+	पूर्ण
 
-	if (!found)
-		return NOTIFY_DONE;
+	अगर (!found)
+		वापस NOTIFY_DONE;
 
-	for (i = 0; i < nr_wp_slots(); i++) {
-		bp = __this_cpu_read(bp_per_reg[i]);
-		if (!bp)
-			continue;
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		bp = __this_cpu_पढ़ो(bp_per_reg[i]);
+		अगर (!bp)
+			जारी;
 
 		info = counter_arch_bp(bp);
-		__set_breakpoint(i, info);
-	}
+		__set_अवरोधpoपूर्णांक(i, info);
+	पूर्ण
 
 	/*
 	 * If the process was being single-stepped by ptrace, let the
 	 * other single-step actions occur (e.g. generate SIGTRAP).
 	 */
-	if (test_thread_flag(TIF_SINGLESTEP))
-		return NOTIFY_DONE;
+	अगर (test_thपढ़ो_flag(TIF_SINGLESTEP))
+		वापस NOTIFY_DONE;
 
-	return NOTIFY_STOP;
-}
-NOKPROBE_SYMBOL(single_step_dabr_instruction);
-
-/*
- * Handle debug exception notifications.
- */
-int hw_breakpoint_exceptions_notify(
-		struct notifier_block *unused, unsigned long val, void *data)
-{
-	int ret = NOTIFY_DONE;
-
-	switch (val) {
-	case DIE_DABR_MATCH:
-		ret = hw_breakpoint_handler(data);
-		break;
-	case DIE_SSTEP:
-		ret = single_step_dabr_instruction(data);
-		break;
-	}
-
-	return ret;
-}
-NOKPROBE_SYMBOL(hw_breakpoint_exceptions_notify);
+	वापस NOTIFY_STOP;
+पूर्ण
+NOKPROBE_SYMBOL(single_step_dabr_inकाष्ठाion);
 
 /*
- * Release the user breakpoints used by ptrace
+ * Handle debug exception notअगरications.
  */
-void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
-{
-	int i;
-	struct thread_struct *t = &tsk->thread;
+पूर्णांक hw_अवरोधpoपूर्णांक_exceptions_notअगरy(
+		काष्ठा notअगरier_block *unused, अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	पूर्णांक ret = NOTIFY_DONE;
 
-	for (i = 0; i < nr_wp_slots(); i++) {
-		unregister_hw_breakpoint(t->ptrace_bps[i]);
-		t->ptrace_bps[i] = NULL;
-	}
-}
+	चयन (val) अणु
+	हाल DIE_DABR_MATCH:
+		ret = hw_अवरोधpoपूर्णांक_handler(data);
+		अवरोध;
+	हाल DIE_SSTEP:
+		ret = single_step_dabr_inकाष्ठाion(data);
+		अवरोध;
+	पूर्ण
 
-void hw_breakpoint_pmu_read(struct perf_event *bp)
-{
+	वापस ret;
+पूर्ण
+NOKPROBE_SYMBOL(hw_अवरोधpoपूर्णांक_exceptions_notअगरy);
+
+/*
+ * Release the user अवरोधpoपूर्णांकs used by ptrace
+ */
+व्योम flush_ptrace_hw_अवरोधpoपूर्णांक(काष्ठा task_काष्ठा *tsk)
+अणु
+	पूर्णांक i;
+	काष्ठा thपढ़ो_काष्ठा *t = &tsk->thपढ़ो;
+
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		unरेजिस्टर_hw_अवरोधpoपूर्णांक(t->ptrace_bps[i]);
+		t->ptrace_bps[i] = शून्य;
+	पूर्ण
+पूर्ण
+
+व्योम hw_अवरोधpoपूर्णांक_pmu_पढ़ो(काष्ठा perf_event *bp)
+अणु
 	/* TODO */
-}
+पूर्ण
 
-void ptrace_triggered(struct perf_event *bp,
-		      struct perf_sample_data *data, struct pt_regs *regs)
-{
-	struct perf_event_attr attr;
+व्योम ptrace_triggered(काष्ठा perf_event *bp,
+		      काष्ठा perf_sample_data *data, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा perf_event_attr attr;
 
 	/*
-	 * Disable the breakpoint request here since ptrace has defined a
-	 * one-shot behaviour for breakpoint exceptions in PPC64.
-	 * The SIGTRAP signal is generated automatically for us in do_dabr().
-	 * We don't have to do anything about that here
+	 * Disable the अवरोधpoपूर्णांक request here since ptrace has defined a
+	 * one-shot behaviour क्रम अवरोधpoपूर्णांक exceptions in PPC64.
+	 * The SIGTRAP संकेत is generated स्वतःmatically क्रम us in करो_dabr().
+	 * We करोn't have to करो anything about that here
 	 */
 	attr = bp->attr;
 	attr.disabled = true;
-	modify_user_hw_breakpoint(bp, &attr);
-}
+	modअगरy_user_hw_अवरोधpoपूर्णांक(bp, &attr);
+पूर्ण

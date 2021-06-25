@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * omap_crtc.h -- OMAP DRM CRTC
  *
@@ -6,29 +7,29 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
-#ifndef __OMAPDRM_CRTC_H__
-#define __OMAPDRM_CRTC_H__
+#अगर_अघोषित __OMAPDRM_CRTC_H__
+#घोषणा __OMAPDRM_CRTC_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum omap_channel;
+क्रमागत omap_channel;
 
-struct drm_crtc;
-struct drm_device;
-struct drm_plane;
-struct omap_drm_pipeline;
-struct omap_dss_device;
-struct videomode;
+काष्ठा drm_crtc;
+काष्ठा drm_device;
+काष्ठा drm_plane;
+काष्ठा omap_drm_pipeline;
+काष्ठा omap_dss_device;
+काष्ठा videomode;
 
-struct videomode *omap_crtc_timings(struct drm_crtc *crtc);
-enum omap_channel omap_crtc_channel(struct drm_crtc *crtc);
-struct drm_crtc *omap_crtc_init(struct drm_device *dev,
-				struct omap_drm_pipeline *pipe,
-				struct drm_plane *plane);
-int omap_crtc_wait_pending(struct drm_crtc *crtc);
-void omap_crtc_error_irq(struct drm_crtc *crtc, u32 irqstatus);
-void omap_crtc_vblank_irq(struct drm_crtc *crtc);
-void omap_crtc_framedone_irq(struct drm_crtc *crtc, uint32_t irqstatus);
-void omap_crtc_flush(struct drm_crtc *crtc);
+काष्ठा videomode *omap_crtc_timings(काष्ठा drm_crtc *crtc);
+क्रमागत omap_channel omap_crtc_channel(काष्ठा drm_crtc *crtc);
+काष्ठा drm_crtc *omap_crtc_init(काष्ठा drm_device *dev,
+				काष्ठा omap_drm_pipeline *pipe,
+				काष्ठा drm_plane *plane);
+पूर्णांक omap_crtc_रुको_pending(काष्ठा drm_crtc *crtc);
+व्योम omap_crtc_error_irq(काष्ठा drm_crtc *crtc, u32 irqstatus);
+व्योम omap_crtc_vblank_irq(काष्ठा drm_crtc *crtc);
+व्योम omap_crtc_frameकरोne_irq(काष्ठा drm_crtc *crtc, uपूर्णांक32_t irqstatus);
+व्योम omap_crtc_flush(काष्ठा drm_crtc *crtc);
 
-#endif /* __OMAPDRM_CRTC_H__ */
+#पूर्ण_अगर /* __OMAPDRM_CRTC_H__ */

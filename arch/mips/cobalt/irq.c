@@ -1,64 +1,65 @@
+<शैली गुरु>
 /*
  * IRQ vector handles
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1995, 1996, 1997, 2003 by Ralf Baechle
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
 
-#include <asm/i8259.h>
-#include <asm/irq_cpu.h>
-#include <asm/irq_gt641xx.h>
-#include <asm/gt64120.h>
+#समावेश <यंत्र/i8259.h>
+#समावेश <यंत्र/irq_cpu.h>
+#समावेश <यंत्र/irq_gt641xx.h>
+#समावेश <यंत्र/gt64120.h>
 
-#include <irq.h>
+#समावेश <irq.h>
 
-asmlinkage void plat_irq_dispatch(void)
-{
-	unsigned pending = read_c0_status() & read_c0_cause() & ST0_IM;
-	int irq;
+यंत्रlinkage व्योम plat_irq_dispatch(व्योम)
+अणु
+	अचिन्हित pending = पढ़ो_c0_status() & पढ़ो_c0_cause() & ST0_IM;
+	पूर्णांक irq;
 
-	if (pending & CAUSEF_IP2)
+	अगर (pending & CAUSEF_IP2)
 		gt641xx_irq_dispatch();
-	else if (pending & CAUSEF_IP6) {
+	अन्यथा अगर (pending & CAUSEF_IP6) अणु
 		irq = i8259_irq();
-		if (irq < 0)
-			spurious_interrupt();
-		else
-			do_IRQ(irq);
-	} else if (pending & CAUSEF_IP3)
-		do_IRQ(MIPS_CPU_IRQ_BASE + 3);
-	else if (pending & CAUSEF_IP4)
-		do_IRQ(MIPS_CPU_IRQ_BASE + 4);
-	else if (pending & CAUSEF_IP5)
-		do_IRQ(MIPS_CPU_IRQ_BASE + 5);
-	else if (pending & CAUSEF_IP7)
-		do_IRQ(MIPS_CPU_IRQ_BASE + 7);
-	else
-		spurious_interrupt();
-}
+		अगर (irq < 0)
+			spurious_पूर्णांकerrupt();
+		अन्यथा
+			करो_IRQ(irq);
+	पूर्ण अन्यथा अगर (pending & CAUSEF_IP3)
+		करो_IRQ(MIPS_CPU_IRQ_BASE + 3);
+	अन्यथा अगर (pending & CAUSEF_IP4)
+		करो_IRQ(MIPS_CPU_IRQ_BASE + 4);
+	अन्यथा अगर (pending & CAUSEF_IP5)
+		करो_IRQ(MIPS_CPU_IRQ_BASE + 5);
+	अन्यथा अगर (pending & CAUSEF_IP7)
+		करो_IRQ(MIPS_CPU_IRQ_BASE + 7);
+	अन्यथा
+		spurious_पूर्णांकerrupt();
+पूर्ण
 
-void __init arch_init_irq(void)
-{
+व्योम __init arch_init_irq(व्योम)
+अणु
 	mips_cpu_irq_init();
 	gt641xx_irq_init();
 	init_i8259_irqs();
 
-	if (request_irq(GT641XX_CASCADE_IRQ, no_action, IRQF_NO_THREAD,
-			"cascade", NULL)) {
+	अगर (request_irq(GT641XX_CASCADE_IRQ, no_action, IRQF_NO_THREAD,
+			"cascade", शून्य)) अणु
 		pr_err("Failed to request irq %d (cascade)\n",
 		       GT641XX_CASCADE_IRQ);
-	}
-	if (request_irq(I8259_CASCADE_IRQ, no_action, IRQF_NO_THREAD,
-			"cascade", NULL)) {
+	पूर्ण
+	अगर (request_irq(I8259_CASCADE_IRQ, no_action, IRQF_NO_THREAD,
+			"cascade", शून्य)) अणु
 		pr_err("Failed to request irq %d (cascade)\n",
 		       I8259_CASCADE_IRQ);
-	}
-}
+	पूर्ण
+पूर्ण

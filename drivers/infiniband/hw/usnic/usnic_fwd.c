@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013, Cisco Systems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,281 +31,281 @@
  * SOFTWARE.
  *
  */
-#include <linux/netdevice.h>
-#include <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/pci.h>
 
-#include "enic_api.h"
-#include "usnic_common_pkt_hdr.h"
-#include "usnic_fwd.h"
-#include "usnic_log.h"
+#समावेश "enic_api.h"
+#समावेश "usnic_common_pkt_hdr.h"
+#समावेश "usnic_fwd.h"
+#समावेश "usnic_log.h"
 
-static int usnic_fwd_devcmd_locked(struct usnic_fwd_dev *ufdev, int vnic_idx,
-					enum vnic_devcmd_cmd cmd, u64 *a0,
+अटल पूर्णांक usnic_fwd_devcmd_locked(काष्ठा usnic_fwd_dev *ufdev, पूर्णांक vnic_idx,
+					क्रमागत vnic_devcmd_cmd cmd, u64 *a0,
 					u64 *a1)
-{
-	int status;
-	struct net_device *netdev = ufdev->netdev;
+अणु
+	पूर्णांक status;
+	काष्ठा net_device *netdev = ufdev->netdev;
 
-	lockdep_assert_held(&ufdev->lock);
+	lockdep_निश्चित_held(&ufdev->lock);
 
 	status = enic_api_devcmd_proxy_by_index(netdev,
 			vnic_idx,
 			cmd,
 			a0, a1,
 			1000);
-	if (status) {
-		if (status == ERR_EINVAL && cmd == CMD_DEL_FILTER) {
+	अगर (status) अणु
+		अगर (status == ERR_EINVAL && cmd == CMD_DEL_FILTER) अणु
 			usnic_dbg("Dev %s vnic idx %u cmd %u already deleted",
 					ufdev->name, vnic_idx, cmd);
-		} else {
+		पूर्ण अन्यथा अणु
 			usnic_err("Dev %s vnic idx %u cmd %u failed with status %d\n",
 					ufdev->name, vnic_idx, cmd,
 					status);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		usnic_dbg("Dev %s vnic idx %u cmd %u success",
 				ufdev->name, vnic_idx, cmd);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int usnic_fwd_devcmd(struct usnic_fwd_dev *ufdev, int vnic_idx,
-				enum vnic_devcmd_cmd cmd, u64 *a0, u64 *a1)
-{
-	int status;
+अटल पूर्णांक usnic_fwd_devcmd(काष्ठा usnic_fwd_dev *ufdev, पूर्णांक vnic_idx,
+				क्रमागत vnic_devcmd_cmd cmd, u64 *a0, u64 *a1)
+अणु
+	पूर्णांक status;
 
 	spin_lock(&ufdev->lock);
 	status = usnic_fwd_devcmd_locked(ufdev, vnic_idx, cmd, a0, a1);
 	spin_unlock(&ufdev->lock);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-struct usnic_fwd_dev *usnic_fwd_dev_alloc(struct pci_dev *pdev)
-{
-	struct usnic_fwd_dev *ufdev;
+काष्ठा usnic_fwd_dev *usnic_fwd_dev_alloc(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा usnic_fwd_dev *ufdev;
 
-	ufdev = kzalloc(sizeof(*ufdev), GFP_KERNEL);
-	if (!ufdev)
-		return NULL;
+	ufdev = kzalloc(माप(*ufdev), GFP_KERNEL);
+	अगर (!ufdev)
+		वापस शून्य;
 
 	ufdev->pdev = pdev;
 	ufdev->netdev = pci_get_drvdata(pdev);
 	spin_lock_init(&ufdev->lock);
-	BUILD_BUG_ON(sizeof(ufdev->name) != sizeof(ufdev->netdev->name));
-	strcpy(ufdev->name, ufdev->netdev->name);
+	BUILD_BUG_ON(माप(ufdev->name) != माप(ufdev->netdev->name));
+	म_नकल(ufdev->name, ufdev->netdev->name);
 
-	return ufdev;
-}
+	वापस ufdev;
+पूर्ण
 
-void usnic_fwd_dev_free(struct usnic_fwd_dev *ufdev)
-{
-	kfree(ufdev);
-}
+व्योम usnic_fwd_dev_मुक्त(काष्ठा usnic_fwd_dev *ufdev)
+अणु
+	kमुक्त(ufdev);
+पूर्ण
 
-void usnic_fwd_set_mac(struct usnic_fwd_dev *ufdev, char mac[ETH_ALEN])
-{
+व्योम usnic_fwd_set_mac(काष्ठा usnic_fwd_dev *ufdev, अक्षर mac[ETH_ALEN])
+अणु
 	spin_lock(&ufdev->lock);
-	memcpy(&ufdev->mac, mac, sizeof(ufdev->mac));
+	स_नकल(&ufdev->mac, mac, माप(ufdev->mac));
 	spin_unlock(&ufdev->lock);
-}
+पूर्ण
 
-void usnic_fwd_add_ipaddr(struct usnic_fwd_dev *ufdev, __be32 inaddr)
-{
+व्योम usnic_fwd_add_ipaddr(काष्ठा usnic_fwd_dev *ufdev, __be32 inaddr)
+अणु
 	spin_lock(&ufdev->lock);
-	if (!ufdev->inaddr)
+	अगर (!ufdev->inaddr)
 		ufdev->inaddr = inaddr;
 	spin_unlock(&ufdev->lock);
-}
+पूर्ण
 
-void usnic_fwd_del_ipaddr(struct usnic_fwd_dev *ufdev)
-{
+व्योम usnic_fwd_del_ipaddr(काष्ठा usnic_fwd_dev *ufdev)
+अणु
 	spin_lock(&ufdev->lock);
 	ufdev->inaddr = 0;
 	spin_unlock(&ufdev->lock);
-}
+पूर्ण
 
-void usnic_fwd_carrier_up(struct usnic_fwd_dev *ufdev)
-{
+व्योम usnic_fwd_carrier_up(काष्ठा usnic_fwd_dev *ufdev)
+अणु
 	spin_lock(&ufdev->lock);
 	ufdev->link_up = 1;
 	spin_unlock(&ufdev->lock);
-}
+पूर्ण
 
-void usnic_fwd_carrier_down(struct usnic_fwd_dev *ufdev)
-{
+व्योम usnic_fwd_carrier_करोwn(काष्ठा usnic_fwd_dev *ufdev)
+अणु
 	spin_lock(&ufdev->lock);
 	ufdev->link_up = 0;
 	spin_unlock(&ufdev->lock);
-}
+पूर्ण
 
-void usnic_fwd_set_mtu(struct usnic_fwd_dev *ufdev, unsigned int mtu)
-{
+व्योम usnic_fwd_set_mtu(काष्ठा usnic_fwd_dev *ufdev, अचिन्हित पूर्णांक mtu)
+अणु
 	spin_lock(&ufdev->lock);
 	ufdev->mtu = mtu;
 	spin_unlock(&ufdev->lock);
-}
+पूर्ण
 
-static int usnic_fwd_dev_ready_locked(struct usnic_fwd_dev *ufdev)
-{
-	lockdep_assert_held(&ufdev->lock);
+अटल पूर्णांक usnic_fwd_dev_पढ़ोy_locked(काष्ठा usnic_fwd_dev *ufdev)
+अणु
+	lockdep_निश्चित_held(&ufdev->lock);
 
-	if (!ufdev->link_up)
-		return -EPERM;
+	अगर (!ufdev->link_up)
+		वापस -EPERM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int validate_filter_locked(struct usnic_fwd_dev *ufdev,
-					struct filter *filter)
-{
+अटल पूर्णांक validate_filter_locked(काष्ठा usnic_fwd_dev *ufdev,
+					काष्ठा filter *filter)
+अणु
 
-	lockdep_assert_held(&ufdev->lock);
+	lockdep_निश्चित_held(&ufdev->lock);
 
-	if (filter->type == FILTER_IPV4_5TUPLE) {
-		if (!(filter->u.ipv4.flags & FILTER_FIELD_5TUP_DST_AD))
-			return -EACCES;
-		if (!(filter->u.ipv4.flags & FILTER_FIELD_5TUP_DST_PT))
-			return -EBUSY;
-		else if (ufdev->inaddr == 0)
-			return -EINVAL;
-		else if (filter->u.ipv4.dst_port == 0)
-			return -ERANGE;
-		else if (ntohl(ufdev->inaddr) != filter->u.ipv4.dst_addr)
-			return -EFAULT;
-		else
-			return 0;
-	}
+	अगर (filter->type == FILTER_IPV4_5TUPLE) अणु
+		अगर (!(filter->u.ipv4.flags & FILTER_FIELD_5TUP_DST_AD))
+			वापस -EACCES;
+		अगर (!(filter->u.ipv4.flags & FILTER_FIELD_5TUP_DST_PT))
+			वापस -EBUSY;
+		अन्यथा अगर (ufdev->inaddr == 0)
+			वापस -EINVAL;
+		अन्यथा अगर (filter->u.ipv4.dst_port == 0)
+			वापस -दुस्फल;
+		अन्यथा अगर (ntohl(ufdev->inaddr) != filter->u.ipv4.dst_addr)
+			वापस -EFAULT;
+		अन्यथा
+			वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fill_tlv(struct filter_tlv *tlv, struct filter *filter,
-		struct filter_action *action)
-{
+अटल व्योम fill_tlv(काष्ठा filter_tlv *tlv, काष्ठा filter *filter,
+		काष्ठा filter_action *action)
+अणु
 	tlv->type = CLSF_TLV_FILTER;
-	tlv->length = sizeof(struct filter);
-	*((struct filter *)&tlv->val) = *filter;
+	tlv->length = माप(काष्ठा filter);
+	*((काष्ठा filter *)&tlv->val) = *filter;
 
-	tlv = (struct filter_tlv *)((char *)tlv + sizeof(struct filter_tlv) +
-			sizeof(struct filter));
+	tlv = (काष्ठा filter_tlv *)((अक्षर *)tlv + माप(काष्ठा filter_tlv) +
+			माप(काष्ठा filter));
 	tlv->type = CLSF_TLV_ACTION;
-	tlv->length = sizeof(struct filter_action);
-	*((struct filter_action *)&tlv->val) = *action;
-}
+	tlv->length = माप(काष्ठा filter_action);
+	*((काष्ठा filter_action *)&tlv->val) = *action;
+पूर्ण
 
-struct usnic_fwd_flow*
-usnic_fwd_alloc_flow(struct usnic_fwd_dev *ufdev, struct filter *filter,
-				struct usnic_filter_action *uaction)
-{
-	struct filter_tlv *tlv;
-	struct pci_dev *pdev;
-	struct usnic_fwd_flow *flow;
-	uint64_t a0, a1;
-	uint64_t tlv_size;
+काष्ठा usnic_fwd_flow*
+usnic_fwd_alloc_flow(काष्ठा usnic_fwd_dev *ufdev, काष्ठा filter *filter,
+				काष्ठा usnic_filter_action *uaction)
+अणु
+	काष्ठा filter_tlv *tlv;
+	काष्ठा pci_dev *pdev;
+	काष्ठा usnic_fwd_flow *flow;
+	uपूर्णांक64_t a0, a1;
+	uपूर्णांक64_t tlv_size;
 	dma_addr_t tlv_pa;
-	int status;
+	पूर्णांक status;
 
 	pdev = ufdev->pdev;
-	tlv_size = (2*sizeof(struct filter_tlv) + sizeof(struct filter) +
-			sizeof(struct filter_action));
+	tlv_size = (2*माप(काष्ठा filter_tlv) + माप(काष्ठा filter) +
+			माप(काष्ठा filter_action));
 
-	flow = kzalloc(sizeof(*flow), GFP_ATOMIC);
-	if (!flow)
-		return ERR_PTR(-ENOMEM);
+	flow = kzalloc(माप(*flow), GFP_ATOMIC);
+	अगर (!flow)
+		वापस ERR_PTR(-ENOMEM);
 
 	tlv = dma_alloc_coherent(&pdev->dev, tlv_size, &tlv_pa, GFP_ATOMIC);
-	if (!tlv) {
+	अगर (!tlv) अणु
 		usnic_err("Failed to allocate memory\n");
 		status = -ENOMEM;
-		goto out_free_flow;
-	}
+		जाओ out_मुक्त_flow;
+	पूर्ण
 
 	fill_tlv(tlv, filter, &uaction->action);
 
 	spin_lock(&ufdev->lock);
-	status = usnic_fwd_dev_ready_locked(ufdev);
-	if (status) {
+	status = usnic_fwd_dev_पढ़ोy_locked(ufdev);
+	अगर (status) अणु
 		usnic_err("Forwarding dev %s not ready with status %d\n",
 				ufdev->name, status);
-		goto out_free_tlv;
-	}
+		जाओ out_मुक्त_tlv;
+	पूर्ण
 
 	status = validate_filter_locked(ufdev, filter);
-	if (status) {
+	अगर (status) अणु
 		usnic_err("Failed to validate filter with status %d\n",
 				status);
-		goto out_free_tlv;
-	}
+		जाओ out_मुक्त_tlv;
+	पूर्ण
 
 	/* Issue Devcmd */
 	a0 = tlv_pa;
 	a1 = tlv_size;
 	status = usnic_fwd_devcmd_locked(ufdev, uaction->vnic_idx,
 						CMD_ADD_FILTER, &a0, &a1);
-	if (status) {
+	अगर (status) अणु
 		usnic_err("VF %s Filter add failed with status:%d",
 				ufdev->name, status);
 		status = -EFAULT;
-		goto out_free_tlv;
-	} else {
+		जाओ out_मुक्त_tlv;
+	पूर्ण अन्यथा अणु
 		usnic_dbg("VF %s FILTER ID:%llu", ufdev->name, a0);
-	}
+	पूर्ण
 
-	flow->flow_id = (uint32_t) a0;
+	flow->flow_id = (uपूर्णांक32_t) a0;
 	flow->vnic_idx = uaction->vnic_idx;
 	flow->ufdev = ufdev;
 
-out_free_tlv:
+out_मुक्त_tlv:
 	spin_unlock(&ufdev->lock);
-	dma_free_coherent(&pdev->dev, tlv_size, tlv, tlv_pa);
-	if (!status)
-		return flow;
-out_free_flow:
-	kfree(flow);
-	return ERR_PTR(status);
-}
+	dma_मुक्त_coherent(&pdev->dev, tlv_size, tlv, tlv_pa);
+	अगर (!status)
+		वापस flow;
+out_मुक्त_flow:
+	kमुक्त(flow);
+	वापस ERR_PTR(status);
+पूर्ण
 
-int usnic_fwd_dealloc_flow(struct usnic_fwd_flow *flow)
-{
-	int status;
+पूर्णांक usnic_fwd_dealloc_flow(काष्ठा usnic_fwd_flow *flow)
+अणु
+	पूर्णांक status;
 	u64 a0, a1;
 
 	a0 = flow->flow_id;
 
 	status = usnic_fwd_devcmd(flow->ufdev, flow->vnic_idx,
 					CMD_DEL_FILTER, &a0, &a1);
-	if (status) {
-		if (status == ERR_EINVAL) {
+	अगर (status) अणु
+		अगर (status == ERR_EINVAL) अणु
 			usnic_dbg("Filter %u already deleted for VF Idx %u pf: %s status: %d",
 					flow->flow_id, flow->vnic_idx,
 					flow->ufdev->name, status);
-		} else {
+		पूर्ण अन्यथा अणु
 			usnic_err("PF %s VF Idx %u Filter: %u FILTER DELETE failed with status %d",
 					flow->ufdev->name, flow->vnic_idx,
 					flow->flow_id, status);
-		}
+		पूर्ण
 		status = 0;
 		/*
-		 * Log the error and fake success to the caller because if
+		 * Log the error and fake success to the caller because अगर
 		 * a flow fails to be deleted in the firmware, it is an
 		 * unrecoverable error.
 		 */
-	} else {
+	पूर्ण अन्यथा अणु
 		usnic_dbg("PF %s VF Idx %u Filter: %u FILTER DELETED",
 				flow->ufdev->name, flow->vnic_idx,
 				flow->flow_id);
-	}
+	पूर्ण
 
-	kfree(flow);
-	return status;
-}
+	kमुक्त(flow);
+	वापस status;
+पूर्ण
 
-int usnic_fwd_enable_qp(struct usnic_fwd_dev *ufdev, int vnic_idx, int qp_idx)
-{
-	int status;
-	struct net_device *pf_netdev;
+पूर्णांक usnic_fwd_enable_qp(काष्ठा usnic_fwd_dev *ufdev, पूर्णांक vnic_idx, पूर्णांक qp_idx)
+अणु
+	पूर्णांक status;
+	काष्ठा net_device *pf_netdev;
 	u64 a0, a1;
 
 	pf_netdev = ufdev->netdev;
@@ -313,26 +314,26 @@ int usnic_fwd_enable_qp(struct usnic_fwd_dev *ufdev, int vnic_idx, int qp_idx)
 
 	status = usnic_fwd_devcmd(ufdev, vnic_idx, CMD_QP_ENABLE,
 						&a0, &a1);
-	if (status) {
+	अगर (status) अणु
 		usnic_err("PF %s VNIC Index %u RQ Index: %u ENABLE Failed with status %d",
 				netdev_name(pf_netdev),
 				vnic_idx,
 				qp_idx,
 				status);
-	} else {
+	पूर्ण अन्यथा अणु
 		usnic_dbg("PF %s VNIC Index %u RQ Index: %u ENABLED",
 				netdev_name(pf_netdev),
 				vnic_idx, qp_idx);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int usnic_fwd_disable_qp(struct usnic_fwd_dev *ufdev, int vnic_idx, int qp_idx)
-{
-	int status;
+पूर्णांक usnic_fwd_disable_qp(काष्ठा usnic_fwd_dev *ufdev, पूर्णांक vnic_idx, पूर्णांक qp_idx)
+अणु
+	पूर्णांक status;
 	u64 a0, a1;
-	struct net_device *pf_netdev;
+	काष्ठा net_device *pf_netdev;
 
 	pf_netdev = ufdev->netdev;
 	a0 = qp_idx;
@@ -340,18 +341,18 @@ int usnic_fwd_disable_qp(struct usnic_fwd_dev *ufdev, int vnic_idx, int qp_idx)
 
 	status = usnic_fwd_devcmd(ufdev, vnic_idx, CMD_QP_DISABLE,
 			&a0, &a1);
-	if (status) {
+	अगर (status) अणु
 		usnic_err("PF %s VNIC Index %u RQ Index: %u DISABLE Failed with status %d",
 				netdev_name(pf_netdev),
 				vnic_idx,
 				qp_idx,
 				status);
-	} else {
+	पूर्ण अन्यथा अणु
 		usnic_dbg("PF %s VNIC Index %u RQ Index: %u DISABLED",
 				netdev_name(pf_netdev),
 				vnic_idx,
 				qp_idx);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण

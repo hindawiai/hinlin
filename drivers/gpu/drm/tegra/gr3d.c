@@ -1,179 +1,180 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Avionic Design GmbH
  * Copyright (C) 2013 NVIDIA Corporation
  */
 
-#include <linux/clk.h>
-#include <linux/host1x.h>
-#include <linux/iommu.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/host1x.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reset.h>
 
-#include <soc/tegra/pmc.h>
+#समावेश <soc/tegra/pmc.h>
 
-#include "drm.h"
-#include "gem.h"
-#include "gr3d.h"
+#समावेश "drm.h"
+#समावेश "gem.h"
+#समावेश "gr3d.h"
 
-struct gr3d_soc {
-	unsigned int version;
-};
+काष्ठा gr3d_soc अणु
+	अचिन्हित पूर्णांक version;
+पूर्ण;
 
-struct gr3d {
-	struct tegra_drm_client client;
-	struct host1x_channel *channel;
-	struct clk *clk_secondary;
-	struct clk *clk;
-	struct reset_control *rst_secondary;
-	struct reset_control *rst;
+काष्ठा gr3d अणु
+	काष्ठा tegra_drm_client client;
+	काष्ठा host1x_channel *channel;
+	काष्ठा clk *clk_secondary;
+	काष्ठा clk *clk;
+	काष्ठा reset_control *rst_secondary;
+	काष्ठा reset_control *rst;
 
-	const struct gr3d_soc *soc;
+	स्थिर काष्ठा gr3d_soc *soc;
 
 	DECLARE_BITMAP(addr_regs, GR3D_NUM_REGS);
-};
+पूर्ण;
 
-static inline struct gr3d *to_gr3d(struct tegra_drm_client *client)
-{
-	return container_of(client, struct gr3d, client);
-}
+अटल अंतरभूत काष्ठा gr3d *to_gr3d(काष्ठा tegra_drm_client *client)
+अणु
+	वापस container_of(client, काष्ठा gr3d, client);
+पूर्ण
 
-static int gr3d_init(struct host1x_client *client)
-{
-	struct tegra_drm_client *drm = host1x_to_drm_client(client);
-	struct drm_device *dev = dev_get_drvdata(client->host);
-	unsigned long flags = HOST1X_SYNCPT_HAS_BASE;
-	struct gr3d *gr3d = to_gr3d(drm);
-	int err;
+अटल पूर्णांक gr3d_init(काष्ठा host1x_client *client)
+अणु
+	काष्ठा tegra_drm_client *drm = host1x_to_drm_client(client);
+	काष्ठा drm_device *dev = dev_get_drvdata(client->host);
+	अचिन्हित दीर्घ flags = HOST1X_SYNCPT_HAS_BASE;
+	काष्ठा gr3d *gr3d = to_gr3d(drm);
+	पूर्णांक err;
 
 	gr3d->channel = host1x_channel_request(client);
-	if (!gr3d->channel)
-		return -ENOMEM;
+	अगर (!gr3d->channel)
+		वापस -ENOMEM;
 
 	client->syncpts[0] = host1x_syncpt_request(client, flags);
-	if (!client->syncpts[0]) {
+	अगर (!client->syncpts[0]) अणु
 		err = -ENOMEM;
 		dev_err(client->dev, "failed to request syncpoint: %d\n", err);
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
 	err = host1x_client_iommu_attach(client);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(client->dev, "failed to attach to domain: %d\n", err);
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	err = tegra_drm_register_client(dev->dev_private, drm);
-	if (err < 0) {
+	err = tegra_drm_रेजिस्टर_client(dev->dev_निजी, drm);
+	अगर (err < 0) अणु
 		dev_err(client->dev, "failed to register client: %d\n", err);
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 detach:
 	host1x_client_iommu_detach(client);
-free:
+मुक्त:
 	host1x_syncpt_put(client->syncpts[0]);
 put:
 	host1x_channel_put(gr3d->channel);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gr3d_exit(struct host1x_client *client)
-{
-	struct tegra_drm_client *drm = host1x_to_drm_client(client);
-	struct drm_device *dev = dev_get_drvdata(client->host);
-	struct gr3d *gr3d = to_gr3d(drm);
-	int err;
+अटल पूर्णांक gr3d_निकास(काष्ठा host1x_client *client)
+अणु
+	काष्ठा tegra_drm_client *drm = host1x_to_drm_client(client);
+	काष्ठा drm_device *dev = dev_get_drvdata(client->host);
+	काष्ठा gr3d *gr3d = to_gr3d(drm);
+	पूर्णांक err;
 
-	err = tegra_drm_unregister_client(dev->dev_private, drm);
-	if (err < 0)
-		return err;
+	err = tegra_drm_unरेजिस्टर_client(dev->dev_निजी, drm);
+	अगर (err < 0)
+		वापस err;
 
 	host1x_client_iommu_detach(client);
 	host1x_syncpt_put(client->syncpts[0]);
 	host1x_channel_put(gr3d->channel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct host1x_client_ops gr3d_client_ops = {
+अटल स्थिर काष्ठा host1x_client_ops gr3d_client_ops = अणु
 	.init = gr3d_init,
-	.exit = gr3d_exit,
-};
+	.निकास = gr3d_निकास,
+पूर्ण;
 
-static int gr3d_open_channel(struct tegra_drm_client *client,
-			     struct tegra_drm_context *context)
-{
-	struct gr3d *gr3d = to_gr3d(client);
+अटल पूर्णांक gr3d_खोलो_channel(काष्ठा tegra_drm_client *client,
+			     काष्ठा tegra_drm_context *context)
+अणु
+	काष्ठा gr3d *gr3d = to_gr3d(client);
 
 	context->channel = host1x_channel_get(gr3d->channel);
-	if (!context->channel)
-		return -ENOMEM;
+	अगर (!context->channel)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gr3d_close_channel(struct tegra_drm_context *context)
-{
+अटल व्योम gr3d_बंद_channel(काष्ठा tegra_drm_context *context)
+अणु
 	host1x_channel_put(context->channel);
-}
+पूर्ण
 
-static int gr3d_is_addr_reg(struct device *dev, u32 class, u32 offset)
-{
-	struct gr3d *gr3d = dev_get_drvdata(dev);
+अटल पूर्णांक gr3d_is_addr_reg(काष्ठा device *dev, u32 class, u32 offset)
+अणु
+	काष्ठा gr3d *gr3d = dev_get_drvdata(dev);
 
-	switch (class) {
-	case HOST1X_CLASS_HOST1X:
-		if (offset == 0x2b)
-			return 1;
+	चयन (class) अणु
+	हाल HOST1X_CLASS_HOST1X:
+		अगर (offset == 0x2b)
+			वापस 1;
 
-		break;
+		अवरोध;
 
-	case HOST1X_CLASS_GR3D:
-		if (offset >= GR3D_NUM_REGS)
-			break;
+	हाल HOST1X_CLASS_GR3D:
+		अगर (offset >= GR3D_NUM_REGS)
+			अवरोध;
 
-		if (test_bit(offset, gr3d->addr_regs))
-			return 1;
+		अगर (test_bit(offset, gr3d->addr_regs))
+			वापस 1;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct tegra_drm_client_ops gr3d_ops = {
-	.open_channel = gr3d_open_channel,
-	.close_channel = gr3d_close_channel,
+अटल स्थिर काष्ठा tegra_drm_client_ops gr3d_ops = अणु
+	.खोलो_channel = gr3d_खोलो_channel,
+	.बंद_channel = gr3d_बंद_channel,
 	.is_addr_reg = gr3d_is_addr_reg,
 	.submit = tegra_drm_submit,
-};
+पूर्ण;
 
-static const struct gr3d_soc tegra20_gr3d_soc = {
+अटल स्थिर काष्ठा gr3d_soc tegra20_gr3d_soc = अणु
 	.version = 0x20,
-};
+पूर्ण;
 
-static const struct gr3d_soc tegra30_gr3d_soc = {
+अटल स्थिर काष्ठा gr3d_soc tegra30_gr3d_soc = अणु
 	.version = 0x30,
-};
+पूर्ण;
 
-static const struct gr3d_soc tegra114_gr3d_soc = {
+अटल स्थिर काष्ठा gr3d_soc tegra114_gr3d_soc = अणु
 	.version = 0x35,
-};
+पूर्ण;
 
-static const struct of_device_id tegra_gr3d_match[] = {
-	{ .compatible = "nvidia,tegra114-gr3d", .data = &tegra114_gr3d_soc },
-	{ .compatible = "nvidia,tegra30-gr3d", .data = &tegra30_gr3d_soc },
-	{ .compatible = "nvidia,tegra20-gr3d", .data = &tegra20_gr3d_soc },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id tegra_gr3d_match[] = अणु
+	अणु .compatible = "nvidia,tegra114-gr3d", .data = &tegra114_gr3d_soc पूर्ण,
+	अणु .compatible = "nvidia,tegra30-gr3d", .data = &tegra30_gr3d_soc पूर्ण,
+	अणु .compatible = "nvidia,tegra20-gr3d", .data = &tegra20_gr3d_soc पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tegra_gr3d_match);
 
-static const u32 gr3d_addr_regs[] = {
+अटल स्थिर u32 gr3d_addr_regs[] = अणु
 	GR3D_IDX_ATTRIBUTE( 0),
 	GR3D_IDX_ATTRIBUTE( 1),
 	GR3D_IDX_ATTRIBUTE( 2),
@@ -276,70 +277,70 @@ static const u32 gr3d_addr_regs[] = {
 	GR3D_GLOBAL_SAMP23SURFADDR(13),
 	GR3D_GLOBAL_SAMP23SURFADDR(14),
 	GR3D_GLOBAL_SAMP23SURFADDR(15),
-};
+पूर्ण;
 
-static int gr3d_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct host1x_syncpt **syncpts;
-	struct gr3d *gr3d;
-	unsigned int i;
-	int err;
+अटल पूर्णांक gr3d_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा host1x_syncpt **syncpts;
+	काष्ठा gr3d *gr3d;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	gr3d = devm_kzalloc(&pdev->dev, sizeof(*gr3d), GFP_KERNEL);
-	if (!gr3d)
-		return -ENOMEM;
+	gr3d = devm_kzalloc(&pdev->dev, माप(*gr3d), GFP_KERNEL);
+	अगर (!gr3d)
+		वापस -ENOMEM;
 
 	gr3d->soc = of_device_get_match_data(&pdev->dev);
 
-	syncpts = devm_kzalloc(&pdev->dev, sizeof(*syncpts), GFP_KERNEL);
-	if (!syncpts)
-		return -ENOMEM;
+	syncpts = devm_kzalloc(&pdev->dev, माप(*syncpts), GFP_KERNEL);
+	अगर (!syncpts)
+		वापस -ENOMEM;
 
-	gr3d->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(gr3d->clk)) {
+	gr3d->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(gr3d->clk)) अणु
 		dev_err(&pdev->dev, "cannot get clock\n");
-		return PTR_ERR(gr3d->clk);
-	}
+		वापस PTR_ERR(gr3d->clk);
+	पूर्ण
 
 	gr3d->rst = devm_reset_control_get(&pdev->dev, "3d");
-	if (IS_ERR(gr3d->rst)) {
+	अगर (IS_ERR(gr3d->rst)) अणु
 		dev_err(&pdev->dev, "cannot get reset\n");
-		return PTR_ERR(gr3d->rst);
-	}
+		वापस PTR_ERR(gr3d->rst);
+	पूर्ण
 
-	if (of_device_is_compatible(np, "nvidia,tegra30-gr3d")) {
+	अगर (of_device_is_compatible(np, "nvidia,tegra30-gr3d")) अणु
 		gr3d->clk_secondary = devm_clk_get(&pdev->dev, "3d2");
-		if (IS_ERR(gr3d->clk_secondary)) {
+		अगर (IS_ERR(gr3d->clk_secondary)) अणु
 			dev_err(&pdev->dev, "cannot get secondary clock\n");
-			return PTR_ERR(gr3d->clk_secondary);
-		}
+			वापस PTR_ERR(gr3d->clk_secondary);
+		पूर्ण
 
 		gr3d->rst_secondary = devm_reset_control_get(&pdev->dev,
 								"3d2");
-		if (IS_ERR(gr3d->rst_secondary)) {
+		अगर (IS_ERR(gr3d->rst_secondary)) अणु
 			dev_err(&pdev->dev, "cannot get secondary reset\n");
-			return PTR_ERR(gr3d->rst_secondary);
-		}
-	}
+			वापस PTR_ERR(gr3d->rst_secondary);
+		पूर्ण
+	पूर्ण
 
-	err = tegra_powergate_sequence_power_up(TEGRA_POWERGATE_3D, gr3d->clk,
+	err = tegra_घातergate_sequence_घातer_up(TEGRA_POWERGATE_3D, gr3d->clk,
 						gr3d->rst);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to power up 3D unit\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (gr3d->clk_secondary) {
-		err = tegra_powergate_sequence_power_up(TEGRA_POWERGATE_3D1,
+	अगर (gr3d->clk_secondary) अणु
+		err = tegra_घातergate_sequence_घातer_up(TEGRA_POWERGATE_3D1,
 							gr3d->clk_secondary,
 							gr3d->rst_secondary);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev,
 				"failed to power up secondary 3D unit\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	INIT_LIST_HEAD(&gr3d->client.base.list);
 	gr3d->client.base.ops = &gr3d_client_ops;
@@ -352,52 +353,52 @@ static int gr3d_probe(struct platform_device *pdev)
 	gr3d->client.version = gr3d->soc->version;
 	gr3d->client.ops = &gr3d_ops;
 
-	err = host1x_client_register(&gr3d->client.base);
-	if (err < 0) {
+	err = host1x_client_रेजिस्टर(&gr3d->client.base);
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to register host1x client: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* initialize address register map */
-	for (i = 0; i < ARRAY_SIZE(gr3d_addr_regs); i++)
+	/* initialize address रेजिस्टर map */
+	क्रम (i = 0; i < ARRAY_SIZE(gr3d_addr_regs); i++)
 		set_bit(gr3d_addr_regs[i], gr3d->addr_regs);
 
-	platform_set_drvdata(pdev, gr3d);
+	platक्रमm_set_drvdata(pdev, gr3d);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gr3d_remove(struct platform_device *pdev)
-{
-	struct gr3d *gr3d = platform_get_drvdata(pdev);
-	int err;
+अटल पूर्णांक gr3d_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gr3d *gr3d = platक्रमm_get_drvdata(pdev);
+	पूर्णांक err;
 
-	err = host1x_client_unregister(&gr3d->client.base);
-	if (err < 0) {
+	err = host1x_client_unरेजिस्टर(&gr3d->client.base);
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to unregister host1x client: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (gr3d->clk_secondary) {
-		reset_control_assert(gr3d->rst_secondary);
-		tegra_powergate_power_off(TEGRA_POWERGATE_3D1);
+	अगर (gr3d->clk_secondary) अणु
+		reset_control_निश्चित(gr3d->rst_secondary);
+		tegra_घातergate_घातer_off(TEGRA_POWERGATE_3D1);
 		clk_disable_unprepare(gr3d->clk_secondary);
-	}
+	पूर्ण
 
-	reset_control_assert(gr3d->rst);
-	tegra_powergate_power_off(TEGRA_POWERGATE_3D);
+	reset_control_निश्चित(gr3d->rst);
+	tegra_घातergate_घातer_off(TEGRA_POWERGATE_3D);
 	clk_disable_unprepare(gr3d->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct platform_driver tegra_gr3d_driver = {
-	.driver = {
+काष्ठा platक्रमm_driver tegra_gr3d_driver = अणु
+	.driver = अणु
 		.name = "tegra-gr3d",
 		.of_match_table = tegra_gr3d_match,
-	},
+	पूर्ण,
 	.probe = gr3d_probe,
-	.remove = gr3d_remove,
-};
+	.हटाओ = gr3d_हटाओ,
+पूर्ण;

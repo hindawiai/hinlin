@@ -1,29 +1,30 @@
+<शैली गुरु>
 /*
- * Copyright 2003-2011 NetLogic Microsystems, Inc. (NetLogic). All rights
+ * Copyright 2003-2011 NetLogic Microप्रणालीs, Inc. (NetLogic). All rights
  * reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the NetLogic
+ * COPYING in the मुख्य directory of this source tree, or the NetLogic
  * license below:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY NETLOGIC ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL NETLOGIC OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -32,23 +33,23 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ASM_NLM_MIPS_EXTS_H
-#define _ASM_NLM_MIPS_EXTS_H
+#अगर_अघोषित _ASM_NLM_MIPS_EXTS_H
+#घोषणा _ASM_NLM_MIPS_EXTS_H
 
 /*
- * XLR and XLP interrupt request and interrupt mask registers
+ * XLR and XLP पूर्णांकerrupt request and पूर्णांकerrupt mask रेजिस्टरs
  */
 /*
- * NOTE: Do not save/restore flags around write_c0_eimr().
- * On non-R2 platforms the flags has part of EIMR that is shadowed in STATUS
- * register. Restoring flags will overwrite the lower 8 bits of EIMR.
+ * NOTE: Do not save/restore flags around ग_लिखो_c0_eimr().
+ * On non-R2 platक्रमms the flags has part of EIMR that is shaकरोwed in STATUS
+ * रेजिस्टर. Restoring flags will overग_लिखो the lower 8 bits of EIMR.
  *
- * Call with interrupts disabled.
+ * Call with पूर्णांकerrupts disabled.
  */
-#define write_c0_eimr(val)						\
-do {									\
-	if (sizeof(unsigned long) == 4) {				\
-		__asm__ __volatile__(					\
+#घोषणा ग_लिखो_c0_eimr(val)						\
+करो अणु									\
+	अगर (माप(अचिन्हित दीर्घ) == 4) अणु				\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips64\n\t"				\
 			"dsll\t%L0, %L0, 32\n\t"			\
 			"dsrl\t%L0, %L0, 32\n\t"			\
@@ -57,20 +58,20 @@ do {									\
 			"dmtc0\t%L0, $9, 7\n\t"				\
 			".set\tmips0"					\
 			: : "r" (val));					\
-	} else								\
-		__write_64bit_c0_register($9, 7, (val));		\
-} while (0)
+	पूर्ण अन्यथा								\
+		__ग_लिखो_64bit_c0_रेजिस्टर($9, 7, (val));		\
+पूर्ण जबतक (0)
 
 /*
- * Handling the 64 bit EIMR and EIRR registers in 32-bit mode with
+ * Handling the 64 bit EIMR and EIRR रेजिस्टरs in 32-bit mode with
  * standard functions will be very inefficient. This provides
- * optimized functions for the normal operations on the registers.
+ * optimized functions क्रम the normal operations on the रेजिस्टरs.
  *
- * Call with interrupts disabled.
+ * Call with पूर्णांकerrupts disabled.
  */
-static inline void ack_c0_eirr(int irq)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत व्योम ack_c0_eirr(पूर्णांक irq)
+अणु
+	__यंत्र__ __अस्थिर__(
 		".set	push\n\t"
 		".set	mips64\n\t"
 		".set	noat\n\t"
@@ -79,11 +80,11 @@ static inline void ack_c0_eirr(int irq)
 		"dmtc0	$1, $9, 6\n\t"
 		".set	pop"
 		: : "r" (irq));
-}
+पूर्ण
 
-static inline void set_c0_eimr(int irq)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत व्योम set_c0_eimr(पूर्णांक irq)
+अणु
+	__यंत्र__ __अस्थिर__(
 		".set	push\n\t"
 		".set	mips64\n\t"
 		".set	noat\n\t"
@@ -94,11 +95,11 @@ static inline void set_c0_eimr(int irq)
 		"dmtc0	$1, $9, 7\n\t"
 		".set	pop"
 		: "+r" (irq));
-}
+पूर्ण
 
-static inline void clear_c0_eimr(int irq)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत व्योम clear_c0_eimr(पूर्णांक irq)
+अणु
+	__यंत्र__ __अस्थिर__(
 		".set	push\n\t"
 		".set	mips64\n\t"
 		".set	noat\n\t"
@@ -110,20 +111,20 @@ static inline void clear_c0_eimr(int irq)
 		"dmtc0	$1, $9, 7\n\t"
 		".set	pop"
 		: "+r" (irq));
-}
+पूर्ण
 
 /*
- * Read c0 eimr and c0 eirr, do AND of the two values, the result is
- * the interrupts which are raised and are not masked.
+ * Read c0 eimr and c0 eirr, करो AND of the two values, the result is
+ * the पूर्णांकerrupts which are उठाओd and are not masked.
  */
-static inline uint64_t read_c0_eirr_and_eimr(void)
-{
-	uint64_t val;
+अटल अंतरभूत uपूर्णांक64_t पढ़ो_c0_eirr_and_eimr(व्योम)
+अणु
+	uपूर्णांक64_t val;
 
-#ifdef CONFIG_64BIT
-	val = __read_64bit_c0_register($9, 6) & __read_64bit_c0_register($9, 7);
-#else
-	__asm__ __volatile__(
+#अगर_घोषित CONFIG_64BIT
+	val = __पढ़ो_64bit_c0_रेजिस्टर($9, 6) & __पढ़ो_64bit_c0_रेजिस्टर($9, 7);
+#अन्यथा
+	__यंत्र__ __अस्थिर__(
 		".set	push\n\t"
 		".set	mips64\n\t"
 		".set	noat\n\t"
@@ -135,50 +136,50 @@ static inline uint64_t read_c0_eirr_and_eimr(void)
 		"dsra	%L0, %L0, 32\n\t"
 		".set	pop"
 		: "=r" (val));
-#endif
-	return val;
-}
+#पूर्ण_अगर
+	वापस val;
+पूर्ण
 
-static inline int hard_smp_processor_id(void)
-{
-	return __read_32bit_c0_register($15, 1) & 0x3ff;
-}
+अटल अंतरभूत पूर्णांक hard_smp_processor_id(व्योम)
+अणु
+	वापस __पढ़ो_32bit_c0_रेजिस्टर($15, 1) & 0x3ff;
+पूर्ण
 
-static inline int nlm_nodeid(void)
-{
-	uint32_t prid = read_c0_prid() & PRID_IMP_MASK;
+अटल अंतरभूत पूर्णांक nlm_nodeid(व्योम)
+अणु
+	uपूर्णांक32_t prid = पढ़ो_c0_prid() & PRID_IMP_MASK;
 
-	if ((prid == PRID_IMP_NETLOGIC_XLP9XX) ||
+	अगर ((prid == PRID_IMP_NETLOGIC_XLP9XX) ||
 			(prid == PRID_IMP_NETLOGIC_XLP5XX))
-		return (__read_32bit_c0_register($15, 1) >> 7) & 0x7;
-	else
-		return (__read_32bit_c0_register($15, 1) >> 5) & 0x3;
-}
+		वापस (__पढ़ो_32bit_c0_रेजिस्टर($15, 1) >> 7) & 0x7;
+	अन्यथा
+		वापस (__पढ़ो_32bit_c0_रेजिस्टर($15, 1) >> 5) & 0x3;
+पूर्ण
 
-static inline unsigned int nlm_core_id(void)
-{
-	uint32_t prid = read_c0_prid() & PRID_IMP_MASK;
+अटल अंतरभूत अचिन्हित पूर्णांक nlm_core_id(व्योम)
+अणु
+	uपूर्णांक32_t prid = पढ़ो_c0_prid() & PRID_IMP_MASK;
 
-	if ((prid == PRID_IMP_NETLOGIC_XLP9XX) ||
+	अगर ((prid == PRID_IMP_NETLOGIC_XLP9XX) ||
 			(prid == PRID_IMP_NETLOGIC_XLP5XX))
-		return (read_c0_ebase() & 0x7c) >> 2;
-	else
-		return (read_c0_ebase() & 0x1c) >> 2;
-}
+		वापस (पढ़ो_c0_ebase() & 0x7c) >> 2;
+	अन्यथा
+		वापस (पढ़ो_c0_ebase() & 0x1c) >> 2;
+पूर्ण
 
-static inline unsigned int nlm_thread_id(void)
-{
-	return read_c0_ebase() & 0x3;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक nlm_thपढ़ो_id(व्योम)
+अणु
+	वापस पढ़ो_c0_ebase() & 0x3;
+पूर्ण
 
-#define __read_64bit_c2_split(source, sel)				\
-({									\
-	unsigned long long __val;					\
-	unsigned long __flags;						\
+#घोषणा __पढ़ो_64bit_c2_split(source, sel)				\
+(अणु									\
+	अचिन्हित दीर्घ दीर्घ __val;					\
+	अचिन्हित दीर्घ __flags;						\
 									\
 	local_irq_save(__flags);					\
-	if (sel == 0)							\
-		__asm__ __volatile__(					\
+	अगर (sel == 0)							\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips64\n\t"				\
 			"dmfc2\t%M0, " #source "\n\t"			\
 			"dsll\t%L0, %M0, 32\n\t"			\
@@ -186,8 +187,8 @@ static inline unsigned int nlm_thread_id(void)
 			"dsra\t%L0, %L0, 32\n\t"			\
 			".set\tmips0\n\t"				\
 			: "=r" (__val));				\
-	else								\
-		__asm__ __volatile__(					\
+	अन्यथा								\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips64\n\t"				\
 			"dmfc2\t%M0, " #source ", " #sel "\n\t"		\
 			"dsll\t%L0, %M0, 32\n\t"			\
@@ -198,15 +199,15 @@ static inline unsigned int nlm_thread_id(void)
 	local_irq_restore(__flags);					\
 									\
 	__val;								\
-})
+पूर्ण)
 
-#define __write_64bit_c2_split(source, sel, val)			\
-do {									\
-	unsigned long __flags;						\
+#घोषणा __ग_लिखो_64bit_c2_split(source, sel, val)			\
+करो अणु									\
+	अचिन्हित दीर्घ __flags;						\
 									\
 	local_irq_save(__flags);					\
-	if (sel == 0)							\
-		__asm__ __volatile__(					\
+	अगर (sel == 0)							\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips64\n\t"				\
 			"dsll\t%L0, %L0, 32\n\t"			\
 			"dsrl\t%L0, %L0, 32\n\t"			\
@@ -215,8 +216,8 @@ do {									\
 			"dmtc2\t%L0, " #source "\n\t"			\
 			".set\tmips0\n\t"				\
 			: : "r" (val));					\
-	else								\
-		__asm__ __volatile__(					\
+	अन्यथा								\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips64\n\t"				\
 			"dsll\t%L0, %L0, 32\n\t"			\
 			"dsrl\t%L0, %L0, 32\n\t"			\
@@ -226,76 +227,76 @@ do {									\
 			".set\tmips0\n\t"				\
 			: : "r" (val));					\
 	local_irq_restore(__flags);					\
-} while (0)
+पूर्ण जबतक (0)
 
-#define __read_32bit_c2_register(source, sel)				\
-({ uint32_t __res;							\
-	if (sel == 0)							\
-		__asm__ __volatile__(					\
+#घोषणा __पढ़ो_32bit_c2_रेजिस्टर(source, sel)				\
+(अणु uपूर्णांक32_t __res;							\
+	अगर (sel == 0)							\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips32\n\t"				\
 			"mfc2\t%0, " #source "\n\t"			\
 			".set\tmips0\n\t"				\
 			: "=r" (__res));				\
-	else								\
-		__asm__ __volatile__(					\
+	अन्यथा								\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips32\n\t"				\
 			"mfc2\t%0, " #source ", " #sel "\n\t"		\
 			".set\tmips0\n\t"				\
 			: "=r" (__res));				\
 	__res;								\
-})
+पूर्ण)
 
-#define __read_64bit_c2_register(source, sel)				\
-({ unsigned long long __res;						\
-	if (sizeof(unsigned long) == 4)					\
-		__res = __read_64bit_c2_split(source, sel);		\
-	else if (sel == 0)						\
-		__asm__ __volatile__(					\
+#घोषणा __पढ़ो_64bit_c2_रेजिस्टर(source, sel)				\
+(अणु अचिन्हित दीर्घ दीर्घ __res;						\
+	अगर (माप(अचिन्हित दीर्घ) == 4)					\
+		__res = __पढ़ो_64bit_c2_split(source, sel);		\
+	अन्यथा अगर (sel == 0)						\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips64\n\t"				\
 			"dmfc2\t%0, " #source "\n\t"			\
 			".set\tmips0\n\t"				\
 			: "=r" (__res));				\
-	else								\
-		__asm__ __volatile__(					\
+	अन्यथा								\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips64\n\t"				\
 			"dmfc2\t%0, " #source ", " #sel "\n\t"		\
 			".set\tmips0\n\t"				\
 			: "=r" (__res));				\
 	__res;								\
-})
+पूर्ण)
 
-#define __write_64bit_c2_register(register, sel, value)			\
-do {									\
-	if (sizeof(unsigned long) == 4)					\
-		__write_64bit_c2_split(register, sel, value);		\
-	else if (sel == 0)						\
-		__asm__ __volatile__(					\
+#घोषणा __ग_लिखो_64bit_c2_रेजिस्टर(रेजिस्टर, sel, value)			\
+करो अणु									\
+	अगर (माप(अचिन्हित दीर्घ) == 4)					\
+		__ग_लिखो_64bit_c2_split(रेजिस्टर, sel, value);		\
+	अन्यथा अगर (sel == 0)						\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips64\n\t"				\
-			"dmtc2\t%z0, " #register "\n\t"			\
+			"dmtc2\t%z0, " #रेजिस्टर "\n\t"			\
 			".set\tmips0\n\t"				\
 			: : "Jr" (value));				\
-	else								\
-		__asm__ __volatile__(					\
+	अन्यथा								\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips64\n\t"				\
-			"dmtc2\t%z0, " #register ", " #sel "\n\t"	\
+			"dmtc2\t%z0, " #रेजिस्टर ", " #sel "\n\t"	\
 			".set\tmips0\n\t"				\
 			: : "Jr" (value));				\
-} while (0)
+पूर्ण जबतक (0)
 
-#define __write_32bit_c2_register(reg, sel, value)			\
-({									\
-	if (sel == 0)							\
-		__asm__ __volatile__(					\
+#घोषणा __ग_लिखो_32bit_c2_रेजिस्टर(reg, sel, value)			\
+(अणु									\
+	अगर (sel == 0)							\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips32\n\t"				\
 			"mtc2\t%z0, " #reg "\n\t"			\
 			".set\tmips0\n\t"				\
 			: : "Jr" (value));				\
-	else								\
-		__asm__ __volatile__(					\
+	अन्यथा								\
+		__यंत्र__ __अस्थिर__(					\
 			".set\tmips32\n\t"				\
 			"mtc2\t%z0, " #reg ", " #sel "\n\t"		\
 			".set\tmips0\n\t"				\
 			: : "Jr" (value));				\
-})
+पूर्ण)
 
-#endif /*_ASM_NLM_MIPS_EXTS_H */
+#पूर्ण_अगर /*_ASM_NLM_MIPS_EXTS_H */

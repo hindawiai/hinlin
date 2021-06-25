@@ -1,106 +1,107 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_BYTEORDER_LITTLE_ENDIAN_H
-#define _UAPI_LINUX_BYTEORDER_LITTLE_ENDIAN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_BYTEORDER_LITTLE_ENDIAN_H
+#घोषणा _UAPI_LINUX_BYTEORDER_LITTLE_ENDIAN_H
 
-#ifndef __LITTLE_ENDIAN
-#define __LITTLE_ENDIAN 1234
-#endif
-#ifndef __LITTLE_ENDIAN_BITFIELD
-#define __LITTLE_ENDIAN_BITFIELD
-#endif
+#अगर_अघोषित __LITTLE_ENDIAN
+#घोषणा __LITTLE_ENDIAN 1234
+#पूर्ण_अगर
+#अगर_अघोषित __LITTLE_ENDIAN_BITFIELD
+#घोषणा __LITTLE_ENDIAN_BITFIELD
+#पूर्ण_अगर
 
-#include <linux/types.h>
-#include <linux/swab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/swab.h>
 
-#define __constant_htonl(x) ((__force __be32)___constant_swab32((x)))
-#define __constant_ntohl(x) ___constant_swab32((__force __be32)(x))
-#define __constant_htons(x) ((__force __be16)___constant_swab16((x)))
-#define __constant_ntohs(x) ___constant_swab16((__force __be16)(x))
-#define __constant_cpu_to_le64(x) ((__force __le64)(__u64)(x))
-#define __constant_le64_to_cpu(x) ((__force __u64)(__le64)(x))
-#define __constant_cpu_to_le32(x) ((__force __le32)(__u32)(x))
-#define __constant_le32_to_cpu(x) ((__force __u32)(__le32)(x))
-#define __constant_cpu_to_le16(x) ((__force __le16)(__u16)(x))
-#define __constant_le16_to_cpu(x) ((__force __u16)(__le16)(x))
-#define __constant_cpu_to_be64(x) ((__force __be64)___constant_swab64((x)))
-#define __constant_be64_to_cpu(x) ___constant_swab64((__force __u64)(__be64)(x))
-#define __constant_cpu_to_be32(x) ((__force __be32)___constant_swab32((x)))
-#define __constant_be32_to_cpu(x) ___constant_swab32((__force __u32)(__be32)(x))
-#define __constant_cpu_to_be16(x) ((__force __be16)___constant_swab16((x)))
-#define __constant_be16_to_cpu(x) ___constant_swab16((__force __u16)(__be16)(x))
-#define __cpu_to_le64(x) ((__force __le64)(__u64)(x))
-#define __le64_to_cpu(x) ((__force __u64)(__le64)(x))
-#define __cpu_to_le32(x) ((__force __le32)(__u32)(x))
-#define __le32_to_cpu(x) ((__force __u32)(__le32)(x))
-#define __cpu_to_le16(x) ((__force __le16)(__u16)(x))
-#define __le16_to_cpu(x) ((__force __u16)(__le16)(x))
-#define __cpu_to_be64(x) ((__force __be64)__swab64((x)))
-#define __be64_to_cpu(x) __swab64((__force __u64)(__be64)(x))
-#define __cpu_to_be32(x) ((__force __be32)__swab32((x)))
-#define __be32_to_cpu(x) __swab32((__force __u32)(__be32)(x))
-#define __cpu_to_be16(x) ((__force __be16)__swab16((x)))
-#define __be16_to_cpu(x) __swab16((__force __u16)(__be16)(x))
+#घोषणा __स्थिरant_htonl(x) ((__क्रमce __be32)___स्थिरant_swab32((x)))
+#घोषणा __स्थिरant_ntohl(x) ___स्थिरant_swab32((__क्रमce __be32)(x))
+#घोषणा __स्थिरant_htons(x) ((__क्रमce __be16)___स्थिरant_swab16((x)))
+#घोषणा __स्थिरant_ntohs(x) ___स्थिरant_swab16((__क्रमce __be16)(x))
+#घोषणा __स्थिरant_cpu_to_le64(x) ((__क्रमce __le64)(__u64)(x))
+#घोषणा __स्थिरant_le64_to_cpu(x) ((__क्रमce __u64)(__le64)(x))
+#घोषणा __स्थिरant_cpu_to_le32(x) ((__क्रमce __le32)(__u32)(x))
+#घोषणा __स्थिरant_le32_to_cpu(x) ((__क्रमce __u32)(__le32)(x))
+#घोषणा __स्थिरant_cpu_to_le16(x) ((__क्रमce __le16)(__u16)(x))
+#घोषणा __स्थिरant_le16_to_cpu(x) ((__क्रमce __u16)(__le16)(x))
+#घोषणा __स्थिरant_cpu_to_be64(x) ((__क्रमce __be64)___स्थिरant_swab64((x)))
+#घोषणा __स्थिरant_be64_to_cpu(x) ___स्थिरant_swab64((__क्रमce __u64)(__be64)(x))
+#घोषणा __स्थिरant_cpu_to_be32(x) ((__क्रमce __be32)___स्थिरant_swab32((x)))
+#घोषणा __स्थिरant_be32_to_cpu(x) ___स्थिरant_swab32((__क्रमce __u32)(__be32)(x))
+#घोषणा __स्थिरant_cpu_to_be16(x) ((__क्रमce __be16)___स्थिरant_swab16((x)))
+#घोषणा __स्थिरant_be16_to_cpu(x) ___स्थिरant_swab16((__क्रमce __u16)(__be16)(x))
+#घोषणा __cpu_to_le64(x) ((__क्रमce __le64)(__u64)(x))
+#घोषणा __le64_to_cpu(x) ((__क्रमce __u64)(__le64)(x))
+#घोषणा __cpu_to_le32(x) ((__क्रमce __le32)(__u32)(x))
+#घोषणा __le32_to_cpu(x) ((__क्रमce __u32)(__le32)(x))
+#घोषणा __cpu_to_le16(x) ((__क्रमce __le16)(__u16)(x))
+#घोषणा __le16_to_cpu(x) ((__क्रमce __u16)(__le16)(x))
+#घोषणा __cpu_to_be64(x) ((__क्रमce __be64)__swab64((x)))
+#घोषणा __be64_to_cpu(x) __swab64((__क्रमce __u64)(__be64)(x))
+#घोषणा __cpu_to_be32(x) ((__क्रमce __be32)__swab32((x)))
+#घोषणा __be32_to_cpu(x) __swab32((__क्रमce __u32)(__be32)(x))
+#घोषणा __cpu_to_be16(x) ((__क्रमce __be16)__swab16((x)))
+#घोषणा __be16_to_cpu(x) __swab16((__क्रमce __u16)(__be16)(x))
 
-static __always_inline __le64 __cpu_to_le64p(const __u64 *p)
-{
-	return (__force __le64)*p;
-}
-static __always_inline __u64 __le64_to_cpup(const __le64 *p)
-{
-	return (__force __u64)*p;
-}
-static __always_inline __le32 __cpu_to_le32p(const __u32 *p)
-{
-	return (__force __le32)*p;
-}
-static __always_inline __u32 __le32_to_cpup(const __le32 *p)
-{
-	return (__force __u32)*p;
-}
-static __always_inline __le16 __cpu_to_le16p(const __u16 *p)
-{
-	return (__force __le16)*p;
-}
-static __always_inline __u16 __le16_to_cpup(const __le16 *p)
-{
-	return (__force __u16)*p;
-}
-static __always_inline __be64 __cpu_to_be64p(const __u64 *p)
-{
-	return (__force __be64)__swab64p(p);
-}
-static __always_inline __u64 __be64_to_cpup(const __be64 *p)
-{
-	return __swab64p((__u64 *)p);
-}
-static __always_inline __be32 __cpu_to_be32p(const __u32 *p)
-{
-	return (__force __be32)__swab32p(p);
-}
-static __always_inline __u32 __be32_to_cpup(const __be32 *p)
-{
-	return __swab32p((__u32 *)p);
-}
-static __always_inline __be16 __cpu_to_be16p(const __u16 *p)
-{
-	return (__force __be16)__swab16p(p);
-}
-static __always_inline __u16 __be16_to_cpup(const __be16 *p)
-{
-	return __swab16p((__u16 *)p);
-}
-#define __cpu_to_le64s(x) do { (void)(x); } while (0)
-#define __le64_to_cpus(x) do { (void)(x); } while (0)
-#define __cpu_to_le32s(x) do { (void)(x); } while (0)
-#define __le32_to_cpus(x) do { (void)(x); } while (0)
-#define __cpu_to_le16s(x) do { (void)(x); } while (0)
-#define __le16_to_cpus(x) do { (void)(x); } while (0)
-#define __cpu_to_be64s(x) __swab64s((x))
-#define __be64_to_cpus(x) __swab64s((x))
-#define __cpu_to_be32s(x) __swab32s((x))
-#define __be32_to_cpus(x) __swab32s((x))
-#define __cpu_to_be16s(x) __swab16s((x))
-#define __be16_to_cpus(x) __swab16s((x))
+अटल __always_अंतरभूत __le64 __cpu_to_le64p(स्थिर __u64 *p)
+अणु
+	वापस (__क्रमce __le64)*p;
+पूर्ण
+अटल __always_अंतरभूत __u64 __le64_to_cpup(स्थिर __le64 *p)
+अणु
+	वापस (__क्रमce __u64)*p;
+पूर्ण
+अटल __always_अंतरभूत __le32 __cpu_to_le32p(स्थिर __u32 *p)
+अणु
+	वापस (__क्रमce __le32)*p;
+पूर्ण
+अटल __always_अंतरभूत __u32 __le32_to_cpup(स्थिर __le32 *p)
+अणु
+	वापस (__क्रमce __u32)*p;
+पूर्ण
+अटल __always_अंतरभूत __le16 __cpu_to_le16p(स्थिर __u16 *p)
+अणु
+	वापस (__क्रमce __le16)*p;
+पूर्ण
+अटल __always_अंतरभूत __u16 __le16_to_cpup(स्थिर __le16 *p)
+अणु
+	वापस (__क्रमce __u16)*p;
+पूर्ण
+अटल __always_अंतरभूत __be64 __cpu_to_be64p(स्थिर __u64 *p)
+अणु
+	वापस (__क्रमce __be64)__swab64p(p);
+पूर्ण
+अटल __always_अंतरभूत __u64 __be64_to_cpup(स्थिर __be64 *p)
+अणु
+	वापस __swab64p((__u64 *)p);
+पूर्ण
+अटल __always_अंतरभूत __be32 __cpu_to_be32p(स्थिर __u32 *p)
+अणु
+	वापस (__क्रमce __be32)__swab32p(p);
+पूर्ण
+अटल __always_अंतरभूत __u32 __be32_to_cpup(स्थिर __be32 *p)
+अणु
+	वापस __swab32p((__u32 *)p);
+पूर्ण
+अटल __always_अंतरभूत __be16 __cpu_to_be16p(स्थिर __u16 *p)
+अणु
+	वापस (__क्रमce __be16)__swab16p(p);
+पूर्ण
+अटल __always_अंतरभूत __u16 __be16_to_cpup(स्थिर __be16 *p)
+अणु
+	वापस __swab16p((__u16 *)p);
+पूर्ण
+#घोषणा __cpu_to_le64s(x) करो अणु (व्योम)(x); पूर्ण जबतक (0)
+#घोषणा __le64_to_cpus(x) करो अणु (व्योम)(x); पूर्ण जबतक (0)
+#घोषणा __cpu_to_le32s(x) करो अणु (व्योम)(x); पूर्ण जबतक (0)
+#घोषणा __le32_to_cpus(x) करो अणु (व्योम)(x); पूर्ण जबतक (0)
+#घोषणा __cpu_to_le16s(x) करो अणु (व्योम)(x); पूर्ण जबतक (0)
+#घोषणा __le16_to_cpus(x) करो अणु (व्योम)(x); पूर्ण जबतक (0)
+#घोषणा __cpu_to_be64s(x) __swab64s((x))
+#घोषणा __be64_to_cpus(x) __swab64s((x))
+#घोषणा __cpu_to_be32s(x) __swab32s((x))
+#घोषणा __be32_to_cpus(x) __swab32s((x))
+#घोषणा __cpu_to_be16s(x) __swab16s((x))
+#घोषणा __be16_to_cpus(x) __swab16s((x))
 
 
-#endif /* _UAPI_LINUX_BYTEORDER_LITTLE_ENDIAN_H */
+#पूर्ण_अगर /* _UAPI_LINUX_BYTEORDER_LITTLE_ENDIAN_H */

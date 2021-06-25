@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/smp.h>
-#include <asm/hexagon_vm.h>
+#समावेश <linux/smp.h>
+#समावेश <यंत्र/hexagon_vm.h>
 
-void machine_power_off(void)
-{
+व्योम machine_घातer_off(व्योम)
+अणु
 	smp_send_stop();
 	__vmstop();
-}
+पूर्ण
 
-void machine_halt(void)
-{
-}
+व्योम machine_halt(व्योम)
+अणु
+पूर्ण
 
-void machine_restart(char *cmd)
-{
-}
+व्योम machine_restart(अक्षर *cmd)
+अणु
+पूर्ण
 
-void (*pm_power_off)(void) = NULL;
-EXPORT_SYMBOL(pm_power_off);
+व्योम (*pm_घातer_off)(व्योम) = शून्य;
+EXPORT_SYMBOL(pm_घातer_off);

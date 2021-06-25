@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Universal Interface for Intel High Definition Audio Codec
+ * Universal Interface क्रम Intel High Definition Audio Codec
  *
- * HD audio interface patch for SigmaTel STAC92xx
+ * HD audio पूर्णांकerface patch क्रम SigmaTel STAC92xx
  *
  * Copyright (c) 2005 Embedded Alley Solutions, Inc.
  * Matt Porter <mporter@embeddedalley.com>
@@ -11,22 +12,22 @@
  * Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <linux/dmi.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/jack.h>
-#include <sound/hda_codec.h>
-#include "hda_local.h"
-#include "hda_auto_parser.h"
-#include "hda_beep.h"
-#include "hda_jack.h"
-#include "hda_generic.h"
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/jack.h>
+#समावेश <sound/hda_codec.h>
+#समावेश "hda_local.h"
+#समावेश "hda_auto_parser.h"
+#समावेश "hda_beep.h"
+#समावेश "hda_jack.h"
+#समावेश "hda_generic.h"
 
-enum {
+क्रमागत अणु
 	STAC_REF,
 	STAC_9200_OQO,
 	STAC_9200_DELL_D21,
@@ -44,18 +45,18 @@ enum {
 	STAC_9200_PANASONIC,
 	STAC_9200_EAPD_INIT,
 	STAC_9200_MODELS
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAC_9205_REF,
 	STAC_9205_DELL_M42,
 	STAC_9205_DELL_M43,
 	STAC_9205_DELL_M44,
 	STAC_9205_EAPD,
 	STAC_9205_MODELS
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAC_92HD73XX_NO_JD, /* no jack-detection */
 	STAC_92HD73XX_REF,
 	STAC_92HD73XX_INTEL,
@@ -69,9 +70,9 @@ enum {
 	STAC_92HD89XX_HP_Z1_G2_RIGHT_MIC_JACK,
 	STAC_92HD73XX_ASUS_MOBO,
 	STAC_92HD73XX_MODELS
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAC_92HD83XXX_REF,
 	STAC_92HD83XXX_PWR_REF,
 	STAC_DELL_S14,
@@ -91,9 +92,9 @@ enum {
 	STAC_HP_ENVY_TS_DAC_BIND,
 	STAC_92HD83XXX_GPIO10_EAPD,
 	STAC_92HD83XXX_MODELS
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAC_92HD71BXX_REF,
 	STAC_DELL_M4_1,
 	STAC_DELL_M4_2,
@@ -106,15 +107,15 @@ enum {
 	STAC_92HD71BXX_NO_DMIC,
 	STAC_92HD71BXX_NO_SMUX,
 	STAC_92HD71BXX_MODELS
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAC_92HD95_HP_LED,
 	STAC_92HD95_HP_BASS,
 	STAC_92HD95_MODELS
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAC_925x_REF,
 	STAC_M1,
 	STAC_M1_2,
@@ -124,9 +125,9 @@ enum {
 	STAC_M5,
 	STAC_M6,
 	STAC_925x_MODELS
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAC_D945_REF,
 	STAC_D945GTP3,
 	STAC_D945GTP5,
@@ -143,9 +144,9 @@ enum {
 	STAC_922X_DELL_M82,
 	STAC_922X_INTEL_MAC_GPIO,
 	STAC_922X_MODELS
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAC_D965_REF_NO_JD, /* no jack-detection */
 	STAC_D965_REF,
 	STAC_D965_3ST,
@@ -160,1018 +161,1018 @@ enum {
 	STAC_927X_DELL_DMIC,
 	STAC_927X_VOLKNOB,
 	STAC_927X_MODELS
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	STAC_9872_VAIO,
 	STAC_9872_MODELS
-};
+पूर्ण;
 
-struct sigmatel_spec {
-	struct hda_gen_spec gen;
+काष्ठा sigmatel_spec अणु
+	काष्ठा hda_gen_spec gen;
 
-	unsigned int eapd_switch: 1;
-	unsigned int linear_tone_beep:1;
-	unsigned int headset_jack:1; /* 4-pin headset jack (hp + mono mic) */
-	unsigned int volknob_init:1; /* special volume-knob initialization */
-	unsigned int powerdown_adcs:1;
-	unsigned int have_spdif_mux:1;
+	अचिन्हित पूर्णांक eapd_चयन: 1;
+	अचिन्हित पूर्णांक linear_tone_beep:1;
+	अचिन्हित पूर्णांक headset_jack:1; /* 4-pin headset jack (hp + mono mic) */
+	अचिन्हित पूर्णांक volknob_init:1; /* special volume-knob initialization */
+	अचिन्हित पूर्णांक घातerकरोwn_adcs:1;
+	अचिन्हित पूर्णांक have_spdअगर_mux:1;
 
 	/* gpio lines */
-	unsigned int eapd_mask;
-	unsigned int gpio_mask;
-	unsigned int gpio_dir;
-	unsigned int gpio_data;
-	unsigned int gpio_mute;
-	unsigned int gpio_led;
-	unsigned int gpio_led_polarity;
-	unsigned int vref_mute_led_nid; /* pin NID for mute-LED vref control */
-	unsigned int vref_led;
-	int default_polarity;
+	अचिन्हित पूर्णांक eapd_mask;
+	अचिन्हित पूर्णांक gpio_mask;
+	अचिन्हित पूर्णांक gpio_dir;
+	अचिन्हित पूर्णांक gpio_data;
+	अचिन्हित पूर्णांक gpio_mute;
+	अचिन्हित पूर्णांक gpio_led;
+	अचिन्हित पूर्णांक gpio_led_polarity;
+	अचिन्हित पूर्णांक vref_mute_led_nid; /* pin NID क्रम mute-LED vref control */
+	अचिन्हित पूर्णांक vref_led;
+	पूर्णांक शेष_polarity;
 
-	unsigned int mic_mute_led_gpio; /* capture mute LED GPIO */
-	unsigned int mic_enabled; /* current mic mute state (bitmask) */
+	अचिन्हित पूर्णांक mic_mute_led_gpio; /* capture mute LED GPIO */
+	अचिन्हित पूर्णांक mic_enabled; /* current mic mute state (biपंचांगask) */
 
 	/* stream */
-	unsigned int stream_delay;
+	अचिन्हित पूर्णांक stream_delay;
 
 	/* analog loopback */
-	const struct snd_kcontrol_new *aloopback_ctl;
-	unsigned int aloopback;
-	unsigned char aloopback_mask;
-	unsigned char aloopback_shift;
+	स्थिर काष्ठा snd_kcontrol_new *aloopback_ctl;
+	अचिन्हित पूर्णांक aloopback;
+	अचिन्हित अक्षर aloopback_mask;
+	अचिन्हित अक्षर aloopback_shअगरt;
 
-	/* power management */
-	unsigned int power_map_bits;
-	unsigned int num_pwrs;
-	const hda_nid_t *pwr_nids;
-	unsigned int active_adcs;
+	/* घातer management */
+	अचिन्हित पूर्णांक घातer_map_bits;
+	अचिन्हित पूर्णांक num_pwrs;
+	स्थिर hda_nid_t *pwr_nids;
+	अचिन्हित पूर्णांक active_adcs;
 
-	/* beep widgets */
+	/* beep widमाला_लो */
 	hda_nid_t anabeep_nid;
 
 	/* SPDIF-out mux */
-	const char * const *spdif_labels;
-	struct hda_input_mux spdif_mux;
-	unsigned int cur_smux[2];
-};
+	स्थिर अक्षर * स्थिर *spdअगर_labels;
+	काष्ठा hda_input_mux spdअगर_mux;
+	अचिन्हित पूर्णांक cur_smux[2];
+पूर्ण;
 
-#define AC_VERB_IDT_SET_POWER_MAP	0x7ec
-#define AC_VERB_IDT_GET_POWER_MAP	0xfec
+#घोषणा AC_VERB_IDT_SET_POWER_MAP	0x7ec
+#घोषणा AC_VERB_IDT_GET_POWER_MAP	0xfec
 
-static const hda_nid_t stac92hd73xx_pwr_nids[8] = {
+अटल स्थिर hda_nid_t stac92hd73xx_pwr_nids[8] = अणु
 	0x0a, 0x0b, 0x0c, 0xd, 0x0e,
 	0x0f, 0x10, 0x11
-};
+पूर्ण;
 
-static const hda_nid_t stac92hd83xxx_pwr_nids[7] = {
+अटल स्थिर hda_nid_t stac92hd83xxx_pwr_nids[7] = अणु
 	0x0a, 0x0b, 0x0c, 0xd, 0x0e,
 	0x0f, 0x10
-};
+पूर्ण;
 
-static const hda_nid_t stac92hd71bxx_pwr_nids[3] = {
+अटल स्थिर hda_nid_t stac92hd71bxx_pwr_nids[3] = अणु
 	0x0a, 0x0d, 0x0f
-};
+पूर्ण;
 
 
 /*
  * PCM hooks
  */
-static void stac_playback_pcm_hook(struct hda_pcm_stream *hinfo,
-				   struct hda_codec *codec,
-				   struct snd_pcm_substream *substream,
-				   int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	if (action == HDA_GEN_PCM_ACT_OPEN && spec->stream_delay)
+अटल व्योम stac_playback_pcm_hook(काष्ठा hda_pcm_stream *hinfo,
+				   काष्ठा hda_codec *codec,
+				   काष्ठा snd_pcm_substream *substream,
+				   पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	अगर (action == HDA_GEN_PCM_ACT_OPEN && spec->stream_delay)
 		msleep(spec->stream_delay);
-}
+पूर्ण
 
-static void stac_capture_pcm_hook(struct hda_pcm_stream *hinfo,
-				  struct hda_codec *codec,
-				  struct snd_pcm_substream *substream,
-				  int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	int i, idx = 0;
+अटल व्योम stac_capture_pcm_hook(काष्ठा hda_pcm_stream *hinfo,
+				  काष्ठा hda_codec *codec,
+				  काष्ठा snd_pcm_substream *substream,
+				  पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	पूर्णांक i, idx = 0;
 
-	if (!spec->powerdown_adcs)
-		return;
+	अगर (!spec->घातerकरोwn_adcs)
+		वापस;
 
-	for (i = 0; i < spec->gen.num_all_adcs; i++) {
-		if (spec->gen.all_adcs[i] == hinfo->nid) {
+	क्रम (i = 0; i < spec->gen.num_all_adcs; i++) अणु
+		अगर (spec->gen.all_adcs[i] == hinfo->nid) अणु
 			idx = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	switch (action) {
-	case HDA_GEN_PCM_ACT_OPEN:
+	चयन (action) अणु
+	हाल HDA_GEN_PCM_ACT_OPEN:
 		msleep(40);
-		snd_hda_codec_write(codec, hinfo->nid, 0,
+		snd_hda_codec_ग_लिखो(codec, hinfo->nid, 0,
 				    AC_VERB_SET_POWER_STATE, AC_PWRST_D0);
 		spec->active_adcs |= (1 << idx);
-		break;
-	case HDA_GEN_PCM_ACT_CLOSE:
-		snd_hda_codec_write(codec, hinfo->nid, 0,
+		अवरोध;
+	हाल HDA_GEN_PCM_ACT_CLOSE:
+		snd_hda_codec_ग_लिखो(codec, hinfo->nid, 0,
 				    AC_VERB_SET_POWER_STATE, AC_PWRST_D3);
 		spec->active_adcs &= ~(1 << idx);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * Early 2006 Intel Macintoshes with STAC9220X5 codecs seem to have a
- * funky external mute control using GPIO pins.
+ * Early 2006 Intel Macपूर्णांकoshes with STAC9220X5 codecs seem to have a
+ * funky बाह्यal mute control using GPIO pins.
  */
 
-static void stac_gpio_set(struct hda_codec *codec, unsigned int mask,
-			  unsigned int dir_mask, unsigned int data)
-{
-	unsigned int gpiostate, gpiomask, gpiodir;
+अटल व्योम stac_gpio_set(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक mask,
+			  अचिन्हित पूर्णांक dir_mask, अचिन्हित पूर्णांक data)
+अणु
+	अचिन्हित पूर्णांक gpiostate, gpiomask, gpiodir;
 	hda_nid_t fg = codec->core.afg;
 
 	codec_dbg(codec, "%s msk %x dir %x gpio %x\n", __func__, mask, dir_mask, data);
 
-	gpiostate = snd_hda_codec_read(codec, fg, 0,
+	gpiostate = snd_hda_codec_पढ़ो(codec, fg, 0,
 				       AC_VERB_GET_GPIO_DATA, 0);
 	gpiostate = (gpiostate & ~dir_mask) | (data & dir_mask);
 
-	gpiomask = snd_hda_codec_read(codec, fg, 0,
+	gpiomask = snd_hda_codec_पढ़ो(codec, fg, 0,
 				      AC_VERB_GET_GPIO_MASK, 0);
 	gpiomask |= mask;
 
-	gpiodir = snd_hda_codec_read(codec, fg, 0,
-				     AC_VERB_GET_GPIO_DIRECTION, 0);
+	gpiodir = snd_hda_codec_पढ़ो(codec, fg, 0,
+				     AC_VERB_GET_GPIO_सूचीECTION, 0);
 	gpiodir |= dir_mask;
 
 	/* Configure GPIOx as CMOS */
-	snd_hda_codec_write(codec, fg, 0, 0x7e7, 0);
+	snd_hda_codec_ग_लिखो(codec, fg, 0, 0x7e7, 0);
 
-	snd_hda_codec_write(codec, fg, 0,
+	snd_hda_codec_ग_लिखो(codec, fg, 0,
 			    AC_VERB_SET_GPIO_MASK, gpiomask);
-	snd_hda_codec_read(codec, fg, 0,
-			   AC_VERB_SET_GPIO_DIRECTION, gpiodir); /* sync */
+	snd_hda_codec_पढ़ो(codec, fg, 0,
+			   AC_VERB_SET_GPIO_सूचीECTION, gpiodir); /* sync */
 
 	msleep(1);
 
-	snd_hda_codec_read(codec, fg, 0,
+	snd_hda_codec_पढ़ो(codec, fg, 0,
 			   AC_VERB_SET_GPIO_DATA, gpiostate); /* sync */
-}
+पूर्ण
 
-/* hook for controlling mic-mute LED GPIO */
-static int stac_capture_led_update(struct led_classdev *led_cdev,
-				   enum led_brightness brightness)
-{
-	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	struct sigmatel_spec *spec = codec->spec;
+/* hook क्रम controlling mic-mute LED GPIO */
+अटल पूर्णांक stac_capture_led_update(काष्ठा led_classdev *led_cdev,
+				   क्रमागत led_brightness brightness)
+अणु
+	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (brightness)
+	अगर (brightness)
 		spec->gpio_data |= spec->mic_mute_led_gpio;
-	else
+	अन्यथा
 		spec->gpio_data &= ~spec->mic_mute_led_gpio;
 	stac_gpio_set(codec, spec->gpio_mask, spec->gpio_dir, spec->gpio_data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stac_vrefout_set(struct hda_codec *codec,
-					hda_nid_t nid, unsigned int new_vref)
-{
-	int error, pinctl;
+अटल पूर्णांक stac_vrefout_set(काष्ठा hda_codec *codec,
+					hda_nid_t nid, अचिन्हित पूर्णांक new_vref)
+अणु
+	पूर्णांक error, pinctl;
 
 	codec_dbg(codec, "%s, nid %x ctl %x\n", __func__, nid, new_vref);
-	pinctl = snd_hda_codec_read(codec, nid, 0,
+	pinctl = snd_hda_codec_पढ़ो(codec, nid, 0,
 				AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
 
-	if (pinctl < 0)
-		return pinctl;
+	अगर (pinctl < 0)
+		वापस pinctl;
 
 	pinctl &= 0xff;
 	pinctl &= ~AC_PINCTL_VREFEN;
 	pinctl |= (new_vref & AC_PINCTL_VREFEN);
 
 	error = snd_hda_set_pin_ctl_cache(codec, nid, pinctl);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* prevent codec AFG to D3 state when vref-out pin is used for mute LED */
+/* prevent codec AFG to D3 state when vref-out pin is used क्रम mute LED */
 /* this hook is set in stac_setup_gpio() */
-static unsigned int stac_vref_led_power_filter(struct hda_codec *codec,
+अटल अचिन्हित पूर्णांक stac_vref_led_घातer_filter(काष्ठा hda_codec *codec,
 					       hda_nid_t nid,
-					       unsigned int power_state)
-{
-	if (nid == codec->core.afg && power_state == AC_PWRST_D3)
-		return AC_PWRST_D1;
-	return snd_hda_gen_path_power_filter(codec, nid, power_state);
-}
+					       अचिन्हित पूर्णांक घातer_state)
+अणु
+	अगर (nid == codec->core.afg && घातer_state == AC_PWRST_D3)
+		वापस AC_PWRST_D1;
+	वापस snd_hda_gen_path_घातer_filter(codec, nid, घातer_state);
+पूर्ण
 
-/* update mute-LED accoring to the master switch */
-static void stac_update_led_status(struct hda_codec *codec, bool muted)
-{
-	struct sigmatel_spec *spec = codec->spec;
+/* update mute-LED accoring to the master चयन */
+अटल व्योम stac_update_led_status(काष्ठा hda_codec *codec, bool muted)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (!spec->gpio_led)
-		return;
+	अगर (!spec->gpio_led)
+		वापस;
 
-	/* LED state is inverted on these systems */
-	if (spec->gpio_led_polarity)
+	/* LED state is inverted on these प्रणालीs */
+	अगर (spec->gpio_led_polarity)
 		muted = !muted;
 
-	if (!spec->vref_mute_led_nid) {
-		if (muted)
+	अगर (!spec->vref_mute_led_nid) अणु
+		अगर (muted)
 			spec->gpio_data |= spec->gpio_led;
-		else
+		अन्यथा
 			spec->gpio_data &= ~spec->gpio_led;
 		stac_gpio_set(codec, spec->gpio_mask,
 				spec->gpio_dir, spec->gpio_data);
-	} else {
+	पूर्ण अन्यथा अणु
 		spec->vref_led = muted ? AC_PINCTL_VREF_50 : AC_PINCTL_VREF_GRD;
 		stac_vrefout_set(codec,	spec->vref_mute_led_nid,
 				 spec->vref_led);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* vmaster hook to update mute LED */
-static int stac_vmaster_hook(struct led_classdev *led_cdev,
-			     enum led_brightness brightness)
-{
-	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+अटल पूर्णांक stac_vmaster_hook(काष्ठा led_classdev *led_cdev,
+			     क्रमागत led_brightness brightness)
+अणु
+	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
 
 	stac_update_led_status(codec, brightness);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* automute hook to handle GPIO mute and EAPD updates */
-static void stac_update_outputs(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
+/* स्वतःmute hook to handle GPIO mute and EAPD updates */
+अटल व्योम stac_update_outमाला_दो(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (spec->gpio_mute)
+	अगर (spec->gpio_mute)
 		spec->gen.master_mute =
-			!(snd_hda_codec_read(codec, codec->core.afg, 0,
+			!(snd_hda_codec_पढ़ो(codec, codec->core.afg, 0,
 				AC_VERB_GET_GPIO_DATA, 0) & spec->gpio_mute);
 
-	snd_hda_gen_update_outputs(codec);
+	snd_hda_gen_update_outमाला_दो(codec);
 
-	if (spec->eapd_mask && spec->eapd_switch) {
-		unsigned int val = spec->gpio_data;
-		if (spec->gen.speaker_muted)
+	अगर (spec->eapd_mask && spec->eapd_चयन) अणु
+		अचिन्हित पूर्णांक val = spec->gpio_data;
+		अगर (spec->gen.speaker_muted)
 			val &= ~spec->eapd_mask;
-		else
+		अन्यथा
 			val |= spec->eapd_mask;
-		if (spec->gpio_data != val) {
+		अगर (spec->gpio_data != val) अणु
 			spec->gpio_data = val;
 			stac_gpio_set(codec, spec->gpio_mask, spec->gpio_dir,
 				      val);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void stac_toggle_power_map(struct hda_codec *codec, hda_nid_t nid,
-				  bool enable, bool do_write)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	unsigned int idx, val;
+अटल व्योम stac_toggle_घातer_map(काष्ठा hda_codec *codec, hda_nid_t nid,
+				  bool enable, bool करो_ग_लिखो)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	अचिन्हित पूर्णांक idx, val;
 
-	for (idx = 0; idx < spec->num_pwrs; idx++) {
-		if (spec->pwr_nids[idx] == nid)
-			break;
-	}
-	if (idx >= spec->num_pwrs)
-		return;
+	क्रम (idx = 0; idx < spec->num_pwrs; idx++) अणु
+		अगर (spec->pwr_nids[idx] == nid)
+			अवरोध;
+	पूर्ण
+	अगर (idx >= spec->num_pwrs)
+		वापस;
 
 	idx = 1 << idx;
 
-	val = spec->power_map_bits;
-	if (enable)
+	val = spec->घातer_map_bits;
+	अगर (enable)
 		val &= ~idx;
-	else
+	अन्यथा
 		val |= idx;
 
-	/* power down unused output ports */
-	if (val != spec->power_map_bits) {
-		spec->power_map_bits = val;
-		if (do_write)
-			snd_hda_codec_write(codec, codec->core.afg, 0,
+	/* घातer करोwn unused output ports */
+	अगर (val != spec->घातer_map_bits) अणु
+		spec->घातer_map_bits = val;
+		अगर (करो_ग_लिखो)
+			snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
 					    AC_VERB_IDT_SET_POWER_MAP, val);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* update power bit per jack plug/unplug */
-static void jack_update_power(struct hda_codec *codec,
-			      struct hda_jack_callback *jack)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	int i;
+/* update घातer bit per jack plug/unplug */
+अटल व्योम jack_update_घातer(काष्ठा hda_codec *codec,
+			      काष्ठा hda_jack_callback *jack)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	पूर्णांक i;
 
-	if (!spec->num_pwrs)
-		return;
+	अगर (!spec->num_pwrs)
+		वापस;
 
-	if (jack && jack->nid) {
-		stac_toggle_power_map(codec, jack->nid,
+	अगर (jack && jack->nid) अणु
+		stac_toggle_घातer_map(codec, jack->nid,
 				      snd_hda_jack_detect(codec, jack->nid),
 				      true);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* update all jacks */
-	for (i = 0; i < spec->num_pwrs; i++) {
+	क्रम (i = 0; i < spec->num_pwrs; i++) अणु
 		hda_nid_t nid = spec->pwr_nids[i];
-		if (!snd_hda_jack_tbl_get(codec, nid))
-			continue;
-		stac_toggle_power_map(codec, nid,
+		अगर (!snd_hda_jack_tbl_get(codec, nid))
+			जारी;
+		stac_toggle_घातer_map(codec, nid,
 				      snd_hda_jack_detect(codec, nid),
 				      false);
-	}
+	पूर्ण
 
-	snd_hda_codec_write(codec, codec->core.afg, 0,
+	snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
 			    AC_VERB_IDT_SET_POWER_MAP,
-			    spec->power_map_bits);
-}
+			    spec->घातer_map_bits);
+पूर्ण
 
-static void stac_vref_event(struct hda_codec *codec,
-			    struct hda_jack_callback *event)
-{
-	unsigned int data;
+अटल व्योम stac_vref_event(काष्ठा hda_codec *codec,
+			    काष्ठा hda_jack_callback *event)
+अणु
+	अचिन्हित पूर्णांक data;
 
-	data = snd_hda_codec_read(codec, codec->core.afg, 0,
+	data = snd_hda_codec_पढ़ो(codec, codec->core.afg, 0,
 				  AC_VERB_GET_GPIO_DATA, 0);
 	/* toggle VREF state based on GPIOx status */
-	snd_hda_codec_write(codec, codec->core.afg, 0, 0x7e0,
-			    !!(data & (1 << event->private_data)));
-}
+	snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0, 0x7e0,
+			    !!(data & (1 << event->निजी_data)));
+पूर्ण
 
-/* initialize the power map and enable the power event to jacks that
- * haven't been assigned to automute
+/* initialize the घातer map and enable the घातer event to jacks that
+ * haven't been asचिन्हित to स्वतःmute
  */
-static void stac_init_power_map(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	int i;
+अटल व्योम stac_init_घातer_map(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	पूर्णांक i;
 
-	for (i = 0; i < spec->num_pwrs; i++)  {
+	क्रम (i = 0; i < spec->num_pwrs; i++)  अणु
 		hda_nid_t nid = spec->pwr_nids[i];
-		unsigned int def_conf = snd_hda_codec_get_pincfg(codec, nid);
+		अचिन्हित पूर्णांक def_conf = snd_hda_codec_get_pincfg(codec, nid);
 		def_conf = get_defcfg_connect(def_conf);
-		if (def_conf == AC_JACK_PORT_COMPLEX &&
+		अगर (def_conf == AC_JACK_PORT_COMPLEX &&
 		    spec->vref_mute_led_nid != nid &&
-		    is_jack_detectable(codec, nid)) {
+		    is_jack_detectable(codec, nid)) अणु
 			snd_hda_jack_detect_enable_callback(codec, nid,
-							    jack_update_power);
-		} else {
-			if (def_conf == AC_JACK_PORT_NONE)
-				stac_toggle_power_map(codec, nid, false, false);
-			else
-				stac_toggle_power_map(codec, nid, true, false);
-		}
-	}
-}
+							    jack_update_घातer);
+		पूर्ण अन्यथा अणु
+			अगर (def_conf == AC_JACK_PORT_NONE)
+				stac_toggle_घातer_map(codec, nid, false, false);
+			अन्यथा
+				stac_toggle_घातer_map(codec, nid, true, false);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  */
 
-static inline bool get_int_hint(struct hda_codec *codec, const char *key,
-				int *valp)
-{
-	return !snd_hda_get_int_hint(codec, key, valp);
-}
+अटल अंतरभूत bool get_पूर्णांक_hपूर्णांक(काष्ठा hda_codec *codec, स्थिर अक्षर *key,
+				पूर्णांक *valp)
+अणु
+	वापस !snd_hda_get_पूर्णांक_hपूर्णांक(codec, key, valp);
+पूर्ण
 
-/* override some hints from the hwdep entry */
-static void stac_store_hints(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	int val;
+/* override some hपूर्णांकs from the hwdep entry */
+अटल व्योम stac_store_hपूर्णांकs(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	पूर्णांक val;
 
-	if (get_int_hint(codec, "gpio_mask", &spec->gpio_mask)) {
+	अगर (get_पूर्णांक_hपूर्णांक(codec, "gpio_mask", &spec->gpio_mask)) अणु
 		spec->eapd_mask = spec->gpio_dir = spec->gpio_data =
 			spec->gpio_mask;
-	}
-	if (get_int_hint(codec, "gpio_dir", &spec->gpio_dir))
+	पूर्ण
+	अगर (get_पूर्णांक_hपूर्णांक(codec, "gpio_dir", &spec->gpio_dir))
 		spec->gpio_dir &= spec->gpio_mask;
-	if (get_int_hint(codec, "gpio_data", &spec->gpio_data))
+	अगर (get_पूर्णांक_hपूर्णांक(codec, "gpio_data", &spec->gpio_data))
 		spec->gpio_data &= spec->gpio_mask;
-	if (get_int_hint(codec, "eapd_mask", &spec->eapd_mask))
+	अगर (get_पूर्णांक_hपूर्णांक(codec, "eapd_mask", &spec->eapd_mask))
 		spec->eapd_mask &= spec->gpio_mask;
-	if (get_int_hint(codec, "gpio_mute", &spec->gpio_mute))
+	अगर (get_पूर्णांक_hपूर्णांक(codec, "gpio_mute", &spec->gpio_mute))
 		spec->gpio_mute &= spec->gpio_mask;
-	val = snd_hda_get_bool_hint(codec, "eapd_switch");
-	if (val >= 0)
-		spec->eapd_switch = val;
-}
+	val = snd_hda_get_bool_hपूर्णांक(codec, "eapd_switch");
+	अगर (val >= 0)
+		spec->eapd_चयन = val;
+पूर्ण
 
 /*
  * loopback controls
  */
 
-#define stac_aloopback_info snd_ctl_boolean_mono_info
+#घोषणा stac_aloopback_info snd_ctl_boolean_mono_info
 
-static int stac_aloopback_get(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	unsigned int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
-	struct sigmatel_spec *spec = codec->spec;
+अटल पूर्णांक stac_aloopback_get(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	अचिन्हित पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	ucontrol->value.integer.value[0] = !!(spec->aloopback &
+	ucontrol->value.पूर्णांकeger.value[0] = !!(spec->aloopback &
 					      (spec->aloopback_mask << idx));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stac_aloopback_put(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	unsigned int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
-	unsigned int dac_mode;
-	unsigned int val, idx_val;
+अटल पूर्णांक stac_aloopback_put(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	अचिन्हित पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
+	अचिन्हित पूर्णांक dac_mode;
+	अचिन्हित पूर्णांक val, idx_val;
 
 	idx_val = spec->aloopback_mask << idx;
-	if (ucontrol->value.integer.value[0])
+	अगर (ucontrol->value.पूर्णांकeger.value[0])
 		val = spec->aloopback | idx_val;
-	else
+	अन्यथा
 		val = spec->aloopback & ~idx_val;
-	if (spec->aloopback == val)
-		return 0;
+	अगर (spec->aloopback == val)
+		वापस 0;
 
 	spec->aloopback = val;
 
-	/* Only return the bits defined by the shift value of the
+	/* Only वापस the bits defined by the shअगरt value of the
 	 * first two bytes of the mask
 	 */
-	dac_mode = snd_hda_codec_read(codec, codec->core.afg, 0,
-				      kcontrol->private_value & 0xFFFF, 0x0);
-	dac_mode >>= spec->aloopback_shift;
+	dac_mode = snd_hda_codec_पढ़ो(codec, codec->core.afg, 0,
+				      kcontrol->निजी_value & 0xFFFF, 0x0);
+	dac_mode >>= spec->aloopback_shअगरt;
 
-	if (spec->aloopback & idx_val) {
-		snd_hda_power_up(codec);
+	अगर (spec->aloopback & idx_val) अणु
+		snd_hda_घातer_up(codec);
 		dac_mode |= idx_val;
-	} else {
-		snd_hda_power_down(codec);
+	पूर्ण अन्यथा अणु
+		snd_hda_घातer_करोwn(codec);
 		dac_mode &= ~idx_val;
-	}
+	पूर्ण
 
-	snd_hda_codec_write_cache(codec, codec->core.afg, 0,
-		kcontrol->private_value >> 16, dac_mode);
+	snd_hda_codec_ग_लिखो_cache(codec, codec->core.afg, 0,
+		kcontrol->निजी_value >> 16, dac_mode);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-#define STAC_ANALOG_LOOPBACK(verb_read, verb_write, cnt) \
-	{ \
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा STAC_ANALOG_LOOPBACK(verb_पढ़ो, verb_ग_लिखो, cnt) \
+	अणु \
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
 		.name  = "Analog Loopback", \
 		.count = cnt, \
 		.info  = stac_aloopback_info, \
 		.get   = stac_aloopback_get, \
 		.put   = stac_aloopback_put, \
-		.private_value = verb_read | (verb_write << 16), \
-	}
+		.निजी_value = verb_पढ़ो | (verb_ग_लिखो << 16), \
+	पूर्ण
 
 /*
  * Mute LED handling on HP laptops
  */
 
-/* check whether it's a HP laptop with a docking port */
-static bool hp_bnb2011_with_dock(struct hda_codec *codec)
-{
-	if (codec->core.vendor_id != 0x111d7605 &&
-	    codec->core.vendor_id != 0x111d76d1)
-		return false;
+/* check whether it's a HP laptop with a करोcking port */
+अटल bool hp_bnb2011_with_करोck(काष्ठा hda_codec *codec)
+अणु
+	अगर (codec->core.venकरोr_id != 0x111d7605 &&
+	    codec->core.venकरोr_id != 0x111d76d1)
+		वापस false;
 
-	switch (codec->core.subsystem_id) {
-	case 0x103c1618:
-	case 0x103c1619:
-	case 0x103c161a:
-	case 0x103c161b:
-	case 0x103c161c:
-	case 0x103c161d:
-	case 0x103c161e:
-	case 0x103c161f:
+	चयन (codec->core.subप्रणाली_id) अणु
+	हाल 0x103c1618:
+	हाल 0x103c1619:
+	हाल 0x103c161a:
+	हाल 0x103c161b:
+	हाल 0x103c161c:
+	हाल 0x103c161d:
+	हाल 0x103c161e:
+	हाल 0x103c161f:
 
-	case 0x103c162a:
-	case 0x103c162b:
+	हाल 0x103c162a:
+	हाल 0x103c162b:
 
-	case 0x103c1630:
-	case 0x103c1631:
+	हाल 0x103c1630:
+	हाल 0x103c1631:
 
-	case 0x103c1633:
-	case 0x103c1634:
-	case 0x103c1635:
+	हाल 0x103c1633:
+	हाल 0x103c1634:
+	हाल 0x103c1635:
 
-	case 0x103c3587:
-	case 0x103c3588:
-	case 0x103c3589:
-	case 0x103c358a:
+	हाल 0x103c3587:
+	हाल 0x103c3588:
+	हाल 0x103c3589:
+	हाल 0x103c358a:
 
-	case 0x103c3667:
-	case 0x103c3668:
-	case 0x103c3669:
+	हाल 0x103c3667:
+	हाल 0x103c3668:
+	हाल 0x103c3669:
 
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool hp_blike_system(u32 subsystem_id)
-{
-	switch (subsystem_id) {
-	case 0x103c1473: /* HP ProBook 6550b */
-	case 0x103c1520:
-	case 0x103c1521:
-	case 0x103c1523:
-	case 0x103c1524:
-	case 0x103c1525:
-	case 0x103c1722:
-	case 0x103c1723:
-	case 0x103c1724:
-	case 0x103c1725:
-	case 0x103c1726:
-	case 0x103c1727:
-	case 0x103c1728:
-	case 0x103c1729:
-	case 0x103c172a:
-	case 0x103c172b:
-	case 0x103c307e:
-	case 0x103c307f:
-	case 0x103c3080:
-	case 0x103c3081:
-	case 0x103c7007:
-	case 0x103c7008:
-		return true;
-	}
-	return false;
-}
+अटल bool hp_blike_प्रणाली(u32 subप्रणाली_id)
+अणु
+	चयन (subप्रणाली_id) अणु
+	हाल 0x103c1473: /* HP ProBook 6550b */
+	हाल 0x103c1520:
+	हाल 0x103c1521:
+	हाल 0x103c1523:
+	हाल 0x103c1524:
+	हाल 0x103c1525:
+	हाल 0x103c1722:
+	हाल 0x103c1723:
+	हाल 0x103c1724:
+	हाल 0x103c1725:
+	हाल 0x103c1726:
+	हाल 0x103c1727:
+	हाल 0x103c1728:
+	हाल 0x103c1729:
+	हाल 0x103c172a:
+	हाल 0x103c172b:
+	हाल 0x103c307e:
+	हाल 0x103c307f:
+	हाल 0x103c3080:
+	हाल 0x103c3081:
+	हाल 0x103c7007:
+	हाल 0x103c7008:
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void set_hp_led_gpio(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	unsigned int gpio;
+अटल व्योम set_hp_led_gpio(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	अचिन्हित पूर्णांक gpio;
 
-	if (spec->gpio_led)
-		return;
+	अगर (spec->gpio_led)
+		वापस;
 
-	gpio = snd_hda_param_read(codec, codec->core.afg, AC_PAR_GPIO_CAP);
+	gpio = snd_hda_param_पढ़ो(codec, codec->core.afg, AC_PAR_GPIO_CAP);
 	gpio &= AC_GPIO_IO_COUNT;
-	if (gpio > 3)
+	अगर (gpio > 3)
 		spec->gpio_led = 0x08; /* GPIO 3 */
-	else
+	अन्यथा
 		spec->gpio_led = 0x01; /* GPIO 0 */
-}
+पूर्ण
 
 /*
- * This method searches for the mute LED GPIO configuration
- * provided as OEM string in SMBIOS. The format of that string
+ * This method searches क्रम the mute LED GPIO configuration
+ * provided as OEM string in SMBIOS. The क्रमmat of that string
  * is HP_Mute_LED_P_G or HP_Mute_LED_P
  * where P can be 0 or 1 and defines mute LED GPIO control state (low/high)
  * that corresponds to the NOT muted state of the master volume
  * and G is the index of the GPIO to use as the mute LED control (0..9)
- * If _G portion is missing it is assigned based on the codec ID
+ * If _G portion is missing it is asचिन्हित based on the codec ID
  *
- * So, HP B-series like systems may have HP_Mute_LED_0 (current models)
+ * So, HP B-series like प्रणालीs may have HP_Mute_LED_0 (current models)
  * or  HP_Mute_LED_0_3 (future models) OEM SMBIOS strings
  *
  *
- * The dv-series laptops don't seem to have the HP_Mute_LED* strings in
- * SMBIOS - at least the ones I have seen do not have them - which include
- * my own system (HP Pavilion dv6-1110ax) and my cousin's
+ * The dv-series laptops करोn't seem to have the HP_Mute_LED* strings in
+ * SMBIOS - at least the ones I have seen करो not have them - which include
+ * my own प्रणाली (HP Pavilion dv6-1110ax) and my cousin's
  * HP Pavilion dv9500t CTO.
- * Need more information on whether it is true across the entire series.
+ * Need more inक्रमmation on whether it is true across the entire series.
  * -- kunal
  */
-static int find_mute_led_cfg(struct hda_codec *codec, int default_polarity)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	const struct dmi_device *dev = NULL;
+अटल पूर्णांक find_mute_led_cfg(काष्ठा hda_codec *codec, पूर्णांक शेष_polarity)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	स्थिर काष्ठा dmi_device *dev = शून्य;
 
-	if (get_int_hint(codec, "gpio_led", &spec->gpio_led)) {
-		get_int_hint(codec, "gpio_led_polarity",
+	अगर (get_पूर्णांक_hपूर्णांक(codec, "gpio_led", &spec->gpio_led)) अणु
+		get_पूर्णांक_hपूर्णांक(codec, "gpio_led_polarity",
 			     &spec->gpio_led_polarity);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	while ((dev = dmi_find_device(DMI_DEV_TYPE_OEM_STRING, NULL, dev))) {
-		if (sscanf(dev->name, "HP_Mute_LED_%u_%x",
+	जबतक ((dev = dmi_find_device(DMI_DEV_TYPE_OEM_STRING, शून्य, dev))) अणु
+		अगर (माला_पूछो(dev->name, "HP_Mute_LED_%u_%x",
 			   &spec->gpio_led_polarity,
-			   &spec->gpio_led) == 2) {
-			unsigned int max_gpio;
-			max_gpio = snd_hda_param_read(codec, codec->core.afg,
+			   &spec->gpio_led) == 2) अणु
+			अचिन्हित पूर्णांक max_gpio;
+			max_gpio = snd_hda_param_पढ़ो(codec, codec->core.afg,
 						      AC_PAR_GPIO_CAP);
 			max_gpio &= AC_GPIO_IO_COUNT;
-			if (spec->gpio_led < max_gpio)
+			अगर (spec->gpio_led < max_gpio)
 				spec->gpio_led = 1 << spec->gpio_led;
-			else
+			अन्यथा
 				spec->vref_mute_led_nid = spec->gpio_led;
-			return 1;
-		}
-		if (sscanf(dev->name, "HP_Mute_LED_%u",
-			   &spec->gpio_led_polarity) == 1) {
+			वापस 1;
+		पूर्ण
+		अगर (माला_पूछो(dev->name, "HP_Mute_LED_%u",
+			   &spec->gpio_led_polarity) == 1) अणु
 			set_hp_led_gpio(codec);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 		/* BIOS bug: unfilled OEM string */
-		if (strstr(dev->name, "HP_Mute_LED_P_G")) {
+		अगर (म_माला(dev->name, "HP_Mute_LED_P_G")) अणु
 			set_hp_led_gpio(codec);
-			if (default_polarity >= 0)
-				spec->gpio_led_polarity = default_polarity;
-			else
+			अगर (शेष_polarity >= 0)
+				spec->gpio_led_polarity = शेष_polarity;
+			अन्यथा
 				spec->gpio_led_polarity = 1;
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Fallback case - if we don't find the DMI strings,
-	 * we statically set the GPIO - if not a B-series system
-	 * and default polarity is provided
+	 * Fallback हाल - अगर we करोn't find the DMI strings,
+	 * we अटलally set the GPIO - अगर not a B-series प्रणाली
+	 * and शेष polarity is provided
 	 */
-	if (!hp_blike_system(codec->core.subsystem_id) &&
-	    (default_polarity == 0 || default_polarity == 1)) {
+	अगर (!hp_blike_प्रणाली(codec->core.subप्रणाली_id) &&
+	    (शेष_polarity == 0 || शेष_polarity == 1)) अणु
 		set_hp_led_gpio(codec);
-		spec->gpio_led_polarity = default_polarity;
-		return 1;
-	}
-	return 0;
-}
+		spec->gpio_led_polarity = शेष_polarity;
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* check whether a built-in speaker is included in parsed pins */
-static bool has_builtin_speaker(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	const hda_nid_t *nid_pin;
-	int nids, i;
+अटल bool has_builtin_speaker(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	स्थिर hda_nid_t *nid_pin;
+	पूर्णांक nids, i;
 
-	if (spec->gen.autocfg.line_out_type == AUTO_PIN_SPEAKER_OUT) {
-		nid_pin = spec->gen.autocfg.line_out_pins;
-		nids = spec->gen.autocfg.line_outs;
-	} else {
-		nid_pin = spec->gen.autocfg.speaker_pins;
-		nids = spec->gen.autocfg.speaker_outs;
-	}
+	अगर (spec->gen.स्वतःcfg.line_out_type == AUTO_PIN_SPEAKER_OUT) अणु
+		nid_pin = spec->gen.स्वतःcfg.line_out_pins;
+		nids = spec->gen.स्वतःcfg.line_outs;
+	पूर्ण अन्यथा अणु
+		nid_pin = spec->gen.स्वतःcfg.speaker_pins;
+		nids = spec->gen.स्वतःcfg.speaker_outs;
+	पूर्ण
 
-	for (i = 0; i < nids; i++) {
-		unsigned int def_conf = snd_hda_codec_get_pincfg(codec, nid_pin[i]);
-		if (snd_hda_get_input_pin_attr(def_conf) == INPUT_PIN_ATTR_INT)
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < nids; i++) अणु
+		अचिन्हित पूर्णांक def_conf = snd_hda_codec_get_pincfg(codec, nid_pin[i]);
+		अगर (snd_hda_get_input_pin_attr(def_conf) == INPUT_PIN_ATTR_INT)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
  * PC beep controls
  */
 
 /* create PC beep volume controls */
-static int stac_auto_create_beep_ctls(struct hda_codec *codec,
+अटल पूर्णांक stac_स्वतः_create_beep_ctls(काष्ठा hda_codec *codec,
 						hda_nid_t nid)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 	u32 caps = query_amp_caps(codec, nid, HDA_OUTPUT);
-	struct snd_kcontrol_new *knew;
-	static const struct snd_kcontrol_new abeep_mute_ctl =
-		HDA_CODEC_MUTE(NULL, 0, 0, 0);
-	static const struct snd_kcontrol_new dbeep_mute_ctl =
-		HDA_CODEC_MUTE_BEEP(NULL, 0, 0, 0);
-	static const struct snd_kcontrol_new beep_vol_ctl =
-		HDA_CODEC_VOLUME(NULL, 0, 0, 0);
+	काष्ठा snd_kcontrol_new *knew;
+	अटल स्थिर काष्ठा snd_kcontrol_new abeep_mute_ctl =
+		HDA_CODEC_MUTE(शून्य, 0, 0, 0);
+	अटल स्थिर काष्ठा snd_kcontrol_new dbeep_mute_ctl =
+		HDA_CODEC_MUTE_BEEP(शून्य, 0, 0, 0);
+	अटल स्थिर काष्ठा snd_kcontrol_new beep_vol_ctl =
+		HDA_CODEC_VOLUME(शून्य, 0, 0, 0);
 
-	/* check for mute support for the amp */
-	if ((caps & AC_AMPCAP_MUTE) >> AC_AMPCAP_MUTE_SHIFT) {
-		const struct snd_kcontrol_new *temp;
-		if (spec->anabeep_nid == nid)
+	/* check क्रम mute support क्रम the amp */
+	अगर ((caps & AC_AMPCAP_MUTE) >> AC_AMPCAP_MUTE_SHIFT) अणु
+		स्थिर काष्ठा snd_kcontrol_new *temp;
+		अगर (spec->anabeep_nid == nid)
 			temp = &abeep_mute_ctl;
-		else
+		अन्यथा
 			temp = &dbeep_mute_ctl;
 		knew = snd_hda_gen_add_kctl(&spec->gen,
 					    "Beep Playback Switch", temp);
-		if (!knew)
-			return -ENOMEM;
-		knew->private_value =
+		अगर (!knew)
+			वापस -ENOMEM;
+		knew->निजी_value =
 			HDA_COMPOSE_AMP_VAL(nid, 1, 0, HDA_OUTPUT);
-	}
+	पूर्ण
 
-	/* check to see if there is volume support for the amp */
-	if ((caps & AC_AMPCAP_NUM_STEPS) >> AC_AMPCAP_NUM_STEPS_SHIFT) {
+	/* check to see अगर there is volume support क्रम the amp */
+	अगर ((caps & AC_AMPCAP_NUM_STEPS) >> AC_AMPCAP_NUM_STEPS_SHIFT) अणु
 		knew = snd_hda_gen_add_kctl(&spec->gen,
 					    "Beep Playback Volume",
 					    &beep_vol_ctl);
-		if (!knew)
-			return -ENOMEM;
-		knew->private_value =
+		अगर (!knew)
+			वापस -ENOMEM;
+		knew->निजी_value =
 			HDA_COMPOSE_AMP_VAL(nid, 1, 0, HDA_OUTPUT);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SND_HDA_INPUT_BEEP
-#define stac_dig_beep_switch_info snd_ctl_boolean_mono_info
+#अगर_घोषित CONFIG_SND_HDA_INPUT_BEEP
+#घोषणा stac_dig_beep_चयन_info snd_ctl_boolean_mono_info
 
-static int stac_dig_beep_switch_get(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	ucontrol->value.integer.value[0] = codec->beep->enabled;
-	return 0;
-}
+अटल पूर्णांक stac_dig_beep_चयन_get(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	ucontrol->value.पूर्णांकeger.value[0] = codec->beep->enabled;
+	वापस 0;
+पूर्ण
 
-static int stac_dig_beep_switch_put(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	return snd_hda_enable_beep_device(codec, ucontrol->value.integer.value[0]);
-}
+अटल पूर्णांक stac_dig_beep_चयन_put(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	वापस snd_hda_enable_beep_device(codec, ucontrol->value.पूर्णांकeger.value[0]);
+पूर्ण
 
-static const struct snd_kcontrol_new stac_dig_beep_ctrl = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new stac_dig_beep_ctrl = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Beep Playback Switch",
-	.info = stac_dig_beep_switch_info,
-	.get = stac_dig_beep_switch_get,
-	.put = stac_dig_beep_switch_put,
-};
+	.info = stac_dig_beep_चयन_info,
+	.get = stac_dig_beep_चयन_get,
+	.put = stac_dig_beep_चयन_put,
+पूर्ण;
 
-static int stac_beep_switch_ctl(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल पूर्णांक stac_beep_चयन_ctl(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (!snd_hda_gen_add_kctl(&spec->gen, NULL, &stac_dig_beep_ctrl))
-		return -ENOMEM;
-	return 0;
-}
-#endif
+	अगर (!snd_hda_gen_add_kctl(&spec->gen, शून्य, &stac_dig_beep_ctrl))
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * SPDIF-out mux controls
  */
 
-static int stac_smux_enum_info(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_info *uinfo)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	return snd_hda_input_mux_info(&spec->spdif_mux, uinfo);
-}
+अटल पूर्णांक stac_smux_क्रमागत_info(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	वापस snd_hda_input_mux_info(&spec->spdअगर_mux, uinfo);
+पूर्ण
 
-static int stac_smux_enum_get(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	unsigned int smux_idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
+अटल पूर्णांक stac_smux_क्रमागत_get(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	अचिन्हित पूर्णांक smux_idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
 
-	ucontrol->value.enumerated.item[0] = spec->cur_smux[smux_idx];
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = spec->cur_smux[smux_idx];
+	वापस 0;
+पूर्ण
 
-static int stac_smux_enum_put(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	unsigned int smux_idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
+अटल पूर्णांक stac_smux_क्रमागत_put(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	अचिन्हित पूर्णांक smux_idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
 
-	return snd_hda_input_mux_put(codec, &spec->spdif_mux, ucontrol,
-				     spec->gen.autocfg.dig_out_pins[smux_idx],
+	वापस snd_hda_input_mux_put(codec, &spec->spdअगर_mux, ucontrol,
+				     spec->gen.स्वतःcfg.dig_out_pins[smux_idx],
 				     &spec->cur_smux[smux_idx]);
-}
+पूर्ण
 
-static const struct snd_kcontrol_new stac_smux_mixer = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new stac_smux_mixer = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "IEC958 Playback Source",
 	/* count set later */
-	.info = stac_smux_enum_info,
-	.get = stac_smux_enum_get,
-	.put = stac_smux_enum_put,
-};
+	.info = stac_smux_क्रमागत_info,
+	.get = stac_smux_क्रमागत_get,
+	.put = stac_smux_क्रमागत_put,
+पूर्ण;
 
-static const char * const stac_spdif_labels[] = {
-	"Digital Playback", "Analog Mux 1", "Analog Mux 2", NULL
-};
+अटल स्थिर अक्षर * स्थिर stac_spdअगर_labels[] = अणु
+	"Digital Playback", "Analog Mux 1", "Analog Mux 2", शून्य
+पूर्ण;
 
-static int stac_create_spdif_mux_ctls(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	struct auto_pin_cfg *cfg = &spec->gen.autocfg;
-	const char * const *labels = spec->spdif_labels;
-	struct snd_kcontrol_new *kctl;
-	int i, num_cons;
+अटल पूर्णांक stac_create_spdअगर_mux_ctls(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	काष्ठा स्वतः_pin_cfg *cfg = &spec->gen.स्वतःcfg;
+	स्थिर अक्षर * स्थिर *labels = spec->spdअगर_labels;
+	काष्ठा snd_kcontrol_new *kctl;
+	पूर्णांक i, num_cons;
 
-	if (cfg->dig_outs < 1)
-		return 0;
+	अगर (cfg->dig_outs < 1)
+		वापस 0;
 
 	num_cons = snd_hda_get_num_conns(codec, cfg->dig_out_pins[0]);
-	if (num_cons <= 1)
-		return 0;
+	अगर (num_cons <= 1)
+		वापस 0;
 
-	if (!labels)
-		labels = stac_spdif_labels;
-	for (i = 0; i < num_cons; i++) {
-		if (snd_BUG_ON(!labels[i]))
-			return -EINVAL;
-		snd_hda_add_imux_item(codec, &spec->spdif_mux, labels[i], i, NULL);
-	}
+	अगर (!labels)
+		labels = stac_spdअगर_labels;
+	क्रम (i = 0; i < num_cons; i++) अणु
+		अगर (snd_BUG_ON(!labels[i]))
+			वापस -EINVAL;
+		snd_hda_add_imux_item(codec, &spec->spdअगर_mux, labels[i], i, शून्य);
+	पूर्ण
 
-	kctl = snd_hda_gen_add_kctl(&spec->gen, NULL, &stac_smux_mixer);
-	if (!kctl)
-		return -ENOMEM;
+	kctl = snd_hda_gen_add_kctl(&spec->gen, शून्य, &stac_smux_mixer);
+	अगर (!kctl)
+		वापस -ENOMEM;
 	kctl->count = cfg->dig_outs;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hda_verb stac9200_eapd_init[] = {
-	/* set dac0mux for dac converter */
-	{0x07, AC_VERB_SET_CONNECT_SEL, 0x00},
-	{0x08, AC_VERB_SET_EAPD_BTLENABLE, 0x02},
-	{}
-};
+अटल स्थिर काष्ठा hda_verb stac9200_eapd_init[] = अणु
+	/* set dac0mux क्रम dac converter */
+	अणु0x07, AC_VERB_SET_CONNECT_SEL, 0x00पूर्ण,
+	अणु0x08, AC_VERB_SET_EAPD_BTLENABLE, 0x02पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb dell_eq_core_init[] = {
+अटल स्थिर काष्ठा hda_verb dell_eq_core_init[] = अणु
 	/* set master volume to max value without distortion
 	 * and direct control */
-	{ 0x1f, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xec},
-	{}
-};
+	अणु 0x1f, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xecपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb stac92hd73xx_core_init[] = {
+अटल स्थिर काष्ठा hda_verb stac92hd73xx_core_init[] = अणु
 	/* set master volume and direct control */
-	{ 0x1f, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xff},
-	{}
-};
+	अणु 0x1f, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xffपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb stac92hd83xxx_core_init[] = {
-	/* power state controls amps */
-	{ 0x01, AC_VERB_SET_EAPD, 1 << 2},
-	{}
-};
+अटल स्थिर काष्ठा hda_verb stac92hd83xxx_core_init[] = अणु
+	/* घातer state controls amps */
+	अणु 0x01, AC_VERB_SET_EAPD, 1 << 2पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb stac92hd83xxx_hp_zephyr_init[] = {
-	{ 0x22, 0x785, 0x43 },
-	{ 0x22, 0x782, 0xe0 },
-	{ 0x22, 0x795, 0x00 },
-	{}
-};
+अटल स्थिर काष्ठा hda_verb stac92hd83xxx_hp_zephyr_init[] = अणु
+	अणु 0x22, 0x785, 0x43 पूर्ण,
+	अणु 0x22, 0x782, 0xe0 पूर्ण,
+	अणु 0x22, 0x795, 0x00 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb stac92hd71bxx_core_init[] = {
+अटल स्थिर काष्ठा hda_verb stac92hd71bxx_core_init[] = अणु
 	/* set master volume and direct control */
-	{ 0x28, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xff},
-	{}
-};
+	अणु 0x28, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xffपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const hda_nid_t stac92hd71bxx_unmute_nids[] = {
-	/* unmute right and left channels for nodes 0x0f, 0xa, 0x0d */
+अटल स्थिर hda_nid_t stac92hd71bxx_unmute_nids[] = अणु
+	/* unmute right and left channels क्रम nodes 0x0f, 0xa, 0x0d */
 	0x0f, 0x0a, 0x0d, 0
-};
+पूर्ण;
 
-static const struct hda_verb stac925x_core_init[] = {
-	/* set dac0mux for dac converter */
-	{ 0x06, AC_VERB_SET_CONNECT_SEL, 0x00},
+अटल स्थिर काष्ठा hda_verb stac925x_core_init[] = अणु
+	/* set dac0mux क्रम dac converter */
+	अणु 0x06, AC_VERB_SET_CONNECT_SEL, 0x00पूर्ण,
 	/* mute the master volume */
-	{ 0x0e, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE },
-	{}
-};
+	अणु 0x0e, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb stac922x_core_init[] = {
+अटल स्थिर काष्ठा hda_verb stac922x_core_init[] = अणु
 	/* set master volume and direct control */
-	{ 0x16, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xff},
-	{}
-};
+	अणु 0x16, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xffपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb d965_core_init[] = {
+अटल स्थिर काष्ठा hda_verb d965_core_init[] = अणु
 	/* unmute node 0x1b */
-	{ 0x1b, AC_VERB_SET_AMP_GAIN_MUTE, 0xb000},
+	अणु 0x1b, AC_VERB_SET_AMP_GAIN_MUTE, 0xb000पूर्ण,
 	/* select node 0x03 as DAC */
-	{ 0x0b, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{}
-};
+	अणु 0x0b, AC_VERB_SET_CONNECT_SEL, 0x01पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb dell_3st_core_init[] = {
-	/* don't set delta bit */
-	{0x24, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0x7f},
+अटल स्थिर काष्ठा hda_verb dell_3st_core_init[] = अणु
+	/* करोn't set delta bit */
+	अणु0x24, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0x7fपूर्ण,
 	/* unmute node 0x1b */
-	{0x1b, AC_VERB_SET_AMP_GAIN_MUTE, 0xb000},
+	अणु0x1b, AC_VERB_SET_AMP_GAIN_MUTE, 0xb000पूर्ण,
 	/* select node 0x03 as DAC */
-	{0x0b, AC_VERB_SET_CONNECT_SEL, 0x01},
-	{}
-};
+	अणु0x0b, AC_VERB_SET_CONNECT_SEL, 0x01पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb stac927x_core_init[] = {
+अटल स्थिर काष्ठा hda_verb stac927x_core_init[] = अणु
 	/* set master volume and direct control */
-	{ 0x24, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xff},
+	अणु 0x24, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xffपूर्ण,
 	/* enable analog pc beep path */
-	{ 0x01, AC_VERB_SET_DIGI_CONVERT_2, 1 << 5},
-	{}
-};
+	अणु 0x01, AC_VERB_SET_DIGI_CONVERT_2, 1 << 5पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb stac927x_volknob_core_init[] = {
-	/* don't set delta bit */
-	{0x24, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0x7f},
+अटल स्थिर काष्ठा hda_verb stac927x_volknob_core_init[] = अणु
+	/* करोn't set delta bit */
+	अणु0x24, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0x7fपूर्ण,
 	/* enable analog pc beep path */
-	{0x01, AC_VERB_SET_DIGI_CONVERT_2, 1 << 5},
-	{}
-};
+	अणु0x01, AC_VERB_SET_DIGI_CONVERT_2, 1 << 5पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_verb stac9205_core_init[] = {
+अटल स्थिर काष्ठा hda_verb stac9205_core_init[] = अणु
 	/* set master volume and direct control */
-	{ 0x24, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xff},
+	अणु 0x24, AC_VERB_SET_VOLUME_KNOB_CONTROL, 0xffपूर्ण,
 	/* enable analog pc beep path */
-	{ 0x01, AC_VERB_SET_DIGI_CONVERT_2, 1 << 5},
-	{}
-};
+	अणु 0x01, AC_VERB_SET_DIGI_CONVERT_2, 1 << 5पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_kcontrol_new stac92hd73xx_6ch_loopback =
+अटल स्थिर काष्ठा snd_kcontrol_new stac92hd73xx_6ch_loopback =
 	STAC_ANALOG_LOOPBACK(0xFA0, 0x7A1, 3);
 
-static const struct snd_kcontrol_new stac92hd73xx_8ch_loopback =
+अटल स्थिर काष्ठा snd_kcontrol_new stac92hd73xx_8ch_loopback =
 	STAC_ANALOG_LOOPBACK(0xFA0, 0x7A1, 4);
 
-static const struct snd_kcontrol_new stac92hd73xx_10ch_loopback =
+अटल स्थिर काष्ठा snd_kcontrol_new stac92hd73xx_10ch_loopback =
 	STAC_ANALOG_LOOPBACK(0xFA0, 0x7A1, 5);
 
-static const struct snd_kcontrol_new stac92hd71bxx_loopback =
+अटल स्थिर काष्ठा snd_kcontrol_new stac92hd71bxx_loopback =
 	STAC_ANALOG_LOOPBACK(0xFA0, 0x7A0, 2);
 
-static const struct snd_kcontrol_new stac9205_loopback =
+अटल स्थिर काष्ठा snd_kcontrol_new stac9205_loopback =
 	STAC_ANALOG_LOOPBACK(0xFE0, 0x7E0, 1);
 
-static const struct snd_kcontrol_new stac927x_loopback =
+अटल स्थिर काष्ठा snd_kcontrol_new stac927x_loopback =
 	STAC_ANALOG_LOOPBACK(0xFEB, 0x7EB, 1);
 
-static const struct hda_pintbl ref9200_pin_configs[] = {
-	{ 0x08, 0x01c47010 },
-	{ 0x09, 0x01447010 },
-	{ 0x0d, 0x0221401f },
-	{ 0x0e, 0x01114010 },
-	{ 0x0f, 0x02a19020 },
-	{ 0x10, 0x01a19021 },
-	{ 0x11, 0x90100140 },
-	{ 0x12, 0x01813122 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl ref9200_pin_configs[] = अणु
+	अणु 0x08, 0x01c47010 पूर्ण,
+	अणु 0x09, 0x01447010 पूर्ण,
+	अणु 0x0d, 0x0221401f पूर्ण,
+	अणु 0x0e, 0x01114010 पूर्ण,
+	अणु 0x0f, 0x02a19020 पूर्ण,
+	अणु 0x10, 0x01a19021 पूर्ण,
+	अणु 0x11, 0x90100140 पूर्ण,
+	अणु 0x12, 0x01813122 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl gateway9200_m4_pin_configs[] = {
-	{ 0x08, 0x400000fe },
-	{ 0x09, 0x404500f4 },
-	{ 0x0d, 0x400100f0 },
-	{ 0x0e, 0x90110010 },
-	{ 0x0f, 0x400100f1 },
-	{ 0x10, 0x02a1902e },
-	{ 0x11, 0x500000f2 },
-	{ 0x12, 0x500000f3 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl gateway9200_m4_pin_configs[] = अणु
+	अणु 0x08, 0x400000fe पूर्ण,
+	अणु 0x09, 0x404500f4 पूर्ण,
+	अणु 0x0d, 0x400100f0 पूर्ण,
+	अणु 0x0e, 0x90110010 पूर्ण,
+	अणु 0x0f, 0x400100f1 पूर्ण,
+	अणु 0x10, 0x02a1902e पूर्ण,
+	अणु 0x11, 0x500000f2 पूर्ण,
+	अणु 0x12, 0x500000f3 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl gateway9200_m4_2_pin_configs[] = {
-	{ 0x08, 0x400000fe },
-	{ 0x09, 0x404500f4 },
-	{ 0x0d, 0x400100f0 },
-	{ 0x0e, 0x90110010 },
-	{ 0x0f, 0x400100f1 },
-	{ 0x10, 0x02a1902e },
-	{ 0x11, 0x500000f2 },
-	{ 0x12, 0x500000f3 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl gateway9200_m4_2_pin_configs[] = अणु
+	अणु 0x08, 0x400000fe पूर्ण,
+	अणु 0x09, 0x404500f4 पूर्ण,
+	अणु 0x0d, 0x400100f0 पूर्ण,
+	अणु 0x0e, 0x90110010 पूर्ण,
+	अणु 0x0f, 0x400100f1 पूर्ण,
+	अणु 0x10, 0x02a1902e पूर्ण,
+	अणु 0x11, 0x500000f2 पूर्ण,
+	अणु 0x12, 0x500000f3 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 9200 pin configs for
+    STAC 9200 pin configs क्रम
     102801A8
     102801DE
     102801E8
 */
-static const struct hda_pintbl dell9200_d21_pin_configs[] = {
-	{ 0x08, 0x400001f0 },
-	{ 0x09, 0x400001f1 },
-	{ 0x0d, 0x02214030 },
-	{ 0x0e, 0x01014010 },
-	{ 0x0f, 0x02a19020 },
-	{ 0x10, 0x01a19021 },
-	{ 0x11, 0x90100140 },
-	{ 0x12, 0x01813122 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_d21_pin_configs[] = अणु
+	अणु 0x08, 0x400001f0 पूर्ण,
+	अणु 0x09, 0x400001f1 पूर्ण,
+	अणु 0x0d, 0x02214030 पूर्ण,
+	अणु 0x0e, 0x01014010 पूर्ण,
+	अणु 0x0f, 0x02a19020 पूर्ण,
+	अणु 0x10, 0x01a19021 पूर्ण,
+	अणु 0x11, 0x90100140 पूर्ण,
+	अणु 0x12, 0x01813122 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 9200 pin configs for
+    STAC 9200 pin configs क्रम
     102801C0
     102801C1
 */
-static const struct hda_pintbl dell9200_d22_pin_configs[] = {
-	{ 0x08, 0x400001f0 },
-	{ 0x09, 0x400001f1 },
-	{ 0x0d, 0x0221401f },
-	{ 0x0e, 0x01014010 },
-	{ 0x0f, 0x01813020 },
-	{ 0x10, 0x02a19021 },
-	{ 0x11, 0x90100140 },
-	{ 0x12, 0x400001f2 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_d22_pin_configs[] = अणु
+	अणु 0x08, 0x400001f0 पूर्ण,
+	अणु 0x09, 0x400001f1 पूर्ण,
+	अणु 0x0d, 0x0221401f पूर्ण,
+	अणु 0x0e, 0x01014010 पूर्ण,
+	अणु 0x0f, 0x01813020 पूर्ण,
+	अणु 0x10, 0x02a19021 पूर्ण,
+	अणु 0x11, 0x90100140 पूर्ण,
+	अणु 0x12, 0x400001f2 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 9200 pin configs for
+    STAC 9200 pin configs क्रम
     102801C4 (Dell Dimension E310)
     102801C5
     102801C7
@@ -1179,289 +1180,289 @@ static const struct hda_pintbl dell9200_d22_pin_configs[] = {
     102801DA
     102801E3
 */
-static const struct hda_pintbl dell9200_d23_pin_configs[] = {
-	{ 0x08, 0x400001f0 },
-	{ 0x09, 0x400001f1 },
-	{ 0x0d, 0x0221401f },
-	{ 0x0e, 0x01014010 },
-	{ 0x0f, 0x01813020 },
-	{ 0x10, 0x01a19021 },
-	{ 0x11, 0x90100140 },
-	{ 0x12, 0x400001f2 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_d23_pin_configs[] = अणु
+	अणु 0x08, 0x400001f0 पूर्ण,
+	अणु 0x09, 0x400001f1 पूर्ण,
+	अणु 0x0d, 0x0221401f पूर्ण,
+	अणु 0x0e, 0x01014010 पूर्ण,
+	अणु 0x0f, 0x01813020 पूर्ण,
+	अणु 0x10, 0x01a19021 पूर्ण,
+	अणु 0x11, 0x90100140 पूर्ण,
+	अणु 0x12, 0x400001f2 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 
 /* 
-    STAC 9200-32 pin configs for
+    STAC 9200-32 pin configs क्रम
     102801B5 (Dell Inspiron 630m)
     102801D8 (Dell Inspiron 640m)
 */
-static const struct hda_pintbl dell9200_m21_pin_configs[] = {
-	{ 0x08, 0x40c003fa },
-	{ 0x09, 0x03441340 },
-	{ 0x0d, 0x0321121f },
-	{ 0x0e, 0x90170310 },
-	{ 0x0f, 0x408003fb },
-	{ 0x10, 0x03a11020 },
-	{ 0x11, 0x401003fc },
-	{ 0x12, 0x403003fd },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_m21_pin_configs[] = अणु
+	अणु 0x08, 0x40c003fa पूर्ण,
+	अणु 0x09, 0x03441340 पूर्ण,
+	अणु 0x0d, 0x0321121f पूर्ण,
+	अणु 0x0e, 0x90170310 पूर्ण,
+	अणु 0x0f, 0x408003fb पूर्ण,
+	अणु 0x10, 0x03a11020 पूर्ण,
+	अणु 0x11, 0x401003fc पूर्ण,
+	अणु 0x12, 0x403003fd पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /* 
-    STAC 9200-32 pin configs for
+    STAC 9200-32 pin configs क्रम
     102801C2 (Dell Latitude D620)
     102801C8 
     102801CC (Dell Latitude D820)
     102801D4 
     102801D6 
 */
-static const struct hda_pintbl dell9200_m22_pin_configs[] = {
-	{ 0x08, 0x40c003fa },
-	{ 0x09, 0x0144131f },
-	{ 0x0d, 0x0321121f },
-	{ 0x0e, 0x90170310 },
-	{ 0x0f, 0x90a70321 },
-	{ 0x10, 0x03a11020 },
-	{ 0x11, 0x401003fb },
-	{ 0x12, 0x40f000fc },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_m22_pin_configs[] = अणु
+	अणु 0x08, 0x40c003fa पूर्ण,
+	अणु 0x09, 0x0144131f पूर्ण,
+	अणु 0x0d, 0x0321121f पूर्ण,
+	अणु 0x0e, 0x90170310 पूर्ण,
+	अणु 0x0f, 0x90a70321 पूर्ण,
+	अणु 0x10, 0x03a11020 पूर्ण,
+	अणु 0x11, 0x401003fb पूर्ण,
+	अणु 0x12, 0x40f000fc पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /* 
-    STAC 9200-32 pin configs for
+    STAC 9200-32 pin configs क्रम
     102801CE (Dell XPS M1710)
     102801CF (Dell Precision M90)
 */
-static const struct hda_pintbl dell9200_m23_pin_configs[] = {
-	{ 0x08, 0x40c003fa },
-	{ 0x09, 0x01441340 },
-	{ 0x0d, 0x0421421f },
-	{ 0x0e, 0x90170310 },
-	{ 0x0f, 0x408003fb },
-	{ 0x10, 0x04a1102e },
-	{ 0x11, 0x90170311 },
-	{ 0x12, 0x403003fc },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_m23_pin_configs[] = अणु
+	अणु 0x08, 0x40c003fa पूर्ण,
+	अणु 0x09, 0x01441340 पूर्ण,
+	अणु 0x0d, 0x0421421f पूर्ण,
+	अणु 0x0e, 0x90170310 पूर्ण,
+	अणु 0x0f, 0x408003fb पूर्ण,
+	अणु 0x10, 0x04a1102e पूर्ण,
+	अणु 0x11, 0x90170311 पूर्ण,
+	अणु 0x12, 0x403003fc पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 9200-32 pin configs for 
+    STAC 9200-32 pin configs क्रम 
     102801C9
     102801CA
     102801CB (Dell Latitude 120L)
     102801D3
 */
-static const struct hda_pintbl dell9200_m24_pin_configs[] = {
-	{ 0x08, 0x40c003fa },
-	{ 0x09, 0x404003fb },
-	{ 0x0d, 0x0321121f },
-	{ 0x0e, 0x90170310 },
-	{ 0x0f, 0x408003fc },
-	{ 0x10, 0x03a11020 },
-	{ 0x11, 0x401003fd },
-	{ 0x12, 0x403003fe },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_m24_pin_configs[] = अणु
+	अणु 0x08, 0x40c003fa पूर्ण,
+	अणु 0x09, 0x404003fb पूर्ण,
+	अणु 0x0d, 0x0321121f पूर्ण,
+	अणु 0x0e, 0x90170310 पूर्ण,
+	अणु 0x0f, 0x408003fc पूर्ण,
+	अणु 0x10, 0x03a11020 पूर्ण,
+	अणु 0x11, 0x401003fd पूर्ण,
+	अणु 0x12, 0x403003fe पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 9200-32 pin configs for
+    STAC 9200-32 pin configs क्रम
     102801BD (Dell Inspiron E1505n)
     102801EE
     102801EF
 */
-static const struct hda_pintbl dell9200_m25_pin_configs[] = {
-	{ 0x08, 0x40c003fa },
-	{ 0x09, 0x01441340 },
-	{ 0x0d, 0x0421121f },
-	{ 0x0e, 0x90170310 },
-	{ 0x0f, 0x408003fb },
-	{ 0x10, 0x04a11020 },
-	{ 0x11, 0x401003fc },
-	{ 0x12, 0x403003fd },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_m25_pin_configs[] = अणु
+	अणु 0x08, 0x40c003fa पूर्ण,
+	अणु 0x09, 0x01441340 पूर्ण,
+	अणु 0x0d, 0x0421121f पूर्ण,
+	अणु 0x0e, 0x90170310 पूर्ण,
+	अणु 0x0f, 0x408003fb पूर्ण,
+	अणु 0x10, 0x04a11020 पूर्ण,
+	अणु 0x11, 0x401003fc पूर्ण,
+	अणु 0x12, 0x403003fd पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 9200-32 pin configs for
+    STAC 9200-32 pin configs क्रम
     102801F5 (Dell Inspiron 1501)
     102801F6
 */
-static const struct hda_pintbl dell9200_m26_pin_configs[] = {
-	{ 0x08, 0x40c003fa },
-	{ 0x09, 0x404003fb },
-	{ 0x0d, 0x0421121f },
-	{ 0x0e, 0x90170310 },
-	{ 0x0f, 0x408003fc },
-	{ 0x10, 0x04a11020 },
-	{ 0x11, 0x401003fd },
-	{ 0x12, 0x403003fe },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_m26_pin_configs[] = अणु
+	अणु 0x08, 0x40c003fa पूर्ण,
+	अणु 0x09, 0x404003fb पूर्ण,
+	अणु 0x0d, 0x0421121f पूर्ण,
+	अणु 0x0e, 0x90170310 पूर्ण,
+	अणु 0x0f, 0x408003fc पूर्ण,
+	अणु 0x10, 0x04a11020 पूर्ण,
+	अणु 0x11, 0x401003fd पूर्ण,
+	अणु 0x12, 0x403003fe पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
     STAC 9200-32
     102801CD (Dell Inspiron E1705/9400)
 */
-static const struct hda_pintbl dell9200_m27_pin_configs[] = {
-	{ 0x08, 0x40c003fa },
-	{ 0x09, 0x01441340 },
-	{ 0x0d, 0x0421121f },
-	{ 0x0e, 0x90170310 },
-	{ 0x0f, 0x90170310 },
-	{ 0x10, 0x04a11020 },
-	{ 0x11, 0x90170310 },
-	{ 0x12, 0x40f003fc },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell9200_m27_pin_configs[] = अणु
+	अणु 0x08, 0x40c003fa पूर्ण,
+	अणु 0x09, 0x01441340 पूर्ण,
+	अणु 0x0d, 0x0421121f पूर्ण,
+	अणु 0x0e, 0x90170310 पूर्ण,
+	अणु 0x0f, 0x90170310 पूर्ण,
+	अणु 0x10, 0x04a11020 पूर्ण,
+	अणु 0x11, 0x90170310 पूर्ण,
+	अणु 0x12, 0x40f003fc पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl oqo9200_pin_configs[] = {
-	{ 0x08, 0x40c000f0 },
-	{ 0x09, 0x404000f1 },
-	{ 0x0d, 0x0221121f },
-	{ 0x0e, 0x02211210 },
-	{ 0x0f, 0x90170111 },
-	{ 0x10, 0x90a70120 },
-	{ 0x11, 0x400000f2 },
-	{ 0x12, 0x400000f3 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl oqo9200_pin_configs[] = अणु
+	अणु 0x08, 0x40c000f0 पूर्ण,
+	अणु 0x09, 0x404000f1 पूर्ण,
+	अणु 0x0d, 0x0221121f पूर्ण,
+	अणु 0x0e, 0x02211210 पूर्ण,
+	अणु 0x0f, 0x90170111 पूर्ण,
+	अणु 0x10, 0x90a70120 पूर्ण,
+	अणु 0x11, 0x400000f2 पूर्ण,
+	अणु 0x12, 0x400000f3 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
  *  STAC 92HD700
  *  18881000 Amigaone X1000
  */
-static const struct hda_pintbl nemo_pin_configs[] = {
-	{ 0x0a, 0x02214020 },	/* Front panel HP socket */
-	{ 0x0b, 0x02a19080 },	/* Front Mic */
-	{ 0x0c, 0x0181304e },	/* Line in */
-	{ 0x0d, 0x01014010 },	/* Line out */
-	{ 0x0e, 0x01a19040 },	/* Rear Mic */
-	{ 0x0f, 0x01011012 },	/* Rear speakers */
-	{ 0x10, 0x01016011 },	/* Center speaker */
-	{ 0x11, 0x01012014 },	/* Side speakers (7.1) */
-	{ 0x12, 0x103301f0 },	/* Motherboard CD line in connector */
-	{ 0x13, 0x411111f0 },	/* Unused */
-	{ 0x14, 0x411111f0 },	/* Unused */
-	{ 0x21, 0x01442170 },	/* S/PDIF line out */
-	{ 0x22, 0x411111f0 },	/* Unused */
-	{ 0x23, 0x411111f0 },	/* Unused */
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl nemo_pin_configs[] = अणु
+	अणु 0x0a, 0x02214020 पूर्ण,	/* Front panel HP socket */
+	अणु 0x0b, 0x02a19080 पूर्ण,	/* Front Mic */
+	अणु 0x0c, 0x0181304e पूर्ण,	/* Line in */
+	अणु 0x0d, 0x01014010 पूर्ण,	/* Line out */
+	अणु 0x0e, 0x01a19040 पूर्ण,	/* Rear Mic */
+	अणु 0x0f, 0x01011012 पूर्ण,	/* Rear speakers */
+	अणु 0x10, 0x01016011 पूर्ण,	/* Center speaker */
+	अणु 0x11, 0x01012014 पूर्ण,	/* Side speakers (7.1) */
+	अणु 0x12, 0x103301f0 पूर्ण,	/* Motherboard CD line in connector */
+	अणु 0x13, 0x411111f0 पूर्ण,	/* Unused */
+	अणु 0x14, 0x411111f0 पूर्ण,	/* Unused */
+	अणु 0x21, 0x01442170 पूर्ण,	/* S/PDIF line out */
+	अणु 0x22, 0x411111f0 पूर्ण,	/* Unused */
+	अणु 0x23, 0x411111f0 पूर्ण,	/* Unused */
+	अणुपूर्ण
+पूर्ण;
 
-static void stac9200_fixup_panasonic(struct hda_codec *codec,
-				     const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac9200_fixup_panasonic(काष्ठा hda_codec *codec,
+				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
 		spec->gpio_mask = spec->gpio_dir = 0x09;
 		spec->gpio_data = 0x00;
 		/* CF-74 has no headphone detection, and the driver should *NOT*
-		 * do detection and HP/speaker toggle because the hardware does it.
+		 * करो detection and HP/speaker toggle because the hardware करोes it.
 		 */
-		spec->gen.suppress_auto_mute = 1;
-	}
-}
+		spec->gen.suppress_स्वतः_mute = 1;
+	पूर्ण
+पूर्ण
 
 
-static const struct hda_fixup stac9200_fixups[] = {
-	[STAC_REF] = {
+अटल स्थिर काष्ठा hda_fixup stac9200_fixups[] = अणु
+	[STAC_REF] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = ref9200_pin_configs,
-	},
-	[STAC_9200_OQO] = {
+	पूर्ण,
+	[STAC_9200_OQO] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = oqo9200_pin_configs,
 		.chained = true,
 		.chain_id = STAC_9200_EAPD_INIT,
-	},
-	[STAC_9200_DELL_D21] = {
+	पूर्ण,
+	[STAC_9200_DELL_D21] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_d21_pin_configs,
-	},
-	[STAC_9200_DELL_D22] = {
+	पूर्ण,
+	[STAC_9200_DELL_D22] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_d22_pin_configs,
-	},
-	[STAC_9200_DELL_D23] = {
+	पूर्ण,
+	[STAC_9200_DELL_D23] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_d23_pin_configs,
-	},
-	[STAC_9200_DELL_M21] = {
+	पूर्ण,
+	[STAC_9200_DELL_M21] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_m21_pin_configs,
-	},
-	[STAC_9200_DELL_M22] = {
+	पूर्ण,
+	[STAC_9200_DELL_M22] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_m22_pin_configs,
-	},
-	[STAC_9200_DELL_M23] = {
+	पूर्ण,
+	[STAC_9200_DELL_M23] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_m23_pin_configs,
-	},
-	[STAC_9200_DELL_M24] = {
+	पूर्ण,
+	[STAC_9200_DELL_M24] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_m24_pin_configs,
-	},
-	[STAC_9200_DELL_M25] = {
+	पूर्ण,
+	[STAC_9200_DELL_M25] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_m25_pin_configs,
-	},
-	[STAC_9200_DELL_M26] = {
+	पूर्ण,
+	[STAC_9200_DELL_M26] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_m26_pin_configs,
-	},
-	[STAC_9200_DELL_M27] = {
+	पूर्ण,
+	[STAC_9200_DELL_M27] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell9200_m27_pin_configs,
-	},
-	[STAC_9200_M4] = {
+	पूर्ण,
+	[STAC_9200_M4] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = gateway9200_m4_pin_configs,
 		.chained = true,
 		.chain_id = STAC_9200_EAPD_INIT,
-	},
-	[STAC_9200_M4_2] = {
+	पूर्ण,
+	[STAC_9200_M4_2] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = gateway9200_m4_2_pin_configs,
 		.chained = true,
 		.chain_id = STAC_9200_EAPD_INIT,
-	},
-	[STAC_9200_PANASONIC] = {
+	पूर्ण,
+	[STAC_9200_PANASONIC] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac9200_fixup_panasonic,
-	},
-	[STAC_9200_EAPD_INIT] = {
+	पूर्ण,
+	[STAC_9200_EAPD_INIT] = अणु
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (const struct hda_verb[]) {
-			{0x08, AC_VERB_SET_EAPD_BTLENABLE, 0x02},
-			{}
-		},
-	},
-};
+		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+			अणु0x08, AC_VERB_SET_EAPD_BTLENABLE, 0x02पूर्ण,
+			अणुपूर्ण
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct hda_model_fixup stac9200_models[] = {
-	{ .id = STAC_REF, .name = "ref" },
-	{ .id = STAC_9200_OQO, .name = "oqo" },
-	{ .id = STAC_9200_DELL_D21, .name = "dell-d21" },
-	{ .id = STAC_9200_DELL_D22, .name = "dell-d22" },
-	{ .id = STAC_9200_DELL_D23, .name = "dell-d23" },
-	{ .id = STAC_9200_DELL_M21, .name = "dell-m21" },
-	{ .id = STAC_9200_DELL_M22, .name = "dell-m22" },
-	{ .id = STAC_9200_DELL_M23, .name = "dell-m23" },
-	{ .id = STAC_9200_DELL_M24, .name = "dell-m24" },
-	{ .id = STAC_9200_DELL_M25, .name = "dell-m25" },
-	{ .id = STAC_9200_DELL_M26, .name = "dell-m26" },
-	{ .id = STAC_9200_DELL_M27, .name = "dell-m27" },
-	{ .id = STAC_9200_M4, .name = "gateway-m4" },
-	{ .id = STAC_9200_M4_2, .name = "gateway-m4-2" },
-	{ .id = STAC_9200_PANASONIC, .name = "panasonic" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac9200_models[] = अणु
+	अणु .id = STAC_REF, .name = "ref" पूर्ण,
+	अणु .id = STAC_9200_OQO, .name = "oqo" पूर्ण,
+	अणु .id = STAC_9200_DELL_D21, .name = "dell-d21" पूर्ण,
+	अणु .id = STAC_9200_DELL_D22, .name = "dell-d22" पूर्ण,
+	अणु .id = STAC_9200_DELL_D23, .name = "dell-d23" पूर्ण,
+	अणु .id = STAC_9200_DELL_M21, .name = "dell-m21" पूर्ण,
+	अणु .id = STAC_9200_DELL_M22, .name = "dell-m22" पूर्ण,
+	अणु .id = STAC_9200_DELL_M23, .name = "dell-m23" पूर्ण,
+	अणु .id = STAC_9200_DELL_M24, .name = "dell-m24" पूर्ण,
+	अणु .id = STAC_9200_DELL_M25, .name = "dell-m25" पूर्ण,
+	अणु .id = STAC_9200_DELL_M26, .name = "dell-m26" पूर्ण,
+	अणु .id = STAC_9200_DELL_M27, .name = "dell-m27" पूर्ण,
+	अणु .id = STAC_9200_M4, .name = "gateway-m4" पूर्ण,
+	अणु .id = STAC_9200_M4_2, .name = "gateway-m4-2" पूर्ण,
+	अणु .id = STAC_9200_PANASONIC, .name = "panasonic" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk stac9200_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac9200_fixup_tbl[] = अणु
 	/* SigmaTel reference board */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x2668,
 		      "DFI LanParty", STAC_REF),
@@ -1536,159 +1537,159 @@ static const struct snd_pci_quirk stac9200_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x107b, 0x0318, "Gateway ML3019, MT3707", STAC_9200_M4_2),
 	/* OQO Mobile */
 	SND_PCI_QUIRK(0x1106, 0x3288, "OQO Model 2", STAC_9200_OQO),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-static const struct hda_pintbl ref925x_pin_configs[] = {
-	{ 0x07, 0x40c003f0 },
-	{ 0x08, 0x424503f2 },
-	{ 0x0a, 0x01813022 },
-	{ 0x0b, 0x02a19021 },
-	{ 0x0c, 0x90a70320 },
-	{ 0x0d, 0x02214210 },
-	{ 0x10, 0x01019020 },
-	{ 0x11, 0x9033032e },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl ref925x_pin_configs[] = अणु
+	अणु 0x07, 0x40c003f0 पूर्ण,
+	अणु 0x08, 0x424503f2 पूर्ण,
+	अणु 0x0a, 0x01813022 पूर्ण,
+	अणु 0x0b, 0x02a19021 पूर्ण,
+	अणु 0x0c, 0x90a70320 पूर्ण,
+	अणु 0x0d, 0x02214210 पूर्ण,
+	अणु 0x10, 0x01019020 पूर्ण,
+	अणु 0x11, 0x9033032e पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac925xM1_pin_configs[] = {
-	{ 0x07, 0x40c003f4 },
-	{ 0x08, 0x424503f2 },
-	{ 0x0a, 0x400000f3 },
-	{ 0x0b, 0x02a19020 },
-	{ 0x0c, 0x40a000f0 },
-	{ 0x0d, 0x90100210 },
-	{ 0x10, 0x400003f1 },
-	{ 0x11, 0x9033032e },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac925xM1_pin_configs[] = अणु
+	अणु 0x07, 0x40c003f4 पूर्ण,
+	अणु 0x08, 0x424503f2 पूर्ण,
+	अणु 0x0a, 0x400000f3 पूर्ण,
+	अणु 0x0b, 0x02a19020 पूर्ण,
+	अणु 0x0c, 0x40a000f0 पूर्ण,
+	अणु 0x0d, 0x90100210 पूर्ण,
+	अणु 0x10, 0x400003f1 पूर्ण,
+	अणु 0x11, 0x9033032e पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac925xM1_2_pin_configs[] = {
-	{ 0x07, 0x40c003f4 },
-	{ 0x08, 0x424503f2 },
-	{ 0x0a, 0x400000f3 },
-	{ 0x0b, 0x02a19020 },
-	{ 0x0c, 0x40a000f0 },
-	{ 0x0d, 0x90100210 },
-	{ 0x10, 0x400003f1 },
-	{ 0x11, 0x9033032e },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac925xM1_2_pin_configs[] = अणु
+	अणु 0x07, 0x40c003f4 पूर्ण,
+	अणु 0x08, 0x424503f2 पूर्ण,
+	अणु 0x0a, 0x400000f3 पूर्ण,
+	अणु 0x0b, 0x02a19020 पूर्ण,
+	अणु 0x0c, 0x40a000f0 पूर्ण,
+	अणु 0x0d, 0x90100210 पूर्ण,
+	अणु 0x10, 0x400003f1 पूर्ण,
+	अणु 0x11, 0x9033032e पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac925xM2_pin_configs[] = {
-	{ 0x07, 0x40c003f4 },
-	{ 0x08, 0x424503f2 },
-	{ 0x0a, 0x400000f3 },
-	{ 0x0b, 0x02a19020 },
-	{ 0x0c, 0x40a000f0 },
-	{ 0x0d, 0x90100210 },
-	{ 0x10, 0x400003f1 },
-	{ 0x11, 0x9033032e },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac925xM2_pin_configs[] = अणु
+	अणु 0x07, 0x40c003f4 पूर्ण,
+	अणु 0x08, 0x424503f2 पूर्ण,
+	अणु 0x0a, 0x400000f3 पूर्ण,
+	अणु 0x0b, 0x02a19020 पूर्ण,
+	अणु 0x0c, 0x40a000f0 पूर्ण,
+	अणु 0x0d, 0x90100210 पूर्ण,
+	अणु 0x10, 0x400003f1 पूर्ण,
+	अणु 0x11, 0x9033032e पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac925xM2_2_pin_configs[] = {
-	{ 0x07, 0x40c003f4 },
-	{ 0x08, 0x424503f2 },
-	{ 0x0a, 0x400000f3 },
-	{ 0x0b, 0x02a19020 },
-	{ 0x0c, 0x40a000f0 },
-	{ 0x0d, 0x90100210 },
-	{ 0x10, 0x400003f1 },
-	{ 0x11, 0x9033032e },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac925xM2_2_pin_configs[] = अणु
+	अणु 0x07, 0x40c003f4 पूर्ण,
+	अणु 0x08, 0x424503f2 पूर्ण,
+	अणु 0x0a, 0x400000f3 पूर्ण,
+	अणु 0x0b, 0x02a19020 पूर्ण,
+	अणु 0x0c, 0x40a000f0 पूर्ण,
+	अणु 0x0d, 0x90100210 पूर्ण,
+	अणु 0x10, 0x400003f1 पूर्ण,
+	अणु 0x11, 0x9033032e पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac925xM3_pin_configs[] = {
-	{ 0x07, 0x40c003f4 },
-	{ 0x08, 0x424503f2 },
-	{ 0x0a, 0x400000f3 },
-	{ 0x0b, 0x02a19020 },
-	{ 0x0c, 0x40a000f0 },
-	{ 0x0d, 0x90100210 },
-	{ 0x10, 0x400003f1 },
-	{ 0x11, 0x503303f3 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac925xM3_pin_configs[] = अणु
+	अणु 0x07, 0x40c003f4 पूर्ण,
+	अणु 0x08, 0x424503f2 पूर्ण,
+	अणु 0x0a, 0x400000f3 पूर्ण,
+	अणु 0x0b, 0x02a19020 पूर्ण,
+	अणु 0x0c, 0x40a000f0 पूर्ण,
+	अणु 0x0d, 0x90100210 पूर्ण,
+	अणु 0x10, 0x400003f1 पूर्ण,
+	अणु 0x11, 0x503303f3 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac925xM5_pin_configs[] = {
-	{ 0x07, 0x40c003f4 },
-	{ 0x08, 0x424503f2 },
-	{ 0x0a, 0x400000f3 },
-	{ 0x0b, 0x02a19020 },
-	{ 0x0c, 0x40a000f0 },
-	{ 0x0d, 0x90100210 },
-	{ 0x10, 0x400003f1 },
-	{ 0x11, 0x9033032e },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac925xM5_pin_configs[] = अणु
+	अणु 0x07, 0x40c003f4 पूर्ण,
+	अणु 0x08, 0x424503f2 पूर्ण,
+	अणु 0x0a, 0x400000f3 पूर्ण,
+	अणु 0x0b, 0x02a19020 पूर्ण,
+	अणु 0x0c, 0x40a000f0 पूर्ण,
+	अणु 0x0d, 0x90100210 पूर्ण,
+	अणु 0x10, 0x400003f1 पूर्ण,
+	अणु 0x11, 0x9033032e पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac925xM6_pin_configs[] = {
-	{ 0x07, 0x40c003f4 },
-	{ 0x08, 0x424503f2 },
-	{ 0x0a, 0x400000f3 },
-	{ 0x0b, 0x02a19020 },
-	{ 0x0c, 0x40a000f0 },
-	{ 0x0d, 0x90100210 },
-	{ 0x10, 0x400003f1 },
-	{ 0x11, 0x90330320 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac925xM6_pin_configs[] = अणु
+	अणु 0x07, 0x40c003f4 पूर्ण,
+	अणु 0x08, 0x424503f2 पूर्ण,
+	अणु 0x0a, 0x400000f3 पूर्ण,
+	अणु 0x0b, 0x02a19020 पूर्ण,
+	अणु 0x0c, 0x40a000f0 पूर्ण,
+	अणु 0x0d, 0x90100210 पूर्ण,
+	अणु 0x10, 0x400003f1 पूर्ण,
+	अणु 0x11, 0x90330320 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_fixup stac925x_fixups[] = {
-	[STAC_REF] = {
+अटल स्थिर काष्ठा hda_fixup stac925x_fixups[] = अणु
+	[STAC_REF] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = ref925x_pin_configs,
-	},
-	[STAC_M1] = {
+	पूर्ण,
+	[STAC_M1] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac925xM1_pin_configs,
-	},
-	[STAC_M1_2] = {
+	पूर्ण,
+	[STAC_M1_2] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac925xM1_2_pin_configs,
-	},
-	[STAC_M2] = {
+	पूर्ण,
+	[STAC_M2] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac925xM2_pin_configs,
-	},
-	[STAC_M2_2] = {
+	पूर्ण,
+	[STAC_M2_2] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac925xM2_2_pin_configs,
-	},
-	[STAC_M3] = {
+	पूर्ण,
+	[STAC_M3] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac925xM3_pin_configs,
-	},
-	[STAC_M5] = {
+	पूर्ण,
+	[STAC_M5] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac925xM5_pin_configs,
-	},
-	[STAC_M6] = {
+	पूर्ण,
+	[STAC_M6] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac925xM6_pin_configs,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct hda_model_fixup stac925x_models[] = {
-	{ .id = STAC_REF, .name = "ref" },
-	{ .id = STAC_M1, .name = "m1" },
-	{ .id = STAC_M1_2, .name = "m1-2" },
-	{ .id = STAC_M2, .name = "m2" },
-	{ .id = STAC_M2_2, .name = "m2-2" },
-	{ .id = STAC_M3, .name = "m3" },
-	{ .id = STAC_M5, .name = "m5" },
-	{ .id = STAC_M6, .name = "m6" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac925x_models[] = अणु
+	अणु .id = STAC_REF, .name = "ref" पूर्ण,
+	अणु .id = STAC_M1, .name = "m1" पूर्ण,
+	अणु .id = STAC_M1_2, .name = "m1-2" पूर्ण,
+	अणु .id = STAC_M2, .name = "m2" पूर्ण,
+	अणु .id = STAC_M2_2, .name = "m2-2" पूर्ण,
+	अणु .id = STAC_M3, .name = "m3" पूर्ण,
+	अणु .id = STAC_M5, .name = "m5" पूर्ण,
+	अणु .id = STAC_M6, .name = "m6" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk stac925x_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac925x_fixup_tbl[] = अणु
 	/* SigmaTel reference board */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x2668, "DFI LanParty", STAC_REF),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DFI, 0x3101, "DFI LanParty", STAC_REF),
 	SND_PCI_QUIRK(0x8384, 0x7632, "Stac9202 Reference Board", STAC_REF),
 
-	/* Default table for unknown ID */
+	/* Default table क्रम unknown ID */
 	SND_PCI_QUIRK(0x1002, 0x437b, "Gateway mobile", STAC_M2_2),
 
 	/* gateway machines are checked via codec ssid */
@@ -1697,258 +1698,258 @@ static const struct snd_pci_quirk stac925x_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x107b, 0x0461, "Gateway NX560XL", STAC_M1),
 	SND_PCI_QUIRK(0x107b, 0x0681, "Gateway NX860", STAC_M2),
 	SND_PCI_QUIRK(0x107b, 0x0367, "Gateway MX6453", STAC_M1_2),
-	/* Not sure about the brand name for those */
+	/* Not sure about the bअक्रम name क्रम those */
 	SND_PCI_QUIRK(0x107b, 0x0281, "Gateway mobile", STAC_M1),
 	SND_PCI_QUIRK(0x107b, 0x0507, "Gateway mobile", STAC_M3),
 	SND_PCI_QUIRK(0x107b, 0x0281, "Gateway mobile", STAC_M6),
 	SND_PCI_QUIRK(0x107b, 0x0685, "Gateway mobile", STAC_M2_2),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-static const struct hda_pintbl ref92hd73xx_pin_configs[] = {
-	{ 0x0a, 0x02214030 },
-	{ 0x0b, 0x02a19040 },
-	{ 0x0c, 0x01a19020 },
-	{ 0x0d, 0x02214030 },
-	{ 0x0e, 0x0181302e },
-	{ 0x0f, 0x01014010 },
-	{ 0x10, 0x01014020 },
-	{ 0x11, 0x01014030 },
-	{ 0x12, 0x02319040 },
-	{ 0x13, 0x90a000f0 },
-	{ 0x14, 0x90a000f0 },
-	{ 0x22, 0x01452050 },
-	{ 0x23, 0x01452050 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl ref92hd73xx_pin_configs[] = अणु
+	अणु 0x0a, 0x02214030 पूर्ण,
+	अणु 0x0b, 0x02a19040 पूर्ण,
+	अणु 0x0c, 0x01a19020 पूर्ण,
+	अणु 0x0d, 0x02214030 पूर्ण,
+	अणु 0x0e, 0x0181302e पूर्ण,
+	अणु 0x0f, 0x01014010 पूर्ण,
+	अणु 0x10, 0x01014020 पूर्ण,
+	अणु 0x11, 0x01014030 पूर्ण,
+	अणु 0x12, 0x02319040 पूर्ण,
+	अणु 0x13, 0x90a000f0 पूर्ण,
+	अणु 0x14, 0x90a000f0 पूर्ण,
+	अणु 0x22, 0x01452050 पूर्ण,
+	अणु 0x23, 0x01452050 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl dell_m6_pin_configs[] = {
-	{ 0x0a, 0x0321101f },
-	{ 0x0b, 0x4f00000f },
-	{ 0x0c, 0x4f0000f0 },
-	{ 0x0d, 0x90170110 },
-	{ 0x0e, 0x03a11020 },
-	{ 0x0f, 0x0321101f },
-	{ 0x10, 0x4f0000f0 },
-	{ 0x11, 0x4f0000f0 },
-	{ 0x12, 0x4f0000f0 },
-	{ 0x13, 0x90a60160 },
-	{ 0x14, 0x4f0000f0 },
-	{ 0x22, 0x4f0000f0 },
-	{ 0x23, 0x4f0000f0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_m6_pin_configs[] = अणु
+	अणु 0x0a, 0x0321101f पूर्ण,
+	अणु 0x0b, 0x4f00000f पूर्ण,
+	अणु 0x0c, 0x4f0000f0 पूर्ण,
+	अणु 0x0d, 0x90170110 पूर्ण,
+	अणु 0x0e, 0x03a11020 पूर्ण,
+	अणु 0x0f, 0x0321101f पूर्ण,
+	अणु 0x10, 0x4f0000f0 पूर्ण,
+	अणु 0x11, 0x4f0000f0 पूर्ण,
+	अणु 0x12, 0x4f0000f0 पूर्ण,
+	अणु 0x13, 0x90a60160 पूर्ण,
+	अणु 0x14, 0x4f0000f0 पूर्ण,
+	अणु 0x22, 0x4f0000f0 पूर्ण,
+	अणु 0x23, 0x4f0000f0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl alienware_m17x_pin_configs[] = {
-	{ 0x0a, 0x0321101f },
-	{ 0x0b, 0x0321101f },
-	{ 0x0c, 0x03a11020 },
-	{ 0x0d, 0x03014020 },
-	{ 0x0e, 0x90170110 },
-	{ 0x0f, 0x4f0000f0 },
-	{ 0x10, 0x4f0000f0 },
-	{ 0x11, 0x4f0000f0 },
-	{ 0x12, 0x4f0000f0 },
-	{ 0x13, 0x90a60160 },
-	{ 0x14, 0x4f0000f0 },
-	{ 0x22, 0x4f0000f0 },
-	{ 0x23, 0x904601b0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl alienware_m17x_pin_configs[] = अणु
+	अणु 0x0a, 0x0321101f पूर्ण,
+	अणु 0x0b, 0x0321101f पूर्ण,
+	अणु 0x0c, 0x03a11020 पूर्ण,
+	अणु 0x0d, 0x03014020 पूर्ण,
+	अणु 0x0e, 0x90170110 पूर्ण,
+	अणु 0x0f, 0x4f0000f0 पूर्ण,
+	अणु 0x10, 0x4f0000f0 पूर्ण,
+	अणु 0x11, 0x4f0000f0 पूर्ण,
+	अणु 0x12, 0x4f0000f0 पूर्ण,
+	अणु 0x13, 0x90a60160 पूर्ण,
+	अणु 0x14, 0x4f0000f0 पूर्ण,
+	अणु 0x22, 0x4f0000f0 पूर्ण,
+	अणु 0x23, 0x904601b0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl intel_dg45id_pin_configs[] = {
-	{ 0x0a, 0x02214230 },
-	{ 0x0b, 0x02A19240 },
-	{ 0x0c, 0x01013214 },
-	{ 0x0d, 0x01014210 },
-	{ 0x0e, 0x01A19250 },
-	{ 0x0f, 0x01011212 },
-	{ 0x10, 0x01016211 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl पूर्णांकel_dg45id_pin_configs[] = अणु
+	अणु 0x0a, 0x02214230 पूर्ण,
+	अणु 0x0b, 0x02A19240 पूर्ण,
+	अणु 0x0c, 0x01013214 पूर्ण,
+	अणु 0x0d, 0x01014210 पूर्ण,
+	अणु 0x0e, 0x01A19250 पूर्ण,
+	अणु 0x0f, 0x01011212 पूर्ण,
+	अणु 0x10, 0x01016211 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac92hd89xx_hp_front_jack_pin_configs[] = {
-	{ 0x0a, 0x02214030 },
-	{ 0x0b, 0x02A19010 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac92hd89xx_hp_front_jack_pin_configs[] = अणु
+	अणु 0x0a, 0x02214030 पूर्ण,
+	अणु 0x0b, 0x02A19010 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac92hd89xx_hp_z1_g2_right_mic_jack_pin_configs[] = {
-	{ 0x0e, 0x400000f0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac92hd89xx_hp_z1_g2_right_mic_jack_pin_configs[] = अणु
+	अणु 0x0e, 0x400000f0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void stac92hd73xx_fixup_ref(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd73xx_fixup_ref(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	snd_hda_apply_pincfgs(codec, ref92hd73xx_pin_configs);
 	spec->gpio_mask = spec->gpio_dir = spec->gpio_data = 0;
-}
+पूर्ण
 
-static void stac92hd73xx_fixup_dell(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd73xx_fixup_dell(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
 	snd_hda_apply_pincfgs(codec, dell_m6_pin_configs);
-	spec->eapd_switch = 0;
-}
+	spec->eapd_चयन = 0;
+पूर्ण
 
-static void stac92hd73xx_fixup_dell_eq(struct hda_codec *codec,
-				       const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd73xx_fixup_dell_eq(काष्ठा hda_codec *codec,
+				       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	stac92hd73xx_fixup_dell(codec);
 	snd_hda_add_verbs(codec, dell_eq_core_init);
 	spec->volknob_init = 1;
-}
+पूर्ण
 
 /* Analog Mics */
-static void stac92hd73xx_fixup_dell_m6_amic(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+अटल व्योम stac92hd73xx_fixup_dell_m6_amic(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	stac92hd73xx_fixup_dell(codec);
 	snd_hda_codec_set_pincfg(codec, 0x0b, 0x90A70170);
-}
+पूर्ण
 
 /* Digital Mics */
-static void stac92hd73xx_fixup_dell_m6_dmic(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+अटल व्योम stac92hd73xx_fixup_dell_m6_dmic(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	stac92hd73xx_fixup_dell(codec);
 	snd_hda_codec_set_pincfg(codec, 0x13, 0x90A60160);
-}
+पूर्ण
 
 /* Both */
-static void stac92hd73xx_fixup_dell_m6_both(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+अटल व्योम stac92hd73xx_fixup_dell_m6_both(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	stac92hd73xx_fixup_dell(codec);
 	snd_hda_codec_set_pincfg(codec, 0x0b, 0x90A70170);
 	snd_hda_codec_set_pincfg(codec, 0x13, 0x90A60160);
-}
+पूर्ण
 
-static void stac92hd73xx_fixup_alienware_m17x(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd73xx_fixup_alienware_m17x(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	snd_hda_apply_pincfgs(codec, alienware_m17x_pin_configs);
-	spec->eapd_switch = 0;
-}
+	spec->eapd_चयन = 0;
+पूर्ण
 
-static void stac92hd73xx_fixup_no_jd(struct hda_codec *codec,
-				     const struct hda_fixup *fix, int action)
-{
-	if (action == HDA_FIXUP_ACT_PRE_PROBE)
+अटल व्योम stac92hd73xx_fixup_no_jd(काष्ठा hda_codec *codec,
+				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
 		codec->no_jack_detect = 1;
-}
+पूर्ण
 
 
-static void stac92hd73xx_disable_automute(struct hda_codec *codec,
-				     const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd73xx_disable_स्वतःmute(काष्ठा hda_codec *codec,
+				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
-	spec->gen.suppress_auto_mute = 1;
-}
+	spec->gen.suppress_स्वतः_mute = 1;
+पूर्ण
 
-static const struct hda_fixup stac92hd73xx_fixups[] = {
-	[STAC_92HD73XX_REF] = {
+अटल स्थिर काष्ठा hda_fixup stac92hd73xx_fixups[] = अणु
+	[STAC_92HD73XX_REF] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd73xx_fixup_ref,
-	},
-	[STAC_DELL_M6_AMIC] = {
+	पूर्ण,
+	[STAC_DELL_M6_AMIC] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd73xx_fixup_dell_m6_amic,
-	},
-	[STAC_DELL_M6_DMIC] = {
+	पूर्ण,
+	[STAC_DELL_M6_DMIC] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd73xx_fixup_dell_m6_dmic,
-	},
-	[STAC_DELL_M6_BOTH] = {
+	पूर्ण,
+	[STAC_DELL_M6_BOTH] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd73xx_fixup_dell_m6_both,
-	},
-	[STAC_DELL_EQ]	= {
+	पूर्ण,
+	[STAC_DELL_EQ]	= अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd73xx_fixup_dell_eq,
-	},
-	[STAC_ALIENWARE_M17X] = {
+	पूर्ण,
+	[STAC_ALIENWARE_M17X] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd73xx_fixup_alienware_m17x,
-	},
-	[STAC_ELO_VUPOINT_15MX] = {
+	पूर्ण,
+	[STAC_ELO_VUPOINT_15MX] = अणु
 		.type = HDA_FIXUP_FUNC,
-		.v.func = stac92hd73xx_disable_automute,
-	},
-	[STAC_92HD73XX_INTEL] = {
+		.v.func = stac92hd73xx_disable_स्वतःmute,
+	पूर्ण,
+	[STAC_92HD73XX_INTEL] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = intel_dg45id_pin_configs,
-	},
-	[STAC_92HD73XX_NO_JD] = {
+		.v.pins = पूर्णांकel_dg45id_pin_configs,
+	पूर्ण,
+	[STAC_92HD73XX_NO_JD] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd73xx_fixup_no_jd,
-	},
-	[STAC_92HD89XX_HP_FRONT_JACK] = {
+	पूर्ण,
+	[STAC_92HD89XX_HP_FRONT_JACK] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac92hd89xx_hp_front_jack_pin_configs,
-	},
-	[STAC_92HD89XX_HP_Z1_G2_RIGHT_MIC_JACK] = {
+	पूर्ण,
+	[STAC_92HD89XX_HP_Z1_G2_RIGHT_MIC_JACK] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac92hd89xx_hp_z1_g2_right_mic_jack_pin_configs,
-	},
-	[STAC_92HD73XX_ASUS_MOBO] = {
+	पूर्ण,
+	[STAC_92HD73XX_ASUS_MOBO] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
 			/* enable 5.1 and SPDIF out */
-			{ 0x0c, 0x01014411 },
-			{ 0x0d, 0x01014410 },
-			{ 0x0e, 0x01014412 },
-			{ 0x22, 0x014b1180 },
-			{ }
-		}
-	},
-};
+			अणु 0x0c, 0x01014411 पूर्ण,
+			अणु 0x0d, 0x01014410 पूर्ण,
+			अणु 0x0e, 0x01014412 पूर्ण,
+			अणु 0x22, 0x014b1180 पूर्ण,
+			अणु पूर्ण
+		पूर्ण
+	पूर्ण,
+पूर्ण;
 
-static const struct hda_model_fixup stac92hd73xx_models[] = {
-	{ .id = STAC_92HD73XX_NO_JD, .name = "no-jd" },
-	{ .id = STAC_92HD73XX_REF, .name = "ref" },
-	{ .id = STAC_92HD73XX_INTEL, .name = "intel" },
-	{ .id = STAC_DELL_M6_AMIC, .name = "dell-m6-amic" },
-	{ .id = STAC_DELL_M6_DMIC, .name = "dell-m6-dmic" },
-	{ .id = STAC_DELL_M6_BOTH, .name = "dell-m6" },
-	{ .id = STAC_DELL_EQ, .name = "dell-eq" },
-	{ .id = STAC_ALIENWARE_M17X, .name = "alienware" },
-	{ .id = STAC_ELO_VUPOINT_15MX, .name = "elo-vupoint-15mx" },
-	{ .id = STAC_92HD73XX_ASUS_MOBO, .name = "asus-mobo" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac92hd73xx_models[] = अणु
+	अणु .id = STAC_92HD73XX_NO_JD, .name = "no-jd" पूर्ण,
+	अणु .id = STAC_92HD73XX_REF, .name = "ref" पूर्ण,
+	अणु .id = STAC_92HD73XX_INTEL, .name = "intel" पूर्ण,
+	अणु .id = STAC_DELL_M6_AMIC, .name = "dell-m6-amic" पूर्ण,
+	अणु .id = STAC_DELL_M6_DMIC, .name = "dell-m6-dmic" पूर्ण,
+	अणु .id = STAC_DELL_M6_BOTH, .name = "dell-m6" पूर्ण,
+	अणु .id = STAC_DELL_EQ, .name = "dell-eq" पूर्ण,
+	अणु .id = STAC_ALIENWARE_M17X, .name = "alienware" पूर्ण,
+	अणु .id = STAC_ELO_VUPOINT_15MX, .name = "elo-vupoint-15mx" पूर्ण,
+	अणु .id = STAC_92HD73XX_ASUS_MOBO, .name = "asus-mobo" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk stac92hd73xx_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac92hd73xx_fixup_tbl[] = अणु
 	/* SigmaTel reference board */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x2668,
 				"DFI LanParty", STAC_92HD73XX_REF),
@@ -2001,750 +2002,750 @@ static const struct snd_pci_quirk stac92hd73xx_fixup_tbl[] = {
 				"unknown HP", STAC_92HD89XX_HP_FRONT_JACK),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_ASUSTEK, 0x83f8, "ASUS AT4NM10",
 		      STAC_92HD73XX_ASUS_MOBO),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-static const struct hda_pintbl ref92hd83xxx_pin_configs[] = {
-	{ 0x0a, 0x02214030 },
-	{ 0x0b, 0x02211010 },
-	{ 0x0c, 0x02a19020 },
-	{ 0x0d, 0x02170130 },
-	{ 0x0e, 0x01014050 },
-	{ 0x0f, 0x01819040 },
-	{ 0x10, 0x01014020 },
-	{ 0x11, 0x90a3014e },
-	{ 0x1f, 0x01451160 },
-	{ 0x20, 0x98560170 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl ref92hd83xxx_pin_configs[] = अणु
+	अणु 0x0a, 0x02214030 पूर्ण,
+	अणु 0x0b, 0x02211010 पूर्ण,
+	अणु 0x0c, 0x02a19020 पूर्ण,
+	अणु 0x0d, 0x02170130 पूर्ण,
+	अणु 0x0e, 0x01014050 पूर्ण,
+	अणु 0x0f, 0x01819040 पूर्ण,
+	अणु 0x10, 0x01014020 पूर्ण,
+	अणु 0x11, 0x90a3014e पूर्ण,
+	अणु 0x1f, 0x01451160 पूर्ण,
+	अणु 0x20, 0x98560170 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl dell_s14_pin_configs[] = {
-	{ 0x0a, 0x0221403f },
-	{ 0x0b, 0x0221101f },
-	{ 0x0c, 0x02a19020 },
-	{ 0x0d, 0x90170110 },
-	{ 0x0e, 0x40f000f0 },
-	{ 0x0f, 0x40f000f0 },
-	{ 0x10, 0x40f000f0 },
-	{ 0x11, 0x90a60160 },
-	{ 0x1f, 0x40f000f0 },
-	{ 0x20, 0x40f000f0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_s14_pin_configs[] = अणु
+	अणु 0x0a, 0x0221403f पूर्ण,
+	अणु 0x0b, 0x0221101f पूर्ण,
+	अणु 0x0c, 0x02a19020 पूर्ण,
+	अणु 0x0d, 0x90170110 पूर्ण,
+	अणु 0x0e, 0x40f000f0 पूर्ण,
+	अणु 0x0f, 0x40f000f0 पूर्ण,
+	अणु 0x10, 0x40f000f0 पूर्ण,
+	अणु 0x11, 0x90a60160 पूर्ण,
+	अणु 0x1f, 0x40f000f0 पूर्ण,
+	अणु 0x20, 0x40f000f0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl dell_vostro_3500_pin_configs[] = {
-	{ 0x0a, 0x02a11020 },
-	{ 0x0b, 0x0221101f },
-	{ 0x0c, 0x400000f0 },
-	{ 0x0d, 0x90170110 },
-	{ 0x0e, 0x400000f1 },
-	{ 0x0f, 0x400000f2 },
-	{ 0x10, 0x400000f3 },
-	{ 0x11, 0x90a60160 },
-	{ 0x1f, 0x400000f4 },
-	{ 0x20, 0x400000f5 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_vostro_3500_pin_configs[] = अणु
+	अणु 0x0a, 0x02a11020 पूर्ण,
+	अणु 0x0b, 0x0221101f पूर्ण,
+	अणु 0x0c, 0x400000f0 पूर्ण,
+	अणु 0x0d, 0x90170110 पूर्ण,
+	अणु 0x0e, 0x400000f1 पूर्ण,
+	अणु 0x0f, 0x400000f2 पूर्ण,
+	अणु 0x10, 0x400000f3 पूर्ण,
+	अणु 0x11, 0x90a60160 पूर्ण,
+	अणु 0x1f, 0x400000f4 पूर्ण,
+	अणु 0x20, 0x400000f5 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl hp_dv7_4000_pin_configs[] = {
-	{ 0x0a, 0x03a12050 },
-	{ 0x0b, 0x0321201f },
-	{ 0x0c, 0x40f000f0 },
-	{ 0x0d, 0x90170110 },
-	{ 0x0e, 0x40f000f0 },
-	{ 0x0f, 0x40f000f0 },
-	{ 0x10, 0x90170110 },
-	{ 0x11, 0xd5a30140 },
-	{ 0x1f, 0x40f000f0 },
-	{ 0x20, 0x40f000f0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl hp_dv7_4000_pin_configs[] = अणु
+	अणु 0x0a, 0x03a12050 पूर्ण,
+	अणु 0x0b, 0x0321201f पूर्ण,
+	अणु 0x0c, 0x40f000f0 पूर्ण,
+	अणु 0x0d, 0x90170110 पूर्ण,
+	अणु 0x0e, 0x40f000f0 पूर्ण,
+	अणु 0x0f, 0x40f000f0 पूर्ण,
+	अणु 0x10, 0x90170110 पूर्ण,
+	अणु 0x11, 0xd5a30140 पूर्ण,
+	अणु 0x1f, 0x40f000f0 पूर्ण,
+	अणु 0x20, 0x40f000f0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl hp_zephyr_pin_configs[] = {
-	{ 0x0a, 0x01813050 },
-	{ 0x0b, 0x0421201f },
-	{ 0x0c, 0x04a1205e },
-	{ 0x0d, 0x96130310 },
-	{ 0x0e, 0x96130310 },
-	{ 0x0f, 0x0101401f },
-	{ 0x10, 0x1111611f },
-	{ 0x11, 0xd5a30130 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl hp_zephyr_pin_configs[] = अणु
+	अणु 0x0a, 0x01813050 पूर्ण,
+	अणु 0x0b, 0x0421201f पूर्ण,
+	अणु 0x0c, 0x04a1205e पूर्ण,
+	अणु 0x0d, 0x96130310 पूर्ण,
+	अणु 0x0e, 0x96130310 पूर्ण,
+	अणु 0x0f, 0x0101401f पूर्ण,
+	अणु 0x10, 0x1111611f पूर्ण,
+	अणु 0x11, 0xd5a30130 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl hp_cNB11_intquad_pin_configs[] = {
-	{ 0x0a, 0x40f000f0 },
-	{ 0x0b, 0x0221101f },
-	{ 0x0c, 0x02a11020 },
-	{ 0x0d, 0x92170110 },
-	{ 0x0e, 0x40f000f0 },
-	{ 0x0f, 0x92170110 },
-	{ 0x10, 0x40f000f0 },
-	{ 0x11, 0xd5a30130 },
-	{ 0x1f, 0x40f000f0 },
-	{ 0x20, 0x40f000f0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl hp_cNB11_पूर्णांकquad_pin_configs[] = अणु
+	अणु 0x0a, 0x40f000f0 पूर्ण,
+	अणु 0x0b, 0x0221101f पूर्ण,
+	अणु 0x0c, 0x02a11020 पूर्ण,
+	अणु 0x0d, 0x92170110 पूर्ण,
+	अणु 0x0e, 0x40f000f0 पूर्ण,
+	अणु 0x0f, 0x92170110 पूर्ण,
+	अणु 0x10, 0x40f000f0 पूर्ण,
+	अणु 0x11, 0xd5a30130 पूर्ण,
+	अणु 0x1f, 0x40f000f0 पूर्ण,
+	अणु 0x20, 0x40f000f0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void stac92hd83xxx_fixup_hp(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd83xxx_fixup_hp(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
-	if (hp_bnb2011_with_dock(codec)) {
+	अगर (hp_bnb2011_with_करोck(codec)) अणु
 		snd_hda_codec_set_pincfg(codec, 0xa, 0x2101201f);
 		snd_hda_codec_set_pincfg(codec, 0xf, 0x2181205e);
-	}
+	पूर्ण
 
-	if (find_mute_led_cfg(codec, spec->default_polarity))
+	अगर (find_mute_led_cfg(codec, spec->शेष_polarity))
 		codec_dbg(codec, "mute LED gpio %d polarity %d\n",
 				spec->gpio_led,
 				spec->gpio_led_polarity);
 
-	/* allow auto-switching of dock line-in */
-	spec->gen.line_in_auto_switch = true;
-}
+	/* allow स्वतः-चयनing of करोck line-in */
+	spec->gen.line_in_स्वतः_चयन = true;
+पूर्ण
 
-static void stac92hd83xxx_fixup_hp_zephyr(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+अटल व्योम stac92hd83xxx_fixup_hp_zephyr(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	snd_hda_apply_pincfgs(codec, hp_zephyr_pin_configs);
 	snd_hda_add_verbs(codec, stac92hd83xxx_hp_zephyr_init);
-}
+पूर्ण
 
-static void stac92hd83xxx_fixup_hp_led(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd83xxx_fixup_hp_led(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE)
-		spec->default_polarity = 0;
-}
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+		spec->शेष_polarity = 0;
+पूर्ण
 
-static void stac92hd83xxx_fixup_hp_inv_led(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd83xxx_fixup_hp_inv_led(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE)
-		spec->default_polarity = 1;
-}
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+		spec->शेष_polarity = 1;
+पूर्ण
 
-static void stac92hd83xxx_fixup_hp_mic_led(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd83xxx_fixup_hp_mic_led(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
 		spec->mic_mute_led_gpio = 0x08; /* GPIO3 */
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 		/* resetting controller clears GPIO, so we need to keep on */
-		codec->core.power_caps &= ~AC_PWRST_CLKSTOP;
-#endif
-	}
-}
+		codec->core.घातer_caps &= ~AC_PWRST_CLKSTOP;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-static void stac92hd83xxx_fixup_hp_led_gpio10(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd83xxx_fixup_hp_led_gpio10(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
 		spec->gpio_led = 0x10; /* GPIO4 */
-		spec->default_polarity = 0;
-	}
-}
+		spec->शेष_polarity = 0;
+	पूर्ण
+पूर्ण
 
-static void stac92hd83xxx_fixup_headset_jack(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd83xxx_fixup_headset_jack(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE)
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
 		spec->headset_jack = 1;
-}
+पूर्ण
 
-static void stac92hd83xxx_fixup_gpio10_eapd(struct hda_codec *codec,
-					    const struct hda_fixup *fix,
-					    int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd83xxx_fixup_gpio10_eapd(काष्ठा hda_codec *codec,
+					    स्थिर काष्ठा hda_fixup *fix,
+					    पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 	spec->eapd_mask = spec->gpio_mask = spec->gpio_dir =
 		spec->gpio_data = 0x10;
-	spec->eapd_switch = 0;
-}
+	spec->eapd_चयन = 0;
+पूर्ण
 
-static void hp_envy_ts_fixup_dac_bind(struct hda_codec *codec,
-					    const struct hda_fixup *fix,
-					    int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	static const hda_nid_t preferred_pairs[] = {
+अटल व्योम hp_envy_ts_fixup_dac_bind(काष्ठा hda_codec *codec,
+					    स्थिर काष्ठा hda_fixup *fix,
+					    पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	अटल स्थिर hda_nid_t preferred_pairs[] = अणु
 		0xd, 0x13,
 		0
-	};
+	पूर्ण;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	spec->gen.preferred_dacs = preferred_pairs;
-}
+पूर्ण
 
-static const struct hda_verb hp_bnb13_eq_verbs[] = {
+अटल स्थिर काष्ठा hda_verb hp_bnb13_eq_verbs[] = अणु
 	/* 44.1KHz base */
-	{ 0x22, 0x7A6, 0x3E },
-	{ 0x22, 0x7A7, 0x68 },
-	{ 0x22, 0x7A8, 0x17 },
-	{ 0x22, 0x7A9, 0x3E },
-	{ 0x22, 0x7AA, 0x68 },
-	{ 0x22, 0x7AB, 0x17 },
-	{ 0x22, 0x7AC, 0x00 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x83 },
-	{ 0x22, 0x7A7, 0x2F },
-	{ 0x22, 0x7A8, 0xD1 },
-	{ 0x22, 0x7A9, 0x83 },
-	{ 0x22, 0x7AA, 0x2F },
-	{ 0x22, 0x7AB, 0xD1 },
-	{ 0x22, 0x7AC, 0x01 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x3E },
-	{ 0x22, 0x7A7, 0x68 },
-	{ 0x22, 0x7A8, 0x17 },
-	{ 0x22, 0x7A9, 0x3E },
-	{ 0x22, 0x7AA, 0x68 },
-	{ 0x22, 0x7AB, 0x17 },
-	{ 0x22, 0x7AC, 0x02 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x7C },
-	{ 0x22, 0x7A7, 0xC6 },
-	{ 0x22, 0x7A8, 0x0C },
-	{ 0x22, 0x7A9, 0x7C },
-	{ 0x22, 0x7AA, 0xC6 },
-	{ 0x22, 0x7AB, 0x0C },
-	{ 0x22, 0x7AC, 0x03 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xC3 },
-	{ 0x22, 0x7A7, 0x25 },
-	{ 0x22, 0x7A8, 0xAF },
-	{ 0x22, 0x7A9, 0xC3 },
-	{ 0x22, 0x7AA, 0x25 },
-	{ 0x22, 0x7AB, 0xAF },
-	{ 0x22, 0x7AC, 0x04 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x3E },
-	{ 0x22, 0x7A7, 0x85 },
-	{ 0x22, 0x7A8, 0x73 },
-	{ 0x22, 0x7A9, 0x3E },
-	{ 0x22, 0x7AA, 0x85 },
-	{ 0x22, 0x7AB, 0x73 },
-	{ 0x22, 0x7AC, 0x05 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x85 },
-	{ 0x22, 0x7A7, 0x39 },
-	{ 0x22, 0x7A8, 0xC7 },
-	{ 0x22, 0x7A9, 0x85 },
-	{ 0x22, 0x7AA, 0x39 },
-	{ 0x22, 0x7AB, 0xC7 },
-	{ 0x22, 0x7AC, 0x06 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x3C },
-	{ 0x22, 0x7A7, 0x90 },
-	{ 0x22, 0x7A8, 0xB0 },
-	{ 0x22, 0x7A9, 0x3C },
-	{ 0x22, 0x7AA, 0x90 },
-	{ 0x22, 0x7AB, 0xB0 },
-	{ 0x22, 0x7AC, 0x07 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x7A },
-	{ 0x22, 0x7A7, 0xC6 },
-	{ 0x22, 0x7A8, 0x39 },
-	{ 0x22, 0x7A9, 0x7A },
-	{ 0x22, 0x7AA, 0xC6 },
-	{ 0x22, 0x7AB, 0x39 },
-	{ 0x22, 0x7AC, 0x08 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xC4 },
-	{ 0x22, 0x7A7, 0xE9 },
-	{ 0x22, 0x7A8, 0xDC },
-	{ 0x22, 0x7A9, 0xC4 },
-	{ 0x22, 0x7AA, 0xE9 },
-	{ 0x22, 0x7AB, 0xDC },
-	{ 0x22, 0x7AC, 0x09 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x3D },
-	{ 0x22, 0x7A7, 0xE1 },
-	{ 0x22, 0x7A8, 0x0D },
-	{ 0x22, 0x7A9, 0x3D },
-	{ 0x22, 0x7AA, 0xE1 },
-	{ 0x22, 0x7AB, 0x0D },
-	{ 0x22, 0x7AC, 0x0A },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x89 },
-	{ 0x22, 0x7A7, 0xB6 },
-	{ 0x22, 0x7A8, 0xEB },
-	{ 0x22, 0x7A9, 0x89 },
-	{ 0x22, 0x7AA, 0xB6 },
-	{ 0x22, 0x7AB, 0xEB },
-	{ 0x22, 0x7AC, 0x0B },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x39 },
-	{ 0x22, 0x7A7, 0x9D },
-	{ 0x22, 0x7A8, 0xFE },
-	{ 0x22, 0x7A9, 0x39 },
-	{ 0x22, 0x7AA, 0x9D },
-	{ 0x22, 0x7AB, 0xFE },
-	{ 0x22, 0x7AC, 0x0C },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x76 },
-	{ 0x22, 0x7A7, 0x49 },
-	{ 0x22, 0x7A8, 0x15 },
-	{ 0x22, 0x7A9, 0x76 },
-	{ 0x22, 0x7AA, 0x49 },
-	{ 0x22, 0x7AB, 0x15 },
-	{ 0x22, 0x7AC, 0x0D },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xC8 },
-	{ 0x22, 0x7A7, 0x80 },
-	{ 0x22, 0x7A8, 0xF5 },
-	{ 0x22, 0x7A9, 0xC8 },
-	{ 0x22, 0x7AA, 0x80 },
-	{ 0x22, 0x7AB, 0xF5 },
-	{ 0x22, 0x7AC, 0x0E },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x40 },
-	{ 0x22, 0x7A7, 0x00 },
-	{ 0x22, 0x7A8, 0x00 },
-	{ 0x22, 0x7A9, 0x40 },
-	{ 0x22, 0x7AA, 0x00 },
-	{ 0x22, 0x7AB, 0x00 },
-	{ 0x22, 0x7AC, 0x0F },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x90 },
-	{ 0x22, 0x7A7, 0x68 },
-	{ 0x22, 0x7A8, 0xF1 },
-	{ 0x22, 0x7A9, 0x90 },
-	{ 0x22, 0x7AA, 0x68 },
-	{ 0x22, 0x7AB, 0xF1 },
-	{ 0x22, 0x7AC, 0x10 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x34 },
-	{ 0x22, 0x7A7, 0x47 },
-	{ 0x22, 0x7A8, 0x6C },
-	{ 0x22, 0x7A9, 0x34 },
-	{ 0x22, 0x7AA, 0x47 },
-	{ 0x22, 0x7AB, 0x6C },
-	{ 0x22, 0x7AC, 0x11 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x6F },
-	{ 0x22, 0x7A7, 0x97 },
-	{ 0x22, 0x7A8, 0x0F },
-	{ 0x22, 0x7A9, 0x6F },
-	{ 0x22, 0x7AA, 0x97 },
-	{ 0x22, 0x7AB, 0x0F },
-	{ 0x22, 0x7AC, 0x12 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xCB },
-	{ 0x22, 0x7A7, 0xB8 },
-	{ 0x22, 0x7A8, 0x94 },
-	{ 0x22, 0x7A9, 0xCB },
-	{ 0x22, 0x7AA, 0xB8 },
-	{ 0x22, 0x7AB, 0x94 },
-	{ 0x22, 0x7AC, 0x13 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x40 },
-	{ 0x22, 0x7A7, 0x00 },
-	{ 0x22, 0x7A8, 0x00 },
-	{ 0x22, 0x7A9, 0x40 },
-	{ 0x22, 0x7AA, 0x00 },
-	{ 0x22, 0x7AB, 0x00 },
-	{ 0x22, 0x7AC, 0x14 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x95 },
-	{ 0x22, 0x7A7, 0x76 },
-	{ 0x22, 0x7A8, 0x5B },
-	{ 0x22, 0x7A9, 0x95 },
-	{ 0x22, 0x7AA, 0x76 },
-	{ 0x22, 0x7AB, 0x5B },
-	{ 0x22, 0x7AC, 0x15 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x31 },
-	{ 0x22, 0x7A7, 0xAC },
-	{ 0x22, 0x7A8, 0x31 },
-	{ 0x22, 0x7A9, 0x31 },
-	{ 0x22, 0x7AA, 0xAC },
-	{ 0x22, 0x7AB, 0x31 },
-	{ 0x22, 0x7AC, 0x16 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x6A },
-	{ 0x22, 0x7A7, 0x89 },
-	{ 0x22, 0x7A8, 0xA5 },
-	{ 0x22, 0x7A9, 0x6A },
-	{ 0x22, 0x7AA, 0x89 },
-	{ 0x22, 0x7AB, 0xA5 },
-	{ 0x22, 0x7AC, 0x17 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xCE },
-	{ 0x22, 0x7A7, 0x53 },
-	{ 0x22, 0x7A8, 0xCF },
-	{ 0x22, 0x7A9, 0xCE },
-	{ 0x22, 0x7AA, 0x53 },
-	{ 0x22, 0x7AB, 0xCF },
-	{ 0x22, 0x7AC, 0x18 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x40 },
-	{ 0x22, 0x7A7, 0x00 },
-	{ 0x22, 0x7A8, 0x00 },
-	{ 0x22, 0x7A9, 0x40 },
-	{ 0x22, 0x7AA, 0x00 },
-	{ 0x22, 0x7AB, 0x00 },
-	{ 0x22, 0x7AC, 0x19 },
-	{ 0x22, 0x7AD, 0x80 },
+	अणु 0x22, 0x7A6, 0x3E पूर्ण,
+	अणु 0x22, 0x7A7, 0x68 पूर्ण,
+	अणु 0x22, 0x7A8, 0x17 पूर्ण,
+	अणु 0x22, 0x7A9, 0x3E पूर्ण,
+	अणु 0x22, 0x7AA, 0x68 पूर्ण,
+	अणु 0x22, 0x7AB, 0x17 पूर्ण,
+	अणु 0x22, 0x7AC, 0x00 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x83 पूर्ण,
+	अणु 0x22, 0x7A7, 0x2F पूर्ण,
+	अणु 0x22, 0x7A8, 0xD1 पूर्ण,
+	अणु 0x22, 0x7A9, 0x83 पूर्ण,
+	अणु 0x22, 0x7AA, 0x2F पूर्ण,
+	अणु 0x22, 0x7AB, 0xD1 पूर्ण,
+	अणु 0x22, 0x7AC, 0x01 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x3E पूर्ण,
+	अणु 0x22, 0x7A7, 0x68 पूर्ण,
+	अणु 0x22, 0x7A8, 0x17 पूर्ण,
+	अणु 0x22, 0x7A9, 0x3E पूर्ण,
+	अणु 0x22, 0x7AA, 0x68 पूर्ण,
+	अणु 0x22, 0x7AB, 0x17 पूर्ण,
+	अणु 0x22, 0x7AC, 0x02 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x7C पूर्ण,
+	अणु 0x22, 0x7A7, 0xC6 पूर्ण,
+	अणु 0x22, 0x7A8, 0x0C पूर्ण,
+	अणु 0x22, 0x7A9, 0x7C पूर्ण,
+	अणु 0x22, 0x7AA, 0xC6 पूर्ण,
+	अणु 0x22, 0x7AB, 0x0C पूर्ण,
+	अणु 0x22, 0x7AC, 0x03 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xC3 पूर्ण,
+	अणु 0x22, 0x7A7, 0x25 पूर्ण,
+	अणु 0x22, 0x7A8, 0xAF पूर्ण,
+	अणु 0x22, 0x7A9, 0xC3 पूर्ण,
+	अणु 0x22, 0x7AA, 0x25 पूर्ण,
+	अणु 0x22, 0x7AB, 0xAF पूर्ण,
+	अणु 0x22, 0x7AC, 0x04 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x3E पूर्ण,
+	अणु 0x22, 0x7A7, 0x85 पूर्ण,
+	अणु 0x22, 0x7A8, 0x73 पूर्ण,
+	अणु 0x22, 0x7A9, 0x3E पूर्ण,
+	अणु 0x22, 0x7AA, 0x85 पूर्ण,
+	अणु 0x22, 0x7AB, 0x73 पूर्ण,
+	अणु 0x22, 0x7AC, 0x05 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x85 पूर्ण,
+	अणु 0x22, 0x7A7, 0x39 पूर्ण,
+	अणु 0x22, 0x7A8, 0xC7 पूर्ण,
+	अणु 0x22, 0x7A9, 0x85 पूर्ण,
+	अणु 0x22, 0x7AA, 0x39 पूर्ण,
+	अणु 0x22, 0x7AB, 0xC7 पूर्ण,
+	अणु 0x22, 0x7AC, 0x06 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x3C पूर्ण,
+	अणु 0x22, 0x7A7, 0x90 पूर्ण,
+	अणु 0x22, 0x7A8, 0xB0 पूर्ण,
+	अणु 0x22, 0x7A9, 0x3C पूर्ण,
+	अणु 0x22, 0x7AA, 0x90 पूर्ण,
+	अणु 0x22, 0x7AB, 0xB0 पूर्ण,
+	अणु 0x22, 0x7AC, 0x07 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x7A पूर्ण,
+	अणु 0x22, 0x7A7, 0xC6 पूर्ण,
+	अणु 0x22, 0x7A8, 0x39 पूर्ण,
+	अणु 0x22, 0x7A9, 0x7A पूर्ण,
+	अणु 0x22, 0x7AA, 0xC6 पूर्ण,
+	अणु 0x22, 0x7AB, 0x39 पूर्ण,
+	अणु 0x22, 0x7AC, 0x08 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xC4 पूर्ण,
+	अणु 0x22, 0x7A7, 0xE9 पूर्ण,
+	अणु 0x22, 0x7A8, 0xDC पूर्ण,
+	अणु 0x22, 0x7A9, 0xC4 पूर्ण,
+	अणु 0x22, 0x7AA, 0xE9 पूर्ण,
+	अणु 0x22, 0x7AB, 0xDC पूर्ण,
+	अणु 0x22, 0x7AC, 0x09 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x3D पूर्ण,
+	अणु 0x22, 0x7A7, 0xE1 पूर्ण,
+	अणु 0x22, 0x7A8, 0x0D पूर्ण,
+	अणु 0x22, 0x7A9, 0x3D पूर्ण,
+	अणु 0x22, 0x7AA, 0xE1 पूर्ण,
+	अणु 0x22, 0x7AB, 0x0D पूर्ण,
+	अणु 0x22, 0x7AC, 0x0A पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x89 पूर्ण,
+	अणु 0x22, 0x7A7, 0xB6 पूर्ण,
+	अणु 0x22, 0x7A8, 0xEB पूर्ण,
+	अणु 0x22, 0x7A9, 0x89 पूर्ण,
+	अणु 0x22, 0x7AA, 0xB6 पूर्ण,
+	अणु 0x22, 0x7AB, 0xEB पूर्ण,
+	अणु 0x22, 0x7AC, 0x0B पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x39 पूर्ण,
+	अणु 0x22, 0x7A7, 0x9D पूर्ण,
+	अणु 0x22, 0x7A8, 0xFE पूर्ण,
+	अणु 0x22, 0x7A9, 0x39 पूर्ण,
+	अणु 0x22, 0x7AA, 0x9D पूर्ण,
+	अणु 0x22, 0x7AB, 0xFE पूर्ण,
+	अणु 0x22, 0x7AC, 0x0C पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x76 पूर्ण,
+	अणु 0x22, 0x7A7, 0x49 पूर्ण,
+	अणु 0x22, 0x7A8, 0x15 पूर्ण,
+	अणु 0x22, 0x7A9, 0x76 पूर्ण,
+	अणु 0x22, 0x7AA, 0x49 पूर्ण,
+	अणु 0x22, 0x7AB, 0x15 पूर्ण,
+	अणु 0x22, 0x7AC, 0x0D पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xC8 पूर्ण,
+	अणु 0x22, 0x7A7, 0x80 पूर्ण,
+	अणु 0x22, 0x7A8, 0xF5 पूर्ण,
+	अणु 0x22, 0x7A9, 0xC8 पूर्ण,
+	अणु 0x22, 0x7AA, 0x80 पूर्ण,
+	अणु 0x22, 0x7AB, 0xF5 पूर्ण,
+	अणु 0x22, 0x7AC, 0x0E पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x40 पूर्ण,
+	अणु 0x22, 0x7A7, 0x00 पूर्ण,
+	अणु 0x22, 0x7A8, 0x00 पूर्ण,
+	अणु 0x22, 0x7A9, 0x40 पूर्ण,
+	अणु 0x22, 0x7AA, 0x00 पूर्ण,
+	अणु 0x22, 0x7AB, 0x00 पूर्ण,
+	अणु 0x22, 0x7AC, 0x0F पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x90 पूर्ण,
+	अणु 0x22, 0x7A7, 0x68 पूर्ण,
+	अणु 0x22, 0x7A8, 0xF1 पूर्ण,
+	अणु 0x22, 0x7A9, 0x90 पूर्ण,
+	अणु 0x22, 0x7AA, 0x68 पूर्ण,
+	अणु 0x22, 0x7AB, 0xF1 पूर्ण,
+	अणु 0x22, 0x7AC, 0x10 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x34 पूर्ण,
+	अणु 0x22, 0x7A7, 0x47 पूर्ण,
+	अणु 0x22, 0x7A8, 0x6C पूर्ण,
+	अणु 0x22, 0x7A9, 0x34 पूर्ण,
+	अणु 0x22, 0x7AA, 0x47 पूर्ण,
+	अणु 0x22, 0x7AB, 0x6C पूर्ण,
+	अणु 0x22, 0x7AC, 0x11 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x6F पूर्ण,
+	अणु 0x22, 0x7A7, 0x97 पूर्ण,
+	अणु 0x22, 0x7A8, 0x0F पूर्ण,
+	अणु 0x22, 0x7A9, 0x6F पूर्ण,
+	अणु 0x22, 0x7AA, 0x97 पूर्ण,
+	अणु 0x22, 0x7AB, 0x0F पूर्ण,
+	अणु 0x22, 0x7AC, 0x12 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xCB पूर्ण,
+	अणु 0x22, 0x7A7, 0xB8 पूर्ण,
+	अणु 0x22, 0x7A8, 0x94 पूर्ण,
+	अणु 0x22, 0x7A9, 0xCB पूर्ण,
+	अणु 0x22, 0x7AA, 0xB8 पूर्ण,
+	अणु 0x22, 0x7AB, 0x94 पूर्ण,
+	अणु 0x22, 0x7AC, 0x13 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x40 पूर्ण,
+	अणु 0x22, 0x7A7, 0x00 पूर्ण,
+	अणु 0x22, 0x7A8, 0x00 पूर्ण,
+	अणु 0x22, 0x7A9, 0x40 पूर्ण,
+	अणु 0x22, 0x7AA, 0x00 पूर्ण,
+	अणु 0x22, 0x7AB, 0x00 पूर्ण,
+	अणु 0x22, 0x7AC, 0x14 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x95 पूर्ण,
+	अणु 0x22, 0x7A7, 0x76 पूर्ण,
+	अणु 0x22, 0x7A8, 0x5B पूर्ण,
+	अणु 0x22, 0x7A9, 0x95 पूर्ण,
+	अणु 0x22, 0x7AA, 0x76 पूर्ण,
+	अणु 0x22, 0x7AB, 0x5B पूर्ण,
+	अणु 0x22, 0x7AC, 0x15 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x31 पूर्ण,
+	अणु 0x22, 0x7A7, 0xAC पूर्ण,
+	अणु 0x22, 0x7A8, 0x31 पूर्ण,
+	अणु 0x22, 0x7A9, 0x31 पूर्ण,
+	अणु 0x22, 0x7AA, 0xAC पूर्ण,
+	अणु 0x22, 0x7AB, 0x31 पूर्ण,
+	अणु 0x22, 0x7AC, 0x16 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x6A पूर्ण,
+	अणु 0x22, 0x7A7, 0x89 पूर्ण,
+	अणु 0x22, 0x7A8, 0xA5 पूर्ण,
+	अणु 0x22, 0x7A9, 0x6A पूर्ण,
+	अणु 0x22, 0x7AA, 0x89 पूर्ण,
+	अणु 0x22, 0x7AB, 0xA5 पूर्ण,
+	अणु 0x22, 0x7AC, 0x17 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xCE पूर्ण,
+	अणु 0x22, 0x7A7, 0x53 पूर्ण,
+	अणु 0x22, 0x7A8, 0xCF पूर्ण,
+	अणु 0x22, 0x7A9, 0xCE पूर्ण,
+	अणु 0x22, 0x7AA, 0x53 पूर्ण,
+	अणु 0x22, 0x7AB, 0xCF पूर्ण,
+	अणु 0x22, 0x7AC, 0x18 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x40 पूर्ण,
+	अणु 0x22, 0x7A7, 0x00 पूर्ण,
+	अणु 0x22, 0x7A8, 0x00 पूर्ण,
+	अणु 0x22, 0x7A9, 0x40 पूर्ण,
+	अणु 0x22, 0x7AA, 0x00 पूर्ण,
+	अणु 0x22, 0x7AB, 0x00 पूर्ण,
+	अणु 0x22, 0x7AC, 0x19 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
 	/* 48KHz base */
-	{ 0x22, 0x7A6, 0x3E },
-	{ 0x22, 0x7A7, 0x88 },
-	{ 0x22, 0x7A8, 0xDC },
-	{ 0x22, 0x7A9, 0x3E },
-	{ 0x22, 0x7AA, 0x88 },
-	{ 0x22, 0x7AB, 0xDC },
-	{ 0x22, 0x7AC, 0x1A },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x82 },
-	{ 0x22, 0x7A7, 0xEE },
-	{ 0x22, 0x7A8, 0x46 },
-	{ 0x22, 0x7A9, 0x82 },
-	{ 0x22, 0x7AA, 0xEE },
-	{ 0x22, 0x7AB, 0x46 },
-	{ 0x22, 0x7AC, 0x1B },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x3E },
-	{ 0x22, 0x7A7, 0x88 },
-	{ 0x22, 0x7A8, 0xDC },
-	{ 0x22, 0x7A9, 0x3E },
-	{ 0x22, 0x7AA, 0x88 },
-	{ 0x22, 0x7AB, 0xDC },
-	{ 0x22, 0x7AC, 0x1C },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x7D },
-	{ 0x22, 0x7A7, 0x09 },
-	{ 0x22, 0x7A8, 0x28 },
-	{ 0x22, 0x7A9, 0x7D },
-	{ 0x22, 0x7AA, 0x09 },
-	{ 0x22, 0x7AB, 0x28 },
-	{ 0x22, 0x7AC, 0x1D },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xC2 },
-	{ 0x22, 0x7A7, 0xE5 },
-	{ 0x22, 0x7A8, 0xB4 },
-	{ 0x22, 0x7A9, 0xC2 },
-	{ 0x22, 0x7AA, 0xE5 },
-	{ 0x22, 0x7AB, 0xB4 },
-	{ 0x22, 0x7AC, 0x1E },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x3E },
-	{ 0x22, 0x7A7, 0xA3 },
-	{ 0x22, 0x7A8, 0x1F },
-	{ 0x22, 0x7A9, 0x3E },
-	{ 0x22, 0x7AA, 0xA3 },
-	{ 0x22, 0x7AB, 0x1F },
-	{ 0x22, 0x7AC, 0x1F },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x84 },
-	{ 0x22, 0x7A7, 0xCA },
-	{ 0x22, 0x7A8, 0xF1 },
-	{ 0x22, 0x7A9, 0x84 },
-	{ 0x22, 0x7AA, 0xCA },
-	{ 0x22, 0x7AB, 0xF1 },
-	{ 0x22, 0x7AC, 0x20 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x3C },
-	{ 0x22, 0x7A7, 0xD5 },
-	{ 0x22, 0x7A8, 0x9C },
-	{ 0x22, 0x7A9, 0x3C },
-	{ 0x22, 0x7AA, 0xD5 },
-	{ 0x22, 0x7AB, 0x9C },
-	{ 0x22, 0x7AC, 0x21 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x7B },
-	{ 0x22, 0x7A7, 0x35 },
-	{ 0x22, 0x7A8, 0x0F },
-	{ 0x22, 0x7A9, 0x7B },
-	{ 0x22, 0x7AA, 0x35 },
-	{ 0x22, 0x7AB, 0x0F },
-	{ 0x22, 0x7AC, 0x22 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xC4 },
-	{ 0x22, 0x7A7, 0x87 },
-	{ 0x22, 0x7A8, 0x45 },
-	{ 0x22, 0x7A9, 0xC4 },
-	{ 0x22, 0x7AA, 0x87 },
-	{ 0x22, 0x7AB, 0x45 },
-	{ 0x22, 0x7AC, 0x23 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x3E },
-	{ 0x22, 0x7A7, 0x0A },
-	{ 0x22, 0x7A8, 0x78 },
-	{ 0x22, 0x7A9, 0x3E },
-	{ 0x22, 0x7AA, 0x0A },
-	{ 0x22, 0x7AB, 0x78 },
-	{ 0x22, 0x7AC, 0x24 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x88 },
-	{ 0x22, 0x7A7, 0xE2 },
-	{ 0x22, 0x7A8, 0x05 },
-	{ 0x22, 0x7A9, 0x88 },
-	{ 0x22, 0x7AA, 0xE2 },
-	{ 0x22, 0x7AB, 0x05 },
-	{ 0x22, 0x7AC, 0x25 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x3A },
-	{ 0x22, 0x7A7, 0x1A },
-	{ 0x22, 0x7A8, 0xA3 },
-	{ 0x22, 0x7A9, 0x3A },
-	{ 0x22, 0x7AA, 0x1A },
-	{ 0x22, 0x7AB, 0xA3 },
-	{ 0x22, 0x7AC, 0x26 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x77 },
-	{ 0x22, 0x7A7, 0x1D },
-	{ 0x22, 0x7A8, 0xFB },
-	{ 0x22, 0x7A9, 0x77 },
-	{ 0x22, 0x7AA, 0x1D },
-	{ 0x22, 0x7AB, 0xFB },
-	{ 0x22, 0x7AC, 0x27 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xC7 },
-	{ 0x22, 0x7A7, 0xDA },
-	{ 0x22, 0x7A8, 0xE5 },
-	{ 0x22, 0x7A9, 0xC7 },
-	{ 0x22, 0x7AA, 0xDA },
-	{ 0x22, 0x7AB, 0xE5 },
-	{ 0x22, 0x7AC, 0x28 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x40 },
-	{ 0x22, 0x7A7, 0x00 },
-	{ 0x22, 0x7A8, 0x00 },
-	{ 0x22, 0x7A9, 0x40 },
-	{ 0x22, 0x7AA, 0x00 },
-	{ 0x22, 0x7AB, 0x00 },
-	{ 0x22, 0x7AC, 0x29 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x8E },
-	{ 0x22, 0x7A7, 0xD7 },
-	{ 0x22, 0x7A8, 0x22 },
-	{ 0x22, 0x7A9, 0x8E },
-	{ 0x22, 0x7AA, 0xD7 },
-	{ 0x22, 0x7AB, 0x22 },
-	{ 0x22, 0x7AC, 0x2A },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x35 },
-	{ 0x22, 0x7A7, 0x26 },
-	{ 0x22, 0x7A8, 0xC6 },
-	{ 0x22, 0x7A9, 0x35 },
-	{ 0x22, 0x7AA, 0x26 },
-	{ 0x22, 0x7AB, 0xC6 },
-	{ 0x22, 0x7AC, 0x2B },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x71 },
-	{ 0x22, 0x7A7, 0x28 },
-	{ 0x22, 0x7A8, 0xDE },
-	{ 0x22, 0x7A9, 0x71 },
-	{ 0x22, 0x7AA, 0x28 },
-	{ 0x22, 0x7AB, 0xDE },
-	{ 0x22, 0x7AC, 0x2C },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xCA },
-	{ 0x22, 0x7A7, 0xD9 },
-	{ 0x22, 0x7A8, 0x3A },
-	{ 0x22, 0x7A9, 0xCA },
-	{ 0x22, 0x7AA, 0xD9 },
-	{ 0x22, 0x7AB, 0x3A },
-	{ 0x22, 0x7AC, 0x2D },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x40 },
-	{ 0x22, 0x7A7, 0x00 },
-	{ 0x22, 0x7A8, 0x00 },
-	{ 0x22, 0x7A9, 0x40 },
-	{ 0x22, 0x7AA, 0x00 },
-	{ 0x22, 0x7AB, 0x00 },
-	{ 0x22, 0x7AC, 0x2E },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x93 },
-	{ 0x22, 0x7A7, 0x5E },
-	{ 0x22, 0x7A8, 0xD8 },
-	{ 0x22, 0x7A9, 0x93 },
-	{ 0x22, 0x7AA, 0x5E },
-	{ 0x22, 0x7AB, 0xD8 },
-	{ 0x22, 0x7AC, 0x2F },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x32 },
-	{ 0x22, 0x7A7, 0xB7 },
-	{ 0x22, 0x7A8, 0xB1 },
-	{ 0x22, 0x7A9, 0x32 },
-	{ 0x22, 0x7AA, 0xB7 },
-	{ 0x22, 0x7AB, 0xB1 },
-	{ 0x22, 0x7AC, 0x30 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x6C },
-	{ 0x22, 0x7A7, 0xA1 },
-	{ 0x22, 0x7A8, 0x28 },
-	{ 0x22, 0x7A9, 0x6C },
-	{ 0x22, 0x7AA, 0xA1 },
-	{ 0x22, 0x7AB, 0x28 },
-	{ 0x22, 0x7AC, 0x31 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0xCD },
-	{ 0x22, 0x7A7, 0x48 },
-	{ 0x22, 0x7A8, 0x4F },
-	{ 0x22, 0x7A9, 0xCD },
-	{ 0x22, 0x7AA, 0x48 },
-	{ 0x22, 0x7AB, 0x4F },
-	{ 0x22, 0x7AC, 0x32 },
-	{ 0x22, 0x7AD, 0x80 },
-	{ 0x22, 0x7A6, 0x40 },
-	{ 0x22, 0x7A7, 0x00 },
-	{ 0x22, 0x7A8, 0x00 },
-	{ 0x22, 0x7A9, 0x40 },
-	{ 0x22, 0x7AA, 0x00 },
-	{ 0x22, 0x7AB, 0x00 },
-	{ 0x22, 0x7AC, 0x33 },
-	{ 0x22, 0x7AD, 0x80 },
+	अणु 0x22, 0x7A6, 0x3E पूर्ण,
+	अणु 0x22, 0x7A7, 0x88 पूर्ण,
+	अणु 0x22, 0x7A8, 0xDC पूर्ण,
+	अणु 0x22, 0x7A9, 0x3E पूर्ण,
+	अणु 0x22, 0x7AA, 0x88 पूर्ण,
+	अणु 0x22, 0x7AB, 0xDC पूर्ण,
+	अणु 0x22, 0x7AC, 0x1A पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x82 पूर्ण,
+	अणु 0x22, 0x7A7, 0xEE पूर्ण,
+	अणु 0x22, 0x7A8, 0x46 पूर्ण,
+	अणु 0x22, 0x7A9, 0x82 पूर्ण,
+	अणु 0x22, 0x7AA, 0xEE पूर्ण,
+	अणु 0x22, 0x7AB, 0x46 पूर्ण,
+	अणु 0x22, 0x7AC, 0x1B पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x3E पूर्ण,
+	अणु 0x22, 0x7A7, 0x88 पूर्ण,
+	अणु 0x22, 0x7A8, 0xDC पूर्ण,
+	अणु 0x22, 0x7A9, 0x3E पूर्ण,
+	अणु 0x22, 0x7AA, 0x88 पूर्ण,
+	अणु 0x22, 0x7AB, 0xDC पूर्ण,
+	अणु 0x22, 0x7AC, 0x1C पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x7D पूर्ण,
+	अणु 0x22, 0x7A7, 0x09 पूर्ण,
+	अणु 0x22, 0x7A8, 0x28 पूर्ण,
+	अणु 0x22, 0x7A9, 0x7D पूर्ण,
+	अणु 0x22, 0x7AA, 0x09 पूर्ण,
+	अणु 0x22, 0x7AB, 0x28 पूर्ण,
+	अणु 0x22, 0x7AC, 0x1D पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xC2 पूर्ण,
+	अणु 0x22, 0x7A7, 0xE5 पूर्ण,
+	अणु 0x22, 0x7A8, 0xB4 पूर्ण,
+	अणु 0x22, 0x7A9, 0xC2 पूर्ण,
+	अणु 0x22, 0x7AA, 0xE5 पूर्ण,
+	अणु 0x22, 0x7AB, 0xB4 पूर्ण,
+	अणु 0x22, 0x7AC, 0x1E पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x3E पूर्ण,
+	अणु 0x22, 0x7A7, 0xA3 पूर्ण,
+	अणु 0x22, 0x7A8, 0x1F पूर्ण,
+	अणु 0x22, 0x7A9, 0x3E पूर्ण,
+	अणु 0x22, 0x7AA, 0xA3 पूर्ण,
+	अणु 0x22, 0x7AB, 0x1F पूर्ण,
+	अणु 0x22, 0x7AC, 0x1F पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x84 पूर्ण,
+	अणु 0x22, 0x7A7, 0xCA पूर्ण,
+	अणु 0x22, 0x7A8, 0xF1 पूर्ण,
+	अणु 0x22, 0x7A9, 0x84 पूर्ण,
+	अणु 0x22, 0x7AA, 0xCA पूर्ण,
+	अणु 0x22, 0x7AB, 0xF1 पूर्ण,
+	अणु 0x22, 0x7AC, 0x20 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x3C पूर्ण,
+	अणु 0x22, 0x7A7, 0xD5 पूर्ण,
+	अणु 0x22, 0x7A8, 0x9C पूर्ण,
+	अणु 0x22, 0x7A9, 0x3C पूर्ण,
+	अणु 0x22, 0x7AA, 0xD5 पूर्ण,
+	अणु 0x22, 0x7AB, 0x9C पूर्ण,
+	अणु 0x22, 0x7AC, 0x21 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x7B पूर्ण,
+	अणु 0x22, 0x7A7, 0x35 पूर्ण,
+	अणु 0x22, 0x7A8, 0x0F पूर्ण,
+	अणु 0x22, 0x7A9, 0x7B पूर्ण,
+	अणु 0x22, 0x7AA, 0x35 पूर्ण,
+	अणु 0x22, 0x7AB, 0x0F पूर्ण,
+	अणु 0x22, 0x7AC, 0x22 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xC4 पूर्ण,
+	अणु 0x22, 0x7A7, 0x87 पूर्ण,
+	अणु 0x22, 0x7A8, 0x45 पूर्ण,
+	अणु 0x22, 0x7A9, 0xC4 पूर्ण,
+	अणु 0x22, 0x7AA, 0x87 पूर्ण,
+	अणु 0x22, 0x7AB, 0x45 पूर्ण,
+	अणु 0x22, 0x7AC, 0x23 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x3E पूर्ण,
+	अणु 0x22, 0x7A7, 0x0A पूर्ण,
+	अणु 0x22, 0x7A8, 0x78 पूर्ण,
+	अणु 0x22, 0x7A9, 0x3E पूर्ण,
+	अणु 0x22, 0x7AA, 0x0A पूर्ण,
+	अणु 0x22, 0x7AB, 0x78 पूर्ण,
+	अणु 0x22, 0x7AC, 0x24 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x88 पूर्ण,
+	अणु 0x22, 0x7A7, 0xE2 पूर्ण,
+	अणु 0x22, 0x7A8, 0x05 पूर्ण,
+	अणु 0x22, 0x7A9, 0x88 पूर्ण,
+	अणु 0x22, 0x7AA, 0xE2 पूर्ण,
+	अणु 0x22, 0x7AB, 0x05 पूर्ण,
+	अणु 0x22, 0x7AC, 0x25 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x3A पूर्ण,
+	अणु 0x22, 0x7A7, 0x1A पूर्ण,
+	अणु 0x22, 0x7A8, 0xA3 पूर्ण,
+	अणु 0x22, 0x7A9, 0x3A पूर्ण,
+	अणु 0x22, 0x7AA, 0x1A पूर्ण,
+	अणु 0x22, 0x7AB, 0xA3 पूर्ण,
+	अणु 0x22, 0x7AC, 0x26 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x77 पूर्ण,
+	अणु 0x22, 0x7A7, 0x1D पूर्ण,
+	अणु 0x22, 0x7A8, 0xFB पूर्ण,
+	अणु 0x22, 0x7A9, 0x77 पूर्ण,
+	अणु 0x22, 0x7AA, 0x1D पूर्ण,
+	अणु 0x22, 0x7AB, 0xFB पूर्ण,
+	अणु 0x22, 0x7AC, 0x27 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xC7 पूर्ण,
+	अणु 0x22, 0x7A7, 0xDA पूर्ण,
+	अणु 0x22, 0x7A8, 0xE5 पूर्ण,
+	अणु 0x22, 0x7A9, 0xC7 पूर्ण,
+	अणु 0x22, 0x7AA, 0xDA पूर्ण,
+	अणु 0x22, 0x7AB, 0xE5 पूर्ण,
+	अणु 0x22, 0x7AC, 0x28 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x40 पूर्ण,
+	अणु 0x22, 0x7A7, 0x00 पूर्ण,
+	अणु 0x22, 0x7A8, 0x00 पूर्ण,
+	अणु 0x22, 0x7A9, 0x40 पूर्ण,
+	अणु 0x22, 0x7AA, 0x00 पूर्ण,
+	अणु 0x22, 0x7AB, 0x00 पूर्ण,
+	अणु 0x22, 0x7AC, 0x29 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x8E पूर्ण,
+	अणु 0x22, 0x7A7, 0xD7 पूर्ण,
+	अणु 0x22, 0x7A8, 0x22 पूर्ण,
+	अणु 0x22, 0x7A9, 0x8E पूर्ण,
+	अणु 0x22, 0x7AA, 0xD7 पूर्ण,
+	अणु 0x22, 0x7AB, 0x22 पूर्ण,
+	अणु 0x22, 0x7AC, 0x2A पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x35 पूर्ण,
+	अणु 0x22, 0x7A7, 0x26 पूर्ण,
+	अणु 0x22, 0x7A8, 0xC6 पूर्ण,
+	अणु 0x22, 0x7A9, 0x35 पूर्ण,
+	अणु 0x22, 0x7AA, 0x26 पूर्ण,
+	अणु 0x22, 0x7AB, 0xC6 पूर्ण,
+	अणु 0x22, 0x7AC, 0x2B पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x71 पूर्ण,
+	अणु 0x22, 0x7A7, 0x28 पूर्ण,
+	अणु 0x22, 0x7A8, 0xDE पूर्ण,
+	अणु 0x22, 0x7A9, 0x71 पूर्ण,
+	अणु 0x22, 0x7AA, 0x28 पूर्ण,
+	अणु 0x22, 0x7AB, 0xDE पूर्ण,
+	अणु 0x22, 0x7AC, 0x2C पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xCA पूर्ण,
+	अणु 0x22, 0x7A7, 0xD9 पूर्ण,
+	अणु 0x22, 0x7A8, 0x3A पूर्ण,
+	अणु 0x22, 0x7A9, 0xCA पूर्ण,
+	अणु 0x22, 0x7AA, 0xD9 पूर्ण,
+	अणु 0x22, 0x7AB, 0x3A पूर्ण,
+	अणु 0x22, 0x7AC, 0x2D पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x40 पूर्ण,
+	अणु 0x22, 0x7A7, 0x00 पूर्ण,
+	अणु 0x22, 0x7A8, 0x00 पूर्ण,
+	अणु 0x22, 0x7A9, 0x40 पूर्ण,
+	अणु 0x22, 0x7AA, 0x00 पूर्ण,
+	अणु 0x22, 0x7AB, 0x00 पूर्ण,
+	अणु 0x22, 0x7AC, 0x2E पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x93 पूर्ण,
+	अणु 0x22, 0x7A7, 0x5E पूर्ण,
+	अणु 0x22, 0x7A8, 0xD8 पूर्ण,
+	अणु 0x22, 0x7A9, 0x93 पूर्ण,
+	अणु 0x22, 0x7AA, 0x5E पूर्ण,
+	अणु 0x22, 0x7AB, 0xD8 पूर्ण,
+	अणु 0x22, 0x7AC, 0x2F पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x32 पूर्ण,
+	अणु 0x22, 0x7A7, 0xB7 पूर्ण,
+	अणु 0x22, 0x7A8, 0xB1 पूर्ण,
+	अणु 0x22, 0x7A9, 0x32 पूर्ण,
+	अणु 0x22, 0x7AA, 0xB7 पूर्ण,
+	अणु 0x22, 0x7AB, 0xB1 पूर्ण,
+	अणु 0x22, 0x7AC, 0x30 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x6C पूर्ण,
+	अणु 0x22, 0x7A7, 0xA1 पूर्ण,
+	अणु 0x22, 0x7A8, 0x28 पूर्ण,
+	अणु 0x22, 0x7A9, 0x6C पूर्ण,
+	अणु 0x22, 0x7AA, 0xA1 पूर्ण,
+	अणु 0x22, 0x7AB, 0x28 पूर्ण,
+	अणु 0x22, 0x7AC, 0x31 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0xCD पूर्ण,
+	अणु 0x22, 0x7A7, 0x48 पूर्ण,
+	अणु 0x22, 0x7A8, 0x4F पूर्ण,
+	अणु 0x22, 0x7A9, 0xCD पूर्ण,
+	अणु 0x22, 0x7AA, 0x48 पूर्ण,
+	अणु 0x22, 0x7AB, 0x4F पूर्ण,
+	अणु 0x22, 0x7AC, 0x32 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
+	अणु 0x22, 0x7A6, 0x40 पूर्ण,
+	अणु 0x22, 0x7A7, 0x00 पूर्ण,
+	अणु 0x22, 0x7A8, 0x00 पूर्ण,
+	अणु 0x22, 0x7A9, 0x40 पूर्ण,
+	अणु 0x22, 0x7AA, 0x00 पूर्ण,
+	अणु 0x22, 0x7AB, 0x00 पूर्ण,
+	अणु 0x22, 0x7AC, 0x33 पूर्ण,
+	अणु 0x22, 0x7AD, 0x80 पूर्ण,
 	/* common */
-	{ 0x22, 0x782, 0xC1 },
-	{ 0x22, 0x771, 0x2C },
-	{ 0x22, 0x772, 0x2C },
-	{ 0x22, 0x788, 0x04 },
-	{ 0x01, 0x7B0, 0x08 },
-	{}
-};
+	अणु 0x22, 0x782, 0xC1 पूर्ण,
+	अणु 0x22, 0x771, 0x2C पूर्ण,
+	अणु 0x22, 0x772, 0x2C पूर्ण,
+	अणु 0x22, 0x788, 0x04 पूर्ण,
+	अणु 0x01, 0x7B0, 0x08 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_fixup stac92hd83xxx_fixups[] = {
-	[STAC_92HD83XXX_REF] = {
+अटल स्थिर काष्ठा hda_fixup stac92hd83xxx_fixups[] = अणु
+	[STAC_92HD83XXX_REF] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = ref92hd83xxx_pin_configs,
-	},
-	[STAC_92HD83XXX_PWR_REF] = {
+	पूर्ण,
+	[STAC_92HD83XXX_PWR_REF] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = ref92hd83xxx_pin_configs,
-	},
-	[STAC_DELL_S14] = {
+	पूर्ण,
+	[STAC_DELL_S14] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_s14_pin_configs,
-	},
-	[STAC_DELL_VOSTRO_3500] = {
+	पूर्ण,
+	[STAC_DELL_VOSTRO_3500] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_vostro_3500_pin_configs,
-	},
-	[STAC_92HD83XXX_HP_cNB11_INTQUAD] = {
+	पूर्ण,
+	[STAC_92HD83XXX_HP_cNB11_INTQUAD] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = hp_cNB11_intquad_pin_configs,
+		.v.pins = hp_cNB11_पूर्णांकquad_pin_configs,
 		.chained = true,
 		.chain_id = STAC_92HD83XXX_HP,
-	},
-	[STAC_92HD83XXX_HP] = {
+	पूर्ण,
+	[STAC_92HD83XXX_HP] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd83xxx_fixup_hp,
-	},
-	[STAC_HP_DV7_4000] = {
+	पूर्ण,
+	[STAC_HP_DV7_4000] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = hp_dv7_4000_pin_configs,
 		.chained = true,
 		.chain_id = STAC_92HD83XXX_HP,
-	},
-	[STAC_HP_ZEPHYR] = {
+	पूर्ण,
+	[STAC_HP_ZEPHYR] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd83xxx_fixup_hp_zephyr,
 		.chained = true,
 		.chain_id = STAC_92HD83XXX_HP,
-	},
-	[STAC_92HD83XXX_HP_LED] = {
+	पूर्ण,
+	[STAC_92HD83XXX_HP_LED] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd83xxx_fixup_hp_led,
 		.chained = true,
 		.chain_id = STAC_92HD83XXX_HP,
-	},
-	[STAC_92HD83XXX_HP_INV_LED] = {
+	पूर्ण,
+	[STAC_92HD83XXX_HP_INV_LED] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd83xxx_fixup_hp_inv_led,
 		.chained = true,
 		.chain_id = STAC_92HD83XXX_HP,
-	},
-	[STAC_92HD83XXX_HP_MIC_LED] = {
+	पूर्ण,
+	[STAC_92HD83XXX_HP_MIC_LED] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd83xxx_fixup_hp_mic_led,
 		.chained = true,
 		.chain_id = STAC_92HD83XXX_HP,
-	},
-	[STAC_HP_LED_GPIO10] = {
+	पूर्ण,
+	[STAC_HP_LED_GPIO10] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd83xxx_fixup_hp_led_gpio10,
 		.chained = true,
 		.chain_id = STAC_92HD83XXX_HP,
-	},
-	[STAC_92HD83XXX_HEADSET_JACK] = {
+	पूर्ण,
+	[STAC_92HD83XXX_HEADSET_JACK] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd83xxx_fixup_headset_jack,
-	},
-	[STAC_HP_ENVY_BASS] = {
+	पूर्ण,
+	[STAC_HP_ENVY_BASS] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
-			{ 0x0f, 0x90170111 },
-			{}
-		},
-	},
-	[STAC_HP_BNB13_EQ] = {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+			अणु 0x0f, 0x90170111 पूर्ण,
+			अणुपूर्ण
+		पूर्ण,
+	पूर्ण,
+	[STAC_HP_BNB13_EQ] = अणु
 		.type = HDA_FIXUP_VERBS,
 		.v.verbs = hp_bnb13_eq_verbs,
 		.chained = true,
 		.chain_id = STAC_92HD83XXX_HP_MIC_LED,
-	},
-	[STAC_HP_ENVY_TS_BASS] = {
+	पूर्ण,
+	[STAC_HP_ENVY_TS_BASS] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
-			{ 0x10, 0x92170111 },
-			{}
-		},
-	},
-	[STAC_HP_ENVY_TS_DAC_BIND] = {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+			अणु 0x10, 0x92170111 पूर्ण,
+			अणुपूर्ण
+		पूर्ण,
+	पूर्ण,
+	[STAC_HP_ENVY_TS_DAC_BIND] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = hp_envy_ts_fixup_dac_bind,
 		.chained = true,
 		.chain_id = STAC_HP_ENVY_TS_BASS,
-	},
-	[STAC_92HD83XXX_GPIO10_EAPD] = {
+	पूर्ण,
+	[STAC_92HD83XXX_GPIO10_EAPD] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd83xxx_fixup_gpio10_eapd,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct hda_model_fixup stac92hd83xxx_models[] = {
-	{ .id = STAC_92HD83XXX_REF, .name = "ref" },
-	{ .id = STAC_92HD83XXX_PWR_REF, .name = "mic-ref" },
-	{ .id = STAC_DELL_S14, .name = "dell-s14" },
-	{ .id = STAC_DELL_VOSTRO_3500, .name = "dell-vostro-3500" },
-	{ .id = STAC_92HD83XXX_HP_cNB11_INTQUAD, .name = "hp_cNB11_intquad" },
-	{ .id = STAC_HP_DV7_4000, .name = "hp-dv7-4000" },
-	{ .id = STAC_HP_ZEPHYR, .name = "hp-zephyr" },
-	{ .id = STAC_92HD83XXX_HP_LED, .name = "hp-led" },
-	{ .id = STAC_92HD83XXX_HP_INV_LED, .name = "hp-inv-led" },
-	{ .id = STAC_92HD83XXX_HP_MIC_LED, .name = "hp-mic-led" },
-	{ .id = STAC_92HD83XXX_HEADSET_JACK, .name = "headset-jack" },
-	{ .id = STAC_HP_ENVY_BASS, .name = "hp-envy-bass" },
-	{ .id = STAC_HP_BNB13_EQ, .name = "hp-bnb13-eq" },
-	{ .id = STAC_HP_ENVY_TS_BASS, .name = "hp-envy-ts-bass" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac92hd83xxx_models[] = अणु
+	अणु .id = STAC_92HD83XXX_REF, .name = "ref" पूर्ण,
+	अणु .id = STAC_92HD83XXX_PWR_REF, .name = "mic-ref" पूर्ण,
+	अणु .id = STAC_DELL_S14, .name = "dell-s14" पूर्ण,
+	अणु .id = STAC_DELL_VOSTRO_3500, .name = "dell-vostro-3500" पूर्ण,
+	अणु .id = STAC_92HD83XXX_HP_cNB11_INTQUAD, .name = "hp_cNB11_intquad" पूर्ण,
+	अणु .id = STAC_HP_DV7_4000, .name = "hp-dv7-4000" पूर्ण,
+	अणु .id = STAC_HP_ZEPHYR, .name = "hp-zephyr" पूर्ण,
+	अणु .id = STAC_92HD83XXX_HP_LED, .name = "hp-led" पूर्ण,
+	अणु .id = STAC_92HD83XXX_HP_INV_LED, .name = "hp-inv-led" पूर्ण,
+	अणु .id = STAC_92HD83XXX_HP_MIC_LED, .name = "hp-mic-led" पूर्ण,
+	अणु .id = STAC_92HD83XXX_HEADSET_JACK, .name = "headset-jack" पूर्ण,
+	अणु .id = STAC_HP_ENVY_BASS, .name = "hp-envy-bass" पूर्ण,
+	अणु .id = STAC_HP_BNB13_EQ, .name = "hp-bnb13-eq" पूर्ण,
+	अणु .id = STAC_HP_ENVY_TS_BASS, .name = "hp-envy-ts-bass" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk stac92hd83xxx_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac92hd83xxx_fixup_tbl[] = अणु
 	/* SigmaTel reference board */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x2668,
 		      "DFI LanParty", STAC_92HD83XXX_REF),
@@ -2931,303 +2932,303 @@ static const struct snd_pci_quirk stac92hd83xxx_fixup_tbl[] = {
 	SND_PCI_QUIRK(PCI_VENDOR_ID_HP, 0x148a,
 		      "HP Mini", STAC_92HD83XXX_HP_LED),
 	SND_PCI_QUIRK_VENDOR(PCI_VENDOR_ID_HP, "HP", STAC_92HD83XXX_HP),
-	/* match both for 0xfa91 and 0xfa93 */
+	/* match both क्रम 0xfa91 and 0xfa93 */
 	SND_PCI_QUIRK_MASK(PCI_VENDOR_ID_TOSHIBA, 0xfffd, 0xfa91,
 		      "Toshiba Satellite S50D", STAC_92HD83XXX_GPIO10_EAPD),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-/* HP dv7 bass switch - GPIO5 */
-#define stac_hp_bass_gpio_info	snd_ctl_boolean_mono_info
-static int stac_hp_bass_gpio_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	ucontrol->value.integer.value[0] = !!(spec->gpio_data & 0x20);
-	return 0;
-}
+/* HP dv7 bass चयन - GPIO5 */
+#घोषणा stac_hp_bass_gpio_info	snd_ctl_boolean_mono_info
+अटल पूर्णांक stac_hp_bass_gpio_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	ucontrol->value.पूर्णांकeger.value[0] = !!(spec->gpio_data & 0x20);
+	वापस 0;
+पूर्ण
 
-static int stac_hp_bass_gpio_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct sigmatel_spec *spec = codec->spec;
-	unsigned int gpio_data;
+अटल पूर्णांक stac_hp_bass_gpio_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	अचिन्हित पूर्णांक gpio_data;
 
 	gpio_data = (spec->gpio_data & ~0x20) |
-		(ucontrol->value.integer.value[0] ? 0x20 : 0);
-	if (gpio_data == spec->gpio_data)
-		return 0;
+		(ucontrol->value.पूर्णांकeger.value[0] ? 0x20 : 0);
+	अगर (gpio_data == spec->gpio_data)
+		वापस 0;
 	spec->gpio_data = gpio_data;
 	stac_gpio_set(codec, spec->gpio_mask, spec->gpio_dir, spec->gpio_data);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct snd_kcontrol_new stac_hp_bass_sw_ctrl = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new stac_hp_bass_sw_ctrl = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.info = stac_hp_bass_gpio_info,
 	.get = stac_hp_bass_gpio_get,
 	.put = stac_hp_bass_gpio_put,
-};
+पूर्ण;
 
-static int stac_add_hp_bass_switch(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल पूर्णांक stac_add_hp_bass_चयन(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (!snd_hda_gen_add_kctl(&spec->gen, "Bass Speaker Playback Switch",
+	अगर (!snd_hda_gen_add_kctl(&spec->gen, "Bass Speaker Playback Switch",
 				  &stac_hp_bass_sw_ctrl))
-		return -ENOMEM;
+		वापस -ENOMEM;
 
 	spec->gpio_mask |= 0x20;
 	spec->gpio_dir |= 0x20;
 	spec->gpio_data |= 0x20;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hda_pintbl ref92hd71bxx_pin_configs[] = {
-	{ 0x0a, 0x02214030 },
-	{ 0x0b, 0x02a19040 },
-	{ 0x0c, 0x01a19020 },
-	{ 0x0d, 0x01014010 },
-	{ 0x0e, 0x0181302e },
-	{ 0x0f, 0x01014010 },
-	{ 0x14, 0x01019020 },
-	{ 0x18, 0x90a000f0 },
-	{ 0x19, 0x90a000f0 },
-	{ 0x1e, 0x01452050 },
-	{ 0x1f, 0x01452050 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl ref92hd71bxx_pin_configs[] = अणु
+	अणु 0x0a, 0x02214030 पूर्ण,
+	अणु 0x0b, 0x02a19040 पूर्ण,
+	अणु 0x0c, 0x01a19020 पूर्ण,
+	अणु 0x0d, 0x01014010 पूर्ण,
+	अणु 0x0e, 0x0181302e पूर्ण,
+	अणु 0x0f, 0x01014010 पूर्ण,
+	अणु 0x14, 0x01019020 पूर्ण,
+	अणु 0x18, 0x90a000f0 पूर्ण,
+	अणु 0x19, 0x90a000f0 पूर्ण,
+	अणु 0x1e, 0x01452050 पूर्ण,
+	अणु 0x1f, 0x01452050 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl dell_m4_1_pin_configs[] = {
-	{ 0x0a, 0x0421101f },
-	{ 0x0b, 0x04a11221 },
-	{ 0x0c, 0x40f000f0 },
-	{ 0x0d, 0x90170110 },
-	{ 0x0e, 0x23a1902e },
-	{ 0x0f, 0x23014250 },
-	{ 0x14, 0x40f000f0 },
-	{ 0x18, 0x90a000f0 },
-	{ 0x19, 0x40f000f0 },
-	{ 0x1e, 0x4f0000f0 },
-	{ 0x1f, 0x4f0000f0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_m4_1_pin_configs[] = अणु
+	अणु 0x0a, 0x0421101f पूर्ण,
+	अणु 0x0b, 0x04a11221 पूर्ण,
+	अणु 0x0c, 0x40f000f0 पूर्ण,
+	अणु 0x0d, 0x90170110 पूर्ण,
+	अणु 0x0e, 0x23a1902e पूर्ण,
+	अणु 0x0f, 0x23014250 पूर्ण,
+	अणु 0x14, 0x40f000f0 पूर्ण,
+	अणु 0x18, 0x90a000f0 पूर्ण,
+	अणु 0x19, 0x40f000f0 पूर्ण,
+	अणु 0x1e, 0x4f0000f0 पूर्ण,
+	अणु 0x1f, 0x4f0000f0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl dell_m4_2_pin_configs[] = {
-	{ 0x0a, 0x0421101f },
-	{ 0x0b, 0x04a11221 },
-	{ 0x0c, 0x90a70330 },
-	{ 0x0d, 0x90170110 },
-	{ 0x0e, 0x23a1902e },
-	{ 0x0f, 0x23014250 },
-	{ 0x14, 0x40f000f0 },
-	{ 0x18, 0x40f000f0 },
-	{ 0x19, 0x40f000f0 },
-	{ 0x1e, 0x044413b0 },
-	{ 0x1f, 0x044413b0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_m4_2_pin_configs[] = अणु
+	अणु 0x0a, 0x0421101f पूर्ण,
+	अणु 0x0b, 0x04a11221 पूर्ण,
+	अणु 0x0c, 0x90a70330 पूर्ण,
+	अणु 0x0d, 0x90170110 पूर्ण,
+	अणु 0x0e, 0x23a1902e पूर्ण,
+	अणु 0x0f, 0x23014250 पूर्ण,
+	अणु 0x14, 0x40f000f0 पूर्ण,
+	अणु 0x18, 0x40f000f0 पूर्ण,
+	अणु 0x19, 0x40f000f0 पूर्ण,
+	अणु 0x1e, 0x044413b0 पूर्ण,
+	अणु 0x1f, 0x044413b0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl dell_m4_3_pin_configs[] = {
-	{ 0x0a, 0x0421101f },
-	{ 0x0b, 0x04a11221 },
-	{ 0x0c, 0x90a70330 },
-	{ 0x0d, 0x90170110 },
-	{ 0x0e, 0x40f000f0 },
-	{ 0x0f, 0x40f000f0 },
-	{ 0x14, 0x40f000f0 },
-	{ 0x18, 0x90a000f0 },
-	{ 0x19, 0x40f000f0 },
-	{ 0x1e, 0x044413b0 },
-	{ 0x1f, 0x044413b0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_m4_3_pin_configs[] = अणु
+	अणु 0x0a, 0x0421101f पूर्ण,
+	अणु 0x0b, 0x04a11221 पूर्ण,
+	अणु 0x0c, 0x90a70330 पूर्ण,
+	अणु 0x0d, 0x90170110 पूर्ण,
+	अणु 0x0e, 0x40f000f0 पूर्ण,
+	अणु 0x0f, 0x40f000f0 पूर्ण,
+	अणु 0x14, 0x40f000f0 पूर्ण,
+	अणु 0x18, 0x90a000f0 पूर्ण,
+	अणु 0x19, 0x40f000f0 पूर्ण,
+	अणु 0x1e, 0x044413b0 पूर्ण,
+	अणु 0x1f, 0x044413b0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void stac92hd71bxx_fixup_ref(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd71bxx_fixup_ref(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	snd_hda_apply_pincfgs(codec, ref92hd71bxx_pin_configs);
 	spec->gpio_mask = spec->gpio_dir = spec->gpio_data = 0;
-}
+पूर्ण
 
-static void stac92hd71bxx_fixup_hp_m4(struct hda_codec *codec,
-				      const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	struct hda_jack_callback *jack;
+अटल व्योम stac92hd71bxx_fixup_hp_m4(काष्ठा hda_codec *codec,
+				      स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	काष्ठा hda_jack_callback *jack;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
-	/* Enable VREF power saving on GPIO1 detect */
-	snd_hda_codec_write_cache(codec, codec->core.afg, 0,
+	/* Enable VREF घातer saving on GPIO1 detect */
+	snd_hda_codec_ग_लिखो_cache(codec, codec->core.afg, 0,
 				  AC_VERB_SET_GPIO_UNSOLICITED_RSP_MASK, 0x02);
 	jack = snd_hda_jack_detect_enable_callback(codec, codec->core.afg,
 						   stac_vref_event);
-	if (!IS_ERR(jack))
-		jack->private_data = 0x02;
+	अगर (!IS_ERR(jack))
+		jack->निजी_data = 0x02;
 
 	spec->gpio_mask |= 0x02;
 
-	/* enable internal microphone */
+	/* enable पूर्णांकernal microphone */
 	snd_hda_codec_set_pincfg(codec, 0x0e, 0x01813040);
-}
+पूर्ण
 
-static void stac92hd71bxx_fixup_hp_dv4(struct hda_codec *codec,
-				       const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd71bxx_fixup_hp_dv4(काष्ठा hda_codec *codec,
+				       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 	spec->gpio_led = 0x01;
-}
+पूर्ण
 
-static void stac92hd71bxx_fixup_hp_dv5(struct hda_codec *codec,
-				       const struct hda_fixup *fix, int action)
-{
-	unsigned int cap;
+अटल व्योम stac92hd71bxx_fixup_hp_dv5(काष्ठा hda_codec *codec,
+				       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अचिन्हित पूर्णांक cap;
 
-	switch (action) {
-	case HDA_FIXUP_ACT_PRE_PROBE:
+	चयन (action) अणु
+	हाल HDA_FIXUP_ACT_PRE_PROBE:
 		snd_hda_codec_set_pincfg(codec, 0x0d, 0x90170010);
-		break;
+		अवरोध;
 
-	case HDA_FIXUP_ACT_PROBE:
+	हाल HDA_FIXUP_ACT_PROBE:
 		/* enable bass on HP dv7 */
-		cap = snd_hda_param_read(codec, 0x1, AC_PAR_GPIO_CAP);
+		cap = snd_hda_param_पढ़ो(codec, 0x1, AC_PAR_GPIO_CAP);
 		cap &= AC_GPIO_IO_COUNT;
-		if (cap >= 6)
-			stac_add_hp_bass_switch(codec);
-		break;
-	}
-}
+		अगर (cap >= 6)
+			stac_add_hp_bass_चयन(codec);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void stac92hd71bxx_fixup_hp_hdx(struct hda_codec *codec,
-				       const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd71bxx_fixup_hp_hdx(काष्ठा hda_codec *codec,
+				       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 	spec->gpio_led = 0x08;
-}
+पूर्ण
 
-static bool is_hp_output(struct hda_codec *codec, hda_nid_t pin)
-{
-	unsigned int pin_cfg = snd_hda_codec_get_pincfg(codec, pin);
+अटल bool is_hp_output(काष्ठा hda_codec *codec, hda_nid_t pin)
+अणु
+	अचिन्हित पूर्णांक pin_cfg = snd_hda_codec_get_pincfg(codec, pin);
 
 	/* count line-out, too, as BIOS sets often so */
-	return get_defcfg_connect(pin_cfg) != AC_JACK_PORT_NONE &&
+	वापस get_defcfg_connect(pin_cfg) != AC_JACK_PORT_NONE &&
 		(get_defcfg_device(pin_cfg) == AC_JACK_LINE_OUT ||
 		 get_defcfg_device(pin_cfg) == AC_JACK_HP_OUT);
-}
+पूर्ण
 
-static void fixup_hp_headphone(struct hda_codec *codec, hda_nid_t pin)
-{
-	unsigned int pin_cfg = snd_hda_codec_get_pincfg(codec, pin);
+अटल व्योम fixup_hp_headphone(काष्ठा hda_codec *codec, hda_nid_t pin)
+अणु
+	अचिन्हित पूर्णांक pin_cfg = snd_hda_codec_get_pincfg(codec, pin);
 
 	/* It was changed in the BIOS to just satisfy MS DTM.
-	 * Lets turn it back into follower HP
+	 * Lets turn it back पूर्णांकo follower HP
 	 */
 	pin_cfg = (pin_cfg & (~AC_DEFCFG_DEVICE)) |
 		(AC_JACK_HP_OUT << AC_DEFCFG_DEVICE_SHIFT);
 	pin_cfg = (pin_cfg & (~(AC_DEFCFG_DEF_ASSOC | AC_DEFCFG_SEQUENCE))) |
 		0x1f;
 	snd_hda_codec_set_pincfg(codec, pin, pin_cfg);
-}
+पूर्ण
 
-static void stac92hd71bxx_fixup_hp(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd71bxx_fixup_hp(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
-	/* when both output A and F are assigned, these are supposedly
-	 * dock and built-in headphones; fix both pin configs
+	/* when both output A and F are asचिन्हित, these are supposedly
+	 * करोck and built-in headphones; fix both pin configs
 	 */
-	if (is_hp_output(codec, 0x0a) && is_hp_output(codec, 0x0f)) {
+	अगर (is_hp_output(codec, 0x0a) && is_hp_output(codec, 0x0f)) अणु
 		fixup_hp_headphone(codec, 0x0a);
 		fixup_hp_headphone(codec, 0x0f);
-	}
+	पूर्ण
 
-	if (find_mute_led_cfg(codec, 1))
+	अगर (find_mute_led_cfg(codec, 1))
 		codec_dbg(codec, "mute LED gpio %d polarity %d\n",
 				spec->gpio_led,
 				spec->gpio_led_polarity);
 
-}
+पूर्ण
 
-static const struct hda_fixup stac92hd71bxx_fixups[] = {
-	[STAC_92HD71BXX_REF] = {
+अटल स्थिर काष्ठा hda_fixup stac92hd71bxx_fixups[] = अणु
+	[STAC_92HD71BXX_REF] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd71bxx_fixup_ref,
-	},
-	[STAC_DELL_M4_1] = {
+	पूर्ण,
+	[STAC_DELL_M4_1] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_m4_1_pin_configs,
-	},
-	[STAC_DELL_M4_2] = {
+	पूर्ण,
+	[STAC_DELL_M4_2] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_m4_2_pin_configs,
-	},
-	[STAC_DELL_M4_3] = {
+	पूर्ण,
+	[STAC_DELL_M4_3] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_m4_3_pin_configs,
-	},
-	[STAC_HP_M4] = {
+	पूर्ण,
+	[STAC_HP_M4] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd71bxx_fixup_hp_m4,
 		.chained = true,
 		.chain_id = STAC_92HD71BXX_HP,
-	},
-	[STAC_HP_DV4] = {
+	पूर्ण,
+	[STAC_HP_DV4] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd71bxx_fixup_hp_dv4,
 		.chained = true,
 		.chain_id = STAC_HP_DV5,
-	},
-	[STAC_HP_DV5] = {
+	पूर्ण,
+	[STAC_HP_DV5] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd71bxx_fixup_hp_dv5,
 		.chained = true,
 		.chain_id = STAC_92HD71BXX_HP,
-	},
-	[STAC_HP_HDX] = {
+	पूर्ण,
+	[STAC_HP_HDX] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd71bxx_fixup_hp_hdx,
 		.chained = true,
 		.chain_id = STAC_92HD71BXX_HP,
-	},
-	[STAC_92HD71BXX_HP] = {
+	पूर्ण,
+	[STAC_92HD71BXX_HP] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd71bxx_fixup_hp,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct hda_model_fixup stac92hd71bxx_models[] = {
-	{ .id = STAC_92HD71BXX_REF, .name = "ref" },
-	{ .id = STAC_DELL_M4_1, .name = "dell-m4-1" },
-	{ .id = STAC_DELL_M4_2, .name = "dell-m4-2" },
-	{ .id = STAC_DELL_M4_3, .name = "dell-m4-3" },
-	{ .id = STAC_HP_M4, .name = "hp-m4" },
-	{ .id = STAC_HP_DV4, .name = "hp-dv4" },
-	{ .id = STAC_HP_DV5, .name = "hp-dv5" },
-	{ .id = STAC_HP_HDX, .name = "hp-hdx" },
-	{ .id = STAC_HP_DV4, .name = "hp-dv4-1222nr" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac92hd71bxx_models[] = अणु
+	अणु .id = STAC_92HD71BXX_REF, .name = "ref" पूर्ण,
+	अणु .id = STAC_DELL_M4_1, .name = "dell-m4-1" पूर्ण,
+	अणु .id = STAC_DELL_M4_2, .name = "dell-m4-2" पूर्ण,
+	अणु .id = STAC_DELL_M4_3, .name = "dell-m4-3" पूर्ण,
+	अणु .id = STAC_HP_M4, .name = "hp-m4" पूर्ण,
+	अणु .id = STAC_HP_DV4, .name = "hp-dv4" पूर्ण,
+	अणु .id = STAC_HP_DV5, .name = "hp-dv5" पूर्ण,
+	अणु .id = STAC_HP_HDX, .name = "hp-hdx" पूर्ण,
+	अणु .id = STAC_HP_DV4, .name = "hp-dv4-1222nr" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk stac92hd71bxx_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac92hd71bxx_fixup_tbl[] = अणु
 	/* SigmaTel reference board */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x2668,
 		      "DFI LanParty", STAC_92HD71BXX_REF),
@@ -3280,214 +3281,214 @@ static const struct snd_pci_quirk stac92hd71bxx_fixup_tbl[] = {
 				"unknown Dell", STAC_DELL_M4_2),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL, 0x02aa,
 				"unknown Dell", STAC_DELL_M4_3),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-static const struct hda_pintbl ref922x_pin_configs[] = {
-	{ 0x0a, 0x01014010 },
-	{ 0x0b, 0x01016011 },
-	{ 0x0c, 0x01012012 },
-	{ 0x0d, 0x0221401f },
-	{ 0x0e, 0x01813122 },
-	{ 0x0f, 0x01011014 },
-	{ 0x10, 0x01441030 },
-	{ 0x11, 0x01c41030 },
-	{ 0x15, 0x40000100 },
-	{ 0x1b, 0x40000100 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl ref922x_pin_configs[] = अणु
+	अणु 0x0a, 0x01014010 पूर्ण,
+	अणु 0x0b, 0x01016011 पूर्ण,
+	अणु 0x0c, 0x01012012 पूर्ण,
+	अणु 0x0d, 0x0221401f पूर्ण,
+	अणु 0x0e, 0x01813122 पूर्ण,
+	अणु 0x0f, 0x01011014 पूर्ण,
+	अणु 0x10, 0x01441030 पूर्ण,
+	अणु 0x11, 0x01c41030 पूर्ण,
+	अणु 0x15, 0x40000100 पूर्ण,
+	अणु 0x1b, 0x40000100 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 922X pin configs for
+    STAC 922X pin configs क्रम
     102801A7
     102801AB
     102801A9
     102801D1
     102801D2
 */
-static const struct hda_pintbl dell_922x_d81_pin_configs[] = {
-	{ 0x0a, 0x02214030 },
-	{ 0x0b, 0x01a19021 },
-	{ 0x0c, 0x01111012 },
-	{ 0x0d, 0x01114010 },
-	{ 0x0e, 0x02a19020 },
-	{ 0x0f, 0x01117011 },
-	{ 0x10, 0x400001f0 },
-	{ 0x11, 0x400001f1 },
-	{ 0x15, 0x01813122 },
-	{ 0x1b, 0x400001f2 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_922x_d81_pin_configs[] = अणु
+	अणु 0x0a, 0x02214030 पूर्ण,
+	अणु 0x0b, 0x01a19021 पूर्ण,
+	अणु 0x0c, 0x01111012 पूर्ण,
+	अणु 0x0d, 0x01114010 पूर्ण,
+	अणु 0x0e, 0x02a19020 पूर्ण,
+	अणु 0x0f, 0x01117011 पूर्ण,
+	अणु 0x10, 0x400001f0 पूर्ण,
+	अणु 0x11, 0x400001f1 पूर्ण,
+	अणु 0x15, 0x01813122 पूर्ण,
+	अणु 0x1b, 0x400001f2 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 922X pin configs for
+    STAC 922X pin configs क्रम
     102801AC
     102801D0
 */
-static const struct hda_pintbl dell_922x_d82_pin_configs[] = {
-	{ 0x0a, 0x02214030 },
-	{ 0x0b, 0x01a19021 },
-	{ 0x0c, 0x01111012 },
-	{ 0x0d, 0x01114010 },
-	{ 0x0e, 0x02a19020 },
-	{ 0x0f, 0x01117011 },
-	{ 0x10, 0x01451140 },
-	{ 0x11, 0x400001f0 },
-	{ 0x15, 0x01813122 },
-	{ 0x1b, 0x400001f1 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_922x_d82_pin_configs[] = अणु
+	अणु 0x0a, 0x02214030 पूर्ण,
+	अणु 0x0b, 0x01a19021 पूर्ण,
+	अणु 0x0c, 0x01111012 पूर्ण,
+	अणु 0x0d, 0x01114010 पूर्ण,
+	अणु 0x0e, 0x02a19020 पूर्ण,
+	अणु 0x0f, 0x01117011 पूर्ण,
+	अणु 0x10, 0x01451140 पूर्ण,
+	अणु 0x11, 0x400001f0 पूर्ण,
+	अणु 0x15, 0x01813122 पूर्ण,
+	अणु 0x1b, 0x400001f1 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 922X pin configs for
+    STAC 922X pin configs क्रम
     102801BF
 */
-static const struct hda_pintbl dell_922x_m81_pin_configs[] = {
-	{ 0x0a, 0x0321101f },
-	{ 0x0b, 0x01112024 },
-	{ 0x0c, 0x01111222 },
-	{ 0x0d, 0x91174220 },
-	{ 0x0e, 0x03a11050 },
-	{ 0x0f, 0x01116221 },
-	{ 0x10, 0x90a70330 },
-	{ 0x11, 0x01452340 },
-	{ 0x15, 0x40C003f1 },
-	{ 0x1b, 0x405003f0 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_922x_m81_pin_configs[] = अणु
+	अणु 0x0a, 0x0321101f पूर्ण,
+	अणु 0x0b, 0x01112024 पूर्ण,
+	अणु 0x0c, 0x01111222 पूर्ण,
+	अणु 0x0d, 0x91174220 पूर्ण,
+	अणु 0x0e, 0x03a11050 पूर्ण,
+	अणु 0x0f, 0x01116221 पूर्ण,
+	अणु 0x10, 0x90a70330 पूर्ण,
+	अणु 0x11, 0x01452340 पूर्ण,
+	अणु 0x15, 0x40C003f1 पूर्ण,
+	अणु 0x1b, 0x405003f0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 9221 A1 pin configs for
+    STAC 9221 A1 pin configs क्रम
     102801D7 (Dell XPS M1210)
 */
-static const struct hda_pintbl dell_922x_m82_pin_configs[] = {
-	{ 0x0a, 0x02211211 },
-	{ 0x0b, 0x408103ff },
-	{ 0x0c, 0x02a1123e },
-	{ 0x0d, 0x90100310 },
-	{ 0x0e, 0x408003f1 },
-	{ 0x0f, 0x0221121f },
-	{ 0x10, 0x03451340 },
-	{ 0x11, 0x40c003f2 },
-	{ 0x15, 0x508003f3 },
-	{ 0x1b, 0x405003f4 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_922x_m82_pin_configs[] = अणु
+	अणु 0x0a, 0x02211211 पूर्ण,
+	अणु 0x0b, 0x408103ff पूर्ण,
+	अणु 0x0c, 0x02a1123e पूर्ण,
+	अणु 0x0d, 0x90100310 पूर्ण,
+	अणु 0x0e, 0x408003f1 पूर्ण,
+	अणु 0x0f, 0x0221121f पूर्ण,
+	अणु 0x10, 0x03451340 पूर्ण,
+	अणु 0x11, 0x40c003f2 पूर्ण,
+	अणु 0x15, 0x508003f3 पूर्ण,
+	अणु 0x1b, 0x405003f4 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl d945gtp3_pin_configs[] = {
-	{ 0x0a, 0x0221401f },
-	{ 0x0b, 0x01a19022 },
-	{ 0x0c, 0x01813021 },
-	{ 0x0d, 0x01014010 },
-	{ 0x0e, 0x40000100 },
-	{ 0x0f, 0x40000100 },
-	{ 0x10, 0x40000100 },
-	{ 0x11, 0x40000100 },
-	{ 0x15, 0x02a19120 },
-	{ 0x1b, 0x40000100 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl d945gtp3_pin_configs[] = अणु
+	अणु 0x0a, 0x0221401f पूर्ण,
+	अणु 0x0b, 0x01a19022 पूर्ण,
+	अणु 0x0c, 0x01813021 पूर्ण,
+	अणु 0x0d, 0x01014010 पूर्ण,
+	अणु 0x0e, 0x40000100 पूर्ण,
+	अणु 0x0f, 0x40000100 पूर्ण,
+	अणु 0x10, 0x40000100 पूर्ण,
+	अणु 0x11, 0x40000100 पूर्ण,
+	अणु 0x15, 0x02a19120 पूर्ण,
+	अणु 0x1b, 0x40000100 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl d945gtp5_pin_configs[] = {
-	{ 0x0a, 0x0221401f },
-	{ 0x0b, 0x01011012 },
-	{ 0x0c, 0x01813024 },
-	{ 0x0d, 0x01014010 },
-	{ 0x0e, 0x01a19021 },
-	{ 0x0f, 0x01016011 },
-	{ 0x10, 0x01452130 },
-	{ 0x11, 0x40000100 },
-	{ 0x15, 0x02a19320 },
-	{ 0x1b, 0x40000100 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl d945gtp5_pin_configs[] = अणु
+	अणु 0x0a, 0x0221401f पूर्ण,
+	अणु 0x0b, 0x01011012 पूर्ण,
+	अणु 0x0c, 0x01813024 पूर्ण,
+	अणु 0x0d, 0x01014010 पूर्ण,
+	अणु 0x0e, 0x01a19021 पूर्ण,
+	अणु 0x0f, 0x01016011 पूर्ण,
+	अणु 0x10, 0x01452130 पूर्ण,
+	अणु 0x11, 0x40000100 पूर्ण,
+	अणु 0x15, 0x02a19320 पूर्ण,
+	अणु 0x1b, 0x40000100 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl intel_mac_v1_pin_configs[] = {
-	{ 0x0a, 0x0121e21f },
-	{ 0x0b, 0x400000ff },
-	{ 0x0c, 0x9017e110 },
-	{ 0x0d, 0x400000fd },
-	{ 0x0e, 0x400000fe },
-	{ 0x0f, 0x0181e020 },
-	{ 0x10, 0x1145e030 },
-	{ 0x11, 0x11c5e240 },
-	{ 0x15, 0x400000fc },
-	{ 0x1b, 0x400000fb },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl पूर्णांकel_mac_v1_pin_configs[] = अणु
+	अणु 0x0a, 0x0121e21f पूर्ण,
+	अणु 0x0b, 0x400000ff पूर्ण,
+	अणु 0x0c, 0x9017e110 पूर्ण,
+	अणु 0x0d, 0x400000fd पूर्ण,
+	अणु 0x0e, 0x400000fe पूर्ण,
+	अणु 0x0f, 0x0181e020 पूर्ण,
+	अणु 0x10, 0x1145e030 पूर्ण,
+	अणु 0x11, 0x11c5e240 पूर्ण,
+	अणु 0x15, 0x400000fc पूर्ण,
+	अणु 0x1b, 0x400000fb पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl intel_mac_v2_pin_configs[] = {
-	{ 0x0a, 0x0121e21f },
-	{ 0x0b, 0x90a7012e },
-	{ 0x0c, 0x9017e110 },
-	{ 0x0d, 0x400000fd },
-	{ 0x0e, 0x400000fe },
-	{ 0x0f, 0x0181e020 },
-	{ 0x10, 0x1145e230 },
-	{ 0x11, 0x500000fa },
-	{ 0x15, 0x400000fc },
-	{ 0x1b, 0x400000fb },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl पूर्णांकel_mac_v2_pin_configs[] = अणु
+	अणु 0x0a, 0x0121e21f पूर्ण,
+	अणु 0x0b, 0x90a7012e पूर्ण,
+	अणु 0x0c, 0x9017e110 पूर्ण,
+	अणु 0x0d, 0x400000fd पूर्ण,
+	अणु 0x0e, 0x400000fe पूर्ण,
+	अणु 0x0f, 0x0181e020 पूर्ण,
+	अणु 0x10, 0x1145e230 पूर्ण,
+	अणु 0x11, 0x500000fa पूर्ण,
+	अणु 0x15, 0x400000fc पूर्ण,
+	अणु 0x1b, 0x400000fb पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl intel_mac_v3_pin_configs[] = {
-	{ 0x0a, 0x0121e21f },
-	{ 0x0b, 0x90a7012e },
-	{ 0x0c, 0x9017e110 },
-	{ 0x0d, 0x400000fd },
-	{ 0x0e, 0x400000fe },
-	{ 0x0f, 0x0181e020 },
-	{ 0x10, 0x1145e230 },
-	{ 0x11, 0x11c5e240 },
-	{ 0x15, 0x400000fc },
-	{ 0x1b, 0x400000fb },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl पूर्णांकel_mac_v3_pin_configs[] = अणु
+	अणु 0x0a, 0x0121e21f पूर्ण,
+	अणु 0x0b, 0x90a7012e पूर्ण,
+	अणु 0x0c, 0x9017e110 पूर्ण,
+	अणु 0x0d, 0x400000fd पूर्ण,
+	अणु 0x0e, 0x400000fe पूर्ण,
+	अणु 0x0f, 0x0181e020 पूर्ण,
+	अणु 0x10, 0x1145e230 पूर्ण,
+	अणु 0x11, 0x11c5e240 पूर्ण,
+	अणु 0x15, 0x400000fc पूर्ण,
+	अणु 0x1b, 0x400000fb पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl intel_mac_v4_pin_configs[] = {
-	{ 0x0a, 0x0321e21f },
-	{ 0x0b, 0x03a1e02e },
-	{ 0x0c, 0x9017e110 },
-	{ 0x0d, 0x9017e11f },
-	{ 0x0e, 0x400000fe },
-	{ 0x0f, 0x0381e020 },
-	{ 0x10, 0x1345e230 },
-	{ 0x11, 0x13c5e240 },
-	{ 0x15, 0x400000fc },
-	{ 0x1b, 0x400000fb },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl पूर्णांकel_mac_v4_pin_configs[] = अणु
+	अणु 0x0a, 0x0321e21f पूर्ण,
+	अणु 0x0b, 0x03a1e02e पूर्ण,
+	अणु 0x0c, 0x9017e110 पूर्ण,
+	अणु 0x0d, 0x9017e11f पूर्ण,
+	अणु 0x0e, 0x400000fe पूर्ण,
+	अणु 0x0f, 0x0381e020 पूर्ण,
+	अणु 0x10, 0x1345e230 पूर्ण,
+	अणु 0x11, 0x13c5e240 पूर्ण,
+	अणु 0x15, 0x400000fc पूर्ण,
+	अणु 0x1b, 0x400000fb पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl intel_mac_v5_pin_configs[] = {
-	{ 0x0a, 0x0321e21f },
-	{ 0x0b, 0x03a1e02e },
-	{ 0x0c, 0x9017e110 },
-	{ 0x0d, 0x9017e11f },
-	{ 0x0e, 0x400000fe },
-	{ 0x0f, 0x0381e020 },
-	{ 0x10, 0x1345e230 },
-	{ 0x11, 0x13c5e240 },
-	{ 0x15, 0x400000fc },
-	{ 0x1b, 0x400000fb },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl पूर्णांकel_mac_v5_pin_configs[] = अणु
+	अणु 0x0a, 0x0321e21f पूर्ण,
+	अणु 0x0b, 0x03a1e02e पूर्ण,
+	अणु 0x0c, 0x9017e110 पूर्ण,
+	अणु 0x0d, 0x9017e11f पूर्ण,
+	अणु 0x0e, 0x400000fe पूर्ण,
+	अणु 0x0f, 0x0381e020 पूर्ण,
+	अणु 0x10, 0x1345e230 पूर्ण,
+	अणु 0x11, 0x13c5e240 पूर्ण,
+	अणु 0x15, 0x400000fc पूर्ण,
+	अणु 0x1b, 0x400000fb पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl ecs202_pin_configs[] = {
-	{ 0x0a, 0x0221401f },
-	{ 0x0b, 0x02a19020 },
-	{ 0x0c, 0x01a19020 },
-	{ 0x0d, 0x01114010 },
-	{ 0x0e, 0x408000f0 },
-	{ 0x0f, 0x01813022 },
-	{ 0x10, 0x074510a0 },
-	{ 0x11, 0x40c400f1 },
-	{ 0x15, 0x9037012e },
-	{ 0x1b, 0x40e000f2 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl ecs202_pin_configs[] = अणु
+	अणु 0x0a, 0x0221401f पूर्ण,
+	अणु 0x0b, 0x02a19020 पूर्ण,
+	अणु 0x0c, 0x01a19020 पूर्ण,
+	अणु 0x0d, 0x01114010 पूर्ण,
+	अणु 0x0e, 0x408000f0 पूर्ण,
+	अणु 0x0f, 0x01813022 पूर्ण,
+	अणु 0x10, 0x074510a0 पूर्ण,
+	अणु 0x11, 0x40c400f1 पूर्ण,
+	अणु 0x15, 0x9037012e पूर्ण,
+	अणु 0x1b, 0x40e000f2 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-/* codec SSIDs for Intel Mac sharing the same PCI SSID 8384:7680 */
-static const struct snd_pci_quirk stac922x_intel_mac_fixup_tbl[] = {
+/* codec SSIDs क्रम Intel Mac sharing the same PCI SSID 8384:7680 */
+अटल स्थिर काष्ठा snd_pci_quirk stac922x_पूर्णांकel_mac_fixup_tbl[] = अणु
 	SND_PCI_QUIRK(0x0000, 0x0100, "Mac Mini", STAC_INTEL_MAC_V3),
 	SND_PCI_QUIRK(0x106b, 0x0800, "Mac", STAC_INTEL_MAC_V1),
 	SND_PCI_QUIRK(0x106b, 0x0600, "Mac", STAC_INTEL_MAC_V2),
@@ -3501,143 +3502,143 @@ static const struct snd_pci_quirk stac922x_intel_mac_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x106b, 0x1a00, "Mac", STAC_INTEL_MAC_V4),
 	SND_PCI_QUIRK(0x106b, 0x0a00, "Mac", STAC_INTEL_MAC_V5),
 	SND_PCI_QUIRK(0x106b, 0x2200, "Mac", STAC_INTEL_MAC_V5),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_fixup stac922x_fixups[];
+अटल स्थिर काष्ठा hda_fixup stac922x_fixups[];
 
 /* remap the fixup from codec SSID and apply it */
-static void stac922x_fixup_intel_mac_auto(struct hda_codec *codec,
-					  const struct hda_fixup *fix,
-					  int action)
-{
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+अटल व्योम stac922x_fixup_पूर्णांकel_mac_स्वतः(काष्ठा hda_codec *codec,
+					  स्थिर काष्ठा hda_fixup *fix,
+					  पूर्णांक action)
+अणु
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	codec->fixup_id = HDA_FIXUP_ID_NOT_SET;
-	snd_hda_pick_fixup(codec, NULL, stac922x_intel_mac_fixup_tbl,
+	snd_hda_pick_fixup(codec, शून्य, stac922x_पूर्णांकel_mac_fixup_tbl,
 			   stac922x_fixups);
-	if (codec->fixup_id != HDA_FIXUP_ID_NOT_SET)
+	अगर (codec->fixup_id != HDA_FIXUP_ID_NOT_SET)
 		snd_hda_apply_fixup(codec, action);
-}
+पूर्ण
 
-static void stac922x_fixup_intel_mac_gpio(struct hda_codec *codec,
-					  const struct hda_fixup *fix,
-					  int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac922x_fixup_पूर्णांकel_mac_gpio(काष्ठा hda_codec *codec,
+					  स्थिर काष्ठा hda_fixup *fix,
+					  पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
 		spec->gpio_mask = spec->gpio_dir = 0x03;
 		spec->gpio_data = 0x03;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct hda_fixup stac922x_fixups[] = {
-	[STAC_D945_REF] = {
+अटल स्थिर काष्ठा hda_fixup stac922x_fixups[] = अणु
+	[STAC_D945_REF] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = ref922x_pin_configs,
-	},
-	[STAC_D945GTP3] = {
+	पूर्ण,
+	[STAC_D945GTP3] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = d945gtp3_pin_configs,
-	},
-	[STAC_D945GTP5] = {
+	पूर्ण,
+	[STAC_D945GTP5] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = d945gtp5_pin_configs,
-	},
-	[STAC_INTEL_MAC_AUTO] = {
+	पूर्ण,
+	[STAC_INTEL_MAC_AUTO] = अणु
 		.type = HDA_FIXUP_FUNC,
-		.v.func = stac922x_fixup_intel_mac_auto,
-	},
-	[STAC_INTEL_MAC_V1] = {
+		.v.func = stac922x_fixup_पूर्णांकel_mac_स्वतः,
+	पूर्ण,
+	[STAC_INTEL_MAC_V1] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = intel_mac_v1_pin_configs,
+		.v.pins = पूर्णांकel_mac_v1_pin_configs,
 		.chained = true,
 		.chain_id = STAC_922X_INTEL_MAC_GPIO,
-	},
-	[STAC_INTEL_MAC_V2] = {
+	पूर्ण,
+	[STAC_INTEL_MAC_V2] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = intel_mac_v2_pin_configs,
+		.v.pins = पूर्णांकel_mac_v2_pin_configs,
 		.chained = true,
 		.chain_id = STAC_922X_INTEL_MAC_GPIO,
-	},
-	[STAC_INTEL_MAC_V3] = {
+	पूर्ण,
+	[STAC_INTEL_MAC_V3] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = intel_mac_v3_pin_configs,
+		.v.pins = पूर्णांकel_mac_v3_pin_configs,
 		.chained = true,
 		.chain_id = STAC_922X_INTEL_MAC_GPIO,
-	},
-	[STAC_INTEL_MAC_V4] = {
+	पूर्ण,
+	[STAC_INTEL_MAC_V4] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = intel_mac_v4_pin_configs,
+		.v.pins = पूर्णांकel_mac_v4_pin_configs,
 		.chained = true,
 		.chain_id = STAC_922X_INTEL_MAC_GPIO,
-	},
-	[STAC_INTEL_MAC_V5] = {
+	पूर्ण,
+	[STAC_INTEL_MAC_V5] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = intel_mac_v5_pin_configs,
+		.v.pins = पूर्णांकel_mac_v5_pin_configs,
 		.chained = true,
 		.chain_id = STAC_922X_INTEL_MAC_GPIO,
-	},
-	[STAC_922X_INTEL_MAC_GPIO] = {
+	पूर्ण,
+	[STAC_922X_INTEL_MAC_GPIO] = अणु
 		.type = HDA_FIXUP_FUNC,
-		.v.func = stac922x_fixup_intel_mac_gpio,
-	},
-	[STAC_ECS_202] = {
+		.v.func = stac922x_fixup_पूर्णांकel_mac_gpio,
+	पूर्ण,
+	[STAC_ECS_202] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = ecs202_pin_configs,
-	},
-	[STAC_922X_DELL_D81] = {
+	पूर्ण,
+	[STAC_922X_DELL_D81] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_922x_d81_pin_configs,
-	},
-	[STAC_922X_DELL_D82] = {
+	पूर्ण,
+	[STAC_922X_DELL_D82] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_922x_d82_pin_configs,
-	},
-	[STAC_922X_DELL_M81] = {
+	पूर्ण,
+	[STAC_922X_DELL_M81] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_922x_m81_pin_configs,
-	},
-	[STAC_922X_DELL_M82] = {
+	पूर्ण,
+	[STAC_922X_DELL_M82] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_922x_m82_pin_configs,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct hda_model_fixup stac922x_models[] = {
-	{ .id = STAC_D945_REF, .name = "ref" },
-	{ .id = STAC_D945GTP5, .name = "5stack" },
-	{ .id = STAC_D945GTP3, .name = "3stack" },
-	{ .id = STAC_INTEL_MAC_V1, .name = "intel-mac-v1" },
-	{ .id = STAC_INTEL_MAC_V2, .name = "intel-mac-v2" },
-	{ .id = STAC_INTEL_MAC_V3, .name = "intel-mac-v3" },
-	{ .id = STAC_INTEL_MAC_V4, .name = "intel-mac-v4" },
-	{ .id = STAC_INTEL_MAC_V5, .name = "intel-mac-v5" },
-	{ .id = STAC_INTEL_MAC_AUTO, .name = "intel-mac-auto" },
-	{ .id = STAC_ECS_202, .name = "ecs202" },
-	{ .id = STAC_922X_DELL_D81, .name = "dell-d81" },
-	{ .id = STAC_922X_DELL_D82, .name = "dell-d82" },
-	{ .id = STAC_922X_DELL_M81, .name = "dell-m81" },
-	{ .id = STAC_922X_DELL_M82, .name = "dell-m82" },
-	/* for backward compatibility */
-	{ .id = STAC_INTEL_MAC_V3, .name = "macmini" },
-	{ .id = STAC_INTEL_MAC_V5, .name = "macbook" },
-	{ .id = STAC_INTEL_MAC_V3, .name = "macbook-pro-v1" },
-	{ .id = STAC_INTEL_MAC_V3, .name = "macbook-pro" },
-	{ .id = STAC_INTEL_MAC_V2, .name = "imac-intel" },
-	{ .id = STAC_INTEL_MAC_V3, .name = "imac-intel-20" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac922x_models[] = अणु
+	अणु .id = STAC_D945_REF, .name = "ref" पूर्ण,
+	अणु .id = STAC_D945GTP5, .name = "5stack" पूर्ण,
+	अणु .id = STAC_D945GTP3, .name = "3stack" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V1, .name = "intel-mac-v1" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V2, .name = "intel-mac-v2" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V3, .name = "intel-mac-v3" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V4, .name = "intel-mac-v4" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V5, .name = "intel-mac-v5" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_AUTO, .name = "intel-mac-auto" पूर्ण,
+	अणु .id = STAC_ECS_202, .name = "ecs202" पूर्ण,
+	अणु .id = STAC_922X_DELL_D81, .name = "dell-d81" पूर्ण,
+	अणु .id = STAC_922X_DELL_D82, .name = "dell-d82" पूर्ण,
+	अणु .id = STAC_922X_DELL_M81, .name = "dell-m81" पूर्ण,
+	अणु .id = STAC_922X_DELL_M82, .name = "dell-m82" पूर्ण,
+	/* क्रम backward compatibility */
+	अणु .id = STAC_INTEL_MAC_V3, .name = "macmini" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V5, .name = "macbook" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V3, .name = "macbook-pro-v1" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V3, .name = "macbook-pro" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V2, .name = "imac-intel" पूर्ण,
+	अणु .id = STAC_INTEL_MAC_V3, .name = "imac-intel-20" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk stac922x_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac922x_fixup_tbl[] = अणु
 	/* SigmaTel reference board */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x2668,
 		      "DFI LanParty", STAC_D945_REF),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DFI, 0x3101,
 		      "DFI LanParty", STAC_D945_REF),
-	/* Intel 945G based systems */
+	/* Intel 945G based प्रणालीs */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0101,
 		      "Intel D945G", STAC_D945GTP3),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0202,
@@ -3668,7 +3669,7 @@ static const struct snd_pci_quirk stac922x_fixup_tbl[] = {
 		      "Intel D945G", STAC_D945GTP3),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0110,
 		      "Intel D945G", STAC_D945GTP3),
-	/* Intel D945G 5-stack systems */
+	/* Intel D945G 5-stack प्रणालीs */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0404,
 		      "Intel D945G", STAC_D945GTP5),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0303,
@@ -3677,7 +3678,7 @@ static const struct snd_pci_quirk stac922x_fixup_tbl[] = {
 		      "Intel D945G", STAC_D945GTP5),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0417,
 		      "Intel D945G", STAC_D945GTP5),
-	/* Intel 945P based systems */
+	/* Intel 945P based प्रणालीs */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0b0b,
 		      "Intel D945P", STAC_D945GTP3),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0112,
@@ -3690,15 +3691,15 @@ static const struct snd_pci_quirk stac922x_fixup_tbl[] = {
 		      "Intel D945P", STAC_D945GTP3),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0707,
 		      "Intel D945P", STAC_D945GTP5),
-	/* other intel */
+	/* other पूर्णांकel */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x0204,
 		      "Intel D945", STAC_D945_REF),
-	/* other systems  */
+	/* other प्रणालीs  */
 
 	/* Apple Intel Mac (Mac Mini, MacBook, MacBook Pro...) */
 	SND_PCI_QUIRK(0x8384, 0x7680, "Mac", STAC_INTEL_MAC_AUTO),
 
-	/* Dell systems  */
+	/* Dell प्रणालीs  */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL, 0x01a7,
 		      "unknown Dell", STAC_922X_DELL_D81),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL, 0x01a9,
@@ -3720,264 +3721,264 @@ static const struct snd_pci_quirk stac922x_fixup_tbl[] = {
 	/* ECS/PC Chips boards */
 	SND_PCI_QUIRK_MASK(0x1019, 0xf000, 0x2000,
 		      "ECS/PC chips", STAC_ECS_202),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-static const struct hda_pintbl ref927x_pin_configs[] = {
-	{ 0x0a, 0x02214020 },
-	{ 0x0b, 0x02a19080 },
-	{ 0x0c, 0x0181304e },
-	{ 0x0d, 0x01014010 },
-	{ 0x0e, 0x01a19040 },
-	{ 0x0f, 0x01011012 },
-	{ 0x10, 0x01016011 },
-	{ 0x11, 0x0101201f },
-	{ 0x12, 0x183301f0 },
-	{ 0x13, 0x18a001f0 },
-	{ 0x14, 0x18a001f0 },
-	{ 0x21, 0x01442070 },
-	{ 0x22, 0x01c42190 },
-	{ 0x23, 0x40000100 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl ref927x_pin_configs[] = अणु
+	अणु 0x0a, 0x02214020 पूर्ण,
+	अणु 0x0b, 0x02a19080 पूर्ण,
+	अणु 0x0c, 0x0181304e पूर्ण,
+	अणु 0x0d, 0x01014010 पूर्ण,
+	अणु 0x0e, 0x01a19040 पूर्ण,
+	अणु 0x0f, 0x01011012 पूर्ण,
+	अणु 0x10, 0x01016011 पूर्ण,
+	अणु 0x11, 0x0101201f पूर्ण,
+	अणु 0x12, 0x183301f0 पूर्ण,
+	अणु 0x13, 0x18a001f0 पूर्ण,
+	अणु 0x14, 0x18a001f0 पूर्ण,
+	अणु 0x21, 0x01442070 पूर्ण,
+	अणु 0x22, 0x01c42190 पूर्ण,
+	अणु 0x23, 0x40000100 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl d965_3st_pin_configs[] = {
-	{ 0x0a, 0x0221401f },
-	{ 0x0b, 0x02a19120 },
-	{ 0x0c, 0x40000100 },
-	{ 0x0d, 0x01014011 },
-	{ 0x0e, 0x01a19021 },
-	{ 0x0f, 0x01813024 },
-	{ 0x10, 0x40000100 },
-	{ 0x11, 0x40000100 },
-	{ 0x12, 0x40000100 },
-	{ 0x13, 0x40000100 },
-	{ 0x14, 0x40000100 },
-	{ 0x21, 0x40000100 },
-	{ 0x22, 0x40000100 },
-	{ 0x23, 0x40000100 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl d965_3st_pin_configs[] = अणु
+	अणु 0x0a, 0x0221401f पूर्ण,
+	अणु 0x0b, 0x02a19120 पूर्ण,
+	अणु 0x0c, 0x40000100 पूर्ण,
+	अणु 0x0d, 0x01014011 पूर्ण,
+	अणु 0x0e, 0x01a19021 पूर्ण,
+	अणु 0x0f, 0x01813024 पूर्ण,
+	अणु 0x10, 0x40000100 पूर्ण,
+	अणु 0x11, 0x40000100 पूर्ण,
+	अणु 0x12, 0x40000100 पूर्ण,
+	अणु 0x13, 0x40000100 पूर्ण,
+	अणु 0x14, 0x40000100 पूर्ण,
+	अणु 0x21, 0x40000100 पूर्ण,
+	अणु 0x22, 0x40000100 पूर्ण,
+	अणु 0x23, 0x40000100 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl d965_5st_pin_configs[] = {
-	{ 0x0a, 0x02214020 },
-	{ 0x0b, 0x02a19080 },
-	{ 0x0c, 0x0181304e },
-	{ 0x0d, 0x01014010 },
-	{ 0x0e, 0x01a19040 },
-	{ 0x0f, 0x01011012 },
-	{ 0x10, 0x01016011 },
-	{ 0x11, 0x40000100 },
-	{ 0x12, 0x40000100 },
-	{ 0x13, 0x40000100 },
-	{ 0x14, 0x40000100 },
-	{ 0x21, 0x01442070 },
-	{ 0x22, 0x40000100 },
-	{ 0x23, 0x40000100 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl d965_5st_pin_configs[] = अणु
+	अणु 0x0a, 0x02214020 पूर्ण,
+	अणु 0x0b, 0x02a19080 पूर्ण,
+	अणु 0x0c, 0x0181304e पूर्ण,
+	अणु 0x0d, 0x01014010 पूर्ण,
+	अणु 0x0e, 0x01a19040 पूर्ण,
+	अणु 0x0f, 0x01011012 पूर्ण,
+	अणु 0x10, 0x01016011 पूर्ण,
+	अणु 0x11, 0x40000100 पूर्ण,
+	अणु 0x12, 0x40000100 पूर्ण,
+	अणु 0x13, 0x40000100 पूर्ण,
+	अणु 0x14, 0x40000100 पूर्ण,
+	अणु 0x21, 0x01442070 पूर्ण,
+	अणु 0x22, 0x40000100 पूर्ण,
+	अणु 0x23, 0x40000100 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl d965_5st_no_fp_pin_configs[] = {
-	{ 0x0a, 0x40000100 },
-	{ 0x0b, 0x40000100 },
-	{ 0x0c, 0x0181304e },
-	{ 0x0d, 0x01014010 },
-	{ 0x0e, 0x01a19040 },
-	{ 0x0f, 0x01011012 },
-	{ 0x10, 0x01016011 },
-	{ 0x11, 0x40000100 },
-	{ 0x12, 0x40000100 },
-	{ 0x13, 0x40000100 },
-	{ 0x14, 0x40000100 },
-	{ 0x21, 0x01442070 },
-	{ 0x22, 0x40000100 },
-	{ 0x23, 0x40000100 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl d965_5st_no_fp_pin_configs[] = अणु
+	अणु 0x0a, 0x40000100 पूर्ण,
+	अणु 0x0b, 0x40000100 पूर्ण,
+	अणु 0x0c, 0x0181304e पूर्ण,
+	अणु 0x0d, 0x01014010 पूर्ण,
+	अणु 0x0e, 0x01a19040 पूर्ण,
+	अणु 0x0f, 0x01011012 पूर्ण,
+	अणु 0x10, 0x01016011 पूर्ण,
+	अणु 0x11, 0x40000100 पूर्ण,
+	अणु 0x12, 0x40000100 पूर्ण,
+	अणु 0x13, 0x40000100 पूर्ण,
+	अणु 0x14, 0x40000100 पूर्ण,
+	अणु 0x21, 0x01442070 पूर्ण,
+	अणु 0x22, 0x40000100 पूर्ण,
+	अणु 0x23, 0x40000100 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl dell_3st_pin_configs[] = {
-	{ 0x0a, 0x02211230 },
-	{ 0x0b, 0x02a11220 },
-	{ 0x0c, 0x01a19040 },
-	{ 0x0d, 0x01114210 },
-	{ 0x0e, 0x01111212 },
-	{ 0x0f, 0x01116211 },
-	{ 0x10, 0x01813050 },
-	{ 0x11, 0x01112214 },
-	{ 0x12, 0x403003fa },
-	{ 0x13, 0x90a60040 },
-	{ 0x14, 0x90a60040 },
-	{ 0x21, 0x404003fb },
-	{ 0x22, 0x40c003fc },
-	{ 0x23, 0x40000100 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_3st_pin_configs[] = अणु
+	अणु 0x0a, 0x02211230 पूर्ण,
+	अणु 0x0b, 0x02a11220 पूर्ण,
+	अणु 0x0c, 0x01a19040 पूर्ण,
+	अणु 0x0d, 0x01114210 पूर्ण,
+	अणु 0x0e, 0x01111212 पूर्ण,
+	अणु 0x0f, 0x01116211 पूर्ण,
+	अणु 0x10, 0x01813050 पूर्ण,
+	अणु 0x11, 0x01112214 पूर्ण,
+	अणु 0x12, 0x403003fa पूर्ण,
+	अणु 0x13, 0x90a60040 पूर्ण,
+	अणु 0x14, 0x90a60040 पूर्ण,
+	अणु 0x21, 0x404003fb पूर्ण,
+	अणु 0x22, 0x40c003fc पूर्ण,
+	अणु 0x23, 0x40000100 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void stac927x_fixup_ref_no_jd(struct hda_codec *codec,
-				     const struct hda_fixup *fix, int action)
-{
-	/* no jack detecion for ref-no-jd model */
-	if (action == HDA_FIXUP_ACT_PRE_PROBE)
+अटल व्योम stac927x_fixup_ref_no_jd(काष्ठा hda_codec *codec,
+				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	/* no jack detecion क्रम ref-no-jd model */
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
 		codec->no_jack_detect = 1;
-}
+पूर्ण
 
-static void stac927x_fixup_ref(struct hda_codec *codec,
-			       const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac927x_fixup_ref(काष्ठा hda_codec *codec,
+			       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
 		snd_hda_apply_pincfgs(codec, ref927x_pin_configs);
 		spec->eapd_mask = spec->gpio_mask = 0;
 		spec->gpio_dir = spec->gpio_data = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void stac927x_fixup_dell_dmic(struct hda_codec *codec,
-				     const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac927x_fixup_dell_dmic(काष्ठा hda_codec *codec,
+				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
-	if (codec->core.subsystem_id != 0x1028022f) {
+	अगर (codec->core.subप्रणाली_id != 0x1028022f) अणु
 		/* GPIO2 High = Enable EAPD */
 		spec->eapd_mask = spec->gpio_mask = 0x04;
 		spec->gpio_dir = spec->gpio_data = 0x04;
-	}
+	पूर्ण
 
 	snd_hda_add_verbs(codec, dell_3st_core_init);
 	spec->volknob_init = 1;
-}
+पूर्ण
 
-static void stac927x_fixup_volknob(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac927x_fixup_volknob(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
 		snd_hda_add_verbs(codec, stac927x_volknob_core_init);
 		spec->volknob_init = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct hda_fixup stac927x_fixups[] = {
-	[STAC_D965_REF_NO_JD] = {
+अटल स्थिर काष्ठा hda_fixup stac927x_fixups[] = अणु
+	[STAC_D965_REF_NO_JD] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac927x_fixup_ref_no_jd,
 		.chained = true,
 		.chain_id = STAC_D965_REF,
-	},
-	[STAC_D965_REF] = {
+	पूर्ण,
+	[STAC_D965_REF] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac927x_fixup_ref,
-	},
-	[STAC_D965_3ST] = {
+	पूर्ण,
+	[STAC_D965_3ST] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = d965_3st_pin_configs,
 		.chained = true,
 		.chain_id = STAC_D965_VERBS,
-	},
-	[STAC_D965_5ST] = {
+	पूर्ण,
+	[STAC_D965_5ST] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = d965_5st_pin_configs,
 		.chained = true,
 		.chain_id = STAC_D965_VERBS,
-	},
-	[STAC_D965_VERBS] = {
+	पूर्ण,
+	[STAC_D965_VERBS] = अणु
 		.type = HDA_FIXUP_VERBS,
 		.v.verbs = d965_core_init,
-	},
-	[STAC_D965_5ST_NO_FP] = {
+	पूर्ण,
+	[STAC_D965_5ST_NO_FP] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = d965_5st_no_fp_pin_configs,
-	},
-	[STAC_NEMO_DEFAULT] = {
+	पूर्ण,
+	[STAC_NEMO_DEFAULT] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = nemo_pin_configs,
-	},
-	[STAC_DELL_3ST] = {
+	पूर्ण,
+	[STAC_DELL_3ST] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_3st_pin_configs,
 		.chained = true,
 		.chain_id = STAC_927X_DELL_DMIC,
-	},
-	[STAC_DELL_BIOS] = {
+	पूर्ण,
+	[STAC_DELL_BIOS] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
 			/* correct the front output jack as a hp out */
-			{ 0x0f, 0x0221101f },
+			अणु 0x0f, 0x0221101f पूर्ण,
 			/* correct the front input jack as a mic */
-			{ 0x0e, 0x02a79130 },
-			{}
-		},
+			अणु 0x0e, 0x02a79130 पूर्ण,
+			अणुपूर्ण
+		पूर्ण,
 		.chained = true,
 		.chain_id = STAC_927X_DELL_DMIC,
-	},
-	[STAC_DELL_BIOS_AMIC] = {
+	पूर्ण,
+	[STAC_DELL_BIOS_AMIC] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
 			/* configure the analog microphone on some laptops */
-			{ 0x0c, 0x90a79130 },
-			{}
-		},
+			अणु 0x0c, 0x90a79130 पूर्ण,
+			अणुपूर्ण
+		पूर्ण,
 		.chained = true,
 		.chain_id = STAC_DELL_BIOS,
-	},
-	[STAC_DELL_BIOS_SPDIF] = {
+	पूर्ण,
+	[STAC_DELL_BIOS_SPDIF] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
 			/* correct the device field to SPDIF out */
-			{ 0x21, 0x01442070 },
-			{}
-		},
+			अणु 0x21, 0x01442070 पूर्ण,
+			अणुपूर्ण
+		पूर्ण,
 		.chained = true,
 		.chain_id = STAC_DELL_BIOS,
-	},
-	[STAC_927X_DELL_DMIC] = {
+	पूर्ण,
+	[STAC_927X_DELL_DMIC] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac927x_fixup_dell_dmic,
-	},
-	[STAC_927X_VOLKNOB] = {
+	पूर्ण,
+	[STAC_927X_VOLKNOB] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac927x_fixup_volknob,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct hda_model_fixup stac927x_models[] = {
-	{ .id = STAC_D965_REF_NO_JD, .name = "ref-no-jd" },
-	{ .id = STAC_D965_REF, .name = "ref" },
-	{ .id = STAC_D965_3ST, .name = "3stack" },
-	{ .id = STAC_D965_5ST, .name = "5stack" },
-	{ .id = STAC_D965_5ST_NO_FP, .name = "5stack-no-fp" },
-	{ .id = STAC_DELL_3ST, .name = "dell-3stack" },
-	{ .id = STAC_DELL_BIOS, .name = "dell-bios" },
-	{ .id = STAC_NEMO_DEFAULT, .name = "nemo-default" },
-	{ .id = STAC_DELL_BIOS_AMIC, .name = "dell-bios-amic" },
-	{ .id = STAC_927X_VOLKNOB, .name = "volknob" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac927x_models[] = अणु
+	अणु .id = STAC_D965_REF_NO_JD, .name = "ref-no-jd" पूर्ण,
+	अणु .id = STAC_D965_REF, .name = "ref" पूर्ण,
+	अणु .id = STAC_D965_3ST, .name = "3stack" पूर्ण,
+	अणु .id = STAC_D965_5ST, .name = "5stack" पूर्ण,
+	अणु .id = STAC_D965_5ST_NO_FP, .name = "5stack-no-fp" पूर्ण,
+	अणु .id = STAC_DELL_3ST, .name = "dell-3stack" पूर्ण,
+	अणु .id = STAC_DELL_BIOS, .name = "dell-bios" पूर्ण,
+	अणु .id = STAC_NEMO_DEFAULT, .name = "nemo-default" पूर्ण,
+	अणु .id = STAC_DELL_BIOS_AMIC, .name = "dell-bios-amic" पूर्ण,
+	अणु .id = STAC_927X_VOLKNOB, .name = "volknob" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk stac927x_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac927x_fixup_tbl[] = अणु
 	/* SigmaTel reference board */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x2668,
 		      "DFI LanParty", STAC_D965_REF),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DFI, 0x3101,
 		      "DFI LanParty", STAC_D965_REF),
-	 /* Intel 946 based systems */
+	 /* Intel 946 based प्रणालीs */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x3d01, "Intel D946", STAC_D965_3ST),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0xa301, "Intel D946", STAC_D965_3ST),
-	/* 965 based 3 stack systems */
+	/* 965 based 3 stack प्रणालीs */
 	SND_PCI_QUIRK_MASK(PCI_VENDOR_ID_INTEL, 0xff00, 0x2100,
 			   "Intel D965", STAC_D965_3ST),
 	SND_PCI_QUIRK_MASK(PCI_VENDOR_ID_INTEL, 0xff00, 0x2000,
 			   "Intel D965", STAC_D965_3ST),
-	/* Dell 3 stack systems */
+	/* Dell 3 stack प्रणालीs */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL,  0x01dd, "Dell Dimension E520", STAC_DELL_3ST),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL,  0x01ed, "Dell     ", STAC_DELL_3ST),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL,  0x01f4, "Dell     ", STAC_DELL_3ST),
-	/* Dell 3 stack systems with verb table in BIOS */
+	/* Dell 3 stack प्रणालीs with verb table in BIOS */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL,  0x01f3, "Dell Inspiron 1420", STAC_DELL_BIOS),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL,  0x01f7, "Dell XPS M1730", STAC_DELL_BIOS),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL,  0x0227, "Dell Vostro 1400  ", STAC_DELL_BIOS),
@@ -3987,7 +3988,7 @@ static const struct snd_pci_quirk stac927x_fixup_tbl[] = {
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL,  0x0243, "Dell     ", STAC_DELL_BIOS),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL,  0x02ff, "Dell     ", STAC_DELL_BIOS),
 	SND_PCI_QUIRK(PCI_VENDOR_ID_DELL,  0x0209, "Dell XPS 1330", STAC_DELL_BIOS_SPDIF),
-	/* 965 based 5 stack systems */
+	/* 965 based 5 stack प्रणालीs */
 	SND_PCI_QUIRK_MASK(PCI_VENDOR_ID_INTEL, 0xff00, 0x2300,
 			   "Intel D965", STAC_D965_5ST),
 	SND_PCI_QUIRK_MASK(PCI_VENDOR_ID_INTEL, 0xff00, 0x2500,
@@ -3996,27 +3997,27 @@ static const struct snd_pci_quirk stac927x_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1888, 0x1000, "AmigaOne X1000", STAC_NEMO_DEFAULT),
 	/* volume-knob fixes */
 	SND_PCI_QUIRK_VENDOR(0x10cf, "FSC", STAC_927X_VOLKNOB),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-static const struct hda_pintbl ref9205_pin_configs[] = {
-	{ 0x0a, 0x40000100 },
-	{ 0x0b, 0x40000100 },
-	{ 0x0c, 0x01016011 },
-	{ 0x0d, 0x01014010 },
-	{ 0x0e, 0x01813122 },
-	{ 0x0f, 0x01a19021 },
-	{ 0x14, 0x01019020 },
-	{ 0x16, 0x40000100 },
-	{ 0x17, 0x90a000f0 },
-	{ 0x18, 0x90a000f0 },
-	{ 0x21, 0x01441030 },
-	{ 0x22, 0x01c41030 },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl ref9205_pin_configs[] = अणु
+	अणु 0x0a, 0x40000100 पूर्ण,
+	अणु 0x0b, 0x40000100 पूर्ण,
+	अणु 0x0c, 0x01016011 पूर्ण,
+	अणु 0x0d, 0x01014010 पूर्ण,
+	अणु 0x0e, 0x01813122 पूर्ण,
+	अणु 0x0f, 0x01a19021 पूर्ण,
+	अणु 0x14, 0x01019020 पूर्ण,
+	अणु 0x16, 0x40000100 पूर्ण,
+	अणु 0x17, 0x90a000f0 पूर्ण,
+	अणु 0x18, 0x90a000f0 पूर्ण,
+	अणु 0x21, 0x01441030 पूर्ण,
+	अणु 0x22, 0x01c41030 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 9205 pin configs for
+    STAC 9205 pin configs क्रम
     102801F1
     102801F2
     102801FC
@@ -4026,24 +4027,24 @@ static const struct hda_pintbl ref9205_pin_configs[] = {
     10280228 (Dell Vostro 1500)
     10280229 (Dell Vostro 1700)
 */
-static const struct hda_pintbl dell_9205_m42_pin_configs[] = {
-	{ 0x0a, 0x0321101F },
-	{ 0x0b, 0x03A11020 },
-	{ 0x0c, 0x400003FA },
-	{ 0x0d, 0x90170310 },
-	{ 0x0e, 0x400003FB },
-	{ 0x0f, 0x400003FC },
-	{ 0x14, 0x400003FD },
-	{ 0x16, 0x40F000F9 },
-	{ 0x17, 0x90A60330 },
-	{ 0x18, 0x400003FF },
-	{ 0x21, 0x0144131F },
-	{ 0x22, 0x40C003FE },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_9205_m42_pin_configs[] = अणु
+	अणु 0x0a, 0x0321101F पूर्ण,
+	अणु 0x0b, 0x03A11020 पूर्ण,
+	अणु 0x0c, 0x400003FA पूर्ण,
+	अणु 0x0d, 0x90170310 पूर्ण,
+	अणु 0x0e, 0x400003FB पूर्ण,
+	अणु 0x0f, 0x400003FC पूर्ण,
+	अणु 0x14, 0x400003FD पूर्ण,
+	अणु 0x16, 0x40F000F9 पूर्ण,
+	अणु 0x17, 0x90A60330 पूर्ण,
+	अणु 0x18, 0x400003FF पूर्ण,
+	अणु 0x21, 0x0144131F पूर्ण,
+	अणु 0x22, 0x40C003FE पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
-    STAC 9205 pin configs for
+    STAC 9205 pin configs क्रम
     102801F9
     102801FA
     102801FE
@@ -4052,69 +4053,69 @@ static const struct hda_pintbl dell_9205_m42_pin_configs[] = {
     10280200
     10280201
 */
-static const struct hda_pintbl dell_9205_m43_pin_configs[] = {
-	{ 0x0a, 0x0321101f },
-	{ 0x0b, 0x03a11020 },
-	{ 0x0c, 0x90a70330 },
-	{ 0x0d, 0x90170310 },
-	{ 0x0e, 0x400000fe },
-	{ 0x0f, 0x400000ff },
-	{ 0x14, 0x400000fd },
-	{ 0x16, 0x40f000f9 },
-	{ 0x17, 0x400000fa },
-	{ 0x18, 0x400000fc },
-	{ 0x21, 0x0144131f },
-	{ 0x22, 0x40c003f8 },
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_9205_m43_pin_configs[] = अणु
+	अणु 0x0a, 0x0321101f पूर्ण,
+	अणु 0x0b, 0x03a11020 पूर्ण,
+	अणु 0x0c, 0x90a70330 पूर्ण,
+	अणु 0x0d, 0x90170310 पूर्ण,
+	अणु 0x0e, 0x400000fe पूर्ण,
+	अणु 0x0f, 0x400000ff पूर्ण,
+	अणु 0x14, 0x400000fd पूर्ण,
+	अणु 0x16, 0x40f000f9 पूर्ण,
+	अणु 0x17, 0x400000fa पूर्ण,
+	अणु 0x18, 0x400000fc पूर्ण,
+	अणु 0x21, 0x0144131f पूर्ण,
+	अणु 0x22, 0x40c003f8 पूर्ण,
 	/* Enable SPDIF in/out */
-	{ 0x1f, 0x01441030 },
-	{ 0x20, 0x1c410030 },
-	{}
-};
+	अणु 0x1f, 0x01441030 पूर्ण,
+	अणु 0x20, 0x1c410030 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl dell_9205_m44_pin_configs[] = {
-	{ 0x0a, 0x0421101f },
-	{ 0x0b, 0x04a11020 },
-	{ 0x0c, 0x400003fa },
-	{ 0x0d, 0x90170310 },
-	{ 0x0e, 0x400003fb },
-	{ 0x0f, 0x400003fc },
-	{ 0x14, 0x400003fd },
-	{ 0x16, 0x400003f9 },
-	{ 0x17, 0x90a60330 },
-	{ 0x18, 0x400003ff },
-	{ 0x21, 0x01441340 },
-	{ 0x22, 0x40c003fe },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl dell_9205_m44_pin_configs[] = अणु
+	अणु 0x0a, 0x0421101f पूर्ण,
+	अणु 0x0b, 0x04a11020 पूर्ण,
+	अणु 0x0c, 0x400003fa पूर्ण,
+	अणु 0x0d, 0x90170310 पूर्ण,
+	अणु 0x0e, 0x400003fb पूर्ण,
+	अणु 0x0f, 0x400003fc पूर्ण,
+	अणु 0x14, 0x400003fd पूर्ण,
+	अणु 0x16, 0x400003f9 पूर्ण,
+	अणु 0x17, 0x90a60330 पूर्ण,
+	अणु 0x18, 0x400003ff पूर्ण,
+	अणु 0x21, 0x01441340 पूर्ण,
+	अणु 0x22, 0x40c003fe पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void stac9205_fixup_ref(struct hda_codec *codec,
-			       const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac9205_fixup_ref(काष्ठा hda_codec *codec,
+			       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
 		snd_hda_apply_pincfgs(codec, ref9205_pin_configs);
 		/* SPDIF-In enabled */
 		spec->eapd_mask = spec->gpio_mask = spec->gpio_dir = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void stac9205_fixup_dell_m43(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	struct hda_jack_callback *jack;
+अटल व्योम stac9205_fixup_dell_m43(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	काष्ठा hda_jack_callback *jack;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
 		snd_hda_apply_pincfgs(codec, dell_9205_m43_pin_configs);
 
-		/* Enable unsol response for GPIO4/Dock HP connection */
-		snd_hda_codec_write_cache(codec, codec->core.afg, 0,
+		/* Enable unsol response क्रम GPIO4/Dock HP connection */
+		snd_hda_codec_ग_लिखो_cache(codec, codec->core.afg, 0,
 			AC_VERB_SET_GPIO_UNSOLICITED_RSP_MASK, 0x10);
 		jack = snd_hda_jack_detect_enable_callback(codec, codec->core.afg,
 							   stac_vref_event);
-		if (!IS_ERR(jack))
-			jack->private_data = 0x01;
+		अगर (!IS_ERR(jack))
+			jack->निजी_data = 0x01;
 
 		spec->gpio_dir = 0x0b;
 		spec->eapd_mask = 0x01;
@@ -4124,52 +4125,52 @@ static void stac9205_fixup_dell_m43(struct hda_codec *codec,
 		 * GPIO3 Low = DRM
 		 */
 		spec->gpio_data = 0x01;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void stac9205_fixup_eapd(struct hda_codec *codec,
-				const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac9205_fixup_eapd(काष्ठा hda_codec *codec,
+				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE)
-		spec->eapd_switch = 0;
-}
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+		spec->eapd_चयन = 0;
+पूर्ण
 
-static const struct hda_fixup stac9205_fixups[] = {
-	[STAC_9205_REF] = {
+अटल स्थिर काष्ठा hda_fixup stac9205_fixups[] = अणु
+	[STAC_9205_REF] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac9205_fixup_ref,
-	},
-	[STAC_9205_DELL_M42] = {
+	पूर्ण,
+	[STAC_9205_DELL_M42] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_9205_m42_pin_configs,
-	},
-	[STAC_9205_DELL_M43] = {
+	पूर्ण,
+	[STAC_9205_DELL_M43] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac9205_fixup_dell_m43,
-	},
-	[STAC_9205_DELL_M44] = {
+	पूर्ण,
+	[STAC_9205_DELL_M44] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = dell_9205_m44_pin_configs,
-	},
-	[STAC_9205_EAPD] = {
+	पूर्ण,
+	[STAC_9205_EAPD] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac9205_fixup_eapd,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_model_fixup stac9205_models[] = {
-	{ .id = STAC_9205_REF, .name = "ref" },
-	{ .id = STAC_9205_DELL_M42, .name = "dell-m42" },
-	{ .id = STAC_9205_DELL_M43, .name = "dell-m43" },
-	{ .id = STAC_9205_DELL_M44, .name = "dell-m44" },
-	{ .id = STAC_9205_EAPD, .name = "eapd" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac9205_models[] = अणु
+	अणु .id = STAC_9205_REF, .name = "ref" पूर्ण,
+	अणु .id = STAC_9205_DELL_M42, .name = "dell-m42" पूर्ण,
+	अणु .id = STAC_9205_DELL_M43, .name = "dell-m43" पूर्ण,
+	अणु .id = STAC_9205_DELL_M44, .name = "dell-m44" पूर्ण,
+	अणु .id = STAC_9205_EAPD, .name = "eapd" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk stac9205_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac9205_fixup_tbl[] = अणु
 	/* SigmaTel reference board */
 	SND_PCI_QUIRK(PCI_VENDOR_ID_INTEL, 0x2668,
 		      "DFI LanParty", STAC_9205_REF),
@@ -4213,285 +4214,285 @@ static const struct snd_pci_quirk stac9205_fixup_tbl[] = {
 	/* Gateway */
 	SND_PCI_QUIRK(0x107b, 0x0560, "Gateway T6834c", STAC_9205_EAPD),
 	SND_PCI_QUIRK(0x107b, 0x0565, "Gateway T1616", STAC_9205_EAPD),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-static void stac92hd95_fixup_hp_led(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac92hd95_fixup_hp_led(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
-	if (find_mute_led_cfg(codec, spec->default_polarity))
+	अगर (find_mute_led_cfg(codec, spec->शेष_polarity))
 		codec_dbg(codec, "mute LED gpio %d polarity %d\n",
 				spec->gpio_led,
 				spec->gpio_led_polarity);
-}
+पूर्ण
 
-static const struct hda_fixup stac92hd95_fixups[] = {
-	[STAC_92HD95_HP_LED] = {
+अटल स्थिर काष्ठा hda_fixup stac92hd95_fixups[] = अणु
+	[STAC_92HD95_HP_LED] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = stac92hd95_fixup_hp_led,
-	},
-	[STAC_92HD95_HP_BASS] = {
+	पूर्ण,
+	[STAC_92HD95_HP_BASS] = अणु
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (const struct hda_verb[]) {
-			{0x1a, 0x795, 0x00}, /* HPF to 100Hz */
-			{}
-		},
+		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+			अणु0x1a, 0x795, 0x00पूर्ण, /* HPF to 100Hz */
+			अणुपूर्ण
+		पूर्ण,
 		.chained = true,
 		.chain_id = STAC_92HD95_HP_LED,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_pci_quirk stac92hd95_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac92hd95_fixup_tbl[] = अणु
 	SND_PCI_QUIRK(PCI_VENDOR_ID_HP, 0x1911, "HP Spectre 13", STAC_92HD95_HP_BASS),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-static const struct hda_model_fixup stac92hd95_models[] = {
-	{ .id = STAC_92HD95_HP_LED, .name = "hp-led" },
-	{ .id = STAC_92HD95_HP_BASS, .name = "hp-bass" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac92hd95_models[] = अणु
+	अणु .id = STAC_92HD95_HP_LED, .name = "hp-led" पूर्ण,
+	अणु .id = STAC_92HD95_HP_BASS, .name = "hp-bass" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 
-static int stac_parse_auto_config(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	int err;
-	int flags = 0;
+अटल पूर्णांक stac_parse_स्वतः_config(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	पूर्णांक err;
+	पूर्णांक flags = 0;
 
-	if (spec->headset_jack)
+	अगर (spec->headset_jack)
 		flags |= HDA_PINCFG_HEADSET_MIC;
 
-	err = snd_hda_parse_pin_defcfg(codec, &spec->gen.autocfg, NULL, flags);
-	if (err < 0)
-		return err;
+	err = snd_hda_parse_pin_defcfg(codec, &spec->gen.स्वतःcfg, शून्य, flags);
+	अगर (err < 0)
+		वापस err;
 
 	/* add hooks */
 	spec->gen.pcm_playback_hook = stac_playback_pcm_hook;
 	spec->gen.pcm_capture_hook = stac_capture_pcm_hook;
 
-	spec->gen.automute_hook = stac_update_outputs;
+	spec->gen.स्वतःmute_hook = stac_update_outमाला_दो;
 
-	if (spec->gpio_led)
+	अगर (spec->gpio_led)
 		snd_hda_gen_add_mute_led_cdev(codec, stac_vmaster_hook);
 
-	err = snd_hda_gen_parse_auto_config(codec, &spec->gen.autocfg);
-	if (err < 0)
-		return err;
+	err = snd_hda_gen_parse_स्वतः_config(codec, &spec->gen.स्वतःcfg);
+	अगर (err < 0)
+		वापस err;
 
-	if (spec->vref_mute_led_nid) {
-		err = snd_hda_gen_fix_pin_power(codec, spec->vref_mute_led_nid);
-		if (err < 0)
-			return err;
-	}
+	अगर (spec->vref_mute_led_nid) अणु
+		err = snd_hda_gen_fix_pin_घातer(codec, spec->vref_mute_led_nid);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	/* setup analog beep controls */
-	if (spec->anabeep_nid > 0) {
-		err = stac_auto_create_beep_ctls(codec,
+	अगर (spec->anabeep_nid > 0) अणु
+		err = stac_स्वतः_create_beep_ctls(codec,
 						 spec->anabeep_nid);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	/* setup digital beep controls and input device */
-#ifdef CONFIG_SND_HDA_INPUT_BEEP
-	if (spec->gen.beep_nid) {
+#अगर_घोषित CONFIG_SND_HDA_INPUT_BEEP
+	अगर (spec->gen.beep_nid) अणु
 		hda_nid_t nid = spec->gen.beep_nid;
-		unsigned int caps;
+		अचिन्हित पूर्णांक caps;
 
-		err = stac_auto_create_beep_ctls(codec, nid);
-		if (err < 0)
-			return err;
-		if (codec->beep) {
+		err = stac_स्वतः_create_beep_ctls(codec, nid);
+		अगर (err < 0)
+			वापस err;
+		अगर (codec->beep) अणु
 			/* IDT/STAC codecs have linear beep tone parameter */
 			codec->beep->linear_tone = spec->linear_tone_beep;
-			/* if no beep switch is available, make its own one */
+			/* अगर no beep चयन is available, make its own one */
 			caps = query_amp_caps(codec, nid, HDA_OUTPUT);
-			if (!(caps & AC_AMPCAP_MUTE)) {
-				err = stac_beep_switch_ctl(codec);
-				if (err < 0)
-					return err;
-			}
-		}
-	}
-#endif
+			अगर (!(caps & AC_AMPCAP_MUTE)) अणु
+				err = stac_beep_चयन_ctl(codec);
+				अगर (err < 0)
+					वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	if (spec->aloopback_ctl &&
-	    snd_hda_get_bool_hint(codec, "loopback") == 1) {
-		unsigned int wr_verb =
-			spec->aloopback_ctl->private_value >> 16;
-		if (snd_hdac_regmap_add_vendor_verb(&codec->core, wr_verb))
-			return -ENOMEM;
-		if (!snd_hda_gen_add_kctl(&spec->gen, NULL, spec->aloopback_ctl))
-			return -ENOMEM;
-	}
+	अगर (spec->aloopback_ctl &&
+	    snd_hda_get_bool_hपूर्णांक(codec, "loopback") == 1) अणु
+		अचिन्हित पूर्णांक wr_verb =
+			spec->aloopback_ctl->निजी_value >> 16;
+		अगर (snd_hdac_regmap_add_venकरोr_verb(&codec->core, wr_verb))
+			वापस -ENOMEM;
+		अगर (!snd_hda_gen_add_kctl(&spec->gen, शून्य, spec->aloopback_ctl))
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (spec->have_spdif_mux) {
-		err = stac_create_spdif_mux_ctls(codec);
-		if (err < 0)
-			return err;
-	}
+	अगर (spec->have_spdअगर_mux) अणु
+		err = stac_create_spdअगर_mux_ctls(codec);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	stac_init_power_map(codec);
+	stac_init_घातer_map(codec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stac_init(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	int i;
+अटल पूर्णांक stac_init(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
+	पूर्णांक i;
 
-	/* override some hints */
-	stac_store_hints(codec);
+	/* override some hपूर्णांकs */
+	stac_store_hपूर्णांकs(codec);
 
 	/* set up GPIO */
-	/* turn on EAPD statically when spec->eapd_switch isn't set.
+	/* turn on EAPD अटलally when spec->eapd_चयन isn't set.
 	 * otherwise, unsol event will turn it on/off dynamically
 	 */
-	if (!spec->eapd_switch)
+	अगर (!spec->eapd_चयन)
 		spec->gpio_data |= spec->eapd_mask;
 	stac_gpio_set(codec, spec->gpio_mask, spec->gpio_dir, spec->gpio_data);
 
 	snd_hda_gen_init(codec);
 
-	/* sync the power-map */
-	if (spec->num_pwrs)
-		snd_hda_codec_write(codec, codec->core.afg, 0,
+	/* sync the घातer-map */
+	अगर (spec->num_pwrs)
+		snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
 				    AC_VERB_IDT_SET_POWER_MAP,
-				    spec->power_map_bits);
+				    spec->घातer_map_bits);
 
-	/* power down inactive ADCs */
-	if (spec->powerdown_adcs) {
-		for (i = 0; i < spec->gen.num_all_adcs; i++) {
-			if (spec->active_adcs & (1 << i))
-				continue;
-			snd_hda_codec_write(codec, spec->gen.all_adcs[i], 0,
+	/* घातer करोwn inactive ADCs */
+	अगर (spec->घातerकरोwn_adcs) अणु
+		क्रम (i = 0; i < spec->gen.num_all_adcs; i++) अणु
+			अगर (spec->active_adcs & (1 << i))
+				जारी;
+			snd_hda_codec_ग_लिखो(codec, spec->gen.all_adcs[i], 0,
 					    AC_VERB_SET_POWER_STATE,
 					    AC_PWRST_D3);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stac_shutup(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac_shutup(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
 	snd_hda_shutup_pins(codec);
 
-	if (spec->eapd_mask)
+	अगर (spec->eapd_mask)
 		stac_gpio_set(codec, spec->gpio_mask,
 				spec->gpio_dir, spec->gpio_data &
 				~spec->eapd_mask);
-}
+पूर्ण
 
-#define stac_free	snd_hda_gen_free
+#घोषणा stac_मुक्त	snd_hda_gen_मुक्त
 
-#ifdef CONFIG_SND_PROC_FS
-static void stac92hd_proc_hook(struct snd_info_buffer *buffer,
-			       struct hda_codec *codec, hda_nid_t nid)
-{
-	if (nid == codec->core.afg)
-		snd_iprintf(buffer, "Power-Map: 0x%02x\n", 
-			    snd_hda_codec_read(codec, nid, 0,
+#अगर_घोषित CONFIG_SND_PROC_FS
+अटल व्योम stac92hd_proc_hook(काष्ठा snd_info_buffer *buffer,
+			       काष्ठा hda_codec *codec, hda_nid_t nid)
+अणु
+	अगर (nid == codec->core.afg)
+		snd_iम_लिखो(buffer, "Power-Map: 0x%02x\n", 
+			    snd_hda_codec_पढ़ो(codec, nid, 0,
 					       AC_VERB_IDT_GET_POWER_MAP, 0));
-}
+पूर्ण
 
-static void analog_loop_proc_hook(struct snd_info_buffer *buffer,
-				  struct hda_codec *codec,
-				  unsigned int verb)
-{
-	snd_iprintf(buffer, "Analog Loopback: 0x%02x\n",
-		    snd_hda_codec_read(codec, codec->core.afg, 0, verb, 0));
-}
+अटल व्योम analog_loop_proc_hook(काष्ठा snd_info_buffer *buffer,
+				  काष्ठा hda_codec *codec,
+				  अचिन्हित पूर्णांक verb)
+अणु
+	snd_iम_लिखो(buffer, "Analog Loopback: 0x%02x\n",
+		    snd_hda_codec_पढ़ो(codec, codec->core.afg, 0, verb, 0));
+पूर्ण
 
 /* stac92hd71bxx, stac92hd73xx */
-static void stac92hd7x_proc_hook(struct snd_info_buffer *buffer,
-				 struct hda_codec *codec, hda_nid_t nid)
-{
+अटल व्योम stac92hd7x_proc_hook(काष्ठा snd_info_buffer *buffer,
+				 काष्ठा hda_codec *codec, hda_nid_t nid)
+अणु
 	stac92hd_proc_hook(buffer, codec, nid);
-	if (nid == codec->core.afg)
+	अगर (nid == codec->core.afg)
 		analog_loop_proc_hook(buffer, codec, 0xfa0);
-}
+पूर्ण
 
-static void stac9205_proc_hook(struct snd_info_buffer *buffer,
-			       struct hda_codec *codec, hda_nid_t nid)
-{
-	if (nid == codec->core.afg)
+अटल व्योम stac9205_proc_hook(काष्ठा snd_info_buffer *buffer,
+			       काष्ठा hda_codec *codec, hda_nid_t nid)
+अणु
+	अगर (nid == codec->core.afg)
 		analog_loop_proc_hook(buffer, codec, 0xfe0);
-}
+पूर्ण
 
-static void stac927x_proc_hook(struct snd_info_buffer *buffer,
-			       struct hda_codec *codec, hda_nid_t nid)
-{
-	if (nid == codec->core.afg)
+अटल व्योम stac927x_proc_hook(काष्ठा snd_info_buffer *buffer,
+			       काष्ठा hda_codec *codec, hda_nid_t nid)
+अणु
+	अगर (nid == codec->core.afg)
 		analog_loop_proc_hook(buffer, codec, 0xfeb);
-}
-#else
-#define stac92hd_proc_hook	NULL
-#define stac92hd7x_proc_hook	NULL
-#define stac9205_proc_hook	NULL
-#define stac927x_proc_hook	NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा stac92hd_proc_hook	शून्य
+#घोषणा stac92hd7x_proc_hook	शून्य
+#घोषणा stac9205_proc_hook	शून्य
+#घोषणा stac927x_proc_hook	शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
-static int stac_suspend(struct hda_codec *codec)
-{
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक stac_suspend(काष्ठा hda_codec *codec)
+अणु
 	stac_shutup(codec);
-	return 0;
-}
-#else
-#define stac_suspend		NULL
-#endif /* CONFIG_PM */
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा stac_suspend		शून्य
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct hda_codec_ops stac_patch_ops = {
+अटल स्थिर काष्ठा hda_codec_ops stac_patch_ops = अणु
 	.build_controls = snd_hda_gen_build_controls,
 	.build_pcms = snd_hda_gen_build_pcms,
 	.init = stac_init,
-	.free = stac_free,
+	.मुक्त = stac_मुक्त,
 	.unsol_event = snd_hda_jack_unsol_event,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend = stac_suspend,
-#endif
-	.reboot_notify = stac_shutup,
-};
+#पूर्ण_अगर
+	.reboot_notअगरy = stac_shutup,
+पूर्ण;
 
-static int alloc_stac_spec(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
+अटल पूर्णांक alloc_stac_spec(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
 
-	spec = kzalloc(sizeof(*spec), GFP_KERNEL);
-	if (!spec)
-		return -ENOMEM;
+	spec = kzalloc(माप(*spec), GFP_KERNEL);
+	अगर (!spec)
+		वापस -ENOMEM;
 	snd_hda_gen_spec_init(&spec->gen);
 	codec->spec = spec;
 	codec->no_trigger_sense = 1; /* seems common with STAC/IDT codecs */
 	spec->gen.dac_min_mute = true;
 	codec->patch_ops = stac_patch_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int patch_stac9200(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	int err;
+अटल पूर्णांक patch_stac9200(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	पूर्णांक err;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	spec = codec->spec;
 	spec->linear_tone_beep = 1;
 	spec->gen.own_eapd_ctl = 1;
 
-	codec->power_filter = snd_hda_codec_eapd_power_filter;
+	codec->घातer_filter = snd_hda_codec_eapd_घातer_filter;
 
 	snd_hda_add_verbs(codec, stac9200_eapd_init);
 
@@ -4499,25 +4500,25 @@ static int patch_stac9200(struct hda_codec *codec)
 			   stac9200_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return err;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस err;
+	पूर्ण
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int patch_stac925x(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	int err;
+अटल पूर्णांक patch_stac925x(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	पूर्णांक err;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	spec = codec->spec;
 	spec->linear_tone_beep = 1;
@@ -4529,58 +4530,58 @@ static int patch_stac925x(struct hda_codec *codec)
 			   stac925x_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return err;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस err;
+	पूर्ण
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int patch_stac92hd73xx(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	int err;
-	int num_dacs;
+अटल पूर्णांक patch_stac92hd73xx(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	पूर्णांक err;
+	पूर्णांक num_dacs;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	spec = codec->spec;
-	/* enable power_save_node only for new 92HD89xx chips, as it causes
+	/* enable घातer_save_node only क्रम new 92HD89xx chips, as it causes
 	 * click noises on old 92HD73xx chips.
 	 */
-	if ((codec->core.vendor_id & 0xfffffff0) != 0x111d7670)
-		codec->power_save_node = 1;
+	अगर ((codec->core.venकरोr_id & 0xfffffff0) != 0x111d7670)
+		codec->घातer_save_node = 1;
 	spec->linear_tone_beep = 0;
 	spec->gen.mixer_nid = 0x1d;
-	spec->have_spdif_mux = 1;
+	spec->have_spdअगर_mux = 1;
 
 	num_dacs = snd_hda_get_num_conns(codec, 0x0a) - 1;
-	if (num_dacs < 3 || num_dacs > 5) {
+	अगर (num_dacs < 3 || num_dacs > 5) अणु
 		codec_warn(codec,
 			   "Could not determine number of channels defaulting to DAC count\n");
 		num_dacs = 5;
-	}
+	पूर्ण
 
-	switch (num_dacs) {
-	case 0x3: /* 6 Channel */
+	चयन (num_dacs) अणु
+	हाल 0x3: /* 6 Channel */
 		spec->aloopback_ctl = &stac92hd73xx_6ch_loopback;
-		break;
-	case 0x4: /* 8 Channel */
+		अवरोध;
+	हाल 0x4: /* 8 Channel */
 		spec->aloopback_ctl = &stac92hd73xx_8ch_loopback;
-		break;
-	case 0x5: /* 10 Channel */
+		अवरोध;
+	हाल 0x5: /* 10 Channel */
 		spec->aloopback_ctl = &stac92hd73xx_10ch_loopback;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spec->aloopback_mask = 0x01;
-	spec->aloopback_shift = 8;
+	spec->aloopback_shअगरt = 8;
 
 	spec->gen.beep_nid = 0x1c; /* digital beep */
 
@@ -4588,87 +4589,87 @@ static int patch_stac92hd73xx(struct hda_codec *codec)
 	spec->eapd_mask = spec->gpio_mask = spec->gpio_dir = 0x1;
 	spec->gpio_data = 0x01;
 
-	spec->eapd_switch = 1;
+	spec->eapd_चयन = 1;
 
 	spec->num_pwrs = ARRAY_SIZE(stac92hd73xx_pwr_nids);
 	spec->pwr_nids = stac92hd73xx_pwr_nids;
 
 	spec->gen.own_eapd_ctl = 1;
-	spec->gen.power_down_unused = 1;
+	spec->gen.घातer_करोwn_unused = 1;
 
 	snd_hda_pick_fixup(codec, stac92hd73xx_models, stac92hd73xx_fixup_tbl,
 			   stac92hd73xx_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	if (!spec->volknob_init)
+	अगर (!spec->volknob_init)
 		snd_hda_add_verbs(codec, stac92hd73xx_core_init);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return err;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस err;
+	पूर्ण
 
-	/* Don't GPIO-mute speakers if there are no internal speakers, because
-	 * the GPIO might be necessary for Headphone
+	/* Don't GPIO-mute speakers अगर there are no पूर्णांकernal speakers, because
+	 * the GPIO might be necessary क्रम Headphone
 	 */
-	if (spec->eapd_switch && !has_builtin_speaker(codec))
-		spec->eapd_switch = 0;
+	अगर (spec->eapd_चयन && !has_builtin_speaker(codec))
+		spec->eapd_चयन = 0;
 
 	codec->proc_widget_hook = stac92hd7x_proc_hook;
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stac_setup_gpio(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
+अटल व्योम stac_setup_gpio(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec = codec->spec;
 
 	spec->gpio_mask |= spec->eapd_mask;
-	if (spec->gpio_led) {
-		if (!spec->vref_mute_led_nid) {
+	अगर (spec->gpio_led) अणु
+		अगर (!spec->vref_mute_led_nid) अणु
 			spec->gpio_mask |= spec->gpio_led;
 			spec->gpio_dir |= spec->gpio_led;
 			spec->gpio_data |= spec->gpio_led;
-		} else {
-			codec->power_filter = stac_vref_led_power_filter;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			codec->घातer_filter = stac_vref_led_घातer_filter;
+		पूर्ण
+	पूर्ण
 
-	if (spec->mic_mute_led_gpio) {
+	अगर (spec->mic_mute_led_gpio) अणु
 		spec->gpio_mask |= spec->mic_mute_led_gpio;
 		spec->gpio_dir |= spec->mic_mute_led_gpio;
 		spec->mic_enabled = 0;
 		spec->gpio_data |= spec->mic_mute_led_gpio;
 		snd_hda_gen_add_micmute_led_cdev(codec, stac_capture_led_update);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int patch_stac92hd83xxx(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	int err;
+अटल पूर्णांक patch_stac92hd83xxx(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	पूर्णांक err;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* longer delay needed for D3 */
-	codec->core.power_caps &= ~AC_PWRST_EPSS;
+	/* दीर्घer delay needed क्रम D3 */
+	codec->core.घातer_caps &= ~AC_PWRST_EPSS;
 
 	spec = codec->spec;
-	codec->power_save_node = 1;
+	codec->घातer_save_node = 1;
 	spec->linear_tone_beep = 0;
 	spec->gen.own_eapd_ctl = 1;
-	spec->gen.power_down_unused = 1;
+	spec->gen.घातer_करोwn_unused = 1;
 	spec->gen.mixer_nid = 0x1b;
 
 	spec->gen.beep_nid = 0x21; /* digital beep */
 	spec->pwr_nids = stac92hd83xxx_pwr_nids;
 	spec->num_pwrs = ARRAY_SIZE(stac92hd83xxx_pwr_nids);
-	spec->default_polarity = -1; /* no default cfg */
+	spec->शेष_polarity = -1; /* no शेष cfg */
 
 	snd_hda_add_verbs(codec, stac92hd83xxx_core_init);
 
@@ -4678,45 +4679,45 @@ static int patch_stac92hd83xxx(struct hda_codec *codec)
 
 	stac_setup_gpio(codec);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return err;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस err;
+	पूर्ण
 
 	codec->proc_widget_hook = stac92hd_proc_hook;
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const hda_nid_t stac92hd95_pwr_nids[] = {
+अटल स्थिर hda_nid_t stac92hd95_pwr_nids[] = अणु
 	0x0a, 0x0b, 0x0c, 0x0d
-};
+पूर्ण;
 
-static int patch_stac92hd95(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	int err;
+अटल पूर्णांक patch_stac92hd95(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	पूर्णांक err;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* longer delay needed for D3 */
-	codec->core.power_caps &= ~AC_PWRST_EPSS;
+	/* दीर्घer delay needed क्रम D3 */
+	codec->core.घातer_caps &= ~AC_PWRST_EPSS;
 
 	spec = codec->spec;
-	codec->power_save_node = 1;
+	codec->घातer_save_node = 1;
 	spec->linear_tone_beep = 0;
 	spec->gen.own_eapd_ctl = 1;
-	spec->gen.power_down_unused = 1;
+	spec->gen.घातer_करोwn_unused = 1;
 
 	spec->gen.beep_nid = 0x19; /* digital beep */
 	spec->pwr_nids = stac92hd95_pwr_nids;
 	spec->num_pwrs = ARRAY_SIZE(stac92hd95_pwr_nids);
-	spec->default_polarity = 0;
+	spec->शेष_polarity = 0;
 
 	snd_hda_pick_fixup(codec, stac92hd95_models, stac92hd95_fixup_tbl,
 			   stac92hd95_fixups);
@@ -4724,50 +4725,50 @@ static int patch_stac92hd95(struct hda_codec *codec)
 
 	stac_setup_gpio(codec);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return err;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस err;
+	पूर्ण
 
 	codec->proc_widget_hook = stac92hd_proc_hook;
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int patch_stac92hd71bxx(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	const hda_nid_t *unmute_nids = stac92hd71bxx_unmute_nids;
-	int err;
+अटल पूर्णांक patch_stac92hd71bxx(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	स्थिर hda_nid_t *unmute_nids = stac92hd71bxx_unmute_nids;
+	पूर्णांक err;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	spec = codec->spec;
-	/* disabled power_save_node since it causes noises on a Dell machine */
-	/* codec->power_save_node = 1; */
+	/* disabled घातer_save_node since it causes noises on a Dell machine */
+	/* codec->घातer_save_node = 1; */
 	spec->linear_tone_beep = 0;
 	spec->gen.own_eapd_ctl = 1;
-	spec->gen.power_down_unused = 1;
+	spec->gen.घातer_करोwn_unused = 1;
 	spec->gen.mixer_nid = 0x17;
-	spec->have_spdif_mux = 1;
+	spec->have_spdअगर_mux = 1;
 
 	/* GPIO0 = EAPD */
 	spec->gpio_mask = 0x01;
 	spec->gpio_dir = 0x01;
 	spec->gpio_data = 0x01;
 
-	switch (codec->core.vendor_id) {
-	case 0x111d76b6: /* 4 Port without Analog Mixer */
-	case 0x111d76b7:
+	चयन (codec->core.venकरोr_id) अणु
+	हाल 0x111d76b6: /* 4 Port without Analog Mixer */
+	हाल 0x111d76b7:
 		unmute_nids++;
-		break;
-	case 0x111d7608: /* 5 Port with Analog Mixer */
-		if ((codec->core.revision_id & 0xf) == 0 ||
+		अवरोध;
+	हाल 0x111d7608: /* 5 Port with Analog Mixer */
+		अगर ((codec->core.revision_id & 0xf) == 0 ||
 		    (codec->core.revision_id & 0xf) == 1)
 			spec->stream_delay = 40; /* 40 milliseconds */
 
@@ -4775,29 +4776,29 @@ static int patch_stac92hd71bxx(struct hda_codec *codec)
 		unmute_nids++;
 		snd_hda_codec_set_pincfg(codec, 0x0f, 0x40f000f0);
 		snd_hda_codec_set_pincfg(codec, 0x19, 0x40f000f3);
-		break;
-	case 0x111d7603: /* 6 Port with Analog Mixer */
-		if ((codec->core.revision_id & 0xf) == 1)
+		अवरोध;
+	हाल 0x111d7603: /* 6 Port with Analog Mixer */
+		अगर ((codec->core.revision_id & 0xf) == 1)
 			spec->stream_delay = 40; /* 40 milliseconds */
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (get_wcaps_type(get_wcaps(codec, 0x28)) == AC_WID_VOL_KNB)
+	अगर (get_wcaps_type(get_wcaps(codec, 0x28)) == AC_WID_VOL_KNB)
 		snd_hda_add_verbs(codec, stac92hd71bxx_core_init);
 
-	if (get_wcaps(codec, 0xa) & AC_WCAP_IN_AMP) {
-		const hda_nid_t *p;
-		for (p = unmute_nids; *p; p++)
+	अगर (get_wcaps(codec, 0xa) & AC_WCAP_IN_AMP) अणु
+		स्थिर hda_nid_t *p;
+		क्रम (p = unmute_nids; *p; p++)
 			snd_hda_codec_amp_init_stereo(codec, *p, HDA_INPUT, 0,
 						      0xff, 0x00);
-	}
+	पूर्ण
 
 	spec->aloopback_ctl = &stac92hd71bxx_loopback;
 	spec->aloopback_mask = 0x50;
-	spec->aloopback_shift = 0;
+	spec->aloopback_shअगरt = 0;
 
-	spec->powerdown_adcs = 1;
+	spec->घातerकरोwn_adcs = 1;
 	spec->gen.beep_nid = 0x26; /* digital beep */
 	spec->num_pwrs = ARRAY_SIZE(stac92hd71bxx_pwr_nids);
 	spec->pwr_nids = stac92hd71bxx_pwr_nids;
@@ -4808,27 +4809,27 @@ static int patch_stac92hd71bxx(struct hda_codec *codec)
 
 	stac_setup_gpio(codec);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return err;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस err;
+	पूर्ण
 
 	codec->proc_widget_hook = stac92hd7x_proc_hook;
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int patch_stac922x(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	int err;
+अटल पूर्णांक patch_stac922x(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	पूर्णांक err;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	spec = codec->spec;
 	spec->linear_tone_beep = 1;
@@ -4847,36 +4848,36 @@ static int patch_stac922x(struct hda_codec *codec)
 			   stac922x_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return err;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस err;
+	पूर्ण
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const stac927x_spdif_labels[] = {
+अटल स्थिर अक्षर * स्थिर stac927x_spdअगर_labels[] = अणु
 	"Digital Playback", "ADAT", "Analog Mux 1",
-	"Analog Mux 2", "Analog Mux 3", NULL
-};
+	"Analog Mux 2", "Analog Mux 3", शून्य
+पूर्ण;
 
-static int patch_stac927x(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	int err;
+अटल पूर्णांक patch_stac927x(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	पूर्णांक err;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	spec = codec->spec;
 	spec->linear_tone_beep = 1;
 	spec->gen.own_eapd_ctl = 1;
-	spec->have_spdif_mux = 1;
-	spec->spdif_labels = stac927x_spdif_labels;
+	spec->have_spdअगर_mux = 1;
+	spec->spdअगर_labels = stac927x_spdअगर_labels;
 
 	spec->gen.beep_nid = 0x23; /* digital beep */
 
@@ -4886,54 +4887,54 @@ static int patch_stac927x(struct hda_codec *codec)
 
 	spec->aloopback_ctl = &stac927x_loopback;
 	spec->aloopback_mask = 0x40;
-	spec->aloopback_shift = 0;
-	spec->eapd_switch = 1;
+	spec->aloopback_shअगरt = 0;
+	spec->eapd_चयन = 1;
 
 	snd_hda_pick_fixup(codec, stac927x_models, stac927x_fixup_tbl,
 			   stac927x_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	if (!spec->volknob_init)
+	अगर (!spec->volknob_init)
 		snd_hda_add_verbs(codec, stac927x_core_init);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return err;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस err;
+	पूर्ण
 
 	codec->proc_widget_hook = stac927x_proc_hook;
 
 	/*
 	 * !!FIXME!!
-	 * The STAC927x seem to require fairly long delays for certain
-	 * command sequences.  With too short delays (even if the answer
+	 * The STAC927x seem to require fairly दीर्घ delays क्रम certain
+	 * command sequences.  With too लघु delays (even अगर the answer
 	 * is set to RIRB properly), it results in the silence output
 	 * on some hardwares like Dell.
 	 *
-	 * The below flag enables the longer delay (see get_response
-	 * in hda_intel.c).
+	 * The below flag enables the दीर्घer delay (see get_response
+	 * in hda_पूर्णांकel.c).
 	 */
-	codec->bus->core.needs_damn_long_delay = 1;
+	codec->bus->core.needs_damn_दीर्घ_delay = 1;
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int patch_stac9205(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	int err;
+अटल पूर्णांक patch_stac9205(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	पूर्णांक err;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	spec = codec->spec;
 	spec->linear_tone_beep = 1;
 	spec->gen.own_eapd_ctl = 1;
-	spec->have_spdif_mux = 1;
+	spec->have_spdअगर_mux = 1;
 
 	spec->gen.beep_nid = 0x23; /* digital beep */
 
@@ -4941,81 +4942,81 @@ static int patch_stac9205(struct hda_codec *codec)
 	spec->aloopback_ctl = &stac9205_loopback;
 
 	spec->aloopback_mask = 0x40;
-	spec->aloopback_shift = 0;
+	spec->aloopback_shअगरt = 0;
 	
 	/* GPIO0 High = EAPD */
 	spec->eapd_mask = spec->gpio_mask = spec->gpio_dir = 0x1;
 	spec->gpio_data = 0x01;
 
 	/* Turn on/off EAPD per HP plugging */
-	spec->eapd_switch = 1;
+	spec->eapd_चयन = 1;
 
 	snd_hda_pick_fixup(codec, stac9205_models, stac9205_fixup_tbl,
 			   stac9205_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return err;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस err;
+	पूर्ण
 
 	codec->proc_widget_hook = stac9205_proc_hook;
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * STAC9872 hack
  */
 
-static const struct hda_verb stac9872_core_init[] = {
-	{0x15, AC_VERB_SET_CONNECT_SEL, 0x1}, /* mic-sel: 0a,0d,14,02 */
-	{0x15, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE}, /* Mic-in -> 0x9 */
-	{}
-};
+अटल स्थिर काष्ठा hda_verb stac9872_core_init[] = अणु
+	अणु0x15, AC_VERB_SET_CONNECT_SEL, 0x1पूर्ण, /* mic-sel: 0a,0d,14,02 */
+	अणु0x15, AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTEपूर्ण, /* Mic-in -> 0x9 */
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_pintbl stac9872_vaio_pin_configs[] = {
-	{ 0x0a, 0x03211020 },
-	{ 0x0b, 0x411111f0 },
-	{ 0x0c, 0x411111f0 },
-	{ 0x0d, 0x03a15030 },
-	{ 0x0e, 0x411111f0 },
-	{ 0x0f, 0x90170110 },
-	{ 0x11, 0x411111f0 },
-	{ 0x13, 0x411111f0 },
-	{ 0x14, 0x90a7013e },
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl stac9872_vaio_pin_configs[] = अणु
+	अणु 0x0a, 0x03211020 पूर्ण,
+	अणु 0x0b, 0x411111f0 पूर्ण,
+	अणु 0x0c, 0x411111f0 पूर्ण,
+	अणु 0x0d, 0x03a15030 पूर्ण,
+	अणु 0x0e, 0x411111f0 पूर्ण,
+	अणु 0x0f, 0x90170110 पूर्ण,
+	अणु 0x11, 0x411111f0 पूर्ण,
+	अणु 0x13, 0x411111f0 पूर्ण,
+	अणु 0x14, 0x90a7013e पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_model_fixup stac9872_models[] = {
-	{ .id = STAC_9872_VAIO, .name = "vaio" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup stac9872_models[] = अणु
+	अणु .id = STAC_9872_VAIO, .name = "vaio" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_fixup stac9872_fixups[] = {
-	[STAC_9872_VAIO] = {
+अटल स्थिर काष्ठा hda_fixup stac9872_fixups[] = अणु
+	[STAC_9872_VAIO] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = stac9872_vaio_pin_configs,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_pci_quirk stac9872_fixup_tbl[] = {
+अटल स्थिर काष्ठा snd_pci_quirk stac9872_fixup_tbl[] = अणु
 	SND_PCI_QUIRK_MASK(0x104d, 0xfff0, 0x81e0,
 			   "Sony VAIO F/S", STAC_9872_VAIO),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-static int patch_stac9872(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec;
-	int err;
+अटल पूर्णांक patch_stac9872(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा sigmatel_spec *spec;
+	पूर्णांक err;
 
 	err = alloc_stac_spec(codec);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	spec = codec->spec;
 	spec->linear_tone_beep = 1;
@@ -5027,22 +5028,22 @@ static int patch_stac9872(struct hda_codec *codec)
 			   stac9872_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	err = stac_parse_auto_config(codec);
-	if (err < 0) {
-		stac_free(codec);
-		return -EINVAL;
-	}
+	err = stac_parse_स्वतः_config(codec);
+	अगर (err < 0) अणु
+		stac_मुक्त(codec);
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * patch entries
  */
-static const struct hda_device_id snd_hda_id_sigmatel[] = {
+अटल स्थिर काष्ठा hda_device_id snd_hda_id_sigmatel[] = अणु
 	HDA_CODEC_ENTRY(0x83847690, "STAC9200", patch_stac9200),
 	HDA_CODEC_ENTRY(0x83847882, "STAC9220 A1", patch_stac922x),
 	HDA_CODEC_ENTRY(0x83847680, "STAC9221 A1", patch_stac922x),
@@ -5075,7 +5076,7 @@ static const struct hda_device_id snd_hda_id_sigmatel[] = {
 	HDA_CODEC_ENTRY(0x83847637, "STAC9250D", patch_stac925x),
 	HDA_CODEC_ENTRY(0x83847645, "92HD206X", patch_stac927x),
 	HDA_CODEC_ENTRY(0x83847646, "92HD206D", patch_stac927x),
-	/* The following does not take into account .id=0x83847661 when subsys =
+	/* The following करोes not take पूर्णांकo account .id=0x83847661 when subsys =
 	 * 104D0C00 which is STAC9225s. Because of this, some SZ Notebooks are
 	 * currently not fully supported.
 	 */
@@ -5147,15 +5148,15 @@ static const struct hda_device_id snd_hda_id_sigmatel[] = {
 	HDA_CODEC_ENTRY(0x111d76f1, "92HD66C1X3", patch_stac92hd83xxx),
 	HDA_CODEC_ENTRY(0x111d76f2, "92HD66C2X3", patch_stac92hd83xxx),
 	HDA_CODEC_ENTRY(0x111d76f3, "92HD66C3/65", patch_stac92hd83xxx),
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 MODULE_DEVICE_TABLE(hdaudio, snd_hda_id_sigmatel);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("IDT/Sigmatel HD-audio codec");
 
-static struct hda_codec_driver sigmatel_driver = {
+अटल काष्ठा hda_codec_driver sigmatel_driver = अणु
 	.id = snd_hda_id_sigmatel,
-};
+पूर्ण;
 
 module_hda_codec_driver(sigmatel_driver);

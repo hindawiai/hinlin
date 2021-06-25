@@ -1,198 +1,199 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* AFS file locking support
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include "internal.h"
+#समावेश "internal.h"
 
-#define AFS_LOCK_GRANTED	0
-#define AFS_LOCK_PENDING	1
-#define AFS_LOCK_YOUR_TRY	2
+#घोषणा AFS_LOCK_GRANTED	0
+#घोषणा AFS_LOCK_PENDING	1
+#घोषणा AFS_LOCK_YOUR_TRY	2
 
-struct workqueue_struct *afs_lock_manager;
+काष्ठा workqueue_काष्ठा *afs_lock_manager;
 
-static void afs_next_locker(struct afs_vnode *vnode, int error);
-static void afs_fl_copy_lock(struct file_lock *new, struct file_lock *fl);
-static void afs_fl_release_private(struct file_lock *fl);
+अटल व्योम afs_next_locker(काष्ठा afs_vnode *vnode, पूर्णांक error);
+अटल व्योम afs_fl_copy_lock(काष्ठा file_lock *new, काष्ठा file_lock *fl);
+अटल व्योम afs_fl_release_निजी(काष्ठा file_lock *fl);
 
-static const struct file_lock_operations afs_lock_ops = {
+अटल स्थिर काष्ठा file_lock_operations afs_lock_ops = अणु
 	.fl_copy_lock		= afs_fl_copy_lock,
-	.fl_release_private	= afs_fl_release_private,
-};
+	.fl_release_निजी	= afs_fl_release_निजी,
+पूर्ण;
 
-static inline void afs_set_lock_state(struct afs_vnode *vnode, enum afs_lock_state state)
-{
+अटल अंतरभूत व्योम afs_set_lock_state(काष्ठा afs_vnode *vnode, क्रमागत afs_lock_state state)
+अणु
 	_debug("STATE %u -> %u", vnode->lock_state, state);
 	vnode->lock_state = state;
-}
+पूर्ण
 
-static atomic_t afs_file_lock_debug_id;
+अटल atomic_t afs_file_lock_debug_id;
 
 /*
- * if the callback is broken on this vnode, then the lock may now be available
+ * अगर the callback is broken on this vnode, then the lock may now be available
  */
-void afs_lock_may_be_available(struct afs_vnode *vnode)
-{
+व्योम afs_lock_may_be_available(काष्ठा afs_vnode *vnode)
+अणु
 	_enter("{%llx:%llu}", vnode->fid.vid, vnode->fid.vnode);
 
 	spin_lock(&vnode->lock);
-	if (vnode->lock_state == AFS_VNODE_LOCK_WAITING_FOR_CB)
+	अगर (vnode->lock_state == AFS_VNODE_LOCK_WAITING_FOR_CB)
 		afs_next_locker(vnode, 0);
-	trace_afs_flock_ev(vnode, NULL, afs_flock_callback_break, 0);
+	trace_afs_flock_ev(vnode, शून्य, afs_flock_callback_अवरोध, 0);
 	spin_unlock(&vnode->lock);
-}
+पूर्ण
 
 /*
- * the lock will time out in 5 minutes unless we extend it, so schedule
- * extension in a bit less than that time
+ * the lock will समय out in 5 minutes unless we extend it, so schedule
+ * extension in a bit less than that समय
  */
-static void afs_schedule_lock_extension(struct afs_vnode *vnode)
-{
-	ktime_t expires_at, now, duration;
+अटल व्योम afs_schedule_lock_extension(काष्ठा afs_vnode *vnode)
+अणु
+	kसमय_प्रकार expires_at, now, duration;
 	u64 duration_j;
 
-	expires_at = ktime_add_ms(vnode->locked_at, AFS_LOCKWAIT * 1000 / 2);
-	now = ktime_get_real();
-	duration = ktime_sub(expires_at, now);
-	if (duration <= 0)
+	expires_at = kसमय_add_ms(vnode->locked_at, AFS_LOCKWAIT * 1000 / 2);
+	now = kसमय_get_real();
+	duration = kसमय_sub(expires_at, now);
+	अगर (duration <= 0)
 		duration_j = 0;
-	else
-		duration_j = nsecs_to_jiffies(ktime_to_ns(duration));
+	अन्यथा
+		duration_j = nsecs_to_jअगरfies(kसमय_प्रकारo_ns(duration));
 
 	queue_delayed_work(afs_lock_manager, &vnode->lock_work, duration_j);
-}
+पूर्ण
 
 /*
- * In the case of successful completion of a lock operation, record the time
- * the reply appeared and start the lock extension timer.
+ * In the हाल of successful completion of a lock operation, record the समय
+ * the reply appeared and start the lock extension समयr.
  */
-void afs_lock_op_done(struct afs_call *call)
-{
-	struct afs_operation *op = call->op;
-	struct afs_vnode *vnode = op->file[0].vnode;
+व्योम afs_lock_op_करोne(काष्ठा afs_call *call)
+अणु
+	काष्ठा afs_operation *op = call->op;
+	काष्ठा afs_vnode *vnode = op->file[0].vnode;
 
-	if (call->error == 0) {
+	अगर (call->error == 0) अणु
 		spin_lock(&vnode->lock);
-		trace_afs_flock_ev(vnode, NULL, afs_flock_timestamp, 0);
-		vnode->locked_at = call->reply_time;
+		trace_afs_flock_ev(vnode, शून्य, afs_flock_बारtamp, 0);
+		vnode->locked_at = call->reply_समय;
 		afs_schedule_lock_extension(vnode);
 		spin_unlock(&vnode->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * grant one or more locks (readlocks are allowed to jump the queue if the
- * first lock in the queue is itself a readlock)
+ * grant one or more locks (पढ़ोlocks are allowed to jump the queue अगर the
+ * first lock in the queue is itself a पढ़ोlock)
  * - the caller must hold the vnode lock
  */
-static void afs_grant_locks(struct afs_vnode *vnode)
-{
-	struct file_lock *p, *_p;
+अटल व्योम afs_grant_locks(काष्ठा afs_vnode *vnode)
+अणु
+	काष्ठा file_lock *p, *_p;
 	bool exclusive = (vnode->lock_type == AFS_LOCK_WRITE);
 
-	list_for_each_entry_safe(p, _p, &vnode->pending_locks, fl_u.afs.link) {
-		if (!exclusive && p->fl_type == F_WRLCK)
-			continue;
+	list_क्रम_each_entry_safe(p, _p, &vnode->pending_locks, fl_u.afs.link) अणु
+		अगर (!exclusive && p->fl_type == F_WRLCK)
+			जारी;
 
 		list_move_tail(&p->fl_u.afs.link, &vnode->granted_locks);
 		p->fl_u.afs.state = AFS_LOCK_GRANTED;
 		trace_afs_flock_op(vnode, p, afs_flock_op_grant);
-		wake_up(&p->fl_wait);
-	}
-}
+		wake_up(&p->fl_रुको);
+	पूर्ण
+पूर्ण
 
 /*
- * If an error is specified, reject every pending lock that matches the
+ * If an error is specअगरied, reject every pending lock that matches the
  * authentication and type of the lock we failed to get.  If there are any
- * remaining lockers, try to wake up one of them to have a go.
+ * reमुख्यing lockers, try to wake up one of them to have a go.
  */
-static void afs_next_locker(struct afs_vnode *vnode, int error)
-{
-	struct file_lock *p, *_p, *next = NULL;
-	struct key *key = vnode->lock_key;
-	unsigned int fl_type = F_RDLCK;
+अटल व्योम afs_next_locker(काष्ठा afs_vnode *vnode, पूर्णांक error)
+अणु
+	काष्ठा file_lock *p, *_p, *next = शून्य;
+	काष्ठा key *key = vnode->lock_key;
+	अचिन्हित पूर्णांक fl_type = F_RDLCK;
 
 	_enter("");
 
-	if (vnode->lock_type == AFS_LOCK_WRITE)
+	अगर (vnode->lock_type == AFS_LOCK_WRITE)
 		fl_type = F_WRLCK;
 
-	list_for_each_entry_safe(p, _p, &vnode->pending_locks, fl_u.afs.link) {
-		if (error &&
+	list_क्रम_each_entry_safe(p, _p, &vnode->pending_locks, fl_u.afs.link) अणु
+		अगर (error &&
 		    p->fl_type == fl_type &&
-		    afs_file_key(p->fl_file) == key) {
+		    afs_file_key(p->fl_file) == key) अणु
 			list_del_init(&p->fl_u.afs.link);
 			p->fl_u.afs.state = error;
-			wake_up(&p->fl_wait);
-		}
+			wake_up(&p->fl_रुको);
+		पूर्ण
 
 		/* Select the next locker to hand off to. */
-		if (next &&
+		अगर (next &&
 		    (next->fl_type == F_WRLCK || p->fl_type == F_RDLCK))
-			continue;
+			जारी;
 		next = p;
-	}
+	पूर्ण
 
-	vnode->lock_key = NULL;
+	vnode->lock_key = शून्य;
 	key_put(key);
 
-	if (next) {
+	अगर (next) अणु
 		afs_set_lock_state(vnode, AFS_VNODE_LOCK_SETTING);
 		next->fl_u.afs.state = AFS_LOCK_YOUR_TRY;
 		trace_afs_flock_op(vnode, next, afs_flock_op_wake);
-		wake_up(&next->fl_wait);
-	} else {
+		wake_up(&next->fl_रुको);
+	पूर्ण अन्यथा अणु
 		afs_set_lock_state(vnode, AFS_VNODE_LOCK_NONE);
-		trace_afs_flock_ev(vnode, NULL, afs_flock_no_lockers, 0);
-	}
+		trace_afs_flock_ev(vnode, शून्य, afs_flock_no_lockers, 0);
+	पूर्ण
 
 	_leave("");
-}
+पूर्ण
 
 /*
- * Kill off all waiters in the the pending lock queue due to the vnode being
+ * Kill off all रुकोers in the the pending lock queue due to the vnode being
  * deleted.
  */
-static void afs_kill_lockers_enoent(struct afs_vnode *vnode)
-{
-	struct file_lock *p;
+अटल व्योम afs_समाप्त_lockers_enoent(काष्ठा afs_vnode *vnode)
+अणु
+	काष्ठा file_lock *p;
 
 	afs_set_lock_state(vnode, AFS_VNODE_LOCK_DELETED);
 
-	while (!list_empty(&vnode->pending_locks)) {
+	जबतक (!list_empty(&vnode->pending_locks)) अणु
 		p = list_entry(vnode->pending_locks.next,
-			       struct file_lock, fl_u.afs.link);
+			       काष्ठा file_lock, fl_u.afs.link);
 		list_del_init(&p->fl_u.afs.link);
 		p->fl_u.afs.state = -ENOENT;
-		wake_up(&p->fl_wait);
-	}
+		wake_up(&p->fl_रुको);
+	पूर्ण
 
 	key_put(vnode->lock_key);
-	vnode->lock_key = NULL;
-}
+	vnode->lock_key = शून्य;
+पूर्ण
 
-static void afs_lock_success(struct afs_operation *op)
-{
+अटल व्योम afs_lock_success(काष्ठा afs_operation *op)
+अणु
 	_enter("op=%08x", op->debug_id);
 	afs_vnode_commit_status(op, &op->file[0]);
-}
+पूर्ण
 
-static const struct afs_operation_ops afs_set_lock_operation = {
+अटल स्थिर काष्ठा afs_operation_ops afs_set_lock_operation = अणु
 	.issue_afs_rpc	= afs_fs_set_lock,
 	.issue_yfs_rpc	= yfs_fs_set_lock,
 	.success	= afs_lock_success,
-	.aborted	= afs_check_for_remote_deletion,
-};
+	.पातed	= afs_check_क्रम_remote_deletion,
+पूर्ण;
 
 /*
  * Get a lock on a file
  */
-static int afs_set_lock(struct afs_vnode *vnode, struct key *key,
+अटल पूर्णांक afs_set_lock(काष्ठा afs_vnode *vnode, काष्ठा key *key,
 			afs_lock_type_t type)
-{
-	struct afs_operation *op;
+अणु
+	काष्ठा afs_operation *op;
 
 	_enter("%s{%llx:%llu.%u},%x,%u",
 	       vnode->volume->name,
@@ -202,28 +203,28 @@ static int afs_set_lock(struct afs_vnode *vnode, struct key *key,
 	       key_serial(key), type);
 
 	op = afs_alloc_operation(key, vnode->volume);
-	if (IS_ERR(op))
-		return PTR_ERR(op);
+	अगर (IS_ERR(op))
+		वापस PTR_ERR(op);
 
 	afs_op_set_vnode(op, 0, vnode);
 
 	op->lock.type	= type;
 	op->ops		= &afs_set_lock_operation;
-	return afs_do_sync_operation(op);
-}
+	वापस afs_करो_sync_operation(op);
+पूर्ण
 
-static const struct afs_operation_ops afs_extend_lock_operation = {
+अटल स्थिर काष्ठा afs_operation_ops afs_extend_lock_operation = अणु
 	.issue_afs_rpc	= afs_fs_extend_lock,
 	.issue_yfs_rpc	= yfs_fs_extend_lock,
 	.success	= afs_lock_success,
-};
+पूर्ण;
 
 /*
  * Extend a lock on a file
  */
-static int afs_extend_lock(struct afs_vnode *vnode, struct key *key)
-{
-	struct afs_operation *op;
+अटल पूर्णांक afs_extend_lock(काष्ठा afs_vnode *vnode, काष्ठा key *key)
+अणु
+	काष्ठा afs_operation *op;
 
 	_enter("%s{%llx:%llu.%u},%x",
 	       vnode->volume->name,
@@ -233,28 +234,28 @@ static int afs_extend_lock(struct afs_vnode *vnode, struct key *key)
 	       key_serial(key));
 
 	op = afs_alloc_operation(key, vnode->volume);
-	if (IS_ERR(op))
-		return PTR_ERR(op);
+	अगर (IS_ERR(op))
+		वापस PTR_ERR(op);
 
 	afs_op_set_vnode(op, 0, vnode);
 
 	op->flags	|= AFS_OPERATION_UNINTR;
 	op->ops		= &afs_extend_lock_operation;
-	return afs_do_sync_operation(op);
-}
+	वापस afs_करो_sync_operation(op);
+पूर्ण
 
-static const struct afs_operation_ops afs_release_lock_operation = {
+अटल स्थिर काष्ठा afs_operation_ops afs_release_lock_operation = अणु
 	.issue_afs_rpc	= afs_fs_release_lock,
 	.issue_yfs_rpc	= yfs_fs_release_lock,
 	.success	= afs_lock_success,
-};
+पूर्ण;
 
 /*
  * Release a lock on a file
  */
-static int afs_release_lock(struct afs_vnode *vnode, struct key *key)
-{
-	struct afs_operation *op;
+अटल पूर्णांक afs_release_lock(काष्ठा afs_vnode *vnode, काष्ठा key *key)
+अणु
+	काष्ठा afs_operation *op;
 
 	_enter("%s{%llx:%llu.%u},%x",
 	       vnode->volume->name,
@@ -264,27 +265,27 @@ static int afs_release_lock(struct afs_vnode *vnode, struct key *key)
 	       key_serial(key));
 
 	op = afs_alloc_operation(key, vnode->volume);
-	if (IS_ERR(op))
-		return PTR_ERR(op);
+	अगर (IS_ERR(op))
+		वापस PTR_ERR(op);
 
 	afs_op_set_vnode(op, 0, vnode);
 
 	op->flags	|= AFS_OPERATION_UNINTR;
 	op->ops		= &afs_release_lock_operation;
-	return afs_do_sync_operation(op);
-}
+	वापस afs_करो_sync_operation(op);
+पूर्ण
 
 /*
- * do work for a lock, including:
- * - probing for a lock we're waiting on but didn't get immediately
- * - extending a lock that's close to timing out
+ * करो work क्रम a lock, including:
+ * - probing क्रम a lock we're waiting on but didn't get immediately
+ * - extending a lock that's बंद to timing out
  */
-void afs_lock_work(struct work_struct *work)
-{
-	struct afs_vnode *vnode =
-		container_of(work, struct afs_vnode, lock_work.work);
-	struct key *key;
-	int ret;
+व्योम afs_lock_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा afs_vnode *vnode =
+		container_of(work, काष्ठा afs_vnode, lock_work.work);
+	काष्ठा key *key;
+	पूर्णांक ret;
 
 	_enter("{%llx:%llu}", vnode->fid.vid, vnode->fid.vnode);
 
@@ -292,175 +293,175 @@ void afs_lock_work(struct work_struct *work)
 
 again:
 	_debug("wstate %u for %p", vnode->lock_state, vnode);
-	switch (vnode->lock_state) {
-	case AFS_VNODE_LOCK_NEED_UNLOCK:
+	चयन (vnode->lock_state) अणु
+	हाल AFS_VNODE_LOCK_NEED_UNLOCK:
 		afs_set_lock_state(vnode, AFS_VNODE_LOCK_UNLOCKING);
-		trace_afs_flock_ev(vnode, NULL, afs_flock_work_unlocking, 0);
+		trace_afs_flock_ev(vnode, शून्य, afs_flock_work_unlocking, 0);
 		spin_unlock(&vnode->lock);
 
-		/* attempt to release the server lock; if it fails, we just
-		 * wait 5 minutes and it'll expire anyway */
+		/* attempt to release the server lock; अगर it fails, we just
+		 * रुको 5 minutes and it'll expire anyway */
 		ret = afs_release_lock(vnode, vnode->lock_key);
-		if (ret < 0 && vnode->lock_state != AFS_VNODE_LOCK_DELETED) {
-			trace_afs_flock_ev(vnode, NULL, afs_flock_release_fail,
+		अगर (ret < 0 && vnode->lock_state != AFS_VNODE_LOCK_DELETED) अणु
+			trace_afs_flock_ev(vnode, शून्य, afs_flock_release_fail,
 					   ret);
-			printk(KERN_WARNING "AFS:"
+			prपूर्णांकk(KERN_WARNING "AFS:"
 			       " Failed to release lock on {%llx:%llx} error %d\n",
 			       vnode->fid.vid, vnode->fid.vnode, ret);
-		}
+		पूर्ण
 
 		spin_lock(&vnode->lock);
-		if (ret == -ENOENT)
-			afs_kill_lockers_enoent(vnode);
-		else
+		अगर (ret == -ENOENT)
+			afs_समाप्त_lockers_enoent(vnode);
+		अन्यथा
 			afs_next_locker(vnode, 0);
 		spin_unlock(&vnode->lock);
-		return;
+		वापस;
 
-	/* If we've already got a lock, then it must be time to extend that
-	 * lock as AFS locks time out after 5 minutes.
+	/* If we've alपढ़ोy got a lock, then it must be समय to extend that
+	 * lock as AFS locks समय out after 5 minutes.
 	 */
-	case AFS_VNODE_LOCK_GRANTED:
+	हाल AFS_VNODE_LOCK_GRANTED:
 		_debug("extend");
 
 		ASSERT(!list_empty(&vnode->granted_locks));
 
 		key = key_get(vnode->lock_key);
 		afs_set_lock_state(vnode, AFS_VNODE_LOCK_EXTENDING);
-		trace_afs_flock_ev(vnode, NULL, afs_flock_work_extending, 0);
+		trace_afs_flock_ev(vnode, शून्य, afs_flock_work_extending, 0);
 		spin_unlock(&vnode->lock);
 
 		ret = afs_extend_lock(vnode, key); /* RPC */
 		key_put(key);
 
-		if (ret < 0) {
-			trace_afs_flock_ev(vnode, NULL, afs_flock_extend_fail,
+		अगर (ret < 0) अणु
+			trace_afs_flock_ev(vnode, शून्य, afs_flock_extend_fail,
 					   ret);
 			pr_warn("AFS: Failed to extend lock on {%llx:%llx} error %d\n",
 				vnode->fid.vid, vnode->fid.vnode, ret);
-		}
+		पूर्ण
 
 		spin_lock(&vnode->lock);
 
-		if (ret == -ENOENT) {
-			afs_kill_lockers_enoent(vnode);
+		अगर (ret == -ENOENT) अणु
+			afs_समाप्त_lockers_enoent(vnode);
 			spin_unlock(&vnode->lock);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (vnode->lock_state != AFS_VNODE_LOCK_EXTENDING)
-			goto again;
+		अगर (vnode->lock_state != AFS_VNODE_LOCK_EXTENDING)
+			जाओ again;
 		afs_set_lock_state(vnode, AFS_VNODE_LOCK_GRANTED);
 
-		if (ret != 0)
+		अगर (ret != 0)
 			queue_delayed_work(afs_lock_manager, &vnode->lock_work,
 					   HZ * 10);
 		spin_unlock(&vnode->lock);
 		_leave(" [ext]");
-		return;
+		वापस;
 
 	/* If we're waiting for a callback to indicate lock release, we can't
-	 * actually rely on this, so need to recheck at regular intervals.  The
-	 * problem is that the server might not notify us if the lock just
+	 * actually rely on this, so need to recheck at regular पूर्णांकervals.  The
+	 * problem is that the server might not notअगरy us अगर the lock just
 	 * expires (say because a client died) rather than being explicitly
 	 * released.
 	 */
-	case AFS_VNODE_LOCK_WAITING_FOR_CB:
+	हाल AFS_VNODE_LOCK_WAITING_FOR_CB:
 		_debug("retry");
 		afs_next_locker(vnode, 0);
 		spin_unlock(&vnode->lock);
-		return;
+		वापस;
 
-	case AFS_VNODE_LOCK_DELETED:
-		afs_kill_lockers_enoent(vnode);
+	हाल AFS_VNODE_LOCK_DELETED:
+		afs_समाप्त_lockers_enoent(vnode);
 		spin_unlock(&vnode->lock);
-		return;
+		वापस;
 
-	default:
+	शेष:
 		/* Looks like a lock request was withdrawn. */
 		spin_unlock(&vnode->lock);
 		_leave(" [no]");
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
 /*
- * pass responsibility for the unlocking of a vnode on the server to the
- * manager thread, lest a pending signal in the calling thread interrupt
+ * pass responsibility क्रम the unlocking of a vnode on the server to the
+ * manager thपढ़ो, lest a pending संकेत in the calling thपढ़ो पूर्णांकerrupt
  * AF_RXRPC
  * - the caller must hold the vnode lock
  */
-static void afs_defer_unlock(struct afs_vnode *vnode)
-{
+अटल व्योम afs_defer_unlock(काष्ठा afs_vnode *vnode)
+अणु
 	_enter("%u", vnode->lock_state);
 
-	if (list_empty(&vnode->granted_locks) &&
+	अगर (list_empty(&vnode->granted_locks) &&
 	    (vnode->lock_state == AFS_VNODE_LOCK_GRANTED ||
-	     vnode->lock_state == AFS_VNODE_LOCK_EXTENDING)) {
+	     vnode->lock_state == AFS_VNODE_LOCK_EXTENDING)) अणु
 		cancel_delayed_work(&vnode->lock_work);
 
 		afs_set_lock_state(vnode, AFS_VNODE_LOCK_NEED_UNLOCK);
-		trace_afs_flock_ev(vnode, NULL, afs_flock_defer_unlock, 0);
+		trace_afs_flock_ev(vnode, शून्य, afs_flock_defer_unlock, 0);
 		queue_delayed_work(afs_lock_manager, &vnode->lock_work, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Check that our view of the file metadata is up to date and check to see
  * whether we think that we have a locking permit.
  */
-static int afs_do_setlk_check(struct afs_vnode *vnode, struct key *key,
-			      enum afs_flock_mode mode, afs_lock_type_t type)
-{
+अटल पूर्णांक afs_करो_setlk_check(काष्ठा afs_vnode *vnode, काष्ठा key *key,
+			      क्रमागत afs_flock_mode mode, afs_lock_type_t type)
+अणु
 	afs_access_t access;
-	int ret;
+	पूर्णांक ret;
 
 	/* Make sure we've got a callback on this file and that our view of the
 	 * data version is up to date.
 	 */
 	ret = afs_validate(vnode, key);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Check the permission set to see if we're actually going to be
+	/* Check the permission set to see अगर we're actually going to be
 	 * allowed to get a lock on this file.
 	 */
 	ret = afs_check_permit(vnode, key, &access);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* At a rough estimation, you need LOCK, WRITE or INSERT perm to
-	 * read-lock a file and WRITE or INSERT perm to write-lock a file.
+	 * पढ़ो-lock a file and WRITE or INSERT perm to ग_लिखो-lock a file.
 	 *
-	 * We can't rely on the server to do this for us since if we want to
-	 * share a read lock that we already have, we won't go the server.
+	 * We can't rely on the server to करो this क्रम us since अगर we want to
+	 * share a पढ़ो lock that we alपढ़ोy have, we won't go the server.
 	 */
-	if (type == AFS_LOCK_READ) {
-		if (!(access & (AFS_ACE_INSERT | AFS_ACE_WRITE | AFS_ACE_LOCK)))
-			return -EACCES;
-	} else {
-		if (!(access & (AFS_ACE_INSERT | AFS_ACE_WRITE)))
-			return -EACCES;
-	}
+	अगर (type == AFS_LOCK_READ) अणु
+		अगर (!(access & (AFS_ACE_INSERT | AFS_ACE_WRITE | AFS_ACE_LOCK)))
+			वापस -EACCES;
+	पूर्ण अन्यथा अणु
+		अगर (!(access & (AFS_ACE_INSERT | AFS_ACE_WRITE)))
+			वापस -EACCES;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * request a lock on a file on the server
  */
-static int afs_do_setlk(struct file *file, struct file_lock *fl)
-{
-	struct inode *inode = locks_inode(file);
-	struct afs_vnode *vnode = AFS_FS_I(inode);
-	enum afs_flock_mode mode = AFS_FS_S(inode->i_sb)->flock_mode;
+अटल पूर्णांक afs_करो_setlk(काष्ठा file *file, काष्ठा file_lock *fl)
+अणु
+	काष्ठा inode *inode = locks_inode(file);
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
+	क्रमागत afs_flock_mode mode = AFS_FS_S(inode->i_sb)->flock_mode;
 	afs_lock_type_t type;
-	struct key *key = afs_file_key(file);
+	काष्ठा key *key = afs_file_key(file);
 	bool partial, no_server_lock = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (mode == afs_flock_mode_unset)
-		mode = afs_flock_mode_openafs;
+	अगर (mode == afs_flock_mode_unset)
+		mode = afs_flock_mode_खोलोafs;
 
 	_enter("{%llx:%llu},%llu-%llu,%u,%u",
 	       vnode->fid.vid, vnode->fid.vnode,
@@ -472,79 +473,79 @@ static int afs_do_setlk(struct file *file, struct file_lock *fl)
 
 	partial = (fl->fl_start != 0 || fl->fl_end != OFFSET_MAX);
 	type = (fl->fl_type == F_RDLCK) ? AFS_LOCK_READ : AFS_LOCK_WRITE;
-	if (mode == afs_flock_mode_write && partial)
+	अगर (mode == afs_flock_mode_ग_लिखो && partial)
 		type = AFS_LOCK_WRITE;
 
-	ret = afs_do_setlk_check(vnode, key, mode, type);
-	if (ret < 0)
-		return ret;
+	ret = afs_करो_setlk_check(vnode, key, mode, type);
+	अगर (ret < 0)
+		वापस ret;
 
 	trace_afs_flock_op(vnode, fl, afs_flock_op_set_lock);
 
-	/* AFS3 protocol only supports full-file locks and doesn't provide any
-	 * method of upgrade/downgrade, so we need to emulate for partial-file
+	/* AFS3 protocol only supports full-file locks and करोesn't provide any
+	 * method of upgrade/करोwngrade, so we need to emulate क्रम partial-file
 	 * locks.
 	 *
-	 * The OpenAFS client only gets a server lock for a full-file lock and
+	 * The OpenAFS client only माला_लो a server lock क्रम a full-file lock and
 	 * keeps partial-file locks local.  Allow this behaviour to be emulated
-	 * (as the default).
+	 * (as the शेष).
 	 */
-	if (mode == afs_flock_mode_local ||
-	    (partial && mode == afs_flock_mode_openafs)) {
+	अगर (mode == afs_flock_mode_local ||
+	    (partial && mode == afs_flock_mode_खोलोafs)) अणु
 		no_server_lock = true;
-		goto skip_server_lock;
-	}
+		जाओ skip_server_lock;
+	पूर्ण
 
 	spin_lock(&vnode->lock);
 	list_add_tail(&fl->fl_u.afs.link, &vnode->pending_locks);
 
 	ret = -ENOENT;
-	if (vnode->lock_state == AFS_VNODE_LOCK_DELETED)
-		goto error_unlock;
+	अगर (vnode->lock_state == AFS_VNODE_LOCK_DELETED)
+		जाओ error_unlock;
 
-	/* If we've already got a lock on the server then try to move to having
+	/* If we've alपढ़ोy got a lock on the server then try to move to having
 	 * the VFS grant the requested lock.  Note that this means that other
 	 * clients may get starved out.
 	 */
 	_debug("try %u", vnode->lock_state);
-	if (vnode->lock_state == AFS_VNODE_LOCK_GRANTED) {
-		if (type == AFS_LOCK_READ) {
+	अगर (vnode->lock_state == AFS_VNODE_LOCK_GRANTED) अणु
+		अगर (type == AFS_LOCK_READ) अणु
 			_debug("instant readlock");
 			list_move_tail(&fl->fl_u.afs.link, &vnode->granted_locks);
 			fl->fl_u.afs.state = AFS_LOCK_GRANTED;
-			goto vnode_is_locked_u;
-		}
+			जाओ vnode_is_locked_u;
+		पूर्ण
 
-		if (vnode->lock_type == AFS_LOCK_WRITE) {
+		अगर (vnode->lock_type == AFS_LOCK_WRITE) अणु
 			_debug("instant writelock");
 			list_move_tail(&fl->fl_u.afs.link, &vnode->granted_locks);
 			fl->fl_u.afs.state = AFS_LOCK_GRANTED;
-			goto vnode_is_locked_u;
-		}
-	}
+			जाओ vnode_is_locked_u;
+		पूर्ण
+	पूर्ण
 
-	if (vnode->lock_state == AFS_VNODE_LOCK_NONE &&
-	    !(fl->fl_flags & FL_SLEEP)) {
+	अगर (vnode->lock_state == AFS_VNODE_LOCK_NONE &&
+	    !(fl->fl_flags & FL_SLEEP)) अणु
 		ret = -EAGAIN;
-		if (type == AFS_LOCK_READ) {
-			if (vnode->status.lock_count == -1)
-				goto lock_is_contended; /* Write locked */
-		} else {
-			if (vnode->status.lock_count != 0)
-				goto lock_is_contended; /* Locked */
-		}
-	}
+		अगर (type == AFS_LOCK_READ) अणु
+			अगर (vnode->status.lock_count == -1)
+				जाओ lock_is_contended; /* Write locked */
+		पूर्ण अन्यथा अणु
+			अगर (vnode->status.lock_count != 0)
+				जाओ lock_is_contended; /* Locked */
+		पूर्ण
+	पूर्ण
 
-	if (vnode->lock_state != AFS_VNODE_LOCK_NONE)
-		goto need_to_wait;
+	अगर (vnode->lock_state != AFS_VNODE_LOCK_NONE)
+		जाओ need_to_रुको;
 
 try_to_lock:
-	/* We don't have a lock on this vnode and we aren't currently waiting
-	 * for one either, so ask the server for a lock.
+	/* We करोn't have a lock on this vnode and we aren't currently रुकोing
+	 * क्रम one either, so ask the server क्रम a lock.
 	 *
-	 * Note that we need to be careful if we get interrupted by a signal
+	 * Note that we need to be careful अगर we get पूर्णांकerrupted by a संकेत
 	 * after dispatching the request as we may still get the lock, even
-	 * though we don't wait for the reply (it's not too bad a problem - the
+	 * though we करोn't wait for the reply (it's not too bad a problem - the
 	 * lock will expire in 5 mins anyway).
 	 */
 	trace_afs_flock_ev(vnode, fl, afs_flock_try_to_lock, 0);
@@ -556,47 +557,47 @@ try_to_lock:
 	ret = afs_set_lock(vnode, key, type); /* RPC */
 
 	spin_lock(&vnode->lock);
-	switch (ret) {
-	case -EKEYREJECTED:
-	case -EKEYEXPIRED:
-	case -EKEYREVOKED:
-	case -EPERM:
-	case -EACCES:
+	चयन (ret) अणु
+	हाल -EKEYREJECTED:
+	हाल -EKEYEXPIRED:
+	हाल -EKEYREVOKED:
+	हाल -EPERM:
+	हाल -EACCES:
 		fl->fl_u.afs.state = ret;
 		trace_afs_flock_ev(vnode, fl, afs_flock_fail_perm, ret);
 		list_del_init(&fl->fl_u.afs.link);
 		afs_next_locker(vnode, ret);
-		goto error_unlock;
+		जाओ error_unlock;
 
-	case -ENOENT:
+	हाल -ENOENT:
 		fl->fl_u.afs.state = ret;
 		trace_afs_flock_ev(vnode, fl, afs_flock_fail_other, ret);
 		list_del_init(&fl->fl_u.afs.link);
-		afs_kill_lockers_enoent(vnode);
-		goto error_unlock;
+		afs_समाप्त_lockers_enoent(vnode);
+		जाओ error_unlock;
 
-	default:
+	शेष:
 		fl->fl_u.afs.state = ret;
 		trace_afs_flock_ev(vnode, fl, afs_flock_fail_other, ret);
 		list_del_init(&fl->fl_u.afs.link);
 		afs_next_locker(vnode, 0);
-		goto error_unlock;
+		जाओ error_unlock;
 
-	case -EWOULDBLOCK:
-		/* The server doesn't have a lock-waiting queue, so the client
-		 * will have to retry.  The server will break the outstanding
+	हाल -EWOULDBLOCK:
+		/* The server करोesn't have a lock-रुकोing queue, so the client
+		 * will have to retry.  The server will अवरोध the outstanding
 		 * callbacks on a file when a lock is released.
 		 */
 		ASSERT(list_empty(&vnode->granted_locks));
 		ASSERTCMP(vnode->pending_locks.next, ==, &fl->fl_u.afs.link);
-		goto lock_is_contended;
+		जाओ lock_is_contended;
 
-	case 0:
+	हाल 0:
 		afs_set_lock_state(vnode, AFS_VNODE_LOCK_GRANTED);
 		trace_afs_flock_ev(vnode, fl, afs_flock_acquired, type);
 		afs_grant_locks(vnode);
-		goto vnode_is_locked_u;
-	}
+		जाओ vnode_is_locked_u;
+	पूर्ण
 
 vnode_is_locked_u:
 	spin_unlock(&vnode->lock);
@@ -607,75 +608,75 @@ vnode_is_locked:
 skip_server_lock:
 	/* ... but the VFS still needs to distribute access on this client. */
 	trace_afs_flock_ev(vnode, fl, afs_flock_vfs_locking, 0);
-	ret = locks_lock_file_wait(file, fl);
+	ret = locks_lock_file_रुको(file, fl);
 	trace_afs_flock_ev(vnode, fl, afs_flock_vfs_lock, ret);
-	if (ret < 0)
-		goto vfs_rejected_lock;
+	अगर (ret < 0)
+		जाओ vfs_rejected_lock;
 
 	/* Again, make sure we've got a callback on this file and, again, make
 	 * sure that our view of the data version is up to date (we ignore
-	 * errors incurred here and deal with the consequences elsewhere).
+	 * errors incurred here and deal with the consequences अन्यथाwhere).
 	 */
 	afs_validate(vnode, key);
 	_leave(" = 0");
-	return 0;
+	वापस 0;
 
 lock_is_contended:
-	if (!(fl->fl_flags & FL_SLEEP)) {
+	अगर (!(fl->fl_flags & FL_SLEEP)) अणु
 		list_del_init(&fl->fl_u.afs.link);
 		afs_next_locker(vnode, 0);
 		ret = -EAGAIN;
-		goto error_unlock;
-	}
+		जाओ error_unlock;
+	पूर्ण
 
 	afs_set_lock_state(vnode, AFS_VNODE_LOCK_WAITING_FOR_CB);
 	trace_afs_flock_ev(vnode, fl, afs_flock_would_block, ret);
 	queue_delayed_work(afs_lock_manager, &vnode->lock_work, HZ * 5);
 
-need_to_wait:
+need_to_रुको:
 	/* We're going to have to wait.  Either this client doesn't have a lock
-	 * on the server yet and we need to wait for a callback to occur, or
-	 * the client does have a lock on the server, but it's shared and we
+	 * on the server yet and we need to रुको क्रम a callback to occur, or
+	 * the client करोes have a lock on the server, but it's shared and we
 	 * need an exclusive lock.
 	 */
 	spin_unlock(&vnode->lock);
 
-	trace_afs_flock_ev(vnode, fl, afs_flock_waiting, 0);
-	ret = wait_event_interruptible(fl->fl_wait,
+	trace_afs_flock_ev(vnode, fl, afs_flock_रुकोing, 0);
+	ret = रुको_event_पूर्णांकerruptible(fl->fl_रुको,
 				       fl->fl_u.afs.state != AFS_LOCK_PENDING);
-	trace_afs_flock_ev(vnode, fl, afs_flock_waited, ret);
+	trace_afs_flock_ev(vnode, fl, afs_flock_रुकोed, ret);
 
-	if (fl->fl_u.afs.state >= 0 && fl->fl_u.afs.state != AFS_LOCK_GRANTED) {
+	अगर (fl->fl_u.afs.state >= 0 && fl->fl_u.afs.state != AFS_LOCK_GRANTED) अणु
 		spin_lock(&vnode->lock);
 
-		switch (fl->fl_u.afs.state) {
-		case AFS_LOCK_YOUR_TRY:
+		चयन (fl->fl_u.afs.state) अणु
+		हाल AFS_LOCK_YOUR_TRY:
 			fl->fl_u.afs.state = AFS_LOCK_PENDING;
-			goto try_to_lock;
-		case AFS_LOCK_PENDING:
-			if (ret > 0) {
+			जाओ try_to_lock;
+		हाल AFS_LOCK_PENDING:
+			अगर (ret > 0) अणु
 				/* We need to retry the lock.  We may not be
-				 * notified by the server if it just expired
+				 * notअगरied by the server अगर it just expired
 				 * rather than being released.
 				 */
 				ASSERTCMP(vnode->lock_state, ==, AFS_VNODE_LOCK_WAITING_FOR_CB);
 				afs_set_lock_state(vnode, AFS_VNODE_LOCK_SETTING);
 				fl->fl_u.afs.state = AFS_LOCK_PENDING;
-				goto try_to_lock;
-			}
-			goto error_unlock;
-		case AFS_LOCK_GRANTED:
-		default:
-			break;
-		}
+				जाओ try_to_lock;
+			पूर्ण
+			जाओ error_unlock;
+		हाल AFS_LOCK_GRANTED:
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		spin_unlock(&vnode->lock);
-	}
+	पूर्ण
 
-	if (fl->fl_u.afs.state == AFS_LOCK_GRANTED)
-		goto vnode_is_locked;
+	अगर (fl->fl_u.afs.state == AFS_LOCK_GRANTED)
+		जाओ vnode_is_locked;
 	ret = fl->fl_u.afs.state;
-	goto error;
+	जाओ error;
 
 vfs_rejected_lock:
 	/* The VFS rejected the lock we just obtained, so we have to discard
@@ -683,8 +684,8 @@ vfs_rejected_lock:
 	 * deal with.
 	 */
 	_debug("vfs refused %d", ret);
-	if (no_server_lock)
-		goto error;
+	अगर (no_server_lock)
+		जाओ error;
 	spin_lock(&vnode->lock);
 	list_del_init(&fl->fl_u.afs.link);
 	afs_defer_unlock(vnode);
@@ -693,118 +694,118 @@ error_unlock:
 	spin_unlock(&vnode->lock);
 error:
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * unlock on a file on the server
  */
-static int afs_do_unlk(struct file *file, struct file_lock *fl)
-{
-	struct afs_vnode *vnode = AFS_FS_I(locks_inode(file));
-	int ret;
+अटल पूर्णांक afs_करो_unlk(काष्ठा file *file, काष्ठा file_lock *fl)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(locks_inode(file));
+	पूर्णांक ret;
 
 	_enter("{%llx:%llu},%u", vnode->fid.vid, vnode->fid.vnode, fl->fl_type);
 
 	trace_afs_flock_op(vnode, fl, afs_flock_op_unlock);
 
-	/* Flush all pending writes before doing anything with locks. */
+	/* Flush all pending ग_लिखोs beक्रमe करोing anything with locks. */
 	vfs_fsync(file, 0);
 
-	ret = locks_lock_file_wait(file, fl);
+	ret = locks_lock_file_रुको(file, fl);
 	_leave(" = %d [%u]", ret, vnode->lock_state);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * return information about a lock we currently hold, if indeed we hold one
+ * वापस inक्रमmation about a lock we currently hold, अगर indeed we hold one
  */
-static int afs_do_getlk(struct file *file, struct file_lock *fl)
-{
-	struct afs_vnode *vnode = AFS_FS_I(locks_inode(file));
-	struct key *key = afs_file_key(file);
-	int ret, lock_count;
+अटल पूर्णांक afs_करो_getlk(काष्ठा file *file, काष्ठा file_lock *fl)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(locks_inode(file));
+	काष्ठा key *key = afs_file_key(file);
+	पूर्णांक ret, lock_count;
 
 	_enter("");
 
-	if (vnode->lock_state == AFS_VNODE_LOCK_DELETED)
-		return -ENOENT;
+	अगर (vnode->lock_state == AFS_VNODE_LOCK_DELETED)
+		वापस -ENOENT;
 
 	fl->fl_type = F_UNLCK;
 
 	/* check local lock records first */
 	posix_test_lock(file, fl);
-	if (fl->fl_type == F_UNLCK) {
+	अगर (fl->fl_type == F_UNLCK) अणु
 		/* no local locks; consult the server */
-		ret = afs_fetch_status(vnode, key, false, NULL);
-		if (ret < 0)
-			goto error;
+		ret = afs_fetch_status(vnode, key, false, शून्य);
+		अगर (ret < 0)
+			जाओ error;
 
 		lock_count = READ_ONCE(vnode->status.lock_count);
-		if (lock_count != 0) {
-			if (lock_count > 0)
+		अगर (lock_count != 0) अणु
+			अगर (lock_count > 0)
 				fl->fl_type = F_RDLCK;
-			else
+			अन्यथा
 				fl->fl_type = F_WRLCK;
 			fl->fl_start = 0;
 			fl->fl_end = OFFSET_MAX;
 			fl->fl_pid = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 error:
 	_leave(" = %d [%hd]", ret, fl->fl_type);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * manage POSIX locks on a file
  */
-int afs_lock(struct file *file, int cmd, struct file_lock *fl)
-{
-	struct afs_vnode *vnode = AFS_FS_I(locks_inode(file));
-	enum afs_flock_operation op;
-	int ret;
+पूर्णांक afs_lock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(locks_inode(file));
+	क्रमागत afs_flock_operation op;
+	पूर्णांक ret;
 
 	_enter("{%llx:%llu},%d,{t=%x,fl=%x,r=%Ld:%Ld}",
 	       vnode->fid.vid, vnode->fid.vnode, cmd,
 	       fl->fl_type, fl->fl_flags,
-	       (long long) fl->fl_start, (long long) fl->fl_end);
+	       (दीर्घ दीर्घ) fl->fl_start, (दीर्घ दीर्घ) fl->fl_end);
 
-	/* AFS doesn't support mandatory locks */
-	if (__mandatory_lock(&vnode->vfs_inode) && fl->fl_type != F_UNLCK)
-		return -ENOLCK;
+	/* AFS करोesn't support mandatory locks */
+	अगर (__mandatory_lock(&vnode->vfs_inode) && fl->fl_type != F_UNLCK)
+		वापस -ENOLCK;
 
-	if (IS_GETLK(cmd))
-		return afs_do_getlk(file, fl);
+	अगर (IS_GETLK(cmd))
+		वापस afs_करो_getlk(file, fl);
 
-	fl->fl_u.afs.debug_id = atomic_inc_return(&afs_file_lock_debug_id);
+	fl->fl_u.afs.debug_id = atomic_inc_वापस(&afs_file_lock_debug_id);
 	trace_afs_flock_op(vnode, fl, afs_flock_op_lock);
 
-	if (fl->fl_type == F_UNLCK)
-		ret = afs_do_unlk(file, fl);
-	else
-		ret = afs_do_setlk(file, fl);
+	अगर (fl->fl_type == F_UNLCK)
+		ret = afs_करो_unlk(file, fl);
+	अन्यथा
+		ret = afs_करो_setlk(file, fl);
 
-	switch (ret) {
-	case 0:		op = afs_flock_op_return_ok; break;
-	case -EAGAIN:	op = afs_flock_op_return_eagain; break;
-	case -EDEADLK:	op = afs_flock_op_return_edeadlk; break;
-	default:	op = afs_flock_op_return_error; break;
-	}
+	चयन (ret) अणु
+	हाल 0:		op = afs_flock_op_वापस_ok; अवरोध;
+	हाल -EAGAIN:	op = afs_flock_op_वापस_eagain; अवरोध;
+	हाल -EDEADLK:	op = afs_flock_op_वापस_edeadlk; अवरोध;
+	शेष:	op = afs_flock_op_वापस_error; अवरोध;
+	पूर्ण
 	trace_afs_flock_op(vnode, fl, op);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * manage FLOCK locks on a file
  */
-int afs_flock(struct file *file, int cmd, struct file_lock *fl)
-{
-	struct afs_vnode *vnode = AFS_FS_I(locks_inode(file));
-	enum afs_flock_operation op;
-	int ret;
+पूर्णांक afs_flock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(locks_inode(file));
+	क्रमागत afs_flock_operation op;
+	पूर्णांक ret;
 
 	_enter("{%llx:%llu},%d,{t=%x,fl=%x}",
 	       vnode->fid.vid, vnode->fid.vnode, cmd,
@@ -815,57 +816,57 @@ int afs_flock(struct file *file, int cmd, struct file_lock *fl)
 	 * Note: we could try to fake a POSIX lock request here by
 	 * using ((u32) filp | 0x80000000) or some such as the pid.
 	 * Not sure whether that would be unique, though, or whether
-	 * that would break in other places.
+	 * that would अवरोध in other places.
 	 */
-	if (!(fl->fl_flags & FL_FLOCK))
-		return -ENOLCK;
+	अगर (!(fl->fl_flags & FL_FLOCK))
+		वापस -ENOLCK;
 
-	fl->fl_u.afs.debug_id = atomic_inc_return(&afs_file_lock_debug_id);
+	fl->fl_u.afs.debug_id = atomic_inc_वापस(&afs_file_lock_debug_id);
 	trace_afs_flock_op(vnode, fl, afs_flock_op_flock);
 
 	/* we're simulating flock() locks using posix locks on the server */
-	if (fl->fl_type == F_UNLCK)
-		ret = afs_do_unlk(file, fl);
-	else
-		ret = afs_do_setlk(file, fl);
+	अगर (fl->fl_type == F_UNLCK)
+		ret = afs_करो_unlk(file, fl);
+	अन्यथा
+		ret = afs_करो_setlk(file, fl);
 
-	switch (ret) {
-	case 0:		op = afs_flock_op_return_ok; break;
-	case -EAGAIN:	op = afs_flock_op_return_eagain; break;
-	case -EDEADLK:	op = afs_flock_op_return_edeadlk; break;
-	default:	op = afs_flock_op_return_error; break;
-	}
+	चयन (ret) अणु
+	हाल 0:		op = afs_flock_op_वापस_ok; अवरोध;
+	हाल -EAGAIN:	op = afs_flock_op_वापस_eagain; अवरोध;
+	हाल -EDEADLK:	op = afs_flock_op_वापस_edeadlk; अवरोध;
+	शेष:	op = afs_flock_op_वापस_error; अवरोध;
+	पूर्ण
 	trace_afs_flock_op(vnode, fl, op);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * the POSIX lock management core VFS code copies the lock record and adds the
- * copy into its own list, so we need to add that copy to the vnode's lock
- * queue in the same place as the original (which will be deleted shortly
+ * copy पूर्णांकo its own list, so we need to add that copy to the vnode's lock
+ * queue in the same place as the original (which will be deleted लघुly
  * after)
  */
-static void afs_fl_copy_lock(struct file_lock *new, struct file_lock *fl)
-{
-	struct afs_vnode *vnode = AFS_FS_I(locks_inode(fl->fl_file));
+अटल व्योम afs_fl_copy_lock(काष्ठा file_lock *new, काष्ठा file_lock *fl)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(locks_inode(fl->fl_file));
 
 	_enter("");
 
-	new->fl_u.afs.debug_id = atomic_inc_return(&afs_file_lock_debug_id);
+	new->fl_u.afs.debug_id = atomic_inc_वापस(&afs_file_lock_debug_id);
 
 	spin_lock(&vnode->lock);
 	trace_afs_flock_op(vnode, new, afs_flock_op_copy_lock);
 	list_add(&new->fl_u.afs.link, &fl->fl_u.afs.link);
 	spin_unlock(&vnode->lock);
-}
+पूर्ण
 
 /*
- * need to remove this lock from the vnode queue when it's removed from the
+ * need to हटाओ this lock from the vnode queue when it's हटाओd from the
  * VFS's list
  */
-static void afs_fl_release_private(struct file_lock *fl)
-{
-	struct afs_vnode *vnode = AFS_FS_I(locks_inode(fl->fl_file));
+अटल व्योम afs_fl_release_निजी(काष्ठा file_lock *fl)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(locks_inode(fl->fl_file));
 
 	_enter("");
 
@@ -873,9 +874,9 @@ static void afs_fl_release_private(struct file_lock *fl)
 
 	trace_afs_flock_op(vnode, fl, afs_flock_op_release_lock);
 	list_del_init(&fl->fl_u.afs.link);
-	if (list_empty(&vnode->granted_locks))
+	अगर (list_empty(&vnode->granted_locks))
 		afs_defer_unlock(vnode);
 
 	_debug("state %u for %p", vnode->lock_state, vnode);
 	spin_unlock(&vnode->lock);
-}
+पूर्ण

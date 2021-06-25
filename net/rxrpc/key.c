@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* RxRPC key management
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
@@ -8,82 +9,82 @@
  *	"afs@example.com"
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <crypto/skcipher.h>
-#include <linux/module.h>
-#include <linux/net.h>
-#include <linux/skbuff.h>
-#include <linux/key-type.h>
-#include <linux/ctype.h>
-#include <linux/slab.h>
-#include <net/sock.h>
-#include <net/af_rxrpc.h>
-#include <keys/rxrpc-type.h>
-#include <keys/user-type.h>
-#include "ar-internal.h"
+#समावेश <crypto/skcipher.h>
+#समावेश <linux/module.h>
+#समावेश <linux/net.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/key-type.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/slab.h>
+#समावेश <net/sock.h>
+#समावेश <net/af_rxrpc.h>
+#समावेश <keys/rxrpc-type.h>
+#समावेश <keys/user-type.h>
+#समावेश "ar-internal.h"
 
-static int rxrpc_preparse(struct key_preparsed_payload *);
-static void rxrpc_free_preparse(struct key_preparsed_payload *);
-static void rxrpc_destroy(struct key *);
-static void rxrpc_describe(const struct key *, struct seq_file *);
-static long rxrpc_read(const struct key *, char *, size_t);
+अटल पूर्णांक rxrpc_preparse(काष्ठा key_preparsed_payload *);
+अटल व्योम rxrpc_मुक्त_preparse(काष्ठा key_preparsed_payload *);
+अटल व्योम rxrpc_destroy(काष्ठा key *);
+अटल व्योम rxrpc_describe(स्थिर काष्ठा key *, काष्ठा seq_file *);
+अटल दीर्घ rxrpc_पढ़ो(स्थिर काष्ठा key *, अक्षर *, माप_प्रकार);
 
 /*
  * rxrpc defined keys take an arbitrary string as the description and an
  * arbitrary blob of data as the payload
  */
-struct key_type key_type_rxrpc = {
+काष्ठा key_type key_type_rxrpc = अणु
 	.name		= "rxrpc",
 	.flags		= KEY_TYPE_NET_DOMAIN,
 	.preparse	= rxrpc_preparse,
-	.free_preparse	= rxrpc_free_preparse,
+	.मुक्त_preparse	= rxrpc_मुक्त_preparse,
 	.instantiate	= generic_key_instantiate,
 	.destroy	= rxrpc_destroy,
 	.describe	= rxrpc_describe,
-	.read		= rxrpc_read,
-};
+	.पढ़ो		= rxrpc_पढ़ो,
+पूर्ण;
 EXPORT_SYMBOL(key_type_rxrpc);
 
 /*
- * parse an RxKAD type XDR format token
+ * parse an RxKAD type XDR क्रमmat token
  * - the caller guarantees we have at least 4 words
  */
-static int rxrpc_preparse_xdr_rxkad(struct key_preparsed_payload *prep,
-				    size_t datalen,
-				    const __be32 *xdr, unsigned int toklen)
-{
-	struct rxrpc_key_token *token, **pptoken;
-	time64_t expiry;
-	size_t plen;
+अटल पूर्णांक rxrpc_preparse_xdr_rxkad(काष्ठा key_preparsed_payload *prep,
+				    माप_प्रकार datalen,
+				    स्थिर __be32 *xdr, अचिन्हित पूर्णांक toklen)
+अणु
+	काष्ठा rxrpc_key_token *token, **pptoken;
+	समय64_t expiry;
+	माप_प्रकार plen;
 	u32 tktlen;
 
 	_enter(",{%x,%x,%x,%x},%u",
 	       ntohl(xdr[0]), ntohl(xdr[1]), ntohl(xdr[2]), ntohl(xdr[3]),
 	       toklen);
 
-	if (toklen <= 8 * 4)
-		return -EKEYREJECTED;
+	अगर (toklen <= 8 * 4)
+		वापस -EKEYREJECTED;
 	tktlen = ntohl(xdr[7]);
 	_debug("tktlen: %x", tktlen);
-	if (tktlen > AFSTOKEN_RK_TIX_MAX)
-		return -EKEYREJECTED;
-	if (toklen < 8 * 4 + tktlen)
-		return -EKEYREJECTED;
+	अगर (tktlen > AFSTOKEN_RK_TIX_MAX)
+		वापस -EKEYREJECTED;
+	अगर (toklen < 8 * 4 + tktlen)
+		वापस -EKEYREJECTED;
 
-	plen = sizeof(*token) + sizeof(*token->kad) + tktlen;
+	plen = माप(*token) + माप(*token->kad) + tktlen;
 	prep->quotalen = datalen + plen;
 
-	plen -= sizeof(*token);
-	token = kzalloc(sizeof(*token), GFP_KERNEL);
-	if (!token)
-		return -ENOMEM;
+	plen -= माप(*token);
+	token = kzalloc(माप(*token), GFP_KERNEL);
+	अगर (!token)
+		वापस -ENOMEM;
 
 	token->kad = kzalloc(plen, GFP_KERNEL);
-	if (!token->kad) {
-		kfree(token);
-		return -ENOMEM;
-	}
+	अगर (!token->kad) अणु
+		kमुक्त(token);
+		वापस -ENOMEM;
+	पूर्ण
 
 	token->security_index	= RXRPC_SECURITY_RXKAD;
 	token->kad->ticket_len	= tktlen;
@@ -92,8 +93,8 @@ static int rxrpc_preparse_xdr_rxkad(struct key_preparsed_payload *prep,
 	token->kad->start	= ntohl(xdr[4]);
 	token->kad->expiry	= ntohl(xdr[5]);
 	token->kad->primary_flag = ntohl(xdr[6]);
-	memcpy(&token->kad->session_key, &xdr[2], 8);
-	memcpy(&token->kad->ticket, &xdr[8], tktlen);
+	स_नकल(&token->kad->session_key, &xdr[2], 8);
+	स_नकल(&token->kad->ticket, &xdr[8], tktlen);
 
 	_debug("SCIX: %u", token->security_index);
 	_debug("TLEN: %u", token->kad->ticket_len);
@@ -105,7 +106,7 @@ static int rxrpc_preparse_xdr_rxkad(struct key_preparsed_payload *prep,
 	       token->kad->session_key[2], token->kad->session_key[3],
 	       token->kad->session_key[4], token->kad->session_key[5],
 	       token->kad->session_key[6], token->kad->session_key[7]);
-	if (token->kad->ticket_len >= 8)
+	अगर (token->kad->ticket_len >= 8)
 		_debug("TCKT: %02x%02x%02x%02x%02x%02x%02x%02x",
 		       token->kad->ticket[0], token->kad->ticket[1],
 		       token->kad->ticket[2], token->kad->ticket[3],
@@ -113,108 +114,108 @@ static int rxrpc_preparse_xdr_rxkad(struct key_preparsed_payload *prep,
 		       token->kad->ticket[6], token->kad->ticket[7]);
 
 	/* count the number of tokens attached */
-	prep->payload.data[1] = (void *)((unsigned long)prep->payload.data[1] + 1);
+	prep->payload.data[1] = (व्योम *)((अचिन्हित दीर्घ)prep->payload.data[1] + 1);
 
 	/* attach the data */
-	for (pptoken = (struct rxrpc_key_token **)&prep->payload.data[0];
+	क्रम (pptoken = (काष्ठा rxrpc_key_token **)&prep->payload.data[0];
 	     *pptoken;
 	     pptoken = &(*pptoken)->next)
-		continue;
+		जारी;
 	*pptoken = token;
-	expiry = rxrpc_u32_to_time64(token->kad->expiry);
-	if (expiry < prep->expiry)
+	expiry = rxrpc_u32_to_समय64(token->kad->expiry);
+	अगर (expiry < prep->expiry)
 		prep->expiry = expiry;
 
 	_leave(" = 0");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * attempt to parse the data as the XDR format
+ * attempt to parse the data as the XDR क्रमmat
  * - the caller guarantees we have more than 7 words
  */
-static int rxrpc_preparse_xdr(struct key_preparsed_payload *prep)
-{
-	const __be32 *xdr = prep->data, *token, *p;
-	const char *cp;
-	unsigned int len, paddedlen, loop, ntoken, toklen, sec_ix;
-	size_t datalen = prep->datalen;
-	int ret, ret2;
+अटल पूर्णांक rxrpc_preparse_xdr(काष्ठा key_preparsed_payload *prep)
+अणु
+	स्थिर __be32 *xdr = prep->data, *token, *p;
+	स्थिर अक्षर *cp;
+	अचिन्हित पूर्णांक len, paddedlen, loop, ntoken, toklen, sec_ix;
+	माप_प्रकार datalen = prep->datalen;
+	पूर्णांक ret, ret2;
 
 	_enter(",{%x,%x,%x,%x},%zu",
 	       ntohl(xdr[0]), ntohl(xdr[1]), ntohl(xdr[2]), ntohl(xdr[3]),
 	       prep->datalen);
 
-	if (datalen > AFSTOKEN_LENGTH_MAX)
-		goto not_xdr;
+	अगर (datalen > AFSTOKEN_LENGTH_MAX)
+		जाओ not_xdr;
 
 	/* XDR is an array of __be32's */
-	if (datalen & 3)
-		goto not_xdr;
+	अगर (datalen & 3)
+		जाओ not_xdr;
 
 	/* the flags should be 0 (the setpag bit must be handled by
 	 * userspace) */
-	if (ntohl(*xdr++) != 0)
-		goto not_xdr;
+	अगर (ntohl(*xdr++) != 0)
+		जाओ not_xdr;
 	datalen -= 4;
 
 	/* check the cell name */
 	len = ntohl(*xdr++);
-	if (len < 1 || len > AFSTOKEN_CELL_MAX)
-		goto not_xdr;
+	अगर (len < 1 || len > AFSTOKEN_CELL_MAX)
+		जाओ not_xdr;
 	datalen -= 4;
 	paddedlen = (len + 3) & ~3;
-	if (paddedlen > datalen)
-		goto not_xdr;
+	अगर (paddedlen > datalen)
+		जाओ not_xdr;
 
-	cp = (const char *) xdr;
-	for (loop = 0; loop < len; loop++)
-		if (!isprint(cp[loop]))
-			goto not_xdr;
-	for (; loop < paddedlen; loop++)
-		if (cp[loop])
-			goto not_xdr;
+	cp = (स्थिर अक्षर *) xdr;
+	क्रम (loop = 0; loop < len; loop++)
+		अगर (!है_छाप(cp[loop]))
+			जाओ not_xdr;
+	क्रम (; loop < paddedlen; loop++)
+		अगर (cp[loop])
+			जाओ not_xdr;
 	_debug("cellname: [%u/%u] '%*.*s'",
-	       len, paddedlen, len, len, (const char *) xdr);
+	       len, paddedlen, len, len, (स्थिर अक्षर *) xdr);
 	datalen -= paddedlen;
 	xdr += paddedlen >> 2;
 
 	/* get the token count */
-	if (datalen < 12)
-		goto not_xdr;
+	अगर (datalen < 12)
+		जाओ not_xdr;
 	ntoken = ntohl(*xdr++);
 	datalen -= 4;
 	_debug("ntoken: %x", ntoken);
-	if (ntoken < 1 || ntoken > AFSTOKEN_MAX)
-		goto not_xdr;
+	अगर (ntoken < 1 || ntoken > AFSTOKEN_MAX)
+		जाओ not_xdr;
 
 	/* check each token wrapper */
 	p = xdr;
 	loop = ntoken;
-	do {
-		if (datalen < 8)
-			goto not_xdr;
+	करो अणु
+		अगर (datalen < 8)
+			जाओ not_xdr;
 		toklen = ntohl(*p++);
 		sec_ix = ntohl(*p);
 		datalen -= 4;
 		_debug("token: [%x/%zx] %x", toklen, datalen, sec_ix);
 		paddedlen = (toklen + 3) & ~3;
-		if (toklen < 20 || toklen > datalen || paddedlen > datalen)
-			goto not_xdr;
+		अगर (toklen < 20 || toklen > datalen || paddedlen > datalen)
+			जाओ not_xdr;
 		datalen -= paddedlen;
 		p += paddedlen >> 2;
 
-	} while (--loop > 0);
+	पूर्ण जबतक (--loop > 0);
 
 	_debug("remainder: %zu", datalen);
-	if (datalen != 0)
-		goto not_xdr;
+	अगर (datalen != 0)
+		जाओ not_xdr;
 
-	/* okay: we're going to assume it's valid XDR format
+	/* okay: we're going to assume it's valid XDR क्रमmat
 	 * - we ignore the cellname, relying on the key to be correctly named
 	 */
 	ret = -EPROTONOSUPPORT;
-	do {
+	करो अणु
 		toklen = ntohl(*xdr++);
 		token = xdr;
 		xdr += (toklen + 3) / 4;
@@ -224,100 +225,100 @@ static int rxrpc_preparse_xdr(struct key_preparsed_payload *prep)
 
 		_debug("TOKEN type=%x len=%x", sec_ix, toklen);
 
-		switch (sec_ix) {
-		case RXRPC_SECURITY_RXKAD:
+		चयन (sec_ix) अणु
+		हाल RXRPC_SECURITY_RXKAD:
 			ret2 = rxrpc_preparse_xdr_rxkad(prep, datalen, token, toklen);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret2 = -EPROTONOSUPPORT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (ret2) {
-		case 0:
+		चयन (ret2) अणु
+		हाल 0:
 			ret = 0;
-			break;
-		case -EPROTONOSUPPORT:
-			break;
-		case -ENOPKG:
-			if (ret != 0)
+			अवरोध;
+		हाल -EPROTONOSUPPORT:
+			अवरोध;
+		हाल -ENOPKG:
+			अगर (ret != 0)
 				ret = -ENOPKG;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = ret2;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-	} while (--ntoken > 0);
+	पूर्ण जबतक (--ntoken > 0);
 
 error:
 	_leave(" = %d", ret);
-	return ret;
+	वापस ret;
 
 not_xdr:
 	_leave(" = -EPROTO");
-	return -EPROTO;
-}
+	वापस -EPROTO;
+पूर्ण
 
 /*
  * Preparse an rxrpc defined key.
  *
- * Data should be of the form:
+ * Data should be of the क्रमm:
  *	OFFSET	LEN	CONTENT
- *	0	4	key interface version number
+ *	0	4	key पूर्णांकerface version number
  *	4	2	security index (type)
  *	6	2	ticket length
- *	8	4	key expiry time (time_t)
+ *	8	4	key expiry समय (समय_प्रकार)
  *	12	4	kvno
  *	16	8	session key
  *	24	[len]	ticket
  *
- * if no data is provided, then a no-security key is made
+ * अगर no data is provided, then a no-security key is made
  */
-static int rxrpc_preparse(struct key_preparsed_payload *prep)
-{
-	const struct rxrpc_key_data_v1 *v1;
-	struct rxrpc_key_token *token, **pp;
-	time64_t expiry;
-	size_t plen;
+अटल पूर्णांक rxrpc_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+	स्थिर काष्ठा rxrpc_key_data_v1 *v1;
+	काष्ठा rxrpc_key_token *token, **pp;
+	समय64_t expiry;
+	माप_प्रकार plen;
 	u32 kver;
-	int ret;
+	पूर्णांक ret;
 
 	_enter("%zu", prep->datalen);
 
 	/* handle a no-security key */
-	if (!prep->data && prep->datalen == 0)
-		return 0;
+	अगर (!prep->data && prep->datalen == 0)
+		वापस 0;
 
-	/* determine if the XDR payload format is being used */
-	if (prep->datalen > 7 * 4) {
+	/* determine अगर the XDR payload क्रमmat is being used */
+	अगर (prep->datalen > 7 * 4) अणु
 		ret = rxrpc_preparse_xdr(prep);
-		if (ret != -EPROTO)
-			return ret;
-	}
+		अगर (ret != -EPROTO)
+			वापस ret;
+	पूर्ण
 
-	/* get the key interface version number */
+	/* get the key पूर्णांकerface version number */
 	ret = -EINVAL;
-	if (prep->datalen <= 4 || !prep->data)
-		goto error;
-	memcpy(&kver, prep->data, sizeof(kver));
-	prep->data += sizeof(kver);
-	prep->datalen -= sizeof(kver);
+	अगर (prep->datalen <= 4 || !prep->data)
+		जाओ error;
+	स_नकल(&kver, prep->data, माप(kver));
+	prep->data += माप(kver);
+	prep->datalen -= माप(kver);
 
 	_debug("KEY I/F VERSION: %u", kver);
 
 	ret = -EKEYREJECTED;
-	if (kver != 1)
-		goto error;
+	अगर (kver != 1)
+		जाओ error;
 
 	/* deal with a version 1 key */
 	ret = -EINVAL;
-	if (prep->datalen < sizeof(*v1))
-		goto error;
+	अगर (prep->datalen < माप(*v1))
+		जाओ error;
 
 	v1 = prep->data;
-	if (prep->datalen != sizeof(*v1) + v1->ticket_length)
-		goto error;
+	अगर (prep->datalen != माप(*v1) + v1->ticket_length)
+		जाओ error;
 
 	_debug("SCIX: %u", v1->security_index);
 	_debug("TLEN: %u", v1->ticket_length);
@@ -328,7 +329,7 @@ static int rxrpc_preparse(struct key_preparsed_payload *prep)
 	       v1->session_key[2], v1->session_key[3],
 	       v1->session_key[4], v1->session_key[5],
 	       v1->session_key[6], v1->session_key[7]);
-	if (v1->ticket_length >= 8)
+	अगर (v1->ticket_length >= 8)
 		_debug("TCKT: %02x%02x%02x%02x%02x%02x%02x%02x",
 		       v1->ticket[0], v1->ticket[1],
 		       v1->ticket[2], v1->ticket[3],
@@ -336,193 +337,193 @@ static int rxrpc_preparse(struct key_preparsed_payload *prep)
 		       v1->ticket[6], v1->ticket[7]);
 
 	ret = -EPROTONOSUPPORT;
-	if (v1->security_index != RXRPC_SECURITY_RXKAD)
-		goto error;
+	अगर (v1->security_index != RXRPC_SECURITY_RXKAD)
+		जाओ error;
 
-	plen = sizeof(*token->kad) + v1->ticket_length;
-	prep->quotalen = plen + sizeof(*token);
+	plen = माप(*token->kad) + v1->ticket_length;
+	prep->quotalen = plen + माप(*token);
 
 	ret = -ENOMEM;
-	token = kzalloc(sizeof(*token), GFP_KERNEL);
-	if (!token)
-		goto error;
+	token = kzalloc(माप(*token), GFP_KERNEL);
+	अगर (!token)
+		जाओ error;
 	token->kad = kzalloc(plen, GFP_KERNEL);
-	if (!token->kad)
-		goto error_free;
+	अगर (!token->kad)
+		जाओ error_मुक्त;
 
 	token->security_index		= RXRPC_SECURITY_RXKAD;
 	token->kad->ticket_len		= v1->ticket_length;
 	token->kad->expiry		= v1->expiry;
 	token->kad->kvno		= v1->kvno;
-	memcpy(&token->kad->session_key, &v1->session_key, 8);
-	memcpy(&token->kad->ticket, v1->ticket, v1->ticket_length);
+	स_नकल(&token->kad->session_key, &v1->session_key, 8);
+	स_नकल(&token->kad->ticket, v1->ticket, v1->ticket_length);
 
 	/* count the number of tokens attached */
-	prep->payload.data[1] = (void *)((unsigned long)prep->payload.data[1] + 1);
+	prep->payload.data[1] = (व्योम *)((अचिन्हित दीर्घ)prep->payload.data[1] + 1);
 
 	/* attach the data */
-	pp = (struct rxrpc_key_token **)&prep->payload.data[0];
-	while (*pp)
+	pp = (काष्ठा rxrpc_key_token **)&prep->payload.data[0];
+	जबतक (*pp)
 		pp = &(*pp)->next;
 	*pp = token;
-	expiry = rxrpc_u32_to_time64(token->kad->expiry);
-	if (expiry < prep->expiry)
+	expiry = rxrpc_u32_to_समय64(token->kad->expiry);
+	अगर (expiry < prep->expiry)
 		prep->expiry = expiry;
-	token = NULL;
+	token = शून्य;
 	ret = 0;
 
-error_free:
-	kfree(token);
+error_मुक्त:
+	kमुक्त(token);
 error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Free token list.
  */
-static void rxrpc_free_token_list(struct rxrpc_key_token *token)
-{
-	struct rxrpc_key_token *next;
+अटल व्योम rxrpc_मुक्त_token_list(काष्ठा rxrpc_key_token *token)
+अणु
+	काष्ठा rxrpc_key_token *next;
 
-	for (; token; token = next) {
+	क्रम (; token; token = next) अणु
 		next = token->next;
-		switch (token->security_index) {
-		case RXRPC_SECURITY_RXKAD:
-			kfree(token->kad);
-			break;
-		default:
+		चयन (token->security_index) अणु
+		हाल RXRPC_SECURITY_RXKAD:
+			kमुक्त(token->kad);
+			अवरोध;
+		शेष:
 			pr_err("Unknown token type %x on rxrpc key\n",
 			       token->security_index);
 			BUG();
-		}
+		पूर्ण
 
-		kfree(token);
-	}
-}
+		kमुक्त(token);
+	पूर्ण
+पूर्ण
 
 /*
  * Clean up preparse data.
  */
-static void rxrpc_free_preparse(struct key_preparsed_payload *prep)
-{
-	rxrpc_free_token_list(prep->payload.data[0]);
-}
+अटल व्योम rxrpc_मुक्त_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+	rxrpc_मुक्त_token_list(prep->payload.data[0]);
+पूर्ण
 
 /*
  * dispose of the data dangling from the corpse of a rxrpc key
  */
-static void rxrpc_destroy(struct key *key)
-{
-	rxrpc_free_token_list(key->payload.data[0]);
-}
+अटल व्योम rxrpc_destroy(काष्ठा key *key)
+अणु
+	rxrpc_मुक्त_token_list(key->payload.data[0]);
+पूर्ण
 
 /*
  * describe the rxrpc key
  */
-static void rxrpc_describe(const struct key *key, struct seq_file *m)
-{
-	const struct rxrpc_key_token *token;
-	const char *sep = ": ";
+अटल व्योम rxrpc_describe(स्थिर काष्ठा key *key, काष्ठा seq_file *m)
+अणु
+	स्थिर काष्ठा rxrpc_key_token *token;
+	स्थिर अक्षर *sep = ": ";
 
-	seq_puts(m, key->description);
+	seq_माला_दो(m, key->description);
 
-	for (token = key->payload.data[0]; token; token = token->next) {
-		seq_puts(m, sep);
+	क्रम (token = key->payload.data[0]; token; token = token->next) अणु
+		seq_माला_दो(m, sep);
 
-		switch (token->security_index) {
-		case RXRPC_SECURITY_RXKAD:
-			seq_puts(m, "ka");
-			break;
-		default: /* we have a ticket we can't encode */
-			seq_printf(m, "%u", token->security_index);
-			break;
-		}
+		चयन (token->security_index) अणु
+		हाल RXRPC_SECURITY_RXKAD:
+			seq_माला_दो(m, "ka");
+			अवरोध;
+		शेष: /* we have a ticket we can't encode */
+			seq_म_लिखो(m, "%u", token->security_index);
+			अवरोध;
+		पूर्ण
 
 		sep = " ";
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * grab the security key for a socket
+ * grab the security key क्रम a socket
  */
-int rxrpc_request_key(struct rxrpc_sock *rx, sockptr_t optval, int optlen)
-{
-	struct key *key;
-	char *description;
+पूर्णांक rxrpc_request_key(काष्ठा rxrpc_sock *rx, sockptr_t optval, पूर्णांक optlen)
+अणु
+	काष्ठा key *key;
+	अक्षर *description;
 
 	_enter("");
 
-	if (optlen <= 0 || optlen > PAGE_SIZE - 1 || rx->securities)
-		return -EINVAL;
+	अगर (optlen <= 0 || optlen > PAGE_SIZE - 1 || rx->securities)
+		वापस -EINVAL;
 
 	description = memdup_sockptr_nul(optval, optlen);
-	if (IS_ERR(description))
-		return PTR_ERR(description);
+	अगर (IS_ERR(description))
+		वापस PTR_ERR(description);
 
-	key = request_key_net(&key_type_rxrpc, description, sock_net(&rx->sk), NULL);
-	if (IS_ERR(key)) {
-		kfree(description);
+	key = request_key_net(&key_type_rxrpc, description, sock_net(&rx->sk), शून्य);
+	अगर (IS_ERR(key)) अणु
+		kमुक्त(description);
 		_leave(" = %ld", PTR_ERR(key));
-		return PTR_ERR(key);
-	}
+		वापस PTR_ERR(key);
+	पूर्ण
 
 	rx->key = key;
-	kfree(description);
+	kमुक्त(description);
 	_leave(" = 0 [key %x]", key->serial);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * generate a server data key
  */
-int rxrpc_get_server_data_key(struct rxrpc_connection *conn,
-			      const void *session_key,
-			      time64_t expiry,
+पूर्णांक rxrpc_get_server_data_key(काष्ठा rxrpc_connection *conn,
+			      स्थिर व्योम *session_key,
+			      समय64_t expiry,
 			      u32 kvno)
-{
-	const struct cred *cred = current_cred();
-	struct key *key;
-	int ret;
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
+	काष्ठा key *key;
+	पूर्णांक ret;
 
-	struct {
+	काष्ठा अणु
 		u32 kver;
-		struct rxrpc_key_data_v1 v1;
-	} data;
+		काष्ठा rxrpc_key_data_v1 v1;
+	पूर्ण data;
 
 	_enter("");
 
 	key = key_alloc(&key_type_rxrpc, "x",
 			GLOBAL_ROOT_UID, GLOBAL_ROOT_GID, cred, 0,
-			KEY_ALLOC_NOT_IN_QUOTA, NULL);
-	if (IS_ERR(key)) {
+			KEY_ALLOC_NOT_IN_QUOTA, शून्य);
+	अगर (IS_ERR(key)) अणु
 		_leave(" = -ENOMEM [alloc %ld]", PTR_ERR(key));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	_debug("key %d", key_serial(key));
 
 	data.kver = 1;
 	data.v1.security_index = RXRPC_SECURITY_RXKAD;
 	data.v1.ticket_length = 0;
-	data.v1.expiry = rxrpc_time64_to_u32(expiry);
+	data.v1.expiry = rxrpc_समय64_to_u32(expiry);
 	data.v1.kvno = 0;
 
-	memcpy(&data.v1.session_key, session_key, sizeof(data.v1.session_key));
+	स_नकल(&data.v1.session_key, session_key, माप(data.v1.session_key));
 
-	ret = key_instantiate_and_link(key, &data, sizeof(data), NULL, NULL);
-	if (ret < 0)
-		goto error;
+	ret = key_instantiate_and_link(key, &data, माप(data), शून्य, शून्य);
+	अगर (ret < 0)
+		जाओ error;
 
 	conn->params.key = key;
 	_leave(" = 0 [%d]", key_serial(key));
-	return 0;
+	वापस 0;
 
 error:
 	key_revoke(key);
 	key_put(key);
 	_leave(" = -ENOMEM [ins %d]", ret);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 EXPORT_SYMBOL(rxrpc_get_server_data_key);
 
 /**
@@ -530,166 +531,166 @@ EXPORT_SYMBOL(rxrpc_get_server_data_key);
  * @keyname: The name to give the key.
  *
  * Generate a null RxRPC key that can be used to indicate anonymous security is
- * required for a particular domain.
+ * required क्रम a particular करोमुख्य.
  */
-struct key *rxrpc_get_null_key(const char *keyname)
-{
-	const struct cred *cred = current_cred();
-	struct key *key;
-	int ret;
+काष्ठा key *rxrpc_get_null_key(स्थिर अक्षर *keyname)
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
+	काष्ठा key *key;
+	पूर्णांक ret;
 
 	key = key_alloc(&key_type_rxrpc, keyname,
 			GLOBAL_ROOT_UID, GLOBAL_ROOT_GID, cred,
-			KEY_POS_SEARCH, KEY_ALLOC_NOT_IN_QUOTA, NULL);
-	if (IS_ERR(key))
-		return key;
+			KEY_POS_SEARCH, KEY_ALLOC_NOT_IN_QUOTA, शून्य);
+	अगर (IS_ERR(key))
+		वापस key;
 
-	ret = key_instantiate_and_link(key, NULL, 0, NULL, NULL);
-	if (ret < 0) {
+	ret = key_instantiate_and_link(key, शून्य, 0, शून्य, शून्य);
+	अगर (ret < 0) अणु
 		key_revoke(key);
 		key_put(key);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return key;
-}
+	वापस key;
+पूर्ण
 EXPORT_SYMBOL(rxrpc_get_null_key);
 
 /*
- * read the contents of an rxrpc key
- * - this returns the result in XDR form
+ * पढ़ो the contents of an rxrpc key
+ * - this वापसs the result in XDR क्रमm
  */
-static long rxrpc_read(const struct key *key,
-		       char *buffer, size_t buflen)
-{
-	const struct rxrpc_key_token *token;
-	size_t size;
+अटल दीर्घ rxrpc_पढ़ो(स्थिर काष्ठा key *key,
+		       अक्षर *buffer, माप_प्रकार buflen)
+अणु
+	स्थिर काष्ठा rxrpc_key_token *token;
+	माप_प्रकार size;
 	__be32 *xdr, *oldxdr;
 	u32 cnlen, toksize, ntoks, tok, zero;
 	u16 toksizes[AFSTOKEN_MAX];
 
 	_enter("");
 
-	/* we don't know what form we should return non-AFS keys in */
-	if (memcmp(key->description, "afs@", 4) != 0)
-		return -EOPNOTSUPP;
-	cnlen = strlen(key->description + 4);
+	/* we करोn't know what क्रमm we should वापस non-AFS keys in */
+	अगर (स_भेद(key->description, "afs@", 4) != 0)
+		वापस -EOPNOTSUPP;
+	cnlen = म_माप(key->description + 4);
 
-#define RND(X) (((X) + 3) & ~3)
+#घोषणा RND(X) (((X) + 3) & ~3)
 
-	/* AFS keys we return in XDR form, so we need to work out the size of
+	/* AFS keys we वापस in XDR क्रमm, so we need to work out the size of
 	 * the XDR */
 	size = 2 * 4;	/* flags, cellname len */
 	size += RND(cnlen);	/* cellname */
 	size += 1 * 4;	/* token count */
 
 	ntoks = 0;
-	for (token = key->payload.data[0]; token; token = token->next) {
+	क्रम (token = key->payload.data[0]; token; token = token->next) अणु
 		toksize = 4;	/* sec index */
 
-		switch (token->security_index) {
-		case RXRPC_SECURITY_RXKAD:
+		चयन (token->security_index) अणु
+		हाल RXRPC_SECURITY_RXKAD:
 			toksize += 8 * 4;	/* viceid, kvno, key*2, begin,
 						 * end, primary, tktlen */
-			if (!token->no_leak_key)
+			अगर (!token->no_leak_key)
 				toksize += RND(token->kad->ticket_len);
-			break;
+			अवरोध;
 
-		default: /* we have a ticket we can't encode */
+		शेष: /* we have a ticket we can't encode */
 			pr_err("Unsupported key token type (%u)\n",
 			       token->security_index);
-			return -ENOPKG;
-		}
+			वापस -ENOPKG;
+		पूर्ण
 
 		_debug("token[%u]: toksize=%u", ntoks, toksize);
 		ASSERTCMP(toksize, <=, AFSTOKEN_LENGTH_MAX);
 
 		toksizes[ntoks++] = toksize;
 		size += toksize + 4; /* each token has a length word */
-	}
+	पूर्ण
 
-#undef RND
+#अघोषित RND
 
-	if (!buffer || buflen < size)
-		return size;
+	अगर (!buffer || buflen < size)
+		वापस size;
 
 	xdr = (__be32 *)buffer;
 	zero = 0;
-#define ENCODE(x)				\
-	do {					\
+#घोषणा ENCODE(x)				\
+	करो अणु					\
 		*xdr++ = htonl(x);		\
-	} while(0)
-#define ENCODE_DATA(l, s)						\
-	do {								\
+	पूर्ण जबतक(0)
+#घोषणा ENCODE_DATA(l, s)						\
+	करो अणु								\
 		u32 _l = (l);						\
 		ENCODE(l);						\
-		memcpy(xdr, (s), _l);					\
-		if (_l & 3)						\
-			memcpy((u8 *)xdr + _l, &zero, 4 - (_l & 3));	\
+		स_नकल(xdr, (s), _l);					\
+		अगर (_l & 3)						\
+			स_नकल((u8 *)xdr + _l, &zero, 4 - (_l & 3));	\
 		xdr += (_l + 3) >> 2;					\
-	} while(0)
-#define ENCODE_BYTES(l, s)						\
-	do {								\
+	पूर्ण जबतक(0)
+#घोषणा ENCODE_BYTES(l, s)						\
+	करो अणु								\
 		u32 _l = (l);						\
-		memcpy(xdr, (s), _l);					\
-		if (_l & 3)						\
-			memcpy((u8 *)xdr + _l, &zero, 4 - (_l & 3));	\
+		स_नकल(xdr, (s), _l);					\
+		अगर (_l & 3)						\
+			स_नकल((u8 *)xdr + _l, &zero, 4 - (_l & 3));	\
 		xdr += (_l + 3) >> 2;					\
-	} while(0)
-#define ENCODE64(x)					\
-	do {						\
+	पूर्ण जबतक(0)
+#घोषणा ENCODE64(x)					\
+	करो अणु						\
 		__be64 y = cpu_to_be64(x);		\
-		memcpy(xdr, &y, 8);			\
+		स_नकल(xdr, &y, 8);			\
 		xdr += 8 >> 2;				\
-	} while(0)
-#define ENCODE_STR(s)				\
-	do {					\
-		const char *_s = (s);		\
-		ENCODE_DATA(strlen(_s), _s);	\
-	} while(0)
+	पूर्ण जबतक(0)
+#घोषणा ENCODE_STR(s)				\
+	करो अणु					\
+		स्थिर अक्षर *_s = (s);		\
+		ENCODE_DATA(म_माप(_s), _s);	\
+	पूर्ण जबतक(0)
 
 	ENCODE(0);					/* flags */
 	ENCODE_DATA(cnlen, key->description + 4);	/* cellname */
 	ENCODE(ntoks);
 
 	tok = 0;
-	for (token = key->payload.data[0]; token; token = token->next) {
+	क्रम (token = key->payload.data[0]; token; token = token->next) अणु
 		toksize = toksizes[tok++];
 		ENCODE(toksize);
 		oldxdr = xdr;
 		ENCODE(token->security_index);
 
-		switch (token->security_index) {
-		case RXRPC_SECURITY_RXKAD:
+		चयन (token->security_index) अणु
+		हाल RXRPC_SECURITY_RXKAD:
 			ENCODE(token->kad->vice_id);
 			ENCODE(token->kad->kvno);
 			ENCODE_BYTES(8, token->kad->session_key);
 			ENCODE(token->kad->start);
 			ENCODE(token->kad->expiry);
 			ENCODE(token->kad->primary_flag);
-			if (token->no_leak_key)
+			अगर (token->no_leak_key)
 				ENCODE(0);
-			else
+			अन्यथा
 				ENCODE_DATA(token->kad->ticket_len, token->kad->ticket);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			pr_err("Unsupported key token type (%u)\n",
 			       token->security_index);
-			return -ENOPKG;
-		}
+			वापस -ENOPKG;
+		पूर्ण
 
-		ASSERTCMP((unsigned long)xdr - (unsigned long)oldxdr, ==,
+		ASSERTCMP((अचिन्हित दीर्घ)xdr - (अचिन्हित दीर्घ)oldxdr, ==,
 			  toksize);
-	}
+	पूर्ण
 
-#undef ENCODE_STR
-#undef ENCODE_DATA
-#undef ENCODE64
-#undef ENCODE
+#अघोषित ENCODE_STR
+#अघोषित ENCODE_DATA
+#अघोषित ENCODE64
+#अघोषित ENCODE
 
 	ASSERTCMP(tok, ==, ntoks);
-	ASSERTCMP((char __user *) xdr - buffer, ==, size);
+	ASSERTCMP((अक्षर __user *) xdr - buffer, ==, size);
 	_leave(" = %zu", size);
-	return size;
-}
+	वापस size;
+पूर्ण

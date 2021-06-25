@@ -1,1103 +1,1104 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2006 Netfilter Core Team <coreteam@netfilter.org>
  */
 
-#include <linux/types.h>
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/udp.h>
-#include <linux/tcp.h>
-#include <linux/icmp.h>
-#include <linux/icmpv6.h>
+#समावेश <linux/types.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/icmpv6.h>
 
-#include <linux/dccp.h>
-#include <linux/sctp.h>
-#include <net/sctp/checksum.h>
+#समावेश <linux/dccp.h>
+#समावेश <linux/sctp.h>
+#समावेश <net/sctp/checksum.h>
 
-#include <linux/netfilter.h>
-#include <net/netfilter/nf_nat.h>
+#समावेश <linux/netfilter.h>
+#समावेश <net/netfilter/nf_nat.h>
 
-#include <linux/ipv6.h>
-#include <linux/netfilter_ipv6.h>
-#include <net/checksum.h>
-#include <net/ip6_checksum.h>
-#include <net/ip6_route.h>
-#include <net/xfrm.h>
-#include <net/ipv6.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/ipv6.h>
 
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack.h>
-#include <linux/netfilter/nfnetlink_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <linux/netfilter/nfnetlink_conntrack.h>
 
-static void nf_csum_update(struct sk_buff *skb,
-			   unsigned int iphdroff, __sum16 *check,
-			   const struct nf_conntrack_tuple *t,
-			   enum nf_nat_manip_type maniptype);
+अटल व्योम nf_csum_update(काष्ठा sk_buff *skb,
+			   अचिन्हित पूर्णांक iphdroff, __sum16 *check,
+			   स्थिर काष्ठा nf_conntrack_tuple *t,
+			   क्रमागत nf_nat_manip_type maniptype);
 
-static void
-__udp_manip_pkt(struct sk_buff *skb,
-	        unsigned int iphdroff, struct udphdr *hdr,
-	        const struct nf_conntrack_tuple *tuple,
-	        enum nf_nat_manip_type maniptype, bool do_csum)
-{
+अटल व्योम
+__udp_manip_pkt(काष्ठा sk_buff *skb,
+	        अचिन्हित पूर्णांक iphdroff, काष्ठा udphdr *hdr,
+	        स्थिर काष्ठा nf_conntrack_tuple *tuple,
+	        क्रमागत nf_nat_manip_type maniptype, bool करो_csum)
+अणु
 	__be16 *portptr, newport;
 
-	if (maniptype == NF_NAT_MANIP_SRC) {
+	अगर (maniptype == NF_NAT_MANIP_SRC) अणु
 		/* Get rid of src port */
 		newport = tuple->src.u.udp.port;
 		portptr = &hdr->source;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Get rid of dst port */
 		newport = tuple->dst.u.udp.port;
 		portptr = &hdr->dest;
-	}
-	if (do_csum) {
+	पूर्ण
+	अगर (करो_csum) अणु
 		nf_csum_update(skb, iphdroff, &hdr->check, tuple, maniptype);
 		inet_proto_csum_replace2(&hdr->check, skb, *portptr, newport,
 					 false);
-		if (!hdr->check)
+		अगर (!hdr->check)
 			hdr->check = CSUM_MANGLED_0;
-	}
+	पूर्ण
 	*portptr = newport;
-}
+पूर्ण
 
-static bool udp_manip_pkt(struct sk_buff *skb,
-			  unsigned int iphdroff, unsigned int hdroff,
-			  const struct nf_conntrack_tuple *tuple,
-			  enum nf_nat_manip_type maniptype)
-{
-	struct udphdr *hdr;
+अटल bool udp_manip_pkt(काष्ठा sk_buff *skb,
+			  अचिन्हित पूर्णांक iphdroff, अचिन्हित पूर्णांक hdroff,
+			  स्थिर काष्ठा nf_conntrack_tuple *tuple,
+			  क्रमागत nf_nat_manip_type maniptype)
+अणु
+	काष्ठा udphdr *hdr;
 
-	if (skb_ensure_writable(skb, hdroff + sizeof(*hdr)))
-		return false;
+	अगर (skb_ensure_writable(skb, hdroff + माप(*hdr)))
+		वापस false;
 
-	hdr = (struct udphdr *)(skb->data + hdroff);
+	hdr = (काष्ठा udphdr *)(skb->data + hdroff);
 	__udp_manip_pkt(skb, iphdroff, hdr, tuple, maniptype, !!hdr->check);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool udplite_manip_pkt(struct sk_buff *skb,
-			      unsigned int iphdroff, unsigned int hdroff,
-			      const struct nf_conntrack_tuple *tuple,
-			      enum nf_nat_manip_type maniptype)
-{
-#ifdef CONFIG_NF_CT_PROTO_UDPLITE
-	struct udphdr *hdr;
+अटल bool udplite_manip_pkt(काष्ठा sk_buff *skb,
+			      अचिन्हित पूर्णांक iphdroff, अचिन्हित पूर्णांक hdroff,
+			      स्थिर काष्ठा nf_conntrack_tuple *tuple,
+			      क्रमागत nf_nat_manip_type maniptype)
+अणु
+#अगर_घोषित CONFIG_NF_CT_PROTO_UDPLITE
+	काष्ठा udphdr *hdr;
 
-	if (skb_ensure_writable(skb, hdroff + sizeof(*hdr)))
-		return false;
+	अगर (skb_ensure_writable(skb, hdroff + माप(*hdr)))
+		वापस false;
 
-	hdr = (struct udphdr *)(skb->data + hdroff);
+	hdr = (काष्ठा udphdr *)(skb->data + hdroff);
 	__udp_manip_pkt(skb, iphdroff, hdr, tuple, maniptype, true);
-#endif
-	return true;
-}
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-static bool
-sctp_manip_pkt(struct sk_buff *skb,
-	       unsigned int iphdroff, unsigned int hdroff,
-	       const struct nf_conntrack_tuple *tuple,
-	       enum nf_nat_manip_type maniptype)
-{
-#ifdef CONFIG_NF_CT_PROTO_SCTP
-	struct sctphdr *hdr;
-	int hdrsize = 8;
+अटल bool
+sctp_manip_pkt(काष्ठा sk_buff *skb,
+	       अचिन्हित पूर्णांक iphdroff, अचिन्हित पूर्णांक hdroff,
+	       स्थिर काष्ठा nf_conntrack_tuple *tuple,
+	       क्रमागत nf_nat_manip_type maniptype)
+अणु
+#अगर_घोषित CONFIG_NF_CT_PROTO_SCTP
+	काष्ठा sctphdr *hdr;
+	पूर्णांक hdrsize = 8;
 
-	/* This could be an inner header returned in imcp packet; in such
-	 * cases we cannot update the checksum field since it is outside
+	/* This could be an inner header वापसed in imcp packet; in such
+	 * हालs we cannot update the checksum field since it is outside
 	 * of the 8 bytes of transport layer headers we are guaranteed.
 	 */
-	if (skb->len >= hdroff + sizeof(*hdr))
-		hdrsize = sizeof(*hdr);
+	अगर (skb->len >= hdroff + माप(*hdr))
+		hdrsize = माप(*hdr);
 
-	if (skb_ensure_writable(skb, hdroff + hdrsize))
-		return false;
+	अगर (skb_ensure_writable(skb, hdroff + hdrsize))
+		वापस false;
 
-	hdr = (struct sctphdr *)(skb->data + hdroff);
+	hdr = (काष्ठा sctphdr *)(skb->data + hdroff);
 
-	if (maniptype == NF_NAT_MANIP_SRC) {
+	अगर (maniptype == NF_NAT_MANIP_SRC) अणु
 		/* Get rid of src port */
 		hdr->source = tuple->src.u.sctp.port;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Get rid of dst port */
 		hdr->dest = tuple->dst.u.sctp.port;
-	}
+	पूर्ण
 
-	if (hdrsize < sizeof(*hdr))
-		return true;
+	अगर (hdrsize < माप(*hdr))
+		वापस true;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL) {
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL) अणु
 		hdr->checksum = sctp_compute_cksum(skb, hdroff);
 		skb->ip_summed = CHECKSUM_NONE;
-	}
+	पूर्ण
 
-#endif
-	return true;
-}
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-static bool
-tcp_manip_pkt(struct sk_buff *skb,
-	      unsigned int iphdroff, unsigned int hdroff,
-	      const struct nf_conntrack_tuple *tuple,
-	      enum nf_nat_manip_type maniptype)
-{
-	struct tcphdr *hdr;
+अटल bool
+tcp_manip_pkt(काष्ठा sk_buff *skb,
+	      अचिन्हित पूर्णांक iphdroff, अचिन्हित पूर्णांक hdroff,
+	      स्थिर काष्ठा nf_conntrack_tuple *tuple,
+	      क्रमागत nf_nat_manip_type maniptype)
+अणु
+	काष्ठा tcphdr *hdr;
 	__be16 *portptr, newport, oldport;
-	int hdrsize = 8; /* TCP connection tracking guarantees this much */
+	पूर्णांक hdrsize = 8; /* TCP connection tracking guarantees this much */
 
-	/* this could be a inner header returned in icmp packet; in such
-	   cases we cannot update the checksum field since it is outside of
+	/* this could be a inner header वापसed in icmp packet; in such
+	   हालs we cannot update the checksum field since it is outside of
 	   the 8 bytes of transport layer headers we are guaranteed */
-	if (skb->len >= hdroff + sizeof(struct tcphdr))
-		hdrsize = sizeof(struct tcphdr);
+	अगर (skb->len >= hdroff + माप(काष्ठा tcphdr))
+		hdrsize = माप(काष्ठा tcphdr);
 
-	if (skb_ensure_writable(skb, hdroff + hdrsize))
-		return false;
+	अगर (skb_ensure_writable(skb, hdroff + hdrsize))
+		वापस false;
 
-	hdr = (struct tcphdr *)(skb->data + hdroff);
+	hdr = (काष्ठा tcphdr *)(skb->data + hdroff);
 
-	if (maniptype == NF_NAT_MANIP_SRC) {
+	अगर (maniptype == NF_NAT_MANIP_SRC) अणु
 		/* Get rid of src port */
 		newport = tuple->src.u.tcp.port;
 		portptr = &hdr->source;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Get rid of dst port */
 		newport = tuple->dst.u.tcp.port;
 		portptr = &hdr->dest;
-	}
+	पूर्ण
 
 	oldport = *portptr;
 	*portptr = newport;
 
-	if (hdrsize < sizeof(*hdr))
-		return true;
+	अगर (hdrsize < माप(*hdr))
+		वापस true;
 
 	nf_csum_update(skb, iphdroff, &hdr->check, tuple, maniptype);
 	inet_proto_csum_replace2(&hdr->check, skb, oldport, newport, false);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool
-dccp_manip_pkt(struct sk_buff *skb,
-	       unsigned int iphdroff, unsigned int hdroff,
-	       const struct nf_conntrack_tuple *tuple,
-	       enum nf_nat_manip_type maniptype)
-{
-#ifdef CONFIG_NF_CT_PROTO_DCCP
-	struct dccp_hdr *hdr;
+अटल bool
+dccp_manip_pkt(काष्ठा sk_buff *skb,
+	       अचिन्हित पूर्णांक iphdroff, अचिन्हित पूर्णांक hdroff,
+	       स्थिर काष्ठा nf_conntrack_tuple *tuple,
+	       क्रमागत nf_nat_manip_type maniptype)
+अणु
+#अगर_घोषित CONFIG_NF_CT_PROTO_DCCP
+	काष्ठा dccp_hdr *hdr;
 	__be16 *portptr, oldport, newport;
-	int hdrsize = 8; /* DCCP connection tracking guarantees this much */
+	पूर्णांक hdrsize = 8; /* DCCP connection tracking guarantees this much */
 
-	if (skb->len >= hdroff + sizeof(struct dccp_hdr))
-		hdrsize = sizeof(struct dccp_hdr);
+	अगर (skb->len >= hdroff + माप(काष्ठा dccp_hdr))
+		hdrsize = माप(काष्ठा dccp_hdr);
 
-	if (skb_ensure_writable(skb, hdroff + hdrsize))
-		return false;
+	अगर (skb_ensure_writable(skb, hdroff + hdrsize))
+		वापस false;
 
-	hdr = (struct dccp_hdr *)(skb->data + hdroff);
+	hdr = (काष्ठा dccp_hdr *)(skb->data + hdroff);
 
-	if (maniptype == NF_NAT_MANIP_SRC) {
+	अगर (maniptype == NF_NAT_MANIP_SRC) अणु
 		newport = tuple->src.u.dccp.port;
 		portptr = &hdr->dccph_sport;
-	} else {
+	पूर्ण अन्यथा अणु
 		newport = tuple->dst.u.dccp.port;
 		portptr = &hdr->dccph_dport;
-	}
+	पूर्ण
 
 	oldport = *portptr;
 	*portptr = newport;
 
-	if (hdrsize < sizeof(*hdr))
-		return true;
+	अगर (hdrsize < माप(*hdr))
+		वापस true;
 
 	nf_csum_update(skb, iphdroff, &hdr->dccph_checksum, tuple, maniptype);
 	inet_proto_csum_replace2(&hdr->dccph_checksum, skb, oldport, newport,
 				 false);
-#endif
-	return true;
-}
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-static bool
-icmp_manip_pkt(struct sk_buff *skb,
-	       unsigned int iphdroff, unsigned int hdroff,
-	       const struct nf_conntrack_tuple *tuple,
-	       enum nf_nat_manip_type maniptype)
-{
-	struct icmphdr *hdr;
+अटल bool
+icmp_manip_pkt(काष्ठा sk_buff *skb,
+	       अचिन्हित पूर्णांक iphdroff, अचिन्हित पूर्णांक hdroff,
+	       स्थिर काष्ठा nf_conntrack_tuple *tuple,
+	       क्रमागत nf_nat_manip_type maniptype)
+अणु
+	काष्ठा icmphdr *hdr;
 
-	if (skb_ensure_writable(skb, hdroff + sizeof(*hdr)))
-		return false;
+	अगर (skb_ensure_writable(skb, hdroff + माप(*hdr)))
+		वापस false;
 
-	hdr = (struct icmphdr *)(skb->data + hdroff);
-	switch (hdr->type) {
-	case ICMP_ECHO:
-	case ICMP_ECHOREPLY:
-	case ICMP_TIMESTAMP:
-	case ICMP_TIMESTAMPREPLY:
-	case ICMP_INFO_REQUEST:
-	case ICMP_INFO_REPLY:
-	case ICMP_ADDRESS:
-	case ICMP_ADDRESSREPLY:
-		break;
-	default:
-		return true;
-	}
+	hdr = (काष्ठा icmphdr *)(skb->data + hdroff);
+	चयन (hdr->type) अणु
+	हाल ICMP_ECHO:
+	हाल ICMP_ECHOREPLY:
+	हाल ICMP_TIMESTAMP:
+	हाल ICMP_TIMESTAMPREPLY:
+	हाल ICMP_INFO_REQUEST:
+	हाल ICMP_INFO_REPLY:
+	हाल ICMP_ADDRESS:
+	हाल ICMP_ADDRESSREPLY:
+		अवरोध;
+	शेष:
+		वापस true;
+	पूर्ण
 	inet_proto_csum_replace2(&hdr->checksum, skb,
 				 hdr->un.echo.id, tuple->src.u.icmp.id, false);
 	hdr->un.echo.id = tuple->src.u.icmp.id;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool
-icmpv6_manip_pkt(struct sk_buff *skb,
-		 unsigned int iphdroff, unsigned int hdroff,
-		 const struct nf_conntrack_tuple *tuple,
-		 enum nf_nat_manip_type maniptype)
-{
-	struct icmp6hdr *hdr;
+अटल bool
+icmpv6_manip_pkt(काष्ठा sk_buff *skb,
+		 अचिन्हित पूर्णांक iphdroff, अचिन्हित पूर्णांक hdroff,
+		 स्थिर काष्ठा nf_conntrack_tuple *tuple,
+		 क्रमागत nf_nat_manip_type maniptype)
+अणु
+	काष्ठा icmp6hdr *hdr;
 
-	if (skb_ensure_writable(skb, hdroff + sizeof(*hdr)))
-		return false;
+	अगर (skb_ensure_writable(skb, hdroff + माप(*hdr)))
+		वापस false;
 
-	hdr = (struct icmp6hdr *)(skb->data + hdroff);
+	hdr = (काष्ठा icmp6hdr *)(skb->data + hdroff);
 	nf_csum_update(skb, iphdroff, &hdr->icmp6_cksum, tuple, maniptype);
-	if (hdr->icmp6_type == ICMPV6_ECHO_REQUEST ||
-	    hdr->icmp6_type == ICMPV6_ECHO_REPLY) {
+	अगर (hdr->icmp6_type == ICMPV6_ECHO_REQUEST ||
+	    hdr->icmp6_type == ICMPV6_ECHO_REPLY) अणु
 		inet_proto_csum_replace2(&hdr->icmp6_cksum, skb,
-					 hdr->icmp6_identifier,
+					 hdr->icmp6_identअगरier,
 					 tuple->src.u.icmp.id, false);
-		hdr->icmp6_identifier = tuple->src.u.icmp.id;
-	}
-	return true;
-}
+		hdr->icmp6_identअगरier = tuple->src.u.icmp.id;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /* manipulate a GRE packet according to maniptype */
-static bool
-gre_manip_pkt(struct sk_buff *skb,
-	      unsigned int iphdroff, unsigned int hdroff,
-	      const struct nf_conntrack_tuple *tuple,
-	      enum nf_nat_manip_type maniptype)
-{
-#if IS_ENABLED(CONFIG_NF_CT_PROTO_GRE)
-	const struct gre_base_hdr *greh;
-	struct pptp_gre_header *pgreh;
+अटल bool
+gre_manip_pkt(काष्ठा sk_buff *skb,
+	      अचिन्हित पूर्णांक iphdroff, अचिन्हित पूर्णांक hdroff,
+	      स्थिर काष्ठा nf_conntrack_tuple *tuple,
+	      क्रमागत nf_nat_manip_type maniptype)
+अणु
+#अगर IS_ENABLED(CONFIG_NF_CT_PROTO_GRE)
+	स्थिर काष्ठा gre_base_hdr *greh;
+	काष्ठा pptp_gre_header *pgreh;
 
 	/* pgreh includes two optional 32bit fields which are not required
 	 * to be there.  That's where the magic '8' comes from */
-	if (skb_ensure_writable(skb, hdroff + sizeof(*pgreh) - 8))
-		return false;
+	अगर (skb_ensure_writable(skb, hdroff + माप(*pgreh) - 8))
+		वापस false;
 
-	greh = (void *)skb->data + hdroff;
-	pgreh = (struct pptp_gre_header *)greh;
+	greh = (व्योम *)skb->data + hdroff;
+	pgreh = (काष्ठा pptp_gre_header *)greh;
 
 	/* we only have destination manip of a packet, since 'source key'
 	 * is not present in the packet itself */
-	if (maniptype != NF_NAT_MANIP_DST)
-		return true;
+	अगर (maniptype != NF_NAT_MANIP_DST)
+		वापस true;
 
-	switch (greh->flags & GRE_VERSION) {
-	case GRE_VERSION_0:
-		/* We do not currently NAT any GREv0 packets.
+	चयन (greh->flags & GRE_VERSION) अणु
+	हाल GRE_VERSION_0:
+		/* We करो not currently NAT any GREv0 packets.
 		 * Try to behave like "nf_nat_proto_unknown" */
-		break;
-	case GRE_VERSION_1:
+		अवरोध;
+	हाल GRE_VERSION_1:
 		pr_debug("call_id -> 0x%04x\n", ntohs(tuple->dst.u.gre.key));
 		pgreh->call_id = tuple->dst.u.gre.key;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_debug("can't nat unknown GRE version\n");
-		return false;
-	}
-#endif
-	return true;
-}
+		वापस false;
+	पूर्ण
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-static bool l4proto_manip_pkt(struct sk_buff *skb,
-			      unsigned int iphdroff, unsigned int hdroff,
-			      const struct nf_conntrack_tuple *tuple,
-			      enum nf_nat_manip_type maniptype)
-{
-	switch (tuple->dst.protonum) {
-	case IPPROTO_TCP:
-		return tcp_manip_pkt(skb, iphdroff, hdroff,
+अटल bool l4proto_manip_pkt(काष्ठा sk_buff *skb,
+			      अचिन्हित पूर्णांक iphdroff, अचिन्हित पूर्णांक hdroff,
+			      स्थिर काष्ठा nf_conntrack_tuple *tuple,
+			      क्रमागत nf_nat_manip_type maniptype)
+अणु
+	चयन (tuple->dst.protonum) अणु
+	हाल IPPROTO_TCP:
+		वापस tcp_manip_pkt(skb, iphdroff, hdroff,
 				     tuple, maniptype);
-	case IPPROTO_UDP:
-		return udp_manip_pkt(skb, iphdroff, hdroff,
+	हाल IPPROTO_UDP:
+		वापस udp_manip_pkt(skb, iphdroff, hdroff,
 				     tuple, maniptype);
-	case IPPROTO_UDPLITE:
-		return udplite_manip_pkt(skb, iphdroff, hdroff,
+	हाल IPPROTO_UDPLITE:
+		वापस udplite_manip_pkt(skb, iphdroff, hdroff,
 					 tuple, maniptype);
-	case IPPROTO_SCTP:
-		return sctp_manip_pkt(skb, iphdroff, hdroff,
+	हाल IPPROTO_SCTP:
+		वापस sctp_manip_pkt(skb, iphdroff, hdroff,
 				      tuple, maniptype);
-	case IPPROTO_ICMP:
-		return icmp_manip_pkt(skb, iphdroff, hdroff,
+	हाल IPPROTO_ICMP:
+		वापस icmp_manip_pkt(skb, iphdroff, hdroff,
 				      tuple, maniptype);
-	case IPPROTO_ICMPV6:
-		return icmpv6_manip_pkt(skb, iphdroff, hdroff,
+	हाल IPPROTO_ICMPV6:
+		वापस icmpv6_manip_pkt(skb, iphdroff, hdroff,
 					tuple, maniptype);
-	case IPPROTO_DCCP:
-		return dccp_manip_pkt(skb, iphdroff, hdroff,
+	हाल IPPROTO_DCCP:
+		वापस dccp_manip_pkt(skb, iphdroff, hdroff,
 				      tuple, maniptype);
-	case IPPROTO_GRE:
-		return gre_manip_pkt(skb, iphdroff, hdroff,
+	हाल IPPROTO_GRE:
+		वापस gre_manip_pkt(skb, iphdroff, hdroff,
 				     tuple, maniptype);
-	}
+	पूर्ण
 
-	/* If we don't know protocol -- no error, pass it unmodified. */
-	return true;
-}
+	/* If we करोn't know protocol -- no error, pass it unmodअगरied. */
+	वापस true;
+पूर्ण
 
-static bool nf_nat_ipv4_manip_pkt(struct sk_buff *skb,
-				  unsigned int iphdroff,
-				  const struct nf_conntrack_tuple *target,
-				  enum nf_nat_manip_type maniptype)
-{
-	struct iphdr *iph;
-	unsigned int hdroff;
+अटल bool nf_nat_ipv4_manip_pkt(काष्ठा sk_buff *skb,
+				  अचिन्हित पूर्णांक iphdroff,
+				  स्थिर काष्ठा nf_conntrack_tuple *target,
+				  क्रमागत nf_nat_manip_type maniptype)
+अणु
+	काष्ठा iphdr *iph;
+	अचिन्हित पूर्णांक hdroff;
 
-	if (skb_ensure_writable(skb, iphdroff + sizeof(*iph)))
-		return false;
+	अगर (skb_ensure_writable(skb, iphdroff + माप(*iph)))
+		वापस false;
 
-	iph = (void *)skb->data + iphdroff;
+	iph = (व्योम *)skb->data + iphdroff;
 	hdroff = iphdroff + iph->ihl * 4;
 
-	if (!l4proto_manip_pkt(skb, iphdroff, hdroff, target, maniptype))
-		return false;
-	iph = (void *)skb->data + iphdroff;
+	अगर (!l4proto_manip_pkt(skb, iphdroff, hdroff, target, maniptype))
+		वापस false;
+	iph = (व्योम *)skb->data + iphdroff;
 
-	if (maniptype == NF_NAT_MANIP_SRC) {
+	अगर (maniptype == NF_NAT_MANIP_SRC) अणु
 		csum_replace4(&iph->check, iph->saddr, target->src.u3.ip);
 		iph->saddr = target->src.u3.ip;
-	} else {
+	पूर्ण अन्यथा अणु
 		csum_replace4(&iph->check, iph->daddr, target->dst.u3.ip);
 		iph->daddr = target->dst.u3.ip;
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static bool nf_nat_ipv6_manip_pkt(struct sk_buff *skb,
-				  unsigned int iphdroff,
-				  const struct nf_conntrack_tuple *target,
-				  enum nf_nat_manip_type maniptype)
-{
-#if IS_ENABLED(CONFIG_IPV6)
-	struct ipv6hdr *ipv6h;
+अटल bool nf_nat_ipv6_manip_pkt(काष्ठा sk_buff *skb,
+				  अचिन्हित पूर्णांक iphdroff,
+				  स्थिर काष्ठा nf_conntrack_tuple *target,
+				  क्रमागत nf_nat_manip_type maniptype)
+अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+	काष्ठा ipv6hdr *ipv6h;
 	__be16 frag_off;
-	int hdroff;
+	पूर्णांक hdroff;
 	u8 nexthdr;
 
-	if (skb_ensure_writable(skb, iphdroff + sizeof(*ipv6h)))
-		return false;
+	अगर (skb_ensure_writable(skb, iphdroff + माप(*ipv6h)))
+		वापस false;
 
-	ipv6h = (void *)skb->data + iphdroff;
+	ipv6h = (व्योम *)skb->data + iphdroff;
 	nexthdr = ipv6h->nexthdr;
-	hdroff = ipv6_skip_exthdr(skb, iphdroff + sizeof(*ipv6h),
+	hdroff = ipv6_skip_exthdr(skb, iphdroff + माप(*ipv6h),
 				  &nexthdr, &frag_off);
-	if (hdroff < 0)
-		goto manip_addr;
+	अगर (hdroff < 0)
+		जाओ manip_addr;
 
-	if ((frag_off & htons(~0x7)) == 0 &&
+	अगर ((frag_off & htons(~0x7)) == 0 &&
 	    !l4proto_manip_pkt(skb, iphdroff, hdroff, target, maniptype))
-		return false;
+		वापस false;
 
 	/* must reload, offset might have changed */
-	ipv6h = (void *)skb->data + iphdroff;
+	ipv6h = (व्योम *)skb->data + iphdroff;
 
 manip_addr:
-	if (maniptype == NF_NAT_MANIP_SRC)
+	अगर (maniptype == NF_NAT_MANIP_SRC)
 		ipv6h->saddr = target->src.u3.in6;
-	else
+	अन्यथा
 		ipv6h->daddr = target->dst.u3.in6;
 
-#endif
-	return true;
-}
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-unsigned int nf_nat_manip_pkt(struct sk_buff *skb, struct nf_conn *ct,
-			      enum nf_nat_manip_type mtype,
-			      enum ip_conntrack_dir dir)
-{
-	struct nf_conntrack_tuple target;
+अचिन्हित पूर्णांक nf_nat_manip_pkt(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			      क्रमागत nf_nat_manip_type mtype,
+			      क्रमागत ip_conntrack_dir dir)
+अणु
+	काष्ठा nf_conntrack_tuple target;
 
 	/* We are aiming to look like inverse of other direction. */
 	nf_ct_invert_tuple(&target, &ct->tuplehash[!dir].tuple);
 
-	switch (target.src.l3num) {
-	case NFPROTO_IPV6:
-		if (nf_nat_ipv6_manip_pkt(skb, 0, &target, mtype))
-			return NF_ACCEPT;
-		break;
-	case NFPROTO_IPV4:
-		if (nf_nat_ipv4_manip_pkt(skb, 0, &target, mtype))
-			return NF_ACCEPT;
-		break;
-	default:
+	चयन (target.src.l3num) अणु
+	हाल NFPROTO_IPV6:
+		अगर (nf_nat_ipv6_manip_pkt(skb, 0, &target, mtype))
+			वापस NF_ACCEPT;
+		अवरोध;
+	हाल NFPROTO_IPV4:
+		अगर (nf_nat_ipv4_manip_pkt(skb, 0, &target, mtype))
+			वापस NF_ACCEPT;
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return NF_DROP;
-}
+	वापस NF_DROP;
+पूर्ण
 
-static void nf_nat_ipv4_csum_update(struct sk_buff *skb,
-				    unsigned int iphdroff, __sum16 *check,
-				    const struct nf_conntrack_tuple *t,
-				    enum nf_nat_manip_type maniptype)
-{
-	struct iphdr *iph = (struct iphdr *)(skb->data + iphdroff);
+अटल व्योम nf_nat_ipv4_csum_update(काष्ठा sk_buff *skb,
+				    अचिन्हित पूर्णांक iphdroff, __sum16 *check,
+				    स्थिर काष्ठा nf_conntrack_tuple *t,
+				    क्रमागत nf_nat_manip_type maniptype)
+अणु
+	काष्ठा iphdr *iph = (काष्ठा iphdr *)(skb->data + iphdroff);
 	__be32 oldip, newip;
 
-	if (maniptype == NF_NAT_MANIP_SRC) {
+	अगर (maniptype == NF_NAT_MANIP_SRC) अणु
 		oldip = iph->saddr;
 		newip = t->src.u3.ip;
-	} else {
+	पूर्ण अन्यथा अणु
 		oldip = iph->daddr;
 		newip = t->dst.u3.ip;
-	}
+	पूर्ण
 	inet_proto_csum_replace4(check, skb, oldip, newip, true);
-}
+पूर्ण
 
-static void nf_nat_ipv6_csum_update(struct sk_buff *skb,
-				    unsigned int iphdroff, __sum16 *check,
-				    const struct nf_conntrack_tuple *t,
-				    enum nf_nat_manip_type maniptype)
-{
-#if IS_ENABLED(CONFIG_IPV6)
-	const struct ipv6hdr *ipv6h = (struct ipv6hdr *)(skb->data + iphdroff);
-	const struct in6_addr *oldip, *newip;
+अटल व्योम nf_nat_ipv6_csum_update(काष्ठा sk_buff *skb,
+				    अचिन्हित पूर्णांक iphdroff, __sum16 *check,
+				    स्थिर काष्ठा nf_conntrack_tuple *t,
+				    क्रमागत nf_nat_manip_type maniptype)
+अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+	स्थिर काष्ठा ipv6hdr *ipv6h = (काष्ठा ipv6hdr *)(skb->data + iphdroff);
+	स्थिर काष्ठा in6_addr *oldip, *newip;
 
-	if (maniptype == NF_NAT_MANIP_SRC) {
+	अगर (maniptype == NF_NAT_MANIP_SRC) अणु
 		oldip = &ipv6h->saddr;
 		newip = &t->src.u3.in6;
-	} else {
+	पूर्ण अन्यथा अणु
 		oldip = &ipv6h->daddr;
 		newip = &t->dst.u3.in6;
-	}
+	पूर्ण
 	inet_proto_csum_replace16(check, skb, oldip->s6_addr32,
 				  newip->s6_addr32, true);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void nf_csum_update(struct sk_buff *skb,
-			   unsigned int iphdroff, __sum16 *check,
-			   const struct nf_conntrack_tuple *t,
-			   enum nf_nat_manip_type maniptype)
-{
-	switch (t->src.l3num) {
-	case NFPROTO_IPV4:
+अटल व्योम nf_csum_update(काष्ठा sk_buff *skb,
+			   अचिन्हित पूर्णांक iphdroff, __sum16 *check,
+			   स्थिर काष्ठा nf_conntrack_tuple *t,
+			   क्रमागत nf_nat_manip_type maniptype)
+अणु
+	चयन (t->src.l3num) अणु
+	हाल NFPROTO_IPV4:
 		nf_nat_ipv4_csum_update(skb, iphdroff, check, t, maniptype);
-		return;
-	case NFPROTO_IPV6:
+		वापस;
+	हाल NFPROTO_IPV6:
 		nf_nat_ipv6_csum_update(skb, iphdroff, check, t, maniptype);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void nf_nat_ipv4_csum_recalc(struct sk_buff *skb,
-				    u8 proto, void *data, __sum16 *check,
-				    int datalen, int oldlen)
-{
-	if (skb->ip_summed != CHECKSUM_PARTIAL) {
-		const struct iphdr *iph = ip_hdr(skb);
+अटल व्योम nf_nat_ipv4_csum_recalc(काष्ठा sk_buff *skb,
+				    u8 proto, व्योम *data, __sum16 *check,
+				    पूर्णांक datalen, पूर्णांक oldlen)
+अणु
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL) अणु
+		स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
 
 		skb->ip_summed = CHECKSUM_PARTIAL;
 		skb->csum_start = skb_headroom(skb) + skb_network_offset(skb) +
 			ip_hdrlen(skb);
-		skb->csum_offset = (void *)check - data;
+		skb->csum_offset = (व्योम *)check - data;
 		*check = ~csum_tcpudp_magic(iph->saddr, iph->daddr, datalen,
 					    proto, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		inet_proto_csum_replace2(check, skb,
 					 htons(oldlen), htons(datalen), true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-static void nf_nat_ipv6_csum_recalc(struct sk_buff *skb,
-				    u8 proto, void *data, __sum16 *check,
-				    int datalen, int oldlen)
-{
-	if (skb->ip_summed != CHECKSUM_PARTIAL) {
-		const struct ipv6hdr *ipv6h = ipv6_hdr(skb);
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल व्योम nf_nat_ipv6_csum_recalc(काष्ठा sk_buff *skb,
+				    u8 proto, व्योम *data, __sum16 *check,
+				    पूर्णांक datalen, पूर्णांक oldlen)
+अणु
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL) अणु
+		स्थिर काष्ठा ipv6hdr *ipv6h = ipv6_hdr(skb);
 
 		skb->ip_summed = CHECKSUM_PARTIAL;
 		skb->csum_start = skb_headroom(skb) + skb_network_offset(skb) +
-			(data - (void *)skb->data);
-		skb->csum_offset = (void *)check - data;
+			(data - (व्योम *)skb->data);
+		skb->csum_offset = (व्योम *)check - data;
 		*check = ~csum_ipv6_magic(&ipv6h->saddr, &ipv6h->daddr,
 					  datalen, proto, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		inet_proto_csum_replace2(check, skb,
 					 htons(oldlen), htons(datalen), true);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-void nf_nat_csum_recalc(struct sk_buff *skb,
-			u8 nfproto, u8 proto, void *data, __sum16 *check,
-			int datalen, int oldlen)
-{
-	switch (nfproto) {
-	case NFPROTO_IPV4:
+व्योम nf_nat_csum_recalc(काष्ठा sk_buff *skb,
+			u8 nfproto, u8 proto, व्योम *data, __sum16 *check,
+			पूर्णांक datalen, पूर्णांक oldlen)
+अणु
+	चयन (nfproto) अणु
+	हाल NFPROTO_IPV4:
 		nf_nat_ipv4_csum_recalc(skb, proto, data, check,
 					datalen, oldlen);
-		return;
-#if IS_ENABLED(CONFIG_IPV6)
-	case NFPROTO_IPV6:
+		वापस;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	हाल NFPROTO_IPV6:
 		nf_nat_ipv6_csum_recalc(skb, proto, data, check,
 					datalen, oldlen);
-		return;
-#endif
-	}
+		वापस;
+#पूर्ण_अगर
+	पूर्ण
 
 	WARN_ON_ONCE(1);
-}
+पूर्ण
 
-int nf_nat_icmp_reply_translation(struct sk_buff *skb,
-				  struct nf_conn *ct,
-				  enum ip_conntrack_info ctinfo,
-				  unsigned int hooknum)
-{
-	struct {
-		struct icmphdr	icmp;
-		struct iphdr	ip;
-	} *inside;
-	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
-	enum nf_nat_manip_type manip = HOOK2MANIP(hooknum);
-	unsigned int hdrlen = ip_hdrlen(skb);
-	struct nf_conntrack_tuple target;
-	unsigned long statusbit;
+पूर्णांक nf_nat_icmp_reply_translation(काष्ठा sk_buff *skb,
+				  काष्ठा nf_conn *ct,
+				  क्रमागत ip_conntrack_info ctinfo,
+				  अचिन्हित पूर्णांक hooknum)
+अणु
+	काष्ठा अणु
+		काष्ठा icmphdr	icmp;
+		काष्ठा iphdr	ip;
+	पूर्ण *inside;
+	क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
+	क्रमागत nf_nat_manip_type manip = HOOK2MANIP(hooknum);
+	अचिन्हित पूर्णांक hdrlen = ip_hdrlen(skb);
+	काष्ठा nf_conntrack_tuple target;
+	अचिन्हित दीर्घ statusbit;
 
 	WARN_ON(ctinfo != IP_CT_RELATED && ctinfo != IP_CT_RELATED_REPLY);
 
-	if (skb_ensure_writable(skb, hdrlen + sizeof(*inside)))
-		return 0;
-	if (nf_ip_checksum(skb, hooknum, hdrlen, IPPROTO_ICMP))
-		return 0;
+	अगर (skb_ensure_writable(skb, hdrlen + माप(*inside)))
+		वापस 0;
+	अगर (nf_ip_checksum(skb, hooknum, hdrlen, IPPROTO_ICMP))
+		वापस 0;
 
-	inside = (void *)skb->data + hdrlen;
-	if (inside->icmp.type == ICMP_REDIRECT) {
-		if ((ct->status & IPS_NAT_DONE_MASK) != IPS_NAT_DONE_MASK)
-			return 0;
-		if (ct->status & IPS_NAT_MASK)
-			return 0;
-	}
+	inside = (व्योम *)skb->data + hdrlen;
+	अगर (inside->icmp.type == ICMP_REसूचीECT) अणु
+		अगर ((ct->status & IPS_NAT_DONE_MASK) != IPS_NAT_DONE_MASK)
+			वापस 0;
+		अगर (ct->status & IPS_NAT_MASK)
+			वापस 0;
+	पूर्ण
 
-	if (manip == NF_NAT_MANIP_SRC)
+	अगर (manip == NF_NAT_MANIP_SRC)
 		statusbit = IPS_SRC_NAT;
-	else
+	अन्यथा
 		statusbit = IPS_DST_NAT;
 
-	/* Invert if this is reply direction */
-	if (dir == IP_CT_DIR_REPLY)
+	/* Invert अगर this is reply direction */
+	अगर (dir == IP_CT_सूची_REPLY)
 		statusbit ^= IPS_NAT_MASK;
 
-	if (!(ct->status & statusbit))
-		return 1;
+	अगर (!(ct->status & statusbit))
+		वापस 1;
 
-	if (!nf_nat_ipv4_manip_pkt(skb, hdrlen + sizeof(inside->icmp),
+	अगर (!nf_nat_ipv4_manip_pkt(skb, hdrlen + माप(inside->icmp),
 				   &ct->tuplehash[!dir].tuple, !manip))
-		return 0;
+		वापस 0;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL) {
-		/* Reloading "inside" here since manip_pkt may reallocate */
-		inside = (void *)skb->data + hdrlen;
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL) अणु
+		/* Reloading "inside" here since manip_pkt may पुनः_स्मृतिate */
+		inside = (व्योम *)skb->data + hdrlen;
 		inside->icmp.checksum = 0;
 		inside->icmp.checksum =
 			csum_fold(skb_checksum(skb, hdrlen,
 					       skb->len - hdrlen, 0));
-	}
+	पूर्ण
 
 	/* Change outer to look like the reply to an incoming packet */
 	nf_ct_invert_tuple(&target, &ct->tuplehash[!dir].tuple);
 	target.dst.protonum = IPPROTO_ICMP;
-	if (!nf_nat_ipv4_manip_pkt(skb, 0, &target, manip))
-		return 0;
+	अगर (!nf_nat_ipv4_manip_pkt(skb, 0, &target, manip))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_nat_icmp_reply_translation);
 
-static unsigned int
-nf_nat_ipv4_fn(void *priv, struct sk_buff *skb,
-	       const struct nf_hook_state *state)
-{
-	struct nf_conn *ct;
-	enum ip_conntrack_info ctinfo;
+अटल अचिन्हित पूर्णांक
+nf_nat_ipv4_fn(व्योम *priv, काष्ठा sk_buff *skb,
+	       स्थिर काष्ठा nf_hook_state *state)
+अणु
+	काष्ठा nf_conn *ct;
+	क्रमागत ip_conntrack_info ctinfo;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct)
-		return NF_ACCEPT;
+	अगर (!ct)
+		वापस NF_ACCEPT;
 
-	if (ctinfo == IP_CT_RELATED || ctinfo == IP_CT_RELATED_REPLY) {
-		if (ip_hdr(skb)->protocol == IPPROTO_ICMP) {
-			if (!nf_nat_icmp_reply_translation(skb, ct, ctinfo,
+	अगर (ctinfo == IP_CT_RELATED || ctinfo == IP_CT_RELATED_REPLY) अणु
+		अगर (ip_hdr(skb)->protocol == IPPROTO_ICMP) अणु
+			अगर (!nf_nat_icmp_reply_translation(skb, ct, ctinfo,
 							   state->hook))
-				return NF_DROP;
-			else
-				return NF_ACCEPT;
-		}
-	}
+				वापस NF_DROP;
+			अन्यथा
+				वापस NF_ACCEPT;
+		पूर्ण
+	पूर्ण
 
-	return nf_nat_inet_fn(priv, skb, state);
-}
+	वापस nf_nat_inet_fn(priv, skb, state);
+पूर्ण
 
-static unsigned int
-nf_nat_ipv4_pre_routing(void *priv, struct sk_buff *skb,
-			const struct nf_hook_state *state)
-{
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक
+nf_nat_ipv4_pre_routing(व्योम *priv, काष्ठा sk_buff *skb,
+			स्थिर काष्ठा nf_hook_state *state)
+अणु
+	अचिन्हित पूर्णांक ret;
 	__be32 daddr = ip_hdr(skb)->daddr;
 
 	ret = nf_nat_ipv4_fn(priv, skb, state);
-	if (ret == NF_ACCEPT && daddr != ip_hdr(skb)->daddr)
+	अगर (ret == NF_ACCEPT && daddr != ip_hdr(skb)->daddr)
 		skb_dst_drop(skb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_XFRM
-static int nf_xfrm_me_harder(struct net *net, struct sk_buff *skb, unsigned int family)
-{
-	struct sock *sk = skb->sk;
-	struct dst_entry *dst;
-	unsigned int hh_len;
-	struct flowi fl;
-	int err;
+#अगर_घोषित CONFIG_XFRM
+अटल पूर्णांक nf_xfrm_me_harder(काष्ठा net *net, काष्ठा sk_buff *skb, अचिन्हित पूर्णांक family)
+अणु
+	काष्ठा sock *sk = skb->sk;
+	काष्ठा dst_entry *dst;
+	अचिन्हित पूर्णांक hh_len;
+	काष्ठा flowi fl;
+	पूर्णांक err;
 
 	err = xfrm_decode_session(skb, &fl, family);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	dst = skb_dst(skb);
-	if (dst->xfrm)
-		dst = ((struct xfrm_dst *)dst)->route;
-	if (!dst_hold_safe(dst))
-		return -EHOSTUNREACH;
+	अगर (dst->xfrm)
+		dst = ((काष्ठा xfrm_dst *)dst)->route;
+	अगर (!dst_hold_safe(dst))
+		वापस -EHOSTUNREACH;
 
-	if (sk && !net_eq(net, sock_net(sk)))
-		sk = NULL;
+	अगर (sk && !net_eq(net, sock_net(sk)))
+		sk = शून्य;
 
 	dst = xfrm_lookup(net, dst, &fl, sk, 0);
-	if (IS_ERR(dst))
-		return PTR_ERR(dst);
+	अगर (IS_ERR(dst))
+		वापस PTR_ERR(dst);
 
 	skb_dst_drop(skb);
 	skb_dst_set(skb, dst);
 
-	/* Change in oif may mean change in hh_len. */
+	/* Change in oअगर may mean change in hh_len. */
 	hh_len = skb_dst(skb)->dev->hard_header_len;
-	if (skb_headroom(skb) < hh_len &&
+	अगर (skb_headroom(skb) < hh_len &&
 	    pskb_expand_head(skb, hh_len - skb_headroom(skb), 0, GFP_ATOMIC))
-		return -ENOMEM;
-	return 0;
-}
-#endif
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static unsigned int
-nf_nat_ipv4_local_in(void *priv, struct sk_buff *skb,
-		     const struct nf_hook_state *state)
-{
+अटल अचिन्हित पूर्णांक
+nf_nat_ipv4_local_in(व्योम *priv, काष्ठा sk_buff *skb,
+		     स्थिर काष्ठा nf_hook_state *state)
+अणु
 	__be32 saddr = ip_hdr(skb)->saddr;
-	struct sock *sk = skb->sk;
-	unsigned int ret;
+	काष्ठा sock *sk = skb->sk;
+	अचिन्हित पूर्णांक ret;
 
 	ret = nf_nat_ipv4_fn(priv, skb, state);
 
-	if (ret == NF_ACCEPT && sk && saddr != ip_hdr(skb)->saddr &&
+	अगर (ret == NF_ACCEPT && sk && saddr != ip_hdr(skb)->saddr &&
 	    !inet_sk_transparent(sk))
 		skb_orphan(skb); /* TCP edemux obtained wrong socket */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int
-nf_nat_ipv4_out(void *priv, struct sk_buff *skb,
-		const struct nf_hook_state *state)
-{
-#ifdef CONFIG_XFRM
-	const struct nf_conn *ct;
-	enum ip_conntrack_info ctinfo;
-	int err;
-#endif
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक
+nf_nat_ipv4_out(व्योम *priv, काष्ठा sk_buff *skb,
+		स्थिर काष्ठा nf_hook_state *state)
+अणु
+#अगर_घोषित CONFIG_XFRM
+	स्थिर काष्ठा nf_conn *ct;
+	क्रमागत ip_conntrack_info ctinfo;
+	पूर्णांक err;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक ret;
 
 	ret = nf_nat_ipv4_fn(priv, skb, state);
-#ifdef CONFIG_XFRM
-	if (ret != NF_ACCEPT)
-		return ret;
+#अगर_घोषित CONFIG_XFRM
+	अगर (ret != NF_ACCEPT)
+		वापस ret;
 
-	if (IPCB(skb)->flags & IPSKB_XFRM_TRANSFORMED)
-		return ret;
+	अगर (IPCB(skb)->flags & IPSKB_XFRM_TRANSFORMED)
+		वापस ret;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (ct) {
-		enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	अगर (ct) अणु
+		क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
 
-		if (ct->tuplehash[dir].tuple.src.u3.ip !=
+		अगर (ct->tuplehash[dir].tuple.src.u3.ip !=
 		     ct->tuplehash[!dir].tuple.dst.u3.ip ||
 		    (ct->tuplehash[dir].tuple.dst.protonum != IPPROTO_ICMP &&
 		     ct->tuplehash[dir].tuple.src.u.all !=
-		     ct->tuplehash[!dir].tuple.dst.u.all)) {
+		     ct->tuplehash[!dir].tuple.dst.u.all)) अणु
 			err = nf_xfrm_me_harder(state->net, skb, AF_INET);
-			if (err < 0)
+			अगर (err < 0)
 				ret = NF_DROP_ERR(err);
-		}
-	}
-#endif
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static unsigned int
-nf_nat_ipv4_local_fn(void *priv, struct sk_buff *skb,
-		     const struct nf_hook_state *state)
-{
-	const struct nf_conn *ct;
-	enum ip_conntrack_info ctinfo;
-	unsigned int ret;
-	int err;
+अटल अचिन्हित पूर्णांक
+nf_nat_ipv4_local_fn(व्योम *priv, काष्ठा sk_buff *skb,
+		     स्थिर काष्ठा nf_hook_state *state)
+अणु
+	स्थिर काष्ठा nf_conn *ct;
+	क्रमागत ip_conntrack_info ctinfo;
+	अचिन्हित पूर्णांक ret;
+	पूर्णांक err;
 
 	ret = nf_nat_ipv4_fn(priv, skb, state);
-	if (ret != NF_ACCEPT)
-		return ret;
+	अगर (ret != NF_ACCEPT)
+		वापस ret;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (ct) {
-		enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	अगर (ct) अणु
+		क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
 
-		if (ct->tuplehash[dir].tuple.dst.u3.ip !=
-		    ct->tuplehash[!dir].tuple.src.u3.ip) {
+		अगर (ct->tuplehash[dir].tuple.dst.u3.ip !=
+		    ct->tuplehash[!dir].tuple.src.u3.ip) अणु
 			err = ip_route_me_harder(state->net, state->sk, skb, RTN_UNSPEC);
-			if (err < 0)
+			अगर (err < 0)
 				ret = NF_DROP_ERR(err);
-		}
-#ifdef CONFIG_XFRM
-		else if (!(IPCB(skb)->flags & IPSKB_XFRM_TRANSFORMED) &&
+		पूर्ण
+#अगर_घोषित CONFIG_XFRM
+		अन्यथा अगर (!(IPCB(skb)->flags & IPSKB_XFRM_TRANSFORMED) &&
 			 ct->tuplehash[dir].tuple.dst.protonum != IPPROTO_ICMP &&
 			 ct->tuplehash[dir].tuple.dst.u.all !=
-			 ct->tuplehash[!dir].tuple.src.u.all) {
+			 ct->tuplehash[!dir].tuple.src.u.all) अणु
 			err = nf_xfrm_me_harder(state->net, skb, AF_INET);
-			if (err < 0)
+			अगर (err < 0)
 				ret = NF_DROP_ERR(err);
-		}
-#endif
-	}
-	return ret;
-}
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct nf_hook_ops nf_nat_ipv4_ops[] = {
-	/* Before packet filtering, change destination */
-	{
+अटल स्थिर काष्ठा nf_hook_ops nf_nat_ipv4_ops[] = अणु
+	/* Beक्रमe packet filtering, change destination */
+	अणु
 		.hook		= nf_nat_ipv4_pre_routing,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_PRE_ROUTING,
 		.priority	= NF_IP_PRI_NAT_DST,
-	},
+	पूर्ण,
 	/* After packet filtering, change source */
-	{
+	अणु
 		.hook		= nf_nat_ipv4_out,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_POST_ROUTING,
 		.priority	= NF_IP_PRI_NAT_SRC,
-	},
-	/* Before packet filtering, change destination */
-	{
+	पूर्ण,
+	/* Beक्रमe packet filtering, change destination */
+	अणु
 		.hook		= nf_nat_ipv4_local_fn,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_LOCAL_OUT,
 		.priority	= NF_IP_PRI_NAT_DST,
-	},
+	पूर्ण,
 	/* After packet filtering, change source */
-	{
+	अणु
 		.hook		= nf_nat_ipv4_local_in,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP_PRI_NAT_SRC,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int nf_nat_ipv4_register_fn(struct net *net, const struct nf_hook_ops *ops)
-{
-	return nf_nat_register_fn(net, ops->pf, ops, nf_nat_ipv4_ops,
+पूर्णांक nf_nat_ipv4_रेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops)
+अणु
+	वापस nf_nat_रेजिस्टर_fn(net, ops->pf, ops, nf_nat_ipv4_ops,
 				  ARRAY_SIZE(nf_nat_ipv4_ops));
-}
-EXPORT_SYMBOL_GPL(nf_nat_ipv4_register_fn);
+पूर्ण
+EXPORT_SYMBOL_GPL(nf_nat_ipv4_रेजिस्टर_fn);
 
-void nf_nat_ipv4_unregister_fn(struct net *net, const struct nf_hook_ops *ops)
-{
-	nf_nat_unregister_fn(net, ops->pf, ops, ARRAY_SIZE(nf_nat_ipv4_ops));
-}
-EXPORT_SYMBOL_GPL(nf_nat_ipv4_unregister_fn);
+व्योम nf_nat_ipv4_unरेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops)
+अणु
+	nf_nat_unरेजिस्टर_fn(net, ops->pf, ops, ARRAY_SIZE(nf_nat_ipv4_ops));
+पूर्ण
+EXPORT_SYMBOL_GPL(nf_nat_ipv4_unरेजिस्टर_fn);
 
-#if IS_ENABLED(CONFIG_IPV6)
-int nf_nat_icmpv6_reply_translation(struct sk_buff *skb,
-				    struct nf_conn *ct,
-				    enum ip_conntrack_info ctinfo,
-				    unsigned int hooknum,
-				    unsigned int hdrlen)
-{
-	struct {
-		struct icmp6hdr	icmp6;
-		struct ipv6hdr	ip6;
-	} *inside;
-	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
-	enum nf_nat_manip_type manip = HOOK2MANIP(hooknum);
-	struct nf_conntrack_tuple target;
-	unsigned long statusbit;
+#अगर IS_ENABLED(CONFIG_IPV6)
+पूर्णांक nf_nat_icmpv6_reply_translation(काष्ठा sk_buff *skb,
+				    काष्ठा nf_conn *ct,
+				    क्रमागत ip_conntrack_info ctinfo,
+				    अचिन्हित पूर्णांक hooknum,
+				    अचिन्हित पूर्णांक hdrlen)
+अणु
+	काष्ठा अणु
+		काष्ठा icmp6hdr	icmp6;
+		काष्ठा ipv6hdr	ip6;
+	पूर्ण *inside;
+	क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
+	क्रमागत nf_nat_manip_type manip = HOOK2MANIP(hooknum);
+	काष्ठा nf_conntrack_tuple target;
+	अचिन्हित दीर्घ statusbit;
 
 	WARN_ON(ctinfo != IP_CT_RELATED && ctinfo != IP_CT_RELATED_REPLY);
 
-	if (skb_ensure_writable(skb, hdrlen + sizeof(*inside)))
-		return 0;
-	if (nf_ip6_checksum(skb, hooknum, hdrlen, IPPROTO_ICMPV6))
-		return 0;
+	अगर (skb_ensure_writable(skb, hdrlen + माप(*inside)))
+		वापस 0;
+	अगर (nf_ip6_checksum(skb, hooknum, hdrlen, IPPROTO_ICMPV6))
+		वापस 0;
 
-	inside = (void *)skb->data + hdrlen;
-	if (inside->icmp6.icmp6_type == NDISC_REDIRECT) {
-		if ((ct->status & IPS_NAT_DONE_MASK) != IPS_NAT_DONE_MASK)
-			return 0;
-		if (ct->status & IPS_NAT_MASK)
-			return 0;
-	}
+	inside = (व्योम *)skb->data + hdrlen;
+	अगर (inside->icmp6.icmp6_type == NDISC_REसूचीECT) अणु
+		अगर ((ct->status & IPS_NAT_DONE_MASK) != IPS_NAT_DONE_MASK)
+			वापस 0;
+		अगर (ct->status & IPS_NAT_MASK)
+			वापस 0;
+	पूर्ण
 
-	if (manip == NF_NAT_MANIP_SRC)
+	अगर (manip == NF_NAT_MANIP_SRC)
 		statusbit = IPS_SRC_NAT;
-	else
+	अन्यथा
 		statusbit = IPS_DST_NAT;
 
-	/* Invert if this is reply direction */
-	if (dir == IP_CT_DIR_REPLY)
+	/* Invert अगर this is reply direction */
+	अगर (dir == IP_CT_सूची_REPLY)
 		statusbit ^= IPS_NAT_MASK;
 
-	if (!(ct->status & statusbit))
-		return 1;
+	अगर (!(ct->status & statusbit))
+		वापस 1;
 
-	if (!nf_nat_ipv6_manip_pkt(skb, hdrlen + sizeof(inside->icmp6),
+	अगर (!nf_nat_ipv6_manip_pkt(skb, hdrlen + माप(inside->icmp6),
 				   &ct->tuplehash[!dir].tuple, !manip))
-		return 0;
+		वापस 0;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL) {
-		struct ipv6hdr *ipv6h = ipv6_hdr(skb);
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL) अणु
+		काष्ठा ipv6hdr *ipv6h = ipv6_hdr(skb);
 
-		inside = (void *)skb->data + hdrlen;
+		inside = (व्योम *)skb->data + hdrlen;
 		inside->icmp6.icmp6_cksum = 0;
 		inside->icmp6.icmp6_cksum =
 			csum_ipv6_magic(&ipv6h->saddr, &ipv6h->daddr,
 					skb->len - hdrlen, IPPROTO_ICMPV6,
 					skb_checksum(skb, hdrlen,
 						     skb->len - hdrlen, 0));
-	}
+	पूर्ण
 
 	nf_ct_invert_tuple(&target, &ct->tuplehash[!dir].tuple);
 	target.dst.protonum = IPPROTO_ICMPV6;
-	if (!nf_nat_ipv6_manip_pkt(skb, 0, &target, manip))
-		return 0;
+	अगर (!nf_nat_ipv6_manip_pkt(skb, 0, &target, manip))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_nat_icmpv6_reply_translation);
 
-static unsigned int
-nf_nat_ipv6_fn(void *priv, struct sk_buff *skb,
-	       const struct nf_hook_state *state)
-{
-	struct nf_conn *ct;
-	enum ip_conntrack_info ctinfo;
+अटल अचिन्हित पूर्णांक
+nf_nat_ipv6_fn(व्योम *priv, काष्ठा sk_buff *skb,
+	       स्थिर काष्ठा nf_hook_state *state)
+अणु
+	काष्ठा nf_conn *ct;
+	क्रमागत ip_conntrack_info ctinfo;
 	__be16 frag_off;
-	int hdrlen;
+	पूर्णांक hdrlen;
 	u8 nexthdr;
 
 	ct = nf_ct_get(skb, &ctinfo);
 	/* Can't track?  It's not due to stress, or conntrack would
 	 * have dropped it.  Hence it's the user's responsibilty to
-	 * packet filter it out, or implement conntrack/NAT for that
+	 * packet filter it out, or implement conntrack/NAT क्रम that
 	 * protocol. 8) --RR
 	 */
-	if (!ct)
-		return NF_ACCEPT;
+	अगर (!ct)
+		वापस NF_ACCEPT;
 
-	if (ctinfo == IP_CT_RELATED || ctinfo == IP_CT_RELATED_REPLY) {
+	अगर (ctinfo == IP_CT_RELATED || ctinfo == IP_CT_RELATED_REPLY) अणु
 		nexthdr = ipv6_hdr(skb)->nexthdr;
-		hdrlen = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr),
+		hdrlen = ipv6_skip_exthdr(skb, माप(काष्ठा ipv6hdr),
 					  &nexthdr, &frag_off);
 
-		if (hdrlen >= 0 && nexthdr == IPPROTO_ICMPV6) {
-			if (!nf_nat_icmpv6_reply_translation(skb, ct, ctinfo,
+		अगर (hdrlen >= 0 && nexthdr == IPPROTO_ICMPV6) अणु
+			अगर (!nf_nat_icmpv6_reply_translation(skb, ct, ctinfo,
 							     state->hook,
 							     hdrlen))
-				return NF_DROP;
-			else
-				return NF_ACCEPT;
-		}
-	}
+				वापस NF_DROP;
+			अन्यथा
+				वापस NF_ACCEPT;
+		पूर्ण
+	पूर्ण
 
-	return nf_nat_inet_fn(priv, skb, state);
-}
+	वापस nf_nat_inet_fn(priv, skb, state);
+पूर्ण
 
-static unsigned int
-nf_nat_ipv6_in(void *priv, struct sk_buff *skb,
-	       const struct nf_hook_state *state)
-{
-	unsigned int ret;
-	struct in6_addr daddr = ipv6_hdr(skb)->daddr;
+अटल अचिन्हित पूर्णांक
+nf_nat_ipv6_in(व्योम *priv, काष्ठा sk_buff *skb,
+	       स्थिर काष्ठा nf_hook_state *state)
+अणु
+	अचिन्हित पूर्णांक ret;
+	काष्ठा in6_addr daddr = ipv6_hdr(skb)->daddr;
 
 	ret = nf_nat_ipv6_fn(priv, skb, state);
-	if (ret != NF_DROP && ret != NF_STOLEN &&
+	अगर (ret != NF_DROP && ret != NF_STOLEN &&
 	    ipv6_addr_cmp(&daddr, &ipv6_hdr(skb)->daddr))
 		skb_dst_drop(skb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int
-nf_nat_ipv6_out(void *priv, struct sk_buff *skb,
-		const struct nf_hook_state *state)
-{
-#ifdef CONFIG_XFRM
-	const struct nf_conn *ct;
-	enum ip_conntrack_info ctinfo;
-	int err;
-#endif
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक
+nf_nat_ipv6_out(व्योम *priv, काष्ठा sk_buff *skb,
+		स्थिर काष्ठा nf_hook_state *state)
+अणु
+#अगर_घोषित CONFIG_XFRM
+	स्थिर काष्ठा nf_conn *ct;
+	क्रमागत ip_conntrack_info ctinfo;
+	पूर्णांक err;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक ret;
 
 	ret = nf_nat_ipv6_fn(priv, skb, state);
-#ifdef CONFIG_XFRM
-	if (ret != NF_ACCEPT)
-		return ret;
+#अगर_घोषित CONFIG_XFRM
+	अगर (ret != NF_ACCEPT)
+		वापस ret;
 
-	if (IP6CB(skb)->flags & IP6SKB_XFRM_TRANSFORMED)
-		return ret;
+	अगर (IP6CB(skb)->flags & IP6SKB_XFRM_TRANSFORMED)
+		वापस ret;
 	ct = nf_ct_get(skb, &ctinfo);
-	if (ct) {
-		enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	अगर (ct) अणु
+		क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
 
-		if (!nf_inet_addr_cmp(&ct->tuplehash[dir].tuple.src.u3,
+		अगर (!nf_inet_addr_cmp(&ct->tuplehash[dir].tuple.src.u3,
 				      &ct->tuplehash[!dir].tuple.dst.u3) ||
 		    (ct->tuplehash[dir].tuple.dst.protonum != IPPROTO_ICMPV6 &&
 		     ct->tuplehash[dir].tuple.src.u.all !=
-		     ct->tuplehash[!dir].tuple.dst.u.all)) {
+		     ct->tuplehash[!dir].tuple.dst.u.all)) अणु
 			err = nf_xfrm_me_harder(state->net, skb, AF_INET6);
-			if (err < 0)
+			अगर (err < 0)
 				ret = NF_DROP_ERR(err);
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int
-nf_nat_ipv6_local_fn(void *priv, struct sk_buff *skb,
-		     const struct nf_hook_state *state)
-{
-	const struct nf_conn *ct;
-	enum ip_conntrack_info ctinfo;
-	unsigned int ret;
-	int err;
+अटल अचिन्हित पूर्णांक
+nf_nat_ipv6_local_fn(व्योम *priv, काष्ठा sk_buff *skb,
+		     स्थिर काष्ठा nf_hook_state *state)
+अणु
+	स्थिर काष्ठा nf_conn *ct;
+	क्रमागत ip_conntrack_info ctinfo;
+	अचिन्हित पूर्णांक ret;
+	पूर्णांक err;
 
 	ret = nf_nat_ipv6_fn(priv, skb, state);
-	if (ret != NF_ACCEPT)
-		return ret;
+	अगर (ret != NF_ACCEPT)
+		वापस ret;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (ct) {
-		enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	अगर (ct) अणु
+		क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
 
-		if (!nf_inet_addr_cmp(&ct->tuplehash[dir].tuple.dst.u3,
-				      &ct->tuplehash[!dir].tuple.src.u3)) {
+		अगर (!nf_inet_addr_cmp(&ct->tuplehash[dir].tuple.dst.u3,
+				      &ct->tuplehash[!dir].tuple.src.u3)) अणु
 			err = nf_ip6_route_me_harder(state->net, state->sk, skb);
-			if (err < 0)
+			अगर (err < 0)
 				ret = NF_DROP_ERR(err);
-		}
-#ifdef CONFIG_XFRM
-		else if (!(IP6CB(skb)->flags & IP6SKB_XFRM_TRANSFORMED) &&
+		पूर्ण
+#अगर_घोषित CONFIG_XFRM
+		अन्यथा अगर (!(IP6CB(skb)->flags & IP6SKB_XFRM_TRANSFORMED) &&
 			 ct->tuplehash[dir].tuple.dst.protonum != IPPROTO_ICMPV6 &&
 			 ct->tuplehash[dir].tuple.dst.u.all !=
-			 ct->tuplehash[!dir].tuple.src.u.all) {
+			 ct->tuplehash[!dir].tuple.src.u.all) अणु
 			err = nf_xfrm_me_harder(state->net, skb, AF_INET6);
-			if (err < 0)
+			अगर (err < 0)
 				ret = NF_DROP_ERR(err);
-		}
-#endif
-	}
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nf_hook_ops nf_nat_ipv6_ops[] = {
-	/* Before packet filtering, change destination */
-	{
+अटल स्थिर काष्ठा nf_hook_ops nf_nat_ipv6_ops[] = अणु
+	/* Beक्रमe packet filtering, change destination */
+	अणु
 		.hook		= nf_nat_ipv6_in,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_PRE_ROUTING,
 		.priority	= NF_IP6_PRI_NAT_DST,
-	},
+	पूर्ण,
 	/* After packet filtering, change source */
-	{
+	अणु
 		.hook		= nf_nat_ipv6_out,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_POST_ROUTING,
 		.priority	= NF_IP6_PRI_NAT_SRC,
-	},
-	/* Before packet filtering, change destination */
-	{
+	पूर्ण,
+	/* Beक्रमe packet filtering, change destination */
+	अणु
 		.hook		= nf_nat_ipv6_local_fn,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_LOCAL_OUT,
 		.priority	= NF_IP6_PRI_NAT_DST,
-	},
+	पूर्ण,
 	/* After packet filtering, change source */
-	{
+	अणु
 		.hook		= nf_nat_ipv6_fn,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP6_PRI_NAT_SRC,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int nf_nat_ipv6_register_fn(struct net *net, const struct nf_hook_ops *ops)
-{
-	return nf_nat_register_fn(net, ops->pf, ops, nf_nat_ipv6_ops,
+पूर्णांक nf_nat_ipv6_रेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops)
+अणु
+	वापस nf_nat_रेजिस्टर_fn(net, ops->pf, ops, nf_nat_ipv6_ops,
 				  ARRAY_SIZE(nf_nat_ipv6_ops));
-}
-EXPORT_SYMBOL_GPL(nf_nat_ipv6_register_fn);
+पूर्ण
+EXPORT_SYMBOL_GPL(nf_nat_ipv6_रेजिस्टर_fn);
 
-void nf_nat_ipv6_unregister_fn(struct net *net, const struct nf_hook_ops *ops)
-{
-	nf_nat_unregister_fn(net, ops->pf, ops, ARRAY_SIZE(nf_nat_ipv6_ops));
-}
-EXPORT_SYMBOL_GPL(nf_nat_ipv6_unregister_fn);
-#endif /* CONFIG_IPV6 */
+व्योम nf_nat_ipv6_unरेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops)
+अणु
+	nf_nat_unरेजिस्टर_fn(net, ops->pf, ops, ARRAY_SIZE(nf_nat_ipv6_ops));
+पूर्ण
+EXPORT_SYMBOL_GPL(nf_nat_ipv6_unरेजिस्टर_fn);
+#पूर्ण_अगर /* CONFIG_IPV6 */
 
-#if defined(CONFIG_NF_TABLES_INET) && IS_ENABLED(CONFIG_NFT_NAT)
-int nf_nat_inet_register_fn(struct net *net, const struct nf_hook_ops *ops)
-{
-	int ret;
+#अगर defined(CONFIG_NF_TABLES_INET) && IS_ENABLED(CONFIG_NFT_NAT)
+पूर्णांक nf_nat_inet_रेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops)
+अणु
+	पूर्णांक ret;
 
-	if (WARN_ON_ONCE(ops->pf != NFPROTO_INET))
-		return -EINVAL;
+	अगर (WARN_ON_ONCE(ops->pf != NFPROTO_INET))
+		वापस -EINVAL;
 
-	ret = nf_nat_register_fn(net, NFPROTO_IPV6, ops, nf_nat_ipv6_ops,
+	ret = nf_nat_रेजिस्टर_fn(net, NFPROTO_IPV6, ops, nf_nat_ipv6_ops,
 				 ARRAY_SIZE(nf_nat_ipv6_ops));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = nf_nat_register_fn(net, NFPROTO_IPV4, ops, nf_nat_ipv4_ops,
+	ret = nf_nat_रेजिस्टर_fn(net, NFPROTO_IPV4, ops, nf_nat_ipv4_ops,
 				 ARRAY_SIZE(nf_nat_ipv4_ops));
-	if (ret)
-		nf_nat_unregister_fn(net, NFPROTO_IPV6, ops,
+	अगर (ret)
+		nf_nat_unरेजिस्टर_fn(net, NFPROTO_IPV6, ops,
 					ARRAY_SIZE(nf_nat_ipv6_ops));
-	return ret;
-}
-EXPORT_SYMBOL_GPL(nf_nat_inet_register_fn);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(nf_nat_inet_रेजिस्टर_fn);
 
-void nf_nat_inet_unregister_fn(struct net *net, const struct nf_hook_ops *ops)
-{
-	nf_nat_unregister_fn(net, NFPROTO_IPV4, ops, ARRAY_SIZE(nf_nat_ipv4_ops));
-	nf_nat_unregister_fn(net, NFPROTO_IPV6, ops, ARRAY_SIZE(nf_nat_ipv6_ops));
-}
-EXPORT_SYMBOL_GPL(nf_nat_inet_unregister_fn);
-#endif /* NFT INET NAT */
+व्योम nf_nat_inet_unरेजिस्टर_fn(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops)
+अणु
+	nf_nat_unरेजिस्टर_fn(net, NFPROTO_IPV4, ops, ARRAY_SIZE(nf_nat_ipv4_ops));
+	nf_nat_unरेजिस्टर_fn(net, NFPROTO_IPV6, ops, ARRAY_SIZE(nf_nat_ipv6_ops));
+पूर्ण
+EXPORT_SYMBOL_GPL(nf_nat_inet_unरेजिस्टर_fn);
+#पूर्ण_अगर /* NFT INET NAT */

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Radisys 82600 Embedded chipset Memory Controller kernel module
  * (C) 2005 EADS Astrium
@@ -5,49 +6,49 @@
  * GNU General Public License.
  *
  * Written by Tim Small <tim@buttersideup.com>, based on work by Thayne
- * Harbaugh, Dan Hollis <goemon at anime dot net> and others.
+ * Harbaugh, Dan Hollis <goemon at anime करोt net> and others.
  *
  * $Id: edac_r82600.c,v 1.1.2.6 2005/10/05 00:43:44 dsp_llnl Exp $
  *
  * Written with reference to 82600 High Integration Dual PCI System
  * Controller Data Book:
- * www.radisys.com/files/support_downloads/007-01277-0002.82600DataBook.pdf
- * references to this document given in []
+ * www.radisys.com/files/support_करोwnloads/007-01277-0002.82600DataBook.pdf
+ * references to this करोcument given in []
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/pci_ids.h>
-#include <linux/edac.h>
-#include "edac_module.h"
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/edac.h>
+#समावेश "edac_module.h"
 
-#define EDAC_MOD_STR	"r82600_edac"
+#घोषणा EDAC_MOD_STR	"r82600_edac"
 
-#define r82600_printk(level, fmt, arg...) \
-	edac_printk(level, "r82600", fmt, ##arg)
+#घोषणा r82600_prपूर्णांकk(level, fmt, arg...) \
+	edac_prपूर्णांकk(level, "r82600", fmt, ##arg)
 
-#define r82600_mc_printk(mci, level, fmt, arg...) \
-	edac_mc_chipset_printk(mci, level, "r82600", fmt, ##arg)
+#घोषणा r82600_mc_prपूर्णांकk(mci, level, fmt, arg...) \
+	edac_mc_chipset_prपूर्णांकk(mci, level, "r82600", fmt, ##arg)
 
-/* Radisys say "The 82600 integrates a main memory SDRAM controller that
+/* Radisys say "The 82600 पूर्णांकegrates a मुख्य memory SDRAM controller that
  * supports up to four banks of memory. The four banks can support a mix of
  * sizes of 64 bit wide (72 bits with ECC) Synchronous DRAM (SDRAM) DIMMs,
- * each of which can be any size from 16MB to 512MB. Both registered (control
- * signals buffered) and unbuffered DIMM types are supported. Mixing of
- * registered and unbuffered DIMMs as well as mixing of ECC and non-ECC DIMMs
- * is not allowed. The 82600 SDRAM interface operates at the same frequency as
+ * each of which can be any size from 16MB to 512MB. Both रेजिस्टरed (control
+ * संकेतs buffered) and unbuffered DIMM types are supported. Mixing of
+ * रेजिस्टरed and unbuffered DIMMs as well as mixing of ECC and non-ECC DIMMs
+ * is not allowed. The 82600 SDRAM पूर्णांकerface operates at the same frequency as
  * the CPU bus, 66MHz, 100MHz or 133MHz."
  */
 
-#define R82600_NR_CSROWS 4
-#define R82600_NR_CHANS  1
-#define R82600_NR_DIMMS  4
+#घोषणा R82600_NR_CSROWS 4
+#घोषणा R82600_NR_CHANS  1
+#घोषणा R82600_NR_DIMMS  4
 
-#define R82600_BRIDGE_ID  0x8200
+#घोषणा R82600_BRIDGE_ID  0x8200
 
-/* Radisys 82600 register addresses - device 0 function 0 - PCI bridge */
-#define R82600_DRAMC	0x57	/* Various SDRAM related control bits
+/* Radisys 82600 रेजिस्टर addresses - device 0 function 0 - PCI bridge */
+#घोषणा R82600_DRAMC	0x57	/* Various SDRAM related control bits
 				 * all bits are R/W
 				 *
 				 * 7    SDRAM ISA Hole Enable
@@ -61,7 +62,7 @@
 				 *          10=15.6us 11=125usec
 				 */
 
-#define R82600_SDRAMC	0x76	/* "SDRAM Control Register"
+#घोषणा R82600_SDRAMC	0x76	/* "SDRAM Control Register"
 				 * More SDRAM related control bits
 				 * all bits are R/W
 				 *
@@ -72,7 +73,7 @@
 				 * 4    Force ECC
 				 *
 				 *        1=Drive ECC bits to 0 during
-				 *          write cycles (i.e. ECC test mode)
+				 *          ग_लिखो cycles (i.e. ECC test mode)
 				 *
 				 *        0=Normal ECC functioning
 				 *
@@ -82,16 +83,16 @@
 				 *
 				 * 1    RAS# to CAS# Delay 0=3 1=2
 				 *
-				 * 0    RAS# Precharge     0=3 1=2
+				 * 0    RAS# Preअक्षरge     0=3 1=2
 				 */
 
-#define R82600_EAP	0x80	/* ECC Error Address Pointer Register
+#घोषणा R82600_EAP	0x80	/* ECC Error Address Poपूर्णांकer Register
 				 *
 				 * 31    Disable Hardware Scrubbing (RW)
-				 *        0=Scrub on corrected read
-				 *        1=Don't scrub on corrected read
+				 *        0=Scrub on corrected पढ़ो
+				 *        1=Don't scrub on corrected पढ़ो
 				 *
-				 * 30:12 Error Address Pointer (RO)
+				 * 30:12 Error Address Poपूर्णांकer (RO)
 				 *        Upper 19 bits of error address
 				 *
 				 * 11:4  Syndrome Bits (RO)
@@ -105,61 +106,61 @@
 				 *        0=NMI not triggered
 				 *
 				 * 1     MBE (R/WC)
-				 *        read 1=MBE at EAP (see above)
-				 *        read 0=no MBE, or SBE occurred first
-				 *        write 1=Clear MBE status (must also
+				 *        पढ़ो 1=MBE at EAP (see above)
+				 *        पढ़ो 0=no MBE, or SBE occurred first
+				 *        ग_लिखो 1=Clear MBE status (must also
 				 *          clear SBE)
-				 *        write 0=NOP
+				 *        ग_लिखो 0=NOP
 				 *
 				 * 1     SBE (R/WC)
-				 *        read 1=SBE at EAP (see above)
-				 *        read 0=no SBE, or MBE occurred first
-				 *        write 1=Clear SBE status (must also
+				 *        पढ़ो 1=SBE at EAP (see above)
+				 *        पढ़ो 0=no SBE, or MBE occurred first
+				 *        ग_लिखो 1=Clear SBE status (must also
 				 *          clear MBE)
-				 *        write 0=NOP
+				 *        ग_लिखो 0=NOP
 				 */
 
-#define R82600_DRBA	0x60	/* + 0x60..0x63 SDRAM Row Boundary Address
+#घोषणा R82600_DRBA	0x60	/* + 0x60..0x63 SDRAM Row Boundary Address
 				 *  Registers
 				 *
 				 * 7:0  Address lines 30:24 - upper limit of
 				 * each row [p57]
 				 */
 
-struct r82600_error_info {
+काष्ठा r82600_error_info अणु
 	u32 eapr;
-};
+पूर्ण;
 
-static bool disable_hardware_scrub;
+अटल bool disable_hardware_scrub;
 
-static struct edac_pci_ctl_info *r82600_pci;
+अटल काष्ठा edac_pci_ctl_info *r82600_pci;
 
-static void r82600_get_error_info(struct mem_ctl_info *mci,
-				struct r82600_error_info *info)
-{
-	struct pci_dev *pdev;
+अटल व्योम r82600_get_error_info(काष्ठा mem_ctl_info *mci,
+				काष्ठा r82600_error_info *info)
+अणु
+	काष्ठा pci_dev *pdev;
 
 	pdev = to_pci_dev(mci->pdev);
-	pci_read_config_dword(pdev, R82600_EAP, &info->eapr);
+	pci_पढ़ो_config_dword(pdev, R82600_EAP, &info->eapr);
 
-	if (info->eapr & BIT(0))
+	अगर (info->eapr & BIT(0))
 		/* Clear error to allow next error to be reported [p.62] */
-		pci_write_bits32(pdev, R82600_EAP,
+		pci_ग_लिखो_bits32(pdev, R82600_EAP,
 				 ((u32) BIT(0) & (u32) BIT(1)),
 				 ((u32) BIT(0) & (u32) BIT(1)));
 
-	if (info->eapr & BIT(1))
+	अगर (info->eapr & BIT(1))
 		/* Clear error to allow next error to be reported [p.62] */
-		pci_write_bits32(pdev, R82600_EAP,
+		pci_ग_लिखो_bits32(pdev, R82600_EAP,
 				 ((u32) BIT(0) & (u32) BIT(1)),
 				 ((u32) BIT(0) & (u32) BIT(1)));
-}
+पूर्ण
 
-static int r82600_process_error_info(struct mem_ctl_info *mci,
-				struct r82600_error_info *info,
-				int handle_errors)
-{
-	int error_found;
+अटल पूर्णांक r82600_process_error_info(काष्ठा mem_ctl_info *mci,
+				काष्ठा r82600_error_info *info,
+				पूर्णांक handle_errors)
+अणु
+	पूर्णांक error_found;
 	u32 eapaddr, page;
 	u32 syndrome;
 
@@ -174,51 +175,51 @@ static int r82600_process_error_info(struct mem_ctl_info *mci,
 	 * granularity (upper 19 bits only)     */
 	page = eapaddr >> PAGE_SHIFT;
 
-	if (info->eapr & BIT(0)) {	/* CE? */
+	अगर (info->eapr & BIT(0)) अणु	/* CE? */
 		error_found = 1;
 
-		if (handle_errors)
+		अगर (handle_errors)
 			edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 					     page, 0, syndrome,
 					     edac_mc_find_csrow_by_page(mci, page),
 					     0, -1,
 					     mci->ctl_name, "");
-	}
+	पूर्ण
 
-	if (info->eapr & BIT(1)) {	/* UE? */
+	अगर (info->eapr & BIT(1)) अणु	/* UE? */
 		error_found = 1;
 
-		if (handle_errors)
-			/* 82600 doesn't give enough info */
+		अगर (handle_errors)
+			/* 82600 करोesn't give enough info */
 			edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 					     page, 0, 0,
 					     edac_mc_find_csrow_by_page(mci, page),
 					     0, -1,
 					     mci->ctl_name, "");
-	}
+	पूर्ण
 
-	return error_found;
-}
+	वापस error_found;
+पूर्ण
 
-static void r82600_check(struct mem_ctl_info *mci)
-{
-	struct r82600_error_info info;
+अटल व्योम r82600_check(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा r82600_error_info info;
 
 	r82600_get_error_info(mci, &info);
 	r82600_process_error_info(mci, &info, 1);
-}
+पूर्ण
 
-static inline int ecc_enabled(u8 dramcr)
-{
-	return dramcr & BIT(5);
-}
+अटल अंतरभूत पूर्णांक ecc_enabled(u8 dramcr)
+अणु
+	वापस dramcr & BIT(5);
+पूर्ण
 
-static void r82600_init_csrows(struct mem_ctl_info *mci, struct pci_dev *pdev,
+अटल व्योम r82600_init_csrows(काष्ठा mem_ctl_info *mci, काष्ठा pci_dev *pdev,
 			u8 dramcr)
-{
-	struct csrow_info *csrow;
-	struct dimm_info *dimm;
-	int index;
+अणु
+	काष्ठा csrow_info *csrow;
+	काष्ठा dimm_info *dimm;
+	पूर्णांक index;
 	u8 drbar;		/* SDRAM Row Boundary Address Register */
 	u32 row_high_limit, row_high_limit_last;
 	u32 reg_sdram, ecc_on, row_base;
@@ -227,12 +228,12 @@ static void r82600_init_csrows(struct mem_ctl_info *mci, struct pci_dev *pdev,
 	reg_sdram = dramcr & BIT(4);
 	row_high_limit_last = 0;
 
-	for (index = 0; index < mci->nr_csrows; index++) {
+	क्रम (index = 0; index < mci->nr_csrows; index++) अणु
 		csrow = mci->csrows[index];
 		dimm = csrow->channels[0]->dimm;
 
 		/* find the DRAM Chip Select Base address and mask */
-		pci_read_config_byte(pdev, R82600_DRBA + index, &drbar);
+		pci_पढ़ो_config_byte(pdev, R82600_DRBA + index, &drbar);
 
 		edac_dbg(1, "Row=%d DRBA = %#0x\n", index, drbar);
 
@@ -243,8 +244,8 @@ static void r82600_init_csrows(struct mem_ctl_info *mci, struct pci_dev *pdev,
 			 index, row_high_limit, row_high_limit_last);
 
 		/* Empty row [p.57] */
-		if (row_high_limit == row_high_limit_last)
-			continue;
+		अगर (row_high_limit == row_high_limit_last)
+			जारी;
 
 		row_base = row_high_limit_last;
 
@@ -262,22 +263,22 @@ static void r82600_init_csrows(struct mem_ctl_info *mci, struct pci_dev *pdev,
 		/* Mode is global on 82600 */
 		dimm->edac_mode = ecc_on ? EDAC_SECDED : EDAC_NONE;
 		row_high_limit_last = row_high_limit;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int r82600_probe1(struct pci_dev *pdev, int dev_idx)
-{
-	struct mem_ctl_info *mci;
-	struct edac_mc_layer layers[2];
+अटल पूर्णांक r82600_probe1(काष्ठा pci_dev *pdev, पूर्णांक dev_idx)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा edac_mc_layer layers[2];
 	u8 dramcr;
 	u32 eapr;
 	u32 scrub_disabled;
 	u32 sdram_refresh_rate;
-	struct r82600_error_info discard;
+	काष्ठा r82600_error_info discard;
 
 	edac_dbg(0, "\n");
-	pci_read_config_byte(pdev, R82600_DRAMC, &dramcr);
-	pci_read_config_dword(pdev, R82600_EAP, &eapr);
+	pci_पढ़ो_config_byte(pdev, R82600_DRAMC, &dramcr);
+	pci_पढ़ो_config_dword(pdev, R82600_EAP, &eapr);
 	scrub_disabled = eapr & BIT(31);
 	sdram_refresh_rate = dramcr & (BIT(0) | BIT(1));
 	edac_dbg(2, "sdram refresh rate = %#0x\n", sdram_refresh_rate);
@@ -289,130 +290,130 @@ static int r82600_probe1(struct pci_dev *pdev, int dev_idx)
 	layers[1].size = R82600_NR_CHANS;
 	layers[1].is_virt_csrow = false;
 	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, 0);
-	if (mci == NULL)
-		return -ENOMEM;
+	अगर (mci == शून्य)
+		वापस -ENOMEM;
 
 	edac_dbg(0, "mci = %p\n", mci);
 	mci->pdev = &pdev->dev;
 	mci->mtype_cap = MEM_FLAG_RDDR | MEM_FLAG_DDR;
 	mci->edac_ctl_cap = EDAC_FLAG_NONE | EDAC_FLAG_EC | EDAC_FLAG_SECDED;
-	/* FIXME try to work out if the chip leads have been used for COM2
+	/* FIXME try to work out अगर the chip leads have been used क्रम COM2
 	 * instead on this board? [MA6?] MAYBE:
 	 */
 
-	/* On the R82600, the pins for memory bits 72:65 - i.e. the   *
-	 * EC bits are shared with the pins for COM2 (!), so if COM2  *
+	/* On the R82600, the pins क्रम memory bits 72:65 - i.e. the   *
+	 * EC bits are shared with the pins क्रम COM2 (!), so अगर COM2  *
 	 * is enabled, we assume COM2 is wired up, and thus no EDAC   *
 	 * is possible.                                               */
 	mci->edac_cap = EDAC_FLAG_NONE | EDAC_FLAG_EC | EDAC_FLAG_SECDED;
 
-	if (ecc_enabled(dramcr)) {
-		if (scrub_disabled)
+	अगर (ecc_enabled(dramcr)) अणु
+		अगर (scrub_disabled)
 			edac_dbg(3, "mci = %p - Scrubbing disabled! EAP: %#0x\n",
 				 mci, eapr);
-	} else
+	पूर्ण अन्यथा
 		mci->edac_cap = EDAC_FLAG_NONE;
 
 	mci->mod_name = EDAC_MOD_STR;
 	mci->ctl_name = "R82600";
 	mci->dev_name = pci_name(pdev);
 	mci->edac_check = r82600_check;
-	mci->ctl_page_to_phys = NULL;
+	mci->ctl_page_to_phys = शून्य;
 	r82600_init_csrows(mci, pdev, dramcr);
 	r82600_get_error_info(mci, &discard);	/* clear counters */
 
 	/* Here we assume that we will never see multiple instances of this
-	 * type of memory controller.  The ID is therefore hardcoded to 0.
+	 * type of memory controller.  The ID is thereक्रमe hardcoded to 0.
 	 */
-	if (edac_mc_add_mc(mci)) {
+	अगर (edac_mc_add_mc(mci)) अणु
 		edac_dbg(3, "failed edac_mc_add_mc()\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* get this far and it's successful */
 
-	if (disable_hardware_scrub) {
+	अगर (disable_hardware_scrub) अणु
 		edac_dbg(3, "Disabling Hardware Scrub (scrub on error)\n");
-		pci_write_bits32(pdev, R82600_EAP, BIT(31), BIT(31));
-	}
+		pci_ग_लिखो_bits32(pdev, R82600_EAP, BIT(31), BIT(31));
+	पूर्ण
 
 	/* allocating generic PCI control info */
 	r82600_pci = edac_pci_create_generic_ctl(&pdev->dev, EDAC_MOD_STR);
-	if (!r82600_pci) {
-		printk(KERN_WARNING
+	अगर (!r82600_pci) अणु
+		prपूर्णांकk(KERN_WARNING
 			"%s(): Unable to create PCI control\n",
 			__func__);
-		printk(KERN_WARNING
+		prपूर्णांकk(KERN_WARNING
 			"%s(): PCI error report via EDAC not setup\n",
 			__func__);
-	}
+	पूर्ण
 
 	edac_dbg(3, "success\n");
-	return 0;
+	वापस 0;
 
 fail:
-	edac_mc_free(mci);
-	return -ENODEV;
-}
+	edac_mc_मुक्त(mci);
+	वापस -ENODEV;
+पूर्ण
 
-/* returns count (>= 0), or negative on error */
-static int r82600_init_one(struct pci_dev *pdev,
-			   const struct pci_device_id *ent)
-{
+/* वापसs count (>= 0), or negative on error */
+अटल पूर्णांक r82600_init_one(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *ent)
+अणु
 	edac_dbg(0, "\n");
 
-	/* don't need to call pci_enable_device() */
-	return r82600_probe1(pdev, ent->driver_data);
-}
+	/* करोn't need to call pci_enable_device() */
+	वापस r82600_probe1(pdev, ent->driver_data);
+पूर्ण
 
-static void r82600_remove_one(struct pci_dev *pdev)
-{
-	struct mem_ctl_info *mci;
+अटल व्योम r82600_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mem_ctl_info *mci;
 
 	edac_dbg(0, "\n");
 
-	if (r82600_pci)
+	अगर (r82600_pci)
 		edac_pci_release_generic_ctl(r82600_pci);
 
-	if ((mci = edac_mc_del_mc(&pdev->dev)) == NULL)
-		return;
+	अगर ((mci = edac_mc_del_mc(&pdev->dev)) == शून्य)
+		वापस;
 
-	edac_mc_free(mci);
-}
+	edac_mc_मुक्त(mci);
+पूर्ण
 
-static const struct pci_device_id r82600_pci_tbl[] = {
-	{
+अटल स्थिर काष्ठा pci_device_id r82600_pci_tbl[] = अणु
+	अणु
 	 PCI_DEVICE(PCI_VENDOR_ID_RADISYS, R82600_BRIDGE_ID)
-	 },
-	{
+	 पूर्ण,
+	अणु
 	 0,
-	 }			/* 0 terminated list. */
-};
+	 पूर्ण			/* 0 terminated list. */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, r82600_pci_tbl);
 
-static struct pci_driver r82600_driver = {
+अटल काष्ठा pci_driver r82600_driver = अणु
 	.name = EDAC_MOD_STR,
 	.probe = r82600_init_one,
-	.remove = r82600_remove_one,
+	.हटाओ = r82600_हटाओ_one,
 	.id_table = r82600_pci_tbl,
-};
+पूर्ण;
 
-static int __init r82600_init(void)
-{
-       /* Ensure that the OPSTATE is set correctly for POLL or NMI */
+अटल पूर्णांक __init r82600_init(व्योम)
+अणु
+       /* Ensure that the OPSTATE is set correctly क्रम POLL or NMI */
        opstate_init();
 
-	return pci_register_driver(&r82600_driver);
-}
+	वापस pci_रेजिस्टर_driver(&r82600_driver);
+पूर्ण
 
-static void __exit r82600_exit(void)
-{
-	pci_unregister_driver(&r82600_driver);
-}
+अटल व्योम __निकास r82600_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&r82600_driver);
+पूर्ण
 
 module_init(r82600_init);
-module_exit(r82600_exit);
+module_निकास(r82600_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Tim Small <tim@buttersideup.com> - WPAD Ltd. "
@@ -423,5 +424,5 @@ module_param(disable_hardware_scrub, bool, 0644);
 MODULE_PARM_DESC(disable_hardware_scrub,
 		 "If set, disable the chipset's automatic scrub for CEs");
 
-module_param(edac_op_state, int, 0444);
+module_param(edac_op_state, पूर्णांक, 0444);
 MODULE_PARM_DESC(edac_op_state, "EDAC Error Reporting state: 0=Poll,1=NMI");

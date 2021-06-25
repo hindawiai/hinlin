@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <endian.h>
-#include <elf.h>
+#समावेश <मानकपन.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकतर्क.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <endian.h>
+#समावेश <elf.h>
 
-#include "relocs.h"
+#समावेश "relocs.h"
 
-void die(char *fmt, ...)
-{
-	va_list ap;
+व्योम die(अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	exit(1);
-}
+	बहु_शुरू(ap, fmt);
+	भख_लिखो(मानक_त्रुटि, fmt, ap);
+	बहु_पूर्ण(ap);
+	निकास(1);
+पूर्ण
 
-static void usage(void)
-{
+अटल व्योम usage(व्योम)
+अणु
 	die("relocs [--reloc-info|--text|--bin|--keep] vmlinux\n");
-}
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int show_reloc_info, as_text, as_bin, keep_relocs;
-	const char *fname;
-	FILE *fp;
-	int i;
-	unsigned char e_ident[EI_NIDENT];
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक show_reloc_info, as_text, as_bin, keep_relocs;
+	स्थिर अक्षर *fname;
+	खाता *fp;
+	पूर्णांक i;
+	अचिन्हित अक्षर e_ident[EI_NIDENT];
 
 	show_reloc_info = 0;
 	as_text = 0;
 	as_bin = 0;
 	keep_relocs = 0;
-	fname = NULL;
-	for (i = 1; i < argc; i++) {
-		char *arg = argv[i];
+	fname = शून्य;
+	क्रम (i = 1; i < argc; i++) अणु
+		अक्षर *arg = argv[i];
 
-		if (*arg == '-') {
-			if (strcmp(arg, "--reloc-info") == 0) {
+		अगर (*arg == '-') अणु
+			अगर (म_भेद(arg, "--reloc-info") == 0) अणु
 				show_reloc_info = 1;
-				continue;
-			}
-			if (strcmp(arg, "--text") == 0) {
+				जारी;
+			पूर्ण
+			अगर (म_भेद(arg, "--text") == 0) अणु
 				as_text = 1;
-				continue;
-			}
-			if (strcmp(arg, "--bin") == 0) {
+				जारी;
+			पूर्ण
+			अगर (म_भेद(arg, "--bin") == 0) अणु
 				as_bin = 1;
-				continue;
-			}
-			if (strcmp(arg, "--keep") == 0) {
+				जारी;
+			पूर्ण
+			अगर (म_भेद(arg, "--keep") == 0) अणु
 				keep_relocs = 1;
-				continue;
-			}
-		} else if (!fname) {
+				जारी;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!fname) अणु
 			fname = arg;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		usage();
-	}
-	if (!fname)
+	पूर्ण
+	अगर (!fname)
 		usage();
 
-	fp = fopen(fname, "r+");
-	if (!fp)
-		die("Cannot open %s: %s\n", fname, strerror(errno));
+	fp = ख_खोलो(fname, "r+");
+	अगर (!fp)
+		die("Cannot open %s: %s\n", fname, म_त्रुटि(त्रुटि_सं));
 
-	if (fread(&e_ident, 1, EI_NIDENT, fp) != EI_NIDENT)
-		die("Cannot read %s: %s", fname, strerror(errno));
+	अगर (ख_पढ़ो(&e_ident, 1, EI_NIDENT, fp) != EI_NIDENT)
+		die("Cannot read %s: %s", fname, म_त्रुटि(त्रुटि_सं));
 
-	rewind(fp);
-	if (e_ident[EI_CLASS] == ELFCLASS64)
+	शुरुआत(fp);
+	अगर (e_ident[EI_CLASS] == ELFCLASS64)
 		process_64(fp, as_text,  as_bin, show_reloc_info, keep_relocs);
-	else
+	अन्यथा
 		process_32(fp, as_text, as_bin, show_reloc_info, keep_relocs);
-	fclose(fp);
-	return 0;
-}
+	ख_बंद(fp);
+	वापस 0;
+पूर्ण

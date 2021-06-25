@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/arm/mach-ixp4xx/fsg-setup.c
  *
@@ -8,209 +9,209 @@
  *
  * based on ixdp425-setup.c:
  *	Copyright (C) 2003-2004 MontaVista Software, Inc.
- * based on nslu2-power.c
+ * based on nslu2-घातer.c
  *	Copyright (C) 2005 Tower Technologies
  *
  * Author: Rod Whitby <rod@whitby.id.au>
- * Maintainers: http://www.nslu2-linux.org/
+ * Maपूर्णांकainers: http://www.nslu2-linux.org/
  *
  */
-#include <linux/gpio.h>
-#include <linux/if_ether.h>
-#include <linux/irq.h>
-#include <linux/serial.h>
-#include <linux/serial_8250.h>
-#include <linux/leds.h>
-#include <linux/reboot.h>
-#include <linux/i2c.h>
-#include <linux/gpio/machine.h>
-#include <linux/io.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/flash.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_8250.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/flash.h>
 
-#include "irqs.h"
+#समावेश "irqs.h"
 
-#define FSG_SDA_PIN		12
-#define FSG_SCL_PIN		13
+#घोषणा FSG_SDA_PIN		12
+#घोषणा FSG_SCL_PIN		13
 
-#define FSG_SB_GPIO		4	/* sync button */
-#define FSG_RB_GPIO		9	/* reset button */
-#define FSG_UB_GPIO		10	/* usb button */
+#घोषणा FSG_SB_GPIO		4	/* sync button */
+#घोषणा FSG_RB_GPIO		9	/* reset button */
+#घोषणा FSG_UB_GPIO		10	/* usb button */
 
-static struct flash_platform_data fsg_flash_data = {
+अटल काष्ठा flash_platक्रमm_data fsg_flash_data = अणु
 	.map_name		= "cfi_probe",
 	.width			= 2,
-};
+पूर्ण;
 
-static struct resource fsg_flash_resource = {
+अटल काष्ठा resource fsg_flash_resource = अणु
 	.flags			= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device fsg_flash = {
+अटल काष्ठा platक्रमm_device fsg_flash = अणु
 	.name			= "IXP4XX-Flash",
 	.id			= 0,
-	.dev = {
-		.platform_data	= &fsg_flash_data,
-	},
+	.dev = अणु
+		.platक्रमm_data	= &fsg_flash_data,
+	पूर्ण,
 	.num_resources		= 1,
 	.resource		= &fsg_flash_resource,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table fsg_i2c_gpiod_table = {
+अटल काष्ठा gpiod_lookup_table fsg_i2c_gpiod_table = अणु
 	.dev_id		= "i2c-gpio.0",
-	.table		= {
+	.table		= अणु
 		GPIO_LOOKUP_IDX("IXP4XX_GPIO_CHIP", FSG_SDA_PIN,
-				NULL, 0, GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN),
+				शून्य, 0, GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN),
 		GPIO_LOOKUP_IDX("IXP4XX_GPIO_CHIP", FSG_SCL_PIN,
-				NULL, 1, GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN),
-	},
-};
+				शून्य, 1, GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN),
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device fsg_i2c_gpio = {
+अटल काष्ठा platक्रमm_device fsg_i2c_gpio = अणु
 	.name			= "i2c-gpio",
 	.id			= 0,
-	.dev = {
-		.platform_data	= NULL,
-	},
-};
+	.dev = अणु
+		.platक्रमm_data	= शून्य,
+	पूर्ण,
+पूर्ण;
 
-static struct i2c_board_info __initdata fsg_i2c_board_info [] = {
-	{
+अटल काष्ठा i2c_board_info __initdata fsg_i2c_board_info [] = अणु
+	अणु
 		I2C_BOARD_INFO("isl1208", 0x6f),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct resource fsg_uart_resources[] = {
-	{
+अटल काष्ठा resource fsg_uart_resources[] = अणु
+	अणु
 		.start		= IXP4XX_UART1_BASE_PHYS,
 		.end		= IXP4XX_UART1_BASE_PHYS + 0x0fff,
 		.flags		= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start		= IXP4XX_UART2_BASE_PHYS,
 		.end		= IXP4XX_UART2_BASE_PHYS + 0x0fff,
 		.flags		= IORESOURCE_MEM,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct plat_serial8250_port fsg_uart_data[] = {
-	{
+अटल काष्ठा plat_serial8250_port fsg_uart_data[] = अणु
+	अणु
 		.mapbase	= IXP4XX_UART1_BASE_PHYS,
-		.membase	= (char *)IXP4XX_UART1_BASE_VIRT + REG_OFFSET,
+		.membase	= (अक्षर *)IXP4XX_UART1_BASE_VIRT + REG_OFFSET,
 		.irq		= IRQ_IXP4XX_UART1,
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
 		.iotype		= UPIO_MEM,
-		.regshift	= 2,
+		.regshअगरt	= 2,
 		.uartclk	= IXP4XX_UART_XTAL,
-	},
-	{
+	पूर्ण,
+	अणु
 		.mapbase	= IXP4XX_UART2_BASE_PHYS,
-		.membase	= (char *)IXP4XX_UART2_BASE_VIRT + REG_OFFSET,
+		.membase	= (अक्षर *)IXP4XX_UART2_BASE_VIRT + REG_OFFSET,
 		.irq		= IRQ_IXP4XX_UART2,
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
 		.iotype		= UPIO_MEM,
-		.regshift	= 2,
+		.regshअगरt	= 2,
 		.uartclk	= IXP4XX_UART_XTAL,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_device fsg_uart = {
+अटल काष्ठा platक्रमm_device fsg_uart = अणु
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_PLATFORM,
-	.dev = {
-		.platform_data	= fsg_uart_data,
-	},
+	.dev = अणु
+		.platक्रमm_data	= fsg_uart_data,
+	पूर्ण,
 	.num_resources		= ARRAY_SIZE(fsg_uart_resources),
 	.resource		= fsg_uart_resources,
-};
+पूर्ण;
 
-static struct platform_device fsg_leds = {
+अटल काष्ठा platक्रमm_device fsg_leds = अणु
 	.name		= "fsg-led",
 	.id		= -1,
-};
+पूर्ण;
 
-/* Built-in 10/100 Ethernet MAC interfaces */
-static struct resource fsg_eth_npeb_resources[] = {
-	{
+/* Built-in 10/100 Ethernet MAC पूर्णांकerfaces */
+अटल काष्ठा resource fsg_eth_npeb_resources[] = अणु
+	अणु
 		.start		= IXP4XX_EthB_BASE_PHYS,
 		.end		= IXP4XX_EthB_BASE_PHYS + 0x0fff,
 		.flags		= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct resource fsg_eth_npec_resources[] = {
-	{
+अटल काष्ठा resource fsg_eth_npec_resources[] = अणु
+	अणु
 		.start		= IXP4XX_EthC_BASE_PHYS,
 		.end		= IXP4XX_EthC_BASE_PHYS + 0x0fff,
 		.flags		= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct eth_plat_info fsg_plat_eth[] = {
-	{
+अटल काष्ठा eth_plat_info fsg_plat_eth[] = अणु
+	अणु
 		.phy		= 5,
 		.rxq		= 3,
-		.txreadyq	= 20,
-	}, {
+		.txपढ़ोyq	= 20,
+	पूर्ण, अणु
 		.phy		= 4,
 		.rxq		= 4,
-		.txreadyq	= 21,
-	}
-};
+		.txपढ़ोyq	= 21,
+	पूर्ण
+पूर्ण;
 
-static struct platform_device fsg_eth[] = {
-	{
+अटल काष्ठा platक्रमm_device fsg_eth[] = अणु
+	अणु
 		.name			= "ixp4xx_eth",
 		.id			= IXP4XX_ETH_NPEB,
-		.dev = {
-			.platform_data	= fsg_plat_eth,
-		},
+		.dev = अणु
+			.platक्रमm_data	= fsg_plat_eth,
+		पूर्ण,
 		.num_resources	= ARRAY_SIZE(fsg_eth_npeb_resources),
 		.resource	= fsg_eth_npeb_resources,
-	}, {
+	पूर्ण, अणु
 		.name			= "ixp4xx_eth",
 		.id			= IXP4XX_ETH_NPEC,
-		.dev = {
-			.platform_data	= fsg_plat_eth + 1,
-		},
+		.dev = अणु
+			.platक्रमm_data	= fsg_plat_eth + 1,
+		पूर्ण,
 		.num_resources	= ARRAY_SIZE(fsg_eth_npec_resources),
 		.resource	= fsg_eth_npec_resources,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device *fsg_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *fsg_devices[] __initdata = अणु
 	&fsg_i2c_gpio,
 	&fsg_flash,
 	&fsg_leds,
 	&fsg_eth[0],
 	&fsg_eth[1],
-};
+पूर्ण;
 
-static irqreturn_t fsg_power_handler(int irq, void *dev_id)
-{
-	/* Signal init to do the ctrlaltdel action, this will bypass init if
-	 * it hasn't started and do a kernel_restart.
+अटल irqवापस_t fsg_घातer_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	/* Signal init to करो the ctrlaltdel action, this will bypass init अगर
+	 * it hasn't started and करो a kernel_restart.
 	 */
 	ctrl_alt_del();
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t fsg_reset_handler(int irq, void *dev_id)
-{
-	/* This is the paper-clip reset which does an emergency reboot. */
-	printk(KERN_INFO "Restarting system.\n");
-	machine_restart(NULL);
+अटल irqवापस_t fsg_reset_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	/* This is the paper-clip reset which करोes an emergency reboot. */
+	prपूर्णांकk(KERN_INFO "Restarting system.\n");
+	machine_restart(शून्य);
 
 	/* This should never be reached. */
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void __init fsg_init(void)
-{
-	uint8_t __iomem *f;
+अटल व्योम __init fsg_init(व्योम)
+अणु
+	uपूर्णांक8_t __iomem *f;
 
 	ixp4xx_sys_init();
 
@@ -221,90 +222,90 @@ static void __init fsg_init(void)
 	*IXP4XX_EXP_CS0 |= IXP4XX_FLASH_WRITABLE;
 	*IXP4XX_EXP_CS1 = *IXP4XX_EXP_CS0;
 
-	/* Configure CS2 for operation, 8bit and writable */
+	/* Configure CS2 क्रम operation, 8bit and writable */
 	*IXP4XX_EXP_CS2 = 0xbfff0002;
 
 	gpiod_add_lookup_table(&fsg_i2c_gpiod_table);
-	i2c_register_board_info(0, fsg_i2c_board_info,
+	i2c_रेजिस्टर_board_info(0, fsg_i2c_board_info,
 				ARRAY_SIZE(fsg_i2c_board_info));
 
-	/* This is only useful on a modified machine, but it is valuable
+	/* This is only useful on a modअगरied machine, but it is valuable
 	 * to have it first in order to see debug messages, and so that
-	 * it does *not* get removed if platform_add_devices fails!
+	 * it करोes *not* get हटाओd अगर platक्रमm_add_devices fails!
 	 */
-	(void)platform_device_register(&fsg_uart);
+	(व्योम)platक्रमm_device_रेजिस्टर(&fsg_uart);
 
-	platform_add_devices(fsg_devices, ARRAY_SIZE(fsg_devices));
+	platक्रमm_add_devices(fsg_devices, ARRAY_SIZE(fsg_devices));
 
-	if (request_irq(gpio_to_irq(FSG_RB_GPIO), &fsg_reset_handler,
-			IRQF_TRIGGER_LOW, "FSG reset button", NULL) < 0) {
+	अगर (request_irq(gpio_to_irq(FSG_RB_GPIO), &fsg_reset_handler,
+			IRQF_TRIGGER_LOW, "FSG reset button", शून्य) < 0) अणु
 
-		printk(KERN_DEBUG "Reset Button IRQ %d not available\n",
+		prपूर्णांकk(KERN_DEBUG "Reset Button IRQ %d not available\n",
 			gpio_to_irq(FSG_RB_GPIO));
-	}
+	पूर्ण
 
-	if (request_irq(gpio_to_irq(FSG_SB_GPIO), &fsg_power_handler,
-			IRQF_TRIGGER_LOW, "FSG power button", NULL) < 0) {
+	अगर (request_irq(gpio_to_irq(FSG_SB_GPIO), &fsg_घातer_handler,
+			IRQF_TRIGGER_LOW, "FSG power button", शून्य) < 0) अणु
 
-		printk(KERN_DEBUG "Power Button IRQ %d not available\n",
+		prपूर्णांकk(KERN_DEBUG "Power Button IRQ %d not available\n",
 			gpio_to_irq(FSG_SB_GPIO));
-	}
+	पूर्ण
 
 	/*
-	 * Map in a portion of the flash and read the MAC addresses.
+	 * Map in a portion of the flash and पढ़ो the MAC addresses.
 	 * Since it is stored in BE in the flash itself, we need to
-	 * byteswap it if we're in LE mode.
+	 * byteswap it अगर we're in LE mode.
 	 */
 	f = ioremap(IXP4XX_EXP_BUS_BASE(0), 0x400000);
-	if (f) {
-#ifdef __ARMEB__
-		int i;
-		for (i = 0; i < 6; i++) {
-			fsg_plat_eth[0].hwaddr[i] = readb(f + 0x3C0422 + i);
-			fsg_plat_eth[1].hwaddr[i] = readb(f + 0x3C043B + i);
-		}
-#else
+	अगर (f) अणु
+#अगर_घोषित __ARMEB__
+		पूर्णांक i;
+		क्रम (i = 0; i < 6; i++) अणु
+			fsg_plat_eth[0].hwaddr[i] = पढ़ोb(f + 0x3C0422 + i);
+			fsg_plat_eth[1].hwaddr[i] = पढ़ोb(f + 0x3C043B + i);
+		पूर्ण
+#अन्यथा
 
 		/*
-		  Endian-swapped reads from unaligned addresses are
+		  Endian-swapped पढ़ोs from unaligned addresses are
 		  required to extract the two MACs from the big-endian
 		  Redboot config area in flash.
 		*/
 
-		fsg_plat_eth[0].hwaddr[0] = readb(f + 0x3C0421);
-		fsg_plat_eth[0].hwaddr[1] = readb(f + 0x3C0420);
-		fsg_plat_eth[0].hwaddr[2] = readb(f + 0x3C0427);
-		fsg_plat_eth[0].hwaddr[3] = readb(f + 0x3C0426);
-		fsg_plat_eth[0].hwaddr[4] = readb(f + 0x3C0425);
-		fsg_plat_eth[0].hwaddr[5] = readb(f + 0x3C0424);
+		fsg_plat_eth[0].hwaddr[0] = पढ़ोb(f + 0x3C0421);
+		fsg_plat_eth[0].hwaddr[1] = पढ़ोb(f + 0x3C0420);
+		fsg_plat_eth[0].hwaddr[2] = पढ़ोb(f + 0x3C0427);
+		fsg_plat_eth[0].hwaddr[3] = पढ़ोb(f + 0x3C0426);
+		fsg_plat_eth[0].hwaddr[4] = पढ़ोb(f + 0x3C0425);
+		fsg_plat_eth[0].hwaddr[5] = पढ़ोb(f + 0x3C0424);
 
-		fsg_plat_eth[1].hwaddr[0] = readb(f + 0x3C0439);
-		fsg_plat_eth[1].hwaddr[1] = readb(f + 0x3C043F);
-		fsg_plat_eth[1].hwaddr[2] = readb(f + 0x3C043E);
-		fsg_plat_eth[1].hwaddr[3] = readb(f + 0x3C043D);
-		fsg_plat_eth[1].hwaddr[4] = readb(f + 0x3C043C);
-		fsg_plat_eth[1].hwaddr[5] = readb(f + 0x3C0443);
-#endif
+		fsg_plat_eth[1].hwaddr[0] = पढ़ोb(f + 0x3C0439);
+		fsg_plat_eth[1].hwaddr[1] = पढ़ोb(f + 0x3C043F);
+		fsg_plat_eth[1].hwaddr[2] = पढ़ोb(f + 0x3C043E);
+		fsg_plat_eth[1].hwaddr[3] = पढ़ोb(f + 0x3C043D);
+		fsg_plat_eth[1].hwaddr[4] = पढ़ोb(f + 0x3C043C);
+		fsg_plat_eth[1].hwaddr[5] = पढ़ोb(f + 0x3C0443);
+#पूर्ण_अगर
 		iounmap(f);
-	}
-	printk(KERN_INFO "FSG: Using MAC address %pM for port 0\n",
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "FSG: Using MAC address %pM for port 0\n",
 	       fsg_plat_eth[0].hwaddr);
-	printk(KERN_INFO "FSG: Using MAC address %pM for port 1\n",
+	prपूर्णांकk(KERN_INFO "FSG: Using MAC address %pM for port 1\n",
 	       fsg_plat_eth[1].hwaddr);
 
-}
+पूर्ण
 
 MACHINE_START(FSG, "Freecom FSG-3")
-	/* Maintainer: www.nslu2-linux.org */
+	/* Maपूर्णांकainer: www.nslu2-linux.org */
 	.map_io		= ixp4xx_map_io,
 	.init_early	= ixp4xx_init_early,
 	.init_irq	= ixp4xx_init_irq,
-	.init_time	= ixp4xx_timer_init,
+	.init_समय	= ixp4xx_समयr_init,
 	.atag_offset	= 0x100,
 	.init_machine	= fsg_init,
-#if defined(CONFIG_PCI)
+#अगर defined(CONFIG_PCI)
 	.dma_zone_size	= SZ_64M,
-#endif
+#पूर्ण_अगर
 	.restart	= ixp4xx_restart,
 MACHINE_END
 

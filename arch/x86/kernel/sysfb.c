@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Generic System Framebuffers on x86
  * Copyright (c) 2012-2013 David Herrmann <dh.herrmann@gmail.com>
  */
 
 /*
- * Simple-Framebuffer support for x86 systems
- * Create a platform-device for any available boot framebuffer. The
- * simple-framebuffer platform device is already available on DT systems, so
+ * Simple-Framebuffer support क्रम x86 प्रणालीs
+ * Create a platक्रमm-device क्रम any available boot framebuffer. The
+ * simple-framebuffer platक्रमm device is alपढ़ोy available on DT प्रणालीs, so
  * this module parses the global "screen_info" object and creates a suitable
- * platform device compatible with the "simple-framebuffer" DT object. If
+ * platक्रमm device compatible with the "simple-framebuffer" DT object. If
  * the framebuffer is incompatible, we instead create a legacy
  * "vesa-framebuffer", "efi-framebuffer" or "platform-framebuffer" device and
- * pass the screen_info as platform_data. This allows legacy drivers
+ * pass the screen_info as platक्रमm_data. This allows legacy drivers
  * to pick these devices up without messing with simple-framebuffer drivers.
- * The global "screen_info" is still valid at all times.
+ * The global "screen_info" is still valid at all बार.
  *
- * If CONFIG_X86_SYSFB is not selected, we never register "simple-framebuffer"
- * platform devices, but only use legacy framebuffer devices for
+ * If CONFIG_X86_SYSFB is not selected, we never रेजिस्टर "simple-framebuffer"
+ * platक्रमm devices, but only use legacy framebuffer devices क्रम
  * backwards compatibility.
  *
- * TODO: We set the dev_id field of all platform-devices to 0. This allows
+ * TODO: We set the dev_id field of all platक्रमm-devices to 0. This allows
  * other x86 OF/DT parsers to create such devices, too. However, they must
- * start at offset 1 for this to work.
+ * start at offset 1 क्रम this to work.
  */
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/platform_data/simplefb.h>
-#include <linux/platform_device.h>
-#include <linux/screen_info.h>
-#include <asm/sysfb.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/platक्रमm_data/simplefb.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/screen_info.h>
+#समावेश <यंत्र/sysfb.h>
 
-static __init int sysfb_init(void)
-{
-	struct screen_info *si = &screen_info;
-	struct simplefb_platform_data mode;
-	struct platform_device *pd;
-	const char *name;
+अटल __init पूर्णांक sysfb_init(व्योम)
+अणु
+	काष्ठा screen_info *si = &screen_info;
+	काष्ठा simplefb_platक्रमm_data mode;
+	काष्ठा platक्रमm_device *pd;
+	स्थिर अक्षर *name;
 	bool compatible;
-	int ret;
+	पूर्णांक ret;
 
 	sysfb_apply_efi_quirks();
 
 	/* try to create a simple-framebuffer device */
 	compatible = parse_mode(si, &mode);
-	if (compatible) {
+	अगर (compatible) अणु
 		ret = create_simplefb(si, &mode);
-		if (!ret)
-			return 0;
-	}
+		अगर (!ret)
+			वापस 0;
+	पूर्ण
 
-	/* if the FB is incompatible, create a legacy framebuffer device */
-	if (si->orig_video_isVGA == VIDEO_TYPE_EFI)
+	/* अगर the FB is incompatible, create a legacy framebuffer device */
+	अगर (si->orig_video_isVGA == VIDEO_TYPE_EFI)
 		name = "efi-framebuffer";
-	else if (si->orig_video_isVGA == VIDEO_TYPE_VLFB)
+	अन्यथा अगर (si->orig_video_isVGA == VIDEO_TYPE_VLFB)
 		name = "vesa-framebuffer";
-	else
+	अन्यथा
 		name = "platform-framebuffer";
 
-	pd = platform_device_register_resndata(NULL, name, 0,
-					       NULL, 0, si, sizeof(*si));
-	return PTR_ERR_OR_ZERO(pd);
-}
+	pd = platक्रमm_device_रेजिस्टर_resndata(शून्य, name, 0,
+					       शून्य, 0, si, माप(*si));
+	वापस PTR_ERR_OR_ZERO(pd);
+पूर्ण
 
-/* must execute after PCI subsystem for EFI quirks */
+/* must execute after PCI subप्रणाली क्रम EFI quirks */
 device_initcall(sysfb_init);

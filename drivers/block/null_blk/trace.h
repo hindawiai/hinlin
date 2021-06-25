@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * null_blk device driver tracepoints.
+ * null_blk device driver tracepoपूर्णांकs.
  *
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  */
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM nullb
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM nullb
 
-#if !defined(_TRACE_NULLB_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_NULLB_H
+#अगर !defined(_TRACE_शून्यB_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_शून्यB_H
 
-#include <linux/tracepoint.h>
-#include <linux/trace_seq.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <linux/trace_seq.h>
 
-#include "null_blk.h"
+#समावेश "null_blk.h"
 
-const char *nullb_trace_disk_name(struct trace_seq *p, char *name);
+स्थिर अक्षर *nullb_trace_disk_name(काष्ठा trace_seq *p, अक्षर *name);
 
-#define __print_disk_name(name) nullb_trace_disk_name(p, name)
+#घोषणा __prपूर्णांक_disk_name(name) nullb_trace_disk_name(p, name)
 
-#ifndef TRACE_HEADER_MULTI_READ
-static inline void __assign_disk_name(char *name, struct gendisk *disk)
-{
-	if (disk)
-		memcpy(name, disk->disk_name, DISK_NAME_LEN);
-	else
-		memset(name, 0, DISK_NAME_LEN);
-}
-#endif
+#अगर_अघोषित TRACE_HEADER_MULTI_READ
+अटल अंतरभूत व्योम __assign_disk_name(अक्षर *name, काष्ठा gendisk *disk)
+अणु
+	अगर (disk)
+		स_नकल(name, disk->disk_name, DISK_NAME_LEN);
+	अन्यथा
+		स_रखो(name, 0, DISK_NAME_LEN);
+पूर्ण
+#पूर्ण_अगर
 
 TRACE_EVENT(nullb_zone_op,
-	    TP_PROTO(struct nullb_cmd *cmd, unsigned int zone_no,
-		     unsigned int zone_cond),
+	    TP_PROTO(काष्ठा nullb_cmd *cmd, अचिन्हित पूर्णांक zone_no,
+		     अचिन्हित पूर्णांक zone_cond),
 	    TP_ARGS(cmd, zone_no, zone_cond),
 	    TP_STRUCT__entry(
-		__array(char, disk, DISK_NAME_LEN)
-		__field(enum req_opf, op)
-		__field(unsigned int, zone_no)
-		__field(unsigned int, zone_cond)
+		__array(अक्षर, disk, DISK_NAME_LEN)
+		__field(क्रमागत req_opf, op)
+		__field(अचिन्हित पूर्णांक, zone_no)
+		__field(अचिन्हित पूर्णांक, zone_cond)
 	    ),
 	    TP_fast_assign(
 		__entry->op = req_op(cmd->rq);
@@ -46,34 +47,34 @@ TRACE_EVENT(nullb_zone_op,
 		__entry->zone_cond = zone_cond;
 		__assign_disk_name(__entry->disk, cmd->rq->rq_disk);
 	    ),
-	    TP_printk("%s req=%-15s zone_no=%u zone_cond=%-10s",
-		      __print_disk_name(__entry->disk),
+	    TP_prपूर्णांकk("%s req=%-15s zone_no=%u zone_cond=%-10s",
+		      __prपूर्णांक_disk_name(__entry->disk),
 		      blk_op_str(__entry->op),
 		      __entry->zone_no,
 		      blk_zone_cond_str(__entry->zone_cond))
 );
 
 TRACE_EVENT(nullb_report_zones,
-	    TP_PROTO(struct nullb *nullb, unsigned int nr_zones),
+	    TP_PROTO(काष्ठा nullb *nullb, अचिन्हित पूर्णांक nr_zones),
 	    TP_ARGS(nullb, nr_zones),
 	    TP_STRUCT__entry(
-		__array(char, disk, DISK_NAME_LEN)
-		__field(unsigned int, nr_zones)
+		__array(अक्षर, disk, DISK_NAME_LEN)
+		__field(अचिन्हित पूर्णांक, nr_zones)
 	    ),
 	    TP_fast_assign(
 		__entry->nr_zones = nr_zones;
 		__assign_disk_name(__entry->disk, nullb->disk);
 	    ),
-	    TP_printk("%s nr_zones=%u",
-		      __print_disk_name(__entry->disk), __entry->nr_zones)
+	    TP_prपूर्णांकk("%s nr_zones=%u",
+		      __prपूर्णांक_disk_name(__entry->disk), __entry->nr_zones)
 );
 
-#endif /* _TRACE_NULLB_H */
+#पूर्ण_अगर /* _TRACE_शून्यB_H */
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE trace
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता trace
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

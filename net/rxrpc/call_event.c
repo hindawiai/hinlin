@@ -1,255 +1,256 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Management of Tx window, Tx resend, ACKs and out-of-sequence reception
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Management of Tx winकरोw, Tx resend, ACKs and out-of-sequence reception
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/circ_buf.h>
-#include <linux/net.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/udp.h>
-#include <net/sock.h>
-#include <net/af_rxrpc.h>
-#include "ar-internal.h"
+#समावेश <linux/module.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/net.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/udp.h>
+#समावेश <net/sock.h>
+#समावेश <net/af_rxrpc.h>
+#समावेश "ar-internal.h"
 
 /*
  * Propose a PING ACK be sent.
  */
-static void rxrpc_propose_ping(struct rxrpc_call *call,
+अटल व्योम rxrpc_propose_ping(काष्ठा rxrpc_call *call,
 			       bool immediate, bool background)
-{
-	if (immediate) {
-		if (background &&
+अणु
+	अगर (immediate) अणु
+		अगर (background &&
 		    !test_and_set_bit(RXRPC_CALL_EV_PING, &call->events))
 			rxrpc_queue_call(call);
-	} else {
-		unsigned long now = jiffies;
-		unsigned long ping_at = now + rxrpc_idle_ack_delay;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ now = jअगरfies;
+		अचिन्हित दीर्घ ping_at = now + rxrpc_idle_ack_delay;
 
-		if (time_before(ping_at, call->ping_at)) {
+		अगर (समय_beक्रमe(ping_at, call->ping_at)) अणु
 			WRITE_ONCE(call->ping_at, ping_at);
-			rxrpc_reduce_call_timer(call, ping_at, now,
-						rxrpc_timer_set_for_ping);
-		}
-	}
-}
+			rxrpc_reduce_call_समयr(call, ping_at, now,
+						rxrpc_समयr_set_क्रम_ping);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * propose an ACK be sent
  */
-static void __rxrpc_propose_ACK(struct rxrpc_call *call, u8 ack_reason,
+अटल व्योम __rxrpc_propose_ACK(काष्ठा rxrpc_call *call, u8 ack_reason,
 				u32 serial, bool immediate, bool background,
-				enum rxrpc_propose_ack_trace why)
-{
-	enum rxrpc_propose_ack_outcome outcome = rxrpc_propose_ack_use;
-	unsigned long expiry = rxrpc_soft_ack_delay;
+				क्रमागत rxrpc_propose_ack_trace why)
+अणु
+	क्रमागत rxrpc_propose_ack_outcome outcome = rxrpc_propose_ack_use;
+	अचिन्हित दीर्घ expiry = rxrpc_soft_ack_delay;
 	s8 prior = rxrpc_ack_priority[ack_reason];
 
-	/* Pings are handled specially because we don't want to accidentally
-	 * lose a ping response by subsuming it into a ping.
+	/* Pings are handled specially because we करोn't want to accidentally
+	 * lose a ping response by subsuming it पूर्णांकo a ping.
 	 */
-	if (ack_reason == RXRPC_ACK_PING) {
+	अगर (ack_reason == RXRPC_ACK_PING) अणु
 		rxrpc_propose_ping(call, immediate, background);
-		goto trace;
-	}
+		जाओ trace;
+	पूर्ण
 
 	/* Update DELAY, IDLE, REQUESTED and PING_RESPONSE ACK serial
-	 * numbers, but we don't alter the timeout.
+	 * numbers, but we करोn't alter the समयout.
 	 */
 	_debug("prior %u %u vs %u %u",
 	       ack_reason, prior,
 	       call->ackr_reason, rxrpc_ack_priority[call->ackr_reason]);
-	if (ack_reason == call->ackr_reason) {
-		if (RXRPC_ACK_UPDATEABLE & (1 << ack_reason)) {
+	अगर (ack_reason == call->ackr_reason) अणु
+		अगर (RXRPC_ACK_UPDATEABLE & (1 << ack_reason)) अणु
 			outcome = rxrpc_propose_ack_update;
 			call->ackr_serial = serial;
-		}
-		if (!immediate)
-			goto trace;
-	} else if (prior > rxrpc_ack_priority[call->ackr_reason]) {
+		पूर्ण
+		अगर (!immediate)
+			जाओ trace;
+	पूर्ण अन्यथा अगर (prior > rxrpc_ack_priority[call->ackr_reason]) अणु
 		call->ackr_reason = ack_reason;
 		call->ackr_serial = serial;
-	} else {
+	पूर्ण अन्यथा अणु
 		outcome = rxrpc_propose_ack_subsume;
-	}
+	पूर्ण
 
-	switch (ack_reason) {
-	case RXRPC_ACK_REQUESTED:
-		if (rxrpc_requested_ack_delay < expiry)
+	चयन (ack_reason) अणु
+	हाल RXRPC_ACK_REQUESTED:
+		अगर (rxrpc_requested_ack_delay < expiry)
 			expiry = rxrpc_requested_ack_delay;
-		if (serial == 1)
+		अगर (serial == 1)
 			immediate = false;
-		break;
+		अवरोध;
 
-	case RXRPC_ACK_DELAY:
-		if (rxrpc_soft_ack_delay < expiry)
+	हाल RXRPC_ACK_DELAY:
+		अगर (rxrpc_soft_ack_delay < expiry)
 			expiry = rxrpc_soft_ack_delay;
-		break;
+		अवरोध;
 
-	case RXRPC_ACK_IDLE:
-		if (rxrpc_idle_ack_delay < expiry)
+	हाल RXRPC_ACK_IDLE:
+		अगर (rxrpc_idle_ack_delay < expiry)
 			expiry = rxrpc_idle_ack_delay;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		immediate = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (test_bit(RXRPC_CALL_EV_ACK, &call->events)) {
+	अगर (test_bit(RXRPC_CALL_EV_ACK, &call->events)) अणु
 		_debug("already scheduled");
-	} else if (immediate || expiry == 0) {
+	पूर्ण अन्यथा अगर (immediate || expiry == 0) अणु
 		_debug("immediate ACK %lx", call->events);
-		if (!test_and_set_bit(RXRPC_CALL_EV_ACK, &call->events) &&
+		अगर (!test_and_set_bit(RXRPC_CALL_EV_ACK, &call->events) &&
 		    background)
 			rxrpc_queue_call(call);
-	} else {
-		unsigned long now = jiffies, ack_at;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ now = jअगरfies, ack_at;
 
-		if (call->peer->srtt_us != 0)
-			ack_at = usecs_to_jiffies(call->peer->srtt_us >> 3);
-		else
+		अगर (call->peer->srtt_us != 0)
+			ack_at = usecs_to_jअगरfies(call->peer->srtt_us >> 3);
+		अन्यथा
 			ack_at = expiry;
 
 		ack_at += READ_ONCE(call->tx_backoff);
 		ack_at += now;
-		if (time_before(ack_at, call->ack_at)) {
+		अगर (समय_beक्रमe(ack_at, call->ack_at)) अणु
 			WRITE_ONCE(call->ack_at, ack_at);
-			rxrpc_reduce_call_timer(call, ack_at, now,
-						rxrpc_timer_set_for_ack);
-		}
-	}
+			rxrpc_reduce_call_समयr(call, ack_at, now,
+						rxrpc_समयr_set_क्रम_ack);
+		पूर्ण
+	पूर्ण
 
 trace:
 	trace_rxrpc_propose_ack(call, why, ack_reason, serial, immediate,
 				background, outcome);
-}
+पूर्ण
 
 /*
- * propose an ACK be sent, locking the call structure
+ * propose an ACK be sent, locking the call काष्ठाure
  */
-void rxrpc_propose_ACK(struct rxrpc_call *call, u8 ack_reason,
+व्योम rxrpc_propose_ACK(काष्ठा rxrpc_call *call, u8 ack_reason,
 		       u32 serial, bool immediate, bool background,
-		       enum rxrpc_propose_ack_trace why)
-{
+		       क्रमागत rxrpc_propose_ack_trace why)
+अणु
 	spin_lock_bh(&call->lock);
 	__rxrpc_propose_ACK(call, ack_reason, serial,
 			    immediate, background, why);
 	spin_unlock_bh(&call->lock);
-}
+पूर्ण
 
 /*
- * Handle congestion being detected by the retransmit timeout.
+ * Handle congestion being detected by the retransmit समयout.
  */
-static void rxrpc_congestion_timeout(struct rxrpc_call *call)
-{
+अटल व्योम rxrpc_congestion_समयout(काष्ठा rxrpc_call *call)
+अणु
 	set_bit(RXRPC_CALL_RETRANS_TIMEOUT, &call->flags);
-}
+पूर्ण
 
 /*
- * Perform retransmission of NAK'd and unack'd packets.
+ * Perक्रमm retransmission of NAK'd and unack'd packets.
  */
-static void rxrpc_resend(struct rxrpc_call *call, unsigned long now_j)
-{
-	struct sk_buff *skb;
-	unsigned long resend_at, rto_j;
+अटल व्योम rxrpc_resend(काष्ठा rxrpc_call *call, अचिन्हित दीर्घ now_j)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ resend_at, rto_j;
 	rxrpc_seq_t cursor, seq, top;
-	ktime_t now, max_age, oldest, ack_ts;
-	int ix;
+	kसमय_प्रकार now, max_age, oldest, ack_ts;
+	पूर्णांक ix;
 	u8 annotation, anno_type, retrans = 0, unacked = 0;
 
 	_enter("{%d,%d}", call->tx_hard_ack, call->tx_top);
 
 	rto_j = call->peer->rto_j;
 
-	now = ktime_get_real();
-	max_age = ktime_sub(now, jiffies_to_usecs(rto_j));
+	now = kसमय_get_real();
+	max_age = kसमय_sub(now, jअगरfies_to_usecs(rto_j));
 
 	spin_lock_bh(&call->lock);
 
 	cursor = call->tx_hard_ack;
 	top = call->tx_top;
-	ASSERT(before_eq(cursor, top));
-	if (cursor == top)
-		goto out_unlock;
+	ASSERT(beक्रमe_eq(cursor, top));
+	अगर (cursor == top)
+		जाओ out_unlock;
 
 	/* Scan the packet list without dropping the lock and decide which of
 	 * the packets in the Tx buffer we're going to resend and what the new
-	 * resend timeout will be.
+	 * resend समयout will be.
 	 */
 	trace_rxrpc_resend(call, (cursor + 1) & RXRPC_RXTX_BUFF_MASK);
 	oldest = now;
-	for (seq = cursor + 1; before_eq(seq, top); seq++) {
+	क्रम (seq = cursor + 1; beक्रमe_eq(seq, top); seq++) अणु
 		ix = seq & RXRPC_RXTX_BUFF_MASK;
 		annotation = call->rxtx_annotations[ix];
 		anno_type = annotation & RXRPC_TX_ANNO_MASK;
 		annotation &= ~RXRPC_TX_ANNO_MASK;
-		if (anno_type == RXRPC_TX_ANNO_ACK)
-			continue;
+		अगर (anno_type == RXRPC_TX_ANNO_ACK)
+			जारी;
 
 		skb = call->rxtx_buffer[ix];
 		rxrpc_see_skb(skb, rxrpc_skb_seen);
 
-		if (anno_type == RXRPC_TX_ANNO_UNACK) {
-			if (ktime_after(skb->tstamp, max_age)) {
-				if (ktime_before(skb->tstamp, oldest))
+		अगर (anno_type == RXRPC_TX_ANNO_UNACK) अणु
+			अगर (kसमय_after(skb->tstamp, max_age)) अणु
+				अगर (kसमय_beक्रमe(skb->tstamp, oldest))
 					oldest = skb->tstamp;
-				continue;
-			}
-			if (!(annotation & RXRPC_TX_ANNO_RESENT))
+				जारी;
+			पूर्ण
+			अगर (!(annotation & RXRPC_TX_ANNO_RESENT))
 				unacked++;
-		}
+		पूर्ण
 
 		/* Okay, we need to retransmit a packet. */
 		call->rxtx_annotations[ix] = RXRPC_TX_ANNO_RETRANS | annotation;
 		retrans++;
 		trace_rxrpc_retransmit(call, seq, annotation | anno_type,
-				       ktime_to_ns(ktime_sub(skb->tstamp, max_age)));
-	}
+				       kसमय_प्रकारo_ns(kसमय_sub(skb->tstamp, max_age)));
+	पूर्ण
 
-	resend_at = nsecs_to_jiffies(ktime_to_ns(ktime_sub(now, oldest)));
-	resend_at += jiffies + rto_j;
+	resend_at = nsecs_to_jअगरfies(kसमय_प्रकारo_ns(kसमय_sub(now, oldest)));
+	resend_at += jअगरfies + rto_j;
 	WRITE_ONCE(call->resend_at, resend_at);
 
-	if (unacked)
-		rxrpc_congestion_timeout(call);
+	अगर (unacked)
+		rxrpc_congestion_समयout(call);
 
 	/* If there was nothing that needed retransmission then it's likely
 	 * that an ACK got lost somewhere.  Send a ping to find out instead of
 	 * retransmitting data.
 	 */
-	if (!retrans) {
-		rxrpc_reduce_call_timer(call, resend_at, now_j,
-					rxrpc_timer_set_for_resend);
+	अगर (!retrans) अणु
+		rxrpc_reduce_call_समयr(call, resend_at, now_j,
+					rxrpc_समयr_set_क्रम_resend);
 		spin_unlock_bh(&call->lock);
-		ack_ts = ktime_sub(now, call->acks_latest_ts);
-		if (ktime_to_us(ack_ts) < (call->peer->srtt_us >> 3))
-			goto out;
+		ack_ts = kसमय_sub(now, call->acks_latest_ts);
+		अगर (kसमय_प्रकारo_us(ack_ts) < (call->peer->srtt_us >> 3))
+			जाओ out;
 		rxrpc_propose_ACK(call, RXRPC_ACK_PING, 0, true, false,
-				  rxrpc_propose_ack_ping_for_lost_ack);
-		rxrpc_send_ack_packet(call, true, NULL);
-		goto out;
-	}
+				  rxrpc_propose_ack_ping_क्रम_lost_ack);
+		rxrpc_send_ack_packet(call, true, शून्य);
+		जाओ out;
+	पूर्ण
 
-	/* Now go through the Tx window and perform the retransmissions.  We
-	 * have to drop the lock for each send.  If an ACK comes in whilst the
-	 * lock is dropped, it may clear some of the retransmission markers for
+	/* Now go through the Tx winकरोw and perक्रमm the retransmissions.  We
+	 * have to drop the lock क्रम each send.  If an ACK comes in whilst the
+	 * lock is dropped, it may clear some of the retransmission markers क्रम
 	 * packets that it soft-ACKs.
 	 */
-	for (seq = cursor + 1; before_eq(seq, top); seq++) {
+	क्रम (seq = cursor + 1; beक्रमe_eq(seq, top); seq++) अणु
 		ix = seq & RXRPC_RXTX_BUFF_MASK;
 		annotation = call->rxtx_annotations[ix];
 		anno_type = annotation & RXRPC_TX_ANNO_MASK;
-		if (anno_type != RXRPC_TX_ANNO_RETRANS)
-			continue;
+		अगर (anno_type != RXRPC_TX_ANNO_RETRANS)
+			जारी;
 
-		/* We need to reset the retransmission state, but we need to do
-		 * so before we drop the lock as a new ACK/NAK may come in and
+		/* We need to reset the retransmission state, but we need to करो
+		 * so beक्रमe we drop the lock as a new ACK/NAK may come in and
 		 * confuse things
 		 */
 		annotation &= ~RXRPC_TX_ANNO_MASK;
@@ -257,166 +258,166 @@ static void rxrpc_resend(struct rxrpc_call *call, unsigned long now_j)
 		call->rxtx_annotations[ix] = annotation;
 
 		skb = call->rxtx_buffer[ix];
-		if (!skb)
-			continue;
+		अगर (!skb)
+			जारी;
 
 		rxrpc_get_skb(skb, rxrpc_skb_got);
 		spin_unlock_bh(&call->lock);
 
-		if (rxrpc_send_data_packet(call, skb, true) < 0) {
-			rxrpc_free_skb(skb, rxrpc_skb_freed);
-			return;
-		}
+		अगर (rxrpc_send_data_packet(call, skb, true) < 0) अणु
+			rxrpc_मुक्त_skb(skb, rxrpc_skb_मुक्तd);
+			वापस;
+		पूर्ण
 
-		if (rxrpc_is_client_call(call))
+		अगर (rxrpc_is_client_call(call))
 			rxrpc_expose_client_call(call);
 
-		rxrpc_free_skb(skb, rxrpc_skb_freed);
+		rxrpc_मुक्त_skb(skb, rxrpc_skb_मुक्तd);
 		spin_lock_bh(&call->lock);
-		if (after(call->tx_hard_ack, seq))
+		अगर (after(call->tx_hard_ack, seq))
 			seq = call->tx_hard_ack;
-	}
+	पूर्ण
 
 out_unlock:
 	spin_unlock_bh(&call->lock);
 out:
 	_leave("");
-}
+पूर्ण
 
 /*
- * Handle retransmission and deferred ACK/abort generation.
+ * Handle retransmission and deferred ACK/पात generation.
  */
-void rxrpc_process_call(struct work_struct *work)
-{
-	struct rxrpc_call *call =
-		container_of(work, struct rxrpc_call, processor);
+व्योम rxrpc_process_call(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rxrpc_call *call =
+		container_of(work, काष्ठा rxrpc_call, processor);
 	rxrpc_serial_t *send_ack;
-	unsigned long now, next, t;
-	unsigned int iterations = 0;
+	अचिन्हित दीर्घ now, next, t;
+	अचिन्हित पूर्णांक iterations = 0;
 
 	rxrpc_see_call(call);
 
-	//printk("\n--------------------\n");
+	//prपूर्णांकk("\n--------------------\n");
 	_enter("{%d,%s,%lx}",
 	       call->debug_id, rxrpc_call_states[call->state], call->events);
 
 recheck_state:
-	/* Limit the number of times we do this before returning to the manager */
+	/* Limit the number of बार we करो this beक्रमe वापसing to the manager */
 	iterations++;
-	if (iterations > 5)
-		goto requeue;
+	अगर (iterations > 5)
+		जाओ requeue;
 
-	if (test_and_clear_bit(RXRPC_CALL_EV_ABORT, &call->events)) {
-		rxrpc_send_abort_packet(call);
-		goto recheck_state;
-	}
+	अगर (test_and_clear_bit(RXRPC_CALL_EV_ABORT, &call->events)) अणु
+		rxrpc_send_पात_packet(call);
+		जाओ recheck_state;
+	पूर्ण
 
-	if (call->state == RXRPC_CALL_COMPLETE) {
-		del_timer_sync(&call->timer);
-		goto out_put;
-	}
+	अगर (call->state == RXRPC_CALL_COMPLETE) अणु
+		del_समयr_sync(&call->समयr);
+		जाओ out_put;
+	पूर्ण
 
-	/* Work out if any timeouts tripped */
-	now = jiffies;
+	/* Work out अगर any समयouts tripped */
+	now = jअगरfies;
 	t = READ_ONCE(call->expect_rx_by);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_normal, now);
+	अगर (समय_after_eq(now, t)) अणु
+		trace_rxrpc_समयr(call, rxrpc_समयr_exp_normal, now);
 		set_bit(RXRPC_CALL_EV_EXPIRED, &call->events);
-	}
+	पूर्ण
 
 	t = READ_ONCE(call->expect_req_by);
-	if (call->state == RXRPC_CALL_SERVER_RECV_REQUEST &&
-	    time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_idle, now);
+	अगर (call->state == RXRPC_CALL_SERVER_RECV_REQUEST &&
+	    समय_after_eq(now, t)) अणु
+		trace_rxrpc_समयr(call, rxrpc_समयr_exp_idle, now);
 		set_bit(RXRPC_CALL_EV_EXPIRED, &call->events);
-	}
+	पूर्ण
 
 	t = READ_ONCE(call->expect_term_by);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_hard, now);
+	अगर (समय_after_eq(now, t)) अणु
+		trace_rxrpc_समयr(call, rxrpc_समयr_exp_hard, now);
 		set_bit(RXRPC_CALL_EV_EXPIRED, &call->events);
-	}
+	पूर्ण
 
 	t = READ_ONCE(call->ack_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_ack, now);
+	अगर (समय_after_eq(now, t)) अणु
+		trace_rxrpc_समयr(call, rxrpc_समयr_exp_ack, now);
 		cmpxchg(&call->ack_at, t, now + MAX_JIFFY_OFFSET);
 		set_bit(RXRPC_CALL_EV_ACK, &call->events);
-	}
+	पूर्ण
 
 	t = READ_ONCE(call->ack_lost_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_lost_ack, now);
+	अगर (समय_after_eq(now, t)) अणु
+		trace_rxrpc_समयr(call, rxrpc_समयr_exp_lost_ack, now);
 		cmpxchg(&call->ack_lost_at, t, now + MAX_JIFFY_OFFSET);
 		set_bit(RXRPC_CALL_EV_ACK_LOST, &call->events);
-	}
+	पूर्ण
 
 	t = READ_ONCE(call->keepalive_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_keepalive, now);
+	अगर (समय_after_eq(now, t)) अणु
+		trace_rxrpc_समयr(call, rxrpc_समयr_exp_keepalive, now);
 		cmpxchg(&call->keepalive_at, t, now + MAX_JIFFY_OFFSET);
 		rxrpc_propose_ACK(call, RXRPC_ACK_PING, 0, true, true,
-				  rxrpc_propose_ack_ping_for_keepalive);
+				  rxrpc_propose_ack_ping_क्रम_keepalive);
 		set_bit(RXRPC_CALL_EV_PING, &call->events);
-	}
+	पूर्ण
 
 	t = READ_ONCE(call->ping_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_ping, now);
+	अगर (समय_after_eq(now, t)) अणु
+		trace_rxrpc_समयr(call, rxrpc_समयr_exp_ping, now);
 		cmpxchg(&call->ping_at, t, now + MAX_JIFFY_OFFSET);
 		set_bit(RXRPC_CALL_EV_PING, &call->events);
-	}
+	पूर्ण
 
 	t = READ_ONCE(call->resend_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_resend, now);
+	अगर (समय_after_eq(now, t)) अणु
+		trace_rxrpc_समयr(call, rxrpc_समयr_exp_resend, now);
 		cmpxchg(&call->resend_at, t, now + MAX_JIFFY_OFFSET);
 		set_bit(RXRPC_CALL_EV_RESEND, &call->events);
-	}
+	पूर्ण
 
 	/* Process events */
-	if (test_and_clear_bit(RXRPC_CALL_EV_EXPIRED, &call->events)) {
-		if (test_bit(RXRPC_CALL_RX_HEARD, &call->flags) &&
-		    (int)call->conn->hi_serial - (int)call->rx_serial > 0) {
+	अगर (test_and_clear_bit(RXRPC_CALL_EV_EXPIRED, &call->events)) अणु
+		अगर (test_bit(RXRPC_CALL_RX_HEARD, &call->flags) &&
+		    (पूर्णांक)call->conn->hi_serial - (पूर्णांक)call->rx_serial > 0) अणु
 			trace_rxrpc_call_reset(call);
-			rxrpc_abort_call("EXP", call, 0, RX_USER_ABORT, -ECONNRESET);
-		} else {
-			rxrpc_abort_call("EXP", call, 0, RX_USER_ABORT, -ETIME);
-		}
+			rxrpc_पात_call("EXP", call, 0, RX_USER_ABORT, -ECONNRESET);
+		पूर्ण अन्यथा अणु
+			rxrpc_पात_call("EXP", call, 0, RX_USER_ABORT, -ETIME);
+		पूर्ण
 		set_bit(RXRPC_CALL_EV_ABORT, &call->events);
-		goto recheck_state;
-	}
+		जाओ recheck_state;
+	पूर्ण
 
-	send_ack = NULL;
-	if (test_and_clear_bit(RXRPC_CALL_EV_ACK_LOST, &call->events)) {
+	send_ack = शून्य;
+	अगर (test_and_clear_bit(RXRPC_CALL_EV_ACK_LOST, &call->events)) अणु
 		call->acks_lost_top = call->tx_top;
 		rxrpc_propose_ACK(call, RXRPC_ACK_PING, 0, true, false,
-				  rxrpc_propose_ack_ping_for_lost_ack);
+				  rxrpc_propose_ack_ping_क्रम_lost_ack);
 		send_ack = &call->acks_lost_ping;
-	}
+	पूर्ण
 
-	if (test_and_clear_bit(RXRPC_CALL_EV_ACK, &call->events) ||
-	    send_ack) {
-		if (call->ackr_reason) {
+	अगर (test_and_clear_bit(RXRPC_CALL_EV_ACK, &call->events) ||
+	    send_ack) अणु
+		अगर (call->ackr_reason) अणु
 			rxrpc_send_ack_packet(call, false, send_ack);
-			goto recheck_state;
-		}
-	}
+			जाओ recheck_state;
+		पूर्ण
+	पूर्ण
 
-	if (test_and_clear_bit(RXRPC_CALL_EV_PING, &call->events)) {
-		rxrpc_send_ack_packet(call, true, NULL);
-		goto recheck_state;
-	}
+	अगर (test_and_clear_bit(RXRPC_CALL_EV_PING, &call->events)) अणु
+		rxrpc_send_ack_packet(call, true, शून्य);
+		जाओ recheck_state;
+	पूर्ण
 
-	if (test_and_clear_bit(RXRPC_CALL_EV_RESEND, &call->events)) {
+	अगर (test_and_clear_bit(RXRPC_CALL_EV_RESEND, &call->events)) अणु
 		rxrpc_resend(call, now);
-		goto recheck_state;
-	}
+		जाओ recheck_state;
+	पूर्ण
 
-	/* Make sure the timer is restarted */
+	/* Make sure the समयr is restarted */
 	next = call->expect_rx_by;
 
-#define set(T) { t = READ_ONCE(T); if (time_before(t, next)) next = t; }
+#घोषणा set(T) अणु t = READ_ONCE(T); अगर (समय_beक्रमe(t, next)) next = t; पूर्ण
 
 	set(call->expect_req_by);
 	set(call->expect_term_by);
@@ -426,23 +427,23 @@ recheck_state:
 	set(call->keepalive_at);
 	set(call->ping_at);
 
-	now = jiffies;
-	if (time_after_eq(now, next))
-		goto recheck_state;
+	now = jअगरfies;
+	अगर (समय_after_eq(now, next))
+		जाओ recheck_state;
 
-	rxrpc_reduce_call_timer(call, next, now, rxrpc_timer_restart);
+	rxrpc_reduce_call_समयr(call, next, now, rxrpc_समयr_restart);
 
-	/* other events may have been raised since we started checking */
-	if (call->events && call->state < RXRPC_CALL_COMPLETE)
-		goto requeue;
+	/* other events may have been उठाओd since we started checking */
+	अगर (call->events && call->state < RXRPC_CALL_COMPLETE)
+		जाओ requeue;
 
 out_put:
 	rxrpc_put_call(call, rxrpc_call_put);
 out:
 	_leave("");
-	return;
+	वापस;
 
 requeue:
 	__rxrpc_queue_call(call);
-	goto out;
-}
+	जाओ out;
+पूर्ण

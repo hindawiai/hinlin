@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * DRM driver for Ilitek ILI9486 panels
+ * DRM driver क्रम Ilitek ILI9486 panels
  *
  * Copyright 2020 Kamlesh Gurudasani <kamlesh.gurudasani@gmail.com>
  */
 
-#include <linux/backlight.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/property.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/property.h>
+#समावेश <linux/spi/spi.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem_atomic_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_mipi_dbi.h>
-#include <drm/drm_modeset_helper.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem_atomic_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_mipi_dbi.h>
+#समावेश <drm/drm_modeset_helper.h>
 
-#define ILI9486_ITFCTR1         0xb0
-#define ILI9486_PWCTRL1         0xc2
-#define ILI9486_VMCTRL1         0xc5
-#define ILI9486_PGAMCTRL        0xe0
-#define ILI9486_NGAMCTRL        0xe1
-#define ILI9486_DGAMCTRL        0xe2
-#define ILI9486_MADCTL_BGR      BIT(3)
-#define ILI9486_MADCTL_MV       BIT(5)
-#define ILI9486_MADCTL_MX       BIT(6)
-#define ILI9486_MADCTL_MY       BIT(7)
+#घोषणा ILI9486_ITFCTR1         0xb0
+#घोषणा ILI9486_PWCTRL1         0xc2
+#घोषणा ILI9486_VMCTRL1         0xc5
+#घोषणा ILI9486_PGAMCTRL        0xe0
+#घोषणा ILI9486_NGAMCTRL        0xe1
+#घोषणा ILI9486_DGAMCTRL        0xe2
+#घोषणा ILI9486_MADCTL_BGR      BIT(3)
+#घोषणा ILI9486_MADCTL_MV       BIT(5)
+#घोषणा ILI9486_MADCTL_MX       BIT(6)
+#घोषणा ILI9486_MADCTL_MY       BIT(7)
 
 /*
  * The PiScreen/waveshare rpi-lcd-35 has a SPI to 16-bit parallel bus converter
  * in front of the  display controller. This means that 8-bit values have to be
  * transferred as 16-bit.
  */
-static int waveshare_command(struct mipi_dbi *mipi, u8 *cmd, u8 *par,
-			     size_t num)
-{
-	struct spi_device *spi = mipi->spi;
-	void *data = par;
+अटल पूर्णांक waveshare_command(काष्ठा mipi_dbi *mipi, u8 *cmd, u8 *par,
+			     माप_प्रकार num)
+अणु
+	काष्ठा spi_device *spi = mipi->spi;
+	व्योम *data = par;
 	u32 speed_hz;
-	int i, ret;
+	पूर्णांक i, ret;
 	__be16 *buf;
 
-	buf = kmalloc(32 * sizeof(u16), GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(32 * माप(u16), GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	/*
 	 * The displays are Raspberry Pi HATs and connected to the 8-bit only
 	 * SPI controller, so 16-bit command and parameters need byte swapping
-	 * before being transferred as 8-bit on the big endian SPI bus.
-	 * Pixel data bytes have already been swapped before this function is
+	 * beक्रमe being transferred as 8-bit on the big endian SPI bus.
+	 * Pixel data bytes have alपढ़ोy been swapped beक्रमe this function is
 	 * called.
 	 */
 	buf[0] = cpu_to_be16(*cmd);
 	gpiod_set_value_cansleep(mipi->dc, 0);
 	speed_hz = mipi_dbi_spi_cmd_max_speed(spi, 2);
 	ret = mipi_dbi_spi_transfer(spi, speed_hz, 8, buf, 2);
-	if (ret || !num)
-		goto free;
+	अगर (ret || !num)
+		जाओ मुक्त;
 
 	/* 8-bit configuration data, not 16-bit pixel data */
-	if (num <= 32) {
-		for (i = 0; i < num; i++)
+	अगर (num <= 32) अणु
+		क्रम (i = 0; i < num; i++)
 			buf[i] = cpu_to_be16(par[i]);
 		num *= 2;
 		speed_hz = mipi_dbi_spi_cmd_max_speed(spi, num);
 		data = buf;
-	}
+	पूर्ण
 
 	gpiod_set_value_cansleep(mipi->dc, 1);
 	ret = mipi_dbi_spi_transfer(spi, speed_hz, 8, data, num);
- free:
-	kfree(buf);
+ मुक्त:
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void waveshare_enable(struct drm_simple_display_pipe *pipe,
-			     struct drm_crtc_state *crtc_state,
-			     struct drm_plane_state *plane_state)
-{
-	struct mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
-	struct mipi_dbi *dbi = &dbidev->dbi;
+अटल व्योम waveshare_enable(काष्ठा drm_simple_display_pipe *pipe,
+			     काष्ठा drm_crtc_state *crtc_state,
+			     काष्ठा drm_plane_state *plane_state)
+अणु
+	काष्ठा mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
+	काष्ठा mipi_dbi *dbi = &dbidev->dbi;
 	u8 addr_mode;
-	int ret, idx;
+	पूर्णांक ret, idx;
 
-	if (!drm_dev_enter(pipe->crtc.dev, &idx))
-		return;
+	अगर (!drm_dev_enter(pipe->crtc.dev, &idx))
+		वापस;
 
 	DRM_DEBUG_KMS("\n");
 
-	ret = mipi_dbi_poweron_conditional_reset(dbidev);
-	if (ret < 0)
-		goto out_exit;
-	if (ret == 1)
-		goto out_enable;
+	ret = mipi_dbi_घातeron_conditional_reset(dbidev);
+	अगर (ret < 0)
+		जाओ out_निकास;
+	अगर (ret == 1)
+		जाओ out_enable;
 
 	mipi_dbi_command(dbi, ILI9486_ITFCTR1);
 	mipi_dbi_command(dbi, MIPI_DCS_EXIT_SLEEP_MODE);
@@ -127,42 +128,42 @@ static void waveshare_enable(struct drm_simple_display_pipe *pipe,
 	msleep(100);
 
  out_enable:
-	switch (dbidev->rotation) {
-	case 90:
+	चयन (dbidev->rotation) अणु
+	हाल 90:
 		addr_mode = ILI9486_MADCTL_MY;
-		break;
-	case 180:
+		अवरोध;
+	हाल 180:
 		addr_mode = ILI9486_MADCTL_MV;
-		break;
-	case 270:
+		अवरोध;
+	हाल 270:
 		addr_mode = ILI9486_MADCTL_MX;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		addr_mode = ILI9486_MADCTL_MV | ILI9486_MADCTL_MY |
 			ILI9486_MADCTL_MX;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	addr_mode |= ILI9486_MADCTL_BGR;
 	mipi_dbi_command(dbi, MIPI_DCS_SET_ADDRESS_MODE, addr_mode);
 	mipi_dbi_enable_flush(dbidev, crtc_state, plane_state);
- out_exit:
-	drm_dev_exit(idx);
-}
+ out_निकास:
+	drm_dev_निकास(idx);
+पूर्ण
 
-static const struct drm_simple_display_pipe_funcs waveshare_pipe_funcs = {
+अटल स्थिर काष्ठा drm_simple_display_pipe_funcs waveshare_pipe_funcs = अणु
 	.enable = waveshare_enable,
 	.disable = mipi_dbi_pipe_disable,
 	.update = mipi_dbi_pipe_update,
 	.prepare_fb = drm_gem_simple_display_pipe_prepare_fb,
-};
+पूर्ण;
 
-static const struct drm_display_mode waveshare_mode = {
+अटल स्थिर काष्ठा drm_display_mode waveshare_mode = अणु
 	DRM_SIMPLE_MODE(480, 320, 73, 49),
-};
+पूर्ण;
 
 DEFINE_DRM_GEM_CMA_FOPS(ili9486_fops);
 
-static const struct drm_driver ili9486_driver = {
+अटल स्थिर काष्ठा drm_driver ili9486_driver = अणु
 	.driver_features	= DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
 	.fops			= &ili9486_fops,
 	DRM_GEM_CMA_DRIVER_OPS_VMAP,
@@ -172,107 +173,107 @@ static const struct drm_driver ili9486_driver = {
 	.date			= "20200118",
 	.major			= 1,
 	.minor			= 0,
-};
+पूर्ण;
 
-static const struct of_device_id ili9486_of_match[] = {
-	{ .compatible = "waveshare,rpi-lcd-35" },
-	{ .compatible = "ozzmaker,piscreen" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ili9486_of_match[] = अणु
+	अणु .compatible = "waveshare,rpi-lcd-35" पूर्ण,
+	अणु .compatible = "ozzmaker,piscreen" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ili9486_of_match);
 
-static const struct spi_device_id ili9486_id[] = {
-	{ "ili9486", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id ili9486_id[] = अणु
+	अणु "ili9486", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, ili9486_id);
 
-static int ili9486_probe(struct spi_device *spi)
-{
-	struct device *dev = &spi->dev;
-	struct mipi_dbi_dev *dbidev;
-	struct drm_device *drm;
-	struct mipi_dbi *dbi;
-	struct gpio_desc *dc;
+अटल पूर्णांक ili9486_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा mipi_dbi_dev *dbidev;
+	काष्ठा drm_device *drm;
+	काष्ठा mipi_dbi *dbi;
+	काष्ठा gpio_desc *dc;
 	u32 rotation = 0;
-	int ret;
+	पूर्णांक ret;
 
 	dbidev = devm_drm_dev_alloc(dev, &ili9486_driver,
-				    struct mipi_dbi_dev, drm);
-	if (IS_ERR(dbidev))
-		return PTR_ERR(dbidev);
+				    काष्ठा mipi_dbi_dev, drm);
+	अगर (IS_ERR(dbidev))
+		वापस PTR_ERR(dbidev);
 
 	dbi = &dbidev->dbi;
 	drm = &dbidev->drm;
 
 	dbi->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(dbi->reset)) {
+	अगर (IS_ERR(dbi->reset)) अणु
 		DRM_DEV_ERROR(dev, "Failed to get gpio 'reset'\n");
-		return PTR_ERR(dbi->reset);
-	}
+		वापस PTR_ERR(dbi->reset);
+	पूर्ण
 
 	dc = devm_gpiod_get(dev, "dc", GPIOD_OUT_LOW);
-	if (IS_ERR(dc)) {
+	अगर (IS_ERR(dc)) अणु
 		DRM_DEV_ERROR(dev, "Failed to get gpio 'dc'\n");
-		return PTR_ERR(dc);
-	}
+		वापस PTR_ERR(dc);
+	पूर्ण
 
 	dbidev->backlight = devm_of_find_backlight(dev);
-	if (IS_ERR(dbidev->backlight))
-		return PTR_ERR(dbidev->backlight);
+	अगर (IS_ERR(dbidev->backlight))
+		वापस PTR_ERR(dbidev->backlight);
 
-	device_property_read_u32(dev, "rotation", &rotation);
+	device_property_पढ़ो_u32(dev, "rotation", &rotation);
 
 	ret = mipi_dbi_spi_init(spi, dbi, dc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dbi->command = waveshare_command;
-	dbi->read_commands = NULL;
+	dbi->पढ़ो_commands = शून्य;
 
 	ret = mipi_dbi_dev_init(dbidev, &waveshare_pipe_funcs,
 				&waveshare_mode, rotation);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_mode_config_reset(drm);
 
-	ret = drm_dev_register(drm, 0);
-	if (ret)
-		return ret;
+	ret = drm_dev_रेजिस्टर(drm, 0);
+	अगर (ret)
+		वापस ret;
 
 	spi_set_drvdata(spi, drm);
 
 	drm_fbdev_generic_setup(drm, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ili9486_remove(struct spi_device *spi)
-{
-	struct drm_device *drm = spi_get_drvdata(spi);
+अटल पूर्णांक ili9486_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा drm_device *drm = spi_get_drvdata(spi);
 
 	drm_dev_unplug(drm);
-	drm_atomic_helper_shutdown(drm);
+	drm_atomic_helper_shutकरोwn(drm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ili9486_shutdown(struct spi_device *spi)
-{
-	drm_atomic_helper_shutdown(spi_get_drvdata(spi));
-}
+अटल व्योम ili9486_shutकरोwn(काष्ठा spi_device *spi)
+अणु
+	drm_atomic_helper_shutकरोwn(spi_get_drvdata(spi));
+पूर्ण
 
-static struct spi_driver ili9486_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ili9486_spi_driver = अणु
+	.driver = अणु
 		.name = "ili9486",
 		.of_match_table = ili9486_of_match,
-	},
+	पूर्ण,
 	.id_table = ili9486_id,
 	.probe = ili9486_probe,
-	.remove = ili9486_remove,
-	.shutdown = ili9486_shutdown,
-};
+	.हटाओ = ili9486_हटाओ,
+	.shutकरोwn = ili9486_shutकरोwn,
+पूर्ण;
 module_spi_driver(ili9486_spi_driver);
 
 MODULE_DESCRIPTION("Ilitek ILI9486 DRM driver");

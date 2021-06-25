@@ -1,342 +1,343 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2006 - 2007 Ivo van Doorn
  * Copyright (C) 2007 Dmitry Torokhov
  * Copyright 2009 Johannes Berg <johannes@sipsolutions.net>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef __RFKILL_H
-#define __RFKILL_H
+#अगर_अघोषित __RFKILL_H
+#घोषणा __RFKILL_H
 
-#include <uapi/linux/rfkill.h>
+#समावेश <uapi/linux/rfसमाप्त.h>
 
-/* don't allow anyone to use these in the kernel */
-enum rfkill_user_states {
+/* करोn't allow anyone to use these in the kernel */
+क्रमागत rfसमाप्त_user_states अणु
 	RFKILL_USER_STATE_SOFT_BLOCKED	= RFKILL_STATE_SOFT_BLOCKED,
 	RFKILL_USER_STATE_UNBLOCKED	= RFKILL_STATE_UNBLOCKED,
 	RFKILL_USER_STATE_HARD_BLOCKED	= RFKILL_STATE_HARD_BLOCKED,
-};
-#undef RFKILL_STATE_SOFT_BLOCKED
-#undef RFKILL_STATE_UNBLOCKED
-#undef RFKILL_STATE_HARD_BLOCKED
+पूर्ण;
+#अघोषित RFKILL_STATE_SOFT_BLOCKED
+#अघोषित RFKILL_STATE_UNBLOCKED
+#अघोषित RFKILL_STATE_HARD_BLOCKED
 
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/leds.h>
-#include <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/err.h>
 
-struct device;
+काष्ठा device;
 /* this is opaque */
-struct rfkill;
+काष्ठा rfसमाप्त;
 
 /**
- * struct rfkill_ops - rfkill driver methods
+ * काष्ठा rfसमाप्त_ops - rfसमाप्त driver methods
  *
- * @poll: poll the rfkill block state(s) -- only assign this method
+ * @poll: poll the rfसमाप्त block state(s) -- only assign this method
  *	when you need polling. When called, simply call one of the
- *	rfkill_set{,_hw,_sw}_state family of functions. If the hw
- *	is getting unblocked you need to take into account the return
+ *	rfसमाप्त_setअणु,_hw,_swपूर्ण_state family of functions. If the hw
+ *	is getting unblocked you need to take पूर्णांकo account the वापस
  *	value of those functions to make sure the software block is
  *	properly used.
- * @query: query the rfkill block state(s) and call exactly one of the
- *	rfkill_set{,_hw,_sw}_state family of functions. Assign this
- *	method if input events can cause hardware state changes to make
- *	the rfkill core query your driver before setting a requested
+ * @query: query the rfसमाप्त block state(s) and call exactly one of the
+ *	rfसमाप्त_setअणु,_hw,_swपूर्ण_state family of functions. Assign this
+ *	method अगर input events can cause hardware state changes to make
+ *	the rfसमाप्त core query your driver beक्रमe setting a requested
  *	block.
  * @set_block: turn the transmitter on (blocked == false) or off
- *	(blocked == true) -- ignore and return 0 when hard blocked.
- *	This callback must be assigned.
+ *	(blocked == true) -- ignore and वापस 0 when hard blocked.
+ *	This callback must be asचिन्हित.
  */
-struct rfkill_ops {
-	void	(*poll)(struct rfkill *rfkill, void *data);
-	void	(*query)(struct rfkill *rfkill, void *data);
-	int	(*set_block)(void *data, bool blocked);
-};
+काष्ठा rfसमाप्त_ops अणु
+	व्योम	(*poll)(काष्ठा rfसमाप्त *rfसमाप्त, व्योम *data);
+	व्योम	(*query)(काष्ठा rfसमाप्त *rfसमाप्त, व्योम *data);
+	पूर्णांक	(*set_block)(व्योम *data, bool blocked);
+पूर्ण;
 
-#if defined(CONFIG_RFKILL) || defined(CONFIG_RFKILL_MODULE)
+#अगर defined(CONFIG_RFKILL) || defined(CONFIG_RFKILL_MODULE)
 /**
- * rfkill_alloc - Allocate rfkill structure
- * @name: name of the struct -- the string is not copied internally
- * @parent: device that has rf switch on it
- * @type: type of the switch (RFKILL_TYPE_*)
- * @ops: rfkill methods
+ * rfसमाप्त_alloc - Allocate rfसमाप्त काष्ठाure
+ * @name: name of the काष्ठा -- the string is not copied पूर्णांकernally
+ * @parent: device that has rf चयन on it
+ * @type: type of the चयन (RFKILL_TYPE_*)
+ * @ops: rfसमाप्त methods
  * @ops_data: data passed to each method
  *
  * This function should be called by the transmitter driver to allocate an
- * rfkill structure. Returns %NULL on failure.
+ * rfसमाप्त काष्ठाure. Returns %शून्य on failure.
  */
-struct rfkill * __must_check rfkill_alloc(const char *name,
-					  struct device *parent,
-					  const enum rfkill_type type,
-					  const struct rfkill_ops *ops,
-					  void *ops_data);
+काष्ठा rfसमाप्त * __must_check rfसमाप्त_alloc(स्थिर अक्षर *name,
+					  काष्ठा device *parent,
+					  स्थिर क्रमागत rfसमाप्त_type type,
+					  स्थिर काष्ठा rfसमाप्त_ops *ops,
+					  व्योम *ops_data);
 
 /**
- * rfkill_register - Register a rfkill structure.
- * @rfkill: rfkill structure to be registered
+ * rfसमाप्त_रेजिस्टर - Register a rfसमाप्त काष्ठाure.
+ * @rfसमाप्त: rfसमाप्त काष्ठाure to be रेजिस्टरed
  *
- * This function should be called by the transmitter driver to register
- * the rfkill structure. Before calling this function the driver needs
- * to be ready to service method calls from rfkill.
+ * This function should be called by the transmitter driver to रेजिस्टर
+ * the rfसमाप्त काष्ठाure. Beक्रमe calling this function the driver needs
+ * to be पढ़ोy to service method calls from rfसमाप्त.
  *
- * If rfkill_init_sw_state() is not called before registration,
+ * If rfसमाप्त_init_sw_state() is not called beक्रमe registration,
  * set_block() will be called to initialize the software blocked state
- * to a default value.
+ * to a शेष value.
  *
- * If the hardware blocked state is not set before registration,
+ * If the hardware blocked state is not set beक्रमe registration,
  * it is assumed to be unblocked.
  */
-int __must_check rfkill_register(struct rfkill *rfkill);
+पूर्णांक __must_check rfसमाप्त_रेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त);
 
 /**
- * rfkill_pause_polling(struct rfkill *rfkill)
+ * rfसमाप्त_छोड़ो_polling(काष्ठा rfसमाप्त *rfसमाप्त)
  *
- * Pause polling -- say transmitter is off for other reasons.
- * NOTE: not necessary for suspend/resume -- in that case the
+ * Pause polling -- say transmitter is off क्रम other reasons.
+ * NOTE: not necessary क्रम suspend/resume -- in that हाल the
  * core stops polling anyway (but will also correctly handle
- * the case of polling having been paused before suspend.)
+ * the हाल of polling having been छोड़ोd beक्रमe suspend.)
  */
-void rfkill_pause_polling(struct rfkill *rfkill);
+व्योम rfसमाप्त_छोड़ो_polling(काष्ठा rfसमाप्त *rfसमाप्त);
 
 /**
- * rfkill_resume_polling(struct rfkill *rfkill)
+ * rfसमाप्त_resume_polling(काष्ठा rfसमाप्त *rfसमाप्त)
  *
  * Resume polling
- * NOTE: not necessary for suspend/resume -- in that case the
+ * NOTE: not necessary क्रम suspend/resume -- in that हाल the
  * core stops polling anyway
  */
-void rfkill_resume_polling(struct rfkill *rfkill);
+व्योम rfसमाप्त_resume_polling(काष्ठा rfसमाप्त *rfसमाप्त);
 
 
 /**
- * rfkill_unregister - Unregister a rfkill structure.
- * @rfkill: rfkill structure to be unregistered
+ * rfसमाप्त_unरेजिस्टर - Unरेजिस्टर a rfसमाप्त काष्ठाure.
+ * @rfसमाप्त: rfसमाप्त काष्ठाure to be unरेजिस्टरed
  *
  * This function should be called by the network driver during device
- * teardown to destroy rfkill structure. Until it returns, the driver
+ * tearकरोwn to destroy rfसमाप्त काष्ठाure. Until it वापसs, the driver
  * needs to be able to service method calls.
  */
-void rfkill_unregister(struct rfkill *rfkill);
+व्योम rfसमाप्त_unरेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त);
 
 /**
- * rfkill_destroy - Free rfkill structure
- * @rfkill: rfkill structure to be destroyed
+ * rfसमाप्त_destroy - Free rfसमाप्त काष्ठाure
+ * @rfसमाप्त: rfसमाप्त काष्ठाure to be destroyed
  *
- * Destroys the rfkill structure.
+ * Destroys the rfसमाप्त काष्ठाure.
  */
-void rfkill_destroy(struct rfkill *rfkill);
+व्योम rfसमाप्त_destroy(काष्ठा rfसमाप्त *rfसमाप्त);
 
 /**
- * rfkill_set_hw_state_reason - Set the internal rfkill hardware block state
+ * rfसमाप्त_set_hw_state_reason - Set the पूर्णांकernal rfसमाप्त hardware block state
  *	with a reason
- * @rfkill: pointer to the rfkill class to modify.
+ * @rfसमाप्त: poपूर्णांकer to the rfसमाप्त class to modअगरy.
  * @blocked: the current hardware block state to set
- * @reason: one of &enum rfkill_hard_block_reasons
+ * @reason: one of &क्रमागत rfसमाप्त_hard_block_reasons
  *
- * Prefer to use rfkill_set_hw_state if you don't need any special reason.
+ * Prefer to use rfसमाप्त_set_hw_state अगर you करोn't need any special reason.
  */
-bool rfkill_set_hw_state_reason(struct rfkill *rfkill,
-				bool blocked, unsigned long reason);
+bool rfसमाप्त_set_hw_state_reason(काष्ठा rfसमाप्त *rfसमाप्त,
+				bool blocked, अचिन्हित दीर्घ reason);
 /**
- * rfkill_set_hw_state - Set the internal rfkill hardware block state
- * @rfkill: pointer to the rfkill class to modify.
+ * rfसमाप्त_set_hw_state - Set the पूर्णांकernal rfसमाप्त hardware block state
+ * @rfसमाप्त: poपूर्णांकer to the rfसमाप्त class to modअगरy.
  * @blocked: the current hardware block state to set
  *
- * rfkill drivers that get events when the hard-blocked state changes
- * use this function to notify the rfkill core (and through that also
+ * rfसमाप्त drivers that get events when the hard-blocked state changes
+ * use this function to notअगरy the rfसमाप्त core (and through that also
  * userspace) of the current state.  They should also use this after
- * resume if the state could have changed.
+ * resume अगर the state could have changed.
  *
- * You need not (but may) call this function if poll_state is assigned.
+ * You need not (but may) call this function अगर poll_state is asचिन्हित.
  *
- * This function can be called in any context, even from within rfkill
+ * This function can be called in any context, even from within rfसमाप्त
  * callbacks.
  *
- * The function returns the combined block state (true if transmitter
+ * The function वापसs the combined block state (true अगर transmitter
  * should be blocked) so that drivers need not keep track of the soft
  * block state -- which they might not be able to.
  */
-static inline bool rfkill_set_hw_state(struct rfkill *rfkill, bool blocked)
-{
-	return rfkill_set_hw_state_reason(rfkill, blocked,
+अटल अंतरभूत bool rfसमाप्त_set_hw_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked)
+अणु
+	वापस rfसमाप्त_set_hw_state_reason(rfसमाप्त, blocked,
 					  RFKILL_HARD_BLOCK_SIGNAL);
-}
+पूर्ण
 
 /**
- * rfkill_set_sw_state - Set the internal rfkill software block state
- * @rfkill: pointer to the rfkill class to modify.
+ * rfसमाप्त_set_sw_state - Set the पूर्णांकernal rfसमाप्त software block state
+ * @rfसमाप्त: poपूर्णांकer to the rfसमाप्त class to modअगरy.
  * @blocked: the current software block state to set
  *
- * rfkill drivers that get events when the soft-blocked state changes
- * (yes, some platforms directly act on input but allow changing again)
- * use this function to notify the rfkill core (and through that also
+ * rfसमाप्त drivers that get events when the soft-blocked state changes
+ * (yes, some platक्रमms directly act on input but allow changing again)
+ * use this function to notअगरy the rfसमाप्त core (and through that also
  * userspace) of the current state.
  *
- * Drivers should also call this function after resume if the state has
- * been changed by the user.  This only makes sense for "persistent"
- * devices (see rfkill_init_sw_state()).
+ * Drivers should also call this function after resume अगर the state has
+ * been changed by the user.  This only makes sense क्रम "persistent"
+ * devices (see rfसमाप्त_init_sw_state()).
  *
- * This function can be called in any context, even from within rfkill
+ * This function can be called in any context, even from within rfसमाप्त
  * callbacks.
  *
- * The function returns the combined block state (true if transmitter
+ * The function वापसs the combined block state (true अगर transmitter
  * should be blocked).
  */
-bool rfkill_set_sw_state(struct rfkill *rfkill, bool blocked);
+bool rfसमाप्त_set_sw_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked);
 
 /**
- * rfkill_init_sw_state - Initialize persistent software block state
- * @rfkill: pointer to the rfkill class to modify.
+ * rfसमाप्त_init_sw_state - Initialize persistent software block state
+ * @rfसमाप्त: poपूर्णांकer to the rfसमाप्त class to modअगरy.
  * @blocked: the current software block state to set
  *
- * rfkill drivers that preserve their software block state over power off
- * use this function to notify the rfkill core (and through that also
- * userspace) of their initial state.  It should only be used before
+ * rfसमाप्त drivers that preserve their software block state over घातer off
+ * use this function to notअगरy the rfसमाप्त core (and through that also
+ * userspace) of their initial state.  It should only be used beक्रमe
  * registration.
  *
  * In addition, it marks the device as "persistent", an attribute which
- * can be read by userspace.  Persistent devices are expected to preserve
+ * can be पढ़ो by userspace.  Persistent devices are expected to preserve
  * their own state when suspended.
  */
-void rfkill_init_sw_state(struct rfkill *rfkill, bool blocked);
+व्योम rfसमाप्त_init_sw_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked);
 
 /**
- * rfkill_set_states - Set the internal rfkill block states
- * @rfkill: pointer to the rfkill class to modify.
+ * rfसमाप्त_set_states - Set the पूर्णांकernal rfसमाप्त block states
+ * @rfसमाप्त: poपूर्णांकer to the rfसमाप्त class to modअगरy.
  * @sw: the current software block state to set
  * @hw: the current hardware block state to set
  *
- * This function can be called in any context, even from within rfkill
+ * This function can be called in any context, even from within rfसमाप्त
  * callbacks.
  */
-void rfkill_set_states(struct rfkill *rfkill, bool sw, bool hw);
+व्योम rfसमाप्त_set_states(काष्ठा rfसमाप्त *rfसमाप्त, bool sw, bool hw);
 
 /**
- * rfkill_blocked - Query rfkill block state
+ * rfसमाप्त_blocked - Query rfसमाप्त block state
  *
- * @rfkill: rfkill struct to query
+ * @rfसमाप्त: rfसमाप्त काष्ठा to query
  */
-bool rfkill_blocked(struct rfkill *rfkill);
+bool rfसमाप्त_blocked(काष्ठा rfसमाप्त *rfसमाप्त);
 
 /**
- * rfkill_find_type - Helper for finding rfkill type by name
+ * rfसमाप्त_find_type - Helper क्रम finding rfसमाप्त type by name
  * @name: the name of the type
  *
- * Returns enum rfkill_type that corresponds to the name.
+ * Returns क्रमागत rfसमाप्त_type that corresponds to the name.
  */
-enum rfkill_type rfkill_find_type(const char *name);
+क्रमागत rfसमाप्त_type rfसमाप्त_find_type(स्थिर अक्षर *name);
 
-#else /* !RFKILL */
-static inline struct rfkill * __must_check
-rfkill_alloc(const char *name,
-	     struct device *parent,
-	     const enum rfkill_type type,
-	     const struct rfkill_ops *ops,
-	     void *ops_data)
-{
-	return ERR_PTR(-ENODEV);
-}
+#अन्यथा /* !RFKILL */
+अटल अंतरभूत काष्ठा rfसमाप्त * __must_check
+rfसमाप्त_alloc(स्थिर अक्षर *name,
+	     काष्ठा device *parent,
+	     स्थिर क्रमागत rfसमाप्त_type type,
+	     स्थिर काष्ठा rfसमाप्त_ops *ops,
+	     व्योम *ops_data)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static inline int __must_check rfkill_register(struct rfkill *rfkill)
-{
-	if (rfkill == ERR_PTR(-ENODEV))
-		return 0;
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक __must_check rfसमाप्त_रेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	अगर (rfसमाप्त == ERR_PTR(-ENODEV))
+		वापस 0;
+	वापस -EINVAL;
+पूर्ण
 
-static inline void rfkill_pause_polling(struct rfkill *rfkill)
-{
-}
+अटल अंतरभूत व्योम rfसमाप्त_छोड़ो_polling(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+पूर्ण
 
-static inline void rfkill_resume_polling(struct rfkill *rfkill)
-{
-}
+अटल अंतरभूत व्योम rfसमाप्त_resume_polling(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+पूर्ण
 
-static inline void rfkill_unregister(struct rfkill *rfkill)
-{
-}
+अटल अंतरभूत व्योम rfसमाप्त_unरेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+पूर्ण
 
-static inline void rfkill_destroy(struct rfkill *rfkill)
-{
-}
+अटल अंतरभूत व्योम rfसमाप्त_destroy(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+पूर्ण
 
-static inline bool rfkill_set_hw_state_reason(struct rfkill *rfkill,
+अटल अंतरभूत bool rfसमाप्त_set_hw_state_reason(काष्ठा rfसमाप्त *rfसमाप्त,
 					      bool blocked,
-					      unsigned long reason)
-{
-	return blocked;
-}
+					      अचिन्हित दीर्घ reason)
+अणु
+	वापस blocked;
+पूर्ण
 
-static inline bool rfkill_set_hw_state(struct rfkill *rfkill, bool blocked)
-{
-	return blocked;
-}
+अटल अंतरभूत bool rfसमाप्त_set_hw_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked)
+अणु
+	वापस blocked;
+पूर्ण
 
-static inline bool rfkill_set_sw_state(struct rfkill *rfkill, bool blocked)
-{
-	return blocked;
-}
+अटल अंतरभूत bool rfसमाप्त_set_sw_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked)
+अणु
+	वापस blocked;
+पूर्ण
 
-static inline void rfkill_init_sw_state(struct rfkill *rfkill, bool blocked)
-{
-}
+अटल अंतरभूत व्योम rfसमाप्त_init_sw_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked)
+अणु
+पूर्ण
 
-static inline void rfkill_set_states(struct rfkill *rfkill, bool sw, bool hw)
-{
-}
+अटल अंतरभूत व्योम rfसमाप्त_set_states(काष्ठा rfसमाप्त *rfसमाप्त, bool sw, bool hw)
+अणु
+पूर्ण
 
-static inline bool rfkill_blocked(struct rfkill *rfkill)
-{
-	return false;
-}
+अटल अंतरभूत bool rfसमाप्त_blocked(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	वापस false;
+पूर्ण
 
-static inline enum rfkill_type rfkill_find_type(const char *name)
-{
-	return RFKILL_TYPE_ALL;
-}
+अटल अंतरभूत क्रमागत rfसमाप्त_type rfसमाप्त_find_type(स्थिर अक्षर *name)
+अणु
+	वापस RFKILL_TYPE_ALL;
+पूर्ण
 
-#endif /* RFKILL || RFKILL_MODULE */
+#पूर्ण_अगर /* RFKILL || RFKILL_MODULE */
 
 
-#ifdef CONFIG_RFKILL_LEDS
+#अगर_घोषित CONFIG_RFKILL_LEDS
 /**
- * rfkill_get_led_trigger_name - Get the LED trigger name for the button's LED.
- * This function might return a NULL pointer if registering of the
- * LED trigger failed. Use this as "default_trigger" for the LED.
+ * rfसमाप्त_get_led_trigger_name - Get the LED trigger name क्रम the button's LED.
+ * This function might वापस a शून्य poपूर्णांकer अगर रेजिस्टरing of the
+ * LED trigger failed. Use this as "default_trigger" क्रम the LED.
  */
-const char *rfkill_get_led_trigger_name(struct rfkill *rfkill);
+स्थिर अक्षर *rfसमाप्त_get_led_trigger_name(काष्ठा rfसमाप्त *rfसमाप्त);
 
 /**
- * rfkill_set_led_trigger_name - Set the LED trigger name
- * @rfkill: rfkill struct
+ * rfसमाप्त_set_led_trigger_name - Set the LED trigger name
+ * @rfसमाप्त: rfसमाप्त काष्ठा
  * @name: LED trigger name
  *
  * This function sets the LED trigger name of the radio LED
- * trigger that rfkill creates. It is optional, but if called
- * must be called before rfkill_register() to be effective.
+ * trigger that rfसमाप्त creates. It is optional, but अगर called
+ * must be called beक्रमe rfसमाप्त_रेजिस्टर() to be effective.
  */
-void rfkill_set_led_trigger_name(struct rfkill *rfkill, const char *name);
-#else
-static inline const char *rfkill_get_led_trigger_name(struct rfkill *rfkill)
-{
-	return NULL;
-}
+व्योम rfसमाप्त_set_led_trigger_name(काष्ठा rfसमाप्त *rfसमाप्त, स्थिर अक्षर *name);
+#अन्यथा
+अटल अंतरभूत स्थिर अक्षर *rfसमाप्त_get_led_trigger_name(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void
-rfkill_set_led_trigger_name(struct rfkill *rfkill, const char *name)
-{
-}
-#endif
+अटल अंतरभूत व्योम
+rfसमाप्त_set_led_trigger_name(काष्ठा rfसमाप्त *rfसमाप्त, स्थिर अक्षर *name)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* RFKILL_H */
+#पूर्ण_अगर /* RFKILL_H */

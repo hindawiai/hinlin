@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /******************************************************************************
  *
  * Name: acenvex.h - Extra host and compiler configuration
@@ -7,42 +8,42 @@
  *
  *****************************************************************************/
 
-#ifndef __ACENVEX_H__
-#define __ACENVEX_H__
+#अगर_अघोषित __ACENVEX_H__
+#घोषणा __ACENVEX_H__
 
 /*! [Begin] no source code translation */
 
 /******************************************************************************
  *
- * Extra host configuration files. All ACPICA headers are included before
+ * Extra host configuration files. All ACPICA headers are included beक्रमe
  * including these files.
  *
  *****************************************************************************/
 
-#if defined(_LINUX) || defined(__linux__)
-#include <acpi/platform/aclinuxex.h>
+#अगर defined(_LINUX) || defined(__linux__)
+#समावेश <acpi/platक्रमm/aclinuxex.h>
 
-#elif defined(__DragonFly__)
-#include "acdragonflyex.h"
+#या_अगर defined(__DragonFly__)
+#समावेश "acdragonflyex.h"
 
 /*
- * EFI applications can be built with -nostdlib, in this case, it must be
+ * EFI applications can be built with -nostdlib, in this हाल, it must be
  * included after including all other host environmental definitions, in
  * order to override the definitions.
  */
-#elif defined(_AED_EFI) || defined(_GNU_EFI) || defined(_EDK2_EFI)
-#include "acefiex.h"
+#या_अगर defined(_AED_EFI) || defined(_GNU_EFI) || defined(_EDK2_EFI)
+#समावेश "acefiex.h"
 
-#endif
+#पूर्ण_अगर
 
-#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
-#include "acgccex.h"
+#अगर defined(__GNUC__) && !defined(__INTEL_COMPILER)
+#समावेश "acgccex.h"
 
-#elif defined(_MSC_VER)
-#include "acmsvcex.h"
+#या_अगर defined(_MSC_VER)
+#समावेश "acmsvcex.h"
 
-#endif
+#पूर्ण_अगर
 
 /*! [End] no source code translation !*/
 
-#endif				/* __ACENVEX_H__ */
+#पूर्ण_अगर				/* __ACENVEX_H__ */

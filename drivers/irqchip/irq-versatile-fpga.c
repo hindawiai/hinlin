@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  Support for Versatile FPGA-based IRQ controllers
+ *  Support क्रम Versatile FPGA-based IRQ controllers
  */
-#include <linux/bitops.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <linux/irqchip.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/irqchip/versatile-fpga.h>
-#include <linux/irqdomain.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/irqchip/versatile-fpga.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
-#include <asm/exception.h>
-#include <asm/mach/irq.h>
+#समावेश <यंत्र/exception.h>
+#समावेश <यंत्र/mach/irq.h>
 
-#define IRQ_STATUS		0x00
-#define IRQ_RAW_STATUS		0x04
-#define IRQ_ENABLE_SET		0x08
-#define IRQ_ENABLE_CLEAR	0x0c
-#define INT_SOFT_SET		0x10
-#define INT_SOFT_CLEAR		0x14
-#define FIQ_STATUS		0x20
-#define FIQ_RAW_STATUS		0x24
-#define FIQ_ENABLE		0x28
-#define FIQ_ENABLE_SET		0x28
-#define FIQ_ENABLE_CLEAR	0x2C
+#घोषणा IRQ_STATUS		0x00
+#घोषणा IRQ_RAW_STATUS		0x04
+#घोषणा IRQ_ENABLE_SET		0x08
+#घोषणा IRQ_ENABLE_CLEAR	0x0c
+#घोषणा INT_SOFT_SET		0x10
+#घोषणा INT_SOFT_CLEAR		0x14
+#घोषणा FIQ_STATUS		0x20
+#घोषणा FIQ_RAW_STATUS		0x24
+#घोषणा FIQ_ENABLE		0x28
+#घोषणा FIQ_ENABLE_SET		0x28
+#घोषणा FIQ_ENABLE_CLEAR	0x2C
 
-#define PIC_ENABLES             0x20	/* set interrupt pass through bits */
+#घोषणा PIC_ENABLES             0x20	/* set पूर्णांकerrupt pass through bits */
 
 /**
- * struct fpga_irq_data - irq data container for the FPGA IRQ controller
- * @base: memory offset in virtual memory
- * @chip: chip container for this instance
- * @domain: IRQ domain for this instance
- * @valid: mask for valid IRQs on this controller
+ * काष्ठा fpga_irq_data - irq data container क्रम the FPGA IRQ controller
+ * @base: memory offset in भव memory
+ * @chip: chip container क्रम this instance
+ * @करोमुख्य: IRQ करोमुख्य क्रम this instance
+ * @valid: mask क्रम valid IRQs on this controller
  * @used_irqs: number of active IRQs on this controller
  */
-struct fpga_irq_data {
-	void __iomem *base;
-	struct irq_chip chip;
+काष्ठा fpga_irq_data अणु
+	व्योम __iomem *base;
+	काष्ठा irq_chip chip;
 	u32 valid;
-	struct irq_domain *domain;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
 	u8 used_irqs;
-};
+पूर्ण;
 
-/* we cannot allocate memory when the controllers are initially registered */
-static struct fpga_irq_data fpga_irq_devices[CONFIG_VERSATILE_FPGA_IRQ_NR];
-static int fpga_irq_id;
+/* we cannot allocate memory when the controllers are initially रेजिस्टरed */
+अटल काष्ठा fpga_irq_data fpga_irq_devices[CONFIG_VERSATILE_FPGA_IRQ_NR];
+अटल पूर्णांक fpga_irq_id;
 
-static void fpga_irq_mask(struct irq_data *d)
-{
-	struct fpga_irq_data *f = irq_data_get_irq_chip_data(d);
+अटल व्योम fpga_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा fpga_irq_data *f = irq_data_get_irq_chip_data(d);
 	u32 mask = 1 << d->hwirq;
 
-	writel(mask, f->base + IRQ_ENABLE_CLEAR);
-}
+	ग_लिखोl(mask, f->base + IRQ_ENABLE_CLEAR);
+पूर्ण
 
-static void fpga_irq_unmask(struct irq_data *d)
-{
-	struct fpga_irq_data *f = irq_data_get_irq_chip_data(d);
+अटल व्योम fpga_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा fpga_irq_data *f = irq_data_get_irq_chip_data(d);
 	u32 mask = 1 << d->hwirq;
 
-	writel(mask, f->base + IRQ_ENABLE_SET);
-}
+	ग_लिखोl(mask, f->base + IRQ_ENABLE_SET);
+पूर्ण
 
-static void fpga_irq_handle(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct fpga_irq_data *f = irq_desc_get_handler_data(desc);
+अटल व्योम fpga_irq_handle(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा fpga_irq_data *f = irq_desc_get_handler_data(desc);
 	u32 status;
 
 	chained_irq_enter(chip, desc);
 
-	status = readl(f->base + IRQ_STATUS);
-	if (status == 0) {
-		do_bad_IRQ(desc);
-		goto out;
-	}
+	status = पढ़ोl(f->base + IRQ_STATUS);
+	अगर (status == 0) अणु
+		करो_bad_IRQ(desc);
+		जाओ out;
+	पूर्ण
 
-	do {
-		unsigned int irq = ffs(status) - 1;
+	करो अणु
+		अचिन्हित पूर्णांक irq = ffs(status) - 1;
 
 		status &= ~(1 << irq);
-		generic_handle_irq(irq_find_mapping(f->domain, irq));
-	} while (status);
+		generic_handle_irq(irq_find_mapping(f->करोमुख्य, irq));
+	पूर्ण जबतक (status);
 
 out:
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
 /*
- * Handle each interrupt in a single FPGA IRQ controller.  Returns non-zero
- * if we've handled at least one interrupt.  This does a single read of the
- * status register and handles all interrupts in order from LSB first.
+ * Handle each पूर्णांकerrupt in a single FPGA IRQ controller.  Returns non-zero
+ * अगर we've handled at least one पूर्णांकerrupt.  This करोes a single पढ़ो of the
+ * status रेजिस्टर and handles all पूर्णांकerrupts in order from LSB first.
  */
-static int handle_one_fpga(struct fpga_irq_data *f, struct pt_regs *regs)
-{
-	int handled = 0;
-	int irq;
+अटल पूर्णांक handle_one_fpga(काष्ठा fpga_irq_data *f, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक handled = 0;
+	पूर्णांक irq;
 	u32 status;
 
-	while ((status  = readl(f->base + IRQ_STATUS))) {
+	जबतक ((status  = पढ़ोl(f->base + IRQ_STATUS))) अणु
 		irq = ffs(status) - 1;
-		handle_domain_irq(f->domain, irq, regs);
+		handle_करोमुख्य_irq(f->करोमुख्य, irq, regs);
 		handled = 1;
-	}
+	पूर्ण
 
-	return handled;
-}
+	वापस handled;
+पूर्ण
 
 /*
- * Keep iterating over all registered FPGA IRQ controllers until there are
- * no pending interrupts.
+ * Keep iterating over all रेजिस्टरed FPGA IRQ controllers until there are
+ * no pending पूर्णांकerrupts.
  */
-asmlinkage void __exception_irq_entry fpga_handle_irq(struct pt_regs *regs)
-{
-	int i, handled;
+यंत्रlinkage व्योम __exception_irq_entry fpga_handle_irq(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक i, handled;
 
-	do {
-		for (i = 0, handled = 0; i < fpga_irq_id; ++i)
+	करो अणु
+		क्रम (i = 0, handled = 0; i < fpga_irq_id; ++i)
 			handled |= handle_one_fpga(&fpga_irq_devices[i], regs);
-	} while (handled);
-}
+	पूर्ण जबतक (handled);
+पूर्ण
 
-static int fpga_irqdomain_map(struct irq_domain *d, unsigned int irq,
+अटल पूर्णांक fpga_irqकरोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
 		irq_hw_number_t hwirq)
-{
-	struct fpga_irq_data *f = d->host_data;
+अणु
+	काष्ठा fpga_irq_data *f = d->host_data;
 
-	/* Skip invalid IRQs, only register handlers for the real ones */
-	if (!(f->valid & BIT(hwirq)))
-		return -EPERM;
+	/* Skip invalid IRQs, only रेजिस्टर handlers क्रम the real ones */
+	अगर (!(f->valid & BIT(hwirq)))
+		वापस -EPERM;
 	irq_set_chip_data(irq, f);
 	irq_set_chip_and_handler(irq, &f->chip,
 				handle_level_irq);
 	irq_set_probe(irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops fpga_irqdomain_ops = {
-	.map = fpga_irqdomain_map,
-	.xlate = irq_domain_xlate_onetwocell,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops fpga_irqकरोमुख्य_ops = अणु
+	.map = fpga_irqकरोमुख्य_map,
+	.xlate = irq_करोमुख्य_xlate_onetwocell,
+पूर्ण;
 
-void __init fpga_irq_init(void __iomem *base, const char *name, int irq_start,
-			  int parent_irq, u32 valid, struct device_node *node)
-{
-	struct fpga_irq_data *f;
-	int i;
+व्योम __init fpga_irq_init(व्योम __iomem *base, स्थिर अक्षर *name, पूर्णांक irq_start,
+			  पूर्णांक parent_irq, u32 valid, काष्ठा device_node *node)
+अणु
+	काष्ठा fpga_irq_data *f;
+	पूर्णांक i;
 
-	if (fpga_irq_id >= ARRAY_SIZE(fpga_irq_devices)) {
+	अगर (fpga_irq_id >= ARRAY_SIZE(fpga_irq_devices)) अणु
 		pr_err("%s: too few FPGA IRQ controllers, increase CONFIG_VERSATILE_FPGA_IRQ_NR\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 	f = &fpga_irq_devices[fpga_irq_id];
 	f->base = base;
 	f->chip.name = name;
@@ -164,77 +165,77 @@ void __init fpga_irq_init(void __iomem *base, const char *name, int irq_start,
 	f->chip.irq_unmask = fpga_irq_unmask;
 	f->valid = valid;
 
-	if (parent_irq != -1) {
+	अगर (parent_irq != -1) अणु
 		irq_set_chained_handler_and_data(parent_irq, fpga_irq_handle,
 						 f);
-	}
+	पूर्ण
 
 	/* This will also allocate irq descriptors */
-	f->domain = irq_domain_add_simple(node, fls(valid), irq_start,
-					  &fpga_irqdomain_ops, f);
+	f->करोमुख्य = irq_करोमुख्य_add_simple(node, fls(valid), irq_start,
+					  &fpga_irqकरोमुख्य_ops, f);
 
-	/* This will allocate all valid descriptors in the linear case */
-	for (i = 0; i < fls(valid); i++)
-		if (valid & BIT(i)) {
-			if (!irq_start)
-				irq_create_mapping(f->domain, i);
+	/* This will allocate all valid descriptors in the linear हाल */
+	क्रम (i = 0; i < fls(valid); i++)
+		अगर (valid & BIT(i)) अणु
+			अगर (!irq_start)
+				irq_create_mapping(f->करोमुख्य, i);
 			f->used_irqs++;
-		}
+		पूर्ण
 
 	pr_info("FPGA IRQ chip %d \"%s\" @ %p, %u irqs",
 		fpga_irq_id, name, base, f->used_irqs);
-	if (parent_irq != -1)
+	अगर (parent_irq != -1)
 		pr_cont(", parent IRQ: %d\n", parent_irq);
-	else
+	अन्यथा
 		pr_cont("\n");
 
 	fpga_irq_id++;
-}
+पूर्ण
 
-#ifdef CONFIG_OF
-int __init fpga_irq_of_init(struct device_node *node,
-			    struct device_node *parent)
-{
-	void __iomem *base;
+#अगर_घोषित CONFIG_OF
+पूर्णांक __init fpga_irq_of_init(काष्ठा device_node *node,
+			    काष्ठा device_node *parent)
+अणु
+	व्योम __iomem *base;
 	u32 clear_mask;
 	u32 valid_mask;
-	int parent_irq;
+	पूर्णांक parent_irq;
 
-	if (WARN_ON(!node))
-		return -ENODEV;
+	अगर (WARN_ON(!node))
+		वापस -ENODEV;
 
 	base = of_iomap(node, 0);
 	WARN(!base, "unable to map fpga irq registers\n");
 
-	if (of_property_read_u32(node, "clear-mask", &clear_mask))
+	अगर (of_property_पढ़ो_u32(node, "clear-mask", &clear_mask))
 		clear_mask = 0;
 
-	if (of_property_read_u32(node, "valid-mask", &valid_mask))
+	अगर (of_property_पढ़ो_u32(node, "valid-mask", &valid_mask))
 		valid_mask = 0;
 
-	writel(clear_mask, base + IRQ_ENABLE_CLEAR);
-	writel(clear_mask, base + FIQ_ENABLE_CLEAR);
+	ग_लिखोl(clear_mask, base + IRQ_ENABLE_CLEAR);
+	ग_लिखोl(clear_mask, base + FIQ_ENABLE_CLEAR);
 
 	/* Some chips are cascaded from a parent IRQ */
 	parent_irq = irq_of_parse_and_map(node, 0);
-	if (!parent_irq) {
+	अगर (!parent_irq) अणु
 		set_handle_irq(fpga_handle_irq);
 		parent_irq = -1;
-	}
+	पूर्ण
 
 	fpga_irq_init(base, node->name, 0, parent_irq, valid_mask, node);
 
 	/*
-	 * On Versatile AB/PB, some secondary interrupts have a direct
-	 * pass-thru to the primary controller for IRQs 20 and 22-31 which need
+	 * On Versatile AB/PB, some secondary पूर्णांकerrupts have a direct
+	 * pass-thru to the primary controller क्रम IRQs 20 and 22-31 which need
 	 * to be enabled. See section 3.10 of the Versatile AB user guide.
 	 */
-	if (of_device_is_compatible(node, "arm,versatile-sic"))
-		writel(0xffd00000, base + PIC_ENABLES);
+	अगर (of_device_is_compatible(node, "arm,versatile-sic"))
+		ग_लिखोl(0xffd00000, base + PIC_ENABLES);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 IRQCHIP_DECLARE(arm_fpga, "arm,versatile-fpga-irq", fpga_irq_of_init);
 IRQCHIP_DECLARE(arm_fpga_sic, "arm,versatile-sic", fpga_irq_of_init);
 IRQCHIP_DECLARE(ox810se_rps, "oxsemi,ox810se-rps-irq", fpga_irq_of_init);
-#endif
+#पूर्ण_अगर

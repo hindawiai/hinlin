@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Sample fifo dma implementation
+ * Sample fअगरo dma implementation
  *
  * Copyright (C) 2010 Stefani Seibold <stefani@seibold.net>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kfifo.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kfअगरo.h>
 
 /*
- * This module shows how to handle fifo dma operations.
+ * This module shows how to handle fअगरo dma operations.
  */
 
-/* fifo size in elements (bytes) */
-#define FIFO_SIZE	32
+/* fअगरo size in elements (bytes) */
+#घोषणा FIFO_SIZE	32
 
-static struct kfifo fifo;
+अटल काष्ठा kfअगरo fअगरo;
 
-static int __init example_init(void)
-{
-	int			i;
-	unsigned int		ret;
-	unsigned int		nents;
-	struct scatterlist	sg[10];
+अटल पूर्णांक __init example_init(व्योम)
+अणु
+	पूर्णांक			i;
+	अचिन्हित पूर्णांक		ret;
+	अचिन्हित पूर्णांक		nents;
+	काष्ठा scatterlist	sg[10];
 
-	printk(KERN_INFO "DMA fifo test start\n");
+	prपूर्णांकk(KERN_INFO "DMA fifo test start\n");
 
-	if (kfifo_alloc(&fifo, FIFO_SIZE, GFP_KERNEL)) {
-		printk(KERN_WARNING "error kfifo_alloc\n");
-		return -ENOMEM;
-	}
+	अगर (kfअगरo_alloc(&fअगरo, FIFO_SIZE, GFP_KERNEL)) अणु
+		prपूर्णांकk(KERN_WARNING "error kfifo_alloc\n");
+		वापस -ENOMEM;
+	पूर्ण
 
-	printk(KERN_INFO "queue size: %u\n", kfifo_size(&fifo));
+	prपूर्णांकk(KERN_INFO "queue size: %u\n", kfअगरo_size(&fअगरo));
 
-	kfifo_in(&fifo, "test", 4);
+	kfअगरo_in(&fअगरo, "test", 4);
 
-	for (i = 0; i != 9; i++)
-		kfifo_put(&fifo, i);
+	क्रम (i = 0; i != 9; i++)
+		kfअगरo_put(&fअगरo, i);
 
 	/* kick away first byte */
-	kfifo_skip(&fifo);
+	kfअगरo_skip(&fअगरo);
 
-	printk(KERN_INFO "queue len: %u\n", kfifo_len(&fifo));
+	prपूर्णांकk(KERN_INFO "queue len: %u\n", kfअगरo_len(&fअगरo));
 
 	/*
-	 * Configure the kfifo buffer to receive data from DMA input.
+	 * Configure the kfअगरo buffer to receive data from DMA input.
 	 *
 	 *  .--------------------------------------.
 	 *  | 0 | 1 | 2 | ... | 12 | 13 | ... | 31 |
@@ -53,32 +54,32 @@ static int __init example_init(void)
 	 *   \_/ \________________/ \_____________/
 	 *    \          \                  \
 	 *     \          \_allocated data   \
-	 *      \_*free space*                \_*free space*
+	 *      \_*मुक्त space*                \_*मुक्त space*
 	 *
-	 * We need two different SG entries: one for the free space area at the
-	 * end of the kfifo buffer (19 bytes) and another for the first free
-	 * byte at the beginning, after the kfifo_skip().
+	 * We need two dअगरferent SG entries: one क्रम the मुक्त space area at the
+	 * end of the kfअगरo buffer (19 bytes) and another क्रम the first मुक्त
+	 * byte at the beginning, after the kfअगरo_skip().
 	 */
 	sg_init_table(sg, ARRAY_SIZE(sg));
-	nents = kfifo_dma_in_prepare(&fifo, sg, ARRAY_SIZE(sg), FIFO_SIZE);
-	printk(KERN_INFO "DMA sgl entries: %d\n", nents);
-	if (!nents) {
-		/* fifo is full and no sgl was created */
-		printk(KERN_WARNING "error kfifo_dma_in_prepare\n");
-		return -EIO;
-	}
+	nents = kfअगरo_dma_in_prepare(&fअगरo, sg, ARRAY_SIZE(sg), FIFO_SIZE);
+	prपूर्णांकk(KERN_INFO "DMA sgl entries: %d\n", nents);
+	अगर (!nents) अणु
+		/* fअगरo is full and no sgl was created */
+		prपूर्णांकk(KERN_WARNING "error kfifo_dma_in_prepare\n");
+		वापस -EIO;
+	पूर्ण
 
 	/* receive data */
-	printk(KERN_INFO "scatterlist for receive:\n");
-	for (i = 0; i < nents; i++) {
-		printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO "scatterlist for receive:\n");
+	क्रम (i = 0; i < nents; i++) अणु
+		prपूर्णांकk(KERN_INFO
 		"sg[%d] -> "
 		"page %p offset 0x%.8x length 0x%.8x\n",
 			i, sg_page(&sg[i]), sg[i].offset, sg[i].length);
 
-		if (sg_is_last(&sg[i]))
-			break;
-	}
+		अगर (sg_is_last(&sg[i]))
+			अवरोध;
+	पूर्ण
 
 	/* put here your code to setup and exectute the dma operation */
 	/* ... */
@@ -87,27 +88,27 @@ static int __init example_init(void)
 	ret = 0;
 
 	/* finish the dma operation and update the received data */
-	kfifo_dma_in_finish(&fifo, ret);
+	kfअगरo_dma_in_finish(&fअगरo, ret);
 
 	/* Prepare to transmit data, example: 8 bytes */
-	nents = kfifo_dma_out_prepare(&fifo, sg, ARRAY_SIZE(sg), 8);
-	printk(KERN_INFO "DMA sgl entries: %d\n", nents);
-	if (!nents) {
+	nents = kfअगरo_dma_out_prepare(&fअगरo, sg, ARRAY_SIZE(sg), 8);
+	prपूर्णांकk(KERN_INFO "DMA sgl entries: %d\n", nents);
+	अगर (!nents) अणु
 		/* no data was available and no sgl was created */
-		printk(KERN_WARNING "error kfifo_dma_out_prepare\n");
-		return -EIO;
-	}
+		prपूर्णांकk(KERN_WARNING "error kfifo_dma_out_prepare\n");
+		वापस -EIO;
+	पूर्ण
 
-	printk(KERN_INFO "scatterlist for transmit:\n");
-	for (i = 0; i < nents; i++) {
-		printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO "scatterlist for transmit:\n");
+	क्रम (i = 0; i < nents; i++) अणु
+		prपूर्णांकk(KERN_INFO
 		"sg[%d] -> "
 		"page %p offset 0x%.8x length 0x%.8x\n",
 			i, sg_page(&sg[i]), sg[i].offset, sg[i].length);
 
-		if (sg_is_last(&sg[i]))
-			break;
-	}
+		अगर (sg_is_last(&sg[i]))
+			अवरोध;
+	पूर्ण
 
 	/* put here your code to setup and exectute the dma operation */
 	/* ... */
@@ -116,26 +117,26 @@ static int __init example_init(void)
 	ret = 5;
 
 	/* finish the dma operation and update the transmitted data */
-	kfifo_dma_out_finish(&fifo, ret);
+	kfअगरo_dma_out_finish(&fअगरo, ret);
 
-	ret = kfifo_len(&fifo);
-	printk(KERN_INFO "queue len: %u\n", kfifo_len(&fifo));
+	ret = kfअगरo_len(&fअगरo);
+	prपूर्णांकk(KERN_INFO "queue len: %u\n", kfअगरo_len(&fअगरo));
 
-	if (ret != 7) {
-		printk(KERN_WARNING "size mismatch: test failed");
-		return -EIO;
-	}
-	printk(KERN_INFO "test passed\n");
+	अगर (ret != 7) अणु
+		prपूर्णांकk(KERN_WARNING "size mismatch: test failed");
+		वापस -EIO;
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "test passed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit example_exit(void)
-{
-	kfifo_free(&fifo);
-}
+अटल व्योम __निकास example_निकास(व्योम)
+अणु
+	kfअगरo_मुक्त(&fअगरo);
+पूर्ण
 
 module_init(example_init);
-module_exit(example_exit);
+module_निकास(example_निकास);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Stefani Seibold <stefani@seibold.net>");

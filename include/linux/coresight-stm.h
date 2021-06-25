@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_CORESIGHT_STM_H_
-#define __LINUX_CORESIGHT_STM_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_CORESIGHT_STM_H_
+#घोषणा __LINUX_CORESIGHT_STM_H_
 
-#include <uapi/linux/coresight-stm.h>
+#समावेश <uapi/linux/coresight-sपंचांग.h>
 
-#endif
+#पूर्ण_अगर

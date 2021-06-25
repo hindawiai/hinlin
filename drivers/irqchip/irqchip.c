@@ -1,60 +1,61 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2012 Thomas Petazzoni
  *
- * Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+ * Thomas Petazzoni <thomas.petazzoni@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/acpi.h>
-#include <linux/init.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/irqchip.h>
-#include <linux/platform_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/platक्रमm_device.h>
 
 /*
  * This special of_device_id is the sentinel at the end of the
- * of_device_id[] array of all irqchips. It is automatically placed at
+ * of_device_id[] array of all irqchips. It is स्वतःmatically placed at
  * the end of the array by the linker, thanks to being part of a
  * special section.
  */
-static const struct of_device_id
+अटल स्थिर काष्ठा of_device_id
 irqchip_of_match_end __used __section("__irqchip_of_table_end");
 
-extern struct of_device_id __irqchip_of_table[];
+बाह्य काष्ठा of_device_id __irqchip_of_table[];
 
-void __init irqchip_init(void)
-{
+व्योम __init irqchip_init(व्योम)
+अणु
 	of_irq_init(__irqchip_of_table);
 	acpi_probe_device_table(irqchip);
-}
+पूर्ण
 
-int platform_irqchip_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct device_node *par_np = of_irq_find_parent(np);
+पूर्णांक platक्रमm_irqchip_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा device_node *par_np = of_irq_find_parent(np);
 	of_irq_init_cb_t irq_init_cb = of_device_get_match_data(&pdev->dev);
 
-	if (!irq_init_cb)
-		return -EINVAL;
+	अगर (!irq_init_cb)
+		वापस -EINVAL;
 
-	if (par_np == np)
-		par_np = NULL;
+	अगर (par_np == np)
+		par_np = शून्य;
 
 	/*
-	 * If there's a parent interrupt controller and  none of the parent irq
-	 * domains have been registered, that means the parent interrupt
-	 * controller has not been initialized yet.  it's not time for this
-	 * interrupt controller to initialize. So, defer probe of this
-	 * interrupt controller. The actual initialization callback of this
-	 * interrupt controller can check for specific domains as necessary.
+	 * If there's a parent पूर्णांकerrupt controller and  none of the parent irq
+	 * करोमुख्यs have been रेजिस्टरed, that means the parent पूर्णांकerrupt
+	 * controller has not been initialized yet.  it's not समय क्रम this
+	 * पूर्णांकerrupt controller to initialize. So, defer probe of this
+	 * पूर्णांकerrupt controller. The actual initialization callback of this
+	 * पूर्णांकerrupt controller can check क्रम specअगरic करोमुख्यs as necessary.
 	 */
-	if (par_np && !irq_find_matching_host(par_np, DOMAIN_BUS_ANY))
-		return -EPROBE_DEFER;
+	अगर (par_np && !irq_find_matching_host(par_np, DOMAIN_BUS_ANY))
+		वापस -EPROBE_DEFER;
 
-	return irq_init_cb(np, par_np);
-}
-EXPORT_SYMBOL_GPL(platform_irqchip_probe);
+	वापस irq_init_cb(np, par_np);
+पूर्ण
+EXPORT_SYMBOL_GPL(platक्रमm_irqchip_probe);

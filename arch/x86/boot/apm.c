@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright (C) 1991, 1992 Linus Torvalds
@@ -11,36 +12,36 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * Get APM BIOS information
+ * Get APM BIOS inक्रमmation
  */
 
-#include "boot.h"
+#समावेश "boot.h"
 
-int query_apm_bios(void)
-{
-	struct biosregs ireg, oreg;
+पूर्णांक query_apm_bios(व्योम)
+अणु
+	काष्ठा biosregs ireg, oreg;
 
 	/* APM BIOS installation check */
 	initregs(&ireg);
 	ireg.ah = 0x53;
-	intcall(0x15, &ireg, &oreg);
+	पूर्णांकcall(0x15, &ireg, &oreg);
 
-	if (oreg.flags & X86_EFLAGS_CF)
-		return -1;		/* No APM BIOS */
+	अगर (oreg.flags & X86_EFLAGS_CF)
+		वापस -1;		/* No APM BIOS */
 
-	if (oreg.bx != 0x504d)		/* "PM" signature */
-		return -1;
+	अगर (oreg.bx != 0x504d)		/* "PM" signature */
+		वापस -1;
 
-	if (!(oreg.cx & 0x02))		/* 32 bits supported? */
-		return -1;
+	अगर (!(oreg.cx & 0x02))		/* 32 bits supported? */
+		वापस -1;
 
-	/* Disconnect first, just in case */
+	/* Disconnect first, just in हाल */
 	ireg.al = 0x04;
-	intcall(0x15, &ireg, NULL);
+	पूर्णांकcall(0x15, &ireg, शून्य);
 
 	/* 32-bit connect */
 	ireg.al = 0x03;
-	intcall(0x15, &ireg, &oreg);
+	पूर्णांकcall(0x15, &ireg, &oreg);
 
 	boot_params.apm_bios_info.cseg        = oreg.ax;
 	boot_params.apm_bios_info.offset      = oreg.ebx;
@@ -50,24 +51,24 @@ int query_apm_bios(void)
 	boot_params.apm_bios_info.cseg_16_len = oreg.hsi;
 	boot_params.apm_bios_info.dseg_len    = oreg.di;
 
-	if (oreg.flags & X86_EFLAGS_CF)
-		return -1;
+	अगर (oreg.flags & X86_EFLAGS_CF)
+		वापस -1;
 
-	/* Redo the installation check as the 32-bit connect;
-	   some BIOSes return different flags this way... */
+	/* Reकरो the installation check as the 32-bit connect;
+	   some BIOSes वापस dअगरferent flags this way... */
 
 	ireg.al = 0x00;
-	intcall(0x15, &ireg, &oreg);
+	पूर्णांकcall(0x15, &ireg, &oreg);
 
-	if ((oreg.eflags & X86_EFLAGS_CF) || oreg.bx != 0x504d) {
+	अगर ((oreg.eflags & X86_EFLAGS_CF) || oreg.bx != 0x504d) अणु
 		/* Failure with 32-bit connect, try to disconnect and ignore */
 		ireg.al = 0x04;
-		intcall(0x15, &ireg, NULL);
-		return -1;
-	}
+		पूर्णांकcall(0x15, &ireg, शून्य);
+		वापस -1;
+	पूर्ण
 
 	boot_params.apm_bios_info.version = oreg.ax;
 	boot_params.apm_bios_info.flags   = oreg.cx;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

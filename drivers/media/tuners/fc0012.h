@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Fitipower FC0012 tuner driver - include
+ * Fitiघातer FC0012 tuner driver - include
  *
  * Copyright (C) 2012 Hans-Frieder Vogt <hfvogt@gmx.net>
  */
 
-#ifndef _FC0012_H_
-#define _FC0012_H_
+#अगर_अघोषित _FC0012_H_
+#घोषणा _FC0012_H_
 
-#include <media/dvb_frontend.h>
-#include "fc001x-common.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "fc001x-common.h"
 
-struct fc0012_config {
+काष्ठा fc0012_config अणु
 	/*
 	 * I2C address
 	 */
 	u8 i2c_address;
 
 	/*
-	 * clock
+	 * घड़ी
 	 */
-	enum fc001x_xtal_freq xtal_freq;
+	क्रमागत fc001x_xtal_freq xtal_freq;
 
 	bool dual_master;
 
@@ -30,23 +31,23 @@ struct fc0012_config {
 	bool loop_through;
 
 	/*
-	 * clock output
+	 * घड़ी output
 	 */
-	bool clock_out;
-};
+	bool घड़ी_out;
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_MEDIA_TUNER_FC0012)
-extern struct dvb_frontend *fc0012_attach(struct dvb_frontend *fe,
-					struct i2c_adapter *i2c,
-					const struct fc0012_config *cfg);
-#else
-static inline struct dvb_frontend *fc0012_attach(struct dvb_frontend *fe,
-					struct i2c_adapter *i2c,
-					const struct fc0012_config *cfg)
-{
+#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_FC0012)
+बाह्य काष्ठा dvb_frontend *fc0012_attach(काष्ठा dvb_frontend *fe,
+					काष्ठा i2c_adapter *i2c,
+					स्थिर काष्ठा fc0012_config *cfg);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *fc0012_attach(काष्ठा dvb_frontend *fe,
+					काष्ठा i2c_adapter *i2c,
+					स्थिर काष्ठा fc0012_config *cfg)
+अणु
 	pr_warn("%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

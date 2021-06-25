@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for simulating a mouse on GPIO lines.
+ * Driver क्रम simulating a mouse on GPIO lines.
  *
- * Copyright (C) 2007 Atmel Corporation
+ * Copyright (C) 2007 Aपंचांगel Corporation
  * Copyright (C) 2017 Linus Walleij <linus.walleij@linaro.org>
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/input.h>
-#include <linux/gpio/consumer.h>
-#include <linux/property.h>
-#include <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/property.h>
+#समावेश <linux/of.h>
 
 /**
- * struct gpio_mouse
- * @scan_ms: the scan interval in milliseconds.
- * @up: GPIO line for up value.
- * @down: GPIO line for down value.
- * @left: GPIO line for left value.
- * @right: GPIO line for right value.
- * @bleft: GPIO line for left button.
- * @bmiddle: GPIO line for middle button.
- * @bright: GPIO line for right button.
+ * काष्ठा gpio_mouse
+ * @scan_ms: the scan पूर्णांकerval in milliseconds.
+ * @up: GPIO line क्रम up value.
+ * @करोwn: GPIO line क्रम करोwn value.
+ * @left: GPIO line क्रम left value.
+ * @right: GPIO line क्रम right value.
+ * @bleft: GPIO line क्रम left button.
+ * @bmiddle: GPIO line क्रम middle button.
+ * @bright: GPIO line क्रम right button.
  *
- * This struct must be added to the platform_device in the board code.
+ * This काष्ठा must be added to the platक्रमm_device in the board code.
  * It is used by the gpio_mouse driver to setup GPIO lines and to
  * calculate mouse movement.
  */
-struct gpio_mouse {
+काष्ठा gpio_mouse अणु
 	u32 scan_ms;
-	struct gpio_desc *up;
-	struct gpio_desc *down;
-	struct gpio_desc *left;
-	struct gpio_desc *right;
-	struct gpio_desc *bleft;
-	struct gpio_desc *bmiddle;
-	struct gpio_desc *bright;
-};
+	काष्ठा gpio_desc *up;
+	काष्ठा gpio_desc *करोwn;
+	काष्ठा gpio_desc *left;
+	काष्ठा gpio_desc *right;
+	काष्ठा gpio_desc *bleft;
+	काष्ठा gpio_desc *bmiddle;
+	काष्ठा gpio_desc *bright;
+पूर्ण;
 
 /*
- * Timer function which is run every scan_ms ms when the device is opened.
- * The dev input variable is set to the the input_dev pointer.
+ * Timer function which is run every scan_ms ms when the device is खोलोed.
+ * The dev input variable is set to the the input_dev poपूर्णांकer.
  */
-static void gpio_mouse_scan(struct input_dev *input)
-{
-	struct gpio_mouse *gpio = input_get_drvdata(input);
-	int x, y;
+अटल व्योम gpio_mouse_scan(काष्ठा input_dev *input)
+अणु
+	काष्ठा gpio_mouse *gpio = input_get_drvdata(input);
+	पूर्णांक x, y;
 
-	if (gpio->bleft)
+	अगर (gpio->bleft)
 		input_report_key(input, BTN_LEFT,
 				 gpiod_get_value(gpio->bleft));
-	if (gpio->bmiddle)
+	अगर (gpio->bmiddle)
 		input_report_key(input, BTN_MIDDLE,
 				 gpiod_get_value(gpio->bmiddle));
-	if (gpio->bright)
+	अगर (gpio->bright)
 		input_report_key(input, BTN_RIGHT,
 				 gpiod_get_value(gpio->bright));
 
 	x = gpiod_get_value(gpio->right) - gpiod_get_value(gpio->left);
-	y = gpiod_get_value(gpio->down) - gpiod_get_value(gpio->up);
+	y = gpiod_get_value(gpio->करोwn) - gpiod_get_value(gpio->up);
 
 	input_report_rel(input, REL_X, x);
 	input_report_rel(input, REL_Y, y);
 	input_sync(input);
-}
+पूर्ण
 
-static int gpio_mouse_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct gpio_mouse *gmouse;
-	struct input_dev *input;
-	int error;
+अटल पूर्णांक gpio_mouse_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा gpio_mouse *gmouse;
+	काष्ठा input_dev *input;
+	पूर्णांक error;
 
-	gmouse = devm_kzalloc(dev, sizeof(*gmouse), GFP_KERNEL);
-	if (!gmouse)
-		return -ENOMEM;
+	gmouse = devm_kzalloc(dev, माप(*gmouse), GFP_KERNEL);
+	अगर (!gmouse)
+		वापस -ENOMEM;
 
-	/* Assign some default scanning time */
-	error = device_property_read_u32(dev, "scan-interval-ms",
+	/* Assign some शेष scanning समय */
+	error = device_property_पढ़ो_u32(dev, "scan-interval-ms",
 					 &gmouse->scan_ms);
-	if (error || gmouse->scan_ms == 0) {
+	अगर (error || gmouse->scan_ms == 0) अणु
 		dev_warn(dev, "invalid scan time, set to 50 ms\n");
 		gmouse->scan_ms = 50;
-	}
+	पूर्ण
 
 	gmouse->up = devm_gpiod_get(dev, "up", GPIOD_IN);
-	if (IS_ERR(gmouse->up))
-		return PTR_ERR(gmouse->up);
-	gmouse->down = devm_gpiod_get(dev, "down", GPIOD_IN);
-	if (IS_ERR(gmouse->down))
-		return PTR_ERR(gmouse->down);
+	अगर (IS_ERR(gmouse->up))
+		वापस PTR_ERR(gmouse->up);
+	gmouse->करोwn = devm_gpiod_get(dev, "down", GPIOD_IN);
+	अगर (IS_ERR(gmouse->करोwn))
+		वापस PTR_ERR(gmouse->करोwn);
 	gmouse->left = devm_gpiod_get(dev, "left", GPIOD_IN);
-	if (IS_ERR(gmouse->left))
-		return PTR_ERR(gmouse->left);
+	अगर (IS_ERR(gmouse->left))
+		वापस PTR_ERR(gmouse->left);
 	gmouse->right = devm_gpiod_get(dev, "right", GPIOD_IN);
-	if (IS_ERR(gmouse->right))
-		return PTR_ERR(gmouse->right);
+	अगर (IS_ERR(gmouse->right))
+		वापस PTR_ERR(gmouse->right);
 
 	gmouse->bleft = devm_gpiod_get_optional(dev, "button-left", GPIOD_IN);
-	if (IS_ERR(gmouse->bleft))
-		return PTR_ERR(gmouse->bleft);
+	अगर (IS_ERR(gmouse->bleft))
+		वापस PTR_ERR(gmouse->bleft);
 	gmouse->bmiddle = devm_gpiod_get_optional(dev, "button-middle",
 						  GPIOD_IN);
-	if (IS_ERR(gmouse->bmiddle))
-		return PTR_ERR(gmouse->bmiddle);
+	अगर (IS_ERR(gmouse->bmiddle))
+		वापस PTR_ERR(gmouse->bmiddle);
 	gmouse->bright = devm_gpiod_get_optional(dev, "button-right",
 						 GPIOD_IN);
-	if (IS_ERR(gmouse->bright))
-		return PTR_ERR(gmouse->bright);
+	अगर (IS_ERR(gmouse->bright))
+		वापस PTR_ERR(gmouse->bright);
 
 	input = devm_input_allocate_device(dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input->name = pdev->name;
 	input->id.bustype = BUS_HOST;
@@ -121,24 +122,24 @@ static int gpio_mouse_probe(struct platform_device *pdev)
 
 	input_set_capability(input, EV_REL, REL_X);
 	input_set_capability(input, EV_REL, REL_Y);
-	if (gmouse->bleft)
+	अगर (gmouse->bleft)
 		input_set_capability(input, EV_KEY, BTN_LEFT);
-	if (gmouse->bmiddle)
+	अगर (gmouse->bmiddle)
 		input_set_capability(input, EV_KEY, BTN_MIDDLE);
-	if (gmouse->bright)
+	अगर (gmouse->bright)
 		input_set_capability(input, EV_KEY, BTN_RIGHT);
 
 	error = input_setup_polling(input, gpio_mouse_scan);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	input_set_poll_interval(input, gmouse->scan_ms);
+	input_set_poll_पूर्णांकerval(input, gmouse->scan_ms);
 
-	error = input_register_device(input);
-	if (error) {
+	error = input_रेजिस्टर_device(input);
+	अगर (error) अणु
 		dev_err(dev, "could not register input device\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	dev_dbg(dev, "%d ms scan time, buttons: %s%s%s\n",
 		gmouse->scan_ms,
@@ -146,23 +147,23 @@ static int gpio_mouse_probe(struct platform_device *pdev)
 		gmouse->bmiddle ? "" : "middle ",
 		gmouse->bright ? "" : "right");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gpio_mouse_of_match[] = {
-	{ .compatible = "gpio-mouse", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id gpio_mouse_of_match[] = अणु
+	अणु .compatible = "gpio-mouse", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gpio_mouse_of_match);
 
-static struct platform_driver gpio_mouse_device_driver = {
+अटल काष्ठा platक्रमm_driver gpio_mouse_device_driver = अणु
 	.probe		= gpio_mouse_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "gpio_mouse",
 		.of_match_table = gpio_mouse_of_match,
-	}
-};
-module_platform_driver(gpio_mouse_device_driver);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(gpio_mouse_device_driver);
 
 MODULE_AUTHOR("Hans-Christian Egtvedt <egtvedt@samfundet.no>");
 MODULE_DESCRIPTION("GPIO mouse driver");

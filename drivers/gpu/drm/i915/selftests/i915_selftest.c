@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,419 +22,419 @@
  * IN THE SOFTWARE.
  */
 
-#include <linux/random.h>
+#समावेश <linux/अक्रमom.h>
 
-#include "gt/intel_gt_pm.h"
-#include "i915_drv.h"
-#include "i915_selftest.h"
+#समावेश "gt/intel_gt_pm.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_selftest.h"
 
-#include "igt_flush_test.h"
+#समावेश "igt_flush_test.h"
 
-struct i915_selftest i915_selftest __read_mostly = {
-	.timeout_ms = 500,
-};
+काष्ठा i915_selftest i915_selftest __पढ़ो_mostly = अणु
+	.समयout_ms = 500,
+पूर्ण;
 
-int i915_mock_sanitycheck(void)
-{
+पूर्णांक i915_mock_sanitycheck(व्योम)
+अणु
 	pr_info(DRIVER_NAME ": %s() - ok!\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int i915_live_sanitycheck(struct drm_i915_private *i915)
-{
+पूर्णांक i915_live_sanitycheck(काष्ठा drm_i915_निजी *i915)
+अणु
 	pr_info("%s: %s() - ok!\n", i915->drm.driver->name, __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum {
-#define selftest(name, func) mock_##name,
-#include "i915_mock_selftests.h"
-#undef selftest
-};
+क्रमागत अणु
+#घोषणा selftest(name, func) mock_##name,
+#समावेश "i915_mock_selftests.h"
+#अघोषित selftest
+पूर्ण;
 
-enum {
-#define selftest(name, func) live_##name,
-#include "i915_live_selftests.h"
-#undef selftest
-};
+क्रमागत अणु
+#घोषणा selftest(name, func) live_##name,
+#समावेश "i915_live_selftests.h"
+#अघोषित selftest
+पूर्ण;
 
-enum {
-#define selftest(name, func) perf_##name,
-#include "i915_perf_selftests.h"
-#undef selftest
-};
+क्रमागत अणु
+#घोषणा selftest(name, func) perf_##name,
+#समावेश "i915_perf_selftests.h"
+#अघोषित selftest
+पूर्ण;
 
-struct selftest {
+काष्ठा selftest अणु
 	bool enabled;
-	const char *name;
-	union {
-		int (*mock)(void);
-		int (*live)(struct drm_i915_private *);
-	};
-};
+	स्थिर अक्षर *name;
+	जोड़ अणु
+		पूर्णांक (*mock)(व्योम);
+		पूर्णांक (*live)(काष्ठा drm_i915_निजी *);
+	पूर्ण;
+पूर्ण;
 
-#define selftest(n, f) [mock_##n] = { .name = #n, { .mock = f } },
-static struct selftest mock_selftests[] = {
-#include "i915_mock_selftests.h"
-};
-#undef selftest
+#घोषणा selftest(n, f) [mock_##n] = अणु .name = #n, अणु .mock = f पूर्ण पूर्ण,
+अटल काष्ठा selftest mock_selftests[] = अणु
+#समावेश "i915_mock_selftests.h"
+पूर्ण;
+#अघोषित selftest
 
-#define selftest(n, f) [live_##n] = { .name = #n, { .live = f } },
-static struct selftest live_selftests[] = {
-#include "i915_live_selftests.h"
-};
-#undef selftest
+#घोषणा selftest(n, f) [live_##n] = अणु .name = #n, अणु .live = f पूर्ण पूर्ण,
+अटल काष्ठा selftest live_selftests[] = अणु
+#समावेश "i915_live_selftests.h"
+पूर्ण;
+#अघोषित selftest
 
-#define selftest(n, f) [perf_##n] = { .name = #n, { .live = f } },
-static struct selftest perf_selftests[] = {
-#include "i915_perf_selftests.h"
-};
-#undef selftest
+#घोषणा selftest(n, f) [perf_##n] = अणु .name = #n, अणु .live = f पूर्ण पूर्ण,
+अटल काष्ठा selftest perf_selftests[] = अणु
+#समावेश "i915_perf_selftests.h"
+पूर्ण;
+#अघोषित selftest
 
-/* Embed the line number into the parameter name so that we can order tests */
-#define selftest(n, func) selftest_0(n, func, param(n))
-#define param(n) __PASTE(igt__, __PASTE(__LINE__, __mock_##n))
-#define selftest_0(n, func, id) \
+/* Embed the line number पूर्णांकo the parameter name so that we can order tests */
+#घोषणा selftest(n, func) selftest_0(n, func, param(n))
+#घोषणा param(n) __PASTE(igt__, __PASTE(__LINE__, __mock_##n))
+#घोषणा selftest_0(n, func, id) \
 module_param_named(id, mock_selftests[mock_##n].enabled, bool, 0400);
-#include "i915_mock_selftests.h"
-#undef selftest_0
-#undef param
+#समावेश "i915_mock_selftests.h"
+#अघोषित selftest_0
+#अघोषित param
 
-#define param(n) __PASTE(igt__, __PASTE(__LINE__, __live_##n))
-#define selftest_0(n, func, id) \
+#घोषणा param(n) __PASTE(igt__, __PASTE(__LINE__, __live_##n))
+#घोषणा selftest_0(n, func, id) \
 module_param_named(id, live_selftests[live_##n].enabled, bool, 0400);
-#include "i915_live_selftests.h"
-#undef selftest_0
-#undef param
+#समावेश "i915_live_selftests.h"
+#अघोषित selftest_0
+#अघोषित param
 
-#define param(n) __PASTE(igt__, __PASTE(__LINE__, __perf_##n))
-#define selftest_0(n, func, id) \
+#घोषणा param(n) __PASTE(igt__, __PASTE(__LINE__, __perf_##n))
+#घोषणा selftest_0(n, func, id) \
 module_param_named(id, perf_selftests[perf_##n].enabled, bool, 0400);
-#include "i915_perf_selftests.h"
-#undef selftest_0
-#undef param
-#undef selftest
+#समावेश "i915_perf_selftests.h"
+#अघोषित selftest_0
+#अघोषित param
+#अघोषित selftest
 
-static void set_default_test_all(struct selftest *st, unsigned int count)
-{
-	unsigned int i;
+अटल व्योम set_शेष_test_all(काष्ठा selftest *st, अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < count; i++)
-		if (st[i].enabled)
-			return;
+	क्रम (i = 0; i < count; i++)
+		अगर (st[i].enabled)
+			वापस;
 
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		st[i].enabled = true;
-}
+पूर्ण
 
-static int __run_selftests(const char *name,
-			   struct selftest *st,
-			   unsigned int count,
-			   void *data)
-{
-	int err = 0;
+अटल पूर्णांक __run_selftests(स्थिर अक्षर *name,
+			   काष्ठा selftest *st,
+			   अचिन्हित पूर्णांक count,
+			   व्योम *data)
+अणु
+	पूर्णांक err = 0;
 
-	while (!i915_selftest.random_seed)
-		i915_selftest.random_seed = get_random_int();
+	जबतक (!i915_selftest.अक्रमom_seed)
+		i915_selftest.अक्रमom_seed = get_अक्रमom_पूर्णांक();
 
-	i915_selftest.timeout_jiffies =
-		i915_selftest.timeout_ms ?
-		msecs_to_jiffies_timeout(i915_selftest.timeout_ms) :
+	i915_selftest.समयout_jअगरfies =
+		i915_selftest.समयout_ms ?
+		msecs_to_jअगरfies_समयout(i915_selftest.समयout_ms) :
 		MAX_SCHEDULE_TIMEOUT;
 
-	set_default_test_all(st, count);
+	set_शेष_test_all(st, count);
 
 	pr_info(DRIVER_NAME ": Performing %s selftests with st_random_seed=0x%x st_timeout=%u\n",
-		name, i915_selftest.random_seed, i915_selftest.timeout_ms);
+		name, i915_selftest.अक्रमom_seed, i915_selftest.समयout_ms);
 
 	/* Tests are listed in order in i915_*_selftests.h */
-	for (; count--; st++) {
-		if (!st->enabled)
-			continue;
+	क्रम (; count--; st++) अणु
+		अगर (!st->enabled)
+			जारी;
 
 		cond_resched();
-		if (signal_pending(current))
-			return -EINTR;
+		अगर (संकेत_pending(current))
+			वापस -EINTR;
 
 		pr_info(DRIVER_NAME ": Running %s\n", st->name);
-		if (data)
+		अगर (data)
 			err = st->live(data);
-		else
+		अन्यथा
 			err = st->mock();
-		if (err == -EINTR && !signal_pending(current))
+		अगर (err == -EINTR && !संकेत_pending(current))
 			err = 0;
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	if (WARN(err > 0 || err == -ENOTTY,
+	अगर (WARN(err > 0 || err == -ENOTTY,
 		 "%s returned %d, conflicting with selftest's magic values!\n",
 		 st->name, err))
 		err = -1;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#define run_selftests(x, data) \
+#घोषणा run_selftests(x, data) \
 	__run_selftests(#x, x##_selftests, ARRAY_SIZE(x##_selftests), data)
 
-int i915_mock_selftests(void)
-{
-	int err;
+पूर्णांक i915_mock_selftests(व्योम)
+अणु
+	पूर्णांक err;
 
-	if (!i915_selftest.mock)
-		return 0;
+	अगर (!i915_selftest.mock)
+		वापस 0;
 
-	err = run_selftests(mock, NULL);
-	if (err) {
+	err = run_selftests(mock, शून्य);
+	अगर (err) अणु
 		i915_selftest.mock = err;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (i915_selftest.mock < 0) {
+	अगर (i915_selftest.mock < 0) अणु
 		i915_selftest.mock = -ENOTTY;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int i915_live_selftests(struct pci_dev *pdev)
-{
-	int err;
+पूर्णांक i915_live_selftests(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक err;
 
-	if (!i915_selftest.live)
-		return 0;
+	अगर (!i915_selftest.live)
+		वापस 0;
 
 	err = run_selftests(live, pdev_to_i915(pdev));
-	if (err) {
+	अगर (err) अणु
 		i915_selftest.live = err;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (i915_selftest.live < 0) {
+	अगर (i915_selftest.live < 0) अणु
 		i915_selftest.live = -ENOTTY;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int i915_perf_selftests(struct pci_dev *pdev)
-{
-	int err;
+पूर्णांक i915_perf_selftests(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक err;
 
-	if (!i915_selftest.perf)
-		return 0;
+	अगर (!i915_selftest.perf)
+		वापस 0;
 
 	err = run_selftests(perf, pdev_to_i915(pdev));
-	if (err) {
+	अगर (err) अणु
 		i915_selftest.perf = err;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (i915_selftest.perf < 0) {
+	अगर (i915_selftest.perf < 0) अणु
 		i915_selftest.perf = -ENOTTY;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool apply_subtest_filter(const char *caller, const char *name)
-{
-	char *filter, *sep, *tok;
+अटल bool apply_subtest_filter(स्थिर अक्षर *caller, स्थिर अक्षर *name)
+अणु
+	अक्षर *filter, *sep, *tok;
 	bool result = true;
 
 	filter = kstrdup(i915_selftest.filter, GFP_KERNEL);
-	for (sep = filter; (tok = strsep(&sep, ","));) {
+	क्रम (sep = filter; (tok = strsep(&sep, ","));) अणु
 		bool allow = true;
-		char *sl;
+		अक्षर *sl;
 
-		if (*tok == '!') {
+		अगर (*tok == '!') अणु
 			allow = false;
 			tok++;
-		}
+		पूर्ण
 
-		if (*tok == '\0')
-			continue;
+		अगर (*tok == '\0')
+			जारी;
 
-		sl = strchr(tok, '/');
-		if (sl) {
+		sl = म_अक्षर(tok, '/');
+		अगर (sl) अणु
 			*sl++ = '\0';
-			if (strcmp(tok, caller)) {
-				if (allow)
+			अगर (म_भेद(tok, caller)) अणु
+				अगर (allow)
 					result = false;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			tok = sl;
-		}
+		पूर्ण
 
-		if (strcmp(tok, name)) {
-			if (allow)
+		अगर (म_भेद(tok, name)) अणु
+			अगर (allow)
 				result = false;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		result = allow;
-		break;
-	}
-	kfree(filter);
+		अवरोध;
+	पूर्ण
+	kमुक्त(filter);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-int __i915_nop_setup(void *data)
-{
-	return 0;
-}
+पूर्णांक __i915_nop_setup(व्योम *data)
+अणु
+	वापस 0;
+पूर्ण
 
-int __i915_nop_teardown(int err, void *data)
-{
-	return err;
-}
+पूर्णांक __i915_nop_tearकरोwn(पूर्णांक err, व्योम *data)
+अणु
+	वापस err;
+पूर्ण
 
-int __i915_live_setup(void *data)
-{
-	struct drm_i915_private *i915 = data;
+पूर्णांक __i915_live_setup(व्योम *data)
+अणु
+	काष्ठा drm_i915_निजी *i915 = data;
 
-	/* The selftests expect an idle system */
-	if (intel_gt_pm_wait_for_idle(&i915->gt))
-		return -EIO;
+	/* The selftests expect an idle प्रणाली */
+	अगर (पूर्णांकel_gt_pm_रुको_क्रम_idle(&i915->gt))
+		वापस -EIO;
 
-	return intel_gt_terminally_wedged(&i915->gt);
-}
+	वापस पूर्णांकel_gt_terminally_wedged(&i915->gt);
+पूर्ण
 
-int __i915_live_teardown(int err, void *data)
-{
-	struct drm_i915_private *i915 = data;
+पूर्णांक __i915_live_tearकरोwn(पूर्णांक err, व्योम *data)
+अणु
+	काष्ठा drm_i915_निजी *i915 = data;
 
-	if (igt_flush_test(i915))
+	अगर (igt_flush_test(i915))
 		err = -EIO;
 
-	i915_gem_drain_freed_objects(i915);
+	i915_gem_drain_मुक्तd_objects(i915);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int __intel_gt_live_setup(void *data)
-{
-	struct intel_gt *gt = data;
+पूर्णांक __पूर्णांकel_gt_live_setup(व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = data;
 
-	/* The selftests expect an idle system */
-	if (intel_gt_pm_wait_for_idle(gt))
-		return -EIO;
+	/* The selftests expect an idle प्रणाली */
+	अगर (पूर्णांकel_gt_pm_रुको_क्रम_idle(gt))
+		वापस -EIO;
 
-	return intel_gt_terminally_wedged(gt);
-}
+	वापस पूर्णांकel_gt_terminally_wedged(gt);
+पूर्ण
 
-int __intel_gt_live_teardown(int err, void *data)
-{
-	struct intel_gt *gt = data;
+पूर्णांक __पूर्णांकel_gt_live_tearकरोwn(पूर्णांक err, व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = data;
 
-	if (igt_flush_test(gt->i915))
+	अगर (igt_flush_test(gt->i915))
 		err = -EIO;
 
-	i915_gem_drain_freed_objects(gt->i915);
+	i915_gem_drain_मुक्तd_objects(gt->i915);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int __i915_subtests(const char *caller,
-		    int (*setup)(void *data),
-		    int (*teardown)(int err, void *data),
-		    const struct i915_subtest *st,
-		    unsigned int count,
-		    void *data)
-{
-	int err;
+पूर्णांक __i915_subtests(स्थिर अक्षर *caller,
+		    पूर्णांक (*setup)(व्योम *data),
+		    पूर्णांक (*tearकरोwn)(पूर्णांक err, व्योम *data),
+		    स्थिर काष्ठा i915_subtest *st,
+		    अचिन्हित पूर्णांक count,
+		    व्योम *data)
+अणु
+	पूर्णांक err;
 
-	for (; count--; st++) {
+	क्रम (; count--; st++) अणु
 		cond_resched();
-		if (signal_pending(current))
-			return -EINTR;
+		अगर (संकेत_pending(current))
+			वापस -EINTR;
 
-		if (!apply_subtest_filter(caller, st->name))
-			continue;
+		अगर (!apply_subtest_filter(caller, st->name))
+			जारी;
 
 		err = setup(data);
-		if (err) {
+		अगर (err) अणु
 			pr_err(DRIVER_NAME "/%s: setup failed for %s\n",
 			       caller, st->name);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		pr_info(DRIVER_NAME ": Running %s/%s\n", caller, st->name);
 		GEM_TRACE("Running %s/%s\n", caller, st->name);
 
-		err = teardown(st->func(data), data);
-		if (err && err != -EINTR) {
+		err = tearकरोwn(st->func(data), data);
+		अगर (err && err != -EINTR) अणु
 			pr_err(DRIVER_NAME "/%s: %s failed with error %d\n",
 			       caller, st->name, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool __igt_timeout(unsigned long timeout, const char *fmt, ...)
-{
-	va_list va;
+bool __igt_समयout(अचिन्हित दीर्घ समयout, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
 
-	if (!signal_pending(current)) {
+	अगर (!संकेत_pending(current)) अणु
 		cond_resched();
-		if (time_before(jiffies, timeout))
-			return false;
-	}
+		अगर (समय_beक्रमe(jअगरfies, समयout))
+			वापस false;
+	पूर्ण
 
-	if (fmt) {
-		va_start(va, fmt);
-		vprintk(fmt, va);
-		va_end(va);
-	}
+	अगर (fmt) अणु
+		बहु_शुरू(va, fmt);
+		vprपूर्णांकk(fmt, va);
+		बहु_पूर्ण(va);
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void igt_hexdump(const void *buf, size_t len)
-{
-	const size_t rowsize = 8 * sizeof(u32);
-	const void *prev = NULL;
+व्योम igt_hexdump(स्थिर व्योम *buf, माप_प्रकार len)
+अणु
+	स्थिर माप_प्रकार rowsize = 8 * माप(u32);
+	स्थिर व्योम *prev = शून्य;
 	bool skip = false;
-	size_t pos;
+	माप_प्रकार pos;
 
-	for (pos = 0; pos < len; pos += rowsize) {
-		char line[128];
+	क्रम (pos = 0; pos < len; pos += rowsize) अणु
+		अक्षर line[128];
 
-		if (prev && !memcmp(prev, buf + pos, rowsize)) {
-			if (!skip) {
+		अगर (prev && !स_भेद(prev, buf + pos, rowsize)) अणु
+			अगर (!skip) अणु
 				pr_info("*\n");
 				skip = true;
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
 		WARN_ON_ONCE(hex_dump_to_buffer(buf + pos, len - pos,
-						rowsize, sizeof(u32),
-						line, sizeof(line),
-						false) >= sizeof(line));
+						rowsize, माप(u32),
+						line, माप(line),
+						false) >= माप(line));
 		pr_info("[%04zx] %s\n", pos, line);
 
 		prev = buf + pos;
 		skip = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-module_param_named(st_random_seed, i915_selftest.random_seed, uint, 0400);
-module_param_named(st_timeout, i915_selftest.timeout_ms, uint, 0400);
-module_param_named(st_filter, i915_selftest.filter, charp, 0400);
+module_param_named(st_अक्रमom_seed, i915_selftest.अक्रमom_seed, uपूर्णांक, 0400);
+module_param_named(st_समयout, i915_selftest.समयout_ms, uपूर्णांक, 0400);
+module_param_named(st_filter, i915_selftest.filter, अक्षरp, 0400);
 
-module_param_named_unsafe(mock_selftests, i915_selftest.mock, int, 0400);
+module_param_named_unsafe(mock_selftests, i915_selftest.mock, पूर्णांक, 0400);
 MODULE_PARM_DESC(mock_selftests, "Run selftests before loading, using mock hardware (0:disabled [default], 1:run tests then load driver, -1:run tests then exit module)");
 
-module_param_named_unsafe(live_selftests, i915_selftest.live, int, 0400);
+module_param_named_unsafe(live_selftests, i915_selftest.live, पूर्णांक, 0400);
 MODULE_PARM_DESC(live_selftests, "Run selftests after driver initialisation on the live system (0:disabled [default], 1:run tests then continue, -1:run tests then exit module)");
 
-module_param_named_unsafe(perf_selftests, i915_selftest.perf, int, 0400);
+module_param_named_unsafe(perf_selftests, i915_selftest.perf, पूर्णांक, 0400);
 MODULE_PARM_DESC(perf_selftests, "Run performance orientated selftests after driver initialisation on the live system (0:disabled [default], 1:run tests then continue, -1:run tests then exit module)");

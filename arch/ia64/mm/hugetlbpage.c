@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * IA-64 Huge TLB Page Support for Kernel.
+ * IA-64 Huge TLB Page Support क्रम Kernel.
  *
- * Copyright (C) 2002-2004 Rohit Seth <rohit.seth@intel.com>
- * Copyright (C) 2003-2004 Ken Chen <kenneth.w.chen@intel.com>
+ * Copyright (C) 2002-2004 Rohit Seth <rohit.seth@पूर्णांकel.com>
+ * Copyright (C) 2003-2004 Ken Chen <kenneth.w.chen@पूर्णांकel.com>
  *
  * Sep, 2003: add numa support
  * Feb, 2004: dynamic hugetlb page size via boot parameter
  */
 
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/hugetlb.h>
-#include <linux/pagemap.h>
-#include <linux/module.h>
-#include <linux/sysctl.h>
-#include <linux/log2.h>
-#include <asm/mman.h>
-#include <asm/tlb.h>
-#include <asm/tlbflush.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/log2.h>
+#समावेश <यंत्र/mman.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/tlbflush.h>
 
-unsigned int hpage_shift = HPAGE_SHIFT_DEFAULT;
-EXPORT_SYMBOL(hpage_shift);
+अचिन्हित पूर्णांक hpage_shअगरt = HPAGE_SHIFT_DEFAULT;
+EXPORT_SYMBOL(hpage_shअगरt);
 
 pte_t *
-huge_pte_alloc(struct mm_struct *mm, struct vm_area_struct *vma,
-	       unsigned long addr, unsigned long sz)
-{
-	unsigned long taddr = htlbpage_to_page(addr);
+huge_pte_alloc(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
+	       अचिन्हित दीर्घ addr, अचिन्हित दीर्घ sz)
+अणु
+	अचिन्हित दीर्घ taddr = htlbpage_to_page(addr);
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
-	pte_t *pte = NULL;
+	pte_t *pte = शून्य;
 
 	pgd = pgd_offset(mm, taddr);
 	p4d = p4d_offset(pgd, taddr);
 	pud = pud_alloc(mm, p4d, taddr);
-	if (pud) {
+	अगर (pud) अणु
 		pmd = pmd_alloc(mm, pud, taddr);
-		if (pmd)
+		अगर (pmd)
 			pte = pte_alloc_map(mm, pmd, taddr);
-	}
-	return pte;
-}
+	पूर्ण
+	वापस pte;
+पूर्ण
 
 pte_t *
-huge_pte_offset (struct mm_struct *mm, unsigned long addr, unsigned long sz)
-{
-	unsigned long taddr = htlbpage_to_page(addr);
+huge_pte_offset (काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ sz)
+अणु
+	अचिन्हित दीर्घ taddr = htlbpage_to_page(addr);
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
-	pte_t *pte = NULL;
+	pte_t *pte = शून्य;
 
 	pgd = pgd_offset(mm, taddr);
-	if (pgd_present(*pgd)) {
+	अगर (pgd_present(*pgd)) अणु
 		p4d = p4d_offset(pgd, addr);
-		if (p4d_present(*p4d)) {
+		अगर (p4d_present(*p4d)) अणु
 			pud = pud_offset(p4d, taddr);
-			if (pud_present(*pud)) {
+			अगर (pud_present(*pud)) अणु
 				pmd = pmd_offset(pud, taddr);
-				if (pmd_present(*pmd))
+				अगर (pmd_present(*pmd))
 					pte = pte_offset_map(pmd, taddr);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-#define mk_pte_huge(entry) { pte_val(entry) |= _PAGE_P; }
+#घोषणा mk_pte_huge(entry) अणु pte_val(entry) |= _PAGE_P; पूर्ण
 
 /*
- * Don't actually need to do any preparation, but need to make sure
+ * Don't actually need to करो any preparation, but need to make sure
  * the address is in the right region.
  */
-int prepare_hugepage_range(struct file *file,
-			unsigned long addr, unsigned long len)
-{
-	if (len & ~HPAGE_MASK)
-		return -EINVAL;
-	if (addr & ~HPAGE_MASK)
-		return -EINVAL;
-	if (REGION_NUMBER(addr) != RGN_HPAGE)
-		return -EINVAL;
+पूर्णांक prepare_hugepage_range(काष्ठा file *file,
+			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len)
+अणु
+	अगर (len & ~HPAGE_MASK)
+		वापस -EINVAL;
+	अगर (addr & ~HPAGE_MASK)
+		वापस -EINVAL;
+	अगर (REGION_NUMBER(addr) != RGN_HPAGE)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct page *follow_huge_addr(struct mm_struct *mm, unsigned long addr, int write)
-{
-	struct page *page;
+काष्ठा page *follow_huge_addr(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr, पूर्णांक ग_लिखो)
+अणु
+	काष्ठा page *page;
 	pte_t *ptep;
 
-	if (REGION_NUMBER(addr) != RGN_HPAGE)
-		return ERR_PTR(-EINVAL);
+	अगर (REGION_NUMBER(addr) != RGN_HPAGE)
+		वापस ERR_PTR(-EINVAL);
 
 	ptep = huge_pte_offset(mm, addr, HPAGE_SIZE);
-	if (!ptep || pte_none(*ptep))
-		return NULL;
+	अगर (!ptep || pte_none(*ptep))
+		वापस शून्य;
 	page = pte_page(*ptep);
 	page += ((addr & ~HPAGE_MASK) >> PAGE_SHIFT);
-	return page;
-}
-int pmd_huge(pmd_t pmd)
-{
-	return 0;
-}
+	वापस page;
+पूर्ण
+पूर्णांक pmd_huge(pmd_t pmd)
+अणु
+	वापस 0;
+पूर्ण
 
-int pud_huge(pud_t pud)
-{
-	return 0;
-}
+पूर्णांक pud_huge(pud_t pud)
+अणु
+	वापस 0;
+पूर्ण
 
-void hugetlb_free_pgd_range(struct mmu_gather *tlb,
-			unsigned long addr, unsigned long end,
-			unsigned long floor, unsigned long ceiling)
-{
+व्योम hugetlb_मुक्त_pgd_range(काष्ठा mmu_gather *tlb,
+			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+			अचिन्हित दीर्घ न्यूनमान, अचिन्हित दीर्घ उच्चमानing)
+अणु
 	/*
-	 * This is called to free hugetlb page tables.
+	 * This is called to मुक्त hugetlb page tables.
 	 *
 	 * The offset of these addresses from the base of the hugetlb
-	 * region must be scaled down by HPAGE_SIZE/PAGE_SIZE so that
-	 * the standard free_pgd_range will free the right page tables.
+	 * region must be scaled करोwn by HPAGE_SIZE/PAGE_SIZE so that
+	 * the standard मुक्त_pgd_range will मुक्त the right page tables.
 	 *
-	 * If floor and ceiling are also in the hugetlb region, they
-	 * must likewise be scaled down; but if outside, left unchanged.
+	 * If न्यूनमान and उच्चमानing are also in the hugetlb region, they
+	 * must likewise be scaled करोwn; but अगर outside, left unchanged.
 	 */
 
 	addr = htlbpage_to_page(addr);
 	end  = htlbpage_to_page(end);
-	if (REGION_NUMBER(floor) == RGN_HPAGE)
-		floor = htlbpage_to_page(floor);
-	if (REGION_NUMBER(ceiling) == RGN_HPAGE)
-		ceiling = htlbpage_to_page(ceiling);
+	अगर (REGION_NUMBER(न्यूनमान) == RGN_HPAGE)
+		न्यूनमान = htlbpage_to_page(न्यूनमान);
+	अगर (REGION_NUMBER(उच्चमानing) == RGN_HPAGE)
+		उच्चमानing = htlbpage_to_page(उच्चमानing);
 
-	free_pgd_range(tlb, addr, end, floor, ceiling);
-}
+	मुक्त_pgd_range(tlb, addr, end, न्यूनमान, उच्चमानing);
+पूर्ण
 
-unsigned long hugetlb_get_unmapped_area(struct file *file, unsigned long addr, unsigned long len,
-		unsigned long pgoff, unsigned long flags)
-{
-	struct vm_unmapped_area_info info;
+अचिन्हित दीर्घ hugetlb_get_unmapped_area(काष्ठा file *file, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+		अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा vm_unmapped_area_info info;
 
-	if (len > RGN_MAP_LIMIT)
-		return -ENOMEM;
-	if (len & ~HPAGE_MASK)
-		return -EINVAL;
+	अगर (len > RGN_MAP_LIMIT)
+		वापस -ENOMEM;
+	अगर (len & ~HPAGE_MASK)
+		वापस -EINVAL;
 
 	/* Handle MAP_FIXED */
-	if (flags & MAP_FIXED) {
-		if (prepare_hugepage_range(file, addr, len))
-			return -EINVAL;
-		return addr;
-	}
+	अगर (flags & MAP_FIXED) अणु
+		अगर (prepare_hugepage_range(file, addr, len))
+			वापस -EINVAL;
+		वापस addr;
+	पूर्ण
 
 	/* This code assumes that RGN_HPAGE != 0. */
-	if ((REGION_NUMBER(addr) != RGN_HPAGE) || (addr & (HPAGE_SIZE - 1)))
+	अगर ((REGION_NUMBER(addr) != RGN_HPAGE) || (addr & (HPAGE_SIZE - 1)))
 		addr = HPAGE_REGION_BASE;
 
 	info.flags = 0;
@@ -168,34 +169,34 @@ unsigned long hugetlb_get_unmapped_area(struct file *file, unsigned long addr, u
 	info.high_limit = HPAGE_REGION_BASE + RGN_MAP_LIMIT;
 	info.align_mask = PAGE_MASK & (HPAGE_SIZE - 1);
 	info.align_offset = 0;
-	return vm_unmapped_area(&info);
-}
+	वापस vm_unmapped_area(&info);
+पूर्ण
 
-static int __init hugetlb_setup_sz(char *str)
-{
+अटल पूर्णांक __init hugetlb_setup_sz(अक्षर *str)
+अणु
 	u64 tr_pages;
-	unsigned long long size;
+	अचिन्हित दीर्घ दीर्घ size;
 
-	if (ia64_pal_vm_page_size(&tr_pages, NULL) != 0)
+	अगर (ia64_pal_vm_page_size(&tr_pages, शून्य) != 0)
 		/*
-		 * shouldn't happen, but just in case.
+		 * shouldn't happen, but just in हाल.
 		 */
 		tr_pages = 0x15557000UL;
 
 	size = memparse(str, &str);
-	if (*str || !is_power_of_2(size) || !(tr_pages & size) ||
+	अगर (*str || !is_घातer_of_2(size) || !(tr_pages & size) ||
 		size <= PAGE_SIZE ||
-		size >= (1UL << PAGE_SHIFT << MAX_ORDER)) {
-		printk(KERN_WARNING "Invalid huge page size specified\n");
-		return 1;
-	}
+		size >= (1UL << PAGE_SHIFT << MAX_ORDER)) अणु
+		prपूर्णांकk(KERN_WARNING "Invalid huge page size specified\n");
+		वापस 1;
+	पूर्ण
 
-	hpage_shift = __ffs(size);
+	hpage_shअगरt = __ffs(size);
 	/*
-	 * boot cpu already executed ia64_mmu_init, and has HPAGE_SHIFT_DEFAULT
-	 * override here with new page shift.
+	 * boot cpu alपढ़ोy executed ia64_mmu_init, and has HPAGE_SHIFT_DEFAULT
+	 * override here with new page shअगरt.
 	 */
-	ia64_set_rr(HPAGE_REGION_BASE, hpage_shift << 2);
-	return 0;
-}
+	ia64_set_rr(HPAGE_REGION_BASE, hpage_shअगरt << 2);
+	वापस 0;
+पूर्ण
 early_param("hugepagesz", hugetlb_setup_sz);

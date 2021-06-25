@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2010-2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __FIFO_MONITOR_LOCAL_H_INCLUDED__
-#define __FIFO_MONITOR_LOCAL_H_INCLUDED__
+#अगर_अघोषित __FIFO_MONITOR_LOCAL_H_INCLUDED__
+#घोषणा __FIFO_MONITOR_LOCAL_H_INCLUDED__
 
-#include <type_support.h>
-#include "fifo_monitor_global.h"
+#समावेश <type_support.h>
+#समावेश "fifo_monitor_global.h"
 
-#include "hive_isp_css_defs.h"	/* ISP_STR_MON_PORT_SND_SP, ... */
+#समावेश "hive_isp_css_defs.h"	/* ISP_STR_MON_PORT_SND_SP, ... */
 
-#define _hive_str_mon_valid_offset   0
-#define _hive_str_mon_accept_offset  1
+#घोषणा _hive_str_mon_valid_offset   0
+#घोषणा _hive_str_mon_accept_offset  1
 
-#define	FIFO_CHANNEL_SP_VALID_MASK		0x55555555
-#define	FIFO_CHANNEL_SP_VALID_B_MASK	0x00000055
-#define	FIFO_CHANNEL_ISP_VALID_MASK		0x15555555
-#define	FIFO_CHANNEL_MOD_VALID_MASK		0x55555555
+#घोषणा	FIFO_CHANNEL_SP_VALID_MASK		0x55555555
+#घोषणा	FIFO_CHANNEL_SP_VALID_B_MASK	0x00000055
+#घोषणा	FIFO_CHANNEL_ISP_VALID_MASK		0x15555555
+#घोषणा	FIFO_CHANNEL_MOD_VALID_MASK		0x55555555
 
-typedef enum fifo_switch {
+प्रकार क्रमागत fअगरo_चयन अणु
 	FIFO_SWITCH_IF,
 	FIFO_SWITCH_GDC0,
 	FIFO_SWITCH_GDC1,
 	N_FIFO_SWITCH
-} fifo_switch_t;
+पूर्ण fअगरo_चयन_t;
 
-typedef enum fifo_channel {
+प्रकार क्रमागत fअगरo_channel अणु
 	FIFO_CHANNEL_ISP0_TO_SP0,
 	FIFO_CHANNEL_SP0_TO_ISP0,
 	FIFO_CHANNEL_ISP0_TO_IF0,
@@ -76,25 +77,25 @@ typedef enum fifo_channel {
 		FIFO_CHANNEL_IRQ0_TO_SP0,
 	 */
 	N_FIFO_CHANNEL
-} fifo_channel_t;
+पूर्ण fअगरo_channel_t;
 
-struct fifo_channel_state_s {
+काष्ठा fअगरo_channel_state_s अणु
 	bool	src_valid;
-	bool	fifo_accept;
-	bool	fifo_valid;
+	bool	fअगरo_accept;
+	bool	fअगरo_valid;
 	bool	sink_accept;
-};
+पूर्ण;
 
-/* The switch is tri-state */
-struct fifo_switch_state_s {
+/* The चयन is tri-state */
+काष्ठा fअगरo_चयन_state_s अणु
 	bool	is_none;
 	bool	is_isp;
 	bool	is_sp;
-};
+पूर्ण;
 
-struct fifo_monitor_state_s {
-	struct fifo_channel_state_s	fifo_channels[N_FIFO_CHANNEL];
-	struct fifo_switch_state_s	fifo_switches[N_FIFO_SWITCH];
-};
+काष्ठा fअगरo_monitor_state_s अणु
+	काष्ठा fअगरo_channel_state_s	fअगरo_channels[N_FIFO_CHANNEL];
+	काष्ठा fअगरo_चयन_state_s	fअगरo_चयनes[N_FIFO_SWITCH];
+पूर्ण;
 
-#endif /* __FIFO_MONITOR_LOCAL_H_INCLUDED__ */
+#पूर्ण_अगर /* __FIFO_MONITOR_LOCAL_H_INCLUDED__ */

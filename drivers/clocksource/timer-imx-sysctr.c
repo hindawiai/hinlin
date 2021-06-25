@@ -1,148 +1,149 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // Copyright 2017-2019 NXP
 
-#include <linux/interrupt.h>
-#include <linux/clockchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/घड़ीchips.h>
 
-#include "timer-of.h"
+#समावेश "timer-of.h"
 
-#define CMP_OFFSET	0x10000
+#घोषणा CMP_OFFSET	0x10000
 
-#define CNTCV_LO	0x8
-#define CNTCV_HI	0xc
-#define CMPCV_LO	(CMP_OFFSET + 0x20)
-#define CMPCV_HI	(CMP_OFFSET + 0x24)
-#define CMPCR		(CMP_OFFSET + 0x2c)
+#घोषणा CNTCV_LO	0x8
+#घोषणा CNTCV_HI	0xc
+#घोषणा CMPCV_LO	(CMP_OFFSET + 0x20)
+#घोषणा CMPCV_HI	(CMP_OFFSET + 0x24)
+#घोषणा CMPCR		(CMP_OFFSET + 0x2c)
 
-#define SYS_CTR_EN		0x1
-#define SYS_CTR_IRQ_MASK	0x2
+#घोषणा SYS_CTR_EN		0x1
+#घोषणा SYS_CTR_IRQ_MASK	0x2
 
-#define SYS_CTR_CLK_DIV		0x3
+#घोषणा SYS_CTR_CLK_DIV		0x3
 
-static void __iomem *sys_ctr_base;
-static u32 cmpcr;
+अटल व्योम __iomem *sys_ctr_base;
+अटल u32 cmpcr;
 
-static void sysctr_timer_enable(bool enable)
-{
-	writel(enable ? cmpcr | SYS_CTR_EN : cmpcr, sys_ctr_base + CMPCR);
-}
+अटल व्योम sysctr_समयr_enable(bool enable)
+अणु
+	ग_लिखोl(enable ? cmpcr | SYS_CTR_EN : cmpcr, sys_ctr_base + CMPCR);
+पूर्ण
 
-static void sysctr_irq_acknowledge(void)
-{
+अटल व्योम sysctr_irq_acknowledge(व्योम)
+अणु
 	/*
 	 * clear the enable bit(EN =0) will clear
-	 * the status bit(ISTAT = 0), then the interrupt
-	 * signal will be negated(acknowledged).
+	 * the status bit(ISTAT = 0), then the पूर्णांकerrupt
+	 * संकेत will be negated(acknowledged).
 	 */
-	sysctr_timer_enable(false);
-}
+	sysctr_समयr_enable(false);
+पूर्ण
 
-static inline u64 sysctr_read_counter(void)
-{
-	u32 cnt_hi, tmp_hi, cnt_lo;
+अटल अंतरभूत u64 sysctr_पढ़ो_counter(व्योम)
+अणु
+	u32 cnt_hi, पंचांगp_hi, cnt_lo;
 
-	do {
-		cnt_hi = readl_relaxed(sys_ctr_base + CNTCV_HI);
-		cnt_lo = readl_relaxed(sys_ctr_base + CNTCV_LO);
-		tmp_hi = readl_relaxed(sys_ctr_base + CNTCV_HI);
-	} while (tmp_hi != cnt_hi);
+	करो अणु
+		cnt_hi = पढ़ोl_relaxed(sys_ctr_base + CNTCV_HI);
+		cnt_lo = पढ़ोl_relaxed(sys_ctr_base + CNTCV_LO);
+		पंचांगp_hi = पढ़ोl_relaxed(sys_ctr_base + CNTCV_HI);
+	पूर्ण जबतक (पंचांगp_hi != cnt_hi);
 
-	return  ((u64) cnt_hi << 32) | cnt_lo;
-}
+	वापस  ((u64) cnt_hi << 32) | cnt_lo;
+पूर्ण
 
-static int sysctr_set_next_event(unsigned long delta,
-				 struct clock_event_device *evt)
-{
+अटल पूर्णांक sysctr_set_next_event(अचिन्हित दीर्घ delta,
+				 काष्ठा घड़ी_event_device *evt)
+अणु
 	u32 cmp_hi, cmp_lo;
 	u64 next;
 
-	sysctr_timer_enable(false);
+	sysctr_समयr_enable(false);
 
-	next = sysctr_read_counter();
+	next = sysctr_पढ़ो_counter();
 
 	next += delta;
 
 	cmp_hi = (next >> 32) & 0x00fffff;
 	cmp_lo = next & 0xffffffff;
 
-	writel_relaxed(cmp_hi, sys_ctr_base + CMPCV_HI);
-	writel_relaxed(cmp_lo, sys_ctr_base + CMPCV_LO);
+	ग_लिखोl_relaxed(cmp_hi, sys_ctr_base + CMPCV_HI);
+	ग_लिखोl_relaxed(cmp_lo, sys_ctr_base + CMPCV_LO);
 
-	sysctr_timer_enable(true);
+	sysctr_समयr_enable(true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sysctr_set_state_oneshot(struct clock_event_device *evt)
-{
-	return 0;
-}
+अटल पूर्णांक sysctr_set_state_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	वापस 0;
+पूर्ण
 
-static int sysctr_set_state_shutdown(struct clock_event_device *evt)
-{
-	sysctr_timer_enable(false);
+अटल पूर्णांक sysctr_set_state_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	sysctr_समयr_enable(false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t sysctr_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = dev_id;
+अटल irqवापस_t sysctr_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = dev_id;
 
 	sysctr_irq_acknowledge();
 
 	evt->event_handler(evt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct timer_of to_sysctr = {
+अटल काष्ठा समयr_of to_sysctr = अणु
 	.flags = TIMER_OF_IRQ | TIMER_OF_CLOCK | TIMER_OF_BASE,
-	.clkevt = {
+	.clkevt = अणु
 		.name			= "i.MX system counter timer",
 		.features		= CLOCK_EVT_FEAT_ONESHOT |
 						CLOCK_EVT_FEAT_DYNIRQ,
 		.set_state_oneshot	= sysctr_set_state_oneshot,
 		.set_next_event		= sysctr_set_next_event,
-		.set_state_shutdown	= sysctr_set_state_shutdown,
+		.set_state_shutकरोwn	= sysctr_set_state_shutकरोwn,
 		.rating			= 200,
-	},
-	.of_irq = {
-		.handler		= sysctr_timer_interrupt,
+	पूर्ण,
+	.of_irq = अणु
+		.handler		= sysctr_समयr_पूर्णांकerrupt,
 		.flags			= IRQF_TIMER | IRQF_IRQPOLL,
-	},
-	.of_clk = {
+	पूर्ण,
+	.of_clk = अणु
 		.name = "per",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void __init sysctr_clockevent_init(void)
-{
+अटल व्योम __init sysctr_घड़ीevent_init(व्योम)
+अणु
 	to_sysctr.clkevt.cpumask = cpumask_of(0);
 
-	clockevents_config_and_register(&to_sysctr.clkevt,
-					timer_of_rate(&to_sysctr),
+	घड़ीevents_config_and_रेजिस्टर(&to_sysctr.clkevt,
+					समयr_of_rate(&to_sysctr),
 					0xff, 0x7fffffff);
-}
+पूर्ण
 
-static int __init sysctr_timer_init(struct device_node *np)
-{
-	int ret = 0;
+अटल पूर्णांक __init sysctr_समयr_init(काष्ठा device_node *np)
+अणु
+	पूर्णांक ret = 0;
 
-	ret = timer_of_init(np, &to_sysctr);
-	if (ret)
-		return ret;
+	ret = समयr_of_init(np, &to_sysctr);
+	अगर (ret)
+		वापस ret;
 
-	/* system counter clock is divided by 3 internally */
+	/* प्रणाली counter घड़ी is भागided by 3 पूर्णांकernally */
 	to_sysctr.of_clk.rate /= SYS_CTR_CLK_DIV;
 
-	sys_ctr_base = timer_of_base(&to_sysctr);
-	cmpcr = readl(sys_ctr_base + CMPCR);
+	sys_ctr_base = समयr_of_base(&to_sysctr);
+	cmpcr = पढ़ोl(sys_ctr_base + CMPCR);
 	cmpcr &= ~SYS_CTR_EN;
 
-	sysctr_clockevent_init();
+	sysctr_घड़ीevent_init();
 
-	return 0;
-}
-TIMER_OF_DECLARE(sysctr_timer, "nxp,sysctr-timer", sysctr_timer_init);
+	वापस 0;
+पूर्ण
+TIMER_OF_DECLARE(sysctr_समयr, "nxp,sysctr-timer", sysctr_समयr_init);

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-    Copyright (c) 2001,2002 Christer Weinigel <wingel@nano-system.com>
+    Copyright (c) 2001,2002 Christer Weinigel <wingel@nano-प्रणाली.com>
 
     National Semiconductor SCx200 ACCESS.bus support
     Also supports the AMD CS5535 and AMD CS5536
@@ -11,45 +12,45 @@
 
 */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/i2c.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
 
-#include <linux/scx200.h>
+#समावेश <linux/scx200.h>
 
 MODULE_AUTHOR("Christer Weinigel <wingel@nano-system.com>");
 MODULE_DESCRIPTION("NatSemi SCx200 ACCESS.bus Driver");
 MODULE_ALIAS("platform:cs5535-smb");
 MODULE_LICENSE("GPL");
 
-#define MAX_DEVICES 4
-static int base[MAX_DEVICES] = { 0x820, 0x840 };
-module_param_hw_array(base, int, ioport, NULL, 0);
+#घोषणा MAX_DEVICES 4
+अटल पूर्णांक base[MAX_DEVICES] = अणु 0x820, 0x840 पूर्ण;
+module_param_hw_array(base, पूर्णांक, ioport, शून्य, 0);
 MODULE_PARM_DESC(base, "Base addresses for the ACCESS.bus controllers");
 
-#define POLL_TIMEOUT	(HZ/5)
+#घोषणा POLL_TIMEOUT	(HZ/5)
 
-enum scx200_acb_state {
+क्रमागत scx200_acb_state अणु
 	state_idle,
 	state_address,
 	state_command,
 	state_repeat_start,
 	state_quick,
-	state_read,
-	state_write,
-};
+	state_पढ़ो,
+	state_ग_लिखो,
+पूर्ण;
 
-static const char *scx200_acb_state_name[] = {
+अटल स्थिर अक्षर *scx200_acb_state_name[] = अणु
 	"idle",
 	"address",
 	"command",
@@ -57,197 +58,197 @@ static const char *scx200_acb_state_name[] = {
 	"quick",
 	"read",
 	"write",
-};
+पूर्ण;
 
-/* Physical interface */
-struct scx200_acb_iface {
-	struct scx200_acb_iface *next;
-	struct i2c_adapter adapter;
-	unsigned base;
-	struct mutex mutex;
+/* Physical पूर्णांकerface */
+काष्ठा scx200_acb_अगरace अणु
+	काष्ठा scx200_acb_अगरace *next;
+	काष्ठा i2c_adapter adapter;
+	अचिन्हित base;
+	काष्ठा mutex mutex;
 
 	/* State machine data */
-	enum scx200_acb_state state;
-	int result;
+	क्रमागत scx200_acb_state state;
+	पूर्णांक result;
 	u8 address_byte;
 	u8 command;
 	u8 *ptr;
-	char needs_reset;
-	unsigned len;
-};
+	अक्षर needs_reset;
+	अचिन्हित len;
+पूर्ण;
 
 /* Register Definitions */
-#define ACBSDA		(iface->base + 0)
-#define ACBST		(iface->base + 1)
-#define    ACBST_SDAST		0x40 /* SDA Status */
-#define    ACBST_BER		0x20
-#define    ACBST_NEGACK		0x10 /* Negative Acknowledge */
-#define    ACBST_STASTR		0x08 /* Stall After Start */
-#define    ACBST_MASTER		0x02
-#define ACBCST		(iface->base + 2)
-#define    ACBCST_BB		0x02
-#define ACBCTL1		(iface->base + 3)
-#define    ACBCTL1_STASTRE	0x80
-#define    ACBCTL1_NMINTE	0x40
-#define    ACBCTL1_ACK		0x10
-#define    ACBCTL1_STOP		0x02
-#define    ACBCTL1_START	0x01
-#define ACBADDR		(iface->base + 4)
-#define ACBCTL2		(iface->base + 5)
-#define    ACBCTL2_ENABLE	0x01
+#घोषणा ACBSDA		(अगरace->base + 0)
+#घोषणा ACBST		(अगरace->base + 1)
+#घोषणा    ACBST_SDAST		0x40 /* SDA Status */
+#घोषणा    ACBST_BER		0x20
+#घोषणा    ACBST_NEGACK		0x10 /* Negative Acknowledge */
+#घोषणा    ACBST_STASTR		0x08 /* Stall After Start */
+#घोषणा    ACBST_MASTER		0x02
+#घोषणा ACBCST		(अगरace->base + 2)
+#घोषणा    ACBCST_BB		0x02
+#घोषणा ACBCTL1		(अगरace->base + 3)
+#घोषणा    ACBCTL1_STASTRE	0x80
+#घोषणा    ACBCTL1_NMINTE	0x40
+#घोषणा    ACBCTL1_ACK		0x10
+#घोषणा    ACBCTL1_STOP		0x02
+#घोषणा    ACBCTL1_START	0x01
+#घोषणा ACBADDR		(अगरace->base + 4)
+#घोषणा ACBCTL2		(अगरace->base + 5)
+#घोषणा    ACBCTL2_ENABLE	0x01
 
 /************************************************************************/
 
-static void scx200_acb_machine(struct scx200_acb_iface *iface, u8 status)
-{
-	const char *errmsg;
+अटल व्योम scx200_acb_machine(काष्ठा scx200_acb_अगरace *अगरace, u8 status)
+अणु
+	स्थिर अक्षर *errmsg;
 
-	dev_dbg(&iface->adapter.dev, "state %s, status = 0x%02x\n",
-		scx200_acb_state_name[iface->state], status);
+	dev_dbg(&अगरace->adapter.dev, "state %s, status = 0x%02x\n",
+		scx200_acb_state_name[अगरace->state], status);
 
-	if (status & ACBST_BER) {
+	अगर (status & ACBST_BER) अणु
 		errmsg = "bus error";
-		goto error;
-	}
-	if (!(status & ACBST_MASTER)) {
+		जाओ error;
+	पूर्ण
+	अगर (!(status & ACBST_MASTER)) अणु
 		errmsg = "not master";
-		goto error;
-	}
-	if (status & ACBST_NEGACK) {
-		dev_dbg(&iface->adapter.dev, "negative ack in state %s\n",
-			scx200_acb_state_name[iface->state]);
+		जाओ error;
+	पूर्ण
+	अगर (status & ACBST_NEGACK) अणु
+		dev_dbg(&अगरace->adapter.dev, "negative ack in state %s\n",
+			scx200_acb_state_name[अगरace->state]);
 
-		iface->state = state_idle;
-		iface->result = -ENXIO;
+		अगरace->state = state_idle;
+		अगरace->result = -ENXIO;
 
 		outb(inb(ACBCTL1) | ACBCTL1_STOP, ACBCTL1);
 		outb(ACBST_STASTR | ACBST_NEGACK, ACBST);
 
-		/* Reset the status register */
+		/* Reset the status रेजिस्टर */
 		outb(0, ACBST);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (iface->state) {
-	case state_idle:
-		dev_warn(&iface->adapter.dev, "interrupt in idle state\n");
-		break;
+	चयन (अगरace->state) अणु
+	हाल state_idle:
+		dev_warn(&अगरace->adapter.dev, "interrupt in idle state\n");
+		अवरोध;
 
-	case state_address:
-		/* Do a pointer write first */
-		outb(iface->address_byte & ~1, ACBSDA);
+	हाल state_address:
+		/* Do a poपूर्णांकer ग_लिखो first */
+		outb(अगरace->address_byte & ~1, ACBSDA);
 
-		iface->state = state_command;
-		break;
+		अगरace->state = state_command;
+		अवरोध;
 
-	case state_command:
-		outb(iface->command, ACBSDA);
+	हाल state_command:
+		outb(अगरace->command, ACBSDA);
 
-		if (iface->address_byte & 1)
-			iface->state = state_repeat_start;
-		else
-			iface->state = state_write;
-		break;
+		अगर (अगरace->address_byte & 1)
+			अगरace->state = state_repeat_start;
+		अन्यथा
+			अगरace->state = state_ग_लिखो;
+		अवरोध;
 
-	case state_repeat_start:
+	हाल state_repeat_start:
 		outb(inb(ACBCTL1) | ACBCTL1_START, ACBCTL1);
 		fallthrough;
 
-	case state_quick:
-		if (iface->address_byte & 1) {
-			if (iface->len == 1)
+	हाल state_quick:
+		अगर (अगरace->address_byte & 1) अणु
+			अगर (अगरace->len == 1)
 				outb(inb(ACBCTL1) | ACBCTL1_ACK, ACBCTL1);
-			else
+			अन्यथा
 				outb(inb(ACBCTL1) & ~ACBCTL1_ACK, ACBCTL1);
-			outb(iface->address_byte, ACBSDA);
+			outb(अगरace->address_byte, ACBSDA);
 
-			iface->state = state_read;
-		} else {
-			outb(iface->address_byte, ACBSDA);
+			अगरace->state = state_पढ़ो;
+		पूर्ण अन्यथा अणु
+			outb(अगरace->address_byte, ACBSDA);
 
-			iface->state = state_write;
-		}
-		break;
+			अगरace->state = state_ग_लिखो;
+		पूर्ण
+		अवरोध;
 
-	case state_read:
-		/* Set ACK if _next_ byte will be the last one */
-		if (iface->len == 2)
+	हाल state_पढ़ो:
+		/* Set ACK अगर _next_ byte will be the last one */
+		अगर (अगरace->len == 2)
 			outb(inb(ACBCTL1) | ACBCTL1_ACK, ACBCTL1);
-		else
+		अन्यथा
 			outb(inb(ACBCTL1) & ~ACBCTL1_ACK, ACBCTL1);
 
-		if (iface->len == 1) {
-			iface->result = 0;
-			iface->state = state_idle;
+		अगर (अगरace->len == 1) अणु
+			अगरace->result = 0;
+			अगरace->state = state_idle;
 			outb(inb(ACBCTL1) | ACBCTL1_STOP, ACBCTL1);
-		}
+		पूर्ण
 
-		*iface->ptr++ = inb(ACBSDA);
-		--iface->len;
+		*अगरace->ptr++ = inb(ACBSDA);
+		--अगरace->len;
 
-		break;
+		अवरोध;
 
-	case state_write:
-		if (iface->len == 0) {
-			iface->result = 0;
-			iface->state = state_idle;
+	हाल state_ग_लिखो:
+		अगर (अगरace->len == 0) अणु
+			अगरace->result = 0;
+			अगरace->state = state_idle;
 			outb(inb(ACBCTL1) | ACBCTL1_STOP, ACBCTL1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		outb(*iface->ptr++, ACBSDA);
-		--iface->len;
+		outb(*अगरace->ptr++, ACBSDA);
+		--अगरace->len;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return;
+	वापस;
 
  error:
-	dev_err(&iface->adapter.dev,
+	dev_err(&अगरace->adapter.dev,
 		"%s in state %s (addr=0x%02x, len=%d, status=0x%02x)\n", errmsg,
-		scx200_acb_state_name[iface->state], iface->address_byte,
-		iface->len, status);
+		scx200_acb_state_name[अगरace->state], अगरace->address_byte,
+		अगरace->len, status);
 
-	iface->state = state_idle;
-	iface->result = -EIO;
-	iface->needs_reset = 1;
-}
+	अगरace->state = state_idle;
+	अगरace->result = -EIO;
+	अगरace->needs_reset = 1;
+पूर्ण
 
-static void scx200_acb_poll(struct scx200_acb_iface *iface)
-{
+अटल व्योम scx200_acb_poll(काष्ठा scx200_acb_अगरace *अगरace)
+अणु
 	u8 status;
-	unsigned long timeout;
+	अचिन्हित दीर्घ समयout;
 
-	timeout = jiffies + POLL_TIMEOUT;
-	while (1) {
+	समयout = jअगरfies + POLL_TIMEOUT;
+	जबतक (1) अणु
 		status = inb(ACBST);
 
-		/* Reset the status register to avoid the hang */
+		/* Reset the status रेजिस्टर to aव्योम the hang */
 		outb(0, ACBST);
 
-		if ((status & (ACBST_SDAST|ACBST_BER|ACBST_NEGACK)) != 0) {
-			scx200_acb_machine(iface, status);
-			return;
-		}
-		if (time_after(jiffies, timeout))
-			break;
+		अगर ((status & (ACBST_SDAST|ACBST_BER|ACBST_NEGACK)) != 0) अणु
+			scx200_acb_machine(अगरace, status);
+			वापस;
+		पूर्ण
+		अगर (समय_after(jअगरfies, समयout))
+			अवरोध;
 		cpu_relax();
 		cond_resched();
-	}
+	पूर्ण
 
-	dev_err(&iface->adapter.dev, "timeout in state %s\n",
-		scx200_acb_state_name[iface->state]);
+	dev_err(&अगरace->adapter.dev, "timeout in state %s\n",
+		scx200_acb_state_name[अगरace->state]);
 
-	iface->state = state_idle;
-	iface->result = -EIO;
-	iface->needs_reset = 1;
-}
+	अगरace->state = state_idle;
+	अगरace->result = -EIO;
+	अगरace->needs_reset = 1;
+पूर्ण
 
-static void scx200_acb_reset(struct scx200_acb_iface *iface)
-{
+अटल व्योम scx200_acb_reset(काष्ठा scx200_acb_अगरace *अगरace)
+अणु
 	/* Disable the ACCESS.bus device and Configure the SCL
-	   frequency: 16 clock cycles */
+	   frequency: 16 घड़ी cycles */
 	outb(0x70, ACBCTL2);
 	/* Polling mode */
 	outb(0, ACBCTL1);
@@ -263,338 +264,338 @@ static void scx200_acb_reset(struct scx200_acb_iface *iface)
 	outb(ACBST_BER | ACBST_NEGACK | ACBST_STASTR, ACBST);
 	/* Clear BB bit */
 	outb(inb(ACBCST) | ACBCST_BB, ACBCST);
-}
+पूर्ण
 
-static s32 scx200_acb_smbus_xfer(struct i2c_adapter *adapter,
-				 u16 address, unsigned short flags,
-				 char rw, u8 command, int size,
-				 union i2c_smbus_data *data)
-{
-	struct scx200_acb_iface *iface = i2c_get_adapdata(adapter);
-	int len;
+अटल s32 scx200_acb_smbus_xfer(काष्ठा i2c_adapter *adapter,
+				 u16 address, अचिन्हित लघु flags,
+				 अक्षर rw, u8 command, पूर्णांक size,
+				 जोड़ i2c_smbus_data *data)
+अणु
+	काष्ठा scx200_acb_अगरace *अगरace = i2c_get_adapdata(adapter);
+	पूर्णांक len;
 	u8 *buffer;
 	u16 cur_word;
-	int rc;
+	पूर्णांक rc;
 
-	switch (size) {
-	case I2C_SMBUS_QUICK:
+	चयन (size) अणु
+	हाल I2C_SMBUS_QUICK:
 		len = 0;
-		buffer = NULL;
-		break;
+		buffer = शून्य;
+		अवरोध;
 
-	case I2C_SMBUS_BYTE:
+	हाल I2C_SMBUS_BYTE:
 		len = 1;
 		buffer = rw ? &data->byte : &command;
-		break;
+		अवरोध;
 
-	case I2C_SMBUS_BYTE_DATA:
+	हाल I2C_SMBUS_BYTE_DATA:
 		len = 1;
 		buffer = &data->byte;
-		break;
+		अवरोध;
 
-	case I2C_SMBUS_WORD_DATA:
+	हाल I2C_SMBUS_WORD_DATA:
 		len = 2;
 		cur_word = cpu_to_le16(data->word);
 		buffer = (u8 *)&cur_word;
-		break;
+		अवरोध;
 
-	case I2C_SMBUS_I2C_BLOCK_DATA:
+	हाल I2C_SMBUS_I2C_BLOCK_DATA:
 		len = data->block[0];
-		if (len == 0 || len > I2C_SMBUS_BLOCK_MAX)
-			return -EINVAL;
+		अगर (len == 0 || len > I2C_SMBUS_BLOCK_MAX)
+			वापस -EINVAL;
 		buffer = &data->block[1];
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(&adapter->dev,
 		"size=%d, address=0x%x, command=0x%x, len=%d, read=%d\n",
 		size, address, command, len, rw);
 
-	if (!len && rw == I2C_SMBUS_READ) {
+	अगर (!len && rw == I2C_SMBUS_READ) अणु
 		dev_dbg(&adapter->dev, "zero length read\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	mutex_lock(&iface->mutex);
+	mutex_lock(&अगरace->mutex);
 
-	iface->address_byte = (address << 1) | rw;
-	iface->command = command;
-	iface->ptr = buffer;
-	iface->len = len;
-	iface->result = -EINVAL;
-	iface->needs_reset = 0;
+	अगरace->address_byte = (address << 1) | rw;
+	अगरace->command = command;
+	अगरace->ptr = buffer;
+	अगरace->len = len;
+	अगरace->result = -EINVAL;
+	अगरace->needs_reset = 0;
 
 	outb(inb(ACBCTL1) | ACBCTL1_START, ACBCTL1);
 
-	if (size == I2C_SMBUS_QUICK || size == I2C_SMBUS_BYTE)
-		iface->state = state_quick;
-	else
-		iface->state = state_address;
+	अगर (size == I2C_SMBUS_QUICK || size == I2C_SMBUS_BYTE)
+		अगरace->state = state_quick;
+	अन्यथा
+		अगरace->state = state_address;
 
-	while (iface->state != state_idle)
-		scx200_acb_poll(iface);
+	जबतक (अगरace->state != state_idle)
+		scx200_acb_poll(अगरace);
 
-	if (iface->needs_reset)
-		scx200_acb_reset(iface);
+	अगर (अगरace->needs_reset)
+		scx200_acb_reset(अगरace);
 
-	rc = iface->result;
+	rc = अगरace->result;
 
-	mutex_unlock(&iface->mutex);
+	mutex_unlock(&अगरace->mutex);
 
-	if (rc == 0 && size == I2C_SMBUS_WORD_DATA && rw == I2C_SMBUS_READ)
+	अगर (rc == 0 && size == I2C_SMBUS_WORD_DATA && rw == I2C_SMBUS_READ)
 		data->word = le16_to_cpu(cur_word);
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	dev_dbg(&adapter->dev, "transfer done, result: %d", rc);
-	if (buffer) {
-		int i;
-		printk(" data:");
-		for (i = 0; i < len; ++i)
-			printk(" %02x", buffer[i]);
-	}
-	printk("\n");
-#endif
+	अगर (buffer) अणु
+		पूर्णांक i;
+		prपूर्णांकk(" data:");
+		क्रम (i = 0; i < len; ++i)
+			prपूर्णांकk(" %02x", buffer[i]);
+	पूर्ण
+	prपूर्णांकk("\n");
+#पूर्ण_अगर
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static u32 scx200_acb_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
+अटल u32 scx200_acb_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
 	       I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_WORD_DATA |
 	       I2C_FUNC_SMBUS_I2C_BLOCK;
-}
+पूर्ण
 
 /* For now, we only handle combined mode (smbus) */
-static const struct i2c_algorithm scx200_acb_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm scx200_acb_algorithm = अणु
 	.smbus_xfer	= scx200_acb_smbus_xfer,
 	.functionality	= scx200_acb_func,
-};
+पूर्ण;
 
-static struct scx200_acb_iface *scx200_acb_list;
-static DEFINE_MUTEX(scx200_acb_list_mutex);
+अटल काष्ठा scx200_acb_अगरace *scx200_acb_list;
+अटल DEFINE_MUTEX(scx200_acb_list_mutex);
 
-static int scx200_acb_probe(struct scx200_acb_iface *iface)
-{
+अटल पूर्णांक scx200_acb_probe(काष्ठा scx200_acb_अगरace *अगरace)
+अणु
 	u8 val;
 
 	/* Disable the ACCESS.bus device and Configure the SCL
-	   frequency: 16 clock cycles */
+	   frequency: 16 घड़ी cycles */
 	outb(0x70, ACBCTL2);
 
-	if (inb(ACBCTL2) != 0x70) {
+	अगर (inb(ACBCTL2) != 0x70) अणु
 		pr_debug("ACBCTL2 readback failed\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	outb(inb(ACBCTL1) | ACBCTL1_NMINTE, ACBCTL1);
 
 	val = inb(ACBCTL1);
-	if (val) {
+	अगर (val) अणु
 		pr_debug("disabled, but ACBCTL1=0x%02x\n", val);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	outb(inb(ACBCTL2) | ACBCTL2_ENABLE, ACBCTL2);
 
 	outb(inb(ACBCTL1) | ACBCTL1_NMINTE, ACBCTL1);
 
 	val = inb(ACBCTL1);
-	if ((val & ACBCTL1_NMINTE) != ACBCTL1_NMINTE) {
+	अगर ((val & ACBCTL1_NMINTE) != ACBCTL1_NMINTE) अणु
 		pr_debug("enabled, but NMINTE won't be set, ACBCTL1=0x%02x\n",
 			 val);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct scx200_acb_iface *scx200_create_iface(const char *text,
-		struct device *dev, int index)
-{
-	struct scx200_acb_iface *iface;
-	struct i2c_adapter *adapter;
+अटल काष्ठा scx200_acb_अगरace *scx200_create_अगरace(स्थिर अक्षर *text,
+		काष्ठा device *dev, पूर्णांक index)
+अणु
+	काष्ठा scx200_acb_अगरace *अगरace;
+	काष्ठा i2c_adapter *adapter;
 
-	iface = kzalloc(sizeof(*iface), GFP_KERNEL);
-	if (!iface)
-		return NULL;
+	अगरace = kzalloc(माप(*अगरace), GFP_KERNEL);
+	अगर (!अगरace)
+		वापस शून्य;
 
-	adapter = &iface->adapter;
-	i2c_set_adapdata(adapter, iface);
-	snprintf(adapter->name, sizeof(adapter->name), "%s ACB%d", text, index);
+	adapter = &अगरace->adapter;
+	i2c_set_adapdata(adapter, अगरace);
+	snम_लिखो(adapter->name, माप(adapter->name), "%s ACB%d", text, index);
 	adapter->owner = THIS_MODULE;
 	adapter->algo = &scx200_acb_algorithm;
 	adapter->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
 	adapter->dev.parent = dev;
 
-	mutex_init(&iface->mutex);
+	mutex_init(&अगरace->mutex);
 
-	return iface;
-}
+	वापस अगरace;
+पूर्ण
 
-static int scx200_acb_create(struct scx200_acb_iface *iface)
-{
-	struct i2c_adapter *adapter;
-	int rc;
+अटल पूर्णांक scx200_acb_create(काष्ठा scx200_acb_अगरace *अगरace)
+अणु
+	काष्ठा i2c_adapter *adapter;
+	पूर्णांक rc;
 
-	adapter = &iface->adapter;
+	adapter = &अगरace->adapter;
 
-	rc = scx200_acb_probe(iface);
-	if (rc) {
+	rc = scx200_acb_probe(अगरace);
+	अगर (rc) अणु
 		pr_warn("probe failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	scx200_acb_reset(iface);
+	scx200_acb_reset(अगरace);
 
-	if (i2c_add_adapter(adapter) < 0) {
+	अगर (i2c_add_adapter(adapter) < 0) अणु
 		pr_err("failed to register\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!adapter->dev.parent) {
-		/* If there's no dev, we're tracking (ISA) ifaces manually */
+	अगर (!adapter->dev.parent) अणु
+		/* If there's no dev, we're tracking (ISA) अगरaces manually */
 		mutex_lock(&scx200_acb_list_mutex);
-		iface->next = scx200_acb_list;
-		scx200_acb_list = iface;
+		अगरace->next = scx200_acb_list;
+		scx200_acb_list = अगरace;
 		mutex_unlock(&scx200_acb_list_mutex);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct scx200_acb_iface *scx200_create_dev(const char *text,
-		unsigned long base, int index, struct device *dev)
-{
-	struct scx200_acb_iface *iface;
-	int rc;
+अटल काष्ठा scx200_acb_अगरace *scx200_create_dev(स्थिर अक्षर *text,
+		अचिन्हित दीर्घ base, पूर्णांक index, काष्ठा device *dev)
+अणु
+	काष्ठा scx200_acb_अगरace *अगरace;
+	पूर्णांक rc;
 
-	iface = scx200_create_iface(text, dev, index);
+	अगरace = scx200_create_अगरace(text, dev, index);
 
-	if (iface == NULL)
-		return NULL;
+	अगर (अगरace == शून्य)
+		वापस शून्य;
 
-	if (!request_region(base, 8, iface->adapter.name)) {
+	अगर (!request_region(base, 8, अगरace->adapter.name)) अणु
 		pr_err("can't allocate io 0x%lx-0x%lx\n", base, base + 8 - 1);
-		goto errout_free;
-	}
+		जाओ errout_मुक्त;
+	पूर्ण
 
-	iface->base = base;
-	rc = scx200_acb_create(iface);
+	अगरace->base = base;
+	rc = scx200_acb_create(अगरace);
 
-	if (rc == 0)
-		return iface;
+	अगर (rc == 0)
+		वापस अगरace;
 
 	release_region(base, 8);
- errout_free:
-	kfree(iface);
-	return NULL;
-}
+ errout_मुक्त:
+	kमुक्त(अगरace);
+	वापस शून्य;
+पूर्ण
 
-static int scx200_probe(struct platform_device *pdev)
-{
-	struct scx200_acb_iface *iface;
-	struct resource *res;
+अटल पूर्णांक scx200_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा scx200_acb_अगरace *अगरace;
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "can't fetch device resource info\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	iface = scx200_create_dev("CS5535", res->start, 0, &pdev->dev);
-	if (!iface)
-		return -EIO;
+	अगरace = scx200_create_dev("CS5535", res->start, 0, &pdev->dev);
+	अगर (!अगरace)
+		वापस -EIO;
 
 	dev_info(&pdev->dev, "SCx200 device '%s' registered\n",
-			iface->adapter.name);
-	platform_set_drvdata(pdev, iface);
+			अगरace->adapter.name);
+	platक्रमm_set_drvdata(pdev, अगरace);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scx200_cleanup_iface(struct scx200_acb_iface *iface)
-{
-	i2c_del_adapter(&iface->adapter);
-	release_region(iface->base, 8);
-	kfree(iface);
-}
+अटल व्योम scx200_cleanup_अगरace(काष्ठा scx200_acb_अगरace *अगरace)
+अणु
+	i2c_del_adapter(&अगरace->adapter);
+	release_region(अगरace->base, 8);
+	kमुक्त(अगरace);
+पूर्ण
 
-static int scx200_remove(struct platform_device *pdev)
-{
-	struct scx200_acb_iface *iface;
+अटल पूर्णांक scx200_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा scx200_acb_अगरace *अगरace;
 
-	iface = platform_get_drvdata(pdev);
-	scx200_cleanup_iface(iface);
+	अगरace = platक्रमm_get_drvdata(pdev);
+	scx200_cleanup_अगरace(अगरace);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver scx200_pci_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver scx200_pci_driver = अणु
+	.driver = अणु
 		.name = "cs5535-smb",
-	},
+	पूर्ण,
 	.probe = scx200_probe,
-	.remove = scx200_remove,
-};
+	.हटाओ = scx200_हटाओ,
+पूर्ण;
 
-static const struct pci_device_id scx200_isa[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_NS, PCI_DEVICE_ID_NS_SCx200_BRIDGE) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_NS, PCI_DEVICE_ID_NS_SC1100_BRIDGE) },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id scx200_isa[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_NS, PCI_DEVICE_ID_NS_SCx200_BRIDGE) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_NS, PCI_DEVICE_ID_NS_SC1100_BRIDGE) पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
-static __init void scx200_scan_isa(void)
-{
-	int i;
+अटल __init व्योम scx200_scan_isa(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (!pci_dev_present(scx200_isa))
-		return;
+	अगर (!pci_dev_present(scx200_isa))
+		वापस;
 
-	for (i = 0; i < MAX_DEVICES; ++i) {
-		if (base[i] == 0)
-			continue;
+	क्रम (i = 0; i < MAX_DEVICES; ++i) अणु
+		अगर (base[i] == 0)
+			जारी;
 
 		/* XXX: should we care about failures? */
-		scx200_create_dev("SCx200", base[i], i, NULL);
-	}
-}
+		scx200_create_dev("SCx200", base[i], i, शून्य);
+	पूर्ण
+पूर्ण
 
-static int __init scx200_acb_init(void)
-{
+अटल पूर्णांक __init scx200_acb_init(व्योम)
+अणु
 	pr_debug("NatSemi SCx200 ACCESS.bus Driver\n");
 
-	/* First scan for ISA-based devices */
+	/* First scan क्रम ISA-based devices */
 	scx200_scan_isa();	/* XXX: should we care about errors? */
 
 	/* If at least one bus was created, init must succeed */
-	if (scx200_acb_list)
-		return 0;
+	अगर (scx200_acb_list)
+		वापस 0;
 
-	/* No ISA devices; register the platform driver for PCI-based devices */
-	return platform_driver_register(&scx200_pci_driver);
-}
+	/* No ISA devices; रेजिस्टर the platक्रमm driver क्रम PCI-based devices */
+	वापस platक्रमm_driver_रेजिस्टर(&scx200_pci_driver);
+पूर्ण
 
-static void __exit scx200_acb_cleanup(void)
-{
-	struct scx200_acb_iface *iface;
+अटल व्योम __निकास scx200_acb_cleanup(व्योम)
+अणु
+	काष्ठा scx200_acb_अगरace *अगरace;
 
-	platform_driver_unregister(&scx200_pci_driver);
+	platक्रमm_driver_unरेजिस्टर(&scx200_pci_driver);
 
 	mutex_lock(&scx200_acb_list_mutex);
-	while ((iface = scx200_acb_list) != NULL) {
-		scx200_acb_list = iface->next;
+	जबतक ((अगरace = scx200_acb_list) != शून्य) अणु
+		scx200_acb_list = अगरace->next;
 		mutex_unlock(&scx200_acb_list_mutex);
 
-		scx200_cleanup_iface(iface);
+		scx200_cleanup_अगरace(अगरace);
 
 		mutex_lock(&scx200_acb_list_mutex);
-	}
+	पूर्ण
 	mutex_unlock(&scx200_acb_list_mutex);
-}
+पूर्ण
 
 module_init(scx200_acb_init);
-module_exit(scx200_acb_cleanup);
+module_निकास(scx200_acb_cleanup);

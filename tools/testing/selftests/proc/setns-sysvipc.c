@@ -1,133 +1,134 @@
+<शैली गुरु>
 /*
- * Copyright © 2019 Alexey Dobriyan <adobriyan@gmail.com>
+ * Copyright तऊ 2019 Alexey Dobriyan <aकरोbriyan@gmail.com>
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modअगरy, and distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
- * Test that setns(CLONE_NEWIPC) points to new /proc/sysvipc content even
- * if old one is in dcache.
+ * Test that setns(CLONE_NEWIPC) poपूर्णांकs to new /proc/sysvipc content even
+ * अगर old one is in dcache.
  */
-#undef NDEBUG
-#include <assert.h>
-#include <errno.h>
-#include <stdio.h>
-#include <sched.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
+#अघोषित न_संशोधन
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकपन.स>
+#समावेश <sched.h>
+#समावेश <संकेत.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <sys/ipc.h>
+#समावेश <sys/shm.h>
 
-static pid_t pid = -1;
+अटल pid_t pid = -1;
 
-static void f(void)
-{
-	if (pid > 0) {
-		kill(pid, SIGTERM);
-	}
-}
+अटल व्योम f(व्योम)
+अणु
+	अगर (pid > 0) अणु
+		समाप्त(pid, संक_इति);
+	पूर्ण
+पूर्ण
 
-int main(void)
-{
-	int fd[2];
-	char _ = 0;
-	int nsfd;
+पूर्णांक मुख्य(व्योम)
+अणु
+	पूर्णांक fd[2];
+	अक्षर _ = 0;
+	पूर्णांक nsfd;
 
-	atexit(f);
+	निकास_पर(f);
 
-	/* Check for priviledges and syscall availability straight away. */
-	if (unshare(CLONE_NEWIPC) == -1) {
-		if (errno == ENOSYS || errno == EPERM) {
-			return 4;
-		}
-		return 1;
-	}
+	/* Check क्रम priviledges and syscall availability straight away. */
+	अगर (unshare(CLONE_NEWIPC) == -1) अणु
+		अगर (त्रुटि_सं == ENOSYS || त्रुटि_सं == EPERM) अणु
+			वापस 4;
+		पूर्ण
+		वापस 1;
+	पूर्ण
 	/* Distinguisher between two otherwise empty IPC namespaces. */
-	if (shmget(IPC_PRIVATE, 1, IPC_CREAT) == -1) {
-		return 1;
-	}
+	अगर (shmget(IPC_PRIVATE, 1, IPC_CREAT) == -1) अणु
+		वापस 1;
+	पूर्ण
 
-	if (pipe(fd) == -1) {
-		return 1;
-	}
+	अगर (pipe(fd) == -1) अणु
+		वापस 1;
+	पूर्ण
 
-	pid = fork();
-	if (pid == -1) {
-		return 1;
-	}
+	pid = विभाजन();
+	अगर (pid == -1) अणु
+		वापस 1;
+	पूर्ण
 
-	if (pid == 0) {
-		if (unshare(CLONE_NEWIPC) == -1) {
-			return 1;
-		}
+	अगर (pid == 0) अणु
+		अगर (unshare(CLONE_NEWIPC) == -1) अणु
+			वापस 1;
+		पूर्ण
 
-		if (write(fd[1], &_, 1) != 1) {
-			return 1;
-		}
+		अगर (ग_लिखो(fd[1], &_, 1) != 1) अणु
+			वापस 1;
+		पूर्ण
 
-		pause();
+		छोड़ो();
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (read(fd[0], &_, 1) != 1) {
-		return 1;
-	}
+	अगर (पढ़ो(fd[0], &_, 1) != 1) अणु
+		वापस 1;
+	पूर्ण
 
-	{
-		char buf[64];
-		snprintf(buf, sizeof(buf), "/proc/%u/ns/ipc", pid);
-		nsfd = open(buf, O_RDONLY);
-		if (nsfd == -1) {
-			return 1;
-		}
-	}
+	अणु
+		अक्षर buf[64];
+		snम_लिखो(buf, माप(buf), "/proc/%u/ns/ipc", pid);
+		nsfd = खोलो(buf, O_RDONLY);
+		अगर (nsfd == -1) अणु
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	/* Reliably pin dentry into dcache. */
-	(void)open("/proc/sysvipc/shm", O_RDONLY);
+	/* Reliably pin dentry पूर्णांकo dcache. */
+	(व्योम)खोलो("/proc/sysvipc/shm", O_RDONLY);
 
-	if (setns(nsfd, CLONE_NEWIPC) == -1) {
-		return 1;
-	}
+	अगर (setns(nsfd, CLONE_NEWIPC) == -1) अणु
+		वापस 1;
+	पूर्ण
 
-	kill(pid, SIGTERM);
+	समाप्त(pid, संक_इति);
 	pid = 0;
 
-	{
-		char buf[4096];
-		ssize_t rv;
-		int fd;
+	अणु
+		अक्षर buf[4096];
+		sमाप_प्रकार rv;
+		पूर्णांक fd;
 
-		fd = open("/proc/sysvipc/shm", O_RDONLY);
-		if (fd == -1) {
-			return 1;
-		}
+		fd = खोलो("/proc/sysvipc/shm", O_RDONLY);
+		अगर (fd == -1) अणु
+			वापस 1;
+		पूर्ण
 
-#define S32 "       key      shmid perms       size  cpid  lpid nattch   uid   gid  cuid  cgid      atime      dtime      ctime        rss       swap\n"
-#define S64 "       key      shmid perms                  size  cpid  lpid nattch   uid   gid  cuid  cgid      atime      dtime      ctime                   rss                  swap\n"
-		rv = read(fd, buf, sizeof(buf));
-		if (rv == strlen(S32)) {
-			assert(memcmp(buf, S32, strlen(S32)) == 0);
-		} else if (rv == strlen(S64)) {
-			assert(memcmp(buf, S64, strlen(S64)) == 0);
-		} else {
-			assert(0);
-		}
-	}
+#घोषणा S32 "       key      shmid perms       size  cpid  lpid nattch   uid   gid  cuid  cgid      atime      dtime      ctime        rss       swap\n"
+#घोषणा S64 "       key      shmid perms                  size  cpid  lpid nattch   uid   gid  cuid  cgid      atime      dtime      ctime                   rss                  swap\n"
+		rv = पढ़ो(fd, buf, माप(buf));
+		अगर (rv == म_माप(S32)) अणु
+			निश्चित(स_भेद(buf, S32, म_माप(S32)) == 0);
+		पूर्ण अन्यथा अगर (rv == म_माप(S64)) अणु
+			निश्चित(स_भेद(buf, S64, म_माप(S64)) == 0);
+		पूर्ण अन्यथा अणु
+			निश्चित(0);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

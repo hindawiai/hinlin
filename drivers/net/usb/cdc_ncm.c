@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * cdc_ncm.c
  *
@@ -5,31 +6,31 @@
  * Contact: Alexey Orishko <alexey.orishko@stericsson.com>
  * Original author: Hans Petter Selasky <hans.petter.selasky@stericsson.com>
  *
- * USB Host Driver for Network Control Model (NCM)
- * http://www.usb.org/developers/docs/devclass_docs/NCM10_012011.zip
+ * USB Host Driver क्रम Network Control Model (NCM)
+ * http://www.usb.org/developers/करोcs/devclass_करोcs/NCM10_012011.zip
  *
  * The NCM encoding, decoding and initialization logic
- * derives from FreeBSD 8.x. if_cdce.c and if_cdcereg.h
+ * derives from FreeBSD 8.x. अगर_cdce.c and अगर_cdcereg.h
  *
  * This software is available to you under a choice of one of two
  * licenses. You may choose this file to be licensed under the terms
  * of the GNU General Public License (GPL) Version 2 or the 2-clause
  * BSD license listed below:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -38,101 +39,101 @@
  * SUCH DAMAGE.
  */
 
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/ctype.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/workqueue.h>
-#include <linux/mii.h>
-#include <linux/crc32.h>
-#include <linux/usb.h>
-#include <linux/hrtimer.h>
-#include <linux/atomic.h>
-#include <linux/usb/usbnet.h>
-#include <linux/usb/cdc.h>
-#include <linux/usb/cdc_ncm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/usb/usbnet.h>
+#समावेश <linux/usb/cdc.h>
+#समावेश <linux/usb/cdc_ncm.h>
 
-#if IS_ENABLED(CONFIG_USB_NET_CDC_MBIM)
-static bool prefer_mbim = true;
-#else
-static bool prefer_mbim;
-#endif
+#अगर IS_ENABLED(CONFIG_USB_NET_CDC_MBIM)
+अटल bool prefer_mbim = true;
+#अन्यथा
+अटल bool prefer_mbim;
+#पूर्ण_अगर
 module_param(prefer_mbim, bool, 0644);
 MODULE_PARM_DESC(prefer_mbim, "Prefer MBIM setting on dual NCM/MBIM functions");
 
-static void cdc_ncm_txpath_bh(struct tasklet_struct *t);
-static void cdc_ncm_tx_timeout_start(struct cdc_ncm_ctx *ctx);
-static enum hrtimer_restart cdc_ncm_tx_timer_cb(struct hrtimer *hr_timer);
-static struct usb_driver cdc_ncm_driver;
+अटल व्योम cdc_ncm_txpath_bh(काष्ठा tasklet_काष्ठा *t);
+अटल व्योम cdc_ncm_tx_समयout_start(काष्ठा cdc_ncm_ctx *ctx);
+अटल क्रमागत hrसमयr_restart cdc_ncm_tx_समयr_cb(काष्ठा hrसमयr *hr_समयr);
+अटल काष्ठा usb_driver cdc_ncm_driver;
 
-struct cdc_ncm_stats {
-	char stat_string[ETH_GSTRING_LEN];
-	int sizeof_stat;
-	int stat_offset;
-};
+काष्ठा cdc_ncm_stats अणु
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+पूर्ण;
 
-#define CDC_NCM_STAT(str, m) { \
+#घोषणा CDC_NCM_STAT(str, m) अणु \
 		.stat_string = str, \
-		.sizeof_stat = sizeof(((struct cdc_ncm_ctx *)0)->m), \
-		.stat_offset = offsetof(struct cdc_ncm_ctx, m) }
-#define CDC_NCM_SIMPLE_STAT(m)	CDC_NCM_STAT(__stringify(m), m)
+		.माप_stat = माप(((काष्ठा cdc_ncm_ctx *)0)->m), \
+		.stat_offset = दुरत्व(काष्ठा cdc_ncm_ctx, m) पूर्ण
+#घोषणा CDC_NCM_SIMPLE_STAT(m)	CDC_NCM_STAT(__stringअगरy(m), m)
 
-static const struct cdc_ncm_stats cdc_ncm_gstrings_stats[] = {
+अटल स्थिर काष्ठा cdc_ncm_stats cdc_ncm_gstrings_stats[] = अणु
 	CDC_NCM_SIMPLE_STAT(tx_reason_ntb_full),
 	CDC_NCM_SIMPLE_STAT(tx_reason_ndp_full),
-	CDC_NCM_SIMPLE_STAT(tx_reason_timeout),
+	CDC_NCM_SIMPLE_STAT(tx_reason_समयout),
 	CDC_NCM_SIMPLE_STAT(tx_reason_max_datagram),
 	CDC_NCM_SIMPLE_STAT(tx_overhead),
 	CDC_NCM_SIMPLE_STAT(tx_ntbs),
 	CDC_NCM_SIMPLE_STAT(rx_overhead),
 	CDC_NCM_SIMPLE_STAT(rx_ntbs),
-};
+पूर्ण;
 
-#define CDC_NCM_LOW_MEM_MAX_CNT 10
+#घोषणा CDC_NCM_LOW_MEM_MAX_CNT 10
 
-static int cdc_ncm_get_sset_count(struct net_device __always_unused *netdev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
-		return ARRAY_SIZE(cdc_ncm_gstrings_stats);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक cdc_ncm_get_sset_count(काष्ठा net_device __always_unused *netdev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस ARRAY_SIZE(cdc_ncm_gstrings_stats);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void cdc_ncm_get_ethtool_stats(struct net_device *netdev,
-				    struct ethtool_stats __always_unused *stats,
+अटल व्योम cdc_ncm_get_ethtool_stats(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_stats __always_unused *stats,
 				    u64 *data)
-{
-	struct usbnet *dev = netdev_priv(netdev);
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	int i;
-	char *p = NULL;
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	पूर्णांक i;
+	अक्षर *p = शून्य;
 
-	for (i = 0; i < ARRAY_SIZE(cdc_ncm_gstrings_stats); i++) {
-		p = (char *)ctx + cdc_ncm_gstrings_stats[i].stat_offset;
-		data[i] = (cdc_ncm_gstrings_stats[i].sizeof_stat == sizeof(u64)) ? *(u64 *)p : *(u32 *)p;
-	}
-}
+	क्रम (i = 0; i < ARRAY_SIZE(cdc_ncm_gstrings_stats); i++) अणु
+		p = (अक्षर *)ctx + cdc_ncm_gstrings_stats[i].stat_offset;
+		data[i] = (cdc_ncm_gstrings_stats[i].माप_stat == माप(u64)) ? *(u64 *)p : *(u32 *)p;
+	पूर्ण
+पूर्ण
 
-static void cdc_ncm_get_strings(struct net_device __always_unused *netdev, u32 stringset, u8 *data)
-{
+अटल व्योम cdc_ncm_get_strings(काष्ठा net_device __always_unused *netdev, u32 stringset, u8 *data)
+अणु
 	u8 *p = data;
-	int i;
+	पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < ARRAY_SIZE(cdc_ncm_gstrings_stats); i++) {
-			memcpy(p, cdc_ncm_gstrings_stats[i].stat_string, ETH_GSTRING_LEN);
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < ARRAY_SIZE(cdc_ncm_gstrings_stats); i++) अणु
+			स_नकल(p, cdc_ncm_gstrings_stats[i].stat_string, ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void cdc_ncm_update_rxtx_max(struct usbnet *dev, u32 new_rx, u32 new_tx);
+अटल व्योम cdc_ncm_update_rxtx_max(काष्ठा usbnet *dev, u32 new_rx, u32 new_tx);
 
-static const struct ethtool_ops cdc_ncm_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops cdc_ncm_ethtool_ops = अणु
 	.get_link		= usbnet_get_link,
 	.nway_reset		= usbnet_nway_reset,
 	.get_drvinfo		= usbnet_get_drvinfo,
@@ -142,308 +143,308 @@ static const struct ethtool_ops cdc_ncm_ethtool_ops = {
 	.get_sset_count		= cdc_ncm_get_sset_count,
 	.get_strings		= cdc_ncm_get_strings,
 	.get_ethtool_stats	= cdc_ncm_get_ethtool_stats,
-	.get_link_ksettings	= usbnet_get_link_ksettings_internal,
-	.set_link_ksettings	= NULL,
-};
+	.get_link_ksettings	= usbnet_get_link_ksettings_पूर्णांकernal,
+	.set_link_ksettings	= शून्य,
+पूर्ण;
 
-static u32 cdc_ncm_check_rx_max(struct usbnet *dev, u32 new_rx)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल u32 cdc_ncm_check_rx_max(काष्ठा usbnet *dev, u32 new_rx)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 	u32 val, max, min;
 
 	/* clamp new_rx to sane values */
 	min = USB_CDC_NCM_NTB_MIN_IN_SIZE;
 	max = min_t(u32, CDC_NCM_NTB_MAX_SIZE_RX, le32_to_cpu(ctx->ncm_parm.dwNtbInMaxSize));
 
-	/* dwNtbInMaxSize spec violation? Use MIN size for both limits */
-	if (max < min) {
-		dev_warn(&dev->intf->dev, "dwNtbInMaxSize=%u is too small. Using %u\n",
+	/* dwNtbInMaxSize spec violation? Use MIN size क्रम both limits */
+	अगर (max < min) अणु
+		dev_warn(&dev->पूर्णांकf->dev, "dwNtbInMaxSize=%u is too small. Using %u\n",
 			 le32_to_cpu(ctx->ncm_parm.dwNtbInMaxSize), min);
 		max = min;
-	}
+	पूर्ण
 
 	val = clamp_t(u32, new_rx, min, max);
-	if (val != new_rx)
-		dev_dbg(&dev->intf->dev, "rx_max must be in the [%u, %u] range\n", min, max);
+	अगर (val != new_rx)
+		dev_dbg(&dev->पूर्णांकf->dev, "rx_max must be in the [%u, %u] range\n", min, max);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static u32 cdc_ncm_check_tx_max(struct usbnet *dev, u32 new_tx)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल u32 cdc_ncm_check_tx_max(काष्ठा usbnet *dev, u32 new_tx)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 	u32 val, max, min;
 
 	/* clamp new_tx to sane values */
-	if (ctx->is_ndp16)
-		min = ctx->max_datagram_size + ctx->max_ndp_size + sizeof(struct usb_cdc_ncm_nth16);
-	else
-		min = ctx->max_datagram_size + ctx->max_ndp_size + sizeof(struct usb_cdc_ncm_nth32);
+	अगर (ctx->is_ndp16)
+		min = ctx->max_datagram_size + ctx->max_ndp_size + माप(काष्ठा usb_cdc_ncm_nth16);
+	अन्यथा
+		min = ctx->max_datagram_size + ctx->max_ndp_size + माप(काष्ठा usb_cdc_ncm_nth32);
 
 	max = min_t(u32, CDC_NCM_NTB_MAX_SIZE_TX, le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize));
 
-	/* some devices set dwNtbOutMaxSize too low for the above default */
+	/* some devices set dwNtbOutMaxSize too low क्रम the above शेष */
 	min = min(min, max);
 
 	val = clamp_t(u32, new_tx, min, max);
-	if (val != new_tx)
-		dev_dbg(&dev->intf->dev, "tx_max must be in the [%u, %u] range\n", min, max);
+	अगर (val != new_tx)
+		dev_dbg(&dev->पूर्णांकf->dev, "tx_max must be in the [%u, %u] range\n", min, max);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static ssize_t cdc_ncm_show_min_tx_pkt(struct device *d, struct device_attribute *attr, char *buf)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल sमाप_प्रकार cdc_ncm_show_min_tx_pkt(काष्ठा device *d, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 
-	return sprintf(buf, "%u\n", ctx->min_tx_pkt);
-}
+	वापस प्र_लिखो(buf, "%u\n", ctx->min_tx_pkt);
+पूर्ण
 
-static ssize_t cdc_ncm_show_rx_max(struct device *d, struct device_attribute *attr, char *buf)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल sमाप_प्रकार cdc_ncm_show_rx_max(काष्ठा device *d, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 
-	return sprintf(buf, "%u\n", ctx->rx_max);
-}
+	वापस प्र_लिखो(buf, "%u\n", ctx->rx_max);
+पूर्ण
 
-static ssize_t cdc_ncm_show_tx_max(struct device *d, struct device_attribute *attr, char *buf)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल sमाप_प्रकार cdc_ncm_show_tx_max(काष्ठा device *d, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 
-	return sprintf(buf, "%u\n", ctx->tx_max);
-}
+	वापस प्र_लिखो(buf, "%u\n", ctx->tx_max);
+पूर्ण
 
-static ssize_t cdc_ncm_show_tx_timer_usecs(struct device *d, struct device_attribute *attr, char *buf)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल sमाप_प्रकार cdc_ncm_show_tx_समयr_usecs(काष्ठा device *d, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 
-	return sprintf(buf, "%u\n", ctx->timer_interval / (u32)NSEC_PER_USEC);
-}
+	वापस प्र_लिखो(buf, "%u\n", ctx->समयr_पूर्णांकerval / (u32)NSEC_PER_USEC);
+पूर्ण
 
-static ssize_t cdc_ncm_store_min_tx_pkt(struct device *d,  struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	unsigned long val;
+अटल sमाप_प्रकार cdc_ncm_store_min_tx_pkt(काष्ठा device *d,  काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	अचिन्हित दीर्घ val;
 
 	/* no need to restrict values - anything from 0 to infinity is OK */
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	ctx->min_tx_pkt = val;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t cdc_ncm_store_rx_max(struct device *d,  struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	unsigned long val;
+अटल sमाप_प्रकार cdc_ncm_store_rx_max(काष्ठा device *d,  काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val) || cdc_ncm_check_rx_max(dev, val) != val)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val) || cdc_ncm_check_rx_max(dev, val) != val)
+		वापस -EINVAL;
 
 	cdc_ncm_update_rxtx_max(dev, val, ctx->tx_max);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t cdc_ncm_store_tx_max(struct device *d,  struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	unsigned long val;
+अटल sमाप_प्रकार cdc_ncm_store_tx_max(काष्ठा device *d,  काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val) || cdc_ncm_check_tx_max(dev, val) != val)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val) || cdc_ncm_check_tx_max(dev, val) != val)
+		वापस -EINVAL;
 
 	cdc_ncm_update_rxtx_max(dev, ctx->rx_max, val);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t cdc_ncm_store_tx_timer_usecs(struct device *d,  struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	ssize_t ret;
-	unsigned long val;
+अटल sमाप_प्रकार cdc_ncm_store_tx_समयr_usecs(काष्ठा device *d,  काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	sमाप_प्रकार ret;
+	अचिन्हित दीर्घ val;
 
-	ret = kstrtoul(buf, 0, &val);
-	if (ret)
-		return ret;
-	if (val && (val < CDC_NCM_TIMER_INTERVAL_MIN || val > CDC_NCM_TIMER_INTERVAL_MAX))
-		return -EINVAL;
+	ret = kम_से_अदीर्घ(buf, 0, &val);
+	अगर (ret)
+		वापस ret;
+	अगर (val && (val < CDC_NCM_TIMER_INTERVAL_MIN || val > CDC_NCM_TIMER_INTERVAL_MAX))
+		वापस -EINVAL;
 
 	spin_lock_bh(&ctx->mtx);
-	ctx->timer_interval = val * NSEC_PER_USEC;
-	if (!ctx->timer_interval)
-		ctx->tx_timer_pending = 0;
+	ctx->समयr_पूर्णांकerval = val * NSEC_PER_USEC;
+	अगर (!ctx->समयr_पूर्णांकerval)
+		ctx->tx_समयr_pending = 0;
 	spin_unlock_bh(&ctx->mtx);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR(min_tx_pkt, 0644, cdc_ncm_show_min_tx_pkt, cdc_ncm_store_min_tx_pkt);
-static DEVICE_ATTR(rx_max, 0644, cdc_ncm_show_rx_max, cdc_ncm_store_rx_max);
-static DEVICE_ATTR(tx_max, 0644, cdc_ncm_show_tx_max, cdc_ncm_store_tx_max);
-static DEVICE_ATTR(tx_timer_usecs, 0644, cdc_ncm_show_tx_timer_usecs, cdc_ncm_store_tx_timer_usecs);
+अटल DEVICE_ATTR(min_tx_pkt, 0644, cdc_ncm_show_min_tx_pkt, cdc_ncm_store_min_tx_pkt);
+अटल DEVICE_ATTR(rx_max, 0644, cdc_ncm_show_rx_max, cdc_ncm_store_rx_max);
+अटल DEVICE_ATTR(tx_max, 0644, cdc_ncm_show_tx_max, cdc_ncm_store_tx_max);
+अटल DEVICE_ATTR(tx_समयr_usecs, 0644, cdc_ncm_show_tx_समयr_usecs, cdc_ncm_store_tx_समयr_usecs);
 
-static ssize_t ndp_to_end_show(struct device *d, struct device_attribute *attr, char *buf)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल sमाप_प्रकार ndp_to_end_show(काष्ठा device *d, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 
-	return sprintf(buf, "%c\n", ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END ? 'Y' : 'N');
-}
+	वापस प्र_लिखो(buf, "%c\n", ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END ? 'Y' : 'N');
+पूर्ण
 
-static ssize_t ndp_to_end_store(struct device *d,  struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct usbnet *dev = netdev_priv(to_net_dev(d));
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल sमाप_प्रकार ndp_to_end_store(काष्ठा device *d,  काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d));
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 	bool enable;
 
-	if (strtobool(buf, &enable))
-		return -EINVAL;
+	अगर (strtobool(buf, &enable))
+		वापस -EINVAL;
 
 	/* no change? */
-	if (enable == (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
-		return len;
+	अगर (enable == (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
+		वापस len;
 
-	if (enable) {
-		if (ctx->is_ndp16 && !ctx->delayed_ndp16) {
+	अगर (enable) अणु
+		अगर (ctx->is_ndp16 && !ctx->delayed_ndp16) अणु
 			ctx->delayed_ndp16 = kzalloc(ctx->max_ndp_size, GFP_KERNEL);
-			if (!ctx->delayed_ndp16)
-				return -ENOMEM;
-		}
-		if (!ctx->is_ndp16 && !ctx->delayed_ndp32) {
+			अगर (!ctx->delayed_ndp16)
+				वापस -ENOMEM;
+		पूर्ण
+		अगर (!ctx->is_ndp16 && !ctx->delayed_ndp32) अणु
 			ctx->delayed_ndp32 = kzalloc(ctx->max_ndp_size, GFP_KERNEL);
-			if (!ctx->delayed_ndp32)
-				return -ENOMEM;
-		}
-	}
+			अगर (!ctx->delayed_ndp32)
+				वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	/* flush pending data before changing flag */
-	netif_tx_lock_bh(dev->net);
-	usbnet_start_xmit(NULL, dev->net);
+	/* flush pending data beक्रमe changing flag */
+	netअगर_tx_lock_bh(dev->net);
+	usbnet_start_xmit(शून्य, dev->net);
 	spin_lock_bh(&ctx->mtx);
-	if (enable)
+	अगर (enable)
 		ctx->drvflags |= CDC_NCM_FLAG_NDP_TO_END;
-	else
+	अन्यथा
 		ctx->drvflags &= ~CDC_NCM_FLAG_NDP_TO_END;
 	spin_unlock_bh(&ctx->mtx);
-	netif_tx_unlock_bh(dev->net);
+	netअगर_tx_unlock_bh(dev->net);
 
-	return len;
-}
-static DEVICE_ATTR_RW(ndp_to_end);
+	वापस len;
+पूर्ण
+अटल DEVICE_ATTR_RW(ndp_to_end);
 
-#define NCM_PARM_ATTR(name, format, tocpu)				\
-static ssize_t cdc_ncm_show_##name(struct device *d, struct device_attribute *attr, char *buf) \
-{ \
-	struct usbnet *dev = netdev_priv(to_net_dev(d)); \
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0]; \
-	return sprintf(buf, format "\n", tocpu(ctx->ncm_parm.name));	\
-} \
-static DEVICE_ATTR(name, 0444, cdc_ncm_show_##name, NULL)
+#घोषणा NCM_PARM_ATTR(name, क्रमmat, tocpu)				\
+अटल sमाप_प्रकार cdc_ncm_show_##name(काष्ठा device *d, काष्ठा device_attribute *attr, अक्षर *buf) \
+अणु \
+	काष्ठा usbnet *dev = netdev_priv(to_net_dev(d)); \
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0]; \
+	वापस प्र_लिखो(buf, क्रमmat "\n", tocpu(ctx->ncm_parm.name));	\
+पूर्ण \
+अटल DEVICE_ATTR(name, 0444, cdc_ncm_show_##name, शून्य)
 
 NCM_PARM_ATTR(bmNtbFormatsSupported, "0x%04x", le16_to_cpu);
 NCM_PARM_ATTR(dwNtbInMaxSize, "%u", le32_to_cpu);
 NCM_PARM_ATTR(wNdpInDivisor, "%u", le16_to_cpu);
-NCM_PARM_ATTR(wNdpInPayloadRemainder, "%u", le16_to_cpu);
+NCM_PARM_ATTR(wNdpInPayloadReमुख्यder, "%u", le16_to_cpu);
 NCM_PARM_ATTR(wNdpInAlignment, "%u", le16_to_cpu);
 NCM_PARM_ATTR(dwNtbOutMaxSize, "%u", le32_to_cpu);
 NCM_PARM_ATTR(wNdpOutDivisor, "%u", le16_to_cpu);
-NCM_PARM_ATTR(wNdpOutPayloadRemainder, "%u", le16_to_cpu);
+NCM_PARM_ATTR(wNdpOutPayloadReमुख्यder, "%u", le16_to_cpu);
 NCM_PARM_ATTR(wNdpOutAlignment, "%u", le16_to_cpu);
 NCM_PARM_ATTR(wNtbOutMaxDatagrams, "%u", le16_to_cpu);
 
-static struct attribute *cdc_ncm_sysfs_attrs[] = {
+अटल काष्ठा attribute *cdc_ncm_sysfs_attrs[] = अणु
 	&dev_attr_min_tx_pkt.attr,
 	&dev_attr_ndp_to_end.attr,
 	&dev_attr_rx_max.attr,
 	&dev_attr_tx_max.attr,
-	&dev_attr_tx_timer_usecs.attr,
+	&dev_attr_tx_समयr_usecs.attr,
 	&dev_attr_bmNtbFormatsSupported.attr,
 	&dev_attr_dwNtbInMaxSize.attr,
 	&dev_attr_wNdpInDivisor.attr,
-	&dev_attr_wNdpInPayloadRemainder.attr,
+	&dev_attr_wNdpInPayloadReमुख्यder.attr,
 	&dev_attr_wNdpInAlignment.attr,
 	&dev_attr_dwNtbOutMaxSize.attr,
 	&dev_attr_wNdpOutDivisor.attr,
-	&dev_attr_wNdpOutPayloadRemainder.attr,
+	&dev_attr_wNdpOutPayloadReमुख्यder.attr,
 	&dev_attr_wNdpOutAlignment.attr,
 	&dev_attr_wNtbOutMaxDatagrams.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group cdc_ncm_sysfs_attr_group = {
+अटल स्थिर काष्ठा attribute_group cdc_ncm_sysfs_attr_group = अणु
 	.name = "cdc_ncm",
 	.attrs = cdc_ncm_sysfs_attrs,
-};
+पूर्ण;
 
 /* handle rx_max and tx_max changes */
-static void cdc_ncm_update_rxtx_max(struct usbnet *dev, u32 new_rx, u32 new_tx)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	u8 iface_no = ctx->control->cur_altsetting->desc.bInterfaceNumber;
+अटल व्योम cdc_ncm_update_rxtx_max(काष्ठा usbnet *dev, u32 new_rx, u32 new_tx)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	u8 अगरace_no = ctx->control->cur_altsetting->desc.bInterfaceNumber;
 	u32 val;
 
 	val = cdc_ncm_check_rx_max(dev, new_rx);
 
-	/* inform device about NTB input size changes */
-	if (val != ctx->rx_max) {
+	/* inक्रमm device about NTB input size changes */
+	अगर (val != ctx->rx_max) अणु
 		__le32 dwNtbInMaxSize = cpu_to_le32(val);
 
-		dev_info(&dev->intf->dev, "setting rx_max = %u\n", val);
+		dev_info(&dev->पूर्णांकf->dev, "setting rx_max = %u\n", val);
 
 		/* tell device to use new size */
-		if (usbnet_write_cmd(dev, USB_CDC_SET_NTB_INPUT_SIZE,
-				     USB_TYPE_CLASS | USB_DIR_OUT
+		अगर (usbnet_ग_लिखो_cmd(dev, USB_CDC_SET_NTB_INPUT_SIZE,
+				     USB_TYPE_CLASS | USB_सूची_OUT
 				     | USB_RECIP_INTERFACE,
-				     0, iface_no, &dwNtbInMaxSize, 4) < 0)
-			dev_dbg(&dev->intf->dev, "Setting NTB Input Size failed\n");
-		else
+				     0, अगरace_no, &dwNtbInMaxSize, 4) < 0)
+			dev_dbg(&dev->पूर्णांकf->dev, "Setting NTB Input Size failed\n");
+		अन्यथा
 			ctx->rx_max = val;
-	}
+	पूर्ण
 
-	/* usbnet use these values for sizing rx queues */
-	if (dev->rx_urb_size != ctx->rx_max) {
+	/* usbnet use these values क्रम sizing rx queues */
+	अगर (dev->rx_urb_size != ctx->rx_max) अणु
 		dev->rx_urb_size = ctx->rx_max;
-		if (netif_running(dev->net))
+		अगर (netअगर_running(dev->net))
 			usbnet_unlink_rx_urbs(dev);
-	}
+	पूर्ण
 
 	val = cdc_ncm_check_tx_max(dev, new_tx);
-	if (val != ctx->tx_max)
-		dev_info(&dev->intf->dev, "setting tx_max = %u\n", val);
+	अगर (val != ctx->tx_max)
+		dev_info(&dev->पूर्णांकf->dev, "setting tx_max = %u\n", val);
 
-	/* Adding a pad byte here if necessary simplifies the handling
+	/* Adding a pad byte here अगर necessary simplअगरies the handling
 	 * in cdc_ncm_fill_tx_frame, making tx_max always represent
 	 * the real skb max size.
 	 *
 	 * We cannot use dev->maxpacket here because this is called from
-	 * .bind which is called before usbnet sets up dev->maxpacket
+	 * .bind which is called beक्रमe usbnet sets up dev->maxpacket
 	 */
-	if (val != le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize) &&
+	अगर (val != le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize) &&
 	    val % usb_maxpacket(dev->udev, dev->out, 1) == 0)
 		val++;
 
-	/* we might need to flush any pending tx buffers if running */
-	if (netif_running(dev->net) && val > ctx->tx_max) {
-		netif_tx_lock_bh(dev->net);
-		usbnet_start_xmit(NULL, dev->net);
-		/* make sure tx_curr_skb is reallocated if it was empty */
-		if (ctx->tx_curr_skb) {
-			dev_kfree_skb_any(ctx->tx_curr_skb);
-			ctx->tx_curr_skb = NULL;
-		}
+	/* we might need to flush any pending tx buffers अगर running */
+	अगर (netअगर_running(dev->net) && val > ctx->tx_max) अणु
+		netअगर_tx_lock_bh(dev->net);
+		usbnet_start_xmit(शून्य, dev->net);
+		/* make sure tx_curr_skb is पुनः_स्मृतिated अगर it was empty */
+		अगर (ctx->tx_curr_skb) अणु
+			dev_kमुक्त_skb_any(ctx->tx_curr_skb);
+			ctx->tx_curr_skb = शून्य;
+		पूर्ण
 		ctx->tx_max = val;
-		netif_tx_unlock_bh(dev->net);
-	} else {
+		netअगर_tx_unlock_bh(dev->net);
+	पूर्ण अन्यथा अणु
 		ctx->tx_max = val;
-	}
+	पूर्ण
 
 	dev->hard_mtu = ctx->tx_max;
 
@@ -453,500 +454,500 @@ static void cdc_ncm_update_rxtx_max(struct usbnet *dev, u32 new_rx, u32 new_tx)
 	/* never pad more than 3 full USB packets per transfer */
 	ctx->min_tx_pkt = clamp_t(u16, ctx->tx_max - 3 * usb_maxpacket(dev->udev, dev->out, 1),
 				  CDC_NCM_MIN_TX_PKT, ctx->tx_max);
-}
+पूर्ण
 
-/* helpers for NCM and MBIM differences */
-static u8 cdc_ncm_flags(struct usbnet *dev)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+/* helpers क्रम NCM and MBIM dअगरferences */
+अटल u8 cdc_ncm_flags(काष्ठा usbnet *dev)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 
-	if (cdc_ncm_comm_intf_is_mbim(dev->intf->cur_altsetting) && ctx->mbim_desc)
-		return ctx->mbim_desc->bmNetworkCapabilities;
-	if (ctx->func_desc)
-		return ctx->func_desc->bmNetworkCapabilities;
-	return 0;
-}
+	अगर (cdc_ncm_comm_पूर्णांकf_is_mbim(dev->पूर्णांकf->cur_altsetting) && ctx->mbim_desc)
+		वापस ctx->mbim_desc->bmNetworkCapabilities;
+	अगर (ctx->func_desc)
+		वापस ctx->func_desc->bmNetworkCapabilities;
+	वापस 0;
+पूर्ण
 
-static int cdc_ncm_eth_hlen(struct usbnet *dev)
-{
-	if (cdc_ncm_comm_intf_is_mbim(dev->intf->cur_altsetting))
-		return 0;
-	return ETH_HLEN;
-}
+अटल पूर्णांक cdc_ncm_eth_hlen(काष्ठा usbnet *dev)
+अणु
+	अगर (cdc_ncm_comm_पूर्णांकf_is_mbim(dev->पूर्णांकf->cur_altsetting))
+		वापस 0;
+	वापस ETH_HLEN;
+पूर्ण
 
-static u32 cdc_ncm_min_dgram_size(struct usbnet *dev)
-{
-	if (cdc_ncm_comm_intf_is_mbim(dev->intf->cur_altsetting))
-		return CDC_MBIM_MIN_DATAGRAM_SIZE;
-	return CDC_NCM_MIN_DATAGRAM_SIZE;
-}
+अटल u32 cdc_ncm_min_dgram_size(काष्ठा usbnet *dev)
+अणु
+	अगर (cdc_ncm_comm_पूर्णांकf_is_mbim(dev->पूर्णांकf->cur_altsetting))
+		वापस CDC_MBIM_MIN_DATAGRAM_SIZE;
+	वापस CDC_NCM_MIN_DATAGRAM_SIZE;
+पूर्ण
 
-static u32 cdc_ncm_max_dgram_size(struct usbnet *dev)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल u32 cdc_ncm_max_dgram_size(काष्ठा usbnet *dev)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 
-	if (cdc_ncm_comm_intf_is_mbim(dev->intf->cur_altsetting) && ctx->mbim_desc)
-		return le16_to_cpu(ctx->mbim_desc->wMaxSegmentSize);
-	if (ctx->ether_desc)
-		return le16_to_cpu(ctx->ether_desc->wMaxSegmentSize);
-	return CDC_NCM_MAX_DATAGRAM_SIZE;
-}
+	अगर (cdc_ncm_comm_पूर्णांकf_is_mbim(dev->पूर्णांकf->cur_altsetting) && ctx->mbim_desc)
+		वापस le16_to_cpu(ctx->mbim_desc->wMaxSegmentSize);
+	अगर (ctx->ether_desc)
+		वापस le16_to_cpu(ctx->ether_desc->wMaxSegmentSize);
+	वापस CDC_NCM_MAX_DATAGRAM_SIZE;
+पूर्ण
 
-/* initial one-time device setup.  MUST be called with the data interface
+/* initial one-समय device setup.  MUST be called with the data पूर्णांकerface
  * in altsetting 0
  */
-static int cdc_ncm_init(struct usbnet *dev)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	u8 iface_no = ctx->control->cur_altsetting->desc.bInterfaceNumber;
-	int err;
+अटल पूर्णांक cdc_ncm_init(काष्ठा usbnet *dev)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	u8 अगरace_no = ctx->control->cur_altsetting->desc.bInterfaceNumber;
+	पूर्णांक err;
 
-	err = usbnet_read_cmd(dev, USB_CDC_GET_NTB_PARAMETERS,
-			      USB_TYPE_CLASS | USB_DIR_IN
+	err = usbnet_पढ़ो_cmd(dev, USB_CDC_GET_NTB_PARAMETERS,
+			      USB_TYPE_CLASS | USB_सूची_IN
 			      |USB_RECIP_INTERFACE,
-			      0, iface_no, &ctx->ncm_parm,
-			      sizeof(ctx->ncm_parm));
-	if (err < 0) {
-		dev_err(&dev->intf->dev, "failed GET_NTB_PARAMETERS\n");
-		return err; /* GET_NTB_PARAMETERS is required */
-	}
+			      0, अगरace_no, &ctx->ncm_parm,
+			      माप(ctx->ncm_parm));
+	अगर (err < 0) अणु
+		dev_err(&dev->पूर्णांकf->dev, "failed GET_NTB_PARAMETERS\n");
+		वापस err; /* GET_NTB_PARAMETERS is required */
+	पूर्ण
 
 	/* set CRC Mode */
-	if (cdc_ncm_flags(dev) & USB_CDC_NCM_NCAP_CRC_MODE) {
-		dev_dbg(&dev->intf->dev, "Setting CRC mode off\n");
-		err = usbnet_write_cmd(dev, USB_CDC_SET_CRC_MODE,
-				       USB_TYPE_CLASS | USB_DIR_OUT
+	अगर (cdc_ncm_flags(dev) & USB_CDC_NCM_NCAP_CRC_MODE) अणु
+		dev_dbg(&dev->पूर्णांकf->dev, "Setting CRC mode off\n");
+		err = usbnet_ग_लिखो_cmd(dev, USB_CDC_SET_CRC_MODE,
+				       USB_TYPE_CLASS | USB_सूची_OUT
 				       | USB_RECIP_INTERFACE,
 				       USB_CDC_NCM_CRC_NOT_APPENDED,
-				       iface_no, NULL, 0);
-		if (err < 0)
-			dev_err(&dev->intf->dev, "SET_CRC_MODE failed\n");
-	}
+				       अगरace_no, शून्य, 0);
+		अगर (err < 0)
+			dev_err(&dev->पूर्णांकf->dev, "SET_CRC_MODE failed\n");
+	पूर्ण
 
-	/* use ndp16 by default */
+	/* use ndp16 by शेष */
 	ctx->is_ndp16 = 1;
 
-	/* set NTB format, if both formats are supported.
+	/* set NTB क्रमmat, अगर both क्रमmats are supported.
 	 *
-	 * "The host shall only send this command while the NCM Data
+	 * "The host shall only send this command जबतक the NCM Data
 	 *  Interface is in alternate setting 0."
 	 */
-	if (le16_to_cpu(ctx->ncm_parm.bmNtbFormatsSupported) &
-						USB_CDC_NCM_NTB32_SUPPORTED) {
-		if (ctx->drvflags & CDC_NCM_FLAG_PREFER_NTB32) {
+	अगर (le16_to_cpu(ctx->ncm_parm.bmNtbFormatsSupported) &
+						USB_CDC_NCM_NTB32_SUPPORTED) अणु
+		अगर (ctx->drvflags & CDC_NCM_FLAG_PREFER_NTB32) अणु
 			ctx->is_ndp16 = 0;
-			dev_dbg(&dev->intf->dev, "Setting NTB format to 32-bit\n");
-			err = usbnet_write_cmd(dev, USB_CDC_SET_NTB_FORMAT,
-					       USB_TYPE_CLASS | USB_DIR_OUT
+			dev_dbg(&dev->पूर्णांकf->dev, "Setting NTB format to 32-bit\n");
+			err = usbnet_ग_लिखो_cmd(dev, USB_CDC_SET_NTB_FORMAT,
+					       USB_TYPE_CLASS | USB_सूची_OUT
 					       | USB_RECIP_INTERFACE,
 					       USB_CDC_NCM_NTB32_FORMAT,
-					       iface_no, NULL, 0);
-		} else {
+					       अगरace_no, शून्य, 0);
+		पूर्ण अन्यथा अणु
 			ctx->is_ndp16 = 1;
-			dev_dbg(&dev->intf->dev, "Setting NTB format to 16-bit\n");
-			err = usbnet_write_cmd(dev, USB_CDC_SET_NTB_FORMAT,
-					       USB_TYPE_CLASS | USB_DIR_OUT
+			dev_dbg(&dev->पूर्णांकf->dev, "Setting NTB format to 16-bit\n");
+			err = usbnet_ग_लिखो_cmd(dev, USB_CDC_SET_NTB_FORMAT,
+					       USB_TYPE_CLASS | USB_सूची_OUT
 					       | USB_RECIP_INTERFACE,
 					       USB_CDC_NCM_NTB16_FORMAT,
-					       iface_no, NULL, 0);
-		}
-		if (err < 0) {
+					       अगरace_no, शून्य, 0);
+		पूर्ण
+		अगर (err < 0) अणु
 			ctx->is_ndp16 = 1;
-			dev_err(&dev->intf->dev, "SET_NTB_FORMAT failed\n");
-		}
-	}
+			dev_err(&dev->पूर्णांकf->dev, "SET_NTB_FORMAT failed\n");
+		पूर्ण
+	पूर्ण
 
 	/* set initial device values */
 	ctx->rx_max = le32_to_cpu(ctx->ncm_parm.dwNtbInMaxSize);
 	ctx->tx_max = le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize);
-	ctx->tx_remainder = le16_to_cpu(ctx->ncm_parm.wNdpOutPayloadRemainder);
+	ctx->tx_reमुख्यder = le16_to_cpu(ctx->ncm_parm.wNdpOutPayloadReमुख्यder);
 	ctx->tx_modulus = le16_to_cpu(ctx->ncm_parm.wNdpOutDivisor);
 	ctx->tx_ndp_modulus = le16_to_cpu(ctx->ncm_parm.wNdpOutAlignment);
 	/* devices prior to NCM Errata shall set this field to zero */
 	ctx->tx_max_datagrams = le16_to_cpu(ctx->ncm_parm.wNtbOutMaxDatagrams);
 
-	dev_dbg(&dev->intf->dev,
+	dev_dbg(&dev->पूर्णांकf->dev,
 		"dwNtbInMaxSize=%u dwNtbOutMaxSize=%u wNdpOutPayloadRemainder=%u wNdpOutDivisor=%u wNdpOutAlignment=%u wNtbOutMaxDatagrams=%u flags=0x%x\n",
-		ctx->rx_max, ctx->tx_max, ctx->tx_remainder, ctx->tx_modulus,
+		ctx->rx_max, ctx->tx_max, ctx->tx_reमुख्यder, ctx->tx_modulus,
 		ctx->tx_ndp_modulus, ctx->tx_max_datagrams, cdc_ncm_flags(dev));
 
 	/* max count of tx datagrams */
-	if ((ctx->tx_max_datagrams == 0) ||
+	अगर ((ctx->tx_max_datagrams == 0) ||
 			(ctx->tx_max_datagrams > CDC_NCM_DPT_DATAGRAMS_MAX))
 		ctx->tx_max_datagrams = CDC_NCM_DPT_DATAGRAMS_MAX;
 
 	/* set up maximum NDP size */
-	if (ctx->is_ndp16)
-		ctx->max_ndp_size = sizeof(struct usb_cdc_ncm_ndp16) + (ctx->tx_max_datagrams + 1) * sizeof(struct usb_cdc_ncm_dpe16);
-	else
-		ctx->max_ndp_size = sizeof(struct usb_cdc_ncm_ndp32) + (ctx->tx_max_datagrams + 1) * sizeof(struct usb_cdc_ncm_dpe32);
+	अगर (ctx->is_ndp16)
+		ctx->max_ndp_size = माप(काष्ठा usb_cdc_ncm_ndp16) + (ctx->tx_max_datagrams + 1) * माप(काष्ठा usb_cdc_ncm_dpe16);
+	अन्यथा
+		ctx->max_ndp_size = माप(काष्ठा usb_cdc_ncm_ndp32) + (ctx->tx_max_datagrams + 1) * माप(काष्ठा usb_cdc_ncm_dpe32);
 
-	/* initial coalescing timer interval */
-	ctx->timer_interval = CDC_NCM_TIMER_INTERVAL_USEC * NSEC_PER_USEC;
+	/* initial coalescing समयr पूर्णांकerval */
+	ctx->समयr_पूर्णांकerval = CDC_NCM_TIMER_INTERVAL_USEC * NSEC_PER_USEC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* set a new max datagram size */
-static void cdc_ncm_set_dgram_size(struct usbnet *dev, int new_size)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	u8 iface_no = ctx->control->cur_altsetting->desc.bInterfaceNumber;
+अटल व्योम cdc_ncm_set_dgram_size(काष्ठा usbnet *dev, पूर्णांक new_size)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	u8 अगरace_no = ctx->control->cur_altsetting->desc.bInterfaceNumber;
 	__le16 max_datagram_size;
 	u16 mbim_mtu;
-	int err;
+	पूर्णांक err;
 
-	/* set default based on descriptors */
+	/* set शेष based on descriptors */
 	ctx->max_datagram_size = clamp_t(u32, new_size,
 					 cdc_ncm_min_dgram_size(dev),
 					 CDC_NCM_MAX_DATAGRAM_SIZE);
 
-	/* inform the device about the selected Max Datagram Size? */
-	if (!(cdc_ncm_flags(dev) & USB_CDC_NCM_NCAP_MAX_DATAGRAM_SIZE))
-		goto out;
+	/* inक्रमm the device about the selected Max Datagram Size? */
+	अगर (!(cdc_ncm_flags(dev) & USB_CDC_NCM_NCAP_MAX_DATAGRAM_SIZE))
+		जाओ out;
 
-	/* read current mtu value from device */
-	err = usbnet_read_cmd(dev, USB_CDC_GET_MAX_DATAGRAM_SIZE,
-			      USB_TYPE_CLASS | USB_DIR_IN | USB_RECIP_INTERFACE,
-			      0, iface_no, &max_datagram_size, sizeof(max_datagram_size));
-	if (err != sizeof(max_datagram_size)) {
-		dev_dbg(&dev->intf->dev, "GET_MAX_DATAGRAM_SIZE failed\n");
-		goto out;
-	}
+	/* पढ़ो current mtu value from device */
+	err = usbnet_पढ़ो_cmd(dev, USB_CDC_GET_MAX_DATAGRAM_SIZE,
+			      USB_TYPE_CLASS | USB_सूची_IN | USB_RECIP_INTERFACE,
+			      0, अगरace_no, &max_datagram_size, माप(max_datagram_size));
+	अगर (err != माप(max_datagram_size)) अणु
+		dev_dbg(&dev->पूर्णांकf->dev, "GET_MAX_DATAGRAM_SIZE failed\n");
+		जाओ out;
+	पूर्ण
 
-	if (le16_to_cpu(max_datagram_size) == ctx->max_datagram_size)
-		goto out;
+	अगर (le16_to_cpu(max_datagram_size) == ctx->max_datagram_size)
+		जाओ out;
 
 	max_datagram_size = cpu_to_le16(ctx->max_datagram_size);
-	err = usbnet_write_cmd(dev, USB_CDC_SET_MAX_DATAGRAM_SIZE,
-			       USB_TYPE_CLASS | USB_DIR_OUT | USB_RECIP_INTERFACE,
-			       0, iface_no, &max_datagram_size, sizeof(max_datagram_size));
-	if (err < 0)
-		dev_dbg(&dev->intf->dev, "SET_MAX_DATAGRAM_SIZE failed\n");
+	err = usbnet_ग_लिखो_cmd(dev, USB_CDC_SET_MAX_DATAGRAM_SIZE,
+			       USB_TYPE_CLASS | USB_सूची_OUT | USB_RECIP_INTERFACE,
+			       0, अगरace_no, &max_datagram_size, माप(max_datagram_size));
+	अगर (err < 0)
+		dev_dbg(&dev->पूर्णांकf->dev, "SET_MAX_DATAGRAM_SIZE failed\n");
 
 out:
-	/* set MTU to max supported by the device if necessary */
-	dev->net->mtu = min_t(int, dev->net->mtu, ctx->max_datagram_size - cdc_ncm_eth_hlen(dev));
+	/* set MTU to max supported by the device अगर necessary */
+	dev->net->mtu = min_t(पूर्णांक, dev->net->mtu, ctx->max_datagram_size - cdc_ncm_eth_hlen(dev));
 
-	/* do not exceed operater preferred MTU */
-	if (ctx->mbim_extended_desc) {
+	/* करो not exceed operater preferred MTU */
+	अगर (ctx->mbim_extended_desc) अणु
 		mbim_mtu = le16_to_cpu(ctx->mbim_extended_desc->wMTU);
-		if (mbim_mtu != 0 && mbim_mtu < dev->net->mtu)
+		अगर (mbim_mtu != 0 && mbim_mtu < dev->net->mtu)
 			dev->net->mtu = mbim_mtu;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cdc_ncm_fix_modulus(struct usbnet *dev)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल व्योम cdc_ncm_fix_modulus(काष्ठा usbnet *dev)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 	u32 val;
 
 	/*
-	 * verify that the structure alignment is:
-	 * - power of two
+	 * verअगरy that the काष्ठाure alignment is:
+	 * - घातer of two
 	 * - not greater than the maximum transmit length
 	 * - not less than four bytes
 	 */
 	val = ctx->tx_ndp_modulus;
 
-	if ((val < USB_CDC_NCM_NDP_ALIGN_MIN_SIZE) ||
-	    (val != ((-val) & val)) || (val >= ctx->tx_max)) {
-		dev_dbg(&dev->intf->dev, "Using default alignment: 4 bytes\n");
+	अगर ((val < USB_CDC_NCM_NDP_ALIGN_MIN_SIZE) ||
+	    (val != ((-val) & val)) || (val >= ctx->tx_max)) अणु
+		dev_dbg(&dev->पूर्णांकf->dev, "Using default alignment: 4 bytes\n");
 		ctx->tx_ndp_modulus = USB_CDC_NCM_NDP_ALIGN_MIN_SIZE;
-	}
+	पूर्ण
 
 	/*
-	 * verify that the payload alignment is:
-	 * - power of two
+	 * verअगरy that the payload alignment is:
+	 * - घातer of two
 	 * - not greater than the maximum transmit length
 	 * - not less than four bytes
 	 */
 	val = ctx->tx_modulus;
 
-	if ((val < USB_CDC_NCM_NDP_ALIGN_MIN_SIZE) ||
-	    (val != ((-val) & val)) || (val >= ctx->tx_max)) {
-		dev_dbg(&dev->intf->dev, "Using default transmit modulus: 4 bytes\n");
+	अगर ((val < USB_CDC_NCM_NDP_ALIGN_MIN_SIZE) ||
+	    (val != ((-val) & val)) || (val >= ctx->tx_max)) अणु
+		dev_dbg(&dev->पूर्णांकf->dev, "Using default transmit modulus: 4 bytes\n");
 		ctx->tx_modulus = USB_CDC_NCM_NDP_ALIGN_MIN_SIZE;
-	}
+	पूर्ण
 
-	/* verify the payload remainder */
-	if (ctx->tx_remainder >= ctx->tx_modulus) {
-		dev_dbg(&dev->intf->dev, "Using default transmit remainder: 0 bytes\n");
-		ctx->tx_remainder = 0;
-	}
+	/* verअगरy the payload reमुख्यder */
+	अगर (ctx->tx_reमुख्यder >= ctx->tx_modulus) अणु
+		dev_dbg(&dev->पूर्णांकf->dev, "Using default transmit remainder: 0 bytes\n");
+		ctx->tx_reमुख्यder = 0;
+	पूर्ण
 
-	/* adjust TX-remainder according to NCM specification. */
-	ctx->tx_remainder = ((ctx->tx_remainder - cdc_ncm_eth_hlen(dev)) &
+	/* adjust TX-reमुख्यder according to NCM specअगरication. */
+	ctx->tx_reमुख्यder = ((ctx->tx_reमुख्यder - cdc_ncm_eth_hlen(dev)) &
 			     (ctx->tx_modulus - 1));
-}
+पूर्ण
 
-static int cdc_ncm_setup(struct usbnet *dev)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+अटल पूर्णांक cdc_ncm_setup(काष्ठा usbnet *dev)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 	u32 def_rx, def_tx;
 
-	/* be conservative when selecting intial buffer size to
-	 * increase the number of hosts this will work for
+	/* be conservative when selecting पूर्णांकial buffer size to
+	 * increase the number of hosts this will work क्रम
 	 */
 	def_rx = min_t(u32, CDC_NCM_NTB_DEF_SIZE_RX,
 		       le32_to_cpu(ctx->ncm_parm.dwNtbInMaxSize));
 	def_tx = min_t(u32, CDC_NCM_NTB_DEF_SIZE_TX,
 		       le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize));
 
-	/* clamp rx_max and tx_max and inform device */
+	/* clamp rx_max and tx_max and inक्रमm device */
 	cdc_ncm_update_rxtx_max(dev, def_rx, def_tx);
 
-	/* sanitize the modulus and remainder values */
+	/* sanitize the modulus and reमुख्यder values */
 	cdc_ncm_fix_modulus(dev);
 
 	/* set max datagram size */
 	cdc_ncm_set_dgram_size(dev, cdc_ncm_max_dgram_size(dev));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-cdc_ncm_find_endpoints(struct usbnet *dev, struct usb_interface *intf)
-{
-	struct usb_host_endpoint *e, *in = NULL, *out = NULL;
+अटल व्योम
+cdc_ncm_find_endpoपूर्णांकs(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा usb_host_endpoपूर्णांक *e, *in = शून्य, *out = शून्य;
 	u8 ep;
 
-	for (ep = 0; ep < intf->cur_altsetting->desc.bNumEndpoints; ep++) {
-		e = intf->cur_altsetting->endpoint + ep;
+	क्रम (ep = 0; ep < पूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs; ep++) अणु
+		e = पूर्णांकf->cur_altsetting->endpoपूर्णांक + ep;
 
-		/* ignore endpoints which cannot transfer data */
-		if (!usb_endpoint_maxp(&e->desc))
-			continue;
+		/* ignore endpoपूर्णांकs which cannot transfer data */
+		अगर (!usb_endpoपूर्णांक_maxp(&e->desc))
+			जारी;
 
-		switch (e->desc.bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) {
-		case USB_ENDPOINT_XFER_INT:
-			if (usb_endpoint_dir_in(&e->desc)) {
-				if (!dev->status)
+		चयन (e->desc.bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) अणु
+		हाल USB_ENDPOINT_XFER_INT:
+			अगर (usb_endpoपूर्णांक_dir_in(&e->desc)) अणु
+				अगर (!dev->status)
 					dev->status = e;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case USB_ENDPOINT_XFER_BULK:
-			if (usb_endpoint_dir_in(&e->desc)) {
-				if (!in)
+		हाल USB_ENDPOINT_XFER_BULK:
+			अगर (usb_endpoपूर्णांक_dir_in(&e->desc)) अणु
+				अगर (!in)
 					in = e;
-			} else {
-				if (!out)
+			पूर्ण अन्यथा अणु
+				अगर (!out)
 					out = e;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
-	if (in && !dev->in)
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (in && !dev->in)
 		dev->in = usb_rcvbulkpipe(dev->udev,
-					  in->desc.bEndpointAddress &
+					  in->desc.bEndpoपूर्णांकAddress &
 					  USB_ENDPOINT_NUMBER_MASK);
-	if (out && !dev->out)
+	अगर (out && !dev->out)
 		dev->out = usb_sndbulkpipe(dev->udev,
-					   out->desc.bEndpointAddress &
+					   out->desc.bEndpoपूर्णांकAddress &
 					   USB_ENDPOINT_NUMBER_MASK);
-}
+पूर्ण
 
-static void cdc_ncm_free(struct cdc_ncm_ctx *ctx)
-{
-	if (ctx == NULL)
-		return;
+अटल व्योम cdc_ncm_मुक्त(काष्ठा cdc_ncm_ctx *ctx)
+अणु
+	अगर (ctx == शून्य)
+		वापस;
 
-	if (ctx->tx_rem_skb != NULL) {
-		dev_kfree_skb_any(ctx->tx_rem_skb);
-		ctx->tx_rem_skb = NULL;
-	}
+	अगर (ctx->tx_rem_skb != शून्य) अणु
+		dev_kमुक्त_skb_any(ctx->tx_rem_skb);
+		ctx->tx_rem_skb = शून्य;
+	पूर्ण
 
-	if (ctx->tx_curr_skb != NULL) {
-		dev_kfree_skb_any(ctx->tx_curr_skb);
-		ctx->tx_curr_skb = NULL;
-	}
+	अगर (ctx->tx_curr_skb != शून्य) अणु
+		dev_kमुक्त_skb_any(ctx->tx_curr_skb);
+		ctx->tx_curr_skb = शून्य;
+	पूर्ण
 
-	if (ctx->is_ndp16)
-		kfree(ctx->delayed_ndp16);
-	else
-		kfree(ctx->delayed_ndp32);
+	अगर (ctx->is_ndp16)
+		kमुक्त(ctx->delayed_ndp16);
+	अन्यथा
+		kमुक्त(ctx->delayed_ndp32);
 
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 
-/* we need to override the usbnet change_mtu ndo for two reasons:
+/* we need to override the usbnet change_mtu nकरो क्रम two reasons:
  *  - respect the negotiated maximum datagram size
- *  - avoid unwanted changes to rx and tx buffers
+ *  - aव्योम unwanted changes to rx and tx buffers
  */
-int cdc_ncm_change_mtu(struct net_device *net, int new_mtu)
-{
-	struct usbnet *dev = netdev_priv(net);
+पूर्णांक cdc_ncm_change_mtu(काष्ठा net_device *net, पूर्णांक new_mtu)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(net);
 
 	net->mtu = new_mtu;
 	cdc_ncm_set_dgram_size(dev, new_mtu + cdc_ncm_eth_hlen(dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdc_ncm_change_mtu);
 
-static const struct net_device_ops cdc_ncm_netdev_ops = {
-	.ndo_open	     = usbnet_open,
-	.ndo_stop	     = usbnet_stop,
-	.ndo_start_xmit	     = usbnet_start_xmit,
-	.ndo_tx_timeout	     = usbnet_tx_timeout,
-	.ndo_set_rx_mode     = usbnet_set_rx_mode,
-	.ndo_get_stats64     = dev_get_tstats64,
-	.ndo_change_mtu	     = cdc_ncm_change_mtu,
-	.ndo_set_mac_address = eth_mac_addr,
-	.ndo_validate_addr   = eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops cdc_ncm_netdev_ops = अणु
+	.nकरो_खोलो	     = usbnet_खोलो,
+	.nकरो_stop	     = usbnet_stop,
+	.nकरो_start_xmit	     = usbnet_start_xmit,
+	.nकरो_tx_समयout	     = usbnet_tx_समयout,
+	.nकरो_set_rx_mode     = usbnet_set_rx_mode,
+	.nकरो_get_stats64     = dev_get_tstats64,
+	.nकरो_change_mtu	     = cdc_ncm_change_mtu,
+	.nकरो_set_mac_address = eth_mac_addr,
+	.nकरो_validate_addr   = eth_validate_addr,
+पूर्ण;
 
-int cdc_ncm_bind_common(struct usbnet *dev, struct usb_interface *intf, u8 data_altsetting, int drvflags)
-{
-	struct cdc_ncm_ctx *ctx;
-	struct usb_driver *driver;
+पूर्णांक cdc_ncm_bind_common(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf, u8 data_altsetting, पूर्णांक drvflags)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx;
+	काष्ठा usb_driver *driver;
 	u8 *buf;
-	int len;
-	int temp;
-	u8 iface_no;
-	struct usb_cdc_parsed_header hdr;
+	पूर्णांक len;
+	पूर्णांक temp;
+	u8 अगरace_no;
+	काष्ठा usb_cdc_parsed_header hdr;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->dev = dev;
 
-	hrtimer_init(&ctx->tx_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	ctx->tx_timer.function = &cdc_ncm_tx_timer_cb;
+	hrसमयr_init(&ctx->tx_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	ctx->tx_समयr.function = &cdc_ncm_tx_समयr_cb;
 	tasklet_setup(&ctx->bh, cdc_ncm_txpath_bh);
 	atomic_set(&ctx->stop, 0);
 	spin_lock_init(&ctx->mtx);
 
-	/* store ctx pointer in device data field */
-	dev->data[0] = (unsigned long)ctx;
+	/* store ctx poपूर्णांकer in device data field */
+	dev->data[0] = (अचिन्हित दीर्घ)ctx;
 
-	/* only the control interface can be successfully probed */
-	ctx->control = intf;
+	/* only the control पूर्णांकerface can be successfully probed */
+	ctx->control = पूर्णांकf;
 
-	/* get some pointers */
-	driver = driver_of(intf);
-	buf = intf->cur_altsetting->extra;
-	len = intf->cur_altsetting->extralen;
+	/* get some poपूर्णांकers */
+	driver = driver_of(पूर्णांकf);
+	buf = पूर्णांकf->cur_altsetting->extra;
+	len = पूर्णांकf->cur_altsetting->extralen;
 
-	/* parse through descriptors associated with control interface */
-	cdc_parse_cdc_header(&hdr, intf, buf, len);
+	/* parse through descriptors associated with control पूर्णांकerface */
+	cdc_parse_cdc_header(&hdr, पूर्णांकf, buf, len);
 
-	if (hdr.usb_cdc_union_desc)
-		ctx->data = usb_ifnum_to_if(dev->udev,
-					    hdr.usb_cdc_union_desc->bSlaveInterface0);
+	अगर (hdr.usb_cdc_जोड़_desc)
+		ctx->data = usb_अगरnum_to_अगर(dev->udev,
+					    hdr.usb_cdc_जोड़_desc->bSlaveInterface0);
 	ctx->ether_desc = hdr.usb_cdc_ether_desc;
 	ctx->func_desc = hdr.usb_cdc_ncm_desc;
 	ctx->mbim_desc = hdr.usb_cdc_mbim_desc;
 	ctx->mbim_extended_desc = hdr.usb_cdc_mbim_extended_desc;
 
 	/* some buggy devices have an IAD but no CDC Union */
-	if (!hdr.usb_cdc_union_desc && intf->intf_assoc && intf->intf_assoc->bInterfaceCount == 2) {
-		ctx->data = usb_ifnum_to_if(dev->udev, intf->cur_altsetting->desc.bInterfaceNumber + 1);
-		dev_dbg(&intf->dev, "CDC Union missing - got slave from IAD\n");
-	}
+	अगर (!hdr.usb_cdc_जोड़_desc && पूर्णांकf->पूर्णांकf_assoc && पूर्णांकf->पूर्णांकf_assoc->bInterfaceCount == 2) अणु
+		ctx->data = usb_अगरnum_to_अगर(dev->udev, पूर्णांकf->cur_altsetting->desc.bInterfaceNumber + 1);
+		dev_dbg(&पूर्णांकf->dev, "CDC Union missing - got slave from IAD\n");
+	पूर्ण
 
-	/* check if we got everything */
-	if (!ctx->data) {
-		dev_err(&intf->dev, "CDC Union missing and no IAD found\n");
-		goto error;
-	}
-	if (cdc_ncm_comm_intf_is_mbim(intf->cur_altsetting)) {
-		if (!ctx->mbim_desc) {
-			dev_err(&intf->dev, "MBIM functional descriptor missing\n");
-			goto error;
-		}
-	} else {
-		if (!ctx->ether_desc || !ctx->func_desc) {
-			dev_err(&intf->dev, "NCM or ECM functional descriptors missing\n");
-			goto error;
-		}
-	}
+	/* check अगर we got everything */
+	अगर (!ctx->data) अणु
+		dev_err(&पूर्णांकf->dev, "CDC Union missing and no IAD found\n");
+		जाओ error;
+	पूर्ण
+	अगर (cdc_ncm_comm_पूर्णांकf_is_mbim(पूर्णांकf->cur_altsetting)) अणु
+		अगर (!ctx->mbim_desc) अणु
+			dev_err(&पूर्णांकf->dev, "MBIM functional descriptor missing\n");
+			जाओ error;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!ctx->ether_desc || !ctx->func_desc) अणु
+			dev_err(&पूर्णांकf->dev, "NCM or ECM functional descriptors missing\n");
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	/* claim data interface, if different from control */
-	if (ctx->data != ctx->control) {
-		temp = usb_driver_claim_interface(driver, ctx->data, dev);
-		if (temp) {
-			dev_err(&intf->dev, "failed to claim data intf\n");
-			goto error;
-		}
-	}
+	/* claim data पूर्णांकerface, अगर dअगरferent from control */
+	अगर (ctx->data != ctx->control) अणु
+		temp = usb_driver_claim_पूर्णांकerface(driver, ctx->data, dev);
+		अगर (temp) अणु
+			dev_err(&पूर्णांकf->dev, "failed to claim data intf\n");
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	iface_no = ctx->data->cur_altsetting->desc.bInterfaceNumber;
+	अगरace_no = ctx->data->cur_altsetting->desc.bInterfaceNumber;
 
-	/* Device-specific flags */
+	/* Device-specअगरic flags */
 	ctx->drvflags = drvflags;
 
-	/* Reset data interface. Some devices will not reset properly
+	/* Reset data पूर्णांकerface. Some devices will not reset properly
 	 * unless they are configured first.  Toggle the altsetting to
-	 * force a reset.
-	 * Some other devices do not work properly with this procedure
-	 * that can be avoided using quirk CDC_MBIM_FLAG_AVOID_ALTSETTING_TOGGLE
+	 * क्रमce a reset.
+	 * Some other devices करो not work properly with this procedure
+	 * that can be aव्योमed using quirk CDC_MBIM_FLAG_AVOID_ALTSETTING_TOGGLE
 	 */
-	if (!(ctx->drvflags & CDC_MBIM_FLAG_AVOID_ALTSETTING_TOGGLE))
-		usb_set_interface(dev->udev, iface_no, data_altsetting);
+	अगर (!(ctx->drvflags & CDC_MBIM_FLAG_AVOID_ALTSETTING_TOGGLE))
+		usb_set_पूर्णांकerface(dev->udev, अगरace_no, data_altsetting);
 
-	temp = usb_set_interface(dev->udev, iface_no, 0);
-	if (temp) {
-		dev_dbg(&intf->dev, "set interface failed\n");
-		goto error2;
-	}
+	temp = usb_set_पूर्णांकerface(dev->udev, अगरace_no, 0);
+	अगर (temp) अणु
+		dev_dbg(&पूर्णांकf->dev, "set interface failed\n");
+		जाओ error2;
+	पूर्ण
 
 	/* initialize basic device settings */
-	if (cdc_ncm_init(dev))
-		goto error2;
+	अगर (cdc_ncm_init(dev))
+		जाओ error2;
 
-	/* Some firmwares need a pause here or they will silently fail
-	 * to set up the interface properly.  This value was decided
+	/* Some firmwares need a छोड़ो here or they will silently fail
+	 * to set up the पूर्णांकerface properly.  This value was decided
 	 * empirically on a Sierra Wireless MC7455 running 02.08.02.00
 	 * firmware.
 	 */
 	usleep_range(10000, 20000);
 
-	/* configure data interface */
-	temp = usb_set_interface(dev->udev, iface_no, data_altsetting);
-	if (temp) {
-		dev_dbg(&intf->dev, "set interface failed\n");
-		goto error2;
-	}
+	/* configure data पूर्णांकerface */
+	temp = usb_set_पूर्णांकerface(dev->udev, अगरace_no, data_altsetting);
+	अगर (temp) अणु
+		dev_dbg(&पूर्णांकf->dev, "set interface failed\n");
+		जाओ error2;
+	पूर्ण
 
-	cdc_ncm_find_endpoints(dev, ctx->data);
-	cdc_ncm_find_endpoints(dev, ctx->control);
-	if (!dev->in || !dev->out || !dev->status) {
-		dev_dbg(&intf->dev, "failed to collect endpoints\n");
-		goto error2;
-	}
+	cdc_ncm_find_endpoपूर्णांकs(dev, ctx->data);
+	cdc_ncm_find_endpoपूर्णांकs(dev, ctx->control);
+	अगर (!dev->in || !dev->out || !dev->status) अणु
+		dev_dbg(&पूर्णांकf->dev, "failed to collect endpoints\n");
+		जाओ error2;
+	पूर्ण
 
-	usb_set_intfdata(ctx->control, dev);
+	usb_set_पूर्णांकfdata(ctx->control, dev);
 
-	if (ctx->ether_desc) {
+	अगर (ctx->ether_desc) अणु
 		temp = usbnet_get_ethernet_addr(dev, ctx->ether_desc->iMACAddress);
-		if (temp) {
-			dev_err(&intf->dev, "failed to get mac address\n");
-			goto error2;
-		}
-		dev_info(&intf->dev, "MAC-Address: %pM\n", dev->net->dev_addr);
-	}
+		अगर (temp) अणु
+			dev_err(&पूर्णांकf->dev, "failed to get mac address\n");
+			जाओ error2;
+		पूर्ण
+		dev_info(&पूर्णांकf->dev, "MAC-Address: %pM\n", dev->net->dev_addr);
+	पूर्ण
 
-	/* finish setting up the device specific data */
+	/* finish setting up the device specअगरic data */
 	cdc_ncm_setup(dev);
 
-	/* Allocate the delayed NDP if needed. */
-	if (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END) {
-		if (ctx->is_ndp16) {
+	/* Allocate the delayed NDP अगर needed. */
+	अगर (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END) अणु
+		अगर (ctx->is_ndp16) अणु
 			ctx->delayed_ndp16 = kzalloc(ctx->max_ndp_size, GFP_KERNEL);
-			if (!ctx->delayed_ndp16)
-				goto error2;
-		} else {
+			अगर (!ctx->delayed_ndp16)
+				जाओ error2;
+		पूर्ण अन्यथा अणु
 			ctx->delayed_ndp32 = kzalloc(ctx->max_ndp_size, GFP_KERNEL);
-			if (!ctx->delayed_ndp32)
-				goto error2;
-		}
-		dev_info(&intf->dev, "NDP will be placed at end of frame for this device.");
-	}
+			अगर (!ctx->delayed_ndp32)
+				जाओ error2;
+		पूर्ण
+		dev_info(&पूर्णांकf->dev, "NDP will be placed at end of frame for this device.");
+	पूर्ण
 
 	/* override ethtool_ops */
 	dev->net->ethtool_ops = &cdc_ncm_ethtool_ops;
@@ -958,1055 +959,1055 @@ int cdc_ncm_bind_common(struct usbnet *dev, struct usb_interface *intf, u8 data_
 	dev->net->netdev_ops = &cdc_ncm_netdev_ops;
 	dev->net->max_mtu = cdc_ncm_max_dgram_size(dev) - cdc_ncm_eth_hlen(dev);
 
-	return 0;
+	वापस 0;
 
 error2:
-	usb_set_intfdata(ctx->control, NULL);
-	usb_set_intfdata(ctx->data, NULL);
-	if (ctx->data != ctx->control)
-		usb_driver_release_interface(driver, ctx->data);
+	usb_set_पूर्णांकfdata(ctx->control, शून्य);
+	usb_set_पूर्णांकfdata(ctx->data, शून्य);
+	अगर (ctx->data != ctx->control)
+		usb_driver_release_पूर्णांकerface(driver, ctx->data);
 error:
-	cdc_ncm_free((struct cdc_ncm_ctx *)dev->data[0]);
+	cdc_ncm_मुक्त((काष्ठा cdc_ncm_ctx *)dev->data[0]);
 	dev->data[0] = 0;
-	dev_info(&intf->dev, "bind() failure\n");
-	return -ENODEV;
-}
+	dev_info(&पूर्णांकf->dev, "bind() failure\n");
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdc_ncm_bind_common);
 
-void cdc_ncm_unbind(struct usbnet *dev, struct usb_interface *intf)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	struct usb_driver *driver = driver_of(intf);
+व्योम cdc_ncm_unbind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	काष्ठा usb_driver *driver = driver_of(पूर्णांकf);
 
-	if (ctx == NULL)
-		return;		/* no setup */
+	अगर (ctx == शून्य)
+		वापस;		/* no setup */
 
 	atomic_set(&ctx->stop, 1);
 
-	hrtimer_cancel(&ctx->tx_timer);
+	hrसमयr_cancel(&ctx->tx_समयr);
 
-	tasklet_kill(&ctx->bh);
+	tasklet_समाप्त(&ctx->bh);
 
-	/* handle devices with combined control and data interface */
-	if (ctx->control == ctx->data)
-		ctx->data = NULL;
+	/* handle devices with combined control and data पूर्णांकerface */
+	अगर (ctx->control == ctx->data)
+		ctx->data = शून्य;
 
 	/* disconnect master --> disconnect slave */
-	if (intf == ctx->control && ctx->data) {
-		usb_set_intfdata(ctx->data, NULL);
-		usb_driver_release_interface(driver, ctx->data);
-		ctx->data = NULL;
+	अगर (पूर्णांकf == ctx->control && ctx->data) अणु
+		usb_set_पूर्णांकfdata(ctx->data, शून्य);
+		usb_driver_release_पूर्णांकerface(driver, ctx->data);
+		ctx->data = शून्य;
 
-	} else if (intf == ctx->data && ctx->control) {
-		usb_set_intfdata(ctx->control, NULL);
-		usb_driver_release_interface(driver, ctx->control);
-		ctx->control = NULL;
-	}
+	पूर्ण अन्यथा अगर (पूर्णांकf == ctx->data && ctx->control) अणु
+		usb_set_पूर्णांकfdata(ctx->control, शून्य);
+		usb_driver_release_पूर्णांकerface(driver, ctx->control);
+		ctx->control = शून्य;
+	पूर्ण
 
-	usb_set_intfdata(intf, NULL);
-	cdc_ncm_free(ctx);
-}
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	cdc_ncm_मुक्त(ctx);
+पूर्ण
 EXPORT_SYMBOL_GPL(cdc_ncm_unbind);
 
-/* Return the number of the MBIM control interface altsetting iff it
+/* Return the number of the MBIM control पूर्णांकerface altsetting अगरf it
  * is preferred and available,
  */
-u8 cdc_ncm_select_altsetting(struct usb_interface *intf)
-{
-	struct usb_host_interface *alt;
+u8 cdc_ncm_select_altsetting(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा usb_host_पूर्णांकerface *alt;
 
-	/* The MBIM spec defines a NCM compatible default altsetting,
+	/* The MBIM spec defines a NCM compatible शेष altsetting,
 	 * which we may have matched:
 	 *
 	 *  "Functions that implement both NCM 1.0 and MBIM (an
-	 *   “NCM/MBIM function”) according to this recommendation
-	 *   shall provide two alternate settings for the
+	 *   ै NCM/MBIM functionै ) according to this recommendation
+	 *   shall provide two alternate settings क्रम the
 	 *   Communication Interface.  Alternate setting 0, and the
-	 *   associated class and endpoint descriptors, shall be
-	 *   constructed according to the rules given for the
+	 *   associated class and endpoपूर्णांक descriptors, shall be
+	 *   स्थिरructed according to the rules given क्रम the
 	 *   Communication Interface in section 5 of [USBNCM10].
 	 *   Alternate setting 1, and the associated class and
-	 *   endpoint descriptors, shall be constructed according to
+	 *   endpoपूर्णांक descriptors, shall be स्थिरructed according to
 	 *   the rules given in section 6 (USB Device Model) of this
-	 *   specification."
+	 *   specअगरication."
 	 */
-	if (intf->num_altsetting < 2)
-		return intf->cur_altsetting->desc.bAlternateSetting;
+	अगर (पूर्णांकf->num_altsetting < 2)
+		वापस पूर्णांकf->cur_altsetting->desc.bAlternateSetting;
 
-	if (prefer_mbim) {
-		alt = usb_altnum_to_altsetting(intf, CDC_NCM_COMM_ALTSETTING_MBIM);
-		if (alt && cdc_ncm_comm_intf_is_mbim(alt))
-			return CDC_NCM_COMM_ALTSETTING_MBIM;
-	}
-	return CDC_NCM_COMM_ALTSETTING_NCM;
-}
+	अगर (prefer_mbim) अणु
+		alt = usb_altnum_to_altsetting(पूर्णांकf, CDC_NCM_COMM_ALTSETTING_MBIM);
+		अगर (alt && cdc_ncm_comm_पूर्णांकf_is_mbim(alt))
+			वापस CDC_NCM_COMM_ALTSETTING_MBIM;
+	पूर्ण
+	वापस CDC_NCM_COMM_ALTSETTING_NCM;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdc_ncm_select_altsetting);
 
-static int cdc_ncm_bind(struct usbnet *dev, struct usb_interface *intf)
-{
+अटल पूर्णांक cdc_ncm_bind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
 	/* MBIM backwards compatible function? */
-	if (cdc_ncm_select_altsetting(intf) != CDC_NCM_COMM_ALTSETTING_NCM)
-		return -ENODEV;
+	अगर (cdc_ncm_select_altsetting(पूर्णांकf) != CDC_NCM_COMM_ALTSETTING_NCM)
+		वापस -ENODEV;
 
 	/* The NCM data altsetting is fixed, so we hard-coded it.
 	 * Additionally, generic NCM devices are assumed to accept arbitrarily
 	 * placed NDP.
 	 */
-	return cdc_ncm_bind_common(dev, intf, CDC_NCM_DATA_ALTSETTING_NCM, 0);
-}
+	वापस cdc_ncm_bind_common(dev, पूर्णांकf, CDC_NCM_DATA_ALTSETTING_NCM, 0);
+पूर्ण
 
-static void cdc_ncm_align_tail(struct sk_buff *skb, size_t modulus, size_t remainder, size_t max)
-{
-	size_t align = ALIGN(skb->len, modulus) - skb->len + remainder;
+अटल व्योम cdc_ncm_align_tail(काष्ठा sk_buff *skb, माप_प्रकार modulus, माप_प्रकार reमुख्यder, माप_प्रकार max)
+अणु
+	माप_प्रकार align = ALIGN(skb->len, modulus) - skb->len + reमुख्यder;
 
-	if (skb->len + align > max)
+	अगर (skb->len + align > max)
 		align = max - skb->len;
-	if (align && skb_tailroom(skb) >= align)
+	अगर (align && skb_tailroom(skb) >= align)
 		skb_put_zero(skb, align);
-}
+पूर्ण
 
-/* return a pointer to a valid struct usb_cdc_ncm_ndp16 of type sign, possibly
+/* वापस a poपूर्णांकer to a valid काष्ठा usb_cdc_ncm_ndp16 of type sign, possibly
  * allocating a new one within skb
  */
-static struct usb_cdc_ncm_ndp16 *cdc_ncm_ndp16(struct cdc_ncm_ctx *ctx, struct sk_buff *skb, __le32 sign, size_t reserve)
-{
-	struct usb_cdc_ncm_ndp16 *ndp16 = NULL;
-	struct usb_cdc_ncm_nth16 *nth16 = (void *)skb->data;
-	size_t ndpoffset = le16_to_cpu(nth16->wNdpIndex);
+अटल काष्ठा usb_cdc_ncm_ndp16 *cdc_ncm_ndp16(काष्ठा cdc_ncm_ctx *ctx, काष्ठा sk_buff *skb, __le32 sign, माप_प्रकार reserve)
+अणु
+	काष्ठा usb_cdc_ncm_ndp16 *ndp16 = शून्य;
+	काष्ठा usb_cdc_ncm_nth16 *nth16 = (व्योम *)skb->data;
+	माप_प्रकार ndpoffset = le16_to_cpu(nth16->wNdpIndex);
 
 	/* If NDP should be moved to the end of the NCM package, we can't follow the
-	* NTH16 header as we would normally do. NDP isn't written to the SKB yet, and
+	* NTH16 header as we would normally करो. NDP isn't written to the SKB yet, and
 	* the wNdpIndex field in the header is actually not consistent with reality. It will be later.
 	*/
-	if (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END) {
-		if (ctx->delayed_ndp16->dwSignature == sign)
-			return ctx->delayed_ndp16;
+	अगर (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END) अणु
+		अगर (ctx->delayed_ndp16->dwSignature == sign)
+			वापस ctx->delayed_ndp16;
 
 		/* We can only push a single NDP to the end. Return
-		 * NULL to send what we've already got and queue this
-		 * skb for later.
+		 * शून्य to send what we've alपढ़ोy got and queue this
+		 * skb क्रम later.
 		 */
-		else if (ctx->delayed_ndp16->dwSignature)
-			return NULL;
-	}
+		अन्यथा अगर (ctx->delayed_ndp16->dwSignature)
+			वापस शून्य;
+	पूर्ण
 
-	/* follow the chain of NDPs, looking for a match */
-	while (ndpoffset) {
-		ndp16 = (struct usb_cdc_ncm_ndp16 *)(skb->data + ndpoffset);
-		if  (ndp16->dwSignature == sign)
-			return ndp16;
+	/* follow the chain of NDPs, looking क्रम a match */
+	जबतक (ndpoffset) अणु
+		ndp16 = (काष्ठा usb_cdc_ncm_ndp16 *)(skb->data + ndpoffset);
+		अगर  (ndp16->dwSignature == sign)
+			वापस ndp16;
 		ndpoffset = le16_to_cpu(ndp16->wNextNdpIndex);
-	}
+	पूर्ण
 
 	/* align new NDP */
-	if (!(ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
+	अगर (!(ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
 		cdc_ncm_align_tail(skb, ctx->tx_ndp_modulus, 0, ctx->tx_curr_size);
 
-	/* verify that there is room for the NDP and the datagram (reserve) */
-	if ((ctx->tx_curr_size - skb->len - reserve) < ctx->max_ndp_size)
-		return NULL;
+	/* verअगरy that there is room क्रम the NDP and the datagram (reserve) */
+	अगर ((ctx->tx_curr_size - skb->len - reserve) < ctx->max_ndp_size)
+		वापस शून्य;
 
 	/* link to it */
-	if (ndp16)
+	अगर (ndp16)
 		ndp16->wNextNdpIndex = cpu_to_le16(skb->len);
-	else
+	अन्यथा
 		nth16->wNdpIndex = cpu_to_le16(skb->len);
 
 	/* push a new empty NDP */
-	if (!(ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
+	अगर (!(ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
 		ndp16 = skb_put_zero(skb, ctx->max_ndp_size);
-	else
+	अन्यथा
 		ndp16 = ctx->delayed_ndp16;
 
 	ndp16->dwSignature = sign;
-	ndp16->wLength = cpu_to_le16(sizeof(struct usb_cdc_ncm_ndp16) + sizeof(struct usb_cdc_ncm_dpe16));
-	return ndp16;
-}
+	ndp16->wLength = cpu_to_le16(माप(काष्ठा usb_cdc_ncm_ndp16) + माप(काष्ठा usb_cdc_ncm_dpe16));
+	वापस ndp16;
+पूर्ण
 
-static struct usb_cdc_ncm_ndp32 *cdc_ncm_ndp32(struct cdc_ncm_ctx *ctx, struct sk_buff *skb, __le32 sign, size_t reserve)
-{
-	struct usb_cdc_ncm_ndp32 *ndp32 = NULL;
-	struct usb_cdc_ncm_nth32 *nth32 = (void *)skb->data;
-	size_t ndpoffset = le32_to_cpu(nth32->dwNdpIndex);
+अटल काष्ठा usb_cdc_ncm_ndp32 *cdc_ncm_ndp32(काष्ठा cdc_ncm_ctx *ctx, काष्ठा sk_buff *skb, __le32 sign, माप_प्रकार reserve)
+अणु
+	काष्ठा usb_cdc_ncm_ndp32 *ndp32 = शून्य;
+	काष्ठा usb_cdc_ncm_nth32 *nth32 = (व्योम *)skb->data;
+	माप_प्रकार ndpoffset = le32_to_cpu(nth32->dwNdpIndex);
 
 	/* If NDP should be moved to the end of the NCM package, we can't follow the
-	 * NTH32 header as we would normally do. NDP isn't written to the SKB yet, and
+	 * NTH32 header as we would normally करो. NDP isn't written to the SKB yet, and
 	 * the wNdpIndex field in the header is actually not consistent with reality. It will be later.
 	 */
-	if (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END) {
-		if (ctx->delayed_ndp32->dwSignature == sign)
-			return ctx->delayed_ndp32;
+	अगर (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END) अणु
+		अगर (ctx->delayed_ndp32->dwSignature == sign)
+			वापस ctx->delayed_ndp32;
 
 		/* We can only push a single NDP to the end. Return
-		 * NULL to send what we've already got and queue this
-		 * skb for later.
+		 * शून्य to send what we've alपढ़ोy got and queue this
+		 * skb क्रम later.
 		 */
-		else if (ctx->delayed_ndp32->dwSignature)
-			return NULL;
-	}
+		अन्यथा अगर (ctx->delayed_ndp32->dwSignature)
+			वापस शून्य;
+	पूर्ण
 
-	/* follow the chain of NDPs, looking for a match */
-	while (ndpoffset) {
-		ndp32 = (struct usb_cdc_ncm_ndp32 *)(skb->data + ndpoffset);
-		if  (ndp32->dwSignature == sign)
-			return ndp32;
+	/* follow the chain of NDPs, looking क्रम a match */
+	जबतक (ndpoffset) अणु
+		ndp32 = (काष्ठा usb_cdc_ncm_ndp32 *)(skb->data + ndpoffset);
+		अगर  (ndp32->dwSignature == sign)
+			वापस ndp32;
 		ndpoffset = le32_to_cpu(ndp32->dwNextNdpIndex);
-	}
+	पूर्ण
 
 	/* align new NDP */
-	if (!(ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
+	अगर (!(ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
 		cdc_ncm_align_tail(skb, ctx->tx_ndp_modulus, 0, ctx->tx_curr_size);
 
-	/* verify that there is room for the NDP and the datagram (reserve) */
-	if ((ctx->tx_curr_size - skb->len - reserve) < ctx->max_ndp_size)
-		return NULL;
+	/* verअगरy that there is room क्रम the NDP and the datagram (reserve) */
+	अगर ((ctx->tx_curr_size - skb->len - reserve) < ctx->max_ndp_size)
+		वापस शून्य;
 
 	/* link to it */
-	if (ndp32)
+	अगर (ndp32)
 		ndp32->dwNextNdpIndex = cpu_to_le32(skb->len);
-	else
+	अन्यथा
 		nth32->dwNdpIndex = cpu_to_le32(skb->len);
 
 	/* push a new empty NDP */
-	if (!(ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
+	अगर (!(ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END))
 		ndp32 = skb_put_zero(skb, ctx->max_ndp_size);
-	else
+	अन्यथा
 		ndp32 = ctx->delayed_ndp32;
 
 	ndp32->dwSignature = sign;
-	ndp32->wLength = cpu_to_le16(sizeof(struct usb_cdc_ncm_ndp32) + sizeof(struct usb_cdc_ncm_dpe32));
-	return ndp32;
-}
+	ndp32->wLength = cpu_to_le16(माप(काष्ठा usb_cdc_ncm_ndp32) + माप(काष्ठा usb_cdc_ncm_dpe32));
+	वापस ndp32;
+पूर्ण
 
-struct sk_buff *
-cdc_ncm_fill_tx_frame(struct usbnet *dev, struct sk_buff *skb, __le32 sign)
-{
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	union {
-		struct usb_cdc_ncm_nth16 *nth16;
-		struct usb_cdc_ncm_nth32 *nth32;
-	} nth;
-	union {
-		struct usb_cdc_ncm_ndp16 *ndp16;
-		struct usb_cdc_ncm_ndp32 *ndp32;
-	} ndp;
-	struct sk_buff *skb_out;
+काष्ठा sk_buff *
+cdc_ncm_fill_tx_frame(काष्ठा usbnet *dev, काष्ठा sk_buff *skb, __le32 sign)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	जोड़ अणु
+		काष्ठा usb_cdc_ncm_nth16 *nth16;
+		काष्ठा usb_cdc_ncm_nth32 *nth32;
+	पूर्ण nth;
+	जोड़ अणु
+		काष्ठा usb_cdc_ncm_ndp16 *ndp16;
+		काष्ठा usb_cdc_ncm_ndp32 *ndp32;
+	पूर्ण ndp;
+	काष्ठा sk_buff *skb_out;
 	u16 n = 0, index, ndplen;
-	u8 ready2send = 0;
+	u8 पढ़ोy2send = 0;
 	u32 delayed_ndp_size;
-	size_t padding_count;
+	माप_प्रकार padding_count;
 
-	/* When our NDP gets written in cdc_ncm_ndp(), then skb_out->len gets updated
+	/* When our NDP माला_लो written in cdc_ncm_ndp(), then skb_out->len माला_लो updated
 	 * accordingly. Otherwise, we should check here.
 	 */
-	if (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END)
+	अगर (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END)
 		delayed_ndp_size = ctx->max_ndp_size +
 			max_t(u32,
 			      ctx->tx_ndp_modulus,
-			      ctx->tx_modulus + ctx->tx_remainder) - 1;
-	else
+			      ctx->tx_modulus + ctx->tx_reमुख्यder) - 1;
+	अन्यथा
 		delayed_ndp_size = 0;
 
-	/* if there is a remaining skb, it gets priority */
-	if (skb != NULL) {
+	/* अगर there is a reमुख्यing skb, it माला_लो priority */
+	अगर (skb != शून्य) अणु
 		swap(skb, ctx->tx_rem_skb);
 		swap(sign, ctx->tx_rem_sign);
-	} else {
-		ready2send = 1;
-	}
+	पूर्ण अन्यथा अणु
+		पढ़ोy2send = 1;
+	पूर्ण
 
-	/* check if we are resuming an OUT skb */
+	/* check अगर we are resuming an OUT skb */
 	skb_out = ctx->tx_curr_skb;
 
 	/* allocate a new OUT skb */
-	if (!skb_out) {
-		if (ctx->tx_low_mem_val == 0) {
+	अगर (!skb_out) अणु
+		अगर (ctx->tx_low_mem_val == 0) अणु
 			ctx->tx_curr_size = ctx->tx_max;
 			skb_out = alloc_skb(ctx->tx_curr_size, GFP_ATOMIC);
-			/* If the memory allocation fails we will wait longer
-			 * each time before attempting another full size
-			 * allocation again to not overload the system
+			/* If the memory allocation fails we will रुको दीर्घer
+			 * each समय beक्रमe attempting another full size
+			 * allocation again to not overload the प्रणाली
 			 * further.
 			 */
-			if (skb_out == NULL) {
+			अगर (skb_out == शून्य) अणु
 				ctx->tx_low_mem_max_cnt = min(ctx->tx_low_mem_max_cnt + 1,
-							      (unsigned)CDC_NCM_LOW_MEM_MAX_CNT);
+							      (अचिन्हित)CDC_NCM_LOW_MEM_MAX_CNT);
 				ctx->tx_low_mem_val = ctx->tx_low_mem_max_cnt;
-			}
-		}
-		if (skb_out == NULL) {
-			/* See if a very small allocation is possible.
+			पूर्ण
+		पूर्ण
+		अगर (skb_out == शून्य) अणु
+			/* See अगर a very small allocation is possible.
 			 * We will send this packet immediately and hope
 			 * that there is more memory available later.
 			 */
-			if (skb)
+			अगर (skb)
 				ctx->tx_curr_size = max(skb->len,
 					(u32)USB_CDC_NCM_NTB_MIN_OUT_SIZE);
-			else
+			अन्यथा
 				ctx->tx_curr_size = USB_CDC_NCM_NTB_MIN_OUT_SIZE;
 			skb_out = alloc_skb(ctx->tx_curr_size, GFP_ATOMIC);
 
-			/* No allocation possible so we will abort */
-			if (skb_out == NULL) {
-				if (skb != NULL) {
-					dev_kfree_skb_any(skb);
+			/* No allocation possible so we will पात */
+			अगर (skb_out == शून्य) अणु
+				अगर (skb != शून्य) अणु
+					dev_kमुक्त_skb_any(skb);
 					dev->net->stats.tx_dropped++;
-				}
-				goto exit_no_skb;
-			}
+				पूर्ण
+				जाओ निकास_no_skb;
+			पूर्ण
 			ctx->tx_low_mem_val--;
-		}
-		if (ctx->is_ndp16) {
+		पूर्ण
+		अगर (ctx->is_ndp16) अणु
 			/* fill out the initial 16-bit NTB header */
-			nth.nth16 = skb_put_zero(skb_out, sizeof(struct usb_cdc_ncm_nth16));
+			nth.nth16 = skb_put_zero(skb_out, माप(काष्ठा usb_cdc_ncm_nth16));
 			nth.nth16->dwSignature = cpu_to_le32(USB_CDC_NCM_NTH16_SIGN);
-			nth.nth16->wHeaderLength = cpu_to_le16(sizeof(struct usb_cdc_ncm_nth16));
+			nth.nth16->wHeaderLength = cpu_to_le16(माप(काष्ठा usb_cdc_ncm_nth16));
 			nth.nth16->wSequence = cpu_to_le16(ctx->tx_seq++);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* fill out the initial 32-bit NTB header */
-			nth.nth32 = skb_put_zero(skb_out, sizeof(struct usb_cdc_ncm_nth32));
+			nth.nth32 = skb_put_zero(skb_out, माप(काष्ठा usb_cdc_ncm_nth32));
 			nth.nth32->dwSignature = cpu_to_le32(USB_CDC_NCM_NTH32_SIGN);
-			nth.nth32->wHeaderLength = cpu_to_le16(sizeof(struct usb_cdc_ncm_nth32));
+			nth.nth32->wHeaderLength = cpu_to_le16(माप(काष्ठा usb_cdc_ncm_nth32));
 			nth.nth32->wSequence = cpu_to_le16(ctx->tx_seq++);
-		}
+		पूर्ण
 
 		/* count total number of frames in this NTB */
 		ctx->tx_curr_frame_num = 0;
 
-		/* recent payload counter for this skb_out */
+		/* recent payload counter क्रम this skb_out */
 		ctx->tx_curr_frame_payload = 0;
-	}
+	पूर्ण
 
-	for (n = ctx->tx_curr_frame_num; n < ctx->tx_max_datagrams; n++) {
-		/* send any remaining skb first */
-		if (skb == NULL) {
+	क्रम (n = ctx->tx_curr_frame_num; n < ctx->tx_max_datagrams; n++) अणु
+		/* send any reमुख्यing skb first */
+		अगर (skb == शून्य) अणु
 			skb = ctx->tx_rem_skb;
 			sign = ctx->tx_rem_sign;
-			ctx->tx_rem_skb = NULL;
+			ctx->tx_rem_skb = शून्य;
 
-			/* check for end of skb */
-			if (skb == NULL)
-				break;
-		}
+			/* check क्रम end of skb */
+			अगर (skb == शून्य)
+				अवरोध;
+		पूर्ण
 
-		/* get the appropriate NDP for this skb */
-		if (ctx->is_ndp16)
-			ndp.ndp16 = cdc_ncm_ndp16(ctx, skb_out, sign, skb->len + ctx->tx_modulus + ctx->tx_remainder);
-		else
-			ndp.ndp32 = cdc_ncm_ndp32(ctx, skb_out, sign, skb->len + ctx->tx_modulus + ctx->tx_remainder);
+		/* get the appropriate NDP क्रम this skb */
+		अगर (ctx->is_ndp16)
+			ndp.ndp16 = cdc_ncm_ndp16(ctx, skb_out, sign, skb->len + ctx->tx_modulus + ctx->tx_reमुख्यder);
+		अन्यथा
+			ndp.ndp32 = cdc_ncm_ndp32(ctx, skb_out, sign, skb->len + ctx->tx_modulus + ctx->tx_reमुख्यder);
 
 		/* align beginning of next frame */
-		cdc_ncm_align_tail(skb_out,  ctx->tx_modulus, ctx->tx_remainder, ctx->tx_curr_size);
+		cdc_ncm_align_tail(skb_out,  ctx->tx_modulus, ctx->tx_reमुख्यder, ctx->tx_curr_size);
 
-		/* check if we had enough room left for both NDP and frame */
-		if ((ctx->is_ndp16 && !ndp.ndp16) || (!ctx->is_ndp16 && !ndp.ndp32) ||
-		    skb_out->len + skb->len + delayed_ndp_size > ctx->tx_curr_size) {
-			if (n == 0) {
+		/* check अगर we had enough room left क्रम both NDP and frame */
+		अगर ((ctx->is_ndp16 && !ndp.ndp16) || (!ctx->is_ndp16 && !ndp.ndp32) ||
+		    skb_out->len + skb->len + delayed_ndp_size > ctx->tx_curr_size) अणु
+			अगर (n == 0) अणु
 				/* won't fit, MTU problem? */
-				dev_kfree_skb_any(skb);
-				skb = NULL;
+				dev_kमुक्त_skb_any(skb);
+				skb = शून्य;
 				dev->net->stats.tx_dropped++;
-			} else {
-				/* no room for skb - store for later */
-				if (ctx->tx_rem_skb != NULL) {
-					dev_kfree_skb_any(ctx->tx_rem_skb);
+			पूर्ण अन्यथा अणु
+				/* no room क्रम skb - store क्रम later */
+				अगर (ctx->tx_rem_skb != शून्य) अणु
+					dev_kमुक्त_skb_any(ctx->tx_rem_skb);
 					dev->net->stats.tx_dropped++;
-				}
+				पूर्ण
 				ctx->tx_rem_skb = skb;
 				ctx->tx_rem_sign = sign;
-				skb = NULL;
-				ready2send = 1;
-				ctx->tx_reason_ntb_full++;	/* count reason for transmitting */
-			}
-			break;
-		}
+				skb = शून्य;
+				पढ़ोy2send = 1;
+				ctx->tx_reason_ntb_full++;	/* count reason क्रम transmitting */
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		/* calculate frame number within this NDP */
-		if (ctx->is_ndp16) {
+		अगर (ctx->is_ndp16) अणु
 			ndplen = le16_to_cpu(ndp.ndp16->wLength);
-			index = (ndplen - sizeof(struct usb_cdc_ncm_ndp16)) / sizeof(struct usb_cdc_ncm_dpe16) - 1;
+			index = (ndplen - माप(काष्ठा usb_cdc_ncm_ndp16)) / माप(काष्ठा usb_cdc_ncm_dpe16) - 1;
 
 			/* OK, add this skb */
 			ndp.ndp16->dpe16[index].wDatagramLength = cpu_to_le16(skb->len);
 			ndp.ndp16->dpe16[index].wDatagramIndex = cpu_to_le16(skb_out->len);
-			ndp.ndp16->wLength = cpu_to_le16(ndplen + sizeof(struct usb_cdc_ncm_dpe16));
-		} else {
+			ndp.ndp16->wLength = cpu_to_le16(ndplen + माप(काष्ठा usb_cdc_ncm_dpe16));
+		पूर्ण अन्यथा अणु
 			ndplen = le16_to_cpu(ndp.ndp32->wLength);
-			index = (ndplen - sizeof(struct usb_cdc_ncm_ndp32)) / sizeof(struct usb_cdc_ncm_dpe32) - 1;
+			index = (ndplen - माप(काष्ठा usb_cdc_ncm_ndp32)) / माप(काष्ठा usb_cdc_ncm_dpe32) - 1;
 
 			ndp.ndp32->dpe32[index].dwDatagramLength = cpu_to_le32(skb->len);
 			ndp.ndp32->dpe32[index].dwDatagramIndex = cpu_to_le32(skb_out->len);
-			ndp.ndp32->wLength = cpu_to_le16(ndplen + sizeof(struct usb_cdc_ncm_dpe32));
-		}
+			ndp.ndp32->wLength = cpu_to_le16(ndplen + माप(काष्ठा usb_cdc_ncm_dpe32));
+		पूर्ण
 		skb_put_data(skb_out, skb->data, skb->len);
 		ctx->tx_curr_frame_payload += skb->len;	/* count real tx payload data */
-		dev_kfree_skb_any(skb);
-		skb = NULL;
+		dev_kमुक्त_skb_any(skb);
+		skb = शून्य;
 
-		/* send now if this NDP is full */
-		if (index >= CDC_NCM_DPT_DATAGRAMS_MAX) {
-			ready2send = 1;
-			ctx->tx_reason_ndp_full++;	/* count reason for transmitting */
-			break;
-		}
-	}
+		/* send now अगर this NDP is full */
+		अगर (index >= CDC_NCM_DPT_DATAGRAMS_MAX) अणु
+			पढ़ोy2send = 1;
+			ctx->tx_reason_ndp_full++;	/* count reason क्रम transmitting */
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* free up any dangling skb */
-	if (skb != NULL) {
-		dev_kfree_skb_any(skb);
-		skb = NULL;
+	/* मुक्त up any dangling skb */
+	अगर (skb != शून्य) अणु
+		dev_kमुक्त_skb_any(skb);
+		skb = शून्य;
 		dev->net->stats.tx_dropped++;
-	}
+	पूर्ण
 
 	ctx->tx_curr_frame_num = n;
 
-	if (n == 0) {
-		/* wait for more frames */
+	अगर (n == 0) अणु
+		/* रुको क्रम more frames */
 		/* push variables */
 		ctx->tx_curr_skb = skb_out;
-		goto exit_no_skb;
+		जाओ निकास_no_skb;
 
-	} else if ((n < ctx->tx_max_datagrams) && (ready2send == 0) && (ctx->timer_interval > 0)) {
-		/* wait for more frames */
+	पूर्ण अन्यथा अगर ((n < ctx->tx_max_datagrams) && (पढ़ोy2send == 0) && (ctx->समयr_पूर्णांकerval > 0)) अणु
+		/* रुको क्रम more frames */
 		/* push variables */
 		ctx->tx_curr_skb = skb_out;
 		/* set the pending count */
-		if (n < CDC_NCM_RESTART_TIMER_DATAGRAM_CNT)
-			ctx->tx_timer_pending = CDC_NCM_TIMER_PENDING_CNT;
-		goto exit_no_skb;
+		अगर (n < CDC_NCM_RESTART_TIMER_DATAGRAM_CNT)
+			ctx->tx_समयr_pending = CDC_NCM_TIMER_PENDING_CNT;
+		जाओ निकास_no_skb;
 
-	} else {
-		if (n == ctx->tx_max_datagrams)
-			ctx->tx_reason_max_datagram++;	/* count reason for transmitting */
+	पूर्ण अन्यथा अणु
+		अगर (n == ctx->tx_max_datagrams)
+			ctx->tx_reason_max_datagram++;	/* count reason क्रम transmitting */
 		/* frame goes out */
 		/* variables will be reset at next call */
-	}
+	पूर्ण
 
 	/* If requested, put NDP at end of frame. */
-	if (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END) {
-		if (ctx->is_ndp16) {
-			nth.nth16 = (struct usb_cdc_ncm_nth16 *)skb_out->data;
+	अगर (ctx->drvflags & CDC_NCM_FLAG_NDP_TO_END) अणु
+		अगर (ctx->is_ndp16) अणु
+			nth.nth16 = (काष्ठा usb_cdc_ncm_nth16 *)skb_out->data;
 			cdc_ncm_align_tail(skb_out, ctx->tx_ndp_modulus, 0, ctx->tx_curr_size - ctx->max_ndp_size);
 			nth.nth16->wNdpIndex = cpu_to_le16(skb_out->len);
 			skb_put_data(skb_out, ctx->delayed_ndp16, ctx->max_ndp_size);
 
 			/* Zero out delayed NDP - signature checking will naturally fail. */
-			ndp.ndp16 = memset(ctx->delayed_ndp16, 0, ctx->max_ndp_size);
-		} else {
-			nth.nth32 = (struct usb_cdc_ncm_nth32 *)skb_out->data;
+			ndp.ndp16 = स_रखो(ctx->delayed_ndp16, 0, ctx->max_ndp_size);
+		पूर्ण अन्यथा अणु
+			nth.nth32 = (काष्ठा usb_cdc_ncm_nth32 *)skb_out->data;
 			cdc_ncm_align_tail(skb_out, ctx->tx_ndp_modulus, 0, ctx->tx_curr_size - ctx->max_ndp_size);
 			nth.nth32->dwNdpIndex = cpu_to_le32(skb_out->len);
 			skb_put_data(skb_out, ctx->delayed_ndp32, ctx->max_ndp_size);
 
-			ndp.ndp32 = memset(ctx->delayed_ndp32, 0, ctx->max_ndp_size);
-		}
-	}
+			ndp.ndp32 = स_रखो(ctx->delayed_ndp32, 0, ctx->max_ndp_size);
+		पूर्ण
+	पूर्ण
 
 	/* If collected data size is less or equal ctx->min_tx_pkt
 	 * bytes, we send buffers as it is. If we get more data, it
-	 * would be more efficient for USB HS mobile device with DMA
+	 * would be more efficient क्रम USB HS mobile device with DMA
 	 * engine to receive a full size NTB, than canceling DMA
-	 * transfer and receiving a short packet.
+	 * transfer and receiving a लघु packet.
 	 *
-	 * This optimization support is pointless if we end up sending
+	 * This optimization support is poपूर्णांकless अगर we end up sending
 	 * a ZLP after full sized NTBs.
 	 */
-	if (!(dev->driver_info->flags & FLAG_SEND_ZLP) &&
-	    skb_out->len > ctx->min_tx_pkt) {
+	अगर (!(dev->driver_info->flags & FLAG_SEND_ZLP) &&
+	    skb_out->len > ctx->min_tx_pkt) अणु
 		padding_count = ctx->tx_curr_size - skb_out->len;
-		if (!WARN_ON(padding_count > ctx->tx_curr_size))
+		अगर (!WARN_ON(padding_count > ctx->tx_curr_size))
 			skb_put_zero(skb_out, padding_count);
-	} else if (skb_out->len < ctx->tx_curr_size &&
-		   (skb_out->len % dev->maxpacket) == 0) {
-		skb_put_u8(skb_out, 0);	/* force short packet */
-	}
+	पूर्ण अन्यथा अगर (skb_out->len < ctx->tx_curr_size &&
+		   (skb_out->len % dev->maxpacket) == 0) अणु
+		skb_put_u8(skb_out, 0);	/* क्रमce लघु packet */
+	पूर्ण
 
 	/* set final frame length */
-	if (ctx->is_ndp16) {
-		nth.nth16 = (struct usb_cdc_ncm_nth16 *)skb_out->data;
+	अगर (ctx->is_ndp16) अणु
+		nth.nth16 = (काष्ठा usb_cdc_ncm_nth16 *)skb_out->data;
 		nth.nth16->wBlockLength = cpu_to_le16(skb_out->len);
-	} else {
-		nth.nth32 = (struct usb_cdc_ncm_nth32 *)skb_out->data;
+	पूर्ण अन्यथा अणु
+		nth.nth32 = (काष्ठा usb_cdc_ncm_nth32 *)skb_out->data;
 		nth.nth32->dwBlockLength = cpu_to_le32(skb_out->len);
-	}
+	पूर्ण
 
-	/* return skb */
-	ctx->tx_curr_skb = NULL;
+	/* वापस skb */
+	ctx->tx_curr_skb = शून्य;
 
-	/* keep private stats: framing overhead and number of NTBs */
+	/* keep निजी stats: framing overhead and number of NTBs */
 	ctx->tx_overhead += skb_out->len - ctx->tx_curr_frame_payload;
 	ctx->tx_ntbs++;
 
-	/* usbnet will count all the framing overhead by default.
+	/* usbnet will count all the framing overhead by शेष.
 	 * Adjust the stats so that the tx_bytes counter show real
 	 * payload data instead.
 	 */
 	usbnet_set_skb_tx_stats(skb_out, n,
-				(long)ctx->tx_curr_frame_payload - skb_out->len);
+				(दीर्घ)ctx->tx_curr_frame_payload - skb_out->len);
 
-	return skb_out;
+	वापस skb_out;
 
-exit_no_skb:
-	/* Start timer, if there is a remaining non-empty skb */
-	if (ctx->tx_curr_skb != NULL && n > 0)
-		cdc_ncm_tx_timeout_start(ctx);
-	return NULL;
-}
+निकास_no_skb:
+	/* Start समयr, अगर there is a reमुख्यing non-empty skb */
+	अगर (ctx->tx_curr_skb != शून्य && n > 0)
+		cdc_ncm_tx_समयout_start(ctx);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdc_ncm_fill_tx_frame);
 
-static void cdc_ncm_tx_timeout_start(struct cdc_ncm_ctx *ctx)
-{
-	/* start timer, if not already started */
-	if (!(hrtimer_active(&ctx->tx_timer) || atomic_read(&ctx->stop)))
-		hrtimer_start(&ctx->tx_timer,
-				ctx->timer_interval,
+अटल व्योम cdc_ncm_tx_समयout_start(काष्ठा cdc_ncm_ctx *ctx)
+अणु
+	/* start समयr, अगर not alपढ़ोy started */
+	अगर (!(hrसमयr_active(&ctx->tx_समयr) || atomic_पढ़ो(&ctx->stop)))
+		hrसमयr_start(&ctx->tx_समयr,
+				ctx->समयr_पूर्णांकerval,
 				HRTIMER_MODE_REL);
-}
+पूर्ण
 
-static enum hrtimer_restart cdc_ncm_tx_timer_cb(struct hrtimer *timer)
-{
-	struct cdc_ncm_ctx *ctx =
-			container_of(timer, struct cdc_ncm_ctx, tx_timer);
+अटल क्रमागत hrसमयr_restart cdc_ncm_tx_समयr_cb(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx =
+			container_of(समयr, काष्ठा cdc_ncm_ctx, tx_समयr);
 
-	if (!atomic_read(&ctx->stop))
+	अगर (!atomic_पढ़ो(&ctx->stop))
 		tasklet_schedule(&ctx->bh);
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-static void cdc_ncm_txpath_bh(struct tasklet_struct *t)
-{
-	struct cdc_ncm_ctx *ctx = from_tasklet(ctx, t, bh);
-	struct usbnet *dev = ctx->dev;
+अटल व्योम cdc_ncm_txpath_bh(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा cdc_ncm_ctx *ctx = from_tasklet(ctx, t, bh);
+	काष्ठा usbnet *dev = ctx->dev;
 
 	spin_lock_bh(&ctx->mtx);
-	if (ctx->tx_timer_pending != 0) {
-		ctx->tx_timer_pending--;
-		cdc_ncm_tx_timeout_start(ctx);
+	अगर (ctx->tx_समयr_pending != 0) अणु
+		ctx->tx_समयr_pending--;
+		cdc_ncm_tx_समयout_start(ctx);
 		spin_unlock_bh(&ctx->mtx);
-	} else if (dev->net != NULL) {
-		ctx->tx_reason_timeout++;	/* count reason for transmitting */
+	पूर्ण अन्यथा अगर (dev->net != शून्य) अणु
+		ctx->tx_reason_समयout++;	/* count reason क्रम transmitting */
 		spin_unlock_bh(&ctx->mtx);
-		netif_tx_lock_bh(dev->net);
-		usbnet_start_xmit(NULL, dev->net);
-		netif_tx_unlock_bh(dev->net);
-	} else {
+		netअगर_tx_lock_bh(dev->net);
+		usbnet_start_xmit(शून्य, dev->net);
+		netअगर_tx_unlock_bh(dev->net);
+	पूर्ण अन्यथा अणु
 		spin_unlock_bh(&ctx->mtx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct sk_buff *
-cdc_ncm_tx_fixup(struct usbnet *dev, struct sk_buff *skb, gfp_t flags)
-{
-	struct sk_buff *skb_out;
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+काष्ठा sk_buff *
+cdc_ncm_tx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb, gfp_t flags)
+अणु
+	काष्ठा sk_buff *skb_out;
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
 
 	/*
-	 * The Ethernet API we are using does not support transmitting
+	 * The Ethernet API we are using करोes not support transmitting
 	 * multiple Ethernet frames in a single call. This driver will
 	 * accumulate multiple Ethernet frames and send out a larger
-	 * USB frame when the USB buffer is full or when a single jiffies
-	 * timeout happens.
+	 * USB frame when the USB buffer is full or when a single jअगरfies
+	 * समयout happens.
 	 */
-	if (ctx == NULL)
-		goto error;
+	अगर (ctx == शून्य)
+		जाओ error;
 
 	spin_lock_bh(&ctx->mtx);
 
-	if (ctx->is_ndp16)
+	अगर (ctx->is_ndp16)
 		skb_out = cdc_ncm_fill_tx_frame(dev, skb, cpu_to_le32(USB_CDC_NCM_NDP16_NOCRC_SIGN));
-	else
+	अन्यथा
 		skb_out = cdc_ncm_fill_tx_frame(dev, skb, cpu_to_le32(USB_CDC_NCM_NDP32_NOCRC_SIGN));
 
 	spin_unlock_bh(&ctx->mtx);
-	return skb_out;
+	वापस skb_out;
 
 error:
-	if (skb != NULL)
-		dev_kfree_skb_any(skb);
+	अगर (skb != शून्य)
+		dev_kमुक्त_skb_any(skb);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdc_ncm_tx_fixup);
 
-/* verify NTB header and return offset of first NDP, or negative error */
-int cdc_ncm_rx_verify_nth16(struct cdc_ncm_ctx *ctx, struct sk_buff *skb_in)
-{
-	struct usbnet *dev = netdev_priv(skb_in->dev);
-	struct usb_cdc_ncm_nth16 *nth16;
-	int len;
-	int ret = -EINVAL;
+/* verअगरy NTB header and वापस offset of first NDP, or negative error */
+पूर्णांक cdc_ncm_rx_verअगरy_nth16(काष्ठा cdc_ncm_ctx *ctx, काष्ठा sk_buff *skb_in)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(skb_in->dev);
+	काष्ठा usb_cdc_ncm_nth16 *nth16;
+	पूर्णांक len;
+	पूर्णांक ret = -EINVAL;
 
-	if (ctx == NULL)
-		goto error;
+	अगर (ctx == शून्य)
+		जाओ error;
 
-	if (skb_in->len < (sizeof(struct usb_cdc_ncm_nth16) +
-					sizeof(struct usb_cdc_ncm_ndp16))) {
-		netif_dbg(dev, rx_err, dev->net, "frame too short\n");
-		goto error;
-	}
+	अगर (skb_in->len < (माप(काष्ठा usb_cdc_ncm_nth16) +
+					माप(काष्ठा usb_cdc_ncm_ndp16))) अणु
+		netअगर_dbg(dev, rx_err, dev->net, "frame too short\n");
+		जाओ error;
+	पूर्ण
 
-	nth16 = (struct usb_cdc_ncm_nth16 *)skb_in->data;
+	nth16 = (काष्ठा usb_cdc_ncm_nth16 *)skb_in->data;
 
-	if (nth16->dwSignature != cpu_to_le32(USB_CDC_NCM_NTH16_SIGN)) {
-		netif_dbg(dev, rx_err, dev->net,
+	अगर (nth16->dwSignature != cpu_to_le32(USB_CDC_NCM_NTH16_SIGN)) अणु
+		netअगर_dbg(dev, rx_err, dev->net,
 			  "invalid NTH16 signature <%#010x>\n",
 			  le32_to_cpu(nth16->dwSignature));
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	len = le16_to_cpu(nth16->wBlockLength);
-	if (len > ctx->rx_max) {
-		netif_dbg(dev, rx_err, dev->net,
+	अगर (len > ctx->rx_max) अणु
+		netअगर_dbg(dev, rx_err, dev->net,
 			  "unsupported NTB block length %u/%u\n", len,
 			  ctx->rx_max);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if ((ctx->rx_seq + 1) != le16_to_cpu(nth16->wSequence) &&
+	अगर ((ctx->rx_seq + 1) != le16_to_cpu(nth16->wSequence) &&
 	    (ctx->rx_seq || le16_to_cpu(nth16->wSequence)) &&
-	    !((ctx->rx_seq == 0xffff) && !le16_to_cpu(nth16->wSequence))) {
-		netif_dbg(dev, rx_err, dev->net,
+	    !((ctx->rx_seq == 0xffff) && !le16_to_cpu(nth16->wSequence))) अणु
+		netअगर_dbg(dev, rx_err, dev->net,
 			  "sequence number glitch prev=%d curr=%d\n",
 			  ctx->rx_seq, le16_to_cpu(nth16->wSequence));
-	}
+	पूर्ण
 	ctx->rx_seq = le16_to_cpu(nth16->wSequence);
 
 	ret = le16_to_cpu(nth16->wNdpIndex);
 error:
-	return ret;
-}
-EXPORT_SYMBOL_GPL(cdc_ncm_rx_verify_nth16);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(cdc_ncm_rx_verअगरy_nth16);
 
-int cdc_ncm_rx_verify_nth32(struct cdc_ncm_ctx *ctx, struct sk_buff *skb_in)
-{
-	struct usbnet *dev = netdev_priv(skb_in->dev);
-	struct usb_cdc_ncm_nth32 *nth32;
-	int len;
-	int ret = -EINVAL;
+पूर्णांक cdc_ncm_rx_verअगरy_nth32(काष्ठा cdc_ncm_ctx *ctx, काष्ठा sk_buff *skb_in)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(skb_in->dev);
+	काष्ठा usb_cdc_ncm_nth32 *nth32;
+	पूर्णांक len;
+	पूर्णांक ret = -EINVAL;
 
-	if (ctx == NULL)
-		goto error;
+	अगर (ctx == शून्य)
+		जाओ error;
 
-	if (skb_in->len < (sizeof(struct usb_cdc_ncm_nth32) +
-					sizeof(struct usb_cdc_ncm_ndp32))) {
-		netif_dbg(dev, rx_err, dev->net, "frame too short\n");
-		goto error;
-	}
+	अगर (skb_in->len < (माप(काष्ठा usb_cdc_ncm_nth32) +
+					माप(काष्ठा usb_cdc_ncm_ndp32))) अणु
+		netअगर_dbg(dev, rx_err, dev->net, "frame too short\n");
+		जाओ error;
+	पूर्ण
 
-	nth32 = (struct usb_cdc_ncm_nth32 *)skb_in->data;
+	nth32 = (काष्ठा usb_cdc_ncm_nth32 *)skb_in->data;
 
-	if (nth32->dwSignature != cpu_to_le32(USB_CDC_NCM_NTH32_SIGN)) {
-		netif_dbg(dev, rx_err, dev->net,
+	अगर (nth32->dwSignature != cpu_to_le32(USB_CDC_NCM_NTH32_SIGN)) अणु
+		netअगर_dbg(dev, rx_err, dev->net,
 			  "invalid NTH32 signature <%#010x>\n",
 			  le32_to_cpu(nth32->dwSignature));
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	len = le32_to_cpu(nth32->dwBlockLength);
-	if (len > ctx->rx_max) {
-		netif_dbg(dev, rx_err, dev->net,
+	अगर (len > ctx->rx_max) अणु
+		netअगर_dbg(dev, rx_err, dev->net,
 			  "unsupported NTB block length %u/%u\n", len,
 			  ctx->rx_max);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if ((ctx->rx_seq + 1) != le16_to_cpu(nth32->wSequence) &&
+	अगर ((ctx->rx_seq + 1) != le16_to_cpu(nth32->wSequence) &&
 	    (ctx->rx_seq || le16_to_cpu(nth32->wSequence)) &&
-	    !((ctx->rx_seq == 0xffff) && !le16_to_cpu(nth32->wSequence))) {
-		netif_dbg(dev, rx_err, dev->net,
+	    !((ctx->rx_seq == 0xffff) && !le16_to_cpu(nth32->wSequence))) अणु
+		netअगर_dbg(dev, rx_err, dev->net,
 			  "sequence number glitch prev=%d curr=%d\n",
 			  ctx->rx_seq, le16_to_cpu(nth32->wSequence));
-	}
+	पूर्ण
 	ctx->rx_seq = le16_to_cpu(nth32->wSequence);
 
 	ret = le32_to_cpu(nth32->dwNdpIndex);
 error:
-	return ret;
-}
-EXPORT_SYMBOL_GPL(cdc_ncm_rx_verify_nth32);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(cdc_ncm_rx_verअगरy_nth32);
 
-/* verify NDP header and return number of datagrams, or negative error */
-int cdc_ncm_rx_verify_ndp16(struct sk_buff *skb_in, int ndpoffset)
-{
-	struct usbnet *dev = netdev_priv(skb_in->dev);
-	struct usb_cdc_ncm_ndp16 *ndp16;
-	int ret = -EINVAL;
+/* verअगरy NDP header and वापस number of datagrams, or negative error */
+पूर्णांक cdc_ncm_rx_verअगरy_ndp16(काष्ठा sk_buff *skb_in, पूर्णांक ndpoffset)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(skb_in->dev);
+	काष्ठा usb_cdc_ncm_ndp16 *ndp16;
+	पूर्णांक ret = -EINVAL;
 
-	if ((ndpoffset + sizeof(struct usb_cdc_ncm_ndp16)) > skb_in->len) {
-		netif_dbg(dev, rx_err, dev->net, "invalid NDP offset  <%u>\n",
+	अगर ((ndpoffset + माप(काष्ठा usb_cdc_ncm_ndp16)) > skb_in->len) अणु
+		netअगर_dbg(dev, rx_err, dev->net, "invalid NDP offset  <%u>\n",
 			  ndpoffset);
-		goto error;
-	}
-	ndp16 = (struct usb_cdc_ncm_ndp16 *)(skb_in->data + ndpoffset);
+		जाओ error;
+	पूर्ण
+	ndp16 = (काष्ठा usb_cdc_ncm_ndp16 *)(skb_in->data + ndpoffset);
 
-	if (le16_to_cpu(ndp16->wLength) < USB_CDC_NCM_NDP16_LENGTH_MIN) {
-		netif_dbg(dev, rx_err, dev->net, "invalid DPT16 length <%u>\n",
+	अगर (le16_to_cpu(ndp16->wLength) < USB_CDC_NCM_NDP16_LENGTH_MIN) अणु
+		netअगर_dbg(dev, rx_err, dev->net, "invalid DPT16 length <%u>\n",
 			  le16_to_cpu(ndp16->wLength));
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ret = ((le16_to_cpu(ndp16->wLength) -
-					sizeof(struct usb_cdc_ncm_ndp16)) /
-					sizeof(struct usb_cdc_ncm_dpe16));
-	ret--; /* we process NDP entries except for the last one */
+					माप(काष्ठा usb_cdc_ncm_ndp16)) /
+					माप(काष्ठा usb_cdc_ncm_dpe16));
+	ret--; /* we process NDP entries except क्रम the last one */
 
-	if ((sizeof(struct usb_cdc_ncm_ndp16) +
-	     ret * (sizeof(struct usb_cdc_ncm_dpe16))) > skb_in->len) {
-		netif_dbg(dev, rx_err, dev->net, "Invalid nframes = %d\n", ret);
+	अगर ((माप(काष्ठा usb_cdc_ncm_ndp16) +
+	     ret * (माप(काष्ठा usb_cdc_ncm_dpe16))) > skb_in->len) अणु
+		netअगर_dbg(dev, rx_err, dev->net, "Invalid nframes = %d\n", ret);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 error:
-	return ret;
-}
-EXPORT_SYMBOL_GPL(cdc_ncm_rx_verify_ndp16);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(cdc_ncm_rx_verअगरy_ndp16);
 
-/* verify NDP header and return number of datagrams, or negative error */
-int cdc_ncm_rx_verify_ndp32(struct sk_buff *skb_in, int ndpoffset)
-{
-	struct usbnet *dev = netdev_priv(skb_in->dev);
-	struct usb_cdc_ncm_ndp32 *ndp32;
-	int ret = -EINVAL;
+/* verअगरy NDP header and वापस number of datagrams, or negative error */
+पूर्णांक cdc_ncm_rx_verअगरy_ndp32(काष्ठा sk_buff *skb_in, पूर्णांक ndpoffset)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(skb_in->dev);
+	काष्ठा usb_cdc_ncm_ndp32 *ndp32;
+	पूर्णांक ret = -EINVAL;
 
-	if ((ndpoffset + sizeof(struct usb_cdc_ncm_ndp32)) > skb_in->len) {
-		netif_dbg(dev, rx_err, dev->net, "invalid NDP offset  <%u>\n",
+	अगर ((ndpoffset + माप(काष्ठा usb_cdc_ncm_ndp32)) > skb_in->len) अणु
+		netअगर_dbg(dev, rx_err, dev->net, "invalid NDP offset  <%u>\n",
 			  ndpoffset);
-		goto error;
-	}
-	ndp32 = (struct usb_cdc_ncm_ndp32 *)(skb_in->data + ndpoffset);
+		जाओ error;
+	पूर्ण
+	ndp32 = (काष्ठा usb_cdc_ncm_ndp32 *)(skb_in->data + ndpoffset);
 
-	if (le16_to_cpu(ndp32->wLength) < USB_CDC_NCM_NDP32_LENGTH_MIN) {
-		netif_dbg(dev, rx_err, dev->net, "invalid DPT32 length <%u>\n",
+	अगर (le16_to_cpu(ndp32->wLength) < USB_CDC_NCM_NDP32_LENGTH_MIN) अणु
+		netअगर_dbg(dev, rx_err, dev->net, "invalid DPT32 length <%u>\n",
 			  le16_to_cpu(ndp32->wLength));
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ret = ((le16_to_cpu(ndp32->wLength) -
-					sizeof(struct usb_cdc_ncm_ndp32)) /
-					sizeof(struct usb_cdc_ncm_dpe32));
-	ret--; /* we process NDP entries except for the last one */
+					माप(काष्ठा usb_cdc_ncm_ndp32)) /
+					माप(काष्ठा usb_cdc_ncm_dpe32));
+	ret--; /* we process NDP entries except क्रम the last one */
 
-	if ((sizeof(struct usb_cdc_ncm_ndp32) +
-	     ret * (sizeof(struct usb_cdc_ncm_dpe32))) > skb_in->len) {
-		netif_dbg(dev, rx_err, dev->net, "Invalid nframes = %d\n", ret);
+	अगर ((माप(काष्ठा usb_cdc_ncm_ndp32) +
+	     ret * (माप(काष्ठा usb_cdc_ncm_dpe32))) > skb_in->len) अणु
+		netअगर_dbg(dev, rx_err, dev->net, "Invalid nframes = %d\n", ret);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 error:
-	return ret;
-}
-EXPORT_SYMBOL_GPL(cdc_ncm_rx_verify_ndp32);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(cdc_ncm_rx_verअगरy_ndp32);
 
-int cdc_ncm_rx_fixup(struct usbnet *dev, struct sk_buff *skb_in)
-{
-	struct sk_buff *skb;
-	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
-	int len;
-	int nframes;
-	int x;
-	int offset;
-	union {
-		struct usb_cdc_ncm_ndp16 *ndp16;
-		struct usb_cdc_ncm_ndp32 *ndp32;
-	} ndp;
-	union {
-		struct usb_cdc_ncm_dpe16 *dpe16;
-		struct usb_cdc_ncm_dpe32 *dpe32;
-	} dpe;
+पूर्णांक cdc_ncm_rx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb_in)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा cdc_ncm_ctx *ctx = (काष्ठा cdc_ncm_ctx *)dev->data[0];
+	पूर्णांक len;
+	पूर्णांक nframes;
+	पूर्णांक x;
+	पूर्णांक offset;
+	जोड़ अणु
+		काष्ठा usb_cdc_ncm_ndp16 *ndp16;
+		काष्ठा usb_cdc_ncm_ndp32 *ndp32;
+	पूर्ण ndp;
+	जोड़ अणु
+		काष्ठा usb_cdc_ncm_dpe16 *dpe16;
+		काष्ठा usb_cdc_ncm_dpe32 *dpe32;
+	पूर्ण dpe;
 
-	int ndpoffset;
-	int loopcount = 50; /* arbitrary max preventing infinite loop */
+	पूर्णांक ndpoffset;
+	पूर्णांक loopcount = 50; /* arbitrary max preventing infinite loop */
 	u32 payload = 0;
 
-	if (ctx->is_ndp16)
-		ndpoffset = cdc_ncm_rx_verify_nth16(ctx, skb_in);
-	else
-		ndpoffset = cdc_ncm_rx_verify_nth32(ctx, skb_in);
+	अगर (ctx->is_ndp16)
+		ndpoffset = cdc_ncm_rx_verअगरy_nth16(ctx, skb_in);
+	अन्यथा
+		ndpoffset = cdc_ncm_rx_verअगरy_nth32(ctx, skb_in);
 
-	if (ndpoffset < 0)
-		goto error;
+	अगर (ndpoffset < 0)
+		जाओ error;
 
 next_ndp:
-	if (ctx->is_ndp16) {
-		nframes = cdc_ncm_rx_verify_ndp16(skb_in, ndpoffset);
-		if (nframes < 0)
-			goto error;
+	अगर (ctx->is_ndp16) अणु
+		nframes = cdc_ncm_rx_verअगरy_ndp16(skb_in, ndpoffset);
+		अगर (nframes < 0)
+			जाओ error;
 
-		ndp.ndp16 = (struct usb_cdc_ncm_ndp16 *)(skb_in->data + ndpoffset);
+		ndp.ndp16 = (काष्ठा usb_cdc_ncm_ndp16 *)(skb_in->data + ndpoffset);
 
-		if (ndp.ndp16->dwSignature != cpu_to_le32(USB_CDC_NCM_NDP16_NOCRC_SIGN)) {
-			netif_dbg(dev, rx_err, dev->net,
+		अगर (ndp.ndp16->dwSignature != cpu_to_le32(USB_CDC_NCM_NDP16_NOCRC_SIGN)) अणु
+			netअगर_dbg(dev, rx_err, dev->net,
 				  "invalid DPT16 signature <%#010x>\n",
 				  le32_to_cpu(ndp.ndp16->dwSignature));
-			goto err_ndp;
-		}
+			जाओ err_ndp;
+		पूर्ण
 		dpe.dpe16 = ndp.ndp16->dpe16;
-	} else {
-		nframes = cdc_ncm_rx_verify_ndp32(skb_in, ndpoffset);
-		if (nframes < 0)
-			goto error;
+	पूर्ण अन्यथा अणु
+		nframes = cdc_ncm_rx_verअगरy_ndp32(skb_in, ndpoffset);
+		अगर (nframes < 0)
+			जाओ error;
 
-		ndp.ndp32 = (struct usb_cdc_ncm_ndp32 *)(skb_in->data + ndpoffset);
+		ndp.ndp32 = (काष्ठा usb_cdc_ncm_ndp32 *)(skb_in->data + ndpoffset);
 
-		if (ndp.ndp32->dwSignature != cpu_to_le32(USB_CDC_NCM_NDP32_NOCRC_SIGN)) {
-			netif_dbg(dev, rx_err, dev->net,
+		अगर (ndp.ndp32->dwSignature != cpu_to_le32(USB_CDC_NCM_NDP32_NOCRC_SIGN)) अणु
+			netअगर_dbg(dev, rx_err, dev->net,
 				  "invalid DPT32 signature <%#010x>\n",
 				  le32_to_cpu(ndp.ndp32->dwSignature));
-			goto err_ndp;
-		}
+			जाओ err_ndp;
+		पूर्ण
 		dpe.dpe32 = ndp.ndp32->dpe32;
-	}
+	पूर्ण
 
-	for (x = 0; x < nframes; x++) {
-		if (ctx->is_ndp16) {
+	क्रम (x = 0; x < nframes; x++) अणु
+		अगर (ctx->is_ndp16) अणु
 			offset = le16_to_cpu(dpe.dpe16->wDatagramIndex);
 			len = le16_to_cpu(dpe.dpe16->wDatagramLength);
-		} else {
+		पूर्ण अन्यथा अणु
 			offset = le32_to_cpu(dpe.dpe32->dwDatagramIndex);
 			len = le32_to_cpu(dpe.dpe32->dwDatagramLength);
-		}
+		पूर्ण
 
 		/*
 		 * CDC NCM ch. 3.7
-		 * All entries after first NULL entry are to be ignored
+		 * All entries after first शून्य entry are to be ignored
 		 */
-		if ((offset == 0) || (len == 0)) {
-			if (!x)
-				goto err_ndp; /* empty NTB */
-			break;
-		}
+		अगर ((offset == 0) || (len == 0)) अणु
+			अगर (!x)
+				जाओ err_ndp; /* empty NTB */
+			अवरोध;
+		पूर्ण
 
 		/* sanity checking */
-		if (((offset + len) > skb_in->len) ||
-				(len > ctx->rx_max) || (len < ETH_HLEN)) {
-			netif_dbg(dev, rx_err, dev->net,
+		अगर (((offset + len) > skb_in->len) ||
+				(len > ctx->rx_max) || (len < ETH_HLEN)) अणु
+			netअगर_dbg(dev, rx_err, dev->net,
 				  "invalid frame detected (ignored) offset[%u]=%u, length=%u, skb=%p\n",
 				  x, offset, len, skb_in);
-			if (!x)
-				goto err_ndp;
-			break;
+			अगर (!x)
+				जाओ err_ndp;
+			अवरोध;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* create a fresh copy to reduce truesize */
 			skb = netdev_alloc_skb_ip_align(dev->net,  len);
-			if (!skb)
-				goto error;
+			अगर (!skb)
+				जाओ error;
 			skb_put_data(skb, skb_in->data + offset, len);
-			usbnet_skb_return(dev, skb);
+			usbnet_skb_वापस(dev, skb);
 			payload += len;	/* count payload bytes in this NTB */
-		}
+		पूर्ण
 
-		if (ctx->is_ndp16)
+		अगर (ctx->is_ndp16)
 			dpe.dpe16++;
-		else
+		अन्यथा
 			dpe.dpe32++;
-	}
+	पूर्ण
 err_ndp:
 	/* are there more NDPs to process? */
-	if (ctx->is_ndp16)
+	अगर (ctx->is_ndp16)
 		ndpoffset = le16_to_cpu(ndp.ndp16->wNextNdpIndex);
-	else
+	अन्यथा
 		ndpoffset = le32_to_cpu(ndp.ndp32->dwNextNdpIndex);
 
-	if (ndpoffset && loopcount--)
-		goto next_ndp;
+	अगर (ndpoffset && loopcount--)
+		जाओ next_ndp;
 
 	/* update stats */
 	ctx->rx_overhead += skb_in->len - payload;
 	ctx->rx_ntbs++;
 
-	return 1;
+	वापस 1;
 error:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdc_ncm_rx_fixup);
 
-static void
-cdc_ncm_speed_change(struct usbnet *dev,
-		     struct usb_cdc_speed_change *data)
-{
-	/* RTL8156 shipped before 2021 sends notification about every 32ms. */
+अटल व्योम
+cdc_ncm_speed_change(काष्ठा usbnet *dev,
+		     काष्ठा usb_cdc_speed_change *data)
+अणु
+	/* RTL8156 shipped beक्रमe 2021 sends notअगरication about every 32ms. */
 	dev->rx_speed = le32_to_cpu(data->DLBitRRate);
 	dev->tx_speed = le32_to_cpu(data->ULBitRate);
-}
+पूर्ण
 
-static void cdc_ncm_status(struct usbnet *dev, struct urb *urb)
-{
-	struct usb_cdc_notification *event;
+अटल व्योम cdc_ncm_status(काष्ठा usbnet *dev, काष्ठा urb *urb)
+अणु
+	काष्ठा usb_cdc_notअगरication *event;
 
-	if (urb->actual_length < sizeof(*event))
-		return;
+	अगर (urb->actual_length < माप(*event))
+		वापस;
 
-	/* test for split data in 8-byte chunks */
-	if (test_and_clear_bit(EVENT_STS_SPLIT, &dev->flags)) {
+	/* test क्रम split data in 8-byte chunks */
+	अगर (test_and_clear_bit(EVENT_STS_SPLIT, &dev->flags)) अणु
 		cdc_ncm_speed_change(dev,
-		      (struct usb_cdc_speed_change *)urb->transfer_buffer);
-		return;
-	}
+		      (काष्ठा usb_cdc_speed_change *)urb->transfer_buffer);
+		वापस;
+	पूर्ण
 
 	event = urb->transfer_buffer;
 
-	switch (event->bNotificationType) {
-	case USB_CDC_NOTIFY_NETWORK_CONNECTION:
+	चयन (event->bNotअगरicationType) अणु
+	हाल USB_CDC_NOTIFY_NETWORK_CONNECTION:
 		/*
-		 * According to the CDC NCM specification ch.7.1
-		 * USB_CDC_NOTIFY_NETWORK_CONNECTION notification shall be
+		 * According to the CDC NCM specअगरication ch.7.1
+		 * USB_CDC_NOTIFY_NETWORK_CONNECTION notअगरication shall be
 		 * sent by device after USB_CDC_NOTIFY_SPEED_CHANGE.
 		 */
-		/* RTL8156 shipped before 2021 sends notification about
-		 * every 32ms. Don't forward notification if state is same.
+		/* RTL8156 shipped beक्रमe 2021 sends notअगरication about
+		 * every 32ms. Don't क्रमward notअगरication अगर state is same.
 		 */
-		if (netif_carrier_ok(dev->net) != !!event->wValue)
+		अगर (netअगर_carrier_ok(dev->net) != !!event->wValue)
 			usbnet_link_change(dev, !!event->wValue, 0);
-		break;
+		अवरोध;
 
-	case USB_CDC_NOTIFY_SPEED_CHANGE:
-		if (urb->actual_length < (sizeof(*event) +
-					sizeof(struct usb_cdc_speed_change)))
+	हाल USB_CDC_NOTIFY_SPEED_CHANGE:
+		अगर (urb->actual_length < (माप(*event) +
+					माप(काष्ठा usb_cdc_speed_change)))
 			set_bit(EVENT_STS_SPLIT, &dev->flags);
-		else
+		अन्यथा
 			cdc_ncm_speed_change(dev,
-					     (struct usb_cdc_speed_change *)&event[1]);
-		break;
+					     (काष्ठा usb_cdc_speed_change *)&event[1]);
+		अवरोध;
 
-	default:
+	शेष:
 		dev_dbg(&dev->udev->dev,
 			"NCM: unexpected notification 0x%02x!\n",
-			event->bNotificationType);
-		break;
-	}
-}
+			event->bNotअगरicationType);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct driver_info cdc_ncm_info = {
+अटल स्थिर काष्ठा driver_info cdc_ncm_info = अणु
 	.description = "CDC NCM",
 	.flags = FLAG_POINTTOPOINT | FLAG_NO_SETINT | FLAG_MULTI_PACKET
 			| FLAG_LINK_INTR | FLAG_ETHER,
 	.bind = cdc_ncm_bind,
 	.unbind = cdc_ncm_unbind,
-	.manage_power = usbnet_manage_power,
+	.manage_घातer = usbnet_manage_घातer,
 	.status = cdc_ncm_status,
 	.rx_fixup = cdc_ncm_rx_fixup,
 	.tx_fixup = cdc_ncm_tx_fixup,
 	.set_rx_mode = usbnet_cdc_update_filter,
-};
+पूर्ण;
 
 /* Same as cdc_ncm_info, but with FLAG_WWAN */
-static const struct driver_info wwan_info = {
+अटल स्थिर काष्ठा driver_info wwan_info = अणु
 	.description = "Mobile Broadband Network Device",
 	.flags = FLAG_POINTTOPOINT | FLAG_NO_SETINT | FLAG_MULTI_PACKET
 			| FLAG_LINK_INTR | FLAG_WWAN,
 	.bind = cdc_ncm_bind,
 	.unbind = cdc_ncm_unbind,
-	.manage_power = usbnet_manage_power,
+	.manage_घातer = usbnet_manage_घातer,
 	.status = cdc_ncm_status,
 	.rx_fixup = cdc_ncm_rx_fixup,
 	.tx_fixup = cdc_ncm_tx_fixup,
 	.set_rx_mode = usbnet_cdc_update_filter,
-};
+पूर्ण;
 
 /* Same as wwan_info, but with FLAG_NOARP  */
-static const struct driver_info wwan_noarp_info = {
+अटल स्थिर काष्ठा driver_info wwan_noarp_info = अणु
 	.description = "Mobile Broadband Network Device (NO ARP)",
 	.flags = FLAG_POINTTOPOINT | FLAG_NO_SETINT | FLAG_MULTI_PACKET
 			| FLAG_LINK_INTR | FLAG_WWAN | FLAG_NOARP,
 	.bind = cdc_ncm_bind,
 	.unbind = cdc_ncm_unbind,
-	.manage_power = usbnet_manage_power,
+	.manage_घातer = usbnet_manage_घातer,
 	.status = cdc_ncm_status,
 	.rx_fixup = cdc_ncm_rx_fixup,
 	.tx_fixup = cdc_ncm_tx_fixup,
 	.set_rx_mode = usbnet_cdc_update_filter,
-};
+पूर्ण;
 
-static const struct usb_device_id cdc_devs[] = {
+अटल स्थिर काष्ठा usb_device_id cdc_devs[] = अणु
 	/* Ericsson MBM devices like F5521gw */
-	{ .match_flags = USB_DEVICE_ID_MATCH_INT_INFO
+	अणु .match_flags = USB_DEVICE_ID_MATCH_INT_INFO
 		| USB_DEVICE_ID_MATCH_VENDOR,
-	  .idVendor = 0x0bdb,
+	  .idVenकरोr = 0x0bdb,
 	  .bInterfaceClass = USB_CLASS_COMM,
 	  .bInterfaceSubClass = USB_CDC_SUBCLASS_NCM,
 	  .bInterfaceProtocol = USB_CDC_PROTO_NONE,
-	  .driver_info = (unsigned long) &wwan_info,
-	},
+	  .driver_info = (अचिन्हित दीर्घ) &wwan_info,
+	पूर्ण,
 
 	/* Telit LE910 V2 */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1bc7, 0x0036,
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1bc7, 0x0036,
 		USB_CLASS_COMM,
 		USB_CDC_SUBCLASS_NCM, USB_CDC_PROTO_NONE),
-	  .driver_info = (unsigned long)&wwan_noarp_info,
-	},
+	  .driver_info = (अचिन्हित दीर्घ)&wwan_noarp_info,
+	पूर्ण,
 
 	/* DW5812 LTE Verizon Mobile Broadband Card
 	 * Unlike DW5550 this device requires FLAG_NOARP
 	 */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x413c, 0x81bb,
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x413c, 0x81bb,
 		USB_CLASS_COMM,
 		USB_CDC_SUBCLASS_NCM, USB_CDC_PROTO_NONE),
-	  .driver_info = (unsigned long)&wwan_noarp_info,
-	},
+	  .driver_info = (अचिन्हित दीर्घ)&wwan_noarp_info,
+	पूर्ण,
 
 	/* DW5813 LTE AT&T Mobile Broadband Card
 	 * Unlike DW5550 this device requires FLAG_NOARP
 	 */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x413c, 0x81bc,
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x413c, 0x81bc,
 		USB_CLASS_COMM,
 		USB_CDC_SUBCLASS_NCM, USB_CDC_PROTO_NONE),
-	  .driver_info = (unsigned long)&wwan_noarp_info,
-	},
+	  .driver_info = (अचिन्हित दीर्घ)&wwan_noarp_info,
+	पूर्ण,
 
-	/* Dell branded MBM devices like DW5550 */
-	{ .match_flags = USB_DEVICE_ID_MATCH_INT_INFO
+	/* Dell bअक्रमed MBM devices like DW5550 */
+	अणु .match_flags = USB_DEVICE_ID_MATCH_INT_INFO
 		| USB_DEVICE_ID_MATCH_VENDOR,
-	  .idVendor = 0x413c,
+	  .idVenकरोr = 0x413c,
 	  .bInterfaceClass = USB_CLASS_COMM,
 	  .bInterfaceSubClass = USB_CDC_SUBCLASS_NCM,
 	  .bInterfaceProtocol = USB_CDC_PROTO_NONE,
-	  .driver_info = (unsigned long) &wwan_info,
-	},
+	  .driver_info = (अचिन्हित दीर्घ) &wwan_info,
+	पूर्ण,
 
-	/* Toshiba branded MBM devices */
-	{ .match_flags = USB_DEVICE_ID_MATCH_INT_INFO
+	/* Toshiba bअक्रमed MBM devices */
+	अणु .match_flags = USB_DEVICE_ID_MATCH_INT_INFO
 		| USB_DEVICE_ID_MATCH_VENDOR,
-	  .idVendor = 0x0930,
+	  .idVenकरोr = 0x0930,
 	  .bInterfaceClass = USB_CLASS_COMM,
 	  .bInterfaceSubClass = USB_CDC_SUBCLASS_NCM,
 	  .bInterfaceProtocol = USB_CDC_PROTO_NONE,
-	  .driver_info = (unsigned long) &wwan_info,
-	},
+	  .driver_info = (अचिन्हित दीर्घ) &wwan_info,
+	पूर्ण,
 
 	/* tag Huawei devices as wwan */
-	{ USB_VENDOR_AND_INTERFACE_INFO(0x12d1,
+	अणु USB_VENDOR_AND_INTERFACE_INFO(0x12d1,
 					USB_CLASS_COMM,
 					USB_CDC_SUBCLASS_NCM,
 					USB_CDC_PROTO_NONE),
-	  .driver_info = (unsigned long)&wwan_info,
-	},
+	  .driver_info = (अचिन्हित दीर्घ)&wwan_info,
+	पूर्ण,
 
-	/* Infineon(now Intel) HSPA Modem platform */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1519, 0x0443,
+	/* Infineon(now Intel) HSPA Modem platक्रमm */
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1519, 0x0443,
 		USB_CLASS_COMM,
 		USB_CDC_SUBCLASS_NCM, USB_CDC_PROTO_NONE),
-	  .driver_info = (unsigned long)&wwan_noarp_info,
-	},
+	  .driver_info = (अचिन्हित दीर्घ)&wwan_noarp_info,
+	पूर्ण,
 
 	/* u-blox TOBY-L4 */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1546, 0x1010,
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1546, 0x1010,
 		USB_CLASS_COMM,
 		USB_CDC_SUBCLASS_NCM, USB_CDC_PROTO_NONE),
-	  .driver_info = (unsigned long)&wwan_info,
-	},
+	  .driver_info = (अचिन्हित दीर्घ)&wwan_info,
+	पूर्ण,
 
 	/* Generic CDC-NCM devices */
-	{ USB_INTERFACE_INFO(USB_CLASS_COMM,
+	अणु USB_INTERFACE_INFO(USB_CLASS_COMM,
 		USB_CDC_SUBCLASS_NCM, USB_CDC_PROTO_NONE),
-		.driver_info = (unsigned long)&cdc_ncm_info,
-	},
-	{
-	},
-};
+		.driver_info = (अचिन्हित दीर्घ)&cdc_ncm_info,
+	पूर्ण,
+	अणु
+	पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, cdc_devs);
 
-static struct usb_driver cdc_ncm_driver = {
+अटल काष्ठा usb_driver cdc_ncm_driver = अणु
 	.name = "cdc_ncm",
 	.id_table = cdc_devs,
 	.probe = usbnet_probe,
@@ -2014,9 +2015,9 @@ static struct usb_driver cdc_ncm_driver = {
 	.suspend = usbnet_suspend,
 	.resume = usbnet_resume,
 	.reset_resume =	usbnet_resume,
-	.supports_autosuspend = 1,
+	.supports_स्वतःsuspend = 1,
 	.disable_hub_initiated_lpm = 1,
-};
+पूर्ण;
 
 module_usb_driver(cdc_ncm_driver);
 

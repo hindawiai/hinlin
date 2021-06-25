@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
@@ -11,13 +12,13 @@
  * @Date 	Mar 28 2008
  */
 
-#ifndef CTPCM_H
-#define CTPCM_H
+#अगर_अघोषित CTPCM_H
+#घोषणा CTPCM_H
 
-#include "ctatc.h"
+#समावेश "ctatc.h"
 
-int ct_alsa_pcm_create(struct ct_atc *atc,
-		       enum CTALSADEVS device,
-		       const char *device_name);
+पूर्णांक ct_alsa_pcm_create(काष्ठा ct_atc *atc,
+		       क्रमागत CTALSADEVS device,
+		       स्थिर अक्षर *device_name);
 
-#endif /* CTPCM_H */
+#पूर्ण_अगर /* CTPCM_H */

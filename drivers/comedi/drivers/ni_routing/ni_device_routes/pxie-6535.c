@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* vim: set ts=8 sw=8 noet tw=80 nowrap: */
 /*
  *  comedi/drivers/ni_routing/ni_device_routes/pxie-6535.c
- *  List of valid routes for specific NI boards.
+ *  List of valid routes क्रम specअगरic NI boards.
  *
  *  COMEDI - Linux Control and Measurement Device Interface
  *  Copyright (C) 2016 Spencer E. Olson <olsonse@umich.edu>
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is मुक्त software; you can redistribute it and/or modअगरy
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -15,25 +16,25 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  GNU General Public License क्रम more details.
  */
 
 /*
  * The contents of this file are generated using the tools in
  * comedi/drivers/ni_routing/tools
  *
- * Please use those tools to help maintain the contents of this file.
+ * Please use those tools to help मुख्यtain the contents of this file.
  */
 
-#include "../ni_device_routes.h"
-#include "all.h"
+#समावेश "../ni_device_routes.h"
+#समावेश "all.h"
 
-struct ni_device_routes ni_pxie_6535_device_routes = {
+काष्ठा ni_device_routes ni_pxie_6535_device_routes = अणु
 	.device = "pxie-6535",
-	.routes = (struct ni_route_set[]){
-		{
+	.routes = (काष्ठा ni_route_set[])अणु
+		अणु
 			.dest = NI_PFI(0),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(1),
 				NI_PFI(2),
 				NI_PFI(3),
@@ -59,11 +60,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(1),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(2),
 				NI_PFI(3),
@@ -89,11 +90,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(2),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(3),
@@ -119,11 +120,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(3),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -149,11 +150,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(4),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -181,11 +182,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(5),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -213,11 +214,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(0),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -243,11 +244,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(1),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -273,11 +274,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(2),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -303,11 +304,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(3),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -333,11 +334,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(4),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -363,11 +364,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(5),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -393,11 +394,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(6),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -423,11 +424,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(7),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -455,19 +456,19 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				NI_DO_ReadyForTransferEvent,
 				NI_ChangeDetectionEvent,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_DI_SampleClock,
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(5),
 				TRIGGER_LINE(7),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_DI_StartTrigger,
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -482,11 +483,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				TRIGGER_LINE(5),
 				TRIGGER_LINE(6),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_DI_ReferenceTrigger,
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -501,11 +502,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				TRIGGER_LINE(5),
 				TRIGGER_LINE(6),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_DI_PauseTrigger,
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -520,19 +521,19 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				TRIGGER_LINE(5),
 				TRIGGER_LINE(6),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_DO_SampleClock,
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(4),
 				TRIGGER_LINE(7),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_DO_StartTrigger,
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -547,11 +548,11 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				TRIGGER_LINE(5),
 				TRIGGER_LINE(6),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_DO_PauseTrigger,
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -566,10 +567,10 @@ struct ni_device_routes ni_pxie_6535_device_routes = {
 				TRIGGER_LINE(5),
 				TRIGGER_LINE(6),
 				0, /* Termination */
-			}
-		},
-		{ /* Termination of list */
+			पूर्ण
+		पूर्ण,
+		अणु /* Termination of list */
 			.dest = 0,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;

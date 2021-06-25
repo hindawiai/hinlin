@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2015-2020 Advanced Micro Devices, Inc. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,262 +24,262 @@
  *
  */
 
-#ifndef __AMDGPU_DM_H__
-#define __AMDGPU_DM_H__
+#अगर_अघोषित __AMDGPU_DM_H__
+#घोषणा __AMDGPU_DM_H__
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_connector.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_dp_mst_helper.h>
-#include <drm/drm_plane.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_connector.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_dp_mst_helper.h>
+#समावेश <drm/drm_plane.h>
 
 /*
- * This file contains the definition for amdgpu_display_manager
- * and its API for amdgpu driver's use.
+ * This file contains the definition क्रम amdgpu_display_manager
+ * and its API क्रम amdgpu driver's use.
  * This component provides all the display related functionality
  * and this is the only component that calls DAL API.
- * The API contained here intended for amdgpu driver use.
+ * The API contained here पूर्णांकended क्रम amdgpu driver use.
  * The API that is called directly from KMS framework is located
  * in amdgpu_dm_kms.h file
  */
 
-#define AMDGPU_DM_MAX_DISPLAY_INDEX 31
+#घोषणा AMDGPU_DM_MAX_DISPLAY_INDEX 31
 
-#define AMDGPU_DM_MAX_CRTC 6
+#घोषणा AMDGPU_DM_MAX_CRTC 6
 
 /*
-#include "include/amdgpu_dal_power_if.h"
-#include "amdgpu_dm_irq.h"
+#समावेश "include/amdgpu_dal_power_if.h"
+#समावेश "amdgpu_dm_irq.h"
 */
 
-#include "irq_types.h"
-#include "signal_types.h"
-#include "amdgpu_dm_crc.h"
+#समावेश "irq_types.h"
+#समावेश "signal_types.h"
+#समावेश "amdgpu_dm_crc.h"
 
 /* Forward declarations */
-struct amdgpu_device;
-struct drm_device;
-struct dc;
-struct amdgpu_bo;
-struct dmub_srv;
-struct dc_plane_state;
+काष्ठा amdgpu_device;
+काष्ठा drm_device;
+काष्ठा dc;
+काष्ठा amdgpu_bo;
+काष्ठा dmub_srv;
+काष्ठा dc_plane_state;
 
-struct common_irq_params {
-	struct amdgpu_device *adev;
-	enum dc_irq_source irq_src;
-	atomic64_t previous_timestamp;
-};
+काष्ठा common_irq_params अणु
+	काष्ठा amdgpu_device *adev;
+	क्रमागत dc_irq_source irq_src;
+	atomic64_t previous_बारtamp;
+पूर्ण;
 
 /**
- * struct dm_compressor_info - Buffer info used by frame buffer compression
+ * काष्ठा dm_compressor_info - Buffer info used by frame buffer compression
  * @cpu_addr: MMIO cpu addr
- * @bo_ptr: Pointer to the buffer object
+ * @bo_ptr: Poपूर्णांकer to the buffer object
  * @gpu_addr: MMIO gpu addr
  */
-struct dm_compressor_info {
-	void *cpu_addr;
-	struct amdgpu_bo *bo_ptr;
-	uint64_t gpu_addr;
-};
+काष्ठा dm_compressor_info अणु
+	व्योम *cpu_addr;
+	काष्ठा amdgpu_bo *bo_ptr;
+	uपूर्णांक64_t gpu_addr;
+पूर्ण;
 
 /**
- * struct vblank_workqueue - Works to be executed in a separate thread during vblank
- * @mall_work: work for mall stutter
+ * काष्ठा vblank_workqueue - Works to be executed in a separate thपढ़ो during vblank
+ * @mall_work: work क्रम mall stutter
  * @dm: amdgpu display manager device
  * @otg_inst: otg instance of which vblank is being set
- * @enable: true if enable vblank
+ * @enable: true अगर enable vblank
  */
-struct vblank_workqueue {
-	struct work_struct mall_work;
-	struct amdgpu_display_manager *dm;
-	int otg_inst;
+काष्ठा vblank_workqueue अणु
+	काष्ठा work_काष्ठा mall_work;
+	काष्ठा amdgpu_display_manager *dm;
+	पूर्णांक otg_inst;
 	bool enable;
-};
+पूर्ण;
 
 /**
- * struct amdgpu_dm_backlight_caps - Information about backlight
+ * काष्ठा amdgpu_dm_backlight_caps - Inक्रमmation about backlight
  *
- * Describe the backlight support for ACPI or eDP AUX.
+ * Describe the backlight support क्रम ACPI or eDP AUX.
  */
-struct amdgpu_dm_backlight_caps {
+काष्ठा amdgpu_dm_backlight_caps अणु
 	/**
-	 * @ext_caps: Keep the data struct with all the information about the
-	 * display support for HDR.
+	 * @ext_caps: Keep the data काष्ठा with all the inक्रमmation about the
+	 * display support क्रम HDR.
 	 */
-	union dpcd_sink_ext_caps *ext_caps;
+	जोड़ dpcd_sink_ext_caps *ext_caps;
 	/**
-	 * @aux_min_input_signal: Min brightness value supported by the display
+	 * @aux_min_input_संकेत: Min brightness value supported by the display
 	 */
-	u32 aux_min_input_signal;
+	u32 aux_min_input_संकेत;
 	/**
-	 * @aux_max_input_signal: Max brightness value supported by the display
+	 * @aux_max_input_संकेत: Max brightness value supported by the display
 	 * in nits.
 	 */
-	u32 aux_max_input_signal;
+	u32 aux_max_input_संकेत;
 	/**
-	 * @min_input_signal: minimum possible input in range 0-255.
+	 * @min_input_संकेत: minimum possible input in range 0-255.
 	 */
-	int min_input_signal;
+	पूर्णांक min_input_संकेत;
 	/**
-	 * @max_input_signal: maximum possible input in range 0-255.
+	 * @max_input_संकेत: maximum possible input in range 0-255.
 	 */
-	int max_input_signal;
+	पूर्णांक max_input_संकेत;
 	/**
-	 * @caps_valid: true if these values are from the ACPI interface.
+	 * @caps_valid: true अगर these values are from the ACPI पूर्णांकerface.
 	 */
 	bool caps_valid;
 	/**
-	 * @aux_support: Describes if the display supports AUX backlight.
+	 * @aux_support: Describes अगर the display supports AUX backlight.
 	 */
 	bool aux_support;
-};
+पूर्ण;
 
 /**
- * struct dal_allocation - Tracks mapped FB memory for SMU communication
+ * काष्ठा dal_allocation - Tracks mapped FB memory क्रम SMU communication
  */
-struct dal_allocation {
-	struct list_head list;
-	struct amdgpu_bo *bo;
-	void *cpu_ptr;
+काष्ठा dal_allocation अणु
+	काष्ठा list_head list;
+	काष्ठा amdgpu_bo *bo;
+	व्योम *cpu_ptr;
 	u64 gpu_addr;
-};
+पूर्ण;
 
 /**
- * struct amdgpu_display_manager - Central amdgpu display manager device
+ * काष्ठा amdgpu_display_manager - Central amdgpu display manager device
  *
- * @dc: Display Core control structure
- * @adev: AMDGPU base driver structure
- * @ddev: DRM base driver structure
+ * @dc: Display Core control काष्ठाure
+ * @adev: AMDGPU base driver काष्ठाure
+ * @ddev: DRM base driver काष्ठाure
  * @display_indexes_num: Max number of display streams supported
  * @irq_handler_list_table_lock: Synchronizes access to IRQ tables
  * @backlight_dev: Backlight control device
  * @backlight_link: Link on which to control backlight
  * @backlight_caps: Capabilities of the backlight device
- * @freesync_module: Module handling freesync calculations
+ * @मुक्तsync_module: Module handling मुक्तsync calculations
  * @hdcp_workqueue: AMDGPU content protection queue
  * @fw_dmcu: Reference to DMCU firmware
  * @dmcu_fw_version: Version of the DMCU firmware
  * @soc_bounding_box: SOC bounding box values provided by gpu_info FW
- * @cached_state: Caches device atomic state for suspend/resume
+ * @cached_state: Caches device atomic state क्रम suspend/resume
  * @cached_dc_state: Cached state of content streams
- * @compressor: Frame buffer compression buffer. See &struct dm_compressor_info
- * @force_timing_sync: set via debugfs. When set, indicates that all connected
- *		       displays will be forced to synchronize.
+ * @compressor: Frame buffer compression buffer. See &काष्ठा dm_compressor_info
+ * @क्रमce_timing_sync: set via debugfs. When set, indicates that all connected
+ *		       displays will be क्रमced to synchronize.
  */
-struct amdgpu_display_manager {
+काष्ठा amdgpu_display_manager अणु
 
-	struct dc *dc;
+	काष्ठा dc *dc;
 
 	/**
 	 * @dmub_srv:
 	 *
-	 * DMUB service, used for controlling the DMUB on hardware
-	 * that supports it. The pointer to the dmub_srv will be
-	 * NULL on hardware that does not support it.
+	 * DMUB service, used क्रम controlling the DMUB on hardware
+	 * that supports it. The poपूर्णांकer to the dmub_srv will be
+	 * शून्य on hardware that करोes not support it.
 	 */
-	struct dmub_srv *dmub_srv;
+	काष्ठा dmub_srv *dmub_srv;
 
 	/**
 	 * @dmub_fb_info:
 	 *
-	 * Framebuffer regions for the DMUB.
+	 * Framebuffer regions क्रम the DMUB.
 	 */
-	struct dmub_srv_fb_info *dmub_fb_info;
+	काष्ठा dmub_srv_fb_info *dmub_fb_info;
 
 	/**
 	 * @dmub_fw:
 	 *
 	 * DMUB firmware, required on hardware that has DMUB support.
 	 */
-	const struct firmware *dmub_fw;
+	स्थिर काष्ठा firmware *dmub_fw;
 
 	/**
 	 * @dmub_bo:
 	 *
-	 * Buffer object for the DMUB.
+	 * Buffer object क्रम the DMUB.
 	 */
-	struct amdgpu_bo *dmub_bo;
+	काष्ठा amdgpu_bo *dmub_bo;
 
 	/**
 	 * @dmub_bo_gpu_addr:
 	 *
-	 * GPU virtual address for the DMUB buffer object.
+	 * GPU भव address क्रम the DMUB buffer object.
 	 */
 	u64 dmub_bo_gpu_addr;
 
 	/**
 	 * @dmub_bo_cpu_addr:
 	 *
-	 * CPU address for the DMUB buffer object.
+	 * CPU address क्रम the DMUB buffer object.
 	 */
-	void *dmub_bo_cpu_addr;
+	व्योम *dmub_bo_cpu_addr;
 
 	/**
 	 * @dmcub_fw_version:
 	 *
 	 * DMCUB firmware version.
 	 */
-	uint32_t dmcub_fw_version;
+	uपूर्णांक32_t dmcub_fw_version;
 
 	/**
 	 * @cgs_device:
 	 *
-	 * The Common Graphics Services device. It provides an interface for
-	 * accessing registers.
+	 * The Common Graphics Services device. It provides an पूर्णांकerface क्रम
+	 * accessing रेजिस्टरs.
 	 */
-	struct cgs_device *cgs_device;
+	काष्ठा cgs_device *cgs_device;
 
-	struct amdgpu_device *adev;
-	struct drm_device *ddev;
+	काष्ठा amdgpu_device *adev;
+	काष्ठा drm_device *ddev;
 	u16 display_indexes_num;
 
 	/**
 	 * @atomic_obj:
 	 *
 	 * In combination with &dm_atomic_state it helps manage
-	 * global atomic state that doesn't map cleanly into existing
+	 * global atomic state that करोesn't map cleanly पूर्णांकo existing
 	 * drm resources, like &dc_context.
 	 */
-	struct drm_private_obj atomic_obj;
+	काष्ठा drm_निजी_obj atomic_obj;
 
 	/**
 	 * @dc_lock:
 	 *
-	 * Guards access to DC functions that can issue register write
+	 * Guards access to DC functions that can issue रेजिस्टर ग_लिखो
 	 * sequences.
 	 */
-	struct mutex dc_lock;
+	काष्ठा mutex dc_lock;
 
 	/**
 	 * @audio_lock:
 	 *
 	 * Guards access to audio instance changes.
 	 */
-	struct mutex audio_lock;
+	काष्ठा mutex audio_lock;
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
 	/**
 	 * @vblank_lock:
 	 *
 	 * Guards access to deferred vblank work state.
 	 */
 	spinlock_t vblank_lock;
-#endif
+#पूर्ण_अगर
 
 	/**
 	 * @audio_component:
 	 *
-	 * Used to notify ELD changes to sound driver.
+	 * Used to notअगरy ELD changes to sound driver.
 	 */
-	struct drm_audio_component *audio_component;
+	काष्ठा drm_audio_component *audio_component;
 
 	/**
-	 * @audio_registered:
+	 * @audio_रेजिस्टरed:
 	 *
-	 * True if the audio component has been registered
+	 * True अगर the audio component has been रेजिस्टरed
 	 * successfully, false otherwise.
 	 */
-	bool audio_registered;
+	bool audio_रेजिस्टरed;
 
 	/**
 	 * @irq_handler_list_low_tab:
@@ -290,9 +291,9 @@ struct amdgpu_display_manager {
 	 * processed. Hence, they can sleep.
 	 *
 	 * Note that handlers are called in the same order as they were
-	 * registered (FIFO).
+	 * रेजिस्टरed (FIFO).
 	 */
-	struct list_head irq_handler_list_low_tab[DAL_IRQ_SOURCES_NUMBER];
+	काष्ठा list_head irq_handler_list_low_tab[DAL_IRQ_SOURCES_NUMBER];
 
 	/**
 	 * @irq_handler_list_high_tab:
@@ -302,302 +303,302 @@ struct amdgpu_display_manager {
 	 * It is a n*m table, same as &irq_handler_list_low_tab. However,
 	 * handlers in this table are not deferred and are called immediately.
 	 */
-	struct list_head irq_handler_list_high_tab[DAL_IRQ_SOURCES_NUMBER];
+	काष्ठा list_head irq_handler_list_high_tab[DAL_IRQ_SOURCES_NUMBER];
 
 	/**
 	 * @pflip_params:
 	 *
-	 * Page flip IRQ parameters, passed to registered handlers when
+	 * Page flip IRQ parameters, passed to रेजिस्टरed handlers when
 	 * triggered.
 	 */
-	struct common_irq_params
+	काष्ठा common_irq_params
 	pflip_params[DC_IRQ_SOURCE_PFLIP_LAST - DC_IRQ_SOURCE_PFLIP_FIRST + 1];
 
 	/**
 	 * @vblank_params:
 	 *
-	 * Vertical blanking IRQ parameters, passed to registered handlers when
+	 * Vertical blanking IRQ parameters, passed to रेजिस्टरed handlers when
 	 * triggered.
 	 */
-	struct common_irq_params
+	काष्ठा common_irq_params
 	vblank_params[DC_IRQ_SOURCE_VBLANK6 - DC_IRQ_SOURCE_VBLANK1 + 1];
 
 	/**
 	 * @vline0_params:
 	 *
-	 * OTG vertical interrupt0 IRQ parameters, passed to registered
+	 * OTG vertical पूर्णांकerrupt0 IRQ parameters, passed to रेजिस्टरed
 	 * handlers when triggered.
 	 */
-	struct common_irq_params
+	काष्ठा common_irq_params
 	vline0_params[DC_IRQ_SOURCE_DC6_VLINE0 - DC_IRQ_SOURCE_DC1_VLINE0 + 1];
 
 	/**
 	 * @vupdate_params:
 	 *
-	 * Vertical update IRQ parameters, passed to registered handlers when
+	 * Vertical update IRQ parameters, passed to रेजिस्टरed handlers when
 	 * triggered.
 	 */
-	struct common_irq_params
+	काष्ठा common_irq_params
 	vupdate_params[DC_IRQ_SOURCE_VUPDATE6 - DC_IRQ_SOURCE_VUPDATE1 + 1];
 
 	/**
 	 * @dmub_trace_params:
 	 *
-	 * DMUB trace event IRQ parameters, passed to registered handlers when
+	 * DMUB trace event IRQ parameters, passed to रेजिस्टरed handlers when
 	 * triggered.
 	 */
-	struct common_irq_params
+	काष्ठा common_irq_params
 	dmub_trace_params[1];
 
 	spinlock_t irq_handler_list_table_lock;
 
-	struct backlight_device *backlight_dev;
+	काष्ठा backlight_device *backlight_dev;
 
-	const struct dc_link *backlight_link;
-	struct amdgpu_dm_backlight_caps backlight_caps;
+	स्थिर काष्ठा dc_link *backlight_link;
+	काष्ठा amdgpu_dm_backlight_caps backlight_caps;
 
-	struct mod_freesync *freesync_module;
-#ifdef CONFIG_DRM_AMD_DC_HDCP
-	struct hdcp_workqueue *hdcp_workqueue;
-#endif
+	काष्ठा mod_मुक्तsync *मुक्तsync_module;
+#अगर_घोषित CONFIG_DRM_AMD_DC_HDCP
+	काष्ठा hdcp_workqueue *hdcp_workqueue;
+#पूर्ण_अगर
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
 	/**
 	 * @vblank_workqueue:
 	 *
 	 * amdgpu workqueue during vblank
 	 */
-	struct vblank_workqueue *vblank_workqueue;
-#endif
+	काष्ठा vblank_workqueue *vblank_workqueue;
+#पूर्ण_अगर
 
-	struct drm_atomic_state *cached_state;
-	struct dc_state *cached_dc_state;
+	काष्ठा drm_atomic_state *cached_state;
+	काष्ठा dc_state *cached_dc_state;
 
-	struct dm_compressor_info compressor;
+	काष्ठा dm_compressor_info compressor;
 
-	const struct firmware *fw_dmcu;
-	uint32_t dmcu_fw_version;
+	स्थिर काष्ठा firmware *fw_dmcu;
+	uपूर्णांक32_t dmcu_fw_version;
 	/**
 	 * @soc_bounding_box:
 	 *
-	 * gpu_info FW provided soc bounding box struct or 0 if not
+	 * gpu_info FW provided soc bounding box काष्ठा or 0 अगर not
 	 * available in FW
 	 */
-	const struct gpu_info_soc_bounding_box_v1_0 *soc_bounding_box;
+	स्थिर काष्ठा gpu_info_soc_bounding_box_v1_0 *soc_bounding_box;
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
 	/**
 	 * @active_vblank_irq_count:
 	 *
 	 * number of currently active vblank irqs
 	 */
-	uint32_t active_vblank_irq_count;
-#endif
+	uपूर्णांक32_t active_vblank_irq_count;
+#पूर्ण_अगर
 
-#if defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
+#अगर defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
 	/**
 	 * @crc_rd_wrk:
 	 *
-	 * Work to be executed in a separate thread to communicate with PSP.
+	 * Work to be executed in a separate thपढ़ो to communicate with PSP.
 	 */
-	struct crc_rd_work *crc_rd_wrk;
-#endif
+	काष्ठा crc_rd_work *crc_rd_wrk;
+#पूर्ण_अगर
 
 	/**
 	 * @mst_encoders:
 	 *
-	 * fake encoders used for DP MST.
+	 * fake encoders used क्रम DP MST.
 	 */
-	struct amdgpu_encoder mst_encoders[AMDGPU_DM_MAX_CRTC];
-	bool force_timing_sync;
+	काष्ठा amdgpu_encoder mst_encoders[AMDGPU_DM_MAX_CRTC];
+	bool क्रमce_timing_sync;
 	bool disable_hpd_irq;
 	bool dmcub_trace_event_en;
 	/**
 	 * @da_list:
 	 *
-	 * DAL fb memory allocation list, for communication with SMU.
+	 * DAL fb memory allocation list, क्रम communication with SMU.
 	 */
-	struct list_head da_list;
-};
+	काष्ठा list_head da_list;
+पूर्ण;
 
-enum dsc_clock_force_state {
+क्रमागत dsc_घड़ी_क्रमce_state अणु
 	DSC_CLK_FORCE_DEFAULT = 0,
 	DSC_CLK_FORCE_ENABLE,
 	DSC_CLK_FORCE_DISABLE,
-};
+पूर्ण;
 
-struct dsc_preferred_settings {
-	enum dsc_clock_force_state dsc_force_enable;
-	uint32_t dsc_num_slices_v;
-	uint32_t dsc_num_slices_h;
-	uint32_t dsc_bits_per_pixel;
-};
+काष्ठा dsc_preferred_settings अणु
+	क्रमागत dsc_घड़ी_क्रमce_state dsc_क्रमce_enable;
+	uपूर्णांक32_t dsc_num_slices_v;
+	uपूर्णांक32_t dsc_num_slices_h;
+	uपूर्णांक32_t dsc_bits_per_pixel;
+पूर्ण;
 
-struct amdgpu_dm_connector {
+काष्ठा amdgpu_dm_connector अणु
 
-	struct drm_connector base;
-	uint32_t connector_id;
+	काष्ठा drm_connector base;
+	uपूर्णांक32_t connector_id;
 
 	/* we need to mind the EDID between detect
 	   and get modes due to analog/digital/tvencoder */
-	struct edid *edid;
+	काष्ठा edid *edid;
 
 	/* shared with amdgpu */
-	struct amdgpu_hpd hpd;
+	काष्ठा amdgpu_hpd hpd;
 
 	/* number of modes generated from EDID at 'dc_sink' */
-	int num_modes;
+	पूर्णांक num_modes;
 
-	/* The 'old' sink - before an HPD.
+	/* The 'old' sink - beक्रमe an HPD.
 	 * The 'current' sink is in dc_link->sink. */
-	struct dc_sink *dc_sink;
-	struct dc_link *dc_link;
-	struct dc_sink *dc_em_sink;
+	काष्ठा dc_sink *dc_sink;
+	काष्ठा dc_link *dc_link;
+	काष्ठा dc_sink *dc_em_sink;
 
 	/* DM only */
-	struct drm_dp_mst_topology_mgr mst_mgr;
-	struct amdgpu_dm_dp_aux dm_dp_aux;
-	struct drm_dp_mst_port *port;
-	struct amdgpu_dm_connector *mst_port;
-	struct drm_dp_aux *dsc_aux;
+	काष्ठा drm_dp_mst_topology_mgr mst_mgr;
+	काष्ठा amdgpu_dm_dp_aux dm_dp_aux;
+	काष्ठा drm_dp_mst_port *port;
+	काष्ठा amdgpu_dm_connector *mst_port;
+	काष्ठा drm_dp_aux *dsc_aux;
 
-	/* TODO see if we can merge with ddc_bus or make a dm_connector */
-	struct amdgpu_i2c_adapter *i2c;
+	/* TODO see अगर we can merge with ddc_bus or make a dm_connector */
+	काष्ठा amdgpu_i2c_adapter *i2c;
 
 	/* Monitor range limits */
-	int min_vfreq ;
-	int max_vfreq ;
-	int pixel_clock_mhz;
+	पूर्णांक min_vfreq ;
+	पूर्णांक max_vfreq ;
+	पूर्णांक pixel_घड़ी_mhz;
 
-	/* Audio instance - protected by audio_lock. */
-	int audio_inst;
+	/* Audio instance - रक्षित by audio_lock. */
+	पूर्णांक audio_inst;
 
-	struct mutex hpd_lock;
+	काष्ठा mutex hpd_lock;
 
 	bool fake_enable;
-#ifdef CONFIG_DEBUG_FS
-	uint32_t debugfs_dpcd_address;
-	uint32_t debugfs_dpcd_size;
-#endif
-	bool force_yuv420_output;
-	struct dsc_preferred_settings dsc_settings;
+#अगर_घोषित CONFIG_DEBUG_FS
+	uपूर्णांक32_t debugfs_dpcd_address;
+	uपूर्णांक32_t debugfs_dpcd_size;
+#पूर्ण_अगर
+	bool क्रमce_yuv420_output;
+	काष्ठा dsc_preferred_settings dsc_settings;
 	/* Cached display modes */
-	struct drm_display_mode freesync_vid_base;
-};
+	काष्ठा drm_display_mode मुक्तsync_vid_base;
+पूर्ण;
 
-#define to_amdgpu_dm_connector(x) container_of(x, struct amdgpu_dm_connector, base)
+#घोषणा to_amdgpu_dm_connector(x) container_of(x, काष्ठा amdgpu_dm_connector, base)
 
-extern const struct amdgpu_ip_block_version dm_ip_block;
+बाह्य स्थिर काष्ठा amdgpu_ip_block_version dm_ip_block;
 
-struct dm_plane_state {
-	struct drm_plane_state base;
-	struct dc_plane_state *dc_state;
-};
+काष्ठा dm_plane_state अणु
+	काष्ठा drm_plane_state base;
+	काष्ठा dc_plane_state *dc_state;
+पूर्ण;
 
-struct dm_crtc_state {
-	struct drm_crtc_state base;
-	struct dc_stream_state *stream;
+काष्ठा dm_crtc_state अणु
+	काष्ठा drm_crtc_state base;
+	काष्ठा dc_stream_state *stream;
 
 	bool cm_has_degamma;
 	bool cm_is_degamma_srgb;
 
-	int update_type;
-	int active_planes;
+	पूर्णांक update_type;
+	पूर्णांक active_planes;
 
-	int crc_skip_count;
+	पूर्णांक crc_skip_count;
 
-	bool freesync_timing_changed;
-	bool freesync_vrr_info_changed;
+	bool मुक्तsync_timing_changed;
+	bool मुक्तsync_vrr_info_changed;
 
-	bool dsc_force_changed;
+	bool dsc_क्रमce_changed;
 	bool vrr_supported;
-	struct mod_freesync_config freesync_config;
-	struct dc_info_packet vrr_infopacket;
+	काष्ठा mod_मुक्तsync_config मुक्तsync_config;
+	काष्ठा dc_info_packet vrr_infopacket;
 
-	int abm_level;
-};
+	पूर्णांक abm_level;
+पूर्ण;
 
-#define to_dm_crtc_state(x) container_of(x, struct dm_crtc_state, base)
+#घोषणा to_dm_crtc_state(x) container_of(x, काष्ठा dm_crtc_state, base)
 
-struct dm_atomic_state {
-	struct drm_private_state base;
+काष्ठा dm_atomic_state अणु
+	काष्ठा drm_निजी_state base;
 
-	struct dc_state *context;
-};
+	काष्ठा dc_state *context;
+पूर्ण;
 
-#define to_dm_atomic_state(x) container_of(x, struct dm_atomic_state, base)
+#घोषणा to_dm_atomic_state(x) container_of(x, काष्ठा dm_atomic_state, base)
 
-struct dm_connector_state {
-	struct drm_connector_state base;
+काष्ठा dm_connector_state अणु
+	काष्ठा drm_connector_state base;
 
-	enum amdgpu_rmx_type scaling;
-	uint8_t underscan_vborder;
-	uint8_t underscan_hborder;
+	क्रमागत amdgpu_rmx_type scaling;
+	uपूर्णांक8_t underscan_vborder;
+	uपूर्णांक8_t underscan_hborder;
 	bool underscan_enable;
-	bool freesync_capable;
-#ifdef CONFIG_DRM_AMD_DC_HDCP
+	bool मुक्तsync_capable;
+#अगर_घोषित CONFIG_DRM_AMD_DC_HDCP
 	bool update_hdcp;
-#endif
-	uint8_t abm_level;
-	int vcpi_slots;
-	uint64_t pbn;
-};
+#पूर्ण_अगर
+	uपूर्णांक8_t abm_level;
+	पूर्णांक vcpi_slots;
+	uपूर्णांक64_t pbn;
+पूर्ण;
 
-struct amdgpu_hdmi_vsdb_info {
-	unsigned int amd_vsdb_version;		/* VSDB version, should be used to determine which VSIF to send */
-	bool freesync_supported;		/* FreeSync Supported */
-	unsigned int min_refresh_rate_hz;	/* FreeSync Minimum Refresh Rate in Hz */
-	unsigned int max_refresh_rate_hz;	/* FreeSync Maximum Refresh Rate in Hz */
-};
+काष्ठा amdgpu_hdmi_vsdb_info अणु
+	अचिन्हित पूर्णांक amd_vsdb_version;		/* VSDB version, should be used to determine which VSIF to send */
+	bool मुक्तsync_supported;		/* FreeSync Supported */
+	अचिन्हित पूर्णांक min_refresh_rate_hz;	/* FreeSync Minimum Refresh Rate in Hz */
+	अचिन्हित पूर्णांक max_refresh_rate_hz;	/* FreeSync Maximum Refresh Rate in Hz */
+पूर्ण;
 
 
-#define to_dm_connector_state(x)\
-	container_of((x), struct dm_connector_state, base)
+#घोषणा to_dm_connector_state(x)\
+	container_of((x), काष्ठा dm_connector_state, base)
 
-void amdgpu_dm_connector_funcs_reset(struct drm_connector *connector);
-struct drm_connector_state *
-amdgpu_dm_connector_atomic_duplicate_state(struct drm_connector *connector);
-int amdgpu_dm_connector_atomic_set_property(struct drm_connector *connector,
-					    struct drm_connector_state *state,
-					    struct drm_property *property,
-					    uint64_t val);
+व्योम amdgpu_dm_connector_funcs_reset(काष्ठा drm_connector *connector);
+काष्ठा drm_connector_state *
+amdgpu_dm_connector_atomic_duplicate_state(काष्ठा drm_connector *connector);
+पूर्णांक amdgpu_dm_connector_atomic_set_property(काष्ठा drm_connector *connector,
+					    काष्ठा drm_connector_state *state,
+					    काष्ठा drm_property *property,
+					    uपूर्णांक64_t val);
 
-int amdgpu_dm_connector_atomic_get_property(struct drm_connector *connector,
-					    const struct drm_connector_state *state,
-					    struct drm_property *property,
-					    uint64_t *val);
+पूर्णांक amdgpu_dm_connector_atomic_get_property(काष्ठा drm_connector *connector,
+					    स्थिर काष्ठा drm_connector_state *state,
+					    काष्ठा drm_property *property,
+					    uपूर्णांक64_t *val);
 
-int amdgpu_dm_get_encoder_crtc_mask(struct amdgpu_device *adev);
+पूर्णांक amdgpu_dm_get_encoder_crtc_mask(काष्ठा amdgpu_device *adev);
 
-void amdgpu_dm_connector_init_helper(struct amdgpu_display_manager *dm,
-				     struct amdgpu_dm_connector *aconnector,
-				     int connector_type,
-				     struct dc_link *link,
-				     int link_index);
+व्योम amdgpu_dm_connector_init_helper(काष्ठा amdgpu_display_manager *dm,
+				     काष्ठा amdgpu_dm_connector *aconnector,
+				     पूर्णांक connector_type,
+				     काष्ठा dc_link *link,
+				     पूर्णांक link_index);
 
-enum drm_mode_status amdgpu_dm_connector_mode_valid(struct drm_connector *connector,
-				   struct drm_display_mode *mode);
+क्रमागत drm_mode_status amdgpu_dm_connector_mode_valid(काष्ठा drm_connector *connector,
+				   काष्ठा drm_display_mode *mode);
 
-void dm_restore_drm_connector_state(struct drm_device *dev,
-				    struct drm_connector *connector);
+व्योम dm_restore_drm_connector_state(काष्ठा drm_device *dev,
+				    काष्ठा drm_connector *connector);
 
-void amdgpu_dm_update_freesync_caps(struct drm_connector *connector,
-					struct edid *edid);
+व्योम amdgpu_dm_update_मुक्तsync_caps(काष्ठा drm_connector *connector,
+					काष्ठा edid *edid);
 
-void amdgpu_dm_trigger_timing_sync(struct drm_device *dev);
+व्योम amdgpu_dm_trigger_timing_sync(काष्ठा drm_device *dev);
 
-#define MAX_COLOR_LUT_ENTRIES 4096
-/* Legacy gamm LUT users such as X doesn't like large LUT sizes */
-#define MAX_COLOR_LEGACY_LUT_ENTRIES 256
+#घोषणा MAX_COLOR_LUT_ENTRIES 4096
+/* Legacy gamm LUT users such as X करोesn't like large LUT sizes */
+#घोषणा MAX_COLOR_LEGACY_LUT_ENTRIES 256
 
-void amdgpu_dm_init_color_mod(void);
-int amdgpu_dm_update_crtc_color_mgmt(struct dm_crtc_state *crtc);
-int amdgpu_dm_update_plane_color_mgmt(struct dm_crtc_state *crtc,
-				      struct dc_plane_state *dc_plane_state);
+व्योम amdgpu_dm_init_color_mod(व्योम);
+पूर्णांक amdgpu_dm_update_crtc_color_mgmt(काष्ठा dm_crtc_state *crtc);
+पूर्णांक amdgpu_dm_update_plane_color_mgmt(काष्ठा dm_crtc_state *crtc,
+				      काष्ठा dc_plane_state *dc_plane_state);
 
-void amdgpu_dm_update_connector_after_detect(
-		struct amdgpu_dm_connector *aconnector);
+व्योम amdgpu_dm_update_connector_after_detect(
+		काष्ठा amdgpu_dm_connector *aconnector);
 
-extern const struct drm_encoder_helper_funcs amdgpu_dm_encoder_helper_funcs;
+बाह्य स्थिर काष्ठा drm_encoder_helper_funcs amdgpu_dm_encoder_helper_funcs;
 
-#endif /* __AMDGPU_DM_H__ */
+#पूर्ण_अगर /* __AMDGPU_DM_H__ */

@@ -1,206 +1,207 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // ALSA SoC Audio Layer - Samsung S/PDIF Controller driver
 //
 // Copyright (c) 2010 Samsung Electronics Co. Ltd
 //		http://www.samsung.com/
 
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/module.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
 
-#include <sound/soc.h>
-#include <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/pcm_params.h>
 
-#include <linux/platform_data/asoc-s3c.h>
+#समावेश <linux/platक्रमm_data/asoc-s3c.h>
 
-#include "dma.h"
-#include "spdif.h"
+#समावेश "dma.h"
+#समावेश "spdif.h"
 
 /* Registers */
-#define CLKCON				0x00
-#define CON				0x04
-#define BSTAS				0x08
-#define CSTAS				0x0C
-#define DATA_OUTBUF			0x10
-#define DCNT				0x14
-#define BSTAS_S				0x18
-#define DCNT_S				0x1C
+#घोषणा CLKCON				0x00
+#घोषणा CON				0x04
+#घोषणा BSTAS				0x08
+#घोषणा CSTAS				0x0C
+#घोषणा DATA_OUTBUF			0x10
+#घोषणा DCNT				0x14
+#घोषणा BSTAS_S				0x18
+#घोषणा DCNT_S				0x1C
 
-#define CLKCTL_MASK			0x7
-#define CLKCTL_MCLK_EXT			(0x1 << 2)
-#define CLKCTL_PWR_ON			(0x1 << 0)
+#घोषणा CLKCTL_MASK			0x7
+#घोषणा CLKCTL_MCLK_EXT			(0x1 << 2)
+#घोषणा CLKCTL_PWR_ON			(0x1 << 0)
 
-#define CON_MASK			0x3ffffff
-#define CON_FIFO_TH_SHIFT		19
-#define CON_FIFO_TH_MASK		(0x7 << 19)
-#define CON_USERDATA_23RDBIT		(0x1 << 12)
+#घोषणा CON_MASK			0x3ffffff
+#घोषणा CON_FIFO_TH_SHIFT		19
+#घोषणा CON_FIFO_TH_MASK		(0x7 << 19)
+#घोषणा CON_USERDATA_23RDBIT		(0x1 << 12)
 
-#define CON_SW_RESET			(0x1 << 5)
+#घोषणा CON_SW_RESET			(0x1 << 5)
 
-#define CON_MCLKDIV_MASK		(0x3 << 3)
-#define CON_MCLKDIV_256FS		(0x0 << 3)
-#define CON_MCLKDIV_384FS		(0x1 << 3)
-#define CON_MCLKDIV_512FS		(0x2 << 3)
+#घोषणा CON_MCLKDIV_MASK		(0x3 << 3)
+#घोषणा CON_MCLKDIV_256FS		(0x0 << 3)
+#घोषणा CON_MCLKDIV_384FS		(0x1 << 3)
+#घोषणा CON_MCLKDIV_512FS		(0x2 << 3)
 
-#define CON_PCM_MASK			(0x3 << 1)
-#define CON_PCM_16BIT			(0x0 << 1)
-#define CON_PCM_20BIT			(0x1 << 1)
-#define CON_PCM_24BIT			(0x2 << 1)
+#घोषणा CON_PCM_MASK			(0x3 << 1)
+#घोषणा CON_PCM_16BIT			(0x0 << 1)
+#घोषणा CON_PCM_20BIT			(0x1 << 1)
+#घोषणा CON_PCM_24BIT			(0x2 << 1)
 
-#define CON_PCM_DATA			(0x1 << 0)
+#घोषणा CON_PCM_DATA			(0x1 << 0)
 
-#define CSTAS_MASK			0x3fffffff
-#define CSTAS_SAMP_FREQ_MASK		(0xF << 24)
-#define CSTAS_SAMP_FREQ_44		(0x0 << 24)
-#define CSTAS_SAMP_FREQ_48		(0x2 << 24)
-#define CSTAS_SAMP_FREQ_32		(0x3 << 24)
-#define CSTAS_SAMP_FREQ_96		(0xA << 24)
+#घोषणा CSTAS_MASK			0x3fffffff
+#घोषणा CSTAS_SAMP_FREQ_MASK		(0xF << 24)
+#घोषणा CSTAS_SAMP_FREQ_44		(0x0 << 24)
+#घोषणा CSTAS_SAMP_FREQ_48		(0x2 << 24)
+#घोषणा CSTAS_SAMP_FREQ_32		(0x3 << 24)
+#घोषणा CSTAS_SAMP_FREQ_96		(0xA << 24)
 
-#define CSTAS_CATEGORY_MASK		(0xFF << 8)
-#define CSTAS_CATEGORY_CODE_CDP		(0x01 << 8)
+#घोषणा CSTAS_CATEGORY_MASK		(0xFF << 8)
+#घोषणा CSTAS_CATEGORY_CODE_CDP		(0x01 << 8)
 
-#define CSTAS_NO_COPYRIGHT		(0x1 << 2)
+#घोषणा CSTAS_NO_COPYRIGHT		(0x1 << 2)
 
 /**
- * struct samsung_spdif_info - Samsung S/PDIF Controller information
- * @lock: Spin lock for S/PDIF.
+ * काष्ठा samsung_spdअगर_info - Samsung S/PDIF Controller inक्रमmation
+ * @lock: Spin lock क्रम S/PDIF.
  * @dev: The parent device passed to use from the probe.
- * @regs: The pointer to the device register block.
- * @clk_rate: Current clock rate for calcurate ratio.
- * @pclk: The peri-clock pointer for spdif master operation.
- * @sclk: The source clock pointer for making sync signals.
+ * @regs: The poपूर्णांकer to the device रेजिस्टर block.
+ * @clk_rate: Current घड़ी rate क्रम calcurate ratio.
+ * @pclk: The peri-घड़ी poपूर्णांकer क्रम spdअगर master operation.
+ * @sclk: The source घड़ी poपूर्णांकer क्रम making sync संकेतs.
  * @saved_clkcon: Backup clkcon reg. in suspend.
  * @saved_con: Backup con reg. in suspend.
  * @saved_cstas: Backup cstas reg. in suspend.
- * @dma_playback: DMA information for playback channel.
+ * @dma_playback: DMA inक्रमmation क्रम playback channel.
  */
-struct samsung_spdif_info {
+काष्ठा samsung_spdअगर_info अणु
 	spinlock_t	lock;
-	struct device	*dev;
-	void __iomem	*regs;
-	unsigned long	clk_rate;
-	struct clk	*pclk;
-	struct clk	*sclk;
+	काष्ठा device	*dev;
+	व्योम __iomem	*regs;
+	अचिन्हित दीर्घ	clk_rate;
+	काष्ठा clk	*pclk;
+	काष्ठा clk	*sclk;
 	u32		saved_clkcon;
 	u32		saved_con;
 	u32		saved_cstas;
-	struct snd_dmaengine_dai_dma_data *dma_playback;
-};
+	काष्ठा snd_dmaengine_dai_dma_data *dma_playback;
+पूर्ण;
 
-static struct snd_dmaengine_dai_dma_data spdif_stereo_out;
-static struct samsung_spdif_info spdif_info;
+अटल काष्ठा snd_dmaengine_dai_dma_data spdअगर_stereo_out;
+अटल काष्ठा samsung_spdअगर_info spdअगर_info;
 
-static inline struct samsung_spdif_info
-*component_to_info(struct snd_soc_component *component)
-{
-	return snd_soc_component_get_drvdata(component);
-}
+अटल अंतरभूत काष्ठा samsung_spdअगर_info
+*component_to_info(काष्ठा snd_soc_component *component)
+अणु
+	वापस snd_soc_component_get_drvdata(component);
+पूर्ण
 
-static inline struct samsung_spdif_info *to_info(struct snd_soc_dai *cpu_dai)
-{
-	return snd_soc_dai_get_drvdata(cpu_dai);
-}
+अटल अंतरभूत काष्ठा samsung_spdअगर_info *to_info(काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	वापस snd_soc_dai_get_drvdata(cpu_dai);
+पूर्ण
 
-static void spdif_snd_txctrl(struct samsung_spdif_info *spdif, int on)
-{
-	void __iomem *regs = spdif->regs;
+अटल व्योम spdअगर_snd_txctrl(काष्ठा samsung_spdअगर_info *spdअगर, पूर्णांक on)
+अणु
+	व्योम __iomem *regs = spdअगर->regs;
 	u32 clkcon;
 
-	dev_dbg(spdif->dev, "Entered %s\n", __func__);
+	dev_dbg(spdअगर->dev, "Entered %s\n", __func__);
 
-	clkcon = readl(regs + CLKCON) & CLKCTL_MASK;
-	if (on)
-		writel(clkcon | CLKCTL_PWR_ON, regs + CLKCON);
-	else
-		writel(clkcon & ~CLKCTL_PWR_ON, regs + CLKCON);
-}
+	clkcon = पढ़ोl(regs + CLKCON) & CLKCTL_MASK;
+	अगर (on)
+		ग_लिखोl(clkcon | CLKCTL_PWR_ON, regs + CLKCON);
+	अन्यथा
+		ग_लिखोl(clkcon & ~CLKCTL_PWR_ON, regs + CLKCON);
+पूर्ण
 
-static int spdif_set_sysclk(struct snd_soc_dai *cpu_dai,
-				int clk_id, unsigned int freq, int dir)
-{
-	struct samsung_spdif_info *spdif = to_info(cpu_dai);
+अटल पूर्णांक spdअगर_set_sysclk(काष्ठा snd_soc_dai *cpu_dai,
+				पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा samsung_spdअगर_info *spdअगर = to_info(cpu_dai);
 	u32 clkcon;
 
-	dev_dbg(spdif->dev, "Entered %s\n", __func__);
+	dev_dbg(spdअगर->dev, "Entered %s\n", __func__);
 
-	clkcon = readl(spdif->regs + CLKCON);
+	clkcon = पढ़ोl(spdअगर->regs + CLKCON);
 
-	if (clk_id == SND_SOC_SPDIF_INT_MCLK)
+	अगर (clk_id == SND_SOC_SPDIF_INT_MCLK)
 		clkcon &= ~CLKCTL_MCLK_EXT;
-	else
+	अन्यथा
 		clkcon |= CLKCTL_MCLK_EXT;
 
-	writel(clkcon, spdif->regs + CLKCON);
+	ग_लिखोl(clkcon, spdअगर->regs + CLKCON);
 
-	spdif->clk_rate = freq;
+	spdअगर->clk_rate = freq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int spdif_trigger(struct snd_pcm_substream *substream, int cmd,
-				struct snd_soc_dai *dai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct samsung_spdif_info *spdif = to_info(asoc_rtd_to_cpu(rtd, 0));
-	unsigned long flags;
+अटल पूर्णांक spdअगर_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा samsung_spdअगर_info *spdअगर = to_info(asoc_rtd_to_cpu(rtd, 0));
+	अचिन्हित दीर्घ flags;
 
-	dev_dbg(spdif->dev, "Entered %s\n", __func__);
+	dev_dbg(spdअगर->dev, "Entered %s\n", __func__);
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		spin_lock_irqsave(&spdif->lock, flags);
-		spdif_snd_txctrl(spdif, 1);
-		spin_unlock_irqrestore(&spdif->lock, flags);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		spin_lock_irqsave(&spdif->lock, flags);
-		spdif_snd_txctrl(spdif, 0);
-		spin_unlock_irqrestore(&spdif->lock, flags);
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		spin_lock_irqsave(&spdअगर->lock, flags);
+		spdअगर_snd_txctrl(spdअगर, 1);
+		spin_unlock_irqrestore(&spdअगर->lock, flags);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		spin_lock_irqsave(&spdअगर->lock, flags);
+		spdअगर_snd_txctrl(spdअगर, 0);
+		spin_unlock_irqrestore(&spdअगर->lock, flags);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int spdif_sysclk_ratios[] = {
+अटल पूर्णांक spdअगर_sysclk_ratios[] = अणु
 	512, 384, 256,
-};
+पूर्ण;
 
-static int spdif_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params,
-				struct snd_soc_dai *socdai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct samsung_spdif_info *spdif = to_info(asoc_rtd_to_cpu(rtd, 0));
-	void __iomem *regs = spdif->regs;
-	struct snd_dmaengine_dai_dma_data *dma_data;
+अटल पूर्णांक spdअगर_hw_params(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_hw_params *params,
+				काष्ठा snd_soc_dai *socdai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा samsung_spdअगर_info *spdअगर = to_info(asoc_rtd_to_cpu(rtd, 0));
+	व्योम __iomem *regs = spdअगर->regs;
+	काष्ठा snd_dmaengine_dai_dma_data *dma_data;
 	u32 con, clkcon, cstas;
-	unsigned long flags;
-	int i, ratio;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, ratio;
 
-	dev_dbg(spdif->dev, "Entered %s\n", __func__);
+	dev_dbg(spdअगर->dev, "Entered %s\n", __func__);
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		dma_data = spdif->dma_playback;
-	else {
-		dev_err(spdif->dev, "Capture is not supported\n");
-		return -EINVAL;
-	}
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		dma_data = spdअगर->dma_playback;
+	अन्यथा अणु
+		dev_err(spdअगर->dev, "Capture is not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_soc_dai_set_dma_data(asoc_rtd_to_cpu(rtd, 0), substream, dma_data);
 
-	spin_lock_irqsave(&spdif->lock, flags);
+	spin_lock_irqsave(&spdअगर->lock, flags);
 
-	con = readl(regs + CON) & CON_MASK;
-	cstas = readl(regs + CSTAS) & CSTAS_MASK;
-	clkcon = readl(regs + CLKCON) & CLKCTL_MASK;
+	con = पढ़ोl(regs + CON) & CON_MASK;
+	cstas = पढ़ोl(regs + CSTAS) & CSTAS_MASK;
+	clkcon = पढ़ोl(regs + CLKCON) & CLKCTL_MASK;
 
 	con &= ~CON_FIFO_TH_MASK;
 	con |= (0x7 << CON_FIFO_TH_SHIFT);
@@ -208,138 +209,138 @@ static int spdif_hw_params(struct snd_pcm_substream *substream,
 	con |= CON_PCM_DATA;
 
 	con &= ~CON_PCM_MASK;
-	switch (params_width(params)) {
-	case 16:
+	चयन (params_width(params)) अणु
+	हाल 16:
 		con |= CON_PCM_16BIT;
-		break;
-	default:
-		dev_err(spdif->dev, "Unsupported data size.\n");
-		goto err;
-	}
+		अवरोध;
+	शेष:
+		dev_err(spdअगर->dev, "Unsupported data size.\n");
+		जाओ err;
+	पूर्ण
 
-	ratio = spdif->clk_rate / params_rate(params);
-	for (i = 0; i < ARRAY_SIZE(spdif_sysclk_ratios); i++)
-		if (ratio == spdif_sysclk_ratios[i])
-			break;
-	if (i == ARRAY_SIZE(spdif_sysclk_ratios)) {
-		dev_err(spdif->dev, "Invalid clock ratio %ld/%d\n",
-				spdif->clk_rate, params_rate(params));
-		goto err;
-	}
+	ratio = spdअगर->clk_rate / params_rate(params);
+	क्रम (i = 0; i < ARRAY_SIZE(spdअगर_sysclk_ratios); i++)
+		अगर (ratio == spdअगर_sysclk_ratios[i])
+			अवरोध;
+	अगर (i == ARRAY_SIZE(spdअगर_sysclk_ratios)) अणु
+		dev_err(spdअगर->dev, "Invalid clock ratio %ld/%d\n",
+				spdअगर->clk_rate, params_rate(params));
+		जाओ err;
+	पूर्ण
 
 	con &= ~CON_MCLKDIV_MASK;
-	switch (ratio) {
-	case 256:
+	चयन (ratio) अणु
+	हाल 256:
 		con |= CON_MCLKDIV_256FS;
-		break;
-	case 384:
+		अवरोध;
+	हाल 384:
 		con |= CON_MCLKDIV_384FS;
-		break;
-	case 512:
+		अवरोध;
+	हाल 512:
 		con |= CON_MCLKDIV_512FS;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cstas &= ~CSTAS_SAMP_FREQ_MASK;
-	switch (params_rate(params)) {
-	case 44100:
+	चयन (params_rate(params)) अणु
+	हाल 44100:
 		cstas |= CSTAS_SAMP_FREQ_44;
-		break;
-	case 48000:
+		अवरोध;
+	हाल 48000:
 		cstas |= CSTAS_SAMP_FREQ_48;
-		break;
-	case 32000:
+		अवरोध;
+	हाल 32000:
 		cstas |= CSTAS_SAMP_FREQ_32;
-		break;
-	case 96000:
+		अवरोध;
+	हाल 96000:
 		cstas |= CSTAS_SAMP_FREQ_96;
-		break;
-	default:
-		dev_err(spdif->dev, "Invalid sampling rate %d\n",
+		अवरोध;
+	शेष:
+		dev_err(spdअगर->dev, "Invalid sampling rate %d\n",
 				params_rate(params));
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	cstas &= ~CSTAS_CATEGORY_MASK;
 	cstas |= CSTAS_CATEGORY_CODE_CDP;
 	cstas |= CSTAS_NO_COPYRIGHT;
 
-	writel(con, regs + CON);
-	writel(cstas, regs + CSTAS);
-	writel(clkcon, regs + CLKCON);
+	ग_लिखोl(con, regs + CON);
+	ग_लिखोl(cstas, regs + CSTAS);
+	ग_लिखोl(clkcon, regs + CLKCON);
 
-	spin_unlock_irqrestore(&spdif->lock, flags);
+	spin_unlock_irqrestore(&spdअगर->lock, flags);
 
-	return 0;
+	वापस 0;
 err:
-	spin_unlock_irqrestore(&spdif->lock, flags);
-	return -EINVAL;
-}
+	spin_unlock_irqrestore(&spdअगर->lock, flags);
+	वापस -EINVAL;
+पूर्ण
 
-static void spdif_shutdown(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct samsung_spdif_info *spdif = to_info(asoc_rtd_to_cpu(rtd, 0));
-	void __iomem *regs = spdif->regs;
+अटल व्योम spdअगर_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा samsung_spdअगर_info *spdअगर = to_info(asoc_rtd_to_cpu(rtd, 0));
+	व्योम __iomem *regs = spdअगर->regs;
 	u32 con, clkcon;
 
-	dev_dbg(spdif->dev, "Entered %s\n", __func__);
+	dev_dbg(spdअगर->dev, "Entered %s\n", __func__);
 
-	con = readl(regs + CON) & CON_MASK;
-	clkcon = readl(regs + CLKCON) & CLKCTL_MASK;
+	con = पढ़ोl(regs + CON) & CON_MASK;
+	clkcon = पढ़ोl(regs + CLKCON) & CLKCTL_MASK;
 
-	writel(con | CON_SW_RESET, regs + CON);
+	ग_लिखोl(con | CON_SW_RESET, regs + CON);
 	cpu_relax();
 
-	writel(clkcon & ~CLKCTL_PWR_ON, regs + CLKCON);
-}
+	ग_लिखोl(clkcon & ~CLKCTL_PWR_ON, regs + CLKCON);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int spdif_suspend(struct snd_soc_component *component)
-{
-	struct samsung_spdif_info *spdif = component_to_info(component);
-	u32 con = spdif->saved_con;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक spdअगर_suspend(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा samsung_spdअगर_info *spdअगर = component_to_info(component);
+	u32 con = spdअगर->saved_con;
 
-	dev_dbg(spdif->dev, "Entered %s\n", __func__);
+	dev_dbg(spdअगर->dev, "Entered %s\n", __func__);
 
-	spdif->saved_clkcon = readl(spdif->regs	+ CLKCON) & CLKCTL_MASK;
-	spdif->saved_con = readl(spdif->regs + CON) & CON_MASK;
-	spdif->saved_cstas = readl(spdif->regs + CSTAS) & CSTAS_MASK;
+	spdअगर->saved_clkcon = पढ़ोl(spdअगर->regs	+ CLKCON) & CLKCTL_MASK;
+	spdअगर->saved_con = पढ़ोl(spdअगर->regs + CON) & CON_MASK;
+	spdअगर->saved_cstas = पढ़ोl(spdअगर->regs + CSTAS) & CSTAS_MASK;
 
-	writel(con | CON_SW_RESET, spdif->regs + CON);
+	ग_लिखोl(con | CON_SW_RESET, spdअगर->regs + CON);
 	cpu_relax();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int spdif_resume(struct snd_soc_component *component)
-{
-	struct samsung_spdif_info *spdif = component_to_info(component);
+अटल पूर्णांक spdअगर_resume(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा samsung_spdअगर_info *spdअगर = component_to_info(component);
 
-	dev_dbg(spdif->dev, "Entered %s\n", __func__);
+	dev_dbg(spdअगर->dev, "Entered %s\n", __func__);
 
-	writel(spdif->saved_clkcon, spdif->regs	+ CLKCON);
-	writel(spdif->saved_con, spdif->regs + CON);
-	writel(spdif->saved_cstas, spdif->regs + CSTAS);
+	ग_लिखोl(spdअगर->saved_clkcon, spdअगर->regs	+ CLKCON);
+	ग_लिखोl(spdअगर->saved_con, spdअगर->regs + CON);
+	ग_लिखोl(spdअगर->saved_cstas, spdअगर->regs + CSTAS);
 
-	return 0;
-}
-#else
-#define spdif_suspend NULL
-#define spdif_resume NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा spdअगर_suspend शून्य
+#घोषणा spdअगर_resume शून्य
+#पूर्ण_अगर
 
-static const struct snd_soc_dai_ops spdif_dai_ops = {
-	.set_sysclk	= spdif_set_sysclk,
-	.trigger	= spdif_trigger,
-	.hw_params	= spdif_hw_params,
-	.shutdown	= spdif_shutdown,
-};
+अटल स्थिर काष्ठा snd_soc_dai_ops spdअगर_dai_ops = अणु
+	.set_sysclk	= spdअगर_set_sysclk,
+	.trigger	= spdअगर_trigger,
+	.hw_params	= spdअगर_hw_params,
+	.shutकरोwn	= spdअगर_shutकरोwn,
+पूर्ण;
 
-static struct snd_soc_dai_driver samsung_spdif_dai = {
+अटल काष्ठा snd_soc_dai_driver samsung_spdअगर_dai = अणु
 	.name = "samsung-spdif",
-	.playback = {
+	.playback = अणु
 		.stream_name = "S/PDIF Playback",
 		.channels_min = 2,
 		.channels_max = 2,
@@ -347,144 +348,144 @@ static struct snd_soc_dai_driver samsung_spdif_dai = {
 				SNDRV_PCM_RATE_44100 |
 				SNDRV_PCM_RATE_48000 |
 				SNDRV_PCM_RATE_96000),
-		.formats = SNDRV_PCM_FMTBIT_S16_LE, },
-	.ops = &spdif_dai_ops,
-};
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE, पूर्ण,
+	.ops = &spdअगर_dai_ops,
+पूर्ण;
 
-static const struct snd_soc_component_driver samsung_spdif_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver samsung_spdअगर_component = अणु
 	.name		= "samsung-spdif",
-	.suspend	= spdif_suspend,
-	.resume		= spdif_resume,
-};
+	.suspend	= spdअगर_suspend,
+	.resume		= spdअगर_resume,
+पूर्ण;
 
-static int spdif_probe(struct platform_device *pdev)
-{
-	struct s3c_audio_pdata *spdif_pdata;
-	struct resource *mem_res;
-	struct samsung_spdif_info *spdif;
+अटल पूर्णांक spdअगर_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा s3c_audio_pdata *spdअगर_pdata;
+	काष्ठा resource *mem_res;
+	काष्ठा samsung_spdअगर_info *spdअगर;
 	dma_filter_fn filter;
-	int ret;
+	पूर्णांक ret;
 
-	spdif_pdata = pdev->dev.platform_data;
+	spdअगर_pdata = pdev->dev.platक्रमm_data;
 
 	dev_dbg(&pdev->dev, "Entered %s\n", __func__);
 
-	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!mem_res) {
+	mem_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!mem_res) अणु
 		dev_err(&pdev->dev, "Unable to get register resource.\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (spdif_pdata && spdif_pdata->cfg_gpio
-			&& spdif_pdata->cfg_gpio(pdev)) {
+	अगर (spdअगर_pdata && spdअगर_pdata->cfg_gpio
+			&& spdअगर_pdata->cfg_gpio(pdev)) अणु
 		dev_err(&pdev->dev, "Unable to configure GPIO pins\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	spdif = &spdif_info;
-	spdif->dev = &pdev->dev;
+	spdअगर = &spdअगर_info;
+	spdअगर->dev = &pdev->dev;
 
-	spin_lock_init(&spdif->lock);
+	spin_lock_init(&spdअगर->lock);
 
-	spdif->pclk = devm_clk_get(&pdev->dev, "spdif");
-	if (IS_ERR(spdif->pclk)) {
+	spdअगर->pclk = devm_clk_get(&pdev->dev, "spdif");
+	अगर (IS_ERR(spdअगर->pclk)) अणु
 		dev_err(&pdev->dev, "failed to get peri-clock\n");
 		ret = -ENOENT;
-		goto err0;
-	}
-	ret = clk_prepare_enable(spdif->pclk);
-	if (ret)
-		goto err0;
+		जाओ err0;
+	पूर्ण
+	ret = clk_prepare_enable(spdअगर->pclk);
+	अगर (ret)
+		जाओ err0;
 
-	spdif->sclk = devm_clk_get(&pdev->dev, "sclk_spdif");
-	if (IS_ERR(spdif->sclk)) {
+	spdअगर->sclk = devm_clk_get(&pdev->dev, "sclk_spdif");
+	अगर (IS_ERR(spdअगर->sclk)) अणु
 		dev_err(&pdev->dev, "failed to get internal source clock\n");
 		ret = -ENOENT;
-		goto err1;
-	}
-	ret = clk_prepare_enable(spdif->sclk);
-	if (ret)
-		goto err1;
+		जाओ err1;
+	पूर्ण
+	ret = clk_prepare_enable(spdअगर->sclk);
+	अगर (ret)
+		जाओ err1;
 
 	/* Request S/PDIF Register's memory region */
-	if (!request_mem_region(mem_res->start,
-				resource_size(mem_res), "samsung-spdif")) {
+	अगर (!request_mem_region(mem_res->start,
+				resource_size(mem_res), "samsung-spdif")) अणु
 		dev_err(&pdev->dev, "Unable to request register region\n");
 		ret = -EBUSY;
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
-	spdif->regs = ioremap(mem_res->start, 0x100);
-	if (spdif->regs == NULL) {
+	spdअगर->regs = ioremap(mem_res->start, 0x100);
+	अगर (spdअगर->regs == शून्य) अणु
 		dev_err(&pdev->dev, "Cannot ioremap registers\n");
 		ret = -ENXIO;
-		goto err3;
-	}
+		जाओ err3;
+	पूर्ण
 
-	spdif_stereo_out.addr_width = 2;
-	spdif_stereo_out.addr = mem_res->start + DATA_OUTBUF;
-	filter = NULL;
-	if (spdif_pdata) {
-		spdif_stereo_out.filter_data = spdif_pdata->dma_playback;
-		filter = spdif_pdata->dma_filter;
-	}
-	spdif->dma_playback = &spdif_stereo_out;
+	spdअगर_stereo_out.addr_width = 2;
+	spdअगर_stereo_out.addr = mem_res->start + DATA_OUTBUF;
+	filter = शून्य;
+	अगर (spdअगर_pdata) अणु
+		spdअगर_stereo_out.filter_data = spdअगर_pdata->dma_playback;
+		filter = spdअगर_pdata->dma_filter;
+	पूर्ण
+	spdअगर->dma_playback = &spdअगर_stereo_out;
 
-	ret = samsung_asoc_dma_platform_register(&pdev->dev, filter,
-						 NULL, NULL, NULL);
-	if (ret) {
+	ret = samsung_asoc_dma_platक्रमm_रेजिस्टर(&pdev->dev, filter,
+						 शून्य, शून्य, शून्य);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register DMA: %d\n", ret);
-		goto err4;
-	}
+		जाओ err4;
+	पूर्ण
 
-	dev_set_drvdata(&pdev->dev, spdif);
+	dev_set_drvdata(&pdev->dev, spdअगर);
 
-	ret = devm_snd_soc_register_component(&pdev->dev,
-			&samsung_spdif_component, &samsung_spdif_dai, 1);
-	if (ret != 0) {
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+			&samsung_spdअगर_component, &samsung_spdअगर_dai, 1);
+	अगर (ret != 0) अणु
 		dev_err(&pdev->dev, "fail to register dai\n");
-		goto err4;
-	}
+		जाओ err4;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err4:
-	iounmap(spdif->regs);
+	iounmap(spdअगर->regs);
 err3:
 	release_mem_region(mem_res->start, resource_size(mem_res));
 err2:
-	clk_disable_unprepare(spdif->sclk);
+	clk_disable_unprepare(spdअगर->sclk);
 err1:
-	clk_disable_unprepare(spdif->pclk);
+	clk_disable_unprepare(spdअगर->pclk);
 err0:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int spdif_remove(struct platform_device *pdev)
-{
-	struct samsung_spdif_info *spdif = &spdif_info;
-	struct resource *mem_res;
+अटल पूर्णांक spdअगर_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा samsung_spdअगर_info *spdअगर = &spdअगर_info;
+	काष्ठा resource *mem_res;
 
-	iounmap(spdif->regs);
+	iounmap(spdअगर->regs);
 
-	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (mem_res)
+	mem_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (mem_res)
 		release_mem_region(mem_res->start, resource_size(mem_res));
 
-	clk_disable_unprepare(spdif->sclk);
-	clk_disable_unprepare(spdif->pclk);
+	clk_disable_unprepare(spdअगर->sclk);
+	clk_disable_unprepare(spdअगर->pclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver samsung_spdif_driver = {
-	.probe	= spdif_probe,
-	.remove	= spdif_remove,
-	.driver	= {
+अटल काष्ठा platक्रमm_driver samsung_spdअगर_driver = अणु
+	.probe	= spdअगर_probe,
+	.हटाओ	= spdअगर_हटाओ,
+	.driver	= अणु
 		.name	= "samsung-spdif",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(samsung_spdif_driver);
+module_platक्रमm_driver(samsung_spdअगर_driver);
 
 MODULE_AUTHOR("Seungwhan Youn, <sw.youn@samsung.com>");
 MODULE_DESCRIPTION("Samsung S/PDIF Controller Driver");

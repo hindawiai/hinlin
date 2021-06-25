@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __GEN7_RENDERCLEAR_H__
-#define __GEN7_RENDERCLEAR_H__
+#अगर_अघोषित __GEN7_RENDERCLEAR_H__
+#घोषणा __GEN7_RENDERCLEAR_H__
 
-struct intel_engine_cs;
-struct i915_vma;
+काष्ठा पूर्णांकel_engine_cs;
+काष्ठा i915_vma;
 
-int gen7_setup_clear_gpr_bb(struct intel_engine_cs * const engine,
-			    struct i915_vma * const vma);
+पूर्णांक gen7_setup_clear_gpr_bb(काष्ठा पूर्णांकel_engine_cs * स्थिर engine,
+			    काष्ठा i915_vma * स्थिर vma);
 
-#endif /* __GEN7_RENDERCLEAR_H__ */
+#पूर्ण_अगर /* __GEN7_RENDERCLEAR_H__ */

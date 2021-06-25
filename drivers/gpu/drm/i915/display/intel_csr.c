@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright तऊ 2014 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,81 +23,81 @@
  *
  */
 
-#include <linux/firmware.h>
+#समावेश <linux/firmware.h>
 
-#include "i915_drv.h"
-#include "i915_reg.h"
-#include "intel_csr.h"
-#include "intel_de.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_reg.h"
+#समावेश "intel_csr.h"
+#समावेश "intel_de.h"
 
 /**
- * DOC: csr support for dmc
+ * DOC: csr support क्रम dmc
  *
  * Display Context Save and Restore (CSR) firmware support added from gen9
  * onwards to drive newly added DMC (Display microcontroller) in display
- * engine to save and restore the state of display engine when it enter into
- * low-power state and comes back to normal.
+ * engine to save and restore the state of display engine when it enter पूर्णांकo
+ * low-घातer state and comes back to normal.
  */
 
-#define GEN12_CSR_MAX_FW_SIZE		ICL_CSR_MAX_FW_SIZE
+#घोषणा GEN12_CSR_MAX_FW_SIZE		ICL_CSR_MAX_FW_SIZE
 
-#define ADLS_CSR_PATH			"i915/adls_dmc_ver2_01.bin"
-#define ADLS_CSR_VERSION_REQUIRED	CSR_VERSION(2, 1)
+#घोषणा ADLS_CSR_PATH			"i915/adls_dmc_ver2_01.bin"
+#घोषणा ADLS_CSR_VERSION_REQUIRED	CSR_VERSION(2, 1)
 MODULE_FIRMWARE(ADLS_CSR_PATH);
 
-#define DG1_CSR_PATH			"i915/dg1_dmc_ver2_02.bin"
-#define DG1_CSR_VERSION_REQUIRED	CSR_VERSION(2, 2)
+#घोषणा DG1_CSR_PATH			"i915/dg1_dmc_ver2_02.bin"
+#घोषणा DG1_CSR_VERSION_REQUIRED	CSR_VERSION(2, 2)
 MODULE_FIRMWARE(DG1_CSR_PATH);
 
-#define RKL_CSR_PATH			"i915/rkl_dmc_ver2_02.bin"
-#define RKL_CSR_VERSION_REQUIRED	CSR_VERSION(2, 2)
+#घोषणा RKL_CSR_PATH			"i915/rkl_dmc_ver2_02.bin"
+#घोषणा RKL_CSR_VERSION_REQUIRED	CSR_VERSION(2, 2)
 MODULE_FIRMWARE(RKL_CSR_PATH);
 
-#define TGL_CSR_PATH			"i915/tgl_dmc_ver2_08.bin"
-#define TGL_CSR_VERSION_REQUIRED	CSR_VERSION(2, 8)
+#घोषणा TGL_CSR_PATH			"i915/tgl_dmc_ver2_08.bin"
+#घोषणा TGL_CSR_VERSION_REQUIRED	CSR_VERSION(2, 8)
 MODULE_FIRMWARE(TGL_CSR_PATH);
 
-#define ICL_CSR_PATH			"i915/icl_dmc_ver1_09.bin"
-#define ICL_CSR_VERSION_REQUIRED	CSR_VERSION(1, 9)
-#define ICL_CSR_MAX_FW_SIZE		0x6000
+#घोषणा ICL_CSR_PATH			"i915/icl_dmc_ver1_09.bin"
+#घोषणा ICL_CSR_VERSION_REQUIRED	CSR_VERSION(1, 9)
+#घोषणा ICL_CSR_MAX_FW_SIZE		0x6000
 MODULE_FIRMWARE(ICL_CSR_PATH);
 
-#define CNL_CSR_PATH			"i915/cnl_dmc_ver1_07.bin"
-#define CNL_CSR_VERSION_REQUIRED	CSR_VERSION(1, 7)
-#define CNL_CSR_MAX_FW_SIZE		GLK_CSR_MAX_FW_SIZE
+#घोषणा CNL_CSR_PATH			"i915/cnl_dmc_ver1_07.bin"
+#घोषणा CNL_CSR_VERSION_REQUIRED	CSR_VERSION(1, 7)
+#घोषणा CNL_CSR_MAX_FW_SIZE		GLK_CSR_MAX_FW_SIZE
 MODULE_FIRMWARE(CNL_CSR_PATH);
 
-#define GLK_CSR_PATH			"i915/glk_dmc_ver1_04.bin"
-#define GLK_CSR_VERSION_REQUIRED	CSR_VERSION(1, 4)
-#define GLK_CSR_MAX_FW_SIZE		0x4000
+#घोषणा GLK_CSR_PATH			"i915/glk_dmc_ver1_04.bin"
+#घोषणा GLK_CSR_VERSION_REQUIRED	CSR_VERSION(1, 4)
+#घोषणा GLK_CSR_MAX_FW_SIZE		0x4000
 MODULE_FIRMWARE(GLK_CSR_PATH);
 
-#define KBL_CSR_PATH			"i915/kbl_dmc_ver1_04.bin"
-#define KBL_CSR_VERSION_REQUIRED	CSR_VERSION(1, 4)
-#define KBL_CSR_MAX_FW_SIZE		BXT_CSR_MAX_FW_SIZE
+#घोषणा KBL_CSR_PATH			"i915/kbl_dmc_ver1_04.bin"
+#घोषणा KBL_CSR_VERSION_REQUIRED	CSR_VERSION(1, 4)
+#घोषणा KBL_CSR_MAX_FW_SIZE		BXT_CSR_MAX_FW_SIZE
 MODULE_FIRMWARE(KBL_CSR_PATH);
 
-#define SKL_CSR_PATH			"i915/skl_dmc_ver1_27.bin"
-#define SKL_CSR_VERSION_REQUIRED	CSR_VERSION(1, 27)
-#define SKL_CSR_MAX_FW_SIZE		BXT_CSR_MAX_FW_SIZE
+#घोषणा SKL_CSR_PATH			"i915/skl_dmc_ver1_27.bin"
+#घोषणा SKL_CSR_VERSION_REQUIRED	CSR_VERSION(1, 27)
+#घोषणा SKL_CSR_MAX_FW_SIZE		BXT_CSR_MAX_FW_SIZE
 MODULE_FIRMWARE(SKL_CSR_PATH);
 
-#define BXT_CSR_PATH			"i915/bxt_dmc_ver1_07.bin"
-#define BXT_CSR_VERSION_REQUIRED	CSR_VERSION(1, 7)
-#define BXT_CSR_MAX_FW_SIZE		0x3000
+#घोषणा BXT_CSR_PATH			"i915/bxt_dmc_ver1_07.bin"
+#घोषणा BXT_CSR_VERSION_REQUIRED	CSR_VERSION(1, 7)
+#घोषणा BXT_CSR_MAX_FW_SIZE		0x3000
 MODULE_FIRMWARE(BXT_CSR_PATH);
 
-#define CSR_DEFAULT_FW_OFFSET		0xFFFFFFFF
-#define PACKAGE_MAX_FW_INFO_ENTRIES	20
-#define PACKAGE_V2_MAX_FW_INFO_ENTRIES	32
-#define DMC_V1_MAX_MMIO_COUNT		8
-#define DMC_V3_MAX_MMIO_COUNT		20
+#घोषणा CSR_DEFAULT_FW_OFFSET		0xFFFFFFFF
+#घोषणा PACKAGE_MAX_FW_INFO_ENTRIES	20
+#घोषणा PACKAGE_V2_MAX_FW_INFO_ENTRIES	32
+#घोषणा DMC_V1_MAX_MMIO_COUNT		8
+#घोषणा DMC_V3_MAX_MMIO_COUNT		20
 
-struct intel_css_header {
-	/* 0x09 for DMC */
+काष्ठा पूर्णांकel_css_header अणु
+	/* 0x09 क्रम DMC */
 	u32 module_type;
 
-	/* Includes the DMC specific header in dwords */
+	/* Includes the DMC specअगरic header in dwords */
 	u32 header_len;
 
 	/* always value would be 0x10000 */
@@ -106,9 +107,9 @@ struct intel_css_header {
 	u32 module_id;
 
 	/* Not used */
-	u32 module_vendor;
+	u32 module_venकरोr;
 
-	/* in YYYYMMDD format */
+	/* in YYYYMMDD क्रमmat */
 	u32 date;
 
 	/* Size in dwords (CSS_Headerlen + PackageHeaderLen + dmc FWsLen)/4 */
@@ -134,25 +135,25 @@ struct intel_css_header {
 
 	/* Not used */
 	u32 kernel_header_info;
-} __packed;
+पूर्ण __packed;
 
-struct intel_fw_info {
+काष्ठा पूर्णांकel_fw_info अणु
 	u8 reserved1;
 
 	/* reserved on package_header version 1, must be 0 on version 2 */
 	u8 dmc_id;
 
 	/* Stepping (A, B, C, ..., *). * is a wildcard */
-	char stepping;
+	अक्षर stepping;
 
 	/* Sub-stepping (0, 1, ..., *). * is a wildcard */
-	char substepping;
+	अक्षर substepping;
 
 	u32 offset;
 	u32 reserved2;
-} __packed;
+पूर्ण __packed;
 
-struct intel_package_header {
+काष्ठा पूर्णांकel_package_header अणु
 	/* DMC container header length in dwords */
 	u8 header_len;
 
@@ -163,9 +164,9 @@ struct intel_package_header {
 
 	/* Number of valid entries in the FWInfo array below */
 	u32 num_entries;
-} __packed;
+पूर्ण __packed;
 
-struct intel_dmc_header_base {
+काष्ठा पूर्णांकel_dmc_header_base अणु
 	/* always value would be 0x40403E3E */
 	u32 signature;
 
@@ -186,10 +187,10 @@ struct intel_dmc_header_base {
 
 	/* Major Minor version */
 	u32 fw_version;
-} __packed;
+पूर्ण __packed;
 
-struct intel_dmc_header_v1 {
-	struct intel_dmc_header_base base;
+काष्ठा पूर्णांकel_dmc_header_v1 अणु
+	काष्ठा पूर्णांकel_dmc_header_base base;
 
 	/* Number of valid MMIO cycles present. */
 	u32 mmio_count;
@@ -201,13 +202,13 @@ struct intel_dmc_header_v1 {
 	u32 mmiodata[DMC_V1_MAX_MMIO_COUNT];
 
 	/* FW filename  */
-	char dfile[32];
+	अक्षर dfile[32];
 
 	u32 reserved1[2];
-} __packed;
+पूर्ण __packed;
 
-struct intel_dmc_header_v3 {
-	struct intel_dmc_header_base base;
+काष्ठा पूर्णांकel_dmc_header_v3 अणु
+	काष्ठा पूर्णांकel_dmc_header_base base;
 
 	/* DMC RAM start MMIO address */
 	u32 start_mmioaddr;
@@ -215,7 +216,7 @@ struct intel_dmc_header_v3 {
 	u32 reserved[9];
 
 	/* FW filename */
-	char dfile[32];
+	अक्षर dfile[32];
 
 	/* Number of valid MMIO cycles present. */
 	u32 mmio_count;
@@ -225,173 +226,173 @@ struct intel_dmc_header_v3 {
 
 	/* MMIO data */
 	u32 mmiodata[DMC_V3_MAX_MMIO_COUNT];
-} __packed;
+पूर्ण __packed;
 
-struct stepping_info {
-	char stepping;
-	char substepping;
-};
+काष्ठा stepping_info अणु
+	अक्षर stepping;
+	अक्षर substepping;
+पूर्ण;
 
-static const struct stepping_info skl_stepping_info[] = {
-	{'A', '0'}, {'B', '0'}, {'C', '0'},
-	{'D', '0'}, {'E', '0'}, {'F', '0'},
-	{'G', '0'}, {'H', '0'}, {'I', '0'},
-	{'J', '0'}, {'K', '0'}
-};
+अटल स्थिर काष्ठा stepping_info skl_stepping_info[] = अणु
+	अणु'A', '0'}, {'B', '0'}, {'C', '0'पूर्ण,
+	अणु'D', '0'}, {'E', '0'}, {'F', '0'पूर्ण,
+	अणु'G', '0'}, {'H', '0'}, {'I', '0'पूर्ण,
+	अणु'J', '0'}, {'K', '0'पूर्ण
+पूर्ण;
 
-static const struct stepping_info bxt_stepping_info[] = {
-	{'A', '0'}, {'A', '1'}, {'A', '2'},
-	{'B', '0'}, {'B', '1'}, {'B', '2'}
-};
+अटल स्थिर काष्ठा stepping_info bxt_stepping_info[] = अणु
+	अणु'A', '0'}, {'A', '1'}, {'A', '2'पूर्ण,
+	अणु'B', '0'}, {'B', '1'}, {'B', '2'पूर्ण
+पूर्ण;
 
-static const struct stepping_info icl_stepping_info[] = {
-	{'A', '0'}, {'A', '1'}, {'A', '2'},
-	{'B', '0'}, {'B', '2'},
-	{'C', '0'}
-};
+अटल स्थिर काष्ठा stepping_info icl_stepping_info[] = अणु
+	अणु'A', '0'}, {'A', '1'}, {'A', '2'पूर्ण,
+	अणु'B', '0'}, {'B', '2'पूर्ण,
+	अणु'C', '0'पूर्ण
+पूर्ण;
 
-static const struct stepping_info no_stepping_info = { '*', '*' };
+अटल स्थिर काष्ठा stepping_info no_stepping_info = अणु '*', '*' पूर्ण;
 
-static const struct stepping_info *
-intel_get_stepping_info(struct drm_i915_private *dev_priv)
-{
-	const struct stepping_info *si;
-	unsigned int size;
+अटल स्थिर काष्ठा stepping_info *
+पूर्णांकel_get_stepping_info(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	स्थिर काष्ठा stepping_info *si;
+	अचिन्हित पूर्णांक size;
 
-	if (IS_ICELAKE(dev_priv)) {
+	अगर (IS_ICELAKE(dev_priv)) अणु
 		size = ARRAY_SIZE(icl_stepping_info);
 		si = icl_stepping_info;
-	} else if (IS_SKYLAKE(dev_priv)) {
+	पूर्ण अन्यथा अगर (IS_SKYLAKE(dev_priv)) अणु
 		size = ARRAY_SIZE(skl_stepping_info);
 		si = skl_stepping_info;
-	} else if (IS_BROXTON(dev_priv)) {
+	पूर्ण अन्यथा अगर (IS_BROXTON(dev_priv)) अणु
 		size = ARRAY_SIZE(bxt_stepping_info);
 		si = bxt_stepping_info;
-	} else {
+	पूर्ण अन्यथा अणु
 		size = 0;
-		si = NULL;
-	}
+		si = शून्य;
+	पूर्ण
 
-	if (INTEL_REVID(dev_priv) < size)
-		return si + INTEL_REVID(dev_priv);
+	अगर (INTEL_REVID(dev_priv) < size)
+		वापस si + INTEL_REVID(dev_priv);
 
-	return &no_stepping_info;
-}
+	वापस &no_stepping_info;
+पूर्ण
 
-static void gen9_set_dc_state_debugmask(struct drm_i915_private *dev_priv)
-{
+अटल व्योम gen9_set_dc_state_debugmask(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	u32 val, mask;
 
 	mask = DC_STATE_DEBUG_MASK_MEMORY_UP;
 
-	if (IS_GEN9_LP(dev_priv))
+	अगर (IS_GEN9_LP(dev_priv))
 		mask |= DC_STATE_DEBUG_MASK_CORES;
 
-	/* The below bit doesn't need to be cleared ever afterwards */
-	val = intel_de_read(dev_priv, DC_STATE_DEBUG);
-	if ((val & mask) != mask) {
+	/* The below bit करोesn't need to be cleared ever afterwards */
+	val = पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_DEBUG);
+	अगर ((val & mask) != mask) अणु
 		val |= mask;
-		intel_de_write(dev_priv, DC_STATE_DEBUG, val);
-		intel_de_posting_read(dev_priv, DC_STATE_DEBUG);
-	}
-}
+		पूर्णांकel_de_ग_लिखो(dev_priv, DC_STATE_DEBUG, val);
+		पूर्णांकel_de_posting_पढ़ो(dev_priv, DC_STATE_DEBUG);
+	पूर्ण
+पूर्ण
 
 /**
- * intel_csr_load_program() - write the firmware from memory to register.
+ * पूर्णांकel_csr_load_program() - ग_लिखो the firmware from memory to रेजिस्टर.
  * @dev_priv: i915 drm device.
  *
- * CSR firmware is read from a .bin file and kept in internal memory one time.
- * Everytime display comes back from low power state this function is called to
- * copy the firmware from internal memory to registers.
+ * CSR firmware is पढ़ो from a .bin file and kept in पूर्णांकernal memory one समय.
+ * Everyसमय display comes back from low घातer state this function is called to
+ * copy the firmware from पूर्णांकernal memory to रेजिस्टरs.
  */
-void intel_csr_load_program(struct drm_i915_private *dev_priv)
-{
+व्योम पूर्णांकel_csr_load_program(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	u32 *payload = dev_priv->csr.dmc_payload;
 	u32 i, fw_size;
 
-	if (!HAS_CSR(dev_priv)) {
+	अगर (!HAS_CSR(dev_priv)) अणु
 		drm_err(&dev_priv->drm,
 			"No CSR support available for this platform\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!dev_priv->csr.dmc_payload) {
+	अगर (!dev_priv->csr.dmc_payload) अणु
 		drm_err(&dev_priv->drm,
 			"Tried to program CSR with empty payload\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fw_size = dev_priv->csr.dmc_fw_size;
-	assert_rpm_wakelock_held(&dev_priv->runtime_pm);
+	निश्चित_rpm_wakelock_held(&dev_priv->runसमय_pm);
 
 	preempt_disable();
 
-	for (i = 0; i < fw_size; i++)
-		intel_uncore_write_fw(&dev_priv->uncore, CSR_PROGRAM(i),
+	क्रम (i = 0; i < fw_size; i++)
+		पूर्णांकel_uncore_ग_लिखो_fw(&dev_priv->uncore, CSR_PROGRAM(i),
 				      payload[i]);
 
 	preempt_enable();
 
-	for (i = 0; i < dev_priv->csr.mmio_count; i++) {
-		intel_de_write(dev_priv, dev_priv->csr.mmioaddr[i],
+	क्रम (i = 0; i < dev_priv->csr.mmio_count; i++) अणु
+		पूर्णांकel_de_ग_लिखो(dev_priv, dev_priv->csr.mmioaddr[i],
 			       dev_priv->csr.mmiodata[i]);
-	}
+	पूर्ण
 
 	dev_priv->csr.dc_state = 0;
 
 	gen9_set_dc_state_debugmask(dev_priv);
-}
+पूर्ण
 
 /*
- * Search fw_info table for dmc_offset to find firmware binary: num_entries is
- * already sanitized.
+ * Search fw_info table क्रम dmc_offset to find firmware binary: num_entries is
+ * alपढ़ोy sanitized.
  */
-static u32 find_dmc_fw_offset(const struct intel_fw_info *fw_info,
-			      unsigned int num_entries,
-			      const struct stepping_info *si,
+अटल u32 find_dmc_fw_offset(स्थिर काष्ठा पूर्णांकel_fw_info *fw_info,
+			      अचिन्हित पूर्णांक num_entries,
+			      स्थिर काष्ठा stepping_info *si,
 			      u8 package_ver)
-{
+अणु
 	u32 dmc_offset = CSR_DEFAULT_FW_OFFSET;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num_entries; i++) {
-		if (package_ver > 1 && fw_info[i].dmc_id != 0)
-			continue;
+	क्रम (i = 0; i < num_entries; i++) अणु
+		अगर (package_ver > 1 && fw_info[i].dmc_id != 0)
+			जारी;
 
-		if (fw_info[i].substepping == '*' &&
-		    si->stepping == fw_info[i].stepping) {
+		अगर (fw_info[i].substepping == '*' &&
+		    si->stepping == fw_info[i].stepping) अणु
 			dmc_offset = fw_info[i].offset;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (si->stepping == fw_info[i].stepping &&
-		    si->substepping == fw_info[i].substepping) {
+		अगर (si->stepping == fw_info[i].stepping &&
+		    si->substepping == fw_info[i].substepping) अणु
 			dmc_offset = fw_info[i].offset;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (fw_info[i].stepping == '*' &&
-		    fw_info[i].substepping == '*') {
+		अगर (fw_info[i].stepping == '*' &&
+		    fw_info[i].substepping == '*') अणु
 			/*
 			 * In theory we should stop the search as generic
-			 * entries should always come after the more specific
-			 * ones, but let's continue to make sure to work even
-			 * with "broken" firmwares. If we don't find a more
-			 * specific one, then we use this entry
+			 * entries should always come after the more specअगरic
+			 * ones, but let's जारी to make sure to work even
+			 * with "broken" firmwares. If we करोn't find a more
+			 * specअगरic one, then we use this entry
 			 */
 			dmc_offset = fw_info[i].offset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return dmc_offset;
-}
+	वापस dmc_offset;
+पूर्ण
 
-static u32 parse_csr_fw_dmc(struct intel_csr *csr,
-			    const struct intel_dmc_header_base *dmc_header,
-			    size_t rem_size)
-{
-	unsigned int header_len_bytes, dmc_header_size, payload_size, i;
-	const u32 *mmioaddr, *mmiodata;
+अटल u32 parse_csr_fw_dmc(काष्ठा पूर्णांकel_csr *csr,
+			    स्थिर काष्ठा पूर्णांकel_dmc_header_base *dmc_header,
+			    माप_प्रकार rem_size)
+अणु
+	अचिन्हित पूर्णांक header_len_bytes, dmc_header_size, payload_size, i;
+	स्थिर u32 *mmioaddr, *mmiodata;
 	u32 mmio_count, mmio_count_max;
 	u8 *payload;
 
@@ -399,19 +400,19 @@ static u32 parse_csr_fw_dmc(struct intel_csr *csr,
 		     ARRAY_SIZE(csr->mmioaddr) < DMC_V1_MAX_MMIO_COUNT);
 
 	/*
-	 * Check if we can access common fields, we will checkc again below
-	 * after we have read the version
+	 * Check अगर we can access common fields, we will checkc again below
+	 * after we have पढ़ो the version
 	 */
-	if (rem_size < sizeof(struct intel_dmc_header_base))
-		goto error_truncated;
+	अगर (rem_size < माप(काष्ठा पूर्णांकel_dmc_header_base))
+		जाओ error_truncated;
 
-	/* Cope with small differences between v1 and v3 */
-	if (dmc_header->header_ver == 3) {
-		const struct intel_dmc_header_v3 *v3 =
-			(const struct intel_dmc_header_v3 *)dmc_header;
+	/* Cope with small dअगरferences between v1 and v3 */
+	अगर (dmc_header->header_ver == 3) अणु
+		स्थिर काष्ठा पूर्णांकel_dmc_header_v3 *v3 =
+			(स्थिर काष्ठा पूर्णांकel_dmc_header_v3 *)dmc_header;
 
-		if (rem_size < sizeof(struct intel_dmc_header_v3))
-			goto error_truncated;
+		अगर (rem_size < माप(काष्ठा पूर्णांकel_dmc_header_v3))
+			जाओ error_truncated;
 
 		mmioaddr = v3->mmioaddr;
 		mmiodata = v3->mmiodata;
@@ -419,227 +420,227 @@ static u32 parse_csr_fw_dmc(struct intel_csr *csr,
 		mmio_count_max = DMC_V3_MAX_MMIO_COUNT;
 		/* header_len is in dwords */
 		header_len_bytes = dmc_header->header_len * 4;
-		dmc_header_size = sizeof(*v3);
-	} else if (dmc_header->header_ver == 1) {
-		const struct intel_dmc_header_v1 *v1 =
-			(const struct intel_dmc_header_v1 *)dmc_header;
+		dmc_header_size = माप(*v3);
+	पूर्ण अन्यथा अगर (dmc_header->header_ver == 1) अणु
+		स्थिर काष्ठा पूर्णांकel_dmc_header_v1 *v1 =
+			(स्थिर काष्ठा पूर्णांकel_dmc_header_v1 *)dmc_header;
 
-		if (rem_size < sizeof(struct intel_dmc_header_v1))
-			goto error_truncated;
+		अगर (rem_size < माप(काष्ठा पूर्णांकel_dmc_header_v1))
+			जाओ error_truncated;
 
 		mmioaddr = v1->mmioaddr;
 		mmiodata = v1->mmiodata;
 		mmio_count = v1->mmio_count;
 		mmio_count_max = DMC_V1_MAX_MMIO_COUNT;
 		header_len_bytes = dmc_header->header_len;
-		dmc_header_size = sizeof(*v1);
-	} else {
+		dmc_header_size = माप(*v1);
+	पूर्ण अन्यथा अणु
 		DRM_ERROR("Unknown DMC fw header version: %u\n",
 			  dmc_header->header_ver);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (header_len_bytes != dmc_header_size) {
+	अगर (header_len_bytes != dmc_header_size) अणु
 		DRM_ERROR("DMC firmware has wrong dmc header length "
 			  "(%u bytes)\n", header_len_bytes);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Cache the dmc header info. */
-	if (mmio_count > mmio_count_max) {
+	अगर (mmio_count > mmio_count_max) अणु
 		DRM_ERROR("DMC firmware has wrong mmio count %u\n", mmio_count);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < mmio_count; i++) {
-		if (mmioaddr[i] < CSR_MMIO_START_RANGE ||
-		    mmioaddr[i] > CSR_MMIO_END_RANGE) {
+	क्रम (i = 0; i < mmio_count; i++) अणु
+		अगर (mmioaddr[i] < CSR_MMIO_START_RANGE ||
+		    mmioaddr[i] > CSR_MMIO_END_RANGE) अणु
 			DRM_ERROR("DMC firmware has wrong mmio address 0x%x\n",
 				  mmioaddr[i]);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		csr->mmioaddr[i] = _MMIO(mmioaddr[i]);
 		csr->mmiodata[i] = mmiodata[i];
-	}
+	पूर्ण
 	csr->mmio_count = mmio_count;
 
 	rem_size -= header_len_bytes;
 
-	/* fw_size is in dwords, so multiplied by 4 to convert into bytes. */
+	/* fw_size is in dwords, so multiplied by 4 to convert पूर्णांकo bytes. */
 	payload_size = dmc_header->fw_size * 4;
-	if (rem_size < payload_size)
-		goto error_truncated;
+	अगर (rem_size < payload_size)
+		जाओ error_truncated;
 
-	if (payload_size > csr->max_fw_size) {
+	अगर (payload_size > csr->max_fw_size) अणु
 		DRM_ERROR("DMC FW too big (%u bytes)\n", payload_size);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	csr->dmc_fw_size = dmc_header->fw_size;
 
-	csr->dmc_payload = kmalloc(payload_size, GFP_KERNEL);
-	if (!csr->dmc_payload) {
+	csr->dmc_payload = kदो_स्मृति(payload_size, GFP_KERNEL);
+	अगर (!csr->dmc_payload) अणु
 		DRM_ERROR("Memory allocation failed for dmc payload\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	payload = (u8 *)(dmc_header) + header_len_bytes;
-	memcpy(csr->dmc_payload, payload, payload_size);
+	स_नकल(csr->dmc_payload, payload, payload_size);
 
-	return header_len_bytes + payload_size;
+	वापस header_len_bytes + payload_size;
 
 error_truncated:
 	DRM_ERROR("Truncated DMC firmware, refusing.\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32
-parse_csr_fw_package(struct intel_csr *csr,
-		     const struct intel_package_header *package_header,
-		     const struct stepping_info *si,
-		     size_t rem_size)
-{
-	u32 package_size = sizeof(struct intel_package_header);
+अटल u32
+parse_csr_fw_package(काष्ठा पूर्णांकel_csr *csr,
+		     स्थिर काष्ठा पूर्णांकel_package_header *package_header,
+		     स्थिर काष्ठा stepping_info *si,
+		     माप_प्रकार rem_size)
+अणु
+	u32 package_size = माप(काष्ठा पूर्णांकel_package_header);
 	u32 num_entries, max_entries, dmc_offset;
-	const struct intel_fw_info *fw_info;
+	स्थिर काष्ठा पूर्णांकel_fw_info *fw_info;
 
-	if (rem_size < package_size)
-		goto error_truncated;
+	अगर (rem_size < package_size)
+		जाओ error_truncated;
 
-	if (package_header->header_ver == 1) {
+	अगर (package_header->header_ver == 1) अणु
 		max_entries = PACKAGE_MAX_FW_INFO_ENTRIES;
-	} else if (package_header->header_ver == 2) {
+	पूर्ण अन्यथा अगर (package_header->header_ver == 2) अणु
 		max_entries = PACKAGE_V2_MAX_FW_INFO_ENTRIES;
-	} else {
+	पूर्ण अन्यथा अणु
 		DRM_ERROR("DMC firmware has unknown header version %u\n",
 			  package_header->header_ver);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * We should always have space for max_entries,
-	 * even if not all are used
+	 * We should always have space क्रम max_entries,
+	 * even अगर not all are used
 	 */
-	package_size += max_entries * sizeof(struct intel_fw_info);
-	if (rem_size < package_size)
-		goto error_truncated;
+	package_size += max_entries * माप(काष्ठा पूर्णांकel_fw_info);
+	अगर (rem_size < package_size)
+		जाओ error_truncated;
 
-	if (package_header->header_len * 4 != package_size) {
+	अगर (package_header->header_len * 4 != package_size) अणु
 		DRM_ERROR("DMC firmware has wrong package header length "
 			  "(%u bytes)\n", package_size);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	num_entries = package_header->num_entries;
-	if (WARN_ON(package_header->num_entries > max_entries))
+	अगर (WARN_ON(package_header->num_entries > max_entries))
 		num_entries = max_entries;
 
-	fw_info = (const struct intel_fw_info *)
-		((u8 *)package_header + sizeof(*package_header));
+	fw_info = (स्थिर काष्ठा पूर्णांकel_fw_info *)
+		((u8 *)package_header + माप(*package_header));
 	dmc_offset = find_dmc_fw_offset(fw_info, num_entries, si,
 					package_header->header_ver);
-	if (dmc_offset == CSR_DEFAULT_FW_OFFSET) {
+	अगर (dmc_offset == CSR_DEFAULT_FW_OFFSET) अणु
 		DRM_ERROR("DMC firmware not supported for %c stepping\n",
 			  si->stepping);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* dmc_offset is in dwords */
-	return package_size + dmc_offset * 4;
+	वापस package_size + dmc_offset * 4;
 
 error_truncated:
 	DRM_ERROR("Truncated DMC firmware, refusing.\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Return number of bytes parsed or 0 on error */
-static u32 parse_csr_fw_css(struct intel_csr *csr,
-			    struct intel_css_header *css_header,
-			    size_t rem_size)
-{
-	if (rem_size < sizeof(struct intel_css_header)) {
+अटल u32 parse_csr_fw_css(काष्ठा पूर्णांकel_csr *csr,
+			    काष्ठा पूर्णांकel_css_header *css_header,
+			    माप_प्रकार rem_size)
+अणु
+	अगर (rem_size < माप(काष्ठा पूर्णांकel_css_header)) अणु
 		DRM_ERROR("Truncated DMC firmware, refusing.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sizeof(struct intel_css_header) !=
-	    (css_header->header_len * 4)) {
+	अगर (माप(काष्ठा पूर्णांकel_css_header) !=
+	    (css_header->header_len * 4)) अणु
 		DRM_ERROR("DMC firmware has wrong CSS header length "
 			  "(%u bytes)\n",
 			  (css_header->header_len * 4));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (csr->required_version &&
-	    css_header->version != csr->required_version) {
+	अगर (csr->required_version &&
+	    css_header->version != csr->required_version) अणु
 		DRM_INFO("Refusing to load DMC firmware v%u.%u,"
 			 " please use v%u.%u\n",
 			 CSR_VERSION_MAJOR(css_header->version),
 			 CSR_VERSION_MINOR(css_header->version),
 			 CSR_VERSION_MAJOR(csr->required_version),
 			 CSR_VERSION_MINOR(csr->required_version));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	csr->version = css_header->version;
 
-	return sizeof(struct intel_css_header);
-}
+	वापस माप(काष्ठा पूर्णांकel_css_header);
+पूर्ण
 
-static void parse_csr_fw(struct drm_i915_private *dev_priv,
-			 const struct firmware *fw)
-{
-	struct intel_css_header *css_header;
-	struct intel_package_header *package_header;
-	struct intel_dmc_header_base *dmc_header;
-	struct intel_csr *csr = &dev_priv->csr;
-	const struct stepping_info *si = intel_get_stepping_info(dev_priv);
-	u32 readcount = 0;
+अटल व्योम parse_csr_fw(काष्ठा drm_i915_निजी *dev_priv,
+			 स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा पूर्णांकel_css_header *css_header;
+	काष्ठा पूर्णांकel_package_header *package_header;
+	काष्ठा पूर्णांकel_dmc_header_base *dmc_header;
+	काष्ठा पूर्णांकel_csr *csr = &dev_priv->csr;
+	स्थिर काष्ठा stepping_info *si = पूर्णांकel_get_stepping_info(dev_priv);
+	u32 पढ़ोcount = 0;
 	u32 r;
 
-	if (!fw)
-		return;
+	अगर (!fw)
+		वापस;
 
-	/* Extract CSS Header information */
-	css_header = (struct intel_css_header *)fw->data;
+	/* Extract CSS Header inक्रमmation */
+	css_header = (काष्ठा पूर्णांकel_css_header *)fw->data;
 	r = parse_csr_fw_css(csr, css_header, fw->size);
-	if (!r)
-		return;
+	अगर (!r)
+		वापस;
 
-	readcount += r;
+	पढ़ोcount += r;
 
-	/* Extract Package Header information */
-	package_header = (struct intel_package_header *)&fw->data[readcount];
-	r = parse_csr_fw_package(csr, package_header, si, fw->size - readcount);
-	if (!r)
-		return;
+	/* Extract Package Header inक्रमmation */
+	package_header = (काष्ठा पूर्णांकel_package_header *)&fw->data[पढ़ोcount];
+	r = parse_csr_fw_package(csr, package_header, si, fw->size - पढ़ोcount);
+	अगर (!r)
+		वापस;
 
-	readcount += r;
+	पढ़ोcount += r;
 
-	/* Extract dmc_header information */
-	dmc_header = (struct intel_dmc_header_base *)&fw->data[readcount];
-	parse_csr_fw_dmc(csr, dmc_header, fw->size - readcount);
-}
+	/* Extract dmc_header inक्रमmation */
+	dmc_header = (काष्ठा पूर्णांकel_dmc_header_base *)&fw->data[पढ़ोcount];
+	parse_csr_fw_dmc(csr, dmc_header, fw->size - पढ़ोcount);
+पूर्ण
 
-static void intel_csr_runtime_pm_get(struct drm_i915_private *dev_priv)
-{
+अटल व्योम पूर्णांकel_csr_runसमय_pm_get(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	drm_WARN_ON(&dev_priv->drm, dev_priv->csr.wakeref);
 	dev_priv->csr.wakeref =
-		intel_display_power_get(dev_priv, POWER_DOMAIN_INIT);
-}
+		पूर्णांकel_display_घातer_get(dev_priv, POWER_DOMAIN_INIT);
+पूर्ण
 
-static void intel_csr_runtime_pm_put(struct drm_i915_private *dev_priv)
-{
-	intel_wakeref_t wakeref __maybe_unused =
+अटल व्योम पूर्णांकel_csr_runसमय_pm_put(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांकel_wakeref_t wakeref __maybe_unused =
 		fetch_and_zero(&dev_priv->csr.wakeref);
 
-	intel_display_power_put(dev_priv, POWER_DOMAIN_INIT, wakeref);
-}
+	पूर्णांकel_display_घातer_put(dev_priv, POWER_DOMAIN_INIT, wakeref);
+पूर्ण
 
-static void csr_load_work_fn(struct work_struct *work)
-{
-	struct drm_i915_private *dev_priv;
-	struct intel_csr *csr;
-	const struct firmware *fw = NULL;
+अटल व्योम csr_load_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv;
+	काष्ठा पूर्णांकel_csr *csr;
+	स्थिर काष्ठा firmware *fw = शून्य;
 
 	dev_priv = container_of(work, typeof(*dev_priv), csr.work);
 	csr = &dev_priv->csr;
@@ -647,173 +648,173 @@ static void csr_load_work_fn(struct work_struct *work)
 	request_firmware(&fw, dev_priv->csr.fw_path, dev_priv->drm.dev);
 	parse_csr_fw(dev_priv, fw);
 
-	if (dev_priv->csr.dmc_payload) {
-		intel_csr_load_program(dev_priv);
-		intel_csr_runtime_pm_put(dev_priv);
+	अगर (dev_priv->csr.dmc_payload) अणु
+		पूर्णांकel_csr_load_program(dev_priv);
+		पूर्णांकel_csr_runसमय_pm_put(dev_priv);
 
 		drm_info(&dev_priv->drm,
 			 "Finished loading DMC firmware %s (v%u.%u)\n",
 			 dev_priv->csr.fw_path, CSR_VERSION_MAJOR(csr->version),
 			 CSR_VERSION_MINOR(csr->version));
-	} else {
+	पूर्ण अन्यथा अणु
 		drm_notice(&dev_priv->drm,
 			   "Failed to load DMC firmware %s."
 			   " Disabling runtime power management.\n",
 			   csr->fw_path);
 		drm_notice(&dev_priv->drm, "DMC firmware homepage: %s",
 			   INTEL_UC_FIRMWARE_URL);
-	}
+	पूर्ण
 
 	release_firmware(fw);
-}
+पूर्ण
 
 /**
- * intel_csr_ucode_init() - initialize the firmware loading.
+ * पूर्णांकel_csr_ucode_init() - initialize the firmware loading.
  * @dev_priv: i915 drm device.
  *
- * This function is called at the time of loading the display driver to read
- * firmware from a .bin file and copied into a internal memory.
+ * This function is called at the समय of loading the display driver to पढ़ो
+ * firmware from a .bin file and copied पूर्णांकo a पूर्णांकernal memory.
  */
-void intel_csr_ucode_init(struct drm_i915_private *dev_priv)
-{
-	struct intel_csr *csr = &dev_priv->csr;
+व्योम पूर्णांकel_csr_ucode_init(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_csr *csr = &dev_priv->csr;
 
 	INIT_WORK(&dev_priv->csr.work, csr_load_work_fn);
 
-	if (!HAS_CSR(dev_priv))
-		return;
+	अगर (!HAS_CSR(dev_priv))
+		वापस;
 
 	/*
-	 * Obtain a runtime pm reference, until CSR is loaded, to avoid entering
-	 * runtime-suspend.
+	 * Obtain a runसमय pm reference, until CSR is loaded, to aव्योम entering
+	 * runसमय-suspend.
 	 *
-	 * On error, we return with the rpm wakeref held to prevent runtime
-	 * suspend as runtime suspend *requires* a working CSR for whatever
+	 * On error, we वापस with the rpm wakeref held to prevent runसमय
+	 * suspend as runसमय suspend *requires* a working CSR क्रम whatever
 	 * reason.
 	 */
-	intel_csr_runtime_pm_get(dev_priv);
+	पूर्णांकel_csr_runसमय_pm_get(dev_priv);
 
-	if (IS_ALDERLAKE_S(dev_priv)) {
+	अगर (IS_ALDERLAKE_S(dev_priv)) अणु
 		csr->fw_path = ADLS_CSR_PATH;
 		csr->required_version = ADLS_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = GEN12_CSR_MAX_FW_SIZE;
-	} else if (IS_DG1(dev_priv)) {
+	पूर्ण अन्यथा अगर (IS_DG1(dev_priv)) अणु
 		csr->fw_path = DG1_CSR_PATH;
 		csr->required_version = DG1_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = GEN12_CSR_MAX_FW_SIZE;
-	} else if (IS_ROCKETLAKE(dev_priv)) {
+	पूर्ण अन्यथा अगर (IS_ROCKETLAKE(dev_priv)) अणु
 		csr->fw_path = RKL_CSR_PATH;
 		csr->required_version = RKL_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = GEN12_CSR_MAX_FW_SIZE;
-	} else if (DISPLAY_VER(dev_priv) >= 12) {
+	पूर्ण अन्यथा अगर (DISPLAY_VER(dev_priv) >= 12) अणु
 		csr->fw_path = TGL_CSR_PATH;
 		csr->required_version = TGL_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = GEN12_CSR_MAX_FW_SIZE;
-	} else if (IS_DISPLAY_VER(dev_priv, 11)) {
+	पूर्ण अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 11)) अणु
 		csr->fw_path = ICL_CSR_PATH;
 		csr->required_version = ICL_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = ICL_CSR_MAX_FW_SIZE;
-	} else if (IS_CANNONLAKE(dev_priv)) {
+	पूर्ण अन्यथा अगर (IS_CANNONLAKE(dev_priv)) अणु
 		csr->fw_path = CNL_CSR_PATH;
 		csr->required_version = CNL_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = CNL_CSR_MAX_FW_SIZE;
-	} else if (IS_GEMINILAKE(dev_priv)) {
+	पूर्ण अन्यथा अगर (IS_GEMINILAKE(dev_priv)) अणु
 		csr->fw_path = GLK_CSR_PATH;
 		csr->required_version = GLK_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = GLK_CSR_MAX_FW_SIZE;
-	} else if (IS_KABYLAKE(dev_priv) ||
+	पूर्ण अन्यथा अगर (IS_KABYLAKE(dev_priv) ||
 		   IS_COFFEELAKE(dev_priv) ||
-		   IS_COMETLAKE(dev_priv)) {
+		   IS_COMETLAKE(dev_priv)) अणु
 		csr->fw_path = KBL_CSR_PATH;
 		csr->required_version = KBL_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = KBL_CSR_MAX_FW_SIZE;
-	} else if (IS_SKYLAKE(dev_priv)) {
+	पूर्ण अन्यथा अगर (IS_SKYLAKE(dev_priv)) अणु
 		csr->fw_path = SKL_CSR_PATH;
 		csr->required_version = SKL_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = SKL_CSR_MAX_FW_SIZE;
-	} else if (IS_BROXTON(dev_priv)) {
+	पूर्ण अन्यथा अगर (IS_BROXTON(dev_priv)) अणु
 		csr->fw_path = BXT_CSR_PATH;
 		csr->required_version = BXT_CSR_VERSION_REQUIRED;
 		csr->max_fw_size = BXT_CSR_MAX_FW_SIZE;
-	}
+	पूर्ण
 
-	if (dev_priv->params.dmc_firmware_path) {
-		if (strlen(dev_priv->params.dmc_firmware_path) == 0) {
-			csr->fw_path = NULL;
+	अगर (dev_priv->params.dmc_firmware_path) अणु
+		अगर (म_माप(dev_priv->params.dmc_firmware_path) == 0) अणु
+			csr->fw_path = शून्य;
 			drm_info(&dev_priv->drm,
 				 "Disabling CSR firmware and runtime PM\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		csr->fw_path = dev_priv->params.dmc_firmware_path;
-		/* Bypass version check for firmware override. */
+		/* Bypass version check क्रम firmware override. */
 		csr->required_version = 0;
-	}
+	पूर्ण
 
-	if (csr->fw_path == NULL) {
+	अगर (csr->fw_path == शून्य) अणु
 		drm_dbg_kms(&dev_priv->drm,
 			    "No known CSR firmware for platform, disabling runtime PM\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	drm_dbg_kms(&dev_priv->drm, "Loading %s\n", csr->fw_path);
 	schedule_work(&dev_priv->csr.work);
-}
+पूर्ण
 
 /**
- * intel_csr_ucode_suspend() - prepare CSR firmware before system suspend
+ * पूर्णांकel_csr_ucode_suspend() - prepare CSR firmware beक्रमe प्रणाली suspend
  * @dev_priv: i915 drm device
  *
- * Prepare the DMC firmware before entering system suspend. This includes
+ * Prepare the DMC firmware beक्रमe entering प्रणाली suspend. This includes
  * flushing pending work items and releasing any resources acquired during
  * init.
  */
-void intel_csr_ucode_suspend(struct drm_i915_private *dev_priv)
-{
-	if (!HAS_CSR(dev_priv))
-		return;
+व्योम पूर्णांकel_csr_ucode_suspend(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	अगर (!HAS_CSR(dev_priv))
+		वापस;
 
 	flush_work(&dev_priv->csr.work);
 
-	/* Drop the reference held in case DMC isn't loaded. */
-	if (!dev_priv->csr.dmc_payload)
-		intel_csr_runtime_pm_put(dev_priv);
-}
+	/* Drop the reference held in हाल DMC isn't loaded. */
+	अगर (!dev_priv->csr.dmc_payload)
+		पूर्णांकel_csr_runसमय_pm_put(dev_priv);
+पूर्ण
 
 /**
- * intel_csr_ucode_resume() - init CSR firmware during system resume
+ * पूर्णांकel_csr_ucode_resume() - init CSR firmware during प्रणाली resume
  * @dev_priv: i915 drm device
  *
- * Reinitialize the DMC firmware during system resume, reacquiring any
- * resources released in intel_csr_ucode_suspend().
+ * Reinitialize the DMC firmware during प्रणाली resume, reacquiring any
+ * resources released in पूर्णांकel_csr_ucode_suspend().
  */
-void intel_csr_ucode_resume(struct drm_i915_private *dev_priv)
-{
-	if (!HAS_CSR(dev_priv))
-		return;
+व्योम पूर्णांकel_csr_ucode_resume(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	अगर (!HAS_CSR(dev_priv))
+		वापस;
 
 	/*
-	 * Reacquire the reference to keep RPM disabled in case DMC isn't
+	 * Reacquire the reference to keep RPM disabled in हाल DMC isn't
 	 * loaded.
 	 */
-	if (!dev_priv->csr.dmc_payload)
-		intel_csr_runtime_pm_get(dev_priv);
-}
+	अगर (!dev_priv->csr.dmc_payload)
+		पूर्णांकel_csr_runसमय_pm_get(dev_priv);
+पूर्ण
 
 /**
- * intel_csr_ucode_fini() - unload the CSR firmware.
+ * पूर्णांकel_csr_ucode_fini() - unload the CSR firmware.
  * @dev_priv: i915 drm device.
  *
- * Firmmware unloading includes freeing the internal memory and reset the
+ * Firmmware unloading includes मुक्तing the पूर्णांकernal memory and reset the
  * firmware loading status.
  */
-void intel_csr_ucode_fini(struct drm_i915_private *dev_priv)
-{
-	if (!HAS_CSR(dev_priv))
-		return;
+व्योम पूर्णांकel_csr_ucode_fini(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	अगर (!HAS_CSR(dev_priv))
+		वापस;
 
-	intel_csr_ucode_suspend(dev_priv);
+	पूर्णांकel_csr_ucode_suspend(dev_priv);
 	drm_WARN_ON(&dev_priv->drm, dev_priv->csr.wakeref);
 
-	kfree(dev_priv->csr.dmc_payload);
-}
+	kमुक्त(dev_priv->csr.dmc_payload);
+पूर्ण

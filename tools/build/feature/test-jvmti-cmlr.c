@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <jvmti.h>
-#include <jvmticmlr.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <jvmti.h>
+#समावेश <jvmticmlr.h>
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	jvmtiCompiledMethodLoadInlineRecord	rec __attribute__((unused));
 	jvmtiCompiledMethodLoadRecordHeader	hdr __attribute__((unused));
 	PCStackInfo				p   __attribute__((unused));
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl1251
  *
@@ -6,16 +7,16 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
-#ifndef __WL1251_PS_H__
-#define __WL1251_PS_H__
+#अगर_अघोषित __WL1251_PS_H__
+#घोषणा __WL1251_PS_H__
 
-#include "wl1251.h"
-#include "acx.h"
+#समावेश "wl1251.h"
+#समावेश "acx.h"
 
-int wl1251_ps_set_mode(struct wl1251 *wl, enum wl1251_station_mode mode);
-void wl1251_ps_elp_sleep(struct wl1251 *wl);
-int wl1251_ps_elp_wakeup(struct wl1251 *wl);
-void wl1251_elp_work(struct work_struct *work);
+पूर्णांक wl1251_ps_set_mode(काष्ठा wl1251 *wl, क्रमागत wl1251_station_mode mode);
+व्योम wl1251_ps_elp_sleep(काष्ठा wl1251 *wl);
+पूर्णांक wl1251_ps_elp_wakeup(काष्ठा wl1251 *wl);
+व्योम wl1251_elp_work(काष्ठा work_काष्ठा *work);
 
 
-#endif /* __WL1251_PS_H__ */
+#पूर्ण_अगर /* __WL1251_PS_H__ */

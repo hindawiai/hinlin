@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Landlock LSM - Limits for different components
+ * Landlock LSM - Limits क्रम dअगरferent components
  *
- * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
- * Copyright © 2018-2020 ANSSI
+ * Copyright तऊ 2016-2020 Mickaथ+l Salaथञn <mic@digikod.net>
+ * Copyright तऊ 2018-2020 ANSSI
  */
 
-#ifndef _SECURITY_LANDLOCK_LIMITS_H
-#define _SECURITY_LANDLOCK_LIMITS_H
+#अगर_अघोषित _SECURITY_LANDLOCK_LIMITS_H
+#घोषणा _SECURITY_LANDLOCK_LIMITS_H
 
-#include <linux/limits.h>
-#include <uapi/linux/landlock.h>
+#समावेश <linux/सीमा.स>
+#समावेश <uapi/linux/landlock.h>
 
-#define LANDLOCK_MAX_NUM_LAYERS		64
-#define LANDLOCK_MAX_NUM_RULES		U32_MAX
+#घोषणा LANDLOCK_MAX_NUM_LAYERS		64
+#घोषणा LANDLOCK_MAX_NUM_RULES		U32_MAX
 
-#define LANDLOCK_LAST_ACCESS_FS		LANDLOCK_ACCESS_FS_MAKE_SYM
-#define LANDLOCK_MASK_ACCESS_FS		((LANDLOCK_LAST_ACCESS_FS << 1) - 1)
+#घोषणा LANDLOCK_LAST_ACCESS_FS		LANDLOCK_ACCESS_FS_MAKE_SYM
+#घोषणा LANDLOCK_MASK_ACCESS_FS		((LANDLOCK_LAST_ACCESS_FS << 1) - 1)
 
-#endif /* _SECURITY_LANDLOCK_LIMITS_H */
+#पूर्ण_अगर /* _SECURITY_LANDLOCK_LIMITS_H */

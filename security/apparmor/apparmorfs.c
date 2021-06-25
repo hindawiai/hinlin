@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AppArmor security module
  *
- * This file contains AppArmor /sys/kernel/security/apparmor interface functions
+ * This file contains AppArmor /sys/kernel/security/apparmor पूर्णांकerface functions
  *
  * Copyright (C) 1998-2008 Novell/SUSE
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#include <linux/ctype.h>
-#include <linux/security.h>
-#include <linux/vmalloc.h>
-#include <linux/init.h>
-#include <linux/seq_file.h>
-#include <linux/uaccess.h>
-#include <linux/mount.h>
-#include <linux/namei.h>
-#include <linux/capability.h>
-#include <linux/rcupdate.h>
-#include <linux/fs.h>
-#include <linux/fs_context.h>
-#include <linux/poll.h>
-#include <linux/zlib.h>
-#include <uapi/linux/major.h>
-#include <uapi/linux/magic.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/security.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/init.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/zlib.h>
+#समावेश <uapi/linux/major.h>
+#समावेश <uapi/linux/magic.h>
 
-#include "include/apparmor.h"
-#include "include/apparmorfs.h"
-#include "include/audit.h"
-#include "include/cred.h"
-#include "include/crypto.h"
-#include "include/ipc.h"
-#include "include/label.h"
-#include "include/policy.h"
-#include "include/policy_ns.h"
-#include "include/resource.h"
-#include "include/policy_unpack.h"
+#समावेश "include/apparmor.h"
+#समावेश "include/apparmorfs.h"
+#समावेश "include/audit.h"
+#समावेश "include/cred.h"
+#समावेश "include/crypto.h"
+#समावेश "include/ipc.h"
+#समावेश "include/label.h"
+#समावेश "include/policy.h"
+#समावेश "include/policy_ns.h"
+#समावेश "include/resource.h"
+#समावेश "include/policy_unpack.h"
 
 /*
- * The apparmor filesystem interface used for policy load and introspection
- * The interface is split into two main components based on their function
+ * The apparmor fileप्रणाली पूर्णांकerface used क्रम policy load and पूर्णांकrospection
+ * The पूर्णांकerface is split पूर्णांकo two मुख्य components based on their function
  * a securityfs component:
- *   used for static files that are always available, and which allows
- *   userspace to specificy the location of the security filesystem.
+ *   used क्रम अटल files that are always available, and which allows
+ *   userspace to specअगरicy the location of the security fileप्रणाली.
  *
  *   fns and data are prefixed with
  *      aa_sfs_
  *
  * an apparmorfs component:
- *   used loaded policy content and introspection. It is not part of  a
- *   regular mounted filesystem and is available only through the magic
+ *   used loaded policy content and पूर्णांकrospection. It is not part of  a
+ *   regular mounted fileप्रणाली and is available only through the magic
  *   policy symlink in the root of the securityfs apparmor/ directory.
  *   Tasks queries will be magically redirected to the correct portion
  *   of the policy tree based on their confinement.
@@ -58,7 +59,7 @@
  *      aafs_
  *
  * The aa_fs_ prefix is used to indicate the fn is used by both the
- * securityfs and apparmorfs filesystems.
+ * securityfs and apparmorfs fileप्रणालीs.
  */
 
 
@@ -66,237 +67,237 @@
  * support fns
  */
 
-struct rawdata_f_data {
-	struct aa_loaddata *loaddata;
-};
+काष्ठा rawdata_f_data अणु
+	काष्ठा aa_loaddata *loaddata;
+पूर्ण;
 
-#define RAWDATA_F_DATA_BUF(p) (char *)(p + 1)
+#घोषणा RAWDATA_F_DATA_BUF(p) (अक्षर *)(p + 1)
 
-static void rawdata_f_data_free(struct rawdata_f_data *private)
-{
-	if (!private)
-		return;
+अटल व्योम rawdata_f_data_मुक्त(काष्ठा rawdata_f_data *निजी)
+अणु
+	अगर (!निजी)
+		वापस;
 
-	aa_put_loaddata(private->loaddata);
-	kvfree(private);
-}
+	aa_put_loaddata(निजी->loaddata);
+	kvमुक्त(निजी);
+पूर्ण
 
-static struct rawdata_f_data *rawdata_f_data_alloc(size_t size)
-{
-	struct rawdata_f_data *ret;
+अटल काष्ठा rawdata_f_data *rawdata_f_data_alloc(माप_प्रकार size)
+अणु
+	काष्ठा rawdata_f_data *ret;
 
-	if (size > SIZE_MAX - sizeof(*ret))
-		return ERR_PTR(-EINVAL);
+	अगर (size > SIZE_MAX - माप(*ret))
+		वापस ERR_PTR(-EINVAL);
 
-	ret = kvzalloc(sizeof(*ret) + size, GFP_KERNEL);
-	if (!ret)
-		return ERR_PTR(-ENOMEM);
+	ret = kvzalloc(माप(*ret) + size, GFP_KERNEL);
+	अगर (!ret)
+		वापस ERR_PTR(-ENOMEM);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * aa_mangle_name - mangle a profile name to std profile layout form
- * @name: profile name to mangle  (NOT NULL)
- * @target: buffer to store mangled name, same length as @name (MAYBE NULL)
+ * aa_mangle_name - mangle a profile name to std profile layout क्रमm
+ * @name: profile name to mangle  (NOT शून्य)
+ * @target: buffer to store mangled name, same length as @name (MAYBE शून्य)
  *
  * Returns: length of mangled name
  */
-static int mangle_name(const char *name, char *target)
-{
-	char *t = target;
+अटल पूर्णांक mangle_name(स्थिर अक्षर *name, अक्षर *target)
+अणु
+	अक्षर *t = target;
 
-	while (*name == '/' || *name == '.')
+	जबतक (*name == '/' || *name == '.')
 		name++;
 
-	if (target) {
-		for (; *name; name++) {
-			if (*name == '/')
+	अगर (target) अणु
+		क्रम (; *name; name++) अणु
+			अगर (*name == '/')
 				*(t)++ = '.';
-			else if (isspace(*name))
+			अन्यथा अगर (है_खाली(*name))
 				*(t)++ = '_';
-			else if (isalnum(*name) || strchr("._-", *name))
+			अन्यथा अगर (है_अक्षर_अंक(*name) || म_अक्षर("._-", *name))
 				*(t)++ = *name;
-		}
+		पूर्ण
 
 		*t = 0;
-	} else {
-		int len = 0;
-		for (; *name; name++) {
-			if (isalnum(*name) || isspace(*name) ||
-			    strchr("/._-", *name))
+	पूर्ण अन्यथा अणु
+		पूर्णांक len = 0;
+		क्रम (; *name; name++) अणु
+			अगर (है_अक्षर_अंक(*name) || है_खाली(*name) ||
+			    म_अक्षर("/._-", *name))
 				len++;
-		}
+		पूर्ण
 
-		return len;
-	}
+		वापस len;
+	पूर्ण
 
-	return t - target;
-}
+	वापस t - target;
+पूर्ण
 
 
 /*
- * aafs - core fns and data for the policy tree
+ * aafs - core fns and data क्रम the policy tree
  */
 
-#define AAFS_NAME		"apparmorfs"
-static struct vfsmount *aafs_mnt;
-static int aafs_count;
+#घोषणा AAFS_NAME		"apparmorfs"
+अटल काष्ठा vfsmount *aafs_mnt;
+अटल पूर्णांक aafs_count;
 
 
-static int aafs_show_path(struct seq_file *seq, struct dentry *dentry)
-{
-	seq_printf(seq, "%s:[%lu]", AAFS_NAME, d_inode(dentry)->i_ino);
-	return 0;
-}
+अटल पूर्णांक aafs_show_path(काष्ठा seq_file *seq, काष्ठा dentry *dentry)
+अणु
+	seq_म_लिखो(seq, "%s:[%lu]", AAFS_NAME, d_inode(dentry)->i_ino);
+	वापस 0;
+पूर्ण
 
-static void aafs_free_inode(struct inode *inode)
-{
-	if (S_ISLNK(inode->i_mode))
-		kfree(inode->i_link);
-	free_inode_nonrcu(inode);
-}
+अटल व्योम aafs_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	अगर (S_ISLNK(inode->i_mode))
+		kमुक्त(inode->i_link);
+	मुक्त_inode_nonrcu(inode);
+पूर्ण
 
-static const struct super_operations aafs_super_ops = {
+अटल स्थिर काष्ठा super_operations aafs_super_ops = अणु
 	.statfs = simple_statfs,
-	.free_inode = aafs_free_inode,
+	.मुक्त_inode = aafs_मुक्त_inode,
 	.show_path = aafs_show_path,
-};
+पूर्ण;
 
-static int apparmorfs_fill_super(struct super_block *sb, struct fs_context *fc)
-{
-	static struct tree_descr files[] = { {""} };
-	int error;
+अटल पूर्णांक apparmorfs_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	अटल काष्ठा tree_descr files[] = अणु अणु""पूर्ण पूर्ण;
+	पूर्णांक error;
 
 	error = simple_fill_super(sb, AAFS_MAGIC, files);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	sb->s_op = &aafs_super_ops;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apparmorfs_get_tree(struct fs_context *fc)
-{
-	return get_tree_single(fc, apparmorfs_fill_super);
-}
+अटल पूर्णांक apparmorfs_get_tree(काष्ठा fs_context *fc)
+अणु
+	वापस get_tree_single(fc, apparmorfs_fill_super);
+पूर्ण
 
-static const struct fs_context_operations apparmorfs_context_ops = {
+अटल स्थिर काष्ठा fs_context_operations apparmorfs_context_ops = अणु
 	.get_tree	= apparmorfs_get_tree,
-};
+पूर्ण;
 
-static int apparmorfs_init_fs_context(struct fs_context *fc)
-{
+अटल पूर्णांक apparmorfs_init_fs_context(काष्ठा fs_context *fc)
+अणु
 	fc->ops = &apparmorfs_context_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct file_system_type aafs_ops = {
+अटल काष्ठा file_प्रणाली_type aafs_ops = अणु
 	.owner = THIS_MODULE,
 	.name = AAFS_NAME,
 	.init_fs_context = apparmorfs_init_fs_context,
-	.kill_sb = kill_anon_super,
-};
+	.समाप्त_sb = समाप्त_anon_super,
+पूर्ण;
 
 /**
- * __aafs_setup_d_inode - basic inode setup for apparmorfs
- * @dir: parent directory for the dentry
- * @dentry: dentry we are seting the inode up for
+ * __aafs_setup_d_inode - basic inode setup क्रम apparmorfs
+ * @dir: parent directory क्रम the dentry
+ * @dentry: dentry we are seting the inode up क्रम
  * @mode: permissions the file should have
- * @data: data to store on inode.i_private, available in open()
- * @link: if symlink, symlink target string
- * @fops: struct file_operations that should be used
- * @iops: struct of inode_operations that should be used
+ * @data: data to store on inode.i_निजी, available in खोलो()
+ * @link: अगर symlink, symlink target string
+ * @fops: काष्ठा file_operations that should be used
+ * @iops: काष्ठा of inode_operations that should be used
  */
-static int __aafs_setup_d_inode(struct inode *dir, struct dentry *dentry,
-			       umode_t mode, void *data, char *link,
-			       const struct file_operations *fops,
-			       const struct inode_operations *iops)
-{
-	struct inode *inode = new_inode(dir->i_sb);
+अटल पूर्णांक __aafs_setup_d_inode(काष्ठा inode *dir, काष्ठा dentry *dentry,
+			       umode_t mode, व्योम *data, अक्षर *link,
+			       स्थिर काष्ठा file_operations *fops,
+			       स्थिर काष्ठा inode_operations *iops)
+अणु
+	काष्ठा inode *inode = new_inode(dir->i_sb);
 
 	AA_BUG(!dir);
 	AA_BUG(!dentry);
 
-	if (!inode)
-		return -ENOMEM;
+	अगर (!inode)
+		वापस -ENOMEM;
 
 	inode->i_ino = get_next_ino();
 	inode->i_mode = mode;
-	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
-	inode->i_private = data;
-	if (S_ISDIR(mode)) {
+	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	inode->i_निजी = data;
+	अगर (S_ISसूची(mode)) अणु
 		inode->i_op = iops ? iops : &simple_dir_inode_operations;
 		inode->i_fop = &simple_dir_operations;
 		inc_nlink(inode);
 		inc_nlink(dir);
-	} else if (S_ISLNK(mode)) {
+	पूर्ण अन्यथा अगर (S_ISLNK(mode)) अणु
 		inode->i_op = iops ? iops : &simple_symlink_inode_operations;
 		inode->i_link = link;
-	} else {
+	पूर्ण अन्यथा अणु
 		inode->i_fop = fops;
-	}
+	पूर्ण
 	d_instantiate(dentry, inode);
 	dget(dentry);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * aafs_create - create a dentry in the apparmorfs filesystem
+ * aafs_create - create a dentry in the apparmorfs fileप्रणाली
  *
  * @name: name of dentry to create
  * @mode: permissions the file should have
- * @parent: parent directory for this dentry
- * @data: data to store on inode.i_private, available in open()
- * @link: if symlink, symlink target string
- * @fops: struct file_operations that should be used for
- * @iops: struct of inode_operations that should be used
+ * @parent: parent directory क्रम this dentry
+ * @data: data to store on inode.i_निजी, available in खोलो()
+ * @link: अगर symlink, symlink target string
+ * @fops: काष्ठा file_operations that should be used क्रम
+ * @iops: काष्ठा of inode_operations that should be used
  *
- * This is the basic "create a xxx" function for apparmorfs.
+ * This is the basic "create a xxx" function क्रम apparmorfs.
  *
- * Returns a pointer to a dentry if it succeeds, that must be free with
- * aafs_remove(). Will return ERR_PTR on failure.
+ * Returns a poपूर्णांकer to a dentry अगर it succeeds, that must be मुक्त with
+ * aafs_हटाओ(). Will वापस ERR_PTR on failure.
  */
-static struct dentry *aafs_create(const char *name, umode_t mode,
-				  struct dentry *parent, void *data, void *link,
-				  const struct file_operations *fops,
-				  const struct inode_operations *iops)
-{
-	struct dentry *dentry;
-	struct inode *dir;
-	int error;
+अटल काष्ठा dentry *aafs_create(स्थिर अक्षर *name, umode_t mode,
+				  काष्ठा dentry *parent, व्योम *data, व्योम *link,
+				  स्थिर काष्ठा file_operations *fops,
+				  स्थिर काष्ठा inode_operations *iops)
+अणु
+	काष्ठा dentry *dentry;
+	काष्ठा inode *dir;
+	पूर्णांक error;
 
 	AA_BUG(!name);
 	AA_BUG(!parent);
 
-	if (!(mode & S_IFMT))
+	अगर (!(mode & S_IFMT))
 		mode = (mode & S_IALLUGO) | S_IFREG;
 
 	error = simple_pin_fs(&aafs_ops, &aafs_mnt, &aafs_count);
-	if (error)
-		return ERR_PTR(error);
+	अगर (error)
+		वापस ERR_PTR(error);
 
 	dir = d_inode(parent);
 
 	inode_lock(dir);
-	dentry = lookup_one_len(name, parent, strlen(name));
-	if (IS_ERR(dentry)) {
+	dentry = lookup_one_len(name, parent, म_माप(name));
+	अगर (IS_ERR(dentry)) अणु
 		error = PTR_ERR(dentry);
-		goto fail_lock;
-	}
+		जाओ fail_lock;
+	पूर्ण
 
-	if (d_really_is_positive(dentry)) {
+	अगर (d_really_is_positive(dentry)) अणु
 		error = -EEXIST;
-		goto fail_dentry;
-	}
+		जाओ fail_dentry;
+	पूर्ण
 
 	error = __aafs_setup_d_inode(dir, dentry, mode, data, link, fops, iops);
-	if (error)
-		goto fail_dentry;
+	अगर (error)
+		जाओ fail_dentry;
 	inode_unlock(dir);
 
-	return dentry;
+	वापस dentry;
 
 fail_dentry:
 	dput(dentry);
@@ -305,115 +306,115 @@ fail_lock:
 	inode_unlock(dir);
 	simple_release_fs(&aafs_mnt, &aafs_count);
 
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 
 /**
- * aafs_create_file - create a file in the apparmorfs filesystem
+ * aafs_create_file - create a file in the apparmorfs fileप्रणाली
  *
  * @name: name of dentry to create
  * @mode: permissions the file should have
- * @parent: parent directory for this dentry
- * @data: data to store on inode.i_private, available in open()
- * @fops: struct file_operations that should be used for
+ * @parent: parent directory क्रम this dentry
+ * @data: data to store on inode.i_निजी, available in खोलो()
+ * @fops: काष्ठा file_operations that should be used क्रम
  *
  * see aafs_create
  */
-static struct dentry *aafs_create_file(const char *name, umode_t mode,
-				       struct dentry *parent, void *data,
-				       const struct file_operations *fops)
-{
-	return aafs_create(name, mode, parent, data, NULL, fops, NULL);
-}
+अटल काष्ठा dentry *aafs_create_file(स्थिर अक्षर *name, umode_t mode,
+				       काष्ठा dentry *parent, व्योम *data,
+				       स्थिर काष्ठा file_operations *fops)
+अणु
+	वापस aafs_create(name, mode, parent, data, शून्य, fops, शून्य);
+पूर्ण
 
 /**
- * aafs_create_dir - create a directory in the apparmorfs filesystem
+ * aafs_create_dir - create a directory in the apparmorfs fileप्रणाली
  *
  * @name: name of dentry to create
- * @parent: parent directory for this dentry
+ * @parent: parent directory क्रम this dentry
  *
  * see aafs_create
  */
-static struct dentry *aafs_create_dir(const char *name, struct dentry *parent)
-{
-	return aafs_create(name, S_IFDIR | 0755, parent, NULL, NULL, NULL,
-			   NULL);
-}
+अटल काष्ठा dentry *aafs_create_dir(स्थिर अक्षर *name, काष्ठा dentry *parent)
+अणु
+	वापस aafs_create(name, S_IFसूची | 0755, parent, शून्य, शून्य, शून्य,
+			   शून्य);
+पूर्ण
 
 /**
- * aafs_remove - removes a file or directory from the apparmorfs filesystem
+ * aafs_हटाओ - हटाओs a file or directory from the apparmorfs fileप्रणाली
  *
- * @dentry: dentry of the file/directory/symlink to removed.
+ * @dentry: dentry of the file/directory/symlink to हटाओd.
  */
-static void aafs_remove(struct dentry *dentry)
-{
-	struct inode *dir;
+अटल व्योम aafs_हटाओ(काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *dir;
 
-	if (!dentry || IS_ERR(dentry))
-		return;
+	अगर (!dentry || IS_ERR(dentry))
+		वापस;
 
 	dir = d_inode(dentry->d_parent);
 	inode_lock(dir);
-	if (simple_positive(dentry)) {
-		if (d_is_dir(dentry))
-			simple_rmdir(dir, dentry);
-		else
+	अगर (simple_positive(dentry)) अणु
+		अगर (d_is_dir(dentry))
+			simple_सूची_हटाओ(dir, dentry);
+		अन्यथा
 			simple_unlink(dir, dentry);
 		d_delete(dentry);
 		dput(dentry);
-	}
+	पूर्ण
 	inode_unlock(dir);
 	simple_release_fs(&aafs_mnt, &aafs_count);
-}
+पूर्ण
 
 
 /*
- * aa_fs - policy load/replace/remove
+ * aa_fs - policy load/replace/हटाओ
  */
 
 /**
- * aa_simple_write_to_buffer - common routine for getting policy from user
- * @userbuf: user buffer to copy data from  (NOT NULL)
+ * aa_simple_ग_लिखो_to_buffer - common routine क्रम getting policy from user
+ * @userbuf: user buffer to copy data from  (NOT शून्य)
  * @alloc_size: size of user buffer (REQUIRES: @alloc_size >= @copy_size)
  * @copy_size: size of data to copy from user buffer
- * @pos: position write is at in the file (NOT NULL)
+ * @pos: position ग_लिखो is at in the file (NOT शून्य)
  *
  * Returns: kernel buffer containing copy of user buffer data or an
  *          ERR_PTR on failure.
  */
-static struct aa_loaddata *aa_simple_write_to_buffer(const char __user *userbuf,
-						     size_t alloc_size,
-						     size_t copy_size,
+अटल काष्ठा aa_loaddata *aa_simple_ग_लिखो_to_buffer(स्थिर अक्षर __user *userbuf,
+						     माप_प्रकार alloc_size,
+						     माप_प्रकार copy_size,
 						     loff_t *pos)
-{
-	struct aa_loaddata *data;
+अणु
+	काष्ठा aa_loaddata *data;
 
 	AA_BUG(copy_size > alloc_size);
 
-	if (*pos != 0)
-		/* only writes from pos 0, that is complete writes */
-		return ERR_PTR(-ESPIPE);
+	अगर (*pos != 0)
+		/* only ग_लिखोs from pos 0, that is complete ग_लिखोs */
+		वापस ERR_PTR(-ESPIPE);
 
-	/* freed by caller to simple_write_to_buffer */
+	/* मुक्तd by caller to simple_ग_लिखो_to_buffer */
 	data = aa_loaddata_alloc(alloc_size);
-	if (IS_ERR(data))
-		return data;
+	अगर (IS_ERR(data))
+		वापस data;
 
 	data->size = copy_size;
-	if (copy_from_user(data->data, userbuf, copy_size)) {
-		kvfree(data);
-		return ERR_PTR(-EFAULT);
-	}
+	अगर (copy_from_user(data->data, userbuf, copy_size)) अणु
+		kvमुक्त(data);
+		वापस ERR_PTR(-EFAULT);
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static ssize_t policy_update(u32 mask, const char __user *buf, size_t size,
-			     loff_t *pos, struct aa_ns *ns)
-{
-	struct aa_loaddata *data;
-	struct aa_label *label;
-	ssize_t error;
+अटल sमाप_प्रकार policy_update(u32 mask, स्थिर अक्षर __user *buf, माप_प्रकार size,
+			     loff_t *pos, काष्ठा aa_ns *ns)
+अणु
+	काष्ठा aa_loaddata *data;
+	काष्ठा aa_label *label;
+	sमाप_प्रकार error;
 
 	label = begin_current_label_crit_section();
 
@@ -421,231 +422,231 @@ static ssize_t policy_update(u32 mask, const char __user *buf, size_t size,
 	 * below after unpack
 	 */
 	error = aa_may_manage_policy(label, ns, mask);
-	if (error)
-		goto end_section;
+	अगर (error)
+		जाओ end_section;
 
-	data = aa_simple_write_to_buffer(buf, size, size, pos);
+	data = aa_simple_ग_लिखो_to_buffer(buf, size, size, pos);
 	error = PTR_ERR(data);
-	if (!IS_ERR(data)) {
+	अगर (!IS_ERR(data)) अणु
 		error = aa_replace_profiles(ns, label, mask, data);
 		aa_put_loaddata(data);
-	}
+	पूर्ण
 end_section:
 	end_current_label_crit_section(label);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /* .load file hook fn to load policy */
-static ssize_t profile_load(struct file *f, const char __user *buf, size_t size,
+अटल sमाप_प्रकार profile_load(काष्ठा file *f, स्थिर अक्षर __user *buf, माप_प्रकार size,
 			    loff_t *pos)
-{
-	struct aa_ns *ns = aa_get_ns(f->f_inode->i_private);
-	int error = policy_update(AA_MAY_LOAD_POLICY, buf, size, pos, ns);
+अणु
+	काष्ठा aa_ns *ns = aa_get_ns(f->f_inode->i_निजी);
+	पूर्णांक error = policy_update(AA_MAY_LOAD_POLICY, buf, size, pos, ns);
 
 	aa_put_ns(ns);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct file_operations aa_fs_profile_load = {
-	.write = profile_load,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations aa_fs_profile_load = अणु
+	.ग_लिखो = profile_load,
+	.llseek = शेष_llseek,
+पूर्ण;
 
 /* .replace file hook fn to load and/or replace policy */
-static ssize_t profile_replace(struct file *f, const char __user *buf,
-			       size_t size, loff_t *pos)
-{
-	struct aa_ns *ns = aa_get_ns(f->f_inode->i_private);
-	int error = policy_update(AA_MAY_LOAD_POLICY | AA_MAY_REPLACE_POLICY,
+अटल sमाप_प्रकार profile_replace(काष्ठा file *f, स्थिर अक्षर __user *buf,
+			       माप_प्रकार size, loff_t *pos)
+अणु
+	काष्ठा aa_ns *ns = aa_get_ns(f->f_inode->i_निजी);
+	पूर्णांक error = policy_update(AA_MAY_LOAD_POLICY | AA_MAY_REPLACE_POLICY,
 				  buf, size, pos, ns);
 	aa_put_ns(ns);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct file_operations aa_fs_profile_replace = {
-	.write = profile_replace,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations aa_fs_profile_replace = अणु
+	.ग_लिखो = profile_replace,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-/* .remove file hook fn to remove loaded policy */
-static ssize_t profile_remove(struct file *f, const char __user *buf,
-			      size_t size, loff_t *pos)
-{
-	struct aa_loaddata *data;
-	struct aa_label *label;
-	ssize_t error;
-	struct aa_ns *ns = aa_get_ns(f->f_inode->i_private);
+/* .हटाओ file hook fn to हटाओ loaded policy */
+अटल sमाप_प्रकार profile_हटाओ(काष्ठा file *f, स्थिर अक्षर __user *buf,
+			      माप_प्रकार size, loff_t *pos)
+अणु
+	काष्ठा aa_loaddata *data;
+	काष्ठा aa_label *label;
+	sमाप_प्रकार error;
+	काष्ठा aa_ns *ns = aa_get_ns(f->f_inode->i_निजी);
 
 	label = begin_current_label_crit_section();
 	/* high level check about policy management - fine grained in
 	 * below after unpack
 	 */
 	error = aa_may_manage_policy(label, ns, AA_MAY_REMOVE_POLICY);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	/*
-	 * aa_remove_profile needs a null terminated string so 1 extra
+	 * aa_हटाओ_profile needs a null terminated string so 1 extra
 	 * byte is allocated and the copied data is null terminated.
 	 */
-	data = aa_simple_write_to_buffer(buf, size + 1, size, pos);
+	data = aa_simple_ग_लिखो_to_buffer(buf, size + 1, size, pos);
 
 	error = PTR_ERR(data);
-	if (!IS_ERR(data)) {
+	अगर (!IS_ERR(data)) अणु
 		data->data[size] = 0;
-		error = aa_remove_profiles(ns, label, data->data, size);
+		error = aa_हटाओ_profiles(ns, label, data->data, size);
 		aa_put_loaddata(data);
-	}
+	पूर्ण
  out:
 	end_current_label_crit_section(label);
 	aa_put_ns(ns);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct file_operations aa_fs_profile_remove = {
-	.write = profile_remove,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations aa_fs_profile_हटाओ = अणु
+	.ग_लिखो = profile_हटाओ,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-struct aa_revision {
-	struct aa_ns *ns;
-	long last_read;
-};
+काष्ठा aa_revision अणु
+	काष्ठा aa_ns *ns;
+	दीर्घ last_पढ़ो;
+पूर्ण;
 
-/* revision file hook fn for policy loads */
-static int ns_revision_release(struct inode *inode, struct file *file)
-{
-	struct aa_revision *rev = file->private_data;
+/* revision file hook fn क्रम policy loads */
+अटल पूर्णांक ns_revision_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा aa_revision *rev = file->निजी_data;
 
-	if (rev) {
+	अगर (rev) अणु
 		aa_put_ns(rev->ns);
-		kfree(rev);
-	}
+		kमुक्त(rev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t ns_revision_read(struct file *file, char __user *buf,
-				size_t size, loff_t *ppos)
-{
-	struct aa_revision *rev = file->private_data;
-	char buffer[32];
-	long last_read;
-	int avail;
+अटल sमाप_प्रकार ns_revision_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				माप_प्रकार size, loff_t *ppos)
+अणु
+	काष्ठा aa_revision *rev = file->निजी_data;
+	अक्षर buffer[32];
+	दीर्घ last_पढ़ो;
+	पूर्णांक avail;
 
 	mutex_lock_nested(&rev->ns->lock, rev->ns->level);
-	last_read = rev->last_read;
-	if (last_read == rev->ns->revision) {
+	last_पढ़ो = rev->last_पढ़ो;
+	अगर (last_पढ़ो == rev->ns->revision) अणु
 		mutex_unlock(&rev->ns->lock);
-		if (file->f_flags & O_NONBLOCK)
-			return -EAGAIN;
-		if (wait_event_interruptible(rev->ns->wait,
-					     last_read !=
+		अगर (file->f_flags & O_NONBLOCK)
+			वापस -EAGAIN;
+		अगर (रुको_event_पूर्णांकerruptible(rev->ns->रुको,
+					     last_पढ़ो !=
 					     READ_ONCE(rev->ns->revision)))
-			return -ERESTARTSYS;
+			वापस -ERESTARTSYS;
 		mutex_lock_nested(&rev->ns->lock, rev->ns->level);
-	}
+	पूर्ण
 
-	avail = sprintf(buffer, "%ld\n", rev->ns->revision);
-	if (*ppos + size > avail) {
-		rev->last_read = rev->ns->revision;
+	avail = प्र_लिखो(buffer, "%ld\n", rev->ns->revision);
+	अगर (*ppos + size > avail) अणु
+		rev->last_पढ़ो = rev->ns->revision;
 		*ppos = 0;
-	}
+	पूर्ण
 	mutex_unlock(&rev->ns->lock);
 
-	return simple_read_from_buffer(buf, size, ppos, buffer, avail);
-}
+	वापस simple_पढ़ो_from_buffer(buf, size, ppos, buffer, avail);
+पूर्ण
 
-static int ns_revision_open(struct inode *inode, struct file *file)
-{
-	struct aa_revision *rev = kzalloc(sizeof(*rev), GFP_KERNEL);
+अटल पूर्णांक ns_revision_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा aa_revision *rev = kzalloc(माप(*rev), GFP_KERNEL);
 
-	if (!rev)
-		return -ENOMEM;
+	अगर (!rev)
+		वापस -ENOMEM;
 
-	rev->ns = aa_get_ns(inode->i_private);
-	if (!rev->ns)
+	rev->ns = aa_get_ns(inode->i_निजी);
+	अगर (!rev->ns)
 		rev->ns = aa_get_current_ns();
-	file->private_data = rev;
+	file->निजी_data = rev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __poll_t ns_revision_poll(struct file *file, poll_table *pt)
-{
-	struct aa_revision *rev = file->private_data;
+अटल __poll_t ns_revision_poll(काष्ठा file *file, poll_table *pt)
+अणु
+	काष्ठा aa_revision *rev = file->निजी_data;
 	__poll_t mask = 0;
 
-	if (rev) {
+	अगर (rev) अणु
 		mutex_lock_nested(&rev->ns->lock, rev->ns->level);
-		poll_wait(file, &rev->ns->wait, pt);
-		if (rev->last_read < rev->ns->revision)
+		poll_रुको(file, &rev->ns->रुको, pt);
+		अगर (rev->last_पढ़ो < rev->ns->revision)
 			mask |= EPOLLIN | EPOLLRDNORM;
 		mutex_unlock(&rev->ns->lock);
-	}
+	पूर्ण
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-void __aa_bump_ns_revision(struct aa_ns *ns)
-{
+व्योम __aa_bump_ns_revision(काष्ठा aa_ns *ns)
+अणु
 	WRITE_ONCE(ns->revision, READ_ONCE(ns->revision) + 1);
-	wake_up_interruptible(&ns->wait);
-}
+	wake_up_पूर्णांकerruptible(&ns->रुको);
+पूर्ण
 
-static const struct file_operations aa_fs_ns_revision_fops = {
+अटल स्थिर काष्ठा file_operations aa_fs_ns_revision_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= ns_revision_open,
+	.खोलो		= ns_revision_खोलो,
 	.poll		= ns_revision_poll,
-	.read		= ns_revision_read,
+	.पढ़ो		= ns_revision_पढ़ो,
 	.llseek		= generic_file_llseek,
 	.release	= ns_revision_release,
-};
+पूर्ण;
 
-static void profile_query_cb(struct aa_profile *profile, struct aa_perms *perms,
-			     const char *match_str, size_t match_len)
-{
-	struct aa_perms tmp = { };
-	struct aa_dfa *dfa;
-	unsigned int state = 0;
+अटल व्योम profile_query_cb(काष्ठा aa_profile *profile, काष्ठा aa_perms *perms,
+			     स्थिर अक्षर *match_str, माप_प्रकार match_len)
+अणु
+	काष्ठा aa_perms पंचांगp = अणु पूर्ण;
+	काष्ठा aa_dfa *dfa;
+	अचिन्हित पूर्णांक state = 0;
 
-	if (profile_unconfined(profile))
-		return;
-	if (profile->file.dfa && *match_str == AA_CLASS_FILE) {
+	अगर (profile_unconfined(profile))
+		वापस;
+	अगर (profile->file.dfa && *match_str == AA_CLASS_खाता) अणु
 		dfa = profile->file.dfa;
 		state = aa_dfa_match_len(dfa, profile->file.start,
 					 match_str + 1, match_len - 1);
-		if (state) {
-			struct path_cond cond = { };
+		अगर (state) अणु
+			काष्ठा path_cond cond = अणु पूर्ण;
 
-			tmp = aa_compute_fperms(dfa, state, &cond);
-		}
-	} else if (profile->policy.dfa) {
-		if (!PROFILE_MEDIATES(profile, *match_str))
-			return;	/* no change to current perms */
+			पंचांगp = aa_compute_fperms(dfa, state, &cond);
+		पूर्ण
+	पूर्ण अन्यथा अगर (profile->policy.dfa) अणु
+		अगर (!PROखाता_MEDIATES(profile, *match_str))
+			वापस;	/* no change to current perms */
 		dfa = profile->policy.dfa;
 		state = aa_dfa_match_len(dfa, profile->policy.start[0],
 					 match_str, match_len);
-		if (state)
-			aa_compute_perms(dfa, state, &tmp);
-	}
-	aa_apply_modes_to_perms(profile, &tmp);
-	aa_perms_accum_raw(perms, &tmp);
-}
+		अगर (state)
+			aa_compute_perms(dfa, state, &पंचांगp);
+	पूर्ण
+	aa_apply_modes_to_perms(profile, &पंचांगp);
+	aa_perms_accum_raw(perms, &पंचांगp);
+पूर्ण
 
 
 /**
- * query_data - queries a policy and writes its data to buf
- * @buf: the resulting data is stored here (NOT NULL)
+ * query_data - queries a policy and ग_लिखोs its data to buf
+ * @buf: the resulting data is stored here (NOT शून्य)
  * @buf_len: size of buf
  * @query: query string used to retrieve data
  * @query_len: size of query including second NUL byte
  *
- * The buffers pointed to by buf and query may overlap. The query buffer is
- * parsed before buf is written to.
+ * The buffers poपूर्णांकed to by buf and query may overlap. The query buffer is
+ * parsed beक्रमe buf is written to.
  *
  * The query should look like "<LABEL>\0<KEY>\0", where <LABEL> is the name of
  * the security confinement context and <KEY> is the name of the data to
@@ -653,121 +654,121 @@ static void profile_query_cb(struct aa_profile *profile, struct aa_perms *perms,
  *
  * Don't expect the contents of buf to be preserved on failure.
  *
- * Returns: number of characters written to buf or -errno on failure
+ * Returns: number of अक्षरacters written to buf or -त्रुटि_सं on failure
  */
-static ssize_t query_data(char *buf, size_t buf_len,
-			  char *query, size_t query_len)
-{
-	char *out;
-	const char *key;
-	struct label_it i;
-	struct aa_label *label, *curr;
-	struct aa_profile *profile;
-	struct aa_data *data;
+अटल sमाप_प्रकार query_data(अक्षर *buf, माप_प्रकार buf_len,
+			  अक्षर *query, माप_प्रकार query_len)
+अणु
+	अक्षर *out;
+	स्थिर अक्षर *key;
+	काष्ठा label_it i;
+	काष्ठा aa_label *label, *curr;
+	काष्ठा aa_profile *profile;
+	काष्ठा aa_data *data;
 	u32 bytes, blocks;
 	__le32 outle32;
 
-	if (!query_len)
-		return -EINVAL; /* need a query */
+	अगर (!query_len)
+		वापस -EINVAL; /* need a query */
 
 	key = query + strnlen(query, query_len) + 1;
-	if (key + 1 >= query + query_len)
-		return -EINVAL; /* not enough space for a non-empty key */
-	if (key + strnlen(key, query + query_len - key) >= query + query_len)
-		return -EINVAL; /* must end with NUL */
+	अगर (key + 1 >= query + query_len)
+		वापस -EINVAL; /* not enough space क्रम a non-empty key */
+	अगर (key + strnlen(key, query + query_len - key) >= query + query_len)
+		वापस -EINVAL; /* must end with NUL */
 
-	if (buf_len < sizeof(bytes) + sizeof(blocks))
-		return -EINVAL; /* not enough space */
+	अगर (buf_len < माप(bytes) + माप(blocks))
+		वापस -EINVAL; /* not enough space */
 
 	curr = begin_current_label_crit_section();
 	label = aa_label_parse(curr, query, GFP_KERNEL, false, false);
 	end_current_label_crit_section(curr);
-	if (IS_ERR(label))
-		return PTR_ERR(label);
+	अगर (IS_ERR(label))
+		वापस PTR_ERR(label);
 
-	/* We are going to leave space for two numbers. The first is the total
+	/* We are going to leave space क्रम two numbers. The first is the total
 	 * number of bytes we are writing after the first number. This is so
-	 * users can read the full output without reallocation.
+	 * users can पढ़ो the full output without पुनः_स्मृतिation.
 	 *
 	 * The second number is the number of data blocks we're writing. An
 	 * application might be confined by multiple policies having data in
 	 * the same key.
 	 */
-	memset(buf, 0, sizeof(bytes) + sizeof(blocks));
-	out = buf + sizeof(bytes) + sizeof(blocks);
+	स_रखो(buf, 0, माप(bytes) + माप(blocks));
+	out = buf + माप(bytes) + माप(blocks);
 
 	blocks = 0;
-	label_for_each_confined(i, label, profile) {
-		if (!profile->data)
-			continue;
+	label_क्रम_each_confined(i, label, profile) अणु
+		अगर (!profile->data)
+			जारी;
 
 		data = rhashtable_lookup_fast(profile->data, &key,
 					      profile->data->p);
 
-		if (data) {
-			if (out + sizeof(outle32) + data->size > buf +
-			    buf_len) {
+		अगर (data) अणु
+			अगर (out + माप(outle32) + data->size > buf +
+			    buf_len) अणु
 				aa_put_label(label);
-				return -EINVAL; /* not enough space */
-			}
+				वापस -EINVAL; /* not enough space */
+			पूर्ण
 			outle32 = __cpu_to_le32(data->size);
-			memcpy(out, &outle32, sizeof(outle32));
-			out += sizeof(outle32);
-			memcpy(out, data->data, data->size);
+			स_नकल(out, &outle32, माप(outle32));
+			out += माप(outle32);
+			स_नकल(out, data->data, data->size);
 			out += data->size;
 			blocks++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	aa_put_label(label);
 
-	outle32 = __cpu_to_le32(out - buf - sizeof(bytes));
-	memcpy(buf, &outle32, sizeof(outle32));
+	outle32 = __cpu_to_le32(out - buf - माप(bytes));
+	स_नकल(buf, &outle32, माप(outle32));
 	outle32 = __cpu_to_le32(blocks);
-	memcpy(buf + sizeof(bytes), &outle32, sizeof(outle32));
+	स_नकल(buf + माप(bytes), &outle32, माप(outle32));
 
-	return out - buf;
-}
+	वापस out - buf;
+पूर्ण
 
 /**
- * query_label - queries a label and writes permissions to buf
- * @buf: the resulting permissions string is stored here (NOT NULL)
+ * query_label - queries a label and ग_लिखोs permissions to buf
+ * @buf: the resulting permissions string is stored here (NOT शून्य)
  * @buf_len: size of buf
  * @query: binary query string to match against the dfa
  * @query_len: size of query
- * @view_only: only compute for querier's view
+ * @view_only: only compute क्रम querier's view
  *
- * The buffers pointed to by buf and query may overlap. The query buffer is
- * parsed before buf is written to.
+ * The buffers poपूर्णांकed to by buf and query may overlap. The query buffer is
+ * parsed beक्रमe buf is written to.
  *
  * The query should look like "LABEL_NAME\0DFA_STRING" where LABEL_NAME is
  * the name of the label, in the current namespace, that is to be queried and
  * DFA_STRING is a binary string to match against the label(s)'s DFA.
  *
- * LABEL_NAME must be NUL terminated. DFA_STRING may contain NUL characters
+ * LABEL_NAME must be NUL terminated. DFA_STRING may contain NUL अक्षरacters
  * but must *not* be NUL terminated.
  *
- * Returns: number of characters written to buf or -errno on failure
+ * Returns: number of अक्षरacters written to buf or -त्रुटि_सं on failure
  */
-static ssize_t query_label(char *buf, size_t buf_len,
-			   char *query, size_t query_len, bool view_only)
-{
-	struct aa_profile *profile;
-	struct aa_label *label, *curr;
-	char *label_name, *match_str;
-	size_t label_name_len, match_len;
-	struct aa_perms perms;
-	struct label_it i;
+अटल sमाप_प्रकार query_label(अक्षर *buf, माप_प्रकार buf_len,
+			   अक्षर *query, माप_प्रकार query_len, bool view_only)
+अणु
+	काष्ठा aa_profile *profile;
+	काष्ठा aa_label *label, *curr;
+	अक्षर *label_name, *match_str;
+	माप_प्रकार label_name_len, match_len;
+	काष्ठा aa_perms perms;
+	काष्ठा label_it i;
 
-	if (!query_len)
-		return -EINVAL;
+	अगर (!query_len)
+		वापस -EINVAL;
 
 	label_name = query;
 	label_name_len = strnlen(query, query_len);
-	if (!label_name_len || label_name_len == query_len)
-		return -EINVAL;
+	अगर (!label_name_len || label_name_len == query_len)
+		वापस -EINVAL;
 
 	/**
-	 * The extra byte is to account for the null byte between the
+	 * The extra byte is to account क्रम the null byte between the
 	 * profile name and dfa string. profile_name_len is greater
 	 * than zero and less than query_len, so a byte can be safely
 	 * added or subtracted.
@@ -778,348 +779,348 @@ static ssize_t query_label(char *buf, size_t buf_len,
 	curr = begin_current_label_crit_section();
 	label = aa_label_parse(curr, label_name, GFP_KERNEL, false, false);
 	end_current_label_crit_section(curr);
-	if (IS_ERR(label))
-		return PTR_ERR(label);
+	अगर (IS_ERR(label))
+		वापस PTR_ERR(label);
 
 	perms = allperms;
-	if (view_only) {
-		label_for_each_in_ns(i, labels_ns(label), label, profile) {
+	अगर (view_only) अणु
+		label_क्रम_each_in_ns(i, labels_ns(label), label, profile) अणु
 			profile_query_cb(profile, &perms, match_str, match_len);
-		}
-	} else {
-		label_for_each(i, label, profile) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		label_क्रम_each(i, label, profile) अणु
 			profile_query_cb(profile, &perms, match_str, match_len);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	aa_put_label(label);
 
-	return scnprintf(buf, buf_len,
+	वापस scnम_लिखो(buf, buf_len,
 		      "allow 0x%08x\ndeny 0x%08x\naudit 0x%08x\nquiet 0x%08x\n",
 		      perms.allow, perms.deny, perms.audit, perms.quiet);
-}
+पूर्ण
 
 /*
  * Transaction based IO.
- * The file expects a write which triggers the transaction, and then
- * possibly a read(s) which collects the result - which is stored in a
- * file-local buffer. Once a new write is performed, a new set of results
+ * The file expects a ग_लिखो which triggers the transaction, and then
+ * possibly a पढ़ो(s) which collects the result - which is stored in a
+ * file-local buffer. Once a new ग_लिखो is perक्रमmed, a new set of results
  * are stored in the file-local buffer.
  */
-struct multi_transaction {
-	struct kref count;
-	ssize_t size;
-	char data[];
-};
+काष्ठा multi_transaction अणु
+	काष्ठा kref count;
+	sमाप_प्रकार size;
+	अक्षर data[];
+पूर्ण;
 
-#define MULTI_TRANSACTION_LIMIT (PAGE_SIZE - sizeof(struct multi_transaction))
+#घोषणा MULTI_TRANSACTION_LIMIT (PAGE_SIZE - माप(काष्ठा multi_transaction))
 /* TODO: replace with per file lock */
-static DEFINE_SPINLOCK(multi_transaction_lock);
+अटल DEFINE_SPINLOCK(multi_transaction_lock);
 
-static void multi_transaction_kref(struct kref *kref)
-{
-	struct multi_transaction *t;
+अटल व्योम multi_transaction_kref(काष्ठा kref *kref)
+अणु
+	काष्ठा multi_transaction *t;
 
-	t = container_of(kref, struct multi_transaction, count);
-	free_page((unsigned long) t);
-}
+	t = container_of(kref, काष्ठा multi_transaction, count);
+	मुक्त_page((अचिन्हित दीर्घ) t);
+पूर्ण
 
-static struct multi_transaction *
-get_multi_transaction(struct multi_transaction *t)
-{
-	if  (t)
+अटल काष्ठा multi_transaction *
+get_multi_transaction(काष्ठा multi_transaction *t)
+अणु
+	अगर  (t)
 		kref_get(&(t->count));
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-static void put_multi_transaction(struct multi_transaction *t)
-{
-	if (t)
+अटल व्योम put_multi_transaction(काष्ठा multi_transaction *t)
+अणु
+	अगर (t)
 		kref_put(&(t->count), multi_transaction_kref);
-}
+पूर्ण
 
-/* does not increment @new's count */
-static void multi_transaction_set(struct file *file,
-				  struct multi_transaction *new, size_t n)
-{
-	struct multi_transaction *old;
+/* करोes not increment @new's count */
+अटल व्योम multi_transaction_set(काष्ठा file *file,
+				  काष्ठा multi_transaction *new, माप_प्रकार n)
+अणु
+	काष्ठा multi_transaction *old;
 
 	AA_BUG(n > MULTI_TRANSACTION_LIMIT);
 
 	new->size = n;
 	spin_lock(&multi_transaction_lock);
-	old = (struct multi_transaction *) file->private_data;
-	file->private_data = new;
+	old = (काष्ठा multi_transaction *) file->निजी_data;
+	file->निजी_data = new;
 	spin_unlock(&multi_transaction_lock);
 	put_multi_transaction(old);
-}
+पूर्ण
 
-static struct multi_transaction *multi_transaction_new(struct file *file,
-						       const char __user *buf,
-						       size_t size)
-{
-	struct multi_transaction *t;
+अटल काष्ठा multi_transaction *multi_transaction_new(काष्ठा file *file,
+						       स्थिर अक्षर __user *buf,
+						       माप_प्रकार size)
+अणु
+	काष्ठा multi_transaction *t;
 
-	if (size > MULTI_TRANSACTION_LIMIT - 1)
-		return ERR_PTR(-EFBIG);
+	अगर (size > MULTI_TRANSACTION_LIMIT - 1)
+		वापस ERR_PTR(-EFBIG);
 
-	t = (struct multi_transaction *)get_zeroed_page(GFP_KERNEL);
-	if (!t)
-		return ERR_PTR(-ENOMEM);
+	t = (काष्ठा multi_transaction *)get_zeroed_page(GFP_KERNEL);
+	अगर (!t)
+		वापस ERR_PTR(-ENOMEM);
 	kref_init(&t->count);
-	if (copy_from_user(t->data, buf, size))
-		return ERR_PTR(-EFAULT);
+	अगर (copy_from_user(t->data, buf, size))
+		वापस ERR_PTR(-EFAULT);
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-static ssize_t multi_transaction_read(struct file *file, char __user *buf,
-				       size_t size, loff_t *pos)
-{
-	struct multi_transaction *t;
-	ssize_t ret;
+अटल sमाप_प्रकार multi_transaction_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				       माप_प्रकार size, loff_t *pos)
+अणु
+	काष्ठा multi_transaction *t;
+	sमाप_प्रकार ret;
 
 	spin_lock(&multi_transaction_lock);
-	t = get_multi_transaction(file->private_data);
+	t = get_multi_transaction(file->निजी_data);
 	spin_unlock(&multi_transaction_lock);
-	if (!t)
-		return 0;
+	अगर (!t)
+		वापस 0;
 
-	ret = simple_read_from_buffer(buf, size, pos, t->data, t->size);
+	ret = simple_पढ़ो_from_buffer(buf, size, pos, t->data, t->size);
 	put_multi_transaction(t);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int multi_transaction_release(struct inode *inode, struct file *file)
-{
-	put_multi_transaction(file->private_data);
+अटल पूर्णांक multi_transaction_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	put_multi_transaction(file->निजी_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define QUERY_CMD_LABEL		"label\0"
-#define QUERY_CMD_LABEL_LEN	6
-#define QUERY_CMD_PROFILE	"profile\0"
-#define QUERY_CMD_PROFILE_LEN	8
-#define QUERY_CMD_LABELALL	"labelall\0"
-#define QUERY_CMD_LABELALL_LEN	9
-#define QUERY_CMD_DATA		"data\0"
-#define QUERY_CMD_DATA_LEN	5
+#घोषणा QUERY_CMD_LABEL		"label\0"
+#घोषणा QUERY_CMD_LABEL_LEN	6
+#घोषणा QUERY_CMD_PROखाता	"profile\0"
+#घोषणा QUERY_CMD_PROखाता_LEN	8
+#घोषणा QUERY_CMD_LABELALL	"labelall\0"
+#घोषणा QUERY_CMD_LABELALL_LEN	9
+#घोषणा QUERY_CMD_DATA		"data\0"
+#घोषणा QUERY_CMD_DATA_LEN	5
 
 /**
- * aa_write_access - generic permissions and data query
- * @file: pointer to open apparmorfs/access file
- * @ubuf: user buffer containing the complete query string (NOT NULL)
+ * aa_ग_लिखो_access - generic permissions and data query
+ * @file: poपूर्णांकer to खोलो apparmorfs/access file
+ * @ubuf: user buffer containing the complete query string (NOT शून्य)
  * @count: size of ubuf
  * @ppos: position in the file (MUST BE ZERO)
  *
- * Allows for one permissions or data query per open(), write(), and read()
- * sequence. The only queries currently supported are label-based queries for
+ * Allows क्रम one permissions or data query per खोलो(), ग_लिखो(), and पढ़ो()
+ * sequence. The only queries currently supported are label-based queries क्रम
  * permissions or data.
  *
  * For permissions queries, ubuf must begin with "label\0", followed by the
- * profile query specific format described in the query_label() function
- * documentation.
+ * profile query specअगरic क्रमmat described in the query_label() function
+ * करोcumentation.
  *
- * For data queries, ubuf must have the form "data\0<LABEL>\0<KEY>\0", where
+ * For data queries, ubuf must have the क्रमm "data\0<LABEL>\0<KEY>\0", where
  * <LABEL> is the name of the security confinement context and <KEY> is the
  * name of the data to retrieve.
  *
- * Returns: number of bytes written or -errno on failure
+ * Returns: number of bytes written or -त्रुटि_सं on failure
  */
-static ssize_t aa_write_access(struct file *file, const char __user *ubuf,
-			       size_t count, loff_t *ppos)
-{
-	struct multi_transaction *t;
-	ssize_t len;
+अटल sमाप_प्रकार aa_ग_लिखो_access(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा multi_transaction *t;
+	sमाप_प्रकार len;
 
-	if (*ppos)
-		return -ESPIPE;
+	अगर (*ppos)
+		वापस -ESPIPE;
 
 	t = multi_transaction_new(file, ubuf, count);
-	if (IS_ERR(t))
-		return PTR_ERR(t);
+	अगर (IS_ERR(t))
+		वापस PTR_ERR(t);
 
-	if (count > QUERY_CMD_PROFILE_LEN &&
-	    !memcmp(t->data, QUERY_CMD_PROFILE, QUERY_CMD_PROFILE_LEN)) {
+	अगर (count > QUERY_CMD_PROखाता_LEN &&
+	    !स_भेद(t->data, QUERY_CMD_PROखाता, QUERY_CMD_PROखाता_LEN)) अणु
 		len = query_label(t->data, MULTI_TRANSACTION_LIMIT,
-				  t->data + QUERY_CMD_PROFILE_LEN,
-				  count - QUERY_CMD_PROFILE_LEN, true);
-	} else if (count > QUERY_CMD_LABEL_LEN &&
-		   !memcmp(t->data, QUERY_CMD_LABEL, QUERY_CMD_LABEL_LEN)) {
+				  t->data + QUERY_CMD_PROखाता_LEN,
+				  count - QUERY_CMD_PROखाता_LEN, true);
+	पूर्ण अन्यथा अगर (count > QUERY_CMD_LABEL_LEN &&
+		   !स_भेद(t->data, QUERY_CMD_LABEL, QUERY_CMD_LABEL_LEN)) अणु
 		len = query_label(t->data, MULTI_TRANSACTION_LIMIT,
 				  t->data + QUERY_CMD_LABEL_LEN,
 				  count - QUERY_CMD_LABEL_LEN, true);
-	} else if (count > QUERY_CMD_LABELALL_LEN &&
-		   !memcmp(t->data, QUERY_CMD_LABELALL,
-			   QUERY_CMD_LABELALL_LEN)) {
+	पूर्ण अन्यथा अगर (count > QUERY_CMD_LABELALL_LEN &&
+		   !स_भेद(t->data, QUERY_CMD_LABELALL,
+			   QUERY_CMD_LABELALL_LEN)) अणु
 		len = query_label(t->data, MULTI_TRANSACTION_LIMIT,
 				  t->data + QUERY_CMD_LABELALL_LEN,
 				  count - QUERY_CMD_LABELALL_LEN, false);
-	} else if (count > QUERY_CMD_DATA_LEN &&
-		   !memcmp(t->data, QUERY_CMD_DATA, QUERY_CMD_DATA_LEN)) {
+	पूर्ण अन्यथा अगर (count > QUERY_CMD_DATA_LEN &&
+		   !स_भेद(t->data, QUERY_CMD_DATA, QUERY_CMD_DATA_LEN)) अणु
 		len = query_data(t->data, MULTI_TRANSACTION_LIMIT,
 				 t->data + QUERY_CMD_DATA_LEN,
 				 count - QUERY_CMD_DATA_LEN);
-	} else
+	पूर्ण अन्यथा
 		len = -EINVAL;
 
-	if (len < 0) {
+	अगर (len < 0) अणु
 		put_multi_transaction(t);
-		return len;
-	}
+		वापस len;
+	पूर्ण
 
 	multi_transaction_set(file, t, len);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations aa_sfs_access = {
-	.write		= aa_write_access,
-	.read		= multi_transaction_read,
+अटल स्थिर काष्ठा file_operations aa_sfs_access = अणु
+	.ग_लिखो		= aa_ग_लिखो_access,
+	.पढ़ो		= multi_transaction_पढ़ो,
 	.release	= multi_transaction_release,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-static int aa_sfs_seq_show(struct seq_file *seq, void *v)
-{
-	struct aa_sfs_entry *fs_file = seq->private;
+अटल पूर्णांक aa_sfs_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_sfs_entry *fs_file = seq->निजी;
 
-	if (!fs_file)
-		return 0;
+	अगर (!fs_file)
+		वापस 0;
 
-	switch (fs_file->v_type) {
-	case AA_SFS_TYPE_BOOLEAN:
-		seq_printf(seq, "%s\n", fs_file->v.boolean ? "yes" : "no");
-		break;
-	case AA_SFS_TYPE_STRING:
-		seq_printf(seq, "%s\n", fs_file->v.string);
-		break;
-	case AA_SFS_TYPE_U64:
-		seq_printf(seq, "%#08lx\n", fs_file->v.u64);
-		break;
-	default:
+	चयन (fs_file->v_type) अणु
+	हाल AA_SFS_TYPE_BOOLEAN:
+		seq_म_लिखो(seq, "%s\n", fs_file->v.boolean ? "yes" : "no");
+		अवरोध;
+	हाल AA_SFS_TYPE_STRING:
+		seq_म_लिखो(seq, "%s\n", fs_file->v.string);
+		अवरोध;
+	हाल AA_SFS_TYPE_U64:
+		seq_म_लिखो(seq, "%#08lx\n", fs_file->v.u64);
+		अवरोध;
+	शेष:
 		/* Ignore unpritable entry types. */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aa_sfs_seq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, aa_sfs_seq_show, inode->i_private);
-}
+अटल पूर्णांक aa_sfs_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, aa_sfs_seq_show, inode->i_निजी);
+पूर्ण
 
-const struct file_operations aa_sfs_seq_file_ops = {
+स्थिर काष्ठा file_operations aa_sfs_seq_file_ops = अणु
 	.owner		= THIS_MODULE,
-	.open		= aa_sfs_seq_open,
-	.read		= seq_read,
+	.खोलो		= aa_sfs_seq_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
 /*
  * profile based file operations
  *     policy/profiles/XXXX/profiles/ *
  */
 
-#define SEQ_PROFILE_FOPS(NAME)						      \
-static int seq_profile_ ##NAME ##_open(struct inode *inode, struct file *file)\
-{									      \
-	return seq_profile_open(inode, file, seq_profile_ ##NAME ##_show);    \
-}									      \
+#घोषणा SEQ_PROखाता_FOPS(NAME)						      \
+अटल पूर्णांक seq_profile_ ##NAME ##_खोलो(काष्ठा inode *inode, काष्ठा file *file)\
+अणु									      \
+	वापस seq_profile_खोलो(inode, file, seq_profile_ ##NAME ##_show);    \
+पूर्ण									      \
 									      \
-static const struct file_operations seq_profile_ ##NAME ##_fops = {	      \
+अटल स्थिर काष्ठा file_operations seq_profile_ ##NAME ##_fops = अणु	      \
 	.owner		= THIS_MODULE,					      \
-	.open		= seq_profile_ ##NAME ##_open,			      \
-	.read		= seq_read,					      \
+	.खोलो		= seq_profile_ ##NAME ##_खोलो,			      \
+	.पढ़ो		= seq_पढ़ो,					      \
 	.llseek		= seq_lseek,					      \
 	.release	= seq_profile_release,				      \
-}									      \
+पूर्ण									      \
 
-static int seq_profile_open(struct inode *inode, struct file *file,
-			    int (*show)(struct seq_file *, void *))
-{
-	struct aa_proxy *proxy = aa_get_proxy(inode->i_private);
-	int error = single_open(file, show, proxy);
+अटल पूर्णांक seq_profile_खोलो(काष्ठा inode *inode, काष्ठा file *file,
+			    पूर्णांक (*show)(काष्ठा seq_file *, व्योम *))
+अणु
+	काष्ठा aa_proxy *proxy = aa_get_proxy(inode->i_निजी);
+	पूर्णांक error = single_खोलो(file, show, proxy);
 
-	if (error) {
-		file->private_data = NULL;
+	अगर (error) अणु
+		file->निजी_data = शून्य;
 		aa_put_proxy(proxy);
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int seq_profile_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = (struct seq_file *) file->private_data;
-	if (seq)
-		aa_put_proxy(seq->private);
-	return single_release(inode, file);
-}
+अटल पूर्णांक seq_profile_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = (काष्ठा seq_file *) file->निजी_data;
+	अगर (seq)
+		aa_put_proxy(seq->निजी);
+	वापस single_release(inode, file);
+पूर्ण
 
-static int seq_profile_name_show(struct seq_file *seq, void *v)
-{
-	struct aa_proxy *proxy = seq->private;
-	struct aa_label *label = aa_get_label_rcu(&proxy->label);
-	struct aa_profile *profile = labels_profile(label);
-	seq_printf(seq, "%s\n", profile->base.name);
+अटल पूर्णांक seq_profile_name_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_proxy *proxy = seq->निजी;
+	काष्ठा aa_label *label = aa_get_label_rcu(&proxy->label);
+	काष्ठा aa_profile *profile = labels_profile(label);
+	seq_म_लिखो(seq, "%s\n", profile->base.name);
 	aa_put_label(label);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_profile_mode_show(struct seq_file *seq, void *v)
-{
-	struct aa_proxy *proxy = seq->private;
-	struct aa_label *label = aa_get_label_rcu(&proxy->label);
-	struct aa_profile *profile = labels_profile(label);
-	seq_printf(seq, "%s\n", aa_profile_mode_names[profile->mode]);
+अटल पूर्णांक seq_profile_mode_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_proxy *proxy = seq->निजी;
+	काष्ठा aa_label *label = aa_get_label_rcu(&proxy->label);
+	काष्ठा aa_profile *profile = labels_profile(label);
+	seq_म_लिखो(seq, "%s\n", aa_profile_mode_names[profile->mode]);
 	aa_put_label(label);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_profile_attach_show(struct seq_file *seq, void *v)
-{
-	struct aa_proxy *proxy = seq->private;
-	struct aa_label *label = aa_get_label_rcu(&proxy->label);
-	struct aa_profile *profile = labels_profile(label);
-	if (profile->attach)
-		seq_printf(seq, "%s\n", profile->attach);
-	else if (profile->xmatch)
-		seq_puts(seq, "<unknown>\n");
-	else
-		seq_printf(seq, "%s\n", profile->base.name);
+अटल पूर्णांक seq_profile_attach_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_proxy *proxy = seq->निजी;
+	काष्ठा aa_label *label = aa_get_label_rcu(&proxy->label);
+	काष्ठा aa_profile *profile = labels_profile(label);
+	अगर (profile->attach)
+		seq_म_लिखो(seq, "%s\n", profile->attach);
+	अन्यथा अगर (profile->xmatch)
+		seq_माला_दो(seq, "<unknown>\n");
+	अन्यथा
+		seq_म_लिखो(seq, "%s\n", profile->base.name);
 	aa_put_label(label);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_profile_hash_show(struct seq_file *seq, void *v)
-{
-	struct aa_proxy *proxy = seq->private;
-	struct aa_label *label = aa_get_label_rcu(&proxy->label);
-	struct aa_profile *profile = labels_profile(label);
-	unsigned int i, size = aa_hash_size();
+अटल पूर्णांक seq_profile_hash_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_proxy *proxy = seq->निजी;
+	काष्ठा aa_label *label = aa_get_label_rcu(&proxy->label);
+	काष्ठा aa_profile *profile = labels_profile(label);
+	अचिन्हित पूर्णांक i, size = aa_hash_size();
 
-	if (profile->hash) {
-		for (i = 0; i < size; i++)
-			seq_printf(seq, "%.2x", profile->hash[i]);
-		seq_putc(seq, '\n');
-	}
+	अगर (profile->hash) अणु
+		क्रम (i = 0; i < size; i++)
+			seq_म_लिखो(seq, "%.2x", profile->hash[i]);
+		seq_अ_दो(seq, '\n');
+	पूर्ण
 	aa_put_label(label);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-SEQ_PROFILE_FOPS(name);
-SEQ_PROFILE_FOPS(mode);
-SEQ_PROFILE_FOPS(attach);
-SEQ_PROFILE_FOPS(hash);
+SEQ_PROखाता_FOPS(name);
+SEQ_PROखाता_FOPS(mode);
+SEQ_PROखाता_FOPS(attach);
+SEQ_PROखाता_FOPS(hash);
 
 /*
  * namespace based files
@@ -1127,73 +1128,73 @@ SEQ_PROFILE_FOPS(hash);
  *     policy/ *
  */
 
-#define SEQ_NS_FOPS(NAME)						      \
-static int seq_ns_ ##NAME ##_open(struct inode *inode, struct file *file)     \
-{									      \
-	return single_open(file, seq_ns_ ##NAME ##_show, inode->i_private);   \
-}									      \
+#घोषणा SEQ_NS_FOPS(NAME)						      \
+अटल पूर्णांक seq_ns_ ##NAME ##_खोलो(काष्ठा inode *inode, काष्ठा file *file)     \
+अणु									      \
+	वापस single_खोलो(file, seq_ns_ ##NAME ##_show, inode->i_निजी);   \
+पूर्ण									      \
 									      \
-static const struct file_operations seq_ns_ ##NAME ##_fops = {	      \
+अटल स्थिर काष्ठा file_operations seq_ns_ ##NAME ##_fops = अणु	      \
 	.owner		= THIS_MODULE,					      \
-	.open		= seq_ns_ ##NAME ##_open,			      \
-	.read		= seq_read,					      \
+	.खोलो		= seq_ns_ ##NAME ##_खोलो,			      \
+	.पढ़ो		= seq_पढ़ो,					      \
 	.llseek		= seq_lseek,					      \
 	.release	= single_release,				      \
-}									      \
+पूर्ण									      \
 
-static int seq_ns_stacked_show(struct seq_file *seq, void *v)
-{
-	struct aa_label *label;
+अटल पूर्णांक seq_ns_stacked_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_label *label;
 
 	label = begin_current_label_crit_section();
-	seq_printf(seq, "%s\n", label->size > 1 ? "yes" : "no");
+	seq_म_लिखो(seq, "%s\n", label->size > 1 ? "yes" : "no");
 	end_current_label_crit_section(label);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_ns_nsstacked_show(struct seq_file *seq, void *v)
-{
-	struct aa_label *label;
-	struct aa_profile *profile;
-	struct label_it it;
-	int count = 1;
+अटल पूर्णांक seq_ns_nsstacked_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_label *label;
+	काष्ठा aa_profile *profile;
+	काष्ठा label_it it;
+	पूर्णांक count = 1;
 
 	label = begin_current_label_crit_section();
 
-	if (label->size > 1) {
-		label_for_each(it, label, profile)
-			if (profile->ns != labels_ns(label)) {
+	अगर (label->size > 1) अणु
+		label_क्रम_each(it, label, profile)
+			अगर (profile->ns != labels_ns(label)) अणु
 				count++;
-				break;
-			}
-	}
+				अवरोध;
+			पूर्ण
+	पूर्ण
 
-	seq_printf(seq, "%s\n", count > 1 ? "yes" : "no");
+	seq_म_लिखो(seq, "%s\n", count > 1 ? "yes" : "no");
 	end_current_label_crit_section(label);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_ns_level_show(struct seq_file *seq, void *v)
-{
-	struct aa_label *label;
+अटल पूर्णांक seq_ns_level_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_label *label;
 
 	label = begin_current_label_crit_section();
-	seq_printf(seq, "%d\n", labels_ns(label)->level);
+	seq_म_लिखो(seq, "%d\n", labels_ns(label)->level);
 	end_current_label_crit_section(label);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_ns_name_show(struct seq_file *seq, void *v)
-{
-	struct aa_label *label = begin_current_label_crit_section();
-	seq_printf(seq, "%s\n", labels_ns(label)->base.name);
+अटल पूर्णांक seq_ns_name_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_label *label = begin_current_label_crit_section();
+	seq_म_लिखो(seq, "%s\n", labels_ns(label)->base.name);
 	end_current_label_crit_section(label);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEQ_NS_FOPS(stacked);
 SEQ_NS_FOPS(nsstacked);
@@ -1203,230 +1204,230 @@ SEQ_NS_FOPS(name);
 
 /* policy/raw_data/ * file ops */
 
-#define SEQ_RAWDATA_FOPS(NAME)						      \
-static int seq_rawdata_ ##NAME ##_open(struct inode *inode, struct file *file)\
-{									      \
-	return seq_rawdata_open(inode, file, seq_rawdata_ ##NAME ##_show);    \
-}									      \
+#घोषणा SEQ_RAWDATA_FOPS(NAME)						      \
+अटल पूर्णांक seq_rawdata_ ##NAME ##_खोलो(काष्ठा inode *inode, काष्ठा file *file)\
+अणु									      \
+	वापस seq_rawdata_खोलो(inode, file, seq_rawdata_ ##NAME ##_show);    \
+पूर्ण									      \
 									      \
-static const struct file_operations seq_rawdata_ ##NAME ##_fops = {	      \
+अटल स्थिर काष्ठा file_operations seq_rawdata_ ##NAME ##_fops = अणु	      \
 	.owner		= THIS_MODULE,					      \
-	.open		= seq_rawdata_ ##NAME ##_open,			      \
-	.read		= seq_read,					      \
+	.खोलो		= seq_rawdata_ ##NAME ##_खोलो,			      \
+	.पढ़ो		= seq_पढ़ो,					      \
 	.llseek		= seq_lseek,					      \
 	.release	= seq_rawdata_release,				      \
-}									      \
+पूर्ण									      \
 
-static int seq_rawdata_open(struct inode *inode, struct file *file,
-			    int (*show)(struct seq_file *, void *))
-{
-	struct aa_loaddata *data = __aa_get_loaddata(inode->i_private);
-	int error;
+अटल पूर्णांक seq_rawdata_खोलो(काष्ठा inode *inode, काष्ठा file *file,
+			    पूर्णांक (*show)(काष्ठा seq_file *, व्योम *))
+अणु
+	काष्ठा aa_loaddata *data = __aa_get_loaddata(inode->i_निजी);
+	पूर्णांक error;
 
-	if (!data)
+	अगर (!data)
 		/* lost race this ent is being reaped */
-		return -ENOENT;
+		वापस -ENOENT;
 
-	error = single_open(file, show, data);
-	if (error) {
-		AA_BUG(file->private_data &&
-		       ((struct seq_file *)file->private_data)->private);
+	error = single_खोलो(file, show, data);
+	अगर (error) अणु
+		AA_BUG(file->निजी_data &&
+		       ((काष्ठा seq_file *)file->निजी_data)->निजी);
 		aa_put_loaddata(data);
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int seq_rawdata_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = (struct seq_file *) file->private_data;
+अटल पूर्णांक seq_rawdata_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = (काष्ठा seq_file *) file->निजी_data;
 
-	if (seq)
-		aa_put_loaddata(seq->private);
+	अगर (seq)
+		aa_put_loaddata(seq->निजी);
 
-	return single_release(inode, file);
-}
+	वापस single_release(inode, file);
+पूर्ण
 
-static int seq_rawdata_abi_show(struct seq_file *seq, void *v)
-{
-	struct aa_loaddata *data = seq->private;
+अटल पूर्णांक seq_rawdata_abi_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_loaddata *data = seq->निजी;
 
-	seq_printf(seq, "v%d\n", data->abi);
+	seq_म_लिखो(seq, "v%d\n", data->abi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_rawdata_revision_show(struct seq_file *seq, void *v)
-{
-	struct aa_loaddata *data = seq->private;
+अटल पूर्णांक seq_rawdata_revision_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_loaddata *data = seq->निजी;
 
-	seq_printf(seq, "%ld\n", data->revision);
+	seq_म_लिखो(seq, "%ld\n", data->revision);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_rawdata_hash_show(struct seq_file *seq, void *v)
-{
-	struct aa_loaddata *data = seq->private;
-	unsigned int i, size = aa_hash_size();
+अटल पूर्णांक seq_rawdata_hash_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_loaddata *data = seq->निजी;
+	अचिन्हित पूर्णांक i, size = aa_hash_size();
 
-	if (data->hash) {
-		for (i = 0; i < size; i++)
-			seq_printf(seq, "%.2x", data->hash[i]);
-		seq_putc(seq, '\n');
-	}
+	अगर (data->hash) अणु
+		क्रम (i = 0; i < size; i++)
+			seq_म_लिखो(seq, "%.2x", data->hash[i]);
+		seq_अ_दो(seq, '\n');
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_rawdata_compressed_size_show(struct seq_file *seq, void *v)
-{
-	struct aa_loaddata *data = seq->private;
+अटल पूर्णांक seq_rawdata_compressed_size_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा aa_loaddata *data = seq->निजी;
 
-	seq_printf(seq, "%zu\n", data->compressed_size);
+	seq_म_लिखो(seq, "%zu\n", data->compressed_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEQ_RAWDATA_FOPS(abi);
 SEQ_RAWDATA_FOPS(revision);
 SEQ_RAWDATA_FOPS(hash);
 SEQ_RAWDATA_FOPS(compressed_size);
 
-static int deflate_decompress(char *src, size_t slen, char *dst, size_t dlen)
-{
-	int error;
-	struct z_stream_s strm;
+अटल पूर्णांक deflate_decompress(अक्षर *src, माप_प्रकार slen, अक्षर *dst, माप_प्रकार dlen)
+अणु
+	पूर्णांक error;
+	काष्ठा z_stream_s strm;
 
-	if (aa_g_rawdata_compression_level == 0) {
-		if (dlen < slen)
-			return -EINVAL;
-		memcpy(dst, src, slen);
-		return 0;
-	}
+	अगर (aa_g_rawdata_compression_level == 0) अणु
+		अगर (dlen < slen)
+			वापस -EINVAL;
+		स_नकल(dst, src, slen);
+		वापस 0;
+	पूर्ण
 
-	memset(&strm, 0, sizeof(strm));
+	स_रखो(&strm, 0, माप(strm));
 
 	strm.workspace = kvzalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
-	if (!strm.workspace)
-		return -ENOMEM;
+	अगर (!strm.workspace)
+		वापस -ENOMEM;
 
 	strm.next_in = src;
 	strm.avail_in = slen;
 
 	error = zlib_inflateInit(&strm);
-	if (error != Z_OK) {
+	अगर (error != Z_OK) अणु
 		error = -ENOMEM;
-		goto fail_inflate_init;
-	}
+		जाओ fail_inflate_init;
+	पूर्ण
 
 	strm.next_out = dst;
 	strm.avail_out = dlen;
 
 	error = zlib_inflate(&strm, Z_FINISH);
-	if (error != Z_STREAM_END)
+	अगर (error != Z_STREAM_END)
 		error = -EINVAL;
-	else
+	अन्यथा
 		error = 0;
 
 	zlib_inflateEnd(&strm);
 fail_inflate_init:
-	kvfree(strm.workspace);
-	return error;
-}
+	kvमुक्त(strm.workspace);
+	वापस error;
+पूर्ण
 
-static ssize_t rawdata_read(struct file *file, char __user *buf, size_t size,
+अटल sमाप_प्रकार rawdata_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size,
 			    loff_t *ppos)
-{
-	struct rawdata_f_data *private = file->private_data;
+अणु
+	काष्ठा rawdata_f_data *निजी = file->निजी_data;
 
-	return simple_read_from_buffer(buf, size, ppos,
-				       RAWDATA_F_DATA_BUF(private),
-				       private->loaddata->size);
-}
+	वापस simple_पढ़ो_from_buffer(buf, size, ppos,
+				       RAWDATA_F_DATA_BUF(निजी),
+				       निजी->loaddata->size);
+पूर्ण
 
-static int rawdata_release(struct inode *inode, struct file *file)
-{
-	rawdata_f_data_free(file->private_data);
+अटल पूर्णांक rawdata_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	rawdata_f_data_मुक्त(file->निजी_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rawdata_open(struct inode *inode, struct file *file)
-{
-	int error;
-	struct aa_loaddata *loaddata;
-	struct rawdata_f_data *private;
+अटल पूर्णांक rawdata_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक error;
+	काष्ठा aa_loaddata *loaddata;
+	काष्ठा rawdata_f_data *निजी;
 
-	if (!policy_view_capable(NULL))
-		return -EACCES;
+	अगर (!policy_view_capable(शून्य))
+		वापस -EACCES;
 
-	loaddata = __aa_get_loaddata(inode->i_private);
-	if (!loaddata)
+	loaddata = __aa_get_loaddata(inode->i_निजी);
+	अगर (!loaddata)
 		/* lost race: this entry is being reaped */
-		return -ENOENT;
+		वापस -ENOENT;
 
-	private = rawdata_f_data_alloc(loaddata->size);
-	if (IS_ERR(private)) {
-		error = PTR_ERR(private);
-		goto fail_private_alloc;
-	}
+	निजी = rawdata_f_data_alloc(loaddata->size);
+	अगर (IS_ERR(निजी)) अणु
+		error = PTR_ERR(निजी);
+		जाओ fail_निजी_alloc;
+	पूर्ण
 
-	private->loaddata = loaddata;
+	निजी->loaddata = loaddata;
 
 	error = deflate_decompress(loaddata->data, loaddata->compressed_size,
-				   RAWDATA_F_DATA_BUF(private),
+				   RAWDATA_F_DATA_BUF(निजी),
 				   loaddata->size);
-	if (error)
-		goto fail_decompress;
+	अगर (error)
+		जाओ fail_decompress;
 
-	file->private_data = private;
-	return 0;
+	file->निजी_data = निजी;
+	वापस 0;
 
 fail_decompress:
-	rawdata_f_data_free(private);
-	return error;
+	rawdata_f_data_मुक्त(निजी);
+	वापस error;
 
-fail_private_alloc:
+fail_निजी_alloc:
 	aa_put_loaddata(loaddata);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct file_operations rawdata_fops = {
-	.open = rawdata_open,
-	.read = rawdata_read,
+अटल स्थिर काष्ठा file_operations rawdata_fops = अणु
+	.खोलो = rawdata_खोलो,
+	.पढ़ो = rawdata_पढ़ो,
 	.llseek = generic_file_llseek,
 	.release = rawdata_release,
-};
+पूर्ण;
 
-static void remove_rawdata_dents(struct aa_loaddata *rawdata)
-{
-	int i;
+अटल व्योम हटाओ_rawdata_dents(काष्ठा aa_loaddata *rawdata)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < AAFS_LOADDATA_NDENTS; i++) {
-		if (!IS_ERR_OR_NULL(rawdata->dents[i])) {
-			/* no refcounts on i_private */
-			aafs_remove(rawdata->dents[i]);
-			rawdata->dents[i] = NULL;
-		}
-	}
-}
+	क्रम (i = 0; i < AAFS_LOADDATA_NDENTS; i++) अणु
+		अगर (!IS_ERR_OR_शून्य(rawdata->dents[i])) अणु
+			/* no refcounts on i_निजी */
+			aafs_हटाओ(rawdata->dents[i]);
+			rawdata->dents[i] = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void __aa_fs_remove_rawdata(struct aa_loaddata *rawdata)
-{
+व्योम __aa_fs_हटाओ_rawdata(काष्ठा aa_loaddata *rawdata)
+अणु
 	AA_BUG(rawdata->ns && !mutex_is_locked(&rawdata->ns->lock));
 
-	if (rawdata->ns) {
-		remove_rawdata_dents(rawdata);
+	अगर (rawdata->ns) अणु
+		हटाओ_rawdata_dents(rawdata);
 		list_del_init(&rawdata->list);
 		aa_put_ns(rawdata->ns);
-		rawdata->ns = NULL;
-	}
-}
+		rawdata->ns = शून्य;
+	पूर्ण
+पूर्ण
 
-int __aa_fs_create_rawdata(struct aa_ns *ns, struct aa_loaddata *rawdata)
-{
-	struct dentry *dent, *dir;
+पूर्णांक __aa_fs_create_rawdata(काष्ठा aa_ns *ns, काष्ठा aa_loaddata *rawdata)
+अणु
+	काष्ठा dentry *dent, *dir;
 
 	AA_BUG(!ns);
 	AA_BUG(!rawdata);
@@ -1435,50 +1436,50 @@ int __aa_fs_create_rawdata(struct aa_ns *ns, struct aa_loaddata *rawdata)
 
 	/*
 	 * just use ns revision dir was originally created at. This is
-	 * under ns->lock and if load is successful revision will be
+	 * under ns->lock and अगर load is successful revision will be
 	 * bumped and is guaranteed to be unique
 	 */
-	rawdata->name = kasprintf(GFP_KERNEL, "%ld", ns->revision);
-	if (!rawdata->name)
-		return -ENOMEM;
+	rawdata->name = kaप्र_लिखो(GFP_KERNEL, "%ld", ns->revision);
+	अगर (!rawdata->name)
+		वापस -ENOMEM;
 
 	dir = aafs_create_dir(rawdata->name, ns_subdata_dir(ns));
-	if (IS_ERR(dir))
-		/* ->name freed when rawdata freed */
-		return PTR_ERR(dir);
-	rawdata->dents[AAFS_LOADDATA_DIR] = dir;
+	अगर (IS_ERR(dir))
+		/* ->name मुक्तd when rawdata मुक्तd */
+		वापस PTR_ERR(dir);
+	rawdata->dents[AAFS_LOADDATA_सूची] = dir;
 
 	dent = aafs_create_file("abi", S_IFREG | 0444, dir, rawdata,
 				      &seq_rawdata_abi_fops);
-	if (IS_ERR(dent))
-		goto fail;
+	अगर (IS_ERR(dent))
+		जाओ fail;
 	rawdata->dents[AAFS_LOADDATA_ABI] = dent;
 
 	dent = aafs_create_file("revision", S_IFREG | 0444, dir, rawdata,
 				      &seq_rawdata_revision_fops);
-	if (IS_ERR(dent))
-		goto fail;
+	अगर (IS_ERR(dent))
+		जाओ fail;
 	rawdata->dents[AAFS_LOADDATA_REVISION] = dent;
 
-	if (aa_g_hash_policy) {
+	अगर (aa_g_hash_policy) अणु
 		dent = aafs_create_file("sha1", S_IFREG | 0444, dir,
 					      rawdata, &seq_rawdata_hash_fops);
-		if (IS_ERR(dent))
-			goto fail;
+		अगर (IS_ERR(dent))
+			जाओ fail;
 		rawdata->dents[AAFS_LOADDATA_HASH] = dent;
-	}
+	पूर्ण
 
 	dent = aafs_create_file("compressed_size", S_IFREG | 0444, dir,
 				rawdata,
 				&seq_rawdata_compressed_size_fops);
-	if (IS_ERR(dent))
-		goto fail;
+	अगर (IS_ERR(dent))
+		जाओ fail;
 	rawdata->dents[AAFS_LOADDATA_COMPRESSED_SIZE] = dent;
 
 	dent = aafs_create_file("raw_data", S_IFREG | 0444,
 				      dir, rawdata, &rawdata_fops);
-	if (IS_ERR(dent))
-		goto fail;
+	अगर (IS_ERR(dent))
+		जाओ fail;
 	rawdata->dents[AAFS_LOADDATA_DATA] = dent;
 	d_inode(dent)->i_size = rawdata->size;
 
@@ -1486,13 +1487,13 @@ int __aa_fs_create_rawdata(struct aa_ns *ns, struct aa_loaddata *rawdata)
 	list_add(&rawdata->list, &ns->rawdata_list);
 	/* no refcount on inode rawdata */
 
-	return 0;
+	वापस 0;
 
 fail:
-	remove_rawdata_dents(rawdata);
+	हटाओ_rawdata_dents(rawdata);
 
-	return PTR_ERR(dent);
-}
+	वापस PTR_ERR(dent);
+पूर्ण
 
 /** fns to setup dynamic per profile/namespace files **/
 
@@ -1500,119 +1501,119 @@ fail:
  *
  * Requires: @profile->ns->lock held
  */
-void __aafs_profile_rmdir(struct aa_profile *profile)
-{
-	struct aa_profile *child;
-	int i;
+व्योम __aafs_profile_सूची_हटाओ(काष्ठा aa_profile *profile)
+अणु
+	काष्ठा aa_profile *child;
+	पूर्णांक i;
 
-	if (!profile)
-		return;
+	अगर (!profile)
+		वापस;
 
-	list_for_each_entry(child, &profile->base.profiles, base.list)
-		__aafs_profile_rmdir(child);
+	list_क्रम_each_entry(child, &profile->base.profiles, base.list)
+		__aafs_profile_सूची_हटाओ(child);
 
-	for (i = AAFS_PROF_SIZEOF - 1; i >= 0; --i) {
-		struct aa_proxy *proxy;
-		if (!profile->dents[i])
-			continue;
+	क्रम (i = AAFS_PROF_SIZखातापूर्ण - 1; i >= 0; --i) अणु
+		काष्ठा aa_proxy *proxy;
+		अगर (!profile->dents[i])
+			जारी;
 
-		proxy = d_inode(profile->dents[i])->i_private;
-		aafs_remove(profile->dents[i]);
+		proxy = d_inode(profile->dents[i])->i_निजी;
+		aafs_हटाओ(profile->dents[i]);
 		aa_put_proxy(proxy);
-		profile->dents[i] = NULL;
-	}
-}
+		profile->dents[i] = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  *
  * Requires: @old->ns->lock held
  */
-void __aafs_profile_migrate_dents(struct aa_profile *old,
-				  struct aa_profile *new)
-{
-	int i;
+व्योम __aafs_profile_migrate_dents(काष्ठा aa_profile *old,
+				  काष्ठा aa_profile *new)
+अणु
+	पूर्णांक i;
 
 	AA_BUG(!old);
 	AA_BUG(!new);
 	AA_BUG(!mutex_is_locked(&profiles_ns(old)->lock));
 
-	for (i = 0; i < AAFS_PROF_SIZEOF; i++) {
+	क्रम (i = 0; i < AAFS_PROF_SIZखातापूर्ण; i++) अणु
 		new->dents[i] = old->dents[i];
-		if (new->dents[i])
-			new->dents[i]->d_inode->i_mtime = current_time(new->dents[i]->d_inode);
-		old->dents[i] = NULL;
-	}
-}
+		अगर (new->dents[i])
+			new->dents[i]->d_inode->i_mसमय = current_समय(new->dents[i]->d_inode);
+		old->dents[i] = शून्य;
+	पूर्ण
+पूर्ण
 
-static struct dentry *create_profile_file(struct dentry *dir, const char *name,
-					  struct aa_profile *profile,
-					  const struct file_operations *fops)
-{
-	struct aa_proxy *proxy = aa_get_proxy(profile->label.proxy);
-	struct dentry *dent;
+अटल काष्ठा dentry *create_profile_file(काष्ठा dentry *dir, स्थिर अक्षर *name,
+					  काष्ठा aa_profile *profile,
+					  स्थिर काष्ठा file_operations *fops)
+अणु
+	काष्ठा aa_proxy *proxy = aa_get_proxy(profile->label.proxy);
+	काष्ठा dentry *dent;
 
 	dent = aafs_create_file(name, S_IFREG | 0444, dir, proxy, fops);
-	if (IS_ERR(dent))
+	अगर (IS_ERR(dent))
 		aa_put_proxy(proxy);
 
-	return dent;
-}
+	वापस dent;
+पूर्ण
 
-static int profile_depth(struct aa_profile *profile)
-{
-	int depth = 0;
+अटल पूर्णांक profile_depth(काष्ठा aa_profile *profile)
+अणु
+	पूर्णांक depth = 0;
 
-	rcu_read_lock();
-	for (depth = 0; profile; profile = rcu_access_pointer(profile->parent))
+	rcu_पढ़ो_lock();
+	क्रम (depth = 0; profile; profile = rcu_access_poपूर्णांकer(profile->parent))
 		depth++;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return depth;
-}
+	वापस depth;
+पूर्ण
 
-static char *gen_symlink_name(int depth, const char *dirname, const char *fname)
-{
-	char *buffer, *s;
-	int error;
-	int size = depth * 6 + strlen(dirname) + strlen(fname) + 11;
+अटल अक्षर *gen_symlink_name(पूर्णांक depth, स्थिर अक्षर *स_नाम, स्थिर अक्षर *fname)
+अणु
+	अक्षर *buffer, *s;
+	पूर्णांक error;
+	पूर्णांक size = depth * 6 + म_माप(स_नाम) + म_माप(fname) + 11;
 
-	s = buffer = kmalloc(size, GFP_KERNEL);
-	if (!buffer)
-		return ERR_PTR(-ENOMEM);
+	s = buffer = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buffer)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (; depth > 0; depth--) {
-		strcpy(s, "../../");
+	क्रम (; depth > 0; depth--) अणु
+		म_नकल(s, "../../");
 		s += 6;
 		size -= 6;
-	}
+	पूर्ण
 
-	error = snprintf(s, size, "raw_data/%s/%s", dirname, fname);
-	if (error >= size || error < 0) {
-		kfree(buffer);
-		return ERR_PTR(-ENAMETOOLONG);
-	}
+	error = snम_लिखो(s, size, "raw_data/%s/%s", स_नाम, fname);
+	अगर (error >= size || error < 0) अणु
+		kमुक्त(buffer);
+		वापस ERR_PTR(-ENAMETOOLONG);
+	पूर्ण
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-static void rawdata_link_cb(void *arg)
-{
-	kfree(arg);
-}
+अटल व्योम rawdata_link_cb(व्योम *arg)
+अणु
+	kमुक्त(arg);
+पूर्ण
 
-static const char *rawdata_get_link_base(struct dentry *dentry,
-					 struct inode *inode,
-					 struct delayed_call *done,
-					 const char *name)
-{
-	struct aa_proxy *proxy = inode->i_private;
-	struct aa_label *label;
-	struct aa_profile *profile;
-	char *target;
-	int depth;
+अटल स्थिर अक्षर *rawdata_get_link_base(काष्ठा dentry *dentry,
+					 काष्ठा inode *inode,
+					 काष्ठा delayed_call *करोne,
+					 स्थिर अक्षर *name)
+अणु
+	काष्ठा aa_proxy *proxy = inode->i_निजी;
+	काष्ठा aa_label *label;
+	काष्ठा aa_profile *profile;
+	अक्षर *target;
+	पूर्णांक depth;
 
-	if (!dentry)
-		return ERR_PTR(-ECHILD);
+	अगर (!dentry)
+		वापस ERR_PTR(-ECHILD);
 
 	label = aa_get_label_rcu(&proxy->label);
 	profile = labels_profile(label);
@@ -1620,226 +1621,226 @@ static const char *rawdata_get_link_base(struct dentry *dentry,
 	target = gen_symlink_name(depth, profile->rawdata->name, name);
 	aa_put_label(label);
 
-	if (IS_ERR(target))
-		return target;
+	अगर (IS_ERR(target))
+		वापस target;
 
-	set_delayed_call(done, rawdata_link_cb, target);
+	set_delayed_call(करोne, rawdata_link_cb, target);
 
-	return target;
-}
+	वापस target;
+पूर्ण
 
-static const char *rawdata_get_link_sha1(struct dentry *dentry,
-					 struct inode *inode,
-					 struct delayed_call *done)
-{
-	return rawdata_get_link_base(dentry, inode, done, "sha1");
-}
+अटल स्थिर अक्षर *rawdata_get_link_sha1(काष्ठा dentry *dentry,
+					 काष्ठा inode *inode,
+					 काष्ठा delayed_call *करोne)
+अणु
+	वापस rawdata_get_link_base(dentry, inode, करोne, "sha1");
+पूर्ण
 
-static const char *rawdata_get_link_abi(struct dentry *dentry,
-					struct inode *inode,
-					struct delayed_call *done)
-{
-	return rawdata_get_link_base(dentry, inode, done, "abi");
-}
+अटल स्थिर अक्षर *rawdata_get_link_abi(काष्ठा dentry *dentry,
+					काष्ठा inode *inode,
+					काष्ठा delayed_call *करोne)
+अणु
+	वापस rawdata_get_link_base(dentry, inode, करोne, "abi");
+पूर्ण
 
-static const char *rawdata_get_link_data(struct dentry *dentry,
-					 struct inode *inode,
-					 struct delayed_call *done)
-{
-	return rawdata_get_link_base(dentry, inode, done, "raw_data");
-}
+अटल स्थिर अक्षर *rawdata_get_link_data(काष्ठा dentry *dentry,
+					 काष्ठा inode *inode,
+					 काष्ठा delayed_call *करोne)
+अणु
+	वापस rawdata_get_link_base(dentry, inode, करोne, "raw_data");
+पूर्ण
 
-static const struct inode_operations rawdata_link_sha1_iops = {
+अटल स्थिर काष्ठा inode_operations rawdata_link_sha1_iops = अणु
 	.get_link	= rawdata_get_link_sha1,
-};
+पूर्ण;
 
-static const struct inode_operations rawdata_link_abi_iops = {
+अटल स्थिर काष्ठा inode_operations rawdata_link_abi_iops = अणु
 	.get_link	= rawdata_get_link_abi,
-};
-static const struct inode_operations rawdata_link_data_iops = {
+पूर्ण;
+अटल स्थिर काष्ठा inode_operations rawdata_link_data_iops = अणु
 	.get_link	= rawdata_get_link_data,
-};
+पूर्ण;
 
 
 /*
  * Requires: @profile->ns->lock held
  */
-int __aafs_profile_mkdir(struct aa_profile *profile, struct dentry *parent)
-{
-	struct aa_profile *child;
-	struct dentry *dent = NULL, *dir;
-	int error;
+पूर्णांक __aafs_profile_सूची_गढ़ो(काष्ठा aa_profile *profile, काष्ठा dentry *parent)
+अणु
+	काष्ठा aa_profile *child;
+	काष्ठा dentry *dent = शून्य, *dir;
+	पूर्णांक error;
 
 	AA_BUG(!profile);
 	AA_BUG(!mutex_is_locked(&profiles_ns(profile)->lock));
 
-	if (!parent) {
-		struct aa_profile *p;
+	अगर (!parent) अणु
+		काष्ठा aa_profile *p;
 		p = aa_deref_parent(profile);
 		dent = prof_dir(p);
 		/* adding to parent that previously didn't have children */
 		dent = aafs_create_dir("profiles", dent);
-		if (IS_ERR(dent))
-			goto fail;
+		अगर (IS_ERR(dent))
+			जाओ fail;
 		prof_child_dir(p) = parent = dent;
-	}
+	पूर्ण
 
-	if (!profile->dirname) {
-		int len, id_len;
-		len = mangle_name(profile->base.name, NULL);
-		id_len = snprintf(NULL, 0, ".%ld", profile->ns->uniq_id);
+	अगर (!profile->स_नाम) अणु
+		पूर्णांक len, id_len;
+		len = mangle_name(profile->base.name, शून्य);
+		id_len = snम_लिखो(शून्य, 0, ".%ld", profile->ns->uniq_id);
 
-		profile->dirname = kmalloc(len + id_len + 1, GFP_KERNEL);
-		if (!profile->dirname) {
+		profile->स_नाम = kदो_स्मृति(len + id_len + 1, GFP_KERNEL);
+		अगर (!profile->स_नाम) अणु
 			error = -ENOMEM;
-			goto fail2;
-		}
+			जाओ fail2;
+		पूर्ण
 
-		mangle_name(profile->base.name, profile->dirname);
-		sprintf(profile->dirname + len, ".%ld", profile->ns->uniq_id++);
-	}
+		mangle_name(profile->base.name, profile->स_नाम);
+		प्र_लिखो(profile->स_नाम + len, ".%ld", profile->ns->uniq_id++);
+	पूर्ण
 
-	dent = aafs_create_dir(profile->dirname, parent);
-	if (IS_ERR(dent))
-		goto fail;
+	dent = aafs_create_dir(profile->स_नाम, parent);
+	अगर (IS_ERR(dent))
+		जाओ fail;
 	prof_dir(profile) = dir = dent;
 
 	dent = create_profile_file(dir, "name", profile,
 				   &seq_profile_name_fops);
-	if (IS_ERR(dent))
-		goto fail;
+	अगर (IS_ERR(dent))
+		जाओ fail;
 	profile->dents[AAFS_PROF_NAME] = dent;
 
 	dent = create_profile_file(dir, "mode", profile,
 				   &seq_profile_mode_fops);
-	if (IS_ERR(dent))
-		goto fail;
+	अगर (IS_ERR(dent))
+		जाओ fail;
 	profile->dents[AAFS_PROF_MODE] = dent;
 
 	dent = create_profile_file(dir, "attach", profile,
 				   &seq_profile_attach_fops);
-	if (IS_ERR(dent))
-		goto fail;
+	अगर (IS_ERR(dent))
+		जाओ fail;
 	profile->dents[AAFS_PROF_ATTACH] = dent;
 
-	if (profile->hash) {
+	अगर (profile->hash) अणु
 		dent = create_profile_file(dir, "sha1", profile,
 					   &seq_profile_hash_fops);
-		if (IS_ERR(dent))
-			goto fail;
+		अगर (IS_ERR(dent))
+			जाओ fail;
 		profile->dents[AAFS_PROF_HASH] = dent;
-	}
+	पूर्ण
 
-	if (profile->rawdata) {
+	अगर (profile->rawdata) अणु
 		dent = aafs_create("raw_sha1", S_IFLNK | 0444, dir,
-				   profile->label.proxy, NULL, NULL,
+				   profile->label.proxy, शून्य, शून्य,
 				   &rawdata_link_sha1_iops);
-		if (IS_ERR(dent))
-			goto fail;
+		अगर (IS_ERR(dent))
+			जाओ fail;
 		aa_get_proxy(profile->label.proxy);
 		profile->dents[AAFS_PROF_RAW_HASH] = dent;
 
 		dent = aafs_create("raw_abi", S_IFLNK | 0444, dir,
-				   profile->label.proxy, NULL, NULL,
+				   profile->label.proxy, शून्य, शून्य,
 				   &rawdata_link_abi_iops);
-		if (IS_ERR(dent))
-			goto fail;
+		अगर (IS_ERR(dent))
+			जाओ fail;
 		aa_get_proxy(profile->label.proxy);
 		profile->dents[AAFS_PROF_RAW_ABI] = dent;
 
 		dent = aafs_create("raw_data", S_IFLNK | 0444, dir,
-				   profile->label.proxy, NULL, NULL,
+				   profile->label.proxy, शून्य, शून्य,
 				   &rawdata_link_data_iops);
-		if (IS_ERR(dent))
-			goto fail;
+		अगर (IS_ERR(dent))
+			जाओ fail;
 		aa_get_proxy(profile->label.proxy);
 		profile->dents[AAFS_PROF_RAW_DATA] = dent;
-	}
+	पूर्ण
 
-	list_for_each_entry(child, &profile->base.profiles, base.list) {
-		error = __aafs_profile_mkdir(child, prof_child_dir(profile));
-		if (error)
-			goto fail2;
-	}
+	list_क्रम_each_entry(child, &profile->base.profiles, base.list) अणु
+		error = __aafs_profile_सूची_गढ़ो(child, prof_child_dir(profile));
+		अगर (error)
+			जाओ fail2;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
 	error = PTR_ERR(dent);
 
 fail2:
-	__aafs_profile_rmdir(profile);
+	__aafs_profile_सूची_हटाओ(profile);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int ns_mkdir_op(struct user_namespace *mnt_userns, struct inode *dir,
-		       struct dentry *dentry, umode_t mode)
-{
-	struct aa_ns *ns, *parent;
+अटल पूर्णांक ns_सूची_गढ़ो_op(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		       काष्ठा dentry *dentry, umode_t mode)
+अणु
+	काष्ठा aa_ns *ns, *parent;
 	/* TODO: improve permission check */
-	struct aa_label *label;
-	int error;
+	काष्ठा aa_label *label;
+	पूर्णांक error;
 
 	label = begin_current_label_crit_section();
-	error = aa_may_manage_policy(label, NULL, AA_MAY_LOAD_POLICY);
+	error = aa_may_manage_policy(label, शून्य, AA_MAY_LOAD_POLICY);
 	end_current_label_crit_section(label);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	parent = aa_get_ns(dir->i_private);
+	parent = aa_get_ns(dir->i_निजी);
 	AA_BUG(d_inode(ns_subns_dir(parent)) != dir);
 
 	/* we have to unlock and then relock to get locking order right
-	 * for pin_fs
+	 * क्रम pin_fs
 	 */
 	inode_unlock(dir);
 	error = simple_pin_fs(&aafs_ops, &aafs_mnt, &aafs_count);
 	mutex_lock_nested(&parent->lock, parent->level);
 	inode_lock_nested(dir, I_MUTEX_PARENT);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	error = __aafs_setup_d_inode(dir, dentry, mode | S_IFDIR,  NULL,
-				     NULL, NULL, NULL);
-	if (error)
-		goto out_pin;
+	error = __aafs_setup_d_inode(dir, dentry, mode | S_IFसूची,  शून्य,
+				     शून्य, शून्य, शून्य);
+	अगर (error)
+		जाओ out_pin;
 
 	ns = __aa_find_or_create_ns(parent, READ_ONCE(dentry->d_name.name),
 				    dentry);
-	if (IS_ERR(ns)) {
+	अगर (IS_ERR(ns)) अणु
 		error = PTR_ERR(ns);
-		ns = NULL;
-	}
+		ns = शून्य;
+	पूर्ण
 
-	aa_put_ns(ns);		/* list ref remains */
+	aa_put_ns(ns);		/* list ref reमुख्यs */
 out_pin:
-	if (error)
+	अगर (error)
 		simple_release_fs(&aafs_mnt, &aafs_count);
 out:
 	mutex_unlock(&parent->lock);
 	aa_put_ns(parent);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int ns_rmdir_op(struct inode *dir, struct dentry *dentry)
-{
-	struct aa_ns *ns, *parent;
+अटल पूर्णांक ns_सूची_हटाओ_op(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा aa_ns *ns, *parent;
 	/* TODO: improve permission check */
-	struct aa_label *label;
-	int error;
+	काष्ठा aa_label *label;
+	पूर्णांक error;
 
 	label = begin_current_label_crit_section();
-	error = aa_may_manage_policy(label, NULL, AA_MAY_LOAD_POLICY);
+	error = aa_may_manage_policy(label, शून्य, AA_MAY_LOAD_POLICY);
 	end_current_label_crit_section(label);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	parent = aa_get_ns(dir->i_private);
-	/* rmdir calls the generic securityfs functions to remove files
+	parent = aa_get_ns(dir->i_निजी);
+	/* सूची_हटाओ calls the generic securityfs functions to हटाओ files
 	 * from the apparmor dir. It is up to the apparmor ns locking
-	 * to avoid races.
+	 * to aव्योम races.
 	 */
 	inode_unlock(dir);
 	inode_unlock(dentry->d_inode);
@@ -1847,13 +1848,13 @@ static int ns_rmdir_op(struct inode *dir, struct dentry *dentry)
 	mutex_lock_nested(&parent->lock, parent->level);
 	ns = aa_get_ns(__aa_findn_ns(&parent->sub_ns, dentry->d_name.name,
 				     dentry->d_name.len));
-	if (!ns) {
+	अगर (!ns) अणु
 		error = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	AA_BUG(ns_dir(ns) != dentry);
 
-	__aa_remove_ns(ns);
+	__aa_हटाओ_ns(ns);
 	aa_put_ns(ns);
 
 out:
@@ -1862,662 +1863,662 @@ out:
 	inode_lock(dentry->d_inode);
 	aa_put_ns(parent);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct inode_operations ns_dir_inode_operations = {
+अटल स्थिर काष्ठा inode_operations ns_dir_inode_operations = अणु
 	.lookup		= simple_lookup,
-	.mkdir		= ns_mkdir_op,
-	.rmdir		= ns_rmdir_op,
-};
+	.सूची_गढ़ो		= ns_सूची_गढ़ो_op,
+	.सूची_हटाओ		= ns_सूची_हटाओ_op,
+पूर्ण;
 
-static void __aa_fs_list_remove_rawdata(struct aa_ns *ns)
-{
-	struct aa_loaddata *ent, *tmp;
+अटल व्योम __aa_fs_list_हटाओ_rawdata(काष्ठा aa_ns *ns)
+अणु
+	काष्ठा aa_loaddata *ent, *पंचांगp;
 
 	AA_BUG(!mutex_is_locked(&ns->lock));
 
-	list_for_each_entry_safe(ent, tmp, &ns->rawdata_list, list)
-		__aa_fs_remove_rawdata(ent);
-}
+	list_क्रम_each_entry_safe(ent, पंचांगp, &ns->rawdata_list, list)
+		__aa_fs_हटाओ_rawdata(ent);
+पूर्ण
 
 /**
  *
  * Requires: @ns->lock held
  */
-void __aafs_ns_rmdir(struct aa_ns *ns)
-{
-	struct aa_ns *sub;
-	struct aa_profile *child;
-	int i;
+व्योम __aafs_ns_सूची_हटाओ(काष्ठा aa_ns *ns)
+अणु
+	काष्ठा aa_ns *sub;
+	काष्ठा aa_profile *child;
+	पूर्णांक i;
 
-	if (!ns)
-		return;
+	अगर (!ns)
+		वापस;
 	AA_BUG(!mutex_is_locked(&ns->lock));
 
-	list_for_each_entry(child, &ns->base.profiles, base.list)
-		__aafs_profile_rmdir(child);
+	list_क्रम_each_entry(child, &ns->base.profiles, base.list)
+		__aafs_profile_सूची_हटाओ(child);
 
-	list_for_each_entry(sub, &ns->sub_ns, base.list) {
+	list_क्रम_each_entry(sub, &ns->sub_ns, base.list) अणु
 		mutex_lock_nested(&sub->lock, sub->level);
-		__aafs_ns_rmdir(sub);
+		__aafs_ns_सूची_हटाओ(sub);
 		mutex_unlock(&sub->lock);
-	}
+	पूर्ण
 
-	__aa_fs_list_remove_rawdata(ns);
+	__aa_fs_list_हटाओ_rawdata(ns);
 
-	if (ns_subns_dir(ns)) {
-		sub = d_inode(ns_subns_dir(ns))->i_private;
+	अगर (ns_subns_dir(ns)) अणु
+		sub = d_inode(ns_subns_dir(ns))->i_निजी;
 		aa_put_ns(sub);
-	}
-	if (ns_subload(ns)) {
-		sub = d_inode(ns_subload(ns))->i_private;
+	पूर्ण
+	अगर (ns_subload(ns)) अणु
+		sub = d_inode(ns_subload(ns))->i_निजी;
 		aa_put_ns(sub);
-	}
-	if (ns_subreplace(ns)) {
-		sub = d_inode(ns_subreplace(ns))->i_private;
+	पूर्ण
+	अगर (ns_subreplace(ns)) अणु
+		sub = d_inode(ns_subreplace(ns))->i_निजी;
 		aa_put_ns(sub);
-	}
-	if (ns_subremove(ns)) {
-		sub = d_inode(ns_subremove(ns))->i_private;
+	पूर्ण
+	अगर (ns_subहटाओ(ns)) अणु
+		sub = d_inode(ns_subहटाओ(ns))->i_निजी;
 		aa_put_ns(sub);
-	}
-	if (ns_subrevision(ns)) {
-		sub = d_inode(ns_subrevision(ns))->i_private;
+	पूर्ण
+	अगर (ns_subrevision(ns)) अणु
+		sub = d_inode(ns_subrevision(ns))->i_निजी;
 		aa_put_ns(sub);
-	}
+	पूर्ण
 
-	for (i = AAFS_NS_SIZEOF - 1; i >= 0; --i) {
-		aafs_remove(ns->dents[i]);
-		ns->dents[i] = NULL;
-	}
-}
+	क्रम (i = AAFS_NS_SIZखातापूर्ण - 1; i >= 0; --i) अणु
+		aafs_हटाओ(ns->dents[i]);
+		ns->dents[i] = शून्य;
+	पूर्ण
+पूर्ण
 
 /* assumes cleanup in caller */
-static int __aafs_ns_mkdir_entries(struct aa_ns *ns, struct dentry *dir)
-{
-	struct dentry *dent;
+अटल पूर्णांक __aafs_ns_सूची_गढ़ो_entries(काष्ठा aa_ns *ns, काष्ठा dentry *dir)
+अणु
+	काष्ठा dentry *dent;
 
 	AA_BUG(!ns);
 	AA_BUG(!dir);
 
 	dent = aafs_create_dir("profiles", dir);
-	if (IS_ERR(dent))
-		return PTR_ERR(dent);
+	अगर (IS_ERR(dent))
+		वापस PTR_ERR(dent);
 	ns_subprofs_dir(ns) = dent;
 
 	dent = aafs_create_dir("raw_data", dir);
-	if (IS_ERR(dent))
-		return PTR_ERR(dent);
+	अगर (IS_ERR(dent))
+		वापस PTR_ERR(dent);
 	ns_subdata_dir(ns) = dent;
 
 	dent = aafs_create_file("revision", 0444, dir, ns,
 				&aa_fs_ns_revision_fops);
-	if (IS_ERR(dent))
-		return PTR_ERR(dent);
+	अगर (IS_ERR(dent))
+		वापस PTR_ERR(dent);
 	aa_get_ns(ns);
 	ns_subrevision(ns) = dent;
 
 	dent = aafs_create_file(".load", 0640, dir, ns,
 				      &aa_fs_profile_load);
-	if (IS_ERR(dent))
-		return PTR_ERR(dent);
+	अगर (IS_ERR(dent))
+		वापस PTR_ERR(dent);
 	aa_get_ns(ns);
 	ns_subload(ns) = dent;
 
 	dent = aafs_create_file(".replace", 0640, dir, ns,
 				      &aa_fs_profile_replace);
-	if (IS_ERR(dent))
-		return PTR_ERR(dent);
+	अगर (IS_ERR(dent))
+		वापस PTR_ERR(dent);
 	aa_get_ns(ns);
 	ns_subreplace(ns) = dent;
 
 	dent = aafs_create_file(".remove", 0640, dir, ns,
-				      &aa_fs_profile_remove);
-	if (IS_ERR(dent))
-		return PTR_ERR(dent);
+				      &aa_fs_profile_हटाओ);
+	अगर (IS_ERR(dent))
+		वापस PTR_ERR(dent);
 	aa_get_ns(ns);
-	ns_subremove(ns) = dent;
+	ns_subहटाओ(ns) = dent;
 
-	  /* use create_dentry so we can supply private data */
-	dent = aafs_create("namespaces", S_IFDIR | 0755, dir, ns, NULL, NULL,
+	  /* use create_dentry so we can supply निजी data */
+	dent = aafs_create("namespaces", S_IFसूची | 0755, dir, ns, शून्य, शून्य,
 			   &ns_dir_inode_operations);
-	if (IS_ERR(dent))
-		return PTR_ERR(dent);
+	अगर (IS_ERR(dent))
+		वापस PTR_ERR(dent);
 	aa_get_ns(ns);
 	ns_subns_dir(ns) = dent;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Requires: @ns->lock held
  */
-int __aafs_ns_mkdir(struct aa_ns *ns, struct dentry *parent, const char *name,
-		    struct dentry *dent)
-{
-	struct aa_ns *sub;
-	struct aa_profile *child;
-	struct dentry *dir;
-	int error;
+पूर्णांक __aafs_ns_सूची_गढ़ो(काष्ठा aa_ns *ns, काष्ठा dentry *parent, स्थिर अक्षर *name,
+		    काष्ठा dentry *dent)
+अणु
+	काष्ठा aa_ns *sub;
+	काष्ठा aa_profile *child;
+	काष्ठा dentry *dir;
+	पूर्णांक error;
 
 	AA_BUG(!ns);
 	AA_BUG(!parent);
 	AA_BUG(!mutex_is_locked(&ns->lock));
 
-	if (!name)
+	अगर (!name)
 		name = ns->base.name;
 
-	if (!dent) {
-		/* create ns dir if it doesn't already exist */
+	अगर (!dent) अणु
+		/* create ns dir अगर it करोesn't alपढ़ोy exist */
 		dent = aafs_create_dir(name, parent);
-		if (IS_ERR(dent))
-			goto fail;
-	} else
+		अगर (IS_ERR(dent))
+			जाओ fail;
+	पूर्ण अन्यथा
 		dget(dent);
 	ns_dir(ns) = dir = dent;
-	error = __aafs_ns_mkdir_entries(ns, dir);
-	if (error)
-		goto fail2;
+	error = __aafs_ns_सूची_गढ़ो_entries(ns, dir);
+	अगर (error)
+		जाओ fail2;
 
 	/* profiles */
-	list_for_each_entry(child, &ns->base.profiles, base.list) {
-		error = __aafs_profile_mkdir(child, ns_subprofs_dir(ns));
-		if (error)
-			goto fail2;
-	}
+	list_क्रम_each_entry(child, &ns->base.profiles, base.list) अणु
+		error = __aafs_profile_सूची_गढ़ो(child, ns_subprofs_dir(ns));
+		अगर (error)
+			जाओ fail2;
+	पूर्ण
 
 	/* subnamespaces */
-	list_for_each_entry(sub, &ns->sub_ns, base.list) {
+	list_क्रम_each_entry(sub, &ns->sub_ns, base.list) अणु
 		mutex_lock_nested(&sub->lock, sub->level);
-		error = __aafs_ns_mkdir(sub, ns_subns_dir(ns), NULL, NULL);
+		error = __aafs_ns_सूची_गढ़ो(sub, ns_subns_dir(ns), शून्य, शून्य);
 		mutex_unlock(&sub->lock);
-		if (error)
-			goto fail2;
-	}
+		अगर (error)
+			जाओ fail2;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
 	error = PTR_ERR(dent);
 
 fail2:
-	__aafs_ns_rmdir(ns);
+	__aafs_ns_सूची_हटाओ(ns);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * __next_ns - find the next namespace to list
- * @root: root namespace to stop search at (NOT NULL)
- * @ns: current ns position (NOT NULL)
+ * @root: root namespace to stop search at (NOT शून्य)
+ * @ns: current ns position (NOT शून्य)
  *
  * Find the next namespace from @ns under @root and handle all locking needed
- * while switching current namespace.
+ * जबतक चयनing current namespace.
  *
- * Returns: next namespace or NULL if at last namespace under @root
+ * Returns: next namespace or शून्य अगर at last namespace under @root
  * Requires: ns->parent->lock to be held
  * NOTE: will not unlock root->lock
  */
-static struct aa_ns *__next_ns(struct aa_ns *root, struct aa_ns *ns)
-{
-	struct aa_ns *parent, *next;
+अटल काष्ठा aa_ns *__next_ns(काष्ठा aa_ns *root, काष्ठा aa_ns *ns)
+अणु
+	काष्ठा aa_ns *parent, *next;
 
 	AA_BUG(!root);
 	AA_BUG(!ns);
 	AA_BUG(ns != root && !mutex_is_locked(&ns->parent->lock));
 
 	/* is next namespace a child */
-	if (!list_empty(&ns->sub_ns)) {
+	अगर (!list_empty(&ns->sub_ns)) अणु
 		next = list_first_entry(&ns->sub_ns, typeof(*ns), base.list);
 		mutex_lock_nested(&next->lock, next->level);
-		return next;
-	}
+		वापस next;
+	पूर्ण
 
-	/* check if the next ns is a sibling, parent, gp, .. */
+	/* check अगर the next ns is a sibling, parent, gp, .. */
 	parent = ns->parent;
-	while (ns != root) {
+	जबतक (ns != root) अणु
 		mutex_unlock(&ns->lock);
 		next = list_next_entry(ns, base.list);
-		if (!list_entry_is_head(next, &parent->sub_ns, base.list)) {
+		अगर (!list_entry_is_head(next, &parent->sub_ns, base.list)) अणु
 			mutex_lock_nested(&next->lock, next->level);
-			return next;
-		}
+			वापस next;
+		पूर्ण
 		ns = parent;
 		parent = parent->parent;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * __first_profile - find the first profile in a namespace
- * @root: namespace that is root of profiles being displayed (NOT NULL)
- * @ns: namespace to start in   (NOT NULL)
+ * @root: namespace that is root of profiles being displayed (NOT शून्य)
+ * @ns: namespace to start in   (NOT शून्य)
  *
- * Returns: unrefcounted profile or NULL if no profile
+ * Returns: unrefcounted profile or शून्य अगर no profile
  * Requires: profile->ns.lock to be held
  */
-static struct aa_profile *__first_profile(struct aa_ns *root,
-					  struct aa_ns *ns)
-{
+अटल काष्ठा aa_profile *__first_profile(काष्ठा aa_ns *root,
+					  काष्ठा aa_ns *ns)
+अणु
 	AA_BUG(!root);
 	AA_BUG(ns && !mutex_is_locked(&ns->lock));
 
-	for (; ns; ns = __next_ns(root, ns)) {
-		if (!list_empty(&ns->base.profiles))
-			return list_first_entry(&ns->base.profiles,
-						struct aa_profile, base.list);
-	}
-	return NULL;
-}
+	क्रम (; ns; ns = __next_ns(root, ns)) अणु
+		अगर (!list_empty(&ns->base.profiles))
+			वापस list_first_entry(&ns->base.profiles,
+						काष्ठा aa_profile, base.list);
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * __next_profile - step to the next profile in a profile tree
- * @profile: current profile in tree (NOT NULL)
+ * @profile: current profile in tree (NOT शून्य)
  *
- * Perform a depth first traversal on the profile tree in a namespace
+ * Perक्रमm a depth first traversal on the profile tree in a namespace
  *
- * Returns: next profile or NULL if done
+ * Returns: next profile or शून्य अगर करोne
  * Requires: profile->ns.lock to be held
  */
-static struct aa_profile *__next_profile(struct aa_profile *p)
-{
-	struct aa_profile *parent;
-	struct aa_ns *ns = p->ns;
+अटल काष्ठा aa_profile *__next_profile(काष्ठा aa_profile *p)
+अणु
+	काष्ठा aa_profile *parent;
+	काष्ठा aa_ns *ns = p->ns;
 
 	AA_BUG(!mutex_is_locked(&profiles_ns(p)->lock));
 
 	/* is next profile a child */
-	if (!list_empty(&p->base.profiles))
-		return list_first_entry(&p->base.profiles, typeof(*p),
+	अगर (!list_empty(&p->base.profiles))
+		वापस list_first_entry(&p->base.profiles, typeof(*p),
 					base.list);
 
 	/* is next profile a sibling, parent sibling, gp, sibling, .. */
-	parent = rcu_dereference_protected(p->parent,
+	parent = rcu_dereference_रक्षित(p->parent,
 					   mutex_is_locked(&p->ns->lock));
-	while (parent) {
+	जबतक (parent) अणु
 		p = list_next_entry(p, base.list);
-		if (!list_entry_is_head(p, &parent->base.profiles, base.list))
-			return p;
+		अगर (!list_entry_is_head(p, &parent->base.profiles, base.list))
+			वापस p;
 		p = parent;
-		parent = rcu_dereference_protected(parent->parent,
+		parent = rcu_dereference_रक्षित(parent->parent,
 					    mutex_is_locked(&parent->ns->lock));
-	}
+	पूर्ण
 
 	/* is next another profile in the namespace */
 	p = list_next_entry(p, base.list);
-	if (!list_entry_is_head(p, &ns->base.profiles, base.list))
-		return p;
+	अगर (!list_entry_is_head(p, &ns->base.profiles, base.list))
+		वापस p;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * next_profile - step to the next profile in where ever it may be
- * @root: root namespace  (NOT NULL)
- * @profile: current profile  (NOT NULL)
+ * @root: root namespace  (NOT शून्य)
+ * @profile: current profile  (NOT शून्य)
  *
- * Returns: next profile or NULL if there isn't one
+ * Returns: next profile or शून्य अगर there isn't one
  */
-static struct aa_profile *next_profile(struct aa_ns *root,
-				       struct aa_profile *profile)
-{
-	struct aa_profile *next = __next_profile(profile);
-	if (next)
-		return next;
+अटल काष्ठा aa_profile *next_profile(काष्ठा aa_ns *root,
+				       काष्ठा aa_profile *profile)
+अणु
+	काष्ठा aa_profile *next = __next_profile(profile);
+	अगर (next)
+		वापस next;
 
 	/* finished all profiles in namespace move to next namespace */
-	return __first_profile(root, __next_ns(root, profile->ns));
-}
+	वापस __first_profile(root, __next_ns(root, profile->ns));
+पूर्ण
 
 /**
  * p_start - start a depth first traversal of profile tree
  * @f: seq_file to fill
  * @pos: current position
  *
- * Returns: first profile under current namespace or NULL if none found
+ * Returns: first profile under current namespace or शून्य अगर none found
  *
  * acquires first ns->lock
  */
-static void *p_start(struct seq_file *f, loff_t *pos)
-{
-	struct aa_profile *profile = NULL;
-	struct aa_ns *root = aa_get_current_ns();
+अटल व्योम *p_start(काष्ठा seq_file *f, loff_t *pos)
+अणु
+	काष्ठा aa_profile *profile = शून्य;
+	काष्ठा aa_ns *root = aa_get_current_ns();
 	loff_t l = *pos;
-	f->private = root;
+	f->निजी = root;
 
 	/* find the first profile */
 	mutex_lock_nested(&root->lock, root->level);
 	profile = __first_profile(root, root);
 
 	/* skip to position */
-	for (; profile && l > 0; l--)
+	क्रम (; profile && l > 0; l--)
 		profile = next_profile(root, profile);
 
-	return profile;
-}
+	वापस profile;
+पूर्ण
 
 /**
- * p_next - read the next profile entry
+ * p_next - पढ़ो the next profile entry
  * @f: seq_file to fill
- * @p: profile previously returned
+ * @p: profile previously वापसed
  * @pos: current position
  *
- * Returns: next profile after @p or NULL if none
+ * Returns: next profile after @p or शून्य अगर none
  *
  * may acquire/release locks in namespace tree as necessary
  */
-static void *p_next(struct seq_file *f, void *p, loff_t *pos)
-{
-	struct aa_profile *profile = p;
-	struct aa_ns *ns = f->private;
+अटल व्योम *p_next(काष्ठा seq_file *f, व्योम *p, loff_t *pos)
+अणु
+	काष्ठा aa_profile *profile = p;
+	काष्ठा aa_ns *ns = f->निजी;
 	(*pos)++;
 
-	return next_profile(ns, profile);
-}
+	वापस next_profile(ns, profile);
+पूर्ण
 
 /**
  * p_stop - stop depth first traversal
  * @f: seq_file we are filling
- * @p: the last profile writen
+ * @p: the last profile ग_लिखोn
  *
- * Release all locking done by p_start/p_next on namespace tree
+ * Release all locking करोne by p_start/p_next on namespace tree
  */
-static void p_stop(struct seq_file *f, void *p)
-{
-	struct aa_profile *profile = p;
-	struct aa_ns *root = f->private, *ns;
+अटल व्योम p_stop(काष्ठा seq_file *f, व्योम *p)
+अणु
+	काष्ठा aa_profile *profile = p;
+	काष्ठा aa_ns *root = f->निजी, *ns;
 
-	if (profile) {
-		for (ns = profile->ns; ns && ns != root; ns = ns->parent)
+	अगर (profile) अणु
+		क्रम (ns = profile->ns; ns && ns != root; ns = ns->parent)
 			mutex_unlock(&ns->lock);
-	}
+	पूर्ण
 	mutex_unlock(&root->lock);
 	aa_put_ns(root);
-}
+पूर्ण
 
 /**
  * seq_show_profile - show a profile entry
  * @f: seq_file to file
- * @p: current position (profile)    (NOT NULL)
+ * @p: current position (profile)    (NOT शून्य)
  *
  * Returns: error on failure
  */
-static int seq_show_profile(struct seq_file *f, void *p)
-{
-	struct aa_profile *profile = (struct aa_profile *)p;
-	struct aa_ns *root = f->private;
+अटल पूर्णांक seq_show_profile(काष्ठा seq_file *f, व्योम *p)
+अणु
+	काष्ठा aa_profile *profile = (काष्ठा aa_profile *)p;
+	काष्ठा aa_ns *root = f->निजी;
 
-	aa_label_seq_xprint(f, root, &profile->label,
+	aa_label_seq_xprपूर्णांक(f, root, &profile->label,
 			    FLAG_SHOW_MODE | FLAG_VIEW_SUBNS, GFP_KERNEL);
-	seq_putc(f, '\n');
+	seq_अ_दो(f, '\n');
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations aa_sfs_profiles_op = {
+अटल स्थिर काष्ठा seq_operations aa_sfs_profiles_op = अणु
 	.start = p_start,
 	.next = p_next,
 	.stop = p_stop,
 	.show = seq_show_profile,
-};
+पूर्ण;
 
-static int profiles_open(struct inode *inode, struct file *file)
-{
-	if (!policy_view_capable(NULL))
-		return -EACCES;
+अटल पूर्णांक profiles_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (!policy_view_capable(शून्य))
+		वापस -EACCES;
 
-	return seq_open(file, &aa_sfs_profiles_op);
-}
+	वापस seq_खोलो(file, &aa_sfs_profiles_op);
+पूर्ण
 
-static int profiles_release(struct inode *inode, struct file *file)
-{
-	return seq_release(inode, file);
-}
+अटल पूर्णांक profiles_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस seq_release(inode, file);
+पूर्ण
 
-static const struct file_operations aa_sfs_profiles_fops = {
-	.open = profiles_open,
-	.read = seq_read,
+अटल स्थिर काष्ठा file_operations aa_sfs_profiles_fops = अणु
+	.खोलो = profiles_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = profiles_release,
-};
+पूर्ण;
 
 
-/** Base file system setup **/
-static struct aa_sfs_entry aa_sfs_entry_file[] = {
-	AA_SFS_FILE_STRING("mask",
+/** Base file प्रणाली setup **/
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_file[] = अणु
+	AA_SFS_खाता_STRING("mask",
 			   "create read write exec append mmap_exec link lock"),
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_ptrace[] = {
-	AA_SFS_FILE_STRING("mask", "read trace"),
-	{ }
-};
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_ptrace[] = अणु
+	AA_SFS_खाता_STRING("mask", "read trace"),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_signal[] = {
-	AA_SFS_FILE_STRING("mask", AA_SFS_SIG_MASK),
-	{ }
-};
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_संकेत[] = अणु
+	AA_SFS_खाता_STRING("mask", AA_SFS_SIG_MASK),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_attach[] = {
-	AA_SFS_FILE_BOOLEAN("xattr", 1),
-	{ }
-};
-static struct aa_sfs_entry aa_sfs_entry_domain[] = {
-	AA_SFS_FILE_BOOLEAN("change_hat",	1),
-	AA_SFS_FILE_BOOLEAN("change_hatv",	1),
-	AA_SFS_FILE_BOOLEAN("change_onexec",	1),
-	AA_SFS_FILE_BOOLEAN("change_profile",	1),
-	AA_SFS_FILE_BOOLEAN("stack",		1),
-	AA_SFS_FILE_BOOLEAN("fix_binfmt_elf_mmap",	1),
-	AA_SFS_FILE_BOOLEAN("post_nnp_subset",	1),
-	AA_SFS_FILE_BOOLEAN("computed_longest_left",	1),
-	AA_SFS_DIR("attach_conditions",		aa_sfs_entry_attach),
-	AA_SFS_FILE_STRING("version", "1.2"),
-	{ }
-};
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_attach[] = अणु
+	AA_SFS_खाता_BOOLEAN("xattr", 1),
+	अणु पूर्ण
+पूर्ण;
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_करोमुख्य[] = अणु
+	AA_SFS_खाता_BOOLEAN("change_hat",	1),
+	AA_SFS_खाता_BOOLEAN("change_hatv",	1),
+	AA_SFS_खाता_BOOLEAN("change_onexec",	1),
+	AA_SFS_खाता_BOOLEAN("change_profile",	1),
+	AA_SFS_खाता_BOOLEAN("stack",		1),
+	AA_SFS_खाता_BOOLEAN("fix_binfmt_elf_mmap",	1),
+	AA_SFS_खाता_BOOLEAN("post_nnp_subset",	1),
+	AA_SFS_खाता_BOOLEAN("computed_longest_left",	1),
+	AA_SFS_सूची("attach_conditions",		aa_sfs_entry_attach),
+	AA_SFS_खाता_STRING("version", "1.2"),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_versions[] = {
-	AA_SFS_FILE_BOOLEAN("v5",	1),
-	AA_SFS_FILE_BOOLEAN("v6",	1),
-	AA_SFS_FILE_BOOLEAN("v7",	1),
-	AA_SFS_FILE_BOOLEAN("v8",	1),
-	{ }
-};
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_versions[] = अणु
+	AA_SFS_खाता_BOOLEAN("v5",	1),
+	AA_SFS_खाता_BOOLEAN("v6",	1),
+	AA_SFS_खाता_BOOLEAN("v7",	1),
+	AA_SFS_खाता_BOOLEAN("v8",	1),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_policy[] = {
-	AA_SFS_DIR("versions",			aa_sfs_entry_versions),
-	AA_SFS_FILE_BOOLEAN("set_load",		1),
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_policy[] = अणु
+	AA_SFS_सूची("versions",			aa_sfs_entry_versions),
+	AA_SFS_खाता_BOOLEAN("set_load",		1),
 	/* number of out of band transitions supported */
-	AA_SFS_FILE_U64("outofband",		MAX_OOB_SUPPORTED),
-	{ }
-};
+	AA_SFS_खाता_U64("outofband",		MAX_OOB_SUPPORTED),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_mount[] = {
-	AA_SFS_FILE_STRING("mask", "mount umount pivot_root"),
-	{ }
-};
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_mount[] = अणु
+	AA_SFS_खाता_STRING("mask", "mount umount pivot_root"),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_ns[] = {
-	AA_SFS_FILE_BOOLEAN("profile",		1),
-	AA_SFS_FILE_BOOLEAN("pivot_root",	0),
-	{ }
-};
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_ns[] = अणु
+	AA_SFS_खाता_BOOLEAN("profile",		1),
+	AA_SFS_खाता_BOOLEAN("pivot_root",	0),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_query_label[] = {
-	AA_SFS_FILE_STRING("perms", "allow deny audit quiet"),
-	AA_SFS_FILE_BOOLEAN("data",		1),
-	AA_SFS_FILE_BOOLEAN("multi_transaction",	1),
-	{ }
-};
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_query_label[] = अणु
+	AA_SFS_खाता_STRING("perms", "allow deny audit quiet"),
+	AA_SFS_खाता_BOOLEAN("data",		1),
+	AA_SFS_खाता_BOOLEAN("multi_transaction",	1),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_query[] = {
-	AA_SFS_DIR("label",			aa_sfs_entry_query_label),
-	{ }
-};
-static struct aa_sfs_entry aa_sfs_entry_features[] = {
-	AA_SFS_DIR("policy",			aa_sfs_entry_policy),
-	AA_SFS_DIR("domain",			aa_sfs_entry_domain),
-	AA_SFS_DIR("file",			aa_sfs_entry_file),
-	AA_SFS_DIR("network_v8",		aa_sfs_entry_network),
-	AA_SFS_DIR("mount",			aa_sfs_entry_mount),
-	AA_SFS_DIR("namespaces",		aa_sfs_entry_ns),
-	AA_SFS_FILE_U64("capability",		VFS_CAP_FLAGS_MASK),
-	AA_SFS_DIR("rlimit",			aa_sfs_entry_rlimit),
-	AA_SFS_DIR("caps",			aa_sfs_entry_caps),
-	AA_SFS_DIR("ptrace",			aa_sfs_entry_ptrace),
-	AA_SFS_DIR("signal",			aa_sfs_entry_signal),
-	AA_SFS_DIR("query",			aa_sfs_entry_query),
-	{ }
-};
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_query[] = अणु
+	AA_SFS_सूची("label",			aa_sfs_entry_query_label),
+	अणु पूर्ण
+पूर्ण;
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_features[] = अणु
+	AA_SFS_सूची("policy",			aa_sfs_entry_policy),
+	AA_SFS_सूची("domain",			aa_sfs_entry_करोमुख्य),
+	AA_SFS_सूची("file",			aa_sfs_entry_file),
+	AA_SFS_सूची("network_v8",		aa_sfs_entry_network),
+	AA_SFS_सूची("mount",			aa_sfs_entry_mount),
+	AA_SFS_सूची("namespaces",		aa_sfs_entry_ns),
+	AA_SFS_खाता_U64("capability",		VFS_CAP_FLAGS_MASK),
+	AA_SFS_सूची("rlimit",			aa_sfs_entry_rlimit),
+	AA_SFS_सूची("caps",			aa_sfs_entry_caps),
+	AA_SFS_सूची("ptrace",			aa_sfs_entry_ptrace),
+	AA_SFS_सूची("signal",			aa_sfs_entry_संकेत),
+	AA_SFS_सूची("query",			aa_sfs_entry_query),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry_apparmor[] = {
-	AA_SFS_FILE_FOPS(".access", 0666, &aa_sfs_access),
-	AA_SFS_FILE_FOPS(".stacked", 0444, &seq_ns_stacked_fops),
-	AA_SFS_FILE_FOPS(".ns_stacked", 0444, &seq_ns_nsstacked_fops),
-	AA_SFS_FILE_FOPS(".ns_level", 0444, &seq_ns_level_fops),
-	AA_SFS_FILE_FOPS(".ns_name", 0444, &seq_ns_name_fops),
-	AA_SFS_FILE_FOPS("profiles", 0444, &aa_sfs_profiles_fops),
-	AA_SFS_DIR("features", aa_sfs_entry_features),
-	{ }
-};
+अटल काष्ठा aa_sfs_entry aa_sfs_entry_apparmor[] = अणु
+	AA_SFS_खाता_FOPS(".access", 0666, &aa_sfs_access),
+	AA_SFS_खाता_FOPS(".stacked", 0444, &seq_ns_stacked_fops),
+	AA_SFS_खाता_FOPS(".ns_stacked", 0444, &seq_ns_nsstacked_fops),
+	AA_SFS_खाता_FOPS(".ns_level", 0444, &seq_ns_level_fops),
+	AA_SFS_खाता_FOPS(".ns_name", 0444, &seq_ns_name_fops),
+	AA_SFS_खाता_FOPS("profiles", 0444, &aa_sfs_profiles_fops),
+	AA_SFS_सूची("features", aa_sfs_entry_features),
+	अणु पूर्ण
+पूर्ण;
 
-static struct aa_sfs_entry aa_sfs_entry =
-	AA_SFS_DIR("apparmor", aa_sfs_entry_apparmor);
+अटल काष्ठा aa_sfs_entry aa_sfs_entry =
+	AA_SFS_सूची("apparmor", aa_sfs_entry_apparmor);
 
 /**
  * entry_create_file - create a file entry in the apparmor securityfs
- * @fs_file: aa_sfs_entry to build an entry for (NOT NULL)
+ * @fs_file: aa_sfs_entry to build an entry क्रम (NOT शून्य)
  * @parent: the parent dentry in the securityfs
  *
- * Use entry_remove_file to remove entries created with this fn.
+ * Use entry_हटाओ_file to हटाओ entries created with this fn.
  */
-static int __init entry_create_file(struct aa_sfs_entry *fs_file,
-				    struct dentry *parent)
-{
-	int error = 0;
+अटल पूर्णांक __init entry_create_file(काष्ठा aa_sfs_entry *fs_file,
+				    काष्ठा dentry *parent)
+अणु
+	पूर्णांक error = 0;
 
 	fs_file->dentry = securityfs_create_file(fs_file->name,
 						 S_IFREG | fs_file->mode,
 						 parent, fs_file,
 						 fs_file->file_ops);
-	if (IS_ERR(fs_file->dentry)) {
+	अगर (IS_ERR(fs_file->dentry)) अणु
 		error = PTR_ERR(fs_file->dentry);
-		fs_file->dentry = NULL;
-	}
-	return error;
-}
+		fs_file->dentry = शून्य;
+	पूर्ण
+	वापस error;
+पूर्ण
 
-static void __init entry_remove_dir(struct aa_sfs_entry *fs_dir);
+अटल व्योम __init entry_हटाओ_dir(काष्ठा aa_sfs_entry *fs_dir);
 /**
  * entry_create_dir - recursively create a directory entry in the securityfs
- * @fs_dir: aa_sfs_entry (and all child entries) to build (NOT NULL)
+ * @fs_dir: aa_sfs_entry (and all child entries) to build (NOT शून्य)
  * @parent: the parent dentry in the securityfs
  *
- * Use entry_remove_dir to remove entries created with this fn.
+ * Use entry_हटाओ_dir to हटाओ entries created with this fn.
  */
-static int __init entry_create_dir(struct aa_sfs_entry *fs_dir,
-				   struct dentry *parent)
-{
-	struct aa_sfs_entry *fs_file;
-	struct dentry *dir;
-	int error;
+अटल पूर्णांक __init entry_create_dir(काष्ठा aa_sfs_entry *fs_dir,
+				   काष्ठा dentry *parent)
+अणु
+	काष्ठा aa_sfs_entry *fs_file;
+	काष्ठा dentry *dir;
+	पूर्णांक error;
 
 	dir = securityfs_create_dir(fs_dir->name, parent);
-	if (IS_ERR(dir))
-		return PTR_ERR(dir);
+	अगर (IS_ERR(dir))
+		वापस PTR_ERR(dir);
 	fs_dir->dentry = dir;
 
-	for (fs_file = fs_dir->v.files; fs_file && fs_file->name; ++fs_file) {
-		if (fs_file->v_type == AA_SFS_TYPE_DIR)
+	क्रम (fs_file = fs_dir->v.files; fs_file && fs_file->name; ++fs_file) अणु
+		अगर (fs_file->v_type == AA_SFS_TYPE_सूची)
 			error = entry_create_dir(fs_file, fs_dir->dentry);
-		else
+		अन्यथा
 			error = entry_create_file(fs_file, fs_dir->dentry);
-		if (error)
-			goto failed;
-	}
+		अगर (error)
+			जाओ failed;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 failed:
-	entry_remove_dir(fs_dir);
+	entry_हटाओ_dir(fs_dir);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * entry_remove_file - drop a single file entry in the apparmor securityfs
- * @fs_file: aa_sfs_entry to detach from the securityfs (NOT NULL)
+ * entry_हटाओ_file - drop a single file entry in the apparmor securityfs
+ * @fs_file: aa_sfs_entry to detach from the securityfs (NOT शून्य)
  */
-static void __init entry_remove_file(struct aa_sfs_entry *fs_file)
-{
-	if (!fs_file->dentry)
-		return;
+अटल व्योम __init entry_हटाओ_file(काष्ठा aa_sfs_entry *fs_file)
+अणु
+	अगर (!fs_file->dentry)
+		वापस;
 
-	securityfs_remove(fs_file->dentry);
-	fs_file->dentry = NULL;
-}
+	securityfs_हटाओ(fs_file->dentry);
+	fs_file->dentry = शून्य;
+पूर्ण
 
 /**
- * entry_remove_dir - recursively drop a directory entry from the securityfs
- * @fs_dir: aa_sfs_entry (and all child entries) to detach (NOT NULL)
+ * entry_हटाओ_dir - recursively drop a directory entry from the securityfs
+ * @fs_dir: aa_sfs_entry (and all child entries) to detach (NOT शून्य)
  */
-static void __init entry_remove_dir(struct aa_sfs_entry *fs_dir)
-{
-	struct aa_sfs_entry *fs_file;
+अटल व्योम __init entry_हटाओ_dir(काष्ठा aa_sfs_entry *fs_dir)
+अणु
+	काष्ठा aa_sfs_entry *fs_file;
 
-	for (fs_file = fs_dir->v.files; fs_file && fs_file->name; ++fs_file) {
-		if (fs_file->v_type == AA_SFS_TYPE_DIR)
-			entry_remove_dir(fs_file);
-		else
-			entry_remove_file(fs_file);
-	}
+	क्रम (fs_file = fs_dir->v.files; fs_file && fs_file->name; ++fs_file) अणु
+		अगर (fs_file->v_type == AA_SFS_TYPE_सूची)
+			entry_हटाओ_dir(fs_file);
+		अन्यथा
+			entry_हटाओ_file(fs_file);
+	पूर्ण
 
-	entry_remove_file(fs_dir);
-}
+	entry_हटाओ_file(fs_dir);
+पूर्ण
 
 /**
- * aa_destroy_aafs - cleanup and free aafs
+ * aa_destroy_aafs - cleanup and मुक्त aafs
  *
  * releases dentries allocated by aa_create_aafs
  */
-void __init aa_destroy_aafs(void)
-{
-	entry_remove_dir(&aa_sfs_entry);
-}
+व्योम __init aa_destroy_aafs(व्योम)
+अणु
+	entry_हटाओ_dir(&aa_sfs_entry);
+पूर्ण
 
 
-#define NULL_FILE_NAME ".null"
-struct path aa_null;
+#घोषणा शून्य_खाता_NAME ".null"
+काष्ठा path aa_null;
 
-static int aa_mk_null_file(struct dentry *parent)
-{
-	struct vfsmount *mount = NULL;
-	struct dentry *dentry;
-	struct inode *inode;
-	int count = 0;
-	int error = simple_pin_fs(parent->d_sb->s_type, &mount, &count);
+अटल पूर्णांक aa_mk_null_file(काष्ठा dentry *parent)
+अणु
+	काष्ठा vfsmount *mount = शून्य;
+	काष्ठा dentry *dentry;
+	काष्ठा inode *inode;
+	पूर्णांक count = 0;
+	पूर्णांक error = simple_pin_fs(parent->d_sb->s_type, &mount, &count);
 
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	inode_lock(d_inode(parent));
-	dentry = lookup_one_len(NULL_FILE_NAME, parent, strlen(NULL_FILE_NAME));
-	if (IS_ERR(dentry)) {
+	dentry = lookup_one_len(शून्य_खाता_NAME, parent, म_माप(शून्य_खाता_NAME));
+	अगर (IS_ERR(dentry)) अणु
 		error = PTR_ERR(dentry);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	inode = new_inode(parent->d_inode->i_sb);
-	if (!inode) {
+	अगर (!inode) अणु
 		error = -ENOMEM;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
 	inode->i_ino = get_next_ino();
 	inode->i_mode = S_IFCHR | S_IRUGO | S_IWUGO;
-	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
 	init_special_inode(inode, S_IFCHR | S_IRUGO | S_IWUGO,
 			   MKDEV(MEM_MAJOR, 3));
 	d_instantiate(dentry, inode);
@@ -2531,21 +2532,21 @@ out1:
 out:
 	inode_unlock(d_inode(parent));
 	simple_release_fs(&mount, &count);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 
 
-static const char *policy_get_link(struct dentry *dentry,
-				   struct inode *inode,
-				   struct delayed_call *done)
-{
-	struct aa_ns *ns;
-	struct path path;
-	int error;
+अटल स्थिर अक्षर *policy_get_link(काष्ठा dentry *dentry,
+				   काष्ठा inode *inode,
+				   काष्ठा delayed_call *करोne)
+अणु
+	काष्ठा aa_ns *ns;
+	काष्ठा path path;
+	पूर्णांक error;
 
-	if (!dentry)
-		return ERR_PTR(-ECHILD);
+	अगर (!dentry)
+		वापस ERR_PTR(-ECHILD);
 
 	ns = aa_get_current_ns();
 	path.mnt = mntget(aafs_mnt);
@@ -2553,116 +2554,116 @@ static const char *policy_get_link(struct dentry *dentry,
 	error = nd_jump_link(&path);
 	aa_put_ns(ns);
 
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 
-static int policy_readlink(struct dentry *dentry, char __user *buffer,
-			   int buflen)
-{
-	char name[32];
-	int res;
+अटल पूर्णांक policy_पढ़ोlink(काष्ठा dentry *dentry, अक्षर __user *buffer,
+			   पूर्णांक buflen)
+अणु
+	अक्षर name[32];
+	पूर्णांक res;
 
-	res = snprintf(name, sizeof(name), "%s:[%lu]", AAFS_NAME,
+	res = snम_लिखो(name, माप(name), "%s:[%lu]", AAFS_NAME,
 		       d_inode(dentry)->i_ino);
-	if (res > 0 && res < sizeof(name))
-		res = readlink_copy(buffer, buflen, name);
-	else
+	अगर (res > 0 && res < माप(name))
+		res = पढ़ोlink_copy(buffer, buflen, name);
+	अन्यथा
 		res = -ENOENT;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static const struct inode_operations policy_link_iops = {
-	.readlink	= policy_readlink,
+अटल स्थिर काष्ठा inode_operations policy_link_iops = अणु
+	.पढ़ोlink	= policy_पढ़ोlink,
 	.get_link	= policy_get_link,
-};
+पूर्ण;
 
 
 /**
- * aa_create_aafs - create the apparmor security filesystem
+ * aa_create_aafs - create the apparmor security fileप्रणाली
  *
  * dentries created here are released by aa_destroy_aafs
  *
  * Returns: error on failure
  */
-static int __init aa_create_aafs(void)
-{
-	struct dentry *dent;
-	int error;
+अटल पूर्णांक __init aa_create_aafs(व्योम)
+अणु
+	काष्ठा dentry *dent;
+	पूर्णांक error;
 
-	if (!apparmor_initialized)
-		return 0;
+	अगर (!apparmor_initialized)
+		वापस 0;
 
-	if (aa_sfs_entry.dentry) {
+	अगर (aa_sfs_entry.dentry) अणु
 		AA_ERROR("%s: AppArmor securityfs already exists\n", __func__);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
-	/* setup apparmorfs used to virtualize policy/ */
+	/* setup apparmorfs used to भवize policy/ */
 	aafs_mnt = kern_mount(&aafs_ops);
-	if (IS_ERR(aafs_mnt))
+	अगर (IS_ERR(aafs_mnt))
 		panic("can't set apparmorfs up\n");
 	aafs_mnt->mnt_sb->s_flags &= ~SB_NOUSER;
 
 	/* Populate fs tree. */
-	error = entry_create_dir(&aa_sfs_entry, NULL);
-	if (error)
-		goto error;
+	error = entry_create_dir(&aa_sfs_entry, शून्य);
+	अगर (error)
+		जाओ error;
 
 	dent = securityfs_create_file(".load", 0666, aa_sfs_entry.dentry,
-				      NULL, &aa_fs_profile_load);
-	if (IS_ERR(dent))
-		goto dent_error;
+				      शून्य, &aa_fs_profile_load);
+	अगर (IS_ERR(dent))
+		जाओ dent_error;
 	ns_subload(root_ns) = dent;
 
 	dent = securityfs_create_file(".replace", 0666, aa_sfs_entry.dentry,
-				      NULL, &aa_fs_profile_replace);
-	if (IS_ERR(dent))
-		goto dent_error;
+				      शून्य, &aa_fs_profile_replace);
+	अगर (IS_ERR(dent))
+		जाओ dent_error;
 	ns_subreplace(root_ns) = dent;
 
 	dent = securityfs_create_file(".remove", 0666, aa_sfs_entry.dentry,
-				      NULL, &aa_fs_profile_remove);
-	if (IS_ERR(dent))
-		goto dent_error;
-	ns_subremove(root_ns) = dent;
+				      शून्य, &aa_fs_profile_हटाओ);
+	अगर (IS_ERR(dent))
+		जाओ dent_error;
+	ns_subहटाओ(root_ns) = dent;
 
 	dent = securityfs_create_file("revision", 0444, aa_sfs_entry.dentry,
-				      NULL, &aa_fs_ns_revision_fops);
-	if (IS_ERR(dent))
-		goto dent_error;
+				      शून्य, &aa_fs_ns_revision_fops);
+	अगर (IS_ERR(dent))
+		जाओ dent_error;
 	ns_subrevision(root_ns) = dent;
 
 	/* policy tree referenced by magic policy symlink */
 	mutex_lock_nested(&root_ns->lock, root_ns->level);
-	error = __aafs_ns_mkdir(root_ns, aafs_mnt->mnt_root, ".policy",
+	error = __aafs_ns_सूची_गढ़ो(root_ns, aafs_mnt->mnt_root, ".policy",
 				aafs_mnt->mnt_root);
 	mutex_unlock(&root_ns->lock);
-	if (error)
-		goto error;
+	अगर (error)
+		जाओ error;
 
 	/* magic symlink similar to nsfs redirects based on task policy */
 	dent = securityfs_create_symlink("policy", aa_sfs_entry.dentry,
-					 NULL, &policy_link_iops);
-	if (IS_ERR(dent))
-		goto dent_error;
+					 शून्य, &policy_link_iops);
+	अगर (IS_ERR(dent))
+		जाओ dent_error;
 
 	error = aa_mk_null_file(aa_sfs_entry.dentry);
-	if (error)
-		goto error;
+	अगर (error)
+		जाओ error;
 
-	/* TODO: add default profile to apparmorfs */
+	/* TODO: add शेष profile to apparmorfs */
 
 	/* Report that AppArmor fs is enabled */
 	aa_info_message("AppArmor Filesystem Enabled");
-	return 0;
+	वापस 0;
 
 dent_error:
 	error = PTR_ERR(dent);
 error:
 	aa_destroy_aafs();
 	AA_ERROR("Error creating AppArmor securityfs\n");
-	return error;
-}
+	वापस error;
+पूर्ण
 
 fs_initcall(aa_create_aafs);

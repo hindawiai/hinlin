@@ -1,188 +1,189 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/slab.h>
-#include <net/ax25.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <net/rose.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/slab.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <net/rose.h>
 
-static void rose_ftimer_expiry(struct timer_list *);
-static void rose_t0timer_expiry(struct timer_list *);
+अटल व्योम rose_fसमयr_expiry(काष्ठा समयr_list *);
+अटल व्योम rose_t0समयr_expiry(काष्ठा समयr_list *);
 
-static void rose_transmit_restart_confirmation(struct rose_neigh *neigh);
-static void rose_transmit_restart_request(struct rose_neigh *neigh);
+अटल व्योम rose_transmit_restart_confirmation(काष्ठा rose_neigh *neigh);
+अटल व्योम rose_transmit_restart_request(काष्ठा rose_neigh *neigh);
 
-void rose_start_ftimer(struct rose_neigh *neigh)
-{
-	del_timer(&neigh->ftimer);
+व्योम rose_start_fसमयr(काष्ठा rose_neigh *neigh)
+अणु
+	del_समयr(&neigh->fसमयr);
 
-	neigh->ftimer.function = rose_ftimer_expiry;
-	neigh->ftimer.expires  =
-		jiffies + msecs_to_jiffies(sysctl_rose_link_fail_timeout);
+	neigh->fसमयr.function = rose_fसमयr_expiry;
+	neigh->fसमयr.expires  =
+		jअगरfies + msecs_to_jअगरfies(sysctl_rose_link_fail_समयout);
 
-	add_timer(&neigh->ftimer);
-}
+	add_समयr(&neigh->fसमयr);
+पूर्ण
 
-static void rose_start_t0timer(struct rose_neigh *neigh)
-{
-	del_timer(&neigh->t0timer);
+अटल व्योम rose_start_t0समयr(काष्ठा rose_neigh *neigh)
+अणु
+	del_समयr(&neigh->t0समयr);
 
-	neigh->t0timer.function = rose_t0timer_expiry;
-	neigh->t0timer.expires  =
-		jiffies + msecs_to_jiffies(sysctl_rose_restart_request_timeout);
+	neigh->t0समयr.function = rose_t0समयr_expiry;
+	neigh->t0समयr.expires  =
+		jअगरfies + msecs_to_jअगरfies(sysctl_rose_restart_request_समयout);
 
-	add_timer(&neigh->t0timer);
-}
+	add_समयr(&neigh->t0समयr);
+पूर्ण
 
-void rose_stop_ftimer(struct rose_neigh *neigh)
-{
-	del_timer(&neigh->ftimer);
-}
+व्योम rose_stop_fसमयr(काष्ठा rose_neigh *neigh)
+अणु
+	del_समयr(&neigh->fसमयr);
+पूर्ण
 
-void rose_stop_t0timer(struct rose_neigh *neigh)
-{
-	del_timer(&neigh->t0timer);
-}
+व्योम rose_stop_t0समयr(काष्ठा rose_neigh *neigh)
+अणु
+	del_समयr(&neigh->t0समयr);
+पूर्ण
 
-int rose_ftimer_running(struct rose_neigh *neigh)
-{
-	return timer_pending(&neigh->ftimer);
-}
+पूर्णांक rose_fसमयr_running(काष्ठा rose_neigh *neigh)
+अणु
+	वापस समयr_pending(&neigh->fसमयr);
+पूर्ण
 
-static int rose_t0timer_running(struct rose_neigh *neigh)
-{
-	return timer_pending(&neigh->t0timer);
-}
+अटल पूर्णांक rose_t0समयr_running(काष्ठा rose_neigh *neigh)
+अणु
+	वापस समयr_pending(&neigh->t0समयr);
+पूर्ण
 
-static void rose_ftimer_expiry(struct timer_list *t)
-{
-}
+अटल व्योम rose_fसमयr_expiry(काष्ठा समयr_list *t)
+अणु
+पूर्ण
 
-static void rose_t0timer_expiry(struct timer_list *t)
-{
-	struct rose_neigh *neigh = from_timer(neigh, t, t0timer);
+अटल व्योम rose_t0समयr_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा rose_neigh *neigh = from_समयr(neigh, t, t0समयr);
 
 	rose_transmit_restart_request(neigh);
 
 	neigh->dce_mode = 0;
 
-	rose_start_t0timer(neigh);
-}
+	rose_start_t0समयr(neigh);
+पूर्ण
 
 /*
  *	Interface to ax25_send_frame. Changes my level 2 callsign depending
- *	on whether we have a global ROSE callsign or use the default port
+ *	on whether we have a global ROSE callsign or use the शेष port
  *	callsign.
  */
-static int rose_send_frame(struct sk_buff *skb, struct rose_neigh *neigh)
-{
+अटल पूर्णांक rose_send_frame(काष्ठा sk_buff *skb, काष्ठा rose_neigh *neigh)
+अणु
 	ax25_address *rose_call;
 	ax25_cb *ax25s;
 
-	if (ax25cmp(&rose_callsign, &null_ax25_address) == 0)
+	अगर (ax25cmp(&rose_callsign, &null_ax25_address) == 0)
 		rose_call = (ax25_address *)neigh->dev->dev_addr;
-	else
+	अन्यथा
 		rose_call = &rose_callsign;
 
 	ax25s = neigh->ax25;
 	neigh->ax25 = ax25_send_frame(skb, 260, rose_call, &neigh->callsign, neigh->digipeat, neigh->dev);
-	if (ax25s)
+	अगर (ax25s)
 		ax25_cb_put(ax25s);
 
-	return neigh->ax25 != NULL;
-}
+	वापस neigh->ax25 != शून्य;
+पूर्ण
 
 /*
  *	Interface to ax25_link_up. Changes my level 2 callsign depending
- *	on whether we have a global ROSE callsign or use the default port
+ *	on whether we have a global ROSE callsign or use the शेष port
  *	callsign.
  */
-static int rose_link_up(struct rose_neigh *neigh)
-{
+अटल पूर्णांक rose_link_up(काष्ठा rose_neigh *neigh)
+अणु
 	ax25_address *rose_call;
 	ax25_cb *ax25s;
 
-	if (ax25cmp(&rose_callsign, &null_ax25_address) == 0)
+	अगर (ax25cmp(&rose_callsign, &null_ax25_address) == 0)
 		rose_call = (ax25_address *)neigh->dev->dev_addr;
-	else
+	अन्यथा
 		rose_call = &rose_callsign;
 
 	ax25s = neigh->ax25;
 	neigh->ax25 = ax25_find_cb(rose_call, &neigh->callsign, neigh->digipeat, neigh->dev);
-	if (ax25s)
+	अगर (ax25s)
 		ax25_cb_put(ax25s);
 
-	return neigh->ax25 != NULL;
-}
+	वापस neigh->ax25 != शून्य;
+पूर्ण
 
 /*
  *	This handles all restart and diagnostic frames.
  */
-void rose_link_rx_restart(struct sk_buff *skb, struct rose_neigh *neigh, unsigned short frametype)
-{
-	struct sk_buff *skbn;
+व्योम rose_link_rx_restart(काष्ठा sk_buff *skb, काष्ठा rose_neigh *neigh, अचिन्हित लघु frametype)
+अणु
+	काष्ठा sk_buff *skbn;
 
-	switch (frametype) {
-	case ROSE_RESTART_REQUEST:
-		rose_stop_t0timer(neigh);
+	चयन (frametype) अणु
+	हाल ROSE_RESTART_REQUEST:
+		rose_stop_t0समयr(neigh);
 		neigh->restarted = 1;
 		neigh->dce_mode  = (skb->data[3] == ROSE_DTE_ORIGINATED);
 		rose_transmit_restart_confirmation(neigh);
-		break;
+		अवरोध;
 
-	case ROSE_RESTART_CONFIRMATION:
-		rose_stop_t0timer(neigh);
+	हाल ROSE_RESTART_CONFIRMATION:
+		rose_stop_t0समयr(neigh);
 		neigh->restarted = 1;
-		break;
+		अवरोध;
 
-	case ROSE_DIAGNOSTIC:
+	हाल ROSE_DIAGNOSTIC:
 		pr_warn("ROSE: received diagnostic #%d - %3ph\n", skb->data[3],
 			skb->data + 4);
-		break;
+		अवरोध;
 
-	default:
-		printk(KERN_WARNING "ROSE: received unknown %02X with LCI 000\n", frametype);
-		break;
-	}
+	शेष:
+		prपूर्णांकk(KERN_WARNING "ROSE: received unknown %02X with LCI 000\n", frametype);
+		अवरोध;
+	पूर्ण
 
-	if (neigh->restarted) {
-		while ((skbn = skb_dequeue(&neigh->queue)) != NULL)
-			if (!rose_send_frame(skbn, neigh))
-				kfree_skb(skbn);
-	}
-}
+	अगर (neigh->restarted) अणु
+		जबतक ((skbn = skb_dequeue(&neigh->queue)) != शून्य)
+			अगर (!rose_send_frame(skbn, neigh))
+				kमुक्त_skb(skbn);
+	पूर्ण
+पूर्ण
 
 /*
  *	This routine is called when a Restart Request is needed
  */
-static void rose_transmit_restart_request(struct rose_neigh *neigh)
-{
-	struct sk_buff *skb;
-	unsigned char *dptr;
-	int len;
+अटल व्योम rose_transmit_restart_request(काष्ठा rose_neigh *neigh)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *dptr;
+	पूर्णांक len;
 
 	len = AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN + ROSE_MIN_LEN + 3;
 
-	if ((skb = alloc_skb(len, GFP_ATOMIC)) == NULL)
-		return;
+	अगर ((skb = alloc_skb(len, GFP_ATOMIC)) == शून्य)
+		वापस;
 
 	skb_reserve(skb, AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN);
 
@@ -195,23 +196,23 @@ static void rose_transmit_restart_request(struct rose_neigh *neigh)
 	*dptr++ = ROSE_DTE_ORIGINATED;
 	*dptr++ = 0;
 
-	if (!rose_send_frame(skb, neigh))
-		kfree_skb(skb);
-}
+	अगर (!rose_send_frame(skb, neigh))
+		kमुक्त_skb(skb);
+पूर्ण
 
 /*
  * This routine is called when a Restart Confirmation is needed
  */
-static void rose_transmit_restart_confirmation(struct rose_neigh *neigh)
-{
-	struct sk_buff *skb;
-	unsigned char *dptr;
-	int len;
+अटल व्योम rose_transmit_restart_confirmation(काष्ठा rose_neigh *neigh)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *dptr;
+	पूर्णांक len;
 
 	len = AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN + ROSE_MIN_LEN + 1;
 
-	if ((skb = alloc_skb(len, GFP_ATOMIC)) == NULL)
-		return;
+	अगर ((skb = alloc_skb(len, GFP_ATOMIC)) == शून्य)
+		वापस;
 
 	skb_reserve(skb, AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN);
 
@@ -222,24 +223,24 @@ static void rose_transmit_restart_confirmation(struct rose_neigh *neigh)
 	*dptr++ = 0x00;
 	*dptr++ = ROSE_RESTART_CONFIRMATION;
 
-	if (!rose_send_frame(skb, neigh))
-		kfree_skb(skb);
-}
+	अगर (!rose_send_frame(skb, neigh))
+		kमुक्त_skb(skb);
+पूर्ण
 
 /*
  * This routine is called when a Clear Request is needed outside of the context
  * of a connected socket.
  */
-void rose_transmit_clear_request(struct rose_neigh *neigh, unsigned int lci, unsigned char cause, unsigned char diagnostic)
-{
-	struct sk_buff *skb;
-	unsigned char *dptr;
-	int len;
+व्योम rose_transmit_clear_request(काष्ठा rose_neigh *neigh, अचिन्हित पूर्णांक lci, अचिन्हित अक्षर cause, अचिन्हित अक्षर diagnostic)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *dptr;
+	पूर्णांक len;
 
 	len = AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN + ROSE_MIN_LEN + 3;
 
-	if ((skb = alloc_skb(len, GFP_ATOMIC)) == NULL)
-		return;
+	अगर ((skb = alloc_skb(len, GFP_ATOMIC)) == शून्य)
+		वापस;
 
 	skb_reserve(skb, AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN);
 
@@ -252,35 +253,35 @@ void rose_transmit_clear_request(struct rose_neigh *neigh, unsigned int lci, uns
 	*dptr++ = cause;
 	*dptr++ = diagnostic;
 
-	if (!rose_send_frame(skb, neigh))
-		kfree_skb(skb);
-}
+	अगर (!rose_send_frame(skb, neigh))
+		kमुक्त_skb(skb);
+पूर्ण
 
-void rose_transmit_link(struct sk_buff *skb, struct rose_neigh *neigh)
-{
-	unsigned char *dptr;
+व्योम rose_transmit_link(काष्ठा sk_buff *skb, काष्ठा rose_neigh *neigh)
+अणु
+	अचिन्हित अक्षर *dptr;
 
-	if (neigh->loopback) {
+	अगर (neigh->loopback) अणु
 		rose_loopback_queue(skb, neigh);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!rose_link_up(neigh))
+	अगर (!rose_link_up(neigh))
 		neigh->restarted = 0;
 
 	dptr = skb_push(skb, 1);
 	*dptr++ = AX25_P_ROSE;
 
-	if (neigh->restarted) {
-		if (!rose_send_frame(skb, neigh))
-			kfree_skb(skb);
-	} else {
+	अगर (neigh->restarted) अणु
+		अगर (!rose_send_frame(skb, neigh))
+			kमुक्त_skb(skb);
+	पूर्ण अन्यथा अणु
 		skb_queue_tail(&neigh->queue, skb);
 
-		if (!rose_t0timer_running(neigh)) {
+		अगर (!rose_t0समयr_running(neigh)) अणु
 			rose_transmit_restart_request(neigh);
 			neigh->dce_mode = 0;
-			rose_start_t0timer(neigh);
-		}
-	}
-}
+			rose_start_t0समयr(neigh);
+		पूर्ण
+	पूर्ण
+पूर्ण

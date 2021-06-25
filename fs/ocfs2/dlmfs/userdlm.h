@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * userdlm.h
  *
@@ -8,88 +9,88 @@
  */
 
 
-#ifndef USERDLM_H
-#define USERDLM_H
+#अगर_अघोषित USERDLM_H
+#घोषणा USERDLM_H
 
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
 
 /* user_lock_res->l_flags flags. */
-#define USER_LOCK_ATTACHED      (0x00000001) /* we have initialized
+#घोषणा USER_LOCK_ATTACHED      (0x00000001) /* we have initialized
 					       * the lvb */
-#define USER_LOCK_BUSY          (0x00000002) /* we are currently in
+#घोषणा USER_LOCK_BUSY          (0x00000002) /* we are currently in
 					       * dlm_lock */
-#define USER_LOCK_BLOCKED       (0x00000004) /* blocked waiting to
-					      * downconvert*/
-#define USER_LOCK_IN_TEARDOWN   (0x00000008) /* we're currently
+#घोषणा USER_LOCK_BLOCKED       (0x00000004) /* blocked रुकोing to
+					      * करोwnconvert*/
+#घोषणा USER_LOCK_IN_TEARDOWN   (0x00000008) /* we're currently
 					      * destroying this
 					      * lock. */
-#define USER_LOCK_QUEUED        (0x00000010) /* lock is on the
+#घोषणा USER_LOCK_QUEUED        (0x00000010) /* lock is on the
 					      * workqueue */
-#define USER_LOCK_IN_CANCEL     (0x00000020)
+#घोषणा USER_LOCK_IN_CANCEL     (0x00000020)
 
-struct user_lock_res {
+काष्ठा user_lock_res अणु
 	spinlock_t               l_lock;
 
-	int                      l_flags;
+	पूर्णांक                      l_flags;
 
-#define USER_DLM_LOCK_ID_MAX_LEN  32
-	char                     l_name[USER_DLM_LOCK_ID_MAX_LEN];
-	int                      l_namelen;
-	int                      l_level;
-	unsigned int             l_ro_holders;
-	unsigned int             l_ex_holders;
-	struct ocfs2_dlm_lksb    l_lksb;
+#घोषणा USER_DLM_LOCK_ID_MAX_LEN  32
+	अक्षर                     l_name[USER_DLM_LOCK_ID_MAX_LEN];
+	पूर्णांक                      l_namelen;
+	पूर्णांक                      l_level;
+	अचिन्हित पूर्णांक             l_ro_holders;
+	अचिन्हित पूर्णांक             l_ex_holders;
+	काष्ठा ocfs2_dlm_lksb    l_lksb;
 
-	int                      l_requested;
-	int                      l_blocking;
+	पूर्णांक                      l_requested;
+	पूर्णांक                      l_blocking;
 
-	wait_queue_head_t        l_event;
+	रुको_queue_head_t        l_event;
 
-	struct work_struct       l_work;
-};
+	काष्ठा work_काष्ठा       l_work;
+पूर्ण;
 
-extern struct workqueue_struct *user_dlm_worker;
+बाह्य काष्ठा workqueue_काष्ठा *user_dlm_worker;
 
-void user_dlm_lock_res_init(struct user_lock_res *lockres,
-			    struct dentry *dentry);
-int user_dlm_destroy_lock(struct user_lock_res *lockres);
-int user_dlm_cluster_lock(struct user_lock_res *lockres,
-			  int level,
-			  int lkm_flags);
-void user_dlm_cluster_unlock(struct user_lock_res *lockres,
-			     int level);
-void user_dlm_write_lvb(struct inode *inode,
-			const char *val,
-			unsigned int len);
-bool user_dlm_read_lvb(struct inode *inode, char *val);
-struct ocfs2_cluster_connection *user_dlm_register(const struct qstr *name);
-void user_dlm_unregister(struct ocfs2_cluster_connection *conn);
-void user_dlm_set_locking_protocol(void);
+व्योम user_dlm_lock_res_init(काष्ठा user_lock_res *lockres,
+			    काष्ठा dentry *dentry);
+पूर्णांक user_dlm_destroy_lock(काष्ठा user_lock_res *lockres);
+पूर्णांक user_dlm_cluster_lock(काष्ठा user_lock_res *lockres,
+			  पूर्णांक level,
+			  पूर्णांक lkm_flags);
+व्योम user_dlm_cluster_unlock(काष्ठा user_lock_res *lockres,
+			     पूर्णांक level);
+व्योम user_dlm_ग_लिखो_lvb(काष्ठा inode *inode,
+			स्थिर अक्षर *val,
+			अचिन्हित पूर्णांक len);
+bool user_dlm_पढ़ो_lvb(काष्ठा inode *inode, अक्षर *val);
+काष्ठा ocfs2_cluster_connection *user_dlm_रेजिस्टर(स्थिर काष्ठा qstr *name);
+व्योम user_dlm_unरेजिस्टर(काष्ठा ocfs2_cluster_connection *conn);
+व्योम user_dlm_set_locking_protocol(व्योम);
 
-struct dlmfs_inode_private {
-	struct ocfs2_cluster_connection	*ip_conn;
+काष्ठा dlmfs_inode_निजी अणु
+	काष्ठा ocfs2_cluster_connection	*ip_conn;
 
-	struct user_lock_res ip_lockres; /* unused for directories. */
-	struct inode         *ip_parent;
+	काष्ठा user_lock_res ip_lockres; /* unused क्रम directories. */
+	काष्ठा inode         *ip_parent;
 
-	struct inode         ip_vfs_inode;
-};
+	काष्ठा inode         ip_vfs_inode;
+पूर्ण;
 
-static inline struct dlmfs_inode_private *
-DLMFS_I(struct inode *inode)
-{
-        return container_of(inode,
-			    struct dlmfs_inode_private,
+अटल अंतरभूत काष्ठा dlmfs_inode_निजी *
+DLMFS_I(काष्ठा inode *inode)
+अणु
+        वापस container_of(inode,
+			    काष्ठा dlmfs_inode_निजी,
 			    ip_vfs_inode);
-}
+पूर्ण
 
-struct dlmfs_filp_private {
-	int                  fp_lock_level;
-};
+काष्ठा dlmfs_filp_निजी अणु
+	पूर्णांक                  fp_lock_level;
+पूर्ण;
 
-#define DLMFS_MAGIC	0x76a9f425
+#घोषणा DLMFS_MAGIC	0x76a9f425
 
-#endif /* USERDLM_H */
+#पूर्ण_अगर /* USERDLM_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/arm/mach-footbridge/netwinder-hw.c
  *
@@ -6,90 +7,90 @@
  *
  * Copyright (C) 1998, 1999 Russell King, Phil Blundell
  */
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/leds.h>
 
-#include <asm/hardware/dec21285.h>
-#include <asm/mach-types.h>
-#include <asm/setup.h>
-#include <asm/system_misc.h>
+#समावेश <यंत्र/hardware/dec21285.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-#define IRDA_IO_BASE		0x180
-#define GP1_IO_BASE		0x338
-#define GP2_IO_BASE		0x33a
+#घोषणा IRDA_IO_BASE		0x180
+#घोषणा GP1_IO_BASE		0x338
+#घोषणा GP2_IO_BASE		0x33a
 
 /*
  * Winbond WB83977F accessibility stuff
  */
-static inline void wb977_open(void)
-{
+अटल अंतरभूत व्योम wb977_खोलो(व्योम)
+अणु
 	outb(0x87, 0x370);
 	outb(0x87, 0x370);
-}
+पूर्ण
 
-static inline void wb977_close(void)
-{
+अटल अंतरभूत व्योम wb977_बंद(व्योम)
+अणु
 	outb(0xaa, 0x370);
-}
+पूर्ण
 
-static inline void wb977_wb(int reg, int val)
-{
+अटल अंतरभूत व्योम wb977_wb(पूर्णांक reg, पूर्णांक val)
+अणु
 	outb(reg, 0x370);
 	outb(val, 0x371);
-}
+पूर्ण
 
-static inline void wb977_ww(int reg, int val)
-{
+अटल अंतरभूत व्योम wb977_ww(पूर्णांक reg, पूर्णांक val)
+अणु
 	outb(reg, 0x370);
 	outb(val >> 8, 0x371);
 	outb(reg + 1, 0x370);
 	outb(val & 255, 0x371);
-}
+पूर्ण
 
-#define wb977_device_select(dev)	wb977_wb(0x07, dev)
-#define wb977_device_disable()		wb977_wb(0x30, 0x00)
-#define wb977_device_enable()		wb977_wb(0x30, 0x01)
+#घोषणा wb977_device_select(dev)	wb977_wb(0x07, dev)
+#घोषणा wb977_device_disable()		wb977_wb(0x30, 0x00)
+#घोषणा wb977_device_enable()		wb977_wb(0x30, 0x01)
 
 /*
- * This is a lock for accessing ports GP1_IO_BASE and GP2_IO_BASE
+ * This is a lock क्रम accessing ports GP1_IO_BASE and GP2_IO_BASE
  */
 DEFINE_RAW_SPINLOCK(nw_gpio_lock);
 EXPORT_SYMBOL(nw_gpio_lock);
 
-static unsigned int current_gpio_op;
-static unsigned int current_gpio_io;
-static unsigned int current_cpld;
+अटल अचिन्हित पूर्णांक current_gpio_op;
+अटल अचिन्हित पूर्णांक current_gpio_io;
+अटल अचिन्हित पूर्णांक current_cpld;
 
-void nw_gpio_modify_op(unsigned int mask, unsigned int set)
-{
-	unsigned int new_gpio, changed;
+व्योम nw_gpio_modअगरy_op(अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक set)
+अणु
+	अचिन्हित पूर्णांक new_gpio, changed;
 
 	new_gpio = (current_gpio_op & ~mask) | set;
 	changed = new_gpio ^ current_gpio_op;
 	current_gpio_op = new_gpio;
 
-	if (changed & 0xff)
+	अगर (changed & 0xff)
 		outb(new_gpio, GP1_IO_BASE);
-	if (changed & 0xff00)
+	अगर (changed & 0xff00)
 		outb(new_gpio >> 8, GP2_IO_BASE);
-}
-EXPORT_SYMBOL(nw_gpio_modify_op);
+पूर्ण
+EXPORT_SYMBOL(nw_gpio_modअगरy_op);
 
-static inline void __gpio_modify_io(int mask, int in)
-{
-	unsigned int new_gpio, changed;
-	int port;
+अटल अंतरभूत व्योम __gpio_modअगरy_io(पूर्णांक mask, पूर्णांक in)
+अणु
+	अचिन्हित पूर्णांक new_gpio, changed;
+	पूर्णांक port;
 
 	new_gpio = (current_gpio_io & ~mask) | in;
 	changed = new_gpio ^ current_gpio_io;
@@ -100,53 +101,53 @@ static inline void __gpio_modify_io(int mask, int in)
 
 	wb977_device_select(7);
 
-	for (port = 0xe1; changed && port < 0xe8; changed >>= 1) {
+	क्रम (port = 0xe1; changed && port < 0xe8; changed >>= 1) अणु
 		wb977_wb(port, new_gpio & 1);
 
 		port += 1;
 		new_gpio >>= 1;
-	}
+	पूर्ण
 
 	wb977_device_select(8);
 
-	for (port = 0xe8; changed && port < 0xec; changed >>= 1) {
+	क्रम (port = 0xe8; changed && port < 0xec; changed >>= 1) अणु
 		wb977_wb(port, new_gpio & 1);
 
 		port += 1;
 		new_gpio >>= 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void nw_gpio_modify_io(unsigned int mask, unsigned int in)
-{
+व्योम nw_gpio_modअगरy_io(अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक in)
+अणु
 	/* Open up the SuperIO chip */
-	wb977_open();
+	wb977_खोलो();
 
-	__gpio_modify_io(mask, in);
+	__gpio_modअगरy_io(mask, in);
 
 	/* Close up the EFER gate */
-	wb977_close();
-}
-EXPORT_SYMBOL(nw_gpio_modify_io);
+	wb977_बंद();
+पूर्ण
+EXPORT_SYMBOL(nw_gpio_modअगरy_io);
 
-unsigned int nw_gpio_read(void)
-{
-	return inb(GP1_IO_BASE) | inb(GP2_IO_BASE) << 8;
-}
-EXPORT_SYMBOL(nw_gpio_read);
+अचिन्हित पूर्णांक nw_gpio_पढ़ो(व्योम)
+अणु
+	वापस inb(GP1_IO_BASE) | inb(GP2_IO_BASE) << 8;
+पूर्ण
+EXPORT_SYMBOL(nw_gpio_पढ़ो);
 
 /*
- * Initialise the Winbond W83977F global registers
+ * Initialise the Winbond W83977F global रेजिस्टरs
  */
-static inline void wb977_init_global(void)
-{
+अटल अंतरभूत व्योम wb977_init_global(व्योम)
+अणु
 	/*
-	 * Enable R/W config registers
+	 * Enable R/W config रेजिस्टरs
 	 */
 	wb977_wb(0x26, 0x40);
 
 	/*
-	 * Power down FDC (not used)
+	 * Power करोwn FDC (not used)
 	 */
 	wb977_wb(0x22, 0xfe);
 
@@ -164,26 +165,26 @@ static inline void wb977_init_global(void)
 	 * GP17, GP16, GP15, GP14
 	 */
 	wb977_wb(0x2c, 0x55);
-}
+पूर्ण
 
 /*
- * Initialise the Winbond W83977F printer port
+ * Initialise the Winbond W83977F prपूर्णांकer port
  */
-static inline void wb977_init_printer(void)
-{
+अटल अंतरभूत व्योम wb977_init_prपूर्णांकer(व्योम)
+अणु
 	wb977_device_select(1);
 
 	/*
 	 * mode 1 == EPP
 	 */
 	wb977_wb(0xf0, 0x01);
-}
+पूर्ण
 
 /*
  * Initialise the Winbond W83977F keyboard controller
  */
-static inline void wb977_init_keyboard(void)
-{
+अटल अंतरभूत व्योम wb977_init_keyboard(व्योम)
+अणु
 	wb977_device_select(5);
 
 	/*
@@ -213,13 +214,13 @@ static inline void wb977_init_keyboard(void)
 	 * Enable device
 	 */
 	wb977_device_enable();
-}
+पूर्ण
 
 /*
  * Initialise the Winbond W83977F Infra-Red device
  */
-static inline void wb977_init_irda(void)
-{
+अटल अंतरभूत व्योम wb977_init_irda(व्योम)
+अणु
 	wb977_device_select(6);
 
 	/*
@@ -252,20 +253,20 @@ static inline void wb977_init_irda(void)
 	 * Enable device
 	 */
 	wb977_device_enable();
-}
+पूर्ण
 
 /*
  * Initialise Winbond W83977F general purpose IO
  */
-static inline void wb977_init_gpio(void)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम wb977_init_gpio(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * Set up initial I/O definitions
 	 */
 	current_gpio_io = -1;
-	__gpio_modify_io(-1, GPIO_DONE | GPIO_WDTIMER);
+	__gpio_modअगरy_io(-1, GPIO_DONE | GPIO_WDTIMER);
 
 	wb977_device_select(7);
 
@@ -300,8 +301,8 @@ static inline void wb977_init_gpio(void)
 	wb977_ww(0x60, GP2_IO_BASE);
 
 	/*
-	 * Clear watchdog timer regs
-	 *  - timer disable
+	 * Clear watchकरोg समयr regs
+	 *  - समयr disable
 	 */
 	wb977_wb(0xf2, 0x00);
 
@@ -311,7 +312,7 @@ static inline void wb977_init_gpio(void)
 	wb977_wb(0xf3, 0x00);
 
 	/*
-	 *  - timer counting, disable power LED, disable timeouot
+	 *  - समयr counting, disable घातer LED, disable समयouot
 	 */
 	wb977_wb(0xf4, 0x00);
 
@@ -321,27 +322,27 @@ static inline void wb977_init_gpio(void)
 	wb977_device_enable();
 
 	/*
-	 * Set Group1/Group2 outputs
+	 * Set Group1/Group2 outमाला_दो
 	 */
 	raw_spin_lock_irqsave(&nw_gpio_lock, flags);
-	nw_gpio_modify_op(-1, GPIO_RED_LED | GPIO_FAN);
+	nw_gpio_modअगरy_op(-1, GPIO_RED_LED | GPIO_FAN);
 	raw_spin_unlock_irqrestore(&nw_gpio_lock, flags);
-}
+पूर्ण
 
 /*
  * Initialise the Winbond W83977F chip.
  */
-static void __init wb977_init(void)
-{
+अटल व्योम __init wb977_init(व्योम)
+अणु
 	request_region(0x370, 2, "W83977AF configuration");
 
 	/*
 	 * Open up the SuperIO chip
 	 */
-	wb977_open();
+	wb977_खोलो();
 
 	/*
-	 * Initialise the global registers
+	 * Initialise the global रेजिस्टरs
 	 */
 	wb977_init_global();
 
@@ -349,7 +350,7 @@ static void __init wb977_init(void)
 	 * Initialise the various devices in
 	 * the multi-IO chip.
 	 */
-	wb977_init_printer();
+	wb977_init_prपूर्णांकer();
 	wb977_init_keyboard();
 	wb977_init_irda();
 	wb977_init_gpio();
@@ -357,70 +358,70 @@ static void __init wb977_init(void)
 	/*
 	 * Close up the EFER gate
 	 */
-	wb977_close();
-}
+	wb977_बंद();
+पूर्ण
 
-void nw_cpld_modify(unsigned int mask, unsigned int set)
-{
-	int msk;
+व्योम nw_cpld_modअगरy(अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक set)
+अणु
+	पूर्णांक msk;
 
 	current_cpld = (current_cpld & ~mask) | set;
 
-	nw_gpio_modify_io(GPIO_DATA | GPIO_IOCLK | GPIO_IOLOAD, 0);
-	nw_gpio_modify_op(GPIO_IOLOAD, 0);
+	nw_gpio_modअगरy_io(GPIO_DATA | GPIO_IOCLK | GPIO_IOLOAD, 0);
+	nw_gpio_modअगरy_op(GPIO_IOLOAD, 0);
 
-	for (msk = 8; msk; msk >>= 1) {
-		int bit = current_cpld & msk;
+	क्रम (msk = 8; msk; msk >>= 1) अणु
+		पूर्णांक bit = current_cpld & msk;
 
-		nw_gpio_modify_op(GPIO_DATA | GPIO_IOCLK, bit ? GPIO_DATA : 0);
-		nw_gpio_modify_op(GPIO_IOCLK, GPIO_IOCLK);
-	}
+		nw_gpio_modअगरy_op(GPIO_DATA | GPIO_IOCLK, bit ? GPIO_DATA : 0);
+		nw_gpio_modअगरy_op(GPIO_IOCLK, GPIO_IOCLK);
+	पूर्ण
 
-	nw_gpio_modify_op(GPIO_IOCLK|GPIO_DATA, 0);
-	nw_gpio_modify_op(GPIO_IOLOAD|GPIO_DSCLK, GPIO_IOLOAD|GPIO_DSCLK);
-	nw_gpio_modify_op(GPIO_IOLOAD, 0);
-}
-EXPORT_SYMBOL(nw_cpld_modify);
+	nw_gpio_modअगरy_op(GPIO_IOCLK|GPIO_DATA, 0);
+	nw_gpio_modअगरy_op(GPIO_IOLOAD|GPIO_DSCLK, GPIO_IOLOAD|GPIO_DSCLK);
+	nw_gpio_modअगरy_op(GPIO_IOLOAD, 0);
+पूर्ण
+EXPORT_SYMBOL(nw_cpld_modअगरy);
 
-static void __init cpld_init(void)
-{
-	unsigned long flags;
+अटल व्योम __init cpld_init(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&nw_gpio_lock, flags);
-	nw_cpld_modify(-1, CPLD_UNMUTE | CPLD_7111_DISABLE);
+	nw_cpld_modअगरy(-1, CPLD_UNMUTE | CPLD_7111_DISABLE);
 	raw_spin_unlock_irqrestore(&nw_gpio_lock, flags);
-}
+पूर्ण
 
-static unsigned char rwa_unlock[] __initdata =
-{ 0x00, 0x00, 0x6a, 0xb5, 0xda, 0xed, 0xf6, 0xfb, 0x7d, 0xbe, 0xdf, 0x6f, 0x37, 0x1b,
+अटल अचिन्हित अक्षर rwa_unlock[] __initdata =
+अणु 0x00, 0x00, 0x6a, 0xb5, 0xda, 0xed, 0xf6, 0xfb, 0x7d, 0xbe, 0xdf, 0x6f, 0x37, 0x1b,
   0x0d, 0x86, 0xc3, 0x61, 0xb0, 0x58, 0x2c, 0x16, 0x8b, 0x45, 0xa2, 0xd1, 0xe8, 0x74,
-  0x3a, 0x9d, 0xce, 0xe7, 0x73, 0x39 };
+  0x3a, 0x9d, 0xce, 0xe7, 0x73, 0x39 पूर्ण;
 
-#ifndef DEBUG
-#define dprintk(x...)
-#else
-#define dprintk(x...) printk(x)
-#endif
+#अगर_अघोषित DEBUG
+#घोषणा dprपूर्णांकk(x...)
+#अन्यथा
+#घोषणा dprपूर्णांकk(x...) prपूर्णांकk(x)
+#पूर्ण_अगर
 
-#define WRITE_RWA(r,v) do { outb((r), 0x279); udelay(10); outb((v), 0xa79); } while (0)
+#घोषणा WRITE_RWA(r,v) करो अणु outb((r), 0x279); udelay(10); outb((v), 0xa79); पूर्ण जबतक (0)
 
-static inline void rwa010_unlock(void)
-{
-	int i;
+अटल अंतरभूत व्योम rwa010_unlock(व्योम)
+अणु
+	पूर्णांक i;
 
 	WRITE_RWA(2, 2);
 	mdelay(10);
 
-	for (i = 0; i < sizeof(rwa_unlock); i++) {
+	क्रम (i = 0; i < माप(rwa_unlock); i++) अणु
 		outb(rwa_unlock[i], 0x279);
 		udelay(10);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void rwa010_read_ident(void)
-{
-	unsigned char si[9];
-	int i, j;
+अटल अंतरभूत व्योम rwa010_पढ़ो_ident(व्योम)
+अणु
+	अचिन्हित अक्षर si[9];
+	पूर्णांक i, j;
 
 	WRITE_RWA(3, 0);
 	WRITE_RWA(0, 128);
@@ -429,29 +430,29 @@ static inline void rwa010_read_ident(void)
 
 	mdelay(1);
 
-	dprintk("Identifier: ");
-	for (i = 0; i < 9; i++) {
+	dprपूर्णांकk("Identifier: ");
+	क्रम (i = 0; i < 9; i++) अणु
 		si[i] = 0;
-		for (j = 0; j < 8; j++) {
-			int bit;
+		क्रम (j = 0; j < 8; j++) अणु
+			पूर्णांक bit;
 			udelay(250);
 			inb(0x203);
 			udelay(250);
 			bit = inb(0x203);
-			dprintk("%02X ", bit);
+			dprपूर्णांकk("%02X ", bit);
 			bit = (bit == 0xaa) ? 1 : 0;
 			si[i] |= bit << j;
-		}
-		dprintk("(%02X) ", si[i]);
-	}
-	dprintk("\n");
-}
+		पूर्ण
+		dprपूर्णांकk("(%02X) ", si[i]);
+	पूर्ण
+	dprपूर्णांकk("\n");
+पूर्ण
 
-static inline void rwa010_global_init(void)
-{
+अटल अंतरभूत व्योम rwa010_global_init(व्योम)
+अणु
 	WRITE_RWA(6, 2);	// Assign a card no = 2
 
-	dprintk("Card no = %d\n", inb(0x203));
+	dprपूर्णांकk("Card no = %d\n", inb(0x203));
 
 	/* disable the modem section of the chip */
 	WRITE_RWA(7, 3);
@@ -464,187 +465,187 @@ static inline void rwa010_global_init(void)
 	/* disable the MPU-401 section of the chip */
 	WRITE_RWA(7, 2);
 	WRITE_RWA(0x30, 0);
-}
+पूर्ण
 
-static inline void rwa010_game_port_init(void)
-{
-	int i;
+अटल अंतरभूत व्योम rwa010_game_port_init(व्योम)
+अणु
+	पूर्णांक i;
 
 	WRITE_RWA(7, 5);
 
-	dprintk("Slider base: ");
+	dprपूर्णांकk("Slider base: ");
 	WRITE_RWA(0x61, 1);
 	i = inb(0x203);
 
 	WRITE_RWA(0x60, 2);
-	dprintk("%02X%02X (201)\n", inb(0x203), i);
+	dprपूर्णांकk("%02X%02X (201)\n", inb(0x203), i);
 
 	WRITE_RWA(0x30, 1);
-}
+पूर्ण
 
-static inline void rwa010_waveartist_init(int base, int irq, int dma)
-{
-	int i;
+अटल अंतरभूत व्योम rwa010_waveartist_init(पूर्णांक base, पूर्णांक irq, पूर्णांक dma)
+अणु
+	पूर्णांक i;
 
 	WRITE_RWA(7, 0);
 
-	dprintk("WaveArtist base: ");
+	dprपूर्णांकk("WaveArtist base: ");
 	WRITE_RWA(0x61, base & 255);
 	i = inb(0x203);
 
 	WRITE_RWA(0x60, base >> 8);
-	dprintk("%02X%02X (%X),", inb(0x203), i, base);
+	dprपूर्णांकk("%02X%02X (%X),", inb(0x203), i, base);
 
 	WRITE_RWA(0x70, irq);
-	dprintk(" irq: %d (%d),", inb(0x203), irq);
+	dprपूर्णांकk(" irq: %d (%d),", inb(0x203), irq);
 
 	WRITE_RWA(0x74, dma);
-	dprintk(" dma: %d (%d)\n", inb(0x203), dma);
+	dprपूर्णांकk(" dma: %d (%d)\n", inb(0x203), dma);
 
 	WRITE_RWA(0x30, 1);
-}
+पूर्ण
 
-static inline void rwa010_soundblaster_init(int sb_base, int al_base, int irq, int dma)
-{
-	int i;
+अटल अंतरभूत व्योम rwa010_soundblaster_init(पूर्णांक sb_base, पूर्णांक al_base, पूर्णांक irq, पूर्णांक dma)
+अणु
+	पूर्णांक i;
 
 	WRITE_RWA(7, 1);
 
-	dprintk("SoundBlaster base: ");
+	dprपूर्णांकk("SoundBlaster base: ");
 	WRITE_RWA(0x61, sb_base & 255);
 	i = inb(0x203);
 
 	WRITE_RWA(0x60, sb_base >> 8);
-	dprintk("%02X%02X (%X),", inb(0x203), i, sb_base);
+	dprपूर्णांकk("%02X%02X (%X),", inb(0x203), i, sb_base);
 
-	dprintk(" irq: ");
+	dprपूर्णांकk(" irq: ");
 	WRITE_RWA(0x70, irq);
-	dprintk("%d (%d),", inb(0x203), irq);
+	dprपूर्णांकk("%d (%d),", inb(0x203), irq);
 
-	dprintk(" 8-bit DMA: ");
+	dprपूर्णांकk(" 8-bit DMA: ");
 	WRITE_RWA(0x74, dma);
-	dprintk("%d (%d)\n", inb(0x203), dma);
+	dprपूर्णांकk("%d (%d)\n", inb(0x203), dma);
 
-	dprintk("AdLib base: ");
+	dprपूर्णांकk("AdLib base: ");
 	WRITE_RWA(0x63, al_base & 255);
 	i = inb(0x203);
 
 	WRITE_RWA(0x62, al_base >> 8);
-	dprintk("%02X%02X (%X)\n", inb(0x203), i, al_base);
+	dprपूर्णांकk("%02X%02X (%X)\n", inb(0x203), i, al_base);
 
 	WRITE_RWA(0x30, 1);
-}
+पूर्ण
 
-static void rwa010_soundblaster_reset(void)
-{
-	int i;
+अटल व्योम rwa010_soundblaster_reset(व्योम)
+अणु
+	पूर्णांक i;
 
 	outb(1, 0x226);
 	udelay(3);
 	outb(0, 0x226);
 
-	for (i = 0; i < 5; i++) {
-		if (inb(0x22e) & 0x80)
-			break;
+	क्रम (i = 0; i < 5; i++) अणु
+		अगर (inb(0x22e) & 0x80)
+			अवरोध;
 		mdelay(1);
-	}
-	if (i == 5)
-		printk("SoundBlaster: DSP reset failed\n");
+	पूर्ण
+	अगर (i == 5)
+		prपूर्णांकk("SoundBlaster: DSP reset failed\n");
 
-	dprintk("SoundBlaster DSP reset: %02X (AA)\n", inb(0x22a));
+	dprपूर्णांकk("SoundBlaster DSP reset: %02X (AA)\n", inb(0x22a));
 
-	for (i = 0; i < 5; i++) {
-		if ((inb(0x22c) & 0x80) == 0)
-			break;
+	क्रम (i = 0; i < 5; i++) अणु
+		अगर ((inb(0x22c) & 0x80) == 0)
+			अवरोध;
 		mdelay(1);
-	}
+	पूर्ण
 
-	if (i == 5)
-		printk("SoundBlaster: DSP not ready\n");
-	else {
+	अगर (i == 5)
+		prपूर्णांकk("SoundBlaster: DSP not ready\n");
+	अन्यथा अणु
 		outb(0xe1, 0x22c);
 
-		dprintk("SoundBlaster DSP id: ");
+		dprपूर्णांकk("SoundBlaster DSP id: ");
 		i = inb(0x22a);
 		udelay(1);
 		i |= inb(0x22a) << 8;
-		dprintk("%04X\n", i);
+		dprपूर्णांकk("%04X\n", i);
 
-		for (i = 0; i < 5; i++) {
-			if ((inb(0x22c) & 0x80) == 0)
-				break;
+		क्रम (i = 0; i < 5; i++) अणु
+			अगर ((inb(0x22c) & 0x80) == 0)
+				अवरोध;
 			mdelay(1);
-		}
+		पूर्ण
 
-		if (i == 5)
-			printk("SoundBlaster: could not turn speaker off\n");
+		अगर (i == 5)
+			prपूर्णांकk("SoundBlaster: could not turn speaker off\n");
 
 		outb(0xd3, 0x22c);
-	}
+	पूर्ण
 
 	/* turn on OPL3 */
 	outb(5, 0x38a);
 	outb(1, 0x38b);
-}
+पूर्ण
 
-static void __init rwa010_init(void)
-{
+अटल व्योम __init rwa010_init(व्योम)
+अणु
 	rwa010_unlock();
-	rwa010_read_ident();
+	rwa010_पढ़ो_ident();
 	rwa010_global_init();
 	rwa010_game_port_init();
 	rwa010_waveartist_init(0x250, 3, 7);
 	rwa010_soundblaster_init(0x220, 0x388, 3, 1);
 	rwa010_soundblaster_reset();
-}
+पूर्ण
 
 /*
  * Initialise any other hardware after we've got the PCI bus
  * initialised.  We may need the PCI bus to talk to this other
  * hardware.
  */
-static int __init nw_hw_init(void)
-{
-	if (machine_is_netwinder()) {
+अटल पूर्णांक __init nw_hw_init(व्योम)
+अणु
+	अगर (machine_is_netwinder()) अणु
 		wb977_init();
 		cpld_init();
 		rwa010_init();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 __initcall(nw_hw_init);
 
 /*
- * Older NeTTroms either do not provide a parameters
- * page, or they don't supply correct information in
+ * Older NeTTroms either करो not provide a parameters
+ * page, or they करोn't supply correct inक्रमmation in
  * the parameter page.
  */
-static void __init
-fixup_netwinder(struct tag *tags, char **cmdline)
-{
-#ifdef CONFIG_ISAPNP
-	extern int isapnp_disable;
+अटल व्योम __init
+fixup_netwinder(काष्ठा tag *tags, अक्षर **cmdline)
+अणु
+#अगर_घोषित CONFIG_ISAPNP
+	बाह्य पूर्णांक isapnp_disable;
 
 	/*
 	 * We must not use the kernels ISAPnP code
 	 * on the NetWinder - it will reset the settings
-	 * for the WaveArtist chip and render it inoperable.
+	 * क्रम the WaveArtist chip and render it inoperable.
 	 */
 	isapnp_disable = 1;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void netwinder_restart(enum reboot_mode mode, const char *cmd)
-{
-	if (mode == REBOOT_SOFT) {
-		/* Jump into the ROM */
+अटल व्योम netwinder_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
+अणु
+	अगर (mode == REBOOT_SOFT) अणु
+		/* Jump पूर्णांकo the ROM */
 		soft_restart(0x41000000);
-	} else {
+	पूर्ण अन्यथा अणु
 		local_irq_disable();
 		local_fiq_disable();
 
-		/* open up the SuperIO chip */
+		/* खोलो up the SuperIO chip */
 		outb(0x87, 0x370);
 		outb(0x87, 0x370);
 
@@ -652,113 +653,113 @@ static void netwinder_restart(enum reboot_mode mode, const char *cmd)
 		outb(0x07, 0x370);
 		outb(0x07, 0x371);
 
-		/* set GP16 for WD-TIMER output */
+		/* set GP16 क्रम WD-TIMER output */
 		outb(0xe6, 0x370);
 		outb(0x00, 0x371);
 
-		/* set a RED LED and toggle WD_TIMER for rebooting */
+		/* set a RED LED and toggle WD_TIMER क्रम rebooting */
 		outb(0xc4, 0x338);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* LEDs */
-#if defined(CONFIG_NEW_LEDS) && defined(CONFIG_LEDS_CLASS)
-struct netwinder_led {
-	struct led_classdev     cdev;
+#अगर defined(CONFIG_NEW_LEDS) && defined(CONFIG_LEDS_CLASS)
+काष्ठा netwinder_led अणु
+	काष्ठा led_classdev     cdev;
 	u8                      mask;
-};
+पूर्ण;
 
 /*
- * The triggers lines up below will only be used if the
+ * The triggers lines up below will only be used अगर the
  * LED triggers are compiled in.
  */
-static const struct {
-	const char *name;
-	const char *trigger;
-} netwinder_leds[] = {
-	{ "netwinder:green", "heartbeat", },
-	{ "netwinder:red", "cpu0", },
-};
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *trigger;
+पूर्ण netwinder_leds[] = अणु
+	अणु "netwinder:green", "heartbeat", पूर्ण,
+	अणु "netwinder:red", "cpu0", पूर्ण,
+पूर्ण;
 
 /*
  * The LED control in Netwinder is reversed:
  *  - setting bit means turn off LED
  *  - clearing bit means turn on LED
  */
-static void netwinder_led_set(struct led_classdev *cdev,
-		enum led_brightness b)
-{
-	struct netwinder_led *led = container_of(cdev,
-			struct netwinder_led, cdev);
-	unsigned long flags;
+अटल व्योम netwinder_led_set(काष्ठा led_classdev *cdev,
+		क्रमागत led_brightness b)
+अणु
+	काष्ठा netwinder_led *led = container_of(cdev,
+			काष्ठा netwinder_led, cdev);
+	अचिन्हित दीर्घ flags;
 	u32 reg;
 
 	raw_spin_lock_irqsave(&nw_gpio_lock, flags);
-	reg = nw_gpio_read();
-	if (b != LED_OFF)
+	reg = nw_gpio_पढ़ो();
+	अगर (b != LED_OFF)
 		reg &= ~led->mask;
-	else
+	अन्यथा
 		reg |= led->mask;
-	nw_gpio_modify_op(led->mask, reg);
+	nw_gpio_modअगरy_op(led->mask, reg);
 	raw_spin_unlock_irqrestore(&nw_gpio_lock, flags);
-}
+पूर्ण
 
-static enum led_brightness netwinder_led_get(struct led_classdev *cdev)
-{
-	struct netwinder_led *led = container_of(cdev,
-			struct netwinder_led, cdev);
-	unsigned long flags;
+अटल क्रमागत led_brightness netwinder_led_get(काष्ठा led_classdev *cdev)
+अणु
+	काष्ठा netwinder_led *led = container_of(cdev,
+			काष्ठा netwinder_led, cdev);
+	अचिन्हित दीर्घ flags;
 	u32 reg;
 
 	raw_spin_lock_irqsave(&nw_gpio_lock, flags);
-	reg = nw_gpio_read();
+	reg = nw_gpio_पढ़ो();
 	raw_spin_unlock_irqrestore(&nw_gpio_lock, flags);
 
-	return (reg & led->mask) ? LED_OFF : LED_FULL;
-}
+	वापस (reg & led->mask) ? LED_OFF : LED_FULL;
+पूर्ण
 
-static int __init netwinder_leds_init(void)
-{
-	int i;
+अटल पूर्णांक __init netwinder_leds_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (!machine_is_netwinder())
-		return -ENODEV;
+	अगर (!machine_is_netwinder())
+		वापस -ENODEV;
 
-	for (i = 0; i < ARRAY_SIZE(netwinder_leds); i++) {
-		struct netwinder_led *led;
+	क्रम (i = 0; i < ARRAY_SIZE(netwinder_leds); i++) अणु
+		काष्ठा netwinder_led *led;
 
-		led = kzalloc(sizeof(*led), GFP_KERNEL);
-		if (!led)
-			break;
+		led = kzalloc(माप(*led), GFP_KERNEL);
+		अगर (!led)
+			अवरोध;
 
 		led->cdev.name = netwinder_leds[i].name;
 		led->cdev.brightness_set = netwinder_led_set;
 		led->cdev.brightness_get = netwinder_led_get;
-		led->cdev.default_trigger = netwinder_leds[i].trigger;
+		led->cdev.शेष_trigger = netwinder_leds[i].trigger;
 
-		if (i == 0)
+		अगर (i == 0)
 			led->mask = GPIO_GREEN_LED;
-		else
+		अन्यथा
 			led->mask = GPIO_RED_LED;
 
-		if (led_classdev_register(NULL, &led->cdev) < 0) {
-			kfree(led);
-			break;
-		}
-	}
+		अगर (led_classdev_रेजिस्टर(शून्य, &led->cdev) < 0) अणु
+			kमुक्त(led);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Since we may have triggers on any subsystem, defer registration
- * until after subsystem_init.
+ * Since we may have triggers on any subप्रणाली, defer registration
+ * until after subप्रणाली_init.
  */
 fs_initcall(netwinder_leds_init);
-#endif
+#पूर्ण_अगर
 
 MACHINE_START(NETWINDER, "Rebel-NetWinder")
-	/* Maintainer: Russell King/Rebel.com */
+	/* Maपूर्णांकainer: Russell King/Rebel.com */
 	.atag_offset	= 0x100,
 	.video_start	= 0x000a0000,
 	.video_end	= 0x000bffff,
@@ -767,6 +768,6 @@ MACHINE_START(NETWINDER, "Rebel-NetWinder")
 	.fixup		= fixup_netwinder,
 	.map_io		= footbridge_map_io,
 	.init_irq	= footbridge_init_irq,
-	.init_time	= isa_timer_init,
+	.init_समय	= isa_समयr_init,
 	.restart	= netwinder_restart,
 MACHINE_END

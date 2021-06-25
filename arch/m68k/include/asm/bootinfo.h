@@ -1,34 +1,35 @@
+<शैली गुरु>
 /*
-** asm/bootinfo.h -- Definition of the Linux/m68k boot information structure
+** यंत्र/bootinfo.h -- Definition of the Linux/m68k boot inक्रमmation काष्ठाure
 **
 ** Copyright 1992 by Greg Harp
 **
 ** This file is subject to the terms and conditions of the GNU General Public
-** License.  See the file COPYING in the main directory of this archive
-** for more details.
+** License.  See the file COPYING in the मुख्य directory of this archive
+** क्रम more details.
 */
 
-#ifndef _M68K_BOOTINFO_H
-#define _M68K_BOOTINFO_H
+#अगर_अघोषित _M68K_BOOTINFO_H
+#घोषणा _M68K_BOOTINFO_H
 
-#include <uapi/asm/bootinfo.h>
-
-
-#ifndef __ASSEMBLY__
-
-#ifdef CONFIG_BOOTINFO_PROC
-extern void save_bootinfo(const struct bi_record *bi);
-#else
-static inline void save_bootinfo(const struct bi_record *bi) {}
-#endif
-
-#ifdef CONFIG_UBOOT
-void process_uboot_commandline(char *commandp, int size);
-#else
-static inline void process_uboot_commandline(char *commandp, int size) {}
-#endif
-
-#endif /* __ASSEMBLY__ */
+#समावेश <uapi/यंत्र/bootinfo.h>
 
 
-#endif /* _M68K_BOOTINFO_H */
+#अगर_अघोषित __ASSEMBLY__
+
+#अगर_घोषित CONFIG_BOOTINFO_PROC
+बाह्य व्योम save_bootinfo(स्थिर काष्ठा bi_record *bi);
+#अन्यथा
+अटल अंतरभूत व्योम save_bootinfo(स्थिर काष्ठा bi_record *bi) अणुपूर्ण
+#पूर्ण_अगर
+
+#अगर_घोषित CONFIG_UBOOT
+व्योम process_uboot_commandline(अक्षर *commandp, पूर्णांक size);
+#अन्यथा
+अटल अंतरभूत व्योम process_uboot_commandline(अक्षर *commandp, पूर्णांक size) अणुपूर्ण
+#पूर्ण_अगर
+
+#पूर्ण_अगर /* __ASSEMBLY__ */
+
+
+#पूर्ण_अगर /* _M68K_BOOTINFO_H */

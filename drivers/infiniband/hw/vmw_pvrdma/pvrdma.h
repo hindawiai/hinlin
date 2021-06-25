@@ -1,40 +1,41 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2012-2016 VMware, Inc.  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of EITHER the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of EITHER the GNU General Public License
  * version 2 as published by the Free Software Foundation or the BSD
  * 2-Clause License. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED
  * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License version 2 for more details at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html.
+ * See the GNU General Public License version 2 क्रम more details at
+ * http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.hपंचांगl.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program available in the file COPYING in the main
+ * aदीर्घ with this program available in the file COPYING in the मुख्य
  * directory of this source tree.
  *
  * The BSD 2-Clause License
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT,
+ * INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
@@ -43,200 +44,200 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __PVRDMA_H__
-#define __PVRDMA_H__
+#अगर_अघोषित __PVRDMA_H__
+#घोषणा __PVRDMA_H__
 
-#include <linux/compiler.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/pci.h>
-#include <linux/semaphore.h>
-#include <linux/workqueue.h>
-#include <rdma/ib_umem.h>
-#include <rdma/ib_verbs.h>
-#include <rdma/vmw_pvrdma-abi.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/workqueue.h>
+#समावेश <rdma/ib_uस्मृति.स>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/vmw_pvrdma-abi.h>
 
-#include "pvrdma_ring.h"
-#include "pvrdma_dev_api.h"
-#include "pvrdma_verbs.h"
+#समावेश "pvrdma_ring.h"
+#समावेश "pvrdma_dev_api.h"
+#समावेश "pvrdma_verbs.h"
 
 /* NOT the same as BIT_MASK(). */
-#define PVRDMA_MASK(n) ((n << 1) - 1)
+#घोषणा PVRDMA_MASK(n) ((n << 1) - 1)
 
 /*
  * VMware PVRDMA PCI device id.
  */
-#define PCI_DEVICE_ID_VMWARE_PVRDMA	0x0820
+#घोषणा PCI_DEVICE_ID_VMWARE_PVRDMA	0x0820
 
-#define PVRDMA_NUM_RING_PAGES		4
-#define PVRDMA_QP_NUM_HEADER_PAGES	1
+#घोषणा PVRDMA_NUM_RING_PAGES		4
+#घोषणा PVRDMA_QP_NUM_HEADER_PAGES	1
 
-struct pvrdma_dev;
+काष्ठा pvrdma_dev;
 
-struct pvrdma_page_dir {
+काष्ठा pvrdma_page_dir अणु
 	dma_addr_t dir_dma;
 	u64 *dir;
-	int ntables;
+	पूर्णांक ntables;
 	u64 **tables;
 	u64 npages;
-	void **pages;
-};
+	व्योम **pages;
+पूर्ण;
 
-struct pvrdma_cq {
-	struct ib_cq ibcq;
-	int offset;
+काष्ठा pvrdma_cq अणु
+	काष्ठा ib_cq ibcq;
+	पूर्णांक offset;
 	spinlock_t cq_lock; /* Poll lock. */
-	struct pvrdma_uar_map *uar;
-	struct ib_umem *umem;
-	struct pvrdma_ring_state *ring_state;
-	struct pvrdma_page_dir pdir;
+	काष्ठा pvrdma_uar_map *uar;
+	काष्ठा ib_umem *umem;
+	काष्ठा pvrdma_ring_state *ring_state;
+	काष्ठा pvrdma_page_dir pdir;
 	u32 cq_handle;
 	bool is_kernel;
 	refcount_t refcnt;
-	struct completion free;
-};
+	काष्ठा completion मुक्त;
+पूर्ण;
 
-struct pvrdma_id_table {
+काष्ठा pvrdma_id_table अणु
 	u32 last;
 	u32 top;
 	u32 max;
 	u32 mask;
 	spinlock_t lock; /* Table lock. */
-	unsigned long *table;
-};
+	अचिन्हित दीर्घ *table;
+पूर्ण;
 
-struct pvrdma_uar_map {
-	unsigned long pfn;
-	void __iomem *map;
-	int index;
-};
+काष्ठा pvrdma_uar_map अणु
+	अचिन्हित दीर्घ pfn;
+	व्योम __iomem *map;
+	पूर्णांक index;
+पूर्ण;
 
-struct pvrdma_uar_table {
-	struct pvrdma_id_table tbl;
-	int size;
-};
+काष्ठा pvrdma_uar_table अणु
+	काष्ठा pvrdma_id_table tbl;
+	पूर्णांक size;
+पूर्ण;
 
-struct pvrdma_ucontext {
-	struct ib_ucontext ibucontext;
-	struct pvrdma_dev *dev;
-	struct pvrdma_uar_map uar;
+काष्ठा pvrdma_ucontext अणु
+	काष्ठा ib_ucontext ibucontext;
+	काष्ठा pvrdma_dev *dev;
+	काष्ठा pvrdma_uar_map uar;
 	u64 ctx_handle;
-};
+पूर्ण;
 
-struct pvrdma_pd {
-	struct ib_pd ibpd;
+काष्ठा pvrdma_pd अणु
+	काष्ठा ib_pd ibpd;
 	u32 pdn;
 	u32 pd_handle;
-	int privileged;
-};
+	पूर्णांक privileged;
+पूर्ण;
 
-struct pvrdma_mr {
+काष्ठा pvrdma_mr अणु
 	u32 mr_handle;
 	u64 iova;
 	u64 size;
-};
+पूर्ण;
 
-struct pvrdma_user_mr {
-	struct ib_mr ibmr;
-	struct ib_umem *umem;
-	struct pvrdma_mr mmr;
-	struct pvrdma_page_dir pdir;
+काष्ठा pvrdma_user_mr अणु
+	काष्ठा ib_mr ibmr;
+	काष्ठा ib_umem *umem;
+	काष्ठा pvrdma_mr mmr;
+	काष्ठा pvrdma_page_dir pdir;
 	u64 *pages;
 	u32 npages;
 	u32 max_pages;
-	u32 page_shift;
-};
+	u32 page_shअगरt;
+पूर्ण;
 
-struct pvrdma_wq {
-	struct pvrdma_ring *ring;
+काष्ठा pvrdma_wq अणु
+	काष्ठा pvrdma_ring *ring;
 	spinlock_t lock; /* Work queue lock. */
-	int wqe_cnt;
-	int wqe_size;
-	int max_sg;
-	int offset;
-};
+	पूर्णांक wqe_cnt;
+	पूर्णांक wqe_size;
+	पूर्णांक max_sg;
+	पूर्णांक offset;
+पूर्ण;
 
-struct pvrdma_ah {
-	struct ib_ah ibah;
-	struct pvrdma_av av;
-};
+काष्ठा pvrdma_ah अणु
+	काष्ठा ib_ah ibah;
+	काष्ठा pvrdma_av av;
+पूर्ण;
 
-struct pvrdma_srq {
-	struct ib_srq ibsrq;
-	int offset;
+काष्ठा pvrdma_srq अणु
+	काष्ठा ib_srq ibsrq;
+	पूर्णांक offset;
 	spinlock_t lock; /* SRQ lock. */
-	int wqe_cnt;
-	int wqe_size;
-	int max_gs;
-	struct ib_umem *umem;
-	struct pvrdma_ring_state *ring;
-	struct pvrdma_page_dir pdir;
+	पूर्णांक wqe_cnt;
+	पूर्णांक wqe_size;
+	पूर्णांक max_gs;
+	काष्ठा ib_umem *umem;
+	काष्ठा pvrdma_ring_state *ring;
+	काष्ठा pvrdma_page_dir pdir;
 	u32 srq_handle;
-	int npages;
+	पूर्णांक npages;
 	refcount_t refcnt;
-	struct completion free;
-};
+	काष्ठा completion मुक्त;
+पूर्ण;
 
-struct pvrdma_qp {
-	struct ib_qp ibqp;
+काष्ठा pvrdma_qp अणु
+	काष्ठा ib_qp ibqp;
 	u32 qp_handle;
 	u32 qkey;
-	struct pvrdma_wq sq;
-	struct pvrdma_wq rq;
-	struct ib_umem *rumem;
-	struct ib_umem *sumem;
-	struct pvrdma_page_dir pdir;
-	struct pvrdma_srq *srq;
-	int npages;
-	int npages_send;
-	int npages_recv;
+	काष्ठा pvrdma_wq sq;
+	काष्ठा pvrdma_wq rq;
+	काष्ठा ib_umem *rumem;
+	काष्ठा ib_umem *sumem;
+	काष्ठा pvrdma_page_dir pdir;
+	काष्ठा pvrdma_srq *srq;
+	पूर्णांक npages;
+	पूर्णांक npages_send;
+	पूर्णांक npages_recv;
 	u32 flags;
 	u8 port;
 	u8 state;
 	bool is_kernel;
-	struct mutex mutex; /* QP state mutex. */
+	काष्ठा mutex mutex; /* QP state mutex. */
 	refcount_t refcnt;
-	struct completion free;
-};
+	काष्ठा completion मुक्त;
+पूर्ण;
 
-struct pvrdma_dev {
-	/* PCI device-related information. */
-	struct ib_device ib_dev;
-	struct pci_dev *pdev;
-	void __iomem *regs;
-	struct pvrdma_device_shared_region *dsr; /* Shared region pointer */
+काष्ठा pvrdma_dev अणु
+	/* PCI device-related inक्रमmation. */
+	काष्ठा ib_device ib_dev;
+	काष्ठा pci_dev *pdev;
+	व्योम __iomem *regs;
+	काष्ठा pvrdma_device_shared_region *dsr; /* Shared region poपूर्णांकer */
 	dma_addr_t dsrbase; /* Shared region base address */
-	void *cmd_slot;
-	void *resp_slot;
-	unsigned long flags;
-	struct list_head device_link;
-	unsigned int dsr_version;
+	व्योम *cmd_slot;
+	व्योम *resp_slot;
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head device_link;
+	अचिन्हित पूर्णांक dsr_version;
 
-	/* Locking and interrupt information. */
+	/* Locking and पूर्णांकerrupt inक्रमmation. */
 	spinlock_t cmd_lock; /* Command lock. */
-	struct semaphore cmd_sema;
-	struct completion cmd_done;
-	unsigned int nr_vectors;
+	काष्ठा semaphore cmd_sema;
+	काष्ठा completion cmd_करोne;
+	अचिन्हित पूर्णांक nr_vectors;
 
-	/* RDMA-related device information. */
-	union ib_gid *sgid_tbl;
-	struct pvrdma_ring_state *async_ring_state;
-	struct pvrdma_page_dir async_pdir;
-	struct pvrdma_ring_state *cq_ring_state;
-	struct pvrdma_page_dir cq_pdir;
-	struct pvrdma_cq **cq_tbl;
+	/* RDMA-related device inक्रमmation. */
+	जोड़ ib_gid *sgid_tbl;
+	काष्ठा pvrdma_ring_state *async_ring_state;
+	काष्ठा pvrdma_page_dir async_pdir;
+	काष्ठा pvrdma_ring_state *cq_ring_state;
+	काष्ठा pvrdma_page_dir cq_pdir;
+	काष्ठा pvrdma_cq **cq_tbl;
 	spinlock_t cq_tbl_lock;
-	struct pvrdma_srq **srq_tbl;
+	काष्ठा pvrdma_srq **srq_tbl;
 	spinlock_t srq_tbl_lock;
-	struct pvrdma_qp **qp_tbl;
+	काष्ठा pvrdma_qp **qp_tbl;
 	spinlock_t qp_tbl_lock;
-	struct pvrdma_uar_table uar_table;
-	struct pvrdma_uar_map driver_uar;
+	काष्ठा pvrdma_uar_table uar_table;
+	काष्ठा pvrdma_uar_map driver_uar;
 	__be64 sys_image_guid;
-	spinlock_t desc_lock; /* Device modification lock. */
+	spinlock_t desc_lock; /* Device modअगरication lock. */
 	u32 port_cap_mask;
-	struct mutex port_mutex; /* Port modification mutex. */
+	काष्ठा mutex port_mutex; /* Port modअगरication mutex. */
 	bool ib_active;
 	atomic_t num_qps;
 	atomic_t num_cqs;
@@ -244,312 +245,312 @@ struct pvrdma_dev {
 	atomic_t num_pds;
 	atomic_t num_ahs;
 
-	/* Network device information. */
-	struct net_device *netdev;
-	struct notifier_block nb_netdev;
-};
+	/* Network device inक्रमmation. */
+	काष्ठा net_device *netdev;
+	काष्ठा notअगरier_block nb_netdev;
+पूर्ण;
 
-struct pvrdma_netdevice_work {
-	struct work_struct work;
-	struct net_device *event_netdev;
-	unsigned long event;
-};
+काष्ठा pvrdma_netdevice_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा net_device *event_netdev;
+	अचिन्हित दीर्घ event;
+पूर्ण;
 
-static inline struct pvrdma_dev *to_vdev(struct ib_device *ibdev)
-{
-	return container_of(ibdev, struct pvrdma_dev, ib_dev);
-}
+अटल अंतरभूत काष्ठा pvrdma_dev *to_vdev(काष्ठा ib_device *ibdev)
+अणु
+	वापस container_of(ibdev, काष्ठा pvrdma_dev, ib_dev);
+पूर्ण
 
-static inline struct
-pvrdma_ucontext *to_vucontext(struct ib_ucontext *ibucontext)
-{
-	return container_of(ibucontext, struct pvrdma_ucontext, ibucontext);
-}
+अटल अंतरभूत काष्ठा
+pvrdma_ucontext *to_vucontext(काष्ठा ib_ucontext *ibucontext)
+अणु
+	वापस container_of(ibucontext, काष्ठा pvrdma_ucontext, ibucontext);
+पूर्ण
 
-static inline struct pvrdma_pd *to_vpd(struct ib_pd *ibpd)
-{
-	return container_of(ibpd, struct pvrdma_pd, ibpd);
-}
+अटल अंतरभूत काष्ठा pvrdma_pd *to_vpd(काष्ठा ib_pd *ibpd)
+अणु
+	वापस container_of(ibpd, काष्ठा pvrdma_pd, ibpd);
+पूर्ण
 
-static inline struct pvrdma_cq *to_vcq(struct ib_cq *ibcq)
-{
-	return container_of(ibcq, struct pvrdma_cq, ibcq);
-}
+अटल अंतरभूत काष्ठा pvrdma_cq *to_vcq(काष्ठा ib_cq *ibcq)
+अणु
+	वापस container_of(ibcq, काष्ठा pvrdma_cq, ibcq);
+पूर्ण
 
-static inline struct pvrdma_srq *to_vsrq(struct ib_srq *ibsrq)
-{
-	return container_of(ibsrq, struct pvrdma_srq, ibsrq);
-}
+अटल अंतरभूत काष्ठा pvrdma_srq *to_vsrq(काष्ठा ib_srq *ibsrq)
+अणु
+	वापस container_of(ibsrq, काष्ठा pvrdma_srq, ibsrq);
+पूर्ण
 
-static inline struct pvrdma_user_mr *to_vmr(struct ib_mr *ibmr)
-{
-	return container_of(ibmr, struct pvrdma_user_mr, ibmr);
-}
+अटल अंतरभूत काष्ठा pvrdma_user_mr *to_vmr(काष्ठा ib_mr *ibmr)
+अणु
+	वापस container_of(ibmr, काष्ठा pvrdma_user_mr, ibmr);
+पूर्ण
 
-static inline struct pvrdma_qp *to_vqp(struct ib_qp *ibqp)
-{
-	return container_of(ibqp, struct pvrdma_qp, ibqp);
-}
+अटल अंतरभूत काष्ठा pvrdma_qp *to_vqp(काष्ठा ib_qp *ibqp)
+अणु
+	वापस container_of(ibqp, काष्ठा pvrdma_qp, ibqp);
+पूर्ण
 
-static inline struct pvrdma_ah *to_vah(struct ib_ah *ibah)
-{
-	return container_of(ibah, struct pvrdma_ah, ibah);
-}
+अटल अंतरभूत काष्ठा pvrdma_ah *to_vah(काष्ठा ib_ah *ibah)
+अणु
+	वापस container_of(ibah, काष्ठा pvrdma_ah, ibah);
+पूर्ण
 
-static inline void pvrdma_write_reg(struct pvrdma_dev *dev, u32 reg, u32 val)
-{
-	writel(cpu_to_le32(val), dev->regs + reg);
-}
+अटल अंतरभूत व्योम pvrdma_ग_लिखो_reg(काष्ठा pvrdma_dev *dev, u32 reg, u32 val)
+अणु
+	ग_लिखोl(cpu_to_le32(val), dev->regs + reg);
+पूर्ण
 
-static inline u32 pvrdma_read_reg(struct pvrdma_dev *dev, u32 reg)
-{
-	return le32_to_cpu(readl(dev->regs + reg));
-}
+अटल अंतरभूत u32 pvrdma_पढ़ो_reg(काष्ठा pvrdma_dev *dev, u32 reg)
+अणु
+	वापस le32_to_cpu(पढ़ोl(dev->regs + reg));
+पूर्ण
 
-static inline void pvrdma_write_uar_cq(struct pvrdma_dev *dev, u32 val)
-{
-	writel(cpu_to_le32(val), dev->driver_uar.map + PVRDMA_UAR_CQ_OFFSET);
-}
+अटल अंतरभूत व्योम pvrdma_ग_लिखो_uar_cq(काष्ठा pvrdma_dev *dev, u32 val)
+अणु
+	ग_लिखोl(cpu_to_le32(val), dev->driver_uar.map + PVRDMA_UAR_CQ_OFFSET);
+पूर्ण
 
-static inline void pvrdma_write_uar_qp(struct pvrdma_dev *dev, u32 val)
-{
-	writel(cpu_to_le32(val), dev->driver_uar.map + PVRDMA_UAR_QP_OFFSET);
-}
+अटल अंतरभूत व्योम pvrdma_ग_लिखो_uar_qp(काष्ठा pvrdma_dev *dev, u32 val)
+अणु
+	ग_लिखोl(cpu_to_le32(val), dev->driver_uar.map + PVRDMA_UAR_QP_OFFSET);
+पूर्ण
 
-static inline void *pvrdma_page_dir_get_ptr(struct pvrdma_page_dir *pdir,
+अटल अंतरभूत व्योम *pvrdma_page_dir_get_ptr(काष्ठा pvrdma_page_dir *pdir,
 					    u64 offset)
-{
-	return pdir->pages[offset / PAGE_SIZE] + (offset % PAGE_SIZE);
-}
+अणु
+	वापस pdir->pages[offset / PAGE_SIZE] + (offset % PAGE_SIZE);
+पूर्ण
 
-static inline enum pvrdma_mtu ib_mtu_to_pvrdma(enum ib_mtu mtu)
-{
-	return (enum pvrdma_mtu)mtu;
-}
+अटल अंतरभूत क्रमागत pvrdma_mtu ib_mtu_to_pvrdma(क्रमागत ib_mtu mtu)
+अणु
+	वापस (क्रमागत pvrdma_mtu)mtu;
+पूर्ण
 
-static inline enum ib_mtu pvrdma_mtu_to_ib(enum pvrdma_mtu mtu)
-{
-	return (enum ib_mtu)mtu;
-}
+अटल अंतरभूत क्रमागत ib_mtu pvrdma_mtu_to_ib(क्रमागत pvrdma_mtu mtu)
+अणु
+	वापस (क्रमागत ib_mtu)mtu;
+पूर्ण
 
-static inline enum pvrdma_port_state ib_port_state_to_pvrdma(
-					enum ib_port_state state)
-{
-	return (enum pvrdma_port_state)state;
-}
+अटल अंतरभूत क्रमागत pvrdma_port_state ib_port_state_to_pvrdma(
+					क्रमागत ib_port_state state)
+अणु
+	वापस (क्रमागत pvrdma_port_state)state;
+पूर्ण
 
-static inline enum ib_port_state pvrdma_port_state_to_ib(
-					enum pvrdma_port_state state)
-{
-	return (enum ib_port_state)state;
-}
+अटल अंतरभूत क्रमागत ib_port_state pvrdma_port_state_to_ib(
+					क्रमागत pvrdma_port_state state)
+अणु
+	वापस (क्रमागत ib_port_state)state;
+पूर्ण
 
-static inline int pvrdma_port_cap_flags_to_ib(int flags)
-{
-	return flags;
-}
+अटल अंतरभूत पूर्णांक pvrdma_port_cap_flags_to_ib(पूर्णांक flags)
+अणु
+	वापस flags;
+पूर्ण
 
-static inline enum pvrdma_port_width ib_port_width_to_pvrdma(
-					enum ib_port_width width)
-{
-	return (enum pvrdma_port_width)width;
-}
+अटल अंतरभूत क्रमागत pvrdma_port_width ib_port_width_to_pvrdma(
+					क्रमागत ib_port_width width)
+अणु
+	वापस (क्रमागत pvrdma_port_width)width;
+पूर्ण
 
-static inline enum ib_port_width pvrdma_port_width_to_ib(
-					enum pvrdma_port_width width)
-{
-	return (enum ib_port_width)width;
-}
+अटल अंतरभूत क्रमागत ib_port_width pvrdma_port_width_to_ib(
+					क्रमागत pvrdma_port_width width)
+अणु
+	वापस (क्रमागत ib_port_width)width;
+पूर्ण
 
-static inline enum pvrdma_port_speed ib_port_speed_to_pvrdma(
-					enum ib_port_speed speed)
-{
-	return (enum pvrdma_port_speed)speed;
-}
+अटल अंतरभूत क्रमागत pvrdma_port_speed ib_port_speed_to_pvrdma(
+					क्रमागत ib_port_speed speed)
+अणु
+	वापस (क्रमागत pvrdma_port_speed)speed;
+पूर्ण
 
-static inline enum ib_port_speed pvrdma_port_speed_to_ib(
-					enum pvrdma_port_speed speed)
-{
-	return (enum ib_port_speed)speed;
-}
+अटल अंतरभूत क्रमागत ib_port_speed pvrdma_port_speed_to_ib(
+					क्रमागत pvrdma_port_speed speed)
+अणु
+	वापस (क्रमागत ib_port_speed)speed;
+पूर्ण
 
-static inline int ib_qp_attr_mask_to_pvrdma(int attr_mask)
-{
-	return attr_mask & PVRDMA_MASK(PVRDMA_QP_ATTR_MASK_MAX);
-}
+अटल अंतरभूत पूर्णांक ib_qp_attr_mask_to_pvrdma(पूर्णांक attr_mask)
+अणु
+	वापस attr_mask & PVRDMA_MASK(PVRDMA_QP_ATTR_MASK_MAX);
+पूर्ण
 
-static inline enum pvrdma_mig_state ib_mig_state_to_pvrdma(
-					enum ib_mig_state state)
-{
-	return (enum pvrdma_mig_state)state;
-}
+अटल अंतरभूत क्रमागत pvrdma_mig_state ib_mig_state_to_pvrdma(
+					क्रमागत ib_mig_state state)
+अणु
+	वापस (क्रमागत pvrdma_mig_state)state;
+पूर्ण
 
-static inline enum ib_mig_state pvrdma_mig_state_to_ib(
-					enum pvrdma_mig_state state)
-{
-	return (enum ib_mig_state)state;
-}
+अटल अंतरभूत क्रमागत ib_mig_state pvrdma_mig_state_to_ib(
+					क्रमागत pvrdma_mig_state state)
+अणु
+	वापस (क्रमागत ib_mig_state)state;
+पूर्ण
 
-static inline int ib_access_flags_to_pvrdma(int flags)
-{
-	return flags;
-}
+अटल अंतरभूत पूर्णांक ib_access_flags_to_pvrdma(पूर्णांक flags)
+अणु
+	वापस flags;
+पूर्ण
 
-static inline int pvrdma_access_flags_to_ib(int flags)
-{
-	return flags & PVRDMA_MASK(PVRDMA_ACCESS_FLAGS_MAX);
-}
+अटल अंतरभूत पूर्णांक pvrdma_access_flags_to_ib(पूर्णांक flags)
+अणु
+	वापस flags & PVRDMA_MASK(PVRDMA_ACCESS_FLAGS_MAX);
+पूर्ण
 
-static inline enum pvrdma_qp_type ib_qp_type_to_pvrdma(enum ib_qp_type type)
-{
-	return (enum pvrdma_qp_type)type;
-}
+अटल अंतरभूत क्रमागत pvrdma_qp_type ib_qp_type_to_pvrdma(क्रमागत ib_qp_type type)
+अणु
+	वापस (क्रमागत pvrdma_qp_type)type;
+पूर्ण
 
-static inline enum pvrdma_qp_state ib_qp_state_to_pvrdma(enum ib_qp_state state)
-{
-	return (enum pvrdma_qp_state)state;
-}
+अटल अंतरभूत क्रमागत pvrdma_qp_state ib_qp_state_to_pvrdma(क्रमागत ib_qp_state state)
+अणु
+	वापस (क्रमागत pvrdma_qp_state)state;
+पूर्ण
 
-static inline enum ib_qp_state pvrdma_qp_state_to_ib(enum pvrdma_qp_state state)
-{
-	return (enum ib_qp_state)state;
-}
+अटल अंतरभूत क्रमागत ib_qp_state pvrdma_qp_state_to_ib(क्रमागत pvrdma_qp_state state)
+अणु
+	वापस (क्रमागत ib_qp_state)state;
+पूर्ण
 
-static inline enum pvrdma_wr_opcode ib_wr_opcode_to_pvrdma(enum ib_wr_opcode op)
-{
-	switch (op) {
-	case IB_WR_RDMA_WRITE:
-		return PVRDMA_WR_RDMA_WRITE;
-	case IB_WR_RDMA_WRITE_WITH_IMM:
-		return PVRDMA_WR_RDMA_WRITE_WITH_IMM;
-	case IB_WR_SEND:
-		return PVRDMA_WR_SEND;
-	case IB_WR_SEND_WITH_IMM:
-		return PVRDMA_WR_SEND_WITH_IMM;
-	case IB_WR_RDMA_READ:
-		return PVRDMA_WR_RDMA_READ;
-	case IB_WR_ATOMIC_CMP_AND_SWP:
-		return PVRDMA_WR_ATOMIC_CMP_AND_SWP;
-	case IB_WR_ATOMIC_FETCH_AND_ADD:
-		return PVRDMA_WR_ATOMIC_FETCH_AND_ADD;
-	case IB_WR_LSO:
-		return PVRDMA_WR_LSO;
-	case IB_WR_SEND_WITH_INV:
-		return PVRDMA_WR_SEND_WITH_INV;
-	case IB_WR_RDMA_READ_WITH_INV:
-		return PVRDMA_WR_RDMA_READ_WITH_INV;
-	case IB_WR_LOCAL_INV:
-		return PVRDMA_WR_LOCAL_INV;
-	case IB_WR_REG_MR:
-		return PVRDMA_WR_FAST_REG_MR;
-	case IB_WR_MASKED_ATOMIC_CMP_AND_SWP:
-		return PVRDMA_WR_MASKED_ATOMIC_CMP_AND_SWP;
-	case IB_WR_MASKED_ATOMIC_FETCH_AND_ADD:
-		return PVRDMA_WR_MASKED_ATOMIC_FETCH_AND_ADD;
-	case IB_WR_REG_MR_INTEGRITY:
-		return PVRDMA_WR_REG_SIG_MR;
-	default:
-		return PVRDMA_WR_ERROR;
-	}
-}
+अटल अंतरभूत क्रमागत pvrdma_wr_opcode ib_wr_opcode_to_pvrdma(क्रमागत ib_wr_opcode op)
+अणु
+	चयन (op) अणु
+	हाल IB_WR_RDMA_WRITE:
+		वापस PVRDMA_WR_RDMA_WRITE;
+	हाल IB_WR_RDMA_WRITE_WITH_IMM:
+		वापस PVRDMA_WR_RDMA_WRITE_WITH_IMM;
+	हाल IB_WR_SEND:
+		वापस PVRDMA_WR_SEND;
+	हाल IB_WR_SEND_WITH_IMM:
+		वापस PVRDMA_WR_SEND_WITH_IMM;
+	हाल IB_WR_RDMA_READ:
+		वापस PVRDMA_WR_RDMA_READ;
+	हाल IB_WR_ATOMIC_CMP_AND_SWP:
+		वापस PVRDMA_WR_ATOMIC_CMP_AND_SWP;
+	हाल IB_WR_ATOMIC_FETCH_AND_ADD:
+		वापस PVRDMA_WR_ATOMIC_FETCH_AND_ADD;
+	हाल IB_WR_LSO:
+		वापस PVRDMA_WR_LSO;
+	हाल IB_WR_SEND_WITH_INV:
+		वापस PVRDMA_WR_SEND_WITH_INV;
+	हाल IB_WR_RDMA_READ_WITH_INV:
+		वापस PVRDMA_WR_RDMA_READ_WITH_INV;
+	हाल IB_WR_LOCAL_INV:
+		वापस PVRDMA_WR_LOCAL_INV;
+	हाल IB_WR_REG_MR:
+		वापस PVRDMA_WR_FAST_REG_MR;
+	हाल IB_WR_MASKED_ATOMIC_CMP_AND_SWP:
+		वापस PVRDMA_WR_MASKED_ATOMIC_CMP_AND_SWP;
+	हाल IB_WR_MASKED_ATOMIC_FETCH_AND_ADD:
+		वापस PVRDMA_WR_MASKED_ATOMIC_FETCH_AND_ADD;
+	हाल IB_WR_REG_MR_INTEGRITY:
+		वापस PVRDMA_WR_REG_SIG_MR;
+	शेष:
+		वापस PVRDMA_WR_ERROR;
+	पूर्ण
+पूर्ण
 
-static inline enum ib_wc_status pvrdma_wc_status_to_ib(
-					enum pvrdma_wc_status status)
-{
-	return (enum ib_wc_status)status;
-}
+अटल अंतरभूत क्रमागत ib_wc_status pvrdma_wc_status_to_ib(
+					क्रमागत pvrdma_wc_status status)
+अणु
+	वापस (क्रमागत ib_wc_status)status;
+पूर्ण
 
-static inline int pvrdma_wc_opcode_to_ib(unsigned int opcode)
-{
-	switch (opcode) {
-	case PVRDMA_WC_SEND:
-		return IB_WC_SEND;
-	case PVRDMA_WC_RDMA_WRITE:
-		return IB_WC_RDMA_WRITE;
-	case PVRDMA_WC_RDMA_READ:
-		return IB_WC_RDMA_READ;
-	case PVRDMA_WC_COMP_SWAP:
-		return IB_WC_COMP_SWAP;
-	case PVRDMA_WC_FETCH_ADD:
-		return IB_WC_FETCH_ADD;
-	case PVRDMA_WC_LOCAL_INV:
-		return IB_WC_LOCAL_INV;
-	case PVRDMA_WC_FAST_REG_MR:
-		return IB_WC_REG_MR;
-	case PVRDMA_WC_MASKED_COMP_SWAP:
-		return IB_WC_MASKED_COMP_SWAP;
-	case PVRDMA_WC_MASKED_FETCH_ADD:
-		return IB_WC_MASKED_FETCH_ADD;
-	case PVRDMA_WC_RECV:
-		return IB_WC_RECV;
-	case PVRDMA_WC_RECV_RDMA_WITH_IMM:
-		return IB_WC_RECV_RDMA_WITH_IMM;
-	default:
-		return IB_WC_SEND;
-	}
-}
+अटल अंतरभूत पूर्णांक pvrdma_wc_opcode_to_ib(अचिन्हित पूर्णांक opcode)
+अणु
+	चयन (opcode) अणु
+	हाल PVRDMA_WC_SEND:
+		वापस IB_WC_SEND;
+	हाल PVRDMA_WC_RDMA_WRITE:
+		वापस IB_WC_RDMA_WRITE;
+	हाल PVRDMA_WC_RDMA_READ:
+		वापस IB_WC_RDMA_READ;
+	हाल PVRDMA_WC_COMP_SWAP:
+		वापस IB_WC_COMP_SWAP;
+	हाल PVRDMA_WC_FETCH_ADD:
+		वापस IB_WC_FETCH_ADD;
+	हाल PVRDMA_WC_LOCAL_INV:
+		वापस IB_WC_LOCAL_INV;
+	हाल PVRDMA_WC_FAST_REG_MR:
+		वापस IB_WC_REG_MR;
+	हाल PVRDMA_WC_MASKED_COMP_SWAP:
+		वापस IB_WC_MASKED_COMP_SWAP;
+	हाल PVRDMA_WC_MASKED_FETCH_ADD:
+		वापस IB_WC_MASKED_FETCH_ADD;
+	हाल PVRDMA_WC_RECV:
+		वापस IB_WC_RECV;
+	हाल PVRDMA_WC_RECV_RDMA_WITH_IMM:
+		वापस IB_WC_RECV_RDMA_WITH_IMM;
+	शेष:
+		वापस IB_WC_SEND;
+	पूर्ण
+पूर्ण
 
-static inline int pvrdma_wc_flags_to_ib(int flags)
-{
-	return flags;
-}
+अटल अंतरभूत पूर्णांक pvrdma_wc_flags_to_ib(पूर्णांक flags)
+अणु
+	वापस flags;
+पूर्ण
 
-static inline int ib_send_flags_to_pvrdma(int flags)
-{
-	return flags & PVRDMA_MASK(PVRDMA_SEND_FLAGS_MAX);
-}
+अटल अंतरभूत पूर्णांक ib_send_flags_to_pvrdma(पूर्णांक flags)
+अणु
+	वापस flags & PVRDMA_MASK(PVRDMA_SEND_FLAGS_MAX);
+पूर्ण
 
-static inline int pvrdma_network_type_to_ib(enum pvrdma_network_type type)
-{
-	switch (type) {
-	case PVRDMA_NETWORK_ROCE_V1:
-		return RDMA_NETWORK_ROCE_V1;
-	case PVRDMA_NETWORK_IPV4:
-		return RDMA_NETWORK_IPV4;
-	case PVRDMA_NETWORK_IPV6:
-		return RDMA_NETWORK_IPV6;
-	default:
-		return RDMA_NETWORK_IPV6;
-	}
-}
+अटल अंतरभूत पूर्णांक pvrdma_network_type_to_ib(क्रमागत pvrdma_network_type type)
+अणु
+	चयन (type) अणु
+	हाल PVRDMA_NETWORK_ROCE_V1:
+		वापस RDMA_NETWORK_ROCE_V1;
+	हाल PVRDMA_NETWORK_IPV4:
+		वापस RDMA_NETWORK_IPV4;
+	हाल PVRDMA_NETWORK_IPV6:
+		वापस RDMA_NETWORK_IPV6;
+	शेष:
+		वापस RDMA_NETWORK_IPV6;
+	पूर्ण
+पूर्ण
 
-void pvrdma_qp_cap_to_ib(struct ib_qp_cap *dst,
-			 const struct pvrdma_qp_cap *src);
-void ib_qp_cap_to_pvrdma(struct pvrdma_qp_cap *dst,
-			 const struct ib_qp_cap *src);
-void pvrdma_gid_to_ib(union ib_gid *dst, const union pvrdma_gid *src);
-void ib_gid_to_pvrdma(union pvrdma_gid *dst, const union ib_gid *src);
-void pvrdma_global_route_to_ib(struct ib_global_route *dst,
-			       const struct pvrdma_global_route *src);
-void ib_global_route_to_pvrdma(struct pvrdma_global_route *dst,
-			       const struct ib_global_route *src);
-void pvrdma_ah_attr_to_rdma(struct rdma_ah_attr *dst,
-			    const struct pvrdma_ah_attr *src);
-void rdma_ah_attr_to_pvrdma(struct pvrdma_ah_attr *dst,
-			    const struct rdma_ah_attr *src);
-u8 ib_gid_type_to_pvrdma(enum ib_gid_type gid_type);
+व्योम pvrdma_qp_cap_to_ib(काष्ठा ib_qp_cap *dst,
+			 स्थिर काष्ठा pvrdma_qp_cap *src);
+व्योम ib_qp_cap_to_pvrdma(काष्ठा pvrdma_qp_cap *dst,
+			 स्थिर काष्ठा ib_qp_cap *src);
+व्योम pvrdma_gid_to_ib(जोड़ ib_gid *dst, स्थिर जोड़ pvrdma_gid *src);
+व्योम ib_gid_to_pvrdma(जोड़ pvrdma_gid *dst, स्थिर जोड़ ib_gid *src);
+व्योम pvrdma_global_route_to_ib(काष्ठा ib_global_route *dst,
+			       स्थिर काष्ठा pvrdma_global_route *src);
+व्योम ib_global_route_to_pvrdma(काष्ठा pvrdma_global_route *dst,
+			       स्थिर काष्ठा ib_global_route *src);
+व्योम pvrdma_ah_attr_to_rdma(काष्ठा rdma_ah_attr *dst,
+			    स्थिर काष्ठा pvrdma_ah_attr *src);
+व्योम rdma_ah_attr_to_pvrdma(काष्ठा pvrdma_ah_attr *dst,
+			    स्थिर काष्ठा rdma_ah_attr *src);
+u8 ib_gid_type_to_pvrdma(क्रमागत ib_gid_type gid_type);
 
-int pvrdma_uar_table_init(struct pvrdma_dev *dev);
-void pvrdma_uar_table_cleanup(struct pvrdma_dev *dev);
+पूर्णांक pvrdma_uar_table_init(काष्ठा pvrdma_dev *dev);
+व्योम pvrdma_uar_table_cleanup(काष्ठा pvrdma_dev *dev);
 
-int pvrdma_uar_alloc(struct pvrdma_dev *dev, struct pvrdma_uar_map *uar);
-void pvrdma_uar_free(struct pvrdma_dev *dev, struct pvrdma_uar_map *uar);
+पूर्णांक pvrdma_uar_alloc(काष्ठा pvrdma_dev *dev, काष्ठा pvrdma_uar_map *uar);
+व्योम pvrdma_uar_मुक्त(काष्ठा pvrdma_dev *dev, काष्ठा pvrdma_uar_map *uar);
 
-void _pvrdma_flush_cqe(struct pvrdma_qp *qp, struct pvrdma_cq *cq);
+व्योम _pvrdma_flush_cqe(काष्ठा pvrdma_qp *qp, काष्ठा pvrdma_cq *cq);
 
-int pvrdma_page_dir_init(struct pvrdma_dev *dev, struct pvrdma_page_dir *pdir,
+पूर्णांक pvrdma_page_dir_init(काष्ठा pvrdma_dev *dev, काष्ठा pvrdma_page_dir *pdir,
 			 u64 npages, bool alloc_pages);
-void pvrdma_page_dir_cleanup(struct pvrdma_dev *dev,
-			     struct pvrdma_page_dir *pdir);
-int pvrdma_page_dir_insert_dma(struct pvrdma_page_dir *pdir, u64 idx,
+व्योम pvrdma_page_dir_cleanup(काष्ठा pvrdma_dev *dev,
+			     काष्ठा pvrdma_page_dir *pdir);
+पूर्णांक pvrdma_page_dir_insert_dma(काष्ठा pvrdma_page_dir *pdir, u64 idx,
 			       dma_addr_t daddr);
-int pvrdma_page_dir_insert_umem(struct pvrdma_page_dir *pdir,
-				struct ib_umem *umem, u64 offset);
-dma_addr_t pvrdma_page_dir_get_dma(struct pvrdma_page_dir *pdir, u64 idx);
-int pvrdma_page_dir_insert_page_list(struct pvrdma_page_dir *pdir,
-				     u64 *page_list, int num_pages);
+पूर्णांक pvrdma_page_dir_insert_umem(काष्ठा pvrdma_page_dir *pdir,
+				काष्ठा ib_umem *umem, u64 offset);
+dma_addr_t pvrdma_page_dir_get_dma(काष्ठा pvrdma_page_dir *pdir, u64 idx);
+पूर्णांक pvrdma_page_dir_insert_page_list(काष्ठा pvrdma_page_dir *pdir,
+				     u64 *page_list, पूर्णांक num_pages);
 
-int pvrdma_cmd_post(struct pvrdma_dev *dev, union pvrdma_cmd_req *req,
-		    union pvrdma_cmd_resp *rsp, unsigned resp_code);
+पूर्णांक pvrdma_cmd_post(काष्ठा pvrdma_dev *dev, जोड़ pvrdma_cmd_req *req,
+		    जोड़ pvrdma_cmd_resp *rsp, अचिन्हित resp_code);
 
-#endif /* __PVRDMA_H__ */
+#पूर्ण_अगर /* __PVRDMA_H__ */

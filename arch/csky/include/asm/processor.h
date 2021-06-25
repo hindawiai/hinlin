@@ -1,94 +1,95 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_PROCESSOR_H
-#define __ASM_CSKY_PROCESSOR_H
+#अगर_अघोषित __ASM_CSKY_PROCESSOR_H
+#घोषणा __ASM_CSKY_PROCESSOR_H
 
-#include <linux/bitops.h>
-#include <asm/segment.h>
-#include <asm/ptrace.h>
-#include <asm/current.h>
-#include <asm/cache.h>
-#include <abi/reg_ops.h>
-#include <abi/regdef.h>
-#include <abi/switch_context.h>
-#ifdef CONFIG_CPU_HAS_FPU
-#include <abi/fpu.h>
-#endif
+#समावेश <linux/bitops.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/cache.h>
+#समावेश <abi/reg_ops.h>
+#समावेश <abi/regdef.h>
+#समावेश <abi/चयन_context.h>
+#अगर_घोषित CONFIG_CPU_HAS_FPU
+#समावेश <abi/fpu.h>
+#पूर्ण_अगर
 
-struct cpuinfo_csky {
-	unsigned long asid_cache;
-} __aligned(SMP_CACHE_BYTES);
+काष्ठा cpuinfo_csky अणु
+	अचिन्हित दीर्घ asid_cache;
+पूर्ण __aligned(SMP_CACHE_BYTES);
 
-extern struct cpuinfo_csky cpu_data[];
+बाह्य काष्ठा cpuinfo_csky cpu_data[];
 
 /*
- * User space process size: 2GB. This is hardcoded into a few places,
- * so don't change it unless you know what you are doing.  TASK_SIZE
- * for a 64 bit kernel expandable to 8192EB, of which the current CSKY
+ * User space process size: 2GB. This is hardcoded पूर्णांकo a few places,
+ * so करोn't change it unless you know what you are करोing.  TASK_SIZE
+ * क्रम a 64 bit kernel expandable to 8192EB, of which the current CSKY
  * implementations will "only" be able to use 1TB ...
  */
-#define TASK_SIZE	(PAGE_OFFSET - (PAGE_SIZE * 8))
+#घोषणा TASK_SIZE	(PAGE_OFFSET - (PAGE_SIZE * 8))
 
-#ifdef __KERNEL__
-#define STACK_TOP       TASK_SIZE
-#define STACK_TOP_MAX   STACK_TOP
-#endif
+#अगर_घोषित __KERNEL__
+#घोषणा STACK_TOP       TASK_SIZE
+#घोषणा STACK_TOP_MAX   STACK_TOP
+#पूर्ण_अगर
 
-/* This decides where the kernel will search for a free chunk of vm
+/* This decides where the kernel will search क्रम a मुक्त chunk of vm
  * space during mmap's.
  */
-#define TASK_UNMAPPED_BASE      (TASK_SIZE / 3)
+#घोषणा TASK_UNMAPPED_BASE      (TASK_SIZE / 3)
 
-struct thread_struct {
-	unsigned long  sp;        /* kernel stack pointer */
-	unsigned long  trap_no;   /* saved status register */
+काष्ठा thपढ़ो_काष्ठा अणु
+	अचिन्हित दीर्घ  sp;        /* kernel stack poपूर्णांकer */
+	अचिन्हित दीर्घ  trap_no;   /* saved status रेजिस्टर */
 
 	/* FPU regs */
-	struct user_fp __aligned(16) user_fp;
-};
+	काष्ठा user_fp __aligned(16) user_fp;
+पूर्ण;
 
-#define INIT_THREAD  { \
-	.sp = sizeof(init_stack) + (unsigned long) &init_stack, \
-}
+#घोषणा INIT_THREAD  अणु \
+	.sp = माप(init_stack) + (अचिन्हित दीर्घ) &init_stack, \
+पूर्ण
 
 /*
- * Do necessary setup to start up a newly executed thread.
+ * Do necessary setup to start up a newly executed thपढ़ो.
  *
- * pass the data segment into user programs if it exists,
+ * pass the data segment पूर्णांकo user programs अगर it exists,
  * it can't hurt anything as far as I can tell
  */
-#define start_thread(_regs, _pc, _usp)					\
-do {									\
-	set_fs(USER_DS); /* reads from user space */			\
+#घोषणा start_thपढ़ो(_regs, _pc, _usp)					\
+करो अणु									\
+	set_fs(USER_DS); /* पढ़ोs from user space */			\
 	(_regs)->pc = (_pc);						\
-	(_regs)->regs[1] = 0; /* ABIV1 is R7, uClibc_main rtdl arg */	\
+	(_regs)->regs[1] = 0; /* ABIV1 is R7, uClibc_मुख्य rtdl arg */	\
 	(_regs)->regs[2] = 0;						\
 	(_regs)->regs[3] = 0; /* ABIV2 is R7, use it? */		\
 	(_regs)->sr &= ~PS_S;						\
 	(_regs)->usp = (_usp);						\
-} while (0)
+पूर्ण जबतक (0)
 
 /* Forward declaration, a strange C thing */
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-/* Free all resources held by a thread. */
-static inline void release_thread(struct task_struct *dead_task)
-{
-}
+/* Free all resources held by a thपढ़ो. */
+अटल अंतरभूत व्योम release_thपढ़ो(काष्ठा task_काष्ठा *dead_task)
+अणु
+पूर्ण
 
-/* Prepare to copy thread state - unlazy all lazy status */
-#define prepare_to_copy(tsk)    do { } while (0)
+/* Prepare to copy thपढ़ो state - unlazy all lazy status */
+#घोषणा prepare_to_copy(tsk)    करो अणु पूर्ण जबतक (0)
 
-extern int kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
+बाह्य पूर्णांक kernel_thपढ़ो(पूर्णांक (*fn)(व्योम *), व्योम *arg, अचिन्हित दीर्घ flags);
 
-unsigned long get_wchan(struct task_struct *p);
+अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
 
-#define KSTK_EIP(tsk)		(task_pt_regs(tsk)->pc)
-#define KSTK_ESP(tsk)		(task_pt_regs(tsk)->usp)
+#घोषणा KSTK_EIP(tsk)		(task_pt_regs(tsk)->pc)
+#घोषणा KSTK_ESP(tsk)		(task_pt_regs(tsk)->usp)
 
-#define task_pt_regs(p) \
-	((struct pt_regs *)(THREAD_SIZE + task_stack_page(p)) - 1)
+#घोषणा task_pt_regs(p) \
+	((काष्ठा pt_regs *)(THREAD_SIZE + task_stack_page(p)) - 1)
 
-#define cpu_relax() barrier()
+#घोषणा cpu_relax() barrier()
 
-#endif /* __ASM_CSKY_PROCESSOR_H */
+#पूर्ण_अगर /* __ASM_CSKY_PROCESSOR_H */

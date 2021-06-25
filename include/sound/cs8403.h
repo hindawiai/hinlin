@@ -1,242 +1,243 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __SOUND_CS8403_H
-#define __SOUND_CS8403_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __SOUND_CS8403_H
+#घोषणा __SOUND_CS8403_H
 
 /*
- *  Routines for Cirrus Logic CS8403/CS8404A IEC958 (S/PDIF) Transmitter
+ *  Routines क्रम Cirrus Logic CS8403/CS8404A IEC958 (S/PDIF) Transmitter
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>,
  *		     Takashi Iwai <tiwai@suse.de>
  */
 
-#ifdef SND_CS8403
+#अगर_घोषित SND_CS8403
 
-#ifndef SND_CS8403_DECL
-#define SND_CS8403_DECL static
-#endif
-#ifndef SND_CS8403_DECODE
-#define SND_CS8403_DECODE snd_cs8403_decode_spdif_bits
-#endif
-#ifndef SND_CS8403_ENCODE
-#define SND_CS8403_ENCODE snd_cs8403_encode_spdif_bits
-#endif
+#अगर_अघोषित SND_CS8403_DECL
+#घोषणा SND_CS8403_DECL अटल
+#पूर्ण_अगर
+#अगर_अघोषित SND_CS8403_DECODE
+#घोषणा SND_CS8403_DECODE snd_cs8403_decode_spdअगर_bits
+#पूर्ण_अगर
+#अगर_अघोषित SND_CS8403_ENCODE
+#घोषणा SND_CS8403_ENCODE snd_cs8403_encode_spdअगर_bits
+#पूर्ण_अगर
 
 
-SND_CS8403_DECL void SND_CS8403_DECODE(struct snd_aes_iec958 *diga, unsigned char bits)
-{
-	if (bits & 0x01) {	/* consumer */
-		if (!(bits & 0x02))
+SND_CS8403_DECL व्योम SND_CS8403_DECODE(काष्ठा snd_aes_iec958 *diga, अचिन्हित अक्षर bits)
+अणु
+	अगर (bits & 0x01) अणु	/* consumer */
+		अगर (!(bits & 0x02))
 			diga->status[0] |= IEC958_AES0_NONAUDIO;
-		if (!(bits & 0x08))
+		अगर (!(bits & 0x08))
 			diga->status[0] |= IEC958_AES0_CON_NOT_COPYRIGHT;
-		switch (bits & 0x10) {
-		case 0x10: diga->status[0] |= IEC958_AES0_CON_EMPHASIS_NONE; break;
-		case 0x00: diga->status[0] |= IEC958_AES0_CON_EMPHASIS_5015; break;
-		}
-		if (!(bits & 0x80))
+		चयन (bits & 0x10) अणु
+		हाल 0x10: diga->status[0] |= IEC958_AES0_CON_EMPHASIS_NONE; अवरोध;
+		हाल 0x00: diga->status[0] |= IEC958_AES0_CON_EMPHASIS_5015; अवरोध;
+		पूर्ण
+		अगर (!(bits & 0x80))
 			diga->status[1] |= IEC958_AES1_CON_ORIGINAL;
-		switch (bits & 0x60) {
-		case 0x00: diga->status[1] |= IEC958_AES1_CON_MAGNETIC_ID; break;
-		case 0x20: diga->status[1] |= IEC958_AES1_CON_DIGDIGCONV_ID; break;
-		case 0x40: diga->status[1] |= IEC958_AES1_CON_LASEROPT_ID; break;
-		case 0x60: diga->status[1] |= IEC958_AES1_CON_GENERAL; break;
-		}
-		switch (bits & 0x06) {
-		case 0x00: diga->status[3] |= IEC958_AES3_CON_FS_44100; break;
-		case 0x02: diga->status[3] |= IEC958_AES3_CON_FS_48000; break;
-		case 0x04: diga->status[3] |= IEC958_AES3_CON_FS_32000; break;
-		}
-	} else {
+		चयन (bits & 0x60) अणु
+		हाल 0x00: diga->status[1] |= IEC958_AES1_CON_MAGNETIC_ID; अवरोध;
+		हाल 0x20: diga->status[1] |= IEC958_AES1_CON_DIGDIGCONV_ID; अवरोध;
+		हाल 0x40: diga->status[1] |= IEC958_AES1_CON_LASEROPT_ID; अवरोध;
+		हाल 0x60: diga->status[1] |= IEC958_AES1_CON_GENERAL; अवरोध;
+		पूर्ण
+		चयन (bits & 0x06) अणु
+		हाल 0x00: diga->status[3] |= IEC958_AES3_CON_FS_44100; अवरोध;
+		हाल 0x02: diga->status[3] |= IEC958_AES3_CON_FS_48000; अवरोध;
+		हाल 0x04: diga->status[3] |= IEC958_AES3_CON_FS_32000; अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		diga->status[0] = IEC958_AES0_PROFESSIONAL;
-		switch (bits & 0x18) {
-		case 0x00: diga->status[0] |= IEC958_AES0_PRO_FS_32000; break;
-		case 0x10: diga->status[0] |= IEC958_AES0_PRO_FS_44100; break;
-		case 0x08: diga->status[0] |= IEC958_AES0_PRO_FS_48000; break;
-		case 0x18: diga->status[0] |= IEC958_AES0_PRO_FS_NOTID; break;
-		}
-		switch (bits & 0x60) {
-		case 0x20: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_NONE; break;
-		case 0x40: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_5015; break;
-		case 0x00: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_CCITT; break;
-		case 0x60: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_NOTID; break;
-		}
-		if (bits & 0x80)
+		चयन (bits & 0x18) अणु
+		हाल 0x00: diga->status[0] |= IEC958_AES0_PRO_FS_32000; अवरोध;
+		हाल 0x10: diga->status[0] |= IEC958_AES0_PRO_FS_44100; अवरोध;
+		हाल 0x08: diga->status[0] |= IEC958_AES0_PRO_FS_48000; अवरोध;
+		हाल 0x18: diga->status[0] |= IEC958_AES0_PRO_FS_NOTID; अवरोध;
+		पूर्ण
+		चयन (bits & 0x60) अणु
+		हाल 0x20: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_NONE; अवरोध;
+		हाल 0x40: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_5015; अवरोध;
+		हाल 0x00: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_CCITT; अवरोध;
+		हाल 0x60: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_NOTID; अवरोध;
+		पूर्ण
+		अगर (bits & 0x80)
 			diga->status[1] |= IEC958_AES1_PRO_MODE_STEREOPHONIC;
-	}
-}
+	पूर्ण
+पूर्ण
 
-SND_CS8403_DECL unsigned char SND_CS8403_ENCODE(struct snd_aes_iec958 *diga)
-{
-	unsigned char bits;
+SND_CS8403_DECL अचिन्हित अक्षर SND_CS8403_ENCODE(काष्ठा snd_aes_iec958 *diga)
+अणु
+	अचिन्हित अक्षर bits;
 
-	if (!(diga->status[0] & IEC958_AES0_PROFESSIONAL)) {
+	अगर (!(diga->status[0] & IEC958_AES0_PROFESSIONAL)) अणु
 		bits = 0x01;	/* consumer mode */
-		if (diga->status[0] & IEC958_AES0_NONAUDIO)
+		अगर (diga->status[0] & IEC958_AES0_NONAUDIO)
 			bits &= ~0x02;
-		else
+		अन्यथा
 			bits |= 0x02;
-		if (diga->status[0] & IEC958_AES0_CON_NOT_COPYRIGHT)
+		अगर (diga->status[0] & IEC958_AES0_CON_NOT_COPYRIGHT)
 			bits &= ~0x08;
-		else
+		अन्यथा
 			bits |= 0x08;
-		switch (diga->status[0] & IEC958_AES0_CON_EMPHASIS) {
-		default:
-		case IEC958_AES0_CON_EMPHASIS_NONE: bits |= 0x10; break;
-		case IEC958_AES0_CON_EMPHASIS_5015: bits |= 0x00; break;
-		}
-		if (diga->status[1] & IEC958_AES1_CON_ORIGINAL)
+		चयन (diga->status[0] & IEC958_AES0_CON_EMPHASIS) अणु
+		शेष:
+		हाल IEC958_AES0_CON_EMPHASIS_NONE: bits |= 0x10; अवरोध;
+		हाल IEC958_AES0_CON_EMPHASIS_5015: bits |= 0x00; अवरोध;
+		पूर्ण
+		अगर (diga->status[1] & IEC958_AES1_CON_ORIGINAL)
 			bits &= ~0x80;
-		else
+		अन्यथा
 			bits |= 0x80;
-		if ((diga->status[1] & IEC958_AES1_CON_CATEGORY) == IEC958_AES1_CON_GENERAL)
+		अगर ((diga->status[1] & IEC958_AES1_CON_CATEGORY) == IEC958_AES1_CON_GENERAL)
 			bits |= 0x60;
-		else {
-			switch(diga->status[1] & IEC958_AES1_CON_MAGNETIC_MASK) {
-			case IEC958_AES1_CON_MAGNETIC_ID:
-				bits |= 0x00; break;
-			case IEC958_AES1_CON_DIGDIGCONV_ID:
-				bits |= 0x20; break;
-			default:
-			case IEC958_AES1_CON_LASEROPT_ID:
-				bits |= 0x40; break;
-			}
-		}
-		switch (diga->status[3] & IEC958_AES3_CON_FS) {
-		default:
-		case IEC958_AES3_CON_FS_44100: bits |= 0x00; break;
-		case IEC958_AES3_CON_FS_48000: bits |= 0x02; break;
-		case IEC958_AES3_CON_FS_32000: bits |= 0x04; break;
-		}
-	} else {
+		अन्यथा अणु
+			चयन(diga->status[1] & IEC958_AES1_CON_MAGNETIC_MASK) अणु
+			हाल IEC958_AES1_CON_MAGNETIC_ID:
+				bits |= 0x00; अवरोध;
+			हाल IEC958_AES1_CON_DIGDIGCONV_ID:
+				bits |= 0x20; अवरोध;
+			शेष:
+			हाल IEC958_AES1_CON_LASEROPT_ID:
+				bits |= 0x40; अवरोध;
+			पूर्ण
+		पूर्ण
+		चयन (diga->status[3] & IEC958_AES3_CON_FS) अणु
+		शेष:
+		हाल IEC958_AES3_CON_FS_44100: bits |= 0x00; अवरोध;
+		हाल IEC958_AES3_CON_FS_48000: bits |= 0x02; अवरोध;
+		हाल IEC958_AES3_CON_FS_32000: bits |= 0x04; अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		bits = 0x00;	/* professional mode */
-		if (diga->status[0] & IEC958_AES0_NONAUDIO)
+		अगर (diga->status[0] & IEC958_AES0_NONAUDIO)
 			bits &= ~0x02;
-		else
+		अन्यथा
 			bits |= 0x02;
 		/* CHECKME: I'm not sure about the bit order in val here */
-		switch (diga->status[0] & IEC958_AES0_PRO_FS) {
-		case IEC958_AES0_PRO_FS_32000:	bits |= 0x00; break;
-		case IEC958_AES0_PRO_FS_44100:	bits |= 0x10; break;	/* 44.1kHz */
-		case IEC958_AES0_PRO_FS_48000:	bits |= 0x08; break;	/* 48kHz */
-		default:
-		case IEC958_AES0_PRO_FS_NOTID: bits |= 0x18; break;
-		}
-		switch (diga->status[0] & IEC958_AES0_PRO_EMPHASIS) {
-		case IEC958_AES0_PRO_EMPHASIS_NONE: bits |= 0x20; break;
-		case IEC958_AES0_PRO_EMPHASIS_5015: bits |= 0x40; break;
-		case IEC958_AES0_PRO_EMPHASIS_CCITT: bits |= 0x00; break;
-		default:
-		case IEC958_AES0_PRO_EMPHASIS_NOTID: bits |= 0x60; break;
-		}
-		switch (diga->status[1] & IEC958_AES1_PRO_MODE) {
-		case IEC958_AES1_PRO_MODE_TWO:
-		case IEC958_AES1_PRO_MODE_STEREOPHONIC: bits |= 0x00; break;
-		default: bits |= 0x80; break;
-		}
-	}
-	return bits;
-}
+		चयन (diga->status[0] & IEC958_AES0_PRO_FS) अणु
+		हाल IEC958_AES0_PRO_FS_32000:	bits |= 0x00; अवरोध;
+		हाल IEC958_AES0_PRO_FS_44100:	bits |= 0x10; अवरोध;	/* 44.1kHz */
+		हाल IEC958_AES0_PRO_FS_48000:	bits |= 0x08; अवरोध;	/* 48kHz */
+		शेष:
+		हाल IEC958_AES0_PRO_FS_NOTID: bits |= 0x18; अवरोध;
+		पूर्ण
+		चयन (diga->status[0] & IEC958_AES0_PRO_EMPHASIS) अणु
+		हाल IEC958_AES0_PRO_EMPHASIS_NONE: bits |= 0x20; अवरोध;
+		हाल IEC958_AES0_PRO_EMPHASIS_5015: bits |= 0x40; अवरोध;
+		हाल IEC958_AES0_PRO_EMPHASIS_CCITT: bits |= 0x00; अवरोध;
+		शेष:
+		हाल IEC958_AES0_PRO_EMPHASIS_NOTID: bits |= 0x60; अवरोध;
+		पूर्ण
+		चयन (diga->status[1] & IEC958_AES1_PRO_MODE) अणु
+		हाल IEC958_AES1_PRO_MODE_TWO:
+		हाल IEC958_AES1_PRO_MODE_STEREOPHONIC: bits |= 0x00; अवरोध;
+		शेष: bits |= 0x80; अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस bits;
+पूर्ण
 
-#endif /* SND_CS8403 */
+#पूर्ण_अगर /* SND_CS8403 */
 
-#ifdef SND_CS8404
+#अगर_घोषित SND_CS8404
 
-#ifndef SND_CS8404_DECL
-#define SND_CS8404_DECL static
-#endif
-#ifndef SND_CS8404_DECODE
-#define SND_CS8404_DECODE snd_cs8404_decode_spdif_bits
-#endif
-#ifndef SND_CS8404_ENCODE
-#define SND_CS8404_ENCODE snd_cs8404_encode_spdif_bits
-#endif
+#अगर_अघोषित SND_CS8404_DECL
+#घोषणा SND_CS8404_DECL अटल
+#पूर्ण_अगर
+#अगर_अघोषित SND_CS8404_DECODE
+#घोषणा SND_CS8404_DECODE snd_cs8404_decode_spdअगर_bits
+#पूर्ण_अगर
+#अगर_अघोषित SND_CS8404_ENCODE
+#घोषणा SND_CS8404_ENCODE snd_cs8404_encode_spdअगर_bits
+#पूर्ण_अगर
 
 
-SND_CS8404_DECL void SND_CS8404_DECODE(struct snd_aes_iec958 *diga, unsigned char bits)
-{
-	if (bits & 0x10) {	/* consumer */
-		if (!(bits & 0x20))
+SND_CS8404_DECL व्योम SND_CS8404_DECODE(काष्ठा snd_aes_iec958 *diga, अचिन्हित अक्षर bits)
+अणु
+	अगर (bits & 0x10) अणु	/* consumer */
+		अगर (!(bits & 0x20))
 			diga->status[0] |= IEC958_AES0_CON_NOT_COPYRIGHT;
-		if (!(bits & 0x40))
+		अगर (!(bits & 0x40))
 			diga->status[0] |= IEC958_AES0_CON_EMPHASIS_5015;
-		if (!(bits & 0x80))
+		अगर (!(bits & 0x80))
 			diga->status[1] |= IEC958_AES1_CON_ORIGINAL;
-		switch (bits & 0x03) {
-		case 0x00: diga->status[1] |= IEC958_AES1_CON_DAT; break;
-		case 0x03: diga->status[1] |= IEC958_AES1_CON_GENERAL; break;
-		}
-		switch (bits & 0x06) {
-		case 0x02: diga->status[3] |= IEC958_AES3_CON_FS_32000; break;
-		case 0x04: diga->status[3] |= IEC958_AES3_CON_FS_48000; break;
-		case 0x06: diga->status[3] |= IEC958_AES3_CON_FS_44100; break;
-		}
-	} else {
+		चयन (bits & 0x03) अणु
+		हाल 0x00: diga->status[1] |= IEC958_AES1_CON_DAT; अवरोध;
+		हाल 0x03: diga->status[1] |= IEC958_AES1_CON_GENERAL; अवरोध;
+		पूर्ण
+		चयन (bits & 0x06) अणु
+		हाल 0x02: diga->status[3] |= IEC958_AES3_CON_FS_32000; अवरोध;
+		हाल 0x04: diga->status[3] |= IEC958_AES3_CON_FS_48000; अवरोध;
+		हाल 0x06: diga->status[3] |= IEC958_AES3_CON_FS_44100; अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		diga->status[0] = IEC958_AES0_PROFESSIONAL;
-		if (!(bits & 0x04))
+		अगर (!(bits & 0x04))
 			diga->status[0] |= IEC958_AES0_NONAUDIO;
-		switch (bits & 0x60) {
-		case 0x00: diga->status[0] |= IEC958_AES0_PRO_FS_32000; break;
-		case 0x40: diga->status[0] |= IEC958_AES0_PRO_FS_44100; break;
-		case 0x20: diga->status[0] |= IEC958_AES0_PRO_FS_48000; break;
-		case 0x60: diga->status[0] |= IEC958_AES0_PRO_FS_NOTID; break;
-		}
-		switch (bits & 0x03) {
-		case 0x02: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_NONE; break;
-		case 0x01: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_5015; break;
-		case 0x00: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_CCITT; break;
-		case 0x03: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_NOTID; break;
-		}
-		if (!(bits & 0x80))
+		चयन (bits & 0x60) अणु
+		हाल 0x00: diga->status[0] |= IEC958_AES0_PRO_FS_32000; अवरोध;
+		हाल 0x40: diga->status[0] |= IEC958_AES0_PRO_FS_44100; अवरोध;
+		हाल 0x20: diga->status[0] |= IEC958_AES0_PRO_FS_48000; अवरोध;
+		हाल 0x60: diga->status[0] |= IEC958_AES0_PRO_FS_NOTID; अवरोध;
+		पूर्ण
+		चयन (bits & 0x03) अणु
+		हाल 0x02: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_NONE; अवरोध;
+		हाल 0x01: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_5015; अवरोध;
+		हाल 0x00: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_CCITT; अवरोध;
+		हाल 0x03: diga->status[0] |= IEC958_AES0_PRO_EMPHASIS_NOTID; अवरोध;
+		पूर्ण
+		अगर (!(bits & 0x80))
 			diga->status[1] |= IEC958_AES1_PRO_MODE_STEREOPHONIC;
-	}
-}
+	पूर्ण
+पूर्ण
 
-SND_CS8404_DECL unsigned char SND_CS8404_ENCODE(struct snd_aes_iec958 *diga)
-{
-	unsigned char bits;
+SND_CS8404_DECL अचिन्हित अक्षर SND_CS8404_ENCODE(काष्ठा snd_aes_iec958 *diga)
+अणु
+	अचिन्हित अक्षर bits;
 
-	if (!(diga->status[0] & IEC958_AES0_PROFESSIONAL)) {
+	अगर (!(diga->status[0] & IEC958_AES0_PROFESSIONAL)) अणु
 		bits = 0x10;	/* consumer mode */
-		if (!(diga->status[0] & IEC958_AES0_CON_NOT_COPYRIGHT))
+		अगर (!(diga->status[0] & IEC958_AES0_CON_NOT_COPYRIGHT))
 			bits |= 0x20;
-		if ((diga->status[0] & IEC958_AES0_CON_EMPHASIS) == IEC958_AES0_CON_EMPHASIS_NONE)
+		अगर ((diga->status[0] & IEC958_AES0_CON_EMPHASIS) == IEC958_AES0_CON_EMPHASIS_NONE)
 			bits |= 0x40;
-		if (!(diga->status[1] & IEC958_AES1_CON_ORIGINAL))
+		अगर (!(diga->status[1] & IEC958_AES1_CON_ORIGINAL))
 			bits |= 0x80;
-		if ((diga->status[1] & IEC958_AES1_CON_CATEGORY) == IEC958_AES1_CON_GENERAL)
+		अगर ((diga->status[1] & IEC958_AES1_CON_CATEGORY) == IEC958_AES1_CON_GENERAL)
 			bits |= 0x03;
-		switch (diga->status[3] & IEC958_AES3_CON_FS) {
-		default:
-		case IEC958_AES3_CON_FS_44100: bits |= 0x06; break;
-		case IEC958_AES3_CON_FS_48000: bits |= 0x04; break;
-		case IEC958_AES3_CON_FS_32000: bits |= 0x02; break;
-		}
-	} else {
+		चयन (diga->status[3] & IEC958_AES3_CON_FS) अणु
+		शेष:
+		हाल IEC958_AES3_CON_FS_44100: bits |= 0x06; अवरोध;
+		हाल IEC958_AES3_CON_FS_48000: bits |= 0x04; अवरोध;
+		हाल IEC958_AES3_CON_FS_32000: bits |= 0x02; अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		bits = 0x00;	/* professional mode */
-		if (!(diga->status[0] & IEC958_AES0_NONAUDIO))
+		अगर (!(diga->status[0] & IEC958_AES0_NONAUDIO))
 			bits |= 0x04;
-		switch (diga->status[0] & IEC958_AES0_PRO_FS) {
-		case IEC958_AES0_PRO_FS_32000:	bits |= 0x00; break;
-		case IEC958_AES0_PRO_FS_44100:	bits |= 0x40; break;	/* 44.1kHz */
-		case IEC958_AES0_PRO_FS_48000:	bits |= 0x20; break;	/* 48kHz */
-		default:
-		case IEC958_AES0_PRO_FS_NOTID:	bits |= 0x00; break;
-		}
-		switch (diga->status[0] & IEC958_AES0_PRO_EMPHASIS) {
-		case IEC958_AES0_PRO_EMPHASIS_NONE: bits |= 0x02; break;
-		case IEC958_AES0_PRO_EMPHASIS_5015: bits |= 0x01; break;
-		case IEC958_AES0_PRO_EMPHASIS_CCITT: bits |= 0x00; break;
-		default:
-		case IEC958_AES0_PRO_EMPHASIS_NOTID: bits |= 0x03; break;
-		}
-		switch (diga->status[1] & IEC958_AES1_PRO_MODE) {
-		case IEC958_AES1_PRO_MODE_TWO:
-		case IEC958_AES1_PRO_MODE_STEREOPHONIC: bits |= 0x00; break;
-		default: bits |= 0x80; break;
-		}
-	}
-	return bits;
-}
+		चयन (diga->status[0] & IEC958_AES0_PRO_FS) अणु
+		हाल IEC958_AES0_PRO_FS_32000:	bits |= 0x00; अवरोध;
+		हाल IEC958_AES0_PRO_FS_44100:	bits |= 0x40; अवरोध;	/* 44.1kHz */
+		हाल IEC958_AES0_PRO_FS_48000:	bits |= 0x20; अवरोध;	/* 48kHz */
+		शेष:
+		हाल IEC958_AES0_PRO_FS_NOTID:	bits |= 0x00; अवरोध;
+		पूर्ण
+		चयन (diga->status[0] & IEC958_AES0_PRO_EMPHASIS) अणु
+		हाल IEC958_AES0_PRO_EMPHASIS_NONE: bits |= 0x02; अवरोध;
+		हाल IEC958_AES0_PRO_EMPHASIS_5015: bits |= 0x01; अवरोध;
+		हाल IEC958_AES0_PRO_EMPHASIS_CCITT: bits |= 0x00; अवरोध;
+		शेष:
+		हाल IEC958_AES0_PRO_EMPHASIS_NOTID: bits |= 0x03; अवरोध;
+		पूर्ण
+		चयन (diga->status[1] & IEC958_AES1_PRO_MODE) अणु
+		हाल IEC958_AES1_PRO_MODE_TWO:
+		हाल IEC958_AES1_PRO_MODE_STEREOPHONIC: bits |= 0x00; अवरोध;
+		शेष: bits |= 0x80; अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस bits;
+पूर्ण
 
-#endif /* SND_CS8404 */
+#पूर्ण_अगर /* SND_CS8404 */
 
-#endif /* __SOUND_CS8403_H */
+#पूर्ण_अगर /* __SOUND_CS8403_H */

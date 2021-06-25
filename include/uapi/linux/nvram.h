@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_NVRAM_H
-#define _UAPI_LINUX_NVRAM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_NVRAM_H
+#घोषणा _UAPI_LINUX_NVRAM_H
 
-#include <linux/ioctl.h>
+#समावेश <linux/ioctl.h>
 
 /* /dev/nvram ioctls */
-#define NVRAM_INIT	_IO('p', 0x40) /* initialize NVRAM and set checksum */
-#define NVRAM_SETCKS	_IO('p', 0x41) /* recalculate checksum */
+#घोषणा NVRAM_INIT	_IO('p', 0x40) /* initialize NVRAM and set checksum */
+#घोषणा NVRAM_SETCKS	_IO('p', 0x41) /* recalculate checksum */
 
-/* for all current systems, this is where NVRAM starts */
-#define NVRAM_FIRST_BYTE    14
-/* all these functions expect an NVRAM offset, not an absolute */
-#define NVRAM_OFFSET(x)   ((x)-NVRAM_FIRST_BYTE)
+/* क्रम all current प्रणालीs, this is where NVRAM starts */
+#घोषणा NVRAM_FIRST_BYTE    14
+/* all these functions expect an NVRAM offset, not an असलolute */
+#घोषणा NVRAM_OFFSET(x)   ((x)-NVRAM_FIRST_BYTE)
 
 
-#endif /* _UAPI_LINUX_NVRAM_H */
+#पूर्ण_अगर /* _UAPI_LINUX_NVRAM_H */

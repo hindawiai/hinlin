@@ -1,232 +1,233 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Ingenic JZ4740 "glue layer"
  *
  * Copyright (C) 2013, Apelete Seketeli <apelete@seketeli.net>
  */
 
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/usb/role.h>
-#include <linux/usb/usb_phy_generic.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/usb/role.h>
+#समावेश <linux/usb/usb_phy_generic.h>
 
-#include "musb_core.h"
+#समावेश "musb_core.h"
 
-struct jz4740_glue {
-	struct platform_device	*pdev;
-	struct musb		*musb;
-	struct clk		*clk;
-	struct usb_role_switch	*role_sw;
-};
+काष्ठा jz4740_glue अणु
+	काष्ठा platक्रमm_device	*pdev;
+	काष्ठा musb		*musb;
+	काष्ठा clk		*clk;
+	काष्ठा usb_role_चयन	*role_sw;
+पूर्ण;
 
-static irqreturn_t jz4740_musb_interrupt(int irq, void *__hci)
-{
-	unsigned long	flags;
-	irqreturn_t	retval = IRQ_NONE, retval_dma = IRQ_NONE;
-	struct musb	*musb = __hci;
+अटल irqवापस_t jz4740_musb_पूर्णांकerrupt(पूर्णांक irq, व्योम *__hci)
+अणु
+	अचिन्हित दीर्घ	flags;
+	irqवापस_t	retval = IRQ_NONE, retval_dma = IRQ_NONE;
+	काष्ठा musb	*musb = __hci;
 
-	if (IS_ENABLED(CONFIG_USB_INVENTRA_DMA) && musb->dma_controller)
+	अगर (IS_ENABLED(CONFIG_USB_INVENTRA_DMA) && musb->dma_controller)
 		retval_dma = dma_controller_irq(irq, musb->dma_controller);
 
 	spin_lock_irqsave(&musb->lock, flags);
 
-	musb->int_usb = musb_readb(musb->mregs, MUSB_INTRUSB);
-	musb->int_tx = musb_readw(musb->mregs, MUSB_INTRTX);
-	musb->int_rx = musb_readw(musb->mregs, MUSB_INTRRX);
+	musb->पूर्णांक_usb = musb_पढ़ोb(musb->mregs, MUSB_INTRUSB);
+	musb->पूर्णांक_tx = musb_पढ़ोw(musb->mregs, MUSB_INTRTX);
+	musb->पूर्णांक_rx = musb_पढ़ोw(musb->mregs, MUSB_INTRRX);
 
 	/*
 	 * The controller is gadget only, the state of the host mode IRQ bits is
 	 * undefined. Mask them to make sure that the musb driver core will
 	 * never see them set
 	 */
-	musb->int_usb &= MUSB_INTR_SUSPEND | MUSB_INTR_RESUME |
+	musb->पूर्णांक_usb &= MUSB_INTR_SUSPEND | MUSB_INTR_RESUME |
 			 MUSB_INTR_RESET | MUSB_INTR_SOF;
 
-	if (musb->int_usb || musb->int_tx || musb->int_rx)
-		retval = musb_interrupt(musb);
+	अगर (musb->पूर्णांक_usb || musb->पूर्णांक_tx || musb->पूर्णांक_rx)
+		retval = musb_पूर्णांकerrupt(musb);
 
 	spin_unlock_irqrestore(&musb->lock, flags);
 
-	if (retval == IRQ_HANDLED || retval_dma == IRQ_HANDLED)
-		return IRQ_HANDLED;
+	अगर (retval == IRQ_HANDLED || retval_dma == IRQ_HANDLED)
+		वापस IRQ_HANDLED;
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static struct musb_fifo_cfg jz4740_musb_fifo_cfg[] = {
-	{ .hw_ep_num = 1, .style = FIFO_TX, .maxpacket = 512, },
-	{ .hw_ep_num = 1, .style = FIFO_RX, .maxpacket = 512, },
-	{ .hw_ep_num = 2, .style = FIFO_TX, .maxpacket = 64, },
-};
+अटल काष्ठा musb_fअगरo_cfg jz4740_musb_fअगरo_cfg[] = अणु
+	अणु .hw_ep_num = 1, .style = FIFO_TX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 1, .style = FIFO_RX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 2, .style = FIFO_TX, .maxpacket = 64, पूर्ण,
+पूर्ण;
 
-static const struct musb_hdrc_config jz4740_musb_config = {
-	/* Silicon does not implement USB OTG. */
-	.multipoint	= 0,
+अटल स्थिर काष्ठा musb_hdrc_config jz4740_musb_config = अणु
+	/* Silicon करोes not implement USB OTG. */
+	.multipoपूर्णांक	= 0,
 	/* Max EPs scanned, driver will decide which EP can be used. */
 	.num_eps	= 4,
 	/* RAMbits needed to configure EPs from table */
 	.ram_bits	= 9,
-	.fifo_cfg	= jz4740_musb_fifo_cfg,
-	.fifo_cfg_size	= ARRAY_SIZE(jz4740_musb_fifo_cfg),
-};
+	.fअगरo_cfg	= jz4740_musb_fअगरo_cfg,
+	.fअगरo_cfg_size	= ARRAY_SIZE(jz4740_musb_fअगरo_cfg),
+पूर्ण;
 
-static int jz4740_musb_role_switch_set(struct usb_role_switch *sw,
-				       enum usb_role role)
-{
-	struct jz4740_glue *glue = usb_role_switch_get_drvdata(sw);
-	struct usb_phy *phy = glue->musb->xceiv;
+अटल पूर्णांक jz4740_musb_role_चयन_set(काष्ठा usb_role_चयन *sw,
+				       क्रमागत usb_role role)
+अणु
+	काष्ठा jz4740_glue *glue = usb_role_चयन_get_drvdata(sw);
+	काष्ठा usb_phy *phy = glue->musb->xceiv;
 
-	switch (role) {
-	case USB_ROLE_NONE:
-		atomic_notifier_call_chain(&phy->notifier, USB_EVENT_NONE, phy);
-		break;
-	case USB_ROLE_DEVICE:
-		atomic_notifier_call_chain(&phy->notifier, USB_EVENT_VBUS, phy);
-		break;
-	case USB_ROLE_HOST:
-		atomic_notifier_call_chain(&phy->notifier, USB_EVENT_ID, phy);
-		break;
-	}
+	चयन (role) अणु
+	हाल USB_ROLE_NONE:
+		atomic_notअगरier_call_chain(&phy->notअगरier, USB_EVENT_NONE, phy);
+		अवरोध;
+	हाल USB_ROLE_DEVICE:
+		atomic_notअगरier_call_chain(&phy->notअगरier, USB_EVENT_VBUS, phy);
+		अवरोध;
+	हाल USB_ROLE_HOST:
+		atomic_notअगरier_call_chain(&phy->notअगरier, USB_EVENT_ID, phy);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jz4740_musb_init(struct musb *musb)
-{
-	struct device *dev = musb->controller->parent;
-	struct jz4740_glue *glue = dev_get_drvdata(dev);
-	struct usb_role_switch_desc role_sw_desc = {
-		.set = jz4740_musb_role_switch_set,
+अटल पूर्णांक jz4740_musb_init(काष्ठा musb *musb)
+अणु
+	काष्ठा device *dev = musb->controller->parent;
+	काष्ठा jz4740_glue *glue = dev_get_drvdata(dev);
+	काष्ठा usb_role_चयन_desc role_sw_desc = अणु
+		.set = jz4740_musb_role_चयन_set,
 		.driver_data = glue,
 		.fwnode = dev_fwnode(dev),
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
 	glue->musb = musb;
 
-	if (dev->of_node)
+	अगर (dev->of_node)
 		musb->xceiv = devm_usb_get_phy_by_phandle(dev, "phys", 0);
-	else
+	अन्यथा
 		musb->xceiv = devm_usb_get_phy(dev, USB_PHY_TYPE_USB2);
-	if (IS_ERR(musb->xceiv)) {
+	अगर (IS_ERR(musb->xceiv)) अणु
 		err = PTR_ERR(musb->xceiv);
-		if (err != -EPROBE_DEFER)
+		अगर (err != -EPROBE_DEFER)
 			dev_err(dev, "No transceiver configured: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	glue->role_sw = usb_role_switch_register(dev, &role_sw_desc);
-	if (IS_ERR(glue->role_sw)) {
+	glue->role_sw = usb_role_चयन_रेजिस्टर(dev, &role_sw_desc);
+	अगर (IS_ERR(glue->role_sw)) अणु
 		dev_err(dev, "Failed to register USB role switch\n");
-		return PTR_ERR(glue->role_sw);
-	}
+		वापस PTR_ERR(glue->role_sw);
+	पूर्ण
 
 	/*
-	 * Silicon does not implement ConfigData register.
-	 * Set dyn_fifo to avoid reading EP config from hardware.
+	 * Silicon करोes not implement ConfigData रेजिस्टर.
+	 * Set dyn_fअगरo to aव्योम पढ़ोing EP config from hardware.
 	 */
-	musb->dyn_fifo = true;
+	musb->dyn_fअगरo = true;
 
-	musb->isr = jz4740_musb_interrupt;
+	musb->isr = jz4740_musb_पूर्णांकerrupt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jz4740_musb_exit(struct musb *musb)
-{
-	struct jz4740_glue *glue = dev_get_drvdata(musb->controller->parent);
+अटल पूर्णांक jz4740_musb_निकास(काष्ठा musb *musb)
+अणु
+	काष्ठा jz4740_glue *glue = dev_get_drvdata(musb->controller->parent);
 
-	usb_role_switch_unregister(glue->role_sw);
+	usb_role_चयन_unरेजिस्टर(glue->role_sw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct musb_platform_ops jz4740_musb_ops = {
+अटल स्थिर काष्ठा musb_platक्रमm_ops jz4740_musb_ops = अणु
 	.quirks		= MUSB_DMA_INVENTRA | MUSB_INDEXED_EP,
-	.fifo_mode	= 2,
+	.fअगरo_mode	= 2,
 	.init		= jz4740_musb_init,
-	.exit		= jz4740_musb_exit,
-#ifdef CONFIG_USB_INVENTRA_DMA
+	.निकास		= jz4740_musb_निकास,
+#अगर_घोषित CONFIG_USB_INVENTRA_DMA
 	.dma_init	= musbhs_dma_controller_create_noirq,
-	.dma_exit	= musbhs_dma_controller_destroy,
-#endif
-};
+	.dma_निकास	= musbhs_dma_controller_destroy,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct musb_hdrc_platform_data jz4740_musb_pdata = {
+अटल स्थिर काष्ठा musb_hdrc_platक्रमm_data jz4740_musb_pdata = अणु
 	.mode		= MUSB_PERIPHERAL,
 	.config		= &jz4740_musb_config,
-	.platform_ops	= &jz4740_musb_ops,
-};
+	.platक्रमm_ops	= &jz4740_musb_ops,
+पूर्ण;
 
-static struct musb_fifo_cfg jz4770_musb_fifo_cfg[] = {
-	{ .hw_ep_num = 1, .style = FIFO_TX, .maxpacket = 512, },
-	{ .hw_ep_num = 1, .style = FIFO_RX, .maxpacket = 512, },
-	{ .hw_ep_num = 2, .style = FIFO_TX, .maxpacket = 512, },
-	{ .hw_ep_num = 2, .style = FIFO_RX, .maxpacket = 512, },
-	{ .hw_ep_num = 3, .style = FIFO_TX, .maxpacket = 512, },
-	{ .hw_ep_num = 3, .style = FIFO_RX, .maxpacket = 512, },
-	{ .hw_ep_num = 4, .style = FIFO_TX, .maxpacket = 512, },
-	{ .hw_ep_num = 4, .style = FIFO_RX, .maxpacket = 512, },
-	{ .hw_ep_num = 5, .style = FIFO_TX, .maxpacket = 512, },
-	{ .hw_ep_num = 5, .style = FIFO_RX, .maxpacket = 512, },
-};
+अटल काष्ठा musb_fअगरo_cfg jz4770_musb_fअगरo_cfg[] = अणु
+	अणु .hw_ep_num = 1, .style = FIFO_TX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 1, .style = FIFO_RX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 2, .style = FIFO_TX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 2, .style = FIFO_RX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 3, .style = FIFO_TX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 3, .style = FIFO_RX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 4, .style = FIFO_TX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 4, .style = FIFO_RX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 5, .style = FIFO_TX, .maxpacket = 512, पूर्ण,
+	अणु .hw_ep_num = 5, .style = FIFO_RX, .maxpacket = 512, पूर्ण,
+पूर्ण;
 
-static struct musb_hdrc_config jz4770_musb_config = {
-	.multipoint	= 1,
+अटल काष्ठा musb_hdrc_config jz4770_musb_config = अणु
+	.multipoपूर्णांक	= 1,
 	.num_eps	= 11,
 	.ram_bits	= 11,
-	.fifo_cfg	= jz4770_musb_fifo_cfg,
-	.fifo_cfg_size	= ARRAY_SIZE(jz4770_musb_fifo_cfg),
-};
+	.fअगरo_cfg	= jz4770_musb_fअगरo_cfg,
+	.fअगरo_cfg_size	= ARRAY_SIZE(jz4770_musb_fअगरo_cfg),
+पूर्ण;
 
-static const struct musb_hdrc_platform_data jz4770_musb_pdata = {
+अटल स्थिर काष्ठा musb_hdrc_platक्रमm_data jz4770_musb_pdata = अणु
 	.mode		= MUSB_PERIPHERAL, /* TODO: support OTG */
 	.config		= &jz4770_musb_config,
-	.platform_ops	= &jz4740_musb_ops,
-};
+	.platक्रमm_ops	= &jz4740_musb_ops,
+पूर्ण;
 
-static int jz4740_probe(struct platform_device *pdev)
-{
-	struct device			*dev = &pdev->dev;
-	const struct musb_hdrc_platform_data *pdata;
-	struct platform_device		*musb;
-	struct jz4740_glue		*glue;
-	struct clk			*clk;
-	int				ret;
+अटल पूर्णांक jz4740_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device			*dev = &pdev->dev;
+	स्थिर काष्ठा musb_hdrc_platक्रमm_data *pdata;
+	काष्ठा platक्रमm_device		*musb;
+	काष्ठा jz4740_glue		*glue;
+	काष्ठा clk			*clk;
+	पूर्णांक				ret;
 
-	glue = devm_kzalloc(dev, sizeof(*glue), GFP_KERNEL);
-	if (!glue)
-		return -ENOMEM;
+	glue = devm_kzalloc(dev, माप(*glue), GFP_KERNEL);
+	अगर (!glue)
+		वापस -ENOMEM;
 
 	pdata = of_device_get_match_data(dev);
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(dev, "missing platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	musb = platform_device_alloc("musb-hdrc", PLATFORM_DEVID_AUTO);
-	if (!musb) {
+	musb = platक्रमm_device_alloc("musb-hdrc", PLATFORM_DEVID_AUTO);
+	अगर (!musb) अणु
 		dev_err(dev, "failed to allocate musb device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	clk = devm_clk_get(dev, "udc");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err(dev, "failed to get clock\n");
 		ret = PTR_ERR(clk);
-		goto err_platform_device_put;
-	}
+		जाओ err_platक्रमm_device_put;
+	पूर्ण
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable clock\n");
-		goto err_platform_device_put;
-	}
+		जाओ err_platक्रमm_device_put;
+	पूर्ण
 
 	musb->dev.parent		= dev;
 	musb->dev.dma_mask		= &musb->dev.coherent_dma_mask;
@@ -235,63 +236,63 @@ static int jz4740_probe(struct platform_device *pdev)
 	glue->pdev			= musb;
 	glue->clk			= clk;
 
-	platform_set_drvdata(pdev, glue);
+	platक्रमm_set_drvdata(pdev, glue);
 
-	ret = platform_device_add_resources(musb, pdev->resource,
+	ret = platक्रमm_device_add_resources(musb, pdev->resource,
 					    pdev->num_resources);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to add resources\n");
-		goto err_clk_disable;
-	}
+		जाओ err_clk_disable;
+	पूर्ण
 
-	ret = platform_device_add_data(musb, pdata, sizeof(*pdata));
-	if (ret) {
+	ret = platक्रमm_device_add_data(musb, pdata, माप(*pdata));
+	अगर (ret) अणु
 		dev_err(dev, "failed to add platform_data\n");
-		goto err_clk_disable;
-	}
+		जाओ err_clk_disable;
+	पूर्ण
 
-	ret = platform_device_add(musb);
-	if (ret) {
+	ret = platक्रमm_device_add(musb);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register musb device\n");
-		goto err_clk_disable;
-	}
+		जाओ err_clk_disable;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_clk_disable:
 	clk_disable_unprepare(clk);
-err_platform_device_put:
-	platform_device_put(musb);
-	return ret;
-}
+err_platक्रमm_device_put:
+	platक्रमm_device_put(musb);
+	वापस ret;
+पूर्ण
 
-static int jz4740_remove(struct platform_device *pdev)
-{
-	struct jz4740_glue *glue = platform_get_drvdata(pdev);
+अटल पूर्णांक jz4740_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा jz4740_glue *glue = platक्रमm_get_drvdata(pdev);
 
-	platform_device_unregister(glue->pdev);
+	platक्रमm_device_unरेजिस्टर(glue->pdev);
 	clk_disable_unprepare(glue->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id jz4740_musb_of_match[] = {
-	{ .compatible = "ingenic,jz4740-musb", .data = &jz4740_musb_pdata },
-	{ .compatible = "ingenic,jz4770-musb", .data = &jz4770_musb_pdata },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id jz4740_musb_of_match[] = अणु
+	अणु .compatible = "ingenic,jz4740-musb", .data = &jz4740_musb_pdata पूर्ण,
+	अणु .compatible = "ingenic,jz4770-musb", .data = &jz4770_musb_pdata पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, jz4740_musb_of_match);
 
-static struct platform_driver jz4740_driver = {
+अटल काष्ठा platक्रमm_driver jz4740_driver = अणु
 	.probe		= jz4740_probe,
-	.remove		= jz4740_remove,
-	.driver		= {
+	.हटाओ		= jz4740_हटाओ,
+	.driver		= अणु
 		.name	= "musb-jz4740",
 		.of_match_table = jz4740_musb_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 MODULE_DESCRIPTION("JZ4740 MUSB Glue Layer");
 MODULE_AUTHOR("Apelete Seketeli <apelete@seketeli.net>");
 MODULE_LICENSE("GPL v2");
-module_platform_driver(jz4740_driver);
+module_platक्रमm_driver(jz4740_driver);

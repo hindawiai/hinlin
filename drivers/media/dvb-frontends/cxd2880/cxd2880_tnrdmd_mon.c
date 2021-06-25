@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * cxd2880_tnrdmd_mon.c
  * Sony CXD2880 DVB-T2/T tuner + demodulator driver
@@ -7,71 +8,71 @@
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
-#include "cxd2880_common.h"
-#include "cxd2880_tnrdmd_mon.h"
+#समावेश "cxd2880_common.h"
+#समावेश "cxd2880_tnrdmd_mon.h"
 
-static const u8 rf_lvl_seq[2] = {
+अटल स्थिर u8 rf_lvl_seq[2] = अणु
 	0x80, 0x00,
-};
+पूर्ण;
 
-int cxd2880_tnrdmd_mon_rf_lvl(struct cxd2880_tnrdmd *tnr_dmd,
-			      int *rf_lvl_db)
-{
+पूर्णांक cxd2880_tnrdmd_mon_rf_lvl(काष्ठा cxd2880_tnrdmd *tnr_dmd,
+			      पूर्णांक *rf_lvl_db)
+अणु
 	u8 rdata[2];
-	int ret;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !rf_lvl_db)
-		return -EINVAL;
+	अगर (!tnr_dmd || !rf_lvl_db)
+		वापस -EINVAL;
 
-	if (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (tnr_dmd->state != CXD2880_TNRDMD_STATE_ACTIVE)
+		वापस -EINVAL;
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x00);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x10, 0x01);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_SYS,
 				     0x00, 0x10);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tnr_dmd->io->write_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_regs(tnr_dmd->io,
 				      CXD2880_IO_TGT_SYS,
 				      0x5b, rf_lvl_seq, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	usleep_range(2000, 3000);
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_SYS,
 				     0x00, 0x1a);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_SYS,
 				     0x15, rdata, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (rdata[0] || rdata[1])
-		return -EINVAL;
+	अगर (rdata[0] || rdata[1])
+		वापस -EINVAL;
 
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_SYS,
 				     0x11, rdata, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*rf_lvl_db =
 	    cxd2880_convert2s_complement((rdata[0] << 3) |
@@ -79,72 +80,72 @@ int cxd2880_tnrdmd_mon_rf_lvl(struct cxd2880_tnrdmd *tnr_dmd,
 
 	*rf_lvl_db *= 125;
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x00, 0x00);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_DMD,
 				     0x10, 0x00);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (tnr_dmd->rf_lvl_cmpstn)
+	अगर (tnr_dmd->rf_lvl_cmpstn)
 		ret = tnr_dmd->rf_lvl_cmpstn(tnr_dmd, rf_lvl_db);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2880_tnrdmd_mon_rf_lvl_sub(struct cxd2880_tnrdmd *tnr_dmd,
-				  int *rf_lvl_db)
-{
-	if (!tnr_dmd || !rf_lvl_db)
-		return -EINVAL;
+पूर्णांक cxd2880_tnrdmd_mon_rf_lvl_sub(काष्ठा cxd2880_tnrdmd *tnr_dmd,
+				  पूर्णांक *rf_lvl_db)
+अणु
+	अगर (!tnr_dmd || !rf_lvl_db)
+		वापस -EINVAL;
 
-	if (tnr_dmd->diver_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
+		वापस -EINVAL;
 
-	return cxd2880_tnrdmd_mon_rf_lvl(tnr_dmd->diver_sub, rf_lvl_db);
-}
+	वापस cxd2880_tnrdmd_mon_rf_lvl(tnr_dmd->भागer_sub, rf_lvl_db);
+पूर्ण
 
-int cxd2880_tnrdmd_mon_internal_cpu_status(struct cxd2880_tnrdmd
+पूर्णांक cxd2880_tnrdmd_mon_पूर्णांकernal_cpu_status(काष्ठा cxd2880_tnrdmd
 					   *tnr_dmd, u16 *status)
-{
-	u8 data[2] = { 0 };
-	int ret;
+अणु
+	u8 data[2] = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
-	if (!tnr_dmd || !status)
-		return -EINVAL;
+	अगर (!tnr_dmd || !status)
+		वापस -EINVAL;
 
-	ret = tnr_dmd->io->write_reg(tnr_dmd->io,
+	ret = tnr_dmd->io->ग_लिखो_reg(tnr_dmd->io,
 				     CXD2880_IO_TGT_SYS,
 				     0x00, 0x1a);
-	if (ret)
-		return ret;
-	ret = tnr_dmd->io->read_regs(tnr_dmd->io,
+	अगर (ret)
+		वापस ret;
+	ret = tnr_dmd->io->पढ़ो_regs(tnr_dmd->io,
 				     CXD2880_IO_TGT_SYS,
 				     0x15, data, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*status = (data[0] << 8) | data[1];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cxd2880_tnrdmd_mon_internal_cpu_status_sub(struct
+पूर्णांक cxd2880_tnrdmd_mon_पूर्णांकernal_cpu_status_sub(काष्ठा
 					       cxd2880_tnrdmd
 					       *tnr_dmd,
 					       u16 *status)
-{
-	if (!tnr_dmd || !status)
-		return -EINVAL;
+अणु
+	अगर (!tnr_dmd || !status)
+		वापस -EINVAL;
 
-	if (tnr_dmd->diver_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
-		return -EINVAL;
+	अगर (tnr_dmd->भागer_mode != CXD2880_TNRDMD_DIVERMODE_MAIN)
+		वापस -EINVAL;
 
-	return cxd2880_tnrdmd_mon_internal_cpu_status(tnr_dmd->diver_sub,
+	वापस cxd2880_tnrdmd_mon_पूर्णांकernal_cpu_status(tnr_dmd->भागer_sub,
 						      status);
-}
+पूर्ण

@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * timb_video.h Platform struct for the Timberdale video driver
+ * timb_video.h Platक्रमm काष्ठा क्रम the Timberdale video driver
  * Copyright (c) 2009-2010 Intel Corporation
  */
 
-#ifndef _TIMB_VIDEO_
-#define _TIMB_VIDEO_ 1
+#अगर_अघोषित _TIMB_VIDEO_
+#घोषणा _TIMB_VIDEO_ 1
 
-#include <linux/i2c.h>
+#समावेश <linux/i2c.h>
 
-struct timb_video_platform_data {
-	int dma_channel;
-	int i2c_adapter; /* The I2C adapter where the encoder is attached */
-	struct {
-		const char *module_name;
-		struct i2c_board_info *info;
-	} encoder;
-};
+काष्ठा timb_video_platक्रमm_data अणु
+	पूर्णांक dma_channel;
+	पूर्णांक i2c_adapter; /* The I2C adapter where the encoder is attached */
+	काष्ठा अणु
+		स्थिर अक्षर *module_name;
+		काष्ठा i2c_board_info *info;
+	पूर्ण encoder;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

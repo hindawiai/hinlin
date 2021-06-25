@@ -1,55 +1,56 @@
+<शैली गुरु>
 /*
  *  linux/drivers/video/console/fbcon_ud.c -- Software Rotation - 180 degrees
  *
  *      Copyright (C) 2005 Antonino Daplas <adaplas @pol.net>
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive for
+ *  License.  See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/fb.h>
-#include <linux/vt_kern.h>
-#include <linux/console.h>
-#include <asm/types.h>
-#include "fbcon.h"
-#include "fbcon_rotate.h"
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/fb.h>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/console.h>
+#समावेश <यंत्र/types.h>
+#समावेश "fbcon.h"
+#समावेश "fbcon_rotate.h"
 
 /*
  * Rotation 180 degrees
  */
 
-static void ud_update_attr(u8 *dst, u8 *src, int attribute,
-				  struct vc_data *vc)
-{
-	int i, offset = (vc->vc_font.height < 10) ? 1 : 2;
-	int width = (vc->vc_font.width + 7) >> 3;
-	unsigned int cellsize = vc->vc_font.height * width;
+अटल व्योम ud_update_attr(u8 *dst, u8 *src, पूर्णांक attribute,
+				  काष्ठा vc_data *vc)
+अणु
+	पूर्णांक i, offset = (vc->vc_font.height < 10) ? 1 : 2;
+	पूर्णांक width = (vc->vc_font.width + 7) >> 3;
+	अचिन्हित पूर्णांक cellsize = vc->vc_font.height * width;
 	u8 c;
 
 	offset = offset * width;
 
-	for (i = 0; i < cellsize; i++) {
+	क्रम (i = 0; i < cellsize; i++) अणु
 		c = src[i];
-		if (attribute & FBCON_ATTRIBUTE_UNDERLINE && i < offset)
+		अगर (attribute & FBCON_ATTRIBUTE_UNDERLINE && i < offset)
 			c = 0xff;
-		if (attribute & FBCON_ATTRIBUTE_BOLD)
+		अगर (attribute & FBCON_ATTRIBUTE_BOLD)
 			c |= c << 1;
-		if (attribute & FBCON_ATTRIBUTE_REVERSE)
+		अगर (attribute & FBCON_ATTRIBUTE_REVERSE)
 			c = ~c;
 		dst[i] = c;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void ud_bmove(struct vc_data *vc, struct fb_info *info, int sy,
-		     int sx, int dy, int dx, int height, int width)
-{
-	struct fbcon_ops *ops = info->fbcon_par;
-	struct fb_copyarea area;
+अटल व्योम ud_bmove(काष्ठा vc_data *vc, काष्ठा fb_info *info, पूर्णांक sy,
+		     पूर्णांक sx, पूर्णांक dy, पूर्णांक dx, पूर्णांक height, पूर्णांक width)
+अणु
+	काष्ठा fbcon_ops *ops = info->fbcon_par;
+	काष्ठा fb_copyarea area;
 	u32 vyres = GETVYRES(ops->p->scrollmode, info);
 	u32 vxres = GETVXRES(ops->p->scrollmode, info);
 
@@ -61,18 +62,18 @@ static void ud_bmove(struct vc_data *vc, struct fb_info *info, int sy,
 	area.width  = width * vc->vc_font.width;
 
 	info->fbops->fb_copyarea(info, &area);
-}
+पूर्ण
 
-static void ud_clear(struct vc_data *vc, struct fb_info *info, int sy,
-		     int sx, int height, int width)
-{
-	struct fbcon_ops *ops = info->fbcon_par;
-	struct fb_fillrect region;
-	int bgshift = (vc->vc_hi_font_mask) ? 13 : 12;
+अटल व्योम ud_clear(काष्ठा vc_data *vc, काष्ठा fb_info *info, पूर्णांक sy,
+		     पूर्णांक sx, पूर्णांक height, पूर्णांक width)
+अणु
+	काष्ठा fbcon_ops *ops = info->fbcon_par;
+	काष्ठा fb_fillrect region;
+	पूर्णांक bgshअगरt = (vc->vc_hi_font_mask) ? 13 : 12;
 	u32 vyres = GETVYRES(ops->p->scrollmode, info);
 	u32 vxres = GETVXRES(ops->p->scrollmode, info);
 
-	region.color = attr_bgcol_ec(bgshift,vc,info);
+	region.color = attr_bgcol_ec(bgshअगरt,vc,info);
 	region.dy = vyres - ((sy + height) * vc->vc_font.height);
 	region.dx = vxres - ((sx + width) *  vc->vc_font.width);
 	region.width = width * vc->vc_font.width;
@@ -80,93 +81,93 @@ static void ud_clear(struct vc_data *vc, struct fb_info *info, int sy,
 	region.rop = ROP_COPY;
 
 	info->fbops->fb_fillrect(info, &region);
-}
+पूर्ण
 
-static inline void ud_putcs_aligned(struct vc_data *vc, struct fb_info *info,
-				    const u16 *s, u32 attr, u32 cnt,
+अटल अंतरभूत व्योम ud_अ_दोs_aligned(काष्ठा vc_data *vc, काष्ठा fb_info *info,
+				    स्थिर u16 *s, u32 attr, u32 cnt,
 				    u32 d_pitch, u32 s_pitch, u32 cellsize,
-				    struct fb_image *image, u8 *buf, u8 *dst)
-{
-	struct fbcon_ops *ops = info->fbcon_par;
-	u16 charmask = vc->vc_hi_font_mask ? 0x1ff : 0xff;
+				    काष्ठा fb_image *image, u8 *buf, u8 *dst)
+अणु
+	काष्ठा fbcon_ops *ops = info->fbcon_par;
+	u16 अक्षरmask = vc->vc_hi_font_mask ? 0x1ff : 0xff;
 	u32 idx = vc->vc_font.width >> 3;
 	u8 *src;
 
-	while (cnt--) {
-		src = ops->fontbuffer + (scr_readw(s--) & charmask)*cellsize;
+	जबतक (cnt--) अणु
+		src = ops->fontbuffer + (scr_पढ़ोw(s--) & अक्षरmask)*cellsize;
 
-		if (attr) {
+		अगर (attr) अणु
 			ud_update_attr(buf, src, attr, vc);
 			src = buf;
-		}
+		पूर्ण
 
-		if (likely(idx == 1))
+		अगर (likely(idx == 1))
 			__fb_pad_aligned_buffer(dst, d_pitch, src, idx,
 						image->height);
-		else
+		अन्यथा
 			fb_pad_aligned_buffer(dst, d_pitch, src, idx,
 					      image->height);
 
 		dst += s_pitch;
-	}
+	पूर्ण
 
 	info->fbops->fb_imageblit(info, image);
-}
+पूर्ण
 
-static inline void ud_putcs_unaligned(struct vc_data *vc,
-				      struct fb_info *info, const u16 *s,
+अटल अंतरभूत व्योम ud_अ_दोs_unaligned(काष्ठा vc_data *vc,
+				      काष्ठा fb_info *info, स्थिर u16 *s,
 				      u32 attr, u32 cnt, u32 d_pitch,
 				      u32 s_pitch, u32 cellsize,
-				      struct fb_image *image, u8 *buf,
+				      काष्ठा fb_image *image, u8 *buf,
 				      u8 *dst)
-{
-	struct fbcon_ops *ops = info->fbcon_par;
-	u16 charmask = vc->vc_hi_font_mask ? 0x1ff : 0xff;
-	u32 shift_low = 0, mod = vc->vc_font.width % 8;
-	u32 shift_high = 8;
+अणु
+	काष्ठा fbcon_ops *ops = info->fbcon_par;
+	u16 अक्षरmask = vc->vc_hi_font_mask ? 0x1ff : 0xff;
+	u32 shअगरt_low = 0, mod = vc->vc_font.width % 8;
+	u32 shअगरt_high = 8;
 	u32 idx = vc->vc_font.width >> 3;
 	u8 *src;
 
-	while (cnt--) {
-		src = ops->fontbuffer + (scr_readw(s--) & charmask)*cellsize;
+	जबतक (cnt--) अणु
+		src = ops->fontbuffer + (scr_पढ़ोw(s--) & अक्षरmask)*cellsize;
 
-		if (attr) {
+		अगर (attr) अणु
 			ud_update_attr(buf, src, attr, vc);
 			src = buf;
-		}
+		पूर्ण
 
 		fb_pad_unaligned_buffer(dst, d_pitch, src, idx,
-					image->height, shift_high,
-					shift_low, mod);
-		shift_low += mod;
-		dst += (shift_low >= 8) ? s_pitch : s_pitch - 1;
-		shift_low &= 7;
-		shift_high = 8 - shift_low;
-	}
+					image->height, shअगरt_high,
+					shअगरt_low, mod);
+		shअगरt_low += mod;
+		dst += (shअगरt_low >= 8) ? s_pitch : s_pitch - 1;
+		shअगरt_low &= 7;
+		shअगरt_high = 8 - shअगरt_low;
+	पूर्ण
 
 	info->fbops->fb_imageblit(info, image);
 
-}
+पूर्ण
 
-static void ud_putcs(struct vc_data *vc, struct fb_info *info,
-		      const unsigned short *s, int count, int yy, int xx,
-		      int fg, int bg)
-{
-	struct fb_image image;
-	struct fbcon_ops *ops = info->fbcon_par;
+अटल व्योम ud_अ_दोs(काष्ठा vc_data *vc, काष्ठा fb_info *info,
+		      स्थिर अचिन्हित लघु *s, पूर्णांक count, पूर्णांक yy, पूर्णांक xx,
+		      पूर्णांक fg, पूर्णांक bg)
+अणु
+	काष्ठा fb_image image;
+	काष्ठा fbcon_ops *ops = info->fbcon_par;
 	u32 width = (vc->vc_font.width + 7)/8;
 	u32 cellsize = width * vc->vc_font.height;
 	u32 maxcnt = info->pixmap.size/cellsize;
 	u32 scan_align = info->pixmap.scan_align - 1;
 	u32 buf_align = info->pixmap.buf_align - 1;
 	u32 mod = vc->vc_font.width % 8, cnt, pitch, size;
-	u32 attribute = get_attribute(info, scr_readw(s));
-	u8 *dst, *buf = NULL;
+	u32 attribute = get_attribute(info, scr_पढ़ोw(s));
+	u8 *dst, *buf = शून्य;
 	u32 vyres = GETVYRES(ops->p->scrollmode, info);
 	u32 vxres = GETVXRES(ops->p->scrollmode, info);
 
-	if (!ops->fontbuffer)
-		return;
+	अगर (!ops->fontbuffer)
+		वापस;
 
 	image.fg_color = fg;
 	image.bg_color = bg;
@@ -175,18 +176,18 @@ static void ud_putcs(struct vc_data *vc, struct fb_info *info,
 	image.height = vc->vc_font.height;
 	image.depth = 1;
 
-	if (attribute) {
-		buf = kmalloc(cellsize, GFP_KERNEL);
-		if (!buf)
-			return;
-	}
+	अगर (attribute) अणु
+		buf = kदो_स्मृति(cellsize, GFP_KERNEL);
+		अगर (!buf)
+			वापस;
+	पूर्ण
 
 	s += count - 1;
 
-	while (count) {
-		if (count > maxcnt)
+	जबतक (count) अणु
+		अगर (count > maxcnt)
 			cnt = maxcnt;
-		else
+		अन्यथा
 			cnt = count;
 
 		image.width = vc->vc_font.width * cnt;
@@ -197,11 +198,11 @@ static void ud_putcs(struct vc_data *vc, struct fb_info *info,
 		dst = fb_get_buffer_offset(info, &info->pixmap, size);
 		image.data = dst;
 
-		if (!mod)
-			ud_putcs_aligned(vc, info, s, attribute, cnt, pitch,
+		अगर (!mod)
+			ud_अ_दोs_aligned(vc, info, s, attribute, cnt, pitch,
 					 width, cellsize, &image, buf, dst);
-		else
-			ud_putcs_unaligned(vc, info, s, attribute, cnt, pitch,
+		अन्यथा
+			ud_अ_दोs_unaligned(vc, info, s, attribute, cnt, pitch,
 					   width, cellsize, &image,
 					   buf, dst);
 
@@ -209,179 +210,179 @@ static void ud_putcs(struct vc_data *vc, struct fb_info *info,
 		count -= cnt;
 		s -= cnt;
 		xx += cnt;
-	}
+	पूर्ण
 
-	/* buf is always NULL except when in monochrome mode, so in this case
-	   it's a gain to check buf against NULL even though kfree() handles
-	   NULL pointers just fine */
-	if (unlikely(buf))
-		kfree(buf);
+	/* buf is always शून्य except when in monochrome mode, so in this हाल
+	   it's a gain to check buf against शून्य even though kमुक्त() handles
+	   शून्य poपूर्णांकers just fine */
+	अगर (unlikely(buf))
+		kमुक्त(buf);
 
-}
+पूर्ण
 
-static void ud_clear_margins(struct vc_data *vc, struct fb_info *info,
-			     int color, int bottom_only)
-{
-	unsigned int cw = vc->vc_font.width;
-	unsigned int ch = vc->vc_font.height;
-	unsigned int rw = info->var.xres - (vc->vc_cols*cw);
-	unsigned int bh = info->var.yres - (vc->vc_rows*ch);
-	struct fb_fillrect region;
+अटल व्योम ud_clear_margins(काष्ठा vc_data *vc, काष्ठा fb_info *info,
+			     पूर्णांक color, पूर्णांक bottom_only)
+अणु
+	अचिन्हित पूर्णांक cw = vc->vc_font.width;
+	अचिन्हित पूर्णांक ch = vc->vc_font.height;
+	अचिन्हित पूर्णांक rw = info->var.xres - (vc->vc_cols*cw);
+	अचिन्हित पूर्णांक bh = info->var.yres - (vc->vc_rows*ch);
+	काष्ठा fb_fillrect region;
 
 	region.color = color;
 	region.rop = ROP_COPY;
 
-	if ((int) rw > 0 && !bottom_only) {
+	अगर ((पूर्णांक) rw > 0 && !bottom_only) अणु
 		region.dy = 0;
 		region.dx = info->var.xoffset;
 		region.width  = rw;
-		region.height = info->var.yres_virtual;
+		region.height = info->var.yres_भव;
 		info->fbops->fb_fillrect(info, &region);
-	}
+	पूर्ण
 
-	if ((int) bh > 0) {
+	अगर ((पूर्णांक) bh > 0) अणु
 		region.dy = info->var.yoffset;
 		region.dx = info->var.xoffset;
                 region.height  = bh;
                 region.width = info->var.xres;
 		info->fbops->fb_fillrect(info, &region);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ud_cursor(struct vc_data *vc, struct fb_info *info, int mode,
-		      int fg, int bg)
-{
-	struct fb_cursor cursor;
-	struct fbcon_ops *ops = info->fbcon_par;
-	unsigned short charmask = vc->vc_hi_font_mask ? 0x1ff : 0xff;
-	int w = (vc->vc_font.width + 7) >> 3, c;
-	int y = real_y(ops->p, vc->state.y);
-	int attribute, use_sw = vc->vc_cursor_type & CUR_SW;
-	int err = 1, dx, dy;
-	char *src;
+अटल व्योम ud_cursor(काष्ठा vc_data *vc, काष्ठा fb_info *info, पूर्णांक mode,
+		      पूर्णांक fg, पूर्णांक bg)
+अणु
+	काष्ठा fb_cursor cursor;
+	काष्ठा fbcon_ops *ops = info->fbcon_par;
+	अचिन्हित लघु अक्षरmask = vc->vc_hi_font_mask ? 0x1ff : 0xff;
+	पूर्णांक w = (vc->vc_font.width + 7) >> 3, c;
+	पूर्णांक y = real_y(ops->p, vc->state.y);
+	पूर्णांक attribute, use_sw = vc->vc_cursor_type & CUR_SW;
+	पूर्णांक err = 1, dx, dy;
+	अक्षर *src;
 	u32 vyres = GETVYRES(ops->p->scrollmode, info);
 	u32 vxres = GETVXRES(ops->p->scrollmode, info);
 
-	if (!ops->fontbuffer)
-		return;
+	अगर (!ops->fontbuffer)
+		वापस;
 
 	cursor.set = 0;
 
- 	c = scr_readw((u16 *) vc->vc_pos);
+ 	c = scr_पढ़ोw((u16 *) vc->vc_pos);
 	attribute = get_attribute(info, c);
-	src = ops->fontbuffer + ((c & charmask) * (w * vc->vc_font.height));
+	src = ops->fontbuffer + ((c & अक्षरmask) * (w * vc->vc_font.height));
 
-	if (ops->cursor_state.image.data != src ||
-	    ops->cursor_reset) {
+	अगर (ops->cursor_state.image.data != src ||
+	    ops->cursor_reset) अणु
 	    ops->cursor_state.image.data = src;
 	    cursor.set |= FB_CUR_SETIMAGE;
-	}
+	पूर्ण
 
-	if (attribute) {
+	अगर (attribute) अणु
 		u8 *dst;
 
-		dst = kmalloc_array(w, vc->vc_font.height, GFP_ATOMIC);
-		if (!dst)
-			return;
-		kfree(ops->cursor_data);
+		dst = kदो_स्मृति_array(w, vc->vc_font.height, GFP_ATOMIC);
+		अगर (!dst)
+			वापस;
+		kमुक्त(ops->cursor_data);
 		ops->cursor_data = dst;
 		ud_update_attr(dst, src, attribute, vc);
 		src = dst;
-	}
+	पूर्ण
 
-	if (ops->cursor_state.image.fg_color != fg ||
+	अगर (ops->cursor_state.image.fg_color != fg ||
 	    ops->cursor_state.image.bg_color != bg ||
-	    ops->cursor_reset) {
+	    ops->cursor_reset) अणु
 		ops->cursor_state.image.fg_color = fg;
 		ops->cursor_state.image.bg_color = bg;
 		cursor.set |= FB_CUR_SETCMAP;
-	}
+	पूर्ण
 
-	if (ops->cursor_state.image.height != vc->vc_font.height ||
+	अगर (ops->cursor_state.image.height != vc->vc_font.height ||
 	    ops->cursor_state.image.width != vc->vc_font.width ||
-	    ops->cursor_reset) {
+	    ops->cursor_reset) अणु
 		ops->cursor_state.image.height = vc->vc_font.height;
 		ops->cursor_state.image.width = vc->vc_font.width;
 		cursor.set |= FB_CUR_SETSIZE;
-	}
+	पूर्ण
 
 	dy = vyres - ((y * vc->vc_font.height) + vc->vc_font.height);
 	dx = vxres - ((vc->state.x * vc->vc_font.width) + vc->vc_font.width);
 
-	if (ops->cursor_state.image.dx != dx ||
+	अगर (ops->cursor_state.image.dx != dx ||
 	    ops->cursor_state.image.dy != dy ||
-	    ops->cursor_reset) {
+	    ops->cursor_reset) अणु
 		ops->cursor_state.image.dx = dx;
 		ops->cursor_state.image.dy = dy;
 		cursor.set |= FB_CUR_SETPOS;
-	}
+	पूर्ण
 
-	if (ops->cursor_state.hot.x || ops->cursor_state.hot.y ||
-	    ops->cursor_reset) {
+	अगर (ops->cursor_state.hot.x || ops->cursor_state.hot.y ||
+	    ops->cursor_reset) अणु
 		ops->cursor_state.hot.x = cursor.hot.y = 0;
 		cursor.set |= FB_CUR_SETHOT;
-	}
+	पूर्ण
 
-	if (cursor.set & FB_CUR_SETSIZE ||
+	अगर (cursor.set & FB_CUR_SETSIZE ||
 	    vc->vc_cursor_type != ops->p->cursor_shape ||
-	    ops->cursor_state.mask == NULL ||
-	    ops->cursor_reset) {
-		char *mask = kmalloc_array(w, vc->vc_font.height, GFP_ATOMIC);
-		int cur_height, size, i = 0;
+	    ops->cursor_state.mask == शून्य ||
+	    ops->cursor_reset) अणु
+		अक्षर *mask = kदो_स्मृति_array(w, vc->vc_font.height, GFP_ATOMIC);
+		पूर्णांक cur_height, size, i = 0;
 		u8 msk = 0xff;
 
-		if (!mask)
-			return;
+		अगर (!mask)
+			वापस;
 
-		kfree(ops->cursor_state.mask);
+		kमुक्त(ops->cursor_state.mask);
 		ops->cursor_state.mask = mask;
 
 		ops->p->cursor_shape = vc->vc_cursor_type;
 		cursor.set |= FB_CUR_SETSHAPE;
 
-		switch (CUR_SIZE(ops->p->cursor_shape)) {
-		case CUR_NONE:
+		चयन (CUR_SIZE(ops->p->cursor_shape)) अणु
+		हाल CUR_NONE:
 			cur_height = 0;
-			break;
-		case CUR_UNDERLINE:
+			अवरोध;
+		हाल CUR_UNDERLINE:
 			cur_height = (vc->vc_font.height < 10) ? 1 : 2;
-			break;
-		case CUR_LOWER_THIRD:
+			अवरोध;
+		हाल CUR_LOWER_THIRD:
 			cur_height = vc->vc_font.height/3;
-			break;
-		case CUR_LOWER_HALF:
+			अवरोध;
+		हाल CUR_LOWER_HALF:
 			cur_height = vc->vc_font.height >> 1;
-			break;
-		case CUR_TWO_THIRDS:
+			अवरोध;
+		हाल CUR_TWO_THIRDS:
 			cur_height = (vc->vc_font.height << 1)/3;
-			break;
-		case CUR_BLOCK:
-		default:
+			अवरोध;
+		हाल CUR_BLOCK:
+		शेष:
 			cur_height = vc->vc_font.height;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		size = cur_height * w;
 
-		while (size--)
+		जबतक (size--)
 			mask[i++] = msk;
 
 		size = (vc->vc_font.height - cur_height) * w;
 
-		while (size--)
+		जबतक (size--)
 			mask[i++] = ~msk;
-	}
+	पूर्ण
 
-	switch (mode) {
-	case CM_ERASE:
+	चयन (mode) अणु
+	हाल CM_ERASE:
 		ops->cursor_state.enable = 0;
-		break;
-	case CM_DRAW:
-	case CM_MOVE:
-	default:
+		अवरोध;
+	हाल CM_DRAW:
+	हाल CM_MOVE:
+	शेष:
 		ops->cursor_state.enable = (use_sw) ? 0 : 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cursor.image.data = src;
 	cursor.image.fg_color = ops->cursor_state.image.fg_color;
@@ -397,26 +398,26 @@ static void ud_cursor(struct vc_data *vc, struct fb_info *info, int mode,
 	cursor.image.depth = 1;
 	cursor.rop = ROP_XOR;
 
-	if (info->fbops->fb_cursor)
+	अगर (info->fbops->fb_cursor)
 		err = info->fbops->fb_cursor(info, &cursor);
 
-	if (err)
+	अगर (err)
 		soft_cursor(info, &cursor);
 
 	ops->cursor_reset = 0;
-}
+पूर्ण
 
-static int ud_update_start(struct fb_info *info)
-{
-	struct fbcon_ops *ops = info->fbcon_par;
-	int xoffset, yoffset;
+अटल पूर्णांक ud_update_start(काष्ठा fb_info *info)
+अणु
+	काष्ठा fbcon_ops *ops = info->fbcon_par;
+	पूर्णांक xoffset, yoffset;
 	u32 vyres = GETVYRES(ops->p->scrollmode, info);
 	u32 vxres = GETVXRES(ops->p->scrollmode, info);
-	int err;
+	पूर्णांक err;
 
 	xoffset = vxres - info->var.xres - ops->var.xoffset;
 	yoffset = vyres - info->var.yres - ops->var.yoffset;
-	if (yoffset < 0)
+	अगर (yoffset < 0)
 		yoffset += vyres;
 	ops->var.xoffset = xoffset;
 	ops->var.yoffset = yoffset;
@@ -424,15 +425,15 @@ static int ud_update_start(struct fb_info *info)
 	ops->var.xoffset = info->var.xoffset;
 	ops->var.yoffset = info->var.yoffset;
 	ops->var.vmode = info->var.vmode;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void fbcon_rotate_ud(struct fbcon_ops *ops)
-{
+व्योम fbcon_rotate_ud(काष्ठा fbcon_ops *ops)
+अणु
 	ops->bmove = ud_bmove;
 	ops->clear = ud_clear;
-	ops->putcs = ud_putcs;
+	ops->अ_दोs = ud_अ_दोs;
 	ops->clear_margins = ud_clear_margins;
 	ops->cursor = ud_cursor;
 	ops->update_start = ud_update_start;
-}
+पूर्ण

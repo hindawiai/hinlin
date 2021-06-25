@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap1/board-h2.c
  *
- * Board specific inits for OMAP-1610 H2
+ * Board specअगरic inits क्रम OMAP-1610 H2
  *
  * Copyright (C) 2001 RidgeRun, Inc.
  * Author: Greg Lonnon <glonnon@ridgerun.com>
  *
  * Copyright (C) 2002 MontaVista Software, Inc.
  *
- * Separated FPGA interrupts from innovator1510.c and cleaned up for 2.6
+ * Separated FPGA पूर्णांकerrupts from innovator1510.c and cleaned up क्रम 2.6
  * Copyright (C) 2004 Nokia Corporation by Tony Lindrgen <tony@atomide.com>
  *
- * H2 specific changes and cleanup
+ * H2 specअगरic changes and cleanup
  * Copyright (C) 2004 Nokia Corporation by Imre Deak <imre.deak@nokia.com>
  */
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/platnand.h>
-#include <linux/mtd/physmap.h>
-#include <linux/input.h>
-#include <linux/mfd/tps65010.h>
-#include <linux/smc91x.h>
-#include <linux/omapfb.h>
-#include <linux/platform_data/gpio-omap.h>
-#include <linux/leds.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/platnand.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/input.h>
+#समावेश <linux/mfd/tps65010.h>
+#समावेश <linux/smc91x.h>
+#समावेश <linux/omapfb.h>
+#समावेश <linux/platक्रमm_data/gpio-omap.h>
+#समावेश <linux/leds.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <mach/mux.h>
-#include <linux/omap-dma.h>
-#include <mach/tc.h>
-#include <linux/platform_data/keypad-omap.h>
-#include "flash.h"
+#समावेश <mach/mux.h>
+#समावेश <linux/omap-dma.h>
+#समावेश <mach/tc.h>
+#समावेश <linux/platक्रमm_data/keypad-omap.h>
+#समावेश "flash.h"
 
-#include <mach/hardware.h>
-#include <mach/usb.h>
+#समावेश <mach/hardware.h>
+#समावेश <mach/usb.h>
 
-#include "common.h"
-#include "board-h2.h"
+#समावेश "common.h"
+#समावेश "board-h2.h"
 
 /* The first 16 SoC GPIO lines are on this GPIO chip */
-#define OMAP_GPIO_LABEL			"gpio-0-15"
+#घोषणा OMAP_GPIO_LABEL			"gpio-0-15"
 
 /* At OMAP1610 Innovator the Ethernet is directly connected to CS1 */
-#define OMAP1610_ETHR_START		0x04000300
+#घोषणा OMAP1610_ETHR_START		0x04000300
 
-static const unsigned int h2_keymap[] = {
+अटल स्थिर अचिन्हित पूर्णांक h2_keymap[] = अणु
 	KEY(0, 0, KEY_LEFT),
 	KEY(1, 0, KEY_RIGHT),
 	KEY(2, 0, KEY_3),
@@ -89,301 +90,301 @@ static const unsigned int h2_keymap[] = {
 	KEY(2, 5, KEY_F15),
 	KEY(3, 5, KEY_F16),
 	KEY(4, 5, KEY_SLEEP),
-};
+पूर्ण;
 
-static struct mtd_partition h2_nor_partitions[] = {
+अटल काष्ठा mtd_partition h2_nor_partitions[] = अणु
 	/* bootloader (U-Boot, etc) in first sector */
-	{
+	अणु
 	      .name		= "bootloader",
 	      .offset		= 0,
 	      .size		= SZ_128K,
-	      .mask_flags	= MTD_WRITEABLE, /* force read-only */
-	},
+	      .mask_flags	= MTD_WRITEABLE, /* क्रमce पढ़ो-only */
+	पूर्ण,
 	/* bootloader params in the next sector */
-	{
+	अणु
 	      .name		= "params",
 	      .offset		= MTDPART_OFS_APPEND,
 	      .size		= SZ_128K,
 	      .mask_flags	= 0,
-	},
+	पूर्ण,
 	/* kernel */
-	{
+	अणु
 	      .name		= "kernel",
 	      .offset		= MTDPART_OFS_APPEND,
 	      .size		= SZ_2M,
 	      .mask_flags	= 0
-	},
-	/* file system */
-	{
+	पूर्ण,
+	/* file प्रणाली */
+	अणु
 	      .name		= "filesystem",
 	      .offset		= MTDPART_OFS_APPEND,
 	      .size		= MTDPART_SIZ_FULL,
 	      .mask_flags	= 0
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct physmap_flash_data h2_nor_data = {
+अटल काष्ठा physmap_flash_data h2_nor_data = अणु
 	.width		= 2,
 	.set_vpp	= omap1_set_vpp,
 	.parts		= h2_nor_partitions,
 	.nr_parts	= ARRAY_SIZE(h2_nor_partitions),
-};
+पूर्ण;
 
-static struct resource h2_nor_resource = {
+अटल काष्ठा resource h2_nor_resource = अणु
 	/* This is on CS3, wherever it's mapped */
 	.flags		= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device h2_nor_device = {
+अटल काष्ठा platक्रमm_device h2_nor_device = अणु
 	.name		= "physmap-flash",
 	.id		= 0,
-	.dev		= {
-		.platform_data	= &h2_nor_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data	= &h2_nor_data,
+	पूर्ण,
 	.num_resources	= 1,
 	.resource	= &h2_nor_resource,
-};
+पूर्ण;
 
-static struct mtd_partition h2_nand_partitions[] = {
-#if 0
-	/* REVISIT:  enable these partitions if you make NAND BOOT
+अटल काष्ठा mtd_partition h2_nand_partitions[] = अणु
+#अगर 0
+	/* REVISIT:  enable these partitions अगर you make न_अंकD BOOT
 	 * work on your H2 (rev C or newer); published versions of
 	 * x-load only support P2 and H3.
 	 */
-	{
+	अणु
 		.name		= "xloader",
 		.offset		= 0,
 		.size		= 64 * 1024,
-		.mask_flags	= MTD_WRITEABLE,	/* force read-only */
-	},
-	{
+		.mask_flags	= MTD_WRITEABLE,	/* क्रमce पढ़ो-only */
+	पूर्ण,
+	अणु
 		.name		= "bootloader",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 256 * 1024,
-		.mask_flags	= MTD_WRITEABLE,	/* force read-only */
-	},
-	{
+		.mask_flags	= MTD_WRITEABLE,	/* क्रमce पढ़ो-only */
+	पूर्ण,
+	अणु
 		.name		= "params",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 192 * 1024,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "kernel",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 2 * SZ_1M,
-	},
-#endif
-	{
+	पूर्ण,
+#पूर्ण_अगर
+	अणु
 		.name		= "filesystem",
 		.size		= MTDPART_SIZ_FULL,
 		.offset		= MTDPART_OFS_APPEND,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define H2_NAND_RB_GPIO_PIN	62
+#घोषणा H2_न_अंकD_RB_GPIO_PIN	62
 
-static int h2_nand_dev_ready(struct nand_chip *chip)
-{
-	return gpio_get_value(H2_NAND_RB_GPIO_PIN);
-}
+अटल पूर्णांक h2_nand_dev_पढ़ोy(काष्ठा nand_chip *chip)
+अणु
+	वापस gpio_get_value(H2_न_अंकD_RB_GPIO_PIN);
+पूर्ण
 
-static struct platform_nand_data h2_nand_platdata = {
-	.chip	= {
+अटल काष्ठा platक्रमm_nand_data h2_nand_platdata = अणु
+	.chip	= अणु
 		.nr_chips		= 1,
 		.chip_offset		= 0,
 		.nr_partitions		= ARRAY_SIZE(h2_nand_partitions),
 		.partitions		= h2_nand_partitions,
-		.options		= NAND_SAMSUNG_LP_OPTIONS,
-	},
-	.ctrl	= {
+		.options		= न_अंकD_SAMSUNG_LP_OPTIONS,
+	पूर्ण,
+	.ctrl	= अणु
 		.cmd_ctrl	= omap1_nand_cmd_ctl,
-		.dev_ready	= h2_nand_dev_ready,
-	},
-};
+		.dev_पढ़ोy	= h2_nand_dev_पढ़ोy,
+	पूर्ण,
+पूर्ण;
 
-static struct resource h2_nand_resource = {
+अटल काष्ठा resource h2_nand_resource = अणु
 	.flags		= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device h2_nand_device = {
+अटल काष्ठा platक्रमm_device h2_nand_device = अणु
 	.name		= "gen_nand",
 	.id		= 0,
-	.dev		= {
-		.platform_data	= &h2_nand_platdata,
-	},
+	.dev		= अणु
+		.platक्रमm_data	= &h2_nand_platdata,
+	पूर्ण,
 	.num_resources	= 1,
 	.resource	= &h2_nand_resource,
-};
+पूर्ण;
 
-static struct smc91x_platdata h2_smc91x_info = {
+अटल काष्ठा smc91x_platdata h2_smc91x_info = अणु
 	.flags	= SMC91X_USE_16BIT | SMC91X_NOWAIT,
 	.leda	= RPC_LED_100_10,
 	.ledb	= RPC_LED_TX_RX,
-};
+पूर्ण;
 
-static struct resource h2_smc91x_resources[] = {
-	[0] = {
+अटल काष्ठा resource h2_smc91x_resources[] = अणु
+	[0] = अणु
 		.start	= OMAP1610_ETHR_START,		/* Physical */
 		.end	= OMAP1610_ETHR_START + 0xf,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_LOWEDGE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device h2_smc91x_device = {
+अटल काष्ठा platक्रमm_device h2_smc91x_device = अणु
 	.name		= "smc91x",
 	.id		= 0,
-	.dev	= {
-		.platform_data	= &h2_smc91x_info,
-	},
+	.dev	= अणु
+		.platक्रमm_data	= &h2_smc91x_info,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(h2_smc91x_resources),
 	.resource	= h2_smc91x_resources,
-};
+पूर्ण;
 
-static struct resource h2_kp_resources[] = {
-	[0] = {
+अटल काष्ठा resource h2_kp_resources[] = अणु
+	[0] = अणु
 		.start	= INT_KEYBOARD,
 		.end	= INT_KEYBOARD,
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct matrix_keymap_data h2_keymap_data = {
+अटल स्थिर काष्ठा matrix_keymap_data h2_keymap_data = अणु
 	.keymap		= h2_keymap,
 	.keymap_size	= ARRAY_SIZE(h2_keymap),
-};
+पूर्ण;
 
-static struct omap_kp_platform_data h2_kp_data = {
+अटल काष्ठा omap_kp_platक्रमm_data h2_kp_data = अणु
 	.rows		= 8,
 	.cols		= 8,
 	.keymap_data	= &h2_keymap_data,
 	.rep		= true,
 	.delay		= 9,
 	.dbounce	= true,
-};
+पूर्ण;
 
-static struct platform_device h2_kp_device = {
+अटल काष्ठा platक्रमm_device h2_kp_device = अणु
 	.name		= "omap-keypad",
 	.id		= -1,
-	.dev		= {
-		.platform_data = &h2_kp_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data = &h2_kp_data,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(h2_kp_resources),
 	.resource	= h2_kp_resources,
-};
+पूर्ण;
 
-static const struct gpio_led h2_gpio_led_pins[] = {
-	{
+अटल स्थिर काष्ठा gpio_led h2_gpio_led_pins[] = अणु
+	अणु
 		.name		= "h2:red",
-		.default_trigger = "heartbeat",
+		.शेष_trigger = "heartbeat",
 		.gpio		= 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "h2:green",
-		.default_trigger = "cpu0",
+		.शेष_trigger = "cpu0",
 		.gpio		= OMAP_MPUIO(4),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_led_platform_data h2_gpio_led_data = {
+अटल काष्ठा gpio_led_platक्रमm_data h2_gpio_led_data = अणु
 	.leds		= h2_gpio_led_pins,
 	.num_leds	= ARRAY_SIZE(h2_gpio_led_pins),
-};
+पूर्ण;
 
-static struct platform_device h2_gpio_leds = {
+अटल काष्ठा platक्रमm_device h2_gpio_leds = अणु
 	.name	= "leds-gpio",
 	.id	= -1,
-	.dev	= {
-		.platform_data = &h2_gpio_led_data,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data = &h2_gpio_led_data,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *h2_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *h2_devices[] __initdata = अणु
 	&h2_nor_device,
 	&h2_nand_device,
 	&h2_smc91x_device,
 	&h2_kp_device,
 	&h2_gpio_leds,
-};
+पूर्ण;
 
-static void __init h2_init_smc91x(void)
-{
-	if (gpio_request(0, "SMC91x irq") < 0) {
-		printk("Error requesting gpio 0 for smc91x irq\n");
-		return;
-	}
-}
+अटल व्योम __init h2_init_smc91x(व्योम)
+अणु
+	अगर (gpio_request(0, "SMC91x irq") < 0) अणु
+		prपूर्णांकk("Error requesting gpio 0 for smc91x irq\n");
+		वापस;
+	पूर्ण
+पूर्ण
 
-static int tps_setup(struct i2c_client *client, void *context)
-{
-	if (!IS_BUILTIN(CONFIG_TPS65010))
-		return -ENOSYS;
+अटल पूर्णांक tps_setup(काष्ठा i2c_client *client, व्योम *context)
+अणु
+	अगर (!IS_BUILTIN(CONFIG_TPS65010))
+		वापस -ENOSYS;
 
 	tps65010_config_vregs1(TPS_LDO2_ENABLE | TPS_VLDO2_3_0V |
 				TPS_LDO1_ENABLE | TPS_VLDO1_3_0V);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct tps65010_board tps_board = {
+अटल काष्ठा tps65010_board tps_board = अणु
 	.base		= H2_TPS_GPIO_BASE,
-	.outmask	= 0x0f,
+	.ouपंचांगask	= 0x0f,
 	.setup		= tps_setup,
-};
+पूर्ण;
 
-static struct i2c_board_info __initdata h2_i2c_board_info[] = {
-	{
+अटल काष्ठा i2c_board_info __initdata h2_i2c_board_info[] = अणु
+	अणु
 		I2C_BOARD_INFO("tps65010", 0x48),
-		.platform_data	= &tps_board,
-	}, {
+		.platक्रमm_data	= &tps_board,
+	पूर्ण, अणु
 		.type = "isp1301_omap",
 		.addr = 0x2d,
 		.dev_name = "isp1301",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table isp1301_gpiod_table = {
+अटल काष्ठा gpiod_lookup_table isp1301_gpiod_table = अणु
 	.dev_id = "isp1301",
-	.table = {
+	.table = अणु
 		/* Active low since the irq triggers on falling edge */
 		GPIO_LOOKUP(OMAP_GPIO_LABEL, 2,
-			    NULL, GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+			    शून्य, GPIO_ACTIVE_LOW),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct omap_usb_config h2_usb_config __initdata = {
-	/* usb1 has a Mini-AB port and external isp1301 transceiver */
+अटल काष्ठा omap_usb_config h2_usb_config __initdata = अणु
+	/* usb1 has a Mini-AB port and बाह्यal isp1301 transceiver */
 	.otg		= 2,
 
-#if IS_ENABLED(CONFIG_USB_OMAP)
+#अगर IS_ENABLED(CONFIG_USB_OMAP)
 	.hmc_mode	= 19,	/* 0:host(off) 1:dev|otg 2:disabled */
 	/* .hmc_mode	= 21,*/	/* 0:host(off) 1:dev(loopback) 2:host(loopback) */
-#elif	IS_ENABLED(CONFIG_USB_OHCI_HCD)
+#या_अगर	IS_ENABLED(CONFIG_USB_OHCI_HCD)
 	/* needs OTG cable, or NONSTANDARD (B-to-MiniB) */
 	.hmc_mode	= 20,	/* 1:dev|otg(off) 1:host 2:disabled */
-#endif
+#पूर्ण_अगर
 
 	.pins[1]	= 3,
-};
+पूर्ण;
 
-static const struct omap_lcd_config h2_lcd_config __initconst = {
+अटल स्थिर काष्ठा omap_lcd_config h2_lcd_config __initस्थिर = अणु
 	.ctrl_name	= "internal",
-};
+पूर्ण;
 
-static void __init h2_init(void)
-{
+अटल व्योम __init h2_init(व्योम)
+अणु
 	h2_init_smc91x();
 
 	/* Here we assume the NOR boot config:  NOR on CS3 (possibly swapped
-	 * to address 0 by a dip switch), NAND on CS2B.  The NAND driver will
-	 * notice whether a NAND chip is enabled at probe time.
+	 * to address 0 by a dip चयन), न_अंकD on CS2B.  The न_अंकD driver will
+	 * notice whether a न_अंकD chip is enabled at probe समय.
 	 *
-	 * FIXME revC boards (and H3) support NAND-boot, with a dip switch to
-	 * put NOR on CS2B and NAND (which on H2 may be 16bit) on CS3.  Try
-	 * detecting that in code here, to avoid probing every possible flash
+	 * FIXME revC boards (and H3) support न_अंकD-boot, with a dip चयन to
+	 * put NOR on CS2B and न_अंकD (which on H2 may be 16bit) on CS3.  Try
+	 * detecting that in code here, to aव्योम probing every possible flash
 	 * configuration...
 	 */
 	h2_nor_resource.end = h2_nor_resource.start = omap_cs3_phys();
@@ -391,8 +392,8 @@ static void __init h2_init(void)
 
 	h2_nand_resource.end = h2_nand_resource.start = OMAP_CS2B_PHYS;
 	h2_nand_resource.end += SZ_4K - 1;
-	BUG_ON(gpio_request(H2_NAND_RB_GPIO_PIN, "NAND ready") < 0);
-	gpio_direction_input(H2_NAND_RB_GPIO_PIN);
+	BUG_ON(gpio_request(H2_न_अंकD_RB_GPIO_PIN, "NAND ready") < 0);
+	gpio_direction_input(H2_न_अंकD_RB_GPIO_PIN);
 
 	gpiod_add_lookup_table(&isp1301_gpiod_table);
 
@@ -403,7 +404,7 @@ static void __init h2_init(void)
 	/* omap_cfg_reg(U19_ARMIO1); */		/* CD */
 	omap_cfg_reg(BALLOUT_V8_ARMIO3);	/* WP */
 
-	/* Mux pins for keypad */
+	/* Mux pins क्रम keypad */
 	omap_cfg_reg(F18_1610_KBC0);
 	omap_cfg_reg(D20_1610_KBC1);
 	omap_cfg_reg(D19_1610_KBC2);
@@ -422,22 +423,22 @@ static void __init h2_init(void)
 
 	h2_smc91x_resources[1].start = gpio_to_irq(0);
 	h2_smc91x_resources[1].end = gpio_to_irq(0);
-	platform_add_devices(h2_devices, ARRAY_SIZE(h2_devices));
+	platक्रमm_add_devices(h2_devices, ARRAY_SIZE(h2_devices));
 	omap_serial_init();
 
 	/* ISP1301 IRQ wired at M14 */
 	omap_cfg_reg(M14_1510_GPIO2);
 	h2_i2c_board_info[0].irq = gpio_to_irq(58);
-	omap_register_i2c_bus(1, 100, h2_i2c_board_info,
+	omap_रेजिस्टर_i2c_bus(1, 100, h2_i2c_board_info,
 			      ARRAY_SIZE(h2_i2c_board_info));
 	omap1_usb_init(&h2_usb_config);
 	h2_mmc_init();
 
 	omapfb_set_lcd_config(&h2_lcd_config);
-}
+पूर्ण
 
 MACHINE_START(OMAP_H2, "TI-H2")
-	/* Maintainer: Imre Deak <imre.deak@nokia.com> */
+	/* Maपूर्णांकainer: Imre Deak <imre.deak@nokia.com> */
 	.atag_offset	= 0x100,
 	.map_io		= omap16xx_map_io,
 	.init_early     = omap1_init_early,
@@ -445,6 +446,6 @@ MACHINE_START(OMAP_H2, "TI-H2")
 	.handle_irq	= omap1_handle_irq,
 	.init_machine	= h2_init,
 	.init_late	= omap1_init_late,
-	.init_time	= omap1_timer_init,
+	.init_समय	= omap1_समयr_init,
 	.restart	= omap1_restart,
 MACHINE_END

@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2007-2009 ST-Ericsson AB
  *
  * ABX500 core access functions.
- * The abx500 interface is used for the Analog Baseband chips.
+ * The abx500 पूर्णांकerface is used क्रम the Analog Baseband chips.
  *
  * Author: Mattias Wallin <mattias.wallin@stericsson.com>
  * Author: Mattias Nilsson <mattias.i.nilsson@stericsson.com>
@@ -11,61 +12,61 @@
  * Author: Rickard Andersson <rickard.andersson@stericsson.com>
  */
 
-#include <linux/regulator/machine.h>
+#समावेश <linux/regulator/machine.h>
 
-struct device;
+काष्ठा device;
 
-#ifndef MFD_ABX500_H
-#define MFD_ABX500_H
+#अगर_अघोषित MFD_ABX500_H
+#घोषणा MFD_ABX500_H
 
 /**
- * struct abx500_init_setting
- * Initial value of the registers for driver to use during setup.
+ * काष्ठा abx500_init_setting
+ * Initial value of the रेजिस्टरs क्रम driver to use during setup.
  */
-struct abx500_init_settings {
+काष्ठा abx500_init_settings अणु
 	u8 bank;
 	u8 reg;
 	u8 setting;
-};
+पूर्ण;
 
-int abx500_set_register_interruptible(struct device *dev, u8 bank, u8 reg,
+पूर्णांक abx500_set_रेजिस्टर_पूर्णांकerruptible(काष्ठा device *dev, u8 bank, u8 reg,
 	u8 value);
-int abx500_get_register_interruptible(struct device *dev, u8 bank, u8 reg,
+पूर्णांक abx500_get_रेजिस्टर_पूर्णांकerruptible(काष्ठा device *dev, u8 bank, u8 reg,
 	u8 *value);
-int abx500_get_register_page_interruptible(struct device *dev, u8 bank,
+पूर्णांक abx500_get_रेजिस्टर_page_पूर्णांकerruptible(काष्ठा device *dev, u8 bank,
 	u8 first_reg, u8 *regvals, u8 numregs);
-int abx500_set_register_page_interruptible(struct device *dev, u8 bank,
+पूर्णांक abx500_set_रेजिस्टर_page_पूर्णांकerruptible(काष्ठा device *dev, u8 bank,
 	u8 first_reg, u8 *regvals, u8 numregs);
 /**
- * abx500_mask_and_set_register_inerruptible() - Modifies selected bits of a
- *	target register
+ * abx500_mask_and_set_रेजिस्टर_inerruptible() - Modअगरies selected bits of a
+ *	target रेजिस्टर
  *
  * @dev: The AB sub device.
  * @bank: The i2c bank number.
- * @bitmask: The bit mask to use.
+ * @biपंचांगask: The bit mask to use.
  * @bitvalues: The new bit values.
  *
- * Updates the value of an AB register:
- * value -> ((value & ~bitmask) | (bitvalues & bitmask))
+ * Updates the value of an AB रेजिस्टर:
+ * value -> ((value & ~biपंचांगask) | (bitvalues & biपंचांगask))
  */
-int abx500_mask_and_set_register_interruptible(struct device *dev, u8 bank,
-	u8 reg, u8 bitmask, u8 bitvalues);
-int abx500_get_chip_id(struct device *dev);
-int abx500_event_registers_startup_state_get(struct device *dev, u8 *event);
-int abx500_startup_irq_enabled(struct device *dev, unsigned int irq);
+पूर्णांक abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(काष्ठा device *dev, u8 bank,
+	u8 reg, u8 biपंचांगask, u8 bitvalues);
+पूर्णांक abx500_get_chip_id(काष्ठा device *dev);
+पूर्णांक abx500_event_रेजिस्टरs_startup_state_get(काष्ठा device *dev, u8 *event);
+पूर्णांक abx500_startup_irq_enabled(काष्ठा device *dev, अचिन्हित पूर्णांक irq);
 
-struct abx500_ops {
-	int (*get_chip_id) (struct device *);
-	int (*get_register) (struct device *, u8, u8, u8 *);
-	int (*set_register) (struct device *, u8, u8, u8);
-	int (*get_register_page) (struct device *, u8, u8, u8 *, u8);
-	int (*set_register_page) (struct device *, u8, u8, u8 *, u8);
-	int (*mask_and_set_register) (struct device *, u8, u8, u8, u8);
-	int (*event_registers_startup_state_get) (struct device *, u8 *);
-	int (*startup_irq_enabled) (struct device *, unsigned int);
-	void (*dump_all_banks) (struct device *);
-};
+काष्ठा abx500_ops अणु
+	पूर्णांक (*get_chip_id) (काष्ठा device *);
+	पूर्णांक (*get_रेजिस्टर) (काष्ठा device *, u8, u8, u8 *);
+	पूर्णांक (*set_रेजिस्टर) (काष्ठा device *, u8, u8, u8);
+	पूर्णांक (*get_रेजिस्टर_page) (काष्ठा device *, u8, u8, u8 *, u8);
+	पूर्णांक (*set_रेजिस्टर_page) (काष्ठा device *, u8, u8, u8 *, u8);
+	पूर्णांक (*mask_and_set_रेजिस्टर) (काष्ठा device *, u8, u8, u8, u8);
+	पूर्णांक (*event_रेजिस्टरs_startup_state_get) (काष्ठा device *, u8 *);
+	पूर्णांक (*startup_irq_enabled) (काष्ठा device *, अचिन्हित पूर्णांक);
+	व्योम (*dump_all_banks) (काष्ठा device *);
+पूर्ण;
 
-int abx500_register_ops(struct device *core_dev, struct abx500_ops *ops);
-void abx500_remove_ops(struct device *dev);
-#endif
+पूर्णांक abx500_रेजिस्टर_ops(काष्ठा device *core_dev, काष्ठा abx500_ops *ops);
+व्योम abx500_हटाओ_ops(काष्ठा device *dev);
+#पूर्ण_अगर

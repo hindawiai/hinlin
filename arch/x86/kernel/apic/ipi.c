@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/cpumask.h>
-#include <linux/smp.h>
-#include <asm/io_apic.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/smp.h>
+#समावेश <यंत्र/io_apic.h>
 
-#include "local.h"
+#समावेश "local.h"
 
-DEFINE_STATIC_KEY_FALSE(apic_use_ipi_shorthand);
+DEFINE_STATIC_KEY_FALSE(apic_use_ipi_लघुhand);
 
-#ifdef CONFIG_SMP
-static int apic_ipi_shorthand_off __ro_after_init;
+#अगर_घोषित CONFIG_SMP
+अटल पूर्णांक apic_ipi_लघुhand_off __ro_after_init;
 
-static __init int apic_ipi_shorthand(char *str)
-{
-	get_option(&str, &apic_ipi_shorthand_off);
-	return 1;
-}
-__setup("no_ipi_broadcast=", apic_ipi_shorthand);
+अटल __init पूर्णांक apic_ipi_लघुhand(अक्षर *str)
+अणु
+	get_option(&str, &apic_ipi_लघुhand_off);
+	वापस 1;
+पूर्ण
+__setup("no_ipi_broadcast=", apic_ipi_लघुhand);
 
-static int __init print_ipi_mode(void)
-{
+अटल पूर्णांक __init prपूर्णांक_ipi_mode(व्योम)
+अणु
 	pr_info("IPI shorthand broadcast: %s\n",
-		apic_ipi_shorthand_off ? "disabled" : "enabled");
-	return 0;
-}
-late_initcall(print_ipi_mode);
+		apic_ipi_लघुhand_off ? "disabled" : "enabled");
+	वापस 0;
+पूर्ण
+late_initcall(prपूर्णांक_ipi_mode);
 
-void apic_smt_update(void)
-{
+व्योम apic_smt_update(व्योम)
+अणु
 	/*
-	 * Do not switch to broadcast mode if:
+	 * Do not चयन to broadcast mode अगर:
 	 * - Disabled on the command line
 	 * - Only a single CPU is online
 	 * - Not all present CPUs have been at least booted once
 	 *
 	 * The latter is important as the local APIC might be in some
-	 * random state and a broadcast might cause havoc. That's
-	 * especially true for NMI broadcasting.
+	 * अक्रमom state and a broadcast might cause havoc. That's
+	 * especially true क्रम NMI broadcasting.
 	 */
-	if (apic_ipi_shorthand_off || num_online_cpus() == 1 ||
-	    !cpumask_equal(cpu_present_mask, &cpus_booted_once_mask)) {
-		static_branch_disable(&apic_use_ipi_shorthand);
-	} else {
-		static_branch_enable(&apic_use_ipi_shorthand);
-	}
-}
+	अगर (apic_ipi_लघुhand_off || num_online_cpus() == 1 ||
+	    !cpumask_equal(cpu_present_mask, &cpus_booted_once_mask)) अणु
+		अटल_branch_disable(&apic_use_ipi_लघुhand);
+	पूर्ण अन्यथा अणु
+		अटल_branch_enable(&apic_use_ipi_लघुhand);
+	पूर्ण
+पूर्ण
 
-void apic_send_IPI_allbutself(unsigned int vector)
-{
-	if (num_online_cpus() < 2)
-		return;
+व्योम apic_send_IPI_allbutself(अचिन्हित पूर्णांक vector)
+अणु
+	अगर (num_online_cpus() < 2)
+		वापस;
 
-	if (static_branch_likely(&apic_use_ipi_shorthand))
+	अगर (अटल_branch_likely(&apic_use_ipi_लघुhand))
 		apic->send_IPI_allbutself(vector);
-	else
+	अन्यथा
 		apic->send_IPI_mask_allbutself(cpu_online_mask, vector);
-}
+पूर्ण
 
 /*
  * Send a 'reschedule' IPI to another CPU. It goes straight through and
- * wastes no time serializing anything. Worst case is that we lose a
+ * wastes no समय serializing anything. Worst हाल is that we lose a
  * reschedule ...
  */
-void native_smp_send_reschedule(int cpu)
-{
-	if (unlikely(cpu_is_offline(cpu))) {
+व्योम native_smp_send_reschedule(पूर्णांक cpu)
+अणु
+	अगर (unlikely(cpu_is_offline(cpu))) अणु
 		WARN(1, "sched: Unexpected reschedule of offline CPU#%d!\n", cpu);
-		return;
-	}
+		वापस;
+	पूर्ण
 	apic->send_IPI(cpu, RESCHEDULE_VECTOR);
-}
+पूर्ण
 
-void native_send_call_func_single_ipi(int cpu)
-{
+व्योम native_send_call_func_single_ipi(पूर्णांक cpu)
+अणु
 	apic->send_IPI(cpu, CALL_FUNCTION_SINGLE_VECTOR);
-}
+पूर्ण
 
-void native_send_call_func_ipi(const struct cpumask *mask)
-{
-	if (static_branch_likely(&apic_use_ipi_shorthand)) {
-		unsigned int cpu = smp_processor_id();
+व्योम native_send_call_func_ipi(स्थिर काष्ठा cpumask *mask)
+अणु
+	अगर (अटल_branch_likely(&apic_use_ipi_लघुhand)) अणु
+		अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-		if (!cpumask_or_equal(mask, cpumask_of(cpu), cpu_online_mask))
-			goto sendmask;
+		अगर (!cpumask_or_equal(mask, cpumask_of(cpu), cpu_online_mask))
+			जाओ sendmask;
 
-		if (cpumask_test_cpu(cpu, mask))
+		अगर (cpumask_test_cpu(cpu, mask))
 			apic->send_IPI_all(CALL_FUNCTION_VECTOR);
-		else if (num_online_cpus() > 1)
+		अन्यथा अगर (num_online_cpus() > 1)
 			apic->send_IPI_allbutself(CALL_FUNCTION_VECTOR);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 sendmask:
 	apic->send_IPI_mask(mask, CALL_FUNCTION_VECTOR);
-}
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static inline int __prepare_ICR2(unsigned int mask)
-{
-	return SET_APIC_DEST_FIELD(mask);
-}
+अटल अंतरभूत पूर्णांक __prepare_ICR2(अचिन्हित पूर्णांक mask)
+अणु
+	वापस SET_APIC_DEST_FIELD(mask);
+पूर्ण
 
-static inline void __xapic_wait_icr_idle(void)
-{
-	while (native_apic_mem_read(APIC_ICR) & APIC_ICR_BUSY)
+अटल अंतरभूत व्योम __xapic_रुको_icr_idle(व्योम)
+अणु
+	जबतक (native_apic_mem_पढ़ो(APIC_ICR) & APIC_ICR_BUSY)
 		cpu_relax();
-}
+पूर्ण
 
-void __default_send_IPI_shortcut(unsigned int shortcut, int vector)
-{
+व्योम __शेष_send_IPI_लघुcut(अचिन्हित पूर्णांक लघुcut, पूर्णांक vector)
+अणु
 	/*
-	 * Subtle. In the case of the 'never do double writes' workaround
-	 * we have to lock out interrupts to be safe.  As we don't care
-	 * of the value read we use an atomic rmw access to avoid costly
-	 * cli/sti.  Otherwise we use an even cheaper single atomic write
+	 * Subtle. In the हाल of the 'never do double writes' workaround
+	 * we have to lock out पूर्णांकerrupts to be safe.  As we करोn't care
+	 * of the value पढ़ो we use an atomic rmw access to aव्योम costly
+	 * cli/sti.  Otherwise we use an even cheaper single atomic ग_लिखो
 	 * to the APIC.
 	 */
-	unsigned int cfg;
+	अचिन्हित पूर्णांक cfg;
 
 	/*
-	 * Wait for idle.
+	 * Wait क्रम idle.
 	 */
-	if (unlikely(vector == NMI_VECTOR))
-		safe_apic_wait_icr_idle();
-	else
-		__xapic_wait_icr_idle();
+	अगर (unlikely(vector == NMI_VECTOR))
+		safe_apic_रुको_icr_idle();
+	अन्यथा
+		__xapic_रुको_icr_idle();
 
 	/*
 	 * No need to touch the target chip field. Also the destination
-	 * mode is ignored when a shorthand is used.
+	 * mode is ignored when a लघुhand is used.
 	 */
-	cfg = __prepare_ICR(shortcut, vector, 0);
+	cfg = __prepare_ICR(लघुcut, vector, 0);
 
 	/*
-	 * Send the IPI. The write to APIC_ICR fires this off.
+	 * Send the IPI. The ग_लिखो to APIC_ICR fires this off.
 	 */
-	native_apic_mem_write(APIC_ICR, cfg);
-}
+	native_apic_mem_ग_लिखो(APIC_ICR, cfg);
+पूर्ण
 
 /*
- * This is used to send an IPI with no shorthand notation (the destination is
- * specified in bits 56 to 63 of the ICR).
+ * This is used to send an IPI with no लघुhand notation (the destination is
+ * specअगरied in bits 56 to 63 of the ICR).
  */
-void __default_send_IPI_dest_field(unsigned int mask, int vector, unsigned int dest)
-{
-	unsigned long cfg;
+व्योम __शेष_send_IPI_dest_field(अचिन्हित पूर्णांक mask, पूर्णांक vector, अचिन्हित पूर्णांक dest)
+अणु
+	अचिन्हित दीर्घ cfg;
 
 	/*
-	 * Wait for idle.
+	 * Wait क्रम idle.
 	 */
-	if (unlikely(vector == NMI_VECTOR))
-		safe_apic_wait_icr_idle();
-	else
-		__xapic_wait_icr_idle();
+	अगर (unlikely(vector == NMI_VECTOR))
+		safe_apic_रुको_icr_idle();
+	अन्यथा
+		__xapic_रुको_icr_idle();
 
 	/*
 	 * prepare target chip field
 	 */
 	cfg = __prepare_ICR2(mask);
-	native_apic_mem_write(APIC_ICR2, cfg);
+	native_apic_mem_ग_लिखो(APIC_ICR2, cfg);
 
 	/*
 	 * program the ICR
@@ -167,165 +168,165 @@ void __default_send_IPI_dest_field(unsigned int mask, int vector, unsigned int d
 	cfg = __prepare_ICR(0, vector, dest);
 
 	/*
-	 * Send the IPI. The write to APIC_ICR fires this off.
+	 * Send the IPI. The ग_लिखो to APIC_ICR fires this off.
 	 */
-	native_apic_mem_write(APIC_ICR, cfg);
-}
+	native_apic_mem_ग_लिखो(APIC_ICR, cfg);
+पूर्ण
 
-void default_send_IPI_single_phys(int cpu, int vector)
-{
-	unsigned long flags;
+व्योम शेष_send_IPI_single_phys(पूर्णांक cpu, पूर्णांक vector)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	__default_send_IPI_dest_field(per_cpu(x86_cpu_to_apicid, cpu),
+	__शेष_send_IPI_dest_field(per_cpu(x86_cpu_to_apicid, cpu),
 				      vector, APIC_DEST_PHYSICAL);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-void default_send_IPI_mask_sequence_phys(const struct cpumask *mask, int vector)
-{
-	unsigned long query_cpu;
-	unsigned long flags;
+व्योम शेष_send_IPI_mask_sequence_phys(स्थिर काष्ठा cpumask *mask, पूर्णांक vector)
+अणु
+	अचिन्हित दीर्घ query_cpu;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * Hack. The clustered APIC addressing mode doesn't allow us to send
-	 * to an arbitrary mask, so I do a unicast to each CPU instead.
+	 * Hack. The clustered APIC addressing mode करोesn't allow us to send
+	 * to an arbitrary mask, so I करो a unicast to each CPU instead.
 	 * - mbligh
 	 */
 	local_irq_save(flags);
-	for_each_cpu(query_cpu, mask) {
-		__default_send_IPI_dest_field(per_cpu(x86_cpu_to_apicid,
+	क्रम_each_cpu(query_cpu, mask) अणु
+		__शेष_send_IPI_dest_field(per_cpu(x86_cpu_to_apicid,
 				query_cpu), vector, APIC_DEST_PHYSICAL);
-	}
+	पूर्ण
 	local_irq_restore(flags);
-}
+पूर्ण
 
-void default_send_IPI_mask_allbutself_phys(const struct cpumask *mask,
-						 int vector)
-{
-	unsigned int this_cpu = smp_processor_id();
-	unsigned int query_cpu;
-	unsigned long flags;
+व्योम शेष_send_IPI_mask_allbutself_phys(स्थिर काष्ठा cpumask *mask,
+						 पूर्णांक vector)
+अणु
+	अचिन्हित पूर्णांक this_cpu = smp_processor_id();
+	अचिन्हित पूर्णांक query_cpu;
+	अचिन्हित दीर्घ flags;
 
 	/* See Hack comment above */
 
 	local_irq_save(flags);
-	for_each_cpu(query_cpu, mask) {
-		if (query_cpu == this_cpu)
-			continue;
-		__default_send_IPI_dest_field(per_cpu(x86_cpu_to_apicid,
+	क्रम_each_cpu(query_cpu, mask) अणु
+		अगर (query_cpu == this_cpu)
+			जारी;
+		__शेष_send_IPI_dest_field(per_cpu(x86_cpu_to_apicid,
 				 query_cpu), vector, APIC_DEST_PHYSICAL);
-	}
+	पूर्ण
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /*
- * Helper function for APICs which insist on cpumasks
+ * Helper function क्रम APICs which insist on cpumasks
  */
-void default_send_IPI_single(int cpu, int vector)
-{
+व्योम शेष_send_IPI_single(पूर्णांक cpu, पूर्णांक vector)
+अणु
 	apic->send_IPI_mask(cpumask_of(cpu), vector);
-}
+पूर्ण
 
-void default_send_IPI_allbutself(int vector)
-{
-	__default_send_IPI_shortcut(APIC_DEST_ALLBUT, vector);
-}
+व्योम शेष_send_IPI_allbutself(पूर्णांक vector)
+अणु
+	__शेष_send_IPI_लघुcut(APIC_DEST_ALLBUT, vector);
+पूर्ण
 
-void default_send_IPI_all(int vector)
-{
-	__default_send_IPI_shortcut(APIC_DEST_ALLINC, vector);
-}
+व्योम शेष_send_IPI_all(पूर्णांक vector)
+अणु
+	__शेष_send_IPI_लघुcut(APIC_DEST_ALLINC, vector);
+पूर्ण
 
-void default_send_IPI_self(int vector)
-{
-	__default_send_IPI_shortcut(APIC_DEST_SELF, vector);
-}
+व्योम शेष_send_IPI_self(पूर्णांक vector)
+अणु
+	__शेष_send_IPI_लघुcut(APIC_DEST_SELF, vector);
+पूर्ण
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 
-void default_send_IPI_mask_sequence_logical(const struct cpumask *mask,
-						 int vector)
-{
-	unsigned long flags;
-	unsigned int query_cpu;
+व्योम शेष_send_IPI_mask_sequence_logical(स्थिर काष्ठा cpumask *mask,
+						 पूर्णांक vector)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक query_cpu;
 
 	/*
-	 * Hack. The clustered APIC addressing mode doesn't allow us to send
-	 * to an arbitrary mask, so I do a unicasts to each CPU instead. This
-	 * should be modified to do 1 message per cluster ID - mbligh
+	 * Hack. The clustered APIC addressing mode करोesn't allow us to send
+	 * to an arbitrary mask, so I करो a unicasts to each CPU instead. This
+	 * should be modअगरied to करो 1 message per cluster ID - mbligh
 	 */
 
 	local_irq_save(flags);
-	for_each_cpu(query_cpu, mask)
-		__default_send_IPI_dest_field(
+	क्रम_each_cpu(query_cpu, mask)
+		__शेष_send_IPI_dest_field(
 			early_per_cpu(x86_cpu_to_logical_apicid, query_cpu),
 			vector, APIC_DEST_LOGICAL);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-void default_send_IPI_mask_allbutself_logical(const struct cpumask *mask,
-						 int vector)
-{
-	unsigned long flags;
-	unsigned int query_cpu;
-	unsigned int this_cpu = smp_processor_id();
+व्योम शेष_send_IPI_mask_allbutself_logical(स्थिर काष्ठा cpumask *mask,
+						 पूर्णांक vector)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक query_cpu;
+	अचिन्हित पूर्णांक this_cpu = smp_processor_id();
 
 	/* See Hack comment above */
 
 	local_irq_save(flags);
-	for_each_cpu(query_cpu, mask) {
-		if (query_cpu == this_cpu)
-			continue;
-		__default_send_IPI_dest_field(
+	क्रम_each_cpu(query_cpu, mask) अणु
+		अगर (query_cpu == this_cpu)
+			जारी;
+		__शेष_send_IPI_dest_field(
 			early_per_cpu(x86_cpu_to_logical_apicid, query_cpu),
 			vector, APIC_DEST_LOGICAL);
-		}
+		पूर्ण
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /*
  * This is only used on smaller machines.
  */
-void default_send_IPI_mask_logical(const struct cpumask *cpumask, int vector)
-{
-	unsigned long mask = cpumask_bits(cpumask)[0];
-	unsigned long flags;
+व्योम शेष_send_IPI_mask_logical(स्थिर काष्ठा cpumask *cpumask, पूर्णांक vector)
+अणु
+	अचिन्हित दीर्घ mask = cpumask_bits(cpumask)[0];
+	अचिन्हित दीर्घ flags;
 
-	if (!mask)
-		return;
+	अगर (!mask)
+		वापस;
 
 	local_irq_save(flags);
 	WARN_ON(mask & ~cpumask_bits(cpu_online_mask)[0]);
-	__default_send_IPI_dest_field(mask, vector, APIC_DEST_LOGICAL);
+	__शेष_send_IPI_dest_field(mask, vector, APIC_DEST_LOGICAL);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-/* must come after the send_IPI functions above for inlining */
-static int convert_apicid_to_cpu(int apic_id)
-{
-	int i;
+/* must come after the send_IPI functions above क्रम inlining */
+अटल पूर्णांक convert_apicid_to_cpu(पूर्णांक apic_id)
+अणु
+	पूर्णांक i;
 
-	for_each_possible_cpu(i) {
-		if (per_cpu(x86_cpu_to_apicid, i) == apic_id)
-			return i;
-	}
-	return -1;
-}
+	क्रम_each_possible_cpu(i) अणु
+		अगर (per_cpu(x86_cpu_to_apicid, i) == apic_id)
+			वापस i;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-int safe_smp_processor_id(void)
-{
-	int apicid, cpuid;
+पूर्णांक safe_smp_processor_id(व्योम)
+अणु
+	पूर्णांक apicid, cpuid;
 
-	if (!boot_cpu_has(X86_FEATURE_APIC))
-		return 0;
+	अगर (!boot_cpu_has(X86_FEATURE_APIC))
+		वापस 0;
 
 	apicid = hard_smp_processor_id();
-	if (apicid == BAD_APICID)
-		return 0;
+	अगर (apicid == BAD_APICID)
+		वापस 0;
 
 	cpuid = convert_apicid_to_cpu(apicid);
 
-	return cpuid >= 0 ? cpuid : 0;
-}
-#endif
+	वापस cpuid >= 0 ? cpuid : 0;
+पूर्ण
+#पूर्ण_अगर

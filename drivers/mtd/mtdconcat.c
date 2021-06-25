@@ -1,237 +1,238 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * MTD device concatenation layer
  *
- * Copyright © 2002 Robert Kaiser <rkaiser@sysgo.de>
- * Copyright © 2002-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 2002 Robert Kaiser <rkaiser@sysgo.de>
+ * Copyright तऊ 2002-2010 David Woodhouse <dwmw2@infradead.org>
  *
- * NAND support by Christian Gan <cgan@iders.ca>
+ * न_अंकD support by Christian Gan <cgan@iders.ca>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/backing-dev.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/backing-dev.h>
 
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/concat.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/concat.h>
 
-#include <asm/div64.h>
+#समावेश <यंत्र/भाग64.h>
 
 /*
- * Our storage structure:
- * Subdev points to an array of pointers to struct mtd_info objects
- * which is allocated along with this structure
+ * Our storage काष्ठाure:
+ * Subdev poपूर्णांकs to an array of poपूर्णांकers to काष्ठा mtd_info objects
+ * which is allocated aदीर्घ with this काष्ठाure
  *
  */
-struct mtd_concat {
-	struct mtd_info mtd;
-	int num_subdev;
-	struct mtd_info **subdev;
-};
+काष्ठा mtd_concat अणु
+	काष्ठा mtd_info mtd;
+	पूर्णांक num_subdev;
+	काष्ठा mtd_info **subdev;
+पूर्ण;
 
 /*
- * how to calculate the size required for the above structure,
- * including the pointer array subdev points to:
+ * how to calculate the size required क्रम the above काष्ठाure,
+ * including the poपूर्णांकer array subdev poपूर्णांकs to:
  */
-#define SIZEOF_STRUCT_MTD_CONCAT(num_subdev)	\
-	((sizeof(struct mtd_concat) + (num_subdev) * sizeof(struct mtd_info *)))
+#घोषणा SIZखातापूर्ण_STRUCT_MTD_CONCAT(num_subdev)	\
+	((माप(काष्ठा mtd_concat) + (num_subdev) * माप(काष्ठा mtd_info *)))
 
 /*
- * Given a pointer to the MTD object in the mtd_concat structure,
- * we can retrieve the pointer to that structure with this macro.
+ * Given a poपूर्णांकer to the MTD object in the mtd_concat काष्ठाure,
+ * we can retrieve the poपूर्णांकer to that काष्ठाure with this macro.
  */
-#define CONCAT(x)  ((struct mtd_concat *)(x))
+#घोषणा CONCAT(x)  ((काष्ठा mtd_concat *)(x))
 
 /*
  * MTD methods which look up the relevant subdevice, translate the
  * effective address and pass through to the subdevice.
  */
 
-static int
-concat_read(struct mtd_info *mtd, loff_t from, size_t len,
-	    size_t * retlen, u_char * buf)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int ret = 0, err;
-	int i;
+अटल पूर्णांक
+concat_पढ़ो(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
+	    माप_प्रकार * retlen, u_अक्षर * buf)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक ret = 0, err;
+	पूर्णांक i;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
-		size_t size, retsize;
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
+		माप_प्रकार size, retsize;
 
-		if (from >= subdev->size) {
-			/* Not destined for this subdev */
+		अगर (from >= subdev->size) अणु
+			/* Not destined क्रम this subdev */
 			size = 0;
 			from -= subdev->size;
-			continue;
-		}
-		if (from + len > subdev->size)
-			/* First part goes into this subdev */
+			जारी;
+		पूर्ण
+		अगर (from + len > subdev->size)
+			/* First part goes पूर्णांकo this subdev */
 			size = subdev->size - from;
-		else
-			/* Entire transaction goes into this subdev */
+		अन्यथा
+			/* Entire transaction goes पूर्णांकo this subdev */
 			size = len;
 
-		err = mtd_read(subdev, from, size, &retsize, buf);
+		err = mtd_पढ़ो(subdev, from, size, &retsize, buf);
 
-		/* Save information about bitflips! */
-		if (unlikely(err)) {
-			if (mtd_is_eccerr(err)) {
+		/* Save inक्रमmation about bitflips! */
+		अगर (unlikely(err)) अणु
+			अगर (mtd_is_eccerr(err)) अणु
 				mtd->ecc_stats.failed++;
 				ret = err;
-			} else if (mtd_is_bitflip(err)) {
+			पूर्ण अन्यथा अगर (mtd_is_bitflip(err)) अणु
 				mtd->ecc_stats.corrected++;
-				/* Do not overwrite -EBADMSG !! */
-				if (!ret)
+				/* Do not overग_लिखो -EBADMSG !! */
+				अगर (!ret)
 					ret = err;
-			} else
-				return err;
-		}
+			पूर्ण अन्यथा
+				वापस err;
+		पूर्ण
 
 		*retlen += retsize;
 		len -= size;
-		if (len == 0)
-			return ret;
+		अगर (len == 0)
+			वापस ret;
 
 		buf += size;
 		from = 0;
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int
-concat_panic_write(struct mtd_info *mtd, loff_t to, size_t len,
-	     size_t * retlen, const u_char * buf)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int err = -EINVAL;
-	int i;
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
-		size_t size, retsize;
+अटल पूर्णांक
+concat_panic_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
+	     माप_प्रकार * retlen, स्थिर u_अक्षर * buf)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक err = -EINVAL;
+	पूर्णांक i;
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
+		माप_प्रकार size, retsize;
 
-		if (to >= subdev->size) {
+		अगर (to >= subdev->size) अणु
 			to -= subdev->size;
-			continue;
-		}
-		if (to + len > subdev->size)
+			जारी;
+		पूर्ण
+		अगर (to + len > subdev->size)
 			size = subdev->size - to;
-		else
+		अन्यथा
 			size = len;
 
-		err = mtd_panic_write(subdev, to, size, &retsize, buf);
-		if (err == -EOPNOTSUPP) {
-			printk(KERN_ERR "mtdconcat: Cannot write from panic without panic_write\n");
-			return err;
-		}
-		if (err)
-			break;
+		err = mtd_panic_ग_लिखो(subdev, to, size, &retsize, buf);
+		अगर (err == -EOPNOTSUPP) अणु
+			prपूर्णांकk(KERN_ERR "mtdconcat: Cannot write from panic without panic_write\n");
+			वापस err;
+		पूर्ण
+		अगर (err)
+			अवरोध;
 
 		*retlen += retsize;
 		len -= size;
-		if (len == 0)
-			break;
+		अगर (len == 0)
+			अवरोध;
 
 		err = -EINVAL;
 		buf += size;
 		to = 0;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
 
-static int
-concat_write(struct mtd_info *mtd, loff_t to, size_t len,
-	     size_t * retlen, const u_char * buf)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int err = -EINVAL;
-	int i;
+अटल पूर्णांक
+concat_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
+	     माप_प्रकार * retlen, स्थिर u_अक्षर * buf)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक err = -EINVAL;
+	पूर्णांक i;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
-		size_t size, retsize;
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
+		माप_प्रकार size, retsize;
 
-		if (to >= subdev->size) {
+		अगर (to >= subdev->size) अणु
 			size = 0;
 			to -= subdev->size;
-			continue;
-		}
-		if (to + len > subdev->size)
+			जारी;
+		पूर्ण
+		अगर (to + len > subdev->size)
 			size = subdev->size - to;
-		else
+		अन्यथा
 			size = len;
 
-		err = mtd_write(subdev, to, size, &retsize, buf);
-		if (err)
-			break;
+		err = mtd_ग_लिखो(subdev, to, size, &retsize, buf);
+		अगर (err)
+			अवरोध;
 
 		*retlen += retsize;
 		len -= size;
-		if (len == 0)
-			break;
+		अगर (len == 0)
+			अवरोध;
 
 		err = -EINVAL;
 		buf += size;
 		to = 0;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int
-concat_writev(struct mtd_info *mtd, const struct kvec *vecs,
-		unsigned long count, loff_t to, size_t * retlen)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	struct kvec *vecs_copy;
-	unsigned long entry_low, entry_high;
-	size_t total_len = 0;
-	int i;
-	int err = -EINVAL;
+अटल पूर्णांक
+concat_ग_लिखोv(काष्ठा mtd_info *mtd, स्थिर काष्ठा kvec *vecs,
+		अचिन्हित दीर्घ count, loff_t to, माप_प्रकार * retlen)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	काष्ठा kvec *vecs_copy;
+	अचिन्हित दीर्घ entry_low, entry_high;
+	माप_प्रकार total_len = 0;
+	पूर्णांक i;
+	पूर्णांक err = -EINVAL;
 
 	/* Calculate total length of data */
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		total_len += vecs[i].iov_len;
 
 	/* Check alignment */
-	if (mtd->writesize > 1) {
-		uint64_t __to = to;
-		if (do_div(__to, mtd->writesize) || (total_len % mtd->writesize))
-			return -EINVAL;
-	}
+	अगर (mtd->ग_लिखोsize > 1) अणु
+		uपूर्णांक64_t __to = to;
+		अगर (करो_भाग(__to, mtd->ग_लिखोsize) || (total_len % mtd->ग_लिखोsize))
+			वापस -EINVAL;
+	पूर्ण
 
 	/* make a copy of vecs */
-	vecs_copy = kmemdup(vecs, sizeof(struct kvec) * count, GFP_KERNEL);
-	if (!vecs_copy)
-		return -ENOMEM;
+	vecs_copy = kmemdup(vecs, माप(काष्ठा kvec) * count, GFP_KERNEL);
+	अगर (!vecs_copy)
+		वापस -ENOMEM;
 
 	entry_low = 0;
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
-		size_t size, wsize, retsize, old_iov_len;
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
+		माप_प्रकार size, wsize, retsize, old_iov_len;
 
-		if (to >= subdev->size) {
+		अगर (to >= subdev->size) अणु
 			to -= subdev->size;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		size = min_t(uint64_t, total_len, subdev->size - to);
-		wsize = size; /* store for future use */
+		size = min_t(uपूर्णांक64_t, total_len, subdev->size - to);
+		wsize = size; /* store क्रम future use */
 
 		entry_high = entry_low;
-		while (entry_high < count) {
-			if (size <= vecs_copy[entry_high].iov_len)
-				break;
+		जबतक (entry_high < count) अणु
+			अगर (size <= vecs_copy[entry_high].iov_len)
+				अवरोध;
 			size -= vecs_copy[entry_high++].iov_len;
-		}
+		पूर्ण
 
 		old_iov_len = vecs_copy[entry_high].iov_len;
 		vecs_copy[entry_high].iov_len = size;
 
-		err = mtd_writev(subdev, &vecs_copy[entry_low],
+		err = mtd_ग_लिखोv(subdev, &vecs_copy[entry_low],
 				 entry_high - entry_low + 1, to, &retsize);
 
 		vecs_copy[entry_high].iov_len = old_iov_len - size;
@@ -239,187 +240,187 @@ concat_writev(struct mtd_info *mtd, const struct kvec *vecs,
 
 		entry_low = entry_high;
 
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		*retlen += retsize;
 		total_len -= wsize;
 
-		if (total_len == 0)
-			break;
+		अगर (total_len == 0)
+			अवरोध;
 
 		err = -EINVAL;
 		to = 0;
-	}
+	पूर्ण
 
-	kfree(vecs_copy);
-	return err;
-}
+	kमुक्त(vecs_copy);
+	वापस err;
+पूर्ण
 
-static int
-concat_read_oob(struct mtd_info *mtd, loff_t from, struct mtd_oob_ops *ops)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	struct mtd_oob_ops devops = *ops;
-	int i, err, ret = 0;
+अटल पूर्णांक
+concat_पढ़ो_oob(काष्ठा mtd_info *mtd, loff_t from, काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	काष्ठा mtd_oob_ops devops = *ops;
+	पूर्णांक i, err, ret = 0;
 
 	ops->retlen = ops->oobretlen = 0;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
 
-		if (from >= subdev->size) {
+		अगर (from >= subdev->size) अणु
 			from -= subdev->size;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* partial read ? */
-		if (from + devops.len > subdev->size)
+		/* partial पढ़ो ? */
+		अगर (from + devops.len > subdev->size)
 			devops.len = subdev->size - from;
 
-		err = mtd_read_oob(subdev, from, &devops);
+		err = mtd_पढ़ो_oob(subdev, from, &devops);
 		ops->retlen += devops.retlen;
 		ops->oobretlen += devops.oobretlen;
 
-		/* Save information about bitflips! */
-		if (unlikely(err)) {
-			if (mtd_is_eccerr(err)) {
+		/* Save inक्रमmation about bitflips! */
+		अगर (unlikely(err)) अणु
+			अगर (mtd_is_eccerr(err)) अणु
 				mtd->ecc_stats.failed++;
 				ret = err;
-			} else if (mtd_is_bitflip(err)) {
+			पूर्ण अन्यथा अगर (mtd_is_bitflip(err)) अणु
 				mtd->ecc_stats.corrected++;
-				/* Do not overwrite -EBADMSG !! */
-				if (!ret)
+				/* Do not overग_लिखो -EBADMSG !! */
+				अगर (!ret)
 					ret = err;
-			} else
-				return err;
-		}
+			पूर्ण अन्यथा
+				वापस err;
+		पूर्ण
 
-		if (devops.datbuf) {
+		अगर (devops.datbuf) अणु
 			devops.len = ops->len - ops->retlen;
-			if (!devops.len)
-				return ret;
+			अगर (!devops.len)
+				वापस ret;
 			devops.datbuf += devops.retlen;
-		}
-		if (devops.oobbuf) {
+		पूर्ण
+		अगर (devops.oobbuf) अणु
 			devops.ooblen = ops->ooblen - ops->oobretlen;
-			if (!devops.ooblen)
-				return ret;
+			अगर (!devops.ooblen)
+				वापस ret;
 			devops.oobbuf += ops->oobretlen;
-		}
+		पूर्ण
 
 		from = 0;
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int
-concat_write_oob(struct mtd_info *mtd, loff_t to, struct mtd_oob_ops *ops)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	struct mtd_oob_ops devops = *ops;
-	int i, err;
+अटल पूर्णांक
+concat_ग_लिखो_oob(काष्ठा mtd_info *mtd, loff_t to, काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	काष्ठा mtd_oob_ops devops = *ops;
+	पूर्णांक i, err;
 
-	if (!(mtd->flags & MTD_WRITEABLE))
-		return -EROFS;
+	अगर (!(mtd->flags & MTD_WRITEABLE))
+		वापस -EROFS;
 
 	ops->retlen = ops->oobretlen = 0;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
 
-		if (to >= subdev->size) {
+		अगर (to >= subdev->size) अणु
 			to -= subdev->size;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* partial write ? */
-		if (to + devops.len > subdev->size)
+		/* partial ग_लिखो ? */
+		अगर (to + devops.len > subdev->size)
 			devops.len = subdev->size - to;
 
-		err = mtd_write_oob(subdev, to, &devops);
+		err = mtd_ग_लिखो_oob(subdev, to, &devops);
 		ops->retlen += devops.retlen;
 		ops->oobretlen += devops.oobretlen;
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (devops.datbuf) {
+		अगर (devops.datbuf) अणु
 			devops.len = ops->len - ops->retlen;
-			if (!devops.len)
-				return 0;
+			अगर (!devops.len)
+				वापस 0;
 			devops.datbuf += devops.retlen;
-		}
-		if (devops.oobbuf) {
+		पूर्ण
+		अगर (devops.oobbuf) अणु
 			devops.ooblen = ops->ooblen - ops->oobretlen;
-			if (!devops.ooblen)
-				return 0;
+			अगर (!devops.ooblen)
+				वापस 0;
 			devops.oobbuf += devops.oobretlen;
-		}
+		पूर्ण
 		to = 0;
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int concat_erase(struct mtd_info *mtd, struct erase_info *instr)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	struct mtd_info *subdev;
-	int i, err;
-	uint64_t length, offset = 0;
-	struct erase_info *erase;
+अटल पूर्णांक concat_erase(काष्ठा mtd_info *mtd, काष्ठा erase_info *instr)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	काष्ठा mtd_info *subdev;
+	पूर्णांक i, err;
+	uपूर्णांक64_t length, offset = 0;
+	काष्ठा erase_info *erase;
 
 	/*
-	 * Check for proper erase block alignment of the to-be-erased area.
-	 * It is easier to do this based on the super device's erase
+	 * Check क्रम proper erase block alignment of the to-be-erased area.
+	 * It is easier to करो this based on the super device's erase
 	 * region info rather than looking at each particular sub-device
 	 * in turn.
 	 */
-	if (!concat->mtd.numeraseregions) {
-		/* the easy case: device has uniform erase block size */
-		if (instr->addr & (concat->mtd.erasesize - 1))
-			return -EINVAL;
-		if (instr->len & (concat->mtd.erasesize - 1))
-			return -EINVAL;
-	} else {
+	अगर (!concat->mtd.numeraseregions) अणु
+		/* the easy हाल: device has unअगरorm erase block size */
+		अगर (instr->addr & (concat->mtd.erasesize - 1))
+			वापस -EINVAL;
+		अगर (instr->len & (concat->mtd.erasesize - 1))
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		/* device has variable erase size */
-		struct mtd_erase_region_info *erase_regions =
+		काष्ठा mtd_erase_region_info *erase_regions =
 		    concat->mtd.eraseregions;
 
 		/*
 		 * Find the erase region where the to-be-erased area begins:
 		 */
-		for (i = 0; i < concat->mtd.numeraseregions &&
+		क्रम (i = 0; i < concat->mtd.numeraseregions &&
 		     instr->addr >= erase_regions[i].offset; i++) ;
 		--i;
 
 		/*
 		 * Now erase_regions[i] is the region in which the
-		 * to-be-erased area begins. Verify that the starting
+		 * to-be-erased area begins. Verअगरy that the starting
 		 * offset is aligned to this region's erase size:
 		 */
-		if (i < 0 || instr->addr & (erase_regions[i].erasesize - 1))
-			return -EINVAL;
+		अगर (i < 0 || instr->addr & (erase_regions[i].erasesize - 1))
+			वापस -EINVAL;
 
 		/*
 		 * now find the erase region where the to-be-erased area ends:
 		 */
-		for (; i < concat->mtd.numeraseregions &&
+		क्रम (; i < concat->mtd.numeraseregions &&
 		     (instr->addr + instr->len) >= erase_regions[i].offset;
 		     ++i) ;
 		--i;
 		/*
-		 * check if the ending offset is aligned to this region's erase size
+		 * check अगर the ending offset is aligned to this region's erase size
 		 */
-		if (i < 0 || ((instr->addr + instr->len) &
+		अगर (i < 0 || ((instr->addr + instr->len) &
 					(erase_regions[i].erasesize - 1)))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	/* make a local copy of instr to avoid modifying the caller's struct */
-	erase = kmalloc(sizeof (struct erase_info), GFP_KERNEL);
+	/* make a local copy of instr to aव्योम modअगरying the caller's काष्ठा */
+	erase = kदो_स्मृति(माप (काष्ठा erase_info), GFP_KERNEL);
 
-	if (!erase)
-		return -ENOMEM;
+	अगर (!erase)
+		वापस -ENOMEM;
 
 	*erase = *instr;
 	length = instr->len;
@@ -428,315 +429,315 @@ static int concat_erase(struct mtd_info *mtd, struct erase_info *instr)
 	 * find the subdevice where the to-be-erased area begins, adjust
 	 * starting offset to be relative to the subdevice start
 	 */
-	for (i = 0; i < concat->num_subdev; i++) {
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
 		subdev = concat->subdev[i];
-		if (subdev->size <= erase->addr) {
+		अगर (subdev->size <= erase->addr) अणु
 			erase->addr -= subdev->size;
 			offset += subdev->size;
-		} else {
-			break;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* must never happen since size limit has been verified above */
+	/* must never happen since size limit has been verअगरied above */
 	BUG_ON(i >= concat->num_subdev);
 
-	/* now do the erase: */
+	/* now करो the erase: */
 	err = 0;
-	for (; length > 0; i++) {
-		/* loop for all subdevices affected by this request */
+	क्रम (; length > 0; i++) अणु
+		/* loop क्रम all subdevices affected by this request */
 		subdev = concat->subdev[i];	/* get current subdevice */
 
 		/* limit length to subdevice's size: */
-		if (erase->addr + length > subdev->size)
+		अगर (erase->addr + length > subdev->size)
 			erase->len = subdev->size - erase->addr;
-		else
+		अन्यथा
 			erase->len = length;
 
 		length -= erase->len;
-		if ((err = mtd_erase(subdev, erase))) {
+		अगर ((err = mtd_erase(subdev, erase))) अणु
 			/* sanity check: should never happen since
 			 * block alignment has been checked above */
 			BUG_ON(err == -EINVAL);
-			if (erase->fail_addr != MTD_FAIL_ADDR_UNKNOWN)
+			अगर (erase->fail_addr != MTD_FAIL_ADDR_UNKNOWN)
 				instr->fail_addr = erase->fail_addr + offset;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/*
-		 * erase->addr specifies the offset of the area to be
+		 * erase->addr specअगरies the offset of the area to be
 		 * erased *within the current subdevice*. It can be
-		 * non-zero only the first time through this loop, i.e.
-		 * for the first subdevice where blocks need to be erased.
+		 * non-zero only the first समय through this loop, i.e.
+		 * क्रम the first subdevice where blocks need to be erased.
 		 * All the following erases must begin at the start of the
 		 * current subdevice, i.e. at offset zero.
 		 */
 		erase->addr = 0;
 		offset += subdev->size;
-	}
-	kfree(erase);
+	पूर्ण
+	kमुक्त(erase);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int concat_xxlock(struct mtd_info *mtd, loff_t ofs, uint64_t len,
+अटल पूर्णांक concat_xxlock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len,
 			 bool is_lock)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int i, err = -EINVAL;
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक i, err = -EINVAL;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
-		uint64_t size;
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
+		uपूर्णांक64_t size;
 
-		if (ofs >= subdev->size) {
+		अगर (ofs >= subdev->size) अणु
 			size = 0;
 			ofs -= subdev->size;
-			continue;
-		}
-		if (ofs + len > subdev->size)
+			जारी;
+		पूर्ण
+		अगर (ofs + len > subdev->size)
 			size = subdev->size - ofs;
-		else
+		अन्यथा
 			size = len;
 
-		if (is_lock)
+		अगर (is_lock)
 			err = mtd_lock(subdev, ofs, size);
-		else
+		अन्यथा
 			err = mtd_unlock(subdev, ofs, size);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		len -= size;
-		if (len == 0)
-			break;
+		अगर (len == 0)
+			अवरोध;
 
 		err = -EINVAL;
 		ofs = 0;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int concat_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	return concat_xxlock(mtd, ofs, len, true);
-}
+अटल पूर्णांक concat_lock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	वापस concat_xxlock(mtd, ofs, len, true);
+पूर्ण
 
-static int concat_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	return concat_xxlock(mtd, ofs, len, false);
-}
+अटल पूर्णांक concat_unlock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	वापस concat_xxlock(mtd, ofs, len, false);
+पूर्ण
 
-static int concat_is_locked(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int i, err = -EINVAL;
+अटल पूर्णांक concat_is_locked(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक i, err = -EINVAL;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
 
-		if (ofs >= subdev->size) {
+		अगर (ofs >= subdev->size) अणु
 			ofs -= subdev->size;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (ofs + len > subdev->size)
-			break;
+		अगर (ofs + len > subdev->size)
+			अवरोध;
 
-		return mtd_is_locked(subdev, ofs, len);
-	}
+		वापस mtd_is_locked(subdev, ofs, len);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void concat_sync(struct mtd_info *mtd)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int i;
+अटल व्योम concat_sync(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक i;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
 		mtd_sync(subdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int concat_suspend(struct mtd_info *mtd)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int i, rc = 0;
+अटल पूर्णांक concat_suspend(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक i, rc = 0;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
-		if ((rc = mtd_suspend(subdev)) < 0)
-			return rc;
-	}
-	return rc;
-}
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
+		अगर ((rc = mtd_suspend(subdev)) < 0)
+			वापस rc;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void concat_resume(struct mtd_info *mtd)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int i;
+अटल व्योम concat_resume(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक i;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
 		mtd_resume(subdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int concat_block_isbad(struct mtd_info *mtd, loff_t ofs)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int i, res = 0;
+अटल पूर्णांक concat_block_isbad(काष्ठा mtd_info *mtd, loff_t ofs)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक i, res = 0;
 
-	if (!mtd_can_have_bb(concat->subdev[0]))
-		return res;
+	अगर (!mtd_can_have_bb(concat->subdev[0]))
+		वापस res;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
 
-		if (ofs >= subdev->size) {
+		अगर (ofs >= subdev->size) अणु
 			ofs -= subdev->size;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		res = mtd_block_isbad(subdev, ofs);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int concat_block_markbad(struct mtd_info *mtd, loff_t ofs)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	int i, err = -EINVAL;
+अटल पूर्णांक concat_block_markbad(काष्ठा mtd_info *mtd, loff_t ofs)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	पूर्णांक i, err = -EINVAL;
 
-	for (i = 0; i < concat->num_subdev; i++) {
-		struct mtd_info *subdev = concat->subdev[i];
+	क्रम (i = 0; i < concat->num_subdev; i++) अणु
+		काष्ठा mtd_info *subdev = concat->subdev[i];
 
-		if (ofs >= subdev->size) {
+		अगर (ofs >= subdev->size) अणु
 			ofs -= subdev->size;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		err = mtd_block_markbad(subdev, ofs);
-		if (!err)
+		अगर (!err)
 			mtd->ecc_stats.badblocks++;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * This function constructs a virtual MTD device by concatenating
- * num_devs MTD devices. A pointer to the new device object is
- * stored to *new_dev upon success. This function does _not_
- * register any devices: this is the caller's responsibility.
+ * This function स्थिरructs a भव MTD device by concatenating
+ * num_devs MTD devices. A poपूर्णांकer to the new device object is
+ * stored to *new_dev upon success. This function करोes _not_
+ * रेजिस्टर any devices: this is the caller's responsibility.
  */
-struct mtd_info *mtd_concat_create(struct mtd_info *subdev[],	/* subdevices to concatenate */
-				   int num_devs,	/* number of subdevices      */
-				   const char *name)
-{				/* name for the new device   */
-	int i;
-	size_t size;
-	struct mtd_concat *concat;
-	uint32_t max_erasesize, curr_erasesize;
-	int num_erase_region;
-	int max_writebufsize = 0;
+काष्ठा mtd_info *mtd_concat_create(काष्ठा mtd_info *subdev[],	/* subdevices to concatenate */
+				   पूर्णांक num_devs,	/* number of subdevices      */
+				   स्थिर अक्षर *name)
+अणु				/* name क्रम the new device   */
+	पूर्णांक i;
+	माप_प्रकार size;
+	काष्ठा mtd_concat *concat;
+	uपूर्णांक32_t max_erasesize, curr_erasesize;
+	पूर्णांक num_erase_region;
+	पूर्णांक max_ग_लिखोbufsize = 0;
 
-	printk(KERN_NOTICE "Concatenating MTD devices:\n");
-	for (i = 0; i < num_devs; i++)
-		printk(KERN_NOTICE "(%d): \"%s\"\n", i, subdev[i]->name);
-	printk(KERN_NOTICE "into device \"%s\"\n", name);
+	prपूर्णांकk(KERN_NOTICE "Concatenating MTD devices:\n");
+	क्रम (i = 0; i < num_devs; i++)
+		prपूर्णांकk(KERN_NOTICE "(%d): \"%s\"\n", i, subdev[i]->name);
+	prपूर्णांकk(KERN_NOTICE "into device \"%s\"\n", name);
 
-	/* allocate the device structure */
-	size = SIZEOF_STRUCT_MTD_CONCAT(num_devs);
+	/* allocate the device काष्ठाure */
+	size = SIZखातापूर्ण_STRUCT_MTD_CONCAT(num_devs);
 	concat = kzalloc(size, GFP_KERNEL);
-	if (!concat) {
-		printk
+	अगर (!concat) अणु
+		prपूर्णांकk
 		    ("memory allocation error while creating concatenated device \"%s\"\n",
 		     name);
-		return NULL;
-	}
-	concat->subdev = (struct mtd_info **) (concat + 1);
+		वापस शून्य;
+	पूर्ण
+	concat->subdev = (काष्ठा mtd_info **) (concat + 1);
 
 	/*
-	 * Set up the new "super" device's MTD object structure, check for
+	 * Set up the new "super" device's MTD object काष्ठाure, check क्रम
 	 * incompatibilities between the subdevices.
 	 */
 	concat->mtd.type = subdev[0]->type;
 	concat->mtd.flags = subdev[0]->flags;
 	concat->mtd.size = subdev[0]->size;
 	concat->mtd.erasesize = subdev[0]->erasesize;
-	concat->mtd.writesize = subdev[0]->writesize;
+	concat->mtd.ग_लिखोsize = subdev[0]->ग_लिखोsize;
 
-	for (i = 0; i < num_devs; i++)
-		if (max_writebufsize < subdev[i]->writebufsize)
-			max_writebufsize = subdev[i]->writebufsize;
-	concat->mtd.writebufsize = max_writebufsize;
+	क्रम (i = 0; i < num_devs; i++)
+		अगर (max_ग_लिखोbufsize < subdev[i]->ग_लिखोbufsize)
+			max_ग_लिखोbufsize = subdev[i]->ग_लिखोbufsize;
+	concat->mtd.ग_लिखोbufsize = max_ग_लिखोbufsize;
 
 	concat->mtd.subpage_sft = subdev[0]->subpage_sft;
 	concat->mtd.oobsize = subdev[0]->oobsize;
 	concat->mtd.oobavail = subdev[0]->oobavail;
-	if (subdev[0]->_writev)
-		concat->mtd._writev = concat_writev;
-	if (subdev[0]->_read_oob)
-		concat->mtd._read_oob = concat_read_oob;
-	if (subdev[0]->_write_oob)
-		concat->mtd._write_oob = concat_write_oob;
-	if (subdev[0]->_block_isbad)
+	अगर (subdev[0]->_ग_लिखोv)
+		concat->mtd._ग_लिखोv = concat_ग_लिखोv;
+	अगर (subdev[0]->_पढ़ो_oob)
+		concat->mtd._पढ़ो_oob = concat_पढ़ो_oob;
+	अगर (subdev[0]->_ग_लिखो_oob)
+		concat->mtd._ग_लिखो_oob = concat_ग_लिखो_oob;
+	अगर (subdev[0]->_block_isbad)
 		concat->mtd._block_isbad = concat_block_isbad;
-	if (subdev[0]->_block_markbad)
+	अगर (subdev[0]->_block_markbad)
 		concat->mtd._block_markbad = concat_block_markbad;
-	if (subdev[0]->_panic_write)
-		concat->mtd._panic_write = concat_panic_write;
+	अगर (subdev[0]->_panic_ग_लिखो)
+		concat->mtd._panic_ग_लिखो = concat_panic_ग_लिखो;
 
 	concat->mtd.ecc_stats.badblocks = subdev[0]->ecc_stats.badblocks;
 
 	concat->subdev[0] = subdev[0];
 
-	for (i = 1; i < num_devs; i++) {
-		if (concat->mtd.type != subdev[i]->type) {
-			kfree(concat);
-			printk("Incompatible device type on \"%s\"\n",
+	क्रम (i = 1; i < num_devs; i++) अणु
+		अगर (concat->mtd.type != subdev[i]->type) अणु
+			kमुक्त(concat);
+			prपूर्णांकk("Incompatible device type on \"%s\"\n",
 			       subdev[i]->name);
-			return NULL;
-		}
-		if (concat->mtd.flags != subdev[i]->flags) {
+			वापस शून्य;
+		पूर्ण
+		अगर (concat->mtd.flags != subdev[i]->flags) अणु
 			/*
 			 * Expect all flags except MTD_WRITEABLE to be
 			 * equal on all subdevices.
 			 */
-			if ((concat->mtd.flags ^ subdev[i]->
-			     flags) & ~MTD_WRITEABLE) {
-				kfree(concat);
-				printk("Incompatible device flags on \"%s\"\n",
+			अगर ((concat->mtd.flags ^ subdev[i]->
+			     flags) & ~MTD_WRITEABLE) अणु
+				kमुक्त(concat);
+				prपूर्णांकk("Incompatible device flags on \"%s\"\n",
 				       subdev[i]->name);
-				return NULL;
-			} else
-				/* if writeable attribute differs,
-				   make super device writeable */
+				वापस शून्य;
+			पूर्ण अन्यथा
+				/* अगर ग_लिखोable attribute dअगरfers,
+				   make super device ग_लिखोable */
 				concat->mtd.flags |=
 				    subdev[i]->flags & MTD_WRITEABLE;
-		}
+		पूर्ण
 
 		concat->mtd.size += subdev[i]->size;
 		concat->mtd.ecc_stats.badblocks +=
 			subdev[i]->ecc_stats.badblocks;
-		if (concat->mtd.writesize   !=  subdev[i]->writesize ||
+		अगर (concat->mtd.ग_लिखोsize   !=  subdev[i]->ग_लिखोsize ||
 		    concat->mtd.subpage_sft != subdev[i]->subpage_sft ||
 		    concat->mtd.oobsize    !=  subdev[i]->oobsize ||
-		    !concat->mtd._read_oob  != !subdev[i]->_read_oob ||
-		    !concat->mtd._write_oob != !subdev[i]->_write_oob) {
-			kfree(concat);
-			printk("Incompatible OOB or ECC data on \"%s\"\n",
+		    !concat->mtd._पढ़ो_oob  != !subdev[i]->_पढ़ो_oob ||
+		    !concat->mtd._ग_लिखो_oob != !subdev[i]->_ग_लिखो_oob) अणु
+			kमुक्त(concat);
+			prपूर्णांकk("Incompatible OOB or ECC data on \"%s\"\n",
 			       subdev[i]->name);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		concat->subdev[i] = subdev[i];
 
-	}
+	पूर्ण
 
 	mtd_set_ooblayout(&concat->mtd, subdev[0]->ooblayout);
 
@@ -744,8 +745,8 @@ struct mtd_info *mtd_concat_create(struct mtd_info *subdev[],	/* subdevices to c
 	concat->mtd.name = name;
 
 	concat->mtd._erase = concat_erase;
-	concat->mtd._read = concat_read;
-	concat->mtd._write = concat_write;
+	concat->mtd._पढ़ो = concat_पढ़ो;
+	concat->mtd._ग_लिखो = concat_ग_लिखो;
 	concat->mtd._sync = concat_sync;
 	concat->mtd._lock = concat_lock;
 	concat->mtd._unlock = concat_unlock;
@@ -761,65 +762,65 @@ struct mtd_info *mtd_concat_create(struct mtd_info *subdev[],	/* subdevices to c
 	 */
 	max_erasesize = curr_erasesize = subdev[0]->erasesize;
 	num_erase_region = 1;
-	for (i = 0; i < num_devs; i++) {
-		if (subdev[i]->numeraseregions == 0) {
-			/* current subdevice has uniform erase size */
-			if (subdev[i]->erasesize != curr_erasesize) {
-				/* if it differs from the last subdevice's erase size, count it */
+	क्रम (i = 0; i < num_devs; i++) अणु
+		अगर (subdev[i]->numeraseregions == 0) अणु
+			/* current subdevice has unअगरorm erase size */
+			अगर (subdev[i]->erasesize != curr_erasesize) अणु
+				/* अगर it dअगरfers from the last subdevice's erase size, count it */
 				++num_erase_region;
 				curr_erasesize = subdev[i]->erasesize;
-				if (curr_erasesize > max_erasesize)
+				अगर (curr_erasesize > max_erasesize)
 					max_erasesize = curr_erasesize;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* current subdevice has variable erase size */
-			int j;
-			for (j = 0; j < subdev[i]->numeraseregions; j++) {
+			पूर्णांक j;
+			क्रम (j = 0; j < subdev[i]->numeraseregions; j++) अणु
 
 				/* walk the list of erase regions, count any changes */
-				if (subdev[i]->eraseregions[j].erasesize !=
-				    curr_erasesize) {
+				अगर (subdev[i]->eraseregions[j].erasesize !=
+				    curr_erasesize) अणु
 					++num_erase_region;
 					curr_erasesize =
 					    subdev[i]->eraseregions[j].
 					    erasesize;
-					if (curr_erasesize > max_erasesize)
+					अगर (curr_erasesize > max_erasesize)
 						max_erasesize = curr_erasesize;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (num_erase_region == 1) {
+	अगर (num_erase_region == 1) अणु
 		/*
-		 * All subdevices have the same uniform erase size.
+		 * All subdevices have the same unअगरorm erase size.
 		 * This is easy:
 		 */
 		concat->mtd.erasesize = curr_erasesize;
 		concat->mtd.numeraseregions = 0;
-	} else {
-		uint64_t tmp64;
+	पूर्ण अन्यथा अणु
+		uपूर्णांक64_t पंचांगp64;
 
 		/*
 		 * erase block size varies across the subdevices: allocate
 		 * space to store the data describing the variable erase regions
 		 */
-		struct mtd_erase_region_info *erase_region_p;
-		uint64_t begin, position;
+		काष्ठा mtd_erase_region_info *erase_region_p;
+		uपूर्णांक64_t begin, position;
 
 		concat->mtd.erasesize = max_erasesize;
 		concat->mtd.numeraseregions = num_erase_region;
 		concat->mtd.eraseregions = erase_region_p =
-		    kmalloc_array(num_erase_region,
-				  sizeof(struct mtd_erase_region_info),
+		    kदो_स्मृति_array(num_erase_region,
+				  माप(काष्ठा mtd_erase_region_info),
 				  GFP_KERNEL);
-		if (!erase_region_p) {
-			kfree(concat);
-			printk
+		अगर (!erase_region_p) अणु
+			kमुक्त(concat);
+			prपूर्णांकk
 			    ("memory allocation error while creating erase region list"
 			     " for device \"%s\"\n", name);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
 		/*
 		 * walk the map of the new device once more and fill in
@@ -827,71 +828,71 @@ struct mtd_info *mtd_concat_create(struct mtd_info *subdev[],	/* subdevices to c
 		 */
 		curr_erasesize = subdev[0]->erasesize;
 		begin = position = 0;
-		for (i = 0; i < num_devs; i++) {
-			if (subdev[i]->numeraseregions == 0) {
-				/* current subdevice has uniform erase size */
-				if (subdev[i]->erasesize != curr_erasesize) {
+		क्रम (i = 0; i < num_devs; i++) अणु
+			अगर (subdev[i]->numeraseregions == 0) अणु
+				/* current subdevice has unअगरorm erase size */
+				अगर (subdev[i]->erasesize != curr_erasesize) अणु
 					/*
-					 *  fill in an mtd_erase_region_info structure for the area
+					 *  fill in an mtd_erase_region_info काष्ठाure क्रम the area
 					 *  we have walked so far:
 					 */
 					erase_region_p->offset = begin;
 					erase_region_p->erasesize =
 					    curr_erasesize;
-					tmp64 = position - begin;
-					do_div(tmp64, curr_erasesize);
-					erase_region_p->numblocks = tmp64;
+					पंचांगp64 = position - begin;
+					करो_भाग(पंचांगp64, curr_erasesize);
+					erase_region_p->numblocks = पंचांगp64;
 					begin = position;
 
 					curr_erasesize = subdev[i]->erasesize;
 					++erase_region_p;
-				}
+				पूर्ण
 				position += subdev[i]->size;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* current subdevice has variable erase size */
-				int j;
-				for (j = 0; j < subdev[i]->numeraseregions; j++) {
+				पूर्णांक j;
+				क्रम (j = 0; j < subdev[i]->numeraseregions; j++) अणु
 					/* walk the list of erase regions, count any changes */
-					if (subdev[i]->eraseregions[j].
-					    erasesize != curr_erasesize) {
+					अगर (subdev[i]->eraseregions[j].
+					    erasesize != curr_erasesize) अणु
 						erase_region_p->offset = begin;
 						erase_region_p->erasesize =
 						    curr_erasesize;
-						tmp64 = position - begin;
-						do_div(tmp64, curr_erasesize);
-						erase_region_p->numblocks = tmp64;
+						पंचांगp64 = position - begin;
+						करो_भाग(पंचांगp64, curr_erasesize);
+						erase_region_p->numblocks = पंचांगp64;
 						begin = position;
 
 						curr_erasesize =
 						    subdev[i]->eraseregions[j].
 						    erasesize;
 						++erase_region_p;
-					}
+					पूर्ण
 					position +=
 					    subdev[i]->eraseregions[j].
-					    numblocks * (uint64_t)curr_erasesize;
-				}
-			}
-		}
-		/* Now write the final entry */
+					    numblocks * (uपूर्णांक64_t)curr_erasesize;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		/* Now ग_लिखो the final entry */
 		erase_region_p->offset = begin;
 		erase_region_p->erasesize = curr_erasesize;
-		tmp64 = position - begin;
-		do_div(tmp64, curr_erasesize);
-		erase_region_p->numblocks = tmp64;
-	}
+		पंचांगp64 = position - begin;
+		करो_भाग(पंचांगp64, curr_erasesize);
+		erase_region_p->numblocks = पंचांगp64;
+	पूर्ण
 
-	return &concat->mtd;
-}
+	वापस &concat->mtd;
+पूर्ण
 
 /* Cleans the context obtained from mtd_concat_create() */
-void mtd_concat_destroy(struct mtd_info *mtd)
-{
-	struct mtd_concat *concat = CONCAT(mtd);
-	if (concat->mtd.numeraseregions)
-		kfree(concat->mtd.eraseregions);
-	kfree(concat);
-}
+व्योम mtd_concat_destroy(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा mtd_concat *concat = CONCAT(mtd);
+	अगर (concat->mtd.numeraseregions)
+		kमुक्त(concat->mtd.eraseregions);
+	kमुक्त(concat);
+पूर्ण
 
 EXPORT_SYMBOL(mtd_concat_create);
 EXPORT_SYMBOL(mtd_concat_destroy);

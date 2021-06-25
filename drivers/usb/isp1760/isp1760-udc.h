@@ -1,103 +1,104 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Driver for the NXP ISP1761 device controller
+ * Driver क्रम the NXP ISP1761 device controller
  *
  * Copyright 2014 Ideas on Board Oy
  *
  * Contacts:
- *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ *	Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#ifndef _ISP1760_UDC_H_
-#define _ISP1760_UDC_H_
+#अगर_अघोषित _ISP1760_UDC_H_
+#घोषणा _ISP1760_UDC_H_
 
-#include <linux/ioport.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/timer.h>
-#include <linux/usb/gadget.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/usb/gadget.h>
 
-struct isp1760_device;
-struct isp1760_udc;
+काष्ठा isp1760_device;
+काष्ठा isp1760_udc;
 
-enum isp1760_ctrl_state {
-	ISP1760_CTRL_SETUP,		/* Waiting for a SETUP transaction */
+क्रमागत isp1760_ctrl_state अणु
+	ISP1760_CTRL_SETUP,		/* Waiting क्रम a SETUP transaction */
 	ISP1760_CTRL_DATA_IN,		/* Setup received, data IN stage */
 	ISP1760_CTRL_DATA_OUT,		/* Setup received, data OUT stage */
 	ISP1760_CTRL_STATUS,		/* 0-length request in status stage */
-};
+पूर्ण;
 
-struct isp1760_ep {
-	struct isp1760_udc *udc;
-	struct usb_ep ep;
+काष्ठा isp1760_ep अणु
+	काष्ठा isp1760_udc *udc;
+	काष्ठा usb_ep ep;
 
-	struct list_head queue;
+	काष्ठा list_head queue;
 
-	unsigned int addr;
-	unsigned int maxpacket;
-	char name[7];
+	अचिन्हित पूर्णांक addr;
+	अचिन्हित पूर्णांक maxpacket;
+	अक्षर name[7];
 
-	const struct usb_endpoint_descriptor *desc;
+	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc;
 
 	bool rx_pending;
 	bool halted;
 	bool wedged;
-};
+पूर्ण;
 
 /**
- * struct isp1760_udc - UDC state information
+ * काष्ठा isp1760_udc - UDC state inक्रमmation
  * irq: IRQ number
  * irqname: IRQ name (as passed to request_irq)
- * regs: Base address of the UDC registers
+ * regs: Base address of the UDC रेजिस्टरs
  * driver: Gadget driver
  * gadget: Gadget device
- * lock: Protects driver, vbus_timer, ep, ep0_*, DC_EPINDEX register
- * ep: Array of endpoints
- * ep0_state: Control request state for endpoint 0
+ * lock: Protects driver, vbus_समयr, ep, ep0_*, DC_EPINDEX रेजिस्टर
+ * ep: Array of endpoपूर्णांकs
+ * ep0_state: Control request state क्रम endpoपूर्णांक 0
  * ep0_dir: Direction of the current control request
  * ep0_length: Length of the current control request
  * connected: Tracks gadget driver bus connection state
  */
-struct isp1760_udc {
-#ifdef CONFIG_USB_ISP1761_UDC
-	struct isp1760_device *isp;
+काष्ठा isp1760_udc अणु
+#अगर_घोषित CONFIG_USB_ISP1761_UDC
+	काष्ठा isp1760_device *isp;
 
-	int irq;
-	char *irqname;
-	void __iomem *regs;
+	पूर्णांक irq;
+	अक्षर *irqname;
+	व्योम __iomem *regs;
 
-	struct usb_gadget_driver *driver;
-	struct usb_gadget gadget;
+	काष्ठा usb_gadget_driver *driver;
+	काष्ठा usb_gadget gadget;
 
 	spinlock_t lock;
-	struct timer_list vbus_timer;
+	काष्ठा समयr_list vbus_समयr;
 
-	struct isp1760_ep ep[15];
+	काष्ठा isp1760_ep ep[15];
 
-	enum isp1760_ctrl_state ep0_state;
+	क्रमागत isp1760_ctrl_state ep0_state;
 	u8 ep0_dir;
 	u16 ep0_length;
 
 	bool connected;
 
-	unsigned int devstatus;
-#endif
-};
+	अचिन्हित पूर्णांक devstatus;
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_USB_ISP1761_UDC
-int isp1760_udc_register(struct isp1760_device *isp, int irq,
-			 unsigned long irqflags);
-void isp1760_udc_unregister(struct isp1760_device *isp);
-#else
-static inline int isp1760_udc_register(struct isp1760_device *isp, int irq,
-				       unsigned long irqflags)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_USB_ISP1761_UDC
+पूर्णांक isp1760_udc_रेजिस्टर(काष्ठा isp1760_device *isp, पूर्णांक irq,
+			 अचिन्हित दीर्घ irqflags);
+व्योम isp1760_udc_unरेजिस्टर(काष्ठा isp1760_device *isp);
+#अन्यथा
+अटल अंतरभूत पूर्णांक isp1760_udc_रेजिस्टर(काष्ठा isp1760_device *isp, पूर्णांक irq,
+				       अचिन्हित दीर्घ irqflags)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void isp1760_udc_unregister(struct isp1760_device *isp)
-{
-}
-#endif
+अटल अंतरभूत व्योम isp1760_udc_unरेजिस्टर(काष्ठा isp1760_device *isp)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

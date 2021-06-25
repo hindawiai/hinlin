@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_PKEYS_H
-#define _ASM_X86_PKEYS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_PKEYS_H
+#घोषणा _ASM_X86_PKEYS_H
 
-#define ARCH_DEFAULT_PKEY	0
+#घोषणा ARCH_DEFAULT_PKEY	0
 
 /*
  * If more than 16 keys are ever supported, a thorough audit
  * will be necessary to ensure that the types that store key
  * numbers and masks have sufficient capacity.
  */
-#define arch_max_pkey() (boot_cpu_has(X86_FEATURE_OSPKE) ? 16 : 1)
+#घोषणा arch_max_pkey() (boot_cpu_has(X86_FEATURE_OSPKE) ? 16 : 1)
 
-extern int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
-		unsigned long init_val);
+बाह्य पूर्णांक arch_set_user_pkey_access(काष्ठा task_काष्ठा *tsk, पूर्णांक pkey,
+		अचिन्हित दीर्घ init_val);
 
-static inline bool arch_pkeys_enabled(void)
-{
-	return boot_cpu_has(X86_FEATURE_OSPKE);
-}
+अटल अंतरभूत bool arch_pkeys_enabled(व्योम)
+अणु
+	वापस boot_cpu_has(X86_FEATURE_OSPKE);
+पूर्ण
 
 /*
  * Try to dedicate one of the protection keys to be used as an
  * execute-only protection key.
  */
-extern int __execute_only_pkey(struct mm_struct *mm);
-static inline int execute_only_pkey(struct mm_struct *mm)
-{
-	if (!boot_cpu_has(X86_FEATURE_OSPKE))
-		return ARCH_DEFAULT_PKEY;
+बाह्य पूर्णांक __execute_only_pkey(काष्ठा mm_काष्ठा *mm);
+अटल अंतरभूत पूर्णांक execute_only_pkey(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (!boot_cpu_has(X86_FEATURE_OSPKE))
+		वापस ARCH_DEFAULT_PKEY;
 
-	return __execute_only_pkey(mm);
-}
+	वापस __execute_only_pkey(mm);
+पूर्ण
 
-extern int __arch_override_mprotect_pkey(struct vm_area_struct *vma,
-		int prot, int pkey);
-static inline int arch_override_mprotect_pkey(struct vm_area_struct *vma,
-		int prot, int pkey)
-{
-	if (!boot_cpu_has(X86_FEATURE_OSPKE))
-		return 0;
+बाह्य पूर्णांक __arch_override_mprotect_pkey(काष्ठा vm_area_काष्ठा *vma,
+		पूर्णांक prot, पूर्णांक pkey);
+अटल अंतरभूत पूर्णांक arch_override_mprotect_pkey(काष्ठा vm_area_काष्ठा *vma,
+		पूर्णांक prot, पूर्णांक pkey)
+अणु
+	अगर (!boot_cpu_has(X86_FEATURE_OSPKE))
+		वापस 0;
 
-	return __arch_override_mprotect_pkey(vma, prot, pkey);
-}
+	वापस __arch_override_mprotect_pkey(vma, prot, pkey);
+पूर्ण
 
-extern int __arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
-		unsigned long init_val);
+बाह्य पूर्णांक __arch_set_user_pkey_access(काष्ठा task_काष्ठा *tsk, पूर्णांक pkey,
+		अचिन्हित दीर्घ init_val);
 
-#define ARCH_VM_PKEY_FLAGS (VM_PKEY_BIT0 | VM_PKEY_BIT1 | VM_PKEY_BIT2 | VM_PKEY_BIT3)
+#घोषणा ARCH_VM_PKEY_FLAGS (VM_PKEY_BIT0 | VM_PKEY_BIT1 | VM_PKEY_BIT2 | VM_PKEY_BIT3)
 
-#define mm_pkey_allocation_map(mm)	(mm->context.pkey_allocation_map)
-#define mm_set_pkey_allocated(mm, pkey) do {		\
+#घोषणा mm_pkey_allocation_map(mm)	(mm->context.pkey_allocation_map)
+#घोषणा mm_set_pkey_allocated(mm, pkey) करो अणु		\
 	mm_pkey_allocation_map(mm) |= (1U << pkey);	\
-} while (0)
-#define mm_set_pkey_free(mm, pkey) do {			\
+पूर्ण जबतक (0)
+#घोषणा mm_set_pkey_मुक्त(mm, pkey) करो अणु			\
 	mm_pkey_allocation_map(mm) &= ~(1U << pkey);	\
-} while (0)
+पूर्ण जबतक (0)
 
-static inline
-bool mm_pkey_is_allocated(struct mm_struct *mm, int pkey)
-{
+अटल अंतरभूत
+bool mm_pkey_is_allocated(काष्ठा mm_काष्ठा *mm, पूर्णांक pkey)
+अणु
 	/*
-	 * "Allocated" pkeys are those that have been returned
+	 * "Allocated" pkeys are those that have been वापसed
 	 * from pkey_alloc() or pkey 0 which is allocated
 	 * implicitly when the mm is created.
 	 */
-	if (pkey < 0)
-		return false;
-	if (pkey >= arch_max_pkey())
-		return false;
+	अगर (pkey < 0)
+		वापस false;
+	अगर (pkey >= arch_max_pkey())
+		वापस false;
 	/*
 	 * The exec-only pkey is set in the allocation map, but
-	 * is not available to any of the user interfaces like
+	 * is not available to any of the user पूर्णांकerfaces like
 	 * mprotect_pkey().
 	 */
-	if (pkey == mm->context.execute_only_pkey)
-		return false;
+	अगर (pkey == mm->context.execute_only_pkey)
+		वापस false;
 
-	return mm_pkey_allocation_map(mm) & (1U << pkey);
-}
+	वापस mm_pkey_allocation_map(mm) & (1U << pkey);
+पूर्ण
 
 /*
  * Returns a positive, 4-bit key on success, or -1 on failure.
  */
-static inline
-int mm_pkey_alloc(struct mm_struct *mm)
-{
+अटल अंतरभूत
+पूर्णांक mm_pkey_alloc(काष्ठा mm_काष्ठा *mm)
+अणु
 	/*
 	 * Note: this is the one and only place we make sure
 	 * that the pkey is valid as far as the hardware is
@@ -92,46 +93,46 @@ int mm_pkey_alloc(struct mm_struct *mm)
 	 * only good, valid pkeys come out of here.
 	 */
 	u16 all_pkeys_mask = ((1U << arch_max_pkey()) - 1);
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * Are we out of pkeys?  We must handle this specially
-	 * because ffz() behavior is undefined if there are no
+	 * because ffz() behavior is undefined अगर there are no
 	 * zeros.
 	 */
-	if (mm_pkey_allocation_map(mm) == all_pkeys_mask)
-		return -1;
+	अगर (mm_pkey_allocation_map(mm) == all_pkeys_mask)
+		वापस -1;
 
 	ret = ffz(mm_pkey_allocation_map(mm));
 
 	mm_set_pkey_allocated(mm, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline
-int mm_pkey_free(struct mm_struct *mm, int pkey)
-{
-	if (!mm_pkey_is_allocated(mm, pkey))
-		return -EINVAL;
+अटल अंतरभूत
+पूर्णांक mm_pkey_मुक्त(काष्ठा mm_काष्ठा *mm, पूर्णांक pkey)
+अणु
+	अगर (!mm_pkey_is_allocated(mm, pkey))
+		वापस -EINVAL;
 
-	mm_set_pkey_free(mm, pkey);
+	mm_set_pkey_मुक्त(mm, pkey);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-extern int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
-		unsigned long init_val);
-extern int __arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
-		unsigned long init_val);
-extern void copy_init_pkru_to_fpregs(void);
+बाह्य पूर्णांक arch_set_user_pkey_access(काष्ठा task_काष्ठा *tsk, पूर्णांक pkey,
+		अचिन्हित दीर्घ init_val);
+बाह्य पूर्णांक __arch_set_user_pkey_access(काष्ठा task_काष्ठा *tsk, पूर्णांक pkey,
+		अचिन्हित दीर्घ init_val);
+बाह्य व्योम copy_init_pkru_to_fpregs(व्योम);
 
-static inline int vma_pkey(struct vm_area_struct *vma)
-{
-	unsigned long vma_pkey_mask = VM_PKEY_BIT0 | VM_PKEY_BIT1 |
+अटल अंतरभूत पूर्णांक vma_pkey(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अचिन्हित दीर्घ vma_pkey_mask = VM_PKEY_BIT0 | VM_PKEY_BIT1 |
 				      VM_PKEY_BIT2 | VM_PKEY_BIT3;
 
-	return (vma->vm_flags & vma_pkey_mask) >> VM_PKEY_SHIFT;
-}
+	वापस (vma->vm_flags & vma_pkey_mask) >> VM_PKEY_SHIFT;
+पूर्ण
 
-#endif /*_ASM_X86_PKEYS_H */
+#पूर्ण_अगर /*_ASM_X86_PKEYS_H */

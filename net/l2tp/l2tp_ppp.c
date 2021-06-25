@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*****************************************************************************
  * Linux PPP over L2TP (PPPoX/PPPoL2TP) Sockets
  *
@@ -17,21 +18,21 @@
 /* This driver handles only L2TP data frames; control frames are handled by a
  * userspace application.
  *
- * To send data in an L2TP session, userspace opens a PPPoL2TP socket and
+ * To send data in an L2TP session, userspace खोलोs a PPPoL2TP socket and
  * attaches it to a bound UDP socket with local tunnel_id / session_id and
  * peer tunnel_id / session_id set. Data can then be sent or received using
  * regular socket sendmsg() / recvmsg() calls. Kernel parameters of the socket
- * can be read or modified using ioctl() or [gs]etsockopt() calls.
+ * can be पढ़ो or modअगरied using ioctl() or [gs]etsockopt() calls.
  *
  * When a PPPoL2TP socket is connected with local and peer session_id values
  * zero, the socket is treated as a special tunnel management socket.
  *
- * Here's example userspace code to create a socket for sending/receiving data
+ * Here's example userspace code to create a socket क्रम sending/receiving data
  * over an L2TP session:-
  *
- *	struct sockaddr_pppol2tp sax;
- *	int fd;
- *	int session_fd;
+ *	काष्ठा sockaddr_pppol2tp sax;
+ *	पूर्णांक fd;
+ *	पूर्णांक session_fd;
  *
  *	fd = socket(AF_PPPOX, SOCK_DGRAM, PX_PROTO_OL2TP);
  *
@@ -46,260 +47,260 @@
  *	sax.pppol2tp.d_tunnel  = peer_tunnel_id;
  *	sax.pppol2tp.d_session = peer_session_id;
  *
- *	session_fd = connect(fd, (struct sockaddr *)&sax, sizeof(sax));
+ *	session_fd = connect(fd, (काष्ठा sockaddr *)&sax, माप(sax));
  *
  * A pppd plugin that allows PPP traffic to be carried over L2TP using
  * this driver is available from the OpenL2TP project at
- * http://openl2tp.sourceforge.net.
+ * http://खोलोl2tp.sourceक्रमge.net.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/list.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/list.h>
+#समावेश <linux/uaccess.h>
 
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
-#include <linux/kthread.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/jiffies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/jअगरfies.h>
 
-#include <linux/netdevice.h>
-#include <linux/net.h>
-#include <linux/inetdevice.h>
-#include <linux/skbuff.h>
-#include <linux/init.h>
-#include <linux/ip.h>
-#include <linux/udp.h>
-#include <linux/if_pppox.h>
-#include <linux/if_pppol2tp.h>
-#include <net/sock.h>
-#include <linux/ppp_channel.h>
-#include <linux/ppp_defs.h>
-#include <linux/ppp-ioctl.h>
-#include <linux/file.h>
-#include <linux/hash.h>
-#include <linux/sort.h>
-#include <linux/proc_fs.h>
-#include <linux/l2tp.h>
-#include <linux/nsproxy.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <net/ip.h>
-#include <net/udp.h>
-#include <net/inet_common.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/net.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/अगर_pppox.h>
+#समावेश <linux/अगर_pppol2tp.h>
+#समावेश <net/sock.h>
+#समावेश <linux/ppp_channel.h>
+#समावेश <linux/ppp_defs.h>
+#समावेश <linux/ppp-ioctl.h>
+#समावेश <linux/file.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/l2tp.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/ip.h>
+#समावेश <net/udp.h>
+#समावेश <net/inet_common.h>
 
-#include <asm/byteorder.h>
-#include <linux/atomic.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/atomic.h>
 
-#include "l2tp_core.h"
+#समावेश "l2tp_core.h"
 
-#define PPPOL2TP_DRV_VERSION	"V2.0"
+#घोषणा PPPOL2TP_DRV_VERSION	"V2.0"
 
-/* Space for UDP, L2TP and PPP headers */
-#define PPPOL2TP_HEADER_OVERHEAD	40
+/* Space क्रम UDP, L2TP and PPP headers */
+#घोषणा PPPOL2TP_HEADER_OVERHEAD	40
 
 /* Number of bytes to build transmit L2TP headers.
- * Unfortunately the size is different depending on whether sequence numbers
+ * Unक्रमtunately the size is dअगरferent depending on whether sequence numbers
  * are enabled.
  */
-#define PPPOL2TP_L2TP_HDR_SIZE_SEQ		10
-#define PPPOL2TP_L2TP_HDR_SIZE_NOSEQ		6
+#घोषणा PPPOL2TP_L2TP_HDR_SIZE_SEQ		10
+#घोषणा PPPOL2TP_L2TP_HDR_SIZE_NOSEQ		6
 
-/* Private data of each session. This data lives at the end of struct
+/* Private data of each session. This data lives at the end of काष्ठा
  * l2tp_session, referenced via session->priv[].
  */
-struct pppol2tp_session {
-	int			owner;		/* pid that opened the socket */
+काष्ठा pppol2tp_session अणु
+	पूर्णांक			owner;		/* pid that खोलोed the socket */
 
-	struct mutex		sk_lock;	/* Protects .sk */
-	struct sock __rcu	*sk;		/* Pointer to the session PPPoX socket */
-	struct sock		*__sk;		/* Copy of .sk, for cleanup */
-	struct rcu_head		rcu;		/* For asynchronous release */
-};
+	काष्ठा mutex		sk_lock;	/* Protects .sk */
+	काष्ठा sock __rcu	*sk;		/* Poपूर्णांकer to the session PPPoX socket */
+	काष्ठा sock		*__sk;		/* Copy of .sk, क्रम cleanup */
+	काष्ठा rcu_head		rcu;		/* For asynchronous release */
+पूर्ण;
 
-static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb);
+अटल पूर्णांक pppol2tp_xmit(काष्ठा ppp_channel *chan, काष्ठा sk_buff *skb);
 
-static const struct ppp_channel_ops pppol2tp_chan_ops = {
+अटल स्थिर काष्ठा ppp_channel_ops pppol2tp_chan_ops = अणु
 	.start_xmit =  pppol2tp_xmit,
-};
+पूर्ण;
 
-static const struct proto_ops pppol2tp_ops;
+अटल स्थिर काष्ठा proto_ops pppol2tp_ops;
 
 /* Retrieves the pppol2tp socket associated to a session.
- * A reference is held on the returned socket, so this function must be paired
+ * A reference is held on the वापसed socket, so this function must be paired
  * with sock_put().
  */
-static struct sock *pppol2tp_session_get_sock(struct l2tp_session *session)
-{
-	struct pppol2tp_session *ps = l2tp_session_priv(session);
-	struct sock *sk;
+अटल काष्ठा sock *pppol2tp_session_get_sock(काष्ठा l2tp_session *session)
+अणु
+	काष्ठा pppol2tp_session *ps = l2tp_session_priv(session);
+	काष्ठा sock *sk;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	sk = rcu_dereference(ps->sk);
-	if (sk)
+	अगर (sk)
 		sock_hold(sk);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
 /* Helpers to obtain tunnel/session contexts from sockets.
  */
-static inline struct l2tp_session *pppol2tp_sock_to_session(struct sock *sk)
-{
-	struct l2tp_session *session;
+अटल अंतरभूत काष्ठा l2tp_session *pppol2tp_sock_to_session(काष्ठा sock *sk)
+अणु
+	काष्ठा l2tp_session *session;
 
-	if (!sk)
-		return NULL;
+	अगर (!sk)
+		वापस शून्य;
 
 	sock_hold(sk);
-	session = (struct l2tp_session *)(sk->sk_user_data);
-	if (!session) {
+	session = (काष्ठा l2tp_session *)(sk->sk_user_data);
+	अगर (!session) अणु
 		sock_put(sk);
-		goto out;
-	}
-	if (WARN_ON(session->magic != L2TP_SESSION_MAGIC)) {
-		session = NULL;
+		जाओ out;
+	पूर्ण
+	अगर (WARN_ON(session->magic != L2TP_SESSION_MAGIC)) अणु
+		session = शून्य;
 		sock_put(sk);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	return session;
-}
+	वापस session;
+पूर्ण
 
 /*****************************************************************************
  * Receive data handling
  *****************************************************************************/
 
-/* Receive message. This is the recvmsg for the PPPoL2TP socket.
+/* Receive message. This is the recvmsg क्रम the PPPoL2TP socket.
  */
-static int pppol2tp_recvmsg(struct socket *sock, struct msghdr *msg,
-			    size_t len, int flags)
-{
-	int err;
-	struct sk_buff *skb;
-	struct sock *sk = sock->sk;
+अटल पूर्णांक pppol2tp_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			    माप_प्रकार len, पूर्णांक flags)
+अणु
+	पूर्णांक err;
+	काष्ठा sk_buff *skb;
+	काष्ठा sock *sk = sock->sk;
 
 	err = -EIO;
-	if (sk->sk_state & PPPOX_BOUND)
-		goto end;
+	अगर (sk->sk_state & PPPOX_BOUND)
+		जाओ end;
 
 	err = 0;
 	skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
 				flags & MSG_DONTWAIT, &err);
-	if (!skb)
-		goto end;
+	अगर (!skb)
+		जाओ end;
 
-	if (len > skb->len)
+	अगर (len > skb->len)
 		len = skb->len;
-	else if (len < skb->len)
+	अन्यथा अगर (len < skb->len)
 		msg->msg_flags |= MSG_TRUNC;
 
 	err = skb_copy_datagram_msg(skb, 0, msg, len);
-	if (likely(err == 0))
+	अगर (likely(err == 0))
 		err = len;
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void pppol2tp_recv(struct l2tp_session *session, struct sk_buff *skb, int data_len)
-{
-	struct pppol2tp_session *ps = l2tp_session_priv(session);
-	struct sock *sk = NULL;
+अटल व्योम pppol2tp_recv(काष्ठा l2tp_session *session, काष्ठा sk_buff *skb, पूर्णांक data_len)
+अणु
+	काष्ठा pppol2tp_session *ps = l2tp_session_priv(session);
+	काष्ठा sock *sk = शून्य;
 
 	/* If the socket is bound, send it in to PPP's input queue. Otherwise
 	 * queue it on the session socket.
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	sk = rcu_dereference(ps->sk);
-	if (!sk)
-		goto no_sock;
+	अगर (!sk)
+		जाओ no_sock;
 
 	/* If the first two bytes are 0xFF03, consider that it is the PPP's
 	 * Address and Control fields and skip them. The L2TP module has always
 	 * worked this way, although, in theory, the use of these fields should
 	 * be negociated and handled at the PPP layer. These fields are
-	 * constant: 0xFF is the All-Stations Address and 0x03 the Unnumbered
-	 * Information command with Poll/Final bit set to zero (RFC 1662).
+	 * स्थिरant: 0xFF is the All-Stations Address and 0x03 the Unnumbered
+	 * Inक्रमmation command with Poll/Final bit set to zero (RFC 1662).
 	 */
-	if (pskb_may_pull(skb, 2) && skb->data[0] == PPP_ALLSTATIONS &&
+	अगर (pskb_may_pull(skb, 2) && skb->data[0] == PPP_ALLSTATIONS &&
 	    skb->data[1] == PPP_UI)
 		skb_pull(skb, 2);
 
-	if (sk->sk_state & PPPOX_BOUND) {
-		struct pppox_sock *po;
+	अगर (sk->sk_state & PPPOX_BOUND) अणु
+		काष्ठा pppox_sock *po;
 
 		po = pppox_sk(sk);
 		ppp_input(&po->chan, skb);
-	} else {
-		if (sock_queue_rcv_skb(sk, skb) < 0) {
-			atomic_long_inc(&session->stats.rx_errors);
-			kfree_skb(skb);
-		}
-	}
-	rcu_read_unlock();
+	पूर्ण अन्यथा अणु
+		अगर (sock_queue_rcv_skb(sk, skb) < 0) अणु
+			atomic_दीर्घ_inc(&session->stats.rx_errors);
+			kमुक्त_skb(skb);
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return;
+	वापस;
 
 no_sock:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	pr_warn_ratelimited("%s: no socket in recv\n", session->name);
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
 /************************************************************************
  * Transmit handling
  ***********************************************************************/
 
-/* This is the sendmsg for the PPPoL2TP pppol2tp_session socket.  We come here
- * when a user application does a sendmsg() on the session socket. L2TP and
- * PPP headers must be inserted into the user's data.
+/* This is the sendmsg क्रम the PPPoL2TP pppol2tp_session socket.  We come here
+ * when a user application करोes a sendmsg() on the session socket. L2TP and
+ * PPP headers must be inserted पूर्णांकo the user's data.
  */
-static int pppol2tp_sendmsg(struct socket *sock, struct msghdr *m,
-			    size_t total_len)
-{
-	struct sock *sk = sock->sk;
-	struct sk_buff *skb;
-	int error;
-	struct l2tp_session *session;
-	struct l2tp_tunnel *tunnel;
-	int uhlen;
+अटल पूर्णांक pppol2tp_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m,
+			    माप_प्रकार total_len)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sk_buff *skb;
+	पूर्णांक error;
+	काष्ठा l2tp_session *session;
+	काष्ठा l2tp_tunnel *tunnel;
+	पूर्णांक uhlen;
 
 	error = -ENOTCONN;
-	if (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED))
-		goto error;
+	अगर (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED))
+		जाओ error;
 
 	/* Get session and tunnel contexts */
 	error = -EBADF;
 	session = pppol2tp_sock_to_session(sk);
-	if (!session)
-		goto error;
+	अगर (!session)
+		जाओ error;
 
 	tunnel = session->tunnel;
 
-	uhlen = (tunnel->encap == L2TP_ENCAPTYPE_UDP) ? sizeof(struct udphdr) : 0;
+	uhlen = (tunnel->encap == L2TP_ENCAPTYPE_UDP) ? माप(काष्ठा udphdr) : 0;
 
 	/* Allocate a socket buffer */
 	error = -ENOMEM;
-	skb = sock_wmalloc(sk, NET_SKB_PAD + sizeof(struct iphdr) +
+	skb = sock_wदो_स्मृति(sk, NET_SKB_PAD + माप(काष्ठा iphdr) +
 			   uhlen + session->hdr_len +
-			   2 + total_len, /* 2 bytes for PPP_ALLSTATIONS & PPP_UI */
+			   2 + total_len, /* 2 bytes क्रम PPP_ALLSTATIONS & PPP_UI */
 			   0, GFP_KERNEL);
-	if (!skb)
-		goto error_put_sess;
+	अगर (!skb)
+		जाओ error_put_sess;
 
-	/* Reserve space for headers. */
+	/* Reserve space क्रम headers. */
 	skb_reserve(skb, NET_SKB_PAD);
 	skb_reset_network_header(skb);
-	skb_reserve(skb, sizeof(struct iphdr));
+	skb_reserve(skb, माप(काष्ठा iphdr));
 	skb_reset_transport_header(skb);
 	skb_reserve(skb, uhlen);
 
@@ -308,12 +309,12 @@ static int pppol2tp_sendmsg(struct socket *sock, struct msghdr *m,
 	skb->data[1] = PPP_UI;
 	skb_put(skb, 2);
 
-	/* Copy user data into skb */
-	error = memcpy_from_msg(skb_put(skb, total_len), m, total_len);
-	if (error < 0) {
-		kfree_skb(skb);
-		goto error_put_sess;
-	}
+	/* Copy user data पूर्णांकo skb */
+	error = स_नकल_from_msg(skb_put(skb, total_len), m, total_len);
+	अगर (error < 0) अणु
+		kमुक्त_skb(skb);
+		जाओ error_put_sess;
+	पूर्ण
 
 	local_bh_disable();
 	l2tp_xmit_skb(session, skb);
@@ -321,13 +322,13 @@ static int pppol2tp_sendmsg(struct socket *sock, struct msghdr *m,
 
 	sock_put(sk);
 
-	return total_len;
+	वापस total_len;
 
 error_put_sess:
 	sock_put(sk);
 error:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /* Transmit function called by generic PPP driver.  Sends PPP frame
  * over PPPoL2TP socket.
@@ -336,38 +337,38 @@ error:
  * being called with a msghdr from userspace, it is called with a skb
  * from the kernel.
  *
- * The supplied skb from ppp doesn't have enough headroom for the
+ * The supplied skb from ppp करोesn't have enough headroom क्रम the
  * insertion of L2TP, UDP and IP headers so we need to allocate more
  * headroom in the skb. This will create a cloned skb. But we must be
- * careful in the error case because the caller will expect to free
+ * careful in the error हाल because the caller will expect to मुक्त
  * the skb it supplied, not our cloned skb. So we take care to always
- * leave the original skb unfreed if we return an error.
+ * leave the original skb unमुक्तd अगर we वापस an error.
  */
-static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
-{
-	struct sock *sk = (struct sock *)chan->private;
-	struct l2tp_session *session;
-	struct l2tp_tunnel *tunnel;
-	int uhlen, headroom;
+अटल पूर्णांक pppol2tp_xmit(काष्ठा ppp_channel *chan, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *sk = (काष्ठा sock *)chan->निजी;
+	काष्ठा l2tp_session *session;
+	काष्ठा l2tp_tunnel *tunnel;
+	पूर्णांक uhlen, headroom;
 
-	if (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED))
-		goto abort;
+	अगर (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED))
+		जाओ पात;
 
 	/* Get session and tunnel contexts from the socket */
 	session = pppol2tp_sock_to_session(sk);
-	if (!session)
-		goto abort;
+	अगर (!session)
+		जाओ पात;
 
 	tunnel = session->tunnel;
 
-	uhlen = (tunnel->encap == L2TP_ENCAPTYPE_UDP) ? sizeof(struct udphdr) : 0;
+	uhlen = (tunnel->encap == L2TP_ENCAPTYPE_UDP) ? माप(काष्ठा udphdr) : 0;
 	headroom = NET_SKB_PAD +
-		   sizeof(struct iphdr) + /* IP header */
-		   uhlen +		/* UDP header (if L2TP_ENCAPTYPE_UDP) */
+		   माप(काष्ठा iphdr) + /* IP header */
+		   uhlen +		/* UDP header (अगर L2TP_ENCAPTYPE_UDP) */
 		   session->hdr_len +	/* L2TP header */
-		   2;			/* 2 bytes for PPP_ALLSTATIONS & PPP_UI */
-	if (skb_cow_head(skb, headroom))
-		goto abort_put_sess;
+		   2;			/* 2 bytes क्रम PPP_ALLSTATIONS & PPP_UI */
+	अगर (skb_cow_head(skb, headroom))
+		जाओ पात_put_sess;
 
 	/* Setup PPP header */
 	__skb_push(skb, 2);
@@ -380,131 +381,131 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 
 	sock_put(sk);
 
-	return 1;
+	वापस 1;
 
-abort_put_sess:
+पात_put_sess:
 	sock_put(sk);
-abort:
+पात:
 	/* Free the original skb */
-	kfree_skb(skb);
-	return 1;
-}
+	kमुक्त_skb(skb);
+	वापस 1;
+पूर्ण
 
 /*****************************************************************************
  * Session (and tunnel control) socket create/destroy.
  *****************************************************************************/
 
-static void pppol2tp_put_sk(struct rcu_head *head)
-{
-	struct pppol2tp_session *ps;
+अटल व्योम pppol2tp_put_sk(काष्ठा rcu_head *head)
+अणु
+	काष्ठा pppol2tp_session *ps;
 
 	ps = container_of(head, typeof(*ps), rcu);
 	sock_put(ps->__sk);
-}
+पूर्ण
 
-/* Really kill the session socket. (Called from sock_put() if
+/* Really समाप्त the session socket. (Called from sock_put() अगर
  * refcnt == 0.)
  */
-static void pppol2tp_session_destruct(struct sock *sk)
-{
-	struct l2tp_session *session = sk->sk_user_data;
+अटल व्योम pppol2tp_session_deकाष्ठा(काष्ठा sock *sk)
+अणु
+	काष्ठा l2tp_session *session = sk->sk_user_data;
 
 	skb_queue_purge(&sk->sk_receive_queue);
-	skb_queue_purge(&sk->sk_write_queue);
+	skb_queue_purge(&sk->sk_ग_लिखो_queue);
 
-	if (session) {
-		sk->sk_user_data = NULL;
-		if (WARN_ON(session->magic != L2TP_SESSION_MAGIC))
-			return;
+	अगर (session) अणु
+		sk->sk_user_data = शून्य;
+		अगर (WARN_ON(session->magic != L2TP_SESSION_MAGIC))
+			वापस;
 		l2tp_session_dec_refcount(session);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Called when the PPPoX socket (session) is closed.
+/* Called when the PPPoX socket (session) is बंदd.
  */
-static int pppol2tp_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	struct l2tp_session *session;
-	int error;
+अटल पूर्णांक pppol2tp_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2tp_session *session;
+	पूर्णांक error;
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
 	error = -EBADF;
 	lock_sock(sk);
-	if (sock_flag(sk, SOCK_DEAD) != 0)
-		goto error;
+	अगर (sock_flag(sk, SOCK_DEAD) != 0)
+		जाओ error;
 
 	pppox_unbind_sock(sk);
 
 	/* Signal the death of the socket. */
 	sk->sk_state = PPPOX_DEAD;
 	sock_orphan(sk);
-	sock->sk = NULL;
+	sock->sk = शून्य;
 
 	session = pppol2tp_sock_to_session(sk);
-	if (session) {
-		struct pppol2tp_session *ps;
+	अगर (session) अणु
+		काष्ठा pppol2tp_session *ps;
 
 		l2tp_session_delete(session);
 
 		ps = l2tp_session_priv(session);
 		mutex_lock(&ps->sk_lock);
-		ps->__sk = rcu_dereference_protected(ps->sk,
+		ps->__sk = rcu_dereference_रक्षित(ps->sk,
 						     lockdep_is_held(&ps->sk_lock));
-		RCU_INIT_POINTER(ps->sk, NULL);
+		RCU_INIT_POINTER(ps->sk, शून्य);
 		mutex_unlock(&ps->sk_lock);
 		call_rcu(&ps->rcu, pppol2tp_put_sk);
 
-		/* Rely on the sock_put() call at the end of the function for
+		/* Rely on the sock_put() call at the end of the function क्रम
 		 * dropping the reference held by pppol2tp_sock_to_session().
 		 * The last reference will be dropped by pppol2tp_put_sk().
 		 */
-	}
+	पूर्ण
 
 	release_sock(sk);
 
 	/* This will delete the session context via
-	 * pppol2tp_session_destruct() if the socket's refcnt drops to
+	 * pppol2tp_session_deकाष्ठा() अगर the socket's refcnt drops to
 	 * zero.
 	 */
 	sock_put(sk);
 
-	return 0;
+	वापस 0;
 
 error:
 	release_sock(sk);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static struct proto pppol2tp_sk_proto = {
+अटल काष्ठा proto pppol2tp_sk_proto = अणु
 	.name	  = "PPPOL2TP",
 	.owner	  = THIS_MODULE,
-	.obj_size = sizeof(struct pppox_sock),
-};
+	.obj_size = माप(काष्ठा pppox_sock),
+पूर्ण;
 
-static int pppol2tp_backlog_recv(struct sock *sk, struct sk_buff *skb)
-{
-	int rc;
+अटल पूर्णांक pppol2tp_backlog_recv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक rc;
 
 	rc = l2tp_udp_encap_recv(sk, skb);
-	if (rc)
-		kfree_skb(skb);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return NET_RX_SUCCESS;
-}
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
-/* socket() handler. Initialize a new struct sock.
+/* socket() handler. Initialize a new काष्ठा sock.
  */
-static int pppol2tp_create(struct net *net, struct socket *sock, int kern)
-{
-	int error = -ENOMEM;
-	struct sock *sk;
+अटल पूर्णांक pppol2tp_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक kern)
+अणु
+	पूर्णांक error = -ENOMEM;
+	काष्ठा sock *sk;
 
 	sk = sk_alloc(net, PF_PPPOX, GFP_KERNEL, &pppol2tp_sk_proto, kern);
-	if (!sk)
-		goto out;
+	अगर (!sk)
+		जाओ out;
 
 	sock_init_data(sock, sk);
 
@@ -516,60 +517,60 @@ static int pppol2tp_create(struct net *net, struct socket *sock, int kern)
 	sk->sk_family	   = PF_PPPOX;
 	sk->sk_state	   = PPPOX_NONE;
 	sk->sk_type	   = SOCK_STREAM;
-	sk->sk_destruct	   = pppol2tp_session_destruct;
+	sk->sk_deकाष्ठा	   = pppol2tp_session_deकाष्ठा;
 
 	error = 0;
 
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void pppol2tp_show(struct seq_file *m, void *arg)
-{
-	struct l2tp_session *session = arg;
-	struct sock *sk;
+अटल व्योम pppol2tp_show(काष्ठा seq_file *m, व्योम *arg)
+अणु
+	काष्ठा l2tp_session *session = arg;
+	काष्ठा sock *sk;
 
 	sk = pppol2tp_session_get_sock(session);
-	if (sk) {
-		struct pppox_sock *po = pppox_sk(sk);
+	अगर (sk) अणु
+		काष्ठा pppox_sock *po = pppox_sk(sk);
 
-		seq_printf(m, "   interface %s\n", ppp_dev_name(&po->chan));
+		seq_म_लिखो(m, "   interface %s\n", ppp_dev_name(&po->chan));
 		sock_put(sk);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pppol2tp_session_init(struct l2tp_session *session)
-{
-	struct pppol2tp_session *ps;
+अटल व्योम pppol2tp_session_init(काष्ठा l2tp_session *session)
+अणु
+	काष्ठा pppol2tp_session *ps;
 
 	session->recv_skb = pppol2tp_recv;
-	if (IS_ENABLED(CONFIG_L2TP_DEBUGFS))
+	अगर (IS_ENABLED(CONFIG_L2TP_DEBUGFS))
 		session->show = pppol2tp_show;
 
 	ps = l2tp_session_priv(session);
 	mutex_init(&ps->sk_lock);
 	ps->owner = current->pid;
-}
+पूर्ण
 
-struct l2tp_connect_info {
+काष्ठा l2tp_connect_info अणु
 	u8 version;
-	int fd;
+	पूर्णांक fd;
 	u32 tunnel_id;
 	u32 peer_tunnel_id;
 	u32 session_id;
 	u32 peer_session_id;
-};
+पूर्ण;
 
-static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
-				      struct l2tp_connect_info *info)
-{
-	switch (sa_len) {
-	case sizeof(struct sockaddr_pppol2tp):
-	{
-		const struct sockaddr_pppol2tp *sa_v2in4 = sa;
+अटल पूर्णांक pppol2tp_sockaddr_get_info(स्थिर व्योम *sa, पूर्णांक sa_len,
+				      काष्ठा l2tp_connect_info *info)
+अणु
+	चयन (sa_len) अणु
+	हाल माप(काष्ठा sockaddr_pppol2tp):
+	अणु
+		स्थिर काष्ठा sockaddr_pppol2tp *sa_v2in4 = sa;
 
-		if (sa_v2in4->sa_protocol != PX_PROTO_OL2TP)
-			return -EINVAL;
+		अगर (sa_v2in4->sa_protocol != PX_PROTO_OL2TP)
+			वापस -EINVAL;
 
 		info->version = 2;
 		info->fd = sa_v2in4->pppol2tp.fd;
@@ -578,14 +579,14 @@ static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
 		info->session_id = sa_v2in4->pppol2tp.s_session;
 		info->peer_session_id = sa_v2in4->pppol2tp.d_session;
 
-		break;
-	}
-	case sizeof(struct sockaddr_pppol2tpv3):
-	{
-		const struct sockaddr_pppol2tpv3 *sa_v3in4 = sa;
+		अवरोध;
+	पूर्ण
+	हाल माप(काष्ठा sockaddr_pppol2tpv3):
+	अणु
+		स्थिर काष्ठा sockaddr_pppol2tpv3 *sa_v3in4 = sa;
 
-		if (sa_v3in4->sa_protocol != PX_PROTO_OL2TP)
-			return -EINVAL;
+		अगर (sa_v3in4->sa_protocol != PX_PROTO_OL2TP)
+			वापस -EINVAL;
 
 		info->version = 3;
 		info->fd = sa_v3in4->pppol2tp.fd;
@@ -594,14 +595,14 @@ static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
 		info->session_id = sa_v3in4->pppol2tp.s_session;
 		info->peer_session_id = sa_v3in4->pppol2tp.d_session;
 
-		break;
-	}
-	case sizeof(struct sockaddr_pppol2tpin6):
-	{
-		const struct sockaddr_pppol2tpin6 *sa_v2in6 = sa;
+		अवरोध;
+	पूर्ण
+	हाल माप(काष्ठा sockaddr_pppol2tpin6):
+	अणु
+		स्थिर काष्ठा sockaddr_pppol2tpin6 *sa_v2in6 = sa;
 
-		if (sa_v2in6->sa_protocol != PX_PROTO_OL2TP)
-			return -EINVAL;
+		अगर (sa_v2in6->sa_protocol != PX_PROTO_OL2TP)
+			वापस -EINVAL;
 
 		info->version = 2;
 		info->fd = sa_v2in6->pppol2tp.fd;
@@ -610,14 +611,14 @@ static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
 		info->session_id = sa_v2in6->pppol2tp.s_session;
 		info->peer_session_id = sa_v2in6->pppol2tp.d_session;
 
-		break;
-	}
-	case sizeof(struct sockaddr_pppol2tpv3in6):
-	{
-		const struct sockaddr_pppol2tpv3in6 *sa_v3in6 = sa;
+		अवरोध;
+	पूर्ण
+	हाल माप(काष्ठा sockaddr_pppol2tpv3in6):
+	अणु
+		स्थिर काष्ठा sockaddr_pppol2tpv3in6 *sa_v3in6 = sa;
 
-		if (sa_v3in6->sa_protocol != PX_PROTO_OL2TP)
-			return -EINVAL;
+		अगर (sa_v3in6->sa_protocol != PX_PROTO_OL2TP)
+			वापस -EINVAL;
 
 		info->version = 3;
 		info->fd = sa_v3in6->pppol2tp.fd;
@@ -626,302 +627,302 @@ static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
 		info->session_id = sa_v3in6->pppol2tp.s_session;
 		info->peer_session_id = sa_v3in6->pppol2tp.d_session;
 
-		break;
-	}
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Rough estimation of the maximum payload size a tunnel can transmit without
  * fragmenting at the lower IP layer. Assumes L2TPv2 with sequence
  * numbers and no IP option. Not quite accurate, but the result is mostly
  * unused anyway.
  */
-static int pppol2tp_tunnel_mtu(const struct l2tp_tunnel *tunnel)
-{
-	int mtu;
+अटल पूर्णांक pppol2tp_tunnel_mtu(स्थिर काष्ठा l2tp_tunnel *tunnel)
+अणु
+	पूर्णांक mtu;
 
 	mtu = l2tp_tunnel_dst_mtu(tunnel);
-	if (mtu <= PPPOL2TP_HEADER_OVERHEAD)
-		return 1500 - PPPOL2TP_HEADER_OVERHEAD;
+	अगर (mtu <= PPPOL2TP_HEADER_OVERHEAD)
+		वापस 1500 - PPPOL2TP_HEADER_OVERHEAD;
 
-	return mtu - PPPOL2TP_HEADER_OVERHEAD;
-}
+	वापस mtu - PPPOL2TP_HEADER_OVERHEAD;
+पूर्ण
 
 /* connect() handler. Attach a PPPoX socket to a tunnel UDP socket
  */
-static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
-			    int sockaddr_len, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct pppox_sock *po = pppox_sk(sk);
-	struct l2tp_session *session = NULL;
-	struct l2tp_connect_info info;
-	struct l2tp_tunnel *tunnel;
-	struct pppol2tp_session *ps;
-	struct l2tp_session_cfg cfg = { 0, };
+अटल पूर्णांक pppol2tp_connect(काष्ठा socket *sock, काष्ठा sockaddr *uservaddr,
+			    पूर्णांक sockaddr_len, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा pppox_sock *po = pppox_sk(sk);
+	काष्ठा l2tp_session *session = शून्य;
+	काष्ठा l2tp_connect_info info;
+	काष्ठा l2tp_tunnel *tunnel;
+	काष्ठा pppol2tp_session *ps;
+	काष्ठा l2tp_session_cfg cfg = अणु 0, पूर्ण;
 	bool drop_refcnt = false;
 	bool drop_tunnel = false;
 	bool new_session = false;
 	bool new_tunnel = false;
-	int error;
+	पूर्णांक error;
 
 	error = pppol2tp_sockaddr_get_info(uservaddr, sockaddr_len, &info);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
 	lock_sock(sk);
 
-	/* Check for already bound sockets */
+	/* Check क्रम alपढ़ोy bound sockets */
 	error = -EBUSY;
-	if (sk->sk_state & PPPOX_CONNECTED)
-		goto end;
+	अगर (sk->sk_state & PPPOX_CONNECTED)
+		जाओ end;
 
-	/* We don't supporting rebinding anyway */
+	/* We करोn't supporting rebinding anyway */
 	error = -EALREADY;
-	if (sk->sk_user_data)
-		goto end; /* socket is already attached */
+	अगर (sk->sk_user_data)
+		जाओ end; /* socket is alपढ़ोy attached */
 
-	/* Don't bind if tunnel_id is 0 */
+	/* Don't bind अगर tunnel_id is 0 */
 	error = -EINVAL;
-	if (!info.tunnel_id)
-		goto end;
+	अगर (!info.tunnel_id)
+		जाओ end;
 
 	tunnel = l2tp_tunnel_get(sock_net(sk), info.tunnel_id);
-	if (tunnel)
+	अगर (tunnel)
 		drop_tunnel = true;
 
-	/* Special case: create tunnel context if session_id and
+	/* Special हाल: create tunnel context अगर session_id and
 	 * peer_session_id is 0. Otherwise look up tunnel using supplied
 	 * tunnel id.
 	 */
-	if (!info.session_id && !info.peer_session_id) {
-		if (!tunnel) {
-			struct l2tp_tunnel_cfg tcfg = {
+	अगर (!info.session_id && !info.peer_session_id) अणु
+		अगर (!tunnel) अणु
+			काष्ठा l2tp_tunnel_cfg tcfg = अणु
 				.encap = L2TP_ENCAPTYPE_UDP,
-			};
+			पूर्ण;
 
-			/* Prevent l2tp_tunnel_register() from trying to set up
+			/* Prevent l2tp_tunnel_रेजिस्टर() from trying to set up
 			 * a kernel socket.
 			 */
-			if (info.fd < 0) {
+			अगर (info.fd < 0) अणु
 				error = -EBADF;
-				goto end;
-			}
+				जाओ end;
+			पूर्ण
 
 			error = l2tp_tunnel_create(info.fd,
 						   info.version,
 						   info.tunnel_id,
 						   info.peer_tunnel_id, &tcfg,
 						   &tunnel);
-			if (error < 0)
-				goto end;
+			अगर (error < 0)
+				जाओ end;
 
 			l2tp_tunnel_inc_refcount(tunnel);
-			error = l2tp_tunnel_register(tunnel, sock_net(sk),
+			error = l2tp_tunnel_रेजिस्टर(tunnel, sock_net(sk),
 						     &tcfg);
-			if (error < 0) {
-				kfree(tunnel);
-				goto end;
-			}
+			अगर (error < 0) अणु
+				kमुक्त(tunnel);
+				जाओ end;
+			पूर्ण
 			drop_tunnel = true;
 			new_tunnel = true;
-		}
-	} else {
-		/* Error if we can't find the tunnel */
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Error अगर we can't find the tunnel */
 		error = -ENOENT;
-		if (!tunnel)
-			goto end;
+		अगर (!tunnel)
+			जाओ end;
 
-		/* Error if socket is not prepped */
-		if (!tunnel->sock)
-			goto end;
-	}
+		/* Error अगर socket is not prepped */
+		अगर (!tunnel->sock)
+			जाओ end;
+	पूर्ण
 
-	if (tunnel->peer_tunnel_id == 0)
+	अगर (tunnel->peer_tunnel_id == 0)
 		tunnel->peer_tunnel_id = info.peer_tunnel_id;
 
 	session = l2tp_tunnel_get_session(tunnel, info.session_id);
-	if (session) {
+	अगर (session) अणु
 		drop_refcnt = true;
 
-		if (session->pwtype != L2TP_PWTYPE_PPP) {
+		अगर (session->pwtype != L2TP_PWTYPE_PPP) अणु
 			error = -EPROTOTYPE;
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 
 		ps = l2tp_session_priv(session);
 
-		/* Using a pre-existing session is fine as long as it hasn't
+		/* Using a pre-existing session is fine as दीर्घ as it hasn't
 		 * been connected yet.
 		 */
 		mutex_lock(&ps->sk_lock);
-		if (rcu_dereference_protected(ps->sk,
+		अगर (rcu_dereference_रक्षित(ps->sk,
 					      lockdep_is_held(&ps->sk_lock)) ||
-		    ps->__sk) {
+		    ps->__sk) अणु
 			mutex_unlock(&ps->sk_lock);
 			error = -EEXIST;
-			goto end;
-		}
-	} else {
+			जाओ end;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		cfg.pw_type = L2TP_PWTYPE_PPP;
 
-		session = l2tp_session_create(sizeof(struct pppol2tp_session),
+		session = l2tp_session_create(माप(काष्ठा pppol2tp_session),
 					      tunnel, info.session_id,
 					      info.peer_session_id, &cfg);
-		if (IS_ERR(session)) {
+		अगर (IS_ERR(session)) अणु
 			error = PTR_ERR(session);
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 
 		pppol2tp_session_init(session);
 		ps = l2tp_session_priv(session);
 		l2tp_session_inc_refcount(session);
 
 		mutex_lock(&ps->sk_lock);
-		error = l2tp_session_register(session, tunnel);
-		if (error < 0) {
+		error = l2tp_session_रेजिस्टर(session, tunnel);
+		अगर (error < 0) अणु
 			mutex_unlock(&ps->sk_lock);
-			kfree(session);
-			goto end;
-		}
+			kमुक्त(session);
+			जाओ end;
+		पूर्ण
 		drop_refcnt = true;
 		new_session = true;
-	}
+	पूर्ण
 
-	/* Special case: if source & dest session_id == 0x0000, this
+	/* Special हाल: अगर source & dest session_id == 0x0000, this
 	 * socket is being created to manage the tunnel. Just set up
-	 * the internal context for use by ioctl() and sockopt()
+	 * the पूर्णांकernal context क्रम use by ioctl() and sockopt()
 	 * handlers.
 	 */
-	if (session->session_id == 0 && session->peer_session_id == 0) {
+	अगर (session->session_id == 0 && session->peer_session_id == 0) अणु
 		error = 0;
-		goto out_no_ppp;
-	}
+		जाओ out_no_ppp;
+	पूर्ण
 
 	/* The only header we need to worry about is the L2TP
-	 * header. This size is different depending on whether
-	 * sequence numbers are enabled for the data channel.
+	 * header. This size is dअगरferent depending on whether
+	 * sequence numbers are enabled क्रम the data channel.
 	 */
 	po->chan.hdrlen = PPPOL2TP_L2TP_HDR_SIZE_NOSEQ;
 
-	po->chan.private = sk;
+	po->chan.निजी = sk;
 	po->chan.ops	 = &pppol2tp_chan_ops;
 	po->chan.mtu	 = pppol2tp_tunnel_mtu(tunnel);
 
-	error = ppp_register_net_channel(sock_net(sk), &po->chan);
-	if (error) {
+	error = ppp_रेजिस्टर_net_channel(sock_net(sk), &po->chan);
+	अगर (error) अणु
 		mutex_unlock(&ps->sk_lock);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 out_no_ppp:
 	/* This is how we get the session context from the socket. */
 	sk->sk_user_data = session;
-	rcu_assign_pointer(ps->sk, sk);
+	rcu_assign_poपूर्णांकer(ps->sk, sk);
 	mutex_unlock(&ps->sk_lock);
 
 	/* Keep the reference we've grabbed on the session: sk doesn't expect
-	 * the session to disappear. pppol2tp_session_destruct() is responsible
-	 * for dropping it.
+	 * the session to disappear. pppol2tp_session_deकाष्ठा() is responsible
+	 * क्रम dropping it.
 	 */
 	drop_refcnt = false;
 
 	sk->sk_state = PPPOX_CONNECTED;
 
 end:
-	if (error) {
-		if (new_session)
+	अगर (error) अणु
+		अगर (new_session)
 			l2tp_session_delete(session);
-		if (new_tunnel)
+		अगर (new_tunnel)
 			l2tp_tunnel_delete(tunnel);
-	}
-	if (drop_refcnt)
+	पूर्ण
+	अगर (drop_refcnt)
 		l2tp_session_dec_refcount(session);
-	if (drop_tunnel)
+	अगर (drop_tunnel)
 		l2tp_tunnel_dec_refcount(tunnel);
 	release_sock(sk);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#ifdef CONFIG_L2TP_V3
+#अगर_घोषित CONFIG_L2TP_V3
 
-/* Called when creating sessions via the netlink interface. */
-static int pppol2tp_session_create(struct net *net, struct l2tp_tunnel *tunnel,
+/* Called when creating sessions via the netlink पूर्णांकerface. */
+अटल पूर्णांक pppol2tp_session_create(काष्ठा net *net, काष्ठा l2tp_tunnel *tunnel,
 				   u32 session_id, u32 peer_session_id,
-				   struct l2tp_session_cfg *cfg)
-{
-	int error;
-	struct l2tp_session *session;
+				   काष्ठा l2tp_session_cfg *cfg)
+अणु
+	पूर्णांक error;
+	काष्ठा l2tp_session *session;
 
-	/* Error if tunnel socket is not prepped */
-	if (!tunnel->sock) {
+	/* Error अगर tunnel socket is not prepped */
+	अगर (!tunnel->sock) अणु
 		error = -ENOENT;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* Allocate and initialize a new session context. */
-	session = l2tp_session_create(sizeof(struct pppol2tp_session),
+	session = l2tp_session_create(माप(काष्ठा pppol2tp_session),
 				      tunnel, session_id,
 				      peer_session_id, cfg);
-	if (IS_ERR(session)) {
+	अगर (IS_ERR(session)) अणु
 		error = PTR_ERR(session);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	pppol2tp_session_init(session);
 
-	error = l2tp_session_register(session, tunnel);
-	if (error < 0)
-		goto err_sess;
+	error = l2tp_session_रेजिस्टर(session, tunnel);
+	अगर (error < 0)
+		जाओ err_sess;
 
-	return 0;
+	वापस 0;
 
 err_sess:
-	kfree(session);
+	kमुक्त(session);
 err:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#endif /* CONFIG_L2TP_V3 */
+#पूर्ण_अगर /* CONFIG_L2TP_V3 */
 
 /* getname() support.
  */
-static int pppol2tp_getname(struct socket *sock, struct sockaddr *uaddr,
-			    int peer)
-{
-	int len = 0;
-	int error = 0;
-	struct l2tp_session *session;
-	struct l2tp_tunnel *tunnel;
-	struct sock *sk = sock->sk;
-	struct inet_sock *inet;
-	struct pppol2tp_session *pls;
+अटल पूर्णांक pppol2tp_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+			    पूर्णांक peer)
+अणु
+	पूर्णांक len = 0;
+	पूर्णांक error = 0;
+	काष्ठा l2tp_session *session;
+	काष्ठा l2tp_tunnel *tunnel;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा inet_sock *inet;
+	काष्ठा pppol2tp_session *pls;
 
 	error = -ENOTCONN;
-	if (!sk)
-		goto end;
-	if (!(sk->sk_state & PPPOX_CONNECTED))
-		goto end;
+	अगर (!sk)
+		जाओ end;
+	अगर (!(sk->sk_state & PPPOX_CONNECTED))
+		जाओ end;
 
 	error = -EBADF;
 	session = pppol2tp_sock_to_session(sk);
-	if (!session)
-		goto end;
+	अगर (!session)
+		जाओ end;
 
 	pls = l2tp_session_priv(session);
 	tunnel = session->tunnel;
 
 	inet = inet_sk(tunnel->sock);
-	if (tunnel->version == 2 && tunnel->sock->sk_family == AF_INET) {
-		struct sockaddr_pppol2tp sp;
+	अगर (tunnel->version == 2 && tunnel->sock->sk_family == AF_INET) अणु
+		काष्ठा sockaddr_pppol2tp sp;
 
-		len = sizeof(sp);
-		memset(&sp, 0, len);
+		len = माप(sp);
+		स_रखो(&sp, 0, len);
 		sp.sa_family	= AF_PPPOX;
 		sp.sa_protocol	= PX_PROTO_OL2TP;
 		sp.pppol2tp.fd  = tunnel->fd;
@@ -933,13 +934,13 @@ static int pppol2tp_getname(struct socket *sock, struct sockaddr *uaddr,
 		sp.pppol2tp.addr.sin_family = AF_INET;
 		sp.pppol2tp.addr.sin_port = inet->inet_dport;
 		sp.pppol2tp.addr.sin_addr.s_addr = inet->inet_daddr;
-		memcpy(uaddr, &sp, len);
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (tunnel->version == 2 && tunnel->sock->sk_family == AF_INET6) {
-		struct sockaddr_pppol2tpin6 sp;
+		स_नकल(uaddr, &sp, len);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (tunnel->version == 2 && tunnel->sock->sk_family == AF_INET6) अणु
+		काष्ठा sockaddr_pppol2tpin6 sp;
 
-		len = sizeof(sp);
-		memset(&sp, 0, len);
+		len = माप(sp);
+		स_रखो(&sp, 0, len);
 		sp.sa_family	= AF_PPPOX;
 		sp.sa_protocol	= PX_PROTO_OL2TP;
 		sp.pppol2tp.fd  = tunnel->fd;
@@ -950,14 +951,14 @@ static int pppol2tp_getname(struct socket *sock, struct sockaddr *uaddr,
 		sp.pppol2tp.d_session = session->peer_session_id;
 		sp.pppol2tp.addr.sin6_family = AF_INET6;
 		sp.pppol2tp.addr.sin6_port = inet->inet_dport;
-		memcpy(&sp.pppol2tp.addr.sin6_addr, &tunnel->sock->sk_v6_daddr,
-		       sizeof(tunnel->sock->sk_v6_daddr));
-		memcpy(uaddr, &sp, len);
-	} else if (tunnel->version == 3 && tunnel->sock->sk_family == AF_INET6) {
-		struct sockaddr_pppol2tpv3in6 sp;
+		स_नकल(&sp.pppol2tp.addr.sin6_addr, &tunnel->sock->sk_v6_daddr,
+		       माप(tunnel->sock->sk_v6_daddr));
+		स_नकल(uaddr, &sp, len);
+	पूर्ण अन्यथा अगर (tunnel->version == 3 && tunnel->sock->sk_family == AF_INET6) अणु
+		काष्ठा sockaddr_pppol2tpv3in6 sp;
 
-		len = sizeof(sp);
-		memset(&sp, 0, len);
+		len = माप(sp);
+		स_रखो(&sp, 0, len);
 		sp.sa_family	= AF_PPPOX;
 		sp.sa_protocol	= PX_PROTO_OL2TP;
 		sp.pppol2tp.fd  = tunnel->fd;
@@ -968,15 +969,15 @@ static int pppol2tp_getname(struct socket *sock, struct sockaddr *uaddr,
 		sp.pppol2tp.d_session = session->peer_session_id;
 		sp.pppol2tp.addr.sin6_family = AF_INET6;
 		sp.pppol2tp.addr.sin6_port = inet->inet_dport;
-		memcpy(&sp.pppol2tp.addr.sin6_addr, &tunnel->sock->sk_v6_daddr,
-		       sizeof(tunnel->sock->sk_v6_daddr));
-		memcpy(uaddr, &sp, len);
-#endif
-	} else if (tunnel->version == 3) {
-		struct sockaddr_pppol2tpv3 sp;
+		स_नकल(&sp.pppol2tp.addr.sin6_addr, &tunnel->sock->sk_v6_daddr,
+		       माप(tunnel->sock->sk_v6_daddr));
+		स_नकल(uaddr, &sp, len);
+#पूर्ण_अगर
+	पूर्ण अन्यथा अगर (tunnel->version == 3) अणु
+		काष्ठा sockaddr_pppol2tpv3 sp;
 
-		len = sizeof(sp);
-		memset(&sp, 0, len);
+		len = माप(sp);
+		स_रखो(&sp, 0, len);
 		sp.sa_family	= AF_PPPOX;
 		sp.sa_protocol	= PX_PROTO_OL2TP;
 		sp.pppol2tp.fd  = tunnel->fd;
@@ -988,657 +989,657 @@ static int pppol2tp_getname(struct socket *sock, struct sockaddr *uaddr,
 		sp.pppol2tp.addr.sin_family = AF_INET;
 		sp.pppol2tp.addr.sin_port = inet->inet_dport;
 		sp.pppol2tp.addr.sin_addr.s_addr = inet->inet_daddr;
-		memcpy(uaddr, &sp, len);
-	}
+		स_नकल(uaddr, &sp, len);
+	पूर्ण
 
 	error = len;
 
 	sock_put(sk);
 end:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /****************************************************************************
  * ioctl() handlers.
  *
- * The PPPoX socket is created for L2TP sessions: tunnels have their own UDP
+ * The PPPoX socket is created क्रम L2TP sessions: tunnels have their own UDP
  * sockets. However, in order to control kernel tunnel features, we allow
- * userspace to create a special "tunnel" PPPoX socket which is used for
+ * userspace to create a special "tunnel" PPPoX socket which is used क्रम
  * control only.  Tunnel PPPoX sockets have session_id == 0 and simply allow
- * the user application to issue L2TP setsockopt(), getsockopt() and ioctl()
+ * the user application to issue L2TP setsockopt(), माला_लोockopt() and ioctl()
  * calls.
  ****************************************************************************/
 
-static void pppol2tp_copy_stats(struct pppol2tp_ioc_stats *dest,
-				const struct l2tp_stats *stats)
-{
-	memset(dest, 0, sizeof(*dest));
+अटल व्योम pppol2tp_copy_stats(काष्ठा pppol2tp_ioc_stats *dest,
+				स्थिर काष्ठा l2tp_stats *stats)
+अणु
+	स_रखो(dest, 0, माप(*dest));
 
-	dest->tx_packets = atomic_long_read(&stats->tx_packets);
-	dest->tx_bytes = atomic_long_read(&stats->tx_bytes);
-	dest->tx_errors = atomic_long_read(&stats->tx_errors);
-	dest->rx_packets = atomic_long_read(&stats->rx_packets);
-	dest->rx_bytes = atomic_long_read(&stats->rx_bytes);
-	dest->rx_seq_discards = atomic_long_read(&stats->rx_seq_discards);
-	dest->rx_oos_packets = atomic_long_read(&stats->rx_oos_packets);
-	dest->rx_errors = atomic_long_read(&stats->rx_errors);
-}
+	dest->tx_packets = atomic_दीर्घ_पढ़ो(&stats->tx_packets);
+	dest->tx_bytes = atomic_दीर्घ_पढ़ो(&stats->tx_bytes);
+	dest->tx_errors = atomic_दीर्घ_पढ़ो(&stats->tx_errors);
+	dest->rx_packets = atomic_दीर्घ_पढ़ो(&stats->rx_packets);
+	dest->rx_bytes = atomic_दीर्घ_पढ़ो(&stats->rx_bytes);
+	dest->rx_seq_discards = atomic_दीर्घ_पढ़ो(&stats->rx_seq_discards);
+	dest->rx_oos_packets = atomic_दीर्घ_पढ़ो(&stats->rx_oos_packets);
+	dest->rx_errors = atomic_दीर्घ_पढ़ो(&stats->rx_errors);
+पूर्ण
 
-static int pppol2tp_tunnel_copy_stats(struct pppol2tp_ioc_stats *stats,
-				      struct l2tp_tunnel *tunnel)
-{
-	struct l2tp_session *session;
+अटल पूर्णांक pppol2tp_tunnel_copy_stats(काष्ठा pppol2tp_ioc_stats *stats,
+				      काष्ठा l2tp_tunnel *tunnel)
+अणु
+	काष्ठा l2tp_session *session;
 
-	if (!stats->session_id) {
+	अगर (!stats->session_id) अणु
 		pppol2tp_copy_stats(stats, &tunnel->stats);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* If session_id is set, search the corresponding session in the
 	 * context of this tunnel and record the session's statistics.
 	 */
 	session = l2tp_tunnel_get_session(tunnel, stats->session_id);
-	if (!session)
-		return -EBADR;
+	अगर (!session)
+		वापस -EBADR;
 
-	if (session->pwtype != L2TP_PWTYPE_PPP) {
+	अगर (session->pwtype != L2TP_PWTYPE_PPP) अणु
 		l2tp_session_dec_refcount(session);
-		return -EBADR;
-	}
+		वापस -EBADR;
+	पूर्ण
 
 	pppol2tp_copy_stats(stats, &session->stats);
 	l2tp_session_dec_refcount(session);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pppol2tp_ioctl(struct socket *sock, unsigned int cmd,
-			  unsigned long arg)
-{
-	struct pppol2tp_ioc_stats stats;
-	struct l2tp_session *session;
+अटल पूर्णांक pppol2tp_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
+			  अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा pppol2tp_ioc_stats stats;
+	काष्ठा l2tp_session *session;
 
-	switch (cmd) {
-	case PPPIOCGMRU:
-	case PPPIOCGFLAGS:
+	चयन (cmd) अणु
+	हाल PPPIOCGMRU:
+	हाल PPPIOCGFLAGS:
 		session = sock->sk->sk_user_data;
-		if (!session)
-			return -ENOTCONN;
+		अगर (!session)
+			वापस -ENOTCONN;
 
-		if (WARN_ON(session->magic != L2TP_SESSION_MAGIC))
-			return -EBADF;
+		अगर (WARN_ON(session->magic != L2TP_SESSION_MAGIC))
+			वापस -EBADF;
 
-		/* Not defined for tunnels */
-		if (!session->session_id && !session->peer_session_id)
-			return -ENOSYS;
+		/* Not defined क्रम tunnels */
+		अगर (!session->session_id && !session->peer_session_id)
+			वापस -ENOSYS;
 
-		if (put_user(0, (int __user *)arg))
-			return -EFAULT;
-		break;
+		अगर (put_user(0, (पूर्णांक __user *)arg))
+			वापस -EFAULT;
+		अवरोध;
 
-	case PPPIOCSMRU:
-	case PPPIOCSFLAGS:
+	हाल PPPIOCSMRU:
+	हाल PPPIOCSFLAGS:
 		session = sock->sk->sk_user_data;
-		if (!session)
-			return -ENOTCONN;
+		अगर (!session)
+			वापस -ENOTCONN;
 
-		if (WARN_ON(session->magic != L2TP_SESSION_MAGIC))
-			return -EBADF;
+		अगर (WARN_ON(session->magic != L2TP_SESSION_MAGIC))
+			वापस -EBADF;
 
-		/* Not defined for tunnels */
-		if (!session->session_id && !session->peer_session_id)
-			return -ENOSYS;
+		/* Not defined क्रम tunnels */
+		अगर (!session->session_id && !session->peer_session_id)
+			वापस -ENOSYS;
 
-		if (!access_ok((int __user *)arg, sizeof(int)))
-			return -EFAULT;
-		break;
+		अगर (!access_ok((पूर्णांक __user *)arg, माप(पूर्णांक)))
+			वापस -EFAULT;
+		अवरोध;
 
-	case PPPIOCGL2TPSTATS:
+	हाल PPPIOCGL2TPSTATS:
 		session = sock->sk->sk_user_data;
-		if (!session)
-			return -ENOTCONN;
+		अगर (!session)
+			वापस -ENOTCONN;
 
-		if (WARN_ON(session->magic != L2TP_SESSION_MAGIC))
-			return -EBADF;
+		अगर (WARN_ON(session->magic != L2TP_SESSION_MAGIC))
+			वापस -EBADF;
 
 		/* Session 0 represents the parent tunnel */
-		if (!session->session_id && !session->peer_session_id) {
+		अगर (!session->session_id && !session->peer_session_id) अणु
 			u32 session_id;
-			int err;
+			पूर्णांक err;
 
-			if (copy_from_user(&stats, (void __user *)arg,
-					   sizeof(stats)))
-				return -EFAULT;
+			अगर (copy_from_user(&stats, (व्योम __user *)arg,
+					   माप(stats)))
+				वापस -EFAULT;
 
 			session_id = stats.session_id;
 			err = pppol2tp_tunnel_copy_stats(&stats,
 							 session->tunnel);
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			stats.session_id = session_id;
-		} else {
+		पूर्ण अन्यथा अणु
 			pppol2tp_copy_stats(&stats, &session->stats);
 			stats.session_id = session->session_id;
-		}
+		पूर्ण
 		stats.tunnel_id = session->tunnel->tunnel_id;
 		stats.using_ipsec = l2tp_tunnel_uses_xfrm(session->tunnel);
 
-		if (copy_to_user((void __user *)arg, &stats, sizeof(stats)))
-			return -EFAULT;
-		break;
+		अगर (copy_to_user((व्योम __user *)arg, &stats, माप(stats)))
+			वापस -EFAULT;
+		अवरोध;
 
-	default:
-		return -ENOIOCTLCMD;
-	}
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*****************************************************************************
- * setsockopt() / getsockopt() support.
+ * setsockopt() / माला_लोockopt() support.
  *
- * The PPPoX socket is created for L2TP sessions: tunnels have their own UDP
+ * The PPPoX socket is created क्रम L2TP sessions: tunnels have their own UDP
  * sockets. In order to control kernel tunnel features, we allow userspace to
- * create a special "tunnel" PPPoX socket which is used for control only.
+ * create a special "tunnel" PPPoX socket which is used क्रम control only.
  * Tunnel PPPoX sockets have session_id == 0 and simply allow the user
- * application to issue L2TP setsockopt(), getsockopt() and ioctl() calls.
+ * application to issue L2TP setsockopt(), माला_लोockopt() and ioctl() calls.
  *****************************************************************************/
 
 /* Tunnel setsockopt() helper.
  */
-static int pppol2tp_tunnel_setsockopt(struct sock *sk,
-				      struct l2tp_tunnel *tunnel,
-				      int optname, int val)
-{
-	int err = 0;
+अटल पूर्णांक pppol2tp_tunnel_setsockopt(काष्ठा sock *sk,
+				      काष्ठा l2tp_tunnel *tunnel,
+				      पूर्णांक optname, पूर्णांक val)
+अणु
+	पूर्णांक err = 0;
 
-	switch (optname) {
-	case PPPOL2TP_SO_DEBUG:
+	चयन (optname) अणु
+	हाल PPPOL2TP_SO_DEBUG:
 		/* Tunnel debug flags option is deprecated */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Session setsockopt helper.
  */
-static int pppol2tp_session_setsockopt(struct sock *sk,
-				       struct l2tp_session *session,
-				       int optname, int val)
-{
-	int err = 0;
+अटल पूर्णांक pppol2tp_session_setsockopt(काष्ठा sock *sk,
+				       काष्ठा l2tp_session *session,
+				       पूर्णांक optname, पूर्णांक val)
+अणु
+	पूर्णांक err = 0;
 
-	switch (optname) {
-	case PPPOL2TP_SO_RECVSEQ:
-		if (val != 0 && val != 1) {
+	चयन (optname) अणु
+	हाल PPPOL2TP_SO_RECVSEQ:
+		अगर (val != 0 && val != 1) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		session->recv_seq = !!val;
-		break;
+		अवरोध;
 
-	case PPPOL2TP_SO_SENDSEQ:
-		if (val != 0 && val != 1) {
+	हाल PPPOL2TP_SO_SENDSEQ:
+		अगर (val != 0 && val != 1) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		session->send_seq = !!val;
-		{
-			struct pppox_sock *po = pppox_sk(sk);
+		अणु
+			काष्ठा pppox_sock *po = pppox_sk(sk);
 
 			po->chan.hdrlen = val ? PPPOL2TP_L2TP_HDR_SIZE_SEQ :
 				PPPOL2TP_L2TP_HDR_SIZE_NOSEQ;
-		}
+		पूर्ण
 		l2tp_session_set_header_len(session, session->tunnel->version);
-		break;
+		अवरोध;
 
-	case PPPOL2TP_SO_LNSMODE:
-		if (val != 0 && val != 1) {
+	हाल PPPOL2TP_SO_LNSMODE:
+		अगर (val != 0 && val != 1) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		session->lns_mode = !!val;
-		break;
+		अवरोध;
 
-	case PPPOL2TP_SO_DEBUG:
+	हाल PPPOL2TP_SO_DEBUG:
 		/* Session debug flags option is deprecated */
-		break;
+		अवरोध;
 
-	case PPPOL2TP_SO_REORDERTO:
-		session->reorder_timeout = msecs_to_jiffies(val);
-		break;
+	हाल PPPOL2TP_SO_REORDERTO:
+		session->reorder_समयout = msecs_to_jअगरfies(val);
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Main setsockopt() entry point.
+/* Main setsockopt() entry poपूर्णांक.
  * Does API checks, then calls either the tunnel or session setsockopt
- * handler, according to whether the PPPoL2TP socket is a for a regular
+ * handler, according to whether the PPPoL2TP socket is a क्रम a regular
  * session or the special tunnel type.
  */
-static int pppol2tp_setsockopt(struct socket *sock, int level, int optname,
-			       sockptr_t optval, unsigned int optlen)
-{
-	struct sock *sk = sock->sk;
-	struct l2tp_session *session;
-	struct l2tp_tunnel *tunnel;
-	int val;
-	int err;
+अटल पूर्णांक pppol2tp_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+			       sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2tp_session *session;
+	काष्ठा l2tp_tunnel *tunnel;
+	पूर्णांक val;
+	पूर्णांक err;
 
-	if (level != SOL_PPPOL2TP)
-		return -EINVAL;
+	अगर (level != SOL_PPPOL2TP)
+		वापस -EINVAL;
 
-	if (optlen < sizeof(int))
-		return -EINVAL;
+	अगर (optlen < माप(पूर्णांक))
+		वापस -EINVAL;
 
-	if (copy_from_sockptr(&val, optval, sizeof(int)))
-		return -EFAULT;
+	अगर (copy_from_sockptr(&val, optval, माप(पूर्णांक)))
+		वापस -EFAULT;
 
 	err = -ENOTCONN;
-	if (!sk->sk_user_data)
-		goto end;
+	अगर (!sk->sk_user_data)
+		जाओ end;
 
 	/* Get session context from the socket */
 	err = -EBADF;
 	session = pppol2tp_sock_to_session(sk);
-	if (!session)
-		goto end;
+	अगर (!session)
+		जाओ end;
 
-	/* Special case: if session_id == 0x0000, treat as operation on tunnel
+	/* Special हाल: अगर session_id == 0x0000, treat as operation on tunnel
 	 */
-	if (session->session_id == 0 && session->peer_session_id == 0) {
+	अगर (session->session_id == 0 && session->peer_session_id == 0) अणु
 		tunnel = session->tunnel;
 		err = pppol2tp_tunnel_setsockopt(sk, tunnel, optname, val);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = pppol2tp_session_setsockopt(sk, session, optname, val);
-	}
+	पूर्ण
 
 	sock_put(sk);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Tunnel getsockopt helper. Called with sock locked.
+/* Tunnel माला_लोockopt helper. Called with sock locked.
  */
-static int pppol2tp_tunnel_getsockopt(struct sock *sk,
-				      struct l2tp_tunnel *tunnel,
-				      int optname, int *val)
-{
-	int err = 0;
+अटल पूर्णांक pppol2tp_tunnel_माला_लोockopt(काष्ठा sock *sk,
+				      काष्ठा l2tp_tunnel *tunnel,
+				      पूर्णांक optname, पूर्णांक *val)
+अणु
+	पूर्णांक err = 0;
 
-	switch (optname) {
-	case PPPOL2TP_SO_DEBUG:
+	चयन (optname) अणु
+	हाल PPPOL2TP_SO_DEBUG:
 		/* Tunnel debug flags option is deprecated */
 		*val = 0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Session getsockopt helper. Called with sock locked.
+/* Session माला_लोockopt helper. Called with sock locked.
  */
-static int pppol2tp_session_getsockopt(struct sock *sk,
-				       struct l2tp_session *session,
-				       int optname, int *val)
-{
-	int err = 0;
+अटल पूर्णांक pppol2tp_session_माला_लोockopt(काष्ठा sock *sk,
+				       काष्ठा l2tp_session *session,
+				       पूर्णांक optname, पूर्णांक *val)
+अणु
+	पूर्णांक err = 0;
 
-	switch (optname) {
-	case PPPOL2TP_SO_RECVSEQ:
+	चयन (optname) अणु
+	हाल PPPOL2TP_SO_RECVSEQ:
 		*val = session->recv_seq;
-		break;
+		अवरोध;
 
-	case PPPOL2TP_SO_SENDSEQ:
+	हाल PPPOL2TP_SO_SENDSEQ:
 		*val = session->send_seq;
-		break;
+		अवरोध;
 
-	case PPPOL2TP_SO_LNSMODE:
+	हाल PPPOL2TP_SO_LNSMODE:
 		*val = session->lns_mode;
-		break;
+		अवरोध;
 
-	case PPPOL2TP_SO_DEBUG:
+	हाल PPPOL2TP_SO_DEBUG:
 		/* Session debug flags option is deprecated */
 		*val = 0;
-		break;
+		अवरोध;
 
-	case PPPOL2TP_SO_REORDERTO:
-		*val = (int)jiffies_to_msecs(session->reorder_timeout);
-		break;
+	हाल PPPOL2TP_SO_REORDERTO:
+		*val = (पूर्णांक)jअगरfies_to_msecs(session->reorder_समयout);
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Main getsockopt() entry point.
- * Does API checks, then calls either the tunnel or session getsockopt
- * handler, according to whether the PPPoX socket is a for a regular session
+/* Main माला_लोockopt() entry poपूर्णांक.
+ * Does API checks, then calls either the tunnel or session माला_लोockopt
+ * handler, according to whether the PPPoX socket is a क्रम a regular session
  * or the special tunnel type.
  */
-static int pppol2tp_getsockopt(struct socket *sock, int level, int optname,
-			       char __user *optval, int __user *optlen)
-{
-	struct sock *sk = sock->sk;
-	struct l2tp_session *session;
-	struct l2tp_tunnel *tunnel;
-	int val, len;
-	int err;
+अटल पूर्णांक pppol2tp_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+			       अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2tp_session *session;
+	काष्ठा l2tp_tunnel *tunnel;
+	पूर्णांक val, len;
+	पूर्णांक err;
 
-	if (level != SOL_PPPOL2TP)
-		return -EINVAL;
+	अगर (level != SOL_PPPOL2TP)
+		वापस -EINVAL;
 
-	if (get_user(len, optlen))
-		return -EFAULT;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
 
-	len = min_t(unsigned int, len, sizeof(int));
+	len = min_t(अचिन्हित पूर्णांक, len, माप(पूर्णांक));
 
-	if (len < 0)
-		return -EINVAL;
+	अगर (len < 0)
+		वापस -EINVAL;
 
 	err = -ENOTCONN;
-	if (!sk->sk_user_data)
-		goto end;
+	अगर (!sk->sk_user_data)
+		जाओ end;
 
 	/* Get the session context */
 	err = -EBADF;
 	session = pppol2tp_sock_to_session(sk);
-	if (!session)
-		goto end;
+	अगर (!session)
+		जाओ end;
 
-	/* Special case: if session_id == 0x0000, treat as operation on tunnel */
-	if (session->session_id == 0 && session->peer_session_id == 0) {
+	/* Special हाल: अगर session_id == 0x0000, treat as operation on tunnel */
+	अगर (session->session_id == 0 && session->peer_session_id == 0) अणु
 		tunnel = session->tunnel;
-		err = pppol2tp_tunnel_getsockopt(sk, tunnel, optname, &val);
-		if (err)
-			goto end_put_sess;
-	} else {
-		err = pppol2tp_session_getsockopt(sk, session, optname, &val);
-		if (err)
-			goto end_put_sess;
-	}
+		err = pppol2tp_tunnel_माला_लोockopt(sk, tunnel, optname, &val);
+		अगर (err)
+			जाओ end_put_sess;
+	पूर्ण अन्यथा अणु
+		err = pppol2tp_session_माला_लोockopt(sk, session, optname, &val);
+		अगर (err)
+			जाओ end_put_sess;
+	पूर्ण
 
 	err = -EFAULT;
-	if (put_user(len, optlen))
-		goto end_put_sess;
+	अगर (put_user(len, optlen))
+		जाओ end_put_sess;
 
-	if (copy_to_user((void __user *)optval, &val, len))
-		goto end_put_sess;
+	अगर (copy_to_user((व्योम __user *)optval, &val, len))
+		जाओ end_put_sess;
 
 	err = 0;
 
 end_put_sess:
 	sock_put(sk);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*****************************************************************************
- * /proc filesystem for debug
- * Since the original pppol2tp driver provided /proc/net/pppol2tp for
+ * /proc fileप्रणाली क्रम debug
+ * Since the original pppol2tp driver provided /proc/net/pppol2tp क्रम
  * L2TPv2, we dump only L2TPv2 tunnels and sessions here.
  *****************************************************************************/
 
-static unsigned int pppol2tp_net_id;
+अटल अचिन्हित पूर्णांक pppol2tp_net_id;
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 
-struct pppol2tp_seq_data {
-	struct seq_net_private p;
-	int tunnel_idx;			/* current tunnel */
-	int session_idx;		/* index of session within current tunnel */
-	struct l2tp_tunnel *tunnel;
-	struct l2tp_session *session;	/* NULL means get next tunnel */
-};
+काष्ठा pppol2tp_seq_data अणु
+	काष्ठा seq_net_निजी p;
+	पूर्णांक tunnel_idx;			/* current tunnel */
+	पूर्णांक session_idx;		/* index of session within current tunnel */
+	काष्ठा l2tp_tunnel *tunnel;
+	काष्ठा l2tp_session *session;	/* शून्य means get next tunnel */
+पूर्ण;
 
-static void pppol2tp_next_tunnel(struct net *net, struct pppol2tp_seq_data *pd)
-{
+अटल व्योम pppol2tp_next_tunnel(काष्ठा net *net, काष्ठा pppol2tp_seq_data *pd)
+अणु
 	/* Drop reference taken during previous invocation */
-	if (pd->tunnel)
+	अगर (pd->tunnel)
 		l2tp_tunnel_dec_refcount(pd->tunnel);
 
-	for (;;) {
+	क्रम (;;) अणु
 		pd->tunnel = l2tp_tunnel_get_nth(net, pd->tunnel_idx);
 		pd->tunnel_idx++;
 
 		/* Only accept L2TPv2 tunnels */
-		if (!pd->tunnel || pd->tunnel->version == 2)
-			return;
+		अगर (!pd->tunnel || pd->tunnel->version == 2)
+			वापस;
 
 		l2tp_tunnel_dec_refcount(pd->tunnel);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pppol2tp_next_session(struct net *net, struct pppol2tp_seq_data *pd)
-{
+अटल व्योम pppol2tp_next_session(काष्ठा net *net, काष्ठा pppol2tp_seq_data *pd)
+अणु
 	/* Drop reference taken during previous invocation */
-	if (pd->session)
+	अगर (pd->session)
 		l2tp_session_dec_refcount(pd->session);
 
 	pd->session = l2tp_session_get_nth(pd->tunnel, pd->session_idx);
 	pd->session_idx++;
 
-	if (!pd->session) {
+	अगर (!pd->session) अणु
 		pd->session_idx = 0;
 		pppol2tp_next_tunnel(net, pd);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void *pppol2tp_seq_start(struct seq_file *m, loff_t *offs)
-{
-	struct pppol2tp_seq_data *pd = SEQ_START_TOKEN;
+अटल व्योम *pppol2tp_seq_start(काष्ठा seq_file *m, loff_t *offs)
+अणु
+	काष्ठा pppol2tp_seq_data *pd = SEQ_START_TOKEN;
 	loff_t pos = *offs;
-	struct net *net;
+	काष्ठा net *net;
 
-	if (!pos)
-		goto out;
+	अगर (!pos)
+		जाओ out;
 
-	if (WARN_ON(!m->private)) {
-		pd = NULL;
-		goto out;
-	}
+	अगर (WARN_ON(!m->निजी)) अणु
+		pd = शून्य;
+		जाओ out;
+	पूर्ण
 
-	pd = m->private;
+	pd = m->निजी;
 	net = seq_file_net(m);
 
-	if (!pd->tunnel)
+	अगर (!pd->tunnel)
 		pppol2tp_next_tunnel(net, pd);
-	else
+	अन्यथा
 		pppol2tp_next_session(net, pd);
 
-	/* NULL tunnel and session indicates end of list */
-	if (!pd->tunnel && !pd->session)
-		pd = NULL;
+	/* शून्य tunnel and session indicates end of list */
+	अगर (!pd->tunnel && !pd->session)
+		pd = शून्य;
 
 out:
-	return pd;
-}
+	वापस pd;
+पूर्ण
 
-static void *pppol2tp_seq_next(struct seq_file *m, void *v, loff_t *pos)
-{
+अटल व्योम *pppol2tp_seq_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
 	(*pos)++;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void pppol2tp_seq_stop(struct seq_file *p, void *v)
-{
-	struct pppol2tp_seq_data *pd = v;
+अटल व्योम pppol2tp_seq_stop(काष्ठा seq_file *p, व्योम *v)
+अणु
+	काष्ठा pppol2tp_seq_data *pd = v;
 
-	if (!pd || pd == SEQ_START_TOKEN)
-		return;
+	अगर (!pd || pd == SEQ_START_TOKEN)
+		वापस;
 
 	/* Drop reference taken by last invocation of pppol2tp_next_session()
 	 * or pppol2tp_next_tunnel().
 	 */
-	if (pd->session) {
+	अगर (pd->session) अणु
 		l2tp_session_dec_refcount(pd->session);
-		pd->session = NULL;
-	}
-	if (pd->tunnel) {
+		pd->session = शून्य;
+	पूर्ण
+	अगर (pd->tunnel) अणु
 		l2tp_tunnel_dec_refcount(pd->tunnel);
-		pd->tunnel = NULL;
-	}
-}
+		pd->tunnel = शून्य;
+	पूर्ण
+पूर्ण
 
-static void pppol2tp_seq_tunnel_show(struct seq_file *m, void *v)
-{
-	struct l2tp_tunnel *tunnel = v;
+अटल व्योम pppol2tp_seq_tunnel_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा l2tp_tunnel *tunnel = v;
 
-	seq_printf(m, "\nTUNNEL '%s', %c %d\n",
+	seq_म_लिखो(m, "\nTUNNEL '%s', %c %d\n",
 		   tunnel->name,
 		   (tunnel == tunnel->sock->sk_user_data) ? 'Y' : 'N',
-		   refcount_read(&tunnel->ref_count) - 1);
-	seq_printf(m, " %08x %ld/%ld/%ld %ld/%ld/%ld\n",
+		   refcount_पढ़ो(&tunnel->ref_count) - 1);
+	seq_म_लिखो(m, " %08x %ld/%ld/%ld %ld/%ld/%ld\n",
 		   0,
-		   atomic_long_read(&tunnel->stats.tx_packets),
-		   atomic_long_read(&tunnel->stats.tx_bytes),
-		   atomic_long_read(&tunnel->stats.tx_errors),
-		   atomic_long_read(&tunnel->stats.rx_packets),
-		   atomic_long_read(&tunnel->stats.rx_bytes),
-		   atomic_long_read(&tunnel->stats.rx_errors));
-}
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.tx_packets),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.tx_bytes),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.tx_errors),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.rx_packets),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.rx_bytes),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.rx_errors));
+पूर्ण
 
-static void pppol2tp_seq_session_show(struct seq_file *m, void *v)
-{
-	struct l2tp_session *session = v;
-	struct l2tp_tunnel *tunnel = session->tunnel;
-	unsigned char state;
-	char user_data_ok;
-	struct sock *sk;
+अटल व्योम pppol2tp_seq_session_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा l2tp_session *session = v;
+	काष्ठा l2tp_tunnel *tunnel = session->tunnel;
+	अचिन्हित अक्षर state;
+	अक्षर user_data_ok;
+	काष्ठा sock *sk;
 	u32 ip = 0;
 	u16 port = 0;
 
-	if (tunnel->sock) {
-		struct inet_sock *inet = inet_sk(tunnel->sock);
+	अगर (tunnel->sock) अणु
+		काष्ठा inet_sock *inet = inet_sk(tunnel->sock);
 
 		ip = ntohl(inet->inet_saddr);
 		port = ntohs(inet->inet_sport);
-	}
+	पूर्ण
 
 	sk = pppol2tp_session_get_sock(session);
-	if (sk) {
+	अगर (sk) अणु
 		state = sk->sk_state;
 		user_data_ok = (session == sk->sk_user_data) ? 'Y' : 'N';
-	} else {
+	पूर्ण अन्यथा अणु
 		state = 0;
 		user_data_ok = 'N';
-	}
+	पूर्ण
 
-	seq_printf(m, "  SESSION '%s' %08X/%d %04X/%04X -> %04X/%04X %d %c\n",
+	seq_म_लिखो(m, "  SESSION '%s' %08X/%d %04X/%04X -> %04X/%04X %d %c\n",
 		   session->name, ip, port,
 		   tunnel->tunnel_id,
 		   session->session_id,
 		   tunnel->peer_tunnel_id,
 		   session->peer_session_id,
 		   state, user_data_ok);
-	seq_printf(m, "   0/0/%c/%c/%s %08x %u\n",
+	seq_म_लिखो(m, "   0/0/%c/%c/%s %08x %u\n",
 		   session->recv_seq ? 'R' : '-',
 		   session->send_seq ? 'S' : '-',
 		   session->lns_mode ? "LNS" : "LAC",
 		   0,
-		   jiffies_to_msecs(session->reorder_timeout));
-	seq_printf(m, "   %hu/%hu %ld/%ld/%ld %ld/%ld/%ld\n",
+		   jअगरfies_to_msecs(session->reorder_समयout));
+	seq_म_लिखो(m, "   %hu/%hu %ld/%ld/%ld %ld/%ld/%ld\n",
 		   session->nr, session->ns,
-		   atomic_long_read(&session->stats.tx_packets),
-		   atomic_long_read(&session->stats.tx_bytes),
-		   atomic_long_read(&session->stats.tx_errors),
-		   atomic_long_read(&session->stats.rx_packets),
-		   atomic_long_read(&session->stats.rx_bytes),
-		   atomic_long_read(&session->stats.rx_errors));
+		   atomic_दीर्घ_पढ़ो(&session->stats.tx_packets),
+		   atomic_दीर्घ_पढ़ो(&session->stats.tx_bytes),
+		   atomic_दीर्घ_पढ़ो(&session->stats.tx_errors),
+		   atomic_दीर्घ_पढ़ो(&session->stats.rx_packets),
+		   atomic_दीर्घ_पढ़ो(&session->stats.rx_bytes),
+		   atomic_दीर्घ_पढ़ो(&session->stats.rx_errors));
 
-	if (sk) {
-		struct pppox_sock *po = pppox_sk(sk);
+	अगर (sk) अणु
+		काष्ठा pppox_sock *po = pppox_sk(sk);
 
-		seq_printf(m, "   interface %s\n", ppp_dev_name(&po->chan));
+		seq_म_लिखो(m, "   interface %s\n", ppp_dev_name(&po->chan));
 		sock_put(sk);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pppol2tp_seq_show(struct seq_file *m, void *v)
-{
-	struct pppol2tp_seq_data *pd = v;
+अटल पूर्णांक pppol2tp_seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा pppol2tp_seq_data *pd = v;
 
 	/* display header on line 1 */
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(m, "PPPoL2TP driver info, " PPPOL2TP_DRV_VERSION "\n");
-		seq_puts(m, "TUNNEL name, user-data-ok session-count\n");
-		seq_puts(m, " debug tx-pkts/bytes/errs rx-pkts/bytes/errs\n");
-		seq_puts(m, "  SESSION name, addr/port src-tid/sid dest-tid/sid state user-data-ok\n");
-		seq_puts(m, "   mtu/mru/rcvseq/sendseq/lns debug reorderto\n");
-		seq_puts(m, "   nr/ns tx-pkts/bytes/errs rx-pkts/bytes/errs\n");
-		goto out;
-	}
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(m, "PPPoL2TP driver info, " PPPOL2TP_DRV_VERSION "\n");
+		seq_माला_दो(m, "TUNNEL name, user-data-ok session-count\n");
+		seq_माला_दो(m, " debug tx-pkts/bytes/errs rx-pkts/bytes/errs\n");
+		seq_माला_दो(m, "  SESSION name, addr/port src-tid/sid dest-tid/sid state user-data-ok\n");
+		seq_माला_दो(m, "   mtu/mru/rcvseq/sendseq/lns debug reorderto\n");
+		seq_माला_दो(m, "   nr/ns tx-pkts/bytes/errs rx-pkts/bytes/errs\n");
+		जाओ out;
+	पूर्ण
 
-	if (!pd->session)
+	अगर (!pd->session)
 		pppol2tp_seq_tunnel_show(m, pd->tunnel);
-	else
+	अन्यथा
 		pppol2tp_seq_session_show(m, pd->session);
 
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations pppol2tp_seq_ops = {
+अटल स्थिर काष्ठा seq_operations pppol2tp_seq_ops = अणु
 	.start		= pppol2tp_seq_start,
 	.next		= pppol2tp_seq_next,
 	.stop		= pppol2tp_seq_stop,
 	.show		= pppol2tp_seq_show,
-};
-#endif /* CONFIG_PROC_FS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
 /*****************************************************************************
  * Network namespace
  *****************************************************************************/
 
-static __net_init int pppol2tp_init_net(struct net *net)
-{
-	struct proc_dir_entry *pde;
-	int err = 0;
+अटल __net_init पूर्णांक pppol2tp_init_net(काष्ठा net *net)
+अणु
+	काष्ठा proc_dir_entry *pde;
+	पूर्णांक err = 0;
 
 	pde = proc_create_net("pppol2tp", 0444, net->proc_net,
-			      &pppol2tp_seq_ops, sizeof(struct pppol2tp_seq_data));
-	if (!pde) {
+			      &pppol2tp_seq_ops, माप(काष्ठा pppol2tp_seq_data));
+	अगर (!pde) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static __net_exit void pppol2tp_exit_net(struct net *net)
-{
-	remove_proc_entry("pppol2tp", net->proc_net);
-}
+अटल __net_निकास व्योम pppol2tp_निकास_net(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("pppol2tp", net->proc_net);
+पूर्ण
 
-static struct pernet_operations pppol2tp_net_ops = {
+अटल काष्ठा pernet_operations pppol2tp_net_ops = अणु
 	.init = pppol2tp_init_net,
-	.exit = pppol2tp_exit_net,
+	.निकास = pppol2tp_निकास_net,
 	.id   = &pppol2tp_net_id,
-};
+पूर्ण;
 
 /*****************************************************************************
  * Init and cleanup
  *****************************************************************************/
 
-static const struct proto_ops pppol2tp_ops = {
+अटल स्थिर काष्ठा proto_ops pppol2tp_ops = अणु
 	.family		= AF_PPPOX,
 	.owner		= THIS_MODULE,
 	.release	= pppol2tp_release,
@@ -1649,83 +1650,83 @@ static const struct proto_ops pppol2tp_ops = {
 	.getname	= pppol2tp_getname,
 	.poll		= datagram_poll,
 	.listen		= sock_no_listen,
-	.shutdown	= sock_no_shutdown,
+	.shutकरोwn	= sock_no_shutकरोwn,
 	.setsockopt	= pppol2tp_setsockopt,
-	.getsockopt	= pppol2tp_getsockopt,
+	.माला_लोockopt	= pppol2tp_माला_लोockopt,
 	.sendmsg	= pppol2tp_sendmsg,
 	.recvmsg	= pppol2tp_recvmsg,
 	.mmap		= sock_no_mmap,
 	.ioctl		= pppox_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl = pppox_compat_ioctl,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct pppox_proto pppol2tp_proto = {
+अटल स्थिर काष्ठा pppox_proto pppol2tp_proto = अणु
 	.create		= pppol2tp_create,
 	.ioctl		= pppol2tp_ioctl,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-#ifdef CONFIG_L2TP_V3
+#अगर_घोषित CONFIG_L2TP_V3
 
-static const struct l2tp_nl_cmd_ops pppol2tp_nl_cmd_ops = {
+अटल स्थिर काष्ठा l2tp_nl_cmd_ops pppol2tp_nl_cmd_ops = अणु
 	.session_create	= pppol2tp_session_create,
 	.session_delete	= l2tp_session_delete,
-};
+पूर्ण;
 
-#endif /* CONFIG_L2TP_V3 */
+#पूर्ण_अगर /* CONFIG_L2TP_V3 */
 
-static int __init pppol2tp_init(void)
-{
-	int err;
+अटल पूर्णांक __init pppol2tp_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = register_pernet_device(&pppol2tp_net_ops);
-	if (err)
-		goto out;
+	err = रेजिस्टर_pernet_device(&pppol2tp_net_ops);
+	अगर (err)
+		जाओ out;
 
-	err = proto_register(&pppol2tp_sk_proto, 0);
-	if (err)
-		goto out_unregister_pppol2tp_pernet;
+	err = proto_रेजिस्टर(&pppol2tp_sk_proto, 0);
+	अगर (err)
+		जाओ out_unरेजिस्टर_pppol2tp_pernet;
 
-	err = register_pppox_proto(PX_PROTO_OL2TP, &pppol2tp_proto);
-	if (err)
-		goto out_unregister_pppol2tp_proto;
+	err = रेजिस्टर_pppox_proto(PX_PROTO_OL2TP, &pppol2tp_proto);
+	अगर (err)
+		जाओ out_unरेजिस्टर_pppol2tp_proto;
 
-#ifdef CONFIG_L2TP_V3
-	err = l2tp_nl_register_ops(L2TP_PWTYPE_PPP, &pppol2tp_nl_cmd_ops);
-	if (err)
-		goto out_unregister_pppox;
-#endif
+#अगर_घोषित CONFIG_L2TP_V3
+	err = l2tp_nl_रेजिस्टर_ops(L2TP_PWTYPE_PPP, &pppol2tp_nl_cmd_ops);
+	अगर (err)
+		जाओ out_unरेजिस्टर_pppox;
+#पूर्ण_अगर
 
 	pr_info("PPPoL2TP kernel driver, %s\n", PPPOL2TP_DRV_VERSION);
 
 out:
-	return err;
+	वापस err;
 
-#ifdef CONFIG_L2TP_V3
-out_unregister_pppox:
-	unregister_pppox_proto(PX_PROTO_OL2TP);
-#endif
-out_unregister_pppol2tp_proto:
-	proto_unregister(&pppol2tp_sk_proto);
-out_unregister_pppol2tp_pernet:
-	unregister_pernet_device(&pppol2tp_net_ops);
-	goto out;
-}
+#अगर_घोषित CONFIG_L2TP_V3
+out_unरेजिस्टर_pppox:
+	unरेजिस्टर_pppox_proto(PX_PROTO_OL2TP);
+#पूर्ण_अगर
+out_unरेजिस्टर_pppol2tp_proto:
+	proto_unरेजिस्टर(&pppol2tp_sk_proto);
+out_unरेजिस्टर_pppol2tp_pernet:
+	unरेजिस्टर_pernet_device(&pppol2tp_net_ops);
+	जाओ out;
+पूर्ण
 
-static void __exit pppol2tp_exit(void)
-{
-#ifdef CONFIG_L2TP_V3
-	l2tp_nl_unregister_ops(L2TP_PWTYPE_PPP);
-#endif
-	unregister_pppox_proto(PX_PROTO_OL2TP);
-	proto_unregister(&pppol2tp_sk_proto);
-	unregister_pernet_device(&pppol2tp_net_ops);
-}
+अटल व्योम __निकास pppol2tp_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_L2TP_V3
+	l2tp_nl_unरेजिस्टर_ops(L2TP_PWTYPE_PPP);
+#पूर्ण_अगर
+	unरेजिस्टर_pppox_proto(PX_PROTO_OL2TP);
+	proto_unरेजिस्टर(&pppol2tp_sk_proto);
+	unरेजिस्टर_pernet_device(&pppol2tp_net_ops);
+पूर्ण
 
 module_init(pppol2tp_init);
-module_exit(pppol2tp_exit);
+module_निकास(pppol2tp_निकास);
 
 MODULE_AUTHOR("James Chapman <jchapman@katalix.com>");
 MODULE_DESCRIPTION("PPP over L2TP over UDP");

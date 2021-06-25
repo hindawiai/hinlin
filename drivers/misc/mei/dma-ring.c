@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright(c) 2016-2018 Intel Corporation. All rights reserved.
  */
-#include <linux/dma-mapping.h>
-#include <linux/mei.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/mei.h>
 
-#include "mei_dev.h"
+#समावेश "mei_dev.h"
 
 /**
  * mei_dmam_dscr_alloc() - allocate a managed coherent buffer
- *     for the dma descriptor
+ *     क्रम the dma descriptor
  * @dev: mei_device
  * @dscr: dma descriptor
  *
  * Return:
  * * 0       - on success or zero allocation request
- * * -EINVAL - if size is not power of 2
+ * * -EINVAL - अगर size is not घातer of 2
  * * -ENOMEM - of allocation has failed
  */
-static int mei_dmam_dscr_alloc(struct mei_device *dev,
-			       struct mei_dma_dscr *dscr)
-{
-	if (!dscr->size)
-		return 0;
+अटल पूर्णांक mei_dmam_dscr_alloc(काष्ठा mei_device *dev,
+			       काष्ठा mei_dma_dscr *dscr)
+अणु
+	अगर (!dscr->size)
+		वापस 0;
 
-	if (WARN_ON(!is_power_of_2(dscr->size)))
-		return -EINVAL;
+	अगर (WARN_ON(!is_घातer_of_2(dscr->size)))
+		वापस -EINVAL;
 
-	if (dscr->vaddr)
-		return 0;
+	अगर (dscr->vaddr)
+		वापस 0;
 
 	dscr->vaddr = dmam_alloc_coherent(dev->dev, dscr->size, &dscr->daddr,
 					  GFP_KERNEL);
-	if (!dscr->vaddr)
-		return -ENOMEM;
+	अगर (!dscr->vaddr)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_dmam_dscr_free() - free a managed coherent buffer
+ * mei_dmam_dscr_मुक्त() - मुक्त a managed coherent buffer
  *     from the dma descriptor
  * @dev: mei_device
  * @dscr: dma descriptor
  */
-static void mei_dmam_dscr_free(struct mei_device *dev,
-			       struct mei_dma_dscr *dscr)
-{
-	if (!dscr->vaddr)
-		return;
+अटल व्योम mei_dmam_dscr_मुक्त(काष्ठा mei_device *dev,
+			       काष्ठा mei_dma_dscr *dscr)
+अणु
+	अगर (!dscr->vaddr)
+		वापस;
 
-	dmam_free_coherent(dev->dev, dscr->size, dscr->vaddr, dscr->daddr);
-	dscr->vaddr = NULL;
-}
+	dmam_मुक्त_coherent(dev->dev, dscr->size, dscr->vaddr, dscr->daddr);
+	dscr->vaddr = शून्य;
+पूर्ण
 
 /**
- * mei_dmam_ring_free() - free dma ring buffers
+ * mei_dmam_ring_मुक्त() - मुक्त dma ring buffers
  * @dev: mei device
  */
-void mei_dmam_ring_free(struct mei_device *dev)
-{
-	int i;
+व्योम mei_dmam_ring_मुक्त(काष्ठा mei_device *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < DMA_DSCR_NUM; i++)
-		mei_dmam_dscr_free(dev, &dev->dr_dscr[i]);
-}
+	क्रम (i = 0; i < DMA_DSCR_NUM; i++)
+		mei_dmam_dscr_मुक्त(dev, &dev->dr_dscr[i]);
+पूर्ण
 
 /**
  * mei_dmam_ring_alloc() - allocate dma ring buffers
@@ -72,71 +73,71 @@ void mei_dmam_ring_free(struct mei_device *dev)
  *
  * Return: -ENOMEM on allocation failure 0 otherwise
  */
-int mei_dmam_ring_alloc(struct mei_device *dev)
-{
-	int i;
+पूर्णांक mei_dmam_ring_alloc(काष्ठा mei_device *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < DMA_DSCR_NUM; i++)
-		if (mei_dmam_dscr_alloc(dev, &dev->dr_dscr[i]))
-			goto err;
+	क्रम (i = 0; i < DMA_DSCR_NUM; i++)
+		अगर (mei_dmam_dscr_alloc(dev, &dev->dr_dscr[i]))
+			जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
-	mei_dmam_ring_free(dev);
-	return -ENOMEM;
-}
+	mei_dmam_ring_मुक्त(dev);
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * mei_dma_ring_is_allocated() - check if dma ring is allocated
+ * mei_dma_ring_is_allocated() - check अगर dma ring is allocated
  * @dev: mei device
  *
- * Return: true if dma ring is allocated
+ * Return: true अगर dma ring is allocated
  */
-bool mei_dma_ring_is_allocated(struct mei_device *dev)
-{
-	return !!dev->dr_dscr[DMA_DSCR_HOST].vaddr;
-}
+bool mei_dma_ring_is_allocated(काष्ठा mei_device *dev)
+अणु
+	वापस !!dev->dr_dscr[DMA_DSCR_HOST].vaddr;
+पूर्ण
 
-static inline
-struct hbm_dma_ring_ctrl *mei_dma_ring_ctrl(struct mei_device *dev)
-{
-	return (struct hbm_dma_ring_ctrl *)dev->dr_dscr[DMA_DSCR_CTRL].vaddr;
-}
+अटल अंतरभूत
+काष्ठा hbm_dma_ring_ctrl *mei_dma_ring_ctrl(काष्ठा mei_device *dev)
+अणु
+	वापस (काष्ठा hbm_dma_ring_ctrl *)dev->dr_dscr[DMA_DSCR_CTRL].vaddr;
+पूर्ण
 
 /**
  * mei_dma_ring_reset() - reset the dma control block
  * @dev: mei device
  */
-void mei_dma_ring_reset(struct mei_device *dev)
-{
-	struct hbm_dma_ring_ctrl *ctrl = mei_dma_ring_ctrl(dev);
+व्योम mei_dma_ring_reset(काष्ठा mei_device *dev)
+अणु
+	काष्ठा hbm_dma_ring_ctrl *ctrl = mei_dma_ring_ctrl(dev);
 
-	if (!ctrl)
-		return;
+	अगर (!ctrl)
+		वापस;
 
-	memset(ctrl, 0, sizeof(*ctrl));
-}
+	स_रखो(ctrl, 0, माप(*ctrl));
+पूर्ण
 
 /**
- * mei_dma_copy_from() - copy from dma ring into buffer
+ * mei_dma_copy_from() - copy from dma ring पूर्णांकo buffer
  * @dev: mei device
  * @buf: data buffer
  * @offset: offset in slots.
  * @n: number of slots to copy.
  */
-static size_t mei_dma_copy_from(struct mei_device *dev, unsigned char *buf,
+अटल माप_प्रकार mei_dma_copy_from(काष्ठा mei_device *dev, अचिन्हित अक्षर *buf,
 				u32 offset, u32 n)
-{
-	unsigned char *dbuf = dev->dr_dscr[DMA_DSCR_DEVICE].vaddr;
+अणु
+	अचिन्हित अक्षर *dbuf = dev->dr_dscr[DMA_DSCR_DEVICE].vaddr;
 
-	size_t b_offset = offset << 2;
-	size_t b_n = n << 2;
+	माप_प्रकार b_offset = offset << 2;
+	माप_प्रकार b_n = n << 2;
 
-	memcpy(buf, dbuf + b_offset, b_n);
+	स_नकल(buf, dbuf + b_offset, b_n);
 
-	return b_n;
-}
+	वापस b_n;
+पूर्ण
 
 /**
  * mei_dma_copy_to() - copy to a buffer to the dma ring
@@ -145,64 +146,64 @@ static size_t mei_dma_copy_from(struct mei_device *dev, unsigned char *buf,
  * @offset: offset in slots.
  * @n: number of slots to copy.
  */
-static size_t mei_dma_copy_to(struct mei_device *dev, unsigned char *buf,
+अटल माप_प्रकार mei_dma_copy_to(काष्ठा mei_device *dev, अचिन्हित अक्षर *buf,
 			      u32 offset, u32 n)
-{
-	unsigned char *hbuf = dev->dr_dscr[DMA_DSCR_HOST].vaddr;
+अणु
+	अचिन्हित अक्षर *hbuf = dev->dr_dscr[DMA_DSCR_HOST].vaddr;
 
-	size_t b_offset = offset << 2;
-	size_t b_n = n << 2;
+	माप_प्रकार b_offset = offset << 2;
+	माप_प्रकार b_n = n << 2;
 
-	memcpy(hbuf + b_offset, buf, b_n);
+	स_नकल(hbuf + b_offset, buf, b_n);
 
-	return b_n;
-}
+	वापस b_n;
+पूर्ण
 
 /**
- * mei_dma_ring_read() - read data from the ring
+ * mei_dma_ring_पढ़ो() - पढ़ो data from the ring
  * @dev: mei device
- * @buf: buffer to read into: may be NULL in case of droping the data.
- * @len: length to read.
+ * @buf: buffer to पढ़ो पूर्णांकo: may be शून्य in हाल of droping the data.
+ * @len: length to पढ़ो.
  */
-void mei_dma_ring_read(struct mei_device *dev, unsigned char *buf, u32 len)
-{
-	struct hbm_dma_ring_ctrl *ctrl = mei_dma_ring_ctrl(dev);
+व्योम mei_dma_ring_पढ़ो(काष्ठा mei_device *dev, अचिन्हित अक्षर *buf, u32 len)
+अणु
+	काष्ठा hbm_dma_ring_ctrl *ctrl = mei_dma_ring_ctrl(dev);
 	u32 dbuf_depth;
 	u32 rd_idx, rem, slots;
 
-	if (WARN_ON(!ctrl))
-		return;
+	अगर (WARN_ON(!ctrl))
+		वापस;
 
 	dev_dbg(dev->dev, "reading from dma %u bytes\n", len);
 
-	if (!len)
-		return;
+	अगर (!len)
+		वापस;
 
 	dbuf_depth = dev->dr_dscr[DMA_DSCR_DEVICE].size >> 2;
 	rd_idx = READ_ONCE(ctrl->dbuf_rd_idx) & (dbuf_depth - 1);
 	slots = mei_data2slots(len);
 
-	/* if buf is NULL we drop the packet by advancing the pointer.*/
-	if (!buf)
-		goto out;
+	/* अगर buf is शून्य we drop the packet by advancing the poपूर्णांकer.*/
+	अगर (!buf)
+		जाओ out;
 
-	if (rd_idx + slots > dbuf_depth) {
+	अगर (rd_idx + slots > dbuf_depth) अणु
 		buf += mei_dma_copy_from(dev, buf, rd_idx, dbuf_depth - rd_idx);
 		rem = slots - (dbuf_depth - rd_idx);
 		rd_idx = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		rem = slots;
-	}
+	पूर्ण
 
 	mei_dma_copy_from(dev, buf, rd_idx, rem);
 out:
 	WRITE_ONCE(ctrl->dbuf_rd_idx, ctrl->dbuf_rd_idx + slots);
-}
+पूर्ण
 
-static inline u32 mei_dma_ring_hbuf_depth(struct mei_device *dev)
-{
-	return dev->dr_dscr[DMA_DSCR_HOST].size >> 2;
-}
+अटल अंतरभूत u32 mei_dma_ring_hbuf_depth(काष्ठा mei_device *dev)
+अणु
+	वापस dev->dr_dscr[DMA_DSCR_HOST].size >> 2;
+पूर्ण
 
 /**
  * mei_dma_ring_empty_slots() - calaculate number of empty slots in dma ring
@@ -210,60 +211,60 @@ static inline u32 mei_dma_ring_hbuf_depth(struct mei_device *dev)
  *
  * Return: number of empty slots
  */
-u32 mei_dma_ring_empty_slots(struct mei_device *dev)
-{
-	struct hbm_dma_ring_ctrl *ctrl = mei_dma_ring_ctrl(dev);
+u32 mei_dma_ring_empty_slots(काष्ठा mei_device *dev)
+अणु
+	काष्ठा hbm_dma_ring_ctrl *ctrl = mei_dma_ring_ctrl(dev);
 	u32 wr_idx, rd_idx, hbuf_depth, empty;
 
-	if (!mei_dma_ring_is_allocated(dev))
-		return 0;
+	अगर (!mei_dma_ring_is_allocated(dev))
+		वापस 0;
 
-	if (WARN_ON(!ctrl))
-		return 0;
+	अगर (WARN_ON(!ctrl))
+		वापस 0;
 
 	/* easier to work in slots */
 	hbuf_depth = mei_dma_ring_hbuf_depth(dev);
 	rd_idx = READ_ONCE(ctrl->hbuf_rd_idx);
 	wr_idx = READ_ONCE(ctrl->hbuf_wr_idx);
 
-	if (rd_idx > wr_idx)
+	अगर (rd_idx > wr_idx)
 		empty = rd_idx - wr_idx;
-	else
+	अन्यथा
 		empty = hbuf_depth - (wr_idx - rd_idx);
 
-	return empty;
-}
+	वापस empty;
+पूर्ण
 
 /**
- * mei_dma_ring_write - write data to dma ring host buffer
+ * mei_dma_ring_ग_लिखो - ग_लिखो data to dma ring host buffer
  *
  * @dev: mei_device
  * @buf: data will be written
  * @len: data length
  */
-void mei_dma_ring_write(struct mei_device *dev, unsigned char *buf, u32 len)
-{
-	struct hbm_dma_ring_ctrl *ctrl = mei_dma_ring_ctrl(dev);
+व्योम mei_dma_ring_ग_लिखो(काष्ठा mei_device *dev, अचिन्हित अक्षर *buf, u32 len)
+अणु
+	काष्ठा hbm_dma_ring_ctrl *ctrl = mei_dma_ring_ctrl(dev);
 	u32 hbuf_depth;
 	u32 wr_idx, rem, slots;
 
-	if (WARN_ON(!ctrl))
-		return;
+	अगर (WARN_ON(!ctrl))
+		वापस;
 
 	dev_dbg(dev->dev, "writing to dma %u bytes\n", len);
 	hbuf_depth = mei_dma_ring_hbuf_depth(dev);
 	wr_idx = READ_ONCE(ctrl->hbuf_wr_idx) & (hbuf_depth - 1);
 	slots = mei_data2slots(len);
 
-	if (wr_idx + slots > hbuf_depth) {
+	अगर (wr_idx + slots > hbuf_depth) अणु
 		buf += mei_dma_copy_to(dev, buf, wr_idx, hbuf_depth - wr_idx);
 		rem = slots - (hbuf_depth - wr_idx);
 		wr_idx = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		rem = slots;
-	}
+	पूर्ण
 
 	mei_dma_copy_to(dev, buf, wr_idx, rem);
 
 	WRITE_ONCE(ctrl->hbuf_wr_idx, ctrl->hbuf_wr_idx + slots);
-}
+पूर्ण

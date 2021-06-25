@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St - Fअगरth Floor, Boston, MA 02110-1301 USA.
  * The full GNU General Public License is included in this distribution
  * in the file called LICENSE.GPL.
  *
@@ -26,25 +27,25 @@
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *   * Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Redistributions in binary क्रमm must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in
- *     the documentation and/or other materials provided with the
+ *     the करोcumentation and/or other materials provided with the
  *     distribution.
  *   * Neither the name of Intel Corporation nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
+ *     contributors may be used to enकरोrse or promote products derived
+ *     from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -53,11 +54,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SCU_TASK_CONTEXT_H_
-#define _SCU_TASK_CONTEXT_H_
+#अगर_अघोषित _SCU_TASK_CONTEXT_H_
+#घोषणा _SCU_TASK_CONTEXT_H_
 
 /**
- * This file contains the structures and constants for the SCU hardware task
+ * This file contains the काष्ठाures and स्थिरants क्रम the SCU hardware task
  *    context.
  *
  *
@@ -65,41 +66,41 @@
 
 
 /**
- * enum scu_ssp_task_type - This enumberation defines the various SSP task
- *    types the SCU hardware will accept. The definition for the various task
- *    types the SCU hardware will accept can be found in the DS specification.
+ * क्रमागत scu_ssp_task_type - This क्रमागतberation defines the various SSP task
+ *    types the SCU hardware will accept. The definition क्रम the various task
+ *    types the SCU hardware will accept can be found in the DS specअगरication.
  *
  *
  */
-typedef enum {
+प्रकार क्रमागत अणु
 	SCU_TASK_TYPE_IOREAD,           /* /< IO READ direction or no direction */
 	SCU_TASK_TYPE_IOWRITE,          /* /< IO Write direction */
 	SCU_TASK_TYPE_SMP_REQUEST,      /* /< SMP Request type */
 	SCU_TASK_TYPE_RESPONSE,         /* /< Driver generated response frame (targt mode) */
 	SCU_TASK_TYPE_RAW_FRAME,        /* /< Raw frame request type */
-	SCU_TASK_TYPE_PRIMITIVE         /* /< Request for a primitive to be transmitted */
-} scu_ssp_task_type;
+	SCU_TASK_TYPE_PRIMITIVE         /* /< Request क्रम a primitive to be transmitted */
+पूर्ण scu_ssp_task_type;
 
 /**
- * enum scu_sata_task_type - This enumeration defines the various SATA task
- *    types the SCU hardware will accept. The definition for the various task
- *    types the SCU hardware will accept can be found in the DS specification.
+ * क्रमागत scu_sata_task_type - This क्रमागतeration defines the various SATA task
+ *    types the SCU hardware will accept. The definition क्रम the various task
+ *    types the SCU hardware will accept can be found in the DS specअगरication.
  *
  *
  */
-typedef enum {
+प्रकार क्रमागत अणु
 	SCU_TASK_TYPE_DMA_IN,           /* /< Read request */
-	SCU_TASK_TYPE_FPDMAQ_READ,      /* /< NCQ read request */
-	SCU_TASK_TYPE_PACKET_DMA_IN,    /* /< Packet read request */
+	SCU_TASK_TYPE_FPDMAQ_READ,      /* /< NCQ पढ़ो request */
+	SCU_TASK_TYPE_PACKET_DMA_IN,    /* /< Packet पढ़ो request */
 	SCU_TASK_TYPE_SATA_RAW_FRAME,   /* /< Raw frame request */
 	RESERVED_4,
 	RESERVED_5,
 	RESERVED_6,
 	RESERVED_7,
 	SCU_TASK_TYPE_DMA_OUT,          /* /< Write request */
-	SCU_TASK_TYPE_FPDMAQ_WRITE,     /* /< NCQ write Request */
-	SCU_TASK_TYPE_PACKET_DMA_OUT    /* /< Packet write request */
-} scu_sata_task_type;
+	SCU_TASK_TYPE_FPDMAQ_WRITE,     /* /< NCQ ग_लिखो Request */
+	SCU_TASK_TYPE_PACKET_DMA_OUT    /* /< Packet ग_लिखो request */
+पूर्ण scu_sata_task_type;
 
 
 /**
@@ -107,26 +108,26 @@ typedef enum {
  *
  * SCU_CONTEXT_TYPE
  */
-#define SCU_TASK_CONTEXT_TYPE  0
-#define SCU_RNC_CONTEXT_TYPE   1
+#घोषणा SCU_TASK_CONTEXT_TYPE  0
+#घोषणा SCU_RNC_CONTEXT_TYPE   1
 
 /**
  *
  *
  * SCU_TASK_CONTEXT_VALIDITY
  */
-#define SCU_TASK_CONTEXT_INVALID          0
-#define SCU_TASK_CONTEXT_VALID            1
+#घोषणा SCU_TASK_CONTEXT_INVALID          0
+#घोषणा SCU_TASK_CONTEXT_VALID            1
 
 /**
  *
  *
  * SCU_COMMAND_CODE
  */
-#define SCU_COMMAND_CODE_INITIATOR_NEW_TASK   0
-#define SCU_COMMAND_CODE_ACTIVE_TASK          1
-#define SCU_COMMAND_CODE_PRIMITIVE_SEQ_TASK   2
-#define SCU_COMMAND_CODE_TARGET_RAW_FRAMES    3
+#घोषणा SCU_COMMAND_CODE_INITIATOR_NEW_TASK   0
+#घोषणा SCU_COMMAND_CODE_ACTIVE_TASK          1
+#घोषणा SCU_COMMAND_CODE_PRIMITIVE_SEQ_TASK   2
+#घोषणा SCU_COMMAND_CODE_TARGET_RAW_FRAMES    3
 
 /**
  *
@@ -136,146 +137,146 @@ typedef enum {
 /**
  *
  *
- * This priority is used when there is no priority request for this request.
+ * This priority is used when there is no priority request क्रम this request.
  */
-#define SCU_TASK_PRIORITY_NORMAL          0
+#घोषणा SCU_TASK_PRIORITY_NORMAL          0
 
 /**
  *
  *
  * This priority indicates that the task should be scheduled to the head of the
- * queue.  The task will NOT be executed if the TX is suspended for the remote
+ * queue.  The task will NOT be executed अगर the TX is suspended क्रम the remote
  * node.
  */
-#define SCU_TASK_PRIORITY_HEAD_OF_Q       1
+#घोषणा SCU_TASK_PRIORITY_HEAD_OF_Q       1
 
 /**
  *
  *
- * This priority indicates that the task will be executed before all
+ * This priority indicates that the task will be executed beक्रमe all
  * SCU_TASK_PRIORITY_NORMAL and SCU_TASK_PRIORITY_HEAD_OF_Q tasks. The task
- * WILL be executed if the TX is suspended for the remote node.
+ * WILL be executed अगर the TX is suspended क्रम the remote node.
  */
-#define SCU_TASK_PRIORITY_HIGH            2
+#घोषणा SCU_TASK_PRIORITY_HIGH            2
 
 /**
  *
  *
  * This task priority is reserved and should not be used.
  */
-#define SCU_TASK_PRIORITY_RESERVED        3
+#घोषणा SCU_TASK_PRIORITY_RESERVED        3
 
-#define SCU_TASK_INITIATOR_MODE           1
-#define SCU_TASK_TARGET_MODE              0
+#घोषणा SCU_TASK_INITIATOR_MODE           1
+#घोषणा SCU_TASK_TARGET_MODE              0
 
-#define SCU_TASK_REGULAR                  0
-#define SCU_TASK_ABORTED                  1
+#घोषणा SCU_TASK_REGULAR                  0
+#घोषणा SCU_TASK_ABORTED                  1
 
-/* direction bit defintion */
+/* direction bit defपूर्णांकion */
 /**
  *
  *
- * SATA_DIRECTION
+ * SATA_सूचीECTION
  */
-#define SCU_SATA_WRITE_DATA_DIRECTION     0
-#define SCU_SATA_READ_DATA_DIRECTION      1
+#घोषणा SCU_SATA_WRITE_DATA_सूचीECTION     0
+#घोषणा SCU_SATA_READ_DATA_सूचीECTION      1
 
 /**
  *
  *
- * SCU_COMMAND_CONTEXT_MACROS These macros provide the mask and shift
- * operations to construct the various SCU commands
+ * SCU_COMMAND_CONTEXT_MACROS These macros provide the mask and shअगरt
+ * operations to स्थिरruct the various SCU commands
  */
-#define SCU_CONTEXT_COMMAND_REQUEST_TYPE_SHIFT           21
-#define SCU_CONTEXT_COMMAND_REQUEST_TYPE_MASK            0x00E00000
-#define scu_get_command_request_type(x)	\
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_TYPE_SHIFT           21
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_TYPE_MASK            0x00E00000
+#घोषणा scu_get_command_request_type(x)	\
 	((x) & SCU_CONTEXT_COMMAND_REQUEST_TYPE_MASK)
 
-#define SCU_CONTEXT_COMMAND_REQUEST_SUBTYPE_SHIFT        18
-#define SCU_CONTEXT_COMMAND_REQUEST_SUBTYPE_MASK         0x001C0000
-#define scu_get_command_request_subtype(x) \
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_SUBTYPE_SHIFT        18
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_SUBTYPE_MASK         0x001C0000
+#घोषणा scu_get_command_request_subtype(x) \
 	((x) & SCU_CONTEXT_COMMAND_REQUEST_SUBTYPE_MASK)
 
-#define SCU_CONTEXT_COMMAND_REQUEST_FULLTYPE_MASK	 \
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_FULLTYPE_MASK	 \
 	(\
 		SCU_CONTEXT_COMMAND_REQUEST_TYPE_MASK		  \
 		| SCU_CONTEXT_COMMAND_REQUEST_SUBTYPE_MASK	    \
 	)
-#define scu_get_command_request_full_type(x) \
+#घोषणा scu_get_command_request_full_type(x) \
 	((x) & SCU_CONTEXT_COMMAND_REQUEST_FULLTYPE_MASK)
 
-#define SCU_CONTEXT_COMMAND_PROTOCOL_ENGINE_GROUP_SHIFT  16
-#define SCU_CONTEXT_COMMAND_PROTOCOL_ENGINE_GROUP_MASK   0x00010000
-#define scu_get_command_protocl_engine_group(x)	\
+#घोषणा SCU_CONTEXT_COMMAND_PROTOCOL_ENGINE_GROUP_SHIFT  16
+#घोषणा SCU_CONTEXT_COMMAND_PROTOCOL_ENGINE_GROUP_MASK   0x00010000
+#घोषणा scu_get_command_protocl_engine_group(x)	\
 	((x) & SCU_CONTEXT_COMMAND_PROTOCOL_ENGINE_GROUP_MASK)
 
-#define SCU_CONTEXT_COMMAND_LOGICAL_PORT_SHIFT           12
-#define SCU_CONTEXT_COMMAND_LOGICAL_PORT_MASK            0x00007000
-#define scu_get_command_reqeust_logical_port(x)	\
+#घोषणा SCU_CONTEXT_COMMAND_LOGICAL_PORT_SHIFT           12
+#घोषणा SCU_CONTEXT_COMMAND_LOGICAL_PORT_MASK            0x00007000
+#घोषणा scu_get_command_reqeust_logical_port(x)	\
 	((x) & SCU_CONTEXT_COMMAND_LOGICAL_PORT_MASK)
 
 
-#define MAKE_SCU_CONTEXT_COMMAND_TYPE(type) \
+#घोषणा MAKE_SCU_CONTEXT_COMMAND_TYPE(type) \
 	((u32)(type) << SCU_CONTEXT_COMMAND_REQUEST_TYPE_SHIFT)
 
 /**
  * MAKE_SCU_CONTEXT_COMMAND_TYPE() -
  *
- * SCU_COMMAND_TYPES These constants provide the grouping of the different SCU
+ * SCU_COMMAND_TYPES These स्थिरants provide the grouping of the dअगरferent SCU
  * command types.
  */
-#define SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_TC    MAKE_SCU_CONTEXT_COMMAND_TYPE(0)
-#define SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_TC    MAKE_SCU_CONTEXT_COMMAND_TYPE(1)
-#define SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_RNC   MAKE_SCU_CONTEXT_COMMAND_TYPE(2)
-#define SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_RNC   MAKE_SCU_CONTEXT_COMMAND_TYPE(3)
-#define SCU_CONTEXT_COMMAND_REQUEST_TYPE_OTHER_RNC  MAKE_SCU_CONTEXT_COMMAND_TYPE(6)
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_TC    MAKE_SCU_CONTEXT_COMMAND_TYPE(0)
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_TC    MAKE_SCU_CONTEXT_COMMAND_TYPE(1)
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_RNC   MAKE_SCU_CONTEXT_COMMAND_TYPE(2)
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_RNC   MAKE_SCU_CONTEXT_COMMAND_TYPE(3)
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_TYPE_OTHER_RNC  MAKE_SCU_CONTEXT_COMMAND_TYPE(6)
 
-#define MAKE_SCU_CONTEXT_COMMAND_REQUEST(type, command)	\
+#घोषणा MAKE_SCU_CONTEXT_COMMAND_REQUEST(type, command)	\
 	((type) | ((command) << SCU_CONTEXT_COMMAND_REQUEST_SUBTYPE_SHIFT))
 
 /**
  *
  *
- * SCU_REQUEST_TYPES These constants are the various request types that can be
+ * SCU_REQUEST_TYPES These स्थिरants are the various request types that can be
  * posted to the SCU hardware.
  */
-#define SCU_CONTEXT_COMMAND_REQUST_POST_TC \
+#घोषणा SCU_CONTEXT_COMMAND_REQUST_POST_TC \
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_TC, 0))
 
-#define SCU_CONTEXT_COMMAND_REQUEST_POST_TC_ABORT \
+#घोषणा SCU_CONTEXT_COMMAND_REQUEST_POST_TC_ABORT \
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_TC, 1))
 
-#define SCU_CONTEXT_COMMAND_REQUST_DUMP_TC \
+#घोषणा SCU_CONTEXT_COMMAND_REQUST_DUMP_TC \
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_TC, 0))
 
-#define SCU_CONTEXT_COMMAND_POST_RNC_32	\
+#घोषणा SCU_CONTEXT_COMMAND_POST_RNC_32	\
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_RNC, 0))
 
-#define SCU_CONTEXT_COMMAND_POST_RNC_96	\
+#घोषणा SCU_CONTEXT_COMMAND_POST_RNC_96	\
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_RNC, 1))
 
-#define SCU_CONTEXT_COMMAND_POST_RNC_INVALIDATE	\
+#घोषणा SCU_CONTEXT_COMMAND_POST_RNC_INVALIDATE	\
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_RNC, 2))
 
-#define SCU_CONTEXT_COMMAND_DUMP_RNC_32	\
+#घोषणा SCU_CONTEXT_COMMAND_DUMP_RNC_32	\
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_RNC, 0))
 
-#define SCU_CONTEXT_COMMAND_DUMP_RNC_96	\
+#घोषणा SCU_CONTEXT_COMMAND_DUMP_RNC_96	\
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_RNC, 1))
 
-#define SCU_CONTEXT_COMMAND_POST_RNC_SUSPEND_TX	\
+#घोषणा SCU_CONTEXT_COMMAND_POST_RNC_SUSPEND_TX	\
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_OTHER_RNC, 0))
 
-#define SCU_CONTEXT_COMMAND_POST_RNC_SUSPEND_TX_RX \
+#घोषणा SCU_CONTEXT_COMMAND_POST_RNC_SUSPEND_TX_RX \
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_OTHER_RNC, 1))
 
-#define SCU_CONTEXT_COMMAND_POST_RNC_RESUME \
+#घोषणा SCU_CONTEXT_COMMAND_POST_RNC_RESUME \
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_OTHER_RNC, 2))
 
-#define SCU_CONTEXT_IT_NEXUS_LOSS_TIMER_ENABLE \
+#घोषणा SCU_CONTEXT_IT_NEXUS_LOSS_TIMER_ENABLE \
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_OTHER_RNC, 3))
 
-#define SCU_CONTEXT_IT_NEXUS_LOSS_TIMER_DISABLE	\
+#घोषणा SCU_CONTEXT_IT_NEXUS_LOSS_TIMER_DISABLE	\
 	(MAKE_SCU_CONTEXT_COMMAND_REQUEST(SCU_CONTEXT_COMMAND_REQUEST_TYPE_OTHER_RNC, 4))
 
 /**
@@ -284,18 +285,18 @@ typedef enum {
  * SCU_TASK_CONTEXT_PROTOCOL SCU Task context protocol types this is uesd to
  * program the SCU Task context protocol field in word 0x00.
  */
-#define SCU_TASK_CONTEXT_PROTOCOL_SMP    0x00
-#define SCU_TASK_CONTEXT_PROTOCOL_SSP    0x01
-#define SCU_TASK_CONTEXT_PROTOCOL_STP    0x02
-#define SCU_TASK_CONTEXT_PROTOCOL_NONE   0x07
+#घोषणा SCU_TASK_CONTEXT_PROTOCOL_SMP    0x00
+#घोषणा SCU_TASK_CONTEXT_PROTOCOL_SSP    0x01
+#घोषणा SCU_TASK_CONTEXT_PROTOCOL_STP    0x02
+#घोषणा SCU_TASK_CONTEXT_PROTOCOL_NONE   0x07
 
 /**
- * struct ssp_task_context - This is the SCU hardware definition for an SSP
+ * काष्ठा ssp_task_context - This is the SCU hardware definition क्रम an SSP
  *    request.
  *
  *
  */
-struct ssp_task_context {
+काष्ठा ssp_task_context अणु
 	/* OFFSET 0x18 */
 	u32 reserved00:24;
 	u32 frame_type:8;
@@ -306,7 +307,7 @@ struct ssp_task_context {
 	/* OFFSET 0x20 */
 	u32 fill_bytes:2;
 	u32 reserved02:6;
-	u32 changing_data_pointer:1;
+	u32 changing_data_poपूर्णांकer:1;
 	u32 retransmit:1;
 	u32 retry_data_frame:1;
 	u32 tlr_control:2;
@@ -321,15 +322,15 @@ struct ssp_task_context {
 
 	/* OFFSET 0x2C */
 	u32 data_offset;
-};
+पूर्ण;
 
 /**
- * struct stp_task_context - This is the SCU hardware definition for an STP
+ * काष्ठा stp_task_context - This is the SCU hardware definition क्रम an STP
  *    request.
  *
  *
  */
-struct stp_task_context {
+काष्ठा stp_task_context अणु
 	/* OFFSET 0x18 */
 	u32 fis_type:8;
 	u32 pm_port:4;
@@ -352,16 +353,16 @@ struct stp_task_context {
 	u32 reserved4:27;
 
 	/* OFFSET 0x2C */
-	u32 data_offset; /* TODO: What is this used for? */
-};
+	u32 data_offset; /* TODO: What is this used क्रम? */
+पूर्ण;
 
 /**
- * struct smp_task_context - This is the SCU hardware definition for an SMP
+ * काष्ठा smp_task_context - This is the SCU hardware definition क्रम an SMP
  *    request.
  *
  *
  */
-struct smp_task_context {
+काष्ठा smp_task_context अणु
 	/* OFFSET 0x18 */
 	u32 response_length:8;
 	u32 function_result:8;
@@ -383,15 +384,15 @@ struct smp_task_context {
 
 	/* OFFSET 0x2C */
 	u32 reserved5;
-};
+पूर्ण;
 
 /**
- * struct primitive_task_context - This is the SCU hardware definition used
+ * काष्ठा primitive_task_context - This is the SCU hardware definition used
  *    when the driver wants to send a primitive on the link.
  *
  *
  */
-struct primitive_task_context {
+काष्ठा primitive_task_context अणु
 	/* OFFSET 0x18 */
 	/**
 	 * This field is the control word and it must be 0.
@@ -400,7 +401,7 @@ struct primitive_task_context {
 
 	/* OFFSET 0x1C */
 	/**
-	 * This field specifies the primitive that is to be transmitted.
+	 * This field specअगरies the primitive that is to be transmitted.
 	 */
 	u32 sequence;
 
@@ -415,30 +416,30 @@ struct primitive_task_context {
 
 	/* OFFSET 0x2C */
 	u32 reserved3;
-};
+पूर्ण;
 
 /**
- * The union of the protocols that can be selected in the SCU task context
+ * The जोड़ of the protocols that can be selected in the SCU task context
  *    field.
  *
  * protocol_context
  */
-union protocol_context {
-	struct ssp_task_context ssp;
-	struct stp_task_context stp;
-	struct smp_task_context smp;
-	struct primitive_task_context primitive;
+जोड़ protocol_context अणु
+	काष्ठा ssp_task_context ssp;
+	काष्ठा stp_task_context stp;
+	काष्ठा smp_task_context smp;
+	काष्ठा primitive_task_context primitive;
 	u32 words[6];
-};
+पूर्ण;
 
 /**
- * struct scu_sgl_element - This structure represents a single SCU defined SGL
+ * काष्ठा scu_sgl_element - This काष्ठाure represents a single SCU defined SGL
  *    element. SCU SGLs contain a 64 bit address with the maximum data transfer
  *    being 24 bits in size.  The SGL can not cross a 4GB boundary.
  *
- * struct scu_sgl_element
+ * काष्ठा scu_sgl_element
  */
-struct scu_sgl_element {
+काष्ठा scu_sgl_element अणु
 	/**
 	 * This field is the upper 32 bits of the 64 bit physical address.
 	 */
@@ -455,36 +456,36 @@ struct scu_sgl_element {
 	u32 length:24;
 
 	/**
-	 * This field is the address modifier to be used when a virtual function is
+	 * This field is the address modअगरier to be used when a भव function is
 	 * requesting a data transfer.
 	 */
-	u32 address_modifier:8;
+	u32 address_modअगरier:8;
 
-};
+पूर्ण;
 
-#define SCU_SGL_ELEMENT_PAIR_A   0
-#define SCU_SGL_ELEMENT_PAIR_B   1
+#घोषणा SCU_SGL_ELEMENT_PAIR_A   0
+#घोषणा SCU_SGL_ELEMENT_PAIR_B   1
 
 /**
- * struct scu_sgl_element_pair - This structure is the SCU hardware definition
+ * काष्ठा scu_sgl_element_pair - This काष्ठाure is the SCU hardware definition
  *    of a pair of SGL elements. The SCU hardware always works on SGL pairs.
- *    They are refered to in the DS specification as SGL A and SGL B.  Each SGL
+ *    They are refered to in the DS specअगरication as SGL A and SGL B.  Each SGL
  *    pair is followed by the address of the next pair.
  *
  *
  */
-struct scu_sgl_element_pair {
+काष्ठा scu_sgl_element_pair अणु
 	/* OFFSET 0x60-0x68 */
 	/**
 	 * This field is the SGL element A of the SGL pair.
 	 */
-	struct scu_sgl_element A;
+	काष्ठा scu_sgl_element A;
 
 	/* OFFSET 0x6C-0x74 */
 	/**
 	 * This field is the SGL element B of the SGL pair.
 	 */
-	struct scu_sgl_element B;
+	काष्ठा scu_sgl_element B;
 
 	/* OFFSET 0x78-0x7C */
 	/**
@@ -499,18 +500,18 @@ struct scu_sgl_element_pair {
 	 */
 	u32 next_pair_lower;
 
-};
+पूर्ण;
 
 /**
- * struct transport_snapshot - This structure is the SCU hardware scratch area
- *    for the task context. This is set to 0 by the driver but can be read by
+ * काष्ठा transport_snapshot - This काष्ठाure is the SCU hardware scratch area
+ *    क्रम the task context. This is set to 0 by the driver but can be पढ़ो by
  *    issuing a dump TC request to the SCU.
  *
  *
  */
-struct transport_snapshot {
+काष्ठा transport_snapshot अणु
 	/* OFFSET 0x48 */
-	u32 xfer_rdy_write_data_length;
+	u32 xfer_rdy_ग_लिखो_data_length;
 
 	/* OFFSET 0x4C */
 	u32 data_offset;
@@ -520,21 +521,21 @@ struct transport_snapshot {
 	u32 reserved_50_0:8;
 
 	/* OFFSET 0x54 */
-	u32 next_initiator_write_data_offset;
+	u32 next_initiator_ग_लिखो_data_offset;
 
 	/* OFFSET 0x58 */
-	u32 next_initiator_write_data_xfer_size:24;
+	u32 next_initiator_ग_लिखो_data_xfer_size:24;
 	u32 reserved_58_0:8;
-};
+पूर्ण;
 
 /**
- * struct scu_task_context - This structure defines the contents of the SCU
+ * काष्ठा scu_task_context - This काष्ठाure defines the contents of the SCU
  *    silicon task context. It lays out all of the fields according to the
- *    expected order and location for the Storage Controller unit.
+ *    expected order and location क्रम the Storage Controller unit.
  *
  *
  */
-struct scu_task_context {
+काष्ठा scu_task_context अणु
 	/* OFFSET 0x00 ------ */
 	/**
 	 * This field must be encoded to one of the valid SCU task priority values
@@ -545,7 +546,7 @@ struct scu_task_context {
 	u32 priority:2;
 
 	/**
-	 * This field must be set to true if this is an initiator generated request.
+	 * This field must be set to true अगर this is an initiator generated request.
 	 * Until target mode is supported all task requests are initiator requests.
 	 */
 	u32 initiator_request:1;
@@ -558,12 +559,12 @@ struct scu_task_context {
 
 	/**
 	 * This field muse be programed when generating an SMP response since the SMP
-	 * connection remains open until the SMP response is generated.
+	 * connection reमुख्यs खोलो until the SMP response is generated.
 	 */
 	u32 protocol_engine_index:3;
 
 	/**
-	 * This field must contain the logical port for the task request.
+	 * This field must contain the logical port क्रम the task request.
 	 */
 	u32 logical_port_index:3;
 
@@ -577,7 +578,7 @@ struct scu_task_context {
 	u32 protocol_type:3;
 
 	/**
-	 * This filed must be set to the TCi allocated for this task
+	 * This filed must be set to the TCi allocated क्रम this task
 	 */
 	u32 task_index:12;
 
@@ -587,13 +588,13 @@ struct scu_task_context {
 	u32 reserved_00_0:1;
 
 	/**
-	 * For a normal task request this must be set to 0.  If this is an abort of
+	 * For a normal task request this must be set to 0.  If this is an पात of
 	 * this task request it must be set to 1.
 	 */
-	u32 abort:1;
+	u32 पात:1;
 
 	/**
-	 * This field must be set to true for the SCU hardware to process the task.
+	 * This field must be set to true क्रम the SCU hardware to process the task.
 	 */
 	u32 valid:1;
 
@@ -609,15 +610,15 @@ struct scu_task_context {
 	u32 remote_node_index:12;
 
 	/**
-	 * This field is programmed if this is a mirrored request, which we are not
-	 * using, in which case it is the RNi for the mirrored target.
+	 * This field is programmed अगर this is a mirrored request, which we are not
+	 * using, in which हाल it is the RNi क्रम the mirrored target.
 	 */
 	u32 mirrored_node_index:12;
 
 	/**
 	 * This field is programmed with the direction of the SATA reqeust
-	 *    - SCU_SATA_WRITE_DATA_DIRECTION
-	 *    - SCU_SATA_READ_DATA_DIRECTION
+	 *    - SCU_SATA_WRITE_DATA_सूचीECTION
+	 *    - SCU_SATA_READ_DATA_सूचीECTION
 	 */
 	u32 sata_direction:1;
 
@@ -631,8 +632,8 @@ struct scu_task_context {
 	u32 command_code:2;
 
 	/**
-	 * This field is set to true if the remote node should be suspended.
-	 * This bit is only valid for SSP & SMP target devices.
+	 * This field is set to true अगर the remote node should be suspended.
+	 * This bit is only valid क्रम SSP & SMP target devices.
 	 */
 	u32 suspend_node:1;
 
@@ -670,16 +671,16 @@ struct scu_task_context {
 	u32 ssp_tlr_enable:1;
 
 	/**
-	 * This is field specifies if the SCU DMAs a response frame to host
-	 * memory for good response frames when operating in target mode.
+	 * This is field specअगरies अगर the SCU DMAs a response frame to host
+	 * memory क्रम good response frames when operating in target mode.
 	 */
 	u32 dma_ssp_target_good_response:1;
 
 	/**
-	 * This field indicates if the SCU should DMA the response frame to
+	 * This field indicates अगर the SCU should DMA the response frame to
 	 * host memory.
 	 */
-	u32 do_not_dma_ssp_good_response:1;
+	u32 करो_not_dma_ssp_good_response:1;
 
 	/**
 	 * This field is set to true when strict ordering is to be enabled
@@ -687,7 +688,7 @@ struct scu_task_context {
 	u32 strict_ordering:1;
 
 	/**
-	 * This field indicates the type of endianess to be utilized for the
+	 * This field indicates the type of endianess to be utilized क्रम the
 	 * frame.  command, task, and response frames utilized control_frame
 	 * set to 1.
 	 */
@@ -699,10 +700,10 @@ struct scu_task_context {
 	u32 tl_control_reserved:3;
 
 	/**
-	 * This field is set to true when the SCU hardware task timeout control is to
+	 * This field is set to true when the SCU hardware task समयout control is to
 	 * be enabled
 	 */
-	u32 timeout_enable:1;
+	u32 समयout_enable:1;
 
 	/**
 	 * This field is reserved and the driver should set it to 0x00
@@ -721,18 +722,18 @@ struct scu_task_context {
 
 	/* OFFSET 0x0C */
 	/**
-	 * This field is the address modifier for this io request it should be
-	 * programmed with the virtual function that is making the request.
+	 * This field is the address modअगरier क्रम this io request it should be
+	 * programmed with the भव function that is making the request.
 	 */
-	u32 address_modifier:16;
+	u32 address_modअगरier:16;
 
 	/**
-	 * @todo What we support mirrored SMP response frame?
+	 * @toकरो What we support mirrored SMP response frame?
 	 */
 	u32 mirrored_protocol_engine:3;  /* mirrored protocol Engine Index */
 
 	/**
-	 * If this is a mirrored request the logical port index for the mirrored RNi
+	 * If this is a mirrored request the logical port index क्रम the mirrored RNi
 	 * must be programmed.
 	 */
 	u32 mirrored_logical_port:4;  /* mirrored local port index */
@@ -743,7 +744,7 @@ struct scu_task_context {
 	u32 reserved_0C_0:8;
 
 	/**
-	 * This field must be set to true if the mirrored request processing is to be
+	 * This field must be set to true अगर the mirrored request processing is to be
 	 * enabled.
 	 */
 	u32 mirror_request_enable:1;  /* Mirrored request Enable */
@@ -758,7 +759,7 @@ struct scu_task_context {
 	 * This is the target TLR enable bit it must be set to 0 when creatning the
 	 * task context.
 	 */
-	u32 xfer_ready_tlr_enable:1;
+	u32 xfer_पढ़ोy_tlr_enable:1;
 
 	/**
 	 * This field is reserved and the driver must set it to 0x00
@@ -785,9 +786,9 @@ struct scu_task_context {
 
 	/* OFFSET 0x18-0x2C */
 	/**
-	 * This union provides for the protocol specif part of the SCU Task Context.
+	 * This जोड़ provides क्रम the protocol specअगर part of the SCU Task Context.
 	 */
-	union protocol_context type;
+	जोड़ protocol_context type;
 
 	/* OFFSET 0x30-0x34 */
 	/**
@@ -829,12 +830,12 @@ struct scu_task_context {
 	u32 task_status:8;
 
 	/**
-	 * This field is used during initiator write TLR
+	 * This field is used during initiator ग_लिखो TLR
 	 */
 	u32 previous_extended_tag:4;
 
 	/**
-	 * This field is set the maximum number of retries for a STP non-data FIS
+	 * This field is set the maximum number of retries क्रम a STP non-data FIS
 	 */
 	u32 stp_retry_count:2;
 
@@ -845,7 +846,7 @@ struct scu_task_context {
 
 	/**
 	 * This field is used by the SCU TL to determine when to take a snapshot when
-	 * tranmitting read data frames.
+	 * tranmitting पढ़ो data frames.
 	 *    - 0x00 The entire IO
 	 *    - 0x01 32k
 	 *    - 0x02 64k
@@ -860,51 +861,51 @@ struct scu_task_context {
 	u32 reserved_40_2:4;
 
 	/* OFFSET 0x44 */
-	u32 write_data_length; /* read only set to 0 */
+	u32 ग_लिखो_data_length; /* पढ़ो only set to 0 */
 
 	/* OFFSET 0x48-0x58 */
-	struct transport_snapshot snapshot; /* read only set to 0 */
+	काष्ठा transport_snapshot snapshot; /* पढ़ो only set to 0 */
 
 	/* OFFSET 0x5C */
 	u32 blk_prot_en:1;
 	u32 blk_sz:2;
 	u32 blk_prot_func:2;
 	u32 reserved_5C_0:9;
-	u32 active_sgl_element:2;  /* read only set to 0 */
-	u32 sgl_exhausted:1;  /* read only set to 0 */
-	u32 payload_data_transfer_error:4;  /* read only set to 0 */
-	u32 frame_buffer_offset:11; /* read only set to 0 */
+	u32 active_sgl_element:2;  /* पढ़ो only set to 0 */
+	u32 sgl_exhausted:1;  /* पढ़ो only set to 0 */
+	u32 payload_data_transfer_error:4;  /* पढ़ो only set to 0 */
+	u32 frame_buffer_offset:11; /* पढ़ो only set to 0 */
 
 	/* OFFSET 0x60-0x7C */
 	/**
-	 * This field is the first SGL element pair found in the TC data structure.
+	 * This field is the first SGL element pair found in the TC data काष्ठाure.
 	 */
-	struct scu_sgl_element_pair sgl_pair_ab;
+	काष्ठा scu_sgl_element_pair sgl_pair_ab;
 	/* OFFSET 0x80-0x9C */
 	/**
-	 * This field is the second SGL element pair found in the TC data structure.
+	 * This field is the second SGL element pair found in the TC data काष्ठाure.
 	 */
-	struct scu_sgl_element_pair sgl_pair_cd;
+	काष्ठा scu_sgl_element_pair sgl_pair_cd;
 
 	/* OFFSET 0xA0-BC */
-	struct scu_sgl_element_pair sgl_snapshot_ac;
+	काष्ठा scu_sgl_element_pair sgl_snapshot_ac;
 
 	/* OFFSET 0xC0 */
-	u32 active_sgl_element_pair; /* read only set to 0 */
+	u32 active_sgl_element_pair; /* पढ़ो only set to 0 */
 
 	/* OFFSET 0xC4-0xCC */
 	u32 reserved_C4_CC[3];
 
 	/* OFFSET 0xD0 */
-	u32 interm_crc_val:16;
+	u32 पूर्णांकerm_crc_val:16;
 	u32 init_crc_seed:16;
 
 	/* OFFSET 0xD4 */
-	u32 app_tag_verify:16;
+	u32 app_tag_verअगरy:16;
 	u32 app_tag_gen:16;
 
 	/* OFFSET 0xD8 */
-	u32 ref_tag_seed_verify;
+	u32 ref_tag_seed_verअगरy;
 
 	/* OFFSET 0xDC */
 	u32 UD_bytes_immed_val:13;
@@ -918,10 +919,10 @@ struct scu_task_context {
 	u32 app_tag_gen_mask:16;
 
 	/* OFFSET 0xE4 */
-	union {
+	जोड़ अणु
 		u16 bgctl;
-		struct {
-			u16 crc_verify:1;
+		काष्ठा अणु
+			u16 crc_verअगरy:1;
 			u16 app_tag_chk:1;
 			u16 ref_tag_chk:1;
 			u16 op:2;
@@ -931,14 +932,14 @@ struct scu_task_context {
 			u16 fixed_ref_tag:1;
 			u16 invert_crc:1;
 			u16 app_ref_f_detect:1;
-			u16 uninit_dif_check_err:1;
-			u16 uninit_dif_bypass:1;
+			u16 uninit_dअगर_check_err:1;
+			u16 uninit_dअगर_bypass:1;
 			u16 app_f_detect:1;
 			u16 reserved_0:2;
-		} bgctl_f;
-	};
+		पूर्ण bgctl_f;
+	पूर्ण;
 
-	u16 app_tag_verify_mask;
+	u16 app_tag_verअगरy_mask;
 
 	/* OFFSET 0xE8 */
 	u32 blk_guard_err:8;
@@ -948,18 +949,18 @@ struct scu_task_context {
 	u32 ref_tag_seed_gen;
 
 	/* OFFSET 0xF0 */
-	u32 intermediate_crc_valid_snapshot:16;
+	u32 पूर्णांकermediate_crc_valid_snapshot:16;
 	u32 reserved_F0_0:16;
 
 	/* OFFSET 0xF4 */
-	u32 reference_tag_seed_for_verify_function_snapshot;
+	u32 reference_tag_seed_क्रम_verअगरy_function_snapshot;
 
 	/* OFFSET 0xF8 */
 	u32 snapshot_of_reserved_dword_DC_of_tc;
 
 	/* OFFSET 0xFC */
-	u32 reference_tag_seed_for_generate_function_snapshot;
+	u32 reference_tag_seed_क्रम_generate_function_snapshot;
 
-} __packed;
+पूर्ण __packed;
 
-#endif /* _SCU_TASK_CONTEXT_H_ */
+#पूर्ण_अगर /* _SCU_TASK_CONTEXT_H_ */

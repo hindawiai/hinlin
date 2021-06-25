@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
-#include "test_probe_read_user_str.skel.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
+#समावेश "test_probe_read_user_str.skel.h"
 
-static const char str1[] = "mestring";
-static const char str2[] = "mestringalittlebigger";
-static const char str3[] = "mestringblubblubblubblubblub";
+अटल स्थिर अक्षर str1[] = "mestring";
+अटल स्थिर अक्षर str2[] = "mestringalittlebigger";
+अटल स्थिर अक्षर str3[] = "mestringblubblubblubblubblub";
 
-static int test_one_str(struct test_probe_read_user_str *skel, const char *str,
-			size_t len)
-{
-	int err, duration = 0;
-	char buf[256];
+अटल पूर्णांक test_one_str(काष्ठा test_probe_पढ़ो_user_str *skel, स्थिर अक्षर *str,
+			माप_प्रकार len)
+अणु
+	पूर्णांक err, duration = 0;
+	अक्षर buf[256];
 
 	/* Ensure bytes after string are ones */
-	memset(buf, 1, sizeof(buf));
-	memcpy(buf, str, len);
+	स_रखो(buf, 1, माप(buf));
+	स_नकल(buf, str, len);
 
-	/* Give prog our userspace pointer */
+	/* Give prog our userspace poपूर्णांकer */
 	skel->bss->user_ptr = buf;
 
-	/* Trigger tracepoint */
+	/* Trigger tracepoपूर्णांक */
 	usleep(1);
 
 	/* Did helper fail? */
-	if (CHECK(skel->bss->ret < 0, "prog_ret", "prog returned: %ld\n",
+	अगर (CHECK(skel->bss->ret < 0, "prog_ret", "prog returned: %ld\n",
 		  skel->bss->ret))
-		return 1;
+		वापस 1;
 
 	/* Check that string was copied correctly */
-	err = memcmp(skel->bss->buf, str, len);
-	if (CHECK(err, "memcmp", "prog copied wrong string"))
-		return 1;
+	err = स_भेद(skel->bss->buf, str, len);
+	अगर (CHECK(err, "memcmp", "prog copied wrong string"))
+		वापस 1;
 
 	/* Now check that no extra trailing bytes were copied */
-	memset(buf, 0, sizeof(buf));
-	err = memcmp(skel->bss->buf + len, buf, sizeof(buf) - len);
-	if (CHECK(err, "memcmp", "trailing bytes were not stripped"))
-		return 1;
+	स_रखो(buf, 0, माप(buf));
+	err = स_भेद(skel->bss->buf + len, buf, माप(buf) - len);
+	अगर (CHECK(err, "memcmp", "trailing bytes were not stripped"))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void test_probe_read_user_str(void)
-{
-	struct test_probe_read_user_str *skel;
-	int err, duration = 0;
+व्योम test_probe_पढ़ो_user_str(व्योम)
+अणु
+	काष्ठा test_probe_पढ़ो_user_str *skel;
+	पूर्णांक err, duration = 0;
 
-	skel = test_probe_read_user_str__open_and_load();
-	if (CHECK(!skel, "test_probe_read_user_str__open_and_load",
+	skel = test_probe_पढ़ो_user_str__खोलो_and_load();
+	अगर (CHECK(!skel, "test_probe_read_user_str__open_and_load",
 		  "skeleton open and load failed\n"))
-		return;
+		वापस;
 
-	/* Give pid to bpf prog so it doesn't read from anyone else */
+	/* Give pid to bpf prog so it करोesn't पढ़ो from anyone अन्यथा */
 	skel->bss->pid = getpid();
 
-	err = test_probe_read_user_str__attach(skel);
-	if (CHECK(err, "test_probe_read_user_str__attach",
+	err = test_probe_पढ़ो_user_str__attach(skel);
+	अगर (CHECK(err, "test_probe_read_user_str__attach",
 		  "skeleton attach failed: %d\n", err))
-		goto out;
+		जाओ out;
 
-	if (test_one_str(skel, str1, sizeof(str1)))
-		goto out;
-	if (test_one_str(skel, str2, sizeof(str2)))
-		goto out;
-	if (test_one_str(skel, str3, sizeof(str3)))
-		goto out;
+	अगर (test_one_str(skel, str1, माप(str1)))
+		जाओ out;
+	अगर (test_one_str(skel, str2, माप(str2)))
+		जाओ out;
+	अगर (test_one_str(skel, str3, माप(str3)))
+		जाओ out;
 
 out:
-	test_probe_read_user_str__destroy(skel);
-}
+	test_probe_पढ़ो_user_str__destroy(skel);
+पूर्ण

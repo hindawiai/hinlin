@@ -1,126 +1,127 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Network port table
  *
  * SELinux must keep a mapping of network ports to labels/SIDs.  This
- * mapping is maintained as part of the normal policy but a fast cache is
+ * mapping is मुख्यtained as part of the normal policy but a fast cache is
  * needed to reduce the lookup overhead.
  *
  * Author: Paul Moore <paul@paul-moore.com>
  *
  * This code is heavily based on the "netif" concept originally developed by
  * James Morris <jmorris@redhat.com>
- *   (see security/selinux/netif.c for more information)
+ *   (see security/selinux/netअगर.c क्रम more inक्रमmation)
  */
 
 /*
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2008
  */
 
-#include <linux/types.h>
-#include <linux/rcupdate.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <net/ip.h>
-#include <net/ipv6.h>
+#समावेश <linux/types.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6.h>
 
-#include "netport.h"
-#include "objsec.h"
+#समावेश "netport.h"
+#समावेश "objsec.h"
 
-#define SEL_NETPORT_HASH_SIZE       256
-#define SEL_NETPORT_HASH_BKT_LIMIT   16
+#घोषणा SEL_NETPORT_HASH_SIZE       256
+#घोषणा SEL_NETPORT_HASH_BKT_LIMIT   16
 
-struct sel_netport_bkt {
-	int size;
-	struct list_head list;
-};
+काष्ठा sel_netport_bkt अणु
+	पूर्णांक size;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct sel_netport {
-	struct netport_security_struct psec;
+काष्ठा sel_netport अणु
+	काष्ठा netport_security_काष्ठा psec;
 
-	struct list_head list;
-	struct rcu_head rcu;
-};
+	काष्ठा list_head list;
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-/* NOTE: we are using a combined hash table for both IPv4 and IPv6, the reason
- * for this is that I suspect most users will not make heavy use of both
- * address families at the same time so one table will usually end up wasted,
- * if this becomes a problem we can always add a hash table for each address
+/* NOTE: we are using a combined hash table क्रम both IPv4 and IPv6, the reason
+ * क्रम this is that I suspect most users will not make heavy use of both
+ * address families at the same समय so one table will usually end up wasted,
+ * अगर this becomes a problem we can always add a hash table क्रम each address
  * family later */
 
-static DEFINE_SPINLOCK(sel_netport_lock);
-static struct sel_netport_bkt sel_netport_hash[SEL_NETPORT_HASH_SIZE];
+अटल DEFINE_SPINLOCK(sel_netport_lock);
+अटल काष्ठा sel_netport_bkt sel_netport_hash[SEL_NETPORT_HASH_SIZE];
 
 /**
- * sel_netport_hashfn - Hashing function for the port table
+ * sel_netport_hashfn - Hashing function क्रम the port table
  * @pnum: port number
  *
  * Description:
- * This is the hashing function for the port table, it returns the bucket
- * number for the given port.
+ * This is the hashing function क्रम the port table, it वापसs the bucket
+ * number क्रम the given port.
  *
  */
-static unsigned int sel_netport_hashfn(u16 pnum)
-{
-	return (pnum & (SEL_NETPORT_HASH_SIZE - 1));
-}
+अटल अचिन्हित पूर्णांक sel_netport_hashfn(u16 pnum)
+अणु
+	वापस (pnum & (SEL_NETPORT_HASH_SIZE - 1));
+पूर्ण
 
 /**
- * sel_netport_find - Search for a port record
+ * sel_netport_find - Search क्रम a port record
  * @protocol: protocol
  * @port: pnum
  *
  * Description:
- * Search the network port table and return the matching record.  If an entry
- * can not be found in the table return NULL.
+ * Search the network port table and वापस the matching record.  If an entry
+ * can not be found in the table वापस शून्य.
  *
  */
-static struct sel_netport *sel_netport_find(u8 protocol, u16 pnum)
-{
-	unsigned int idx;
-	struct sel_netport *port;
+अटल काष्ठा sel_netport *sel_netport_find(u8 protocol, u16 pnum)
+अणु
+	अचिन्हित पूर्णांक idx;
+	काष्ठा sel_netport *port;
 
 	idx = sel_netport_hashfn(pnum);
-	list_for_each_entry_rcu(port, &sel_netport_hash[idx].list, list)
-		if (port->psec.port == pnum && port->psec.protocol == protocol)
-			return port;
+	list_क्रम_each_entry_rcu(port, &sel_netport_hash[idx].list, list)
+		अगर (port->psec.port == pnum && port->psec.protocol == protocol)
+			वापस port;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * sel_netport_insert - Insert a new port into the table
+ * sel_netport_insert - Insert a new port पूर्णांकo the table
  * @port: the new port record
  *
  * Description:
  * Add a new port record to the network address hash table.
  *
  */
-static void sel_netport_insert(struct sel_netport *port)
-{
-	unsigned int idx;
+अटल व्योम sel_netport_insert(काष्ठा sel_netport *port)
+अणु
+	अचिन्हित पूर्णांक idx;
 
 	/* we need to impose a limit on the growth of the hash table so check
-	 * this bucket to make sure it is within the specified bounds */
+	 * this bucket to make sure it is within the specअगरied bounds */
 	idx = sel_netport_hashfn(port->psec.port);
 	list_add_rcu(&port->list, &sel_netport_hash[idx].list);
-	if (sel_netport_hash[idx].size == SEL_NETPORT_HASH_BKT_LIMIT) {
-		struct sel_netport *tail;
+	अगर (sel_netport_hash[idx].size == SEL_NETPORT_HASH_BKT_LIMIT) अणु
+		काष्ठा sel_netport *tail;
 		tail = list_entry(
-			rcu_dereference_protected(
+			rcu_dereference_रक्षित(
 				sel_netport_hash[idx].list.prev,
 				lockdep_is_held(&sel_netport_lock)),
-			struct sel_netport, list);
+			काष्ठा sel_netport, list);
 		list_del_rcu(&tail->list);
-		kfree_rcu(tail, rcu);
-	} else
+		kमुक्त_rcu(tail, rcu);
+	पूर्ण अन्यथा
 		sel_netport_hash[idx].size++;
-}
+पूर्ण
 
 /**
  * sel_netport_sid_slow - Lookup the SID of a network address using the policy
@@ -134,38 +135,38 @@ static void sel_netport_insert(struct sel_netport *port)
  * queries.  Returns zero on success, negative values on failure.
  *
  */
-static int sel_netport_sid_slow(u8 protocol, u16 pnum, u32 *sid)
-{
-	int ret;
-	struct sel_netport *port;
-	struct sel_netport *new;
+अटल पूर्णांक sel_netport_sid_slow(u8 protocol, u16 pnum, u32 *sid)
+अणु
+	पूर्णांक ret;
+	काष्ठा sel_netport *port;
+	काष्ठा sel_netport *new;
 
 	spin_lock_bh(&sel_netport_lock);
 	port = sel_netport_find(protocol, pnum);
-	if (port != NULL) {
+	अगर (port != शून्य) अणु
 		*sid = port->psec.sid;
 		spin_unlock_bh(&sel_netport_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = security_port_sid(&selinux_state, protocol, pnum, sid);
-	if (ret != 0)
-		goto out;
-	new = kzalloc(sizeof(*new), GFP_ATOMIC);
-	if (new) {
+	अगर (ret != 0)
+		जाओ out;
+	new = kzalloc(माप(*new), GFP_ATOMIC);
+	अगर (new) अणु
 		new->psec.port = pnum;
 		new->psec.protocol = protocol;
 		new->psec.sid = *sid;
 		sel_netport_insert(new);
-	}
+	पूर्ण
 
 out:
 	spin_unlock_bh(&sel_netport_lock);
-	if (unlikely(ret))
+	अगर (unlikely(ret))
 		pr_warn("SELinux: failure in %s(), unable to determine network port label\n",
 			__func__);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * sel_netport_sid - Lookup the SID of a network port
@@ -175,26 +176,26 @@ out:
  *
  * Description:
  * This function determines the SID of a network port using the fastest method
- * possible.  First the port table is queried, but if an entry can't be found
+ * possible.  First the port table is queried, but अगर an entry can't be found
  * then the policy is queried and the result is added to the table to speedup
  * future queries.  Returns zero on success, negative values on failure.
  *
  */
-int sel_netport_sid(u8 protocol, u16 pnum, u32 *sid)
-{
-	struct sel_netport *port;
+पूर्णांक sel_netport_sid(u8 protocol, u16 pnum, u32 *sid)
+अणु
+	काष्ठा sel_netport *port;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	port = sel_netport_find(protocol, pnum);
-	if (port != NULL) {
+	अगर (port != शून्य) अणु
 		*sid = port->psec.sid;
-		rcu_read_unlock();
-		return 0;
-	}
-	rcu_read_unlock();
+		rcu_पढ़ो_unlock();
+		वापस 0;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return sel_netport_sid_slow(protocol, pnum, sid);
-}
+	वापस sel_netport_sid_slow(protocol, pnum, sid);
+पूर्ण
 
 /**
  * sel_netport_flush - Flush the entire network port table
@@ -203,36 +204,36 @@ int sel_netport_sid(u8 protocol, u16 pnum, u32 *sid)
  * Remove all entries from the network address table.
  *
  */
-void sel_netport_flush(void)
-{
-	unsigned int idx;
-	struct sel_netport *port, *port_tmp;
+व्योम sel_netport_flush(व्योम)
+अणु
+	अचिन्हित पूर्णांक idx;
+	काष्ठा sel_netport *port, *port_पंचांगp;
 
 	spin_lock_bh(&sel_netport_lock);
-	for (idx = 0; idx < SEL_NETPORT_HASH_SIZE; idx++) {
-		list_for_each_entry_safe(port, port_tmp,
-					 &sel_netport_hash[idx].list, list) {
+	क्रम (idx = 0; idx < SEL_NETPORT_HASH_SIZE; idx++) अणु
+		list_क्रम_each_entry_safe(port, port_पंचांगp,
+					 &sel_netport_hash[idx].list, list) अणु
 			list_del_rcu(&port->list);
-			kfree_rcu(port, rcu);
-		}
+			kमुक्त_rcu(port, rcu);
+		पूर्ण
 		sel_netport_hash[idx].size = 0;
-	}
+	पूर्ण
 	spin_unlock_bh(&sel_netport_lock);
-}
+पूर्ण
 
-static __init int sel_netport_init(void)
-{
-	int iter;
+अटल __init पूर्णांक sel_netport_init(व्योम)
+अणु
+	पूर्णांक iter;
 
-	if (!selinux_enabled_boot)
-		return 0;
+	अगर (!selinux_enabled_boot)
+		वापस 0;
 
-	for (iter = 0; iter < SEL_NETPORT_HASH_SIZE; iter++) {
+	क्रम (iter = 0; iter < SEL_NETPORT_HASH_SIZE; iter++) अणु
 		INIT_LIST_HEAD(&sel_netport_hash[iter].list);
 		sel_netport_hash[iter].size = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __initcall(sel_netport_init);

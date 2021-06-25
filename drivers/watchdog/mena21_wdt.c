@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Watchdog driver for the A21 VME CPU Boards
+ * Watchकरोg driver क्रम the A21 VME CPU Boards
  *
  * Copyright (C) 2013 MEN Mikro Elektronik Nuernberg GmbH
  *
  */
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/watchdog.h>
-#include <linux/uaccess.h>
-#include <linux/gpio/consumer.h>
-#include <linux/delay.h>
-#include <linux/bitops.h>
-#include <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/of.h>
 
-#define NUM_GPIOS 6
+#घोषणा NUM_GPIOS 6
 
-enum a21_wdt_gpios {
+क्रमागत a21_wdt_gpios अणु
 	GPIO_WD_ENAB,
 	GPIO_WD_FAST,
 	GPIO_WD_TRIG,
 	GPIO_WD_RST0,
 	GPIO_WD_RST1,
 	GPIO_WD_RST2,
-};
+पूर्ण;
 
-struct a21_wdt_drv {
-	struct watchdog_device wdt;
-	struct gpio_desc *gpios[NUM_GPIOS];
-};
+काष्ठा a21_wdt_drv अणु
+	काष्ठा watchकरोg_device wdt;
+	काष्ठा gpio_desc *gpios[NUM_GPIOS];
+पूर्ण;
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 			    __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static unsigned int a21_wdt_get_bootstatus(struct a21_wdt_drv *drv)
-{
-	int reset = 0;
+अटल अचिन्हित पूर्णांक a21_wdt_get_bootstatus(काष्ठा a21_wdt_drv *drv)
+अणु
+	पूर्णांक reset = 0;
 
 	reset |= gpiod_get_value(drv->gpios[GPIO_WD_RST0]) ? (1 << 0) : 0;
 	reset |= gpiod_get_value(drv->gpios[GPIO_WD_RST1]) ? (1 << 1) : 0;
 	reset |= gpiod_get_value(drv->gpios[GPIO_WD_RST2]) ? (1 << 2) : 0;
 
-	return reset;
-}
+	वापस reset;
+पूर्ण
 
-static int a21_wdt_start(struct watchdog_device *wdt)
-{
-	struct a21_wdt_drv *drv = watchdog_get_drvdata(wdt);
+अटल पूर्णांक a21_wdt_start(काष्ठा watchकरोg_device *wdt)
+अणु
+	काष्ठा a21_wdt_drv *drv = watchकरोg_get_drvdata(wdt);
 
 	gpiod_set_value(drv->gpios[GPIO_WD_ENAB], 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int a21_wdt_stop(struct watchdog_device *wdt)
-{
-	struct a21_wdt_drv *drv = watchdog_get_drvdata(wdt);
+अटल पूर्णांक a21_wdt_stop(काष्ठा watchकरोg_device *wdt)
+अणु
+	काष्ठा a21_wdt_drv *drv = watchकरोg_get_drvdata(wdt);
 
 	gpiod_set_value(drv->gpios[GPIO_WD_ENAB], 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int a21_wdt_ping(struct watchdog_device *wdt)
-{
-	struct a21_wdt_drv *drv = watchdog_get_drvdata(wdt);
+अटल पूर्णांक a21_wdt_ping(काष्ठा watchकरोg_device *wdt)
+अणु
+	काष्ठा a21_wdt_drv *drv = watchकरोg_get_drvdata(wdt);
 
 	gpiod_set_value(drv->gpios[GPIO_WD_TRIG], 0);
 	ndelay(10);
 	gpiod_set_value(drv->gpios[GPIO_WD_TRIG], 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int a21_wdt_set_timeout(struct watchdog_device *wdt,
-			       unsigned int timeout)
-{
-	struct a21_wdt_drv *drv = watchdog_get_drvdata(wdt);
+अटल पूर्णांक a21_wdt_set_समयout(काष्ठा watchकरोg_device *wdt,
+			       अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा a21_wdt_drv *drv = watchकरोg_get_drvdata(wdt);
 
-	if (timeout != 1 && timeout != 30) {
+	अगर (समयout != 1 && समयout != 30) अणु
 		dev_err(wdt->parent, "Only 1 and 30 allowed as timeout\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (timeout == 30 && wdt->timeout == 1) {
+	अगर (समयout == 30 && wdt->समयout == 1) अणु
 		dev_err(wdt->parent,
 			"Transition from fast to slow mode not allowed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (timeout == 1)
+	अगर (समयout == 1)
 		gpiod_set_value(drv->gpios[GPIO_WD_FAST], 1);
-	else
+	अन्यथा
 		gpiod_set_value(drv->gpios[GPIO_WD_FAST], 0);
 
-	wdt->timeout = timeout;
+	wdt->समयout = समयout;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info a21_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info a21_wdt_info = अणु
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "MEN A21 Watchdog",
-};
+पूर्ण;
 
-static const struct watchdog_ops a21_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops a21_wdt_ops = अणु
 	.owner = THIS_MODULE,
 	.start = a21_wdt_start,
 	.stop = a21_wdt_stop,
 	.ping = a21_wdt_ping,
-	.set_timeout = a21_wdt_set_timeout,
-};
+	.set_समयout = a21_wdt_set_समयout,
+पूर्ण;
 
-static struct watchdog_device a21_wdt = {
+अटल काष्ठा watchकरोg_device a21_wdt = अणु
 	.info = &a21_wdt_info,
 	.ops = &a21_wdt_ops,
-	.min_timeout = 1,
-	.max_timeout = 30,
-};
+	.min_समयout = 1,
+	.max_समयout = 30,
+पूर्ण;
 
-static int a21_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct a21_wdt_drv *drv;
-	unsigned int reset = 0;
-	int num_gpios;
-	int ret;
-	int i;
+अटल पूर्णांक a21_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा a21_wdt_drv *drv;
+	अचिन्हित पूर्णांक reset = 0;
+	पूर्णांक num_gpios;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	drv = devm_kzalloc(dev, sizeof(struct a21_wdt_drv), GFP_KERNEL);
-	if (!drv)
-		return -ENOMEM;
+	drv = devm_kzalloc(dev, माप(काष्ठा a21_wdt_drv), GFP_KERNEL);
+	अगर (!drv)
+		वापस -ENOMEM;
 
-	num_gpios = gpiod_count(dev, NULL);
-	if (num_gpios != NUM_GPIOS) {
+	num_gpios = gpiod_count(dev, शून्य);
+	अगर (num_gpios != NUM_GPIOS) अणु
 		dev_err(dev, "gpios DT property wrong, got %d want %d",
 			num_gpios, NUM_GPIOS);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Request the used GPIOs */
-	for (i = 0; i < num_gpios; i++) {
-		enum gpiod_flags gflags;
+	क्रम (i = 0; i < num_gpios; i++) अणु
+		क्रमागत gpiod_flags gflags;
 
-		if (i < GPIO_WD_RST0)
+		अगर (i < GPIO_WD_RST0)
 			gflags = GPIOD_ASIS;
-		else
+		अन्यथा
 			gflags = GPIOD_IN;
-		drv->gpios[i] = devm_gpiod_get_index(dev, NULL, i, gflags);
-		if (IS_ERR(drv->gpios[i]))
-			return PTR_ERR(drv->gpios[i]);
+		drv->gpios[i] = devm_gpiod_get_index(dev, शून्य, i, gflags);
+		अगर (IS_ERR(drv->gpios[i]))
+			वापस PTR_ERR(drv->gpios[i]);
 
 		gpiod_set_consumer_name(drv->gpios[i], "MEN A21 Watchdog");
 
@@ -163,64 +164,64 @@ static int a21_wdt_probe(struct platform_device *pdev)
 		 * Retrieve the initial value from the GPIOs that should be
 		 * output, then set up the line as output with that value.
 		 */
-		if (i < GPIO_WD_RST0) {
-			int val;
+		अगर (i < GPIO_WD_RST0) अणु
+			पूर्णांक val;
 
 			val = gpiod_get_value(drv->gpios[i]);
 			gpiod_direction_output(drv->gpios[i], val);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	watchdog_init_timeout(&a21_wdt, 30, dev);
-	watchdog_set_nowayout(&a21_wdt, nowayout);
-	watchdog_set_drvdata(&a21_wdt, drv);
+	watchकरोg_init_समयout(&a21_wdt, 30, dev);
+	watchकरोg_set_nowayout(&a21_wdt, nowayout);
+	watchकरोg_set_drvdata(&a21_wdt, drv);
 	a21_wdt.parent = dev;
 
 	reset = a21_wdt_get_bootstatus(drv);
-	if (reset == 2)
+	अगर (reset == 2)
 		a21_wdt.bootstatus |= WDIOF_EXTERN1;
-	else if (reset == 4)
+	अन्यथा अगर (reset == 4)
 		a21_wdt.bootstatus |= WDIOF_CARDRESET;
-	else if (reset == 5)
+	अन्यथा अगर (reset == 5)
 		a21_wdt.bootstatus |= WDIOF_POWERUNDER;
-	else if (reset == 7)
+	अन्यथा अगर (reset == 7)
 		a21_wdt.bootstatus |= WDIOF_EXTERN2;
 
 	drv->wdt = a21_wdt;
 	dev_set_drvdata(dev, drv);
 
-	ret = devm_watchdog_register_device(dev, &a21_wdt);
-	if (ret)
-		return ret;
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, &a21_wdt);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(dev, "MEN A21 watchdog timer driver enabled\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void a21_wdt_shutdown(struct platform_device *pdev)
-{
-	struct a21_wdt_drv *drv = dev_get_drvdata(&pdev->dev);
+अटल व्योम a21_wdt_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा a21_wdt_drv *drv = dev_get_drvdata(&pdev->dev);
 
 	gpiod_set_value(drv->gpios[GPIO_WD_ENAB], 0);
-}
+पूर्ण
 
-static const struct of_device_id a21_wdt_ids[] = {
-	{ .compatible = "men,a021-wdt" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id a21_wdt_ids[] = अणु
+	अणु .compatible = "men,a021-wdt" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, a21_wdt_ids);
 
-static struct platform_driver a21_wdt_driver = {
+अटल काष्ठा platक्रमm_driver a21_wdt_driver = अणु
 	.probe = a21_wdt_probe,
-	.shutdown = a21_wdt_shutdown,
-	.driver = {
+	.shutकरोwn = a21_wdt_shutकरोwn,
+	.driver = अणु
 		.name = "a21-watchdog",
 		.of_match_table = a21_wdt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(a21_wdt_driver);
+module_platक्रमm_driver(a21_wdt_driver);
 
 MODULE_AUTHOR("MEN Mikro Elektronik");
 MODULE_DESCRIPTION("MEN A21 Watchdog");

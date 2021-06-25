@@ -1,8 +1,9 @@
-#ifndef __NV50_KMS_WIMM_H__
-#define __NV50_KMS_WIMM_H__
-#include "wndw.h"
+<शैली गुरु>
+#अगर_अघोषित __NV50_KMS_WIMM_H__
+#घोषणा __NV50_KMS_WIMM_H__
+#समावेश "wndw.h"
 
-int nv50_wimm_init(struct nouveau_drm *drm, struct nv50_wndw *);
+पूर्णांक nv50_wimm_init(काष्ठा nouveau_drm *drm, काष्ठा nv50_wndw *);
 
-int wimmc37b_init(struct nouveau_drm *, s32, struct nv50_wndw *);
-#endif
+पूर्णांक wimmc37b_init(काष्ठा nouveau_drm *, s32, काष्ठा nv50_wndw *);
+#पूर्ण_अगर

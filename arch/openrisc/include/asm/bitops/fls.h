@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
-#ifndef __ASM_OPENRISC_FLS_H
-#define __ASM_OPENRISC_FLS_H
+#अगर_अघोषित __ASM_OPENRISC_FLS_H
+#घोषणा __ASM_OPENRISC_FLS_H
 
 
-#ifdef CONFIG_OPENRISC_HAVE_INST_FL1
+#अगर_घोषित CONFIG_OPENRISC_HAVE_INST_FL1
 
-static inline int fls(unsigned int x)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक fls(अचिन्हित पूर्णांक x)
+अणु
+	पूर्णांक ret;
 
-	__asm__ ("l.fl1 %0,%1"
+	__यंत्र__ ("l.fl1 %0,%1"
 		 : "=r" (ret)
 		 : "r" (x));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#else
-#include <asm-generic/bitops/fls.h>
-#endif
+#अन्यथा
+#समावेश <यंत्र-generic/bitops/fls.h>
+#पूर्ण_अगर
 
-#endif /* __ASM_OPENRISC_FLS_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_FLS_H */

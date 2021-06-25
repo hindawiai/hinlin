@@ -1,229 +1,230 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * APEI Error Record Serialization Table debug support
  *
  * ERST is a way provided by APEI to save and retrieve hardware error
- * information to and from a persistent store. This file provide the
- * debugging/testing support for ERST kernel support and firmware
+ * inक्रमmation to and from a persistent store. This file provide the
+ * debugging/testing support क्रम ERST kernel support and firmware
  * implementation.
  *
  * Copyright 2010 Intel Corp.
- *   Author: Huang Ying <ying.huang@intel.com>
+ *   Author: Huang Ying <ying.huang@पूर्णांकel.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <acpi/apei.h>
-#include <linux/miscdevice.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/uaccess.h>
+#समावेश <acpi/apei.h>
+#समावेश <linux/miscdevice.h>
 
-#include "apei-internal.h"
+#समावेश "apei-internal.h"
 
-#define ERST_DBG_PFX			"ERST DBG: "
+#घोषणा ERST_DBG_PFX			"ERST DBG: "
 
-#define ERST_DBG_RECORD_LEN_MAX		0x4000
+#घोषणा ERST_DBG_RECORD_LEN_MAX		0x4000
 
-static void *erst_dbg_buf;
-static unsigned int erst_dbg_buf_len;
+अटल व्योम *erst_dbg_buf;
+अटल अचिन्हित पूर्णांक erst_dbg_buf_len;
 
-/* Prevent erst_dbg_read/write from being invoked concurrently */
-static DEFINE_MUTEX(erst_dbg_mutex);
+/* Prevent erst_dbg_पढ़ो/ग_लिखो from being invoked concurrently */
+अटल DEFINE_MUTEX(erst_dbg_mutex);
 
-static int erst_dbg_open(struct inode *inode, struct file *file)
-{
-	int rc, *pos;
+अटल पूर्णांक erst_dbg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक rc, *pos;
 
-	if (erst_disable)
-		return -ENODEV;
+	अगर (erst_disable)
+		वापस -ENODEV;
 
-	pos = (int *)&file->private_data;
+	pos = (पूर्णांक *)&file->निजी_data;
 
 	rc = erst_get_record_id_begin(pos);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return nonseekable_open(inode, file);
-}
+	वापस nonseekable_खोलो(inode, file);
+पूर्ण
 
-static int erst_dbg_release(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक erst_dbg_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	erst_get_record_id_end();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long erst_dbg_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
-{
-	int rc;
+अटल दीर्घ erst_dbg_ioctl(काष्ठा file *f, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक rc;
 	u64 record_id;
 	u32 record_count;
 
-	switch (cmd) {
-	case APEI_ERST_CLEAR_RECORD:
-		rc = copy_from_user(&record_id, (void __user *)arg,
-				    sizeof(record_id));
-		if (rc)
-			return -EFAULT;
-		return erst_clear(record_id);
-	case APEI_ERST_GET_RECORD_COUNT:
+	चयन (cmd) अणु
+	हाल APEI_ERST_CLEAR_RECORD:
+		rc = copy_from_user(&record_id, (व्योम __user *)arg,
+				    माप(record_id));
+		अगर (rc)
+			वापस -EFAULT;
+		वापस erst_clear(record_id);
+	हाल APEI_ERST_GET_RECORD_COUNT:
 		rc = erst_get_record_count();
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 		record_count = rc;
 		rc = put_user(record_count, (u32 __user *)arg);
-		if (rc)
-			return rc;
-		return 0;
-	default:
-		return -ENOTTY;
-	}
-}
+		अगर (rc)
+			वापस rc;
+		वापस 0;
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-static ssize_t erst_dbg_read(struct file *filp, char __user *ubuf,
-			     size_t usize, loff_t *off)
-{
-	int rc, *pos;
-	ssize_t len = 0;
+अटल sमाप_प्रकार erst_dbg_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf,
+			     माप_प्रकार usize, loff_t *off)
+अणु
+	पूर्णांक rc, *pos;
+	sमाप_प्रकार len = 0;
 	u64 id;
 
-	if (*off)
-		return -EINVAL;
+	अगर (*off)
+		वापस -EINVAL;
 
-	if (mutex_lock_interruptible(&erst_dbg_mutex) != 0)
-		return -EINTR;
+	अगर (mutex_lock_पूर्णांकerruptible(&erst_dbg_mutex) != 0)
+		वापस -EINTR;
 
-	pos = (int *)&filp->private_data;
+	pos = (पूर्णांक *)&filp->निजी_data;
 
 retry_next:
 	rc = erst_get_record_id_next(pos, &id);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 	/* no more record */
-	if (id == APEI_ERST_INVALID_RECORD_ID) {
+	अगर (id == APEI_ERST_INVALID_RECORD_ID) अणु
 		/*
 		 * If the persistent store is empty initially, the function
-		 * 'erst_read' below will return "-ENOENT" value. This causes
-		 * 'retry_next' label is entered again. The returned value
-		 * should be zero indicating the read operation is EOF.
+		 * 'erst_read' below will वापस "-ENOENT" value. This causes
+		 * 'retry_next' label is entered again. The वापसed value
+		 * should be zero indicating the पढ़ो operation is खातापूर्ण.
 		 */
 		len = 0;
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 retry:
-	rc = len = erst_read(id, erst_dbg_buf, erst_dbg_buf_len);
-	/* The record may be cleared by others, try read next record */
-	if (rc == -ENOENT)
-		goto retry_next;
-	if (rc < 0)
-		goto out;
-	if (len > ERST_DBG_RECORD_LEN_MAX) {
+	rc = len = erst_पढ़ो(id, erst_dbg_buf, erst_dbg_buf_len);
+	/* The record may be cleared by others, try पढ़ो next record */
+	अगर (rc == -ENOENT)
+		जाओ retry_next;
+	अगर (rc < 0)
+		जाओ out;
+	अगर (len > ERST_DBG_RECORD_LEN_MAX) अणु
 		pr_warn(ERST_DBG_PFX
 			"Record (ID: 0x%llx) length is too long: %zd\n", id, len);
 		rc = -EIO;
-		goto out;
-	}
-	if (len > erst_dbg_buf_len) {
-		void *p;
+		जाओ out;
+	पूर्ण
+	अगर (len > erst_dbg_buf_len) अणु
+		व्योम *p;
 		rc = -ENOMEM;
-		p = kmalloc(len, GFP_KERNEL);
-		if (!p)
-			goto out;
-		kfree(erst_dbg_buf);
+		p = kदो_स्मृति(len, GFP_KERNEL);
+		अगर (!p)
+			जाओ out;
+		kमुक्त(erst_dbg_buf);
 		erst_dbg_buf = p;
 		erst_dbg_buf_len = len;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	rc = -EINVAL;
-	if (len > usize)
-		goto out;
+	अगर (len > usize)
+		जाओ out;
 
 	rc = -EFAULT;
-	if (copy_to_user(ubuf, erst_dbg_buf, len))
-		goto out;
+	अगर (copy_to_user(ubuf, erst_dbg_buf, len))
+		जाओ out;
 	rc = 0;
 out:
 	mutex_unlock(&erst_dbg_mutex);
-	return rc ? rc : len;
-}
+	वापस rc ? rc : len;
+पूर्ण
 
-static ssize_t erst_dbg_write(struct file *filp, const char __user *ubuf,
-			      size_t usize, loff_t *off)
-{
-	int rc;
-	struct cper_record_header *rcd;
+अटल sमाप_प्रकार erst_dbg_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf,
+			      माप_प्रकार usize, loff_t *off)
+अणु
+	पूर्णांक rc;
+	काष्ठा cper_record_header *rcd;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if (usize > ERST_DBG_RECORD_LEN_MAX) {
+	अगर (usize > ERST_DBG_RECORD_LEN_MAX) अणु
 		pr_err(ERST_DBG_PFX "Too long record to be written\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (mutex_lock_interruptible(&erst_dbg_mutex))
-		return -EINTR;
-	if (usize > erst_dbg_buf_len) {
-		void *p;
+	अगर (mutex_lock_पूर्णांकerruptible(&erst_dbg_mutex))
+		वापस -EINTR;
+	अगर (usize > erst_dbg_buf_len) अणु
+		व्योम *p;
 		rc = -ENOMEM;
-		p = kmalloc(usize, GFP_KERNEL);
-		if (!p)
-			goto out;
-		kfree(erst_dbg_buf);
+		p = kदो_स्मृति(usize, GFP_KERNEL);
+		अगर (!p)
+			जाओ out;
+		kमुक्त(erst_dbg_buf);
 		erst_dbg_buf = p;
 		erst_dbg_buf_len = usize;
-	}
+	पूर्ण
 	rc = copy_from_user(erst_dbg_buf, ubuf, usize);
-	if (rc) {
+	अगर (rc) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	rcd = erst_dbg_buf;
 	rc = -EINVAL;
-	if (rcd->record_length != usize)
-		goto out;
+	अगर (rcd->record_length != usize)
+		जाओ out;
 
-	rc = erst_write(erst_dbg_buf);
+	rc = erst_ग_लिखो(erst_dbg_buf);
 
 out:
 	mutex_unlock(&erst_dbg_mutex);
-	return rc < 0 ? rc : usize;
-}
+	वापस rc < 0 ? rc : usize;
+पूर्ण
 
-static const struct file_operations erst_dbg_ops = {
+अटल स्थिर काष्ठा file_operations erst_dbg_ops = अणु
 	.owner		= THIS_MODULE,
-	.open		= erst_dbg_open,
+	.खोलो		= erst_dbg_खोलो,
 	.release	= erst_dbg_release,
-	.read		= erst_dbg_read,
-	.write		= erst_dbg_write,
+	.पढ़ो		= erst_dbg_पढ़ो,
+	.ग_लिखो		= erst_dbg_ग_लिखो,
 	.unlocked_ioctl	= erst_dbg_ioctl,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static struct miscdevice erst_dbg_dev = {
+अटल काष्ठा miscdevice erst_dbg_dev = अणु
 	.minor	= MISC_DYNAMIC_MINOR,
 	.name	= "erst_dbg",
 	.fops	= &erst_dbg_ops,
-};
+पूर्ण;
 
-static __init int erst_dbg_init(void)
-{
-	if (erst_disable) {
+अटल __init पूर्णांक erst_dbg_init(व्योम)
+अणु
+	अगर (erst_disable) अणु
 		pr_info(ERST_DBG_PFX "ERST support is disabled.\n");
-		return -ENODEV;
-	}
-	return misc_register(&erst_dbg_dev);
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस misc_रेजिस्टर(&erst_dbg_dev);
+पूर्ण
 
-static __exit void erst_dbg_exit(void)
-{
-	misc_deregister(&erst_dbg_dev);
-	kfree(erst_dbg_buf);
-}
+अटल __निकास व्योम erst_dbg_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&erst_dbg_dev);
+	kमुक्त(erst_dbg_buf);
+पूर्ण
 
 module_init(erst_dbg_init);
-module_exit(erst_dbg_exit);
+module_निकास(erst_dbg_निकास);
 
 MODULE_AUTHOR("Huang Ying");
 MODULE_DESCRIPTION("APEI Error Record Serialization Table debug support");

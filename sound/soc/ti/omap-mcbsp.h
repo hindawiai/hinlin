@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * omap-mcbsp.h
  *
  * Copyright (C) 2008 Nokia Corporation
  *
- * Contact: Jarkko Nikula <jarkko.nikula@bitmer.com>
+ * Contact: Jarkko Nikula <jarkko.nikula@biपंचांगer.com>
  *          Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#ifndef __OMAP_MCBSP_H__
-#define __OMAP_MCBSP_H__
+#अगर_अघोषित __OMAP_MCBSP_H__
+#घोषणा __OMAP_MCBSP_H__
 
-#include <sound/dmaengine_pcm.h>
+#समावेश <sound/dmaengine_pcm.h>
 
-/* Source clocks for McBSP sample rate generator */
-enum omap_mcbsp_clksrg_clk {
+/* Source घड़ीs क्रम McBSP sample rate generator */
+क्रमागत omap_mcbsp_clksrg_clk अणु
 	OMAP_MCBSP_SYSCLK_CLKS_FCLK,	/* Internal FCLK */
 	OMAP_MCBSP_SYSCLK_CLKS_EXT,	/* External CLKS pin */
 	OMAP_MCBSP_SYSCLK_CLK,		/* Internal ICLK */
 	OMAP_MCBSP_SYSCLK_CLKX_EXT,	/* External CLKX pin */
 	OMAP_MCBSP_SYSCLK_CLKR_EXT,	/* External CLKR pin */
-};
+पूर्ण;
 
-/* McBSP dividers */
-enum omap_mcbsp_div {
-	OMAP_MCBSP_CLKGDV,		/* Sample rate generator divider */
-};
+/* McBSP भागiders */
+क्रमागत omap_mcbsp_भाग अणु
+	OMAP_MCBSP_CLKGDV,		/* Sample rate generator भागider */
+पूर्ण;
 
-int omap_mcbsp_st_add_controls(struct snd_soc_pcm_runtime *rtd, int port_id);
+पूर्णांक omap_mcbsp_st_add_controls(काष्ठा snd_soc_pcm_runसमय *rtd, पूर्णांक port_id);
 
-#endif /* __OMAP_MCBSP_H__ */
+#पूर्ण_अगर /* __OMAP_MCBSP_H__ */

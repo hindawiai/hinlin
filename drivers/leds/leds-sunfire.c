@@ -1,254 +1,255 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* leds-sunfire.c: SUNW,Ultra-Enterprise LED driver.
  *
  * Copyright (C) 2008 David S. Miller <davem@davemloft.net>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/leds.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include <asm/fhc.h>
-#include <asm/upa.h>
+#समावेश <यंत्र/fhc.h>
+#समावेश <यंत्र/upa.h>
 
 MODULE_AUTHOR("David S. Miller (davem@davemloft.net)");
 MODULE_DESCRIPTION("Sun Fire LED driver");
 MODULE_LICENSE("GPL");
 
-struct sunfire_led {
-	struct led_classdev	led_cdev;
-	void __iomem		*reg;
-};
-#define	to_sunfire_led(d) container_of(d, struct sunfire_led, led_cdev)
+काष्ठा sunfire_led अणु
+	काष्ठा led_classdev	led_cdev;
+	व्योम __iomem		*reg;
+पूर्ण;
+#घोषणा	to_sunfire_led(d) container_of(d, काष्ठा sunfire_led, led_cdev)
 
-static void __clockboard_set(struct led_classdev *led_cdev,
-			     enum led_brightness led_val, u8 bit)
-{
-	struct sunfire_led *p = to_sunfire_led(led_cdev);
-	u8 reg = upa_readb(p->reg);
+अटल व्योम __घड़ीboard_set(काष्ठा led_classdev *led_cdev,
+			     क्रमागत led_brightness led_val, u8 bit)
+अणु
+	काष्ठा sunfire_led *p = to_sunfire_led(led_cdev);
+	u8 reg = upa_पढ़ोb(p->reg);
 
-	switch (bit) {
-	case CLOCK_CTRL_LLED:
-		if (led_val)
+	चयन (bit) अणु
+	हाल CLOCK_CTRL_LLED:
+		अगर (led_val)
 			reg &= ~bit;
-		else
+		अन्यथा
 			reg |= bit;
-		break;
+		अवरोध;
 
-	default:
-		if (led_val)
+	शेष:
+		अगर (led_val)
 			reg |= bit;
-		else
+		अन्यथा
 			reg &= ~bit;
-		break;
-	}
-	upa_writeb(reg, p->reg);
-}
+		अवरोध;
+	पूर्ण
+	upa_ग_लिखोb(reg, p->reg);
+पूर्ण
 
-static void clockboard_left_set(struct led_classdev *led_cdev,
-				enum led_brightness led_val)
-{
-	__clockboard_set(led_cdev, led_val, CLOCK_CTRL_LLED);
-}
+अटल व्योम घड़ीboard_left_set(काष्ठा led_classdev *led_cdev,
+				क्रमागत led_brightness led_val)
+अणु
+	__घड़ीboard_set(led_cdev, led_val, CLOCK_CTRL_LLED);
+पूर्ण
 
-static void clockboard_middle_set(struct led_classdev *led_cdev,
-				  enum led_brightness led_val)
-{
-	__clockboard_set(led_cdev, led_val, CLOCK_CTRL_MLED);
-}
+अटल व्योम घड़ीboard_middle_set(काष्ठा led_classdev *led_cdev,
+				  क्रमागत led_brightness led_val)
+अणु
+	__घड़ीboard_set(led_cdev, led_val, CLOCK_CTRL_MLED);
+पूर्ण
 
-static void clockboard_right_set(struct led_classdev *led_cdev,
-				 enum led_brightness led_val)
-{
-	__clockboard_set(led_cdev, led_val, CLOCK_CTRL_RLED);
-}
+अटल व्योम घड़ीboard_right_set(काष्ठा led_classdev *led_cdev,
+				 क्रमागत led_brightness led_val)
+अणु
+	__घड़ीboard_set(led_cdev, led_val, CLOCK_CTRL_RLED);
+पूर्ण
 
-static void __fhc_set(struct led_classdev *led_cdev,
-			     enum led_brightness led_val, u32 bit)
-{
-	struct sunfire_led *p = to_sunfire_led(led_cdev);
-	u32 reg = upa_readl(p->reg);
+अटल व्योम __fhc_set(काष्ठा led_classdev *led_cdev,
+			     क्रमागत led_brightness led_val, u32 bit)
+अणु
+	काष्ठा sunfire_led *p = to_sunfire_led(led_cdev);
+	u32 reg = upa_पढ़ोl(p->reg);
 
-	switch (bit) {
-	case FHC_CONTROL_LLED:
-		if (led_val)
+	चयन (bit) अणु
+	हाल FHC_CONTROL_LLED:
+		अगर (led_val)
 			reg &= ~bit;
-		else
+		अन्यथा
 			reg |= bit;
-		break;
+		अवरोध;
 
-	default:
-		if (led_val)
+	शेष:
+		अगर (led_val)
 			reg |= bit;
-		else
+		अन्यथा
 			reg &= ~bit;
-		break;
-	}
-	upa_writel(reg, p->reg);
-}
+		अवरोध;
+	पूर्ण
+	upa_ग_लिखोl(reg, p->reg);
+पूर्ण
 
-static void fhc_left_set(struct led_classdev *led_cdev,
-			 enum led_brightness led_val)
-{
+अटल व्योम fhc_left_set(काष्ठा led_classdev *led_cdev,
+			 क्रमागत led_brightness led_val)
+अणु
 	__fhc_set(led_cdev, led_val, FHC_CONTROL_LLED);
-}
+पूर्ण
 
-static void fhc_middle_set(struct led_classdev *led_cdev,
-			   enum led_brightness led_val)
-{
+अटल व्योम fhc_middle_set(काष्ठा led_classdev *led_cdev,
+			   क्रमागत led_brightness led_val)
+अणु
 	__fhc_set(led_cdev, led_val, FHC_CONTROL_MLED);
-}
+पूर्ण
 
-static void fhc_right_set(struct led_classdev *led_cdev,
-			  enum led_brightness led_val)
-{
+अटल व्योम fhc_right_set(काष्ठा led_classdev *led_cdev,
+			  क्रमागत led_brightness led_val)
+अणु
 	__fhc_set(led_cdev, led_val, FHC_CONTROL_RLED);
-}
+पूर्ण
 
-typedef void (*set_handler)(struct led_classdev *, enum led_brightness);
-struct led_type {
-	const char	*name;
+प्रकार व्योम (*set_handler)(काष्ठा led_classdev *, क्रमागत led_brightness);
+काष्ठा led_type अणु
+	स्थिर अक्षर	*name;
 	set_handler	handler;
-	const char	*default_trigger;
-};
+	स्थिर अक्षर	*शेष_trigger;
+पूर्ण;
 
-#define NUM_LEDS_PER_BOARD	3
-struct sunfire_drvdata {
-	struct sunfire_led	leds[NUM_LEDS_PER_BOARD];
-};
+#घोषणा NUM_LEDS_PER_BOARD	3
+काष्ठा sunfire_drvdata अणु
+	काष्ठा sunfire_led	leds[NUM_LEDS_PER_BOARD];
+पूर्ण;
 
-static int sunfire_led_generic_probe(struct platform_device *pdev,
-					       struct led_type *types)
-{
-	struct sunfire_drvdata *p;
-	int i, err;
+अटल पूर्णांक sunfire_led_generic_probe(काष्ठा platक्रमm_device *pdev,
+					       काष्ठा led_type *types)
+अणु
+	काष्ठा sunfire_drvdata *p;
+	पूर्णांक i, err;
 
-	if (pdev->num_resources != 1) {
+	अगर (pdev->num_resources != 1) अणु
 		dev_err(&pdev->dev, "Wrong number of resources %d, should be 1\n",
 		       pdev->num_resources);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	p = devm_kzalloc(&pdev->dev, sizeof(*p), GFP_KERNEL);
-	if (!p)
-		return -ENOMEM;
+	p = devm_kzalloc(&pdev->dev, माप(*p), GFP_KERNEL);
+	अगर (!p)
+		वापस -ENOMEM;
 
-	for (i = 0; i < NUM_LEDS_PER_BOARD; i++) {
-		struct led_classdev *lp = &p->leds[i].led_cdev;
+	क्रम (i = 0; i < NUM_LEDS_PER_BOARD; i++) अणु
+		काष्ठा led_classdev *lp = &p->leds[i].led_cdev;
 
-		p->leds[i].reg = (void __iomem *) pdev->resource[0].start;
+		p->leds[i].reg = (व्योम __iomem *) pdev->resource[0].start;
 		lp->name = types[i].name;
 		lp->brightness = LED_FULL;
 		lp->brightness_set = types[i].handler;
-		lp->default_trigger = types[i].default_trigger;
+		lp->शेष_trigger = types[i].शेष_trigger;
 
-		err = led_classdev_register(&pdev->dev, lp);
-		if (err) {
+		err = led_classdev_रेजिस्टर(&pdev->dev, lp);
+		अगर (err) अणु
 			dev_err(&pdev->dev, "Could not register %s LED\n",
 			       lp->name);
-			for (i--; i >= 0; i--)
-				led_classdev_unregister(&p->leds[i].led_cdev);
-			return err;
-		}
-	}
+			क्रम (i--; i >= 0; i--)
+				led_classdev_unरेजिस्टर(&p->leds[i].led_cdev);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	platform_set_drvdata(pdev, p);
+	platक्रमm_set_drvdata(pdev, p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunfire_led_generic_remove(struct platform_device *pdev)
-{
-	struct sunfire_drvdata *p = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक sunfire_led_generic_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sunfire_drvdata *p = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
-	for (i = 0; i < NUM_LEDS_PER_BOARD; i++)
-		led_classdev_unregister(&p->leds[i].led_cdev);
+	क्रम (i = 0; i < NUM_LEDS_PER_BOARD; i++)
+		led_classdev_unरेजिस्टर(&p->leds[i].led_cdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct led_type clockboard_led_types[NUM_LEDS_PER_BOARD] = {
-	{
+अटल काष्ठा led_type घड़ीboard_led_types[NUM_LEDS_PER_BOARD] = अणु
+	अणु
 		.name		= "clockboard-left",
-		.handler	= clockboard_left_set,
-	},
-	{
+		.handler	= घड़ीboard_left_set,
+	पूर्ण,
+	अणु
 		.name		= "clockboard-middle",
-		.handler	= clockboard_middle_set,
-	},
-	{
+		.handler	= घड़ीboard_middle_set,
+	पूर्ण,
+	अणु
 		.name		= "clockboard-right",
-		.handler	= clockboard_right_set,
-		.default_trigger = "heartbeat",
-	},
-};
+		.handler	= घड़ीboard_right_set,
+		.शेष_trigger = "heartbeat",
+	पूर्ण,
+पूर्ण;
 
-static int sunfire_clockboard_led_probe(struct platform_device *pdev)
-{
-	return sunfire_led_generic_probe(pdev, clockboard_led_types);
-}
+अटल पूर्णांक sunfire_घड़ीboard_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस sunfire_led_generic_probe(pdev, घड़ीboard_led_types);
+पूर्ण
 
-static struct led_type fhc_led_types[NUM_LEDS_PER_BOARD] = {
-	{
+अटल काष्ठा led_type fhc_led_types[NUM_LEDS_PER_BOARD] = अणु
+	अणु
 		.name		= "fhc-left",
 		.handler	= fhc_left_set,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "fhc-middle",
 		.handler	= fhc_middle_set,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "fhc-right",
 		.handler	= fhc_right_set,
-		.default_trigger = "heartbeat",
-	},
-};
+		.शेष_trigger = "heartbeat",
+	पूर्ण,
+पूर्ण;
 
-static int sunfire_fhc_led_probe(struct platform_device *pdev)
-{
-	return sunfire_led_generic_probe(pdev, fhc_led_types);
-}
+अटल पूर्णांक sunfire_fhc_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस sunfire_led_generic_probe(pdev, fhc_led_types);
+पूर्ण
 
 MODULE_ALIAS("platform:sunfire-clockboard-leds");
 MODULE_ALIAS("platform:sunfire-fhc-leds");
 
-static struct platform_driver sunfire_clockboard_led_driver = {
-	.probe		= sunfire_clockboard_led_probe,
-	.remove		= sunfire_led_generic_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver sunfire_घड़ीboard_led_driver = अणु
+	.probe		= sunfire_घड़ीboard_led_probe,
+	.हटाओ		= sunfire_led_generic_हटाओ,
+	.driver		= अणु
 		.name	= "sunfire-clockboard-leds",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_driver sunfire_fhc_led_driver = {
+अटल काष्ठा platक्रमm_driver sunfire_fhc_led_driver = अणु
 	.probe		= sunfire_fhc_led_probe,
-	.remove		= sunfire_led_generic_remove,
-	.driver		= {
+	.हटाओ		= sunfire_led_generic_हटाओ,
+	.driver		= अणु
 		.name	= "sunfire-fhc-leds",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_driver * const drivers[] = {
-	&sunfire_clockboard_led_driver,
+अटल काष्ठा platक्रमm_driver * स्थिर drivers[] = अणु
+	&sunfire_घड़ीboard_led_driver,
 	&sunfire_fhc_led_driver,
-};
+पूर्ण;
 
-static int __init sunfire_leds_init(void)
-{
-	return platform_register_drivers(drivers, ARRAY_SIZE(drivers));
-}
+अटल पूर्णांक __init sunfire_leds_init(व्योम)
+अणु
+	वापस platक्रमm_रेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+पूर्ण
 
-static void __exit sunfire_leds_exit(void)
-{
-	platform_unregister_drivers(drivers, ARRAY_SIZE(drivers));
-}
+अटल व्योम __निकास sunfire_leds_निकास(व्योम)
+अणु
+	platक्रमm_unरेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+पूर्ण
 
 module_init(sunfire_leds_init);
-module_exit(sunfire_leds_exit);
+module_निकास(sunfire_leds_निकास);

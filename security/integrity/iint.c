@@ -1,230 +1,231 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008 IBM Corporation
  *
  * Authors:
  * Mimi Zohar <zohar@us.ibm.com>
  *
- * File: integrity_iint.c
- *	- implements the integrity hooks: integrity_inode_alloc,
- *	  integrity_inode_free
- *	- cache integrity information associated with an inode
+ * File: पूर्णांकegrity_iपूर्णांक.c
+ *	- implements the पूर्णांकegrity hooks: पूर्णांकegrity_inode_alloc,
+ *	  पूर्णांकegrity_inode_मुक्त
+ *	- cache पूर्णांकegrity inक्रमmation associated with an inode
  *	  using a rbtree tree.
  */
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/rbtree.h>
-#include <linux/file.h>
-#include <linux/uaccess.h>
-#include <linux/security.h>
-#include <linux/lsm_hooks.h>
-#include "integrity.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/file.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/security.h>
+#समावेश <linux/lsm_hooks.h>
+#समावेश "integrity.h"
 
-static struct rb_root integrity_iint_tree = RB_ROOT;
-static DEFINE_RWLOCK(integrity_iint_lock);
-static struct kmem_cache *iint_cache __read_mostly;
+अटल काष्ठा rb_root पूर्णांकegrity_iपूर्णांक_tree = RB_ROOT;
+अटल DEFINE_RWLOCK(पूर्णांकegrity_iपूर्णांक_lock);
+अटल काष्ठा kmem_cache *iपूर्णांक_cache __पढ़ो_mostly;
 
-struct dentry *integrity_dir;
+काष्ठा dentry *पूर्णांकegrity_dir;
 
 /*
- * __integrity_iint_find - return the iint associated with an inode
+ * __पूर्णांकegrity_iपूर्णांक_find - वापस the iपूर्णांक associated with an inode
  */
-static struct integrity_iint_cache *__integrity_iint_find(struct inode *inode)
-{
-	struct integrity_iint_cache *iint;
-	struct rb_node *n = integrity_iint_tree.rb_node;
+अटल काष्ठा पूर्णांकegrity_iपूर्णांक_cache *__पूर्णांकegrity_iपूर्णांक_find(काष्ठा inode *inode)
+अणु
+	काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक;
+	काष्ठा rb_node *n = पूर्णांकegrity_iपूर्णांक_tree.rb_node;
 
-	while (n) {
-		iint = rb_entry(n, struct integrity_iint_cache, rb_node);
+	जबतक (n) अणु
+		iपूर्णांक = rb_entry(n, काष्ठा पूर्णांकegrity_iपूर्णांक_cache, rb_node);
 
-		if (inode < iint->inode)
+		अगर (inode < iपूर्णांक->inode)
 			n = n->rb_left;
-		else if (inode > iint->inode)
+		अन्यथा अगर (inode > iपूर्णांक->inode)
 			n = n->rb_right;
-		else
-			break;
-	}
-	if (!n)
-		return NULL;
+		अन्यथा
+			अवरोध;
+	पूर्ण
+	अगर (!n)
+		वापस शून्य;
 
-	return iint;
-}
+	वापस iपूर्णांक;
+पूर्ण
 
 /*
- * integrity_iint_find - return the iint associated with an inode
+ * पूर्णांकegrity_iपूर्णांक_find - वापस the iपूर्णांक associated with an inode
  */
-struct integrity_iint_cache *integrity_iint_find(struct inode *inode)
-{
-	struct integrity_iint_cache *iint;
+काष्ठा पूर्णांकegrity_iपूर्णांक_cache *पूर्णांकegrity_iपूर्णांक_find(काष्ठा inode *inode)
+अणु
+	काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक;
 
-	if (!IS_IMA(inode))
-		return NULL;
+	अगर (!IS_IMA(inode))
+		वापस शून्य;
 
-	read_lock(&integrity_iint_lock);
-	iint = __integrity_iint_find(inode);
-	read_unlock(&integrity_iint_lock);
+	पढ़ो_lock(&पूर्णांकegrity_iपूर्णांक_lock);
+	iपूर्णांक = __पूर्णांकegrity_iपूर्णांक_find(inode);
+	पढ़ो_unlock(&पूर्णांकegrity_iपूर्णांक_lock);
 
-	return iint;
-}
+	वापस iपूर्णांक;
+पूर्ण
 
-static void iint_free(struct integrity_iint_cache *iint)
-{
-	kfree(iint->ima_hash);
-	iint->ima_hash = NULL;
-	iint->version = 0;
-	iint->flags = 0UL;
-	iint->atomic_flags = 0UL;
-	iint->ima_file_status = INTEGRITY_UNKNOWN;
-	iint->ima_mmap_status = INTEGRITY_UNKNOWN;
-	iint->ima_bprm_status = INTEGRITY_UNKNOWN;
-	iint->ima_read_status = INTEGRITY_UNKNOWN;
-	iint->ima_creds_status = INTEGRITY_UNKNOWN;
-	iint->evm_status = INTEGRITY_UNKNOWN;
-	iint->measured_pcrs = 0;
-	kmem_cache_free(iint_cache, iint);
-}
+अटल व्योम iपूर्णांक_मुक्त(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक)
+अणु
+	kमुक्त(iपूर्णांक->ima_hash);
+	iपूर्णांक->ima_hash = शून्य;
+	iपूर्णांक->version = 0;
+	iपूर्णांक->flags = 0UL;
+	iपूर्णांक->atomic_flags = 0UL;
+	iपूर्णांक->ima_file_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->ima_mmap_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->ima_bprm_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->ima_पढ़ो_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->ima_creds_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->evm_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->measured_pcrs = 0;
+	kmem_cache_मुक्त(iपूर्णांक_cache, iपूर्णांक);
+पूर्ण
 
 /**
- * integrity_inode_get - find or allocate an iint associated with an inode
- * @inode: pointer to the inode
- * @return: allocated iint
+ * पूर्णांकegrity_inode_get - find or allocate an iपूर्णांक associated with an inode
+ * @inode: poपूर्णांकer to the inode
+ * @वापस: allocated iपूर्णांक
  *
  * Caller must lock i_mutex
  */
-struct integrity_iint_cache *integrity_inode_get(struct inode *inode)
-{
-	struct rb_node **p;
-	struct rb_node *node, *parent = NULL;
-	struct integrity_iint_cache *iint, *test_iint;
+काष्ठा पूर्णांकegrity_iपूर्णांक_cache *पूर्णांकegrity_inode_get(काष्ठा inode *inode)
+अणु
+	काष्ठा rb_node **p;
+	काष्ठा rb_node *node, *parent = शून्य;
+	काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक, *test_iपूर्णांक;
 
 	/*
-	 * The integrity's "iint_cache" is initialized at security_init(),
+	 * The पूर्णांकegrity's "iint_cache" is initialized at security_init(),
 	 * unless it is not included in the ordered list of LSMs enabled
 	 * on the boot command line.
 	 */
-	if (!iint_cache)
+	अगर (!iपूर्णांक_cache)
 		panic("%s: lsm=integrity required.\n", __func__);
 
-	iint = integrity_iint_find(inode);
-	if (iint)
-		return iint;
+	iपूर्णांक = पूर्णांकegrity_iपूर्णांक_find(inode);
+	अगर (iपूर्णांक)
+		वापस iपूर्णांक;
 
-	iint = kmem_cache_alloc(iint_cache, GFP_NOFS);
-	if (!iint)
-		return NULL;
+	iपूर्णांक = kmem_cache_alloc(iपूर्णांक_cache, GFP_NOFS);
+	अगर (!iपूर्णांक)
+		वापस शून्य;
 
-	write_lock(&integrity_iint_lock);
+	ग_लिखो_lock(&पूर्णांकegrity_iपूर्णांक_lock);
 
-	p = &integrity_iint_tree.rb_node;
-	while (*p) {
+	p = &पूर्णांकegrity_iपूर्णांक_tree.rb_node;
+	जबतक (*p) अणु
 		parent = *p;
-		test_iint = rb_entry(parent, struct integrity_iint_cache,
+		test_iपूर्णांक = rb_entry(parent, काष्ठा पूर्णांकegrity_iपूर्णांक_cache,
 				     rb_node);
-		if (inode < test_iint->inode)
+		अगर (inode < test_iपूर्णांक->inode)
 			p = &(*p)->rb_left;
-		else
+		अन्यथा
 			p = &(*p)->rb_right;
-	}
+	पूर्ण
 
-	iint->inode = inode;
-	node = &iint->rb_node;
+	iपूर्णांक->inode = inode;
+	node = &iपूर्णांक->rb_node;
 	inode->i_flags |= S_IMA;
 	rb_link_node(node, parent, p);
-	rb_insert_color(node, &integrity_iint_tree);
+	rb_insert_color(node, &पूर्णांकegrity_iपूर्णांक_tree);
 
-	write_unlock(&integrity_iint_lock);
-	return iint;
-}
+	ग_लिखो_unlock(&पूर्णांकegrity_iपूर्णांक_lock);
+	वापस iपूर्णांक;
+पूर्ण
 
 /**
- * integrity_inode_free - called on security_inode_free
- * @inode: pointer to the inode
+ * पूर्णांकegrity_inode_मुक्त - called on security_inode_मुक्त
+ * @inode: poपूर्णांकer to the inode
  *
- * Free the integrity information(iint) associated with an inode.
+ * Free the पूर्णांकegrity inक्रमmation(iपूर्णांक) associated with an inode.
  */
-void integrity_inode_free(struct inode *inode)
-{
-	struct integrity_iint_cache *iint;
+व्योम पूर्णांकegrity_inode_मुक्त(काष्ठा inode *inode)
+अणु
+	काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक;
 
-	if (!IS_IMA(inode))
-		return;
+	अगर (!IS_IMA(inode))
+		वापस;
 
-	write_lock(&integrity_iint_lock);
-	iint = __integrity_iint_find(inode);
-	rb_erase(&iint->rb_node, &integrity_iint_tree);
-	write_unlock(&integrity_iint_lock);
+	ग_लिखो_lock(&पूर्णांकegrity_iपूर्णांक_lock);
+	iपूर्णांक = __पूर्णांकegrity_iपूर्णांक_find(inode);
+	rb_erase(&iपूर्णांक->rb_node, &पूर्णांकegrity_iपूर्णांक_tree);
+	ग_लिखो_unlock(&पूर्णांकegrity_iपूर्णांक_lock);
 
-	iint_free(iint);
-}
+	iपूर्णांक_मुक्त(iपूर्णांक);
+पूर्ण
 
-static void init_once(void *foo)
-{
-	struct integrity_iint_cache *iint = (struct integrity_iint_cache *) foo;
+अटल व्योम init_once(व्योम *foo)
+अणु
+	काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक = (काष्ठा पूर्णांकegrity_iपूर्णांक_cache *) foo;
 
-	memset(iint, 0, sizeof(*iint));
-	iint->ima_file_status = INTEGRITY_UNKNOWN;
-	iint->ima_mmap_status = INTEGRITY_UNKNOWN;
-	iint->ima_bprm_status = INTEGRITY_UNKNOWN;
-	iint->ima_read_status = INTEGRITY_UNKNOWN;
-	iint->ima_creds_status = INTEGRITY_UNKNOWN;
-	iint->evm_status = INTEGRITY_UNKNOWN;
-	mutex_init(&iint->mutex);
-}
+	स_रखो(iपूर्णांक, 0, माप(*iपूर्णांक));
+	iपूर्णांक->ima_file_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->ima_mmap_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->ima_bprm_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->ima_पढ़ो_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->ima_creds_status = INTEGRITY_UNKNOWN;
+	iपूर्णांक->evm_status = INTEGRITY_UNKNOWN;
+	mutex_init(&iपूर्णांक->mutex);
+पूर्ण
 
-static int __init integrity_iintcache_init(void)
-{
-	iint_cache =
-	    kmem_cache_create("iint_cache", sizeof(struct integrity_iint_cache),
+अटल पूर्णांक __init पूर्णांकegrity_iपूर्णांकcache_init(व्योम)
+अणु
+	iपूर्णांक_cache =
+	    kmem_cache_create("iint_cache", माप(काष्ठा पूर्णांकegrity_iपूर्णांक_cache),
 			      0, SLAB_PANIC, init_once);
-	return 0;
-}
-DEFINE_LSM(integrity) = {
+	वापस 0;
+पूर्ण
+DEFINE_LSM(पूर्णांकegrity) = अणु
 	.name = "integrity",
-	.init = integrity_iintcache_init,
-};
+	.init = पूर्णांकegrity_iपूर्णांकcache_init,
+पूर्ण;
 
 
 /*
- * integrity_kernel_read - read data from the file
+ * पूर्णांकegrity_kernel_पढ़ो - पढ़ो data from the file
  *
- * This is a function for reading file content instead of kernel_read().
- * It does not perform locking checks to ensure it cannot be blocked.
- * It does not perform security checks because it is irrelevant for IMA.
+ * This is a function क्रम पढ़ोing file content instead of kernel_पढ़ो().
+ * It करोes not perक्रमm locking checks to ensure it cannot be blocked.
+ * It करोes not perक्रमm security checks because it is irrelevant क्रम IMA.
  *
  */
-int integrity_kernel_read(struct file *file, loff_t offset,
-			  void *addr, unsigned long count)
-{
-	return __kernel_read(file, addr, count, &offset);
-}
+पूर्णांक पूर्णांकegrity_kernel_पढ़ो(काष्ठा file *file, loff_t offset,
+			  व्योम *addr, अचिन्हित दीर्घ count)
+अणु
+	वापस __kernel_पढ़ो(file, addr, count, &offset);
+पूर्ण
 
 /*
- * integrity_load_keys - load integrity keys hook
+ * पूर्णांकegrity_load_keys - load पूर्णांकegrity keys hook
  *
- * Hooks is called from init/main.c:kernel_init_freeable()
- * when rootfs is ready
+ * Hooks is called from init/मुख्य.c:kernel_init_मुक्तable()
+ * when rootfs is पढ़ोy
  */
-void __init integrity_load_keys(void)
-{
+व्योम __init पूर्णांकegrity_load_keys(व्योम)
+अणु
 	ima_load_x509();
 	evm_load_x509();
-}
+पूर्ण
 
-static int __init integrity_fs_init(void)
-{
-	integrity_dir = securityfs_create_dir("integrity", NULL);
-	if (IS_ERR(integrity_dir)) {
-		int ret = PTR_ERR(integrity_dir);
+अटल पूर्णांक __init पूर्णांकegrity_fs_init(व्योम)
+अणु
+	पूर्णांकegrity_dir = securityfs_create_dir("integrity", शून्य);
+	अगर (IS_ERR(पूर्णांकegrity_dir)) अणु
+		पूर्णांक ret = PTR_ERR(पूर्णांकegrity_dir);
 
-		if (ret != -ENODEV)
+		अगर (ret != -ENODEV)
 			pr_err("Unable to create integrity sysfs dir: %d\n",
 			       ret);
-		integrity_dir = NULL;
-		return ret;
-	}
+		पूर्णांकegrity_dir = शून्य;
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-late_initcall(integrity_fs_init)
+late_initcall(पूर्णांकegrity_fs_init)

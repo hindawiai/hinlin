@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*****************************************************************************/
 
 /*
  *	yam.h  -- YAM radio modem driver.
  *
  *	Copyright (C) 1998 Frederic Rible F1OAT (frible@teaser.fr)
- *	Adapted from baycom.c driver written by Thomas Sailer (sailer@ife.ee.ethz.ch)
+ *	Adapted from baycom.c driver written by Thomas Sailer (sailer@अगरe.ee.ethz.ch)
  *
  *  Please note that the GPL allows you to use the driver, NOT the radio.
  *  In order to use the radio, you need a license from the communications
@@ -14,54 +15,54 @@
 
 /*****************************************************************************/
 
-#define SIOCYAMRESERVED	(0)
-#define SIOCYAMSCFG 	(1)	/* Set configuration */
-#define SIOCYAMGCFG 	(2)	/* Get configuration */
-#define SIOCYAMSMCS 	(3)	/* Set mcs data */
+#घोषणा SIOCYAMRESERVED	(0)
+#घोषणा SIOCYAMSCFG 	(1)	/* Set configuration */
+#घोषणा SIOCYAMGCFG 	(2)	/* Get configuration */
+#घोषणा SIOCYAMSMCS 	(3)	/* Set mcs data */
 
-#define YAM_IOBASE   (1 << 0)
-#define YAM_IRQ      (1 << 1)
-#define YAM_BITRATE  (1 << 2) /* Bit rate of radio port ->57600 */
-#define YAM_MODE     (1 << 3) /* 0=simplex 1=duplex 2=duplex+tempo */
-#define YAM_HOLDDLY  (1 << 4) /* duplex tempo (sec) */
-#define YAM_TXDELAY  (1 << 5) /* Tx Delay (ms) */
-#define YAM_TXTAIL   (1 << 6) /* Tx Tail  (ms) */
-#define YAM_PERSIST  (1 << 7) /* Persist  (ms) */
-#define YAM_SLOTTIME (1 << 8) /* Slottime (ms) */
-#define YAM_BAUDRATE (1 << 9) /* Baud rate of rs232 port ->115200 */
+#घोषणा YAM_IOBASE   (1 << 0)
+#घोषणा YAM_IRQ      (1 << 1)
+#घोषणा YAM_BITRATE  (1 << 2) /* Bit rate of radio port ->57600 */
+#घोषणा YAM_MODE     (1 << 3) /* 0=simplex 1=duplex 2=duplex+tempo */
+#घोषणा YAM_HOLDDLY  (1 << 4) /* duplex tempo (sec) */
+#घोषणा YAM_TXDELAY  (1 << 5) /* Tx Delay (ms) */
+#घोषणा YAM_TXTAIL   (1 << 6) /* Tx Tail  (ms) */
+#घोषणा YAM_PERSIST  (1 << 7) /* Persist  (ms) */
+#घोषणा YAM_SLOTTIME (1 << 8) /* Slotसमय (ms) */
+#घोषणा YAM_BAUDRATE (1 << 9) /* Baud rate of rs232 port ->115200 */
 
-#define YAM_MAXBITRATE  57600
-#define YAM_MAXBAUDRATE 115200
-#define YAM_MAXMODE     2
-#define YAM_MAXHOLDDLY  99
-#define YAM_MAXTXDELAY  999
-#define YAM_MAXTXTAIL   999
-#define YAM_MAXPERSIST  255
-#define YAM_MAXSLOTTIME 999
+#घोषणा YAM_MAXBITRATE  57600
+#घोषणा YAM_MAXBAUDRATE 115200
+#घोषणा YAM_MAXMODE     2
+#घोषणा YAM_MAXHOLDDLY  99
+#घोषणा YAM_MAXTXDELAY  999
+#घोषणा YAM_MAXTXTAIL   999
+#घोषणा YAM_MAXPERSIST  255
+#घोषणा YAM_MAXSLOTTIME 999
 
-#define YAM_FPGA_SIZE	5302
+#घोषणा YAM_FPGA_SIZE	5302
 
-struct yamcfg {
-	unsigned int mask;		/* Mask of commands */
-	unsigned int iobase;	/* IO Base of COM port */
-	unsigned int irq;		/* IRQ of COM port */
-	unsigned int bitrate;	/* Bit rate of radio port */
-	unsigned int baudrate;	/* Baud rate of the RS232 port */
-	unsigned int txdelay;	/* TxDelay */
-	unsigned int txtail;	/* TxTail */
-	unsigned int persist;	/* Persistence */
-	unsigned int slottime;	/* Slottime */
-	unsigned int mode;		/* mode 0 (simp), 1(Dupl), 2(Dupl+delay) */
-	unsigned int holddly;	/* PTT delay in FullDuplex 2 mode */
-};
+काष्ठा yamcfg अणु
+	अचिन्हित पूर्णांक mask;		/* Mask of commands */
+	अचिन्हित पूर्णांक iobase;	/* IO Base of COM port */
+	अचिन्हित पूर्णांक irq;		/* IRQ of COM port */
+	अचिन्हित पूर्णांक bitrate;	/* Bit rate of radio port */
+	अचिन्हित पूर्णांक baudrate;	/* Baud rate of the RS232 port */
+	अचिन्हित पूर्णांक txdelay;	/* TxDelay */
+	अचिन्हित पूर्णांक txtail;	/* TxTail */
+	अचिन्हित पूर्णांक persist;	/* Persistence */
+	अचिन्हित पूर्णांक slotसमय;	/* Slotसमय */
+	अचिन्हित पूर्णांक mode;		/* mode 0 (simp), 1(Dupl), 2(Dupl+delay) */
+	अचिन्हित पूर्णांक holddly;	/* PTT delay in FullDuplex 2 mode */
+पूर्ण;
 
-struct yamdrv_ioctl_cfg {
-	int cmd;
-	struct yamcfg cfg;
-};
+काष्ठा yamdrv_ioctl_cfg अणु
+	पूर्णांक cmd;
+	काष्ठा yamcfg cfg;
+पूर्ण;
 
-struct yamdrv_ioctl_mcs {
-	int cmd;
-	unsigned int bitrate;
-	unsigned char bits[YAM_FPGA_SIZE];
-};
+काष्ठा yamdrv_ioctl_mcs अणु
+	पूर्णांक cmd;
+	अचिन्हित पूर्णांक bitrate;
+	अचिन्हित अक्षर bits[YAM_FPGA_SIZE];
+पूर्ण;

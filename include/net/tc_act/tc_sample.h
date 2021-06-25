@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_TC_SAMPLE_H
-#define __NET_TC_SAMPLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_TC_SAMPLE_H
+#घोषणा __NET_TC_SAMPLE_H
 
-#include <net/act_api.h>
-#include <linux/tc_act/tc_sample.h>
-#include <net/psample.h>
+#समावेश <net/act_api.h>
+#समावेश <linux/tc_act/tc_sample.h>
+#समावेश <net/psample.h>
 
-struct tcf_sample {
-	struct tc_action common;
+काष्ठा tcf_sample अणु
+	काष्ठा tc_action common;
 	u32 rate;
 	bool truncate;
 	u32 trunc_size;
-	struct psample_group __rcu *psample_group;
+	काष्ठा psample_group __rcu *psample_group;
 	u32 psample_group_num;
-	struct list_head tcfm_list;
-};
-#define to_sample(a) ((struct tcf_sample *)a)
+	काष्ठा list_head tcfm_list;
+पूर्ण;
+#घोषणा to_sample(a) ((काष्ठा tcf_sample *)a)
 
-static inline bool is_tcf_sample(const struct tc_action *a)
-{
-#ifdef CONFIG_NET_CLS_ACT
-	return a->ops && a->ops->id == TCA_ID_SAMPLE;
-#else
-	return false;
-#endif
-}
+अटल अंतरभूत bool is_tcf_sample(स्थिर काष्ठा tc_action *a)
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	वापस a->ops && a->ops->id == TCA_ID_SAMPLE;
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
-static inline __u32 tcf_sample_rate(const struct tc_action *a)
-{
-	return to_sample(a)->rate;
-}
+अटल अंतरभूत __u32 tcf_sample_rate(स्थिर काष्ठा tc_action *a)
+अणु
+	वापस to_sample(a)->rate;
+पूर्ण
 
-static inline bool tcf_sample_truncate(const struct tc_action *a)
-{
-	return to_sample(a)->truncate;
-}
+अटल अंतरभूत bool tcf_sample_truncate(स्थिर काष्ठा tc_action *a)
+अणु
+	वापस to_sample(a)->truncate;
+पूर्ण
 
-static inline int tcf_sample_trunc_size(const struct tc_action *a)
-{
-	return to_sample(a)->trunc_size;
-}
+अटल अंतरभूत पूर्णांक tcf_sample_trunc_size(स्थिर काष्ठा tc_action *a)
+अणु
+	वापस to_sample(a)->trunc_size;
+पूर्ण
 
-#endif /* __NET_TC_SAMPLE_H */
+#पूर्ण_अगर /* __NET_TC_SAMPLE_H */

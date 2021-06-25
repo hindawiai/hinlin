@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005 Cisco Systems. All rights reserved.
@@ -7,20 +8,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,32 +34,32 @@
  * SOFTWARE.
  */
 
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#include <rdma/ib_verbs.h>
-#include <rdma/ib_cache.h>
-#include <rdma/ib_pack.h>
-#include <rdma/uverbs_ioctl.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/ib_cache.h>
+#समावेश <rdma/ib_pack.h>
+#समावेश <rdma/uverbs_ioctl.h>
 
-#include "mthca_dev.h"
-#include "mthca_cmd.h"
-#include "mthca_memfree.h"
-#include "mthca_wqe.h"
+#समावेश "mthca_dev.h"
+#समावेश "mthca_cmd.h"
+#समावेश "mthca_memfree.h"
+#समावेश "mthca_wqe.h"
 
-enum {
-	MTHCA_MAX_DIRECT_QP_SIZE = 4 * PAGE_SIZE,
+क्रमागत अणु
+	MTHCA_MAX_सूचीECT_QP_SIZE = 4 * PAGE_SIZE,
 	MTHCA_ACK_REQ_FREQ       = 10,
 	MTHCA_FLIGHT_LIMIT       = 9,
 	MTHCA_UD_HEADER_SIZE     = 72, /* largest UD header possible */
-	MTHCA_INLINE_HEADER_SIZE = 4,  /* data segment overhead for inline */
-	MTHCA_INLINE_CHUNK_SIZE  = 16  /* inline data segment chunk */
-};
+	MTHCA_INLINE_HEADER_SIZE = 4,  /* data segment overhead क्रम अंतरभूत */
+	MTHCA_INLINE_CHUNK_SIZE  = 16  /* अंतरभूत data segment chunk */
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTHCA_QP_STATE_RST  = 0,
 	MTHCA_QP_STATE_INIT = 1,
 	MTHCA_QP_STATE_RTR  = 2,
@@ -67,23 +68,23 @@ enum {
 	MTHCA_QP_STATE_SQD  = 5,
 	MTHCA_QP_STATE_ERR  = 6,
 	MTHCA_QP_STATE_DRAINING = 7
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTHCA_QP_ST_RC 	= 0x0,
 	MTHCA_QP_ST_UC 	= 0x1,
 	MTHCA_QP_ST_RD 	= 0x2,
 	MTHCA_QP_ST_UD 	= 0x3,
 	MTHCA_QP_ST_MLX = 0x7
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTHCA_QP_PM_MIGRATED = 0x3,
 	MTHCA_QP_PM_ARMED    = 0x0,
 	MTHCA_QP_PM_REARM    = 0x1
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	/* qp_context flags */
 	MTHCA_QP_BIT_DE  = 1 <<  8,
 	/* params1 */
@@ -98,26 +99,26 @@ enum {
 	MTHCA_QP_BIT_RAE = 1 << 13,
 	MTHCA_QP_BIT_RIC = 1 <<  4,
 	MTHCA_QP_BIT_RSC = 1 <<  3
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTHCA_SEND_DOORBELL_FENCE = 1 << 5
-};
+पूर्ण;
 
-struct mthca_qp_path {
+काष्ठा mthca_qp_path अणु
 	__be32 port_pkey;
 	u8     rnr_retry;
 	u8     g_mylmc;
 	__be16 rlid;
 	u8     ackto;
 	u8     mgid_index;
-	u8     static_rate;
+	u8     अटल_rate;
 	u8     hop_limit;
 	__be32 sl_tclass_flowlabel;
 	u8     rgid[16];
-} __packed;
+पूर्ण __packed;
 
-struct mthca_qp_context {
+काष्ठा mthca_qp_context अणु
 	__be32 flags;
 	__be32 tavor_sched_queue; /* Reserved on Arbel */
 	u8     mtu_msgmax;
@@ -128,8 +129,8 @@ struct mthca_qp_context {
 	__be32 local_qpn;
 	__be32 remote_qpn;
 	u32    reserved1[2];
-	struct mthca_qp_path pri_path;
-	struct mthca_qp_path alt_path;
+	काष्ठा mthca_qp_path pri_path;
+	काष्ठा mthca_qp_path alt_path;
 	__be32 rdd;
 	__be32 pd;
 	__be32 wqe_base;
@@ -154,16 +155,16 @@ struct mthca_qp_context {
 	__be16 rq_wqe_counter;	/* reserved on Tavor */
 	__be16 sq_wqe_counter;	/* reserved on Tavor */
 	u32    reserved3[18];
-} __packed;
+पूर्ण __packed;
 
-struct mthca_qp_param {
+काष्ठा mthca_qp_param अणु
 	__be32 opt_param_mask;
 	u32    reserved1;
-	struct mthca_qp_context context;
+	काष्ठा mthca_qp_context context;
 	u32    reserved2[62];
-} __packed;
+पूर्ण __packed;
 
-enum {
+क्रमागत अणु
 	MTHCA_QP_OPTPAR_ALT_ADDR_PATH     = 1 << 0,
 	MTHCA_QP_OPTPAR_RRE               = 1 << 1,
 	MTHCA_QP_OPTPAR_RAE               = 1 << 2,
@@ -181,9 +182,9 @@ enum {
 	MTHCA_QP_OPTPAR_ACK_TIMEOUT       = 1 << 14,
 	MTHCA_QP_OPTPAR_RNR_RETRY         = 1 << 15,
 	MTHCA_QP_OPTPAR_SCHED_QUEUE       = 1 << 16
-};
+पूर्ण;
 
-static const u8 mthca_opcode[] = {
+अटल स्थिर u8 mthca_opcode[] = अणु
 	[IB_WR_SEND]                 = MTHCA_OPCODE_SEND,
 	[IB_WR_SEND_WITH_IMM]        = MTHCA_OPCODE_SEND_IMM,
 	[IB_WR_RDMA_WRITE]           = MTHCA_OPCODE_RDMA_WRITE,
@@ -191,128 +192,128 @@ static const u8 mthca_opcode[] = {
 	[IB_WR_RDMA_READ]            = MTHCA_OPCODE_RDMA_READ,
 	[IB_WR_ATOMIC_CMP_AND_SWP]   = MTHCA_OPCODE_ATOMIC_CS,
 	[IB_WR_ATOMIC_FETCH_AND_ADD] = MTHCA_OPCODE_ATOMIC_FA,
-};
+पूर्ण;
 
-static int is_sqp(struct mthca_dev *dev, struct mthca_qp *qp)
-{
-	return qp->qpn >= dev->qp_table.sqp_start &&
+अटल पूर्णांक is_sqp(काष्ठा mthca_dev *dev, काष्ठा mthca_qp *qp)
+अणु
+	वापस qp->qpn >= dev->qp_table.sqp_start &&
 		qp->qpn <= dev->qp_table.sqp_start + 3;
-}
+पूर्ण
 
-static int is_qp0(struct mthca_dev *dev, struct mthca_qp *qp)
-{
-	return qp->qpn >= dev->qp_table.sqp_start &&
+अटल पूर्णांक is_qp0(काष्ठा mthca_dev *dev, काष्ठा mthca_qp *qp)
+अणु
+	वापस qp->qpn >= dev->qp_table.sqp_start &&
 		qp->qpn <= dev->qp_table.sqp_start + 1;
-}
+पूर्ण
 
-static void *get_recv_wqe(struct mthca_qp *qp, int n)
-{
-	if (qp->is_direct)
-		return qp->queue.direct.buf + (n << qp->rq.wqe_shift);
-	else
-		return qp->queue.page_list[(n << qp->rq.wqe_shift) >> PAGE_SHIFT].buf +
-			((n << qp->rq.wqe_shift) & (PAGE_SIZE - 1));
-}
+अटल व्योम *get_recv_wqe(काष्ठा mthca_qp *qp, पूर्णांक n)
+अणु
+	अगर (qp->is_direct)
+		वापस qp->queue.direct.buf + (n << qp->rq.wqe_shअगरt);
+	अन्यथा
+		वापस qp->queue.page_list[(n << qp->rq.wqe_shअगरt) >> PAGE_SHIFT].buf +
+			((n << qp->rq.wqe_shअगरt) & (PAGE_SIZE - 1));
+पूर्ण
 
-static void *get_send_wqe(struct mthca_qp *qp, int n)
-{
-	if (qp->is_direct)
-		return qp->queue.direct.buf + qp->send_wqe_offset +
-			(n << qp->sq.wqe_shift);
-	else
-		return qp->queue.page_list[(qp->send_wqe_offset +
-					    (n << qp->sq.wqe_shift)) >>
+अटल व्योम *get_send_wqe(काष्ठा mthca_qp *qp, पूर्णांक n)
+अणु
+	अगर (qp->is_direct)
+		वापस qp->queue.direct.buf + qp->send_wqe_offset +
+			(n << qp->sq.wqe_shअगरt);
+	अन्यथा
+		वापस qp->queue.page_list[(qp->send_wqe_offset +
+					    (n << qp->sq.wqe_shअगरt)) >>
 					   PAGE_SHIFT].buf +
-			((qp->send_wqe_offset + (n << qp->sq.wqe_shift)) &
+			((qp->send_wqe_offset + (n << qp->sq.wqe_shअगरt)) &
 			 (PAGE_SIZE - 1));
-}
+पूर्ण
 
-static void mthca_wq_reset(struct mthca_wq *wq)
-{
+अटल व्योम mthca_wq_reset(काष्ठा mthca_wq *wq)
+अणु
 	wq->next_ind  = 0;
 	wq->last_comp = wq->max - 1;
 	wq->head      = 0;
 	wq->tail      = 0;
-}
+पूर्ण
 
-void mthca_qp_event(struct mthca_dev *dev, u32 qpn,
-		    enum ib_event_type event_type)
-{
-	struct mthca_qp *qp;
-	struct ib_event event;
+व्योम mthca_qp_event(काष्ठा mthca_dev *dev, u32 qpn,
+		    क्रमागत ib_event_type event_type)
+अणु
+	काष्ठा mthca_qp *qp;
+	काष्ठा ib_event event;
 
 	spin_lock(&dev->qp_table.lock);
 	qp = mthca_array_get(&dev->qp_table.qp, qpn & (dev->limits.num_qps - 1));
-	if (qp)
+	अगर (qp)
 		++qp->refcount;
 	spin_unlock(&dev->qp_table.lock);
 
-	if (!qp) {
+	अगर (!qp) अणु
 		mthca_warn(dev, "Async event %d for bogus QP %08x\n",
 			   event_type, qpn);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (event_type == IB_EVENT_PATH_MIG)
+	अगर (event_type == IB_EVENT_PATH_MIG)
 		qp->port = qp->alt_port;
 
 	event.device      = &dev->ib_dev;
 	event.event       = event_type;
 	event.element.qp  = &qp->ibqp;
-	if (qp->ibqp.event_handler)
+	अगर (qp->ibqp.event_handler)
 		qp->ibqp.event_handler(&event, qp->ibqp.qp_context);
 
 	spin_lock(&dev->qp_table.lock);
-	if (!--qp->refcount)
-		wake_up(&qp->wait);
+	अगर (!--qp->refcount)
+		wake_up(&qp->रुको);
 	spin_unlock(&dev->qp_table.lock);
-}
+पूर्ण
 
-static int to_mthca_state(enum ib_qp_state ib_state)
-{
-	switch (ib_state) {
-	case IB_QPS_RESET: return MTHCA_QP_STATE_RST;
-	case IB_QPS_INIT:  return MTHCA_QP_STATE_INIT;
-	case IB_QPS_RTR:   return MTHCA_QP_STATE_RTR;
-	case IB_QPS_RTS:   return MTHCA_QP_STATE_RTS;
-	case IB_QPS_SQD:   return MTHCA_QP_STATE_SQD;
-	case IB_QPS_SQE:   return MTHCA_QP_STATE_SQE;
-	case IB_QPS_ERR:   return MTHCA_QP_STATE_ERR;
-	default:                return -1;
-	}
-}
+अटल पूर्णांक to_mthca_state(क्रमागत ib_qp_state ib_state)
+अणु
+	चयन (ib_state) अणु
+	हाल IB_QPS_RESET: वापस MTHCA_QP_STATE_RST;
+	हाल IB_QPS_INIT:  वापस MTHCA_QP_STATE_INIT;
+	हाल IB_QPS_RTR:   वापस MTHCA_QP_STATE_RTR;
+	हाल IB_QPS_RTS:   वापस MTHCA_QP_STATE_RTS;
+	हाल IB_QPS_SQD:   वापस MTHCA_QP_STATE_SQD;
+	हाल IB_QPS_SQE:   वापस MTHCA_QP_STATE_SQE;
+	हाल IB_QPS_ERR:   वापस MTHCA_QP_STATE_ERR;
+	शेष:                वापस -1;
+	पूर्ण
+पूर्ण
 
-enum { RC, UC, UD, RD, RDEE, MLX, NUM_TRANS };
+क्रमागत अणु RC, UC, UD, RD, RDEE, MLX, NUM_TRANS पूर्ण;
 
-static int to_mthca_st(int transport)
-{
-	switch (transport) {
-	case RC:  return MTHCA_QP_ST_RC;
-	case UC:  return MTHCA_QP_ST_UC;
-	case UD:  return MTHCA_QP_ST_UD;
-	case RD:  return MTHCA_QP_ST_RD;
-	case MLX: return MTHCA_QP_ST_MLX;
-	default:  return -1;
-	}
-}
+अटल पूर्णांक to_mthca_st(पूर्णांक transport)
+अणु
+	चयन (transport) अणु
+	हाल RC:  वापस MTHCA_QP_ST_RC;
+	हाल UC:  वापस MTHCA_QP_ST_UC;
+	हाल UD:  वापस MTHCA_QP_ST_UD;
+	हाल RD:  वापस MTHCA_QP_ST_RD;
+	हाल MLX: वापस MTHCA_QP_ST_MLX;
+	शेष:  वापस -1;
+	पूर्ण
+पूर्ण
 
-static void store_attrs(struct mthca_sqp *sqp, const struct ib_qp_attr *attr,
-			int attr_mask)
-{
-	if (attr_mask & IB_QP_PKEY_INDEX)
+अटल व्योम store_attrs(काष्ठा mthca_sqp *sqp, स्थिर काष्ठा ib_qp_attr *attr,
+			पूर्णांक attr_mask)
+अणु
+	अगर (attr_mask & IB_QP_PKEY_INDEX)
 		sqp->pkey_index = attr->pkey_index;
-	if (attr_mask & IB_QP_QKEY)
+	अगर (attr_mask & IB_QP_QKEY)
 		sqp->qkey = attr->qkey;
-	if (attr_mask & IB_QP_SQ_PSN)
+	अगर (attr_mask & IB_QP_SQ_PSN)
 		sqp->send_psn = attr->sq_psn;
-}
+पूर्ण
 
-static void init_port(struct mthca_dev *dev, int port)
-{
-	int err;
-	struct mthca_init_ib_param param;
+अटल व्योम init_port(काष्ठा mthca_dev *dev, पूर्णांक port)
+अणु
+	पूर्णांक err;
+	काष्ठा mthca_init_ib_param param;
 
-	memset(&param, 0, sizeof param);
+	स_रखो(&param, 0, माप param);
 
 	param.port_width = dev->limits.port_width_cap;
 	param.vl_cap     = dev->limits.vl_cap;
@@ -321,141 +322,141 @@ static void init_port(struct mthca_dev *dev, int port)
 	param.pkey_cap   = dev->limits.pkey_table_len;
 
 	err = mthca_INIT_IB(dev, &param, port);
-	if (err)
+	अगर (err)
 		mthca_warn(dev, "INIT_IB failed, return code %d.\n", err);
-}
+पूर्ण
 
-static __be32 get_hw_access_flags(struct mthca_qp *qp, const struct ib_qp_attr *attr,
-				  int attr_mask)
-{
+अटल __be32 get_hw_access_flags(काष्ठा mthca_qp *qp, स्थिर काष्ठा ib_qp_attr *attr,
+				  पूर्णांक attr_mask)
+अणु
 	u8 dest_rd_atomic;
 	u32 access_flags;
 	u32 hw_access_flags = 0;
 
-	if (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC)
+	अगर (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC)
 		dest_rd_atomic = attr->max_dest_rd_atomic;
-	else
+	अन्यथा
 		dest_rd_atomic = qp->resp_depth;
 
-	if (attr_mask & IB_QP_ACCESS_FLAGS)
+	अगर (attr_mask & IB_QP_ACCESS_FLAGS)
 		access_flags = attr->qp_access_flags;
-	else
+	अन्यथा
 		access_flags = qp->atomic_rd_en;
 
-	if (!dest_rd_atomic)
+	अगर (!dest_rd_atomic)
 		access_flags &= IB_ACCESS_REMOTE_WRITE;
 
-	if (access_flags & IB_ACCESS_REMOTE_READ)
+	अगर (access_flags & IB_ACCESS_REMOTE_READ)
 		hw_access_flags |= MTHCA_QP_BIT_RRE;
-	if (access_flags & IB_ACCESS_REMOTE_ATOMIC)
+	अगर (access_flags & IB_ACCESS_REMOTE_ATOMIC)
 		hw_access_flags |= MTHCA_QP_BIT_RAE;
-	if (access_flags & IB_ACCESS_REMOTE_WRITE)
+	अगर (access_flags & IB_ACCESS_REMOTE_WRITE)
 		hw_access_flags |= MTHCA_QP_BIT_RWE;
 
-	return cpu_to_be32(hw_access_flags);
-}
+	वापस cpu_to_be32(hw_access_flags);
+पूर्ण
 
-static inline enum ib_qp_state to_ib_qp_state(int mthca_state)
-{
-	switch (mthca_state) {
-	case MTHCA_QP_STATE_RST:      return IB_QPS_RESET;
-	case MTHCA_QP_STATE_INIT:     return IB_QPS_INIT;
-	case MTHCA_QP_STATE_RTR:      return IB_QPS_RTR;
-	case MTHCA_QP_STATE_RTS:      return IB_QPS_RTS;
-	case MTHCA_QP_STATE_DRAINING:
-	case MTHCA_QP_STATE_SQD:      return IB_QPS_SQD;
-	case MTHCA_QP_STATE_SQE:      return IB_QPS_SQE;
-	case MTHCA_QP_STATE_ERR:      return IB_QPS_ERR;
-	default:                      return -1;
-	}
-}
+अटल अंतरभूत क्रमागत ib_qp_state to_ib_qp_state(पूर्णांक mthca_state)
+अणु
+	चयन (mthca_state) अणु
+	हाल MTHCA_QP_STATE_RST:      वापस IB_QPS_RESET;
+	हाल MTHCA_QP_STATE_INIT:     वापस IB_QPS_INIT;
+	हाल MTHCA_QP_STATE_RTR:      वापस IB_QPS_RTR;
+	हाल MTHCA_QP_STATE_RTS:      वापस IB_QPS_RTS;
+	हाल MTHCA_QP_STATE_DRAINING:
+	हाल MTHCA_QP_STATE_SQD:      वापस IB_QPS_SQD;
+	हाल MTHCA_QP_STATE_SQE:      वापस IB_QPS_SQE;
+	हाल MTHCA_QP_STATE_ERR:      वापस IB_QPS_ERR;
+	शेष:                      वापस -1;
+	पूर्ण
+पूर्ण
 
-static inline enum ib_mig_state to_ib_mig_state(int mthca_mig_state)
-{
-	switch (mthca_mig_state) {
-	case 0:  return IB_MIG_ARMED;
-	case 1:  return IB_MIG_REARM;
-	case 3:  return IB_MIG_MIGRATED;
-	default: return -1;
-	}
-}
+अटल अंतरभूत क्रमागत ib_mig_state to_ib_mig_state(पूर्णांक mthca_mig_state)
+अणु
+	चयन (mthca_mig_state) अणु
+	हाल 0:  वापस IB_MIG_ARMED;
+	हाल 1:  वापस IB_MIG_REARM;
+	हाल 3:  वापस IB_MIG_MIGRATED;
+	शेष: वापस -1;
+	पूर्ण
+पूर्ण
 
-static int to_ib_qp_access_flags(int mthca_flags)
-{
-	int ib_flags = 0;
+अटल पूर्णांक to_ib_qp_access_flags(पूर्णांक mthca_flags)
+अणु
+	पूर्णांक ib_flags = 0;
 
-	if (mthca_flags & MTHCA_QP_BIT_RRE)
+	अगर (mthca_flags & MTHCA_QP_BIT_RRE)
 		ib_flags |= IB_ACCESS_REMOTE_READ;
-	if (mthca_flags & MTHCA_QP_BIT_RWE)
+	अगर (mthca_flags & MTHCA_QP_BIT_RWE)
 		ib_flags |= IB_ACCESS_REMOTE_WRITE;
-	if (mthca_flags & MTHCA_QP_BIT_RAE)
+	अगर (mthca_flags & MTHCA_QP_BIT_RAE)
 		ib_flags |= IB_ACCESS_REMOTE_ATOMIC;
 
-	return ib_flags;
-}
+	वापस ib_flags;
+पूर्ण
 
-static void to_rdma_ah_attr(struct mthca_dev *dev,
-			    struct rdma_ah_attr *ah_attr,
-			    struct mthca_qp_path *path)
-{
+अटल व्योम to_rdma_ah_attr(काष्ठा mthca_dev *dev,
+			    काष्ठा rdma_ah_attr *ah_attr,
+			    काष्ठा mthca_qp_path *path)
+अणु
 	u8 port_num = (be32_to_cpu(path->port_pkey) >> 24) & 0x3;
 
-	memset(ah_attr, 0, sizeof(*ah_attr));
+	स_रखो(ah_attr, 0, माप(*ah_attr));
 
-	if (port_num == 0 || port_num > dev->limits.num_ports)
-		return;
+	अगर (port_num == 0 || port_num > dev->limits.num_ports)
+		वापस;
 	ah_attr->type = rdma_ah_find_type(&dev->ib_dev, port_num);
 	rdma_ah_set_port_num(ah_attr, port_num);
 
 	rdma_ah_set_dlid(ah_attr, be16_to_cpu(path->rlid));
 	rdma_ah_set_sl(ah_attr, be32_to_cpu(path->sl_tclass_flowlabel) >> 28);
 	rdma_ah_set_path_bits(ah_attr, path->g_mylmc & 0x7f);
-	rdma_ah_set_static_rate(ah_attr,
+	rdma_ah_set_अटल_rate(ah_attr,
 				mthca_rate_to_ib(dev,
-						 path->static_rate & 0xf,
+						 path->अटल_rate & 0xf,
 						 port_num));
-	if (path->g_mylmc & (1 << 7)) {
+	अगर (path->g_mylmc & (1 << 7)) अणु
 		u32 tc_fl = be32_to_cpu(path->sl_tclass_flowlabel);
 
-		rdma_ah_set_grh(ah_attr, NULL,
+		rdma_ah_set_grh(ah_attr, शून्य,
 				tc_fl & 0xfffff,
 				path->mgid_index &
 				(dev->limits.gid_table_len - 1),
 				path->hop_limit,
 				(tc_fl >> 20) & 0xff);
 		rdma_ah_set_dgid_raw(ah_attr, path->rgid);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int mthca_query_qp(struct ib_qp *ibqp, struct ib_qp_attr *qp_attr, int qp_attr_mask,
-		   struct ib_qp_init_attr *qp_init_attr)
-{
-	struct mthca_dev *dev = to_mdev(ibqp->device);
-	struct mthca_qp *qp = to_mqp(ibqp);
-	int err = 0;
-	struct mthca_mailbox *mailbox = NULL;
-	struct mthca_qp_param *qp_param;
-	struct mthca_qp_context *context;
-	int mthca_state;
+पूर्णांक mthca_query_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *qp_attr, पूर्णांक qp_attr_mask,
+		   काष्ठा ib_qp_init_attr *qp_init_attr)
+अणु
+	काष्ठा mthca_dev *dev = to_mdev(ibqp->device);
+	काष्ठा mthca_qp *qp = to_mqp(ibqp);
+	पूर्णांक err = 0;
+	काष्ठा mthca_mailbox *mailbox = शून्य;
+	काष्ठा mthca_qp_param *qp_param;
+	काष्ठा mthca_qp_context *context;
+	पूर्णांक mthca_state;
 
 	mutex_lock(&qp->mutex);
 
-	if (qp->state == IB_QPS_RESET) {
+	अगर (qp->state == IB_QPS_RESET) अणु
 		qp_attr->qp_state = IB_QPS_RESET;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	if (IS_ERR(mailbox)) {
+	अगर (IS_ERR(mailbox)) अणु
 		err = PTR_ERR(mailbox);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = mthca_QUERY_QP(dev, qp->qpn, 0, mailbox);
-	if (err) {
+	अगर (err) अणु
 		mthca_warn(dev, "QUERY_QP failed (%d)\n", err);
-		goto out_mailbox;
-	}
+		जाओ out_mailbox;
+	पूर्ण
 
 	qp_param    = mailbox->buf;
 	context     = &qp_param->context;
@@ -473,69 +474,69 @@ int mthca_query_qp(struct ib_qp *ibqp, struct ib_qp_attr *qp_attr, int qp_attr_m
 	qp_attr->qp_access_flags     =
 		to_ib_qp_access_flags(be32_to_cpu(context->params2));
 
-	if (qp->transport == RC || qp->transport == UC) {
+	अगर (qp->transport == RC || qp->transport == UC) अणु
 		to_rdma_ah_attr(dev, &qp_attr->ah_attr, &context->pri_path);
 		to_rdma_ah_attr(dev, &qp_attr->alt_ah_attr, &context->alt_path);
 		qp_attr->alt_pkey_index =
 			be32_to_cpu(context->alt_path.port_pkey) & 0x7f;
 		qp_attr->alt_port_num	=
 			rdma_ah_get_port_num(&qp_attr->alt_ah_attr);
-	}
+	पूर्ण
 
 	qp_attr->pkey_index = be32_to_cpu(context->pri_path.port_pkey) & 0x7f;
 	qp_attr->port_num   =
 		(be32_to_cpu(context->pri_path.port_pkey) >> 24) & 0x3;
 
-	/* qp_attr->en_sqd_async_notify is only applicable in modify qp */
+	/* qp_attr->en_sqd_async_notअगरy is only applicable in modअगरy qp */
 	qp_attr->sq_draining = mthca_state == MTHCA_QP_STATE_DRAINING;
 
 	qp_attr->max_rd_atomic = 1 << ((be32_to_cpu(context->params1) >> 21) & 0x7);
 
 	qp_attr->max_dest_rd_atomic =
 		1 << ((be32_to_cpu(context->params2) >> 21) & 0x7);
-	qp_attr->min_rnr_timer 	    =
+	qp_attr->min_rnr_समयr 	    =
 		(be32_to_cpu(context->rnr_nextrecvpsn) >> 24) & 0x1f;
-	qp_attr->timeout 	    = context->pri_path.ackto >> 3;
+	qp_attr->समयout 	    = context->pri_path.ackto >> 3;
 	qp_attr->retry_cnt 	    = (be32_to_cpu(context->params1) >> 16) & 0x7;
 	qp_attr->rnr_retry 	    = context->pri_path.rnr_retry >> 5;
-	qp_attr->alt_timeout 	    = context->alt_path.ackto >> 3;
+	qp_attr->alt_समयout 	    = context->alt_path.ackto >> 3;
 
-done:
+करोne:
 	qp_attr->cur_qp_state	     = qp_attr->qp_state;
 	qp_attr->cap.max_send_wr     = qp->sq.max;
 	qp_attr->cap.max_recv_wr     = qp->rq.max;
 	qp_attr->cap.max_send_sge    = qp->sq.max_gs;
 	qp_attr->cap.max_recv_sge    = qp->rq.max_gs;
-	qp_attr->cap.max_inline_data = qp->max_inline_data;
+	qp_attr->cap.max_अंतरभूत_data = qp->max_अंतरभूत_data;
 
 	qp_init_attr->cap	     = qp_attr->cap;
 	qp_init_attr->sq_sig_type    = qp->sq_policy;
 
 out_mailbox:
-	mthca_free_mailbox(dev, mailbox);
+	mthca_मुक्त_mailbox(dev, mailbox);
 
 out:
 	mutex_unlock(&qp->mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mthca_path_set(struct mthca_dev *dev, const struct rdma_ah_attr *ah,
-			  struct mthca_qp_path *path, u8 port)
-{
+अटल पूर्णांक mthca_path_set(काष्ठा mthca_dev *dev, स्थिर काष्ठा rdma_ah_attr *ah,
+			  काष्ठा mthca_qp_path *path, u8 port)
+अणु
 	path->g_mylmc     = rdma_ah_get_path_bits(ah) & 0x7f;
 	path->rlid        = cpu_to_be16(rdma_ah_get_dlid(ah));
-	path->static_rate = mthca_get_rate(dev, rdma_ah_get_static_rate(ah),
+	path->अटल_rate = mthca_get_rate(dev, rdma_ah_get_अटल_rate(ah),
 					   port);
 
-	if (rdma_ah_get_ah_flags(ah) & IB_AH_GRH) {
-		const struct ib_global_route *grh = rdma_ah_read_grh(ah);
+	अगर (rdma_ah_get_ah_flags(ah) & IB_AH_GRH) अणु
+		स्थिर काष्ठा ib_global_route *grh = rdma_ah_पढ़ो_grh(ah);
 
-		if (grh->sgid_index >= dev->limits.gid_table_len) {
+		अगर (grh->sgid_index >= dev->limits.gid_table_len) अणु
 			mthca_dbg(dev, "sgid_index (%u) too large. max is %d\n",
 				  grh->sgid_index,
 				  dev->limits.gid_table_len - 1);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		path->g_mylmc   |= 1 << 7;
 		path->mgid_index = grh->sgid_index;
@@ -544,298 +545,298 @@ static int mthca_path_set(struct mthca_dev *dev, const struct rdma_ah_attr *ah,
 			cpu_to_be32((rdma_ah_get_sl(ah) << 28) |
 				    (grh->traffic_class << 20) |
 				    (grh->flow_label));
-		memcpy(path->rgid, grh->dgid.raw, 16);
-	} else {
+		स_नकल(path->rgid, grh->dgid.raw, 16);
+	पूर्ण अन्यथा अणु
 		path->sl_tclass_flowlabel = cpu_to_be32(rdma_ah_get_sl(ah) <<
 							28);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __mthca_modify_qp(struct ib_qp *ibqp,
-			     const struct ib_qp_attr *attr, int attr_mask,
-			     enum ib_qp_state cur_state,
-			     enum ib_qp_state new_state,
-			     struct ib_udata *udata)
-{
-	struct mthca_dev *dev = to_mdev(ibqp->device);
-	struct mthca_qp *qp = to_mqp(ibqp);
-	struct mthca_ucontext *context = rdma_udata_to_drv_context(
-		udata, struct mthca_ucontext, ibucontext);
-	struct mthca_mailbox *mailbox;
-	struct mthca_qp_param *qp_param;
-	struct mthca_qp_context *qp_context;
+अटल पूर्णांक __mthca_modअगरy_qp(काष्ठा ib_qp *ibqp,
+			     स्थिर काष्ठा ib_qp_attr *attr, पूर्णांक attr_mask,
+			     क्रमागत ib_qp_state cur_state,
+			     क्रमागत ib_qp_state new_state,
+			     काष्ठा ib_udata *udata)
+अणु
+	काष्ठा mthca_dev *dev = to_mdev(ibqp->device);
+	काष्ठा mthca_qp *qp = to_mqp(ibqp);
+	काष्ठा mthca_ucontext *context = rdma_udata_to_drv_context(
+		udata, काष्ठा mthca_ucontext, ibucontext);
+	काष्ठा mthca_mailbox *mailbox;
+	काष्ठा mthca_qp_param *qp_param;
+	काष्ठा mthca_qp_context *qp_context;
 	u32 sqd_event = 0;
-	int err = -EINVAL;
+	पूर्णांक err = -EINVAL;
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	if (IS_ERR(mailbox)) {
+	अगर (IS_ERR(mailbox)) अणु
 		err = PTR_ERR(mailbox);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	qp_param = mailbox->buf;
 	qp_context = &qp_param->context;
-	memset(qp_param, 0, sizeof *qp_param);
+	स_रखो(qp_param, 0, माप *qp_param);
 
 	qp_context->flags      = cpu_to_be32((to_mthca_state(new_state) << 28) |
 					     (to_mthca_st(qp->transport) << 16));
 	qp_context->flags     |= cpu_to_be32(MTHCA_QP_BIT_DE);
-	if (!(attr_mask & IB_QP_PATH_MIG_STATE))
+	अगर (!(attr_mask & IB_QP_PATH_MIG_STATE))
 		qp_context->flags |= cpu_to_be32(MTHCA_QP_PM_MIGRATED << 11);
-	else {
+	अन्यथा अणु
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_PM_STATE);
-		switch (attr->path_mig_state) {
-		case IB_MIG_MIGRATED:
+		चयन (attr->path_mig_state) अणु
+		हाल IB_MIG_MIGRATED:
 			qp_context->flags |= cpu_to_be32(MTHCA_QP_PM_MIGRATED << 11);
-			break;
-		case IB_MIG_REARM:
+			अवरोध;
+		हाल IB_MIG_REARM:
 			qp_context->flags |= cpu_to_be32(MTHCA_QP_PM_REARM << 11);
-			break;
-		case IB_MIG_ARMED:
+			अवरोध;
+		हाल IB_MIG_ARMED:
 			qp_context->flags |= cpu_to_be32(MTHCA_QP_PM_ARMED << 11);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* leave tavor_sched_queue as 0 */
 
-	if (qp->transport == MLX || qp->transport == UD)
+	अगर (qp->transport == MLX || qp->transport == UD)
 		qp_context->mtu_msgmax = (IB_MTU_2048 << 5) | 11;
-	else if (attr_mask & IB_QP_PATH_MTU) {
-		if (attr->path_mtu < IB_MTU_256 || attr->path_mtu > IB_MTU_2048) {
+	अन्यथा अगर (attr_mask & IB_QP_PATH_MTU) अणु
+		अगर (attr->path_mtu < IB_MTU_256 || attr->path_mtu > IB_MTU_2048) अणु
 			mthca_dbg(dev, "path MTU (%u) is invalid\n",
 				  attr->path_mtu);
-			goto out_mailbox;
-		}
+			जाओ out_mailbox;
+		पूर्ण
 		qp_context->mtu_msgmax = (attr->path_mtu << 5) | 31;
-	}
+	पूर्ण
 
-	if (mthca_is_memfree(dev)) {
-		if (qp->rq.max)
+	अगर (mthca_is_memमुक्त(dev)) अणु
+		अगर (qp->rq.max)
 			qp_context->rq_size_stride = ilog2(qp->rq.max) << 3;
-		qp_context->rq_size_stride |= qp->rq.wqe_shift - 4;
+		qp_context->rq_size_stride |= qp->rq.wqe_shअगरt - 4;
 
-		if (qp->sq.max)
+		अगर (qp->sq.max)
 			qp_context->sq_size_stride = ilog2(qp->sq.max) << 3;
-		qp_context->sq_size_stride |= qp->sq.wqe_shift - 4;
-	}
+		qp_context->sq_size_stride |= qp->sq.wqe_shअगरt - 4;
+	पूर्ण
 
 	/* leave arbel_sched_queue as 0 */
 
-	if (qp->ibqp.uobject)
+	अगर (qp->ibqp.uobject)
 		qp_context->usr_page = cpu_to_be32(context->uar.index);
-	else
+	अन्यथा
 		qp_context->usr_page = cpu_to_be32(dev->driver_uar.index);
 	qp_context->local_qpn  = cpu_to_be32(qp->qpn);
-	if (attr_mask & IB_QP_DEST_QPN) {
+	अगर (attr_mask & IB_QP_DEST_QPN) अणु
 		qp_context->remote_qpn = cpu_to_be32(attr->dest_qp_num);
-	}
+	पूर्ण
 
-	if (qp->transport == MLX)
+	अगर (qp->transport == MLX)
 		qp_context->pri_path.port_pkey |=
 			cpu_to_be32(qp->port << 24);
-	else {
-		if (attr_mask & IB_QP_PORT) {
+	अन्यथा अणु
+		अगर (attr_mask & IB_QP_PORT) अणु
 			qp_context->pri_path.port_pkey |=
 				cpu_to_be32(attr->port_num << 24);
 			qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_PORT_NUM);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (attr_mask & IB_QP_PKEY_INDEX) {
+	अगर (attr_mask & IB_QP_PKEY_INDEX) अणु
 		qp_context->pri_path.port_pkey |=
 			cpu_to_be32(attr->pkey_index);
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_PKEY_INDEX);
-	}
+	पूर्ण
 
-	if (attr_mask & IB_QP_RNR_RETRY) {
+	अगर (attr_mask & IB_QP_RNR_RETRY) अणु
 		qp_context->alt_path.rnr_retry = qp_context->pri_path.rnr_retry =
 			attr->rnr_retry << 5;
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_RNR_RETRY |
 							MTHCA_QP_OPTPAR_ALT_RNR_RETRY);
-	}
+	पूर्ण
 
-	if (attr_mask & IB_QP_AV) {
-		if (mthca_path_set(dev, &attr->ah_attr, &qp_context->pri_path,
+	अगर (attr_mask & IB_QP_AV) अणु
+		अगर (mthca_path_set(dev, &attr->ah_attr, &qp_context->pri_path,
 				   attr_mask & IB_QP_PORT ? attr->port_num : qp->port))
-			goto out_mailbox;
+			जाओ out_mailbox;
 
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_PRIMARY_ADDR_PATH);
-	}
+	पूर्ण
 
-	if (ibqp->qp_type == IB_QPT_RC &&
-	    cur_state == IB_QPS_INIT && new_state == IB_QPS_RTR) {
+	अगर (ibqp->qp_type == IB_QPT_RC &&
+	    cur_state == IB_QPS_INIT && new_state == IB_QPS_RTR) अणु
 		u8 sched_queue = ibqp->uobject ? 0x2 : 0x1;
 
-		if (mthca_is_memfree(dev))
+		अगर (mthca_is_memमुक्त(dev))
 			qp_context->rlkey_arbel_sched_queue |= sched_queue;
-		else
+		अन्यथा
 			qp_context->tavor_sched_queue |= cpu_to_be32(sched_queue);
 
 		qp_param->opt_param_mask |=
 			cpu_to_be32(MTHCA_QP_OPTPAR_SCHED_QUEUE);
-	}
+	पूर्ण
 
-	if (attr_mask & IB_QP_TIMEOUT) {
-		qp_context->pri_path.ackto = attr->timeout << 3;
+	अगर (attr_mask & IB_QP_TIMEOUT) अणु
+		qp_context->pri_path.ackto = attr->समयout << 3;
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_ACK_TIMEOUT);
-	}
+	पूर्ण
 
-	if (attr_mask & IB_QP_ALT_PATH) {
-		if (attr->alt_pkey_index >= dev->limits.pkey_table_len) {
+	अगर (attr_mask & IB_QP_ALT_PATH) अणु
+		अगर (attr->alt_pkey_index >= dev->limits.pkey_table_len) अणु
 			mthca_dbg(dev, "Alternate P_Key index (%u) too large. max is %d\n",
 				  attr->alt_pkey_index, dev->limits.pkey_table_len-1);
-			goto out_mailbox;
-		}
+			जाओ out_mailbox;
+		पूर्ण
 
-		if (attr->alt_port_num == 0 || attr->alt_port_num > dev->limits.num_ports) {
+		अगर (attr->alt_port_num == 0 || attr->alt_port_num > dev->limits.num_ports) अणु
 			mthca_dbg(dev, "Alternate port number (%u) is invalid\n",
 				attr->alt_port_num);
-			goto out_mailbox;
-		}
+			जाओ out_mailbox;
+		पूर्ण
 
-		if (mthca_path_set(dev, &attr->alt_ah_attr, &qp_context->alt_path,
+		अगर (mthca_path_set(dev, &attr->alt_ah_attr, &qp_context->alt_path,
 				   rdma_ah_get_port_num(&attr->alt_ah_attr)))
-			goto out_mailbox;
+			जाओ out_mailbox;
 
 		qp_context->alt_path.port_pkey |= cpu_to_be32(attr->alt_pkey_index |
 							      attr->alt_port_num << 24);
-		qp_context->alt_path.ackto = attr->alt_timeout << 3;
+		qp_context->alt_path.ackto = attr->alt_समयout << 3;
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_ALT_ADDR_PATH);
-	}
+	पूर्ण
 
 	/* leave rdd as 0 */
 	qp_context->pd         = cpu_to_be32(to_mpd(ibqp->pd)->pd_num);
-	/* leave wqe_base as 0 (we always create an MR based at 0 for WQs) */
+	/* leave wqe_base as 0 (we always create an MR based at 0 क्रम WQs) */
 	qp_context->wqe_lkey   = cpu_to_be32(qp->mr.ibmr.lkey);
 	qp_context->params1    = cpu_to_be32((MTHCA_ACK_REQ_FREQ << 28) |
 					     (MTHCA_FLIGHT_LIMIT << 24) |
 					     MTHCA_QP_BIT_SWE);
-	if (qp->sq_policy == IB_SIGNAL_ALL_WR)
+	अगर (qp->sq_policy == IB_SIGNAL_ALL_WR)
 		qp_context->params1 |= cpu_to_be32(MTHCA_QP_BIT_SSC);
-	if (attr_mask & IB_QP_RETRY_CNT) {
+	अगर (attr_mask & IB_QP_RETRY_CNT) अणु
 		qp_context->params1 |= cpu_to_be32(attr->retry_cnt << 16);
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_RETRY_COUNT);
-	}
+	पूर्ण
 
-	if (attr_mask & IB_QP_MAX_QP_RD_ATOMIC) {
-		if (attr->max_rd_atomic) {
+	अगर (attr_mask & IB_QP_MAX_QP_RD_ATOMIC) अणु
+		अगर (attr->max_rd_atomic) अणु
 			qp_context->params1 |=
 				cpu_to_be32(MTHCA_QP_BIT_SRE |
 					    MTHCA_QP_BIT_SAE);
 			qp_context->params1 |=
 				cpu_to_be32(fls(attr->max_rd_atomic - 1) << 21);
-		}
+		पूर्ण
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_SRA_MAX);
-	}
+	पूर्ण
 
-	if (attr_mask & IB_QP_SQ_PSN)
+	अगर (attr_mask & IB_QP_SQ_PSN)
 		qp_context->next_send_psn = cpu_to_be32(attr->sq_psn);
 	qp_context->cqn_snd = cpu_to_be32(to_mcq(ibqp->send_cq)->cqn);
 
-	if (mthca_is_memfree(dev)) {
+	अगर (mthca_is_memमुक्त(dev)) अणु
 		qp_context->snd_wqe_base_l = cpu_to_be32(qp->send_wqe_offset);
 		qp_context->snd_db_index   = cpu_to_be32(qp->sq.db_index);
-	}
+	पूर्ण
 
-	if (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC) {
-		if (attr->max_dest_rd_atomic)
+	अगर (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC) अणु
+		अगर (attr->max_dest_rd_atomic)
 			qp_context->params2 |=
 				cpu_to_be32(fls(attr->max_dest_rd_atomic - 1) << 21);
 
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_RRA_MAX);
-	}
+	पूर्ण
 
-	if (attr_mask & (IB_QP_ACCESS_FLAGS | IB_QP_MAX_DEST_RD_ATOMIC)) {
+	अगर (attr_mask & (IB_QP_ACCESS_FLAGS | IB_QP_MAX_DEST_RD_ATOMIC)) अणु
 		qp_context->params2      |= get_hw_access_flags(qp, attr, attr_mask);
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_RWE |
 							MTHCA_QP_OPTPAR_RRE |
 							MTHCA_QP_OPTPAR_RAE);
-	}
+	पूर्ण
 
 	qp_context->params2 |= cpu_to_be32(MTHCA_QP_BIT_RSC);
 
-	if (ibqp->srq)
+	अगर (ibqp->srq)
 		qp_context->params2 |= cpu_to_be32(MTHCA_QP_BIT_RIC);
 
-	if (attr_mask & IB_QP_MIN_RNR_TIMER) {
-		qp_context->rnr_nextrecvpsn |= cpu_to_be32(attr->min_rnr_timer << 24);
+	अगर (attr_mask & IB_QP_MIN_RNR_TIMER) अणु
+		qp_context->rnr_nextrecvpsn |= cpu_to_be32(attr->min_rnr_समयr << 24);
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_RNR_TIMEOUT);
-	}
-	if (attr_mask & IB_QP_RQ_PSN)
+	पूर्ण
+	अगर (attr_mask & IB_QP_RQ_PSN)
 		qp_context->rnr_nextrecvpsn |= cpu_to_be32(attr->rq_psn);
 
 	qp_context->ra_buff_indx =
 		cpu_to_be32(dev->qp_table.rdb_base +
 			    ((qp->qpn & (dev->limits.num_qps - 1)) * MTHCA_RDB_ENTRY_SIZE <<
-			     dev->qp_table.rdb_shift));
+			     dev->qp_table.rdb_shअगरt));
 
 	qp_context->cqn_rcv = cpu_to_be32(to_mcq(ibqp->recv_cq)->cqn);
 
-	if (mthca_is_memfree(dev))
+	अगर (mthca_is_memमुक्त(dev))
 		qp_context->rcv_db_index   = cpu_to_be32(qp->rq.db_index);
 
-	if (attr_mask & IB_QP_QKEY) {
+	अगर (attr_mask & IB_QP_QKEY) अणु
 		qp_context->qkey = cpu_to_be32(attr->qkey);
 		qp_param->opt_param_mask |= cpu_to_be32(MTHCA_QP_OPTPAR_Q_KEY);
-	}
+	पूर्ण
 
-	if (ibqp->srq)
+	अगर (ibqp->srq)
 		qp_context->srqn = cpu_to_be32(1 << 24 |
 					       to_msrq(ibqp->srq)->srqn);
 
-	if (cur_state == IB_QPS_RTS && new_state == IB_QPS_SQD	&&
+	अगर (cur_state == IB_QPS_RTS && new_state == IB_QPS_SQD	&&
 	    attr_mask & IB_QP_EN_SQD_ASYNC_NOTIFY		&&
-	    attr->en_sqd_async_notify)
+	    attr->en_sqd_async_notअगरy)
 		sqd_event = 1 << 31;
 
 	err = mthca_MODIFY_QP(dev, cur_state, new_state, qp->qpn, 0,
 			      mailbox, sqd_event);
-	if (err) {
+	अगर (err) अणु
 		mthca_warn(dev, "modify QP %d->%d returned %d.\n",
 			   cur_state, new_state, err);
-		goto out_mailbox;
-	}
+		जाओ out_mailbox;
+	पूर्ण
 
 	qp->state = new_state;
-	if (attr_mask & IB_QP_ACCESS_FLAGS)
+	अगर (attr_mask & IB_QP_ACCESS_FLAGS)
 		qp->atomic_rd_en = attr->qp_access_flags;
-	if (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC)
+	अगर (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC)
 		qp->resp_depth = attr->max_dest_rd_atomic;
-	if (attr_mask & IB_QP_PORT)
+	अगर (attr_mask & IB_QP_PORT)
 		qp->port = attr->port_num;
-	if (attr_mask & IB_QP_ALT_PATH)
+	अगर (attr_mask & IB_QP_ALT_PATH)
 		qp->alt_port = attr->alt_port_num;
 
-	if (is_sqp(dev, qp))
+	अगर (is_sqp(dev, qp))
 		store_attrs(qp->sqp, attr, attr_mask);
 
 	/*
-	 * If we moved QP0 to RTR, bring the IB link up; if we moved
-	 * QP0 to RESET or ERROR, bring the link back down.
+	 * If we moved QP0 to RTR, bring the IB link up; अगर we moved
+	 * QP0 to RESET or ERROR, bring the link back करोwn.
 	 */
-	if (is_qp0(dev, qp)) {
-		if (cur_state != IB_QPS_RTR &&
+	अगर (is_qp0(dev, qp)) अणु
+		अगर (cur_state != IB_QPS_RTR &&
 		    new_state == IB_QPS_RTR)
 			init_port(dev, qp->port);
 
-		if (cur_state != IB_QPS_RESET &&
+		अगर (cur_state != IB_QPS_RESET &&
 		    cur_state != IB_QPS_ERR &&
 		    (new_state == IB_QPS_RESET ||
 		     new_state == IB_QPS_ERR))
 			mthca_CLOSE_IB(dev, qp->port);
-	}
+	पूर्ण
 
 	/*
 	 * If we moved a kernel QP to RESET, clean up all old CQ
 	 * entries and reinitialize the QP.
 	 */
-	if (new_state == IB_QPS_RESET && !qp->ibqp.uobject) {
+	अगर (new_state == IB_QPS_RESET && !qp->ibqp.uobject) अणु
 		mthca_cq_clean(dev, to_mcq(qp->ibqp.recv_cq), qp->qpn,
-			       qp->ibqp.srq ? to_msrq(qp->ibqp.srq) : NULL);
-		if (qp->ibqp.send_cq != qp->ibqp.recv_cq)
-			mthca_cq_clean(dev, to_mcq(qp->ibqp.send_cq), qp->qpn, NULL);
+			       qp->ibqp.srq ? to_msrq(qp->ibqp.srq) : शून्य);
+		अगर (qp->ibqp.send_cq != qp->ibqp.recv_cq)
+			mthca_cq_clean(dev, to_mcq(qp->ibqp.send_cq), qp->qpn, शून्य);
 
 		mthca_wq_reset(&qp->sq);
 		qp->sq.last = get_send_wqe(qp, qp->sq.max - 1);
@@ -843,274 +844,274 @@ static int __mthca_modify_qp(struct ib_qp *ibqp,
 		mthca_wq_reset(&qp->rq);
 		qp->rq.last = get_recv_wqe(qp, qp->rq.max - 1);
 
-		if (mthca_is_memfree(dev)) {
+		अगर (mthca_is_memमुक्त(dev)) अणु
 			*qp->sq.db = 0;
 			*qp->rq.db = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out_mailbox:
-	mthca_free_mailbox(dev, mailbox);
+	mthca_मुक्त_mailbox(dev, mailbox);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mthca_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr, int attr_mask,
-		    struct ib_udata *udata)
-{
-	struct mthca_dev *dev = to_mdev(ibqp->device);
-	struct mthca_qp *qp = to_mqp(ibqp);
-	enum ib_qp_state cur_state, new_state;
-	int err = -EINVAL;
+पूर्णांक mthca_modअगरy_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *attr, पूर्णांक attr_mask,
+		    काष्ठा ib_udata *udata)
+अणु
+	काष्ठा mthca_dev *dev = to_mdev(ibqp->device);
+	काष्ठा mthca_qp *qp = to_mqp(ibqp);
+	क्रमागत ib_qp_state cur_state, new_state;
+	पूर्णांक err = -EINVAL;
 
-	if (attr_mask & ~IB_QP_ATTR_STANDARD_BITS)
-		return -EOPNOTSUPP;
+	अगर (attr_mask & ~IB_QP_ATTR_STANDARD_BITS)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&qp->mutex);
-	if (attr_mask & IB_QP_CUR_STATE) {
+	अगर (attr_mask & IB_QP_CUR_STATE) अणु
 		cur_state = attr->cur_qp_state;
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_lock_irq(&qp->sq.lock);
 		spin_lock(&qp->rq.lock);
 		cur_state = qp->state;
 		spin_unlock(&qp->rq.lock);
 		spin_unlock_irq(&qp->sq.lock);
-	}
+	पूर्ण
 
 	new_state = attr_mask & IB_QP_STATE ? attr->qp_state : cur_state;
 
-	if (!ib_modify_qp_is_ok(cur_state, new_state, ibqp->qp_type,
-				attr_mask)) {
+	अगर (!ib_modअगरy_qp_is_ok(cur_state, new_state, ibqp->qp_type,
+				attr_mask)) अणु
 		mthca_dbg(dev, "Bad QP transition (transport %d) "
 			  "%d->%d with attr 0x%08x\n",
 			  qp->transport, cur_state, new_state,
 			  attr_mask);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if ((attr_mask & IB_QP_PKEY_INDEX) &&
-	     attr->pkey_index >= dev->limits.pkey_table_len) {
+	अगर ((attr_mask & IB_QP_PKEY_INDEX) &&
+	     attr->pkey_index >= dev->limits.pkey_table_len) अणु
 		mthca_dbg(dev, "P_Key index (%u) too large. max is %d\n",
 			  attr->pkey_index, dev->limits.pkey_table_len-1);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if ((attr_mask & IB_QP_PORT) &&
-	    (attr->port_num == 0 || attr->port_num > dev->limits.num_ports)) {
+	अगर ((attr_mask & IB_QP_PORT) &&
+	    (attr->port_num == 0 || attr->port_num > dev->limits.num_ports)) अणु
 		mthca_dbg(dev, "Port number (%u) is invalid\n", attr->port_num);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (attr_mask & IB_QP_MAX_QP_RD_ATOMIC &&
-	    attr->max_rd_atomic > dev->limits.max_qp_init_rdma) {
+	अगर (attr_mask & IB_QP_MAX_QP_RD_ATOMIC &&
+	    attr->max_rd_atomic > dev->limits.max_qp_init_rdma) अणु
 		mthca_dbg(dev, "Max rdma_atomic as initiator %u too large (max is %d)\n",
 			  attr->max_rd_atomic, dev->limits.max_qp_init_rdma);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC &&
-	    attr->max_dest_rd_atomic > 1 << dev->qp_table.rdb_shift) {
+	अगर (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC &&
+	    attr->max_dest_rd_atomic > 1 << dev->qp_table.rdb_shअगरt) अणु
 		mthca_dbg(dev, "Max rdma_atomic as responder %u too large (max %d)\n",
-			  attr->max_dest_rd_atomic, 1 << dev->qp_table.rdb_shift);
-		goto out;
-	}
+			  attr->max_dest_rd_atomic, 1 << dev->qp_table.rdb_shअगरt);
+		जाओ out;
+	पूर्ण
 
-	if (cur_state == new_state && cur_state == IB_QPS_RESET) {
+	अगर (cur_state == new_state && cur_state == IB_QPS_RESET) अणु
 		err = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = __mthca_modify_qp(ibqp, attr, attr_mask, cur_state, new_state,
+	err = __mthca_modअगरy_qp(ibqp, attr, attr_mask, cur_state, new_state,
 				udata);
 
 out:
 	mutex_unlock(&qp->mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mthca_max_data_size(struct mthca_dev *dev, struct mthca_qp *qp, int desc_sz)
-{
+अटल पूर्णांक mthca_max_data_size(काष्ठा mthca_dev *dev, काष्ठा mthca_qp *qp, पूर्णांक desc_sz)
+अणु
 	/*
 	 * Calculate the maximum size of WQE s/g segments, excluding
 	 * the next segment and other non-data segments.
 	 */
-	int max_data_size = desc_sz - sizeof (struct mthca_next_seg);
+	पूर्णांक max_data_size = desc_sz - माप (काष्ठा mthca_next_seg);
 
-	switch (qp->transport) {
-	case MLX:
-		max_data_size -= 2 * sizeof (struct mthca_data_seg);
-		break;
+	चयन (qp->transport) अणु
+	हाल MLX:
+		max_data_size -= 2 * माप (काष्ठा mthca_data_seg);
+		अवरोध;
 
-	case UD:
-		if (mthca_is_memfree(dev))
-			max_data_size -= sizeof (struct mthca_arbel_ud_seg);
-		else
-			max_data_size -= sizeof (struct mthca_tavor_ud_seg);
-		break;
+	हाल UD:
+		अगर (mthca_is_memमुक्त(dev))
+			max_data_size -= माप (काष्ठा mthca_arbel_ud_seg);
+		अन्यथा
+			max_data_size -= माप (काष्ठा mthca_tavor_ud_seg);
+		अवरोध;
 
-	default:
-		max_data_size -= sizeof (struct mthca_raddr_seg);
-		break;
-	}
+	शेष:
+		max_data_size -= माप (काष्ठा mthca_raddr_seg);
+		अवरोध;
+	पूर्ण
 
-	return max_data_size;
-}
+	वापस max_data_size;
+पूर्ण
 
-static inline int mthca_max_inline_data(struct mthca_pd *pd, int max_data_size)
-{
-	/* We don't support inline data for kernel QPs (yet). */
-	return pd->ibpd.uobject ? max_data_size - MTHCA_INLINE_HEADER_SIZE : 0;
-}
+अटल अंतरभूत पूर्णांक mthca_max_अंतरभूत_data(काष्ठा mthca_pd *pd, पूर्णांक max_data_size)
+अणु
+	/* We करोn't support अंतरभूत data क्रम kernel QPs (yet). */
+	वापस pd->ibpd.uobject ? max_data_size - MTHCA_INLINE_HEADER_SIZE : 0;
+पूर्ण
 
-static void mthca_adjust_qp_caps(struct mthca_dev *dev,
-				 struct mthca_pd *pd,
-				 struct mthca_qp *qp)
-{
-	int max_data_size = mthca_max_data_size(dev, qp,
+अटल व्योम mthca_adjust_qp_caps(काष्ठा mthca_dev *dev,
+				 काष्ठा mthca_pd *pd,
+				 काष्ठा mthca_qp *qp)
+अणु
+	पूर्णांक max_data_size = mthca_max_data_size(dev, qp,
 						min(dev->limits.max_desc_sz,
-						    1 << qp->sq.wqe_shift));
+						    1 << qp->sq.wqe_shअगरt));
 
-	qp->max_inline_data = mthca_max_inline_data(pd, max_data_size);
+	qp->max_अंतरभूत_data = mthca_max_अंतरभूत_data(pd, max_data_size);
 
-	qp->sq.max_gs = min_t(int, dev->limits.max_sg,
-			      max_data_size / sizeof (struct mthca_data_seg));
-	qp->rq.max_gs = min_t(int, dev->limits.max_sg,
-			       (min(dev->limits.max_desc_sz, 1 << qp->rq.wqe_shift) -
-				sizeof (struct mthca_next_seg)) /
-			       sizeof (struct mthca_data_seg));
-}
+	qp->sq.max_gs = min_t(पूर्णांक, dev->limits.max_sg,
+			      max_data_size / माप (काष्ठा mthca_data_seg));
+	qp->rq.max_gs = min_t(पूर्णांक, dev->limits.max_sg,
+			       (min(dev->limits.max_desc_sz, 1 << qp->rq.wqe_shअगरt) -
+				माप (काष्ठा mthca_next_seg)) /
+			       माप (काष्ठा mthca_data_seg));
+पूर्ण
 
 /*
- * Allocate and register buffer for WQEs.  qp->rq.max, sq.max,
- * rq.max_gs and sq.max_gs must all be assigned.
- * mthca_alloc_wqe_buf will calculate rq.wqe_shift and
- * sq.wqe_shift (as well as send_wqe_offset, is_direct, and
+ * Allocate and रेजिस्टर buffer क्रम WQEs.  qp->rq.max, sq.max,
+ * rq.max_gs and sq.max_gs must all be asचिन्हित.
+ * mthca_alloc_wqe_buf will calculate rq.wqe_shअगरt and
+ * sq.wqe_shअगरt (as well as send_wqe_offset, is_direct, and
  * queue)
  */
-static int mthca_alloc_wqe_buf(struct mthca_dev *dev,
-			       struct mthca_pd *pd,
-			       struct mthca_qp *qp,
-			       struct ib_udata *udata)
-{
-	int size;
-	int err = -ENOMEM;
+अटल पूर्णांक mthca_alloc_wqe_buf(काष्ठा mthca_dev *dev,
+			       काष्ठा mthca_pd *pd,
+			       काष्ठा mthca_qp *qp,
+			       काष्ठा ib_udata *udata)
+अणु
+	पूर्णांक size;
+	पूर्णांक err = -ENOMEM;
 
-	size = sizeof (struct mthca_next_seg) +
-		qp->rq.max_gs * sizeof (struct mthca_data_seg);
+	size = माप (काष्ठा mthca_next_seg) +
+		qp->rq.max_gs * माप (काष्ठा mthca_data_seg);
 
-	if (size > dev->limits.max_desc_sz)
-		return -EINVAL;
+	अगर (size > dev->limits.max_desc_sz)
+		वापस -EINVAL;
 
-	for (qp->rq.wqe_shift = 6; 1 << qp->rq.wqe_shift < size;
-	     qp->rq.wqe_shift++)
+	क्रम (qp->rq.wqe_shअगरt = 6; 1 << qp->rq.wqe_shअगरt < size;
+	     qp->rq.wqe_shअगरt++)
 		; /* nothing */
 
-	size = qp->sq.max_gs * sizeof (struct mthca_data_seg);
-	switch (qp->transport) {
-	case MLX:
-		size += 2 * sizeof (struct mthca_data_seg);
-		break;
+	size = qp->sq.max_gs * माप (काष्ठा mthca_data_seg);
+	चयन (qp->transport) अणु
+	हाल MLX:
+		size += 2 * माप (काष्ठा mthca_data_seg);
+		अवरोध;
 
-	case UD:
-		size += mthca_is_memfree(dev) ?
-			sizeof (struct mthca_arbel_ud_seg) :
-			sizeof (struct mthca_tavor_ud_seg);
-		break;
+	हाल UD:
+		size += mthca_is_memमुक्त(dev) ?
+			माप (काष्ठा mthca_arbel_ud_seg) :
+			माप (काष्ठा mthca_tavor_ud_seg);
+		अवरोध;
 
-	case UC:
-		size += sizeof (struct mthca_raddr_seg);
-		break;
+	हाल UC:
+		size += माप (काष्ठा mthca_raddr_seg);
+		अवरोध;
 
-	case RC:
-		size += sizeof (struct mthca_raddr_seg);
+	हाल RC:
+		size += माप (काष्ठा mthca_raddr_seg);
 		/*
 		 * An atomic op will require an atomic segment, a
 		 * remote address segment and one scatter entry.
 		 */
-		size = max_t(int, size,
-			     sizeof (struct mthca_atomic_seg) +
-			     sizeof (struct mthca_raddr_seg) +
-			     sizeof (struct mthca_data_seg));
-		break;
+		size = max_t(पूर्णांक, size,
+			     माप (काष्ठा mthca_atomic_seg) +
+			     माप (काष्ठा mthca_raddr_seg) +
+			     माप (काष्ठा mthca_data_seg));
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* Make sure that we have enough space for a bind request */
-	size = max_t(int, size, sizeof (struct mthca_bind_seg));
+	/* Make sure that we have enough space क्रम a bind request */
+	size = max_t(पूर्णांक, size, माप (काष्ठा mthca_bind_seg));
 
-	size += sizeof (struct mthca_next_seg);
+	size += माप (काष्ठा mthca_next_seg);
 
-	if (size > dev->limits.max_desc_sz)
-		return -EINVAL;
+	अगर (size > dev->limits.max_desc_sz)
+		वापस -EINVAL;
 
-	for (qp->sq.wqe_shift = 6; 1 << qp->sq.wqe_shift < size;
-	     qp->sq.wqe_shift++)
+	क्रम (qp->sq.wqe_shअगरt = 6; 1 << qp->sq.wqe_shअगरt < size;
+	     qp->sq.wqe_shअगरt++)
 		; /* nothing */
 
-	qp->send_wqe_offset = ALIGN(qp->rq.max << qp->rq.wqe_shift,
-				    1 << qp->sq.wqe_shift);
+	qp->send_wqe_offset = ALIGN(qp->rq.max << qp->rq.wqe_shअगरt,
+				    1 << qp->sq.wqe_shअगरt);
 
 	/*
-	 * If this is a userspace QP, we don't actually have to
+	 * If this is a userspace QP, we करोn't actually have to
 	 * allocate anything.  All we need is to calculate the WQE
-	 * sizes and the send_wqe_offset, so we're done now.
+	 * sizes and the send_wqe_offset, so we're करोne now.
 	 */
-	if (udata)
-		return 0;
+	अगर (udata)
+		वापस 0;
 
 	size = PAGE_ALIGN(qp->send_wqe_offset +
-			  (qp->sq.max << qp->sq.wqe_shift));
+			  (qp->sq.max << qp->sq.wqe_shअगरt));
 
-	qp->wrid = kmalloc_array(qp->rq.max + qp->sq.max, sizeof(u64),
+	qp->wrid = kदो_स्मृति_array(qp->rq.max + qp->sq.max, माप(u64),
 				 GFP_KERNEL);
-	if (!qp->wrid)
-		goto err_out;
+	अगर (!qp->wrid)
+		जाओ err_out;
 
-	err = mthca_buf_alloc(dev, size, MTHCA_MAX_DIRECT_QP_SIZE,
+	err = mthca_buf_alloc(dev, size, MTHCA_MAX_सूचीECT_QP_SIZE,
 			      &qp->queue, &qp->is_direct, pd, 0, &qp->mr);
-	if (err)
-		goto err_out;
+	अगर (err)
+		जाओ err_out;
 
-	return 0;
+	वापस 0;
 
 err_out:
-	kfree(qp->wrid);
-	return err;
-}
+	kमुक्त(qp->wrid);
+	वापस err;
+पूर्ण
 
-static void mthca_free_wqe_buf(struct mthca_dev *dev,
-			       struct mthca_qp *qp)
-{
-	mthca_buf_free(dev, PAGE_ALIGN(qp->send_wqe_offset +
-				       (qp->sq.max << qp->sq.wqe_shift)),
+अटल व्योम mthca_मुक्त_wqe_buf(काष्ठा mthca_dev *dev,
+			       काष्ठा mthca_qp *qp)
+अणु
+	mthca_buf_मुक्त(dev, PAGE_ALIGN(qp->send_wqe_offset +
+				       (qp->sq.max << qp->sq.wqe_shअगरt)),
 		       &qp->queue, qp->is_direct, &qp->mr);
-	kfree(qp->wrid);
-}
+	kमुक्त(qp->wrid);
+पूर्ण
 
-static int mthca_map_memfree(struct mthca_dev *dev,
-			     struct mthca_qp *qp)
-{
-	int ret;
+अटल पूर्णांक mthca_map_memमुक्त(काष्ठा mthca_dev *dev,
+			     काष्ठा mthca_qp *qp)
+अणु
+	पूर्णांक ret;
 
-	if (mthca_is_memfree(dev)) {
+	अगर (mthca_is_memमुक्त(dev)) अणु
 		ret = mthca_table_get(dev, dev->qp_table.qp_table, qp->qpn);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = mthca_table_get(dev, dev->qp_table.eqp_table, qp->qpn);
-		if (ret)
-			goto err_qpc;
+		अगर (ret)
+			जाओ err_qpc;
 
 		ret = mthca_table_get(dev, dev->qp_table.rdb_table,
-				      qp->qpn << dev->qp_table.rdb_shift);
-		if (ret)
-			goto err_eqpc;
+				      qp->qpn << dev->qp_table.rdb_shअगरt);
+		अगर (ret)
+			जाओ err_eqpc;
 
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_eqpc:
 	mthca_table_put(dev, dev->qp_table.eqp_table, qp->qpn);
@@ -1118,61 +1119,61 @@ err_eqpc:
 err_qpc:
 	mthca_table_put(dev, dev->qp_table.qp_table, qp->qpn);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mthca_unmap_memfree(struct mthca_dev *dev,
-				struct mthca_qp *qp)
-{
+अटल व्योम mthca_unmap_memमुक्त(काष्ठा mthca_dev *dev,
+				काष्ठा mthca_qp *qp)
+अणु
 	mthca_table_put(dev, dev->qp_table.rdb_table,
-			qp->qpn << dev->qp_table.rdb_shift);
+			qp->qpn << dev->qp_table.rdb_shअगरt);
 	mthca_table_put(dev, dev->qp_table.eqp_table, qp->qpn);
 	mthca_table_put(dev, dev->qp_table.qp_table, qp->qpn);
-}
+पूर्ण
 
-static int mthca_alloc_memfree(struct mthca_dev *dev,
-			       struct mthca_qp *qp)
-{
-	if (mthca_is_memfree(dev)) {
+अटल पूर्णांक mthca_alloc_memमुक्त(काष्ठा mthca_dev *dev,
+			       काष्ठा mthca_qp *qp)
+अणु
+	अगर (mthca_is_memमुक्त(dev)) अणु
 		qp->rq.db_index = mthca_alloc_db(dev, MTHCA_DB_TYPE_RQ,
 						 qp->qpn, &qp->rq.db);
-		if (qp->rq.db_index < 0)
-			return -ENOMEM;
+		अगर (qp->rq.db_index < 0)
+			वापस -ENOMEM;
 
 		qp->sq.db_index = mthca_alloc_db(dev, MTHCA_DB_TYPE_SQ,
 						 qp->qpn, &qp->sq.db);
-		if (qp->sq.db_index < 0) {
-			mthca_free_db(dev, MTHCA_DB_TYPE_RQ, qp->rq.db_index);
-			return -ENOMEM;
-		}
-	}
+		अगर (qp->sq.db_index < 0) अणु
+			mthca_मुक्त_db(dev, MTHCA_DB_TYPE_RQ, qp->rq.db_index);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mthca_free_memfree(struct mthca_dev *dev,
-			       struct mthca_qp *qp)
-{
-	if (mthca_is_memfree(dev)) {
-		mthca_free_db(dev, MTHCA_DB_TYPE_SQ, qp->sq.db_index);
-		mthca_free_db(dev, MTHCA_DB_TYPE_RQ, qp->rq.db_index);
-	}
-}
+अटल व्योम mthca_मुक्त_memमुक्त(काष्ठा mthca_dev *dev,
+			       काष्ठा mthca_qp *qp)
+अणु
+	अगर (mthca_is_memमुक्त(dev)) अणु
+		mthca_मुक्त_db(dev, MTHCA_DB_TYPE_SQ, qp->sq.db_index);
+		mthca_मुक्त_db(dev, MTHCA_DB_TYPE_RQ, qp->rq.db_index);
+	पूर्ण
+पूर्ण
 
-static int mthca_alloc_qp_common(struct mthca_dev *dev,
-				 struct mthca_pd *pd,
-				 struct mthca_cq *send_cq,
-				 struct mthca_cq *recv_cq,
-				 enum ib_sig_type send_policy,
-				 struct mthca_qp *qp,
-				 struct ib_udata *udata)
-{
-	int ret;
-	int i;
-	struct mthca_next_seg *next;
+अटल पूर्णांक mthca_alloc_qp_common(काष्ठा mthca_dev *dev,
+				 काष्ठा mthca_pd *pd,
+				 काष्ठा mthca_cq *send_cq,
+				 काष्ठा mthca_cq *recv_cq,
+				 क्रमागत ib_sig_type send_policy,
+				 काष्ठा mthca_qp *qp,
+				 काष्ठा ib_udata *udata)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
+	काष्ठा mthca_next_seg *next;
 
 	qp->refcount = 1;
-	init_waitqueue_head(&qp->wait);
+	init_रुकोqueue_head(&qp->रुको);
 	mutex_init(&qp->mutex);
 	qp->state    	 = IB_QPS_RESET;
 	qp->atomic_rd_en = 0;
@@ -1184,220 +1185,220 @@ static int mthca_alloc_qp_common(struct mthca_dev *dev,
 	spin_lock_init(&qp->sq.lock);
 	spin_lock_init(&qp->rq.lock);
 
-	ret = mthca_map_memfree(dev, qp);
-	if (ret)
-		return ret;
+	ret = mthca_map_memमुक्त(dev, qp);
+	अगर (ret)
+		वापस ret;
 
 	ret = mthca_alloc_wqe_buf(dev, pd, qp, udata);
-	if (ret) {
-		mthca_unmap_memfree(dev, qp);
-		return ret;
-	}
+	अगर (ret) अणु
+		mthca_unmap_memमुक्त(dev, qp);
+		वापस ret;
+	पूर्ण
 
 	mthca_adjust_qp_caps(dev, pd, qp);
 
 	/*
-	 * If this is a userspace QP, we're done now.  The doorbells
+	 * If this is a userspace QP, we're करोne now.  The करोorbells
 	 * will be allocated and buffers will be initialized in
 	 * userspace.
 	 */
-	if (udata)
-		return 0;
+	अगर (udata)
+		वापस 0;
 
-	ret = mthca_alloc_memfree(dev, qp);
-	if (ret) {
-		mthca_free_wqe_buf(dev, qp);
-		mthca_unmap_memfree(dev, qp);
-		return ret;
-	}
+	ret = mthca_alloc_memमुक्त(dev, qp);
+	अगर (ret) अणु
+		mthca_मुक्त_wqe_buf(dev, qp);
+		mthca_unmap_memमुक्त(dev, qp);
+		वापस ret;
+	पूर्ण
 
-	if (mthca_is_memfree(dev)) {
-		struct mthca_data_seg *scatter;
-		int size = (sizeof (struct mthca_next_seg) +
-			    qp->rq.max_gs * sizeof (struct mthca_data_seg)) / 16;
+	अगर (mthca_is_memमुक्त(dev)) अणु
+		काष्ठा mthca_data_seg *scatter;
+		पूर्णांक size = (माप (काष्ठा mthca_next_seg) +
+			    qp->rq.max_gs * माप (काष्ठा mthca_data_seg)) / 16;
 
-		for (i = 0; i < qp->rq.max; ++i) {
+		क्रम (i = 0; i < qp->rq.max; ++i) अणु
 			next = get_recv_wqe(qp, i);
 			next->nda_op = cpu_to_be32(((i + 1) & (qp->rq.max - 1)) <<
-						   qp->rq.wqe_shift);
+						   qp->rq.wqe_shअगरt);
 			next->ee_nds = cpu_to_be32(size);
 
-			for (scatter = (void *) (next + 1);
-			     (void *) scatter < (void *) next + (1 << qp->rq.wqe_shift);
+			क्रम (scatter = (व्योम *) (next + 1);
+			     (व्योम *) scatter < (व्योम *) next + (1 << qp->rq.wqe_shअगरt);
 			     ++scatter)
 				scatter->lkey = cpu_to_be32(MTHCA_INVAL_LKEY);
-		}
+		पूर्ण
 
-		for (i = 0; i < qp->sq.max; ++i) {
+		क्रम (i = 0; i < qp->sq.max; ++i) अणु
 			next = get_send_wqe(qp, i);
 			next->nda_op = cpu_to_be32((((i + 1) & (qp->sq.max - 1)) <<
-						    qp->sq.wqe_shift) +
+						    qp->sq.wqe_shअगरt) +
 						   qp->send_wqe_offset);
-		}
-	} else {
-		for (i = 0; i < qp->rq.max; ++i) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < qp->rq.max; ++i) अणु
 			next = get_recv_wqe(qp, i);
 			next->nda_op = htonl((((i + 1) % qp->rq.max) <<
-					      qp->rq.wqe_shift) | 1);
-		}
+					      qp->rq.wqe_shअगरt) | 1);
+		पूर्ण
 
-	}
+	पूर्ण
 
 	qp->sq.last = get_send_wqe(qp, qp->sq.max - 1);
 	qp->rq.last = get_recv_wqe(qp, qp->rq.max - 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mthca_set_qp_size(struct mthca_dev *dev, struct ib_qp_cap *cap,
-			     struct mthca_pd *pd, struct mthca_qp *qp)
-{
-	int max_data_size = mthca_max_data_size(dev, qp, dev->limits.max_desc_sz);
+अटल पूर्णांक mthca_set_qp_size(काष्ठा mthca_dev *dev, काष्ठा ib_qp_cap *cap,
+			     काष्ठा mthca_pd *pd, काष्ठा mthca_qp *qp)
+अणु
+	पूर्णांक max_data_size = mthca_max_data_size(dev, qp, dev->limits.max_desc_sz);
 
-	/* Sanity check QP size before proceeding */
-	if (cap->max_send_wr  	 > dev->limits.max_wqes ||
+	/* Sanity check QP size beक्रमe proceeding */
+	अगर (cap->max_send_wr  	 > dev->limits.max_wqes ||
 	    cap->max_recv_wr  	 > dev->limits.max_wqes ||
 	    cap->max_send_sge 	 > dev->limits.max_sg   ||
 	    cap->max_recv_sge 	 > dev->limits.max_sg   ||
-	    cap->max_inline_data > mthca_max_inline_data(pd, max_data_size))
-		return -EINVAL;
+	    cap->max_अंतरभूत_data > mthca_max_अंतरभूत_data(pd, max_data_size))
+		वापस -EINVAL;
 
 	/*
 	 * For MLX transport we need 2 extra send gather entries:
-	 * one for the header and one for the checksum at the end
+	 * one क्रम the header and one क्रम the checksum at the end
 	 */
-	if (qp->transport == MLX && cap->max_send_sge + 2 > dev->limits.max_sg)
-		return -EINVAL;
+	अगर (qp->transport == MLX && cap->max_send_sge + 2 > dev->limits.max_sg)
+		वापस -EINVAL;
 
-	if (mthca_is_memfree(dev)) {
+	अगर (mthca_is_memमुक्त(dev)) अणु
 		qp->rq.max = cap->max_recv_wr ?
-			roundup_pow_of_two(cap->max_recv_wr) : 0;
+			roundup_घात_of_two(cap->max_recv_wr) : 0;
 		qp->sq.max = cap->max_send_wr ?
-			roundup_pow_of_two(cap->max_send_wr) : 0;
-	} else {
+			roundup_घात_of_two(cap->max_send_wr) : 0;
+	पूर्ण अन्यथा अणु
 		qp->rq.max = cap->max_recv_wr;
 		qp->sq.max = cap->max_send_wr;
-	}
+	पूर्ण
 
 	qp->rq.max_gs = cap->max_recv_sge;
-	qp->sq.max_gs = max_t(int, cap->max_send_sge,
-			      ALIGN(cap->max_inline_data + MTHCA_INLINE_HEADER_SIZE,
+	qp->sq.max_gs = max_t(पूर्णांक, cap->max_send_sge,
+			      ALIGN(cap->max_अंतरभूत_data + MTHCA_INLINE_HEADER_SIZE,
 				    MTHCA_INLINE_CHUNK_SIZE) /
-			      sizeof (struct mthca_data_seg));
+			      माप (काष्ठा mthca_data_seg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mthca_alloc_qp(struct mthca_dev *dev,
-		   struct mthca_pd *pd,
-		   struct mthca_cq *send_cq,
-		   struct mthca_cq *recv_cq,
-		   enum ib_qp_type type,
-		   enum ib_sig_type send_policy,
-		   struct ib_qp_cap *cap,
-		   struct mthca_qp *qp,
-		   struct ib_udata *udata)
-{
-	int err;
+पूर्णांक mthca_alloc_qp(काष्ठा mthca_dev *dev,
+		   काष्ठा mthca_pd *pd,
+		   काष्ठा mthca_cq *send_cq,
+		   काष्ठा mthca_cq *recv_cq,
+		   क्रमागत ib_qp_type type,
+		   क्रमागत ib_sig_type send_policy,
+		   काष्ठा ib_qp_cap *cap,
+		   काष्ठा mthca_qp *qp,
+		   काष्ठा ib_udata *udata)
+अणु
+	पूर्णांक err;
 
-	switch (type) {
-	case IB_QPT_RC: qp->transport = RC; break;
-	case IB_QPT_UC: qp->transport = UC; break;
-	case IB_QPT_UD: qp->transport = UD; break;
-	default: return -EINVAL;
-	}
+	चयन (type) अणु
+	हाल IB_QPT_RC: qp->transport = RC; अवरोध;
+	हाल IB_QPT_UC: qp->transport = UC; अवरोध;
+	हाल IB_QPT_UD: qp->transport = UD; अवरोध;
+	शेष: वापस -EINVAL;
+	पूर्ण
 
 	err = mthca_set_qp_size(dev, cap, pd, qp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	qp->qpn = mthca_alloc(&dev->qp_table.alloc);
-	if (qp->qpn == -1)
-		return -ENOMEM;
+	अगर (qp->qpn == -1)
+		वापस -ENOMEM;
 
-	/* initialize port to zero for error-catching. */
+	/* initialize port to zero क्रम error-catching. */
 	qp->port = 0;
 
 	err = mthca_alloc_qp_common(dev, pd, send_cq, recv_cq,
 				    send_policy, qp, udata);
-	if (err) {
-		mthca_free(&dev->qp_table.alloc, qp->qpn);
-		return err;
-	}
+	अगर (err) अणु
+		mthca_मुक्त(&dev->qp_table.alloc, qp->qpn);
+		वापस err;
+	पूर्ण
 
 	spin_lock_irq(&dev->qp_table.lock);
 	mthca_array_set(&dev->qp_table.qp,
 			qp->qpn & (dev->limits.num_qps - 1), qp);
 	spin_unlock_irq(&dev->qp_table.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mthca_lock_cqs(struct mthca_cq *send_cq, struct mthca_cq *recv_cq)
+अटल व्योम mthca_lock_cqs(काष्ठा mthca_cq *send_cq, काष्ठा mthca_cq *recv_cq)
 	__acquires(&send_cq->lock) __acquires(&recv_cq->lock)
-{
-	if (send_cq == recv_cq) {
+अणु
+	अगर (send_cq == recv_cq) अणु
 		spin_lock_irq(&send_cq->lock);
 		__acquire(&recv_cq->lock);
-	} else if (send_cq->cqn < recv_cq->cqn) {
+	पूर्ण अन्यथा अगर (send_cq->cqn < recv_cq->cqn) अणु
 		spin_lock_irq(&send_cq->lock);
 		spin_lock_nested(&recv_cq->lock, SINGLE_DEPTH_NESTING);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_lock_irq(&recv_cq->lock);
 		spin_lock_nested(&send_cq->lock, SINGLE_DEPTH_NESTING);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mthca_unlock_cqs(struct mthca_cq *send_cq, struct mthca_cq *recv_cq)
+अटल व्योम mthca_unlock_cqs(काष्ठा mthca_cq *send_cq, काष्ठा mthca_cq *recv_cq)
 	__releases(&send_cq->lock) __releases(&recv_cq->lock)
-{
-	if (send_cq == recv_cq) {
+अणु
+	अगर (send_cq == recv_cq) अणु
 		__release(&recv_cq->lock);
 		spin_unlock_irq(&send_cq->lock);
-	} else if (send_cq->cqn < recv_cq->cqn) {
+	पूर्ण अन्यथा अगर (send_cq->cqn < recv_cq->cqn) अणु
 		spin_unlock(&recv_cq->lock);
 		spin_unlock_irq(&send_cq->lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock(&send_cq->lock);
 		spin_unlock_irq(&recv_cq->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int mthca_alloc_sqp(struct mthca_dev *dev,
-		    struct mthca_pd *pd,
-		    struct mthca_cq *send_cq,
-		    struct mthca_cq *recv_cq,
-		    enum ib_sig_type send_policy,
-		    struct ib_qp_cap *cap,
-		    int qpn,
+पूर्णांक mthca_alloc_sqp(काष्ठा mthca_dev *dev,
+		    काष्ठा mthca_pd *pd,
+		    काष्ठा mthca_cq *send_cq,
+		    काष्ठा mthca_cq *recv_cq,
+		    क्रमागत ib_sig_type send_policy,
+		    काष्ठा ib_qp_cap *cap,
+		    पूर्णांक qpn,
 		    u32 port,
-		    struct mthca_qp *qp,
-		    struct ib_udata *udata)
-{
+		    काष्ठा mthca_qp *qp,
+		    काष्ठा ib_udata *udata)
+अणु
 	u32 mqpn = qpn * 2 + dev->qp_table.sqp_start + port - 1;
-	int err;
+	पूर्णांक err;
 
 	qp->transport = MLX;
 	err = mthca_set_qp_size(dev, cap, pd, qp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	qp->sqp->header_buf_size = qp->sq.max * MTHCA_UD_HEADER_SIZE;
 	qp->sqp->header_buf =
 		dma_alloc_coherent(&dev->pdev->dev, qp->sqp->header_buf_size,
 				   &qp->sqp->header_dma, GFP_KERNEL);
-	if (!qp->sqp->header_buf)
-		return -ENOMEM;
+	अगर (!qp->sqp->header_buf)
+		वापस -ENOMEM;
 
 	spin_lock_irq(&dev->qp_table.lock);
-	if (mthca_array_get(&dev->qp_table.qp, mqpn))
+	अगर (mthca_array_get(&dev->qp_table.qp, mqpn))
 		err = -EBUSY;
-	else
+	अन्यथा
 		mthca_array_set(&dev->qp_table.qp, mqpn, qp->sqp);
 	spin_unlock_irq(&dev->qp_table.lock);
 
-	if (err)
-		goto err_out;
+	अगर (err)
+		जाओ err_out;
 
 	qp->port      = port;
 	qp->qpn       = mqpn;
@@ -1405,16 +1406,16 @@ int mthca_alloc_sqp(struct mthca_dev *dev,
 
 	err = mthca_alloc_qp_common(dev, pd, send_cq, recv_cq,
 				    send_policy, qp, udata);
-	if (err)
-		goto err_out_free;
+	अगर (err)
+		जाओ err_out_मुक्त;
 
 	atomic_inc(&pd->sqp_count);
 
-	return 0;
+	वापस 0;
 
- err_out_free:
+ err_out_मुक्त:
 	/*
-	 * Lock CQs here, so that CQ polling code can do QP lookup
+	 * Lock CQs here, so that CQ polling code can करो QP lookup
 	 * without taking a lock.
 	 */
 	mthca_lock_cqs(send_cq, recv_cq);
@@ -1426,33 +1427,33 @@ int mthca_alloc_sqp(struct mthca_dev *dev,
 	mthca_unlock_cqs(send_cq, recv_cq);
 
 err_out:
-	dma_free_coherent(&dev->pdev->dev, qp->sqp->header_buf_size,
+	dma_मुक्त_coherent(&dev->pdev->dev, qp->sqp->header_buf_size,
 			  qp->sqp->header_buf, qp->sqp->header_dma);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int get_qp_refcount(struct mthca_dev *dev, struct mthca_qp *qp)
-{
-	int c;
+अटल अंतरभूत पूर्णांक get_qp_refcount(काष्ठा mthca_dev *dev, काष्ठा mthca_qp *qp)
+अणु
+	पूर्णांक c;
 
 	spin_lock_irq(&dev->qp_table.lock);
 	c = qp->refcount;
 	spin_unlock_irq(&dev->qp_table.lock);
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-void mthca_free_qp(struct mthca_dev *dev,
-		   struct mthca_qp *qp)
-{
-	struct mthca_cq *send_cq;
-	struct mthca_cq *recv_cq;
+व्योम mthca_मुक्त_qp(काष्ठा mthca_dev *dev,
+		   काष्ठा mthca_qp *qp)
+अणु
+	काष्ठा mthca_cq *send_cq;
+	काष्ठा mthca_cq *recv_cq;
 
 	send_cq = to_mcq(qp->ibqp.send_cq);
 	recv_cq = to_mcq(qp->ibqp.recv_cq);
 
 	/*
-	 * Lock CQs here, so that CQ polling code can do QP lookup
+	 * Lock CQs here, so that CQ polling code can करो QP lookup
 	 * without taking a lock.
 	 */
 	mthca_lock_cqs(send_cq, recv_cq);
@@ -1465,55 +1466,55 @@ void mthca_free_qp(struct mthca_dev *dev,
 
 	mthca_unlock_cqs(send_cq, recv_cq);
 
-	wait_event(qp->wait, !get_qp_refcount(dev, qp));
+	रुको_event(qp->रुको, !get_qp_refcount(dev, qp));
 
-	if (qp->state != IB_QPS_RESET)
+	अगर (qp->state != IB_QPS_RESET)
 		mthca_MODIFY_QP(dev, qp->state, IB_QPS_RESET, qp->qpn, 0,
-				NULL, 0);
+				शून्य, 0);
 
 	/*
 	 * If this is a userspace QP, the buffers, MR, CQs and so on
-	 * will be cleaned up in userspace, so all we have to do is
-	 * unref the mem-free tables and free the QPN in our table.
+	 * will be cleaned up in userspace, so all we have to करो is
+	 * unref the mem-मुक्त tables and मुक्त the QPN in our table.
 	 */
-	if (!qp->ibqp.uobject) {
+	अगर (!qp->ibqp.uobject) अणु
 		mthca_cq_clean(dev, recv_cq, qp->qpn,
-			       qp->ibqp.srq ? to_msrq(qp->ibqp.srq) : NULL);
-		if (send_cq != recv_cq)
-			mthca_cq_clean(dev, send_cq, qp->qpn, NULL);
+			       qp->ibqp.srq ? to_msrq(qp->ibqp.srq) : शून्य);
+		अगर (send_cq != recv_cq)
+			mthca_cq_clean(dev, send_cq, qp->qpn, शून्य);
 
-		mthca_free_memfree(dev, qp);
-		mthca_free_wqe_buf(dev, qp);
-	}
+		mthca_मुक्त_memमुक्त(dev, qp);
+		mthca_मुक्त_wqe_buf(dev, qp);
+	पूर्ण
 
-	mthca_unmap_memfree(dev, qp);
+	mthca_unmap_memमुक्त(dev, qp);
 
-	if (is_sqp(dev, qp)) {
+	अगर (is_sqp(dev, qp)) अणु
 		atomic_dec(&(to_mpd(qp->ibqp.pd)->sqp_count));
-		dma_free_coherent(&dev->pdev->dev, qp->sqp->header_buf_size,
+		dma_मुक्त_coherent(&dev->pdev->dev, qp->sqp->header_buf_size,
 				  qp->sqp->header_buf, qp->sqp->header_dma);
-	} else
-		mthca_free(&dev->qp_table.alloc, qp->qpn);
-}
+	पूर्ण अन्यथा
+		mthca_मुक्त(&dev->qp_table.alloc, qp->qpn);
+पूर्ण
 
-/* Create UD header for an MLX send and build a data segment for it */
-static int build_mlx_header(struct mthca_dev *dev, struct mthca_qp *qp, int ind,
-			    const struct ib_ud_wr *wr,
-			    struct mthca_mlx_seg *mlx,
-			    struct mthca_data_seg *data)
-{
-	struct mthca_sqp *sqp = qp->sqp;
-	int header_size;
-	int err;
+/* Create UD header क्रम an MLX send and build a data segment क्रम it */
+अटल पूर्णांक build_mlx_header(काष्ठा mthca_dev *dev, काष्ठा mthca_qp *qp, पूर्णांक ind,
+			    स्थिर काष्ठा ib_ud_wr *wr,
+			    काष्ठा mthca_mlx_seg *mlx,
+			    काष्ठा mthca_data_seg *data)
+अणु
+	काष्ठा mthca_sqp *sqp = qp->sqp;
+	पूर्णांक header_size;
+	पूर्णांक err;
 	u16 pkey;
 
 	ib_ud_header_init(256, /* assume a MAD */ 1, 0, 0,
 			  mthca_ah_grh_present(to_mah(wr->ah)), 0, 0, 0,
 			  &sqp->ud_header);
 
-	err = mthca_read_ah(dev, to_mah(wr->ah), &sqp->ud_header);
-	if (err)
-		return err;
+	err = mthca_पढ़ो_ah(dev, to_mah(wr->ah), &sqp->ud_header);
+	अगर (err)
+		वापस err;
 	mlx->flags &= ~cpu_to_be32(MTHCA_NEXT_SOLICIT | 1);
 	mlx->flags |= cpu_to_be32((!qp->ibqp.qp_num ? MTHCA_MLX_VL15 : 0) |
 				  (sqp->ud_header.lrh.destination_lid ==
@@ -1522,28 +1523,28 @@ static int build_mlx_header(struct mthca_dev *dev, struct mthca_qp *qp, int ind,
 	mlx->rlid = sqp->ud_header.lrh.destination_lid;
 	mlx->vcrc = 0;
 
-	switch (wr->wr.opcode) {
-	case IB_WR_SEND:
+	चयन (wr->wr.opcode) अणु
+	हाल IB_WR_SEND:
 		sqp->ud_header.bth.opcode = IB_OPCODE_UD_SEND_ONLY;
 		sqp->ud_header.immediate_present = 0;
-		break;
-	case IB_WR_SEND_WITH_IMM:
+		अवरोध;
+	हाल IB_WR_SEND_WITH_IMM:
 		sqp->ud_header.bth.opcode = IB_OPCODE_UD_SEND_ONLY_WITH_IMMEDIATE;
 		sqp->ud_header.immediate_present = 1;
 		sqp->ud_header.immediate_data = wr->wr.ex.imm_data;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	sqp->ud_header.lrh.virtual_lane    = !qp->ibqp.qp_num ? 15 : 0;
-	if (sqp->ud_header.lrh.destination_lid == IB_LID_PERMISSIVE)
+	sqp->ud_header.lrh.भव_lane    = !qp->ibqp.qp_num ? 15 : 0;
+	अगर (sqp->ud_header.lrh.destination_lid == IB_LID_PERMISSIVE)
 		sqp->ud_header.lrh.source_lid = IB_LID_PERMISSIVE;
 	sqp->ud_header.bth.solicited_event = !!(wr->wr.send_flags & IB_SEND_SOLICITED);
-	if (!qp->ibqp.qp_num)
+	अगर (!qp->ibqp.qp_num)
 		ib_get_cached_pkey(&dev->ib_dev, qp->port, sqp->pkey_index,
 				   &pkey);
-	else
+	अन्यथा
 		ib_get_cached_pkey(&dev->ib_dev, qp->port, wr->pkey_index,
 				   &pkey);
 	sqp->ud_header.bth.pkey = cpu_to_be16(pkey);
@@ -1558,92 +1559,92 @@ static int build_mlx_header(struct mthca_dev *dev, struct mthca_qp *qp, int ind,
 					ind * MTHCA_UD_HEADER_SIZE);
 
 	data->byte_count = cpu_to_be32(header_size);
-	data->lkey       = cpu_to_be32(to_mpd(qp->ibqp.pd)->ntmr.ibmr.lkey);
+	data->lkey       = cpu_to_be32(to_mpd(qp->ibqp.pd)->nपंचांगr.ibmr.lkey);
 	data->addr       = cpu_to_be64(sqp->header_dma +
 				       ind * MTHCA_UD_HEADER_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int mthca_wq_overflow(struct mthca_wq *wq, int nreq,
-				    struct ib_cq *ib_cq)
-{
-	unsigned cur;
-	struct mthca_cq *cq;
+अटल अंतरभूत पूर्णांक mthca_wq_overflow(काष्ठा mthca_wq *wq, पूर्णांक nreq,
+				    काष्ठा ib_cq *ib_cq)
+अणु
+	अचिन्हित cur;
+	काष्ठा mthca_cq *cq;
 
 	cur = wq->head - wq->tail;
-	if (likely(cur + nreq < wq->max))
-		return 0;
+	अगर (likely(cur + nreq < wq->max))
+		वापस 0;
 
 	cq = to_mcq(ib_cq);
 	spin_lock(&cq->lock);
 	cur = wq->head - wq->tail;
 	spin_unlock(&cq->lock);
 
-	return cur + nreq >= wq->max;
-}
+	वापस cur + nreq >= wq->max;
+पूर्ण
 
-static __always_inline void set_raddr_seg(struct mthca_raddr_seg *rseg,
+अटल __always_अंतरभूत व्योम set_raddr_seg(काष्ठा mthca_raddr_seg *rseg,
 					  u64 remote_addr, u32 rkey)
-{
+अणु
 	rseg->raddr    = cpu_to_be64(remote_addr);
 	rseg->rkey     = cpu_to_be32(rkey);
 	rseg->reserved = 0;
-}
+पूर्ण
 
-static __always_inline void set_atomic_seg(struct mthca_atomic_seg *aseg,
-					   const struct ib_atomic_wr *wr)
-{
-	if (wr->wr.opcode == IB_WR_ATOMIC_CMP_AND_SWP) {
+अटल __always_अंतरभूत व्योम set_atomic_seg(काष्ठा mthca_atomic_seg *aseg,
+					   स्थिर काष्ठा ib_atomic_wr *wr)
+अणु
+	अगर (wr->wr.opcode == IB_WR_ATOMIC_CMP_AND_SWP) अणु
 		aseg->swap_add = cpu_to_be64(wr->swap);
 		aseg->compare  = cpu_to_be64(wr->compare_add);
-	} else {
+	पूर्ण अन्यथा अणु
 		aseg->swap_add = cpu_to_be64(wr->compare_add);
 		aseg->compare  = 0;
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-static void set_tavor_ud_seg(struct mthca_tavor_ud_seg *useg,
-			     const struct ib_ud_wr *wr)
-{
+अटल व्योम set_tavor_ud_seg(काष्ठा mthca_tavor_ud_seg *useg,
+			     स्थिर काष्ठा ib_ud_wr *wr)
+अणु
 	useg->lkey    = cpu_to_be32(to_mah(wr->ah)->key);
 	useg->av_addr =	cpu_to_be64(to_mah(wr->ah)->avdma);
 	useg->dqpn    =	cpu_to_be32(wr->remote_qpn);
 	useg->qkey    =	cpu_to_be32(wr->remote_qkey);
 
-}
+पूर्ण
 
-static void set_arbel_ud_seg(struct mthca_arbel_ud_seg *useg,
-			     const struct ib_ud_wr *wr)
-{
-	memcpy(useg->av, to_mah(wr->ah)->av, MTHCA_AV_SIZE);
+अटल व्योम set_arbel_ud_seg(काष्ठा mthca_arbel_ud_seg *useg,
+			     स्थिर काष्ठा ib_ud_wr *wr)
+अणु
+	स_नकल(useg->av, to_mah(wr->ah)->av, MTHCA_AV_SIZE);
 	useg->dqpn = cpu_to_be32(wr->remote_qpn);
 	useg->qkey = cpu_to_be32(wr->remote_qkey);
-}
+पूर्ण
 
-int mthca_tavor_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
-			  const struct ib_send_wr **bad_wr)
-{
-	struct mthca_dev *dev = to_mdev(ibqp->device);
-	struct mthca_qp *qp = to_mqp(ibqp);
-	void *wqe;
-	void *prev_wqe;
-	unsigned long flags;
-	int err = 0;
-	int nreq;
-	int i;
-	int size;
+पूर्णांक mthca_tavor_post_send(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_send_wr *wr,
+			  स्थिर काष्ठा ib_send_wr **bad_wr)
+अणु
+	काष्ठा mthca_dev *dev = to_mdev(ibqp->device);
+	काष्ठा mthca_qp *qp = to_mqp(ibqp);
+	व्योम *wqe;
+	व्योम *prev_wqe;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
+	पूर्णांक nreq;
+	पूर्णांक i;
+	पूर्णांक size;
 	/*
-	 * f0 and size0 are only used if nreq != 0, and they will
-	 * always be initialized the first time through the main loop
-	 * before nreq is incremented.  So nreq cannot become non-zero
+	 * f0 and size0 are only used अगर nreq != 0, and they will
+	 * always be initialized the first समय through the मुख्य loop
+	 * beक्रमe nreq is incremented.  So nreq cannot become non-zero
 	 * without initializing f0 and size0, and they are in fact
 	 * never used uninitialized.
 	 */
-	int size0;
+	पूर्णांक size0;
 	u32 f0;
-	int ind;
+	पूर्णांक ind;
 	u8 op0 = 0;
 
 	spin_lock_irqsave(&qp->sq.lock, flags);
@@ -1652,195 +1653,195 @@ int mthca_tavor_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
 
 	ind = qp->sq.next_ind;
 
-	for (nreq = 0; wr; ++nreq, wr = wr->next) {
-		if (mthca_wq_overflow(&qp->sq, nreq, qp->ibqp.send_cq)) {
+	क्रम (nreq = 0; wr; ++nreq, wr = wr->next) अणु
+		अगर (mthca_wq_overflow(&qp->sq, nreq, qp->ibqp.send_cq)) अणु
 			mthca_err(dev, "SQ %06x full (%u head, %u tail,"
 					" %d max, %d nreq)\n", qp->qpn,
 					qp->sq.head, qp->sq.tail,
 					qp->sq.max, nreq);
 			err = -ENOMEM;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		wqe = get_send_wqe(qp, ind);
 		prev_wqe = qp->sq.last;
 		qp->sq.last = wqe;
 
-		((struct mthca_next_seg *) wqe)->nda_op = 0;
-		((struct mthca_next_seg *) wqe)->ee_nds = 0;
-		((struct mthca_next_seg *) wqe)->flags =
+		((काष्ठा mthca_next_seg *) wqe)->nda_op = 0;
+		((काष्ठा mthca_next_seg *) wqe)->ee_nds = 0;
+		((काष्ठा mthca_next_seg *) wqe)->flags =
 			((wr->send_flags & IB_SEND_SIGNALED) ?
 			 cpu_to_be32(MTHCA_NEXT_CQ_UPDATE) : 0) |
 			((wr->send_flags & IB_SEND_SOLICITED) ?
 			 cpu_to_be32(MTHCA_NEXT_SOLICIT) : 0)   |
 			cpu_to_be32(1);
-		if (wr->opcode == IB_WR_SEND_WITH_IMM ||
+		अगर (wr->opcode == IB_WR_SEND_WITH_IMM ||
 		    wr->opcode == IB_WR_RDMA_WRITE_WITH_IMM)
-			((struct mthca_next_seg *) wqe)->imm = wr->ex.imm_data;
+			((काष्ठा mthca_next_seg *) wqe)->imm = wr->ex.imm_data;
 
-		wqe += sizeof (struct mthca_next_seg);
-		size = sizeof (struct mthca_next_seg) / 16;
+		wqe += माप (काष्ठा mthca_next_seg);
+		size = माप (काष्ठा mthca_next_seg) / 16;
 
-		switch (qp->transport) {
-		case RC:
-			switch (wr->opcode) {
-			case IB_WR_ATOMIC_CMP_AND_SWP:
-			case IB_WR_ATOMIC_FETCH_AND_ADD:
+		चयन (qp->transport) अणु
+		हाल RC:
+			चयन (wr->opcode) अणु
+			हाल IB_WR_ATOMIC_CMP_AND_SWP:
+			हाल IB_WR_ATOMIC_FETCH_AND_ADD:
 				set_raddr_seg(wqe, atomic_wr(wr)->remote_addr,
 					      atomic_wr(wr)->rkey);
-				wqe += sizeof (struct mthca_raddr_seg);
+				wqe += माप (काष्ठा mthca_raddr_seg);
 
 				set_atomic_seg(wqe, atomic_wr(wr));
-				wqe += sizeof (struct mthca_atomic_seg);
-				size += (sizeof (struct mthca_raddr_seg) +
-					 sizeof (struct mthca_atomic_seg)) / 16;
-				break;
+				wqe += माप (काष्ठा mthca_atomic_seg);
+				size += (माप (काष्ठा mthca_raddr_seg) +
+					 माप (काष्ठा mthca_atomic_seg)) / 16;
+				अवरोध;
 
-			case IB_WR_RDMA_WRITE:
-			case IB_WR_RDMA_WRITE_WITH_IMM:
-			case IB_WR_RDMA_READ:
+			हाल IB_WR_RDMA_WRITE:
+			हाल IB_WR_RDMA_WRITE_WITH_IMM:
+			हाल IB_WR_RDMA_READ:
 				set_raddr_seg(wqe, rdma_wr(wr)->remote_addr,
 					      rdma_wr(wr)->rkey);
-				wqe  += sizeof (struct mthca_raddr_seg);
-				size += sizeof (struct mthca_raddr_seg) / 16;
-				break;
+				wqe  += माप (काष्ठा mthca_raddr_seg);
+				size += माप (काष्ठा mthca_raddr_seg) / 16;
+				अवरोध;
 
-			default:
-				/* No extra segments required for sends */
-				break;
-			}
+			शेष:
+				/* No extra segments required क्रम sends */
+				अवरोध;
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case UC:
-			switch (wr->opcode) {
-			case IB_WR_RDMA_WRITE:
-			case IB_WR_RDMA_WRITE_WITH_IMM:
+		हाल UC:
+			चयन (wr->opcode) अणु
+			हाल IB_WR_RDMA_WRITE:
+			हाल IB_WR_RDMA_WRITE_WITH_IMM:
 				set_raddr_seg(wqe, rdma_wr(wr)->remote_addr,
 					      rdma_wr(wr)->rkey);
-				wqe  += sizeof (struct mthca_raddr_seg);
-				size += sizeof (struct mthca_raddr_seg) / 16;
-				break;
+				wqe  += माप (काष्ठा mthca_raddr_seg);
+				size += माप (काष्ठा mthca_raddr_seg) / 16;
+				अवरोध;
 
-			default:
-				/* No extra segments required for sends */
-				break;
-			}
+			शेष:
+				/* No extra segments required क्रम sends */
+				अवरोध;
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case UD:
+		हाल UD:
 			set_tavor_ud_seg(wqe, ud_wr(wr));
-			wqe  += sizeof (struct mthca_tavor_ud_seg);
-			size += sizeof (struct mthca_tavor_ud_seg) / 16;
-			break;
+			wqe  += माप (काष्ठा mthca_tavor_ud_seg);
+			size += माप (काष्ठा mthca_tavor_ud_seg) / 16;
+			अवरोध;
 
-		case MLX:
+		हाल MLX:
 			err = build_mlx_header(
 				dev, qp, ind, ud_wr(wr),
-				wqe - sizeof(struct mthca_next_seg), wqe);
-			if (err) {
+				wqe - माप(काष्ठा mthca_next_seg), wqe);
+			अगर (err) अणु
 				*bad_wr = wr;
-				goto out;
-			}
-			wqe += sizeof (struct mthca_data_seg);
-			size += sizeof (struct mthca_data_seg) / 16;
-			break;
-		}
+				जाओ out;
+			पूर्ण
+			wqe += माप (काष्ठा mthca_data_seg);
+			size += माप (काष्ठा mthca_data_seg) / 16;
+			अवरोध;
+		पूर्ण
 
-		if (wr->num_sge > qp->sq.max_gs) {
+		अगर (wr->num_sge > qp->sq.max_gs) अणु
 			mthca_err(dev, "too many gathers\n");
 			err = -EINVAL;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < wr->num_sge; ++i) {
+		क्रम (i = 0; i < wr->num_sge; ++i) अणु
 			mthca_set_data_seg(wqe, wr->sg_list + i);
-			wqe  += sizeof (struct mthca_data_seg);
-			size += sizeof (struct mthca_data_seg) / 16;
-		}
+			wqe  += माप (काष्ठा mthca_data_seg);
+			size += माप (काष्ठा mthca_data_seg) / 16;
+		पूर्ण
 
-		/* Add one more inline data segment for ICRC */
-		if (qp->transport == MLX) {
-			((struct mthca_data_seg *) wqe)->byte_count =
+		/* Add one more अंतरभूत data segment क्रम ICRC */
+		अगर (qp->transport == MLX) अणु
+			((काष्ठा mthca_data_seg *) wqe)->byte_count =
 				cpu_to_be32((1 << 31) | 4);
 			((u32 *) wqe)[1] = 0;
-			wqe += sizeof (struct mthca_data_seg);
-			size += sizeof (struct mthca_data_seg) / 16;
-		}
+			wqe += माप (काष्ठा mthca_data_seg);
+			size += माप (काष्ठा mthca_data_seg) / 16;
+		पूर्ण
 
 		qp->wrid[ind + qp->rq.max] = wr->wr_id;
 
-		if (wr->opcode >= ARRAY_SIZE(mthca_opcode)) {
+		अगर (wr->opcode >= ARRAY_SIZE(mthca_opcode)) अणु
 			mthca_err(dev, "opcode invalid\n");
 			err = -EINVAL;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		((struct mthca_next_seg *) prev_wqe)->nda_op =
-			cpu_to_be32(((ind << qp->sq.wqe_shift) +
+		((काष्ठा mthca_next_seg *) prev_wqe)->nda_op =
+			cpu_to_be32(((ind << qp->sq.wqe_shअगरt) +
 				     qp->send_wqe_offset) |
 				    mthca_opcode[wr->opcode]);
 		wmb();
-		((struct mthca_next_seg *) prev_wqe)->ee_nds =
+		((काष्ठा mthca_next_seg *) prev_wqe)->ee_nds =
 			cpu_to_be32((nreq ? 0 : MTHCA_NEXT_DBD) | size |
 				    ((wr->send_flags & IB_SEND_FENCE) ?
 				    MTHCA_NEXT_FENCE : 0));
 
-		if (!nreq) {
+		अगर (!nreq) अणु
 			size0 = size;
 			op0   = mthca_opcode[wr->opcode];
 			f0    = wr->send_flags & IB_SEND_FENCE ?
 				MTHCA_SEND_DOORBELL_FENCE : 0;
-		}
+		पूर्ण
 
 		++ind;
-		if (unlikely(ind >= qp->sq.max))
+		अगर (unlikely(ind >= qp->sq.max))
 			ind -= qp->sq.max;
-	}
+	पूर्ण
 
 out:
-	if (likely(nreq)) {
+	अगर (likely(nreq)) अणु
 		wmb();
 
-		mthca_write64(((qp->sq.next_ind << qp->sq.wqe_shift) +
+		mthca_ग_लिखो64(((qp->sq.next_ind << qp->sq.wqe_shअगरt) +
 			       qp->send_wqe_offset) | f0 | op0,
 			      (qp->qpn << 8) | size0,
 			      dev->kar + MTHCA_SEND_DOORBELL,
-			      MTHCA_GET_DOORBELL_LOCK(&dev->doorbell_lock));
-	}
+			      MTHCA_GET_DOORBELL_LOCK(&dev->करोorbell_lock));
+	पूर्ण
 
 	qp->sq.next_ind = ind;
 	qp->sq.head    += nreq;
 
 	spin_unlock_irqrestore(&qp->sq.lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mthca_tavor_post_receive(struct ib_qp *ibqp, const struct ib_recv_wr *wr,
-			     const struct ib_recv_wr **bad_wr)
-{
-	struct mthca_dev *dev = to_mdev(ibqp->device);
-	struct mthca_qp *qp = to_mqp(ibqp);
-	unsigned long flags;
-	int err = 0;
-	int nreq;
-	int i;
-	int size;
+पूर्णांक mthca_tavor_post_receive(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_recv_wr *wr,
+			     स्थिर काष्ठा ib_recv_wr **bad_wr)
+अणु
+	काष्ठा mthca_dev *dev = to_mdev(ibqp->device);
+	काष्ठा mthca_qp *qp = to_mqp(ibqp);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
+	पूर्णांक nreq;
+	पूर्णांक i;
+	पूर्णांक size;
 	/*
-	 * size0 is only used if nreq != 0, and it will always be
-	 * initialized the first time through the main loop before
+	 * size0 is only used अगर nreq != 0, and it will always be
+	 * initialized the first समय through the मुख्य loop beक्रमe
 	 * nreq is incremented.  So nreq cannot become non-zero
 	 * without initializing size0, and it is in fact never used
 	 * uninitialized.
 	 */
-	int size0;
-	int ind;
-	void *wqe;
-	void *prev_wqe;
+	पूर्णांक size0;
+	पूर्णांक ind;
+	व्योम *wqe;
+	व्योम *prev_wqe;
 
 	spin_lock_irqsave(&qp->rq.lock, flags);
 
@@ -1848,106 +1849,106 @@ int mthca_tavor_post_receive(struct ib_qp *ibqp, const struct ib_recv_wr *wr,
 
 	ind = qp->rq.next_ind;
 
-	for (nreq = 0; wr; wr = wr->next) {
-		if (mthca_wq_overflow(&qp->rq, nreq, qp->ibqp.recv_cq)) {
+	क्रम (nreq = 0; wr; wr = wr->next) अणु
+		अगर (mthca_wq_overflow(&qp->rq, nreq, qp->ibqp.recv_cq)) अणु
 			mthca_err(dev, "RQ %06x full (%u head, %u tail,"
 					" %d max, %d nreq)\n", qp->qpn,
 					qp->rq.head, qp->rq.tail,
 					qp->rq.max, nreq);
 			err = -ENOMEM;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		wqe = get_recv_wqe(qp, ind);
 		prev_wqe = qp->rq.last;
 		qp->rq.last = wqe;
 
-		((struct mthca_next_seg *) wqe)->ee_nds =
+		((काष्ठा mthca_next_seg *) wqe)->ee_nds =
 			cpu_to_be32(MTHCA_NEXT_DBD);
-		((struct mthca_next_seg *) wqe)->flags = 0;
+		((काष्ठा mthca_next_seg *) wqe)->flags = 0;
 
-		wqe += sizeof (struct mthca_next_seg);
-		size = sizeof (struct mthca_next_seg) / 16;
+		wqe += माप (काष्ठा mthca_next_seg);
+		size = माप (काष्ठा mthca_next_seg) / 16;
 
-		if (unlikely(wr->num_sge > qp->rq.max_gs)) {
+		अगर (unlikely(wr->num_sge > qp->rq.max_gs)) अणु
 			err = -EINVAL;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < wr->num_sge; ++i) {
+		क्रम (i = 0; i < wr->num_sge; ++i) अणु
 			mthca_set_data_seg(wqe, wr->sg_list + i);
-			wqe  += sizeof (struct mthca_data_seg);
-			size += sizeof (struct mthca_data_seg) / 16;
-		}
+			wqe  += माप (काष्ठा mthca_data_seg);
+			size += माप (काष्ठा mthca_data_seg) / 16;
+		पूर्ण
 
 		qp->wrid[ind] = wr->wr_id;
 
-		((struct mthca_next_seg *) prev_wqe)->ee_nds =
+		((काष्ठा mthca_next_seg *) prev_wqe)->ee_nds =
 			cpu_to_be32(MTHCA_NEXT_DBD | size);
 
-		if (!nreq)
+		अगर (!nreq)
 			size0 = size;
 
 		++ind;
-		if (unlikely(ind >= qp->rq.max))
+		अगर (unlikely(ind >= qp->rq.max))
 			ind -= qp->rq.max;
 
 		++nreq;
-		if (unlikely(nreq == MTHCA_TAVOR_MAX_WQES_PER_RECV_DB)) {
+		अगर (unlikely(nreq == MTHCA_TAVOR_MAX_WQES_PER_RECV_DB)) अणु
 			nreq = 0;
 
 			wmb();
 
-			mthca_write64((qp->rq.next_ind << qp->rq.wqe_shift) | size0,
+			mthca_ग_लिखो64((qp->rq.next_ind << qp->rq.wqe_shअगरt) | size0,
 				      qp->qpn << 8, dev->kar + MTHCA_RECEIVE_DOORBELL,
-				      MTHCA_GET_DOORBELL_LOCK(&dev->doorbell_lock));
+				      MTHCA_GET_DOORBELL_LOCK(&dev->करोorbell_lock));
 
 			qp->rq.next_ind = ind;
 			qp->rq.head += MTHCA_TAVOR_MAX_WQES_PER_RECV_DB;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	if (likely(nreq)) {
+	अगर (likely(nreq)) अणु
 		wmb();
 
-		mthca_write64((qp->rq.next_ind << qp->rq.wqe_shift) | size0,
+		mthca_ग_लिखो64((qp->rq.next_ind << qp->rq.wqe_shअगरt) | size0,
 			      qp->qpn << 8 | nreq, dev->kar + MTHCA_RECEIVE_DOORBELL,
-			      MTHCA_GET_DOORBELL_LOCK(&dev->doorbell_lock));
-	}
+			      MTHCA_GET_DOORBELL_LOCK(&dev->करोorbell_lock));
+	पूर्ण
 
 	qp->rq.next_ind = ind;
 	qp->rq.head    += nreq;
 
 	spin_unlock_irqrestore(&qp->rq.lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mthca_arbel_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
-			  const struct ib_send_wr **bad_wr)
-{
-	struct mthca_dev *dev = to_mdev(ibqp->device);
-	struct mthca_qp *qp = to_mqp(ibqp);
+पूर्णांक mthca_arbel_post_send(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_send_wr *wr,
+			  स्थिर काष्ठा ib_send_wr **bad_wr)
+अणु
+	काष्ठा mthca_dev *dev = to_mdev(ibqp->device);
+	काष्ठा mthca_qp *qp = to_mqp(ibqp);
 	u32 dbhi;
-	void *wqe;
-	void *prev_wqe;
-	unsigned long flags;
-	int err = 0;
-	int nreq;
-	int i;
-	int size;
+	व्योम *wqe;
+	व्योम *prev_wqe;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
+	पूर्णांक nreq;
+	पूर्णांक i;
+	पूर्णांक size;
 	/*
-	 * f0 and size0 are only used if nreq != 0, and they will
-	 * always be initialized the first time through the main loop
-	 * before nreq is incremented.  So nreq cannot become non-zero
+	 * f0 and size0 are only used अगर nreq != 0, and they will
+	 * always be initialized the first समय through the मुख्य loop
+	 * beक्रमe nreq is incremented.  So nreq cannot become non-zero
 	 * without initializing f0 and size0, and they are in fact
 	 * never used uninitialized.
 	 */
-	int size0;
+	पूर्णांक size0;
 	u32 f0;
-	int ind;
+	पूर्णांक ind;
 	u8 op0 = 0;
 
 	spin_lock_irqsave(&qp->sq.lock, flags);
@@ -1956,8 +1957,8 @@ int mthca_arbel_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
 
 	ind = qp->sq.head & (qp->sq.max - 1);
 
-	for (nreq = 0; wr; ++nreq, wr = wr->next) {
-		if (unlikely(nreq == MTHCA_ARBEL_MAX_WQES_PER_SEND_DB)) {
+	क्रम (nreq = 0; wr; ++nreq, wr = wr->next) अणु
+		अगर (unlikely(nreq == MTHCA_ARBEL_MAX_WQES_PER_SEND_DB)) अणु
 			nreq = 0;
 
 			dbhi = (MTHCA_ARBEL_MAX_WQES_PER_SEND_DB << 24) |
@@ -1966,38 +1967,38 @@ int mthca_arbel_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
 			qp->sq.head += MTHCA_ARBEL_MAX_WQES_PER_SEND_DB;
 
 			/*
-			 * Make sure that descriptors are written before
-			 * doorbell record.
+			 * Make sure that descriptors are written beक्रमe
+			 * करोorbell record.
 			 */
 			wmb();
 			*qp->sq.db = cpu_to_be32(qp->sq.head & 0xffff);
 
 			/*
-			 * Make sure doorbell record is written before we
-			 * write MMIO send doorbell.
+			 * Make sure करोorbell record is written beक्रमe we
+			 * ग_लिखो MMIO send करोorbell.
 			 */
 			wmb();
 
-			mthca_write64(dbhi, (qp->qpn << 8) | size0,
+			mthca_ग_लिखो64(dbhi, (qp->qpn << 8) | size0,
 				      dev->kar + MTHCA_SEND_DOORBELL,
-				      MTHCA_GET_DOORBELL_LOCK(&dev->doorbell_lock));
-		}
+				      MTHCA_GET_DOORBELL_LOCK(&dev->करोorbell_lock));
+		पूर्ण
 
-		if (mthca_wq_overflow(&qp->sq, nreq, qp->ibqp.send_cq)) {
+		अगर (mthca_wq_overflow(&qp->sq, nreq, qp->ibqp.send_cq)) अणु
 			mthca_err(dev, "SQ %06x full (%u head, %u tail,"
 					" %d max, %d nreq)\n", qp->qpn,
 					qp->sq.head, qp->sq.tail,
 					qp->sq.max, nreq);
 			err = -ENOMEM;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		wqe = get_send_wqe(qp, ind);
 		prev_wqe = qp->sq.last;
 		qp->sq.last = wqe;
 
-		((struct mthca_next_seg *) wqe)->flags =
+		((काष्ठा mthca_next_seg *) wqe)->flags =
 			((wr->send_flags & IB_SEND_SIGNALED) ?
 			 cpu_to_be32(MTHCA_NEXT_CQ_UPDATE) : 0) |
 			((wr->send_flags & IB_SEND_SOLICITED) ?
@@ -2005,171 +2006,171 @@ int mthca_arbel_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
 			((wr->send_flags & IB_SEND_IP_CSUM) ?
 			 cpu_to_be32(MTHCA_NEXT_IP_CSUM | MTHCA_NEXT_TCP_UDP_CSUM) : 0) |
 			cpu_to_be32(1);
-		if (wr->opcode == IB_WR_SEND_WITH_IMM ||
+		अगर (wr->opcode == IB_WR_SEND_WITH_IMM ||
 		    wr->opcode == IB_WR_RDMA_WRITE_WITH_IMM)
-			((struct mthca_next_seg *) wqe)->imm = wr->ex.imm_data;
+			((काष्ठा mthca_next_seg *) wqe)->imm = wr->ex.imm_data;
 
-		wqe += sizeof (struct mthca_next_seg);
-		size = sizeof (struct mthca_next_seg) / 16;
+		wqe += माप (काष्ठा mthca_next_seg);
+		size = माप (काष्ठा mthca_next_seg) / 16;
 
-		switch (qp->transport) {
-		case RC:
-			switch (wr->opcode) {
-			case IB_WR_ATOMIC_CMP_AND_SWP:
-			case IB_WR_ATOMIC_FETCH_AND_ADD:
+		चयन (qp->transport) अणु
+		हाल RC:
+			चयन (wr->opcode) अणु
+			हाल IB_WR_ATOMIC_CMP_AND_SWP:
+			हाल IB_WR_ATOMIC_FETCH_AND_ADD:
 				set_raddr_seg(wqe, atomic_wr(wr)->remote_addr,
 					      atomic_wr(wr)->rkey);
-				wqe += sizeof (struct mthca_raddr_seg);
+				wqe += माप (काष्ठा mthca_raddr_seg);
 
 				set_atomic_seg(wqe, atomic_wr(wr));
-				wqe  += sizeof (struct mthca_atomic_seg);
-				size += (sizeof (struct mthca_raddr_seg) +
-					 sizeof (struct mthca_atomic_seg)) / 16;
-				break;
+				wqe  += माप (काष्ठा mthca_atomic_seg);
+				size += (माप (काष्ठा mthca_raddr_seg) +
+					 माप (काष्ठा mthca_atomic_seg)) / 16;
+				अवरोध;
 
-			case IB_WR_RDMA_READ:
-			case IB_WR_RDMA_WRITE:
-			case IB_WR_RDMA_WRITE_WITH_IMM:
+			हाल IB_WR_RDMA_READ:
+			हाल IB_WR_RDMA_WRITE:
+			हाल IB_WR_RDMA_WRITE_WITH_IMM:
 				set_raddr_seg(wqe, rdma_wr(wr)->remote_addr,
 					      rdma_wr(wr)->rkey);
-				wqe  += sizeof (struct mthca_raddr_seg);
-				size += sizeof (struct mthca_raddr_seg) / 16;
-				break;
+				wqe  += माप (काष्ठा mthca_raddr_seg);
+				size += माप (काष्ठा mthca_raddr_seg) / 16;
+				अवरोध;
 
-			default:
-				/* No extra segments required for sends */
-				break;
-			}
+			शेष:
+				/* No extra segments required क्रम sends */
+				अवरोध;
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case UC:
-			switch (wr->opcode) {
-			case IB_WR_RDMA_WRITE:
-			case IB_WR_RDMA_WRITE_WITH_IMM:
+		हाल UC:
+			चयन (wr->opcode) अणु
+			हाल IB_WR_RDMA_WRITE:
+			हाल IB_WR_RDMA_WRITE_WITH_IMM:
 				set_raddr_seg(wqe, rdma_wr(wr)->remote_addr,
 					      rdma_wr(wr)->rkey);
-				wqe  += sizeof (struct mthca_raddr_seg);
-				size += sizeof (struct mthca_raddr_seg) / 16;
-				break;
+				wqe  += माप (काष्ठा mthca_raddr_seg);
+				size += माप (काष्ठा mthca_raddr_seg) / 16;
+				अवरोध;
 
-			default:
-				/* No extra segments required for sends */
-				break;
-			}
+			शेष:
+				/* No extra segments required क्रम sends */
+				अवरोध;
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case UD:
+		हाल UD:
 			set_arbel_ud_seg(wqe, ud_wr(wr));
-			wqe  += sizeof (struct mthca_arbel_ud_seg);
-			size += sizeof (struct mthca_arbel_ud_seg) / 16;
-			break;
+			wqe  += माप (काष्ठा mthca_arbel_ud_seg);
+			size += माप (काष्ठा mthca_arbel_ud_seg) / 16;
+			अवरोध;
 
-		case MLX:
+		हाल MLX:
 			err = build_mlx_header(
 				dev, qp, ind, ud_wr(wr),
-				wqe - sizeof(struct mthca_next_seg), wqe);
-			if (err) {
+				wqe - माप(काष्ठा mthca_next_seg), wqe);
+			अगर (err) अणु
 				*bad_wr = wr;
-				goto out;
-			}
-			wqe += sizeof (struct mthca_data_seg);
-			size += sizeof (struct mthca_data_seg) / 16;
-			break;
-		}
+				जाओ out;
+			पूर्ण
+			wqe += माप (काष्ठा mthca_data_seg);
+			size += माप (काष्ठा mthca_data_seg) / 16;
+			अवरोध;
+		पूर्ण
 
-		if (wr->num_sge > qp->sq.max_gs) {
+		अगर (wr->num_sge > qp->sq.max_gs) अणु
 			mthca_err(dev, "too many gathers\n");
 			err = -EINVAL;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < wr->num_sge; ++i) {
+		क्रम (i = 0; i < wr->num_sge; ++i) अणु
 			mthca_set_data_seg(wqe, wr->sg_list + i);
-			wqe  += sizeof (struct mthca_data_seg);
-			size += sizeof (struct mthca_data_seg) / 16;
-		}
+			wqe  += माप (काष्ठा mthca_data_seg);
+			size += माप (काष्ठा mthca_data_seg) / 16;
+		पूर्ण
 
-		/* Add one more inline data segment for ICRC */
-		if (qp->transport == MLX) {
-			((struct mthca_data_seg *) wqe)->byte_count =
+		/* Add one more अंतरभूत data segment क्रम ICRC */
+		अगर (qp->transport == MLX) अणु
+			((काष्ठा mthca_data_seg *) wqe)->byte_count =
 				cpu_to_be32((1 << 31) | 4);
 			((u32 *) wqe)[1] = 0;
-			wqe += sizeof (struct mthca_data_seg);
-			size += sizeof (struct mthca_data_seg) / 16;
-		}
+			wqe += माप (काष्ठा mthca_data_seg);
+			size += माप (काष्ठा mthca_data_seg) / 16;
+		पूर्ण
 
 		qp->wrid[ind + qp->rq.max] = wr->wr_id;
 
-		if (wr->opcode >= ARRAY_SIZE(mthca_opcode)) {
+		अगर (wr->opcode >= ARRAY_SIZE(mthca_opcode)) अणु
 			mthca_err(dev, "opcode invalid\n");
 			err = -EINVAL;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		((struct mthca_next_seg *) prev_wqe)->nda_op =
-			cpu_to_be32(((ind << qp->sq.wqe_shift) +
+		((काष्ठा mthca_next_seg *) prev_wqe)->nda_op =
+			cpu_to_be32(((ind << qp->sq.wqe_shअगरt) +
 				     qp->send_wqe_offset) |
 				    mthca_opcode[wr->opcode]);
 		wmb();
-		((struct mthca_next_seg *) prev_wqe)->ee_nds =
+		((काष्ठा mthca_next_seg *) prev_wqe)->ee_nds =
 			cpu_to_be32(MTHCA_NEXT_DBD | size |
 				    ((wr->send_flags & IB_SEND_FENCE) ?
 				     MTHCA_NEXT_FENCE : 0));
 
-		if (!nreq) {
+		अगर (!nreq) अणु
 			size0 = size;
 			op0   = mthca_opcode[wr->opcode];
 			f0    = wr->send_flags & IB_SEND_FENCE ?
 				MTHCA_SEND_DOORBELL_FENCE : 0;
-		}
+		पूर्ण
 
 		++ind;
-		if (unlikely(ind >= qp->sq.max))
+		अगर (unlikely(ind >= qp->sq.max))
 			ind -= qp->sq.max;
-	}
+	पूर्ण
 
 out:
-	if (likely(nreq)) {
+	अगर (likely(nreq)) अणु
 		dbhi = (nreq << 24) | ((qp->sq.head & 0xffff) << 8) | f0 | op0;
 
 		qp->sq.head += nreq;
 
 		/*
-		 * Make sure that descriptors are written before
-		 * doorbell record.
+		 * Make sure that descriptors are written beक्रमe
+		 * करोorbell record.
 		 */
 		wmb();
 		*qp->sq.db = cpu_to_be32(qp->sq.head & 0xffff);
 
 		/*
-		 * Make sure doorbell record is written before we
-		 * write MMIO send doorbell.
+		 * Make sure करोorbell record is written beक्रमe we
+		 * ग_लिखो MMIO send करोorbell.
 		 */
 		wmb();
 
-		mthca_write64(dbhi, (qp->qpn << 8) | size0, dev->kar + MTHCA_SEND_DOORBELL,
-			      MTHCA_GET_DOORBELL_LOCK(&dev->doorbell_lock));
-	}
+		mthca_ग_लिखो64(dbhi, (qp->qpn << 8) | size0, dev->kar + MTHCA_SEND_DOORBELL,
+			      MTHCA_GET_DOORBELL_LOCK(&dev->करोorbell_lock));
+	पूर्ण
 
 	spin_unlock_irqrestore(&qp->sq.lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mthca_arbel_post_receive(struct ib_qp *ibqp, const struct ib_recv_wr *wr,
-			     const struct ib_recv_wr **bad_wr)
-{
-	struct mthca_dev *dev = to_mdev(ibqp->device);
-	struct mthca_qp *qp = to_mqp(ibqp);
-	unsigned long flags;
-	int err = 0;
-	int nreq;
-	int ind;
-	int i;
-	void *wqe;
+पूर्णांक mthca_arbel_post_receive(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_recv_wr *wr,
+			     स्थिर काष्ठा ib_recv_wr **bad_wr)
+अणु
+	काष्ठा mthca_dev *dev = to_mdev(ibqp->device);
+	काष्ठा mthca_qp *qp = to_mqp(ibqp);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
+	पूर्णांक nreq;
+	पूर्णांक ind;
+	पूर्णांक i;
+	व्योम *wqe;
 
 	spin_lock_irqsave(&qp->rq.lock, flags);
 
@@ -2177,96 +2178,96 @@ int mthca_arbel_post_receive(struct ib_qp *ibqp, const struct ib_recv_wr *wr,
 
 	ind = qp->rq.head & (qp->rq.max - 1);
 
-	for (nreq = 0; wr; ++nreq, wr = wr->next) {
-		if (mthca_wq_overflow(&qp->rq, nreq, qp->ibqp.recv_cq)) {
+	क्रम (nreq = 0; wr; ++nreq, wr = wr->next) अणु
+		अगर (mthca_wq_overflow(&qp->rq, nreq, qp->ibqp.recv_cq)) अणु
 			mthca_err(dev, "RQ %06x full (%u head, %u tail,"
 					" %d max, %d nreq)\n", qp->qpn,
 					qp->rq.head, qp->rq.tail,
 					qp->rq.max, nreq);
 			err = -ENOMEM;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		wqe = get_recv_wqe(qp, ind);
 
-		((struct mthca_next_seg *) wqe)->flags = 0;
+		((काष्ठा mthca_next_seg *) wqe)->flags = 0;
 
-		wqe += sizeof (struct mthca_next_seg);
+		wqe += माप (काष्ठा mthca_next_seg);
 
-		if (unlikely(wr->num_sge > qp->rq.max_gs)) {
+		अगर (unlikely(wr->num_sge > qp->rq.max_gs)) अणु
 			err = -EINVAL;
 			*bad_wr = wr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < wr->num_sge; ++i) {
+		क्रम (i = 0; i < wr->num_sge; ++i) अणु
 			mthca_set_data_seg(wqe, wr->sg_list + i);
-			wqe += sizeof (struct mthca_data_seg);
-		}
+			wqe += माप (काष्ठा mthca_data_seg);
+		पूर्ण
 
-		if (i < qp->rq.max_gs)
+		अगर (i < qp->rq.max_gs)
 			mthca_set_data_seg_inval(wqe);
 
 		qp->wrid[ind] = wr->wr_id;
 
 		++ind;
-		if (unlikely(ind >= qp->rq.max))
+		अगर (unlikely(ind >= qp->rq.max))
 			ind -= qp->rq.max;
-	}
+	पूर्ण
 out:
-	if (likely(nreq)) {
+	अगर (likely(nreq)) अणु
 		qp->rq.head += nreq;
 
 		/*
-		 * Make sure that descriptors are written before
-		 * doorbell record.
+		 * Make sure that descriptors are written beक्रमe
+		 * करोorbell record.
 		 */
 		wmb();
 		*qp->rq.db = cpu_to_be32(qp->rq.head & 0xffff);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&qp->rq.lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mthca_free_err_wqe(struct mthca_dev *dev, struct mthca_qp *qp, int is_send,
-			int index, int *dbd, __be32 *new_wqe)
-{
-	struct mthca_next_seg *next;
+व्योम mthca_मुक्त_err_wqe(काष्ठा mthca_dev *dev, काष्ठा mthca_qp *qp, पूर्णांक is_send,
+			पूर्णांक index, पूर्णांक *dbd, __be32 *new_wqe)
+अणु
+	काष्ठा mthca_next_seg *next;
 
 	/*
 	 * For SRQs, all receive WQEs generate a CQE, so we're always
-	 * at the end of the doorbell chain.
+	 * at the end of the करोorbell chain.
 	 */
-	if (qp->ibqp.srq && !is_send) {
+	अगर (qp->ibqp.srq && !is_send) अणु
 		*new_wqe = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (is_send)
+	अगर (is_send)
 		next = get_send_wqe(qp, index);
-	else
+	अन्यथा
 		next = get_recv_wqe(qp, index);
 
 	*dbd = !!(next->ee_nds & cpu_to_be32(MTHCA_NEXT_DBD));
-	if (next->ee_nds & cpu_to_be32(0x3f))
+	अगर (next->ee_nds & cpu_to_be32(0x3f))
 		*new_wqe = (next->nda_op & cpu_to_be32(~0x3f)) |
 			(next->ee_nds & cpu_to_be32(0x3f));
-	else
+	अन्यथा
 		*new_wqe = 0;
-}
+पूर्ण
 
-int mthca_init_qp_table(struct mthca_dev *dev)
-{
-	int err;
-	int i;
+पूर्णांक mthca_init_qp_table(काष्ठा mthca_dev *dev)
+अणु
+	पूर्णांक err;
+	पूर्णांक i;
 
 	spin_lock_init(&dev->qp_table.lock);
 
 	/*
-	 * We reserve 2 extra QPs per port for the special QPs.  The
-	 * special QP for port 1 has to be even, so round up.
+	 * We reserve 2 extra QPs per port क्रम the special QPs.  The
+	 * special QP क्रम port 1 has to be even, so round up.
 	 */
 	dev->qp_table.sqp_start = (dev->limits.reserved_qps + 1) & ~1UL;
 	err = mthca_alloc_init(&dev->qp_table.alloc,
@@ -2274,44 +2275,44 @@ int mthca_init_qp_table(struct mthca_dev *dev)
 			       (1 << 24) - 1,
 			       dev->qp_table.sqp_start +
 			       MTHCA_MAX_PORTS * 2);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = mthca_array_init(&dev->qp_table.qp,
 			       dev->limits.num_qps);
-	if (err) {
+	अगर (err) अणु
 		mthca_alloc_cleanup(&dev->qp_table.alloc);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	for (i = 0; i < 2; ++i) {
+	क्रम (i = 0; i < 2; ++i) अणु
 		err = mthca_CONF_SPECIAL_QP(dev, i ? IB_QPT_GSI : IB_QPT_SMI,
 				    dev->qp_table.sqp_start + i * 2);
-		if (err) {
+		अगर (err) अणु
 			mthca_warn(dev, "CONF_SPECIAL_QP returned "
 				   "%d, aborting.\n", err);
-			goto err_out;
-		}
-	}
-	return 0;
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
+	वापस 0;
 
  err_out:
-	for (i = 0; i < 2; ++i)
+	क्रम (i = 0; i < 2; ++i)
 		mthca_CONF_SPECIAL_QP(dev, i, 0);
 
 	mthca_array_cleanup(&dev->qp_table.qp, dev->limits.num_qps);
 	mthca_alloc_cleanup(&dev->qp_table.alloc);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mthca_cleanup_qp_table(struct mthca_dev *dev)
-{
-	int i;
+व्योम mthca_cleanup_qp_table(काष्ठा mthca_dev *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 2; ++i)
+	क्रम (i = 0; i < 2; ++i)
 		mthca_CONF_SPECIAL_QP(dev, i, 0);
 
 	mthca_array_cleanup(&dev->qp_table.qp, dev->limits.num_qps);
 	mthca_alloc_cleanup(&dev->qp_table.alloc);
-}
+पूर्ण

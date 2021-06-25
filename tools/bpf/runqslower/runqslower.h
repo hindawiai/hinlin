@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
-#ifndef __RUNQSLOWER_H
-#define __RUNQSLOWER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause) */
+#अगर_अघोषित __RUNQSLOWER_H
+#घोषणा __RUNQSLOWER_H
 
-#define TASK_COMM_LEN 16
+#घोषणा TASK_COMM_LEN 16
 
-struct event {
-	char task[TASK_COMM_LEN];
+काष्ठा event अणु
+	अक्षर task[TASK_COMM_LEN];
 	__u64 delta_us;
 	pid_t pid;
-};
+पूर्ण;
 
-#endif /* __RUNQSLOWER_H */
+#पूर्ण_अगर /* __RUNQSLOWER_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Machine check injection support.
  * Copyright 2008 Intel Corporation.
@@ -8,67 +9,67 @@
  * Ying Huang
  *
  * The AMD part (from mce_amd_inj.c): a simple MCE injection facility
- * for testing different aspects of the RAS code. This driver should be
- * built as module so that it can be loaded on production kernels for
+ * क्रम testing dअगरferent aspects of the RAS code. This driver should be
+ * built as module so that it can be loaded on production kernels क्रम
  * testing purposes.
  *
  * Copyright (c) 2010-17:  Borislav Petkov <bp@alien8.de>
  *			   Advanced Micro Devices Inc.
  */
 
-#include <linux/cpu.h>
-#include <linux/debugfs.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/notifier.h>
-#include <linux/pci.h>
-#include <linux/uaccess.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/amd_nb.h>
-#include <asm/apic.h>
-#include <asm/irq_vectors.h>
-#include <asm/mce.h>
-#include <asm/nmi.h>
-#include <asm/smp.h>
+#समावेश <यंत्र/amd_nb.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/irq_vectors.h>
+#समावेश <यंत्र/mce.h>
+#समावेश <यंत्र/nmi.h>
+#समावेश <यंत्र/smp.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
 /*
  * Collect all the MCi_XXX settings
  */
-static struct mce i_mce;
-static struct dentry *dfs_inj;
+अटल काष्ठा mce i_mce;
+अटल काष्ठा dentry *dfs_inj;
 
-#define MAX_FLAG_OPT_SIZE	4
-#define NBCFG			0x44
+#घोषणा MAX_FLAG_OPT_SIZE	4
+#घोषणा NBCFG			0x44
 
-enum injection_type {
+क्रमागत injection_type अणु
 	SW_INJ = 0,	/* SW injection, simply decode the error */
 	HW_INJ,		/* Trigger a #MC */
-	DFR_INT_INJ,    /* Trigger Deferred error interrupt */
-	THR_INT_INJ,    /* Trigger threshold interrupt */
+	DFR_INT_INJ,    /* Trigger Deferred error पूर्णांकerrupt */
+	THR_INT_INJ,    /* Trigger threshold पूर्णांकerrupt */
 	N_INJ_TYPES,
-};
+पूर्ण;
 
-static const char * const flags_options[] = {
+अटल स्थिर अक्षर * स्थिर flags_options[] = अणु
 	[SW_INJ] = "sw",
 	[HW_INJ] = "hw",
 	[DFR_INT_INJ] = "df",
 	[THR_INT_INJ] = "th",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-/* Set default injection to SW_INJ */
-static enum injection_type inj_type = SW_INJ;
+/* Set शेष injection to SW_INJ */
+अटल क्रमागत injection_type inj_type = SW_INJ;
 
-#define MCE_INJECT_SET(reg)						\
-static int inj_##reg##_set(void *data, u64 val)				\
-{									\
-	struct mce *m = (struct mce *)data;				\
+#घोषणा MCE_INJECT_SET(reg)						\
+अटल पूर्णांक inj_##reg##_set(व्योम *data, u64 val)				\
+अणु									\
+	काष्ठा mce *m = (काष्ठा mce *)data;				\
 									\
 	m->reg = val;							\
-	return 0;							\
-}
+	वापस 0;							\
+पूर्ण
 
 MCE_INJECT_SET(status);
 MCE_INJECT_SET(misc);
@@ -76,14 +77,14 @@ MCE_INJECT_SET(addr);
 MCE_INJECT_SET(synd);
 MCE_INJECT_SET(ipid);
 
-#define MCE_INJECT_GET(reg)						\
-static int inj_##reg##_get(void *data, u64 *val)			\
-{									\
-	struct mce *m = (struct mce *)data;				\
+#घोषणा MCE_INJECT_GET(reg)						\
+अटल पूर्णांक inj_##reg##_get(व्योम *data, u64 *val)			\
+अणु									\
+	काष्ठा mce *m = (काष्ठा mce *)data;				\
 									\
 	*val = m->reg;							\
-	return 0;							\
-}
+	वापस 0;							\
+पूर्ण
 
 MCE_INJECT_GET(status);
 MCE_INJECT_GET(misc);
@@ -97,441 +98,441 @@ DEFINE_SIMPLE_ATTRIBUTE(addr_fops, inj_addr_get, inj_addr_set, "%llx\n");
 DEFINE_SIMPLE_ATTRIBUTE(synd_fops, inj_synd_get, inj_synd_set, "%llx\n");
 DEFINE_SIMPLE_ATTRIBUTE(ipid_fops, inj_ipid_get, inj_ipid_set, "%llx\n");
 
-static void setup_inj_struct(struct mce *m)
-{
-	memset(m, 0, sizeof(struct mce));
+अटल व्योम setup_inj_काष्ठा(काष्ठा mce *m)
+अणु
+	स_रखो(m, 0, माप(काष्ठा mce));
 
-	m->cpuvendor = boot_cpu_data.x86_vendor;
-	m->time	     = ktime_get_real_seconds();
+	m->cpuvenकरोr = boot_cpu_data.x86_venकरोr;
+	m->समय	     = kसमय_get_real_seconds();
 	m->cpuid     = cpuid_eax(1);
 	m->microcode = boot_cpu_data.microcode;
-}
+पूर्ण
 
-/* Update fake mce registers on current CPU. */
-static void inject_mce(struct mce *m)
-{
-	struct mce *i = &per_cpu(injectm, m->extcpu);
+/* Update fake mce रेजिस्टरs on current CPU. */
+अटल व्योम inject_mce(काष्ठा mce *m)
+अणु
+	काष्ठा mce *i = &per_cpu(injecपंचांग, m->extcpu);
 
-	/* Make sure no one reads partially written injectm */
+	/* Make sure no one पढ़ोs partially written injecपंचांग */
 	i->finished = 0;
 	mb();
 	m->finished = 0;
 	/* First set the fields after finished */
 	i->extcpu = m->extcpu;
 	mb();
-	/* Now write record in order, finished last (except above) */
-	memcpy(i, m, sizeof(struct mce));
+	/* Now ग_लिखो record in order, finished last (except above) */
+	स_नकल(i, m, माप(काष्ठा mce));
 	/* Finally activate it */
 	mb();
 	i->finished = 1;
-}
+पूर्ण
 
-static void raise_poll(struct mce *m)
-{
-	unsigned long flags;
+अटल व्योम उठाओ_poll(काष्ठा mce *m)
+अणु
+	अचिन्हित दीर्घ flags;
 	mce_banks_t b;
 
-	memset(&b, 0xff, sizeof(mce_banks_t));
+	स_रखो(&b, 0xff, माप(mce_banks_t));
 	local_irq_save(flags);
 	machine_check_poll(0, &b);
 	local_irq_restore(flags);
 	m->finished = 0;
-}
+पूर्ण
 
-static void raise_exception(struct mce *m, struct pt_regs *pregs)
-{
-	struct pt_regs regs;
-	unsigned long flags;
+अटल व्योम उठाओ_exception(काष्ठा mce *m, काष्ठा pt_regs *pregs)
+अणु
+	काष्ठा pt_regs regs;
+	अचिन्हित दीर्घ flags;
 
-	if (!pregs) {
-		memset(&regs, 0, sizeof(struct pt_regs));
+	अगर (!pregs) अणु
+		स_रखो(&regs, 0, माप(काष्ठा pt_regs));
 		regs.ip = m->ip;
 		regs.cs = m->cs;
 		pregs = &regs;
-	}
-	/* do_machine_check() expects interrupts disabled -- at least */
+	पूर्ण
+	/* करो_machine_check() expects पूर्णांकerrupts disabled -- at least */
 	local_irq_save(flags);
-	do_machine_check(pregs);
+	करो_machine_check(pregs);
 	local_irq_restore(flags);
 	m->finished = 0;
-}
+पूर्ण
 
-static cpumask_var_t mce_inject_cpumask;
-static DEFINE_MUTEX(mce_inject_mutex);
+अटल cpumask_var_t mce_inject_cpumask;
+अटल DEFINE_MUTEX(mce_inject_mutex);
 
-static int mce_raise_notify(unsigned int cmd, struct pt_regs *regs)
-{
-	int cpu = smp_processor_id();
-	struct mce *m = this_cpu_ptr(&injectm);
-	if (!cpumask_test_cpu(cpu, mce_inject_cpumask))
-		return NMI_DONE;
+अटल पूर्णांक mce_उठाओ_notअगरy(अचिन्हित पूर्णांक cmd, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा mce *m = this_cpu_ptr(&injecपंचांग);
+	अगर (!cpumask_test_cpu(cpu, mce_inject_cpumask))
+		वापस NMI_DONE;
 	cpumask_clear_cpu(cpu, mce_inject_cpumask);
-	if (m->inject_flags & MCJ_EXCEPTION)
-		raise_exception(m, regs);
-	else if (m->status)
-		raise_poll(m);
-	return NMI_HANDLED;
-}
+	अगर (m->inject_flags & MCJ_EXCEPTION)
+		उठाओ_exception(m, regs);
+	अन्यथा अगर (m->status)
+		उठाओ_poll(m);
+	वापस NMI_HANDLED;
+पूर्ण
 
-static void mce_irq_ipi(void *info)
-{
-	int cpu = smp_processor_id();
-	struct mce *m = this_cpu_ptr(&injectm);
+अटल व्योम mce_irq_ipi(व्योम *info)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा mce *m = this_cpu_ptr(&injecपंचांग);
 
-	if (cpumask_test_cpu(cpu, mce_inject_cpumask) &&
-			m->inject_flags & MCJ_EXCEPTION) {
+	अगर (cpumask_test_cpu(cpu, mce_inject_cpumask) &&
+			m->inject_flags & MCJ_EXCEPTION) अणु
 		cpumask_clear_cpu(cpu, mce_inject_cpumask);
-		raise_exception(m, NULL);
-	}
-}
+		उठाओ_exception(m, शून्य);
+	पूर्ण
+पूर्ण
 
 /* Inject mce on current CPU */
-static int raise_local(void)
-{
-	struct mce *m = this_cpu_ptr(&injectm);
-	int context = MCJ_CTX(m->inject_flags);
-	int ret = 0;
-	int cpu = m->extcpu;
+अटल पूर्णांक उठाओ_local(व्योम)
+अणु
+	काष्ठा mce *m = this_cpu_ptr(&injecपंचांग);
+	पूर्णांक context = MCJ_CTX(m->inject_flags);
+	पूर्णांक ret = 0;
+	पूर्णांक cpu = m->extcpu;
 
-	if (m->inject_flags & MCJ_EXCEPTION) {
+	अगर (m->inject_flags & MCJ_EXCEPTION) अणु
 		pr_info("Triggering MCE exception on CPU %d\n", cpu);
-		switch (context) {
-		case MCJ_CTX_IRQ:
+		चयन (context) अणु
+		हाल MCJ_CTX_IRQ:
 			/*
-			 * Could do more to fake interrupts like
+			 * Could करो more to fake पूर्णांकerrupts like
 			 * calling irq_enter, but the necessary
 			 * machinery isn't exported currently.
 			 */
 			fallthrough;
-		case MCJ_CTX_PROCESS:
-			raise_exception(m, NULL);
-			break;
-		default:
+		हाल MCJ_CTX_PROCESS:
+			उठाओ_exception(m, शून्य);
+			अवरोध;
+		शेष:
 			pr_info("Invalid MCE context\n");
 			ret = -EINVAL;
-		}
+		पूर्ण
 		pr_info("MCE exception done on CPU %d\n", cpu);
-	} else if (m->status) {
+	पूर्ण अन्यथा अगर (m->status) अणु
 		pr_info("Starting machine check poll CPU %d\n", cpu);
-		raise_poll(m);
-		mce_notify_irq();
+		उठाओ_poll(m);
+		mce_notअगरy_irq();
 		pr_info("Machine check poll done on CPU %d\n", cpu);
-	} else
+	पूर्ण अन्यथा
 		m->finished = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __maybe_unused raise_mce(struct mce *m)
-{
-	int context = MCJ_CTX(m->inject_flags);
+अटल व्योम __maybe_unused उठाओ_mce(काष्ठा mce *m)
+अणु
+	पूर्णांक context = MCJ_CTX(m->inject_flags);
 
 	inject_mce(m);
 
-	if (context == MCJ_CTX_RANDOM)
-		return;
+	अगर (context == MCJ_CTX_RANDOM)
+		वापस;
 
-	if (m->inject_flags & (MCJ_IRQ_BROADCAST | MCJ_NMI_BROADCAST)) {
-		unsigned long start;
-		int cpu;
+	अगर (m->inject_flags & (MCJ_IRQ_BROADCAST | MCJ_NMI_BROADCAST)) अणु
+		अचिन्हित दीर्घ start;
+		पूर्णांक cpu;
 
 		get_online_cpus();
 		cpumask_copy(mce_inject_cpumask, cpu_online_mask);
 		cpumask_clear_cpu(get_cpu(), mce_inject_cpumask);
-		for_each_online_cpu(cpu) {
-			struct mce *mcpu = &per_cpu(injectm, cpu);
-			if (!mcpu->finished ||
+		क्रम_each_online_cpu(cpu) अणु
+			काष्ठा mce *mcpu = &per_cpu(injecपंचांग, cpu);
+			अगर (!mcpu->finished ||
 			    MCJ_CTX(mcpu->inject_flags) != MCJ_CTX_RANDOM)
 				cpumask_clear_cpu(cpu, mce_inject_cpumask);
-		}
-		if (!cpumask_empty(mce_inject_cpumask)) {
-			if (m->inject_flags & MCJ_IRQ_BROADCAST) {
+		पूर्ण
+		अगर (!cpumask_empty(mce_inject_cpumask)) अणु
+			अगर (m->inject_flags & MCJ_IRQ_BROADCAST) अणु
 				/*
-				 * don't wait because mce_irq_ipi is necessary
-				 * to be sync with following raise_local
+				 * करोn't रुको because mce_irq_ipi is necessary
+				 * to be sync with following उठाओ_local
 				 */
 				preempt_disable();
 				smp_call_function_many(mce_inject_cpumask,
-					mce_irq_ipi, NULL, 0);
+					mce_irq_ipi, शून्य, 0);
 				preempt_enable();
-			} else if (m->inject_flags & MCJ_NMI_BROADCAST)
+			पूर्ण अन्यथा अगर (m->inject_flags & MCJ_NMI_BROADCAST)
 				apic->send_IPI_mask(mce_inject_cpumask,
 						NMI_VECTOR);
-		}
-		start = jiffies;
-		while (!cpumask_empty(mce_inject_cpumask)) {
-			if (!time_before(jiffies, start + 2*HZ)) {
+		पूर्ण
+		start = jअगरfies;
+		जबतक (!cpumask_empty(mce_inject_cpumask)) अणु
+			अगर (!समय_beक्रमe(jअगरfies, start + 2*HZ)) अणु
 				pr_err("Timeout waiting for mce inject %lx\n",
 					*cpumask_bits(mce_inject_cpumask));
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			cpu_relax();
-		}
-		raise_local();
+		पूर्ण
+		उठाओ_local();
 		put_cpu();
 		put_online_cpus();
-	} else {
+	पूर्ण अन्यथा अणु
 		preempt_disable();
-		raise_local();
+		उठाओ_local();
 		preempt_enable();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int mce_inject_raise(struct notifier_block *nb, unsigned long val,
-			    void *data)
-{
-	struct mce *m = (struct mce *)data;
+अटल पूर्णांक mce_inject_उठाओ(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
+			    व्योम *data)
+अणु
+	काष्ठा mce *m = (काष्ठा mce *)data;
 
-	if (!m)
-		return NOTIFY_DONE;
+	अगर (!m)
+		वापस NOTIFY_DONE;
 
 	mutex_lock(&mce_inject_mutex);
-	raise_mce(m);
+	उठाओ_mce(m);
 	mutex_unlock(&mce_inject_mutex);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block inject_nb = {
-	.notifier_call  = mce_inject_raise,
-};
+अटल काष्ठा notअगरier_block inject_nb = अणु
+	.notअगरier_call  = mce_inject_उठाओ,
+पूर्ण;
 
 /*
- * Caller needs to be make sure this cpu doesn't disappear
+ * Caller needs to be make sure this cpu करोesn't disappear
  * from under us, i.e.: get_cpu/put_cpu.
  */
-static int toggle_hw_mce_inject(unsigned int cpu, bool enable)
-{
+अटल पूर्णांक toggle_hw_mce_inject(अचिन्हित पूर्णांक cpu, bool enable)
+अणु
 	u32 l, h;
-	int err;
+	पूर्णांक err;
 
 	err = rdmsr_on_cpu(cpu, MSR_K7_HWCR, &l, &h);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: error reading HWCR\n", __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	enable ? (l |= BIT(18)) : (l &= ~BIT(18));
 
 	err = wrmsr_on_cpu(cpu, MSR_K7_HWCR, l, h);
-	if (err)
+	अगर (err)
 		pr_err("%s: error writing HWCR\n", __func__);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __set_inj(const char *buf)
-{
-	int i;
+अटल पूर्णांक __set_inj(स्थिर अक्षर *buf)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < N_INJ_TYPES; i++) {
-		if (!strncmp(flags_options[i], buf, strlen(flags_options[i]))) {
+	क्रम (i = 0; i < N_INJ_TYPES; i++) अणु
+		अगर (!म_भेदन(flags_options[i], buf, म_माप(flags_options[i]))) अणु
 			inj_type = i;
-			return 0;
-		}
-	}
-	return -EINVAL;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t flags_read(struct file *filp, char __user *ubuf,
-			  size_t cnt, loff_t *ppos)
-{
-	char buf[MAX_FLAG_OPT_SIZE];
-	int n;
+अटल sमाप_प्रकार flags_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf,
+			  माप_प्रकार cnt, loff_t *ppos)
+अणु
+	अक्षर buf[MAX_FLAG_OPT_SIZE];
+	पूर्णांक n;
 
-	n = sprintf(buf, "%s\n", flags_options[inj_type]);
+	n = प्र_लिखो(buf, "%s\n", flags_options[inj_type]);
 
-	return simple_read_from_buffer(ubuf, cnt, ppos, buf, n);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos, buf, n);
+पूर्ण
 
-static ssize_t flags_write(struct file *filp, const char __user *ubuf,
-			   size_t cnt, loff_t *ppos)
-{
-	char buf[MAX_FLAG_OPT_SIZE], *__buf;
-	int err;
+अटल sमाप_प्रकार flags_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf,
+			   माप_प्रकार cnt, loff_t *ppos)
+अणु
+	अक्षर buf[MAX_FLAG_OPT_SIZE], *__buf;
+	पूर्णांक err;
 
-	if (cnt > MAX_FLAG_OPT_SIZE)
-		return -EINVAL;
+	अगर (cnt > MAX_FLAG_OPT_SIZE)
+		वापस -EINVAL;
 
-	if (copy_from_user(&buf, ubuf, cnt))
-		return -EFAULT;
+	अगर (copy_from_user(&buf, ubuf, cnt))
+		वापस -EFAULT;
 
 	buf[cnt - 1] = 0;
 
 	/* strip whitespace */
-	__buf = strstrip(buf);
+	__buf = म_मालाip(buf);
 
 	err = __set_inj(__buf);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: Invalid flags value: %s\n", __func__, __buf);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	*ppos += cnt;
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static const struct file_operations flags_fops = {
-	.read           = flags_read,
-	.write          = flags_write,
+अटल स्थिर काष्ठा file_operations flags_fops = अणु
+	.पढ़ो           = flags_पढ़ो,
+	.ग_लिखो          = flags_ग_लिखो,
 	.llseek         = generic_file_llseek,
-};
+पूर्ण;
 
 /*
  * On which CPU to inject?
  */
 MCE_INJECT_GET(extcpu);
 
-static int inj_extcpu_set(void *data, u64 val)
-{
-	struct mce *m = (struct mce *)data;
+अटल पूर्णांक inj_extcpu_set(व्योम *data, u64 val)
+अणु
+	काष्ठा mce *m = (काष्ठा mce *)data;
 
-	if (val >= nr_cpu_ids || !cpu_online(val)) {
+	अगर (val >= nr_cpu_ids || !cpu_online(val)) अणु
 		pr_err("%s: Invalid CPU: %llu\n", __func__, val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	m->extcpu = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SIMPLE_ATTRIBUTE(extcpu_fops, inj_extcpu_get, inj_extcpu_set, "%llu\n");
 
-static void trigger_mce(void *info)
-{
-	asm volatile("int $18");
-}
+अटल व्योम trigger_mce(व्योम *info)
+अणु
+	यंत्र अस्थिर("int $18");
+पूर्ण
 
-static void trigger_dfr_int(void *info)
-{
-	asm volatile("int %0" :: "i" (DEFERRED_ERROR_VECTOR));
-}
+अटल व्योम trigger_dfr_पूर्णांक(व्योम *info)
+अणु
+	यंत्र अस्थिर("int %0" :: "i" (DEFERRED_ERROR_VECTOR));
+पूर्ण
 
-static void trigger_thr_int(void *info)
-{
-	asm volatile("int %0" :: "i" (THRESHOLD_APIC_VECTOR));
-}
+अटल व्योम trigger_thr_पूर्णांक(व्योम *info)
+अणु
+	यंत्र अस्थिर("int %0" :: "i" (THRESHOLD_APIC_VECTOR));
+पूर्ण
 
-static u32 get_nbc_for_node(int node_id)
-{
-	struct cpuinfo_x86 *c = &boot_cpu_data;
+अटल u32 get_nbc_क्रम_node(पूर्णांक node_id)
+अणु
+	काष्ठा cpuinfo_x86 *c = &boot_cpu_data;
 	u32 cores_per_node;
 
 	cores_per_node = (c->x86_max_cores * smp_num_siblings) / amd_get_nodes_per_socket();
 
-	return cores_per_node * node_id;
-}
+	वापस cores_per_node * node_id;
+पूर्ण
 
-static void toggle_nb_mca_mst_cpu(u16 nid)
-{
-	struct amd_northbridge *nb;
-	struct pci_dev *F3;
+अटल व्योम toggle_nb_mca_mst_cpu(u16 nid)
+अणु
+	काष्ठा amd_northbridge *nb;
+	काष्ठा pci_dev *F3;
 	u32 val;
-	int err;
+	पूर्णांक err;
 
 	nb = node_to_amd_nb(nid);
-	if (!nb)
-		return;
+	अगर (!nb)
+		वापस;
 
 	F3 = nb->misc;
-	if (!F3)
-		return;
+	अगर (!F3)
+		वापस;
 
-	err = pci_read_config_dword(F3, NBCFG, &val);
-	if (err) {
+	err = pci_पढ़ो_config_dword(F3, NBCFG, &val);
+	अगर (err) अणु
 		pr_err("%s: Error reading F%dx%03x.\n",
 		       __func__, PCI_FUNC(F3->devfn), NBCFG);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (val & BIT(27))
-		return;
+	अगर (val & BIT(27))
+		वापस;
 
 	pr_err("%s: Set D18F3x44[NbMcaToMstCpuEn] which BIOS hasn't done.\n",
 	       __func__);
 
 	val |= BIT(27);
-	err = pci_write_config_dword(F3, NBCFG, val);
-	if (err)
+	err = pci_ग_लिखो_config_dword(F3, NBCFG, val);
+	अगर (err)
 		pr_err("%s: Error writing F%dx%03x.\n",
 		       __func__, PCI_FUNC(F3->devfn), NBCFG);
-}
+पूर्ण
 
-static void prepare_msrs(void *info)
-{
-	struct mce m = *(struct mce *)info;
+अटल व्योम prepare_msrs(व्योम *info)
+अणु
+	काष्ठा mce m = *(काष्ठा mce *)info;
 	u8 b = m.bank;
 
 	wrmsrl(MSR_IA32_MCG_STATUS, m.mcgstatus);
 
-	if (boot_cpu_has(X86_FEATURE_SMCA)) {
-		if (m.inject_flags == DFR_INT_INJ) {
+	अगर (boot_cpu_has(X86_FEATURE_SMCA)) अणु
+		अगर (m.inject_flags == DFR_INT_INJ) अणु
 			wrmsrl(MSR_AMD64_SMCA_MCx_DESTAT(b), m.status);
 			wrmsrl(MSR_AMD64_SMCA_MCx_DEADDR(b), m.addr);
-		} else {
+		पूर्ण अन्यथा अणु
 			wrmsrl(MSR_AMD64_SMCA_MCx_STATUS(b), m.status);
 			wrmsrl(MSR_AMD64_SMCA_MCx_ADDR(b), m.addr);
-		}
+		पूर्ण
 
 		wrmsrl(MSR_AMD64_SMCA_MCx_MISC(b), m.misc);
 		wrmsrl(MSR_AMD64_SMCA_MCx_SYND(b), m.synd);
-	} else {
+	पूर्ण अन्यथा अणु
 		wrmsrl(MSR_IA32_MCx_STATUS(b), m.status);
 		wrmsrl(MSR_IA32_MCx_ADDR(b), m.addr);
 		wrmsrl(MSR_IA32_MCx_MISC(b), m.misc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_inject(void)
-{
+अटल व्योम करो_inject(व्योम)
+अणु
 	u64 mcg_status = 0;
-	unsigned int cpu = i_mce.extcpu;
+	अचिन्हित पूर्णांक cpu = i_mce.extcpu;
 	u8 b = i_mce.bank;
 
 	i_mce.tsc = rdtsc_ordered();
 
-	if (i_mce.misc)
+	अगर (i_mce.misc)
 		i_mce.status |= MCI_STATUS_MISCV;
 
-	if (i_mce.synd)
+	अगर (i_mce.synd)
 		i_mce.status |= MCI_STATUS_SYNDV;
 
-	if (inj_type == SW_INJ) {
+	अगर (inj_type == SW_INJ) अणु
 		mce_log(&i_mce);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* prep MCE global settings for the injection */
+	/* prep MCE global settings क्रम the injection */
 	mcg_status = MCG_STATUS_MCIP | MCG_STATUS_EIPV;
 
-	if (!(i_mce.status & MCI_STATUS_PCC))
+	अगर (!(i_mce.status & MCI_STATUS_PCC))
 		mcg_status |= MCG_STATUS_RIPV;
 
 	/*
-	 * Ensure necessary status bits for deferred errors:
+	 * Ensure necessary status bits क्रम deferred errors:
 	 * - MCx_STATUS[Deferred]: make sure it is a deferred error
 	 * - MCx_STATUS[UC] cleared: deferred errors are _not_ UC
 	 */
-	if (inj_type == DFR_INT_INJ) {
+	अगर (inj_type == DFR_INT_INJ) अणु
 		i_mce.status |= MCI_STATUS_DEFERRED;
 		i_mce.status &= ~MCI_STATUS_UC;
-	}
+	पूर्ण
 
 	/*
 	 * For multi node CPUs, logging and reporting of bank 4 errors happens
-	 * only on the node base core. Refer to D18F3x44[NbMcaToMstCpuEn] for
+	 * only on the node base core. Refer to D18F3x44[NbMcaToMstCpuEn] क्रम
 	 * Fam10h and later BKDGs.
 	 */
-	if (boot_cpu_has(X86_FEATURE_AMD_DCM) &&
+	अगर (boot_cpu_has(X86_FEATURE_AMD_DCM) &&
 	    b == 4 &&
-	    boot_cpu_data.x86 < 0x17) {
+	    boot_cpu_data.x86 < 0x17) अणु
 		toggle_nb_mca_mst_cpu(topology_die_id(cpu));
-		cpu = get_nbc_for_node(topology_die_id(cpu));
-	}
+		cpu = get_nbc_क्रम_node(topology_die_id(cpu));
+	पूर्ण
 
 	get_online_cpus();
-	if (!cpu_online(cpu))
-		goto err;
+	अगर (!cpu_online(cpu))
+		जाओ err;
 
 	toggle_hw_mce_inject(cpu, true);
 
@@ -541,55 +542,55 @@ static void do_inject(void)
 
 	toggle_hw_mce_inject(cpu, false);
 
-	switch (inj_type) {
-	case DFR_INT_INJ:
-		smp_call_function_single(cpu, trigger_dfr_int, NULL, 0);
-		break;
-	case THR_INT_INJ:
-		smp_call_function_single(cpu, trigger_thr_int, NULL, 0);
-		break;
-	default:
-		smp_call_function_single(cpu, trigger_mce, NULL, 0);
-	}
+	चयन (inj_type) अणु
+	हाल DFR_INT_INJ:
+		smp_call_function_single(cpu, trigger_dfr_पूर्णांक, शून्य, 0);
+		अवरोध;
+	हाल THR_INT_INJ:
+		smp_call_function_single(cpu, trigger_thr_पूर्णांक, शून्य, 0);
+		अवरोध;
+	शेष:
+		smp_call_function_single(cpu, trigger_mce, शून्य, 0);
+	पूर्ण
 
 err:
 	put_online_cpus();
 
-}
+पूर्ण
 
 /*
- * This denotes into which bank we're injecting and triggers
- * the injection, at the same time.
+ * This denotes पूर्णांकo which bank we're injecting and triggers
+ * the injection, at the same समय.
  */
-static int inj_bank_set(void *data, u64 val)
-{
-	struct mce *m = (struct mce *)data;
+अटल पूर्णांक inj_bank_set(व्योम *data, u64 val)
+अणु
+	काष्ठा mce *m = (काष्ठा mce *)data;
 	u8 n_banks;
 	u64 cap;
 
-	/* Get bank count on target CPU so we can handle non-uniform values. */
+	/* Get bank count on target CPU so we can handle non-unअगरorm values. */
 	rdmsrl_on_cpu(m->extcpu, MSR_IA32_MCG_CAP, &cap);
 	n_banks = cap & MCG_BANKCNT_MASK;
 
-	if (val >= n_banks) {
+	अगर (val >= n_banks) अणु
 		pr_err("MCA bank %llu non-existent on CPU%d\n", val, m->extcpu);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	m->bank = val;
-	do_inject();
+	करो_inject();
 
-	/* Reset injection struct */
-	setup_inj_struct(&i_mce);
+	/* Reset injection काष्ठा */
+	setup_inj_काष्ठा(&i_mce);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 MCE_INJECT_GET(bank);
 
 DEFINE_SIMPLE_ATTRIBUTE(bank_fops, inj_bank_get, inj_bank_set, "%llu\n");
 
-static const char readme_msg[] =
+अटल स्थिर अक्षर पढ़ोme_msg[] =
 "Description of the files and their usages:\n"
 "\n"
 "Note1: i refers to the bank number below.\n"
@@ -636,76 +637,76 @@ static const char readme_msg[] =
 "ipid:\t IPID (AMD-specific)\n"
 "\n";
 
-static ssize_t
-inj_readme_read(struct file *filp, char __user *ubuf,
-		       size_t cnt, loff_t *ppos)
-{
-	return simple_read_from_buffer(ubuf, cnt, ppos,
-					readme_msg, strlen(readme_msg));
-}
+अटल sमाप_प्रकार
+inj_पढ़ोme_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf,
+		       माप_प्रकार cnt, loff_t *ppos)
+अणु
+	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos,
+					पढ़ोme_msg, म_माप(पढ़ोme_msg));
+पूर्ण
 
-static const struct file_operations readme_fops = {
-	.read		= inj_readme_read,
-};
+अटल स्थिर काष्ठा file_operations पढ़ोme_fops = अणु
+	.पढ़ो		= inj_पढ़ोme_पढ़ो,
+पूर्ण;
 
-static struct dfs_node {
-	char *name;
-	const struct file_operations *fops;
+अटल काष्ठा dfs_node अणु
+	अक्षर *name;
+	स्थिर काष्ठा file_operations *fops;
 	umode_t perm;
-} dfs_fls[] = {
-	{ .name = "status",	.fops = &status_fops, .perm = S_IRUSR | S_IWUSR },
-	{ .name = "misc",	.fops = &misc_fops,   .perm = S_IRUSR | S_IWUSR },
-	{ .name = "addr",	.fops = &addr_fops,   .perm = S_IRUSR | S_IWUSR },
-	{ .name = "synd",	.fops = &synd_fops,   .perm = S_IRUSR | S_IWUSR },
-	{ .name = "ipid",	.fops = &ipid_fops,   .perm = S_IRUSR | S_IWUSR },
-	{ .name = "bank",	.fops = &bank_fops,   .perm = S_IRUSR | S_IWUSR },
-	{ .name = "flags",	.fops = &flags_fops,  .perm = S_IRUSR | S_IWUSR },
-	{ .name = "cpu",	.fops = &extcpu_fops, .perm = S_IRUSR | S_IWUSR },
-	{ .name = "README",	.fops = &readme_fops, .perm = S_IRUSR | S_IRGRP | S_IROTH },
-};
+पूर्ण dfs_fls[] = अणु
+	अणु .name = "status",	.fops = &status_fops, .perm = S_IRUSR | S_IWUSR पूर्ण,
+	अणु .name = "misc",	.fops = &misc_fops,   .perm = S_IRUSR | S_IWUSR पूर्ण,
+	अणु .name = "addr",	.fops = &addr_fops,   .perm = S_IRUSR | S_IWUSR पूर्ण,
+	अणु .name = "synd",	.fops = &synd_fops,   .perm = S_IRUSR | S_IWUSR पूर्ण,
+	अणु .name = "ipid",	.fops = &ipid_fops,   .perm = S_IRUSR | S_IWUSR पूर्ण,
+	अणु .name = "bank",	.fops = &bank_fops,   .perm = S_IRUSR | S_IWUSR पूर्ण,
+	अणु .name = "flags",	.fops = &flags_fops,  .perm = S_IRUSR | S_IWUSR पूर्ण,
+	अणु .name = "cpu",	.fops = &extcpu_fops, .perm = S_IRUSR | S_IWUSR पूर्ण,
+	अणु .name = "README",	.fops = &पढ़ोme_fops, .perm = S_IRUSR | S_IRGRP | S_IROTH पूर्ण,
+पूर्ण;
 
-static void __init debugfs_init(void)
-{
-	unsigned int i;
+अटल व्योम __init debugfs_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	dfs_inj = debugfs_create_dir("mce-inject", NULL);
+	dfs_inj = debugfs_create_dir("mce-inject", शून्य);
 
-	for (i = 0; i < ARRAY_SIZE(dfs_fls); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(dfs_fls); i++)
 		debugfs_create_file(dfs_fls[i].name, dfs_fls[i].perm, dfs_inj,
 				    &i_mce, dfs_fls[i].fops);
-}
+पूर्ण
 
-static int __init inject_init(void)
-{
-	if (!alloc_cpumask_var(&mce_inject_cpumask, GFP_KERNEL))
-		return -ENOMEM;
+अटल पूर्णांक __init inject_init(व्योम)
+अणु
+	अगर (!alloc_cpumask_var(&mce_inject_cpumask, GFP_KERNEL))
+		वापस -ENOMEM;
 
 	debugfs_init();
 
-	register_nmi_handler(NMI_LOCAL, mce_raise_notify, 0, "mce_notify");
-	mce_register_injector_chain(&inject_nb);
+	रेजिस्टर_nmi_handler(NMI_LOCAL, mce_उठाओ_notअगरy, 0, "mce_notify");
+	mce_रेजिस्टर_injector_chain(&inject_nb);
 
-	setup_inj_struct(&i_mce);
+	setup_inj_काष्ठा(&i_mce);
 
 	pr_info("Machine check injector initialized\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit inject_exit(void)
-{
+अटल व्योम __निकास inject_निकास(व्योम)
+अणु
 
-	mce_unregister_injector_chain(&inject_nb);
-	unregister_nmi_handler(NMI_LOCAL, "mce_notify");
+	mce_unरेजिस्टर_injector_chain(&inject_nb);
+	unरेजिस्टर_nmi_handler(NMI_LOCAL, "mce_notify");
 
-	debugfs_remove_recursive(dfs_inj);
-	dfs_inj = NULL;
+	debugfs_हटाओ_recursive(dfs_inj);
+	dfs_inj = शून्य;
 
-	memset(&dfs_fls, 0, sizeof(dfs_fls));
+	स_रखो(&dfs_fls, 0, माप(dfs_fls));
 
-	free_cpumask_var(mce_inject_cpumask);
-}
+	मुक्त_cpumask_var(mce_inject_cpumask);
+पूर्ण
 
 module_init(inject_init);
-module_exit(inject_exit);
+module_निकास(inject_निकास);
 MODULE_LICENSE("GPL");

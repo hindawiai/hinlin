@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Generic entry points for the idle threads and
+ * Generic entry poपूर्णांकs क्रम the idle thपढ़ोs and
  * implementation of the idle task scheduling class.
  *
  * (NOTE: these are not related to SCHED_IDLE batch scheduled
  *        tasks which are handled in sched/fair.c )
  */
-#include "sched.h"
+#समावेश "sched.h"
 
-#include <trace/events/power.h>
+#समावेश <trace/events/घातer.h>
 
 /* Linker adds these: start and end of __cpuidle functions */
-extern char __cpuidle_text_start[], __cpuidle_text_end[];
+बाह्य अक्षर __cpuidle_text_start[], __cpuidle_text_end[];
 
 /**
- * sched_idle_set_state - Record idle state for the current CPU.
+ * sched_idle_set_state - Record idle state क्रम the current CPU.
  * @idle_state: State to record.
  */
-void sched_idle_set_state(struct cpuidle_state *idle_state)
-{
+व्योम sched_idle_set_state(काष्ठा cpuidle_state *idle_state)
+अणु
 	idle_set_state(this_rq(), idle_state);
-}
+पूर्ण
 
-static int __read_mostly cpu_idle_force_poll;
+अटल पूर्णांक __पढ़ो_mostly cpu_idle_क्रमce_poll;
 
-void cpu_idle_poll_ctrl(bool enable)
-{
-	if (enable) {
-		cpu_idle_force_poll++;
-	} else {
-		cpu_idle_force_poll--;
-		WARN_ON_ONCE(cpu_idle_force_poll < 0);
-	}
-}
+व्योम cpu_idle_poll_ctrl(bool enable)
+अणु
+	अगर (enable) अणु
+		cpu_idle_क्रमce_poll++;
+	पूर्ण अन्यथा अणु
+		cpu_idle_क्रमce_poll--;
+		WARN_ON_ONCE(cpu_idle_क्रमce_poll < 0);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_GENERIC_IDLE_POLL_SETUP
-static int __init cpu_idle_poll_setup(char *__unused)
-{
-	cpu_idle_force_poll = 1;
+#अगर_घोषित CONFIG_GENERIC_IDLE_POLL_SETUP
+अटल पूर्णांक __init cpu_idle_poll_setup(अक्षर *__unused)
+अणु
+	cpu_idle_क्रमce_poll = 1;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("nohlt", cpu_idle_poll_setup);
 
-static int __init cpu_idle_nopoll_setup(char *__unused)
-{
-	cpu_idle_force_poll = 0;
+अटल पूर्णांक __init cpu_idle_nopoll_setup(अक्षर *__unused)
+अणु
+	cpu_idle_क्रमce_poll = 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("hlt", cpu_idle_nopoll_setup);
-#endif
+#पूर्ण_अगर
 
-static noinline int __cpuidle cpu_idle_poll(void)
-{
+अटल noअंतरभूत पूर्णांक __cpuidle cpu_idle_poll(व्योम)
+अणु
 	trace_cpu_idle(0, smp_processor_id());
 	stop_critical_timings();
 	rcu_idle_enter();
 	local_irq_enable();
 
-	while (!tif_need_resched() &&
-	       (cpu_idle_force_poll || tick_check_broadcast_expired()))
+	जबतक (!tअगर_need_resched() &&
+	       (cpu_idle_क्रमce_poll || tick_check_broadcast_expired()))
 		cpu_relax();
 
-	rcu_idle_exit();
+	rcu_idle_निकास();
 	start_critical_timings();
 	trace_cpu_idle(PWR_EVENT_EXIT, smp_processor_id());
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Weak implementations for optional arch specific functions */
-void __weak arch_cpu_idle_prepare(void) { }
-void __weak arch_cpu_idle_enter(void) { }
-void __weak arch_cpu_idle_exit(void) { }
-void __weak arch_cpu_idle_dead(void) { }
-void __weak arch_cpu_idle(void)
-{
-	cpu_idle_force_poll = 1;
+/* Weak implementations क्रम optional arch specअगरic functions */
+व्योम __weak arch_cpu_idle_prepare(व्योम) अणु पूर्ण
+व्योम __weak arch_cpu_idle_enter(व्योम) अणु पूर्ण
+व्योम __weak arch_cpu_idle_निकास(व्योम) अणु पूर्ण
+व्योम __weak arch_cpu_idle_dead(व्योम) अणु पूर्ण
+व्योम __weak arch_cpu_idle(व्योम)
+अणु
+	cpu_idle_क्रमce_poll = 1;
 	raw_local_irq_enable();
-}
+पूर्ण
 
 /**
- * default_idle_call - Default CPU idle routine.
+ * शेष_idle_call - Default CPU idle routine.
  *
  * To use when the cpuidle framework cannot be used.
  */
-void __cpuidle default_idle_call(void)
-{
-	if (current_clr_polling_and_test()) {
+व्योम __cpuidle शेष_idle_call(व्योम)
+अणु
+	अगर (current_clr_polling_and_test()) अणु
 		local_irq_enable();
-	} else {
+	पूर्ण अन्यथा अणु
 
 		trace_cpu_idle(1, smp_processor_id());
 		stop_critical_timings();
 
 		/*
 		 * arch_cpu_idle() is supposed to enable IRQs, however
-		 * we can't do that because of RCU and tracing.
+		 * we can't करो that because of RCU and tracing.
 		 *
-		 * Trace IRQs enable here, then switch off RCU, and have
+		 * Trace IRQs enable here, then चयन off RCU, and have
 		 * arch_cpu_idle() use raw_local_irq_enable(). Note that
-		 * rcu_idle_enter() relies on lockdep IRQ state, so switch that
+		 * rcu_idle_enter() relies on lockdep IRQ state, so चयन that
 		 * last -- this is very similar to the entry code.
 		 */
 		trace_hardirqs_on_prepare();
@@ -119,111 +120,111 @@ void __cpuidle default_idle_call(void)
 		 */
 		raw_local_irq_disable();
 		lockdep_hardirqs_off(_THIS_IP_);
-		rcu_idle_exit();
+		rcu_idle_निकास();
 		lockdep_hardirqs_on(_THIS_IP_);
 		raw_local_irq_enable();
 
 		start_critical_timings();
 		trace_cpu_idle(PWR_EVENT_EXIT, smp_processor_id());
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int call_cpuidle_s2idle(struct cpuidle_driver *drv,
-			       struct cpuidle_device *dev)
-{
-	if (current_clr_polling_and_test())
-		return -EBUSY;
+अटल पूर्णांक call_cpuidle_s2idle(काष्ठा cpuidle_driver *drv,
+			       काष्ठा cpuidle_device *dev)
+अणु
+	अगर (current_clr_polling_and_test())
+		वापस -EBUSY;
 
-	return cpuidle_enter_s2idle(drv, dev);
-}
+	वापस cpuidle_enter_s2idle(drv, dev);
+पूर्ण
 
-static int call_cpuidle(struct cpuidle_driver *drv, struct cpuidle_device *dev,
-		      int next_state)
-{
+अटल पूर्णांक call_cpuidle(काष्ठा cpuidle_driver *drv, काष्ठा cpuidle_device *dev,
+		      पूर्णांक next_state)
+अणु
 	/*
-	 * The idle task must be scheduled, it is pointless to go to idle, just
-	 * update no idle residency and return.
+	 * The idle task must be scheduled, it is poपूर्णांकless to go to idle, just
+	 * update no idle residency and वापस.
 	 */
-	if (current_clr_polling_and_test()) {
+	अगर (current_clr_polling_and_test()) अणु
 		dev->last_residency_ns = 0;
 		local_irq_enable();
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/*
-	 * Enter the idle state previously returned by the governor decision.
-	 * This function will block until an interrupt occurs and will take
-	 * care of re-enabling the local interrupts
+	 * Enter the idle state previously वापसed by the governor decision.
+	 * This function will block until an पूर्णांकerrupt occurs and will take
+	 * care of re-enabling the local पूर्णांकerrupts
 	 */
-	return cpuidle_enter(drv, dev, next_state);
-}
+	वापस cpuidle_enter(drv, dev, next_state);
+पूर्ण
 
 /**
- * cpuidle_idle_call - the main idle function
+ * cpuidle_idle_call - the मुख्य idle function
  *
  * NOTE: no locks or semaphores should be used here
  *
  * On architectures that support TIF_POLLING_NRFLAG, is called with polling
- * set, and it returns with polling set.  If it ever stops polling, it
+ * set, and it वापसs with polling set.  If it ever stops polling, it
  * must clear the polling bit.
  */
-static void cpuidle_idle_call(void)
-{
-	struct cpuidle_device *dev = cpuidle_get_device();
-	struct cpuidle_driver *drv = cpuidle_get_cpu_driver(dev);
-	int next_state, entered_state;
+अटल व्योम cpuidle_idle_call(व्योम)
+अणु
+	काष्ठा cpuidle_device *dev = cpuidle_get_device();
+	काष्ठा cpuidle_driver *drv = cpuidle_get_cpu_driver(dev);
+	पूर्णांक next_state, entered_state;
 
 	/*
-	 * Check if the idle task must be rescheduled. If it is the
-	 * case, exit the function after re-enabling the local irq.
+	 * Check अगर the idle task must be rescheduled. If it is the
+	 * हाल, निकास the function after re-enabling the local irq.
 	 */
-	if (need_resched()) {
+	अगर (need_resched()) अणु
 		local_irq_enable();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * The RCU framework needs to be told that we are entering an idle
-	 * section, so no more rcu read side critical sections and one more
+	 * section, so no more rcu पढ़ो side critical sections and one more
 	 * step to the grace period
 	 */
 
-	if (cpuidle_not_available(drv, dev)) {
+	अगर (cpuidle_not_available(drv, dev)) अणु
 		tick_nohz_idle_stop_tick();
 
-		default_idle_call();
-		goto exit_idle;
-	}
+		शेष_idle_call();
+		जाओ निकास_idle;
+	पूर्ण
 
 	/*
-	 * Suspend-to-idle ("s2idle") is a system state in which all user space
+	 * Suspend-to-idle ("s2idle") is a प्रणाली state in which all user space
 	 * has been frozen, all I/O devices have been suspended and the only
-	 * activity happens here and in interrupts (if any). In that case bypass
-	 * the cpuidle governor and go straight for the deepest idle state
+	 * activity happens here and in पूर्णांकerrupts (अगर any). In that हाल bypass
+	 * the cpuidle governor and go straight क्रम the deepest idle state
 	 * available.  Possibly also suspend the local tick and the entire
-	 * timekeeping to prevent timer interrupts from kicking us out of idle
-	 * until a proper wakeup interrupt happens.
+	 * समयkeeping to prevent समयr पूर्णांकerrupts from kicking us out of idle
+	 * until a proper wakeup पूर्णांकerrupt happens.
 	 */
 
-	if (idle_should_enter_s2idle() || dev->forced_idle_latency_limit_ns) {
+	अगर (idle_should_enter_s2idle() || dev->क्रमced_idle_latency_limit_ns) अणु
 		u64 max_latency_ns;
 
-		if (idle_should_enter_s2idle()) {
+		अगर (idle_should_enter_s2idle()) अणु
 
 			entered_state = call_cpuidle_s2idle(drv, dev);
-			if (entered_state > 0)
-				goto exit_idle;
+			अगर (entered_state > 0)
+				जाओ निकास_idle;
 
 			max_latency_ns = U64_MAX;
-		} else {
-			max_latency_ns = dev->forced_idle_latency_limit_ns;
-		}
+		पूर्ण अन्यथा अणु
+			max_latency_ns = dev->क्रमced_idle_latency_limit_ns;
+		पूर्ण
 
 		tick_nohz_idle_stop_tick();
 
 		next_state = cpuidle_find_deepest_state(drv, dev, max_latency_ns);
 		call_cpuidle(drv, dev, next_state);
-	} else {
+	पूर्ण अन्यथा अणु
 		bool stop_tick = true;
 
 		/*
@@ -231,9 +232,9 @@ static void cpuidle_idle_call(void)
 		 */
 		next_state = cpuidle_select(drv, dev, &stop_tick);
 
-		if (stop_tick || tick_nohz_tick_stopped())
+		अगर (stop_tick || tick_nohz_tick_stopped())
 			tick_nohz_idle_stop_tick();
-		else
+		अन्यथा
 			tick_nohz_idle_retain_tick();
 
 		entered_state = call_cpuidle(drv, dev, next_state);
@@ -241,37 +242,37 @@ static void cpuidle_idle_call(void)
 		 * Give the governor an opportunity to reflect on the outcome
 		 */
 		cpuidle_reflect(dev, entered_state);
-	}
+	पूर्ण
 
-exit_idle:
+निकास_idle:
 	__current_set_polling();
 
 	/*
-	 * It is up to the idle functions to reenable local interrupts
+	 * It is up to the idle functions to reenable local पूर्णांकerrupts
 	 */
-	if (WARN_ON_ONCE(irqs_disabled()))
+	अगर (WARN_ON_ONCE(irqs_disabled()))
 		local_irq_enable();
-}
+पूर्ण
 
 /*
  * Generic idle loop implementation
  *
  * Called with polling cleared.
  */
-static void do_idle(void)
-{
-	int cpu = smp_processor_id();
+अटल व्योम करो_idle(व्योम)
+अणु
+	पूर्णांक cpu = smp_processor_id();
 
 	/*
-	 * Check if we need to update blocked load
+	 * Check अगर we need to update blocked load
 	 */
 	nohz_run_idle_balance(cpu);
 
 	/*
-	 * If the arch has a polling bit, we maintain an invariant:
+	 * If the arch has a polling bit, we मुख्यtain an invariant:
 	 *
-	 * Our polling bit is clear if we're not scheduled (i.e. if rq->curr !=
-	 * rq->idle). This means that, if rq->idle has the polling bit set,
+	 * Our polling bit is clear अगर we're not scheduled (i.e. अगर rq->curr !=
+	 * rq->idle). This means that, अगर rq->idle has the polling bit set,
 	 * then setting need_resched is guaranteed to cause the CPU to
 	 * reschedule.
 	 */
@@ -279,91 +280,91 @@ static void do_idle(void)
 	__current_set_polling();
 	tick_nohz_idle_enter();
 
-	while (!need_resched()) {
+	जबतक (!need_resched()) अणु
 		rmb();
 
 		local_irq_disable();
 
-		if (cpu_is_offline(cpu)) {
+		अगर (cpu_is_offline(cpu)) अणु
 			tick_nohz_idle_stop_tick();
 			cpuhp_report_idle_dead();
 			arch_cpu_idle_dead();
-		}
+		पूर्ण
 
 		arch_cpu_idle_enter();
 		rcu_nocb_flush_deferred_wakeup();
 
 		/*
-		 * In poll mode we reenable interrupts and spin. Also if we
+		 * In poll mode we reenable पूर्णांकerrupts and spin. Also अगर we
 		 * detected in the wakeup from idle path that the tick
-		 * broadcast device expired for us, we don't want to go deep
+		 * broadcast device expired क्रम us, we करोn't want to go deep
 		 * idle as we know that the IPI is going to arrive right away.
 		 */
-		if (cpu_idle_force_poll || tick_check_broadcast_expired()) {
+		अगर (cpu_idle_क्रमce_poll || tick_check_broadcast_expired()) अणु
 			tick_nohz_idle_restart_tick();
 			cpu_idle_poll();
-		} else {
+		पूर्ण अन्यथा अणु
 			cpuidle_idle_call();
-		}
-		arch_cpu_idle_exit();
-	}
+		पूर्ण
+		arch_cpu_idle_निकास();
+	पूर्ण
 
 	/*
 	 * Since we fell out of the loop above, we know TIF_NEED_RESCHED must
-	 * be set, propagate it into PREEMPT_NEED_RESCHED.
+	 * be set, propagate it पूर्णांकo PREEMPT_NEED_RESCHED.
 	 *
-	 * This is required because for polling idle loops we will not have had
-	 * an IPI to fold the state for us.
+	 * This is required because क्रम polling idle loops we will not have had
+	 * an IPI to fold the state क्रम us.
 	 */
 	preempt_set_need_resched();
-	tick_nohz_idle_exit();
+	tick_nohz_idle_निकास();
 	__current_clr_polling();
 
 	/*
-	 * We promise to call sched_ttwu_pending() and reschedule if
-	 * need_resched() is set while polling is set. That means that clearing
-	 * polling needs to be visible before doing these things.
+	 * We promise to call sched_ttwu_pending() and reschedule अगर
+	 * need_resched() is set जबतक polling is set. That means that clearing
+	 * polling needs to be visible beक्रमe करोing these things.
 	 */
 	smp_mb__after_atomic();
 
 	/*
-	 * RCU relies on this call to be done outside of an RCU read-side
+	 * RCU relies on this call to be करोne outside of an RCU पढ़ो-side
 	 * critical section.
 	 */
 	flush_smp_call_function_from_idle();
 	schedule_idle();
 
-	if (unlikely(klp_patch_pending(current)))
+	अगर (unlikely(klp_patch_pending(current)))
 		klp_update_patch_state(current);
-}
+पूर्ण
 
-bool cpu_in_idle(unsigned long pc)
-{
-	return pc >= (unsigned long)__cpuidle_text_start &&
-		pc < (unsigned long)__cpuidle_text_end;
-}
+bool cpu_in_idle(अचिन्हित दीर्घ pc)
+अणु
+	वापस pc >= (अचिन्हित दीर्घ)__cpuidle_text_start &&
+		pc < (अचिन्हित दीर्घ)__cpuidle_text_end;
+पूर्ण
 
-struct idle_timer {
-	struct hrtimer timer;
-	int done;
-};
+काष्ठा idle_समयr अणु
+	काष्ठा hrसमयr समयr;
+	पूर्णांक करोne;
+पूर्ण;
 
-static enum hrtimer_restart idle_inject_timer_fn(struct hrtimer *timer)
-{
-	struct idle_timer *it = container_of(timer, struct idle_timer, timer);
+अटल क्रमागत hrसमयr_restart idle_inject_समयr_fn(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा idle_समयr *it = container_of(समयr, काष्ठा idle_समयr, समयr);
 
-	WRITE_ONCE(it->done, 1);
+	WRITE_ONCE(it->करोne, 1);
 	set_tsk_need_resched(current);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-void play_idle_precise(u64 duration_ns, u64 latency_ns)
-{
-	struct idle_timer it;
+व्योम play_idle_precise(u64 duration_ns, u64 latency_ns)
+अणु
+	काष्ठा idle_समयr it;
 
 	/*
-	 * Only FIFO tasks can disable the tick since they don't need the forced
+	 * Only FIFO tasks can disable the tick since they करोn't need the क्रमced
 	 * preemption.
 	 */
 	WARN_ON_ONCE(current->policy != SCHED_FIFO);
@@ -378,124 +379,124 @@ void play_idle_precise(u64 duration_ns, u64 latency_ns)
 	current->flags |= PF_IDLE;
 	cpuidle_use_deepest_state(latency_ns);
 
-	it.done = 0;
-	hrtimer_init_on_stack(&it.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	it.timer.function = idle_inject_timer_fn;
-	hrtimer_start(&it.timer, ns_to_ktime(duration_ns),
+	it.करोne = 0;
+	hrसमयr_init_on_stack(&it.समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	it.समयr.function = idle_inject_समयr_fn;
+	hrसमयr_start(&it.समयr, ns_to_kसमय(duration_ns),
 		      HRTIMER_MODE_REL_PINNED);
 
-	while (!READ_ONCE(it.done))
-		do_idle();
+	जबतक (!READ_ONCE(it.करोne))
+		करो_idle();
 
 	cpuidle_use_deepest_state(0);
 	current->flags &= ~PF_IDLE;
 
 	preempt_fold_need_resched();
 	preempt_enable();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(play_idle_precise);
 
-void cpu_startup_entry(enum cpuhp_state state)
-{
+व्योम cpu_startup_entry(क्रमागत cpuhp_state state)
+अणु
 	arch_cpu_idle_prepare();
 	cpuhp_online_idle(state);
-	while (1)
-		do_idle();
-}
+	जबतक (1)
+		करो_idle();
+पूर्ण
 
 /*
  * idle-task scheduling class.
  */
 
-#ifdef CONFIG_SMP
-static int
-select_task_rq_idle(struct task_struct *p, int cpu, int flags)
-{
-	return task_cpu(p); /* IDLE tasks as never migrated */
-}
+#अगर_घोषित CONFIG_SMP
+अटल पूर्णांक
+select_task_rq_idle(काष्ठा task_काष्ठा *p, पूर्णांक cpu, पूर्णांक flags)
+अणु
+	वापस task_cpu(p); /* IDLE tasks as never migrated */
+पूर्ण
 
-static int
-balance_idle(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
-{
-	return WARN_ON_ONCE(1);
-}
-#endif
+अटल पूर्णांक
+balance_idle(काष्ठा rq *rq, काष्ठा task_काष्ठा *prev, काष्ठा rq_flags *rf)
+अणु
+	वापस WARN_ON_ONCE(1);
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Idle tasks are unconditionally rescheduled:
  */
-static void check_preempt_curr_idle(struct rq *rq, struct task_struct *p, int flags)
-{
+अटल व्योम check_preempt_curr_idle(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags)
+अणु
 	resched_curr(rq);
-}
+पूर्ण
 
-static void put_prev_task_idle(struct rq *rq, struct task_struct *prev)
-{
-}
+अटल व्योम put_prev_task_idle(काष्ठा rq *rq, काष्ठा task_काष्ठा *prev)
+अणु
+पूर्ण
 
-static void set_next_task_idle(struct rq *rq, struct task_struct *next, bool first)
-{
+अटल व्योम set_next_task_idle(काष्ठा rq *rq, काष्ठा task_काष्ठा *next, bool first)
+अणु
 	update_idle_core(rq);
 	schedstat_inc(rq->sched_goidle);
-}
+पूर्ण
 
-struct task_struct *pick_next_task_idle(struct rq *rq)
-{
-	struct task_struct *next = rq->idle;
+काष्ठा task_काष्ठा *pick_next_task_idle(काष्ठा rq *rq)
+अणु
+	काष्ठा task_काष्ठा *next = rq->idle;
 
 	set_next_task_idle(rq, next, true);
 
-	return next;
-}
+	वापस next;
+पूर्ण
 
 /*
- * It is not legal to sleep in the idle task - print a warning
- * message if some code attempts to do it:
+ * It is not legal to sleep in the idle task - prपूर्णांक a warning
+ * message अगर some code attempts to करो it:
  */
-static void
-dequeue_task_idle(struct rq *rq, struct task_struct *p, int flags)
-{
+अटल व्योम
+dequeue_task_idle(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags)
+अणु
 	raw_spin_unlock_irq(&rq->lock);
-	printk(KERN_ERR "bad: scheduling from the idle thread!\n");
+	prपूर्णांकk(KERN_ERR "bad: scheduling from the idle thread!\n");
 	dump_stack();
 	raw_spin_lock_irq(&rq->lock);
-}
+पूर्ण
 
 /*
  * scheduler tick hitting a task of our scheduling class.
  *
  * NOTE: This function can be called remotely by the tick offload that
- * goes along full dynticks. Therefore no local assumption can be made
+ * goes aदीर्घ full dynticks. Thereक्रमe no local assumption can be made
  * and everything must be accessed through the @rq and @curr passed in
  * parameters.
  */
-static void task_tick_idle(struct rq *rq, struct task_struct *curr, int queued)
-{
-}
+अटल व्योम task_tick_idle(काष्ठा rq *rq, काष्ठा task_काष्ठा *curr, पूर्णांक queued)
+अणु
+पूर्ण
 
-static void switched_to_idle(struct rq *rq, struct task_struct *p)
-{
+अटल व्योम चयनed_to_idle(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
 	BUG();
-}
+पूर्ण
 
-static void
-prio_changed_idle(struct rq *rq, struct task_struct *p, int oldprio)
-{
+अटल व्योम
+prio_changed_idle(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक oldprio)
+अणु
 	BUG();
-}
+पूर्ण
 
-static void update_curr_idle(struct rq *rq)
-{
-}
+अटल व्योम update_curr_idle(काष्ठा rq *rq)
+अणु
+पूर्ण
 
 /*
- * Simple, special scheduling class for the per-CPU idle tasks:
+ * Simple, special scheduling class क्रम the per-CPU idle tasks:
  */
-DEFINE_SCHED_CLASS(idle) = {
+DEFINE_SCHED_CLASS(idle) = अणु
 
-	/* no enqueue/yield_task for idle tasks */
+	/* no enqueue/yield_task क्रम idle tasks */
 
-	/* dequeue is not valid, we print a debug message there: */
+	/* dequeue is not valid, we prपूर्णांक a debug message there: */
 	.dequeue_task		= dequeue_task_idle,
 
 	.check_preempt_curr	= check_preempt_curr_idle,
@@ -504,15 +505,15 @@ DEFINE_SCHED_CLASS(idle) = {
 	.put_prev_task		= put_prev_task_idle,
 	.set_next_task          = set_next_task_idle,
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	.balance		= balance_idle,
 	.select_task_rq		= select_task_rq_idle,
 	.set_cpus_allowed	= set_cpus_allowed_common,
-#endif
+#पूर्ण_अगर
 
 	.task_tick		= task_tick_idle,
 
 	.prio_changed		= prio_changed_idle,
-	.switched_to		= switched_to_idle,
+	.चयनed_to		= चयनed_to_idle,
 	.update_curr		= update_curr_idle,
-};
+पूर्ण;

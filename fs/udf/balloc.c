@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * balloc.c
  *
  * PURPOSE
- *	Block allocation handling routines for the OSTA-UDF(tm) filesystem.
+ *	Block allocation handling routines क्रम the OSTA-UDF(पंचांग) fileप्रणाली.
  *
  * COPYRIGHT
  *	This file is distributed under the terms of the GNU General Public
@@ -19,612 +20,612 @@
  *
  */
 
-#include "udfdecl.h"
+#समावेश "udfdecl.h"
 
-#include <linux/bitops.h>
+#समावेश <linux/bitops.h>
 
-#include "udf_i.h"
-#include "udf_sb.h"
+#समावेश "udf_i.h"
+#समावेश "udf_sb.h"
 
-#define udf_clear_bit	__test_and_clear_bit_le
-#define udf_set_bit	__test_and_set_bit_le
-#define udf_test_bit	test_bit_le
-#define udf_find_next_one_bit	find_next_bit_le
+#घोषणा udf_clear_bit	__test_and_clear_bit_le
+#घोषणा udf_set_bit	__test_and_set_bit_le
+#घोषणा udf_test_bit	test_bit_le
+#घोषणा udf_find_next_one_bit	find_next_bit_le
 
-static int read_block_bitmap(struct super_block *sb,
-			     struct udf_bitmap *bitmap, unsigned int block,
-			     unsigned long bitmap_nr)
-{
-	struct buffer_head *bh = NULL;
-	int retval = 0;
-	struct kernel_lb_addr loc;
+अटल पूर्णांक पढ़ो_block_biपंचांगap(काष्ठा super_block *sb,
+			     काष्ठा udf_biपंचांगap *biपंचांगap, अचिन्हित पूर्णांक block,
+			     अचिन्हित दीर्घ biपंचांगap_nr)
+अणु
+	काष्ठा buffer_head *bh = शून्य;
+	पूर्णांक retval = 0;
+	काष्ठा kernel_lb_addr loc;
 
-	loc.logicalBlockNum = bitmap->s_extPosition;
+	loc.logicalBlockNum = biपंचांगap->s_extPosition;
 	loc.partitionReferenceNum = UDF_SB(sb)->s_partition;
 
-	bh = udf_tread(sb, udf_get_lb_pblock(sb, &loc, block));
-	if (!bh)
+	bh = udf_tपढ़ो(sb, udf_get_lb_pblock(sb, &loc, block));
+	अगर (!bh)
 		retval = -EIO;
 
-	bitmap->s_block_bitmap[bitmap_nr] = bh;
-	return retval;
-}
+	biपंचांगap->s_block_biपंचांगap[biपंचांगap_nr] = bh;
+	वापस retval;
+पूर्ण
 
-static int __load_block_bitmap(struct super_block *sb,
-			       struct udf_bitmap *bitmap,
-			       unsigned int block_group)
-{
-	int retval = 0;
-	int nr_groups = bitmap->s_nr_groups;
+अटल पूर्णांक __load_block_biपंचांगap(काष्ठा super_block *sb,
+			       काष्ठा udf_biपंचांगap *biपंचांगap,
+			       अचिन्हित पूर्णांक block_group)
+अणु
+	पूर्णांक retval = 0;
+	पूर्णांक nr_groups = biपंचांगap->s_nr_groups;
 
-	if (block_group >= nr_groups) {
+	अगर (block_group >= nr_groups) अणु
 		udf_debug("block_group (%u) > nr_groups (%d)\n",
 			  block_group, nr_groups);
-	}
+	पूर्ण
 
-	if (bitmap->s_block_bitmap[block_group])
-		return block_group;
+	अगर (biपंचांगap->s_block_biपंचांगap[block_group])
+		वापस block_group;
 
-	retval = read_block_bitmap(sb, bitmap, block_group, block_group);
-	if (retval < 0)
-		return retval;
+	retval = पढ़ो_block_biपंचांगap(sb, biपंचांगap, block_group, block_group);
+	अगर (retval < 0)
+		वापस retval;
 
-	return block_group;
-}
+	वापस block_group;
+पूर्ण
 
-static inline int load_block_bitmap(struct super_block *sb,
-				    struct udf_bitmap *bitmap,
-				    unsigned int block_group)
-{
-	int slot;
+अटल अंतरभूत पूर्णांक load_block_biपंचांगap(काष्ठा super_block *sb,
+				    काष्ठा udf_biपंचांगap *biपंचांगap,
+				    अचिन्हित पूर्णांक block_group)
+अणु
+	पूर्णांक slot;
 
-	slot = __load_block_bitmap(sb, bitmap, block_group);
+	slot = __load_block_biपंचांगap(sb, biपंचांगap, block_group);
 
-	if (slot < 0)
-		return slot;
+	अगर (slot < 0)
+		वापस slot;
 
-	if (!bitmap->s_block_bitmap[slot])
-		return -EIO;
+	अगर (!biपंचांगap->s_block_biपंचांगap[slot])
+		वापस -EIO;
 
-	return slot;
-}
+	वापस slot;
+पूर्ण
 
-static void udf_add_free_space(struct super_block *sb, u16 partition, u32 cnt)
-{
-	struct udf_sb_info *sbi = UDF_SB(sb);
-	struct logicalVolIntegrityDesc *lvid;
+अटल व्योम udf_add_मुक्त_space(काष्ठा super_block *sb, u16 partition, u32 cnt)
+अणु
+	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
+	काष्ठा logicalVolIntegrityDesc *lvid;
 
-	if (!sbi->s_lvid_bh)
-		return;
+	अगर (!sbi->s_lvid_bh)
+		वापस;
 
-	lvid = (struct logicalVolIntegrityDesc *)sbi->s_lvid_bh->b_data;
-	le32_add_cpu(&lvid->freeSpaceTable[partition], cnt);
+	lvid = (काष्ठा logicalVolIntegrityDesc *)sbi->s_lvid_bh->b_data;
+	le32_add_cpu(&lvid->मुक्तSpaceTable[partition], cnt);
 	udf_updated_lvid(sb);
-}
+पूर्ण
 
-static void udf_bitmap_free_blocks(struct super_block *sb,
-				   struct udf_bitmap *bitmap,
-				   struct kernel_lb_addr *bloc,
-				   uint32_t offset,
-				   uint32_t count)
-{
-	struct udf_sb_info *sbi = UDF_SB(sb);
-	struct buffer_head *bh = NULL;
-	struct udf_part_map *partmap;
-	unsigned long block;
-	unsigned long block_group;
-	unsigned long bit;
-	unsigned long i;
-	int bitmap_nr;
-	unsigned long overflow;
+अटल व्योम udf_biपंचांगap_मुक्त_blocks(काष्ठा super_block *sb,
+				   काष्ठा udf_biपंचांगap *biपंचांगap,
+				   काष्ठा kernel_lb_addr *bloc,
+				   uपूर्णांक32_t offset,
+				   uपूर्णांक32_t count)
+अणु
+	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा udf_part_map *parपंचांगap;
+	अचिन्हित दीर्घ block;
+	अचिन्हित दीर्घ block_group;
+	अचिन्हित दीर्घ bit;
+	अचिन्हित दीर्घ i;
+	पूर्णांक biपंचांगap_nr;
+	अचिन्हित दीर्घ overflow;
 
 	mutex_lock(&sbi->s_alloc_mutex);
-	partmap = &sbi->s_partmaps[bloc->partitionReferenceNum];
-	if (bloc->logicalBlockNum + count < count ||
-	    (bloc->logicalBlockNum + count) > partmap->s_partition_len) {
+	parपंचांगap = &sbi->s_parपंचांगaps[bloc->partitionReferenceNum];
+	अगर (bloc->logicalBlockNum + count < count ||
+	    (bloc->logicalBlockNum + count) > parपंचांगap->s_partition_len) अणु
 		udf_debug("%u < %d || %u + %u > %u\n",
 			  bloc->logicalBlockNum, 0,
 			  bloc->logicalBlockNum, count,
-			  partmap->s_partition_len);
-		goto error_return;
-	}
+			  parपंचांगap->s_partition_len);
+		जाओ error_वापस;
+	पूर्ण
 
 	block = bloc->logicalBlockNum + offset +
-		(sizeof(struct spaceBitmapDesc) << 3);
+		(माप(काष्ठा spaceBiपंचांगapDesc) << 3);
 
-	do {
+	करो अणु
 		overflow = 0;
 		block_group = block >> (sb->s_blocksize_bits + 3);
 		bit = block % (sb->s_blocksize << 3);
 
 		/*
-		* Check to see if we are freeing blocks across a group boundary.
+		* Check to see अगर we are मुक्तing blocks across a group boundary.
 		*/
-		if (bit + count > (sb->s_blocksize << 3)) {
+		अगर (bit + count > (sb->s_blocksize << 3)) अणु
 			overflow = bit + count - (sb->s_blocksize << 3);
 			count -= overflow;
-		}
-		bitmap_nr = load_block_bitmap(sb, bitmap, block_group);
-		if (bitmap_nr < 0)
-			goto error_return;
+		पूर्ण
+		biपंचांगap_nr = load_block_biपंचांगap(sb, biपंचांगap, block_group);
+		अगर (biपंचांगap_nr < 0)
+			जाओ error_वापस;
 
-		bh = bitmap->s_block_bitmap[bitmap_nr];
-		for (i = 0; i < count; i++) {
-			if (udf_set_bit(bit + i, bh->b_data)) {
+		bh = biपंचांगap->s_block_biपंचांगap[biपंचांगap_nr];
+		क्रम (i = 0; i < count; i++) अणु
+			अगर (udf_set_bit(bit + i, bh->b_data)) अणु
 				udf_debug("bit %lu already set\n", bit + i);
 				udf_debug("byte=%2x\n",
 					  ((__u8 *)bh->b_data)[(bit + i) >> 3]);
-			}
-		}
-		udf_add_free_space(sb, sbi->s_partition, count);
+			पूर्ण
+		पूर्ण
+		udf_add_मुक्त_space(sb, sbi->s_partition, count);
 		mark_buffer_dirty(bh);
-		if (overflow) {
+		अगर (overflow) अणु
 			block += count;
 			count = overflow;
-		}
-	} while (overflow);
+		पूर्ण
+	पूर्ण जबतक (overflow);
 
-error_return:
+error_वापस:
 	mutex_unlock(&sbi->s_alloc_mutex);
-}
+पूर्ण
 
-static int udf_bitmap_prealloc_blocks(struct super_block *sb,
-				      struct udf_bitmap *bitmap,
-				      uint16_t partition, uint32_t first_block,
-				      uint32_t block_count)
-{
-	struct udf_sb_info *sbi = UDF_SB(sb);
-	int alloc_count = 0;
-	int bit, block, block_group;
-	int bitmap_nr;
-	struct buffer_head *bh;
+अटल पूर्णांक udf_biपंचांगap_pपुनः_स्मृति_blocks(काष्ठा super_block *sb,
+				      काष्ठा udf_biपंचांगap *biपंचांगap,
+				      uपूर्णांक16_t partition, uपूर्णांक32_t first_block,
+				      uपूर्णांक32_t block_count)
+अणु
+	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
+	पूर्णांक alloc_count = 0;
+	पूर्णांक bit, block, block_group;
+	पूर्णांक biपंचांगap_nr;
+	काष्ठा buffer_head *bh;
 	__u32 part_len;
 
 	mutex_lock(&sbi->s_alloc_mutex);
-	part_len = sbi->s_partmaps[partition].s_partition_len;
-	if (first_block >= part_len)
-		goto out;
+	part_len = sbi->s_parपंचांगaps[partition].s_partition_len;
+	अगर (first_block >= part_len)
+		जाओ out;
 
-	if (first_block + block_count > part_len)
+	अगर (first_block + block_count > part_len)
 		block_count = part_len - first_block;
 
-	do {
-		block = first_block + (sizeof(struct spaceBitmapDesc) << 3);
+	करो अणु
+		block = first_block + (माप(काष्ठा spaceBiपंचांगapDesc) << 3);
 		block_group = block >> (sb->s_blocksize_bits + 3);
 
-		bitmap_nr = load_block_bitmap(sb, bitmap, block_group);
-		if (bitmap_nr < 0)
-			goto out;
-		bh = bitmap->s_block_bitmap[bitmap_nr];
+		biपंचांगap_nr = load_block_biपंचांगap(sb, biपंचांगap, block_group);
+		अगर (biपंचांगap_nr < 0)
+			जाओ out;
+		bh = biपंचांगap->s_block_biपंचांगap[biपंचांगap_nr];
 
 		bit = block % (sb->s_blocksize << 3);
 
-		while (bit < (sb->s_blocksize << 3) && block_count > 0) {
-			if (!udf_clear_bit(bit, bh->b_data))
-				goto out;
+		जबतक (bit < (sb->s_blocksize << 3) && block_count > 0) अणु
+			अगर (!udf_clear_bit(bit, bh->b_data))
+				जाओ out;
 			block_count--;
 			alloc_count++;
 			bit++;
 			block++;
-		}
+		पूर्ण
 		mark_buffer_dirty(bh);
-	} while (block_count > 0);
+	पूर्ण जबतक (block_count > 0);
 
 out:
-	udf_add_free_space(sb, partition, -alloc_count);
+	udf_add_मुक्त_space(sb, partition, -alloc_count);
 	mutex_unlock(&sbi->s_alloc_mutex);
-	return alloc_count;
-}
+	वापस alloc_count;
+पूर्ण
 
-static udf_pblk_t udf_bitmap_new_block(struct super_block *sb,
-				struct udf_bitmap *bitmap, uint16_t partition,
-				uint32_t goal, int *err)
-{
-	struct udf_sb_info *sbi = UDF_SB(sb);
-	int newbit, bit = 0;
+अटल udf_pblk_t udf_biपंचांगap_new_block(काष्ठा super_block *sb,
+				काष्ठा udf_biपंचांगap *biपंचांगap, uपूर्णांक16_t partition,
+				uपूर्णांक32_t goal, पूर्णांक *err)
+अणु
+	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
+	पूर्णांक newbit, bit = 0;
 	udf_pblk_t block;
-	int block_group, group_start;
-	int end_goal, nr_groups, bitmap_nr, i;
-	struct buffer_head *bh = NULL;
-	char *ptr;
+	पूर्णांक block_group, group_start;
+	पूर्णांक end_goal, nr_groups, biपंचांगap_nr, i;
+	काष्ठा buffer_head *bh = शून्य;
+	अक्षर *ptr;
 	udf_pblk_t newblock = 0;
 
 	*err = -ENOSPC;
 	mutex_lock(&sbi->s_alloc_mutex);
 
 repeat:
-	if (goal >= sbi->s_partmaps[partition].s_partition_len)
+	अगर (goal >= sbi->s_parपंचांगaps[partition].s_partition_len)
 		goal = 0;
 
-	nr_groups = bitmap->s_nr_groups;
-	block = goal + (sizeof(struct spaceBitmapDesc) << 3);
+	nr_groups = biपंचांगap->s_nr_groups;
+	block = goal + (माप(काष्ठा spaceBiपंचांगapDesc) << 3);
 	block_group = block >> (sb->s_blocksize_bits + 3);
-	group_start = block_group ? 0 : sizeof(struct spaceBitmapDesc);
+	group_start = block_group ? 0 : माप(काष्ठा spaceBiपंचांगapDesc);
 
-	bitmap_nr = load_block_bitmap(sb, bitmap, block_group);
-	if (bitmap_nr < 0)
-		goto error_return;
-	bh = bitmap->s_block_bitmap[bitmap_nr];
-	ptr = memscan((char *)bh->b_data + group_start, 0xFF,
+	biपंचांगap_nr = load_block_biपंचांगap(sb, biपंचांगap, block_group);
+	अगर (biपंचांगap_nr < 0)
+		जाओ error_वापस;
+	bh = biपंचांगap->s_block_biपंचांगap[biपंचांगap_nr];
+	ptr = memscan((अक्षर *)bh->b_data + group_start, 0xFF,
 		      sb->s_blocksize - group_start);
 
-	if ((ptr - ((char *)bh->b_data)) < sb->s_blocksize) {
+	अगर ((ptr - ((अक्षर *)bh->b_data)) < sb->s_blocksize) अणु
 		bit = block % (sb->s_blocksize << 3);
-		if (udf_test_bit(bit, bh->b_data))
-			goto got_block;
+		अगर (udf_test_bit(bit, bh->b_data))
+			जाओ got_block;
 
 		end_goal = (bit + 63) & ~63;
 		bit = udf_find_next_one_bit(bh->b_data, end_goal, bit);
-		if (bit < end_goal)
-			goto got_block;
+		अगर (bit < end_goal)
+			जाओ got_block;
 
-		ptr = memscan((char *)bh->b_data + (bit >> 3), 0xFF,
+		ptr = memscan((अक्षर *)bh->b_data + (bit >> 3), 0xFF,
 			      sb->s_blocksize - ((bit + 7) >> 3));
-		newbit = (ptr - ((char *)bh->b_data)) << 3;
-		if (newbit < sb->s_blocksize << 3) {
+		newbit = (ptr - ((अक्षर *)bh->b_data)) << 3;
+		अगर (newbit < sb->s_blocksize << 3) अणु
 			bit = newbit;
-			goto search_back;
-		}
+			जाओ search_back;
+		पूर्ण
 
 		newbit = udf_find_next_one_bit(bh->b_data,
 					       sb->s_blocksize << 3, bit);
-		if (newbit < sb->s_blocksize << 3) {
+		अगर (newbit < sb->s_blocksize << 3) अणु
 			bit = newbit;
-			goto got_block;
-		}
-	}
+			जाओ got_block;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < (nr_groups * 2); i++) {
+	क्रम (i = 0; i < (nr_groups * 2); i++) अणु
 		block_group++;
-		if (block_group >= nr_groups)
+		अगर (block_group >= nr_groups)
 			block_group = 0;
-		group_start = block_group ? 0 : sizeof(struct spaceBitmapDesc);
+		group_start = block_group ? 0 : माप(काष्ठा spaceBiपंचांगapDesc);
 
-		bitmap_nr = load_block_bitmap(sb, bitmap, block_group);
-		if (bitmap_nr < 0)
-			goto error_return;
-		bh = bitmap->s_block_bitmap[bitmap_nr];
-		if (i < nr_groups) {
-			ptr = memscan((char *)bh->b_data + group_start, 0xFF,
+		biपंचांगap_nr = load_block_biपंचांगap(sb, biपंचांगap, block_group);
+		अगर (biपंचांगap_nr < 0)
+			जाओ error_वापस;
+		bh = biपंचांगap->s_block_biपंचांगap[biपंचांगap_nr];
+		अगर (i < nr_groups) अणु
+			ptr = memscan((अक्षर *)bh->b_data + group_start, 0xFF,
 				      sb->s_blocksize - group_start);
-			if ((ptr - ((char *)bh->b_data)) < sb->s_blocksize) {
-				bit = (ptr - ((char *)bh->b_data)) << 3;
-				break;
-			}
-		} else {
+			अगर ((ptr - ((अक्षर *)bh->b_data)) < sb->s_blocksize) अणु
+				bit = (ptr - ((अक्षर *)bh->b_data)) << 3;
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			bit = udf_find_next_one_bit(bh->b_data,
 						    sb->s_blocksize << 3,
 						    group_start << 3);
-			if (bit < sb->s_blocksize << 3)
-				break;
-		}
-	}
-	if (i >= (nr_groups * 2)) {
+			अगर (bit < sb->s_blocksize << 3)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (i >= (nr_groups * 2)) अणु
 		mutex_unlock(&sbi->s_alloc_mutex);
-		return newblock;
-	}
-	if (bit < sb->s_blocksize << 3)
-		goto search_back;
-	else
+		वापस newblock;
+	पूर्ण
+	अगर (bit < sb->s_blocksize << 3)
+		जाओ search_back;
+	अन्यथा
 		bit = udf_find_next_one_bit(bh->b_data, sb->s_blocksize << 3,
 					    group_start << 3);
-	if (bit >= sb->s_blocksize << 3) {
+	अगर (bit >= sb->s_blocksize << 3) अणु
 		mutex_unlock(&sbi->s_alloc_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 search_back:
 	i = 0;
-	while (i < 7 && bit > (group_start << 3) &&
-	       udf_test_bit(bit - 1, bh->b_data)) {
+	जबतक (i < 7 && bit > (group_start << 3) &&
+	       udf_test_bit(bit - 1, bh->b_data)) अणु
 		++i;
 		--bit;
-	}
+	पूर्ण
 
 got_block:
 	newblock = bit + (block_group << (sb->s_blocksize_bits + 3)) -
-		(sizeof(struct spaceBitmapDesc) << 3);
+		(माप(काष्ठा spaceBiपंचांगapDesc) << 3);
 
-	if (newblock >= sbi->s_partmaps[partition].s_partition_len) {
+	अगर (newblock >= sbi->s_parपंचांगaps[partition].s_partition_len) अणु
 		/*
-		 * Ran off the end of the bitmap, and bits following are
+		 * Ran off the end of the biपंचांगap, and bits following are
 		 * non-compliant (not all zero)
 		 */
 		udf_err(sb, "bitmap for partition %d corrupted (block %u marked"
 			" as free, partition length is %u)\n", partition,
-			newblock, sbi->s_partmaps[partition].s_partition_len);
-		goto error_return;
-	}
+			newblock, sbi->s_parपंचांगaps[partition].s_partition_len);
+		जाओ error_वापस;
+	पूर्ण
 
-	if (!udf_clear_bit(bit, bh->b_data)) {
+	अगर (!udf_clear_bit(bit, bh->b_data)) अणु
 		udf_debug("bit already cleared for block %d\n", bit);
-		goto repeat;
-	}
+		जाओ repeat;
+	पूर्ण
 
 	mark_buffer_dirty(bh);
 
-	udf_add_free_space(sb, partition, -1);
+	udf_add_मुक्त_space(sb, partition, -1);
 	mutex_unlock(&sbi->s_alloc_mutex);
 	*err = 0;
-	return newblock;
+	वापस newblock;
 
-error_return:
+error_वापस:
 	*err = -EIO;
 	mutex_unlock(&sbi->s_alloc_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void udf_table_free_blocks(struct super_block *sb,
-				  struct inode *table,
-				  struct kernel_lb_addr *bloc,
-				  uint32_t offset,
-				  uint32_t count)
-{
-	struct udf_sb_info *sbi = UDF_SB(sb);
-	struct udf_part_map *partmap;
-	uint32_t start, end;
-	uint32_t elen;
-	struct kernel_lb_addr eloc;
-	struct extent_position oepos, epos;
-	int8_t etype;
-	struct udf_inode_info *iinfo;
+अटल व्योम udf_table_मुक्त_blocks(काष्ठा super_block *sb,
+				  काष्ठा inode *table,
+				  काष्ठा kernel_lb_addr *bloc,
+				  uपूर्णांक32_t offset,
+				  uपूर्णांक32_t count)
+अणु
+	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
+	काष्ठा udf_part_map *parपंचांगap;
+	uपूर्णांक32_t start, end;
+	uपूर्णांक32_t elen;
+	काष्ठा kernel_lb_addr eloc;
+	काष्ठा extent_position oepos, epos;
+	पूर्णांक8_t etype;
+	काष्ठा udf_inode_info *iinfo;
 
 	mutex_lock(&sbi->s_alloc_mutex);
-	partmap = &sbi->s_partmaps[bloc->partitionReferenceNum];
-	if (bloc->logicalBlockNum + count < count ||
-	    (bloc->logicalBlockNum + count) > partmap->s_partition_len) {
+	parपंचांगap = &sbi->s_parपंचांगaps[bloc->partitionReferenceNum];
+	अगर (bloc->logicalBlockNum + count < count ||
+	    (bloc->logicalBlockNum + count) > parपंचांगap->s_partition_len) अणु
 		udf_debug("%u < %d || %u + %u > %u\n",
 			  bloc->logicalBlockNum, 0,
 			  bloc->logicalBlockNum, count,
-			  partmap->s_partition_len);
-		goto error_return;
-	}
+			  parपंचांगap->s_partition_len);
+		जाओ error_वापस;
+	पूर्ण
 
 	iinfo = UDF_I(table);
-	udf_add_free_space(sb, sbi->s_partition, count);
+	udf_add_मुक्त_space(sb, sbi->s_partition, count);
 
 	start = bloc->logicalBlockNum + offset;
 	end = bloc->logicalBlockNum + offset + count - 1;
 
-	epos.offset = oepos.offset = sizeof(struct unallocSpaceEntry);
+	epos.offset = oepos.offset = माप(काष्ठा unallocSpaceEntry);
 	elen = 0;
 	epos.block = oepos.block = iinfo->i_location;
-	epos.bh = oepos.bh = NULL;
+	epos.bh = oepos.bh = शून्य;
 
-	while (count &&
-	       (etype = udf_next_aext(table, &epos, &eloc, &elen, 1)) != -1) {
-		if (((eloc.logicalBlockNum +
-			(elen >> sb->s_blocksize_bits)) == start)) {
-			if ((0x3FFFFFFF - elen) <
-					(count << sb->s_blocksize_bits)) {
-				uint32_t tmp = ((0x3FFFFFFF - elen) >>
+	जबतक (count &&
+	       (etype = udf_next_aext(table, &epos, &eloc, &elen, 1)) != -1) अणु
+		अगर (((eloc.logicalBlockNum +
+			(elen >> sb->s_blocksize_bits)) == start)) अणु
+			अगर ((0x3FFFFFFF - elen) <
+					(count << sb->s_blocksize_bits)) अणु
+				uपूर्णांक32_t पंचांगp = ((0x3FFFFFFF - elen) >>
 							sb->s_blocksize_bits);
-				count -= tmp;
-				start += tmp;
+				count -= पंचांगp;
+				start += पंचांगp;
 				elen = (etype << 30) |
 					(0x40000000 - sb->s_blocksize);
-			} else {
+			पूर्ण अन्यथा अणु
 				elen = (etype << 30) |
 					(elen +
 					(count << sb->s_blocksize_bits));
 				start += count;
 				count = 0;
-			}
-			udf_write_aext(table, &oepos, &eloc, elen, 1);
-		} else if (eloc.logicalBlockNum == (end + 1)) {
-			if ((0x3FFFFFFF - elen) <
-					(count << sb->s_blocksize_bits)) {
-				uint32_t tmp = ((0x3FFFFFFF - elen) >>
+			पूर्ण
+			udf_ग_लिखो_aext(table, &oepos, &eloc, elen, 1);
+		पूर्ण अन्यथा अगर (eloc.logicalBlockNum == (end + 1)) अणु
+			अगर ((0x3FFFFFFF - elen) <
+					(count << sb->s_blocksize_bits)) अणु
+				uपूर्णांक32_t पंचांगp = ((0x3FFFFFFF - elen) >>
 						sb->s_blocksize_bits);
-				count -= tmp;
-				end -= tmp;
-				eloc.logicalBlockNum -= tmp;
+				count -= पंचांगp;
+				end -= पंचांगp;
+				eloc.logicalBlockNum -= पंचांगp;
 				elen = (etype << 30) |
 					(0x40000000 - sb->s_blocksize);
-			} else {
+			पूर्ण अन्यथा अणु
 				eloc.logicalBlockNum = start;
 				elen = (etype << 30) |
 					(elen +
 					(count << sb->s_blocksize_bits));
 				end -= count;
 				count = 0;
-			}
-			udf_write_aext(table, &oepos, &eloc, elen, 1);
-		}
+			पूर्ण
+			udf_ग_लिखो_aext(table, &oepos, &eloc, elen, 1);
+		पूर्ण
 
-		if (epos.bh != oepos.bh) {
+		अगर (epos.bh != oepos.bh) अणु
 			oepos.block = epos.block;
-			brelse(oepos.bh);
+			brअन्यथा(oepos.bh);
 			get_bh(epos.bh);
 			oepos.bh = epos.bh;
 			oepos.offset = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			oepos.offset = epos.offset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (count) {
+	अगर (count) अणु
 		/*
 		 * NOTE: we CANNOT use udf_add_aext here, as it can try to
 		 * allocate a new block, and since we hold the super block
-		 * lock already very bad things would happen :)
+		 * lock alपढ़ोy very bad things would happen :)
 		 *
 		 * We copy the behavior of udf_add_aext, but instead of
-		 * trying to allocate a new block close to the existing one,
+		 * trying to allocate a new block बंद to the existing one,
 		 * we just steal a block from the extent we are trying to add.
 		 *
-		 * It would be nice if the blocks were close together, but it
+		 * It would be nice अगर the blocks were बंद together, but it
 		 * isn't required.
 		 */
 
-		int adsize;
+		पूर्णांक adsize;
 
 		eloc.logicalBlockNum = start;
 		elen = EXT_RECORDED_ALLOCATED |
 			(count << sb->s_blocksize_bits);
 
-		if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
-			adsize = sizeof(struct short_ad);
-		else if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
-			adsize = sizeof(struct long_ad);
-		else {
-			brelse(oepos.bh);
-			brelse(epos.bh);
-			goto error_return;
-		}
+		अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
+			adsize = माप(काष्ठा लघु_ad);
+		अन्यथा अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
+			adsize = माप(काष्ठा दीर्घ_ad);
+		अन्यथा अणु
+			brअन्यथा(oepos.bh);
+			brअन्यथा(epos.bh);
+			जाओ error_वापस;
+		पूर्ण
 
-		if (epos.offset + (2 * adsize) > sb->s_blocksize) {
-			/* Steal a block from the extent being free'd */
+		अगर (epos.offset + (2 * adsize) > sb->s_blocksize) अणु
+			/* Steal a block from the extent being मुक्त'd */
 			udf_setup_indirect_aext(table, eloc.logicalBlockNum,
 						&epos);
 
 			eloc.logicalBlockNum++;
 			elen -= sb->s_blocksize;
-		}
+		पूर्ण
 
 		/* It's possible that stealing the block emptied the extent */
-		if (elen)
+		अगर (elen)
 			__udf_add_aext(table, &epos, &eloc, elen, 1);
-	}
+	पूर्ण
 
-	brelse(epos.bh);
-	brelse(oepos.bh);
+	brअन्यथा(epos.bh);
+	brअन्यथा(oepos.bh);
 
-error_return:
+error_वापस:
 	mutex_unlock(&sbi->s_alloc_mutex);
-	return;
-}
+	वापस;
+पूर्ण
 
-static int udf_table_prealloc_blocks(struct super_block *sb,
-				     struct inode *table, uint16_t partition,
-				     uint32_t first_block, uint32_t block_count)
-{
-	struct udf_sb_info *sbi = UDF_SB(sb);
-	int alloc_count = 0;
-	uint32_t elen, adsize;
-	struct kernel_lb_addr eloc;
-	struct extent_position epos;
-	int8_t etype = -1;
-	struct udf_inode_info *iinfo;
+अटल पूर्णांक udf_table_pपुनः_स्मृति_blocks(काष्ठा super_block *sb,
+				     काष्ठा inode *table, uपूर्णांक16_t partition,
+				     uपूर्णांक32_t first_block, uपूर्णांक32_t block_count)
+अणु
+	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
+	पूर्णांक alloc_count = 0;
+	uपूर्णांक32_t elen, adsize;
+	काष्ठा kernel_lb_addr eloc;
+	काष्ठा extent_position epos;
+	पूर्णांक8_t etype = -1;
+	काष्ठा udf_inode_info *iinfo;
 
-	if (first_block >= sbi->s_partmaps[partition].s_partition_len)
-		return 0;
+	अगर (first_block >= sbi->s_parपंचांगaps[partition].s_partition_len)
+		वापस 0;
 
 	iinfo = UDF_I(table);
-	if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
-		adsize = sizeof(struct short_ad);
-	else if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
-		adsize = sizeof(struct long_ad);
-	else
-		return 0;
+	अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
+		adsize = माप(काष्ठा लघु_ad);
+	अन्यथा अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
+		adsize = माप(काष्ठा दीर्घ_ad);
+	अन्यथा
+		वापस 0;
 
 	mutex_lock(&sbi->s_alloc_mutex);
-	epos.offset = sizeof(struct unallocSpaceEntry);
+	epos.offset = माप(काष्ठा unallocSpaceEntry);
 	epos.block = iinfo->i_location;
-	epos.bh = NULL;
+	epos.bh = शून्य;
 	eloc.logicalBlockNum = 0xFFFFFFFF;
 
-	while (first_block != eloc.logicalBlockNum &&
-	       (etype = udf_next_aext(table, &epos, &eloc, &elen, 1)) != -1) {
+	जबतक (first_block != eloc.logicalBlockNum &&
+	       (etype = udf_next_aext(table, &epos, &eloc, &elen, 1)) != -1) अणु
 		udf_debug("eloc=%u, elen=%u, first_block=%u\n",
 			  eloc.logicalBlockNum, elen, first_block);
 		; /* empty loop body */
-	}
+	पूर्ण
 
-	if (first_block == eloc.logicalBlockNum) {
+	अगर (first_block == eloc.logicalBlockNum) अणु
 		epos.offset -= adsize;
 
 		alloc_count = (elen >> sb->s_blocksize_bits);
-		if (alloc_count > block_count) {
+		अगर (alloc_count > block_count) अणु
 			alloc_count = block_count;
 			eloc.logicalBlockNum += alloc_count;
 			elen -= (alloc_count << sb->s_blocksize_bits);
-			udf_write_aext(table, &epos, &eloc,
+			udf_ग_लिखो_aext(table, &epos, &eloc,
 					(etype << 30) | elen, 1);
-		} else
+		पूर्ण अन्यथा
 			udf_delete_aext(table, epos);
-	} else {
+	पूर्ण अन्यथा अणु
 		alloc_count = 0;
-	}
+	पूर्ण
 
-	brelse(epos.bh);
+	brअन्यथा(epos.bh);
 
-	if (alloc_count)
-		udf_add_free_space(sb, partition, -alloc_count);
+	अगर (alloc_count)
+		udf_add_मुक्त_space(sb, partition, -alloc_count);
 	mutex_unlock(&sbi->s_alloc_mutex);
-	return alloc_count;
-}
+	वापस alloc_count;
+पूर्ण
 
-static udf_pblk_t udf_table_new_block(struct super_block *sb,
-			       struct inode *table, uint16_t partition,
-			       uint32_t goal, int *err)
-{
-	struct udf_sb_info *sbi = UDF_SB(sb);
-	uint32_t spread = 0xFFFFFFFF, nspread = 0xFFFFFFFF;
+अटल udf_pblk_t udf_table_new_block(काष्ठा super_block *sb,
+			       काष्ठा inode *table, uपूर्णांक16_t partition,
+			       uपूर्णांक32_t goal, पूर्णांक *err)
+अणु
+	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
+	uपूर्णांक32_t spपढ़ो = 0xFFFFFFFF, nspपढ़ो = 0xFFFFFFFF;
 	udf_pblk_t newblock = 0;
-	uint32_t adsize;
-	uint32_t elen, goal_elen = 0;
-	struct kernel_lb_addr eloc, goal_eloc;
-	struct extent_position epos, goal_epos;
-	int8_t etype;
-	struct udf_inode_info *iinfo = UDF_I(table);
+	uपूर्णांक32_t adsize;
+	uपूर्णांक32_t elen, goal_elen = 0;
+	काष्ठा kernel_lb_addr eloc, goal_eloc;
+	काष्ठा extent_position epos, goal_epos;
+	पूर्णांक8_t etype;
+	काष्ठा udf_inode_info *iinfo = UDF_I(table);
 
 	*err = -ENOSPC;
 
-	if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
-		adsize = sizeof(struct short_ad);
-	else if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
-		adsize = sizeof(struct long_ad);
-	else
-		return newblock;
+	अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
+		adsize = माप(काष्ठा लघु_ad);
+	अन्यथा अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
+		adsize = माप(काष्ठा दीर्घ_ad);
+	अन्यथा
+		वापस newblock;
 
 	mutex_lock(&sbi->s_alloc_mutex);
-	if (goal >= sbi->s_partmaps[partition].s_partition_len)
+	अगर (goal >= sbi->s_parपंचांगaps[partition].s_partition_len)
 		goal = 0;
 
-	/* We search for the closest matching block to goal. If we find
+	/* We search क्रम the बंदst matching block to goal. If we find
 	   a exact hit, we stop. Otherwise we keep going till we run out
 	   of extents. We store the buffer_head, bloc, and extoffset
-	   of the current closest match and use that when we are done.
+	   of the current बंदst match and use that when we are करोne.
 	 */
-	epos.offset = sizeof(struct unallocSpaceEntry);
+	epos.offset = माप(काष्ठा unallocSpaceEntry);
 	epos.block = iinfo->i_location;
-	epos.bh = goal_epos.bh = NULL;
+	epos.bh = goal_epos.bh = शून्य;
 
-	while (spread &&
-	       (etype = udf_next_aext(table, &epos, &eloc, &elen, 1)) != -1) {
-		if (goal >= eloc.logicalBlockNum) {
-			if (goal < eloc.logicalBlockNum +
+	जबतक (spपढ़ो &&
+	       (etype = udf_next_aext(table, &epos, &eloc, &elen, 1)) != -1) अणु
+		अगर (goal >= eloc.logicalBlockNum) अणु
+			अगर (goal < eloc.logicalBlockNum +
 					(elen >> sb->s_blocksize_bits))
-				nspread = 0;
-			else
-				nspread = goal - eloc.logicalBlockNum -
+				nspपढ़ो = 0;
+			अन्यथा
+				nspपढ़ो = goal - eloc.logicalBlockNum -
 					(elen >> sb->s_blocksize_bits);
-		} else {
-			nspread = eloc.logicalBlockNum - goal;
-		}
+		पूर्ण अन्यथा अणु
+			nspपढ़ो = eloc.logicalBlockNum - goal;
+		पूर्ण
 
-		if (nspread < spread) {
-			spread = nspread;
-			if (goal_epos.bh != epos.bh) {
-				brelse(goal_epos.bh);
+		अगर (nspपढ़ो < spपढ़ो) अणु
+			spपढ़ो = nspपढ़ो;
+			अगर (goal_epos.bh != epos.bh) अणु
+				brअन्यथा(goal_epos.bh);
 				goal_epos.bh = epos.bh;
 				get_bh(goal_epos.bh);
-			}
+			पूर्ण
 			goal_epos.block = epos.block;
 			goal_epos.offset = epos.offset - adsize;
 			goal_eloc = eloc;
 			goal_elen = (etype << 30) | elen;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	brelse(epos.bh);
+	brअन्यथा(epos.bh);
 
-	if (spread == 0xFFFFFFFF) {
-		brelse(goal_epos.bh);
+	अगर (spपढ़ो == 0xFFFFFFFF) अणु
+		brअन्यथा(goal_epos.bh);
 		mutex_unlock(&sbi->s_alloc_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Only allocate blocks from the beginning of the extent.
 	   That way, we only delete (empty) extents, never have to insert an
@@ -635,86 +636,86 @@ static udf_pblk_t udf_table_new_block(struct super_block *sb,
 	goal_eloc.logicalBlockNum++;
 	goal_elen -= sb->s_blocksize;
 
-	if (goal_elen)
-		udf_write_aext(table, &goal_epos, &goal_eloc, goal_elen, 1);
-	else
+	अगर (goal_elen)
+		udf_ग_लिखो_aext(table, &goal_epos, &goal_eloc, goal_elen, 1);
+	अन्यथा
 		udf_delete_aext(table, goal_epos);
-	brelse(goal_epos.bh);
+	brअन्यथा(goal_epos.bh);
 
-	udf_add_free_space(sb, partition, -1);
+	udf_add_मुक्त_space(sb, partition, -1);
 
 	mutex_unlock(&sbi->s_alloc_mutex);
 	*err = 0;
-	return newblock;
-}
+	वापस newblock;
+पूर्ण
 
-void udf_free_blocks(struct super_block *sb, struct inode *inode,
-		     struct kernel_lb_addr *bloc, uint32_t offset,
-		     uint32_t count)
-{
-	uint16_t partition = bloc->partitionReferenceNum;
-	struct udf_part_map *map = &UDF_SB(sb)->s_partmaps[partition];
+व्योम udf_मुक्त_blocks(काष्ठा super_block *sb, काष्ठा inode *inode,
+		     काष्ठा kernel_lb_addr *bloc, uपूर्णांक32_t offset,
+		     uपूर्णांक32_t count)
+अणु
+	uपूर्णांक16_t partition = bloc->partitionReferenceNum;
+	काष्ठा udf_part_map *map = &UDF_SB(sb)->s_parपंचांगaps[partition];
 
-	if (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_BITMAP) {
-		udf_bitmap_free_blocks(sb, map->s_uspace.s_bitmap,
+	अगर (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_BITMAP) अणु
+		udf_biपंचांगap_मुक्त_blocks(sb, map->s_uspace.s_biपंचांगap,
 				       bloc, offset, count);
-	} else if (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_TABLE) {
-		udf_table_free_blocks(sb, map->s_uspace.s_table,
+	पूर्ण अन्यथा अगर (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_TABLE) अणु
+		udf_table_मुक्त_blocks(sb, map->s_uspace.s_table,
 				      bloc, offset, count);
-	}
+	पूर्ण
 
-	if (inode) {
+	अगर (inode) अणु
 		inode_sub_bytes(inode,
 				((sector_t)count) << sb->s_blocksize_bits);
-	}
-}
+	पूर्ण
+पूर्ण
 
-inline int udf_prealloc_blocks(struct super_block *sb,
-			       struct inode *inode,
-			       uint16_t partition, uint32_t first_block,
-			       uint32_t block_count)
-{
-	struct udf_part_map *map = &UDF_SB(sb)->s_partmaps[partition];
-	int allocated;
+अंतरभूत पूर्णांक udf_pपुनः_स्मृति_blocks(काष्ठा super_block *sb,
+			       काष्ठा inode *inode,
+			       uपूर्णांक16_t partition, uपूर्णांक32_t first_block,
+			       uपूर्णांक32_t block_count)
+अणु
+	काष्ठा udf_part_map *map = &UDF_SB(sb)->s_parपंचांगaps[partition];
+	पूर्णांक allocated;
 
-	if (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_BITMAP)
-		allocated = udf_bitmap_prealloc_blocks(sb,
-						       map->s_uspace.s_bitmap,
+	अगर (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_BITMAP)
+		allocated = udf_biपंचांगap_pपुनः_स्मृति_blocks(sb,
+						       map->s_uspace.s_biपंचांगap,
 						       partition, first_block,
 						       block_count);
-	else if (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_TABLE)
-		allocated = udf_table_prealloc_blocks(sb,
+	अन्यथा अगर (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_TABLE)
+		allocated = udf_table_pपुनः_स्मृति_blocks(sb,
 						      map->s_uspace.s_table,
 						      partition, first_block,
 						      block_count);
-	else
-		return 0;
+	अन्यथा
+		वापस 0;
 
-	if (inode && allocated > 0)
+	अगर (inode && allocated > 0)
 		inode_add_bytes(inode, allocated << sb->s_blocksize_bits);
-	return allocated;
-}
+	वापस allocated;
+पूर्ण
 
-inline udf_pblk_t udf_new_block(struct super_block *sb,
-			 struct inode *inode,
-			 uint16_t partition, uint32_t goal, int *err)
-{
-	struct udf_part_map *map = &UDF_SB(sb)->s_partmaps[partition];
+अंतरभूत udf_pblk_t udf_new_block(काष्ठा super_block *sb,
+			 काष्ठा inode *inode,
+			 uपूर्णांक16_t partition, uपूर्णांक32_t goal, पूर्णांक *err)
+अणु
+	काष्ठा udf_part_map *map = &UDF_SB(sb)->s_parपंचांगaps[partition];
 	udf_pblk_t block;
 
-	if (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_BITMAP)
-		block = udf_bitmap_new_block(sb,
-					     map->s_uspace.s_bitmap,
+	अगर (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_BITMAP)
+		block = udf_biपंचांगap_new_block(sb,
+					     map->s_uspace.s_biपंचांगap,
 					     partition, goal, err);
-	else if (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_TABLE)
+	अन्यथा अगर (map->s_partition_flags & UDF_PART_FLAG_UNALLOC_TABLE)
 		block = udf_table_new_block(sb,
 					    map->s_uspace.s_table,
 					    partition, goal, err);
-	else {
+	अन्यथा अणु
 		*err = -EIO;
-		return 0;
-	}
-	if (inode && block)
+		वापस 0;
+	पूर्ण
+	अगर (inode && block)
 		inode_add_bytes(inode, sb->s_blocksize);
-	return block;
-}
+	वापस block;
+पूर्ण

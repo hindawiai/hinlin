@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
- * eeprom.h:  Definitions for the Sun eeprom.
+ * eeprom.h:  Definitions क्रम the Sun eeprom.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
 /* The EEPROM and the Mostek Mk48t02 use the same IO address space
- * for their registers/data areas.  The IDPROM lives here too.
+ * क्रम their रेजिस्टरs/data areas.  The IDPROM lives here too.
  */

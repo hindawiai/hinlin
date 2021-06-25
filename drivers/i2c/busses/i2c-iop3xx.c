@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* ------------------------------------------------------------------------- */
-/* i2c-iop3xx.c i2c driver algorithms for Intel XScale IOP3xx & IXP46x       */
+/* i2c-iop3xx.c i2c driver algorithms क्रम Intel XScale IOP3xx & IXP46x       */
 /* ------------------------------------------------------------------------- */
 /* Copyright (C) 2003 Peter Milne, D-TACQ Solutions Ltd
- *                    <Peter dot Milne at D hyphen TACQ dot com>
+ *                    <Peter करोt Milne at D hyphen TACQ करोt com>
  *
  * With acknowledgements to i2c-algo-ibm_ocp.c by
  * Ian DaSilva, MontaVista Software, Inc. idasilva@mvista.com
@@ -12,13 +13,13 @@
  *
  * Copyright (C) 1995-1997 Simon G. Vogl, 1998-2000 Hans Berglund
  *
- * And which acknowledged Kyösti Mälkki <kmalkki@cc.hut.fi>,
- * Frodo Looijaard <frodol@dds.nl>, Martin Bailey<mbailey@littlefeet-inc.com>
+ * And which acknowledged Kyथघsti Mथअlkki <kmalkki@cc.hut.fi>,
+ * Froकरो Looijaard <froकरोl@dds.nl>, Martin Bailey<mbailey@littlefeet-inc.com>
  *
- * Major cleanup by Deepak Saxena <dsaxena@plexity.net>, 01/2005:
+ * Major cleanup by Deepak Saxena <dsaxena@plनिकासy.net>, 01/2005:
  *
- * - Use driver model to pass per-chip info instead of hardcoding and #ifdefs
- * - Use ioremap/__raw_readl/__raw_writel instead of direct dereference
+ * - Use driver model to pass per-chip info instead of hardcoding and #अगर_घोषितs
+ * - Use ioremap/__raw_पढ़ोl/__raw_ग_लिखोl instead of direct dereference
  * - Make it work with IXP46x chips
  * - Cleanup function names, coding style, etc
  *
@@ -26,56 +27,56 @@
  *	fix: driver refuses to address self.
  */
 
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/platform_device.h>
-#include <linux/i2c.h>
-#include <linux/io.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpio/consumer.h>
 
-#include "i2c-iop3xx.h"
+#समावेश "i2c-iop3xx.h"
 
 /* global unit counter */
-static int i2c_id;
+अटल पूर्णांक i2c_id;
 
-static inline unsigned char
-iic_cook_addr(struct i2c_msg *msg)
-{
-	unsigned char addr;
+अटल अंतरभूत अचिन्हित अक्षर
+iic_cook_addr(काष्ठा i2c_msg *msg)
+अणु
+	अचिन्हित अक्षर addr;
 
 	addr = i2c_8bit_addr_from_msg(msg);
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static void
-iop3xx_i2c_reset(struct i2c_algo_iop3xx_data *iop3xx_adap)
-{
+अटल व्योम
+iop3xx_i2c_reset(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap)
+अणु
 	/* Follows devman 9.3 */
-	__raw_writel(IOP3XX_ICR_UNIT_RESET, iop3xx_adap->ioaddr + CR_OFFSET);
-	__raw_writel(IOP3XX_ISR_CLEARBITS, iop3xx_adap->ioaddr + SR_OFFSET);
-	__raw_writel(0, iop3xx_adap->ioaddr + CR_OFFSET);
-}
+	__raw_ग_लिखोl(IOP3XX_ICR_UNIT_RESET, iop3xx_adap->ioaddr + CR_OFFSET);
+	__raw_ग_लिखोl(IOP3XX_ISR_CLEARBITS, iop3xx_adap->ioaddr + SR_OFFSET);
+	__raw_ग_लिखोl(0, iop3xx_adap->ioaddr + CR_OFFSET);
+पूर्ण
 
-static void
-iop3xx_i2c_enable(struct i2c_algo_iop3xx_data *iop3xx_adap)
-{
+अटल व्योम
+iop3xx_i2c_enable(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap)
+अणु
 	u32 cr = IOP3XX_ICR_GCD | IOP3XX_ICR_SCLEN | IOP3XX_ICR_UE;
 
 	/*
-	 * Every time unit enable is asserted, GPOD needs to be cleared
-	 * on IOP3XX to avoid data corruption on the bus. We use the
+	 * Every समय unit enable is निश्चितed, GPOD needs to be cleared
+	 * on IOP3XX to aव्योम data corruption on the bus. We use the
 	 * gpiod_set_raw_value() to make sure the 0 hits the hardware
-	 * GPOD register. These descriptors are only passed along to
-	 * the device if this is necessary.
+	 * GPOD रेजिस्टर. These descriptors are only passed aदीर्घ to
+	 * the device अगर this is necessary.
 	 */
-	if (iop3xx_adap->gpio_scl)
+	अगर (iop3xx_adap->gpio_scl)
 		gpiod_set_raw_value(iop3xx_adap->gpio_scl, 0);
-	if (iop3xx_adap->gpio_sda)
+	अगर (iop3xx_adap->gpio_sda)
 		gpiod_set_raw_value(iop3xx_adap->gpio_sda, 0);
 
 	/* NB SR bits not same position as CR IE bits :-( */
@@ -86,59 +87,59 @@ iop3xx_i2c_enable(struct i2c_algo_iop3xx_data *iop3xx_adap)
 	cr |= IOP3XX_ICR_ALD_IE | IOP3XX_ICR_BERR_IE |
 		IOP3XX_ICR_RXFULL_IE | IOP3XX_ICR_TXEMPTY_IE;
 
-	__raw_writel(cr, iop3xx_adap->ioaddr + CR_OFFSET);
-}
+	__raw_ग_लिखोl(cr, iop3xx_adap->ioaddr + CR_OFFSET);
+पूर्ण
 
-static void
-iop3xx_i2c_transaction_cleanup(struct i2c_algo_iop3xx_data *iop3xx_adap)
-{
-	unsigned long cr = __raw_readl(iop3xx_adap->ioaddr + CR_OFFSET);
+अटल व्योम
+iop3xx_i2c_transaction_cleanup(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap)
+अणु
+	अचिन्हित दीर्घ cr = __raw_पढ़ोl(iop3xx_adap->ioaddr + CR_OFFSET);
 
 	cr &= ~(IOP3XX_ICR_MSTART | IOP3XX_ICR_TBYTE |
 		IOP3XX_ICR_MSTOP | IOP3XX_ICR_SCLEN);
 
-	__raw_writel(cr, iop3xx_adap->ioaddr + CR_OFFSET);
-}
+	__raw_ग_लिखोl(cr, iop3xx_adap->ioaddr + CR_OFFSET);
+पूर्ण
 
 /*
- * NB: the handler has to clear the source of the interrupt!
- * Then it passes the SR flags of interest to BH via adap data
+ * NB: the handler has to clear the source of the पूर्णांकerrupt!
+ * Then it passes the SR flags of पूर्णांकerest to BH via adap data
  */
-static irqreturn_t
-iop3xx_i2c_irq_handler(int this_irq, void *dev_id)
-{
-	struct i2c_algo_iop3xx_data *iop3xx_adap = dev_id;
-	u32 sr = __raw_readl(iop3xx_adap->ioaddr + SR_OFFSET);
+अटल irqवापस_t
+iop3xx_i2c_irq_handler(पूर्णांक this_irq, व्योम *dev_id)
+अणु
+	काष्ठा i2c_algo_iop3xx_data *iop3xx_adap = dev_id;
+	u32 sr = __raw_पढ़ोl(iop3xx_adap->ioaddr + SR_OFFSET);
 
-	if ((sr &= iop3xx_adap->SR_enabled)) {
-		__raw_writel(sr, iop3xx_adap->ioaddr + SR_OFFSET);
+	अगर ((sr &= iop3xx_adap->SR_enabled)) अणु
+		__raw_ग_लिखोl(sr, iop3xx_adap->ioaddr + SR_OFFSET);
 		iop3xx_adap->SR_received |= sr;
-		wake_up_interruptible(&iop3xx_adap->waitq);
-	}
-	return IRQ_HANDLED;
-}
+		wake_up_पूर्णांकerruptible(&iop3xx_adap->रुकोq);
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* check all error conditions, clear them , report most important */
-static int
+अटल पूर्णांक
 iop3xx_i2c_error(u32 sr)
-{
-	int rc = 0;
+अणु
+	पूर्णांक rc = 0;
 
-	if ((sr & IOP3XX_ISR_BERRD)) {
-		if (!rc)
+	अगर ((sr & IOP3XX_ISR_BERRD)) अणु
+		अगर (!rc)
 			rc = -I2C_ERR_BERR;
-	}
-	if ((sr & IOP3XX_ISR_ALD)) {
-		if (!rc)
+	पूर्ण
+	अगर ((sr & IOP3XX_ISR_ALD)) अणु
+		अगर (!rc)
 			rc = -I2C_ERR_ALD;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static inline u32
-iop3xx_i2c_get_srstat(struct i2c_algo_iop3xx_data *iop3xx_adap)
-{
-	unsigned long flags;
+अटल अंतरभूत u32
+iop3xx_i2c_get_srstat(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 sr;
 
 	spin_lock_irqsave(&iop3xx_adap->lock, flags);
@@ -146,341 +147,341 @@ iop3xx_i2c_get_srstat(struct i2c_algo_iop3xx_data *iop3xx_adap)
 	iop3xx_adap->SR_received = 0;
 	spin_unlock_irqrestore(&iop3xx_adap->lock, flags);
 
-	return sr;
-}
+	वापस sr;
+पूर्ण
 
 /*
- * sleep until interrupted, then recover and analyse the SR
+ * sleep until पूर्णांकerrupted, then recover and analyse the SR
  * saved by handler
  */
-typedef int (*compare_func)(unsigned test, unsigned mask);
-/* returns 1 on correct comparison */
+प्रकार पूर्णांक (*compare_func)(अचिन्हित test, अचिन्हित mask);
+/* वापसs 1 on correct comparison */
 
-static int
-iop3xx_i2c_wait_event(struct i2c_algo_iop3xx_data *iop3xx_adap,
-			  unsigned flags, unsigned *status,
+अटल पूर्णांक
+iop3xx_i2c_रुको_event(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap,
+			  अचिन्हित flags, अचिन्हित *status,
 			  compare_func compare)
-{
-	unsigned sr = 0;
-	int interrupted;
-	int done;
-	int rc = 0;
+अणु
+	अचिन्हित sr = 0;
+	पूर्णांक पूर्णांकerrupted;
+	पूर्णांक करोne;
+	पूर्णांक rc = 0;
 
-	do {
-		interrupted = wait_event_interruptible_timeout (
-			iop3xx_adap->waitq,
-			(done = compare(sr = iop3xx_i2c_get_srstat(iop3xx_adap), flags)),
+	करो अणु
+		पूर्णांकerrupted = रुको_event_पूर्णांकerruptible_समयout (
+			iop3xx_adap->रुकोq,
+			(करोne = compare(sr = iop3xx_i2c_get_srstat(iop3xx_adap), flags)),
 			1 * HZ
 			);
-		if ((rc = iop3xx_i2c_error(sr)) < 0) {
+		अगर ((rc = iop3xx_i2c_error(sr)) < 0) अणु
 			*status = sr;
-			return rc;
-		} else if (!interrupted) {
+			वापस rc;
+		पूर्ण अन्यथा अगर (!पूर्णांकerrupted) अणु
 			*status = sr;
-			return -ETIMEDOUT;
-		}
-	} while (!done);
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण जबतक (!करोne);
 
 	*status = sr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Concrete compare_funcs
  */
-static int
-all_bits_clear(unsigned test, unsigned mask)
-{
-	return (test & mask) == 0;
-}
+अटल पूर्णांक
+all_bits_clear(अचिन्हित test, अचिन्हित mask)
+अणु
+	वापस (test & mask) == 0;
+पूर्ण
 
-static int
-any_bits_set(unsigned test, unsigned mask)
-{
-	return (test & mask) != 0;
-}
+अटल पूर्णांक
+any_bits_set(अचिन्हित test, अचिन्हित mask)
+अणु
+	वापस (test & mask) != 0;
+पूर्ण
 
-static int
-iop3xx_i2c_wait_tx_done(struct i2c_algo_iop3xx_data *iop3xx_adap, int *status)
-{
-	return iop3xx_i2c_wait_event(
+अटल पूर्णांक
+iop3xx_i2c_रुको_tx_करोne(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap, पूर्णांक *status)
+अणु
+	वापस iop3xx_i2c_रुको_event(
 		iop3xx_adap,
 		IOP3XX_ISR_TXEMPTY | IOP3XX_ISR_ALD | IOP3XX_ISR_BERRD,
 		status, any_bits_set);
-}
+पूर्ण
 
-static int
-iop3xx_i2c_wait_rx_done(struct i2c_algo_iop3xx_data *iop3xx_adap, int *status)
-{
-	return iop3xx_i2c_wait_event(
+अटल पूर्णांक
+iop3xx_i2c_रुको_rx_करोne(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap, पूर्णांक *status)
+अणु
+	वापस iop3xx_i2c_रुको_event(
 		iop3xx_adap,
 		IOP3XX_ISR_RXFULL | IOP3XX_ISR_ALD | IOP3XX_ISR_BERRD,
 		status,	any_bits_set);
-}
+पूर्ण
 
-static int
-iop3xx_i2c_wait_idle(struct i2c_algo_iop3xx_data *iop3xx_adap, int *status)
-{
-	return iop3xx_i2c_wait_event(
+अटल पूर्णांक
+iop3xx_i2c_रुको_idle(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap, पूर्णांक *status)
+अणु
+	वापस iop3xx_i2c_रुको_event(
 		iop3xx_adap, IOP3XX_ISR_UNITBUSY, status, all_bits_clear);
-}
+पूर्ण
 
-static int
-iop3xx_i2c_send_target_addr(struct i2c_algo_iop3xx_data *iop3xx_adap,
-				struct i2c_msg *msg)
-{
-	unsigned long cr = __raw_readl(iop3xx_adap->ioaddr + CR_OFFSET);
-	int status;
-	int rc;
+अटल पूर्णांक
+iop3xx_i2c_send_target_addr(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap,
+				काष्ठा i2c_msg *msg)
+अणु
+	अचिन्हित दीर्घ cr = __raw_पढ़ोl(iop3xx_adap->ioaddr + CR_OFFSET);
+	पूर्णांक status;
+	पूर्णांक rc;
 
-	/* avoid writing to my slave address (hangs on 80331),
-	 * forbidden in Intel developer manual
+	/* aव्योम writing to my slave address (hangs on 80331),
+	 * क्रमbidden in Intel developer manual
 	 */
-	if (msg->addr == MYSAR) {
-		return -EBUSY;
-	}
+	अगर (msg->addr == MYSAR) अणु
+		वापस -EBUSY;
+	पूर्ण
 
-	__raw_writel(iic_cook_addr(msg), iop3xx_adap->ioaddr + DBR_OFFSET);
+	__raw_ग_लिखोl(iic_cook_addr(msg), iop3xx_adap->ioaddr + DBR_OFFSET);
 
 	cr &= ~(IOP3XX_ICR_MSTOP | IOP3XX_ICR_NACK);
 	cr |= IOP3XX_ICR_MSTART | IOP3XX_ICR_TBYTE;
 
-	__raw_writel(cr, iop3xx_adap->ioaddr + CR_OFFSET);
-	rc = iop3xx_i2c_wait_tx_done(iop3xx_adap, &status);
+	__raw_ग_लिखोl(cr, iop3xx_adap->ioaddr + CR_OFFSET);
+	rc = iop3xx_i2c_रुको_tx_करोne(iop3xx_adap, &status);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-iop3xx_i2c_write_byte(struct i2c_algo_iop3xx_data *iop3xx_adap, char byte,
-				int stop)
-{
-	unsigned long cr = __raw_readl(iop3xx_adap->ioaddr + CR_OFFSET);
-	int status;
-	int rc = 0;
+अटल पूर्णांक
+iop3xx_i2c_ग_लिखो_byte(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap, अक्षर byte,
+				पूर्णांक stop)
+अणु
+	अचिन्हित दीर्घ cr = __raw_पढ़ोl(iop3xx_adap->ioaddr + CR_OFFSET);
+	पूर्णांक status;
+	पूर्णांक rc = 0;
 
-	__raw_writel(byte, iop3xx_adap->ioaddr + DBR_OFFSET);
+	__raw_ग_लिखोl(byte, iop3xx_adap->ioaddr + DBR_OFFSET);
 	cr &= ~IOP3XX_ICR_MSTART;
-	if (stop) {
+	अगर (stop) अणु
 		cr |= IOP3XX_ICR_MSTOP;
-	} else {
+	पूर्ण अन्यथा अणु
 		cr &= ~IOP3XX_ICR_MSTOP;
-	}
+	पूर्ण
 	cr |= IOP3XX_ICR_TBYTE;
-	__raw_writel(cr, iop3xx_adap->ioaddr + CR_OFFSET);
-	rc = iop3xx_i2c_wait_tx_done(iop3xx_adap, &status);
+	__raw_ग_लिखोl(cr, iop3xx_adap->ioaddr + CR_OFFSET);
+	rc = iop3xx_i2c_रुको_tx_करोne(iop3xx_adap, &status);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-iop3xx_i2c_read_byte(struct i2c_algo_iop3xx_data *iop3xx_adap, char *byte,
-				int stop)
-{
-	unsigned long cr = __raw_readl(iop3xx_adap->ioaddr + CR_OFFSET);
-	int status;
-	int rc = 0;
+अटल पूर्णांक
+iop3xx_i2c_पढ़ो_byte(काष्ठा i2c_algo_iop3xx_data *iop3xx_adap, अक्षर *byte,
+				पूर्णांक stop)
+अणु
+	अचिन्हित दीर्घ cr = __raw_पढ़ोl(iop3xx_adap->ioaddr + CR_OFFSET);
+	पूर्णांक status;
+	पूर्णांक rc = 0;
 
 	cr &= ~IOP3XX_ICR_MSTART;
 
-	if (stop) {
+	अगर (stop) अणु
 		cr |= IOP3XX_ICR_MSTOP | IOP3XX_ICR_NACK;
-	} else {
+	पूर्ण अन्यथा अणु
 		cr &= ~(IOP3XX_ICR_MSTOP | IOP3XX_ICR_NACK);
-	}
+	पूर्ण
 	cr |= IOP3XX_ICR_TBYTE;
-	__raw_writel(cr, iop3xx_adap->ioaddr + CR_OFFSET);
+	__raw_ग_लिखोl(cr, iop3xx_adap->ioaddr + CR_OFFSET);
 
-	rc = iop3xx_i2c_wait_rx_done(iop3xx_adap, &status);
+	rc = iop3xx_i2c_रुको_rx_करोne(iop3xx_adap, &status);
 
-	*byte = __raw_readl(iop3xx_adap->ioaddr + DBR_OFFSET);
+	*byte = __raw_पढ़ोl(iop3xx_adap->ioaddr + DBR_OFFSET);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-iop3xx_i2c_writebytes(struct i2c_adapter *i2c_adap, const char *buf, int count)
-{
-	struct i2c_algo_iop3xx_data *iop3xx_adap = i2c_adap->algo_data;
-	int ii;
-	int rc = 0;
+अटल पूर्णांक
+iop3xx_i2c_ग_लिखोbytes(काष्ठा i2c_adapter *i2c_adap, स्थिर अक्षर *buf, पूर्णांक count)
+अणु
+	काष्ठा i2c_algo_iop3xx_data *iop3xx_adap = i2c_adap->algo_data;
+	पूर्णांक ii;
+	पूर्णांक rc = 0;
 
-	for (ii = 0; rc == 0 && ii != count; ++ii)
-		rc = iop3xx_i2c_write_byte(iop3xx_adap, buf[ii], ii == count-1);
-	return rc;
-}
+	क्रम (ii = 0; rc == 0 && ii != count; ++ii)
+		rc = iop3xx_i2c_ग_लिखो_byte(iop3xx_adap, buf[ii], ii == count-1);
+	वापस rc;
+पूर्ण
 
-static int
-iop3xx_i2c_readbytes(struct i2c_adapter *i2c_adap, char *buf, int count)
-{
-	struct i2c_algo_iop3xx_data *iop3xx_adap = i2c_adap->algo_data;
-	int ii;
-	int rc = 0;
+अटल पूर्णांक
+iop3xx_i2c_पढ़ोbytes(काष्ठा i2c_adapter *i2c_adap, अक्षर *buf, पूर्णांक count)
+अणु
+	काष्ठा i2c_algo_iop3xx_data *iop3xx_adap = i2c_adap->algo_data;
+	पूर्णांक ii;
+	पूर्णांक rc = 0;
 
-	for (ii = 0; rc == 0 && ii != count; ++ii)
-		rc = iop3xx_i2c_read_byte(iop3xx_adap, &buf[ii], ii == count-1);
+	क्रम (ii = 0; rc == 0 && ii != count; ++ii)
+		rc = iop3xx_i2c_पढ़ो_byte(iop3xx_adap, &buf[ii], ii == count-1);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * Description:  This function implements combined transactions.  Combined
- * transactions consist of combinations of reading and writing blocks of data.
+ * transactions consist of combinations of पढ़ोing and writing blocks of data.
  * FROM THE SAME ADDRESS
- * Each transfer (i.e. a read or a write) is separated by a repeated start
+ * Each transfer (i.e. a पढ़ो or a ग_लिखो) is separated by a repeated start
  * condition.
  */
-static int
-iop3xx_i2c_handle_msg(struct i2c_adapter *i2c_adap, struct i2c_msg *pmsg)
-{
-	struct i2c_algo_iop3xx_data *iop3xx_adap = i2c_adap->algo_data;
-	int rc;
+अटल पूर्णांक
+iop3xx_i2c_handle_msg(काष्ठा i2c_adapter *i2c_adap, काष्ठा i2c_msg *pmsg)
+अणु
+	काष्ठा i2c_algo_iop3xx_data *iop3xx_adap = i2c_adap->algo_data;
+	पूर्णांक rc;
 
 	rc = iop3xx_i2c_send_target_addr(iop3xx_adap, pmsg);
-	if (rc < 0) {
-		return rc;
-	}
+	अगर (rc < 0) अणु
+		वापस rc;
+	पूर्ण
 
-	if ((pmsg->flags&I2C_M_RD)) {
-		return iop3xx_i2c_readbytes(i2c_adap, pmsg->buf, pmsg->len);
-	} else {
-		return iop3xx_i2c_writebytes(i2c_adap, pmsg->buf, pmsg->len);
-	}
-}
+	अगर ((pmsg->flags&I2C_M_RD)) अणु
+		वापस iop3xx_i2c_पढ़ोbytes(i2c_adap, pmsg->buf, pmsg->len);
+	पूर्ण अन्यथा अणु
+		वापस iop3xx_i2c_ग_लिखोbytes(i2c_adap, pmsg->buf, pmsg->len);
+	पूर्ण
+पूर्ण
 
 /*
- * master_xfer() - main read/write entry
+ * master_xfer() - मुख्य पढ़ो/ग_लिखो entry
  */
-static int
-iop3xx_i2c_master_xfer(struct i2c_adapter *i2c_adap, struct i2c_msg *msgs,
-				int num)
-{
-	struct i2c_algo_iop3xx_data *iop3xx_adap = i2c_adap->algo_data;
-	int im = 0;
-	int ret = 0;
-	int status;
+अटल पूर्णांक
+iop3xx_i2c_master_xfer(काष्ठा i2c_adapter *i2c_adap, काष्ठा i2c_msg *msgs,
+				पूर्णांक num)
+अणु
+	काष्ठा i2c_algo_iop3xx_data *iop3xx_adap = i2c_adap->algo_data;
+	पूर्णांक im = 0;
+	पूर्णांक ret = 0;
+	पूर्णांक status;
 
-	iop3xx_i2c_wait_idle(iop3xx_adap, &status);
+	iop3xx_i2c_रुको_idle(iop3xx_adap, &status);
 	iop3xx_i2c_reset(iop3xx_adap);
 	iop3xx_i2c_enable(iop3xx_adap);
 
-	for (im = 0; ret == 0 && im != num; im++) {
+	क्रम (im = 0; ret == 0 && im != num; im++) अणु
 		ret = iop3xx_i2c_handle_msg(i2c_adap, &msgs[im]);
-	}
+	पूर्ण
 
 	iop3xx_i2c_transaction_cleanup(iop3xx_adap);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return im;
-}
+	वापस im;
+पूर्ण
 
-static u32
-iop3xx_i2c_func(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-}
+अटल u32
+iop3xx_i2c_func(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+पूर्ण
 
-static const struct i2c_algorithm iop3xx_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm iop3xx_i2c_algo = अणु
 	.master_xfer	= iop3xx_i2c_master_xfer,
 	.functionality	= iop3xx_i2c_func,
-};
+पूर्ण;
 
-static int
-iop3xx_i2c_remove(struct platform_device *pdev)
-{
-	struct i2c_adapter *padapter = platform_get_drvdata(pdev);
-	struct i2c_algo_iop3xx_data *adapter_data =
-		(struct i2c_algo_iop3xx_data *)padapter->algo_data;
-	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	unsigned long cr = __raw_readl(adapter_data->ioaddr + CR_OFFSET);
+अटल पूर्णांक
+iop3xx_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा i2c_adapter *padapter = platक्रमm_get_drvdata(pdev);
+	काष्ठा i2c_algo_iop3xx_data *adapter_data =
+		(काष्ठा i2c_algo_iop3xx_data *)padapter->algo_data;
+	काष्ठा resource *res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अचिन्हित दीर्घ cr = __raw_पढ़ोl(adapter_data->ioaddr + CR_OFFSET);
 
 	/*
 	 * Disable the actual HW unit
 	 */
 	cr &= ~(IOP3XX_ICR_ALD_IE | IOP3XX_ICR_BERR_IE |
 		IOP3XX_ICR_RXFULL_IE | IOP3XX_ICR_TXEMPTY_IE);
-	__raw_writel(cr, adapter_data->ioaddr + CR_OFFSET);
+	__raw_ग_लिखोl(cr, adapter_data->ioaddr + CR_OFFSET);
 
 	iounmap(adapter_data->ioaddr);
 	release_mem_region(res->start, IOP3XX_I2C_IO_SIZE);
-	kfree(adapter_data);
-	kfree(padapter);
+	kमुक्त(adapter_data);
+	kमुक्त(padapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-iop3xx_i2c_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	int ret, irq;
-	struct i2c_adapter *new_adapter;
-	struct i2c_algo_iop3xx_data *adapter_data;
+अटल पूर्णांक
+iop3xx_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	पूर्णांक ret, irq;
+	काष्ठा i2c_adapter *new_adapter;
+	काष्ठा i2c_algo_iop3xx_data *adapter_data;
 
-	new_adapter = kzalloc(sizeof(struct i2c_adapter), GFP_KERNEL);
-	if (!new_adapter) {
+	new_adapter = kzalloc(माप(काष्ठा i2c_adapter), GFP_KERNEL);
+	अगर (!new_adapter) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	adapter_data = kzalloc(sizeof(struct i2c_algo_iop3xx_data), GFP_KERNEL);
-	if (!adapter_data) {
+	adapter_data = kzalloc(माप(काष्ठा i2c_algo_iop3xx_data), GFP_KERNEL);
+	अगर (!adapter_data) अणु
 		ret = -ENOMEM;
-		goto free_adapter;
-	}
+		जाओ मुक्त_adapter;
+	पूर्ण
 
 	adapter_data->gpio_scl = devm_gpiod_get_optional(&pdev->dev,
 							 "scl",
 							 GPIOD_ASIS);
-	if (IS_ERR(adapter_data->gpio_scl)) {
+	अगर (IS_ERR(adapter_data->gpio_scl)) अणु
 		ret = PTR_ERR(adapter_data->gpio_scl);
-		goto free_both;
-	}
+		जाओ मुक्त_both;
+	पूर्ण
 	adapter_data->gpio_sda = devm_gpiod_get_optional(&pdev->dev,
 							 "sda",
 							 GPIOD_ASIS);
-	if (IS_ERR(adapter_data->gpio_sda)) {
+	अगर (IS_ERR(adapter_data->gpio_sda)) अणु
 		ret = PTR_ERR(adapter_data->gpio_sda);
-		goto free_both;
-	}
+		जाओ मुक्त_both;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		ret = -ENODEV;
-		goto free_both;
-	}
+		जाओ मुक्त_both;
+	पूर्ण
 
-	if (!request_mem_region(res->start, IOP3XX_I2C_IO_SIZE, pdev->name)) {
+	अगर (!request_mem_region(res->start, IOP3XX_I2C_IO_SIZE, pdev->name)) अणु
 		ret = -EBUSY;
-		goto free_both;
-	}
+		जाओ मुक्त_both;
+	पूर्ण
 
-	/* set the adapter enumeration # */
+	/* set the adapter क्रमागतeration # */
 	adapter_data->id = i2c_id++;
 
 	adapter_data->ioaddr = ioremap(res->start, IOP3XX_I2C_IO_SIZE);
-	if (!adapter_data->ioaddr) {
+	अगर (!adapter_data->ioaddr) अणु
 		ret = -ENOMEM;
-		goto release_region;
-	}
+		जाओ release_region;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		ret = -ENXIO;
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 	ret = request_irq(irq, iop3xx_i2c_irq_handler, 0,
 				pdev->name, adapter_data);
 
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EIO;
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
-	memcpy(new_adapter->name, pdev->name, strlen(pdev->name));
+	स_नकल(new_adapter->name, pdev->name, म_माप(pdev->name));
 	new_adapter->owner = THIS_MODULE;
 	new_adapter->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
 	new_adapter->dev.parent = &pdev->dev;
@@ -490,21 +491,21 @@ iop3xx_i2c_probe(struct platform_device *pdev)
 	/*
 	 * Default values...should these come in from board code?
 	 */
-	new_adapter->timeout = HZ;
+	new_adapter->समयout = HZ;
 	new_adapter->algo = &iop3xx_i2c_algo;
 
-	init_waitqueue_head(&adapter_data->waitq);
+	init_रुकोqueue_head(&adapter_data->रुकोq);
 	spin_lock_init(&adapter_data->lock);
 
 	iop3xx_i2c_reset(adapter_data);
 	iop3xx_i2c_enable(adapter_data);
 
-	platform_set_drvdata(pdev, new_adapter);
+	platक्रमm_set_drvdata(pdev, new_adapter);
 	new_adapter->algo_data = adapter_data;
 
 	i2c_add_numbered_adapter(new_adapter);
 
-	return 0;
+	वापस 0;
 
 unmap:
 	iounmap(adapter_data->ioaddr);
@@ -512,33 +513,33 @@ unmap:
 release_region:
 	release_mem_region(res->start, IOP3XX_I2C_IO_SIZE);
 
-free_both:
-	kfree(adapter_data);
+मुक्त_both:
+	kमुक्त(adapter_data);
 
-free_adapter:
-	kfree(new_adapter);
+मुक्त_adapter:
+	kमुक्त(new_adapter);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id i2c_iop3xx_match[] = {
-	{ .compatible = "intel,iop3xx-i2c", },
-	{ .compatible = "intel,ixp4xx-i2c", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id i2c_iop3xx_match[] = अणु
+	अणु .compatible = "intel,iop3xx-i2c", पूर्ण,
+	अणु .compatible = "intel,ixp4xx-i2c", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, i2c_iop3xx_match);
 
-static struct platform_driver iop3xx_i2c_driver = {
+अटल काष्ठा platक्रमm_driver iop3xx_i2c_driver = अणु
 	.probe		= iop3xx_i2c_probe,
-	.remove		= iop3xx_i2c_remove,
-	.driver		= {
+	.हटाओ		= iop3xx_i2c_हटाओ,
+	.driver		= अणु
 		.name	= "IOP3xx-I2C",
 		.of_match_table = i2c_iop3xx_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(iop3xx_i2c_driver);
+module_platक्रमm_driver(iop3xx_i2c_driver);
 
 MODULE_AUTHOR("D-TACQ Solutions Ltd <www.d-tacq.com>");
 MODULE_DESCRIPTION("IOP3xx iic algorithm and driver");

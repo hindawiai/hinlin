@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Freescale imx6sx pinctrl driver
 //
-// Author: Anson Huang <Anson.Huang@freescale.com>
+// Author: Anson Huang <Anson.Huang@मुक्तscale.com>
 // Copyright (C) 2014 Freescale Semiconductor, Inc.
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-imx.h"
+#समावेश "pinctrl-imx.h"
 
-enum imx6sx_pads {
+क्रमागत imx6sx_pads अणु
 	MX6Sx_PAD_RESERVE0 = 0,
 	MX6Sx_PAD_RESERVE1 = 1,
 	MX6Sx_PAD_RESERVE2 = 2,
@@ -95,22 +96,22 @@ enum imx6sx_pads {
 	MX6SX_PAD_LCD1_HSYNC = 77,
 	MX6SX_PAD_LCD1_RESET = 78,
 	MX6SX_PAD_LCD1_VSYNC = 79,
-	MX6SX_PAD_NAND_ALE = 80,
-	MX6SX_PAD_NAND_CE0_B = 81,
-	MX6SX_PAD_NAND_CE1_B = 82,
-	MX6SX_PAD_NAND_CLE = 83,
-	MX6SX_PAD_NAND_DATA00 = 84 ,
-	MX6SX_PAD_NAND_DATA01 = 85,
-	MX6SX_PAD_NAND_DATA02 = 86,
-	MX6SX_PAD_NAND_DATA03 = 87,
-	MX6SX_PAD_NAND_DATA04 = 88,
-	MX6SX_PAD_NAND_DATA05 = 89,
-	MX6SX_PAD_NAND_DATA06 = 90,
-	MX6SX_PAD_NAND_DATA07 = 91,
-	MX6SX_PAD_NAND_RE_B = 92,
-	MX6SX_PAD_NAND_READY_B = 93,
-	MX6SX_PAD_NAND_WE_B = 94,
-	MX6SX_PAD_NAND_WP_B = 95,
+	MX6SX_PAD_न_अंकD_ALE = 80,
+	MX6SX_PAD_न_अंकD_CE0_B = 81,
+	MX6SX_PAD_न_अंकD_CE1_B = 82,
+	MX6SX_PAD_न_अंकD_CLE = 83,
+	MX6SX_PAD_न_अंकD_DATA00 = 84 ,
+	MX6SX_PAD_न_अंकD_DATA01 = 85,
+	MX6SX_PAD_न_अंकD_DATA02 = 86,
+	MX6SX_PAD_न_अंकD_DATA03 = 87,
+	MX6SX_PAD_न_अंकD_DATA04 = 88,
+	MX6SX_PAD_न_अंकD_DATA05 = 89,
+	MX6SX_PAD_न_अंकD_DATA06 = 90,
+	MX6SX_PAD_न_अंकD_DATA07 = 91,
+	MX6SX_PAD_न_अंकD_RE_B = 92,
+	MX6SX_PAD_न_अंकD_READY_B = 93,
+	MX6SX_PAD_न_अंकD_WE_B = 94,
+	MX6SX_PAD_न_अंकD_WP_B = 95,
 	MX6SX_PAD_QSPI1A_DATA0 = 96,
 	MX6SX_PAD_QSPI1A_DATA1 = 97,
 	MX6SX_PAD_QSPI1A_DATA2 = 98,
@@ -186,10 +187,10 @@ enum imx6sx_pads {
 	MX6SX_PAD_SD4_RESET_B = 168,
 	MX6SX_PAD_USB_H_DATA = 169,
 	MX6SX_PAD_USB_H_STROBE = 170,
-};
+पूर्ण;
 
-/* Pad names for the pinmux subsystem */
-static const struct pinctrl_pin_desc imx6sx_pinctrl_pads[] = {
+/* Pad names क्रम the pinmux subप्रणाली */
+अटल स्थिर काष्ठा pinctrl_pin_desc imx6sx_pinctrl_pads[] = अणु
 	IMX_PINCTRL_PIN(MX6Sx_PAD_RESERVE0),
 	IMX_PINCTRL_PIN(MX6Sx_PAD_RESERVE1),
 	IMX_PINCTRL_PIN(MX6Sx_PAD_RESERVE2),
@@ -270,22 +271,22 @@ static const struct pinctrl_pin_desc imx6sx_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX6SX_PAD_LCD1_HSYNC),
 	IMX_PINCTRL_PIN(MX6SX_PAD_LCD1_RESET),
 	IMX_PINCTRL_PIN(MX6SX_PAD_LCD1_VSYNC),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_ALE),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_CE0_B),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_CE1_B),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_CLE),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_DATA00),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_DATA01),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_DATA02),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_DATA03),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_DATA04),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_DATA05),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_DATA06),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_DATA07),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_RE_B),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_READY_B),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_WE_B),
-	IMX_PINCTRL_PIN(MX6SX_PAD_NAND_WP_B),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_ALE),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_CE0_B),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_CE1_B),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_CLE),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_DATA00),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_DATA01),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_DATA02),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_DATA03),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_DATA04),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_DATA05),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_DATA06),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_DATA07),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_RE_B),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_READY_B),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_WE_B),
+	IMX_PINCTRL_PIN(MX6SX_PAD_न_अंकD_WP_B),
 	IMX_PINCTRL_PIN(MX6SX_PAD_QSPI1A_DATA0),
 	IMX_PINCTRL_PIN(MX6SX_PAD_QSPI1A_DATA1),
 	IMX_PINCTRL_PIN(MX6SX_PAD_QSPI1A_DATA2),
@@ -361,35 +362,35 @@ static const struct pinctrl_pin_desc imx6sx_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX6SX_PAD_SD4_RESET_B),
 	IMX_PINCTRL_PIN(MX6SX_PAD_USB_H_DATA),
 	IMX_PINCTRL_PIN(MX6SX_PAD_USB_H_STROBE),
-};
+पूर्ण;
 
-static const struct imx_pinctrl_soc_info imx6sx_pinctrl_info = {
+अटल स्थिर काष्ठा imx_pinctrl_soc_info imx6sx_pinctrl_info = अणु
 	.pins = imx6sx_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx6sx_pinctrl_pads),
 	.gpr_compatible = "fsl,imx6sx-iomuxc-gpr",
-};
+पूर्ण;
 
-static const struct of_device_id imx6sx_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx6sx-iomuxc", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx6sx_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx6sx-iomuxc", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int imx6sx_pinctrl_probe(struct platform_device *pdev)
-{
-	return imx_pinctrl_probe(pdev, &imx6sx_pinctrl_info);
-}
+अटल पूर्णांक imx6sx_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_pinctrl_probe(pdev, &imx6sx_pinctrl_info);
+पूर्ण
 
-static struct platform_driver imx6sx_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx6sx_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "imx6sx-pinctrl",
 		.of_match_table = imx6sx_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = imx6sx_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init imx6sx_pinctrl_init(void)
-{
-	return platform_driver_register(&imx6sx_pinctrl_driver);
-}
+अटल पूर्णांक __init imx6sx_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&imx6sx_pinctrl_driver);
+पूर्ण
 arch_initcall(imx6sx_pinctrl_init);

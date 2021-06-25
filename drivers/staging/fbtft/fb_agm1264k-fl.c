@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * FB driver for Two KS0108 LCD controllers in AGM1264K-FL display
+ * FB driver क्रम Two KS0108 LCD controllers in AGM1264K-FL display
  *
  * Copyright (C) 2014 ololoshka2871
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/gpio/consumer.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
 
-#include "fbtft.h"
+#समावेश "fbtft.h"
 
 /* Uncomment text line to use negative image on display */
-/*#define NEGATIVE*/
+/*#घोषणा NEGATIVE*/
 
-#define WHITE		0xff
-#define BLACK		0
+#घोषणा WHITE		0xff
+#घोषणा BLACK		0
 
-#define DRVNAME		"fb_agm1264k-fl"
-#define WIDTH		64
-#define HEIGHT		64
-#define TOTALWIDTH	(WIDTH * 2)	 /* because 2 x ks0108 in one display */
-#define FPS			20
+#घोषणा DRVNAME		"fb_agm1264k-fl"
+#घोषणा WIDTH		64
+#घोषणा HEIGHT		64
+#घोषणा TOTALWIDTH	(WIDTH * 2)	 /* because 2 x ks0108 in one display */
+#घोषणा FPS			20
 
-#define EPIN		gpio.wr
-#define RS			gpio.dc
-#define RW			gpio.aux[2]
-#define CS0			gpio.aux[0]
-#define CS1			gpio.aux[1]
+#घोषणा EPIN		gpio.wr
+#घोषणा RS			gpio.dc
+#घोषणा RW			gpio.aux[2]
+#घोषणा CS0			gpio.aux[0]
+#घोषणा CS1			gpio.aux[1]
 
-/* diffusing error (Floyd-Steinberg) */
-#define DIFFUSING_MATRIX_WIDTH	2
-#define DIFFUSING_MATRIX_HEIGHT	2
+/* dअगरfusing error (Floyd-Steinberg) */
+#घोषणा DIFFUSING_MATRIX_WIDTH	2
+#घोषणा DIFFUSING_MATRIX_HEIGHT	2
 
-static const signed char
-diffusing_matrix[DIFFUSING_MATRIX_WIDTH][DIFFUSING_MATRIX_HEIGHT] = {
-	{-1, 3},
-	{3, 2},
-};
+अटल स्थिर चिन्हित अक्षर
+dअगरfusing_matrix[DIFFUSING_MATRIX_WIDTH][DIFFUSING_MATRIX_HEIGHT] = अणु
+	अणु-1, 3पूर्ण,
+	अणु3, 2पूर्ण,
+पूर्ण;
 
-static const unsigned char gamma_correction_table[] = {
+अटल स्थिर अचिन्हित अक्षर gamma_correction_table[] = अणु
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6,
 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 11, 11, 11, 12, 12, 13,
@@ -59,28 +60,28 @@ static const unsigned char gamma_correction_table[] = {
 194, 196, 197, 199, 201, 203, 205, 207, 209, 211, 213, 215, 217, 219,
 221, 223, 225, 227, 229, 231, 234, 236, 238, 240, 242, 244, 246, 248,
 251, 253, 255
-};
+पूर्ण;
 
-static int init_display(struct fbtft_par *par)
-{
+अटल पूर्णांक init_display(काष्ठा fbtft_par *par)
+अणु
 	u8 i;
 
 	par->fbtftops.reset(par);
 
-	for (i = 0; i < 2; ++i) {
-		write_reg(par, i, 0x3f); /* display on */
-		write_reg(par, i, 0x40); /* set x to 0 */
-		write_reg(par, i, 0xb0); /* set page to 0 */
-		write_reg(par, i, 0xc0); /* set start line to 0 */
-	}
+	क्रम (i = 0; i < 2; ++i) अणु
+		ग_लिखो_reg(par, i, 0x3f); /* display on */
+		ग_लिखो_reg(par, i, 0x40); /* set x to 0 */
+		ग_लिखो_reg(par, i, 0xb0); /* set page to 0 */
+		ग_लिखो_reg(par, i, 0xc0); /* set start line to 0 */
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void reset(struct fbtft_par *par)
-{
-	if (!par->gpio.reset)
-		return;
+अटल व्योम reset(काष्ठा fbtft_par *par)
+अणु
+	अगर (!par->gpio.reset)
+		वापस;
 
 	dev_dbg(par->info->device, "%s()\n", __func__);
 
@@ -88,270 +89,270 @@ static void reset(struct fbtft_par *par)
 	udelay(20);
 	gpiod_set_value(par->gpio.reset, 1);
 	mdelay(120);
-}
+पूर्ण
 
-/* Check if all necessary GPIOS defined */
-static int verify_gpios(struct fbtft_par *par)
-{
-	int i;
+/* Check अगर all necessary GPIOS defined */
+अटल पूर्णांक verअगरy_gpios(काष्ठा fbtft_par *par)
+अणु
+	पूर्णांक i;
 
 	dev_dbg(par->info->device,
 		"%s()\n", __func__);
 
-	if (!par->EPIN) {
+	अगर (!par->EPIN) अणु
 		dev_err(par->info->device,
 			"Missing info about 'wr' (aka E) gpio. Aborting.\n");
-		return -EINVAL;
-	}
-	for (i = 0; i < 8; ++i) {
-		if (!par->gpio.db[i]) {
+		वापस -EINVAL;
+	पूर्ण
+	क्रम (i = 0; i < 8; ++i) अणु
+		अगर (!par->gpio.db[i]) अणु
 			dev_err(par->info->device,
 				"Missing info about 'db[%i]' gpio. Aborting.\n",
 				i);
-			return -EINVAL;
-		}
-	}
-	if (!par->CS0) {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	अगर (!par->CS0) अणु
 		dev_err(par->info->device,
 			"Missing info about 'cs0' gpio. Aborting.\n");
-		return -EINVAL;
-	}
-	if (!par->CS1) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!par->CS1) अणु
 		dev_err(par->info->device,
 			"Missing info about 'cs1' gpio. Aborting.\n");
-		return -EINVAL;
-	}
-	if (!par->RW) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!par->RW) अणु
 		dev_err(par->info->device,
 			"Missing info about 'rw' gpio. Aborting.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long
-request_gpios_match(struct fbtft_par *par, const struct fbtft_gpio *gpio)
-{
+अटल अचिन्हित दीर्घ
+request_gpios_match(काष्ठा fbtft_par *par, स्थिर काष्ठा fbtft_gpio *gpio)
+अणु
 	dev_dbg(par->info->device,
 		"%s('%s')\n", __func__, gpio->name);
 
-	if (strcasecmp(gpio->name, "wr") == 0) {
+	अगर (strहालcmp(gpio->name, "wr") == 0) अणु
 		/* left ks0108 E pin */
 		par->EPIN = gpio->gpio;
-		return GPIOD_OUT_LOW;
-	} else if (strcasecmp(gpio->name, "cs0") == 0) {
+		वापस GPIOD_OUT_LOW;
+	पूर्ण अन्यथा अगर (strहालcmp(gpio->name, "cs0") == 0) अणु
 		/* left ks0108 controller pin */
 		par->CS0 = gpio->gpio;
-		return GPIOD_OUT_HIGH;
-	} else if (strcasecmp(gpio->name, "cs1") == 0) {
+		वापस GPIOD_OUT_HIGH;
+	पूर्ण अन्यथा अगर (strहालcmp(gpio->name, "cs1") == 0) अणु
 		/* right ks0108 controller pin */
 		par->CS1 = gpio->gpio;
-		return GPIOD_OUT_HIGH;
-	}
+		वापस GPIOD_OUT_HIGH;
+	पूर्ण
 
-	/* if write (rw = 0) e(1->0) perform write */
-	/* if read (rw = 1) e(0->1) set data on D0-7*/
-	else if (strcasecmp(gpio->name, "rw") == 0) {
+	/* अगर ग_लिखो (rw = 0) e(1->0) perक्रमm ग_लिखो */
+	/* अगर पढ़ो (rw = 1) e(0->1) set data on D0-7*/
+	अन्यथा अगर (strहालcmp(gpio->name, "rw") == 0) अणु
 		par->RW = gpio->gpio;
-		return GPIOD_OUT_LOW;
-	}
+		वापस GPIOD_OUT_LOW;
+	पूर्ण
 
-	return FBTFT_GPIO_NO_MATCH;
-}
+	वापस FBTFT_GPIO_NO_MATCH;
+पूर्ण
 
 /* This function oses to enter commands
  * first byte - destination controller 0 or 1
  * following - commands
  */
-static void write_reg8_bus8(struct fbtft_par *par, int len, ...)
-{
-	va_list args;
-	int i, ret;
+अटल व्योम ग_लिखो_reg8_bus8(काष्ठा fbtft_par *par, पूर्णांक len, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक i, ret;
 	u8 *buf = par->buf;
 
-	if (unlikely(par->debug & DEBUG_WRITE_REGISTER)) {
-		va_start(args, len);
-		for (i = 0; i < len; i++)
-			buf[i] = (u8)va_arg(args, unsigned int);
+	अगर (unlikely(par->debug & DEBUG_WRITE_REGISTER)) अणु
+		बहु_शुरू(args, len);
+		क्रम (i = 0; i < len; i++)
+			buf[i] = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
 
-		va_end(args);
+		बहु_पूर्ण(args);
 		fbtft_par_dbg_hex(DEBUG_WRITE_REGISTER, par, par->info->device,
 				  u8, buf, len, "%s: ", __func__);
-}
+पूर्ण
 
-	va_start(args, len);
+	बहु_शुरू(args, len);
 
-	*buf = (u8)va_arg(args, unsigned int);
+	*buf = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
 
-	if (*buf > 1) {
-		va_end(args);
+	अगर (*buf > 1) अणु
+		बहु_पूर्ण(args);
 		dev_err(par->info->device,
 			"Incorrect chip select request (%d)\n", *buf);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* select chip */
-	if (*buf) {
+	अगर (*buf) अणु
 		/* cs1 */
 		gpiod_set_value(par->CS0, 1);
 		gpiod_set_value(par->CS1, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* cs0 */
 		gpiod_set_value(par->CS0, 0);
 		gpiod_set_value(par->CS1, 1);
-	}
+	पूर्ण
 
 	gpiod_set_value(par->RS, 0); /* RS->0 (command mode) */
 	len--;
 
-	if (len) {
+	अगर (len) अणु
 		i = len;
-		while (i--)
-			*buf++ = (u8)va_arg(args, unsigned int);
-		ret = par->fbtftops.write(par, par->buf, len * (sizeof(u8)));
-		if (ret < 0) {
-			va_end(args);
+		जबतक (i--)
+			*buf++ = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
+		ret = par->fbtftops.ग_लिखो(par, par->buf, len * (माप(u8)));
+		अगर (ret < 0) अणु
+			बहु_पूर्ण(args);
 			dev_err(par->info->device,
 				"write() failed and returned %d\n", ret);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-static struct
-{
-	int xs, ys_page, xe, ye_page;
-} addr_win;
+अटल काष्ठा
+अणु
+	पूर्णांक xs, ys_page, xe, ye_page;
+पूर्ण addr_win;
 
 /* save display writing zone */
-static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
-{
+अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
+अणु
 	addr_win.xs = xs;
 	addr_win.ys_page = ys / 8;
 	addr_win.xe = xe;
 	addr_win.ye_page = ye / 8;
-}
+पूर्ण
 
-static void
-construct_line_bitmap(struct fbtft_par *par, u8 *dest, signed short *src,
-		      int xs, int xe, int y)
-{
-	int x, i;
+अटल व्योम
+स्थिरruct_line_biपंचांगap(काष्ठा fbtft_par *par, u8 *dest, चिन्हित लघु *src,
+		      पूर्णांक xs, पूर्णांक xe, पूर्णांक y)
+अणु
+	पूर्णांक x, i;
 
-	for (x = xs; x < xe; ++x) {
+	क्रम (x = xs; x < xe; ++x) अणु
 		u8 res = 0;
 
-		for (i = 0; i < 8; i++)
-			if (src[(y * 8 + i) * par->info->var.xres + x])
+		क्रम (i = 0; i < 8; i++)
+			अगर (src[(y * 8 + i) * par->info->var.xres + x])
 				res |= 1 << i;
-#ifdef NEGATIVE
+#अगर_घोषित NEGATIVE
 		*dest++ = res;
-#else
+#अन्यथा
 		*dest++ = ~res;
-#endif
-	}
-}
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-static void iterate_diffusion_matrix(u32 xres, u32 yres, int x,
-				     int y, signed short *convert_buf,
-				     signed short pixel, signed short error)
-{
+अटल व्योम iterate_dअगरfusion_matrix(u32 xres, u32 yres, पूर्णांक x,
+				     पूर्णांक y, चिन्हित लघु *convert_buf,
+				     चिन्हित लघु pixel, चिन्हित लघु error)
+अणु
 	u16 i, j;
 
-	/* diffusion matrix row */
-	for (i = 0; i < DIFFUSING_MATRIX_WIDTH; ++i)
-		/* diffusion matrix column */
-		for (j = 0; j < DIFFUSING_MATRIX_HEIGHT; ++j) {
-			signed short *write_pos;
-			signed char coeff;
+	/* dअगरfusion matrix row */
+	क्रम (i = 0; i < DIFFUSING_MATRIX_WIDTH; ++i)
+		/* dअगरfusion matrix column */
+		क्रम (j = 0; j < DIFFUSING_MATRIX_HEIGHT; ++j) अणु
+			चिन्हित लघु *ग_लिखो_pos;
+			चिन्हित अक्षर coeff;
 
 			/* skip pixels out of zone */
-			if (x + i < 0 || x + i >= xres || y + j >= yres)
-				continue;
-			write_pos = &convert_buf[(y + j) * xres + x + i];
-			coeff = diffusing_matrix[i][j];
-			if (-1 == coeff) {
+			अगर (x + i < 0 || x + i >= xres || y + j >= yres)
+				जारी;
+			ग_लिखो_pos = &convert_buf[(y + j) * xres + x + i];
+			coeff = dअगरfusing_matrix[i][j];
+			अगर (-1 == coeff) अणु
 				/* pixel itself */
-				*write_pos = pixel;
-			} else {
-				signed short p = *write_pos + error * coeff;
+				*ग_लिखो_pos = pixel;
+			पूर्ण अन्यथा अणु
+				चिन्हित लघु p = *ग_लिखो_pos + error * coeff;
 
-				if (p > WHITE)
+				अगर (p > WHITE)
 					p = WHITE;
-				if (p < BLACK)
+				अगर (p < BLACK)
 					p = BLACK;
-				*write_pos = p;
-			}
-		}
-}
+				*ग_लिखो_pos = p;
+			पूर्ण
+		पूर्ण
+पूर्ण
 
-static int write_vmem(struct fbtft_par *par, size_t offset, size_t len)
-{
+अटल पूर्णांक ग_लिखो_vmem(काष्ठा fbtft_par *par, माप_प्रकार offset, माप_प्रकार len)
+अणु
 	u16 *vmem16 = (u16 *)par->info->screen_buffer;
 	u8 *buf = par->txbuf.buf;
-	int x, y;
-	int ret = 0;
+	पूर्णांक x, y;
+	पूर्णांक ret = 0;
 
 	/* buffer to convert RGB565 -> grayscale16 -> Dithered image 1bpp */
-	signed short *convert_buf = kmalloc_array(par->info->var.xres *
-		par->info->var.yres, sizeof(signed short), GFP_NOIO);
+	चिन्हित लघु *convert_buf = kदो_स्मृति_array(par->info->var.xres *
+		par->info->var.yres, माप(चिन्हित लघु), GFP_NOIO);
 
-	if (!convert_buf)
-		return -ENOMEM;
+	अगर (!convert_buf)
+		वापस -ENOMEM;
 
 	/* converting to grayscale16 */
-	for (x = 0; x < par->info->var.xres; ++x)
-		for (y = 0; y < par->info->var.yres; ++y) {
+	क्रम (x = 0; x < par->info->var.xres; ++x)
+		क्रम (y = 0; y < par->info->var.yres; ++y) अणु
 			u16 pixel = vmem16[y *  par->info->var.xres + x];
 			u16 b = pixel & 0x1f;
 			u16 g = (pixel & (0x3f << 5)) >> 5;
 			u16 r = (pixel & (0x1f << (5 + 6))) >> (5 + 6);
 
 			pixel = (299 * r + 587 * g + 114 * b) / 200;
-			if (pixel > 255)
+			अगर (pixel > 255)
 				pixel = 255;
 
 			/* gamma-correction by table */
 			convert_buf[y *  par->info->var.xres + x] =
-				(signed short)gamma_correction_table[pixel];
-		}
+				(चिन्हित लघु)gamma_correction_table[pixel];
+		पूर्ण
 
 	/* Image Dithering */
-	for (x = 0; x < par->info->var.xres; ++x)
-		for (y = 0; y < par->info->var.yres; ++y) {
-			signed short pixel =
+	क्रम (x = 0; x < par->info->var.xres; ++x)
+		क्रम (y = 0; y < par->info->var.yres; ++y) अणु
+			चिन्हित लघु pixel =
 				convert_buf[y *  par->info->var.xres + x];
-			signed short error_b = pixel - BLACK;
-			signed short error_w = pixel - WHITE;
-			signed short error;
+			चिन्हित लघु error_b = pixel - BLACK;
+			चिन्हित लघु error_w = pixel - WHITE;
+			चिन्हित लघु error;
 
-			/* what color close? */
-			if (abs(error_b) >= abs(error_w)) {
+			/* what color बंद? */
+			अगर (असल(error_b) >= असल(error_w)) अणु
 				/* white */
 				error = error_w;
 				pixel = 0xff;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* black */
 				error = error_b;
 				pixel = 0;
-			}
+			पूर्ण
 
 			error /= 8;
 
-			iterate_diffusion_matrix(par->info->var.xres,
+			iterate_dअगरfusion_matrix(par->info->var.xres,
 						 par->info->var.yres,
 						 x, y, convert_buf,
 						 pixel, error);
-		}
+		पूर्ण
 
 	/* 1 string = 2 pages */
-	for (y = addr_win.ys_page; y <= addr_win.ye_page; ++y) {
+	क्रम (y = addr_win.ys_page; y <= addr_win.ye_page; ++y) अणु
 		/* left half of display */
-		if (addr_win.xs < par->info->var.xres / 2) {
-			construct_line_bitmap(par, buf, convert_buf,
+		अगर (addr_win.xs < par->info->var.xres / 2) अणु
+			स्थिरruct_line_biपंचांगap(par, buf, convert_buf,
 					      addr_win.xs,
 					      par->info->var.xres / 2, y);
 
@@ -360,20 +361,20 @@ static int write_vmem(struct fbtft_par *par, size_t offset, size_t len)
 			/* select left side (sc0)
 			 * set addr
 			 */
-			write_reg(par, 0x00, BIT(6) | (u8)addr_win.xs);
-			write_reg(par, 0x00, (0x17 << 3) | (u8)y);
+			ग_लिखो_reg(par, 0x00, BIT(6) | (u8)addr_win.xs);
+			ग_लिखो_reg(par, 0x00, (0x17 << 3) | (u8)y);
 
-			/* write bitmap */
+			/* ग_लिखो biपंचांगap */
 			gpiod_set_value(par->RS, 1); /* RS->1 (data mode) */
-			ret = par->fbtftops.write(par, buf, len);
-			if (ret < 0)
+			ret = par->fbtftops.ग_लिखो(par, buf, len);
+			अगर (ret < 0)
 				dev_err(par->info->device,
 					"write failed and returned: %d\n",
 					ret);
-		}
+		पूर्ण
 		/* right half of display */
-		if (addr_win.xe >= par->info->var.xres / 2) {
-			construct_line_bitmap(par, buf,
+		अगर (addr_win.xe >= par->info->var.xres / 2) अणु
+			स्थिरruct_line_biपंचांगap(par, buf,
 					      convert_buf,
 					      par->info->var.xres / 2,
 					      addr_win.xe + 1, y);
@@ -383,68 +384,68 @@ static int write_vmem(struct fbtft_par *par, size_t offset, size_t len)
 			/* select right side (sc1)
 			 * set addr
 			 */
-			write_reg(par, 0x01, BIT(6));
-			write_reg(par, 0x01, (0x17 << 3) | (u8)y);
+			ग_लिखो_reg(par, 0x01, BIT(6));
+			ग_लिखो_reg(par, 0x01, (0x17 << 3) | (u8)y);
 
-			/* write bitmap */
+			/* ग_लिखो biपंचांगap */
 			gpiod_set_value(par->RS, 1); /* RS->1 (data mode) */
-			par->fbtftops.write(par, buf, len);
-			if (ret < 0)
+			par->fbtftops.ग_लिखो(par, buf, len);
+			अगर (ret < 0)
 				dev_err(par->info->device,
 					"write failed and returned: %d\n",
 					ret);
-		}
-	}
-	kfree(convert_buf);
+		पूर्ण
+	पूर्ण
+	kमुक्त(convert_buf);
 
 	gpiod_set_value(par->CS0, 1);
 	gpiod_set_value(par->CS1, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int write(struct fbtft_par *par, void *buf, size_t len)
-{
+अटल पूर्णांक ग_लिखो(काष्ठा fbtft_par *par, व्योम *buf, माप_प्रकार len)
+अणु
 	fbtft_par_dbg_hex(DEBUG_WRITE, par, par->info->device, u8, buf, len,
 			  "%s(len=%zu): ", __func__, len);
 
-	gpiod_set_value(par->RW, 0); /* set write mode */
+	gpiod_set_value(par->RW, 0); /* set ग_लिखो mode */
 
-	while (len--) {
+	जबतक (len--) अणु
 		u8 i, data;
 
 		data = *(u8 *)buf++;
 
 		/* set data bus */
-		for (i = 0; i < 8; ++i)
+		क्रम (i = 0; i < 8; ++i)
 			gpiod_set_value(par->gpio.db[i], data & (1 << i));
 		/* set E */
 		gpiod_set_value(par->EPIN, 1);
 		udelay(5);
-		/* unset E - write */
+		/* unset E - ग_लिखो */
 		gpiod_set_value(par->EPIN, 0);
 		udelay(1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct fbtft_display display = {
+अटल काष्ठा fbtft_display display = अणु
 	.regwidth = 8,
 	.width = TOTALWIDTH,
 	.height = HEIGHT,
 	.fps = FPS,
-	.fbtftops = {
+	.fbtftops = अणु
 		.init_display = init_display,
 		.set_addr_win = set_addr_win,
-		.verify_gpios = verify_gpios,
+		.verअगरy_gpios = verअगरy_gpios,
 		.request_gpios_match = request_gpios_match,
 		.reset = reset,
-		.write = write,
-		.write_register = write_reg8_bus8,
-		.write_vmem = write_vmem,
-	},
-};
+		.ग_लिखो = ग_लिखो,
+		.ग_लिखो_रेजिस्टर = ग_लिखो_reg8_bus8,
+		.ग_लिखो_vmem = ग_लिखो_vmem,
+	पूर्ण,
+पूर्ण;
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "displaytronic,fb_agm1264k-fl", &display);
 

@@ -1,273 +1,274 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  linux/fs/minix/bitmap.c
+ *  linux/fs/minix/biपंचांगap.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
 /*
- * Modified for 680x0 by Hamish Macdonald
- * Fixed for 680x0 by Andreas Schwab
+ * Modअगरied क्रम 680x0 by Hamish Macकरोnald
+ * Fixed क्रम 680x0 by Andreas Schwab
  */
 
-/* bitmap.c contains the code that handles the inode and block bitmaps */
+/* biपंचांगap.c contains the code that handles the inode and block biपंचांगaps */
 
-#include "minix.h"
-#include <linux/buffer_head.h>
-#include <linux/bitops.h>
-#include <linux/sched.h>
+#समावेश "minix.h"
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/sched.h>
 
-static DEFINE_SPINLOCK(bitmap_lock);
+अटल DEFINE_SPINLOCK(biपंचांगap_lock);
 
 /*
- * bitmap consists of blocks filled with 16bit words
- * bit set == busy, bit clear == free
- * endianness is a mess, but for counting zero bits it really doesn't matter...
+ * biपंचांगap consists of blocks filled with 16bit words
+ * bit set == busy, bit clear == मुक्त
+ * endianness is a mess, but क्रम counting zero bits it really करोesn't matter...
  */
-static __u32 count_free(struct buffer_head *map[], unsigned blocksize, __u32 numbits)
-{
+अटल __u32 count_मुक्त(काष्ठा buffer_head *map[], अचिन्हित blocksize, __u32 numbits)
+अणु
 	__u32 sum = 0;
-	unsigned blocks = DIV_ROUND_UP(numbits, blocksize * 8);
+	अचिन्हित blocks = DIV_ROUND_UP(numbits, blocksize * 8);
 
-	while (blocks--) {
-		unsigned words = blocksize / 2;
+	जबतक (blocks--) अणु
+		अचिन्हित words = blocksize / 2;
 		__u16 *p = (__u16 *)(*map++)->b_data;
-		while (words--)
+		जबतक (words--)
 			sum += 16 - hweight16(*p++);
-	}
+	पूर्ण
 
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
-void minix_free_block(struct inode *inode, unsigned long block)
-{
-	struct super_block *sb = inode->i_sb;
-	struct minix_sb_info *sbi = minix_sb(sb);
-	struct buffer_head *bh;
-	int k = sb->s_blocksize_bits + 3;
-	unsigned long bit, zone;
+व्योम minix_मुक्त_block(काष्ठा inode *inode, अचिन्हित दीर्घ block)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा minix_sb_info *sbi = minix_sb(sb);
+	काष्ठा buffer_head *bh;
+	पूर्णांक k = sb->s_blocksize_bits + 3;
+	अचिन्हित दीर्घ bit, zone;
 
-	if (block < sbi->s_firstdatazone || block >= sbi->s_nzones) {
-		printk("Trying to free block not in datazone\n");
-		return;
-	}
+	अगर (block < sbi->s_firstdatazone || block >= sbi->s_nzones) अणु
+		prपूर्णांकk("Trying to free block not in datazone\n");
+		वापस;
+	पूर्ण
 	zone = block - sbi->s_firstdatazone + 1;
 	bit = zone & ((1<<k) - 1);
 	zone >>= k;
-	if (zone >= sbi->s_zmap_blocks) {
-		printk("minix_free_block: nonexistent bitmap buffer\n");
-		return;
-	}
+	अगर (zone >= sbi->s_zmap_blocks) अणु
+		prपूर्णांकk("minix_free_block: nonexistent bitmap buffer\n");
+		वापस;
+	पूर्ण
 	bh = sbi->s_zmap[zone];
-	spin_lock(&bitmap_lock);
-	if (!minix_test_and_clear_bit(bit, bh->b_data))
-		printk("minix_free_block (%s:%lu): bit already cleared\n",
+	spin_lock(&biपंचांगap_lock);
+	अगर (!minix_test_and_clear_bit(bit, bh->b_data))
+		prपूर्णांकk("minix_free_block (%s:%lu): bit already cleared\n",
 		       sb->s_id, block);
-	spin_unlock(&bitmap_lock);
+	spin_unlock(&biपंचांगap_lock);
 	mark_buffer_dirty(bh);
-	return;
-}
+	वापस;
+पूर्ण
 
-int minix_new_block(struct inode * inode)
-{
-	struct minix_sb_info *sbi = minix_sb(inode->i_sb);
-	int bits_per_zone = 8 * inode->i_sb->s_blocksize;
-	int i;
+पूर्णांक minix_new_block(काष्ठा inode * inode)
+अणु
+	काष्ठा minix_sb_info *sbi = minix_sb(inode->i_sb);
+	पूर्णांक bits_per_zone = 8 * inode->i_sb->s_blocksize;
+	पूर्णांक i;
 
-	for (i = 0; i < sbi->s_zmap_blocks; i++) {
-		struct buffer_head *bh = sbi->s_zmap[i];
-		int j;
+	क्रम (i = 0; i < sbi->s_zmap_blocks; i++) अणु
+		काष्ठा buffer_head *bh = sbi->s_zmap[i];
+		पूर्णांक j;
 
-		spin_lock(&bitmap_lock);
+		spin_lock(&biपंचांगap_lock);
 		j = minix_find_first_zero_bit(bh->b_data, bits_per_zone);
-		if (j < bits_per_zone) {
+		अगर (j < bits_per_zone) अणु
 			minix_set_bit(j, bh->b_data);
-			spin_unlock(&bitmap_lock);
+			spin_unlock(&biपंचांगap_lock);
 			mark_buffer_dirty(bh);
 			j += i * bits_per_zone + sbi->s_firstdatazone-1;
-			if (j < sbi->s_firstdatazone || j >= sbi->s_nzones)
-				break;
-			return j;
-		}
-		spin_unlock(&bitmap_lock);
-	}
-	return 0;
-}
+			अगर (j < sbi->s_firstdatazone || j >= sbi->s_nzones)
+				अवरोध;
+			वापस j;
+		पूर्ण
+		spin_unlock(&biपंचांगap_lock);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-unsigned long minix_count_free_blocks(struct super_block *sb)
-{
-	struct minix_sb_info *sbi = minix_sb(sb);
+अचिन्हित दीर्घ minix_count_मुक्त_blocks(काष्ठा super_block *sb)
+अणु
+	काष्ठा minix_sb_info *sbi = minix_sb(sb);
 	u32 bits = sbi->s_nzones - sbi->s_firstdatazone + 1;
 
-	return (count_free(sbi->s_zmap, sb->s_blocksize, bits)
+	वापस (count_मुक्त(sbi->s_zmap, sb->s_blocksize, bits)
 		<< sbi->s_log_zone_size);
-}
+पूर्ण
 
-struct minix_inode *
-minix_V1_raw_inode(struct super_block *sb, ino_t ino, struct buffer_head **bh)
-{
-	int block;
-	struct minix_sb_info *sbi = minix_sb(sb);
-	struct minix_inode *p;
+काष्ठा minix_inode *
+minix_V1_raw_inode(काष्ठा super_block *sb, ino_t ino, काष्ठा buffer_head **bh)
+अणु
+	पूर्णांक block;
+	काष्ठा minix_sb_info *sbi = minix_sb(sb);
+	काष्ठा minix_inode *p;
 
-	if (!ino || ino > sbi->s_ninodes) {
-		printk("Bad inode number on dev %s: %ld is out of range\n",
-		       sb->s_id, (long)ino);
-		return NULL;
-	}
+	अगर (!ino || ino > sbi->s_ninodes) अणु
+		prपूर्णांकk("Bad inode number on dev %s: %ld is out of range\n",
+		       sb->s_id, (दीर्घ)ino);
+		वापस शून्य;
+	पूर्ण
 	ino--;
 	block = 2 + sbi->s_imap_blocks + sbi->s_zmap_blocks +
 		 ino / MINIX_INODES_PER_BLOCK;
-	*bh = sb_bread(sb, block);
-	if (!*bh) {
-		printk("Unable to read inode block\n");
-		return NULL;
-	}
-	p = (void *)(*bh)->b_data;
-	return p + ino % MINIX_INODES_PER_BLOCK;
-}
+	*bh = sb_bपढ़ो(sb, block);
+	अगर (!*bh) अणु
+		prपूर्णांकk("Unable to read inode block\n");
+		वापस शून्य;
+	पूर्ण
+	p = (व्योम *)(*bh)->b_data;
+	वापस p + ino % MINIX_INODES_PER_BLOCK;
+पूर्ण
 
-struct minix2_inode *
-minix_V2_raw_inode(struct super_block *sb, ino_t ino, struct buffer_head **bh)
-{
-	int block;
-	struct minix_sb_info *sbi = minix_sb(sb);
-	struct minix2_inode *p;
-	int minix2_inodes_per_block = sb->s_blocksize / sizeof(struct minix2_inode);
+काष्ठा minix2_inode *
+minix_V2_raw_inode(काष्ठा super_block *sb, ino_t ino, काष्ठा buffer_head **bh)
+अणु
+	पूर्णांक block;
+	काष्ठा minix_sb_info *sbi = minix_sb(sb);
+	काष्ठा minix2_inode *p;
+	पूर्णांक minix2_inodes_per_block = sb->s_blocksize / माप(काष्ठा minix2_inode);
 
-	*bh = NULL;
-	if (!ino || ino > sbi->s_ninodes) {
-		printk("Bad inode number on dev %s: %ld is out of range\n",
-		       sb->s_id, (long)ino);
-		return NULL;
-	}
+	*bh = शून्य;
+	अगर (!ino || ino > sbi->s_ninodes) अणु
+		prपूर्णांकk("Bad inode number on dev %s: %ld is out of range\n",
+		       sb->s_id, (दीर्घ)ino);
+		वापस शून्य;
+	पूर्ण
 	ino--;
 	block = 2 + sbi->s_imap_blocks + sbi->s_zmap_blocks +
 		 ino / minix2_inodes_per_block;
-	*bh = sb_bread(sb, block);
-	if (!*bh) {
-		printk("Unable to read inode block\n");
-		return NULL;
-	}
-	p = (void *)(*bh)->b_data;
-	return p + ino % minix2_inodes_per_block;
-}
+	*bh = sb_bपढ़ो(sb, block);
+	अगर (!*bh) अणु
+		prपूर्णांकk("Unable to read inode block\n");
+		वापस शून्य;
+	पूर्ण
+	p = (व्योम *)(*bh)->b_data;
+	वापस p + ino % minix2_inodes_per_block;
+पूर्ण
 
 /* Clear the link count and mode of a deleted inode on disk. */
 
-static void minix_clear_inode(struct inode *inode)
-{
-	struct buffer_head *bh = NULL;
+अटल व्योम minix_clear_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा buffer_head *bh = शून्य;
 
-	if (INODE_VERSION(inode) == MINIX_V1) {
-		struct minix_inode *raw_inode;
+	अगर (INODE_VERSION(inode) == MINIX_V1) अणु
+		काष्ठा minix_inode *raw_inode;
 		raw_inode = minix_V1_raw_inode(inode->i_sb, inode->i_ino, &bh);
-		if (raw_inode) {
+		अगर (raw_inode) अणु
 			raw_inode->i_nlinks = 0;
 			raw_inode->i_mode = 0;
-		}
-	} else {
-		struct minix2_inode *raw_inode;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा minix2_inode *raw_inode;
 		raw_inode = minix_V2_raw_inode(inode->i_sb, inode->i_ino, &bh);
-		if (raw_inode) {
+		अगर (raw_inode) अणु
 			raw_inode->i_nlinks = 0;
 			raw_inode->i_mode = 0;
-		}
-	}
-	if (bh) {
+		पूर्ण
+	पूर्ण
+	अगर (bh) अणु
 		mark_buffer_dirty(bh);
-		brelse (bh);
-	}
-}
+		brअन्यथा (bh);
+	पूर्ण
+पूर्ण
 
-void minix_free_inode(struct inode * inode)
-{
-	struct super_block *sb = inode->i_sb;
-	struct minix_sb_info *sbi = minix_sb(inode->i_sb);
-	struct buffer_head *bh;
-	int k = sb->s_blocksize_bits + 3;
-	unsigned long ino, bit;
+व्योम minix_मुक्त_inode(काष्ठा inode * inode)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा minix_sb_info *sbi = minix_sb(inode->i_sb);
+	काष्ठा buffer_head *bh;
+	पूर्णांक k = sb->s_blocksize_bits + 3;
+	अचिन्हित दीर्घ ino, bit;
 
 	ino = inode->i_ino;
-	if (ino < 1 || ino > sbi->s_ninodes) {
-		printk("minix_free_inode: inode 0 or nonexistent inode\n");
-		return;
-	}
+	अगर (ino < 1 || ino > sbi->s_ninodes) अणु
+		prपूर्णांकk("minix_free_inode: inode 0 or nonexistent inode\n");
+		वापस;
+	पूर्ण
 	bit = ino & ((1<<k) - 1);
 	ino >>= k;
-	if (ino >= sbi->s_imap_blocks) {
-		printk("minix_free_inode: nonexistent imap in superblock\n");
-		return;
-	}
+	अगर (ino >= sbi->s_imap_blocks) अणु
+		prपूर्णांकk("minix_free_inode: nonexistent imap in superblock\n");
+		वापस;
+	पूर्ण
 
 	minix_clear_inode(inode);	/* clear on-disk copy */
 
 	bh = sbi->s_imap[ino];
-	spin_lock(&bitmap_lock);
-	if (!minix_test_and_clear_bit(bit, bh->b_data))
-		printk("minix_free_inode: bit %lu already cleared\n", bit);
-	spin_unlock(&bitmap_lock);
+	spin_lock(&biपंचांगap_lock);
+	अगर (!minix_test_and_clear_bit(bit, bh->b_data))
+		prपूर्णांकk("minix_free_inode: bit %lu already cleared\n", bit);
+	spin_unlock(&biपंचांगap_lock);
 	mark_buffer_dirty(bh);
-}
+पूर्ण
 
-struct inode *minix_new_inode(const struct inode *dir, umode_t mode, int *error)
-{
-	struct super_block *sb = dir->i_sb;
-	struct minix_sb_info *sbi = minix_sb(sb);
-	struct inode *inode = new_inode(sb);
-	struct buffer_head * bh;
-	int bits_per_zone = 8 * sb->s_blocksize;
-	unsigned long j;
-	int i;
+काष्ठा inode *minix_new_inode(स्थिर काष्ठा inode *dir, umode_t mode, पूर्णांक *error)
+अणु
+	काष्ठा super_block *sb = dir->i_sb;
+	काष्ठा minix_sb_info *sbi = minix_sb(sb);
+	काष्ठा inode *inode = new_inode(sb);
+	काष्ठा buffer_head * bh;
+	पूर्णांक bits_per_zone = 8 * sb->s_blocksize;
+	अचिन्हित दीर्घ j;
+	पूर्णांक i;
 
-	if (!inode) {
+	अगर (!inode) अणु
 		*error = -ENOMEM;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	j = bits_per_zone;
-	bh = NULL;
+	bh = शून्य;
 	*error = -ENOSPC;
-	spin_lock(&bitmap_lock);
-	for (i = 0; i < sbi->s_imap_blocks; i++) {
+	spin_lock(&biपंचांगap_lock);
+	क्रम (i = 0; i < sbi->s_imap_blocks; i++) अणु
 		bh = sbi->s_imap[i];
 		j = minix_find_first_zero_bit(bh->b_data, bits_per_zone);
-		if (j < bits_per_zone)
-			break;
-	}
-	if (!bh || j >= bits_per_zone) {
-		spin_unlock(&bitmap_lock);
+		अगर (j < bits_per_zone)
+			अवरोध;
+	पूर्ण
+	अगर (!bh || j >= bits_per_zone) अणु
+		spin_unlock(&biपंचांगap_lock);
 		iput(inode);
-		return NULL;
-	}
-	if (minix_test_and_set_bit(j, bh->b_data)) {	/* shouldn't happen */
-		spin_unlock(&bitmap_lock);
-		printk("minix_new_inode: bit already set\n");
+		वापस शून्य;
+	पूर्ण
+	अगर (minix_test_and_set_bit(j, bh->b_data)) अणु	/* shouldn't happen */
+		spin_unlock(&biपंचांगap_lock);
+		prपूर्णांकk("minix_new_inode: bit already set\n");
 		iput(inode);
-		return NULL;
-	}
-	spin_unlock(&bitmap_lock);
+		वापस शून्य;
+	पूर्ण
+	spin_unlock(&biपंचांगap_lock);
 	mark_buffer_dirty(bh);
 	j += i * bits_per_zone;
-	if (!j || j > sbi->s_ninodes) {
+	अगर (!j || j > sbi->s_ninodes) अणु
 		iput(inode);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	inode_init_owner(&init_user_ns, inode, dir, mode);
 	inode->i_ino = j;
-	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
 	inode->i_blocks = 0;
-	memset(&minix_i(inode)->u, 0, sizeof(minix_i(inode)->u));
+	स_रखो(&minix_i(inode)->u, 0, माप(minix_i(inode)->u));
 	insert_inode_hash(inode);
 	mark_inode_dirty(inode);
 
 	*error = 0;
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-unsigned long minix_count_free_inodes(struct super_block *sb)
-{
-	struct minix_sb_info *sbi = minix_sb(sb);
+अचिन्हित दीर्घ minix_count_मुक्त_inodes(काष्ठा super_block *sb)
+अणु
+	काष्ठा minix_sb_info *sbi = minix_sb(sb);
 	u32 bits = sbi->s_ninodes + 1;
 
-	return count_free(sbi->s_imap, sb->s_blocksize, bits);
-}
+	वापस count_मुक्त(sbi->s_imap, sb->s_blocksize, bits);
+पूर्ण

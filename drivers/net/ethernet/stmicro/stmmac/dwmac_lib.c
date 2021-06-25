@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*******************************************************************************
   Copyright (C) 2007-2009  STMicroelectronics Ltd
 
@@ -6,276 +7,276 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include "common.h"
-#include "dwmac_dma.h"
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश "common.h"
+#समावेश "dwmac_dma.h"
 
-#define GMAC_HI_REG_AE		0x80000000
+#घोषणा GMAC_HI_REG_AE		0x80000000
 
-int dwmac_dma_reset(void __iomem *ioaddr)
-{
-	u32 value = readl(ioaddr + DMA_BUS_MODE);
+पूर्णांक dwmac_dma_reset(व्योम __iomem *ioaddr)
+अणु
+	u32 value = पढ़ोl(ioaddr + DMA_BUS_MODE);
 
 	/* DMA SW reset */
 	value |= DMA_BUS_MODE_SFT_RESET;
-	writel(value, ioaddr + DMA_BUS_MODE);
+	ग_लिखोl(value, ioaddr + DMA_BUS_MODE);
 
-	return readl_poll_timeout(ioaddr + DMA_BUS_MODE, value,
+	वापस पढ़ोl_poll_समयout(ioaddr + DMA_BUS_MODE, value,
 				 !(value & DMA_BUS_MODE_SFT_RESET),
 				 10000, 200000);
-}
+पूर्ण
 
-/* CSR1 enables the transmit DMA to check for new descriptor */
-void dwmac_enable_dma_transmission(void __iomem *ioaddr)
-{
-	writel(1, ioaddr + DMA_XMT_POLL_DEMAND);
-}
+/* CSR1 enables the transmit DMA to check क्रम new descriptor */
+व्योम dwmac_enable_dma_transmission(व्योम __iomem *ioaddr)
+अणु
+	ग_लिखोl(1, ioaddr + DMA_XMT_POLL_DEMAND);
+पूर्ण
 
-void dwmac_enable_dma_irq(void __iomem *ioaddr, u32 chan, bool rx, bool tx)
-{
-	u32 value = readl(ioaddr + DMA_INTR_ENA);
+व्योम dwmac_enable_dma_irq(व्योम __iomem *ioaddr, u32 chan, bool rx, bool tx)
+अणु
+	u32 value = पढ़ोl(ioaddr + DMA_INTR_ENA);
 
-	if (rx)
+	अगर (rx)
 		value |= DMA_INTR_DEFAULT_RX;
-	if (tx)
+	अगर (tx)
 		value |= DMA_INTR_DEFAULT_TX;
 
-	writel(value, ioaddr + DMA_INTR_ENA);
-}
+	ग_लिखोl(value, ioaddr + DMA_INTR_ENA);
+पूर्ण
 
-void dwmac_disable_dma_irq(void __iomem *ioaddr, u32 chan, bool rx, bool tx)
-{
-	u32 value = readl(ioaddr + DMA_INTR_ENA);
+व्योम dwmac_disable_dma_irq(व्योम __iomem *ioaddr, u32 chan, bool rx, bool tx)
+अणु
+	u32 value = पढ़ोl(ioaddr + DMA_INTR_ENA);
 
-	if (rx)
+	अगर (rx)
 		value &= ~DMA_INTR_DEFAULT_RX;
-	if (tx)
+	अगर (tx)
 		value &= ~DMA_INTR_DEFAULT_TX;
 
-	writel(value, ioaddr + DMA_INTR_ENA);
-}
+	ग_लिखोl(value, ioaddr + DMA_INTR_ENA);
+पूर्ण
 
-void dwmac_dma_start_tx(void __iomem *ioaddr, u32 chan)
-{
-	u32 value = readl(ioaddr + DMA_CONTROL);
+व्योम dwmac_dma_start_tx(व्योम __iomem *ioaddr, u32 chan)
+अणु
+	u32 value = पढ़ोl(ioaddr + DMA_CONTROL);
 	value |= DMA_CONTROL_ST;
-	writel(value, ioaddr + DMA_CONTROL);
-}
+	ग_लिखोl(value, ioaddr + DMA_CONTROL);
+पूर्ण
 
-void dwmac_dma_stop_tx(void __iomem *ioaddr, u32 chan)
-{
-	u32 value = readl(ioaddr + DMA_CONTROL);
+व्योम dwmac_dma_stop_tx(व्योम __iomem *ioaddr, u32 chan)
+अणु
+	u32 value = पढ़ोl(ioaddr + DMA_CONTROL);
 	value &= ~DMA_CONTROL_ST;
-	writel(value, ioaddr + DMA_CONTROL);
-}
+	ग_लिखोl(value, ioaddr + DMA_CONTROL);
+पूर्ण
 
-void dwmac_dma_start_rx(void __iomem *ioaddr, u32 chan)
-{
-	u32 value = readl(ioaddr + DMA_CONTROL);
+व्योम dwmac_dma_start_rx(व्योम __iomem *ioaddr, u32 chan)
+अणु
+	u32 value = पढ़ोl(ioaddr + DMA_CONTROL);
 	value |= DMA_CONTROL_SR;
-	writel(value, ioaddr + DMA_CONTROL);
-}
+	ग_लिखोl(value, ioaddr + DMA_CONTROL);
+पूर्ण
 
-void dwmac_dma_stop_rx(void __iomem *ioaddr, u32 chan)
-{
-	u32 value = readl(ioaddr + DMA_CONTROL);
+व्योम dwmac_dma_stop_rx(व्योम __iomem *ioaddr, u32 chan)
+अणु
+	u32 value = पढ़ोl(ioaddr + DMA_CONTROL);
 	value &= ~DMA_CONTROL_SR;
-	writel(value, ioaddr + DMA_CONTROL);
-}
+	ग_लिखोl(value, ioaddr + DMA_CONTROL);
+पूर्ण
 
-#ifdef DWMAC_DMA_DEBUG
-static void show_tx_process_state(unsigned int status)
-{
-	unsigned int state;
+#अगर_घोषित DWMAC_DMA_DEBUG
+अटल व्योम show_tx_process_state(अचिन्हित पूर्णांक status)
+अणु
+	अचिन्हित पूर्णांक state;
 	state = (status & DMA_STATUS_TS_MASK) >> DMA_STATUS_TS_SHIFT;
 
-	switch (state) {
-	case 0:
+	चयन (state) अणु
+	हाल 0:
 		pr_debug("- TX (Stopped): Reset or Stop command\n");
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		pr_debug("- TX (Running): Fetching the Tx desc\n");
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		pr_debug("- TX (Running): Waiting for end of tx\n");
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		pr_debug("- TX (Running): Reading the data "
 		       "and queuing the data into the Tx buf\n");
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		pr_debug("- TX (Suspended): Tx Buff Underflow "
 		       "or an unavailable Transmit descriptor\n");
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		pr_debug("- TX (Running): Closing Tx descriptor\n");
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void show_rx_process_state(unsigned int status)
-{
-	unsigned int state;
+अटल व्योम show_rx_process_state(अचिन्हित पूर्णांक status)
+अणु
+	अचिन्हित पूर्णांक state;
 	state = (status & DMA_STATUS_RS_MASK) >> DMA_STATUS_RS_SHIFT;
 
-	switch (state) {
-	case 0:
+	चयन (state) अणु
+	हाल 0:
 		pr_debug("- RX (Stopped): Reset or Stop command\n");
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		pr_debug("- RX (Running): Fetching the Rx desc\n");
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		pr_debug("- RX (Running): Checking for end of pkt\n");
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		pr_debug("- RX (Running): Waiting for Rx pkt\n");
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		pr_debug("- RX (Suspended): Unavailable Rx buf\n");
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		pr_debug("- RX (Running): Closing Rx descriptor\n");
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		pr_debug("- RX(Running): Flushing the current frame"
 		       " from the Rx buf\n");
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		pr_debug("- RX (Running): Queuing the Rx frame"
 		       " from the Rx buf into memory\n");
-		break;
-	default:
-		break;
-	}
-}
-#endif
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-int dwmac_dma_interrupt(void __iomem *ioaddr,
-			struct stmmac_extra_stats *x, u32 chan, u32 dir)
-{
-	int ret = 0;
-	/* read the status register (CSR5) */
-	u32 intr_status = readl(ioaddr + DMA_STATUS);
+पूर्णांक dwmac_dma_पूर्णांकerrupt(व्योम __iomem *ioaddr,
+			काष्ठा sपंचांगmac_extra_stats *x, u32 chan, u32 dir)
+अणु
+	पूर्णांक ret = 0;
+	/* पढ़ो the status रेजिस्टर (CSR5) */
+	u32 पूर्णांकr_status = पढ़ोl(ioaddr + DMA_STATUS);
 
-#ifdef DWMAC_DMA_DEBUG
-	/* Enable it to monitor DMA rx/tx status in case of critical problems */
-	pr_debug("%s: [CSR5: 0x%08x]\n", __func__, intr_status);
-	show_tx_process_state(intr_status);
-	show_rx_process_state(intr_status);
-#endif
+#अगर_घोषित DWMAC_DMA_DEBUG
+	/* Enable it to monitor DMA rx/tx status in हाल of critical problems */
+	pr_debug("%s: [CSR5: 0x%08x]\n", __func__, पूर्णांकr_status);
+	show_tx_process_state(पूर्णांकr_status);
+	show_rx_process_state(पूर्णांकr_status);
+#पूर्ण_अगर
 
-	if (dir == DMA_DIR_RX)
-		intr_status &= DMA_STATUS_MSK_RX;
-	else if (dir == DMA_DIR_TX)
-		intr_status &= DMA_STATUS_MSK_TX;
+	अगर (dir == DMA_सूची_RX)
+		पूर्णांकr_status &= DMA_STATUS_MSK_RX;
+	अन्यथा अगर (dir == DMA_सूची_TX)
+		पूर्णांकr_status &= DMA_STATUS_MSK_TX;
 
-	/* ABNORMAL interrupts */
-	if (unlikely(intr_status & DMA_STATUS_AIS)) {
-		if (unlikely(intr_status & DMA_STATUS_UNF)) {
+	/* ABNORMAL पूर्णांकerrupts */
+	अगर (unlikely(पूर्णांकr_status & DMA_STATUS_AIS)) अणु
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_UNF)) अणु
 			ret = tx_hard_error_bump_tc;
 			x->tx_undeflow_irq++;
-		}
-		if (unlikely(intr_status & DMA_STATUS_TJT))
+		पूर्ण
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_TJT))
 			x->tx_jabber_irq++;
 
-		if (unlikely(intr_status & DMA_STATUS_OVF))
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_OVF))
 			x->rx_overflow_irq++;
 
-		if (unlikely(intr_status & DMA_STATUS_RU))
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_RU))
 			x->rx_buf_unav_irq++;
-		if (unlikely(intr_status & DMA_STATUS_RPS))
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_RPS))
 			x->rx_process_stopped_irq++;
-		if (unlikely(intr_status & DMA_STATUS_RWT))
-			x->rx_watchdog_irq++;
-		if (unlikely(intr_status & DMA_STATUS_ETI))
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_RWT))
+			x->rx_watchकरोg_irq++;
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_ETI))
 			x->tx_early_irq++;
-		if (unlikely(intr_status & DMA_STATUS_TPS)) {
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_TPS)) अणु
 			x->tx_process_stopped_irq++;
 			ret = tx_hard_error;
-		}
-		if (unlikely(intr_status & DMA_STATUS_FBI)) {
+		पूर्ण
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_FBI)) अणु
 			x->fatal_bus_error_irq++;
 			ret = tx_hard_error;
-		}
-	}
-	/* TX/RX NORMAL interrupts */
-	if (likely(intr_status & DMA_STATUS_NIS)) {
+		पूर्ण
+	पूर्ण
+	/* TX/RX NORMAL पूर्णांकerrupts */
+	अगर (likely(पूर्णांकr_status & DMA_STATUS_NIS)) अणु
 		x->normal_irq_n++;
-		if (likely(intr_status & DMA_STATUS_RI)) {
-			u32 value = readl(ioaddr + DMA_INTR_ENA);
+		अगर (likely(पूर्णांकr_status & DMA_STATUS_RI)) अणु
+			u32 value = पढ़ोl(ioaddr + DMA_INTR_ENA);
 			/* to schedule NAPI on real RIE event. */
-			if (likely(value & DMA_INTR_ENA_RIE)) {
+			अगर (likely(value & DMA_INTR_ENA_RIE)) अणु
 				x->rx_normal_irq_n++;
 				ret |= handle_rx;
-			}
-		}
-		if (likely(intr_status & DMA_STATUS_TI)) {
+			पूर्ण
+		पूर्ण
+		अगर (likely(पूर्णांकr_status & DMA_STATUS_TI)) अणु
 			x->tx_normal_irq_n++;
 			ret |= handle_tx;
-		}
-		if (unlikely(intr_status & DMA_STATUS_ERI))
+		पूर्ण
+		अगर (unlikely(पूर्णांकr_status & DMA_STATUS_ERI))
 			x->rx_early_irq++;
-	}
-	/* Optional hardware blocks, interrupts should be disabled */
-	if (unlikely(intr_status &
+	पूर्ण
+	/* Optional hardware blocks, पूर्णांकerrupts should be disabled */
+	अगर (unlikely(पूर्णांकr_status &
 		     (DMA_STATUS_GPI | DMA_STATUS_GMI | DMA_STATUS_GLI)))
-		pr_warn("%s: unexpected status %08x\n", __func__, intr_status);
+		pr_warn("%s: unexpected status %08x\n", __func__, पूर्णांकr_status);
 
-	/* Clear the interrupt by writing a logic 1 to the CSR5[15-0] */
-	writel((intr_status & 0x1ffff), ioaddr + DMA_STATUS);
+	/* Clear the पूर्णांकerrupt by writing a logic 1 to the CSR5[15-0] */
+	ग_लिखोl((पूर्णांकr_status & 0x1ffff), ioaddr + DMA_STATUS);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void dwmac_dma_flush_tx_fifo(void __iomem *ioaddr)
-{
-	u32 csr6 = readl(ioaddr + DMA_CONTROL);
-	writel((csr6 | DMA_CONTROL_FTF), ioaddr + DMA_CONTROL);
+व्योम dwmac_dma_flush_tx_fअगरo(व्योम __iomem *ioaddr)
+अणु
+	u32 csr6 = पढ़ोl(ioaddr + DMA_CONTROL);
+	ग_लिखोl((csr6 | DMA_CONTROL_FTF), ioaddr + DMA_CONTROL);
 
-	do {} while ((readl(ioaddr + DMA_CONTROL) & DMA_CONTROL_FTF));
-}
+	करो अणुपूर्ण जबतक ((पढ़ोl(ioaddr + DMA_CONTROL) & DMA_CONTROL_FTF));
+पूर्ण
 
-void stmmac_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
-			 unsigned int high, unsigned int low)
-{
-	unsigned long data;
+व्योम sपंचांगmac_set_mac_addr(व्योम __iomem *ioaddr, u8 addr[6],
+			 अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low)
+अणु
+	अचिन्हित दीर्घ data;
 
 	data = (addr[5] << 8) | addr[4];
-	/* For MAC Addr registers we have to set the Address Enable (AE)
+	/* For MAC Addr रेजिस्टरs we have to set the Address Enable (AE)
 	 * bit that has no effect on the High Reg 0 where the bit 31 (MO)
 	 * is RO.
 	 */
-	writel(data | GMAC_HI_REG_AE, ioaddr + high);
+	ग_लिखोl(data | GMAC_HI_REG_AE, ioaddr + high);
 	data = (addr[3] << 24) | (addr[2] << 16) | (addr[1] << 8) | addr[0];
-	writel(data, ioaddr + low);
-}
-EXPORT_SYMBOL_GPL(stmmac_set_mac_addr);
+	ग_लिखोl(data, ioaddr + low);
+पूर्ण
+EXPORT_SYMBOL_GPL(sपंचांगmac_set_mac_addr);
 
 /* Enable disable MAC RX/TX */
-void stmmac_set_mac(void __iomem *ioaddr, bool enable)
-{
-	u32 value = readl(ioaddr + MAC_CTRL_REG);
+व्योम sपंचांगmac_set_mac(व्योम __iomem *ioaddr, bool enable)
+अणु
+	u32 value = पढ़ोl(ioaddr + MAC_CTRL_REG);
 
-	if (enable)
+	अगर (enable)
 		value |= MAC_ENABLE_RX | MAC_ENABLE_TX;
-	else
+	अन्यथा
 		value &= ~(MAC_ENABLE_TX | MAC_ENABLE_RX);
 
-	writel(value, ioaddr + MAC_CTRL_REG);
-}
+	ग_लिखोl(value, ioaddr + MAC_CTRL_REG);
+पूर्ण
 
-void stmmac_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
-			 unsigned int high, unsigned int low)
-{
-	unsigned int hi_addr, lo_addr;
+व्योम sपंचांगmac_get_mac_addr(व्योम __iomem *ioaddr, अचिन्हित अक्षर *addr,
+			 अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low)
+अणु
+	अचिन्हित पूर्णांक hi_addr, lo_addr;
 
 	/* Read the MAC address from the hardware */
-	hi_addr = readl(ioaddr + high);
-	lo_addr = readl(ioaddr + low);
+	hi_addr = पढ़ोl(ioaddr + high);
+	lo_addr = पढ़ोl(ioaddr + low);
 
 	/* Extract the MAC address from the high and low words */
 	addr[0] = lo_addr & 0xff;
@@ -284,5 +285,5 @@ void stmmac_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
 	addr[3] = (lo_addr >> 24) & 0xff;
 	addr[4] = hi_addr & 0xff;
 	addr[5] = (hi_addr >> 8) & 0xff;
-}
-EXPORT_SYMBOL_GPL(stmmac_get_mac_addr);
+पूर्ण
+EXPORT_SYMBOL_GPL(sपंचांगmac_get_mac_addr);

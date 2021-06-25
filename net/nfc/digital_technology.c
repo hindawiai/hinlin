@@ -1,143 +1,144 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * NFC Digital Protocol stack
  * Copyright (c) 2013, Intel Corporation.
  */
 
-#define pr_fmt(fmt) "digital: %s: " fmt, __func__
+#घोषणा pr_fmt(fmt) "digital: %s: " fmt, __func__
 
-#include "digital.h"
+#समावेश "digital.h"
 
-#define DIGITAL_CMD_SENS_REQ    0x26
-#define DIGITAL_CMD_ALL_REQ     0x52
-#define DIGITAL_CMD_SEL_REQ_CL1 0x93
-#define DIGITAL_CMD_SEL_REQ_CL2 0x95
-#define DIGITAL_CMD_SEL_REQ_CL3 0x97
+#घोषणा DIGITAL_CMD_SENS_REQ    0x26
+#घोषणा DIGITAL_CMD_ALL_REQ     0x52
+#घोषणा DIGITAL_CMD_SEL_REQ_CL1 0x93
+#घोषणा DIGITAL_CMD_SEL_REQ_CL2 0x95
+#घोषणा DIGITAL_CMD_SEL_REQ_CL3 0x97
 
-#define DIGITAL_SDD_REQ_SEL_PAR 0x20
+#घोषणा DIGITAL_SDD_REQ_SEL_PAR 0x20
 
-#define DIGITAL_SDD_RES_CT  0x88
-#define DIGITAL_SDD_RES_LEN 5
-#define DIGITAL_SEL_RES_LEN 1
+#घोषणा DIGITAL_SDD_RES_CT  0x88
+#घोषणा DIGITAL_SDD_RES_LEN 5
+#घोषणा DIGITAL_SEL_RES_LEN 1
 
-#define DIGITAL_SEL_RES_NFCID1_COMPLETE(sel_res) (!((sel_res) & 0x04))
-#define DIGITAL_SEL_RES_IS_T2T(sel_res) (!((sel_res) & 0x60))
-#define DIGITAL_SEL_RES_IS_T4T(sel_res) ((sel_res) & 0x20)
-#define DIGITAL_SEL_RES_IS_NFC_DEP(sel_res) ((sel_res) & 0x40)
+#घोषणा DIGITAL_SEL_RES_NFCID1_COMPLETE(sel_res) (!((sel_res) & 0x04))
+#घोषणा DIGITAL_SEL_RES_IS_T2T(sel_res) (!((sel_res) & 0x60))
+#घोषणा DIGITAL_SEL_RES_IS_T4T(sel_res) ((sel_res) & 0x20)
+#घोषणा DIGITAL_SEL_RES_IS_NFC_DEP(sel_res) ((sel_res) & 0x40)
 
-#define DIGITAL_SENS_RES_IS_T1T(sens_res) (((sens_res) & 0x0C00) == 0x0C00)
-#define DIGITAL_SENS_RES_IS_VALID(sens_res) \
+#घोषणा DIGITAL_SENS_RES_IS_T1T(sens_res) (((sens_res) & 0x0C00) == 0x0C00)
+#घोषणा DIGITAL_SENS_RES_IS_VALID(sens_res) \
 	((!((sens_res) & 0x001F) && (((sens_res) & 0x0C00) == 0x0C00)) || \
 	(((sens_res) & 0x001F) && ((sens_res) & 0x0C00) != 0x0C00))
 
-#define DIGITAL_MIFARE_READ_RES_LEN 16
-#define DIGITAL_MIFARE_ACK_RES	0x0A
+#घोषणा DIGITAL_MIFARE_READ_RES_LEN 16
+#घोषणा DIGITAL_MIFARE_ACK_RES	0x0A
 
-#define DIGITAL_CMD_SENSB_REQ			0x05
-#define DIGITAL_SENSB_ADVANCED			BIT(5)
-#define DIGITAL_SENSB_EXTENDED			BIT(4)
-#define DIGITAL_SENSB_ALLB_REQ			BIT(3)
-#define DIGITAL_SENSB_N(n)			((n) & 0x7)
+#घोषणा DIGITAL_CMD_SENSB_REQ			0x05
+#घोषणा DIGITAL_SENSB_ADVANCED			BIT(5)
+#घोषणा DIGITAL_SENSB_EXTENDED			BIT(4)
+#घोषणा DIGITAL_SENSB_ALLB_REQ			BIT(3)
+#घोषणा DIGITAL_SENSB_N(n)			((n) & 0x7)
 
-#define DIGITAL_CMD_SENSB_RES			0x50
+#घोषणा DIGITAL_CMD_SENSB_RES			0x50
 
-#define DIGITAL_CMD_ATTRIB_REQ			0x1D
-#define DIGITAL_ATTRIB_P1_TR0_DEFAULT		(0x0 << 6)
-#define DIGITAL_ATTRIB_P1_TR1_DEFAULT		(0x0 << 4)
-#define DIGITAL_ATTRIB_P1_SUPRESS_EOS		BIT(3)
-#define DIGITAL_ATTRIB_P1_SUPRESS_SOS		BIT(2)
-#define DIGITAL_ATTRIB_P2_LISTEN_POLL_1		(0x0 << 6)
-#define DIGITAL_ATTRIB_P2_POLL_LISTEN_1		(0x0 << 4)
-#define DIGITAL_ATTRIB_P2_MAX_FRAME_256		0x8
-#define DIGITAL_ATTRIB_P4_DID(n)		((n) & 0xf)
+#घोषणा DIGITAL_CMD_ATTRIB_REQ			0x1D
+#घोषणा DIGITAL_ATTRIB_P1_TR0_DEFAULT		(0x0 << 6)
+#घोषणा DIGITAL_ATTRIB_P1_TR1_DEFAULT		(0x0 << 4)
+#घोषणा DIGITAL_ATTRIB_P1_SUPRESS_EOS		BIT(3)
+#घोषणा DIGITAL_ATTRIB_P1_SUPRESS_SOS		BIT(2)
+#घोषणा DIGITAL_ATTRIB_P2_LISTEN_POLL_1		(0x0 << 6)
+#घोषणा DIGITAL_ATTRIB_P2_POLL_LISTEN_1		(0x0 << 4)
+#घोषणा DIGITAL_ATTRIB_P2_MAX_FRAME_256		0x8
+#घोषणा DIGITAL_ATTRIB_P4_DID(n)		((n) & 0xf)
 
-#define DIGITAL_CMD_SENSF_REQ	0x00
-#define DIGITAL_CMD_SENSF_RES	0x01
+#घोषणा DIGITAL_CMD_SENSF_REQ	0x00
+#घोषणा DIGITAL_CMD_SENSF_RES	0x01
 
-#define DIGITAL_SENSF_RES_MIN_LENGTH 17
-#define DIGITAL_SENSF_RES_RD_AP_B1   0x00
-#define DIGITAL_SENSF_RES_RD_AP_B2   0x8F
+#घोषणा DIGITAL_SENSF_RES_MIN_LENGTH 17
+#घोषणा DIGITAL_SENSF_RES_RD_AP_B1   0x00
+#घोषणा DIGITAL_SENSF_RES_RD_AP_B2   0x8F
 
-#define DIGITAL_SENSF_REQ_RC_NONE 0
-#define DIGITAL_SENSF_REQ_RC_SC   1
-#define DIGITAL_SENSF_REQ_RC_AP   2
+#घोषणा DIGITAL_SENSF_REQ_RC_NONE 0
+#घोषणा DIGITAL_SENSF_REQ_RC_SC   1
+#घोषणा DIGITAL_SENSF_REQ_RC_AP   2
 
-#define DIGITAL_CMD_ISO15693_INVENTORY_REQ	0x01
+#घोषणा DIGITAL_CMD_ISO15693_INVENTORY_REQ	0x01
 
-#define DIGITAL_ISO15693_REQ_FLAG_DATA_RATE	BIT(1)
-#define DIGITAL_ISO15693_REQ_FLAG_INVENTORY	BIT(2)
-#define DIGITAL_ISO15693_REQ_FLAG_NB_SLOTS	BIT(5)
-#define DIGITAL_ISO15693_RES_FLAG_ERROR		BIT(0)
-#define DIGITAL_ISO15693_RES_IS_VALID(flags) \
+#घोषणा DIGITAL_ISO15693_REQ_FLAG_DATA_RATE	BIT(1)
+#घोषणा DIGITAL_ISO15693_REQ_FLAG_INVENTORY	BIT(2)
+#घोषणा DIGITAL_ISO15693_REQ_FLAG_NB_SLOTS	BIT(5)
+#घोषणा DIGITAL_ISO15693_RES_FLAG_ERROR		BIT(0)
+#घोषणा DIGITAL_ISO15693_RES_IS_VALID(flags) \
 	(!((flags) & DIGITAL_ISO15693_RES_FLAG_ERROR))
 
-#define DIGITAL_ISO_DEP_I_PCB	 0x02
-#define DIGITAL_ISO_DEP_PNI(pni) ((pni) & 0x01)
+#घोषणा DIGITAL_ISO_DEP_I_PCB	 0x02
+#घोषणा DIGITAL_ISO_DEP_PNI(pni) ((pni) & 0x01)
 
-#define DIGITAL_ISO_DEP_PCB_TYPE(pcb) ((pcb) & 0xC0)
+#घोषणा DIGITAL_ISO_DEP_PCB_TYPE(pcb) ((pcb) & 0xC0)
 
-#define DIGITAL_ISO_DEP_I_BLOCK 0x00
+#घोषणा DIGITAL_ISO_DEP_I_BLOCK 0x00
 
-#define DIGITAL_ISO_DEP_BLOCK_HAS_DID(pcb) ((pcb) & 0x08)
+#घोषणा DIGITAL_ISO_DEP_BLOCK_HAS_DID(pcb) ((pcb) & 0x08)
 
-static const u8 digital_ats_fsc[] = {
+अटल स्थिर u8 digital_ats_fsc[] = अणु
 	 16,  24,  32,  40,  48,  64,  96, 128,
-};
+पूर्ण;
 
-#define DIGITAL_ATS_FSCI(t0) ((t0) & 0x0F)
-#define DIGITAL_SENSB_FSCI(pi2) (((pi2) & 0xF0) >> 4)
-#define DIGITAL_ATS_MAX_FSC  256
+#घोषणा DIGITAL_ATS_FSCI(t0) ((t0) & 0x0F)
+#घोषणा DIGITAL_SENSB_FSCI(pi2) (((pi2) & 0xF0) >> 4)
+#घोषणा DIGITAL_ATS_MAX_FSC  256
 
-#define DIGITAL_RATS_BYTE1 0xE0
-#define DIGITAL_RATS_PARAM 0x80
+#घोषणा DIGITAL_RATS_BYTE1 0xE0
+#घोषणा DIGITAL_RATS_PARAM 0x80
 
-struct digital_sdd_res {
+काष्ठा digital_sdd_res अणु
 	u8 nfcid1[4];
 	u8 bcc;
-} __packed;
+पूर्ण __packed;
 
-struct digital_sel_req {
+काष्ठा digital_sel_req अणु
 	u8 sel_cmd;
 	u8 b2;
 	u8 nfcid1[4];
 	u8 bcc;
-} __packed;
+पूर्ण __packed;
 
-struct digital_sensb_req {
+काष्ठा digital_sensb_req अणु
 	u8 cmd;
 	u8 afi;
 	u8 param;
-} __packed;
+पूर्ण __packed;
 
-struct digital_sensb_res {
+काष्ठा digital_sensb_res अणु
 	u8 cmd;
 	u8 nfcid0[4];
 	u8 app_data[4];
 	u8 proto_info[3];
-} __packed;
+पूर्ण __packed;
 
-struct digital_attrib_req {
+काष्ठा digital_attrib_req अणु
 	u8 cmd;
 	u8 nfcid0[4];
 	u8 param1;
 	u8 param2;
 	u8 param3;
 	u8 param4;
-} __packed;
+पूर्ण __packed;
 
-struct digital_attrib_res {
+काष्ठा digital_attrib_res अणु
 	u8 mbli_did;
-} __packed;
+पूर्ण __packed;
 
-struct digital_sensf_req {
+काष्ठा digital_sensf_req अणु
 	u8 cmd;
 	u8 sc1;
 	u8 sc2;
 	u8 rc;
 	u8 tsn;
-} __packed;
+पूर्ण __packed;
 
-struct digital_sensf_res {
+काष्ठा digital_sensf_res अणु
 	u8 cmd;
 	u8 nfcid2[8];
 	u8 pad0[2];
@@ -146,61 +147,61 @@ struct digital_sensf_res {
 	u8 mrti_update;
 	u8 pad2;
 	u8 rd[2];
-} __packed;
+पूर्ण __packed;
 
-struct digital_iso15693_inv_req {
+काष्ठा digital_iso15693_inv_req अणु
 	u8 flags;
 	u8 cmd;
 	u8 mask_len;
 	u64 mask;
-} __packed;
+पूर्ण __packed;
 
-struct digital_iso15693_inv_res {
+काष्ठा digital_iso15693_inv_res अणु
 	u8 flags;
 	u8 dsfid;
 	u64 uid;
-} __packed;
+पूर्ण __packed;
 
-static int digital_in_send_sdd_req(struct nfc_digital_dev *ddev,
-				   struct nfc_target *target);
+अटल पूर्णांक digital_in_send_sdd_req(काष्ठा nfc_digital_dev *ddev,
+				   काष्ठा nfc_target *target);
 
-int digital_in_iso_dep_pull_sod(struct nfc_digital_dev *ddev,
-				struct sk_buff *skb)
-{
+पूर्णांक digital_in_iso_dep_pull_sod(काष्ठा nfc_digital_dev *ddev,
+				काष्ठा sk_buff *skb)
+अणु
 	u8 pcb;
 	u8 block_type;
 
-	if (skb->len < 1)
-		return -EIO;
+	अगर (skb->len < 1)
+		वापस -EIO;
 
 	pcb = *skb->data;
 	block_type = DIGITAL_ISO_DEP_PCB_TYPE(pcb);
 
 	/* No support fo R-block nor S-block */
-	if (block_type != DIGITAL_ISO_DEP_I_BLOCK) {
+	अगर (block_type != DIGITAL_ISO_DEP_I_BLOCK) अणु
 		pr_err("ISO_DEP R-block and S-block not supported\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (DIGITAL_ISO_DEP_BLOCK_HAS_DID(pcb)) {
+	अगर (DIGITAL_ISO_DEP_BLOCK_HAS_DID(pcb)) अणु
 		pr_err("DID field in ISO_DEP PCB not supported\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	skb_pull(skb, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int digital_in_iso_dep_push_sod(struct nfc_digital_dev *ddev,
-				struct sk_buff *skb)
-{
+पूर्णांक digital_in_iso_dep_push_sod(काष्ठा nfc_digital_dev *ddev,
+				काष्ठा sk_buff *skb)
+अणु
 	/*
 	 * Chaining not supported so skb->len + 1 PCB byte + 2 CRC bytes must
 	 * not be greater than remote FSC
 	 */
-	if (skb->len + 3 > ddev->target_fsc)
-		return -EIO;
+	अगर (skb->len + 3 > ddev->target_fsc)
+		वापस -EIO;
 
 	skb_push(skb, 1);
 
@@ -209,419 +210,419 @@ int digital_in_iso_dep_push_sod(struct nfc_digital_dev *ddev,
 	ddev->curr_nfc_dep_pni =
 		DIGITAL_ISO_DEP_PNI(ddev->curr_nfc_dep_pni + 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void digital_in_recv_ats(struct nfc_digital_dev *ddev, void *arg,
-				struct sk_buff *resp)
-{
-	struct nfc_target *target = arg;
+अटल व्योम digital_in_recv_ats(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+				काष्ठा sk_buff *resp)
+अणु
+	काष्ठा nfc_target *target = arg;
 	u8 fsdi;
-	int rc;
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
-	if (resp->len < 2) {
+	अगर (resp->len < 2) अणु
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	fsdi = DIGITAL_ATS_FSCI(resp->data[1]);
-	if (fsdi >= 8)
+	अगर (fsdi >= 8)
 		ddev->target_fsc = DIGITAL_ATS_MAX_FSC;
-	else
+	अन्यथा
 		ddev->target_fsc = digital_ats_fsc[fsdi];
 
 	ddev->curr_nfc_dep_pni = 0;
 
 	rc = digital_target_found(ddev, target, NFC_PROTO_ISO14443);
 
-exit:
-	dev_kfree_skb(resp);
-	kfree(target);
+निकास:
+	dev_kमुक्त_skb(resp);
+	kमुक्त(target);
 
-	if (rc)
+	अगर (rc)
 		digital_poll_next_tech(ddev);
-}
+पूर्ण
 
-static int digital_in_send_rats(struct nfc_digital_dev *ddev,
-				struct nfc_target *target)
-{
-	int rc;
-	struct sk_buff *skb;
+अटल पूर्णांक digital_in_send_rats(काष्ठा nfc_digital_dev *ddev,
+				काष्ठा nfc_target *target)
+अणु
+	पूर्णांक rc;
+	काष्ठा sk_buff *skb;
 
 	skb = digital_skb_alloc(ddev, 2);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	skb_put_u8(skb, DIGITAL_RATS_BYTE1);
 	skb_put_u8(skb, DIGITAL_RATS_PARAM);
 
 	rc = digital_in_send_cmd(ddev, skb, 30, digital_in_recv_ats,
 				 target);
-	if (rc)
-		kfree_skb(skb);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void digital_in_recv_sel_res(struct nfc_digital_dev *ddev, void *arg,
-				    struct sk_buff *resp)
-{
-	struct nfc_target *target = arg;
-	int rc;
+अटल व्योम digital_in_recv_sel_res(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+				    काष्ठा sk_buff *resp)
+अणु
+	काष्ठा nfc_target *target = arg;
+	पूर्णांक rc;
 	u8 sel_res;
 	u8 nfc_proto;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
-	if (!DIGITAL_DRV_CAPS_IN_CRC(ddev)) {
+	अगर (!DIGITAL_DRV_CAPS_IN_CRC(ddev)) अणु
 		rc = digital_skb_check_crc_a(resp);
-		if (rc) {
+		अगर (rc) अणु
 			PROTOCOL_ERR("4.4.1.3");
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
-	if (resp->len != DIGITAL_SEL_RES_LEN) {
+	अगर (resp->len != DIGITAL_SEL_RES_LEN) अणु
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	sel_res = resp->data[0];
 
-	if (!DIGITAL_SEL_RES_NFCID1_COMPLETE(sel_res)) {
+	अगर (!DIGITAL_SEL_RES_NFCID1_COMPLETE(sel_res)) अणु
 		rc = digital_in_send_sdd_req(ddev, target);
-		if (rc)
-			goto exit;
+		अगर (rc)
+			जाओ निकास;
 
-		goto exit_free_skb;
-	}
+		जाओ निकास_मुक्त_skb;
+	पूर्ण
 
 	target->sel_res = sel_res;
 
-	if (DIGITAL_SEL_RES_IS_T2T(sel_res)) {
+	अगर (DIGITAL_SEL_RES_IS_T2T(sel_res)) अणु
 		nfc_proto = NFC_PROTO_MIFARE;
-	} else if (DIGITAL_SEL_RES_IS_NFC_DEP(sel_res)) {
+	पूर्ण अन्यथा अगर (DIGITAL_SEL_RES_IS_NFC_DEP(sel_res)) अणु
 		nfc_proto = NFC_PROTO_NFC_DEP;
-	} else if (DIGITAL_SEL_RES_IS_T4T(sel_res)) {
+	पूर्ण अन्यथा अगर (DIGITAL_SEL_RES_IS_T4T(sel_res)) अणु
 		rc = digital_in_send_rats(ddev, target);
-		if (rc)
-			goto exit;
+		अगर (rc)
+			जाओ निकास;
 		/*
-		 * Skip target_found and don't free it for now. This will be
-		 * done when receiving the ATS
+		 * Skip target_found and करोn't मुक्त it क्रम now. This will be
+		 * करोne when receiving the ATS
 		 */
-		goto exit_free_skb;
-	} else {
+		जाओ निकास_मुक्त_skb;
+	पूर्ण अन्यथा अणु
 		rc = -EOPNOTSUPP;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rc = digital_target_found(ddev, target, nfc_proto);
 
-exit:
-	kfree(target);
+निकास:
+	kमुक्त(target);
 
-exit_free_skb:
-	dev_kfree_skb(resp);
+निकास_मुक्त_skb:
+	dev_kमुक्त_skb(resp);
 
-	if (rc)
+	अगर (rc)
 		digital_poll_next_tech(ddev);
-}
+पूर्ण
 
-static int digital_in_send_sel_req(struct nfc_digital_dev *ddev,
-				   struct nfc_target *target,
-				   struct digital_sdd_res *sdd_res)
-{
-	struct sk_buff *skb;
-	struct digital_sel_req *sel_req;
+अटल पूर्णांक digital_in_send_sel_req(काष्ठा nfc_digital_dev *ddev,
+				   काष्ठा nfc_target *target,
+				   काष्ठा digital_sdd_res *sdd_res)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा digital_sel_req *sel_req;
 	u8 sel_cmd;
-	int rc;
+	पूर्णांक rc;
 
-	skb = digital_skb_alloc(ddev, sizeof(struct digital_sel_req));
-	if (!skb)
-		return -ENOMEM;
+	skb = digital_skb_alloc(ddev, माप(काष्ठा digital_sel_req));
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	skb_put(skb, sizeof(struct digital_sel_req));
-	sel_req = (struct digital_sel_req *)skb->data;
+	skb_put(skb, माप(काष्ठा digital_sel_req));
+	sel_req = (काष्ठा digital_sel_req *)skb->data;
 
-	if (target->nfcid1_len <= 4)
+	अगर (target->nfcid1_len <= 4)
 		sel_cmd = DIGITAL_CMD_SEL_REQ_CL1;
-	else if (target->nfcid1_len < 10)
+	अन्यथा अगर (target->nfcid1_len < 10)
 		sel_cmd = DIGITAL_CMD_SEL_REQ_CL2;
-	else
+	अन्यथा
 		sel_cmd = DIGITAL_CMD_SEL_REQ_CL3;
 
 	sel_req->sel_cmd = sel_cmd;
 	sel_req->b2 = 0x70;
-	memcpy(sel_req->nfcid1, sdd_res->nfcid1, 4);
+	स_नकल(sel_req->nfcid1, sdd_res->nfcid1, 4);
 	sel_req->bcc = sdd_res->bcc;
 
-	if (DIGITAL_DRV_CAPS_IN_CRC(ddev)) {
+	अगर (DIGITAL_DRV_CAPS_IN_CRC(ddev)) अणु
 		rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				NFC_DIGITAL_FRAMING_NFCA_STANDARD_WITH_CRC_A);
-		if (rc)
-			goto exit;
-	} else {
+		अगर (rc)
+			जाओ निकास;
+	पूर्ण अन्यथा अणु
 		digital_skb_add_crc_a(skb);
-	}
+	पूर्ण
 
 	rc = digital_in_send_cmd(ddev, skb, 30, digital_in_recv_sel_res,
 				 target);
-exit:
-	if (rc)
-		kfree_skb(skb);
+निकास:
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void digital_in_recv_sdd_res(struct nfc_digital_dev *ddev, void *arg,
-				    struct sk_buff *resp)
-{
-	struct nfc_target *target = arg;
-	struct digital_sdd_res *sdd_res;
-	int rc;
+अटल व्योम digital_in_recv_sdd_res(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+				    काष्ठा sk_buff *resp)
+अणु
+	काष्ठा nfc_target *target = arg;
+	काष्ठा digital_sdd_res *sdd_res;
+	पूर्णांक rc;
 	u8 offset, size;
 	u8 i, bcc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
-	if (resp->len < DIGITAL_SDD_RES_LEN) {
+	अगर (resp->len < DIGITAL_SDD_RES_LEN) अणु
 		PROTOCOL_ERR("4.7.2.8");
 		rc = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	sdd_res = (struct digital_sdd_res *)resp->data;
+	sdd_res = (काष्ठा digital_sdd_res *)resp->data;
 
-	for (i = 0, bcc = 0; i < 4; i++)
+	क्रम (i = 0, bcc = 0; i < 4; i++)
 		bcc ^= sdd_res->nfcid1[i];
 
-	if (bcc != sdd_res->bcc) {
+	अगर (bcc != sdd_res->bcc) अणु
 		PROTOCOL_ERR("4.7.2.6");
 		rc = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (sdd_res->nfcid1[0] == DIGITAL_SDD_RES_CT) {
+	अगर (sdd_res->nfcid1[0] == DIGITAL_SDD_RES_CT) अणु
 		offset = 1;
 		size = 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		offset = 0;
 		size = 4;
-	}
+	पूर्ण
 
-	memcpy(target->nfcid1 + target->nfcid1_len, sdd_res->nfcid1 + offset,
+	स_नकल(target->nfcid1 + target->nfcid1_len, sdd_res->nfcid1 + offset,
 	       size);
 	target->nfcid1_len += size;
 
 	rc = digital_in_send_sel_req(ddev, target, sdd_res);
 
-exit:
-	dev_kfree_skb(resp);
+निकास:
+	dev_kमुक्त_skb(resp);
 
-	if (rc) {
-		kfree(target);
+	अगर (rc) अणु
+		kमुक्त(target);
 		digital_poll_next_tech(ddev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int digital_in_send_sdd_req(struct nfc_digital_dev *ddev,
-				   struct nfc_target *target)
-{
-	int rc;
-	struct sk_buff *skb;
+अटल पूर्णांक digital_in_send_sdd_req(काष्ठा nfc_digital_dev *ddev,
+				   काष्ठा nfc_target *target)
+अणु
+	पूर्णांक rc;
+	काष्ठा sk_buff *skb;
 	u8 sel_cmd;
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				     NFC_DIGITAL_FRAMING_NFCA_STANDARD);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	skb = digital_skb_alloc(ddev, 2);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	if (target->nfcid1_len == 0)
+	अगर (target->nfcid1_len == 0)
 		sel_cmd = DIGITAL_CMD_SEL_REQ_CL1;
-	else if (target->nfcid1_len == 3)
+	अन्यथा अगर (target->nfcid1_len == 3)
 		sel_cmd = DIGITAL_CMD_SEL_REQ_CL2;
-	else
+	अन्यथा
 		sel_cmd = DIGITAL_CMD_SEL_REQ_CL3;
 
 	skb_put_u8(skb, sel_cmd);
 	skb_put_u8(skb, DIGITAL_SDD_REQ_SEL_PAR);
 
-	return digital_in_send_cmd(ddev, skb, 30, digital_in_recv_sdd_res,
+	वापस digital_in_send_cmd(ddev, skb, 30, digital_in_recv_sdd_res,
 				   target);
-}
+पूर्ण
 
-static void digital_in_recv_sens_res(struct nfc_digital_dev *ddev, void *arg,
-				     struct sk_buff *resp)
-{
-	struct nfc_target *target = NULL;
-	int rc;
+अटल व्योम digital_in_recv_sens_res(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+				     काष्ठा sk_buff *resp)
+अणु
+	काष्ठा nfc_target *target = शून्य;
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
-	if (resp->len < sizeof(u16)) {
+	अगर (resp->len < माप(u16)) अणु
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	target = kzalloc(sizeof(struct nfc_target), GFP_KERNEL);
-	if (!target) {
+	target = kzalloc(माप(काष्ठा nfc_target), GFP_KERNEL);
+	अगर (!target) अणु
 		rc = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	target->sens_res = __le16_to_cpu(*(__le16 *)resp->data);
 
-	if (!DIGITAL_SENS_RES_IS_VALID(target->sens_res)) {
+	अगर (!DIGITAL_SENS_RES_IS_VALID(target->sens_res)) अणु
 		PROTOCOL_ERR("4.6.3.3");
 		rc = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (DIGITAL_SENS_RES_IS_T1T(target->sens_res))
+	अगर (DIGITAL_SENS_RES_IS_T1T(target->sens_res))
 		rc = digital_target_found(ddev, target, NFC_PROTO_JEWEL);
-	else
+	अन्यथा
 		rc = digital_in_send_sdd_req(ddev, target);
 
-exit:
-	dev_kfree_skb(resp);
+निकास:
+	dev_kमुक्त_skb(resp);
 
-	if (rc) {
-		kfree(target);
+	अगर (rc) अणु
+		kमुक्त(target);
 		digital_poll_next_tech(ddev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int digital_in_send_sens_req(struct nfc_digital_dev *ddev, u8 rf_tech)
-{
-	struct sk_buff *skb;
-	int rc;
+पूर्णांक digital_in_send_sens_req(काष्ठा nfc_digital_dev *ddev, u8 rf_tech)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक rc;
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_RF_TECH,
 				     NFC_DIGITAL_RF_TECH_106A);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				     NFC_DIGITAL_FRAMING_NFCA_SHORT);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	skb = digital_skb_alloc(ddev, 1);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	skb_put_u8(skb, DIGITAL_CMD_SENS_REQ);
 
-	rc = digital_in_send_cmd(ddev, skb, 30, digital_in_recv_sens_res, NULL);
-	if (rc)
-		kfree_skb(skb);
+	rc = digital_in_send_cmd(ddev, skb, 30, digital_in_recv_sens_res, शून्य);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int digital_in_recv_mifare_res(struct sk_buff *resp)
-{
-	/* Successful READ command response is 16 data bytes + 2 CRC bytes long.
-	 * Since the driver can't differentiate a ACK/NACK response from a valid
+पूर्णांक digital_in_recv_mअगरare_res(काष्ठा sk_buff *resp)
+अणु
+	/* Successful READ command response is 16 data bytes + 2 CRC bytes दीर्घ.
+	 * Since the driver can't dअगरferentiate a ACK/NACK response from a valid
 	 * READ response, the CRC calculation must be handled at digital level
-	 * even if the driver supports it for this technology.
+	 * even अगर the driver supports it क्रम this technology.
 	 */
-	if (resp->len == DIGITAL_MIFARE_READ_RES_LEN + DIGITAL_CRC_LEN) {
-		if (digital_skb_check_crc_a(resp)) {
+	अगर (resp->len == DIGITAL_MIFARE_READ_RES_LEN + DIGITAL_CRC_LEN) अणु
+		अगर (digital_skb_check_crc_a(resp)) अणु
 			PROTOCOL_ERR("9.4.1.2");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* ACK response (i.e. successful WRITE). */
-	if (resp->len == 1 && resp->data[0] == DIGITAL_MIFARE_ACK_RES) {
+	अगर (resp->len == 1 && resp->data[0] == DIGITAL_MIFARE_ACK_RES) अणु
 		resp->data[0] = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* NACK and any other responses are treated as error. */
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static void digital_in_recv_attrib_res(struct nfc_digital_dev *ddev, void *arg,
-				       struct sk_buff *resp)
-{
-	struct nfc_target *target = arg;
-	struct digital_attrib_res *attrib_res;
-	int rc;
+अटल व्योम digital_in_recv_attrib_res(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+				       काष्ठा sk_buff *resp)
+अणु
+	काष्ठा nfc_target *target = arg;
+	काष्ठा digital_attrib_res *attrib_res;
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
-	if (resp->len < sizeof(*attrib_res)) {
+	अगर (resp->len < माप(*attrib_res)) अणु
 		PROTOCOL_ERR("12.6.2");
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	attrib_res = (struct digital_attrib_res *)resp->data;
+	attrib_res = (काष्ठा digital_attrib_res *)resp->data;
 
-	if (attrib_res->mbli_did & 0x0f) {
+	अगर (attrib_res->mbli_did & 0x0f) अणु
 		PROTOCOL_ERR("12.6.2.1");
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rc = digital_target_found(ddev, target, NFC_PROTO_ISO14443_B);
 
-exit:
-	dev_kfree_skb(resp);
-	kfree(target);
+निकास:
+	dev_kमुक्त_skb(resp);
+	kमुक्त(target);
 
-	if (rc)
+	अगर (rc)
 		digital_poll_next_tech(ddev);
-}
+पूर्ण
 
-static int digital_in_send_attrib_req(struct nfc_digital_dev *ddev,
-			       struct nfc_target *target,
-			       struct digital_sensb_res *sensb_res)
-{
-	struct digital_attrib_req *attrib_req;
-	struct sk_buff *skb;
-	int rc;
+अटल पूर्णांक digital_in_send_attrib_req(काष्ठा nfc_digital_dev *ddev,
+			       काष्ठा nfc_target *target,
+			       काष्ठा digital_sensb_res *sensb_res)
+अणु
+	काष्ठा digital_attrib_req *attrib_req;
+	काष्ठा sk_buff *skb;
+	पूर्णांक rc;
 
-	skb = digital_skb_alloc(ddev, sizeof(*attrib_req));
-	if (!skb)
-		return -ENOMEM;
+	skb = digital_skb_alloc(ddev, माप(*attrib_req));
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	attrib_req = skb_put(skb, sizeof(*attrib_req));
+	attrib_req = skb_put(skb, माप(*attrib_req));
 
 	attrib_req->cmd = DIGITAL_CMD_ATTRIB_REQ;
-	memcpy(attrib_req->nfcid0, sensb_res->nfcid0,
-	       sizeof(attrib_req->nfcid0));
+	स_नकल(attrib_req->nfcid0, sensb_res->nfcid0,
+	       माप(attrib_req->nfcid0));
 	attrib_req->param1 = DIGITAL_ATTRIB_P1_TR0_DEFAULT |
 			     DIGITAL_ATTRIB_P1_TR1_DEFAULT;
 	attrib_req->param2 = DIGITAL_ATTRIB_P2_LISTEN_POLL_1 |
@@ -632,188 +633,188 @@ static int digital_in_send_attrib_req(struct nfc_digital_dev *ddev,
 
 	rc = digital_in_send_cmd(ddev, skb, 30, digital_in_recv_attrib_res,
 				 target);
-	if (rc)
-		kfree_skb(skb);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void digital_in_recv_sensb_res(struct nfc_digital_dev *ddev, void *arg,
-				      struct sk_buff *resp)
-{
-	struct nfc_target *target = NULL;
-	struct digital_sensb_res *sensb_res;
+अटल व्योम digital_in_recv_sensb_res(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+				      काष्ठा sk_buff *resp)
+अणु
+	काष्ठा nfc_target *target = शून्य;
+	काष्ठा digital_sensb_res *sensb_res;
 	u8 fsci;
-	int rc;
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
-	if (resp->len != sizeof(*sensb_res)) {
+	अगर (resp->len != माप(*sensb_res)) अणु
 		PROTOCOL_ERR("5.6.2.1");
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	sensb_res = (struct digital_sensb_res *)resp->data;
+	sensb_res = (काष्ठा digital_sensb_res *)resp->data;
 
-	if (sensb_res->cmd != DIGITAL_CMD_SENSB_RES) {
+	अगर (sensb_res->cmd != DIGITAL_CMD_SENSB_RES) अणु
 		PROTOCOL_ERR("5.6.2");
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (!(sensb_res->proto_info[1] & BIT(0))) {
+	अगर (!(sensb_res->proto_info[1] & BIT(0))) अणु
 		PROTOCOL_ERR("5.6.2.12");
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (sensb_res->proto_info[1] & BIT(3)) {
+	अगर (sensb_res->proto_info[1] & BIT(3)) अणु
 		PROTOCOL_ERR("5.6.2.16");
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	fsci = DIGITAL_SENSB_FSCI(sensb_res->proto_info[1]);
-	if (fsci >= 8)
+	अगर (fsci >= 8)
 		ddev->target_fsc = DIGITAL_ATS_MAX_FSC;
-	else
+	अन्यथा
 		ddev->target_fsc = digital_ats_fsc[fsci];
 
-	target = kzalloc(sizeof(struct nfc_target), GFP_KERNEL);
-	if (!target) {
+	target = kzalloc(माप(काष्ठा nfc_target), GFP_KERNEL);
+	अगर (!target) अणु
 		rc = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rc = digital_in_send_attrib_req(ddev, target, sensb_res);
 
-exit:
-	dev_kfree_skb(resp);
+निकास:
+	dev_kमुक्त_skb(resp);
 
-	if (rc) {
-		kfree(target);
+	अगर (rc) अणु
+		kमुक्त(target);
 		digital_poll_next_tech(ddev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int digital_in_send_sensb_req(struct nfc_digital_dev *ddev, u8 rf_tech)
-{
-	struct digital_sensb_req *sensb_req;
-	struct sk_buff *skb;
-	int rc;
+पूर्णांक digital_in_send_sensb_req(काष्ठा nfc_digital_dev *ddev, u8 rf_tech)
+अणु
+	काष्ठा digital_sensb_req *sensb_req;
+	काष्ठा sk_buff *skb;
+	पूर्णांक rc;
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_RF_TECH,
 				     NFC_DIGITAL_RF_TECH_106B);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				     NFC_DIGITAL_FRAMING_NFCB);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	skb = digital_skb_alloc(ddev, sizeof(*sensb_req));
-	if (!skb)
-		return -ENOMEM;
+	skb = digital_skb_alloc(ddev, माप(*sensb_req));
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	sensb_req = skb_put(skb, sizeof(*sensb_req));
+	sensb_req = skb_put(skb, माप(*sensb_req));
 
 	sensb_req->cmd = DIGITAL_CMD_SENSB_REQ;
 	sensb_req->afi = 0x00; /* All families and sub-families */
 	sensb_req->param = DIGITAL_SENSB_N(0);
 
 	rc = digital_in_send_cmd(ddev, skb, 30, digital_in_recv_sensb_res,
-				 NULL);
-	if (rc)
-		kfree_skb(skb);
+				 शून्य);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void digital_in_recv_sensf_res(struct nfc_digital_dev *ddev, void *arg,
-				   struct sk_buff *resp)
-{
-	int rc;
+अटल व्योम digital_in_recv_sensf_res(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+				   काष्ठा sk_buff *resp)
+अणु
+	पूर्णांक rc;
 	u8 proto;
-	struct nfc_target target;
-	struct digital_sensf_res *sensf_res;
+	काष्ठा nfc_target target;
+	काष्ठा digital_sensf_res *sensf_res;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
-	if (resp->len < DIGITAL_SENSF_RES_MIN_LENGTH) {
+	अगर (resp->len < DIGITAL_SENSF_RES_MIN_LENGTH) अणु
 		rc = -EIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (!DIGITAL_DRV_CAPS_IN_CRC(ddev)) {
+	अगर (!DIGITAL_DRV_CAPS_IN_CRC(ddev)) अणु
 		rc = digital_skb_check_crc_f(resp);
-		if (rc) {
+		अगर (rc) अणु
 			PROTOCOL_ERR("6.4.1.8");
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
 	skb_pull(resp, 1);
 
-	memset(&target, 0, sizeof(struct nfc_target));
+	स_रखो(&target, 0, माप(काष्ठा nfc_target));
 
-	sensf_res = (struct digital_sensf_res *)resp->data;
+	sensf_res = (काष्ठा digital_sensf_res *)resp->data;
 
-	memcpy(target.sensf_res, sensf_res, resp->len);
+	स_नकल(target.sensf_res, sensf_res, resp->len);
 	target.sensf_res_len = resp->len;
 
-	memcpy(target.nfcid2, sensf_res->nfcid2, NFC_NFCID2_MAXSIZE);
+	स_नकल(target.nfcid2, sensf_res->nfcid2, NFC_NFCID2_MAXSIZE);
 	target.nfcid2_len = NFC_NFCID2_MAXSIZE;
 
-	if (target.nfcid2[0] == DIGITAL_SENSF_NFCID2_NFC_DEP_B1 &&
+	अगर (target.nfcid2[0] == DIGITAL_SENSF_NFCID2_NFC_DEP_B1 &&
 	    target.nfcid2[1] == DIGITAL_SENSF_NFCID2_NFC_DEP_B2)
 		proto = NFC_PROTO_NFC_DEP;
-	else
+	अन्यथा
 		proto = NFC_PROTO_FELICA;
 
 	rc = digital_target_found(ddev, &target, proto);
 
-exit:
-	dev_kfree_skb(resp);
+निकास:
+	dev_kमुक्त_skb(resp);
 
-	if (rc)
+	अगर (rc)
 		digital_poll_next_tech(ddev);
-}
+पूर्ण
 
-int digital_in_send_sensf_req(struct nfc_digital_dev *ddev, u8 rf_tech)
-{
-	struct digital_sensf_req *sensf_req;
-	struct sk_buff *skb;
-	int rc;
+पूर्णांक digital_in_send_sensf_req(काष्ठा nfc_digital_dev *ddev, u8 rf_tech)
+अणु
+	काष्ठा digital_sensf_req *sensf_req;
+	काष्ठा sk_buff *skb;
+	पूर्णांक rc;
 	u8 size;
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_RF_TECH, rf_tech);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				     NFC_DIGITAL_FRAMING_NFCF);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	size = sizeof(struct digital_sensf_req);
+	size = माप(काष्ठा digital_sensf_req);
 
 	skb = digital_skb_alloc(ddev, size);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	skb_put(skb, size);
 
-	sensf_req = (struct digital_sensf_req *)skb->data;
+	sensf_req = (काष्ठा digital_sensf_req *)skb->data;
 	sensf_req->cmd = DIGITAL_CMD_SENSF_REQ;
 	sensf_req->sc1 = 0xFF;
 	sensf_req->sc2 = 0xFF;
@@ -822,86 +823,86 @@ int digital_in_send_sensf_req(struct nfc_digital_dev *ddev, u8 rf_tech)
 
 	*(u8 *)skb_push(skb, 1) = size + 1;
 
-	if (!DIGITAL_DRV_CAPS_IN_CRC(ddev))
+	अगर (!DIGITAL_DRV_CAPS_IN_CRC(ddev))
 		digital_skb_add_crc_f(skb);
 
 	rc = digital_in_send_cmd(ddev, skb, 30, digital_in_recv_sensf_res,
-				 NULL);
-	if (rc)
-		kfree_skb(skb);
+				 शून्य);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void digital_in_recv_iso15693_inv_res(struct nfc_digital_dev *ddev,
-		void *arg, struct sk_buff *resp)
-{
-	struct digital_iso15693_inv_res *res;
-	struct nfc_target *target = NULL;
-	int rc;
+अटल व्योम digital_in_recv_iso15693_inv_res(काष्ठा nfc_digital_dev *ddev,
+		व्योम *arg, काष्ठा sk_buff *resp)
+अणु
+	काष्ठा digital_iso15693_inv_res *res;
+	काष्ठा nfc_target *target = शून्य;
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto out_free_skb;
-	}
+		resp = शून्य;
+		जाओ out_मुक्त_skb;
+	पूर्ण
 
-	if (resp->len != sizeof(*res)) {
+	अगर (resp->len != माप(*res)) अणु
 		rc = -EIO;
-		goto out_free_skb;
-	}
+		जाओ out_मुक्त_skb;
+	पूर्ण
 
-	res = (struct digital_iso15693_inv_res *)resp->data;
+	res = (काष्ठा digital_iso15693_inv_res *)resp->data;
 
-	if (!DIGITAL_ISO15693_RES_IS_VALID(res->flags)) {
+	अगर (!DIGITAL_ISO15693_RES_IS_VALID(res->flags)) अणु
 		PROTOCOL_ERR("ISO15693 - 10.3.1");
 		rc = -EINVAL;
-		goto out_free_skb;
-	}
+		जाओ out_मुक्त_skb;
+	पूर्ण
 
-	target = kzalloc(sizeof(*target), GFP_KERNEL);
-	if (!target) {
+	target = kzalloc(माप(*target), GFP_KERNEL);
+	अगर (!target) अणु
 		rc = -ENOMEM;
-		goto out_free_skb;
-	}
+		जाओ out_मुक्त_skb;
+	पूर्ण
 
 	target->is_iso15693 = 1;
 	target->iso15693_dsfid = res->dsfid;
-	memcpy(target->iso15693_uid, &res->uid, sizeof(target->iso15693_uid));
+	स_नकल(target->iso15693_uid, &res->uid, माप(target->iso15693_uid));
 
 	rc = digital_target_found(ddev, target, NFC_PROTO_ISO15693);
 
-	kfree(target);
+	kमुक्त(target);
 
-out_free_skb:
-	dev_kfree_skb(resp);
+out_मुक्त_skb:
+	dev_kमुक्त_skb(resp);
 
-	if (rc)
+	अगर (rc)
 		digital_poll_next_tech(ddev);
-}
+पूर्ण
 
-int digital_in_send_iso15693_inv_req(struct nfc_digital_dev *ddev, u8 rf_tech)
-{
-	struct digital_iso15693_inv_req *req;
-	struct sk_buff *skb;
-	int rc;
+पूर्णांक digital_in_send_iso15693_inv_req(काष्ठा nfc_digital_dev *ddev, u8 rf_tech)
+अणु
+	काष्ठा digital_iso15693_inv_req *req;
+	काष्ठा sk_buff *skb;
+	पूर्णांक rc;
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_RF_TECH,
 				     NFC_DIGITAL_RF_TECH_ISO15693);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				     NFC_DIGITAL_FRAMING_ISO15693_INVENTORY);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	skb = digital_skb_alloc(ddev, sizeof(*req));
-	if (!skb)
-		return -ENOMEM;
+	skb = digital_skb_alloc(ddev, माप(*req));
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	skb_put(skb, sizeof(*req) - sizeof(req->mask)); /* No mask */
-	req = (struct digital_iso15693_inv_req *)skb->data;
+	skb_put(skb, माप(*req) - माप(req->mask)); /* No mask */
+	req = (काष्ठा digital_iso15693_inv_req *)skb->data;
 
 	/* Single sub-carrier, high data rate, no AFI, single slot
 	 * Inventory command
@@ -913,145 +914,145 @@ int digital_in_send_iso15693_inv_req(struct nfc_digital_dev *ddev, u8 rf_tech)
 	req->mask_len = 0;
 
 	rc = digital_in_send_cmd(ddev, skb, 30,
-				 digital_in_recv_iso15693_inv_res, NULL);
-	if (rc)
-		kfree_skb(skb);
+				 digital_in_recv_iso15693_inv_res, शून्य);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int digital_tg_send_sel_res(struct nfc_digital_dev *ddev)
-{
-	struct sk_buff *skb;
-	int rc;
+अटल पूर्णांक digital_tg_send_sel_res(काष्ठा nfc_digital_dev *ddev)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक rc;
 
 	skb = digital_skb_alloc(ddev, 1);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	skb_put_u8(skb, DIGITAL_SEL_RES_NFC_DEP);
 
-	if (!DIGITAL_DRV_CAPS_TG_CRC(ddev))
+	अगर (!DIGITAL_DRV_CAPS_TG_CRC(ddev))
 		digital_skb_add_crc_a(skb);
 
 	rc = digital_tg_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				     NFC_DIGITAL_FRAMING_NFCA_ANTICOL_COMPLETE);
-	if (rc) {
-		kfree_skb(skb);
-		return rc;
-	}
+	अगर (rc) अणु
+		kमुक्त_skb(skb);
+		वापस rc;
+	पूर्ण
 
 	rc = digital_tg_send_cmd(ddev, skb, 300, digital_tg_recv_atr_req,
-				 NULL);
-	if (rc)
-		kfree_skb(skb);
+				 शून्य);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void digital_tg_recv_sel_req(struct nfc_digital_dev *ddev, void *arg,
-				    struct sk_buff *resp)
-{
-	int rc;
+अटल व्योम digital_tg_recv_sel_req(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+				    काष्ठा sk_buff *resp)
+अणु
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
-	if (!DIGITAL_DRV_CAPS_TG_CRC(ddev)) {
+	अगर (!DIGITAL_DRV_CAPS_TG_CRC(ddev)) अणु
 		rc = digital_skb_check_crc_a(resp);
-		if (rc) {
+		अगर (rc) अणु
 			PROTOCOL_ERR("4.4.1.3");
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
-	/* Silently ignore SEL_REQ content and send a SEL_RES for NFC-DEP */
+	/* Silently ignore SEL_REQ content and send a SEL_RES क्रम NFC-DEP */
 
 	rc = digital_tg_send_sel_res(ddev);
 
-exit:
-	if (rc)
+निकास:
+	अगर (rc)
 		digital_poll_next_tech(ddev);
 
-	dev_kfree_skb(resp);
-}
+	dev_kमुक्त_skb(resp);
+पूर्ण
 
-static int digital_tg_send_sdd_res(struct nfc_digital_dev *ddev)
-{
-	struct sk_buff *skb;
-	struct digital_sdd_res *sdd_res;
-	int rc, i;
+अटल पूर्णांक digital_tg_send_sdd_res(काष्ठा nfc_digital_dev *ddev)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा digital_sdd_res *sdd_res;
+	पूर्णांक rc, i;
 
-	skb = digital_skb_alloc(ddev, sizeof(struct digital_sdd_res));
-	if (!skb)
-		return -ENOMEM;
+	skb = digital_skb_alloc(ddev, माप(काष्ठा digital_sdd_res));
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	skb_put(skb, sizeof(struct digital_sdd_res));
-	sdd_res = (struct digital_sdd_res *)skb->data;
+	skb_put(skb, माप(काष्ठा digital_sdd_res));
+	sdd_res = (काष्ठा digital_sdd_res *)skb->data;
 
 	sdd_res->nfcid1[0] = 0x08;
-	get_random_bytes(sdd_res->nfcid1 + 1, 3);
+	get_अक्रमom_bytes(sdd_res->nfcid1 + 1, 3);
 
 	sdd_res->bcc = 0;
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		sdd_res->bcc ^= sdd_res->nfcid1[i];
 
 	rc = digital_tg_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				NFC_DIGITAL_FRAMING_NFCA_STANDARD_WITH_CRC_A);
-	if (rc) {
-		kfree_skb(skb);
-		return rc;
-	}
+	अगर (rc) अणु
+		kमुक्त_skb(skb);
+		वापस rc;
+	पूर्ण
 
 	rc = digital_tg_send_cmd(ddev, skb, 300, digital_tg_recv_sel_req,
-				 NULL);
-	if (rc)
-		kfree_skb(skb);
+				 शून्य);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void digital_tg_recv_sdd_req(struct nfc_digital_dev *ddev, void *arg,
-				    struct sk_buff *resp)
-{
+अटल व्योम digital_tg_recv_sdd_req(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+				    काष्ठा sk_buff *resp)
+अणु
 	u8 *sdd_req;
-	int rc;
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
 	sdd_req = resp->data;
 
-	if (resp->len < 2 || sdd_req[0] != DIGITAL_CMD_SEL_REQ_CL1 ||
-	    sdd_req[1] != DIGITAL_SDD_REQ_SEL_PAR) {
+	अगर (resp->len < 2 || sdd_req[0] != DIGITAL_CMD_SEL_REQ_CL1 ||
+	    sdd_req[1] != DIGITAL_SDD_REQ_SEL_PAR) अणु
 		rc = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rc = digital_tg_send_sdd_res(ddev);
 
-exit:
-	if (rc)
+निकास:
+	अगर (rc)
 		digital_poll_next_tech(ddev);
 
-	dev_kfree_skb(resp);
-}
+	dev_kमुक्त_skb(resp);
+पूर्ण
 
-static int digital_tg_send_sens_res(struct nfc_digital_dev *ddev)
-{
-	struct sk_buff *skb;
+अटल पूर्णांक digital_tg_send_sens_res(काष्ठा nfc_digital_dev *ddev)
+अणु
+	काष्ठा sk_buff *skb;
 	u8 *sens_res;
-	int rc;
+	पूर्णांक rc;
 
 	skb = digital_skb_alloc(ddev, 2);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	sens_res = skb_put(skb, 2);
 
@@ -1060,237 +1061,237 @@ static int digital_tg_send_sens_res(struct nfc_digital_dev *ddev)
 
 	rc = digital_tg_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				     NFC_DIGITAL_FRAMING_NFCA_STANDARD);
-	if (rc) {
-		kfree_skb(skb);
-		return rc;
-	}
+	अगर (rc) अणु
+		kमुक्त_skb(skb);
+		वापस rc;
+	पूर्ण
 
 	rc = digital_tg_send_cmd(ddev, skb, 300, digital_tg_recv_sdd_req,
-				 NULL);
-	if (rc)
-		kfree_skb(skb);
+				 शून्य);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void digital_tg_recv_sens_req(struct nfc_digital_dev *ddev, void *arg,
-			      struct sk_buff *resp)
-{
+व्योम digital_tg_recv_sens_req(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+			      काष्ठा sk_buff *resp)
+अणु
 	u8 sens_req;
-	int rc;
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
 	sens_req = resp->data[0];
 
-	if (!resp->len || (sens_req != DIGITAL_CMD_SENS_REQ &&
-	    sens_req != DIGITAL_CMD_ALL_REQ)) {
+	अगर (!resp->len || (sens_req != DIGITAL_CMD_SENS_REQ &&
+	    sens_req != DIGITAL_CMD_ALL_REQ)) अणु
 		rc = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rc = digital_tg_send_sens_res(ddev);
 
-exit:
-	if (rc)
+निकास:
+	अगर (rc)
 		digital_poll_next_tech(ddev);
 
-	dev_kfree_skb(resp);
-}
+	dev_kमुक्त_skb(resp);
+पूर्ण
 
-static void digital_tg_recv_atr_or_sensf_req(struct nfc_digital_dev *ddev,
-		void *arg, struct sk_buff *resp)
-{
-	if (!IS_ERR(resp) && (resp->len >= 2) &&
+अटल व्योम digital_tg_recv_atr_or_sensf_req(काष्ठा nfc_digital_dev *ddev,
+		व्योम *arg, काष्ठा sk_buff *resp)
+अणु
+	अगर (!IS_ERR(resp) && (resp->len >= 2) &&
 			(resp->data[1] == DIGITAL_CMD_SENSF_REQ))
 		digital_tg_recv_sensf_req(ddev, arg, resp);
-	else
+	अन्यथा
 		digital_tg_recv_atr_req(ddev, arg, resp);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int digital_tg_send_sensf_res(struct nfc_digital_dev *ddev,
-			      struct digital_sensf_req *sensf_req)
-{
-	struct sk_buff *skb;
+अटल पूर्णांक digital_tg_send_sensf_res(काष्ठा nfc_digital_dev *ddev,
+			      काष्ठा digital_sensf_req *sensf_req)
+अणु
+	काष्ठा sk_buff *skb;
 	u8 size;
-	int rc;
-	struct digital_sensf_res *sensf_res;
+	पूर्णांक rc;
+	काष्ठा digital_sensf_res *sensf_res;
 
-	size = sizeof(struct digital_sensf_res);
+	size = माप(काष्ठा digital_sensf_res);
 
-	if (sensf_req->rc == DIGITAL_SENSF_REQ_RC_NONE)
-		size -= sizeof(sensf_res->rd);
+	अगर (sensf_req->rc == DIGITAL_SENSF_REQ_RC_NONE)
+		size -= माप(sensf_res->rd);
 
 	skb = digital_skb_alloc(ddev, size);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	skb_put(skb, size);
 
-	sensf_res = (struct digital_sensf_res *)skb->data;
+	sensf_res = (काष्ठा digital_sensf_res *)skb->data;
 
-	memset(sensf_res, 0, size);
+	स_रखो(sensf_res, 0, size);
 
 	sensf_res->cmd = DIGITAL_CMD_SENSF_RES;
 	sensf_res->nfcid2[0] = DIGITAL_SENSF_NFCID2_NFC_DEP_B1;
 	sensf_res->nfcid2[1] = DIGITAL_SENSF_NFCID2_NFC_DEP_B2;
-	get_random_bytes(&sensf_res->nfcid2[2], 6);
+	get_अक्रमom_bytes(&sensf_res->nfcid2[2], 6);
 
-	switch (sensf_req->rc) {
-	case DIGITAL_SENSF_REQ_RC_SC:
+	चयन (sensf_req->rc) अणु
+	हाल DIGITAL_SENSF_REQ_RC_SC:
 		sensf_res->rd[0] = sensf_req->sc1;
 		sensf_res->rd[1] = sensf_req->sc2;
-		break;
-	case DIGITAL_SENSF_REQ_RC_AP:
+		अवरोध;
+	हाल DIGITAL_SENSF_REQ_RC_AP:
 		sensf_res->rd[0] = DIGITAL_SENSF_RES_RD_AP_B1;
 		sensf_res->rd[1] = DIGITAL_SENSF_RES_RD_AP_B2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	*(u8 *)skb_push(skb, sizeof(u8)) = size + 1;
+	*(u8 *)skb_push(skb, माप(u8)) = size + 1;
 
-	if (!DIGITAL_DRV_CAPS_TG_CRC(ddev))
+	अगर (!DIGITAL_DRV_CAPS_TG_CRC(ddev))
 		digital_skb_add_crc_f(skb);
 
 	rc = digital_tg_send_cmd(ddev, skb, 300,
-				 digital_tg_recv_atr_or_sensf_req, NULL);
-	if (rc)
-		kfree_skb(skb);
+				 digital_tg_recv_atr_or_sensf_req, शून्य);
+	अगर (rc)
+		kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void digital_tg_recv_sensf_req(struct nfc_digital_dev *ddev, void *arg,
-			       struct sk_buff *resp)
-{
-	struct digital_sensf_req *sensf_req;
-	int rc;
+व्योम digital_tg_recv_sensf_req(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+			       काष्ठा sk_buff *resp)
+अणु
+	काष्ठा digital_sensf_req *sensf_req;
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
+	अगर (IS_ERR(resp)) अणु
 		rc = PTR_ERR(resp);
-		resp = NULL;
-		goto exit;
-	}
+		resp = शून्य;
+		जाओ निकास;
+	पूर्ण
 
-	if (!DIGITAL_DRV_CAPS_TG_CRC(ddev)) {
+	अगर (!DIGITAL_DRV_CAPS_TG_CRC(ddev)) अणु
 		rc = digital_skb_check_crc_f(resp);
-		if (rc) {
+		अगर (rc) अणु
 			PROTOCOL_ERR("6.4.1.8");
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
-	if (resp->len != sizeof(struct digital_sensf_req) + 1) {
+	अगर (resp->len != माप(काष्ठा digital_sensf_req) + 1) अणु
 		rc = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	skb_pull(resp, 1);
-	sensf_req = (struct digital_sensf_req *)resp->data;
+	sensf_req = (काष्ठा digital_sensf_req *)resp->data;
 
-	if (sensf_req->cmd != DIGITAL_CMD_SENSF_REQ) {
+	अगर (sensf_req->cmd != DIGITAL_CMD_SENSF_REQ) अणु
 		rc = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rc = digital_tg_send_sensf_res(ddev, sensf_req);
 
-exit:
-	if (rc)
+निकास:
+	अगर (rc)
 		digital_poll_next_tech(ddev);
 
-	dev_kfree_skb(resp);
-}
+	dev_kमुक्त_skb(resp);
+पूर्ण
 
-static int digital_tg_config_nfca(struct nfc_digital_dev *ddev)
-{
-	int rc;
+अटल पूर्णांक digital_tg_config_nfca(काष्ठा nfc_digital_dev *ddev)
+अणु
+	पूर्णांक rc;
 
 	rc = digital_tg_configure_hw(ddev, NFC_DIGITAL_CONFIG_RF_TECH,
 				     NFC_DIGITAL_RF_TECH_106A);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return digital_tg_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
+	वापस digital_tg_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				       NFC_DIGITAL_FRAMING_NFCA_NFC_DEP);
-}
+पूर्ण
 
-int digital_tg_listen_nfca(struct nfc_digital_dev *ddev, u8 rf_tech)
-{
-	int rc;
+पूर्णांक digital_tg_listen_nfca(काष्ठा nfc_digital_dev *ddev, u8 rf_tech)
+अणु
+	पूर्णांक rc;
 
 	rc = digital_tg_config_nfca(ddev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return digital_tg_listen(ddev, 300, digital_tg_recv_sens_req, NULL);
-}
+	वापस digital_tg_listen(ddev, 300, digital_tg_recv_sens_req, शून्य);
+पूर्ण
 
-static int digital_tg_config_nfcf(struct nfc_digital_dev *ddev, u8 rf_tech)
-{
-	int rc;
+अटल पूर्णांक digital_tg_config_nfcf(काष्ठा nfc_digital_dev *ddev, u8 rf_tech)
+अणु
+	पूर्णांक rc;
 
 	rc = digital_tg_configure_hw(ddev, NFC_DIGITAL_CONFIG_RF_TECH, rf_tech);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return digital_tg_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
+	वापस digital_tg_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING,
 				       NFC_DIGITAL_FRAMING_NFCF_NFC_DEP);
-}
+पूर्ण
 
-int digital_tg_listen_nfcf(struct nfc_digital_dev *ddev, u8 rf_tech)
-{
-	int rc;
+पूर्णांक digital_tg_listen_nfcf(काष्ठा nfc_digital_dev *ddev, u8 rf_tech)
+अणु
+	पूर्णांक rc;
 
 	rc = digital_tg_config_nfcf(ddev, rf_tech);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return digital_tg_listen(ddev, 300, digital_tg_recv_sensf_req, NULL);
-}
+	वापस digital_tg_listen(ddev, 300, digital_tg_recv_sensf_req, शून्य);
+पूर्ण
 
-void digital_tg_recv_md_req(struct nfc_digital_dev *ddev, void *arg,
-			    struct sk_buff *resp)
-{
+व्योम digital_tg_recv_md_req(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
+			    काष्ठा sk_buff *resp)
+अणु
 	u8 rf_tech;
-	int rc;
+	पूर्णांक rc;
 
-	if (IS_ERR(resp)) {
-		resp = NULL;
-		goto exit_free_skb;
-	}
+	अगर (IS_ERR(resp)) अणु
+		resp = शून्य;
+		जाओ निकास_मुक्त_skb;
+	पूर्ण
 
 	rc = ddev->ops->tg_get_rf_tech(ddev, &rf_tech);
-	if (rc)
-		goto exit_free_skb;
+	अगर (rc)
+		जाओ निकास_मुक्त_skb;
 
-	switch (rf_tech) {
-	case NFC_DIGITAL_RF_TECH_106A:
+	चयन (rf_tech) अणु
+	हाल NFC_DIGITAL_RF_TECH_106A:
 		rc = digital_tg_config_nfca(ddev);
-		if (rc)
-			goto exit_free_skb;
+		अगर (rc)
+			जाओ निकास_मुक्त_skb;
 		digital_tg_recv_sens_req(ddev, arg, resp);
-		break;
-	case NFC_DIGITAL_RF_TECH_212F:
-	case NFC_DIGITAL_RF_TECH_424F:
+		अवरोध;
+	हाल NFC_DIGITAL_RF_TECH_212F:
+	हाल NFC_DIGITAL_RF_TECH_424F:
 		rc = digital_tg_config_nfcf(ddev, rf_tech);
-		if (rc)
-			goto exit_free_skb;
+		अगर (rc)
+			जाओ निकास_मुक्त_skb;
 		digital_tg_recv_sensf_req(ddev, arg, resp);
-		break;
-	default:
-		goto exit_free_skb;
-	}
+		अवरोध;
+	शेष:
+		जाओ निकास_मुक्त_skb;
+	पूर्ण
 
-	return;
+	वापस;
 
-exit_free_skb:
+निकास_मुक्त_skb:
 	digital_poll_next_tech(ddev);
-	dev_kfree_skb(resp);
-}
+	dev_kमुक्त_skb(resp);
+पूर्ण

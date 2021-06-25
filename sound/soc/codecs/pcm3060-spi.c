@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // PCM3060 SPI driver
 //
 // Copyright (C) 2018 Kirill Marinushkin <kmarinushkin@birdec.com>
 
-#include <linux/module.h>
-#include <linux/spi/spi.h>
-#include <sound/soc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <sound/soc.h>
 
-#include "pcm3060.h"
+#समावेश "pcm3060.h"
 
-static int pcm3060_spi_probe(struct spi_device *spi)
-{
-	struct pcm3060_priv *priv;
+अटल पूर्णांक pcm3060_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा pcm3060_priv *priv;
 
-	priv = devm_kzalloc(&spi->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&spi->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	spi_set_drvdata(spi, priv);
 
 	priv->regmap = devm_regmap_init_spi(spi, &pcm3060_regmap);
-	if (IS_ERR(priv->regmap))
-		return PTR_ERR(priv->regmap);
+	अगर (IS_ERR(priv->regmap))
+		वापस PTR_ERR(priv->regmap);
 
-	return pcm3060_probe(&spi->dev);
-}
+	वापस pcm3060_probe(&spi->dev);
+पूर्ण
 
-static const struct spi_device_id pcm3060_spi_id[] = {
-	{ .name = "pcm3060" },
-	{ },
-};
+अटल स्थिर काष्ठा spi_device_id pcm3060_spi_id[] = अणु
+	अणु .name = "pcm3060" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, pcm3060_spi_id);
 
-#ifdef CONFIG_OF
-static const struct of_device_id pcm3060_of_match[] = {
-	{ .compatible = "ti,pcm3060" },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id pcm3060_of_match[] = अणु
+	अणु .compatible = "ti,pcm3060" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pcm3060_of_match);
-#endif /* CONFIG_OF */
+#पूर्ण_अगर /* CONFIG_OF */
 
-static struct spi_driver pcm3060_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver pcm3060_spi_driver = अणु
+	.driver = अणु
 		.name = "pcm3060",
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 		.of_match_table = pcm3060_of_match,
-#endif /* CONFIG_OF */
-	},
+#पूर्ण_अगर /* CONFIG_OF */
+	पूर्ण,
 	.id_table = pcm3060_spi_id,
 	.probe = pcm3060_spi_probe,
-};
+पूर्ण;
 
 module_spi_driver(pcm3060_spi_driver);
 

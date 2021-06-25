@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * trace-event-scripting.  Scripting engine common and initialization code.
  *
  * Copyright (C) 2009-2010 Tom Zanussi <tzanussi@gmail.com>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
 
-#include "debug.h"
-#include "trace-event.h"
-#include <linux/zalloc.h>
+#समावेश "debug.h"
+#समावेश "trace-event.h"
+#समावेश <linux/zभाग.स>
 
-struct scripting_context *scripting_context;
+काष्ठा scripting_context *scripting_context;
 
-static int flush_script_unsupported(void)
-{
-	return 0;
-}
+अटल पूर्णांक flush_script_unsupported(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static int stop_script_unsupported(void)
-{
-	return 0;
-}
+अटल पूर्णांक stop_script_unsupported(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void process_event_unsupported(union perf_event *event __maybe_unused,
-				      struct perf_sample *sample __maybe_unused,
-				      struct evsel *evsel __maybe_unused,
-				      struct addr_location *al __maybe_unused)
-{
-}
+अटल व्योम process_event_unsupported(जोड़ perf_event *event __maybe_unused,
+				      काष्ठा perf_sample *sample __maybe_unused,
+				      काष्ठा evsel *evsel __maybe_unused,
+				      काष्ठा addr_location *al __maybe_unused)
+अणु
+पूर्ण
 
-static void print_python_unsupported_msg(void)
-{
-	fprintf(stderr, "Python scripting not supported."
+अटल व्योम prपूर्णांक_python_unsupported_msg(व्योम)
+अणु
+	ख_लिखो(मानक_त्रुटि, "Python scripting not supported."
 		"  Install libpython and rebuild perf to enable it.\n"
 		"For example:\n  # apt-get install python-dev (ubuntu)"
 		"\n  # yum install python-devel (Fedora)"
 		"\n  etc.\n");
-}
+पूर्ण
 
-static int python_start_script_unsupported(const char *script __maybe_unused,
-					   int argc __maybe_unused,
-					   const char **argv __maybe_unused)
-{
-	print_python_unsupported_msg();
+अटल पूर्णांक python_start_script_unsupported(स्थिर अक्षर *script __maybe_unused,
+					   पूर्णांक argc __maybe_unused,
+					   स्थिर अक्षर **argv __maybe_unused)
+अणु
+	prपूर्णांक_python_unsupported_msg();
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int python_generate_script_unsupported(struct tep_handle *pevent
+अटल पूर्णांक python_generate_script_unsupported(काष्ठा tep_handle *pevent
 					      __maybe_unused,
-					      const char *outfile
+					      स्थिर अक्षर *outfile
 					      __maybe_unused)
-{
-	print_python_unsupported_msg();
+अणु
+	prपूर्णांक_python_unsupported_msg();
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-struct scripting_ops python_scripting_unsupported_ops = {
+काष्ठा scripting_ops python_scripting_unsupported_ops = अणु
 	.name = "Python",
 	.start_script = python_start_script_unsupported,
 	.flush_script = flush_script_unsupported,
 	.stop_script = stop_script_unsupported,
 	.process_event = process_event_unsupported,
 	.generate_script = python_generate_script_unsupported,
-};
+पूर्ण;
 
-static void register_python_scripting(struct scripting_ops *scripting_ops)
-{
-	if (scripting_context == NULL)
-		scripting_context = malloc(sizeof(*scripting_context));
+अटल व्योम रेजिस्टर_python_scripting(काष्ठा scripting_ops *scripting_ops)
+अणु
+	अगर (scripting_context == शून्य)
+		scripting_context = दो_स्मृति(माप(*scripting_context));
 
-       if (scripting_context == NULL ||
-	   script_spec_register("Python", scripting_ops) ||
-	   script_spec_register("py", scripting_ops)) {
+       अगर (scripting_context == शून्य ||
+	   script_spec_रेजिस्टर("Python", scripting_ops) ||
+	   script_spec_रेजिस्टर("py", scripting_ops)) अणु
 		pr_err("Error registering Python script extension: disabling it\n");
-		zfree(&scripting_context);
-	}
-}
+		zमुक्त(&scripting_context);
+	पूर्ण
+पूर्ण
 
-#ifndef HAVE_LIBPYTHON_SUPPORT
-void setup_python_scripting(void)
-{
-	register_python_scripting(&python_scripting_unsupported_ops);
-}
-#else
-extern struct scripting_ops python_scripting_ops;
+#अगर_अघोषित HAVE_LIBPYTHON_SUPPORT
+व्योम setup_python_scripting(व्योम)
+अणु
+	रेजिस्टर_python_scripting(&python_scripting_unsupported_ops);
+पूर्ण
+#अन्यथा
+बाह्य काष्ठा scripting_ops python_scripting_ops;
 
-void setup_python_scripting(void)
-{
-	register_python_scripting(&python_scripting_ops);
-}
-#endif
+व्योम setup_python_scripting(व्योम)
+अणु
+	रेजिस्टर_python_scripting(&python_scripting_ops);
+पूर्ण
+#पूर्ण_अगर
 
-static void print_perl_unsupported_msg(void)
-{
-	fprintf(stderr, "Perl scripting not supported."
+अटल व्योम prपूर्णांक_perl_unsupported_msg(व्योम)
+अणु
+	ख_लिखो(मानक_त्रुटि, "Perl scripting not supported."
 		"  Install libperl and rebuild perf to enable it.\n"
 		"For example:\n  # apt-get install libperl-dev (ubuntu)"
 		"\n  # yum install 'perl(ExtUtils::Embed)' (Fedora)"
 		"\n  etc.\n");
-}
+पूर्ण
 
-static int perl_start_script_unsupported(const char *script __maybe_unused,
-					 int argc __maybe_unused,
-					 const char **argv __maybe_unused)
-{
-	print_perl_unsupported_msg();
+अटल पूर्णांक perl_start_script_unsupported(स्थिर अक्षर *script __maybe_unused,
+					 पूर्णांक argc __maybe_unused,
+					 स्थिर अक्षर **argv __maybe_unused)
+अणु
+	prपूर्णांक_perl_unsupported_msg();
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int perl_generate_script_unsupported(struct tep_handle *pevent
+अटल पूर्णांक perl_generate_script_unsupported(काष्ठा tep_handle *pevent
 					    __maybe_unused,
-					    const char *outfile __maybe_unused)
-{
-	print_perl_unsupported_msg();
+					    स्थिर अक्षर *outfile __maybe_unused)
+अणु
+	prपूर्णांक_perl_unsupported_msg();
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-struct scripting_ops perl_scripting_unsupported_ops = {
+काष्ठा scripting_ops perl_scripting_unsupported_ops = अणु
 	.name = "Perl",
 	.start_script = perl_start_script_unsupported,
 	.flush_script = flush_script_unsupported,
 	.stop_script = stop_script_unsupported,
 	.process_event = process_event_unsupported,
 	.generate_script = perl_generate_script_unsupported,
-};
+पूर्ण;
 
-static void register_perl_scripting(struct scripting_ops *scripting_ops)
-{
-	if (scripting_context == NULL)
-		scripting_context = malloc(sizeof(*scripting_context));
+अटल व्योम रेजिस्टर_perl_scripting(काष्ठा scripting_ops *scripting_ops)
+अणु
+	अगर (scripting_context == शून्य)
+		scripting_context = दो_स्मृति(माप(*scripting_context));
 
-       if (scripting_context == NULL ||
-	   script_spec_register("Perl", scripting_ops) ||
-	   script_spec_register("pl", scripting_ops)) {
+       अगर (scripting_context == शून्य ||
+	   script_spec_रेजिस्टर("Perl", scripting_ops) ||
+	   script_spec_रेजिस्टर("pl", scripting_ops)) अणु
 		pr_err("Error registering Perl script extension: disabling it\n");
-		zfree(&scripting_context);
-	}
-}
+		zमुक्त(&scripting_context);
+	पूर्ण
+पूर्ण
 
-#ifndef HAVE_LIBPERL_SUPPORT
-void setup_perl_scripting(void)
-{
-	register_perl_scripting(&perl_scripting_unsupported_ops);
-}
-#else
-extern struct scripting_ops perl_scripting_ops;
+#अगर_अघोषित HAVE_LIBPERL_SUPPORT
+व्योम setup_perl_scripting(व्योम)
+अणु
+	रेजिस्टर_perl_scripting(&perl_scripting_unsupported_ops);
+पूर्ण
+#अन्यथा
+बाह्य काष्ठा scripting_ops perl_scripting_ops;
 
-void setup_perl_scripting(void)
-{
-	register_perl_scripting(&perl_scripting_ops);
-}
-#endif
+व्योम setup_perl_scripting(व्योम)
+अणु
+	रेजिस्टर_perl_scripting(&perl_scripting_ops);
+पूर्ण
+#पूर्ण_अगर

@@ -1,14 +1,15 @@
+<शैली गुरु>
 /**************************************************************************
  *
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND. USA.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,184 +27,184 @@
  *
  **************************************************************************/
 /*
- * Simple open hash tab implementation.
+ * Simple खोलो hash tab implementation.
  *
  * Authors:
- * Thomas Hellström <thomas-at-tungstengraphics-dot-com>
+ * Thomas Hellstrथघm <thomas-at-tungstengraphics-करोt-com>
  */
 
-#include <linux/export.h>
-#include <linux/hash.h>
-#include <linux/mm.h>
-#include <linux/rculist.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/export.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <drm/drm_hashtab.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm_hashtab.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-int drm_ht_create(struct drm_open_hash *ht, unsigned int order)
-{
-	unsigned int size = 1 << order;
+पूर्णांक drm_ht_create(काष्ठा drm_खोलो_hash *ht, अचिन्हित पूर्णांक order)
+अणु
+	अचिन्हित पूर्णांक size = 1 << order;
 
 	ht->order = order;
-	ht->table = NULL;
-	if (size <= PAGE_SIZE / sizeof(*ht->table))
-		ht->table = kcalloc(size, sizeof(*ht->table), GFP_KERNEL);
-	else
-		ht->table = vzalloc(array_size(size, sizeof(*ht->table)));
-	if (!ht->table) {
+	ht->table = शून्य;
+	अगर (size <= PAGE_SIZE / माप(*ht->table))
+		ht->table = kसुस्मृति(size, माप(*ht->table), GFP_KERNEL);
+	अन्यथा
+		ht->table = vzalloc(array_size(size, माप(*ht->table)));
+	अगर (!ht->table) अणु
 		DRM_ERROR("Out of memory for hash table\n");
-		return -ENOMEM;
-	}
-	return 0;
-}
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_ht_create);
 
-void drm_ht_verbose_list(struct drm_open_hash *ht, unsigned long key)
-{
-	struct drm_hash_item *entry;
-	struct hlist_head *h_list;
-	unsigned int hashed_key;
-	int count = 0;
+व्योम drm_ht_verbose_list(काष्ठा drm_खोलो_hash *ht, अचिन्हित दीर्घ key)
+अणु
+	काष्ठा drm_hash_item *entry;
+	काष्ठा hlist_head *h_list;
+	अचिन्हित पूर्णांक hashed_key;
+	पूर्णांक count = 0;
 
-	hashed_key = hash_long(key, ht->order);
+	hashed_key = hash_दीर्घ(key, ht->order);
 	DRM_DEBUG("Key is 0x%08lx, Hashed key is 0x%08x\n", key, hashed_key);
 	h_list = &ht->table[hashed_key];
-	hlist_for_each_entry(entry, h_list, head)
+	hlist_क्रम_each_entry(entry, h_list, head)
 		DRM_DEBUG("count %d, key: 0x%08lx\n", count++, entry->key);
-}
+पूर्ण
 
-static struct hlist_node *drm_ht_find_key(struct drm_open_hash *ht,
-					  unsigned long key)
-{
-	struct drm_hash_item *entry;
-	struct hlist_head *h_list;
-	unsigned int hashed_key;
+अटल काष्ठा hlist_node *drm_ht_find_key(काष्ठा drm_खोलो_hash *ht,
+					  अचिन्हित दीर्घ key)
+अणु
+	काष्ठा drm_hash_item *entry;
+	काष्ठा hlist_head *h_list;
+	अचिन्हित पूर्णांक hashed_key;
 
-	hashed_key = hash_long(key, ht->order);
+	hashed_key = hash_दीर्घ(key, ht->order);
 	h_list = &ht->table[hashed_key];
-	hlist_for_each_entry(entry, h_list, head) {
-		if (entry->key == key)
-			return &entry->head;
-		if (entry->key > key)
-			break;
-	}
-	return NULL;
-}
+	hlist_क्रम_each_entry(entry, h_list, head) अणु
+		अगर (entry->key == key)
+			वापस &entry->head;
+		अगर (entry->key > key)
+			अवरोध;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct hlist_node *drm_ht_find_key_rcu(struct drm_open_hash *ht,
-					      unsigned long key)
-{
-	struct drm_hash_item *entry;
-	struct hlist_head *h_list;
-	unsigned int hashed_key;
+अटल काष्ठा hlist_node *drm_ht_find_key_rcu(काष्ठा drm_खोलो_hash *ht,
+					      अचिन्हित दीर्घ key)
+अणु
+	काष्ठा drm_hash_item *entry;
+	काष्ठा hlist_head *h_list;
+	अचिन्हित पूर्णांक hashed_key;
 
-	hashed_key = hash_long(key, ht->order);
+	hashed_key = hash_दीर्घ(key, ht->order);
 	h_list = &ht->table[hashed_key];
-	hlist_for_each_entry_rcu(entry, h_list, head) {
-		if (entry->key == key)
-			return &entry->head;
-		if (entry->key > key)
-			break;
-	}
-	return NULL;
-}
+	hlist_क्रम_each_entry_rcu(entry, h_list, head) अणु
+		अगर (entry->key == key)
+			वापस &entry->head;
+		अगर (entry->key > key)
+			अवरोध;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-int drm_ht_insert_item(struct drm_open_hash *ht, struct drm_hash_item *item)
-{
-	struct drm_hash_item *entry;
-	struct hlist_head *h_list;
-	struct hlist_node *parent;
-	unsigned int hashed_key;
-	unsigned long key = item->key;
+पूर्णांक drm_ht_insert_item(काष्ठा drm_खोलो_hash *ht, काष्ठा drm_hash_item *item)
+अणु
+	काष्ठा drm_hash_item *entry;
+	काष्ठा hlist_head *h_list;
+	काष्ठा hlist_node *parent;
+	अचिन्हित पूर्णांक hashed_key;
+	अचिन्हित दीर्घ key = item->key;
 
-	hashed_key = hash_long(key, ht->order);
+	hashed_key = hash_दीर्घ(key, ht->order);
 	h_list = &ht->table[hashed_key];
-	parent = NULL;
-	hlist_for_each_entry(entry, h_list, head) {
-		if (entry->key == key)
-			return -EINVAL;
-		if (entry->key > key)
-			break;
+	parent = शून्य;
+	hlist_क्रम_each_entry(entry, h_list, head) अणु
+		अगर (entry->key == key)
+			वापस -EINVAL;
+		अगर (entry->key > key)
+			अवरोध;
 		parent = &entry->head;
-	}
-	if (parent) {
+	पूर्ण
+	अगर (parent) अणु
 		hlist_add_behind_rcu(&item->head, parent);
-	} else {
+	पूर्ण अन्यथा अणु
 		hlist_add_head_rcu(&item->head, h_list);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_ht_insert_item);
 
 /*
- * Just insert an item and return any "bits" bit key that hasn't been
- * used before.
+ * Just insert an item and वापस any "bits" bit key that hasn't been
+ * used beक्रमe.
  */
-int drm_ht_just_insert_please(struct drm_open_hash *ht, struct drm_hash_item *item,
-			      unsigned long seed, int bits, int shift,
-			      unsigned long add)
-{
-	int ret;
-	unsigned long mask = (1UL << bits) - 1;
-	unsigned long first, unshifted_key;
+पूर्णांक drm_ht_just_insert_please(काष्ठा drm_खोलो_hash *ht, काष्ठा drm_hash_item *item,
+			      अचिन्हित दीर्घ seed, पूर्णांक bits, पूर्णांक shअगरt,
+			      अचिन्हित दीर्घ add)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ mask = (1UL << bits) - 1;
+	अचिन्हित दीर्घ first, unshअगरted_key;
 
-	unshifted_key = hash_long(seed, bits);
-	first = unshifted_key;
-	do {
-		item->key = (unshifted_key << shift) + add;
+	unshअगरted_key = hash_दीर्घ(seed, bits);
+	first = unshअगरted_key;
+	करो अणु
+		item->key = (unshअगरted_key << shअगरt) + add;
 		ret = drm_ht_insert_item(ht, item);
-		if (ret)
-			unshifted_key = (unshifted_key + 1) & mask;
-	} while(ret && (unshifted_key != first));
+		अगर (ret)
+			unshअगरted_key = (unshअगरted_key + 1) & mask;
+	पूर्ण जबतक(ret && (unshअगरted_key != first));
 
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("Available key bit space exhausted\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_ht_just_insert_please);
 
-int drm_ht_find_item(struct drm_open_hash *ht, unsigned long key,
-		     struct drm_hash_item **item)
-{
-	struct hlist_node *list;
+पूर्णांक drm_ht_find_item(काष्ठा drm_खोलो_hash *ht, अचिन्हित दीर्घ key,
+		     काष्ठा drm_hash_item **item)
+अणु
+	काष्ठा hlist_node *list;
 
 	list = drm_ht_find_key_rcu(ht, key);
-	if (!list)
-		return -EINVAL;
+	अगर (!list)
+		वापस -EINVAL;
 
-	*item = hlist_entry(list, struct drm_hash_item, head);
-	return 0;
-}
+	*item = hlist_entry(list, काष्ठा drm_hash_item, head);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_ht_find_item);
 
-int drm_ht_remove_key(struct drm_open_hash *ht, unsigned long key)
-{
-	struct hlist_node *list;
+पूर्णांक drm_ht_हटाओ_key(काष्ठा drm_खोलो_hash *ht, अचिन्हित दीर्घ key)
+अणु
+	काष्ठा hlist_node *list;
 
 	list = drm_ht_find_key(ht, key);
-	if (list) {
+	अगर (list) अणु
 		hlist_del_init_rcu(list);
-		return 0;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-int drm_ht_remove_item(struct drm_open_hash *ht, struct drm_hash_item *item)
-{
+पूर्णांक drm_ht_हटाओ_item(काष्ठा drm_खोलो_hash *ht, काष्ठा drm_hash_item *item)
+अणु
 	hlist_del_init_rcu(&item->head);
-	return 0;
-}
-EXPORT_SYMBOL(drm_ht_remove_item);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(drm_ht_हटाओ_item);
 
-void drm_ht_remove(struct drm_open_hash *ht)
-{
-	if (ht->table) {
-		kvfree(ht->table);
-		ht->table = NULL;
-	}
-}
-EXPORT_SYMBOL(drm_ht_remove);
+व्योम drm_ht_हटाओ(काष्ठा drm_खोलो_hash *ht)
+अणु
+	अगर (ht->table) अणु
+		kvमुक्त(ht->table);
+		ht->table = शून्य;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(drm_ht_हटाओ);

@@ -1,113 +1,114 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2010 Broadcom Corporation
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _BRCM_MAC80211_IF_H_
-#define _BRCM_MAC80211_IF_H_
+#अगर_अघोषित _BRCM_MAC80211_IF_H_
+#घोषणा _BRCM_MAC80211_IF_H_
 
-#include <linux/timer.h>
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
-#include <linux/leds.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/leds.h>
 
-#include "ucode_loader.h"
-#include "led.h"
+#समावेश "ucode_loader.h"
+#समावेश "led.h"
 /*
- * Starting index for 5G rates in the
+ * Starting index क्रम 5G rates in the
  * legacy rate table.
  */
-#define BRCMS_LEGACY_5G_RATE_OFFSET	4
+#घोषणा BRCMS_LEGACY_5G_RATE_OFFSET	4
 
-/* softmac ioctl definitions */
-#define BRCMS_SET_SHORTSLOT_OVERRIDE		146
+/* sofपंचांगac ioctl definitions */
+#घोषणा BRCMS_SET_SHORTSLOT_OVERRIDE		146
 
-struct brcms_timer {
-	struct delayed_work dly_wrk;
-	struct brcms_info *wl;
-	void (*fn) (void *);	/* function called upon expiration */
-	void *arg;		/* fixed argument provided to called function */
-	uint ms;
+काष्ठा brcms_समयr अणु
+	काष्ठा delayed_work dly_wrk;
+	काष्ठा brcms_info *wl;
+	व्योम (*fn) (व्योम *);	/* function called upon expiration */
+	व्योम *arg;		/* fixed argument provided to called function */
+	uपूर्णांक ms;
 	bool periodic;
-	bool set;		/* indicates if timer is active */
-	struct brcms_timer *next;	/* for freeing on unload */
-#ifdef DEBUG
-	char *name;		/* Description of the timer */
-#endif
-};
+	bool set;		/* indicates अगर समयr is active */
+	काष्ठा brcms_समयr *next;	/* क्रम मुक्तing on unload */
+#अगर_घोषित DEBUG
+	अक्षर *name;		/* Description of the समयr */
+#पूर्ण_अगर
+पूर्ण;
 
-struct brcms_if {
-	uint subunit;		/* WDS/BSS unit */
-	struct pci_dev *pci_dev;
-};
+काष्ठा brcms_अगर अणु
+	uपूर्णांक subunit;		/* WDS/BSS unit */
+	काष्ठा pci_dev *pci_dev;
+पूर्ण;
 
-#define MAX_FW_IMAGES		4
-struct brcms_firmware {
+#घोषणा MAX_FW_IMAGES		4
+काष्ठा brcms_firmware अणु
 	u32 fw_cnt;
-	const struct firmware *fw_bin[MAX_FW_IMAGES];
-	const struct firmware *fw_hdr[MAX_FW_IMAGES];
+	स्थिर काष्ठा firmware *fw_bin[MAX_FW_IMAGES];
+	स्थिर काष्ठा firmware *fw_hdr[MAX_FW_IMAGES];
 	u32 hdr_num_entries[MAX_FW_IMAGES];
-};
+पूर्ण;
 
-struct brcms_info {
-	struct brcms_pub *pub;		/* pointer to public wlc state */
-	struct brcms_c_info *wlc;	/* pointer to private common data */
+काष्ठा brcms_info अणु
+	काष्ठा brcms_pub *pub;		/* poपूर्णांकer to खुला wlc state */
+	काष्ठा brcms_c_info *wlc;	/* poपूर्णांकer to निजी common data */
 	u32 magic;
 
-	int irq;
+	पूर्णांक irq;
 
 	spinlock_t lock;	/* per-device perimeter lock */
 	spinlock_t isr_lock;	/* per-device ISR synchronization lock */
 
 	/* tx flush */
-	wait_queue_head_t tx_flush_wq;
+	रुको_queue_head_t tx_flush_wq;
 
-	/* timer related fields */
+	/* समयr related fields */
 	atomic_t callbacks;	/* # outstanding callback functions */
-	struct brcms_timer *timers;	/* timer cleanup queue */
+	काष्ठा brcms_समयr *समयrs;	/* समयr cleanup queue */
 
-	struct tasklet_struct tasklet;	/* dpc tasklet */
+	काष्ठा tasklet_काष्ठा tasklet;	/* dpc tasklet */
 	bool resched;		/* dpc needs to be and is rescheduled */
-	struct brcms_firmware fw;
-	struct wiphy *wiphy;
-	struct brcms_ucode ucode;
+	काष्ठा brcms_firmware fw;
+	काष्ठा wiphy *wiphy;
+	काष्ठा brcms_ucode ucode;
 	bool mute_tx;
-	struct brcms_led radio_led;
-	struct led_classdev led_dev;
-};
+	काष्ठा brcms_led radio_led;
+	काष्ठा led_classdev led_dev;
+पूर्ण;
 
 /* misc callbacks */
-void brcms_init(struct brcms_info *wl);
-uint brcms_reset(struct brcms_info *wl);
-void brcms_intrson(struct brcms_info *wl);
-u32 brcms_intrsoff(struct brcms_info *wl);
-void brcms_intrsrestore(struct brcms_info *wl, u32 macintmask);
-int brcms_up(struct brcms_info *wl);
-void brcms_down(struct brcms_info *wl);
-void brcms_txflowcontrol(struct brcms_info *wl, struct brcms_if *wlif,
-			 bool state, int prio);
-bool brcms_rfkill_set_hw_state(struct brcms_info *wl);
+व्योम brcms_init(काष्ठा brcms_info *wl);
+uपूर्णांक brcms_reset(काष्ठा brcms_info *wl);
+व्योम brcms_पूर्णांकrson(काष्ठा brcms_info *wl);
+u32 brcms_पूर्णांकrsoff(काष्ठा brcms_info *wl);
+व्योम brcms_पूर्णांकrsrestore(काष्ठा brcms_info *wl, u32 macपूर्णांकmask);
+पूर्णांक brcms_up(काष्ठा brcms_info *wl);
+व्योम brcms_करोwn(काष्ठा brcms_info *wl);
+व्योम brcms_txflowcontrol(काष्ठा brcms_info *wl, काष्ठा brcms_अगर *wlअगर,
+			 bool state, पूर्णांक prio);
+bool brcms_rfसमाप्त_set_hw_state(काष्ठा brcms_info *wl);
 
-/* timer functions */
-struct brcms_timer *brcms_init_timer(struct brcms_info *wl,
-				     void (*fn) (void *arg), void *arg,
-				     const char *name);
-void brcms_free_timer(struct brcms_timer *timer);
-void brcms_add_timer(struct brcms_timer *timer, uint ms, int periodic);
-bool brcms_del_timer(struct brcms_timer *timer);
-void brcms_dpc(struct tasklet_struct *t);
-void brcms_timer(struct brcms_timer *t);
-void brcms_fatal_error(struct brcms_info *wl);
+/* समयr functions */
+काष्ठा brcms_समयr *brcms_init_समयr(काष्ठा brcms_info *wl,
+				     व्योम (*fn) (व्योम *arg), व्योम *arg,
+				     स्थिर अक्षर *name);
+व्योम brcms_मुक्त_समयr(काष्ठा brcms_समयr *समयr);
+व्योम brcms_add_समयr(काष्ठा brcms_समयr *समयr, uपूर्णांक ms, पूर्णांक periodic);
+bool brcms_del_समयr(काष्ठा brcms_समयr *समयr);
+व्योम brcms_dpc(काष्ठा tasklet_काष्ठा *t);
+व्योम brcms_समयr(काष्ठा brcms_समयr *t);
+व्योम brcms_fatal_error(काष्ठा brcms_info *wl);
 
-#endif				/* _BRCM_MAC80211_IF_H_ */
+#पूर्ण_अगर				/* _BRCM_MAC80211_IF_H_ */

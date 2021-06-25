@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Greybus operations
  *
@@ -6,28 +7,28 @@
  * Copyright 2014 Linaro Ltd.
  */
 
-#ifndef __OPERATION_H
-#define __OPERATION_H
+#अगर_अघोषित __OPERATION_H
+#घोषणा __OPERATION_H
 
-#include <linux/completion.h>
-#include <linux/kref.h>
-#include <linux/timer.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
 
-struct gb_host_device;
-struct gb_operation;
+काष्ठा gb_host_device;
+काष्ठा gb_operation;
 
-/* The default amount of time a request is given to complete */
-#define GB_OPERATION_TIMEOUT_DEFAULT	1000	/* milliseconds */
+/* The शेष amount of समय a request is given to complete */
+#घोषणा GB_OPERATION_TIMEOUT_DEFAULT	1000	/* milliseconds */
 
 /*
  * The top bit of the type in an operation message header indicates
  * whether the message is a request (bit clear) or response (bit set)
  */
-#define GB_MESSAGE_TYPE_RESPONSE	((u8)0x80)
+#घोषणा GB_MESSAGE_TYPE_RESPONSE	((u8)0x80)
 
-enum gb_operation_result {
+क्रमागत gb_operation_result अणु
 	GB_OP_SUCCESS		= 0x00,
 	GB_OP_INTERRUPTED	= 0x01,
 	GB_OP_TIMEOUT		= 0x02,
@@ -39,191 +40,191 @@ enum gb_operation_result {
 	GB_OP_NONEXISTENT	= 0x08,
 	GB_OP_UNKNOWN_ERROR	= 0xfe,
 	GB_OP_MALFUNCTION	= 0xff,
-};
+पूर्ण;
 
-#define GB_OPERATION_MESSAGE_SIZE_MIN	sizeof(struct gb_operation_msg_hdr)
-#define GB_OPERATION_MESSAGE_SIZE_MAX	U16_MAX
+#घोषणा GB_OPERATION_MESSAGE_SIZE_MIN	माप(काष्ठा gb_operation_msg_hdr)
+#घोषणा GB_OPERATION_MESSAGE_SIZE_MAX	U16_MAX
 
 /*
  * Protocol code should only examine the payload and payload_size fields, and
  * host-controller drivers may use the hcpriv field. All other fields are
- * intended to be private to the operations core code.
+ * पूर्णांकended to be निजी to the operations core code.
  */
-struct gb_message {
-	struct gb_operation		*operation;
-	struct gb_operation_msg_hdr	*header;
+काष्ठा gb_message अणु
+	काष्ठा gb_operation		*operation;
+	काष्ठा gb_operation_msg_hdr	*header;
 
-	void				*payload;
-	size_t				payload_size;
+	व्योम				*payload;
+	माप_प्रकार				payload_size;
 
-	void				*buffer;
+	व्योम				*buffer;
 
-	void				*hcpriv;
-};
+	व्योम				*hcpriv;
+पूर्ण;
 
-#define GB_OPERATION_FLAG_INCOMING		BIT(0)
-#define GB_OPERATION_FLAG_UNIDIRECTIONAL	BIT(1)
-#define GB_OPERATION_FLAG_SHORT_RESPONSE	BIT(2)
-#define GB_OPERATION_FLAG_CORE			BIT(3)
+#घोषणा GB_OPERATION_FLAG_INCOMING		BIT(0)
+#घोषणा GB_OPERATION_FLAG_UNIसूचीECTIONAL	BIT(1)
+#घोषणा GB_OPERATION_FLAG_SHORT_RESPONSE	BIT(2)
+#घोषणा GB_OPERATION_FLAG_CORE			BIT(3)
 
-#define GB_OPERATION_FLAG_USER_MASK	(GB_OPERATION_FLAG_SHORT_RESPONSE | \
-					 GB_OPERATION_FLAG_UNIDIRECTIONAL)
+#घोषणा GB_OPERATION_FLAG_USER_MASK	(GB_OPERATION_FLAG_SHORT_RESPONSE | \
+					 GB_OPERATION_FLAG_UNIसूचीECTIONAL)
 
 /*
- * A Greybus operation is a remote procedure call performed over a
- * connection between two UniPro interfaces.
+ * A Greybus operation is a remote procedure call perक्रमmed over a
+ * connection between two UniPro पूर्णांकerfaces.
  *
  * Every operation consists of a request message sent to the other
- * end of the connection coupled with a reply message returned to
- * the sender.  Every operation has a type, whose interpretation is
+ * end of the connection coupled with a reply message वापसed to
+ * the sender.  Every operation has a type, whose पूर्णांकerpretation is
  * dependent on the protocol associated with the connection.
  *
- * Only four things in an operation structure are intended to be
+ * Only four things in an operation काष्ठाure are पूर्णांकended to be
  * directly usable by protocol handlers:  the operation's connection
- * pointer; the operation type; the request message payload (and
+ * poपूर्णांकer; the operation type; the request message payload (and
  * size); and the response message payload (and size).  Note that a
- * message with a 0-byte payload has a null message payload pointer.
+ * message with a 0-byte payload has a null message payload poपूर्णांकer.
  *
- * In addition, every operation has a result, which is an errno
+ * In addition, every operation has a result, which is an त्रुटि_सं
  * value.  Protocol handlers access the operation result using
  * gb_operation_result().
  */
-typedef void (*gb_operation_callback)(struct gb_operation *);
-struct gb_operation {
-	struct gb_connection	*connection;
-	struct gb_message	*request;
-	struct gb_message	*response;
+प्रकार व्योम (*gb_operation_callback)(काष्ठा gb_operation *);
+काष्ठा gb_operation अणु
+	काष्ठा gb_connection	*connection;
+	काष्ठा gb_message	*request;
+	काष्ठा gb_message	*response;
 
-	unsigned long		flags;
+	अचिन्हित दीर्घ		flags;
 	u8			type;
 	u16			id;
-	int			errno;		/* Operation result */
+	पूर्णांक			त्रुटि_सं;		/* Operation result */
 
-	struct work_struct	work;
+	काष्ठा work_काष्ठा	work;
 	gb_operation_callback	callback;
-	struct completion	completion;
-	struct timer_list	timer;
+	काष्ठा completion	completion;
+	काष्ठा समयr_list	समयr;
 
-	struct kref		kref;
-	atomic_t		waiters;
+	काष्ठा kref		kref;
+	atomic_t		रुकोers;
 
-	int			active;
-	struct list_head	links;		/* connection->operations */
+	पूर्णांक			active;
+	काष्ठा list_head	links;		/* connection->operations */
 
-	void			*private;
-};
+	व्योम			*निजी;
+पूर्ण;
 
-static inline bool
-gb_operation_is_incoming(struct gb_operation *operation)
-{
-	return operation->flags & GB_OPERATION_FLAG_INCOMING;
-}
+अटल अंतरभूत bool
+gb_operation_is_incoming(काष्ठा gb_operation *operation)
+अणु
+	वापस operation->flags & GB_OPERATION_FLAG_INCOMING;
+पूर्ण
 
-static inline bool
-gb_operation_is_unidirectional(struct gb_operation *operation)
-{
-	return operation->flags & GB_OPERATION_FLAG_UNIDIRECTIONAL;
-}
+अटल अंतरभूत bool
+gb_operation_is_unidirectional(काष्ठा gb_operation *operation)
+अणु
+	वापस operation->flags & GB_OPERATION_FLAG_UNIसूचीECTIONAL;
+पूर्ण
 
-static inline bool
-gb_operation_short_response_allowed(struct gb_operation *operation)
-{
-	return operation->flags & GB_OPERATION_FLAG_SHORT_RESPONSE;
-}
+अटल अंतरभूत bool
+gb_operation_लघु_response_allowed(काष्ठा gb_operation *operation)
+अणु
+	वापस operation->flags & GB_OPERATION_FLAG_SHORT_RESPONSE;
+पूर्ण
 
-static inline bool gb_operation_is_core(struct gb_operation *operation)
-{
-	return operation->flags & GB_OPERATION_FLAG_CORE;
-}
+अटल अंतरभूत bool gb_operation_is_core(काष्ठा gb_operation *operation)
+अणु
+	वापस operation->flags & GB_OPERATION_FLAG_CORE;
+पूर्ण
 
-void gb_connection_recv(struct gb_connection *connection,
-					void *data, size_t size);
+व्योम gb_connection_recv(काष्ठा gb_connection *connection,
+					व्योम *data, माप_प्रकार size);
 
-int gb_operation_result(struct gb_operation *operation);
+पूर्णांक gb_operation_result(काष्ठा gb_operation *operation);
 
-size_t gb_operation_get_payload_size_max(struct gb_connection *connection);
-struct gb_operation *
-gb_operation_create_flags(struct gb_connection *connection,
-				u8 type, size_t request_size,
-				size_t response_size, unsigned long flags,
+माप_प्रकार gb_operation_get_payload_size_max(काष्ठा gb_connection *connection);
+काष्ठा gb_operation *
+gb_operation_create_flags(काष्ठा gb_connection *connection,
+				u8 type, माप_प्रकार request_size,
+				माप_प्रकार response_size, अचिन्हित दीर्घ flags,
 				gfp_t gfp);
 
-static inline struct gb_operation *
-gb_operation_create(struct gb_connection *connection,
-				u8 type, size_t request_size,
-				size_t response_size, gfp_t gfp)
-{
-	return gb_operation_create_flags(connection, type, request_size,
+अटल अंतरभूत काष्ठा gb_operation *
+gb_operation_create(काष्ठा gb_connection *connection,
+				u8 type, माप_प्रकार request_size,
+				माप_प्रकार response_size, gfp_t gfp)
+अणु
+	वापस gb_operation_create_flags(connection, type, request_size,
 						response_size, 0, gfp);
-}
+पूर्ण
 
-struct gb_operation *
-gb_operation_create_core(struct gb_connection *connection,
-				u8 type, size_t request_size,
-				size_t response_size, unsigned long flags,
+काष्ठा gb_operation *
+gb_operation_create_core(काष्ठा gb_connection *connection,
+				u8 type, माप_प्रकार request_size,
+				माप_प्रकार response_size, अचिन्हित दीर्घ flags,
 				gfp_t gfp);
 
-void gb_operation_get(struct gb_operation *operation);
-void gb_operation_put(struct gb_operation *operation);
+व्योम gb_operation_get(काष्ठा gb_operation *operation);
+व्योम gb_operation_put(काष्ठा gb_operation *operation);
 
-bool gb_operation_response_alloc(struct gb_operation *operation,
-					size_t response_size, gfp_t gfp);
+bool gb_operation_response_alloc(काष्ठा gb_operation *operation,
+					माप_प्रकार response_size, gfp_t gfp);
 
-int gb_operation_request_send(struct gb_operation *operation,
+पूर्णांक gb_operation_request_send(काष्ठा gb_operation *operation,
 				gb_operation_callback callback,
-				unsigned int timeout,
+				अचिन्हित पूर्णांक समयout,
 				gfp_t gfp);
-int gb_operation_request_send_sync_timeout(struct gb_operation *operation,
-						unsigned int timeout);
-static inline int
-gb_operation_request_send_sync(struct gb_operation *operation)
-{
-	return gb_operation_request_send_sync_timeout(operation,
+पूर्णांक gb_operation_request_send_sync_समयout(काष्ठा gb_operation *operation,
+						अचिन्हित पूर्णांक समयout);
+अटल अंतरभूत पूर्णांक
+gb_operation_request_send_sync(काष्ठा gb_operation *operation)
+अणु
+	वापस gb_operation_request_send_sync_समयout(operation,
 			GB_OPERATION_TIMEOUT_DEFAULT);
-}
+पूर्ण
 
-void gb_operation_cancel(struct gb_operation *operation, int errno);
-void gb_operation_cancel_incoming(struct gb_operation *operation, int errno);
+व्योम gb_operation_cancel(काष्ठा gb_operation *operation, पूर्णांक त्रुटि_सं);
+व्योम gb_operation_cancel_incoming(काष्ठा gb_operation *operation, पूर्णांक त्रुटि_सं);
 
-void greybus_message_sent(struct gb_host_device *hd,
-				struct gb_message *message, int status);
+व्योम greybus_message_sent(काष्ठा gb_host_device *hd,
+				काष्ठा gb_message *message, पूर्णांक status);
 
-int gb_operation_sync_timeout(struct gb_connection *connection, int type,
-				void *request, int request_size,
-				void *response, int response_size,
-				unsigned int timeout);
-int gb_operation_unidirectional_timeout(struct gb_connection *connection,
-				int type, void *request, int request_size,
-				unsigned int timeout);
+पूर्णांक gb_operation_sync_समयout(काष्ठा gb_connection *connection, पूर्णांक type,
+				व्योम *request, पूर्णांक request_size,
+				व्योम *response, पूर्णांक response_size,
+				अचिन्हित पूर्णांक समयout);
+पूर्णांक gb_operation_unidirectional_समयout(काष्ठा gb_connection *connection,
+				पूर्णांक type, व्योम *request, पूर्णांक request_size,
+				अचिन्हित पूर्णांक समयout);
 
-static inline int gb_operation_sync(struct gb_connection *connection, int type,
-		      void *request, int request_size,
-		      void *response, int response_size)
-{
-	return gb_operation_sync_timeout(connection, type,
+अटल अंतरभूत पूर्णांक gb_operation_sync(काष्ठा gb_connection *connection, पूर्णांक type,
+		      व्योम *request, पूर्णांक request_size,
+		      व्योम *response, पूर्णांक response_size)
+अणु
+	वापस gb_operation_sync_समयout(connection, type,
 			request, request_size, response, response_size,
 			GB_OPERATION_TIMEOUT_DEFAULT);
-}
+पूर्ण
 
-static inline int gb_operation_unidirectional(struct gb_connection *connection,
-				int type, void *request, int request_size)
-{
-	return gb_operation_unidirectional_timeout(connection, type,
+अटल अंतरभूत पूर्णांक gb_operation_unidirectional(काष्ठा gb_connection *connection,
+				पूर्णांक type, व्योम *request, पूर्णांक request_size)
+अणु
+	वापस gb_operation_unidirectional_समयout(connection, type,
 			request, request_size, GB_OPERATION_TIMEOUT_DEFAULT);
-}
+पूर्ण
 
-static inline void *gb_operation_get_data(struct gb_operation *operation)
-{
-	return operation->private;
-}
+अटल अंतरभूत व्योम *gb_operation_get_data(काष्ठा gb_operation *operation)
+अणु
+	वापस operation->निजी;
+पूर्ण
 
-static inline void gb_operation_set_data(struct gb_operation *operation,
-					 void *data)
-{
-	operation->private = data;
-}
+अटल अंतरभूत व्योम gb_operation_set_data(काष्ठा gb_operation *operation,
+					 व्योम *data)
+अणु
+	operation->निजी = data;
+पूर्ण
 
-int gb_operation_init(void);
-void gb_operation_exit(void);
+पूर्णांक gb_operation_init(व्योम);
+व्योम gb_operation_निकास(व्योम);
 
-#endif /* !__OPERATION_H */
+#पूर्ण_अगर /* !__OPERATION_H */

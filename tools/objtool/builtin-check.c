@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015-2017 Josh Poimboeuf <jpoimboe@redhat.com>
  */
@@ -7,32 +8,32 @@
  * objtool check:
  *
  * This command analyzes every .o file and ensures the validity of its stack
- * trace metadata.  It enforces a set of rules on asm code and C inline
+ * trace metadata.  It enक्रमces a set of rules on यंत्र code and C अंतरभूत
  * assembly code so that stack traces can be reliable.
  *
- * For more information, see tools/objtool/Documentation/stack-validation.txt.
+ * For more inक्रमmation, see tools/objtool/Documentation/stack-validation.txt.
  */
 
-#include <subcmd/parse-options.h>
-#include <string.h>
-#include <stdlib.h>
-#include <objtool/builtin.h>
-#include <objtool/objtool.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <objtool/builtin.h>
+#समावेश <objtool/objtool.h>
 
 bool no_fp, no_unreachable, retpoline, module, backtrace, uaccess, stats,
      validate_dup, vmlinux, mcount, noinstr, backup;
 
-static const char * const check_usage[] = {
+अटल स्थिर अक्षर * स्थिर check_usage[] = अणु
 	"objtool check [<options>] file.o",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const char * const env_usage[] = {
+अटल स्थिर अक्षर * स्थिर env_usage[] = अणु
 	"OBJTOOL_ARGS=\"<options>\"",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-const struct option check_options[] = {
+स्थिर काष्ठा option check_options[] = अणु
 	OPT_BOOLEAN('f', "no-fp", &no_fp, "Skip frame pointer validation"),
 	OPT_BOOLEAN('u', "no-unreachable", &no_unreachable, "Skip 'unreachable instruction' warnings"),
 	OPT_BOOLEAN('r', "retpoline", &retpoline, "Validate retpoline assumptions"),
@@ -46,54 +47,54 @@ const struct option check_options[] = {
 	OPT_BOOLEAN('M', "mcount", &mcount, "generate __mcount_loc"),
 	OPT_BOOLEAN('B', "backup", &backup, "create .orig files before modification"),
 	OPT_END(),
-};
+पूर्ण;
 
-int cmd_parse_options(int argc, const char **argv, const char * const usage[])
-{
-	const char *envv[16] = { };
-	char *env;
-	int envc;
+पूर्णांक cmd_parse_options(पूर्णांक argc, स्थिर अक्षर **argv, स्थिर अक्षर * स्थिर usage[])
+अणु
+	स्थिर अक्षर *envv[16] = अणु पूर्ण;
+	अक्षर *env;
+	पूर्णांक envc;
 
-	env = getenv("OBJTOOL_ARGS");
-	if (env) {
+	env = दो_पर्या("OBJTOOL_ARGS");
+	अगर (env) अणु
 		envv[0] = "OBJTOOL_ARGS";
-		for (envc = 1; envc < ARRAY_SIZE(envv); ) {
+		क्रम (envc = 1; envc < ARRAY_SIZE(envv); ) अणु
 			envv[envc++] = env;
-			env = strchr(env, ' ');
-			if (!env)
-				break;
+			env = म_अक्षर(env, ' ');
+			अगर (!env)
+				अवरोध;
 			*env = '\0';
 			env++;
-		}
+		पूर्ण
 
 		parse_options(envc, envv, check_options, env_usage, 0);
-	}
+	पूर्ण
 
 	argc = parse_options(argc, argv, check_options, usage, 0);
-	if (argc != 1)
+	अगर (argc != 1)
 		usage_with_options(usage, check_options);
-	return argc;
-}
+	वापस argc;
+पूर्ण
 
-int cmd_check(int argc, const char **argv)
-{
-	const char *objname;
-	struct objtool_file *file;
-	int ret;
+पूर्णांक cmd_check(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	स्थिर अक्षर *objname;
+	काष्ठा objtool_file *file;
+	पूर्णांक ret;
 
 	argc = cmd_parse_options(argc, argv, check_usage);
 	objname = argv[0];
 
-	file = objtool_open_read(objname);
-	if (!file)
-		return 1;
+	file = objtool_खोलो_पढ़ो(objname);
+	अगर (!file)
+		वापस 1;
 
 	ret = check(file);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (file->elf->changed)
-		return elf_write(file->elf);
+	अगर (file->elf->changed)
+		वापस elf_ग_लिखो(file->elf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

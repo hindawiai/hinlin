@@ -1,222 +1,223 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright 2001-2003 SuSE Labs.
- * Distributed under the GNU public license, v2.
+ * Copyright 2001-2003 SuSE Lअसल.
+ * Distributed under the GNU खुला license, v2.
  *
- * This is a GART driver for the AMD Opteron/Athlon64 on-CPU northbridge.
- * It also includes support for the AMD 8151 AGP bridge,
- * although it doesn't actually do much, as all the real
- * work is done in the northbridge(s).
+ * This is a GART driver क्रम the AMD Opteron/Athlon64 on-CPU northbridge.
+ * It also includes support क्रम the AMD 8151 AGP bridge,
+ * although it करोesn't actually करो much, as all the real
+ * work is करोne in the northbridge(s).
  */
 
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/agp_backend.h>
-#include <linux/mmzone.h>
-#include <asm/page.h>		/* PAGE_SIZE */
-#include <asm/e820/api.h>
-#include <asm/amd_nb.h>
-#include <asm/gart.h>
-#include "agp.h"
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/agp_backend.h>
+#समावेश <linux/mmzone.h>
+#समावेश <यंत्र/page.h>		/* PAGE_SIZE */
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/amd_nb.h>
+#समावेश <यंत्र/gart.h>
+#समावेश "agp.h"
 
-/* NVIDIA K8 registers */
-#define NVIDIA_X86_64_0_APBASE		0x10
-#define NVIDIA_X86_64_1_APBASE1		0x50
-#define NVIDIA_X86_64_1_APLIMIT1	0x54
-#define NVIDIA_X86_64_1_APSIZE		0xa8
-#define NVIDIA_X86_64_1_APBASE2		0xd8
-#define NVIDIA_X86_64_1_APLIMIT2	0xdc
+/* NVIDIA K8 रेजिस्टरs */
+#घोषणा NVIDIA_X86_64_0_APBASE		0x10
+#घोषणा NVIDIA_X86_64_1_APBASE1		0x50
+#घोषणा NVIDIA_X86_64_1_APLIMIT1	0x54
+#घोषणा NVIDIA_X86_64_1_APSIZE		0xa8
+#घोषणा NVIDIA_X86_64_1_APBASE2		0xd8
+#घोषणा NVIDIA_X86_64_1_APLIMIT2	0xdc
 
-/* ULi K8 registers */
-#define ULI_X86_64_BASE_ADDR		0x10
-#define ULI_X86_64_HTT_FEA_REG		0x50
-#define ULI_X86_64_ENU_SCR_REG		0x54
+/* ULi K8 रेजिस्टरs */
+#घोषणा ULI_X86_64_BASE_ADDR		0x10
+#घोषणा ULI_X86_64_HTT_FEA_REG		0x50
+#घोषणा ULI_X86_64_ENU_SCR_REG		0x54
 
-static struct resource *aperture_resource;
-static bool __initdata agp_try_unsupported = 1;
-static int agp_bridges_found;
+अटल काष्ठा resource *aperture_resource;
+अटल bool __initdata agp_try_unsupported = 1;
+अटल पूर्णांक agp_bridges_found;
 
-static void amd64_tlbflush(struct agp_memory *temp)
-{
+अटल व्योम amd64_tlbflush(काष्ठा agp_memory *temp)
+अणु
 	amd_flush_garts();
-}
+पूर्ण
 
-static int amd64_insert_memory(struct agp_memory *mem, off_t pg_start, int type)
-{
-	int i, j, num_entries;
-	long long tmp;
-	int mask_type;
-	struct agp_bridge_data *bridge = mem->bridge;
+अटल पूर्णांक amd64_insert_memory(काष्ठा agp_memory *mem, off_t pg_start, पूर्णांक type)
+अणु
+	पूर्णांक i, j, num_entries;
+	दीर्घ दीर्घ पंचांगp;
+	पूर्णांक mask_type;
+	काष्ठा agp_bridge_data *bridge = mem->bridge;
 	u32 pte;
 
 	num_entries = agp_num_entries();
 
-	if (type != mem->type)
-		return -EINVAL;
+	अगर (type != mem->type)
+		वापस -EINVAL;
 	mask_type = bridge->driver->agp_type_to_mask_type(bridge, type);
-	if (mask_type != 0)
-		return -EINVAL;
+	अगर (mask_type != 0)
+		वापस -EINVAL;
 
 
 	/* Make sure we can fit the range in the gatt table. */
 	/* FIXME: could wrap */
-	if (((unsigned long)pg_start + mem->page_count) > num_entries)
-		return -EINVAL;
+	अगर (((अचिन्हित दीर्घ)pg_start + mem->page_count) > num_entries)
+		वापस -EINVAL;
 
 	j = pg_start;
 
 	/* gatt table should be empty. */
-	while (j < (pg_start + mem->page_count)) {
-		if (!PGE_EMPTY(agp_bridge, readl(agp_bridge->gatt_table+j)))
-			return -EBUSY;
+	जबतक (j < (pg_start + mem->page_count)) अणु
+		अगर (!PGE_EMPTY(agp_bridge, पढ़ोl(agp_bridge->gatt_table+j)))
+			वापस -EBUSY;
 		j++;
-	}
+	पूर्ण
 
-	if (!mem->is_flushed) {
+	अगर (!mem->is_flushed) अणु
 		global_cache_flush();
 		mem->is_flushed = true;
-	}
+	पूर्ण
 
-	for (i = 0, j = pg_start; i < mem->page_count; i++, j++) {
-		tmp = agp_bridge->driver->mask_memory(agp_bridge,
+	क्रम (i = 0, j = pg_start; i < mem->page_count; i++, j++) अणु
+		पंचांगp = agp_bridge->driver->mask_memory(agp_bridge,
 						      page_to_phys(mem->pages[i]),
 						      mask_type);
 
-		BUG_ON(tmp & 0xffffff0000000ffcULL);
-		pte = (tmp & 0x000000ff00000000ULL) >> 28;
-		pte |=(tmp & 0x00000000fffff000ULL);
+		BUG_ON(पंचांगp & 0xffffff0000000ffcULL);
+		pte = (पंचांगp & 0x000000ff00000000ULL) >> 28;
+		pte |=(पंचांगp & 0x00000000fffff000ULL);
 		pte |= GPTE_VALID | GPTE_COHERENT;
 
-		writel(pte, agp_bridge->gatt_table+j);
-		readl(agp_bridge->gatt_table+j);	/* PCI Posting. */
-	}
+		ग_लिखोl(pte, agp_bridge->gatt_table+j);
+		पढ़ोl(agp_bridge->gatt_table+j);	/* PCI Posting. */
+	पूर्ण
 	amd64_tlbflush(mem);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This hack alters the order element according
- * to the size of a long. It sucks. I totally disown this, even
- * though it does appear to work for the most part.
+ * to the size of a दीर्घ. It sucks. I totally disown this, even
+ * though it करोes appear to work क्रम the most part.
  */
-static struct aper_size_info_32 amd64_aperture_sizes[7] =
-{
-	{32,   8192,   3+(sizeof(long)/8), 0 },
-	{64,   16384,  4+(sizeof(long)/8), 1<<1 },
-	{128,  32768,  5+(sizeof(long)/8), 1<<2 },
-	{256,  65536,  6+(sizeof(long)/8), 1<<1 | 1<<2 },
-	{512,  131072, 7+(sizeof(long)/8), 1<<3 },
-	{1024, 262144, 8+(sizeof(long)/8), 1<<1 | 1<<3},
-	{2048, 524288, 9+(sizeof(long)/8), 1<<2 | 1<<3}
-};
+अटल काष्ठा aper_size_info_32 amd64_aperture_sizes[7] =
+अणु
+	अणु32,   8192,   3+(माप(दीर्घ)/8), 0 पूर्ण,
+	अणु64,   16384,  4+(माप(दीर्घ)/8), 1<<1 पूर्ण,
+	अणु128,  32768,  5+(माप(दीर्घ)/8), 1<<2 पूर्ण,
+	अणु256,  65536,  6+(माप(दीर्घ)/8), 1<<1 | 1<<2 पूर्ण,
+	अणु512,  131072, 7+(माप(दीर्घ)/8), 1<<3 पूर्ण,
+	अणु1024, 262144, 8+(माप(दीर्घ)/8), 1<<1 | 1<<3पूर्ण,
+	अणु2048, 524288, 9+(माप(दीर्घ)/8), 1<<2 | 1<<3पूर्ण
+पूर्ण;
 
 
 /*
  * Get the current Aperture size from the x86-64.
- * Note, that there may be multiple x86-64's, but we just return
+ * Note, that there may be multiple x86-64's, but we just वापस
  * the value from the first one we find. The set_size functions
- * keep the rest coherent anyway. Or at least should do.
+ * keep the rest coherent anyway. Or at least should करो.
  */
-static int amd64_fetch_size(void)
-{
-	struct pci_dev *dev;
-	int i;
+अटल पूर्णांक amd64_fetch_size(व्योम)
+अणु
+	काष्ठा pci_dev *dev;
+	पूर्णांक i;
 	u32 temp;
-	struct aper_size_info_32 *values;
+	काष्ठा aper_size_info_32 *values;
 
 	dev = node_to_amd_nb(0)->misc;
-	if (dev==NULL)
-		return 0;
+	अगर (dev==शून्य)
+		वापस 0;
 
-	pci_read_config_dword(dev, AMD64_GARTAPERTURECTL, &temp);
+	pci_पढ़ो_config_dword(dev, AMD64_GARTAPERTURECTL, &temp);
 	temp = (temp & 0xe);
 	values = A_SIZE_32(amd64_aperture_sizes);
 
-	for (i = 0; i < agp_bridge->driver->num_aperture_sizes; i++) {
-		if (temp == values[i].size_value) {
+	क्रम (i = 0; i < agp_bridge->driver->num_aperture_sizes; i++) अणु
+		अगर (temp == values[i].size_value) अणु
 			agp_bridge->previous_size =
-			    agp_bridge->current_size = (void *) (values + i);
+			    agp_bridge->current_size = (व्योम *) (values + i);
 
 			agp_bridge->aperture_size_idx = i;
-			return values[i].size;
-		}
-	}
-	return 0;
-}
+			वापस values[i].size;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * In a multiprocessor x86-64 system, this function gets
- * called once for each CPU.
+ * In a multiprocessor x86-64 प्रणाली, this function माला_लो
+ * called once क्रम each CPU.
  */
-static u64 amd64_configure(struct pci_dev *hammer, u64 gatt_table)
-{
+अटल u64 amd64_configure(काष्ठा pci_dev *hammer, u64 gatt_table)
+अणु
 	u64 aperturebase;
-	u32 tmp;
+	u32 पंचांगp;
 	u64 aper_base;
 
 	/* Address to map to */
-	pci_read_config_dword(hammer, AMD64_GARTAPERTUREBASE, &tmp);
-	aperturebase = (u64)tmp << 25;
+	pci_पढ़ो_config_dword(hammer, AMD64_GARTAPERTUREBASE, &पंचांगp);
+	aperturebase = (u64)पंचांगp << 25;
 	aper_base = (aperturebase & PCI_BASE_ADDRESS_MEM_MASK);
 
 	enable_gart_translation(hammer, gatt_table);
 
-	return aper_base;
-}
+	वापस aper_base;
+पूर्ण
 
 
-static const struct aper_size_info_32 amd_8151_sizes[7] =
-{
-	{2048, 524288, 9, 0x00000000 },	/* 0 0 0 0 0 0 */
-	{1024, 262144, 8, 0x00000400 },	/* 1 0 0 0 0 0 */
-	{512,  131072, 7, 0x00000600 },	/* 1 1 0 0 0 0 */
-	{256,  65536,  6, 0x00000700 },	/* 1 1 1 0 0 0 */
-	{128,  32768,  5, 0x00000720 },	/* 1 1 1 1 0 0 */
-	{64,   16384,  4, 0x00000730 },	/* 1 1 1 1 1 0 */
-	{32,   8192,   3, 0x00000738 }	/* 1 1 1 1 1 1 */
-};
+अटल स्थिर काष्ठा aper_size_info_32 amd_8151_sizes[7] =
+अणु
+	अणु2048, 524288, 9, 0x00000000 पूर्ण,	/* 0 0 0 0 0 0 */
+	अणु1024, 262144, 8, 0x00000400 पूर्ण,	/* 1 0 0 0 0 0 */
+	अणु512,  131072, 7, 0x00000600 पूर्ण,	/* 1 1 0 0 0 0 */
+	अणु256,  65536,  6, 0x00000700 पूर्ण,	/* 1 1 1 0 0 0 */
+	अणु128,  32768,  5, 0x00000720 पूर्ण,	/* 1 1 1 1 0 0 */
+	अणु64,   16384,  4, 0x00000730 पूर्ण,	/* 1 1 1 1 1 0 */
+	अणु32,   8192,   3, 0x00000738 पूर्ण	/* 1 1 1 1 1 1 */
+पूर्ण;
 
-static int amd_8151_configure(void)
-{
-	unsigned long gatt_bus = virt_to_phys(agp_bridge->gatt_table_real);
-	int i;
+अटल पूर्णांक amd_8151_configure(व्योम)
+अणु
+	अचिन्हित दीर्घ gatt_bus = virt_to_phys(agp_bridge->gatt_table_real);
+	पूर्णांक i;
 
-	if (!amd_nb_has_feature(AMD_NB_GART))
-		return 0;
+	अगर (!amd_nb_has_feature(AMD_NB_GART))
+		वापस 0;
 
 	/* Configure AGP regs in each x86-64 host bridge. */
-	for (i = 0; i < amd_nb_num(); i++) {
+	क्रम (i = 0; i < amd_nb_num(); i++) अणु
 		agp_bridge->gart_bus_addr =
 			amd64_configure(node_to_amd_nb(i)->misc, gatt_bus);
-	}
+	पूर्ण
 	amd_flush_garts();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void amd64_cleanup(void)
-{
-	u32 tmp;
-	int i;
+अटल व्योम amd64_cleanup(व्योम)
+अणु
+	u32 पंचांगp;
+	पूर्णांक i;
 
-	if (!amd_nb_has_feature(AMD_NB_GART))
-		return;
+	अगर (!amd_nb_has_feature(AMD_NB_GART))
+		वापस;
 
-	for (i = 0; i < amd_nb_num(); i++) {
-		struct pci_dev *dev = node_to_amd_nb(i)->misc;
+	क्रम (i = 0; i < amd_nb_num(); i++) अणु
+		काष्ठा pci_dev *dev = node_to_amd_nb(i)->misc;
 		/* disable gart translation */
-		pci_read_config_dword(dev, AMD64_GARTAPERTURECTL, &tmp);
-		tmp &= ~GARTEN;
-		pci_write_config_dword(dev, AMD64_GARTAPERTURECTL, tmp);
-	}
-}
+		pci_पढ़ो_config_dword(dev, AMD64_GARTAPERTURECTL, &पंचांगp);
+		पंचांगp &= ~GARTEN;
+		pci_ग_लिखो_config_dword(dev, AMD64_GARTAPERTURECTL, पंचांगp);
+	पूर्ण
+पूर्ण
 
 
-static const struct agp_bridge_driver amd_8151_driver = {
+अटल स्थिर काष्ठा agp_bridge_driver amd_8151_driver = अणु
 	.owner			= THIS_MODULE,
 	.aperture_sizes		= amd_8151_sizes,
-	.size_type		= U32_APER_SIZE,
+	.माप_प्रकारype		= U32_APER_SIZE,
 	.num_aperture_sizes	= 7,
 	.needs_scratch_page	= true,
 	.configure		= amd_8151_configure,
@@ -224,74 +225,74 @@ static const struct agp_bridge_driver amd_8151_driver = {
 	.cleanup		= amd64_cleanup,
 	.tlb_flush		= amd64_tlbflush,
 	.mask_memory		= agp_generic_mask_memory,
-	.masks			= NULL,
+	.masks			= शून्य,
 	.agp_enable		= agp_generic_enable,
 	.cache_flush		= global_cache_flush,
 	.create_gatt_table	= agp_generic_create_gatt_table,
-	.free_gatt_table	= agp_generic_free_gatt_table,
+	.मुक्त_gatt_table	= agp_generic_मुक्त_gatt_table,
 	.insert_memory		= amd64_insert_memory,
-	.remove_memory		= agp_generic_remove_memory,
+	.हटाओ_memory		= agp_generic_हटाओ_memory,
 	.alloc_by_type		= agp_generic_alloc_by_type,
-	.free_by_type		= agp_generic_free_by_type,
+	.मुक्त_by_type		= agp_generic_मुक्त_by_type,
 	.agp_alloc_page		= agp_generic_alloc_page,
 	.agp_alloc_pages	= agp_generic_alloc_pages,
 	.agp_destroy_page	= agp_generic_destroy_page,
 	.agp_destroy_pages	= agp_generic_destroy_pages,
 	.agp_type_to_mask_type  = agp_generic_type_to_mask_type,
-};
+पूर्ण;
 
-/* Some basic sanity checks for the aperture. */
-static int agp_aperture_valid(u64 aper, u32 size)
-{
-	if (!aperture_valid(aper, size, 32*1024*1024))
-		return 0;
+/* Some basic sanity checks क्रम the aperture. */
+अटल पूर्णांक agp_aperture_valid(u64 aper, u32 size)
+अणु
+	अगर (!aperture_valid(aper, size, 32*1024*1024))
+		वापस 0;
 
-	/* Request the Aperture. This catches cases when someone else
-	   already put a mapping in there - happens with some very broken BIOS
+	/* Request the Aperture. This catches हालs when someone अन्यथा
+	   alपढ़ोy put a mapping in there - happens with some very broken BIOS
 
 	   Maybe better to use pci_assign_resource/pci_enable_device instead
 	   trusting the bridges? */
-	if (!aperture_resource &&
-	    !(aperture_resource = request_mem_region(aper, size, "aperture"))) {
-		printk(KERN_ERR PFX "Aperture conflicts with PCI mapping.\n");
-		return 0;
-	}
-	return 1;
-}
+	अगर (!aperture_resource &&
+	    !(aperture_resource = request_mem_region(aper, size, "aperture"))) अणु
+		prपूर्णांकk(KERN_ERR PFX "Aperture conflicts with PCI mapping.\n");
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*
- * W*s centric BIOS sometimes only set up the aperture in the AGP
+ * W*s centric BIOS someबार only set up the aperture in the AGP
  * bridge, not the northbridge. On AMD64 this is handled early
  * in aperture.c, but when IOMMU is not enabled or we run
- * on a 32bit kernel this needs to be redone.
- * Unfortunately it is impossible to fix the aperture here because it's too late
+ * on a 32bit kernel this needs to be reकरोne.
+ * Unक्रमtunately it is impossible to fix the aperture here because it's too late
  * to allocate that much memory. But at least error out cleanly instead of
  * crashing.
  */
-static int fix_northbridge(struct pci_dev *nb, struct pci_dev *agp, u16 cap)
-{
+अटल पूर्णांक fix_northbridge(काष्ठा pci_dev *nb, काष्ठा pci_dev *agp, u16 cap)
+अणु
 	u64 aper, nb_aper;
-	int order = 0;
+	पूर्णांक order = 0;
 	u32 nb_order, nb_base;
 	u16 apsize;
 
-	pci_read_config_dword(nb, AMD64_GARTAPERTURECTL, &nb_order);
+	pci_पढ़ो_config_dword(nb, AMD64_GARTAPERTURECTL, &nb_order);
 	nb_order = (nb_order >> 1) & 7;
-	pci_read_config_dword(nb, AMD64_GARTAPERTUREBASE, &nb_base);
+	pci_पढ़ो_config_dword(nb, AMD64_GARTAPERTUREBASE, &nb_base);
 	nb_aper = (u64)nb_base << 25;
 
 	/* Northbridge seems to contain crap. Try the AGP bridge. */
 
-	pci_read_config_word(agp, cap+0x14, &apsize);
-	if (apsize == 0xffff) {
-		if (agp_aperture_valid(nb_aper, (32*1024*1024)<<nb_order))
-			return 0;
-		return -1;
-	}
+	pci_पढ़ो_config_word(agp, cap+0x14, &apsize);
+	अगर (apsize == 0xffff) अणु
+		अगर (agp_aperture_valid(nb_aper, (32*1024*1024)<<nb_order))
+			वापस 0;
+		वापस -1;
+	पूर्ण
 
 	apsize &= 0xfff;
 	/* Some BIOS use weird encodings not in the AGPv3 table. */
-	if (apsize & 0xff)
+	अगर (apsize & 0xff)
 		apsize |= 0xf00;
 	order = 7 - hweight16(apsize);
 
@@ -299,520 +300,520 @@ static int fix_northbridge(struct pci_dev *nb, struct pci_dev *agp, u16 cap)
 
 	/*
 	 * On some sick chips APSIZE is 0. This means it wants 4G
-	 * so let double check that order, and lets trust the AMD NB settings
+	 * so let द्विगुन check that order, and lets trust the AMD NB settings
 	 */
-	if (order >=0 && aper + (32ULL<<(20 + order)) > 0x100000000ULL) {
+	अगर (order >=0 && aper + (32ULL<<(20 + order)) > 0x100000000ULL) अणु
 		dev_info(&agp->dev, "aperture size %u MB is not right, using settings from NB\n",
 			 32 << order);
 		order = nb_order;
-	}
+	पूर्ण
 
-	if (nb_order >= order) {
-		if (agp_aperture_valid(nb_aper, (32*1024*1024)<<nb_order))
-			return 0;
-	}
+	अगर (nb_order >= order) अणु
+		अगर (agp_aperture_valid(nb_aper, (32*1024*1024)<<nb_order))
+			वापस 0;
+	पूर्ण
 
 	dev_info(&agp->dev, "aperture from AGP @ %Lx size %u MB\n",
 		 aper, 32 << order);
-	if (order < 0 || !agp_aperture_valid(aper, (32*1024*1024)<<order))
-		return -1;
+	अगर (order < 0 || !agp_aperture_valid(aper, (32*1024*1024)<<order))
+		वापस -1;
 
 	gart_set_size_and_enable(nb, order);
-	pci_write_config_dword(nb, AMD64_GARTAPERTUREBASE, aper >> 25);
+	pci_ग_लिखो_config_dword(nb, AMD64_GARTAPERTUREBASE, aper >> 25);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cache_nbs(struct pci_dev *pdev, u32 cap_ptr)
-{
-	int i;
+अटल पूर्णांक cache_nbs(काष्ठा pci_dev *pdev, u32 cap_ptr)
+अणु
+	पूर्णांक i;
 
-	if (amd_cache_northbridges() < 0)
-		return -ENODEV;
+	अगर (amd_cache_northbridges() < 0)
+		वापस -ENODEV;
 
-	if (!amd_nb_has_feature(AMD_NB_GART))
-		return -ENODEV;
+	अगर (!amd_nb_has_feature(AMD_NB_GART))
+		वापस -ENODEV;
 
 	i = 0;
-	for (i = 0; i < amd_nb_num(); i++) {
-		struct pci_dev *dev = node_to_amd_nb(i)->misc;
-		if (fix_northbridge(dev, pdev, cap_ptr) < 0) {
+	क्रम (i = 0; i < amd_nb_num(); i++) अणु
+		काष्ठा pci_dev *dev = node_to_amd_nb(i)->misc;
+		अगर (fix_northbridge(dev, pdev, cap_ptr) < 0) अणु
 			dev_err(&dev->dev, "no usable aperture found\n");
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 			/* should port this to i386 */
 			dev_err(&dev->dev, "consider rebooting with iommu=memaper=2 to get a good aperture\n");
-#endif
-			return -1;
-		}
-	}
-	return 0;
-}
+#पूर्ण_अगर
+			वापस -1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Handle AMD 8151 quirks */
-static void amd8151_init(struct pci_dev *pdev, struct agp_bridge_data *bridge)
-{
-	char *revstring;
+अटल व्योम amd8151_init(काष्ठा pci_dev *pdev, काष्ठा agp_bridge_data *bridge)
+अणु
+	अक्षर *revstring;
 
-	switch (pdev->revision) {
-	case 0x01: revstring="A0"; break;
-	case 0x02: revstring="A1"; break;
-	case 0x11: revstring="B0"; break;
-	case 0x12: revstring="B1"; break;
-	case 0x13: revstring="B2"; break;
-	case 0x14: revstring="B3"; break;
-	default:   revstring="??"; break;
-	}
+	चयन (pdev->revision) अणु
+	हाल 0x01: revstring="A0"; अवरोध;
+	हाल 0x02: revstring="A1"; अवरोध;
+	हाल 0x11: revstring="B0"; अवरोध;
+	हाल 0x12: revstring="B1"; अवरोध;
+	हाल 0x13: revstring="B2"; अवरोध;
+	हाल 0x14: revstring="B3"; अवरोध;
+	शेष:   revstring="??"; अवरोध;
+	पूर्ण
 
 	dev_info(&pdev->dev, "AMD 8151 AGP Bridge rev %s\n", revstring);
 
 	/*
 	 * Work around errata.
-	 * Chips before B2 stepping incorrectly reporting v3.5
+	 * Chips beक्रमe B2 stepping incorrectly reporting v3.5
 	 */
-	if (pdev->revision < 0x13) {
+	अगर (pdev->revision < 0x13) अणु
 		dev_info(&pdev->dev, "correcting AGP revision (reports 3.5, is really 3.0)\n");
 		bridge->major_version = 3;
 		bridge->minor_version = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static const struct aper_size_info_32 uli_sizes[7] =
-{
-	{256, 65536, 6, 10},
-	{128, 32768, 5, 9},
-	{64, 16384, 4, 8},
-	{32, 8192, 3, 7},
-	{16, 4096, 2, 6},
-	{8, 2048, 1, 4},
-	{4, 1024, 0, 3}
-};
-static int uli_agp_init(struct pci_dev *pdev)
-{
+अटल स्थिर काष्ठा aper_size_info_32 uli_sizes[7] =
+अणु
+	अणु256, 65536, 6, 10पूर्ण,
+	अणु128, 32768, 5, 9पूर्ण,
+	अणु64, 16384, 4, 8पूर्ण,
+	अणु32, 8192, 3, 7पूर्ण,
+	अणु16, 4096, 2, 6पूर्ण,
+	अणु8, 2048, 1, 4पूर्ण,
+	अणु4, 1024, 0, 3पूर्ण
+पूर्ण;
+अटल पूर्णांक uli_agp_init(काष्ठा pci_dev *pdev)
+अणु
 	u32 httfea,baseaddr,enuscr;
-	struct pci_dev *dev1;
-	int i, ret;
-	unsigned size = amd64_fetch_size();
+	काष्ठा pci_dev *dev1;
+	पूर्णांक i, ret;
+	अचिन्हित size = amd64_fetch_size();
 
 	dev_info(&pdev->dev, "setting up ULi AGP\n");
 	dev1 = pci_get_slot (pdev->bus,PCI_DEVFN(0,0));
-	if (dev1 == NULL) {
+	अगर (dev1 == शून्य) अणु
 		dev_info(&pdev->dev, "can't find ULi secondary device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(uli_sizes); i++)
-		if (uli_sizes[i].size == size)
-			break;
+	क्रम (i = 0; i < ARRAY_SIZE(uli_sizes); i++)
+		अगर (uli_sizes[i].size == size)
+			अवरोध;
 
-	if (i == ARRAY_SIZE(uli_sizes)) {
+	अगर (i == ARRAY_SIZE(uli_sizes)) अणु
 		dev_info(&pdev->dev, "no ULi size found for %d\n", size);
 		ret = -ENODEV;
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
-	/* shadow x86-64 registers into ULi registers */
-	pci_read_config_dword (node_to_amd_nb(0)->misc, AMD64_GARTAPERTUREBASE,
+	/* shaकरोw x86-64 रेजिस्टरs पूर्णांकo ULi रेजिस्टरs */
+	pci_पढ़ो_config_dword (node_to_amd_nb(0)->misc, AMD64_GARTAPERTUREBASE,
 			       &httfea);
 
-	/* if x86-64 aperture base is beyond 4G, exit here */
-	if ((httfea & 0x7fff) >> (32 - 25)) {
+	/* अगर x86-64 aperture base is beyond 4G, निकास here */
+	अगर ((httfea & 0x7fff) >> (32 - 25)) अणु
 		ret = -ENODEV;
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
 	httfea = (httfea& 0x7fff) << 25;
 
-	pci_read_config_dword(pdev, ULI_X86_64_BASE_ADDR, &baseaddr);
+	pci_पढ़ो_config_dword(pdev, ULI_X86_64_BASE_ADDR, &baseaddr);
 	baseaddr&= ~PCI_BASE_ADDRESS_MEM_MASK;
 	baseaddr|= httfea;
-	pci_write_config_dword(pdev, ULI_X86_64_BASE_ADDR, baseaddr);
+	pci_ग_लिखो_config_dword(pdev, ULI_X86_64_BASE_ADDR, baseaddr);
 
 	enuscr= httfea+ (size * 1024 * 1024) - 1;
-	pci_write_config_dword(dev1, ULI_X86_64_HTT_FEA_REG, httfea);
-	pci_write_config_dword(dev1, ULI_X86_64_ENU_SCR_REG, enuscr);
+	pci_ग_लिखो_config_dword(dev1, ULI_X86_64_HTT_FEA_REG, httfea);
+	pci_ग_लिखो_config_dword(dev1, ULI_X86_64_ENU_SCR_REG, enuscr);
 	ret = 0;
 put:
 	pci_dev_put(dev1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static const struct aper_size_info_32 nforce3_sizes[5] =
-{
-	{512,  131072, 7, 0x00000000 },
-	{256,  65536,  6, 0x00000008 },
-	{128,  32768,  5, 0x0000000C },
-	{64,   16384,  4, 0x0000000E },
-	{32,   8192,   3, 0x0000000F }
-};
+अटल स्थिर काष्ठा aper_size_info_32 nक्रमce3_sizes[5] =
+अणु
+	अणु512,  131072, 7, 0x00000000 पूर्ण,
+	अणु256,  65536,  6, 0x00000008 पूर्ण,
+	अणु128,  32768,  5, 0x0000000C पूर्ण,
+	अणु64,   16384,  4, 0x0000000E पूर्ण,
+	अणु32,   8192,   3, 0x0000000F पूर्ण
+पूर्ण;
 
-/* Handle shadow device of the Nvidia NForce3 */
-/* CHECK-ME original 2.4 version set up some IORRs. Check if that is needed. */
-static int nforce3_agp_init(struct pci_dev *pdev)
-{
-	u32 tmp, apbase, apbar, aplimit;
-	struct pci_dev *dev1;
-	int i, ret;
-	unsigned size = amd64_fetch_size();
+/* Handle shaकरोw device of the Nvidia NForce3 */
+/* CHECK-ME original 2.4 version set up some IORRs. Check अगर that is needed. */
+अटल पूर्णांक nक्रमce3_agp_init(काष्ठा pci_dev *pdev)
+अणु
+	u32 पंचांगp, apbase, apbar, aplimit;
+	काष्ठा pci_dev *dev1;
+	पूर्णांक i, ret;
+	अचिन्हित size = amd64_fetch_size();
 
 	dev_info(&pdev->dev, "setting up Nforce3 AGP\n");
 
 	dev1 = pci_get_slot(pdev->bus, PCI_DEVFN(11, 0));
-	if (dev1 == NULL) {
+	अगर (dev1 == शून्य) अणु
 		dev_info(&pdev->dev, "can't find Nforce3 secondary device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(nforce3_sizes); i++)
-		if (nforce3_sizes[i].size == size)
-			break;
+	क्रम (i = 0; i < ARRAY_SIZE(nक्रमce3_sizes); i++)
+		अगर (nक्रमce3_sizes[i].size == size)
+			अवरोध;
 
-	if (i == ARRAY_SIZE(nforce3_sizes)) {
+	अगर (i == ARRAY_SIZE(nक्रमce3_sizes)) अणु
 		dev_info(&pdev->dev, "no NForce3 size found for %d\n", size);
 		ret = -ENODEV;
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
-	pci_read_config_dword(dev1, NVIDIA_X86_64_1_APSIZE, &tmp);
-	tmp &= ~(0xf);
-	tmp |= nforce3_sizes[i].size_value;
-	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APSIZE, tmp);
+	pci_पढ़ो_config_dword(dev1, NVIDIA_X86_64_1_APSIZE, &पंचांगp);
+	पंचांगp &= ~(0xf);
+	पंचांगp |= nक्रमce3_sizes[i].size_value;
+	pci_ग_लिखो_config_dword(dev1, NVIDIA_X86_64_1_APSIZE, पंचांगp);
 
-	/* shadow x86-64 registers into NVIDIA registers */
-	pci_read_config_dword (node_to_amd_nb(0)->misc, AMD64_GARTAPERTUREBASE,
+	/* shaकरोw x86-64 रेजिस्टरs पूर्णांकo NVIDIA रेजिस्टरs */
+	pci_पढ़ो_config_dword (node_to_amd_nb(0)->misc, AMD64_GARTAPERTUREBASE,
 			       &apbase);
 
-	/* if x86-64 aperture base is beyond 4G, exit here */
-	if ( (apbase & 0x7fff) >> (32 - 25) ) {
+	/* अगर x86-64 aperture base is beyond 4G, निकास here */
+	अगर ( (apbase & 0x7fff) >> (32 - 25) ) अणु
 		dev_info(&pdev->dev, "aperture base > 4G\n");
 		ret = -ENODEV;
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
 	apbase = (apbase & 0x7fff) << 25;
 
-	pci_read_config_dword(pdev, NVIDIA_X86_64_0_APBASE, &apbar);
+	pci_पढ़ो_config_dword(pdev, NVIDIA_X86_64_0_APBASE, &apbar);
 	apbar &= ~PCI_BASE_ADDRESS_MEM_MASK;
 	apbar |= apbase;
-	pci_write_config_dword(pdev, NVIDIA_X86_64_0_APBASE, apbar);
+	pci_ग_लिखो_config_dword(pdev, NVIDIA_X86_64_0_APBASE, apbar);
 
 	aplimit = apbase + (size * 1024 * 1024) - 1;
-	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APBASE1, apbase);
-	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APLIMIT1, aplimit);
-	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APBASE2, apbase);
-	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APLIMIT2, aplimit);
+	pci_ग_लिखो_config_dword(dev1, NVIDIA_X86_64_1_APBASE1, apbase);
+	pci_ग_लिखो_config_dword(dev1, NVIDIA_X86_64_1_APLIMIT1, aplimit);
+	pci_ग_लिखो_config_dword(dev1, NVIDIA_X86_64_1_APBASE2, apbase);
+	pci_ग_लिखो_config_dword(dev1, NVIDIA_X86_64_1_APLIMIT2, aplimit);
 
 	ret = 0;
 put:
 	pci_dev_put(dev1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int agp_amd64_probe(struct pci_dev *pdev,
-			   const struct pci_device_id *ent)
-{
-	struct agp_bridge_data *bridge;
+अटल पूर्णांक agp_amd64_probe(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा agp_bridge_data *bridge;
 	u8 cap_ptr;
-	int err;
+	पूर्णांक err;
 
 	/* The Highlander principle */
-	if (agp_bridges_found)
-		return -ENODEV;
+	अगर (agp_bridges_found)
+		वापस -ENODEV;
 
 	cap_ptr = pci_find_capability(pdev, PCI_CAP_ID_AGP);
-	if (!cap_ptr)
-		return -ENODEV;
+	अगर (!cap_ptr)
+		वापस -ENODEV;
 
-	/* Could check for AGPv3 here */
+	/* Could check क्रम AGPv3 here */
 
 	bridge = agp_alloc_bridge();
-	if (!bridge)
-		return -ENOMEM;
+	अगर (!bridge)
+		वापस -ENOMEM;
 
-	if (pdev->vendor == PCI_VENDOR_ID_AMD &&
-	    pdev->device == PCI_DEVICE_ID_AMD_8151_0) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AMD &&
+	    pdev->device == PCI_DEVICE_ID_AMD_8151_0) अणु
 		amd8151_init(pdev, bridge);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info(&pdev->dev, "AGP bridge [%04x/%04x]\n",
-			 pdev->vendor, pdev->device);
-	}
+			 pdev->venकरोr, pdev->device);
+	पूर्ण
 
 	bridge->driver = &amd_8151_driver;
 	bridge->dev = pdev;
 	bridge->capndx = cap_ptr;
 
-	/* Fill in the mode register */
-	pci_read_config_dword(pdev, bridge->capndx+PCI_AGP_STATUS, &bridge->mode);
+	/* Fill in the mode रेजिस्टर */
+	pci_पढ़ो_config_dword(pdev, bridge->capndx+PCI_AGP_STATUS, &bridge->mode);
 
-	if (cache_nbs(pdev, cap_ptr) == -1) {
+	अगर (cache_nbs(pdev, cap_ptr) == -1) अणु
 		agp_put_bridge(bridge);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (pdev->vendor == PCI_VENDOR_ID_NVIDIA) {
-		int ret = nforce3_agp_init(pdev);
-		if (ret) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_NVIDIA) अणु
+		पूर्णांक ret = nक्रमce3_agp_init(pdev);
+		अगर (ret) अणु
 			agp_put_bridge(bridge);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (pdev->vendor == PCI_VENDOR_ID_AL) {
-		int ret = uli_agp_init(pdev);
-		if (ret) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_AL) अणु
+		पूर्णांक ret = uli_agp_init(pdev);
+		अगर (ret) अणु
 			agp_put_bridge(bridge);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	pci_set_drvdata(pdev, bridge);
 	err = agp_add_bridge(bridge);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	agp_bridges_found++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void agp_amd64_remove(struct pci_dev *pdev)
-{
-	struct agp_bridge_data *bridge = pci_get_drvdata(pdev);
+अटल व्योम agp_amd64_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा agp_bridge_data *bridge = pci_get_drvdata(pdev);
 
 	release_mem_region(virt_to_phys(bridge->gatt_table_real),
 			   amd64_aperture_sizes[bridge->aperture_size_idx].size);
-	agp_remove_bridge(bridge);
+	agp_हटाओ_bridge(bridge);
 	agp_put_bridge(bridge);
 
 	agp_bridges_found--;
-}
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int agp_amd64_suspend(struct pci_dev *pdev, pm_message_t state)
-{
+अटल पूर्णांक agp_amd64_suspend(काष्ठा pci_dev *pdev, pm_message_t state)
+अणु
 	pci_save_state(pdev);
-	pci_set_power_state(pdev, pci_choose_state(pdev, state));
+	pci_set_घातer_state(pdev, pci_choose_state(pdev, state));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int agp_amd64_resume(struct pci_dev *pdev)
-{
-	pci_set_power_state(pdev, PCI_D0);
+अटल पूर्णांक agp_amd64_resume(काष्ठा pci_dev *pdev)
+अणु
+	pci_set_घातer_state(pdev, PCI_D0);
 	pci_restore_state(pdev);
 
-	if (pdev->vendor == PCI_VENDOR_ID_NVIDIA)
-		nforce3_agp_init(pdev);
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_NVIDIA)
+		nक्रमce3_agp_init(pdev);
 
-	return amd_8151_configure();
-}
+	वापस amd_8151_configure();
+पूर्ण
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct pci_device_id agp_amd64_pci_table[] = {
-	{
+अटल स्थिर काष्ठा pci_device_id agp_amd64_pci_table[] = अणु
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_AMD,
+	.venकरोr		= PCI_VENDOR_ID_AMD,
 	.device		= PCI_DEVICE_ID_AMD_8151_0,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* ULi M1689 */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_AL,
+	.venकरोr		= PCI_VENDOR_ID_AL,
 	.device		= PCI_DEVICE_ID_AL_M1689,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* VIA K8T800Pro */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_VIA,
+	.venकरोr		= PCI_VENDOR_ID_VIA,
 	.device		= PCI_DEVICE_ID_VIA_K8T800PRO_0,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* VIA K8T800 */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_VIA,
+	.venकरोr		= PCI_VENDOR_ID_VIA,
 	.device		= PCI_DEVICE_ID_VIA_8385_0,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* VIA K8M800 / K8N800 */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_VIA,
+	.venकरोr		= PCI_VENDOR_ID_VIA,
 	.device		= PCI_DEVICE_ID_VIA_8380_0,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* VIA K8M890 / K8N890 */
-	{
+	अणु
 	.class          = (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask     = ~0,
-	.vendor         = PCI_VENDOR_ID_VIA,
+	.venकरोr         = PCI_VENDOR_ID_VIA,
 	.device         = PCI_DEVICE_ID_VIA_VT3336,
-	.subvendor      = PCI_ANY_ID,
+	.subvenकरोr      = PCI_ANY_ID,
 	.subdevice      = PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* VIA K8T890 */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_VIA,
+	.venकरोr		= PCI_VENDOR_ID_VIA,
 	.device		= PCI_DEVICE_ID_VIA_3238_0,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* VIA K8T800/K8M800/K8N800 */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_VIA,
+	.venकरोr		= PCI_VENDOR_ID_VIA,
 	.device		= PCI_DEVICE_ID_VIA_838X_1,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* NForce3 */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_NVIDIA,
+	.venकरोr		= PCI_VENDOR_ID_NVIDIA,
 	.device		= PCI_DEVICE_ID_NVIDIA_NFORCE3,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
-	{
+	पूर्ण,
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_NVIDIA,
+	.venकरोr		= PCI_VENDOR_ID_NVIDIA,
 	.device		= PCI_DEVICE_ID_NVIDIA_NFORCE3S,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* SIS 755 */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_SI,
+	.venकरोr		= PCI_VENDOR_ID_SI,
 	.device		= PCI_DEVICE_ID_SI_755,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* SIS 760 */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_SI,
+	.venकरोr		= PCI_VENDOR_ID_SI,
 	.device		= PCI_DEVICE_ID_SI_760,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 	/* ALI/ULI M1695 */
-	{
+	अणु
 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 	.class_mask	= ~0,
-	.vendor		= PCI_VENDOR_ID_AL,
+	.venकरोr		= PCI_VENDOR_ID_AL,
 	.device		= 0x1695,
-	.subvendor	= PCI_ANY_ID,
+	.subvenकरोr	= PCI_ANY_ID,
 	.subdevice	= PCI_ANY_ID,
-	},
+	पूर्ण,
 
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, agp_amd64_pci_table);
 
-static const struct pci_device_id agp_amd64_pci_promisc_table[] = {
-	{ PCI_DEVICE_CLASS(0, 0) },
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id agp_amd64_pci_promisc_table[] = अणु
+	अणु PCI_DEVICE_CLASS(0, 0) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct pci_driver agp_amd64_pci_driver = {
+अटल काष्ठा pci_driver agp_amd64_pci_driver = अणु
 	.name		= "agpgart-amd64",
 	.id_table	= agp_amd64_pci_table,
 	.probe		= agp_amd64_probe,
-	.remove		= agp_amd64_remove,
-#ifdef CONFIG_PM
+	.हटाओ		= agp_amd64_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.suspend	= agp_amd64_suspend,
 	.resume		= agp_amd64_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 
-/* Not static due to IOMMU code calling it early. */
-int __init agp_amd64_init(void)
-{
-	int err = 0;
+/* Not अटल due to IOMMU code calling it early. */
+पूर्णांक __init agp_amd64_init(व्योम)
+अणु
+	पूर्णांक err = 0;
 
-	if (agp_off)
-		return -EINVAL;
+	अगर (agp_off)
+		वापस -EINVAL;
 
-	err = pci_register_driver(&agp_amd64_pci_driver);
-	if (err < 0)
-		return err;
+	err = pci_रेजिस्टर_driver(&agp_amd64_pci_driver);
+	अगर (err < 0)
+		वापस err;
 
-	if (agp_bridges_found == 0) {
-		if (!agp_try_unsupported && !agp_try_unsupported_boot) {
-			printk(KERN_INFO PFX "No supported AGP bridge found.\n");
-#ifdef MODULE
-			printk(KERN_INFO PFX "You can try agp_try_unsupported=1\n");
-#else
-			printk(KERN_INFO PFX "You can boot with agp=try_unsupported\n");
-#endif
-			pci_unregister_driver(&agp_amd64_pci_driver);
-			return -ENODEV;
-		}
+	अगर (agp_bridges_found == 0) अणु
+		अगर (!agp_try_unsupported && !agp_try_unsupported_boot) अणु
+			prपूर्णांकk(KERN_INFO PFX "No supported AGP bridge found.\n");
+#अगर_घोषित MODULE
+			prपूर्णांकk(KERN_INFO PFX "You can try agp_try_unsupported=1\n");
+#अन्यथा
+			prपूर्णांकk(KERN_INFO PFX "You can boot with agp=try_unsupported\n");
+#पूर्ण_अगर
+			pci_unरेजिस्टर_driver(&agp_amd64_pci_driver);
+			वापस -ENODEV;
+		पूर्ण
 
 		/* First check that we have at least one AMD64 NB */
-		if (!amd_nb_num()) {
-			pci_unregister_driver(&agp_amd64_pci_driver);
-			return -ENODEV;
-		}
+		अगर (!amd_nb_num()) अणु
+			pci_unरेजिस्टर_driver(&agp_amd64_pci_driver);
+			वापस -ENODEV;
+		पूर्ण
 
-		/* Look for any AGP bridge */
+		/* Look क्रम any AGP bridge */
 		agp_amd64_pci_driver.id_table = agp_amd64_pci_promisc_table;
 		err = driver_attach(&agp_amd64_pci_driver.driver);
-		if (err == 0 && agp_bridges_found == 0) {
-			pci_unregister_driver(&agp_amd64_pci_driver);
+		अगर (err == 0 && agp_bridges_found == 0) अणु
+			pci_unरेजिस्टर_driver(&agp_amd64_pci_driver);
 			err = -ENODEV;
-		}
-	}
-	return err;
-}
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int __init agp_amd64_mod_init(void)
-{
-#ifndef MODULE
-	if (gart_iommu_aperture)
-		return agp_bridges_found ? 0 : -ENODEV;
-#endif
-	return agp_amd64_init();
-}
+अटल पूर्णांक __init agp_amd64_mod_init(व्योम)
+अणु
+#अगर_अघोषित MODULE
+	अगर (gart_iommu_aperture)
+		वापस agp_bridges_found ? 0 : -ENODEV;
+#पूर्ण_अगर
+	वापस agp_amd64_init();
+पूर्ण
 
-static void __exit agp_amd64_cleanup(void)
-{
-#ifndef MODULE
-	if (gart_iommu_aperture)
-		return;
-#endif
-	if (aperture_resource)
+अटल व्योम __निकास agp_amd64_cleanup(व्योम)
+अणु
+#अगर_अघोषित MODULE
+	अगर (gart_iommu_aperture)
+		वापस;
+#पूर्ण_अगर
+	अगर (aperture_resource)
 		release_resource(aperture_resource);
-	pci_unregister_driver(&agp_amd64_pci_driver);
-}
+	pci_unरेजिस्टर_driver(&agp_amd64_pci_driver);
+पूर्ण
 
 module_init(agp_amd64_mod_init);
-module_exit(agp_amd64_cleanup);
+module_निकास(agp_amd64_cleanup);
 
 MODULE_AUTHOR("Dave Jones, Andi Kleen");
 module_param(agp_try_unsupported, bool, 0);

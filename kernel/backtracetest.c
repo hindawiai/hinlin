@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Simple stack backtrace regression test module
  *
  * (C) Copyright 2008 Intel Corporation
- * Author: Arjan van de Ven <arjan@linux.intel.com>
+ * Author: Arjan van de Ven <arjan@linux.पूर्णांकel.com>
  */
 
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/stacktrace.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/stacktrace.h>
 
-static void backtrace_test_normal(void)
-{
+अटल व्योम backtrace_test_normal(व्योम)
+अणु
 	pr_info("Testing a backtrace from process context.\n");
 	pr_info("The following trace is a kernel self test and not a bug!\n");
 
 	dump_stack();
-}
+पूर्ण
 
-static DECLARE_COMPLETION(backtrace_work);
+अटल DECLARE_COMPLETION(backtrace_work);
 
-static void backtrace_test_irq_callback(unsigned long data)
-{
+अटल व्योम backtrace_test_irq_callback(अचिन्हित दीर्घ data)
+अणु
 	dump_stack();
 	complete(&backtrace_work);
-}
+पूर्ण
 
-static DECLARE_TASKLET_OLD(backtrace_tasklet, &backtrace_test_irq_callback);
+अटल DECLARE_TASKLET_OLD(backtrace_tasklet, &backtrace_test_irq_callback);
 
-static void backtrace_test_irq(void)
-{
+अटल व्योम backtrace_test_irq(व्योम)
+अणु
 	pr_info("Testing a backtrace from irq context.\n");
 	pr_info("The following trace is a kernel self test and not a bug!\n");
 
 	init_completion(&backtrace_work);
 	tasklet_schedule(&backtrace_tasklet);
-	wait_for_completion(&backtrace_work);
-}
+	रुको_क्रम_completion(&backtrace_work);
+पूर्ण
 
-#ifdef CONFIG_STACKTRACE
-static void backtrace_test_saved(void)
-{
-	unsigned long entries[8];
-	unsigned int nr_entries;
+#अगर_घोषित CONFIG_STACKTRACE
+अटल व्योम backtrace_test_saved(व्योम)
+अणु
+	अचिन्हित दीर्घ entries[8];
+	अचिन्हित पूर्णांक nr_entries;
 
 	pr_info("Testing a saved backtrace.\n");
 	pr_info("The following trace is a kernel self test and not a bug!\n");
 
 	nr_entries = stack_trace_save(entries, ARRAY_SIZE(entries), 0);
-	stack_trace_print(entries, nr_entries, 0);
-}
-#else
-static void backtrace_test_saved(void)
-{
+	stack_trace_prपूर्णांक(entries, nr_entries, 0);
+पूर्ण
+#अन्यथा
+अटल व्योम backtrace_test_saved(व्योम)
+अणु
 	pr_info("Saved backtrace test skipped.\n");
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int backtrace_regression_test(void)
-{
+अटल पूर्णांक backtrace_regression_test(व्योम)
+अणु
 	pr_info("====[ backtrace testing ]===========\n");
 
 	backtrace_test_normal();
@@ -69,14 +70,14 @@ static int backtrace_regression_test(void)
 	backtrace_test_saved();
 
 	pr_info("====[ end of backtrace testing ]====\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exitf(void)
-{
-}
+अटल व्योम निकासf(व्योम)
+अणु
+पूर्ण
 
 module_init(backtrace_regression_test);
-module_exit(exitf);
+module_निकास(निकासf);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Arjan van de Ven <arjan@linux.intel.com>");

@@ -1,44 +1,45 @@
-#include "util/map_symbol.h"
-#include "util/branch.h"
-#include <linux/kernel.h>
+<शैली गुरु>
+#समावेश "util/map_symbol.h"
+#समावेश "util/branch.h"
+#समावेश <linux/kernel.h>
 
-static bool cross_area(u64 addr1, u64 addr2, int size)
-{
+अटल bool cross_area(u64 addr1, u64 addr2, पूर्णांक size)
+अणु
 	u64 align1, align2;
 
 	align1 = addr1 & ~(size - 1);
 	align2 = addr2 & ~(size - 1);
 
-	return (align1 != align2) ? true : false;
-}
+	वापस (align1 != align2) ? true : false;
+पूर्ण
 
-#define AREA_4K		4096
-#define AREA_2M		(2 * 1024 * 1024)
+#घोषणा AREA_4K		4096
+#घोषणा AREA_2M		(2 * 1024 * 1024)
 
-void branch_type_count(struct branch_type_stat *st, struct branch_flags *flags,
+व्योम branch_type_count(काष्ठा branch_type_stat *st, काष्ठा branch_flags *flags,
 		       u64 from, u64 to)
-{
-	if (flags->type == PERF_BR_UNKNOWN || from == 0)
-		return;
+अणु
+	अगर (flags->type == PERF_BR_UNKNOWN || from == 0)
+		वापस;
 
 	st->counts[flags->type]++;
 
-	if (flags->type == PERF_BR_COND) {
-		if (to > from)
+	अगर (flags->type == PERF_BR_COND) अणु
+		अगर (to > from)
 			st->cond_fwd++;
-		else
+		अन्यथा
 			st->cond_bwd++;
-	}
+	पूर्ण
 
-	if (cross_area(from, to, AREA_2M))
+	अगर (cross_area(from, to, AREA_2M))
 		st->cross_2m++;
-	else if (cross_area(from, to, AREA_4K))
+	अन्यथा अगर (cross_area(from, to, AREA_4K))
 		st->cross_4k++;
-}
+पूर्ण
 
-const char *branch_type_name(int type)
-{
-	const char *branch_names[PERF_BR_MAX] = {
+स्थिर अक्षर *branch_type_name(पूर्णांक type)
+अणु
+	स्थिर अक्षर *branch_names[PERF_BR_MAX] = अणु
 		"N/A",
 		"COND",
 		"UNCOND",
@@ -50,97 +51,97 @@ const char *branch_type_name(int type)
 		"SYSRET",
 		"COND_CALL",
 		"COND_RET"
-	};
+	पूर्ण;
 
-	if (type >= 0 && type < PERF_BR_MAX)
-		return branch_names[type];
+	अगर (type >= 0 && type < PERF_BR_MAX)
+		वापस branch_names[type];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void branch_type_stat_display(FILE *fp, struct branch_type_stat *st)
-{
+व्योम branch_type_stat_display(खाता *fp, काष्ठा branch_type_stat *st)
+अणु
 	u64 total = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < PERF_BR_MAX; i++)
+	क्रम (i = 0; i < PERF_BR_MAX; i++)
 		total += st->counts[i];
 
-	if (total == 0)
-		return;
+	अगर (total == 0)
+		वापस;
 
-	fprintf(fp, "\n#");
-	fprintf(fp, "\n# Branch Statistics:");
-	fprintf(fp, "\n#");
+	ख_लिखो(fp, "\n#");
+	ख_लिखो(fp, "\n# Branch Statistics:");
+	ख_लिखो(fp, "\n#");
 
-	if (st->cond_fwd > 0) {
-		fprintf(fp, "\n%8s: %5.1f%%",
+	अगर (st->cond_fwd > 0) अणु
+		ख_लिखो(fp, "\n%8s: %5.1f%%",
 			"COND_FWD",
-			100.0 * (double)st->cond_fwd / (double)total);
-	}
+			100.0 * (द्विगुन)st->cond_fwd / (द्विगुन)total);
+	पूर्ण
 
-	if (st->cond_bwd > 0) {
-		fprintf(fp, "\n%8s: %5.1f%%",
+	अगर (st->cond_bwd > 0) अणु
+		ख_लिखो(fp, "\n%8s: %5.1f%%",
 			"COND_BWD",
-			100.0 * (double)st->cond_bwd / (double)total);
-	}
+			100.0 * (द्विगुन)st->cond_bwd / (द्विगुन)total);
+	पूर्ण
 
-	if (st->cross_4k > 0) {
-		fprintf(fp, "\n%8s: %5.1f%%",
+	अगर (st->cross_4k > 0) अणु
+		ख_लिखो(fp, "\n%8s: %5.1f%%",
 			"CROSS_4K",
-			100.0 * (double)st->cross_4k / (double)total);
-	}
+			100.0 * (द्विगुन)st->cross_4k / (द्विगुन)total);
+	पूर्ण
 
-	if (st->cross_2m > 0) {
-		fprintf(fp, "\n%8s: %5.1f%%",
+	अगर (st->cross_2m > 0) अणु
+		ख_लिखो(fp, "\n%8s: %5.1f%%",
 			"CROSS_2M",
-			100.0 * (double)st->cross_2m / (double)total);
-	}
+			100.0 * (द्विगुन)st->cross_2m / (द्विगुन)total);
+	पूर्ण
 
-	for (i = 0; i < PERF_BR_MAX; i++) {
-		if (st->counts[i] > 0)
-			fprintf(fp, "\n%8s: %5.1f%%",
+	क्रम (i = 0; i < PERF_BR_MAX; i++) अणु
+		अगर (st->counts[i] > 0)
+			ख_लिखो(fp, "\n%8s: %5.1f%%",
 				branch_type_name(i),
 				100.0 *
-				(double)st->counts[i] / (double)total);
-	}
-}
+				(द्विगुन)st->counts[i] / (द्विगुन)total);
+	पूर्ण
+पूर्ण
 
-static int count_str_scnprintf(int idx, const char *str, char *bf, int size)
-{
-	return scnprintf(bf, size, "%s%s", (idx) ? " " : " (", str);
-}
+अटल पूर्णांक count_str_scnम_लिखो(पूर्णांक idx, स्थिर अक्षर *str, अक्षर *bf, पूर्णांक size)
+अणु
+	वापस scnम_लिखो(bf, size, "%s%s", (idx) ? " " : " (", str);
+पूर्ण
 
-int branch_type_str(struct branch_type_stat *st, char *bf, int size)
-{
-	int i, j = 0, printed = 0;
+पूर्णांक branch_type_str(काष्ठा branch_type_stat *st, अक्षर *bf, पूर्णांक size)
+अणु
+	पूर्णांक i, j = 0, prपूर्णांकed = 0;
 	u64 total = 0;
 
-	for (i = 0; i < PERF_BR_MAX; i++)
+	क्रम (i = 0; i < PERF_BR_MAX; i++)
 		total += st->counts[i];
 
-	if (total == 0)
-		return 0;
+	अगर (total == 0)
+		वापस 0;
 
-	if (st->cond_fwd > 0)
-		printed += count_str_scnprintf(j++, "COND_FWD", bf + printed, size - printed);
+	अगर (st->cond_fwd > 0)
+		prपूर्णांकed += count_str_scnम_लिखो(j++, "COND_FWD", bf + prपूर्णांकed, size - prपूर्णांकed);
 
-	if (st->cond_bwd > 0)
-		printed += count_str_scnprintf(j++, "COND_BWD", bf + printed, size - printed);
+	अगर (st->cond_bwd > 0)
+		prपूर्णांकed += count_str_scnम_लिखो(j++, "COND_BWD", bf + prपूर्णांकed, size - prपूर्णांकed);
 
-	for (i = 0; i < PERF_BR_MAX; i++) {
-		if (i == PERF_BR_COND)
-			continue;
+	क्रम (i = 0; i < PERF_BR_MAX; i++) अणु
+		अगर (i == PERF_BR_COND)
+			जारी;
 
-		if (st->counts[i] > 0)
-			printed += count_str_scnprintf(j++, branch_type_name(i), bf + printed, size - printed);
-	}
+		अगर (st->counts[i] > 0)
+			prपूर्णांकed += count_str_scnम_लिखो(j++, branch_type_name(i), bf + prपूर्णांकed, size - prपूर्णांकed);
+	पूर्ण
 
-	if (st->cross_4k > 0)
-		printed += count_str_scnprintf(j++, "CROSS_4K", bf + printed, size - printed);
+	अगर (st->cross_4k > 0)
+		prपूर्णांकed += count_str_scnम_लिखो(j++, "CROSS_4K", bf + prपूर्णांकed, size - prपूर्णांकed);
 
-	if (st->cross_2m > 0)
-		printed += count_str_scnprintf(j++, "CROSS_2M", bf + printed, size - printed);
+	अगर (st->cross_2m > 0)
+		prपूर्णांकed += count_str_scnम_लिखो(j++, "CROSS_2M", bf + prपूर्णांकed, size - prपूर्णांकed);
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण

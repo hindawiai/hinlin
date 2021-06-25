@@ -1,261 +1,262 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* XDP user-space packet buffer
  * Copyright(c) 2018 Intel Corporation.
  */
 
-#include <linux/init.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/task.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-#include <linux/bpf.h>
-#include <linux/mm.h>
-#include <linux/netdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/idr.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "xdp_umem.h"
-#include "xsk_queue.h"
+#समावेश "xdp_umem.h"
+#समावेश "xsk_queue.h"
 
-#define XDP_UMEM_MIN_CHUNK_SIZE 2048
+#घोषणा XDP_UMEM_MIN_CHUNK_SIZE 2048
 
-static DEFINE_IDA(umem_ida);
+अटल DEFINE_IDA(umem_ida);
 
-static void xdp_umem_unpin_pages(struct xdp_umem *umem)
-{
+अटल व्योम xdp_umem_unpin_pages(काष्ठा xdp_umem *umem)
+अणु
 	unpin_user_pages_dirty_lock(umem->pgs, umem->npgs, true);
 
-	kfree(umem->pgs);
-	umem->pgs = NULL;
-}
+	kमुक्त(umem->pgs);
+	umem->pgs = शून्य;
+पूर्ण
 
-static void xdp_umem_unaccount_pages(struct xdp_umem *umem)
-{
-	if (umem->user) {
-		atomic_long_sub(umem->npgs, &umem->user->locked_vm);
-		free_uid(umem->user);
-	}
-}
+अटल व्योम xdp_umem_unaccount_pages(काष्ठा xdp_umem *umem)
+अणु
+	अगर (umem->user) अणु
+		atomic_दीर्घ_sub(umem->npgs, &umem->user->locked_vm);
+		मुक्त_uid(umem->user);
+	पूर्ण
+पूर्ण
 
-static void xdp_umem_addr_unmap(struct xdp_umem *umem)
-{
+अटल व्योम xdp_umem_addr_unmap(काष्ठा xdp_umem *umem)
+अणु
 	vunmap(umem->addrs);
-	umem->addrs = NULL;
-}
+	umem->addrs = शून्य;
+पूर्ण
 
-static int xdp_umem_addr_map(struct xdp_umem *umem, struct page **pages,
+अटल पूर्णांक xdp_umem_addr_map(काष्ठा xdp_umem *umem, काष्ठा page **pages,
 			     u32 nr_pages)
-{
+अणु
 	umem->addrs = vmap(pages, nr_pages, VM_MAP, PAGE_KERNEL);
-	if (!umem->addrs)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!umem->addrs)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static void xdp_umem_release(struct xdp_umem *umem)
-{
+अटल व्योम xdp_umem_release(काष्ठा xdp_umem *umem)
+अणु
 	umem->zc = false;
-	ida_simple_remove(&umem_ida, umem->id);
+	ida_simple_हटाओ(&umem_ida, umem->id);
 
 	xdp_umem_addr_unmap(umem);
 	xdp_umem_unpin_pages(umem);
 
 	xdp_umem_unaccount_pages(umem);
-	kfree(umem);
-}
+	kमुक्त(umem);
+पूर्ण
 
-static void xdp_umem_release_deferred(struct work_struct *work)
-{
-	struct xdp_umem *umem = container_of(work, struct xdp_umem, work);
+अटल व्योम xdp_umem_release_deferred(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा xdp_umem *umem = container_of(work, काष्ठा xdp_umem, work);
 
 	xdp_umem_release(umem);
-}
+पूर्ण
 
-void xdp_get_umem(struct xdp_umem *umem)
-{
+व्योम xdp_get_umem(काष्ठा xdp_umem *umem)
+अणु
 	refcount_inc(&umem->users);
-}
+पूर्ण
 
-void xdp_put_umem(struct xdp_umem *umem, bool defer_cleanup)
-{
-	if (!umem)
-		return;
+व्योम xdp_put_umem(काष्ठा xdp_umem *umem, bool defer_cleanup)
+अणु
+	अगर (!umem)
+		वापस;
 
-	if (refcount_dec_and_test(&umem->users)) {
-		if (defer_cleanup) {
+	अगर (refcount_dec_and_test(&umem->users)) अणु
+		अगर (defer_cleanup) अणु
 			INIT_WORK(&umem->work, xdp_umem_release_deferred);
 			schedule_work(&umem->work);
-		} else {
+		पूर्ण अन्यथा अणु
 			xdp_umem_release(umem);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int xdp_umem_pin_pages(struct xdp_umem *umem, unsigned long address)
-{
-	unsigned int gup_flags = FOLL_WRITE;
-	long npgs;
-	int err;
+अटल पूर्णांक xdp_umem_pin_pages(काष्ठा xdp_umem *umem, अचिन्हित दीर्घ address)
+अणु
+	अचिन्हित पूर्णांक gup_flags = FOLL_WRITE;
+	दीर्घ npgs;
+	पूर्णांक err;
 
-	umem->pgs = kcalloc(umem->npgs, sizeof(*umem->pgs),
+	umem->pgs = kसुस्मृति(umem->npgs, माप(*umem->pgs),
 			    GFP_KERNEL | __GFP_NOWARN);
-	if (!umem->pgs)
-		return -ENOMEM;
+	अगर (!umem->pgs)
+		वापस -ENOMEM;
 
-	mmap_read_lock(current->mm);
+	mmap_पढ़ो_lock(current->mm);
 	npgs = pin_user_pages(address, umem->npgs,
-			      gup_flags | FOLL_LONGTERM, &umem->pgs[0], NULL);
-	mmap_read_unlock(current->mm);
+			      gup_flags | FOLL_LONGTERM, &umem->pgs[0], शून्य);
+	mmap_पढ़ो_unlock(current->mm);
 
-	if (npgs != umem->npgs) {
-		if (npgs >= 0) {
+	अगर (npgs != umem->npgs) अणु
+		अगर (npgs >= 0) अणु
 			umem->npgs = npgs;
 			err = -ENOMEM;
-			goto out_pin;
-		}
+			जाओ out_pin;
+		पूर्ण
 		err = npgs;
-		goto out_pgs;
-	}
-	return 0;
+		जाओ out_pgs;
+	पूर्ण
+	वापस 0;
 
 out_pin:
 	xdp_umem_unpin_pages(umem);
 out_pgs:
-	kfree(umem->pgs);
-	umem->pgs = NULL;
-	return err;
-}
+	kमुक्त(umem->pgs);
+	umem->pgs = शून्य;
+	वापस err;
+पूर्ण
 
-static int xdp_umem_account_pages(struct xdp_umem *umem)
-{
-	unsigned long lock_limit, new_npgs, old_npgs;
+अटल पूर्णांक xdp_umem_account_pages(काष्ठा xdp_umem *umem)
+अणु
+	अचिन्हित दीर्घ lock_limit, new_npgs, old_npgs;
 
-	if (capable(CAP_IPC_LOCK))
-		return 0;
+	अगर (capable(CAP_IPC_LOCK))
+		वापस 0;
 
 	lock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
 	umem->user = get_uid(current_user());
 
-	do {
-		old_npgs = atomic_long_read(&umem->user->locked_vm);
+	करो अणु
+		old_npgs = atomic_दीर्घ_पढ़ो(&umem->user->locked_vm);
 		new_npgs = old_npgs + umem->npgs;
-		if (new_npgs > lock_limit) {
-			free_uid(umem->user);
-			umem->user = NULL;
-			return -ENOBUFS;
-		}
-	} while (atomic_long_cmpxchg(&umem->user->locked_vm, old_npgs,
+		अगर (new_npgs > lock_limit) अणु
+			मुक्त_uid(umem->user);
+			umem->user = शून्य;
+			वापस -ENOBUFS;
+		पूर्ण
+	पूर्ण जबतक (atomic_दीर्घ_cmpxchg(&umem->user->locked_vm, old_npgs,
 				     new_npgs) != old_npgs);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xdp_umem_reg(struct xdp_umem *umem, struct xdp_umem_reg *mr)
-{
+अटल पूर्णांक xdp_umem_reg(काष्ठा xdp_umem *umem, काष्ठा xdp_umem_reg *mr)
+अणु
 	u32 npgs_rem, chunk_size = mr->chunk_size, headroom = mr->headroom;
 	bool unaligned_chunks = mr->flags & XDP_UMEM_UNALIGNED_CHUNK_FLAG;
 	u64 npgs, addr = mr->addr, size = mr->len;
-	unsigned int chunks, chunks_rem;
-	int err;
+	अचिन्हित पूर्णांक chunks, chunks_rem;
+	पूर्णांक err;
 
-	if (chunk_size < XDP_UMEM_MIN_CHUNK_SIZE || chunk_size > PAGE_SIZE) {
-		/* Strictly speaking we could support this, if:
+	अगर (chunk_size < XDP_UMEM_MIN_CHUNK_SIZE || chunk_size > PAGE_SIZE) अणु
+		/* Strictly speaking we could support this, अगर:
 		 * - huge pages, or*
 		 * - using an IOMMU, or
 		 * - making sure the memory area is consecutive
-		 * but for now, we simply say "computer says no".
+		 * but क्रम now, we simply say "computer says no".
 		 */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (mr->flags & ~XDP_UMEM_UNALIGNED_CHUNK_FLAG)
-		return -EINVAL;
+	अगर (mr->flags & ~XDP_UMEM_UNALIGNED_CHUNK_FLAG)
+		वापस -EINVAL;
 
-	if (!unaligned_chunks && !is_power_of_2(chunk_size))
-		return -EINVAL;
+	अगर (!unaligned_chunks && !is_घातer_of_2(chunk_size))
+		वापस -EINVAL;
 
-	if (!PAGE_ALIGNED(addr)) {
+	अगर (!PAGE_ALIGNED(addr)) अणु
 		/* Memory area has to be page size aligned. For
 		 * simplicity, this might change.
 		 */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((addr + size) < addr)
-		return -EINVAL;
+	अगर ((addr + size) < addr)
+		वापस -EINVAL;
 
-	npgs = div_u64_rem(size, PAGE_SIZE, &npgs_rem);
-	if (npgs_rem)
+	npgs = भाग_u64_rem(size, PAGE_SIZE, &npgs_rem);
+	अगर (npgs_rem)
 		npgs++;
-	if (npgs > U32_MAX)
-		return -EINVAL;
+	अगर (npgs > U32_MAX)
+		वापस -EINVAL;
 
-	chunks = (unsigned int)div_u64_rem(size, chunk_size, &chunks_rem);
-	if (chunks == 0)
-		return -EINVAL;
+	chunks = (अचिन्हित पूर्णांक)भाग_u64_rem(size, chunk_size, &chunks_rem);
+	अगर (chunks == 0)
+		वापस -EINVAL;
 
-	if (!unaligned_chunks && chunks_rem)
-		return -EINVAL;
+	अगर (!unaligned_chunks && chunks_rem)
+		वापस -EINVAL;
 
-	if (headroom >= chunk_size - XDP_PACKET_HEADROOM)
-		return -EINVAL;
+	अगर (headroom >= chunk_size - XDP_PACKET_HEADROOM)
+		वापस -EINVAL;
 
 	umem->size = size;
 	umem->headroom = headroom;
 	umem->chunk_size = chunk_size;
 	umem->chunks = chunks;
 	umem->npgs = (u32)npgs;
-	umem->pgs = NULL;
-	umem->user = NULL;
+	umem->pgs = शून्य;
+	umem->user = शून्य;
 	umem->flags = mr->flags;
 
 	INIT_LIST_HEAD(&umem->xsk_dma_list);
 	refcount_set(&umem->users, 1);
 
 	err = xdp_umem_account_pages(umem);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = xdp_umem_pin_pages(umem, (unsigned long)addr);
-	if (err)
-		goto out_account;
+	err = xdp_umem_pin_pages(umem, (अचिन्हित दीर्घ)addr);
+	अगर (err)
+		जाओ out_account;
 
 	err = xdp_umem_addr_map(umem, umem->pgs, umem->npgs);
-	if (err)
-		goto out_unpin;
+	अगर (err)
+		जाओ out_unpin;
 
-	return 0;
+	वापस 0;
 
 out_unpin:
 	xdp_umem_unpin_pages(umem);
 out_account:
 	xdp_umem_unaccount_pages(umem);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct xdp_umem *xdp_umem_create(struct xdp_umem_reg *mr)
-{
-	struct xdp_umem *umem;
-	int err;
+काष्ठा xdp_umem *xdp_umem_create(काष्ठा xdp_umem_reg *mr)
+अणु
+	काष्ठा xdp_umem *umem;
+	पूर्णांक err;
 
-	umem = kzalloc(sizeof(*umem), GFP_KERNEL);
-	if (!umem)
-		return ERR_PTR(-ENOMEM);
+	umem = kzalloc(माप(*umem), GFP_KERNEL);
+	अगर (!umem)
+		वापस ERR_PTR(-ENOMEM);
 
 	err = ida_simple_get(&umem_ida, 0, 0, GFP_KERNEL);
-	if (err < 0) {
-		kfree(umem);
-		return ERR_PTR(err);
-	}
+	अगर (err < 0) अणु
+		kमुक्त(umem);
+		वापस ERR_PTR(err);
+	पूर्ण
 	umem->id = err;
 
 	err = xdp_umem_reg(umem, mr);
-	if (err) {
-		ida_simple_remove(&umem_ida, umem->id);
-		kfree(umem);
-		return ERR_PTR(err);
-	}
+	अगर (err) अणु
+		ida_simple_हटाओ(&umem_ida, umem->id);
+		kमुक्त(umem);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return umem;
-}
+	वापस umem;
+पूर्ण

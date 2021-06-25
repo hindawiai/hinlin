@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* $Date: 2005/10/24 23:18:13 $ $RCSfile: mv88e1xxx.c,v $ $Revision: 1.49 $ */
-#include "common.h"
-#include "mv88e1xxx.h"
-#include "cphy.h"
-#include "elmer0.h"
+#समावेश "common.h"
+#समावेश "mv88e1xxx.h"
+#समावेश "cphy.h"
+#समावेश "elmer0.h"
 
-/* MV88E1XXX MDI crossover register values */
-#define CROSSOVER_MDI   0
-#define CROSSOVER_MDIX  1
-#define CROSSOVER_AUTO  3
+/* MV88E1XXX MDI crossover रेजिस्टर values */
+#घोषणा CROSSOVER_MDI   0
+#घोषणा CROSSOVER_MDIX  1
+#घोषणा CROSSOVER_AUTO  3
 
-#define INTR_ENABLE_MASK 0x6CA0
+#घोषणा INTR_ENABLE_MASK 0x6CA0
 
 /*
  * Set the bits given by 'bitval' in PHY register 'reg'.
  */
-static void mdio_set_bit(struct cphy *cphy, int reg, u32 bitval)
-{
+अटल व्योम mdio_set_bit(काष्ठा cphy *cphy, पूर्णांक reg, u32 bitval)
+अणु
 	u32 val;
 
-	(void) simple_mdio_read(cphy, reg, &val);
-	(void) simple_mdio_write(cphy, reg, val | bitval);
-}
+	(व्योम) simple_mdio_पढ़ो(cphy, reg, &val);
+	(व्योम) simple_mdio_ग_लिखो(cphy, reg, val | bitval);
+पूर्ण
 
 /*
  * Clear the bits given by 'bitval' in PHY register 'reg'.
  */
-static void mdio_clear_bit(struct cphy *cphy, int reg, u32 bitval)
-{
+अटल व्योम mdio_clear_bit(काष्ठा cphy *cphy, पूर्णांक reg, u32 bitval)
+अणु
 	u32 val;
 
-	(void) simple_mdio_read(cphy, reg, &val);
-	(void) simple_mdio_write(cphy, reg, val & ~bitval);
-}
+	(व्योम) simple_mdio_पढ़ो(cphy, reg, &val);
+	(व्योम) simple_mdio_ग_लिखो(cphy, reg, val & ~bitval);
+पूर्ण
 
 /*
  * NAME:   phy_reset
@@ -40,359 +41,359 @@ static void mdio_clear_bit(struct cphy *cphy, int reg, u32 bitval)
  * DESC:   Reset the given PHY's port. NOTE: This is not a global
  *         chip reset.
  *
- * PARAMS: cphy     - Pointer to PHY instance data.
+ * PARAMS: cphy     - Poपूर्णांकer to PHY instance data.
  *
  * RETURN:  0 - Successful reset.
  *         -1 - Timeout.
  */
-static int mv88e1xxx_reset(struct cphy *cphy, int wait)
-{
+अटल पूर्णांक mv88e1xxx_reset(काष्ठा cphy *cphy, पूर्णांक रुको)
+अणु
 	u32 ctl;
-	int time_out = 1000;
+	पूर्णांक समय_out = 1000;
 
 	mdio_set_bit(cphy, MII_BMCR, BMCR_RESET);
 
-	do {
-		(void) simple_mdio_read(cphy, MII_BMCR, &ctl);
+	करो अणु
+		(व्योम) simple_mdio_पढ़ो(cphy, MII_BMCR, &ctl);
 		ctl &= BMCR_RESET;
-		if (ctl)
+		अगर (ctl)
 			udelay(1);
-	} while (ctl && --time_out);
+	पूर्ण जबतक (ctl && --समय_out);
 
-	return ctl ? -1 : 0;
-}
+	वापस ctl ? -1 : 0;
+पूर्ण
 
-static int mv88e1xxx_interrupt_enable(struct cphy *cphy)
-{
-	/* Enable PHY interrupts. */
-	(void) simple_mdio_write(cphy, MV88E1XXX_INTERRUPT_ENABLE_REGISTER,
+अटल पूर्णांक mv88e1xxx_पूर्णांकerrupt_enable(काष्ठा cphy *cphy)
+अणु
+	/* Enable PHY पूर्णांकerrupts. */
+	(व्योम) simple_mdio_ग_लिखो(cphy, MV88E1XXX_INTERRUPT_ENABLE_REGISTER,
 		   INTR_ENABLE_MASK);
 
-	/* Enable Marvell interrupts through Elmer0. */
-	if (t1_is_asic(cphy->adapter)) {
+	/* Enable Marvell पूर्णांकerrupts through Elmer0. */
+	अगर (t1_is_asic(cphy->adapter)) अणु
 		u32 elmer;
 
-		t1_tpi_read(cphy->adapter, A_ELMER0_INT_ENABLE, &elmer);
+		t1_tpi_पढ़ो(cphy->adapter, A_ELMER0_INT_ENABLE, &elmer);
 		elmer |= ELMER0_GP_BIT1;
-		if (is_T2(cphy->adapter))
+		अगर (is_T2(cphy->adapter))
 		    elmer |= ELMER0_GP_BIT2 | ELMER0_GP_BIT3 | ELMER0_GP_BIT4;
-		t1_tpi_write(cphy->adapter, A_ELMER0_INT_ENABLE, elmer);
-	}
-	return 0;
-}
+		t1_tpi_ग_लिखो(cphy->adapter, A_ELMER0_INT_ENABLE, elmer);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_interrupt_disable(struct cphy *cphy)
-{
-	/* Disable all phy interrupts. */
-	(void) simple_mdio_write(cphy, MV88E1XXX_INTERRUPT_ENABLE_REGISTER, 0);
+अटल पूर्णांक mv88e1xxx_पूर्णांकerrupt_disable(काष्ठा cphy *cphy)
+अणु
+	/* Disable all phy पूर्णांकerrupts. */
+	(व्योम) simple_mdio_ग_लिखो(cphy, MV88E1XXX_INTERRUPT_ENABLE_REGISTER, 0);
 
-	/* Disable Marvell interrupts through Elmer0. */
-	if (t1_is_asic(cphy->adapter)) {
+	/* Disable Marvell पूर्णांकerrupts through Elmer0. */
+	अगर (t1_is_asic(cphy->adapter)) अणु
 		u32 elmer;
 
-		t1_tpi_read(cphy->adapter, A_ELMER0_INT_ENABLE, &elmer);
+		t1_tpi_पढ़ो(cphy->adapter, A_ELMER0_INT_ENABLE, &elmer);
 		elmer &= ~ELMER0_GP_BIT1;
-		if (is_T2(cphy->adapter))
+		अगर (is_T2(cphy->adapter))
 		    elmer &= ~(ELMER0_GP_BIT2|ELMER0_GP_BIT3|ELMER0_GP_BIT4);
-		t1_tpi_write(cphy->adapter, A_ELMER0_INT_ENABLE, elmer);
-	}
-	return 0;
-}
+		t1_tpi_ग_लिखो(cphy->adapter, A_ELMER0_INT_ENABLE, elmer);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_interrupt_clear(struct cphy *cphy)
-{
+अटल पूर्णांक mv88e1xxx_पूर्णांकerrupt_clear(काष्ठा cphy *cphy)
+अणु
 	u32 elmer;
 
-	/* Clear PHY interrupts by reading the register. */
-	(void) simple_mdio_read(cphy,
+	/* Clear PHY पूर्णांकerrupts by पढ़ोing the रेजिस्टर. */
+	(व्योम) simple_mdio_पढ़ो(cphy,
 			MV88E1XXX_INTERRUPT_STATUS_REGISTER, &elmer);
 
-	/* Clear Marvell interrupts through Elmer0. */
-	if (t1_is_asic(cphy->adapter)) {
-		t1_tpi_read(cphy->adapter, A_ELMER0_INT_CAUSE, &elmer);
+	/* Clear Marvell पूर्णांकerrupts through Elmer0. */
+	अगर (t1_is_asic(cphy->adapter)) अणु
+		t1_tpi_पढ़ो(cphy->adapter, A_ELMER0_INT_CAUSE, &elmer);
 		elmer |= ELMER0_GP_BIT1;
-		if (is_T2(cphy->adapter))
+		अगर (is_T2(cphy->adapter))
 		    elmer |= ELMER0_GP_BIT2|ELMER0_GP_BIT3|ELMER0_GP_BIT4;
-		t1_tpi_write(cphy->adapter, A_ELMER0_INT_CAUSE, elmer);
-	}
-	return 0;
-}
+		t1_tpi_ग_लिखो(cphy->adapter, A_ELMER0_INT_CAUSE, elmer);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Set the PHY speed and duplex.  This also disables auto-negotiation, except
- * for 1Gb/s, where auto-negotiation is mandatory.
+ * Set the PHY speed and duplex.  This also disables स्वतः-negotiation, except
+ * क्रम 1Gb/s, where स्वतः-negotiation is mandatory.
  */
-static int mv88e1xxx_set_speed_duplex(struct cphy *phy, int speed, int duplex)
-{
+अटल पूर्णांक mv88e1xxx_set_speed_duplex(काष्ठा cphy *phy, पूर्णांक speed, पूर्णांक duplex)
+अणु
 	u32 ctl;
 
-	(void) simple_mdio_read(phy, MII_BMCR, &ctl);
-	if (speed >= 0) {
+	(व्योम) simple_mdio_पढ़ो(phy, MII_BMCR, &ctl);
+	अगर (speed >= 0) अणु
 		ctl &= ~(BMCR_SPEED100 | BMCR_SPEED1000 | BMCR_ANENABLE);
-		if (speed == SPEED_100)
+		अगर (speed == SPEED_100)
 			ctl |= BMCR_SPEED100;
-		else if (speed == SPEED_1000)
+		अन्यथा अगर (speed == SPEED_1000)
 			ctl |= BMCR_SPEED1000;
-	}
-	if (duplex >= 0) {
+	पूर्ण
+	अगर (duplex >= 0) अणु
 		ctl &= ~(BMCR_FULLDPLX | BMCR_ANENABLE);
-		if (duplex == DUPLEX_FULL)
+		अगर (duplex == DUPLEX_FULL)
 			ctl |= BMCR_FULLDPLX;
-	}
-	if (ctl & BMCR_SPEED1000)  /* auto-negotiation required for 1Gb/s */
+	पूर्ण
+	अगर (ctl & BMCR_SPEED1000)  /* स्वतः-negotiation required क्रम 1Gb/s */
 		ctl |= BMCR_ANENABLE;
-	(void) simple_mdio_write(phy, MII_BMCR, ctl);
-	return 0;
-}
+	(व्योम) simple_mdio_ग_लिखो(phy, MII_BMCR, ctl);
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_crossover_set(struct cphy *cphy, int crossover)
-{
+अटल पूर्णांक mv88e1xxx_crossover_set(काष्ठा cphy *cphy, पूर्णांक crossover)
+अणु
 	u32 data32;
 
-	(void) simple_mdio_read(cphy,
+	(व्योम) simple_mdio_पढ़ो(cphy,
 			MV88E1XXX_SPECIFIC_CNTRL_REGISTER, &data32);
 	data32 &= ~V_PSCR_MDI_XOVER_MODE(M_PSCR_MDI_XOVER_MODE);
 	data32 |= V_PSCR_MDI_XOVER_MODE(crossover);
-	(void) simple_mdio_write(cphy,
+	(व्योम) simple_mdio_ग_लिखो(cphy,
 			MV88E1XXX_SPECIFIC_CNTRL_REGISTER, data32);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_autoneg_enable(struct cphy *cphy)
-{
+अटल पूर्णांक mv88e1xxx_स्वतःneg_enable(काष्ठा cphy *cphy)
+अणु
 	u32 ctl;
 
-	(void) mv88e1xxx_crossover_set(cphy, CROSSOVER_AUTO);
+	(व्योम) mv88e1xxx_crossover_set(cphy, CROSSOVER_AUTO);
 
-	(void) simple_mdio_read(cphy, MII_BMCR, &ctl);
-	/* restart autoneg for change to take effect */
+	(व्योम) simple_mdio_पढ़ो(cphy, MII_BMCR, &ctl);
+	/* restart स्वतःneg क्रम change to take effect */
 	ctl |= BMCR_ANENABLE | BMCR_ANRESTART;
-	(void) simple_mdio_write(cphy, MII_BMCR, ctl);
-	return 0;
-}
+	(व्योम) simple_mdio_ग_लिखो(cphy, MII_BMCR, ctl);
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_autoneg_disable(struct cphy *cphy)
-{
+अटल पूर्णांक mv88e1xxx_स्वतःneg_disable(काष्ठा cphy *cphy)
+अणु
 	u32 ctl;
 
 	/*
-	 * Crossover *must* be set to manual in order to disable auto-neg.
-	 * The Alaska FAQs document highlights this point.
+	 * Crossover *must* be set to manual in order to disable स्वतः-neg.
+	 * The Alaska FAQs करोcument highlights this poपूर्णांक.
 	 */
-	(void) mv88e1xxx_crossover_set(cphy, CROSSOVER_MDI);
+	(व्योम) mv88e1xxx_crossover_set(cphy, CROSSOVER_MDI);
 
 	/*
-	 * Must include autoneg reset when disabling auto-neg. This
-	 * is described in the Alaska FAQ document.
+	 * Must include स्वतःneg reset when disabling स्वतः-neg. This
+	 * is described in the Alaska FAQ करोcument.
 	 */
-	(void) simple_mdio_read(cphy, MII_BMCR, &ctl);
+	(व्योम) simple_mdio_पढ़ो(cphy, MII_BMCR, &ctl);
 	ctl &= ~BMCR_ANENABLE;
-	(void) simple_mdio_write(cphy, MII_BMCR, ctl | BMCR_ANRESTART);
-	return 0;
-}
+	(व्योम) simple_mdio_ग_लिखो(cphy, MII_BMCR, ctl | BMCR_ANRESTART);
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_autoneg_restart(struct cphy *cphy)
-{
+अटल पूर्णांक mv88e1xxx_स्वतःneg_restart(काष्ठा cphy *cphy)
+अणु
 	mdio_set_bit(cphy, MII_BMCR, BMCR_ANRESTART);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_advertise(struct cphy *phy, unsigned int advertise_map)
-{
+अटल पूर्णांक mv88e1xxx_advertise(काष्ठा cphy *phy, अचिन्हित पूर्णांक advertise_map)
+अणु
 	u32 val = 0;
 
-	if (advertise_map &
-	    (ADVERTISED_1000baseT_Half | ADVERTISED_1000baseT_Full)) {
-		(void) simple_mdio_read(phy, MII_GBCR, &val);
+	अगर (advertise_map &
+	    (ADVERTISED_1000baseT_Half | ADVERTISED_1000baseT_Full)) अणु
+		(व्योम) simple_mdio_पढ़ो(phy, MII_GBCR, &val);
 		val &= ~(GBCR_ADV_1000HALF | GBCR_ADV_1000FULL);
-		if (advertise_map & ADVERTISED_1000baseT_Half)
+		अगर (advertise_map & ADVERTISED_1000baseT_Half)
 			val |= GBCR_ADV_1000HALF;
-		if (advertise_map & ADVERTISED_1000baseT_Full)
+		अगर (advertise_map & ADVERTISED_1000baseT_Full)
 			val |= GBCR_ADV_1000FULL;
-	}
-	(void) simple_mdio_write(phy, MII_GBCR, val);
+	पूर्ण
+	(व्योम) simple_mdio_ग_लिखो(phy, MII_GBCR, val);
 
 	val = 1;
-	if (advertise_map & ADVERTISED_10baseT_Half)
+	अगर (advertise_map & ADVERTISED_10baseT_Half)
 		val |= ADVERTISE_10HALF;
-	if (advertise_map & ADVERTISED_10baseT_Full)
+	अगर (advertise_map & ADVERTISED_10baseT_Full)
 		val |= ADVERTISE_10FULL;
-	if (advertise_map & ADVERTISED_100baseT_Half)
+	अगर (advertise_map & ADVERTISED_100baseT_Half)
 		val |= ADVERTISE_100HALF;
-	if (advertise_map & ADVERTISED_100baseT_Full)
+	अगर (advertise_map & ADVERTISED_100baseT_Full)
 		val |= ADVERTISE_100FULL;
-	if (advertise_map & ADVERTISED_PAUSE)
+	अगर (advertise_map & ADVERTISED_PAUSE)
 		val |= ADVERTISE_PAUSE;
-	if (advertise_map & ADVERTISED_ASYM_PAUSE)
+	अगर (advertise_map & ADVERTISED_ASYM_PAUSE)
 		val |= ADVERTISE_PAUSE_ASYM;
-	(void) simple_mdio_write(phy, MII_ADVERTISE, val);
-	return 0;
-}
+	(व्योम) simple_mdio_ग_लिखो(phy, MII_ADVERTISE, val);
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_set_loopback(struct cphy *cphy, int on)
-{
-	if (on)
+अटल पूर्णांक mv88e1xxx_set_loopback(काष्ठा cphy *cphy, पूर्णांक on)
+अणु
+	अगर (on)
 		mdio_set_bit(cphy, MII_BMCR, BMCR_LOOPBACK);
-	else
+	अन्यथा
 		mdio_clear_bit(cphy, MII_BMCR, BMCR_LOOPBACK);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_get_link_status(struct cphy *cphy, int *link_ok,
-				     int *speed, int *duplex, int *fc)
-{
+अटल पूर्णांक mv88e1xxx_get_link_status(काष्ठा cphy *cphy, पूर्णांक *link_ok,
+				     पूर्णांक *speed, पूर्णांक *duplex, पूर्णांक *fc)
+अणु
 	u32 status;
-	int sp = -1, dplx = -1, pause = 0;
+	पूर्णांक sp = -1, dplx = -1, छोड़ो = 0;
 
-	(void) simple_mdio_read(cphy,
+	(व्योम) simple_mdio_पढ़ो(cphy,
 			MV88E1XXX_SPECIFIC_STATUS_REGISTER, &status);
-	if ((status & V_PSSR_STATUS_RESOLVED) != 0) {
-		if (status & V_PSSR_RX_PAUSE)
-			pause |= PAUSE_RX;
-		if (status & V_PSSR_TX_PAUSE)
-			pause |= PAUSE_TX;
+	अगर ((status & V_PSSR_STATUS_RESOLVED) != 0) अणु
+		अगर (status & V_PSSR_RX_PAUSE)
+			छोड़ो |= PAUSE_RX;
+		अगर (status & V_PSSR_TX_PAUSE)
+			छोड़ो |= PAUSE_TX;
 		dplx = (status & V_PSSR_DUPLEX) ? DUPLEX_FULL : DUPLEX_HALF;
 		sp = G_PSSR_SPEED(status);
-		if (sp == 0)
+		अगर (sp == 0)
 			sp = SPEED_10;
-		else if (sp == 1)
+		अन्यथा अगर (sp == 1)
 			sp = SPEED_100;
-		else
+		अन्यथा
 			sp = SPEED_1000;
-	}
-	if (link_ok)
+	पूर्ण
+	अगर (link_ok)
 		*link_ok = (status & V_PSSR_LINK) != 0;
-	if (speed)
+	अगर (speed)
 		*speed = sp;
-	if (duplex)
+	अगर (duplex)
 		*duplex = dplx;
-	if (fc)
-		*fc = pause;
-	return 0;
-}
+	अगर (fc)
+		*fc = छोड़ो;
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_downshift_set(struct cphy *cphy, int downshift_enable)
-{
+अटल पूर्णांक mv88e1xxx_करोwnshअगरt_set(काष्ठा cphy *cphy, पूर्णांक करोwnshअगरt_enable)
+अणु
 	u32 val;
 
-	(void) simple_mdio_read(cphy,
+	(व्योम) simple_mdio_पढ़ो(cphy,
 		MV88E1XXX_EXT_PHY_SPECIFIC_CNTRL_REGISTER, &val);
 
 	/*
-	 * Set the downshift counter to 2 so we try to establish Gb link
-	 * twice before downshifting.
+	 * Set the करोwnshअगरt counter to 2 so we try to establish Gb link
+	 * twice beक्रमe करोwnshअगरting.
 	 */
 	val &= ~(V_DOWNSHIFT_ENABLE | V_DOWNSHIFT_CNT(M_DOWNSHIFT_CNT));
 
-	if (downshift_enable)
+	अगर (करोwnshअगरt_enable)
 		val |= V_DOWNSHIFT_ENABLE | V_DOWNSHIFT_CNT(2);
-	(void) simple_mdio_write(cphy,
+	(व्योम) simple_mdio_ग_लिखो(cphy,
 			MV88E1XXX_EXT_PHY_SPECIFIC_CNTRL_REGISTER, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv88e1xxx_interrupt_handler(struct cphy *cphy)
-{
-	int cphy_cause = 0;
+अटल पूर्णांक mv88e1xxx_पूर्णांकerrupt_handler(काष्ठा cphy *cphy)
+अणु
+	पूर्णांक cphy_cause = 0;
 	u32 status;
 
 	/*
-	 * Loop until cause reads zero. Need to handle bouncing interrupts.
+	 * Loop until cause पढ़ोs zero. Need to handle bouncing पूर्णांकerrupts.
 	 */
-	while (1) {
+	जबतक (1) अणु
 		u32 cause;
 
-		(void) simple_mdio_read(cphy,
+		(व्योम) simple_mdio_पढ़ो(cphy,
 				MV88E1XXX_INTERRUPT_STATUS_REGISTER,
 				&cause);
 		cause &= INTR_ENABLE_MASK;
-		if (!cause)
-			break;
+		अगर (!cause)
+			अवरोध;
 
-		if (cause & MV88E1XXX_INTR_LINK_CHNG) {
-			(void) simple_mdio_read(cphy,
+		अगर (cause & MV88E1XXX_INTR_LINK_CHNG) अणु
+			(व्योम) simple_mdio_पढ़ो(cphy,
 				MV88E1XXX_SPECIFIC_STATUS_REGISTER, &status);
 
-			if (status & MV88E1XXX_INTR_LINK_CHNG)
+			अगर (status & MV88E1XXX_INTR_LINK_CHNG)
 				cphy->state |= PHY_LINK_UP;
-			else {
+			अन्यथा अणु
 				cphy->state &= ~PHY_LINK_UP;
-				if (cphy->state & PHY_AUTONEG_EN)
+				अगर (cphy->state & PHY_AUTONEG_EN)
 					cphy->state &= ~PHY_AUTONEG_RDY;
 				cphy_cause |= cphy_cause_link_change;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (cause & MV88E1XXX_INTR_AUTONEG_DONE)
+		अगर (cause & MV88E1XXX_INTR_AUTONEG_DONE)
 			cphy->state |= PHY_AUTONEG_RDY;
 
-		if ((cphy->state & (PHY_LINK_UP | PHY_AUTONEG_RDY)) ==
+		अगर ((cphy->state & (PHY_LINK_UP | PHY_AUTONEG_RDY)) ==
 			(PHY_LINK_UP | PHY_AUTONEG_RDY))
 				cphy_cause |= cphy_cause_link_change;
-	}
-	return cphy_cause;
-}
+	पूर्ण
+	वापस cphy_cause;
+पूर्ण
 
-static void mv88e1xxx_destroy(struct cphy *cphy)
-{
-	kfree(cphy);
-}
+अटल व्योम mv88e1xxx_destroy(काष्ठा cphy *cphy)
+अणु
+	kमुक्त(cphy);
+पूर्ण
 
-static const struct cphy_ops mv88e1xxx_ops = {
+अटल स्थिर काष्ठा cphy_ops mv88e1xxx_ops = अणु
 	.destroy              = mv88e1xxx_destroy,
 	.reset                = mv88e1xxx_reset,
-	.interrupt_enable     = mv88e1xxx_interrupt_enable,
-	.interrupt_disable    = mv88e1xxx_interrupt_disable,
-	.interrupt_clear      = mv88e1xxx_interrupt_clear,
-	.interrupt_handler    = mv88e1xxx_interrupt_handler,
-	.autoneg_enable       = mv88e1xxx_autoneg_enable,
-	.autoneg_disable      = mv88e1xxx_autoneg_disable,
-	.autoneg_restart      = mv88e1xxx_autoneg_restart,
+	.पूर्णांकerrupt_enable     = mv88e1xxx_पूर्णांकerrupt_enable,
+	.पूर्णांकerrupt_disable    = mv88e1xxx_पूर्णांकerrupt_disable,
+	.पूर्णांकerrupt_clear      = mv88e1xxx_पूर्णांकerrupt_clear,
+	.पूर्णांकerrupt_handler    = mv88e1xxx_पूर्णांकerrupt_handler,
+	.स्वतःneg_enable       = mv88e1xxx_स्वतःneg_enable,
+	.स्वतःneg_disable      = mv88e1xxx_स्वतःneg_disable,
+	.स्वतःneg_restart      = mv88e1xxx_स्वतःneg_restart,
 	.advertise            = mv88e1xxx_advertise,
 	.set_loopback         = mv88e1xxx_set_loopback,
 	.set_speed_duplex     = mv88e1xxx_set_speed_duplex,
 	.get_link_status      = mv88e1xxx_get_link_status,
-};
+पूर्ण;
 
-static struct cphy *mv88e1xxx_phy_create(struct net_device *dev, int phy_addr,
-					 const struct mdio_ops *mdio_ops)
-{
-	struct adapter *adapter = netdev_priv(dev);
-	struct cphy *cphy = kzalloc(sizeof(*cphy), GFP_KERNEL);
+अटल काष्ठा cphy *mv88e1xxx_phy_create(काष्ठा net_device *dev, पूर्णांक phy_addr,
+					 स्थिर काष्ठा mdio_ops *mdio_ops)
+अणु
+	काष्ठा adapter *adapter = netdev_priv(dev);
+	काष्ठा cphy *cphy = kzalloc(माप(*cphy), GFP_KERNEL);
 
-	if (!cphy)
-		return NULL;
+	अगर (!cphy)
+		वापस शून्य;
 
 	cphy_init(cphy, dev, phy_addr, &mv88e1xxx_ops, mdio_ops);
 
-	/* Configure particular PHY's to run in a different mode. */
-	if ((board_info(adapter)->caps & SUPPORTED_TP) &&
-	    board_info(adapter)->chip_phy == CHBT_PHY_88E1111) {
+	/* Configure particular PHY's to run in a dअगरferent mode. */
+	अगर ((board_info(adapter)->caps & SUPPORTED_TP) &&
+	    board_info(adapter)->chip_phy == CHBT_PHY_88E1111) अणु
 		/*
 		 * Configure the PHY transmitter as class A to reduce EMI.
 		 */
-		(void) simple_mdio_write(cphy,
+		(व्योम) simple_mdio_ग_लिखो(cphy,
 				MV88E1XXX_EXTENDED_ADDR_REGISTER, 0xB);
-		(void) simple_mdio_write(cphy,
+		(व्योम) simple_mdio_ग_लिखो(cphy,
 				MV88E1XXX_EXTENDED_REGISTER, 0x8004);
-	}
-	(void) mv88e1xxx_downshift_set(cphy, 1);   /* Enable downshift */
+	पूर्ण
+	(व्योम) mv88e1xxx_करोwnshअगरt_set(cphy, 1);   /* Enable करोwnshअगरt */
 
 	/* LED */
-	if (is_T2(adapter)) {
-		(void) simple_mdio_write(cphy,
+	अगर (is_T2(adapter)) अणु
+		(व्योम) simple_mdio_ग_लिखो(cphy,
 				MV88E1XXX_LED_CONTROL_REGISTER, 0x1);
-	}
+	पूर्ण
 
-	return cphy;
-}
+	वापस cphy;
+पूर्ण
 
-static int mv88e1xxx_phy_reset(adapter_t* adapter)
-{
-	return 0;
-}
+अटल पूर्णांक mv88e1xxx_phy_reset(adapter_t* adapter)
+अणु
+	वापस 0;
+पूर्ण
 
-const struct gphy t1_mv88e1xxx_ops = {
+स्थिर काष्ठा gphy t1_mv88e1xxx_ops = अणु
 	.create = mv88e1xxx_phy_create,
 	.reset =  mv88e1xxx_phy_reset
-};
+पूर्ण;

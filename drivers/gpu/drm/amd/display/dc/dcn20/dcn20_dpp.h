@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,15 +23,15 @@
  *
  */
 
-#ifndef __DCN20_DPP_H__
-#define __DCN20_DPP_H__
+#अगर_अघोषित __DCN20_DPP_H__
+#घोषणा __DCN20_DPP_H__
 
-#include "dcn10/dcn10_dpp.h"
+#समावेश "dcn10/dcn10_dpp.h"
 
-#define TO_DCN20_DPP(dpp)\
-	container_of(dpp, struct dcn20_dpp, base)
+#घोषणा TO_DCN20_DPP(dpp)\
+	container_of(dpp, काष्ठा dcn20_dpp, base)
 
-#define TF_REG_LIST_DCN20_COMMON_UPDATED(id) \
+#घोषणा TF_REG_LIST_DCN20_COMMON_UPDATED(id) \
 	SRI(CM_BLNDGAM_LUT_WRITE_EN_MASK, CM, id), \
 	SRI(CM_BLNDGAM_RAMB_SLOPE_CNTL_B, CM, id), \
 	SRI(CM_BLNDGAM_RAMB_SLOPE_CNTL_G, CM, id), \
@@ -39,7 +40,7 @@
 	SRI(CM_BLNDGAM_RAMA_SLOPE_CNTL_G, CM, id), \
 	SRI(CM_BLNDGAM_RAMA_SLOPE_CNTL_R, CM, id)
 
-#define TF_REG_LIST_DCN20_COMMON(id) \
+#घोषणा TF_REG_LIST_DCN20_COMMON(id) \
 	SRI(CM_BLNDGAM_CONTROL, CM, id), \
 	SRI(CM_BLNDGAM_RAMB_START_CNTL_B, CM, id), \
 	SRI(CM_BLNDGAM_RAMB_START_CNTL_G, CM, id), \
@@ -150,7 +151,7 @@
 	SRI(CM_SHAPER_RAMA_REGION_32_33, CM, id), \
 	SRI(CM_SHAPER_LUT_INDEX, CM, id)
 
-#define TF_REG_LIST_DCN20_COMMON_APPEND(id) \
+#घोषणा TF_REG_LIST_DCN20_COMMON_APPEND(id) \
 	SRI(CM_GAMUT_REMAP_B_C11_C12, CM, id),\
 	SRI(CM_GAMUT_REMAP_B_C13_C14, CM, id),\
 	SRI(CM_GAMUT_REMAP_B_C21_C22, CM, id),\
@@ -160,7 +161,7 @@
 	SRI(CM_ICSC_B_C11_C12, CM, id), \
 	SRI(CM_ICSC_B_C33_C34, CM, id)
 
-#define TF_REG_LIST_DCN20(id) \
+#घोषणा TF_REG_LIST_DCN20(id) \
 	TF_REG_LIST_DCN(id), \
 	TF_REG_LIST_DCN20_COMMON(id), \
 	TF_REG_LIST_DCN20_COMMON_UPDATED(id), \
@@ -183,7 +184,7 @@
 	SRI(DSCL_MEM_PWR_CTRL, DSCL, id)
 
 
-#define TF_REG_LIST_SH_MASK_DCN20_UPDATED(mask_sh)\
+#घोषणा TF_REG_LIST_SH_MASK_DCN20_UPDATED(mask_sh)\
 	TF_SF(CM0_CM_BLNDGAM_RAMB_SLOPE_CNTL_B, CM_BLNDGAM_RAMB_EXP_REGION_LINEAR_SLOPE_B, mask_sh), \
 	TF_SF(CM0_CM_BLNDGAM_RAMB_SLOPE_CNTL_G, CM_BLNDGAM_RAMB_EXP_REGION_LINEAR_SLOPE_G, mask_sh), \
 	TF_SF(CM0_CM_BLNDGAM_RAMB_SLOPE_CNTL_R, CM_BLNDGAM_RAMB_EXP_REGION_LINEAR_SLOPE_R, mask_sh), \
@@ -206,7 +207,7 @@
 	TF_SF(CM0_CM_SHAPER_CONTROL, CM_SHAPER_LUT_MODE, mask_sh)
 
 
-#define TF_REG_LIST_SH_MASK_DCN20_COMMON(mask_sh)\
+#घोषणा TF_REG_LIST_SH_MASK_DCN20_COMMON(mask_sh)\
 	TF_SF(CM0_CM_3DLUT_MODE, CM_3DLUT_MODE, mask_sh), \
 	TF_SF(CM0_CM_BLNDGAM_RAMB_START_CNTL_B, CM_BLNDGAM_RAMB_EXP_REGION_START_B, mask_sh), \
 	TF_SF(CM0_CM_BLNDGAM_RAMB_START_CNTL_B, CM_BLNDGAM_RAMB_EXP_REGION_START_SEGMENT_B, mask_sh), \
@@ -542,7 +543,7 @@
 	TF_SF(CM0_CM_SHAPER_LUT_DATA, CM_SHAPER_LUT_DATA, mask_sh)
 
 
-#define TF_REG_LIST_SH_MASK_DCN20(mask_sh)\
+#घोषणा TF_REG_LIST_SH_MASK_DCN20(mask_sh)\
 	TF_REG_LIST_SH_MASK_DCN(mask_sh), \
 	TF_REG_LIST_SH_MASK_DCN20_COMMON(mask_sh), \
 	TF_REG_LIST_SH_MASK_DCN20_UPDATED(mask_sh), \
@@ -582,25 +583,25 @@
 	TF_SF(DSCL0_OBUF_MEM_PWR_CTRL, OBUF_MEM_PWR_FORCE, mask_sh),\
 	TF_SF(DSCL0_DSCL_MEM_PWR_CTRL, LUT_MEM_PWR_FORCE, mask_sh)
 
-/* DPP CM debug status register:
+/* DPP CM debug status रेजिस्टर:
  *
  *		Status index including current ICSC, Gamut Remap Mode is 9
  *			ICSC Mode: [4..3]
  *			Gamut Remap Mode: [10..9]
  */
-#define CM_TEST_DEBUG_DATA_STATUS_IDX 9
+#घोषणा CM_TEST_DEBUG_DATA_STATUS_IDX 9
 
-#define TF_DEBUG_REG_LIST_SH_DCN20 \
+#घोषणा TF_DEBUG_REG_LIST_SH_DCN20 \
 	TF_DEBUG_REG_LIST_SH_DCN10, \
 	.CM_TEST_DEBUG_DATA_ICSC_MODE = 3, \
 	.CM_TEST_DEBUG_DATA_GAMUT_REMAP_MODE = 9
 
-#define TF_DEBUG_REG_LIST_MASK_DCN20 \
+#घोषणा TF_DEBUG_REG_LIST_MASK_DCN20 \
 	TF_DEBUG_REG_LIST_MASK_DCN10, \
 	.CM_TEST_DEBUG_DATA_ICSC_MODE = 0x18, \
 	.CM_TEST_DEBUG_DATA_GAMUT_REMAP_MODE = 0x600
 
-#define TF_REG_FIELD_LIST_DCN2_0(type) \
+#घोषणा TF_REG_FIELD_LIST_DCN2_0(type) \
 	TF_REG_FIELD_LIST(type) \
 	type CM_BLNDGAM_LUT_DATA; \
 	type CM_TEST_DEBUG_DATA_ICSC_MODE; \
@@ -635,144 +636,144 @@
 	type OBUF_MEM_PWR_FORCE
 
 
-struct dcn2_dpp_shift {
-	TF_REG_FIELD_LIST_DCN2_0(uint8_t);
-};
+काष्ठा dcn2_dpp_shअगरt अणु
+	TF_REG_FIELD_LIST_DCN2_0(uपूर्णांक8_t);
+पूर्ण;
 
-struct dcn2_dpp_mask {
-	TF_REG_FIELD_LIST_DCN2_0(uint32_t);
-};
+काष्ठा dcn2_dpp_mask अणु
+	TF_REG_FIELD_LIST_DCN2_0(uपूर्णांक32_t);
+पूर्ण;
 
-#define DPP_DCN2_REG_VARIABLE_LIST \
+#घोषणा DPP_DCN2_REG_VARIABLE_LIST \
 	DPP_COMMON_REG_VARIABLE_LIST \
-	uint32_t CM_BLNDGAM_LUT_DATA; \
-	uint32_t ALPHA_2BIT_LUT; \
-	uint32_t FCNV_FP_BIAS_R; \
-	uint32_t FCNV_FP_BIAS_G; \
-	uint32_t FCNV_FP_BIAS_B; \
-	uint32_t FCNV_FP_SCALE_R; \
-	uint32_t FCNV_FP_SCALE_G; \
-	uint32_t FCNV_FP_SCALE_B; \
-	uint32_t COLOR_KEYER_CONTROL; \
-	uint32_t COLOR_KEYER_ALPHA; \
-	uint32_t COLOR_KEYER_RED; \
-	uint32_t COLOR_KEYER_GREEN; \
-	uint32_t COLOR_KEYER_BLUE; \
-	uint32_t OBUF_MEM_PWR_CTRL
+	uपूर्णांक32_t CM_BLNDGAM_LUT_DATA; \
+	uपूर्णांक32_t ALPHA_2BIT_LUT; \
+	uपूर्णांक32_t FCNV_FP_BIAS_R; \
+	uपूर्णांक32_t FCNV_FP_BIAS_G; \
+	uपूर्णांक32_t FCNV_FP_BIAS_B; \
+	uपूर्णांक32_t FCNV_FP_SCALE_R; \
+	uपूर्णांक32_t FCNV_FP_SCALE_G; \
+	uपूर्णांक32_t FCNV_FP_SCALE_B; \
+	uपूर्णांक32_t COLOR_KEYER_CONTROL; \
+	uपूर्णांक32_t COLOR_KEYER_ALPHA; \
+	uपूर्णांक32_t COLOR_KEYER_RED; \
+	uपूर्णांक32_t COLOR_KEYER_GREEN; \
+	uपूर्णांक32_t COLOR_KEYER_BLUE; \
+	uपूर्णांक32_t OBUF_MEM_PWR_CTRL
 
-#define DPP_DCN2_REG_VARIABLE_LIST_CM_APPEND \
-	uint32_t CM_GAMUT_REMAP_B_C11_C12; \
-	uint32_t CM_GAMUT_REMAP_B_C13_C14; \
-	uint32_t CM_GAMUT_REMAP_B_C21_C22; \
-	uint32_t CM_GAMUT_REMAP_B_C23_C24; \
-	uint32_t CM_GAMUT_REMAP_B_C31_C32; \
-	uint32_t CM_GAMUT_REMAP_B_C33_C34; \
-	uint32_t CM_ICSC_B_C11_C12; \
-	uint32_t CM_ICSC_B_C33_C34
+#घोषणा DPP_DCN2_REG_VARIABLE_LIST_CM_APPEND \
+	uपूर्णांक32_t CM_GAMUT_REMAP_B_C11_C12; \
+	uपूर्णांक32_t CM_GAMUT_REMAP_B_C13_C14; \
+	uपूर्णांक32_t CM_GAMUT_REMAP_B_C21_C22; \
+	uपूर्णांक32_t CM_GAMUT_REMAP_B_C23_C24; \
+	uपूर्णांक32_t CM_GAMUT_REMAP_B_C31_C32; \
+	uपूर्णांक32_t CM_GAMUT_REMAP_B_C33_C34; \
+	uपूर्णांक32_t CM_ICSC_B_C11_C12; \
+	uपूर्णांक32_t CM_ICSC_B_C33_C34
 
-struct dcn2_dpp_registers {
+काष्ठा dcn2_dpp_रेजिस्टरs अणु
 	DPP_DCN2_REG_VARIABLE_LIST;
 	DPP_DCN2_REG_VARIABLE_LIST_CM_APPEND;
-};
+पूर्ण;
 
-struct dcn20_dpp {
-	struct dpp base;
+काष्ठा dcn20_dpp अणु
+	काष्ठा dpp base;
 
-	const struct dcn2_dpp_registers *tf_regs;
-	const struct dcn2_dpp_shift *tf_shift;
-	const struct dcn2_dpp_mask *tf_mask;
+	स्थिर काष्ठा dcn2_dpp_रेजिस्टरs *tf_regs;
+	स्थिर काष्ठा dcn2_dpp_shअगरt *tf_shअगरt;
+	स्थिर काष्ठा dcn2_dpp_mask *tf_mask;
 
-	const uint16_t *filter_v;
-	const uint16_t *filter_h;
-	const uint16_t *filter_v_c;
-	const uint16_t *filter_h_c;
-	int lb_pixel_depth_supported;
-	int lb_memory_size;
-	int lb_bits_per_entry;
-	bool is_write_to_ram_a_safe;
-	struct scaler_data scl_data;
-	struct pwl_params pwl_data;
-};
+	स्थिर uपूर्णांक16_t *filter_v;
+	स्थिर uपूर्णांक16_t *filter_h;
+	स्थिर uपूर्णांक16_t *filter_v_c;
+	स्थिर uपूर्णांक16_t *filter_h_c;
+	पूर्णांक lb_pixel_depth_supported;
+	पूर्णांक lb_memory_size;
+	पूर्णांक lb_bits_per_entry;
+	bool is_ग_लिखो_to_ram_a_safe;
+	काष्ठा scaler_data scl_data;
+	काष्ठा pwl_params pwl_data;
+पूर्ण;
 
-enum dcn20_input_csc_select {
+क्रमागत dcn20_input_csc_select अणु
 	DCN2_ICSC_SELECT_BYPASS = 0,
 	DCN2_ICSC_SELECT_ICSC_A = 1,
 	DCN2_ICSC_SELECT_ICSC_B = 2
-};
+पूर्ण;
 
-enum dcn20_gamut_remap_select {
+क्रमागत dcn20_gamut_remap_select अणु
 	DCN2_GAMUT_REMAP_BYPASS = 0,
 	DCN2_GAMUT_REMAP_COEF_A = 1,
 	DCN2_GAMUT_REMAP_COEF_B = 2
-};
+पूर्ण;
 
-void dpp20_read_state(struct dpp *dpp_base,
-		struct dcn_dpp_state *s);
+व्योम dpp20_पढ़ो_state(काष्ठा dpp *dpp_base,
+		काष्ठा dcn_dpp_state *s);
 
-void dpp2_set_degamma_pwl(
-		struct dpp *dpp_base,
-		const struct pwl_params *params);
+व्योम dpp2_set_degamma_pwl(
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_params *params);
 
-void dpp2_set_degamma(
-		struct dpp *dpp_base,
-		enum ipp_degamma_mode mode);
+व्योम dpp2_set_degamma(
+		काष्ठा dpp *dpp_base,
+		क्रमागत ipp_degamma_mode mode);
 
-void dpp2_cm_set_gamut_remap(
-	struct dpp *dpp_base,
-	const struct dpp_grph_csc_adjustment *adjust);
+व्योम dpp2_cm_set_gamut_remap(
+	काष्ठा dpp *dpp_base,
+	स्थिर काष्ठा dpp_grph_csc_adjusपंचांगent *adjust);
 
-void dpp2_program_input_csc(
-		struct dpp *dpp_base,
-		enum dc_color_space color_space,
-		enum dcn20_input_csc_select input_select,
-		const struct out_csc_color_matrix *tbl_entry);
+व्योम dpp2_program_input_csc(
+		काष्ठा dpp *dpp_base,
+		क्रमागत dc_color_space color_space,
+		क्रमागत dcn20_input_csc_select input_select,
+		स्थिर काष्ठा out_csc_color_matrix *tbl_entry);
 
 bool dpp20_program_blnd_lut(
-	struct dpp *dpp_base, const struct pwl_params *params);
+	काष्ठा dpp *dpp_base, स्थिर काष्ठा pwl_params *params);
 
 bool dpp20_program_shaper(
-		struct dpp *dpp_base,
-		const struct pwl_params *params);
+		काष्ठा dpp *dpp_base,
+		स्थिर काष्ठा pwl_params *params);
 
 bool dpp20_program_3dlut(
-		struct dpp *dpp_base,
-		struct tetrahedral_params *params);
+		काष्ठा dpp *dpp_base,
+		काष्ठा tetrahedral_params *params);
 
-void dpp2_cnv_set_alpha_keyer(
-			struct dpp *dpp_base,
-			struct cnv_color_keyer_params *color_keyer);
+व्योम dpp2_cnv_set_alpha_keyer(
+			काष्ठा dpp *dpp_base,
+			काष्ठा cnv_color_keyer_params *color_keyer);
 
-void dscl2_calc_lb_num_partitions(
-			const struct scaler_data *scl_data,
-			enum lb_memory_config lb_config,
-			int *num_part_y,
-			int *num_part_c);
+व्योम dscl2_calc_lb_num_partitions(
+			स्थिर काष्ठा scaler_data *scl_data,
+			क्रमागत lb_memory_config lb_config,
+			पूर्णांक *num_part_y,
+			पूर्णांक *num_part_c);
 
-void dpp2_set_cursor_attributes(
-		struct dpp *dpp_base,
-		struct dc_cursor_attributes *cursor_attributes);
+व्योम dpp2_set_cursor_attributes(
+		काष्ठा dpp *dpp_base,
+		काष्ठा dc_cursor_attributes *cursor_attributes);
 
-void dpp2_dummy_program_input_lut(
-			struct dpp *dpp_base,
-			const struct dc_gamma *gamma);
+व्योम dpp2_dummy_program_input_lut(
+			काष्ठा dpp *dpp_base,
+			स्थिर काष्ठा dc_gamma *gamma);
 
-void oppn20_dummy_program_regamma_pwl(
-			struct dpp *dpp,
-			const struct pwl_params *params,
-			enum opp_regamma mode);
+व्योम oppn20_dummy_program_regamma_pwl(
+			काष्ठा dpp *dpp,
+			स्थिर काष्ठा pwl_params *params,
+			क्रमागत opp_regamma mode);
 
-void dpp2_set_hdr_multiplier(
-		struct dpp *dpp_base,
-		uint32_t multiplier);
+व्योम dpp2_set_hdr_multiplier(
+		काष्ठा dpp *dpp_base,
+		uपूर्णांक32_t multiplier);
 
-bool dpp2_construct(struct dcn20_dpp *dpp2,
-	struct dc_context *ctx,
-	uint32_t inst,
-	const struct dcn2_dpp_registers *tf_regs,
-	const struct dcn2_dpp_shift *tf_shift,
-	const struct dcn2_dpp_mask *tf_mask);
+bool dpp2_स्थिरruct(काष्ठा dcn20_dpp *dpp2,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst,
+	स्थिर काष्ठा dcn2_dpp_रेजिस्टरs *tf_regs,
+	स्थिर काष्ठा dcn2_dpp_shअगरt *tf_shअगरt,
+	स्थिर काष्ठा dcn2_dpp_mask *tf_mask);
 
-void dpp2_power_on_obuf(
-		struct dpp *dpp_base,
-	bool power_on);
-#endif /* __DC_HWSS_DCN20_H__ */
+व्योम dpp2_घातer_on_obuf(
+		काष्ठा dpp *dpp_base,
+	bool घातer_on);
+#पूर्ण_अगर /* __DC_HWSS_DCN20_H__ */

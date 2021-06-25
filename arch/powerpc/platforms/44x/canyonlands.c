@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * This contain platform specific code for APM PPC460EX based Canyonlands
+ * This contain platक्रमm specअगरic code क्रम APM PPC460EX based Canyonlands
  * board.
  *
  * Copyright (c) 2010, Applied Micro Circuits Corporation
  * Author: Rupjyoti Sarmah <rsarmah@apm.com>
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <asm/pci-bridge.h>
-#include <asm/ppc4xx.h>
-#include <asm/udbg.h>
-#include <asm/uic.h>
-#include <linux/of_platform.h>
-#include <linux/delay.h>
-#include "44x.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/ppc4xx.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/uic.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/delay.h>
+#समावेश "44x.h"
 
-#define BCSR_USB_EN	0x11
+#घोषणा BCSR_USB_EN	0x11
 
-static const struct of_device_id ppc460ex_of_bus[] __initconst = {
-	{ .compatible = "ibm,plb4", },
-	{ .compatible = "ibm,opb", },
-	{ .compatible = "ibm,ebc", },
-	{ .compatible = "simple-bus", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ppc460ex_of_bus[] __initस्थिर = अणु
+	अणु .compatible = "ibm,plb4", पूर्ण,
+	अणु .compatible = "ibm,opb", पूर्ण,
+	अणु .compatible = "ibm,ebc", पूर्ण,
+	अणु .compatible = "simple-bus", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int __init ppc460ex_device_probe(void)
-{
-	of_platform_bus_probe(NULL, ppc460ex_of_bus, NULL);
+अटल पूर्णांक __init ppc460ex_device_probe(व्योम)
+अणु
+	of_platक्रमm_bus_probe(शून्य, ppc460ex_of_bus, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_device_initcall(canyonlands, ppc460ex_device_probe);
 
-/* Using this code only for the Canyonlands board.  */
+/* Using this code only क्रम the Canyonlands board.  */
 
-static int __init ppc460ex_probe(void)
-{
-	if (of_machine_is_compatible("amcc,canyonlands")) {
+अटल पूर्णांक __init ppc460ex_probe(व्योम)
+अणु
+	अगर (of_machine_is_compatible("amcc,canyonlands")) अणु
 		pci_set_flags(PCI_REASSIGN_ALL_RSRC);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* USB PHY fixup code on Canyonlands kit. */
 
-static int __init ppc460ex_canyonlands_fixup(void)
-{
+अटल पूर्णांक __init ppc460ex_canyonlands_fixup(व्योम)
+अणु
 	u8 __iomem *bcsr ;
-	void __iomem *vaddr;
-	struct device_node *np;
-	int ret = 0;
+	व्योम __iomem *vaddr;
+	काष्ठा device_node *np;
+	पूर्णांक ret = 0;
 
-	np = of_find_compatible_node(NULL, NULL, "amcc,ppc460ex-bcsr");
-	if (!np) {
-		printk(KERN_ERR "failed did not find amcc, ppc460ex bcsr node\n");
-		return -ENODEV;
-	}
+	np = of_find_compatible_node(शून्य, शून्य, "amcc,ppc460ex-bcsr");
+	अगर (!np) अणु
+		prपूर्णांकk(KERN_ERR "failed did not find amcc, ppc460ex bcsr node\n");
+		वापस -ENODEV;
+	पूर्ण
 
 	bcsr = of_iomap(np, 0);
 	of_node_put(np);
 
-	if (!bcsr) {
-		printk(KERN_CRIT "Could not remap bcsr\n");
+	अगर (!bcsr) अणु
+		prपूर्णांकk(KERN_CRIT "Could not remap bcsr\n");
 		ret = -ENODEV;
-		goto err_bcsr;
-	}
+		जाओ err_bcsr;
+	पूर्ण
 
-	np = of_find_compatible_node(NULL, NULL, "ibm,ppc4xx-gpio");
-	if (!np) {
-		printk(KERN_ERR "failed did not find ibm,ppc4xx-gpio node\n");
-		return -ENODEV;
-	}
+	np = of_find_compatible_node(शून्य, शून्य, "ibm,ppc4xx-gpio");
+	अगर (!np) अणु
+		prपूर्णांकk(KERN_ERR "failed did not find ibm,ppc4xx-gpio node\n");
+		वापस -ENODEV;
+	पूर्ण
 
 	vaddr = of_iomap(np, 0);
 	of_node_put(np);
 
-	if (!vaddr) {
-		printk(KERN_CRIT "Could not get gpio node address\n");
+	अगर (!vaddr) अणु
+		prपूर्णांकk(KERN_CRIT "Could not get gpio node address\n");
 		ret = -ENODEV;
-		goto err_gpio;
-	}
+		जाओ err_gpio;
+	पूर्ण
 	/* Disable USB, through the BCSR7 bits */
 	setbits8(&bcsr[7], BCSR_USB_EN);
 
-	/* Wait for a while after reset */
+	/* Wait क्रम a जबतक after reset */
 	msleep(100);
 
 	/* Enable USB here */
@@ -104,15 +105,15 @@ err_gpio:
 	iounmap(vaddr);
 err_bcsr:
 	iounmap(bcsr);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 machine_device_initcall(canyonlands, ppc460ex_canyonlands_fixup);
-define_machine(canyonlands) {
+define_machine(canyonlands) अणु
 	.name = "Canyonlands",
 	.probe = ppc460ex_probe,
 	.progress = udbg_progress,
 	.init_IRQ = uic_init_tree,
 	.get_irq = uic_get_irq,
-	.restart = ppc4xx_reset_system,
+	.restart = ppc4xx_reset_प्रणाली,
 	.calibrate_decr = generic_calibrate_decr,
-};
+पूर्ण;

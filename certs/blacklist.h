@@ -1,5 +1,6 @@
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <crypto/pkcs7.h>
+<शैली गुरु>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <crypto/pkcs7.h>
 
-extern const char __initconst *const blacklist_hashes[];
+बाह्य स्थिर अक्षर __initस्थिर *स्थिर blacklist_hashes[];

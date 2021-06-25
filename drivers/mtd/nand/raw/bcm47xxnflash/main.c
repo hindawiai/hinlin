@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * BCM47XX NAND flash driver
+ * BCM47XX न_अंकD flash driver
  *
- * Copyright (C) 2012 Rafał Miłecki <zajec5@gmail.com>
+ * Copyright (C) 2012 Rafaध Miधecki <zajec5@gmail.com>
  */
 
-#include "bcm47xxnflash.h"
+#समावेश "bcm47xxnflash.h"
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/bcma/bcma.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/bcma/bcma.h>
 
 MODULE_DESCRIPTION("NAND flash driver for BCMA bus");
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Rafał Miłecki");
+MODULE_AUTHOR("Rafaध Miधecki");
 
-static const char *probes[] = { "bcm47xxpart", NULL };
+अटल स्थिर अक्षर *probes[] = अणु "bcm47xxpart", शून्य पूर्ण;
 
-static int bcm47xxnflash_probe(struct platform_device *pdev)
-{
-	struct bcma_nflash *nflash = dev_get_platdata(&pdev->dev);
-	struct bcm47xxnflash *b47n;
-	struct mtd_info *mtd;
-	int err = 0;
+अटल पूर्णांक bcm47xxnflash_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcma_nflash *nflash = dev_get_platdata(&pdev->dev);
+	काष्ठा bcm47xxnflash *b47n;
+	काष्ठा mtd_info *mtd;
+	पूर्णांक err = 0;
 
-	b47n = devm_kzalloc(&pdev->dev, sizeof(*b47n), GFP_KERNEL);
-	if (!b47n)
-		return -ENOMEM;
+	b47n = devm_kzalloc(&pdev->dev, माप(*b47n), GFP_KERNEL);
+	अगर (!b47n)
+		वापस -ENOMEM;
 
 	nand_set_controller_data(&b47n->nand_chip, b47n);
 	mtd = nand_to_mtd(&b47n->nand_chip);
 	mtd->dev.parent = &pdev->dev;
-	b47n->cc = container_of(nflash, struct bcma_drv_cc, nflash);
+	b47n->cc = container_of(nflash, काष्ठा bcma_drv_cc, nflash);
 
-	if (b47n->cc->core->bus->chipinfo.id == BCMA_CHIP_ID_BCM4706) {
+	अगर (b47n->cc->core->bus->chipinfo.id == BCMA_CHIP_ID_BCM4706) अणु
 		err = bcm47xxnflash_ops_bcm4706_init(b47n);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Device not supported\n");
 		err = -ENOTSUPP;
-	}
-	if (err) {
+	पूर्ण
+	अगर (err) अणु
 		pr_err("Initialization failed: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, b47n);
+	platक्रमm_set_drvdata(pdev, b47n);
 
-	err = mtd_device_parse_register(mtd, probes, NULL, NULL, 0);
-	if (err) {
+	err = mtd_device_parse_रेजिस्टर(mtd, probes, शून्य, शून्य, 0);
+	अगर (err) अणु
 		pr_err("Failed to register MTD device: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm47xxnflash_remove(struct platform_device *pdev)
-{
-	struct bcm47xxnflash *nflash = platform_get_drvdata(pdev);
-	struct nand_chip *chip = &nflash->nand_chip;
-	int ret;
+अटल पूर्णांक bcm47xxnflash_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm47xxnflash *nflash = platक्रमm_get_drvdata(pdev);
+	काष्ठा nand_chip *chip = &nflash->nand_chip;
+	पूर्णांक ret;
 
-	ret = mtd_device_unregister(nand_to_mtd(chip));
+	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver bcm47xxnflash_driver = {
+अटल काष्ठा platक्रमm_driver bcm47xxnflash_driver = अणु
 	.probe	= bcm47xxnflash_probe,
-	.remove = bcm47xxnflash_remove,
-	.driver = {
+	.हटाओ = bcm47xxnflash_हटाओ,
+	.driver = अणु
 		.name = "bcma_nflash",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(bcm47xxnflash_driver);
+module_platक्रमm_driver(bcm47xxnflash_driver);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,48 +21,48 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __EVERGREEN_SMC_H__
-#define __EVERGREEN_SMC_H__
+#अगर_अघोषित __EVERGREEN_SMC_H__
+#घोषणा __EVERGREEN_SMC_H__
 
-#include "rv770_smc.h"
+#समावेश "rv770_smc.h"
 
-#pragma pack(push, 1)
+#आशय pack(push, 1)
 
-#define SMC_EVERGREEN_MC_REGISTER_ARRAY_SIZE 16
+#घोषणा SMC_EVERGREEN_MC_REGISTER_ARRAY_SIZE 16
 
-struct SMC_Evergreen_MCRegisterAddress
-{
-    uint16_t s0;
-    uint16_t s1;
-};
+काष्ठा SMC_Evergreen_MCRegisterAddress
+अणु
+    uपूर्णांक16_t s0;
+    uपूर्णांक16_t s1;
+पूर्ण;
 
-typedef struct SMC_Evergreen_MCRegisterAddress SMC_Evergreen_MCRegisterAddress;
+प्रकार काष्ठा SMC_Evergreen_MCRegisterAddress SMC_Evergreen_MCRegisterAddress;
 
 
-struct SMC_Evergreen_MCRegisterSet
-{
-    uint32_t value[SMC_EVERGREEN_MC_REGISTER_ARRAY_SIZE];
-};
+काष्ठा SMC_Evergreen_MCRegisterSet
+अणु
+    uपूर्णांक32_t value[SMC_EVERGREEN_MC_REGISTER_ARRAY_SIZE];
+पूर्ण;
 
-typedef struct SMC_Evergreen_MCRegisterSet SMC_Evergreen_MCRegisterSet;
+प्रकार काष्ठा SMC_Evergreen_MCRegisterSet SMC_Evergreen_MCRegisterSet;
 
-struct SMC_Evergreen_MCRegisters
-{
-    uint8_t                             last;
-    uint8_t                             reserved[3];
+काष्ठा SMC_Evergreen_MCRegisters
+अणु
+    uपूर्णांक8_t                             last;
+    uपूर्णांक8_t                             reserved[3];
     SMC_Evergreen_MCRegisterAddress     address[SMC_EVERGREEN_MC_REGISTER_ARRAY_SIZE];
     SMC_Evergreen_MCRegisterSet         data[5];
-};
+पूर्ण;
 
-typedef struct SMC_Evergreen_MCRegisters SMC_Evergreen_MCRegisters;
+प्रकार काष्ठा SMC_Evergreen_MCRegisters SMC_Evergreen_MCRegisters;
 
-#define EVERGREEN_SMC_FIRMWARE_HEADER_LOCATION 0x100
+#घोषणा EVERGREEN_SMC_FIRMWARE_HEADER_LOCATION 0x100
 
-#define EVERGREEN_SMC_FIRMWARE_HEADER_softRegisters   0x8
-#define EVERGREEN_SMC_FIRMWARE_HEADER_stateTable      0xC
-#define EVERGREEN_SMC_FIRMWARE_HEADER_mcRegisterTable 0x20
+#घोषणा EVERGREEN_SMC_FIRMWARE_HEADER_softRegisters   0x8
+#घोषणा EVERGREEN_SMC_FIRMWARE_HEADER_stateTable      0xC
+#घोषणा EVERGREEN_SMC_FIRMWARE_HEADER_mcRegisterTable 0x20
 
 
-#pragma pack(pop)
+#आशय pack(pop)
 
-#endif
+#पूर्ण_अगर

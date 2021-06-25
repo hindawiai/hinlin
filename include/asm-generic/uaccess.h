@@ -1,314 +1,315 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_GENERIC_UACCESS_H
-#define __ASM_GENERIC_UACCESS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_GENERIC_UACCESS_H
+#घोषणा __ASM_GENERIC_UACCESS_H
 
 /*
  * User space memory access functions, these should work
  * on any machine that has kernel and user data in the same
  * address space, e.g. all NOMMU machines.
  */
-#include <linux/string.h>
+#समावेश <linux/माला.स>
 
-#ifdef CONFIG_UACCESS_MEMCPY
-#include <asm/unaligned.h>
+#अगर_घोषित CONFIG_UACCESS_MEMCPY
+#समावेश <यंत्र/unaligned.h>
 
-static __always_inline int
-__get_user_fn(size_t size, const void __user *from, void *to)
-{
-	BUILD_BUG_ON(!__builtin_constant_p(size));
+अटल __always_अंतरभूत पूर्णांक
+__get_user_fn(माप_प्रकार size, स्थिर व्योम __user *from, व्योम *to)
+अणु
+	BUILD_BUG_ON(!__builtin_स्थिरant_p(size));
 
-	switch (size) {
-	case 1:
-		*(u8 *)to = get_unaligned((u8 __force *)from);
-		return 0;
-	case 2:
-		*(u16 *)to = get_unaligned((u16 __force *)from);
-		return 0;
-	case 4:
-		*(u32 *)to = get_unaligned((u32 __force *)from);
-		return 0;
-	case 8:
-		*(u64 *)to = get_unaligned((u64 __force *)from);
-		return 0;
-	default:
+	चयन (size) अणु
+	हाल 1:
+		*(u8 *)to = get_unaligned((u8 __क्रमce *)from);
+		वापस 0;
+	हाल 2:
+		*(u16 *)to = get_unaligned((u16 __क्रमce *)from);
+		वापस 0;
+	हाल 4:
+		*(u32 *)to = get_unaligned((u32 __क्रमce *)from);
+		वापस 0;
+	हाल 8:
+		*(u64 *)to = get_unaligned((u64 __क्रमce *)from);
+		वापस 0;
+	शेष:
 		BUILD_BUG();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-}
-#define __get_user_fn(sz, u, k)	__get_user_fn(sz, u, k)
+पूर्ण
+#घोषणा __get_user_fn(sz, u, k)	__get_user_fn(sz, u, k)
 
-static __always_inline int
-__put_user_fn(size_t size, void __user *to, void *from)
-{
-	BUILD_BUG_ON(!__builtin_constant_p(size));
+अटल __always_अंतरभूत पूर्णांक
+__put_user_fn(माप_प्रकार size, व्योम __user *to, व्योम *from)
+अणु
+	BUILD_BUG_ON(!__builtin_स्थिरant_p(size));
 
-	switch (size) {
-	case 1:
-		put_unaligned(*(u8 *)from, (u8 __force *)to);
-		return 0;
-	case 2:
-		put_unaligned(*(u16 *)from, (u16 __force *)to);
-		return 0;
-	case 4:
-		put_unaligned(*(u32 *)from, (u32 __force *)to);
-		return 0;
-	case 8:
-		put_unaligned(*(u64 *)from, (u64 __force *)to);
-		return 0;
-	default:
+	चयन (size) अणु
+	हाल 1:
+		put_unaligned(*(u8 *)from, (u8 __क्रमce *)to);
+		वापस 0;
+	हाल 2:
+		put_unaligned(*(u16 *)from, (u16 __क्रमce *)to);
+		वापस 0;
+	हाल 4:
+		put_unaligned(*(u32 *)from, (u32 __क्रमce *)to);
+		वापस 0;
+	हाल 8:
+		put_unaligned(*(u64 *)from, (u64 __क्रमce *)to);
+		वापस 0;
+	शेष:
 		BUILD_BUG();
-		return 0;
-	}
-}
-#define __put_user_fn(sz, u, k)	__put_user_fn(sz, u, k)
+		वापस 0;
+	पूर्ण
+पूर्ण
+#घोषणा __put_user_fn(sz, u, k)	__put_user_fn(sz, u, k)
 
-#define __get_kernel_nofault(dst, src, type, err_label)			\
-do {									\
+#घोषणा __get_kernel_nofault(dst, src, type, err_label)			\
+करो अणु									\
 	*((type *)dst) = get_unaligned((type *)(src));			\
-	if (0) /* make sure the label looks used to the compiler */	\
-		goto err_label;						\
-} while (0)
+	अगर (0) /* make sure the label looks used to the compiler */	\
+		जाओ err_label;						\
+पूर्ण जबतक (0)
 
-#define __put_kernel_nofault(dst, src, type, err_label)			\
-do {									\
+#घोषणा __put_kernel_nofault(dst, src, type, err_label)			\
+करो अणु									\
 	put_unaligned(*((type *)src), (type *)(dst));			\
-	if (0) /* make sure the label looks used to the compiler */	\
-		goto err_label;						\
-} while (0)
+	अगर (0) /* make sure the label looks used to the compiler */	\
+		जाओ err_label;						\
+पूर्ण जबतक (0)
 
-#define HAVE_GET_KERNEL_NOFAULT 1
+#घोषणा HAVE_GET_KERNEL_NOFAULT 1
 
-static inline __must_check unsigned long
-raw_copy_from_user(void *to, const void __user * from, unsigned long n)
-{
-	memcpy(to, (const void __force *)from, n);
-	return 0;
-}
+अटल अंतरभूत __must_check अचिन्हित दीर्घ
+raw_copy_from_user(व्योम *to, स्थिर व्योम __user * from, अचिन्हित दीर्घ n)
+अणु
+	स_नकल(to, (स्थिर व्योम __क्रमce *)from, n);
+	वापस 0;
+पूर्ण
 
-static inline __must_check unsigned long
-raw_copy_to_user(void __user *to, const void *from, unsigned long n)
-{
-	memcpy((void __force *)to, from, n);
-	return 0;
-}
-#define INLINE_COPY_FROM_USER
-#define INLINE_COPY_TO_USER
-#endif /* CONFIG_UACCESS_MEMCPY */
+अटल अंतरभूत __must_check अचिन्हित दीर्घ
+raw_copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
+अणु
+	स_नकल((व्योम __क्रमce *)to, from, n);
+	वापस 0;
+पूर्ण
+#घोषणा INLINE_COPY_FROM_USER
+#घोषणा INLINE_COPY_TO_USER
+#पूर्ण_अगर /* CONFIG_UACCESS_MEMCPY */
 
-#ifdef CONFIG_SET_FS
-#define MAKE_MM_SEG(s)	((mm_segment_t) { (s) })
+#अगर_घोषित CONFIG_SET_FS
+#घोषणा MAKE_MM_SEG(s)	((mm_segment_t) अणु (s) पूर्ण)
 
-#ifndef KERNEL_DS
-#define KERNEL_DS	MAKE_MM_SEG(~0UL)
-#endif
+#अगर_अघोषित KERNEL_DS
+#घोषणा KERNEL_DS	MAKE_MM_SEG(~0UL)
+#पूर्ण_अगर
 
-#ifndef USER_DS
-#define USER_DS		MAKE_MM_SEG(TASK_SIZE - 1)
-#endif
+#अगर_अघोषित USER_DS
+#घोषणा USER_DS		MAKE_MM_SEG(TASK_SIZE - 1)
+#पूर्ण_अगर
 
-#ifndef get_fs
-#define get_fs()	(current_thread_info()->addr_limit)
+#अगर_अघोषित get_fs
+#घोषणा get_fs()	(current_thपढ़ो_info()->addr_limit)
 
-static inline void set_fs(mm_segment_t fs)
-{
-	current_thread_info()->addr_limit = fs;
-}
-#endif
+अटल अंतरभूत व्योम set_fs(mm_segment_t fs)
+अणु
+	current_thपढ़ो_info()->addr_limit = fs;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef uaccess_kernel
-#define uaccess_kernel() (get_fs().seg == KERNEL_DS.seg)
-#endif
-#endif /* CONFIG_SET_FS */
+#अगर_अघोषित uaccess_kernel
+#घोषणा uaccess_kernel() (get_fs().seg == KERNEL_DS.seg)
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_SET_FS */
 
-#define access_ok(addr, size) __access_ok((unsigned long)(addr),(size))
-
-/*
- * The architecture should really override this if possible, at least
- * doing a check on the get_fs()
- */
-#ifndef __access_ok
-static inline int __access_ok(unsigned long addr, unsigned long size)
-{
-	return 1;
-}
-#endif
+#घोषणा access_ok(addr, size) __access_ok((अचिन्हित दीर्घ)(addr),(size))
 
 /*
- * These are the main single-value transfer routines.  They automatically
- * use the right size if we just have the right pointer type.
- * This version just falls back to copy_{from,to}_user, which should
- * provide a fast-path for small values.
+ * The architecture should really override this अगर possible, at least
+ * करोing a check on the get_fs()
  */
-#define __put_user(x, ptr) \
-({								\
+#अगर_अघोषित __access_ok
+अटल अंतरभूत पूर्णांक __access_ok(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
+अणु
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर
+
+/*
+ * These are the मुख्य single-value transfer routines.  They स्वतःmatically
+ * use the right size अगर we just have the right poपूर्णांकer type.
+ * This version just falls back to copy_अणुfrom,toपूर्ण_user, which should
+ * provide a fast-path क्रम small values.
+ */
+#घोषणा __put_user(x, ptr) \
+(अणु								\
 	__typeof__(*(ptr)) __x = (x);				\
-	int __pu_err = -EFAULT;					\
+	पूर्णांक __pu_err = -EFAULT;					\
         __chk_user_ptr(ptr);                                    \
-	switch (sizeof (*(ptr))) {				\
-	case 1:							\
-	case 2:							\
-	case 4:							\
-	case 8:							\
-		__pu_err = __put_user_fn(sizeof (*(ptr)),	\
+	चयन (माप (*(ptr))) अणु				\
+	हाल 1:							\
+	हाल 2:							\
+	हाल 4:							\
+	हाल 8:							\
+		__pu_err = __put_user_fn(माप (*(ptr)),	\
 					 ptr, &__x);		\
-		break;						\
-	default:						\
+		अवरोध;						\
+	शेष:						\
 		__put_user_bad();				\
-		break;						\
-	 }							\
+		अवरोध;						\
+	 पूर्ण							\
 	__pu_err;						\
-})
+पूर्ण)
 
-#define put_user(x, ptr)					\
-({								\
-	void __user *__p = (ptr);				\
+#घोषणा put_user(x, ptr)					\
+(अणु								\
+	व्योम __user *__p = (ptr);				\
 	might_fault();						\
-	access_ok(__p, sizeof(*ptr)) ?		\
+	access_ok(__p, माप(*ptr)) ?		\
 		__put_user((x), ((__typeof__(*(ptr)) __user *)__p)) :	\
 		-EFAULT;					\
-})
+पूर्ण)
 
-#ifndef __put_user_fn
+#अगर_अघोषित __put_user_fn
 
-static inline int __put_user_fn(size_t size, void __user *ptr, void *x)
-{
-	return unlikely(raw_copy_to_user(ptr, x, size)) ? -EFAULT : 0;
-}
+अटल अंतरभूत पूर्णांक __put_user_fn(माप_प्रकार size, व्योम __user *ptr, व्योम *x)
+अणु
+	वापस unlikely(raw_copy_to_user(ptr, x, size)) ? -EFAULT : 0;
+पूर्ण
 
-#define __put_user_fn(sz, u, k)	__put_user_fn(sz, u, k)
+#घोषणा __put_user_fn(sz, u, k)	__put_user_fn(sz, u, k)
 
-#endif
+#पूर्ण_अगर
 
-extern int __put_user_bad(void) __attribute__((noreturn));
+बाह्य पूर्णांक __put_user_bad(व्योम) __attribute__((noवापस));
 
-#define __get_user(x, ptr)					\
-({								\
-	int __gu_err = -EFAULT;					\
+#घोषणा __get_user(x, ptr)					\
+(अणु								\
+	पूर्णांक __gu_err = -EFAULT;					\
 	__chk_user_ptr(ptr);					\
-	switch (sizeof(*(ptr))) {				\
-	case 1: {						\
-		unsigned char __x = 0;				\
-		__gu_err = __get_user_fn(sizeof (*(ptr)),	\
+	चयन (माप(*(ptr))) अणु				\
+	हाल 1: अणु						\
+		अचिन्हित अक्षर __x = 0;				\
+		__gu_err = __get_user_fn(माप (*(ptr)),	\
 					 ptr, &__x);		\
-		(x) = *(__force __typeof__(*(ptr)) *) &__x;	\
-		break;						\
-	};							\
-	case 2: {						\
-		unsigned short __x = 0;				\
-		__gu_err = __get_user_fn(sizeof (*(ptr)),	\
+		(x) = *(__क्रमce __typeof__(*(ptr)) *) &__x;	\
+		अवरोध;						\
+	पूर्ण;							\
+	हाल 2: अणु						\
+		अचिन्हित लघु __x = 0;				\
+		__gu_err = __get_user_fn(माप (*(ptr)),	\
 					 ptr, &__x);		\
-		(x) = *(__force __typeof__(*(ptr)) *) &__x;	\
-		break;						\
-	};							\
-	case 4: {						\
-		unsigned int __x = 0;				\
-		__gu_err = __get_user_fn(sizeof (*(ptr)),	\
+		(x) = *(__क्रमce __typeof__(*(ptr)) *) &__x;	\
+		अवरोध;						\
+	पूर्ण;							\
+	हाल 4: अणु						\
+		अचिन्हित पूर्णांक __x = 0;				\
+		__gu_err = __get_user_fn(माप (*(ptr)),	\
 					 ptr, &__x);		\
-		(x) = *(__force __typeof__(*(ptr)) *) &__x;	\
-		break;						\
-	};							\
-	case 8: {						\
-		unsigned long long __x = 0;			\
-		__gu_err = __get_user_fn(sizeof (*(ptr)),	\
+		(x) = *(__क्रमce __typeof__(*(ptr)) *) &__x;	\
+		अवरोध;						\
+	पूर्ण;							\
+	हाल 8: अणु						\
+		अचिन्हित दीर्घ दीर्घ __x = 0;			\
+		__gu_err = __get_user_fn(माप (*(ptr)),	\
 					 ptr, &__x);		\
-		(x) = *(__force __typeof__(*(ptr)) *) &__x;	\
-		break;						\
-	};							\
-	default:						\
+		(x) = *(__क्रमce __typeof__(*(ptr)) *) &__x;	\
+		अवरोध;						\
+	पूर्ण;							\
+	शेष:						\
 		__get_user_bad();				\
-		break;						\
-	}							\
+		अवरोध;						\
+	पूर्ण							\
 	__gu_err;						\
-})
+पूर्ण)
 
-#define get_user(x, ptr)					\
-({								\
-	const void __user *__p = (ptr);				\
+#घोषणा get_user(x, ptr)					\
+(अणु								\
+	स्थिर व्योम __user *__p = (ptr);				\
 	might_fault();						\
-	access_ok(__p, sizeof(*ptr)) ?		\
+	access_ok(__p, माप(*ptr)) ?		\
 		__get_user((x), (__typeof__(*(ptr)) __user *)__p) :\
 		((x) = (__typeof__(*(ptr)))0,-EFAULT);		\
-})
+पूर्ण)
 
-#ifndef __get_user_fn
-static inline int __get_user_fn(size_t size, const void __user *ptr, void *x)
-{
-	return unlikely(raw_copy_from_user(x, ptr, size)) ? -EFAULT : 0;
-}
+#अगर_अघोषित __get_user_fn
+अटल अंतरभूत पूर्णांक __get_user_fn(माप_प्रकार size, स्थिर व्योम __user *ptr, व्योम *x)
+अणु
+	वापस unlikely(raw_copy_from_user(x, ptr, size)) ? -EFAULT : 0;
+पूर्ण
 
-#define __get_user_fn(sz, u, k)	__get_user_fn(sz, u, k)
+#घोषणा __get_user_fn(sz, u, k)	__get_user_fn(sz, u, k)
 
-#endif
+#पूर्ण_अगर
 
-extern int __get_user_bad(void) __attribute__((noreturn));
+बाह्य पूर्णांक __get_user_bad(व्योम) __attribute__((noवापस));
 
 /*
  * Copy a null terminated string from userspace.
  */
-#ifndef __strncpy_from_user
-static inline long
-__strncpy_from_user(char *dst, const char __user *src, long count)
-{
-	char *tmp;
-	strncpy(dst, (const char __force *)src, count);
-	for (tmp = dst; *tmp && count > 0; tmp++, count--)
+#अगर_अघोषित __म_नकलन_from_user
+अटल अंतरभूत दीर्घ
+__म_नकलन_from_user(अक्षर *dst, स्थिर अक्षर __user *src, दीर्घ count)
+अणु
+	अक्षर *पंचांगp;
+	म_नकलन(dst, (स्थिर अक्षर __क्रमce *)src, count);
+	क्रम (पंचांगp = dst; *पंचांगp && count > 0; पंचांगp++, count--)
 		;
-	return (tmp - dst);
-}
-#endif
+	वापस (पंचांगp - dst);
+पूर्ण
+#पूर्ण_अगर
 
-static inline long
-strncpy_from_user(char *dst, const char __user *src, long count)
-{
-	if (!access_ok(src, 1))
-		return -EFAULT;
-	return __strncpy_from_user(dst, src, count);
-}
+अटल अंतरभूत दीर्घ
+म_नकलन_from_user(अक्षर *dst, स्थिर अक्षर __user *src, दीर्घ count)
+अणु
+	अगर (!access_ok(src, 1))
+		वापस -EFAULT;
+	वापस __म_नकलन_from_user(dst, src, count);
+पूर्ण
 
 /*
  * Return the size of a string (including the ending 0)
  *
- * Return 0 on exception, a value greater than N if too long
+ * Return 0 on exception, a value greater than N अगर too दीर्घ
  */
-#ifndef __strnlen_user
-#define __strnlen_user(s, n) (strnlen((s), (n)) + 1)
-#endif
+#अगर_अघोषित __strnlen_user
+#घोषणा __strnlen_user(s, n) (strnlen((s), (n)) + 1)
+#पूर्ण_अगर
 
 /*
  * Unlike strnlen, strnlen_user includes the nul terminator in
- * its returned count. Callers should check for a returned value
- * greater than N as an indication the string is too long.
+ * its वापसed count. Callers should check क्रम a वापसed value
+ * greater than N as an indication the string is too दीर्घ.
  */
-static inline long strnlen_user(const char __user *src, long n)
-{
-	if (!access_ok(src, 1))
-		return 0;
-	return __strnlen_user(src, n);
-}
+अटल अंतरभूत दीर्घ strnlen_user(स्थिर अक्षर __user *src, दीर्घ n)
+अणु
+	अगर (!access_ok(src, 1))
+		वापस 0;
+	वापस __strnlen_user(src, n);
+पूर्ण
 
 /*
  * Zero Userspace
  */
-#ifndef __clear_user
-static inline __must_check unsigned long
-__clear_user(void __user *to, unsigned long n)
-{
-	memset((void __force *)to, 0, n);
-	return 0;
-}
-#endif
+#अगर_अघोषित __clear_user
+अटल अंतरभूत __must_check अचिन्हित दीर्घ
+__clear_user(व्योम __user *to, अचिन्हित दीर्घ n)
+अणु
+	स_रखो((व्योम __क्रमce *)to, 0, n);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static inline __must_check unsigned long
-clear_user(void __user *to, unsigned long n)
-{
+अटल अंतरभूत __must_check अचिन्हित दीर्घ
+clear_user(व्योम __user *to, अचिन्हित दीर्घ n)
+अणु
 	might_fault();
-	if (!access_ok(to, n))
-		return n;
+	अगर (!access_ok(to, n))
+		वापस n;
 
-	return __clear_user(to, n);
-}
+	वापस __clear_user(to, n);
+पूर्ण
 
-#include <asm/extable.h>
+#समावेश <यंत्र/extable.h>
 
-#endif /* __ASM_GENERIC_UACCESS_H */
+#पूर्ण_अगर /* __ASM_GENERIC_UACCESS_H */

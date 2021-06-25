@@ -1,424 +1,425 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015 MediaTek Inc.
  * Author: Leilk Liu <leilk.liu@mediatek.com>
  */
 
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/spi-mt65xx.h>
-#include <linux/pm_runtime.h>
-#include <linux/spi/spi.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/spi-mt65xx.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/dma-mapping.h>
 
-#define SPI_CFG0_REG                      0x0000
-#define SPI_CFG1_REG                      0x0004
-#define SPI_TX_SRC_REG                    0x0008
-#define SPI_RX_DST_REG                    0x000c
-#define SPI_TX_DATA_REG                   0x0010
-#define SPI_RX_DATA_REG                   0x0014
-#define SPI_CMD_REG                       0x0018
-#define SPI_STATUS0_REG                   0x001c
-#define SPI_PAD_SEL_REG                   0x0024
-#define SPI_CFG2_REG                      0x0028
-#define SPI_TX_SRC_REG_64                 0x002c
-#define SPI_RX_DST_REG_64                 0x0030
+#घोषणा SPI_CFG0_REG                      0x0000
+#घोषणा SPI_CFG1_REG                      0x0004
+#घोषणा SPI_TX_SRC_REG                    0x0008
+#घोषणा SPI_RX_DST_REG                    0x000c
+#घोषणा SPI_TX_DATA_REG                   0x0010
+#घोषणा SPI_RX_DATA_REG                   0x0014
+#घोषणा SPI_CMD_REG                       0x0018
+#घोषणा SPI_STATUS0_REG                   0x001c
+#घोषणा SPI_PAD_SEL_REG                   0x0024
+#घोषणा SPI_CFG2_REG                      0x0028
+#घोषणा SPI_TX_SRC_REG_64                 0x002c
+#घोषणा SPI_RX_DST_REG_64                 0x0030
 
-#define SPI_CFG0_SCK_HIGH_OFFSET          0
-#define SPI_CFG0_SCK_LOW_OFFSET           8
-#define SPI_CFG0_CS_HOLD_OFFSET           16
-#define SPI_CFG0_CS_SETUP_OFFSET          24
-#define SPI_ADJUST_CFG0_CS_HOLD_OFFSET    0
-#define SPI_ADJUST_CFG0_CS_SETUP_OFFSET   16
+#घोषणा SPI_CFG0_SCK_HIGH_OFFSET          0
+#घोषणा SPI_CFG0_SCK_LOW_OFFSET           8
+#घोषणा SPI_CFG0_CS_HOLD_OFFSET           16
+#घोषणा SPI_CFG0_CS_SETUP_OFFSET          24
+#घोषणा SPI_ADJUST_CFG0_CS_HOLD_OFFSET    0
+#घोषणा SPI_ADJUST_CFG0_CS_SETUP_OFFSET   16
 
-#define SPI_CFG1_CS_IDLE_OFFSET           0
-#define SPI_CFG1_PACKET_LOOP_OFFSET       8
-#define SPI_CFG1_PACKET_LENGTH_OFFSET     16
-#define SPI_CFG1_GET_TICK_DLY_OFFSET      30
+#घोषणा SPI_CFG1_CS_IDLE_OFFSET           0
+#घोषणा SPI_CFG1_PACKET_LOOP_OFFSET       8
+#घोषणा SPI_CFG1_PACKET_LENGTH_OFFSET     16
+#घोषणा SPI_CFG1_GET_TICK_DLY_OFFSET      30
 
-#define SPI_CFG1_CS_IDLE_MASK             0xff
-#define SPI_CFG1_PACKET_LOOP_MASK         0xff00
-#define SPI_CFG1_PACKET_LENGTH_MASK       0x3ff0000
-#define SPI_CFG2_SCK_HIGH_OFFSET          0
-#define SPI_CFG2_SCK_LOW_OFFSET           16
+#घोषणा SPI_CFG1_CS_IDLE_MASK             0xff
+#घोषणा SPI_CFG1_PACKET_LOOP_MASK         0xff00
+#घोषणा SPI_CFG1_PACKET_LENGTH_MASK       0x3ff0000
+#घोषणा SPI_CFG2_SCK_HIGH_OFFSET          0
+#घोषणा SPI_CFG2_SCK_LOW_OFFSET           16
 
-#define SPI_CMD_ACT                  BIT(0)
-#define SPI_CMD_RESUME               BIT(1)
-#define SPI_CMD_RST                  BIT(2)
-#define SPI_CMD_PAUSE_EN             BIT(4)
-#define SPI_CMD_DEASSERT             BIT(5)
-#define SPI_CMD_SAMPLE_SEL           BIT(6)
-#define SPI_CMD_CS_POL               BIT(7)
-#define SPI_CMD_CPHA                 BIT(8)
-#define SPI_CMD_CPOL                 BIT(9)
-#define SPI_CMD_RX_DMA               BIT(10)
-#define SPI_CMD_TX_DMA               BIT(11)
-#define SPI_CMD_TXMSBF               BIT(12)
-#define SPI_CMD_RXMSBF               BIT(13)
-#define SPI_CMD_RX_ENDIAN            BIT(14)
-#define SPI_CMD_TX_ENDIAN            BIT(15)
-#define SPI_CMD_FINISH_IE            BIT(16)
-#define SPI_CMD_PAUSE_IE             BIT(17)
+#घोषणा SPI_CMD_ACT                  BIT(0)
+#घोषणा SPI_CMD_RESUME               BIT(1)
+#घोषणा SPI_CMD_RST                  BIT(2)
+#घोषणा SPI_CMD_PAUSE_EN             BIT(4)
+#घोषणा SPI_CMD_DEASSERT             BIT(5)
+#घोषणा SPI_CMD_SAMPLE_SEL           BIT(6)
+#घोषणा SPI_CMD_CS_POL               BIT(7)
+#घोषणा SPI_CMD_CPHA                 BIT(8)
+#घोषणा SPI_CMD_CPOL                 BIT(9)
+#घोषणा SPI_CMD_RX_DMA               BIT(10)
+#घोषणा SPI_CMD_TX_DMA               BIT(11)
+#घोषणा SPI_CMD_TXMSBF               BIT(12)
+#घोषणा SPI_CMD_RXMSBF               BIT(13)
+#घोषणा SPI_CMD_RX_ENDIAN            BIT(14)
+#घोषणा SPI_CMD_TX_ENDIAN            BIT(15)
+#घोषणा SPI_CMD_FINISH_IE            BIT(16)
+#घोषणा SPI_CMD_PAUSE_IE             BIT(17)
 
-#define MT8173_SPI_MAX_PAD_SEL 3
+#घोषणा MT8173_SPI_MAX_PAD_SEL 3
 
-#define MTK_SPI_PAUSE_INT_STATUS 0x2
+#घोषणा MTK_SPI_PAUSE_INT_STATUS 0x2
 
-#define MTK_SPI_IDLE 0
-#define MTK_SPI_PAUSED 1
+#घोषणा MTK_SPI_IDLE 0
+#घोषणा MTK_SPI_PAUSED 1
 
-#define MTK_SPI_MAX_FIFO_SIZE 32U
-#define MTK_SPI_PACKET_SIZE 1024
-#define MTK_SPI_32BITS_MASK  (0xffffffff)
+#घोषणा MTK_SPI_MAX_FIFO_SIZE 32U
+#घोषणा MTK_SPI_PACKET_SIZE 1024
+#घोषणा MTK_SPI_32BITS_MASK  (0xffffffff)
 
-#define DMA_ADDR_EXT_BITS (36)
-#define DMA_ADDR_DEF_BITS (32)
+#घोषणा DMA_ADDR_EXT_BITS (36)
+#घोषणा DMA_ADDR_DEF_BITS (32)
 
-struct mtk_spi_compatible {
+काष्ठा mtk_spi_compatible अणु
 	bool need_pad_sel;
-	/* Must explicitly send dummy Tx bytes to do Rx only transfer */
+	/* Must explicitly send dummy Tx bytes to करो Rx only transfer */
 	bool must_tx;
-	/* some IC design adjust cfg register to enhance time accuracy */
+	/* some IC design adjust cfg रेजिस्टर to enhance समय accuracy */
 	bool enhance_timing;
 	/* some IC support DMA addr extension */
 	bool dma_ext;
-};
+पूर्ण;
 
-struct mtk_spi {
-	void __iomem *base;
+काष्ठा mtk_spi अणु
+	व्योम __iomem *base;
 	u32 state;
-	int pad_num;
+	पूर्णांक pad_num;
 	u32 *pad_sel;
-	struct clk *parent_clk, *sel_clk, *spi_clk;
-	struct spi_transfer *cur_transfer;
+	काष्ठा clk *parent_clk, *sel_clk, *spi_clk;
+	काष्ठा spi_transfer *cur_transfer;
 	u32 xfer_len;
 	u32 num_xfered;
-	struct scatterlist *tx_sgl, *rx_sgl;
+	काष्ठा scatterlist *tx_sgl, *rx_sgl;
 	u32 tx_sgl_len, rx_sgl_len;
-	const struct mtk_spi_compatible *dev_comp;
-};
+	स्थिर काष्ठा mtk_spi_compatible *dev_comp;
+पूर्ण;
 
-static const struct mtk_spi_compatible mtk_common_compat;
+अटल स्थिर काष्ठा mtk_spi_compatible mtk_common_compat;
 
-static const struct mtk_spi_compatible mt2712_compat = {
+अटल स्थिर काष्ठा mtk_spi_compatible mt2712_compat = अणु
 	.must_tx = true,
-};
+पूर्ण;
 
-static const struct mtk_spi_compatible mt6765_compat = {
+अटल स्थिर काष्ठा mtk_spi_compatible mt6765_compat = अणु
 	.need_pad_sel = true,
 	.must_tx = true,
 	.enhance_timing = true,
 	.dma_ext = true,
-};
+पूर्ण;
 
-static const struct mtk_spi_compatible mt7622_compat = {
+अटल स्थिर काष्ठा mtk_spi_compatible mt7622_compat = अणु
 	.must_tx = true,
 	.enhance_timing = true,
-};
+पूर्ण;
 
-static const struct mtk_spi_compatible mt8173_compat = {
+अटल स्थिर काष्ठा mtk_spi_compatible mt8173_compat = अणु
 	.need_pad_sel = true,
 	.must_tx = true,
-};
+पूर्ण;
 
-static const struct mtk_spi_compatible mt8183_compat = {
+अटल स्थिर काष्ठा mtk_spi_compatible mt8183_compat = अणु
 	.need_pad_sel = true,
 	.must_tx = true,
 	.enhance_timing = true,
-};
+पूर्ण;
 
 /*
- * A piece of default chip info unless the platform
+ * A piece of शेष chip info unless the platक्रमm
  * supplies it.
  */
-static const struct mtk_chip_config mtk_default_chip_info = {
+अटल स्थिर काष्ठा mtk_chip_config mtk_शेष_chip_info = अणु
 	.sample_sel = 0,
-};
+पूर्ण;
 
-static const struct of_device_id mtk_spi_of_match[] = {
-	{ .compatible = "mediatek,mt2701-spi",
-		.data = (void *)&mtk_common_compat,
-	},
-	{ .compatible = "mediatek,mt2712-spi",
-		.data = (void *)&mt2712_compat,
-	},
-	{ .compatible = "mediatek,mt6589-spi",
-		.data = (void *)&mtk_common_compat,
-	},
-	{ .compatible = "mediatek,mt6765-spi",
-		.data = (void *)&mt6765_compat,
-	},
-	{ .compatible = "mediatek,mt7622-spi",
-		.data = (void *)&mt7622_compat,
-	},
-	{ .compatible = "mediatek,mt7629-spi",
-		.data = (void *)&mt7622_compat,
-	},
-	{ .compatible = "mediatek,mt8135-spi",
-		.data = (void *)&mtk_common_compat,
-	},
-	{ .compatible = "mediatek,mt8173-spi",
-		.data = (void *)&mt8173_compat,
-	},
-	{ .compatible = "mediatek,mt8183-spi",
-		.data = (void *)&mt8183_compat,
-	},
-	{ .compatible = "mediatek,mt8192-spi",
-		.data = (void *)&mt6765_compat,
-	},
-	{}
-};
+अटल स्थिर काष्ठा of_device_id mtk_spi_of_match[] = अणु
+	अणु .compatible = "mediatek,mt2701-spi",
+		.data = (व्योम *)&mtk_common_compat,
+	पूर्ण,
+	अणु .compatible = "mediatek,mt2712-spi",
+		.data = (व्योम *)&mt2712_compat,
+	पूर्ण,
+	अणु .compatible = "mediatek,mt6589-spi",
+		.data = (व्योम *)&mtk_common_compat,
+	पूर्ण,
+	अणु .compatible = "mediatek,mt6765-spi",
+		.data = (व्योम *)&mt6765_compat,
+	पूर्ण,
+	अणु .compatible = "mediatek,mt7622-spi",
+		.data = (व्योम *)&mt7622_compat,
+	पूर्ण,
+	अणु .compatible = "mediatek,mt7629-spi",
+		.data = (व्योम *)&mt7622_compat,
+	पूर्ण,
+	अणु .compatible = "mediatek,mt8135-spi",
+		.data = (व्योम *)&mtk_common_compat,
+	पूर्ण,
+	अणु .compatible = "mediatek,mt8173-spi",
+		.data = (व्योम *)&mt8173_compat,
+	पूर्ण,
+	अणु .compatible = "mediatek,mt8183-spi",
+		.data = (व्योम *)&mt8183_compat,
+	पूर्ण,
+	अणु .compatible = "mediatek,mt8192-spi",
+		.data = (व्योम *)&mt6765_compat,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_spi_of_match);
 
-static void mtk_spi_reset(struct mtk_spi *mdata)
-{
+अटल व्योम mtk_spi_reset(काष्ठा mtk_spi *mdata)
+अणु
 	u32 reg_val;
 
 	/* set the software reset bit in SPI_CMD_REG. */
-	reg_val = readl(mdata->base + SPI_CMD_REG);
+	reg_val = पढ़ोl(mdata->base + SPI_CMD_REG);
 	reg_val |= SPI_CMD_RST;
-	writel(reg_val, mdata->base + SPI_CMD_REG);
+	ग_लिखोl(reg_val, mdata->base + SPI_CMD_REG);
 
-	reg_val = readl(mdata->base + SPI_CMD_REG);
+	reg_val = पढ़ोl(mdata->base + SPI_CMD_REG);
 	reg_val &= ~SPI_CMD_RST;
-	writel(reg_val, mdata->base + SPI_CMD_REG);
-}
+	ग_लिखोl(reg_val, mdata->base + SPI_CMD_REG);
+पूर्ण
 
-static int mtk_spi_prepare_message(struct spi_master *master,
-				   struct spi_message *msg)
-{
+अटल पूर्णांक mtk_spi_prepare_message(काष्ठा spi_master *master,
+				   काष्ठा spi_message *msg)
+अणु
 	u16 cpha, cpol;
 	u32 reg_val;
-	struct spi_device *spi = msg->spi;
-	struct mtk_chip_config *chip_config = spi->controller_data;
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+	काष्ठा spi_device *spi = msg->spi;
+	काष्ठा mtk_chip_config *chip_config = spi->controller_data;
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
 	cpha = spi->mode & SPI_CPHA ? 1 : 0;
 	cpol = spi->mode & SPI_CPOL ? 1 : 0;
 
-	reg_val = readl(mdata->base + SPI_CMD_REG);
-	if (cpha)
+	reg_val = पढ़ोl(mdata->base + SPI_CMD_REG);
+	अगर (cpha)
 		reg_val |= SPI_CMD_CPHA;
-	else
+	अन्यथा
 		reg_val &= ~SPI_CMD_CPHA;
-	if (cpol)
+	अगर (cpol)
 		reg_val |= SPI_CMD_CPOL;
-	else
+	अन्यथा
 		reg_val &= ~SPI_CMD_CPOL;
 
 	/* set the mlsbx and mlsbtx */
-	if (spi->mode & SPI_LSB_FIRST) {
+	अगर (spi->mode & SPI_LSB_FIRST) अणु
 		reg_val &= ~SPI_CMD_TXMSBF;
 		reg_val &= ~SPI_CMD_RXMSBF;
-	} else {
+	पूर्ण अन्यथा अणु
 		reg_val |= SPI_CMD_TXMSBF;
 		reg_val |= SPI_CMD_RXMSBF;
-	}
+	पूर्ण
 
 	/* set the tx/rx endian */
-#ifdef __LITTLE_ENDIAN
+#अगर_घोषित __LITTLE_ENDIAN
 	reg_val &= ~SPI_CMD_TX_ENDIAN;
 	reg_val &= ~SPI_CMD_RX_ENDIAN;
-#else
+#अन्यथा
 	reg_val |= SPI_CMD_TX_ENDIAN;
 	reg_val |= SPI_CMD_RX_ENDIAN;
-#endif
+#पूर्ण_अगर
 
-	if (mdata->dev_comp->enhance_timing) {
+	अगर (mdata->dev_comp->enhance_timing) अणु
 		/* set CS polarity */
-		if (spi->mode & SPI_CS_HIGH)
+		अगर (spi->mode & SPI_CS_HIGH)
 			reg_val |= SPI_CMD_CS_POL;
-		else
+		अन्यथा
 			reg_val &= ~SPI_CMD_CS_POL;
 
-		if (chip_config->sample_sel)
+		अगर (chip_config->sample_sel)
 			reg_val |= SPI_CMD_SAMPLE_SEL;
-		else
+		अन्यथा
 			reg_val &= ~SPI_CMD_SAMPLE_SEL;
-	}
+	पूर्ण
 
-	/* set finish and pause interrupt always enable */
+	/* set finish and छोड़ो पूर्णांकerrupt always enable */
 	reg_val |= SPI_CMD_FINISH_IE | SPI_CMD_PAUSE_IE;
 
 	/* disable dma mode */
 	reg_val &= ~(SPI_CMD_TX_DMA | SPI_CMD_RX_DMA);
 
-	/* disable deassert mode */
+	/* disable deनिश्चित mode */
 	reg_val &= ~SPI_CMD_DEASSERT;
 
-	writel(reg_val, mdata->base + SPI_CMD_REG);
+	ग_लिखोl(reg_val, mdata->base + SPI_CMD_REG);
 
 	/* pad select */
-	if (mdata->dev_comp->need_pad_sel)
-		writel(mdata->pad_sel[spi->chip_select],
+	अगर (mdata->dev_comp->need_pad_sel)
+		ग_लिखोl(mdata->pad_sel[spi->chip_select],
 		       mdata->base + SPI_PAD_SEL_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_spi_set_cs(struct spi_device *spi, bool enable)
-{
+अटल व्योम mtk_spi_set_cs(काष्ठा spi_device *spi, bool enable)
+अणु
 	u32 reg_val;
-	struct mtk_spi *mdata = spi_master_get_devdata(spi->master);
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(spi->master);
 
-	if (spi->mode & SPI_CS_HIGH)
+	अगर (spi->mode & SPI_CS_HIGH)
 		enable = !enable;
 
-	reg_val = readl(mdata->base + SPI_CMD_REG);
-	if (!enable) {
+	reg_val = पढ़ोl(mdata->base + SPI_CMD_REG);
+	अगर (!enable) अणु
 		reg_val |= SPI_CMD_PAUSE_EN;
-		writel(reg_val, mdata->base + SPI_CMD_REG);
-	} else {
+		ग_लिखोl(reg_val, mdata->base + SPI_CMD_REG);
+	पूर्ण अन्यथा अणु
 		reg_val &= ~SPI_CMD_PAUSE_EN;
-		writel(reg_val, mdata->base + SPI_CMD_REG);
+		ग_लिखोl(reg_val, mdata->base + SPI_CMD_REG);
 		mdata->state = MTK_SPI_IDLE;
 		mtk_spi_reset(mdata);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mtk_spi_prepare_transfer(struct spi_master *master,
-				     struct spi_transfer *xfer)
-{
-	u32 spi_clk_hz, div, sck_time, reg_val;
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+अटल व्योम mtk_spi_prepare_transfer(काष्ठा spi_master *master,
+				     काष्ठा spi_transfer *xfer)
+अणु
+	u32 spi_clk_hz, भाग, sck_समय, reg_val;
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
 	spi_clk_hz = clk_get_rate(mdata->spi_clk);
-	if (xfer->speed_hz < spi_clk_hz / 2)
-		div = DIV_ROUND_UP(spi_clk_hz, xfer->speed_hz);
-	else
-		div = 1;
+	अगर (xfer->speed_hz < spi_clk_hz / 2)
+		भाग = DIV_ROUND_UP(spi_clk_hz, xfer->speed_hz);
+	अन्यथा
+		भाग = 1;
 
-	sck_time = (div + 1) / 2;
+	sck_समय = (भाग + 1) / 2;
 
-	if (mdata->dev_comp->enhance_timing) {
-		reg_val = readl(mdata->base + SPI_CFG2_REG);
+	अगर (mdata->dev_comp->enhance_timing) अणु
+		reg_val = पढ़ोl(mdata->base + SPI_CFG2_REG);
 		reg_val &= ~(0xffff << SPI_CFG2_SCK_HIGH_OFFSET);
-		reg_val |= (((sck_time - 1) & 0xffff)
+		reg_val |= (((sck_समय - 1) & 0xffff)
 			   << SPI_CFG2_SCK_HIGH_OFFSET);
 		reg_val &= ~(0xffff << SPI_CFG2_SCK_LOW_OFFSET);
-		reg_val |= (((sck_time - 1) & 0xffff)
+		reg_val |= (((sck_समय - 1) & 0xffff)
 			   << SPI_CFG2_SCK_LOW_OFFSET);
-		writel(reg_val, mdata->base + SPI_CFG2_REG);
-	} else {
-		reg_val = readl(mdata->base + SPI_CFG0_REG);
+		ग_लिखोl(reg_val, mdata->base + SPI_CFG2_REG);
+	पूर्ण अन्यथा अणु
+		reg_val = पढ़ोl(mdata->base + SPI_CFG0_REG);
 		reg_val &= ~(0xff << SPI_CFG0_SCK_HIGH_OFFSET);
-		reg_val |= (((sck_time - 1) & 0xff)
+		reg_val |= (((sck_समय - 1) & 0xff)
 			   << SPI_CFG0_SCK_HIGH_OFFSET);
 		reg_val &= ~(0xff << SPI_CFG0_SCK_LOW_OFFSET);
-		reg_val |= (((sck_time - 1) & 0xff) << SPI_CFG0_SCK_LOW_OFFSET);
-		writel(reg_val, mdata->base + SPI_CFG0_REG);
-	}
-}
+		reg_val |= (((sck_समय - 1) & 0xff) << SPI_CFG0_SCK_LOW_OFFSET);
+		ग_लिखोl(reg_val, mdata->base + SPI_CFG0_REG);
+	पूर्ण
+पूर्ण
 
-static void mtk_spi_setup_packet(struct spi_master *master)
-{
+अटल व्योम mtk_spi_setup_packet(काष्ठा spi_master *master)
+अणु
 	u32 packet_size, packet_loop, reg_val;
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
 	packet_size = min_t(u32, mdata->xfer_len, MTK_SPI_PACKET_SIZE);
 	packet_loop = mdata->xfer_len / packet_size;
 
-	reg_val = readl(mdata->base + SPI_CFG1_REG);
+	reg_val = पढ़ोl(mdata->base + SPI_CFG1_REG);
 	reg_val &= ~(SPI_CFG1_PACKET_LENGTH_MASK | SPI_CFG1_PACKET_LOOP_MASK);
 	reg_val |= (packet_size - 1) << SPI_CFG1_PACKET_LENGTH_OFFSET;
 	reg_val |= (packet_loop - 1) << SPI_CFG1_PACKET_LOOP_OFFSET;
-	writel(reg_val, mdata->base + SPI_CFG1_REG);
-}
+	ग_लिखोl(reg_val, mdata->base + SPI_CFG1_REG);
+पूर्ण
 
-static void mtk_spi_enable_transfer(struct spi_master *master)
-{
+अटल व्योम mtk_spi_enable_transfer(काष्ठा spi_master *master)
+अणु
 	u32 cmd;
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
-	cmd = readl(mdata->base + SPI_CMD_REG);
-	if (mdata->state == MTK_SPI_IDLE)
+	cmd = पढ़ोl(mdata->base + SPI_CMD_REG);
+	अगर (mdata->state == MTK_SPI_IDLE)
 		cmd |= SPI_CMD_ACT;
-	else
+	अन्यथा
 		cmd |= SPI_CMD_RESUME;
-	writel(cmd, mdata->base + SPI_CMD_REG);
-}
+	ग_लिखोl(cmd, mdata->base + SPI_CMD_REG);
+पूर्ण
 
-static int mtk_spi_get_mult_delta(u32 xfer_len)
-{
+अटल पूर्णांक mtk_spi_get_mult_delta(u32 xfer_len)
+अणु
 	u32 mult_delta;
 
-	if (xfer_len > MTK_SPI_PACKET_SIZE)
+	अगर (xfer_len > MTK_SPI_PACKET_SIZE)
 		mult_delta = xfer_len % MTK_SPI_PACKET_SIZE;
-	else
+	अन्यथा
 		mult_delta = 0;
 
-	return mult_delta;
-}
+	वापस mult_delta;
+पूर्ण
 
-static void mtk_spi_update_mdata_len(struct spi_master *master)
-{
-	int mult_delta;
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+अटल व्योम mtk_spi_update_mdata_len(काष्ठा spi_master *master)
+अणु
+	पूर्णांक mult_delta;
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
-	if (mdata->tx_sgl_len && mdata->rx_sgl_len) {
-		if (mdata->tx_sgl_len > mdata->rx_sgl_len) {
+	अगर (mdata->tx_sgl_len && mdata->rx_sgl_len) अणु
+		अगर (mdata->tx_sgl_len > mdata->rx_sgl_len) अणु
 			mult_delta = mtk_spi_get_mult_delta(mdata->rx_sgl_len);
 			mdata->xfer_len = mdata->rx_sgl_len - mult_delta;
 			mdata->rx_sgl_len = mult_delta;
 			mdata->tx_sgl_len -= mdata->xfer_len;
-		} else {
+		पूर्ण अन्यथा अणु
 			mult_delta = mtk_spi_get_mult_delta(mdata->tx_sgl_len);
 			mdata->xfer_len = mdata->tx_sgl_len - mult_delta;
 			mdata->tx_sgl_len = mult_delta;
 			mdata->rx_sgl_len -= mdata->xfer_len;
-		}
-	} else if (mdata->tx_sgl_len) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (mdata->tx_sgl_len) अणु
 		mult_delta = mtk_spi_get_mult_delta(mdata->tx_sgl_len);
 		mdata->xfer_len = mdata->tx_sgl_len - mult_delta;
 		mdata->tx_sgl_len = mult_delta;
-	} else if (mdata->rx_sgl_len) {
+	पूर्ण अन्यथा अगर (mdata->rx_sgl_len) अणु
 		mult_delta = mtk_spi_get_mult_delta(mdata->rx_sgl_len);
 		mdata->xfer_len = mdata->rx_sgl_len - mult_delta;
 		mdata->rx_sgl_len = mult_delta;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mtk_spi_setup_dma_addr(struct spi_master *master,
-				   struct spi_transfer *xfer)
-{
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+अटल व्योम mtk_spi_setup_dma_addr(काष्ठा spi_master *master,
+				   काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
-	if (mdata->tx_sgl) {
-		writel((u32)(xfer->tx_dma & MTK_SPI_32BITS_MASK),
+	अगर (mdata->tx_sgl) अणु
+		ग_लिखोl((u32)(xfer->tx_dma & MTK_SPI_32BITS_MASK),
 		       mdata->base + SPI_TX_SRC_REG);
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-		if (mdata->dev_comp->dma_ext)
-			writel((u32)(xfer->tx_dma >> 32),
+#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
+		अगर (mdata->dev_comp->dma_ext)
+			ग_लिखोl((u32)(xfer->tx_dma >> 32),
 			       mdata->base + SPI_TX_SRC_REG_64);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	if (mdata->rx_sgl) {
-		writel((u32)(xfer->rx_dma & MTK_SPI_32BITS_MASK),
+	अगर (mdata->rx_sgl) अणु
+		ग_लिखोl((u32)(xfer->rx_dma & MTK_SPI_32BITS_MASK),
 		       mdata->base + SPI_RX_DST_REG);
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-		if (mdata->dev_comp->dma_ext)
-			writel((u32)(xfer->rx_dma >> 32),
+#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
+		अगर (mdata->dev_comp->dma_ext)
+			ग_लिखोl((u32)(xfer->rx_dma >> 32),
 			       mdata->base + SPI_RX_DST_REG_64);
-#endif
-	}
-}
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-static int mtk_spi_fifo_transfer(struct spi_master *master,
-				 struct spi_device *spi,
-				 struct spi_transfer *xfer)
-{
-	int cnt, remainder;
+अटल पूर्णांक mtk_spi_fअगरo_transfer(काष्ठा spi_master *master,
+				 काष्ठा spi_device *spi,
+				 काष्ठा spi_transfer *xfer)
+अणु
+	पूर्णांक cnt, reमुख्यder;
 	u32 reg_val;
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
 	mdata->cur_transfer = xfer;
 	mdata->xfer_len = min(MTK_SPI_MAX_FIFO_SIZE, xfer->len);
@@ -427,29 +428,29 @@ static int mtk_spi_fifo_transfer(struct spi_master *master,
 	mtk_spi_setup_packet(master);
 
 	cnt = xfer->len / 4;
-	iowrite32_rep(mdata->base + SPI_TX_DATA_REG, xfer->tx_buf, cnt);
+	ioग_लिखो32_rep(mdata->base + SPI_TX_DATA_REG, xfer->tx_buf, cnt);
 
-	remainder = xfer->len % 4;
-	if (remainder > 0) {
+	reमुख्यder = xfer->len % 4;
+	अगर (reमुख्यder > 0) अणु
 		reg_val = 0;
-		memcpy(&reg_val, xfer->tx_buf + (cnt * 4), remainder);
-		writel(reg_val, mdata->base + SPI_TX_DATA_REG);
-	}
+		स_नकल(&reg_val, xfer->tx_buf + (cnt * 4), reमुख्यder);
+		ग_लिखोl(reg_val, mdata->base + SPI_TX_DATA_REG);
+	पूर्ण
 
 	mtk_spi_enable_transfer(master);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int mtk_spi_dma_transfer(struct spi_master *master,
-				struct spi_device *spi,
-				struct spi_transfer *xfer)
-{
-	int cmd;
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+अटल पूर्णांक mtk_spi_dma_transfer(काष्ठा spi_master *master,
+				काष्ठा spi_device *spi,
+				काष्ठा spi_transfer *xfer)
+अणु
+	पूर्णांक cmd;
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
-	mdata->tx_sgl = NULL;
-	mdata->rx_sgl = NULL;
+	mdata->tx_sgl = शून्य;
+	mdata->rx_sgl = शून्य;
 	mdata->tx_sgl_len = 0;
 	mdata->rx_sgl_len = 0;
 	mdata->cur_transfer = xfer;
@@ -457,224 +458,224 @@ static int mtk_spi_dma_transfer(struct spi_master *master,
 
 	mtk_spi_prepare_transfer(master, xfer);
 
-	cmd = readl(mdata->base + SPI_CMD_REG);
-	if (xfer->tx_buf)
+	cmd = पढ़ोl(mdata->base + SPI_CMD_REG);
+	अगर (xfer->tx_buf)
 		cmd |= SPI_CMD_TX_DMA;
-	if (xfer->rx_buf)
+	अगर (xfer->rx_buf)
 		cmd |= SPI_CMD_RX_DMA;
-	writel(cmd, mdata->base + SPI_CMD_REG);
+	ग_लिखोl(cmd, mdata->base + SPI_CMD_REG);
 
-	if (xfer->tx_buf)
+	अगर (xfer->tx_buf)
 		mdata->tx_sgl = xfer->tx_sg.sgl;
-	if (xfer->rx_buf)
+	अगर (xfer->rx_buf)
 		mdata->rx_sgl = xfer->rx_sg.sgl;
 
-	if (mdata->tx_sgl) {
+	अगर (mdata->tx_sgl) अणु
 		xfer->tx_dma = sg_dma_address(mdata->tx_sgl);
 		mdata->tx_sgl_len = sg_dma_len(mdata->tx_sgl);
-	}
-	if (mdata->rx_sgl) {
+	पूर्ण
+	अगर (mdata->rx_sgl) अणु
 		xfer->rx_dma = sg_dma_address(mdata->rx_sgl);
 		mdata->rx_sgl_len = sg_dma_len(mdata->rx_sgl);
-	}
+	पूर्ण
 
 	mtk_spi_update_mdata_len(master);
 	mtk_spi_setup_packet(master);
 	mtk_spi_setup_dma_addr(master, xfer);
 	mtk_spi_enable_transfer(master);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int mtk_spi_transfer_one(struct spi_master *master,
-				struct spi_device *spi,
-				struct spi_transfer *xfer)
-{
-	if (master->can_dma(master, spi, xfer))
-		return mtk_spi_dma_transfer(master, spi, xfer);
-	else
-		return mtk_spi_fifo_transfer(master, spi, xfer);
-}
+अटल पूर्णांक mtk_spi_transfer_one(काष्ठा spi_master *master,
+				काष्ठा spi_device *spi,
+				काष्ठा spi_transfer *xfer)
+अणु
+	अगर (master->can_dma(master, spi, xfer))
+		वापस mtk_spi_dma_transfer(master, spi, xfer);
+	अन्यथा
+		वापस mtk_spi_fअगरo_transfer(master, spi, xfer);
+पूर्ण
 
-static bool mtk_spi_can_dma(struct spi_master *master,
-			    struct spi_device *spi,
-			    struct spi_transfer *xfer)
-{
-	/* Buffers for DMA transactions must be 4-byte aligned */
-	return (xfer->len > MTK_SPI_MAX_FIFO_SIZE &&
-		(unsigned long)xfer->tx_buf % 4 == 0 &&
-		(unsigned long)xfer->rx_buf % 4 == 0);
-}
+अटल bool mtk_spi_can_dma(काष्ठा spi_master *master,
+			    काष्ठा spi_device *spi,
+			    काष्ठा spi_transfer *xfer)
+अणु
+	/* Buffers क्रम DMA transactions must be 4-byte aligned */
+	वापस (xfer->len > MTK_SPI_MAX_FIFO_SIZE &&
+		(अचिन्हित दीर्घ)xfer->tx_buf % 4 == 0 &&
+		(अचिन्हित दीर्घ)xfer->rx_buf % 4 == 0);
+पूर्ण
 
-static int mtk_spi_set_hw_cs_timing(struct spi_device *spi,
-				    struct spi_delay *setup,
-				    struct spi_delay *hold,
-				    struct spi_delay *inactive)
-{
-	struct mtk_spi *mdata = spi_master_get_devdata(spi->master);
+अटल पूर्णांक mtk_spi_set_hw_cs_timing(काष्ठा spi_device *spi,
+				    काष्ठा spi_delay *setup,
+				    काष्ठा spi_delay *hold,
+				    काष्ठा spi_delay *inactive)
+अणु
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(spi->master);
 	u16 setup_dly, hold_dly, inactive_dly;
 	u32 reg_val;
 
-	if ((setup && setup->unit != SPI_DELAY_UNIT_SCK) ||
+	अगर ((setup && setup->unit != SPI_DELAY_UNIT_SCK) ||
 	    (hold && hold->unit != SPI_DELAY_UNIT_SCK) ||
-	    (inactive && inactive->unit != SPI_DELAY_UNIT_SCK)) {
+	    (inactive && inactive->unit != SPI_DELAY_UNIT_SCK)) अणु
 		dev_err(&spi->dev,
 			"Invalid delay unit, should be SPI_DELAY_UNIT_SCK\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	setup_dly = setup ? setup->value : 1;
 	hold_dly = hold ? hold->value : 1;
 	inactive_dly = inactive ? inactive->value : 1;
 
-	reg_val = readl(mdata->base + SPI_CFG0_REG);
-	if (mdata->dev_comp->enhance_timing) {
+	reg_val = पढ़ोl(mdata->base + SPI_CFG0_REG);
+	अगर (mdata->dev_comp->enhance_timing) अणु
 		reg_val &= ~(0xffff << SPI_ADJUST_CFG0_CS_HOLD_OFFSET);
 		reg_val |= (((hold_dly - 1) & 0xffff)
 			   << SPI_ADJUST_CFG0_CS_HOLD_OFFSET);
 		reg_val &= ~(0xffff << SPI_ADJUST_CFG0_CS_SETUP_OFFSET);
 		reg_val |= (((setup_dly - 1) & 0xffff)
 			   << SPI_ADJUST_CFG0_CS_SETUP_OFFSET);
-	} else {
+	पूर्ण अन्यथा अणु
 		reg_val &= ~(0xff << SPI_CFG0_CS_HOLD_OFFSET);
 		reg_val |= (((hold_dly - 1) & 0xff) << SPI_CFG0_CS_HOLD_OFFSET);
 		reg_val &= ~(0xff << SPI_CFG0_CS_SETUP_OFFSET);
 		reg_val |= (((setup_dly - 1) & 0xff)
 			    << SPI_CFG0_CS_SETUP_OFFSET);
-	}
-	writel(reg_val, mdata->base + SPI_CFG0_REG);
+	पूर्ण
+	ग_लिखोl(reg_val, mdata->base + SPI_CFG0_REG);
 
-	reg_val = readl(mdata->base + SPI_CFG1_REG);
+	reg_val = पढ़ोl(mdata->base + SPI_CFG1_REG);
 	reg_val &= ~SPI_CFG1_CS_IDLE_MASK;
 	reg_val |= (((inactive_dly - 1) & 0xff) << SPI_CFG1_CS_IDLE_OFFSET);
-	writel(reg_val, mdata->base + SPI_CFG1_REG);
+	ग_लिखोl(reg_val, mdata->base + SPI_CFG1_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_spi_setup(struct spi_device *spi)
-{
-	struct mtk_spi *mdata = spi_master_get_devdata(spi->master);
+अटल पूर्णांक mtk_spi_setup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(spi->master);
 
-	if (!spi->controller_data)
-		spi->controller_data = (void *)&mtk_default_chip_info;
+	अगर (!spi->controller_data)
+		spi->controller_data = (व्योम *)&mtk_शेष_chip_info;
 
-	if (mdata->dev_comp->need_pad_sel && gpio_is_valid(spi->cs_gpio))
+	अगर (mdata->dev_comp->need_pad_sel && gpio_is_valid(spi->cs_gpio))
 		gpio_direction_output(spi->cs_gpio, !(spi->mode & SPI_CS_HIGH));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t mtk_spi_interrupt(int irq, void *dev_id)
-{
-	u32 cmd, reg_val, cnt, remainder, len;
-	struct spi_master *master = dev_id;
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
-	struct spi_transfer *trans = mdata->cur_transfer;
+अटल irqवापस_t mtk_spi_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	u32 cmd, reg_val, cnt, reमुख्यder, len;
+	काष्ठा spi_master *master = dev_id;
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
+	काष्ठा spi_transfer *trans = mdata->cur_transfer;
 
-	reg_val = readl(mdata->base + SPI_STATUS0_REG);
-	if (reg_val & MTK_SPI_PAUSE_INT_STATUS)
+	reg_val = पढ़ोl(mdata->base + SPI_STATUS0_REG);
+	अगर (reg_val & MTK_SPI_PAUSE_INT_STATUS)
 		mdata->state = MTK_SPI_PAUSED;
-	else
+	अन्यथा
 		mdata->state = MTK_SPI_IDLE;
 
-	if (!master->can_dma(master, master->cur_msg->spi, trans)) {
-		if (trans->rx_buf) {
+	अगर (!master->can_dma(master, master->cur_msg->spi, trans)) अणु
+		अगर (trans->rx_buf) अणु
 			cnt = mdata->xfer_len / 4;
-			ioread32_rep(mdata->base + SPI_RX_DATA_REG,
+			ioपढ़ो32_rep(mdata->base + SPI_RX_DATA_REG,
 				     trans->rx_buf + mdata->num_xfered, cnt);
-			remainder = mdata->xfer_len % 4;
-			if (remainder > 0) {
-				reg_val = readl(mdata->base + SPI_RX_DATA_REG);
-				memcpy(trans->rx_buf +
+			reमुख्यder = mdata->xfer_len % 4;
+			अगर (reमुख्यder > 0) अणु
+				reg_val = पढ़ोl(mdata->base + SPI_RX_DATA_REG);
+				स_नकल(trans->rx_buf +
 					mdata->num_xfered +
 					(cnt * 4),
 					&reg_val,
-					remainder);
-			}
-		}
+					reमुख्यder);
+			पूर्ण
+		पूर्ण
 
 		mdata->num_xfered += mdata->xfer_len;
-		if (mdata->num_xfered == trans->len) {
+		अगर (mdata->num_xfered == trans->len) अणु
 			spi_finalize_current_transfer(master);
-			return IRQ_HANDLED;
-		}
+			वापस IRQ_HANDLED;
+		पूर्ण
 
 		len = trans->len - mdata->num_xfered;
 		mdata->xfer_len = min(MTK_SPI_MAX_FIFO_SIZE, len);
 		mtk_spi_setup_packet(master);
 
 		cnt = mdata->xfer_len / 4;
-		iowrite32_rep(mdata->base + SPI_TX_DATA_REG,
+		ioग_लिखो32_rep(mdata->base + SPI_TX_DATA_REG,
 				trans->tx_buf + mdata->num_xfered, cnt);
 
-		remainder = mdata->xfer_len % 4;
-		if (remainder > 0) {
+		reमुख्यder = mdata->xfer_len % 4;
+		अगर (reमुख्यder > 0) अणु
 			reg_val = 0;
-			memcpy(&reg_val,
+			स_नकल(&reg_val,
 				trans->tx_buf + (cnt * 4) + mdata->num_xfered,
-				remainder);
-			writel(reg_val, mdata->base + SPI_TX_DATA_REG);
-		}
+				reमुख्यder);
+			ग_लिखोl(reg_val, mdata->base + SPI_TX_DATA_REG);
+		पूर्ण
 
 		mtk_spi_enable_transfer(master);
 
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (mdata->tx_sgl)
+	अगर (mdata->tx_sgl)
 		trans->tx_dma += mdata->xfer_len;
-	if (mdata->rx_sgl)
+	अगर (mdata->rx_sgl)
 		trans->rx_dma += mdata->xfer_len;
 
-	if (mdata->tx_sgl && (mdata->tx_sgl_len == 0)) {
+	अगर (mdata->tx_sgl && (mdata->tx_sgl_len == 0)) अणु
 		mdata->tx_sgl = sg_next(mdata->tx_sgl);
-		if (mdata->tx_sgl) {
+		अगर (mdata->tx_sgl) अणु
 			trans->tx_dma = sg_dma_address(mdata->tx_sgl);
 			mdata->tx_sgl_len = sg_dma_len(mdata->tx_sgl);
-		}
-	}
-	if (mdata->rx_sgl && (mdata->rx_sgl_len == 0)) {
+		पूर्ण
+	पूर्ण
+	अगर (mdata->rx_sgl && (mdata->rx_sgl_len == 0)) अणु
 		mdata->rx_sgl = sg_next(mdata->rx_sgl);
-		if (mdata->rx_sgl) {
+		अगर (mdata->rx_sgl) अणु
 			trans->rx_dma = sg_dma_address(mdata->rx_sgl);
 			mdata->rx_sgl_len = sg_dma_len(mdata->rx_sgl);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!mdata->tx_sgl && !mdata->rx_sgl) {
+	अगर (!mdata->tx_sgl && !mdata->rx_sgl) अणु
 		/* spi disable dma */
-		cmd = readl(mdata->base + SPI_CMD_REG);
+		cmd = पढ़ोl(mdata->base + SPI_CMD_REG);
 		cmd &= ~SPI_CMD_TX_DMA;
 		cmd &= ~SPI_CMD_RX_DMA;
-		writel(cmd, mdata->base + SPI_CMD_REG);
+		ग_लिखोl(cmd, mdata->base + SPI_CMD_REG);
 
 		spi_finalize_current_transfer(master);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	mtk_spi_update_mdata_len(master);
 	mtk_spi_setup_packet(master);
 	mtk_spi_setup_dma_addr(master, trans);
 	mtk_spi_enable_transfer(master);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mtk_spi_probe(struct platform_device *pdev)
-{
-	struct spi_master *master;
-	struct mtk_spi *mdata;
-	const struct of_device_id *of_id;
-	int i, irq, ret, addr_bits;
+अटल पूर्णांक mtk_spi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master;
+	काष्ठा mtk_spi *mdata;
+	स्थिर काष्ठा of_device_id *of_id;
+	पूर्णांक i, irq, ret, addr_bits;
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*mdata));
-	if (!master) {
+	master = spi_alloc_master(&pdev->dev, माप(*mdata));
+	अगर (!master) अणु
 		dev_err(&pdev->dev, "failed to alloc spi master\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	master->auto_runtime_pm = true;
+	master->स्वतः_runसमय_pm = true;
 	master->dev.of_node = pdev->dev.of_node;
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_LSB_FIRST;
 
@@ -686,263 +687,263 @@ static int mtk_spi_probe(struct platform_device *pdev)
 	master->set_cs_timing = mtk_spi_set_hw_cs_timing;
 
 	of_id = of_match_node(mtk_spi_of_match, pdev->dev.of_node);
-	if (!of_id) {
+	अगर (!of_id) अणु
 		dev_err(&pdev->dev, "failed to probe of_node\n");
 		ret = -EINVAL;
-		goto err_put_master;
-	}
+		जाओ err_put_master;
+	पूर्ण
 
 	mdata = spi_master_get_devdata(master);
 	mdata->dev_comp = of_id->data;
 
-	if (mdata->dev_comp->enhance_timing)
+	अगर (mdata->dev_comp->enhance_timing)
 		master->mode_bits |= SPI_CS_HIGH;
 
-	if (mdata->dev_comp->must_tx)
+	अगर (mdata->dev_comp->must_tx)
 		master->flags = SPI_MASTER_MUST_TX;
 
-	if (mdata->dev_comp->need_pad_sel) {
+	अगर (mdata->dev_comp->need_pad_sel) अणु
 		mdata->pad_num = of_property_count_u32_elems(
 			pdev->dev.of_node,
 			"mediatek,pad-select");
-		if (mdata->pad_num < 0) {
+		अगर (mdata->pad_num < 0) अणु
 			dev_err(&pdev->dev,
 				"No 'mediatek,pad-select' property\n");
 			ret = -EINVAL;
-			goto err_put_master;
-		}
+			जाओ err_put_master;
+		पूर्ण
 
-		mdata->pad_sel = devm_kmalloc_array(&pdev->dev, mdata->pad_num,
-						    sizeof(u32), GFP_KERNEL);
-		if (!mdata->pad_sel) {
+		mdata->pad_sel = devm_kदो_स्मृति_array(&pdev->dev, mdata->pad_num,
+						    माप(u32), GFP_KERNEL);
+		अगर (!mdata->pad_sel) अणु
 			ret = -ENOMEM;
-			goto err_put_master;
-		}
+			जाओ err_put_master;
+		पूर्ण
 
-		for (i = 0; i < mdata->pad_num; i++) {
-			of_property_read_u32_index(pdev->dev.of_node,
+		क्रम (i = 0; i < mdata->pad_num; i++) अणु
+			of_property_पढ़ो_u32_index(pdev->dev.of_node,
 						   "mediatek,pad-select",
 						   i, &mdata->pad_sel[i]);
-			if (mdata->pad_sel[i] > MT8173_SPI_MAX_PAD_SEL) {
+			अगर (mdata->pad_sel[i] > MT8173_SPI_MAX_PAD_SEL) अणु
 				dev_err(&pdev->dev, "wrong pad-sel[%d]: %u\n",
 					i, mdata->pad_sel[i]);
 				ret = -EINVAL;
-				goto err_put_master;
-			}
-		}
-	}
+				जाओ err_put_master;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	platform_set_drvdata(pdev, master);
-	mdata->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(mdata->base)) {
+	platक्रमm_set_drvdata(pdev, master);
+	mdata->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(mdata->base)) अणु
 		ret = PTR_ERR(mdata->base);
-		goto err_put_master;
-	}
+		जाओ err_put_master;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		ret = irq;
-		goto err_put_master;
-	}
+		जाओ err_put_master;
+	पूर्ण
 
-	if (!pdev->dev.dma_mask)
+	अगर (!pdev->dev.dma_mask)
 		pdev->dev.dma_mask = &pdev->dev.coherent_dma_mask;
 
-	ret = devm_request_irq(&pdev->dev, irq, mtk_spi_interrupt,
+	ret = devm_request_irq(&pdev->dev, irq, mtk_spi_पूर्णांकerrupt,
 			       IRQF_TRIGGER_NONE, dev_name(&pdev->dev), master);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register irq (%d)\n", ret);
-		goto err_put_master;
-	}
+		जाओ err_put_master;
+	पूर्ण
 
 	mdata->parent_clk = devm_clk_get(&pdev->dev, "parent-clk");
-	if (IS_ERR(mdata->parent_clk)) {
+	अगर (IS_ERR(mdata->parent_clk)) अणु
 		ret = PTR_ERR(mdata->parent_clk);
 		dev_err(&pdev->dev, "failed to get parent-clk: %d\n", ret);
-		goto err_put_master;
-	}
+		जाओ err_put_master;
+	पूर्ण
 
 	mdata->sel_clk = devm_clk_get(&pdev->dev, "sel-clk");
-	if (IS_ERR(mdata->sel_clk)) {
+	अगर (IS_ERR(mdata->sel_clk)) अणु
 		ret = PTR_ERR(mdata->sel_clk);
 		dev_err(&pdev->dev, "failed to get sel-clk: %d\n", ret);
-		goto err_put_master;
-	}
+		जाओ err_put_master;
+	पूर्ण
 
 	mdata->spi_clk = devm_clk_get(&pdev->dev, "spi-clk");
-	if (IS_ERR(mdata->spi_clk)) {
+	अगर (IS_ERR(mdata->spi_clk)) अणु
 		ret = PTR_ERR(mdata->spi_clk);
 		dev_err(&pdev->dev, "failed to get spi-clk: %d\n", ret);
-		goto err_put_master;
-	}
+		जाओ err_put_master;
+	पूर्ण
 
 	ret = clk_prepare_enable(mdata->spi_clk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to enable spi_clk (%d)\n", ret);
-		goto err_put_master;
-	}
+		जाओ err_put_master;
+	पूर्ण
 
 	ret = clk_set_parent(mdata->sel_clk, mdata->parent_clk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to clk_set_parent (%d)\n", ret);
 		clk_disable_unprepare(mdata->spi_clk);
-		goto err_put_master;
-	}
+		जाओ err_put_master;
+	पूर्ण
 
 	clk_disable_unprepare(mdata->spi_clk);
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	ret = devm_spi_register_master(&pdev->dev, master);
-	if (ret) {
+	ret = devm_spi_रेजिस्टर_master(&pdev->dev, master);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register master (%d)\n", ret);
-		goto err_disable_runtime_pm;
-	}
+		जाओ err_disable_runसमय_pm;
+	पूर्ण
 
-	if (mdata->dev_comp->need_pad_sel) {
-		if (mdata->pad_num != master->num_chipselect) {
+	अगर (mdata->dev_comp->need_pad_sel) अणु
+		अगर (mdata->pad_num != master->num_chipselect) अणु
 			dev_err(&pdev->dev,
 				"pad_num does not match num_chipselect(%d != %d)\n",
 				mdata->pad_num, master->num_chipselect);
 			ret = -EINVAL;
-			goto err_disable_runtime_pm;
-		}
+			जाओ err_disable_runसमय_pm;
+		पूर्ण
 
-		if (!master->cs_gpios && master->num_chipselect > 1) {
+		अगर (!master->cs_gpios && master->num_chipselect > 1) अणु
 			dev_err(&pdev->dev,
 				"cs_gpios not specified and num_chipselect > 1\n");
 			ret = -EINVAL;
-			goto err_disable_runtime_pm;
-		}
+			जाओ err_disable_runसमय_pm;
+		पूर्ण
 
-		if (master->cs_gpios) {
-			for (i = 0; i < master->num_chipselect; i++) {
+		अगर (master->cs_gpios) अणु
+			क्रम (i = 0; i < master->num_chipselect; i++) अणु
 				ret = devm_gpio_request(&pdev->dev,
 							master->cs_gpios[i],
 							dev_name(&pdev->dev));
-				if (ret) {
+				अगर (ret) अणु
 					dev_err(&pdev->dev,
 						"can't get CS GPIO %i\n", i);
-					goto err_disable_runtime_pm;
-				}
-			}
-		}
-	}
+					जाओ err_disable_runसमय_pm;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (mdata->dev_comp->dma_ext)
+	अगर (mdata->dev_comp->dma_ext)
 		addr_bits = DMA_ADDR_EXT_BITS;
-	else
+	अन्यथा
 		addr_bits = DMA_ADDR_DEF_BITS;
 	ret = dma_set_mask(&pdev->dev, DMA_BIT_MASK(addr_bits));
-	if (ret)
+	अगर (ret)
 		dev_notice(&pdev->dev, "SPI dma_set_mask(%d) failed, ret:%d\n",
 			   addr_bits, ret);
 
-	return 0;
+	वापस 0;
 
-err_disable_runtime_pm:
-	pm_runtime_disable(&pdev->dev);
+err_disable_runसमय_pm:
+	pm_runसमय_disable(&pdev->dev);
 err_put_master:
 	spi_master_put(master);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_spi_remove(struct platform_device *pdev)
-{
-	struct spi_master *master = platform_get_drvdata(pdev);
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+अटल पूर्णांक mtk_spi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
 	mtk_spi_reset(mdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int mtk_spi_suspend(struct device *dev)
-{
-	int ret;
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mtk_spi_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
 	ret = spi_master_suspend(master);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!pm_runtime_suspended(dev))
+	अगर (!pm_runसमय_suspended(dev))
 		clk_disable_unprepare(mdata->spi_clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_spi_resume(struct device *dev)
-{
-	int ret;
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+अटल पूर्णांक mtk_spi_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
-	if (!pm_runtime_suspended(dev)) {
+	अगर (!pm_runसमय_suspended(dev)) अणु
 		ret = clk_prepare_enable(mdata->spi_clk);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "failed to enable spi_clk (%d)\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = spi_master_resume(master);
-	if (ret < 0)
+	अगर (ret < 0)
 		clk_disable_unprepare(mdata->spi_clk);
 
-	return ret;
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-#ifdef CONFIG_PM
-static int mtk_spi_runtime_suspend(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक mtk_spi_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
 
 	clk_disable_unprepare(mdata->spi_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_spi_runtime_resume(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct mtk_spi *mdata = spi_master_get_devdata(master);
-	int ret;
+अटल पूर्णांक mtk_spi_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा mtk_spi *mdata = spi_master_get_devdata(master);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(mdata->spi_clk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to enable spi_clk (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
-#endif /* CONFIG_PM */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct dev_pm_ops mtk_spi_pm = {
+अटल स्थिर काष्ठा dev_pm_ops mtk_spi_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(mtk_spi_suspend, mtk_spi_resume)
-	SET_RUNTIME_PM_OPS(mtk_spi_runtime_suspend,
-			   mtk_spi_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(mtk_spi_runसमय_suspend,
+			   mtk_spi_runसमय_resume, शून्य)
+पूर्ण;
 
-static struct platform_driver mtk_spi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mtk_spi_driver = अणु
+	.driver = अणु
 		.name = "mtk-spi",
 		.pm	= &mtk_spi_pm,
 		.of_match_table = mtk_spi_of_match,
-	},
+	पूर्ण,
 	.probe = mtk_spi_probe,
-	.remove = mtk_spi_remove,
-};
+	.हटाओ = mtk_spi_हटाओ,
+पूर्ण;
 
-module_platform_driver(mtk_spi_driver);
+module_platक्रमm_driver(mtk_spi_driver);
 
 MODULE_DESCRIPTION("MTK SPI Controller driver");
 MODULE_AUTHOR("Leilk Liu <leilk.liu@mediatek.com>");

@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/pci.h>
-#include <linux/usb.h>
-#include <linux/usb/ehci_def.h>
-#include <linux/usb/hcd.h>
-#include <asm/xen/hypercall.h>
-#include <xen/interface/physdev.h>
-#include <xen/xen.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/pci.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/ehci_def.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <यंत्र/xen/hypercall.h>
+#समावेश <xen/पूर्णांकerface/physdev.h>
+#समावेश <xen/xen.h>
 
-static int xen_dbgp_op(struct usb_hcd *hcd, int op)
-{
-#ifdef CONFIG_PCI
-	const struct device *ctrlr = hcd_to_bus(hcd)->controller;
-#endif
-	struct physdev_dbgp_op dbgp;
+अटल पूर्णांक xen_dbgp_op(काष्ठा usb_hcd *hcd, पूर्णांक op)
+अणु
+#अगर_घोषित CONFIG_PCI
+	स्थिर काष्ठा device *ctrlr = hcd_to_bus(hcd)->controller;
+#पूर्ण_अगर
+	काष्ठा physdev_dbgp_op dbgp;
 
-	if (!xen_initial_domain())
-		return 0;
+	अगर (!xen_initial_करोमुख्य())
+		वापस 0;
 
 	dbgp.op = op;
 
-#ifdef CONFIG_PCI
-	if (dev_is_pci(ctrlr)) {
-		const struct pci_dev *pdev = to_pci_dev(ctrlr);
+#अगर_घोषित CONFIG_PCI
+	अगर (dev_is_pci(ctrlr)) अणु
+		स्थिर काष्ठा pci_dev *pdev = to_pci_dev(ctrlr);
 
-		dbgp.u.pci.seg = pci_domain_nr(pdev->bus);
+		dbgp.u.pci.seg = pci_करोमुख्य_nr(pdev->bus);
 		dbgp.u.pci.bus = pdev->bus->number;
 		dbgp.u.pci.devfn = pdev->devfn;
 		dbgp.bus = PHYSDEVOP_DBGP_BUS_PCI;
-	} else
-#endif
+	पूर्ण अन्यथा
+#पूर्ण_अगर
 		dbgp.bus = PHYSDEVOP_DBGP_BUS_UNKNOWN;
 
-	return HYPERVISOR_physdev_op(PHYSDEVOP_dbgp_op, &dbgp);
-}
+	वापस HYPERVISOR_physdev_op(PHYSDEVOP_dbgp_op, &dbgp);
+पूर्ण
 
-int xen_dbgp_reset_prep(struct usb_hcd *hcd)
-{
-	return xen_dbgp_op(hcd, PHYSDEVOP_DBGP_RESET_PREPARE);
-}
+पूर्णांक xen_dbgp_reset_prep(काष्ठा usb_hcd *hcd)
+अणु
+	वापस xen_dbgp_op(hcd, PHYSDEVOP_DBGP_RESET_PREPARE);
+पूर्ण
 
-int xen_dbgp_external_startup(struct usb_hcd *hcd)
-{
-	return xen_dbgp_op(hcd, PHYSDEVOP_DBGP_RESET_DONE);
-}
+पूर्णांक xen_dbgp_बाह्यal_startup(काष्ठा usb_hcd *hcd)
+अणु
+	वापस xen_dbgp_op(hcd, PHYSDEVOP_DBGP_RESET_DONE);
+पूर्ण
 
-#ifndef CONFIG_EARLY_PRINTK_DBGP
-#include <linux/export.h>
+#अगर_अघोषित CONFIG_EARLY_PRINTK_DBGP
+#समावेश <linux/export.h>
 EXPORT_SYMBOL_GPL(xen_dbgp_reset_prep);
-EXPORT_SYMBOL_GPL(xen_dbgp_external_startup);
-#endif
+EXPORT_SYMBOL_GPL(xen_dbgp_बाह्यal_startup);
+#पूर्ण_अगर

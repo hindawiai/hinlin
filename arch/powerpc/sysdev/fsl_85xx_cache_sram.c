@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2009-2010 Freescale Semiconductor, Inc.
  *
- * Simple memory allocator abstraction for QorIQ (P1/P2) based Cache-SRAM
+ * Simple memory allocator असलtraction क्रम QorIQ (P1/P2) based Cache-SRAM
  *
- * Author: Vivek Mahajan <vivek.mahajan@freescale.com>
+ * Author: Vivek Mahajan <vivek.mahajan@मुक्तscale.com>
  *
- * This file is derived from the original work done
- * by Sylvain Munaut for the Bestcomm SRAM allocator.
+ * This file is derived from the original work करोne
+ * by Sylvain Munaut क्रम the Bestcomm SRAM allocator.
  */
 
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/of_platform.h>
-#include <linux/pgtable.h>
-#include <asm/fsl_85xx_cache_sram.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/fsl_85xx_cache_sram.h>
 
-#include "fsl_85xx_cache_ctlr.h"
+#समावेश "fsl_85xx_cache_ctlr.h"
 
-struct mpc85xx_cache_sram *cache_sram;
+काष्ठा mpc85xx_cache_sram *cache_sram;
 
-void *mpc85xx_cache_sram_alloc(unsigned int size,
-				phys_addr_t *phys, unsigned int align)
-{
-	unsigned long offset;
-	unsigned long flags;
+व्योम *mpc85xx_cache_sram_alloc(अचिन्हित पूर्णांक size,
+				phys_addr_t *phys, अचिन्हित पूर्णांक align)
+अणु
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(cache_sram == NULL))
-		return NULL;
+	अगर (unlikely(cache_sram == शून्य))
+		वापस शून्य;
 
-	if (!size || (size > cache_sram->size) || (align > cache_sram->size)) {
+	अगर (!size || (size > cache_sram->size) || (align > cache_sram->size)) अणु
 		pr_err("%s(): size(=%x) or align(=%x) zero or too big\n",
 			__func__, size, align);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if ((align & (align - 1)) || align <= 1) {
+	अगर ((align & (align - 1)) || align <= 1) अणु
 		pr_err("%s(): align(=%x) must be power of two and >1\n",
 			__func__, align);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	spin_lock_irqsave(&cache_sram->lock, flags);
-	offset = rh_alloc_align(cache_sram->rh, size, align, NULL);
+	offset = rh_alloc_align(cache_sram->rh, size, align, शून्य);
 	spin_unlock_irqrestore(&cache_sram->lock, flags);
 
-	if (IS_ERR_VALUE(offset))
-		return NULL;
+	अगर (IS_ERR_VALUE(offset))
+		वापस शून्य;
 
 	*phys = cache_sram->base_phys + offset;
 
-	return (unsigned char *)cache_sram->base_virt + offset;
-}
+	वापस (अचिन्हित अक्षर *)cache_sram->base_virt + offset;
+पूर्ण
 EXPORT_SYMBOL(mpc85xx_cache_sram_alloc);
 
-void mpc85xx_cache_sram_free(void *ptr)
-{
-	unsigned long flags;
+व्योम mpc85xx_cache_sram_मुक्त(व्योम *ptr)
+अणु
+	अचिन्हित दीर्घ flags;
 	BUG_ON(!ptr);
 
 	spin_lock_irqsave(&cache_sram->lock, flags);
-	rh_free(cache_sram->rh, ptr - cache_sram->base_virt);
+	rh_मुक्त(cache_sram->rh, ptr - cache_sram->base_virt);
 	spin_unlock_irqrestore(&cache_sram->lock, flags);
-}
-EXPORT_SYMBOL(mpc85xx_cache_sram_free);
+पूर्ण
+EXPORT_SYMBOL(mpc85xx_cache_sram_मुक्त);
 
-int __init instantiate_cache_sram(struct platform_device *dev,
-		struct sram_parameters sram_params)
-{
-	int ret = 0;
+पूर्णांक __init instantiate_cache_sram(काष्ठा platक्रमm_device *dev,
+		काष्ठा sram_parameters sram_params)
+अणु
+	पूर्णांक ret = 0;
 
-	if (cache_sram) {
+	अगर (cache_sram) अणु
 		dev_err(&dev->dev, "Already initialized cache-sram\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	cache_sram = kzalloc(sizeof(struct mpc85xx_cache_sram), GFP_KERNEL);
-	if (!cache_sram) {
+	cache_sram = kzalloc(माप(काष्ठा mpc85xx_cache_sram), GFP_KERNEL);
+	अगर (!cache_sram) अणु
 		dev_err(&dev->dev, "Out of memory for cache_sram structure\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	cache_sram->base_phys = sram_params.sram_offset;
 	cache_sram->size = sram_params.sram_size;
 
-	if (!request_mem_region(cache_sram->base_phys, cache_sram->size,
-						"fsl_85xx_cache_sram")) {
+	अगर (!request_mem_region(cache_sram->base_phys, cache_sram->size,
+						"fsl_85xx_cache_sram")) अणु
 		dev_err(&dev->dev, "%pOF: request memory failed\n",
 				dev->dev.of_node);
 		ret = -ENXIO;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	cache_sram->base_virt = ioremap_coherent(cache_sram->base_phys,
 						 cache_sram->size);
-	if (!cache_sram->base_virt) {
+	अगर (!cache_sram->base_virt) अणु
 		dev_err(&dev->dev, "%pOF: ioremap_coherent failed\n",
 			dev->dev.of_node);
 		ret = -ENOMEM;
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
-	cache_sram->rh = rh_create(sizeof(unsigned int));
-	if (IS_ERR(cache_sram->rh)) {
+	cache_sram->rh = rh_create(माप(अचिन्हित पूर्णांक));
+	अगर (IS_ERR(cache_sram->rh)) अणु
 		dev_err(&dev->dev, "%pOF: Unable to create remote heap\n",
 				dev->dev.of_node);
 		ret = PTR_ERR(cache_sram->rh);
-		goto out_unmap;
-	}
+		जाओ out_unmap;
+	पूर्ण
 
 	rh_attach_region(cache_sram->rh, 0, cache_sram->size);
 	spin_lock_init(&cache_sram->lock);
 
 	dev_info(&dev->dev, "[base:0x%llx, size:0x%x] configured and loaded\n",
-		(unsigned long long)cache_sram->base_phys, cache_sram->size);
+		(अचिन्हित दीर्घ दीर्घ)cache_sram->base_phys, cache_sram->size);
 
-	return 0;
+	वापस 0;
 
 out_unmap:
 	iounmap(cache_sram->base_virt);
@@ -125,13 +126,13 @@ out_unmap:
 out_release:
 	release_mem_region(cache_sram->base_phys, cache_sram->size);
 
-out_free:
-	kfree(cache_sram);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(cache_sram);
+	वापस ret;
+पूर्ण
 
-void remove_cache_sram(struct platform_device *dev)
-{
+व्योम हटाओ_cache_sram(काष्ठा platक्रमm_device *dev)
+अणु
 	BUG_ON(!cache_sram);
 
 	rh_detach_region(cache_sram->rh, 0, cache_sram->size);
@@ -140,8 +141,8 @@ void remove_cache_sram(struct platform_device *dev)
 	iounmap(cache_sram->base_virt);
 	release_mem_region(cache_sram->base_phys, cache_sram->size);
 
-	kfree(cache_sram);
-	cache_sram = NULL;
+	kमुक्त(cache_sram);
+	cache_sram = शून्य;
 
 	dev_info(&dev->dev, "MPC85xx Cache-SRAM driver unloaded\n");
-}
+पूर्ण

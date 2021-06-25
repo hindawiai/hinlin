@@ -1,53 +1,54 @@
-#include <linux/bpf.h>
-#include <linux/if_ether.h>
-#include <linux/pkt_cls.h>
+<शैली गुरु>
+#समावेश <linux/bpf.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/pkt_cls.h>
 
-#include <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_helpers.h>
 
-#define __round_mask(x, y) ((__typeof__(x))((y) - 1))
-#define round_up(x, y) ((((x) - 1) | __round_mask(x, y)) + 1)
-#define ctx_ptr(ctx, mem) (void *)(unsigned long)ctx->mem
+#घोषणा __round_mask(x, y) ((__typeof__(x))((y) - 1))
+#घोषणा round_up(x, y) ((((x) - 1) | __round_mask(x, y)) + 1)
+#घोषणा ctx_ptr(ctx, mem) (व्योम *)(अचिन्हित दीर्घ)ctx->mem
 
 SEC("t")
-int ing_cls(struct __sk_buff *ctx)
-{
+पूर्णांक ing_cls(काष्ठा __sk_buff *ctx)
+अणु
 	__u8 *data, *data_meta, *data_end;
-	__u32 diff = 0;
+	__u32 dअगरf = 0;
 
 	data_meta = ctx_ptr(ctx, data_meta);
 	data_end  = ctx_ptr(ctx, data_end);
 	data      = ctx_ptr(ctx, data);
 
-	if (data + ETH_ALEN > data_end ||
+	अगर (data + ETH_ALEN > data_end ||
 	    data_meta + round_up(ETH_ALEN, 4) > data)
-		return TC_ACT_SHOT;
+		वापस TC_ACT_SHOT;
 
-	diff |= ((__u32 *)data_meta)[0] ^ ((__u32 *)data)[0];
-	diff |= ((__u16 *)data_meta)[2] ^ ((__u16 *)data)[2];
+	dअगरf |= ((__u32 *)data_meta)[0] ^ ((__u32 *)data)[0];
+	dअगरf |= ((__u16 *)data_meta)[2] ^ ((__u16 *)data)[2];
 
-	return diff ? TC_ACT_SHOT : TC_ACT_OK;
-}
+	वापस dअगरf ? TC_ACT_SHOT : TC_ACT_OK;
+पूर्ण
 
 SEC("x")
-int ing_xdp(struct xdp_md *ctx)
-{
+पूर्णांक ing_xdp(काष्ठा xdp_md *ctx)
+अणु
 	__u8 *data, *data_meta, *data_end;
-	int ret;
+	पूर्णांक ret;
 
 	ret = bpf_xdp_adjust_meta(ctx, -round_up(ETH_ALEN, 4));
-	if (ret < 0)
-		return XDP_DROP;
+	अगर (ret < 0)
+		वापस XDP_DROP;
 
 	data_meta = ctx_ptr(ctx, data_meta);
 	data_end  = ctx_ptr(ctx, data_end);
 	data      = ctx_ptr(ctx, data);
 
-	if (data + ETH_ALEN > data_end ||
+	अगर (data + ETH_ALEN > data_end ||
 	    data_meta + round_up(ETH_ALEN, 4) > data)
-		return XDP_DROP;
+		वापस XDP_DROP;
 
-	__builtin_memcpy(data_meta, data, ETH_ALEN);
-	return XDP_PASS;
-}
+	__builtin_स_नकल(data_meta, data, ETH_ALEN);
+	वापस XDP_PASS;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

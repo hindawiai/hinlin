@@ -1,281 +1,282 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Marvell Armada 37xx SoC Peripheral clocks
+ * Marvell Armada 37xx SoC Peripheral घड़ीs
  *
  * Copyright (C) 2016 Marvell
  *
- * Gregory CLEMENT <gregory.clement@free-electrons.com>
+ * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
  *
- * Most of the peripheral clocks can be modelled like this:
+ * Most of the peripheral घड़ीs can be modelled like this:
  *             _____    _______    _______
  * TBG-A-P  --|     |  |       |  |       |   ______
- * TBG-B-P  --| Mux |--| /div1 |--| /div2 |--| Gate |--> perip_clk
+ * TBG-B-P  --| Mux |--| /भाग1 |--| /भाग2 |--| Gate |--> perip_clk
  * TBG-A-S  --|     |  |       |  |       |  |______|
  * TBG-B-S  --|_____|  |_______|  |_______|
  *
- * However some clocks may use only one or two block or and use the
- * xtal clock as parent.
+ * However some घड़ीs may use only one or two block or and use the
+ * xtal घड़ी as parent.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#define TBG_SEL		0x0
-#define DIV_SEL0	0x4
-#define DIV_SEL1	0x8
-#define DIV_SEL2	0xC
-#define CLK_SEL		0x10
-#define CLK_DIS		0x14
+#घोषणा TBG_SEL		0x0
+#घोषणा DIV_SEL0	0x4
+#घोषणा DIV_SEL1	0x8
+#घोषणा DIV_SEL2	0xC
+#घोषणा CLK_SEL		0x10
+#घोषणा CLK_DIS		0x14
 
-#define  ARMADA_37XX_DVFS_LOAD_1 1
-#define LOAD_LEVEL_NR	4
+#घोषणा  ARMADA_37XX_DVFS_LOAD_1 1
+#घोषणा LOAD_LEVEL_NR	4
 
-#define ARMADA_37XX_NB_L0L1	0x18
-#define ARMADA_37XX_NB_L2L3	0x1C
-#define		ARMADA_37XX_NB_TBG_DIV_OFF	13
-#define		ARMADA_37XX_NB_TBG_DIV_MASK	0x7
-#define		ARMADA_37XX_NB_CLK_SEL_OFF	11
-#define		ARMADA_37XX_NB_CLK_SEL_MASK	0x1
-#define		ARMADA_37XX_NB_TBG_SEL_OFF	9
-#define		ARMADA_37XX_NB_TBG_SEL_MASK	0x3
-#define		ARMADA_37XX_NB_CONFIG_SHIFT	16
-#define ARMADA_37XX_NB_DYN_MOD	0x24
-#define		ARMADA_37XX_NB_DFS_EN	31
-#define ARMADA_37XX_NB_CPU_LOAD	0x30
-#define		ARMADA_37XX_NB_CPU_LOAD_MASK	0x3
-#define		ARMADA_37XX_DVFS_LOAD_0		0
-#define		ARMADA_37XX_DVFS_LOAD_1		1
-#define		ARMADA_37XX_DVFS_LOAD_2		2
-#define		ARMADA_37XX_DVFS_LOAD_3		3
+#घोषणा ARMADA_37XX_NB_L0L1	0x18
+#घोषणा ARMADA_37XX_NB_L2L3	0x1C
+#घोषणा		ARMADA_37XX_NB_TBG_DIV_OFF	13
+#घोषणा		ARMADA_37XX_NB_TBG_DIV_MASK	0x7
+#घोषणा		ARMADA_37XX_NB_CLK_SEL_OFF	11
+#घोषणा		ARMADA_37XX_NB_CLK_SEL_MASK	0x1
+#घोषणा		ARMADA_37XX_NB_TBG_SEL_OFF	9
+#घोषणा		ARMADA_37XX_NB_TBG_SEL_MASK	0x3
+#घोषणा		ARMADA_37XX_NB_CONFIG_SHIFT	16
+#घोषणा ARMADA_37XX_NB_DYN_MOD	0x24
+#घोषणा		ARMADA_37XX_NB_DFS_EN	31
+#घोषणा ARMADA_37XX_NB_CPU_LOAD	0x30
+#घोषणा		ARMADA_37XX_NB_CPU_LOAD_MASK	0x3
+#घोषणा		ARMADA_37XX_DVFS_LOAD_0		0
+#घोषणा		ARMADA_37XX_DVFS_LOAD_1		1
+#घोषणा		ARMADA_37XX_DVFS_LOAD_2		2
+#घोषणा		ARMADA_37XX_DVFS_LOAD_3		3
 
-struct clk_periph_driver_data {
-	struct clk_hw_onecell_data *hw_data;
+काष्ठा clk_periph_driver_data अणु
+	काष्ठा clk_hw_onecell_data *hw_data;
 	spinlock_t lock;
-	void __iomem *reg;
+	व्योम __iomem *reg;
 
-	/* Storage registers for suspend/resume operations */
+	/* Storage रेजिस्टरs क्रम suspend/resume operations */
 	u32 tbg_sel;
-	u32 div_sel0;
-	u32 div_sel1;
-	u32 div_sel2;
+	u32 भाग_sel0;
+	u32 भाग_sel1;
+	u32 भाग_sel2;
 	u32 clk_sel;
 	u32 clk_dis;
-};
+पूर्ण;
 
-struct clk_double_div {
-	struct clk_hw hw;
-	void __iomem *reg1;
-	u8 shift1;
-	void __iomem *reg2;
-	u8 shift2;
-};
+काष्ठा clk_द्विगुन_भाग अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *reg1;
+	u8 shअगरt1;
+	व्योम __iomem *reg2;
+	u8 shअगरt2;
+पूर्ण;
 
-struct clk_pm_cpu {
-	struct clk_hw hw;
-	void __iomem *reg_mux;
-	u8 shift_mux;
+काष्ठा clk_pm_cpu अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *reg_mux;
+	u8 shअगरt_mux;
 	u32 mask_mux;
-	void __iomem *reg_div;
-	u8 shift_div;
-	struct regmap *nb_pm_base;
-	unsigned long l1_expiration;
-};
+	व्योम __iomem *reg_भाग;
+	u8 shअगरt_भाग;
+	काष्ठा regmap *nb_pm_base;
+	अचिन्हित दीर्घ l1_expiration;
+पूर्ण;
 
-#define to_clk_double_div(_hw) container_of(_hw, struct clk_double_div, hw)
-#define to_clk_pm_cpu(_hw) container_of(_hw, struct clk_pm_cpu, hw)
+#घोषणा to_clk_द्विगुन_भाग(_hw) container_of(_hw, काष्ठा clk_द्विगुन_भाग, hw)
+#घोषणा to_clk_pm_cpu(_hw) container_of(_hw, काष्ठा clk_pm_cpu, hw)
 
-struct clk_periph_data {
-	const char *name;
-	const char * const *parent_names;
-	int num_parents;
-	struct clk_hw *mux_hw;
-	struct clk_hw *rate_hw;
-	struct clk_hw *gate_hw;
-	struct clk_hw *muxrate_hw;
-	bool is_double_div;
-};
+काष्ठा clk_periph_data अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *parent_names;
+	पूर्णांक num_parents;
+	काष्ठा clk_hw *mux_hw;
+	काष्ठा clk_hw *rate_hw;
+	काष्ठा clk_hw *gate_hw;
+	काष्ठा clk_hw *muxrate_hw;
+	bool is_द्विगुन_भाग;
+पूर्ण;
 
-static const struct clk_div_table clk_table6[] = {
-	{ .val = 1, .div = 1, },
-	{ .val = 2, .div = 2, },
-	{ .val = 3, .div = 3, },
-	{ .val = 4, .div = 4, },
-	{ .val = 5, .div = 5, },
-	{ .val = 6, .div = 6, },
-	{ .val = 0, .div = 0, }, /* last entry */
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable clk_table6[] = अणु
+	अणु .val = 1, .भाग = 1, पूर्ण,
+	अणु .val = 2, .भाग = 2, पूर्ण,
+	अणु .val = 3, .भाग = 3, पूर्ण,
+	अणु .val = 4, .भाग = 4, पूर्ण,
+	अणु .val = 5, .भाग = 5, पूर्ण,
+	अणु .val = 6, .भाग = 6, पूर्ण,
+	अणु .val = 0, .भाग = 0, पूर्ण, /* last entry */
+पूर्ण;
 
-static const struct clk_div_table clk_table1[] = {
-	{ .val = 0, .div = 1, },
-	{ .val = 1, .div = 2, },
-	{ .val = 0, .div = 0, }, /* last entry */
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable clk_table1[] = अणु
+	अणु .val = 0, .भाग = 1, पूर्ण,
+	अणु .val = 1, .भाग = 2, पूर्ण,
+	अणु .val = 0, .भाग = 0, पूर्ण, /* last entry */
+पूर्ण;
 
-static const struct clk_div_table clk_table2[] = {
-	{ .val = 0, .div = 2, },
-	{ .val = 1, .div = 4, },
-	{ .val = 0, .div = 0, }, /* last entry */
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable clk_table2[] = अणु
+	अणु .val = 0, .भाग = 2, पूर्ण,
+	अणु .val = 1, .भाग = 4, पूर्ण,
+	अणु .val = 0, .भाग = 0, पूर्ण, /* last entry */
+पूर्ण;
 
-static const struct clk_ops clk_double_div_ops;
-static const struct clk_ops clk_pm_cpu_ops;
+अटल स्थिर काष्ठा clk_ops clk_द्विगुन_भाग_ops;
+अटल स्थिर काष्ठा clk_ops clk_pm_cpu_ops;
 
-#define PERIPH_GATE(_name, _bit)		\
-struct clk_gate gate_##_name = {		\
-	.reg = (void *)CLK_DIS,			\
+#घोषणा PERIPH_GATE(_name, _bit)		\
+काष्ठा clk_gate gate_##_name = अणु		\
+	.reg = (व्योम *)CLK_DIS,			\
 	.bit_idx = _bit,			\
-	.hw.init = &(struct clk_init_data){	\
+	.hw.init = &(काष्ठा clk_init_data)अणु	\
 		.ops =  &clk_gate_ops,		\
-	}					\
-};
+	पूर्ण					\
+पूर्ण;
 
-#define PERIPH_MUX(_name, _shift)		\
-struct clk_mux mux_##_name = {			\
-	.reg = (void *)TBG_SEL,			\
-	.shift = _shift,			\
+#घोषणा PERIPH_MUX(_name, _shअगरt)		\
+काष्ठा clk_mux mux_##_name = अणु			\
+	.reg = (व्योम *)TBG_SEL,			\
+	.shअगरt = _shअगरt,			\
 	.mask = 3,				\
-	.hw.init = &(struct clk_init_data){	\
+	.hw.init = &(काष्ठा clk_init_data)अणु	\
 		.ops =  &clk_mux_ro_ops,	\
-	}					\
-};
+	पूर्ण					\
+पूर्ण;
 
-#define PERIPH_DOUBLEDIV(_name, _reg1, _reg2, _shift1, _shift2)	\
-struct clk_double_div rate_##_name = {		\
-	.reg1 = (void *)_reg1,			\
-	.reg2 = (void *)_reg2,			\
-	.shift1 = _shift1,			\
-	.shift2 = _shift2,			\
-	.hw.init = &(struct clk_init_data){	\
-		.ops =  &clk_double_div_ops,	\
-	}					\
-};
+#घोषणा PERIPH_DOUBLEDIV(_name, _reg1, _reg2, _shअगरt1, _shअगरt2)	\
+काष्ठा clk_द्विगुन_भाग rate_##_name = अणु		\
+	.reg1 = (व्योम *)_reg1,			\
+	.reg2 = (व्योम *)_reg2,			\
+	.shअगरt1 = _shअगरt1,			\
+	.shअगरt2 = _shअगरt2,			\
+	.hw.init = &(काष्ठा clk_init_data)अणु	\
+		.ops =  &clk_द्विगुन_भाग_ops,	\
+	पूर्ण					\
+पूर्ण;
 
-#define PERIPH_DIV(_name, _reg, _shift, _table)	\
-struct clk_divider rate_##_name = {		\
-	.reg = (void *)_reg,			\
+#घोषणा PERIPH_DIV(_name, _reg, _shअगरt, _table)	\
+काष्ठा clk_भागider rate_##_name = अणु		\
+	.reg = (व्योम *)_reg,			\
 	.table = _table,			\
-	.shift = _shift,			\
-	.hw.init = &(struct clk_init_data){	\
-		.ops =  &clk_divider_ro_ops,	\
-	}					\
-};
+	.shअगरt = _shअगरt,			\
+	.hw.init = &(काष्ठा clk_init_data)अणु	\
+		.ops =  &clk_भागider_ro_ops,	\
+	पूर्ण					\
+पूर्ण;
 
-#define PERIPH_PM_CPU(_name, _shift1, _reg, _shift2)	\
-struct clk_pm_cpu muxrate_##_name = {		\
-	.reg_mux = (void *)TBG_SEL,		\
+#घोषणा PERIPH_PM_CPU(_name, _shअगरt1, _reg, _shअगरt2)	\
+काष्ठा clk_pm_cpu muxrate_##_name = अणु		\
+	.reg_mux = (व्योम *)TBG_SEL,		\
 	.mask_mux = 3,				\
-	.shift_mux = _shift1,			\
-	.reg_div = (void *)_reg,		\
-	.shift_div = _shift2,			\
-	.hw.init = &(struct clk_init_data){	\
+	.shअगरt_mux = _shअगरt1,			\
+	.reg_भाग = (व्योम *)_reg,		\
+	.shअगरt_भाग = _shअगरt2,			\
+	.hw.init = &(काष्ठा clk_init_data)अणु	\
 		.ops =  &clk_pm_cpu_ops,	\
-	}					\
-};
+	पूर्ण					\
+पूर्ण;
 
-#define PERIPH_CLK_FULL_DD(_name, _bit, _shift, _reg1, _reg2, _shift1, _shift2)\
-static PERIPH_GATE(_name, _bit);			    \
-static PERIPH_MUX(_name, _shift);			    \
-static PERIPH_DOUBLEDIV(_name, _reg1, _reg2, _shift1, _shift2);
+#घोषणा PERIPH_CLK_FULL_DD(_name, _bit, _shअगरt, _reg1, _reg2, _shअगरt1, _shअगरt2)\
+अटल PERIPH_GATE(_name, _bit);			    \
+अटल PERIPH_MUX(_name, _shअगरt);			    \
+अटल PERIPH_DOUBLEDIV(_name, _reg1, _reg2, _shअगरt1, _shअगरt2);
 
-#define PERIPH_CLK_FULL(_name, _bit, _shift, _reg, _shift1, _table)	\
-static PERIPH_GATE(_name, _bit);			    \
-static PERIPH_MUX(_name, _shift);			    \
-static PERIPH_DIV(_name, _reg, _shift1, _table);
+#घोषणा PERIPH_CLK_FULL(_name, _bit, _shअगरt, _reg, _shअगरt1, _table)	\
+अटल PERIPH_GATE(_name, _bit);			    \
+अटल PERIPH_MUX(_name, _shअगरt);			    \
+अटल PERIPH_DIV(_name, _reg, _shअगरt1, _table);
 
-#define PERIPH_CLK_GATE_DIV(_name, _bit,  _reg, _shift, _table)	\
-static PERIPH_GATE(_name, _bit);			\
-static PERIPH_DIV(_name, _reg, _shift, _table);
+#घोषणा PERIPH_CLK_GATE_DIV(_name, _bit,  _reg, _shअगरt, _table)	\
+अटल PERIPH_GATE(_name, _bit);			\
+अटल PERIPH_DIV(_name, _reg, _shअगरt, _table);
 
-#define PERIPH_CLK_MUX_DD(_name, _shift, _reg1, _reg2, _shift1, _shift2)\
-static PERIPH_MUX(_name, _shift);			    \
-static PERIPH_DOUBLEDIV(_name, _reg1, _reg2, _shift1, _shift2);
+#घोषणा PERIPH_CLK_MUX_DD(_name, _shअगरt, _reg1, _reg2, _shअगरt1, _shअगरt2)\
+अटल PERIPH_MUX(_name, _shअगरt);			    \
+अटल PERIPH_DOUBLEDIV(_name, _reg1, _reg2, _shअगरt1, _shअगरt2);
 
-#define REF_CLK_FULL(_name)				\
-	{ .name = #_name,				\
-	  .parent_names = (const char *[]){ "TBG-A-P",	\
-	      "TBG-B-P", "TBG-A-S", "TBG-B-S"},		\
+#घोषणा REF_CLK_FULL(_name)				\
+	अणु .name = #_name,				\
+	  .parent_names = (स्थिर अक्षर *[])अणु "TBG-A-P",	\
+	      "TBG-B-P", "TBG-A-S", "TBG-B-S"पूर्ण,		\
 	  .num_parents = 4,				\
 	  .mux_hw = &mux_##_name.hw,			\
 	  .gate_hw = &gate_##_name.hw,			\
 	  .rate_hw = &rate_##_name.hw,			\
-	}
+	पूर्ण
 
-#define REF_CLK_FULL_DD(_name)				\
-	{ .name = #_name,				\
-	  .parent_names = (const char *[]){ "TBG-A-P",	\
-	      "TBG-B-P", "TBG-A-S", "TBG-B-S"},		\
+#घोषणा REF_CLK_FULL_DD(_name)				\
+	अणु .name = #_name,				\
+	  .parent_names = (स्थिर अक्षर *[])अणु "TBG-A-P",	\
+	      "TBG-B-P", "TBG-A-S", "TBG-B-S"पूर्ण,		\
 	  .num_parents = 4,				\
 	  .mux_hw = &mux_##_name.hw,			\
 	  .gate_hw = &gate_##_name.hw,			\
 	  .rate_hw = &rate_##_name.hw,			\
-	  .is_double_div = true,			\
-	}
+	  .is_द्विगुन_भाग = true,			\
+	पूर्ण
 
-#define REF_CLK_GATE(_name, _parent_name)			\
-	{ .name = #_name,					\
-	  .parent_names = (const char *[]){ _parent_name},	\
+#घोषणा REF_CLK_GATE(_name, _parent_name)			\
+	अणु .name = #_name,					\
+	  .parent_names = (स्थिर अक्षर *[])अणु _parent_nameपूर्ण,	\
 	  .num_parents = 1,					\
 	  .gate_hw = &gate_##_name.hw,				\
-	}
+	पूर्ण
 
-#define REF_CLK_GATE_DIV(_name, _parent_name)			\
-	{ .name = #_name,					\
-	  .parent_names = (const char *[]){ _parent_name},	\
+#घोषणा REF_CLK_GATE_DIV(_name, _parent_name)			\
+	अणु .name = #_name,					\
+	  .parent_names = (स्थिर अक्षर *[])अणु _parent_nameपूर्ण,	\
 	  .num_parents = 1,					\
 	  .gate_hw = &gate_##_name.hw,				\
 	  .rate_hw = &rate_##_name.hw,				\
-	}
+	पूर्ण
 
-#define REF_CLK_PM_CPU(_name)				\
-	{ .name = #_name,				\
-	  .parent_names = (const char *[]){ "TBG-A-P",	\
-	      "TBG-B-P", "TBG-A-S", "TBG-B-S"},		\
+#घोषणा REF_CLK_PM_CPU(_name)				\
+	अणु .name = #_name,				\
+	  .parent_names = (स्थिर अक्षर *[])अणु "TBG-A-P",	\
+	      "TBG-B-P", "TBG-A-S", "TBG-B-S"पूर्ण,		\
 	  .num_parents = 4,				\
 	  .muxrate_hw = &muxrate_##_name.hw,		\
-	}
+	पूर्ण
 
-#define REF_CLK_MUX_DD(_name)				\
-	{ .name = #_name,				\
-	  .parent_names = (const char *[]){ "TBG-A-P",	\
-	      "TBG-B-P", "TBG-A-S", "TBG-B-S"},		\
+#घोषणा REF_CLK_MUX_DD(_name)				\
+	अणु .name = #_name,				\
+	  .parent_names = (स्थिर अक्षर *[])अणु "TBG-A-P",	\
+	      "TBG-B-P", "TBG-A-S", "TBG-B-S"पूर्ण,		\
 	  .num_parents = 4,				\
 	  .mux_hw = &mux_##_name.hw,			\
 	  .rate_hw = &rate_##_name.hw,			\
-	  .is_double_div = true,			\
-	}
+	  .is_द्विगुन_भाग = true,			\
+	पूर्ण
 
-/* NB periph clocks */
+/* NB periph घड़ीs */
 PERIPH_CLK_FULL_DD(mmc, 2, 0, DIV_SEL2, DIV_SEL2, 16, 13);
 PERIPH_CLK_FULL_DD(sata_host, 3, 2, DIV_SEL2, DIV_SEL2, 10, 7);
 PERIPH_CLK_FULL_DD(sec_at, 6, 4, DIV_SEL1, DIV_SEL1, 3, 0);
 PERIPH_CLK_FULL_DD(sec_dap, 7, 6, DIV_SEL1, DIV_SEL1, 9, 6);
 PERIPH_CLK_FULL_DD(tscem, 8, 8, DIV_SEL1, DIV_SEL1, 15, 12);
-PERIPH_CLK_FULL(tscem_tmx, 10, 10, DIV_SEL1, 18, clk_table6);
-static PERIPH_GATE(avs, 11);
+PERIPH_CLK_FULL(tscem_पंचांगx, 10, 10, DIV_SEL1, 18, clk_table6);
+अटल PERIPH_GATE(avs, 11);
 PERIPH_CLK_FULL_DD(pwm, 13, 14, DIV_SEL0, DIV_SEL0, 3, 0);
 PERIPH_CLK_FULL_DD(sqf, 12, 12, DIV_SEL1, DIV_SEL1, 27, 24);
-static PERIPH_GATE(i2c_2, 16);
-static PERIPH_GATE(i2c_1, 17);
+अटल PERIPH_GATE(i2c_2, 16);
+अटल PERIPH_GATE(i2c_1, 17);
 PERIPH_CLK_GATE_DIV(ddr_phy, 19, DIV_SEL0, 18, clk_table2);
 PERIPH_CLK_FULL_DD(ddr_fclk, 21, 16, DIV_SEL0, DIV_SEL0, 15, 12);
 PERIPH_CLK_FULL(trace, 22, 18, DIV_SEL0, 20, clk_table6);
 PERIPH_CLK_FULL(counter, 23, 20, DIV_SEL0, 23, clk_table6);
 PERIPH_CLK_FULL_DD(eip97, 24, 24, DIV_SEL2, DIV_SEL2, 22, 19);
-static PERIPH_PM_CPU(cpu, 22, DIV_SEL0, 28);
+अटल PERIPH_PM_CPU(cpu, 22, DIV_SEL0, 28);
 
-static struct clk_periph_data data_nb[] = {
+अटल काष्ठा clk_periph_data data_nb[] = अणु
 	REF_CLK_FULL_DD(mmc),
 	REF_CLK_FULL_DD(sata_host),
 	REF_CLK_FULL_DD(sec_at),
 	REF_CLK_FULL_DD(sec_dap),
 	REF_CLK_FULL_DD(tscem),
-	REF_CLK_FULL(tscem_tmx),
+	REF_CLK_FULL(tscem_पंचांगx),
 	REF_CLK_GATE(avs, "xtal"),
 	REF_CLK_FULL_DD(sqf),
 	REF_CLK_FULL_DD(pwm),
@@ -287,26 +288,26 @@ static struct clk_periph_data data_nb[] = {
 	REF_CLK_FULL(counter),
 	REF_CLK_FULL_DD(eip97),
 	REF_CLK_PM_CPU(cpu),
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;
 
-/* SB periph clocks */
+/* SB periph घड़ीs */
 PERIPH_CLK_MUX_DD(gbe_50, 6, DIV_SEL2, DIV_SEL2, 6, 9);
 PERIPH_CLK_MUX_DD(gbe_core, 8, DIV_SEL1, DIV_SEL1, 18, 21);
 PERIPH_CLK_MUX_DD(gbe_125, 10, DIV_SEL1, DIV_SEL1, 6, 9);
-static PERIPH_GATE(gbe1_50, 0);
-static PERIPH_GATE(gbe0_50, 1);
-static PERIPH_GATE(gbe1_125, 2);
-static PERIPH_GATE(gbe0_125, 3);
+अटल PERIPH_GATE(gbe1_50, 0);
+अटल PERIPH_GATE(gbe0_50, 1);
+अटल PERIPH_GATE(gbe1_125, 2);
+अटल PERIPH_GATE(gbe0_125, 3);
 PERIPH_CLK_GATE_DIV(gbe1_core, 4, DIV_SEL1, 13, clk_table1);
 PERIPH_CLK_GATE_DIV(gbe0_core, 5, DIV_SEL1, 14, clk_table1);
 PERIPH_CLK_GATE_DIV(gbe_bm, 12, DIV_SEL1, 0, clk_table1);
 PERIPH_CLK_FULL_DD(sdio, 11, 14, DIV_SEL0, DIV_SEL0, 3, 6);
 PERIPH_CLK_FULL_DD(usb32_usb2_sys, 16, 16, DIV_SEL0, DIV_SEL0, 9, 12);
 PERIPH_CLK_FULL_DD(usb32_ss_sys, 17, 18, DIV_SEL0, DIV_SEL0, 15, 18);
-static PERIPH_GATE(pcie, 14);
+अटल PERIPH_GATE(pcie, 14);
 
-static struct clk_periph_data data_sb[] = {
+अटल काष्ठा clk_periph_data data_sb[] = अणु
 	REF_CLK_MUX_DD(gbe_50),
 	REF_CLK_MUX_DD(gbe_core),
 	REF_CLK_MUX_DD(gbe_125),
@@ -321,228 +322,228 @@ static struct clk_periph_data data_sb[] = {
 	REF_CLK_FULL_DD(usb32_usb2_sys),
 	REF_CLK_FULL_DD(usb32_ss_sys),
 	REF_CLK_GATE(pcie, "gbe_core"),
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;
 
-static unsigned int get_div(void __iomem *reg, int shift)
-{
+अटल अचिन्हित पूर्णांक get_भाग(व्योम __iomem *reg, पूर्णांक shअगरt)
+अणु
 	u32 val;
 
-	val = (readl(reg) >> shift) & 0x7;
-	if (val > 6)
-		return 0;
-	return val;
-}
+	val = (पढ़ोl(reg) >> shअगरt) & 0x7;
+	अगर (val > 6)
+		वापस 0;
+	वापस val;
+पूर्ण
 
-static unsigned long clk_double_div_recalc_rate(struct clk_hw *hw,
-						unsigned long parent_rate)
-{
-	struct clk_double_div *double_div = to_clk_double_div(hw);
-	unsigned int div;
+अटल अचिन्हित दीर्घ clk_द्विगुन_भाग_recalc_rate(काष्ठा clk_hw *hw,
+						अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_द्विगुन_भाग *द्विगुन_भाग = to_clk_द्विगुन_भाग(hw);
+	अचिन्हित पूर्णांक भाग;
 
-	div = get_div(double_div->reg1, double_div->shift1);
-	div *= get_div(double_div->reg2, double_div->shift2);
+	भाग = get_भाग(द्विगुन_भाग->reg1, द्विगुन_भाग->shअगरt1);
+	भाग *= get_भाग(द्विगुन_भाग->reg2, द्विगुन_भाग->shअगरt2);
 
-	return DIV_ROUND_UP_ULL((u64)parent_rate, div);
-}
+	वापस DIV_ROUND_UP_ULL((u64)parent_rate, भाग);
+पूर्ण
 
-static const struct clk_ops clk_double_div_ops = {
-	.recalc_rate = clk_double_div_recalc_rate,
-};
+अटल स्थिर काष्ठा clk_ops clk_द्विगुन_भाग_ops = अणु
+	.recalc_rate = clk_द्विगुन_भाग_recalc_rate,
+पूर्ण;
 
-static void armada_3700_pm_dvfs_update_regs(unsigned int load_level,
-					    unsigned int *reg,
-					    unsigned int *offset)
-{
-	if (load_level <= ARMADA_37XX_DVFS_LOAD_1)
+अटल व्योम armada_3700_pm_dvfs_update_regs(अचिन्हित पूर्णांक load_level,
+					    अचिन्हित पूर्णांक *reg,
+					    अचिन्हित पूर्णांक *offset)
+अणु
+	अगर (load_level <= ARMADA_37XX_DVFS_LOAD_1)
 		*reg = ARMADA_37XX_NB_L0L1;
-	else
+	अन्यथा
 		*reg = ARMADA_37XX_NB_L2L3;
 
-	if (load_level == ARMADA_37XX_DVFS_LOAD_0 ||
+	अगर (load_level == ARMADA_37XX_DVFS_LOAD_0 ||
 	    load_level ==  ARMADA_37XX_DVFS_LOAD_2)
 		*offset += ARMADA_37XX_NB_CONFIG_SHIFT;
-}
+पूर्ण
 
-static bool armada_3700_pm_dvfs_is_enabled(struct regmap *base)
-{
-	unsigned int val, reg = ARMADA_37XX_NB_DYN_MOD;
+अटल bool armada_3700_pm_dvfs_is_enabled(काष्ठा regmap *base)
+अणु
+	अचिन्हित पूर्णांक val, reg = ARMADA_37XX_NB_DYN_MOD;
 
-	if (IS_ERR(base))
-		return false;
+	अगर (IS_ERR(base))
+		वापस false;
 
-	regmap_read(base, reg, &val);
+	regmap_पढ़ो(base, reg, &val);
 
-	return !!(val & BIT(ARMADA_37XX_NB_DFS_EN));
-}
+	वापस !!(val & BIT(ARMADA_37XX_NB_DFS_EN));
+पूर्ण
 
-static unsigned int armada_3700_pm_dvfs_get_cpu_div(struct regmap *base)
-{
-	unsigned int reg = ARMADA_37XX_NB_CPU_LOAD;
-	unsigned int offset = ARMADA_37XX_NB_TBG_DIV_OFF;
-	unsigned int load_level, div;
-
-	/*
-	 * This function is always called after the function
-	 * armada_3700_pm_dvfs_is_enabled, so no need to check again
-	 * if the base is valid.
-	 */
-	regmap_read(base, reg, &load_level);
-
-	/*
-	 * The register and the offset inside this register accessed to
-	 * read the current divider depend on the load level
-	 */
-	load_level &= ARMADA_37XX_NB_CPU_LOAD_MASK;
-	armada_3700_pm_dvfs_update_regs(load_level, &reg, &offset);
-
-	regmap_read(base, reg, &div);
-
-	return (div >> offset) & ARMADA_37XX_NB_TBG_DIV_MASK;
-}
-
-static unsigned int armada_3700_pm_dvfs_get_cpu_parent(struct regmap *base)
-{
-	unsigned int reg = ARMADA_37XX_NB_CPU_LOAD;
-	unsigned int offset = ARMADA_37XX_NB_TBG_SEL_OFF;
-	unsigned int load_level, sel;
+अटल अचिन्हित पूर्णांक armada_3700_pm_dvfs_get_cpu_भाग(काष्ठा regmap *base)
+अणु
+	अचिन्हित पूर्णांक reg = ARMADA_37XX_NB_CPU_LOAD;
+	अचिन्हित पूर्णांक offset = ARMADA_37XX_NB_TBG_DIV_OFF;
+	अचिन्हित पूर्णांक load_level, भाग;
 
 	/*
 	 * This function is always called after the function
 	 * armada_3700_pm_dvfs_is_enabled, so no need to check again
-	 * if the base is valid
+	 * अगर the base is valid.
 	 */
-	regmap_read(base, reg, &load_level);
+	regmap_पढ़ो(base, reg, &load_level);
 
 	/*
-	 * The register and the offset inside this register accessed to
-	 * read the current divider depend on the load level
+	 * The रेजिस्टर and the offset inside this रेजिस्टर accessed to
+	 * पढ़ो the current भागider depend on the load level
 	 */
 	load_level &= ARMADA_37XX_NB_CPU_LOAD_MASK;
 	armada_3700_pm_dvfs_update_regs(load_level, &reg, &offset);
 
-	regmap_read(base, reg, &sel);
+	regmap_पढ़ो(base, reg, &भाग);
 
-	return (sel >> offset) & ARMADA_37XX_NB_TBG_SEL_MASK;
-}
+	वापस (भाग >> offset) & ARMADA_37XX_NB_TBG_DIV_MASK;
+पूर्ण
 
-static u8 clk_pm_cpu_get_parent(struct clk_hw *hw)
-{
-	struct clk_pm_cpu *pm_cpu = to_clk_pm_cpu(hw);
+अटल अचिन्हित पूर्णांक armada_3700_pm_dvfs_get_cpu_parent(काष्ठा regmap *base)
+अणु
+	अचिन्हित पूर्णांक reg = ARMADA_37XX_NB_CPU_LOAD;
+	अचिन्हित पूर्णांक offset = ARMADA_37XX_NB_TBG_SEL_OFF;
+	अचिन्हित पूर्णांक load_level, sel;
+
+	/*
+	 * This function is always called after the function
+	 * armada_3700_pm_dvfs_is_enabled, so no need to check again
+	 * अगर the base is valid
+	 */
+	regmap_पढ़ो(base, reg, &load_level);
+
+	/*
+	 * The रेजिस्टर and the offset inside this रेजिस्टर accessed to
+	 * पढ़ो the current भागider depend on the load level
+	 */
+	load_level &= ARMADA_37XX_NB_CPU_LOAD_MASK;
+	armada_3700_pm_dvfs_update_regs(load_level, &reg, &offset);
+
+	regmap_पढ़ो(base, reg, &sel);
+
+	वापस (sel >> offset) & ARMADA_37XX_NB_TBG_SEL_MASK;
+पूर्ण
+
+अटल u8 clk_pm_cpu_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_pm_cpu *pm_cpu = to_clk_pm_cpu(hw);
 	u32 val;
 
-	if (armada_3700_pm_dvfs_is_enabled(pm_cpu->nb_pm_base)) {
+	अगर (armada_3700_pm_dvfs_is_enabled(pm_cpu->nb_pm_base)) अणु
 		val = armada_3700_pm_dvfs_get_cpu_parent(pm_cpu->nb_pm_base);
-	} else {
-		val = readl(pm_cpu->reg_mux) >> pm_cpu->shift_mux;
+	पूर्ण अन्यथा अणु
+		val = पढ़ोl(pm_cpu->reg_mux) >> pm_cpu->shअगरt_mux;
 		val &= pm_cpu->mask_mux;
-	}
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static unsigned long clk_pm_cpu_recalc_rate(struct clk_hw *hw,
-					    unsigned long parent_rate)
-{
-	struct clk_pm_cpu *pm_cpu = to_clk_pm_cpu(hw);
-	unsigned int div;
+अटल अचिन्हित दीर्घ clk_pm_cpu_recalc_rate(काष्ठा clk_hw *hw,
+					    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pm_cpu *pm_cpu = to_clk_pm_cpu(hw);
+	अचिन्हित पूर्णांक भाग;
 
-	if (armada_3700_pm_dvfs_is_enabled(pm_cpu->nb_pm_base))
-		div = armada_3700_pm_dvfs_get_cpu_div(pm_cpu->nb_pm_base);
-	else
-		div = get_div(pm_cpu->reg_div, pm_cpu->shift_div);
-	return DIV_ROUND_UP_ULL((u64)parent_rate, div);
-}
+	अगर (armada_3700_pm_dvfs_is_enabled(pm_cpu->nb_pm_base))
+		भाग = armada_3700_pm_dvfs_get_cpu_भाग(pm_cpu->nb_pm_base);
+	अन्यथा
+		भाग = get_भाग(pm_cpu->reg_भाग, pm_cpu->shअगरt_भाग);
+	वापस DIV_ROUND_UP_ULL((u64)parent_rate, भाग);
+पूर्ण
 
-static long clk_pm_cpu_round_rate(struct clk_hw *hw, unsigned long rate,
-				  unsigned long *parent_rate)
-{
-	struct clk_pm_cpu *pm_cpu = to_clk_pm_cpu(hw);
-	struct regmap *base = pm_cpu->nb_pm_base;
-	unsigned int div = *parent_rate / rate;
-	unsigned int load_level;
+अटल दीर्घ clk_pm_cpu_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				  अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा clk_pm_cpu *pm_cpu = to_clk_pm_cpu(hw);
+	काष्ठा regmap *base = pm_cpu->nb_pm_base;
+	अचिन्हित पूर्णांक भाग = *parent_rate / rate;
+	अचिन्हित पूर्णांक load_level;
 	/* only available when DVFS is enabled */
-	if (!armada_3700_pm_dvfs_is_enabled(base))
-		return -EINVAL;
+	अगर (!armada_3700_pm_dvfs_is_enabled(base))
+		वापस -EINVAL;
 
-	for (load_level = 0; load_level < LOAD_LEVEL_NR; load_level++) {
-		unsigned int reg, val, offset = ARMADA_37XX_NB_TBG_DIV_OFF;
+	क्रम (load_level = 0; load_level < LOAD_LEVEL_NR; load_level++) अणु
+		अचिन्हित पूर्णांक reg, val, offset = ARMADA_37XX_NB_TBG_DIV_OFF;
 
 		armada_3700_pm_dvfs_update_regs(load_level, &reg, &offset);
 
-		regmap_read(base, reg, &val);
+		regmap_पढ़ो(base, reg, &val);
 
 		val >>= offset;
 		val &= ARMADA_37XX_NB_TBG_DIV_MASK;
-		if (val == div)
+		अगर (val == भाग)
 			/*
 			 * We found a load level matching the target
-			 * divider, switch to this load level and
-			 * return.
+			 * भागider, चयन to this load level and
+			 * वापस.
 			 */
-			return *parent_rate / div;
-	}
+			वापस *parent_rate / भाग;
+	पूर्ण
 
-	/* We didn't find any valid divider */
-	return -EINVAL;
-}
+	/* We didn't find any valid भागider */
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * Workaround when base CPU frequnecy is 1000 or 1200 MHz
  *
  * Switching the CPU from the L2 or L3 frequencies (250/300 or 200 MHz
- * respectively) to L0 frequency (1/1.2 GHz) requires a significant
- * amount of time to let VDD stabilize to the appropriate
- * voltage. This amount of time is large enough that it cannot be
- * covered by the hardware countdown register. Due to this, the CPU
- * might start operating at L0 before the voltage is stabilized,
+ * respectively) to L0 frequency (1/1.2 GHz) requires a signअगरicant
+ * amount of समय to let VDD stabilize to the appropriate
+ * voltage. This amount of समय is large enough that it cannot be
+ * covered by the hardware countकरोwn रेजिस्टर. Due to this, the CPU
+ * might start operating at L0 beक्रमe the voltage is stabilized,
  * leading to CPU stalls.
  *
- * To work around this problem, we prevent switching directly from the
- * L2/L3 frequencies to the L0 frequency, and instead switch to the L1
- * frequency in-between. The sequence therefore becomes:
- * 1. First switch from L2/L3 (200/250/300 MHz) to L1 (500/600 MHz)
- * 2. Sleep 20ms for stabling VDD voltage
- * 3. Then switch from L1 (500/600 MHz) to L0 (1000/1200 MHz).
+ * To work around this problem, we prevent चयनing directly from the
+ * L2/L3 frequencies to the L0 frequency, and instead चयन to the L1
+ * frequency in-between. The sequence thereक्रमe becomes:
+ * 1. First चयन from L2/L3 (200/250/300 MHz) to L1 (500/600 MHz)
+ * 2. Sleep 20ms क्रम stabling VDD voltage
+ * 3. Then चयन from L1 (500/600 MHz) to L0 (1000/1200 MHz).
  */
-static void clk_pm_cpu_set_rate_wa(struct clk_pm_cpu *pm_cpu,
-				   unsigned int new_level, unsigned long rate,
-				   struct regmap *base)
-{
-	unsigned int cur_level;
+अटल व्योम clk_pm_cpu_set_rate_wa(काष्ठा clk_pm_cpu *pm_cpu,
+				   अचिन्हित पूर्णांक new_level, अचिन्हित दीर्घ rate,
+				   काष्ठा regmap *base)
+अणु
+	अचिन्हित पूर्णांक cur_level;
 
-	regmap_read(base, ARMADA_37XX_NB_CPU_LOAD, &cur_level);
+	regmap_पढ़ो(base, ARMADA_37XX_NB_CPU_LOAD, &cur_level);
 	cur_level &= ARMADA_37XX_NB_CPU_LOAD_MASK;
 
-	if (cur_level == new_level)
-		return;
+	अगर (cur_level == new_level)
+		वापस;
 
 	/*
 	 * System wants to go to L1 on its own. If we are going from L2/L3,
 	 * remember when 20ms will expire. If from L0, set the value so that
-	 * next switch to L0 won't have to wait.
+	 * next चयन to L0 won't have to रुको.
 	 */
-	if (new_level == ARMADA_37XX_DVFS_LOAD_1) {
-		if (cur_level == ARMADA_37XX_DVFS_LOAD_0)
-			pm_cpu->l1_expiration = jiffies;
-		else
-			pm_cpu->l1_expiration = jiffies + msecs_to_jiffies(20);
-		return;
-	}
+	अगर (new_level == ARMADA_37XX_DVFS_LOAD_1) अणु
+		अगर (cur_level == ARMADA_37XX_DVFS_LOAD_0)
+			pm_cpu->l1_expiration = jअगरfies;
+		अन्यथा
+			pm_cpu->l1_expiration = jअगरfies + msecs_to_jअगरfies(20);
+		वापस;
+	पूर्ण
 
 	/*
-	 * If we are setting to L2/L3, just invalidate L1 expiration time,
+	 * If we are setting to L2/L3, just invalidate L1 expiration समय,
 	 * sleeping is not needed.
 	 */
-	if (rate < 1000*1000*1000)
-		goto invalidate_l1_exp;
+	अगर (rate < 1000*1000*1000)
+		जाओ invalidate_l1_exp;
 
 	/*
 	 * We are going to L0 with rate >= 1GHz. Check whether we have been at
-	 * L1 for long enough time. If not, go to L1 for 20ms.
+	 * L1 क्रम दीर्घ enough समय. If not, go to L1 क्रम 20ms.
 	 */
-	if (pm_cpu->l1_expiration && jiffies >= pm_cpu->l1_expiration)
-		goto invalidate_l1_exp;
+	अगर (pm_cpu->l1_expiration && jअगरfies >= pm_cpu->l1_expiration)
+		जाओ invalidate_l1_exp;
 
 	regmap_update_bits(base, ARMADA_37XX_NB_CPU_LOAD,
 			   ARMADA_37XX_NB_CPU_LOAD_MASK,
@@ -551,88 +552,88 @@ static void clk_pm_cpu_set_rate_wa(struct clk_pm_cpu *pm_cpu,
 
 invalidate_l1_exp:
 	pm_cpu->l1_expiration = 0;
-}
+पूर्ण
 
-static int clk_pm_cpu_set_rate(struct clk_hw *hw, unsigned long rate,
-			       unsigned long parent_rate)
-{
-	struct clk_pm_cpu *pm_cpu = to_clk_pm_cpu(hw);
-	struct regmap *base = pm_cpu->nb_pm_base;
-	unsigned int div = parent_rate / rate;
-	unsigned int load_level;
+अटल पूर्णांक clk_pm_cpu_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pm_cpu *pm_cpu = to_clk_pm_cpu(hw);
+	काष्ठा regmap *base = pm_cpu->nb_pm_base;
+	अचिन्हित पूर्णांक भाग = parent_rate / rate;
+	अचिन्हित पूर्णांक load_level;
 
 	/* only available when DVFS is enabled */
-	if (!armada_3700_pm_dvfs_is_enabled(base))
-		return -EINVAL;
+	अगर (!armada_3700_pm_dvfs_is_enabled(base))
+		वापस -EINVAL;
 
-	for (load_level = 0; load_level < LOAD_LEVEL_NR; load_level++) {
-		unsigned int reg, mask, val,
+	क्रम (load_level = 0; load_level < LOAD_LEVEL_NR; load_level++) अणु
+		अचिन्हित पूर्णांक reg, mask, val,
 			offset = ARMADA_37XX_NB_TBG_DIV_OFF;
 
 		armada_3700_pm_dvfs_update_regs(load_level, &reg, &offset);
 
-		regmap_read(base, reg, &val);
+		regmap_पढ़ो(base, reg, &val);
 		val >>= offset;
 		val &= ARMADA_37XX_NB_TBG_DIV_MASK;
 
-		if (val == div) {
+		अगर (val == भाग) अणु
 			/*
 			 * We found a load level matching the target
-			 * divider, switch to this load level and
-			 * return.
+			 * भागider, चयन to this load level and
+			 * वापस.
 			 */
 			reg = ARMADA_37XX_NB_CPU_LOAD;
 			mask = ARMADA_37XX_NB_CPU_LOAD_MASK;
 
 			/* Apply workaround when base CPU frequency is 1000 or 1200 MHz */
-			if (parent_rate >= 1000*1000*1000)
+			अगर (parent_rate >= 1000*1000*1000)
 				clk_pm_cpu_set_rate_wa(pm_cpu, load_level, rate, base);
 
 			regmap_update_bits(base, reg, mask, load_level);
 
-			return rate;
-		}
-	}
+			वापस rate;
+		पूर्ण
+	पूर्ण
 
-	/* We didn't find any valid divider */
-	return -EINVAL;
-}
+	/* We didn't find any valid भागider */
+	वापस -EINVAL;
+पूर्ण
 
-static const struct clk_ops clk_pm_cpu_ops = {
+अटल स्थिर काष्ठा clk_ops clk_pm_cpu_ops = अणु
 	.get_parent = clk_pm_cpu_get_parent,
 	.round_rate = clk_pm_cpu_round_rate,
 	.set_rate = clk_pm_cpu_set_rate,
 	.recalc_rate = clk_pm_cpu_recalc_rate,
-};
+पूर्ण;
 
-static const struct of_device_id armada_3700_periph_clock_of_match[] = {
-	{ .compatible = "marvell,armada-3700-periph-clock-nb",
-	  .data = data_nb, },
-	{ .compatible = "marvell,armada-3700-periph-clock-sb",
-	.data = data_sb, },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id armada_3700_periph_घड़ी_of_match[] = अणु
+	अणु .compatible = "marvell,armada-3700-periph-clock-nb",
+	  .data = data_nb, पूर्ण,
+	अणु .compatible = "marvell,armada-3700-periph-clock-sb",
+	.data = data_sb, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int armada_3700_add_composite_clk(const struct clk_periph_data *data,
-					 void __iomem *reg, spinlock_t *lock,
-					 struct device *dev, struct clk_hw **hw)
-{
-	const struct clk_ops *mux_ops = NULL, *gate_ops = NULL,
-		*rate_ops = NULL;
-	struct clk_hw *mux_hw = NULL, *gate_hw = NULL, *rate_hw = NULL;
+अटल पूर्णांक armada_3700_add_composite_clk(स्थिर काष्ठा clk_periph_data *data,
+					 व्योम __iomem *reg, spinlock_t *lock,
+					 काष्ठा device *dev, काष्ठा clk_hw **hw)
+अणु
+	स्थिर काष्ठा clk_ops *mux_ops = शून्य, *gate_ops = शून्य,
+		*rate_ops = शून्य;
+	काष्ठा clk_hw *mux_hw = शून्य, *gate_hw = शून्य, *rate_hw = शून्य;
 
-	if (data->mux_hw) {
-		struct clk_mux *mux;
+	अगर (data->mux_hw) अणु
+		काष्ठा clk_mux *mux;
 
 		mux_hw = data->mux_hw;
 		mux = to_clk_mux(mux_hw);
 		mux->lock = lock;
 		mux_ops = mux_hw->init->ops;
 		mux->reg = reg + (u64)mux->reg;
-	}
+	पूर्ण
 
-	if (data->gate_hw) {
-		struct clk_gate *gate;
+	अगर (data->gate_hw) अणु
+		काष्ठा clk_gate *gate;
 
 		gate_hw = data->gate_hw;
 		gate = to_clk_gate(gate_hw);
@@ -640,38 +641,38 @@ static int armada_3700_add_composite_clk(const struct clk_periph_data *data,
 		gate_ops = gate_hw->init->ops;
 		gate->reg = reg + (u64)gate->reg;
 		gate->flags = CLK_GATE_SET_TO_DISABLE;
-	}
+	पूर्ण
 
-	if (data->rate_hw) {
+	अगर (data->rate_hw) अणु
 		rate_hw = data->rate_hw;
 		rate_ops = rate_hw->init->ops;
-		if (data->is_double_div) {
-			struct clk_double_div *rate;
+		अगर (data->is_द्विगुन_भाग) अणु
+			काष्ठा clk_द्विगुन_भाग *rate;
 
-			rate =  to_clk_double_div(rate_hw);
+			rate =  to_clk_द्विगुन_भाग(rate_hw);
 			rate->reg1 = reg + (u64)rate->reg1;
 			rate->reg2 = reg + (u64)rate->reg2;
-		} else {
-			struct clk_divider *rate = to_clk_divider(rate_hw);
-			const struct clk_div_table *clkt;
-			int table_size = 0;
+		पूर्ण अन्यथा अणु
+			काष्ठा clk_भागider *rate = to_clk_भागider(rate_hw);
+			स्थिर काष्ठा clk_भाग_प्रकारable *clkt;
+			पूर्णांक table_size = 0;
 
 			rate->reg = reg + (u64)rate->reg;
-			for (clkt = rate->table; clkt->div; clkt++)
+			क्रम (clkt = rate->table; clkt->भाग; clkt++)
 				table_size++;
 			rate->width = order_base_2(table_size);
 			rate->lock = lock;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (data->muxrate_hw) {
-		struct clk_pm_cpu *pmcpu_clk;
-		struct clk_hw *muxrate_hw = data->muxrate_hw;
-		struct regmap *map;
+	अगर (data->muxrate_hw) अणु
+		काष्ठा clk_pm_cpu *pmcpu_clk;
+		काष्ठा clk_hw *muxrate_hw = data->muxrate_hw;
+		काष्ठा regmap *map;
 
 		pmcpu_clk =  to_clk_pm_cpu(muxrate_hw);
 		pmcpu_clk->reg_mux = reg + (u64)pmcpu_clk->reg_mux;
-		pmcpu_clk->reg_div = reg + (u64)pmcpu_clk->reg_div;
+		pmcpu_clk->reg_भाग = reg + (u64)pmcpu_clk->reg_भाग;
 
 		mux_hw = muxrate_hw;
 		rate_hw = muxrate_hw;
@@ -681,127 +682,127 @@ static int armada_3700_add_composite_clk(const struct clk_periph_data *data,
 		map = syscon_regmap_lookup_by_compatible(
 				"marvell,armada-3700-nb-pm");
 		pmcpu_clk->nb_pm_base = map;
-	}
+	पूर्ण
 
-	*hw = clk_hw_register_composite(dev, data->name, data->parent_names,
+	*hw = clk_hw_रेजिस्टर_composite(dev, data->name, data->parent_names,
 					data->num_parents, mux_hw,
 					mux_ops, rate_hw, rate_ops,
 					gate_hw, gate_ops, CLK_IGNORE_UNUSED);
 
-	return PTR_ERR_OR_ZERO(*hw);
-}
+	वापस PTR_ERR_OR_ZERO(*hw);
+पूर्ण
 
-static int __maybe_unused armada_3700_periph_clock_suspend(struct device *dev)
-{
-	struct clk_periph_driver_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused armada_3700_periph_घड़ी_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा clk_periph_driver_data *data = dev_get_drvdata(dev);
 
-	data->tbg_sel = readl(data->reg + TBG_SEL);
-	data->div_sel0 = readl(data->reg + DIV_SEL0);
-	data->div_sel1 = readl(data->reg + DIV_SEL1);
-	data->div_sel2 = readl(data->reg + DIV_SEL2);
-	data->clk_sel = readl(data->reg + CLK_SEL);
-	data->clk_dis = readl(data->reg + CLK_DIS);
+	data->tbg_sel = पढ़ोl(data->reg + TBG_SEL);
+	data->भाग_sel0 = पढ़ोl(data->reg + DIV_SEL0);
+	data->भाग_sel1 = पढ़ोl(data->reg + DIV_SEL1);
+	data->भाग_sel2 = पढ़ोl(data->reg + DIV_SEL2);
+	data->clk_sel = पढ़ोl(data->reg + CLK_SEL);
+	data->clk_dis = पढ़ोl(data->reg + CLK_DIS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused armada_3700_periph_clock_resume(struct device *dev)
-{
-	struct clk_periph_driver_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused armada_3700_periph_घड़ी_resume(काष्ठा device *dev)
+अणु
+	काष्ठा clk_periph_driver_data *data = dev_get_drvdata(dev);
 
-	/* Follow the same order than what the Cortex-M3 does (ATF code) */
-	writel(data->clk_dis, data->reg + CLK_DIS);
-	writel(data->div_sel0, data->reg + DIV_SEL0);
-	writel(data->div_sel1, data->reg + DIV_SEL1);
-	writel(data->div_sel2, data->reg + DIV_SEL2);
-	writel(data->tbg_sel, data->reg + TBG_SEL);
-	writel(data->clk_sel, data->reg + CLK_SEL);
+	/* Follow the same order than what the Cortex-M3 करोes (ATF code) */
+	ग_लिखोl(data->clk_dis, data->reg + CLK_DIS);
+	ग_लिखोl(data->भाग_sel0, data->reg + DIV_SEL0);
+	ग_लिखोl(data->भाग_sel1, data->reg + DIV_SEL1);
+	ग_लिखोl(data->भाग_sel2, data->reg + DIV_SEL2);
+	ग_लिखोl(data->tbg_sel, data->reg + TBG_SEL);
+	ग_लिखोl(data->clk_sel, data->reg + CLK_SEL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops armada_3700_periph_clock_pm_ops = {
-	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(armada_3700_periph_clock_suspend,
-				      armada_3700_periph_clock_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops armada_3700_periph_घड़ी_pm_ops = अणु
+	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(armada_3700_periph_घड़ी_suspend,
+				      armada_3700_periph_घड़ी_resume)
+पूर्ण;
 
-static int armada_3700_periph_clock_probe(struct platform_device *pdev)
-{
-	struct clk_periph_driver_data *driver_data;
-	struct device_node *np = pdev->dev.of_node;
-	const struct clk_periph_data *data;
-	struct device *dev = &pdev->dev;
-	int num_periph = 0, i, ret;
-	struct resource *res;
+अटल पूर्णांक armada_3700_periph_घड़ी_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_periph_driver_data *driver_data;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	स्थिर काष्ठा clk_periph_data *data;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक num_periph = 0, i, ret;
+	काष्ठा resource *res;
 
 	data = of_device_get_match_data(dev);
-	if (!data)
-		return -ENODEV;
+	अगर (!data)
+		वापस -ENODEV;
 
-	while (data[num_periph].name)
+	जबतक (data[num_periph].name)
 		num_periph++;
 
-	driver_data = devm_kzalloc(dev, sizeof(*driver_data), GFP_KERNEL);
-	if (!driver_data)
-		return -ENOMEM;
+	driver_data = devm_kzalloc(dev, माप(*driver_data), GFP_KERNEL);
+	अगर (!driver_data)
+		वापस -ENOMEM;
 
 	driver_data->hw_data = devm_kzalloc(dev,
-					    struct_size(driver_data->hw_data,
+					    काष्ठा_size(driver_data->hw_data,
 							hws, num_periph),
 					    GFP_KERNEL);
-	if (!driver_data->hw_data)
-		return -ENOMEM;
+	अगर (!driver_data->hw_data)
+		वापस -ENOMEM;
 	driver_data->hw_data->num = num_periph;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	driver_data->reg = devm_ioremap_resource(dev, res);
-	if (IS_ERR(driver_data->reg))
-		return PTR_ERR(driver_data->reg);
+	अगर (IS_ERR(driver_data->reg))
+		वापस PTR_ERR(driver_data->reg);
 
 	spin_lock_init(&driver_data->lock);
 
-	for (i = 0; i < num_periph; i++) {
-		struct clk_hw **hw = &driver_data->hw_data->hws[i];
-		if (armada_3700_add_composite_clk(&data[i], driver_data->reg,
+	क्रम (i = 0; i < num_periph; i++) अणु
+		काष्ठा clk_hw **hw = &driver_data->hw_data->hws[i];
+		अगर (armada_3700_add_composite_clk(&data[i], driver_data->reg,
 						  &driver_data->lock, dev, hw))
 			dev_err(dev, "Can't register periph clock %s\n",
 				data[i].name);
-	}
+	पूर्ण
 
 	ret = of_clk_add_hw_provider(np, of_clk_hw_onecell_get,
 				     driver_data->hw_data);
-	if (ret) {
-		for (i = 0; i < num_periph; i++)
-			clk_hw_unregister(driver_data->hw_data->hws[i]);
-		return ret;
-	}
+	अगर (ret) अणु
+		क्रम (i = 0; i < num_periph; i++)
+			clk_hw_unरेजिस्टर(driver_data->hw_data->hws[i]);
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, driver_data);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, driver_data);
+	वापस 0;
+पूर्ण
 
-static int armada_3700_periph_clock_remove(struct platform_device *pdev)
-{
-	struct clk_periph_driver_data *data = platform_get_drvdata(pdev);
-	struct clk_hw_onecell_data *hw_data = data->hw_data;
-	int i;
+अटल पूर्णांक armada_3700_periph_घड़ी_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_periph_driver_data *data = platक्रमm_get_drvdata(pdev);
+	काष्ठा clk_hw_onecell_data *hw_data = data->hw_data;
+	पूर्णांक i;
 
 	of_clk_del_provider(pdev->dev.of_node);
 
-	for (i = 0; i < hw_data->num; i++)
-		clk_hw_unregister(hw_data->hws[i]);
+	क्रम (i = 0; i < hw_data->num; i++)
+		clk_hw_unरेजिस्टर(hw_data->hws[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver armada_3700_periph_clock_driver = {
-	.probe = armada_3700_periph_clock_probe,
-	.remove = armada_3700_periph_clock_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver armada_3700_periph_घड़ी_driver = अणु
+	.probe = armada_3700_periph_घड़ी_probe,
+	.हटाओ = armada_3700_periph_घड़ी_हटाओ,
+	.driver		= अणु
 		.name	= "marvell-armada-3700-periph-clock",
-		.of_match_table = armada_3700_periph_clock_of_match,
-		.pm	= &armada_3700_periph_clock_pm_ops,
-	},
-};
+		.of_match_table = armada_3700_periph_घड़ी_of_match,
+		.pm	= &armada_3700_periph_घड़ी_pm_ops,
+	पूर्ण,
+पूर्ण;
 
-builtin_platform_driver(armada_3700_periph_clock_driver);
+builtin_platक्रमm_driver(armada_3700_periph_घड़ी_driver);

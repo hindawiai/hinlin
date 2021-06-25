@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#include <linux/bpf.h>
-#include <linux/bitops.h>
-#include <linux/bug.h>
-#include <linux/jiffies.h>
-#include <linux/skbuff.h>
-#include <linux/timekeeping.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/समयkeeping.h>
 
-#include "../ccm.h"
-#include "../nfp_app.h"
-#include "../nfp_net.h"
-#include "fw.h"
-#include "main.h"
+#समावेश "../ccm.h"
+#समावेश "../nfp_app.h"
+#समावेश "../nfp_net.h"
+#समावेश "fw.h"
+#समावेश "main.h"
 
-static struct sk_buff *
-nfp_bpf_cmsg_alloc(struct nfp_app_bpf *bpf, unsigned int size)
-{
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *
+nfp_bpf_cmsg_alloc(काष्ठा nfp_app_bpf *bpf, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = nfp_app_ctrl_msg_alloc(bpf->app, size, GFP_KERNEL);
 	skb_put(skb, size);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static unsigned int
-nfp_bpf_cmsg_map_req_size(struct nfp_app_bpf *bpf, unsigned int n)
-{
-	unsigned int size;
+अटल अचिन्हित पूर्णांक
+nfp_bpf_cmsg_map_req_size(काष्ठा nfp_app_bpf *bpf, अचिन्हित पूर्णांक n)
+अणु
+	अचिन्हित पूर्णांक size;
 
-	size = sizeof(struct cmsg_req_map_op);
+	size = माप(काष्ठा cmsg_req_map_op);
 	size += (bpf->cmsg_key_sz + bpf->cmsg_val_sz) * n;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static struct sk_buff *
-nfp_bpf_cmsg_map_req_alloc(struct nfp_app_bpf *bpf, unsigned int n)
-{
-	return nfp_bpf_cmsg_alloc(bpf, nfp_bpf_cmsg_map_req_size(bpf, n));
-}
+अटल काष्ठा sk_buff *
+nfp_bpf_cmsg_map_req_alloc(काष्ठा nfp_app_bpf *bpf, अचिन्हित पूर्णांक n)
+अणु
+	वापस nfp_bpf_cmsg_alloc(bpf, nfp_bpf_cmsg_map_req_size(bpf, n));
+पूर्ण
 
-static unsigned int
-nfp_bpf_cmsg_map_reply_size(struct nfp_app_bpf *bpf, unsigned int n)
-{
-	unsigned int size;
+अटल अचिन्हित पूर्णांक
+nfp_bpf_cmsg_map_reply_size(काष्ठा nfp_app_bpf *bpf, अचिन्हित पूर्णांक n)
+अणु
+	अचिन्हित पूर्णांक size;
 
-	size = sizeof(struct cmsg_reply_map_op);
+	size = माप(काष्ठा cmsg_reply_map_op);
 	size += (bpf->cmsg_key_sz + bpf->cmsg_val_sz) * n;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int
-nfp_bpf_ctrl_rc_to_errno(struct nfp_app_bpf *bpf,
-			 struct cmsg_reply_map_simple *reply)
-{
-	static const int res_table[] = {
+अटल पूर्णांक
+nfp_bpf_ctrl_rc_to_त्रुटि_सं(काष्ठा nfp_app_bpf *bpf,
+			 काष्ठा cmsg_reply_map_simple *reply)
+अणु
+	अटल स्थिर पूर्णांक res_table[] = अणु
 		[CMSG_RC_SUCCESS]	= 0,
 		[CMSG_RC_ERR_MAP_FD]	= -EBADFD,
 		[CMSG_RC_ERR_MAP_NOENT]	= -ENOENT,
@@ -66,32 +67,32 @@ nfp_bpf_ctrl_rc_to_errno(struct nfp_app_bpf *bpf,
 		[CMSG_RC_ERR_MAP_EXIST]	= -EEXIST,
 		[CMSG_RC_ERR_MAP_NOMEM]	= -ENOMEM,
 		[CMSG_RC_ERR_MAP_E2BIG]	= -E2BIG,
-	};
+	पूर्ण;
 	u32 rc;
 
 	rc = be32_to_cpu(reply->rc);
-	if (rc >= ARRAY_SIZE(res_table)) {
+	अगर (rc >= ARRAY_SIZE(res_table)) अणु
 		cmsg_warn(bpf, "FW responded with invalid status: %u\n", rc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return res_table[rc];
-}
+	वापस res_table[rc];
+पूर्ण
 
-long long int
-nfp_bpf_ctrl_alloc_map(struct nfp_app_bpf *bpf, struct bpf_map *map)
-{
-	struct cmsg_reply_map_alloc_tbl *reply;
-	struct cmsg_req_map_alloc_tbl *req;
-	struct sk_buff *skb;
+दीर्घ दीर्घ पूर्णांक
+nfp_bpf_ctrl_alloc_map(काष्ठा nfp_app_bpf *bpf, काष्ठा bpf_map *map)
+अणु
+	काष्ठा cmsg_reply_map_alloc_tbl *reply;
+	काष्ठा cmsg_req_map_alloc_tbl *req;
+	काष्ठा sk_buff *skb;
 	u32 tid;
-	int err;
+	पूर्णांक err;
 
-	skb = nfp_bpf_cmsg_alloc(bpf, sizeof(*req));
-	if (!skb)
-		return -ENOMEM;
+	skb = nfp_bpf_cmsg_alloc(bpf, माप(*req));
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	req = (void *)skb->data;
+	req = (व्योम *)skb->data;
 	req->key_size = cpu_to_be32(map->key_size);
 	req->value_size = cpu_to_be32(map->value_size);
 	req->max_entries = cpu_to_be32(map->max_entries);
@@ -99,381 +100,381 @@ nfp_bpf_ctrl_alloc_map(struct nfp_app_bpf *bpf, struct bpf_map *map)
 	req->map_flags = 0;
 
 	skb = nfp_ccm_communicate(&bpf->ccm, skb, NFP_CCM_TYPE_BPF_MAP_ALLOC,
-				  sizeof(*reply));
-	if (IS_ERR(skb))
-		return PTR_ERR(skb);
+				  माप(*reply));
+	अगर (IS_ERR(skb))
+		वापस PTR_ERR(skb);
 
-	reply = (void *)skb->data;
-	err = nfp_bpf_ctrl_rc_to_errno(bpf, &reply->reply_hdr);
-	if (err)
-		goto err_free;
+	reply = (व्योम *)skb->data;
+	err = nfp_bpf_ctrl_rc_to_त्रुटि_सं(bpf, &reply->reply_hdr);
+	अगर (err)
+		जाओ err_मुक्त;
 
 	tid = be32_to_cpu(reply->tid);
 	dev_consume_skb_any(skb);
 
-	return tid;
-err_free:
-	dev_kfree_skb_any(skb);
-	return err;
-}
+	वापस tid;
+err_मुक्त:
+	dev_kमुक्त_skb_any(skb);
+	वापस err;
+पूर्ण
 
-void nfp_bpf_ctrl_free_map(struct nfp_app_bpf *bpf, struct nfp_bpf_map *nfp_map)
-{
-	struct cmsg_reply_map_free_tbl *reply;
-	struct cmsg_req_map_free_tbl *req;
-	struct sk_buff *skb;
-	int err;
+व्योम nfp_bpf_ctrl_मुक्त_map(काष्ठा nfp_app_bpf *bpf, काष्ठा nfp_bpf_map *nfp_map)
+अणु
+	काष्ठा cmsg_reply_map_मुक्त_tbl *reply;
+	काष्ठा cmsg_req_map_मुक्त_tbl *req;
+	काष्ठा sk_buff *skb;
+	पूर्णांक err;
 
-	skb = nfp_bpf_cmsg_alloc(bpf, sizeof(*req));
-	if (!skb) {
+	skb = nfp_bpf_cmsg_alloc(bpf, माप(*req));
+	अगर (!skb) अणु
 		cmsg_warn(bpf, "leaking map - failed to allocate msg\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	req = (void *)skb->data;
+	req = (व्योम *)skb->data;
 	req->tid = cpu_to_be32(nfp_map->tid);
 
 	skb = nfp_ccm_communicate(&bpf->ccm, skb, NFP_CCM_TYPE_BPF_MAP_FREE,
-				  sizeof(*reply));
-	if (IS_ERR(skb)) {
+				  माप(*reply));
+	अगर (IS_ERR(skb)) अणु
 		cmsg_warn(bpf, "leaking map - I/O error\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	reply = (void *)skb->data;
-	err = nfp_bpf_ctrl_rc_to_errno(bpf, &reply->reply_hdr);
-	if (err)
+	reply = (व्योम *)skb->data;
+	err = nfp_bpf_ctrl_rc_to_त्रुटि_सं(bpf, &reply->reply_hdr);
+	अगर (err)
 		cmsg_warn(bpf, "leaking map - FW responded with: %d\n", err);
 
 	dev_consume_skb_any(skb);
-}
+पूर्ण
 
-static void *
-nfp_bpf_ctrl_req_key(struct nfp_app_bpf *bpf, struct cmsg_req_map_op *req,
-		     unsigned int n)
-{
-	return &req->data[bpf->cmsg_key_sz * n + bpf->cmsg_val_sz * n];
-}
+अटल व्योम *
+nfp_bpf_ctrl_req_key(काष्ठा nfp_app_bpf *bpf, काष्ठा cmsg_req_map_op *req,
+		     अचिन्हित पूर्णांक n)
+अणु
+	वापस &req->data[bpf->cmsg_key_sz * n + bpf->cmsg_val_sz * n];
+पूर्ण
 
-static void *
-nfp_bpf_ctrl_req_val(struct nfp_app_bpf *bpf, struct cmsg_req_map_op *req,
-		     unsigned int n)
-{
-	return &req->data[bpf->cmsg_key_sz * (n + 1) + bpf->cmsg_val_sz * n];
-}
+अटल व्योम *
+nfp_bpf_ctrl_req_val(काष्ठा nfp_app_bpf *bpf, काष्ठा cmsg_req_map_op *req,
+		     अचिन्हित पूर्णांक n)
+अणु
+	वापस &req->data[bpf->cmsg_key_sz * (n + 1) + bpf->cmsg_val_sz * n];
+पूर्ण
 
-static void *
-nfp_bpf_ctrl_reply_key(struct nfp_app_bpf *bpf, struct cmsg_reply_map_op *reply,
-		       unsigned int n)
-{
-	return &reply->data[bpf->cmsg_key_sz * n + bpf->cmsg_val_sz * n];
-}
+अटल व्योम *
+nfp_bpf_ctrl_reply_key(काष्ठा nfp_app_bpf *bpf, काष्ठा cmsg_reply_map_op *reply,
+		       अचिन्हित पूर्णांक n)
+अणु
+	वापस &reply->data[bpf->cmsg_key_sz * n + bpf->cmsg_val_sz * n];
+पूर्ण
 
-static void *
-nfp_bpf_ctrl_reply_val(struct nfp_app_bpf *bpf, struct cmsg_reply_map_op *reply,
-		       unsigned int n)
-{
-	return &reply->data[bpf->cmsg_key_sz * (n + 1) + bpf->cmsg_val_sz * n];
-}
+अटल व्योम *
+nfp_bpf_ctrl_reply_val(काष्ठा nfp_app_bpf *bpf, काष्ठा cmsg_reply_map_op *reply,
+		       अचिन्हित पूर्णांक n)
+अणु
+	वापस &reply->data[bpf->cmsg_key_sz * (n + 1) + bpf->cmsg_val_sz * n];
+पूर्ण
 
-static bool nfp_bpf_ctrl_op_cache_invalidate(enum nfp_ccm_type op)
-{
-	return op == NFP_CCM_TYPE_BPF_MAP_UPDATE ||
+अटल bool nfp_bpf_ctrl_op_cache_invalidate(क्रमागत nfp_ccm_type op)
+अणु
+	वापस op == NFP_CCM_TYPE_BPF_MAP_UPDATE ||
 	       op == NFP_CCM_TYPE_BPF_MAP_DELETE;
-}
+पूर्ण
 
-static bool nfp_bpf_ctrl_op_cache_capable(enum nfp_ccm_type op)
-{
-	return op == NFP_CCM_TYPE_BPF_MAP_LOOKUP ||
+अटल bool nfp_bpf_ctrl_op_cache_capable(क्रमागत nfp_ccm_type op)
+अणु
+	वापस op == NFP_CCM_TYPE_BPF_MAP_LOOKUP ||
 	       op == NFP_CCM_TYPE_BPF_MAP_GETNEXT;
-}
+पूर्ण
 
-static bool nfp_bpf_ctrl_op_cache_fill(enum nfp_ccm_type op)
-{
-	return op == NFP_CCM_TYPE_BPF_MAP_GETFIRST ||
+अटल bool nfp_bpf_ctrl_op_cache_fill(क्रमागत nfp_ccm_type op)
+अणु
+	वापस op == NFP_CCM_TYPE_BPF_MAP_GETFIRST ||
 	       op == NFP_CCM_TYPE_BPF_MAP_GETNEXT;
-}
+पूर्ण
 
-static unsigned int
-nfp_bpf_ctrl_op_cache_get(struct nfp_bpf_map *nfp_map, enum nfp_ccm_type op,
-			  const u8 *key, u8 *out_key, u8 *out_value,
+अटल अचिन्हित पूर्णांक
+nfp_bpf_ctrl_op_cache_get(काष्ठा nfp_bpf_map *nfp_map, क्रमागत nfp_ccm_type op,
+			  स्थिर u8 *key, u8 *out_key, u8 *out_value,
 			  u32 *cache_gen)
-{
-	struct bpf_map *map = &nfp_map->offmap->map;
-	struct nfp_app_bpf *bpf = nfp_map->bpf;
-	unsigned int i, count, n_entries;
-	struct cmsg_reply_map_op *reply;
+अणु
+	काष्ठा bpf_map *map = &nfp_map->offmap->map;
+	काष्ठा nfp_app_bpf *bpf = nfp_map->bpf;
+	अचिन्हित पूर्णांक i, count, n_entries;
+	काष्ठा cmsg_reply_map_op *reply;
 
 	n_entries = nfp_bpf_ctrl_op_cache_fill(op) ? bpf->cmsg_cache_cnt : 1;
 
 	spin_lock(&nfp_map->cache_lock);
 	*cache_gen = nfp_map->cache_gen;
-	if (nfp_map->cache_blockers)
+	अगर (nfp_map->cache_blockers)
 		n_entries = 1;
 
-	if (nfp_bpf_ctrl_op_cache_invalidate(op))
-		goto exit_block;
-	if (!nfp_bpf_ctrl_op_cache_capable(op))
-		goto exit_unlock;
+	अगर (nfp_bpf_ctrl_op_cache_invalidate(op))
+		जाओ निकास_block;
+	अगर (!nfp_bpf_ctrl_op_cache_capable(op))
+		जाओ निकास_unlock;
 
-	if (!nfp_map->cache)
-		goto exit_unlock;
-	if (nfp_map->cache_to < ktime_get_ns())
-		goto exit_invalidate;
+	अगर (!nfp_map->cache)
+		जाओ निकास_unlock;
+	अगर (nfp_map->cache_to < kसमय_get_ns())
+		जाओ निकास_invalidate;
 
-	reply = (void *)nfp_map->cache->data;
+	reply = (व्योम *)nfp_map->cache->data;
 	count = be32_to_cpu(reply->count);
 
-	for (i = 0; i < count; i++) {
-		void *cached_key;
+	क्रम (i = 0; i < count; i++) अणु
+		व्योम *cached_key;
 
 		cached_key = nfp_bpf_ctrl_reply_key(bpf, reply, i);
-		if (memcmp(cached_key, key, map->key_size))
-			continue;
+		अगर (स_भेद(cached_key, key, map->key_size))
+			जारी;
 
-		if (op == NFP_CCM_TYPE_BPF_MAP_LOOKUP)
-			memcpy(out_value, nfp_bpf_ctrl_reply_val(bpf, reply, i),
+		अगर (op == NFP_CCM_TYPE_BPF_MAP_LOOKUP)
+			स_नकल(out_value, nfp_bpf_ctrl_reply_val(bpf, reply, i),
 			       map->value_size);
-		if (op == NFP_CCM_TYPE_BPF_MAP_GETNEXT) {
-			if (i + 1 == count)
-				break;
+		अगर (op == NFP_CCM_TYPE_BPF_MAP_GETNEXT) अणु
+			अगर (i + 1 == count)
+				अवरोध;
 
-			memcpy(out_key,
+			स_नकल(out_key,
 			       nfp_bpf_ctrl_reply_key(bpf, reply, i + 1),
 			       map->key_size);
-		}
+		पूर्ण
 
 		n_entries = 0;
-		goto exit_unlock;
-	}
-	goto exit_unlock;
+		जाओ निकास_unlock;
+	पूर्ण
+	जाओ निकास_unlock;
 
-exit_block:
+निकास_block:
 	nfp_map->cache_blockers++;
-exit_invalidate:
+निकास_invalidate:
 	dev_consume_skb_any(nfp_map->cache);
-	nfp_map->cache = NULL;
-exit_unlock:
+	nfp_map->cache = शून्य;
+निकास_unlock:
 	spin_unlock(&nfp_map->cache_lock);
-	return n_entries;
-}
+	वापस n_entries;
+पूर्ण
 
-static void
-nfp_bpf_ctrl_op_cache_put(struct nfp_bpf_map *nfp_map, enum nfp_ccm_type op,
-			  struct sk_buff *skb, u32 cache_gen)
-{
+अटल व्योम
+nfp_bpf_ctrl_op_cache_put(काष्ठा nfp_bpf_map *nfp_map, क्रमागत nfp_ccm_type op,
+			  काष्ठा sk_buff *skb, u32 cache_gen)
+अणु
 	bool blocker, filler;
 
 	blocker = nfp_bpf_ctrl_op_cache_invalidate(op);
 	filler = nfp_bpf_ctrl_op_cache_fill(op);
-	if (blocker || filler) {
+	अगर (blocker || filler) अणु
 		u64 to = 0;
 
-		if (filler)
-			to = ktime_get_ns() + NFP_BPF_MAP_CACHE_TIME_NS;
+		अगर (filler)
+			to = kसमय_get_ns() + NFP_BPF_MAP_CACHE_TIME_NS;
 
 		spin_lock(&nfp_map->cache_lock);
-		if (blocker) {
+		अगर (blocker) अणु
 			nfp_map->cache_blockers--;
 			nfp_map->cache_gen++;
-		}
-		if (filler && !nfp_map->cache_blockers &&
-		    nfp_map->cache_gen == cache_gen) {
+		पूर्ण
+		अगर (filler && !nfp_map->cache_blockers &&
+		    nfp_map->cache_gen == cache_gen) अणु
 			nfp_map->cache_to = to;
 			swap(nfp_map->cache, skb);
-		}
+		पूर्ण
 		spin_unlock(&nfp_map->cache_lock);
-	}
+	पूर्ण
 
 	dev_consume_skb_any(skb);
-}
+पूर्ण
 
-static int
-nfp_bpf_ctrl_entry_op(struct bpf_offloaded_map *offmap, enum nfp_ccm_type op,
+अटल पूर्णांक
+nfp_bpf_ctrl_entry_op(काष्ठा bpf_offloaded_map *offmap, क्रमागत nfp_ccm_type op,
 		      u8 *key, u8 *value, u64 flags, u8 *out_key, u8 *out_value)
-{
-	struct nfp_bpf_map *nfp_map = offmap->dev_priv;
-	unsigned int n_entries, reply_entries, count;
-	struct nfp_app_bpf *bpf = nfp_map->bpf;
-	struct bpf_map *map = &offmap->map;
-	struct cmsg_reply_map_op *reply;
-	struct cmsg_req_map_op *req;
-	struct sk_buff *skb;
+अणु
+	काष्ठा nfp_bpf_map *nfp_map = offmap->dev_priv;
+	अचिन्हित पूर्णांक n_entries, reply_entries, count;
+	काष्ठा nfp_app_bpf *bpf = nfp_map->bpf;
+	काष्ठा bpf_map *map = &offmap->map;
+	काष्ठा cmsg_reply_map_op *reply;
+	काष्ठा cmsg_req_map_op *req;
+	काष्ठा sk_buff *skb;
 	u32 cache_gen;
-	int err;
+	पूर्णांक err;
 
-	/* FW messages have no space for more than 32 bits of flags */
-	if (flags >> 32)
-		return -EOPNOTSUPP;
+	/* FW messages have no space क्रम more than 32 bits of flags */
+	अगर (flags >> 32)
+		वापस -EOPNOTSUPP;
 
 	/* Handle op cache */
 	n_entries = nfp_bpf_ctrl_op_cache_get(nfp_map, op, key, out_key,
 					      out_value, &cache_gen);
-	if (!n_entries)
-		return 0;
+	अगर (!n_entries)
+		वापस 0;
 
 	skb = nfp_bpf_cmsg_map_req_alloc(bpf, 1);
-	if (!skb) {
+	अगर (!skb) अणु
 		err = -ENOMEM;
-		goto err_cache_put;
-	}
+		जाओ err_cache_put;
+	पूर्ण
 
-	req = (void *)skb->data;
+	req = (व्योम *)skb->data;
 	req->tid = cpu_to_be32(nfp_map->tid);
 	req->count = cpu_to_be32(n_entries);
 	req->flags = cpu_to_be32(flags);
 
-	/* Copy inputs */
-	if (key)
-		memcpy(nfp_bpf_ctrl_req_key(bpf, req, 0), key, map->key_size);
-	if (value)
-		memcpy(nfp_bpf_ctrl_req_val(bpf, req, 0), value,
+	/* Copy inमाला_दो */
+	अगर (key)
+		स_नकल(nfp_bpf_ctrl_req_key(bpf, req, 0), key, map->key_size);
+	अगर (value)
+		स_नकल(nfp_bpf_ctrl_req_val(bpf, req, 0), value,
 		       map->value_size);
 
 	skb = nfp_ccm_communicate(&bpf->ccm, skb, op, 0);
-	if (IS_ERR(skb)) {
+	अगर (IS_ERR(skb)) अणु
 		err = PTR_ERR(skb);
-		goto err_cache_put;
-	}
+		जाओ err_cache_put;
+	पूर्ण
 
-	if (skb->len < sizeof(*reply)) {
+	अगर (skb->len < माप(*reply)) अणु
 		cmsg_warn(bpf, "cmsg drop - type 0x%02x too short %d!\n",
 			  op, skb->len);
 		err = -EIO;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	reply = (void *)skb->data;
+	reply = (व्योम *)skb->data;
 	count = be32_to_cpu(reply->count);
-	err = nfp_bpf_ctrl_rc_to_errno(bpf, &reply->reply_hdr);
+	err = nfp_bpf_ctrl_rc_to_त्रुटि_सं(bpf, &reply->reply_hdr);
 	/* FW responds with message sized to hold the good entries,
-	 * plus one extra entry if there was an error.
+	 * plus one extra entry अगर there was an error.
 	 */
 	reply_entries = count + !!err;
-	if (n_entries > 1 && count)
+	अगर (n_entries > 1 && count)
 		err = 0;
-	if (err)
-		goto err_free;
+	अगर (err)
+		जाओ err_मुक्त;
 
-	if (skb->len != nfp_bpf_cmsg_map_reply_size(bpf, reply_entries)) {
+	अगर (skb->len != nfp_bpf_cmsg_map_reply_size(bpf, reply_entries)) अणु
 		cmsg_warn(bpf, "cmsg drop - type 0x%02x too short %d for %d entries!\n",
 			  op, skb->len, reply_entries);
 		err = -EIO;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	/* Copy outputs */
-	if (out_key)
-		memcpy(out_key, nfp_bpf_ctrl_reply_key(bpf, reply, 0),
+	/* Copy outमाला_दो */
+	अगर (out_key)
+		स_नकल(out_key, nfp_bpf_ctrl_reply_key(bpf, reply, 0),
 		       map->key_size);
-	if (out_value)
-		memcpy(out_value, nfp_bpf_ctrl_reply_val(bpf, reply, 0),
+	अगर (out_value)
+		स_नकल(out_value, nfp_bpf_ctrl_reply_val(bpf, reply, 0),
 		       map->value_size);
 
 	nfp_bpf_ctrl_op_cache_put(nfp_map, op, skb, cache_gen);
 
-	return 0;
-err_free:
-	dev_kfree_skb_any(skb);
+	वापस 0;
+err_मुक्त:
+	dev_kमुक्त_skb_any(skb);
 err_cache_put:
-	nfp_bpf_ctrl_op_cache_put(nfp_map, op, NULL, cache_gen);
-	return err;
-}
+	nfp_bpf_ctrl_op_cache_put(nfp_map, op, शून्य, cache_gen);
+	वापस err;
+पूर्ण
 
-int nfp_bpf_ctrl_update_entry(struct bpf_offloaded_map *offmap,
-			      void *key, void *value, u64 flags)
-{
-	return nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_UPDATE,
-				     key, value, flags, NULL, NULL);
-}
+पूर्णांक nfp_bpf_ctrl_update_entry(काष्ठा bpf_offloaded_map *offmap,
+			      व्योम *key, व्योम *value, u64 flags)
+अणु
+	वापस nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_UPDATE,
+				     key, value, flags, शून्य, शून्य);
+पूर्ण
 
-int nfp_bpf_ctrl_del_entry(struct bpf_offloaded_map *offmap, void *key)
-{
-	return nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_DELETE,
-				     key, NULL, 0, NULL, NULL);
-}
+पूर्णांक nfp_bpf_ctrl_del_entry(काष्ठा bpf_offloaded_map *offmap, व्योम *key)
+अणु
+	वापस nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_DELETE,
+				     key, शून्य, 0, शून्य, शून्य);
+पूर्ण
 
-int nfp_bpf_ctrl_lookup_entry(struct bpf_offloaded_map *offmap,
-			      void *key, void *value)
-{
-	return nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_LOOKUP,
-				     key, NULL, 0, NULL, value);
-}
+पूर्णांक nfp_bpf_ctrl_lookup_entry(काष्ठा bpf_offloaded_map *offmap,
+			      व्योम *key, व्योम *value)
+अणु
+	वापस nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_LOOKUP,
+				     key, शून्य, 0, शून्य, value);
+पूर्ण
 
-int nfp_bpf_ctrl_getfirst_entry(struct bpf_offloaded_map *offmap,
-				void *next_key)
-{
-	return nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_GETFIRST,
-				     NULL, NULL, 0, next_key, NULL);
-}
+पूर्णांक nfp_bpf_ctrl_getfirst_entry(काष्ठा bpf_offloaded_map *offmap,
+				व्योम *next_key)
+अणु
+	वापस nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_GETFIRST,
+				     शून्य, शून्य, 0, next_key, शून्य);
+पूर्ण
 
-int nfp_bpf_ctrl_getnext_entry(struct bpf_offloaded_map *offmap,
-			       void *key, void *next_key)
-{
-	return nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_GETNEXT,
-				     key, NULL, 0, next_key, NULL);
-}
+पूर्णांक nfp_bpf_ctrl_getnext_entry(काष्ठा bpf_offloaded_map *offmap,
+			       व्योम *key, व्योम *next_key)
+अणु
+	वापस nfp_bpf_ctrl_entry_op(offmap, NFP_CCM_TYPE_BPF_MAP_GETNEXT,
+				     key, शून्य, 0, next_key, शून्य);
+पूर्ण
 
-unsigned int nfp_bpf_ctrl_cmsg_min_mtu(struct nfp_app_bpf *bpf)
-{
-	return max(nfp_bpf_cmsg_map_req_size(bpf, 1),
+अचिन्हित पूर्णांक nfp_bpf_ctrl_cmsg_min_mtu(काष्ठा nfp_app_bpf *bpf)
+अणु
+	वापस max(nfp_bpf_cmsg_map_req_size(bpf, 1),
 		   nfp_bpf_cmsg_map_reply_size(bpf, 1));
-}
+पूर्ण
 
-unsigned int nfp_bpf_ctrl_cmsg_mtu(struct nfp_app_bpf *bpf)
-{
-	return max3(NFP_NET_DEFAULT_MTU,
+अचिन्हित पूर्णांक nfp_bpf_ctrl_cmsg_mtu(काष्ठा nfp_app_bpf *bpf)
+अणु
+	वापस max3(NFP_NET_DEFAULT_MTU,
 		    nfp_bpf_cmsg_map_req_size(bpf, NFP_BPF_MAP_CACHE_CNT),
 		    nfp_bpf_cmsg_map_reply_size(bpf, NFP_BPF_MAP_CACHE_CNT));
-}
+पूर्ण
 
-unsigned int nfp_bpf_ctrl_cmsg_cache_cnt(struct nfp_app_bpf *bpf)
-{
-	unsigned int mtu, req_max, reply_max, entry_sz;
+अचिन्हित पूर्णांक nfp_bpf_ctrl_cmsg_cache_cnt(काष्ठा nfp_app_bpf *bpf)
+अणु
+	अचिन्हित पूर्णांक mtu, req_max, reply_max, entry_sz;
 
 	mtu = bpf->app->ctrl->dp.mtu;
 	entry_sz = bpf->cmsg_key_sz + bpf->cmsg_val_sz;
-	req_max = (mtu - sizeof(struct cmsg_req_map_op)) / entry_sz;
-	reply_max = (mtu - sizeof(struct cmsg_reply_map_op)) / entry_sz;
+	req_max = (mtu - माप(काष्ठा cmsg_req_map_op)) / entry_sz;
+	reply_max = (mtu - माप(काष्ठा cmsg_reply_map_op)) / entry_sz;
 
-	return min3(req_max, reply_max, NFP_BPF_MAP_CACHE_CNT);
-}
+	वापस min3(req_max, reply_max, NFP_BPF_MAP_CACHE_CNT);
+पूर्ण
 
-void nfp_bpf_ctrl_msg_rx(struct nfp_app *app, struct sk_buff *skb)
-{
-	struct nfp_app_bpf *bpf = app->priv;
+व्योम nfp_bpf_ctrl_msg_rx(काष्ठा nfp_app *app, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfp_app_bpf *bpf = app->priv;
 
-	if (unlikely(skb->len < sizeof(struct cmsg_reply_map_simple))) {
+	अगर (unlikely(skb->len < माप(काष्ठा cmsg_reply_map_simple))) अणु
 		cmsg_warn(bpf, "cmsg drop - too short %d!\n", skb->len);
-		dev_kfree_skb_any(skb);
-		return;
-	}
+		dev_kमुक्त_skb_any(skb);
+		वापस;
+	पूर्ण
 
-	if (nfp_ccm_get_type(skb) == NFP_CCM_TYPE_BPF_BPF_EVENT) {
-		if (!nfp_bpf_event_output(bpf, skb->data, skb->len))
+	अगर (nfp_ccm_get_type(skb) == NFP_CCM_TYPE_BPF_BPF_EVENT) अणु
+		अगर (!nfp_bpf_event_output(bpf, skb->data, skb->len))
 			dev_consume_skb_any(skb);
-		else
-			dev_kfree_skb_any(skb);
-		return;
-	}
+		अन्यथा
+			dev_kमुक्त_skb_any(skb);
+		वापस;
+	पूर्ण
 
 	nfp_ccm_rx(&bpf->ccm, skb);
-}
+पूर्ण
 
-void
-nfp_bpf_ctrl_msg_rx_raw(struct nfp_app *app, const void *data, unsigned int len)
-{
-	const struct nfp_ccm_hdr *hdr = data;
-	struct nfp_app_bpf *bpf = app->priv;
+व्योम
+nfp_bpf_ctrl_msg_rx_raw(काष्ठा nfp_app *app, स्थिर व्योम *data, अचिन्हित पूर्णांक len)
+अणु
+	स्थिर काष्ठा nfp_ccm_hdr *hdr = data;
+	काष्ठा nfp_app_bpf *bpf = app->priv;
 
-	if (unlikely(len < sizeof(struct cmsg_reply_map_simple))) {
+	अगर (unlikely(len < माप(काष्ठा cmsg_reply_map_simple))) अणु
 		cmsg_warn(bpf, "cmsg drop - too short %d!\n", len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (hdr->type == NFP_CCM_TYPE_BPF_BPF_EVENT)
+	अगर (hdr->type == NFP_CCM_TYPE_BPF_BPF_EVENT)
 		nfp_bpf_event_output(bpf, data, len);
-	else
+	अन्यथा
 		cmsg_warn(bpf, "cmsg drop - msg type %d with raw buffer!\n",
 			  hdr->type);
-}
+पूर्ण

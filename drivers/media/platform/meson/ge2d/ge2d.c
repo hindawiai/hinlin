@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2020 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/bitfield.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/reset.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/timer.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/regmap.h>
 
-#include <linux/platform_device.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-mem2mem.h>
-#include <media/v4l2-ctrls.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-#include "ge2d-regs.h"
+#समावेश "ge2d-regs.h"
 
-#define GE2D_NAME	"meson-ge2d"
+#घोषणा GE2D_NAME	"meson-ge2d"
 
-#define DEFAULT_WIDTH	128
-#define DEFAULT_HEIGHT	128
-#define DEFAULT_STRIDE	512
+#घोषणा DEFAULT_WIDTH	128
+#घोषणा DEFAULT_HEIGHT	128
+#घोषणा DEFAULT_STRIDE	512
 
-#define MAX_WIDTH	8191
-#define MAX_HEIGHT	8191
+#घोषणा MAX_WIDTH	8191
+#घोषणा MAX_HEIGHT	8191
 
 /*
  * Missing features:
@@ -45,69 +46,69 @@
  * - Colorspace conversion
  */
 
-struct ge2d_fmt {
+काष्ठा ge2d_fmt अणु
 	u32 fourcc;
 	bool alpha;
 	bool le;
-	unsigned int depth;
-	unsigned int hw_fmt;
-	unsigned int hw_map;
-};
+	अचिन्हित पूर्णांक depth;
+	अचिन्हित पूर्णांक hw_fmt;
+	अचिन्हित पूर्णांक hw_map;
+पूर्ण;
 
-struct ge2d_frame {
-	struct vb2_v4l2_buffer *buf;
+काष्ठा ge2d_frame अणु
+	काष्ठा vb2_v4l2_buffer *buf;
 
 	/* Image Format */
-	struct v4l2_pix_format pix_fmt;
+	काष्ठा v4l2_pix_क्रमmat pix_fmt;
 
 	/* Crop */
-	struct v4l2_rect crop;
+	काष्ठा v4l2_rect crop;
 
-	/* Image format */
-	const struct ge2d_fmt *fmt;
-};
+	/* Image क्रमmat */
+	स्थिर काष्ठा ge2d_fmt *fmt;
+पूर्ण;
 
-struct ge2d_ctx {
-	struct v4l2_fh fh;
-	struct meson_ge2d *ge2d;
-	struct ge2d_frame in;
-	struct ge2d_frame out;
-	struct v4l2_ctrl_handler ctrl_handler;
+काष्ठा ge2d_ctx अणु
+	काष्ठा v4l2_fh fh;
+	काष्ठा meson_ge2d *ge2d;
+	काष्ठा ge2d_frame in;
+	काष्ठा ge2d_frame out;
+	काष्ठा v4l2_ctrl_handler ctrl_handler;
 
-	unsigned long sequence_out, sequence_cap;
+	अचिन्हित दीर्घ sequence_out, sequence_cap;
 
 	/* Control values */
 	u32 hflip;
 	u32 vflip;
 	u32 xy_swap;
-};
+पूर्ण;
 
-struct meson_ge2d {
-	struct v4l2_device v4l2_dev;
-	struct v4l2_m2m_dev *m2m_dev;
-	struct video_device *vfd;
+काष्ठा meson_ge2d अणु
+	काष्ठा v4l2_device v4l2_dev;
+	काष्ठा v4l2_m2m_dev *m2m_dev;
+	काष्ठा video_device *vfd;
 
-	struct device *dev;
-	struct regmap *map;
-	struct clk *clk;
+	काष्ठा device *dev;
+	काष्ठा regmap *map;
+	काष्ठा clk *clk;
 
 	/* vb2 queue lock */
-	struct mutex mutex;
+	काष्ठा mutex mutex;
 
-	struct ge2d_ctx *curr;
-};
+	काष्ठा ge2d_ctx *curr;
+पूर्ण;
 
-#define FMT(_fourcc, _alpha, _depth, _map)		\
-{							\
+#घोषणा FMT(_fourcc, _alpha, _depth, _map)		\
+अणु							\
 	.fourcc = _fourcc,				\
 	.alpha = (_alpha),				\
 	.depth = (_depth),				\
 	.hw_fmt = GE2D_FORMAT_ ## _depth ## BIT,	\
 	.hw_map = GE2D_COLOR_MAP_ ## _map,		\
-}
+पूर्ण
 
-/* TOFIX Handle the YUV input formats */
-static const struct ge2d_fmt formats[] = {
+/* TOFIX Handle the YUV input क्रमmats */
+अटल स्थिर काष्ठा ge2d_fmt क्रमmats[] = अणु
 	/*  FOURCC Alpha  HW FMT  HW MAP */
 	FMT(V4L2_PIX_FMT_XRGB32, false, 32, BGRA8888),
 	FMT(V4L2_PIX_FMT_RGB32, true, 32, BGRA8888),
@@ -130,46 +131,46 @@ static const struct ge2d_fmt formats[] = {
 	FMT(V4L2_PIX_FMT_RGBA444, true, 16, RGBA4444),
 	FMT(V4L2_PIX_FMT_XRGB444, false, 16, ARGB4444),
 	FMT(V4L2_PIX_FMT_ARGB444, true, 16, ARGB4444),
-};
+पूर्ण;
 
-#define NUM_FORMATS ARRAY_SIZE(formats)
+#घोषणा NUM_FORMATS ARRAY_SIZE(क्रमmats)
 
-static const struct ge2d_fmt *find_fmt(struct v4l2_format *f)
-{
-	unsigned int i;
+अटल स्थिर काष्ठा ge2d_fmt *find_fmt(काष्ठा v4l2_क्रमmat *f)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < NUM_FORMATS; i++) {
-		if (formats[i].fourcc == f->fmt.pix.pixelformat)
-			return &formats[i];
-	}
+	क्रम (i = 0; i < NUM_FORMATS; i++) अणु
+		अगर (क्रमmats[i].fourcc == f->fmt.pix.pixelक्रमmat)
+			वापस &क्रमmats[i];
+	पूर्ण
 
 	/*
-	 * TRY_FMT/S_FMT should never return an error when the requested format
-	 * is not supported. Drivers should always return a valid format,
-	 * preferably a format that is as widely supported by applications as
+	 * TRY_FMT/S_FMT should never वापस an error when the requested क्रमmat
+	 * is not supported. Drivers should always वापस a valid क्रमmat,
+	 * preferably a क्रमmat that is as widely supported by applications as
 	 * possible.
 	 */
-	return &formats[0];
-}
+	वापस &क्रमmats[0];
+पूर्ण
 
-static struct ge2d_frame *get_frame(struct ge2d_ctx *ctx,
-				    enum v4l2_buf_type type)
-{
-	switch (type) {
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-		return &ctx->in;
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		return &ctx->out;
-	default:
-		/* This should never happen, warn and return OUTPUT frame */
+अटल काष्ठा ge2d_frame *get_frame(काष्ठा ge2d_ctx *ctx,
+				    क्रमागत v4l2_buf_type type)
+अणु
+	चयन (type) अणु
+	हाल V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		वापस &ctx->in;
+	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		वापस &ctx->out;
+	शेष:
+		/* This should never happen, warn and वापस OUTPUT frame */
 		dev_warn(ctx->ge2d->dev, "%s: invalid buffer type\n", __func__);
-		return &ctx->in;
-	}
-}
+		वापस &ctx->in;
+	पूर्ण
+पूर्ण
 
-static void ge2d_hw_start(struct meson_ge2d *ge2d)
-{
-	struct ge2d_ctx *ctx = ge2d->curr;
+अटल व्योम ge2d_hw_start(काष्ठा meson_ge2d *ge2d)
+अणु
+	काष्ठा ge2d_ctx *ctx = ge2d->curr;
 	u32 reg;
 
 	/* Reset */
@@ -180,27 +181,27 @@ static void ge2d_hw_start(struct meson_ge2d *ge2d)
 
 	usleep_range(100, 200);
 
-	/* Implement CANVAS for non-AXG */
-	regmap_write(ge2d->map, GE2D_SRC1_BADDR_CTRL,
+	/* Implement CANVAS क्रम non-AXG */
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC1_BADDR_CTRL,
 		     (vb2_dma_contig_plane_dma_addr(&ctx->in.buf->vb2_buf, 0) + 7) >> 3);
-	regmap_write(ge2d->map, GE2D_SRC1_STRIDE_CTRL,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC1_STRIDE_CTRL,
 		     (ctx->in.pix_fmt.bytesperline + 7) >> 3);
-	regmap_write(ge2d->map, GE2D_SRC2_BADDR_CTRL,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC2_BADDR_CTRL,
 		     (vb2_dma_contig_plane_dma_addr(&ctx->out.buf->vb2_buf, 0) + 7) >> 3);
-	regmap_write(ge2d->map, GE2D_SRC2_STRIDE_CTRL,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC2_STRIDE_CTRL,
 		     (ctx->out.pix_fmt.bytesperline + 7) >> 3);
-	regmap_write(ge2d->map, GE2D_DST1_BADDR_CTRL,
+	regmap_ग_लिखो(ge2d->map, GE2D_DST1_BADDR_CTRL,
 		     (vb2_dma_contig_plane_dma_addr(&ctx->out.buf->vb2_buf, 0) + 7) >> 3);
-	regmap_write(ge2d->map, GE2D_DST1_STRIDE_CTRL,
+	regmap_ग_लिखो(ge2d->map, GE2D_DST1_STRIDE_CTRL,
 		     (ctx->out.pix_fmt.bytesperline + 7) >> 3);
 
-	regmap_write(ge2d->map, GE2D_GEN_CTRL0, 0);
-	regmap_write(ge2d->map, GE2D_GEN_CTRL1,
+	regmap_ग_लिखो(ge2d->map, GE2D_GEN_CTRL0, 0);
+	regmap_ग_लिखो(ge2d->map, GE2D_GEN_CTRL1,
 		     FIELD_PREP(GE2D_INTERRUPT_CTRL, 2) |
 		     FIELD_PREP(GE2D_SRC2_BURST_SIZE_CTRL, 3) |
 		     FIELD_PREP(GE2D_SRC1_BURST_SIZE_CTRL, 0x3f));
 
-	regmap_write(ge2d->map, GE2D_GEN_CTRL2,
+	regmap_ग_लिखो(ge2d->map, GE2D_GEN_CTRL2,
 		     GE2D_SRC1_LITTLE_ENDIAN |
 		     GE2D_SRC2_LITTLE_ENDIAN |
 		     GE2D_DST_LITTLE_ENDIAN |
@@ -210,72 +211,72 @@ static void ge2d_hw_start(struct meson_ge2d *ge2d)
 		     FIELD_PREP(GE2D_SRC2_FORMAT, ctx->out.fmt->hw_fmt) |
 		     FIELD_PREP(GE2D_SRC1_COLOR_MAP, ctx->in.fmt->hw_map) |
 		     FIELD_PREP(GE2D_SRC1_FORMAT, ctx->in.fmt->hw_fmt));
-	regmap_write(ge2d->map, GE2D_GEN_CTRL3,
+	regmap_ग_लिखो(ge2d->map, GE2D_GEN_CTRL3,
 		     GE2D_DST1_ENABLE);
 
-	regmap_write(ge2d->map, GE2D_SRC1_CLIPY_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC1_CLIPY_START_END,
 		     FIELD_PREP(GE2D_START, ctx->in.crop.top) |
 		     FIELD_PREP(GE2D_END, ctx->in.crop.top + ctx->in.crop.height));
-	regmap_write(ge2d->map, GE2D_SRC1_CLIPX_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC1_CLIPX_START_END,
 		     FIELD_PREP(GE2D_START, ctx->in.crop.left) |
 		     FIELD_PREP(GE2D_END, ctx->in.crop.left + ctx->in.crop.width));
-	regmap_write(ge2d->map, GE2D_SRC2_CLIPY_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC2_CLIPY_START_END,
 		     FIELD_PREP(GE2D_START, ctx->out.crop.top) |
 		     FIELD_PREP(GE2D_END, ctx->out.crop.top + ctx->out.crop.height));
-	regmap_write(ge2d->map, GE2D_SRC2_CLIPX_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC2_CLIPX_START_END,
 		     FIELD_PREP(GE2D_START, ctx->out.crop.left) |
 		     FIELD_PREP(GE2D_END, ctx->out.crop.left + ctx->out.crop.width));
-	regmap_write(ge2d->map, GE2D_DST_CLIPY_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_DST_CLIPY_START_END,
 		     FIELD_PREP(GE2D_START, ctx->out.crop.top) |
 		     FIELD_PREP(GE2D_END, ctx->out.crop.top + ctx->out.crop.height));
-	regmap_write(ge2d->map, GE2D_DST_CLIPX_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_DST_CLIPX_START_END,
 		     FIELD_PREP(GE2D_START, ctx->out.crop.left) |
 		     FIELD_PREP(GE2D_END, ctx->out.crop.left + ctx->out.crop.width));
 
-	regmap_write(ge2d->map, GE2D_SRC1_Y_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC1_Y_START_END,
 		     FIELD_PREP(GE2D_END, ctx->in.pix_fmt.height));
-	regmap_write(ge2d->map, GE2D_SRC1_X_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC1_X_START_END,
 		     FIELD_PREP(GE2D_END, ctx->in.pix_fmt.width));
-	regmap_write(ge2d->map, GE2D_SRC2_Y_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC2_Y_START_END,
 		     FIELD_PREP(GE2D_END, ctx->out.pix_fmt.height));
-	regmap_write(ge2d->map, GE2D_SRC2_X_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_SRC2_X_START_END,
 		     FIELD_PREP(GE2D_END, ctx->out.pix_fmt.width));
-	regmap_write(ge2d->map, GE2D_DST_Y_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_DST_Y_START_END,
 		     FIELD_PREP(GE2D_END, ctx->out.pix_fmt.height));
-	regmap_write(ge2d->map, GE2D_DST_X_START_END,
+	regmap_ग_लिखो(ge2d->map, GE2D_DST_X_START_END,
 		     FIELD_PREP(GE2D_END, ctx->out.pix_fmt.width));
 
 	/* Color, no blend, use source color */
 	reg = GE2D_ALU_DO_COLOR_OPERATION_LOGIC(LOGIC_OPERATION_COPY,
 						COLOR_FACTOR_SRC_COLOR);
 
-	if (ctx->in.fmt->alpha && ctx->out.fmt->alpha)
+	अगर (ctx->in.fmt->alpha && ctx->out.fmt->alpha)
 		/* Take source alpha */
 		reg |= GE2D_ALU_DO_ALPHA_OPERATION_LOGIC(LOGIC_OPERATION_COPY,
 							 COLOR_FACTOR_SRC_ALPHA);
-	else if (!ctx->out.fmt->alpha)
+	अन्यथा अगर (!ctx->out.fmt->alpha)
 		/* Set alpha to 0 */
 		reg |= GE2D_ALU_DO_ALPHA_OPERATION_LOGIC(LOGIC_OPERATION_SET,
 							 COLOR_FACTOR_ZERO);
-	else
+	अन्यथा
 		/* Keep original alpha */
 		reg |= GE2D_ALU_DO_ALPHA_OPERATION_LOGIC(LOGIC_OPERATION_COPY,
 							 COLOR_FACTOR_DST_ALPHA);
 
-	regmap_write(ge2d->map, GE2D_ALU_OP_CTRL, reg);
+	regmap_ग_लिखो(ge2d->map, GE2D_ALU_OP_CTRL, reg);
 
 	/* Start */
-	regmap_write(ge2d->map, GE2D_CMD_CTRL,
+	regmap_ग_लिखो(ge2d->map, GE2D_CMD_CTRL,
 		     (ctx->xy_swap ? GE2D_DST_XY_SWAP : 0) |
 		     (ctx->hflip ? GE2D_SRC1_Y_REV : 0) |
 		     (ctx->vflip ? GE2D_SRC1_X_REV : 0) |
 		     GE2D_CBUS_CMD_WR);
-}
+पूर्ण
 
-static void device_run(void *priv)
-{
-	struct ge2d_ctx *ctx = priv;
-	struct meson_ge2d *ge2d = ctx->ge2d;
+अटल व्योम device_run(व्योम *priv)
+अणु
+	काष्ठा ge2d_ctx *ctx = priv;
+	काष्ठा meson_ge2d *ge2d = ctx->ge2d;
 
 	ge2d->curr = ctx;
 
@@ -283,301 +284,301 @@ static void device_run(void *priv)
 	ctx->out.buf = v4l2_m2m_next_dst_buf(ctx->fh.m2m_ctx);
 
 	ge2d_hw_start(ge2d);
-}
+पूर्ण
 
-static irqreturn_t ge2d_isr(int irq, void *priv)
-{
-	struct meson_ge2d *ge2d = priv;
-	u32 intr;
+अटल irqवापस_t ge2d_isr(पूर्णांक irq, व्योम *priv)
+अणु
+	काष्ठा meson_ge2d *ge2d = priv;
+	u32 पूर्णांकr;
 
-	regmap_read(ge2d->map, GE2D_STATUS0, &intr);
+	regmap_पढ़ो(ge2d->map, GE2D_STATUS0, &पूर्णांकr);
 
-	if (!(intr & GE2D_GE2D_BUSY)) {
-		struct vb2_v4l2_buffer *src, *dst;
-		struct ge2d_ctx *ctx = ge2d->curr;
+	अगर (!(पूर्णांकr & GE2D_GE2D_BUSY)) अणु
+		काष्ठा vb2_v4l2_buffer *src, *dst;
+		काष्ठा ge2d_ctx *ctx = ge2d->curr;
 
-		ge2d->curr = NULL;
+		ge2d->curr = शून्य;
 
-		src = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
-		dst = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx);
+		src = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
+		dst = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx);
 
 		src->sequence = ctx->sequence_out++;
 		dst->sequence = ctx->sequence_cap++;
 
-		dst->timecode = src->timecode;
-		dst->vb2_buf.timestamp = src->vb2_buf.timestamp;
+		dst->समयcode = src->समयcode;
+		dst->vb2_buf.बारtamp = src->vb2_buf.बारtamp;
 		dst->flags = src->flags;
 
-		v4l2_m2m_buf_done(src, VB2_BUF_STATE_DONE);
-		v4l2_m2m_buf_done(dst, VB2_BUF_STATE_DONE);
+		v4l2_m2m_buf_करोne(src, VB2_BUF_STATE_DONE);
+		v4l2_m2m_buf_करोne(dst, VB2_BUF_STATE_DONE);
 		v4l2_m2m_job_finish(ge2d->m2m_dev, ctx->fh.m2m_ctx);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct v4l2_m2m_ops ge2d_m2m_ops = {
+अटल स्थिर काष्ठा v4l2_m2m_ops ge2d_m2m_ops = अणु
 	.device_run = device_run,
-};
+पूर्ण;
 
-static int ge2d_queue_setup(struct vb2_queue *vq,
-			    unsigned int *nbuffers, unsigned int *nplanes,
-			    unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct ge2d_ctx *ctx = vb2_get_drv_priv(vq);
-	struct ge2d_frame *f = get_frame(ctx, vq->type);
+अटल पूर्णांक ge2d_queue_setup(काष्ठा vb2_queue *vq,
+			    अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
+			    अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा ge2d_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा ge2d_frame *f = get_frame(ctx, vq->type);
 
-	if (*nplanes)
-		return sizes[0] < f->pix_fmt.sizeimage ? -EINVAL : 0;
+	अगर (*nplanes)
+		वापस sizes[0] < f->pix_fmt.sizeimage ? -EINVAL : 0;
 
 	sizes[0] = f->pix_fmt.sizeimage;
 	*nplanes = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ge2d_buf_prepare(struct vb2_buffer *vb)
-{
-	struct ge2d_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct ge2d_frame *f = get_frame(ctx, vb->vb2_queue->type);
+अटल पूर्णांक ge2d_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा ge2d_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा ge2d_frame *f = get_frame(ctx, vb->vb2_queue->type);
 
 	vbuf->field = V4L2_FIELD_NONE;
 
 	vb2_set_plane_payload(vb, 0, f->pix_fmt.sizeimage);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ge2d_buf_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct ge2d_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल व्योम ge2d_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा ge2d_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
 	v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, vbuf);
-}
+पूर्ण
 
-static int ge2d_start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct ge2d_ctx *ctx = vb2_get_drv_priv(vq);
+अटल पूर्णांक ge2d_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा ge2d_ctx *ctx = vb2_get_drv_priv(vq);
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type))
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type))
 		ctx->sequence_out = 0;
-	else
+	अन्यथा
 		ctx->sequence_cap = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ge2d_stop_streaming(struct vb2_queue *vq)
-{
-	struct ge2d_ctx *ctx = vb2_get_drv_priv(vq);
-	struct vb2_v4l2_buffer *vbuf;
+अटल व्योम ge2d_stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा ge2d_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा vb2_v4l2_buffer *vbuf;
 
-	for (;;) {
-		if (V4L2_TYPE_IS_OUTPUT(vq->type))
-			vbuf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
-		else
-			vbuf = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx);
-		if (!vbuf)
-			break;
-		v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_ERROR);
-	}
-}
+	क्रम (;;) अणु
+		अगर (V4L2_TYPE_IS_OUTPUT(vq->type))
+			vbuf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
+		अन्यथा
+			vbuf = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx);
+		अगर (!vbuf)
+			अवरोध;
+		v4l2_m2m_buf_करोne(vbuf, VB2_BUF_STATE_ERROR);
+	पूर्ण
+पूर्ण
 
-static const struct vb2_ops ge2d_qops = {
+अटल स्थिर काष्ठा vb2_ops ge2d_qops = अणु
 	.queue_setup = ge2d_queue_setup,
 	.buf_prepare = ge2d_buf_prepare,
 	.buf_queue = ge2d_buf_queue,
 	.start_streaming = ge2d_start_streaming,
 	.stop_streaming = ge2d_stop_streaming,
-	.wait_prepare = vb2_ops_wait_prepare,
-	.wait_finish = vb2_ops_wait_finish,
-};
+	.रुको_prepare = vb2_ops_रुको_prepare,
+	.रुको_finish = vb2_ops_रुको_finish,
+पूर्ण;
 
-static int
-queue_init(void *priv, struct vb2_queue *src_vq, struct vb2_queue *dst_vq)
-{
-	struct ge2d_ctx *ctx = priv;
-	int ret;
+अटल पूर्णांक
+queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq, काष्ठा vb2_queue *dst_vq)
+अणु
+	काष्ठा ge2d_ctx *ctx = priv;
+	पूर्णांक ret;
 
 	src_vq->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	src_vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	src_vq->drv_priv = ctx;
 	src_vq->ops = &ge2d_qops;
 	src_vq->mem_ops = &vb2_dma_contig_memops;
-	src_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
-	src_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	src_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
+	src_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	src_vq->lock = &ctx->ge2d->mutex;
 	src_vq->dev = ctx->ge2d->v4l2_dev.dev;
 
 	ret = vb2_queue_init(src_vq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	dst_vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	dst_vq->drv_priv = ctx;
 	dst_vq->ops = &ge2d_qops;
 	dst_vq->mem_ops = &vb2_dma_contig_memops;
-	dst_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
-	dst_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	dst_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
+	dst_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	dst_vq->lock = &ctx->ge2d->mutex;
 	dst_vq->dev = ctx->ge2d->v4l2_dev.dev;
 
-	return vb2_queue_init(dst_vq);
-}
+	वापस vb2_queue_init(dst_vq);
+पूर्ण
 
-static int
-vidioc_querycap(struct file *file, void *priv, struct v4l2_capability *cap)
-{
-	strscpy(cap->driver, GE2D_NAME, sizeof(cap->driver));
-	strscpy(cap->card, GE2D_NAME, sizeof(cap->card));
-	strscpy(cap->bus_info, "platform:" GE2D_NAME, sizeof(cap->bus_info));
+अटल पूर्णांक
+vidioc_querycap(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_capability *cap)
+अणु
+	strscpy(cap->driver, GE2D_NAME, माप(cap->driver));
+	strscpy(cap->card, GE2D_NAME, माप(cap->card));
+	strscpy(cap->bus_info, "platform:" GE2D_NAME, माप(cap->bus_info));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_enum_fmt(struct file *file, void *priv, struct v4l2_fmtdesc *f)
-{
-	const struct ge2d_fmt *fmt;
+अटल पूर्णांक vidioc_क्रमागत_fmt(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_fmtdesc *f)
+अणु
+	स्थिर काष्ठा ge2d_fmt *fmt;
 
-	if (f->index >= NUM_FORMATS)
-		return -EINVAL;
+	अगर (f->index >= NUM_FORMATS)
+		वापस -EINVAL;
 
-	fmt = &formats[f->index];
-	f->pixelformat = fmt->fourcc;
+	fmt = &क्रमmats[f->index];
+	f->pixelक्रमmat = fmt->fourcc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_selection(struct file *file, void *priv,
-			      struct v4l2_selection *s)
-{
-	struct ge2d_ctx *ctx = priv;
-	struct ge2d_frame *f;
+अटल पूर्णांक vidioc_g_selection(काष्ठा file *file, व्योम *priv,
+			      काष्ठा v4l2_selection *s)
+अणु
+	काष्ठा ge2d_ctx *ctx = priv;
+	काष्ठा ge2d_frame *f;
 	bool use_frame = false;
 
-	if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT &&
+	अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT &&
 	    s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	f = get_frame(ctx, s->type);
 
-	switch (s->target) {
-	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
-	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
-		if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		break;
-	case V4L2_SEL_TGT_CROP_DEFAULT:
-	case V4L2_SEL_TGT_CROP_BOUNDS:
-		if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-			return -EINVAL;
-		break;
-	case V4L2_SEL_TGT_COMPOSE:
-		if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
+	चयन (s->target) अणु
+	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			वापस -EINVAL;
+		अवरोध;
+	हाल V4L2_SEL_TGT_CROP_DEFAULT:
+	हाल V4L2_SEL_TGT_CROP_BOUNDS:
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+			वापस -EINVAL;
+		अवरोध;
+	हाल V4L2_SEL_TGT_COMPOSE:
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			वापस -EINVAL;
 		use_frame = true;
-		break;
-	case V4L2_SEL_TGT_CROP:
-		if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-			return -EINVAL;
+		अवरोध;
+	हाल V4L2_SEL_TGT_CROP:
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+			वापस -EINVAL;
 		use_frame = true;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (use_frame) {
+	अगर (use_frame) अणु
 		s->r = f->crop;
-	} else {
+	पूर्ण अन्यथा अणु
 		s->r.left = 0;
 		s->r.top = 0;
 		s->r.width = f->pix_fmt.width;
 		s->r.height = f->pix_fmt.height;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_selection(struct file *file, void *priv,
-			      struct v4l2_selection *s)
-{
-	struct ge2d_ctx *ctx = priv;
-	struct meson_ge2d *ge2d = ctx->ge2d;
-	struct ge2d_frame *f;
-	int ret = 0;
+अटल पूर्णांक vidioc_s_selection(काष्ठा file *file, व्योम *priv,
+			      काष्ठा v4l2_selection *s)
+अणु
+	काष्ठा ge2d_ctx *ctx = priv;
+	काष्ठा meson_ge2d *ge2d = ctx->ge2d;
+	काष्ठा ge2d_frame *f;
+	पूर्णांक ret = 0;
 
-	if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT &&
+	अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT &&
 	    s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	f = get_frame(ctx, s->type);
 
-	switch (s->target) {
-	case V4L2_SEL_TGT_COMPOSE:
+	चयन (s->target) अणु
+	हाल V4L2_SEL_TGT_COMPOSE:
 		/*
-		 * COMPOSE target is only valid for capture buffer type, return
-		 * error for output buffer type
+		 * COMPOSE target is only valid क्रम capture buffer type, वापस
+		 * error क्रम output buffer type
 		 */
-		if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		break;
-	case V4L2_SEL_TGT_CROP:
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			वापस -EINVAL;
+		अवरोध;
+	हाल V4L2_SEL_TGT_CROP:
 		/*
-		 * CROP target is only valid for output buffer type, return
-		 * error for capture buffer type
+		 * CROP target is only valid क्रम output buffer type, वापस
+		 * error क्रम capture buffer type
 		 */
-		if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-			return -EINVAL;
-		break;
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+			वापस -EINVAL;
+		अवरोध;
 	/*
-	 * bound and default crop/compose targets are invalid targets to
+	 * bound and शेष crop/compose tarमाला_लो are invalid tarमाला_लो to
 	 * try/set
 	 */
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (s->r.top < 0 || s->r.left < 0) {
+	अगर (s->r.top < 0 || s->r.left < 0) अणु
 		v4l2_err(&ge2d->v4l2_dev,
 			 "doesn't support negative values for top & left.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (s->r.left + s->r.width > f->pix_fmt.width ||
-	    s->r.top + s->r.height > f->pix_fmt.height) {
+	अगर (s->r.left + s->r.width > f->pix_fmt.width ||
+	    s->r.top + s->r.height > f->pix_fmt.height) अणु
 		v4l2_err(&ge2d->v4l2_dev, "unsupported rectangle value.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	f->crop = s->r;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vidioc_setup_cap_fmt(struct ge2d_ctx *ctx, struct v4l2_pix_format *f)
-{
-	struct ge2d_frame *frm_out = get_frame(ctx, V4L2_BUF_TYPE_VIDEO_OUTPUT);
+अटल व्योम vidioc_setup_cap_fmt(काष्ठा ge2d_ctx *ctx, काष्ठा v4l2_pix_क्रमmat *f)
+अणु
+	काष्ठा ge2d_frame *frm_out = get_frame(ctx, V4L2_BUF_TYPE_VIDEO_OUTPUT);
 
 	*f = frm_out->pix_fmt;
 
-	if (ctx->xy_swap) {
+	अगर (ctx->xy_swap) अणु
 		f->width = frm_out->pix_fmt.height;
 		f->height = frm_out->pix_fmt.width;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int vidioc_try_fmt_cap(struct file *file, void *priv, struct v4l2_format *f)
-{
-	const struct ge2d_fmt *fmt = find_fmt(f);
-	struct ge2d_ctx *ctx = priv;
-	struct v4l2_pix_format fmt_cap;
+अटल पूर्णांक vidioc_try_fmt_cap(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f)
+अणु
+	स्थिर काष्ठा ge2d_fmt *fmt = find_fmt(f);
+	काष्ठा ge2d_ctx *ctx = priv;
+	काष्ठा v4l2_pix_क्रमmat fmt_cap;
 
 	vidioc_setup_cap_fmt(ctx, &fmt_cap);
 
-	fmt_cap.pixelformat = fmt->fourcc;
+	fmt_cap.pixelक्रमmat = fmt->fourcc;
 
 	fmt_cap.bytesperline = max(f->fmt.pix.bytesperline,
 				   ALIGN((fmt_cap.width * fmt->depth) >> 3, 8));
@@ -587,35 +588,35 @@ static int vidioc_try_fmt_cap(struct file *file, void *priv, struct v4l2_format 
 
 	f->fmt.pix = fmt_cap;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_fmt_cap(struct file *file, void *priv, struct v4l2_format *f)
-{
-	struct ge2d_ctx *ctx = priv;
-	struct meson_ge2d *ge2d = ctx->ge2d;
-	struct vb2_queue *vq;
-	struct ge2d_frame *frm;
-	int ret = 0;
+अटल पूर्णांक vidioc_s_fmt_cap(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा ge2d_ctx *ctx = priv;
+	काष्ठा meson_ge2d *ge2d = ctx->ge2d;
+	काष्ठा vb2_queue *vq;
+	काष्ठा ge2d_frame *frm;
+	पूर्णांक ret = 0;
 
 	/* Adjust all values accordingly to the hardware capabilities
-	 * and chosen format.
+	 * and chosen क्रमmat.
 	 */
 	ret = vidioc_try_fmt_cap(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (vb2_is_busy(vq)) {
+	अगर (vb2_is_busy(vq)) अणु
 		v4l2_err(&ge2d->v4l2_dev, "queue (%d) bust\n", f->type);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	frm = get_frame(ctx, V4L2_BUF_TYPE_VIDEO_CAPTURE);
 
 	frm->pix_fmt = f->fmt.pix;
 	frm->fmt = find_fmt(f);
-	f->fmt.pix.pixelformat = frm->fmt->fourcc;
+	f->fmt.pix.pixelक्रमmat = frm->fmt->fourcc;
 
 	/* Reset crop settings */
 	frm->crop.left = 0;
@@ -623,37 +624,37 @@ static int vidioc_s_fmt_cap(struct file *file, void *priv, struct v4l2_format *f
 	frm->crop.width = frm->pix_fmt.width;
 	frm->crop.height = frm->pix_fmt.height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_fmt(struct file *file, void *priv, struct v4l2_format *f)
-{
-	struct ge2d_ctx *ctx = priv;
-	struct vb2_queue *vq;
-	struct ge2d_frame *frm;
+अटल पूर्णांक vidioc_g_fmt(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा ge2d_ctx *ctx = priv;
+	काष्ठा vb2_queue *vq;
+	काष्ठा ge2d_frame *frm;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (!vq)
-		return -EINVAL;
+	अगर (!vq)
+		वापस -EINVAL;
 
 	frm = get_frame(ctx, f->type);
 
 	f->fmt.pix = frm->pix_fmt;
-	f->fmt.pix.pixelformat = frm->fmt->fourcc;
+	f->fmt.pix.pixelक्रमmat = frm->fmt->fourcc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_try_fmt_out(struct file *file, void *priv, struct v4l2_format *f)
-{
-	const struct ge2d_fmt *fmt = find_fmt(f);
+अटल पूर्णांक vidioc_try_fmt_out(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f)
+अणु
+	स्थिर काष्ठा ge2d_fmt *fmt = find_fmt(f);
 
 	f->fmt.pix.field = V4L2_FIELD_NONE;
-	f->fmt.pix.pixelformat = fmt->fourcc;
+	f->fmt.pix.pixelक्रमmat = fmt->fourcc;
 
-	if (f->fmt.pix.width > MAX_WIDTH)
+	अगर (f->fmt.pix.width > MAX_WIDTH)
 		f->fmt.pix.width = MAX_WIDTH;
-	if (f->fmt.pix.height > MAX_HEIGHT)
+	अगर (f->fmt.pix.height > MAX_HEIGHT)
 		f->fmt.pix.height = MAX_HEIGHT;
 
 	f->fmt.pix.bytesperline = max(f->fmt.pix.bytesperline,
@@ -662,36 +663,36 @@ static int vidioc_try_fmt_out(struct file *file, void *priv, struct v4l2_format 
 	f->fmt.pix.sizeimage = max(f->fmt.pix.sizeimage,
 				   f->fmt.pix.height * f->fmt.pix.bytesperline);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_fmt_out(struct file *file, void *priv, struct v4l2_format *f)
-{
-	struct ge2d_ctx *ctx = priv;
-	struct meson_ge2d *ge2d = ctx->ge2d;
-	struct vb2_queue *vq;
-	struct ge2d_frame *frm, *frm_cap;
-	int ret = 0;
+अटल पूर्णांक vidioc_s_fmt_out(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा ge2d_ctx *ctx = priv;
+	काष्ठा meson_ge2d *ge2d = ctx->ge2d;
+	काष्ठा vb2_queue *vq;
+	काष्ठा ge2d_frame *frm, *frm_cap;
+	पूर्णांक ret = 0;
 
 	/* Adjust all values accordingly to the hardware capabilities
-	 * and chosen format.
+	 * and chosen क्रमmat.
 	 */
 	ret = vidioc_try_fmt_out(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (vb2_is_busy(vq)) {
+	अगर (vb2_is_busy(vq)) अणु
 		v4l2_err(&ge2d->v4l2_dev, "queue (%d) bust\n", f->type);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	frm = get_frame(ctx, V4L2_BUF_TYPE_VIDEO_OUTPUT);
 	frm_cap = get_frame(ctx, V4L2_BUF_TYPE_VIDEO_CAPTURE);
 
 	frm->pix_fmt = f->fmt.pix;
 	frm->fmt = find_fmt(f);
-	f->fmt.pix.pixelformat = frm->fmt->fourcc;
+	f->fmt.pix.pixelक्रमmat = frm->fmt->fourcc;
 
 	/* Reset crop settings */
 	frm->crop.left = 0;
@@ -702,18 +703,18 @@ static int vidioc_s_fmt_out(struct file *file, void *priv, struct v4l2_format *f
 	/* Propagate settings to capture */
 	vidioc_setup_cap_fmt(ctx, &frm_cap->pix_fmt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ioctl_ops ge2d_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops ge2d_ioctl_ops = अणु
 	.vidioc_querycap = vidioc_querycap,
 
-	.vidioc_enum_fmt_vid_cap = vidioc_enum_fmt,
+	.vidioc_क्रमागत_fmt_vid_cap = vidioc_क्रमागत_fmt,
 	.vidioc_g_fmt_vid_cap = vidioc_g_fmt,
 	.vidioc_try_fmt_vid_cap = vidioc_try_fmt_cap,
 	.vidioc_s_fmt_vid_cap = vidioc_s_fmt_cap,
 
-	.vidioc_enum_fmt_vid_out = vidioc_enum_fmt,
+	.vidioc_क्रमागत_fmt_vid_out = vidioc_क्रमागत_fmt,
 	.vidioc_g_fmt_vid_out = vidioc_g_fmt,
 	.vidioc_try_fmt_vid_out = vidioc_try_fmt_out,
 	.vidioc_s_fmt_vid_out = vidioc_s_fmt_out,
@@ -734,44 +735,44 @@ static const struct v4l2_ioctl_ops ge2d_ioctl_ops = {
 
 	.vidioc_g_selection = vidioc_g_selection,
 	.vidioc_s_selection = vidioc_s_selection,
-};
+पूर्ण;
 
-static int ge2d_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct ge2d_ctx *ctx = container_of(ctrl->handler, struct ge2d_ctx,
+अटल पूर्णांक ge2d_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा ge2d_ctx *ctx = container_of(ctrl->handler, काष्ठा ge2d_ctx,
 					   ctrl_handler);
-	struct v4l2_pix_format fmt;
-	struct vb2_queue *vq;
+	काष्ठा v4l2_pix_क्रमmat fmt;
+	काष्ठा vb2_queue *vq;
 
-	switch (ctrl->id) {
-	case V4L2_CID_HFLIP:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_HFLIP:
 		ctx->hflip = ctrl->val;
-		break;
-	case V4L2_CID_VFLIP:
+		अवरोध;
+	हाल V4L2_CID_VFLIP:
 		ctx->vflip = ctrl->val;
-		break;
-	case V4L2_CID_ROTATE:
+		अवरोध;
+	हाल V4L2_CID_ROTATE:
 		vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, V4L2_BUF_TYPE_VIDEO_CAPTURE);
-		if (vb2_is_busy(vq))
-			return -EBUSY;
+		अगर (vb2_is_busy(vq))
+			वापस -EBUSY;
 
-		if (ctrl->val == 90) {
+		अगर (ctrl->val == 90) अणु
 			ctx->hflip = 0;
 			ctx->vflip = 1;
 			ctx->xy_swap = 1;
-		} else if (ctrl->val == 180) {
+		पूर्ण अन्यथा अगर (ctrl->val == 180) अणु
 			ctx->hflip = 1;
 			ctx->vflip = 1;
 			ctx->xy_swap = 0;
-		} else if (ctrl->val == 270) {
+		पूर्ण अन्यथा अगर (ctrl->val == 270) अणु
 			ctx->hflip = 1;
 			ctx->vflip = 0;
 			ctx->xy_swap = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			ctx->hflip = 0;
 			ctx->vflip = 0;
 			ctx->xy_swap = 0;
-		}
+		पूर्ण
 
 		vidioc_setup_cap_fmt(ctx, &fmt);
 
@@ -779,25 +780,25 @@ static int ge2d_s_ctrl(struct v4l2_ctrl *ctrl)
 		 * If the rotation parameter changes the OUTPUT frames
 		 * parameters, take them in account
 		 */
-		if (fmt.width != ctx->out.pix_fmt.width ||
+		अगर (fmt.width != ctx->out.pix_fmt.width ||
 		    fmt.height != ctx->out.pix_fmt.width ||
 		    fmt.bytesperline > ctx->out.pix_fmt.bytesperline ||
 		    fmt.sizeimage > ctx->out.pix_fmt.sizeimage)
 			ctx->out.pix_fmt = fmt;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ctrl_ops ge2d_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops ge2d_ctrl_ops = अणु
 	.s_ctrl = ge2d_s_ctrl,
-};
+पूर्ण;
 
-static int ge2d_setup_ctrls(struct ge2d_ctx *ctx)
-{
-	struct meson_ge2d *ge2d = ctx->ge2d;
+अटल पूर्णांक ge2d_setup_ctrls(काष्ठा ge2d_ctx *ctx)
+अणु
+	काष्ठा meson_ge2d *ge2d = ctx->ge2d;
 
 	v4l2_ctrl_handler_init(&ctx->ctrl_handler, 4);
 
@@ -810,187 +811,187 @@ static int ge2d_setup_ctrls(struct ge2d_ctx *ctx)
 	v4l2_ctrl_new_std(&ctx->ctrl_handler, &ge2d_ctrl_ops,
 			  V4L2_CID_ROTATE, 0, 270, 90, 0);
 
-	if (ctx->ctrl_handler.error) {
-		int err = ctx->ctrl_handler.error;
+	अगर (ctx->ctrl_handler.error) अणु
+		पूर्णांक err = ctx->ctrl_handler.error;
 
 		v4l2_err(&ge2d->v4l2_dev, "%s failed\n", __func__);
-		v4l2_ctrl_handler_free(&ctx->ctrl_handler);
-		return err;
-	}
+		v4l2_ctrl_handler_मुक्त(&ctx->ctrl_handler);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ge2d_frame def_frame = {
-	.pix_fmt = {
+अटल स्थिर काष्ठा ge2d_frame def_frame = अणु
+	.pix_fmt = अणु
 		.width = DEFAULT_WIDTH,
 		.height = DEFAULT_HEIGHT,
 		.bytesperline = DEFAULT_STRIDE,
 		.sizeimage = DEFAULT_STRIDE * DEFAULT_HEIGHT,
 		.field = V4L2_FIELD_NONE,
-	},
+	पूर्ण,
 	.crop.width = DEFAULT_WIDTH,
 	.crop.height = DEFAULT_HEIGHT,
-	.fmt = &formats[0],
-};
+	.fmt = &क्रमmats[0],
+पूर्ण;
 
-static int ge2d_open(struct file *file)
-{
-	struct meson_ge2d *ge2d = video_drvdata(file);
-	struct ge2d_ctx *ctx = NULL;
-	int ret = 0;
+अटल पूर्णांक ge2d_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा meson_ge2d *ge2d = video_drvdata(file);
+	काष्ठा ge2d_ctx *ctx = शून्य;
+	पूर्णांक ret = 0;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 	ctx->ge2d = ge2d;
 
-	/* Set default formats */
+	/* Set शेष क्रमmats */
 	ctx->in = def_frame;
 	ctx->out = def_frame;
 
-	if (mutex_lock_interruptible(&ge2d->mutex)) {
-		kfree(ctx);
-		return -ERESTARTSYS;
-	}
+	अगर (mutex_lock_पूर्णांकerruptible(&ge2d->mutex)) अणु
+		kमुक्त(ctx);
+		वापस -ERESTARTSYS;
+	पूर्ण
 	ctx->fh.m2m_ctx = v4l2_m2m_ctx_init(ge2d->m2m_dev, ctx, &queue_init);
-	if (IS_ERR(ctx->fh.m2m_ctx)) {
+	अगर (IS_ERR(ctx->fh.m2m_ctx)) अणु
 		ret = PTR_ERR(ctx->fh.m2m_ctx);
 		mutex_unlock(&ge2d->mutex);
-		kfree(ctx);
-		return ret;
-	}
+		kमुक्त(ctx);
+		वापस ret;
+	पूर्ण
 	v4l2_fh_init(&ctx->fh, video_devdata(file));
-	file->private_data = &ctx->fh;
+	file->निजी_data = &ctx->fh;
 	v4l2_fh_add(&ctx->fh);
 
 	ge2d_setup_ctrls(ctx);
 
-	/* Write the default values to the ctx struct */
+	/* Write the शेष values to the ctx काष्ठा */
 	v4l2_ctrl_handler_setup(&ctx->ctrl_handler);
 
 	ctx->fh.ctrl_handler = &ctx->ctrl_handler;
 	mutex_unlock(&ge2d->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ge2d_release(struct file *file)
-{
-	struct ge2d_ctx *ctx =
-		container_of(file->private_data, struct ge2d_ctx, fh);
-	struct meson_ge2d *ge2d = ctx->ge2d;
+अटल पूर्णांक ge2d_release(काष्ठा file *file)
+अणु
+	काष्ठा ge2d_ctx *ctx =
+		container_of(file->निजी_data, काष्ठा ge2d_ctx, fh);
+	काष्ठा meson_ge2d *ge2d = ctx->ge2d;
 
 	mutex_lock(&ge2d->mutex);
 
 	v4l2_m2m_ctx_release(ctx->fh.m2m_ctx);
 
-	v4l2_ctrl_handler_free(&ctx->ctrl_handler);
+	v4l2_ctrl_handler_मुक्त(&ctx->ctrl_handler);
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_exit(&ctx->fh);
-	kfree(ctx);
+	v4l2_fh_निकास(&ctx->fh);
+	kमुक्त(ctx);
 
 	mutex_unlock(&ge2d->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_file_operations ge2d_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations ge2d_fops = अणु
 	.owner = THIS_MODULE,
-	.open = ge2d_open,
+	.खोलो = ge2d_खोलो,
 	.release = ge2d_release,
 	.poll = v4l2_m2m_fop_poll,
 	.unlocked_ioctl = video_ioctl2,
 	.mmap = v4l2_m2m_fop_mmap,
-};
+पूर्ण;
 
-static const struct video_device ge2d_videodev = {
+अटल स्थिर काष्ठा video_device ge2d_videodev = अणु
 	.name = "meson-ge2d",
 	.fops = &ge2d_fops,
 	.ioctl_ops = &ge2d_ioctl_ops,
 	.minor = -1,
 	.release = video_device_release,
-	.vfl_dir = VFL_DIR_M2M,
+	.vfl_dir = VFL_सूची_M2M,
 	.device_caps = V4L2_CAP_VIDEO_M2M | V4L2_CAP_STREAMING,
-};
+पूर्ण;
 
-static const struct regmap_config meson_ge2d_regmap_conf = {
+अटल स्थिर काष्ठा regmap_config meson_ge2d_regmap_conf = अणु
 	.reg_bits = 8,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = GE2D_SRC2_STRIDE_CTRL,
-};
+	.max_रेजिस्टर = GE2D_SRC2_STRIDE_CTRL,
+पूर्ण;
 
-static int ge2d_probe(struct platform_device *pdev)
-{
-	struct reset_control *rst;
-	struct video_device *vfd;
-	struct meson_ge2d *ge2d;
-	struct resource *res;
-	void __iomem *regs;
-	int ret = 0;
-	int irq;
+अटल पूर्णांक ge2d_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा reset_control *rst;
+	काष्ठा video_device *vfd;
+	काष्ठा meson_ge2d *ge2d;
+	काष्ठा resource *res;
+	व्योम __iomem *regs;
+	पूर्णांक ret = 0;
+	पूर्णांक irq;
 
-	if (!pdev->dev.of_node)
-		return -ENODEV;
+	अगर (!pdev->dev.of_node)
+		वापस -ENODEV;
 
-	ge2d = devm_kzalloc(&pdev->dev, sizeof(*ge2d), GFP_KERNEL);
-	if (!ge2d)
-		return -ENOMEM;
+	ge2d = devm_kzalloc(&pdev->dev, माप(*ge2d), GFP_KERNEL);
+	अगर (!ge2d)
+		वापस -ENOMEM;
 
 	ge2d->dev = &pdev->dev;
 	mutex_init(&ge2d->mutex);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(ge2d->dev, res);
-	if (IS_ERR(regs))
-		return PTR_ERR(regs);
+	अगर (IS_ERR(regs))
+		वापस PTR_ERR(regs);
 
 	ge2d->map = devm_regmap_init_mmio(ge2d->dev, regs,
 					  &meson_ge2d_regmap_conf);
-	if (IS_ERR(ge2d->map))
-		return PTR_ERR(ge2d->map);
+	अगर (IS_ERR(ge2d->map))
+		वापस PTR_ERR(ge2d->map);
 
-	irq = platform_get_irq(pdev, 0);
+	irq = platक्रमm_get_irq(pdev, 0);
 	ret = devm_request_irq(ge2d->dev, irq, ge2d_isr, 0,
 			       dev_name(ge2d->dev), ge2d);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ge2d->dev, "failed to request irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	rst = devm_reset_control_get(ge2d->dev, NULL);
-	if (IS_ERR(rst)) {
+	rst = devm_reset_control_get(ge2d->dev, शून्य);
+	अगर (IS_ERR(rst)) अणु
 		dev_err(ge2d->dev, "failed to get core reset controller\n");
-		return PTR_ERR(rst);
-	}
+		वापस PTR_ERR(rst);
+	पूर्ण
 
-	ge2d->clk = devm_clk_get(ge2d->dev, NULL);
-	if (IS_ERR(ge2d->clk)) {
+	ge2d->clk = devm_clk_get(ge2d->dev, शून्य);
+	अगर (IS_ERR(ge2d->clk)) अणु
 		dev_err(ge2d->dev, "failed to get clock\n");
-		return PTR_ERR(ge2d->clk);
-	}
+		वापस PTR_ERR(ge2d->clk);
+	पूर्ण
 
-	reset_control_assert(rst);
+	reset_control_निश्चित(rst);
 	udelay(1);
-	reset_control_deassert(rst);
+	reset_control_deनिश्चित(rst);
 
 	ret = clk_prepare_enable(ge2d->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(ge2d->dev, "Cannot enable ge2d sclk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = v4l2_device_register(&pdev->dev, &ge2d->v4l2_dev);
-	if (ret)
-		goto disable_clks;
+	ret = v4l2_device_रेजिस्टर(&pdev->dev, &ge2d->v4l2_dev);
+	अगर (ret)
+		जाओ disable_clks;
 
 	vfd = video_device_alloc();
-	if (!vfd) {
+	अगर (!vfd) अणु
 		v4l2_err(&ge2d->v4l2_dev, "Failed to allocate video device\n");
 		ret = -ENOMEM;
-		goto unreg_v4l2_dev;
-	}
+		जाओ unreg_v4l2_dev;
+	पूर्ण
 
 	*vfd = ge2d_videodev;
 	vfd->lock = &ge2d->mutex;
@@ -999,69 +1000,69 @@ static int ge2d_probe(struct platform_device *pdev)
 	video_set_drvdata(vfd, ge2d);
 	ge2d->vfd = vfd;
 
-	platform_set_drvdata(pdev, ge2d);
+	platक्रमm_set_drvdata(pdev, ge2d);
 	ge2d->m2m_dev = v4l2_m2m_init(&ge2d_m2m_ops);
-	if (IS_ERR(ge2d->m2m_dev)) {
+	अगर (IS_ERR(ge2d->m2m_dev)) अणु
 		v4l2_err(&ge2d->v4l2_dev, "Failed to init mem2mem device\n");
 		ret = PTR_ERR(ge2d->m2m_dev);
-		goto rel_vdev;
-	}
+		जाओ rel_vdev;
+	पूर्ण
 
-	ret = video_register_device(vfd, VFL_TYPE_VIDEO, -1);
-	if (ret) {
+	ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, -1);
+	अगर (ret) अणु
 		v4l2_err(&ge2d->v4l2_dev, "Failed to register video device\n");
-		goto rel_m2m;
-	}
+		जाओ rel_m2m;
+	पूर्ण
 
 	v4l2_info(&ge2d->v4l2_dev, "Registered %s as /dev/%s\n",
 		  vfd->name, video_device_node_name(vfd));
 
-	return 0;
+	वापस 0;
 
 rel_m2m:
 	v4l2_m2m_release(ge2d->m2m_dev);
 rel_vdev:
 	video_device_release(ge2d->vfd);
 unreg_v4l2_dev:
-	v4l2_device_unregister(&ge2d->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&ge2d->v4l2_dev);
 disable_clks:
 	clk_disable_unprepare(ge2d->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ge2d_remove(struct platform_device *pdev)
-{
-	struct meson_ge2d *ge2d = platform_get_drvdata(pdev);
+अटल पूर्णांक ge2d_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा meson_ge2d *ge2d = platक्रमm_get_drvdata(pdev);
 
-	video_unregister_device(ge2d->vfd);
+	video_unरेजिस्टर_device(ge2d->vfd);
 	v4l2_m2m_release(ge2d->m2m_dev);
 	video_device_release(ge2d->vfd);
-	v4l2_device_unregister(&ge2d->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&ge2d->v4l2_dev);
 	clk_disable_unprepare(ge2d->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id meson_ge2d_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id meson_ge2d_match[] = अणु
+	अणु
 		.compatible = "amlogic,axg-ge2d",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, meson_ge2d_match);
 
-static struct platform_driver ge2d_drv = {
+अटल काष्ठा platक्रमm_driver ge2d_drv = अणु
 	.probe = ge2d_probe,
-	.remove = ge2d_remove,
-	.driver = {
+	.हटाओ = ge2d_हटाओ,
+	.driver = अणु
 		.name = "meson-ge2d",
 		.of_match_table = meson_ge2d_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ge2d_drv);
+module_platक्रमm_driver(ge2d_drv);
 
 MODULE_AUTHOR("Neil Armstrong <narmstrong@baylibre.com>");
 MODULE_DESCRIPTION("Amlogic 2D Graphic Acceleration Unit");

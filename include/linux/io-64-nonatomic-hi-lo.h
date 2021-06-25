@@ -1,122 +1,123 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_IO_64_NONATOMIC_HI_LO_H_
-#define _LINUX_IO_64_NONATOMIC_HI_LO_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_IO_64_NONATOMIC_HI_LO_H_
+#घोषणा _LINUX_IO_64_NONATOMIC_HI_LO_H_
 
-#include <linux/io.h>
-#include <asm-generic/int-ll64.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र-generic/पूर्णांक-ll64.h>
 
-static inline __u64 hi_lo_readq(const volatile void __iomem *addr)
-{
-	const volatile u32 __iomem *p = addr;
+अटल अंतरभूत __u64 hi_lo_पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	स्थिर अस्थिर u32 __iomem *p = addr;
 	u32 low, high;
 
-	high = readl(p + 1);
-	low = readl(p);
+	high = पढ़ोl(p + 1);
+	low = पढ़ोl(p);
 
-	return low + ((u64)high << 32);
-}
+	वापस low + ((u64)high << 32);
+पूर्ण
 
-static inline void hi_lo_writeq(__u64 val, volatile void __iomem *addr)
-{
-	writel(val >> 32, addr + 4);
-	writel(val, addr);
-}
+अटल अंतरभूत व्योम hi_lo_ग_लिखोq(__u64 val, अस्थिर व्योम __iomem *addr)
+अणु
+	ग_लिखोl(val >> 32, addr + 4);
+	ग_लिखोl(val, addr);
+पूर्ण
 
-static inline __u64 hi_lo_readq_relaxed(const volatile void __iomem *addr)
-{
-	const volatile u32 __iomem *p = addr;
+अटल अंतरभूत __u64 hi_lo_पढ़ोq_relaxed(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	स्थिर अस्थिर u32 __iomem *p = addr;
 	u32 low, high;
 
-	high = readl_relaxed(p + 1);
-	low = readl_relaxed(p);
+	high = पढ़ोl_relaxed(p + 1);
+	low = पढ़ोl_relaxed(p);
 
-	return low + ((u64)high << 32);
-}
+	वापस low + ((u64)high << 32);
+पूर्ण
 
-static inline void hi_lo_writeq_relaxed(__u64 val, volatile void __iomem *addr)
-{
-	writel_relaxed(val >> 32, addr + 4);
-	writel_relaxed(val, addr);
-}
+अटल अंतरभूत व्योम hi_lo_ग_लिखोq_relaxed(__u64 val, अस्थिर व्योम __iomem *addr)
+अणु
+	ग_लिखोl_relaxed(val >> 32, addr + 4);
+	ग_लिखोl_relaxed(val, addr);
+पूर्ण
 
-#ifndef readq
-#define readq hi_lo_readq
-#endif
+#अगर_अघोषित पढ़ोq
+#घोषणा पढ़ोq hi_lo_पढ़ोq
+#पूर्ण_अगर
 
-#ifndef writeq
-#define writeq hi_lo_writeq
-#endif
+#अगर_अघोषित ग_लिखोq
+#घोषणा ग_लिखोq hi_lo_ग_लिखोq
+#पूर्ण_अगर
 
-#ifndef readq_relaxed
-#define readq_relaxed hi_lo_readq_relaxed
-#endif
+#अगर_अघोषित पढ़ोq_relaxed
+#घोषणा पढ़ोq_relaxed hi_lo_पढ़ोq_relaxed
+#पूर्ण_अगर
 
-#ifndef writeq_relaxed
-#define writeq_relaxed hi_lo_writeq_relaxed
-#endif
+#अगर_अघोषित ग_लिखोq_relaxed
+#घोषणा ग_लिखोq_relaxed hi_lo_ग_लिखोq_relaxed
+#पूर्ण_अगर
 
-#ifndef ioread64_hi_lo
-#define ioread64_hi_lo ioread64_hi_lo
-static inline u64 ioread64_hi_lo(const void __iomem *addr)
-{
+#अगर_अघोषित ioपढ़ो64_hi_lo
+#घोषणा ioपढ़ो64_hi_lo ioपढ़ो64_hi_lo
+अटल अंतरभूत u64 ioपढ़ो64_hi_lo(स्थिर व्योम __iomem *addr)
+अणु
 	u32 low, high;
 
-	high = ioread32(addr + sizeof(u32));
-	low = ioread32(addr);
+	high = ioपढ़ो32(addr + माप(u32));
+	low = ioपढ़ो32(addr);
 
-	return low + ((u64)high << 32);
-}
-#endif
+	वापस low + ((u64)high << 32);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef iowrite64_hi_lo
-#define iowrite64_hi_lo iowrite64_hi_lo
-static inline void iowrite64_hi_lo(u64 val, void __iomem *addr)
-{
-	iowrite32(val >> 32, addr + sizeof(u32));
-	iowrite32(val, addr);
-}
-#endif
+#अगर_अघोषित ioग_लिखो64_hi_lo
+#घोषणा ioग_लिखो64_hi_lo ioग_लिखो64_hi_lo
+अटल अंतरभूत व्योम ioग_लिखो64_hi_lo(u64 val, व्योम __iomem *addr)
+अणु
+	ioग_लिखो32(val >> 32, addr + माप(u32));
+	ioग_लिखो32(val, addr);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef ioread64be_hi_lo
-#define ioread64be_hi_lo ioread64be_hi_lo
-static inline u64 ioread64be_hi_lo(const void __iomem *addr)
-{
+#अगर_अघोषित ioपढ़ो64be_hi_lo
+#घोषणा ioपढ़ो64be_hi_lo ioपढ़ो64be_hi_lo
+अटल अंतरभूत u64 ioपढ़ो64be_hi_lo(स्थिर व्योम __iomem *addr)
+अणु
 	u32 low, high;
 
-	high = ioread32be(addr);
-	low = ioread32be(addr + sizeof(u32));
+	high = ioपढ़ो32be(addr);
+	low = ioपढ़ो32be(addr + माप(u32));
 
-	return low + ((u64)high << 32);
-}
-#endif
+	वापस low + ((u64)high << 32);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef iowrite64be_hi_lo
-#define iowrite64be_hi_lo iowrite64be_hi_lo
-static inline void iowrite64be_hi_lo(u64 val, void __iomem *addr)
-{
-	iowrite32be(val >> 32, addr);
-	iowrite32be(val, addr + sizeof(u32));
-}
-#endif
+#अगर_अघोषित ioग_लिखो64be_hi_lo
+#घोषणा ioग_लिखो64be_hi_lo ioग_लिखो64be_hi_lo
+अटल अंतरभूत व्योम ioग_लिखो64be_hi_lo(u64 val, व्योम __iomem *addr)
+अणु
+	ioग_लिखो32be(val >> 32, addr);
+	ioग_लिखो32be(val, addr + माप(u32));
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef ioread64
-#define ioread64_is_nonatomic
-#define ioread64 ioread64_hi_lo
-#endif
+#अगर_अघोषित ioपढ़ो64
+#घोषणा ioपढ़ो64_is_nonatomic
+#घोषणा ioपढ़ो64 ioपढ़ो64_hi_lo
+#पूर्ण_अगर
 
-#ifndef iowrite64
-#define iowrite64_is_nonatomic
-#define iowrite64 iowrite64_hi_lo
-#endif
+#अगर_अघोषित ioग_लिखो64
+#घोषणा ioग_लिखो64_is_nonatomic
+#घोषणा ioग_लिखो64 ioग_लिखो64_hi_lo
+#पूर्ण_अगर
 
-#ifndef ioread64be
-#define ioread64be_is_nonatomic
-#define ioread64be ioread64be_hi_lo
-#endif
+#अगर_अघोषित ioपढ़ो64be
+#घोषणा ioपढ़ो64be_is_nonatomic
+#घोषणा ioपढ़ो64be ioपढ़ो64be_hi_lo
+#पूर्ण_अगर
 
-#ifndef iowrite64be
-#define iowrite64be_is_nonatomic
-#define iowrite64be iowrite64be_hi_lo
-#endif
+#अगर_अघोषित ioग_लिखो64be
+#घोषणा ioग_लिखो64be_is_nonatomic
+#घोषणा ioग_लिखो64be ioग_लिखो64be_hi_lo
+#पूर्ण_अगर
 
-#endif	/* _LINUX_IO_64_NONATOMIC_HI_LO_H_ */
+#पूर्ण_अगर	/* _LINUX_IO_64_NONATOMIC_HI_LO_H_ */

@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __CPUHOTPLUG_H
-#define __CPUHOTPLUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __CPUHOTPLUG_H
+#घोषणा __CPUHOTPLUG_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * CPU-up			CPU-down
+ * CPU-up			CPU-करोwn
  *
  * BP		AP		BP		AP
  *
  * OFFLINE			OFFLINE
  *   |				  ^
  *   v				  |
- * BRINGUP_CPU->AP_OFFLINE	BRINGUP_CPU  <- AP_IDLE_DEAD (idle thread/play_dead)
+ * BRINGUP_CPU->AP_OFFLINE	BRINGUP_CPU  <- AP_IDLE_DEAD (idle thपढ़ो/play_dead)
  *		  |				AP_OFFLINE
  *		  v (IRQ-off)	  ,---------------^
  *		AP_ONLNE	  | (stop_machine)
@@ -22,7 +23,7 @@
  *              AP_ACTIVE			AP_ACTIVE
  */
 
-enum cpuhp_state {
+क्रमागत cpuhp_state अणु
 	CPUHP_INVALID = -1,
 	CPUHP_OFFLINE = 0,
 	CPUHP_CREATE_THREADS,
@@ -64,7 +65,7 @@ enum cpuhp_state {
 	CPUHP_WORKQUEUE_PREP,
 	CPUHP_POWER_NUMA_PREPARE,
 	CPUHP_HRTIMERS_PREPARE,
-	CPUHP_PROFILE_PREPARE,
+	CPUHP_PROखाता_PREPARE,
 	CPUHP_X2APIC_PREPARE,
 	CPUHP_SMPCFD_PREPARE,
 	CPUHP_RELAY_PREPARE,
@@ -142,7 +143,7 @@ enum cpuhp_state {
 	CPUHP_AP_KVM_ARM_VGIC_INIT_STARTING,
 	CPUHP_AP_KVM_ARM_VGIC_STARTING,
 	CPUHP_AP_KVM_ARM_TIMER_STARTING,
-	/* Must be the last timer callback */
+	/* Must be the last समयr callback */
 	CPUHP_AP_DUMMY_TIMER_STARTING,
 	CPUHP_AP_ARM_XEN_STARTING,
 	CPUHP_AP_ARM_CORESIGHT_STARTING,
@@ -203,219 +204,219 @@ enum cpuhp_state {
 	CPUHP_AP_DTPM_CPU_ONLINE,
 	CPUHP_AP_ACTIVE,
 	CPUHP_ONLINE,
-};
+पूर्ण;
 
-int __cpuhp_setup_state(enum cpuhp_state state,	const char *name, bool invoke,
-			int (*startup)(unsigned int cpu),
-			int (*teardown)(unsigned int cpu), bool multi_instance);
+पूर्णांक __cpuhp_setup_state(क्रमागत cpuhp_state state,	स्थिर अक्षर *name, bool invoke,
+			पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu),
+			पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu), bool multi_instance);
 
-int __cpuhp_setup_state_cpuslocked(enum cpuhp_state state, const char *name,
+पूर्णांक __cpuhp_setup_state_cpuslocked(क्रमागत cpuhp_state state, स्थिर अक्षर *name,
 				   bool invoke,
-				   int (*startup)(unsigned int cpu),
-				   int (*teardown)(unsigned int cpu),
+				   पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu),
+				   पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu),
 				   bool multi_instance);
 /**
  * cpuhp_setup_state - Setup hotplug state callbacks with calling the callbacks
- * @state:	The state for which the calls are installed
+ * @state:	The state क्रम which the calls are installed
  * @name:	Name of the callback (will be used in debug output)
  * @startup:	startup callback function
- * @teardown:	teardown callback function
+ * @tearकरोwn:	tearकरोwn callback function
  *
  * Installs the callback functions and invokes the startup callback on
- * the present cpus which have already reached the @state.
+ * the present cpus which have alपढ़ोy reached the @state.
  */
-static inline int cpuhp_setup_state(enum cpuhp_state state,
-				    const char *name,
-				    int (*startup)(unsigned int cpu),
-				    int (*teardown)(unsigned int cpu))
-{
-	return __cpuhp_setup_state(state, name, true, startup, teardown, false);
-}
+अटल अंतरभूत पूर्णांक cpuhp_setup_state(क्रमागत cpuhp_state state,
+				    स्थिर अक्षर *name,
+				    पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu),
+				    पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu))
+अणु
+	वापस __cpuhp_setup_state(state, name, true, startup, tearकरोwn, false);
+पूर्ण
 
-static inline int cpuhp_setup_state_cpuslocked(enum cpuhp_state state,
-					       const char *name,
-					       int (*startup)(unsigned int cpu),
-					       int (*teardown)(unsigned int cpu))
-{
-	return __cpuhp_setup_state_cpuslocked(state, name, true, startup,
-					      teardown, false);
-}
+अटल अंतरभूत पूर्णांक cpuhp_setup_state_cpuslocked(क्रमागत cpuhp_state state,
+					       स्थिर अक्षर *name,
+					       पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu),
+					       पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu))
+अणु
+	वापस __cpuhp_setup_state_cpuslocked(state, name, true, startup,
+					      tearकरोwn, false);
+पूर्ण
 
 /**
  * cpuhp_setup_state_nocalls - Setup hotplug state callbacks without calling the
  *			       callbacks
- * @state:	The state for which the calls are installed
+ * @state:	The state क्रम which the calls are installed
  * @name:	Name of the callback.
  * @startup:	startup callback function
- * @teardown:	teardown callback function
+ * @tearकरोwn:	tearकरोwn callback function
  *
  * Same as @cpuhp_setup_state except that no calls are executed are invoked
- * during installation of this callback. NOP if SMP=n or HOTPLUG_CPU=n.
+ * during installation of this callback. NOP अगर SMP=n or HOTPLUG_CPU=n.
  */
-static inline int cpuhp_setup_state_nocalls(enum cpuhp_state state,
-					    const char *name,
-					    int (*startup)(unsigned int cpu),
-					    int (*teardown)(unsigned int cpu))
-{
-	return __cpuhp_setup_state(state, name, false, startup, teardown,
+अटल अंतरभूत पूर्णांक cpuhp_setup_state_nocalls(क्रमागत cpuhp_state state,
+					    स्थिर अक्षर *name,
+					    पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu),
+					    पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu))
+अणु
+	वापस __cpuhp_setup_state(state, name, false, startup, tearकरोwn,
 				   false);
-}
+पूर्ण
 
-static inline int cpuhp_setup_state_nocalls_cpuslocked(enum cpuhp_state state,
-						     const char *name,
-						     int (*startup)(unsigned int cpu),
-						     int (*teardown)(unsigned int cpu))
-{
-	return __cpuhp_setup_state_cpuslocked(state, name, false, startup,
-					    teardown, false);
-}
+अटल अंतरभूत पूर्णांक cpuhp_setup_state_nocalls_cpuslocked(क्रमागत cpuhp_state state,
+						     स्थिर अक्षर *name,
+						     पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu),
+						     पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu))
+अणु
+	वापस __cpuhp_setup_state_cpuslocked(state, name, false, startup,
+					    tearकरोwn, false);
+पूर्ण
 
 /**
- * cpuhp_setup_state_multi - Add callbacks for multi state
- * @state:	The state for which the calls are installed
+ * cpuhp_setup_state_multi - Add callbacks क्रम multi state
+ * @state:	The state क्रम which the calls are installed
  * @name:	Name of the callback.
  * @startup:	startup callback function
- * @teardown:	teardown callback function
+ * @tearकरोwn:	tearकरोwn callback function
  *
- * Sets the internal multi_instance flag and prepares a state to work as a multi
- * instance callback. No callbacks are invoked at this point. The callbacks are
- * invoked once an instance for this state are registered via
+ * Sets the पूर्णांकernal multi_instance flag and prepares a state to work as a multi
+ * instance callback. No callbacks are invoked at this poपूर्णांक. The callbacks are
+ * invoked once an instance क्रम this state are रेजिस्टरed via
  * @cpuhp_state_add_instance or @cpuhp_state_add_instance_nocalls.
  */
-static inline int cpuhp_setup_state_multi(enum cpuhp_state state,
-					  const char *name,
-					  int (*startup)(unsigned int cpu,
-							 struct hlist_node *node),
-					  int (*teardown)(unsigned int cpu,
-							  struct hlist_node *node))
-{
-	return __cpuhp_setup_state(state, name, false,
-				   (void *) startup,
-				   (void *) teardown, true);
-}
+अटल अंतरभूत पूर्णांक cpuhp_setup_state_multi(क्रमागत cpuhp_state state,
+					  स्थिर अक्षर *name,
+					  पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu,
+							 काष्ठा hlist_node *node),
+					  पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu,
+							  काष्ठा hlist_node *node))
+अणु
+	वापस __cpuhp_setup_state(state, name, false,
+				   (व्योम *) startup,
+				   (व्योम *) tearकरोwn, true);
+पूर्ण
 
-int __cpuhp_state_add_instance(enum cpuhp_state state, struct hlist_node *node,
+पूर्णांक __cpuhp_state_add_instance(क्रमागत cpuhp_state state, काष्ठा hlist_node *node,
 			       bool invoke);
-int __cpuhp_state_add_instance_cpuslocked(enum cpuhp_state state,
-					  struct hlist_node *node, bool invoke);
+पूर्णांक __cpuhp_state_add_instance_cpuslocked(क्रमागत cpuhp_state state,
+					  काष्ठा hlist_node *node, bool invoke);
 
 /**
- * cpuhp_state_add_instance - Add an instance for a state and invoke startup
+ * cpuhp_state_add_instance - Add an instance क्रम a state and invoke startup
  *                            callback.
- * @state:	The state for which the instance is installed
- * @node:	The node for this individual state.
+ * @state:	The state क्रम which the instance is installed
+ * @node:	The node क्रम this inभागidual state.
  *
- * Installs the instance for the @state and invokes the startup callback on
- * the present cpus which have already reached the @state. The @state must have
+ * Installs the instance क्रम the @state and invokes the startup callback on
+ * the present cpus which have alपढ़ोy reached the @state. The @state must have
  * been earlier marked as multi-instance by @cpuhp_setup_state_multi.
  */
-static inline int cpuhp_state_add_instance(enum cpuhp_state state,
-					   struct hlist_node *node)
-{
-	return __cpuhp_state_add_instance(state, node, true);
-}
+अटल अंतरभूत पूर्णांक cpuhp_state_add_instance(क्रमागत cpuhp_state state,
+					   काष्ठा hlist_node *node)
+अणु
+	वापस __cpuhp_state_add_instance(state, node, true);
+पूर्ण
 
 /**
- * cpuhp_state_add_instance_nocalls - Add an instance for a state without
+ * cpuhp_state_add_instance_nocalls - Add an instance क्रम a state without
  *                                    invoking the startup callback.
- * @state:	The state for which the instance is installed
- * @node:	The node for this individual state.
+ * @state:	The state क्रम which the instance is installed
+ * @node:	The node क्रम this inभागidual state.
  *
- * Installs the instance for the @state The @state must have been earlier
+ * Installs the instance क्रम the @state The @state must have been earlier
  * marked as multi-instance by @cpuhp_setup_state_multi.
  */
-static inline int cpuhp_state_add_instance_nocalls(enum cpuhp_state state,
-						   struct hlist_node *node)
-{
-	return __cpuhp_state_add_instance(state, node, false);
-}
+अटल अंतरभूत पूर्णांक cpuhp_state_add_instance_nocalls(क्रमागत cpuhp_state state,
+						   काष्ठा hlist_node *node)
+अणु
+	वापस __cpuhp_state_add_instance(state, node, false);
+पूर्ण
 
-static inline int
-cpuhp_state_add_instance_nocalls_cpuslocked(enum cpuhp_state state,
-					    struct hlist_node *node)
-{
-	return __cpuhp_state_add_instance_cpuslocked(state, node, false);
-}
+अटल अंतरभूत पूर्णांक
+cpuhp_state_add_instance_nocalls_cpuslocked(क्रमागत cpuhp_state state,
+					    काष्ठा hlist_node *node)
+अणु
+	वापस __cpuhp_state_add_instance_cpuslocked(state, node, false);
+पूर्ण
 
-void __cpuhp_remove_state(enum cpuhp_state state, bool invoke);
-void __cpuhp_remove_state_cpuslocked(enum cpuhp_state state, bool invoke);
+व्योम __cpuhp_हटाओ_state(क्रमागत cpuhp_state state, bool invoke);
+व्योम __cpuhp_हटाओ_state_cpuslocked(क्रमागत cpuhp_state state, bool invoke);
 
 /**
- * cpuhp_remove_state - Remove hotplug state callbacks and invoke the teardown
- * @state:	The state for which the calls are removed
+ * cpuhp_हटाओ_state - Remove hotplug state callbacks and invoke the tearकरोwn
+ * @state:	The state क्रम which the calls are हटाओd
  *
- * Removes the callback functions and invokes the teardown callback on
- * the present cpus which have already reached the @state.
+ * Removes the callback functions and invokes the tearकरोwn callback on
+ * the present cpus which have alपढ़ोy reached the @state.
  */
-static inline void cpuhp_remove_state(enum cpuhp_state state)
-{
-	__cpuhp_remove_state(state, true);
-}
+अटल अंतरभूत व्योम cpuhp_हटाओ_state(क्रमागत cpuhp_state state)
+अणु
+	__cpuhp_हटाओ_state(state, true);
+पूर्ण
 
 /**
- * cpuhp_remove_state_nocalls - Remove hotplug state callbacks without invoking
- *				teardown
- * @state:	The state for which the calls are removed
+ * cpuhp_हटाओ_state_nocalls - Remove hotplug state callbacks without invoking
+ *				tearकरोwn
+ * @state:	The state क्रम which the calls are हटाओd
  */
-static inline void cpuhp_remove_state_nocalls(enum cpuhp_state state)
-{
-	__cpuhp_remove_state(state, false);
-}
+अटल अंतरभूत व्योम cpuhp_हटाओ_state_nocalls(क्रमागत cpuhp_state state)
+अणु
+	__cpuhp_हटाओ_state(state, false);
+पूर्ण
 
-static inline void cpuhp_remove_state_nocalls_cpuslocked(enum cpuhp_state state)
-{
-	__cpuhp_remove_state_cpuslocked(state, false);
-}
+अटल अंतरभूत व्योम cpuhp_हटाओ_state_nocalls_cpuslocked(क्रमागत cpuhp_state state)
+अणु
+	__cpuhp_हटाओ_state_cpuslocked(state, false);
+पूर्ण
 
 /**
- * cpuhp_remove_multi_state - Remove hotplug multi state callback
- * @state:	The state for which the calls are removed
+ * cpuhp_हटाओ_multi_state - Remove hotplug multi state callback
+ * @state:	The state क्रम which the calls are हटाओd
  *
  * Removes the callback functions from a multi state. This is the reverse of
- * cpuhp_setup_state_multi(). All instances should have been removed before
+ * cpuhp_setup_state_multi(). All instances should have been हटाओd beक्रमe
  * invoking this function.
  */
-static inline void cpuhp_remove_multi_state(enum cpuhp_state state)
-{
-	__cpuhp_remove_state(state, false);
-}
+अटल अंतरभूत व्योम cpuhp_हटाओ_multi_state(क्रमागत cpuhp_state state)
+अणु
+	__cpuhp_हटाओ_state(state, false);
+पूर्ण
 
-int __cpuhp_state_remove_instance(enum cpuhp_state state,
-				  struct hlist_node *node, bool invoke);
-
-/**
- * cpuhp_state_remove_instance - Remove hotplug instance from state and invoke
- *                               the teardown callback
- * @state:	The state from which the instance is removed
- * @node:	The node for this individual state.
- *
- * Removes the instance and invokes the teardown callback on the present cpus
- * which have already reached the @state.
- */
-static inline int cpuhp_state_remove_instance(enum cpuhp_state state,
-					      struct hlist_node *node)
-{
-	return __cpuhp_state_remove_instance(state, node, true);
-}
+पूर्णांक __cpuhp_state_हटाओ_instance(क्रमागत cpuhp_state state,
+				  काष्ठा hlist_node *node, bool invoke);
 
 /**
- * cpuhp_state_remove_instance_nocalls - Remove hotplug instance from state
- *					 without invoking the reatdown callback
- * @state:	The state from which the instance is removed
- * @node:	The node for this individual state.
+ * cpuhp_state_हटाओ_instance - Remove hotplug instance from state and invoke
+ *                               the tearकरोwn callback
+ * @state:	The state from which the instance is हटाओd
+ * @node:	The node क्रम this inभागidual state.
  *
- * Removes the instance without invoking the teardown callback.
+ * Removes the instance and invokes the tearकरोwn callback on the present cpus
+ * which have alपढ़ोy reached the @state.
  */
-static inline int cpuhp_state_remove_instance_nocalls(enum cpuhp_state state,
-						      struct hlist_node *node)
-{
-	return __cpuhp_state_remove_instance(state, node, false);
-}
+अटल अंतरभूत पूर्णांक cpuhp_state_हटाओ_instance(क्रमागत cpuhp_state state,
+					      काष्ठा hlist_node *node)
+अणु
+	वापस __cpuhp_state_हटाओ_instance(state, node, true);
+पूर्ण
 
-#ifdef CONFIG_SMP
-void cpuhp_online_idle(enum cpuhp_state state);
-#else
-static inline void cpuhp_online_idle(enum cpuhp_state state) { }
-#endif
+/**
+ * cpuhp_state_हटाओ_instance_nocalls - Remove hotplug instance from state
+ *					 without invoking the reatकरोwn callback
+ * @state:	The state from which the instance is हटाओd
+ * @node:	The node क्रम this inभागidual state.
+ *
+ * Removes the instance without invoking the tearकरोwn callback.
+ */
+अटल अंतरभूत पूर्णांक cpuhp_state_हटाओ_instance_nocalls(क्रमागत cpuhp_state state,
+						      काष्ठा hlist_node *node)
+अणु
+	वापस __cpuhp_state_हटाओ_instance(state, node, false);
+पूर्ण
 
-#endif
+#अगर_घोषित CONFIG_SMP
+व्योम cpuhp_online_idle(क्रमागत cpuhp_state state);
+#अन्यथा
+अटल अंतरभूत व्योम cpuhp_online_idle(क्रमागत cpuhp_state state) अणु पूर्ण
+#पूर्ण_अगर
+
+#पूर्ण_अगर

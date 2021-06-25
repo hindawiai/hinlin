@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: getopt
@@ -14,192 +15,192 @@
  *    "f"       - Option has no arguments
  *    "f:"      - Option requires an argument
  *    "f+"      - Option has an optional argument
- *    "f^"      - Option has optional single-char sub-options
- *    "f|"      - Option has required single-char sub-options
+ *    "f^"      - Option has optional single-अक्षर sub-options
+ *    "f|"      - Option has required single-अक्षर sub-options
  */
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acapps.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acapps.h"
 
-#define ACPI_OPTION_ERROR(msg, badchar) \
-	if (acpi_gbl_opterr) {fprintf (stderr, "%s%c\n", msg, badchar);}
+#घोषणा ACPI_OPTION_ERROR(msg, badअक्षर) \
+	अगर (acpi_gbl_opterr) अणुख_लिखो (मानक_त्रुटि, "%s%c\n", msg, badअक्षर);पूर्ण
 
-int acpi_gbl_opterr = 1;
-int acpi_gbl_optind = 1;
-int acpi_gbl_sub_opt_char = 0;
-char *acpi_gbl_optarg;
+पूर्णांक acpi_gbl_opterr = 1;
+पूर्णांक acpi_gbl_optind = 1;
+पूर्णांक acpi_gbl_sub_opt_अक्षर = 0;
+अक्षर *acpi_gbl_optarg;
 
-static int current_char_ptr = 1;
+अटल पूर्णांक current_अक्षर_ptr = 1;
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_getopt_argument
  *
- * PARAMETERS:  argc, argv          - from main
+ * PARAMETERS:  argc, argv          - from मुख्य
  *
- * RETURN:      0 if an argument was found, -1 otherwise. Sets acpi_gbl_Optarg
- *              to point to the next argument.
+ * RETURN:      0 अगर an argument was found, -1 otherwise. Sets acpi_gbl_Optarg
+ *              to poपूर्णांक to the next argument.
  *
- * DESCRIPTION: Get the next argument. Used to obtain arguments for the
- *              two-character options after the original call to acpi_getopt.
- *              Note: Either the argument starts at the next character after
- *              the option, or it is pointed to by the next argv entry.
+ * DESCRIPTION: Get the next argument. Used to obtain arguments क्रम the
+ *              two-अक्षरacter options after the original call to acpi_getopt.
+ *              Note: Either the argument starts at the next अक्षरacter after
+ *              the option, or it is poपूर्णांकed to by the next argv entry.
  *              (After call to acpi_getopt, we need to backup to the previous
  *              argv entry).
  *
  ******************************************************************************/
 
-int acpi_getopt_argument(int argc, char **argv)
-{
+पूर्णांक acpi_getopt_argument(पूर्णांक argc, अक्षर **argv)
+अणु
 
 	acpi_gbl_optind--;
-	current_char_ptr++;
+	current_अक्षर_ptr++;
 
-	if (argv[acpi_gbl_optind][(int)(current_char_ptr + 1)] != '\0') {
+	अगर (argv[acpi_gbl_optind][(पूर्णांक)(current_अक्षर_ptr + 1)] != '\0') अणु
 		acpi_gbl_optarg =
-		    &argv[acpi_gbl_optind++][(int)(current_char_ptr + 1)];
-	} else if (++acpi_gbl_optind >= argc) {
+		    &argv[acpi_gbl_optind++][(पूर्णांक)(current_अक्षर_ptr + 1)];
+	पूर्ण अन्यथा अगर (++acpi_gbl_optind >= argc) अणु
 		ACPI_OPTION_ERROR("\nOption requires an argument", 0);
 
-		current_char_ptr = 1;
-		return (-1);
-	} else {
+		current_अक्षर_ptr = 1;
+		वापस (-1);
+	पूर्ण अन्यथा अणु
 		acpi_gbl_optarg = argv[acpi_gbl_optind++];
-	}
+	पूर्ण
 
-	current_char_ptr = 1;
-	return (0);
-}
+	current_अक्षर_ptr = 1;
+	वापस (0);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_getopt
  *
- * PARAMETERS:  argc, argv          - from main
+ * PARAMETERS:  argc, argv          - from मुख्य
  *              opts                - options info list
  *
- * RETURN:      Option character or ACPI_OPT_END
+ * RETURN:      Option अक्षरacter or ACPI_OPT_END
  *
  * DESCRIPTION: Get the next option
  *
  ******************************************************************************/
 
-int acpi_getopt(int argc, char **argv, char *opts)
-{
-	int current_char;
-	char *opts_ptr;
+पूर्णांक acpi_getopt(पूर्णांक argc, अक्षर **argv, अक्षर *opts)
+अणु
+	पूर्णांक current_अक्षर;
+	अक्षर *opts_ptr;
 
-	if (current_char_ptr == 1) {
-		if (acpi_gbl_optind >= argc ||
+	अगर (current_अक्षर_ptr == 1) अणु
+		अगर (acpi_gbl_optind >= argc ||
 		    argv[acpi_gbl_optind][0] != '-' ||
-		    argv[acpi_gbl_optind][1] == '\0') {
-			return (ACPI_OPT_END);
-		} else if (strcmp(argv[acpi_gbl_optind], "--") == 0) {
+		    argv[acpi_gbl_optind][1] == '\0') अणु
+			वापस (ACPI_OPT_END);
+		पूर्ण अन्यथा अगर (म_भेद(argv[acpi_gbl_optind], "--") == 0) अणु
 			acpi_gbl_optind++;
-			return (ACPI_OPT_END);
-		}
-	}
+			वापस (ACPI_OPT_END);
+		पूर्ण
+	पूर्ण
 
 	/* Get the option */
 
-	current_char = argv[acpi_gbl_optind][current_char_ptr];
+	current_अक्षर = argv[acpi_gbl_optind][current_अक्षर_ptr];
 
 	/* Make sure that the option is legal */
 
-	if (current_char == ':' ||
-	    (opts_ptr = strchr(opts, current_char)) == NULL) {
-		ACPI_OPTION_ERROR("Illegal option: -", current_char);
+	अगर (current_अक्षर == ':' ||
+	    (opts_ptr = म_अक्षर(opts, current_अक्षर)) == शून्य) अणु
+		ACPI_OPTION_ERROR("Illegal option: -", current_अक्षर);
 
-		if (argv[acpi_gbl_optind][++current_char_ptr] == '\0') {
+		अगर (argv[acpi_gbl_optind][++current_अक्षर_ptr] == '\0') अणु
 			acpi_gbl_optind++;
-			current_char_ptr = 1;
-		}
+			current_अक्षर_ptr = 1;
+		पूर्ण
 
-		return ('?');
-	}
+		वापस ('?');
+	पूर्ण
 
 	/* Option requires an argument? */
 
-	if (*++opts_ptr == ':') {
-		if (argv[acpi_gbl_optind][(int)(current_char_ptr + 1)] != '\0') {
+	अगर (*++opts_ptr == ':') अणु
+		अगर (argv[acpi_gbl_optind][(पूर्णांक)(current_अक्षर_ptr + 1)] != '\0') अणु
 			acpi_gbl_optarg =
-			    &argv[acpi_gbl_optind++][(int)
-						     (current_char_ptr + 1)];
-		} else if (++acpi_gbl_optind >= argc) {
+			    &argv[acpi_gbl_optind++][(पूर्णांक)
+						     (current_अक्षर_ptr + 1)];
+		पूर्ण अन्यथा अगर (++acpi_gbl_optind >= argc) अणु
 			ACPI_OPTION_ERROR("Option requires an argument: -",
-					  current_char);
+					  current_अक्षर);
 
-			current_char_ptr = 1;
-			return ('?');
-		} else {
+			current_अक्षर_ptr = 1;
+			वापस ('?');
+		पूर्ण अन्यथा अणु
 			acpi_gbl_optarg = argv[acpi_gbl_optind++];
-		}
+		पूर्ण
 
-		current_char_ptr = 1;
-	}
+		current_अक्षर_ptr = 1;
+	पूर्ण
 
 	/* Option has an optional argument? */
 
-	else if (*opts_ptr == '+') {
-		if (argv[acpi_gbl_optind][(int)(current_char_ptr + 1)] != '\0') {
+	अन्यथा अगर (*opts_ptr == '+') अणु
+		अगर (argv[acpi_gbl_optind][(पूर्णांक)(current_अक्षर_ptr + 1)] != '\0') अणु
 			acpi_gbl_optarg =
-			    &argv[acpi_gbl_optind++][(int)
-						     (current_char_ptr + 1)];
-		} else if (++acpi_gbl_optind >= argc) {
-			acpi_gbl_optarg = NULL;
-		} else {
+			    &argv[acpi_gbl_optind++][(पूर्णांक)
+						     (current_अक्षर_ptr + 1)];
+		पूर्ण अन्यथा अगर (++acpi_gbl_optind >= argc) अणु
+			acpi_gbl_optarg = शून्य;
+		पूर्ण अन्यथा अणु
 			acpi_gbl_optarg = argv[acpi_gbl_optind++];
-		}
+		पूर्ण
 
-		current_char_ptr = 1;
-	}
+		current_अक्षर_ptr = 1;
+	पूर्ण
 
-	/* Option has optional single-char arguments? */
+	/* Option has optional single-अक्षर arguments? */
 
-	else if (*opts_ptr == '^') {
-		if (argv[acpi_gbl_optind][(int)(current_char_ptr + 1)] != '\0') {
+	अन्यथा अगर (*opts_ptr == '^') अणु
+		अगर (argv[acpi_gbl_optind][(पूर्णांक)(current_अक्षर_ptr + 1)] != '\0') अणु
 			acpi_gbl_optarg =
-			    &argv[acpi_gbl_optind][(int)(current_char_ptr + 1)];
-		} else {
+			    &argv[acpi_gbl_optind][(पूर्णांक)(current_अक्षर_ptr + 1)];
+		पूर्ण अन्यथा अणु
 			acpi_gbl_optarg = "^";
-		}
+		पूर्ण
 
-		acpi_gbl_sub_opt_char = acpi_gbl_optarg[0];
+		acpi_gbl_sub_opt_अक्षर = acpi_gbl_optarg[0];
 		acpi_gbl_optind++;
-		current_char_ptr = 1;
-	}
+		current_अक्षर_ptr = 1;
+	पूर्ण
 
-	/* Option has a required single-char argument? */
+	/* Option has a required single-अक्षर argument? */
 
-	else if (*opts_ptr == '|') {
-		if (argv[acpi_gbl_optind][(int)(current_char_ptr + 1)] != '\0') {
+	अन्यथा अगर (*opts_ptr == '|') अणु
+		अगर (argv[acpi_gbl_optind][(पूर्णांक)(current_अक्षर_ptr + 1)] != '\0') अणु
 			acpi_gbl_optarg =
-			    &argv[acpi_gbl_optind][(int)(current_char_ptr + 1)];
-		} else {
+			    &argv[acpi_gbl_optind][(पूर्णांक)(current_अक्षर_ptr + 1)];
+		पूर्ण अन्यथा अणु
 			ACPI_OPTION_ERROR
 			    ("Option requires a single-character suboption: -",
-			     current_char);
+			     current_अक्षर);
 
-			current_char_ptr = 1;
-			return ('?');
-		}
+			current_अक्षर_ptr = 1;
+			वापस ('?');
+		पूर्ण
 
-		acpi_gbl_sub_opt_char = acpi_gbl_optarg[0];
+		acpi_gbl_sub_opt_अक्षर = acpi_gbl_optarg[0];
 		acpi_gbl_optind++;
-		current_char_ptr = 1;
-	}
+		current_अक्षर_ptr = 1;
+	पूर्ण
 
 	/* Option with no arguments */
 
-	else {
-		if (argv[acpi_gbl_optind][++current_char_ptr] == '\0') {
-			current_char_ptr = 1;
+	अन्यथा अणु
+		अगर (argv[acpi_gbl_optind][++current_अक्षर_ptr] == '\0') अणु
+			current_अक्षर_ptr = 1;
 			acpi_gbl_optind++;
-		}
+		पूर्ण
 
-		acpi_gbl_optarg = NULL;
-	}
+		acpi_gbl_optarg = शून्य;
+	पूर्ण
 
-	return (current_char);
-}
+	वापस (current_अक्षर);
+पूर्ण

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_BPFILTER_H
-#define _LINUX_BPFILTER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_BPFILTER_H
+#घोषणा _LINUX_BPFILTER_H
 
-#include <uapi/linux/bpfilter.h>
-#include <linux/usermode_driver.h>
-#include <linux/sockptr.h>
+#समावेश <uapi/linux/bpfilter.h>
+#समावेश <linux/usermode_driver.h>
+#समावेश <linux/sockptr.h>
 
-struct sock;
-int bpfilter_ip_set_sockopt(struct sock *sk, int optname, sockptr_t optval,
-			    unsigned int optlen);
-int bpfilter_ip_get_sockopt(struct sock *sk, int optname, char __user *optval,
-			    int __user *optlen);
-void bpfilter_umh_cleanup(struct umd_info *info);
+काष्ठा sock;
+पूर्णांक bpfilter_ip_set_sockopt(काष्ठा sock *sk, पूर्णांक optname, sockptr_t optval,
+			    अचिन्हित पूर्णांक optlen);
+पूर्णांक bpfilter_ip_get_sockopt(काष्ठा sock *sk, पूर्णांक optname, अक्षर __user *optval,
+			    पूर्णांक __user *optlen);
+व्योम bpfilter_umh_cleanup(काष्ठा umd_info *info);
 
-struct bpfilter_umh_ops {
-	struct umd_info info;
-	/* since ip_getsockopt() can run in parallel, serialize access to umh */
-	struct mutex lock;
-	int (*sockopt)(struct sock *sk, int optname, sockptr_t optval,
-		       unsigned int optlen, bool is_set);
-	int (*start)(void);
-};
-extern struct bpfilter_umh_ops bpfilter_ops;
-#endif
+काष्ठा bpfilter_umh_ops अणु
+	काष्ठा umd_info info;
+	/* since ip_माला_लोockopt() can run in parallel, serialize access to umh */
+	काष्ठा mutex lock;
+	पूर्णांक (*sockopt)(काष्ठा sock *sk, पूर्णांक optname, sockptr_t optval,
+		       अचिन्हित पूर्णांक optlen, bool is_set);
+	पूर्णांक (*start)(व्योम);
+पूर्ण;
+बाह्य काष्ठा bpfilter_umh_ops bpfilter_ops;
+#पूर्ण_अगर

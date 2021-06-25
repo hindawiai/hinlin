@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Derived from many drivers using generic_serial interface,
+ * Derived from many drivers using generic_serial पूर्णांकerface,
  * especially serial_tx3912.c by Steven J. Hill and r39xx_serial.c
  * (was in Linux/VR tree) by Jim Pick.
  *
@@ -9,245 +10,245 @@
  *  Copyright (C) 2001 Steven J. Hill (sjhill@realitydiluted.com)
  *  Copyright (C) 2000-2002 Toshiba Corporation
  *
- *  Serial driver for TX3927/TX4927/TX4925/TX4938 internal SIO controller
+ *  Serial driver क्रम TX3927/TX4927/TX4925/TX4938 पूर्णांकernal SIO controller
  */
 
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/pci.h>
-#include <linux/serial_core.h>
-#include <linux/serial.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-static char *serial_version = "1.11";
-static char *serial_name = "TX39/49 Serial driver";
+अटल अक्षर *serial_version = "1.11";
+अटल अक्षर *serial_name = "TX39/49 Serial driver";
 
-#define PASS_LIMIT	256
+#घोषणा PASS_LIMIT	256
 
-#if !defined(CONFIG_SERIAL_TXX9_STDSERIAL)
-/* "ttyS" is used for standard serial driver */
-#define TXX9_TTY_NAME "ttyTX"
-#define TXX9_TTY_MINOR_START	196
-#define TXX9_TTY_MAJOR	204
-#else
+#अगर !defined(CONFIG_SERIAL_TXX9_STDSERIAL)
+/* "ttyS" is used क्रम standard serial driver */
+#घोषणा TXX9_TTY_NAME "ttyTX"
+#घोषणा TXX9_TTY_MINOR_START	196
+#घोषणा TXX9_TTY_MAJOR	204
+#अन्यथा
 /* acts like standard serial driver */
-#define TXX9_TTY_NAME "ttyS"
-#define TXX9_TTY_MINOR_START	64
-#define TXX9_TTY_MAJOR	TTY_MAJOR
-#endif
+#घोषणा TXX9_TTY_NAME "ttyS"
+#घोषणा TXX9_TTY_MINOR_START	64
+#घोषणा TXX9_TTY_MAJOR	TTY_MAJOR
+#पूर्ण_अगर
 
 /* flag aliases */
-#define UPF_TXX9_HAVE_CTS_LINE	UPF_BUGGY_UART
-#define UPF_TXX9_USE_SCLK	UPF_MAGIC_MULTIPLIER
+#घोषणा UPF_TXX9_HAVE_CTS_LINE	UPF_BUGGY_UART
+#घोषणा UPF_TXX9_USE_SCLK	UPF_MAGIC_MULTIPLIER
 
-#ifdef CONFIG_PCI
-/* support for Toshiba TC86C001 SIO */
-#define ENABLE_SERIAL_TXX9_PCI
-#endif
+#अगर_घोषित CONFIG_PCI
+/* support क्रम Toshiba TC86C001 SIO */
+#घोषणा ENABLE_SERIAL_TXX9_PCI
+#पूर्ण_अगर
 
 /*
  * Number of serial ports
  */
-#define UART_NR  CONFIG_SERIAL_TXX9_NR_UARTS
+#घोषणा UART_NR  CONFIG_SERIAL_TXX9_NR_UARTS
 
-struct uart_txx9_port {
-	struct uart_port	port;
-	/* No additional info for now */
-};
+काष्ठा uart_txx9_port अणु
+	काष्ठा uart_port	port;
+	/* No additional info क्रम now */
+पूर्ण;
 
-#define TXX9_REGION_SIZE	0x24
+#घोषणा TXX9_REGION_SIZE	0x24
 
 /* TXX9 Serial Registers */
-#define TXX9_SILCR	0x00
-#define TXX9_SIDICR	0x04
-#define TXX9_SIDISR	0x08
-#define TXX9_SICISR	0x0c
-#define TXX9_SIFCR	0x10
-#define TXX9_SIFLCR	0x14
-#define TXX9_SIBGR	0x18
-#define TXX9_SITFIFO	0x1c
-#define TXX9_SIRFIFO	0x20
+#घोषणा TXX9_SILCR	0x00
+#घोषणा TXX9_SIDICR	0x04
+#घोषणा TXX9_SIDISR	0x08
+#घोषणा TXX9_SICISR	0x0c
+#घोषणा TXX9_SIFCR	0x10
+#घोषणा TXX9_SIFLCR	0x14
+#घोषणा TXX9_SIBGR	0x18
+#घोषणा TXX9_SITFIFO	0x1c
+#घोषणा TXX9_SIRFIFO	0x20
 
 /* SILCR : Line Control */
-#define TXX9_SILCR_SCS_MASK	0x00000060
-#define TXX9_SILCR_SCS_IMCLK	0x00000000
-#define TXX9_SILCR_SCS_IMCLK_BG	0x00000020
-#define TXX9_SILCR_SCS_SCLK	0x00000040
-#define TXX9_SILCR_SCS_SCLK_BG	0x00000060
-#define TXX9_SILCR_UEPS	0x00000010
-#define TXX9_SILCR_UPEN	0x00000008
-#define TXX9_SILCR_USBL_MASK	0x00000004
-#define TXX9_SILCR_USBL_1BIT	0x00000000
-#define TXX9_SILCR_USBL_2BIT	0x00000004
-#define TXX9_SILCR_UMODE_MASK	0x00000003
-#define TXX9_SILCR_UMODE_8BIT	0x00000000
-#define TXX9_SILCR_UMODE_7BIT	0x00000001
+#घोषणा TXX9_SILCR_SCS_MASK	0x00000060
+#घोषणा TXX9_SILCR_SCS_IMCLK	0x00000000
+#घोषणा TXX9_SILCR_SCS_IMCLK_BG	0x00000020
+#घोषणा TXX9_SILCR_SCS_SCLK	0x00000040
+#घोषणा TXX9_SILCR_SCS_SCLK_BG	0x00000060
+#घोषणा TXX9_SILCR_UEPS	0x00000010
+#घोषणा TXX9_SILCR_UPEN	0x00000008
+#घोषणा TXX9_SILCR_USBL_MASK	0x00000004
+#घोषणा TXX9_SILCR_USBL_1BIT	0x00000000
+#घोषणा TXX9_SILCR_USBL_2BIT	0x00000004
+#घोषणा TXX9_SILCR_UMODE_MASK	0x00000003
+#घोषणा TXX9_SILCR_UMODE_8BIT	0x00000000
+#घोषणा TXX9_SILCR_UMODE_7BIT	0x00000001
 
 /* SIDICR : DMA/Int. Control */
-#define TXX9_SIDICR_TDE	0x00008000
-#define TXX9_SIDICR_RDE	0x00004000
-#define TXX9_SIDICR_TIE	0x00002000
-#define TXX9_SIDICR_RIE	0x00001000
-#define TXX9_SIDICR_SPIE	0x00000800
-#define TXX9_SIDICR_CTSAC	0x00000600
-#define TXX9_SIDICR_STIE_MASK	0x0000003f
-#define TXX9_SIDICR_STIE_OERS		0x00000020
-#define TXX9_SIDICR_STIE_CTSS		0x00000010
-#define TXX9_SIDICR_STIE_RBRKD	0x00000008
-#define TXX9_SIDICR_STIE_TRDY		0x00000004
-#define TXX9_SIDICR_STIE_TXALS	0x00000002
-#define TXX9_SIDICR_STIE_UBRKD	0x00000001
+#घोषणा TXX9_SIDICR_TDE	0x00008000
+#घोषणा TXX9_SIDICR_RDE	0x00004000
+#घोषणा TXX9_SIDICR_TIE	0x00002000
+#घोषणा TXX9_SIDICR_RIE	0x00001000
+#घोषणा TXX9_SIDICR_SPIE	0x00000800
+#घोषणा TXX9_SIDICR_CTSAC	0x00000600
+#घोषणा TXX9_SIDICR_STIE_MASK	0x0000003f
+#घोषणा TXX9_SIDICR_STIE_OERS		0x00000020
+#घोषणा TXX9_SIDICR_STIE_CTSS		0x00000010
+#घोषणा TXX9_SIDICR_STIE_RBRKD	0x00000008
+#घोषणा TXX9_SIDICR_STIE_TRDY		0x00000004
+#घोषणा TXX9_SIDICR_STIE_TXALS	0x00000002
+#घोषणा TXX9_SIDICR_STIE_UBRKD	0x00000001
 
 /* SIDISR : DMA/Int. Status */
-#define TXX9_SIDISR_UBRK	0x00008000
-#define TXX9_SIDISR_UVALID	0x00004000
-#define TXX9_SIDISR_UFER	0x00002000
-#define TXX9_SIDISR_UPER	0x00001000
-#define TXX9_SIDISR_UOER	0x00000800
-#define TXX9_SIDISR_ERI	0x00000400
-#define TXX9_SIDISR_TOUT	0x00000200
-#define TXX9_SIDISR_TDIS	0x00000100
-#define TXX9_SIDISR_RDIS	0x00000080
-#define TXX9_SIDISR_STIS	0x00000040
-#define TXX9_SIDISR_RFDN_MASK	0x0000001f
+#घोषणा TXX9_SIDISR_UBRK	0x00008000
+#घोषणा TXX9_SIDISR_UVALID	0x00004000
+#घोषणा TXX9_SIDISR_UFER	0x00002000
+#घोषणा TXX9_SIDISR_UPER	0x00001000
+#घोषणा TXX9_SIDISR_UOER	0x00000800
+#घोषणा TXX9_SIDISR_ERI	0x00000400
+#घोषणा TXX9_SIDISR_TOUT	0x00000200
+#घोषणा TXX9_SIDISR_TDIS	0x00000100
+#घोषणा TXX9_SIDISR_RDIS	0x00000080
+#घोषणा TXX9_SIDISR_STIS	0x00000040
+#घोषणा TXX9_SIDISR_RFDN_MASK	0x0000001f
 
 /* SICISR : Change Int. Status */
-#define TXX9_SICISR_OERS	0x00000020
-#define TXX9_SICISR_CTSS	0x00000010
-#define TXX9_SICISR_RBRKD	0x00000008
-#define TXX9_SICISR_TRDY	0x00000004
-#define TXX9_SICISR_TXALS	0x00000002
-#define TXX9_SICISR_UBRKD	0x00000001
+#घोषणा TXX9_SICISR_OERS	0x00000020
+#घोषणा TXX9_SICISR_CTSS	0x00000010
+#घोषणा TXX9_SICISR_RBRKD	0x00000008
+#घोषणा TXX9_SICISR_TRDY	0x00000004
+#घोषणा TXX9_SICISR_TXALS	0x00000002
+#घोषणा TXX9_SICISR_UBRKD	0x00000001
 
 /* SIFCR : FIFO Control */
-#define TXX9_SIFCR_SWRST	0x00008000
-#define TXX9_SIFCR_RDIL_MASK	0x00000180
-#define TXX9_SIFCR_RDIL_1	0x00000000
-#define TXX9_SIFCR_RDIL_4	0x00000080
-#define TXX9_SIFCR_RDIL_8	0x00000100
-#define TXX9_SIFCR_RDIL_12	0x00000180
-#define TXX9_SIFCR_RDIL_MAX	0x00000180
-#define TXX9_SIFCR_TDIL_MASK	0x00000018
-#define TXX9_SIFCR_TDIL_1	0x00000000
-#define TXX9_SIFCR_TDIL_4	0x00000001
-#define TXX9_SIFCR_TDIL_8	0x00000010
-#define TXX9_SIFCR_TDIL_MAX	0x00000010
-#define TXX9_SIFCR_TFRST	0x00000004
-#define TXX9_SIFCR_RFRST	0x00000002
-#define TXX9_SIFCR_FRSTE	0x00000001
-#define TXX9_SIO_TX_FIFO	8
-#define TXX9_SIO_RX_FIFO	16
+#घोषणा TXX9_SIFCR_SWRST	0x00008000
+#घोषणा TXX9_SIFCR_RDIL_MASK	0x00000180
+#घोषणा TXX9_SIFCR_RDIL_1	0x00000000
+#घोषणा TXX9_SIFCR_RDIL_4	0x00000080
+#घोषणा TXX9_SIFCR_RDIL_8	0x00000100
+#घोषणा TXX9_SIFCR_RDIL_12	0x00000180
+#घोषणा TXX9_SIFCR_RDIL_MAX	0x00000180
+#घोषणा TXX9_SIFCR_TDIL_MASK	0x00000018
+#घोषणा TXX9_SIFCR_TDIL_1	0x00000000
+#घोषणा TXX9_SIFCR_TDIL_4	0x00000001
+#घोषणा TXX9_SIFCR_TDIL_8	0x00000010
+#घोषणा TXX9_SIFCR_TDIL_MAX	0x00000010
+#घोषणा TXX9_SIFCR_TFRST	0x00000004
+#घोषणा TXX9_SIFCR_RFRST	0x00000002
+#घोषणा TXX9_SIFCR_FRSTE	0x00000001
+#घोषणा TXX9_SIO_TX_FIFO	8
+#घोषणा TXX9_SIO_RX_FIFO	16
 
 /* SIFLCR : Flow Control */
-#define TXX9_SIFLCR_RCS	0x00001000
-#define TXX9_SIFLCR_TES	0x00000800
-#define TXX9_SIFLCR_RTSSC	0x00000200
-#define TXX9_SIFLCR_RSDE	0x00000100
-#define TXX9_SIFLCR_TSDE	0x00000080
-#define TXX9_SIFLCR_RTSTL_MASK	0x0000001e
-#define TXX9_SIFLCR_RTSTL_MAX	0x0000001e
-#define TXX9_SIFLCR_TBRK	0x00000001
+#घोषणा TXX9_SIFLCR_RCS	0x00001000
+#घोषणा TXX9_SIFLCR_TES	0x00000800
+#घोषणा TXX9_SIFLCR_RTSSC	0x00000200
+#घोषणा TXX9_SIFLCR_RSDE	0x00000100
+#घोषणा TXX9_SIFLCR_TSDE	0x00000080
+#घोषणा TXX9_SIFLCR_RTSTL_MASK	0x0000001e
+#घोषणा TXX9_SIFLCR_RTSTL_MAX	0x0000001e
+#घोषणा TXX9_SIFLCR_TBRK	0x00000001
 
 /* SIBGR : Baudrate Control */
-#define TXX9_SIBGR_BCLK_MASK	0x00000300
-#define TXX9_SIBGR_BCLK_T0	0x00000000
-#define TXX9_SIBGR_BCLK_T2	0x00000100
-#define TXX9_SIBGR_BCLK_T4	0x00000200
-#define TXX9_SIBGR_BCLK_T6	0x00000300
-#define TXX9_SIBGR_BRD_MASK	0x000000ff
+#घोषणा TXX9_SIBGR_BCLK_MASK	0x00000300
+#घोषणा TXX9_SIBGR_BCLK_T0	0x00000000
+#घोषणा TXX9_SIBGR_BCLK_T2	0x00000100
+#घोषणा TXX9_SIBGR_BCLK_T4	0x00000200
+#घोषणा TXX9_SIBGR_BCLK_T6	0x00000300
+#घोषणा TXX9_SIBGR_BRD_MASK	0x000000ff
 
-static inline unsigned int sio_in(struct uart_txx9_port *up, int offset)
-{
-	switch (up->port.iotype) {
-	default:
-		return __raw_readl(up->port.membase + offset);
-	case UPIO_PORT:
-		return inl(up->port.iobase + offset);
-	}
-}
+अटल अंतरभूत अचिन्हित पूर्णांक sio_in(काष्ठा uart_txx9_port *up, पूर्णांक offset)
+अणु
+	चयन (up->port.iotype) अणु
+	शेष:
+		वापस __raw_पढ़ोl(up->port.membase + offset);
+	हाल UPIO_PORT:
+		वापस inl(up->port.iobase + offset);
+	पूर्ण
+पूर्ण
 
-static inline void
-sio_out(struct uart_txx9_port *up, int offset, int value)
-{
-	switch (up->port.iotype) {
-	default:
-		__raw_writel(value, up->port.membase + offset);
-		break;
-	case UPIO_PORT:
+अटल अंतरभूत व्योम
+sio_out(काष्ठा uart_txx9_port *up, पूर्णांक offset, पूर्णांक value)
+अणु
+	चयन (up->port.iotype) अणु
+	शेष:
+		__raw_ग_लिखोl(value, up->port.membase + offset);
+		अवरोध;
+	हाल UPIO_PORT:
 		outl(value, up->port.iobase + offset);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static inline void
-sio_mask(struct uart_txx9_port *up, int offset, unsigned int value)
-{
+अटल अंतरभूत व्योम
+sio_mask(काष्ठा uart_txx9_port *up, पूर्णांक offset, अचिन्हित पूर्णांक value)
+अणु
 	sio_out(up, offset, sio_in(up, offset) & ~value);
-}
-static inline void
-sio_set(struct uart_txx9_port *up, int offset, unsigned int value)
-{
+पूर्ण
+अटल अंतरभूत व्योम
+sio_set(काष्ठा uart_txx9_port *up, पूर्णांक offset, अचिन्हित पूर्णांक value)
+अणु
 	sio_out(up, offset, sio_in(up, offset) | value);
-}
+पूर्ण
 
-static inline void
-sio_quot_set(struct uart_txx9_port *up, int quot)
-{
+अटल अंतरभूत व्योम
+sio_quot_set(काष्ठा uart_txx9_port *up, पूर्णांक quot)
+अणु
 	quot >>= 1;
-	if (quot < 256)
+	अगर (quot < 256)
 		sio_out(up, TXX9_SIBGR, quot | TXX9_SIBGR_BCLK_T0);
-	else if (quot < (256 << 2))
+	अन्यथा अगर (quot < (256 << 2))
 		sio_out(up, TXX9_SIBGR, (quot >> 2) | TXX9_SIBGR_BCLK_T2);
-	else if (quot < (256 << 4))
+	अन्यथा अगर (quot < (256 << 4))
 		sio_out(up, TXX9_SIBGR, (quot >> 4) | TXX9_SIBGR_BCLK_T4);
-	else if (quot < (256 << 6))
+	अन्यथा अगर (quot < (256 << 6))
 		sio_out(up, TXX9_SIBGR, (quot >> 6) | TXX9_SIBGR_BCLK_T6);
-	else
+	अन्यथा
 		sio_out(up, TXX9_SIBGR, 0xff | TXX9_SIBGR_BCLK_T6);
-}
+पूर्ण
 
-static struct uart_txx9_port *to_uart_txx9_port(struct uart_port *port)
-{
-	return container_of(port, struct uart_txx9_port, port);
-}
+अटल काष्ठा uart_txx9_port *to_uart_txx9_port(काष्ठा uart_port *port)
+अणु
+	वापस container_of(port, काष्ठा uart_txx9_port, port);
+पूर्ण
 
-static void serial_txx9_stop_tx(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
+अटल व्योम serial_txx9_stop_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
 	sio_mask(up, TXX9_SIDICR, TXX9_SIDICR_TIE);
-}
+पूर्ण
 
-static void serial_txx9_start_tx(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
+अटल व्योम serial_txx9_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
 	sio_set(up, TXX9_SIDICR, TXX9_SIDICR_TIE);
-}
+पूर्ण
 
-static void serial_txx9_stop_rx(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	up->port.read_status_mask &= ~TXX9_SIDISR_RDIS;
-}
+अटल व्योम serial_txx9_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	up->port.पढ़ो_status_mask &= ~TXX9_SIDISR_RDIS;
+पूर्ण
 
-static void serial_txx9_initialize(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	unsigned int tmout = 10000;
+अटल व्योम serial_txx9_initialize(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	अचिन्हित पूर्णांक पंचांगout = 10000;
 
 	sio_out(up, TXX9_SIFCR, TXX9_SIFCR_SWRST);
-	/* TX4925 BUG WORKAROUND.  Accessing SIOC register
+	/* TX4925 BUG WORKAROUND.  Accessing SIOC रेजिस्टर
 	 * immediately after soft reset causes bus error. */
 	udelay(1);
-	while ((sio_in(up, TXX9_SIFCR) & TXX9_SIFCR_SWRST) && --tmout)
+	जबतक ((sio_in(up, TXX9_SIFCR) & TXX9_SIFCR_SWRST) && --पंचांगout)
 		udelay(1);
-	/* TX Int by FIFO Empty, RX Int by Receiving 1 char. */
+	/* TX Int by FIFO Empty, RX Int by Receiving 1 अक्षर. */
 	sio_set(up, TXX9_SIFCR,
 		TXX9_SIFCR_TDIL_MAX | TXX9_SIFCR_RDIL_1);
 	/* initial settings */
@@ -255,21 +256,21 @@ static void serial_txx9_initialize(struct uart_port *port)
 		TXX9_SILCR_UMODE_8BIT | TXX9_SILCR_USBL_1BIT |
 		((up->port.flags & UPF_TXX9_USE_SCLK) ?
 		 TXX9_SILCR_SCS_SCLK_BG : TXX9_SILCR_SCS_IMCLK_BG));
-	sio_quot_set(up, uart_get_divisor(port, 9600));
+	sio_quot_set(up, uart_get_भागisor(port, 9600));
 	sio_out(up, TXX9_SIFLCR, TXX9_SIFLCR_RTSTL_MAX /* 15 */);
 	sio_out(up, TXX9_SIDICR, 0);
-}
+पूर्ण
 
-static inline void
-receive_chars(struct uart_txx9_port *up, unsigned int *status)
-{
-	unsigned char ch;
-	unsigned int disr = *status;
-	int max_count = 256;
-	char flag;
-	unsigned int next_ignore_status_mask;
+अटल अंतरभूत व्योम
+receive_अक्षरs(काष्ठा uart_txx9_port *up, अचिन्हित पूर्णांक *status)
+अणु
+	अचिन्हित अक्षर ch;
+	अचिन्हित पूर्णांक disr = *status;
+	पूर्णांक max_count = 256;
+	अक्षर flag;
+	अचिन्हित पूर्णांक next_ignore_status_mask;
 
-	do {
+	करो अणु
 		ch = sio_in(up, TXX9_SIRFIFO);
 		flag = TTY_NORMAL;
 		up->port.icount.rx++;
@@ -277,268 +278,268 @@ receive_chars(struct uart_txx9_port *up, unsigned int *status)
 		/* mask out RFDN_MASK bit added by previous overrun */
 		next_ignore_status_mask =
 			up->port.ignore_status_mask & ~TXX9_SIDISR_RFDN_MASK;
-		if (unlikely(disr & (TXX9_SIDISR_UBRK | TXX9_SIDISR_UPER |
-				     TXX9_SIDISR_UFER | TXX9_SIDISR_UOER))) {
+		अगर (unlikely(disr & (TXX9_SIDISR_UBRK | TXX9_SIDISR_UPER |
+				     TXX9_SIDISR_UFER | TXX9_SIDISR_UOER))) अणु
 			/*
 			 * For statistics only
 			 */
-			if (disr & TXX9_SIDISR_UBRK) {
+			अगर (disr & TXX9_SIDISR_UBRK) अणु
 				disr &= ~(TXX9_SIDISR_UFER | TXX9_SIDISR_UPER);
 				up->port.icount.brk++;
 				/*
-				 * We do the SysRQ and SAK checking
-				 * here because otherwise the break
+				 * We करो the SysRQ and SAK checking
+				 * here because otherwise the अवरोध
 				 * may get masked by ignore_status_mask
-				 * or read_status_mask.
+				 * or पढ़ो_status_mask.
 				 */
-				if (uart_handle_break(&up->port))
-					goto ignore_char;
-			} else if (disr & TXX9_SIDISR_UPER)
+				अगर (uart_handle_अवरोध(&up->port))
+					जाओ ignore_अक्षर;
+			पूर्ण अन्यथा अगर (disr & TXX9_SIDISR_UPER)
 				up->port.icount.parity++;
-			else if (disr & TXX9_SIDISR_UFER)
+			अन्यथा अगर (disr & TXX9_SIDISR_UFER)
 				up->port.icount.frame++;
-			if (disr & TXX9_SIDISR_UOER) {
+			अगर (disr & TXX9_SIDISR_UOER) अणु
 				up->port.icount.overrun++;
 				/*
-				 * The receiver read buffer still hold
-				 * a char which caused overrun.
-				 * Ignore next char by adding RFDN_MASK
+				 * The receiver पढ़ो buffer still hold
+				 * a अक्षर which caused overrun.
+				 * Ignore next अक्षर by adding RFDN_MASK
 				 * to ignore_status_mask temporarily.
 				 */
 				next_ignore_status_mask |=
 					TXX9_SIDISR_RFDN_MASK;
-			}
+			पूर्ण
 
 			/*
 			 * Mask off conditions which should be ingored.
 			 */
-			disr &= up->port.read_status_mask;
+			disr &= up->port.पढ़ो_status_mask;
 
-			if (disr & TXX9_SIDISR_UBRK) {
+			अगर (disr & TXX9_SIDISR_UBRK) अणु
 				flag = TTY_BREAK;
-			} else if (disr & TXX9_SIDISR_UPER)
+			पूर्ण अन्यथा अगर (disr & TXX9_SIDISR_UPER)
 				flag = TTY_PARITY;
-			else if (disr & TXX9_SIDISR_UFER)
+			अन्यथा अगर (disr & TXX9_SIDISR_UFER)
 				flag = TTY_FRAME;
-		}
-		if (uart_handle_sysrq_char(&up->port, ch))
-			goto ignore_char;
+		पूर्ण
+		अगर (uart_handle_sysrq_अक्षर(&up->port, ch))
+			जाओ ignore_अक्षर;
 
-		uart_insert_char(&up->port, disr, TXX9_SIDISR_UOER, ch, flag);
+		uart_insert_अक्षर(&up->port, disr, TXX9_SIDISR_UOER, ch, flag);
 
-	ignore_char:
+	ignore_अक्षर:
 		up->port.ignore_status_mask = next_ignore_status_mask;
 		disr = sio_in(up, TXX9_SIDISR);
-	} while (!(disr & TXX9_SIDISR_UVALID) && (max_count-- > 0));
+	पूर्ण जबतक (!(disr & TXX9_SIDISR_UVALID) && (max_count-- > 0));
 
 	tty_flip_buffer_push(&up->port.state->port);
 
 	*status = disr;
-}
+पूर्ण
 
-static inline void transmit_chars(struct uart_txx9_port *up)
-{
-	struct circ_buf *xmit = &up->port.state->xmit;
-	int count;
+अटल अंतरभूत व्योम transmit_अक्षरs(काष्ठा uart_txx9_port *up)
+अणु
+	काष्ठा circ_buf *xmit = &up->port.state->xmit;
+	पूर्णांक count;
 
-	if (up->port.x_char) {
-		sio_out(up, TXX9_SITFIFO, up->port.x_char);
+	अगर (up->port.x_अक्षर) अणु
+		sio_out(up, TXX9_SITFIFO, up->port.x_अक्षर);
 		up->port.icount.tx++;
-		up->port.x_char = 0;
-		return;
-	}
-	if (uart_circ_empty(xmit) || uart_tx_stopped(&up->port)) {
+		up->port.x_अक्षर = 0;
+		वापस;
+	पूर्ण
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(&up->port)) अणु
 		serial_txx9_stop_tx(&up->port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	count = TXX9_SIO_TX_FIFO;
-	do {
+	करो अणु
 		sio_out(up, TXX9_SITFIFO, xmit->buf[xmit->tail]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		up->port.icount.tx++;
-		if (uart_circ_empty(xmit))
-			break;
-	} while (--count > 0);
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
+	पूर्ण जबतक (--count > 0);
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&up->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&up->port);
 
-	if (uart_circ_empty(xmit))
+	अगर (uart_circ_empty(xmit))
 		serial_txx9_stop_tx(&up->port);
-}
+पूर्ण
 
-static irqreturn_t serial_txx9_interrupt(int irq, void *dev_id)
-{
-	int pass_counter = 0;
-	struct uart_txx9_port *up = dev_id;
-	unsigned int status;
+अटल irqवापस_t serial_txx9_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	पूर्णांक pass_counter = 0;
+	काष्ठा uart_txx9_port *up = dev_id;
+	अचिन्हित पूर्णांक status;
 
-	while (1) {
+	जबतक (1) अणु
 		spin_lock(&up->port.lock);
 		status = sio_in(up, TXX9_SIDISR);
-		if (!(sio_in(up, TXX9_SIDICR) & TXX9_SIDICR_TIE))
+		अगर (!(sio_in(up, TXX9_SIDICR) & TXX9_SIDICR_TIE))
 			status &= ~TXX9_SIDISR_TDIS;
-		if (!(status & (TXX9_SIDISR_TDIS | TXX9_SIDISR_RDIS |
-				TXX9_SIDISR_TOUT))) {
+		अगर (!(status & (TXX9_SIDISR_TDIS | TXX9_SIDISR_RDIS |
+				TXX9_SIDISR_TOUT))) अणु
 			spin_unlock(&up->port.lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (status & TXX9_SIDISR_RDIS)
-			receive_chars(up, &status);
-		if (status & TXX9_SIDISR_TDIS)
-			transmit_chars(up);
+		अगर (status & TXX9_SIDISR_RDIS)
+			receive_अक्षरs(up, &status);
+		अगर (status & TXX9_SIDISR_TDIS)
+			transmit_अक्षरs(up);
 		/* Clear TX/RX Int. Status */
 		sio_mask(up, TXX9_SIDISR,
 			 TXX9_SIDISR_TDIS | TXX9_SIDISR_RDIS |
 			 TXX9_SIDISR_TOUT);
 		spin_unlock(&up->port.lock);
 
-		if (pass_counter++ > PASS_LIMIT)
-			break;
-	}
+		अगर (pass_counter++ > PASS_LIMIT)
+			अवरोध;
+	पूर्ण
 
-	return pass_counter ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस pass_counter ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static unsigned int serial_txx9_tx_empty(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	unsigned long flags;
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक serial_txx9_tx_empty(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ret;
 
 	spin_lock_irqsave(&up->port.lock, flags);
 	ret = (sio_in(up, TXX9_SICISR) & TXX9_SICISR_TXALS) ? TIOCSER_TEMT : 0;
 	spin_unlock_irqrestore(&up->port.lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int serial_txx9_get_mctrl(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक serial_txx9_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	अचिन्हित पूर्णांक ret;
 
 	/* no modem control lines */
 	ret = TIOCM_CAR | TIOCM_DSR;
 	ret |= (sio_in(up, TXX9_SIFLCR) & TXX9_SIFLCR_RTSSC) ? 0 : TIOCM_RTS;
 	ret |= (sio_in(up, TXX9_SICISR) & TXX9_SICISR_CTSS) ? 0 : TIOCM_CTS;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void serial_txx9_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
+अटल व्योम serial_txx9_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
 
-	if (mctrl & TIOCM_RTS)
+	अगर (mctrl & TIOCM_RTS)
 		sio_mask(up, TXX9_SIFLCR, TXX9_SIFLCR_RTSSC);
-	else
+	अन्यथा
 		sio_set(up, TXX9_SIFLCR, TXX9_SIFLCR_RTSSC);
-}
+पूर्ण
 
-static void serial_txx9_break_ctl(struct uart_port *port, int break_state)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	unsigned long flags;
+अटल व्योम serial_txx9_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&up->port.lock, flags);
-	if (break_state == -1)
+	अगर (अवरोध_state == -1)
 		sio_set(up, TXX9_SIFLCR, TXX9_SIFLCR_TBRK);
-	else
+	अन्यथा
 		sio_mask(up, TXX9_SIFLCR, TXX9_SIFLCR_TBRK);
 	spin_unlock_irqrestore(&up->port.lock, flags);
-}
+पूर्ण
 
-#if defined(CONFIG_SERIAL_TXX9_CONSOLE) || defined(CONFIG_CONSOLE_POLL)
+#अगर defined(CONFIG_SERIAL_TXX9_CONSOLE) || defined(CONFIG_CONSOLE_POLL)
 /*
- *	Wait for transmitter & holding register to empty
+ *	Wait क्रम transmitter & holding रेजिस्टर to empty
  */
-static void wait_for_xmitr(struct uart_txx9_port *up)
-{
-	unsigned int tmout = 10000;
+अटल व्योम रुको_क्रम_xmitr(काष्ठा uart_txx9_port *up)
+अणु
+	अचिन्हित पूर्णांक पंचांगout = 10000;
 
-	/* Wait up to 10ms for the character(s) to be sent. */
-	while (--tmout &&
+	/* Wait up to 10ms क्रम the अक्षरacter(s) to be sent. */
+	जबतक (--पंचांगout &&
 	       !(sio_in(up, TXX9_SICISR) & TXX9_SICISR_TXALS))
 		udelay(1);
 
-	/* Wait up to 1s for flow control if necessary */
-	if (up->port.flags & UPF_CONS_FLOW) {
-		tmout = 1000000;
-		while (--tmout &&
+	/* Wait up to 1s क्रम flow control अगर necessary */
+	अगर (up->port.flags & UPF_CONS_FLOW) अणु
+		पंचांगout = 1000000;
+		जबतक (--पंचांगout &&
 		       (sio_in(up, TXX9_SICISR) & TXX9_SICISR_CTSS))
 			udelay(1);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_CONSOLE_POLL
+#अगर_घोषित CONFIG_CONSOLE_POLL
 /*
- * Console polling routines for writing and reading from the uart while
- * in an interrupt or debug context.
+ * Console polling routines क्रम writing and पढ़ोing from the uart जबतक
+ * in an पूर्णांकerrupt or debug context.
  */
 
-static int serial_txx9_get_poll_char(struct uart_port *port)
-{
-	unsigned int ier;
-	unsigned char c;
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
+अटल पूर्णांक serial_txx9_get_poll_अक्षर(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक ier;
+	अचिन्हित अक्षर c;
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
 
 	/*
-	 *	First save the IER then disable the interrupts
+	 *	First save the IER then disable the पूर्णांकerrupts
 	 */
 	ier = sio_in(up, TXX9_SIDICR);
 	sio_out(up, TXX9_SIDICR, 0);
 
-	while (sio_in(up, TXX9_SIDISR) & TXX9_SIDISR_UVALID)
+	जबतक (sio_in(up, TXX9_SIDISR) & TXX9_SIDISR_UVALID)
 		;
 
 	c = sio_in(up, TXX9_SIRFIFO);
 
 	/*
-	 *	Finally, clear RX interrupt status
+	 *	Finally, clear RX पूर्णांकerrupt status
 	 *	and restore the IER
 	 */
 	sio_mask(up, TXX9_SIDISR, TXX9_SIDISR_RDIS);
 	sio_out(up, TXX9_SIDICR, ier);
-	return c;
-}
+	वापस c;
+पूर्ण
 
 
-static void serial_txx9_put_poll_char(struct uart_port *port, unsigned char c)
-{
-	unsigned int ier;
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
+अटल व्योम serial_txx9_put_poll_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
+अणु
+	अचिन्हित पूर्णांक ier;
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
 
 	/*
-	 *	First save the IER then disable the interrupts
+	 *	First save the IER then disable the पूर्णांकerrupts
 	 */
 	ier = sio_in(up, TXX9_SIDICR);
 	sio_out(up, TXX9_SIDICR, 0);
 
-	wait_for_xmitr(up);
+	रुको_क्रम_xmitr(up);
 	/*
-	 *	Send the character out.
+	 *	Send the अक्षरacter out.
 	 */
 	sio_out(up, TXX9_SITFIFO, c);
 
 	/*
-	 *	Finally, wait for transmitter to become empty
+	 *	Finally, रुको क्रम transmitter to become empty
 	 *	and restore the IER
 	 */
-	wait_for_xmitr(up);
+	रुको_क्रम_xmitr(up);
 	sio_out(up, TXX9_SIDICR, ier);
-}
+पूर्ण
 
-#endif /* CONFIG_CONSOLE_POLL */
+#पूर्ण_अगर /* CONFIG_CONSOLE_POLL */
 
-static int serial_txx9_startup(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	unsigned long flags;
-	int retval;
+अटल पूर्णांक serial_txx9_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retval;
 
 	/*
 	 * Clear the FIFO buffers and disable them.
@@ -552,14 +553,14 @@ static int serial_txx9_startup(struct uart_port *port)
 	sio_out(up, TXX9_SIDICR, 0);
 
 	/*
-	 * Clear the interrupt registers.
+	 * Clear the पूर्णांकerrupt रेजिस्टरs.
 	 */
 	sio_out(up, TXX9_SIDISR, 0);
 
-	retval = request_irq(up->port.irq, serial_txx9_interrupt,
+	retval = request_irq(up->port.irq, serial_txx9_पूर्णांकerrupt,
 			     IRQF_SHARED, "serial_txx9", up);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	/*
 	 * Now, initialize the UART
@@ -572,38 +573,38 @@ static int serial_txx9_startup(struct uart_port *port)
 	sio_mask(up, TXX9_SIFLCR, TXX9_SIFLCR_RSDE | TXX9_SIFLCR_TSDE);
 
 	/*
-	 * Finally, enable interrupts.
+	 * Finally, enable पूर्णांकerrupts.
 	 */
 	sio_set(up, TXX9_SIDICR, TXX9_SIDICR_RIE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void serial_txx9_shutdown(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	unsigned long flags;
+अटल व्योम serial_txx9_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * Disable interrupts from this port
+	 * Disable पूर्णांकerrupts from this port
 	 */
-	sio_out(up, TXX9_SIDICR, 0);	/* disable all intrs */
+	sio_out(up, TXX9_SIDICR, 0);	/* disable all पूर्णांकrs */
 
 	spin_lock_irqsave(&up->port.lock, flags);
 	serial_txx9_set_mctrl(&up->port, up->port.mctrl);
 	spin_unlock_irqrestore(&up->port.lock, flags);
 
 	/*
-	 * Disable break condition
+	 * Disable अवरोध condition
 	 */
 	sio_mask(up, TXX9_SIFLCR, TXX9_SIFLCR_TBRK);
 
-#ifdef CONFIG_SERIAL_TXX9_CONSOLE
-	if (up->port.cons && up->port.line == up->port.cons->index) {
-		free_irq(up->port.irq, up);
-		return;
-	}
-#endif
+#अगर_घोषित CONFIG_SERIAL_TXX9_CONSOLE
+	अगर (up->port.cons && up->port.line == up->port.cons->index) अणु
+		मुक्त_irq(up->port.irq, up);
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 	/* reset FIFOs */
 	sio_set(up, TXX9_SIFCR,
 		TXX9_SIFCR_TFRST | TXX9_SIFCR_RFRST | TXX9_SIFCR_FRSTE);
@@ -614,20 +615,20 @@ static void serial_txx9_shutdown(struct uart_port *port)
 	/* Disable RX/TX */
 	sio_set(up, TXX9_SIFLCR, TXX9_SIFLCR_RSDE | TXX9_SIFLCR_TSDE);
 
-	free_irq(up->port.irq, up);
-}
+	मुक्त_irq(up->port.irq, up);
+पूर्ण
 
-static void
-serial_txx9_set_termios(struct uart_port *port, struct ktermios *termios,
-		       struct ktermios *old)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	unsigned int cval, fcr = 0;
-	unsigned long flags;
-	unsigned int baud, quot;
+अटल व्योम
+serial_txx9_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+		       काष्ठा ktermios *old)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	अचिन्हित पूर्णांक cval, fcr = 0;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud, quot;
 
 	/*
-	 * We don't support modem control lines.
+	 * We करोn't support modem control lines.
 	 */
 	termios->c_cflag &= ~(HUPCL | CMSPAR);
 	termios->c_cflag |= CLOCAL;
@@ -635,88 +636,88 @@ serial_txx9_set_termios(struct uart_port *port, struct ktermios *termios,
 	cval = sio_in(up, TXX9_SILCR);
 	/* byte size and parity */
 	cval &= ~TXX9_SILCR_UMODE_MASK;
-	switch (termios->c_cflag & CSIZE) {
-	case CS7:
+	चयन (termios->c_cflag & CSIZE) अणु
+	हाल CS7:
 		cval |= TXX9_SILCR_UMODE_7BIT;
-		break;
-	default:
-	case CS5:	/* not supported */
-	case CS6:	/* not supported */
-	case CS8:
+		अवरोध;
+	शेष:
+	हाल CS5:	/* not supported */
+	हाल CS6:	/* not supported */
+	हाल CS8:
 		cval |= TXX9_SILCR_UMODE_8BIT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cval &= ~TXX9_SILCR_USBL_MASK;
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		cval |= TXX9_SILCR_USBL_2BIT;
-	else
+	अन्यथा
 		cval |= TXX9_SILCR_USBL_1BIT;
 	cval &= ~(TXX9_SILCR_UPEN | TXX9_SILCR_UEPS);
-	if (termios->c_cflag & PARENB)
+	अगर (termios->c_cflag & PARENB)
 		cval |= TXX9_SILCR_UPEN;
-	if (!(termios->c_cflag & PARODD))
+	अगर (!(termios->c_cflag & PARODD))
 		cval |= TXX9_SILCR_UEPS;
 
 	/*
-	 * Ask the core to calculate the divisor for us.
+	 * Ask the core to calculate the भागisor क्रम us.
 	 */
 	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk/16/2);
-	quot = uart_get_divisor(port, baud);
+	quot = uart_get_भागisor(port, baud);
 
 	/* Set up FIFOs */
-	/* TX Int by FIFO Empty, RX Int by Receiving 1 char. */
+	/* TX Int by FIFO Empty, RX Int by Receiving 1 अक्षर. */
 	fcr = TXX9_SIFCR_TDIL_MAX | TXX9_SIFCR_RDIL_1;
 
 	/*
 	 * Ok, we're now changing the port state.  Do it with
-	 * interrupts disabled.
+	 * पूर्णांकerrupts disabled.
 	 */
 	spin_lock_irqsave(&up->port.lock, flags);
 
 	/*
-	 * Update the per-port timeout.
+	 * Update the per-port समयout.
 	 */
-	uart_update_timeout(port, termios->c_cflag, baud);
+	uart_update_समयout(port, termios->c_cflag, baud);
 
-	up->port.read_status_mask = TXX9_SIDISR_UOER |
+	up->port.पढ़ो_status_mask = TXX9_SIDISR_UOER |
 		TXX9_SIDISR_TDIS | TXX9_SIDISR_RDIS;
-	if (termios->c_iflag & INPCK)
-		up->port.read_status_mask |= TXX9_SIDISR_UFER | TXX9_SIDISR_UPER;
-	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
-		up->port.read_status_mask |= TXX9_SIDISR_UBRK;
+	अगर (termios->c_अगरlag & INPCK)
+		up->port.पढ़ो_status_mask |= TXX9_SIDISR_UFER | TXX9_SIDISR_UPER;
+	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
+		up->port.पढ़ो_status_mask |= TXX9_SIDISR_UBRK;
 
 	/*
 	 * Characteres to ignore
 	 */
 	up->port.ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		up->port.ignore_status_mask |= TXX9_SIDISR_UPER | TXX9_SIDISR_UFER;
-	if (termios->c_iflag & IGNBRK) {
+	अगर (termios->c_अगरlag & IGNBRK) अणु
 		up->port.ignore_status_mask |= TXX9_SIDISR_UBRK;
 		/*
-		 * If we're ignoring parity and break indicators,
-		 * ignore overruns too (for real raw support).
+		 * If we're ignoring parity and अवरोध indicators,
+		 * ignore overruns too (क्रम real raw support).
 		 */
-		if (termios->c_iflag & IGNPAR)
+		अगर (termios->c_अगरlag & IGNPAR)
 			up->port.ignore_status_mask |= TXX9_SIDISR_UOER;
-	}
+	पूर्ण
 
 	/*
-	 * ignore all characters if CREAD is not set
+	 * ignore all अक्षरacters अगर CREAD is not set
 	 */
-	if ((termios->c_cflag & CREAD) == 0)
+	अगर ((termios->c_cflag & CREAD) == 0)
 		up->port.ignore_status_mask |= TXX9_SIDISR_RDIS;
 
 	/* CTS flow control flag */
-	if ((termios->c_cflag & CRTSCTS) &&
-	    (up->port.flags & UPF_TXX9_HAVE_CTS_LINE)) {
+	अगर ((termios->c_cflag & CRTSCTS) &&
+	    (up->port.flags & UPF_TXX9_HAVE_CTS_LINE)) अणु
 		sio_set(up, TXX9_SIFLCR,
 			TXX9_SIFLCR_RCS | TXX9_SIFLCR_TES);
-	} else {
+	पूर्ण अन्यथा अणु
 		sio_mask(up, TXX9_SIFLCR,
 			 TXX9_SIFLCR_RCS | TXX9_SIFLCR_TES);
-	}
+	पूर्ण
 
 	sio_out(up, TXX9_SILCR, cval);
 	sio_quot_set(up, quot);
@@ -724,257 +725,257 @@ serial_txx9_set_termios(struct uart_port *port, struct ktermios *termios,
 
 	serial_txx9_set_mctrl(&up->port, up->port.mctrl);
 	spin_unlock_irqrestore(&up->port.lock, flags);
-}
+पूर्ण
 
-static void
-serial_txx9_pm(struct uart_port *port, unsigned int state,
-	      unsigned int oldstate)
-{
+अटल व्योम
+serial_txx9_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक state,
+	      अचिन्हित पूर्णांक oldstate)
+अणु
 	/*
 	 * If oldstate was -1 this is called from
-	 * uart_configure_port().  In this case do not initialize the
-	 * port now, because the port was already initialized (for
-	 * non-console port) or should not be initialized here (for
+	 * uart_configure_port().  In this हाल करो not initialize the
+	 * port now, because the port was alपढ़ोy initialized (क्रम
+	 * non-console port) or should not be initialized here (क्रम
 	 * console port).  If we initialized the port here we lose
 	 * serial console settings.
 	 */
-	if (state == 0 && oldstate != -1)
+	अगर (state == 0 && oldstate != -1)
 		serial_txx9_initialize(port);
-}
+पूर्ण
 
-static int serial_txx9_request_resource(struct uart_txx9_port *up)
-{
-	unsigned int size = TXX9_REGION_SIZE;
-	int ret = 0;
+अटल पूर्णांक serial_txx9_request_resource(काष्ठा uart_txx9_port *up)
+अणु
+	अचिन्हित पूर्णांक size = TXX9_REGION_SIZE;
+	पूर्णांक ret = 0;
 
-	switch (up->port.iotype) {
-	default:
-		if (!up->port.mapbase)
-			break;
+	चयन (up->port.iotype) अणु
+	शेष:
+		अगर (!up->port.mapbase)
+			अवरोध;
 
-		if (!request_mem_region(up->port.mapbase, size, "serial_txx9")) {
+		अगर (!request_mem_region(up->port.mapbase, size, "serial_txx9")) अणु
 			ret = -EBUSY;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (up->port.flags & UPF_IOREMAP) {
+		अगर (up->port.flags & UPF_IOREMAP) अणु
 			up->port.membase = ioremap(up->port.mapbase, size);
-			if (!up->port.membase) {
+			अगर (!up->port.membase) अणु
 				release_mem_region(up->port.mapbase, size);
 				ret = -ENOMEM;
-			}
-		}
-		break;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case UPIO_PORT:
-		if (!request_region(up->port.iobase, size, "serial_txx9"))
+	हाल UPIO_PORT:
+		अगर (!request_region(up->port.iobase, size, "serial_txx9"))
 			ret = -EBUSY;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void serial_txx9_release_resource(struct uart_txx9_port *up)
-{
-	unsigned int size = TXX9_REGION_SIZE;
+अटल व्योम serial_txx9_release_resource(काष्ठा uart_txx9_port *up)
+अणु
+	अचिन्हित पूर्णांक size = TXX9_REGION_SIZE;
 
-	switch (up->port.iotype) {
-	default:
-		if (!up->port.mapbase)
-			break;
+	चयन (up->port.iotype) अणु
+	शेष:
+		अगर (!up->port.mapbase)
+			अवरोध;
 
-		if (up->port.flags & UPF_IOREMAP) {
+		अगर (up->port.flags & UPF_IOREMAP) अणु
 			iounmap(up->port.membase);
-			up->port.membase = NULL;
-		}
+			up->port.membase = शून्य;
+		पूर्ण
 
 		release_mem_region(up->port.mapbase, size);
-		break;
+		अवरोध;
 
-	case UPIO_PORT:
+	हाल UPIO_PORT:
 		release_region(up->port.iobase, size);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void serial_txx9_release_port(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
+अटल व्योम serial_txx9_release_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
 	serial_txx9_release_resource(up);
-}
+पूर्ण
 
-static int serial_txx9_request_port(struct uart_port *port)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	return serial_txx9_request_resource(up);
-}
+अटल पूर्णांक serial_txx9_request_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	वापस serial_txx9_request_resource(up);
+पूर्ण
 
-static void serial_txx9_config_port(struct uart_port *port, int uflags)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
-	int ret;
+अटल व्योम serial_txx9_config_port(काष्ठा uart_port *port, पूर्णांक uflags)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
+	पूर्णांक ret;
 
 	/*
-	 * Find the region that we can probe for.  This in turn
-	 * tells us whether we can probe for the type of port.
+	 * Find the region that we can probe क्रम.  This in turn
+	 * tells us whether we can probe क्रम the type of port.
 	 */
 	ret = serial_txx9_request_resource(up);
-	if (ret < 0)
-		return;
+	अगर (ret < 0)
+		वापस;
 	port->type = PORT_TXX9;
-	up->port.fifosize = TXX9_SIO_TX_FIFO;
+	up->port.fअगरosize = TXX9_SIO_TX_FIFO;
 
-#ifdef CONFIG_SERIAL_TXX9_CONSOLE
-	if (up->port.line == up->port.cons->index)
-		return;
-#endif
+#अगर_घोषित CONFIG_SERIAL_TXX9_CONSOLE
+	अगर (up->port.line == up->port.cons->index)
+		वापस;
+#पूर्ण_अगर
 	serial_txx9_initialize(port);
-}
+पूर्ण
 
-static const char *
-serial_txx9_type(struct uart_port *port)
-{
-	return "txx9";
-}
+अटल स्थिर अक्षर *
+serial_txx9_type(काष्ठा uart_port *port)
+अणु
+	वापस "txx9";
+पूर्ण
 
-static const struct uart_ops serial_txx9_pops = {
+अटल स्थिर काष्ठा uart_ops serial_txx9_pops = अणु
 	.tx_empty	= serial_txx9_tx_empty,
 	.set_mctrl	= serial_txx9_set_mctrl,
 	.get_mctrl	= serial_txx9_get_mctrl,
 	.stop_tx	= serial_txx9_stop_tx,
 	.start_tx	= serial_txx9_start_tx,
 	.stop_rx	= serial_txx9_stop_rx,
-	.break_ctl	= serial_txx9_break_ctl,
+	.अवरोध_ctl	= serial_txx9_अवरोध_ctl,
 	.startup	= serial_txx9_startup,
-	.shutdown	= serial_txx9_shutdown,
+	.shutकरोwn	= serial_txx9_shutकरोwn,
 	.set_termios	= serial_txx9_set_termios,
 	.pm		= serial_txx9_pm,
 	.type		= serial_txx9_type,
 	.release_port	= serial_txx9_release_port,
 	.request_port	= serial_txx9_request_port,
 	.config_port	= serial_txx9_config_port,
-#ifdef CONFIG_CONSOLE_POLL
-	.poll_get_char	= serial_txx9_get_poll_char,
-	.poll_put_char	= serial_txx9_put_poll_char,
-#endif
-};
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	.poll_get_अक्षर	= serial_txx9_get_poll_अक्षर,
+	.poll_put_अक्षर	= serial_txx9_put_poll_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-static struct uart_txx9_port serial_txx9_ports[UART_NR];
+अटल काष्ठा uart_txx9_port serial_txx9_ports[UART_NR];
 
-static void __init serial_txx9_register_ports(struct uart_driver *drv,
-					      struct device *dev)
-{
-	int i;
+अटल व्योम __init serial_txx9_रेजिस्टर_ports(काष्ठा uart_driver *drv,
+					      काष्ठा device *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < UART_NR; i++) {
-		struct uart_txx9_port *up = &serial_txx9_ports[i];
+	क्रम (i = 0; i < UART_NR; i++) अणु
+		काष्ठा uart_txx9_port *up = &serial_txx9_ports[i];
 
 		up->port.line = i;
 		up->port.ops = &serial_txx9_pops;
 		up->port.dev = dev;
-		if (up->port.iobase || up->port.mapbase)
+		अगर (up->port.iobase || up->port.mapbase)
 			uart_add_one_port(drv, &up->port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_SERIAL_TXX9_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_TXX9_CONSOLE
 
-static void serial_txx9_console_putchar(struct uart_port *port, int ch)
-{
-	struct uart_txx9_port *up = to_uart_txx9_port(port);
+अटल व्योम serial_txx9_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	काष्ठा uart_txx9_port *up = to_uart_txx9_port(port);
 
-	wait_for_xmitr(up);
+	रुको_क्रम_xmitr(up);
 	sio_out(up, TXX9_SITFIFO, ch);
-}
+पूर्ण
 
 /*
- *	Print a string to the serial port trying not to disturb
+ *	Prपूर्णांक a string to the serial port trying not to disturb
  *	any possible real use of the port...
  *
  *	The console_lock must be held when we get here.
  */
-static void
-serial_txx9_console_write(struct console *co, const char *s, unsigned int count)
-{
-	struct uart_txx9_port *up = &serial_txx9_ports[co->index];
-	unsigned int ier, flcr;
+अटल व्योम
+serial_txx9_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा uart_txx9_port *up = &serial_txx9_ports[co->index];
+	अचिन्हित पूर्णांक ier, flcr;
 
 	/*
-	 *	First save the UER then disable the interrupts
+	 *	First save the UER then disable the पूर्णांकerrupts
 	 */
 	ier = sio_in(up, TXX9_SIDICR);
 	sio_out(up, TXX9_SIDICR, 0);
 	/*
-	 *	Disable flow-control if enabled (and unnecessary)
+	 *	Disable flow-control अगर enabled (and unnecessary)
 	 */
 	flcr = sio_in(up, TXX9_SIFLCR);
-	if (!(up->port.flags & UPF_CONS_FLOW) && (flcr & TXX9_SIFLCR_TES))
+	अगर (!(up->port.flags & UPF_CONS_FLOW) && (flcr & TXX9_SIFLCR_TES))
 		sio_out(up, TXX9_SIFLCR, flcr & ~TXX9_SIFLCR_TES);
 
-	uart_console_write(&up->port, s, count, serial_txx9_console_putchar);
+	uart_console_ग_लिखो(&up->port, s, count, serial_txx9_console_अक्षर_दो);
 
 	/*
-	 *	Finally, wait for transmitter to become empty
+	 *	Finally, रुको क्रम transmitter to become empty
 	 *	and restore the IER
 	 */
-	wait_for_xmitr(up);
+	रुको_क्रम_xmitr(up);
 	sio_out(up, TXX9_SIFLCR, flcr);
 	sio_out(up, TXX9_SIDICR, ier);
-}
+पूर्ण
 
-static int __init serial_txx9_console_setup(struct console *co, char *options)
-{
-	struct uart_port *port;
-	struct uart_txx9_port *up;
-	int baud = 9600;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक __init serial_txx9_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा uart_port *port;
+	काष्ठा uart_txx9_port *up;
+	पूर्णांक baud = 9600;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
 	/*
-	 * Check whether an invalid uart number has been specified, and
-	 * if so, search for the first available port that does have
+	 * Check whether an invalid uart number has been specअगरied, and
+	 * अगर so, search क्रम the first available port that करोes have
 	 * console support.
 	 */
-	if (co->index >= UART_NR)
+	अगर (co->index >= UART_NR)
 		co->index = 0;
 	up = &serial_txx9_ports[co->index];
 	port = &up->port;
-	if (!port->ops)
-		return -ENODEV;
+	अगर (!port->ops)
+		वापस -ENODEV;
 
 	serial_txx9_initialize(&up->port);
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver serial_txx9_reg;
-static struct console serial_txx9_console = {
+अटल काष्ठा uart_driver serial_txx9_reg;
+अटल काष्ठा console serial_txx9_console = अणु
 	.name		= TXX9_TTY_NAME,
-	.write		= serial_txx9_console_write,
+	.ग_लिखो		= serial_txx9_console_ग_लिखो,
 	.device		= uart_console_device,
 	.setup		= serial_txx9_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &serial_txx9_reg,
-};
+पूर्ण;
 
-static int __init serial_txx9_console_init(void)
-{
-	register_console(&serial_txx9_console);
-	return 0;
-}
+अटल पूर्णांक __init serial_txx9_console_init(व्योम)
+अणु
+	रेजिस्टर_console(&serial_txx9_console);
+	वापस 0;
+पूर्ण
 console_initcall(serial_txx9_console_init);
 
-#define SERIAL_TXX9_CONSOLE	&serial_txx9_console
-#else
-#define SERIAL_TXX9_CONSOLE	NULL
-#endif
+#घोषणा SERIAL_TXX9_CONSOLE	&serial_txx9_console
+#अन्यथा
+#घोषणा SERIAL_TXX9_CONSOLE	शून्य
+#पूर्ण_अगर
 
-static struct uart_driver serial_txx9_reg = {
+अटल काष्ठा uart_driver serial_txx9_reg = अणु
 	.owner			= THIS_MODULE,
 	.driver_name		= "serial_txx9",
 	.dev_name		= TXX9_TTY_NAME,
@@ -982,56 +983,56 @@ static struct uart_driver serial_txx9_reg = {
 	.minor			= TXX9_TTY_MINOR_START,
 	.nr			= UART_NR,
 	.cons			= SERIAL_TXX9_CONSOLE,
-};
+पूर्ण;
 
-int __init early_serial_txx9_setup(struct uart_port *port)
-{
-	if (port->line >= ARRAY_SIZE(serial_txx9_ports))
-		return -ENODEV;
+पूर्णांक __init early_serial_txx9_setup(काष्ठा uart_port *port)
+अणु
+	अगर (port->line >= ARRAY_SIZE(serial_txx9_ports))
+		वापस -ENODEV;
 
 	serial_txx9_ports[port->line].port = *port;
 	serial_txx9_ports[port->line].port.ops = &serial_txx9_pops;
 	serial_txx9_ports[port->line].port.flags |=
 		UPF_BOOT_AUTOCONF | UPF_FIXED_PORT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static DEFINE_MUTEX(serial_txx9_mutex);
+अटल DEFINE_MUTEX(serial_txx9_mutex);
 
 /**
- *	serial_txx9_register_port - register a serial port
- *	@port: serial port template
+ *	serial_txx9_रेजिस्टर_port - रेजिस्टर a serial port
+ *	@port: serial port ढाँचा
  *
- *	Configure the serial port specified by the request.
+ *	Configure the serial port specअगरied by the request.
  *
- *	The port is then probed and if necessary the IRQ is autodetected
- *	If this fails an error is returned.
+ *	The port is then probed and अगर necessary the IRQ is स्वतःdetected
+ *	If this fails an error is वापसed.
  *
- *	On success the port is ready to use and the line number is returned.
+ *	On success the port is पढ़ोy to use and the line number is वापसed.
  */
-static int serial_txx9_register_port(struct uart_port *port)
-{
-	int i;
-	struct uart_txx9_port *uart;
-	int ret = -ENOSPC;
+अटल पूर्णांक serial_txx9_रेजिस्टर_port(काष्ठा uart_port *port)
+अणु
+	पूर्णांक i;
+	काष्ठा uart_txx9_port *uart;
+	पूर्णांक ret = -ENOSPC;
 
 	mutex_lock(&serial_txx9_mutex);
-	for (i = 0; i < UART_NR; i++) {
+	क्रम (i = 0; i < UART_NR; i++) अणु
 		uart = &serial_txx9_ports[i];
-		if (uart_match_port(&uart->port, port)) {
-			uart_remove_one_port(&serial_txx9_reg, &uart->port);
-			break;
-		}
-	}
-	if (i == UART_NR) {
+		अगर (uart_match_port(&uart->port, port)) अणु
+			uart_हटाओ_one_port(&serial_txx9_reg, &uart->port);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (i == UART_NR) अणु
 		/* Find unused port */
-		for (i = 0; i < UART_NR; i++) {
+		क्रम (i = 0; i < UART_NR; i++) अणु
 			uart = &serial_txx9_ports[i];
-			if (!(uart->port.iobase || uart->port.mapbase))
-				break;
-		}
-	}
-	if (i < UART_NR) {
+			अगर (!(uart->port.iobase || uart->port.mapbase))
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (i < UART_NR) अणु
 		uart->port.iobase = port->iobase;
 		uart->port.membase = port->membase;
 		uart->port.irq      = port->irq;
@@ -1040,49 +1041,49 @@ static int serial_txx9_register_port(struct uart_port *port)
 		uart->port.flags    = port->flags
 			| UPF_BOOT_AUTOCONF | UPF_FIXED_PORT;
 		uart->port.mapbase  = port->mapbase;
-		if (port->dev)
+		अगर (port->dev)
 			uart->port.dev = port->dev;
 		ret = uart_add_one_port(&serial_txx9_reg, &uart->port);
-		if (ret == 0)
+		अगर (ret == 0)
 			ret = uart->port.line;
-	}
+	पूर्ण
 	mutex_unlock(&serial_txx9_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- *	serial_txx9_unregister_port - remove a txx9 serial port at runtime
+ *	serial_txx9_unरेजिस्टर_port - हटाओ a txx9 serial port at runसमय
  *	@line: serial line number
  *
- *	Remove one serial port.  This may not be called from interrupt
+ *	Remove one serial port.  This may not be called from पूर्णांकerrupt
  *	context.  We hand the port back to the our control.
  */
-static void serial_txx9_unregister_port(int line)
-{
-	struct uart_txx9_port *uart = &serial_txx9_ports[line];
+अटल व्योम serial_txx9_unरेजिस्टर_port(पूर्णांक line)
+अणु
+	काष्ठा uart_txx9_port *uart = &serial_txx9_ports[line];
 
 	mutex_lock(&serial_txx9_mutex);
-	uart_remove_one_port(&serial_txx9_reg, &uart->port);
+	uart_हटाओ_one_port(&serial_txx9_reg, &uart->port);
 	uart->port.flags = 0;
 	uart->port.type = PORT_UNKNOWN;
 	uart->port.iobase = 0;
 	uart->port.mapbase = 0;
-	uart->port.membase = NULL;
-	uart->port.dev = NULL;
+	uart->port.membase = शून्य;
+	uart->port.dev = शून्य;
 	mutex_unlock(&serial_txx9_mutex);
-}
+पूर्ण
 
 /*
- * Register a set of serial devices attached to a platform device.
+ * Register a set of serial devices attached to a platक्रमm device.
  */
-static int serial_txx9_probe(struct platform_device *dev)
-{
-	struct uart_port *p = dev_get_platdata(&dev->dev);
-	struct uart_port port;
-	int ret, i;
+अटल पूर्णांक serial_txx9_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा uart_port *p = dev_get_platdata(&dev->dev);
+	काष्ठा uart_port port;
+	पूर्णांक ret, i;
 
-	memset(&port, 0, sizeof(struct uart_port));
-	for (i = 0; p && p->uartclk != 0; p++, i++) {
+	स_रखो(&port, 0, माप(काष्ठा uart_port));
+	क्रम (i = 0; p && p->uartclk != 0; p++, i++) अणु
 		port.iobase	= p->iobase;
 		port.membase	= p->membase;
 		port.irq	= p->irq;
@@ -1092,92 +1093,92 @@ static int serial_txx9_probe(struct platform_device *dev)
 		port.mapbase	= p->mapbase;
 		port.dev	= &dev->dev;
 		port.has_sysrq	= IS_ENABLED(CONFIG_SERIAL_TXX9_CONSOLE);
-		ret = serial_txx9_register_port(&port);
-		if (ret < 0) {
+		ret = serial_txx9_रेजिस्टर_port(&port);
+		अगर (ret < 0) अणु
 			dev_err(&dev->dev, "unable to register port at index %d "
 				"(IO%lx MEM%llx IRQ%d): %d\n", i,
-				p->iobase, (unsigned long long)p->mapbase,
+				p->iobase, (अचिन्हित दीर्घ दीर्घ)p->mapbase,
 				p->irq, ret);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Remove serial ports registered against a platform device.
+ * Remove serial ports रेजिस्टरed against a platक्रमm device.
  */
-static int serial_txx9_remove(struct platform_device *dev)
-{
-	int i;
+अटल पूर्णांक serial_txx9_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < UART_NR; i++) {
-		struct uart_txx9_port *up = &serial_txx9_ports[i];
+	क्रम (i = 0; i < UART_NR; i++) अणु
+		काष्ठा uart_txx9_port *up = &serial_txx9_ports[i];
 
-		if (up->port.dev == &dev->dev)
-			serial_txx9_unregister_port(i);
-	}
-	return 0;
-}
+		अगर (up->port.dev == &dev->dev)
+			serial_txx9_unरेजिस्टर_port(i);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int serial_txx9_suspend(struct platform_device *dev, pm_message_t state)
-{
-	int i;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक serial_txx9_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < UART_NR; i++) {
-		struct uart_txx9_port *up = &serial_txx9_ports[i];
+	क्रम (i = 0; i < UART_NR; i++) अणु
+		काष्ठा uart_txx9_port *up = &serial_txx9_ports[i];
 
-		if (up->port.type != PORT_UNKNOWN && up->port.dev == &dev->dev)
+		अगर (up->port.type != PORT_UNKNOWN && up->port.dev == &dev->dev)
 			uart_suspend_port(&serial_txx9_reg, &up->port);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int serial_txx9_resume(struct platform_device *dev)
-{
-	int i;
+अटल पूर्णांक serial_txx9_resume(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < UART_NR; i++) {
-		struct uart_txx9_port *up = &serial_txx9_ports[i];
+	क्रम (i = 0; i < UART_NR; i++) अणु
+		काष्ठा uart_txx9_port *up = &serial_txx9_ports[i];
 
-		if (up->port.type != PORT_UNKNOWN && up->port.dev == &dev->dev)
+		अगर (up->port.type != PORT_UNKNOWN && up->port.dev == &dev->dev)
 			uart_resume_port(&serial_txx9_reg, &up->port);
-	}
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static struct platform_driver serial_txx9_plat_driver = {
+अटल काष्ठा platक्रमm_driver serial_txx9_plat_driver = अणु
 	.probe		= serial_txx9_probe,
-	.remove		= serial_txx9_remove,
-#ifdef CONFIG_PM
+	.हटाओ		= serial_txx9_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.suspend	= serial_txx9_suspend,
 	.resume		= serial_txx9_resume,
-#endif
-	.driver		= {
+#पूर्ण_अगर
+	.driver		= अणु
 		.name	= "serial_txx9",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#ifdef ENABLE_SERIAL_TXX9_PCI
+#अगर_घोषित ENABLE_SERIAL_TXX9_PCI
 /*
- * Probe one serial board.  Unfortunately, there is no rhyme nor reason
+ * Probe one serial board.  Unक्रमtunately, there is no rhyme nor reason
  * to the arrangement of serial ports on a PCI card.
  */
-static int
-pciserial_txx9_init_one(struct pci_dev *dev, const struct pci_device_id *ent)
-{
-	struct uart_port port;
-	int line;
-	int rc;
+अटल पूर्णांक
+pciserial_txx9_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा uart_port port;
+	पूर्णांक line;
+	पूर्णांक rc;
 
 	rc = pci_enable_device(dev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	memset(&port, 0, sizeof(port));
+	स_रखो(&port, 0, माप(port));
 	port.ops = &serial_txx9_pops;
 	port.flags |= UPF_TXX9_HAVE_CTS_LINE;
 	port.uartclk = 66670000;
@@ -1185,138 +1186,138 @@ pciserial_txx9_init_one(struct pci_dev *dev, const struct pci_device_id *ent)
 	port.iotype = UPIO_PORT;
 	port.iobase = pci_resource_start(dev, 1);
 	port.dev = &dev->dev;
-	line = serial_txx9_register_port(&port);
-	if (line < 0) {
-		printk(KERN_WARNING "Couldn't register serial port %s: %d\n", pci_name(dev), line);
+	line = serial_txx9_रेजिस्टर_port(&port);
+	अगर (line < 0) अणु
+		prपूर्णांकk(KERN_WARNING "Couldn't register serial port %s: %d\n", pci_name(dev), line);
 		pci_disable_device(dev);
-		return line;
-	}
+		वापस line;
+	पूर्ण
 	pci_set_drvdata(dev, &serial_txx9_ports[line]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pciserial_txx9_remove_one(struct pci_dev *dev)
-{
-	struct uart_txx9_port *up = pci_get_drvdata(dev);
+अटल व्योम pciserial_txx9_हटाओ_one(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा uart_txx9_port *up = pci_get_drvdata(dev);
 
-	if (up) {
-		serial_txx9_unregister_port(up->port.line);
+	अगर (up) अणु
+		serial_txx9_unरेजिस्टर_port(up->port.line);
 		pci_disable_device(dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PM
-static int pciserial_txx9_suspend_one(struct pci_dev *dev, pm_message_t state)
-{
-	struct uart_txx9_port *up = pci_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक pciserial_txx9_suspend_one(काष्ठा pci_dev *dev, pm_message_t state)
+अणु
+	काष्ठा uart_txx9_port *up = pci_get_drvdata(dev);
 
-	if (up)
+	अगर (up)
 		uart_suspend_port(&serial_txx9_reg, &up->port);
 	pci_save_state(dev);
-	pci_set_power_state(dev, pci_choose_state(dev, state));
-	return 0;
-}
+	pci_set_घातer_state(dev, pci_choose_state(dev, state));
+	वापस 0;
+पूर्ण
 
-static int pciserial_txx9_resume_one(struct pci_dev *dev)
-{
-	struct uart_txx9_port *up = pci_get_drvdata(dev);
+अटल पूर्णांक pciserial_txx9_resume_one(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा uart_txx9_port *up = pci_get_drvdata(dev);
 
-	pci_set_power_state(dev, PCI_D0);
+	pci_set_घातer_state(dev, PCI_D0);
 	pci_restore_state(dev);
-	if (up)
+	अगर (up)
 		uart_resume_port(&serial_txx9_reg, &up->port);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct pci_device_id serial_txx9_pci_tbl[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_TOSHIBA_2, PCI_DEVICE_ID_TOSHIBA_TC86C001_MISC) },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id serial_txx9_pci_tbl[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_TOSHIBA_2, PCI_DEVICE_ID_TOSHIBA_TC86C001_MISC) पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
-static struct pci_driver serial_txx9_pci_driver = {
+अटल काष्ठा pci_driver serial_txx9_pci_driver = अणु
 	.name		= "serial_txx9",
 	.probe		= pciserial_txx9_init_one,
-	.remove		= pciserial_txx9_remove_one,
-#ifdef CONFIG_PM
+	.हटाओ		= pciserial_txx9_हटाओ_one,
+#अगर_घोषित CONFIG_PM
 	.suspend	= pciserial_txx9_suspend_one,
 	.resume		= pciserial_txx9_resume_one,
-#endif
+#पूर्ण_अगर
 	.id_table	= serial_txx9_pci_tbl,
-};
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, serial_txx9_pci_tbl);
-#endif /* ENABLE_SERIAL_TXX9_PCI */
+#पूर्ण_अगर /* ENABLE_SERIAL_TXX9_PCI */
 
-static struct platform_device *serial_txx9_plat_devs;
+अटल काष्ठा platक्रमm_device *serial_txx9_plat_devs;
 
-static int __init serial_txx9_init(void)
-{
-	int ret;
+अटल पूर्णांक __init serial_txx9_init(व्योम)
+अणु
+	पूर्णांक ret;
 
- 	printk(KERN_INFO "%s version %s\n", serial_name, serial_version);
+ 	prपूर्णांकk(KERN_INFO "%s version %s\n", serial_name, serial_version);
 
-	ret = uart_register_driver(&serial_txx9_reg);
-	if (ret)
-		goto out;
+	ret = uart_रेजिस्टर_driver(&serial_txx9_reg);
+	अगर (ret)
+		जाओ out;
 
-	serial_txx9_plat_devs = platform_device_alloc("serial_txx9", -1);
-	if (!serial_txx9_plat_devs) {
+	serial_txx9_plat_devs = platक्रमm_device_alloc("serial_txx9", -1);
+	अगर (!serial_txx9_plat_devs) अणु
 		ret = -ENOMEM;
-		goto unreg_uart_drv;
-	}
+		जाओ unreg_uart_drv;
+	पूर्ण
 
-	ret = platform_device_add(serial_txx9_plat_devs);
-	if (ret)
-		goto put_dev;
+	ret = platक्रमm_device_add(serial_txx9_plat_devs);
+	अगर (ret)
+		जाओ put_dev;
 
-	serial_txx9_register_ports(&serial_txx9_reg,
+	serial_txx9_रेजिस्टर_ports(&serial_txx9_reg,
 				   &serial_txx9_plat_devs->dev);
 
-	ret = platform_driver_register(&serial_txx9_plat_driver);
-	if (ret)
-		goto del_dev;
+	ret = platक्रमm_driver_रेजिस्टर(&serial_txx9_plat_driver);
+	अगर (ret)
+		जाओ del_dev;
 
-#ifdef ENABLE_SERIAL_TXX9_PCI
-	ret = pci_register_driver(&serial_txx9_pci_driver);
-	if (ret) {
-		platform_driver_unregister(&serial_txx9_plat_driver);
-	}
-#endif
-	if (ret == 0)
-		goto out;
+#अगर_घोषित ENABLE_SERIAL_TXX9_PCI
+	ret = pci_रेजिस्टर_driver(&serial_txx9_pci_driver);
+	अगर (ret) अणु
+		platक्रमm_driver_unरेजिस्टर(&serial_txx9_plat_driver);
+	पूर्ण
+#पूर्ण_अगर
+	अगर (ret == 0)
+		जाओ out;
 
  del_dev:
-	platform_device_del(serial_txx9_plat_devs);
+	platक्रमm_device_del(serial_txx9_plat_devs);
  put_dev:
-	platform_device_put(serial_txx9_plat_devs);
+	platक्रमm_device_put(serial_txx9_plat_devs);
  unreg_uart_drv:
-	uart_unregister_driver(&serial_txx9_reg);
+	uart_unरेजिस्टर_driver(&serial_txx9_reg);
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit serial_txx9_exit(void)
-{
-	int i;
+अटल व्योम __निकास serial_txx9_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-#ifdef ENABLE_SERIAL_TXX9_PCI
-	pci_unregister_driver(&serial_txx9_pci_driver);
-#endif
-	platform_driver_unregister(&serial_txx9_plat_driver);
-	platform_device_unregister(serial_txx9_plat_devs);
-	for (i = 0; i < UART_NR; i++) {
-		struct uart_txx9_port *up = &serial_txx9_ports[i];
-		if (up->port.iobase || up->port.mapbase)
-			uart_remove_one_port(&serial_txx9_reg, &up->port);
-	}
+#अगर_घोषित ENABLE_SERIAL_TXX9_PCI
+	pci_unरेजिस्टर_driver(&serial_txx9_pci_driver);
+#पूर्ण_अगर
+	platक्रमm_driver_unरेजिस्टर(&serial_txx9_plat_driver);
+	platक्रमm_device_unरेजिस्टर(serial_txx9_plat_devs);
+	क्रम (i = 0; i < UART_NR; i++) अणु
+		काष्ठा uart_txx9_port *up = &serial_txx9_ports[i];
+		अगर (up->port.iobase || up->port.mapbase)
+			uart_हटाओ_one_port(&serial_txx9_reg, &up->port);
+	पूर्ण
 
-	uart_unregister_driver(&serial_txx9_reg);
-}
+	uart_unरेजिस्टर_driver(&serial_txx9_reg);
+पूर्ण
 
 module_init(serial_txx9_init);
-module_exit(serial_txx9_exit);
+module_निकास(serial_txx9_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("TX39/49 serial driver");

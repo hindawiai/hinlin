@@ -1,173 +1,174 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
 /*
  * IBM ASM Service Processor Device Driver
  *
  * Copyright (C) IBM Corporation, 2004
  *
- * Author: Max Asböck <amax@us.ibm.com>
+ * Author: Max Asbथघck <amax@us.ibm.com>
  */
 
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include "ibmasm.h"
-#include "lowlevel.h"
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश "ibmasm.h"
+#समावेश "lowlevel.h"
 
-static void exec_next_command(struct service_processor *sp);
+अटल व्योम exec_next_command(काष्ठा service_processor *sp);
 
-static atomic_t command_count = ATOMIC_INIT(0);
+अटल atomic_t command_count = ATOMIC_INIT(0);
 
-struct command *ibmasm_new_command(struct service_processor *sp, size_t buffer_size)
-{
-	struct command *cmd;
+काष्ठा command *ibmयंत्र_new_command(काष्ठा service_processor *sp, माप_प्रकार buffer_size)
+अणु
+	काष्ठा command *cmd;
 
-	if (buffer_size > IBMASM_CMD_MAX_BUFFER_SIZE)
-		return NULL;
+	अगर (buffer_size > IBMASM_CMD_MAX_BUFFER_SIZE)
+		वापस शून्य;
 
-	cmd = kzalloc(sizeof(struct command), GFP_KERNEL);
-	if (cmd == NULL)
-		return NULL;
+	cmd = kzalloc(माप(काष्ठा command), GFP_KERNEL);
+	अगर (cmd == शून्य)
+		वापस शून्य;
 
 
 	cmd->buffer = kzalloc(buffer_size, GFP_KERNEL);
-	if (cmd->buffer == NULL) {
-		kfree(cmd);
-		return NULL;
-	}
+	अगर (cmd->buffer == शून्य) अणु
+		kमुक्त(cmd);
+		वापस शून्य;
+	पूर्ण
 	cmd->buffer_size = buffer_size;
 
 	kref_init(&cmd->kref);
 	cmd->lock = &sp->lock;
 
 	cmd->status = IBMASM_CMD_PENDING;
-	init_waitqueue_head(&cmd->wait);
+	init_रुकोqueue_head(&cmd->रुको);
 	INIT_LIST_HEAD(&cmd->queue_node);
 
 	atomic_inc(&command_count);
-	dbg("command count: %d\n", atomic_read(&command_count));
+	dbg("command count: %d\n", atomic_पढ़ो(&command_count));
 
-	return cmd;
-}
+	वापस cmd;
+पूर्ण
 
-void ibmasm_free_command(struct kref *kref)
-{
-	struct command *cmd = to_command(kref);
+व्योम ibmयंत्र_मुक्त_command(काष्ठा kref *kref)
+अणु
+	काष्ठा command *cmd = to_command(kref);
 
 	list_del(&cmd->queue_node);
 	atomic_dec(&command_count);
-	dbg("command count: %d\n", atomic_read(&command_count));
-	kfree(cmd->buffer);
-	kfree(cmd);
-}
+	dbg("command count: %d\n", atomic_पढ़ो(&command_count));
+	kमुक्त(cmd->buffer);
+	kमुक्त(cmd);
+पूर्ण
 
-static void enqueue_command(struct service_processor *sp, struct command *cmd)
-{
+अटल व्योम enqueue_command(काष्ठा service_processor *sp, काष्ठा command *cmd)
+अणु
 	list_add_tail(&cmd->queue_node, &sp->command_queue);
-}
+पूर्ण
 
-static struct command *dequeue_command(struct service_processor *sp)
-{
-	struct command *cmd;
-	struct list_head *next;
+अटल काष्ठा command *dequeue_command(काष्ठा service_processor *sp)
+अणु
+	काष्ठा command *cmd;
+	काष्ठा list_head *next;
 
-	if (list_empty(&sp->command_queue))
-		return NULL;
+	अगर (list_empty(&sp->command_queue))
+		वापस शून्य;
 
 	next = sp->command_queue.next;
 	list_del_init(next);
-	cmd = list_entry(next, struct command, queue_node);
+	cmd = list_entry(next, काष्ठा command, queue_node);
 
-	return cmd;
-}
+	वापस cmd;
+पूर्ण
 
-static inline void do_exec_command(struct service_processor *sp)
-{
-	char tsbuf[32];
+अटल अंतरभूत व्योम करो_exec_command(काष्ठा service_processor *sp)
+अणु
+	अक्षर tsbuf[32];
 
-	dbg("%s:%d at %s\n", __func__, __LINE__, get_timestamp(tsbuf));
+	dbg("%s:%d at %s\n", __func__, __LINE__, get_बारtamp(tsbuf));
 
-	if (ibmasm_send_i2o_message(sp)) {
+	अगर (ibmयंत्र_send_i2o_message(sp)) अणु
 		sp->current_command->status = IBMASM_CMD_FAILED;
-		wake_up(&sp->current_command->wait);
+		wake_up(&sp->current_command->रुको);
 		command_put(sp->current_command);
 		exec_next_command(sp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * exec_command
  * send a command to a service processor
  * Commands are executed sequentially. One command (sp->current_command)
- * is sent to the service processor. Once the interrupt handler gets a
- * message of type command_response, the message is copied into
+ * is sent to the service processor. Once the पूर्णांकerrupt handler माला_लो a
+ * message of type command_response, the message is copied पूर्णांकo
  * the current commands buffer,
  */
-void ibmasm_exec_command(struct service_processor *sp, struct command *cmd)
-{
-	unsigned long flags;
-	char tsbuf[32];
+व्योम ibmयंत्र_exec_command(काष्ठा service_processor *sp, काष्ठा command *cmd)
+अणु
+	अचिन्हित दीर्घ flags;
+	अक्षर tsbuf[32];
 
-	dbg("%s:%d at %s\n", __func__, __LINE__, get_timestamp(tsbuf));
+	dbg("%s:%d at %s\n", __func__, __LINE__, get_बारtamp(tsbuf));
 
 	spin_lock_irqsave(&sp->lock, flags);
 
-	if (!sp->current_command) {
+	अगर (!sp->current_command) अणु
 		sp->current_command = cmd;
 		command_get(sp->current_command);
 		spin_unlock_irqrestore(&sp->lock, flags);
-		do_exec_command(sp);
-	} else {
+		करो_exec_command(sp);
+	पूर्ण अन्यथा अणु
 		enqueue_command(sp, cmd);
 		spin_unlock_irqrestore(&sp->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void exec_next_command(struct service_processor *sp)
-{
-	unsigned long flags;
-	char tsbuf[32];
+अटल व्योम exec_next_command(काष्ठा service_processor *sp)
+अणु
+	अचिन्हित दीर्घ flags;
+	अक्षर tsbuf[32];
 
-	dbg("%s:%d at %s\n", __func__, __LINE__, get_timestamp(tsbuf));
+	dbg("%s:%d at %s\n", __func__, __LINE__, get_बारtamp(tsbuf));
 
 	spin_lock_irqsave(&sp->lock, flags);
 	sp->current_command = dequeue_command(sp);
-	if (sp->current_command) {
+	अगर (sp->current_command) अणु
 		command_get(sp->current_command);
 		spin_unlock_irqrestore(&sp->lock, flags);
-		do_exec_command(sp);
-	} else {
+		करो_exec_command(sp);
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&sp->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Sleep until a command has failed or a response has been received
- * and the command status been updated by the interrupt handler.
+ * and the command status been updated by the पूर्णांकerrupt handler.
  * (see receive_response).
  */
-void ibmasm_wait_for_response(struct command *cmd, int timeout)
-{
-	wait_event_interruptible_timeout(cmd->wait,
+व्योम ibmयंत्र_रुको_क्रम_response(काष्ठा command *cmd, पूर्णांक समयout)
+अणु
+	रुको_event_पूर्णांकerruptible_समयout(cmd->रुको,
 				cmd->status == IBMASM_CMD_COMPLETE ||
 				cmd->status == IBMASM_CMD_FAILED,
-				timeout * HZ);
-}
+				समयout * HZ);
+पूर्ण
 
 /*
  * receive_command_response
- * called by the interrupt handler when a dot command of type command_response
+ * called by the पूर्णांकerrupt handler when a करोt command of type command_response
  * was received.
  */
-void ibmasm_receive_command_response(struct service_processor *sp, void *response, size_t size)
-{
-	struct command *cmd = sp->current_command;
+व्योम ibmयंत्र_receive_command_response(काष्ठा service_processor *sp, व्योम *response, माप_प्रकार size)
+अणु
+	काष्ठा command *cmd = sp->current_command;
 
-	if (!sp->current_command)
-		return;
+	अगर (!sp->current_command)
+		वापस;
 
-	memcpy_fromio(cmd->buffer, response, min(size, cmd->buffer_size));
+	स_नकल_fromio(cmd->buffer, response, min(size, cmd->buffer_size));
 	cmd->status = IBMASM_CMD_COMPLETE;
-	wake_up(&sp->current_command->wait);
+	wake_up(&sp->current_command->रुको);
 	command_put(sp->current_command);
 	exec_next_command(sp);
-}
+पूर्ण

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	nv_tco 0.01:	TCO timer driver for NV chipsets
+ *	nv_tco 0.01:	TCO समयr driver क्रम NV chipsets
  *
  *	(c) Copyright 2005 Google Inc., All Rights Reserved.
  *
@@ -9,383 +10,383 @@
  *	Reserved.
  *				https://www.kernelconcepts.de
  *
- *	TCO timer driver for NV chipsets
- *	based on softdog.c by Alan Cox <alan@redhat.com>
+ *	TCO समयr driver क्रम NV chipsets
+ *	based on softकरोg.c by Alan Cox <alan@redhat.com>
  */
 
 /*
  *	Includes, defines, variables, module parameters, ...
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/pci.h>
-#include <linux/ioport.h>
-#include <linux/jiffies.h>
-#include <linux/platform_device.h>
-#include <linux/uaccess.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/पन.स>
 
-#include "nv_tco.h"
+#समावेश "nv_tco.h"
 
-/* Module and version information */
-#define TCO_VERSION "0.01"
-#define TCO_MODULE_NAME "NV_TCO"
-#define TCO_DRIVER_NAME   TCO_MODULE_NAME ", v" TCO_VERSION
+/* Module and version inक्रमmation */
+#घोषणा TCO_VERSION "0.01"
+#घोषणा TCO_MODULE_NAME "NV_TCO"
+#घोषणा TCO_DRIVER_NAME   TCO_MODULE_NAME ", v" TCO_VERSION
 
-/* internal variables */
-static unsigned int tcobase;
-static DEFINE_SPINLOCK(tco_lock);	/* Guards the hardware */
-static unsigned long timer_alive;
-static char tco_expect_close;
-static struct pci_dev *tco_pci;
+/* पूर्णांकernal variables */
+अटल अचिन्हित पूर्णांक tcobase;
+अटल DEFINE_SPINLOCK(tco_lock);	/* Guards the hardware */
+अटल अचिन्हित दीर्घ समयr_alive;
+अटल अक्षर tco_expect_बंद;
+अटल काष्ठा pci_dev *tco_pci;
 
-/* the watchdog platform device */
-static struct platform_device *nv_tco_platform_device;
+/* the watchकरोg platक्रमm device */
+अटल काष्ठा platक्रमm_device *nv_tco_platक्रमm_device;
 
 /* module parameters */
-#define WATCHDOG_HEARTBEAT 30	/* 30 sec default heartbeat (2<heartbeat<39) */
-static int heartbeat = WATCHDOG_HEARTBEAT;  /* in seconds */
-module_param(heartbeat, int, 0);
+#घोषणा WATCHDOG_HEARTBEAT 30	/* 30 sec शेष heartbeat (2<heartbeat<39) */
+अटल पूर्णांक heartbeat = WATCHDOG_HEARTBEAT;  /* in seconds */
+module_param(heartbeat, पूर्णांक, 0);
 MODULE_PARM_DESC(heartbeat, "Watchdog heartbeat in seconds. (2<heartbeat<39, "
 			    "default=" __MODULE_STRING(WATCHDOG_HEARTBEAT) ")");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started"
 		" (default=" __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 /*
- * Some TCO specific functions
+ * Some TCO specअगरic functions
  */
-static inline unsigned char seconds_to_ticks(int seconds)
-{
-	/* the internal timer is stored as ticks which decrement
+अटल अंतरभूत अचिन्हित अक्षर seconds_to_ticks(पूर्णांक seconds)
+अणु
+	/* the पूर्णांकernal समयr is stored as ticks which decrement
 	 * every 0.6 seconds */
-	return (seconds * 10) / 6;
-}
+	वापस (seconds * 10) / 6;
+पूर्ण
 
-static void tco_timer_start(void)
-{
+अटल व्योम tco_समयr_start(व्योम)
+अणु
 	u32 val;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tco_lock, flags);
 	val = inl(TCO_CNT(tcobase));
 	val &= ~TCO_CNT_TCOHALT;
 	outl(val, TCO_CNT(tcobase));
 	spin_unlock_irqrestore(&tco_lock, flags);
-}
+पूर्ण
 
-static void tco_timer_stop(void)
-{
+अटल व्योम tco_समयr_stop(व्योम)
+अणु
 	u32 val;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tco_lock, flags);
 	val = inl(TCO_CNT(tcobase));
 	val |= TCO_CNT_TCOHALT;
 	outl(val, TCO_CNT(tcobase));
 	spin_unlock_irqrestore(&tco_lock, flags);
-}
+पूर्ण
 
-static void tco_timer_keepalive(void)
-{
-	unsigned long flags;
+अटल व्योम tco_समयr_keepalive(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tco_lock, flags);
 	outb(0x01, TCO_RLD(tcobase));
 	spin_unlock_irqrestore(&tco_lock, flags);
-}
+पूर्ण
 
-static int tco_timer_set_heartbeat(int t)
-{
-	int ret = 0;
-	unsigned char tmrval;
-	unsigned long flags;
+अटल पूर्णांक tco_समयr_set_heartbeat(पूर्णांक t)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित अक्षर पंचांगrval;
+	अचिन्हित दीर्घ flags;
 	u8 val;
 
 	/*
-	 * note seconds_to_ticks(t) > t, so if t > 0x3f, so is
-	 * tmrval=seconds_to_ticks(t).  Check that the count in seconds isn't
-	 * out of range on it's own (to avoid overflow in tmrval).
+	 * note seconds_to_ticks(t) > t, so अगर t > 0x3f, so is
+	 * पंचांगrval=seconds_to_ticks(t).  Check that the count in seconds isn't
+	 * out of range on it's own (to aव्योम overflow in पंचांगrval).
 	 */
-	if (t < 0 || t > 0x3f)
-		return -EINVAL;
-	tmrval = seconds_to_ticks(t);
+	अगर (t < 0 || t > 0x3f)
+		वापस -EINVAL;
+	पंचांगrval = seconds_to_ticks(t);
 
 	/* "Values of 0h-3h are ignored and should not be attempted" */
-	if (tmrval > 0x3f || tmrval < 0x04)
-		return -EINVAL;
+	अगर (पंचांगrval > 0x3f || पंचांगrval < 0x04)
+		वापस -EINVAL;
 
-	/* Write new heartbeat to watchdog */
+	/* Write new heartbeat to watchकरोg */
 	spin_lock_irqsave(&tco_lock, flags);
 	val = inb(TCO_TMR(tcobase));
 	val &= 0xc0;
-	val |= tmrval;
+	val |= पंचांगrval;
 	outb(val, TCO_TMR(tcobase));
 	val = inb(TCO_TMR(tcobase));
 
-	if ((val & 0x3f) != tmrval)
+	अगर ((val & 0x3f) != पंचांगrval)
 		ret = -EINVAL;
 	spin_unlock_irqrestore(&tco_lock, flags);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	heartbeat = t;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	/dev/watchdog handling
+ *	/dev/watchकरोg handling
  */
 
-static int nv_tco_open(struct inode *inode, struct file *file)
-{
-	/* /dev/watchdog can only be opened once */
-	if (test_and_set_bit(0, &timer_alive))
-		return -EBUSY;
+अटल पूर्णांक nv_tco_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	/* /dev/watchकरोg can only be खोलोed once */
+	अगर (test_and_set_bit(0, &समयr_alive))
+		वापस -EBUSY;
 
-	/* Reload and activate timer */
-	tco_timer_keepalive();
-	tco_timer_start();
-	return stream_open(inode, file);
-}
+	/* Reload and activate समयr */
+	tco_समयr_keepalive();
+	tco_समयr_start();
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int nv_tco_release(struct inode *inode, struct file *file)
-{
-	/* Shut off the timer */
-	if (tco_expect_close == 42) {
-		tco_timer_stop();
-	} else {
+अटल पूर्णांक nv_tco_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	/* Shut off the समयr */
+	अगर (tco_expect_बंद == 42) अणु
+		tco_समयr_stop();
+	पूर्ण अन्यथा अणु
 		pr_crit("Unexpected close, not stopping watchdog!\n");
-		tco_timer_keepalive();
-	}
-	clear_bit(0, &timer_alive);
-	tco_expect_close = 0;
-	return 0;
-}
+		tco_समयr_keepalive();
+	पूर्ण
+	clear_bit(0, &समयr_alive);
+	tco_expect_बंद = 0;
+	वापस 0;
+पूर्ण
 
-static ssize_t nv_tco_write(struct file *file, const char __user *data,
-			    size_t len, loff_t *ppos)
-{
-	/* See if we got the magic character 'V' and reload the timer */
-	if (len) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार nv_tco_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+			    माप_प्रकार len, loff_t *ppos)
+अणु
+	/* See अगर we got the magic अक्षरacter 'V' and reload the समयr */
+	अगर (len) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
 			/*
-			 * note: just in case someone wrote the magic character
+			 * note: just in हाल someone wrote the magic अक्षरacter
 			 * five months ago...
 			 */
-			tco_expect_close = 0;
+			tco_expect_बंद = 0;
 
 			/*
 			 * scan to see whether or not we got the magic
-			 * character
+			 * अक्षरacter
 			 */
-			for (i = 0; i != len; i++) {
-				char c;
-				if (get_user(c, data + i))
-					return -EFAULT;
-				if (c == 'V')
-					tco_expect_close = 42;
-			}
-		}
+			क्रम (i = 0; i != len; i++) अणु
+				अक्षर c;
+				अगर (get_user(c, data + i))
+					वापस -EFAULT;
+				अगर (c == 'V')
+					tco_expect_बंद = 42;
+			पूर्ण
+		पूर्ण
 
-		/* someone wrote to us, we should reload the timer */
-		tco_timer_keepalive();
-	}
-	return len;
-}
+		/* someone wrote to us, we should reload the समयr */
+		tco_समयr_keepalive();
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static long nv_tco_ioctl(struct file *file, unsigned int cmd,
-			 unsigned long arg)
-{
-	int new_options, retval = -EINVAL;
-	int new_heartbeat;
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	static const struct watchdog_info ident = {
+अटल दीर्घ nv_tco_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			 अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक new_options, retval = -EINVAL;
+	पूर्णांक new_heartbeat;
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 		.options =		WDIOF_SETTIMEOUT |
 					WDIOF_KEEPALIVEPING |
 					WDIOF_MAGICCLOSE,
 		.firmware_version =	0,
 		.identity =		TCO_MODULE_NAME,
-	};
+	पूर्ण;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		return copy_to_user(argp, &ident, sizeof(ident)) ? -EFAULT : 0;
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(0, p);
-	case WDIOC_SETOPTIONS:
-		if (get_user(new_options, p))
-			return -EFAULT;
-		if (new_options & WDIOS_DISABLECARD) {
-			tco_timer_stop();
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		वापस copy_to_user(argp, &ident, माप(ident)) ? -EFAULT : 0;
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(0, p);
+	हाल WDIOC_SETOPTIONS:
+		अगर (get_user(new_options, p))
+			वापस -EFAULT;
+		अगर (new_options & WDIOS_DISABLECARD) अणु
+			tco_समयr_stop();
 			retval = 0;
-		}
-		if (new_options & WDIOS_ENABLECARD) {
-			tco_timer_keepalive();
-			tco_timer_start();
+		पूर्ण
+		अगर (new_options & WDIOS_ENABLECARD) अणु
+			tco_समयr_keepalive();
+			tco_समयr_start();
 			retval = 0;
-		}
-		return retval;
-	case WDIOC_KEEPALIVE:
-		tco_timer_keepalive();
-		return 0;
-	case WDIOC_SETTIMEOUT:
-		if (get_user(new_heartbeat, p))
-			return -EFAULT;
-		if (tco_timer_set_heartbeat(new_heartbeat))
-			return -EINVAL;
-		tco_timer_keepalive();
+		पूर्ण
+		वापस retval;
+	हाल WDIOC_KEEPALIVE:
+		tco_समयr_keepalive();
+		वापस 0;
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(new_heartbeat, p))
+			वापस -EFAULT;
+		अगर (tco_समयr_set_heartbeat(new_heartbeat))
+			वापस -EINVAL;
+		tco_समयr_keepalive();
 		fallthrough;
-	case WDIOC_GETTIMEOUT:
-		return put_user(heartbeat, p);
-	default:
-		return -ENOTTY;
-	}
-}
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(heartbeat, p);
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
 /*
  *	Kernel Interfaces
  */
 
-static const struct file_operations nv_tco_fops = {
+अटल स्थिर काष्ठा file_operations nv_tco_fops = अणु
 	.owner =		THIS_MODULE,
 	.llseek =		no_llseek,
-	.write =		nv_tco_write,
+	.ग_लिखो =		nv_tco_ग_लिखो,
 	.unlocked_ioctl =	nv_tco_ioctl,
 	.compat_ioctl =		compat_ptr_ioctl,
-	.open =			nv_tco_open,
+	.खोलो =			nv_tco_खोलो,
 	.release =		nv_tco_release,
-};
+पूर्ण;
 
-static struct miscdevice nv_tco_miscdev = {
+अटल काष्ठा miscdevice nv_tco_miscdev = अणु
 	.minor =	WATCHDOG_MINOR,
 	.name =		"watchdog",
 	.fops =		&nv_tco_fops,
-};
+पूर्ण;
 
 /*
- * Data for PCI driver interface
+ * Data क्रम PCI driver पूर्णांकerface
  *
- * This data only exists for exporting the supported
- * PCI ids via MODULE_DEVICE_TABLE.  We do not actually
- * register a pci_driver, because someone else might one day
- * want to register another driver on the same PCI id.
+ * This data only exists क्रम exporting the supported
+ * PCI ids via MODULE_DEVICE_TABLE.  We करो not actually
+ * रेजिस्टर a pci_driver, because someone अन्यथा might one day
+ * want to रेजिस्टर another driver on the same PCI id.
  */
-static const struct pci_device_id tco_pci_tbl[] = {
-	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP51_SMBUS,
-	  PCI_ANY_ID, PCI_ANY_ID, },
-	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP55_SMBUS,
-	  PCI_ANY_ID, PCI_ANY_ID, },
-	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP78S_SMBUS,
-	  PCI_ANY_ID, PCI_ANY_ID, },
-	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP79_SMBUS,
-	  PCI_ANY_ID, PCI_ANY_ID, },
-	{ 0, },			/* End of list */
-};
+अटल स्थिर काष्ठा pci_device_id tco_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP51_SMBUS,
+	  PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP55_SMBUS,
+	  PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP78S_SMBUS,
+	  PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP79_SMBUS,
+	  PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु 0, पूर्ण,			/* End of list */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, tco_pci_tbl);
 
 /*
- *	Init & exit routines
+ *	Init & निकास routines
  */
 
-static unsigned char nv_tco_getdevice(void)
-{
-	struct pci_dev *dev = NULL;
+अटल अचिन्हित अक्षर nv_tco_getdevice(व्योम)
+अणु
+	काष्ठा pci_dev *dev = शून्य;
 	u32 val;
 
 	/* Find the PCI device */
-	for_each_pci_dev(dev) {
-		if (pci_match_id(tco_pci_tbl, dev) != NULL) {
+	क्रम_each_pci_dev(dev) अणु
+		अगर (pci_match_id(tco_pci_tbl, dev) != शून्य) अणु
 			tco_pci = dev;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!tco_pci)
-		return 0;
+	अगर (!tco_pci)
+		वापस 0;
 
 	/* Find the base io port */
-	pci_read_config_dword(tco_pci, 0x64, &val);
+	pci_पढ़ो_config_dword(tco_pci, 0x64, &val);
 	val &= 0xffff;
-	if (val == 0x0001 || val == 0x0000) {
+	अगर (val == 0x0001 || val == 0x0000) अणु
 		/* Something is wrong here, bar isn't setup */
 		pr_err("failed to get tcobase address\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	val &= 0xff00;
 	tcobase = val + 0x40;
 
-	if (!request_region(tcobase, 0x10, "NV TCO")) {
+	अगर (!request_region(tcobase, 0x10, "NV TCO")) अणु
 		pr_err("I/O address 0x%04x already in use\n", tcobase);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Set a reasonable heartbeat before we stop the timer */
-	tco_timer_set_heartbeat(30);
+	/* Set a reasonable heartbeat beक्रमe we stop the समयr */
+	tco_समयr_set_heartbeat(30);
 
 	/*
-	 * Stop the TCO before we change anything so we don't race with
-	 * a zeroed timer.
+	 * Stop the TCO beक्रमe we change anything so we करोn't race with
+	 * a zeroed समयr.
 	 */
-	tco_timer_keepalive();
-	tco_timer_stop();
+	tco_समयr_keepalive();
+	tco_समयr_stop();
 
 	/* Disable SMI caused by TCO */
-	if (!request_region(MCP51_SMI_EN(tcobase), 4, "NV TCO")) {
+	अगर (!request_region(MCP51_SMI_EN(tcobase), 4, "NV TCO")) अणु
 		pr_err("I/O address 0x%04x already in use\n",
 		       MCP51_SMI_EN(tcobase));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	val = inl(MCP51_SMI_EN(tcobase));
 	val &= ~MCP51_SMI_EN_TCO;
 	outl(val, MCP51_SMI_EN(tcobase));
 	val = inl(MCP51_SMI_EN(tcobase));
 	release_region(MCP51_SMI_EN(tcobase), 4);
-	if (val & MCP51_SMI_EN_TCO) {
+	अगर (val & MCP51_SMI_EN_TCO) अणु
 		pr_err("Could not disable SMI caused by TCO\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Check chipset's NO_REBOOT bit */
-	pci_read_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
+	pci_पढ़ो_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
 	val |= MCP51_SMBUS_SETUP_B_TCO_REBOOT;
-	pci_write_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, val);
-	pci_read_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
-	if (!(val & MCP51_SMBUS_SETUP_B_TCO_REBOOT)) {
+	pci_ग_लिखो_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, val);
+	pci_पढ़ो_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
+	अगर (!(val & MCP51_SMBUS_SETUP_B_TCO_REBOOT)) अणु
 		pr_err("failed to reset NO_REBOOT flag, reboot disabled by hardware\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return 1;
+	वापस 1;
 out:
 	release_region(tcobase, 0x10);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nv_tco_init(struct platform_device *dev)
-{
-	int ret;
+अटल पूर्णांक nv_tco_init(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक ret;
 
-	/* Check whether or not the hardware watchdog is there */
-	if (!nv_tco_getdevice())
-		return -ENODEV;
+	/* Check whether or not the hardware watchकरोg is there */
+	अगर (!nv_tco_getdevice())
+		वापस -ENODEV;
 
-	/* Check to see if last reboot was due to watchdog timeout */
+	/* Check to see अगर last reboot was due to watchकरोg समयout */
 	pr_info("Watchdog reboot %sdetected\n",
 		inl(TCO_STS(tcobase)) & TCO_STS_TCO2TO_STS ? "" : "not ");
 
@@ -394,121 +395,121 @@ static int nv_tco_init(struct platform_device *dev)
 
 	/*
 	 * Check that the heartbeat value is within it's range.
-	 * If not, reset to the default.
+	 * If not, reset to the शेष.
 	 */
-	if (tco_timer_set_heartbeat(heartbeat)) {
+	अगर (tco_समयr_set_heartbeat(heartbeat)) अणु
 		heartbeat = WATCHDOG_HEARTBEAT;
-		tco_timer_set_heartbeat(heartbeat);
+		tco_समयr_set_heartbeat(heartbeat);
 		pr_info("heartbeat value must be 2<heartbeat<39, using %d\n",
 			heartbeat);
-	}
+	पूर्ण
 
-	ret = misc_register(&nv_tco_miscdev);
-	if (ret != 0) {
+	ret = misc_रेजिस्टर(&nv_tco_miscdev);
+	अगर (ret != 0) अणु
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, ret);
-		goto unreg_region;
-	}
+		जाओ unreg_region;
+	पूर्ण
 
-	clear_bit(0, &timer_alive);
+	clear_bit(0, &समयr_alive);
 
-	tco_timer_stop();
+	tco_समयr_stop();
 
 	pr_info("initialized (0x%04x). heartbeat=%d sec (nowayout=%d)\n",
 		tcobase, heartbeat, nowayout);
 
-	return 0;
+	वापस 0;
 
 unreg_region:
 	release_region(tcobase, 0x10);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nv_tco_cleanup(void)
-{
+अटल व्योम nv_tco_cleanup(व्योम)
+अणु
 	u32 val;
 
-	/* Stop the timer before we leave */
-	if (!nowayout)
-		tco_timer_stop();
+	/* Stop the समयr beक्रमe we leave */
+	अगर (!nowayout)
+		tco_समयr_stop();
 
-	/* Set the NO_REBOOT bit to prevent later reboots, just for sure */
-	pci_read_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
+	/* Set the NO_REBOOT bit to prevent later reboots, just क्रम sure */
+	pci_पढ़ो_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
 	val &= ~MCP51_SMBUS_SETUP_B_TCO_REBOOT;
-	pci_write_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, val);
-	pci_read_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
-	if (val & MCP51_SMBUS_SETUP_B_TCO_REBOOT) {
+	pci_ग_लिखो_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, val);
+	pci_पढ़ो_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
+	अगर (val & MCP51_SMBUS_SETUP_B_TCO_REBOOT) अणु
 		pr_crit("Couldn't unset REBOOT bit.  Machine may soon reset\n");
-	}
+	पूर्ण
 
-	/* Deregister */
-	misc_deregister(&nv_tco_miscdev);
+	/* Deरेजिस्टर */
+	misc_deरेजिस्टर(&nv_tco_miscdev);
 	release_region(tcobase, 0x10);
-}
+पूर्ण
 
-static int nv_tco_remove(struct platform_device *dev)
-{
-	if (tcobase)
+अटल पूर्णांक nv_tco_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	अगर (tcobase)
 		nv_tco_cleanup();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nv_tco_shutdown(struct platform_device *dev)
-{
+अटल व्योम nv_tco_shutकरोwn(काष्ठा platक्रमm_device *dev)
+अणु
 	u32 val;
 
-	tco_timer_stop();
+	tco_समयr_stop();
 
-	/* Some BIOSes fail the POST (once) if the NO_REBOOT flag is not
-	 * unset during shutdown. */
-	pci_read_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
+	/* Some BIOSes fail the POST (once) अगर the NO_REBOOT flag is not
+	 * unset during shutकरोwn. */
+	pci_पढ़ो_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, &val);
 	val &= ~MCP51_SMBUS_SETUP_B_TCO_REBOOT;
-	pci_write_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, val);
-}
+	pci_ग_लिखो_config_dword(tco_pci, MCP51_SMBUS_SETUP_B, val);
+पूर्ण
 
-static struct platform_driver nv_tco_driver = {
+अटल काष्ठा platक्रमm_driver nv_tco_driver = अणु
 	.probe		= nv_tco_init,
-	.remove		= nv_tco_remove,
-	.shutdown	= nv_tco_shutdown,
-	.driver		= {
+	.हटाओ		= nv_tco_हटाओ,
+	.shutकरोwn	= nv_tco_shutकरोwn,
+	.driver		= अणु
 		.name	= TCO_MODULE_NAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init nv_tco_init_module(void)
-{
-	int err;
+अटल पूर्णांक __init nv_tco_init_module(व्योम)
+अणु
+	पूर्णांक err;
 
 	pr_info("NV TCO WatchDog Timer Driver v%s\n", TCO_VERSION);
 
-	err = platform_driver_register(&nv_tco_driver);
-	if (err)
-		return err;
+	err = platक्रमm_driver_रेजिस्टर(&nv_tco_driver);
+	अगर (err)
+		वापस err;
 
-	nv_tco_platform_device = platform_device_register_simple(
-					TCO_MODULE_NAME, -1, NULL, 0);
-	if (IS_ERR(nv_tco_platform_device)) {
-		err = PTR_ERR(nv_tco_platform_device);
-		goto unreg_platform_driver;
-	}
+	nv_tco_platक्रमm_device = platक्रमm_device_रेजिस्टर_simple(
+					TCO_MODULE_NAME, -1, शून्य, 0);
+	अगर (IS_ERR(nv_tco_platक्रमm_device)) अणु
+		err = PTR_ERR(nv_tco_platक्रमm_device);
+		जाओ unreg_platक्रमm_driver;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-unreg_platform_driver:
-	platform_driver_unregister(&nv_tco_driver);
-	return err;
-}
+unreg_platक्रमm_driver:
+	platक्रमm_driver_unरेजिस्टर(&nv_tco_driver);
+	वापस err;
+पूर्ण
 
-static void __exit nv_tco_cleanup_module(void)
-{
-	platform_device_unregister(nv_tco_platform_device);
-	platform_driver_unregister(&nv_tco_driver);
+अटल व्योम __निकास nv_tco_cleanup_module(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(nv_tco_platक्रमm_device);
+	platक्रमm_driver_unरेजिस्टर(&nv_tco_driver);
 	pr_info("NV TCO Watchdog Module Unloaded\n");
-}
+पूर्ण
 
 module_init(nv_tco_init_module);
-module_exit(nv_tco_cleanup_module);
+module_निकास(nv_tco_cleanup_module);
 
 MODULE_AUTHOR("Mike Waychison");
 MODULE_DESCRIPTION("TCO timer driver for NV chipsets");

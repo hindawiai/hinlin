@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include "etnaviv_gem.h"
-#include "etnaviv_gpu.h"
+#समावेश "etnaviv_gem.h"
+#समावेश "etnaviv_gpu.h"
 
-#include "cmdstream.xml.h"
+#समावेश "cmdstream.xml.h"
 
-#define EXTRACT(val, field) (((val) & field##__MASK) >> field##__SHIFT)
+#घोषणा EXTRACT(val, field) (((val) & field##__MASK) >> field##__SHIFT)
 
-struct etna_validation_state {
-	struct etnaviv_gpu *gpu;
-	const struct drm_etnaviv_gem_submit_reloc *relocs;
-	unsigned int num_relocs;
+काष्ठा etna_validation_state अणु
+	काष्ठा etnaviv_gpu *gpu;
+	स्थिर काष्ठा drm_etnaviv_gem_submit_reloc *relocs;
+	अचिन्हित पूर्णांक num_relocs;
 	u32 *start;
-};
+पूर्ण;
 
-static const struct {
+अटल स्थिर काष्ठा अणु
 	u16 offset;
 	u16 size;
-} etnaviv_sensitive_states[] __initconst = {
-#define ST(start, num) { (start) >> 2, (num) }
+पूर्ण etnaviv_sensitive_states[] __initस्थिर = अणु
+#घोषणा ST(start, num) अणु (start) >> 2, (num) पूर्ण
 	/* 2D */
 	ST(0x1200, 1),
 	ST(0x1228, 1),
@@ -71,85 +72,85 @@ static const struct {
 	ST(0x10800, 32 * 16),
 	ST(0x14600, 16),
 	ST(0x14800, 8 * 8),
-#undef ST
-};
+#अघोषित ST
+पूर्ण;
 
-#define ETNAVIV_STATES_SIZE (VIV_FE_LOAD_STATE_HEADER_OFFSET__MASK + 1u)
-static DECLARE_BITMAP(etnaviv_states, ETNAVIV_STATES_SIZE);
+#घोषणा ETNAVIV_STATES_SIZE (VIV_FE_LOAD_STATE_HEADER_OFFSET__MASK + 1u)
+अटल DECLARE_BITMAP(etnaviv_states, ETNAVIV_STATES_SIZE);
 
-void __init etnaviv_validate_init(void)
-{
-	unsigned int i;
+व्योम __init etnaviv_validate_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(etnaviv_sensitive_states); i++)
-		bitmap_set(etnaviv_states, etnaviv_sensitive_states[i].offset,
+	क्रम (i = 0; i < ARRAY_SIZE(etnaviv_sensitive_states); i++)
+		biपंचांगap_set(etnaviv_states, etnaviv_sensitive_states[i].offset,
 			   etnaviv_sensitive_states[i].size);
-}
+पूर्ण
 
-static void etnaviv_warn_if_non_sensitive(struct etna_validation_state *state,
-	unsigned int buf_offset, unsigned int state_addr)
-{
-	if (state->num_relocs && state->relocs->submit_offset < buf_offset) {
+अटल व्योम etnaviv_warn_अगर_non_sensitive(काष्ठा etna_validation_state *state,
+	अचिन्हित पूर्णांक buf_offset, अचिन्हित पूर्णांक state_addr)
+अणु
+	अगर (state->num_relocs && state->relocs->submit_offset < buf_offset) अणु
 		dev_warn_once(state->gpu->dev,
 			      "%s: relocation for non-sensitive state 0x%x at offset %u\n",
 			      __func__, state_addr,
 			      state->relocs->submit_offset);
-		while (state->num_relocs &&
-		       state->relocs->submit_offset < buf_offset) {
+		जबतक (state->num_relocs &&
+		       state->relocs->submit_offset < buf_offset) अणु
 			state->relocs++;
 			state->num_relocs--;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool etnaviv_validate_load_state(struct etna_validation_state *state,
-	u32 *ptr, unsigned int state_offset, unsigned int num)
-{
-	unsigned int size = min(ETNAVIV_STATES_SIZE, state_offset + num);
-	unsigned int st_offset = state_offset, buf_offset;
+अटल bool etnaviv_validate_load_state(काष्ठा etna_validation_state *state,
+	u32 *ptr, अचिन्हित पूर्णांक state_offset, अचिन्हित पूर्णांक num)
+अणु
+	अचिन्हित पूर्णांक size = min(ETNAVIV_STATES_SIZE, state_offset + num);
+	अचिन्हित पूर्णांक st_offset = state_offset, buf_offset;
 
-	for_each_set_bit_from(st_offset, etnaviv_states, size) {
+	क्रम_each_set_bit_from(st_offset, etnaviv_states, size) अणु
 		buf_offset = (ptr - state->start +
 			      st_offset - state_offset) * 4;
 
-		etnaviv_warn_if_non_sensitive(state, buf_offset, st_offset * 4);
-		if (state->num_relocs &&
-		    state->relocs->submit_offset == buf_offset) {
+		etnaviv_warn_अगर_non_sensitive(state, buf_offset, st_offset * 4);
+		अगर (state->num_relocs &&
+		    state->relocs->submit_offset == buf_offset) अणु
 			state->relocs++;
 			state->num_relocs--;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		dev_warn_ratelimited(state->gpu->dev,
 				     "%s: load state touches restricted state 0x%x at offset %u\n",
 				     __func__, st_offset * 4, buf_offset);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (state->num_relocs) {
+	अगर (state->num_relocs) अणु
 		buf_offset = (ptr - state->start + num) * 4;
-		etnaviv_warn_if_non_sensitive(state, buf_offset, st_offset * 4 +
+		etnaviv_warn_अगर_non_sensitive(state, buf_offset, st_offset * 4 +
 					      state->relocs->submit_offset -
 					      buf_offset);
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static uint8_t cmd_length[32] = {
+अटल uपूर्णांक8_t cmd_length[32] = अणु
 	[FE_OPCODE_DRAW_PRIMITIVES] = 4,
 	[FE_OPCODE_DRAW_INDEXED_PRIMITIVES] = 6,
 	[FE_OPCODE_DRAW_INSTANCED] = 4,
 	[FE_OPCODE_NOP] = 2,
 	[FE_OPCODE_STALL] = 2,
-};
+पूर्ण;
 
-bool etnaviv_cmd_validate_one(struct etnaviv_gpu *gpu, u32 *stream,
-			      unsigned int size,
-			      struct drm_etnaviv_gem_submit_reloc *relocs,
-			      unsigned int reloc_size)
-{
-	struct etna_validation_state state;
+bool etnaviv_cmd_validate_one(काष्ठा etnaviv_gpu *gpu, u32 *stream,
+			      अचिन्हित पूर्णांक size,
+			      काष्ठा drm_etnaviv_gem_submit_reloc *relocs,
+			      अचिन्हित पूर्णांक reloc_size)
+अणु
+	काष्ठा etna_validation_state state;
 	u32 *buf = stream;
 	u32 *end = buf + size;
 
@@ -158,49 +159,49 @@ bool etnaviv_cmd_validate_one(struct etnaviv_gpu *gpu, u32 *stream,
 	state.num_relocs = reloc_size;
 	state.start = stream;
 
-	while (buf < end) {
+	जबतक (buf < end) अणु
 		u32 cmd = *buf;
-		unsigned int len, n, off;
-		unsigned int op = cmd >> 27;
+		अचिन्हित पूर्णांक len, n, off;
+		अचिन्हित पूर्णांक op = cmd >> 27;
 
-		switch (op) {
-		case FE_OPCODE_LOAD_STATE:
+		चयन (op) अणु
+		हाल FE_OPCODE_LOAD_STATE:
 			n = EXTRACT(cmd, VIV_FE_LOAD_STATE_HEADER_COUNT);
 			len = ALIGN(1 + n, 2);
-			if (buf + len > end)
-				break;
+			अगर (buf + len > end)
+				अवरोध;
 
 			off = EXTRACT(cmd, VIV_FE_LOAD_STATE_HEADER_OFFSET);
-			if (!etnaviv_validate_load_state(&state, buf + 1,
+			अगर (!etnaviv_validate_load_state(&state, buf + 1,
 							 off, n))
-				return false;
-			break;
+				वापस false;
+			अवरोध;
 
-		case FE_OPCODE_DRAW_2D:
+		हाल FE_OPCODE_DRAW_2D:
 			n = EXTRACT(cmd, VIV_FE_DRAW_2D_HEADER_COUNT);
-			if (n == 0)
+			अगर (n == 0)
 				n = 256;
 			len = 2 + n * 2;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			len = cmd_length[op];
-			if (len == 0) {
+			अगर (len == 0) अणु
 				dev_err(gpu->dev, "%s: op %u not permitted at offset %tu\n",
 					__func__, op, buf - state.start);
-				return false;
-			}
-			break;
-		}
+				वापस false;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		buf += len;
-	}
+	पूर्ण
 
-	if (buf > end) {
+	अगर (buf > end) अणु
 		dev_err(gpu->dev, "%s: commands overflow end of buffer: %tu > %u\n",
 			__func__, buf - state.start, size);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण

@@ -1,192 +1,193 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * linux/drivers/efi/runtime-map.c
+ * linux/drivers/efi/runसमय-map.c
  * Copyright (C) 2013 Red Hat, Inc., Dave Young <dyoung@redhat.com>
  */
 
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/efi.h>
-#include <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/slab.h>
 
-#include <asm/setup.h>
+#समावेश <यंत्र/setup.h>
 
-struct efi_runtime_map_entry {
+काष्ठा efi_runसमय_map_entry अणु
 	efi_memory_desc_t md;
-	struct kobject kobj;   /* kobject for each entry */
-};
+	काष्ठा kobject kobj;   /* kobject क्रम each entry */
+पूर्ण;
 
-static struct efi_runtime_map_entry **map_entries;
+अटल काष्ठा efi_runसमय_map_entry **map_entries;
 
-struct map_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct efi_runtime_map_entry *entry, char *buf);
-};
+काष्ठा map_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा efi_runसमय_map_entry *entry, अक्षर *buf);
+पूर्ण;
 
-static inline struct map_attribute *to_map_attr(struct attribute *attr)
-{
-	return container_of(attr, struct map_attribute, attr);
-}
+अटल अंतरभूत काष्ठा map_attribute *to_map_attr(काष्ठा attribute *attr)
+अणु
+	वापस container_of(attr, काष्ठा map_attribute, attr);
+पूर्ण
 
-static ssize_t type_show(struct efi_runtime_map_entry *entry, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "0x%x\n", entry->md.type);
-}
+अटल sमाप_प्रकार type_show(काष्ठा efi_runसमय_map_entry *entry, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "0x%x\n", entry->md.type);
+पूर्ण
 
-#define EFI_RUNTIME_FIELD(var) entry->md.var
+#घोषणा EFI_RUNTIME_FIELD(var) entry->md.var
 
-#define EFI_RUNTIME_U64_ATTR_SHOW(name) \
-static ssize_t name##_show(struct efi_runtime_map_entry *entry, char *buf) \
-{ \
-	return snprintf(buf, PAGE_SIZE, "0x%llx\n", EFI_RUNTIME_FIELD(name)); \
-}
+#घोषणा EFI_RUNTIME_U64_ATTR_SHOW(name) \
+अटल sमाप_प्रकार name##_show(काष्ठा efi_runसमय_map_entry *entry, अक्षर *buf) \
+अणु \
+	वापस snम_लिखो(buf, PAGE_SIZE, "0x%llx\n", EFI_RUNTIME_FIELD(name)); \
+पूर्ण
 
 EFI_RUNTIME_U64_ATTR_SHOW(phys_addr);
 EFI_RUNTIME_U64_ATTR_SHOW(virt_addr);
 EFI_RUNTIME_U64_ATTR_SHOW(num_pages);
 EFI_RUNTIME_U64_ATTR_SHOW(attribute);
 
-static inline struct efi_runtime_map_entry *to_map_entry(struct kobject *kobj)
-{
-	return container_of(kobj, struct efi_runtime_map_entry, kobj);
-}
+अटल अंतरभूत काष्ठा efi_runसमय_map_entry *to_map_entry(काष्ठा kobject *kobj)
+अणु
+	वापस container_of(kobj, काष्ठा efi_runसमय_map_entry, kobj);
+पूर्ण
 
-static ssize_t map_attr_show(struct kobject *kobj, struct attribute *attr,
-			      char *buf)
-{
-	struct efi_runtime_map_entry *entry = to_map_entry(kobj);
-	struct map_attribute *map_attr = to_map_attr(attr);
+अटल sमाप_प्रकार map_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा efi_runसमय_map_entry *entry = to_map_entry(kobj);
+	काष्ठा map_attribute *map_attr = to_map_attr(attr);
 
-	return map_attr->show(entry, buf);
-}
+	वापस map_attr->show(entry, buf);
+पूर्ण
 
-static struct map_attribute map_type_attr = __ATTR_RO_MODE(type, 0400);
-static struct map_attribute map_phys_addr_attr = __ATTR_RO_MODE(phys_addr, 0400);
-static struct map_attribute map_virt_addr_attr = __ATTR_RO_MODE(virt_addr, 0400);
-static struct map_attribute map_num_pages_attr = __ATTR_RO_MODE(num_pages, 0400);
-static struct map_attribute map_attribute_attr = __ATTR_RO_MODE(attribute, 0400);
+अटल काष्ठा map_attribute map_type_attr = __ATTR_RO_MODE(type, 0400);
+अटल काष्ठा map_attribute map_phys_addr_attr = __ATTR_RO_MODE(phys_addr, 0400);
+अटल काष्ठा map_attribute map_virt_addr_attr = __ATTR_RO_MODE(virt_addr, 0400);
+अटल काष्ठा map_attribute map_num_pages_attr = __ATTR_RO_MODE(num_pages, 0400);
+अटल काष्ठा map_attribute map_attribute_attr = __ATTR_RO_MODE(attribute, 0400);
 
 /*
- * These are default attributes that are added for every memmap entry.
+ * These are शेष attributes that are added क्रम every memmap entry.
  */
-static struct attribute *def_attrs[] = {
+अटल काष्ठा attribute *def_attrs[] = अणु
 	&map_type_attr.attr,
 	&map_phys_addr_attr.attr,
 	&map_virt_addr_attr.attr,
 	&map_num_pages_attr.attr,
 	&map_attribute_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct sysfs_ops map_attr_ops = {
+अटल स्थिर काष्ठा sysfs_ops map_attr_ops = अणु
 	.show = map_attr_show,
-};
+पूर्ण;
 
-static void map_release(struct kobject *kobj)
-{
-	struct efi_runtime_map_entry *entry;
+अटल व्योम map_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा efi_runसमय_map_entry *entry;
 
 	entry = to_map_entry(kobj);
-	kfree(entry);
-}
+	kमुक्त(entry);
+पूर्ण
 
-static struct kobj_type __refdata map_ktype = {
+अटल काष्ठा kobj_type __refdata map_ktype = अणु
 	.sysfs_ops	= &map_attr_ops,
-	.default_attrs	= def_attrs,
+	.शेष_attrs	= def_attrs,
 	.release	= map_release,
-};
+पूर्ण;
 
-static struct kset *map_kset;
+अटल काष्ठा kset *map_kset;
 
-static struct efi_runtime_map_entry *
-add_sysfs_runtime_map_entry(struct kobject *kobj, int nr,
+अटल काष्ठा efi_runसमय_map_entry *
+add_sysfs_runसमय_map_entry(काष्ठा kobject *kobj, पूर्णांक nr,
 			    efi_memory_desc_t *md)
-{
-	int ret;
-	struct efi_runtime_map_entry *entry;
+अणु
+	पूर्णांक ret;
+	काष्ठा efi_runसमय_map_entry *entry;
 
-	if (!map_kset) {
-		map_kset = kset_create_and_add("runtime-map", NULL, kobj);
-		if (!map_kset)
-			return ERR_PTR(-ENOMEM);
-	}
+	अगर (!map_kset) अणु
+		map_kset = kset_create_and_add("runtime-map", शून्य, kobj);
+		अगर (!map_kset)
+			वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
-	if (!entry) {
-		kset_unregister(map_kset);
-		map_kset = NULL;
-		return ERR_PTR(-ENOMEM);
-	}
+	entry = kzalloc(माप(*entry), GFP_KERNEL);
+	अगर (!entry) अणु
+		kset_unरेजिस्टर(map_kset);
+		map_kset = शून्य;
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	memcpy(&entry->md, md, sizeof(efi_memory_desc_t));
+	स_नकल(&entry->md, md, माप(efi_memory_desc_t));
 
 	kobject_init(&entry->kobj, &map_ktype);
 	entry->kobj.kset = map_kset;
-	ret = kobject_add(&entry->kobj, NULL, "%d", nr);
-	if (ret) {
+	ret = kobject_add(&entry->kobj, शून्य, "%d", nr);
+	अगर (ret) अणु
 		kobject_put(&entry->kobj);
-		kset_unregister(map_kset);
-		map_kset = NULL;
-		return ERR_PTR(ret);
-	}
+		kset_unरेजिस्टर(map_kset);
+		map_kset = शून्य;
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-int efi_get_runtime_map_size(void)
-{
-	return efi.memmap.nr_map * efi.memmap.desc_size;
-}
+पूर्णांक efi_get_runसमय_map_size(व्योम)
+अणु
+	वापस efi.memmap.nr_map * efi.memmap.desc_size;
+पूर्ण
 
-int efi_get_runtime_map_desc_size(void)
-{
-	return efi.memmap.desc_size;
-}
+पूर्णांक efi_get_runसमय_map_desc_size(व्योम)
+अणु
+	वापस efi.memmap.desc_size;
+पूर्ण
 
-int efi_runtime_map_copy(void *buf, size_t bufsz)
-{
-	size_t sz = efi_get_runtime_map_size();
+पूर्णांक efi_runसमय_map_copy(व्योम *buf, माप_प्रकार bufsz)
+अणु
+	माप_प्रकार sz = efi_get_runसमय_map_size();
 
-	if (sz > bufsz)
+	अगर (sz > bufsz)
 		sz = bufsz;
 
-	memcpy(buf, efi.memmap.map, sz);
-	return 0;
-}
+	स_नकल(buf, efi.memmap.map, sz);
+	वापस 0;
+पूर्ण
 
-int __init efi_runtime_map_init(struct kobject *efi_kobj)
-{
-	int i, j, ret = 0;
-	struct efi_runtime_map_entry *entry;
+पूर्णांक __init efi_runसमय_map_init(काष्ठा kobject *efi_kobj)
+अणु
+	पूर्णांक i, j, ret = 0;
+	काष्ठा efi_runसमय_map_entry *entry;
 	efi_memory_desc_t *md;
 
-	if (!efi_enabled(EFI_MEMMAP))
-		return 0;
+	अगर (!efi_enabled(EFI_MEMMAP))
+		वापस 0;
 
-	map_entries = kcalloc(efi.memmap.nr_map, sizeof(entry), GFP_KERNEL);
-	if (!map_entries) {
+	map_entries = kसुस्मृति(efi.memmap.nr_map, माप(entry), GFP_KERNEL);
+	अगर (!map_entries) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	i = 0;
-	for_each_efi_memory_desc(md) {
-		entry = add_sysfs_runtime_map_entry(efi_kobj, i, md);
-		if (IS_ERR(entry)) {
+	क्रम_each_efi_memory_desc(md) अणु
+		entry = add_sysfs_runसमय_map_entry(efi_kobj, i, md);
+		अगर (IS_ERR(entry)) अणु
 			ret = PTR_ERR(entry);
-			goto out_add_entry;
-		}
+			जाओ out_add_entry;
+		पूर्ण
 		*(map_entries + i++) = entry;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out_add_entry:
-	for (j = i - 1; j >= 0; j--) {
+	क्रम (j = i - 1; j >= 0; j--) अणु
 		entry = *(map_entries + j);
 		kobject_put(&entry->kobj);
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण

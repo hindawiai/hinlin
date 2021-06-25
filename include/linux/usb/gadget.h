@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * <linux/usb/gadget.h>
  *
  * We call the USB code inside a Linux-based peripheral device a "gadget"
- * driver, except for the hardware-specific bus glue.  One USB host can
- * talk to many USB gadgets, but the gadgets are only able to communicate
+ * driver, except क्रम the hardware-specअगरic bus glue.  One USB host can
+ * talk to many USB gadमाला_लो, but the gadमाला_लो are only able to communicate
  * to one host.
  *
  *
@@ -14,917 +15,917 @@
  * This software is licensed under the GNU GPL version 2.
  */
 
-#ifndef __LINUX_USB_GADGET_H
-#define __LINUX_USB_GADGET_H
+#अगर_अघोषित __LINUX_USB_GADGET_H
+#घोषणा __LINUX_USB_GADGET_H
 
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/scatterlist.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
-#include <linux/usb/ch9.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/usb/ch9.h>
 
-#define UDC_TRACE_STR_MAX	512
+#घोषणा UDC_TRACE_STR_MAX	512
 
-struct usb_ep;
+काष्ठा usb_ep;
 
 /**
- * struct usb_request - describes one i/o request
- * @buf: Buffer used for data.  Always provide this; some controllers
- *	only use PIO, or don't use DMA for some endpoints.
+ * काष्ठा usb_request - describes one i/o request
+ * @buf: Buffer used क्रम data.  Always provide this; some controllers
+ *	only use PIO, or करोn't use DMA क्रम some endpoपूर्णांकs.
  * @dma: DMA address corresponding to 'buf'.  If you don't set this
  *	field, and the usb controller needs one, it is responsible
- *	for mapping and unmapping the buffer.
- * @sg: a scatterlist for SG-capable controllers.
+ *	क्रम mapping and unmapping the buffer.
+ * @sg: a scatterlist क्रम SG-capable controllers.
  * @num_sgs: number of SG entries
- * @num_mapped_sgs: number of SG entries mapped to DMA (internal)
+ * @num_mapped_sgs: number of SG entries mapped to DMA (पूर्णांकernal)
  * @length: Length of that data
  * @stream_id: The stream id, when USB3.0 bulk streams are being used
- * @is_last: Indicates if this is the last request of a stream_id before
- *	switching to a different stream (required for DWC3 controllers).
- * @no_interrupt: If true, hints that no completion irq is needed.
- *	Helpful sometimes with deep request queues that are handled
+ * @is_last: Indicates अगर this is the last request of a stream_id beक्रमe
+ *	चयनing to a dअगरferent stream (required क्रम DWC3 controllers).
+ * @no_पूर्णांकerrupt: If true, hपूर्णांकs that no completion irq is needed.
+ *	Helpful someबार with deep request queues that are handled
  *	directly by DMA controllers.
  * @zero: If true, when writing data, makes the last packet be "short"
  *     by adding a zero length packet as needed;
- * @short_not_ok: When reading data, makes short packets be
+ * @लघु_not_ok: When पढ़ोing data, makes लघु packets be
  *     treated as errors (queue stops advancing till cleanup).
- * @dma_mapped: Indicates if request has been mapped to DMA (internal)
+ * @dma_mapped: Indicates अगर request has been mapped to DMA (पूर्णांकernal)
  * @complete: Function called when request completes, so this request and
  *	its buffer may be re-used.  The function will always be called with
- *	interrupts disabled, and it must not sleep.
- *	Reads terminate with a short packet, or when the buffer fills,
- *	whichever comes first.  When writes terminate, some data bytes
- *	will usually still be in flight (often in a hardware fifo).
- *	Errors (for reads or writes) stop the queue from advancing
- *	until the completion function returns, so that any transfers
+ *	पूर्णांकerrupts disabled, and it must not sleep.
+ *	Reads terminate with a लघु packet, or when the buffer fills,
+ *	whichever comes first.  When ग_लिखोs terminate, some data bytes
+ *	will usually still be in flight (often in a hardware fअगरo).
+ *	Errors (क्रम पढ़ोs or ग_लिखोs) stop the queue from advancing
+ *	until the completion function वापसs, so that any transfers
  *	invalidated by the error may first be dequeued.
  * @context: For use by the completion callback
  * @list: For use by the gadget driver.
- * @frame_number: Reports the interval number in (micro)frame in which the
+ * @frame_number: Reports the पूर्णांकerval number in (micro)frame in which the
  *	isochronous transfer was transmitted or received.
- * @status: Reports completion code, zero or a negative errno.
+ * @status: Reports completion code, zero or a negative त्रुटि_सं.
  *	Normally, faults block the transfer queue from advancing until
- *	the completion callback returns.
+ *	the completion callback वापसs.
  *	Code "-ESHUTDOWN" indicates completion caused by device disconnect,
- *	or when the driver disabled the endpoint.
- * @actual: Reports bytes transferred to/from the buffer.  For reads (OUT
+ *	or when the driver disabled the endpoपूर्णांक.
+ * @actual: Reports bytes transferred to/from the buffer.  For पढ़ोs (OUT
  *	transfers) this may be less than the requested length.  If the
- *	short_not_ok flag is set, short reads are treated as errors
+ *	लघु_not_ok flag is set, लघु पढ़ोs are treated as errors
  *	even when status otherwise indicates successful completion.
- *	Note that for writes (IN transfers) some data bytes may still
+ *	Note that क्रम ग_लिखोs (IN transfers) some data bytes may still
  *	reside in a device-side FIFO when the request is reported as
  *	complete.
  *
- * These are allocated/freed through the endpoint they're used with.  The
- * hardware's driver can add extra per-request data to the memory it returns,
- * which often avoids separate memory allocations (potential failures),
+ * These are allocated/मुक्तd through the endpoपूर्णांक they're used with.  The
+ * hardware's driver can add extra per-request data to the memory it वापसs,
+ * which often aव्योमs separate memory allocations (potential failures),
  * later when the request is queued.
  *
  * Request flags affect request handling, such as whether a zero length
- * packet is written (the "zero" flag), whether a short read should be
+ * packet is written (the "zero" flag), whether a लघु पढ़ो should be
  * treated as an error (blocking request queue advance, the "short_not_ok"
- * flag), or hinting that an interrupt is not required (the "no_interrupt"
- * flag, for use with deep request queues).
+ * flag), or hपूर्णांकing that an पूर्णांकerrupt is not required (the "no_interrupt"
+ * flag, क्रम use with deep request queues).
  *
- * Bulk endpoints can use any size buffers, and can also be used for interrupt
- * transfers. interrupt-only endpoints can be much less functional.
+ * Bulk endpoपूर्णांकs can use any size buffers, and can also be used क्रम पूर्णांकerrupt
+ * transfers. पूर्णांकerrupt-only endpoपूर्णांकs can be much less functional.
  *
  * NOTE:  this is analogous to 'struct urb' on the host side, except that
  * it's thinner and promotes more pre-allocation.
  */
 
-struct usb_request {
-	void			*buf;
-	unsigned		length;
+काष्ठा usb_request अणु
+	व्योम			*buf;
+	अचिन्हित		length;
 	dma_addr_t		dma;
 
-	struct scatterlist	*sg;
-	unsigned		num_sgs;
-	unsigned		num_mapped_sgs;
+	काष्ठा scatterlist	*sg;
+	अचिन्हित		num_sgs;
+	अचिन्हित		num_mapped_sgs;
 
-	unsigned		stream_id:16;
-	unsigned		is_last:1;
-	unsigned		no_interrupt:1;
-	unsigned		zero:1;
-	unsigned		short_not_ok:1;
-	unsigned		dma_mapped:1;
+	अचिन्हित		stream_id:16;
+	अचिन्हित		is_last:1;
+	अचिन्हित		no_पूर्णांकerrupt:1;
+	अचिन्हित		zero:1;
+	अचिन्हित		लघु_not_ok:1;
+	अचिन्हित		dma_mapped:1;
 
-	void			(*complete)(struct usb_ep *ep,
-					struct usb_request *req);
-	void			*context;
-	struct list_head	list;
+	व्योम			(*complete)(काष्ठा usb_ep *ep,
+					काष्ठा usb_request *req);
+	व्योम			*context;
+	काष्ठा list_head	list;
 
-	unsigned		frame_number;		/* ISO ONLY */
+	अचिन्हित		frame_number;		/* ISO ONLY */
 
-	int			status;
-	unsigned		actual;
-};
+	पूर्णांक			status;
+	अचिन्हित		actual;
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-/* endpoint-specific parts of the api to the usb controller hardware.
+/* endpoपूर्णांक-specअगरic parts of the api to the usb controller hardware.
  * unlike the urb model, (de)multiplexing layers are not required.
- * (so this api could slash overhead if used on the host side...)
+ * (so this api could slash overhead अगर used on the host side...)
  *
- * note that device side usb controllers commonly differ in how many
- * endpoints they support, as well as their capabilities.
+ * note that device side usb controllers commonly dअगरfer in how many
+ * endpoपूर्णांकs they support, as well as their capabilities.
  */
-struct usb_ep_ops {
-	int (*enable) (struct usb_ep *ep,
-		const struct usb_endpoint_descriptor *desc);
-	int (*disable) (struct usb_ep *ep);
-	void (*dispose) (struct usb_ep *ep);
+काष्ठा usb_ep_ops अणु
+	पूर्णांक (*enable) (काष्ठा usb_ep *ep,
+		स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc);
+	पूर्णांक (*disable) (काष्ठा usb_ep *ep);
+	व्योम (*dispose) (काष्ठा usb_ep *ep);
 
-	struct usb_request *(*alloc_request) (struct usb_ep *ep,
+	काष्ठा usb_request *(*alloc_request) (काष्ठा usb_ep *ep,
 		gfp_t gfp_flags);
-	void (*free_request) (struct usb_ep *ep, struct usb_request *req);
+	व्योम (*मुक्त_request) (काष्ठा usb_ep *ep, काष्ठा usb_request *req);
 
-	int (*queue) (struct usb_ep *ep, struct usb_request *req,
+	पूर्णांक (*queue) (काष्ठा usb_ep *ep, काष्ठा usb_request *req,
 		gfp_t gfp_flags);
-	int (*dequeue) (struct usb_ep *ep, struct usb_request *req);
+	पूर्णांक (*dequeue) (काष्ठा usb_ep *ep, काष्ठा usb_request *req);
 
-	int (*set_halt) (struct usb_ep *ep, int value);
-	int (*set_wedge) (struct usb_ep *ep);
+	पूर्णांक (*set_halt) (काष्ठा usb_ep *ep, पूर्णांक value);
+	पूर्णांक (*set_wedge) (काष्ठा usb_ep *ep);
 
-	int (*fifo_status) (struct usb_ep *ep);
-	void (*fifo_flush) (struct usb_ep *ep);
-};
+	पूर्णांक (*fअगरo_status) (काष्ठा usb_ep *ep);
+	व्योम (*fअगरo_flush) (काष्ठा usb_ep *ep);
+पूर्ण;
 
 /**
- * struct usb_ep_caps - endpoint capabilities description
- * @type_control:Endpoint supports control type (reserved for ep0).
- * @type_iso:Endpoint supports isochronous transfers.
- * @type_bulk:Endpoint supports bulk transfers.
- * @type_int:Endpoint supports interrupt transfers.
- * @dir_in:Endpoint supports IN direction.
- * @dir_out:Endpoint supports OUT direction.
+ * काष्ठा usb_ep_caps - endpoपूर्णांक capabilities description
+ * @type_control:Endpoपूर्णांक supports control type (reserved क्रम ep0).
+ * @type_iso:Endpoपूर्णांक supports isochronous transfers.
+ * @type_bulk:Endpoपूर्णांक supports bulk transfers.
+ * @type_पूर्णांक:Endpoपूर्णांक supports पूर्णांकerrupt transfers.
+ * @dir_in:Endpoपूर्णांक supports IN direction.
+ * @dir_out:Endpoपूर्णांक supports OUT direction.
  */
-struct usb_ep_caps {
-	unsigned type_control:1;
-	unsigned type_iso:1;
-	unsigned type_bulk:1;
-	unsigned type_int:1;
-	unsigned dir_in:1;
-	unsigned dir_out:1;
-};
+काष्ठा usb_ep_caps अणु
+	अचिन्हित type_control:1;
+	अचिन्हित type_iso:1;
+	अचिन्हित type_bulk:1;
+	अचिन्हित type_पूर्णांक:1;
+	अचिन्हित dir_in:1;
+	अचिन्हित dir_out:1;
+पूर्ण;
 
-#define USB_EP_CAPS_TYPE_CONTROL     0x01
-#define USB_EP_CAPS_TYPE_ISO         0x02
-#define USB_EP_CAPS_TYPE_BULK        0x04
-#define USB_EP_CAPS_TYPE_INT         0x08
-#define USB_EP_CAPS_TYPE_ALL \
+#घोषणा USB_EP_CAPS_TYPE_CONTROL     0x01
+#घोषणा USB_EP_CAPS_TYPE_ISO         0x02
+#घोषणा USB_EP_CAPS_TYPE_BULK        0x04
+#घोषणा USB_EP_CAPS_TYPE_INT         0x08
+#घोषणा USB_EP_CAPS_TYPE_ALL \
 	(USB_EP_CAPS_TYPE_ISO | USB_EP_CAPS_TYPE_BULK | USB_EP_CAPS_TYPE_INT)
-#define USB_EP_CAPS_DIR_IN           0x01
-#define USB_EP_CAPS_DIR_OUT          0x02
-#define USB_EP_CAPS_DIR_ALL  (USB_EP_CAPS_DIR_IN | USB_EP_CAPS_DIR_OUT)
+#घोषणा USB_EP_CAPS_सूची_IN           0x01
+#घोषणा USB_EP_CAPS_सूची_OUT          0x02
+#घोषणा USB_EP_CAPS_सूची_ALL  (USB_EP_CAPS_सूची_IN | USB_EP_CAPS_सूची_OUT)
 
-#define USB_EP_CAPS(_type, _dir) \
-	{ \
+#घोषणा USB_EP_CAPS(_type, _dir) \
+	अणु \
 		.type_control = !!(_type & USB_EP_CAPS_TYPE_CONTROL), \
 		.type_iso = !!(_type & USB_EP_CAPS_TYPE_ISO), \
 		.type_bulk = !!(_type & USB_EP_CAPS_TYPE_BULK), \
-		.type_int = !!(_type & USB_EP_CAPS_TYPE_INT), \
-		.dir_in = !!(_dir & USB_EP_CAPS_DIR_IN), \
-		.dir_out = !!(_dir & USB_EP_CAPS_DIR_OUT), \
-	}
+		.type_पूर्णांक = !!(_type & USB_EP_CAPS_TYPE_INT), \
+		.dir_in = !!(_dir & USB_EP_CAPS_सूची_IN), \
+		.dir_out = !!(_dir & USB_EP_CAPS_सूची_OUT), \
+	पूर्ण
 
 /**
- * struct usb_ep - device side representation of USB endpoint
- * @name:identifier for the endpoint, such as "ep-a" or "ep9in-bulk"
- * @ops: Function pointers used to access hardware-specific operations.
- * @ep_list:the gadget's ep_list holds all of its endpoints
- * @caps:The structure describing types and directions supported by endoint.
- * @enabled: The current endpoint enabled/disabled state.
- * @claimed: True if this endpoint is claimed by a function.
- * @maxpacket:The maximum packet size used on this endpoint.  The initial
- *	value can sometimes be reduced (hardware allowing), according to
- *	the endpoint descriptor used to configure the endpoint.
+ * काष्ठा usb_ep - device side representation of USB endpoपूर्णांक
+ * @name:identअगरier क्रम the endpoपूर्णांक, such as "ep-a" or "ep9in-bulk"
+ * @ops: Function poपूर्णांकers used to access hardware-specअगरic operations.
+ * @ep_list:the gadget's ep_list holds all of its endpoपूर्णांकs
+ * @caps:The काष्ठाure describing types and directions supported by enकरोपूर्णांक.
+ * @enabled: The current endpoपूर्णांक enabled/disabled state.
+ * @claimed: True अगर this endpoपूर्णांक is claimed by a function.
+ * @maxpacket:The maximum packet size used on this endpoपूर्णांक.  The initial
+ *	value can someबार be reduced (hardware allowing), according to
+ *	the endpoपूर्णांक descriptor used to configure the endpoपूर्णांक.
  * @maxpacket_limit:The maximum packet size value which can be handled by this
- *	endpoint. It's set once by UDC driver when endpoint is initialized, and
+ *	endpoपूर्णांक. It's set once by UDC driver when endpoपूर्णांक is initialized, and
  *	should not be changed. Should not be confused with maxpacket.
  * @max_streams: The maximum number of streams supported
  *	by this EP (0 - 16, actual number is 2^n)
- * @mult: multiplier, 'mult' value for SS Isoc EPs
- * @maxburst: the maximum number of bursts supported by this EP (for usb3)
- * @driver_data:for use by the gadget driver.
- * @address: used to identify the endpoint when finding descriptor that
+ * @mult: multiplier, 'mult' value क्रम SS Isoc EPs
+ * @maxburst: the maximum number of bursts supported by this EP (क्रम usb3)
+ * @driver_data:क्रम use by the gadget driver.
+ * @address: used to identअगरy the endpoपूर्णांक when finding descriptor that
  *	matches connection speed
- * @desc: endpoint descriptor.  This pointer is set before the endpoint is
- *	enabled and remains valid until the endpoint is disabled.
- * @comp_desc: In case of SuperSpeed support, this is the endpoint companion
- *	descriptor that is used to configure the endpoint
+ * @desc: endpoपूर्णांक descriptor.  This poपूर्णांकer is set beक्रमe the endpoपूर्णांक is
+ *	enabled and reमुख्यs valid until the endpoपूर्णांक is disabled.
+ * @comp_desc: In हाल of SuperSpeed support, this is the endpoपूर्णांक companion
+ *	descriptor that is used to configure the endpoपूर्णांक
  *
- * the bus controller driver lists all the general purpose endpoints in
- * gadget->ep_list.  the control endpoint (gadget->ep0) is not in that list,
+ * the bus controller driver lists all the general purpose endpoपूर्णांकs in
+ * gadget->ep_list.  the control endpoपूर्णांक (gadget->ep0) is not in that list,
  * and is accessed only in response to a driver setup() callback.
  */
 
-struct usb_ep {
-	void			*driver_data;
+काष्ठा usb_ep अणु
+	व्योम			*driver_data;
 
-	const char		*name;
-	const struct usb_ep_ops	*ops;
-	struct list_head	ep_list;
-	struct usb_ep_caps	caps;
+	स्थिर अक्षर		*name;
+	स्थिर काष्ठा usb_ep_ops	*ops;
+	काष्ठा list_head	ep_list;
+	काष्ठा usb_ep_caps	caps;
 	bool			claimed;
 	bool			enabled;
-	unsigned		maxpacket:16;
-	unsigned		maxpacket_limit:16;
-	unsigned		max_streams:16;
-	unsigned		mult:2;
-	unsigned		maxburst:5;
+	अचिन्हित		maxpacket:16;
+	अचिन्हित		maxpacket_limit:16;
+	अचिन्हित		max_streams:16;
+	अचिन्हित		mult:2;
+	अचिन्हित		maxburst:5;
 	u8			address;
-	const struct usb_endpoint_descriptor	*desc;
-	const struct usb_ss_ep_comp_descriptor	*comp_desc;
-};
+	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor	*desc;
+	स्थिर काष्ठा usb_ss_ep_comp_descriptor	*comp_desc;
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-#if IS_ENABLED(CONFIG_USB_GADGET)
-void usb_ep_set_maxpacket_limit(struct usb_ep *ep, unsigned maxpacket_limit);
-int usb_ep_enable(struct usb_ep *ep);
-int usb_ep_disable(struct usb_ep *ep);
-struct usb_request *usb_ep_alloc_request(struct usb_ep *ep, gfp_t gfp_flags);
-void usb_ep_free_request(struct usb_ep *ep, struct usb_request *req);
-int usb_ep_queue(struct usb_ep *ep, struct usb_request *req, gfp_t gfp_flags);
-int usb_ep_dequeue(struct usb_ep *ep, struct usb_request *req);
-int usb_ep_set_halt(struct usb_ep *ep);
-int usb_ep_clear_halt(struct usb_ep *ep);
-int usb_ep_set_wedge(struct usb_ep *ep);
-int usb_ep_fifo_status(struct usb_ep *ep);
-void usb_ep_fifo_flush(struct usb_ep *ep);
-#else
-static inline void usb_ep_set_maxpacket_limit(struct usb_ep *ep,
-		unsigned maxpacket_limit)
-{ }
-static inline int usb_ep_enable(struct usb_ep *ep)
-{ return 0; }
-static inline int usb_ep_disable(struct usb_ep *ep)
-{ return 0; }
-static inline struct usb_request *usb_ep_alloc_request(struct usb_ep *ep,
+#अगर IS_ENABLED(CONFIG_USB_GADGET)
+व्योम usb_ep_set_maxpacket_limit(काष्ठा usb_ep *ep, अचिन्हित maxpacket_limit);
+पूर्णांक usb_ep_enable(काष्ठा usb_ep *ep);
+पूर्णांक usb_ep_disable(काष्ठा usb_ep *ep);
+काष्ठा usb_request *usb_ep_alloc_request(काष्ठा usb_ep *ep, gfp_t gfp_flags);
+व्योम usb_ep_मुक्त_request(काष्ठा usb_ep *ep, काष्ठा usb_request *req);
+पूर्णांक usb_ep_queue(काष्ठा usb_ep *ep, काष्ठा usb_request *req, gfp_t gfp_flags);
+पूर्णांक usb_ep_dequeue(काष्ठा usb_ep *ep, काष्ठा usb_request *req);
+पूर्णांक usb_ep_set_halt(काष्ठा usb_ep *ep);
+पूर्णांक usb_ep_clear_halt(काष्ठा usb_ep *ep);
+पूर्णांक usb_ep_set_wedge(काष्ठा usb_ep *ep);
+पूर्णांक usb_ep_fअगरo_status(काष्ठा usb_ep *ep);
+व्योम usb_ep_fअगरo_flush(काष्ठा usb_ep *ep);
+#अन्यथा
+अटल अंतरभूत व्योम usb_ep_set_maxpacket_limit(काष्ठा usb_ep *ep,
+		अचिन्हित maxpacket_limit)
+अणु पूर्ण
+अटल अंतरभूत पूर्णांक usb_ep_enable(काष्ठा usb_ep *ep)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_ep_disable(काष्ठा usb_ep *ep)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत काष्ठा usb_request *usb_ep_alloc_request(काष्ठा usb_ep *ep,
 		gfp_t gfp_flags)
-{ return NULL; }
-static inline void usb_ep_free_request(struct usb_ep *ep,
-		struct usb_request *req)
-{ }
-static inline int usb_ep_queue(struct usb_ep *ep, struct usb_request *req,
+अणु वापस शून्य; पूर्ण
+अटल अंतरभूत व्योम usb_ep_मुक्त_request(काष्ठा usb_ep *ep,
+		काष्ठा usb_request *req)
+अणु पूर्ण
+अटल अंतरभूत पूर्णांक usb_ep_queue(काष्ठा usb_ep *ep, काष्ठा usb_request *req,
 		gfp_t gfp_flags)
-{ return 0; }
-static inline int usb_ep_dequeue(struct usb_ep *ep, struct usb_request *req)
-{ return 0; }
-static inline int usb_ep_set_halt(struct usb_ep *ep)
-{ return 0; }
-static inline int usb_ep_clear_halt(struct usb_ep *ep)
-{ return 0; }
-static inline int usb_ep_set_wedge(struct usb_ep *ep)
-{ return 0; }
-static inline int usb_ep_fifo_status(struct usb_ep *ep)
-{ return 0; }
-static inline void usb_ep_fifo_flush(struct usb_ep *ep)
-{ }
-#endif /* USB_GADGET */
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_ep_dequeue(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_ep_set_halt(काष्ठा usb_ep *ep)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_ep_clear_halt(काष्ठा usb_ep *ep)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_ep_set_wedge(काष्ठा usb_ep *ep)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_ep_fअगरo_status(काष्ठा usb_ep *ep)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम usb_ep_fअगरo_flush(काष्ठा usb_ep *ep)
+अणु पूर्ण
+#पूर्ण_अगर /* USB_GADGET */
 
 /*-------------------------------------------------------------------------*/
 
-struct usb_dcd_config_params {
-	__u8  bU1devExitLat;	/* U1 Device exit Latency */
-#define USB_DEFAULT_U1_DEV_EXIT_LAT	0x01	/* Less then 1 microsec */
-	__le16 bU2DevExitLat;	/* U2 Device exit Latency */
-#define USB_DEFAULT_U2_DEV_EXIT_LAT	0x1F4	/* Less then 500 microsec */
+काष्ठा usb_dcd_config_params अणु
+	__u8  bU1devExitLat;	/* U1 Device निकास Latency */
+#घोषणा USB_DEFAULT_U1_DEV_EXIT_LAT	0x01	/* Less then 1 microsec */
+	__le16 bU2DevExitLat;	/* U2 Device निकास Latency */
+#घोषणा USB_DEFAULT_U2_DEV_EXIT_LAT	0x1F4	/* Less then 500 microsec */
 	__u8 besl_baseline;	/* Recommended baseline BESL (0-15) */
 	__u8 besl_deep;		/* Recommended deep BESL (0-15) */
-#define USB_DEFAULT_BESL_UNSPECIFIED	0xFF	/* No recommended value */
-};
+#घोषणा USB_DEFAULT_BESL_UNSPECIFIED	0xFF	/* No recommended value */
+पूर्ण;
 
 
-struct usb_gadget;
-struct usb_gadget_driver;
-struct usb_udc;
+काष्ठा usb_gadget;
+काष्ठा usb_gadget_driver;
+काष्ठा usb_udc;
 
 /* the rest of the api to the controller hardware: device operations,
- * which don't involve endpoints (or i/o).
+ * which करोn't involve endpoपूर्णांकs (or i/o).
  */
-struct usb_gadget_ops {
-	int	(*get_frame)(struct usb_gadget *);
-	int	(*wakeup)(struct usb_gadget *);
-	int	(*set_selfpowered) (struct usb_gadget *, int is_selfpowered);
-	int	(*vbus_session) (struct usb_gadget *, int is_active);
-	int	(*vbus_draw) (struct usb_gadget *, unsigned mA);
-	int	(*pullup) (struct usb_gadget *, int is_on);
-	int	(*ioctl)(struct usb_gadget *,
-				unsigned code, unsigned long param);
-	void	(*get_config_params)(struct usb_gadget *,
-				     struct usb_dcd_config_params *);
-	int	(*udc_start)(struct usb_gadget *,
-			struct usb_gadget_driver *);
-	int	(*udc_stop)(struct usb_gadget *);
-	void	(*udc_set_speed)(struct usb_gadget *, enum usb_device_speed);
-	void	(*udc_set_ssp_rate)(struct usb_gadget *gadget,
-			enum usb_ssp_rate rate);
-	struct usb_ep *(*match_ep)(struct usb_gadget *,
-			struct usb_endpoint_descriptor *,
-			struct usb_ss_ep_comp_descriptor *);
-};
+काष्ठा usb_gadget_ops अणु
+	पूर्णांक	(*get_frame)(काष्ठा usb_gadget *);
+	पूर्णांक	(*wakeup)(काष्ठा usb_gadget *);
+	पूर्णांक	(*set_selfघातered) (काष्ठा usb_gadget *, पूर्णांक is_selfघातered);
+	पूर्णांक	(*vbus_session) (काष्ठा usb_gadget *, पूर्णांक is_active);
+	पूर्णांक	(*vbus_draw) (काष्ठा usb_gadget *, अचिन्हित mA);
+	पूर्णांक	(*pullup) (काष्ठा usb_gadget *, पूर्णांक is_on);
+	पूर्णांक	(*ioctl)(काष्ठा usb_gadget *,
+				अचिन्हित code, अचिन्हित दीर्घ param);
+	व्योम	(*get_config_params)(काष्ठा usb_gadget *,
+				     काष्ठा usb_dcd_config_params *);
+	पूर्णांक	(*udc_start)(काष्ठा usb_gadget *,
+			काष्ठा usb_gadget_driver *);
+	पूर्णांक	(*udc_stop)(काष्ठा usb_gadget *);
+	व्योम	(*udc_set_speed)(काष्ठा usb_gadget *, क्रमागत usb_device_speed);
+	व्योम	(*udc_set_ssp_rate)(काष्ठा usb_gadget *gadget,
+			क्रमागत usb_ssp_rate rate);
+	काष्ठा usb_ep *(*match_ep)(काष्ठा usb_gadget *,
+			काष्ठा usb_endpoपूर्णांक_descriptor *,
+			काष्ठा usb_ss_ep_comp_descriptor *);
+पूर्ण;
 
 /**
- * struct usb_gadget - represents a usb device
- * @work: (internal use) Workqueue to be used for sysfs_notify()
- * @udc: struct usb_udc pointer for this gadget
- * @ops: Function pointers used to access hardware-specific operations.
- * @ep0: Endpoint zero, used when reading or writing responses to
+ * काष्ठा usb_gadget - represents a usb device
+ * @work: (पूर्णांकernal use) Workqueue to be used क्रम sysfs_notअगरy()
+ * @udc: काष्ठा usb_udc poपूर्णांकer क्रम this gadget
+ * @ops: Function poपूर्णांकers used to access hardware-specअगरic operations.
+ * @ep0: Endpoपूर्णांक zero, used when पढ़ोing or writing responses to
  *	driver setup() requests
- * @ep_list: List of other endpoints supported by the device.
+ * @ep_list: List of other endpoपूर्णांकs supported by the device.
  * @speed: Speed of current connection to USB host.
  * @max_speed: Maximal speed the UDC can handle.  UDC must support this
  *      and all slower speeds.
- * @ssp_rate: Current connected SuperSpeed Plus signaling rate and lane count.
- * @max_ssp_rate: Maximum SuperSpeed Plus signaling rate and lane count the UDC
+ * @ssp_rate: Current connected SuperSpeed Plus संकेतing rate and lane count.
+ * @max_ssp_rate: Maximum SuperSpeed Plus संकेतing rate and lane count the UDC
  *	can handle. The UDC must support this and all slower speeds and lower
  *	number of lanes.
  * @state: the state we are now (attached, suspended, configured, etc)
- * @name: Identifies the controller hardware type.  Used in diagnostics
- *	and sometimes configuration.
- * @dev: Driver model state for this abstract device.
+ * @name: Identअगरies the controller hardware type.  Used in diagnostics
+ *	and someबार configuration.
+ * @dev: Driver model state क्रम this असलtract device.
  * @isoch_delay: value from Set Isoch Delay request. Only valid on SS/SSP
  * @out_epnum: last used out ep number
  * @in_epnum: last used in ep number
  * @mA: last set mA value
  * @otg_caps: OTG capabilities of this gadget.
- * @sg_supported: true if we can handle scatter-gather
- * @is_otg: True if the USB device port uses a Mini-AB jack, so that the
+ * @sg_supported: true अगर we can handle scatter-gather
+ * @is_otg: True अगर the USB device port uses a Mini-AB jack, so that the
  *	gadget driver must provide a USB OTG descriptor.
  * @is_a_peripheral: False unless is_otg, the "A" end of a USB cable
- *	is in the Mini-AB jack, and HNP has been used to switch roles
+ *	is in the Mini-AB jack, and HNP has been used to चयन roles
  *	so that the "A" device currently acts as A-Peripheral, not A-Host.
  * @a_hnp_support: OTG device feature flag, indicating that the A-Host
  *	supports HNP at this port.
  * @a_alt_hnp_support: OTG device feature flag, indicating that the A-Host
- *	only supports HNP on a different root port.
+ *	only supports HNP on a dअगरferent root port.
  * @b_hnp_enable: OTG device feature flag, indicating that the A-Host
  *	enabled HNP support.
- * @hnp_polling_support: OTG device feature flag, indicating if the OTG device
+ * @hnp_polling_support: OTG device feature flag, indicating अगर the OTG device
  *	in peripheral mode can support HNP polling.
- * @host_request_flag: OTG device feature flag, indicating if A-Peripheral
+ * @host_request_flag: OTG device feature flag, indicating अगर A-Peripheral
  *	or B-Peripheral wants to take host role.
  * @quirk_ep_out_aligned_size: epout requires buffer size to be aligned to
  *	MaxPacketSize.
- * @quirk_altset_not_supp: UDC controller doesn't support alt settings.
- * @quirk_stall_not_supp: UDC controller doesn't support stalling.
- * @quirk_zlp_not_supp: UDC controller doesn't support ZLP.
- * @quirk_avoids_skb_reserve: udc/platform wants to avoid skb_reserve() in
- *	u_ether.c to improve performance.
- * @is_selfpowered: if the gadget is self-powered.
- * @deactivated: True if gadget is deactivated - in deactivated state it cannot
+ * @quirk_altset_not_supp: UDC controller करोesn't support alt settings.
+ * @quirk_stall_not_supp: UDC controller करोesn't support stalling.
+ * @quirk_zlp_not_supp: UDC controller करोesn't support ZLP.
+ * @quirk_aव्योमs_skb_reserve: udc/platक्रमm wants to aव्योम skb_reserve() in
+ *	u_ether.c to improve perक्रमmance.
+ * @is_selfघातered: अगर the gadget is self-घातered.
+ * @deactivated: True अगर gadget is deactivated - in deactivated state it cannot
  *	be connected.
- * @connected: True if gadget is connected.
+ * @connected: True अगर gadget is connected.
  * @lpm_capable: If the gadget max_speed is FULL or HIGH, this flag
  *	indicates that it supports LPM as per the LPM ECN & errata.
- * @irq: the interrupt number for device controller.
+ * @irq: the पूर्णांकerrupt number क्रम device controller.
  *
- * Gadgets have a mostly-portable "gadget driver" implementing device
- * functions, handling all usb configurations and interfaces.  Gadget
- * drivers talk to hardware-specific code indirectly, through ops vectors.
+ * Gadमाला_लो have a mostly-portable "gadget driver" implementing device
+ * functions, handling all usb configurations and पूर्णांकerfaces.  Gadget
+ * drivers talk to hardware-specअगरic code indirectly, through ops vectors.
  * That insulates the gadget driver from hardware details, and packages
- * the hardware endpoints through generic i/o queues.  The "usb_gadget"
- * and "usb_ep" interfaces provide that insulation from the hardware.
+ * the hardware endpoपूर्णांकs through generic i/o queues.  The "usb_gadget"
+ * and "usb_ep" पूर्णांकerfaces provide that insulation from the hardware.
  *
- * Except for the driver data, all fields in this structure are
- * read-only to the gadget driver.  That driver data is part of the
- * "driver model" infrastructure in 2.6 (and later) kernels, and for
- * earlier systems is grouped in a similar structure that's not known
+ * Except क्रम the driver data, all fields in this काष्ठाure are
+ * पढ़ो-only to the gadget driver.  That driver data is part of the
+ * "driver model" infraकाष्ठाure in 2.6 (and later) kernels, and क्रम
+ * earlier प्रणालीs is grouped in a similar काष्ठाure that's not known
  * to the rest of the kernel.
  *
- * Values of the three OTG device feature flags are updated before the
- * setup() call corresponding to USB_REQ_SET_CONFIGURATION, and before
+ * Values of the three OTG device feature flags are updated beक्रमe the
+ * setup() call corresponding to USB_REQ_SET_CONFIGURATION, and beक्रमe
  * driver suspend() calls.  They are valid only when is_otg, and when the
  * device is acting as a B-Peripheral (so is_a_peripheral is false).
  */
-struct usb_gadget {
-	struct work_struct		work;
-	struct usb_udc			*udc;
-	/* readonly to gadget driver */
-	const struct usb_gadget_ops	*ops;
-	struct usb_ep			*ep0;
-	struct list_head		ep_list;	/* of usb_ep */
-	enum usb_device_speed		speed;
-	enum usb_device_speed		max_speed;
+काष्ठा usb_gadget अणु
+	काष्ठा work_काष्ठा		work;
+	काष्ठा usb_udc			*udc;
+	/* पढ़ोonly to gadget driver */
+	स्थिर काष्ठा usb_gadget_ops	*ops;
+	काष्ठा usb_ep			*ep0;
+	काष्ठा list_head		ep_list;	/* of usb_ep */
+	क्रमागत usb_device_speed		speed;
+	क्रमागत usb_device_speed		max_speed;
 
 	/* USB SuperSpeed Plus only */
-	enum usb_ssp_rate		ssp_rate;
-	enum usb_ssp_rate		max_ssp_rate;
+	क्रमागत usb_ssp_rate		ssp_rate;
+	क्रमागत usb_ssp_rate		max_ssp_rate;
 
-	enum usb_device_state		state;
-	const char			*name;
-	struct device			dev;
-	unsigned			isoch_delay;
-	unsigned			out_epnum;
-	unsigned			in_epnum;
-	unsigned			mA;
-	struct usb_otg_caps		*otg_caps;
+	क्रमागत usb_device_state		state;
+	स्थिर अक्षर			*name;
+	काष्ठा device			dev;
+	अचिन्हित			isoch_delay;
+	अचिन्हित			out_epnum;
+	अचिन्हित			in_epnum;
+	अचिन्हित			mA;
+	काष्ठा usb_otg_caps		*otg_caps;
 
-	unsigned			sg_supported:1;
-	unsigned			is_otg:1;
-	unsigned			is_a_peripheral:1;
-	unsigned			b_hnp_enable:1;
-	unsigned			a_hnp_support:1;
-	unsigned			a_alt_hnp_support:1;
-	unsigned			hnp_polling_support:1;
-	unsigned			host_request_flag:1;
-	unsigned			quirk_ep_out_aligned_size:1;
-	unsigned			quirk_altset_not_supp:1;
-	unsigned			quirk_stall_not_supp:1;
-	unsigned			quirk_zlp_not_supp:1;
-	unsigned			quirk_avoids_skb_reserve:1;
-	unsigned			is_selfpowered:1;
-	unsigned			deactivated:1;
-	unsigned			connected:1;
-	unsigned			lpm_capable:1;
-	int				irq;
-};
-#define work_to_gadget(w)	(container_of((w), struct usb_gadget, work))
+	अचिन्हित			sg_supported:1;
+	अचिन्हित			is_otg:1;
+	अचिन्हित			is_a_peripheral:1;
+	अचिन्हित			b_hnp_enable:1;
+	अचिन्हित			a_hnp_support:1;
+	अचिन्हित			a_alt_hnp_support:1;
+	अचिन्हित			hnp_polling_support:1;
+	अचिन्हित			host_request_flag:1;
+	अचिन्हित			quirk_ep_out_aligned_size:1;
+	अचिन्हित			quirk_altset_not_supp:1;
+	अचिन्हित			quirk_stall_not_supp:1;
+	अचिन्हित			quirk_zlp_not_supp:1;
+	अचिन्हित			quirk_aव्योमs_skb_reserve:1;
+	अचिन्हित			is_selfघातered:1;
+	अचिन्हित			deactivated:1;
+	अचिन्हित			connected:1;
+	अचिन्हित			lpm_capable:1;
+	पूर्णांक				irq;
+पूर्ण;
+#घोषणा work_to_gadget(w)	(container_of((w), काष्ठा usb_gadget, work))
 
 /* Interface to the device model */
-static inline void set_gadget_data(struct usb_gadget *gadget, void *data)
-	{ dev_set_drvdata(&gadget->dev, data); }
-static inline void *get_gadget_data(struct usb_gadget *gadget)
-	{ return dev_get_drvdata(&gadget->dev); }
-static inline struct usb_gadget *dev_to_usb_gadget(struct device *dev)
-{
-	return container_of(dev, struct usb_gadget, dev);
-}
-static inline struct usb_gadget *usb_get_gadget(struct usb_gadget *gadget)
-{
+अटल अंतरभूत व्योम set_gadget_data(काष्ठा usb_gadget *gadget, व्योम *data)
+	अणु dev_set_drvdata(&gadget->dev, data); पूर्ण
+अटल अंतरभूत व्योम *get_gadget_data(काष्ठा usb_gadget *gadget)
+	अणु वापस dev_get_drvdata(&gadget->dev); पूर्ण
+अटल अंतरभूत काष्ठा usb_gadget *dev_to_usb_gadget(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा usb_gadget, dev);
+पूर्ण
+अटल अंतरभूत काष्ठा usb_gadget *usb_get_gadget(काष्ठा usb_gadget *gadget)
+अणु
 	get_device(&gadget->dev);
-	return gadget;
-}
-static inline void usb_put_gadget(struct usb_gadget *gadget)
-{
+	वापस gadget;
+पूर्ण
+अटल अंतरभूत व्योम usb_put_gadget(काष्ठा usb_gadget *gadget)
+अणु
 	put_device(&gadget->dev);
-}
-extern void usb_initialize_gadget(struct device *parent,
-		struct usb_gadget *gadget, void (*release)(struct device *dev));
-extern int usb_add_gadget(struct usb_gadget *gadget);
-extern void usb_del_gadget(struct usb_gadget *gadget);
+पूर्ण
+बाह्य व्योम usb_initialize_gadget(काष्ठा device *parent,
+		काष्ठा usb_gadget *gadget, व्योम (*release)(काष्ठा device *dev));
+बाह्य पूर्णांक usb_add_gadget(काष्ठा usb_gadget *gadget);
+बाह्य व्योम usb_del_gadget(काष्ठा usb_gadget *gadget);
 
-/* Legacy device-model interface */
-extern int usb_add_gadget_udc_release(struct device *parent,
-		struct usb_gadget *gadget, void (*release)(struct device *dev));
-extern int usb_add_gadget_udc(struct device *parent, struct usb_gadget *gadget);
-extern void usb_del_gadget_udc(struct usb_gadget *gadget);
-extern char *usb_get_gadget_udc_name(void);
+/* Legacy device-model पूर्णांकerface */
+बाह्य पूर्णांक usb_add_gadget_udc_release(काष्ठा device *parent,
+		काष्ठा usb_gadget *gadget, व्योम (*release)(काष्ठा device *dev));
+बाह्य पूर्णांक usb_add_gadget_udc(काष्ठा device *parent, काष्ठा usb_gadget *gadget);
+बाह्य व्योम usb_del_gadget_udc(काष्ठा usb_gadget *gadget);
+बाह्य अक्षर *usb_get_gadget_udc_name(व्योम);
 
-/* iterates the non-control endpoints; 'tmp' is a struct usb_ep pointer */
-#define gadget_for_each_ep(tmp, gadget) \
-	list_for_each_entry(tmp, &(gadget)->ep_list, ep_list)
+/* iterates the non-control endpoपूर्णांकs; 'tmp' is a काष्ठा usb_ep poपूर्णांकer */
+#घोषणा gadget_क्रम_each_ep(पंचांगp, gadget) \
+	list_क्रम_each_entry(पंचांगp, &(gadget)->ep_list, ep_list)
 
 /**
- * usb_ep_align - returns @len aligned to ep's maxpacketsize.
- * @ep: the endpoint whose maxpacketsize is used to align @len
+ * usb_ep_align - वापसs @len aligned to ep's maxpacketsize.
+ * @ep: the endpoपूर्णांक whose maxpacketsize is used to align @len
  * @len: buffer size's length to align to @ep's maxpacketsize
  *
  * This helper is used to align buffer's size to an ep's maxpacketsize.
  */
-static inline size_t usb_ep_align(struct usb_ep *ep, size_t len)
-{
-	int max_packet_size = (size_t)usb_endpoint_maxp(ep->desc) & 0x7ff;
+अटल अंतरभूत माप_प्रकार usb_ep_align(काष्ठा usb_ep *ep, माप_प्रकार len)
+अणु
+	पूर्णांक max_packet_size = (माप_प्रकार)usb_endpoपूर्णांक_maxp(ep->desc) & 0x7ff;
 
-	return round_up(len, max_packet_size);
-}
+	वापस round_up(len, max_packet_size);
+पूर्ण
 
 /**
- * usb_ep_align_maybe - returns @len aligned to ep's maxpacketsize if gadget
- *	requires quirk_ep_out_aligned_size, otherwise returns len.
- * @g: controller to check for quirk
- * @ep: the endpoint whose maxpacketsize is used to align @len
+ * usb_ep_align_maybe - वापसs @len aligned to ep's maxpacketsize अगर gadget
+ *	requires quirk_ep_out_aligned_size, otherwise वापसs len.
+ * @g: controller to check क्रम quirk
+ * @ep: the endpoपूर्णांक whose maxpacketsize is used to align @len
  * @len: buffer size's length to align to @ep's maxpacketsize
  *
- * This helper is used in case it's required for any reason to check and maybe
+ * This helper is used in हाल it's required क्रम any reason to check and maybe
  * align buffer's size to an ep's maxpacketsize.
  */
-static inline size_t
-usb_ep_align_maybe(struct usb_gadget *g, struct usb_ep *ep, size_t len)
-{
-	return g->quirk_ep_out_aligned_size ? usb_ep_align(ep, len) : len;
-}
+अटल अंतरभूत माप_प्रकार
+usb_ep_align_maybe(काष्ठा usb_gadget *g, काष्ठा usb_ep *ep, माप_प्रकार len)
+अणु
+	वापस g->quirk_ep_out_aligned_size ? usb_ep_align(ep, len) : len;
+पूर्ण
 
 /**
- * gadget_is_altset_supported - return true iff the hardware supports
+ * gadget_is_altset_supported - वापस true अगरf the hardware supports
  *	altsettings
- * @g: controller to check for quirk
+ * @g: controller to check क्रम quirk
  */
-static inline int gadget_is_altset_supported(struct usb_gadget *g)
-{
-	return !g->quirk_altset_not_supp;
-}
+अटल अंतरभूत पूर्णांक gadget_is_altset_supported(काष्ठा usb_gadget *g)
+अणु
+	वापस !g->quirk_altset_not_supp;
+पूर्ण
 
 /**
- * gadget_is_stall_supported - return true iff the hardware supports stalling
- * @g: controller to check for quirk
+ * gadget_is_stall_supported - वापस true अगरf the hardware supports stalling
+ * @g: controller to check क्रम quirk
  */
-static inline int gadget_is_stall_supported(struct usb_gadget *g)
-{
-	return !g->quirk_stall_not_supp;
-}
+अटल अंतरभूत पूर्णांक gadget_is_stall_supported(काष्ठा usb_gadget *g)
+अणु
+	वापस !g->quirk_stall_not_supp;
+पूर्ण
 
 /**
- * gadget_is_zlp_supported - return true iff the hardware supports zlp
- * @g: controller to check for quirk
+ * gadget_is_zlp_supported - वापस true अगरf the hardware supports zlp
+ * @g: controller to check क्रम quirk
  */
-static inline int gadget_is_zlp_supported(struct usb_gadget *g)
-{
-	return !g->quirk_zlp_not_supp;
-}
+अटल अंतरभूत पूर्णांक gadget_is_zlp_supported(काष्ठा usb_gadget *g)
+अणु
+	वापस !g->quirk_zlp_not_supp;
+पूर्ण
 
 /**
- * gadget_avoids_skb_reserve - return true iff the hardware would like to avoid
- *	skb_reserve to improve performance.
- * @g: controller to check for quirk
+ * gadget_aव्योमs_skb_reserve - वापस true अगरf the hardware would like to aव्योम
+ *	skb_reserve to improve perक्रमmance.
+ * @g: controller to check क्रम quirk
  */
-static inline int gadget_avoids_skb_reserve(struct usb_gadget *g)
-{
-	return g->quirk_avoids_skb_reserve;
-}
+अटल अंतरभूत पूर्णांक gadget_aव्योमs_skb_reserve(काष्ठा usb_gadget *g)
+अणु
+	वापस g->quirk_aव्योमs_skb_reserve;
+पूर्ण
 
 /**
- * gadget_is_dualspeed - return true iff the hardware handles high speed
+ * gadget_is_dualspeed - वापस true अगरf the hardware handles high speed
  * @g: controller that might support both high and full speeds
  */
-static inline int gadget_is_dualspeed(struct usb_gadget *g)
-{
-	return g->max_speed >= USB_SPEED_HIGH;
-}
+अटल अंतरभूत पूर्णांक gadget_is_dualspeed(काष्ठा usb_gadget *g)
+अणु
+	वापस g->max_speed >= USB_SPEED_HIGH;
+पूर्ण
 
 /**
- * gadget_is_superspeed() - return true if the hardware handles superspeed
+ * gadget_is_superspeed() - वापस true अगर the hardware handles superspeed
  * @g: controller that might support superspeed
  */
-static inline int gadget_is_superspeed(struct usb_gadget *g)
-{
-	return g->max_speed >= USB_SPEED_SUPER;
-}
+अटल अंतरभूत पूर्णांक gadget_is_superspeed(काष्ठा usb_gadget *g)
+अणु
+	वापस g->max_speed >= USB_SPEED_SUPER;
+पूर्ण
 
 /**
- * gadget_is_superspeed_plus() - return true if the hardware handles
+ * gadget_is_superspeed_plus() - वापस true अगर the hardware handles
  *	superspeed plus
  * @g: controller that might support superspeed plus
  */
-static inline int gadget_is_superspeed_plus(struct usb_gadget *g)
-{
-	return g->max_speed >= USB_SPEED_SUPER_PLUS;
-}
+अटल अंतरभूत पूर्णांक gadget_is_superspeed_plus(काष्ठा usb_gadget *g)
+अणु
+	वापस g->max_speed >= USB_SPEED_SUPER_PLUS;
+पूर्ण
 
 /**
- * gadget_is_otg - return true iff the hardware is OTG-ready
+ * gadget_is_otg - वापस true अगरf the hardware is OTG-पढ़ोy
  * @g: controller that might have a Mini-AB connector
  *
- * This is a runtime test, since kernels with a USB-OTG stack sometimes
+ * This is a runसमय test, since kernels with a USB-OTG stack someबार
  * run on boards which only have a Mini-B (or Mini-A) connector.
  */
-static inline int gadget_is_otg(struct usb_gadget *g)
-{
-#ifdef CONFIG_USB_OTG
-	return g->is_otg;
-#else
-	return 0;
-#endif
-}
+अटल अंतरभूत पूर्णांक gadget_is_otg(काष्ठा usb_gadget *g)
+अणु
+#अगर_घोषित CONFIG_USB_OTG
+	वापस g->is_otg;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-#if IS_ENABLED(CONFIG_USB_GADGET)
-int usb_gadget_frame_number(struct usb_gadget *gadget);
-int usb_gadget_wakeup(struct usb_gadget *gadget);
-int usb_gadget_set_selfpowered(struct usb_gadget *gadget);
-int usb_gadget_clear_selfpowered(struct usb_gadget *gadget);
-int usb_gadget_vbus_connect(struct usb_gadget *gadget);
-int usb_gadget_vbus_draw(struct usb_gadget *gadget, unsigned mA);
-int usb_gadget_vbus_disconnect(struct usb_gadget *gadget);
-int usb_gadget_connect(struct usb_gadget *gadget);
-int usb_gadget_disconnect(struct usb_gadget *gadget);
-int usb_gadget_deactivate(struct usb_gadget *gadget);
-int usb_gadget_activate(struct usb_gadget *gadget);
-#else
-static inline int usb_gadget_frame_number(struct usb_gadget *gadget)
-{ return 0; }
-static inline int usb_gadget_wakeup(struct usb_gadget *gadget)
-{ return 0; }
-static inline int usb_gadget_set_selfpowered(struct usb_gadget *gadget)
-{ return 0; }
-static inline int usb_gadget_clear_selfpowered(struct usb_gadget *gadget)
-{ return 0; }
-static inline int usb_gadget_vbus_connect(struct usb_gadget *gadget)
-{ return 0; }
-static inline int usb_gadget_vbus_draw(struct usb_gadget *gadget, unsigned mA)
-{ return 0; }
-static inline int usb_gadget_vbus_disconnect(struct usb_gadget *gadget)
-{ return 0; }
-static inline int usb_gadget_connect(struct usb_gadget *gadget)
-{ return 0; }
-static inline int usb_gadget_disconnect(struct usb_gadget *gadget)
-{ return 0; }
-static inline int usb_gadget_deactivate(struct usb_gadget *gadget)
-{ return 0; }
-static inline int usb_gadget_activate(struct usb_gadget *gadget)
-{ return 0; }
-#endif /* CONFIG_USB_GADGET */
+#अगर IS_ENABLED(CONFIG_USB_GADGET)
+पूर्णांक usb_gadget_frame_number(काष्ठा usb_gadget *gadget);
+पूर्णांक usb_gadget_wakeup(काष्ठा usb_gadget *gadget);
+पूर्णांक usb_gadget_set_selfघातered(काष्ठा usb_gadget *gadget);
+पूर्णांक usb_gadget_clear_selfघातered(काष्ठा usb_gadget *gadget);
+पूर्णांक usb_gadget_vbus_connect(काष्ठा usb_gadget *gadget);
+पूर्णांक usb_gadget_vbus_draw(काष्ठा usb_gadget *gadget, अचिन्हित mA);
+पूर्णांक usb_gadget_vbus_disconnect(काष्ठा usb_gadget *gadget);
+पूर्णांक usb_gadget_connect(काष्ठा usb_gadget *gadget);
+पूर्णांक usb_gadget_disconnect(काष्ठा usb_gadget *gadget);
+पूर्णांक usb_gadget_deactivate(काष्ठा usb_gadget *gadget);
+पूर्णांक usb_gadget_activate(काष्ठा usb_gadget *gadget);
+#अन्यथा
+अटल अंतरभूत पूर्णांक usb_gadget_frame_number(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_wakeup(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_set_selfघातered(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_clear_selfघातered(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_vbus_connect(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_vbus_draw(काष्ठा usb_gadget *gadget, अचिन्हित mA)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_vbus_disconnect(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_connect(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_disconnect(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_deactivate(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_activate(काष्ठा usb_gadget *gadget)
+अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* CONFIG_USB_GADGET */
 
 /*-------------------------------------------------------------------------*/
 
 /**
- * struct usb_gadget_driver - driver for usb gadget devices
+ * काष्ठा usb_gadget_driver - driver क्रम usb gadget devices
  * @function: String describing the gadget's function
  * @max_speed: Highest speed the driver handles.
- * @setup: Invoked for ep0 control requests that aren't handled by
+ * @setup: Invoked क्रम ep0 control requests that aren't handled by
  *	the hardware level driver. Most calls must be handled by
  *	the gadget driver, including descriptor and configuration
  *	management.  The 16 bit members of the setup data are in
- *	USB byte order. Called in_interrupt; this may not sleep.  Driver
- *	queues a response to ep0, or returns negative to stall.
+ *	USB byte order. Called in_पूर्णांकerrupt; this may not sleep.  Driver
+ *	queues a response to ep0, or वापसs negative to stall.
  * @disconnect: Invoked after all transfers have been stopped,
- *	when the host is disconnected.  May be called in_interrupt; this
+ *	when the host is disconnected.  May be called in_पूर्णांकerrupt; this
  *	may not sleep.  Some devices can't detect disconnect, so this might
- *	not be called except as part of controller shutdown.
+ *	not be called except as part of controller shutकरोwn.
  * @bind: the driver's bind callback
  * @unbind: Invoked when the driver is unbound from a gadget,
  *	usually from rmmod (after a disconnect is reported).
  *	Called in a context that permits sleeping.
- * @suspend: Invoked on USB suspend.  May be called in_interrupt.
- * @resume: Invoked on USB resume.  May be called in_interrupt.
- * @reset: Invoked on USB bus reset. It is mandatory for all gadget drivers
- *	and should be called in_interrupt.
- * @driver: Driver model state for this driver.
- * @udc_name: A name of UDC this driver should be bound to. If udc_name is NULL,
+ * @suspend: Invoked on USB suspend.  May be called in_पूर्णांकerrupt.
+ * @resume: Invoked on USB resume.  May be called in_पूर्णांकerrupt.
+ * @reset: Invoked on USB bus reset. It is mandatory क्रम all gadget drivers
+ *	and should be called in_पूर्णांकerrupt.
+ * @driver: Driver model state क्रम this driver.
+ * @udc_name: A name of UDC this driver should be bound to. If udc_name is शून्य,
  *	this driver will be bound to any available UDC.
- * @pending: UDC core private data used for deferred probe of this driver.
- * @match_existing_only: If udc is not found, return an error and don't add this
+ * @pending: UDC core निजी data used क्रम deferred probe of this driver.
+ * @match_existing_only: If udc is not found, वापस an error and करोn't add this
  *      gadget driver to list of pending driver
  *
  * Devices are disabled till a gadget driver successfully bind()s, which
- * means the driver will handle setup() requests needed to enumerate (and
- * meet "chapter 9" requirements) then do some useful work.
+ * means the driver will handle setup() requests needed to क्रमागतerate (and
+ * meet "chapter 9" requirements) then करो some useful work.
  *
  * If gadget->is_otg is true, the gadget driver must provide an OTG
- * descriptor during enumeration, or else fail the bind() call.  In such
- * cases, no USB traffic may flow until both bind() returns without
+ * descriptor during क्रमागतeration, or अन्यथा fail the bind() call.  In such
+ * हालs, no USB traffic may flow until both bind() वापसs without
  * having called usb_gadget_disconnect(), and the USB host stack has
  * initialized.
  *
- * Drivers use hardware-specific knowledge to configure the usb hardware.
- * endpoint addressing is only one of several hardware characteristics that
- * are in descriptors the ep0 implementation returns from setup() calls.
+ * Drivers use hardware-specअगरic knowledge to configure the usb hardware.
+ * endpoपूर्णांक addressing is only one of several hardware अक्षरacteristics that
+ * are in descriptors the ep0 implementation वापसs from setup() calls.
  *
- * Except for ep0 implementation, most driver code shouldn't need change to
- * run on top of different usb controllers.  It'll use endpoints set up by
+ * Except क्रम ep0 implementation, most driver code shouldn't need change to
+ * run on top of dअगरferent usb controllers.  It'll use endpoपूर्णांकs set up by
  * that ep0 implementation.
  *
  * The usb controller driver handles a few standard usb requests.  Those
- * include set_address, and feature flags for devices, interfaces, and
- * endpoints (the get_status, set_feature, and clear_feature requests).
+ * include set_address, and feature flags क्रम devices, पूर्णांकerfaces, and
+ * endpoपूर्णांकs (the get_status, set_feature, and clear_feature requests).
  *
  * Accordingly, the driver's setup() callback must always implement all
- * get_descriptor requests, returning at least a device descriptor and
- * a configuration descriptor.  Drivers must make sure the endpoint
- * descriptors match any hardware constraints. Some hardware also constrains
+ * get_descriptor requests, वापसing at least a device descriptor and
+ * a configuration descriptor.  Drivers must make sure the endpoपूर्णांक
+ * descriptors match any hardware स्थिरraपूर्णांकs. Some hardware also स्थिरrains
  * other descriptors. (The pxa250 allows only configurations 1, 2, or 3).
  *
  * The driver's setup() callback must also implement set_configuration,
- * and should also implement set_interface, get_configuration, and
- * get_interface.  Setting a configuration (or interface) is where
- * endpoints should be activated or (config 0) shut down.
+ * and should also implement set_पूर्णांकerface, get_configuration, and
+ * get_पूर्णांकerface.  Setting a configuration (or पूर्णांकerface) is where
+ * endpoपूर्णांकs should be activated or (config 0) shut करोwn.
  *
- * (Note that only the default control endpoint is supported.  Neither
+ * (Note that only the शेष control endpoपूर्णांक is supported.  Neither
  * hosts nor devices generally support control traffic except to ep0.)
  *
  * Most devices will ignore USB suspend/resume operations, and so will
  * not provide those callbacks.  However, some may need to change modes
- * when the host is not longer directing those activities.  For example,
+ * when the host is not दीर्घer directing those activities.  For example,
  * local controls (buttons, dials, etc) may need to be re-enabled since
- * the (remote) host can't do that any longer; or an error state might
+ * the (remote) host can't करो that any दीर्घer; or an error state might
  * be cleared, to make the device behave identically whether or not
- * power is maintained.
+ * घातer is मुख्यtained.
  */
-struct usb_gadget_driver {
-	char			*function;
-	enum usb_device_speed	max_speed;
-	int			(*bind)(struct usb_gadget *gadget,
-					struct usb_gadget_driver *driver);
-	void			(*unbind)(struct usb_gadget *);
-	int			(*setup)(struct usb_gadget *,
-					const struct usb_ctrlrequest *);
-	void			(*disconnect)(struct usb_gadget *);
-	void			(*suspend)(struct usb_gadget *);
-	void			(*resume)(struct usb_gadget *);
-	void			(*reset)(struct usb_gadget *);
+काष्ठा usb_gadget_driver अणु
+	अक्षर			*function;
+	क्रमागत usb_device_speed	max_speed;
+	पूर्णांक			(*bind)(काष्ठा usb_gadget *gadget,
+					काष्ठा usb_gadget_driver *driver);
+	व्योम			(*unbind)(काष्ठा usb_gadget *);
+	पूर्णांक			(*setup)(काष्ठा usb_gadget *,
+					स्थिर काष्ठा usb_ctrlrequest *);
+	व्योम			(*disconnect)(काष्ठा usb_gadget *);
+	व्योम			(*suspend)(काष्ठा usb_gadget *);
+	व्योम			(*resume)(काष्ठा usb_gadget *);
+	व्योम			(*reset)(काष्ठा usb_gadget *);
 
 	/* FIXME support safe rmmod */
-	struct device_driver	driver;
+	काष्ठा device_driver	driver;
 
-	char			*udc_name;
-	struct list_head	pending;
-	unsigned                match_existing_only:1;
-};
+	अक्षर			*udc_name;
+	काष्ठा list_head	pending;
+	अचिन्हित                match_existing_only:1;
+पूर्ण;
 
 
 
 /*-------------------------------------------------------------------------*/
 
-/* driver modules register and unregister, as usual.
+/* driver modules रेजिस्टर and unरेजिस्टर, as usual.
  * these calls must be made in a context that can sleep.
  *
  * these will usually be implemented directly by the hardware-dependent
- * usb bus interface driver, which will only support a single driver.
+ * usb bus पूर्णांकerface driver, which will only support a single driver.
  */
 
 /**
  * usb_gadget_probe_driver - probe a gadget driver
- * @driver: the driver being registered
+ * @driver: the driver being रेजिस्टरed
  * Context: can sleep
  *
  * Call this in your gadget driver's module initialization function,
  * to tell the underlying usb controller driver about your driver.
- * The @bind() function will be called to bind it to a gadget before this
- * registration call returns.  It's expected that the @bind() function will
+ * The @bind() function will be called to bind it to a gadget beक्रमe this
+ * registration call वापसs.  It's expected that the @bind() function will
  * be in init sections.
  */
-int usb_gadget_probe_driver(struct usb_gadget_driver *driver);
+पूर्णांक usb_gadget_probe_driver(काष्ठा usb_gadget_driver *driver);
 
 /**
- * usb_gadget_unregister_driver - unregister a gadget driver
- * @driver:the driver being unregistered
+ * usb_gadget_unरेजिस्टर_driver - unरेजिस्टर a gadget driver
+ * @driver:the driver being unरेजिस्टरed
  * Context: can sleep
  *
  * Call this in your gadget driver's module cleanup function,
  * to tell the underlying usb controller that your driver is
  * going away.  If the controller is connected to a USB host,
  * it will first disconnect().  The driver is also requested
- * to unbind() and clean up any device state, before this procedure
- * finally returns.  It's expected that the unbind() functions
- * will be in exit sections, so may not be linked in some kernels.
+ * to unbind() and clean up any device state, beक्रमe this procedure
+ * finally वापसs.  It's expected that the unbind() functions
+ * will be in निकास sections, so may not be linked in some kernels.
  */
-int usb_gadget_unregister_driver(struct usb_gadget_driver *driver);
+पूर्णांक usb_gadget_unरेजिस्टर_driver(काष्ठा usb_gadget_driver *driver);
 
 /*-------------------------------------------------------------------------*/
 
-/* utility to simplify dealing with string descriptors */
+/* utility to simplअगरy dealing with string descriptors */
 
 /**
- * struct usb_string - wraps a C string and its USB id
- * @id:the (nonzero) ID for this string
+ * काष्ठा usb_string - wraps a C string and its USB id
+ * @id:the (nonzero) ID क्रम this string
  * @s:the string, in UTF-8 encoding
  *
  * If you're using usb_gadget_get_string(), use this to wrap a string
  * together with its ID.
  */
-struct usb_string {
+काष्ठा usb_string अणु
 	u8			id;
-	const char		*s;
-};
+	स्थिर अक्षर		*s;
+पूर्ण;
 
 /**
- * struct usb_gadget_strings - a set of USB strings in a given language
- * @language:identifies the strings' language (0x0409 for en-us)
+ * काष्ठा usb_gadget_strings - a set of USB strings in a given language
+ * @language:identअगरies the strings' language (0x0409 क्रम en-us)
  * @strings:array of strings with their ids
  *
  * If you're using usb_gadget_get_string(), use this to wrap all the
- * strings for a given language.
+ * strings क्रम a given language.
  */
-struct usb_gadget_strings {
-	u16			language;	/* 0x0409 for en-us */
-	struct usb_string	*strings;
-};
+काष्ठा usb_gadget_strings अणु
+	u16			language;	/* 0x0409 क्रम en-us */
+	काष्ठा usb_string	*strings;
+पूर्ण;
 
-struct usb_gadget_string_container {
-	struct list_head        list;
+काष्ठा usb_gadget_string_container अणु
+	काष्ठा list_head        list;
 	u8                      *stash[];
-};
+पूर्ण;
 
-/* put descriptor for string with that id into buf (buflen >= 256) */
-int usb_gadget_get_string(const struct usb_gadget_strings *table, int id, u8 *buf);
+/* put descriptor क्रम string with that id पूर्णांकo buf (buflen >= 256) */
+पूर्णांक usb_gadget_get_string(स्थिर काष्ठा usb_gadget_strings *table, पूर्णांक id, u8 *buf);
 
-/* check if the given language identifier is valid */
+/* check अगर the given language identअगरier is valid */
 bool usb_validate_langid(u16 langid);
 
 /*-------------------------------------------------------------------------*/
 
-/* utility to simplify managing config descriptors */
+/* utility to simplअगरy managing config descriptors */
 
-/* write vector of descriptors into buffer */
-int usb_descriptor_fillbuf(void *, unsigned,
-		const struct usb_descriptor_header **);
+/* ग_लिखो vector of descriptors पूर्णांकo buffer */
+पूर्णांक usb_descriptor_fillbuf(व्योम *, अचिन्हित,
+		स्थिर काष्ठा usb_descriptor_header **);
 
 /* build config descriptor from single descriptor vector */
-int usb_gadget_config_buf(const struct usb_config_descriptor *config,
-	void *buf, unsigned buflen, const struct usb_descriptor_header **desc);
+पूर्णांक usb_gadget_config_buf(स्थिर काष्ठा usb_config_descriptor *config,
+	व्योम *buf, अचिन्हित buflen, स्थिर काष्ठा usb_descriptor_header **desc);
 
-/* copy a NULL-terminated vector of descriptors */
-struct usb_descriptor_header **usb_copy_descriptors(
-		struct usb_descriptor_header **);
+/* copy a शून्य-terminated vector of descriptors */
+काष्ठा usb_descriptor_header **usb_copy_descriptors(
+		काष्ठा usb_descriptor_header **);
 
 /**
- * usb_free_descriptors - free descriptors returned by usb_copy_descriptors()
+ * usb_मुक्त_descriptors - मुक्त descriptors वापसed by usb_copy_descriptors()
  * @v: vector of descriptors
  */
-static inline void usb_free_descriptors(struct usb_descriptor_header **v)
-{
-	kfree(v);
-}
+अटल अंतरभूत व्योम usb_मुक्त_descriptors(काष्ठा usb_descriptor_header **v)
+अणु
+	kमुक्त(v);
+पूर्ण
 
-struct usb_function;
-int usb_assign_descriptors(struct usb_function *f,
-		struct usb_descriptor_header **fs,
-		struct usb_descriptor_header **hs,
-		struct usb_descriptor_header **ss,
-		struct usb_descriptor_header **ssp);
-void usb_free_all_descriptors(struct usb_function *f);
+काष्ठा usb_function;
+पूर्णांक usb_assign_descriptors(काष्ठा usb_function *f,
+		काष्ठा usb_descriptor_header **fs,
+		काष्ठा usb_descriptor_header **hs,
+		काष्ठा usb_descriptor_header **ss,
+		काष्ठा usb_descriptor_header **ssp);
+व्योम usb_मुक्त_all_descriptors(काष्ठा usb_function *f);
 
-struct usb_descriptor_header *usb_otg_descriptor_alloc(
-				struct usb_gadget *gadget);
-int usb_otg_descriptor_init(struct usb_gadget *gadget,
-		struct usb_descriptor_header *otg_desc);
+काष्ठा usb_descriptor_header *usb_otg_descriptor_alloc(
+				काष्ठा usb_gadget *gadget);
+पूर्णांक usb_otg_descriptor_init(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_descriptor_header *otg_desc);
 /*-------------------------------------------------------------------------*/
 
-/* utility to simplify map/unmap of usb_requests to/from DMA */
+/* utility to simplअगरy map/unmap of usb_requests to/from DMA */
 
-#ifdef	CONFIG_HAS_DMA
-extern int usb_gadget_map_request_by_dev(struct device *dev,
-		struct usb_request *req, int is_in);
-extern int usb_gadget_map_request(struct usb_gadget *gadget,
-		struct usb_request *req, int is_in);
+#अगर_घोषित	CONFIG_HAS_DMA
+बाह्य पूर्णांक usb_gadget_map_request_by_dev(काष्ठा device *dev,
+		काष्ठा usb_request *req, पूर्णांक is_in);
+बाह्य पूर्णांक usb_gadget_map_request(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_request *req, पूर्णांक is_in);
 
-extern void usb_gadget_unmap_request_by_dev(struct device *dev,
-		struct usb_request *req, int is_in);
-extern void usb_gadget_unmap_request(struct usb_gadget *gadget,
-		struct usb_request *req, int is_in);
-#else /* !CONFIG_HAS_DMA */
-static inline int usb_gadget_map_request_by_dev(struct device *dev,
-		struct usb_request *req, int is_in) { return -ENOSYS; }
-static inline int usb_gadget_map_request(struct usb_gadget *gadget,
-		struct usb_request *req, int is_in) { return -ENOSYS; }
+बाह्य व्योम usb_gadget_unmap_request_by_dev(काष्ठा device *dev,
+		काष्ठा usb_request *req, पूर्णांक is_in);
+बाह्य व्योम usb_gadget_unmap_request(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_request *req, पूर्णांक is_in);
+#अन्यथा /* !CONFIG_HAS_DMA */
+अटल अंतरभूत पूर्णांक usb_gadget_map_request_by_dev(काष्ठा device *dev,
+		काष्ठा usb_request *req, पूर्णांक is_in) अणु वापस -ENOSYS; पूर्ण
+अटल अंतरभूत पूर्णांक usb_gadget_map_request(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_request *req, पूर्णांक is_in) अणु वापस -ENOSYS; पूर्ण
 
-static inline void usb_gadget_unmap_request_by_dev(struct device *dev,
-		struct usb_request *req, int is_in) { }
-static inline void usb_gadget_unmap_request(struct usb_gadget *gadget,
-		struct usb_request *req, int is_in) { }
-#endif /* !CONFIG_HAS_DMA */
+अटल अंतरभूत व्योम usb_gadget_unmap_request_by_dev(काष्ठा device *dev,
+		काष्ठा usb_request *req, पूर्णांक is_in) अणु पूर्ण
+अटल अंतरभूत व्योम usb_gadget_unmap_request(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_request *req, पूर्णांक is_in) अणु पूर्ण
+#पूर्ण_अगर /* !CONFIG_HAS_DMA */
 
 /*-------------------------------------------------------------------------*/
 
 /* utility to set gadget state properly */
 
-extern void usb_gadget_set_state(struct usb_gadget *gadget,
-		enum usb_device_state state);
+बाह्य व्योम usb_gadget_set_state(काष्ठा usb_gadget *gadget,
+		क्रमागत usb_device_state state);
 
 /*-------------------------------------------------------------------------*/
 
 /* utility to tell udc core that the bus reset occurs */
-extern void usb_gadget_udc_reset(struct usb_gadget *gadget,
-		struct usb_gadget_driver *driver);
+बाह्य व्योम usb_gadget_udc_reset(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_gadget_driver *driver);
 
 /*-------------------------------------------------------------------------*/
 
 /* utility to give requests back to the gadget layer */
 
-extern void usb_gadget_giveback_request(struct usb_ep *ep,
-		struct usb_request *req);
+बाह्य व्योम usb_gadget_giveback_request(काष्ठा usb_ep *ep,
+		काष्ठा usb_request *req);
 
 /*-------------------------------------------------------------------------*/
 
-/* utility to find endpoint by name */
+/* utility to find endpoपूर्णांक by name */
 
-extern struct usb_ep *gadget_find_ep_by_name(struct usb_gadget *g,
-		const char *name);
-
-/*-------------------------------------------------------------------------*/
-
-/* utility to check if endpoint caps match descriptor needs */
-
-extern int usb_gadget_ep_match_desc(struct usb_gadget *gadget,
-		struct usb_ep *ep, struct usb_endpoint_descriptor *desc,
-		struct usb_ss_ep_comp_descriptor *ep_comp);
+बाह्य काष्ठा usb_ep *gadget_find_ep_by_name(काष्ठा usb_gadget *g,
+		स्थिर अक्षर *name);
 
 /*-------------------------------------------------------------------------*/
 
-/* utility to update vbus status for udc core, it may be scheduled */
-extern void usb_udc_vbus_handler(struct usb_gadget *gadget, bool status);
+/* utility to check अगर endpoपूर्णांक caps match descriptor needs */
+
+बाह्य पूर्णांक usb_gadget_ep_match_desc(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_ep *ep, काष्ठा usb_endpoपूर्णांक_descriptor *desc,
+		काष्ठा usb_ss_ep_comp_descriptor *ep_comp);
 
 /*-------------------------------------------------------------------------*/
 
-/* utility wrapping a simple endpoint selection policy */
+/* utility to update vbus status क्रम udc core, it may be scheduled */
+बाह्य व्योम usb_udc_vbus_handler(काष्ठा usb_gadget *gadget, bool status);
 
-extern struct usb_ep *usb_ep_autoconfig(struct usb_gadget *,
-			struct usb_endpoint_descriptor *);
+/*-------------------------------------------------------------------------*/
+
+/* utility wrapping a simple endpoपूर्णांक selection policy */
+
+बाह्य काष्ठा usb_ep *usb_ep_स्वतःconfig(काष्ठा usb_gadget *,
+			काष्ठा usb_endpoपूर्णांक_descriptor *);
 
 
-extern struct usb_ep *usb_ep_autoconfig_ss(struct usb_gadget *,
-			struct usb_endpoint_descriptor *,
-			struct usb_ss_ep_comp_descriptor *);
+बाह्य काष्ठा usb_ep *usb_ep_स्वतःconfig_ss(काष्ठा usb_gadget *,
+			काष्ठा usb_endpoपूर्णांक_descriptor *,
+			काष्ठा usb_ss_ep_comp_descriptor *);
 
-extern void usb_ep_autoconfig_release(struct usb_ep *);
+बाह्य व्योम usb_ep_स्वतःconfig_release(काष्ठा usb_ep *);
 
-extern void usb_ep_autoconfig_reset(struct usb_gadget *);
+बाह्य व्योम usb_ep_स्वतःconfig_reset(काष्ठा usb_gadget *);
 
-#endif /* __LINUX_USB_GADGET_H */
+#पूर्ण_अगर /* __LINUX_USB_GADGET_H */

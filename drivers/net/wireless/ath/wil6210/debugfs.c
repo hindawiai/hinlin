@@ -1,422 +1,423 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2012-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/pci.h>
-#include <linux/rtnetlink.h>
-#include <linux/power_supply.h>
-#include "wil6210.h"
-#include "wmi.h"
-#include "txrx.h"
-#include "pmc.h"
+#समावेश <linux/module.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश "wil6210.h"
+#समावेश "wmi.h"
+#समावेश "txrx.h"
+#समावेश "pmc.h"
 
 /* Nasty hack. Better have per device instances */
-static u32 mem_addr;
-static u32 dbg_txdesc_index;
-static u32 dbg_ring_index; /* 24+ for Rx, 0..23 for Tx */
-static u32 dbg_status_msg_index;
-/* 0..wil->num_rx_status_rings-1 for Rx, wil->tx_sring_idx for Tx */
-static u32 dbg_sring_index;
+अटल u32 mem_addr;
+अटल u32 dbg_txdesc_index;
+अटल u32 dbg_ring_index; /* 24+ क्रम Rx, 0..23 क्रम Tx */
+अटल u32 dbg_status_msg_index;
+/* 0..wil->num_rx_status_rings-1 क्रम Rx, wil->tx_sring_idx क्रम Tx */
+अटल u32 dbg_sring_index;
 
-enum dbg_off_type {
-	doff_u32 = 0,
-	doff_x32 = 1,
-	doff_ulong = 2,
-	doff_io32 = 3,
-	doff_u8 = 4
-};
+क्रमागत dbg_off_type अणु
+	करोff_u32 = 0,
+	करोff_x32 = 1,
+	करोff_uदीर्घ = 2,
+	करोff_io32 = 3,
+	करोff_u8 = 4
+पूर्ण;
 
 /* offset to "wil" */
-struct dbg_off {
-	const char *name;
+काष्ठा dbg_off अणु
+	स्थिर अक्षर *name;
 	umode_t mode;
-	ulong off;
-	enum dbg_off_type type;
-};
+	uदीर्घ off;
+	क्रमागत dbg_off_type type;
+पूर्ण;
 
-static void wil_print_desc_edma(struct seq_file *s, struct wil6210_priv *wil,
-				struct wil_ring *ring,
-				char _s, char _h, int idx)
-{
+अटल व्योम wil_prपूर्णांक_desc_edma(काष्ठा seq_file *s, काष्ठा wil6210_priv *wil,
+				काष्ठा wil_ring *ring,
+				अक्षर _s, अक्षर _h, पूर्णांक idx)
+अणु
 	u8 num_of_descs;
 	bool has_skb = false;
 
-	if (ring->is_rx) {
-		struct wil_rx_enhanced_desc *rx_d =
-			(struct wil_rx_enhanced_desc *)
+	अगर (ring->is_rx) अणु
+		काष्ठा wil_rx_enhanced_desc *rx_d =
+			(काष्ठा wil_rx_enhanced_desc *)
 			&ring->va[idx].rx.enhanced;
 		u16 buff_id = le16_to_cpu(rx_d->mac.buff_id);
 
-		if (wil->rx_buff_mgmt.buff_arr &&
+		अगर (wil->rx_buff_mgmt.buff_arr &&
 		    wil_val_in_range(buff_id, 0, wil->rx_buff_mgmt.size))
 			has_skb = wil->rx_buff_mgmt.buff_arr[buff_id].skb;
-		seq_printf(s, "%c", (has_skb) ? _h : _s);
-	} else {
-		struct wil_tx_enhanced_desc *d =
-			(struct wil_tx_enhanced_desc *)
+		seq_म_लिखो(s, "%c", (has_skb) ? _h : _s);
+	पूर्ण अन्यथा अणु
+		काष्ठा wil_tx_enhanced_desc *d =
+			(काष्ठा wil_tx_enhanced_desc *)
 			&ring->va[idx].tx.enhanced;
 
 		num_of_descs = (u8)d->mac.d[2];
 		has_skb = ring->ctx && ring->ctx[idx].skb;
-		if (num_of_descs >= 1)
-			seq_printf(s, "%c", has_skb ? _h : _s);
-		else
+		अगर (num_of_descs >= 1)
+			seq_म_लिखो(s, "%c", has_skb ? _h : _s);
+		अन्यथा
 			/* num_of_descs == 0, it's a frag in a list of descs */
-			seq_printf(s, "%c", has_skb ? 'h' : _s);
-	}
-}
+			seq_म_लिखो(s, "%c", has_skb ? 'h' : _s);
+	पूर्ण
+पूर्ण
 
-static void wil_print_ring(struct seq_file *s, struct wil6210_priv *wil,
-			   const char *name, struct wil_ring *ring,
-			   char _s, char _h)
-{
-	void __iomem *x;
+अटल व्योम wil_prपूर्णांक_ring(काष्ठा seq_file *s, काष्ठा wil6210_priv *wil,
+			   स्थिर अक्षर *name, काष्ठा wil_ring *ring,
+			   अक्षर _s, अक्षर _h)
+अणु
+	व्योम __iomem *x;
 	u32 v;
 
-	seq_printf(s, "RING %s = {\n", name);
-	seq_printf(s, "  pa     = %pad\n", &ring->pa);
-	seq_printf(s, "  va     = 0x%p\n", ring->va);
-	seq_printf(s, "  size   = %d\n", ring->size);
-	if (wil->use_enhanced_dma_hw && ring->is_rx)
-		seq_printf(s, "  swtail = %u\n", *ring->edma_rx_swtail.va);
-	else
-		seq_printf(s, "  swtail = %d\n", ring->swtail);
-	seq_printf(s, "  swhead = %d\n", ring->swhead);
-	if (wil->use_enhanced_dma_hw) {
-		int ring_id = ring->is_rx ?
+	seq_म_लिखो(s, "RING %s = {\n", name);
+	seq_म_लिखो(s, "  pa     = %pad\n", &ring->pa);
+	seq_म_लिखो(s, "  va     = 0x%p\n", ring->va);
+	seq_म_लिखो(s, "  size   = %d\n", ring->size);
+	अगर (wil->use_enhanced_dma_hw && ring->is_rx)
+		seq_म_लिखो(s, "  swtail = %u\n", *ring->edma_rx_swtail.va);
+	अन्यथा
+		seq_म_लिखो(s, "  swtail = %d\n", ring->swtail);
+	seq_म_लिखो(s, "  swhead = %d\n", ring->swhead);
+	अगर (wil->use_enhanced_dma_hw) अणु
+		पूर्णांक ring_id = ring->is_rx ?
 			WIL_RX_DESC_RING_ID : ring - wil->ring_tx;
-		/* SUBQ_CONS is a table of 32 entries, one for each Q pair.
-		 * lower 16bits are for even ring_id and upper 16bits are for
+		/* SUBQ_CONS is a table of 32 entries, one क्रम each Q pair.
+		 * lower 16bits are क्रम even ring_id and upper 16bits are क्रम
 		 * odd ring_id
 		 */
 		x = wmi_addr(wil, RGF_DMA_SCM_SUBQ_CONS + 4 * (ring_id / 2));
-		v = readl_relaxed(x);
+		v = पढ़ोl_relaxed(x);
 
 		v = (ring_id % 2 ? (v >> 16) : (v & 0xffff));
-		seq_printf(s, "  hwhead = %u\n", v);
-	}
-	seq_printf(s, "  hwtail = [0x%08x] -> ", ring->hwtail);
+		seq_म_लिखो(s, "  hwhead = %u\n", v);
+	पूर्ण
+	seq_म_लिखो(s, "  hwtail = [0x%08x] -> ", ring->hwtail);
 	x = wmi_addr(wil, ring->hwtail);
-	if (x) {
-		v = readl(x);
-		seq_printf(s, "0x%08x = %d\n", v, v);
-	} else {
-		seq_puts(s, "???\n");
-	}
+	अगर (x) अणु
+		v = पढ़ोl(x);
+		seq_म_लिखो(s, "0x%08x = %d\n", v, v);
+	पूर्ण अन्यथा अणु
+		seq_माला_दो(s, "???\n");
+	पूर्ण
 
-	if (ring->va && (ring->size <= (1 << WIL_RING_SIZE_ORDER_MAX))) {
-		uint i;
+	अगर (ring->va && (ring->size <= (1 << WIL_RING_SIZE_ORDER_MAX))) अणु
+		uपूर्णांक i;
 
-		for (i = 0; i < ring->size; i++) {
-			if ((i % 128) == 0 && i != 0)
-				seq_puts(s, "\n");
-			if (wil->use_enhanced_dma_hw) {
-				wil_print_desc_edma(s, wil, ring, _s, _h, i);
-			} else {
-				volatile struct vring_tx_desc *d =
+		क्रम (i = 0; i < ring->size; i++) अणु
+			अगर ((i % 128) == 0 && i != 0)
+				seq_माला_दो(s, "\n");
+			अगर (wil->use_enhanced_dma_hw) अणु
+				wil_prपूर्णांक_desc_edma(s, wil, ring, _s, _h, i);
+			पूर्ण अन्यथा अणु
+				अस्थिर काष्ठा vring_tx_desc *d =
 					&ring->va[i].tx.legacy;
-				seq_printf(s, "%c", (d->dma.status & BIT(0)) ?
+				seq_म_लिखो(s, "%c", (d->dma.status & BIT(0)) ?
 					   _s : (ring->ctx[i].skb ? _h : 'h'));
-			}
-		}
-		seq_puts(s, "\n");
-	}
-	seq_puts(s, "}\n");
-}
+			पूर्ण
+		पूर्ण
+		seq_माला_दो(s, "\n");
+	पूर्ण
+	seq_माला_दो(s, "}\n");
+पूर्ण
 
-static int ring_show(struct seq_file *s, void *data)
-{
-	uint i;
-	struct wil6210_priv *wil = s->private;
+अटल पूर्णांक ring_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	uपूर्णांक i;
+	काष्ठा wil6210_priv *wil = s->निजी;
 
-	wil_print_ring(s, wil, "rx", &wil->ring_rx, 'S', '_');
+	wil_prपूर्णांक_ring(s, wil, "rx", &wil->ring_rx, 'S', '_');
 
-	for (i = 0; i < ARRAY_SIZE(wil->ring_tx); i++) {
-		struct wil_ring *ring = &wil->ring_tx[i];
-		struct wil_ring_tx_data *txdata = &wil->ring_tx_data[i];
+	क्रम (i = 0; i < ARRAY_SIZE(wil->ring_tx); i++) अणु
+		काष्ठा wil_ring *ring = &wil->ring_tx[i];
+		काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[i];
 
-		if (ring->va) {
-			int cid = wil->ring2cid_tid[i][0];
-			int tid = wil->ring2cid_tid[i][1];
+		अगर (ring->va) अणु
+			पूर्णांक cid = wil->ring2cid_tid[i][0];
+			पूर्णांक tid = wil->ring2cid_tid[i][1];
 			u32 swhead = ring->swhead;
 			u32 swtail = ring->swtail;
-			int used = (ring->size + swhead - swtail)
+			पूर्णांक used = (ring->size + swhead - swtail)
 				   % ring->size;
-			int avail = ring->size - used - 1;
-			char name[10];
-			char sidle[10];
-			/* performance monitoring */
+			पूर्णांक avail = ring->size - used - 1;
+			अक्षर name[10];
+			अक्षर sidle[10];
+			/* perक्रमmance monitoring */
 			cycles_t now = get_cycles();
-			uint64_t idle = txdata->idle * 100;
-			uint64_t total = now - txdata->begin;
+			uपूर्णांक64_t idle = txdata->idle * 100;
+			uपूर्णांक64_t total = now - txdata->begin;
 
-			if (total != 0) {
-				do_div(idle, total);
-				snprintf(sidle, sizeof(sidle), "%3d%%",
-					 (int)idle);
-			} else {
-				snprintf(sidle, sizeof(sidle), "N/A");
-			}
+			अगर (total != 0) अणु
+				करो_भाग(idle, total);
+				snम_लिखो(sidle, माप(sidle), "%3d%%",
+					 (पूर्णांक)idle);
+			पूर्ण अन्यथा अणु
+				snम_लिखो(sidle, माप(sidle), "N/A");
+			पूर्ण
 			txdata->begin = now;
 			txdata->idle = 0ULL;
 
-			snprintf(name, sizeof(name), "tx_%2d", i);
+			snम_लिखो(name, माप(name), "tx_%2d", i);
 
-			if (cid < wil->max_assoc_sta)
-				seq_printf(s,
+			अगर (cid < wil->max_assoc_sta)
+				seq_म_लिखो(s,
 					   "\n%pM CID %d TID %d 1x%s BACK([%u] %u TU A%s) [%3d|%3d] idle %s\n",
 					   wil->sta[cid].addr, cid, tid,
-					   txdata->dot1x_open ? "+" : "-",
+					   txdata->करोt1x_खोलो ? "+" : "-",
 					   txdata->agg_wsize,
-					   txdata->agg_timeout,
+					   txdata->agg_समयout,
 					   txdata->agg_amsdu ? "+" : "-",
 					   used, avail, sidle);
-			else
-				seq_printf(s,
+			अन्यथा
+				seq_म_लिखो(s,
 					   "\nBroadcast 1x%s [%3d|%3d] idle %s\n",
-					   txdata->dot1x_open ? "+" : "-",
+					   txdata->करोt1x_खोलो ? "+" : "-",
 					   used, avail, sidle);
 
-			wil_print_ring(s, wil, name, ring, '_', 'H');
-		}
-	}
+			wil_prपूर्णांक_ring(s, wil, name, ring, '_', 'H');
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(ring);
 
-static void wil_print_sring(struct seq_file *s, struct wil6210_priv *wil,
-			    struct wil_status_ring *sring)
-{
-	void __iomem *x;
-	int sring_idx = sring - wil->srings;
+अटल व्योम wil_prपूर्णांक_sring(काष्ठा seq_file *s, काष्ठा wil6210_priv *wil,
+			    काष्ठा wil_status_ring *sring)
+अणु
+	व्योम __iomem *x;
+	पूर्णांक sring_idx = sring - wil->srings;
 	u32 v;
 
-	seq_printf(s, "Status Ring %s [ %d ] = {\n",
+	seq_म_लिखो(s, "Status Ring %s [ %d ] = {\n",
 		   sring->is_rx ? "RX" : "TX", sring_idx);
-	seq_printf(s, "  pa     = %pad\n", &sring->pa);
-	seq_printf(s, "  va     = 0x%pK\n", sring->va);
-	seq_printf(s, "  size   = %d\n", sring->size);
-	seq_printf(s, "  elem_size   = %zu\n", sring->elem_size);
-	seq_printf(s, "  swhead = %d\n", sring->swhead);
-	if (wil->use_enhanced_dma_hw) {
-		/* COMPQ_PROD is a table of 32 entries, one for each Q pair.
-		 * lower 16bits are for even ring_id and upper 16bits are for
+	seq_म_लिखो(s, "  pa     = %pad\n", &sring->pa);
+	seq_म_लिखो(s, "  va     = 0x%pK\n", sring->va);
+	seq_म_लिखो(s, "  size   = %d\n", sring->size);
+	seq_म_लिखो(s, "  elem_size   = %zu\n", sring->elem_size);
+	seq_म_लिखो(s, "  swhead = %d\n", sring->swhead);
+	अगर (wil->use_enhanced_dma_hw) अणु
+		/* COMPQ_PROD is a table of 32 entries, one क्रम each Q pair.
+		 * lower 16bits are क्रम even ring_id and upper 16bits are क्रम
 		 * odd ring_id
 		 */
 		x = wmi_addr(wil, RGF_DMA_SCM_COMPQ_PROD + 4 * (sring_idx / 2));
-		v = readl_relaxed(x);
+		v = पढ़ोl_relaxed(x);
 
 		v = (sring_idx % 2 ? (v >> 16) : (v & 0xffff));
-		seq_printf(s, "  hwhead = %u\n", v);
-	}
-	seq_printf(s, "  hwtail = [0x%08x] -> ", sring->hwtail);
+		seq_म_लिखो(s, "  hwhead = %u\n", v);
+	पूर्ण
+	seq_म_लिखो(s, "  hwtail = [0x%08x] -> ", sring->hwtail);
 	x = wmi_addr(wil, sring->hwtail);
-	if (x) {
-		v = readl_relaxed(x);
-		seq_printf(s, "0x%08x = %d\n", v, v);
-	} else {
-		seq_puts(s, "???\n");
-	}
-	seq_printf(s, "  desc_rdy_pol   = %d\n", sring->desc_rdy_pol);
-	seq_printf(s, "  invalid_buff_id_cnt   = %d\n",
+	अगर (x) अणु
+		v = पढ़ोl_relaxed(x);
+		seq_म_लिखो(s, "0x%08x = %d\n", v, v);
+	पूर्ण अन्यथा अणु
+		seq_माला_दो(s, "???\n");
+	पूर्ण
+	seq_म_लिखो(s, "  desc_rdy_pol   = %d\n", sring->desc_rdy_pol);
+	seq_म_लिखो(s, "  invalid_buff_id_cnt   = %d\n",
 		   sring->invalid_buff_id_cnt);
 
-	if (sring->va && (sring->size <= (1 << WIL_RING_SIZE_ORDER_MAX))) {
-		uint i;
+	अगर (sring->va && (sring->size <= (1 << WIL_RING_SIZE_ORDER_MAX))) अणु
+		uपूर्णांक i;
 
-		for (i = 0; i < sring->size; i++) {
+		क्रम (i = 0; i < sring->size; i++) अणु
 			u32 *sdword_0 =
 				(u32 *)(sring->va + (sring->elem_size * i));
 
-			if ((i % 128) == 0 && i != 0)
-				seq_puts(s, "\n");
-			if (i == sring->swhead)
-				seq_printf(s, "%c", (*sdword_0 & BIT(31)) ?
+			अगर ((i % 128) == 0 && i != 0)
+				seq_माला_दो(s, "\n");
+			अगर (i == sring->swhead)
+				seq_म_लिखो(s, "%c", (*sdword_0 & BIT(31)) ?
 					   'X' : 'x');
-			else
-				seq_printf(s, "%c", (*sdword_0 & BIT(31)) ?
+			अन्यथा
+				seq_म_लिखो(s, "%c", (*sdword_0 & BIT(31)) ?
 					   '1' : '0');
-		}
-		seq_puts(s, "\n");
-	}
-	seq_puts(s, "}\n");
-}
+		पूर्ण
+		seq_माला_दो(s, "\n");
+	पूर्ण
+	seq_माला_दो(s, "}\n");
+पूर्ण
 
-static int srings_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	int i = 0;
+अटल पूर्णांक srings_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक i = 0;
 
-	for (i = 0; i < WIL6210_MAX_STATUS_RINGS; i++)
-		if (wil->srings[i].va)
-			wil_print_sring(s, wil, &wil->srings[i]);
+	क्रम (i = 0; i < WIL6210_MAX_STATUS_RINGS; i++)
+		अगर (wil->srings[i].va)
+			wil_prपूर्णांक_sring(s, wil, &wil->srings[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(srings);
 
-static void wil_seq_hexdump(struct seq_file *s, void *p, int len,
-			    const char *prefix)
-{
+अटल व्योम wil_seq_hexdump(काष्ठा seq_file *s, व्योम *p, पूर्णांक len,
+			    स्थिर अक्षर *prefix)
+अणु
 	seq_hex_dump(s, prefix, DUMP_PREFIX_NONE, 16, 1, p, len, false);
-}
+पूर्ण
 
-static void wil_print_mbox_ring(struct seq_file *s, const char *prefix,
-				void __iomem *off)
-{
-	struct wil6210_priv *wil = s->private;
-	struct wil6210_mbox_ring r;
-	int rsize;
-	uint i;
+अटल व्योम wil_prपूर्णांक_mbox_ring(काष्ठा seq_file *s, स्थिर अक्षर *prefix,
+				व्योम __iomem *off)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	काष्ठा wil6210_mbox_ring r;
+	पूर्णांक rsize;
+	uपूर्णांक i;
 
 	wil_halp_vote(wil);
 
-	if (wil_mem_access_lock(wil)) {
+	अगर (wil_mem_access_lock(wil)) अणु
 		wil_halp_unvote(wil);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	wil_memcpy_fromio_32(&r, off, sizeof(r));
+	wil_स_नकल_fromio_32(&r, off, माप(r));
 	wil_mbox_ring_le2cpus(&r);
 	/*
-	 * we just read memory block from NIC. This memory may be
-	 * garbage. Check validity before using it.
+	 * we just पढ़ो memory block from NIC. This memory may be
+	 * garbage. Check validity beक्रमe using it.
 	 */
-	rsize = r.size / sizeof(struct wil6210_mbox_ring_desc);
+	rsize = r.size / माप(काष्ठा wil6210_mbox_ring_desc);
 
-	seq_printf(s, "ring %s = {\n", prefix);
-	seq_printf(s, "  base = 0x%08x\n", r.base);
-	seq_printf(s, "  size = 0x%04x bytes -> %d entries\n", r.size, rsize);
-	seq_printf(s, "  tail = 0x%08x\n", r.tail);
-	seq_printf(s, "  head = 0x%08x\n", r.head);
-	seq_printf(s, "  entry size = %d\n", r.entry_size);
+	seq_म_लिखो(s, "ring %s = {\n", prefix);
+	seq_म_लिखो(s, "  base = 0x%08x\n", r.base);
+	seq_म_लिखो(s, "  size = 0x%04x bytes -> %d entries\n", r.size, rsize);
+	seq_म_लिखो(s, "  tail = 0x%08x\n", r.tail);
+	seq_म_लिखो(s, "  head = 0x%08x\n", r.head);
+	seq_म_लिखो(s, "  entry size = %d\n", r.entry_size);
 
-	if (r.size % sizeof(struct wil6210_mbox_ring_desc)) {
-		seq_printf(s, "  ??? size is not multiple of %zd, garbage?\n",
-			   sizeof(struct wil6210_mbox_ring_desc));
-		goto out;
-	}
+	अगर (r.size % माप(काष्ठा wil6210_mbox_ring_desc)) अणु
+		seq_म_लिखो(s, "  ??? size is not multiple of %zd, garbage?\n",
+			   माप(काष्ठा wil6210_mbox_ring_desc));
+		जाओ out;
+	पूर्ण
 
-	if (!wmi_addr(wil, r.base) ||
+	अगर (!wmi_addr(wil, r.base) ||
 	    !wmi_addr(wil, r.tail) ||
-	    !wmi_addr(wil, r.head)) {
-		seq_puts(s, "  ??? pointers are garbage?\n");
-		goto out;
-	}
+	    !wmi_addr(wil, r.head)) अणु
+		seq_माला_दो(s, "  ??? pointers are garbage?\n");
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < rsize; i++) {
-		struct wil6210_mbox_ring_desc d;
-		struct wil6210_mbox_hdr hdr;
-		size_t delta = i * sizeof(d);
-		void __iomem *x = wil->csr + HOSTADDR(r.base) + delta;
+	क्रम (i = 0; i < rsize; i++) अणु
+		काष्ठा wil6210_mbox_ring_desc d;
+		काष्ठा wil6210_mbox_hdr hdr;
+		माप_प्रकार delta = i * माप(d);
+		व्योम __iomem *x = wil->csr + HOSTADDR(r.base) + delta;
 
-		wil_memcpy_fromio_32(&d, x, sizeof(d));
+		wil_स_नकल_fromio_32(&d, x, माप(d));
 
-		seq_printf(s, "  [%2x] %s %s%s 0x%08x", i,
+		seq_म_लिखो(s, "  [%2x] %s %s%s 0x%08x", i,
 			   d.sync ? "F" : "E",
 			   (r.tail - r.base == delta) ? "t" : " ",
 			   (r.head - r.base == delta) ? "h" : " ",
 			   le32_to_cpu(d.addr));
-		if (0 == wmi_read_hdr(wil, d.addr, &hdr)) {
+		अगर (0 == wmi_पढ़ो_hdr(wil, d.addr, &hdr)) अणु
 			u16 len = le16_to_cpu(hdr.len);
 
-			seq_printf(s, " -> %04x %04x %04x %02x\n",
+			seq_म_लिखो(s, " -> %04x %04x %04x %02x\n",
 				   le16_to_cpu(hdr.seq), len,
 				   le16_to_cpu(hdr.type), hdr.flags);
-			if (len <= MAX_MBOXITEM_SIZE) {
-				unsigned char databuf[MAX_MBOXITEM_SIZE];
-				void __iomem *src = wmi_buffer(wil, d.addr) +
-					sizeof(struct wil6210_mbox_hdr);
+			अगर (len <= MAX_MBOXITEM_SIZE) अणु
+				अचिन्हित अक्षर databuf[MAX_MBOXITEM_SIZE];
+				व्योम __iomem *src = wmi_buffer(wil, d.addr) +
+					माप(काष्ठा wil6210_mbox_hdr);
 				/*
-				 * No need to check @src for validity -
-				 * we already validated @d.addr while
-				 * reading header
+				 * No need to check @src क्रम validity -
+				 * we alपढ़ोy validated @d.addr जबतक
+				 * पढ़ोing header
 				 */
-				wil_memcpy_fromio_32(databuf, src, len);
+				wil_स_नकल_fromio_32(databuf, src, len);
 				wil_seq_hexdump(s, databuf, len, "      : ");
-			}
-		} else {
-			seq_puts(s, "\n");
-		}
-	}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			seq_माला_दो(s, "\n");
+		पूर्ण
+	पूर्ण
  out:
-	seq_puts(s, "}\n");
+	seq_माला_दो(s, "}\n");
 	wil_mem_access_unlock(wil);
 	wil_halp_unvote(wil);
-}
+पूर्ण
 
-static int mbox_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	int ret;
+अटल पूर्णांक mbox_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक ret;
 
-	ret = wil_pm_runtime_get(wil);
-	if (ret < 0)
-		return ret;
+	ret = wil_pm_runसमय_get(wil);
+	अगर (ret < 0)
+		वापस ret;
 
-	wil_print_mbox_ring(s, "tx", wil->csr + HOST_MBOX +
-		       offsetof(struct wil6210_mbox_ctl, tx));
-	wil_print_mbox_ring(s, "rx", wil->csr + HOST_MBOX +
-		       offsetof(struct wil6210_mbox_ctl, rx));
+	wil_prपूर्णांक_mbox_ring(s, "tx", wil->csr + HOST_MBOX +
+		       दुरत्व(काष्ठा wil6210_mbox_ctl, tx));
+	wil_prपूर्णांक_mbox_ring(s, "rx", wil->csr + HOST_MBOX +
+		       दुरत्व(काष्ठा wil6210_mbox_ctl, rx));
 
-	wil_pm_runtime_put(wil);
+	wil_pm_runसमय_put(wil);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(mbox);
 
-static int wil_debugfs_iomem_x32_set(void *data, u64 val)
-{
-	struct wil_debugfs_iomem_data *d = (struct
+अटल पूर्णांक wil_debugfs_iomem_x32_set(व्योम *data, u64 val)
+अणु
+	काष्ठा wil_debugfs_iomem_data *d = (काष्ठा
 					    wil_debugfs_iomem_data *)data;
-	struct wil6210_priv *wil = d->wil;
-	int ret;
+	काष्ठा wil6210_priv *wil = d->wil;
+	पूर्णांक ret;
 
-	ret = wil_pm_runtime_get(wil);
-	if (ret < 0)
-		return ret;
+	ret = wil_pm_runसमय_get(wil);
+	अगर (ret < 0)
+		वापस ret;
 
-	writel_relaxed(val, (void __iomem *)d->offset);
+	ग_लिखोl_relaxed(val, (व्योम __iomem *)d->offset);
 
-	wmb(); /* make sure write propagated to HW */
+	wmb(); /* make sure ग_लिखो propagated to HW */
 
-	wil_pm_runtime_put(wil);
+	wil_pm_runसमय_put(wil);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wil_debugfs_iomem_x32_get(void *data, u64 *val)
-{
-	struct wil_debugfs_iomem_data *d = (struct
+अटल पूर्णांक wil_debugfs_iomem_x32_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा wil_debugfs_iomem_data *d = (काष्ठा
 					    wil_debugfs_iomem_data *)data;
-	struct wil6210_priv *wil = d->wil;
-	int ret;
+	काष्ठा wil6210_priv *wil = d->wil;
+	पूर्णांक ret;
 
-	ret = wil_pm_runtime_get(wil);
-	if (ret < 0)
-		return ret;
+	ret = wil_pm_runसमय_get(wil);
+	अगर (ret < 0)
+		वापस ret;
 
-	*val = readl((void __iomem *)d->offset);
+	*val = पढ़ोl((व्योम __iomem *)d->offset);
 
-	wil_pm_runtime_put(wil);
+	wil_pm_runसमय_put(wil);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_DEBUGFS_ATTRIBUTE(fops_iomem_x32, wil_debugfs_iomem_x32_get,
 			 wil_debugfs_iomem_x32_set, "0x%08llx\n");
 
-static void wil_debugfs_create_iomem_x32(const char *name, umode_t mode,
-					 struct dentry *parent, void *value,
-					 struct wil6210_priv *wil)
-{
-	struct wil_debugfs_iomem_data *data = &wil->dbg_data.data_arr[
+अटल व्योम wil_debugfs_create_iomem_x32(स्थिर अक्षर *name, umode_t mode,
+					 काष्ठा dentry *parent, व्योम *value,
+					 काष्ठा wil6210_priv *wil)
+अणु
+	काष्ठा wil_debugfs_iomem_data *data = &wil->dbg_data.data_arr[
 					      wil->dbg_data.iomem_data_count];
 
 	data->wil = wil;
@@ -424,214 +425,214 @@ static void wil_debugfs_create_iomem_x32(const char *name, umode_t mode,
 
 	debugfs_create_file_unsafe(name, mode, parent, data, &fops_iomem_x32);
 	wil->dbg_data.iomem_data_count++;
-}
+पूर्ण
 
-static int wil_debugfs_ulong_set(void *data, u64 val)
-{
-	*(ulong *)data = val;
-	return 0;
-}
+अटल पूर्णांक wil_debugfs_uदीर्घ_set(व्योम *data, u64 val)
+अणु
+	*(uदीर्घ *)data = val;
+	वापस 0;
+पूर्ण
 
-static int wil_debugfs_ulong_get(void *data, u64 *val)
-{
-	*val = *(ulong *)data;
-	return 0;
-}
+अटल पूर्णांक wil_debugfs_uदीर्घ_get(व्योम *data, u64 *val)
+अणु
+	*val = *(uदीर्घ *)data;
+	वापस 0;
+पूर्ण
 
-DEFINE_DEBUGFS_ATTRIBUTE(wil_fops_ulong, wil_debugfs_ulong_get,
-			 wil_debugfs_ulong_set, "0x%llx\n");
+DEFINE_DEBUGFS_ATTRIBUTE(wil_fops_uदीर्घ, wil_debugfs_uदीर्घ_get,
+			 wil_debugfs_uदीर्घ_set, "0x%llx\n");
 
 /**
  * wil6210_debugfs_init_offset - create set of debugfs files
- * @wil: driver's context, used for printing
+ * @wil: driver's context, used क्रम prपूर्णांकing
  * @dbg: directory on the debugfs, where files will be created
  * @base: base address used in address calculation
  * @tbl: table with file descriptions. Should be terminated with empty element.
  *
  * Creates files accordingly to the @tbl.
  */
-static void wil6210_debugfs_init_offset(struct wil6210_priv *wil,
-					struct dentry *dbg, void *base,
-					const struct dbg_off * const tbl)
-{
-	int i;
+अटल व्योम wil6210_debugfs_init_offset(काष्ठा wil6210_priv *wil,
+					काष्ठा dentry *dbg, व्योम *base,
+					स्थिर काष्ठा dbg_off * स्थिर tbl)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; tbl[i].name; i++) {
-		switch (tbl[i].type) {
-		case doff_u32:
+	क्रम (i = 0; tbl[i].name; i++) अणु
+		चयन (tbl[i].type) अणु
+		हाल करोff_u32:
 			debugfs_create_u32(tbl[i].name, tbl[i].mode, dbg,
 					   base + tbl[i].off);
-			break;
-		case doff_x32:
+			अवरोध;
+		हाल करोff_x32:
 			debugfs_create_x32(tbl[i].name, tbl[i].mode, dbg,
 					   base + tbl[i].off);
-			break;
-		case doff_ulong:
+			अवरोध;
+		हाल करोff_uदीर्घ:
 			debugfs_create_file_unsafe(tbl[i].name, tbl[i].mode,
 						   dbg, base + tbl[i].off,
-						   &wil_fops_ulong);
-			break;
-		case doff_io32:
+						   &wil_fops_uदीर्घ);
+			अवरोध;
+		हाल करोff_io32:
 			wil_debugfs_create_iomem_x32(tbl[i].name, tbl[i].mode,
 						     dbg, base + tbl[i].off,
 						     wil);
-			break;
-		case doff_u8:
+			अवरोध;
+		हाल करोff_u8:
 			debugfs_create_u8(tbl[i].name, tbl[i].mode, dbg,
 					  base + tbl[i].off);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static const struct dbg_off isr_off[] = {
-	{"ICC", 0644, offsetof(struct RGF_ICR, ICC), doff_io32},
-	{"ICR", 0644, offsetof(struct RGF_ICR, ICR), doff_io32},
-	{"ICM", 0644, offsetof(struct RGF_ICR, ICM), doff_io32},
-	{"ICS",	0244, offsetof(struct RGF_ICR, ICS), doff_io32},
-	{"IMV", 0644, offsetof(struct RGF_ICR, IMV), doff_io32},
-	{"IMS",	0244, offsetof(struct RGF_ICR, IMS), doff_io32},
-	{"IMC",	0244, offsetof(struct RGF_ICR, IMC), doff_io32},
-	{},
-};
+अटल स्थिर काष्ठा dbg_off isr_off[] = अणु
+	अणु"ICC", 0644, दुरत्व(काष्ठा RGF_ICR, ICC), करोff_io32पूर्ण,
+	अणु"ICR", 0644, दुरत्व(काष्ठा RGF_ICR, ICR), करोff_io32पूर्ण,
+	अणु"ICM", 0644, दुरत्व(काष्ठा RGF_ICR, ICM), करोff_io32पूर्ण,
+	अणु"ICS",	0244, दुरत्व(काष्ठा RGF_ICR, ICS), करोff_io32पूर्ण,
+	अणु"IMV", 0644, दुरत्व(काष्ठा RGF_ICR, IMV), करोff_io32पूर्ण,
+	अणु"IMS",	0244, दुरत्व(काष्ठा RGF_ICR, IMS), करोff_io32पूर्ण,
+	अणु"IMC",	0244, दुरत्व(काष्ठा RGF_ICR, IMC), करोff_io32पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static void wil6210_debugfs_create_ISR(struct wil6210_priv *wil,
-				       const char *name, struct dentry *parent,
+अटल व्योम wil6210_debugfs_create_ISR(काष्ठा wil6210_priv *wil,
+				       स्थिर अक्षर *name, काष्ठा dentry *parent,
 				       u32 off)
-{
-	struct dentry *d = debugfs_create_dir(name, parent);
+अणु
+	काष्ठा dentry *d = debugfs_create_dir(name, parent);
 
-	wil6210_debugfs_init_offset(wil, d, (void * __force)wil->csr + off,
+	wil6210_debugfs_init_offset(wil, d, (व्योम * __क्रमce)wil->csr + off,
 				    isr_off);
-}
+पूर्ण
 
-static const struct dbg_off pseudo_isr_off[] = {
-	{"CAUSE",   0444, HOSTADDR(RGF_DMA_PSEUDO_CAUSE), doff_io32},
-	{"MASK_SW", 0444, HOSTADDR(RGF_DMA_PSEUDO_CAUSE_MASK_SW), doff_io32},
-	{"MASK_FW", 0444, HOSTADDR(RGF_DMA_PSEUDO_CAUSE_MASK_FW), doff_io32},
-	{},
-};
+अटल स्थिर काष्ठा dbg_off pseuकरो_isr_off[] = अणु
+	अणु"CAUSE",   0444, HOSTADDR(RGF_DMA_PSEUDO_CAUSE), करोff_io32पूर्ण,
+	अणु"MASK_SW", 0444, HOSTADDR(RGF_DMA_PSEUDO_CAUSE_MASK_SW), करोff_io32पूर्ण,
+	अणु"MASK_FW", 0444, HOSTADDR(RGF_DMA_PSEUDO_CAUSE_MASK_FW), करोff_io32पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static void wil6210_debugfs_create_pseudo_ISR(struct wil6210_priv *wil,
-					      struct dentry *parent)
-{
-	struct dentry *d = debugfs_create_dir("PSEUDO_ISR", parent);
+अटल व्योम wil6210_debugfs_create_pseuकरो_ISR(काष्ठा wil6210_priv *wil,
+					      काष्ठा dentry *parent)
+अणु
+	काष्ठा dentry *d = debugfs_create_dir("PSEUDO_ISR", parent);
 
-	wil6210_debugfs_init_offset(wil, d, (void * __force)wil->csr,
-				    pseudo_isr_off);
-}
+	wil6210_debugfs_init_offset(wil, d, (व्योम * __क्रमce)wil->csr,
+				    pseuकरो_isr_off);
+पूर्ण
 
-static const struct dbg_off lgc_itr_cnt_off[] = {
-	{"TRSH", 0644, HOSTADDR(RGF_DMA_ITR_CNT_TRSH), doff_io32},
-	{"DATA", 0644, HOSTADDR(RGF_DMA_ITR_CNT_DATA), doff_io32},
-	{"CTL",  0644, HOSTADDR(RGF_DMA_ITR_CNT_CRL), doff_io32},
-	{},
-};
+अटल स्थिर काष्ठा dbg_off lgc_itr_cnt_off[] = अणु
+	अणु"TRSH", 0644, HOSTADDR(RGF_DMA_ITR_CNT_TRSH), करोff_io32पूर्ण,
+	अणु"DATA", 0644, HOSTADDR(RGF_DMA_ITR_CNT_DATA), करोff_io32पूर्ण,
+	अणु"CTL",  0644, HOSTADDR(RGF_DMA_ITR_CNT_CRL), करोff_io32पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct dbg_off tx_itr_cnt_off[] = {
-	{"TRSH", 0644, HOSTADDR(RGF_DMA_ITR_TX_CNT_TRSH),
-	 doff_io32},
-	{"DATA", 0644, HOSTADDR(RGF_DMA_ITR_TX_CNT_DATA),
-	 doff_io32},
-	{"CTL",  0644, HOSTADDR(RGF_DMA_ITR_TX_CNT_CTL),
-	 doff_io32},
-	{"IDL_TRSH", 0644, HOSTADDR(RGF_DMA_ITR_TX_IDL_CNT_TRSH),
-	 doff_io32},
-	{"IDL_DATA", 0644, HOSTADDR(RGF_DMA_ITR_TX_IDL_CNT_DATA),
-	 doff_io32},
-	{"IDL_CTL",  0644, HOSTADDR(RGF_DMA_ITR_TX_IDL_CNT_CTL),
-	 doff_io32},
-	{},
-};
+अटल स्थिर काष्ठा dbg_off tx_itr_cnt_off[] = अणु
+	अणु"TRSH", 0644, HOSTADDR(RGF_DMA_ITR_TX_CNT_TRSH),
+	 करोff_io32पूर्ण,
+	अणु"DATA", 0644, HOSTADDR(RGF_DMA_ITR_TX_CNT_DATA),
+	 करोff_io32पूर्ण,
+	अणु"CTL",  0644, HOSTADDR(RGF_DMA_ITR_TX_CNT_CTL),
+	 करोff_io32पूर्ण,
+	अणु"IDL_TRSH", 0644, HOSTADDR(RGF_DMA_ITR_TX_IDL_CNT_TRSH),
+	 करोff_io32पूर्ण,
+	अणु"IDL_DATA", 0644, HOSTADDR(RGF_DMA_ITR_TX_IDL_CNT_DATA),
+	 करोff_io32पूर्ण,
+	अणु"IDL_CTL",  0644, HOSTADDR(RGF_DMA_ITR_TX_IDL_CNT_CTL),
+	 करोff_io32पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct dbg_off rx_itr_cnt_off[] = {
-	{"TRSH", 0644, HOSTADDR(RGF_DMA_ITR_RX_CNT_TRSH),
-	 doff_io32},
-	{"DATA", 0644, HOSTADDR(RGF_DMA_ITR_RX_CNT_DATA),
-	 doff_io32},
-	{"CTL",  0644, HOSTADDR(RGF_DMA_ITR_RX_CNT_CTL),
-	 doff_io32},
-	{"IDL_TRSH", 0644, HOSTADDR(RGF_DMA_ITR_RX_IDL_CNT_TRSH),
-	 doff_io32},
-	{"IDL_DATA", 0644, HOSTADDR(RGF_DMA_ITR_RX_IDL_CNT_DATA),
-	 doff_io32},
-	{"IDL_CTL",  0644, HOSTADDR(RGF_DMA_ITR_RX_IDL_CNT_CTL),
-	 doff_io32},
-	{},
-};
+अटल स्थिर काष्ठा dbg_off rx_itr_cnt_off[] = अणु
+	अणु"TRSH", 0644, HOSTADDR(RGF_DMA_ITR_RX_CNT_TRSH),
+	 करोff_io32पूर्ण,
+	अणु"DATA", 0644, HOSTADDR(RGF_DMA_ITR_RX_CNT_DATA),
+	 करोff_io32पूर्ण,
+	अणु"CTL",  0644, HOSTADDR(RGF_DMA_ITR_RX_CNT_CTL),
+	 करोff_io32पूर्ण,
+	अणु"IDL_TRSH", 0644, HOSTADDR(RGF_DMA_ITR_RX_IDL_CNT_TRSH),
+	 करोff_io32पूर्ण,
+	अणु"IDL_DATA", 0644, HOSTADDR(RGF_DMA_ITR_RX_IDL_CNT_DATA),
+	 करोff_io32पूर्ण,
+	अणु"IDL_CTL",  0644, HOSTADDR(RGF_DMA_ITR_RX_IDL_CNT_CTL),
+	 करोff_io32पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int wil6210_debugfs_create_ITR_CNT(struct wil6210_priv *wil,
-					  struct dentry *parent)
-{
-	struct dentry *d, *dtx, *drx;
+अटल पूर्णांक wil6210_debugfs_create_ITR_CNT(काष्ठा wil6210_priv *wil,
+					  काष्ठा dentry *parent)
+अणु
+	काष्ठा dentry *d, *dtx, *drx;
 
 	d = debugfs_create_dir("ITR_CNT", parent);
 
 	dtx = debugfs_create_dir("TX", d);
 	drx = debugfs_create_dir("RX", d);
 
-	wil6210_debugfs_init_offset(wil, d, (void * __force)wil->csr,
+	wil6210_debugfs_init_offset(wil, d, (व्योम * __क्रमce)wil->csr,
 				    lgc_itr_cnt_off);
 
-	wil6210_debugfs_init_offset(wil, dtx, (void * __force)wil->csr,
+	wil6210_debugfs_init_offset(wil, dtx, (व्योम * __क्रमce)wil->csr,
 				    tx_itr_cnt_off);
 
-	wil6210_debugfs_init_offset(wil, drx, (void * __force)wil->csr,
+	wil6210_debugfs_init_offset(wil, drx, (व्योम * __क्रमce)wil->csr,
 				    rx_itr_cnt_off);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memread_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	void __iomem *a;
-	int ret;
+अटल पूर्णांक memपढ़ो_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	व्योम __iomem *a;
+	पूर्णांक ret;
 
-	ret = wil_pm_runtime_get(wil);
-	if (ret < 0)
-		return ret;
+	ret = wil_pm_runसमय_get(wil);
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = wil_mem_access_lock(wil);
-	if (ret) {
-		wil_pm_runtime_put(wil);
-		return ret;
-	}
+	अगर (ret) अणु
+		wil_pm_runसमय_put(wil);
+		वापस ret;
+	पूर्ण
 
 	a = wmi_buffer(wil, cpu_to_le32(mem_addr));
 
-	if (a)
-		seq_printf(s, "[0x%08x] = 0x%08x\n", mem_addr, readl(a));
-	else
-		seq_printf(s, "[0x%08x] = INVALID\n", mem_addr);
+	अगर (a)
+		seq_म_लिखो(s, "[0x%08x] = 0x%08x\n", mem_addr, पढ़ोl(a));
+	अन्यथा
+		seq_म_लिखो(s, "[0x%08x] = INVALID\n", mem_addr);
 
 	wil_mem_access_unlock(wil);
-	wil_pm_runtime_put(wil);
+	wil_pm_runसमय_put(wil);
 
-	return 0;
-}
-DEFINE_SHOW_ATTRIBUTE(memread);
+	वापस 0;
+पूर्ण
+DEFINE_SHOW_ATTRIBUTE(memपढ़ो);
 
-static ssize_t wil_read_file_ioblob(struct file *file, char __user *user_buf,
-				    size_t count, loff_t *ppos)
-{
-	enum { max_count = 4096 };
-	struct wil_blob_wrapper *wil_blob = file->private_data;
-	struct wil6210_priv *wil = wil_blob->wil;
+अटल sमाप_प्रकार wil_पढ़ो_file_ioblob(काष्ठा file *file, अक्षर __user *user_buf,
+				    माप_प्रकार count, loff_t *ppos)
+अणु
+	क्रमागत अणु max_count = 4096 पूर्ण;
+	काष्ठा wil_blob_wrapper *wil_blob = file->निजी_data;
+	काष्ठा wil6210_priv *wil = wil_blob->wil;
 	loff_t aligned_pos, pos = *ppos;
-	size_t available = wil_blob->blob.size;
-	void *buf;
-	size_t unaligned_bytes, aligned_count, ret;
-	int rc;
+	माप_प्रकार available = wil_blob->blob.size;
+	व्योम *buf;
+	माप_प्रकार unaligned_bytes, aligned_count, ret;
+	पूर्णांक rc;
 
-	if (pos < 0)
-		return -EINVAL;
+	अगर (pos < 0)
+		वापस -EINVAL;
 
-	if (pos >= available || !count)
-		return 0;
+	अगर (pos >= available || !count)
+		वापस 0;
 
-	if (count > available - pos)
+	अगर (count > available - pos)
 		count = available - pos;
-	if (count > max_count)
+	अगर (count > max_count)
 		count = max_count;
 
 	/* set pos to 4 bytes aligned */
@@ -639,675 +640,675 @@ static ssize_t wil_read_file_ioblob(struct file *file, char __user *user_buf,
 	aligned_pos = pos - unaligned_bytes;
 	aligned_count = count + unaligned_bytes;
 
-	buf = kmalloc(aligned_count, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(aligned_count, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	rc = wil_pm_runtime_get(wil);
-	if (rc < 0) {
-		kfree(buf);
-		return rc;
-	}
+	rc = wil_pm_runसमय_get(wil);
+	अगर (rc < 0) अणु
+		kमुक्त(buf);
+		वापस rc;
+	पूर्ण
 
 	rc = wil_mem_access_lock(wil);
-	if (rc) {
-		kfree(buf);
-		wil_pm_runtime_put(wil);
-		return rc;
-	}
+	अगर (rc) अणु
+		kमुक्त(buf);
+		wil_pm_runसमय_put(wil);
+		वापस rc;
+	पूर्ण
 
-	wil_memcpy_fromio_32(buf, (const void __iomem *)
+	wil_स_नकल_fromio_32(buf, (स्थिर व्योम __iomem *)
 			     wil_blob->blob.data + aligned_pos, aligned_count);
 
 	ret = copy_to_user(user_buf, buf + unaligned_bytes, count);
 
 	wil_mem_access_unlock(wil);
-	wil_pm_runtime_put(wil);
+	wil_pm_runसमय_put(wil);
 
-	kfree(buf);
-	if (ret == count)
-		return -EFAULT;
+	kमुक्त(buf);
+	अगर (ret == count)
+		वापस -EFAULT;
 
 	count -= ret;
 	*ppos = pos + count;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations fops_ioblob = {
-	.read =		wil_read_file_ioblob,
-	.open =		simple_open,
-	.llseek =	default_llseek,
-};
+अटल स्थिर काष्ठा file_operations fops_ioblob = अणु
+	.पढ़ो =		wil_पढ़ो_file_ioblob,
+	.खोलो =		simple_खोलो,
+	.llseek =	शेष_llseek,
+पूर्ण;
 
-static
-struct dentry *wil_debugfs_create_ioblob(const char *name,
+अटल
+काष्ठा dentry *wil_debugfs_create_ioblob(स्थिर अक्षर *name,
 					 umode_t mode,
-					 struct dentry *parent,
-					 struct wil_blob_wrapper *wil_blob)
-{
-	return debugfs_create_file(name, mode, parent, wil_blob, &fops_ioblob);
-}
+					 काष्ठा dentry *parent,
+					 काष्ठा wil_blob_wrapper *wil_blob)
+अणु
+	वापस debugfs_create_file(name, mode, parent, wil_blob, &fops_ioblob);
+पूर्ण
 
-/*---write channel 1..4 to rxon for it, 0 to rxoff---*/
-static ssize_t wil_write_file_rxon(struct file *file, const char __user *buf,
-				   size_t len, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	int rc;
-	long channel;
+/*---ग_लिखो channel 1..4 to rxon क्रम it, 0 to rxoff---*/
+अटल sमाप_प्रकार wil_ग_लिखो_file_rxon(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				   माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	पूर्णांक rc;
+	दीर्घ channel;
 	bool on;
 
-	char *kbuf = memdup_user_nul(buf, len);
+	अक्षर *kbuf = memdup_user_nul(buf, len);
 
-	if (IS_ERR(kbuf))
-		return PTR_ERR(kbuf);
-	rc = kstrtol(kbuf, 0, &channel);
-	kfree(kbuf);
-	if (rc)
-		return rc;
+	अगर (IS_ERR(kbuf))
+		वापस PTR_ERR(kbuf);
+	rc = kम_से_दीर्घ(kbuf, 0, &channel);
+	kमुक्त(kbuf);
+	अगर (rc)
+		वापस rc;
 
-	if ((channel < 0) || (channel > 4)) {
+	अगर ((channel < 0) || (channel > 4)) अणु
 		wil_err(wil, "Invalid channel %ld\n", channel);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	on = !!channel;
 
-	if (on) {
-		rc = wmi_set_channel(wil, (int)channel);
-		if (rc)
-			return rc;
-	}
+	अगर (on) अणु
+		rc = wmi_set_channel(wil, (पूर्णांक)channel);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	rc = wmi_rxon(wil, on);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const struct file_operations fops_rxon = {
-	.write = wil_write_file_rxon,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_rxon = अणु
+	.ग_लिखो = wil_ग_लिखो_file_rxon,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
-static ssize_t wil_write_file_rbufcap(struct file *file,
-				      const char __user *buf,
-				      size_t count, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	int val;
-	int rc;
+अटल sमाप_प्रकार wil_ग_लिखो_file_rbufcap(काष्ठा file *file,
+				      स्थिर अक्षर __user *buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	पूर्णांक val;
+	पूर्णांक rc;
 
-	rc = kstrtoint_from_user(buf, count, 0, &val);
-	if (rc) {
+	rc = kstrtoपूर्णांक_from_user(buf, count, 0, &val);
+	अगर (rc) अणु
 		wil_err(wil, "Invalid argument\n");
-		return rc;
-	}
-	/* input value: negative to disable, 0 to use system default,
+		वापस rc;
+	पूर्ण
+	/* input value: negative to disable, 0 to use प्रणाली शेष,
 	 * 1..ring size to set descriptor threshold
 	 */
 	wil_info(wil, "%s RBUFCAP, descriptors threshold - %d\n",
 		 val < 0 ? "Disabling" : "Enabling", val);
 
-	if (!wil->ring_rx.va || val > wil->ring_rx.size) {
+	अगर (!wil->ring_rx.va || val > wil->ring_rx.size) अणु
 		wil_err(wil, "Invalid descriptors threshold, %d\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = wmi_rbufcap_cfg(wil, val < 0 ? 0 : 1, val < 0 ? 0 : val);
-	if (rc) {
+	अगर (rc) अणु
 		wil_err(wil, "RBUFCAP config failed: %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations fops_rbufcap = {
-	.write = wil_write_file_rbufcap,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_rbufcap = अणु
+	.ग_लिखो = wil_ग_लिखो_file_rbufcap,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
-/* block ack control, write:
+/* block ack control, ग_लिखो:
  * - "add <ringid> <agg_size> <timeout>" to trigger ADDBA
- * - "del_tx <ringid> <reason>" to trigger DELBA for Tx side
- * - "del_rx <CID> <TID> <reason>" to trigger DELBA for Rx side
+ * - "del_tx <ringid> <reason>" to trigger DELBA क्रम Tx side
+ * - "del_rx <CID> <TID> <reason>" to trigger DELBA क्रम Rx side
  */
-static ssize_t wil_write_back(struct file *file, const char __user *buf,
-			      size_t len, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	int rc;
-	char *kbuf = kmalloc(len + 1, GFP_KERNEL);
-	char cmd[9];
-	int p1, p2, p3;
+अटल sमाप_प्रकार wil_ग_लिखो_back(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			      माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	पूर्णांक rc;
+	अक्षर *kbuf = kदो_स्मृति(len + 1, GFP_KERNEL);
+	अक्षर cmd[9];
+	पूर्णांक p1, p2, p3;
 
-	if (!kbuf)
-		return -ENOMEM;
+	अगर (!kbuf)
+		वापस -ENOMEM;
 
-	rc = simple_write_to_buffer(kbuf, len, ppos, buf, len);
-	if (rc != len) {
-		kfree(kbuf);
-		return rc >= 0 ? -EIO : rc;
-	}
+	rc = simple_ग_लिखो_to_buffer(kbuf, len, ppos, buf, len);
+	अगर (rc != len) अणु
+		kमुक्त(kbuf);
+		वापस rc >= 0 ? -EIO : rc;
+	पूर्ण
 
 	kbuf[len] = '\0';
-	rc = sscanf(kbuf, "%8s %d %d %d", cmd, &p1, &p2, &p3);
-	kfree(kbuf);
+	rc = माला_पूछो(kbuf, "%8s %d %d %d", cmd, &p1, &p2, &p3);
+	kमुक्त(kbuf);
 
-	if (rc < 0)
-		return rc;
-	if (rc < 2)
-		return -EINVAL;
+	अगर (rc < 0)
+		वापस rc;
+	अगर (rc < 2)
+		वापस -EINVAL;
 
-	if ((strcmp(cmd, "add") == 0) ||
-	    (strcmp(cmd, "del_tx") == 0)) {
-		struct wil_ring_tx_data *txdata;
+	अगर ((म_भेद(cmd, "add") == 0) ||
+	    (म_भेद(cmd, "del_tx") == 0)) अणु
+		काष्ठा wil_ring_tx_data *txdata;
 
-		if (p1 < 0 || p1 >= WIL6210_MAX_TX_RINGS) {
+		अगर (p1 < 0 || p1 >= WIL6210_MAX_TX_RINGS) अणु
 			wil_err(wil, "BACK: invalid ring id %d\n", p1);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		txdata = &wil->ring_tx_data[p1];
-		if (strcmp(cmd, "add") == 0) {
-			if (rc < 3) {
+		अगर (म_भेद(cmd, "add") == 0) अणु
+			अगर (rc < 3) अणु
 				wil_err(wil, "BACK: add require at least 2 params\n");
-				return -EINVAL;
-			}
-			if (rc < 4)
+				वापस -EINVAL;
+			पूर्ण
+			अगर (rc < 4)
 				p3 = 0;
 			wmi_addba(wil, txdata->mid, p1, p2, p3);
-		} else {
-			if (rc < 3)
+		पूर्ण अन्यथा अणु
+			अगर (rc < 3)
 				p2 = WLAN_REASON_QSTA_LEAVE_QBSS;
 			wmi_delba_tx(wil, txdata->mid, p1, p2);
-		}
-	} else if (strcmp(cmd, "del_rx") == 0) {
-		struct wil_sta_info *sta;
+		पूर्ण
+	पूर्ण अन्यथा अगर (म_भेद(cmd, "del_rx") == 0) अणु
+		काष्ठा wil_sta_info *sta;
 
-		if (rc < 3) {
+		अगर (rc < 3) अणु
 			wil_err(wil,
 				"BACK: del_rx require at least 2 params\n");
-			return -EINVAL;
-		}
-		if (p1 < 0 || p1 >= wil->max_assoc_sta) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (p1 < 0 || p1 >= wil->max_assoc_sta) अणु
 			wil_err(wil, "BACK: invalid CID %d\n", p1);
-			return -EINVAL;
-		}
-		if (rc < 4)
+			वापस -EINVAL;
+		पूर्ण
+		अगर (rc < 4)
 			p3 = WLAN_REASON_QSTA_LEAVE_QBSS;
 		sta = &wil->sta[p1];
 		wmi_delba_rx(wil, sta->mid, p1, p2, p3);
-	} else {
+	पूर्ण अन्यथा अणु
 		wil_err(wil, "BACK: Unrecognized command \"%s\"\n", cmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t wil_read_back(struct file *file, char __user *user_buf,
-			     size_t count, loff_t *ppos)
-{
-	static const char text[] = "block ack control, write:\n"
+अटल sमाप_प्रकार wil_पढ़ो_back(काष्ठा file *file, अक्षर __user *user_buf,
+			     माप_प्रकार count, loff_t *ppos)
+अणु
+	अटल स्थिर अक्षर text[] = "block ack control, write:\n"
 	" - \"add <ringid> <agg_size> <timeout>\" to trigger ADDBA\n"
 	"If missing, <timeout> defaults to 0\n"
 	" - \"del_tx <ringid> <reason>\" to trigger DELBA for Tx side\n"
 	" - \"del_rx <CID> <TID> <reason>\" to trigger DELBA for Rx side\n"
 	"If missing, <reason> set to \"STA_LEAVING\" (36)\n";
 
-	return simple_read_from_buffer(user_buf, count, ppos, text,
-				       sizeof(text));
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, text,
+				       माप(text));
+पूर्ण
 
-static const struct file_operations fops_back = {
-	.read = wil_read_back,
-	.write = wil_write_back,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_back = अणु
+	.पढ़ो = wil_पढ़ो_back,
+	.ग_लिखो = wil_ग_लिखो_back,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
-/* pmc control, write:
+/* pmc control, ग_लिखो:
  * - "alloc <num descriptors> <descriptor_size>" to allocate PMC
- * - "free" to release memory allocated for PMC
+ * - "free" to release memory allocated क्रम PMC
  */
-static ssize_t wil_write_pmccfg(struct file *file, const char __user *buf,
-				size_t len, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	int rc;
-	char *kbuf = kmalloc(len + 1, GFP_KERNEL);
-	char cmd[9];
-	int num_descs, desc_size;
+अटल sमाप_प्रकार wil_ग_लिखो_pmccfg(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	पूर्णांक rc;
+	अक्षर *kbuf = kदो_स्मृति(len + 1, GFP_KERNEL);
+	अक्षर cmd[9];
+	पूर्णांक num_descs, desc_size;
 
-	if (!kbuf)
-		return -ENOMEM;
+	अगर (!kbuf)
+		वापस -ENOMEM;
 
-	rc = simple_write_to_buffer(kbuf, len, ppos, buf, len);
-	if (rc != len) {
-		kfree(kbuf);
-		return rc >= 0 ? -EIO : rc;
-	}
+	rc = simple_ग_लिखो_to_buffer(kbuf, len, ppos, buf, len);
+	अगर (rc != len) अणु
+		kमुक्त(kbuf);
+		वापस rc >= 0 ? -EIO : rc;
+	पूर्ण
 
 	kbuf[len] = '\0';
-	rc = sscanf(kbuf, "%8s %d %d", cmd, &num_descs, &desc_size);
-	kfree(kbuf);
+	rc = माला_पूछो(kbuf, "%8s %d %d", cmd, &num_descs, &desc_size);
+	kमुक्त(kbuf);
 
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	if (rc < 1) {
+	अगर (rc < 1) अणु
 		wil_err(wil, "pmccfg: no params given\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (0 == strcmp(cmd, "alloc")) {
-		if (rc != 3) {
+	अगर (0 == म_भेद(cmd, "alloc")) अणु
+		अगर (rc != 3) अणु
 			wil_err(wil, "pmccfg: alloc requires 2 params\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		wil_pmc_alloc(wil, num_descs, desc_size);
-	} else if (0 == strcmp(cmd, "free")) {
-		if (rc != 1) {
+	पूर्ण अन्यथा अगर (0 == म_भेद(cmd, "free")) अणु
+		अगर (rc != 1) अणु
 			wil_err(wil, "pmccfg: free does not have any params\n");
-			return -EINVAL;
-		}
-		wil_pmc_free(wil, true);
-	} else {
+			वापस -EINVAL;
+		पूर्ण
+		wil_pmc_मुक्त(wil, true);
+	पूर्ण अन्यथा अणु
 		wil_err(wil, "pmccfg: Unrecognized command \"%s\"\n", cmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t wil_read_pmccfg(struct file *file, char __user *user_buf,
-			       size_t count, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	char text[256];
-	char help[] = "pmc control, write:\n"
+अटल sमाप_प्रकार wil_पढ़ो_pmccfg(काष्ठा file *file, अक्षर __user *user_buf,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	अक्षर text[256];
+	अक्षर help[] = "pmc control, write:\n"
 	" - \"alloc <num descriptors> <descriptor_size>\" to allocate pmc\n"
 	" - \"free\" to free memory allocated for pmc\n";
 
-	snprintf(text, sizeof(text), "Last command status: %d\n\n%s",
+	snम_लिखो(text, माप(text), "Last command status: %d\n\n%s",
 		 wil_pmc_last_cmd_status(wil), help);
 
-	return simple_read_from_buffer(user_buf, count, ppos, text,
-				       strlen(text) + 1);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, text,
+				       म_माप(text) + 1);
+पूर्ण
 
-static const struct file_operations fops_pmccfg = {
-	.read = wil_read_pmccfg,
-	.write = wil_write_pmccfg,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_pmccfg = अणु
+	.पढ़ो = wil_पढ़ो_pmccfg,
+	.ग_लिखो = wil_ग_लिखो_pmccfg,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
-static const struct file_operations fops_pmcdata = {
-	.open		= simple_open,
-	.read		= wil_pmc_read,
+अटल स्थिर काष्ठा file_operations fops_pmcdata = अणु
+	.खोलो		= simple_खोलो,
+	.पढ़ो		= wil_pmc_पढ़ो,
 	.llseek		= wil_pmc_llseek,
-};
+पूर्ण;
 
-static int wil_pmcring_seq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, wil_pmcring_read, inode->i_private);
-}
+अटल पूर्णांक wil_pmcring_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, wil_pmcring_पढ़ो, inode->i_निजी);
+पूर्ण
 
-static const struct file_operations fops_pmcring = {
-	.open		= wil_pmcring_seq_open,
+अटल स्थिर काष्ठा file_operations fops_pmcring = अणु
+	.खोलो		= wil_pmcring_seq_खोलो,
 	.release	= single_release,
-	.read		= seq_read,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
-};
+पूर्ण;
 
 /*---tx_mgmt---*/
 /* Write mgmt frame to this file to send it */
-static ssize_t wil_write_file_txmgmt(struct file *file, const char __user *buf,
-				     size_t len, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	struct wiphy *wiphy = wil_to_wiphy(wil);
-	struct wireless_dev *wdev = wil->main_ndev->ieee80211_ptr;
-	struct cfg80211_mgmt_tx_params params;
-	int rc;
-	void *frame;
+अटल sमाप_प्रकार wil_ग_लिखो_file_txmgmt(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				     माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	काष्ठा wiphy *wiphy = wil_to_wiphy(wil);
+	काष्ठा wireless_dev *wdev = wil->मुख्य_ndev->ieee80211_ptr;
+	काष्ठा cfg80211_mgmt_tx_params params;
+	पूर्णांक rc;
+	व्योम *frame;
 
-	memset(&params, 0, sizeof(params));
+	स_रखो(&params, 0, माप(params));
 
-	if (!len)
-		return -EINVAL;
+	अगर (!len)
+		वापस -EINVAL;
 
 	frame = memdup_user(buf, len);
-	if (IS_ERR(frame))
-		return PTR_ERR(frame);
+	अगर (IS_ERR(frame))
+		वापस PTR_ERR(frame);
 
 	params.buf = frame;
 	params.len = len;
 
-	rc = wil_cfg80211_mgmt_tx(wiphy, wdev, &params, NULL);
+	rc = wil_cfg80211_mgmt_tx(wiphy, wdev, &params, शून्य);
 
-	kfree(frame);
+	kमुक्त(frame);
 	wil_info(wil, "-> %d\n", rc);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const struct file_operations fops_txmgmt = {
-	.write = wil_write_file_txmgmt,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_txmgmt = अणु
+	.ग_लिखो = wil_ग_लिखो_file_txmgmt,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
 /* Write WMI command (w/o mbox header) to this file to send it
  * WMI starts from wil6210_mbox_hdr_wmi header
  */
-static ssize_t wil_write_file_wmi(struct file *file, const char __user *buf,
-				  size_t len, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	struct wil6210_vif *vif = ndev_to_vif(wil->main_ndev);
-	struct wmi_cmd_hdr *wmi;
-	void *cmd;
-	int cmdlen = len - sizeof(struct wmi_cmd_hdr);
+अटल sमाप_प्रकार wil_ग_लिखो_file_wmi(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				  माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(wil->मुख्य_ndev);
+	काष्ठा wmi_cmd_hdr *wmi;
+	व्योम *cmd;
+	पूर्णांक cmdlen = len - माप(काष्ठा wmi_cmd_hdr);
 	u16 cmdid;
-	int rc, rc1;
+	पूर्णांक rc, rc1;
 
-	if (cmdlen < 0)
-		return -EINVAL;
+	अगर (cmdlen < 0)
+		वापस -EINVAL;
 
-	wmi = kmalloc(len, GFP_KERNEL);
-	if (!wmi)
-		return -ENOMEM;
+	wmi = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (!wmi)
+		वापस -ENOMEM;
 
-	rc = simple_write_to_buffer(wmi, len, ppos, buf, len);
-	if (rc < 0) {
-		kfree(wmi);
-		return rc;
-	}
+	rc = simple_ग_लिखो_to_buffer(wmi, len, ppos, buf, len);
+	अगर (rc < 0) अणु
+		kमुक्त(wmi);
+		वापस rc;
+	पूर्ण
 
-	cmd = (cmdlen > 0) ? &wmi[1] : NULL;
+	cmd = (cmdlen > 0) ? &wmi[1] : शून्य;
 	cmdid = le16_to_cpu(wmi->command_id);
 
-	rc1 = wmi_send(wil, cmdid, vif->mid, cmd, cmdlen);
-	kfree(wmi);
+	rc1 = wmi_send(wil, cmdid, vअगर->mid, cmd, cmdlen);
+	kमुक्त(wmi);
 
 	wil_info(wil, "0x%04x[%d] -> %d\n", cmdid, cmdlen, rc1);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct file_operations fops_wmi = {
-	.write = wil_write_file_wmi,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_wmi = अणु
+	.ग_लिखो = wil_ग_लिखो_file_wmi,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
-static void wil_seq_print_skb(struct seq_file *s, struct sk_buff *skb)
-{
-	int i = 0;
-	int len = skb_headlen(skb);
-	void *p = skb->data;
-	int nr_frags = skb_shinfo(skb)->nr_frags;
+अटल व्योम wil_seq_prपूर्णांक_skb(काष्ठा seq_file *s, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक i = 0;
+	पूर्णांक len = skb_headlen(skb);
+	व्योम *p = skb->data;
+	पूर्णांक nr_frags = skb_shinfo(skb)->nr_frags;
 
-	seq_printf(s, "    len = %d\n", len);
+	seq_म_लिखो(s, "    len = %d\n", len);
 	wil_seq_hexdump(s, p, len, "      : ");
 
-	if (nr_frags) {
-		seq_printf(s, "    nr_frags = %d\n", nr_frags);
-		for (i = 0; i < nr_frags; i++) {
-			const skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+	अगर (nr_frags) अणु
+		seq_म_लिखो(s, "    nr_frags = %d\n", nr_frags);
+		क्रम (i = 0; i < nr_frags; i++) अणु
+			स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 			len = skb_frag_size(frag);
 			p = skb_frag_address_safe(frag);
-			seq_printf(s, "    [%2d] : len = %d\n", i, len);
+			seq_म_लिखो(s, "    [%2d] : len = %d\n", i, len);
 			wil_seq_hexdump(s, p, len, "      : ");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*---------Tx/Rx descriptor------------*/
-static int txdesc_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	struct wil_ring *ring;
+अटल पूर्णांक txdesc_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	काष्ठा wil_ring *ring;
 	bool tx;
-	int ring_idx = dbg_ring_index;
-	int txdesc_idx = dbg_txdesc_index;
-	volatile struct vring_tx_desc *d;
-	volatile u32 *u;
-	struct sk_buff *skb;
+	पूर्णांक ring_idx = dbg_ring_index;
+	पूर्णांक txdesc_idx = dbg_txdesc_index;
+	अस्थिर काष्ठा vring_tx_desc *d;
+	अस्थिर u32 *u;
+	काष्ठा sk_buff *skb;
 
-	if (wil->use_enhanced_dma_hw) {
+	अगर (wil->use_enhanced_dma_hw) अणु
 		/* RX ring index == 0 */
-		if (ring_idx >= WIL6210_MAX_TX_RINGS) {
-			seq_printf(s, "invalid ring index %d\n", ring_idx);
-			return 0;
-		}
-		tx = ring_idx > 0; /* desc ring 0 is reserved for RX */
-	} else {
+		अगर (ring_idx >= WIL6210_MAX_TX_RINGS) अणु
+			seq_म_लिखो(s, "invalid ring index %d\n", ring_idx);
+			वापस 0;
+		पूर्ण
+		tx = ring_idx > 0; /* desc ring 0 is reserved क्रम RX */
+	पूर्ण अन्यथा अणु
 		/* RX ring index == WIL6210_MAX_TX_RINGS */
-		if (ring_idx > WIL6210_MAX_TX_RINGS) {
-			seq_printf(s, "invalid ring index %d\n", ring_idx);
-			return 0;
-		}
+		अगर (ring_idx > WIL6210_MAX_TX_RINGS) अणु
+			seq_म_लिखो(s, "invalid ring index %d\n", ring_idx);
+			वापस 0;
+		पूर्ण
 		tx = (ring_idx < WIL6210_MAX_TX_RINGS);
-	}
+	पूर्ण
 
 	ring = tx ? &wil->ring_tx[ring_idx] : &wil->ring_rx;
 
-	if (!ring->va) {
-		if (tx)
-			seq_printf(s, "No Tx[%2d] RING\n", ring_idx);
-		else
-			seq_puts(s, "No Rx RING\n");
-		return 0;
-	}
+	अगर (!ring->va) अणु
+		अगर (tx)
+			seq_म_लिखो(s, "No Tx[%2d] RING\n", ring_idx);
+		अन्यथा
+			seq_माला_दो(s, "No Rx RING\n");
+		वापस 0;
+	पूर्ण
 
-	if (txdesc_idx >= ring->size) {
-		if (tx)
-			seq_printf(s, "[%2d] TxDesc index (%d) >= size (%d)\n",
+	अगर (txdesc_idx >= ring->size) अणु
+		अगर (tx)
+			seq_म_लिखो(s, "[%2d] TxDesc index (%d) >= size (%d)\n",
 				   ring_idx, txdesc_idx, ring->size);
-		else
-			seq_printf(s, "RxDesc index (%d) >= size (%d)\n",
+		अन्यथा
+			seq_म_लिखो(s, "RxDesc index (%d) >= size (%d)\n",
 				   txdesc_idx, ring->size);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* use struct vring_tx_desc for Rx as well,
+	/* use काष्ठा vring_tx_desc क्रम Rx as well,
 	 * only field used, .dma.length, is the same
 	 */
 	d = &ring->va[txdesc_idx].tx.legacy;
-	u = (volatile u32 *)d;
-	skb = NULL;
+	u = (अस्थिर u32 *)d;
+	skb = शून्य;
 
-	if (wil->use_enhanced_dma_hw) {
-		if (tx) {
-			skb = ring->ctx ? ring->ctx[txdesc_idx].skb : NULL;
-		} else if (wil->rx_buff_mgmt.buff_arr) {
-			struct wil_rx_enhanced_desc *rx_d =
-				(struct wil_rx_enhanced_desc *)
+	अगर (wil->use_enhanced_dma_hw) अणु
+		अगर (tx) अणु
+			skb = ring->ctx ? ring->ctx[txdesc_idx].skb : शून्य;
+		पूर्ण अन्यथा अगर (wil->rx_buff_mgmt.buff_arr) अणु
+			काष्ठा wil_rx_enhanced_desc *rx_d =
+				(काष्ठा wil_rx_enhanced_desc *)
 				&ring->va[txdesc_idx].rx.enhanced;
 			u16 buff_id = le16_to_cpu(rx_d->mac.buff_id);
 
-			if (!wil_val_in_range(buff_id, 0,
+			अगर (!wil_val_in_range(buff_id, 0,
 					      wil->rx_buff_mgmt.size))
-				seq_printf(s, "invalid buff_id %d\n", buff_id);
-			else
+				seq_म_लिखो(s, "invalid buff_id %d\n", buff_id);
+			अन्यथा
 				skb = wil->rx_buff_mgmt.buff_arr[buff_id].skb;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		skb = ring->ctx[txdesc_idx].skb;
-	}
-	if (tx)
-		seq_printf(s, "Tx[%2d][%3d] = {\n", ring_idx,
+	पूर्ण
+	अगर (tx)
+		seq_म_लिखो(s, "Tx[%2d][%3d] = {\n", ring_idx,
 			   txdesc_idx);
-	else
-		seq_printf(s, "Rx[%3d] = {\n", txdesc_idx);
-	seq_printf(s, "  MAC = 0x%08x 0x%08x 0x%08x 0x%08x\n",
+	अन्यथा
+		seq_म_लिखो(s, "Rx[%3d] = {\n", txdesc_idx);
+	seq_म_लिखो(s, "  MAC = 0x%08x 0x%08x 0x%08x 0x%08x\n",
 		   u[0], u[1], u[2], u[3]);
-	seq_printf(s, "  DMA = 0x%08x 0x%08x 0x%08x 0x%08x\n",
+	seq_म_लिखो(s, "  DMA = 0x%08x 0x%08x 0x%08x 0x%08x\n",
 		   u[4], u[5], u[6], u[7]);
-	seq_printf(s, "  SKB = 0x%p\n", skb);
+	seq_म_लिखो(s, "  SKB = 0x%p\n", skb);
 
-	if (skb) {
+	अगर (skb) अणु
 		skb_get(skb);
-		wil_seq_print_skb(s, skb);
-		kfree_skb(skb);
-	}
-	seq_puts(s, "}\n");
+		wil_seq_prपूर्णांक_skb(s, skb);
+		kमुक्त_skb(skb);
+	पूर्ण
+	seq_माला_दो(s, "}\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(txdesc);
 
 /*---------Tx/Rx status message------------*/
-static int status_msg_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	int sring_idx = dbg_sring_index;
-	struct wil_status_ring *sring;
+अटल पूर्णांक status_msg_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक sring_idx = dbg_sring_index;
+	काष्ठा wil_status_ring *sring;
 	bool tx;
 	u32 status_msg_idx = dbg_status_msg_index;
 	u32 *u;
 
-	if (sring_idx >= WIL6210_MAX_STATUS_RINGS) {
-		seq_printf(s, "invalid status ring index %d\n", sring_idx);
-		return 0;
-	}
+	अगर (sring_idx >= WIL6210_MAX_STATUS_RINGS) अणु
+		seq_म_लिखो(s, "invalid status ring index %d\n", sring_idx);
+		वापस 0;
+	पूर्ण
 
 	sring = &wil->srings[sring_idx];
 	tx = !sring->is_rx;
 
-	if (!sring->va) {
-		seq_printf(s, "No %cX status ring\n", tx ? 'T' : 'R');
-		return 0;
-	}
+	अगर (!sring->va) अणु
+		seq_म_लिखो(s, "No %cX status ring\n", tx ? 'T' : 'R');
+		वापस 0;
+	पूर्ण
 
-	if (status_msg_idx >= sring->size) {
-		seq_printf(s, "%cxDesc index (%d) >= size (%d)\n",
+	अगर (status_msg_idx >= sring->size) अणु
+		seq_म_लिखो(s, "%cxDesc index (%d) >= size (%d)\n",
 			   tx ? 'T' : 'R', status_msg_idx, sring->size);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	u = sring->va + (sring->elem_size * status_msg_idx);
 
-	seq_printf(s, "%cx[%d][%3d] = {\n",
+	seq_म_लिखो(s, "%cx[%d][%3d] = {\n",
 		   tx ? 'T' : 'R', sring_idx, status_msg_idx);
 
-	seq_printf(s, "  0x%08x 0x%08x 0x%08x 0x%08x\n",
+	seq_म_लिखो(s, "  0x%08x 0x%08x 0x%08x 0x%08x\n",
 		   u[0], u[1], u[2], u[3]);
-	if (!tx && !wil->use_compressed_rx_status)
-		seq_printf(s, "  0x%08x 0x%08x 0x%08x 0x%08x\n",
+	अगर (!tx && !wil->use_compressed_rx_status)
+		seq_म_लिखो(s, "  0x%08x 0x%08x 0x%08x 0x%08x\n",
 			   u[4], u[5], u[6], u[7]);
 
-	seq_puts(s, "}\n");
+	seq_माला_दो(s, "}\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(status_msg);
 
-static int wil_print_rx_buff(struct seq_file *s, struct list_head *lh)
-{
-	struct wil_rx_buff *it;
-	int i = 0;
+अटल पूर्णांक wil_prपूर्णांक_rx_buff(काष्ठा seq_file *s, काष्ठा list_head *lh)
+अणु
+	काष्ठा wil_rx_buff *it;
+	पूर्णांक i = 0;
 
-	list_for_each_entry(it, lh, list) {
-		if ((i % 16) == 0 && i != 0)
-			seq_puts(s, "\n    ");
-		seq_printf(s, "[%4d] ", it->id);
+	list_क्रम_each_entry(it, lh, list) अणु
+		अगर ((i % 16) == 0 && i != 0)
+			seq_माला_दो(s, "\n    ");
+		seq_म_लिखो(s, "[%4d] ", it->id);
 		i++;
-	}
-	seq_printf(s, "\nNumber of buffers: %u\n", i);
+	पूर्ण
+	seq_म_लिखो(s, "\nNumber of buffers: %u\n", i);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int rx_buff_mgmt_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	struct wil_rx_buff_mgmt *rbm = &wil->rx_buff_mgmt;
-	int num_active;
-	int num_free;
+अटल पूर्णांक rx_buff_mgmt_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	काष्ठा wil_rx_buff_mgmt *rbm = &wil->rx_buff_mgmt;
+	पूर्णांक num_active;
+	पूर्णांक num_मुक्त;
 
-	if (!rbm->buff_arr)
-		return -EINVAL;
+	अगर (!rbm->buff_arr)
+		वापस -EINVAL;
 
-	seq_printf(s, "  size = %zu\n", rbm->size);
-	seq_printf(s, "  free_list_empty_cnt = %lu\n",
-		   rbm->free_list_empty_cnt);
+	seq_म_लिखो(s, "  size = %zu\n", rbm->size);
+	seq_म_लिखो(s, "  free_list_empty_cnt = %lu\n",
+		   rbm->मुक्त_list_empty_cnt);
 
-	/* Print active list */
-	seq_puts(s, "  Active list:\n");
-	num_active = wil_print_rx_buff(s, &rbm->active);
-	seq_puts(s, "\n  Free list:\n");
-	num_free = wil_print_rx_buff(s, &rbm->free);
+	/* Prपूर्णांक active list */
+	seq_माला_दो(s, "  Active list:\n");
+	num_active = wil_prपूर्णांक_rx_buff(s, &rbm->active);
+	seq_माला_दो(s, "\n  Free list:\n");
+	num_मुक्त = wil_prपूर्णांक_rx_buff(s, &rbm->मुक्त);
 
-	seq_printf(s, "  Total number of buffers: %u\n",
-		   num_active + num_free);
+	seq_म_लिखो(s, "  Total number of buffers: %u\n",
+		   num_active + num_मुक्त);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(rx_buff_mgmt);
 
-/*---------beamforming------------*/
-static char *wil_bfstatus_str(u32 status)
-{
-	switch (status) {
-	case 0:
-		return "Failed";
-	case 1:
-		return "OK";
-	case 2:
-		return "Retrying";
-	default:
-		return "??";
-	}
-}
+/*---------beamक्रमming------------*/
+अटल अक्षर *wil_bख_स्थितिus_str(u32 status)
+अणु
+	चयन (status) अणु
+	हाल 0:
+		वापस "Failed";
+	हाल 1:
+		वापस "OK";
+	हाल 2:
+		वापस "Retrying";
+	शेष:
+		वापस "??";
+	पूर्ण
+पूर्ण
 
-static bool is_all_zeros(void * const x_, size_t sz)
-{
-	/* if reply is all-0, ignore this CID */
+अटल bool is_all_zeros(व्योम * स्थिर x_, माप_प्रकार sz)
+अणु
+	/* अगर reply is all-0, ignore this CID */
 	u32 *x = x_;
-	int n;
+	पूर्णांक n;
 
-	for (n = 0; n < sz / sizeof(*x); n++)
-		if (x[n])
-			return false;
+	क्रम (n = 0; n < sz / माप(*x); n++)
+		अगर (x[n])
+			वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int bf_show(struct seq_file *s, void *data)
-{
-	int rc;
-	int i;
-	struct wil6210_priv *wil = s->private;
-	struct wil6210_vif *vif = ndev_to_vif(wil->main_ndev);
-	struct wmi_notify_req_cmd cmd = {
-		.interval_usec = 0,
-	};
-	struct {
-		struct wmi_cmd_hdr wmi;
-		struct wmi_notify_req_done_event evt;
-	} __packed reply;
+अटल पूर्णांक bf_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	पूर्णांक rc;
+	पूर्णांक i;
+	काष्ठा wil6210_priv *wil = s->निजी;
+	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(wil->मुख्य_ndev);
+	काष्ठा wmi_notअगरy_req_cmd cmd = अणु
+		.पूर्णांकerval_usec = 0,
+	पूर्ण;
+	काष्ठा अणु
+		काष्ठा wmi_cmd_hdr wmi;
+		काष्ठा wmi_notअगरy_req_करोne_event evt;
+	पूर्ण __packed reply;
 
-	memset(&reply, 0, sizeof(reply));
+	स_रखो(&reply, 0, माप(reply));
 
-	for (i = 0; i < wil->max_assoc_sta; i++) {
+	क्रम (i = 0; i < wil->max_assoc_sta; i++) अणु
 		u32 status;
 		u8 bf_mcs;
 
 		cmd.cid = i;
-		rc = wmi_call(wil, WMI_NOTIFY_REQ_CMDID, vif->mid,
-			      &cmd, sizeof(cmd),
+		rc = wmi_call(wil, WMI_NOTIFY_REQ_CMDID, vअगर->mid,
+			      &cmd, माप(cmd),
 			      WMI_NOTIFY_REQ_DONE_EVENTID, &reply,
-			      sizeof(reply), WIL_WMI_CALL_GENERAL_TO_MS);
-		/* if reply is all-0, ignore this CID */
-		if (rc || is_all_zeros(&reply.evt, sizeof(reply.evt)))
-			continue;
+			      माप(reply), WIL_WMI_CALL_GENERAL_TO_MS);
+		/* अगर reply is all-0, ignore this CID */
+		अगर (rc || is_all_zeros(&reply.evt, माप(reply.evt)))
+			जारी;
 
 		status = le32_to_cpu(reply.evt.status);
 		bf_mcs = le16_to_cpu(reply.evt.bf_mcs);
-		seq_printf(s, "CID %d {\n"
+		seq_म_लिखो(s, "CID %d {\n"
 			   "  TSF = 0x%016llx\n"
 			   "  TxMCS = %s TxTpt = %4d\n"
 			   "  SQI = %4d\n"
@@ -1322,536 +1323,536 @@ static int bf_show(struct seq_file *s, void *data)
 			   le32_to_cpu(reply.evt.tx_tpt),
 			   reply.evt.sqi,
 			   reply.evt.rssi,
-			   status, wil_bfstatus_str(status),
+			   status, wil_bख_स्थितिus_str(status),
 			   le16_to_cpu(reply.evt.my_rx_sector),
 			   le16_to_cpu(reply.evt.my_tx_sector),
 			   le16_to_cpu(reply.evt.other_rx_sector),
 			   le16_to_cpu(reply.evt.other_tx_sector),
 			   le32_to_cpu(reply.evt.rx_goodput),
 			   le32_to_cpu(reply.evt.tx_goodput));
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(bf);
 
 /*---------temp------------*/
-static void print_temp(struct seq_file *s, const char *prefix, s32 t)
-{
-	switch (t) {
-	case 0:
-	case WMI_INVALID_TEMPERATURE:
-		seq_printf(s, "%s N/A\n", prefix);
-	break;
-	default:
-		seq_printf(s, "%s %s%d.%03d\n", prefix, (t < 0 ? "-" : ""),
-			   abs(t / 1000), abs(t % 1000));
-		break;
-	}
-}
+अटल व्योम prपूर्णांक_temp(काष्ठा seq_file *s, स्थिर अक्षर *prefix, s32 t)
+अणु
+	चयन (t) अणु
+	हाल 0:
+	हाल WMI_INVALID_TEMPERATURE:
+		seq_म_लिखो(s, "%s N/A\n", prefix);
+	अवरोध;
+	शेष:
+		seq_म_लिखो(s, "%s %s%d.%03d\n", prefix, (t < 0 ? "-" : ""),
+			   असल(t / 1000), असल(t % 1000));
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int temp_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	int rc, i;
+अटल पूर्णांक temp_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक rc, i;
 
-	if (test_bit(WMI_FW_CAPABILITY_TEMPERATURE_ALL_RF,
-		     wil->fw_capabilities)) {
-		struct wmi_temp_sense_all_done_event sense_all_evt;
+	अगर (test_bit(WMI_FW_CAPABILITY_TEMPERATURE_ALL_RF,
+		     wil->fw_capabilities)) अणु
+		काष्ठा wmi_temp_sense_all_करोne_event sense_all_evt;
 
 		wil_dbg_misc(wil,
 			     "WMI_FW_CAPABILITY_TEMPERATURE_ALL_RF is supported");
 		rc = wmi_get_all_temperatures(wil, &sense_all_evt);
-		if (rc) {
-			seq_puts(s, "Failed\n");
-			return 0;
-		}
-		print_temp(s, "T_mac   =",
+		अगर (rc) अणु
+			seq_माला_दो(s, "Failed\n");
+			वापस 0;
+		पूर्ण
+		prपूर्णांक_temp(s, "T_mac   =",
 			   le32_to_cpu(sense_all_evt.baseband_t1000));
-		seq_printf(s, "Connected RFs [0x%08x]\n",
-			   sense_all_evt.rf_bitmap);
-		for (i = 0; i < WMI_MAX_XIF_PORTS_NUM; i++) {
-			seq_printf(s, "RF[%d]   = ", i);
-			print_temp(s, "",
+		seq_म_लिखो(s, "Connected RFs [0x%08x]\n",
+			   sense_all_evt.rf_biपंचांगap);
+		क्रम (i = 0; i < WMI_MAX_XIF_PORTS_NUM; i++) अणु
+			seq_म_लिखो(s, "RF[%d]   = ", i);
+			prपूर्णांक_temp(s, "",
 				   le32_to_cpu(sense_all_evt.rf_t1000[i]));
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		s32 t_m, t_r;
 
 		wil_dbg_misc(wil,
 			     "WMI_FW_CAPABILITY_TEMPERATURE_ALL_RF is not supported");
 		rc = wmi_get_temperature(wil, &t_m, &t_r);
-		if (rc) {
-			seq_puts(s, "Failed\n");
-			return 0;
-		}
-		print_temp(s, "T_mac   =", t_m);
-		print_temp(s, "T_radio =", t_r);
-	}
-	return 0;
-}
+		अगर (rc) अणु
+			seq_माला_दो(s, "Failed\n");
+			वापस 0;
+		पूर्ण
+		prपूर्णांक_temp(s, "T_mac   =", t_m);
+		prपूर्णांक_temp(s, "T_radio =", t_r);
+	पूर्ण
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(temp);
 
 /*---------freq------------*/
-static int freq_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	struct wireless_dev *wdev = wil->main_ndev->ieee80211_ptr;
+अटल पूर्णांक freq_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	काष्ठा wireless_dev *wdev = wil->मुख्य_ndev->ieee80211_ptr;
 	u32 freq = wdev->chandef.chan ? wdev->chandef.chan->center_freq : 0;
 
-	seq_printf(s, "Freq = %d\n", freq);
+	seq_म_लिखो(s, "Freq = %d\n", freq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(freq);
 
 /*---------link------------*/
-static int link_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	struct station_info *sinfo;
-	int i, rc = 0;
+अटल पूर्णांक link_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	काष्ठा station_info *sinfo;
+	पूर्णांक i, rc = 0;
 
-	sinfo = kzalloc(sizeof(*sinfo), GFP_KERNEL);
-	if (!sinfo)
-		return -ENOMEM;
+	sinfo = kzalloc(माप(*sinfo), GFP_KERNEL);
+	अगर (!sinfo)
+		वापस -ENOMEM;
 
-	for (i = 0; i < wil->max_assoc_sta; i++) {
-		struct wil_sta_info *p = &wil->sta[i];
-		char *status = "unknown";
-		struct wil6210_vif *vif;
+	क्रम (i = 0; i < wil->max_assoc_sta; i++) अणु
+		काष्ठा wil_sta_info *p = &wil->sta[i];
+		अक्षर *status = "unknown";
+		काष्ठा wil6210_vअगर *vअगर;
 		u8 mid;
 
-		switch (p->status) {
-		case wil_sta_unused:
+		चयन (p->status) अणु
+		हाल wil_sta_unused:
 			status = "unused   ";
-			break;
-		case wil_sta_conn_pending:
+			अवरोध;
+		हाल wil_sta_conn_pending:
 			status = "pending  ";
-			break;
-		case wil_sta_connected:
+			अवरोध;
+		हाल wil_sta_connected:
 			status = "connected";
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mid = (p->status != wil_sta_unused) ? p->mid : U8_MAX;
-		seq_printf(s, "[%d][MID %d] %pM %s\n",
+		seq_म_लिखो(s, "[%d][MID %d] %pM %s\n",
 			   i, mid, p->addr, status);
 
-		if (p->status != wil_sta_connected)
-			continue;
+		अगर (p->status != wil_sta_connected)
+			जारी;
 
-		vif = (mid < GET_MAX_VIFS(wil)) ? wil->vifs[mid] : NULL;
-		if (vif) {
-			rc = wil_cid_fill_sinfo(vif, i, sinfo);
-			if (rc)
-				goto out;
+		vअगर = (mid < GET_MAX_VIFS(wil)) ? wil->vअगरs[mid] : शून्य;
+		अगर (vअगर) अणु
+			rc = wil_cid_fill_sinfo(vअगर, i, sinfo);
+			अगर (rc)
+				जाओ out;
 
-			seq_printf(s, "  Tx_mcs = %s\n",
+			seq_म_लिखो(s, "  Tx_mcs = %s\n",
 				   WIL_EXTENDED_MCS_CHECK(sinfo->txrate.mcs));
-			seq_printf(s, "  Rx_mcs = %s\n",
+			seq_म_लिखो(s, "  Rx_mcs = %s\n",
 				   WIL_EXTENDED_MCS_CHECK(sinfo->rxrate.mcs));
-			seq_printf(s, "  SQ     = %d\n", sinfo->signal);
-		} else {
-			seq_puts(s, "  INVALID MID\n");
-		}
-	}
+			seq_म_लिखो(s, "  SQ     = %d\n", sinfo->संकेत);
+		पूर्ण अन्यथा अणु
+			seq_माला_दो(s, "  INVALID MID\n");
+		पूर्ण
+	पूर्ण
 
 out:
-	kfree(sinfo);
-	return rc;
-}
+	kमुक्त(sinfo);
+	वापस rc;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(link);
 
 /*---------info------------*/
-static int info_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	struct net_device *ndev = wil->main_ndev;
-	int is_ac = power_supply_is_system_supplied();
-	int rx = atomic_xchg(&wil->isr_count_rx, 0);
-	int tx = atomic_xchg(&wil->isr_count_tx, 0);
-	static ulong rxf_old, txf_old;
-	ulong rxf = ndev->stats.rx_packets;
-	ulong txf = ndev->stats.tx_packets;
-	unsigned int i;
+अटल पूर्णांक info_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	काष्ठा net_device *ndev = wil->मुख्य_ndev;
+	पूर्णांक is_ac = घातer_supply_is_प्रणाली_supplied();
+	पूर्णांक rx = atomic_xchg(&wil->isr_count_rx, 0);
+	पूर्णांक tx = atomic_xchg(&wil->isr_count_tx, 0);
+	अटल uदीर्घ rxf_old, txf_old;
+	uदीर्घ rxf = ndev->stats.rx_packets;
+	uदीर्घ txf = ndev->stats.tx_packets;
+	अचिन्हित पूर्णांक i;
 
 	/* >0 : AC; 0 : battery; <0 : error */
-	seq_printf(s, "AC powered : %d\n", is_ac);
-	seq_printf(s, "Rx irqs:packets : %8d : %8ld\n", rx, rxf - rxf_old);
-	seq_printf(s, "Tx irqs:packets : %8d : %8ld\n", tx, txf - txf_old);
+	seq_म_लिखो(s, "AC powered : %d\n", is_ac);
+	seq_म_लिखो(s, "Rx irqs:packets : %8d : %8ld\n", rx, rxf - rxf_old);
+	seq_म_लिखो(s, "Tx irqs:packets : %8d : %8ld\n", tx, txf - txf_old);
 	rxf_old = rxf;
 	txf_old = txf;
 
-#define CHECK_QSTATE(x) (state & BIT(__QUEUE_STATE_ ## x)) ? \
-	" " __stringify(x) : ""
+#घोषणा CHECK_QSTATE(x) (state & BIT(__QUEUE_STATE_ ## x)) ? \
+	" " __stringअगरy(x) : ""
 
-	for (i = 0; i < ndev->num_tx_queues; i++) {
-		struct netdev_queue *txq = netdev_get_tx_queue(ndev, i);
-		unsigned long state = txq->state;
+	क्रम (i = 0; i < ndev->num_tx_queues; i++) अणु
+		काष्ठा netdev_queue *txq = netdev_get_tx_queue(ndev, i);
+		अचिन्हित दीर्घ state = txq->state;
 
-		seq_printf(s, "Tx queue[%i] state : 0x%lx%s%s%s\n", i, state,
+		seq_म_लिखो(s, "Tx queue[%i] state : 0x%lx%s%s%s\n", i, state,
 			   CHECK_QSTATE(DRV_XOFF),
 			   CHECK_QSTATE(STACK_XOFF),
 			   CHECK_QSTATE(FROZEN)
 			  );
-	}
-#undef CHECK_QSTATE
-	return 0;
-}
+	पूर्ण
+#अघोषित CHECK_QSTATE
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(info);
 
 /*---------recovery------------*/
-/* mode = [manual|auto]
+/* mode = [manual|स्वतः]
  * state = [idle|pending|running]
  */
-static ssize_t wil_read_file_recovery(struct file *file, char __user *user_buf,
-				      size_t count, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	char buf[80];
-	int n;
-	static const char * const sstate[] = {"idle", "pending", "running"};
+अटल sमाप_प्रकार wil_पढ़ो_file_recovery(काष्ठा file *file, अक्षर __user *user_buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	अक्षर buf[80];
+	पूर्णांक n;
+	अटल स्थिर अक्षर * स्थिर sstate[] = अणु"idle", "pending", "running"पूर्ण;
 
-	n = snprintf(buf, sizeof(buf), "mode = %s\nstate = %s\n",
+	n = snम_लिखो(buf, माप(buf), "mode = %s\nstate = %s\n",
 		     no_fw_recovery ? "manual" : "auto",
 		     sstate[wil->recovery_state]);
 
-	n = min_t(int, n, sizeof(buf));
+	n = min_t(पूर्णांक, n, माप(buf));
 
-	return simple_read_from_buffer(user_buf, count, ppos,
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos,
 				       buf, n);
-}
+पूर्ण
 
-static ssize_t wil_write_file_recovery(struct file *file,
-				       const char __user *buf_,
-				       size_t count, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	static const char run_command[] = "run";
-	char buf[sizeof(run_command) + 1]; /* to detect "runx" */
-	ssize_t rc;
+अटल sमाप_प्रकार wil_ग_लिखो_file_recovery(काष्ठा file *file,
+				       स्थिर अक्षर __user *buf_,
+				       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	अटल स्थिर अक्षर run_command[] = "run";
+	अक्षर buf[माप(run_command) + 1]; /* to detect "runx" */
+	sमाप_प्रकार rc;
 
-	if (wil->recovery_state != fw_recovery_pending) {
+	अगर (wil->recovery_state != fw_recovery_pending) अणु
 		wil_err(wil, "No recovery pending\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (*ppos != 0) {
-		wil_err(wil, "Offset [%d]\n", (int)*ppos);
-		return -EINVAL;
-	}
+	अगर (*ppos != 0) अणु
+		wil_err(wil, "Offset [%d]\n", (पूर्णांक)*ppos);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (count > sizeof(buf)) {
-		wil_err(wil, "Input too long, len = %d\n", (int)count);
-		return -EINVAL;
-	}
+	अगर (count > माप(buf)) अणु
+		wil_err(wil, "Input too long, len = %d\n", (पूर्णांक)count);
+		वापस -EINVAL;
+	पूर्ण
 
-	rc = simple_write_to_buffer(buf, sizeof(buf) - 1, ppos, buf_, count);
-	if (rc < 0)
-		return rc;
+	rc = simple_ग_लिखो_to_buffer(buf, माप(buf) - 1, ppos, buf_, count);
+	अगर (rc < 0)
+		वापस rc;
 
 	buf[rc] = '\0';
-	if (0 == strcmp(buf, run_command))
+	अगर (0 == म_भेद(buf, run_command))
 		wil_set_recovery_state(wil, fw_recovery_running);
-	else
+	अन्यथा
 		wil_err(wil, "Bad recovery command \"%s\"\n", buf);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct file_operations fops_recovery = {
-	.read = wil_read_file_recovery,
-	.write = wil_write_file_recovery,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_recovery = अणु
+	.पढ़ो = wil_पढ़ो_file_recovery,
+	.ग_लिखो = wil_ग_लिखो_file_recovery,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
 /*---------Station matrix------------*/
-static void wil_print_rxtid(struct seq_file *s, struct wil_tid_ampdu_rx *r)
-{
-	int i;
+अटल व्योम wil_prपूर्णांक_rxtid(काष्ठा seq_file *s, काष्ठा wil_tid_ampdu_rx *r)
+अणु
+	पूर्णांक i;
 	u16 index = ((r->head_seq_num - r->ssn) & 0xfff) % r->buf_size;
-	unsigned long long drop_dup = r->drop_dup, drop_old = r->drop_old;
-	unsigned long long drop_dup_mcast = r->drop_dup_mcast;
+	अचिन्हित दीर्घ दीर्घ drop_dup = r->drop_dup, drop_old = r->drop_old;
+	अचिन्हित दीर्घ दीर्घ drop_dup_mcast = r->drop_dup_mcast;
 
-	seq_printf(s, "([%2d]) 0x%03x [", r->buf_size, r->head_seq_num);
-	for (i = 0; i < r->buf_size; i++) {
-		if (i == index)
-			seq_printf(s, "%c", r->reorder_buf[i] ? 'O' : '|');
-		else
-			seq_printf(s, "%c", r->reorder_buf[i] ? '*' : '_');
-	}
-	seq_printf(s,
+	seq_म_लिखो(s, "([%2d]) 0x%03x [", r->buf_size, r->head_seq_num);
+	क्रम (i = 0; i < r->buf_size; i++) अणु
+		अगर (i == index)
+			seq_म_लिखो(s, "%c", r->reorder_buf[i] ? 'O' : '|');
+		अन्यथा
+			seq_म_लिखो(s, "%c", r->reorder_buf[i] ? '*' : '_');
+	पूर्ण
+	seq_म_लिखो(s,
 		   "] total %llu drop %llu (dup %llu + old %llu + dup mcast %llu) last 0x%03x\n",
 		   r->total, drop_dup + drop_old + drop_dup_mcast, drop_dup,
 		   drop_old, drop_dup_mcast, r->ssn_last_drop);
-}
+पूर्ण
 
-static void wil_print_rxtid_crypto(struct seq_file *s, int tid,
-				   struct wil_tid_crypto_rx *c)
-{
-	int i;
+अटल व्योम wil_prपूर्णांक_rxtid_crypto(काष्ठा seq_file *s, पूर्णांक tid,
+				   काष्ठा wil_tid_crypto_rx *c)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++) {
-		struct wil_tid_crypto_rx_single *cc = &c->key_id[i];
+	क्रम (i = 0; i < 4; i++) अणु
+		काष्ठा wil_tid_crypto_rx_single *cc = &c->key_id[i];
 
-		if (cc->key_set)
-			goto has_keys;
-	}
-	return;
+		अगर (cc->key_set)
+			जाओ has_keys;
+	पूर्ण
+	वापस;
 
 has_keys:
-	if (tid < WIL_STA_TID_NUM)
-		seq_printf(s, "  [%2d] PN", tid);
-	else
-		seq_puts(s, "  [GR] PN");
+	अगर (tid < WIL_STA_TID_NUM)
+		seq_म_लिखो(s, "  [%2d] PN", tid);
+	अन्यथा
+		seq_माला_दो(s, "  [GR] PN");
 
-	for (i = 0; i < 4; i++) {
-		struct wil_tid_crypto_rx_single *cc = &c->key_id[i];
+	क्रम (i = 0; i < 4; i++) अणु
+		काष्ठा wil_tid_crypto_rx_single *cc = &c->key_id[i];
 
-		seq_printf(s, " [%i%s]%6phN", i, cc->key_set ? "+" : "-",
+		seq_म_लिखो(s, " [%i%s]%6phN", i, cc->key_set ? "+" : "-",
 			   cc->pn);
-	}
-	seq_puts(s, "\n");
-}
+	पूर्ण
+	seq_माला_दो(s, "\n");
+पूर्ण
 
-static int sta_show(struct seq_file *s, void *data)
+अटल पूर्णांक sta_show(काष्ठा seq_file *s, व्योम *data)
 __acquires(&p->tid_rx_lock) __releases(&p->tid_rx_lock)
-{
-	struct wil6210_priv *wil = s->private;
-	int i, tid, mcs;
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक i, tid, mcs;
 
-	for (i = 0; i < wil->max_assoc_sta; i++) {
-		struct wil_sta_info *p = &wil->sta[i];
-		char *status = "unknown";
+	क्रम (i = 0; i < wil->max_assoc_sta; i++) अणु
+		काष्ठा wil_sta_info *p = &wil->sta[i];
+		अक्षर *status = "unknown";
 		u8 aid = 0;
 		u8 mid;
 		bool sta_connected = false;
 
-		switch (p->status) {
-		case wil_sta_unused:
+		चयन (p->status) अणु
+		हाल wil_sta_unused:
 			status = "unused   ";
-			break;
-		case wil_sta_conn_pending:
+			अवरोध;
+		हाल wil_sta_conn_pending:
 			status = "pending  ";
-			break;
-		case wil_sta_connected:
+			अवरोध;
+		हाल wil_sta_connected:
 			status = "connected";
 			aid = p->aid;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mid = (p->status != wil_sta_unused) ? p->mid : U8_MAX;
-		if (mid < GET_MAX_VIFS(wil)) {
-			struct wil6210_vif *vif = wil->vifs[mid];
+		अगर (mid < GET_MAX_VIFS(wil)) अणु
+			काष्ठा wil6210_vअगर *vअगर = wil->vअगरs[mid];
 
-			if (vif->wdev.iftype == NL80211_IFTYPE_STATION &&
+			अगर (vअगर->wdev.अगरtype == NL80211_IFTYPE_STATION &&
 			    p->status == wil_sta_connected)
 				sta_connected = true;
-		}
-		/* print roam counter only for connected stations */
-		if (sta_connected)
-			seq_printf(s, "[%d] %pM connected (roam counter %d) MID %d AID %d\n",
+		पूर्ण
+		/* prपूर्णांक roam counter only क्रम connected stations */
+		अगर (sta_connected)
+			seq_म_लिखो(s, "[%d] %pM connected (roam counter %d) MID %d AID %d\n",
 				   i, p->addr, p->stats.ft_roams, mid, aid);
-		else
-			seq_printf(s, "[%d] %pM %s MID %d AID %d\n", i,
+		अन्यथा
+			seq_म_लिखो(s, "[%d] %pM %s MID %d AID %d\n", i,
 				   p->addr, status, mid, aid);
 
-		if (p->status == wil_sta_connected) {
+		अगर (p->status == wil_sta_connected) अणु
 			spin_lock_bh(&p->tid_rx_lock);
-			for (tid = 0; tid < WIL_STA_TID_NUM; tid++) {
-				struct wil_tid_ampdu_rx *r = p->tid_rx[tid];
-				struct wil_tid_crypto_rx *c =
+			क्रम (tid = 0; tid < WIL_STA_TID_NUM; tid++) अणु
+				काष्ठा wil_tid_ampdu_rx *r = p->tid_rx[tid];
+				काष्ठा wil_tid_crypto_rx *c =
 						&p->tid_crypto_rx[tid];
 
-				if (r) {
-					seq_printf(s, "  [%2d] ", tid);
-					wil_print_rxtid(s, r);
-				}
+				अगर (r) अणु
+					seq_म_लिखो(s, "  [%2d] ", tid);
+					wil_prपूर्णांक_rxtid(s, r);
+				पूर्ण
 
-				wil_print_rxtid_crypto(s, tid, c);
-			}
-			wil_print_rxtid_crypto(s, WIL_STA_TID_NUM,
+				wil_prपूर्णांक_rxtid_crypto(s, tid, c);
+			पूर्ण
+			wil_prपूर्णांक_rxtid_crypto(s, WIL_STA_TID_NUM,
 					       &p->group_crypto_rx);
 			spin_unlock_bh(&p->tid_rx_lock);
-			seq_printf(s,
+			seq_म_लिखो(s,
 				   "Rx invalid frame: non-data %lu, short %lu, large %lu, replay %lu\n",
 				   p->stats.rx_non_data_frame,
-				   p->stats.rx_short_frame,
+				   p->stats.rx_लघु_frame,
 				   p->stats.rx_large_frame,
 				   p->stats.rx_replay);
-			seq_printf(s,
+			seq_म_लिखो(s,
 				   "mic error %lu, key error %lu, amsdu error %lu, csum error %lu\n",
 				   p->stats.rx_mic_error,
 				   p->stats.rx_key_error,
 				   p->stats.rx_amsdu_error,
 				   p->stats.rx_csum_err);
 
-			seq_puts(s, "Rx/MCS:");
-			for (mcs = 0; mcs < ARRAY_SIZE(p->stats.rx_per_mcs);
+			seq_माला_दो(s, "Rx/MCS:");
+			क्रम (mcs = 0; mcs < ARRAY_SIZE(p->stats.rx_per_mcs);
 			     mcs++)
-				seq_printf(s, " %lld",
+				seq_म_लिखो(s, " %lld",
 					   p->stats.rx_per_mcs[mcs]);
-			seq_puts(s, "\n");
-		}
-	}
+			seq_माला_दो(s, "\n");
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(sta);
 
-static int mids_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	struct wil6210_vif *vif;
-	struct net_device *ndev;
-	int i;
+अटल पूर्णांक mids_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	काष्ठा wil6210_vअगर *vअगर;
+	काष्ठा net_device *ndev;
+	पूर्णांक i;
 
-	mutex_lock(&wil->vif_mutex);
-	for (i = 0; i < GET_MAX_VIFS(wil); i++) {
-		vif = wil->vifs[i];
+	mutex_lock(&wil->vअगर_mutex);
+	क्रम (i = 0; i < GET_MAX_VIFS(wil); i++) अणु
+		vअगर = wil->vअगरs[i];
 
-		if (vif) {
-			ndev = vif_to_ndev(vif);
-			seq_printf(s, "[%d] %pM %s\n", i, ndev->dev_addr,
+		अगर (vअगर) अणु
+			ndev = vअगर_to_ndev(vअगर);
+			seq_म_लिखो(s, "[%d] %pM %s\n", i, ndev->dev_addr,
 				   ndev->name);
-		} else {
-			seq_printf(s, "[%d] unused\n", i);
-		}
-	}
-	mutex_unlock(&wil->vif_mutex);
+		पूर्ण अन्यथा अणु
+			seq_म_लिखो(s, "[%d] unused\n", i);
+		पूर्ण
+	पूर्ण
+	mutex_unlock(&wil->vअगर_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(mids);
 
-static int wil_tx_latency_debugfs_show(struct seq_file *s, void *data)
+अटल पूर्णांक wil_tx_latency_debugfs_show(काष्ठा seq_file *s, व्योम *data)
 __acquires(&p->tid_rx_lock) __releases(&p->tid_rx_lock)
-{
-	struct wil6210_priv *wil = s->private;
-	int i, bin;
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक i, bin;
 
-	for (i = 0; i < wil->max_assoc_sta; i++) {
-		struct wil_sta_info *p = &wil->sta[i];
-		char *status = "unknown";
+	क्रम (i = 0; i < wil->max_assoc_sta; i++) अणु
+		काष्ठा wil_sta_info *p = &wil->sta[i];
+		अक्षर *status = "unknown";
 		u8 aid = 0;
 		u8 mid;
 
-		if (!p->tx_latency_bins)
-			continue;
+		अगर (!p->tx_latency_bins)
+			जारी;
 
-		switch (p->status) {
-		case wil_sta_unused:
+		चयन (p->status) अणु
+		हाल wil_sta_unused:
 			status = "unused   ";
-			break;
-		case wil_sta_conn_pending:
+			अवरोध;
+		हाल wil_sta_conn_pending:
 			status = "pending  ";
-			break;
-		case wil_sta_connected:
+			अवरोध;
+		हाल wil_sta_connected:
 			status = "connected";
 			aid = p->aid;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mid = (p->status != wil_sta_unused) ? p->mid : U8_MAX;
-		seq_printf(s, "[%d] %pM %s MID %d AID %d\n", i, p->addr, status,
+		seq_म_लिखो(s, "[%d] %pM %s MID %d AID %d\n", i, p->addr, status,
 			   mid, aid);
 
-		if (p->status == wil_sta_connected) {
+		अगर (p->status == wil_sta_connected) अणु
 			u64 num_packets = 0;
 			u64 tx_latency_avg = p->stats.tx_latency_total_us;
 
-			seq_puts(s, "Tx/Latency bin:");
-			for (bin = 0; bin < WIL_NUM_LATENCY_BINS; bin++) {
-				seq_printf(s, " %lld",
+			seq_माला_दो(s, "Tx/Latency bin:");
+			क्रम (bin = 0; bin < WIL_NUM_LATENCY_BINS; bin++) अणु
+				seq_म_लिखो(s, " %lld",
 					   p->tx_latency_bins[bin]);
 				num_packets += p->tx_latency_bins[bin];
-			}
-			seq_puts(s, "\n");
-			if (!num_packets)
-				continue;
-			do_div(tx_latency_avg, num_packets);
-			seq_printf(s, "Tx/Latency min/avg/max (us): %d/%lld/%d",
+			पूर्ण
+			seq_माला_दो(s, "\n");
+			अगर (!num_packets)
+				जारी;
+			करो_भाग(tx_latency_avg, num_packets);
+			seq_म_लिखो(s, "Tx/Latency min/avg/max (us): %d/%lld/%d",
 				   p->stats.tx_latency_min_us,
 				   tx_latency_avg,
 				   p->stats.tx_latency_max_us);
 
-			seq_puts(s, "\n");
-		}
-	}
+			seq_माला_दो(s, "\n");
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wil_tx_latency_seq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, wil_tx_latency_debugfs_show,
-			   inode->i_private);
-}
+अटल पूर्णांक wil_tx_latency_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, wil_tx_latency_debugfs_show,
+			   inode->i_निजी);
+पूर्ण
 
-static ssize_t wil_tx_latency_write(struct file *file, const char __user *buf,
-				    size_t len, loff_t *ppos)
-{
-	struct seq_file *s = file->private_data;
-	struct wil6210_priv *wil = s->private;
-	int val, rc, i;
+अटल sमाप_प्रकार wil_tx_latency_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				    माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा seq_file *s = file->निजी_data;
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक val, rc, i;
 	bool enable;
 
-	rc = kstrtoint_from_user(buf, len, 0, &val);
-	if (rc) {
+	rc = kstrtoपूर्णांक_from_user(buf, len, 0, &val);
+	अगर (rc) अणु
 		wil_err(wil, "Invalid argument\n");
-		return rc;
-	}
-	if (val == 1)
-		/* default resolution */
+		वापस rc;
+	पूर्ण
+	अगर (val == 1)
+		/* शेष resolution */
 		val = 500;
-	if (val && (val < 50 || val > 1000)) {
+	अगर (val && (val < 50 || val > 1000)) अणु
 		wil_err(wil, "Invalid resolution %d\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	enable = !!val;
-	if (wil->tx_latency == enable)
-		return len;
+	अगर (wil->tx_latency == enable)
+		वापस len;
 
 	wil_info(wil, "%s TX latency measurements (resolution %dusec)\n",
 		 enable ? "Enabling" : "Disabling", val);
 
-	if (enable) {
-		size_t sz = sizeof(u64) * WIL_NUM_LATENCY_BINS;
+	अगर (enable) अणु
+		माप_प्रकार sz = माप(u64) * WIL_NUM_LATENCY_BINS;
 
 		wil->tx_latency_res = val;
-		for (i = 0; i < wil->max_assoc_sta; i++) {
-			struct wil_sta_info *sta = &wil->sta[i];
+		क्रम (i = 0; i < wil->max_assoc_sta; i++) अणु
+			काष्ठा wil_sta_info *sta = &wil->sta[i];
 
-			kfree(sta->tx_latency_bins);
+			kमुक्त(sta->tx_latency_bins);
 			sta->tx_latency_bins = kzalloc(sz, GFP_KERNEL);
-			if (!sta->tx_latency_bins)
-				return -ENOMEM;
+			अगर (!sta->tx_latency_bins)
+				वापस -ENOMEM;
 			sta->stats.tx_latency_min_us = U32_MAX;
 			sta->stats.tx_latency_max_us = 0;
 			sta->stats.tx_latency_total_us = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	wil->tx_latency = enable;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const struct file_operations fops_tx_latency = {
-	.open		= wil_tx_latency_seq_open,
+अटल स्थिर काष्ठा file_operations fops_tx_latency = अणु
+	.खोलो		= wil_tx_latency_seq_खोलो,
 	.release	= single_release,
-	.read		= seq_read,
-	.write		= wil_tx_latency_write,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= wil_tx_latency_ग_लिखो,
 	.llseek		= seq_lseek,
-};
+पूर्ण;
 
-static void wil_link_stats_print_basic(struct wil6210_vif *vif,
-				       struct seq_file *s,
-				       struct wmi_link_stats_basic *basic)
-{
-	char per[5] = "?";
+अटल व्योम wil_link_stats_prपूर्णांक_basic(काष्ठा wil6210_vअगर *vअगर,
+				       काष्ठा seq_file *s,
+				       काष्ठा wmi_link_stats_basic *basic)
+अणु
+	अक्षर per[5] = "?";
 
-	if (basic->per_average != 0xff)
-		snprintf(per, sizeof(per), "%d%%", basic->per_average);
+	अगर (basic->per_average != 0xff)
+		snम_लिखो(per, माप(per), "%d%%", basic->per_average);
 
-	seq_printf(s, "CID %d {\n"
+	seq_म_लिखो(s, "CID %d {\n"
 		   "\tTxMCS %s TxTpt %d\n"
 		   "\tGoodput(rx:tx) %d:%d\n"
 		   "\tRxBcastFrames %d\n"
@@ -1869,13 +1870,13 @@ static void wil_link_stats_print_basic(struct wil6210_vif *vif,
 		   basic->selected_rfc, basic->rx_effective_ant_num,
 		   basic->my_rx_sector, basic->my_tx_sector,
 		   basic->other_rx_sector, basic->other_tx_sector);
-}
+पूर्ण
 
-static void wil_link_stats_print_global(struct wil6210_priv *wil,
-					struct seq_file *s,
-					struct wmi_link_stats_global *global)
-{
-	seq_printf(s, "Frames(rx:tx) %d:%d\n"
+अटल व्योम wil_link_stats_prपूर्णांक_global(काष्ठा wil6210_priv *wil,
+					काष्ठा seq_file *s,
+					काष्ठा wmi_link_stats_global *global)
+अणु
+	seq_म_लिखो(s, "Frames(rx:tx) %d:%d\n"
 		   "BA Frames(rx:tx) %d:%d\n"
 		   "Beacons %d\n"
 		   "Rx Errors (MIC:CRC) %d:%d\n"
@@ -1888,365 +1889,365 @@ static void wil_link_stats_print_global(struct wil6210_priv *wil,
 		   le32_to_cpu(global->rx_mic_errors),
 		   le32_to_cpu(global->rx_crc_errors),
 		   le32_to_cpu(global->tx_fail_no_ack));
-}
+पूर्ण
 
-static void wil_link_stats_debugfs_show_vif(struct wil6210_vif *vif,
-					    struct seq_file *s)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	struct wmi_link_stats_basic *stats;
-	int i;
+अटल व्योम wil_link_stats_debugfs_show_vअगर(काष्ठा wil6210_vअगर *vअगर,
+					    काष्ठा seq_file *s)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	काष्ठा wmi_link_stats_basic *stats;
+	पूर्णांक i;
 
-	if (!vif->fw_stats_ready) {
-		seq_puts(s, "no statistics\n");
-		return;
-	}
+	अगर (!vअगर->fw_stats_पढ़ोy) अणु
+		seq_माला_दो(s, "no statistics\n");
+		वापस;
+	पूर्ण
 
-	seq_printf(s, "TSF %lld\n", vif->fw_stats_tsf);
-	for (i = 0; i < wil->max_assoc_sta; i++) {
-		if (wil->sta[i].status == wil_sta_unused)
-			continue;
-		if (wil->sta[i].mid != vif->mid)
-			continue;
+	seq_म_लिखो(s, "TSF %lld\n", vअगर->fw_stats_tsf);
+	क्रम (i = 0; i < wil->max_assoc_sta; i++) अणु
+		अगर (wil->sta[i].status == wil_sta_unused)
+			जारी;
+		अगर (wil->sta[i].mid != vअगर->mid)
+			जारी;
 
 		stats = &wil->sta[i].fw_stats_basic;
-		wil_link_stats_print_basic(vif, s, stats);
-	}
-}
+		wil_link_stats_prपूर्णांक_basic(vअगर, s, stats);
+	पूर्ण
+पूर्ण
 
-static int wil_link_stats_debugfs_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
-	struct wil6210_vif *vif;
-	int i, rc;
+अटल पूर्णांक wil_link_stats_debugfs_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
+	काष्ठा wil6210_vअगर *vअगर;
+	पूर्णांक i, rc;
 
-	rc = mutex_lock_interruptible(&wil->vif_mutex);
-	if (rc)
-		return rc;
+	rc = mutex_lock_पूर्णांकerruptible(&wil->vअगर_mutex);
+	अगर (rc)
+		वापस rc;
 
 	/* iterate over all MIDs and show per-cid statistics. Then show the
 	 * global statistics
 	 */
-	for (i = 0; i < GET_MAX_VIFS(wil); i++) {
-		vif = wil->vifs[i];
+	क्रम (i = 0; i < GET_MAX_VIFS(wil); i++) अणु
+		vअगर = wil->vअगरs[i];
 
-		seq_printf(s, "MID %d ", i);
-		if (!vif) {
-			seq_puts(s, "unused\n");
-			continue;
-		}
+		seq_म_लिखो(s, "MID %d ", i);
+		अगर (!vअगर) अणु
+			seq_माला_दो(s, "unused\n");
+			जारी;
+		पूर्ण
 
-		wil_link_stats_debugfs_show_vif(vif, s);
-	}
+		wil_link_stats_debugfs_show_vअगर(vअगर, s);
+	पूर्ण
 
-	mutex_unlock(&wil->vif_mutex);
+	mutex_unlock(&wil->vअगर_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wil_link_stats_seq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, wil_link_stats_debugfs_show, inode->i_private);
-}
+अटल पूर्णांक wil_link_stats_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, wil_link_stats_debugfs_show, inode->i_निजी);
+पूर्ण
 
-static ssize_t wil_link_stats_write(struct file *file, const char __user *buf,
-				    size_t len, loff_t *ppos)
-{
-	struct seq_file *s = file->private_data;
-	struct wil6210_priv *wil = s->private;
-	int cid, interval, rc, i;
-	struct wil6210_vif *vif;
-	char *kbuf = kmalloc(len + 1, GFP_KERNEL);
+अटल sमाप_प्रकार wil_link_stats_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				    माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा seq_file *s = file->निजी_data;
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक cid, पूर्णांकerval, rc, i;
+	काष्ठा wil6210_vअगर *vअगर;
+	अक्षर *kbuf = kदो_स्मृति(len + 1, GFP_KERNEL);
 
-	if (!kbuf)
-		return -ENOMEM;
+	अगर (!kbuf)
+		वापस -ENOMEM;
 
-	rc = simple_write_to_buffer(kbuf, len, ppos, buf, len);
-	if (rc != len) {
-		kfree(kbuf);
-		return rc >= 0 ? -EIO : rc;
-	}
+	rc = simple_ग_लिखो_to_buffer(kbuf, len, ppos, buf, len);
+	अगर (rc != len) अणु
+		kमुक्त(kbuf);
+		वापस rc >= 0 ? -EIO : rc;
+	पूर्ण
 
 	kbuf[len] = '\0';
-	/* specify cid (use -1 for all cids) and snapshot interval in ms */
-	rc = sscanf(kbuf, "%d %d", &cid, &interval);
-	kfree(kbuf);
-	if (rc < 0)
-		return rc;
-	if (rc < 2 || interval < 0)
-		return -EINVAL;
+	/* specअगरy cid (use -1 क्रम all cids) and snapshot पूर्णांकerval in ms */
+	rc = माला_पूछो(kbuf, "%d %d", &cid, &पूर्णांकerval);
+	kमुक्त(kbuf);
+	अगर (rc < 0)
+		वापस rc;
+	अगर (rc < 2 || पूर्णांकerval < 0)
+		वापस -EINVAL;
 
 	wil_info(wil, "request link statistics, cid %d interval %d\n",
-		 cid, interval);
+		 cid, पूर्णांकerval);
 
-	rc = mutex_lock_interruptible(&wil->vif_mutex);
-	if (rc)
-		return rc;
+	rc = mutex_lock_पूर्णांकerruptible(&wil->vअगर_mutex);
+	अगर (rc)
+		वापस rc;
 
-	for (i = 0; i < GET_MAX_VIFS(wil); i++) {
-		vif = wil->vifs[i];
-		if (!vif)
-			continue;
+	क्रम (i = 0; i < GET_MAX_VIFS(wil); i++) अणु
+		vअगर = wil->vअगरs[i];
+		अगर (!vअगर)
+			जारी;
 
-		rc = wmi_link_stats_cfg(vif, WMI_LINK_STATS_TYPE_BASIC,
-					(cid == -1 ? 0xff : cid), interval);
-		if (rc)
+		rc = wmi_link_stats_cfg(vअगर, WMI_LINK_STATS_TYPE_BASIC,
+					(cid == -1 ? 0xff : cid), पूर्णांकerval);
+		अगर (rc)
 			wil_err(wil, "link statistics failed for mid %d\n", i);
-	}
-	mutex_unlock(&wil->vif_mutex);
+	पूर्ण
+	mutex_unlock(&wil->vअगर_mutex);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const struct file_operations fops_link_stats = {
-	.open		= wil_link_stats_seq_open,
+अटल स्थिर काष्ठा file_operations fops_link_stats = अणु
+	.खोलो		= wil_link_stats_seq_खोलो,
 	.release	= single_release,
-	.read		= seq_read,
-	.write		= wil_link_stats_write,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= wil_link_stats_ग_लिखो,
 	.llseek		= seq_lseek,
-};
+पूर्ण;
 
-static int
-wil_link_stats_global_debugfs_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
+अटल पूर्णांक
+wil_link_stats_global_debugfs_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
 
-	if (!wil->fw_stats_global.ready)
-		return 0;
+	अगर (!wil->fw_stats_global.पढ़ोy)
+		वापस 0;
 
-	seq_printf(s, "TSF %lld\n", wil->fw_stats_global.tsf);
-	wil_link_stats_print_global(wil, s, &wil->fw_stats_global.stats);
+	seq_म_लिखो(s, "TSF %lld\n", wil->fw_stats_global.tsf);
+	wil_link_stats_prपूर्णांक_global(wil, s, &wil->fw_stats_global.stats);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-wil_link_stats_global_seq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, wil_link_stats_global_debugfs_show,
-			   inode->i_private);
-}
+अटल पूर्णांक
+wil_link_stats_global_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, wil_link_stats_global_debugfs_show,
+			   inode->i_निजी);
+पूर्ण
 
-static ssize_t
-wil_link_stats_global_write(struct file *file, const char __user *buf,
-			    size_t len, loff_t *ppos)
-{
-	struct seq_file *s = file->private_data;
-	struct wil6210_priv *wil = s->private;
-	int interval, rc;
-	struct wil6210_vif *vif = ndev_to_vif(wil->main_ndev);
+अटल sमाप_प्रकार
+wil_link_stats_global_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			    माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा seq_file *s = file->निजी_data;
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक पूर्णांकerval, rc;
+	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(wil->मुख्य_ndev);
 
-	/* specify snapshot interval in ms */
-	rc = kstrtoint_from_user(buf, len, 0, &interval);
-	if (rc || interval < 0) {
+	/* specअगरy snapshot पूर्णांकerval in ms */
+	rc = kstrtoपूर्णांक_from_user(buf, len, 0, &पूर्णांकerval);
+	अगर (rc || पूर्णांकerval < 0) अणु
 		wil_err(wil, "Invalid argument\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	wil_info(wil, "request global link stats, interval %d\n", interval);
+	wil_info(wil, "request global link stats, interval %d\n", पूर्णांकerval);
 
-	rc = wmi_link_stats_cfg(vif, WMI_LINK_STATS_TYPE_GLOBAL, 0, interval);
-	if (rc)
+	rc = wmi_link_stats_cfg(vअगर, WMI_LINK_STATS_TYPE_GLOBAL, 0, पूर्णांकerval);
+	अगर (rc)
 		wil_err(wil, "global link stats failed %d\n", rc);
 
-	return rc ? rc : len;
-}
+	वापस rc ? rc : len;
+पूर्ण
 
-static const struct file_operations fops_link_stats_global = {
-	.open		= wil_link_stats_global_seq_open,
+अटल स्थिर काष्ठा file_operations fops_link_stats_global = अणु
+	.खोलो		= wil_link_stats_global_seq_खोलो,
 	.release	= single_release,
-	.read		= seq_read,
-	.write		= wil_link_stats_global_write,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= wil_link_stats_global_ग_लिखो,
 	.llseek		= seq_lseek,
-};
+पूर्ण;
 
-static ssize_t wil_read_file_led_cfg(struct file *file, char __user *user_buf,
-				     size_t count, loff_t *ppos)
-{
-	char buf[80];
-	int n;
+अटल sमाप_प्रकार wil_पढ़ो_file_led_cfg(काष्ठा file *file, अक्षर __user *user_buf,
+				     माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buf[80];
+	पूर्णांक n;
 
-	n = snprintf(buf, sizeof(buf),
+	n = snम_लिखो(buf, माप(buf),
 		     "led_id is set to %d, echo 1 to enable, 0 to disable\n",
 		     led_id);
 
-	n = min_t(int, n, sizeof(buf));
+	n = min_t(पूर्णांक, n, माप(buf));
 
-	return simple_read_from_buffer(user_buf, count, ppos,
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos,
 				       buf, n);
-}
+पूर्ण
 
-static ssize_t wil_write_file_led_cfg(struct file *file,
-				      const char __user *buf_,
-				      size_t count, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	int val;
-	int rc;
+अटल sमाप_प्रकार wil_ग_लिखो_file_led_cfg(काष्ठा file *file,
+				      स्थिर अक्षर __user *buf_,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	पूर्णांक val;
+	पूर्णांक rc;
 
-	rc = kstrtoint_from_user(buf_, count, 0, &val);
-	if (rc) {
+	rc = kstrtoपूर्णांक_from_user(buf_, count, 0, &val);
+	अगर (rc) अणु
 		wil_err(wil, "Invalid argument\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	wil_info(wil, "%s led %d\n", val ? "Enabling" : "Disabling", led_id);
 	rc = wmi_led_cfg(wil, val);
-	if (rc) {
+	अगर (rc) अणु
 		wil_info(wil, "%s led %d failed\n",
 			 val ? "Enabling" : "Disabling", led_id);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations fops_led_cfg = {
-	.read = wil_read_file_led_cfg,
-	.write = wil_write_file_led_cfg,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_led_cfg = अणु
+	.पढ़ो = wil_पढ़ो_file_led_cfg,
+	.ग_लिखो = wil_ग_लिखो_file_led_cfg,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
-/* led_blink_time, write:
+/* led_blink_समय, ग_लिखो:
  * "<blink_on_slow> <blink_off_slow> <blink_on_med> <blink_off_med> <blink_on_fast> <blink_off_fast>
  */
-static ssize_t wil_write_led_blink_time(struct file *file,
-					const char __user *buf,
-					size_t len, loff_t *ppos)
-{
-	int rc;
-	char *kbuf = kmalloc(len + 1, GFP_KERNEL);
+अटल sमाप_प्रकार wil_ग_लिखो_led_blink_समय(काष्ठा file *file,
+					स्थिर अक्षर __user *buf,
+					माप_प्रकार len, loff_t *ppos)
+अणु
+	पूर्णांक rc;
+	अक्षर *kbuf = kदो_स्मृति(len + 1, GFP_KERNEL);
 
-	if (!kbuf)
-		return -ENOMEM;
+	अगर (!kbuf)
+		वापस -ENOMEM;
 
-	rc = simple_write_to_buffer(kbuf, len, ppos, buf, len);
-	if (rc != len) {
-		kfree(kbuf);
-		return rc >= 0 ? -EIO : rc;
-	}
+	rc = simple_ग_लिखो_to_buffer(kbuf, len, ppos, buf, len);
+	अगर (rc != len) अणु
+		kमुक्त(kbuf);
+		वापस rc >= 0 ? -EIO : rc;
+	पूर्ण
 
 	kbuf[len] = '\0';
-	rc = sscanf(kbuf, "%d %d %d %d %d %d",
-		    &led_blink_time[WIL_LED_TIME_SLOW].on_ms,
-		    &led_blink_time[WIL_LED_TIME_SLOW].off_ms,
-		    &led_blink_time[WIL_LED_TIME_MED].on_ms,
-		    &led_blink_time[WIL_LED_TIME_MED].off_ms,
-		    &led_blink_time[WIL_LED_TIME_FAST].on_ms,
-		    &led_blink_time[WIL_LED_TIME_FAST].off_ms);
-	kfree(kbuf);
+	rc = माला_पूछो(kbuf, "%d %d %d %d %d %d",
+		    &led_blink_समय[WIL_LED_TIME_SLOW].on_ms,
+		    &led_blink_समय[WIL_LED_TIME_SLOW].off_ms,
+		    &led_blink_समय[WIL_LED_TIME_MED].on_ms,
+		    &led_blink_समय[WIL_LED_TIME_MED].off_ms,
+		    &led_blink_समय[WIL_LED_TIME_FAST].on_ms,
+		    &led_blink_समय[WIL_LED_TIME_FAST].off_ms);
+	kमुक्त(kbuf);
 
-	if (rc < 0)
-		return rc;
-	if (rc < 6)
-		return -EINVAL;
+	अगर (rc < 0)
+		वापस rc;
+	अगर (rc < 6)
+		वापस -EINVAL;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t wil_read_led_blink_time(struct file *file, char __user *user_buf,
-				       size_t count, loff_t *ppos)
-{
-	static char text[400];
+अटल sमाप_प्रकार wil_पढ़ो_led_blink_समय(काष्ठा file *file, अक्षर __user *user_buf,
+				       माप_प्रकार count, loff_t *ppos)
+अणु
+	अटल अक्षर text[400];
 
-	snprintf(text, sizeof(text),
+	snम_लिखो(text, माप(text),
 		 "To set led blink on/off time variables write:\n"
 		 "<blink_on_slow> <blink_off_slow> <blink_on_med> "
 		 "<blink_off_med> <blink_on_fast> <blink_off_fast>\n"
 		 "The current values are:\n"
 		 "%d %d %d %d %d %d\n",
-		 led_blink_time[WIL_LED_TIME_SLOW].on_ms,
-		 led_blink_time[WIL_LED_TIME_SLOW].off_ms,
-		 led_blink_time[WIL_LED_TIME_MED].on_ms,
-		 led_blink_time[WIL_LED_TIME_MED].off_ms,
-		 led_blink_time[WIL_LED_TIME_FAST].on_ms,
-		 led_blink_time[WIL_LED_TIME_FAST].off_ms);
+		 led_blink_समय[WIL_LED_TIME_SLOW].on_ms,
+		 led_blink_समय[WIL_LED_TIME_SLOW].off_ms,
+		 led_blink_समय[WIL_LED_TIME_MED].on_ms,
+		 led_blink_समय[WIL_LED_TIME_MED].off_ms,
+		 led_blink_समय[WIL_LED_TIME_FAST].on_ms,
+		 led_blink_समय[WIL_LED_TIME_FAST].off_ms);
 
-	return simple_read_from_buffer(user_buf, count, ppos, text,
-				       sizeof(text));
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, text,
+				       माप(text));
+पूर्ण
 
-static const struct file_operations fops_led_blink_time = {
-	.read = wil_read_led_blink_time,
-	.write = wil_write_led_blink_time,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_led_blink_समय = अणु
+	.पढ़ो = wil_पढ़ो_led_blink_समय,
+	.ग_लिखो = wil_ग_लिखो_led_blink_समय,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
 /*---------FW capabilities------------*/
-static int wil_fw_capabilities_debugfs_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
+अटल पूर्णांक wil_fw_capabilities_debugfs_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
 
-	seq_printf(s, "fw_capabilities : %*pb\n", WMI_FW_CAPABILITY_MAX,
+	seq_म_लिखो(s, "fw_capabilities : %*pb\n", WMI_FW_CAPABILITY_MAX,
 		   wil->fw_capabilities);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wil_fw_capabilities_seq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, wil_fw_capabilities_debugfs_show,
-			   inode->i_private);
-}
+अटल पूर्णांक wil_fw_capabilities_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, wil_fw_capabilities_debugfs_show,
+			   inode->i_निजी);
+पूर्ण
 
-static const struct file_operations fops_fw_capabilities = {
-	.open		= wil_fw_capabilities_seq_open,
+अटल स्थिर काष्ठा file_operations fops_fw_capabilities = अणु
+	.खोलो		= wil_fw_capabilities_seq_खोलो,
 	.release	= single_release,
-	.read		= seq_read,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
-};
+पूर्ण;
 
 /*---------FW version------------*/
-static int wil_fw_version_debugfs_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
+अटल पूर्णांक wil_fw_version_debugfs_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
 
-	if (wil->fw_version[0])
-		seq_printf(s, "%s\n", wil->fw_version);
-	else
-		seq_puts(s, "N/A\n");
+	अगर (wil->fw_version[0])
+		seq_म_लिखो(s, "%s\n", wil->fw_version);
+	अन्यथा
+		seq_माला_दो(s, "N/A\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wil_fw_version_seq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, wil_fw_version_debugfs_show,
-			   inode->i_private);
-}
+अटल पूर्णांक wil_fw_version_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, wil_fw_version_debugfs_show,
+			   inode->i_निजी);
+पूर्ण
 
-static const struct file_operations fops_fw_version = {
-	.open		= wil_fw_version_seq_open,
+अटल स्थिर काष्ठा file_operations fops_fw_version = अणु
+	.खोलो		= wil_fw_version_seq_खोलो,
 	.release	= single_release,
-	.read		= seq_read,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
-};
+पूर्ण;
 
 /*---------suspend_stats---------*/
-static ssize_t wil_write_suspend_stats(struct file *file,
-				       const char __user *buf,
-				       size_t len, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
+अटल sमाप_प्रकार wil_ग_लिखो_suspend_stats(काष्ठा file *file,
+				       स्थिर अक्षर __user *buf,
+				       माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
 
-	memset(&wil->suspend_stats, 0, sizeof(wil->suspend_stats));
+	स_रखो(&wil->suspend_stats, 0, माप(wil->suspend_stats));
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t wil_read_suspend_stats(struct file *file,
-				      char __user *user_buf,
-				      size_t count, loff_t *ppos)
-{
-	struct wil6210_priv *wil = file->private_data;
-	char *text;
-	int n, ret, text_size = 500;
+अटल sमाप_प्रकार wil_पढ़ो_suspend_stats(काष्ठा file *file,
+				      अक्षर __user *user_buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा wil6210_priv *wil = file->निजी_data;
+	अक्षर *text;
+	पूर्णांक n, ret, text_size = 500;
 
-	text = kmalloc(text_size, GFP_KERNEL);
-	if (!text)
-		return -ENOMEM;
+	text = kदो_स्मृति(text_size, GFP_KERNEL);
+	अगर (!text)
+		वापस -ENOMEM;
 
-	n = snprintf(text, text_size,
+	n = snम_लिखो(text, text_size,
 		     "Radio on suspend statistics:\n"
 		     "successful suspends:%ld failed suspends:%ld\n"
 		     "successful resumes:%ld failed resumes:%ld\n"
@@ -2267,232 +2268,232 @@ static ssize_t wil_read_suspend_stats(struct file *file,
 		     wil->suspend_stats.r_off.failed_resumes,
 		     wil->suspend_stats.rejected_by_host);
 
-	n = min_t(int, n, text_size);
+	n = min_t(पूर्णांक, n, text_size);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, text, n);
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, text, n);
 
-	kfree(text);
+	kमुक्त(text);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations fops_suspend_stats = {
-	.read = wil_read_suspend_stats,
-	.write = wil_write_suspend_stats,
-	.open  = simple_open,
-};
+अटल स्थिर काष्ठा file_operations fops_suspend_stats = अणु
+	.पढ़ो = wil_पढ़ो_suspend_stats,
+	.ग_लिखो = wil_ग_लिखो_suspend_stats,
+	.खोलो  = simple_खोलो,
+पूर्ण;
 
 /*---------compressed_rx_status---------*/
-static ssize_t wil_compressed_rx_status_write(struct file *file,
-					      const char __user *buf,
-					      size_t len, loff_t *ppos)
-{
-	struct seq_file *s = file->private_data;
-	struct wil6210_priv *wil = s->private;
-	int compressed_rx_status;
-	int rc;
+अटल sमाप_प्रकार wil_compressed_rx_status_ग_लिखो(काष्ठा file *file,
+					      स्थिर अक्षर __user *buf,
+					      माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा seq_file *s = file->निजी_data;
+	काष्ठा wil6210_priv *wil = s->निजी;
+	पूर्णांक compressed_rx_status;
+	पूर्णांक rc;
 
-	rc = kstrtoint_from_user(buf, len, 0, &compressed_rx_status);
-	if (rc) {
+	rc = kstrtoपूर्णांक_from_user(buf, len, 0, &compressed_rx_status);
+	अगर (rc) अणु
 		wil_err(wil, "Invalid argument\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (wil_has_active_ifaces(wil, true, false)) {
+	अगर (wil_has_active_अगरaces(wil, true, false)) अणु
 		wil_err(wil, "cannot change edma config after iface is up\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	wil_info(wil, "%sable compressed_rx_status\n",
 		 compressed_rx_status ? "En" : "Dis");
 
 	wil->use_compressed_rx_status = compressed_rx_status;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int
-wil_compressed_rx_status_show(struct seq_file *s, void *data)
-{
-	struct wil6210_priv *wil = s->private;
+अटल पूर्णांक
+wil_compressed_rx_status_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा wil6210_priv *wil = s->निजी;
 
-	seq_printf(s, "%d\n", wil->use_compressed_rx_status);
+	seq_म_लिखो(s, "%d\n", wil->use_compressed_rx_status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-wil_compressed_rx_status_seq_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, wil_compressed_rx_status_show,
-			   inode->i_private);
-}
+अटल पूर्णांक
+wil_compressed_rx_status_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, wil_compressed_rx_status_show,
+			   inode->i_निजी);
+पूर्ण
 
-static const struct file_operations fops_compressed_rx_status = {
-	.open  = wil_compressed_rx_status_seq_open,
+अटल स्थिर काष्ठा file_operations fops_compressed_rx_status = अणु
+	.खोलो  = wil_compressed_rx_status_seq_खोलो,
 	.release = single_release,
-	.read = seq_read,
-	.write = wil_compressed_rx_status_write,
+	.पढ़ो = seq_पढ़ो,
+	.ग_लिखो = wil_compressed_rx_status_ग_लिखो,
 	.llseek	= seq_lseek,
-};
+पूर्ण;
 
 /*----------------*/
-static void wil6210_debugfs_init_blobs(struct wil6210_priv *wil,
-				       struct dentry *dbg)
-{
-	int i;
-	char name[32];
+अटल व्योम wil6210_debugfs_init_blobs(काष्ठा wil6210_priv *wil,
+				       काष्ठा dentry *dbg)
+अणु
+	पूर्णांक i;
+	अक्षर name[32];
 
-	for (i = 0; i < ARRAY_SIZE(fw_mapping); i++) {
-		struct wil_blob_wrapper *wil_blob = &wil->blobs[i];
-		struct debugfs_blob_wrapper *blob = &wil_blob->blob;
-		const struct fw_map *map = &fw_mapping[i];
+	क्रम (i = 0; i < ARRAY_SIZE(fw_mapping); i++) अणु
+		काष्ठा wil_blob_wrapper *wil_blob = &wil->blobs[i];
+		काष्ठा debugfs_blob_wrapper *blob = &wil_blob->blob;
+		स्थिर काष्ठा fw_map *map = &fw_mapping[i];
 
-		if (!map->name)
-			continue;
+		अगर (!map->name)
+			जारी;
 
 		wil_blob->wil = wil;
-		blob->data = (void * __force)wil->csr + HOSTADDR(map->host);
+		blob->data = (व्योम * __क्रमce)wil->csr + HOSTADDR(map->host);
 		blob->size = map->to - map->from;
-		snprintf(name, sizeof(name), "blob_%s", map->name);
+		snम_लिखो(name, माप(name), "blob_%s", map->name);
 		wil_debugfs_create_ioblob(name, 0444, dbg, wil_blob);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* misc files */
-static const struct {
-	const char *name;
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
 	umode_t mode;
-	const struct file_operations *fops;
-} dbg_files[] = {
-	{"mbox",	0444,		&mbox_fops},
-	{"rings",	0444,		&ring_fops},
-	{"stations", 0444,		&sta_fops},
-	{"mids",	0444,		&mids_fops},
-	{"desc",	0444,		&txdesc_fops},
-	{"bf",		0444,		&bf_fops},
-	{"mem_val",	0644,		&memread_fops},
-	{"rxon",	0244,		&fops_rxon},
-	{"tx_mgmt",	0244,		&fops_txmgmt},
-	{"wmi_send", 0244,		&fops_wmi},
-	{"back",	0644,		&fops_back},
-	{"pmccfg",	0644,		&fops_pmccfg},
-	{"pmcdata",	0444,		&fops_pmcdata},
-	{"pmcring",	0444,		&fops_pmcring},
-	{"temp",	0444,		&temp_fops},
-	{"freq",	0444,		&freq_fops},
-	{"link",	0444,		&link_fops},
-	{"info",	0444,		&info_fops},
-	{"recovery", 0644,		&fops_recovery},
-	{"led_cfg",	0644,		&fops_led_cfg},
-	{"led_blink_time",	0644,	&fops_led_blink_time},
-	{"fw_capabilities",	0444,	&fops_fw_capabilities},
-	{"fw_version",	0444,		&fops_fw_version},
-	{"suspend_stats",	0644,	&fops_suspend_stats},
-	{"compressed_rx_status", 0644,	&fops_compressed_rx_status},
-	{"srings",	0444,		&srings_fops},
-	{"status_msg",	0444,		&status_msg_fops},
-	{"rx_buff_mgmt",	0444,	&rx_buff_mgmt_fops},
-	{"tx_latency",	0644,		&fops_tx_latency},
-	{"link_stats",	0644,		&fops_link_stats},
-	{"link_stats_global",	0644,	&fops_link_stats_global},
-	{"rbufcap",	0244,		&fops_rbufcap},
-};
+	स्थिर काष्ठा file_operations *fops;
+पूर्ण dbg_files[] = अणु
+	अणु"mbox",	0444,		&mbox_fopsपूर्ण,
+	अणु"rings",	0444,		&ring_fopsपूर्ण,
+	अणु"stations", 0444,		&sta_fopsपूर्ण,
+	अणु"mids",	0444,		&mids_fopsपूर्ण,
+	अणु"desc",	0444,		&txdesc_fopsपूर्ण,
+	अणु"bf",		0444,		&bf_fopsपूर्ण,
+	अणु"mem_val",	0644,		&memपढ़ो_fopsपूर्ण,
+	अणु"rxon",	0244,		&fops_rxonपूर्ण,
+	अणु"tx_mgmt",	0244,		&fops_txmgmtपूर्ण,
+	अणु"wmi_send", 0244,		&fops_wmiपूर्ण,
+	अणु"back",	0644,		&fops_backपूर्ण,
+	अणु"pmccfg",	0644,		&fops_pmccfgपूर्ण,
+	अणु"pmcdata",	0444,		&fops_pmcdataपूर्ण,
+	अणु"pmcring",	0444,		&fops_pmcringपूर्ण,
+	अणु"temp",	0444,		&temp_fopsपूर्ण,
+	अणु"freq",	0444,		&freq_fopsपूर्ण,
+	अणु"link",	0444,		&link_fopsपूर्ण,
+	अणु"info",	0444,		&info_fopsपूर्ण,
+	अणु"recovery", 0644,		&fops_recoveryपूर्ण,
+	अणु"led_cfg",	0644,		&fops_led_cfgपूर्ण,
+	अणु"led_blink_time",	0644,	&fops_led_blink_समयपूर्ण,
+	अणु"fw_capabilities",	0444,	&fops_fw_capabilitiesपूर्ण,
+	अणु"fw_version",	0444,		&fops_fw_versionपूर्ण,
+	अणु"suspend_stats",	0644,	&fops_suspend_statsपूर्ण,
+	अणु"compressed_rx_status", 0644,	&fops_compressed_rx_statusपूर्ण,
+	अणु"srings",	0444,		&srings_fopsपूर्ण,
+	अणु"status_msg",	0444,		&status_msg_fopsपूर्ण,
+	अणु"rx_buff_mgmt",	0444,	&rx_buff_mgmt_fopsपूर्ण,
+	अणु"tx_latency",	0644,		&fops_tx_latencyपूर्ण,
+	अणु"link_stats",	0644,		&fops_link_statsपूर्ण,
+	अणु"link_stats_global",	0644,	&fops_link_stats_globalपूर्ण,
+	अणु"rbufcap",	0244,		&fops_rbufcapपूर्ण,
+पूर्ण;
 
-static void wil6210_debugfs_init_files(struct wil6210_priv *wil,
-				       struct dentry *dbg)
-{
-	int i;
+अटल व्योम wil6210_debugfs_init_files(काष्ठा wil6210_priv *wil,
+				       काष्ठा dentry *dbg)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(dbg_files); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(dbg_files); i++)
 		debugfs_create_file(dbg_files[i].name, dbg_files[i].mode, dbg,
 				    wil, dbg_files[i].fops);
-}
+पूर्ण
 
-/* interrupt control blocks */
-static const struct {
-	const char *name;
+/* पूर्णांकerrupt control blocks */
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
 	u32 icr_off;
-} dbg_icr[] = {
-	{"USER_ICR",		HOSTADDR(RGF_USER_USER_ICR)},
-	{"DMA_EP_TX_ICR",	HOSTADDR(RGF_DMA_EP_TX_ICR)},
-	{"DMA_EP_RX_ICR",	HOSTADDR(RGF_DMA_EP_RX_ICR)},
-	{"DMA_EP_MISC_ICR",	HOSTADDR(RGF_DMA_EP_MISC_ICR)},
-};
+पूर्ण dbg_icr[] = अणु
+	अणु"USER_ICR",		HOSTADDR(RGF_USER_USER_ICR)पूर्ण,
+	अणु"DMA_EP_TX_ICR",	HOSTADDR(RGF_DMA_EP_TX_ICR)पूर्ण,
+	अणु"DMA_EP_RX_ICR",	HOSTADDR(RGF_DMA_EP_RX_ICR)पूर्ण,
+	अणु"DMA_EP_MISC_ICR",	HOSTADDR(RGF_DMA_EP_MISC_ICR)पूर्ण,
+पूर्ण;
 
-static void wil6210_debugfs_init_isr(struct wil6210_priv *wil,
-				     struct dentry *dbg)
-{
-	int i;
+अटल व्योम wil6210_debugfs_init_isr(काष्ठा wil6210_priv *wil,
+				     काष्ठा dentry *dbg)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(dbg_icr); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(dbg_icr); i++)
 		wil6210_debugfs_create_ISR(wil, dbg_icr[i].name, dbg,
 					   dbg_icr[i].icr_off);
-}
+पूर्ण
 
-#define WIL_FIELD(name, mode, type) { __stringify(name), mode, \
-	offsetof(struct wil6210_priv, name), type}
+#घोषणा WIL_FIELD(name, mode, type) अणु __stringअगरy(name), mode, \
+	दुरत्व(काष्ठा wil6210_priv, name), typeपूर्ण
 
-/* fields in struct wil6210_priv */
-static const struct dbg_off dbg_wil_off[] = {
-	WIL_FIELD(status[0],	0644,	doff_ulong),
-	WIL_FIELD(hw_version,	0444,	doff_x32),
-	WIL_FIELD(recovery_count, 0444,	doff_u32),
-	WIL_FIELD(discovery_mode, 0644,	doff_u8),
-	WIL_FIELD(chip_revision, 0444,	doff_u8),
-	WIL_FIELD(abft_len, 0644,		doff_u8),
-	WIL_FIELD(wakeup_trigger, 0644,		doff_u8),
-	WIL_FIELD(ring_idle_trsh, 0644,	doff_u32),
-	WIL_FIELD(num_rx_status_rings, 0644,	doff_u8),
-	WIL_FIELD(rx_status_ring_order, 0644,	doff_u32),
-	WIL_FIELD(tx_status_ring_order, 0644,	doff_u32),
-	WIL_FIELD(rx_buff_id_count, 0644,	doff_u32),
-	WIL_FIELD(amsdu_en, 0644,	doff_u8),
-	{},
-};
+/* fields in काष्ठा wil6210_priv */
+अटल स्थिर काष्ठा dbg_off dbg_wil_off[] = अणु
+	WIL_FIELD(status[0],	0644,	करोff_uदीर्घ),
+	WIL_FIELD(hw_version,	0444,	करोff_x32),
+	WIL_FIELD(recovery_count, 0444,	करोff_u32),
+	WIL_FIELD(discovery_mode, 0644,	करोff_u8),
+	WIL_FIELD(chip_revision, 0444,	करोff_u8),
+	WIL_FIELD(abft_len, 0644,		करोff_u8),
+	WIL_FIELD(wakeup_trigger, 0644,		करोff_u8),
+	WIL_FIELD(ring_idle_trsh, 0644,	करोff_u32),
+	WIL_FIELD(num_rx_status_rings, 0644,	करोff_u8),
+	WIL_FIELD(rx_status_ring_order, 0644,	करोff_u32),
+	WIL_FIELD(tx_status_ring_order, 0644,	करोff_u32),
+	WIL_FIELD(rx_buff_id_count, 0644,	करोff_u32),
+	WIL_FIELD(amsdu_en, 0644,	करोff_u8),
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct dbg_off dbg_wil_regs[] = {
-	{"RGF_MAC_MTRL_COUNTER_0", 0444, HOSTADDR(RGF_MAC_MTRL_COUNTER_0),
-		doff_io32},
-	{"RGF_USER_USAGE_1", 0444, HOSTADDR(RGF_USER_USAGE_1), doff_io32},
-	{"RGF_USER_USAGE_2", 0444, HOSTADDR(RGF_USER_USAGE_2), doff_io32},
-	{},
-};
+अटल स्थिर काष्ठा dbg_off dbg_wil_regs[] = अणु
+	अणु"RGF_MAC_MTRL_COUNTER_0", 0444, HOSTADDR(RGF_MAC_MTRL_COUNTER_0),
+		करोff_io32पूर्ण,
+	अणु"RGF_USER_USAGE_1", 0444, HOSTADDR(RGF_USER_USAGE_1), करोff_io32पूर्ण,
+	अणु"RGF_USER_USAGE_2", 0444, HOSTADDR(RGF_USER_USAGE_2), करोff_io32पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-/* static parameters */
-static const struct dbg_off dbg_statics[] = {
-	{"desc_index",	0644, (ulong)&dbg_txdesc_index, doff_u32},
-	{"ring_index",	0644, (ulong)&dbg_ring_index, doff_u32},
-	{"mem_addr",	0644, (ulong)&mem_addr, doff_u32},
-	{"led_polarity", 0644, (ulong)&led_polarity, doff_u8},
-	{"status_index", 0644, (ulong)&dbg_status_msg_index, doff_u32},
-	{"sring_index",	0644, (ulong)&dbg_sring_index, doff_u32},
-	{"drop_if_ring_full", 0644, (ulong)&drop_if_ring_full, doff_u8},
-	{},
-};
+/* अटल parameters */
+अटल स्थिर काष्ठा dbg_off dbg_अटलs[] = अणु
+	अणु"desc_index",	0644, (uदीर्घ)&dbg_txdesc_index, करोff_u32पूर्ण,
+	अणु"ring_index",	0644, (uदीर्घ)&dbg_ring_index, करोff_u32पूर्ण,
+	अणु"mem_addr",	0644, (uदीर्घ)&mem_addr, करोff_u32पूर्ण,
+	अणु"led_polarity", 0644, (uदीर्घ)&led_polarity, करोff_u8पूर्ण,
+	अणु"status_index", 0644, (uदीर्घ)&dbg_status_msg_index, करोff_u32पूर्ण,
+	अणु"sring_index",	0644, (uदीर्घ)&dbg_sring_index, करोff_u32पूर्ण,
+	अणु"drop_if_ring_full", 0644, (uदीर्घ)&drop_अगर_ring_full, करोff_u8पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static const int dbg_off_count = 4 * (ARRAY_SIZE(isr_off) - 1) +
+अटल स्थिर पूर्णांक dbg_off_count = 4 * (ARRAY_SIZE(isr_off) - 1) +
 				ARRAY_SIZE(dbg_wil_regs) - 1 +
-				ARRAY_SIZE(pseudo_isr_off) - 1 +
+				ARRAY_SIZE(pseuकरो_isr_off) - 1 +
 				ARRAY_SIZE(lgc_itr_cnt_off) - 1 +
 				ARRAY_SIZE(tx_itr_cnt_off) - 1 +
 				ARRAY_SIZE(rx_itr_cnt_off) - 1;
 
-int wil6210_debugfs_init(struct wil6210_priv *wil)
-{
-	struct dentry *dbg = wil->debug = debugfs_create_dir(WIL_NAME,
+पूर्णांक wil6210_debugfs_init(काष्ठा wil6210_priv *wil)
+अणु
+	काष्ठा dentry *dbg = wil->debug = debugfs_create_dir(WIL_NAME,
 			wil_to_wiphy(wil)->debugfsdir);
-	if (IS_ERR_OR_NULL(dbg))
-		return -ENODEV;
+	अगर (IS_ERR_OR_शून्य(dbg))
+		वापस -ENODEV;
 
-	wil->dbg_data.data_arr = kcalloc(dbg_off_count,
-					 sizeof(struct wil_debugfs_iomem_data),
+	wil->dbg_data.data_arr = kसुस्मृति(dbg_off_count,
+					 माप(काष्ठा wil_debugfs_iomem_data),
 					 GFP_KERNEL);
-	if (!wil->dbg_data.data_arr) {
-		debugfs_remove_recursive(dbg);
-		wil->debug = NULL;
-		return -ENOMEM;
-	}
+	अगर (!wil->dbg_data.data_arr) अणु
+		debugfs_हटाओ_recursive(dbg);
+		wil->debug = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
 	wil->dbg_data.iomem_data_count = 0;
 
@@ -2502,30 +2503,30 @@ int wil6210_debugfs_init(struct wil6210_priv *wil)
 	wil6210_debugfs_init_isr(wil, dbg);
 	wil6210_debugfs_init_blobs(wil, dbg);
 	wil6210_debugfs_init_offset(wil, dbg, wil, dbg_wil_off);
-	wil6210_debugfs_init_offset(wil, dbg, (void * __force)wil->csr,
+	wil6210_debugfs_init_offset(wil, dbg, (व्योम * __क्रमce)wil->csr,
 				    dbg_wil_regs);
-	wil6210_debugfs_init_offset(wil, dbg, NULL, dbg_statics);
+	wil6210_debugfs_init_offset(wil, dbg, शून्य, dbg_अटलs);
 
-	wil6210_debugfs_create_pseudo_ISR(wil, dbg);
+	wil6210_debugfs_create_pseuकरो_ISR(wil, dbg);
 
 	wil6210_debugfs_create_ITR_CNT(wil, dbg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void wil6210_debugfs_remove(struct wil6210_priv *wil)
-{
-	int i;
+व्योम wil6210_debugfs_हटाओ(काष्ठा wil6210_priv *wil)
+अणु
+	पूर्णांक i;
 
-	debugfs_remove_recursive(wil->debug);
-	wil->debug = NULL;
+	debugfs_हटाओ_recursive(wil->debug);
+	wil->debug = शून्य;
 
-	kfree(wil->dbg_data.data_arr);
-	for (i = 0; i < wil->max_assoc_sta; i++)
-		kfree(wil->sta[i].tx_latency_bins);
+	kमुक्त(wil->dbg_data.data_arr);
+	क्रम (i = 0; i < wil->max_assoc_sta; i++)
+		kमुक्त(wil->sta[i].tx_latency_bins);
 
-	/* free pmc memory without sending command to fw, as it will
-	 * be reset on the way down anyway
+	/* मुक्त pmc memory without sending command to fw, as it will
+	 * be reset on the way करोwn anyway
 	 */
-	wil_pmc_free(wil, false);
-}
+	wil_pmc_मुक्त(wil, false);
+पूर्ण

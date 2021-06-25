@@ -1,75 +1,76 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_VDPA_H
-#define _LINUX_VDPA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_VDPA_H
+#घोषणा _LINUX_VDPA_H
 
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/vhost_iotlb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/vhost_iotlb.h>
 
 /**
- * struct vdpa_calllback - vDPA callback definition.
- * @callback: interrupt callback function
- * @private: the data passed to the callback function
+ * काष्ठा vdpa_calllback - vDPA callback definition.
+ * @callback: पूर्णांकerrupt callback function
+ * @निजी: the data passed to the callback function
  */
-struct vdpa_callback {
-	irqreturn_t (*callback)(void *data);
-	void *private;
-};
+काष्ठा vdpa_callback अणु
+	irqवापस_t (*callback)(व्योम *data);
+	व्योम *निजी;
+पूर्ण;
 
 /**
- * struct vdpa_notification_area - vDPA notification area
- * @addr: base address of the notification area
- * @size: size of the notification area
+ * काष्ठा vdpa_notअगरication_area - vDPA notअगरication area
+ * @addr: base address of the notअगरication area
+ * @size: size of the notअगरication area
  */
-struct vdpa_notification_area {
-	resource_size_t addr;
-	resource_size_t size;
-};
+काष्ठा vdpa_notअगरication_area अणु
+	resource_माप_प्रकार addr;
+	resource_माप_प्रकार size;
+पूर्ण;
 
 /**
- * struct vdpa_vq_state - vDPA vq_state definition
+ * काष्ठा vdpa_vq_state - vDPA vq_state definition
  * @avail_index: available index
  */
-struct vdpa_vq_state {
+काष्ठा vdpa_vq_state अणु
 	u16	avail_index;
-};
+पूर्ण;
 
-struct vdpa_mgmt_dev;
+काष्ठा vdpa_mgmt_dev;
 
 /**
- * struct vdpa_device - representation of a vDPA device
+ * काष्ठा vdpa_device - representation of a vDPA device
  * @dev: underlying device
- * @dma_dev: the actual device that is performing DMA
- * @config: the configuration ops for this device.
+ * @dma_dev: the actual device that is perक्रमming DMA
+ * @config: the configuration ops क्रम this device.
  * @index: device index
- * @features_valid: were features initialized? for legacy guests
+ * @features_valid: were features initialized? क्रम legacy guests
  * @nvqs: maximum number of supported virtqueues
- * @mdev: management device pointer; caller must setup when registering device as part
- *	  of dev_add() mgmtdev ops callback before invoking _vdpa_register_device().
+ * @mdev: management device poपूर्णांकer; caller must setup when रेजिस्टरing device as part
+ *	  of dev_add() mgmtdev ops callback beक्रमe invoking _vdpa_रेजिस्टर_device().
  */
-struct vdpa_device {
-	struct device dev;
-	struct device *dma_dev;
-	const struct vdpa_config_ops *config;
-	unsigned int index;
+काष्ठा vdpa_device अणु
+	काष्ठा device dev;
+	काष्ठा device *dma_dev;
+	स्थिर काष्ठा vdpa_config_ops *config;
+	अचिन्हित पूर्णांक index;
 	bool features_valid;
-	int nvqs;
-	struct vdpa_mgmt_dev *mdev;
-};
+	पूर्णांक nvqs;
+	काष्ठा vdpa_mgmt_dev *mdev;
+पूर्ण;
 
 /**
- * struct vdpa_iova_range - the IOVA range support by the device
+ * काष्ठा vdpa_iova_range - the IOVA range support by the device
  * @first: start of the IOVA range
  * @last: end of the IOVA range
  */
-struct vdpa_iova_range {
+काष्ठा vdpa_iova_range अणु
 	u64 first;
 	u64 last;
-};
+पूर्ण;
 
 /**
- * struct vdpa_config_ops - operations for configuring a vDPA device.
+ * काष्ठा vdpa_config_ops - operations क्रम configuring a vDPA device.
  * Note: vDPA device drivers are required to implement all of the
  * operations unless it is mentioned to be optional in the following
  * list.
@@ -80,7 +81,7 @@ struct vdpa_iova_range {
  *				@desc_area: address of desc area
  *				@driver_area: address of driver area
  *				@device_area: address of device area
- *				Returns integer: success (0) or error (< 0)
+ *				Returns पूर्णांकeger: success (0) or error (< 0)
  * @set_vq_num:			Set the size of virtqueue
  *				@vdev: vdpa device
  *				@idx: virtqueue index
@@ -88,40 +89,40 @@ struct vdpa_iova_range {
  * @kick_vq:			Kick the virtqueue
  *				@vdev: vdpa device
  *				@idx: virtqueue index
- * @set_vq_cb:			Set the interrupt callback function for
+ * @set_vq_cb:			Set the पूर्णांकerrupt callback function क्रम
  *				a virtqueue
  *				@vdev: vdpa device
  *				@idx: virtqueue index
- *				@cb: virtio-vdev interrupt callback structure
- * @set_vq_ready:		Set ready status for a virtqueue
+ *				@cb: virtio-vdev पूर्णांकerrupt callback काष्ठाure
+ * @set_vq_पढ़ोy:		Set पढ़ोy status क्रम a virtqueue
  *				@vdev: vdpa device
  *				@idx: virtqueue index
- *				@ready: ready (true) not ready(false)
- * @get_vq_ready:		Get ready status for a virtqueue
+ *				@पढ़ोy: पढ़ोy (true) not पढ़ोy(false)
+ * @get_vq_पढ़ोy:		Get पढ़ोy status क्रम a virtqueue
  *				@vdev: vdpa device
  *				@idx: virtqueue index
- *				Returns boolean: ready (true) or not (false)
- * @set_vq_state:		Set the state for a virtqueue
+ *				Returns boolean: पढ़ोy (true) or not (false)
+ * @set_vq_state:		Set the state क्रम a virtqueue
  *				@vdev: vdpa device
  *				@idx: virtqueue index
- *				@state: pointer to set virtqueue state (last_avail_idx)
- *				Returns integer: success (0) or error (< 0)
- * @get_vq_state:		Get the state for a virtqueue
+ *				@state: poपूर्णांकer to set virtqueue state (last_avail_idx)
+ *				Returns पूर्णांकeger: success (0) or error (< 0)
+ * @get_vq_state:		Get the state क्रम a virtqueue
  *				@vdev: vdpa device
  *				@idx: virtqueue index
- *				@state: pointer to returned state (last_avail_idx)
- * @get_vq_notification: 	Get the notification area for a virtqueue
+ *				@state: poपूर्णांकer to वापसed state (last_avail_idx)
+ * @get_vq_notअगरication: 	Get the notअगरication area क्रम a virtqueue
  *				@vdev: vdpa device
  *				@idx: virtqueue index
- *				Returns the notifcation area
+ *				Returns the notअगरcation area
  * @get_vq_irq:			Get the irq number of a virtqueue (optional,
- *				but must implemented if require vq irq offloading)
+ *				but must implemented अगर require vq irq offloading)
  *				@vdev: vdpa device
  *				@idx: virtqueue index
- *				Returns int: irq number of a virtqueue,
- *				negative number if no irq assigned.
+ *				Returns पूर्णांक: irq number of a virtqueue,
+ *				negative number अगर no irq asचिन्हित.
  * @get_vq_align:		Get the virtqueue align requirement
- *				for the device
+ *				क्रम the device
  *				@vdev: vdpa device
  *				Returns virtqueue algin requirement
  * @get_features:		Get virtio features supported by the device
@@ -131,19 +132,19 @@ struct vdpa_iova_range {
  * @set_features:		Set virtio features supported by the driver
  *				@vdev: vdpa device
  *				@features: feature support by the driver
- *				Returns integer: success (0) or error (< 0)
- * @set_config_cb:		Set the config interrupt callback
+ *				Returns पूर्णांकeger: success (0) or error (< 0)
+ * @set_config_cb:		Set the config पूर्णांकerrupt callback
  *				@vdev: vdpa device
- *				@cb: virtio-vdev interrupt callback structure
+ *				@cb: virtio-vdev पूर्णांकerrupt callback काष्ठाure
  * @get_vq_num_max:		Get the max size of virtqueue
  *				@vdev: vdpa device
  *				Returns u16: max size of virtqueue
  * @get_device_id:		Get virtio device id
  *				@vdev: vdpa device
  *				Returns u32: virtio device id
- * @get_vendor_id:		Get id for the vendor that provides this device
+ * @get_venकरोr_id:		Get id क्रम the venकरोr that provides this device
  *				@vdev: vdpa device
- *				Returns u32: virtio vendor id
+ *				Returns u32: virtio venकरोr id
  * @get_status:			Get the device status
  *				@vdev: vdpa device
  *				Returns u8: virtio device status
@@ -152,20 +153,20 @@ struct vdpa_iova_range {
  *				@status: virtio device status
  * @get_config_size:		Get the size of the configuration space
  *				@vdev: vdpa device
- *				Returns size_t: configuration size
- * @get_config:			Read from device specific configuration space
+ *				Returns माप_प्रकार: configuration size
+ * @get_config:			Read from device specअगरic configuration space
  *				@vdev: vdpa device
  *				@offset: offset from the beginning of
  *				configuration space
- *				@buf: buffer used to read to
- *				@len: the length to read from
+ *				@buf: buffer used to पढ़ो to
+ *				@len: the length to पढ़ो from
  *				configuration space
- * @set_config:			Write to device specific configuration space
+ * @set_config:			Write to device specअगरic configuration space
  *				@vdev: vdpa device
  *				@offset: offset from the beginning of
  *				configuration space
- *				@buf: buffer used to write from
- *				@len: the length to write to
+ *				@buf: buffer used to ग_लिखो from
+ *				@len: the length to ग_लिखो to
  *				configuration space
  * @get_generation:		Get device config generation (optional)
  *				@vdev: vdpa device
@@ -175,205 +176,205 @@ struct vdpa_iova_range {
  *				Returns the iova range supported by
  *				the device.
  * @set_map:			Set device memory mapping (optional)
- *				Needed for device that using device
- *				specific DMA translation (on-chip IOMMU)
+ *				Needed क्रम device that using device
+ *				specअगरic DMA translation (on-chip IOMMU)
  *				@vdev: vdpa device
  *				@iotlb: vhost memory mapping to be
  *				used by the vDPA
- *				Returns integer: success (0) or error (< 0)
+ *				Returns पूर्णांकeger: success (0) or error (< 0)
  * @dma_map:			Map an area of PA to IOVA (optional)
- *				Needed for device that using device
- *				specific DMA translation (on-chip IOMMU)
+ *				Needed क्रम device that using device
+ *				specअगरic DMA translation (on-chip IOMMU)
  *				and preferring incremental map.
  *				@vdev: vdpa device
  *				@iova: iova to be mapped
  *				@size: size of the area
- *				@pa: physical address for the map
+ *				@pa: physical address क्रम the map
  *				@perm: device access permission (VHOST_MAP_XX)
- *				Returns integer: success (0) or error (< 0)
+ *				Returns पूर्णांकeger: success (0) or error (< 0)
  * @dma_unmap:			Unmap an area of IOVA (optional but
  *				must be implemented with dma_map)
- *				Needed for device that using device
- *				specific DMA translation (on-chip IOMMU)
+ *				Needed क्रम device that using device
+ *				specअगरic DMA translation (on-chip IOMMU)
  *				and preferring incremental unmap.
  *				@vdev: vdpa device
  *				@iova: iova to be unmapped
  *				@size: size of the area
- *				Returns integer: success (0) or error (< 0)
- * @free:			Free resources that belongs to vDPA (optional)
+ *				Returns पूर्णांकeger: success (0) or error (< 0)
+ * @मुक्त:			Free resources that beदीर्घs to vDPA (optional)
  *				@vdev: vdpa device
  */
-struct vdpa_config_ops {
+काष्ठा vdpa_config_ops अणु
 	/* Virtqueue ops */
-	int (*set_vq_address)(struct vdpa_device *vdev,
+	पूर्णांक (*set_vq_address)(काष्ठा vdpa_device *vdev,
 			      u16 idx, u64 desc_area, u64 driver_area,
 			      u64 device_area);
-	void (*set_vq_num)(struct vdpa_device *vdev, u16 idx, u32 num);
-	void (*kick_vq)(struct vdpa_device *vdev, u16 idx);
-	void (*set_vq_cb)(struct vdpa_device *vdev, u16 idx,
-			  struct vdpa_callback *cb);
-	void (*set_vq_ready)(struct vdpa_device *vdev, u16 idx, bool ready);
-	bool (*get_vq_ready)(struct vdpa_device *vdev, u16 idx);
-	int (*set_vq_state)(struct vdpa_device *vdev, u16 idx,
-			    const struct vdpa_vq_state *state);
-	int (*get_vq_state)(struct vdpa_device *vdev, u16 idx,
-			    struct vdpa_vq_state *state);
-	struct vdpa_notification_area
-	(*get_vq_notification)(struct vdpa_device *vdev, u16 idx);
+	व्योम (*set_vq_num)(काष्ठा vdpa_device *vdev, u16 idx, u32 num);
+	व्योम (*kick_vq)(काष्ठा vdpa_device *vdev, u16 idx);
+	व्योम (*set_vq_cb)(काष्ठा vdpa_device *vdev, u16 idx,
+			  काष्ठा vdpa_callback *cb);
+	व्योम (*set_vq_पढ़ोy)(काष्ठा vdpa_device *vdev, u16 idx, bool पढ़ोy);
+	bool (*get_vq_पढ़ोy)(काष्ठा vdpa_device *vdev, u16 idx);
+	पूर्णांक (*set_vq_state)(काष्ठा vdpa_device *vdev, u16 idx,
+			    स्थिर काष्ठा vdpa_vq_state *state);
+	पूर्णांक (*get_vq_state)(काष्ठा vdpa_device *vdev, u16 idx,
+			    काष्ठा vdpa_vq_state *state);
+	काष्ठा vdpa_notअगरication_area
+	(*get_vq_notअगरication)(काष्ठा vdpa_device *vdev, u16 idx);
 	/* vq irq is not expected to be changed once DRIVER_OK is set */
-	int (*get_vq_irq)(struct vdpa_device *vdv, u16 idx);
+	पूर्णांक (*get_vq_irq)(काष्ठा vdpa_device *vdv, u16 idx);
 
 	/* Device ops */
-	u32 (*get_vq_align)(struct vdpa_device *vdev);
-	u64 (*get_features)(struct vdpa_device *vdev);
-	int (*set_features)(struct vdpa_device *vdev, u64 features);
-	void (*set_config_cb)(struct vdpa_device *vdev,
-			      struct vdpa_callback *cb);
-	u16 (*get_vq_num_max)(struct vdpa_device *vdev);
-	u32 (*get_device_id)(struct vdpa_device *vdev);
-	u32 (*get_vendor_id)(struct vdpa_device *vdev);
-	u8 (*get_status)(struct vdpa_device *vdev);
-	void (*set_status)(struct vdpa_device *vdev, u8 status);
-	size_t (*get_config_size)(struct vdpa_device *vdev);
-	void (*get_config)(struct vdpa_device *vdev, unsigned int offset,
-			   void *buf, unsigned int len);
-	void (*set_config)(struct vdpa_device *vdev, unsigned int offset,
-			   const void *buf, unsigned int len);
-	u32 (*get_generation)(struct vdpa_device *vdev);
-	struct vdpa_iova_range (*get_iova_range)(struct vdpa_device *vdev);
+	u32 (*get_vq_align)(काष्ठा vdpa_device *vdev);
+	u64 (*get_features)(काष्ठा vdpa_device *vdev);
+	पूर्णांक (*set_features)(काष्ठा vdpa_device *vdev, u64 features);
+	व्योम (*set_config_cb)(काष्ठा vdpa_device *vdev,
+			      काष्ठा vdpa_callback *cb);
+	u16 (*get_vq_num_max)(काष्ठा vdpa_device *vdev);
+	u32 (*get_device_id)(काष्ठा vdpa_device *vdev);
+	u32 (*get_venकरोr_id)(काष्ठा vdpa_device *vdev);
+	u8 (*get_status)(काष्ठा vdpa_device *vdev);
+	व्योम (*set_status)(काष्ठा vdpa_device *vdev, u8 status);
+	माप_प्रकार (*get_config_size)(काष्ठा vdpa_device *vdev);
+	व्योम (*get_config)(काष्ठा vdpa_device *vdev, अचिन्हित पूर्णांक offset,
+			   व्योम *buf, अचिन्हित पूर्णांक len);
+	व्योम (*set_config)(काष्ठा vdpa_device *vdev, अचिन्हित पूर्णांक offset,
+			   स्थिर व्योम *buf, अचिन्हित पूर्णांक len);
+	u32 (*get_generation)(काष्ठा vdpa_device *vdev);
+	काष्ठा vdpa_iova_range (*get_iova_range)(काष्ठा vdpa_device *vdev);
 
 	/* DMA ops */
-	int (*set_map)(struct vdpa_device *vdev, struct vhost_iotlb *iotlb);
-	int (*dma_map)(struct vdpa_device *vdev, u64 iova, u64 size,
+	पूर्णांक (*set_map)(काष्ठा vdpa_device *vdev, काष्ठा vhost_iotlb *iotlb);
+	पूर्णांक (*dma_map)(काष्ठा vdpa_device *vdev, u64 iova, u64 size,
 		       u64 pa, u32 perm);
-	int (*dma_unmap)(struct vdpa_device *vdev, u64 iova, u64 size);
+	पूर्णांक (*dma_unmap)(काष्ठा vdpa_device *vdev, u64 iova, u64 size);
 
 	/* Free device resources */
-	void (*free)(struct vdpa_device *vdev);
-};
+	व्योम (*मुक्त)(काष्ठा vdpa_device *vdev);
+पूर्ण;
 
-struct vdpa_device *__vdpa_alloc_device(struct device *parent,
-					const struct vdpa_config_ops *config,
-					size_t size, const char *name);
+काष्ठा vdpa_device *__vdpa_alloc_device(काष्ठा device *parent,
+					स्थिर काष्ठा vdpa_config_ops *config,
+					माप_प्रकार size, स्थिर अक्षर *name);
 
-#define vdpa_alloc_device(dev_struct, member, parent, config, name)   \
+#घोषणा vdpa_alloc_device(dev_काष्ठा, member, parent, config, name)   \
 			  container_of(__vdpa_alloc_device( \
 				       parent, config, \
-				       sizeof(dev_struct) + \
-				       BUILD_BUG_ON_ZERO(offsetof( \
-				       dev_struct, member)), name), \
-				       dev_struct, member)
+				       माप(dev_काष्ठा) + \
+				       BUILD_BUG_ON_ZERO(दुरत्व( \
+				       dev_काष्ठा, member)), name), \
+				       dev_काष्ठा, member)
 
-int vdpa_register_device(struct vdpa_device *vdev, int nvqs);
-void vdpa_unregister_device(struct vdpa_device *vdev);
+पूर्णांक vdpa_रेजिस्टर_device(काष्ठा vdpa_device *vdev, पूर्णांक nvqs);
+व्योम vdpa_unरेजिस्टर_device(काष्ठा vdpa_device *vdev);
 
-int _vdpa_register_device(struct vdpa_device *vdev, int nvqs);
-void _vdpa_unregister_device(struct vdpa_device *vdev);
+पूर्णांक _vdpa_रेजिस्टर_device(काष्ठा vdpa_device *vdev, पूर्णांक nvqs);
+व्योम _vdpa_unरेजिस्टर_device(काष्ठा vdpa_device *vdev);
 
 /**
- * struct vdpa_driver - operations for a vDPA driver
+ * काष्ठा vdpa_driver - operations क्रम a vDPA driver
  * @driver: underlying device driver
- * @probe: the function to call when a device is found.  Returns 0 or -errno.
- * @remove: the function to call when a device is removed.
+ * @probe: the function to call when a device is found.  Returns 0 or -त्रुटि_सं.
+ * @हटाओ: the function to call when a device is हटाओd.
  */
-struct vdpa_driver {
-	struct device_driver driver;
-	int (*probe)(struct vdpa_device *vdev);
-	void (*remove)(struct vdpa_device *vdev);
-};
+काष्ठा vdpa_driver अणु
+	काष्ठा device_driver driver;
+	पूर्णांक (*probe)(काष्ठा vdpa_device *vdev);
+	व्योम (*हटाओ)(काष्ठा vdpa_device *vdev);
+पूर्ण;
 
-#define vdpa_register_driver(drv) \
-	__vdpa_register_driver(drv, THIS_MODULE)
-int __vdpa_register_driver(struct vdpa_driver *drv, struct module *owner);
-void vdpa_unregister_driver(struct vdpa_driver *drv);
+#घोषणा vdpa_रेजिस्टर_driver(drv) \
+	__vdpa_रेजिस्टर_driver(drv, THIS_MODULE)
+पूर्णांक __vdpa_रेजिस्टर_driver(काष्ठा vdpa_driver *drv, काष्ठा module *owner);
+व्योम vdpa_unरेजिस्टर_driver(काष्ठा vdpa_driver *drv);
 
-#define module_vdpa_driver(__vdpa_driver) \
-	module_driver(__vdpa_driver, vdpa_register_driver,	\
-		      vdpa_unregister_driver)
+#घोषणा module_vdpa_driver(__vdpa_driver) \
+	module_driver(__vdpa_driver, vdpa_रेजिस्टर_driver,	\
+		      vdpa_unरेजिस्टर_driver)
 
-static inline struct vdpa_driver *drv_to_vdpa(struct device_driver *driver)
-{
-	return container_of(driver, struct vdpa_driver, driver);
-}
+अटल अंतरभूत काष्ठा vdpa_driver *drv_to_vdpa(काष्ठा device_driver *driver)
+अणु
+	वापस container_of(driver, काष्ठा vdpa_driver, driver);
+पूर्ण
 
-static inline struct vdpa_device *dev_to_vdpa(struct device *_dev)
-{
-	return container_of(_dev, struct vdpa_device, dev);
-}
+अटल अंतरभूत काष्ठा vdpa_device *dev_to_vdpa(काष्ठा device *_dev)
+अणु
+	वापस container_of(_dev, काष्ठा vdpa_device, dev);
+पूर्ण
 
-static inline void *vdpa_get_drvdata(const struct vdpa_device *vdev)
-{
-	return dev_get_drvdata(&vdev->dev);
-}
+अटल अंतरभूत व्योम *vdpa_get_drvdata(स्थिर काष्ठा vdpa_device *vdev)
+अणु
+	वापस dev_get_drvdata(&vdev->dev);
+पूर्ण
 
-static inline void vdpa_set_drvdata(struct vdpa_device *vdev, void *data)
-{
+अटल अंतरभूत व्योम vdpa_set_drvdata(काष्ठा vdpa_device *vdev, व्योम *data)
+अणु
 	dev_set_drvdata(&vdev->dev, data);
-}
+पूर्ण
 
-static inline struct device *vdpa_get_dma_dev(struct vdpa_device *vdev)
-{
-	return vdev->dma_dev;
-}
+अटल अंतरभूत काष्ठा device *vdpa_get_dma_dev(काष्ठा vdpa_device *vdev)
+अणु
+	वापस vdev->dma_dev;
+पूर्ण
 
-static inline void vdpa_reset(struct vdpa_device *vdev)
-{
-        const struct vdpa_config_ops *ops = vdev->config;
+अटल अंतरभूत व्योम vdpa_reset(काष्ठा vdpa_device *vdev)
+अणु
+        स्थिर काष्ठा vdpa_config_ops *ops = vdev->config;
 
 	vdev->features_valid = false;
         ops->set_status(vdev, 0);
-}
+पूर्ण
 
-static inline int vdpa_set_features(struct vdpa_device *vdev, u64 features)
-{
-        const struct vdpa_config_ops *ops = vdev->config;
+अटल अंतरभूत पूर्णांक vdpa_set_features(काष्ठा vdpa_device *vdev, u64 features)
+अणु
+        स्थिर काष्ठा vdpa_config_ops *ops = vdev->config;
 
 	vdev->features_valid = true;
-        return ops->set_features(vdev, features);
-}
+        वापस ops->set_features(vdev, features);
+पूर्ण
 
 
-static inline void vdpa_get_config(struct vdpa_device *vdev, unsigned offset,
-				   void *buf, unsigned int len)
-{
-        const struct vdpa_config_ops *ops = vdev->config;
+अटल अंतरभूत व्योम vdpa_get_config(काष्ठा vdpa_device *vdev, अचिन्हित offset,
+				   व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+        स्थिर काष्ठा vdpa_config_ops *ops = vdev->config;
 
 	/*
-	 * Config accesses aren't supposed to trigger before features are set.
-	 * If it does happen we assume a legacy guest.
+	 * Config accesses aren't supposed to trigger beक्रमe features are set.
+	 * If it करोes happen we assume a legacy guest.
 	 */
-	if (!vdev->features_valid)
+	अगर (!vdev->features_valid)
 		vdpa_set_features(vdev, 0);
 	ops->get_config(vdev, offset, buf, len);
-}
+पूर्ण
 
 /**
- * struct vdpa_mgmtdev_ops - vdpa device ops
- * @dev_add: Add a vdpa device using alloc and register
- *	     @mdev: parent device to use for device addition
+ * काष्ठा vdpa_mgmtdev_ops - vdpa device ops
+ * @dev_add: Add a vdpa device using alloc and रेजिस्टर
+ *	     @mdev: parent device to use क्रम device addition
  *	     @name: name of the new vdpa device
- *	     Driver need to add a new device using _vdpa_register_device()
- *	     after fully initializing the vdpa device. Driver must return 0
+ *	     Driver need to add a new device using _vdpa_रेजिस्टर_device()
+ *	     after fully initializing the vdpa device. Driver must वापस 0
  *	     on success or appropriate error code.
- * @dev_del: Remove a vdpa device using unregister
- *	     @mdev: parent device to use for device removal
- *	     @dev: vdpa device to remove
- *	     Driver need to remove the specified device by calling
- *	     _vdpa_unregister_device().
+ * @dev_del: Remove a vdpa device using unरेजिस्टर
+ *	     @mdev: parent device to use क्रम device removal
+ *	     @dev: vdpa device to हटाओ
+ *	     Driver need to हटाओ the specअगरied device by calling
+ *	     _vdpa_unरेजिस्टर_device().
  */
-struct vdpa_mgmtdev_ops {
-	int (*dev_add)(struct vdpa_mgmt_dev *mdev, const char *name);
-	void (*dev_del)(struct vdpa_mgmt_dev *mdev, struct vdpa_device *dev);
-};
+काष्ठा vdpa_mgmtdev_ops अणु
+	पूर्णांक (*dev_add)(काष्ठा vdpa_mgmt_dev *mdev, स्थिर अक्षर *name);
+	व्योम (*dev_del)(काष्ठा vdpa_mgmt_dev *mdev, काष्ठा vdpa_device *dev);
+पूर्ण;
 
-struct vdpa_mgmt_dev {
-	struct device *device;
-	const struct vdpa_mgmtdev_ops *ops;
-	const struct virtio_device_id *id_table; /* supported ids */
-	struct list_head list;
-};
+काष्ठा vdpa_mgmt_dev अणु
+	काष्ठा device *device;
+	स्थिर काष्ठा vdpa_mgmtdev_ops *ops;
+	स्थिर काष्ठा virtio_device_id *id_table; /* supported ids */
+	काष्ठा list_head list;
+पूर्ण;
 
-int vdpa_mgmtdev_register(struct vdpa_mgmt_dev *mdev);
-void vdpa_mgmtdev_unregister(struct vdpa_mgmt_dev *mdev);
+पूर्णांक vdpa_mgmtdev_रेजिस्टर(काष्ठा vdpa_mgmt_dev *mdev);
+व्योम vdpa_mgmtdev_unरेजिस्टर(काष्ठा vdpa_mgmt_dev *mdev);
 
-#endif /* _LINUX_VDPA_H */
+#पूर्ण_अगर /* _LINUX_VDPA_H */

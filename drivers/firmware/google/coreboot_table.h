@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * coreboot_table.h
  *
- * Internal header for coreboot table access.
+ * Internal header क्रम coreboot table access.
  *
  * Copyright 2014 Gerd Hoffmann <kraxel@redhat.com>
  * Copyright 2017 Google Inc.
  * Copyright 2017 Samuel Holland <samuel@sholland.org>
  */
 
-#ifndef __COREBOOT_TABLE_H
-#define __COREBOOT_TABLE_H
+#अगर_अघोषित __COREBOOT_TABLE_H
+#घोषणा __COREBOOT_TABLE_H
 
-#include <linux/device.h>
+#समावेश <linux/device.h>
 
-/* Coreboot table header structure */
-struct coreboot_table_header {
-	char signature[4];
+/* Coreboot table header काष्ठाure */
+काष्ठा coreboot_table_header अणु
+	अक्षर signature[4];
 	u32 header_bytes;
 	u32 header_checksum;
 	u32 table_bytes;
 	u32 table_checksum;
 	u32 table_entries;
-};
+पूर्ण;
 
-/* List of coreboot entry structures that is used */
+/* List of coreboot entry काष्ठाures that is used */
 /* Generic */
-struct coreboot_table_entry {
+काष्ठा coreboot_table_entry अणु
 	u32 tag;
 	u32 size;
-};
+पूर्ण;
 
-/* Points to a CBMEM entry */
-struct lb_cbmem_ref {
+/* Poपूर्णांकs to a CBMEM entry */
+काष्ठा lb_cbmem_ref अणु
 	u32 tag;
 	u32 size;
 
 	u64 cbmem_addr;
-};
+पूर्ण;
 
 /* Describes framebuffer setup by coreboot */
-struct lb_framebuffer {
+काष्ठा lb_framebuffer अणु
 	u32 tag;
 	u32 size;
 
@@ -57,39 +58,39 @@ struct lb_framebuffer {
 	u8  blue_mask_size;
 	u8  reserved_mask_pos;
 	u8  reserved_mask_size;
-};
+पूर्ण;
 
-/* A device, additionally with information from coreboot. */
-struct coreboot_device {
-	struct device dev;
-	union {
-		struct coreboot_table_entry entry;
-		struct lb_cbmem_ref cbmem_ref;
-		struct lb_framebuffer framebuffer;
-	};
-};
+/* A device, additionally with inक्रमmation from coreboot. */
+काष्ठा coreboot_device अणु
+	काष्ठा device dev;
+	जोड़ अणु
+		काष्ठा coreboot_table_entry entry;
+		काष्ठा lb_cbmem_ref cbmem_ref;
+		काष्ठा lb_framebuffer framebuffer;
+	पूर्ण;
+पूर्ण;
 
-/* A driver for handling devices described in coreboot tables. */
-struct coreboot_driver {
-	int (*probe)(struct coreboot_device *);
-	void (*remove)(struct coreboot_device *);
-	struct device_driver drv;
+/* A driver क्रम handling devices described in coreboot tables. */
+काष्ठा coreboot_driver अणु
+	पूर्णांक (*probe)(काष्ठा coreboot_device *);
+	व्योम (*हटाओ)(काष्ठा coreboot_device *);
+	काष्ठा device_driver drv;
 	u32 tag;
-};
+पूर्ण;
 
 /* Register a driver that uses the data from a coreboot table. */
-int coreboot_driver_register(struct coreboot_driver *driver);
+पूर्णांक coreboot_driver_रेजिस्टर(काष्ठा coreboot_driver *driver);
 
-/* Unregister a driver that uses the data from a coreboot table. */
-void coreboot_driver_unregister(struct coreboot_driver *driver);
+/* Unरेजिस्टर a driver that uses the data from a coreboot table. */
+व्योम coreboot_driver_unरेजिस्टर(काष्ठा coreboot_driver *driver);
 
-/* module_coreboot_driver() - Helper macro for drivers that don't do
- * anything special in module init/exit.  This eliminates a lot of
+/* module_coreboot_driver() - Helper macro क्रम drivers that करोn't करो
+ * anything special in module init/निकास.  This eliminates a lot of
  * boilerplate.  Each module may only use this macro once, and
- * calling it replaces module_init() and module_exit()
+ * calling it replaces module_init() and module_निकास()
  */
-#define module_coreboot_driver(__coreboot_driver) \
-	module_driver(__coreboot_driver, coreboot_driver_register, \
-			coreboot_driver_unregister)
+#घोषणा module_coreboot_driver(__coreboot_driver) \
+	module_driver(__coreboot_driver, coreboot_driver_रेजिस्टर, \
+			coreboot_driver_unरेजिस्टर)
 
-#endif /* __COREBOOT_TABLE_H */
+#पूर्ण_अगर /* __COREBOOT_TABLE_H */

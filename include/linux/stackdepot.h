@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * A generic stack depot implementation
  *
@@ -8,26 +9,26 @@
  * Based on code by Dmitry Chernenkov.
  */
 
-#ifndef _LINUX_STACKDEPOT_H
-#define _LINUX_STACKDEPOT_H
+#अगर_अघोषित _LINUX_STACKDEPOT_H
+#घोषणा _LINUX_STACKDEPOT_H
 
-typedef u32 depot_stack_handle_t;
+प्रकार u32 depot_stack_handle_t;
 
-depot_stack_handle_t stack_depot_save(unsigned long *entries,
-				      unsigned int nr_entries, gfp_t gfp_flags);
+depot_stack_handle_t stack_depot_save(अचिन्हित दीर्घ *entries,
+				      अचिन्हित पूर्णांक nr_entries, gfp_t gfp_flags);
 
-unsigned int stack_depot_fetch(depot_stack_handle_t handle,
-			       unsigned long **entries);
+अचिन्हित पूर्णांक stack_depot_fetch(depot_stack_handle_t handle,
+			       अचिन्हित दीर्घ **entries);
 
-unsigned int filter_irq_stacks(unsigned long *entries, unsigned int nr_entries);
+अचिन्हित पूर्णांक filter_irq_stacks(अचिन्हित दीर्घ *entries, अचिन्हित पूर्णांक nr_entries);
 
-#ifdef CONFIG_STACKDEPOT
-int stack_depot_init(void);
-#else
-static inline int stack_depot_init(void)
-{
-	return 0;
-}
-#endif	/* CONFIG_STACKDEPOT */
+#अगर_घोषित CONFIG_STACKDEPOT
+पूर्णांक stack_depot_init(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक stack_depot_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_STACKDEPOT */
 
-#endif
+#पूर्ण_अगर

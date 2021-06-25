@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: PoChun Lin <pochun.lin@mediatek.com>
  */
 
-#ifndef _VENC_VPU_IF_H_
-#define _VENC_VPU_IF_H_
+#अगर_अघोषित _VENC_VPU_IF_H_
+#घोषणा _VENC_VPU_IF_H_
 
-#include "mtk_vcodec_fw.h"
-#include "venc_drv_if.h"
+#समावेश "mtk_vcodec_fw.h"
+#समावेश "venc_drv_if.h"
 
 /*
- * struct venc_vpu_inst - encoder VPU driver instance
- * @wq_hd: wait queue used for vpu cmd trigger then wait vpu interrupt done
- * @signaled: flag used for checking vpu interrupt done
+ * काष्ठा venc_vpu_inst - encoder VPU driver instance
+ * @wq_hd: रुको queue used क्रम vpu cmd trigger then रुको vpu पूर्णांकerrupt करोne
+ * @संकेतed: flag used क्रम checking vpu पूर्णांकerrupt करोne
  * @failure: flag to show vpu cmd succeeds or not
- * @state: enum venc_ipi_msg_enc_state
- * @bs_size: bitstream size for skip frame case usage
+ * @state: क्रमागत venc_ipi_msg_enc_state
+ * @bs_size: bitstream size क्रम skip frame हाल usage
  * @is_key_frm: key frame flag
  * @inst_addr: VPU instance addr
- * @vsi: driver structure allocated by VPU side and shared to AP side for
+ * @vsi: driver काष्ठाure allocated by VPU side and shared to AP side क्रम
  *	 control and info share
- * @id: the id of inter-processor interrupt
- * @ctx: context for v4l2 layer integration
- * @dev: device for v4l2 layer integration
+ * @id: the id of पूर्णांकer-processor पूर्णांकerrupt
+ * @ctx: context क्रम v4l2 layer पूर्णांकegration
+ * @dev: device क्रम v4l2 layer पूर्णांकegration
  */
-struct venc_vpu_inst {
-	wait_queue_head_t wq_hd;
-	int signaled;
-	int failure;
-	int state;
-	int bs_size;
-	int is_key_frm;
-	unsigned int inst_addr;
-	void *vsi;
-	int id;
-	struct mtk_vcodec_ctx *ctx;
-};
+काष्ठा venc_vpu_inst अणु
+	रुको_queue_head_t wq_hd;
+	पूर्णांक संकेतed;
+	पूर्णांक failure;
+	पूर्णांक state;
+	पूर्णांक bs_size;
+	पूर्णांक is_key_frm;
+	अचिन्हित पूर्णांक inst_addr;
+	व्योम *vsi;
+	पूर्णांक id;
+	काष्ठा mtk_vcodec_ctx *ctx;
+पूर्ण;
 
-int vpu_enc_init(struct venc_vpu_inst *vpu);
-int vpu_enc_set_param(struct venc_vpu_inst *vpu,
-		      enum venc_set_param_type id,
-		      struct venc_enc_param *param);
-int vpu_enc_encode(struct venc_vpu_inst *vpu, unsigned int bs_mode,
-		   struct venc_frm_buf *frm_buf,
-		   struct mtk_vcodec_mem *bs_buf,
-		   unsigned int *bs_size,
-		   struct venc_frame_info *frame_info);
-int vpu_enc_deinit(struct venc_vpu_inst *vpu);
+पूर्णांक vpu_enc_init(काष्ठा venc_vpu_inst *vpu);
+पूर्णांक vpu_enc_set_param(काष्ठा venc_vpu_inst *vpu,
+		      क्रमागत venc_set_param_type id,
+		      काष्ठा venc_enc_param *param);
+पूर्णांक vpu_enc_encode(काष्ठा venc_vpu_inst *vpu, अचिन्हित पूर्णांक bs_mode,
+		   काष्ठा venc_frm_buf *frm_buf,
+		   काष्ठा mtk_vcodec_mem *bs_buf,
+		   अचिन्हित पूर्णांक *bs_size,
+		   काष्ठा venc_frame_info *frame_info);
+पूर्णांक vpu_enc_deinit(काष्ठा venc_vpu_inst *vpu);
 
-#endif
+#पूर्ण_अगर

@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2015-2018 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
+ *  - Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,145 +46,145 @@
  *
  */
 
-#include <linux/delay.h>
-#include "hfi.h"
-#include "qp.h"
-#include "trace.h"
+#समावेश <linux/delay.h>
+#समावेश "hfi.h"
+#समावेश "qp.h"
+#समावेश "trace.h"
 
-#define SC(name) SEND_CTXT_##name
+#घोषणा SC(name) SEND_CTXT_##name
 /*
  * Send Context functions
  */
-static void sc_wait_for_packet_egress(struct send_context *sc, int pause);
+अटल व्योम sc_रुको_क्रम_packet_egress(काष्ठा send_context *sc, पूर्णांक छोड़ो);
 
 /*
- * Set the CM reset bit and wait for it to clear.  Use the provided
- * sendctrl register.  This routine has no locking.
+ * Set the CM reset bit and रुको क्रम it to clear.  Use the provided
+ * sendctrl रेजिस्टर.  This routine has no locking.
  */
-void __cm_reset(struct hfi1_devdata *dd, u64 sendctrl)
-{
-	write_csr(dd, SEND_CTRL, sendctrl | SEND_CTRL_CM_RESET_SMASK);
-	while (1) {
+व्योम __cm_reset(काष्ठा hfi1_devdata *dd, u64 sendctrl)
+अणु
+	ग_लिखो_csr(dd, SEND_CTRL, sendctrl | SEND_CTRL_CM_RESET_SMASK);
+	जबतक (1) अणु
 		udelay(1);
-		sendctrl = read_csr(dd, SEND_CTRL);
-		if ((sendctrl & SEND_CTRL_CM_RESET_SMASK) == 0)
-			break;
-	}
-}
+		sendctrl = पढ़ो_csr(dd, SEND_CTRL);
+		अगर ((sendctrl & SEND_CTRL_CM_RESET_SMASK) == 0)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /* global control of PIO send */
-void pio_send_control(struct hfi1_devdata *dd, int op)
-{
+व्योम pio_send_control(काष्ठा hfi1_devdata *dd, पूर्णांक op)
+अणु
 	u64 reg, mask;
-	unsigned long flags;
-	int write = 1;	/* write sendctrl back */
-	int flush = 0;	/* re-read sendctrl to make sure it is flushed */
-	int i;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ग_लिखो = 1;	/* ग_लिखो sendctrl back */
+	पूर्णांक flush = 0;	/* re-पढ़ो sendctrl to make sure it is flushed */
+	पूर्णांक i;
 
 	spin_lock_irqsave(&dd->sendctrl_lock, flags);
 
-	reg = read_csr(dd, SEND_CTRL);
-	switch (op) {
-	case PSC_GLOBAL_ENABLE:
+	reg = पढ़ो_csr(dd, SEND_CTRL);
+	चयन (op) अणु
+	हाल PSC_GLOBAL_ENABLE:
 		reg |= SEND_CTRL_SEND_ENABLE_SMASK;
 		fallthrough;
-	case PSC_DATA_VL_ENABLE:
+	हाल PSC_DATA_VL_ENABLE:
 		mask = 0;
-		for (i = 0; i < ARRAY_SIZE(dd->vld); i++)
-			if (!dd->vld[i].mtu)
+		क्रम (i = 0; i < ARRAY_SIZE(dd->vld); i++)
+			अगर (!dd->vld[i].mtu)
 				mask |= BIT_ULL(i);
 		/* Disallow sending on VLs not enabled */
 		mask = (mask & SEND_CTRL_UNSUPPORTED_VL_MASK) <<
 			SEND_CTRL_UNSUPPORTED_VL_SHIFT;
 		reg = (reg & ~SEND_CTRL_UNSUPPORTED_VL_SMASK) | mask;
-		break;
-	case PSC_GLOBAL_DISABLE:
+		अवरोध;
+	हाल PSC_GLOBAL_DISABLE:
 		reg &= ~SEND_CTRL_SEND_ENABLE_SMASK;
-		break;
-	case PSC_GLOBAL_VLARB_ENABLE:
+		अवरोध;
+	हाल PSC_GLOBAL_VLARB_ENABLE:
 		reg |= SEND_CTRL_VL_ARBITER_ENABLE_SMASK;
-		break;
-	case PSC_GLOBAL_VLARB_DISABLE:
+		अवरोध;
+	हाल PSC_GLOBAL_VLARB_DISABLE:
 		reg &= ~SEND_CTRL_VL_ARBITER_ENABLE_SMASK;
-		break;
-	case PSC_CM_RESET:
+		अवरोध;
+	हाल PSC_CM_RESET:
 		__cm_reset(dd, reg);
-		write = 0; /* CSR already written (and flushed) */
-		break;
-	case PSC_DATA_VL_DISABLE:
+		ग_लिखो = 0; /* CSR alपढ़ोy written (and flushed) */
+		अवरोध;
+	हाल PSC_DATA_VL_DISABLE:
 		reg |= SEND_CTRL_UNSUPPORTED_VL_SMASK;
 		flush = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dd_dev_err(dd, "%s: invalid control %d\n", __func__, op);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (write) {
-		write_csr(dd, SEND_CTRL, reg);
-		if (flush)
-			(void)read_csr(dd, SEND_CTRL); /* flush write */
-	}
+	अगर (ग_लिखो) अणु
+		ग_लिखो_csr(dd, SEND_CTRL, reg);
+		अगर (flush)
+			(व्योम)पढ़ो_csr(dd, SEND_CTRL); /* flush ग_लिखो */
+	पूर्ण
 
 	spin_unlock_irqrestore(&dd->sendctrl_lock, flags);
-}
+पूर्ण
 
 /* number of send context memory pools */
-#define NUM_SC_POOLS 2
+#घोषणा NUM_SC_POOLS 2
 
 /* Send Context Size (SCS) wildcards */
-#define SCS_POOL_0 -1
-#define SCS_POOL_1 -2
+#घोषणा SCS_POOL_0 -1
+#घोषणा SCS_POOL_1 -2
 
 /* Send Context Count (SCC) wildcards */
-#define SCC_PER_VL -1
-#define SCC_PER_CPU  -2
-#define SCC_PER_KRCVQ  -3
+#घोषणा SCC_PER_VL -1
+#घोषणा SCC_PER_CPU  -2
+#घोषणा SCC_PER_KRCVQ  -3
 
-/* Send Context Size (SCS) constants */
-#define SCS_ACK_CREDITS  32
-#define SCS_VL15_CREDITS 102	/* 3 pkts of 2048B data + 128B header */
+/* Send Context Size (SCS) स्थिरants */
+#घोषणा SCS_ACK_CREDITS  32
+#घोषणा SCS_VL15_CREDITS 102	/* 3 pkts of 2048B data + 128B header */
 
-#define PIO_THRESHOLD_CEILING 4096
+#घोषणा PIO_THRESHOLD_CEILING 4096
 
-#define PIO_WAIT_BATCH_SIZE 5
+#घोषणा PIO_WAIT_BATCH_SIZE 5
 
-/* default send context sizes */
-static struct sc_config_sizes sc_config_sizes[SC_MAX] = {
-	[SC_KERNEL] = { .size  = SCS_POOL_0,	/* even divide, pool 0 */
-			.count = SCC_PER_VL },	/* one per NUMA */
-	[SC_ACK]    = { .size  = SCS_ACK_CREDITS,
-			.count = SCC_PER_KRCVQ },
-	[SC_USER]   = { .size  = SCS_POOL_0,	/* even divide, pool 0 */
-			.count = SCC_PER_CPU },	/* one per CPU */
-	[SC_VL15]   = { .size  = SCS_VL15_CREDITS,
-			.count = 1 },
+/* शेष send context sizes */
+अटल काष्ठा sc_config_sizes sc_config_sizes[SC_MAX] = अणु
+	[SC_KERNEL] = अणु .size  = SCS_POOL_0,	/* even भागide, pool 0 */
+			.count = SCC_PER_VL पूर्ण,	/* one per NUMA */
+	[SC_ACK]    = अणु .size  = SCS_ACK_CREDITS,
+			.count = SCC_PER_KRCVQ पूर्ण,
+	[SC_USER]   = अणु .size  = SCS_POOL_0,	/* even भागide, pool 0 */
+			.count = SCC_PER_CPU पूर्ण,	/* one per CPU */
+	[SC_VL15]   = अणु .size  = SCS_VL15_CREDITS,
+			.count = 1 पूर्ण,
 
-};
+पूर्ण;
 
 /* send context memory pool configuration */
-struct mem_pool_config {
-	int centipercent;	/* % of memory, in 100ths of 1% */
-	int absolute_blocks;	/* absolute block count */
-};
+काष्ठा mem_pool_config अणु
+	पूर्णांक centipercent;	/* % of memory, in 100ths of 1% */
+	पूर्णांक असलolute_blocks;	/* असलolute block count */
+पूर्ण;
 
-/* default memory pool configuration: 100% in pool 0 */
-static struct mem_pool_config sc_mem_pool_config[NUM_SC_POOLS] = {
-	/* centi%, abs blocks */
-	{  10000,     -1 },		/* pool 0 */
-	{      0,     -1 },		/* pool 1 */
-};
+/* शेष memory pool configuration: 100% in pool 0 */
+अटल काष्ठा mem_pool_config sc_mem_pool_config[NUM_SC_POOLS] = अणु
+	/* centi%, असल blocks */
+	अणु  10000,     -1 पूर्ण,		/* pool 0 */
+	अणु      0,     -1 पूर्ण,		/* pool 1 */
+पूर्ण;
 
-/* memory pool information, used when calculating final sizes */
-struct mem_pool_info {
-	int centipercent;	/*
-				 * 100th of 1% of memory to use, -1 if blocks
-				 * already set
+/* memory pool inक्रमmation, used when calculating final sizes */
+काष्ठा mem_pool_info अणु
+	पूर्णांक centipercent;	/*
+				 * 100th of 1% of memory to use, -1 अगर blocks
+				 * alपढ़ोy set
 				 */
-	int count;		/* count of contexts in the pool */
-	int blocks;		/* block size of the pool */
-	int size;		/* context size, in blocks */
-};
+	पूर्णांक count;		/* count of contexts in the pool */
+	पूर्णांक blocks;		/* block size of the pool */
+	पूर्णांक size;		/* context size, in blocks */
+पूर्ण;
 
 /*
  * Convert a pool wildcard to a valid pool index.  The wildcards
@@ -194,119 +195,119 @@ struct mem_pool_info {
  *
  * Return -1 on non-wildcard input, otherwise convert to a pool number.
  */
-static int wildcard_to_pool(int wc)
-{
-	if (wc >= 0)
-		return -1;	/* non-wildcard */
-	return -wc - 1;
-}
+अटल पूर्णांक wildcard_to_pool(पूर्णांक wc)
+अणु
+	अगर (wc >= 0)
+		वापस -1;	/* non-wildcard */
+	वापस -wc - 1;
+पूर्ण
 
-static const char *sc_type_names[SC_MAX] = {
+अटल स्थिर अक्षर *sc_type_names[SC_MAX] = अणु
 	"kernel",
 	"ack",
 	"user",
 	"vl15"
-};
+पूर्ण;
 
-static const char *sc_type_name(int index)
-{
-	if (index < 0 || index >= SC_MAX)
-		return "unknown";
-	return sc_type_names[index];
-}
+अटल स्थिर अक्षर *sc_type_name(पूर्णांक index)
+अणु
+	अगर (index < 0 || index >= SC_MAX)
+		वापस "unknown";
+	वापस sc_type_names[index];
+पूर्ण
 
 /*
  * Read the send context memory pool configuration and send context
  * size configuration.  Replace any wildcards and come up with final
- * counts and sizes for the send context types.
+ * counts and sizes क्रम the send context types.
  */
-int init_sc_pools_and_sizes(struct hfi1_devdata *dd)
-{
-	struct mem_pool_info mem_pool_info[NUM_SC_POOLS] = { { 0 } };
-	int total_blocks = (chip_pio_mem_size(dd) / PIO_BLOCK_SIZE) - 1;
-	int total_contexts = 0;
-	int fixed_blocks;
-	int pool_blocks;
-	int used_blocks;
-	int cp_total;		/* centipercent total */
-	int ab_total;		/* absolute block total */
-	int extra;
-	int i;
+पूर्णांक init_sc_pools_and_sizes(काष्ठा hfi1_devdata *dd)
+अणु
+	काष्ठा mem_pool_info mem_pool_info[NUM_SC_POOLS] = अणु अणु 0 पूर्ण पूर्ण;
+	पूर्णांक total_blocks = (chip_pio_mem_size(dd) / PIO_BLOCK_SIZE) - 1;
+	पूर्णांक total_contexts = 0;
+	पूर्णांक fixed_blocks;
+	पूर्णांक pool_blocks;
+	पूर्णांक used_blocks;
+	पूर्णांक cp_total;		/* centipercent total */
+	पूर्णांक ab_total;		/* असलolute block total */
+	पूर्णांक extra;
+	पूर्णांक i;
 
 	/*
 	 * When SDMA is enabled, kernel context pio packet size is capped by
-	 * "piothreshold". Reduce pio buffer allocation for kernel context by
+	 * "piothreshold". Reduce pio buffer allocation क्रम kernel context by
 	 * setting it to a fixed size. The allocation allows 3-deep buffering
 	 * of the largest pio packets plus up to 128 bytes header, sufficient
-	 * to maintain verbs performance.
+	 * to मुख्यtain verbs perक्रमmance.
 	 *
-	 * When SDMA is disabled, keep the default pooling allocation.
+	 * When SDMA is disabled, keep the शेष pooling allocation.
 	 */
-	if (HFI1_CAP_IS_KSET(SDMA)) {
+	अगर (HFI1_CAP_IS_KSET(SDMA)) अणु
 		u16 max_pkt_size = (piothreshold < PIO_THRESHOLD_CEILING) ?
 					 piothreshold : PIO_THRESHOLD_CEILING;
 		sc_config_sizes[SC_KERNEL].size =
 			3 * (max_pkt_size + 128) / PIO_BLOCK_SIZE;
-	}
+	पूर्ण
 
 	/*
 	 * Step 0:
-	 *	- copy the centipercents/absolute sizes from the pool config
+	 *	- copy the centipercents/असलolute sizes from the pool config
 	 *	- sanity check these values
-	 *	- add up centipercents, then later check for full value
-	 *	- add up absolute blocks, then later check for over-commit
+	 *	- add up centipercents, then later check क्रम full value
+	 *	- add up असलolute blocks, then later check क्रम over-commit
 	 */
 	cp_total = 0;
 	ab_total = 0;
-	for (i = 0; i < NUM_SC_POOLS; i++) {
-		int cp = sc_mem_pool_config[i].centipercent;
-		int ab = sc_mem_pool_config[i].absolute_blocks;
+	क्रम (i = 0; i < NUM_SC_POOLS; i++) अणु
+		पूर्णांक cp = sc_mem_pool_config[i].centipercent;
+		पूर्णांक ab = sc_mem_pool_config[i].असलolute_blocks;
 
 		/*
 		 * A negative value is "unused" or "invalid".  Both *can*
 		 * be valid, but centipercent wins, so check that first
 		 */
-		if (cp >= 0) {			/* centipercent valid */
+		अगर (cp >= 0) अणु			/* centipercent valid */
 			cp_total += cp;
-		} else if (ab >= 0) {		/* absolute blocks valid */
+		पूर्ण अन्यथा अगर (ab >= 0) अणु		/* असलolute blocks valid */
 			ab_total += ab;
-		} else {			/* neither valid */
+		पूर्ण अन्यथा अणु			/* neither valid */
 			dd_dev_err(
 				dd,
 				"Send context memory pool %d: both the block count and centipercent are invalid\n",
 				i);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		mem_pool_info[i].centipercent = cp;
 		mem_pool_info[i].blocks = ab;
-	}
+	पूर्ण
 
-	/* do not use both % and absolute blocks for different pools */
-	if (cp_total != 0 && ab_total != 0) {
+	/* करो not use both % and असलolute blocks क्रम dअगरferent pools */
+	अगर (cp_total != 0 && ab_total != 0) अणु
 		dd_dev_err(
 			dd,
 			"All send context memory pools must be described as either centipercent or blocks, no mixing between pools\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* if any percentages are present, they must add up to 100% x 100 */
-	if (cp_total != 0 && cp_total != 10000) {
+	/* अगर any percentages are present, they must add up to 100% x 100 */
+	अगर (cp_total != 0 && cp_total != 10000) अणु
 		dd_dev_err(
 			dd,
 			"Send context memory pool centipercent is %d, expecting 10000\n",
 			cp_total);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* the absolute pool total cannot be more than the mem total */
-	if (ab_total > total_blocks) {
+	/* the असलolute pool total cannot be more than the mem total */
+	अगर (ab_total > total_blocks) अणु
 		dd_dev_err(
 			dd,
 			"Send context memory pool absolute block count %d is larger than the memory size %d\n",
 			ab_total, total_blocks);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Step 2:
@@ -316,10 +317,10 @@ int init_sc_pools_and_sizes(struct hfi1_devdata *dd)
 	 *	- add up memory pool user counts
 	 */
 	fixed_blocks = 0;
-	for (i = 0; i < SC_MAX; i++) {
-		int count = sc_config_sizes[i].count;
-		int size = sc_config_sizes[i].size;
-		int pool;
+	क्रम (i = 0; i < SC_MAX; i++) अणु
+		पूर्णांक count = sc_config_sizes[i].count;
+		पूर्णांक size = sc_config_sizes[i].size;
+		पूर्णांक pool;
 
 		/*
 		 * Sanity check count: Either a positive value or
@@ -327,153 +328,153 @@ int init_sc_pools_and_sizes(struct hfi1_devdata *dd)
 		 * value is checked later when we compare against total
 		 * memory available.
 		 */
-		if (i == SC_ACK) {
+		अगर (i == SC_ACK) अणु
 			count = dd->n_krcv_queues;
-		} else if (i == SC_KERNEL) {
+		पूर्ण अन्यथा अगर (i == SC_KERNEL) अणु
 			count = INIT_SC_PER_VL * num_vls;
-		} else if (count == SCC_PER_CPU) {
+		पूर्ण अन्यथा अगर (count == SCC_PER_CPU) अणु
 			count = dd->num_rcv_contexts - dd->n_krcv_queues;
-		} else if (count < 0) {
+		पूर्ण अन्यथा अगर (count < 0) अणु
 			dd_dev_err(
 				dd,
 				"%s send context invalid count wildcard %d\n",
 				sc_type_name(i), count);
-			return -EINVAL;
-		}
-		if (total_contexts + count > chip_send_contexts(dd))
+			वापस -EINVAL;
+		पूर्ण
+		अगर (total_contexts + count > chip_send_contexts(dd))
 			count = chip_send_contexts(dd) - total_contexts;
 
 		total_contexts += count;
 
 		/*
-		 * Sanity check pool: The conversion will return a pool
-		 * number or -1 if a fixed (non-negative) value.  The fixed
+		 * Sanity check pool: The conversion will वापस a pool
+		 * number or -1 अगर a fixed (non-negative) value.  The fixed
 		 * value is checked later when we compare against
 		 * total memory available.
 		 */
 		pool = wildcard_to_pool(size);
-		if (pool == -1) {			/* non-wildcard */
+		अगर (pool == -1) अणु			/* non-wildcard */
 			fixed_blocks += size * count;
-		} else if (pool < NUM_SC_POOLS) {	/* valid wildcard */
+		पूर्ण अन्यथा अगर (pool < NUM_SC_POOLS) अणु	/* valid wildcard */
 			mem_pool_info[pool].count += count;
-		} else {				/* invalid wildcard */
+		पूर्ण अन्यथा अणु				/* invalid wildcard */
 			dd_dev_err(
 				dd,
 				"%s send context invalid pool wildcard %d\n",
 				sc_type_name(i), size);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		dd->sc_sizes[i].count = count;
 		dd->sc_sizes[i].size = size;
-	}
-	if (fixed_blocks > total_blocks) {
+	पूर्ण
+	अगर (fixed_blocks > total_blocks) अणु
 		dd_dev_err(
 			dd,
 			"Send context fixed block count, %u, larger than total block count %u\n",
 			fixed_blocks, total_blocks);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* step 3: calculate the blocks in the pools, and pool context sizes */
 	pool_blocks = total_blocks - fixed_blocks;
-	if (ab_total > pool_blocks) {
+	अगर (ab_total > pool_blocks) अणु
 		dd_dev_err(
 			dd,
 			"Send context fixed pool sizes, %u, larger than pool block count %u\n",
 			ab_total, pool_blocks);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/* subtract off the fixed pool blocks */
 	pool_blocks -= ab_total;
 
-	for (i = 0; i < NUM_SC_POOLS; i++) {
-		struct mem_pool_info *pi = &mem_pool_info[i];
+	क्रम (i = 0; i < NUM_SC_POOLS; i++) अणु
+		काष्ठा mem_pool_info *pi = &mem_pool_info[i];
 
-		/* % beats absolute blocks */
-		if (pi->centipercent >= 0)
+		/* % beats असलolute blocks */
+		अगर (pi->centipercent >= 0)
 			pi->blocks = (pool_blocks * pi->centipercent) / 10000;
 
-		if (pi->blocks == 0 && pi->count != 0) {
+		अगर (pi->blocks == 0 && pi->count != 0) अणु
 			dd_dev_err(
 				dd,
 				"Send context memory pool %d has %u contexts, but no blocks\n",
 				i, pi->count);
-			return -EINVAL;
-		}
-		if (pi->count == 0) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (pi->count == 0) अणु
 			/* warn about wasted blocks */
-			if (pi->blocks != 0)
+			अगर (pi->blocks != 0)
 				dd_dev_err(
 					dd,
 					"Send context memory pool %d has %u blocks, but zero contexts\n",
 					i, pi->blocks);
 			pi->size = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			pi->size = pi->blocks / pi->count;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* step 4: fill in the context type sizes from the pool sizes */
 	used_blocks = 0;
-	for (i = 0; i < SC_MAX; i++) {
-		if (dd->sc_sizes[i].size < 0) {
-			unsigned pool = wildcard_to_pool(dd->sc_sizes[i].size);
+	क्रम (i = 0; i < SC_MAX; i++) अणु
+		अगर (dd->sc_sizes[i].size < 0) अणु
+			अचिन्हित pool = wildcard_to_pool(dd->sc_sizes[i].size);
 
 			WARN_ON_ONCE(pool >= NUM_SC_POOLS);
 			dd->sc_sizes[i].size = mem_pool_info[pool].size;
-		}
+		पूर्ण
 		/* make sure we are not larger than what is allowed by the HW */
-#define PIO_MAX_BLOCKS 1024
-		if (dd->sc_sizes[i].size > PIO_MAX_BLOCKS)
+#घोषणा PIO_MAX_BLOCKS 1024
+		अगर (dd->sc_sizes[i].size > PIO_MAX_BLOCKS)
 			dd->sc_sizes[i].size = PIO_MAX_BLOCKS;
 
 		/* calculate our total usage */
 		used_blocks += dd->sc_sizes[i].size * dd->sc_sizes[i].count;
-	}
+	पूर्ण
 	extra = total_blocks - used_blocks;
-	if (extra != 0)
+	अगर (extra != 0)
 		dd_dev_info(dd, "unused send context blocks: %d\n", extra);
 
-	return total_contexts;
-}
+	वापस total_contexts;
+पूर्ण
 
-int init_send_contexts(struct hfi1_devdata *dd)
-{
+पूर्णांक init_send_contexts(काष्ठा hfi1_devdata *dd)
+अणु
 	u16 base;
-	int ret, i, j, context;
+	पूर्णांक ret, i, j, context;
 
-	ret = init_credit_return(dd);
-	if (ret)
-		return ret;
+	ret = init_credit_वापस(dd);
+	अगर (ret)
+		वापस ret;
 
-	dd->hw_to_sw = kmalloc_array(TXE_NUM_CONTEXTS, sizeof(u8),
+	dd->hw_to_sw = kदो_स्मृति_array(TXE_NUM_CONTEXTS, माप(u8),
 					GFP_KERNEL);
-	dd->send_contexts = kcalloc(dd->num_send_contexts,
-				    sizeof(struct send_context_info),
+	dd->send_contexts = kसुस्मृति(dd->num_send_contexts,
+				    माप(काष्ठा send_context_info),
 				    GFP_KERNEL);
-	if (!dd->send_contexts || !dd->hw_to_sw) {
-		kfree(dd->hw_to_sw);
-		kfree(dd->send_contexts);
-		free_credit_return(dd);
-		return -ENOMEM;
-	}
+	अगर (!dd->send_contexts || !dd->hw_to_sw) अणु
+		kमुक्त(dd->hw_to_sw);
+		kमुक्त(dd->send_contexts);
+		मुक्त_credit_वापस(dd);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* hardware context map starts with invalid send context indices */
-	for (i = 0; i < TXE_NUM_CONTEXTS; i++)
+	क्रम (i = 0; i < TXE_NUM_CONTEXTS; i++)
 		dd->hw_to_sw[i] = INVALID_SCI;
 
 	/*
 	 * All send contexts have their credit sizes.  Allocate credits
-	 * for each context one after another from the global space.
+	 * क्रम each context one after another from the global space.
 	 */
 	context = 0;
 	base = 1;
-	for (i = 0; i < SC_MAX; i++) {
-		struct sc_config_sizes *scs = &dd->sc_sizes[i];
+	क्रम (i = 0; i < SC_MAX; i++) अणु
+		काष्ठा sc_config_sizes *scs = &dd->sc_sizes[i];
 
-		for (j = 0; j < scs->count; j++) {
-			struct send_context_info *sci =
+		क्रम (j = 0; j < scs->count; j++) अणु
+			काष्ठा send_context_info *sci =
 						&dd->send_contexts[context];
 			sci->type = i;
 			sci->base = base;
@@ -481,153 +482,153 @@ int init_send_contexts(struct hfi1_devdata *dd)
 
 			context++;
 			base += scs->size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Allocate a software index and hardware context of the given type.
  *
  * Must be called with dd->sc_lock held.
  */
-static int sc_hw_alloc(struct hfi1_devdata *dd, int type, u32 *sw_index,
+अटल पूर्णांक sc_hw_alloc(काष्ठा hfi1_devdata *dd, पूर्णांक type, u32 *sw_index,
 		       u32 *hw_context)
-{
-	struct send_context_info *sci;
+अणु
+	काष्ठा send_context_info *sci;
 	u32 index;
 	u32 context;
 
-	for (index = 0, sci = &dd->send_contexts[0];
-			index < dd->num_send_contexts; index++, sci++) {
-		if (sci->type == type && sci->allocated == 0) {
+	क्रम (index = 0, sci = &dd->send_contexts[0];
+			index < dd->num_send_contexts; index++, sci++) अणु
+		अगर (sci->type == type && sci->allocated == 0) अणु
 			sci->allocated = 1;
 			/* use a 1:1 mapping, but make them non-equal */
 			context = chip_send_contexts(dd) - index - 1;
 			dd->hw_to_sw[context] = index;
 			*sw_index = index;
 			*hw_context = context;
-			return 0; /* success */
-		}
-	}
+			वापस 0; /* success */
+		पूर्ण
+	पूर्ण
 	dd_dev_err(dd, "Unable to locate a free type %d send context\n", type);
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
 /*
  * Free the send context given by its software index.
  *
  * Must be called with dd->sc_lock held.
  */
-static void sc_hw_free(struct hfi1_devdata *dd, u32 sw_index, u32 hw_context)
-{
-	struct send_context_info *sci;
+अटल व्योम sc_hw_मुक्त(काष्ठा hfi1_devdata *dd, u32 sw_index, u32 hw_context)
+अणु
+	काष्ठा send_context_info *sci;
 
 	sci = &dd->send_contexts[sw_index];
-	if (!sci->allocated) {
+	अगर (!sci->allocated) अणु
 		dd_dev_err(dd, "%s: sw_index %u not allocated? hw_context %u\n",
 			   __func__, sw_index, hw_context);
-	}
+	पूर्ण
 	sci->allocated = 0;
 	dd->hw_to_sw[hw_context] = INVALID_SCI;
-}
+पूर्ण
 
-/* return the base context of a context in a group */
-static inline u32 group_context(u32 context, u32 group)
-{
-	return (context >> group) << group;
-}
+/* वापस the base context of a context in a group */
+अटल अंतरभूत u32 group_context(u32 context, u32 group)
+अणु
+	वापस (context >> group) << group;
+पूर्ण
 
-/* return the size of a group */
-static inline u32 group_size(u32 group)
-{
-	return 1 << group;
-}
+/* वापस the size of a group */
+अटल अंतरभूत u32 group_size(u32 group)
+अणु
+	वापस 1 << group;
+पूर्ण
 
 /*
- * Obtain the credit return addresses, kernel virtual and bus, for the
+ * Obtain the credit वापस addresses, kernel भव and bus, क्रम the
  * given sc.
  *
  * To understand this routine:
- * o va and dma are arrays of struct credit_return.  One for each physical
+ * o va and dma are arrays of काष्ठा credit_वापस.  One क्रम each physical
  *   send context, per NUMA.
- * o Each send context always looks in its relative location in a struct
- *   credit_return for its credit return.
- * o Each send context in a group must have its return address CSR programmed
+ * o Each send context always looks in its relative location in a काष्ठा
+ *   credit_वापस क्रम its credit वापस.
+ * o Each send context in a group must have its वापस address CSR programmed
  *   with the same value.  Use the address of the first send context in the
  *   group.
  */
-static void cr_group_addresses(struct send_context *sc, dma_addr_t *dma)
-{
+अटल व्योम cr_group_addresses(काष्ठा send_context *sc, dma_addr_t *dma)
+अणु
 	u32 gc = group_context(sc->hw_context, sc->group);
 	u32 index = sc->hw_context & 0x7;
 
-	sc->hw_free = &sc->dd->cr_base[sc->node].va[gc].cr[index];
-	*dma = (unsigned long)
-	       &((struct credit_return *)sc->dd->cr_base[sc->node].dma)[gc];
-}
+	sc->hw_मुक्त = &sc->dd->cr_base[sc->node].va[gc].cr[index];
+	*dma = (अचिन्हित दीर्घ)
+	       &((काष्ठा credit_वापस *)sc->dd->cr_base[sc->node].dma)[gc];
+पूर्ण
 
 /*
- * Work queue function triggered in error interrupt routine for
+ * Work queue function triggered in error पूर्णांकerrupt routine क्रम
  * kernel contexts.
  */
-static void sc_halted(struct work_struct *work)
-{
-	struct send_context *sc;
+अटल व्योम sc_halted(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा send_context *sc;
 
-	sc = container_of(work, struct send_context, halt_work);
+	sc = container_of(work, काष्ठा send_context, halt_work);
 	sc_restart(sc);
-}
+पूर्ण
 
 /*
- * Calculate PIO block threshold for this send context using the given MTU.
- * Trigger a return when one MTU plus optional header of credits remain.
+ * Calculate PIO block threshold क्रम this send context using the given MTU.
+ * Trigger a वापस when one MTU plus optional header of credits reमुख्य.
  *
  * Parameter mtu is in bytes.
  * Parameter hdrqentsize is in DWORDs.
  *
- * Return value is what to write into the CSR: trigger return when
- * unreturned credits pass this count.
+ * Return value is what to ग_लिखो पूर्णांकo the CSR: trigger वापस when
+ * unवापसed credits pass this count.
  */
-u32 sc_mtu_to_threshold(struct send_context *sc, u32 mtu, u32 hdrqentsize)
-{
+u32 sc_mtu_to_threshold(काष्ठा send_context *sc, u32 mtu, u32 hdrqentsize)
+अणु
 	u32 release_credits;
 	u32 threshold;
 
-	/* add in the header size, then divide by the PIO block size */
+	/* add in the header size, then भागide by the PIO block size */
 	mtu += hdrqentsize << 2;
 	release_credits = DIV_ROUND_UP(mtu, PIO_BLOCK_SIZE);
 
 	/* check against this context's credits */
-	if (sc->credits <= release_credits)
+	अगर (sc->credits <= release_credits)
 		threshold = 1;
-	else
+	अन्यथा
 		threshold = sc->credits - release_credits;
 
-	return threshold;
-}
+	वापस threshold;
+पूर्ण
 
 /*
  * Calculate credit threshold in terms of percent of the allocated credits.
- * Trigger when unreturned credits equal or exceed the percentage of the whole.
+ * Trigger when unवापसed credits equal or exceed the percentage of the whole.
  *
- * Return value is what to write into the CSR: trigger return when
- * unreturned credits pass this count.
+ * Return value is what to ग_लिखो पूर्णांकo the CSR: trigger वापस when
+ * unवापसed credits pass this count.
  */
-u32 sc_percent_to_threshold(struct send_context *sc, u32 percent)
-{
-	return (sc->credits * percent) / 100;
-}
+u32 sc_percent_to_threshold(काष्ठा send_context *sc, u32 percent)
+अणु
+	वापस (sc->credits * percent) / 100;
+पूर्ण
 
 /*
- * Set the credit return threshold.
+ * Set the credit वापस threshold.
  */
-void sc_set_cr_threshold(struct send_context *sc, u32 new_threshold)
-{
-	unsigned long flags;
+व्योम sc_set_cr_threshold(काष्ठा send_context *sc, u32 new_threshold)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 old_threshold;
-	int force_return = 0;
+	पूर्णांक क्रमce_वापस = 0;
 
 	spin_lock_irqsave(&sc->credit_ctrl_lock, flags);
 
@@ -635,103 +636,103 @@ void sc_set_cr_threshold(struct send_context *sc, u32 new_threshold)
 				SC(CREDIT_CTRL_THRESHOLD_SHIFT))
 			 & SC(CREDIT_CTRL_THRESHOLD_MASK);
 
-	if (new_threshold != old_threshold) {
+	अगर (new_threshold != old_threshold) अणु
 		sc->credit_ctrl =
 			(sc->credit_ctrl
 				& ~SC(CREDIT_CTRL_THRESHOLD_SMASK))
 			| ((new_threshold
 				& SC(CREDIT_CTRL_THRESHOLD_MASK))
 			   << SC(CREDIT_CTRL_THRESHOLD_SHIFT));
-		write_kctxt_csr(sc->dd, sc->hw_context,
+		ग_लिखो_kctxt_csr(sc->dd, sc->hw_context,
 				SC(CREDIT_CTRL), sc->credit_ctrl);
 
-		/* force a credit return on change to avoid a possible stall */
-		force_return = 1;
-	}
+		/* क्रमce a credit वापस on change to aव्योम a possible stall */
+		क्रमce_वापस = 1;
+	पूर्ण
 
 	spin_unlock_irqrestore(&sc->credit_ctrl_lock, flags);
 
-	if (force_return)
-		sc_return_credits(sc);
-}
+	अगर (क्रमce_वापस)
+		sc_वापस_credits(sc);
+पूर्ण
 
 /*
- * set_pio_integrity
+ * set_pio_पूर्णांकegrity
  *
- * Set the CHECK_ENABLE register for the send context 'sc'.
+ * Set the CHECK_ENABLE रेजिस्टर क्रम the send context 'sc'.
  */
-void set_pio_integrity(struct send_context *sc)
-{
-	struct hfi1_devdata *dd = sc->dd;
+व्योम set_pio_पूर्णांकegrity(काष्ठा send_context *sc)
+अणु
+	काष्ठा hfi1_devdata *dd = sc->dd;
 	u32 hw_context = sc->hw_context;
-	int type = sc->type;
+	पूर्णांक type = sc->type;
 
-	write_kctxt_csr(dd, hw_context,
+	ग_लिखो_kctxt_csr(dd, hw_context,
 			SC(CHECK_ENABLE),
-			hfi1_pkt_default_send_ctxt_mask(dd, type));
-}
+			hfi1_pkt_शेष_send_ctxt_mask(dd, type));
+पूर्ण
 
-static u32 get_buffers_allocated(struct send_context *sc)
-{
-	int cpu;
+अटल u32 get_buffers_allocated(काष्ठा send_context *sc)
+अणु
+	पूर्णांक cpu;
 	u32 ret = 0;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		ret += *per_cpu_ptr(sc->buffers_allocated, cpu);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void reset_buffers_allocated(struct send_context *sc)
-{
-	int cpu;
+अटल व्योम reset_buffers_allocated(काष्ठा send_context *sc)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		(*per_cpu_ptr(sc->buffers_allocated, cpu)) = 0;
-}
+पूर्ण
 
 /*
- * Allocate a NUMA relative send context structure of the given type along
+ * Allocate a NUMA relative send context काष्ठाure of the given type aदीर्घ
  * with a HW context.
  */
-struct send_context *sc_alloc(struct hfi1_devdata *dd, int type,
-			      uint hdrqentsize, int numa)
-{
-	struct send_context_info *sci;
-	struct send_context *sc = NULL;
+काष्ठा send_context *sc_alloc(काष्ठा hfi1_devdata *dd, पूर्णांक type,
+			      uपूर्णांक hdrqentsize, पूर्णांक numa)
+अणु
+	काष्ठा send_context_info *sci;
+	काष्ठा send_context *sc = शून्य;
 	dma_addr_t dma;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u64 reg;
 	u32 thresh;
 	u32 sw_index;
 	u32 hw_context;
-	int ret;
+	पूर्णांक ret;
 	u8 opval, opmask;
 
-	/* do not allocate while frozen */
-	if (dd->flags & HFI1_FROZEN)
-		return NULL;
+	/* करो not allocate जबतक frozen */
+	अगर (dd->flags & HFI1_FROZEN)
+		वापस शून्य;
 
-	sc = kzalloc_node(sizeof(*sc), GFP_KERNEL, numa);
-	if (!sc)
-		return NULL;
+	sc = kzalloc_node(माप(*sc), GFP_KERNEL, numa);
+	अगर (!sc)
+		वापस शून्य;
 
 	sc->buffers_allocated = alloc_percpu(u32);
-	if (!sc->buffers_allocated) {
-		kfree(sc);
+	अगर (!sc->buffers_allocated) अणु
+		kमुक्त(sc);
 		dd_dev_err(dd,
 			   "Cannot allocate buffers_allocated per cpu counters\n"
 			  );
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	spin_lock_irqsave(&dd->sc_lock, flags);
 	ret = sc_hw_alloc(dd, type, &sw_index, &hw_context);
-	if (ret) {
+	अगर (ret) अणु
 		spin_unlock_irqrestore(&dd->sc_lock, flags);
-		free_percpu(sc->buffers_allocated);
-		kfree(sc);
-		return NULL;
-	}
+		मुक्त_percpu(sc->buffers_allocated);
+		kमुक्त(sc);
+		वापस शून्य;
+	पूर्ण
 
 	sci = &dd->send_contexts[sw_index];
 	sci->sc = sc;
@@ -742,12 +743,12 @@ struct send_context *sc_alloc(struct hfi1_devdata *dd, int type,
 	spin_lock_init(&sc->alloc_lock);
 	spin_lock_init(&sc->release_lock);
 	spin_lock_init(&sc->credit_ctrl_lock);
-	seqlock_init(&sc->waitlock);
-	INIT_LIST_HEAD(&sc->piowait);
+	seqlock_init(&sc->रुकोlock);
+	INIT_LIST_HEAD(&sc->pioरुको);
 	INIT_WORK(&sc->halt_work, sc_halted);
-	init_waitqueue_head(&sc->halt_wait);
+	init_रुकोqueue_head(&sc->halt_रुको);
 
-	/* grouping is always single context for now */
+	/* grouping is always single context क्रम now */
 	sc->group = 0;
 
 	sc->sw_index = sw_index;
@@ -757,8 +758,8 @@ struct send_context *sc_alloc(struct hfi1_devdata *dd, int type,
 	sc->size = sc->credits * PIO_BLOCK_SIZE;
 
 /* PIO Send Memory Address details */
-#define PIO_ADDR_CONTEXT_MASK 0xfful
-#define PIO_ADDR_CONTEXT_SHIFT 16
+#घोषणा PIO_ADDR_CONTEXT_MASK 0xfful
+#घोषणा PIO_ADDR_CONTEXT_SHIFT 16
 	sc->base_addr = dd->piobase + ((hw_context & PIO_ADDR_CONTEXT_MASK)
 					<< PIO_ADDR_CONTEXT_SHIFT);
 
@@ -767,99 +768,99 @@ struct send_context *sc_alloc(struct hfi1_devdata *dd, int type,
 					<< SC(CTRL_CTXT_DEPTH_SHIFT))
 		| ((sci->base & SC(CTRL_CTXT_BASE_MASK))
 					<< SC(CTRL_CTXT_BASE_SHIFT));
-	write_kctxt_csr(dd, hw_context, SC(CTRL), reg);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CTRL), reg);
 
-	set_pio_integrity(sc);
+	set_pio_पूर्णांकegrity(sc);
 
 	/* unmask all errors */
-	write_kctxt_csr(dd, hw_context, SC(ERR_MASK), (u64)-1);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(ERR_MASK), (u64)-1);
 
-	/* set the default partition key */
-	write_kctxt_csr(dd, hw_context, SC(CHECK_PARTITION_KEY),
+	/* set the शेष partition key */
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CHECK_PARTITION_KEY),
 			(SC(CHECK_PARTITION_KEY_VALUE_MASK) &
 			 DEFAULT_PKEY) <<
 			SC(CHECK_PARTITION_KEY_VALUE_SHIFT));
 
 	/* per context type checks */
-	if (type == SC_USER) {
+	अगर (type == SC_USER) अणु
 		opval = USER_OPCODE_CHECK_VAL;
 		opmask = USER_OPCODE_CHECK_MASK;
-	} else {
+	पूर्ण अन्यथा अणु
 		opval = OPCODE_CHECK_VAL_DISABLED;
 		opmask = OPCODE_CHECK_MASK_DISABLED;
-	}
+	पूर्ण
 
 	/* set the send context check opcode mask and value */
-	write_kctxt_csr(dd, hw_context, SC(CHECK_OPCODE),
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CHECK_OPCODE),
 			((u64)opmask << SC(CHECK_OPCODE_MASK_SHIFT)) |
 			((u64)opval << SC(CHECK_OPCODE_VALUE_SHIFT)));
 
-	/* set up credit return */
+	/* set up credit वापस */
 	reg = dma & SC(CREDIT_RETURN_ADDR_ADDRESS_SMASK);
-	write_kctxt_csr(dd, hw_context, SC(CREDIT_RETURN_ADDR), reg);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CREDIT_RETURN_ADDR), reg);
 
 	/*
-	 * Calculate the initial credit return threshold.
+	 * Calculate the initial credit वापस threshold.
 	 *
-	 * For Ack contexts, set a threshold for half the credits.
+	 * For Ack contexts, set a threshold क्रम half the credits.
 	 * For User contexts use the given percentage.  This has been
 	 * sanitized on driver start-up.
-	 * For Kernel contexts, use the default MTU plus a header
+	 * For Kernel contexts, use the शेष MTU plus a header
 	 * or half the credits, whichever is smaller. This should
-	 * work for both the 3-deep buffering allocation and the
+	 * work क्रम both the 3-deep buffering allocation and the
 	 * pooling allocation.
 	 */
-	if (type == SC_ACK) {
+	अगर (type == SC_ACK) अणु
 		thresh = sc_percent_to_threshold(sc, 50);
-	} else if (type == SC_USER) {
+	पूर्ण अन्यथा अगर (type == SC_USER) अणु
 		thresh = sc_percent_to_threshold(sc,
-						 user_credit_return_threshold);
-	} else { /* kernel */
+						 user_credit_वापस_threshold);
+	पूर्ण अन्यथा अणु /* kernel */
 		thresh = min(sc_percent_to_threshold(sc, 50),
 			     sc_mtu_to_threshold(sc, hfi1_max_mtu,
 						 hdrqentsize));
-	}
+	पूर्ण
 	reg = thresh << SC(CREDIT_CTRL_THRESHOLD_SHIFT);
-	/* add in early return */
-	if (type == SC_USER && HFI1_CAP_IS_USET(EARLY_CREDIT_RETURN))
+	/* add in early वापस */
+	अगर (type == SC_USER && HFI1_CAP_IS_USET(EARLY_CREDIT_RETURN))
 		reg |= SC(CREDIT_CTRL_EARLY_RETURN_SMASK);
-	else if (HFI1_CAP_IS_KSET(EARLY_CREDIT_RETURN)) /* kernel, ack */
+	अन्यथा अगर (HFI1_CAP_IS_KSET(EARLY_CREDIT_RETURN)) /* kernel, ack */
 		reg |= SC(CREDIT_CTRL_EARLY_RETURN_SMASK);
 
-	/* set up write-through credit_ctrl */
+	/* set up ग_लिखो-through credit_ctrl */
 	sc->credit_ctrl = reg;
-	write_kctxt_csr(dd, hw_context, SC(CREDIT_CTRL), reg);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CREDIT_CTRL), reg);
 
 	/* User send contexts should not allow sending on VL15 */
-	if (type == SC_USER) {
+	अगर (type == SC_USER) अणु
 		reg = 1ULL << 15;
-		write_kctxt_csr(dd, hw_context, SC(CHECK_VL), reg);
-	}
+		ग_लिखो_kctxt_csr(dd, hw_context, SC(CHECK_VL), reg);
+	पूर्ण
 
 	spin_unlock_irqrestore(&dd->sc_lock, flags);
 
 	/*
-	 * Allocate shadow ring to track outstanding PIO buffers _after_
-	 * unlocking.  We don't know the size until the lock is held and
-	 * we can't allocate while the lock is held.  No one is using
+	 * Allocate shaकरोw ring to track outstanding PIO buffers _after_
+	 * unlocking.  We करोn't know the size until the lock is held and
+	 * we can't allocate जबतक the lock is held.  No one is using
 	 * the context yet, so allocate it now.
 	 *
-	 * User contexts do not get a shadow ring.
+	 * User contexts करो not get a shaकरोw ring.
 	 */
-	if (type != SC_USER) {
+	अगर (type != SC_USER) अणु
 		/*
-		 * Size the shadow ring 1 larger than the number of credits
+		 * Size the shaकरोw ring 1 larger than the number of credits
 		 * so head == tail can mean empty.
 		 */
 		sc->sr_size = sci->credits + 1;
-		sc->sr = kcalloc_node(sc->sr_size,
-				      sizeof(union pio_shadow_ring),
+		sc->sr = kसुस्मृति_node(sc->sr_size,
+				      माप(जोड़ pio_shaकरोw_ring),
 				      GFP_KERNEL, numa);
-		if (!sc->sr) {
-			sc_free(sc);
-			return NULL;
-		}
-	}
+		अगर (!sc->sr) अणु
+			sc_मुक्त(sc);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	hfi1_cdbg(PIO,
 		  "Send context %u(%u) %s group %u credits %u credit_ctrl 0x%llx threshold %u\n",
@@ -871,23 +872,23 @@ struct send_context *sc_alloc(struct hfi1_devdata *dd, int type,
 		  sc->credit_ctrl,
 		  thresh);
 
-	return sc;
-}
+	वापस sc;
+पूर्ण
 
-/* free a per-NUMA send context structure */
-void sc_free(struct send_context *sc)
-{
-	struct hfi1_devdata *dd;
-	unsigned long flags;
+/* मुक्त a per-NUMA send context काष्ठाure */
+व्योम sc_मुक्त(काष्ठा send_context *sc)
+अणु
+	काष्ठा hfi1_devdata *dd;
+	अचिन्हित दीर्घ flags;
 	u32 sw_index;
 	u32 hw_context;
 
-	if (!sc)
-		return;
+	अगर (!sc)
+		वापस;
 
 	sc->flags |= SCF_IN_FREE;	/* ensure no restarts */
 	dd = sc->dd;
-	if (!list_empty(&sc->piowait))
+	अगर (!list_empty(&sc->pioरुको))
 		dd_dev_err(dd, "piowait list not empty!\n");
 	sw_index = sc->sw_index;
 	hw_context = sc->hw_context;
@@ -895,244 +896,244 @@ void sc_free(struct send_context *sc)
 	flush_work(&sc->halt_work);
 
 	spin_lock_irqsave(&dd->sc_lock, flags);
-	dd->send_contexts[sw_index].sc = NULL;
+	dd->send_contexts[sw_index].sc = शून्य;
 
-	/* clear/disable all registers set in sc_alloc */
-	write_kctxt_csr(dd, hw_context, SC(CTRL), 0);
-	write_kctxt_csr(dd, hw_context, SC(CHECK_ENABLE), 0);
-	write_kctxt_csr(dd, hw_context, SC(ERR_MASK), 0);
-	write_kctxt_csr(dd, hw_context, SC(CHECK_PARTITION_KEY), 0);
-	write_kctxt_csr(dd, hw_context, SC(CHECK_OPCODE), 0);
-	write_kctxt_csr(dd, hw_context, SC(CREDIT_RETURN_ADDR), 0);
-	write_kctxt_csr(dd, hw_context, SC(CREDIT_CTRL), 0);
+	/* clear/disable all रेजिस्टरs set in sc_alloc */
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CTRL), 0);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CHECK_ENABLE), 0);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(ERR_MASK), 0);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CHECK_PARTITION_KEY), 0);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CHECK_OPCODE), 0);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CREDIT_RETURN_ADDR), 0);
+	ग_लिखो_kctxt_csr(dd, hw_context, SC(CREDIT_CTRL), 0);
 
-	/* release the index and context for re-use */
-	sc_hw_free(dd, sw_index, hw_context);
+	/* release the index and context क्रम re-use */
+	sc_hw_मुक्त(dd, sw_index, hw_context);
 	spin_unlock_irqrestore(&dd->sc_lock, flags);
 
-	kfree(sc->sr);
-	free_percpu(sc->buffers_allocated);
-	kfree(sc);
-}
+	kमुक्त(sc->sr);
+	मुक्त_percpu(sc->buffers_allocated);
+	kमुक्त(sc);
+पूर्ण
 
 /* disable the context */
-void sc_disable(struct send_context *sc)
-{
+व्योम sc_disable(काष्ठा send_context *sc)
+अणु
 	u64 reg;
-	struct pio_buf *pbuf;
+	काष्ठा pio_buf *pbuf;
 
-	if (!sc)
-		return;
+	अगर (!sc)
+		वापस;
 
-	/* do all steps, even if already disabled */
+	/* करो all steps, even अगर alपढ़ोy disabled */
 	spin_lock_irq(&sc->alloc_lock);
-	reg = read_kctxt_csr(sc->dd, sc->hw_context, SC(CTRL));
+	reg = पढ़ो_kctxt_csr(sc->dd, sc->hw_context, SC(CTRL));
 	reg &= ~SC(CTRL_CTXT_ENABLE_SMASK);
 	sc->flags &= ~SCF_ENABLED;
-	sc_wait_for_packet_egress(sc, 1);
-	write_kctxt_csr(sc->dd, sc->hw_context, SC(CTRL), reg);
+	sc_रुको_क्रम_packet_egress(sc, 1);
+	ग_लिखो_kctxt_csr(sc->dd, sc->hw_context, SC(CTRL), reg);
 
 	/*
-	 * Flush any waiters.  Once the context is disabled,
-	 * credit return interrupts are stopped (although there
+	 * Flush any रुकोers.  Once the context is disabled,
+	 * credit वापस पूर्णांकerrupts are stopped (although there
 	 * could be one in-process when the context is disabled).
-	 * Wait one microsecond for any lingering interrupts, then
+	 * Wait one microsecond क्रम any lingering पूर्णांकerrupts, then
 	 * proceed with the flush.
 	 */
 	udelay(1);
 	spin_lock(&sc->release_lock);
-	if (sc->sr) {	/* this context has a shadow ring */
-		while (sc->sr_tail != sc->sr_head) {
+	अगर (sc->sr) अणु	/* this context has a shaकरोw ring */
+		जबतक (sc->sr_tail != sc->sr_head) अणु
 			pbuf = &sc->sr[sc->sr_tail].pbuf;
-			if (pbuf->cb)
+			अगर (pbuf->cb)
 				(*pbuf->cb)(pbuf->arg, PRC_SC_DISABLE);
 			sc->sr_tail++;
-			if (sc->sr_tail >= sc->sr_size)
+			अगर (sc->sr_tail >= sc->sr_size)
 				sc->sr_tail = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&sc->release_lock);
 
-	write_seqlock(&sc->waitlock);
-	while (!list_empty(&sc->piowait)) {
-		struct iowait *wait;
-		struct rvt_qp *qp;
-		struct hfi1_qp_priv *priv;
+	ग_लिखो_seqlock(&sc->रुकोlock);
+	जबतक (!list_empty(&sc->pioरुको)) अणु
+		काष्ठा ioरुको *रुको;
+		काष्ठा rvt_qp *qp;
+		काष्ठा hfi1_qp_priv *priv;
 
-		wait = list_first_entry(&sc->piowait, struct iowait, list);
-		qp = iowait_to_qp(wait);
+		रुको = list_first_entry(&sc->pioरुको, काष्ठा ioरुको, list);
+		qp = ioरुको_to_qp(रुको);
 		priv = qp->priv;
-		list_del_init(&priv->s_iowait.list);
-		priv->s_iowait.lock = NULL;
+		list_del_init(&priv->s_ioरुको.list);
+		priv->s_ioरुको.lock = शून्य;
 		hfi1_qp_wakeup(qp, RVT_S_WAIT_PIO | HFI1_S_WAIT_PIO_DRAIN);
-	}
-	write_sequnlock(&sc->waitlock);
+	पूर्ण
+	ग_लिखो_sequnlock(&sc->रुकोlock);
 
 	spin_unlock_irq(&sc->alloc_lock);
-}
+पूर्ण
 
-/* return SendEgressCtxtStatus.PacketOccupancy */
-static u64 packet_occupancy(u64 reg)
-{
-	return (reg &
+/* वापस SendEgressCtxtStatus.PacketOccupancy */
+अटल u64 packet_occupancy(u64 reg)
+अणु
+	वापस (reg &
 		SEND_EGRESS_CTXT_STATUS_CTXT_EGRESS_PACKET_OCCUPANCY_SMASK)
 		>> SEND_EGRESS_CTXT_STATUS_CTXT_EGRESS_PACKET_OCCUPANCY_SHIFT;
-}
+पूर्ण
 
 /* is egress halted on the context? */
-static bool egress_halted(u64 reg)
-{
-	return !!(reg & SEND_EGRESS_CTXT_STATUS_CTXT_EGRESS_HALT_STATUS_SMASK);
-}
+अटल bool egress_halted(u64 reg)
+अणु
+	वापस !!(reg & SEND_EGRESS_CTXT_STATUS_CTXT_EGRESS_HALT_STATUS_SMASK);
+पूर्ण
 
 /* is the send context halted? */
-static bool is_sc_halted(struct hfi1_devdata *dd, u32 hw_context)
-{
-	return !!(read_kctxt_csr(dd, hw_context, SC(STATUS)) &
+अटल bool is_sc_halted(काष्ठा hfi1_devdata *dd, u32 hw_context)
+अणु
+	वापस !!(पढ़ो_kctxt_csr(dd, hw_context, SC(STATUS)) &
 		  SC(STATUS_CTXT_HALTED_SMASK));
-}
+पूर्ण
 
 /**
- * sc_wait_for_packet_egress
+ * sc_रुको_क्रम_packet_egress
  * @sc: valid send context
- * @pause: wait for credit return
+ * @छोड़ो: रुको क्रम credit वापस
  *
- * Wait for packet egress, optionally pause for credit return
+ * Wait क्रम packet egress, optionally छोड़ो क्रम credit वापस
  *
  * Egress halt and Context halt are not necessarily the same thing, so
- * check for both.
+ * check क्रम both.
  *
  * NOTE: The context halt bit may not be set immediately.  Because of this,
  * it is necessary to check the SW SFC_HALTED bit (set in the IRQ) and the HW
- * context bit to determine if the context is halted.
+ * context bit to determine अगर the context is halted.
  */
-static void sc_wait_for_packet_egress(struct send_context *sc, int pause)
-{
-	struct hfi1_devdata *dd = sc->dd;
+अटल व्योम sc_रुको_क्रम_packet_egress(काष्ठा send_context *sc, पूर्णांक छोड़ो)
+अणु
+	काष्ठा hfi1_devdata *dd = sc->dd;
 	u64 reg = 0;
 	u64 reg_prev;
 	u32 loop = 0;
 
-	while (1) {
+	जबतक (1) अणु
 		reg_prev = reg;
-		reg = read_csr(dd, sc->hw_context * 8 +
+		reg = पढ़ो_csr(dd, sc->hw_context * 8 +
 			       SEND_EGRESS_CTXT_STATUS);
-		/* done if any halt bits, SW or HW are set */
-		if (sc->flags & SCF_HALTED ||
+		/* करोne अगर any halt bits, SW or HW are set */
+		अगर (sc->flags & SCF_HALTED ||
 		    is_sc_halted(dd, sc->hw_context) || egress_halted(reg))
-			break;
+			अवरोध;
 		reg = packet_occupancy(reg);
-		if (reg == 0)
-			break;
-		/* counter is reset if occupancy count changes */
-		if (reg != reg_prev)
+		अगर (reg == 0)
+			अवरोध;
+		/* counter is reset अगर occupancy count changes */
+		अगर (reg != reg_prev)
 			loop = 0;
-		if (loop > 50000) {
-			/* timed out - bounce the link */
+		अगर (loop > 50000) अणु
+			/* समयd out - bounce the link */
 			dd_dev_err(dd,
 				   "%s: context %u(%u) timeout waiting for packets to egress, remaining count %u, bouncing link\n",
 				   __func__, sc->sw_index,
 				   sc->hw_context, (u32)reg);
 			queue_work(dd->pport->link_wq,
 				   &dd->pport->link_bounce_work);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		loop++;
 		udelay(1);
-	}
+	पूर्ण
 
-	if (pause)
-		/* Add additional delay to ensure chip returns all credits */
-		pause_for_credit_return(dd);
-}
+	अगर (छोड़ो)
+		/* Add additional delay to ensure chip वापसs all credits */
+		छोड़ो_क्रम_credit_वापस(dd);
+पूर्ण
 
-void sc_wait(struct hfi1_devdata *dd)
-{
-	int i;
+व्योम sc_रुको(काष्ठा hfi1_devdata *dd)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dd->num_send_contexts; i++) {
-		struct send_context *sc = dd->send_contexts[i].sc;
+	क्रम (i = 0; i < dd->num_send_contexts; i++) अणु
+		काष्ठा send_context *sc = dd->send_contexts[i].sc;
 
-		if (!sc)
-			continue;
-		sc_wait_for_packet_egress(sc, 0);
-	}
-}
+		अगर (!sc)
+			जारी;
+		sc_रुको_क्रम_packet_egress(sc, 0);
+	पूर्ण
+पूर्ण
 
 /*
  * Restart a context after it has been halted due to error.
  *
- * If the first step fails - wait for the halt to be asserted, return early.
- * Otherwise complain about timeouts but keep going.
+ * If the first step fails - रुको क्रम the halt to be निश्चितed, वापस early.
+ * Otherwise complain about समयouts but keep going.
  *
  * It is expected that allocations (enabled flag bit) have been shut off
- * already (only applies to kernel contexts).
+ * alपढ़ोy (only applies to kernel contexts).
  */
-int sc_restart(struct send_context *sc)
-{
-	struct hfi1_devdata *dd = sc->dd;
+पूर्णांक sc_restart(काष्ठा send_context *sc)
+अणु
+	काष्ठा hfi1_devdata *dd = sc->dd;
 	u64 reg;
 	u32 loop;
-	int count;
+	पूर्णांक count;
 
-	/* bounce off if not halted, or being free'd */
-	if (!(sc->flags & SCF_HALTED) || (sc->flags & SCF_IN_FREE))
-		return -EINVAL;
+	/* bounce off अगर not halted, or being मुक्त'd */
+	अगर (!(sc->flags & SCF_HALTED) || (sc->flags & SCF_IN_FREE))
+		वापस -EINVAL;
 
 	dd_dev_info(dd, "restarting send context %u(%u)\n", sc->sw_index,
 		    sc->hw_context);
 
 	/*
-	 * Step 1: Wait for the context to actually halt.
+	 * Step 1: Wait क्रम the context to actually halt.
 	 *
-	 * The error interrupt is asynchronous to actually setting halt
+	 * The error पूर्णांकerrupt is asynchronous to actually setting halt
 	 * on the context.
 	 */
 	loop = 0;
-	while (1) {
-		reg = read_kctxt_csr(dd, sc->hw_context, SC(STATUS));
-		if (reg & SC(STATUS_CTXT_HALTED_SMASK))
-			break;
-		if (loop > 100) {
+	जबतक (1) अणु
+		reg = पढ़ो_kctxt_csr(dd, sc->hw_context, SC(STATUS));
+		अगर (reg & SC(STATUS_CTXT_HALTED_SMASK))
+			अवरोध;
+		अगर (loop > 100) अणु
 			dd_dev_err(dd, "%s: context %u(%u) not halting, skipping\n",
 				   __func__, sc->sw_index, sc->hw_context);
-			return -ETIME;
-		}
+			वापस -ETIME;
+		पूर्ण
 		loop++;
 		udelay(1);
-	}
+	पूर्ण
 
 	/*
-	 * Step 2: Ensure no users are still trying to write to PIO.
+	 * Step 2: Ensure no users are still trying to ग_लिखो to PIO.
 	 *
-	 * For kernel contexts, we have already turned off buffer allocation.
-	 * Now wait for the buffer count to go to zero.
+	 * For kernel contexts, we have alपढ़ोy turned off buffer allocation.
+	 * Now रुको क्रम the buffer count to go to zero.
 	 *
-	 * For user contexts, the user handling code has cut off write access
-	 * to the context's PIO pages before calling this routine and will
-	 * restore write access after this routine returns.
+	 * For user contexts, the user handling code has cut off ग_लिखो access
+	 * to the context's PIO pages beक्रमe calling this routine and will
+	 * restore ग_लिखो access after this routine वापसs.
 	 */
-	if (sc->type != SC_USER) {
+	अगर (sc->type != SC_USER) अणु
 		/* kernel context */
 		loop = 0;
-		while (1) {
+		जबतक (1) अणु
 			count = get_buffers_allocated(sc);
-			if (count == 0)
-				break;
-			if (loop > 100) {
+			अगर (count == 0)
+				अवरोध;
+			अगर (loop > 100) अणु
 				dd_dev_err(dd,
 					   "%s: context %u(%u) timeout waiting for PIO buffers to zero, remaining %d\n",
 					   __func__, sc->sw_index,
 					   sc->hw_context, count);
-			}
+			पूर्ण
 			loop++;
 			udelay(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Step 3: Wait for all packets to egress.
-	 * This is done while disabling the send context
+	 * Step 3: Wait क्रम all packets to egress.
+	 * This is करोne जबतक disabling the send context
 	 *
 	 * Step 4: Disable the context
 	 *
@@ -1147,167 +1148,167 @@ int sc_restart(struct send_context *sc)
 	 * This enable will clear the halted flag and per-send context
 	 * error flags.
 	 */
-	return sc_enable(sc);
-}
+	वापस sc_enable(sc);
+पूर्ण
 
 /*
- * PIO freeze processing.  To be called after the TXE block is fully frozen.
+ * PIO मुक्तze processing.  To be called after the TXE block is fully frozen.
  * Go through all frozen send contexts and disable them.  The contexts are
- * already stopped by the freeze.
+ * alपढ़ोy stopped by the मुक्तze.
  */
-void pio_freeze(struct hfi1_devdata *dd)
-{
-	struct send_context *sc;
-	int i;
+व्योम pio_मुक्तze(काष्ठा hfi1_devdata *dd)
+अणु
+	काष्ठा send_context *sc;
+	पूर्णांक i;
 
-	for (i = 0; i < dd->num_send_contexts; i++) {
+	क्रम (i = 0; i < dd->num_send_contexts; i++) अणु
 		sc = dd->send_contexts[i].sc;
 		/*
 		 * Don't disable unallocated, unfrozen, or user send contexts.
 		 * User send contexts will be disabled when the process
-		 * calls into the driver to reset its context.
+		 * calls पूर्णांकo the driver to reset its context.
 		 */
-		if (!sc || !(sc->flags & SCF_FROZEN) || sc->type == SC_USER)
-			continue;
+		अगर (!sc || !(sc->flags & SCF_FROZEN) || sc->type == SC_USER)
+			जारी;
 
-		/* only need to disable, the context is already stopped */
+		/* only need to disable, the context is alपढ़ोy stopped */
 		sc_disable(sc);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Unfreeze PIO for kernel send contexts.  The precondition for calling this
- * is that all PIO send contexts have been disabled and the SPC freeze has
- * been cleared.  Now perform the last step and re-enable each kernel context.
- * User (PSM) processing will occur when PSM calls into the kernel to
- * acknowledge the freeze.
+ * Unमुक्तze PIO क्रम kernel send contexts.  The precondition क्रम calling this
+ * is that all PIO send contexts have been disabled and the SPC मुक्तze has
+ * been cleared.  Now perक्रमm the last step and re-enable each kernel context.
+ * User (PSM) processing will occur when PSM calls पूर्णांकo the kernel to
+ * acknowledge the मुक्तze.
  */
-void pio_kernel_unfreeze(struct hfi1_devdata *dd)
-{
-	struct send_context *sc;
-	int i;
+व्योम pio_kernel_unमुक्तze(काष्ठा hfi1_devdata *dd)
+अणु
+	काष्ठा send_context *sc;
+	पूर्णांक i;
 
-	for (i = 0; i < dd->num_send_contexts; i++) {
+	क्रम (i = 0; i < dd->num_send_contexts; i++) अणु
 		sc = dd->send_contexts[i].sc;
-		if (!sc || !(sc->flags & SCF_FROZEN) || sc->type == SC_USER)
-			continue;
-		if (sc->flags & SCF_LINK_DOWN)
-			continue;
+		अगर (!sc || !(sc->flags & SCF_FROZEN) || sc->type == SC_USER)
+			जारी;
+		अगर (sc->flags & SCF_LINK_DOWN)
+			जारी;
 
 		sc_enable(sc);	/* will clear the sc frozen flag */
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * pio_kernel_linkup() - Re-enable send contexts after linkup event
  * @dd: valid devive data
  *
- * When the link goes down, the freeze path is taken.  However, a link down
- * event is different from a freeze because if the send context is re-enabled
+ * When the link goes करोwn, the मुक्तze path is taken.  However, a link करोwn
+ * event is dअगरferent from a मुक्तze because अगर the send context is re-enabled
  * whowever is sending data will start sending data again, which will hang
  * any QP that is sending data.
  *
- * The freeze path now looks at the type of event that occurs and takes this
- * path for link down event.
+ * The मुक्तze path now looks at the type of event that occurs and takes this
+ * path क्रम link करोwn event.
  */
-void pio_kernel_linkup(struct hfi1_devdata *dd)
-{
-	struct send_context *sc;
-	int i;
+व्योम pio_kernel_linkup(काष्ठा hfi1_devdata *dd)
+अणु
+	काष्ठा send_context *sc;
+	पूर्णांक i;
 
-	for (i = 0; i < dd->num_send_contexts; i++) {
+	क्रम (i = 0; i < dd->num_send_contexts; i++) अणु
 		sc = dd->send_contexts[i].sc;
-		if (!sc || !(sc->flags & SCF_LINK_DOWN) || sc->type == SC_USER)
-			continue;
+		अगर (!sc || !(sc->flags & SCF_LINK_DOWN) || sc->type == SC_USER)
+			जारी;
 
-		sc_enable(sc);	/* will clear the sc link down flag */
-	}
-}
+		sc_enable(sc);	/* will clear the sc link करोwn flag */
+	पूर्ण
+पूर्ण
 
 /*
- * Wait for the SendPioInitCtxt.PioInitInProgress bit to clear.
+ * Wait क्रम the SendPioInitCtxt.PioInitInProgress bit to clear.
  * Returns:
- *	-ETIMEDOUT - if we wait too long
- *	-EIO	   - if there was an error
+ *	-ETIMEDOUT - अगर we रुको too दीर्घ
+ *	-EIO	   - अगर there was an error
  */
-static int pio_init_wait_progress(struct hfi1_devdata *dd)
-{
+अटल पूर्णांक pio_init_रुको_progress(काष्ठा hfi1_devdata *dd)
+अणु
 	u64 reg;
-	int max, count = 0;
+	पूर्णांक max, count = 0;
 
-	/* max is the longest possible HW init time / delay */
+	/* max is the दीर्घest possible HW init समय / delay */
 	max = (dd->icode == ICODE_FPGA_EMULATION) ? 120 : 5;
-	while (1) {
-		reg = read_csr(dd, SEND_PIO_INIT_CTXT);
-		if (!(reg & SEND_PIO_INIT_CTXT_PIO_INIT_IN_PROGRESS_SMASK))
-			break;
-		if (count >= max)
-			return -ETIMEDOUT;
+	जबतक (1) अणु
+		reg = पढ़ो_csr(dd, SEND_PIO_INIT_CTXT);
+		अगर (!(reg & SEND_PIO_INIT_CTXT_PIO_INIT_IN_PROGRESS_SMASK))
+			अवरोध;
+		अगर (count >= max)
+			वापस -ETIMEDOUT;
 		udelay(5);
 		count++;
-	}
+	पूर्ण
 
-	return reg & SEND_PIO_INIT_CTXT_PIO_INIT_ERR_SMASK ? -EIO : 0;
-}
+	वापस reg & SEND_PIO_INIT_CTXT_PIO_INIT_ERR_SMASK ? -EIO : 0;
+पूर्ण
 
 /*
- * Reset all of the send contexts to their power-on state.  Used
+ * Reset all of the send contexts to their घातer-on state.  Used
  * only during manual init - no lock against sc_enable needed.
  */
-void pio_reset_all(struct hfi1_devdata *dd)
-{
-	int ret;
+व्योम pio_reset_all(काष्ठा hfi1_devdata *dd)
+अणु
+	पूर्णांक ret;
 
 	/* make sure the init engine is not busy */
-	ret = pio_init_wait_progress(dd);
-	/* ignore any timeout */
-	if (ret == -EIO) {
+	ret = pio_init_रुको_progress(dd);
+	/* ignore any समयout */
+	अगर (ret == -EIO) अणु
 		/* clear the error */
-		write_csr(dd, SEND_PIO_ERR_CLEAR,
+		ग_लिखो_csr(dd, SEND_PIO_ERR_CLEAR,
 			  SEND_PIO_ERR_CLEAR_PIO_INIT_SM_IN_ERR_SMASK);
-	}
+	पूर्ण
 
 	/* reset init all */
-	write_csr(dd, SEND_PIO_INIT_CTXT,
+	ग_लिखो_csr(dd, SEND_PIO_INIT_CTXT,
 		  SEND_PIO_INIT_CTXT_PIO_ALL_CTXT_INIT_SMASK);
 	udelay(2);
-	ret = pio_init_wait_progress(dd);
-	if (ret < 0) {
+	ret = pio_init_रुको_progress(dd);
+	अगर (ret < 0) अणु
 		dd_dev_err(dd,
 			   "PIO send context init %s while initializing all PIO blocks\n",
 			   ret == -ETIMEDOUT ? "is stuck" : "had an error");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* enable the context */
-int sc_enable(struct send_context *sc)
-{
+पूर्णांक sc_enable(काष्ठा send_context *sc)
+अणु
 	u64 sc_ctrl, reg, pio;
-	struct hfi1_devdata *dd;
-	unsigned long flags;
-	int ret = 0;
+	काष्ठा hfi1_devdata *dd;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (!sc)
-		return -EINVAL;
+	अगर (!sc)
+		वापस -EINVAL;
 	dd = sc->dd;
 
 	/*
 	 * Obtain the allocator lock to guard against any allocation
 	 * attempts (which should not happen prior to context being
-	 * enabled). On the release/disable side we don't need to
-	 * worry about locking since the releaser will not do anything
-	 * if the context accounting values have not changed.
+	 * enabled). On the release/disable side we करोn't need to
+	 * worry about locking since the releaser will not करो anything
+	 * अगर the context accounting values have not changed.
 	 */
 	spin_lock_irqsave(&sc->alloc_lock, flags);
-	sc_ctrl = read_kctxt_csr(dd, sc->hw_context, SC(CTRL));
-	if ((sc_ctrl & SC(CTRL_CTXT_ENABLE_SMASK)))
-		goto unlock; /* already enabled */
+	sc_ctrl = पढ़ो_kctxt_csr(dd, sc->hw_context, SC(CTRL));
+	अगर ((sc_ctrl & SC(CTRL_CTXT_ENABLE_SMASK)))
+		जाओ unlock; /* alपढ़ोy enabled */
 
-	/* IMPORTANT: only clear free and fill if transitioning 0 -> 1 */
+	/* IMPORTANT: only clear मुक्त and fill अगर transitioning 0 -> 1 */
 
-	*sc->hw_free = 0;
-	sc->free = 0;
-	sc->alloc_free = 0;
+	*sc->hw_मुक्त = 0;
+	sc->मुक्त = 0;
+	sc->alloc_मुक्त = 0;
 	sc->fill = 0;
 	sc->fill_wrap = 0;
 	sc->sr_head = 0;
@@ -1322,106 +1323,106 @@ int sc_enable(struct send_context *sc)
 	 * is disabled, the halt will not clear until after the PIO init
 	 * engine runs below.
 	 */
-	reg = read_kctxt_csr(dd, sc->hw_context, SC(ERR_STATUS));
-	if (reg)
-		write_kctxt_csr(dd, sc->hw_context, SC(ERR_CLEAR), reg);
+	reg = पढ़ो_kctxt_csr(dd, sc->hw_context, SC(ERR_STATUS));
+	अगर (reg)
+		ग_लिखो_kctxt_csr(dd, sc->hw_context, SC(ERR_CLEAR), reg);
 
 	/*
 	 * The HW PIO initialization engine can handle only one init
-	 * request at a time. Serialize access to each device's engine.
+	 * request at a समय. Serialize access to each device's engine.
 	 */
 	spin_lock(&dd->sc_init_lock);
 	/*
 	 * Since access to this code block is serialized and
-	 * each access waits for the initialization to complete
-	 * before releasing the lock, the PIO initialization engine
-	 * should not be in use, so we don't have to wait for the
-	 * InProgress bit to go down.
+	 * each access रुकोs क्रम the initialization to complete
+	 * beक्रमe releasing the lock, the PIO initialization engine
+	 * should not be in use, so we करोn't have to रुको क्रम the
+	 * InProgress bit to go करोwn.
 	 */
 	pio = ((sc->hw_context & SEND_PIO_INIT_CTXT_PIO_CTXT_NUM_MASK) <<
 	       SEND_PIO_INIT_CTXT_PIO_CTXT_NUM_SHIFT) |
 		SEND_PIO_INIT_CTXT_PIO_SINGLE_CTXT_INIT_SMASK;
-	write_csr(dd, SEND_PIO_INIT_CTXT, pio);
+	ग_लिखो_csr(dd, SEND_PIO_INIT_CTXT, pio);
 	/*
-	 * Wait until the engine is done.  Give the chip the required time
-	 * so, hopefully, we read the register just once.
+	 * Wait until the engine is करोne.  Give the chip the required समय
+	 * so, hopefully, we पढ़ो the रेजिस्टर just once.
 	 */
 	udelay(2);
-	ret = pio_init_wait_progress(dd);
+	ret = pio_init_रुको_progress(dd);
 	spin_unlock(&dd->sc_init_lock);
-	if (ret) {
+	अगर (ret) अणु
 		dd_dev_err(dd,
 			   "sctxt%u(%u): Context not enabled due to init failure %d\n",
 			   sc->sw_index, sc->hw_context, ret);
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	/*
 	 * All is well. Enable the context.
 	 */
 	sc_ctrl |= SC(CTRL_CTXT_ENABLE_SMASK);
-	write_kctxt_csr(dd, sc->hw_context, SC(CTRL), sc_ctrl);
+	ग_लिखो_kctxt_csr(dd, sc->hw_context, SC(CTRL), sc_ctrl);
 	/*
-	 * Read SendCtxtCtrl to force the write out and prevent a timing
-	 * hazard where a PIO write may reach the context before the enable.
+	 * Read SendCtxtCtrl to क्रमce the ग_लिखो out and prevent a timing
+	 * hazard where a PIO ग_लिखो may reach the context beक्रमe the enable.
 	 */
-	read_kctxt_csr(dd, sc->hw_context, SC(CTRL));
+	पढ़ो_kctxt_csr(dd, sc->hw_context, SC(CTRL));
 	sc->flags |= SCF_ENABLED;
 
 unlock:
 	spin_unlock_irqrestore(&sc->alloc_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* force a credit return on the context */
-void sc_return_credits(struct send_context *sc)
-{
-	if (!sc)
-		return;
+/* क्रमce a credit वापस on the context */
+व्योम sc_वापस_credits(काष्ठा send_context *sc)
+अणु
+	अगर (!sc)
+		वापस;
 
-	/* a 0->1 transition schedules a credit return */
-	write_kctxt_csr(sc->dd, sc->hw_context, SC(CREDIT_FORCE),
+	/* a 0->1 transition schedules a credit वापस */
+	ग_लिखो_kctxt_csr(sc->dd, sc->hw_context, SC(CREDIT_FORCE),
 			SC(CREDIT_FORCE_FORCE_RETURN_SMASK));
 	/*
-	 * Ensure that the write is flushed and the credit return is
+	 * Ensure that the ग_लिखो is flushed and the credit वापस is
 	 * scheduled. We care more about the 0 -> 1 transition.
 	 */
-	read_kctxt_csr(sc->dd, sc->hw_context, SC(CREDIT_FORCE));
-	/* set back to 0 for next time */
-	write_kctxt_csr(sc->dd, sc->hw_context, SC(CREDIT_FORCE), 0);
-}
+	पढ़ो_kctxt_csr(sc->dd, sc->hw_context, SC(CREDIT_FORCE));
+	/* set back to 0 क्रम next समय */
+	ग_लिखो_kctxt_csr(sc->dd, sc->hw_context, SC(CREDIT_FORCE), 0);
+पूर्ण
 
 /* allow all in-flight packets to drain on the context */
-void sc_flush(struct send_context *sc)
-{
-	if (!sc)
-		return;
+व्योम sc_flush(काष्ठा send_context *sc)
+अणु
+	अगर (!sc)
+		वापस;
 
-	sc_wait_for_packet_egress(sc, 1);
-}
+	sc_रुको_क्रम_packet_egress(sc, 1);
+पूर्ण
 
-/* drop all packets on the context, no waiting until they are sent */
-void sc_drop(struct send_context *sc)
-{
-	if (!sc)
-		return;
+/* drop all packets on the context, no रुकोing until they are sent */
+व्योम sc_drop(काष्ठा send_context *sc)
+अणु
+	अगर (!sc)
+		वापस;
 
 	dd_dev_info(sc->dd, "%s: context %u(%u) - not implemented\n",
 		    __func__, sc->sw_index, sc->hw_context);
-}
+पूर्ण
 
 /*
- * Start the software reaction to a context halt or SPC freeze:
+ * Start the software reaction to a context halt or SPC मुक्तze:
  *	- mark the context as halted or frozen
  *	- stop buffer allocations
  *
- * Called from the error interrupt.  Other work is deferred until
- * out of the interrupt.
+ * Called from the error पूर्णांकerrupt.  Other work is deferred until
+ * out of the पूर्णांकerrupt.
  */
-void sc_stop(struct send_context *sc, int flag)
-{
-	unsigned long flags;
+व्योम sc_stop(काष्ठा send_context *sc, पूर्णांक flag)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/* stop buffer allocations */
 	spin_lock_irqsave(&sc->alloc_lock, flags);
@@ -1429,11 +1430,11 @@ void sc_stop(struct send_context *sc, int flag)
 	sc->flags |= flag;
 	sc->flags &= ~SCF_ENABLED;
 	spin_unlock_irqrestore(&sc->alloc_lock, flags);
-	wake_up(&sc->halt_wait);
-}
+	wake_up(&sc->halt_रुको);
+पूर्ण
 
-#define BLOCK_DWORDS (PIO_BLOCK_SIZE / sizeof(u32))
-#define dwords_to_blocks(x) DIV_ROUND_UP(x, BLOCK_DWORDS)
+#घोषणा BLOCK_DWORDS (PIO_BLOCK_SIZE / माप(u32))
+#घोषणा dwords_to_blocks(x) DIV_ROUND_UP(x, BLOCK_DWORDS)
 
 /*
  * The send context buffer "allocator".
@@ -1441,82 +1442,82 @@ void sc_stop(struct send_context *sc, int flag)
  * @sc: the PIO send context we are allocating from
  * @len: length of whole packet - including PBC - in dwords
  * @cb: optional callback to call when the buffer is finished sending
- * @arg: argument for cb
+ * @arg: argument क्रम cb
  *
- * Return a pointer to a PIO buffer, NULL if not enough room, -ECOMM
- * when link is down.
+ * Return a poपूर्णांकer to a PIO buffer, शून्य अगर not enough room, -ECOMM
+ * when link is करोwn.
  */
-struct pio_buf *sc_buffer_alloc(struct send_context *sc, u32 dw_len,
-				pio_release_cb cb, void *arg)
-{
-	struct pio_buf *pbuf = NULL;
-	unsigned long flags;
-	unsigned long avail;
-	unsigned long blocks = dwords_to_blocks(dw_len);
+काष्ठा pio_buf *sc_buffer_alloc(काष्ठा send_context *sc, u32 dw_len,
+				pio_release_cb cb, व्योम *arg)
+अणु
+	काष्ठा pio_buf *pbuf = शून्य;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ avail;
+	अचिन्हित दीर्घ blocks = dwords_to_blocks(dw_len);
 	u32 fill_wrap;
-	int trycount = 0;
+	पूर्णांक trycount = 0;
 	u32 head, next;
 
 	spin_lock_irqsave(&sc->alloc_lock, flags);
-	if (!(sc->flags & SCF_ENABLED)) {
+	अगर (!(sc->flags & SCF_ENABLED)) अणु
 		spin_unlock_irqrestore(&sc->alloc_lock, flags);
-		return ERR_PTR(-ECOMM);
-	}
+		वापस ERR_PTR(-ECOMM);
+	पूर्ण
 
 retry:
-	avail = (unsigned long)sc->credits - (sc->fill - sc->alloc_free);
-	if (blocks > avail) {
+	avail = (अचिन्हित दीर्घ)sc->credits - (sc->fill - sc->alloc_मुक्त);
+	अगर (blocks > avail) अणु
 		/* not enough room */
-		if (unlikely(trycount))	{ /* already tried to get more room */
+		अगर (unlikely(trycount))	अणु /* alपढ़ोy tried to get more room */
 			spin_unlock_irqrestore(&sc->alloc_lock, flags);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		/* copy from receiver cache line and recalculate */
-		sc->alloc_free = READ_ONCE(sc->free);
+		sc->alloc_मुक्त = READ_ONCE(sc->मुक्त);
 		avail =
-			(unsigned long)sc->credits -
-			(sc->fill - sc->alloc_free);
-		if (blocks > avail) {
+			(अचिन्हित दीर्घ)sc->credits -
+			(sc->fill - sc->alloc_मुक्त);
+		अगर (blocks > avail) अणु
 			/* still no room, actively update */
 			sc_release_update(sc);
-			sc->alloc_free = READ_ONCE(sc->free);
+			sc->alloc_मुक्त = READ_ONCE(sc->मुक्त);
 			trycount++;
-			goto retry;
-		}
-	}
+			जाओ retry;
+		पूर्ण
+	पूर्ण
 
 	/* there is enough room */
 
 	preempt_disable();
 	this_cpu_inc(*sc->buffers_allocated);
 
-	/* read this once */
+	/* पढ़ो this once */
 	head = sc->sr_head;
 
 	/* "allocate" the buffer */
 	sc->fill += blocks;
 	fill_wrap = sc->fill_wrap;
 	sc->fill_wrap += blocks;
-	if (sc->fill_wrap >= sc->credits)
+	अगर (sc->fill_wrap >= sc->credits)
 		sc->fill_wrap = sc->fill_wrap - sc->credits;
 
 	/*
-	 * Fill the parts that the releaser looks at before moving the head.
+	 * Fill the parts that the releaser looks at beक्रमe moving the head.
 	 * The only necessary piece is the sent_at field.  The credits
-	 * we have just allocated cannot have been returned yet, so the
-	 * cb and arg will not be looked at for a "while".  Put them
+	 * we have just allocated cannot have been वापसed yet, so the
+	 * cb and arg will not be looked at क्रम a "while".  Put them
 	 * on this side of the memory barrier anyway.
 	 */
 	pbuf = &sc->sr[head].pbuf;
 	pbuf->sent_at = sc->fill;
 	pbuf->cb = cb;
 	pbuf->arg = arg;
-	pbuf->sc = sc;	/* could be filled in at sc->sr init time */
-	/* make sure this is in memory before updating the head */
+	pbuf->sc = sc;	/* could be filled in at sc->sr init समय */
+	/* make sure this is in memory beक्रमe updating the head */
 
-	/* calculate next head index, do not store */
+	/* calculate next head index, करो not store */
 	next = head + 1;
-	if (next >= sc->sr_size)
+	अगर (next >= sc->sr_size)
 		next = 0;
 	/*
 	 * update the head - must be last! - the releaser can look at fields
@@ -1532,346 +1533,346 @@ retry:
 	pbuf->qw_written = 0;
 	pbuf->carry_bytes = 0;
 	pbuf->carry.val64 = 0;
-done:
-	return pbuf;
-}
+करोne:
+	वापस pbuf;
+पूर्ण
 
 /*
- * There are at least two entities that can turn on credit return
- * interrupts and they can overlap.  Avoid problems by implementing
- * a count scheme that is enforced by a lock.  The lock is needed because
- * the count and CSR write must be paired.
+ * There are at least two entities that can turn on credit वापस
+ * पूर्णांकerrupts and they can overlap.  Aव्योम problems by implementing
+ * a count scheme that is enक्रमced by a lock.  The lock is needed because
+ * the count and CSR ग_लिखो must be paired.
  */
 
 /*
- * Start credit return interrupts.  This is managed by a count.  If already
+ * Start credit वापस पूर्णांकerrupts.  This is managed by a count.  If alपढ़ोy
  * on, just increment the count.
  */
-void sc_add_credit_return_intr(struct send_context *sc)
-{
-	unsigned long flags;
+व्योम sc_add_credit_वापस_पूर्णांकr(काष्ठा send_context *sc)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/* lock must surround both the count change and the CSR update */
 	spin_lock_irqsave(&sc->credit_ctrl_lock, flags);
-	if (sc->credit_intr_count == 0) {
+	अगर (sc->credit_पूर्णांकr_count == 0) अणु
 		sc->credit_ctrl |= SC(CREDIT_CTRL_CREDIT_INTR_SMASK);
-		write_kctxt_csr(sc->dd, sc->hw_context,
+		ग_लिखो_kctxt_csr(sc->dd, sc->hw_context,
 				SC(CREDIT_CTRL), sc->credit_ctrl);
-	}
-	sc->credit_intr_count++;
+	पूर्ण
+	sc->credit_पूर्णांकr_count++;
 	spin_unlock_irqrestore(&sc->credit_ctrl_lock, flags);
-}
+पूर्ण
 
 /*
- * Stop credit return interrupts.  This is managed by a count.  Decrement the
- * count, if the last user, then turn the credit interrupts off.
+ * Stop credit वापस पूर्णांकerrupts.  This is managed by a count.  Decrement the
+ * count, अगर the last user, then turn the credit पूर्णांकerrupts off.
  */
-void sc_del_credit_return_intr(struct send_context *sc)
-{
-	unsigned long flags;
+व्योम sc_del_credit_वापस_पूर्णांकr(काष्ठा send_context *sc)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	WARN_ON(sc->credit_intr_count == 0);
+	WARN_ON(sc->credit_पूर्णांकr_count == 0);
 
 	/* lock must surround both the count change and the CSR update */
 	spin_lock_irqsave(&sc->credit_ctrl_lock, flags);
-	sc->credit_intr_count--;
-	if (sc->credit_intr_count == 0) {
+	sc->credit_पूर्णांकr_count--;
+	अगर (sc->credit_पूर्णांकr_count == 0) अणु
 		sc->credit_ctrl &= ~SC(CREDIT_CTRL_CREDIT_INTR_SMASK);
-		write_kctxt_csr(sc->dd, sc->hw_context,
+		ग_लिखो_kctxt_csr(sc->dd, sc->hw_context,
 				SC(CREDIT_CTRL), sc->credit_ctrl);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&sc->credit_ctrl_lock, flags);
-}
+पूर्ण
 
 /*
- * The caller must be careful when calling this.  All needint calls
- * must be paired with !needint.
+ * The caller must be careful when calling this.  All needपूर्णांक calls
+ * must be paired with !needपूर्णांक.
  */
-void hfi1_sc_wantpiobuf_intr(struct send_context *sc, u32 needint)
-{
-	if (needint)
-		sc_add_credit_return_intr(sc);
-	else
-		sc_del_credit_return_intr(sc);
-	trace_hfi1_wantpiointr(sc, needint, sc->credit_ctrl);
-	if (needint)
-		sc_return_credits(sc);
-}
+व्योम hfi1_sc_wantpiobuf_पूर्णांकr(काष्ठा send_context *sc, u32 needपूर्णांक)
+अणु
+	अगर (needपूर्णांक)
+		sc_add_credit_वापस_पूर्णांकr(sc);
+	अन्यथा
+		sc_del_credit_वापस_पूर्णांकr(sc);
+	trace_hfi1_wantpioपूर्णांकr(sc, needपूर्णांक, sc->credit_ctrl);
+	अगर (needपूर्णांक)
+		sc_वापस_credits(sc);
+पूर्ण
 
 /**
  * sc_piobufavail - callback when a PIO buffer is available
  * @sc: the send context
  *
- * This is called from the interrupt handler when a PIO buffer is
- * available after hfi1_verbs_send() returned an error that no buffers were
- * available. Disable the interrupt if there are no more QPs waiting.
+ * This is called from the पूर्णांकerrupt handler when a PIO buffer is
+ * available after hfi1_verbs_send() वापसed an error that no buffers were
+ * available. Disable the पूर्णांकerrupt अगर there are no more QPs रुकोing.
  */
-static void sc_piobufavail(struct send_context *sc)
-{
-	struct hfi1_devdata *dd = sc->dd;
-	struct list_head *list;
-	struct rvt_qp *qps[PIO_WAIT_BATCH_SIZE];
-	struct rvt_qp *qp;
-	struct hfi1_qp_priv *priv;
-	unsigned long flags;
-	uint i, n = 0, top_idx = 0;
+अटल व्योम sc_piobufavail(काष्ठा send_context *sc)
+अणु
+	काष्ठा hfi1_devdata *dd = sc->dd;
+	काष्ठा list_head *list;
+	काष्ठा rvt_qp *qps[PIO_WAIT_BATCH_SIZE];
+	काष्ठा rvt_qp *qp;
+	काष्ठा hfi1_qp_priv *priv;
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक i, n = 0, top_idx = 0;
 
-	if (dd->send_contexts[sc->sw_index].type != SC_KERNEL &&
+	अगर (dd->send_contexts[sc->sw_index].type != SC_KERNEL &&
 	    dd->send_contexts[sc->sw_index].type != SC_VL15)
-		return;
-	list = &sc->piowait;
+		वापस;
+	list = &sc->pioरुको;
 	/*
-	 * Note: checking that the piowait list is empty and clearing
-	 * the buffer available interrupt needs to be atomic or we
-	 * could end up with QPs on the wait list with the interrupt
+	 * Note: checking that the pioरुको list is empty and clearing
+	 * the buffer available पूर्णांकerrupt needs to be atomic or we
+	 * could end up with QPs on the रुको list with the पूर्णांकerrupt
 	 * disabled.
 	 */
-	write_seqlock_irqsave(&sc->waitlock, flags);
-	while (!list_empty(list)) {
-		struct iowait *wait;
+	ग_लिखो_seqlock_irqsave(&sc->रुकोlock, flags);
+	जबतक (!list_empty(list)) अणु
+		काष्ठा ioरुको *रुको;
 
-		if (n == ARRAY_SIZE(qps))
-			break;
-		wait = list_first_entry(list, struct iowait, list);
-		iowait_get_priority(wait);
-		qp = iowait_to_qp(wait);
+		अगर (n == ARRAY_SIZE(qps))
+			अवरोध;
+		रुको = list_first_entry(list, काष्ठा ioरुको, list);
+		ioरुको_get_priority(रुको);
+		qp = ioरुको_to_qp(रुको);
 		priv = qp->priv;
-		list_del_init(&priv->s_iowait.list);
-		priv->s_iowait.lock = NULL;
-		if (n) {
+		list_del_init(&priv->s_ioरुको.list);
+		priv->s_ioरुको.lock = शून्य;
+		अगर (n) अणु
 			priv = qps[top_idx]->priv;
-			top_idx = iowait_priority_update_top(wait,
-							     &priv->s_iowait,
+			top_idx = ioरुको_priority_update_top(रुको,
+							     &priv->s_ioरुको,
 							     n, top_idx);
-		}
+		पूर्ण
 
 		/* refcount held until actual wake up */
 		qps[n++] = qp;
-	}
+	पूर्ण
 	/*
-	 * If there had been waiters and there are more
-	 * insure that we redo the force to avoid a potential hang.
+	 * If there had been रुकोers and there are more
+	 * insure that we reकरो the क्रमce to aव्योम a potential hang.
 	 */
-	if (n) {
-		hfi1_sc_wantpiobuf_intr(sc, 0);
-		if (!list_empty(list))
-			hfi1_sc_wantpiobuf_intr(sc, 1);
-	}
-	write_sequnlock_irqrestore(&sc->waitlock, flags);
+	अगर (n) अणु
+		hfi1_sc_wantpiobuf_पूर्णांकr(sc, 0);
+		अगर (!list_empty(list))
+			hfi1_sc_wantpiobuf_पूर्णांकr(sc, 1);
+	पूर्ण
+	ग_लिखो_sequnlock_irqrestore(&sc->रुकोlock, flags);
 
 	/* Wake up the top-priority one first */
-	if (n)
+	अगर (n)
 		hfi1_qp_wakeup(qps[top_idx],
 			       RVT_S_WAIT_PIO | HFI1_S_WAIT_PIO_DRAIN);
-	for (i = 0; i < n; i++)
-		if (i != top_idx)
+	क्रम (i = 0; i < n; i++)
+		अगर (i != top_idx)
 			hfi1_qp_wakeup(qps[i],
 				       RVT_S_WAIT_PIO | HFI1_S_WAIT_PIO_DRAIN);
-}
+पूर्ण
 
 /* translate a send credit update to a bit code of reasons */
-static inline int fill_code(u64 hw_free)
-{
-	int code = 0;
+अटल अंतरभूत पूर्णांक fill_code(u64 hw_मुक्त)
+अणु
+	पूर्णांक code = 0;
 
-	if (hw_free & CR_STATUS_SMASK)
+	अगर (hw_मुक्त & CR_STATUS_SMASK)
 		code |= PRC_STATUS_ERR;
-	if (hw_free & CR_CREDIT_RETURN_DUE_TO_PBC_SMASK)
+	अगर (hw_मुक्त & CR_CREDIT_RETURN_DUE_TO_PBC_SMASK)
 		code |= PRC_PBC;
-	if (hw_free & CR_CREDIT_RETURN_DUE_TO_THRESHOLD_SMASK)
+	अगर (hw_मुक्त & CR_CREDIT_RETURN_DUE_TO_THRESHOLD_SMASK)
 		code |= PRC_THRESHOLD;
-	if (hw_free & CR_CREDIT_RETURN_DUE_TO_ERR_SMASK)
+	अगर (hw_मुक्त & CR_CREDIT_RETURN_DUE_TO_ERR_SMASK)
 		code |= PRC_FILL_ERR;
-	if (hw_free & CR_CREDIT_RETURN_DUE_TO_FORCE_SMASK)
+	अगर (hw_मुक्त & CR_CREDIT_RETURN_DUE_TO_FORCE_SMASK)
 		code |= PRC_SC_DISABLE;
-	return code;
-}
+	वापस code;
+पूर्ण
 
-/* use the jiffies compare to get the wrap right */
-#define sent_before(a, b) time_before(a, b)	/* a < b */
+/* use the jअगरfies compare to get the wrap right */
+#घोषणा sent_beक्रमe(a, b) समय_beक्रमe(a, b)	/* a < b */
 
 /*
  * The send context buffer "releaser".
  */
-void sc_release_update(struct send_context *sc)
-{
-	struct pio_buf *pbuf;
-	u64 hw_free;
+व्योम sc_release_update(काष्ठा send_context *sc)
+अणु
+	काष्ठा pio_buf *pbuf;
+	u64 hw_मुक्त;
 	u32 head, tail;
-	unsigned long old_free;
-	unsigned long free;
-	unsigned long extra;
-	unsigned long flags;
-	int code;
+	अचिन्हित दीर्घ old_मुक्त;
+	अचिन्हित दीर्घ मुक्त;
+	अचिन्हित दीर्घ extra;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक code;
 
-	if (!sc)
-		return;
+	अगर (!sc)
+		वापस;
 
 	spin_lock_irqsave(&sc->release_lock, flags);
-	/* update free */
-	hw_free = le64_to_cpu(*sc->hw_free);		/* volatile read */
-	old_free = sc->free;
-	extra = (((hw_free & CR_COUNTER_SMASK) >> CR_COUNTER_SHIFT)
-			- (old_free & CR_COUNTER_MASK))
+	/* update मुक्त */
+	hw_मुक्त = le64_to_cpu(*sc->hw_मुक्त);		/* अस्थिर पढ़ो */
+	old_मुक्त = sc->मुक्त;
+	extra = (((hw_मुक्त & CR_COUNTER_SMASK) >> CR_COUNTER_SHIFT)
+			- (old_मुक्त & CR_COUNTER_MASK))
 				& CR_COUNTER_MASK;
-	free = old_free + extra;
-	trace_hfi1_piofree(sc, extra);
+	मुक्त = old_मुक्त + extra;
+	trace_hfi1_pioमुक्त(sc, extra);
 
 	/* call sent buffer callbacks */
 	code = -1;				/* code not yet set */
 	head = READ_ONCE(sc->sr_head);	/* snapshot the head */
 	tail = sc->sr_tail;
-	while (head != tail) {
+	जबतक (head != tail) अणु
 		pbuf = &sc->sr[tail].pbuf;
 
-		if (sent_before(free, pbuf->sent_at)) {
+		अगर (sent_beक्रमe(मुक्त, pbuf->sent_at)) अणु
 			/* not sent yet */
-			break;
-		}
-		if (pbuf->cb) {
-			if (code < 0) /* fill in code on first user */
-				code = fill_code(hw_free);
+			अवरोध;
+		पूर्ण
+		अगर (pbuf->cb) अणु
+			अगर (code < 0) /* fill in code on first user */
+				code = fill_code(hw_मुक्त);
 			(*pbuf->cb)(pbuf->arg, code);
-		}
+		पूर्ण
 
 		tail++;
-		if (tail >= sc->sr_size)
+		अगर (tail >= sc->sr_size)
 			tail = 0;
-	}
+	पूर्ण
 	sc->sr_tail = tail;
-	/* make sure tail is updated before free */
+	/* make sure tail is updated beक्रमe मुक्त */
 	smp_wmb();
-	sc->free = free;
+	sc->मुक्त = मुक्त;
 	spin_unlock_irqrestore(&sc->release_lock, flags);
 	sc_piobufavail(sc);
-}
+पूर्ण
 
 /*
  * Send context group releaser.  Argument is the send context that caused
- * the interrupt.  Called from the send context interrupt handler.
+ * the पूर्णांकerrupt.  Called from the send context पूर्णांकerrupt handler.
  *
  * Call release on all contexts in the group.
  *
  * This routine takes the sc_lock without an irqsave because it is only
- * called from an interrupt handler.  Adjust if that changes.
+ * called from an पूर्णांकerrupt handler.  Adjust अगर that changes.
  */
-void sc_group_release_update(struct hfi1_devdata *dd, u32 hw_context)
-{
-	struct send_context *sc;
+व्योम sc_group_release_update(काष्ठा hfi1_devdata *dd, u32 hw_context)
+अणु
+	काष्ठा send_context *sc;
 	u32 sw_index;
 	u32 gc, gc_end;
 
 	spin_lock(&dd->sc_lock);
 	sw_index = dd->hw_to_sw[hw_context];
-	if (unlikely(sw_index >= dd->num_send_contexts)) {
+	अगर (unlikely(sw_index >= dd->num_send_contexts)) अणु
 		dd_dev_err(dd, "%s: invalid hw (%u) to sw (%u) mapping\n",
 			   __func__, hw_context, sw_index);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	sc = dd->send_contexts[sw_index].sc;
-	if (unlikely(!sc))
-		goto done;
+	अगर (unlikely(!sc))
+		जाओ करोne;
 
 	gc = group_context(hw_context, sc->group);
 	gc_end = gc + group_size(sc->group);
-	for (; gc < gc_end; gc++) {
+	क्रम (; gc < gc_end; gc++) अणु
 		sw_index = dd->hw_to_sw[gc];
-		if (unlikely(sw_index >= dd->num_send_contexts)) {
+		अगर (unlikely(sw_index >= dd->num_send_contexts)) अणु
 			dd_dev_err(dd,
 				   "%s: invalid hw (%u) to sw (%u) mapping\n",
 				   __func__, hw_context, sw_index);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		sc_release_update(dd->send_contexts[sw_index].sc);
-	}
-done:
+	पूर्ण
+करोne:
 	spin_unlock(&dd->sc_lock);
-}
+पूर्ण
 
 /*
  * pio_select_send_context_vl() - select send context
  * @dd: devdata
- * @selector: a spreading factor
+ * @selector: a spपढ़ोing factor
  * @vl: this vl
  *
- * This function returns a send context based on the selector and a vl.
- * The mapping fields are protected by RCU
+ * This function वापसs a send context based on the selector and a vl.
+ * The mapping fields are रक्षित by RCU
  */
-struct send_context *pio_select_send_context_vl(struct hfi1_devdata *dd,
+काष्ठा send_context *pio_select_send_context_vl(काष्ठा hfi1_devdata *dd,
 						u32 selector, u8 vl)
-{
-	struct pio_vl_map *m;
-	struct pio_map_elem *e;
-	struct send_context *rval;
+अणु
+	काष्ठा pio_vl_map *m;
+	काष्ठा pio_map_elem *e;
+	काष्ठा send_context *rval;
 
 	/*
-	 * NOTE This should only happen if SC->VL changed after the initial
+	 * NOTE This should only happen अगर SC->VL changed after the initial
 	 * checks on the QP/AH
-	 * Default will return VL0's send context below
+	 * Default will वापस VL0's send context below
 	 */
-	if (unlikely(vl >= num_vls)) {
-		rval = NULL;
-		goto done;
-	}
+	अगर (unlikely(vl >= num_vls)) अणु
+		rval = शून्य;
+		जाओ करोne;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	m = rcu_dereference(dd->pio_map);
-	if (unlikely(!m)) {
-		rcu_read_unlock();
-		return dd->vld[0].sc;
-	}
+	अगर (unlikely(!m)) अणु
+		rcu_पढ़ो_unlock();
+		वापस dd->vld[0].sc;
+	पूर्ण
 	e = m->map[vl & m->mask];
 	rval = e->ksc[selector & e->mask];
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-done:
+करोne:
 	rval = !rval ? dd->vld[0].sc : rval;
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /*
  * pio_select_send_context_sc() - select send context
  * @dd: devdata
- * @selector: a spreading factor
+ * @selector: a spपढ़ोing factor
  * @sc5: the 5 bit sc
  *
- * This function returns an send context based on the selector and an sc
+ * This function वापसs an send context based on the selector and an sc
  */
-struct send_context *pio_select_send_context_sc(struct hfi1_devdata *dd,
+काष्ठा send_context *pio_select_send_context_sc(काष्ठा hfi1_devdata *dd,
 						u32 selector, u8 sc5)
-{
+अणु
 	u8 vl = sc_to_vlt(dd, sc5);
 
-	return pio_select_send_context_vl(dd, selector, vl);
-}
+	वापस pio_select_send_context_vl(dd, selector, vl);
+पूर्ण
 
 /*
- * Free the indicated map struct
+ * Free the indicated map काष्ठा
  */
-static void pio_map_free(struct pio_vl_map *m)
-{
-	int i;
+अटल व्योम pio_map_मुक्त(काष्ठा pio_vl_map *m)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; m && i < m->actual_vls; i++)
-		kfree(m->map[i]);
-	kfree(m);
-}
+	क्रम (i = 0; m && i < m->actual_vls; i++)
+		kमुक्त(m->map[i]);
+	kमुक्त(m);
+पूर्ण
 
 /*
  * Handle RCU callback
  */
-static void pio_map_rcu_callback(struct rcu_head *list)
-{
-	struct pio_vl_map *m = container_of(list, struct pio_vl_map, list);
+अटल व्योम pio_map_rcu_callback(काष्ठा rcu_head *list)
+अणु
+	काष्ठा pio_vl_map *m = container_of(list, काष्ठा pio_vl_map, list);
 
-	pio_map_free(m);
-}
+	pio_map_मुक्त(m);
+पूर्ण
 
 /*
- * Set credit return threshold for the kernel send context
+ * Set credit वापस threshold क्रम the kernel send context
  */
-static void set_threshold(struct hfi1_devdata *dd, int scontext, int i)
-{
+अटल व्योम set_threshold(काष्ठा hfi1_devdata *dd, पूर्णांक scontext, पूर्णांक i)
+अणु
 	u32 thres;
 
 	thres = min(sc_percent_to_threshold(dd->kernel_send_context[scontext],
@@ -1880,7 +1881,7 @@ static void set_threshold(struct hfi1_devdata *dd, int scontext, int i)
 					dd->vld[i].mtu,
 					dd->rcd[0]->rcvhdrqentsize));
 	sc_set_cr_threshold(dd->kernel_send_context[scontext], thres);
-}
+पूर्ण
 
 /*
  * pio_map_init - called when #vls change
@@ -1891,294 +1892,294 @@ static void set_threshold(struct hfi1_devdata *dd, int scontext, int i)
  *
  * This routine changes the mapping based on the number of vls.
  *
- * vl_scontexts is used to specify a non-uniform vl/send context
- * loading. NULL implies auto computing the loading and giving each
- * VL an uniform distribution of send contexts per VL.
+ * vl_scontexts is used to specअगरy a non-unअगरorm vl/send context
+ * loading. शून्य implies स्वतः computing the loading and giving each
+ * VL an unअगरorm distribution of send contexts per VL.
  *
- * The auto algorithm computers the sc_per_vl and the number of extra
+ * The स्वतः algorithm computers the sc_per_vl and the number of extra
  * send contexts. Any extra send contexts are added from the last VL
- * on down
+ * on करोwn
  *
  * rcu locking is used here to control access to the mapping fields.
  *
- * If either the num_vls or num_send_contexts are non-power of 2, the
- * array sizes in the struct pio_vl_map and the struct pio_map_elem are
- * rounded up to the next highest power of 2 and the first entry is
+ * If either the num_vls or num_send_contexts are non-घातer of 2, the
+ * array sizes in the काष्ठा pio_vl_map and the काष्ठा pio_map_elem are
+ * rounded up to the next highest घातer of 2 and the first entry is
  * reused in a round robin fashion.
  *
- * If an error occurs the map change is not done and the mapping is not
+ * If an error occurs the map change is not करोne and the mapping is not
  * chaged.
  *
  */
-int pio_map_init(struct hfi1_devdata *dd, u8 port, u8 num_vls, u8 *vl_scontexts)
-{
-	int i, j;
-	int extra, sc_per_vl;
-	int scontext = 1;
-	int num_kernel_send_contexts = 0;
+पूर्णांक pio_map_init(काष्ठा hfi1_devdata *dd, u8 port, u8 num_vls, u8 *vl_scontexts)
+अणु
+	पूर्णांक i, j;
+	पूर्णांक extra, sc_per_vl;
+	पूर्णांक scontext = 1;
+	पूर्णांक num_kernel_send_contexts = 0;
 	u8 lvl_scontexts[OPA_MAX_VLS];
-	struct pio_vl_map *oldmap, *newmap;
+	काष्ठा pio_vl_map *oldmap, *newmap;
 
-	if (!vl_scontexts) {
-		for (i = 0; i < dd->num_send_contexts; i++)
-			if (dd->send_contexts[i].type == SC_KERNEL)
+	अगर (!vl_scontexts) अणु
+		क्रम (i = 0; i < dd->num_send_contexts; i++)
+			अगर (dd->send_contexts[i].type == SC_KERNEL)
 				num_kernel_send_contexts++;
-		/* truncate divide */
+		/* truncate भागide */
 		sc_per_vl = num_kernel_send_contexts / num_vls;
 		/* extras */
 		extra = num_kernel_send_contexts % num_vls;
 		vl_scontexts = lvl_scontexts;
-		/* add extras from last vl down */
-		for (i = num_vls - 1; i >= 0; i--, extra--)
+		/* add extras from last vl करोwn */
+		क्रम (i = num_vls - 1; i >= 0; i--, extra--)
 			vl_scontexts[i] = sc_per_vl + (extra > 0 ? 1 : 0);
-	}
+	पूर्ण
 	/* build new map */
-	newmap = kzalloc(sizeof(*newmap) +
-			 roundup_pow_of_two(num_vls) *
-			 sizeof(struct pio_map_elem *),
+	newmap = kzalloc(माप(*newmap) +
+			 roundup_घात_of_two(num_vls) *
+			 माप(काष्ठा pio_map_elem *),
 			 GFP_KERNEL);
-	if (!newmap)
-		goto bail;
+	अगर (!newmap)
+		जाओ bail;
 	newmap->actual_vls = num_vls;
-	newmap->vls = roundup_pow_of_two(num_vls);
+	newmap->vls = roundup_घात_of_two(num_vls);
 	newmap->mask = (1 << ilog2(newmap->vls)) - 1;
-	for (i = 0; i < newmap->vls; i++) {
-		/* save for wrap around */
-		int first_scontext = scontext;
+	क्रम (i = 0; i < newmap->vls; i++) अणु
+		/* save क्रम wrap around */
+		पूर्णांक first_scontext = scontext;
 
-		if (i < newmap->actual_vls) {
-			int sz = roundup_pow_of_two(vl_scontexts[i]);
+		अगर (i < newmap->actual_vls) अणु
+			पूर्णांक sz = roundup_घात_of_two(vl_scontexts[i]);
 
 			/* only allocate once */
-			newmap->map[i] = kzalloc(sizeof(*newmap->map[i]) +
-						 sz * sizeof(struct
+			newmap->map[i] = kzalloc(माप(*newmap->map[i]) +
+						 sz * माप(काष्ठा
 							     send_context *),
 						 GFP_KERNEL);
-			if (!newmap->map[i])
-				goto bail;
+			अगर (!newmap->map[i])
+				जाओ bail;
 			newmap->map[i]->mask = (1 << ilog2(sz)) - 1;
 			/*
 			 * assign send contexts and
-			 * adjust credit return threshold
+			 * adjust credit वापस threshold
 			 */
-			for (j = 0; j < sz; j++) {
-				if (dd->kernel_send_context[scontext]) {
+			क्रम (j = 0; j < sz; j++) अणु
+				अगर (dd->kernel_send_context[scontext]) अणु
 					newmap->map[i]->ksc[j] =
 					dd->kernel_send_context[scontext];
 					set_threshold(dd, scontext, i);
-				}
-				if (++scontext >= first_scontext +
+				पूर्ण
+				अगर (++scontext >= first_scontext +
 						  vl_scontexts[i])
 					/* wrap back to first send context */
 					scontext = first_scontext;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* just re-use entry without allocating */
 			newmap->map[i] = newmap->map[i % num_vls];
-		}
+		पूर्ण
 		scontext = first_scontext + vl_scontexts[i];
-	}
+	पूर्ण
 	/* newmap in hand, save old map */
 	spin_lock_irq(&dd->pio_map_lock);
-	oldmap = rcu_dereference_protected(dd->pio_map,
+	oldmap = rcu_dereference_रक्षित(dd->pio_map,
 					   lockdep_is_held(&dd->pio_map_lock));
 
 	/* publish newmap */
-	rcu_assign_pointer(dd->pio_map, newmap);
+	rcu_assign_poपूर्णांकer(dd->pio_map, newmap);
 
 	spin_unlock_irq(&dd->pio_map_lock);
-	/* success, free any old map after grace period */
-	if (oldmap)
+	/* success, मुक्त any old map after grace period */
+	अगर (oldmap)
 		call_rcu(&oldmap->list, pio_map_rcu_callback);
-	return 0;
+	वापस 0;
 bail:
-	/* free any partial allocation */
-	pio_map_free(newmap);
-	return -ENOMEM;
-}
+	/* मुक्त any partial allocation */
+	pio_map_मुक्त(newmap);
+	वापस -ENOMEM;
+पूर्ण
 
-void free_pio_map(struct hfi1_devdata *dd)
-{
-	/* Free PIO map if allocated */
-	if (rcu_access_pointer(dd->pio_map)) {
+व्योम मुक्त_pio_map(काष्ठा hfi1_devdata *dd)
+अणु
+	/* Free PIO map अगर allocated */
+	अगर (rcu_access_poपूर्णांकer(dd->pio_map)) अणु
 		spin_lock_irq(&dd->pio_map_lock);
-		pio_map_free(rcu_access_pointer(dd->pio_map));
-		RCU_INIT_POINTER(dd->pio_map, NULL);
+		pio_map_मुक्त(rcu_access_poपूर्णांकer(dd->pio_map));
+		RCU_INIT_POINTER(dd->pio_map, शून्य);
 		spin_unlock_irq(&dd->pio_map_lock);
 		synchronize_rcu();
-	}
-	kfree(dd->kernel_send_context);
-	dd->kernel_send_context = NULL;
-}
+	पूर्ण
+	kमुक्त(dd->kernel_send_context);
+	dd->kernel_send_context = शून्य;
+पूर्ण
 
-int init_pervl_scs(struct hfi1_devdata *dd)
-{
-	int i;
+पूर्णांक init_pervl_scs(काष्ठा hfi1_devdata *dd)
+अणु
+	पूर्णांक i;
 	u64 mask, all_vl_mask = (u64)0x80ff; /* VLs 0-7, 15 */
 	u64 data_vls_mask = (u64)0x00ff; /* VLs 0-7 */
 	u32 ctxt;
-	struct hfi1_pportdata *ppd = dd->pport;
+	काष्ठा hfi1_pportdata *ppd = dd->pport;
 
 	dd->vld[15].sc = sc_alloc(dd, SC_VL15,
 				  dd->rcd[0]->rcvhdrqentsize, dd->node);
-	if (!dd->vld[15].sc)
-		return -ENOMEM;
+	अगर (!dd->vld[15].sc)
+		वापस -ENOMEM;
 
 	hfi1_init_ctxt(dd->vld[15].sc);
-	dd->vld[15].mtu = enum_to_mtu(OPA_MTU_2048);
+	dd->vld[15].mtu = क्रमागत_to_mtu(OPA_MTU_2048);
 
-	dd->kernel_send_context = kcalloc_node(dd->num_send_contexts,
-					       sizeof(struct send_context *),
+	dd->kernel_send_context = kसुस्मृति_node(dd->num_send_contexts,
+					       माप(काष्ठा send_context *),
 					       GFP_KERNEL, dd->node);
-	if (!dd->kernel_send_context)
-		goto freesc15;
+	अगर (!dd->kernel_send_context)
+		जाओ मुक्तsc15;
 
 	dd->kernel_send_context[0] = dd->vld[15].sc;
 
-	for (i = 0; i < num_vls; i++) {
+	क्रम (i = 0; i < num_vls; i++) अणु
 		/*
-		 * Since this function does not deal with a specific
+		 * Since this function करोes not deal with a specअगरic
 		 * receive context but we need the RcvHdrQ entry size,
 		 * use the size from rcd[0]. It is guaranteed to be
-		 * valid at this point and will remain the same for all
+		 * valid at this poपूर्णांक and will reमुख्य the same क्रम all
 		 * receive contexts.
 		 */
 		dd->vld[i].sc = sc_alloc(dd, SC_KERNEL,
 					 dd->rcd[0]->rcvhdrqentsize, dd->node);
-		if (!dd->vld[i].sc)
-			goto nomem;
+		अगर (!dd->vld[i].sc)
+			जाओ nomem;
 		dd->kernel_send_context[i + 1] = dd->vld[i].sc;
 		hfi1_init_ctxt(dd->vld[i].sc);
 		/* non VL15 start with the max MTU */
 		dd->vld[i].mtu = hfi1_max_mtu;
-	}
-	for (i = num_vls; i < INIT_SC_PER_VL * num_vls; i++) {
+	पूर्ण
+	क्रम (i = num_vls; i < INIT_SC_PER_VL * num_vls; i++) अणु
 		dd->kernel_send_context[i + 1] =
 		sc_alloc(dd, SC_KERNEL, dd->rcd[0]->rcvhdrqentsize, dd->node);
-		if (!dd->kernel_send_context[i + 1])
-			goto nomem;
+		अगर (!dd->kernel_send_context[i + 1])
+			जाओ nomem;
 		hfi1_init_ctxt(dd->kernel_send_context[i + 1]);
-	}
+	पूर्ण
 
 	sc_enable(dd->vld[15].sc);
 	ctxt = dd->vld[15].sc->hw_context;
 	mask = all_vl_mask & ~(1LL << 15);
-	write_kctxt_csr(dd, ctxt, SC(CHECK_VL), mask);
+	ग_लिखो_kctxt_csr(dd, ctxt, SC(CHECK_VL), mask);
 	dd_dev_info(dd,
 		    "Using send context %u(%u) for VL15\n",
 		    dd->vld[15].sc->sw_index, ctxt);
 
-	for (i = 0; i < num_vls; i++) {
+	क्रम (i = 0; i < num_vls; i++) अणु
 		sc_enable(dd->vld[i].sc);
 		ctxt = dd->vld[i].sc->hw_context;
 		mask = all_vl_mask & ~(data_vls_mask);
-		write_kctxt_csr(dd, ctxt, SC(CHECK_VL), mask);
-	}
-	for (i = num_vls; i < INIT_SC_PER_VL * num_vls; i++) {
+		ग_लिखो_kctxt_csr(dd, ctxt, SC(CHECK_VL), mask);
+	पूर्ण
+	क्रम (i = num_vls; i < INIT_SC_PER_VL * num_vls; i++) अणु
 		sc_enable(dd->kernel_send_context[i + 1]);
 		ctxt = dd->kernel_send_context[i + 1]->hw_context;
 		mask = all_vl_mask & ~(data_vls_mask);
-		write_kctxt_csr(dd, ctxt, SC(CHECK_VL), mask);
-	}
+		ग_लिखो_kctxt_csr(dd, ctxt, SC(CHECK_VL), mask);
+	पूर्ण
 
-	if (pio_map_init(dd, ppd->port - 1, num_vls, NULL))
-		goto nomem;
-	return 0;
+	अगर (pio_map_init(dd, ppd->port - 1, num_vls, शून्य))
+		जाओ nomem;
+	वापस 0;
 
 nomem:
-	for (i = 0; i < num_vls; i++) {
-		sc_free(dd->vld[i].sc);
-		dd->vld[i].sc = NULL;
-	}
+	क्रम (i = 0; i < num_vls; i++) अणु
+		sc_मुक्त(dd->vld[i].sc);
+		dd->vld[i].sc = शून्य;
+	पूर्ण
 
-	for (i = num_vls; i < INIT_SC_PER_VL * num_vls; i++)
-		sc_free(dd->kernel_send_context[i + 1]);
+	क्रम (i = num_vls; i < INIT_SC_PER_VL * num_vls; i++)
+		sc_मुक्त(dd->kernel_send_context[i + 1]);
 
-	kfree(dd->kernel_send_context);
-	dd->kernel_send_context = NULL;
+	kमुक्त(dd->kernel_send_context);
+	dd->kernel_send_context = शून्य;
 
-freesc15:
-	sc_free(dd->vld[15].sc);
-	return -ENOMEM;
-}
+मुक्तsc15:
+	sc_मुक्त(dd->vld[15].sc);
+	वापस -ENOMEM;
+पूर्ण
 
-int init_credit_return(struct hfi1_devdata *dd)
-{
-	int ret;
-	int i;
+पूर्णांक init_credit_वापस(काष्ठा hfi1_devdata *dd)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	dd->cr_base = kcalloc(
+	dd->cr_base = kसुस्मृति(
 		node_affinity.num_possible_nodes,
-		sizeof(struct credit_return_base),
+		माप(काष्ठा credit_वापस_base),
 		GFP_KERNEL);
-	if (!dd->cr_base) {
+	अगर (!dd->cr_base) अणु
 		ret = -ENOMEM;
-		goto done;
-	}
-	for_each_node_with_cpus(i) {
-		int bytes = TXE_NUM_CONTEXTS * sizeof(struct credit_return);
+		जाओ करोne;
+	पूर्ण
+	क्रम_each_node_with_cpus(i) अणु
+		पूर्णांक bytes = TXE_NUM_CONTEXTS * माप(काष्ठा credit_वापस);
 
 		set_dev_node(&dd->pcidev->dev, i);
 		dd->cr_base[i].va = dma_alloc_coherent(&dd->pcidev->dev,
 						       bytes,
 						       &dd->cr_base[i].dma,
 						       GFP_KERNEL);
-		if (!dd->cr_base[i].va) {
+		अगर (!dd->cr_base[i].va) अणु
 			set_dev_node(&dd->pcidev->dev, dd->node);
 			dd_dev_err(dd,
 				   "Unable to allocate credit return DMA range for NUMA %d\n",
 				   i);
 			ret = -ENOMEM;
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 	set_dev_node(&dd->pcidev->dev, dd->node);
 
 	ret = 0;
-done:
-	return ret;
-}
+करोne:
+	वापस ret;
+पूर्ण
 
-void free_credit_return(struct hfi1_devdata *dd)
-{
-	int i;
+व्योम मुक्त_credit_वापस(काष्ठा hfi1_devdata *dd)
+अणु
+	पूर्णांक i;
 
-	if (!dd->cr_base)
-		return;
-	for (i = 0; i < node_affinity.num_possible_nodes; i++) {
-		if (dd->cr_base[i].va) {
-			dma_free_coherent(&dd->pcidev->dev,
+	अगर (!dd->cr_base)
+		वापस;
+	क्रम (i = 0; i < node_affinity.num_possible_nodes; i++) अणु
+		अगर (dd->cr_base[i].va) अणु
+			dma_मुक्त_coherent(&dd->pcidev->dev,
 					  TXE_NUM_CONTEXTS *
-					  sizeof(struct credit_return),
+					  माप(काष्ठा credit_वापस),
 					  dd->cr_base[i].va,
 					  dd->cr_base[i].dma);
-		}
-	}
-	kfree(dd->cr_base);
-	dd->cr_base = NULL;
-}
+		पूर्ण
+	पूर्ण
+	kमुक्त(dd->cr_base);
+	dd->cr_base = शून्य;
+पूर्ण
 
-void seqfile_dump_sci(struct seq_file *s, u32 i,
-		      struct send_context_info *sci)
-{
-	struct send_context *sc = sci->sc;
+व्योम seqfile_dump_sci(काष्ठा seq_file *s, u32 i,
+		      काष्ठा send_context_info *sci)
+अणु
+	काष्ठा send_context *sc = sci->sc;
 	u64 reg;
 
-	seq_printf(s, "SCI %u: type %u base %u credits %u\n",
+	seq_म_लिखो(s, "SCI %u: type %u base %u credits %u\n",
 		   i, sci->type, sci->base, sci->credits);
-	seq_printf(s, "  flags 0x%x sw_inx %u hw_ctxt %u grp %u\n",
+	seq_म_लिखो(s, "  flags 0x%x sw_inx %u hw_ctxt %u grp %u\n",
 		   sc->flags,  sc->sw_index, sc->hw_context, sc->group);
-	seq_printf(s, "  sr_size %u credits %u sr_head %u sr_tail %u\n",
+	seq_म_लिखो(s, "  sr_size %u credits %u sr_head %u sr_tail %u\n",
 		   sc->sr_size, sc->credits, sc->sr_head, sc->sr_tail);
-	seq_printf(s, "  fill %lu free %lu fill_wrap %u alloc_free %lu\n",
-		   sc->fill, sc->free, sc->fill_wrap, sc->alloc_free);
-	seq_printf(s, "  credit_intr_count %u credit_ctrl 0x%llx\n",
-		   sc->credit_intr_count, sc->credit_ctrl);
-	reg = read_kctxt_csr(sc->dd, sc->hw_context, SC(CREDIT_STATUS));
-	seq_printf(s, "  *hw_free %llu CurrentFree %llu LastReturned %llu\n",
-		   (le64_to_cpu(*sc->hw_free) & CR_COUNTER_SMASK) >>
+	seq_म_लिखो(s, "  fill %lu free %lu fill_wrap %u alloc_free %lu\n",
+		   sc->fill, sc->मुक्त, sc->fill_wrap, sc->alloc_मुक्त);
+	seq_म_लिखो(s, "  credit_intr_count %u credit_ctrl 0x%llx\n",
+		   sc->credit_पूर्णांकr_count, sc->credit_ctrl);
+	reg = पढ़ो_kctxt_csr(sc->dd, sc->hw_context, SC(CREDIT_STATUS));
+	seq_म_लिखो(s, "  *hw_free %llu CurrentFree %llu LastReturned %llu\n",
+		   (le64_to_cpu(*sc->hw_मुक्त) & CR_COUNTER_SMASK) >>
 		    CR_COUNTER_SHIFT,
 		   (reg >> SC(CREDIT_STATUS_CURRENT_FREE_COUNTER_SHIFT)) &
 		    SC(CREDIT_STATUS_CURRENT_FREE_COUNTER_MASK),
 		   reg & SC(CREDIT_STATUS_LAST_RETURNED_COUNTER_SMASK));
-}
+पूर्ण

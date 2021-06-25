@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  SR-IPv6 implementation
  *
@@ -6,52 +7,52 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  */
 
-#ifndef _NET_SEG6_HMAC_H
-#define _NET_SEG6_HMAC_H
+#अगर_अघोषित _NET_SEG6_HMAC_H
+#घोषणा _NET_SEG6_HMAC_H
 
-#include <net/flow.h>
-#include <net/ip6_fib.h>
-#include <net/sock.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/route.h>
-#include <net/seg6.h>
-#include <linux/seg6_hmac.h>
-#include <linux/rhashtable-types.h>
+#समावेश <net/flow.h>
+#समावेश <net/ip6_fib.h>
+#समावेश <net/sock.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/route.h>
+#समावेश <net/seg6.h>
+#समावेश <linux/seg6_hmac.h>
+#समावेश <linux/rhashtable-types.h>
 
-#define SEG6_HMAC_MAX_DIGESTSIZE	160
-#define SEG6_HMAC_RING_SIZE		256
+#घोषणा SEG6_HMAC_MAX_DIGESTSIZE	160
+#घोषणा SEG6_HMAC_RING_SIZE		256
 
-struct seg6_hmac_info {
-	struct rhash_head node;
-	struct rcu_head rcu;
+काष्ठा seg6_hmac_info अणु
+	काष्ठा rhash_head node;
+	काष्ठा rcu_head rcu;
 
 	u32 hmackeyid;
-	char secret[SEG6_HMAC_SECRET_LEN];
+	अक्षर secret[SEG6_HMAC_SECRET_LEN];
 	u8 slen;
 	u8 alg_id;
-};
+पूर्ण;
 
-struct seg6_hmac_algo {
+काष्ठा seg6_hmac_algo अणु
 	u8 alg_id;
-	char name[64];
-	struct crypto_shash * __percpu *tfms;
-	struct shash_desc * __percpu *shashs;
-};
+	अक्षर name[64];
+	काष्ठा crypto_shash * __percpu *tfms;
+	काष्ठा shash_desc * __percpu *shashs;
+पूर्ण;
 
-extern int seg6_hmac_compute(struct seg6_hmac_info *hinfo,
-			     struct ipv6_sr_hdr *hdr, struct in6_addr *saddr,
+बाह्य पूर्णांक seg6_hmac_compute(काष्ठा seg6_hmac_info *hinfo,
+			     काष्ठा ipv6_sr_hdr *hdr, काष्ठा in6_addr *saddr,
 			     u8 *output);
-extern struct seg6_hmac_info *seg6_hmac_info_lookup(struct net *net, u32 key);
-extern int seg6_hmac_info_add(struct net *net, u32 key,
-			      struct seg6_hmac_info *hinfo);
-extern int seg6_hmac_info_del(struct net *net, u32 key);
-extern int seg6_push_hmac(struct net *net, struct in6_addr *saddr,
-			  struct ipv6_sr_hdr *srh);
-extern bool seg6_hmac_validate_skb(struct sk_buff *skb);
-extern int seg6_hmac_init(void);
-extern void seg6_hmac_exit(void);
-extern int seg6_hmac_net_init(struct net *net);
-extern void seg6_hmac_net_exit(struct net *net);
+बाह्य काष्ठा seg6_hmac_info *seg6_hmac_info_lookup(काष्ठा net *net, u32 key);
+बाह्य पूर्णांक seg6_hmac_info_add(काष्ठा net *net, u32 key,
+			      काष्ठा seg6_hmac_info *hinfo);
+बाह्य पूर्णांक seg6_hmac_info_del(काष्ठा net *net, u32 key);
+बाह्य पूर्णांक seg6_push_hmac(काष्ठा net *net, काष्ठा in6_addr *saddr,
+			  काष्ठा ipv6_sr_hdr *srh);
+बाह्य bool seg6_hmac_validate_skb(काष्ठा sk_buff *skb);
+बाह्य पूर्णांक seg6_hmac_init(व्योम);
+बाह्य व्योम seg6_hmac_निकास(व्योम);
+बाह्य पूर्णांक seg6_hmac_net_init(काष्ठा net *net);
+बाह्य व्योम seg6_hmac_net_निकास(काष्ठा net *net);
 
-#endif
+#पूर्ण_अगर

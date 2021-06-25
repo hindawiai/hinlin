@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 1991, 1992  Linus Torvalds
- *  Copyright (C) 2000, 2001, 2002 Andi Kleen, SuSE Labs
+ *  Copyright (C) 2000, 2001, 2002 Andi Kleen, SuSE Lअसल
  */
-#include <linux/sched/debug.h>
-#include <linux/kallsyms.h>
-#include <linux/kprobes.h>
-#include <linux/uaccess.h>
-#include <linux/hardirq.h>
-#include <linux/kdebug.h>
-#include <linux/export.h>
-#include <linux/ptrace.h>
-#include <linux/kexec.h>
-#include <linux/sysfs.h>
-#include <linux/bug.h>
-#include <linux/nmi.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/export.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/nmi.h>
 
-#include <asm/cpu_entry_area.h>
-#include <asm/stacktrace.h>
+#समावेश <यंत्र/cpu_entry_area.h>
+#समावेश <यंत्र/stacktrace.h>
 
-static const char * const exception_stack_names[] = {
+अटल स्थिर अक्षर * स्थिर exception_stack_names[] = अणु
 		[ ESTACK_DF	]	= "#DF",
 		[ ESTACK_NMI	]	= "NMI",
 		[ ESTACK_DB	]	= "#DB",
 		[ ESTACK_MCE	]	= "#MC",
 		[ ESTACK_VC	]	= "#VC",
 		[ ESTACK_VC2	]	= "#VC2",
-};
+पूर्ण;
 
-const char *stack_type_name(enum stack_type type)
-{
+स्थिर अक्षर *stack_type_name(क्रमागत stack_type type)
+अणु
 	BUILD_BUG_ON(N_EXCEPTION_STACKS != 6);
 
-	if (type == STACK_TYPE_IRQ)
-		return "IRQ";
+	अगर (type == STACK_TYPE_IRQ)
+		वापस "IRQ";
 
-	if (type == STACK_TYPE_ENTRY) {
+	अगर (type == STACK_TYPE_ENTRY) अणु
 		/*
 		 * On 64-bit, we have a generic entry stack that we
-		 * use for all the kernel entry points, including
+		 * use क्रम all the kernel entry poपूर्णांकs, including
 		 * SYSENTER.
 		 */
-		return "ENTRY_TRAMPOLINE";
-	}
+		वापस "ENTRY_TRAMPOLINE";
+	पूर्ण
 
-	if (type >= STACK_TYPE_EXCEPTION && type <= STACK_TYPE_EXCEPTION_LAST)
-		return exception_stack_names[type - STACK_TYPE_EXCEPTION];
+	अगर (type >= STACK_TYPE_EXCEPTION && type <= STACK_TYPE_EXCEPTION_LAST)
+		वापस exception_stack_names[type - STACK_TYPE_EXCEPTION];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * struct estack_pages - Page descriptor for exception stacks
+ * काष्ठा estack_pages - Page descriptor क्रम exception stacks
  * @offs:	Offset from the start of the exception stack area
  * @size:	Size of the exception stack
- * @type:	Type to store in the stack_info struct
+ * @type:	Type to store in the stack_info काष्ठा
  */
-struct estack_pages {
+काष्ठा estack_pages अणु
 	u32	offs;
 	u16	size;
 	u16	type;
-};
+पूर्ण;
 
-#define EPAGERANGE(st)							\
+#घोषणा EPAGदुस्फल(st)							\
 	[PFN_DOWN(CEA_ESTACK_OFFS(st)) ...				\
-	 PFN_DOWN(CEA_ESTACK_OFFS(st) + CEA_ESTACK_SIZE(st) - 1)] = {	\
+	 PFN_DOWN(CEA_ESTACK_OFFS(st) + CEA_ESTACK_SIZE(st) - 1)] = अणु	\
 		.offs	= CEA_ESTACK_OFFS(st),				\
 		.size	= CEA_ESTACK_SIZE(st),				\
-		.type	= STACK_TYPE_EXCEPTION + ESTACK_ ##st, }
+		.type	= STACK_TYPE_EXCEPTION + ESTACK_ ##st, पूर्ण
 
 /*
  * Array of exception stack page descriptors. If the stack is larger than
@@ -75,141 +76,141 @@ struct estack_pages {
  * info. The guard pages including the not mapped DB2 stack are zeroed
  * out.
  */
-static const
-struct estack_pages estack_pages[CEA_ESTACK_PAGES] ____cacheline_aligned = {
-	EPAGERANGE(DF),
-	EPAGERANGE(NMI),
-	EPAGERANGE(DB),
-	EPAGERANGE(MCE),
-	EPAGERANGE(VC),
-	EPAGERANGE(VC2),
-};
+अटल स्थिर
+काष्ठा estack_pages estack_pages[CEA_ESTACK_PAGES] ____cacheline_aligned = अणु
+	EPAGदुस्फल(DF),
+	EPAGदुस्फल(NMI),
+	EPAGदुस्फल(DB),
+	EPAGदुस्फल(MCE),
+	EPAGदुस्फल(VC),
+	EPAGदुस्फल(VC2),
+पूर्ण;
 
-static __always_inline bool in_exception_stack(unsigned long *stack, struct stack_info *info)
-{
-	unsigned long begin, end, stk = (unsigned long)stack;
-	const struct estack_pages *ep;
-	struct pt_regs *regs;
-	unsigned int k;
+अटल __always_अंतरभूत bool in_exception_stack(अचिन्हित दीर्घ *stack, काष्ठा stack_info *info)
+अणु
+	अचिन्हित दीर्घ begin, end, stk = (अचिन्हित दीर्घ)stack;
+	स्थिर काष्ठा estack_pages *ep;
+	काष्ठा pt_regs *regs;
+	अचिन्हित पूर्णांक k;
 
 	BUILD_BUG_ON(N_EXCEPTION_STACKS != 6);
 
-	begin = (unsigned long)__this_cpu_read(cea_exception_stacks);
+	begin = (अचिन्हित दीर्घ)__this_cpu_पढ़ो(cea_exception_stacks);
 	/*
-	 * Handle the case where stack trace is collected _before_
+	 * Handle the हाल where stack trace is collected _beक्रमe_
 	 * cea_exception_stacks had been initialized.
 	 */
-	if (!begin)
-		return false;
+	अगर (!begin)
+		वापस false;
 
-	end = begin + sizeof(struct cea_exception_stacks);
-	/* Bail if @stack is outside the exception stack area. */
-	if (stk < begin || stk >= end)
-		return false;
+	end = begin + माप(काष्ठा cea_exception_stacks);
+	/* Bail अगर @stack is outside the exception stack area. */
+	अगर (stk < begin || stk >= end)
+		वापस false;
 
 	/* Calc page offset from start of exception stacks */
 	k = (stk - begin) >> PAGE_SHIFT;
 	/* Lookup the page descriptor */
 	ep = &estack_pages[k];
 	/* Guard page? */
-	if (!ep->size)
-		return false;
+	अगर (!ep->size)
+		वापस false;
 
-	begin += (unsigned long)ep->offs;
-	end = begin + (unsigned long)ep->size;
-	regs = (struct pt_regs *)end - 1;
+	begin += (अचिन्हित दीर्घ)ep->offs;
+	end = begin + (अचिन्हित दीर्घ)ep->size;
+	regs = (काष्ठा pt_regs *)end - 1;
 
 	info->type	= ep->type;
-	info->begin	= (unsigned long *)begin;
-	info->end	= (unsigned long *)end;
-	info->next_sp	= (unsigned long *)regs->sp;
-	return true;
-}
+	info->begin	= (अचिन्हित दीर्घ *)begin;
+	info->end	= (अचिन्हित दीर्घ *)end;
+	info->next_sp	= (अचिन्हित दीर्घ *)regs->sp;
+	वापस true;
+पूर्ण
 
-static __always_inline bool in_irq_stack(unsigned long *stack, struct stack_info *info)
-{
-	unsigned long *end = (unsigned long *)this_cpu_read(hardirq_stack_ptr);
-	unsigned long *begin;
+अटल __always_अंतरभूत bool in_irq_stack(अचिन्हित दीर्घ *stack, काष्ठा stack_info *info)
+अणु
+	अचिन्हित दीर्घ *end = (अचिन्हित दीर्घ *)this_cpu_पढ़ो(hardirq_stack_ptr);
+	अचिन्हित दीर्घ *begin;
 
 	/*
-	 * @end points directly to the top most stack entry to avoid a -8
-	 * adjustment in the stack switch hotpath. Adjust it back before
+	 * @end poपूर्णांकs directly to the top most stack entry to aव्योम a -8
+	 * adjusपंचांगent in the stack चयन hotpath. Adjust it back beक्रमe
 	 * calculating @begin.
 	 */
 	end++;
-	begin = end - (IRQ_STACK_SIZE / sizeof(long));
+	begin = end - (IRQ_STACK_SIZE / माप(दीर्घ));
 
 	/*
-	 * Due to the switching logic RSP can never be == @end because the
-	 * final operation is 'popq %rsp' which means after that RSP points
+	 * Due to the चयनing logic RSP can never be == @end because the
+	 * final operation is 'popq %rsp' which means after that RSP poपूर्णांकs
 	 * to the original stack and not to @end.
 	 */
-	if (stack < begin || stack >= end)
-		return false;
+	अगर (stack < begin || stack >= end)
+		वापस false;
 
 	info->type	= STACK_TYPE_IRQ;
 	info->begin	= begin;
 	info->end	= end;
 
 	/*
-	 * The next stack pointer is stored at the top of the irq stack
-	 * before switching to the irq stack. Actual stack entries are all
+	 * The next stack poपूर्णांकer is stored at the top of the irq stack
+	 * beक्रमe चयनing to the irq stack. Actual stack entries are all
 	 * below that.
 	 */
-	info->next_sp = (unsigned long *)*(end - 1);
+	info->next_sp = (अचिन्हित दीर्घ *)*(end - 1);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool noinstr get_stack_info_noinstr(unsigned long *stack, struct task_struct *task,
-				    struct stack_info *info)
-{
-	if (in_task_stack(stack, task, info))
-		return true;
+bool noinstr get_stack_info_noinstr(अचिन्हित दीर्घ *stack, काष्ठा task_काष्ठा *task,
+				    काष्ठा stack_info *info)
+अणु
+	अगर (in_task_stack(stack, task, info))
+		वापस true;
 
-	if (task != current)
-		return false;
+	अगर (task != current)
+		वापस false;
 
-	if (in_exception_stack(stack, info))
-		return true;
+	अगर (in_exception_stack(stack, info))
+		वापस true;
 
-	if (in_irq_stack(stack, info))
-		return true;
+	अगर (in_irq_stack(stack, info))
+		वापस true;
 
-	if (in_entry_stack(stack, info))
-		return true;
+	अगर (in_entry_stack(stack, info))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int get_stack_info(unsigned long *stack, struct task_struct *task,
-		   struct stack_info *info, unsigned long *visit_mask)
-{
+पूर्णांक get_stack_info(अचिन्हित दीर्घ *stack, काष्ठा task_काष्ठा *task,
+		   काष्ठा stack_info *info, अचिन्हित दीर्घ *visit_mask)
+अणु
 	task = task ? : current;
 
-	if (!stack)
-		goto unknown;
+	अगर (!stack)
+		जाओ unknown;
 
-	if (!get_stack_info_noinstr(stack, task, info))
-		goto unknown;
+	अगर (!get_stack_info_noinstr(stack, task, info))
+		जाओ unknown;
 
 	/*
-	 * Make sure we don't iterate through any given stack more than once.
-	 * If it comes up a second time then there's something wrong going on:
-	 * just break out and report an unknown stack type.
+	 * Make sure we करोn't iterate through any given stack more than once.
+	 * If it comes up a second समय then there's something wrong going on:
+	 * just अवरोध out and report an unknown stack type.
 	 */
-	if (visit_mask) {
-		if (*visit_mask & (1UL << info->type)) {
-			if (task == current)
-				printk_deferred_once(KERN_WARNING "WARNING: stack recursion on stack type %d\n", info->type);
-			goto unknown;
-		}
+	अगर (visit_mask) अणु
+		अगर (*visit_mask & (1UL << info->type)) अणु
+			अगर (task == current)
+				prपूर्णांकk_deferred_once(KERN_WARNING "WARNING: stack recursion on stack type %d\n", info->type);
+			जाओ unknown;
+		पूर्ण
 		*visit_mask |= 1UL << info->type;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 unknown:
 	info->type = STACK_TYPE_UNKNOWN;
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण

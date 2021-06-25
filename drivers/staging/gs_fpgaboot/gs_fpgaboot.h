@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 
-#include <linux/firmware.h>
+#समावेश <linux/firmware.h>
 
-#define	MAX_STR	256
+#घोषणा	MAX_STR	256
 
-enum fmt_image {
+क्रमागत fmt_image अणु
 	f_bit,	/* only bitstream is supported */
 	f_rbt,
 	f_bin,
 	f_mcs,
 	f_hex,
-};
+पूर्ण;
 
-enum mdownload {
-	m_systemmap,	/* only system map is supported */
+क्रमागत mकरोwnload अणु
+	m_प्रणालीmap,	/* only प्रणाली map is supported */
 	m_serial,
 	m_jtag,
-};
+पूर्ण;
 
 /*
- * xilinx fpgaimage information
- * NOTE: use MAX_STR instead of dynamic alloc for simplicity
+ * xilinx fpgaimage inक्रमmation
+ * NOTE: use MAX_STR instead of dynamic alloc क्रम simplicity
  */
-struct fpgaimage {
-	enum fmt_image	fmt_img;
-	enum mdownload	dmethod;
+काष्ठा fpgaimage अणु
+	क्रमागत fmt_image	fmt_img;
+	क्रमागत mकरोwnload	dmethod;
 
-	const struct	firmware	*fw_entry;
+	स्थिर काष्ठा	firmware	*fw_entry;
 
 	/*
-	 * the following can be read from bitstream,
-	 * but other image format should have as well
+	 * the following can be पढ़ो from bitstream,
+	 * but other image क्रमmat should have as well
 	 */
-	char	filename[MAX_STR];
-	char	part[MAX_STR];
-	char	date[MAX_STR];
-	char	time[MAX_STR];
-	int	lendata;
+	अक्षर	filename[MAX_STR];
+	अक्षर	part[MAX_STR];
+	अक्षर	date[MAX_STR];
+	अक्षर	समय[MAX_STR];
+	पूर्णांक	lendata;
 	u8	*fpgadata;
-};
+पूर्ण;

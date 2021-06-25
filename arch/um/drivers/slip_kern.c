@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <linux/if_arp.h>
-#include <linux/init.h>
-#include <linux/netdevice.h>
-#include <net_kern.h>
-#include "slip.h"
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net_kern.h>
+#समावेश "slip.h"
 
-struct slip_init {
-	char *gate_addr;
-};
+काष्ठा slip_init अणु
+	अक्षर *gate_addr;
+पूर्ण;
 
-static void slip_init(struct net_device *dev, void *data)
-{
-	struct uml_net_private *private;
-	struct slip_data *spri;
-	struct slip_init *init = data;
+अटल व्योम slip_init(काष्ठा net_device *dev, व्योम *data)
+अणु
+	काष्ठा uml_net_निजी *निजी;
+	काष्ठा slip_data *spri;
+	काष्ठा slip_init *init = data;
 
-	private = netdev_priv(dev);
-	spri = (struct slip_data *) private->user;
+	निजी = netdev_priv(dev);
+	spri = (काष्ठा slip_data *) निजी->user;
 
-	memset(spri->name, 0, sizeof(spri->name));
-	spri->addr = NULL;
+	स_रखो(spri->name, 0, माप(spri->name));
+	spri->addr = शून्य;
 	spri->gate_addr = init->gate_addr;
 	spri->slave = -1;
 	spri->dev = dev;
@@ -31,63 +32,63 @@ static void slip_init(struct net_device *dev, void *data)
 	slip_proto_init(&spri->slip);
 
 	dev->hard_header_len = 0;
-	dev->header_ops = NULL;
+	dev->header_ops = शून्य;
 	dev->addr_len = 0;
 	dev->type = ARPHRD_SLIP;
 	dev->tx_queue_len = 256;
 	dev->flags = IFF_NOARP;
-	printk("SLIP backend - SLIP IP = %s\n", spri->gate_addr);
-}
+	prपूर्णांकk("SLIP backend - SLIP IP = %s\n", spri->gate_addr);
+पूर्ण
 
-static unsigned short slip_protocol(struct sk_buff *skbuff)
-{
-	return htons(ETH_P_IP);
-}
+अटल अचिन्हित लघु slip_protocol(काष्ठा sk_buff *skbuff)
+अणु
+	वापस htons(ETH_P_IP);
+पूर्ण
 
-static int slip_read(int fd, struct sk_buff *skb, struct uml_net_private *lp)
-{
-	return slip_user_read(fd, skb_mac_header(skb), skb->dev->mtu,
-			      (struct slip_data *) &lp->user);
-}
+अटल पूर्णांक slip_पढ़ो(पूर्णांक fd, काष्ठा sk_buff *skb, काष्ठा uml_net_निजी *lp)
+अणु
+	वापस slip_user_पढ़ो(fd, skb_mac_header(skb), skb->dev->mtu,
+			      (काष्ठा slip_data *) &lp->user);
+पूर्ण
 
-static int slip_write(int fd, struct sk_buff *skb, struct uml_net_private *lp)
-{
-	return slip_user_write(fd, skb->data, skb->len,
-			       (struct slip_data *) &lp->user);
-}
+अटल पूर्णांक slip_ग_लिखो(पूर्णांक fd, काष्ठा sk_buff *skb, काष्ठा uml_net_निजी *lp)
+अणु
+	वापस slip_user_ग_लिखो(fd, skb->data, skb->len,
+			       (काष्ठा slip_data *) &lp->user);
+पूर्ण
 
-static const struct net_kern_info slip_kern_info = {
+अटल स्थिर काष्ठा net_kern_info slip_kern_info = अणु
 	.init			= slip_init,
 	.protocol		= slip_protocol,
-	.read			= slip_read,
-	.write			= slip_write,
-};
+	.पढ़ो			= slip_पढ़ो,
+	.ग_लिखो			= slip_ग_लिखो,
+पूर्ण;
 
-static int slip_setup(char *str, char **mac_out, void *data)
-{
-	struct slip_init *init = data;
+अटल पूर्णांक slip_setup(अक्षर *str, अक्षर **mac_out, व्योम *data)
+अणु
+	काष्ठा slip_init *init = data;
 
-	*init = ((struct slip_init) { .gate_addr = NULL });
+	*init = ((काष्ठा slip_init) अणु .gate_addr = शून्य पूर्ण);
 
-	if (str[0] != '\0')
+	अगर (str[0] != '\0')
 		init->gate_addr = str;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct transport slip_transport = {
+अटल काष्ठा transport slip_transport = अणु
 	.list 		= LIST_HEAD_INIT(slip_transport.list),
 	.name 		= "slip",
 	.setup  	= slip_setup,
 	.user 		= &slip_user_info,
 	.kern 		= &slip_kern_info,
-	.private_size 	= sizeof(struct slip_data),
-	.setup_size 	= sizeof(struct slip_init),
-};
+	.निजी_size 	= माप(काष्ठा slip_data),
+	.setup_size 	= माप(काष्ठा slip_init),
+पूर्ण;
 
-static int register_slip(void)
-{
-	register_transport(&slip_transport);
-	return 0;
-}
+अटल पूर्णांक रेजिस्टर_slip(व्योम)
+अणु
+	रेजिस्टर_transport(&slip_transport);
+	वापस 0;
+पूर्ण
 
-late_initcall(register_slip);
+late_initcall(रेजिस्टर_slip);

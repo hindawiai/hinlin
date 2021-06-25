@@ -1,586 +1,587 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Motorola/Freescale IMX serial ports
+ * Driver क्रम Motorola/Freescale IMX serial ports
  *
- * Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
+ * Based on drivers/अक्षर/serial.c, by Linus Torvalds, Theoकरोre Ts'o.
  *
  * Author: Sascha Hauer <sascha@saschahauer.de>
  * Copyright (C) 2004 Pengutronix
  */
 
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <linux/sysrq.h>
-#include <linux/platform_device.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/serial_core.h>
-#include <linux/serial.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/ktime.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/rational.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/io.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/rational.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/dma-mapping.h>
 
-#include <asm/irq.h>
-#include <linux/platform_data/dma-imx.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/platक्रमm_data/dma-imx.h>
 
-#include "serial_mctrl_gpio.h"
+#समावेश "serial_mctrl_gpio.h"
 
 /* Register definitions */
-#define URXD0 0x0  /* Receiver Register */
-#define URTX0 0x40 /* Transmitter Register */
-#define UCR1  0x80 /* Control Register 1 */
-#define UCR2  0x84 /* Control Register 2 */
-#define UCR3  0x88 /* Control Register 3 */
-#define UCR4  0x8c /* Control Register 4 */
-#define UFCR  0x90 /* FIFO Control Register */
-#define USR1  0x94 /* Status Register 1 */
-#define USR2  0x98 /* Status Register 2 */
-#define UESC  0x9c /* Escape Character Register */
-#define UTIM  0xa0 /* Escape Timer Register */
-#define UBIR  0xa4 /* BRM Incremental Register */
-#define UBMR  0xa8 /* BRM Modulator Register */
-#define UBRC  0xac /* Baud Rate Count Register */
-#define IMX21_ONEMS 0xb0 /* One Millisecond register */
-#define IMX1_UTS 0xd0 /* UART Test Register on i.mx1 */
-#define IMX21_UTS 0xb4 /* UART Test Register on all other i.mx*/
+#घोषणा URXD0 0x0  /* Receiver Register */
+#घोषणा URTX0 0x40 /* Transmitter Register */
+#घोषणा UCR1  0x80 /* Control Register 1 */
+#घोषणा UCR2  0x84 /* Control Register 2 */
+#घोषणा UCR3  0x88 /* Control Register 3 */
+#घोषणा UCR4  0x8c /* Control Register 4 */
+#घोषणा UFCR  0x90 /* FIFO Control Register */
+#घोषणा USR1  0x94 /* Status Register 1 */
+#घोषणा USR2  0x98 /* Status Register 2 */
+#घोषणा UESC  0x9c /* Escape Character Register */
+#घोषणा UTIM  0xa0 /* Escape Timer Register */
+#घोषणा UBIR  0xa4 /* BRM Incremental Register */
+#घोषणा UBMR  0xa8 /* BRM Modulator Register */
+#घोषणा UBRC  0xac /* Baud Rate Count Register */
+#घोषणा IMX21_ONEMS 0xb0 /* One Millisecond रेजिस्टर */
+#घोषणा IMX1_UTS 0xd0 /* UART Test Register on i.mx1 */
+#घोषणा IMX21_UTS 0xb4 /* UART Test Register on all other i.mx*/
 
 /* UART Control Register Bit Fields.*/
-#define URXD_DUMMY_READ (1<<16)
-#define URXD_CHARRDY	(1<<15)
-#define URXD_ERR	(1<<14)
-#define URXD_OVRRUN	(1<<13)
-#define URXD_FRMERR	(1<<12)
-#define URXD_BRK	(1<<11)
-#define URXD_PRERR	(1<<10)
-#define URXD_RX_DATA	(0xFF<<0)
-#define UCR1_ADEN	(1<<15) /* Auto detect interrupt */
-#define UCR1_ADBR	(1<<14) /* Auto detect baud rate */
-#define UCR1_TRDYEN	(1<<13) /* Transmitter ready interrupt enable */
-#define UCR1_IDEN	(1<<12) /* Idle condition interrupt */
-#define UCR1_ICD_REG(x) (((x) & 3) << 10) /* idle condition detect */
-#define UCR1_RRDYEN	(1<<9)	/* Recv ready interrupt enable */
-#define UCR1_RXDMAEN	(1<<8)	/* Recv ready DMA enable */
-#define UCR1_IREN	(1<<7)	/* Infrared interface enable */
-#define UCR1_TXMPTYEN	(1<<6)	/* Transimitter empty interrupt enable */
-#define UCR1_RTSDEN	(1<<5)	/* RTS delta interrupt enable */
-#define UCR1_SNDBRK	(1<<4)	/* Send break */
-#define UCR1_TXDMAEN	(1<<3)	/* Transmitter ready DMA enable */
-#define IMX1_UCR1_UARTCLKEN (1<<2) /* UART clock enabled, i.mx1 only */
-#define UCR1_ATDMAEN    (1<<2)  /* Aging DMA Timer Enable */
-#define UCR1_DOZE	(1<<1)	/* Doze */
-#define UCR1_UARTEN	(1<<0)	/* UART enabled */
-#define UCR2_ESCI	(1<<15)	/* Escape seq interrupt enable */
-#define UCR2_IRTS	(1<<14)	/* Ignore RTS pin */
-#define UCR2_CTSC	(1<<13)	/* CTS pin control */
-#define UCR2_CTS	(1<<12)	/* Clear to send */
-#define UCR2_ESCEN	(1<<11)	/* Escape enable */
-#define UCR2_PREN	(1<<8)	/* Parity enable */
-#define UCR2_PROE	(1<<7)	/* Parity odd/even */
-#define UCR2_STPB	(1<<6)	/* Stop */
-#define UCR2_WS		(1<<5)	/* Word size */
-#define UCR2_RTSEN	(1<<4)	/* Request to send interrupt enable */
-#define UCR2_ATEN	(1<<3)	/* Aging Timer Enable */
-#define UCR2_TXEN	(1<<2)	/* Transmitter enabled */
-#define UCR2_RXEN	(1<<1)	/* Receiver enabled */
-#define UCR2_SRST	(1<<0)	/* SW reset */
-#define UCR3_DTREN	(1<<13) /* DTR interrupt enable */
-#define UCR3_PARERREN	(1<<12) /* Parity enable */
-#define UCR3_FRAERREN	(1<<11) /* Frame error interrupt enable */
-#define UCR3_DSR	(1<<10) /* Data set ready */
-#define UCR3_DCD	(1<<9)	/* Data carrier detect */
-#define UCR3_RI		(1<<8)	/* Ring indicator */
-#define UCR3_ADNIMP	(1<<7)	/* Autobaud Detection Not Improved */
-#define UCR3_RXDSEN	(1<<6)	/* Receive status interrupt enable */
-#define UCR3_AIRINTEN	(1<<5)	/* Async IR wake interrupt enable */
-#define UCR3_AWAKEN	(1<<4)	/* Async wake interrupt enable */
-#define UCR3_DTRDEN	(1<<3)	/* Data Terminal Ready Delta Enable. */
-#define IMX21_UCR3_RXDMUXSEL	(1<<2)	/* RXD Muxed Input Select */
-#define UCR3_INVT	(1<<1)	/* Inverted Infrared transmission */
-#define UCR3_BPEN	(1<<0)	/* Preset registers enable */
-#define UCR4_CTSTL_SHF	10	/* CTS trigger level shift */
-#define UCR4_CTSTL_MASK	0x3F	/* CTS trigger is 6 bits wide */
-#define UCR4_INVR	(1<<9)	/* Inverted infrared reception */
-#define UCR4_ENIRI	(1<<8)	/* Serial infrared interrupt enable */
-#define UCR4_WKEN	(1<<7)	/* Wake interrupt enable */
-#define UCR4_REF16	(1<<6)	/* Ref freq 16 MHz */
-#define UCR4_IDDMAEN    (1<<6)  /* DMA IDLE Condition Detected */
-#define UCR4_IRSC	(1<<5)	/* IR special case */
-#define UCR4_TCEN	(1<<3)	/* Transmit complete interrupt enable */
-#define UCR4_BKEN	(1<<2)	/* Break condition interrupt enable */
-#define UCR4_OREN	(1<<1)	/* Receiver overrun interrupt enable */
-#define UCR4_DREN	(1<<0)	/* Recv data ready interrupt enable */
-#define UFCR_RXTL_SHF	0	/* Receiver trigger level shift */
-#define UFCR_DCEDTE	(1<<6)	/* DCE/DTE mode select */
-#define UFCR_RFDIV	(7<<7)	/* Reference freq divider mask */
-#define UFCR_RFDIV_REG(x)	(((x) < 7 ? 6 - (x) : 6) << 7)
-#define UFCR_TXTL_SHF	10	/* Transmitter trigger level shift */
-#define USR1_PARITYERR	(1<<15) /* Parity error interrupt flag */
-#define USR1_RTSS	(1<<14) /* RTS pin status */
-#define USR1_TRDY	(1<<13) /* Transmitter ready interrupt/dma flag */
-#define USR1_RTSD	(1<<12) /* RTS delta */
-#define USR1_ESCF	(1<<11) /* Escape seq interrupt flag */
-#define USR1_FRAMERR	(1<<10) /* Frame error interrupt flag */
-#define USR1_RRDY	(1<<9)	 /* Receiver ready interrupt/dma flag */
-#define USR1_AGTIM	(1<<8)	 /* Ageing timer interrupt flag */
-#define USR1_DTRD	(1<<7)	 /* DTR Delta */
-#define USR1_RXDS	 (1<<6)	 /* Receiver idle interrupt flag */
-#define USR1_AIRINT	 (1<<5)	 /* Async IR wake interrupt flag */
-#define USR1_AWAKE	 (1<<4)	 /* Aysnc wake interrupt flag */
-#define USR2_ADET	 (1<<15) /* Auto baud rate detect complete */
-#define USR2_TXFE	 (1<<14) /* Transmit buffer FIFO empty */
-#define USR2_DTRF	 (1<<13) /* DTR edge interrupt flag */
-#define USR2_IDLE	 (1<<12) /* Idle condition */
-#define USR2_RIDELT	 (1<<10) /* Ring Interrupt Delta */
-#define USR2_RIIN	 (1<<9)	 /* Ring Indicator Input */
-#define USR2_IRINT	 (1<<8)	 /* Serial infrared interrupt flag */
-#define USR2_WAKE	 (1<<7)	 /* Wake */
-#define USR2_DCDIN	 (1<<5)	 /* Data Carrier Detect Input */
-#define USR2_RTSF	 (1<<4)	 /* RTS edge interrupt flag */
-#define USR2_TXDC	 (1<<3)	 /* Transmitter complete */
-#define USR2_BRCD	 (1<<2)	 /* Break condition */
-#define USR2_ORE	(1<<1)	 /* Overrun error */
-#define USR2_RDR	(1<<0)	 /* Recv data ready */
-#define UTS_FRCPERR	(1<<13) /* Force parity error */
-#define UTS_LOOP	(1<<12)	 /* Loop tx and rx */
-#define UTS_TXEMPTY	 (1<<6)	 /* TxFIFO empty */
-#define UTS_RXEMPTY	 (1<<5)	 /* RxFIFO empty */
-#define UTS_TXFULL	 (1<<4)	 /* TxFIFO full */
-#define UTS_RXFULL	 (1<<3)	 /* RxFIFO full */
-#define UTS_SOFTRST	 (1<<0)	 /* Software reset */
+#घोषणा URXD_DUMMY_READ (1<<16)
+#घोषणा URXD_CHARRDY	(1<<15)
+#घोषणा URXD_ERR	(1<<14)
+#घोषणा URXD_OVRRUN	(1<<13)
+#घोषणा URXD_FRMERR	(1<<12)
+#घोषणा URXD_BRK	(1<<11)
+#घोषणा URXD_PRERR	(1<<10)
+#घोषणा URXD_RX_DATA	(0xFF<<0)
+#घोषणा UCR1_ADEN	(1<<15) /* Auto detect पूर्णांकerrupt */
+#घोषणा UCR1_ADBR	(1<<14) /* Auto detect baud rate */
+#घोषणा UCR1_TRDYEN	(1<<13) /* Transmitter पढ़ोy पूर्णांकerrupt enable */
+#घोषणा UCR1_IDEN	(1<<12) /* Idle condition पूर्णांकerrupt */
+#घोषणा UCR1_ICD_REG(x) (((x) & 3) << 10) /* idle condition detect */
+#घोषणा UCR1_RRDYEN	(1<<9)	/* Recv पढ़ोy पूर्णांकerrupt enable */
+#घोषणा UCR1_RXDMAEN	(1<<8)	/* Recv पढ़ोy DMA enable */
+#घोषणा UCR1_IREN	(1<<7)	/* Infrared पूर्णांकerface enable */
+#घोषणा UCR1_TXMPTYEN	(1<<6)	/* Transimitter empty पूर्णांकerrupt enable */
+#घोषणा UCR1_RTSDEN	(1<<5)	/* RTS delta पूर्णांकerrupt enable */
+#घोषणा UCR1_SNDBRK	(1<<4)	/* Send अवरोध */
+#घोषणा UCR1_TXDMAEN	(1<<3)	/* Transmitter पढ़ोy DMA enable */
+#घोषणा IMX1_UCR1_UARTCLKEN (1<<2) /* UART घड़ी enabled, i.mx1 only */
+#घोषणा UCR1_ATDMAEN    (1<<2)  /* Aging DMA Timer Enable */
+#घोषणा UCR1_DOZE	(1<<1)	/* Doze */
+#घोषणा UCR1_UARTEN	(1<<0)	/* UART enabled */
+#घोषणा UCR2_ESCI	(1<<15)	/* Escape seq पूर्णांकerrupt enable */
+#घोषणा UCR2_IRTS	(1<<14)	/* Ignore RTS pin */
+#घोषणा UCR2_CTSC	(1<<13)	/* CTS pin control */
+#घोषणा UCR2_CTS	(1<<12)	/* Clear to send */
+#घोषणा UCR2_ESCEN	(1<<11)	/* Escape enable */
+#घोषणा UCR2_PREN	(1<<8)	/* Parity enable */
+#घोषणा UCR2_PROE	(1<<7)	/* Parity odd/even */
+#घोषणा UCR2_STPB	(1<<6)	/* Stop */
+#घोषणा UCR2_WS		(1<<5)	/* Word size */
+#घोषणा UCR2_RTSEN	(1<<4)	/* Request to send पूर्णांकerrupt enable */
+#घोषणा UCR2_ATEN	(1<<3)	/* Aging Timer Enable */
+#घोषणा UCR2_TXEN	(1<<2)	/* Transmitter enabled */
+#घोषणा UCR2_RXEN	(1<<1)	/* Receiver enabled */
+#घोषणा UCR2_SRST	(1<<0)	/* SW reset */
+#घोषणा UCR3_DTREN	(1<<13) /* DTR पूर्णांकerrupt enable */
+#घोषणा UCR3_PARERREN	(1<<12) /* Parity enable */
+#घोषणा UCR3_FRAERREN	(1<<11) /* Frame error पूर्णांकerrupt enable */
+#घोषणा UCR3_DSR	(1<<10) /* Data set पढ़ोy */
+#घोषणा UCR3_DCD	(1<<9)	/* Data carrier detect */
+#घोषणा UCR3_RI		(1<<8)	/* Ring indicator */
+#घोषणा UCR3_ADNIMP	(1<<7)	/* Autobaud Detection Not Improved */
+#घोषणा UCR3_RXDSEN	(1<<6)	/* Receive status पूर्णांकerrupt enable */
+#घोषणा UCR3_AIRINTEN	(1<<5)	/* Async IR wake पूर्णांकerrupt enable */
+#घोषणा UCR3_AWAKEN	(1<<4)	/* Async wake पूर्णांकerrupt enable */
+#घोषणा UCR3_DTRDEN	(1<<3)	/* Data Terminal Ready Delta Enable. */
+#घोषणा IMX21_UCR3_RXDMUXSEL	(1<<2)	/* RXD Muxed Input Select */
+#घोषणा UCR3_INVT	(1<<1)	/* Inverted Infrared transmission */
+#घोषणा UCR3_BPEN	(1<<0)	/* Preset रेजिस्टरs enable */
+#घोषणा UCR4_CTSTL_SHF	10	/* CTS trigger level shअगरt */
+#घोषणा UCR4_CTSTL_MASK	0x3F	/* CTS trigger is 6 bits wide */
+#घोषणा UCR4_INVR	(1<<9)	/* Inverted infrared reception */
+#घोषणा UCR4_ENIRI	(1<<8)	/* Serial infrared पूर्णांकerrupt enable */
+#घोषणा UCR4_WKEN	(1<<7)	/* Wake पूर्णांकerrupt enable */
+#घोषणा UCR4_REF16	(1<<6)	/* Ref freq 16 MHz */
+#घोषणा UCR4_IDDMAEN    (1<<6)  /* DMA IDLE Condition Detected */
+#घोषणा UCR4_IRSC	(1<<5)	/* IR special हाल */
+#घोषणा UCR4_TCEN	(1<<3)	/* Transmit complete पूर्णांकerrupt enable */
+#घोषणा UCR4_BKEN	(1<<2)	/* Break condition पूर्णांकerrupt enable */
+#घोषणा UCR4_OREN	(1<<1)	/* Receiver overrun पूर्णांकerrupt enable */
+#घोषणा UCR4_DREN	(1<<0)	/* Recv data पढ़ोy पूर्णांकerrupt enable */
+#घोषणा UFCR_RXTL_SHF	0	/* Receiver trigger level shअगरt */
+#घोषणा UFCR_DCEDTE	(1<<6)	/* DCE/DTE mode select */
+#घोषणा UFCR_RFDIV	(7<<7)	/* Reference freq भागider mask */
+#घोषणा UFCR_RFDIV_REG(x)	(((x) < 7 ? 6 - (x) : 6) << 7)
+#घोषणा UFCR_TXTL_SHF	10	/* Transmitter trigger level shअगरt */
+#घोषणा USR1_PARITYERR	(1<<15) /* Parity error पूर्णांकerrupt flag */
+#घोषणा USR1_RTSS	(1<<14) /* RTS pin status */
+#घोषणा USR1_TRDY	(1<<13) /* Transmitter पढ़ोy पूर्णांकerrupt/dma flag */
+#घोषणा USR1_RTSD	(1<<12) /* RTS delta */
+#घोषणा USR1_ESCF	(1<<11) /* Escape seq पूर्णांकerrupt flag */
+#घोषणा USR1_FRAMERR	(1<<10) /* Frame error पूर्णांकerrupt flag */
+#घोषणा USR1_RRDY	(1<<9)	 /* Receiver पढ़ोy पूर्णांकerrupt/dma flag */
+#घोषणा USR1_AGTIM	(1<<8)	 /* Ageing समयr पूर्णांकerrupt flag */
+#घोषणा USR1_DTRD	(1<<7)	 /* DTR Delta */
+#घोषणा USR1_RXDS	 (1<<6)	 /* Receiver idle पूर्णांकerrupt flag */
+#घोषणा USR1_AIRINT	 (1<<5)	 /* Async IR wake पूर्णांकerrupt flag */
+#घोषणा USR1_AWAKE	 (1<<4)	 /* Aysnc wake पूर्णांकerrupt flag */
+#घोषणा USR2_ADET	 (1<<15) /* Auto baud rate detect complete */
+#घोषणा USR2_TXFE	 (1<<14) /* Transmit buffer FIFO empty */
+#घोषणा USR2_DTRF	 (1<<13) /* DTR edge पूर्णांकerrupt flag */
+#घोषणा USR2_IDLE	 (1<<12) /* Idle condition */
+#घोषणा USR2_RIDELT	 (1<<10) /* Ring Interrupt Delta */
+#घोषणा USR2_RIIN	 (1<<9)	 /* Ring Indicator Input */
+#घोषणा USR2_IRINT	 (1<<8)	 /* Serial infrared पूर्णांकerrupt flag */
+#घोषणा USR2_WAKE	 (1<<7)	 /* Wake */
+#घोषणा USR2_DCDIN	 (1<<5)	 /* Data Carrier Detect Input */
+#घोषणा USR2_RTSF	 (1<<4)	 /* RTS edge पूर्णांकerrupt flag */
+#घोषणा USR2_TXDC	 (1<<3)	 /* Transmitter complete */
+#घोषणा USR2_BRCD	 (1<<2)	 /* Break condition */
+#घोषणा USR2_ORE	(1<<1)	 /* Overrun error */
+#घोषणा USR2_RDR	(1<<0)	 /* Recv data पढ़ोy */
+#घोषणा UTS_FRCPERR	(1<<13) /* Force parity error */
+#घोषणा UTS_LOOP	(1<<12)	 /* Loop tx and rx */
+#घोषणा UTS_TXEMPTY	 (1<<6)	 /* TxFIFO empty */
+#घोषणा UTS_RXEMPTY	 (1<<5)	 /* RxFIFO empty */
+#घोषणा UTS_TXFULL	 (1<<4)	 /* TxFIFO full */
+#घोषणा UTS_RXFULL	 (1<<3)	 /* RxFIFO full */
+#घोषणा UTS_SOFTRST	 (1<<0)	 /* Software reset */
 
-/* We've been assigned a range on the "Low-density serial ports" major */
-#define SERIAL_IMX_MAJOR	207
-#define MINOR_START		16
-#define DEV_NAME		"ttymxc"
+/* We've been asचिन्हित a range on the "Low-density serial ports" major */
+#घोषणा SERIAL_IMX_MAJOR	207
+#घोषणा MINOR_START		16
+#घोषणा DEV_NAME		"ttymxc"
 
 /*
- * This determines how often we check the modem status signals
- * for any change.  They generally aren't connected to an IRQ
- * so we have to poll them.  We also check immediately before
- * filling the TX fifo incase CTS has been dropped.
+ * This determines how often we check the modem status संकेतs
+ * क्रम any change.  They generally aren't connected to an IRQ
+ * so we have to poll them.  We also check immediately beक्रमe
+ * filling the TX fअगरo inहाल CTS has been dropped.
  */
-#define MCTRL_TIMEOUT	(250*HZ/1000)
+#घोषणा MCTRL_TIMEOUT	(250*HZ/1000)
 
-#define DRIVER_NAME "IMX-uart"
+#घोषणा DRIVER_NAME "IMX-uart"
 
-#define UART_NR 8
+#घोषणा UART_NR 8
 
 /* i.MX21 type uart runs on all i.mx except i.MX1 and i.MX6q */
-enum imx_uart_type {
+क्रमागत imx_uart_type अणु
 	IMX1_UART,
 	IMX21_UART,
 	IMX53_UART,
 	IMX6Q_UART,
-};
+पूर्ण;
 
 /* device type dependent stuff */
-struct imx_uart_data {
-	unsigned uts_reg;
-	enum imx_uart_type devtype;
-};
+काष्ठा imx_uart_data अणु
+	अचिन्हित uts_reg;
+	क्रमागत imx_uart_type devtype;
+पूर्ण;
 
-enum imx_tx_state {
+क्रमागत imx_tx_state अणु
 	OFF,
 	WAIT_AFTER_RTS,
 	SEND,
 	WAIT_AFTER_SEND,
-};
+पूर्ण;
 
-struct imx_port {
-	struct uart_port	port;
-	struct timer_list	timer;
-	unsigned int		old_status;
-	unsigned int		have_rtscts:1;
-	unsigned int		have_rtsgpio:1;
-	unsigned int		dte_mode:1;
-	unsigned int		inverted_tx:1;
-	unsigned int		inverted_rx:1;
-	struct clk		*clk_ipg;
-	struct clk		*clk_per;
-	const struct imx_uart_data *devdata;
+काष्ठा imx_port अणु
+	काष्ठा uart_port	port;
+	काष्ठा समयr_list	समयr;
+	अचिन्हित पूर्णांक		old_status;
+	अचिन्हित पूर्णांक		have_rtscts:1;
+	अचिन्हित पूर्णांक		have_rtsgpio:1;
+	अचिन्हित पूर्णांक		dte_mode:1;
+	अचिन्हित पूर्णांक		inverted_tx:1;
+	अचिन्हित पूर्णांक		inverted_rx:1;
+	काष्ठा clk		*clk_ipg;
+	काष्ठा clk		*clk_per;
+	स्थिर काष्ठा imx_uart_data *devdata;
 
-	struct mctrl_gpios *gpios;
+	काष्ठा mctrl_gpios *gpios;
 
-	/* shadow registers */
-	unsigned int ucr1;
-	unsigned int ucr2;
-	unsigned int ucr3;
-	unsigned int ucr4;
-	unsigned int ufcr;
+	/* shaकरोw रेजिस्टरs */
+	अचिन्हित पूर्णांक ucr1;
+	अचिन्हित पूर्णांक ucr2;
+	अचिन्हित पूर्णांक ucr3;
+	अचिन्हित पूर्णांक ucr4;
+	अचिन्हित पूर्णांक ufcr;
 
 	/* DMA fields */
-	unsigned int		dma_is_enabled:1;
-	unsigned int		dma_is_rxing:1;
-	unsigned int		dma_is_txing:1;
-	struct dma_chan		*dma_chan_rx, *dma_chan_tx;
-	struct scatterlist	rx_sgl, tx_sgl[2];
-	void			*rx_buf;
-	struct circ_buf		rx_ring;
-	unsigned int		rx_periods;
+	अचिन्हित पूर्णांक		dma_is_enabled:1;
+	अचिन्हित पूर्णांक		dma_is_rxing:1;
+	अचिन्हित पूर्णांक		dma_is_txing:1;
+	काष्ठा dma_chan		*dma_chan_rx, *dma_chan_tx;
+	काष्ठा scatterlist	rx_sgl, tx_sgl[2];
+	व्योम			*rx_buf;
+	काष्ठा circ_buf		rx_ring;
+	अचिन्हित पूर्णांक		rx_periods;
 	dma_cookie_t		rx_cookie;
-	unsigned int		tx_bytes;
-	unsigned int		dma_tx_nents;
-	unsigned int            saved_reg[10];
+	अचिन्हित पूर्णांक		tx_bytes;
+	अचिन्हित पूर्णांक		dma_tx_nents;
+	अचिन्हित पूर्णांक            saved_reg[10];
 	bool			context_saved;
 
-	enum imx_tx_state	tx_state;
-	struct hrtimer		trigger_start_tx;
-	struct hrtimer		trigger_stop_tx;
-};
+	क्रमागत imx_tx_state	tx_state;
+	काष्ठा hrसमयr		trigger_start_tx;
+	काष्ठा hrसमयr		trigger_stop_tx;
+पूर्ण;
 
-struct imx_port_ucrs {
-	unsigned int	ucr1;
-	unsigned int	ucr2;
-	unsigned int	ucr3;
-};
+काष्ठा imx_port_ucrs अणु
+	अचिन्हित पूर्णांक	ucr1;
+	अचिन्हित पूर्णांक	ucr2;
+	अचिन्हित पूर्णांक	ucr3;
+पूर्ण;
 
-static struct imx_uart_data imx_uart_devdata[] = {
-	[IMX1_UART] = {
+अटल काष्ठा imx_uart_data imx_uart_devdata[] = अणु
+	[IMX1_UART] = अणु
 		.uts_reg = IMX1_UTS,
 		.devtype = IMX1_UART,
-	},
-	[IMX21_UART] = {
+	पूर्ण,
+	[IMX21_UART] = अणु
 		.uts_reg = IMX21_UTS,
 		.devtype = IMX21_UART,
-	},
-	[IMX53_UART] = {
+	पूर्ण,
+	[IMX53_UART] = अणु
 		.uts_reg = IMX21_UTS,
 		.devtype = IMX53_UART,
-	},
-	[IMX6Q_UART] = {
+	पूर्ण,
+	[IMX6Q_UART] = अणु
 		.uts_reg = IMX21_UTS,
 		.devtype = IMX6Q_UART,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct of_device_id imx_uart_dt_ids[] = {
-	{ .compatible = "fsl,imx6q-uart", .data = &imx_uart_devdata[IMX6Q_UART], },
-	{ .compatible = "fsl,imx53-uart", .data = &imx_uart_devdata[IMX53_UART], },
-	{ .compatible = "fsl,imx1-uart", .data = &imx_uart_devdata[IMX1_UART], },
-	{ .compatible = "fsl,imx21-uart", .data = &imx_uart_devdata[IMX21_UART], },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx_uart_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx6q-uart", .data = &imx_uart_devdata[IMX6Q_UART], पूर्ण,
+	अणु .compatible = "fsl,imx53-uart", .data = &imx_uart_devdata[IMX53_UART], पूर्ण,
+	अणु .compatible = "fsl,imx1-uart", .data = &imx_uart_devdata[IMX1_UART], पूर्ण,
+	अणु .compatible = "fsl,imx21-uart", .data = &imx_uart_devdata[IMX21_UART], पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, imx_uart_dt_ids);
 
-static void imx_uart_writel(struct imx_port *sport, u32 val, u32 offset)
-{
-	switch (offset) {
-	case UCR1:
+अटल व्योम imx_uart_ग_लिखोl(काष्ठा imx_port *sport, u32 val, u32 offset)
+अणु
+	चयन (offset) अणु
+	हाल UCR1:
 		sport->ucr1 = val;
-		break;
-	case UCR2:
+		अवरोध;
+	हाल UCR2:
 		sport->ucr2 = val;
-		break;
-	case UCR3:
+		अवरोध;
+	हाल UCR3:
 		sport->ucr3 = val;
-		break;
-	case UCR4:
+		अवरोध;
+	हाल UCR4:
 		sport->ucr4 = val;
-		break;
-	case UFCR:
+		अवरोध;
+	हाल UFCR:
 		sport->ufcr = val;
-		break;
-	default:
-		break;
-	}
-	writel(val, sport->port.membase + offset);
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	ग_लिखोl(val, sport->port.membase + offset);
+पूर्ण
 
-static u32 imx_uart_readl(struct imx_port *sport, u32 offset)
-{
-	switch (offset) {
-	case UCR1:
-		return sport->ucr1;
-		break;
-	case UCR2:
+अटल u32 imx_uart_पढ़ोl(काष्ठा imx_port *sport, u32 offset)
+अणु
+	चयन (offset) अणु
+	हाल UCR1:
+		वापस sport->ucr1;
+		अवरोध;
+	हाल UCR2:
 		/*
-		 * UCR2_SRST is the only bit in the cached registers that might
-		 * differ from the value that was last written. As it only
-		 * automatically becomes one after being cleared, reread
+		 * UCR2_SRST is the only bit in the cached रेजिस्टरs that might
+		 * dअगरfer from the value that was last written. As it only
+		 * स्वतःmatically becomes one after being cleared, reपढ़ो
 		 * conditionally.
 		 */
-		if (!(sport->ucr2 & UCR2_SRST))
-			sport->ucr2 = readl(sport->port.membase + offset);
-		return sport->ucr2;
-		break;
-	case UCR3:
-		return sport->ucr3;
-		break;
-	case UCR4:
-		return sport->ucr4;
-		break;
-	case UFCR:
-		return sport->ufcr;
-		break;
-	default:
-		return readl(sport->port.membase + offset);
-	}
-}
+		अगर (!(sport->ucr2 & UCR2_SRST))
+			sport->ucr2 = पढ़ोl(sport->port.membase + offset);
+		वापस sport->ucr2;
+		अवरोध;
+	हाल UCR3:
+		वापस sport->ucr3;
+		अवरोध;
+	हाल UCR4:
+		वापस sport->ucr4;
+		अवरोध;
+	हाल UFCR:
+		वापस sport->ufcr;
+		अवरोध;
+	शेष:
+		वापस पढ़ोl(sport->port.membase + offset);
+	पूर्ण
+पूर्ण
 
-static inline unsigned imx_uart_uts_reg(struct imx_port *sport)
-{
-	return sport->devdata->uts_reg;
-}
+अटल अंतरभूत अचिन्हित imx_uart_uts_reg(काष्ठा imx_port *sport)
+अणु
+	वापस sport->devdata->uts_reg;
+पूर्ण
 
-static inline int imx_uart_is_imx1(struct imx_port *sport)
-{
-	return sport->devdata->devtype == IMX1_UART;
-}
+अटल अंतरभूत पूर्णांक imx_uart_is_imx1(काष्ठा imx_port *sport)
+अणु
+	वापस sport->devdata->devtype == IMX1_UART;
+पूर्ण
 
-static inline int imx_uart_is_imx21(struct imx_port *sport)
-{
-	return sport->devdata->devtype == IMX21_UART;
-}
+अटल अंतरभूत पूर्णांक imx_uart_is_imx21(काष्ठा imx_port *sport)
+अणु
+	वापस sport->devdata->devtype == IMX21_UART;
+पूर्ण
 
-static inline int imx_uart_is_imx53(struct imx_port *sport)
-{
-	return sport->devdata->devtype == IMX53_UART;
-}
+अटल अंतरभूत पूर्णांक imx_uart_is_imx53(काष्ठा imx_port *sport)
+अणु
+	वापस sport->devdata->devtype == IMX53_UART;
+पूर्ण
 
-static inline int imx_uart_is_imx6q(struct imx_port *sport)
-{
-	return sport->devdata->devtype == IMX6Q_UART;
-}
+अटल अंतरभूत पूर्णांक imx_uart_is_imx6q(काष्ठा imx_port *sport)
+अणु
+	वापस sport->devdata->devtype == IMX6Q_UART;
+पूर्ण
 /*
- * Save and restore functions for UCR1, UCR2 and UCR3 registers
+ * Save and restore functions क्रम UCR1, UCR2 and UCR3 रेजिस्टरs
  */
-#if IS_ENABLED(CONFIG_SERIAL_IMX_CONSOLE)
-static void imx_uart_ucrs_save(struct imx_port *sport,
-			       struct imx_port_ucrs *ucr)
-{
-	/* save control registers */
-	ucr->ucr1 = imx_uart_readl(sport, UCR1);
-	ucr->ucr2 = imx_uart_readl(sport, UCR2);
-	ucr->ucr3 = imx_uart_readl(sport, UCR3);
-}
+#अगर IS_ENABLED(CONFIG_SERIAL_IMX_CONSOLE)
+अटल व्योम imx_uart_ucrs_save(काष्ठा imx_port *sport,
+			       काष्ठा imx_port_ucrs *ucr)
+अणु
+	/* save control रेजिस्टरs */
+	ucr->ucr1 = imx_uart_पढ़ोl(sport, UCR1);
+	ucr->ucr2 = imx_uart_पढ़ोl(sport, UCR2);
+	ucr->ucr3 = imx_uart_पढ़ोl(sport, UCR3);
+पूर्ण
 
-static void imx_uart_ucrs_restore(struct imx_port *sport,
-				  struct imx_port_ucrs *ucr)
-{
-	/* restore control registers */
-	imx_uart_writel(sport, ucr->ucr1, UCR1);
-	imx_uart_writel(sport, ucr->ucr2, UCR2);
-	imx_uart_writel(sport, ucr->ucr3, UCR3);
-}
-#endif
+अटल व्योम imx_uart_ucrs_restore(काष्ठा imx_port *sport,
+				  काष्ठा imx_port_ucrs *ucr)
+अणु
+	/* restore control रेजिस्टरs */
+	imx_uart_ग_लिखोl(sport, ucr->ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr->ucr2, UCR2);
+	imx_uart_ग_लिखोl(sport, ucr->ucr3, UCR3);
+पूर्ण
+#पूर्ण_अगर
 
 /* called with port.lock taken and irqs caller dependent */
-static void imx_uart_rts_active(struct imx_port *sport, u32 *ucr2)
-{
+अटल व्योम imx_uart_rts_active(काष्ठा imx_port *sport, u32 *ucr2)
+अणु
 	*ucr2 &= ~(UCR2_CTSC | UCR2_CTS);
 
 	sport->port.mctrl |= TIOCM_RTS;
 	mctrl_gpio_set(sport->gpios, sport->port.mctrl);
-}
+पूर्ण
 
 /* called with port.lock taken and irqs caller dependent */
-static void imx_uart_rts_inactive(struct imx_port *sport, u32 *ucr2)
-{
+अटल व्योम imx_uart_rts_inactive(काष्ठा imx_port *sport, u32 *ucr2)
+अणु
 	*ucr2 &= ~UCR2_CTSC;
 	*ucr2 |= UCR2_CTS;
 
 	sport->port.mctrl &= ~TIOCM_RTS;
 	mctrl_gpio_set(sport->gpios, sport->port.mctrl);
-}
+पूर्ण
 
-static void start_hrtimer_ms(struct hrtimer *hrt, unsigned long msec)
-{
-       hrtimer_start(hrt, ms_to_ktime(msec), HRTIMER_MODE_REL);
-}
+अटल व्योम start_hrसमयr_ms(काष्ठा hrसमयr *hrt, अचिन्हित दीर्घ msec)
+अणु
+       hrसमयr_start(hrt, ms_to_kसमय(msec), HRTIMER_MODE_REL);
+पूर्ण
 
 /* called with port.lock taken and irqs off */
-static void imx_uart_start_rx(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	unsigned int ucr1, ucr2;
+अटल व्योम imx_uart_start_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	अचिन्हित पूर्णांक ucr1, ucr2;
 
-	ucr1 = imx_uart_readl(sport, UCR1);
-	ucr2 = imx_uart_readl(sport, UCR2);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
+	ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 
 	ucr2 |= UCR2_RXEN;
 
-	if (sport->dma_is_enabled) {
+	अगर (sport->dma_is_enabled) अणु
 		ucr1 |= UCR1_RXDMAEN | UCR1_ATDMAEN;
-	} else {
+	पूर्ण अन्यथा अणु
 		ucr1 |= UCR1_RRDYEN;
 		ucr2 |= UCR2_ATEN;
-	}
+	पूर्ण
 
 	/* Write UCR2 first as it includes RXEN */
-	imx_uart_writel(sport, ucr2, UCR2);
-	imx_uart_writel(sport, ucr1, UCR1);
-}
+	imx_uart_ग_लिखोl(sport, ucr2, UCR2);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
+पूर्ण
 
 /* called with port.lock taken and irqs off */
-static void imx_uart_stop_tx(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
+अटल व्योम imx_uart_stop_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
 	u32 ucr1, ucr4, usr2;
 
-	if (sport->tx_state == OFF)
-		return;
+	अगर (sport->tx_state == OFF)
+		वापस;
 
 	/*
-	 * We are maybe in the SMP context, so if the DMA TX thread is running
-	 * on other cpu, we have to wait for it to finish.
+	 * We are maybe in the SMP context, so अगर the DMA TX thपढ़ो is running
+	 * on other cpu, we have to रुको क्रम it to finish.
 	 */
-	if (sport->dma_is_txing)
-		return;
+	अगर (sport->dma_is_txing)
+		वापस;
 
-	ucr1 = imx_uart_readl(sport, UCR1);
-	imx_uart_writel(sport, ucr1 & ~UCR1_TRDYEN, UCR1);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1 & ~UCR1_TRDYEN, UCR1);
 
-	usr2 = imx_uart_readl(sport, USR2);
-	if (!(usr2 & USR2_TXDC)) {
-		/* The shifter is still busy, so retry once TC triggers */
-		return;
-	}
+	usr2 = imx_uart_पढ़ोl(sport, USR2);
+	अगर (!(usr2 & USR2_TXDC)) अणु
+		/* The shअगरter is still busy, so retry once TC triggers */
+		वापस;
+	पूर्ण
 
-	ucr4 = imx_uart_readl(sport, UCR4);
+	ucr4 = imx_uart_पढ़ोl(sport, UCR4);
 	ucr4 &= ~UCR4_TCEN;
-	imx_uart_writel(sport, ucr4, UCR4);
+	imx_uart_ग_लिखोl(sport, ucr4, UCR4);
 
 	/* in rs485 mode disable transmitter */
-	if (port->rs485.flags & SER_RS485_ENABLED) {
-		if (sport->tx_state == SEND) {
+	अगर (port->rs485.flags & SER_RS485_ENABLED) अणु
+		अगर (sport->tx_state == SEND) अणु
 			sport->tx_state = WAIT_AFTER_SEND;
-			start_hrtimer_ms(&sport->trigger_stop_tx,
+			start_hrसमयr_ms(&sport->trigger_stop_tx,
 					 port->rs485.delay_rts_after_send);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (sport->tx_state == WAIT_AFTER_RTS ||
-		    sport->tx_state == WAIT_AFTER_SEND) {
+		अगर (sport->tx_state == WAIT_AFTER_RTS ||
+		    sport->tx_state == WAIT_AFTER_SEND) अणु
 			u32 ucr2;
 
-			hrtimer_try_to_cancel(&sport->trigger_start_tx);
+			hrसमयr_try_to_cancel(&sport->trigger_start_tx);
 
-			ucr2 = imx_uart_readl(sport, UCR2);
-			if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
+			ucr2 = imx_uart_पढ़ोl(sport, UCR2);
+			अगर (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
 				imx_uart_rts_active(sport, &ucr2);
-			else
+			अन्यथा
 				imx_uart_rts_inactive(sport, &ucr2);
-			imx_uart_writel(sport, ucr2, UCR2);
+			imx_uart_ग_लिखोl(sport, ucr2, UCR2);
 
 			imx_uart_start_rx(port);
 
 			sport->tx_state = OFF;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sport->tx_state = OFF;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* called with port.lock taken and irqs off */
-static void imx_uart_stop_rx(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
+अटल व्योम imx_uart_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
 	u32 ucr1, ucr2;
 
-	ucr1 = imx_uart_readl(sport, UCR1);
-	ucr2 = imx_uart_readl(sport, UCR2);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
+	ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 
-	if (sport->dma_is_enabled) {
+	अगर (sport->dma_is_enabled) अणु
 		ucr1 &= ~(UCR1_RXDMAEN | UCR1_ATDMAEN);
-	} else {
+	पूर्ण अन्यथा अणु
 		ucr1 &= ~UCR1_RRDYEN;
 		ucr2 &= ~UCR2_ATEN;
-	}
-	imx_uart_writel(sport, ucr1, UCR1);
+	पूर्ण
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
 	ucr2 &= ~UCR2_RXEN;
-	imx_uart_writel(sport, ucr2, UCR2);
-}
+	imx_uart_ग_लिखोl(sport, ucr2, UCR2);
+पूर्ण
 
 /* called with port.lock taken and irqs off */
-static void imx_uart_enable_ms(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
+अटल व्योम imx_uart_enable_ms(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
 
-	mod_timer(&sport->timer, jiffies);
+	mod_समयr(&sport->समयr, jअगरfies);
 
 	mctrl_gpio_enable_ms(sport->gpios);
-}
+पूर्ण
 
-static void imx_uart_dma_tx(struct imx_port *sport);
+अटल व्योम imx_uart_dma_tx(काष्ठा imx_port *sport);
 
 /* called with port.lock taken and irqs off */
-static inline void imx_uart_transmit_buffer(struct imx_port *sport)
-{
-	struct circ_buf *xmit = &sport->port.state->xmit;
+अटल अंतरभूत व्योम imx_uart_transmit_buffer(काष्ठा imx_port *sport)
+अणु
+	काष्ठा circ_buf *xmit = &sport->port.state->xmit;
 
-	if (sport->port.x_char) {
-		/* Send next char */
-		imx_uart_writel(sport, sport->port.x_char, URTX0);
+	अगर (sport->port.x_अक्षर) अणु
+		/* Send next अक्षर */
+		imx_uart_ग_लिखोl(sport, sport->port.x_अक्षर, URTX0);
 		sport->port.icount.tx++;
-		sport->port.x_char = 0;
-		return;
-	}
+		sport->port.x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(&sport->port)) {
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(&sport->port)) अणु
 		imx_uart_stop_tx(&sport->port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sport->dma_is_enabled) {
+	अगर (sport->dma_is_enabled) अणु
 		u32 ucr1;
 		/*
-		 * We've just sent a X-char Ensure the TX DMA is enabled
+		 * We've just sent a X-अक्षर Ensure the TX DMA is enabled
 		 * and the TX IRQ is disabled.
 		 **/
-		ucr1 = imx_uart_readl(sport, UCR1);
+		ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 		ucr1 &= ~UCR1_TRDYEN;
-		if (sport->dma_is_txing) {
+		अगर (sport->dma_is_txing) अणु
 			ucr1 |= UCR1_TXDMAEN;
-			imx_uart_writel(sport, ucr1, UCR1);
-		} else {
-			imx_uart_writel(sport, ucr1, UCR1);
+			imx_uart_ग_लिखोl(sport, ucr1, UCR1);
+		पूर्ण अन्यथा अणु
+			imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 			imx_uart_dma_tx(sport);
-		}
+		पूर्ण
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while (!uart_circ_empty(xmit) &&
-	       !(imx_uart_readl(sport, imx_uart_uts_reg(sport)) & UTS_TXFULL)) {
+	जबतक (!uart_circ_empty(xmit) &&
+	       !(imx_uart_पढ़ोl(sport, imx_uart_uts_reg(sport)) & UTS_TXFULL)) अणु
 		/* send xmit->buf[xmit->tail]
 		 * out the port here */
-		imx_uart_writel(sport, xmit->buf[xmit->tail], URTX0);
+		imx_uart_ग_लिखोl(sport, xmit->buf[xmit->tail], URTX0);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		sport->port.icount.tx++;
-	}
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&sport->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&sport->port);
 
-	if (uart_circ_empty(xmit))
+	अगर (uart_circ_empty(xmit))
 		imx_uart_stop_tx(&sport->port);
-}
+पूर्ण
 
-static void imx_uart_dma_tx_callback(void *data)
-{
-	struct imx_port *sport = data;
-	struct scatterlist *sgl = &sport->tx_sgl[0];
-	struct circ_buf *xmit = &sport->port.state->xmit;
-	unsigned long flags;
+अटल व्योम imx_uart_dma_tx_callback(व्योम *data)
+अणु
+	काष्ठा imx_port *sport = data;
+	काष्ठा scatterlist *sgl = &sport->tx_sgl[0];
+	काष्ठा circ_buf *xmit = &sport->port.state->xmit;
+	अचिन्हित दीर्घ flags;
 	u32 ucr1;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
 	dma_unmap_sg(sport->port.dev, sgl, sport->dma_tx_nents, DMA_TO_DEVICE);
 
-	ucr1 = imx_uart_readl(sport, UCR1);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 	ucr1 &= ~UCR1_TXDMAEN;
-	imx_uart_writel(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
 	/* update the stat */
 	xmit->tail = (xmit->tail + sport->tx_bytes) & (UART_XMIT_SIZE - 1);
@@ -590,547 +591,547 @@ static void imx_uart_dma_tx_callback(void *data)
 
 	sport->dma_is_txing = 0;
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&sport->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&sport->port);
 
-	if (!uart_circ_empty(xmit) && !uart_tx_stopped(&sport->port))
+	अगर (!uart_circ_empty(xmit) && !uart_tx_stopped(&sport->port))
 		imx_uart_dma_tx(sport);
-	else if (sport->port.rs485.flags & SER_RS485_ENABLED) {
-		u32 ucr4 = imx_uart_readl(sport, UCR4);
+	अन्यथा अगर (sport->port.rs485.flags & SER_RS485_ENABLED) अणु
+		u32 ucr4 = imx_uart_पढ़ोl(sport, UCR4);
 		ucr4 |= UCR4_TCEN;
-		imx_uart_writel(sport, ucr4, UCR4);
-	}
+		imx_uart_ग_लिखोl(sport, ucr4, UCR4);
+	पूर्ण
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
 /* called with port.lock taken and irqs off */
-static void imx_uart_dma_tx(struct imx_port *sport)
-{
-	struct circ_buf *xmit = &sport->port.state->xmit;
-	struct scatterlist *sgl = sport->tx_sgl;
-	struct dma_async_tx_descriptor *desc;
-	struct dma_chan	*chan = sport->dma_chan_tx;
-	struct device *dev = sport->port.dev;
+अटल व्योम imx_uart_dma_tx(काष्ठा imx_port *sport)
+अणु
+	काष्ठा circ_buf *xmit = &sport->port.state->xmit;
+	काष्ठा scatterlist *sgl = sport->tx_sgl;
+	काष्ठा dma_async_tx_descriptor *desc;
+	काष्ठा dma_chan	*chan = sport->dma_chan_tx;
+	काष्ठा device *dev = sport->port.dev;
 	u32 ucr1, ucr4;
-	int ret;
+	पूर्णांक ret;
 
-	if (sport->dma_is_txing)
-		return;
+	अगर (sport->dma_is_txing)
+		वापस;
 
-	ucr4 = imx_uart_readl(sport, UCR4);
+	ucr4 = imx_uart_पढ़ोl(sport, UCR4);
 	ucr4 &= ~UCR4_TCEN;
-	imx_uart_writel(sport, ucr4, UCR4);
+	imx_uart_ग_लिखोl(sport, ucr4, UCR4);
 
-	sport->tx_bytes = uart_circ_chars_pending(xmit);
+	sport->tx_bytes = uart_circ_अक्षरs_pending(xmit);
 
-	if (xmit->tail < xmit->head || xmit->head == 0) {
+	अगर (xmit->tail < xmit->head || xmit->head == 0) अणु
 		sport->dma_tx_nents = 1;
 		sg_init_one(sgl, xmit->buf + xmit->tail, sport->tx_bytes);
-	} else {
+	पूर्ण अन्यथा अणु
 		sport->dma_tx_nents = 2;
 		sg_init_table(sgl, 2);
 		sg_set_buf(sgl, xmit->buf + xmit->tail,
 				UART_XMIT_SIZE - xmit->tail);
 		sg_set_buf(sgl + 1, xmit->buf, xmit->head);
-	}
+	पूर्ण
 
 	ret = dma_map_sg(dev, sgl, sport->dma_tx_nents, DMA_TO_DEVICE);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		dev_err(dev, "DMA mapping error for TX.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	desc = dmaengine_prep_slave_sg(chan, sgl, ret,
 					DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT);
-	if (!desc) {
+	अगर (!desc) अणु
 		dma_unmap_sg(dev, sgl, sport->dma_tx_nents,
 			     DMA_TO_DEVICE);
 		dev_err(dev, "We cannot prepare for the TX slave dma!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	desc->callback = imx_uart_dma_tx_callback;
 	desc->callback_param = sport;
 
 	dev_dbg(dev, "TX: prepare to send %lu bytes by DMA.\n",
-			uart_circ_chars_pending(xmit));
+			uart_circ_अक्षरs_pending(xmit));
 
-	ucr1 = imx_uart_readl(sport, UCR1);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 	ucr1 |= UCR1_TXDMAEN;
-	imx_uart_writel(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
 	/* fire it */
 	sport->dma_is_txing = 1;
 	dmaengine_submit(desc);
 	dma_async_issue_pending(chan);
-	return;
-}
+	वापस;
+पूर्ण
 
 /* called with port.lock taken and irqs off */
-static void imx_uart_start_tx(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
+अटल व्योम imx_uart_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
 	u32 ucr1;
 
-	if (!sport->port.x_char && uart_circ_empty(&port->state->xmit))
-		return;
+	अगर (!sport->port.x_अक्षर && uart_circ_empty(&port->state->xmit))
+		वापस;
 
 	/*
-	 * We cannot simply do nothing here if sport->tx_state == SEND already
-	 * because UCR1_TXMPTYEN might already have been cleared in
+	 * We cannot simply करो nothing here अगर sport->tx_state == SEND alपढ़ोy
+	 * because UCR1_TXMPTYEN might alपढ़ोy have been cleared in
 	 * imx_uart_stop_tx(), but tx_state is still SEND.
 	 */
 
-	if (port->rs485.flags & SER_RS485_ENABLED) {
-		if (sport->tx_state == OFF) {
-			u32 ucr2 = imx_uart_readl(sport, UCR2);
-			if (port->rs485.flags & SER_RS485_RTS_ON_SEND)
+	अगर (port->rs485.flags & SER_RS485_ENABLED) अणु
+		अगर (sport->tx_state == OFF) अणु
+			u32 ucr2 = imx_uart_पढ़ोl(sport, UCR2);
+			अगर (port->rs485.flags & SER_RS485_RTS_ON_SEND)
 				imx_uart_rts_active(sport, &ucr2);
-			else
+			अन्यथा
 				imx_uart_rts_inactive(sport, &ucr2);
-			imx_uart_writel(sport, ucr2, UCR2);
+			imx_uart_ग_लिखोl(sport, ucr2, UCR2);
 
-			if (!(port->rs485.flags & SER_RS485_RX_DURING_TX))
+			अगर (!(port->rs485.flags & SER_RS485_RX_DURING_TX))
 				imx_uart_stop_rx(port);
 
 			sport->tx_state = WAIT_AFTER_RTS;
-			start_hrtimer_ms(&sport->trigger_start_tx,
-					 port->rs485.delay_rts_before_send);
-			return;
-		}
+			start_hrसमयr_ms(&sport->trigger_start_tx,
+					 port->rs485.delay_rts_beक्रमe_send);
+			वापस;
+		पूर्ण
 
-		if (sport->tx_state == WAIT_AFTER_SEND
-		    || sport->tx_state == WAIT_AFTER_RTS) {
+		अगर (sport->tx_state == WAIT_AFTER_SEND
+		    || sport->tx_state == WAIT_AFTER_RTS) अणु
 
-			hrtimer_try_to_cancel(&sport->trigger_stop_tx);
+			hrसमयr_try_to_cancel(&sport->trigger_stop_tx);
 
 			/*
-			 * Enable transmitter and shifter empty irq only if DMA
-			 * is off.  In the DMA case this is done in the
+			 * Enable transmitter and shअगरter empty irq only अगर DMA
+			 * is off.  In the DMA हाल this is करोne in the
 			 * tx-callback.
 			 */
-			if (!sport->dma_is_enabled) {
-				u32 ucr4 = imx_uart_readl(sport, UCR4);
+			अगर (!sport->dma_is_enabled) अणु
+				u32 ucr4 = imx_uart_पढ़ोl(sport, UCR4);
 				ucr4 |= UCR4_TCEN;
-				imx_uart_writel(sport, ucr4, UCR4);
-			}
+				imx_uart_ग_लिखोl(sport, ucr4, UCR4);
+			पूर्ण
 
 			sport->tx_state = SEND;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sport->tx_state = SEND;
-	}
+	पूर्ण
 
-	if (!sport->dma_is_enabled) {
-		ucr1 = imx_uart_readl(sport, UCR1);
-		imx_uart_writel(sport, ucr1 | UCR1_TRDYEN, UCR1);
-	}
+	अगर (!sport->dma_is_enabled) अणु
+		ucr1 = imx_uart_पढ़ोl(sport, UCR1);
+		imx_uart_ग_लिखोl(sport, ucr1 | UCR1_TRDYEN, UCR1);
+	पूर्ण
 
-	if (sport->dma_is_enabled) {
-		if (sport->port.x_char) {
-			/* We have X-char to send, so enable TX IRQ and
-			 * disable TX DMA to let TX interrupt to send X-char */
-			ucr1 = imx_uart_readl(sport, UCR1);
+	अगर (sport->dma_is_enabled) अणु
+		अगर (sport->port.x_अक्षर) अणु
+			/* We have X-अक्षर to send, so enable TX IRQ and
+			 * disable TX DMA to let TX पूर्णांकerrupt to send X-अक्षर */
+			ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 			ucr1 &= ~UCR1_TXDMAEN;
 			ucr1 |= UCR1_TRDYEN;
-			imx_uart_writel(sport, ucr1, UCR1);
-			return;
-		}
+			imx_uart_ग_लिखोl(sport, ucr1, UCR1);
+			वापस;
+		पूर्ण
 
-		if (!uart_circ_empty(&port->state->xmit) &&
+		अगर (!uart_circ_empty(&port->state->xmit) &&
 		    !uart_tx_stopped(port))
 			imx_uart_dma_tx(sport);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t __imx_uart_rtsint(int irq, void *dev_id)
-{
-	struct imx_port *sport = dev_id;
+अटल irqवापस_t __imx_uart_rtsपूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा imx_port *sport = dev_id;
 	u32 usr1;
 
-	imx_uart_writel(sport, USR1_RTSD, USR1);
-	usr1 = imx_uart_readl(sport, USR1) & USR1_RTSS;
+	imx_uart_ग_लिखोl(sport, USR1_RTSD, USR1);
+	usr1 = imx_uart_पढ़ोl(sport, USR1) & USR1_RTSS;
 	uart_handle_cts_change(&sport->port, !!usr1);
-	wake_up_interruptible(&sport->port.state->port.delta_msr_wait);
+	wake_up_पूर्णांकerruptible(&sport->port.state->port.delta_msr_रुको);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t imx_uart_rtsint(int irq, void *dev_id)
-{
-	struct imx_port *sport = dev_id;
-	irqreturn_t ret;
+अटल irqवापस_t imx_uart_rtsपूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा imx_port *sport = dev_id;
+	irqवापस_t ret;
 
 	spin_lock(&sport->port.lock);
 
-	ret = __imx_uart_rtsint(irq, dev_id);
+	ret = __imx_uart_rtsपूर्णांक(irq, dev_id);
 
 	spin_unlock(&sport->port.lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t imx_uart_txint(int irq, void *dev_id)
-{
-	struct imx_port *sport = dev_id;
+अटल irqवापस_t imx_uart_txपूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा imx_port *sport = dev_id;
 
 	spin_lock(&sport->port.lock);
 	imx_uart_transmit_buffer(sport);
 	spin_unlock(&sport->port.lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t __imx_uart_rxint(int irq, void *dev_id)
-{
-	struct imx_port *sport = dev_id;
-	unsigned int rx, flg, ignored = 0;
-	struct tty_port *port = &sport->port.state->port;
+अटल irqवापस_t __imx_uart_rxपूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा imx_port *sport = dev_id;
+	अचिन्हित पूर्णांक rx, flg, ignored = 0;
+	काष्ठा tty_port *port = &sport->port.state->port;
 
-	while (imx_uart_readl(sport, USR2) & USR2_RDR) {
+	जबतक (imx_uart_पढ़ोl(sport, USR2) & USR2_RDR) अणु
 		u32 usr2;
 
 		flg = TTY_NORMAL;
 		sport->port.icount.rx++;
 
-		rx = imx_uart_readl(sport, URXD0);
+		rx = imx_uart_पढ़ोl(sport, URXD0);
 
-		usr2 = imx_uart_readl(sport, USR2);
-		if (usr2 & USR2_BRCD) {
-			imx_uart_writel(sport, USR2_BRCD, USR2);
-			if (uart_handle_break(&sport->port))
-				continue;
-		}
+		usr2 = imx_uart_पढ़ोl(sport, USR2);
+		अगर (usr2 & USR2_BRCD) अणु
+			imx_uart_ग_लिखोl(sport, USR2_BRCD, USR2);
+			अगर (uart_handle_अवरोध(&sport->port))
+				जारी;
+		पूर्ण
 
-		if (uart_handle_sysrq_char(&sport->port, (unsigned char)rx))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(&sport->port, (अचिन्हित अक्षर)rx))
+			जारी;
 
-		if (unlikely(rx & URXD_ERR)) {
-			if (rx & URXD_BRK)
+		अगर (unlikely(rx & URXD_ERR)) अणु
+			अगर (rx & URXD_BRK)
 				sport->port.icount.brk++;
-			else if (rx & URXD_PRERR)
+			अन्यथा अगर (rx & URXD_PRERR)
 				sport->port.icount.parity++;
-			else if (rx & URXD_FRMERR)
+			अन्यथा अगर (rx & URXD_FRMERR)
 				sport->port.icount.frame++;
-			if (rx & URXD_OVRRUN)
+			अगर (rx & URXD_OVRRUN)
 				sport->port.icount.overrun++;
 
-			if (rx & sport->port.ignore_status_mask) {
-				if (++ignored > 100)
-					goto out;
-				continue;
-			}
+			अगर (rx & sport->port.ignore_status_mask) अणु
+				अगर (++ignored > 100)
+					जाओ out;
+				जारी;
+			पूर्ण
 
-			rx &= (sport->port.read_status_mask | 0xFF);
+			rx &= (sport->port.पढ़ो_status_mask | 0xFF);
 
-			if (rx & URXD_BRK)
+			अगर (rx & URXD_BRK)
 				flg = TTY_BREAK;
-			else if (rx & URXD_PRERR)
+			अन्यथा अगर (rx & URXD_PRERR)
 				flg = TTY_PARITY;
-			else if (rx & URXD_FRMERR)
+			अन्यथा अगर (rx & URXD_FRMERR)
 				flg = TTY_FRAME;
-			if (rx & URXD_OVRRUN)
+			अगर (rx & URXD_OVRRUN)
 				flg = TTY_OVERRUN;
 
 			sport->port.sysrq = 0;
-		}
+		पूर्ण
 
-		if (sport->port.ignore_status_mask & URXD_DUMMY_READ)
-			goto out;
+		अगर (sport->port.ignore_status_mask & URXD_DUMMY_READ)
+			जाओ out;
 
-		if (tty_insert_flip_char(port, rx, flg) == 0)
+		अगर (tty_insert_flip_अक्षर(port, rx, flg) == 0)
 			sport->port.icount.buf_overrun++;
-	}
+	पूर्ण
 
 out:
 	tty_flip_buffer_push(port);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t imx_uart_rxint(int irq, void *dev_id)
-{
-	struct imx_port *sport = dev_id;
-	irqreturn_t ret;
+अटल irqवापस_t imx_uart_rxपूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा imx_port *sport = dev_id;
+	irqवापस_t ret;
 
 	spin_lock(&sport->port.lock);
 
-	ret = __imx_uart_rxint(irq, dev_id);
+	ret = __imx_uart_rxपूर्णांक(irq, dev_id);
 
 	spin_unlock(&sport->port.lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void imx_uart_clear_rx_errors(struct imx_port *sport);
+अटल व्योम imx_uart_clear_rx_errors(काष्ठा imx_port *sport);
 
 /*
  * We have a modem side uart, so the meanings of RTS and CTS are inverted.
  */
-static unsigned int imx_uart_get_hwmctrl(struct imx_port *sport)
-{
-	unsigned int tmp = TIOCM_DSR;
-	unsigned usr1 = imx_uart_readl(sport, USR1);
-	unsigned usr2 = imx_uart_readl(sport, USR2);
+अटल अचिन्हित पूर्णांक imx_uart_get_hwmctrl(काष्ठा imx_port *sport)
+अणु
+	अचिन्हित पूर्णांक पंचांगp = TIOCM_DSR;
+	अचिन्हित usr1 = imx_uart_पढ़ोl(sport, USR1);
+	अचिन्हित usr2 = imx_uart_पढ़ोl(sport, USR2);
 
-	if (usr1 & USR1_RTSS)
-		tmp |= TIOCM_CTS;
+	अगर (usr1 & USR1_RTSS)
+		पंचांगp |= TIOCM_CTS;
 
 	/* in DCE mode DCDIN is always 0 */
-	if (!(usr2 & USR2_DCDIN))
-		tmp |= TIOCM_CAR;
+	अगर (!(usr2 & USR2_DCDIN))
+		पंचांगp |= TIOCM_CAR;
 
-	if (sport->dte_mode)
-		if (!(imx_uart_readl(sport, USR2) & USR2_RIIN))
-			tmp |= TIOCM_RI;
+	अगर (sport->dte_mode)
+		अगर (!(imx_uart_पढ़ोl(sport, USR2) & USR2_RIIN))
+			पंचांगp |= TIOCM_RI;
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
 /*
- * Handle any change of modem status signal since we were last called.
+ * Handle any change of modem status संकेत since we were last called.
  */
-static void imx_uart_mctrl_check(struct imx_port *sport)
-{
-	unsigned int status, changed;
+अटल व्योम imx_uart_mctrl_check(काष्ठा imx_port *sport)
+अणु
+	अचिन्हित पूर्णांक status, changed;
 
 	status = imx_uart_get_hwmctrl(sport);
 	changed = status ^ sport->old_status;
 
-	if (changed == 0)
-		return;
+	अगर (changed == 0)
+		वापस;
 
 	sport->old_status = status;
 
-	if (changed & TIOCM_RI && status & TIOCM_RI)
+	अगर (changed & TIOCM_RI && status & TIOCM_RI)
 		sport->port.icount.rng++;
-	if (changed & TIOCM_DSR)
+	अगर (changed & TIOCM_DSR)
 		sport->port.icount.dsr++;
-	if (changed & TIOCM_CAR)
+	अगर (changed & TIOCM_CAR)
 		uart_handle_dcd_change(&sport->port, status & TIOCM_CAR);
-	if (changed & TIOCM_CTS)
+	अगर (changed & TIOCM_CTS)
 		uart_handle_cts_change(&sport->port, status & TIOCM_CTS);
 
-	wake_up_interruptible(&sport->port.state->port.delta_msr_wait);
-}
+	wake_up_पूर्णांकerruptible(&sport->port.state->port.delta_msr_रुको);
+पूर्ण
 
-static irqreturn_t imx_uart_int(int irq, void *dev_id)
-{
-	struct imx_port *sport = dev_id;
-	unsigned int usr1, usr2, ucr1, ucr2, ucr3, ucr4;
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t imx_uart_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा imx_port *sport = dev_id;
+	अचिन्हित पूर्णांक usr1, usr2, ucr1, ucr2, ucr3, ucr4;
+	irqवापस_t ret = IRQ_NONE;
 
 	spin_lock(&sport->port.lock);
 
-	usr1 = imx_uart_readl(sport, USR1);
-	usr2 = imx_uart_readl(sport, USR2);
-	ucr1 = imx_uart_readl(sport, UCR1);
-	ucr2 = imx_uart_readl(sport, UCR2);
-	ucr3 = imx_uart_readl(sport, UCR3);
-	ucr4 = imx_uart_readl(sport, UCR4);
+	usr1 = imx_uart_पढ़ोl(sport, USR1);
+	usr2 = imx_uart_पढ़ोl(sport, USR2);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
+	ucr2 = imx_uart_पढ़ोl(sport, UCR2);
+	ucr3 = imx_uart_पढ़ोl(sport, UCR3);
+	ucr4 = imx_uart_पढ़ोl(sport, UCR4);
 
 	/*
-	 * Even if a condition is true that can trigger an irq only handle it if
+	 * Even अगर a condition is true that can trigger an irq only handle it अगर
 	 * the respective irq source is enabled. This prevents some undesired
-	 * actions, for example if a character that sits in the RX FIFO and that
+	 * actions, क्रम example अगर a अक्षरacter that sits in the RX FIFO and that
 	 * should be fetched via DMA is tried to be fetched using PIO. Or the
-	 * receiver is currently off and so reading from URXD0 results in an
-	 * exception. So just mask the (raw) status bits for disabled irqs.
+	 * receiver is currently off and so पढ़ोing from URXD0 results in an
+	 * exception. So just mask the (raw) status bits क्रम disabled irqs.
 	 */
-	if ((ucr1 & UCR1_RRDYEN) == 0)
+	अगर ((ucr1 & UCR1_RRDYEN) == 0)
 		usr1 &= ~USR1_RRDY;
-	if ((ucr2 & UCR2_ATEN) == 0)
+	अगर ((ucr2 & UCR2_ATEN) == 0)
 		usr1 &= ~USR1_AGTIM;
-	if ((ucr1 & UCR1_TRDYEN) == 0)
+	अगर ((ucr1 & UCR1_TRDYEN) == 0)
 		usr1 &= ~USR1_TRDY;
-	if ((ucr4 & UCR4_TCEN) == 0)
+	अगर ((ucr4 & UCR4_TCEN) == 0)
 		usr2 &= ~USR2_TXDC;
-	if ((ucr3 & UCR3_DTRDEN) == 0)
+	अगर ((ucr3 & UCR3_DTRDEN) == 0)
 		usr1 &= ~USR1_DTRD;
-	if ((ucr1 & UCR1_RTSDEN) == 0)
+	अगर ((ucr1 & UCR1_RTSDEN) == 0)
 		usr1 &= ~USR1_RTSD;
-	if ((ucr3 & UCR3_AWAKEN) == 0)
+	अगर ((ucr3 & UCR3_AWAKEN) == 0)
 		usr1 &= ~USR1_AWAKE;
-	if ((ucr4 & UCR4_OREN) == 0)
+	अगर ((ucr4 & UCR4_OREN) == 0)
 		usr2 &= ~USR2_ORE;
 
-	if (usr1 & (USR1_RRDY | USR1_AGTIM)) {
-		imx_uart_writel(sport, USR1_AGTIM, USR1);
+	अगर (usr1 & (USR1_RRDY | USR1_AGTIM)) अणु
+		imx_uart_ग_लिखोl(sport, USR1_AGTIM, USR1);
 
-		__imx_uart_rxint(irq, dev_id);
+		__imx_uart_rxपूर्णांक(irq, dev_id);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if ((usr1 & USR1_TRDY) || (usr2 & USR2_TXDC)) {
+	अगर ((usr1 & USR1_TRDY) || (usr2 & USR2_TXDC)) अणु
 		imx_uart_transmit_buffer(sport);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (usr1 & USR1_DTRD) {
-		imx_uart_writel(sport, USR1_DTRD, USR1);
+	अगर (usr1 & USR1_DTRD) अणु
+		imx_uart_ग_लिखोl(sport, USR1_DTRD, USR1);
 
 		imx_uart_mctrl_check(sport);
 
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (usr1 & USR1_RTSD) {
-		__imx_uart_rtsint(irq, dev_id);
+	अगर (usr1 & USR1_RTSD) अणु
+		__imx_uart_rtsपूर्णांक(irq, dev_id);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (usr1 & USR1_AWAKE) {
-		imx_uart_writel(sport, USR1_AWAKE, USR1);
+	अगर (usr1 & USR1_AWAKE) अणु
+		imx_uart_ग_लिखोl(sport, USR1_AWAKE, USR1);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (usr2 & USR2_ORE) {
+	अगर (usr2 & USR2_ORE) अणु
 		sport->port.icount.overrun++;
-		imx_uart_writel(sport, USR2_ORE, USR2);
+		imx_uart_ग_लिखोl(sport, USR2_ORE, USR2);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
 	spin_unlock(&sport->port.lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Return TIOCSER_TEMT when transmitter is not busy.
  */
-static unsigned int imx_uart_tx_empty(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक imx_uart_tx_empty(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	अचिन्हित पूर्णांक ret;
 
-	ret = (imx_uart_readl(sport, USR2) & USR2_TXDC) ?  TIOCSER_TEMT : 0;
+	ret = (imx_uart_पढ़ोl(sport, USR2) & USR2_TXDC) ?  TIOCSER_TEMT : 0;
 
-	/* If the TX DMA is working, return 0. */
-	if (sport->dma_is_txing)
+	/* If the TX DMA is working, वापस 0. */
+	अगर (sport->dma_is_txing)
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* called with port.lock taken and irqs off */
-static unsigned int imx_uart_get_mctrl(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	unsigned int ret = imx_uart_get_hwmctrl(sport);
+अटल अचिन्हित पूर्णांक imx_uart_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	अचिन्हित पूर्णांक ret = imx_uart_get_hwmctrl(sport);
 
 	mctrl_gpio_get(sport->gpios, &ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* called with port.lock taken and irqs off */
-static void imx_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	struct imx_port *sport = (struct imx_port *)port;
+अटल व्योम imx_uart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
 	u32 ucr3, uts;
 
-	if (!(port->rs485.flags & SER_RS485_ENABLED)) {
+	अगर (!(port->rs485.flags & SER_RS485_ENABLED)) अणु
 		u32 ucr2;
 
 		/*
-		 * Turn off autoRTS if RTS is lowered and restore autoRTS
-		 * setting if RTS is raised.
+		 * Turn off स्वतःRTS अगर RTS is lowered and restore स्वतःRTS
+		 * setting अगर RTS is उठाओd.
 		 */
-		ucr2 = imx_uart_readl(sport, UCR2);
+		ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 		ucr2 &= ~(UCR2_CTS | UCR2_CTSC);
-		if (mctrl & TIOCM_RTS) {
+		अगर (mctrl & TIOCM_RTS) अणु
 			ucr2 |= UCR2_CTS;
 			/*
-			 * UCR2_IRTS is unset if and only if the port is
-			 * configured for CRTSCTS, so we use inverted UCR2_IRTS
+			 * UCR2_IRTS is unset अगर and only अगर the port is
+			 * configured क्रम CRTSCTS, so we use inverted UCR2_IRTS
 			 * to get the state to restore to.
 			 */
-			if (!(ucr2 & UCR2_IRTS))
+			अगर (!(ucr2 & UCR2_IRTS))
 				ucr2 |= UCR2_CTSC;
-		}
-		imx_uart_writel(sport, ucr2, UCR2);
-	}
+		पूर्ण
+		imx_uart_ग_लिखोl(sport, ucr2, UCR2);
+	पूर्ण
 
-	ucr3 = imx_uart_readl(sport, UCR3) & ~UCR3_DSR;
-	if (!(mctrl & TIOCM_DTR))
+	ucr3 = imx_uart_पढ़ोl(sport, UCR3) & ~UCR3_DSR;
+	अगर (!(mctrl & TIOCM_DTR))
 		ucr3 |= UCR3_DSR;
-	imx_uart_writel(sport, ucr3, UCR3);
+	imx_uart_ग_लिखोl(sport, ucr3, UCR3);
 
-	uts = imx_uart_readl(sport, imx_uart_uts_reg(sport)) & ~UTS_LOOP;
-	if (mctrl & TIOCM_LOOP)
+	uts = imx_uart_पढ़ोl(sport, imx_uart_uts_reg(sport)) & ~UTS_LOOP;
+	अगर (mctrl & TIOCM_LOOP)
 		uts |= UTS_LOOP;
-	imx_uart_writel(sport, uts, imx_uart_uts_reg(sport));
+	imx_uart_ग_लिखोl(sport, uts, imx_uart_uts_reg(sport));
 
 	mctrl_gpio_set(sport->gpios, mctrl);
-}
+पूर्ण
 
 /*
  * Interrupts always disabled.
  */
-static void imx_uart_break_ctl(struct uart_port *port, int break_state)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	unsigned long flags;
+अटल व्योम imx_uart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	अचिन्हित दीर्घ flags;
 	u32 ucr1;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
-	ucr1 = imx_uart_readl(sport, UCR1) & ~UCR1_SNDBRK;
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1) & ~UCR1_SNDBRK;
 
-	if (break_state != 0)
+	अगर (अवरोध_state != 0)
 		ucr1 |= UCR1_SNDBRK;
 
-	imx_uart_writel(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
 /*
- * This is our per-port timeout handler, for checking the
- * modem status signals.
+ * This is our per-port समयout handler, क्रम checking the
+ * modem status संकेतs.
  */
-static void imx_uart_timeout(struct timer_list *t)
-{
-	struct imx_port *sport = from_timer(sport, t, timer);
-	unsigned long flags;
+अटल व्योम imx_uart_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा imx_port *sport = from_समयr(sport, t, समयr);
+	अचिन्हित दीर्घ flags;
 
-	if (sport->port.state) {
+	अगर (sport->port.state) अणु
 		spin_lock_irqsave(&sport->port.lock, flags);
 		imx_uart_mctrl_check(sport);
 		spin_unlock_irqrestore(&sport->port.lock, flags);
 
-		mod_timer(&sport->timer, jiffies + MCTRL_TIMEOUT);
-	}
-}
+		mod_समयr(&sport->समयr, jअगरfies + MCTRL_TIMEOUT);
+	पूर्ण
+पूर्ण
 
 /*
- * There are two kinds of RX DMA interrupts(such as in the MX6Q):
+ * There are two kinds of RX DMA पूर्णांकerrupts(such as in the MX6Q):
  *   [1] the RX DMA buffer is full.
- *   [2] the aging timer expires
+ *   [2] the aging समयr expires
  *
- * Condition [2] is triggered when a character has been sitting in the FIFO
- * for at least 8 byte durations.
+ * Condition [2] is triggered when a अक्षरacter has been sitting in the FIFO
+ * क्रम at least 8 byte durations.
  */
-static void imx_uart_dma_rx_callback(void *data)
-{
-	struct imx_port *sport = data;
-	struct dma_chan	*chan = sport->dma_chan_rx;
-	struct scatterlist *sgl = &sport->rx_sgl;
-	struct tty_port *port = &sport->port.state->port;
-	struct dma_tx_state state;
-	struct circ_buf *rx_ring = &sport->rx_ring;
-	enum dma_status status;
-	unsigned int w_bytes = 0;
-	unsigned int r_bytes;
-	unsigned int bd_size;
+अटल व्योम imx_uart_dma_rx_callback(व्योम *data)
+अणु
+	काष्ठा imx_port *sport = data;
+	काष्ठा dma_chan	*chan = sport->dma_chan_rx;
+	काष्ठा scatterlist *sgl = &sport->rx_sgl;
+	काष्ठा tty_port *port = &sport->port.state->port;
+	काष्ठा dma_tx_state state;
+	काष्ठा circ_buf *rx_ring = &sport->rx_ring;
+	क्रमागत dma_status status;
+	अचिन्हित पूर्णांक w_bytes = 0;
+	अचिन्हित पूर्णांक r_bytes;
+	अचिन्हित पूर्णांक bd_size;
 
 	status = dmaengine_tx_status(chan, sport->rx_cookie, &state);
 
-	if (status == DMA_ERROR) {
+	अगर (status == DMA_ERROR) अणु
 		imx_uart_clear_rx_errors(sport);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!(sport->port.ignore_status_mask & URXD_DUMMY_READ)) {
+	अगर (!(sport->port.ignore_status_mask & URXD_DUMMY_READ)) अणु
 
 		/*
 		 * The state-residue variable represents the empty space
@@ -1138,7 +1139,7 @@ static void imx_uart_dma_rx_callback(void *data)
 		 * the head is always calculated base on the buffer total
 		 * length - DMA transaction residue. The UART script from the
 		 * SDMA firmware will jump to the next buffer descriptor,
-		 * once a DMA transaction if finalized (IMX53 RM - A.4.1.2.4).
+		 * once a DMA transaction अगर finalized (IMX53 RM - A.4.1.2.4).
 		 * Taking this in consideration the tail is always at the
 		 * beginning of the buffer descriptor that contains the head.
 		 */
@@ -1150,50 +1151,50 @@ static void imx_uart_dma_rx_callback(void *data)
 		bd_size = sg_dma_len(sgl) / sport->rx_periods;
 		rx_ring->tail = ((rx_ring->head-1) / bd_size) * bd_size;
 
-		if (rx_ring->head <= sg_dma_len(sgl) &&
-		    rx_ring->head > rx_ring->tail) {
+		अगर (rx_ring->head <= sg_dma_len(sgl) &&
+		    rx_ring->head > rx_ring->tail) अणु
 
 			/* Move data from tail to head */
 			r_bytes = rx_ring->head - rx_ring->tail;
 
 			/* CPU claims ownership of RX DMA buffer */
-			dma_sync_sg_for_cpu(sport->port.dev, sgl, 1,
+			dma_sync_sg_क्रम_cpu(sport->port.dev, sgl, 1,
 				DMA_FROM_DEVICE);
 
 			w_bytes = tty_insert_flip_string(port,
 				sport->rx_buf + rx_ring->tail, r_bytes);
 
 			/* UART retrieves ownership of RX DMA buffer */
-			dma_sync_sg_for_device(sport->port.dev, sgl, 1,
+			dma_sync_sg_क्रम_device(sport->port.dev, sgl, 1,
 				DMA_FROM_DEVICE);
 
-			if (w_bytes != r_bytes)
+			अगर (w_bytes != r_bytes)
 				sport->port.icount.buf_overrun++;
 
 			sport->port.icount.rx += w_bytes;
-		} else	{
+		पूर्ण अन्यथा	अणु
 			WARN_ON(rx_ring->head > sg_dma_len(sgl));
 			WARN_ON(rx_ring->head <= rx_ring->tail);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (w_bytes) {
+	अगर (w_bytes) अणु
 		tty_flip_buffer_push(port);
 		dev_dbg(sport->port.dev, "We get %d bytes.\n", w_bytes);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* RX DMA buffer periods */
-#define RX_DMA_PERIODS	16
-#define RX_BUF_SIZE	(RX_DMA_PERIODS * PAGE_SIZE / 4)
+#घोषणा RX_DMA_PERIODS	16
+#घोषणा RX_BUF_SIZE	(RX_DMA_PERIODS * PAGE_SIZE / 4)
 
-static int imx_uart_start_rx_dma(struct imx_port *sport)
-{
-	struct scatterlist *sgl = &sport->rx_sgl;
-	struct dma_chan	*chan = sport->dma_chan_rx;
-	struct device *dev = sport->port.dev;
-	struct dma_async_tx_descriptor *desc;
-	int ret;
+अटल पूर्णांक imx_uart_start_rx_dma(काष्ठा imx_port *sport)
+अणु
+	काष्ठा scatterlist *sgl = &sport->rx_sgl;
+	काष्ठा dma_chan	*chan = sport->dma_chan_rx;
+	काष्ठा device *dev = sport->port.dev;
+	काष्ठा dma_async_tx_descriptor *desc;
+	पूर्णांक ret;
 
 	sport->rx_ring.head = 0;
 	sport->rx_ring.tail = 0;
@@ -1201,20 +1202,20 @@ static int imx_uart_start_rx_dma(struct imx_port *sport)
 
 	sg_init_one(sgl, sport->rx_buf, RX_BUF_SIZE);
 	ret = dma_map_sg(dev, sgl, 1, DMA_FROM_DEVICE);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		dev_err(dev, "DMA mapping error for RX.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	desc = dmaengine_prep_dma_cyclic(chan, sg_dma_address(sgl),
 		sg_dma_len(sgl), sg_dma_len(sgl) / sport->rx_periods,
 		DMA_DEV_TO_MEM, DMA_PREP_INTERRUPT);
 
-	if (!desc) {
+	अगर (!desc) अणु
 		dma_unmap_sg(dev, sgl, 1, DMA_FROM_DEVICE);
 		dev_err(dev, "We cannot prepare for the RX slave dma!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	desc->callback = imx_uart_dma_rx_callback;
 	desc->callback_param = sport;
 
@@ -1222,613 +1223,613 @@ static int imx_uart_start_rx_dma(struct imx_port *sport)
 	sport->dma_is_rxing = 1;
 	sport->rx_cookie = dmaengine_submit(desc);
 	dma_async_issue_pending(chan);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void imx_uart_clear_rx_errors(struct imx_port *sport)
-{
-	struct tty_port *port = &sport->port.state->port;
+अटल व्योम imx_uart_clear_rx_errors(काष्ठा imx_port *sport)
+अणु
+	काष्ठा tty_port *port = &sport->port.state->port;
 	u32 usr1, usr2;
 
-	usr1 = imx_uart_readl(sport, USR1);
-	usr2 = imx_uart_readl(sport, USR2);
+	usr1 = imx_uart_पढ़ोl(sport, USR1);
+	usr2 = imx_uart_पढ़ोl(sport, USR2);
 
-	if (usr2 & USR2_BRCD) {
+	अगर (usr2 & USR2_BRCD) अणु
 		sport->port.icount.brk++;
-		imx_uart_writel(sport, USR2_BRCD, USR2);
-		uart_handle_break(&sport->port);
-		if (tty_insert_flip_char(port, 0, TTY_BREAK) == 0)
+		imx_uart_ग_लिखोl(sport, USR2_BRCD, USR2);
+		uart_handle_अवरोध(&sport->port);
+		अगर (tty_insert_flip_अक्षर(port, 0, TTY_BREAK) == 0)
 			sport->port.icount.buf_overrun++;
 		tty_flip_buffer_push(port);
-	} else {
-		if (usr1 & USR1_FRAMERR) {
+	पूर्ण अन्यथा अणु
+		अगर (usr1 & USR1_FRAMERR) अणु
 			sport->port.icount.frame++;
-			imx_uart_writel(sport, USR1_FRAMERR, USR1);
-		} else if (usr1 & USR1_PARITYERR) {
+			imx_uart_ग_लिखोl(sport, USR1_FRAMERR, USR1);
+		पूर्ण अन्यथा अगर (usr1 & USR1_PARITYERR) अणु
 			sport->port.icount.parity++;
-			imx_uart_writel(sport, USR1_PARITYERR, USR1);
-		}
-	}
+			imx_uart_ग_लिखोl(sport, USR1_PARITYERR, USR1);
+		पूर्ण
+	पूर्ण
 
-	if (usr2 & USR2_ORE) {
+	अगर (usr2 & USR2_ORE) अणु
 		sport->port.icount.overrun++;
-		imx_uart_writel(sport, USR2_ORE, USR2);
-	}
+		imx_uart_ग_लिखोl(sport, USR2_ORE, USR2);
+	पूर्ण
 
-}
+पूर्ण
 
-#define TXTL_DEFAULT 2 /* reset default */
-#define RXTL_DEFAULT 1 /* reset default */
-#define TXTL_DMA 8 /* DMA burst setting */
-#define RXTL_DMA 9 /* DMA burst setting */
+#घोषणा TXTL_DEFAULT 2 /* reset शेष */
+#घोषणा RXTL_DEFAULT 1 /* reset शेष */
+#घोषणा TXTL_DMA 8 /* DMA burst setting */
+#घोषणा RXTL_DMA 9 /* DMA burst setting */
 
-static void imx_uart_setup_ufcr(struct imx_port *sport,
-				unsigned char txwl, unsigned char rxwl)
-{
-	unsigned int val;
+अटल व्योम imx_uart_setup_ufcr(काष्ठा imx_port *sport,
+				अचिन्हित अक्षर txwl, अचिन्हित अक्षर rxwl)
+अणु
+	अचिन्हित पूर्णांक val;
 
 	/* set receiver / transmitter trigger level */
-	val = imx_uart_readl(sport, UFCR) & (UFCR_RFDIV | UFCR_DCEDTE);
+	val = imx_uart_पढ़ोl(sport, UFCR) & (UFCR_RFDIV | UFCR_DCEDTE);
 	val |= txwl << UFCR_TXTL_SHF | rxwl;
-	imx_uart_writel(sport, val, UFCR);
-}
+	imx_uart_ग_लिखोl(sport, val, UFCR);
+पूर्ण
 
-static void imx_uart_dma_exit(struct imx_port *sport)
-{
-	if (sport->dma_chan_rx) {
+अटल व्योम imx_uart_dma_निकास(काष्ठा imx_port *sport)
+अणु
+	अगर (sport->dma_chan_rx) अणु
 		dmaengine_terminate_sync(sport->dma_chan_rx);
 		dma_release_channel(sport->dma_chan_rx);
-		sport->dma_chan_rx = NULL;
+		sport->dma_chan_rx = शून्य;
 		sport->rx_cookie = -EINVAL;
-		kfree(sport->rx_buf);
-		sport->rx_buf = NULL;
-	}
+		kमुक्त(sport->rx_buf);
+		sport->rx_buf = शून्य;
+	पूर्ण
 
-	if (sport->dma_chan_tx) {
+	अगर (sport->dma_chan_tx) अणु
 		dmaengine_terminate_sync(sport->dma_chan_tx);
 		dma_release_channel(sport->dma_chan_tx);
-		sport->dma_chan_tx = NULL;
-	}
-}
+		sport->dma_chan_tx = शून्य;
+	पूर्ण
+पूर्ण
 
-static int imx_uart_dma_init(struct imx_port *sport)
-{
-	struct dma_slave_config slave_config = {};
-	struct device *dev = sport->port.dev;
-	int ret;
+अटल पूर्णांक imx_uart_dma_init(काष्ठा imx_port *sport)
+अणु
+	काष्ठा dma_slave_config slave_config = अणुपूर्ण;
+	काष्ठा device *dev = sport->port.dev;
+	पूर्णांक ret;
 
-	/* Prepare for RX : */
+	/* Prepare क्रम RX : */
 	sport->dma_chan_rx = dma_request_slave_channel(dev, "rx");
-	if (!sport->dma_chan_rx) {
+	अगर (!sport->dma_chan_rx) अणु
 		dev_dbg(dev, "cannot get the DMA channel.\n");
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	slave_config.direction = DMA_DEV_TO_MEM;
 	slave_config.src_addr = sport->port.mapbase + URXD0;
 	slave_config.src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-	/* one byte less than the watermark level to enable the aging timer */
+	/* one byte less than the watermark level to enable the aging समयr */
 	slave_config.src_maxburst = RXTL_DMA - 1;
 	ret = dmaengine_slave_config(sport->dma_chan_rx, &slave_config);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "error in RX dma configuration.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	sport->rx_buf = kzalloc(RX_BUF_SIZE, GFP_KERNEL);
-	if (!sport->rx_buf) {
+	अगर (!sport->rx_buf) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	sport->rx_ring.buf = sport->rx_buf;
 
-	/* Prepare for TX : */
+	/* Prepare क्रम TX : */
 	sport->dma_chan_tx = dma_request_slave_channel(dev, "tx");
-	if (!sport->dma_chan_tx) {
+	अगर (!sport->dma_chan_tx) अणु
 		dev_err(dev, "cannot get the TX DMA channel!\n");
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	slave_config.direction = DMA_MEM_TO_DEV;
 	slave_config.dst_addr = sport->port.mapbase + URTX0;
 	slave_config.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
 	slave_config.dst_maxburst = TXTL_DMA;
 	ret = dmaengine_slave_config(sport->dma_chan_tx, &slave_config);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "error in TX dma configuration.");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	imx_uart_dma_exit(sport);
-	return ret;
-}
+	imx_uart_dma_निकास(sport);
+	वापस ret;
+पूर्ण
 
-static void imx_uart_enable_dma(struct imx_port *sport)
-{
+अटल व्योम imx_uart_enable_dma(काष्ठा imx_port *sport)
+अणु
 	u32 ucr1;
 
 	imx_uart_setup_ufcr(sport, TXTL_DMA, RXTL_DMA);
 
 	/* set UCR1 */
-	ucr1 = imx_uart_readl(sport, UCR1);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 	ucr1 |= UCR1_RXDMAEN | UCR1_TXDMAEN | UCR1_ATDMAEN;
-	imx_uart_writel(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
 	sport->dma_is_enabled = 1;
-}
+पूर्ण
 
-static void imx_uart_disable_dma(struct imx_port *sport)
-{
+अटल व्योम imx_uart_disable_dma(काष्ठा imx_port *sport)
+अणु
 	u32 ucr1;
 
 	/* clear UCR1 */
-	ucr1 = imx_uart_readl(sport, UCR1);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 	ucr1 &= ~(UCR1_RXDMAEN | UCR1_TXDMAEN | UCR1_ATDMAEN);
-	imx_uart_writel(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
 	imx_uart_setup_ufcr(sport, TXTL_DEFAULT, RXTL_DEFAULT);
 
 	sport->dma_is_enabled = 0;
-}
+पूर्ण
 
 /* half the RX buffer size */
-#define CTSTL 16
+#घोषणा CTSTL 16
 
-static int imx_uart_startup(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	int retval, i;
-	unsigned long flags;
-	int dma_is_inited = 0;
+अटल पूर्णांक imx_uart_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	पूर्णांक retval, i;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक dma_is_inited = 0;
 	u32 ucr1, ucr2, ucr3, ucr4;
 
 	retval = clk_prepare_enable(sport->clk_per);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 	retval = clk_prepare_enable(sport->clk_ipg);
-	if (retval) {
+	अगर (retval) अणु
 		clk_disable_unprepare(sport->clk_per);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	imx_uart_setup_ufcr(sport, TXTL_DEFAULT, RXTL_DEFAULT);
 
-	/* disable the DREN bit (Data Ready interrupt enable) before
+	/* disable the DREN bit (Data Ready पूर्णांकerrupt enable) beक्रमe
 	 * requesting IRQs
 	 */
-	ucr4 = imx_uart_readl(sport, UCR4);
+	ucr4 = imx_uart_पढ़ोl(sport, UCR4);
 
-	/* set the trigger level for CTS */
+	/* set the trigger level क्रम CTS */
 	ucr4 &= ~(UCR4_CTSTL_MASK << UCR4_CTSTL_SHF);
 	ucr4 |= CTSTL << UCR4_CTSTL_SHF;
 
-	imx_uart_writel(sport, ucr4 & ~UCR4_DREN, UCR4);
+	imx_uart_ग_लिखोl(sport, ucr4 & ~UCR4_DREN, UCR4);
 
 	/* Can we enable the DMA support? */
-	if (!uart_console(port) && imx_uart_dma_init(sport) == 0)
+	अगर (!uart_console(port) && imx_uart_dma_init(sport) == 0)
 		dma_is_inited = 1;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
-	/* Reset fifo's and state machines */
+	/* Reset fअगरo's and state machines */
 	i = 100;
 
-	ucr2 = imx_uart_readl(sport, UCR2);
+	ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 	ucr2 &= ~UCR2_SRST;
-	imx_uart_writel(sport, ucr2, UCR2);
+	imx_uart_ग_लिखोl(sport, ucr2, UCR2);
 
-	while (!(imx_uart_readl(sport, UCR2) & UCR2_SRST) && (--i > 0))
+	जबतक (!(imx_uart_पढ़ोl(sport, UCR2) & UCR2_SRST) && (--i > 0))
 		udelay(1);
 
 	/*
-	 * Finally, clear and enable interrupts
+	 * Finally, clear and enable पूर्णांकerrupts
 	 */
-	imx_uart_writel(sport, USR1_RTSD | USR1_DTRD, USR1);
-	imx_uart_writel(sport, USR2_ORE, USR2);
+	imx_uart_ग_लिखोl(sport, USR1_RTSD | USR1_DTRD, USR1);
+	imx_uart_ग_लिखोl(sport, USR2_ORE, USR2);
 
-	ucr1 = imx_uart_readl(sport, UCR1) & ~UCR1_RRDYEN;
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1) & ~UCR1_RRDYEN;
 	ucr1 |= UCR1_UARTEN;
-	if (sport->have_rtscts)
+	अगर (sport->have_rtscts)
 		ucr1 |= UCR1_RTSDEN;
 
-	imx_uart_writel(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
-	ucr4 = imx_uart_readl(sport, UCR4) & ~(UCR4_OREN | UCR4_INVR);
-	if (!sport->dma_is_enabled)
+	ucr4 = imx_uart_पढ़ोl(sport, UCR4) & ~(UCR4_OREN | UCR4_INVR);
+	अगर (!sport->dma_is_enabled)
 		ucr4 |= UCR4_OREN;
-	if (sport->inverted_rx)
+	अगर (sport->inverted_rx)
 		ucr4 |= UCR4_INVR;
-	imx_uart_writel(sport, ucr4, UCR4);
+	imx_uart_ग_लिखोl(sport, ucr4, UCR4);
 
-	ucr3 = imx_uart_readl(sport, UCR3) & ~UCR3_INVT;
+	ucr3 = imx_uart_पढ़ोl(sport, UCR3) & ~UCR3_INVT;
 	/*
-	 * configure tx polarity before enabling tx
+	 * configure tx polarity beक्रमe enabling tx
 	 */
-	if (sport->inverted_tx)
+	अगर (sport->inverted_tx)
 		ucr3 |= UCR3_INVT;
 
-	if (!imx_uart_is_imx1(sport)) {
+	अगर (!imx_uart_is_imx1(sport)) अणु
 		ucr3 |= UCR3_DTRDEN | UCR3_RI | UCR3_DCD;
 
-		if (sport->dte_mode)
-			/* disable broken interrupts */
+		अगर (sport->dte_mode)
+			/* disable broken पूर्णांकerrupts */
 			ucr3 &= ~(UCR3_RI | UCR3_DCD);
-	}
-	imx_uart_writel(sport, ucr3, UCR3);
+	पूर्ण
+	imx_uart_ग_लिखोl(sport, ucr3, UCR3);
 
-	ucr2 = imx_uart_readl(sport, UCR2) & ~UCR2_ATEN;
+	ucr2 = imx_uart_पढ़ोl(sport, UCR2) & ~UCR2_ATEN;
 	ucr2 |= (UCR2_RXEN | UCR2_TXEN);
-	if (!sport->have_rtscts)
+	अगर (!sport->have_rtscts)
 		ucr2 |= UCR2_IRTS;
 	/*
 	 * make sure the edge sensitive RTS-irq is disabled,
 	 * we're using RTSD instead.
 	 */
-	if (!imx_uart_is_imx1(sport))
+	अगर (!imx_uart_is_imx1(sport))
 		ucr2 &= ~UCR2_RTSEN;
-	imx_uart_writel(sport, ucr2, UCR2);
+	imx_uart_ग_लिखोl(sport, ucr2, UCR2);
 
 	/*
-	 * Enable modem status interrupts
+	 * Enable modem status पूर्णांकerrupts
 	 */
 	imx_uart_enable_ms(&sport->port);
 
-	if (dma_is_inited) {
+	अगर (dma_is_inited) अणु
 		imx_uart_enable_dma(sport);
 		imx_uart_start_rx_dma(sport);
-	} else {
-		ucr1 = imx_uart_readl(sport, UCR1);
+	पूर्ण अन्यथा अणु
+		ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 		ucr1 |= UCR1_RRDYEN;
-		imx_uart_writel(sport, ucr1, UCR1);
+		imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
-		ucr2 = imx_uart_readl(sport, UCR2);
+		ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 		ucr2 |= UCR2_ATEN;
-		imx_uart_writel(sport, ucr2, UCR2);
-	}
+		imx_uart_ग_लिखोl(sport, ucr2, UCR2);
+	पूर्ण
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void imx_uart_shutdown(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	unsigned long flags;
+अटल व्योम imx_uart_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	अचिन्हित दीर्घ flags;
 	u32 ucr1, ucr2, ucr4;
 
-	if (sport->dma_is_enabled) {
+	अगर (sport->dma_is_enabled) अणु
 		dmaengine_terminate_sync(sport->dma_chan_tx);
-		if (sport->dma_is_txing) {
+		अगर (sport->dma_is_txing) अणु
 			dma_unmap_sg(sport->port.dev, &sport->tx_sgl[0],
 				     sport->dma_tx_nents, DMA_TO_DEVICE);
 			sport->dma_is_txing = 0;
-		}
+		पूर्ण
 		dmaengine_terminate_sync(sport->dma_chan_rx);
-		if (sport->dma_is_rxing) {
+		अगर (sport->dma_is_rxing) अणु
 			dma_unmap_sg(sport->port.dev, &sport->rx_sgl,
 				     1, DMA_FROM_DEVICE);
 			sport->dma_is_rxing = 0;
-		}
+		पूर्ण
 
 		spin_lock_irqsave(&sport->port.lock, flags);
 		imx_uart_stop_tx(port);
 		imx_uart_stop_rx(port);
 		imx_uart_disable_dma(sport);
 		spin_unlock_irqrestore(&sport->port.lock, flags);
-		imx_uart_dma_exit(sport);
-	}
+		imx_uart_dma_निकास(sport);
+	पूर्ण
 
 	mctrl_gpio_disable_ms(sport->gpios);
 
 	spin_lock_irqsave(&sport->port.lock, flags);
-	ucr2 = imx_uart_readl(sport, UCR2);
+	ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 	ucr2 &= ~(UCR2_TXEN | UCR2_ATEN);
-	imx_uart_writel(sport, ucr2, UCR2);
+	imx_uart_ग_लिखोl(sport, ucr2, UCR2);
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
 	/*
-	 * Stop our timer.
+	 * Stop our समयr.
 	 */
-	del_timer_sync(&sport->timer);
+	del_समयr_sync(&sport->समयr);
 
 	/*
-	 * Disable all interrupts, port and break condition.
+	 * Disable all पूर्णांकerrupts, port and अवरोध condition.
 	 */
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
-	ucr1 = imx_uart_readl(sport, UCR1);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 	ucr1 &= ~(UCR1_TRDYEN | UCR1_RRDYEN | UCR1_RTSDEN | UCR1_UARTEN | UCR1_RXDMAEN | UCR1_ATDMAEN);
-	imx_uart_writel(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
-	ucr4 = imx_uart_readl(sport, UCR4);
+	ucr4 = imx_uart_पढ़ोl(sport, UCR4);
 	ucr4 &= ~(UCR4_OREN | UCR4_TCEN);
-	imx_uart_writel(sport, ucr4, UCR4);
+	imx_uart_ग_लिखोl(sport, ucr4, UCR4);
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
 	clk_disable_unprepare(sport->clk_per);
 	clk_disable_unprepare(sport->clk_ipg);
-}
+पूर्ण
 
 /* called with port.lock taken and irqs off */
-static void imx_uart_flush_buffer(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	struct scatterlist *sgl = &sport->tx_sgl[0];
+अटल व्योम imx_uart_flush_buffer(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	काष्ठा scatterlist *sgl = &sport->tx_sgl[0];
 	u32 ucr2;
-	int i = 100, ubir, ubmr, uts;
+	पूर्णांक i = 100, ubir, ubmr, uts;
 
-	if (!sport->dma_chan_tx)
-		return;
+	अगर (!sport->dma_chan_tx)
+		वापस;
 
 	sport->tx_bytes = 0;
 	dmaengine_terminate_all(sport->dma_chan_tx);
-	if (sport->dma_is_txing) {
+	अगर (sport->dma_is_txing) अणु
 		u32 ucr1;
 
 		dma_unmap_sg(sport->port.dev, sgl, sport->dma_tx_nents,
 			     DMA_TO_DEVICE);
-		ucr1 = imx_uart_readl(sport, UCR1);
+		ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 		ucr1 &= ~UCR1_TXDMAEN;
-		imx_uart_writel(sport, ucr1, UCR1);
+		imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 		sport->dma_is_txing = 0;
-	}
+	पूर्ण
 
 	/*
 	 * According to the Reference Manual description of the UART SRST bit:
 	 *
 	 * "Reset the transmit and receive state machines,
-	 * all FIFOs and register USR1, USR2, UBIR, UBMR, UBRC, URXD, UTXD
+	 * all FIFOs and रेजिस्टर USR1, USR2, UBIR, UBMR, UBRC, URXD, UTXD
 	 * and UTS[6-3]".
 	 *
-	 * We don't need to restore the old values from USR1, USR2, URXD and
-	 * UTXD. UBRC is read only, so only save/restore the other three
-	 * registers.
+	 * We करोn't need to restore the old values from USR1, USR2, URXD and
+	 * UTXD. UBRC is पढ़ो only, so only save/restore the other three
+	 * रेजिस्टरs.
 	 */
-	ubir = imx_uart_readl(sport, UBIR);
-	ubmr = imx_uart_readl(sport, UBMR);
-	uts = imx_uart_readl(sport, IMX21_UTS);
+	ubir = imx_uart_पढ़ोl(sport, UBIR);
+	ubmr = imx_uart_पढ़ोl(sport, UBMR);
+	uts = imx_uart_पढ़ोl(sport, IMX21_UTS);
 
-	ucr2 = imx_uart_readl(sport, UCR2);
+	ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 	ucr2 &= ~UCR2_SRST;
-	imx_uart_writel(sport, ucr2, UCR2);
+	imx_uart_ग_लिखोl(sport, ucr2, UCR2);
 
-	while (!(imx_uart_readl(sport, UCR2) & UCR2_SRST) && (--i > 0))
+	जबतक (!(imx_uart_पढ़ोl(sport, UCR2) & UCR2_SRST) && (--i > 0))
 		udelay(1);
 
-	/* Restore the registers */
-	imx_uart_writel(sport, ubir, UBIR);
-	imx_uart_writel(sport, ubmr, UBMR);
-	imx_uart_writel(sport, uts, IMX21_UTS);
-}
+	/* Restore the रेजिस्टरs */
+	imx_uart_ग_लिखोl(sport, ubir, UBIR);
+	imx_uart_ग_लिखोl(sport, ubmr, UBMR);
+	imx_uart_ग_लिखोl(sport, uts, IMX21_UTS);
+पूर्ण
 
-static void
-imx_uart_set_termios(struct uart_port *port, struct ktermios *termios,
-		     struct ktermios *old)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	unsigned long flags;
+अटल व्योम
+imx_uart_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+		     काष्ठा ktermios *old)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	अचिन्हित दीर्घ flags;
 	u32 ucr2, old_ucr2, ufcr;
-	unsigned int baud, quot;
-	unsigned int old_csize = old ? old->c_cflag & CSIZE : CS8;
-	unsigned long div;
-	unsigned long num, denom, old_ubir, old_ubmr;
-	uint64_t tdiv64;
+	अचिन्हित पूर्णांक baud, quot;
+	अचिन्हित पूर्णांक old_csize = old ? old->c_cflag & CSIZE : CS8;
+	अचिन्हित दीर्घ भाग;
+	अचिन्हित दीर्घ num, denom, old_ubir, old_ubmr;
+	uपूर्णांक64_t tभाग64;
 
 	/*
 	 * We only support CS7 and CS8.
 	 */
-	while ((termios->c_cflag & CSIZE) != CS7 &&
-	       (termios->c_cflag & CSIZE) != CS8) {
+	जबतक ((termios->c_cflag & CSIZE) != CS7 &&
+	       (termios->c_cflag & CSIZE) != CS8) अणु
 		termios->c_cflag &= ~CSIZE;
 		termios->c_cflag |= old_csize;
 		old_csize = CS8;
-	}
+	पूर्ण
 
-	del_timer_sync(&sport->timer);
+	del_समयr_sync(&sport->समयr);
 
 	/*
-	 * Ask the core to calculate the divisor for us.
+	 * Ask the core to calculate the भागisor क्रम us.
 	 */
 	baud = uart_get_baud_rate(port, termios, old, 50, port->uartclk / 16);
-	quot = uart_get_divisor(port, baud);
+	quot = uart_get_भागisor(port, baud);
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
 	/*
-	 * Read current UCR2 and save it for future use, then clear all the bits
+	 * Read current UCR2 and save it क्रम future use, then clear all the bits
 	 * except those we will or may need to preserve.
 	 */
-	old_ucr2 = imx_uart_readl(sport, UCR2);
+	old_ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 	ucr2 = old_ucr2 & (UCR2_TXEN | UCR2_RXEN | UCR2_ATEN | UCR2_CTS);
 
 	ucr2 |= UCR2_SRST | UCR2_IRTS;
-	if ((termios->c_cflag & CSIZE) == CS8)
+	अगर ((termios->c_cflag & CSIZE) == CS8)
 		ucr2 |= UCR2_WS;
 
-	if (!sport->have_rtscts)
+	अगर (!sport->have_rtscts)
 		termios->c_cflag &= ~CRTSCTS;
 
-	if (port->rs485.flags & SER_RS485_ENABLED) {
+	अगर (port->rs485.flags & SER_RS485_ENABLED) अणु
 		/*
-		 * RTS is mandatory for rs485 operation, so keep
+		 * RTS is mandatory क्रम rs485 operation, so keep
 		 * it under manual control and keep transmitter
 		 * disabled.
 		 */
-		if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
+		अगर (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
 			imx_uart_rts_active(sport, &ucr2);
-		else
+		अन्यथा
 			imx_uart_rts_inactive(sport, &ucr2);
 
-	} else if (termios->c_cflag & CRTSCTS) {
+	पूर्ण अन्यथा अगर (termios->c_cflag & CRTSCTS) अणु
 		/*
-		 * Only let receiver control RTS output if we were not requested
+		 * Only let receiver control RTS output अगर we were not requested
 		 * to have RTS inactive (which then should take precedence).
 		 */
-		if (ucr2 & UCR2_CTS)
+		अगर (ucr2 & UCR2_CTS)
 			ucr2 |= UCR2_CTSC;
-	}
+	पूर्ण
 
-	if (termios->c_cflag & CRTSCTS)
+	अगर (termios->c_cflag & CRTSCTS)
 		ucr2 &= ~UCR2_IRTS;
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		ucr2 |= UCR2_STPB;
-	if (termios->c_cflag & PARENB) {
+	अगर (termios->c_cflag & PARENB) अणु
 		ucr2 |= UCR2_PREN;
-		if (termios->c_cflag & PARODD)
+		अगर (termios->c_cflag & PARODD)
 			ucr2 |= UCR2_PROE;
-	}
+	पूर्ण
 
-	sport->port.read_status_mask = 0;
-	if (termios->c_iflag & INPCK)
-		sport->port.read_status_mask |= (URXD_FRMERR | URXD_PRERR);
-	if (termios->c_iflag & (BRKINT | PARMRK))
-		sport->port.read_status_mask |= URXD_BRK;
+	sport->port.पढ़ो_status_mask = 0;
+	अगर (termios->c_अगरlag & INPCK)
+		sport->port.पढ़ो_status_mask |= (URXD_FRMERR | URXD_PRERR);
+	अगर (termios->c_अगरlag & (BRKINT | PARMRK))
+		sport->port.पढ़ो_status_mask |= URXD_BRK;
 
 	/*
 	 * Characters to ignore
 	 */
 	sport->port.ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		sport->port.ignore_status_mask |= URXD_PRERR | URXD_FRMERR;
-	if (termios->c_iflag & IGNBRK) {
+	अगर (termios->c_अगरlag & IGNBRK) अणु
 		sport->port.ignore_status_mask |= URXD_BRK;
 		/*
-		 * If we're ignoring parity and break indicators,
-		 * ignore overruns too (for real raw support).
+		 * If we're ignoring parity and अवरोध indicators,
+		 * ignore overruns too (क्रम real raw support).
 		 */
-		if (termios->c_iflag & IGNPAR)
+		अगर (termios->c_अगरlag & IGNPAR)
 			sport->port.ignore_status_mask |= URXD_OVRRUN;
-	}
+	पूर्ण
 
-	if ((termios->c_cflag & CREAD) == 0)
+	अगर ((termios->c_cflag & CREAD) == 0)
 		sport->port.ignore_status_mask |= URXD_DUMMY_READ;
 
 	/*
-	 * Update the per-port timeout.
+	 * Update the per-port समयout.
 	 */
-	uart_update_timeout(port, termios->c_cflag, baud);
+	uart_update_समयout(port, termios->c_cflag, baud);
 
 	/* custom-baudrate handling */
-	div = sport->port.uartclk / (baud * 16);
-	if (baud == 38400 && quot != div)
+	भाग = sport->port.uartclk / (baud * 16);
+	अगर (baud == 38400 && quot != भाग)
 		baud = sport->port.uartclk / (quot * 16);
 
-	div = sport->port.uartclk / (baud * 16);
-	if (div > 7)
-		div = 7;
-	if (!div)
-		div = 1;
+	भाग = sport->port.uartclk / (baud * 16);
+	अगर (भाग > 7)
+		भाग = 7;
+	अगर (!भाग)
+		भाग = 1;
 
-	rational_best_approximation(16 * div * baud, sport->port.uartclk,
+	rational_best_approximation(16 * भाग * baud, sport->port.uartclk,
 		1 << 16, 1 << 16, &num, &denom);
 
-	tdiv64 = sport->port.uartclk;
-	tdiv64 *= num;
-	do_div(tdiv64, denom * 16 * div);
+	tभाग64 = sport->port.uartclk;
+	tभाग64 *= num;
+	करो_भाग(tभाग64, denom * 16 * भाग);
 	tty_termios_encode_baud_rate(termios,
-				(speed_t)tdiv64, (speed_t)tdiv64);
+				(speed_t)tभाग64, (speed_t)tभाग64);
 
 	num -= 1;
 	denom -= 1;
 
-	ufcr = imx_uart_readl(sport, UFCR);
-	ufcr = (ufcr & (~UFCR_RFDIV)) | UFCR_RFDIV_REG(div);
-	imx_uart_writel(sport, ufcr, UFCR);
+	ufcr = imx_uart_पढ़ोl(sport, UFCR);
+	ufcr = (ufcr & (~UFCR_RFDIV)) | UFCR_RFDIV_REG(भाग);
+	imx_uart_ग_लिखोl(sport, ufcr, UFCR);
 
 	/*
-	 *  Two registers below should always be written both and in this
-	 *  particular order. One consequence is that we need to check if any of
-	 *  them changes and then update both. We do need the check for change
+	 *  Two रेजिस्टरs below should always be written both and in this
+	 *  particular order. One consequence is that we need to check अगर any of
+	 *  them changes and then update both. We करो need the check क्रम change
 	 *  as even writing the same values seem to "restart"
 	 *  transmission/receiving logic in the hardware, that leads to data
-	 *  breakage even when rate doesn't in fact change. E.g., user switches
-	 *  RTS/CTS handshake and suddenly gets broken bytes.
+	 *  अवरोधage even when rate करोesn't in fact change. E.g., user चयनes
+	 *  RTS/CTS handshake and suddenly माला_लो broken bytes.
 	 */
-	old_ubir = imx_uart_readl(sport, UBIR);
-	old_ubmr = imx_uart_readl(sport, UBMR);
-	if (old_ubir != num || old_ubmr != denom) {
-		imx_uart_writel(sport, num, UBIR);
-		imx_uart_writel(sport, denom, UBMR);
-	}
+	old_ubir = imx_uart_पढ़ोl(sport, UBIR);
+	old_ubmr = imx_uart_पढ़ोl(sport, UBMR);
+	अगर (old_ubir != num || old_ubmr != denom) अणु
+		imx_uart_ग_लिखोl(sport, num, UBIR);
+		imx_uart_ग_लिखोl(sport, denom, UBMR);
+	पूर्ण
 
-	if (!imx_uart_is_imx1(sport))
-		imx_uart_writel(sport, sport->port.uartclk / div / 1000,
+	अगर (!imx_uart_is_imx1(sport))
+		imx_uart_ग_लिखोl(sport, sport->port.uartclk / भाग / 1000,
 				IMX21_ONEMS);
 
-	imx_uart_writel(sport, ucr2, UCR2);
+	imx_uart_ग_लिखोl(sport, ucr2, UCR2);
 
-	if (UART_ENABLE_MS(&sport->port, termios->c_cflag))
+	अगर (UART_ENABLE_MS(&sport->port, termios->c_cflag))
 		imx_uart_enable_ms(&sport->port);
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
-static const char *imx_uart_type(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
+अटल स्थिर अक्षर *imx_uart_type(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
 
-	return sport->port.type == PORT_IMX ? "IMX" : NULL;
-}
+	वापस sport->port.type == PORT_IMX ? "IMX" : शून्य;
+पूर्ण
 
 /*
- * Configure/autoconfigure the port.
+ * Configure/स्वतःconfigure the port.
  */
-static void imx_uart_config_port(struct uart_port *port, int flags)
-{
-	struct imx_port *sport = (struct imx_port *)port;
+अटल व्योम imx_uart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
 
-	if (flags & UART_CONFIG_TYPE)
+	अगर (flags & UART_CONFIG_TYPE)
 		sport->port.type = PORT_IMX;
-}
+पूर्ण
 
 /*
- * Verify the new serial_struct (for TIOCSSERIAL).
+ * Verअगरy the new serial_काष्ठा (क्रम TIOCSSERIAL).
  * The only change we allow are to the flags and type, and
  * even then only between PORT_IMX and PORT_UNKNOWN
  */
-static int
-imx_uart_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	int ret = 0;
+अटल पूर्णांक
+imx_uart_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	पूर्णांक ret = 0;
 
-	if (ser->type != PORT_UNKNOWN && ser->type != PORT_IMX)
+	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_IMX)
 		ret = -EINVAL;
-	if (sport->port.irq != ser->irq)
+	अगर (sport->port.irq != ser->irq)
 		ret = -EINVAL;
-	if (ser->io_type != UPIO_MEM)
+	अगर (ser->io_type != UPIO_MEM)
 		ret = -EINVAL;
-	if (sport->port.uartclk / 16 != ser->baud_base)
+	अगर (sport->port.uartclk / 16 != ser->baud_base)
 		ret = -EINVAL;
-	if (sport->port.mapbase != (unsigned long)ser->iomem_base)
+	अगर (sport->port.mapbase != (अचिन्हित दीर्घ)ser->iomem_base)
 		ret = -EINVAL;
-	if (sport->port.iobase != ser->port)
+	अगर (sport->port.iobase != ser->port)
 		ret = -EINVAL;
-	if (ser->hub6 != 0)
+	अगर (ser->hub6 != 0)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#if defined(CONFIG_CONSOLE_POLL)
+#अगर defined(CONFIG_CONSOLE_POLL)
 
-static int imx_uart_poll_init(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	unsigned long flags;
+अटल पूर्णांक imx_uart_poll_init(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	अचिन्हित दीर्घ flags;
 	u32 ucr1, ucr2;
-	int retval;
+	पूर्णांक retval;
 
 	retval = clk_prepare_enable(sport->clk_ipg);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 	retval = clk_prepare_enable(sport->clk_per);
-	if (retval)
+	अगर (retval)
 		clk_disable_unprepare(sport->clk_ipg);
 
 	imx_uart_setup_ufcr(sport, TXTL_DEFAULT, RXTL_DEFAULT);
@@ -1838,14 +1839,14 @@ static int imx_uart_poll_init(struct uart_port *port)
 	/*
 	 * Be careful about the order of enabling bits here. First enable the
 	 * receiver (UARTEN + RXEN) and only then the corresponding irqs.
-	 * This prevents that a character that already sits in the RX fifo is
+	 * This prevents that a अक्षरacter that alपढ़ोy sits in the RX fअगरo is
 	 * triggering an irq but the try to fetch it from there results in an
 	 * exception because UARTEN or RXEN is still off.
 	 */
-	ucr1 = imx_uart_readl(sport, UCR1);
-	ucr2 = imx_uart_readl(sport, UCR2);
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
+	ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 
-	if (imx_uart_is_imx1(sport))
+	अगर (imx_uart_is_imx1(sport))
 		ucr1 |= IMX1_UCR1_UARTCLKEN;
 
 	ucr1 |= UCR1_UARTEN;
@@ -1854,84 +1855,84 @@ static int imx_uart_poll_init(struct uart_port *port)
 	ucr2 |= UCR2_RXEN | UCR2_TXEN;
 	ucr2 &= ~UCR2_ATEN;
 
-	imx_uart_writel(sport, ucr1, UCR1);
-	imx_uart_writel(sport, ucr2, UCR2);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr2, UCR2);
 
 	/* now enable irqs */
-	imx_uart_writel(sport, ucr1 | UCR1_RRDYEN, UCR1);
-	imx_uart_writel(sport, ucr2 | UCR2_ATEN, UCR2);
+	imx_uart_ग_लिखोl(sport, ucr1 | UCR1_RRDYEN, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr2 | UCR2_ATEN, UCR2);
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int imx_uart_poll_get_char(struct uart_port *port)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	if (!(imx_uart_readl(sport, USR2) & USR2_RDR))
-		return NO_POLL_CHAR;
+अटल पूर्णांक imx_uart_poll_get_अक्षर(काष्ठा uart_port *port)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	अगर (!(imx_uart_पढ़ोl(sport, USR2) & USR2_RDR))
+		वापस NO_POLL_CHAR;
 
-	return imx_uart_readl(sport, URXD0) & URXD_RX_DATA;
-}
+	वापस imx_uart_पढ़ोl(sport, URXD0) & URXD_RX_DATA;
+पूर्ण
 
-static void imx_uart_poll_put_char(struct uart_port *port, unsigned char c)
-{
-	struct imx_port *sport = (struct imx_port *)port;
-	unsigned int status;
+अटल व्योम imx_uart_poll_put_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
+	अचिन्हित पूर्णांक status;
 
 	/* drain */
-	do {
-		status = imx_uart_readl(sport, USR1);
-	} while (~status & USR1_TRDY);
+	करो अणु
+		status = imx_uart_पढ़ोl(sport, USR1);
+	पूर्ण जबतक (~status & USR1_TRDY);
 
-	/* write */
-	imx_uart_writel(sport, c, URTX0);
+	/* ग_लिखो */
+	imx_uart_ग_लिखोl(sport, c, URTX0);
 
 	/* flush */
-	do {
-		status = imx_uart_readl(sport, USR2);
-	} while (~status & USR2_TXDC);
-}
-#endif
+	करो अणु
+		status = imx_uart_पढ़ोl(sport, USR2);
+	पूर्ण जबतक (~status & USR2_TXDC);
+पूर्ण
+#पूर्ण_अगर
 
 /* called with port.lock taken and irqs off or from .probe without locking */
-static int imx_uart_rs485_config(struct uart_port *port,
-				 struct serial_rs485 *rs485conf)
-{
-	struct imx_port *sport = (struct imx_port *)port;
+अटल पूर्णांक imx_uart_rs485_config(काष्ठा uart_port *port,
+				 काष्ठा serial_rs485 *rs485conf)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
 	u32 ucr2;
 
 	/* RTS is required to control the transmitter */
-	if (!sport->have_rtscts && !sport->have_rtsgpio)
+	अगर (!sport->have_rtscts && !sport->have_rtsgpio)
 		rs485conf->flags &= ~SER_RS485_ENABLED;
 
-	if (rs485conf->flags & SER_RS485_ENABLED) {
-		/* Enable receiver if low-active RTS signal is requested */
-		if (sport->have_rtscts &&  !sport->have_rtsgpio &&
+	अगर (rs485conf->flags & SER_RS485_ENABLED) अणु
+		/* Enable receiver अगर low-active RTS संकेत is requested */
+		अगर (sport->have_rtscts &&  !sport->have_rtsgpio &&
 		    !(rs485conf->flags & SER_RS485_RTS_ON_SEND))
 			rs485conf->flags |= SER_RS485_RX_DURING_TX;
 
 		/* disable transmitter */
-		ucr2 = imx_uart_readl(sport, UCR2);
-		if (rs485conf->flags & SER_RS485_RTS_AFTER_SEND)
+		ucr2 = imx_uart_पढ़ोl(sport, UCR2);
+		अगर (rs485conf->flags & SER_RS485_RTS_AFTER_SEND)
 			imx_uart_rts_active(sport, &ucr2);
-		else
+		अन्यथा
 			imx_uart_rts_inactive(sport, &ucr2);
-		imx_uart_writel(sport, ucr2, UCR2);
-	}
+		imx_uart_ग_लिखोl(sport, ucr2, UCR2);
+	पूर्ण
 
-	/* Make sure Rx is enabled in case Tx is active with Rx disabled */
-	if (!(rs485conf->flags & SER_RS485_ENABLED) ||
+	/* Make sure Rx is enabled in हाल Tx is active with Rx disabled */
+	अगर (!(rs485conf->flags & SER_RS485_ENABLED) ||
 	    rs485conf->flags & SER_RS485_RX_DURING_TX)
 		imx_uart_start_rx(port);
 
 	port->rs485 = *rs485conf;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct uart_ops imx_uart_pops = {
+अटल स्थिर काष्ठा uart_ops imx_uart_pops = अणु
 	.tx_empty	= imx_uart_tx_empty,
 	.set_mctrl	= imx_uart_set_mctrl,
 	.get_mctrl	= imx_uart_get_mctrl,
@@ -1939,211 +1940,211 @@ static const struct uart_ops imx_uart_pops = {
 	.start_tx	= imx_uart_start_tx,
 	.stop_rx	= imx_uart_stop_rx,
 	.enable_ms	= imx_uart_enable_ms,
-	.break_ctl	= imx_uart_break_ctl,
+	.अवरोध_ctl	= imx_uart_अवरोध_ctl,
 	.startup	= imx_uart_startup,
-	.shutdown	= imx_uart_shutdown,
+	.shutकरोwn	= imx_uart_shutकरोwn,
 	.flush_buffer	= imx_uart_flush_buffer,
 	.set_termios	= imx_uart_set_termios,
 	.type		= imx_uart_type,
 	.config_port	= imx_uart_config_port,
-	.verify_port	= imx_uart_verify_port,
-#if defined(CONFIG_CONSOLE_POLL)
+	.verअगरy_port	= imx_uart_verअगरy_port,
+#अगर defined(CONFIG_CONSOLE_POLL)
 	.poll_init      = imx_uart_poll_init,
-	.poll_get_char  = imx_uart_poll_get_char,
-	.poll_put_char  = imx_uart_poll_put_char,
-#endif
-};
+	.poll_get_अक्षर  = imx_uart_poll_get_अक्षर,
+	.poll_put_अक्षर  = imx_uart_poll_put_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-static struct imx_port *imx_uart_ports[UART_NR];
+अटल काष्ठा imx_port *imx_uart_ports[UART_NR];
 
-#if IS_ENABLED(CONFIG_SERIAL_IMX_CONSOLE)
-static void imx_uart_console_putchar(struct uart_port *port, int ch)
-{
-	struct imx_port *sport = (struct imx_port *)port;
+#अगर IS_ENABLED(CONFIG_SERIAL_IMX_CONSOLE)
+अटल व्योम imx_uart_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	काष्ठा imx_port *sport = (काष्ठा imx_port *)port;
 
-	while (imx_uart_readl(sport, imx_uart_uts_reg(sport)) & UTS_TXFULL)
+	जबतक (imx_uart_पढ़ोl(sport, imx_uart_uts_reg(sport)) & UTS_TXFULL)
 		barrier();
 
-	imx_uart_writel(sport, ch, URTX0);
-}
+	imx_uart_ग_लिखोl(sport, ch, URTX0);
+पूर्ण
 
 /*
  * Interrupts are disabled on entering
  */
-static void
-imx_uart_console_write(struct console *co, const char *s, unsigned int count)
-{
-	struct imx_port *sport = imx_uart_ports[co->index];
-	struct imx_port_ucrs old_ucr;
-	unsigned int ucr1;
-	unsigned long flags = 0;
-	int locked = 1;
+अटल व्योम
+imx_uart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा imx_port *sport = imx_uart_ports[co->index];
+	काष्ठा imx_port_ucrs old_ucr;
+	अचिन्हित पूर्णांक ucr1;
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक locked = 1;
 
-	if (sport->port.sysrq)
+	अगर (sport->port.sysrq)
 		locked = 0;
-	else if (oops_in_progress)
+	अन्यथा अगर (oops_in_progress)
 		locked = spin_trylock_irqsave(&sport->port.lock, flags);
-	else
+	अन्यथा
 		spin_lock_irqsave(&sport->port.lock, flags);
 
 	/*
-	 *	First, save UCR1/2/3 and then disable interrupts
+	 *	First, save UCR1/2/3 and then disable पूर्णांकerrupts
 	 */
 	imx_uart_ucrs_save(sport, &old_ucr);
 	ucr1 = old_ucr.ucr1;
 
-	if (imx_uart_is_imx1(sport))
+	अगर (imx_uart_is_imx1(sport))
 		ucr1 |= IMX1_UCR1_UARTCLKEN;
 	ucr1 |= UCR1_UARTEN;
 	ucr1 &= ~(UCR1_TRDYEN | UCR1_RRDYEN | UCR1_RTSDEN);
 
-	imx_uart_writel(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
-	imx_uart_writel(sport, old_ucr.ucr2 | UCR2_TXEN, UCR2);
+	imx_uart_ग_लिखोl(sport, old_ucr.ucr2 | UCR2_TXEN, UCR2);
 
-	uart_console_write(&sport->port, s, count, imx_uart_console_putchar);
+	uart_console_ग_लिखो(&sport->port, s, count, imx_uart_console_अक्षर_दो);
 
 	/*
-	 *	Finally, wait for transmitter to become empty
+	 *	Finally, रुको क्रम transmitter to become empty
 	 *	and restore UCR1/2/3
 	 */
-	while (!(imx_uart_readl(sport, USR2) & USR2_TXDC));
+	जबतक (!(imx_uart_पढ़ोl(sport, USR2) & USR2_TXDC));
 
 	imx_uart_ucrs_restore(sport, &old_ucr);
 
-	if (locked)
+	अगर (locked)
 		spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
 /*
- * If the port was already initialised (eg, by a boot loader),
+ * If the port was alपढ़ोy initialised (eg, by a boot loader),
  * try to determine the current setup.
  */
-static void __init
-imx_uart_console_get_options(struct imx_port *sport, int *baud,
-			     int *parity, int *bits)
-{
+अटल व्योम __init
+imx_uart_console_get_options(काष्ठा imx_port *sport, पूर्णांक *baud,
+			     पूर्णांक *parity, पूर्णांक *bits)
+अणु
 
-	if (imx_uart_readl(sport, UCR1) & UCR1_UARTEN) {
+	अगर (imx_uart_पढ़ोl(sport, UCR1) & UCR1_UARTEN) अणु
 		/* ok, the port was enabled */
-		unsigned int ucr2, ubir, ubmr, uartclk;
-		unsigned int baud_raw;
-		unsigned int ucfr_rfdiv;
+		अचिन्हित पूर्णांक ucr2, ubir, ubmr, uartclk;
+		अचिन्हित पूर्णांक baud_raw;
+		अचिन्हित पूर्णांक ucfr_rfभाग;
 
-		ucr2 = imx_uart_readl(sport, UCR2);
+		ucr2 = imx_uart_पढ़ोl(sport, UCR2);
 
 		*parity = 'n';
-		if (ucr2 & UCR2_PREN) {
-			if (ucr2 & UCR2_PROE)
+		अगर (ucr2 & UCR2_PREN) अणु
+			अगर (ucr2 & UCR2_PROE)
 				*parity = 'o';
-			else
+			अन्यथा
 				*parity = 'e';
-		}
+		पूर्ण
 
-		if (ucr2 & UCR2_WS)
+		अगर (ucr2 & UCR2_WS)
 			*bits = 8;
-		else
+		अन्यथा
 			*bits = 7;
 
-		ubir = imx_uart_readl(sport, UBIR) & 0xffff;
-		ubmr = imx_uart_readl(sport, UBMR) & 0xffff;
+		ubir = imx_uart_पढ़ोl(sport, UBIR) & 0xffff;
+		ubmr = imx_uart_पढ़ोl(sport, UBMR) & 0xffff;
 
-		ucfr_rfdiv = (imx_uart_readl(sport, UFCR) & UFCR_RFDIV) >> 7;
-		if (ucfr_rfdiv == 6)
-			ucfr_rfdiv = 7;
-		else
-			ucfr_rfdiv = 6 - ucfr_rfdiv;
+		ucfr_rfभाग = (imx_uart_पढ़ोl(sport, UFCR) & UFCR_RFDIV) >> 7;
+		अगर (ucfr_rfभाग == 6)
+			ucfr_rfभाग = 7;
+		अन्यथा
+			ucfr_rfभाग = 6 - ucfr_rfभाग;
 
 		uartclk = clk_get_rate(sport->clk_per);
-		uartclk /= ucfr_rfdiv;
+		uartclk /= ucfr_rfभाग;
 
-		{	/*
+		अणु	/*
 			 * The next code provides exact computation of
 			 *   baud_raw = round(((uartclk/16) * (ubir + 1)) / (ubmr + 1))
-			 * without need of float support or long long division,
+			 * without need of भग्न support or दीर्घ दीर्घ भागision,
 			 * which would be required to prevent 32bit arithmetic overflow
 			 */
-			unsigned int mul = ubir + 1;
-			unsigned int div = 16 * (ubmr + 1);
-			unsigned int rem = uartclk % div;
+			अचिन्हित पूर्णांक mul = ubir + 1;
+			अचिन्हित पूर्णांक भाग = 16 * (ubmr + 1);
+			अचिन्हित पूर्णांक rem = uartclk % भाग;
 
-			baud_raw = (uartclk / div) * mul;
-			baud_raw += (rem * mul + div / 2) / div;
+			baud_raw = (uartclk / भाग) * mul;
+			baud_raw += (rem * mul + भाग / 2) / भाग;
 			*baud = (baud_raw + 50) / 100 * 100;
-		}
+		पूर्ण
 
-		if (*baud != baud_raw)
+		अगर (*baud != baud_raw)
 			dev_info(sport->port.dev, "Console IMX rounded baud rate from %d to %d\n",
 				baud_raw, *baud);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init
-imx_uart_console_setup(struct console *co, char *options)
-{
-	struct imx_port *sport;
-	int baud = 9600;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
-	int retval;
+अटल पूर्णांक __init
+imx_uart_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा imx_port *sport;
+	पूर्णांक baud = 9600;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
+	पूर्णांक retval;
 
 	/*
-	 * Check whether an invalid uart number has been specified, and
-	 * if so, search for the first available port that does have
+	 * Check whether an invalid uart number has been specअगरied, and
+	 * अगर so, search क्रम the first available port that करोes have
 	 * console support.
 	 */
-	if (co->index == -1 || co->index >= ARRAY_SIZE(imx_uart_ports))
+	अगर (co->index == -1 || co->index >= ARRAY_SIZE(imx_uart_ports))
 		co->index = 0;
 	sport = imx_uart_ports[co->index];
-	if (sport == NULL)
-		return -ENODEV;
+	अगर (sport == शून्य)
+		वापस -ENODEV;
 
-	/* For setting the registers, we only need to enable the ipg clock. */
+	/* For setting the रेजिस्टरs, we only need to enable the ipg घड़ी. */
 	retval = clk_prepare_enable(sport->clk_ipg);
-	if (retval)
-		goto error_console;
+	अगर (retval)
+		जाओ error_console;
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	else
+	अन्यथा
 		imx_uart_console_get_options(sport, &baud, &parity, &bits);
 
 	imx_uart_setup_ufcr(sport, TXTL_DEFAULT, RXTL_DEFAULT);
 
 	retval = uart_set_options(&sport->port, co, baud, parity, bits, flow);
 
-	if (retval) {
+	अगर (retval) अणु
 		clk_disable_unprepare(sport->clk_ipg);
-		goto error_console;
-	}
+		जाओ error_console;
+	पूर्ण
 
 	retval = clk_prepare_enable(sport->clk_per);
-	if (retval)
+	अगर (retval)
 		clk_disable_unprepare(sport->clk_ipg);
 
 error_console:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static struct uart_driver imx_uart_uart_driver;
-static struct console imx_uart_console = {
+अटल काष्ठा uart_driver imx_uart_uart_driver;
+अटल काष्ठा console imx_uart_console = अणु
 	.name		= DEV_NAME,
-	.write		= imx_uart_console_write,
+	.ग_लिखो		= imx_uart_console_ग_लिखो,
 	.device		= uart_console_device,
 	.setup		= imx_uart_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &imx_uart_uart_driver,
-};
+पूर्ण;
 
-#define IMX_CONSOLE	&imx_uart_console
+#घोषणा IMX_CONSOLE	&imx_uart_console
 
-#else
-#define IMX_CONSOLE	NULL
-#endif
+#अन्यथा
+#घोषणा IMX_CONSOLE	शून्य
+#पूर्ण_अगर
 
-static struct uart_driver imx_uart_uart_driver = {
+अटल काष्ठा uart_driver imx_uart_uart_driver = अणु
 	.owner          = THIS_MODULE,
 	.driver_name    = DRIVER_NAME,
 	.dev_name       = DEV_NAME,
@@ -2151,89 +2152,89 @@ static struct uart_driver imx_uart_uart_driver = {
 	.minor          = MINOR_START,
 	.nr             = ARRAY_SIZE(imx_uart_ports),
 	.cons           = IMX_CONSOLE,
-};
+पूर्ण;
 
-static enum hrtimer_restart imx_trigger_start_tx(struct hrtimer *t)
-{
-	struct imx_port *sport = container_of(t, struct imx_port, trigger_start_tx);
-	unsigned long flags;
+अटल क्रमागत hrसमयr_restart imx_trigger_start_tx(काष्ठा hrसमयr *t)
+अणु
+	काष्ठा imx_port *sport = container_of(t, काष्ठा imx_port, trigger_start_tx);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
-	if (sport->tx_state == WAIT_AFTER_RTS)
+	अगर (sport->tx_state == WAIT_AFTER_RTS)
 		imx_uart_start_tx(&sport->port);
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-static enum hrtimer_restart imx_trigger_stop_tx(struct hrtimer *t)
-{
-	struct imx_port *sport = container_of(t, struct imx_port, trigger_stop_tx);
-	unsigned long flags;
+अटल क्रमागत hrसमयr_restart imx_trigger_stop_tx(काष्ठा hrसमयr *t)
+अणु
+	काष्ठा imx_port *sport = container_of(t, काष्ठा imx_port, trigger_stop_tx);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
-	if (sport->tx_state == WAIT_AFTER_SEND)
+	अगर (sport->tx_state == WAIT_AFTER_SEND)
 		imx_uart_stop_tx(&sport->port);
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-static int imx_uart_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct imx_port *sport;
-	void __iomem *base;
-	int ret = 0;
+अटल पूर्णांक imx_uart_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा imx_port *sport;
+	व्योम __iomem *base;
+	पूर्णांक ret = 0;
 	u32 ucr1;
-	struct resource *res;
-	int txirq, rxirq, rtsirq;
+	काष्ठा resource *res;
+	पूर्णांक txirq, rxirq, rtsirq;
 
-	sport = devm_kzalloc(&pdev->dev, sizeof(*sport), GFP_KERNEL);
-	if (!sport)
-		return -ENOMEM;
+	sport = devm_kzalloc(&pdev->dev, माप(*sport), GFP_KERNEL);
+	अगर (!sport)
+		वापस -ENOMEM;
 
 	sport->devdata = of_device_get_match_data(&pdev->dev);
 
 	ret = of_alias_get_id(np, "serial");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to get alias id, errno %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	sport->port.line = ret;
 
-	if (of_get_property(np, "uart-has-rtscts", NULL) ||
-	    of_get_property(np, "fsl,uart-has-rtscts", NULL) /* deprecated */)
+	अगर (of_get_property(np, "uart-has-rtscts", शून्य) ||
+	    of_get_property(np, "fsl,uart-has-rtscts", शून्य) /* deprecated */)
 		sport->have_rtscts = 1;
 
-	if (of_get_property(np, "fsl,dte-mode", NULL))
+	अगर (of_get_property(np, "fsl,dte-mode", शून्य))
 		sport->dte_mode = 1;
 
-	if (of_get_property(np, "rts-gpios", NULL))
+	अगर (of_get_property(np, "rts-gpios", शून्य))
 		sport->have_rtsgpio = 1;
 
-	if (of_get_property(np, "fsl,inverted-tx", NULL))
+	अगर (of_get_property(np, "fsl,inverted-tx", शून्य))
 		sport->inverted_tx = 1;
 
-	if (of_get_property(np, "fsl,inverted-rx", NULL))
+	अगर (of_get_property(np, "fsl,inverted-rx", शून्य))
 		sport->inverted_rx = 1;
 
-	if (sport->port.line >= ARRAY_SIZE(imx_uart_ports)) {
+	अगर (sport->port.line >= ARRAY_SIZE(imx_uart_ports)) अणु
 		dev_err(&pdev->dev, "serial%d out of range\n",
 			sport->port.line);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
-	rxirq = platform_get_irq(pdev, 0);
-	if (rxirq < 0)
-		return rxirq;
-	txirq = platform_get_irq_optional(pdev, 1);
-	rtsirq = platform_get_irq_optional(pdev, 2);
+	rxirq = platक्रमm_get_irq(pdev, 0);
+	अगर (rxirq < 0)
+		वापस rxirq;
+	txirq = platक्रमm_get_irq_optional(pdev, 1);
+	rtsirq = platक्रमm_get_irq_optional(pdev, 2);
 
 	sport->port.dev = &pdev->dev;
 	sport->port.mapbase = res->start;
@@ -2241,63 +2242,63 @@ static int imx_uart_probe(struct platform_device *pdev)
 	sport->port.type = PORT_IMX;
 	sport->port.iotype = UPIO_MEM;
 	sport->port.irq = rxirq;
-	sport->port.fifosize = 32;
+	sport->port.fअगरosize = 32;
 	sport->port.has_sysrq = IS_ENABLED(CONFIG_SERIAL_IMX_CONSOLE);
 	sport->port.ops = &imx_uart_pops;
 	sport->port.rs485_config = imx_uart_rs485_config;
 	sport->port.flags = UPF_BOOT_AUTOCONF;
-	timer_setup(&sport->timer, imx_uart_timeout, 0);
+	समयr_setup(&sport->समयr, imx_uart_समयout, 0);
 
 	sport->gpios = mctrl_gpio_init(&sport->port, 0);
-	if (IS_ERR(sport->gpios))
-		return PTR_ERR(sport->gpios);
+	अगर (IS_ERR(sport->gpios))
+		वापस PTR_ERR(sport->gpios);
 
 	sport->clk_ipg = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(sport->clk_ipg)) {
+	अगर (IS_ERR(sport->clk_ipg)) अणु
 		ret = PTR_ERR(sport->clk_ipg);
 		dev_err(&pdev->dev, "failed to get ipg clk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sport->clk_per = devm_clk_get(&pdev->dev, "per");
-	if (IS_ERR(sport->clk_per)) {
+	अगर (IS_ERR(sport->clk_per)) अणु
 		ret = PTR_ERR(sport->clk_per);
 		dev_err(&pdev->dev, "failed to get per clk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sport->port.uartclk = clk_get_rate(sport->clk_per);
 
-	/* For register access, we only need to enable the ipg clock. */
+	/* For रेजिस्टर access, we only need to enable the ipg घड़ी. */
 	ret = clk_prepare_enable(sport->clk_ipg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to enable per clk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* initialize shadow register values */
-	sport->ucr1 = readl(sport->port.membase + UCR1);
-	sport->ucr2 = readl(sport->port.membase + UCR2);
-	sport->ucr3 = readl(sport->port.membase + UCR3);
-	sport->ucr4 = readl(sport->port.membase + UCR4);
-	sport->ufcr = readl(sport->port.membase + UFCR);
+	/* initialize shaकरोw रेजिस्टर values */
+	sport->ucr1 = पढ़ोl(sport->port.membase + UCR1);
+	sport->ucr2 = पढ़ोl(sport->port.membase + UCR2);
+	sport->ucr3 = पढ़ोl(sport->port.membase + UCR3);
+	sport->ucr4 = पढ़ोl(sport->port.membase + UCR4);
+	sport->ufcr = पढ़ोl(sport->port.membase + UFCR);
 
 	ret = uart_get_rs485_mode(&sport->port);
-	if (ret) {
+	अगर (ret) अणु
 		clk_disable_unprepare(sport->clk_ipg);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (sport->port.rs485.flags & SER_RS485_ENABLED &&
+	अगर (sport->port.rs485.flags & SER_RS485_ENABLED &&
 	    (!sport->have_rtscts && !sport->have_rtsgpio))
 		dev_err(&pdev->dev, "no RTS control, disabling rs485\n");
 
 	/*
 	 * If using the i.MX UART RTS/CTS control then the RTS (CTS_B)
-	 * signal cannot be set low during transmission in case the
+	 * संकेत cannot be set low during transmission in हाल the
 	 * receiver is off (limitation of the i.MX UART IP).
 	 */
-	if (sport->port.rs485.flags & SER_RS485_ENABLED &&
+	अगर (sport->port.rs485.flags & SER_RS485_ENABLED &&
 	    sport->have_rtscts && !sport->have_rtsgpio &&
 	    (!(sport->port.rs485.flags & SER_RS485_RTS_ON_SEND) &&
 	     !(sport->port.rs485.flags & SER_RS485_RX_DURING_TX)))
@@ -2306,170 +2307,170 @@ static int imx_uart_probe(struct platform_device *pdev)
 
 	imx_uart_rs485_config(&sport->port, &sport->port.rs485);
 
-	/* Disable interrupts before requesting them */
-	ucr1 = imx_uart_readl(sport, UCR1);
+	/* Disable पूर्णांकerrupts beक्रमe requesting them */
+	ucr1 = imx_uart_पढ़ोl(sport, UCR1);
 	ucr1 &= ~(UCR1_ADEN | UCR1_TRDYEN | UCR1_IDEN | UCR1_RRDYEN | UCR1_RTSDEN);
-	imx_uart_writel(sport, ucr1, UCR1);
+	imx_uart_ग_लिखोl(sport, ucr1, UCR1);
 
-	if (!imx_uart_is_imx1(sport) && sport->dte_mode) {
+	अगर (!imx_uart_is_imx1(sport) && sport->dte_mode) अणु
 		/*
 		 * The DCEDTE bit changes the direction of DSR, DCD, DTR and RI
-		 * and influences if UCR3_RI and UCR3_DCD changes the level of RI
-		 * and DCD (when they are outputs) or enables the respective
-		 * irqs. So set this bit early, i.e. before requesting irqs.
+		 * and influences अगर UCR3_RI and UCR3_DCD changes the level of RI
+		 * and DCD (when they are outमाला_दो) or enables the respective
+		 * irqs. So set this bit early, i.e. beक्रमe requesting irqs.
 		 */
-		u32 ufcr = imx_uart_readl(sport, UFCR);
-		if (!(ufcr & UFCR_DCEDTE))
-			imx_uart_writel(sport, ufcr | UFCR_DCEDTE, UFCR);
+		u32 ufcr = imx_uart_पढ़ोl(sport, UFCR);
+		अगर (!(ufcr & UFCR_DCEDTE))
+			imx_uart_ग_लिखोl(sport, ufcr | UFCR_DCEDTE, UFCR);
 
 		/*
 		 * Disable UCR3_RI and UCR3_DCD irqs. They are also not
 		 * enabled later because they cannot be cleared
 		 * (confirmed on i.MX25) which makes them unusable.
 		 */
-		imx_uart_writel(sport,
+		imx_uart_ग_लिखोl(sport,
 				IMX21_UCR3_RXDMUXSEL | UCR3_ADNIMP | UCR3_DSR,
 				UCR3);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 ucr3 = UCR3_DSR;
-		u32 ufcr = imx_uart_readl(sport, UFCR);
-		if (ufcr & UFCR_DCEDTE)
-			imx_uart_writel(sport, ufcr & ~UFCR_DCEDTE, UFCR);
+		u32 ufcr = imx_uart_पढ़ोl(sport, UFCR);
+		अगर (ufcr & UFCR_DCEDTE)
+			imx_uart_ग_लिखोl(sport, ufcr & ~UFCR_DCEDTE, UFCR);
 
-		if (!imx_uart_is_imx1(sport))
+		अगर (!imx_uart_is_imx1(sport))
 			ucr3 |= IMX21_UCR3_RXDMUXSEL | UCR3_ADNIMP;
-		imx_uart_writel(sport, ucr3, UCR3);
-	}
+		imx_uart_ग_लिखोl(sport, ucr3, UCR3);
+	पूर्ण
 
 	clk_disable_unprepare(sport->clk_ipg);
 
-	hrtimer_init(&sport->trigger_start_tx, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	hrtimer_init(&sport->trigger_stop_tx, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	hrसमयr_init(&sport->trigger_start_tx, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	hrसमयr_init(&sport->trigger_stop_tx, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	sport->trigger_start_tx.function = imx_trigger_start_tx;
 	sport->trigger_stop_tx.function = imx_trigger_stop_tx;
 
 	/*
-	 * Allocate the IRQ(s) i.MX1 has three interrupts whereas later
-	 * chips only have one interrupt.
+	 * Allocate the IRQ(s) i.MX1 has three पूर्णांकerrupts whereas later
+	 * chips only have one पूर्णांकerrupt.
 	 */
-	if (txirq > 0) {
-		ret = devm_request_irq(&pdev->dev, rxirq, imx_uart_rxint, 0,
+	अगर (txirq > 0) अणु
+		ret = devm_request_irq(&pdev->dev, rxirq, imx_uart_rxपूर्णांक, 0,
 				       dev_name(&pdev->dev), sport);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to request rx irq: %d\n",
 				ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = devm_request_irq(&pdev->dev, txirq, imx_uart_txint, 0,
+		ret = devm_request_irq(&pdev->dev, txirq, imx_uart_txपूर्णांक, 0,
 				       dev_name(&pdev->dev), sport);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to request tx irq: %d\n",
 				ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = devm_request_irq(&pdev->dev, rtsirq, imx_uart_rtsint, 0,
+		ret = devm_request_irq(&pdev->dev, rtsirq, imx_uart_rtsपूर्णांक, 0,
 				       dev_name(&pdev->dev), sport);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to request rts irq: %d\n",
 				ret);
-			return ret;
-		}
-	} else {
-		ret = devm_request_irq(&pdev->dev, rxirq, imx_uart_int, 0,
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ret = devm_request_irq(&pdev->dev, rxirq, imx_uart_पूर्णांक, 0,
 				       dev_name(&pdev->dev), sport);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to request irq: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	imx_uart_ports[sport->port.line] = sport;
 
-	platform_set_drvdata(pdev, sport);
+	platक्रमm_set_drvdata(pdev, sport);
 
-	return uart_add_one_port(&imx_uart_uart_driver, &sport->port);
-}
+	वापस uart_add_one_port(&imx_uart_uart_driver, &sport->port);
+पूर्ण
 
-static int imx_uart_remove(struct platform_device *pdev)
-{
-	struct imx_port *sport = platform_get_drvdata(pdev);
+अटल पूर्णांक imx_uart_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा imx_port *sport = platक्रमm_get_drvdata(pdev);
 
-	return uart_remove_one_port(&imx_uart_uart_driver, &sport->port);
-}
+	वापस uart_हटाओ_one_port(&imx_uart_uart_driver, &sport->port);
+पूर्ण
 
-static void imx_uart_restore_context(struct imx_port *sport)
-{
-	unsigned long flags;
+अटल व्योम imx_uart_restore_context(काष्ठा imx_port *sport)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
-	if (!sport->context_saved) {
+	अगर (!sport->context_saved) अणु
 		spin_unlock_irqrestore(&sport->port.lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	imx_uart_writel(sport, sport->saved_reg[4], UFCR);
-	imx_uart_writel(sport, sport->saved_reg[5], UESC);
-	imx_uart_writel(sport, sport->saved_reg[6], UTIM);
-	imx_uart_writel(sport, sport->saved_reg[7], UBIR);
-	imx_uart_writel(sport, sport->saved_reg[8], UBMR);
-	imx_uart_writel(sport, sport->saved_reg[9], IMX21_UTS);
-	imx_uart_writel(sport, sport->saved_reg[0], UCR1);
-	imx_uart_writel(sport, sport->saved_reg[1] | UCR2_SRST, UCR2);
-	imx_uart_writel(sport, sport->saved_reg[2], UCR3);
-	imx_uart_writel(sport, sport->saved_reg[3], UCR4);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[4], UFCR);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[5], UESC);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[6], UTIM);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[7], UBIR);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[8], UBMR);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[9], IMX21_UTS);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[0], UCR1);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[1] | UCR2_SRST, UCR2);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[2], UCR3);
+	imx_uart_ग_लिखोl(sport, sport->saved_reg[3], UCR4);
 	sport->context_saved = false;
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
-static void imx_uart_save_context(struct imx_port *sport)
-{
-	unsigned long flags;
+अटल व्योम imx_uart_save_context(काष्ठा imx_port *sport)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/* Save necessary regs */
 	spin_lock_irqsave(&sport->port.lock, flags);
-	sport->saved_reg[0] = imx_uart_readl(sport, UCR1);
-	sport->saved_reg[1] = imx_uart_readl(sport, UCR2);
-	sport->saved_reg[2] = imx_uart_readl(sport, UCR3);
-	sport->saved_reg[3] = imx_uart_readl(sport, UCR4);
-	sport->saved_reg[4] = imx_uart_readl(sport, UFCR);
-	sport->saved_reg[5] = imx_uart_readl(sport, UESC);
-	sport->saved_reg[6] = imx_uart_readl(sport, UTIM);
-	sport->saved_reg[7] = imx_uart_readl(sport, UBIR);
-	sport->saved_reg[8] = imx_uart_readl(sport, UBMR);
-	sport->saved_reg[9] = imx_uart_readl(sport, IMX21_UTS);
+	sport->saved_reg[0] = imx_uart_पढ़ोl(sport, UCR1);
+	sport->saved_reg[1] = imx_uart_पढ़ोl(sport, UCR2);
+	sport->saved_reg[2] = imx_uart_पढ़ोl(sport, UCR3);
+	sport->saved_reg[3] = imx_uart_पढ़ोl(sport, UCR4);
+	sport->saved_reg[4] = imx_uart_पढ़ोl(sport, UFCR);
+	sport->saved_reg[5] = imx_uart_पढ़ोl(sport, UESC);
+	sport->saved_reg[6] = imx_uart_पढ़ोl(sport, UTIM);
+	sport->saved_reg[7] = imx_uart_पढ़ोl(sport, UBIR);
+	sport->saved_reg[8] = imx_uart_पढ़ोl(sport, UBMR);
+	sport->saved_reg[9] = imx_uart_पढ़ोl(sport, IMX21_UTS);
 	sport->context_saved = true;
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
-static void imx_uart_enable_wakeup(struct imx_port *sport, bool on)
-{
+अटल व्योम imx_uart_enable_wakeup(काष्ठा imx_port *sport, bool on)
+अणु
 	u32 ucr3;
 
-	ucr3 = imx_uart_readl(sport, UCR3);
-	if (on) {
-		imx_uart_writel(sport, USR1_AWAKE, USR1);
+	ucr3 = imx_uart_पढ़ोl(sport, UCR3);
+	अगर (on) अणु
+		imx_uart_ग_लिखोl(sport, USR1_AWAKE, USR1);
 		ucr3 |= UCR3_AWAKEN;
-	} else {
+	पूर्ण अन्यथा अणु
 		ucr3 &= ~UCR3_AWAKEN;
-	}
-	imx_uart_writel(sport, ucr3, UCR3);
+	पूर्ण
+	imx_uart_ग_लिखोl(sport, ucr3, UCR3);
 
-	if (sport->have_rtscts) {
-		u32 ucr1 = imx_uart_readl(sport, UCR1);
-		if (on)
+	अगर (sport->have_rtscts) अणु
+		u32 ucr1 = imx_uart_पढ़ोl(sport, UCR1);
+		अगर (on)
 			ucr1 |= UCR1_RTSDEN;
-		else
+		अन्यथा
 			ucr1 &= ~UCR1_RTSDEN;
-		imx_uart_writel(sport, ucr1, UCR1);
-	}
-}
+		imx_uart_ग_लिखोl(sport, ucr1, UCR1);
+	पूर्ण
+पूर्ण
 
-static int imx_uart_suspend_noirq(struct device *dev)
-{
-	struct imx_port *sport = dev_get_drvdata(dev);
+अटल पूर्णांक imx_uart_suspend_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा imx_port *sport = dev_get_drvdata(dev);
 
 	imx_uart_save_context(sport);
 
@@ -2477,46 +2478,46 @@ static int imx_uart_suspend_noirq(struct device *dev)
 
 	pinctrl_pm_select_sleep_state(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int imx_uart_resume_noirq(struct device *dev)
-{
-	struct imx_port *sport = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक imx_uart_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा imx_port *sport = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	pinctrl_pm_select_default_state(dev);
+	pinctrl_pm_select_शेष_state(dev);
 
 	ret = clk_enable(sport->clk_ipg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	imx_uart_restore_context(sport);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int imx_uart_suspend(struct device *dev)
-{
-	struct imx_port *sport = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक imx_uart_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा imx_port *sport = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	uart_suspend_port(&imx_uart_uart_driver, &sport->port);
 	disable_irq(sport->port.irq);
 
 	ret = clk_prepare_enable(sport->clk_ipg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* enable wakeup from i.MX UART */
 	imx_uart_enable_wakeup(sport, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int imx_uart_resume(struct device *dev)
-{
-	struct imx_port *sport = dev_get_drvdata(dev);
+अटल पूर्णांक imx_uart_resume(काष्ठा device *dev)
+अणु
+	काष्ठा imx_port *sport = dev_get_drvdata(dev);
 
 	/* disable wakeup from i.MX UART */
 	imx_uart_enable_wakeup(sport, false);
@@ -2526,74 +2527,74 @@ static int imx_uart_resume(struct device *dev)
 
 	clk_disable_unprepare(sport->clk_ipg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int imx_uart_freeze(struct device *dev)
-{
-	struct imx_port *sport = dev_get_drvdata(dev);
+अटल पूर्णांक imx_uart_मुक्तze(काष्ठा device *dev)
+अणु
+	काष्ठा imx_port *sport = dev_get_drvdata(dev);
 
 	uart_suspend_port(&imx_uart_uart_driver, &sport->port);
 
-	return clk_prepare_enable(sport->clk_ipg);
-}
+	वापस clk_prepare_enable(sport->clk_ipg);
+पूर्ण
 
-static int imx_uart_thaw(struct device *dev)
-{
-	struct imx_port *sport = dev_get_drvdata(dev);
+अटल पूर्णांक imx_uart_thaw(काष्ठा device *dev)
+अणु
+	काष्ठा imx_port *sport = dev_get_drvdata(dev);
 
 	uart_resume_port(&imx_uart_uart_driver, &sport->port);
 
 	clk_disable_unprepare(sport->clk_ipg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops imx_uart_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops imx_uart_pm_ops = अणु
 	.suspend_noirq = imx_uart_suspend_noirq,
 	.resume_noirq = imx_uart_resume_noirq,
-	.freeze_noirq = imx_uart_suspend_noirq,
+	.मुक्तze_noirq = imx_uart_suspend_noirq,
 	.restore_noirq = imx_uart_resume_noirq,
 	.suspend = imx_uart_suspend,
 	.resume = imx_uart_resume,
-	.freeze = imx_uart_freeze,
+	.मुक्तze = imx_uart_मुक्तze,
 	.thaw = imx_uart_thaw,
 	.restore = imx_uart_thaw,
-};
+पूर्ण;
 
-static struct platform_driver imx_uart_platform_driver = {
+अटल काष्ठा platक्रमm_driver imx_uart_platक्रमm_driver = अणु
 	.probe = imx_uart_probe,
-	.remove = imx_uart_remove,
+	.हटाओ = imx_uart_हटाओ,
 
-	.driver = {
+	.driver = अणु
 		.name = "imx-uart",
 		.of_match_table = imx_uart_dt_ids,
 		.pm = &imx_uart_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init imx_uart_init(void)
-{
-	int ret = uart_register_driver(&imx_uart_uart_driver);
+अटल पूर्णांक __init imx_uart_init(व्योम)
+अणु
+	पूर्णांक ret = uart_रेजिस्टर_driver(&imx_uart_uart_driver);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&imx_uart_platform_driver);
-	if (ret != 0)
-		uart_unregister_driver(&imx_uart_uart_driver);
+	ret = platक्रमm_driver_रेजिस्टर(&imx_uart_platक्रमm_driver);
+	अगर (ret != 0)
+		uart_unरेजिस्टर_driver(&imx_uart_uart_driver);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit imx_uart_exit(void)
-{
-	platform_driver_unregister(&imx_uart_platform_driver);
-	uart_unregister_driver(&imx_uart_uart_driver);
-}
+अटल व्योम __निकास imx_uart_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&imx_uart_platक्रमm_driver);
+	uart_unरेजिस्टर_driver(&imx_uart_uart_driver);
+पूर्ण
 
 module_init(imx_uart_init);
-module_exit(imx_uart_exit);
+module_निकास(imx_uart_निकास);
 
 MODULE_AUTHOR("Sascha Hauer");
 MODULE_DESCRIPTION("IMX generic serial port driver");

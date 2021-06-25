@@ -1,268 +1,269 @@
+<शैली गुरु>
 /*
- * Broadcom specific AMBA
- * Bus subsystem
+ * Broadcom specअगरic AMBA
+ * Bus subप्रणाली
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include "bcma_private.h"
-#include <linux/module.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/platform_device.h>
-#include <linux/pci.h>
-#include <linux/bcma/bcma.h>
-#include <linux/slab.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
+#समावेश "bcma_private.h"
+#समावेश <linux/module.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/bcma/bcma.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
 
 MODULE_DESCRIPTION("Broadcom's specific AMBA driver");
 MODULE_LICENSE("GPL");
 
 /* contains the number the next bus should get. */
-static unsigned int bcma_bus_next_num = 0;
+अटल अचिन्हित पूर्णांक bcma_bus_next_num = 0;
 
 /* bcma_buses_mutex locks the bcma_bus_next_num */
-static DEFINE_MUTEX(bcma_buses_mutex);
+अटल DEFINE_MUTEX(bcma_buses_mutex);
 
-static int bcma_bus_match(struct device *dev, struct device_driver *drv);
-static int bcma_device_probe(struct device *dev);
-static int bcma_device_remove(struct device *dev);
-static int bcma_device_uevent(struct device *dev, struct kobj_uevent_env *env);
+अटल पूर्णांक bcma_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv);
+अटल पूर्णांक bcma_device_probe(काष्ठा device *dev);
+अटल पूर्णांक bcma_device_हटाओ(काष्ठा device *dev);
+अटल पूर्णांक bcma_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env);
 
-static ssize_t manuf_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct bcma_device *core = container_of(dev, struct bcma_device, dev);
-	return sprintf(buf, "0x%03X\n", core->id.manuf);
-}
-static DEVICE_ATTR_RO(manuf);
+अटल sमाप_प्रकार manuf_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा bcma_device *core = container_of(dev, काष्ठा bcma_device, dev);
+	वापस प्र_लिखो(buf, "0x%03X\n", core->id.manuf);
+पूर्ण
+अटल DEVICE_ATTR_RO(manuf);
 
-static ssize_t id_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct bcma_device *core = container_of(dev, struct bcma_device, dev);
-	return sprintf(buf, "0x%03X\n", core->id.id);
-}
-static DEVICE_ATTR_RO(id);
+अटल sमाप_प्रकार id_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा bcma_device *core = container_of(dev, काष्ठा bcma_device, dev);
+	वापस प्र_लिखो(buf, "0x%03X\n", core->id.id);
+पूर्ण
+अटल DEVICE_ATTR_RO(id);
 
-static ssize_t rev_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct bcma_device *core = container_of(dev, struct bcma_device, dev);
-	return sprintf(buf, "0x%02X\n", core->id.rev);
-}
-static DEVICE_ATTR_RO(rev);
+अटल sमाप_प्रकार rev_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा bcma_device *core = container_of(dev, काष्ठा bcma_device, dev);
+	वापस प्र_लिखो(buf, "0x%02X\n", core->id.rev);
+पूर्ण
+अटल DEVICE_ATTR_RO(rev);
 
-static ssize_t class_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct bcma_device *core = container_of(dev, struct bcma_device, dev);
-	return sprintf(buf, "0x%X\n", core->id.class);
-}
-static DEVICE_ATTR_RO(class);
+अटल sमाप_प्रकार class_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा bcma_device *core = container_of(dev, काष्ठा bcma_device, dev);
+	वापस प्र_लिखो(buf, "0x%X\n", core->id.class);
+पूर्ण
+अटल DEVICE_ATTR_RO(class);
 
-static struct attribute *bcma_device_attrs[] = {
+अटल काष्ठा attribute *bcma_device_attrs[] = अणु
 	&dev_attr_manuf.attr,
 	&dev_attr_id.attr,
 	&dev_attr_rev.attr,
 	&dev_attr_class.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(bcma_device);
 
-static struct bus_type bcma_bus_type = {
+अटल काष्ठा bus_type bcma_bus_type = अणु
 	.name		= "bcma",
 	.match		= bcma_bus_match,
 	.probe		= bcma_device_probe,
-	.remove		= bcma_device_remove,
+	.हटाओ		= bcma_device_हटाओ,
 	.uevent		= bcma_device_uevent,
 	.dev_groups	= bcma_device_groups,
-};
+पूर्ण;
 
-static u16 bcma_cc_core_id(struct bcma_bus *bus)
-{
-	if (bus->chipinfo.id == BCMA_CHIP_ID_BCM4706)
-		return BCMA_CORE_4706_CHIPCOMMON;
-	return BCMA_CORE_CHIPCOMMON;
-}
+अटल u16 bcma_cc_core_id(काष्ठा bcma_bus *bus)
+अणु
+	अगर (bus->chipinfo.id == BCMA_CHIP_ID_BCM4706)
+		वापस BCMA_CORE_4706_CHIPCOMMON;
+	वापस BCMA_CORE_CHIPCOMMON;
+पूर्ण
 
-struct bcma_device *bcma_find_core_unit(struct bcma_bus *bus, u16 coreid,
+काष्ठा bcma_device *bcma_find_core_unit(काष्ठा bcma_bus *bus, u16 coreid,
 					u8 unit)
-{
-	struct bcma_device *core;
+अणु
+	काष्ठा bcma_device *core;
 
-	list_for_each_entry(core, &bus->cores, list) {
-		if (core->id.id == coreid && core->core_unit == unit)
-			return core;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(core, &bus->cores, list) अणु
+		अगर (core->id.id == coreid && core->core_unit == unit)
+			वापस core;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(bcma_find_core_unit);
 
-bool bcma_wait_value(struct bcma_device *core, u16 reg, u32 mask, u32 value,
-		     int timeout)
-{
-	unsigned long deadline = jiffies + timeout;
+bool bcma_रुको_value(काष्ठा bcma_device *core, u16 reg, u32 mask, u32 value,
+		     पूर्णांक समयout)
+अणु
+	अचिन्हित दीर्घ deadline = jअगरfies + समयout;
 	u32 val;
 
-	do {
-		val = bcma_read32(core, reg);
-		if ((val & mask) == value)
-			return true;
+	करो अणु
+		val = bcma_पढ़ो32(core, reg);
+		अगर ((val & mask) == value)
+			वापस true;
 		cpu_relax();
 		udelay(10);
-	} while (!time_after_eq(jiffies, deadline));
+	पूर्ण जबतक (!समय_after_eq(jअगरfies, deadline));
 
 	bcma_warn(core->bus, "Timeout waiting for register 0x%04X!\n", reg);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void bcma_release_core_dev(struct device *dev)
-{
-	struct bcma_device *core = container_of(dev, struct bcma_device, dev);
-	if (core->io_addr)
+अटल व्योम bcma_release_core_dev(काष्ठा device *dev)
+अणु
+	काष्ठा bcma_device *core = container_of(dev, काष्ठा bcma_device, dev);
+	अगर (core->io_addr)
 		iounmap(core->io_addr);
-	if (core->io_wrap)
+	अगर (core->io_wrap)
 		iounmap(core->io_wrap);
-	kfree(core);
-}
+	kमुक्त(core);
+पूर्ण
 
-static bool bcma_is_core_needed_early(u16 core_id)
-{
-	switch (core_id) {
-	case BCMA_CORE_NS_NAND:
-	case BCMA_CORE_NS_QSPI:
-		return true;
-	}
+अटल bool bcma_is_core_needed_early(u16 core_id)
+अणु
+	चयन (core_id) अणु
+	हाल BCMA_CORE_NS_न_अंकD:
+	हाल BCMA_CORE_NS_QSPI:
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static struct device_node *bcma_of_find_child_device(struct device *parent,
-						     struct bcma_device *core)
-{
-	struct device_node *node;
+अटल काष्ठा device_node *bcma_of_find_child_device(काष्ठा device *parent,
+						     काष्ठा bcma_device *core)
+अणु
+	काष्ठा device_node *node;
 	u64 size;
-	const __be32 *reg;
+	स्थिर __be32 *reg;
 
-	if (!parent->of_node)
-		return NULL;
+	अगर (!parent->of_node)
+		वापस शून्य;
 
-	for_each_child_of_node(parent->of_node, node) {
-		reg = of_get_address(node, 0, &size, NULL);
-		if (!reg)
-			continue;
-		if (of_translate_address(node, reg) == core->addr)
-			return node;
-	}
-	return NULL;
-}
+	क्रम_each_child_of_node(parent->of_node, node) अणु
+		reg = of_get_address(node, 0, &size, शून्य);
+		अगर (!reg)
+			जारी;
+		अगर (of_translate_address(node, reg) == core->addr)
+			वापस node;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int bcma_of_irq_parse(struct device *parent,
-			     struct bcma_device *core,
-			     struct of_phandle_args *out_irq, int num)
-{
+अटल पूर्णांक bcma_of_irq_parse(काष्ठा device *parent,
+			     काष्ठा bcma_device *core,
+			     काष्ठा of_phandle_args *out_irq, पूर्णांक num)
+अणु
 	__be32 laddr[1];
-	int rc;
+	पूर्णांक rc;
 
-	if (core->dev.of_node) {
+	अगर (core->dev.of_node) अणु
 		rc = of_irq_parse_one(core->dev.of_node, num, out_irq);
-		if (!rc)
-			return rc;
-	}
+		अगर (!rc)
+			वापस rc;
+	पूर्ण
 
 	out_irq->np = parent->of_node;
 	out_irq->args_count = 1;
 	out_irq->args[0] = num;
 
 	laddr[0] = cpu_to_be32(core->addr);
-	return of_irq_parse_raw(laddr, out_irq);
-}
+	वापस of_irq_parse_raw(laddr, out_irq);
+पूर्ण
 
-static unsigned int bcma_of_get_irq(struct device *parent,
-				    struct bcma_device *core, int num)
-{
-	struct of_phandle_args out_irq;
-	int ret;
+अटल अचिन्हित पूर्णांक bcma_of_get_irq(काष्ठा device *parent,
+				    काष्ठा bcma_device *core, पूर्णांक num)
+अणु
+	काष्ठा of_phandle_args out_irq;
+	पूर्णांक ret;
 
-	if (!IS_ENABLED(CONFIG_OF_IRQ) || !parent->of_node)
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_OF_IRQ) || !parent->of_node)
+		वापस 0;
 
 	ret = bcma_of_irq_parse(parent, core, &out_irq, num);
-	if (ret) {
+	अगर (ret) अणु
 		bcma_debug(core->bus, "bcma_of_get_irq() failed with rc=%d\n",
 			   ret);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return irq_create_of_mapping(&out_irq);
-}
+	वापस irq_create_of_mapping(&out_irq);
+पूर्ण
 
-static void bcma_of_fill_device(struct device *parent,
-				struct bcma_device *core)
-{
-	struct device_node *node;
+अटल व्योम bcma_of_fill_device(काष्ठा device *parent,
+				काष्ठा bcma_device *core)
+अणु
+	काष्ठा device_node *node;
 
 	node = bcma_of_find_child_device(parent, core);
-	if (node)
+	अगर (node)
 		core->dev.of_node = node;
 
 	core->irq = bcma_of_get_irq(parent, core, 0);
 
 	of_dma_configure(&core->dev, node, false);
-}
+पूर्ण
 
-unsigned int bcma_core_irq(struct bcma_device *core, int num)
-{
-	struct bcma_bus *bus = core->bus;
-	unsigned int mips_irq;
+अचिन्हित पूर्णांक bcma_core_irq(काष्ठा bcma_device *core, पूर्णांक num)
+अणु
+	काष्ठा bcma_bus *bus = core->bus;
+	अचिन्हित पूर्णांक mips_irq;
 
-	switch (bus->hosttype) {
-	case BCMA_HOSTTYPE_PCI:
-		return bus->host_pci->irq;
-	case BCMA_HOSTTYPE_SOC:
-		if (bus->drv_mips.core && num == 0) {
+	चयन (bus->hosttype) अणु
+	हाल BCMA_HOSTTYPE_PCI:
+		वापस bus->host_pci->irq;
+	हाल BCMA_HOSTTYPE_SOC:
+		अगर (bus->drv_mips.core && num == 0) अणु
 			mips_irq = bcma_core_mips_irq(core);
-			return mips_irq <= 4 ? mips_irq + 2 : 0;
-		}
-		if (bus->dev)
-			return bcma_of_get_irq(bus->dev, core, num);
-		return 0;
-	case BCMA_HOSTTYPE_SDIO:
-		return 0;
-	}
+			वापस mips_irq <= 4 ? mips_irq + 2 : 0;
+		पूर्ण
+		अगर (bus->dev)
+			वापस bcma_of_get_irq(bus->dev, core, num);
+		वापस 0;
+	हाल BCMA_HOSTTYPE_SDIO:
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(bcma_core_irq);
 
-void bcma_prepare_core(struct bcma_bus *bus, struct bcma_device *core)
-{
+व्योम bcma_prepare_core(काष्ठा bcma_bus *bus, काष्ठा bcma_device *core)
+अणु
 	core->dev.release = bcma_release_core_dev;
 	core->dev.bus = &bcma_bus_type;
 	dev_set_name(&core->dev, "bcma%d:%d", bus->num, core->core_index);
 	core->dev.parent = bus->dev;
-	if (bus->dev)
+	अगर (bus->dev)
 		bcma_of_fill_device(bus->dev, core);
 
-	switch (bus->hosttype) {
-	case BCMA_HOSTTYPE_PCI:
+	चयन (bus->hosttype) अणु
+	हाल BCMA_HOSTTYPE_PCI:
 		core->dma_dev = bus->dev;
 		core->irq = bus->host_pci->irq;
-		break;
-	case BCMA_HOSTTYPE_SOC:
-		if (IS_ENABLED(CONFIG_OF) && bus->dev) {
+		अवरोध;
+	हाल BCMA_HOSTTYPE_SOC:
+		अगर (IS_ENABLED(CONFIG_OF) && bus->dev) अणु
 			core->dma_dev = bus->dev;
-		} else {
+		पूर्ण अन्यथा अणु
 			core->dev.dma_mask = &core->dev.coherent_dma_mask;
 			core->dma_dev = &core->dev;
-		}
-		break;
-	case BCMA_HOSTTYPE_SDIO:
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	हाल BCMA_HOSTTYPE_SDIO:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void bcma_init_bus(struct bcma_bus *bus)
-{
+व्योम bcma_init_bus(काष्ठा bcma_bus *bus)
+अणु
 	mutex_lock(&bcma_buses_mutex);
 	bus->num = bcma_bus_next_num++;
 	mutex_unlock(&bcma_buses_mutex);
@@ -271,428 +272,428 @@ void bcma_init_bus(struct bcma_bus *bus)
 	bus->nr_cores = 0;
 
 	bcma_detect_chip(bus);
-}
+पूर्ण
 
-static void bcma_register_core(struct bcma_bus *bus, struct bcma_device *core)
-{
-	int err;
+अटल व्योम bcma_रेजिस्टर_core(काष्ठा bcma_bus *bus, काष्ठा bcma_device *core)
+अणु
+	पूर्णांक err;
 
-	err = device_register(&core->dev);
-	if (err) {
+	err = device_रेजिस्टर(&core->dev);
+	अगर (err) अणु
 		bcma_err(bus, "Could not register dev for core 0x%03X\n",
 			 core->id.id);
 		put_device(&core->dev);
-		return;
-	}
-	core->dev_registered = true;
-}
+		वापस;
+	पूर्ण
+	core->dev_रेजिस्टरed = true;
+पूर्ण
 
-static int bcma_register_devices(struct bcma_bus *bus)
-{
-	struct bcma_device *core;
-	int err;
+अटल पूर्णांक bcma_रेजिस्टर_devices(काष्ठा bcma_bus *bus)
+अणु
+	काष्ठा bcma_device *core;
+	पूर्णांक err;
 
-	list_for_each_entry(core, &bus->cores, list) {
+	list_क्रम_each_entry(core, &bus->cores, list) अणु
 		/* We support that cores ourself */
-		switch (core->id.id) {
-		case BCMA_CORE_4706_CHIPCOMMON:
-		case BCMA_CORE_CHIPCOMMON:
-		case BCMA_CORE_NS_CHIPCOMMON_B:
-		case BCMA_CORE_PCI:
-		case BCMA_CORE_PCIE:
-		case BCMA_CORE_PCIE2:
-		case BCMA_CORE_MIPS_74K:
-		case BCMA_CORE_4706_MAC_GBIT_COMMON:
-			continue;
-		}
+		चयन (core->id.id) अणु
+		हाल BCMA_CORE_4706_CHIPCOMMON:
+		हाल BCMA_CORE_CHIPCOMMON:
+		हाल BCMA_CORE_NS_CHIPCOMMON_B:
+		हाल BCMA_CORE_PCI:
+		हाल BCMA_CORE_PCIE:
+		हाल BCMA_CORE_PCIE2:
+		हाल BCMA_CORE_MIPS_74K:
+		हाल BCMA_CORE_4706_MAC_GBIT_COMMON:
+			जारी;
+		पूर्ण
 
-		/* Early cores were already registered */
-		if (bcma_is_core_needed_early(core->id.id))
-			continue;
+		/* Early cores were alपढ़ोy रेजिस्टरed */
+		अगर (bcma_is_core_needed_early(core->id.id))
+			जारी;
 
 		/* Only first GMAC core on BCM4706 is connected and working */
-		if (core->id.id == BCMA_CORE_4706_MAC_GBIT &&
+		अगर (core->id.id == BCMA_CORE_4706_MAC_GBIT &&
 		    core->core_unit > 0)
-			continue;
+			जारी;
 
-		bcma_register_core(bus, core);
-	}
+		bcma_रेजिस्टर_core(bus, core);
+	पूर्ण
 
-#ifdef CONFIG_BCMA_PFLASH
-	if (bus->drv_cc.pflash.present) {
-		err = platform_device_register(&bcma_pflash_dev);
-		if (err)
+#अगर_घोषित CONFIG_BCMA_PFLASH
+	अगर (bus->drv_cc.pflash.present) अणु
+		err = platक्रमm_device_रेजिस्टर(&bcma_pflash_dev);
+		अगर (err)
 			bcma_err(bus, "Error registering parallel flash\n");
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_BCMA_SFLASH
-	if (bus->drv_cc.sflash.present) {
-		err = platform_device_register(&bcma_sflash_dev);
-		if (err)
+#अगर_घोषित CONFIG_BCMA_SFLASH
+	अगर (bus->drv_cc.sflash.present) अणु
+		err = platक्रमm_device_रेजिस्टर(&bcma_sflash_dev);
+		अगर (err)
 			bcma_err(bus, "Error registering serial flash\n");
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_BCMA_NFLASH
-	if (bus->drv_cc.nflash.present) {
-		err = platform_device_register(&bcma_nflash_dev);
-		if (err)
+#अगर_घोषित CONFIG_BCMA_NFLASH
+	अगर (bus->drv_cc.nflash.present) अणु
+		err = platक्रमm_device_रेजिस्टर(&bcma_nflash_dev);
+		अगर (err)
 			bcma_err(bus, "Error registering NAND flash\n");
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	err = bcma_gpio_init(&bus->drv_cc);
-	if (err == -ENOTSUPP)
+	अगर (err == -ENOTSUPP)
 		bcma_debug(bus, "GPIO driver not activated\n");
-	else if (err)
+	अन्यथा अगर (err)
 		bcma_err(bus, "Error registering GPIO driver: %i\n", err);
 
-	if (bus->hosttype == BCMA_HOSTTYPE_SOC) {
-		err = bcma_chipco_watchdog_register(&bus->drv_cc);
-		if (err)
+	अगर (bus->hosttype == BCMA_HOSTTYPE_SOC) अणु
+		err = bcma_chipco_watchकरोg_रेजिस्टर(&bus->drv_cc);
+		अगर (err)
 			bcma_err(bus, "Error registering watchdog driver\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void bcma_unregister_cores(struct bcma_bus *bus)
-{
-	struct bcma_device *core, *tmp;
+व्योम bcma_unरेजिस्टर_cores(काष्ठा bcma_bus *bus)
+अणु
+	काष्ठा bcma_device *core, *पंचांगp;
 
-	list_for_each_entry_safe(core, tmp, &bus->cores, list) {
-		if (!core->dev_registered)
-			continue;
+	list_क्रम_each_entry_safe(core, पंचांगp, &bus->cores, list) अणु
+		अगर (!core->dev_रेजिस्टरed)
+			जारी;
 		list_del(&core->list);
-		device_unregister(&core->dev);
-	}
-	if (bus->hosttype == BCMA_HOSTTYPE_SOC)
-		platform_device_unregister(bus->drv_cc.watchdog);
+		device_unरेजिस्टर(&core->dev);
+	पूर्ण
+	अगर (bus->hosttype == BCMA_HOSTTYPE_SOC)
+		platक्रमm_device_unरेजिस्टर(bus->drv_cc.watchकरोg);
 
-	/* Now noone uses internally-handled cores, we can free them */
-	list_for_each_entry_safe(core, tmp, &bus->cores, list) {
+	/* Now noone uses पूर्णांकernally-handled cores, we can मुक्त them */
+	list_क्रम_each_entry_safe(core, पंचांगp, &bus->cores, list) अणु
 		list_del(&core->list);
-		kfree(core);
-	}
-}
+		kमुक्त(core);
+	पूर्ण
+पूर्ण
 
-int bcma_bus_register(struct bcma_bus *bus)
-{
-	int err;
-	struct bcma_device *core;
+पूर्णांक bcma_bus_रेजिस्टर(काष्ठा bcma_bus *bus)
+अणु
+	पूर्णांक err;
+	काष्ठा bcma_device *core;
 
-	/* Scan for devices (cores) */
+	/* Scan क्रम devices (cores) */
 	err = bcma_bus_scan(bus);
-	if (err) {
+	अगर (err) अणु
 		bcma_err(bus, "Failed to scan: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Early init CC core */
 	core = bcma_find_core(bus, bcma_cc_core_id(bus));
-	if (core) {
+	अगर (core) अणु
 		bus->drv_cc.core = core;
 		bcma_core_chipcommon_early_init(&bus->drv_cc);
-	}
+	पूर्ण
 
 	/* Early init PCIE core */
 	core = bcma_find_core(bus, BCMA_CORE_PCIE);
-	if (core) {
+	अगर (core) अणु
 		bus->drv_pci[0].core = core;
 		bcma_core_pci_early_init(&bus->drv_pci[0]);
-	}
+	पूर्ण
 
-	if (bus->dev)
-		of_platform_default_populate(bus->dev->of_node, NULL, bus->dev);
+	अगर (bus->dev)
+		of_platक्रमm_शेष_populate(bus->dev->of_node, शून्य, bus->dev);
 
-	/* Cores providing flash access go before SPROM init */
-	list_for_each_entry(core, &bus->cores, list) {
-		if (bcma_is_core_needed_early(core->id.id))
-			bcma_register_core(bus, core);
-	}
+	/* Cores providing flash access go beक्रमe SPROM init */
+	list_क्रम_each_entry(core, &bus->cores, list) अणु
+		अगर (bcma_is_core_needed_early(core->id.id))
+			bcma_रेजिस्टर_core(bus, core);
+	पूर्ण
 
 	/* Try to get SPROM */
 	err = bcma_sprom_get(bus);
-	if (err == -ENOENT) {
+	अगर (err == -ENOENT) अणु
 		bcma_err(bus, "No SPROM available\n");
-	} else if (err)
+	पूर्ण अन्यथा अगर (err)
 		bcma_err(bus, "Failed to get SPROM: %d\n", err);
 
 	/* Init CC core */
 	core = bcma_find_core(bus, bcma_cc_core_id(bus));
-	if (core) {
+	अगर (core) अणु
 		bus->drv_cc.core = core;
 		bcma_core_chipcommon_init(&bus->drv_cc);
-	}
+	पूर्ण
 
 	/* Init CC core */
 	core = bcma_find_core(bus, BCMA_CORE_NS_CHIPCOMMON_B);
-	if (core) {
+	अगर (core) अणु
 		bus->drv_cc_b.core = core;
 		bcma_core_chipcommon_b_init(&bus->drv_cc_b);
-	}
+	पूर्ण
 
 	/* Init MIPS core */
 	core = bcma_find_core(bus, BCMA_CORE_MIPS_74K);
-	if (core) {
+	अगर (core) अणु
 		bus->drv_mips.core = core;
 		bcma_core_mips_init(&bus->drv_mips);
-	}
+	पूर्ण
 
 	/* Init PCIE core */
 	core = bcma_find_core_unit(bus, BCMA_CORE_PCIE, 0);
-	if (core) {
+	अगर (core) अणु
 		bus->drv_pci[0].core = core;
 		bcma_core_pci_init(&bus->drv_pci[0]);
-	}
+	पूर्ण
 
 	/* Init PCIE core */
 	core = bcma_find_core_unit(bus, BCMA_CORE_PCIE, 1);
-	if (core) {
+	अगर (core) अणु
 		bus->drv_pci[1].core = core;
 		bcma_core_pci_init(&bus->drv_pci[1]);
-	}
+	पूर्ण
 
 	/* Init PCIe Gen 2 core */
 	core = bcma_find_core_unit(bus, BCMA_CORE_PCIE2, 0);
-	if (core) {
+	अगर (core) अणु
 		bus->drv_pcie2.core = core;
 		bcma_core_pcie2_init(&bus->drv_pcie2);
-	}
+	पूर्ण
 
 	/* Init GBIT MAC COMMON core */
 	core = bcma_find_core(bus, BCMA_CORE_4706_MAC_GBIT_COMMON);
-	if (core) {
+	अगर (core) अणु
 		bus->drv_gmac_cmn.core = core;
 		bcma_core_gmac_cmn_init(&bus->drv_gmac_cmn);
-	}
+	पूर्ण
 
 	/* Register found cores */
-	bcma_register_devices(bus);
+	bcma_रेजिस्टर_devices(bus);
 
 	bcma_info(bus, "Bus registered\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void bcma_bus_unregister(struct bcma_bus *bus)
-{
-	int err;
+व्योम bcma_bus_unरेजिस्टर(काष्ठा bcma_bus *bus)
+अणु
+	पूर्णांक err;
 
-	err = bcma_gpio_unregister(&bus->drv_cc);
-	if (err == -EBUSY)
+	err = bcma_gpio_unरेजिस्टर(&bus->drv_cc);
+	अगर (err == -EBUSY)
 		bcma_err(bus, "Some GPIOs are still in use.\n");
-	else if (err)
+	अन्यथा अगर (err)
 		bcma_err(bus, "Can not unregister GPIO driver: %i\n", err);
 
-	bcma_core_chipcommon_b_free(&bus->drv_cc_b);
+	bcma_core_chipcommon_b_मुक्त(&bus->drv_cc_b);
 
-	bcma_unregister_cores(bus);
-}
+	bcma_unरेजिस्टर_cores(bus);
+पूर्ण
 
 /*
- * This is a special version of bus registration function designed for SoCs.
- * It scans bus and performs basic initialization of main cores only.
+ * This is a special version of bus registration function deचिन्हित क्रम SoCs.
+ * It scans bus and perक्रमms basic initialization of मुख्य cores only.
  * Please note it requires memory allocation, however it won't try to sleep.
  */
-int __init bcma_bus_early_register(struct bcma_bus *bus)
-{
-	int err;
-	struct bcma_device *core;
+पूर्णांक __init bcma_bus_early_रेजिस्टर(काष्ठा bcma_bus *bus)
+अणु
+	पूर्णांक err;
+	काष्ठा bcma_device *core;
 
-	/* Scan for devices (cores) */
+	/* Scan क्रम devices (cores) */
 	err = bcma_bus_scan(bus);
-	if (err) {
+	अगर (err) अणु
 		bcma_err(bus, "Failed to scan bus: %d\n", err);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* Early init CC core */
 	core = bcma_find_core(bus, bcma_cc_core_id(bus));
-	if (core) {
+	अगर (core) अणु
 		bus->drv_cc.core = core;
 		bcma_core_chipcommon_early_init(&bus->drv_cc);
-	}
+	पूर्ण
 
 	/* Early init MIPS core */
 	core = bcma_find_core(bus, BCMA_CORE_MIPS_74K);
-	if (core) {
+	अगर (core) अणु
 		bus->drv_mips.core = core;
 		bcma_core_mips_early_init(&bus->drv_mips);
-	}
+	पूर्ण
 
 	bcma_info(bus, "Early bus registered\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-int bcma_bus_suspend(struct bcma_bus *bus)
-{
-	struct bcma_device *core;
+#अगर_घोषित CONFIG_PM
+पूर्णांक bcma_bus_suspend(काष्ठा bcma_bus *bus)
+अणु
+	काष्ठा bcma_device *core;
 
-	list_for_each_entry(core, &bus->cores, list) {
-		struct device_driver *drv = core->dev.driver;
-		if (drv) {
-			struct bcma_driver *adrv = container_of(drv, struct bcma_driver, drv);
-			if (adrv->suspend)
+	list_क्रम_each_entry(core, &bus->cores, list) अणु
+		काष्ठा device_driver *drv = core->dev.driver;
+		अगर (drv) अणु
+			काष्ठा bcma_driver *adrv = container_of(drv, काष्ठा bcma_driver, drv);
+			अगर (adrv->suspend)
 				adrv->suspend(core);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int bcma_bus_resume(struct bcma_bus *bus)
-{
-	struct bcma_device *core;
+पूर्णांक bcma_bus_resume(काष्ठा bcma_bus *bus)
+अणु
+	काष्ठा bcma_device *core;
 
 	/* Init CC core */
-	if (bus->drv_cc.core) {
-		bus->drv_cc.setup_done = false;
+	अगर (bus->drv_cc.core) अणु
+		bus->drv_cc.setup_करोne = false;
 		bcma_core_chipcommon_init(&bus->drv_cc);
-	}
+	पूर्ण
 
-	list_for_each_entry(core, &bus->cores, list) {
-		struct device_driver *drv = core->dev.driver;
-		if (drv) {
-			struct bcma_driver *adrv = container_of(drv, struct bcma_driver, drv);
-			if (adrv->resume)
+	list_क्रम_each_entry(core, &bus->cores, list) अणु
+		काष्ठा device_driver *drv = core->dev.driver;
+		अगर (drv) अणु
+			काष्ठा bcma_driver *adrv = container_of(drv, काष्ठा bcma_driver, drv);
+			अगर (adrv->resume)
 				adrv->resume(core);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-int __bcma_driver_register(struct bcma_driver *drv, struct module *owner)
-{
+पूर्णांक __bcma_driver_रेजिस्टर(काष्ठा bcma_driver *drv, काष्ठा module *owner)
+अणु
 	drv->drv.name = drv->name;
 	drv->drv.bus = &bcma_bus_type;
 	drv->drv.owner = owner;
 
-	return driver_register(&drv->drv);
-}
-EXPORT_SYMBOL_GPL(__bcma_driver_register);
+	वापस driver_रेजिस्टर(&drv->drv);
+पूर्ण
+EXPORT_SYMBOL_GPL(__bcma_driver_रेजिस्टर);
 
-void bcma_driver_unregister(struct bcma_driver *drv)
-{
-	driver_unregister(&drv->drv);
-}
-EXPORT_SYMBOL_GPL(bcma_driver_unregister);
+व्योम bcma_driver_unरेजिस्टर(काष्ठा bcma_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->drv);
+पूर्ण
+EXPORT_SYMBOL_GPL(bcma_driver_unरेजिस्टर);
 
-static int bcma_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct bcma_device *core = container_of(dev, struct bcma_device, dev);
-	struct bcma_driver *adrv = container_of(drv, struct bcma_driver, drv);
-	const struct bcma_device_id *cid = &core->id;
-	const struct bcma_device_id *did;
+अटल पूर्णांक bcma_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा bcma_device *core = container_of(dev, काष्ठा bcma_device, dev);
+	काष्ठा bcma_driver *adrv = container_of(drv, काष्ठा bcma_driver, drv);
+	स्थिर काष्ठा bcma_device_id *cid = &core->id;
+	स्थिर काष्ठा bcma_device_id *did;
 
-	for (did = adrv->id_table; did->manuf || did->id || did->rev; did++) {
-	    if ((did->manuf == cid->manuf || did->manuf == BCMA_ANY_MANUF) &&
+	क्रम (did = adrv->id_table; did->manuf || did->id || did->rev; did++) अणु
+	    अगर ((did->manuf == cid->manuf || did->manuf == BCMA_ANY_MANUF) &&
 		(did->id == cid->id || did->id == BCMA_ANY_ID) &&
 		(did->rev == cid->rev || did->rev == BCMA_ANY_REV) &&
 		(did->class == cid->class || did->class == BCMA_ANY_CLASS))
-			return 1;
-	}
-	return 0;
-}
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bcma_device_probe(struct device *dev)
-{
-	struct bcma_device *core = container_of(dev, struct bcma_device, dev);
-	struct bcma_driver *adrv = container_of(dev->driver, struct bcma_driver,
+अटल पूर्णांक bcma_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा bcma_device *core = container_of(dev, काष्ठा bcma_device, dev);
+	काष्ठा bcma_driver *adrv = container_of(dev->driver, काष्ठा bcma_driver,
 					       drv);
-	int err = 0;
+	पूर्णांक err = 0;
 
 	get_device(dev);
-	if (adrv->probe)
+	अगर (adrv->probe)
 		err = adrv->probe(core);
-	if (err)
+	अगर (err)
 		put_device(dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bcma_device_remove(struct device *dev)
-{
-	struct bcma_device *core = container_of(dev, struct bcma_device, dev);
-	struct bcma_driver *adrv = container_of(dev->driver, struct bcma_driver,
+अटल पूर्णांक bcma_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा bcma_device *core = container_of(dev, काष्ठा bcma_device, dev);
+	काष्ठा bcma_driver *adrv = container_of(dev->driver, काष्ठा bcma_driver,
 					       drv);
 
-	if (adrv->remove)
-		adrv->remove(core);
+	अगर (adrv->हटाओ)
+		adrv->हटाओ(core);
 	put_device(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcma_device_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct bcma_device *core = container_of(dev, struct bcma_device, dev);
+अटल पूर्णांक bcma_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा bcma_device *core = container_of(dev, काष्ठा bcma_device, dev);
 
-	return add_uevent_var(env,
+	वापस add_uevent_var(env,
 			      "MODALIAS=bcma:m%04Xid%04Xrev%02Xcl%02X",
 			      core->id.manuf, core->id.id,
 			      core->id.rev, core->id.class);
-}
+पूर्ण
 
-static unsigned int bcma_bus_registered;
+अटल अचिन्हित पूर्णांक bcma_bus_रेजिस्टरed;
 
 /*
- * If built-in, bus has to be registered early, before any driver calls
- * bcma_driver_register.
- * Otherwise registering driver would trigger BUG in driver_register.
+ * If built-in, bus has to be रेजिस्टरed early, beक्रमe any driver calls
+ * bcma_driver_रेजिस्टर.
+ * Otherwise रेजिस्टरing driver would trigger BUG in driver_रेजिस्टर.
  */
-static int __init bcma_init_bus_register(void)
-{
-	int err;
+अटल पूर्णांक __init bcma_init_bus_रेजिस्टर(व्योम)
+अणु
+	पूर्णांक err;
 
-	if (bcma_bus_registered)
-		return 0;
+	अगर (bcma_bus_रेजिस्टरed)
+		वापस 0;
 
-	err = bus_register(&bcma_bus_type);
-	if (!err)
-		bcma_bus_registered = 1;
+	err = bus_रेजिस्टर(&bcma_bus_type);
+	अगर (!err)
+		bcma_bus_रेजिस्टरed = 1;
 
-	return err;
-}
-#ifndef MODULE
-fs_initcall(bcma_init_bus_register);
-#endif
+	वापस err;
+पूर्ण
+#अगर_अघोषित MODULE
+fs_initcall(bcma_init_bus_रेजिस्टर);
+#पूर्ण_अगर
 
-/* Main initialization has to be done with SPI/mtd/NAND/SPROM available */
-static int __init bcma_modinit(void)
-{
-	int err;
+/* Main initialization has to be करोne with SPI/mtd/न_अंकD/SPROM available */
+अटल पूर्णांक __init bcma_modinit(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = bcma_init_bus_register();
-	if (err)
-		return err;
+	err = bcma_init_bus_रेजिस्टर();
+	अगर (err)
+		वापस err;
 
-	err = bcma_host_soc_register_driver();
-	if (err) {
+	err = bcma_host_soc_रेजिस्टर_driver();
+	अगर (err) अणु
 		pr_err("SoC host initialization failed\n");
 		err = 0;
-	}
-#ifdef CONFIG_BCMA_HOST_PCI
+	पूर्ण
+#अगर_घोषित CONFIG_BCMA_HOST_PCI
 	err = bcma_host_pci_init();
-	if (err) {
+	अगर (err) अणु
 		pr_err("PCI host initialization failed\n");
 		err = 0;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return err;
-}
+	वापस err;
+पूर्ण
 module_init(bcma_modinit);
 
-static void __exit bcma_modexit(void)
-{
-#ifdef CONFIG_BCMA_HOST_PCI
-	bcma_host_pci_exit();
-#endif
-	bcma_host_soc_unregister_driver();
-	bus_unregister(&bcma_bus_type);
-}
-module_exit(bcma_modexit)
+अटल व्योम __निकास bcma_modनिकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_BCMA_HOST_PCI
+	bcma_host_pci_निकास();
+#पूर्ण_अगर
+	bcma_host_soc_unरेजिस्टर_driver();
+	bus_unरेजिस्टर(&bcma_bus_type);
+पूर्ण
+module_निकास(bcma_modनिकास)

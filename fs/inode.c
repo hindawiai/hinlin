@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * (C) 1997 Linus Torvalds
  * (C) 1999 Andrea Arcangeli <andrea@suse.de> (dynamic inode allocation)
  */
-#include <linux/export.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/backing-dev.h>
-#include <linux/hash.h>
-#include <linux/swap.h>
-#include <linux/security.h>
-#include <linux/cdev.h>
-#include <linux/memblock.h>
-#include <linux/fsnotify.h>
-#include <linux/mount.h>
-#include <linux/posix_acl.h>
-#include <linux/prefetch.h>
-#include <linux/buffer_head.h> /* for inode_has_buffers */
-#include <linux/ratelimit.h>
-#include <linux/list_lru.h>
-#include <linux/iversion.h>
-#include <trace/events/writeback.h>
-#include "internal.h"
+#समावेश <linux/export.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/security.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/buffer_head.h> /* क्रम inode_has_buffers */
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/list_lru.h>
+#समावेश <linux/iversion.h>
+#समावेश <trace/events/ग_लिखोback.h>
+#समावेश "internal.h"
 
 /*
  * Inode locking rules:
@@ -33,7 +34,7 @@
  * inode->i_sb->s_inode_list_lock protects:
  *   inode->i_sb->s_inodes, inode->i_sb_list
  * bdi->wb.list_lock protects:
- *   bdi->wb.b_{dirty,io,more_io,dirty_time}, inode->i_io_list
+ *   bdi->wb.b_अणुdirty,io,more_io,dirty_समयपूर्ण, inode->i_io_list
  * inode_hash_lock protects:
  *   inode_hashtable, inode->i_hash
  *
@@ -54,85 +55,85 @@
  *   inode_hash_lock
  */
 
-static unsigned int i_hash_mask __read_mostly;
-static unsigned int i_hash_shift __read_mostly;
-static struct hlist_head *inode_hashtable __read_mostly;
-static __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_hash_lock);
+अटल अचिन्हित पूर्णांक i_hash_mask __पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक i_hash_shअगरt __पढ़ो_mostly;
+अटल काष्ठा hlist_head *inode_hashtable __पढ़ो_mostly;
+अटल __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_hash_lock);
 
 /*
- * Empty aops. Can be used for the cases where the user does not
+ * Empty aops. Can be used क्रम the हालs where the user करोes not
  * define any of the address_space operations.
  */
-const struct address_space_operations empty_aops = {
-};
+स्थिर काष्ठा address_space_operations empty_aops = अणु
+पूर्ण;
 EXPORT_SYMBOL(empty_aops);
 
 /*
  * Statistics gathering..
  */
-struct inodes_stat_t inodes_stat;
+काष्ठा inodes_stat_t inodes_stat;
 
-static DEFINE_PER_CPU(unsigned long, nr_inodes);
-static DEFINE_PER_CPU(unsigned long, nr_unused);
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, nr_inodes);
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, nr_unused);
 
-static struct kmem_cache *inode_cachep __read_mostly;
+अटल काष्ठा kmem_cache *inode_cachep __पढ़ो_mostly;
 
-static long get_nr_inodes(void)
-{
-	int i;
-	long sum = 0;
-	for_each_possible_cpu(i)
+अटल दीर्घ get_nr_inodes(व्योम)
+अणु
+	पूर्णांक i;
+	दीर्घ sum = 0;
+	क्रम_each_possible_cpu(i)
 		sum += per_cpu(nr_inodes, i);
-	return sum < 0 ? 0 : sum;
-}
+	वापस sum < 0 ? 0 : sum;
+पूर्ण
 
-static inline long get_nr_inodes_unused(void)
-{
-	int i;
-	long sum = 0;
-	for_each_possible_cpu(i)
+अटल अंतरभूत दीर्घ get_nr_inodes_unused(व्योम)
+अणु
+	पूर्णांक i;
+	दीर्घ sum = 0;
+	क्रम_each_possible_cpu(i)
 		sum += per_cpu(nr_unused, i);
-	return sum < 0 ? 0 : sum;
-}
+	वापस sum < 0 ? 0 : sum;
+पूर्ण
 
-long get_nr_dirty_inodes(void)
-{
+दीर्घ get_nr_dirty_inodes(व्योम)
+अणु
 	/* not actually dirty inodes, but a wild approximation */
-	long nr_dirty = get_nr_inodes() - get_nr_inodes_unused();
-	return nr_dirty > 0 ? nr_dirty : 0;
-}
+	दीर्घ nr_dirty = get_nr_inodes() - get_nr_inodes_unused();
+	वापस nr_dirty > 0 ? nr_dirty : 0;
+पूर्ण
 
 /*
  * Handle nr_inode sysctl
  */
-#ifdef CONFIG_SYSCTL
-int proc_nr_inodes(struct ctl_table *table, int write,
-		   void *buffer, size_t *lenp, loff_t *ppos)
-{
+#अगर_घोषित CONFIG_SYSCTL
+पूर्णांक proc_nr_inodes(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		   व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
 	inodes_stat.nr_inodes = get_nr_inodes();
 	inodes_stat.nr_unused = get_nr_inodes_unused();
-	return proc_doulongvec_minmax(table, write, buffer, lenp, ppos);
-}
-#endif
+	वापस proc_करोuदीर्घvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
+पूर्ण
+#पूर्ण_अगर
 
-static int no_open(struct inode *inode, struct file *file)
-{
-	return -ENXIO;
-}
+अटल पूर्णांक no_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
 /**
- * inode_init_always - perform inode structure initialisation
- * @sb: superblock inode belongs to
+ * inode_init_always - perक्रमm inode काष्ठाure initialisation
+ * @sb: superblock inode beदीर्घs to
  * @inode: inode to initialise
  *
- * These are initializations that need to be done on every inode
+ * These are initializations that need to be करोne on every inode
  * allocation as the fields are not initialised by slab allocation.
  */
-int inode_init_always(struct super_block *sb, struct inode *inode)
-{
-	static const struct inode_operations empty_iops;
-	static const struct file_operations no_open_fops = {.open = no_open};
-	struct address_space *const mapping = &inode->i_data;
+पूर्णांक inode_init_always(काष्ठा super_block *sb, काष्ठा inode *inode)
+अणु
+	अटल स्थिर काष्ठा inode_operations empty_iops;
+	अटल स्थिर काष्ठा file_operations no_खोलो_fops = अणु.खोलो = no_खोलोपूर्ण;
+	काष्ठा address_space *स्थिर mapping = &inode->i_data;
 
 	inode->i_sb = sb;
 	inode->i_blkbits = sb->s_blocksize_bits;
@@ -140,35 +141,35 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	atomic64_set(&inode->i_sequence, 0);
 	atomic_set(&inode->i_count, 1);
 	inode->i_op = &empty_iops;
-	inode->i_fop = &no_open_fops;
+	inode->i_fop = &no_खोलो_fops;
 	inode->i_ino = 0;
 	inode->__i_nlink = 1;
 	inode->i_opflags = 0;
-	if (sb->s_xattr)
+	अगर (sb->s_xattr)
 		inode->i_opflags |= IOP_XATTR;
-	i_uid_write(inode, 0);
-	i_gid_write(inode, 0);
-	atomic_set(&inode->i_writecount, 0);
+	i_uid_ग_लिखो(inode, 0);
+	i_gid_ग_लिखो(inode, 0);
+	atomic_set(&inode->i_ग_लिखोcount, 0);
 	inode->i_size = 0;
-	inode->i_write_hint = WRITE_LIFE_NOT_SET;
+	inode->i_ग_लिखो_hपूर्णांक = WRITE_LIFE_NOT_SET;
 	inode->i_blocks = 0;
 	inode->i_bytes = 0;
 	inode->i_generation = 0;
-	inode->i_pipe = NULL;
-	inode->i_cdev = NULL;
-	inode->i_link = NULL;
+	inode->i_pipe = शून्य;
+	inode->i_cdev = शून्य;
+	inode->i_link = शून्य;
 	inode->i_dir_seq = 0;
 	inode->i_rdev = 0;
 	inode->dirtied_when = 0;
 
-#ifdef CONFIG_CGROUP_WRITEBACK
+#अगर_घोषित CONFIG_CGROUP_WRITEBACK
 	inode->i_wb_frn_winner = 0;
-	inode->i_wb_frn_avg_time = 0;
+	inode->i_wb_frn_avg_समय = 0;
 	inode->i_wb_frn_history = 0;
-#endif
+#पूर्ण_अगर
 
-	if (security_inode_alloc(inode))
-		goto out;
+	अगर (security_inode_alloc(inode))
+		जाओ out;
 	spin_lock_init(&inode->i_lock);
 	lockdep_set_class(&inode->i_lock, &sb->s_type->i_lock_key);
 
@@ -180,149 +181,149 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	mapping->a_ops = &empty_aops;
 	mapping->host = inode;
 	mapping->flags = 0;
-	if (sb->s_type->fs_flags & FS_THP_SUPPORT)
+	अगर (sb->s_type->fs_flags & FS_THP_SUPPORT)
 		__set_bit(AS_THP_SUPPORT, &mapping->flags);
 	mapping->wb_err = 0;
 	atomic_set(&mapping->i_mmap_writable, 0);
-#ifdef CONFIG_READ_ONLY_THP_FOR_FS
+#अगर_घोषित CONFIG_READ_ONLY_THP_FOR_FS
 	atomic_set(&mapping->nr_thps, 0);
-#endif
+#पूर्ण_अगर
 	mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE);
-	mapping->private_data = NULL;
-	mapping->writeback_index = 0;
-	inode->i_private = NULL;
+	mapping->निजी_data = शून्य;
+	mapping->ग_लिखोback_index = 0;
+	inode->i_निजी = शून्य;
 	inode->i_mapping = mapping;
-	INIT_HLIST_HEAD(&inode->i_dentry);	/* buggered by rcu freeing */
-#ifdef CONFIG_FS_POSIX_ACL
-	inode->i_acl = inode->i_default_acl = ACL_NOT_CACHED;
-#endif
+	INIT_HLIST_HEAD(&inode->i_dentry);	/* buggered by rcu मुक्तing */
+#अगर_घोषित CONFIG_FS_POSIX_ACL
+	inode->i_acl = inode->i_शेष_acl = ACL_NOT_CACHED;
+#पूर्ण_अगर
 
-#ifdef CONFIG_FSNOTIFY
-	inode->i_fsnotify_mask = 0;
-#endif
-	inode->i_flctx = NULL;
+#अगर_घोषित CONFIG_FSNOTIFY
+	inode->i_fsnotअगरy_mask = 0;
+#पूर्ण_अगर
+	inode->i_flctx = शून्य;
 	this_cpu_inc(nr_inodes);
 
-	return 0;
+	वापस 0;
 out:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 EXPORT_SYMBOL(inode_init_always);
 
-void free_inode_nonrcu(struct inode *inode)
-{
-	kmem_cache_free(inode_cachep, inode);
-}
-EXPORT_SYMBOL(free_inode_nonrcu);
+व्योम मुक्त_inode_nonrcu(काष्ठा inode *inode)
+अणु
+	kmem_cache_मुक्त(inode_cachep, inode);
+पूर्ण
+EXPORT_SYMBOL(मुक्त_inode_nonrcu);
 
-static void i_callback(struct rcu_head *head)
-{
-	struct inode *inode = container_of(head, struct inode, i_rcu);
-	if (inode->free_inode)
-		inode->free_inode(inode);
-	else
-		free_inode_nonrcu(inode);
-}
+अटल व्योम i_callback(काष्ठा rcu_head *head)
+अणु
+	काष्ठा inode *inode = container_of(head, काष्ठा inode, i_rcu);
+	अगर (inode->मुक्त_inode)
+		inode->मुक्त_inode(inode);
+	अन्यथा
+		मुक्त_inode_nonrcu(inode);
+पूर्ण
 
-static struct inode *alloc_inode(struct super_block *sb)
-{
-	const struct super_operations *ops = sb->s_op;
-	struct inode *inode;
+अटल काष्ठा inode *alloc_inode(काष्ठा super_block *sb)
+अणु
+	स्थिर काष्ठा super_operations *ops = sb->s_op;
+	काष्ठा inode *inode;
 
-	if (ops->alloc_inode)
+	अगर (ops->alloc_inode)
 		inode = ops->alloc_inode(sb);
-	else
+	अन्यथा
 		inode = kmem_cache_alloc(inode_cachep, GFP_KERNEL);
 
-	if (!inode)
-		return NULL;
+	अगर (!inode)
+		वापस शून्य;
 
-	if (unlikely(inode_init_always(sb, inode))) {
-		if (ops->destroy_inode) {
+	अगर (unlikely(inode_init_always(sb, inode))) अणु
+		अगर (ops->destroy_inode) अणु
 			ops->destroy_inode(inode);
-			if (!ops->free_inode)
-				return NULL;
-		}
-		inode->free_inode = ops->free_inode;
+			अगर (!ops->मुक्त_inode)
+				वापस शून्य;
+		पूर्ण
+		inode->मुक्त_inode = ops->मुक्त_inode;
 		i_callback(&inode->i_rcu);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-void __destroy_inode(struct inode *inode)
-{
+व्योम __destroy_inode(काष्ठा inode *inode)
+अणु
 	BUG_ON(inode_has_buffers(inode));
 	inode_detach_wb(inode);
-	security_inode_free(inode);
-	fsnotify_inode_delete(inode);
-	locks_free_lock_context(inode);
-	if (!inode->i_nlink) {
-		WARN_ON(atomic_long_read(&inode->i_sb->s_remove_count) == 0);
-		atomic_long_dec(&inode->i_sb->s_remove_count);
-	}
+	security_inode_मुक्त(inode);
+	fsnotअगरy_inode_delete(inode);
+	locks_मुक्त_lock_context(inode);
+	अगर (!inode->i_nlink) अणु
+		WARN_ON(atomic_दीर्घ_पढ़ो(&inode->i_sb->s_हटाओ_count) == 0);
+		atomic_दीर्घ_dec(&inode->i_sb->s_हटाओ_count);
+	पूर्ण
 
-#ifdef CONFIG_FS_POSIX_ACL
-	if (inode->i_acl && !is_uncached_acl(inode->i_acl))
+#अगर_घोषित CONFIG_FS_POSIX_ACL
+	अगर (inode->i_acl && !is_uncached_acl(inode->i_acl))
 		posix_acl_release(inode->i_acl);
-	if (inode->i_default_acl && !is_uncached_acl(inode->i_default_acl))
-		posix_acl_release(inode->i_default_acl);
-#endif
+	अगर (inode->i_शेष_acl && !is_uncached_acl(inode->i_शेष_acl))
+		posix_acl_release(inode->i_शेष_acl);
+#पूर्ण_अगर
 	this_cpu_dec(nr_inodes);
-}
+पूर्ण
 EXPORT_SYMBOL(__destroy_inode);
 
-static void destroy_inode(struct inode *inode)
-{
-	const struct super_operations *ops = inode->i_sb->s_op;
+अटल व्योम destroy_inode(काष्ठा inode *inode)
+अणु
+	स्थिर काष्ठा super_operations *ops = inode->i_sb->s_op;
 
 	BUG_ON(!list_empty(&inode->i_lru));
 	__destroy_inode(inode);
-	if (ops->destroy_inode) {
+	अगर (ops->destroy_inode) अणु
 		ops->destroy_inode(inode);
-		if (!ops->free_inode)
-			return;
-	}
-	inode->free_inode = ops->free_inode;
+		अगर (!ops->मुक्त_inode)
+			वापस;
+	पूर्ण
+	inode->मुक्त_inode = ops->मुक्त_inode;
 	call_rcu(&inode->i_rcu, i_callback);
-}
+पूर्ण
 
 /**
  * drop_nlink - directly drop an inode's link count
  * @inode: inode
  *
- * This is a low-level filesystem helper to replace any
- * direct filesystem manipulation of i_nlink.  In cases
- * where we are attempting to track writes to the
- * filesystem, a decrement to zero means an imminent
- * write when the file is truncated and actually unlinked
- * on the filesystem.
+ * This is a low-level fileप्रणाली helper to replace any
+ * direct fileप्रणाली manipulation of i_nlink.  In हालs
+ * where we are attempting to track ग_लिखोs to the
+ * fileप्रणाली, a decrement to zero means an imminent
+ * ग_लिखो when the file is truncated and actually unlinked
+ * on the fileप्रणाली.
  */
-void drop_nlink(struct inode *inode)
-{
+व्योम drop_nlink(काष्ठा inode *inode)
+अणु
 	WARN_ON(inode->i_nlink == 0);
 	inode->__i_nlink--;
-	if (!inode->i_nlink)
-		atomic_long_inc(&inode->i_sb->s_remove_count);
-}
+	अगर (!inode->i_nlink)
+		atomic_दीर्घ_inc(&inode->i_sb->s_हटाओ_count);
+पूर्ण
 EXPORT_SYMBOL(drop_nlink);
 
 /**
  * clear_nlink - directly zero an inode's link count
  * @inode: inode
  *
- * This is a low-level filesystem helper to replace any
- * direct filesystem manipulation of i_nlink.  See
- * drop_nlink() for why we care about i_nlink hitting zero.
+ * This is a low-level fileप्रणाली helper to replace any
+ * direct fileप्रणाली manipulation of i_nlink.  See
+ * drop_nlink() क्रम why we care about i_nlink hitting zero.
  */
-void clear_nlink(struct inode *inode)
-{
-	if (inode->i_nlink) {
+व्योम clear_nlink(काष्ठा inode *inode)
+अणु
+	अगर (inode->i_nlink) अणु
 		inode->__i_nlink = 0;
-		atomic_long_inc(&inode->i_sb->s_remove_count);
-	}
-}
+		atomic_दीर्घ_inc(&inode->i_sb->s_हटाओ_count);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(clear_nlink);
 
 /**
@@ -330,66 +331,66 @@ EXPORT_SYMBOL(clear_nlink);
  * @inode: inode
  * @nlink: new nlink (should be non-zero)
  *
- * This is a low-level filesystem helper to replace any
- * direct filesystem manipulation of i_nlink.
+ * This is a low-level fileप्रणाली helper to replace any
+ * direct fileप्रणाली manipulation of i_nlink.
  */
-void set_nlink(struct inode *inode, unsigned int nlink)
-{
-	if (!nlink) {
+व्योम set_nlink(काष्ठा inode *inode, अचिन्हित पूर्णांक nlink)
+अणु
+	अगर (!nlink) अणु
 		clear_nlink(inode);
-	} else {
-		/* Yes, some filesystems do change nlink from zero to one */
-		if (inode->i_nlink == 0)
-			atomic_long_dec(&inode->i_sb->s_remove_count);
+	पूर्ण अन्यथा अणु
+		/* Yes, some fileप्रणालीs करो change nlink from zero to one */
+		अगर (inode->i_nlink == 0)
+			atomic_दीर्घ_dec(&inode->i_sb->s_हटाओ_count);
 
 		inode->__i_nlink = nlink;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(set_nlink);
 
 /**
  * inc_nlink - directly increment an inode's link count
  * @inode: inode
  *
- * This is a low-level filesystem helper to replace any
- * direct filesystem manipulation of i_nlink.  Currently,
- * it is only here for parity with dec_nlink().
+ * This is a low-level fileप्रणाली helper to replace any
+ * direct fileप्रणाली manipulation of i_nlink.  Currently,
+ * it is only here क्रम parity with dec_nlink().
  */
-void inc_nlink(struct inode *inode)
-{
-	if (unlikely(inode->i_nlink == 0)) {
+व्योम inc_nlink(काष्ठा inode *inode)
+अणु
+	अगर (unlikely(inode->i_nlink == 0)) अणु
 		WARN_ON(!(inode->i_state & I_LINKABLE));
-		atomic_long_dec(&inode->i_sb->s_remove_count);
-	}
+		atomic_दीर्घ_dec(&inode->i_sb->s_हटाओ_count);
+	पूर्ण
 
 	inode->__i_nlink++;
-}
+पूर्ण
 EXPORT_SYMBOL(inc_nlink);
 
-static void __address_space_init_once(struct address_space *mapping)
-{
+अटल व्योम __address_space_init_once(काष्ठा address_space *mapping)
+अणु
 	xa_init_flags(&mapping->i_pages, XA_FLAGS_LOCK_IRQ | XA_FLAGS_ACCOUNT);
 	init_rwsem(&mapping->i_mmap_rwsem);
-	INIT_LIST_HEAD(&mapping->private_list);
-	spin_lock_init(&mapping->private_lock);
+	INIT_LIST_HEAD(&mapping->निजी_list);
+	spin_lock_init(&mapping->निजी_lock);
 	mapping->i_mmap = RB_ROOT_CACHED;
-}
+पूर्ण
 
-void address_space_init_once(struct address_space *mapping)
-{
-	memset(mapping, 0, sizeof(*mapping));
+व्योम address_space_init_once(काष्ठा address_space *mapping)
+अणु
+	स_रखो(mapping, 0, माप(*mapping));
 	__address_space_init_once(mapping);
-}
+पूर्ण
 EXPORT_SYMBOL(address_space_init_once);
 
 /*
- * These are initializations that only need to be done
+ * These are initializations that only need to be करोne
  * once, because the fields are idempotent across use
  * of the inode, so let the slab aware of that.
  */
-void inode_init_once(struct inode *inode)
-{
-	memset(inode, 0, sizeof(*inode));
+व्योम inode_init_once(काष्ठा inode *inode)
+अणु
+	स_रखो(inode, 0, माप(*inode));
 	INIT_HLIST_NODE(&inode->i_hash);
 	INIT_LIST_HEAD(&inode->i_devices);
 	INIT_LIST_HEAD(&inode->i_io_list);
@@ -397,199 +398,199 @@ void inode_init_once(struct inode *inode)
 	INIT_LIST_HEAD(&inode->i_lru);
 	__address_space_init_once(&inode->i_data);
 	i_size_ordered_init(inode);
-}
+पूर्ण
 EXPORT_SYMBOL(inode_init_once);
 
-static void init_once(void *foo)
-{
-	struct inode *inode = (struct inode *) foo;
+अटल व्योम init_once(व्योम *foo)
+अणु
+	काष्ठा inode *inode = (काष्ठा inode *) foo;
 
 	inode_init_once(inode);
-}
+पूर्ण
 
 /*
  * inode->i_lock must be held
  */
-void __iget(struct inode *inode)
-{
+व्योम __iget(काष्ठा inode *inode)
+अणु
 	atomic_inc(&inode->i_count);
-}
+पूर्ण
 
 /*
- * get additional reference to inode; caller must already hold one.
+ * get additional reference to inode; caller must alपढ़ोy hold one.
  */
-void ihold(struct inode *inode)
-{
-	WARN_ON(atomic_inc_return(&inode->i_count) < 2);
-}
+व्योम ihold(काष्ठा inode *inode)
+अणु
+	WARN_ON(atomic_inc_वापस(&inode->i_count) < 2);
+पूर्ण
 EXPORT_SYMBOL(ihold);
 
-static void inode_lru_list_add(struct inode *inode)
-{
-	if (list_lru_add(&inode->i_sb->s_inode_lru, &inode->i_lru))
+अटल व्योम inode_lru_list_add(काष्ठा inode *inode)
+अणु
+	अगर (list_lru_add(&inode->i_sb->s_inode_lru, &inode->i_lru))
 		this_cpu_inc(nr_unused);
-	else
+	अन्यथा
 		inode->i_state |= I_REFERENCED;
-}
+पूर्ण
 
 /*
- * Add inode to LRU if needed (inode is unused and clean).
+ * Add inode to LRU अगर needed (inode is unused and clean).
  *
  * Needs inode->i_lock held.
  */
-void inode_add_lru(struct inode *inode)
-{
-	if (!(inode->i_state & (I_DIRTY_ALL | I_SYNC |
+व्योम inode_add_lru(काष्ठा inode *inode)
+अणु
+	अगर (!(inode->i_state & (I_सूचीTY_ALL | I_SYNC |
 				I_FREEING | I_WILL_FREE)) &&
-	    !atomic_read(&inode->i_count) && inode->i_sb->s_flags & SB_ACTIVE)
+	    !atomic_पढ़ो(&inode->i_count) && inode->i_sb->s_flags & SB_ACTIVE)
 		inode_lru_list_add(inode);
-}
+पूर्ण
 
 
-static void inode_lru_list_del(struct inode *inode)
-{
+अटल व्योम inode_lru_list_del(काष्ठा inode *inode)
+अणु
 
-	if (list_lru_del(&inode->i_sb->s_inode_lru, &inode->i_lru))
+	अगर (list_lru_del(&inode->i_sb->s_inode_lru, &inode->i_lru))
 		this_cpu_dec(nr_unused);
-}
+पूर्ण
 
 /**
  * inode_sb_list_add - add inode to the superblock list of inodes
  * @inode: inode to add
  */
-void inode_sb_list_add(struct inode *inode)
-{
+व्योम inode_sb_list_add(काष्ठा inode *inode)
+अणु
 	spin_lock(&inode->i_sb->s_inode_list_lock);
 	list_add(&inode->i_sb_list, &inode->i_sb->s_inodes);
 	spin_unlock(&inode->i_sb->s_inode_list_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(inode_sb_list_add);
 
-static inline void inode_sb_list_del(struct inode *inode)
-{
-	if (!list_empty(&inode->i_sb_list)) {
+अटल अंतरभूत व्योम inode_sb_list_del(काष्ठा inode *inode)
+अणु
+	अगर (!list_empty(&inode->i_sb_list)) अणु
 		spin_lock(&inode->i_sb->s_inode_list_lock);
 		list_del_init(&inode->i_sb_list);
 		spin_unlock(&inode->i_sb->s_inode_list_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned long hash(struct super_block *sb, unsigned long hashval)
-{
-	unsigned long tmp;
+अटल अचिन्हित दीर्घ hash(काष्ठा super_block *sb, अचिन्हित दीर्घ hashval)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
 
-	tmp = (hashval * (unsigned long)sb) ^ (GOLDEN_RATIO_PRIME + hashval) /
+	पंचांगp = (hashval * (अचिन्हित दीर्घ)sb) ^ (GOLDEN_RATIO_PRIME + hashval) /
 			L1_CACHE_BYTES;
-	tmp = tmp ^ ((tmp ^ GOLDEN_RATIO_PRIME) >> i_hash_shift);
-	return tmp & i_hash_mask;
-}
+	पंचांगp = पंचांगp ^ ((पंचांगp ^ GOLDEN_RATIO_PRIME) >> i_hash_shअगरt);
+	वापस पंचांगp & i_hash_mask;
+पूर्ण
 
 /**
  *	__insert_inode_hash - hash an inode
  *	@inode: unhashed inode
- *	@hashval: unsigned long value used to locate this object in the
+ *	@hashval: अचिन्हित दीर्घ value used to locate this object in the
  *		inode_hashtable.
  *
- *	Add an inode to the inode hash for this superblock.
+ *	Add an inode to the inode hash क्रम this superblock.
  */
-void __insert_inode_hash(struct inode *inode, unsigned long hashval)
-{
-	struct hlist_head *b = inode_hashtable + hash(inode->i_sb, hashval);
+व्योम __insert_inode_hash(काष्ठा inode *inode, अचिन्हित दीर्घ hashval)
+अणु
+	काष्ठा hlist_head *b = inode_hashtable + hash(inode->i_sb, hashval);
 
 	spin_lock(&inode_hash_lock);
 	spin_lock(&inode->i_lock);
 	hlist_add_head_rcu(&inode->i_hash, b);
 	spin_unlock(&inode->i_lock);
 	spin_unlock(&inode_hash_lock);
-}
+पूर्ण
 EXPORT_SYMBOL(__insert_inode_hash);
 
 /**
- *	__remove_inode_hash - remove an inode from the hash
+ *	__हटाओ_inode_hash - हटाओ an inode from the hash
  *	@inode: inode to unhash
  *
  *	Remove an inode from the superblock.
  */
-void __remove_inode_hash(struct inode *inode)
-{
+व्योम __हटाओ_inode_hash(काष्ठा inode *inode)
+अणु
 	spin_lock(&inode_hash_lock);
 	spin_lock(&inode->i_lock);
 	hlist_del_init_rcu(&inode->i_hash);
 	spin_unlock(&inode->i_lock);
 	spin_unlock(&inode_hash_lock);
-}
-EXPORT_SYMBOL(__remove_inode_hash);
+पूर्ण
+EXPORT_SYMBOL(__हटाओ_inode_hash);
 
-void clear_inode(struct inode *inode)
-{
+व्योम clear_inode(काष्ठा inode *inode)
+अणु
 	/*
 	 * We have to cycle the i_pages lock here because reclaim can be in the
 	 * process of removing the last page (in __delete_from_page_cache())
-	 * and we must not free the mapping under it.
+	 * and we must not मुक्त the mapping under it.
 	 */
 	xa_lock_irq(&inode->i_data.i_pages);
 	BUG_ON(inode->i_data.nrpages);
 	/*
 	 * Almost always, mapping_empty(&inode->i_data) here; but there are
-	 * two known and long-standing ways in which nodes may get left behind
+	 * two known and दीर्घ-standing ways in which nodes may get left behind
 	 * (when deep radix-tree node allocation failed partway; or when THP
-	 * collapse_file() failed). Until those two known cases are cleaned up,
-	 * or a cleanup function is called here, do not BUG_ON(!mapping_empty),
+	 * collapse_file() failed). Until those two known हालs are cleaned up,
+	 * or a cleanup function is called here, करो not BUG_ON(!mapping_empty),
 	 * nor even WARN_ON(!mapping_empty).
 	 */
 	xa_unlock_irq(&inode->i_data.i_pages);
-	BUG_ON(!list_empty(&inode->i_data.private_list));
+	BUG_ON(!list_empty(&inode->i_data.निजी_list));
 	BUG_ON(!(inode->i_state & I_FREEING));
 	BUG_ON(inode->i_state & I_CLEAR);
 	BUG_ON(!list_empty(&inode->i_wb_list));
-	/* don't need i_lock here, no concurrent mods to i_state */
+	/* करोn't need i_lock here, no concurrent mods to i_state */
 	inode->i_state = I_FREEING | I_CLEAR;
-}
+पूर्ण
 EXPORT_SYMBOL(clear_inode);
 
 /*
  * Free the inode passed in, removing it from the lists it is still connected
- * to. We remove any pages still attached to the inode and wait for any IO that
- * is still in progress before finally destroying the inode.
+ * to. We हटाओ any pages still attached to the inode and रुको क्रम any IO that
+ * is still in progress beक्रमe finally destroying the inode.
  *
- * An inode must already be marked I_FREEING so that we avoid the inode being
- * moved back onto lists if we race with other code that manipulates the lists
- * (e.g. writeback_single_inode). The caller is responsible for setting this.
+ * An inode must alपढ़ोy be marked I_FREEING so that we aव्योम the inode being
+ * moved back onto lists अगर we race with other code that manipulates the lists
+ * (e.g. ग_लिखोback_single_inode). The caller is responsible क्रम setting this.
  *
- * An inode must already be removed from the LRU list before being evicted from
+ * An inode must alपढ़ोy be हटाओd from the LRU list beक्रमe being evicted from
  * the cache. This should occur atomically with setting the I_FREEING state
  * flag, so no inodes here should ever be on the LRU when being evicted.
  */
-static void evict(struct inode *inode)
-{
-	const struct super_operations *op = inode->i_sb->s_op;
+अटल व्योम evict(काष्ठा inode *inode)
+अणु
+	स्थिर काष्ठा super_operations *op = inode->i_sb->s_op;
 
 	BUG_ON(!(inode->i_state & I_FREEING));
 	BUG_ON(!list_empty(&inode->i_lru));
 
-	if (!list_empty(&inode->i_io_list))
+	अगर (!list_empty(&inode->i_io_list))
 		inode_io_list_del(inode);
 
 	inode_sb_list_del(inode);
 
 	/*
-	 * Wait for flusher thread to be done with the inode so that filesystem
-	 * does not start destroying it while writeback is still running. Since
-	 * the inode has I_FREEING set, flusher thread won't start new work on
-	 * the inode.  We just have to wait for running writeback to finish.
+	 * Wait क्रम flusher thपढ़ो to be करोne with the inode so that fileप्रणाली
+	 * करोes not start destroying it जबतक ग_लिखोback is still running. Since
+	 * the inode has I_FREEING set, flusher thपढ़ो won't start new work on
+	 * the inode.  We just have to रुको क्रम running ग_लिखोback to finish.
 	 */
-	inode_wait_for_writeback(inode);
+	inode_रुको_क्रम_ग_लिखोback(inode);
 
-	if (op->evict_inode) {
+	अगर (op->evict_inode) अणु
 		op->evict_inode(inode);
-	} else {
+	पूर्ण अन्यथा अणु
 		truncate_inode_pages_final(&inode->i_data);
 		clear_inode(inode);
-	}
-	if (S_ISCHR(inode->i_mode) && inode->i_cdev)
-		cd_forget(inode);
+	पूर्ण
+	अगर (S_ISCHR(inode->i_mode) && inode->i_cdev)
+		cd_क्रमget(inode);
 
-	remove_inode_hash(inode);
+	हटाओ_inode_hash(inode);
 
 	spin_lock(&inode->i_lock);
 	wake_up_bit(&inode->i_state, __I_NEW);
@@ -597,53 +598,53 @@ static void evict(struct inode *inode)
 	spin_unlock(&inode->i_lock);
 
 	destroy_inode(inode);
-}
+पूर्ण
 
 /*
  * dispose_list - dispose of the contents of a local list
- * @head: the head of the list to free
+ * @head: the head of the list to मुक्त
  *
- * Dispose-list gets a local list with local inodes in it, so it doesn't
+ * Dispose-list माला_लो a local list with local inodes in it, so it करोesn't
  * need to worry about list corruption and SMP locks.
  */
-static void dispose_list(struct list_head *head)
-{
-	while (!list_empty(head)) {
-		struct inode *inode;
+अटल व्योम dispose_list(काष्ठा list_head *head)
+अणु
+	जबतक (!list_empty(head)) अणु
+		काष्ठा inode *inode;
 
-		inode = list_first_entry(head, struct inode, i_lru);
+		inode = list_first_entry(head, काष्ठा inode, i_lru);
 		list_del_init(&inode->i_lru);
 
 		evict(inode);
 		cond_resched();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * evict_inodes	- evict all evictable inodes for a superblock
+ * evict_inodes	- evict all evictable inodes क्रम a superblock
  * @sb:		superblock to operate on
  *
  * Make sure that no inodes with zero refcount are retained.  This is
- * called by superblock shutdown after having SB_ACTIVE flag removed,
+ * called by superblock shutकरोwn after having SB_ACTIVE flag हटाओd,
  * so any inode reaching zero refcount during or after that call will
  * be immediately evicted.
  */
-void evict_inodes(struct super_block *sb)
-{
-	struct inode *inode, *next;
+व्योम evict_inodes(काष्ठा super_block *sb)
+अणु
+	काष्ठा inode *inode, *next;
 	LIST_HEAD(dispose);
 
 again:
 	spin_lock(&sb->s_inode_list_lock);
-	list_for_each_entry_safe(inode, next, &sb->s_inodes, i_sb_list) {
-		if (atomic_read(&inode->i_count))
-			continue;
+	list_क्रम_each_entry_safe(inode, next, &sb->s_inodes, i_sb_list) अणु
+		अगर (atomic_पढ़ो(&inode->i_count))
+			जारी;
 
 		spin_lock(&inode->i_lock);
-		if (inode->i_state & (I_NEW | I_FREEING | I_WILL_FREE)) {
+		अगर (inode->i_state & (I_NEW | I_FREEING | I_WILL_FREE)) अणु
 			spin_unlock(&inode->i_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		inode->i_state |= I_FREEING;
 		inode_lru_list_del(inode);
@@ -651,330 +652,330 @@ again:
 		list_add(&inode->i_lru, &dispose);
 
 		/*
-		 * We can have a ton of inodes to evict at unmount time given
-		 * enough memory, check to see if we need to go to sleep for a
-		 * bit so we don't livelock.
+		 * We can have a ton of inodes to evict at unmount समय given
+		 * enough memory, check to see अगर we need to go to sleep क्रम a
+		 * bit so we करोn't livelock.
 		 */
-		if (need_resched()) {
+		अगर (need_resched()) अणु
 			spin_unlock(&sb->s_inode_list_lock);
 			cond_resched();
 			dispose_list(&dispose);
-			goto again;
-		}
-	}
+			जाओ again;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&sb->s_inode_list_lock);
 
 	dispose_list(&dispose);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(evict_inodes);
 
 /**
- * invalidate_inodes	- attempt to free all inodes on a superblock
+ * invalidate_inodes	- attempt to मुक्त all inodes on a superblock
  * @sb:		superblock to operate on
- * @kill_dirty: flag to guide handling of dirty inodes
+ * @समाप्त_dirty: flag to guide handling of dirty inodes
  *
- * Attempts to free all inodes for a given superblock.  If there were any
- * busy inodes return a non-zero value, else zero.
- * If @kill_dirty is set, discard dirty inodes too, otherwise treat
+ * Attempts to मुक्त all inodes क्रम a given superblock.  If there were any
+ * busy inodes वापस a non-zero value, अन्यथा zero.
+ * If @समाप्त_dirty is set, discard dirty inodes too, otherwise treat
  * them as busy.
  */
-int invalidate_inodes(struct super_block *sb, bool kill_dirty)
-{
-	int busy = 0;
-	struct inode *inode, *next;
+पूर्णांक invalidate_inodes(काष्ठा super_block *sb, bool समाप्त_dirty)
+अणु
+	पूर्णांक busy = 0;
+	काष्ठा inode *inode, *next;
 	LIST_HEAD(dispose);
 
 again:
 	spin_lock(&sb->s_inode_list_lock);
-	list_for_each_entry_safe(inode, next, &sb->s_inodes, i_sb_list) {
+	list_क्रम_each_entry_safe(inode, next, &sb->s_inodes, i_sb_list) अणु
 		spin_lock(&inode->i_lock);
-		if (inode->i_state & (I_NEW | I_FREEING | I_WILL_FREE)) {
+		अगर (inode->i_state & (I_NEW | I_FREEING | I_WILL_FREE)) अणु
 			spin_unlock(&inode->i_lock);
-			continue;
-		}
-		if (inode->i_state & I_DIRTY_ALL && !kill_dirty) {
-			spin_unlock(&inode->i_lock);
-			busy = 1;
-			continue;
-		}
-		if (atomic_read(&inode->i_count)) {
+			जारी;
+		पूर्ण
+		अगर (inode->i_state & I_सूचीTY_ALL && !समाप्त_dirty) अणु
 			spin_unlock(&inode->i_lock);
 			busy = 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
+		अगर (atomic_पढ़ो(&inode->i_count)) अणु
+			spin_unlock(&inode->i_lock);
+			busy = 1;
+			जारी;
+		पूर्ण
 
 		inode->i_state |= I_FREEING;
 		inode_lru_list_del(inode);
 		spin_unlock(&inode->i_lock);
 		list_add(&inode->i_lru, &dispose);
-		if (need_resched()) {
+		अगर (need_resched()) अणु
 			spin_unlock(&sb->s_inode_list_lock);
 			cond_resched();
 			dispose_list(&dispose);
-			goto again;
-		}
-	}
+			जाओ again;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&sb->s_inode_list_lock);
 
 	dispose_list(&dispose);
 
-	return busy;
-}
+	वापस busy;
+पूर्ण
 
 /*
- * Isolate the inode from the LRU in preparation for freeing it.
+ * Isolate the inode from the LRU in preparation क्रम मुक्तing it.
  *
  * Any inodes which are pinned purely because of attached pagecache have their
- * pagecache removed.  If the inode has metadata buffers attached to
- * mapping->private_list then try to remove them.
+ * pagecache हटाओd.  If the inode has metadata buffers attached to
+ * mapping->निजी_list then try to हटाओ them.
  *
  * If the inode has the I_REFERENCED flag set, then it means that it has been
  * used recently - the flag is set in iput_final(). When we encounter such an
- * inode, clear the flag and move it to the back of the LRU so it gets another
- * pass through the LRU before it gets reclaimed. This is necessary because of
- * the fact we are doing lazy LRU updates to minimise lock contention so the
- * LRU does not have strict ordering. Hence we don't want to reclaim inodes
+ * inode, clear the flag and move it to the back of the LRU so it माला_लो another
+ * pass through the LRU beक्रमe it माला_लो reclaimed. This is necessary because of
+ * the fact we are करोing lazy LRU updates to minimise lock contention so the
+ * LRU करोes not have strict ordering. Hence we करोn't want to reclaim inodes
  * with this flag set because they are the inodes that are out of order.
  */
-static enum lru_status inode_lru_isolate(struct list_head *item,
-		struct list_lru_one *lru, spinlock_t *lru_lock, void *arg)
-{
-	struct list_head *freeable = arg;
-	struct inode	*inode = container_of(item, struct inode, i_lru);
+अटल क्रमागत lru_status inode_lru_isolate(काष्ठा list_head *item,
+		काष्ठा list_lru_one *lru, spinlock_t *lru_lock, व्योम *arg)
+अणु
+	काष्ठा list_head *मुक्तable = arg;
+	काष्ठा inode	*inode = container_of(item, काष्ठा inode, i_lru);
 
 	/*
 	 * we are inverting the lru lock/inode->i_lock here, so use a trylock.
 	 * If we fail to get the lock, just skip it.
 	 */
-	if (!spin_trylock(&inode->i_lock))
-		return LRU_SKIP;
+	अगर (!spin_trylock(&inode->i_lock))
+		वापस LRU_SKIP;
 
 	/*
 	 * Referenced or dirty inodes are still in use. Give them another pass
 	 * through the LRU as we canot reclaim them now.
 	 */
-	if (atomic_read(&inode->i_count) ||
-	    (inode->i_state & ~I_REFERENCED)) {
+	अगर (atomic_पढ़ो(&inode->i_count) ||
+	    (inode->i_state & ~I_REFERENCED)) अणु
 		list_lru_isolate(lru, &inode->i_lru);
 		spin_unlock(&inode->i_lock);
 		this_cpu_dec(nr_unused);
-		return LRU_REMOVED;
-	}
+		वापस LRU_REMOVED;
+	पूर्ण
 
 	/* recently referenced inodes get one more pass */
-	if (inode->i_state & I_REFERENCED) {
+	अगर (inode->i_state & I_REFERENCED) अणु
 		inode->i_state &= ~I_REFERENCED;
 		spin_unlock(&inode->i_lock);
-		return LRU_ROTATE;
-	}
+		वापस LRU_ROTATE;
+	पूर्ण
 
-	if (inode_has_buffers(inode) || inode->i_data.nrpages) {
+	अगर (inode_has_buffers(inode) || inode->i_data.nrpages) अणु
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
 		spin_unlock(lru_lock);
-		if (remove_inode_buffers(inode)) {
-			unsigned long reap;
+		अगर (हटाओ_inode_buffers(inode)) अणु
+			अचिन्हित दीर्घ reap;
 			reap = invalidate_mapping_pages(&inode->i_data, 0, -1);
-			if (current_is_kswapd())
+			अगर (current_is_kswapd())
 				__count_vm_events(KSWAPD_INODESTEAL, reap);
-			else
+			अन्यथा
 				__count_vm_events(PGINODESTEAL, reap);
-			if (current->reclaim_state)
+			अगर (current->reclaim_state)
 				current->reclaim_state->reclaimed_slab += reap;
-		}
+		पूर्ण
 		iput(inode);
 		spin_lock(lru_lock);
-		return LRU_RETRY;
-	}
+		वापस LRU_RETRY;
+	पूर्ण
 
 	WARN_ON(inode->i_state & I_NEW);
 	inode->i_state |= I_FREEING;
-	list_lru_isolate_move(lru, &inode->i_lru, freeable);
+	list_lru_isolate_move(lru, &inode->i_lru, मुक्तable);
 	spin_unlock(&inode->i_lock);
 
 	this_cpu_dec(nr_unused);
-	return LRU_REMOVED;
-}
+	वापस LRU_REMOVED;
+पूर्ण
 
 /*
- * Walk the superblock inode LRU for freeable inodes and attempt to free them.
+ * Walk the superblock inode LRU क्रम मुक्तable inodes and attempt to मुक्त them.
  * This is called from the superblock shrinker function with a number of inodes
- * to trim from the LRU. Inodes to be freed are moved to a temporary list and
- * then are freed outside inode_lock by dispose_list().
+ * to trim from the LRU. Inodes to be मुक्तd are moved to a temporary list and
+ * then are मुक्तd outside inode_lock by dispose_list().
  */
-long prune_icache_sb(struct super_block *sb, struct shrink_control *sc)
-{
-	LIST_HEAD(freeable);
-	long freed;
+दीर्घ prune_icache_sb(काष्ठा super_block *sb, काष्ठा shrink_control *sc)
+अणु
+	LIST_HEAD(मुक्तable);
+	दीर्घ मुक्तd;
 
-	freed = list_lru_shrink_walk(&sb->s_inode_lru, sc,
-				     inode_lru_isolate, &freeable);
-	dispose_list(&freeable);
-	return freed;
-}
+	मुक्तd = list_lru_shrink_walk(&sb->s_inode_lru, sc,
+				     inode_lru_isolate, &मुक्तable);
+	dispose_list(&मुक्तable);
+	वापस मुक्तd;
+पूर्ण
 
-static void __wait_on_freeing_inode(struct inode *inode);
+अटल व्योम __रुको_on_मुक्तing_inode(काष्ठा inode *inode);
 /*
  * Called with the inode lock held.
  */
-static struct inode *find_inode(struct super_block *sb,
-				struct hlist_head *head,
-				int (*test)(struct inode *, void *),
-				void *data)
-{
-	struct inode *inode = NULL;
+अटल काष्ठा inode *find_inode(काष्ठा super_block *sb,
+				काष्ठा hlist_head *head,
+				पूर्णांक (*test)(काष्ठा inode *, व्योम *),
+				व्योम *data)
+अणु
+	काष्ठा inode *inode = शून्य;
 
 repeat:
-	hlist_for_each_entry(inode, head, i_hash) {
-		if (inode->i_sb != sb)
-			continue;
-		if (!test(inode, data))
-			continue;
+	hlist_क्रम_each_entry(inode, head, i_hash) अणु
+		अगर (inode->i_sb != sb)
+			जारी;
+		अगर (!test(inode, data))
+			जारी;
 		spin_lock(&inode->i_lock);
-		if (inode->i_state & (I_FREEING|I_WILL_FREE)) {
-			__wait_on_freeing_inode(inode);
-			goto repeat;
-		}
-		if (unlikely(inode->i_state & I_CREATING)) {
+		अगर (inode->i_state & (I_FREEING|I_WILL_FREE)) अणु
+			__रुको_on_मुक्तing_inode(inode);
+			जाओ repeat;
+		पूर्ण
+		अगर (unlikely(inode->i_state & I_CREATING)) अणु
 			spin_unlock(&inode->i_lock);
-			return ERR_PTR(-ESTALE);
-		}
+			वापस ERR_PTR(-ESTALE);
+		पूर्ण
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
-		return inode;
-	}
-	return NULL;
-}
+		वापस inode;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * find_inode_fast is the fast path version of find_inode, see the comment at
- * iget_locked for details.
+ * iget_locked क्रम details.
  */
-static struct inode *find_inode_fast(struct super_block *sb,
-				struct hlist_head *head, unsigned long ino)
-{
-	struct inode *inode = NULL;
+अटल काष्ठा inode *find_inode_fast(काष्ठा super_block *sb,
+				काष्ठा hlist_head *head, अचिन्हित दीर्घ ino)
+अणु
+	काष्ठा inode *inode = शून्य;
 
 repeat:
-	hlist_for_each_entry(inode, head, i_hash) {
-		if (inode->i_ino != ino)
-			continue;
-		if (inode->i_sb != sb)
-			continue;
+	hlist_क्रम_each_entry(inode, head, i_hash) अणु
+		अगर (inode->i_ino != ino)
+			जारी;
+		अगर (inode->i_sb != sb)
+			जारी;
 		spin_lock(&inode->i_lock);
-		if (inode->i_state & (I_FREEING|I_WILL_FREE)) {
-			__wait_on_freeing_inode(inode);
-			goto repeat;
-		}
-		if (unlikely(inode->i_state & I_CREATING)) {
+		अगर (inode->i_state & (I_FREEING|I_WILL_FREE)) अणु
+			__रुको_on_मुक्तing_inode(inode);
+			जाओ repeat;
+		पूर्ण
+		अगर (unlikely(inode->i_state & I_CREATING)) अणु
 			spin_unlock(&inode->i_lock);
-			return ERR_PTR(-ESTALE);
-		}
+			वापस ERR_PTR(-ESTALE);
+		पूर्ण
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
-		return inode;
-	}
-	return NULL;
-}
+		वापस inode;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * Each cpu owns a range of LAST_INO_BATCH numbers.
  * 'shared_last_ino' is dirtied only once out of LAST_INO_BATCH allocations,
  * to renew the exhausted range.
  *
- * This does not significantly increase overflow rate because every CPU can
+ * This करोes not signअगरicantly increase overflow rate because every CPU can
  * consume at most LAST_INO_BATCH-1 unused inode numbers. So there is
  * NR_CPUS*(LAST_INO_BATCH-1) wastage. At 4096 and 1024, this is ~0.1% of the
- * 2^32 range, and is a worst-case. Even a 50% wastage would only increase
- * overflow rate by 2x, which does not seem too significant.
+ * 2^32 range, and is a worst-हाल. Even a 50% wastage would only increase
+ * overflow rate by 2x, which करोes not seem too signअगरicant.
  *
  * On a 32bit, non LFS stat() call, glibc will generate an EOVERFLOW
- * error if st_ino won't fit in target struct field. Use 32bit counter
- * here to attempt to avoid that.
+ * error अगर st_ino won't fit in target काष्ठा field. Use 32bit counter
+ * here to attempt to aव्योम that.
  */
-#define LAST_INO_BATCH 1024
-static DEFINE_PER_CPU(unsigned int, last_ino);
+#घोषणा LAST_INO_BATCH 1024
+अटल DEFINE_PER_CPU(अचिन्हित पूर्णांक, last_ino);
 
-unsigned int get_next_ino(void)
-{
-	unsigned int *p = &get_cpu_var(last_ino);
-	unsigned int res = *p;
+अचिन्हित पूर्णांक get_next_ino(व्योम)
+अणु
+	अचिन्हित पूर्णांक *p = &get_cpu_var(last_ino);
+	अचिन्हित पूर्णांक res = *p;
 
-#ifdef CONFIG_SMP
-	if (unlikely((res & (LAST_INO_BATCH-1)) == 0)) {
-		static atomic_t shared_last_ino;
-		int next = atomic_add_return(LAST_INO_BATCH, &shared_last_ino);
+#अगर_घोषित CONFIG_SMP
+	अगर (unlikely((res & (LAST_INO_BATCH-1)) == 0)) अणु
+		अटल atomic_t shared_last_ino;
+		पूर्णांक next = atomic_add_वापस(LAST_INO_BATCH, &shared_last_ino);
 
 		res = next - LAST_INO_BATCH;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	res++;
 	/* get_next_ino should not provide a 0 inode number */
-	if (unlikely(!res))
+	अगर (unlikely(!res))
 		res++;
 	*p = res;
 	put_cpu_var(last_ino);
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(get_next_ino);
 
 /**
- *	new_inode_pseudo 	- obtain an inode
+ *	new_inode_pseuकरो 	- obtain an inode
  *	@sb: superblock
  *
- *	Allocates a new inode for given superblock.
+ *	Allocates a new inode क्रम given superblock.
  *	Inode wont be chained in superblock s_inodes list
  *	This means :
  *	- fs can't be unmount
- *	- quotas, fsnotify, writeback can't work
+ *	- quotas, fsnotअगरy, ग_लिखोback can't work
  */
-struct inode *new_inode_pseudo(struct super_block *sb)
-{
-	struct inode *inode = alloc_inode(sb);
+काष्ठा inode *new_inode_pseuकरो(काष्ठा super_block *sb)
+अणु
+	काष्ठा inode *inode = alloc_inode(sb);
 
-	if (inode) {
+	अगर (inode) अणु
 		spin_lock(&inode->i_lock);
 		inode->i_state = 0;
 		spin_unlock(&inode->i_lock);
 		INIT_LIST_HEAD(&inode->i_sb_list);
-	}
-	return inode;
-}
+	पूर्ण
+	वापस inode;
+पूर्ण
 
 /**
  *	new_inode 	- obtain an inode
  *	@sb: superblock
  *
- *	Allocates a new inode for given superblock. The default gfp_mask
- *	for allocations related to inode->i_mapping is GFP_HIGHUSER_MOVABLE.
+ *	Allocates a new inode क्रम given superblock. The शेष gfp_mask
+ *	क्रम allocations related to inode->i_mapping is GFP_HIGHUSER_MOVABLE.
  *	If HIGHMEM pages are unsuitable or it is known that pages allocated
- *	for the page cache are not reclaimable or migratable,
+ *	क्रम the page cache are not reclaimable or migratable,
  *	mapping_set_gfp_mask() must be called with suitable flags on the
  *	newly created inode's mapping
  *
  */
-struct inode *new_inode(struct super_block *sb)
-{
-	struct inode *inode;
+काष्ठा inode *new_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा inode *inode;
 
 	spin_lock_prefetch(&sb->s_inode_list_lock);
 
-	inode = new_inode_pseudo(sb);
-	if (inode)
+	inode = new_inode_pseuकरो(sb);
+	अगर (inode)
 		inode_sb_list_add(inode);
-	return inode;
-}
+	वापस inode;
+पूर्ण
 EXPORT_SYMBOL(new_inode);
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-void lockdep_annotate_inode_mutex_key(struct inode *inode)
-{
-	if (S_ISDIR(inode->i_mode)) {
-		struct file_system_type *type = inode->i_sb->s_type;
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+व्योम lockdep_annotate_inode_mutex_key(काष्ठा inode *inode)
+अणु
+	अगर (S_ISसूची(inode->i_mode)) अणु
+		काष्ठा file_प्रणाली_type *type = inode->i_sb->s_type;
 
-		/* Set new key only if filesystem hasn't already changed it */
-		if (lockdep_match_class(&inode->i_rwsem, &type->i_mutex_key)) {
+		/* Set new key only अगर fileप्रणाली hasn't alपढ़ोy changed it */
+		अगर (lockdep_match_class(&inode->i_rwsem, &type->i_mutex_key)) अणु
 			/*
 			 * ensure nobody is actually holding i_mutex
 			 */
@@ -982,21 +983,21 @@ void lockdep_annotate_inode_mutex_key(struct inode *inode)
 			init_rwsem(&inode->i_rwsem);
 			lockdep_set_class(&inode->i_rwsem,
 					  &type->i_mutex_dir_key);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(lockdep_annotate_inode_mutex_key);
-#endif
+#पूर्ण_अगर
 
 /**
- * unlock_new_inode - clear the I_NEW state and wake up any waiters
+ * unlock_new_inode - clear the I_NEW state and wake up any रुकोers
  * @inode:	new inode to unlock
  *
  * Called when the inode is fully initialised to clear the new state of the
- * inode and wake up anyone waiting for the inode to finish initialisation.
+ * inode and wake up anyone रुकोing क्रम the inode to finish initialisation.
  */
-void unlock_new_inode(struct inode *inode)
-{
+व्योम unlock_new_inode(काष्ठा inode *inode)
+अणु
 	lockdep_annotate_inode_mutex_key(inode);
 	spin_lock(&inode->i_lock);
 	WARN_ON(!(inode->i_state & I_NEW));
@@ -1004,11 +1005,11 @@ void unlock_new_inode(struct inode *inode)
 	smp_mb();
 	wake_up_bit(&inode->i_state, __I_NEW);
 	spin_unlock(&inode->i_lock);
-}
+पूर्ण
 EXPORT_SYMBOL(unlock_new_inode);
 
-void discard_new_inode(struct inode *inode)
-{
+व्योम discard_new_inode(काष्ठा inode *inode)
+अणु
 	lockdep_annotate_inode_mutex_key(inode);
 	spin_lock(&inode->i_lock);
 	WARN_ON(!(inode->i_state & I_NEW));
@@ -1017,28 +1018,28 @@ void discard_new_inode(struct inode *inode)
 	wake_up_bit(&inode->i_state, __I_NEW);
 	spin_unlock(&inode->i_lock);
 	iput(inode);
-}
+पूर्ण
 EXPORT_SYMBOL(discard_new_inode);
 
 /**
  * lock_two_nondirectories - take two i_mutexes on non-directory objects
  *
- * Lock any non-NULL argument that is not a directory.
+ * Lock any non-शून्य argument that is not a directory.
  * Zero, one or two objects may be locked by this function.
  *
  * @inode1: first inode to lock
  * @inode2: second inode to lock
  */
-void lock_two_nondirectories(struct inode *inode1, struct inode *inode2)
-{
-	if (inode1 > inode2)
+व्योम lock_two_nondirectories(काष्ठा inode *inode1, काष्ठा inode *inode2)
+अणु
+	अगर (inode1 > inode2)
 		swap(inode1, inode2);
 
-	if (inode1 && !S_ISDIR(inode1->i_mode))
+	अगर (inode1 && !S_ISसूची(inode1->i_mode))
 		inode_lock(inode1);
-	if (inode2 && !S_ISDIR(inode2->i_mode) && inode2 != inode1)
-		inode_lock_nested(inode2, I_MUTEX_NONDIR2);
-}
+	अगर (inode2 && !S_ISसूची(inode2->i_mode) && inode2 != inode1)
+		inode_lock_nested(inode2, I_MUTEX_NONसूची2);
+पूर्ण
 EXPORT_SYMBOL(lock_two_nondirectories);
 
 /**
@@ -1046,164 +1047,164 @@ EXPORT_SYMBOL(lock_two_nondirectories);
  * @inode1: first inode to unlock
  * @inode2: second inode to unlock
  */
-void unlock_two_nondirectories(struct inode *inode1, struct inode *inode2)
-{
-	if (inode1 && !S_ISDIR(inode1->i_mode))
+व्योम unlock_two_nondirectories(काष्ठा inode *inode1, काष्ठा inode *inode2)
+अणु
+	अगर (inode1 && !S_ISसूची(inode1->i_mode))
 		inode_unlock(inode1);
-	if (inode2 && !S_ISDIR(inode2->i_mode) && inode2 != inode1)
+	अगर (inode2 && !S_ISसूची(inode2->i_mode) && inode2 != inode1)
 		inode_unlock(inode2);
-}
+पूर्ण
 EXPORT_SYMBOL(unlock_two_nondirectories);
 
 /**
- * inode_insert5 - obtain an inode from a mounted file system
- * @inode:	pre-allocated inode to use for insert to cache
+ * inode_insert5 - obtain an inode from a mounted file प्रणाली
+ * @inode:	pre-allocated inode to use क्रम insert to cache
  * @hashval:	hash value (usually inode number) to get
- * @test:	callback used for comparisons between inodes
- * @set:	callback used to initialize a new struct inode
- * @data:	opaque data pointer to pass to @test and @set
+ * @test:	callback used क्रम comparisons between inodes
+ * @set:	callback used to initialize a new काष्ठा inode
+ * @data:	opaque data poपूर्णांकer to pass to @test and @set
  *
- * Search for the inode specified by @hashval and @data in the inode cache,
- * and if present it is return it with an increased reference count. This is
- * a variant of iget5_locked() for callers that don't want to fail on memory
+ * Search क्रम the inode specअगरied by @hashval and @data in the inode cache,
+ * and अगर present it is वापस it with an increased reference count. This is
+ * a variant of iget5_locked() क्रम callers that करोn't want to fail on memory
  * allocation of inode.
  *
  * If the inode is not in cache, insert the pre-allocated inode to cache and
- * return it locked, hashed, and with the I_NEW flag set. The file system gets
- * to fill it in before unlocking it via unlock_new_inode().
+ * वापस it locked, hashed, and with the I_NEW flag set. The file प्रणाली माला_लो
+ * to fill it in beक्रमe unlocking it via unlock_new_inode().
  *
  * Note both @test and @set are called with the inode_hash_lock held, so can't
  * sleep.
  */
-struct inode *inode_insert5(struct inode *inode, unsigned long hashval,
-			    int (*test)(struct inode *, void *),
-			    int (*set)(struct inode *, void *), void *data)
-{
-	struct hlist_head *head = inode_hashtable + hash(inode->i_sb, hashval);
-	struct inode *old;
+काष्ठा inode *inode_insert5(काष्ठा inode *inode, अचिन्हित दीर्घ hashval,
+			    पूर्णांक (*test)(काष्ठा inode *, व्योम *),
+			    पूर्णांक (*set)(काष्ठा inode *, व्योम *), व्योम *data)
+अणु
+	काष्ठा hlist_head *head = inode_hashtable + hash(inode->i_sb, hashval);
+	काष्ठा inode *old;
 	bool creating = inode->i_state & I_CREATING;
 
 again:
 	spin_lock(&inode_hash_lock);
 	old = find_inode(inode->i_sb, head, test, data);
-	if (unlikely(old)) {
+	अगर (unlikely(old)) अणु
 		/*
-		 * Uhhuh, somebody else created the same inode under us.
-		 * Use the old inode instead of the preallocated one.
+		 * Uhhuh, somebody अन्यथा created the same inode under us.
+		 * Use the old inode instead of the pपुनः_स्मृतिated one.
 		 */
 		spin_unlock(&inode_hash_lock);
-		if (IS_ERR(old))
-			return NULL;
-		wait_on_inode(old);
-		if (unlikely(inode_unhashed(old))) {
+		अगर (IS_ERR(old))
+			वापस शून्य;
+		रुको_on_inode(old);
+		अगर (unlikely(inode_unhashed(old))) अणु
 			iput(old);
-			goto again;
-		}
-		return old;
-	}
+			जाओ again;
+		पूर्ण
+		वापस old;
+	पूर्ण
 
-	if (set && unlikely(set(inode, data))) {
-		inode = NULL;
-		goto unlock;
-	}
+	अगर (set && unlikely(set(inode, data))) अणु
+		inode = शून्य;
+		जाओ unlock;
+	पूर्ण
 
 	/*
 	 * Return the locked inode with I_NEW set, the
-	 * caller is responsible for filling in the contents
+	 * caller is responsible क्रम filling in the contents
 	 */
 	spin_lock(&inode->i_lock);
 	inode->i_state |= I_NEW;
 	hlist_add_head_rcu(&inode->i_hash, head);
 	spin_unlock(&inode->i_lock);
-	if (!creating)
+	अगर (!creating)
 		inode_sb_list_add(inode);
 unlock:
 	spin_unlock(&inode_hash_lock);
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 EXPORT_SYMBOL(inode_insert5);
 
 /**
- * iget5_locked - obtain an inode from a mounted file system
- * @sb:		super block of file system
+ * iget5_locked - obtain an inode from a mounted file प्रणाली
+ * @sb:		super block of file प्रणाली
  * @hashval:	hash value (usually inode number) to get
- * @test:	callback used for comparisons between inodes
- * @set:	callback used to initialize a new struct inode
- * @data:	opaque data pointer to pass to @test and @set
+ * @test:	callback used क्रम comparisons between inodes
+ * @set:	callback used to initialize a new काष्ठा inode
+ * @data:	opaque data poपूर्णांकer to pass to @test and @set
  *
- * Search for the inode specified by @hashval and @data in the inode cache,
- * and if present it is return it with an increased reference count. This is
- * a generalized version of iget_locked() for file systems where the inode
- * number is not sufficient for unique identification of an inode.
+ * Search क्रम the inode specअगरied by @hashval and @data in the inode cache,
+ * and अगर present it is वापस it with an increased reference count. This is
+ * a generalized version of iget_locked() क्रम file प्रणालीs where the inode
+ * number is not sufficient क्रम unique identअगरication of an inode.
  *
- * If the inode is not in cache, allocate a new inode and return it locked,
- * hashed, and with the I_NEW flag set. The file system gets to fill it in
- * before unlocking it via unlock_new_inode().
+ * If the inode is not in cache, allocate a new inode and वापस it locked,
+ * hashed, and with the I_NEW flag set. The file प्रणाली माला_लो to fill it in
+ * beक्रमe unlocking it via unlock_new_inode().
  *
  * Note both @test and @set are called with the inode_hash_lock held, so can't
  * sleep.
  */
-struct inode *iget5_locked(struct super_block *sb, unsigned long hashval,
-		int (*test)(struct inode *, void *),
-		int (*set)(struct inode *, void *), void *data)
-{
-	struct inode *inode = ilookup5(sb, hashval, test, data);
+काष्ठा inode *iget5_locked(काष्ठा super_block *sb, अचिन्हित दीर्घ hashval,
+		पूर्णांक (*test)(काष्ठा inode *, व्योम *),
+		पूर्णांक (*set)(काष्ठा inode *, व्योम *), व्योम *data)
+अणु
+	काष्ठा inode *inode = ilookup5(sb, hashval, test, data);
 
-	if (!inode) {
-		struct inode *new = alloc_inode(sb);
+	अगर (!inode) अणु
+		काष्ठा inode *new = alloc_inode(sb);
 
-		if (new) {
+		अगर (new) अणु
 			new->i_state = 0;
 			inode = inode_insert5(new, hashval, test, set, data);
-			if (unlikely(inode != new))
+			अगर (unlikely(inode != new))
 				destroy_inode(new);
-		}
-	}
-	return inode;
-}
+		पूर्ण
+	पूर्ण
+	वापस inode;
+पूर्ण
 EXPORT_SYMBOL(iget5_locked);
 
 /**
- * iget_locked - obtain an inode from a mounted file system
- * @sb:		super block of file system
+ * iget_locked - obtain an inode from a mounted file प्रणाली
+ * @sb:		super block of file प्रणाली
  * @ino:	inode number to get
  *
- * Search for the inode specified by @ino in the inode cache and if present
- * return it with an increased reference count. This is for file systems
- * where the inode number is sufficient for unique identification of an inode.
+ * Search क्रम the inode specअगरied by @ino in the inode cache and अगर present
+ * वापस it with an increased reference count. This is क्रम file प्रणालीs
+ * where the inode number is sufficient क्रम unique identअगरication of an inode.
  *
- * If the inode is not in cache, allocate a new inode and return it locked,
- * hashed, and with the I_NEW flag set.  The file system gets to fill it in
- * before unlocking it via unlock_new_inode().
+ * If the inode is not in cache, allocate a new inode and वापस it locked,
+ * hashed, and with the I_NEW flag set.  The file प्रणाली माला_लो to fill it in
+ * beक्रमe unlocking it via unlock_new_inode().
  */
-struct inode *iget_locked(struct super_block *sb, unsigned long ino)
-{
-	struct hlist_head *head = inode_hashtable + hash(sb, ino);
-	struct inode *inode;
+काष्ठा inode *iget_locked(काष्ठा super_block *sb, अचिन्हित दीर्घ ino)
+अणु
+	काष्ठा hlist_head *head = inode_hashtable + hash(sb, ino);
+	काष्ठा inode *inode;
 again:
 	spin_lock(&inode_hash_lock);
 	inode = find_inode_fast(sb, head, ino);
 	spin_unlock(&inode_hash_lock);
-	if (inode) {
-		if (IS_ERR(inode))
-			return NULL;
-		wait_on_inode(inode);
-		if (unlikely(inode_unhashed(inode))) {
+	अगर (inode) अणु
+		अगर (IS_ERR(inode))
+			वापस शून्य;
+		रुको_on_inode(inode);
+		अगर (unlikely(inode_unhashed(inode))) अणु
 			iput(inode);
-			goto again;
-		}
-		return inode;
-	}
+			जाओ again;
+		पूर्ण
+		वापस inode;
+	पूर्ण
 
 	inode = alloc_inode(sb);
-	if (inode) {
-		struct inode *old;
+	अगर (inode) अणु
+		काष्ठा inode *old;
 
 		spin_lock(&inode_hash_lock);
 		/* We released the lock, so.. */
 		old = find_inode_fast(sb, head, ino);
-		if (!old) {
+		अगर (!old) अणु
 			inode->i_ino = ino;
 			spin_lock(&inode->i_lock);
 			inode->i_state = I_NEW;
@@ -1213,933 +1214,933 @@ again:
 			spin_unlock(&inode_hash_lock);
 
 			/* Return the locked inode with I_NEW set, the
-			 * caller is responsible for filling in the contents
+			 * caller is responsible क्रम filling in the contents
 			 */
-			return inode;
-		}
+			वापस inode;
+		पूर्ण
 
 		/*
-		 * Uhhuh, somebody else created the same inode under
+		 * Uhhuh, somebody अन्यथा created the same inode under
 		 * us. Use the old inode instead of the one we just
 		 * allocated.
 		 */
 		spin_unlock(&inode_hash_lock);
 		destroy_inode(inode);
-		if (IS_ERR(old))
-			return NULL;
+		अगर (IS_ERR(old))
+			वापस शून्य;
 		inode = old;
-		wait_on_inode(inode);
-		if (unlikely(inode_unhashed(inode))) {
+		रुको_on_inode(inode);
+		अगर (unlikely(inode_unhashed(inode))) अणु
 			iput(inode);
-			goto again;
-		}
-	}
-	return inode;
-}
+			जाओ again;
+		पूर्ण
+	पूर्ण
+	वापस inode;
+पूर्ण
 EXPORT_SYMBOL(iget_locked);
 
 /*
- * search the inode cache for a matching inode number.
+ * search the inode cache क्रम a matching inode number.
  * If we find one, then the inode number we are trying to
  * allocate is not unique and so we should not use it.
  *
- * Returns 1 if the inode number is unique, 0 if it is not.
+ * Returns 1 अगर the inode number is unique, 0 अगर it is not.
  */
-static int test_inode_iunique(struct super_block *sb, unsigned long ino)
-{
-	struct hlist_head *b = inode_hashtable + hash(sb, ino);
-	struct inode *inode;
+अटल पूर्णांक test_inode_iunique(काष्ठा super_block *sb, अचिन्हित दीर्घ ino)
+अणु
+	काष्ठा hlist_head *b = inode_hashtable + hash(sb, ino);
+	काष्ठा inode *inode;
 
-	hlist_for_each_entry_rcu(inode, b, i_hash) {
-		if (inode->i_ino == ino && inode->i_sb == sb)
-			return 0;
-	}
-	return 1;
-}
+	hlist_क्रम_each_entry_rcu(inode, b, i_hash) अणु
+		अगर (inode->i_ino == ino && inode->i_sb == sb)
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /**
  *	iunique - get a unique inode number
  *	@sb: superblock
  *	@max_reserved: highest reserved inode number
  *
- *	Obtain an inode number that is unique on the system for a given
- *	superblock. This is used by file systems that have no natural
- *	permanent inode numbering system. An inode number is returned that
+ *	Obtain an inode number that is unique on the प्रणाली क्रम a given
+ *	superblock. This is used by file प्रणालीs that have no natural
+ *	permanent inode numbering प्रणाली. An inode number is वापसed that
  *	is higher than the reserved limit but unique.
  *
  *	BUGS:
- *	With a large number of inodes live on the file system this function
+ *	With a large number of inodes live on the file प्रणाली this function
  *	currently becomes quite slow.
  */
-ino_t iunique(struct super_block *sb, ino_t max_reserved)
-{
+ino_t iunique(काष्ठा super_block *sb, ino_t max_reserved)
+अणु
 	/*
 	 * On a 32bit, non LFS stat() call, glibc will generate an EOVERFLOW
-	 * error if st_ino won't fit in target struct field. Use 32bit counter
-	 * here to attempt to avoid that.
+	 * error अगर st_ino won't fit in target काष्ठा field. Use 32bit counter
+	 * here to attempt to aव्योम that.
 	 */
-	static DEFINE_SPINLOCK(iunique_lock);
-	static unsigned int counter;
+	अटल DEFINE_SPINLOCK(iunique_lock);
+	अटल अचिन्हित पूर्णांक counter;
 	ino_t res;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	spin_lock(&iunique_lock);
-	do {
-		if (counter <= max_reserved)
+	करो अणु
+		अगर (counter <= max_reserved)
 			counter = max_reserved + 1;
 		res = counter++;
-	} while (!test_inode_iunique(sb, res));
+	पूर्ण जबतक (!test_inode_iunique(sb, res));
 	spin_unlock(&iunique_lock);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(iunique);
 
-struct inode *igrab(struct inode *inode)
-{
+काष्ठा inode *igrab(काष्ठा inode *inode)
+अणु
 	spin_lock(&inode->i_lock);
-	if (!(inode->i_state & (I_FREEING|I_WILL_FREE))) {
+	अगर (!(inode->i_state & (I_FREEING|I_WILL_FREE))) अणु
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock(&inode->i_lock);
 		/*
-		 * Handle the case where s_op->clear_inode is not been
+		 * Handle the हाल where s_op->clear_inode is not been
 		 * called yet, and somebody is calling igrab
-		 * while the inode is getting freed.
+		 * जबतक the inode is getting मुक्तd.
 		 */
-		inode = NULL;
-	}
-	return inode;
-}
+		inode = शून्य;
+	पूर्ण
+	वापस inode;
+पूर्ण
 EXPORT_SYMBOL(igrab);
 
 /**
- * ilookup5_nowait - search for an inode in the inode cache
- * @sb:		super block of file system to search
- * @hashval:	hash value (usually inode number) to search for
- * @test:	callback used for comparisons between inodes
- * @data:	opaque data pointer to pass to @test
+ * ilookup5_noरुको - search क्रम an inode in the inode cache
+ * @sb:		super block of file प्रणाली to search
+ * @hashval:	hash value (usually inode number) to search क्रम
+ * @test:	callback used क्रम comparisons between inodes
+ * @data:	opaque data poपूर्णांकer to pass to @test
  *
- * Search for the inode specified by @hashval and @data in the inode cache.
- * If the inode is in the cache, the inode is returned with an incremented
+ * Search क्रम the inode specअगरied by @hashval and @data in the inode cache.
+ * If the inode is in the cache, the inode is वापसed with an incremented
  * reference count.
  *
- * Note: I_NEW is not waited upon so you have to be very careful what you do
- * with the returned inode.  You probably should be using ilookup5() instead.
+ * Note: I_NEW is not रुकोed upon so you have to be very careful what you करो
+ * with the वापसed inode.  You probably should be using ilookup5() instead.
  *
  * Note2: @test is called with the inode_hash_lock held, so can't sleep.
  */
-struct inode *ilookup5_nowait(struct super_block *sb, unsigned long hashval,
-		int (*test)(struct inode *, void *), void *data)
-{
-	struct hlist_head *head = inode_hashtable + hash(sb, hashval);
-	struct inode *inode;
+काष्ठा inode *ilookup5_noरुको(काष्ठा super_block *sb, अचिन्हित दीर्घ hashval,
+		पूर्णांक (*test)(काष्ठा inode *, व्योम *), व्योम *data)
+अणु
+	काष्ठा hlist_head *head = inode_hashtable + hash(sb, hashval);
+	काष्ठा inode *inode;
 
 	spin_lock(&inode_hash_lock);
 	inode = find_inode(sb, head, test, data);
 	spin_unlock(&inode_hash_lock);
 
-	return IS_ERR(inode) ? NULL : inode;
-}
-EXPORT_SYMBOL(ilookup5_nowait);
+	वापस IS_ERR(inode) ? शून्य : inode;
+पूर्ण
+EXPORT_SYMBOL(ilookup5_noरुको);
 
 /**
- * ilookup5 - search for an inode in the inode cache
- * @sb:		super block of file system to search
- * @hashval:	hash value (usually inode number) to search for
- * @test:	callback used for comparisons between inodes
- * @data:	opaque data pointer to pass to @test
+ * ilookup5 - search क्रम an inode in the inode cache
+ * @sb:		super block of file प्रणाली to search
+ * @hashval:	hash value (usually inode number) to search क्रम
+ * @test:	callback used क्रम comparisons between inodes
+ * @data:	opaque data poपूर्णांकer to pass to @test
  *
- * Search for the inode specified by @hashval and @data in the inode cache,
- * and if the inode is in the cache, return the inode with an incremented
- * reference count.  Waits on I_NEW before returning the inode.
- * returned with an incremented reference count.
+ * Search क्रम the inode specअगरied by @hashval and @data in the inode cache,
+ * and अगर the inode is in the cache, वापस the inode with an incremented
+ * reference count.  Waits on I_NEW beक्रमe वापसing the inode.
+ * वापसed with an incremented reference count.
  *
- * This is a generalized version of ilookup() for file systems where the
- * inode number is not sufficient for unique identification of an inode.
+ * This is a generalized version of ilookup() क्रम file प्रणालीs where the
+ * inode number is not sufficient क्रम unique identअगरication of an inode.
  *
  * Note: @test is called with the inode_hash_lock held, so can't sleep.
  */
-struct inode *ilookup5(struct super_block *sb, unsigned long hashval,
-		int (*test)(struct inode *, void *), void *data)
-{
-	struct inode *inode;
+काष्ठा inode *ilookup5(काष्ठा super_block *sb, अचिन्हित दीर्घ hashval,
+		पूर्णांक (*test)(काष्ठा inode *, व्योम *), व्योम *data)
+अणु
+	काष्ठा inode *inode;
 again:
-	inode = ilookup5_nowait(sb, hashval, test, data);
-	if (inode) {
-		wait_on_inode(inode);
-		if (unlikely(inode_unhashed(inode))) {
+	inode = ilookup5_noरुको(sb, hashval, test, data);
+	अगर (inode) अणु
+		रुको_on_inode(inode);
+		अगर (unlikely(inode_unhashed(inode))) अणु
 			iput(inode);
-			goto again;
-		}
-	}
-	return inode;
-}
+			जाओ again;
+		पूर्ण
+	पूर्ण
+	वापस inode;
+पूर्ण
 EXPORT_SYMBOL(ilookup5);
 
 /**
- * ilookup - search for an inode in the inode cache
- * @sb:		super block of file system to search
- * @ino:	inode number to search for
+ * ilookup - search क्रम an inode in the inode cache
+ * @sb:		super block of file प्रणाली to search
+ * @ino:	inode number to search क्रम
  *
- * Search for the inode @ino in the inode cache, and if the inode is in the
- * cache, the inode is returned with an incremented reference count.
+ * Search क्रम the inode @ino in the inode cache, and अगर the inode is in the
+ * cache, the inode is वापसed with an incremented reference count.
  */
-struct inode *ilookup(struct super_block *sb, unsigned long ino)
-{
-	struct hlist_head *head = inode_hashtable + hash(sb, ino);
-	struct inode *inode;
+काष्ठा inode *ilookup(काष्ठा super_block *sb, अचिन्हित दीर्घ ino)
+अणु
+	काष्ठा hlist_head *head = inode_hashtable + hash(sb, ino);
+	काष्ठा inode *inode;
 again:
 	spin_lock(&inode_hash_lock);
 	inode = find_inode_fast(sb, head, ino);
 	spin_unlock(&inode_hash_lock);
 
-	if (inode) {
-		if (IS_ERR(inode))
-			return NULL;
-		wait_on_inode(inode);
-		if (unlikely(inode_unhashed(inode))) {
+	अगर (inode) अणु
+		अगर (IS_ERR(inode))
+			वापस शून्य;
+		रुको_on_inode(inode);
+		अगर (unlikely(inode_unhashed(inode))) अणु
 			iput(inode);
-			goto again;
-		}
-	}
-	return inode;
-}
+			जाओ again;
+		पूर्ण
+	पूर्ण
+	वापस inode;
+पूर्ण
 EXPORT_SYMBOL(ilookup);
 
 /**
- * find_inode_nowait - find an inode in the inode cache
- * @sb:		super block of file system to search
- * @hashval:	hash value (usually inode number) to search for
- * @match:	callback used for comparisons between inodes
- * @data:	opaque data pointer to pass to @match
+ * find_inode_noरुको - find an inode in the inode cache
+ * @sb:		super block of file प्रणाली to search
+ * @hashval:	hash value (usually inode number) to search क्रम
+ * @match:	callback used क्रम comparisons between inodes
+ * @data:	opaque data poपूर्णांकer to pass to @match
  *
- * Search for the inode specified by @hashval and @data in the inode
- * cache, where the helper function @match will return 0 if the inode
- * does not match, 1 if the inode does match, and -1 if the search
- * should be stopped.  The @match function must be responsible for
- * taking the i_lock spin_lock and checking i_state for an inode being
- * freed or being initialized, and incrementing the reference count
- * before returning 1.  It also must not sleep, since it is called with
+ * Search क्रम the inode specअगरied by @hashval and @data in the inode
+ * cache, where the helper function @match will वापस 0 अगर the inode
+ * करोes not match, 1 अगर the inode करोes match, and -1 अगर the search
+ * should be stopped.  The @match function must be responsible क्रम
+ * taking the i_lock spin_lock and checking i_state क्रम an inode being
+ * मुक्तd or being initialized, and incrementing the reference count
+ * beक्रमe वापसing 1.  It also must not sleep, since it is called with
  * the inode_hash_lock spinlock held.
  *
  * This is a even more generalized version of ilookup5() when the
  * function must never block --- find_inode() can block in
- * __wait_on_freeing_inode() --- or when the caller can not increment
+ * __रुको_on_मुक्तing_inode() --- or when the caller can not increment
  * the reference count because the resulting iput() might cause an
  * inode eviction.  The tradeoff is that the @match funtion must be
  * very carefully implemented.
  */
-struct inode *find_inode_nowait(struct super_block *sb,
-				unsigned long hashval,
-				int (*match)(struct inode *, unsigned long,
-					     void *),
-				void *data)
-{
-	struct hlist_head *head = inode_hashtable + hash(sb, hashval);
-	struct inode *inode, *ret_inode = NULL;
-	int mval;
+काष्ठा inode *find_inode_noरुको(काष्ठा super_block *sb,
+				अचिन्हित दीर्घ hashval,
+				पूर्णांक (*match)(काष्ठा inode *, अचिन्हित दीर्घ,
+					     व्योम *),
+				व्योम *data)
+अणु
+	काष्ठा hlist_head *head = inode_hashtable + hash(sb, hashval);
+	काष्ठा inode *inode, *ret_inode = शून्य;
+	पूर्णांक mval;
 
 	spin_lock(&inode_hash_lock);
-	hlist_for_each_entry(inode, head, i_hash) {
-		if (inode->i_sb != sb)
-			continue;
+	hlist_क्रम_each_entry(inode, head, i_hash) अणु
+		अगर (inode->i_sb != sb)
+			जारी;
 		mval = match(inode, hashval, data);
-		if (mval == 0)
-			continue;
-		if (mval == 1)
+		अगर (mval == 0)
+			जारी;
+		अगर (mval == 1)
 			ret_inode = inode;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 out:
 	spin_unlock(&inode_hash_lock);
-	return ret_inode;
-}
-EXPORT_SYMBOL(find_inode_nowait);
+	वापस ret_inode;
+पूर्ण
+EXPORT_SYMBOL(find_inode_noरुको);
 
 /**
  * find_inode_rcu - find an inode in the inode cache
- * @sb:		Super block of file system to search
+ * @sb:		Super block of file प्रणाली to search
  * @hashval:	Key to hash
  * @test:	Function to test match on an inode
- * @data:	Data for test function
+ * @data:	Data क्रम test function
  *
- * Search for the inode specified by @hashval and @data in the inode cache,
- * where the helper function @test will return 0 if the inode does not match
- * and 1 if it does.  The @test function must be responsible for taking the
- * i_lock spin_lock and checking i_state for an inode being freed or being
+ * Search क्रम the inode specअगरied by @hashval and @data in the inode cache,
+ * where the helper function @test will वापस 0 अगर the inode करोes not match
+ * and 1 अगर it करोes.  The @test function must be responsible क्रम taking the
+ * i_lock spin_lock and checking i_state क्रम an inode being मुक्तd or being
  * initialized.
  *
- * If successful, this will return the inode for which the @test function
- * returned 1 and NULL otherwise.
+ * If successful, this will वापस the inode क्रम which the @test function
+ * वापसed 1 and शून्य otherwise.
  *
  * The @test function is not permitted to take a ref on any inode presented.
  * It is also not permitted to sleep.
  *
- * The caller must hold the RCU read lock.
+ * The caller must hold the RCU पढ़ो lock.
  */
-struct inode *find_inode_rcu(struct super_block *sb, unsigned long hashval,
-			     int (*test)(struct inode *, void *), void *data)
-{
-	struct hlist_head *head = inode_hashtable + hash(sb, hashval);
-	struct inode *inode;
+काष्ठा inode *find_inode_rcu(काष्ठा super_block *sb, अचिन्हित दीर्घ hashval,
+			     पूर्णांक (*test)(काष्ठा inode *, व्योम *), व्योम *data)
+अणु
+	काष्ठा hlist_head *head = inode_hashtable + hash(sb, hashval);
+	काष्ठा inode *inode;
 
-	RCU_LOCKDEP_WARN(!rcu_read_lock_held(),
+	RCU_LOCKDEP_WARN(!rcu_पढ़ो_lock_held(),
 			 "suspicious find_inode_rcu() usage");
 
-	hlist_for_each_entry_rcu(inode, head, i_hash) {
-		if (inode->i_sb == sb &&
+	hlist_क्रम_each_entry_rcu(inode, head, i_hash) अणु
+		अगर (inode->i_sb == sb &&
 		    !(READ_ONCE(inode->i_state) & (I_FREEING | I_WILL_FREE)) &&
 		    test(inode, data))
-			return inode;
-	}
-	return NULL;
-}
+			वापस inode;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(find_inode_rcu);
 
 /**
  * find_inode_by_ino_rcu - Find an inode in the inode cache
- * @sb:		Super block of file system to search
+ * @sb:		Super block of file प्रणाली to search
  * @ino:	The inode number to match
  *
- * Search for the inode specified by @hashval and @data in the inode cache,
- * where the helper function @test will return 0 if the inode does not match
- * and 1 if it does.  The @test function must be responsible for taking the
- * i_lock spin_lock and checking i_state for an inode being freed or being
+ * Search क्रम the inode specअगरied by @hashval and @data in the inode cache,
+ * where the helper function @test will वापस 0 अगर the inode करोes not match
+ * and 1 अगर it करोes.  The @test function must be responsible क्रम taking the
+ * i_lock spin_lock and checking i_state क्रम an inode being मुक्तd or being
  * initialized.
  *
- * If successful, this will return the inode for which the @test function
- * returned 1 and NULL otherwise.
+ * If successful, this will वापस the inode क्रम which the @test function
+ * वापसed 1 and शून्य otherwise.
  *
  * The @test function is not permitted to take a ref on any inode presented.
  * It is also not permitted to sleep.
  *
- * The caller must hold the RCU read lock.
+ * The caller must hold the RCU पढ़ो lock.
  */
-struct inode *find_inode_by_ino_rcu(struct super_block *sb,
-				    unsigned long ino)
-{
-	struct hlist_head *head = inode_hashtable + hash(sb, ino);
-	struct inode *inode;
+काष्ठा inode *find_inode_by_ino_rcu(काष्ठा super_block *sb,
+				    अचिन्हित दीर्घ ino)
+अणु
+	काष्ठा hlist_head *head = inode_hashtable + hash(sb, ino);
+	काष्ठा inode *inode;
 
-	RCU_LOCKDEP_WARN(!rcu_read_lock_held(),
+	RCU_LOCKDEP_WARN(!rcu_पढ़ो_lock_held(),
 			 "suspicious find_inode_by_ino_rcu() usage");
 
-	hlist_for_each_entry_rcu(inode, head, i_hash) {
-		if (inode->i_ino == ino &&
+	hlist_क्रम_each_entry_rcu(inode, head, i_hash) अणु
+		अगर (inode->i_ino == ino &&
 		    inode->i_sb == sb &&
 		    !(READ_ONCE(inode->i_state) & (I_FREEING | I_WILL_FREE)))
-		    return inode;
-	}
-	return NULL;
-}
+		    वापस inode;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(find_inode_by_ino_rcu);
 
-int insert_inode_locked(struct inode *inode)
-{
-	struct super_block *sb = inode->i_sb;
+पूर्णांक insert_inode_locked(काष्ठा inode *inode)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
 	ino_t ino = inode->i_ino;
-	struct hlist_head *head = inode_hashtable + hash(sb, ino);
+	काष्ठा hlist_head *head = inode_hashtable + hash(sb, ino);
 
-	while (1) {
-		struct inode *old = NULL;
+	जबतक (1) अणु
+		काष्ठा inode *old = शून्य;
 		spin_lock(&inode_hash_lock);
-		hlist_for_each_entry(old, head, i_hash) {
-			if (old->i_ino != ino)
-				continue;
-			if (old->i_sb != sb)
-				continue;
+		hlist_क्रम_each_entry(old, head, i_hash) अणु
+			अगर (old->i_ino != ino)
+				जारी;
+			अगर (old->i_sb != sb)
+				जारी;
 			spin_lock(&old->i_lock);
-			if (old->i_state & (I_FREEING|I_WILL_FREE)) {
+			अगर (old->i_state & (I_FREEING|I_WILL_FREE)) अणु
 				spin_unlock(&old->i_lock);
-				continue;
-			}
-			break;
-		}
-		if (likely(!old)) {
+				जारी;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		अगर (likely(!old)) अणु
 			spin_lock(&inode->i_lock);
 			inode->i_state |= I_NEW | I_CREATING;
 			hlist_add_head_rcu(&inode->i_hash, head);
 			spin_unlock(&inode->i_lock);
 			spin_unlock(&inode_hash_lock);
-			return 0;
-		}
-		if (unlikely(old->i_state & I_CREATING)) {
+			वापस 0;
+		पूर्ण
+		अगर (unlikely(old->i_state & I_CREATING)) अणु
 			spin_unlock(&old->i_lock);
 			spin_unlock(&inode_hash_lock);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		__iget(old);
 		spin_unlock(&old->i_lock);
 		spin_unlock(&inode_hash_lock);
-		wait_on_inode(old);
-		if (unlikely(!inode_unhashed(old))) {
+		रुको_on_inode(old);
+		अगर (unlikely(!inode_unhashed(old))) अणु
 			iput(old);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		iput(old);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(insert_inode_locked);
 
-int insert_inode_locked4(struct inode *inode, unsigned long hashval,
-		int (*test)(struct inode *, void *), void *data)
-{
-	struct inode *old;
+पूर्णांक insert_inode_locked4(काष्ठा inode *inode, अचिन्हित दीर्घ hashval,
+		पूर्णांक (*test)(काष्ठा inode *, व्योम *), व्योम *data)
+अणु
+	काष्ठा inode *old;
 
 	inode->i_state |= I_CREATING;
-	old = inode_insert5(inode, hashval, test, NULL, data);
+	old = inode_insert5(inode, hashval, test, शून्य, data);
 
-	if (old != inode) {
+	अगर (old != inode) अणु
 		iput(old);
-		return -EBUSY;
-	}
-	return 0;
-}
+		वापस -EBUSY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(insert_inode_locked4);
 
 
-int generic_delete_inode(struct inode *inode)
-{
-	return 1;
-}
+पूर्णांक generic_delete_inode(काष्ठा inode *inode)
+अणु
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(generic_delete_inode);
 
 /*
  * Called when we're dropping the last reference
  * to an inode.
  *
- * Call the FS "drop_inode()" function, defaulting to
- * the legacy UNIX filesystem behaviour.  If it tells
- * us to evict inode, do so.  Otherwise, retain inode
- * in cache if fs is alive, sync and evict if fs is
- * shutting down.
+ * Call the FS "drop_inode()" function, शेषing to
+ * the legacy UNIX fileप्रणाली behaviour.  If it tells
+ * us to evict inode, करो so.  Otherwise, retain inode
+ * in cache अगर fs is alive, sync and evict अगर fs is
+ * shutting करोwn.
  */
-static void iput_final(struct inode *inode)
-{
-	struct super_block *sb = inode->i_sb;
-	const struct super_operations *op = inode->i_sb->s_op;
-	unsigned long state;
-	int drop;
+अटल व्योम iput_final(काष्ठा inode *inode)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	स्थिर काष्ठा super_operations *op = inode->i_sb->s_op;
+	अचिन्हित दीर्घ state;
+	पूर्णांक drop;
 
 	WARN_ON(inode->i_state & I_NEW);
 
-	if (op->drop_inode)
+	अगर (op->drop_inode)
 		drop = op->drop_inode(inode);
-	else
+	अन्यथा
 		drop = generic_drop_inode(inode);
 
-	if (!drop &&
+	अगर (!drop &&
 	    !(inode->i_state & I_DONTCACHE) &&
-	    (sb->s_flags & SB_ACTIVE)) {
+	    (sb->s_flags & SB_ACTIVE)) अणु
 		inode_add_lru(inode);
 		spin_unlock(&inode->i_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	state = inode->i_state;
-	if (!drop) {
+	अगर (!drop) अणु
 		WRITE_ONCE(inode->i_state, state | I_WILL_FREE);
 		spin_unlock(&inode->i_lock);
 
-		write_inode_now(inode, 1);
+		ग_लिखो_inode_now(inode, 1);
 
 		spin_lock(&inode->i_lock);
 		state = inode->i_state;
 		WARN_ON(state & I_NEW);
 		state &= ~I_WILL_FREE;
-	}
+	पूर्ण
 
 	WRITE_ONCE(inode->i_state, state | I_FREEING);
-	if (!list_empty(&inode->i_lru))
+	अगर (!list_empty(&inode->i_lru))
 		inode_lru_list_del(inode);
 	spin_unlock(&inode->i_lock);
 
 	evict(inode);
-}
+पूर्ण
 
 /**
  *	iput	- put an inode
  *	@inode: inode to put
  *
  *	Puts an inode, dropping its usage count. If the inode use count hits
- *	zero, the inode is then freed and may also be destroyed.
+ *	zero, the inode is then मुक्तd and may also be destroyed.
  *
  *	Consequently, iput() can sleep.
  */
-void iput(struct inode *inode)
-{
-	if (!inode)
-		return;
+व्योम iput(काष्ठा inode *inode)
+अणु
+	अगर (!inode)
+		वापस;
 	BUG_ON(inode->i_state & I_CLEAR);
 retry:
-	if (atomic_dec_and_lock(&inode->i_count, &inode->i_lock)) {
-		if (inode->i_nlink && (inode->i_state & I_DIRTY_TIME)) {
+	अगर (atomic_dec_and_lock(&inode->i_count, &inode->i_lock)) अणु
+		अगर (inode->i_nlink && (inode->i_state & I_सूचीTY_TIME)) अणु
 			atomic_inc(&inode->i_count);
 			spin_unlock(&inode->i_lock);
-			trace_writeback_lazytime_iput(inode);
+			trace_ग_लिखोback_lazyसमय_iput(inode);
 			mark_inode_dirty_sync(inode);
-			goto retry;
-		}
+			जाओ retry;
+		पूर्ण
 		iput_final(inode);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(iput);
 
-#ifdef CONFIG_BLOCK
+#अगर_घोषित CONFIG_BLOCK
 /**
  *	bmap	- find a block number in a file
  *	@inode:  inode owning the block number being requested
- *	@block: pointer containing the block to find
+ *	@block: poपूर्णांकer containing the block to find
  *
  *	Replaces the value in ``*block`` with the block number on the device holding
  *	corresponding to the requested block number in the file.
- *	That is, asked for block 4 of inode 1 the function will replace the
+ *	That is, asked क्रम block 4 of inode 1 the function will replace the
  *	4 in ``*block``, with disk block relative to the disk start that holds that
  *	block of the file.
  *
- *	Returns -EINVAL in case of error, 0 otherwise. If mapping falls into a
- *	hole, returns 0 and ``*block`` is also set to 0.
+ *	Returns -EINVAL in हाल of error, 0 otherwise. If mapping falls पूर्णांकo a
+ *	hole, वापसs 0 and ``*block`` is also set to 0.
  */
-int bmap(struct inode *inode, sector_t *block)
-{
-	if (!inode->i_mapping->a_ops->bmap)
-		return -EINVAL;
+पूर्णांक bmap(काष्ठा inode *inode, sector_t *block)
+अणु
+	अगर (!inode->i_mapping->a_ops->bmap)
+		वापस -EINVAL;
 
 	*block = inode->i_mapping->a_ops->bmap(inode->i_mapping, *block);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(bmap);
-#endif
+#पूर्ण_अगर
 
 /*
- * With relative atime, only update atime if the previous atime is
- * earlier than either the ctime or mtime or if at least a day has
- * passed since the last atime update.
+ * With relative aसमय, only update aसमय अगर the previous aसमय is
+ * earlier than either the स_समय or mसमय or अगर at least a day has
+ * passed since the last aसमय update.
  */
-static int relatime_need_update(struct vfsmount *mnt, struct inode *inode,
-			     struct timespec64 now)
-{
+अटल पूर्णांक relaसमय_need_update(काष्ठा vfsmount *mnt, काष्ठा inode *inode,
+			     काष्ठा बारpec64 now)
+अणु
 
-	if (!(mnt->mnt_flags & MNT_RELATIME))
-		return 1;
+	अगर (!(mnt->mnt_flags & MNT_RELATIME))
+		वापस 1;
 	/*
-	 * Is mtime younger than atime? If yes, update atime:
+	 * Is mसमय younger than aसमय? If yes, update aसमय:
 	 */
-	if (timespec64_compare(&inode->i_mtime, &inode->i_atime) >= 0)
-		return 1;
+	अगर (बारpec64_compare(&inode->i_mसमय, &inode->i_aसमय) >= 0)
+		वापस 1;
 	/*
-	 * Is ctime younger than atime? If yes, update atime:
+	 * Is स_समय younger than aसमय? If yes, update aसमय:
 	 */
-	if (timespec64_compare(&inode->i_ctime, &inode->i_atime) >= 0)
-		return 1;
+	अगर (बारpec64_compare(&inode->i_स_समय, &inode->i_aसमय) >= 0)
+		वापस 1;
 
 	/*
-	 * Is the previous atime value older than a day? If yes,
-	 * update atime:
+	 * Is the previous aसमय value older than a day? If yes,
+	 * update aसमय:
 	 */
-	if ((long)(now.tv_sec - inode->i_atime.tv_sec) >= 24*60*60)
-		return 1;
+	अगर ((दीर्घ)(now.tv_sec - inode->i_aसमय.tv_sec) >= 24*60*60)
+		वापस 1;
 	/*
-	 * Good, we can skip the atime update:
+	 * Good, we can skip the aसमय update:
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int generic_update_time(struct inode *inode, struct timespec64 *time, int flags)
-{
-	int dirty_flags = 0;
+पूर्णांक generic_update_समय(काष्ठा inode *inode, काष्ठा बारpec64 *समय, पूर्णांक flags)
+अणु
+	पूर्णांक dirty_flags = 0;
 
-	if (flags & (S_ATIME | S_CTIME | S_MTIME)) {
-		if (flags & S_ATIME)
-			inode->i_atime = *time;
-		if (flags & S_CTIME)
-			inode->i_ctime = *time;
-		if (flags & S_MTIME)
-			inode->i_mtime = *time;
+	अगर (flags & (S_ATIME | S_CTIME | S_MTIME)) अणु
+		अगर (flags & S_ATIME)
+			inode->i_aसमय = *समय;
+		अगर (flags & S_CTIME)
+			inode->i_स_समय = *समय;
+		अगर (flags & S_MTIME)
+			inode->i_mसमय = *समय;
 
-		if (inode->i_sb->s_flags & SB_LAZYTIME)
-			dirty_flags |= I_DIRTY_TIME;
-		else
-			dirty_flags |= I_DIRTY_SYNC;
-	}
+		अगर (inode->i_sb->s_flags & SB_LAZYTIME)
+			dirty_flags |= I_सूचीTY_TIME;
+		अन्यथा
+			dirty_flags |= I_सूचीTY_SYNC;
+	पूर्ण
 
-	if ((flags & S_VERSION) && inode_maybe_inc_iversion(inode, false))
-		dirty_flags |= I_DIRTY_SYNC;
+	अगर ((flags & S_VERSION) && inode_maybe_inc_iversion(inode, false))
+		dirty_flags |= I_सूचीTY_SYNC;
 
 	__mark_inode_dirty(inode, dirty_flags);
-	return 0;
-}
-EXPORT_SYMBOL(generic_update_time);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(generic_update_समय);
 
 /*
- * This does the actual work of updating an inodes time or version.  Must have
- * had called mnt_want_write() before calling this.
+ * This करोes the actual work of updating an inodes समय or version.  Must have
+ * had called mnt_want_ग_लिखो() beक्रमe calling this.
  */
-static int update_time(struct inode *inode, struct timespec64 *time, int flags)
-{
-	if (inode->i_op->update_time)
-		return inode->i_op->update_time(inode, time, flags);
-	return generic_update_time(inode, time, flags);
-}
+अटल पूर्णांक update_समय(काष्ठा inode *inode, काष्ठा बारpec64 *समय, पूर्णांक flags)
+अणु
+	अगर (inode->i_op->update_समय)
+		वापस inode->i_op->update_समय(inode, समय, flags);
+	वापस generic_update_समय(inode, समय, flags);
+पूर्ण
 
 /**
- *	atime_needs_update	-	update the access time
- *	@path: the &struct path to update
+ *	aसमय_needs_update	-	update the access समय
+ *	@path: the &काष्ठा path to update
  *	@inode: inode to update
  *
- *	Update the accessed time on an inode and mark it for writeback.
- *	This function automatically handles read only file systems and media,
- *	as well as the "noatime" flag and inode specific "noatime" markers.
+ *	Update the accessed समय on an inode and mark it क्रम ग_लिखोback.
+ *	This function स्वतःmatically handles पढ़ो only file प्रणालीs and media,
+ *	as well as the "noatime" flag and inode specअगरic "noatime" markers.
  */
-bool atime_needs_update(const struct path *path, struct inode *inode)
-{
-	struct vfsmount *mnt = path->mnt;
-	struct timespec64 now;
+bool aसमय_needs_update(स्थिर काष्ठा path *path, काष्ठा inode *inode)
+अणु
+	काष्ठा vfsmount *mnt = path->mnt;
+	काष्ठा बारpec64 now;
 
-	if (inode->i_flags & S_NOATIME)
-		return false;
+	अगर (inode->i_flags & S_NOATIME)
+		वापस false;
 
-	/* Atime updates will likely cause i_uid and i_gid to be written
-	 * back improprely if their true value is unknown to the vfs.
+	/* Aसमय updates will likely cause i_uid and i_gid to be written
+	 * back improprely अगर their true value is unknown to the vfs.
 	 */
-	if (HAS_UNMAPPED_ID(mnt_user_ns(mnt), inode))
-		return false;
+	अगर (HAS_UNMAPPED_ID(mnt_user_ns(mnt), inode))
+		वापस false;
 
-	if (IS_NOATIME(inode))
-		return false;
-	if ((inode->i_sb->s_flags & SB_NODIRATIME) && S_ISDIR(inode->i_mode))
-		return false;
+	अगर (IS_NOATIME(inode))
+		वापस false;
+	अगर ((inode->i_sb->s_flags & SB_NOसूचीATIME) && S_ISसूची(inode->i_mode))
+		वापस false;
 
-	if (mnt->mnt_flags & MNT_NOATIME)
-		return false;
-	if ((mnt->mnt_flags & MNT_NODIRATIME) && S_ISDIR(inode->i_mode))
-		return false;
+	अगर (mnt->mnt_flags & MNT_NOATIME)
+		वापस false;
+	अगर ((mnt->mnt_flags & MNT_NOसूचीATIME) && S_ISसूची(inode->i_mode))
+		वापस false;
 
-	now = current_time(inode);
+	now = current_समय(inode);
 
-	if (!relatime_need_update(mnt, inode, now))
-		return false;
+	अगर (!relaसमय_need_update(mnt, inode, now))
+		वापस false;
 
-	if (timespec64_equal(&inode->i_atime, &now))
-		return false;
+	अगर (बारpec64_equal(&inode->i_aसमय, &now))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void touch_atime(const struct path *path)
-{
-	struct vfsmount *mnt = path->mnt;
-	struct inode *inode = d_inode(path->dentry);
-	struct timespec64 now;
+व्योम touch_aसमय(स्थिर काष्ठा path *path)
+अणु
+	काष्ठा vfsmount *mnt = path->mnt;
+	काष्ठा inode *inode = d_inode(path->dentry);
+	काष्ठा बारpec64 now;
 
-	if (!atime_needs_update(path, inode))
-		return;
+	अगर (!aसमय_needs_update(path, inode))
+		वापस;
 
-	if (!sb_start_write_trylock(inode->i_sb))
-		return;
+	अगर (!sb_start_ग_लिखो_trylock(inode->i_sb))
+		वापस;
 
-	if (__mnt_want_write(mnt) != 0)
-		goto skip_update;
+	अगर (__mnt_want_ग_लिखो(mnt) != 0)
+		जाओ skip_update;
 	/*
-	 * File systems can error out when updating inodes if they need to
-	 * allocate new space to modify an inode (such is the case for
-	 * Btrfs), but since we touch atime while walking down the path we
-	 * really don't care if we failed to update the atime of the file,
-	 * so just ignore the return value.
-	 * We may also fail on filesystems that have the ability to make parts
-	 * of the fs read only, e.g. subvolumes in Btrfs.
+	 * File प्रणालीs can error out when updating inodes अगर they need to
+	 * allocate new space to modअगरy an inode (such is the हाल क्रम
+	 * Btrfs), but since we touch aसमय जबतक walking करोwn the path we
+	 * really करोn't care अगर we failed to update the aसमय of the file,
+	 * so just ignore the वापस value.
+	 * We may also fail on fileप्रणालीs that have the ability to make parts
+	 * of the fs पढ़ो only, e.g. subvolumes in Btrfs.
 	 */
-	now = current_time(inode);
-	update_time(inode, &now, S_ATIME);
-	__mnt_drop_write(mnt);
+	now = current_समय(inode);
+	update_समय(inode, &now, S_ATIME);
+	__mnt_drop_ग_लिखो(mnt);
 skip_update:
-	sb_end_write(inode->i_sb);
-}
-EXPORT_SYMBOL(touch_atime);
+	sb_end_ग_लिखो(inode->i_sb);
+पूर्ण
+EXPORT_SYMBOL(touch_aसमय);
 
 /*
  * The logic we want is
  *
- *	if suid or (sgid and xgrp)
- *		remove privs
+ *	अगर suid or (sgid and xgrp)
+ *		हटाओ privs
  */
-int should_remove_suid(struct dentry *dentry)
-{
+पूर्णांक should_हटाओ_suid(काष्ठा dentry *dentry)
+अणु
 	umode_t mode = d_inode(dentry)->i_mode;
-	int kill = 0;
+	पूर्णांक समाप्त = 0;
 
-	/* suid always must be killed */
-	if (unlikely(mode & S_ISUID))
-		kill = ATTR_KILL_SUID;
+	/* suid always must be समाप्तed */
+	अगर (unlikely(mode & S_ISUID))
+		समाप्त = ATTR_KILL_SUID;
 
 	/*
 	 * sgid without any exec bits is just a mandatory locking mark; leave
-	 * it alone.  If some exec bits are set, it's a real sgid; kill it.
+	 * it alone.  If some exec bits are set, it's a real sgid; समाप्त it.
 	 */
-	if (unlikely((mode & S_ISGID) && (mode & S_IXGRP)))
-		kill |= ATTR_KILL_SGID;
+	अगर (unlikely((mode & S_ISGID) && (mode & S_IXGRP)))
+		समाप्त |= ATTR_KILL_SGID;
 
-	if (unlikely(kill && !capable(CAP_FSETID) && S_ISREG(mode)))
-		return kill;
+	अगर (unlikely(समाप्त && !capable(CAP_FSETID) && S_ISREG(mode)))
+		वापस समाप्त;
 
-	return 0;
-}
-EXPORT_SYMBOL(should_remove_suid);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(should_हटाओ_suid);
 
 /*
- * Return mask of changes for notify_change() that need to be done as a
- * response to write or truncate. Return 0 if nothing has to be changed.
+ * Return mask of changes क्रम notअगरy_change() that need to be करोne as a
+ * response to ग_लिखो or truncate. Return 0 अगर nothing has to be changed.
  * Negative value on error (change should be denied).
  */
-int dentry_needs_remove_privs(struct dentry *dentry)
-{
-	struct inode *inode = d_inode(dentry);
-	int mask = 0;
-	int ret;
+पूर्णांक dentry_needs_हटाओ_privs(काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक mask = 0;
+	पूर्णांक ret;
 
-	if (IS_NOSEC(inode))
-		return 0;
+	अगर (IS_NOSEC(inode))
+		वापस 0;
 
-	mask = should_remove_suid(dentry);
-	ret = security_inode_need_killpriv(dentry);
-	if (ret < 0)
-		return ret;
-	if (ret)
+	mask = should_हटाओ_suid(dentry);
+	ret = security_inode_need_समाप्तpriv(dentry);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret)
 		mask |= ATTR_KILL_PRIV;
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int __remove_privs(struct user_namespace *mnt_userns,
-			  struct dentry *dentry, int kill)
-{
-	struct iattr newattrs;
+अटल पूर्णांक __हटाओ_privs(काष्ठा user_namespace *mnt_userns,
+			  काष्ठा dentry *dentry, पूर्णांक समाप्त)
+अणु
+	काष्ठा iattr newattrs;
 
-	newattrs.ia_valid = ATTR_FORCE | kill;
+	newattrs.ia_valid = ATTR_FORCE | समाप्त;
 	/*
-	 * Note we call this on write, so notify_change will not
+	 * Note we call this on ग_लिखो, so notअगरy_change will not
 	 * encounter any conflicting delegations:
 	 */
-	return notify_change(mnt_userns, dentry, &newattrs, NULL);
-}
+	वापस notअगरy_change(mnt_userns, dentry, &newattrs, शून्य);
+पूर्ण
 
 /*
  * Remove special file priviledges (suid, capabilities) when file is written
  * to or truncated.
  */
-int file_remove_privs(struct file *file)
-{
-	struct dentry *dentry = file_dentry(file);
-	struct inode *inode = file_inode(file);
-	int kill;
-	int error = 0;
+पूर्णांक file_हटाओ_privs(काष्ठा file *file)
+अणु
+	काष्ठा dentry *dentry = file_dentry(file);
+	काष्ठा inode *inode = file_inode(file);
+	पूर्णांक समाप्त;
+	पूर्णांक error = 0;
 
 	/*
-	 * Fast path for nothing security related.
-	 * As well for non-regular files, e.g. blkdev inodes.
-	 * For example, blkdev_write_iter() might get here
-	 * trying to remove privs which it is not allowed to.
+	 * Fast path क्रम nothing security related.
+	 * As well क्रम non-regular files, e.g. blkdev inodes.
+	 * For example, blkdev_ग_लिखो_iter() might get here
+	 * trying to हटाओ privs which it is not allowed to.
 	 */
-	if (IS_NOSEC(inode) || !S_ISREG(inode->i_mode))
-		return 0;
+	अगर (IS_NOSEC(inode) || !S_ISREG(inode->i_mode))
+		वापस 0;
 
-	kill = dentry_needs_remove_privs(dentry);
-	if (kill < 0)
-		return kill;
-	if (kill)
-		error = __remove_privs(file_mnt_user_ns(file), dentry, kill);
-	if (!error)
+	समाप्त = dentry_needs_हटाओ_privs(dentry);
+	अगर (समाप्त < 0)
+		वापस समाप्त;
+	अगर (समाप्त)
+		error = __हटाओ_privs(file_mnt_user_ns(file), dentry, समाप्त);
+	अगर (!error)
 		inode_has_no_xattr(inode);
 
-	return error;
-}
-EXPORT_SYMBOL(file_remove_privs);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL(file_हटाओ_privs);
 
 /**
- *	file_update_time	-	update mtime and ctime time
+ *	file_update_समय	-	update mसमय and स_समय समय
  *	@file: file accessed
  *
- *	Update the mtime and ctime members of an inode and mark the inode
- *	for writeback.  Note that this function is meant exclusively for
- *	usage in the file write path of filesystems, and filesystems may
+ *	Update the mसमय and स_समय members of an inode and mark the inode
+ *	क्रम ग_लिखोback.  Note that this function is meant exclusively क्रम
+ *	usage in the file ग_लिखो path of fileप्रणालीs, and fileप्रणालीs may
  *	choose to explicitly ignore update via this function with the
- *	S_NOCMTIME inode flag, e.g. for network filesystem where these
- *	timestamps are handled by the server.  This can return an error for
- *	file systems who need to allocate space in order to update an inode.
+ *	S_NOCMTIME inode flag, e.g. क्रम network fileप्रणाली where these
+ *	बारtamps are handled by the server.  This can वापस an error क्रम
+ *	file प्रणालीs who need to allocate space in order to update an inode.
  */
 
-int file_update_time(struct file *file)
-{
-	struct inode *inode = file_inode(file);
-	struct timespec64 now;
-	int sync_it = 0;
-	int ret;
+पूर्णांक file_update_समय(काष्ठा file *file)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा बारpec64 now;
+	पूर्णांक sync_it = 0;
+	पूर्णांक ret;
 
 	/* First try to exhaust all avenues to not sync */
-	if (IS_NOCMTIME(inode))
-		return 0;
+	अगर (IS_NOCMTIME(inode))
+		वापस 0;
 
-	now = current_time(inode);
-	if (!timespec64_equal(&inode->i_mtime, &now))
+	now = current_समय(inode);
+	अगर (!बारpec64_equal(&inode->i_mसमय, &now))
 		sync_it = S_MTIME;
 
-	if (!timespec64_equal(&inode->i_ctime, &now))
+	अगर (!बारpec64_equal(&inode->i_स_समय, &now))
 		sync_it |= S_CTIME;
 
-	if (IS_I_VERSION(inode) && inode_iversion_need_inc(inode))
+	अगर (IS_I_VERSION(inode) && inode_iversion_need_inc(inode))
 		sync_it |= S_VERSION;
 
-	if (!sync_it)
-		return 0;
+	अगर (!sync_it)
+		वापस 0;
 
-	/* Finally allowed to write? Takes lock. */
-	if (__mnt_want_write_file(file))
-		return 0;
+	/* Finally allowed to ग_लिखो? Takes lock. */
+	अगर (__mnt_want_ग_लिखो_file(file))
+		वापस 0;
 
-	ret = update_time(inode, &now, sync_it);
-	__mnt_drop_write_file(file);
+	ret = update_समय(inode, &now, sync_it);
+	__mnt_drop_ग_लिखो_file(file);
 
-	return ret;
-}
-EXPORT_SYMBOL(file_update_time);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(file_update_समय);
 
 /* Caller must hold the file's inode lock */
-int file_modified(struct file *file)
-{
-	int err;
+पूर्णांक file_modअगरied(काष्ठा file *file)
+अणु
+	पूर्णांक err;
 
 	/*
-	 * Clear the security bits if the process is not being run by root.
-	 * This keeps people from modifying setuid and setgid binaries.
+	 * Clear the security bits अगर the process is not being run by root.
+	 * This keeps people from modअगरying setuid and setgid binaries.
 	 */
-	err = file_remove_privs(file);
-	if (err)
-		return err;
+	err = file_हटाओ_privs(file);
+	अगर (err)
+		वापस err;
 
-	if (unlikely(file->f_mode & FMODE_NOCMTIME))
-		return 0;
+	अगर (unlikely(file->f_mode & FMODE_NOCMTIME))
+		वापस 0;
 
-	return file_update_time(file);
-}
-EXPORT_SYMBOL(file_modified);
+	वापस file_update_समय(file);
+पूर्ण
+EXPORT_SYMBOL(file_modअगरied);
 
-int inode_needs_sync(struct inode *inode)
-{
-	if (IS_SYNC(inode))
-		return 1;
-	if (S_ISDIR(inode->i_mode) && IS_DIRSYNC(inode))
-		return 1;
-	return 0;
-}
+पूर्णांक inode_needs_sync(काष्ठा inode *inode)
+अणु
+	अगर (IS_SYNC(inode))
+		वापस 1;
+	अगर (S_ISसूची(inode->i_mode) && IS_सूचीSYNC(inode))
+		वापस 1;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(inode_needs_sync);
 
 /*
- * If we try to find an inode in the inode hash while it is being
- * deleted, we have to wait until the filesystem completes its
- * deletion before reporting that it isn't found.  This function waits
+ * If we try to find an inode in the inode hash जबतक it is being
+ * deleted, we have to रुको until the fileप्रणाली completes its
+ * deletion beक्रमe reporting that it isn't found.  This function रुकोs
  * until the deletion _might_ have completed.  Callers are responsible
  * to recheck inode state.
  *
- * It doesn't matter if I_NEW is not set initially, a call to
+ * It करोesn't matter अगर I_NEW is not set initially, a call to
  * wake_up_bit(&inode->i_state, __I_NEW) after removing from the hash list
  * will DTRT.
  */
-static void __wait_on_freeing_inode(struct inode *inode)
-{
-	wait_queue_head_t *wq;
-	DEFINE_WAIT_BIT(wait, &inode->i_state, __I_NEW);
-	wq = bit_waitqueue(&inode->i_state, __I_NEW);
-	prepare_to_wait(wq, &wait.wq_entry, TASK_UNINTERRUPTIBLE);
+अटल व्योम __रुको_on_मुक्तing_inode(काष्ठा inode *inode)
+अणु
+	रुको_queue_head_t *wq;
+	DEFINE_WAIT_BIT(रुको, &inode->i_state, __I_NEW);
+	wq = bit_रुकोqueue(&inode->i_state, __I_NEW);
+	prepare_to_रुको(wq, &रुको.wq_entry, TASK_UNINTERRUPTIBLE);
 	spin_unlock(&inode->i_lock);
 	spin_unlock(&inode_hash_lock);
 	schedule();
-	finish_wait(wq, &wait.wq_entry);
+	finish_रुको(wq, &रुको.wq_entry);
 	spin_lock(&inode_hash_lock);
-}
+पूर्ण
 
-static __initdata unsigned long ihash_entries;
-static int __init set_ihash_entries(char *str)
-{
-	if (!str)
-		return 0;
-	ihash_entries = simple_strtoul(str, &str, 0);
-	return 1;
-}
+अटल __initdata अचिन्हित दीर्घ ihash_entries;
+अटल पूर्णांक __init set_ihash_entries(अक्षर *str)
+अणु
+	अगर (!str)
+		वापस 0;
+	ihash_entries = simple_म_से_अदीर्घ(str, &str, 0);
+	वापस 1;
+पूर्ण
 __setup("ihash_entries=", set_ihash_entries);
 
 /*
- * Initialize the waitqueues and inode hash table.
+ * Initialize the रुकोqueues and inode hash table.
  */
-void __init inode_init_early(void)
-{
+व्योम __init inode_init_early(व्योम)
+अणु
 	/* If hashes are distributed across NUMA nodes, defer
-	 * hash allocation until vmalloc space is available.
+	 * hash allocation until vदो_स्मृति space is available.
 	 */
-	if (hashdist)
-		return;
+	अगर (hashdist)
+		वापस;
 
 	inode_hashtable =
-		alloc_large_system_hash("Inode-cache",
-					sizeof(struct hlist_head),
+		alloc_large_प्रणाली_hash("Inode-cache",
+					माप(काष्ठा hlist_head),
 					ihash_entries,
 					14,
 					HASH_EARLY | HASH_ZERO,
-					&i_hash_shift,
+					&i_hash_shअगरt,
 					&i_hash_mask,
 					0,
 					0);
-}
+पूर्ण
 
-void __init inode_init(void)
-{
+व्योम __init inode_init(व्योम)
+अणु
 	/* inode slab cache */
 	inode_cachep = kmem_cache_create("inode_cache",
-					 sizeof(struct inode),
+					 माप(काष्ठा inode),
 					 0,
 					 (SLAB_RECLAIM_ACCOUNT|SLAB_PANIC|
 					 SLAB_MEM_SPREAD|SLAB_ACCOUNT),
 					 init_once);
 
 	/* Hash may have been set up in inode_init_early */
-	if (!hashdist)
-		return;
+	अगर (!hashdist)
+		वापस;
 
 	inode_hashtable =
-		alloc_large_system_hash("Inode-cache",
-					sizeof(struct hlist_head),
+		alloc_large_प्रणाली_hash("Inode-cache",
+					माप(काष्ठा hlist_head),
 					ihash_entries,
 					14,
 					HASH_ZERO,
-					&i_hash_shift,
+					&i_hash_shअगरt,
 					&i_hash_mask,
 					0,
 					0);
-}
+पूर्ण
 
-void init_special_inode(struct inode *inode, umode_t mode, dev_t rdev)
-{
+व्योम init_special_inode(काष्ठा inode *inode, umode_t mode, dev_t rdev)
+अणु
 	inode->i_mode = mode;
-	if (S_ISCHR(mode)) {
+	अगर (S_ISCHR(mode)) अणु
 		inode->i_fop = &def_chr_fops;
 		inode->i_rdev = rdev;
-	} else if (S_ISBLK(mode)) {
+	पूर्ण अन्यथा अगर (S_ISBLK(mode)) अणु
 		inode->i_fop = &def_blk_fops;
 		inode->i_rdev = rdev;
-	} else if (S_ISFIFO(mode))
-		inode->i_fop = &pipefifo_fops;
-	else if (S_ISSOCK(mode))
-		;	/* leave it no_open_fops */
-	else
-		printk(KERN_DEBUG "init_special_inode: bogus i_mode (%o) for"
+	पूर्ण अन्यथा अगर (S_ISFIFO(mode))
+		inode->i_fop = &pipefअगरo_fops;
+	अन्यथा अगर (S_ISSOCK(mode))
+		;	/* leave it no_खोलो_fops */
+	अन्यथा
+		prपूर्णांकk(KERN_DEBUG "init_special_inode: bogus i_mode (%o) for"
 				  " inode %s:%lu\n", mode, inode->i_sb->s_id,
 				  inode->i_ino);
-}
+पूर्ण
 EXPORT_SYMBOL(init_special_inode);
 
 /**
- * inode_init_owner - Init uid,gid,mode for new inode according to posix standards
+ * inode_init_owner - Init uid,gid,mode क्रम new inode according to posix standards
  * @mnt_userns:	User namespace of the mount the inode was created from
  * @inode: New inode
  * @dir: Directory inode
@@ -2147,28 +2148,28 @@ EXPORT_SYMBOL(init_special_inode);
  *
  * If the inode has been created through an idmapped mount the user namespace of
  * the vfsmount must be passed through @mnt_userns. This function will then take
- * care to map the inode according to @mnt_userns before checking permissions
- * and initializing i_uid and i_gid. On non-idmapped mounts or if permission
- * checking is to be performed on the raw inode simply passs init_user_ns.
+ * care to map the inode according to @mnt_userns beक्रमe checking permissions
+ * and initializing i_uid and i_gid. On non-idmapped mounts or अगर permission
+ * checking is to be perक्रमmed on the raw inode simply passs init_user_ns.
  */
-void inode_init_owner(struct user_namespace *mnt_userns, struct inode *inode,
-		      const struct inode *dir, umode_t mode)
-{
+व्योम inode_init_owner(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		      स्थिर काष्ठा inode *dir, umode_t mode)
+अणु
 	inode_fsuid_set(inode, mnt_userns);
-	if (dir && dir->i_mode & S_ISGID) {
+	अगर (dir && dir->i_mode & S_ISGID) अणु
 		inode->i_gid = dir->i_gid;
 
 		/* Directories are special, and always inherit S_ISGID */
-		if (S_ISDIR(mode))
+		अगर (S_ISसूची(mode))
 			mode |= S_ISGID;
-		else if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP) &&
-			 !in_group_p(i_gid_into_mnt(mnt_userns, dir)) &&
+		अन्यथा अगर ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP) &&
+			 !in_group_p(i_gid_पूर्णांकo_mnt(mnt_userns, dir)) &&
 			 !capable_wrt_inode_uidgid(mnt_userns, dir, CAP_FSETID))
 			mode &= ~S_ISGID;
-	} else
+	पूर्ण अन्यथा
 		inode_fsgid_set(inode, mnt_userns);
 	inode->i_mode = mode;
-}
+पूर्ण
 EXPORT_SYMBOL(inode_init_owner);
 
 /**
@@ -2176,147 +2177,147 @@ EXPORT_SYMBOL(inode_init_owner);
  * @mnt_userns:	user namespace of the mount the inode was found from
  * @inode: inode being checked
  *
- * Return true if current either has CAP_FOWNER in a namespace with the
+ * Return true अगर current either has CAP_FOWNER in a namespace with the
  * inode owner uid mapped, or owns the file.
  *
  * If the inode has been found through an idmapped mount the user namespace of
  * the vfsmount must be passed through @mnt_userns. This function will then take
- * care to map the inode according to @mnt_userns before checking permissions.
- * On non-idmapped mounts or if permission checking is to be performed on the
+ * care to map the inode according to @mnt_userns beक्रमe checking permissions.
+ * On non-idmapped mounts or अगर permission checking is to be perक्रमmed on the
  * raw inode simply passs init_user_ns.
  */
-bool inode_owner_or_capable(struct user_namespace *mnt_userns,
-			    const struct inode *inode)
-{
+bool inode_owner_or_capable(काष्ठा user_namespace *mnt_userns,
+			    स्थिर काष्ठा inode *inode)
+अणु
 	kuid_t i_uid;
-	struct user_namespace *ns;
+	काष्ठा user_namespace *ns;
 
-	i_uid = i_uid_into_mnt(mnt_userns, inode);
-	if (uid_eq(current_fsuid(), i_uid))
-		return true;
+	i_uid = i_uid_पूर्णांकo_mnt(mnt_userns, inode);
+	अगर (uid_eq(current_fsuid(), i_uid))
+		वापस true;
 
 	ns = current_user_ns();
-	if (kuid_has_mapping(ns, i_uid) && ns_capable(ns, CAP_FOWNER))
-		return true;
-	return false;
-}
+	अगर (kuid_has_mapping(ns, i_uid) && ns_capable(ns, CAP_FOWNER))
+		वापस true;
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL(inode_owner_or_capable);
 
 /*
  * Direct i/o helper functions
  */
-static void __inode_dio_wait(struct inode *inode)
-{
-	wait_queue_head_t *wq = bit_waitqueue(&inode->i_state, __I_DIO_WAKEUP);
+अटल व्योम __inode_dio_रुको(काष्ठा inode *inode)
+अणु
+	रुको_queue_head_t *wq = bit_रुकोqueue(&inode->i_state, __I_DIO_WAKEUP);
 	DEFINE_WAIT_BIT(q, &inode->i_state, __I_DIO_WAKEUP);
 
-	do {
-		prepare_to_wait(wq, &q.wq_entry, TASK_UNINTERRUPTIBLE);
-		if (atomic_read(&inode->i_dio_count))
+	करो अणु
+		prepare_to_रुको(wq, &q.wq_entry, TASK_UNINTERRUPTIBLE);
+		अगर (atomic_पढ़ो(&inode->i_dio_count))
 			schedule();
-	} while (atomic_read(&inode->i_dio_count));
-	finish_wait(wq, &q.wq_entry);
-}
+	पूर्ण जबतक (atomic_पढ़ो(&inode->i_dio_count));
+	finish_रुको(wq, &q.wq_entry);
+पूर्ण
 
 /**
- * inode_dio_wait - wait for outstanding DIO requests to finish
- * @inode: inode to wait for
+ * inode_dio_रुको - रुको क्रम outstanding DIO requests to finish
+ * @inode: inode to रुको क्रम
  *
- * Waits for all pending direct I/O requests to finish so that we can
+ * Waits क्रम all pending direct I/O requests to finish so that we can
  * proceed with a truncate or equivalent operation.
  *
  * Must be called under a lock that serializes taking new references
  * to i_dio_count, usually by inode->i_mutex.
  */
-void inode_dio_wait(struct inode *inode)
-{
-	if (atomic_read(&inode->i_dio_count))
-		__inode_dio_wait(inode);
-}
-EXPORT_SYMBOL(inode_dio_wait);
+व्योम inode_dio_रुको(काष्ठा inode *inode)
+अणु
+	अगर (atomic_पढ़ो(&inode->i_dio_count))
+		__inode_dio_रुको(inode);
+पूर्ण
+EXPORT_SYMBOL(inode_dio_रुको);
 
 /*
  * inode_set_flags - atomically set some inode flags
  *
- * Note: the caller should be holding i_mutex, or else be sure that
- * they have exclusive access to the inode structure (i.e., while the
- * inode is being instantiated).  The reason for the cmpxchg() loop
- * --- which wouldn't be necessary if all code paths which modify
+ * Note: the caller should be holding i_mutex, or अन्यथा be sure that
+ * they have exclusive access to the inode काष्ठाure (i.e., जबतक the
+ * inode is being instantiated).  The reason क्रम the cmpxchg() loop
+ * --- which wouldn't be necessary अगर all code paths which modअगरy
  * i_flags actually followed this rule, is that there is at least one
- * code path which doesn't today so we use cmpxchg() out of an abundance
+ * code path which करोesn't today so we use cmpxchg() out of an abundance
  * of caution.
  *
- * In the long run, i_mutex is overkill, and we should probably look
+ * In the दीर्घ run, i_mutex is overसमाप्त, and we should probably look
  * at using the i_lock spinlock to protect i_flags, and then make sure
- * it is so documented in include/linux/fs.h and that all code follows
+ * it is so करोcumented in include/linux/fs.h and that all code follows
  * the locking convention!!
  */
-void inode_set_flags(struct inode *inode, unsigned int flags,
-		     unsigned int mask)
-{
+व्योम inode_set_flags(काष्ठा inode *inode, अचिन्हित पूर्णांक flags,
+		     अचिन्हित पूर्णांक mask)
+अणु
 	WARN_ON_ONCE(flags & ~mask);
 	set_mask_bits(&inode->i_flags, mask, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(inode_set_flags);
 
-void inode_nohighmem(struct inode *inode)
-{
+व्योम inode_nohighmem(काष्ठा inode *inode)
+अणु
 	mapping_set_gfp_mask(inode->i_mapping, GFP_USER);
-}
+पूर्ण
 EXPORT_SYMBOL(inode_nohighmem);
 
 /**
- * timestamp_truncate - Truncate timespec to a granularity
+ * बारtamp_truncate - Truncate बारpec to a granularity
  * @t: Timespec
  * @inode: inode being updated
  *
- * Truncate a timespec to the granularity supported by the fs
- * containing the inode. Always rounds down. gran must
+ * Truncate a बारpec to the granularity supported by the fs
+ * containing the inode. Always rounds करोwn. gran must
  * not be 0 nor greater than a second (NSEC_PER_SEC, or 10^9 ns).
  */
-struct timespec64 timestamp_truncate(struct timespec64 t, struct inode *inode)
-{
-	struct super_block *sb = inode->i_sb;
-	unsigned int gran = sb->s_time_gran;
+काष्ठा बारpec64 बारtamp_truncate(काष्ठा बारpec64 t, काष्ठा inode *inode)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	अचिन्हित पूर्णांक gran = sb->s_समय_gran;
 
-	t.tv_sec = clamp(t.tv_sec, sb->s_time_min, sb->s_time_max);
-	if (unlikely(t.tv_sec == sb->s_time_max || t.tv_sec == sb->s_time_min))
+	t.tv_sec = clamp(t.tv_sec, sb->s_समय_min, sb->s_समय_max);
+	अगर (unlikely(t.tv_sec == sb->s_समय_max || t.tv_sec == sb->s_समय_min))
 		t.tv_nsec = 0;
 
-	/* Avoid division in the common cases 1 ns and 1 s. */
-	if (gran == 1)
+	/* Aव्योम भागision in the common हालs 1 ns and 1 s. */
+	अगर (gran == 1)
 		; /* nothing */
-	else if (gran == NSEC_PER_SEC)
+	अन्यथा अगर (gran == NSEC_PER_SEC)
 		t.tv_nsec = 0;
-	else if (gran > 1 && gran < NSEC_PER_SEC)
+	अन्यथा अगर (gran > 1 && gran < NSEC_PER_SEC)
 		t.tv_nsec -= t.tv_nsec % gran;
-	else
+	अन्यथा
 		WARN(1, "invalid file time granularity: %u", gran);
-	return t;
-}
-EXPORT_SYMBOL(timestamp_truncate);
+	वापस t;
+पूर्ण
+EXPORT_SYMBOL(बारtamp_truncate);
 
 /**
- * current_time - Return FS time
+ * current_समय - Return FS समय
  * @inode: inode.
  *
- * Return the current time truncated to the time granularity supported by
+ * Return the current समय truncated to the समय granularity supported by
  * the fs.
  *
- * Note that inode and inode->sb cannot be NULL.
- * Otherwise, the function warns and returns time without truncation.
+ * Note that inode and inode->sb cannot be शून्य.
+ * Otherwise, the function warns and वापसs समय without truncation.
  */
-struct timespec64 current_time(struct inode *inode)
-{
-	struct timespec64 now;
+काष्ठा बारpec64 current_समय(काष्ठा inode *inode)
+अणु
+	काष्ठा बारpec64 now;
 
-	ktime_get_coarse_real_ts64(&now);
+	kसमय_get_coarse_real_ts64(&now);
 
-	if (unlikely(!inode->i_sb)) {
+	अगर (unlikely(!inode->i_sb)) अणु
 		WARN(1, "current_time() called with uninitialized super_block in the inode");
-		return now;
-	}
+		वापस now;
+	पूर्ण
 
-	return timestamp_truncate(now, inode);
-}
-EXPORT_SYMBOL(current_time);
+	वापस बारtamp_truncate(now, inode);
+पूर्ण
+EXPORT_SYMBOL(current_समय);

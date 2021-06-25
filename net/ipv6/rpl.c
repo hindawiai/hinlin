@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Authors:
  * (C) 2020 Alexander Aring <alex.aring@gmail.com>
  */
 
-#include <net/ipv6.h>
-#include <net/rpl.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/rpl.h>
 
-#define IPV6_PFXTAIL_LEN(x) (sizeof(struct in6_addr) - (x))
-#define IPV6_RPL_BEST_ADDR_COMPRESSION 15
+#घोषणा IPV6_PFXTAIL_LEN(x) (माप(काष्ठा in6_addr) - (x))
+#घोषणा IPV6_RPL_BEST_ADDR_COMPRESSION 15
 
-static void ipv6_rpl_addr_decompress(struct in6_addr *dst,
-				     const struct in6_addr *daddr,
-				     const void *post, unsigned char pfx)
-{
-	memcpy(dst, daddr, pfx);
-	memcpy(&dst->s6_addr[pfx], post, IPV6_PFXTAIL_LEN(pfx));
-}
+अटल व्योम ipv6_rpl_addr_decompress(काष्ठा in6_addr *dst,
+				     स्थिर काष्ठा in6_addr *daddr,
+				     स्थिर व्योम *post, अचिन्हित अक्षर pfx)
+अणु
+	स_नकल(dst, daddr, pfx);
+	स_नकल(&dst->s6_addr[pfx], post, IPV6_PFXTAIL_LEN(pfx));
+पूर्ण
 
-static void ipv6_rpl_addr_compress(void *dst, const struct in6_addr *addr,
-				   unsigned char pfx)
-{
-	memcpy(dst, &addr->s6_addr[pfx], IPV6_PFXTAIL_LEN(pfx));
-}
+अटल व्योम ipv6_rpl_addr_compress(व्योम *dst, स्थिर काष्ठा in6_addr *addr,
+				   अचिन्हित अक्षर pfx)
+अणु
+	स_नकल(dst, &addr->s6_addr[pfx], IPV6_PFXTAIL_LEN(pfx));
+पूर्ण
 
-static void *ipv6_rpl_segdata_pos(const struct ipv6_rpl_sr_hdr *hdr, int i)
-{
-	return (void *)&hdr->rpl_segdata[i * IPV6_PFXTAIL_LEN(hdr->cmpri)];
-}
+अटल व्योम *ipv6_rpl_segdata_pos(स्थिर काष्ठा ipv6_rpl_sr_hdr *hdr, पूर्णांक i)
+अणु
+	वापस (व्योम *)&hdr->rpl_segdata[i * IPV6_PFXTAIL_LEN(hdr->cmpri)];
+पूर्ण
 
-size_t ipv6_rpl_srh_size(unsigned char n, unsigned char cmpri,
-			 unsigned char cmpre)
-{
-	return (n * IPV6_PFXTAIL_LEN(cmpri)) + IPV6_PFXTAIL_LEN(cmpre);
-}
+माप_प्रकार ipv6_rpl_srh_size(अचिन्हित अक्षर n, अचिन्हित अक्षर cmpri,
+			 अचिन्हित अक्षर cmpre)
+अणु
+	वापस (n * IPV6_PFXTAIL_LEN(cmpri)) + IPV6_PFXTAIL_LEN(cmpre);
+पूर्ण
 
-void ipv6_rpl_srh_decompress(struct ipv6_rpl_sr_hdr *outhdr,
-			     const struct ipv6_rpl_sr_hdr *inhdr,
-			     const struct in6_addr *daddr, unsigned char n)
-{
-	int i;
+व्योम ipv6_rpl_srh_decompress(काष्ठा ipv6_rpl_sr_hdr *outhdr,
+			     स्थिर काष्ठा ipv6_rpl_sr_hdr *inhdr,
+			     स्थिर काष्ठा in6_addr *daddr, अचिन्हित अक्षर n)
+अणु
+	पूर्णांक i;
 
 	outhdr->nexthdr = inhdr->nexthdr;
-	outhdr->hdrlen = (((n + 1) * sizeof(struct in6_addr)) >> 3);
+	outhdr->hdrlen = (((n + 1) * माप(काष्ठा in6_addr)) >> 3);
 	outhdr->pad = 0;
 	outhdr->type = inhdr->type;
 	outhdr->segments_left = inhdr->segments_left;
 	outhdr->cmpri = 0;
 	outhdr->cmpre = 0;
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		ipv6_rpl_addr_decompress(&outhdr->rpl_segaddr[i], daddr,
 					 ipv6_rpl_segdata_pos(inhdr, i),
 					 inhdr->cmpri);
@@ -57,46 +58,46 @@ void ipv6_rpl_srh_decompress(struct ipv6_rpl_sr_hdr *outhdr,
 	ipv6_rpl_addr_decompress(&outhdr->rpl_segaddr[n], daddr,
 				 ipv6_rpl_segdata_pos(inhdr, n),
 				 inhdr->cmpre);
-}
+पूर्ण
 
-static unsigned char ipv6_rpl_srh_calc_cmpri(const struct ipv6_rpl_sr_hdr *inhdr,
-					     const struct in6_addr *daddr,
-					     unsigned char n)
-{
-	unsigned char plen;
-	int i;
+अटल अचिन्हित अक्षर ipv6_rpl_srh_calc_cmpri(स्थिर काष्ठा ipv6_rpl_sr_hdr *inhdr,
+					     स्थिर काष्ठा in6_addr *daddr,
+					     अचिन्हित अक्षर n)
+अणु
+	अचिन्हित अक्षर plen;
+	पूर्णांक i;
 
-	for (plen = 0; plen < sizeof(*daddr); plen++) {
-		for (i = 0; i < n; i++) {
-			if (daddr->s6_addr[plen] !=
+	क्रम (plen = 0; plen < माप(*daddr); plen++) अणु
+		क्रम (i = 0; i < n; i++) अणु
+			अगर (daddr->s6_addr[plen] !=
 			    inhdr->rpl_segaddr[i].s6_addr[plen])
-				return plen;
-		}
-	}
+				वापस plen;
+		पूर्ण
+	पूर्ण
 
-	return IPV6_RPL_BEST_ADDR_COMPRESSION;
-}
+	वापस IPV6_RPL_BEST_ADDR_COMPRESSION;
+पूर्ण
 
-static unsigned char ipv6_rpl_srh_calc_cmpre(const struct in6_addr *daddr,
-					     const struct in6_addr *last_segment)
-{
-	unsigned int plen;
+अटल अचिन्हित अक्षर ipv6_rpl_srh_calc_cmpre(स्थिर काष्ठा in6_addr *daddr,
+					     स्थिर काष्ठा in6_addr *last_segment)
+अणु
+	अचिन्हित पूर्णांक plen;
 
-	for (plen = 0; plen < sizeof(*daddr); plen++) {
-		if (daddr->s6_addr[plen] != last_segment->s6_addr[plen])
-			return plen;
-	}
+	क्रम (plen = 0; plen < माप(*daddr); plen++) अणु
+		अगर (daddr->s6_addr[plen] != last_segment->s6_addr[plen])
+			वापस plen;
+	पूर्ण
 
-	return IPV6_RPL_BEST_ADDR_COMPRESSION;
-}
+	वापस IPV6_RPL_BEST_ADDR_COMPRESSION;
+पूर्ण
 
-void ipv6_rpl_srh_compress(struct ipv6_rpl_sr_hdr *outhdr,
-			   const struct ipv6_rpl_sr_hdr *inhdr,
-			   const struct in6_addr *daddr, unsigned char n)
-{
-	unsigned char cmpri, cmpre;
-	size_t seglen;
-	int i;
+व्योम ipv6_rpl_srh_compress(काष्ठा ipv6_rpl_sr_hdr *outhdr,
+			   स्थिर काष्ठा ipv6_rpl_sr_hdr *inhdr,
+			   स्थिर काष्ठा in6_addr *daddr, अचिन्हित अक्षर n)
+अणु
+	अचिन्हित अक्षर cmpri, cmpre;
+	माप_प्रकार seglen;
+	पूर्णांक i;
 
 	cmpri = ipv6_rpl_srh_calc_cmpri(inhdr, daddr, n);
 	cmpre = ipv6_rpl_srh_calc_cmpre(daddr, &inhdr->rpl_segaddr[n]);
@@ -104,21 +105,21 @@ void ipv6_rpl_srh_compress(struct ipv6_rpl_sr_hdr *outhdr,
 	outhdr->nexthdr = inhdr->nexthdr;
 	seglen = (n * IPV6_PFXTAIL_LEN(cmpri)) + IPV6_PFXTAIL_LEN(cmpre);
 	outhdr->hdrlen = seglen >> 3;
-	if (seglen & 0x7) {
+	अगर (seglen & 0x7) अणु
 		outhdr->hdrlen++;
 		outhdr->pad = 8 - (seglen & 0x7);
-	} else {
+	पूर्ण अन्यथा अणु
 		outhdr->pad = 0;
-	}
+	पूर्ण
 	outhdr->type = inhdr->type;
 	outhdr->segments_left = inhdr->segments_left;
 	outhdr->cmpri = cmpri;
 	outhdr->cmpre = cmpre;
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		ipv6_rpl_addr_compress(ipv6_rpl_segdata_pos(outhdr, i),
 				       &inhdr->rpl_segaddr[i], cmpri);
 
 	ipv6_rpl_addr_compress(ipv6_rpl_segdata_pos(outhdr, n),
 			       &inhdr->rpl_segaddr[n], cmpre);
-}
+पूर्ण

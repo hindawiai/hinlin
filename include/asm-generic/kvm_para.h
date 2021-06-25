@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_GENERIC_KVM_PARA_H
-#define _ASM_GENERIC_KVM_PARA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_GENERIC_KVM_PARA_H
+#घोषणा _ASM_GENERIC_KVM_PARA_H
 
-#include <uapi/asm-generic/kvm_para.h>
+#समावेश <uapi/यंत्र-generic/kvm_para.h>
 
 
 /*
- * This function is used by architectures that support kvm to avoid issuing
+ * This function is used by architectures that support kvm to aव्योम issuing
  * false soft lockup messages.
  */
-static inline bool kvm_check_and_clear_guest_paused(void)
-{
-	return false;
-}
+अटल अंतरभूत bool kvm_check_and_clear_guest_छोड़ोd(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline unsigned int kvm_arch_para_features(void)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक kvm_arch_para_features(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline unsigned int kvm_arch_para_hints(void)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक kvm_arch_para_hपूर्णांकs(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline bool kvm_para_available(void)
-{
-	return false;
-}
+अटल अंतरभूत bool kvm_para_available(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

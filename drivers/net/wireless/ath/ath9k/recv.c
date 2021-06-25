@@ -1,54 +1,55 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2008-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <linux/dma-mapping.h>
-#include "ath9k.h"
-#include "ar9003_mac.h"
+#समावेश <linux/dma-mapping.h>
+#समावेश "ath9k.h"
+#समावेश "ar9003_mac.h"
 
-#define SKB_CB_ATHBUF(__skb)	(*((struct ath_rxbuf **)__skb->cb))
+#घोषणा SKB_CB_ATHBUF(__skb)	(*((काष्ठा ath_rxbuf **)__skb->cb))
 
-static inline bool ath9k_check_auto_sleep(struct ath_softc *sc)
-{
-	return sc->ps_enabled &&
+अटल अंतरभूत bool ath9k_check_स्वतः_sleep(काष्ठा ath_softc *sc)
+अणु
+	वापस sc->ps_enabled &&
 	       (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_AUTOSLEEP);
-}
+पूर्ण
 
 /*
  * Setup and link descriptors.
  *
- * 11N: we can no longer afford to self link the last descriptor.
- * MAC acknowledges BA status as long as it copies frames to host
- * buffer (or rx fifo). This can incorrectly acknowledge packets
- * to a sender if last desc is self-linked.
+ * 11N: we can no दीर्घer afक्रमd to self link the last descriptor.
+ * MAC acknowledges BA status as दीर्घ as it copies frames to host
+ * buffer (or rx fअगरo). This can incorrectly acknowledge packets
+ * to a sender अगर last desc is self-linked.
  */
-static void ath_rx_buf_link(struct ath_softc *sc, struct ath_rxbuf *bf,
+अटल व्योम ath_rx_buf_link(काष्ठा ath_softc *sc, काष्ठा ath_rxbuf *bf,
 			    bool flush)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ath_desc *ds;
-	struct sk_buff *skb;
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ath_desc *ds;
+	काष्ठा sk_buff *skb;
 
 	ds = bf->bf_desc;
 	ds->ds_link = 0; /* link to null */
 	ds->ds_data = bf->bf_buf_addr;
 
-	/* virtual addr of the beginning of the buffer. */
+	/* भव addr of the beginning of the buffer. */
 	skb = bf->bf_mpdu;
-	BUG_ON(skb == NULL);
+	BUG_ON(skb == शून्य);
 	ds->ds_vdata = skb->data;
 
 	/*
@@ -60,35 +61,35 @@ static void ath_rx_buf_link(struct ath_softc *sc, struct ath_rxbuf *bf,
 			     common->rx_bufsize,
 			     0);
 
-	if (sc->rx.rxlink)
+	अगर (sc->rx.rxlink)
 		*sc->rx.rxlink = bf->bf_daddr;
-	else if (!flush)
+	अन्यथा अगर (!flush)
 		ath9k_hw_putrxbuf(ah, bf->bf_daddr);
 
 	sc->rx.rxlink = &ds->ds_link;
-}
+पूर्ण
 
-static void ath_rx_buf_relink(struct ath_softc *sc, struct ath_rxbuf *bf,
+अटल व्योम ath_rx_buf_relink(काष्ठा ath_softc *sc, काष्ठा ath_rxbuf *bf,
 			      bool flush)
-{
-	if (sc->rx.buf_hold)
+अणु
+	अगर (sc->rx.buf_hold)
 		ath_rx_buf_link(sc, sc->rx.buf_hold, flush);
 
 	sc->rx.buf_hold = bf;
-}
+पूर्ण
 
-static void ath_setdefantenna(struct ath_softc *sc, u32 antenna)
-{
-	/* XXX block beacon interrupts */
+अटल व्योम ath_setdefantenna(काष्ठा ath_softc *sc, u32 antenna)
+अणु
+	/* XXX block beacon पूर्णांकerrupts */
 	ath9k_hw_setantenna(sc->sc_ah, antenna);
 	sc->rx.defant = antenna;
 	sc->rx.rxotherant = 0;
-}
+पूर्ण
 
-static void ath_opmode_init(struct ath_softc *sc)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
+अटल व्योम ath_opmode_init(काष्ठा ath_softc *sc)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 
 	u32 rfilt, mfilt[2];
 
@@ -104,104 +105,104 @@ static void ath_opmode_init(struct ath_softc *sc)
 
 	/* calculate and install multicast filter */
 	mfilt[0] = mfilt[1] = ~0;
-	ath9k_hw_setmcastfilter(ah, mfilt[0], mfilt[1]);
-}
+	ath9k_hw_seपंचांगcastfilter(ah, mfilt[0], mfilt[1]);
+पूर्ण
 
-static bool ath_rx_edma_buf_link(struct ath_softc *sc,
-				 enum ath9k_rx_qtype qtype)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_rx_edma *rx_edma;
-	struct sk_buff *skb;
-	struct ath_rxbuf *bf;
+अटल bool ath_rx_edma_buf_link(काष्ठा ath_softc *sc,
+				 क्रमागत ath9k_rx_qtype qtype)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_rx_edma *rx_edma;
+	काष्ठा sk_buff *skb;
+	काष्ठा ath_rxbuf *bf;
 
 	rx_edma = &sc->rx.rx_edma[qtype];
-	if (skb_queue_len(&rx_edma->rx_fifo) >= rx_edma->rx_fifo_hwsize)
-		return false;
+	अगर (skb_queue_len(&rx_edma->rx_fअगरo) >= rx_edma->rx_fअगरo_hwsize)
+		वापस false;
 
-	bf = list_first_entry(&sc->rx.rxbuf, struct ath_rxbuf, list);
+	bf = list_first_entry(&sc->rx.rxbuf, काष्ठा ath_rxbuf, list);
 	list_del_init(&bf->list);
 
 	skb = bf->bf_mpdu;
 
-	memset(skb->data, 0, ah->caps.rx_status_len);
-	dma_sync_single_for_device(sc->dev, bf->bf_buf_addr,
+	स_रखो(skb->data, 0, ah->caps.rx_status_len);
+	dma_sync_single_क्रम_device(sc->dev, bf->bf_buf_addr,
 				ah->caps.rx_status_len, DMA_TO_DEVICE);
 
 	SKB_CB_ATHBUF(skb) = bf;
 	ath9k_hw_addrxbuf_edma(ah, bf->bf_buf_addr, qtype);
-	__skb_queue_tail(&rx_edma->rx_fifo, skb);
+	__skb_queue_tail(&rx_edma->rx_fअगरo, skb);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void ath_rx_addbuffer_edma(struct ath_softc *sc,
-				  enum ath9k_rx_qtype qtype)
-{
-	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
-	struct ath_rxbuf *bf, *tbf;
+अटल व्योम ath_rx_addbuffer_edma(काष्ठा ath_softc *sc,
+				  क्रमागत ath9k_rx_qtype qtype)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+	काष्ठा ath_rxbuf *bf, *tbf;
 
-	if (list_empty(&sc->rx.rxbuf)) {
+	अगर (list_empty(&sc->rx.rxbuf)) अणु
 		ath_dbg(common, QUEUE, "No free rx buf available\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_for_each_entry_safe(bf, tbf, &sc->rx.rxbuf, list)
-		if (!ath_rx_edma_buf_link(sc, qtype))
-			break;
+	list_क्रम_each_entry_safe(bf, tbf, &sc->rx.rxbuf, list)
+		अगर (!ath_rx_edma_buf_link(sc, qtype))
+			अवरोध;
 
-}
+पूर्ण
 
-static void ath_rx_remove_buffer(struct ath_softc *sc,
-				 enum ath9k_rx_qtype qtype)
-{
-	struct ath_rxbuf *bf;
-	struct ath_rx_edma *rx_edma;
-	struct sk_buff *skb;
+अटल व्योम ath_rx_हटाओ_buffer(काष्ठा ath_softc *sc,
+				 क्रमागत ath9k_rx_qtype qtype)
+अणु
+	काष्ठा ath_rxbuf *bf;
+	काष्ठा ath_rx_edma *rx_edma;
+	काष्ठा sk_buff *skb;
 
 	rx_edma = &sc->rx.rx_edma[qtype];
 
-	while ((skb = __skb_dequeue(&rx_edma->rx_fifo)) != NULL) {
+	जबतक ((skb = __skb_dequeue(&rx_edma->rx_fअगरo)) != शून्य) अणु
 		bf = SKB_CB_ATHBUF(skb);
 		BUG_ON(!bf);
 		list_add_tail(&bf->list, &sc->rx.rxbuf);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ath_rx_edma_cleanup(struct ath_softc *sc)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ath_rxbuf *bf;
+अटल व्योम ath_rx_edma_cleanup(काष्ठा ath_softc *sc)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ath_rxbuf *bf;
 
-	ath_rx_remove_buffer(sc, ATH9K_RX_QUEUE_LP);
-	ath_rx_remove_buffer(sc, ATH9K_RX_QUEUE_HP);
+	ath_rx_हटाओ_buffer(sc, ATH9K_RX_QUEUE_LP);
+	ath_rx_हटाओ_buffer(sc, ATH9K_RX_QUEUE_HP);
 
-	list_for_each_entry(bf, &sc->rx.rxbuf, list) {
-		if (bf->bf_mpdu) {
+	list_क्रम_each_entry(bf, &sc->rx.rxbuf, list) अणु
+		अगर (bf->bf_mpdu) अणु
 			dma_unmap_single(sc->dev, bf->bf_buf_addr,
 					common->rx_bufsize,
-					DMA_BIDIRECTIONAL);
-			dev_kfree_skb_any(bf->bf_mpdu);
+					DMA_BIसूचीECTIONAL);
+			dev_kमुक्त_skb_any(bf->bf_mpdu);
 			bf->bf_buf_addr = 0;
-			bf->bf_mpdu = NULL;
-		}
-	}
-}
+			bf->bf_mpdu = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ath_rx_edma_init_queue(struct ath_rx_edma *rx_edma, int size)
-{
-	__skb_queue_head_init(&rx_edma->rx_fifo);
-	rx_edma->rx_fifo_hwsize = size;
-}
+अटल व्योम ath_rx_edma_init_queue(काष्ठा ath_rx_edma *rx_edma, पूर्णांक size)
+अणु
+	__skb_queue_head_init(&rx_edma->rx_fअगरo);
+	rx_edma->rx_fअगरo_hwsize = size;
+पूर्ण
 
-static int ath_rx_edma_init(struct ath_softc *sc, int nbufs)
-{
-	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
-	struct ath_hw *ah = sc->sc_ah;
-	struct sk_buff *skb;
-	struct ath_rxbuf *bf;
-	int error = 0, i;
+अटल पूर्णांक ath_rx_edma_init(काष्ठा ath_softc *sc, पूर्णांक nbufs)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा sk_buff *skb;
+	काष्ठा ath_rxbuf *bf;
+	पूर्णांक error = 0, i;
 	u32 size;
 
 	ath9k_hw_set_rx_bufsize(ah, common->rx_bufsize -
@@ -212,76 +213,76 @@ static int ath_rx_edma_init(struct ath_softc *sc, int nbufs)
 	ath_rx_edma_init_queue(&sc->rx.rx_edma[ATH9K_RX_QUEUE_HP],
 			       ah->caps.rx_hp_qdepth);
 
-	size = sizeof(struct ath_rxbuf) * nbufs;
+	size = माप(काष्ठा ath_rxbuf) * nbufs;
 	bf = devm_kzalloc(sc->dev, size, GFP_KERNEL);
-	if (!bf)
-		return -ENOMEM;
+	अगर (!bf)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&sc->rx.rxbuf);
 
-	for (i = 0; i < nbufs; i++, bf++) {
+	क्रम (i = 0; i < nbufs; i++, bf++) अणु
 		skb = ath_rxbuf_alloc(common, common->rx_bufsize, GFP_KERNEL);
-		if (!skb) {
+		अगर (!skb) अणु
 			error = -ENOMEM;
-			goto rx_init_fail;
-		}
+			जाओ rx_init_fail;
+		पूर्ण
 
-		memset(skb->data, 0, common->rx_bufsize);
+		स_रखो(skb->data, 0, common->rx_bufsize);
 		bf->bf_mpdu = skb;
 
 		bf->bf_buf_addr = dma_map_single(sc->dev, skb->data,
 						 common->rx_bufsize,
-						 DMA_BIDIRECTIONAL);
-		if (unlikely(dma_mapping_error(sc->dev,
-						bf->bf_buf_addr))) {
-				dev_kfree_skb_any(skb);
-				bf->bf_mpdu = NULL;
+						 DMA_BIसूचीECTIONAL);
+		अगर (unlikely(dma_mapping_error(sc->dev,
+						bf->bf_buf_addr))) अणु
+				dev_kमुक्त_skb_any(skb);
+				bf->bf_mpdu = शून्य;
 				bf->bf_buf_addr = 0;
 				ath_err(common,
 					"dma_mapping_error() on RX init\n");
 				error = -ENOMEM;
-				goto rx_init_fail;
-		}
+				जाओ rx_init_fail;
+		पूर्ण
 
 		list_add_tail(&bf->list, &sc->rx.rxbuf);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 rx_init_fail:
 	ath_rx_edma_cleanup(sc);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void ath_edma_start_recv(struct ath_softc *sc)
-{
+अटल व्योम ath_edma_start_recv(काष्ठा ath_softc *sc)
+अणु
 	ath9k_hw_rxena(sc->sc_ah);
 	ath_rx_addbuffer_edma(sc, ATH9K_RX_QUEUE_HP);
 	ath_rx_addbuffer_edma(sc, ATH9K_RX_QUEUE_LP);
 	ath_opmode_init(sc);
 	ath9k_hw_startpcureceive(sc->sc_ah, sc->cur_chan->offchannel);
-}
+पूर्ण
 
-static void ath_edma_stop_recv(struct ath_softc *sc)
-{
-	ath_rx_remove_buffer(sc, ATH9K_RX_QUEUE_HP);
-	ath_rx_remove_buffer(sc, ATH9K_RX_QUEUE_LP);
-}
+अटल व्योम ath_edma_stop_recv(काष्ठा ath_softc *sc)
+अणु
+	ath_rx_हटाओ_buffer(sc, ATH9K_RX_QUEUE_HP);
+	ath_rx_हटाओ_buffer(sc, ATH9K_RX_QUEUE_LP);
+पूर्ण
 
-int ath_rx_init(struct ath_softc *sc, int nbufs)
-{
-	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
-	struct sk_buff *skb;
-	struct ath_rxbuf *bf;
-	int error = 0;
+पूर्णांक ath_rx_init(काष्ठा ath_softc *sc, पूर्णांक nbufs)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+	काष्ठा sk_buff *skb;
+	काष्ठा ath_rxbuf *bf;
+	पूर्णांक error = 0;
 
 	spin_lock_init(&sc->sc_pcu_lock);
 
 	common->rx_bufsize = IEEE80211_MAX_MPDU_LEN / 2 +
 			     sc->sc_ah->caps.rx_status_len;
 
-	if (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
-		return ath_rx_edma_init(sc, nbufs);
+	अगर (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
+		वापस ath_rx_edma_init(sc, nbufs);
 
 	ath_dbg(common, CONFIG, "cachelsz %u rxbufsize %u\n",
 		common->cachelsz, common->rx_bufsize);
@@ -290,330 +291,330 @@ int ath_rx_init(struct ath_softc *sc, int nbufs)
 
 	error = ath_descdma_setup(sc, &sc->rx.rxdma, &sc->rx.rxbuf,
 				  "rx", nbufs, 1, 0);
-	if (error != 0) {
+	अगर (error != 0) अणु
 		ath_err(common,
 			"failed to allocate rx descriptors: %d\n",
 			error);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	list_for_each_entry(bf, &sc->rx.rxbuf, list) {
+	list_क्रम_each_entry(bf, &sc->rx.rxbuf, list) अणु
 		skb = ath_rxbuf_alloc(common, common->rx_bufsize,
 				      GFP_KERNEL);
-		if (skb == NULL) {
+		अगर (skb == शून्य) अणु
 			error = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		bf->bf_mpdu = skb;
 		bf->bf_buf_addr = dma_map_single(sc->dev, skb->data,
 						 common->rx_bufsize,
 						 DMA_FROM_DEVICE);
-		if (unlikely(dma_mapping_error(sc->dev,
-					       bf->bf_buf_addr))) {
-			dev_kfree_skb_any(skb);
-			bf->bf_mpdu = NULL;
+		अगर (unlikely(dma_mapping_error(sc->dev,
+					       bf->bf_buf_addr))) अणु
+			dev_kमुक्त_skb_any(skb);
+			bf->bf_mpdu = शून्य;
 			bf->bf_buf_addr = 0;
 			ath_err(common,
 				"dma_mapping_error() on RX init\n");
 			error = -ENOMEM;
-			goto err;
-		}
-	}
-	sc->rx.rxlink = NULL;
+			जाओ err;
+		पूर्ण
+	पूर्ण
+	sc->rx.rxlink = शून्य;
 err:
-	if (error)
+	अगर (error)
 		ath_rx_cleanup(sc);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-void ath_rx_cleanup(struct ath_softc *sc)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct sk_buff *skb;
-	struct ath_rxbuf *bf;
+व्योम ath_rx_cleanup(काष्ठा ath_softc *sc)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा sk_buff *skb;
+	काष्ठा ath_rxbuf *bf;
 
-	if (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA) {
+	अगर (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA) अणु
 		ath_rx_edma_cleanup(sc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_for_each_entry(bf, &sc->rx.rxbuf, list) {
+	list_क्रम_each_entry(bf, &sc->rx.rxbuf, list) अणु
 		skb = bf->bf_mpdu;
-		if (skb) {
+		अगर (skb) अणु
 			dma_unmap_single(sc->dev, bf->bf_buf_addr,
 					 common->rx_bufsize,
 					 DMA_FROM_DEVICE);
-			dev_kfree_skb(skb);
+			dev_kमुक्त_skb(skb);
 			bf->bf_buf_addr = 0;
-			bf->bf_mpdu = NULL;
-		}
-	}
-}
+			bf->bf_mpdu = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Calculate the receive filter according to the
  * operating mode and state:
  *
  * o always accept unicast, broadcast, and multicast traffic
- * o maintain current state of phy error reception (the hal
- *   may enable phy error frames for noise immunity work)
+ * o मुख्यtain current state of phy error reception (the hal
+ *   may enable phy error frames क्रम noise immunity work)
  * o probe request frames are accepted only when operating in
  *   hostap, adhoc, or monitor modes
- * o enable promiscuous mode according to the interface state
+ * o enable promiscuous mode according to the पूर्णांकerface state
  * o accept beacons:
  *   - when operating in adhoc mode so the 802.11 layer creates
- *     node table entries for peers,
- *   - when operating in station mode for collecting rssi data when
+ *     node table entries क्रम peers,
+ *   - when operating in station mode क्रम collecting rssi data when
  *     the station is otherwise quiet, or
  *   - when operating as a repeater so we see repeater-sta beacons
  *   - when scanning
  */
 
-u32 ath_calcrxfilter(struct ath_softc *sc)
-{
-	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+u32 ath_calcrxfilter(काष्ठा ath_softc *sc)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
 	u32 rfilt;
 
-	if (IS_ENABLED(CONFIG_ATH9K_TX99))
-		return 0;
+	अगर (IS_ENABLED(CONFIG_ATH9K_TX99))
+		वापस 0;
 
 	rfilt = ATH9K_RX_FILTER_UCAST | ATH9K_RX_FILTER_BCAST
 		| ATH9K_RX_FILTER_MCAST;
 
-	/* if operating on a DFS channel, enable radar pulse detection */
-	if (sc->hw->conf.radar_enabled)
+	/* अगर operating on a DFS channel, enable radar pulse detection */
+	अगर (sc->hw->conf.radar_enabled)
 		rfilt |= ATH9K_RX_FILTER_PHYRADAR | ATH9K_RX_FILTER_PHYERR;
 
 	spin_lock_bh(&sc->chan_lock);
 
-	if (sc->cur_chan->rxfilter & FIF_PROBE_REQ)
+	अगर (sc->cur_chan->rxfilter & FIF_PROBE_REQ)
 		rfilt |= ATH9K_RX_FILTER_PROBEREQ;
 
-	if (sc->sc_ah->is_monitoring)
+	अगर (sc->sc_ah->is_monitoring)
 		rfilt |= ATH9K_RX_FILTER_PROM;
 
-	if ((sc->cur_chan->rxfilter & FIF_CONTROL) ||
+	अगर ((sc->cur_chan->rxfilter & FIF_CONTROL) ||
 	    sc->sc_ah->dynack.enabled)
 		rfilt |= ATH9K_RX_FILTER_CONTROL;
 
-	if ((sc->sc_ah->opmode == NL80211_IFTYPE_STATION) &&
-	    (sc->cur_chan->nvifs <= 1) &&
+	अगर ((sc->sc_ah->opmode == NL80211_IFTYPE_STATION) &&
+	    (sc->cur_chan->nvअगरs <= 1) &&
 	    !(sc->cur_chan->rxfilter & FIF_BCN_PRBRESP_PROMISC))
 		rfilt |= ATH9K_RX_FILTER_MYBEACON;
-	else if (sc->sc_ah->opmode != NL80211_IFTYPE_OCB)
+	अन्यथा अगर (sc->sc_ah->opmode != NL80211_IFTYPE_OCB)
 		rfilt |= ATH9K_RX_FILTER_BEACON;
 
-	if ((sc->sc_ah->opmode == NL80211_IFTYPE_AP) ||
+	अगर ((sc->sc_ah->opmode == NL80211_IFTYPE_AP) ||
 	    (sc->cur_chan->rxfilter & FIF_PSPOLL))
 		rfilt |= ATH9K_RX_FILTER_PSPOLL;
 
-	if (sc->cur_chandef.width != NL80211_CHAN_WIDTH_20_NOHT)
+	अगर (sc->cur_chandef.width != NL80211_CHAN_WIDTH_20_NOHT)
 		rfilt |= ATH9K_RX_FILTER_COMP_BAR;
 
-	if (sc->cur_chan->nvifs > 1 ||
-	    (sc->cur_chan->rxfilter & (FIF_OTHER_BSS | FIF_MCAST_ACTION))) {
-		/* This is needed for older chips */
-		if (sc->sc_ah->hw_version.macVersion <= AR_SREV_VERSION_9160)
+	अगर (sc->cur_chan->nvअगरs > 1 ||
+	    (sc->cur_chan->rxfilter & (FIF_OTHER_BSS | FIF_MCAST_ACTION))) अणु
+		/* This is needed क्रम older chips */
+		अगर (sc->sc_ah->hw_version.macVersion <= AR_SREV_VERSION_9160)
 			rfilt |= ATH9K_RX_FILTER_PROM;
 		rfilt |= ATH9K_RX_FILTER_MCAST_BCAST_ALL;
-	}
+	पूर्ण
 
-	if (AR_SREV_9550(sc->sc_ah) || AR_SREV_9531(sc->sc_ah) ||
+	अगर (AR_SREV_9550(sc->sc_ah) || AR_SREV_9531(sc->sc_ah) ||
 	    AR_SREV_9561(sc->sc_ah))
 		rfilt |= ATH9K_RX_FILTER_4ADDRESS;
 
-	if (AR_SREV_9462(sc->sc_ah) || AR_SREV_9565(sc->sc_ah))
+	अगर (AR_SREV_9462(sc->sc_ah) || AR_SREV_9565(sc->sc_ah))
 		rfilt |= ATH9K_RX_FILTER_CONTROL_WRAPPER;
 
-	if (ath9k_is_chanctx_enabled() &&
+	अगर (ath9k_is_chanctx_enabled() &&
 	    test_bit(ATH_OP_SCANNING, &common->op_flags))
 		rfilt |= ATH9K_RX_FILTER_BEACON;
 
 	spin_unlock_bh(&sc->chan_lock);
 
-	return rfilt;
+	वापस rfilt;
 
-}
+पूर्ण
 
-void ath_startrecv(struct ath_softc *sc)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_rxbuf *bf, *tbf;
+व्योम ath_startrecv(काष्ठा ath_softc *sc)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_rxbuf *bf, *tbf;
 
-	if (ah->caps.hw_caps & ATH9K_HW_CAP_EDMA) {
+	अगर (ah->caps.hw_caps & ATH9K_HW_CAP_EDMA) अणु
 		ath_edma_start_recv(sc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (list_empty(&sc->rx.rxbuf))
-		goto start_recv;
+	अगर (list_empty(&sc->rx.rxbuf))
+		जाओ start_recv;
 
-	sc->rx.buf_hold = NULL;
-	sc->rx.rxlink = NULL;
-	list_for_each_entry_safe(bf, tbf, &sc->rx.rxbuf, list) {
+	sc->rx.buf_hold = शून्य;
+	sc->rx.rxlink = शून्य;
+	list_क्रम_each_entry_safe(bf, tbf, &sc->rx.rxbuf, list) अणु
 		ath_rx_buf_link(sc, bf, false);
-	}
+	पूर्ण
 
 	/* We could have deleted elements so the list may be empty now */
-	if (list_empty(&sc->rx.rxbuf))
-		goto start_recv;
+	अगर (list_empty(&sc->rx.rxbuf))
+		जाओ start_recv;
 
-	bf = list_first_entry(&sc->rx.rxbuf, struct ath_rxbuf, list);
+	bf = list_first_entry(&sc->rx.rxbuf, काष्ठा ath_rxbuf, list);
 	ath9k_hw_putrxbuf(ah, bf->bf_daddr);
 	ath9k_hw_rxena(ah);
 
 start_recv:
 	ath_opmode_init(sc);
 	ath9k_hw_startpcureceive(ah, sc->cur_chan->offchannel);
-}
+पूर्ण
 
-static void ath_flushrecv(struct ath_softc *sc)
-{
-	if (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
+अटल व्योम ath_flushrecv(काष्ठा ath_softc *sc)
+अणु
+	अगर (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
 		ath_rx_tasklet(sc, 1, true);
 	ath_rx_tasklet(sc, 1, false);
-}
+पूर्ण
 
-bool ath_stoprecv(struct ath_softc *sc)
-{
-	struct ath_hw *ah = sc->sc_ah;
+bool ath_stoprecv(काष्ठा ath_softc *sc)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
 	bool stopped, reset = false;
 
-	ath9k_hw_abortpcurecv(ah);
+	ath9k_hw_पातpcurecv(ah);
 	ath9k_hw_setrxfilter(ah, 0);
 	stopped = ath9k_hw_stopdmarecv(ah, &reset);
 
 	ath_flushrecv(sc);
 
-	if (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
+	अगर (sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
 		ath_edma_stop_recv(sc);
-	else
-		sc->rx.rxlink = NULL;
+	अन्यथा
+		sc->rx.rxlink = शून्य;
 
-	if (!(ah->ah_flags & AH_UNPLUGGED) &&
-	    unlikely(!stopped)) {
+	अगर (!(ah->ah_flags & AH_UNPLUGGED) &&
+	    unlikely(!stopped)) अणु
 		ath_dbg(ath9k_hw_common(sc->sc_ah), RESET,
 			"Failed to stop Rx DMA\n");
 		RESET_STAT_INC(sc, RESET_RX_DMA_ERROR);
-	}
-	return stopped && !reset;
-}
+	पूर्ण
+	वापस stopped && !reset;
+पूर्ण
 
-static bool ath_beacon_dtim_pending_cab(struct sk_buff *skb)
-{
+अटल bool ath_beacon_dtim_pending_cab(काष्ठा sk_buff *skb)
+अणु
 	/* Check whether the Beacon frame has DTIM indicating buffered bc/mc */
-	struct ieee80211_mgmt *mgmt;
+	काष्ठा ieee80211_mgmt *mgmt;
 	u8 *pos, *end, id, elen;
-	struct ieee80211_tim_ie *tim;
+	काष्ठा ieee80211_tim_ie *tim;
 
-	mgmt = (struct ieee80211_mgmt *)skb->data;
+	mgmt = (काष्ठा ieee80211_mgmt *)skb->data;
 	pos = mgmt->u.beacon.variable;
 	end = skb->data + skb->len;
 
-	while (pos + 2 < end) {
+	जबतक (pos + 2 < end) अणु
 		id = *pos++;
 		elen = *pos++;
-		if (pos + elen > end)
-			break;
+		अगर (pos + elen > end)
+			अवरोध;
 
-		if (id == WLAN_EID_TIM) {
-			if (elen < sizeof(*tim))
-				break;
-			tim = (struct ieee80211_tim_ie *) pos;
-			if (tim->dtim_count != 0)
-				break;
-			return tim->bitmap_ctrl & 0x01;
-		}
+		अगर (id == WLAN_EID_TIM) अणु
+			अगर (elen < माप(*tim))
+				अवरोध;
+			tim = (काष्ठा ieee80211_tim_ie *) pos;
+			अगर (tim->dtim_count != 0)
+				अवरोध;
+			वापस tim->biपंचांगap_ctrl & 0x01;
+		पूर्ण
 
 		pos += elen;
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void ath_rx_ps_beacon(struct ath_softc *sc, struct sk_buff *skb)
-{
-	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+अटल व्योम ath_rx_ps_beacon(काष्ठा ath_softc *sc, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
 	bool skip_beacon = false;
 
-	if (skb->len < 24 + 8 + 2 + 2)
-		return;
+	अगर (skb->len < 24 + 8 + 2 + 2)
+		वापस;
 
 	sc->ps_flags &= ~PS_WAIT_FOR_BEACON;
 
-	if (sc->ps_flags & PS_BEACON_SYNC) {
+	अगर (sc->ps_flags & PS_BEACON_SYNC) अणु
 		sc->ps_flags &= ~PS_BEACON_SYNC;
 		ath_dbg(common, PS,
 			"Reconfigure beacon timers based on synchronized timestamp\n");
 
-#ifdef CONFIG_ATH9K_CHANNEL_CONTEXT
-		if (ath9k_is_chanctx_enabled()) {
-			if (sc->cur_chan == &sc->offchannel.chan)
+#अगर_घोषित CONFIG_ATH9K_CHANNEL_CONTEXT
+		अगर (ath9k_is_chanctx_enabled()) अणु
+			अगर (sc->cur_chan == &sc->offchannel.chan)
 				skip_beacon = true;
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 
-		if (!skip_beacon &&
-		    !(WARN_ON_ONCE(sc->cur_chan->beacon.beacon_interval == 0)))
+		अगर (!skip_beacon &&
+		    !(WARN_ON_ONCE(sc->cur_chan->beacon.beacon_पूर्णांकerval == 0)))
 			ath9k_set_beacon(sc);
 
 		ath9k_p2p_beacon_sync(sc);
-	}
+	पूर्ण
 
-	if (ath_beacon_dtim_pending_cab(skb)) {
+	अगर (ath_beacon_dtim_pending_cab(skb)) अणु
 		/*
-		 * Remain awake waiting for buffered broadcast/multicast
+		 * Reमुख्य awake रुकोing क्रम buffered broadcast/multicast
 		 * frames. If the last broadcast/multicast frame is not
 		 * received properly, the next beacon frame will work as
-		 * a backup trigger for returning into NETWORK SLEEP state,
-		 * so we are waiting for it as well.
+		 * a backup trigger क्रम वापसing पूर्णांकo NETWORK SLEEP state,
+		 * so we are रुकोing क्रम it as well.
 		 */
 		ath_dbg(common, PS,
 			"Received DTIM beacon indicating buffered broadcast/multicast frame(s)\n");
 		sc->ps_flags |= PS_WAIT_FOR_CAB | PS_WAIT_FOR_BEACON;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sc->ps_flags & PS_WAIT_FOR_CAB) {
+	अगर (sc->ps_flags & PS_WAIT_FOR_CAB) अणु
 		/*
-		 * This can happen if a broadcast frame is dropped or the AP
+		 * This can happen अगर a broadcast frame is dropped or the AP
 		 * fails to send a frame indicating that all CAB frames have
 		 * been delivered.
 		 */
 		sc->ps_flags &= ~PS_WAIT_FOR_CAB;
 		ath_dbg(common, PS, "PS wait for CAB frames timed out\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ath_rx_ps(struct ath_softc *sc, struct sk_buff *skb, bool mybeacon)
-{
-	struct ieee80211_hdr *hdr;
-	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+अटल व्योम ath_rx_ps(काष्ठा ath_softc *sc, काष्ठा sk_buff *skb, bool mybeacon)
+अणु
+	काष्ठा ieee80211_hdr *hdr;
+	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
 
-	hdr = (struct ieee80211_hdr *)skb->data;
+	hdr = (काष्ठा ieee80211_hdr *)skb->data;
 
 	/* Process Beacon and CAB receive in PS state */
-	if (((sc->ps_flags & PS_WAIT_FOR_BEACON) || ath9k_check_auto_sleep(sc))
-	    && mybeacon) {
+	अगर (((sc->ps_flags & PS_WAIT_FOR_BEACON) || ath9k_check_स्वतः_sleep(sc))
+	    && mybeacon) अणु
 		ath_rx_ps_beacon(sc, skb);
-	} else if ((sc->ps_flags & PS_WAIT_FOR_CAB) &&
+	पूर्ण अन्यथा अगर ((sc->ps_flags & PS_WAIT_FOR_CAB) &&
 		   (ieee80211_is_data(hdr->frame_control) ||
 		    ieee80211_is_action(hdr->frame_control)) &&
 		   is_multicast_ether_addr(hdr->addr1) &&
-		   !ieee80211_has_moredata(hdr->frame_control)) {
+		   !ieee80211_has_moredata(hdr->frame_control)) अणु
 		/*
 		 * No more broadcast/multicast frames to be received at this
-		 * point.
+		 * poपूर्णांक.
 		 */
 		sc->ps_flags &= ~(PS_WAIT_FOR_CAB | PS_WAIT_FOR_BEACON);
 		ath_dbg(common, PS,
 			"All PS CAB frames received, back to sleep\n");
-	} else if ((sc->ps_flags & PS_WAIT_FOR_PSPOLL_DATA) &&
+	पूर्ण अन्यथा अगर ((sc->ps_flags & PS_WAIT_FOR_PSPOLL_DATA) &&
 		   !is_multicast_ether_addr(hdr->addr1) &&
-		   !ieee80211_has_morefrags(hdr->frame_control)) {
+		   !ieee80211_has_morefrags(hdr->frame_control)) अणु
 		sc->ps_flags &= ~PS_WAIT_FOR_PSPOLL_DATA;
 		ath_dbg(common, PS,
 			"Going back to sleep after having received PS-Poll data (0x%lx)\n",
@@ -621,200 +622,200 @@ static void ath_rx_ps(struct ath_softc *sc, struct sk_buff *skb, bool mybeacon)
 					PS_WAIT_FOR_CAB |
 					PS_WAIT_FOR_PSPOLL_DATA |
 					PS_WAIT_FOR_TX_ACK));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool ath_edma_get_buffers(struct ath_softc *sc,
-				 enum ath9k_rx_qtype qtype,
-				 struct ath_rx_status *rs,
-				 struct ath_rxbuf **dest)
-{
-	struct ath_rx_edma *rx_edma = &sc->rx.rx_edma[qtype];
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct sk_buff *skb;
-	struct ath_rxbuf *bf;
-	int ret;
+अटल bool ath_edma_get_buffers(काष्ठा ath_softc *sc,
+				 क्रमागत ath9k_rx_qtype qtype,
+				 काष्ठा ath_rx_status *rs,
+				 काष्ठा ath_rxbuf **dest)
+अणु
+	काष्ठा ath_rx_edma *rx_edma = &sc->rx.rx_edma[qtype];
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा sk_buff *skb;
+	काष्ठा ath_rxbuf *bf;
+	पूर्णांक ret;
 
-	skb = skb_peek(&rx_edma->rx_fifo);
-	if (!skb)
-		return false;
+	skb = skb_peek(&rx_edma->rx_fअगरo);
+	अगर (!skb)
+		वापस false;
 
 	bf = SKB_CB_ATHBUF(skb);
 	BUG_ON(!bf);
 
-	dma_sync_single_for_cpu(sc->dev, bf->bf_buf_addr,
+	dma_sync_single_क्रम_cpu(sc->dev, bf->bf_buf_addr,
 				common->rx_bufsize, DMA_FROM_DEVICE);
 
 	ret = ath9k_hw_process_rxdesc_edma(ah, rs, skb->data);
-	if (ret == -EINPROGRESS) {
+	अगर (ret == -EINPROGRESS) अणु
 		/*let device gain the buffer again*/
-		dma_sync_single_for_device(sc->dev, bf->bf_buf_addr,
+		dma_sync_single_क्रम_device(sc->dev, bf->bf_buf_addr,
 				common->rx_bufsize, DMA_FROM_DEVICE);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	__skb_unlink(skb, &rx_edma->rx_fifo);
-	if (ret == -EINVAL) {
+	__skb_unlink(skb, &rx_edma->rx_fअगरo);
+	अगर (ret == -EINVAL) अणु
 		/* corrupt descriptor, skip this one and the following one */
 		list_add_tail(&bf->list, &sc->rx.rxbuf);
 		ath_rx_edma_buf_link(sc, qtype);
 
-		skb = skb_peek(&rx_edma->rx_fifo);
-		if (skb) {
+		skb = skb_peek(&rx_edma->rx_fअगरo);
+		अगर (skb) अणु
 			bf = SKB_CB_ATHBUF(skb);
 			BUG_ON(!bf);
 
-			__skb_unlink(skb, &rx_edma->rx_fifo);
+			__skb_unlink(skb, &rx_edma->rx_fअगरo);
 			list_add_tail(&bf->list, &sc->rx.rxbuf);
 			ath_rx_edma_buf_link(sc, qtype);
-		}
+		पूर्ण
 
-		bf = NULL;
-	}
+		bf = शून्य;
+	पूर्ण
 
 	*dest = bf;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct ath_rxbuf *ath_edma_get_next_rx_buf(struct ath_softc *sc,
-						struct ath_rx_status *rs,
-						enum ath9k_rx_qtype qtype)
-{
-	struct ath_rxbuf *bf = NULL;
+अटल काष्ठा ath_rxbuf *ath_edma_get_next_rx_buf(काष्ठा ath_softc *sc,
+						काष्ठा ath_rx_status *rs,
+						क्रमागत ath9k_rx_qtype qtype)
+अणु
+	काष्ठा ath_rxbuf *bf = शून्य;
 
-	while (ath_edma_get_buffers(sc, qtype, rs, &bf)) {
-		if (!bf)
-			continue;
+	जबतक (ath_edma_get_buffers(sc, qtype, rs, &bf)) अणु
+		अगर (!bf)
+			जारी;
 
-		return bf;
-	}
-	return NULL;
-}
+		वापस bf;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct ath_rxbuf *ath_get_next_rx_buf(struct ath_softc *sc,
-					   struct ath_rx_status *rs)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ath_desc *ds;
-	struct ath_rxbuf *bf;
-	int ret;
+अटल काष्ठा ath_rxbuf *ath_get_next_rx_buf(काष्ठा ath_softc *sc,
+					   काष्ठा ath_rx_status *rs)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ath_desc *ds;
+	काष्ठा ath_rxbuf *bf;
+	पूर्णांक ret;
 
-	if (list_empty(&sc->rx.rxbuf)) {
-		sc->rx.rxlink = NULL;
-		return NULL;
-	}
+	अगर (list_empty(&sc->rx.rxbuf)) अणु
+		sc->rx.rxlink = शून्य;
+		वापस शून्य;
+	पूर्ण
 
-	bf = list_first_entry(&sc->rx.rxbuf, struct ath_rxbuf, list);
-	if (bf == sc->rx.buf_hold)
-		return NULL;
+	bf = list_first_entry(&sc->rx.rxbuf, काष्ठा ath_rxbuf, list);
+	अगर (bf == sc->rx.buf_hold)
+		वापस शून्य;
 
 	ds = bf->bf_desc;
 
 	/*
-	 * Must provide the virtual address of the current
-	 * descriptor, the physical address, and the virtual
+	 * Must provide the भव address of the current
+	 * descriptor, the physical address, and the भव
 	 * address of the next descriptor in the h/w chain.
-	 * This allows the HAL to look ahead to see if the
-	 * hardware is done with a descriptor by checking the
-	 * done bit in the following descriptor and the address
+	 * This allows the HAL to look ahead to see अगर the
+	 * hardware is करोne with a descriptor by checking the
+	 * करोne bit in the following descriptor and the address
 	 * of the current descriptor the DMA engine is working
 	 * on.  All this is necessary because of our use of
-	 * a self-linked list to avoid rx overruns.
+	 * a self-linked list to aव्योम rx overruns.
 	 */
 	ret = ath9k_hw_rxprocdesc(ah, ds, rs);
-	if (ret == -EINPROGRESS) {
-		struct ath_rx_status trs;
-		struct ath_rxbuf *tbf;
-		struct ath_desc *tds;
+	अगर (ret == -EINPROGRESS) अणु
+		काष्ठा ath_rx_status trs;
+		काष्ठा ath_rxbuf *tbf;
+		काष्ठा ath_desc *tds;
 
-		memset(&trs, 0, sizeof(trs));
-		if (list_is_last(&bf->list, &sc->rx.rxbuf)) {
-			sc->rx.rxlink = NULL;
-			return NULL;
-		}
+		स_रखो(&trs, 0, माप(trs));
+		अगर (list_is_last(&bf->list, &sc->rx.rxbuf)) अणु
+			sc->rx.rxlink = शून्य;
+			वापस शून्य;
+		पूर्ण
 
-		tbf = list_entry(bf->list.next, struct ath_rxbuf, list);
+		tbf = list_entry(bf->list.next, काष्ठा ath_rxbuf, list);
 
 		/*
 		 * On some hardware the descriptor status words could
-		 * get corrupted, including the done bit. Because of
-		 * this, check if the next descriptor's done bit is
+		 * get corrupted, including the करोne bit. Because of
+		 * this, check अगर the next descriptor's करोne bit is
 		 * set or not.
 		 *
-		 * If the next descriptor's done bit is set, the current
+		 * If the next descriptor's करोne bit is set, the current
 		 * descriptor has been corrupted. Force s/w to discard
-		 * this descriptor and continue...
+		 * this descriptor and जारी...
 		 */
 
 		tds = tbf->bf_desc;
 		ret = ath9k_hw_rxprocdesc(ah, tds, &trs);
-		if (ret == -EINPROGRESS)
-			return NULL;
+		अगर (ret == -EINPROGRESS)
+			वापस शून्य;
 
 		/*
-		 * Re-check previous descriptor, in case it has been filled
-		 * in the mean time.
+		 * Re-check previous descriptor, in हाल it has been filled
+		 * in the mean समय.
 		 */
 		ret = ath9k_hw_rxprocdesc(ah, ds, rs);
-		if (ret == -EINPROGRESS) {
+		अगर (ret == -EINPROGRESS) अणु
 			/*
 			 * mark descriptor as zero-length and set the 'more'
 			 * flag to ensure that both buffers get discarded
 			 */
 			rs->rs_datalen = 0;
 			rs->rs_more = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	list_del(&bf->list);
-	if (!bf->bf_mpdu)
-		return bf;
+	अगर (!bf->bf_mpdu)
+		वापस bf;
 
 	/*
-	 * Synchronize the DMA transfer with CPU before
+	 * Synchronize the DMA transfer with CPU beक्रमe
 	 * 1. accessing the frame
 	 * 2. requeueing the same buffer to h/w
 	 */
-	dma_sync_single_for_cpu(sc->dev, bf->bf_buf_addr,
+	dma_sync_single_क्रम_cpu(sc->dev, bf->bf_buf_addr,
 			common->rx_bufsize,
 			DMA_FROM_DEVICE);
 
-	return bf;
-}
+	वापस bf;
+पूर्ण
 
-static void ath9k_process_tsf(struct ath_rx_status *rs,
-			      struct ieee80211_rx_status *rxs,
+अटल व्योम ath9k_process_tsf(काष्ठा ath_rx_status *rs,
+			      काष्ठा ieee80211_rx_status *rxs,
 			      u64 tsf)
-{
+अणु
 	u32 tsf_lower = tsf & 0xffffffff;
 
-	rxs->mactime = (tsf & ~0xffffffffULL) | rs->rs_tstamp;
-	if (rs->rs_tstamp > tsf_lower &&
+	rxs->maस_समय = (tsf & ~0xffffffffULL) | rs->rs_tstamp;
+	अगर (rs->rs_tstamp > tsf_lower &&
 	    unlikely(rs->rs_tstamp - tsf_lower > 0x10000000))
-		rxs->mactime -= 0x100000000ULL;
+		rxs->maस_समय -= 0x100000000ULL;
 
-	if (rs->rs_tstamp < tsf_lower &&
+	अगर (rs->rs_tstamp < tsf_lower &&
 	    unlikely(tsf_lower - rs->rs_tstamp > 0x10000000))
-		rxs->mactime += 0x100000000ULL;
-}
+		rxs->maस_समय += 0x100000000ULL;
+पूर्ण
 
 /*
  * For Decrypt or Demic errors, we only mark packet status here and always push
- * up the frame up to let mac80211 handle the actual error case, be it no
+ * up the frame up to let mac80211 handle the actual error हाल, be it no
  * decryption key or real decryption error. This let us keep statistics there.
  */
-static int ath9k_rx_skb_preprocess(struct ath_softc *sc,
-				   struct sk_buff *skb,
-				   struct ath_rx_status *rx_stats,
-				   struct ieee80211_rx_status *rx_status,
+अटल पूर्णांक ath9k_rx_skb_preprocess(काष्ठा ath_softc *sc,
+				   काष्ठा sk_buff *skb,
+				   काष्ठा ath_rx_status *rx_stats,
+				   काष्ठा ieee80211_rx_status *rx_status,
 				   bool *decrypt_error, u64 tsf)
-{
-	struct ieee80211_hw *hw = sc->hw;
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ieee80211_hdr *hdr;
+अणु
+	काष्ठा ieee80211_hw *hw = sc->hw;
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ieee80211_hdr *hdr;
 	bool discard_current = sc->rx.discard_next;
 	bool is_phyerr;
 
@@ -822,113 +823,113 @@ static int ath9k_rx_skb_preprocess(struct ath_softc *sc,
 	 * Discard corrupt descriptors which are marked in
 	 * ath_get_next_rx_buf().
 	 */
-	if (discard_current)
-		goto corrupt;
+	अगर (discard_current)
+		जाओ corrupt;
 
 	sc->rx.discard_next = false;
 
 	/*
 	 * Discard zero-length packets and packets smaller than an ACK
-	 * which are not PHY_ERROR (short radar pulses have a length of 3)
+	 * which are not PHY_ERROR (लघु radar pulses have a length of 3)
 	 */
 	is_phyerr = rx_stats->rs_status & ATH9K_RXERR_PHY;
-	if (!rx_stats->rs_datalen ||
-	    (rx_stats->rs_datalen < 10 && !is_phyerr)) {
+	अगर (!rx_stats->rs_datalen ||
+	    (rx_stats->rs_datalen < 10 && !is_phyerr)) अणु
 		RX_STAT_INC(sc, rx_len_err);
-		goto corrupt;
-	}
+		जाओ corrupt;
+	पूर्ण
 
 	/*
-	 * rs_status follows rs_datalen so if rs_datalen is too large
-	 * we can take a hint that hardware corrupted it, so ignore
+	 * rs_status follows rs_datalen so अगर rs_datalen is too large
+	 * we can take a hपूर्णांक that hardware corrupted it, so ignore
 	 * those frames.
 	 */
-	if (rx_stats->rs_datalen > (common->rx_bufsize - ah->caps.rx_status_len)) {
+	अगर (rx_stats->rs_datalen > (common->rx_bufsize - ah->caps.rx_status_len)) अणु
 		RX_STAT_INC(sc, rx_len_err);
-		goto corrupt;
-	}
+		जाओ corrupt;
+	पूर्ण
 
 	/* Only use status info from the last fragment */
-	if (rx_stats->rs_more)
-		return 0;
+	अगर (rx_stats->rs_more)
+		वापस 0;
 
 	/*
-	 * Return immediately if the RX descriptor has been marked
+	 * Return immediately अगर the RX descriptor has been marked
 	 * as corrupt based on the various error bits.
 	 *
-	 * This is different from the other corrupt descriptor
+	 * This is dअगरferent from the other corrupt descriptor
 	 * condition handled above.
 	 */
-	if (rx_stats->rs_status & ATH9K_RXERR_CORRUPT_DESC)
-		goto corrupt;
+	अगर (rx_stats->rs_status & ATH9K_RXERR_CORRUPT_DESC)
+		जाओ corrupt;
 
-	hdr = (struct ieee80211_hdr *) (skb->data + ah->caps.rx_status_len);
+	hdr = (काष्ठा ieee80211_hdr *) (skb->data + ah->caps.rx_status_len);
 
 	ath9k_process_tsf(rx_stats, rx_status, tsf);
 	ath_debug_stat_rx(sc, rx_stats);
 
 	/*
-	 * Process PHY errors and return so that the packet
+	 * Process PHY errors and वापस so that the packet
 	 * can be dropped.
 	 */
-	if (rx_stats->rs_status & ATH9K_RXERR_PHY) {
+	अगर (rx_stats->rs_status & ATH9K_RXERR_PHY) अणु
 		/*
 		 * DFS and spectral are mutually exclusive
 		 *
-		 * Since some chips use PHYERR_RADAR as indication for both, we
-		 * need to double check which feature is enabled to prevent
+		 * Since some chips use PHYERR_RADAR as indication क्रम both, we
+		 * need to द्विगुन check which feature is enabled to prevent
 		 * feeding spectral or dfs-detector with wrong frames.
 		 */
-		if (hw->conf.radar_enabled) {
+		अगर (hw->conf.radar_enabled) अणु
 			ath9k_dfs_process_phyerr(sc, hdr, rx_stats,
-						 rx_status->mactime);
-		} else if (sc->spec_priv.spectral_mode != SPECTRAL_DISABLED &&
+						 rx_status->maस_समय);
+		पूर्ण अन्यथा अगर (sc->spec_priv.spectral_mode != SPECTRAL_DISABLED &&
 			   ath_cmn_process_fft(&sc->spec_priv, hdr, rx_stats,
-					       rx_status->mactime)) {
+					       rx_status->maस_समय)) अणु
 			RX_STAT_INC(sc, rx_spectral);
-		}
-		return -EINVAL;
-	}
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * everything but the rate is checked here, the rate check is done
-	 * separately to avoid doing two lookups for a rate for each frame.
+	 * everything but the rate is checked here, the rate check is करोne
+	 * separately to aव्योम करोing two lookups क्रम a rate क्रम each frame.
 	 */
 	spin_lock_bh(&sc->chan_lock);
-	if (!ath9k_cmn_rx_accept(common, hdr, rx_status, rx_stats, decrypt_error,
-				 sc->cur_chan->rxfilter)) {
+	अगर (!ath9k_cmn_rx_accept(common, hdr, rx_status, rx_stats, decrypt_error,
+				 sc->cur_chan->rxfilter)) अणु
 		spin_unlock_bh(&sc->chan_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	spin_unlock_bh(&sc->chan_lock);
 
-	if (ath_is_mybeacon(common, hdr)) {
+	अगर (ath_is_mybeacon(common, hdr)) अणु
 		RX_STAT_INC(sc, rx_beacons);
 		rx_stats->is_mybeacon = true;
-	}
+	पूर्ण
 
 	/*
 	 * This shouldn't happen, but have a safety check anyway.
 	 */
-	if (WARN_ON(!ah->curchan))
-		return -EINVAL;
+	अगर (WARN_ON(!ah->curchan))
+		वापस -EINVAL;
 
-	if (ath9k_cmn_process_rate(common, hw, rx_stats, rx_status)) {
+	अगर (ath9k_cmn_process_rate(common, hw, rx_stats, rx_status)) अणु
 		/*
 		 * No valid hardware bitrate found -- we should not get here
-		 * because hardware has already validated this frame as OK.
+		 * because hardware has alपढ़ोy validated this frame as OK.
 		 */
 		ath_dbg(common, ANY, "unsupported hw bitrate detected 0x%02x using 1 Mbit\n",
 			rx_stats->rs_rate);
 		RX_STAT_INC(sc, rx_rate_err);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ath9k_is_chanctx_enabled()) {
-		if (rx_stats->is_mybeacon)
+	अगर (ath9k_is_chanctx_enabled()) अणु
+		अगर (rx_stats->is_mybeacon)
 			ath_chanctx_beacon_recv_ev(sc,
 					   ATH_CHANCTX_EVENT_BEACON_RECEIVED);
-	}
+	पूर्ण
 
 	ath9k_cmn_process_rssi(common, hw, rx_stats, rx_status);
 
@@ -937,100 +938,100 @@ static int ath9k_rx_skb_preprocess(struct ath_softc *sc,
 	rx_status->antenna = rx_stats->rs_antenna;
 	rx_status->flag |= RX_FLAG_MACTIME_END;
 
-#ifdef CONFIG_ATH9K_BTCOEX_SUPPORT
-	if (ieee80211_is_data_present(hdr->frame_control) &&
+#अगर_घोषित CONFIG_ATH9K_BTCOEX_SUPPORT
+	अगर (ieee80211_is_data_present(hdr->frame_control) &&
 	    !ieee80211_is_qos_nullfunc(hdr->frame_control))
 		sc->rx.num_pkts++;
-#endif
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
 corrupt:
 	sc->rx.discard_next = rx_stats->rs_more;
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
- * Run the LNA combining algorithm only in these cases:
+ * Run the LNA combining algorithm only in these हालs:
  *
- * Standalone WLAN cards with both LNA/Antenna diversity
+ * Standalone WLAN cards with both LNA/Antenna भागersity
  * enabled in the EEPROM.
  *
  * WLAN+BT cards which are in the supported card list
  * in ath_pci_id_table and the user has loaded the
  * driver with "bt_ant_diversity" set to true.
  */
-static void ath9k_antenna_check(struct ath_softc *sc,
-				struct ath_rx_status *rs)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath9k_hw_capabilities *pCap = &ah->caps;
-	struct ath_common *common = ath9k_hw_common(ah);
+अटल व्योम ath9k_antenna_check(काष्ठा ath_softc *sc,
+				काष्ठा ath_rx_status *rs)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath9k_hw_capabilities *pCap = &ah->caps;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 
-	if (!(ah->caps.hw_caps & ATH9K_HW_CAP_ANT_DIV_COMB))
-		return;
+	अगर (!(ah->caps.hw_caps & ATH9K_HW_CAP_ANT_DIV_COMB))
+		वापस;
 
 	/*
-	 * Change the default rx antenna if rx diversity
-	 * chooses the other antenna 3 times in a row.
+	 * Change the शेष rx antenna अगर rx भागersity
+	 * chooses the other antenna 3 बार in a row.
 	 */
-	if (sc->rx.defant != rs->rs_antenna) {
-		if (++sc->rx.rxotherant >= 3)
+	अगर (sc->rx.defant != rs->rs_antenna) अणु
+		अगर (++sc->rx.rxotherant >= 3)
 			ath_setdefantenna(sc, rs->rs_antenna);
-	} else {
+	पूर्ण अन्यथा अणु
 		sc->rx.rxotherant = 0;
-	}
+	पूर्ण
 
-	if (pCap->hw_caps & ATH9K_HW_CAP_BT_ANT_DIV) {
-		if (common->bt_ant_diversity)
+	अगर (pCap->hw_caps & ATH9K_HW_CAP_BT_ANT_DIV) अणु
+		अगर (common->bt_ant_भागersity)
 			ath_ant_comb_scan(sc, rs);
-	} else {
+	पूर्ण अन्यथा अणु
 		ath_ant_comb_scan(sc, rs);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ath9k_apply_ampdu_details(struct ath_softc *sc,
-	struct ath_rx_status *rs, struct ieee80211_rx_status *rxs)
-{
-	if (rs->rs_isaggr) {
+अटल व्योम ath9k_apply_ampdu_details(काष्ठा ath_softc *sc,
+	काष्ठा ath_rx_status *rs, काष्ठा ieee80211_rx_status *rxs)
+अणु
+	अगर (rs->rs_isaggr) अणु
 		rxs->flag |= RX_FLAG_AMPDU_DETAILS | RX_FLAG_AMPDU_LAST_KNOWN;
 
 		rxs->ampdu_reference = sc->rx.ampdu_ref;
 
-		if (!rs->rs_moreaggr) {
+		अगर (!rs->rs_moreaggr) अणु
 			rxs->flag |= RX_FLAG_AMPDU_IS_LAST;
 			sc->rx.ampdu_ref++;
-		}
+		पूर्ण
 
-		if (rs->rs_flags & ATH9K_RX_DELIM_CRC_PRE)
+		अगर (rs->rs_flags & ATH9K_RX_DELIM_CRC_PRE)
 			rxs->flag |= RX_FLAG_AMPDU_DELIM_CRC_ERROR;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ath_rx_count_airtime(struct ath_softc *sc,
-				 struct ath_rx_status *rs,
-				 struct sk_buff *skb)
-{
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ieee80211_sta *sta;
-	struct ieee80211_rx_status *rxs;
-	const struct ieee80211_rate *rate;
+अटल व्योम ath_rx_count_airसमय(काष्ठा ath_softc *sc,
+				 काष्ठा ath_rx_status *rs,
+				 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *) skb->data;
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ieee80211_sta *sta;
+	काष्ठा ieee80211_rx_status *rxs;
+	स्थिर काष्ठा ieee80211_rate *rate;
 	bool is_sgi, is_40, is_sp;
-	int phy;
+	पूर्णांक phy;
 	u16 len = rs->rs_datalen;
-	u32 airtime = 0;
+	u32 airसमय = 0;
 	u8 tidno;
 
-	if (!ieee80211_is_data(hdr->frame_control))
-		return;
+	अगर (!ieee80211_is_data(hdr->frame_control))
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	sta = ieee80211_find_sta_by_ifaddr(sc->hw, hdr->addr2, NULL);
-	if (!sta)
-		goto exit;
+	sta = ieee80211_find_sta_by_अगरaddr(sc->hw, hdr->addr2, शून्य);
+	अगर (!sta)
+		जाओ निकास;
 	tidno = skb->priority & IEEE80211_QOS_CTL_TID_MASK;
 
 	rxs = IEEE80211_SKB_RXCB(skb);
@@ -1039,105 +1040,105 @@ static void ath_rx_count_airtime(struct ath_softc *sc,
 	is_40 = !!(rxs->bw == RATE_INFO_BW_40);
 	is_sp = !!(rxs->enc_flags & RX_ENC_FLAG_SHORTPRE);
 
-	if (!!(rxs->encoding == RX_ENC_HT)) {
+	अगर (!!(rxs->encoding == RX_ENC_HT)) अणु
 		/* MCS rates */
 
-		airtime += ath_pkt_duration(sc, rxs->rate_idx, len,
+		airसमय += ath_pkt_duration(sc, rxs->rate_idx, len,
 					is_40, is_sgi, is_sp);
-	} else {
+	पूर्ण अन्यथा अणु
 
 		phy = IS_CCK_RATE(rs->rs_rate) ? WLAN_RC_PHY_CCK : WLAN_RC_PHY_OFDM;
 		rate = &common->sbands[rxs->band].bitrates[rxs->rate_idx];
-		airtime += ath9k_hw_computetxtime(ah, phy, rate->bitrate * 100,
+		airसमय += ath9k_hw_computetxसमय(ah, phy, rate->bitrate * 100,
 						len, rxs->rate_idx, is_sp);
-	}
+	पूर्ण
 
-	ieee80211_sta_register_airtime(sta, tidno, 0, airtime);
-exit:
-	rcu_read_unlock();
-}
+	ieee80211_sta_रेजिस्टर_airसमय(sta, tidno, 0, airसमय);
+निकास:
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp)
-{
-	struct ath_rxbuf *bf;
-	struct sk_buff *skb = NULL, *requeue_skb, *hdr_skb;
-	struct ieee80211_rx_status *rxs;
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ieee80211_hw *hw = sc->hw;
-	int retval;
-	struct ath_rx_status rs;
-	enum ath9k_rx_qtype qtype;
+पूर्णांक ath_rx_tasklet(काष्ठा ath_softc *sc, पूर्णांक flush, bool hp)
+अणु
+	काष्ठा ath_rxbuf *bf;
+	काष्ठा sk_buff *skb = शून्य, *requeue_skb, *hdr_skb;
+	काष्ठा ieee80211_rx_status *rxs;
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ieee80211_hw *hw = sc->hw;
+	पूर्णांक retval;
+	काष्ठा ath_rx_status rs;
+	क्रमागत ath9k_rx_qtype qtype;
 	bool edma = !!(ah->caps.hw_caps & ATH9K_HW_CAP_EDMA);
-	int dma_type;
+	पूर्णांक dma_type;
 	u64 tsf = 0;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	dma_addr_t new_buf_addr;
-	unsigned int budget = 512;
-	struct ieee80211_hdr *hdr;
+	अचिन्हित पूर्णांक budget = 512;
+	काष्ठा ieee80211_hdr *hdr;
 
-	if (edma)
-		dma_type = DMA_BIDIRECTIONAL;
-	else
+	अगर (edma)
+		dma_type = DMA_BIसूचीECTIONAL;
+	अन्यथा
 		dma_type = DMA_FROM_DEVICE;
 
 	qtype = hp ? ATH9K_RX_QUEUE_HP : ATH9K_RX_QUEUE_LP;
 
 	tsf = ath9k_hw_gettsf64(ah);
 
-	do {
+	करो अणु
 		bool decrypt_error = false;
 
-		memset(&rs, 0, sizeof(rs));
-		if (edma)
+		स_रखो(&rs, 0, माप(rs));
+		अगर (edma)
 			bf = ath_edma_get_next_rx_buf(sc, &rs, qtype);
-		else
+		अन्यथा
 			bf = ath_get_next_rx_buf(sc, &rs);
 
-		if (!bf)
-			break;
+		अगर (!bf)
+			अवरोध;
 
 		skb = bf->bf_mpdu;
-		if (!skb)
-			continue;
+		अगर (!skb)
+			जारी;
 
 		/*
 		 * Take frame header from the first fragment and RX status from
 		 * the last one.
 		 */
-		if (sc->rx.frag)
+		अगर (sc->rx.frag)
 			hdr_skb = sc->rx.frag;
-		else
+		अन्यथा
 			hdr_skb = skb;
 
 		rxs = IEEE80211_SKB_RXCB(hdr_skb);
-		memset(rxs, 0, sizeof(struct ieee80211_rx_status));
+		स_रखो(rxs, 0, माप(काष्ठा ieee80211_rx_status));
 
 		retval = ath9k_rx_skb_preprocess(sc, hdr_skb, &rs, rxs,
 						 &decrypt_error, tsf);
-		if (retval)
-			goto requeue_drop_frag;
+		अगर (retval)
+			जाओ requeue_drop_frag;
 
-		/* Ensure we always have an skb to requeue once we are done
+		/* Ensure we always have an skb to requeue once we are करोne
 		 * processing the current buffer's skb */
 		requeue_skb = ath_rxbuf_alloc(common, common->rx_bufsize, GFP_ATOMIC);
 
 		/* If there is no memory we ignore the current RX'd frame,
 		 * tell hardware it can give us a new frame using the old
-		 * skb and put it at the tail of the sc->rx.rxbuf list for
+		 * skb and put it at the tail of the sc->rx.rxbuf list क्रम
 		 * processing. */
-		if (!requeue_skb) {
+		अगर (!requeue_skb) अणु
 			RX_STAT_INC(sc, rx_oom_err);
-			goto requeue_drop_frag;
-		}
+			जाओ requeue_drop_frag;
+		पूर्ण
 
 		/* We will now give hardware our shiny new allocated skb */
 		new_buf_addr = dma_map_single(sc->dev, requeue_skb->data,
 					      common->rx_bufsize, dma_type);
-		if (unlikely(dma_mapping_error(sc->dev, new_buf_addr))) {
-			dev_kfree_skb_any(requeue_skb);
-			goto requeue_drop_frag;
-		}
+		अगर (unlikely(dma_mapping_error(sc->dev, new_buf_addr))) अणु
+			dev_kमुक्त_skb_any(requeue_skb);
+			जाओ requeue_drop_frag;
+		पूर्ण
 
 		/* Unmap the frame */
 		dma_unmap_single(sc->dev, bf->bf_buf_addr,
@@ -1147,94 +1148,94 @@ int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp)
 		bf->bf_buf_addr = new_buf_addr;
 
 		skb_put(skb, rs.rs_datalen + ah->caps.rx_status_len);
-		if (ah->caps.rx_status_len)
+		अगर (ah->caps.rx_status_len)
 			skb_pull(skb, ah->caps.rx_status_len);
 
-		if (!rs.rs_more)
+		अगर (!rs.rs_more)
 			ath9k_cmn_rx_skb_postprocess(common, hdr_skb, &rs,
 						     rxs, decrypt_error);
 
-		if (rs.rs_more) {
+		अगर (rs.rs_more) अणु
 			RX_STAT_INC(sc, rx_frags);
 			/*
 			 * rs_more indicates chained descriptors which can be
-			 * used to link buffers together for a sort of
+			 * used to link buffers together क्रम a sort of
 			 * scatter-gather operation.
 			 */
-			if (sc->rx.frag) {
+			अगर (sc->rx.frag) अणु
 				/* too many fragments - cannot handle frame */
-				dev_kfree_skb_any(sc->rx.frag);
-				dev_kfree_skb_any(skb);
+				dev_kमुक्त_skb_any(sc->rx.frag);
+				dev_kमुक्त_skb_any(skb);
 				RX_STAT_INC(sc, rx_too_many_frags_err);
-				skb = NULL;
-			}
+				skb = शून्य;
+			पूर्ण
 			sc->rx.frag = skb;
-			goto requeue;
-		}
+			जाओ requeue;
+		पूर्ण
 
-		if (sc->rx.frag) {
-			int space = skb->len - skb_tailroom(hdr_skb);
+		अगर (sc->rx.frag) अणु
+			पूर्णांक space = skb->len - skb_tailroom(hdr_skb);
 
-			if (pskb_expand_head(hdr_skb, 0, space, GFP_ATOMIC) < 0) {
-				dev_kfree_skb(skb);
+			अगर (pskb_expand_head(hdr_skb, 0, space, GFP_ATOMIC) < 0) अणु
+				dev_kमुक्त_skb(skb);
 				RX_STAT_INC(sc, rx_oom_err);
-				goto requeue_drop_frag;
-			}
+				जाओ requeue_drop_frag;
+			पूर्ण
 
-			sc->rx.frag = NULL;
+			sc->rx.frag = शून्य;
 
 			skb_copy_from_linear_data(skb, skb_put(hdr_skb, skb->len),
 						  skb->len);
-			dev_kfree_skb_any(skb);
+			dev_kमुक्त_skb_any(skb);
 			skb = hdr_skb;
-		}
+		पूर्ण
 
-		if (rxs->flag & RX_FLAG_MMIC_STRIPPED)
+		अगर (rxs->flag & RX_FLAG_MMIC_STRIPPED)
 			skb_trim(skb, skb->len - 8);
 
 		spin_lock_irqsave(&sc->sc_pm_lock, flags);
-		if ((sc->ps_flags & (PS_WAIT_FOR_BEACON |
+		अगर ((sc->ps_flags & (PS_WAIT_FOR_BEACON |
 				     PS_WAIT_FOR_CAB |
 				     PS_WAIT_FOR_PSPOLL_DATA)) ||
-		    ath9k_check_auto_sleep(sc))
+		    ath9k_check_स्वतः_sleep(sc))
 			ath_rx_ps(sc, skb, rs.is_mybeacon);
 		spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
 
 		ath9k_antenna_check(sc, &rs);
 		ath9k_apply_ampdu_details(sc, &rs, rxs);
 		ath_debug_rate_stats(sc, &rs, skb);
-		ath_rx_count_airtime(sc, &rs, skb);
+		ath_rx_count_airसमय(sc, &rs, skb);
 
-		hdr = (struct ieee80211_hdr *)skb->data;
-		if (ieee80211_is_ack(hdr->frame_control))
+		hdr = (काष्ठा ieee80211_hdr *)skb->data;
+		अगर (ieee80211_is_ack(hdr->frame_control))
 			ath_dynack_sample_ack_ts(sc->sc_ah, skb, rs.rs_tstamp);
 
 		ieee80211_rx(hw, skb);
 
 requeue_drop_frag:
-		if (sc->rx.frag) {
-			dev_kfree_skb_any(sc->rx.frag);
-			sc->rx.frag = NULL;
-		}
+		अगर (sc->rx.frag) अणु
+			dev_kमुक्त_skb_any(sc->rx.frag);
+			sc->rx.frag = शून्य;
+		पूर्ण
 requeue:
 		list_add_tail(&bf->list, &sc->rx.rxbuf);
 
-		if (!edma) {
+		अगर (!edma) अणु
 			ath_rx_buf_relink(sc, bf, flush);
-			if (!flush)
+			अगर (!flush)
 				ath9k_hw_rxena(ah);
-		} else if (!flush) {
+		पूर्ण अन्यथा अगर (!flush) अणु
 			ath_rx_edma_buf_link(sc, qtype);
-		}
+		पूर्ण
 
-		if (!budget--)
-			break;
-	} while (1);
+		अगर (!budget--)
+			अवरोध;
+	पूर्ण जबतक (1);
 
-	if (!(ah->imask & ATH9K_INT_RXEOL)) {
+	अगर (!(ah->imask & ATH9K_INT_RXEOL)) अणु
 		ah->imask |= (ATH9K_INT_RXEOL | ATH9K_INT_RXORN);
-		ath9k_hw_set_interrupts(ah);
-	}
+		ath9k_hw_set_पूर्णांकerrupts(ah);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

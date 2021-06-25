@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: utmisc - common utility procedures
+ * Module Name: uपंचांगisc - common utility procedures
  *
  ******************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acnamesp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utmisc")
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_is_pci_root_bridge
  *
- * PARAMETERS:  id              - The HID/CID in string format
+ * PARAMETERS:  id              - The HID/CID in string क्रमmat
  *
- * RETURN:      TRUE if the Id is a match for a PCI/PCI-Express Root Bridge
+ * RETURN:      TRUE अगर the Id is a match क्रम a PCI/PCI-Express Root Bridge
  *
- * DESCRIPTION: Determine if the input ID is a PCI Root Bridge ID.
+ * DESCRIPTION: Determine अगर the input ID is a PCI Root Bridge ID.
  *
  ******************************************************************************/
-u8 acpi_ut_is_pci_root_bridge(char *id)
-{
+u8 acpi_ut_is_pci_root_bridge(अक्षर *id)
+अणु
 
 	/*
-	 * Check if this is a PCI root bridge.
-	 * ACPI 3.0+: check for a PCI Express root also.
+	 * Check अगर this is a PCI root bridge.
+	 * ACPI 3.0+: check क्रम a PCI Express root also.
 	 */
-	if (!(strcmp(id,
+	अगर (!(म_भेद(id,
 		     PCI_ROOT_HID_STRING)) ||
-	    !(strcmp(id, PCI_EXPRESS_ROOT_HID_STRING))) {
-		return (TRUE);
-	}
+	    !(म_भेद(id, PCI_EXPRESS_ROOT_HID_STRING))) अणु
+		वापस (TRUE);
+	पूर्ण
 
-	return (FALSE);
-}
+	वापस (FALSE);
+पूर्ण
 
-#if (defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_NAMES_APP)
+#अगर (defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_NAMES_APP)
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_is_aml_table
  *
  * PARAMETERS:  table               - An ACPI table
  *
- * RETURN:      TRUE if table contains executable AML; FALSE otherwise
+ * RETURN:      TRUE अगर table contains executable AML; FALSE otherwise
  *
- * DESCRIPTION: Check ACPI Signature for a table that contains AML code.
+ * DESCRIPTION: Check ACPI Signature क्रम a table that contains AML code.
  *              Currently, these are DSDT,SSDT,PSDT. All other table types are
- *              data tables that do not contain AML code.
+ *              data tables that करो not contain AML code.
  *
  ******************************************************************************/
 
-u8 acpi_ut_is_aml_table(struct acpi_table_header *table)
-{
+u8 acpi_ut_is_aml_table(काष्ठा acpi_table_header *table)
+अणु
 
 	/* These are the only tables that contain executable AML */
 
-	if (ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_DSDT) ||
+	अगर (ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_DSDT) ||
 	    ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_PSDT) ||
 	    ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_SSDT) ||
 	    ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_OSDT) ||
-	    ACPI_IS_OEM_SIG(table->signature)) {
-		return (TRUE);
-	}
+	    ACPI_IS_OEM_SIG(table->signature)) अणु
+		वापस (TRUE);
+	पूर्ण
 
-	return (FALSE);
-}
-#endif
+	वापस (FALSE);
+पूर्ण
+#पूर्ण_अगर
 
 /*******************************************************************************
  *
@@ -77,22 +78,22 @@ u8 acpi_ut_is_aml_table(struct acpi_table_header *table)
  *
  * PARAMETERS:  value           - Value to be converted
  *
- * RETURN:      u32 integer with bytes swapped
+ * RETURN:      u32 पूर्णांकeger with bytes swapped
  *
  * DESCRIPTION: Convert a 32-bit value to big-endian (swap the bytes)
  *
  ******************************************************************************/
 
 u32 acpi_ut_dword_byte_swap(u32 value)
-{
-	union {
+अणु
+	जोड़ अणु
 		u32 value;
 		u8 bytes[4];
-	} out;
-	union {
+	पूर्ण out;
+	जोड़ अणु
 		u32 value;
 		u8 bytes[4];
-	} in;
+	पूर्ण in;
 
 	ACPI_FUNCTION_ENTRY();
 
@@ -103,42 +104,42 @@ u32 acpi_ut_dword_byte_swap(u32 value)
 	out.bytes[2] = in.bytes[1];
 	out.bytes[3] = in.bytes[0];
 
-	return (out.value);
-}
+	वापस (out.value);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_set_integer_width
+ * FUNCTION:    acpi_ut_set_पूर्णांकeger_width
  *
  * PARAMETERS:  Revision            From DSDT header
  *
  * RETURN:      None
  *
- * DESCRIPTION: Set the global integer bit width based upon the revision
+ * DESCRIPTION: Set the global पूर्णांकeger bit width based upon the revision
  *              of the DSDT. For Revision 1 and 0, Integers are 32 bits.
  *              For Revision 2 and above, Integers are 64 bits. Yes, this
- *              makes a difference.
+ *              makes a dअगरference.
  *
  ******************************************************************************/
 
-void acpi_ut_set_integer_width(u8 revision)
-{
+व्योम acpi_ut_set_पूर्णांकeger_width(u8 revision)
+अणु
 
-	if (revision < 2) {
+	अगर (revision < 2) अणु
 
-		/* 32-bit case */
+		/* 32-bit हाल */
 
-		acpi_gbl_integer_bit_width = 32;
-		acpi_gbl_integer_nybble_width = 8;
-		acpi_gbl_integer_byte_width = 4;
-	} else {
-		/* 64-bit case (ACPI 2.0+) */
+		acpi_gbl_पूर्णांकeger_bit_width = 32;
+		acpi_gbl_पूर्णांकeger_nybble_width = 8;
+		acpi_gbl_पूर्णांकeger_byte_width = 4;
+	पूर्ण अन्यथा अणु
+		/* 64-bit हाल (ACPI 2.0+) */
 
-		acpi_gbl_integer_bit_width = 64;
-		acpi_gbl_integer_nybble_width = 16;
-		acpi_gbl_integer_byte_width = 8;
-	}
-}
+		acpi_gbl_पूर्णांकeger_bit_width = 64;
+		acpi_gbl_पूर्णांकeger_nybble_width = 16;
+		acpi_gbl_पूर्णांकeger_byte_width = 8;
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
@@ -155,36 +156,36 @@ void acpi_ut_set_integer_width(u8 revision)
  ******************************************************************************/
 
 acpi_status
-acpi_ut_create_update_state_and_push(union acpi_operand_object *object,
+acpi_ut_create_update_state_and_push(जोड़ acpi_opeअक्रम_object *object,
 				     u16 action,
-				     union acpi_generic_state **state_list)
-{
-	union acpi_generic_state *state;
+				     जोड़ acpi_generic_state **state_list)
+अणु
+	जोड़ acpi_generic_state *state;
 
 	ACPI_FUNCTION_ENTRY();
 
 	/* Ignore null objects; these are expected */
 
-	if (!object) {
-		return (AE_OK);
-	}
+	अगर (!object) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	state = acpi_ut_create_update_state(object, action);
-	if (!state) {
-		return (AE_NO_MEMORY);
-	}
+	अगर (!state) अणु
+		वापस (AE_NO_MEMORY);
+	पूर्ण
 
 	acpi_ut_push_generic_state(state_list, state);
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_walk_package_tree
  *
  * PARAMETERS:  source_object       - The package to walk
- *              target_object       - Target object (if package is being copied)
- *              walk_callback       - Called once for each package element
+ *              target_object       - Target object (अगर package is being copied)
+ *              walk_callback       - Called once क्रम each package element
  *              context             - Passed to the callback function
  *
  * RETURN:      Status
@@ -194,24 +195,24 @@ acpi_ut_create_update_state_and_push(union acpi_operand_object *object,
  ******************************************************************************/
 
 acpi_status
-acpi_ut_walk_package_tree(union acpi_operand_object *source_object,
-			  void *target_object,
-			  acpi_pkg_callback walk_callback, void *context)
-{
+acpi_ut_walk_package_tree(जोड़ acpi_opeअक्रम_object *source_object,
+			  व्योम *target_object,
+			  acpi_pkg_callback walk_callback, व्योम *context)
+अणु
 	acpi_status status = AE_OK;
-	union acpi_generic_state *state_list = NULL;
-	union acpi_generic_state *state;
-	union acpi_operand_object *this_source_obj;
+	जोड़ acpi_generic_state *state_list = शून्य;
+	जोड़ acpi_generic_state *state;
+	जोड़ acpi_opeअक्रम_object *this_source_obj;
 	u32 this_index;
 
 	ACPI_FUNCTION_TRACE(ut_walk_package_tree);
 
 	state = acpi_ut_create_pkg_state(source_object, target_object, 0);
-	if (!state) {
-		return_ACPI_STATUS(AE_NO_MEMORY);
-	}
+	अगर (!state) अणु
+		वापस_ACPI_STATUS(AE_NO_MEMORY);
+	पूर्ण
 
-	while (state) {
+	जबतक (state) अणु
 
 		/* Get one element of the package */
 
@@ -222,27 +223,27 @@ acpi_ut_walk_package_tree(union acpi_operand_object *source_object,
 		    &state->pkg.source_object->package.elements[this_index];
 
 		/*
-		 * Check for:
+		 * Check क्रम:
 		 * 1) An uninitialized package element. It is completely
 		 *    legal to declare a package and leave it uninitialized
-		 * 2) Not an internal object - can be a namespace node instead
-		 * 3) Any type other than a package. Packages are handled in else
-		 *    case below.
+		 * 2) Not an पूर्णांकernal object - can be a namespace node instead
+		 * 3) Any type other than a package. Packages are handled in अन्यथा
+		 *    हाल below.
 		 */
-		if ((!this_source_obj) ||
+		अगर ((!this_source_obj) ||
 		    (ACPI_GET_DESCRIPTOR_TYPE(this_source_obj) !=
 		     ACPI_DESC_TYPE_OPERAND) ||
-		    (this_source_obj->common.type != ACPI_TYPE_PACKAGE)) {
+		    (this_source_obj->common.type != ACPI_TYPE_PACKAGE)) अणु
 			status =
 			    walk_callback(ACPI_COPY_TYPE_SIMPLE,
 					  this_source_obj, state, context);
-			if (ACPI_FAILURE(status)) {
-				return_ACPI_STATUS(status);
-			}
+			अगर (ACPI_FAILURE(status)) अणु
+				वापस_ACPI_STATUS(status);
+			पूर्ण
 
 			state->pkg.index++;
-			while (state->pkg.index >=
-			       state->pkg.source_object->package.count) {
+			जबतक (state->pkg.index >=
+			       state->pkg.source_object->package.count) अणु
 				/*
 				 * We've handled all of the objects at this level,  This means
 				 * that we have just completed a package. That package may
@@ -255,63 +256,63 @@ acpi_ut_walk_package_tree(union acpi_operand_object *source_object,
 
 				/* Finished when there are no more states */
 
-				if (!state) {
+				अगर (!state) अणु
 					/*
 					 * We have handled all of the objects in the top level
 					 * package just add the length of the package objects
-					 * and exit
+					 * and निकास
 					 */
-					return_ACPI_STATUS(AE_OK);
-				}
+					वापस_ACPI_STATUS(AE_OK);
+				पूर्ण
 
 				/*
 				 * Go back up a level and move the index past the just
 				 * completed package object.
 				 */
 				state->pkg.index++;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* This is a subobject of type package */
 
 			status =
 			    walk_callback(ACPI_COPY_TYPE_PACKAGE,
 					  this_source_obj, state, context);
-			if (ACPI_FAILURE(status)) {
-				return_ACPI_STATUS(status);
-			}
+			अगर (ACPI_FAILURE(status)) अणु
+				वापस_ACPI_STATUS(status);
+			पूर्ण
 
 			/*
 			 * Push the current state and create a new one
-			 * The callback above returned a new target package object.
+			 * The callback above वापसed a new target package object.
 			 */
 			acpi_ut_push_generic_state(&state_list, state);
 			state =
 			    acpi_ut_create_pkg_state(this_source_obj,
 						     state->pkg.this_target_obj,
 						     0);
-			if (!state) {
+			अगर (!state) अणु
 
 				/* Free any stacked Update State objects */
 
-				while (state_list) {
+				जबतक (state_list) अणु
 					state =
 					    acpi_ut_pop_generic_state
 					    (&state_list);
 					acpi_ut_delete_generic_state(state);
-				}
-				return_ACPI_STATUS(AE_NO_MEMORY);
-			}
-		}
-	}
+				पूर्ण
+				वापस_ACPI_STATUS(AE_NO_MEMORY);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* We should never get here */
 
 	ACPI_ERROR((AE_INFO, "State list did not terminate correctly"));
 
-	return_ACPI_STATUS(AE_AML_INTERNAL);
-}
+	वापस_ACPI_STATUS(AE_AML_INTERNAL);
+पूर्ण
 
-#ifdef ACPI_DEBUG_OUTPUT
+#अगर_घोषित ACPI_DEBUG_OUTPUT
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_display_init_pathname
@@ -319,7 +320,7 @@ acpi_ut_walk_package_tree(union acpi_operand_object *source_object,
  * PARAMETERS:  type                - Object type of the node
  *              obj_handle          - Handle whose pathname will be displayed
  *              path                - Additional path string to be appended.
- *                                      (NULL if no extra path)
+ *                                      (शून्य अगर no extra path)
  *
  * RETURN:      acpi_status
  *
@@ -327,56 +328,56 @@ acpi_ut_walk_package_tree(union acpi_operand_object *source_object,
  *
  ******************************************************************************/
 
-void
+व्योम
 acpi_ut_display_init_pathname(u8 type,
-			      struct acpi_namespace_node *obj_handle,
-			      const char *path)
-{
+			      काष्ठा acpi_namespace_node *obj_handle,
+			      स्थिर अक्षर *path)
+अणु
 	acpi_status status;
-	struct acpi_buffer buffer;
+	काष्ठा acpi_buffer buffer;
 
 	ACPI_FUNCTION_ENTRY();
 
-	/* Only print the path if the appropriate debug level is enabled */
+	/* Only prपूर्णांक the path अगर the appropriate debug level is enabled */
 
-	if (!(acpi_dbg_level & ACPI_LV_INIT_NAMES)) {
-		return;
-	}
+	अगर (!(acpi_dbg_level & ACPI_LV_INIT_NAMES)) अणु
+		वापस;
+	पूर्ण
 
 	/* Get the full pathname to the node */
 
 	buffer.length = ACPI_ALLOCATE_LOCAL_BUFFER;
 	status = acpi_ns_handle_to_pathname(obj_handle, &buffer, TRUE);
-	if (ACPI_FAILURE(status)) {
-		return;
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस;
+	पूर्ण
 
-	/* Print what we're doing */
+	/* Prपूर्णांक what we're करोing */
 
-	switch (type) {
-	case ACPI_TYPE_METHOD:
+	चयन (type) अणु
+	हाल ACPI_TYPE_METHOD:
 
-		acpi_os_printf("Executing  ");
-		break;
+		acpi_os_म_लिखो("Executing  ");
+		अवरोध;
 
-	default:
+	शेष:
 
-		acpi_os_printf("Initializing ");
-		break;
-	}
+		acpi_os_म_लिखो("Initializing ");
+		अवरोध;
+	पूर्ण
 
-	/* Print the object type and pathname */
+	/* Prपूर्णांक the object type and pathname */
 
-	acpi_os_printf("%-12s %s",
-		       acpi_ut_get_type_name(type), (char *)buffer.pointer);
+	acpi_os_म_लिखो("%-12s %s",
+		       acpi_ut_get_type_name(type), (अक्षर *)buffer.poपूर्णांकer);
 
 	/* Extra path is used to append names like _STA, _INI, etc. */
 
-	if (path) {
-		acpi_os_printf(".%s", path);
-	}
-	acpi_os_printf("\n");
+	अगर (path) अणु
+		acpi_os_म_लिखो(".%s", path);
+	पूर्ण
+	acpi_os_म_लिखो("\n");
 
-	ACPI_FREE(buffer.pointer);
-}
-#endif
+	ACPI_FREE(buffer.poपूर्णांकer);
+पूर्ण
+#पूर्ण_अगर

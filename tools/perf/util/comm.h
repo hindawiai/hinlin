@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_COMM_H
-#define __PERF_COMM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_COMM_H
+#घोषणा __PERF_COMM_H
 
-#include <linux/list.h>
-#include <linux/types.h>
-#include <stdbool.h>
+#समावेश <linux/list.h>
+#समावेश <linux/types.h>
+#समावेश <stdbool.h>
 
-struct comm_str;
+काष्ठा comm_str;
 
-struct comm {
-	struct comm_str *comm_str;
+काष्ठा comm अणु
+	काष्ठा comm_str *comm_str;
 	u64 start;
-	struct list_head list;
+	काष्ठा list_head list;
 	bool exec;
-	union { /* Tool specific area */
-		void	*priv;
+	जोड़ अणु /* Tool specअगरic area */
+		व्योम	*priv;
 		u64	db_id;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-void comm__free(struct comm *comm);
-struct comm *comm__new(const char *str, u64 timestamp, bool exec);
-const char *comm__str(const struct comm *comm);
-int comm__override(struct comm *comm, const char *str, u64 timestamp,
+व्योम comm__मुक्त(काष्ठा comm *comm);
+काष्ठा comm *comm__new(स्थिर अक्षर *str, u64 बारtamp, bool exec);
+स्थिर अक्षर *comm__str(स्थिर काष्ठा comm *comm);
+पूर्णांक comm__override(काष्ठा comm *comm, स्थिर अक्षर *str, u64 बारtamp,
 		   bool exec);
 
-#endif  /* __PERF_COMM_H */
+#पूर्ण_अगर  /* __PERF_COMM_H */

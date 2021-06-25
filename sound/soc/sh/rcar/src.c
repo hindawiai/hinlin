@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Renesas R-Car SRC support
 //
@@ -6,7 +7,7 @@
 // Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
 /*
- * You can use Synchronous Sampling Rate Convert (if no DVC)
+ * You can use Synchronous Sampling Rate Convert (अगर no DVC)
  *
  *	amixer set "SRC Out Rate" on
  *	aplay xxx.wav &
@@ -15,41 +16,41 @@
  */
 
 /*
- * you can enable below define if you don't need
- * SSI interrupt status debug message when debugging
+ * you can enable below define अगर you करोn't need
+ * SSI पूर्णांकerrupt status debug message when debugging
  * see rsnd_dbg_irq_status()
  *
- * #define RSND_DEBUG_NO_IRQ_STATUS 1
+ * #घोषणा RSND_DEBUG_NO_IRQ_STATUS 1
  */
 
-#include "rsnd.h"
+#समावेश "rsnd.h"
 
-#define SRC_NAME "src"
+#घोषणा SRC_NAME "src"
 
 /* SCU_SYSTEM_STATUS0/1 */
-#define OUF_SRC(id)	((1 << (id + 16)) | (1 << id))
+#घोषणा OUF_SRC(id)	((1 << (id + 16)) | (1 << id))
 
-struct rsnd_src {
-	struct rsnd_mod mod;
-	struct rsnd_mod *dma;
-	struct rsnd_kctrl_cfg_s sen;  /* sync convert enable */
-	struct rsnd_kctrl_cfg_s sync; /* sync convert */
-	int irq;
-};
+काष्ठा rsnd_src अणु
+	काष्ठा rsnd_mod mod;
+	काष्ठा rsnd_mod *dma;
+	काष्ठा rsnd_kctrl_cfg_s sen;  /* sync convert enable */
+	काष्ठा rsnd_kctrl_cfg_s sync; /* sync convert */
+	पूर्णांक irq;
+पूर्ण;
 
-#define RSND_SRC_NAME_SIZE 16
+#घोषणा RSND_SRC_NAME_SIZE 16
 
-#define rsnd_src_get(priv, id) ((struct rsnd_src *)(priv->src) + id)
-#define rsnd_src_nr(priv) ((priv)->src_nr)
-#define rsnd_src_sync_is_enabled(mod) (rsnd_mod_to_src(mod)->sen.val)
+#घोषणा rsnd_src_get(priv, id) ((काष्ठा rsnd_src *)(priv->src) + id)
+#घोषणा rsnd_src_nr(priv) ((priv)->src_nr)
+#घोषणा rsnd_src_sync_is_enabled(mod) (rsnd_mod_to_src(mod)->sen.val)
 
-#define rsnd_mod_to_src(_mod)				\
-	container_of((_mod), struct rsnd_src, mod)
+#घोषणा rsnd_mod_to_src(_mod)				\
+	container_of((_mod), काष्ठा rsnd_src, mod)
 
-#define for_each_rsnd_src(pos, priv, i)				\
-	for ((i) = 0;						\
+#घोषणा क्रम_each_rsnd_src(pos, priv, i)				\
+	क्रम ((i) = 0;						\
 	     ((i) < rsnd_src_nr(priv)) &&			\
-	     ((pos) = (struct rsnd_src *)(priv)->src + i);	\
+	     ((pos) = (काष्ठा rsnd_src *)(priv)->src + i);	\
 	     i++)
 
 
@@ -63,178 +64,178 @@ struct rsnd_src {
  *
  */
 
-static void rsnd_src_activation(struct rsnd_mod *mod)
-{
-	rsnd_mod_write(mod, SRC_SWRSR, 0);
-	rsnd_mod_write(mod, SRC_SWRSR, 1);
-}
+अटल व्योम rsnd_src_activation(काष्ठा rsnd_mod *mod)
+अणु
+	rsnd_mod_ग_लिखो(mod, SRC_SWRSR, 0);
+	rsnd_mod_ग_लिखो(mod, SRC_SWRSR, 1);
+पूर्ण
 
-static void rsnd_src_halt(struct rsnd_mod *mod)
-{
-	rsnd_mod_write(mod, SRC_SRCIR, 1);
-	rsnd_mod_write(mod, SRC_SWRSR, 0);
-}
+अटल व्योम rsnd_src_halt(काष्ठा rsnd_mod *mod)
+अणु
+	rsnd_mod_ग_लिखो(mod, SRC_SRCIR, 1);
+	rsnd_mod_ग_लिखो(mod, SRC_SWRSR, 0);
+पूर्ण
 
-static struct dma_chan *rsnd_src_dma_req(struct rsnd_dai_stream *io,
-					 struct rsnd_mod *mod)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	int is_play = rsnd_io_is_play(io);
+अटल काष्ठा dma_chan *rsnd_src_dma_req(काष्ठा rsnd_dai_stream *io,
+					 काष्ठा rsnd_mod *mod)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	पूर्णांक is_play = rsnd_io_is_play(io);
 
-	return rsnd_dma_request_channel(rsnd_src_of_node(priv),
+	वापस rsnd_dma_request_channel(rsnd_src_of_node(priv),
 					mod,
 					is_play ? "rx" : "tx");
-}
+पूर्ण
 
-static u32 rsnd_src_convert_rate(struct rsnd_dai_stream *io,
-				 struct rsnd_mod *mod)
-{
-	struct snd_pcm_runtime *runtime = rsnd_io_to_runtime(io);
-	struct rsnd_src *src = rsnd_mod_to_src(mod);
+अटल u32 rsnd_src_convert_rate(काष्ठा rsnd_dai_stream *io,
+				 काष्ठा rsnd_mod *mod)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = rsnd_io_to_runसमय(io);
+	काष्ठा rsnd_src *src = rsnd_mod_to_src(mod);
 	u32 convert_rate;
 
-	if (!runtime)
-		return 0;
+	अगर (!runसमय)
+		वापस 0;
 
-	if (!rsnd_src_sync_is_enabled(mod))
-		return rsnd_io_converted_rate(io);
+	अगर (!rsnd_src_sync_is_enabled(mod))
+		वापस rsnd_io_converted_rate(io);
 
 	convert_rate = src->sync.val;
 
-	if (!convert_rate)
+	अगर (!convert_rate)
 		convert_rate = rsnd_io_converted_rate(io);
 
-	if (!convert_rate)
-		convert_rate = runtime->rate;
+	अगर (!convert_rate)
+		convert_rate = runसमय->rate;
 
-	return convert_rate;
-}
+	वापस convert_rate;
+पूर्ण
 
-unsigned int rsnd_src_get_rate(struct rsnd_priv *priv,
-			       struct rsnd_dai_stream *io,
-			       int is_in)
-{
-	struct rsnd_mod *src_mod = rsnd_io_to_mod_src(io);
-	struct snd_pcm_runtime *runtime = rsnd_io_to_runtime(io);
-	unsigned int rate = 0;
-	int is_play = rsnd_io_is_play(io);
+अचिन्हित पूर्णांक rsnd_src_get_rate(काष्ठा rsnd_priv *priv,
+			       काष्ठा rsnd_dai_stream *io,
+			       पूर्णांक is_in)
+अणु
+	काष्ठा rsnd_mod *src_mod = rsnd_io_to_mod_src(io);
+	काष्ठा snd_pcm_runसमय *runसमय = rsnd_io_to_runसमय(io);
+	अचिन्हित पूर्णांक rate = 0;
+	पूर्णांक is_play = rsnd_io_is_play(io);
 
 	/*
 	 * Playback
-	 * runtime_rate -> [SRC] -> convert_rate
+	 * runसमय_rate -> [SRC] -> convert_rate
 	 *
 	 * Capture
-	 * convert_rate -> [SRC] -> runtime_rate
+	 * convert_rate -> [SRC] -> runसमय_rate
 	 */
 
-	if (is_play == is_in)
-		return runtime->rate;
+	अगर (is_play == is_in)
+		वापस runसमय->rate;
 
 	/*
-	 * return convert rate if SRC is used,
-	 * otherwise, return runtime->rate as usual
+	 * वापस convert rate अगर SRC is used,
+	 * otherwise, वापस runसमय->rate as usual
 	 */
-	if (src_mod)
+	अगर (src_mod)
 		rate = rsnd_src_convert_rate(io, src_mod);
 
-	if (!rate)
-		rate = runtime->rate;
+	अगर (!rate)
+		rate = runसमय->rate;
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static const u32 bsdsr_table_pattern1[] = {
+अटल स्थिर u32 bsdsr_table_pattern1[] = अणु
 	0x01800000, /* 6 - 1/6 */
 	0x01000000, /* 6 - 1/4 */
 	0x00c00000, /* 6 - 1/3 */
 	0x00800000, /* 6 - 1/2 */
 	0x00600000, /* 6 - 2/3 */
 	0x00400000, /* 6 - 1   */
-};
+पूर्ण;
 
-static const u32 bsdsr_table_pattern2[] = {
+अटल स्थिर u32 bsdsr_table_pattern2[] = अणु
 	0x02400000, /* 6 - 1/6 */
 	0x01800000, /* 6 - 1/4 */
 	0x01200000, /* 6 - 1/3 */
 	0x00c00000, /* 6 - 1/2 */
 	0x00900000, /* 6 - 2/3 */
 	0x00600000, /* 6 - 1   */
-};
+पूर्ण;
 
-static const u32 bsisr_table[] = {
+अटल स्थिर u32 bsisr_table[] = अणु
 	0x00100060, /* 6 - 1/6 */
 	0x00100040, /* 6 - 1/4 */
 	0x00100030, /* 6 - 1/3 */
 	0x00100020, /* 6 - 1/2 */
 	0x00100020, /* 6 - 2/3 */
 	0x00100020, /* 6 - 1   */
-};
+पूर्ण;
 
-static const u32 chan288888[] = {
+अटल स्थिर u32 chan288888[] = अणु
 	0x00000006, /* 1 to 2 */
 	0x000001fe, /* 1 to 8 */
 	0x000001fe, /* 1 to 8 */
 	0x000001fe, /* 1 to 8 */
 	0x000001fe, /* 1 to 8 */
 	0x000001fe, /* 1 to 8 */
-};
+पूर्ण;
 
-static const u32 chan244888[] = {
+अटल स्थिर u32 chan244888[] = अणु
 	0x00000006, /* 1 to 2 */
 	0x0000001e, /* 1 to 4 */
 	0x0000001e, /* 1 to 4 */
 	0x000001fe, /* 1 to 8 */
 	0x000001fe, /* 1 to 8 */
 	0x000001fe, /* 1 to 8 */
-};
+पूर्ण;
 
-static const u32 chan222222[] = {
+अटल स्थिर u32 chan222222[] = अणु
 	0x00000006, /* 1 to 2 */
 	0x00000006, /* 1 to 2 */
 	0x00000006, /* 1 to 2 */
 	0x00000006, /* 1 to 2 */
 	0x00000006, /* 1 to 2 */
 	0x00000006, /* 1 to 2 */
-};
+पूर्ण;
 
-static void rsnd_src_set_convert_rate(struct rsnd_dai_stream *io,
-				      struct rsnd_mod *mod)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct snd_pcm_runtime *runtime = rsnd_io_to_runtime(io);
-	int is_play = rsnd_io_is_play(io);
-	int use_src = 0;
+अटल व्योम rsnd_src_set_convert_rate(काष्ठा rsnd_dai_stream *io,
+				      काष्ठा rsnd_mod *mod)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा snd_pcm_runसमय *runसमय = rsnd_io_to_runसमय(io);
+	पूर्णांक is_play = rsnd_io_is_play(io);
+	पूर्णांक use_src = 0;
 	u32 fin, fout;
-	u32 ifscr, fsrate, adinr;
+	u32 अगरscr, fsrate, adinr;
 	u32 cr, route;
-	u32 i_busif, o_busif, tmp;
-	const u32 *bsdsr_table;
-	const u32 *chptn;
-	uint ratio;
-	int chan;
-	int idx;
+	u32 i_busअगर, o_busअगर, पंचांगp;
+	स्थिर u32 *bsdsr_table;
+	स्थिर u32 *chptn;
+	uपूर्णांक ratio;
+	पूर्णांक chan;
+	पूर्णांक idx;
 
-	if (!runtime)
-		return;
+	अगर (!runसमय)
+		वापस;
 
 	fin  = rsnd_src_get_in_rate(priv, io);
 	fout = rsnd_src_get_out_rate(priv, io);
 
-	chan = rsnd_runtime_channel_original(io);
+	chan = rsnd_runसमय_channel_original(io);
 
-	/* 6 - 1/6 are very enough ratio for SRC_BSDSR */
-	if (fin == fout)
+	/* 6 - 1/6 are very enough ratio क्रम SRC_BSDSR */
+	अगर (fin == fout)
 		ratio = 0;
-	else if (fin > fout)
+	अन्यथा अगर (fin > fout)
 		ratio = 100 * fin / fout;
-	else
+	अन्यथा
 		ratio = 100 * fout / fin;
 
-	if (ratio > 600) {
+	अगर (ratio > 600) अणु
 		dev_err(dev, "FSO/FSI ratio error\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	use_src = (fin != fout) | rsnd_src_sync_is_enabled(mod);
 
@@ -246,31 +247,31 @@ static void rsnd_src_set_convert_rate(struct rsnd_dai_stream *io,
 	/*
 	 * SRC_IFSCR / SRC_IFSVR
 	 */
-	ifscr = 0;
+	अगरscr = 0;
 	fsrate = 0;
-	if (use_src) {
+	अगर (use_src) अणु
 		u64 n;
 
-		ifscr = 1;
+		अगरscr = 1;
 		n = (u64)0x0400000 * fin;
-		do_div(n, fout);
+		करो_भाग(n, fout);
 		fsrate = n;
-	}
+	पूर्ण
 
 	/*
 	 * SRC_SRCCR / SRC_ROUTE_MODE0
 	 */
 	cr	= 0x00011110;
 	route	= 0x0;
-	if (use_src) {
+	अगर (use_src) अणु
 		route	= 0x1;
 
-		if (rsnd_src_sync_is_enabled(mod)) {
+		अगर (rsnd_src_sync_is_enabled(mod)) अणु
 			cr |= 0x1;
 			route |= rsnd_io_is_play(io) ?
 				(0x1 << 24) : (0x1 << 25);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * SRC_BSDSR / SRC_BSISR
@@ -279,131 +280,131 @@ static void rsnd_src_set_convert_rate(struct rsnd_dai_stream *io,
 	 *	Combination of Register Setting Related to
 	 *	FSO/FSI Ratio and Channel, Latency
 	 */
-	switch (rsnd_mod_id(mod)) {
-	case 0:
+	चयन (rsnd_mod_id(mod)) अणु
+	हाल 0:
 		chptn		= chan288888;
 		bsdsr_table	= bsdsr_table_pattern1;
-		break;
-	case 1:
-	case 3:
-	case 4:
+		अवरोध;
+	हाल 1:
+	हाल 3:
+	हाल 4:
 		chptn		= chan244888;
 		bsdsr_table	= bsdsr_table_pattern1;
-		break;
-	case 2:
-	case 9:
+		अवरोध;
+	हाल 2:
+	हाल 9:
 		chptn		= chan222222;
 		bsdsr_table	= bsdsr_table_pattern1;
-		break;
-	case 5:
-	case 6:
-	case 7:
-	case 8:
+		अवरोध;
+	हाल 5:
+	हाल 6:
+	हाल 7:
+	हाल 8:
 		chptn		= chan222222;
 		bsdsr_table	= bsdsr_table_pattern2;
-		break;
-	default:
-		goto convert_rate_err;
-	}
+		अवरोध;
+	शेष:
+		जाओ convert_rate_err;
+	पूर्ण
 
 	/*
-	 * E3 need to overwrite
+	 * E3 need to overग_लिखो
 	 */
-	if (rsnd_is_e3(priv))
-		switch (rsnd_mod_id(mod)) {
-		case 0:
-		case 4:
+	अगर (rsnd_is_e3(priv))
+		चयन (rsnd_mod_id(mod)) अणु
+		हाल 0:
+		हाल 4:
 			chptn	= chan222222;
-		}
+		पूर्ण
 
-	for (idx = 0; idx < ARRAY_SIZE(chan222222); idx++)
-		if (chptn[idx] & (1 << chan))
-			break;
+	क्रम (idx = 0; idx < ARRAY_SIZE(chan222222); idx++)
+		अगर (chptn[idx] & (1 << chan))
+			अवरोध;
 
-	if (chan > 8 ||
+	अगर (chan > 8 ||
 	    idx >= ARRAY_SIZE(chan222222))
-		goto convert_rate_err;
+		जाओ convert_rate_err;
 
 	/* BUSIF_MODE */
-	tmp = rsnd_get_busif_shift(io, mod);
-	i_busif = ( is_play ? tmp : 0) | 1;
-	o_busif = (!is_play ? tmp : 0) | 1;
+	पंचांगp = rsnd_get_busअगर_shअगरt(io, mod);
+	i_busअगर = ( is_play ? पंचांगp : 0) | 1;
+	o_busअगर = (!is_play ? पंचांगp : 0) | 1;
 
-	rsnd_mod_write(mod, SRC_ROUTE_MODE0, route);
+	rsnd_mod_ग_लिखो(mod, SRC_ROUTE_MODE0, route);
 
-	rsnd_mod_write(mod, SRC_SRCIR, 1);	/* initialize */
-	rsnd_mod_write(mod, SRC_ADINR, adinr);
-	rsnd_mod_write(mod, SRC_IFSCR, ifscr);
-	rsnd_mod_write(mod, SRC_IFSVR, fsrate);
-	rsnd_mod_write(mod, SRC_SRCCR, cr);
-	rsnd_mod_write(mod, SRC_BSDSR, bsdsr_table[idx]);
-	rsnd_mod_write(mod, SRC_BSISR, bsisr_table[idx]);
-	rsnd_mod_write(mod, SRC_SRCIR, 0);	/* cancel initialize */
+	rsnd_mod_ग_लिखो(mod, SRC_SRCIR, 1);	/* initialize */
+	rsnd_mod_ग_लिखो(mod, SRC_ADINR, adinr);
+	rsnd_mod_ग_लिखो(mod, SRC_IFSCR, अगरscr);
+	rsnd_mod_ग_लिखो(mod, SRC_IFSVR, fsrate);
+	rsnd_mod_ग_लिखो(mod, SRC_SRCCR, cr);
+	rsnd_mod_ग_लिखो(mod, SRC_BSDSR, bsdsr_table[idx]);
+	rsnd_mod_ग_लिखो(mod, SRC_BSISR, bsisr_table[idx]);
+	rsnd_mod_ग_लिखो(mod, SRC_SRCIR, 0);	/* cancel initialize */
 
-	rsnd_mod_write(mod, SRC_I_BUSIF_MODE, i_busif);
-	rsnd_mod_write(mod, SRC_O_BUSIF_MODE, o_busif);
+	rsnd_mod_ग_लिखो(mod, SRC_I_BUSIF_MODE, i_busअगर);
+	rsnd_mod_ग_लिखो(mod, SRC_O_BUSIF_MODE, o_busअगर);
 
-	rsnd_mod_write(mod, SRC_BUSIF_DALIGN, rsnd_get_dalign(mod, io));
+	rsnd_mod_ग_लिखो(mod, SRC_BUSIF_DALIGN, rsnd_get_dalign(mod, io));
 
-	rsnd_adg_set_src_timesel_gen2(mod, io, fin, fout);
+	rsnd_adg_set_src_बारel_gen2(mod, io, fin, fout);
 
-	return;
+	वापस;
 
 convert_rate_err:
 	dev_err(dev, "unknown BSDSR/BSDIR settings\n");
-}
+पूर्ण
 
-static int rsnd_src_irq(struct rsnd_mod *mod,
-			struct rsnd_dai_stream *io,
-			struct rsnd_priv *priv,
-			int enable)
-{
-	struct rsnd_src *src = rsnd_mod_to_src(mod);
-	u32 sys_int_val, int_val, sys_int_mask;
-	int irq = src->irq;
-	int id = rsnd_mod_id(mod);
+अटल पूर्णांक rsnd_src_irq(काष्ठा rsnd_mod *mod,
+			काष्ठा rsnd_dai_stream *io,
+			काष्ठा rsnd_priv *priv,
+			पूर्णांक enable)
+अणु
+	काष्ठा rsnd_src *src = rsnd_mod_to_src(mod);
+	u32 sys_पूर्णांक_val, पूर्णांक_val, sys_पूर्णांक_mask;
+	पूर्णांक irq = src->irq;
+	पूर्णांक id = rsnd_mod_id(mod);
 
-	sys_int_val =
-	sys_int_mask = OUF_SRC(id);
-	int_val = 0x3300;
+	sys_पूर्णांक_val =
+	sys_पूर्णांक_mask = OUF_SRC(id);
+	पूर्णांक_val = 0x3300;
 
 	/*
 	 * IRQ is not supported on non-DT
 	 * see
 	 *	rsnd_src_probe_()
 	 */
-	if ((irq <= 0) || !enable) {
-		sys_int_val = 0;
-		int_val = 0;
-	}
+	अगर ((irq <= 0) || !enable) अणु
+		sys_पूर्णांक_val = 0;
+		पूर्णांक_val = 0;
+	पूर्ण
 
 	/*
 	 * WORKAROUND
 	 *
 	 * ignore over flow error when rsnd_src_sync_is_enabled()
 	 */
-	if (rsnd_src_sync_is_enabled(mod))
-		sys_int_val = sys_int_val & 0xffff;
+	अगर (rsnd_src_sync_is_enabled(mod))
+		sys_पूर्णांक_val = sys_पूर्णांक_val & 0xffff;
 
-	rsnd_mod_write(mod, SRC_INT_ENABLE0, int_val);
-	rsnd_mod_bset(mod, SCU_SYS_INT_EN0, sys_int_mask, sys_int_val);
-	rsnd_mod_bset(mod, SCU_SYS_INT_EN1, sys_int_mask, sys_int_val);
+	rsnd_mod_ग_लिखो(mod, SRC_INT_ENABLE0, पूर्णांक_val);
+	rsnd_mod_bset(mod, SCU_SYS_INT_EN0, sys_पूर्णांक_mask, sys_पूर्णांक_val);
+	rsnd_mod_bset(mod, SCU_SYS_INT_EN1, sys_पूर्णांक_mask, sys_पूर्णांक_val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rsnd_src_status_clear(struct rsnd_mod *mod)
-{
+अटल व्योम rsnd_src_status_clear(काष्ठा rsnd_mod *mod)
+अणु
 	u32 val = OUF_SRC(rsnd_mod_id(mod));
 
-	rsnd_mod_write(mod, SCU_SYS_STATUS0, val);
-	rsnd_mod_write(mod, SCU_SYS_STATUS1, val);
-}
+	rsnd_mod_ग_लिखो(mod, SCU_SYS_STATUS0, val);
+	rsnd_mod_ग_लिखो(mod, SCU_SYS_STATUS1, val);
+पूर्ण
 
-static bool rsnd_src_error_occurred(struct rsnd_mod *mod)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
+अटल bool rsnd_src_error_occurred(काष्ठा rsnd_mod *mod)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
 	u32 val0, val1;
 	u32 status0, status1;
 	bool ret = false;
@@ -415,59 +416,59 @@ static bool rsnd_src_error_occurred(struct rsnd_mod *mod)
 	 *
 	 * ignore over flow error when rsnd_src_sync_is_enabled()
 	 */
-	if (rsnd_src_sync_is_enabled(mod))
+	अगर (rsnd_src_sync_is_enabled(mod))
 		val0 = val0 & 0xffff;
 
-	status0 = rsnd_mod_read(mod, SCU_SYS_STATUS0);
-	status1 = rsnd_mod_read(mod, SCU_SYS_STATUS1);
-	if ((status0 & val0) || (status1 & val1)) {
+	status0 = rsnd_mod_पढ़ो(mod, SCU_SYS_STATUS0);
+	status1 = rsnd_mod_पढ़ो(mod, SCU_SYS_STATUS1);
+	अगर ((status0 & val0) || (status1 & val1)) अणु
 		rsnd_dbg_irq_status(dev, "%s err status : 0x%08x, 0x%08x\n",
 			rsnd_mod_name(mod), status0, status1);
 
 		ret = true;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rsnd_src_start(struct rsnd_mod *mod,
-			  struct rsnd_dai_stream *io,
-			  struct rsnd_priv *priv)
-{
+अटल पूर्णांक rsnd_src_start(काष्ठा rsnd_mod *mod,
+			  काष्ठा rsnd_dai_stream *io,
+			  काष्ठा rsnd_priv *priv)
+अणु
 	u32 val;
 
 	/*
 	 * WORKAROUND
 	 *
-	 * Enable SRC output if you want to use sync convert together with DVC
+	 * Enable SRC output अगर you want to use sync convert together with DVC
 	 */
 	val = (rsnd_io_to_mod_dvc(io) && !rsnd_src_sync_is_enabled(mod)) ?
 		0x01 : 0x11;
 
-	rsnd_mod_write(mod, SRC_CTRL, val);
+	rsnd_mod_ग_लिखो(mod, SRC_CTRL, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_src_stop(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
-	rsnd_mod_write(mod, SRC_CTRL, 0);
+अटल पूर्णांक rsnd_src_stop(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
+	rsnd_mod_ग_लिखो(mod, SRC_CTRL, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_src_init(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
-	struct rsnd_src *src = rsnd_mod_to_src(mod);
+अटल पूर्णांक rsnd_src_init(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_src *src = rsnd_mod_to_src(mod);
 
 	/* reset sync convert_rate */
 	src->sync.val = 0;
 
-	rsnd_mod_power_on(mod);
+	rsnd_mod_घातer_on(mod);
 
 	rsnd_src_activation(mod);
 
@@ -475,103 +476,103 @@ static int rsnd_src_init(struct rsnd_mod *mod,
 
 	rsnd_src_status_clear(mod);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_src_quit(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
-	struct rsnd_src *src = rsnd_mod_to_src(mod);
+अटल पूर्णांक rsnd_src_quit(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_src *src = rsnd_mod_to_src(mod);
 
 	rsnd_src_halt(mod);
 
-	rsnd_mod_power_off(mod);
+	rsnd_mod_घातer_off(mod);
 
 	/* reset sync convert_rate */
 	src->sync.val = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __rsnd_src_interrupt(struct rsnd_mod *mod,
-				 struct rsnd_dai_stream *io)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
+अटल व्योम __rsnd_src_पूर्णांकerrupt(काष्ठा rsnd_mod *mod,
+				 काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
 	bool stop = false;
 
 	spin_lock(&priv->lock);
 
-	/* ignore all cases if not working */
-	if (!rsnd_io_is_working(io))
-		goto rsnd_src_interrupt_out;
+	/* ignore all हालs अगर not working */
+	अगर (!rsnd_io_is_working(io))
+		जाओ rsnd_src_पूर्णांकerrupt_out;
 
-	if (rsnd_src_error_occurred(mod))
+	अगर (rsnd_src_error_occurred(mod))
 		stop = true;
 
 	rsnd_src_status_clear(mod);
-rsnd_src_interrupt_out:
+rsnd_src_पूर्णांकerrupt_out:
 
 	spin_unlock(&priv->lock);
 
-	if (stop)
+	अगर (stop)
 		snd_pcm_stop_xrun(io->substream);
-}
+पूर्ण
 
-static irqreturn_t rsnd_src_interrupt(int irq, void *data)
-{
-	struct rsnd_mod *mod = data;
+अटल irqवापस_t rsnd_src_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा rsnd_mod *mod = data;
 
-	rsnd_mod_interrupt(mod, __rsnd_src_interrupt);
+	rsnd_mod_पूर्णांकerrupt(mod, __rsnd_src_पूर्णांकerrupt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rsnd_src_probe_(struct rsnd_mod *mod,
-			   struct rsnd_dai_stream *io,
-			   struct rsnd_priv *priv)
-{
-	struct rsnd_src *src = rsnd_mod_to_src(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	int irq = src->irq;
-	int ret;
+अटल पूर्णांक rsnd_src_probe_(काष्ठा rsnd_mod *mod,
+			   काष्ठा rsnd_dai_stream *io,
+			   काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_src *src = rsnd_mod_to_src(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	पूर्णांक irq = src->irq;
+	पूर्णांक ret;
 
-	if (irq > 0) {
+	अगर (irq > 0) अणु
 		/*
 		 * IRQ is not supported on non-DT
 		 * see
 		 *	rsnd_src_irq()
 		 */
 		ret = devm_request_irq(dev, irq,
-				       rsnd_src_interrupt,
+				       rsnd_src_पूर्णांकerrupt,
 				       IRQF_SHARED,
 				       dev_name(dev), mod);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = rsnd_dma_attach(io, mod, &src->dma);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rsnd_src_pcm_new(struct rsnd_mod *mod,
-			    struct rsnd_dai_stream *io,
-			    struct snd_soc_pcm_runtime *rtd)
-{
-	struct rsnd_src *src = rsnd_mod_to_src(mod);
-	int ret;
+अटल पूर्णांक rsnd_src_pcm_new(काष्ठा rsnd_mod *mod,
+			    काष्ठा rsnd_dai_stream *io,
+			    काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा rsnd_src *src = rsnd_mod_to_src(mod);
+	पूर्णांक ret;
 
 	/*
-	 * enable SRC sync convert if possible
+	 * enable SRC sync convert अगर possible
 	 */
 
 	/*
 	 * It can't use SRC Synchronous convert
-	 * when Capture if it uses CMD
+	 * when Capture अगर it uses CMD
 	 */
-	if (rsnd_io_to_mod_cmd(io) && !rsnd_io_is_play(io))
-		return 0;
+	अगर (rsnd_io_to_mod_cmd(io) && !rsnd_io_is_play(io))
+		वापस 0;
 
 	/*
 	 * enable sync convert
@@ -580,24 +581,24 @@ static int rsnd_src_pcm_new(struct rsnd_mod *mod,
 			       rsnd_io_is_play(io) ?
 			       "SRC Out Rate Switch" :
 			       "SRC In Rate Switch",
-			       rsnd_kctrl_accept_anytime,
+			       rsnd_kctrl_accept_anyसमय,
 			       rsnd_src_set_convert_rate,
 			       &src->sen, 1);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = rsnd_kctrl_new_s(mod, io, rtd,
 			       rsnd_io_is_play(io) ?
 			       "SRC Out Rate" :
 			       "SRC In Rate",
-			       rsnd_kctrl_accept_runtime,
+			       rsnd_kctrl_accept_runसमय,
 			       rsnd_src_set_convert_rate,
 			       &src->sync, 192000);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct rsnd_mod_ops rsnd_src_ops = {
+अटल काष्ठा rsnd_mod_ops rsnd_src_ops = अणु
 	.name		= SRC_NAME,
 	.dma_req	= rsnd_src_dma_req,
 	.probe		= rsnd_src_probe_,
@@ -608,98 +609,98 @@ static struct rsnd_mod_ops rsnd_src_ops = {
 	.irq		= rsnd_src_irq,
 	.pcm_new	= rsnd_src_pcm_new,
 	.get_status	= rsnd_mod_get_status,
-};
+पूर्ण;
 
-struct rsnd_mod *rsnd_src_mod_get(struct rsnd_priv *priv, int id)
-{
-	if (WARN_ON(id < 0 || id >= rsnd_src_nr(priv)))
+काष्ठा rsnd_mod *rsnd_src_mod_get(काष्ठा rsnd_priv *priv, पूर्णांक id)
+अणु
+	अगर (WARN_ON(id < 0 || id >= rsnd_src_nr(priv)))
 		id = 0;
 
-	return rsnd_mod_get(rsnd_src_get(priv, id));
-}
+	वापस rsnd_mod_get(rsnd_src_get(priv, id));
+पूर्ण
 
-int rsnd_src_probe(struct rsnd_priv *priv)
-{
-	struct device_node *node;
-	struct device_node *np;
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_src *src;
-	struct clk *clk;
-	char name[RSND_SRC_NAME_SIZE];
-	int i, nr, ret;
+पूर्णांक rsnd_src_probe(काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा device_node *np;
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_src *src;
+	काष्ठा clk *clk;
+	अक्षर name[RSND_SRC_NAME_SIZE];
+	पूर्णांक i, nr, ret;
 
-	/* This driver doesn't support Gen1 at this point */
-	if (rsnd_is_gen1(priv))
-		return 0;
+	/* This driver करोesn't support Gen1 at this poपूर्णांक */
+	अगर (rsnd_is_gen1(priv))
+		वापस 0;
 
 	node = rsnd_src_of_node(priv);
-	if (!node)
-		return 0; /* not used is not error */
+	अगर (!node)
+		वापस 0; /* not used is not error */
 
 	nr = of_get_child_count(node);
-	if (!nr) {
+	अगर (!nr) अणु
 		ret = -EINVAL;
-		goto rsnd_src_probe_done;
-	}
+		जाओ rsnd_src_probe_करोne;
+	पूर्ण
 
-	src	= devm_kcalloc(dev, nr, sizeof(*src), GFP_KERNEL);
-	if (!src) {
+	src	= devm_kसुस्मृति(dev, nr, माप(*src), GFP_KERNEL);
+	अगर (!src) अणु
 		ret = -ENOMEM;
-		goto rsnd_src_probe_done;
-	}
+		जाओ rsnd_src_probe_करोne;
+	पूर्ण
 
 	priv->src_nr	= nr;
 	priv->src	= src;
 
 	i = 0;
-	for_each_child_of_node(node, np) {
-		if (!of_device_is_available(np))
-			goto skip;
+	क्रम_each_child_of_node(node, np) अणु
+		अगर (!of_device_is_available(np))
+			जाओ skip;
 
 		src = rsnd_src_get(priv, i);
 
-		snprintf(name, RSND_SRC_NAME_SIZE, "%s.%d",
+		snम_लिखो(name, RSND_SRC_NAME_SIZE, "%s.%d",
 			 SRC_NAME, i);
 
 		src->irq = irq_of_parse_and_map(np, 0);
-		if (!src->irq) {
+		अगर (!src->irq) अणु
 			ret = -EINVAL;
 			of_node_put(np);
-			goto rsnd_src_probe_done;
-		}
+			जाओ rsnd_src_probe_करोne;
+		पूर्ण
 
 		clk = devm_clk_get(dev, name);
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			ret = PTR_ERR(clk);
 			of_node_put(np);
-			goto rsnd_src_probe_done;
-		}
+			जाओ rsnd_src_probe_करोne;
+		पूर्ण
 
 		ret = rsnd_mod_init(priv, rsnd_mod_get(src),
 				    &rsnd_src_ops, clk, RSND_MOD_SRC, i);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(np);
-			goto rsnd_src_probe_done;
-		}
+			जाओ rsnd_src_probe_करोne;
+		पूर्ण
 
 skip:
 		i++;
-	}
+	पूर्ण
 
 	ret = 0;
 
-rsnd_src_probe_done:
+rsnd_src_probe_करोne:
 	of_node_put(node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void rsnd_src_remove(struct rsnd_priv *priv)
-{
-	struct rsnd_src *src;
-	int i;
+व्योम rsnd_src_हटाओ(काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_src *src;
+	पूर्णांक i;
 
-	for_each_rsnd_src(src, priv, i) {
+	क्रम_each_rsnd_src(src, priv, i) अणु
 		rsnd_mod_quit(rsnd_mod_get(src));
-	}
-}
+	पूर्ण
+पूर्ण

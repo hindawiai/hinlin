@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_FIXMAP_H
-#define __ASM_CSKY_FIXMAP_H
+#अगर_अघोषित __ASM_CSKY_FIXMAP_H
+#घोषणा __ASM_CSKY_FIXMAP_H
 
-#include <asm/page.h>
-#include <asm/memory.h>
-#ifdef CONFIG_HIGHMEM
-#include <linux/threads.h>
-#include <asm/kmap_size.h>
-#endif
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/memory.h>
+#अगर_घोषित CONFIG_HIGHMEM
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <यंत्र/kmap_size.h>
+#पूर्ण_अगर
 
-enum fixed_addresses {
-#ifdef CONFIG_HAVE_TCM
+क्रमागत fixed_addresses अणु
+#अगर_घोषित CONFIG_HAVE_TCM
 	FIX_TCM = TCM_NR_PAGES,
-#endif
-#ifdef CONFIG_HIGHMEM
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_HIGHMEM
 	FIX_KMAP_BEGIN,
 	FIX_KMAP_END = FIX_KMAP_BEGIN + (KM_MAX_IDX * NR_CPUS) - 1,
-#endif
+#पूर्ण_अगर
 	__end_of_fixed_addresses
-};
+पूर्ण;
 
-#define FIXADDR_SIZE	(__end_of_fixed_addresses << PAGE_SHIFT)
-#define FIXADDR_START	(FIXADDR_TOP - FIXADDR_SIZE)
+#घोषणा FIXADDR_SIZE	(__end_of_fixed_addresses << PAGE_SHIFT)
+#घोषणा FIXADDR_START	(FIXADDR_TOP - FIXADDR_SIZE)
 
-#include <asm-generic/fixmap.h>
+#समावेश <यंत्र-generic/fixmap.h>
 
-extern void fixrange_init(unsigned long start, unsigned long end,
+बाह्य व्योम fixrange_init(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
 	pgd_t *pgd_base);
-extern void __init fixaddr_init(void);
+बाह्य व्योम __init fixaddr_init(व्योम);
 
-#endif /* __ASM_CSKY_FIXMAP_H */
+#पूर्ण_अगर /* __ASM_CSKY_FIXMAP_H */

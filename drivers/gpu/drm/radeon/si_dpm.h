@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,62 +21,62 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __SI_DPM_H__
-#define __SI_DPM_H__
+#अगर_अघोषित __SI_DPM_H__
+#घोषणा __SI_DPM_H__
 
-#include "ni_dpm.h"
-#include "sislands_smc.h"
+#समावेश "ni_dpm.h"
+#समावेश "sislands_smc.h"
 
-enum si_cac_config_reg_type
-{
+क्रमागत si_cac_config_reg_type
+अणु
 	SISLANDS_CACCONFIG_MMR = 0,
 	SISLANDS_CACCONFIG_CGIND,
 	SISLANDS_CACCONFIG_MAX
-};
+पूर्ण;
 
-struct si_cac_config_reg
-{
+काष्ठा si_cac_config_reg
+अणु
 	u32 offset;
 	u32 mask;
-	u32 shift;
+	u32 shअगरt;
 	u32 value;
-	enum si_cac_config_reg_type type;
-};
+	क्रमागत si_cac_config_reg_type type;
+पूर्ण;
 
-struct si_powertune_data
-{
-	u32 cac_window;
-	u32 l2_lta_window_size_default;
-	u8 lts_truncate_default;
-	u8 shift_n_default;
+काष्ठा si_घातertune_data
+अणु
+	u32 cac_winकरोw;
+	u32 l2_lta_winकरोw_size_शेष;
+	u8 lts_truncate_शेष;
+	u8 shअगरt_n_शेष;
 	u8 operating_temp;
-	struct ni_leakage_coeffients leakage_coefficients;
+	काष्ठा ni_leakage_coeffients leakage_coefficients;
 	u32 fixed_kt;
 	u32 lkge_lut_v0_percent;
 	u8 dc_cac[NISLANDS_DCCAC_MAX_LEVELS];
-	bool enable_powertune_by_default;
-};
+	bool enable_घातertune_by_शेष;
+पूर्ण;
 
-struct si_dyn_powertune_data
-{
+काष्ठा si_dyn_घातertune_data
+अणु
 	u32 cac_leakage;
 	s32 leakage_minimum_temperature;
-	u32 wintime;
-	u32 l2_lta_window_size;
+	u32 wपूर्णांकime;
+	u32 l2_lta_winकरोw_size;
 	u8 lts_truncate;
-	u8 shift_n;
+	u8 shअगरt_n;
 	u8 dc_pwr_value;
-	bool disable_uvd_powertune;
-};
+	bool disable_uvd_घातertune;
+पूर्ण;
 
-struct si_dte_data
-{
+काष्ठा si_dte_data
+अणु
 	u32 tau[SMC_SISLANDS_DTE_MAX_FILTER_STAGES];
 	u32 r[SMC_SISLANDS_DTE_MAX_FILTER_STAGES];
 	u32 k;
 	u32 t0;
 	u32 max_t;
-	u8 window_size;
+	u8 winकरोw_size;
 	u8 temp_select;
 	u8 dte_mode;
 	u8 tdep_count;
@@ -83,16 +84,16 @@ struct si_dte_data
 	u32 tdep_tau[SMC_SISLANDS_DTE_MAX_TEMPERATURE_DEPENDENT_ARRAY_SIZE];
 	u32 tdep_r[SMC_SISLANDS_DTE_MAX_TEMPERATURE_DEPENDENT_ARRAY_SIZE];
 	u32 t_threshold;
-	bool enable_dte_by_default;
-};
+	bool enable_dte_by_शेष;
+पूर्ण;
 
-struct si_clock_registers {
+काष्ठा si_घड़ी_रेजिस्टरs अणु
 	u32 cg_spll_func_cntl;
 	u32 cg_spll_func_cntl_2;
 	u32 cg_spll_func_cntl_3;
 	u32 cg_spll_func_cntl_4;
-	u32 cg_spll_spread_spectrum;
-	u32 cg_spll_spread_spectrum_2;
+	u32 cg_spll_spपढ़ो_spectrum;
+	u32 cg_spll_spपढ़ो_spectrum_2;
 	u32 dll_cntl;
 	u32 mclk_pwrmgt_cntl;
 	u32 mpll_ad_func_cntl;
@@ -102,73 +103,73 @@ struct si_clock_registers {
 	u32 mpll_func_cntl_2;
 	u32 mpll_ss1;
 	u32 mpll_ss2;
-};
+पूर्ण;
 
-struct si_mc_reg_entry {
+काष्ठा si_mc_reg_entry अणु
 	u32 mclk_max;
 	u32 mc_data[SMC_SISLANDS_MC_REGISTER_ARRAY_SIZE];
-};
+पूर्ण;
 
-struct si_mc_reg_table {
+काष्ठा si_mc_reg_table अणु
 	u8 last;
 	u8 num_entries;
 	u16 valid_flag;
-	struct si_mc_reg_entry mc_reg_table_entry[MAX_AC_TIMING_ENTRIES];
+	काष्ठा si_mc_reg_entry mc_reg_table_entry[MAX_AC_TIMING_ENTRIES];
 	SMC_NIslands_MCRegisterAddress mc_reg_address[SMC_SISLANDS_MC_REGISTER_ARRAY_SIZE];
-};
+पूर्ण;
 
-#define SISLANDS_MCREGISTERTABLE_INITIAL_SLOT               0
-#define SISLANDS_MCREGISTERTABLE_ACPI_SLOT                  1
-#define SISLANDS_MCREGISTERTABLE_ULV_SLOT                   2
-#define SISLANDS_MCREGISTERTABLE_FIRST_DRIVERSTATE_SLOT     3
+#घोषणा SISLANDS_MCREGISTERTABLE_INITIAL_SLOT               0
+#घोषणा SISLANDS_MCREGISTERTABLE_ACPI_SLOT                  1
+#घोषणा SISLANDS_MCREGISTERTABLE_ULV_SLOT                   2
+#घोषणा SISLANDS_MCREGISTERTABLE_FIRST_DRIVERSTATE_SLOT     3
 
-struct si_leakage_voltage_entry
-{
+काष्ठा si_leakage_voltage_entry
+अणु
 	u16 voltage;
 	u16 leakage_index;
-};
+पूर्ण;
 
-#define SISLANDS_LEAKAGE_INDEX0     0xff01
-#define SISLANDS_MAX_LEAKAGE_COUNT  4
+#घोषणा SISLANDS_LEAKAGE_INDEX0     0xff01
+#घोषणा SISLANDS_MAX_LEAKAGE_COUNT  4
 
-struct si_leakage_voltage
-{
+काष्ठा si_leakage_voltage
+अणु
 	u16 count;
-	struct si_leakage_voltage_entry entries[SISLANDS_MAX_LEAKAGE_COUNT];
-};
+	काष्ठा si_leakage_voltage_entry entries[SISLANDS_MAX_LEAKAGE_COUNT];
+पूर्ण;
 
-#define SISLANDS_MAX_HARDWARE_POWERLEVELS 5
+#घोषणा SISLANDS_MAX_HARDWARE_POWERLEVELS 5
 
-struct si_ulv_param {
+काष्ठा si_ulv_param अणु
 	bool supported;
 	u32 cg_ulv_control;
 	u32 cg_ulv_parameter;
 	u32 volt_change_delay;
-	struct rv7xx_pl pl;
+	काष्ठा rv7xx_pl pl;
 	bool one_pcie_lane_in_ulv;
-};
+पूर्ण;
 
-struct si_power_info {
+काष्ठा si_घातer_info अणु
 	/* must be first! */
-	struct ni_power_info ni;
-	struct si_clock_registers clock_registers;
-	struct si_mc_reg_table mc_reg_table;
-	struct atom_voltage_table mvdd_voltage_table;
-	struct atom_voltage_table vddc_phase_shed_table;
-	struct si_leakage_voltage leakage_voltage;
+	काष्ठा ni_घातer_info ni;
+	काष्ठा si_घड़ी_रेजिस्टरs घड़ी_रेजिस्टरs;
+	काष्ठा si_mc_reg_table mc_reg_table;
+	काष्ठा atom_voltage_table mvdd_voltage_table;
+	काष्ठा atom_voltage_table vddc_phase_shed_table;
+	काष्ठा si_leakage_voltage leakage_voltage;
 	u16 mvdd_bootup_value;
-	struct si_ulv_param ulv;
+	काष्ठा si_ulv_param ulv;
 	u32 max_cu;
 	/* pcie gen */
-	enum radeon_pcie_gen force_pcie_gen;
-	enum radeon_pcie_gen boot_pcie_gen;
-	enum radeon_pcie_gen acpi_pcie_gen;
+	क्रमागत radeon_pcie_gen क्रमce_pcie_gen;
+	क्रमागत radeon_pcie_gen boot_pcie_gen;
+	क्रमागत radeon_pcie_gen acpi_pcie_gen;
 	u32 sys_pcie_mask;
 	/* flags */
 	bool enable_dte;
 	bool enable_ppm;
 	bool vddc_phase_shed_control;
-	bool pspp_notify_required;
+	bool pspp_notअगरy_required;
 	bool sclk_deep_sleep_above_low;
 	bool voltage_control_svi2;
 	bool vddci_control_svi2;
@@ -184,14 +185,14 @@ struct si_power_info {
 	u32 papm_cfg_table_start;
 	u32 fan_table_start;
 	/* CAC stuff */
-	const struct si_cac_config_reg *cac_weights;
-	const struct si_cac_config_reg *lcac_config;
-	const struct si_cac_config_reg *cac_override;
-	const struct si_powertune_data *powertune_data;
-	struct si_dyn_powertune_data dyn_powertune_data;
+	स्थिर काष्ठा si_cac_config_reg *cac_weights;
+	स्थिर काष्ठा si_cac_config_reg *lcac_config;
+	स्थिर काष्ठा si_cac_config_reg *cac_override;
+	स्थिर काष्ठा si_घातertune_data *घातertune_data;
+	काष्ठा si_dyn_घातertune_data dyn_घातertune_data;
 	/* DTE stuff */
-	struct si_dte_data dte_data;
-	/* scratch structs */
+	काष्ठा si_dte_data dte_data;
+	/* scratch काष्ठाs */
 	SMC_SIslands_MCRegisters smc_mc_reg_table;
 	SISLANDS_SMC_STATETABLE smc_statetable;
 	PP_SIslands_PAPMParameters papm_parm;
@@ -199,45 +200,45 @@ struct si_power_info {
 	u8 svd_gpio_id;
 	u8 svc_gpio_id;
 	/* fan control */
-	bool fan_ctrl_is_in_default_mode;
+	bool fan_ctrl_is_in_शेष_mode;
 	u32 t_min;
-	u32 fan_ctrl_default_mode;
+	u32 fan_ctrl_शेष_mode;
 	bool fan_is_controlled_by_smc;
-};
+पूर्ण;
 
-#define SISLANDS_INITIAL_STATE_ARB_INDEX    0
-#define SISLANDS_ACPI_STATE_ARB_INDEX       1
-#define SISLANDS_ULV_STATE_ARB_INDEX        2
-#define SISLANDS_DRIVER_STATE_ARB_INDEX     3
+#घोषणा SISLANDS_INITIAL_STATE_ARB_INDEX    0
+#घोषणा SISLANDS_ACPI_STATE_ARB_INDEX       1
+#घोषणा SISLANDS_ULV_STATE_ARB_INDEX        2
+#घोषणा SISLANDS_DRIVER_STATE_ARB_INDEX     3
 
-#define SISLANDS_DPM2_MAX_PULSE_SKIP        256
+#घोषणा SISLANDS_DPM2_MAX_PULSE_SKIP        256
 
-#define SISLANDS_DPM2_NEAR_TDP_DEC          10
-#define SISLANDS_DPM2_ABOVE_SAFE_INC        5
-#define SISLANDS_DPM2_BELOW_SAFE_INC        20
+#घोषणा SISLANDS_DPM2_NEAR_TDP_DEC          10
+#घोषणा SISLANDS_DPM2_ABOVE_SAFE_INC        5
+#घोषणा SISLANDS_DPM2_BELOW_SAFE_INC        20
 
-#define SISLANDS_DPM2_TDP_SAFE_LIMIT_PERCENT            80
+#घोषणा SISLANDS_DPM2_TDP_SAFE_LIMIT_PERCENT            80
 
-#define SISLANDS_DPM2_MAXPS_PERCENT_H                   99
-#define SISLANDS_DPM2_MAXPS_PERCENT_M                   99
+#घोषणा SISLANDS_DPM2_MAXPS_PERCENT_H                   99
+#घोषणा SISLANDS_DPM2_MAXPS_PERCENT_M                   99
 
-#define SISLANDS_DPM2_SQ_RAMP_MAX_POWER                 0x3FFF
-#define SISLANDS_DPM2_SQ_RAMP_MIN_POWER                 0x12
-#define SISLANDS_DPM2_SQ_RAMP_MAX_POWER_DELTA           0x15
-#define SISLANDS_DPM2_SQ_RAMP_STI_SIZE                  0x1E
-#define SISLANDS_DPM2_SQ_RAMP_LTI_RATIO                 0xF
+#घोषणा SISLANDS_DPM2_SQ_RAMP_MAX_POWER                 0x3FFF
+#घोषणा SISLANDS_DPM2_SQ_RAMP_MIN_POWER                 0x12
+#घोषणा SISLANDS_DPM2_SQ_RAMP_MAX_POWER_DELTA           0x15
+#घोषणा SISLANDS_DPM2_SQ_RAMP_STI_SIZE                  0x1E
+#घोषणा SISLANDS_DPM2_SQ_RAMP_LTI_RATIO                 0xF
 
-#define SISLANDS_DPM2_PWREFFICIENCYRATIO_MARGIN         10
+#घोषणा SISLANDS_DPM2_PWREFFICIENCYRATIO_MARGIN         10
 
-#define SISLANDS_VRC_DFLT                               0xC000B3
-#define SISLANDS_ULVVOLTAGECHANGEDELAY_DFLT             1687
-#define SISLANDS_CGULVPARAMETER_DFLT                    0x00040035
-#define SISLANDS_CGULVCONTROL_DFLT                      0x1f007550
+#घोषणा SISLANDS_VRC_DFLT                               0xC000B3
+#घोषणा SISLANDS_ULVVOLTAGECHANGEDELAY_DFLT             1687
+#घोषणा SISLANDS_CGULVPARAMETER_DFLT                    0x00040035
+#घोषणा SISLANDS_CGULVCONTROL_DFLT                      0x1f007550
 
-u8 si_get_ddr3_mclk_frequency_ratio(u32 memory_clock);
-u8 si_get_mclk_frequency_ratio(u32 memory_clock, bool strobe_mode);
-void si_trim_voltage_table_to_fit_state_table(struct radeon_device *rdev,
+u8 si_get_ddr3_mclk_frequency_ratio(u32 memory_घड़ी);
+u8 si_get_mclk_frequency_ratio(u32 memory_घड़ी, bool strobe_mode);
+व्योम si_trim_voltage_table_to_fit_state_table(काष्ठा radeon_device *rdev,
 					      u32 max_voltage_steps,
-					      struct atom_voltage_table *voltage_table);
+					      काष्ठा atom_voltage_table *voltage_table);
 
-#endif
+#पूर्ण_अगर

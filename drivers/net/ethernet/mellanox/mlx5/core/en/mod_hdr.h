@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020 Mellanox Technologies */
 
-#ifndef __MLX5E_EN_MOD_HDR_H__
-#define __MLX5E_EN_MOD_HDR_H__
+#अगर_अघोषित __MLX5E_EN_MOD_HDR_H__
+#घोषणा __MLX5E_EN_MOD_HDR_H__
 
-#include <linux/hashtable.h>
-#include <linux/mlx5/fs.h>
+#समावेश <linux/hashtable.h>
+#समावेश <linux/mlx5/fs.h>
 
-struct mlx5e_mod_hdr_handle;
+काष्ठा mlx5e_mod_hdr_handle;
 
-struct mlx5e_tc_mod_hdr_acts {
-	int num_actions;
-	int max_actions;
-	void *actions;
-};
+काष्ठा mlx5e_tc_mod_hdr_acts अणु
+	पूर्णांक num_actions;
+	पूर्णांक max_actions;
+	व्योम *actions;
+पूर्ण;
 
-struct mlx5e_mod_hdr_handle *
-mlx5e_mod_hdr_attach(struct mlx5_core_dev *mdev,
-		     struct mod_hdr_tbl *tbl,
-		     enum mlx5_flow_namespace_type namespace,
-		     struct mlx5e_tc_mod_hdr_acts *mod_hdr_acts);
-void mlx5e_mod_hdr_detach(struct mlx5_core_dev *mdev,
-			  struct mod_hdr_tbl *tbl,
-			  struct mlx5e_mod_hdr_handle *mh);
-struct mlx5_modify_hdr *mlx5e_mod_hdr_get(struct mlx5e_mod_hdr_handle *mh);
+काष्ठा mlx5e_mod_hdr_handle *
+mlx5e_mod_hdr_attach(काष्ठा mlx5_core_dev *mdev,
+		     काष्ठा mod_hdr_tbl *tbl,
+		     क्रमागत mlx5_flow_namespace_type namespace,
+		     काष्ठा mlx5e_tc_mod_hdr_acts *mod_hdr_acts);
+व्योम mlx5e_mod_hdr_detach(काष्ठा mlx5_core_dev *mdev,
+			  काष्ठा mod_hdr_tbl *tbl,
+			  काष्ठा mlx5e_mod_hdr_handle *mh);
+काष्ठा mlx5_modअगरy_hdr *mlx5e_mod_hdr_get(काष्ठा mlx5e_mod_hdr_handle *mh);
 
-void mlx5e_mod_hdr_tbl_init(struct mod_hdr_tbl *tbl);
-void mlx5e_mod_hdr_tbl_destroy(struct mod_hdr_tbl *tbl);
+व्योम mlx5e_mod_hdr_tbl_init(काष्ठा mod_hdr_tbl *tbl);
+व्योम mlx5e_mod_hdr_tbl_destroy(काष्ठा mod_hdr_tbl *tbl);
 
-#endif /* __MLX5E_EN_MOD_HDR_H__ */
+#पूर्ण_अगर /* __MLX5E_EN_MOD_HDR_H__ */

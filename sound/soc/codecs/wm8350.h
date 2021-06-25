@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * wm8350.h - WM8903 audio codec interface
+ * wm8350.h - WM8903 audio codec पूर्णांकerface
  *
  * Copyright 2008 Wolfson Microelectronics PLC.
  */
 
-#ifndef _WM8350_H
-#define _WM8350_H
+#अगर_अघोषित _WM8350_H
+#घोषणा _WM8350_H
 
-#include <sound/soc.h>
-#include <linux/mfd/wm8350/audio.h>
+#समावेश <sound/soc.h>
+#समावेश <linux/mfd/wm8350/audपन.स>
 
-enum wm8350_jack {
+क्रमागत wm8350_jack अणु
 	WM8350_JDL = 1,
 	WM8350_JDR = 2,
-};
+पूर्ण;
 
-int wm8350_hp_jack_detect(struct snd_soc_component *component, enum wm8350_jack which,
-			  struct snd_soc_jack *jack, int report);
-int wm8350_mic_jack_detect(struct snd_soc_component *component,
-			   struct snd_soc_jack *jack,
-			   int detect_report, int short_report);
+पूर्णांक wm8350_hp_jack_detect(काष्ठा snd_soc_component *component, क्रमागत wm8350_jack which,
+			  काष्ठा snd_soc_jack *jack, पूर्णांक report);
+पूर्णांक wm8350_mic_jack_detect(काष्ठा snd_soc_component *component,
+			   काष्ठा snd_soc_jack *jack,
+			   पूर्णांक detect_report, पूर्णांक लघु_report);
 
-#endif
+#पूर्ण_अगर

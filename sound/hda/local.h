@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Local helper macros and functions for HD-audio core drivers
+ * Local helper macros and functions क्रम HD-audio core drivers
  */
 
-#ifndef __HDAC_LOCAL_H
-#define __HDAC_LOCAL_H
+#अगर_अघोषित __HDAC_LOCAL_H
+#घोषणा __HDAC_LOCAL_H
 
-#define get_wcaps(codec, nid) \
-	snd_hdac_read_parm(codec, nid, AC_PAR_AUDIO_WIDGET_CAP)
+#घोषणा get_wcaps(codec, nid) \
+	snd_hdac_पढ़ो_parm(codec, nid, AC_PAR_AUDIO_WIDGET_CAP)
 
 /* get the widget type from widget capability bits */
-static inline int get_wcaps_type(unsigned int wcaps)
-{
-	if (!wcaps)
-		return -1; /* invalid type */
-	return (wcaps & AC_WCAP_TYPE) >> AC_WCAP_TYPE_SHIFT;
-}
+अटल अंतरभूत पूर्णांक get_wcaps_type(अचिन्हित पूर्णांक wcaps)
+अणु
+	अगर (!wcaps)
+		वापस -1; /* invalid type */
+	वापस (wcaps & AC_WCAP_TYPE) >> AC_WCAP_TYPE_SHIFT;
+पूर्ण
 
-static inline unsigned int get_wcaps_channels(u32 wcaps)
-{
-	unsigned int chans;
+अटल अंतरभूत अचिन्हित पूर्णांक get_wcaps_channels(u32 wcaps)
+अणु
+	अचिन्हित पूर्णांक chans;
 
 	chans = (wcaps & AC_WCAP_CHAN_CNT_EXT) >> 13;
 	chans = (chans + 1) * 2;
 
-	return chans;
-}
+	वापस chans;
+पूर्ण
 
-extern const struct attribute_group *hdac_dev_attr_groups[];
-int hda_widget_sysfs_init(struct hdac_device *codec);
-int hda_widget_sysfs_reinit(struct hdac_device *codec, hda_nid_t start_nid,
-			    int num_nodes);
-void hda_widget_sysfs_exit(struct hdac_device *codec);
+बाह्य स्थिर काष्ठा attribute_group *hdac_dev_attr_groups[];
+पूर्णांक hda_widget_sysfs_init(काष्ठा hdac_device *codec);
+पूर्णांक hda_widget_sysfs_reinit(काष्ठा hdac_device *codec, hda_nid_t start_nid,
+			    पूर्णांक num_nodes);
+व्योम hda_widget_sysfs_निकास(काष्ठा hdac_device *codec);
 
-int snd_hdac_bus_add_device(struct hdac_bus *bus, struct hdac_device *codec);
-void snd_hdac_bus_remove_device(struct hdac_bus *bus,
-				struct hdac_device *codec);
-void snd_hdac_bus_queue_event(struct hdac_bus *bus, u32 res, u32 res_ex);
-int snd_hdac_bus_exec_verb(struct hdac_bus *bus, unsigned int addr,
-			   unsigned int cmd, unsigned int *res);
+पूर्णांक snd_hdac_bus_add_device(काष्ठा hdac_bus *bus, काष्ठा hdac_device *codec);
+व्योम snd_hdac_bus_हटाओ_device(काष्ठा hdac_bus *bus,
+				काष्ठा hdac_device *codec);
+व्योम snd_hdac_bus_queue_event(काष्ठा hdac_bus *bus, u32 res, u32 res_ex);
+पूर्णांक snd_hdac_bus_exec_verb(काष्ठा hdac_bus *bus, अचिन्हित पूर्णांक addr,
+			   अचिन्हित पूर्णांक cmd, अचिन्हित पूर्णांक *res);
 
-int snd_hdac_exec_verb(struct hdac_device *codec, unsigned int cmd,
-		       unsigned int flags, unsigned int *res);
+पूर्णांक snd_hdac_exec_verb(काष्ठा hdac_device *codec, अचिन्हित पूर्णांक cmd,
+		       अचिन्हित पूर्णांक flags, अचिन्हित पूर्णांक *res);
 
-#endif /* __HDAC_LOCAL_H */
+#पूर्ण_अगर /* __HDAC_LOCAL_H */

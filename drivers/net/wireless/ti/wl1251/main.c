@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This file is part of wl1251
  *
  * Copyright (C) 2008-2009 Nokia Corporation
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/firmware.h>
-#include <linux/delay.h>
-#include <linux/irq.h>
-#include <linux/crc32.h>
-#include <linux/etherdevice.h>
-#include <linux/vmalloc.h>
-#include <linux/slab.h>
-#include <linux/netdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/netdevice.h>
 
-#include "wl1251.h"
-#include "wl12xx_80211.h"
-#include "reg.h"
-#include "io.h"
-#include "cmd.h"
-#include "event.h"
-#include "tx.h"
-#include "rx.h"
-#include "ps.h"
-#include "init.h"
-#include "debugfs.h"
-#include "boot.h"
+#समावेश "wl1251.h"
+#समावेश "wl12xx_80211.h"
+#समावेश "reg.h"
+#समावेश "io.h"
+#समावेश "cmd.h"
+#समावेश "event.h"
+#समावेश "tx.h"
+#समावेश "rx.h"
+#समावेश "ps.h"
+#समावेश "init.h"
+#समावेश "debugfs.h"
+#समावेश "boot.h"
 
-void wl1251_enable_interrupts(struct wl1251 *wl)
-{
-	wl->if_ops->enable_irq(wl);
-}
+व्योम wl1251_enable_पूर्णांकerrupts(काष्ठा wl1251 *wl)
+अणु
+	wl->अगर_ops->enable_irq(wl);
+पूर्ण
 
-void wl1251_disable_interrupts(struct wl1251 *wl)
-{
-	wl->if_ops->disable_irq(wl);
-}
+व्योम wl1251_disable_पूर्णांकerrupts(काष्ठा wl1251 *wl)
+अणु
+	wl->अगर_ops->disable_irq(wl);
+पूर्ण
 
-static int wl1251_power_off(struct wl1251 *wl)
-{
-	return wl->if_ops->power(wl, false);
-}
+अटल पूर्णांक wl1251_घातer_off(काष्ठा wl1251 *wl)
+अणु
+	वापस wl->अगर_ops->घातer(wl, false);
+पूर्ण
 
-static int wl1251_power_on(struct wl1251 *wl)
-{
-	return wl->if_ops->power(wl, true);
-}
+अटल पूर्णांक wl1251_घातer_on(काष्ठा wl1251 *wl)
+अणु
+	वापस wl->अगर_ops->घातer(wl, true);
+पूर्ण
 
-static int wl1251_fetch_firmware(struct wl1251 *wl)
-{
-	const struct firmware *fw;
-	struct device *dev = wiphy_dev(wl->hw->wiphy);
-	int ret;
+अटल पूर्णांक wl1251_fetch_firmware(काष्ठा wl1251 *wl)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा device *dev = wiphy_dev(wl->hw->wiphy);
+	पूर्णांक ret;
 
 	ret = request_firmware(&fw, WL1251_FW_NAME, dev);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		wl1251_error("could not get firmware: %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (fw->size % 4) {
+	अगर (fw->size % 4) अणु
 		wl1251_error("firmware size is not multiple of 32 bits: %zu",
 			     fw->size);
 		ret = -EILSEQ;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	wl->fw_len = fw->size;
-	wl->fw = vmalloc(wl->fw_len);
+	wl->fw = vदो_स्मृति(wl->fw_len);
 
-	if (!wl->fw) {
+	अगर (!wl->fw) अणु
 		wl1251_error("could not allocate memory for the firmware");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy(wl->fw, fw->data, wl->fw_len);
+	स_नकल(wl->fw, fw->data, wl->fw_len);
 
 	ret = 0;
 
 out:
 	release_firmware(fw);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wl1251_fetch_nvs(struct wl1251 *wl)
-{
-	const struct firmware *fw;
-	struct device *dev = wiphy_dev(wl->hw->wiphy);
-	int ret;
+अटल पूर्णांक wl1251_fetch_nvs(काष्ठा wl1251 *wl)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा device *dev = wiphy_dev(wl->hw->wiphy);
+	पूर्णांक ret;
 
 	ret = request_firmware(&fw, WL1251_NVS_NAME, dev);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		wl1251_error("could not get nvs file: %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (fw->size % 4) {
+	अगर (fw->size % 4) अणु
 		wl1251_error("nvs size is not multiple of 32 bits: %zu",
 			     fw->size);
 		ret = -EILSEQ;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	wl->nvs = kmemdup(fw->data, fw->size, GFP_KERNEL);
 
-	if (!wl->nvs) {
+	अगर (!wl->nvs) अणु
 		wl1251_error("could not allocate memory for the nvs file");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	wl->nvs_len = fw->size;
 
@@ -123,34 +124,34 @@ static int wl1251_fetch_nvs(struct wl1251 *wl)
 out:
 	release_firmware(fw);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void wl1251_fw_wakeup(struct wl1251 *wl)
-{
+अटल व्योम wl1251_fw_wakeup(काष्ठा wl1251 *wl)
+अणु
 	u32 elp_reg;
 
 	elp_reg = ELPCTRL_WAKE_UP;
-	wl1251_write_elp(wl, HW_ACCESS_ELP_CTRL_REG_ADDR, elp_reg);
-	elp_reg = wl1251_read_elp(wl, HW_ACCESS_ELP_CTRL_REG_ADDR);
+	wl1251_ग_लिखो_elp(wl, HW_ACCESS_ELP_CTRL_REG_ADDR, elp_reg);
+	elp_reg = wl1251_पढ़ो_elp(wl, HW_ACCESS_ELP_CTRL_REG_ADDR);
 
-	if (!(elp_reg & ELPCTRL_WLAN_READY))
+	अगर (!(elp_reg & ELPCTRL_WLAN_READY))
 		wl1251_warning("WLAN not ready");
-}
+पूर्ण
 
-static int wl1251_chip_wakeup(struct wl1251 *wl)
-{
-	int ret;
+अटल पूर्णांक wl1251_chip_wakeup(काष्ठा wl1251 *wl)
+अणु
+	पूर्णांक ret;
 
-	ret = wl1251_power_on(wl);
-	if (ret < 0)
-		return ret;
+	ret = wl1251_घातer_on(wl);
+	अगर (ret < 0)
+		वापस ret;
 
 	msleep(WL1251_POWER_ON_SLEEP);
-	wl->if_ops->reset(wl);
+	wl->अगर_ops->reset(wl);
 
-	/* We don't need a real memory partition here, because we only want
-	 * to use the registers at this point. */
+	/* We करोn't need a real memory partition here, because we only want
+	 * to use the रेजिस्टरs at this poपूर्णांक. */
 	wl1251_set_partition(wl,
 			     0x00000000,
 			     0x00000000,
@@ -162,262 +163,262 @@ static int wl1251_chip_wakeup(struct wl1251 *wl)
 
 	/* whal_FwCtrl_BootSm() */
 
-	/* 0. read chip id from CHIP_ID */
-	wl->chip_id = wl1251_reg_read32(wl, CHIP_ID_B);
+	/* 0. पढ़ो chip id from CHIP_ID */
+	wl->chip_id = wl1251_reg_पढ़ो32(wl, CHIP_ID_B);
 
-	/* 1. check if chip id is valid */
+	/* 1. check अगर chip id is valid */
 
-	switch (wl->chip_id) {
-	case CHIP_ID_1251_PG12:
+	चयन (wl->chip_id) अणु
+	हाल CHIP_ID_1251_PG12:
 		wl1251_debug(DEBUG_BOOT, "chip id 0x%x (1251 PG12)",
 			     wl->chip_id);
-		break;
-	case CHIP_ID_1251_PG11:
+		अवरोध;
+	हाल CHIP_ID_1251_PG11:
 		wl1251_debug(DEBUG_BOOT, "chip id 0x%x (1251 PG11)",
 			     wl->chip_id);
-		break;
-	case CHIP_ID_1251_PG10:
-	default:
+		अवरोध;
+	हाल CHIP_ID_1251_PG10:
+	शेष:
 		wl1251_error("unsupported chip id: 0x%x", wl->chip_id);
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (wl->fw == NULL) {
+	अगर (wl->fw == शून्य) अणु
 		ret = wl1251_fetch_firmware(wl);
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define WL1251_IRQ_LOOP_COUNT 10
-static void wl1251_irq_work(struct work_struct *work)
-{
-	u32 intr, ctr = WL1251_IRQ_LOOP_COUNT;
-	struct wl1251 *wl =
-		container_of(work, struct wl1251, irq_work);
-	int ret;
+#घोषणा WL1251_IRQ_LOOP_COUNT 10
+अटल व्योम wl1251_irq_work(काष्ठा work_काष्ठा *work)
+अणु
+	u32 पूर्णांकr, ctr = WL1251_IRQ_LOOP_COUNT;
+	काष्ठा wl1251 *wl =
+		container_of(work, काष्ठा wl1251, irq_work);
+	पूर्णांक ret;
 
 	mutex_lock(&wl->mutex);
 
 	wl1251_debug(DEBUG_IRQ, "IRQ work");
 
-	if (wl->state == WL1251_STATE_OFF)
-		goto out;
+	अगर (wl->state == WL1251_STATE_OFF)
+		जाओ out;
 
 	ret = wl1251_ps_elp_wakeup(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	wl1251_reg_write32(wl, ACX_REG_INTERRUPT_MASK, WL1251_ACX_INTR_ALL);
+	wl1251_reg_ग_लिखो32(wl, ACX_REG_INTERRUPT_MASK, WL1251_ACX_INTR_ALL);
 
-	intr = wl1251_reg_read32(wl, ACX_REG_INTERRUPT_CLEAR);
-	wl1251_debug(DEBUG_IRQ, "intr: 0x%x", intr);
+	पूर्णांकr = wl1251_reg_पढ़ो32(wl, ACX_REG_INTERRUPT_CLEAR);
+	wl1251_debug(DEBUG_IRQ, "intr: 0x%x", पूर्णांकr);
 
-	do {
-		if (wl->data_path) {
-			wl->rx_counter = wl1251_mem_read32(
+	करो अणु
+		अगर (wl->data_path) अणु
+			wl->rx_counter = wl1251_mem_पढ़ो32(
 				wl, wl->data_path->rx_control_addr);
 
 			/* We handle a frmware bug here */
-			switch ((wl->rx_counter - wl->rx_handled) & 0xf) {
-			case 0:
+			चयन ((wl->rx_counter - wl->rx_handled) & 0xf) अणु
+			हाल 0:
 				wl1251_debug(DEBUG_IRQ,
 					     "RX: FW and host in sync");
-				intr &= ~WL1251_ACX_INTR_RX0_DATA;
-				intr &= ~WL1251_ACX_INTR_RX1_DATA;
-				break;
-			case 1:
+				पूर्णांकr &= ~WL1251_ACX_INTR_RX0_DATA;
+				पूर्णांकr &= ~WL1251_ACX_INTR_RX1_DATA;
+				अवरोध;
+			हाल 1:
 				wl1251_debug(DEBUG_IRQ, "RX: FW +1");
-				intr |= WL1251_ACX_INTR_RX0_DATA;
-				intr &= ~WL1251_ACX_INTR_RX1_DATA;
-				break;
-			case 2:
+				पूर्णांकr |= WL1251_ACX_INTR_RX0_DATA;
+				पूर्णांकr &= ~WL1251_ACX_INTR_RX1_DATA;
+				अवरोध;
+			हाल 2:
 				wl1251_debug(DEBUG_IRQ, "RX: FW +2");
-				intr |= WL1251_ACX_INTR_RX0_DATA;
-				intr |= WL1251_ACX_INTR_RX1_DATA;
-				break;
-			default:
+				पूर्णांकr |= WL1251_ACX_INTR_RX0_DATA;
+				पूर्णांकr |= WL1251_ACX_INTR_RX1_DATA;
+				अवरोध;
+			शेष:
 				wl1251_warning(
 					"RX: FW and host out of sync: %d",
 					wl->rx_counter - wl->rx_handled);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			wl->rx_handled = wl->rx_counter;
 
 			wl1251_debug(DEBUG_IRQ, "RX counter: %d",
 				     wl->rx_counter);
-		}
+		पूर्ण
 
-		intr &= wl->intr_mask;
+		पूर्णांकr &= wl->पूर्णांकr_mask;
 
-		if (intr == 0) {
+		अगर (पूर्णांकr == 0) अणु
 			wl1251_debug(DEBUG_IRQ, "INTR is 0");
-			goto out_sleep;
-		}
+			जाओ out_sleep;
+		पूर्ण
 
-		if (intr & WL1251_ACX_INTR_RX0_DATA) {
+		अगर (पूर्णांकr & WL1251_ACX_INTR_RX0_DATA) अणु
 			wl1251_debug(DEBUG_IRQ, "WL1251_ACX_INTR_RX0_DATA");
 			wl1251_rx(wl);
-		}
+		पूर्ण
 
-		if (intr & WL1251_ACX_INTR_RX1_DATA) {
+		अगर (पूर्णांकr & WL1251_ACX_INTR_RX1_DATA) अणु
 			wl1251_debug(DEBUG_IRQ, "WL1251_ACX_INTR_RX1_DATA");
 			wl1251_rx(wl);
-		}
+		पूर्ण
 
-		if (intr & WL1251_ACX_INTR_TX_RESULT) {
+		अगर (पूर्णांकr & WL1251_ACX_INTR_TX_RESULT) अणु
 			wl1251_debug(DEBUG_IRQ, "WL1251_ACX_INTR_TX_RESULT");
 			wl1251_tx_complete(wl);
-		}
+		पूर्ण
 
-		if (intr & WL1251_ACX_INTR_EVENT_A) {
+		अगर (पूर्णांकr & WL1251_ACX_INTR_EVENT_A) अणु
 			wl1251_debug(DEBUG_IRQ, "WL1251_ACX_INTR_EVENT_A");
 			wl1251_event_handle(wl, 0);
-		}
+		पूर्ण
 
-		if (intr & WL1251_ACX_INTR_EVENT_B) {
+		अगर (पूर्णांकr & WL1251_ACX_INTR_EVENT_B) अणु
 			wl1251_debug(DEBUG_IRQ, "WL1251_ACX_INTR_EVENT_B");
 			wl1251_event_handle(wl, 1);
-		}
+		पूर्ण
 
-		if (intr & WL1251_ACX_INTR_INIT_COMPLETE)
+		अगर (पूर्णांकr & WL1251_ACX_INTR_INIT_COMPLETE)
 			wl1251_debug(DEBUG_IRQ,
 				     "WL1251_ACX_INTR_INIT_COMPLETE");
 
-		if (--ctr == 0)
-			break;
+		अगर (--ctr == 0)
+			अवरोध;
 
-		intr = wl1251_reg_read32(wl, ACX_REG_INTERRUPT_CLEAR);
-	} while (intr);
+		पूर्णांकr = wl1251_reg_पढ़ो32(wl, ACX_REG_INTERRUPT_CLEAR);
+	पूर्ण जबतक (पूर्णांकr);
 
 out_sleep:
-	wl1251_reg_write32(wl, ACX_REG_INTERRUPT_MASK, ~(wl->intr_mask));
+	wl1251_reg_ग_लिखो32(wl, ACX_REG_INTERRUPT_MASK, ~(wl->पूर्णांकr_mask));
 	wl1251_ps_elp_sleep(wl);
 
 out:
 	mutex_unlock(&wl->mutex);
-}
+पूर्ण
 
-static int wl1251_join(struct wl1251 *wl, u8 bss_type, u8 channel,
-		       u16 beacon_interval, u8 dtim_period)
-{
-	int ret;
+अटल पूर्णांक wl1251_join(काष्ठा wl1251 *wl, u8 bss_type, u8 channel,
+		       u16 beacon_पूर्णांकerval, u8 dtim_period)
+अणु
+	पूर्णांक ret;
 
 	ret = wl1251_acx_frame_rates(wl, DEFAULT_HW_GEN_TX_RATE,
 				     DEFAULT_HW_GEN_MODULATION_TYPE,
 				     wl->tx_mgmt_frm_rate,
 				     wl->tx_mgmt_frm_mod);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	/*
-	 * Join command applies filters, and if we are not associated,
-	 * BSSID filter must be disabled for association to work.
+	 * Join command applies filters, and अगर we are not associated,
+	 * BSSID filter must be disabled क्रम association to work.
 	 */
-	if (is_zero_ether_addr(wl->bssid))
+	अगर (is_zero_ether_addr(wl->bssid))
 		wl->rx_config &= ~CFG_BSSID_FILTER_EN;
 
-	ret = wl1251_cmd_join(wl, bss_type, channel, beacon_interval,
+	ret = wl1251_cmd_join(wl, bss_type, channel, beacon_पूर्णांकerval,
 			      dtim_period);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	ret = wl1251_event_wait(wl, JOIN_EVENT_COMPLETE_ID, 100);
-	if (ret < 0)
+	ret = wl1251_event_रुको(wl, JOIN_EVENT_COMPLETE_ID, 100);
+	अगर (ret < 0)
 		wl1251_warning("join timeout");
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void wl1251_op_tx(struct ieee80211_hw *hw,
-			 struct ieee80211_tx_control *control,
-			 struct sk_buff *skb)
-{
-	struct wl1251 *wl = hw->priv;
-	unsigned long flags;
+अटल व्योम wl1251_op_tx(काष्ठा ieee80211_hw *hw,
+			 काष्ठा ieee80211_tx_control *control,
+			 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
+	अचिन्हित दीर्घ flags;
 
 	skb_queue_tail(&wl->tx_queue, skb);
 
 	/*
-	 * The chip specific setup must run before the first TX packet -
-	 * before that, the tx_work will not be initialized!
+	 * The chip specअगरic setup must run beक्रमe the first TX packet -
+	 * beक्रमe that, the tx_work will not be initialized!
 	 */
 
 	ieee80211_queue_work(wl->hw, &wl->tx_work);
 
 	/*
 	 * The workqueue is slow to process the tx_queue and we need stop
-	 * the queue here, otherwise the queue will get too long.
+	 * the queue here, otherwise the queue will get too दीर्घ.
 	 */
-	if (skb_queue_len(&wl->tx_queue) >= WL1251_TX_QUEUE_HIGH_WATERMARK) {
+	अगर (skb_queue_len(&wl->tx_queue) >= WL1251_TX_QUEUE_HIGH_WATERMARK) अणु
 		wl1251_debug(DEBUG_TX, "op_tx: tx_queue full, stop queues");
 
 		spin_lock_irqsave(&wl->wl_lock, flags);
 		ieee80211_stop_queues(wl->hw);
 		wl->tx_queue_stopped = true;
 		spin_unlock_irqrestore(&wl->wl_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int wl1251_op_start(struct ieee80211_hw *hw)
-{
-	struct wl1251 *wl = hw->priv;
-	struct wiphy *wiphy = hw->wiphy;
-	int ret = 0;
+अटल पूर्णांक wl1251_op_start(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
+	काष्ठा wiphy *wiphy = hw->wiphy;
+	पूर्णांक ret = 0;
 
 	wl1251_debug(DEBUG_MAC80211, "mac80211 start");
 
 	mutex_lock(&wl->mutex);
 
-	if (wl->state != WL1251_STATE_OFF) {
+	अगर (wl->state != WL1251_STATE_OFF) अणु
 		wl1251_error("cannot start because not in off state: %d",
 			     wl->state);
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = wl1251_chip_wakeup(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = wl1251_boot(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = wl1251_hw_init(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = wl1251_acx_station_id(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	wl->state = WL1251_STATE_ON;
 
 	wl1251_info("firmware booted (%s)", wl->fw_ver);
 
-	/* update hw/fw version info in wiphy struct */
+	/* update hw/fw version info in wiphy काष्ठा */
 	wiphy->hw_version = wl->chip_id;
-	strncpy(wiphy->fw_version, wl->fw_ver, sizeof(wiphy->fw_version));
+	म_नकलन(wiphy->fw_version, wl->fw_ver, माप(wiphy->fw_version));
 
 out:
-	if (ret < 0)
-		wl1251_power_off(wl);
+	अगर (ret < 0)
+		wl1251_घातer_off(wl);
 
 	mutex_unlock(&wl->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void wl1251_op_stop(struct ieee80211_hw *hw)
-{
-	struct wl1251 *wl = hw->priv;
+अटल व्योम wl1251_op_stop(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
 
 	wl1251_info("down");
 
@@ -427,18 +428,18 @@ static void wl1251_op_stop(struct ieee80211_hw *hw)
 
 	WARN_ON(wl->state != WL1251_STATE_ON);
 
-	if (wl->scanning) {
-		struct cfg80211_scan_info info = {
-			.aborted = true,
-		};
+	अगर (wl->scanning) अणु
+		काष्ठा cfg80211_scan_info info = अणु
+			.पातed = true,
+		पूर्ण;
 
 		ieee80211_scan_completed(wl->hw, &info);
 		wl->scanning = false;
-	}
+	पूर्ण
 
 	wl->state = WL1251_STATE_OFF;
 
-	wl1251_disable_interrupts(wl);
+	wl1251_disable_पूर्णांकerrupts(wl);
 
 	mutex_unlock(&wl->mutex);
 
@@ -448,12 +449,12 @@ static void wl1251_op_stop(struct ieee80211_hw *hw)
 
 	mutex_lock(&wl->mutex);
 
-	/* let's notify MAC80211 about the remaining pending TX frames */
+	/* let's notअगरy MAC80211 about the reमुख्यing pending TX frames */
 	wl1251_tx_flush(wl);
-	wl1251_power_off(wl);
+	wl1251_घातer_off(wl);
 
 	eth_zero_addr(wl->bssid);
-	wl->listen_int = 1;
+	wl->listen_पूर्णांक = 1;
 	wl->bss_type = MAX_BSS_TYPE;
 
 	wl->data_in_count = 0;
@@ -466,7 +467,7 @@ static void wl1251_op_stop(struct ieee80211_hw *hw)
 	wl->station_mode = STATION_ACTIVE_MODE;
 	wl->psm_entry_retry = 0;
 	wl->tx_queue_stopped = false;
-	wl->power_level = WL1251_DEFAULT_POWER_LEVEL;
+	wl->घातer_level = WL1251_DEFAULT_POWER_LEVEL;
 	wl->rssi_thold = 0;
 	wl->channel = WL1251_DEFAULT_CHANNEL;
 	wl->monitor_present = false;
@@ -475,125 +476,125 @@ static void wl1251_op_stop(struct ieee80211_hw *hw)
 	wl1251_debugfs_reset(wl);
 
 	mutex_unlock(&wl->mutex);
-}
+पूर्ण
 
-static int wl1251_op_add_interface(struct ieee80211_hw *hw,
-				   struct ieee80211_vif *vif)
-{
-	struct wl1251 *wl = hw->priv;
-	int ret = 0;
+अटल पूर्णांक wl1251_op_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+				   काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
+	पूर्णांक ret = 0;
 
-	vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
+	vअगर->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
 			     IEEE80211_VIF_SUPPORTS_UAPSD |
 			     IEEE80211_VIF_SUPPORTS_CQM_RSSI;
 
 	wl1251_debug(DEBUG_MAC80211, "mac80211 add interface type %d mac %pM",
-		     vif->type, vif->addr);
+		     vअगर->type, vअगर->addr);
 
 	mutex_lock(&wl->mutex);
-	if (wl->vif) {
+	अगर (wl->vअगर) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	wl->vif = vif;
+	wl->vअगर = vअगर;
 
-	switch (vif->type) {
-	case NL80211_IFTYPE_STATION:
+	चयन (vअगर->type) अणु
+	हाल NL80211_IFTYPE_STATION:
 		wl->bss_type = BSS_TYPE_STA_BSS;
-		break;
-	case NL80211_IFTYPE_ADHOC:
+		अवरोध;
+	हाल NL80211_IFTYPE_ADHOC:
 		wl->bss_type = BSS_TYPE_IBSS;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!ether_addr_equal_unaligned(wl->mac_addr, vif->addr)) {
-		memcpy(wl->mac_addr, vif->addr, ETH_ALEN);
+	अगर (!ether_addr_equal_unaligned(wl->mac_addr, vअगर->addr)) अणु
+		स_नकल(wl->mac_addr, vअगर->addr, ETH_ALEN);
 		SET_IEEE80211_PERM_ADDR(wl->hw, wl->mac_addr);
 		ret = wl1251_acx_station_id(wl);
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
 out:
 	mutex_unlock(&wl->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void wl1251_op_remove_interface(struct ieee80211_hw *hw,
-					 struct ieee80211_vif *vif)
-{
-	struct wl1251 *wl = hw->priv;
+अटल व्योम wl1251_op_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+					 काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
 
 	mutex_lock(&wl->mutex);
 	wl1251_debug(DEBUG_MAC80211, "mac80211 remove interface");
-	wl->vif = NULL;
+	wl->vअगर = शून्य;
 	eth_zero_addr(wl->bssid);
 	mutex_unlock(&wl->mutex);
-}
+पूर्ण
 
-static int wl1251_build_null_data(struct wl1251 *wl)
-{
-	struct sk_buff *skb = NULL;
-	int size;
-	void *ptr;
-	int ret = -ENOMEM;
+अटल पूर्णांक wl1251_build_null_data(काष्ठा wl1251 *wl)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक size;
+	व्योम *ptr;
+	पूर्णांक ret = -ENOMEM;
 
-	if (wl->bss_type == BSS_TYPE_IBSS) {
-		size = sizeof(struct wl12xx_null_data_template);
-		ptr = NULL;
-	} else {
-		skb = ieee80211_nullfunc_get(wl->hw, wl->vif, false);
-		if (!skb)
-			goto out;
+	अगर (wl->bss_type == BSS_TYPE_IBSS) अणु
+		size = माप(काष्ठा wl12xx_null_data_ढाँचा);
+		ptr = शून्य;
+	पूर्ण अन्यथा अणु
+		skb = ieee80211_nullfunc_get(wl->hw, wl->vअगर, false);
+		अगर (!skb)
+			जाओ out;
 		size = skb->len;
 		ptr = skb->data;
-	}
+	पूर्ण
 
-	ret = wl1251_cmd_template_set(wl, CMD_NULL_DATA, ptr, size);
+	ret = wl1251_cmd_ढाँचा_set(wl, CMD_शून्य_DATA, ptr, size);
 
 out:
-	dev_kfree_skb(skb);
-	if (ret)
+	dev_kमुक्त_skb(skb);
+	अगर (ret)
 		wl1251_warning("cmd build null data failed: %d", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wl1251_build_qos_null_data(struct wl1251 *wl)
-{
-	struct ieee80211_qos_hdr template;
+अटल पूर्णांक wl1251_build_qos_null_data(काष्ठा wl1251 *wl)
+अणु
+	काष्ठा ieee80211_qos_hdr ढाँचा;
 
-	memset(&template, 0, sizeof(template));
+	स_रखो(&ढाँचा, 0, माप(ढाँचा));
 
-	memcpy(template.addr1, wl->bssid, ETH_ALEN);
-	memcpy(template.addr2, wl->mac_addr, ETH_ALEN);
-	memcpy(template.addr3, wl->bssid, ETH_ALEN);
+	स_नकल(ढाँचा.addr1, wl->bssid, ETH_ALEN);
+	स_नकल(ढाँचा.addr2, wl->mac_addr, ETH_ALEN);
+	स_नकल(ढाँचा.addr3, wl->bssid, ETH_ALEN);
 
-	template.frame_control = cpu_to_le16(IEEE80211_FTYPE_DATA |
-					     IEEE80211_STYPE_QOS_NULLFUNC |
+	ढाँचा.frame_control = cpu_to_le16(IEEE80211_FTYPE_DATA |
+					     IEEE80211_STYPE_QOS_शून्यFUNC |
 					     IEEE80211_FCTL_TODS);
 
 	/* FIXME: not sure what priority to use here */
-	template.qos_ctrl = cpu_to_le16(0);
+	ढाँचा.qos_ctrl = cpu_to_le16(0);
 
-	return wl1251_cmd_template_set(wl, CMD_QOS_NULL_DATA, &template,
-				       sizeof(template));
-}
+	वापस wl1251_cmd_ढाँचा_set(wl, CMD_QOS_शून्य_DATA, &ढाँचा,
+				       माप(ढाँचा));
+पूर्ण
 
-static bool wl1251_can_do_pm(struct ieee80211_conf *conf, struct wl1251 *wl)
-{
-	return (conf->flags & IEEE80211_CONF_PS) && !wl->monitor_present;
-}
+अटल bool wl1251_can_करो_pm(काष्ठा ieee80211_conf *conf, काष्ठा wl1251 *wl)
+अणु
+	वापस (conf->flags & IEEE80211_CONF_PS) && !wl->monitor_present;
+पूर्ण
 
-static int wl1251_op_config(struct ieee80211_hw *hw, u32 changed)
-{
-	struct wl1251 *wl = hw->priv;
-	struct ieee80211_conf *conf = &hw->conf;
-	int channel, ret = 0;
+अटल पूर्णांक wl1251_op_config(काष्ठा ieee80211_hw *hw, u32 changed)
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
+	काष्ठा ieee80211_conf *conf = &hw->conf;
+	पूर्णांक channel, ret = 0;
 
 	channel = ieee80211_frequency_to_channel(
 			conf->chandef.chan->center_freq);
@@ -603,102 +604,102 @@ static int wl1251_op_config(struct ieee80211_hw *hw, u32 changed)
 		     channel,
 		     conf->flags & IEEE80211_CONF_MONITOR ? "on" : "off",
 		     conf->flags & IEEE80211_CONF_PS ? "on" : "off",
-		     conf->power_level);
+		     conf->घातer_level);
 
 	mutex_lock(&wl->mutex);
 
 	ret = wl1251_ps_elp_wakeup(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (changed & IEEE80211_CONF_CHANGE_MONITOR) {
+	अगर (changed & IEEE80211_CONF_CHANGE_MONITOR) अणु
 		u32 mode;
 
-		if (conf->flags & IEEE80211_CONF_MONITOR) {
+		अगर (conf->flags & IEEE80211_CONF_MONITOR) अणु
 			wl->monitor_present = true;
 			mode = DF_SNIFF_MODE_ENABLE | DF_ENCRYPTION_DISABLE;
-		} else {
+		पूर्ण अन्यथा अणु
 			wl->monitor_present = false;
 			mode = 0;
-		}
+		पूर्ण
 
 		ret = wl1251_acx_feature_cfg(wl, mode);
-		if (ret < 0)
-			goto out_sleep;
-	}
+		अगर (ret < 0)
+			जाओ out_sleep;
+	पूर्ण
 
-	if (channel != wl->channel) {
+	अगर (channel != wl->channel) अणु
 		wl->channel = channel;
 
 		/*
-		 * Use ENABLE_RX command for channel switching when no
-		 * interface is present (monitor mode only).
+		 * Use ENABLE_RX command क्रम channel चयनing when no
+		 * पूर्णांकerface is present (monitor mode only).
 		 * This leaves the tx path disabled in firmware, whereas
 		 * the usual JOIN command seems to transmit some frames
 		 * at firmware level.
 		 */
-		if (wl->vif == NULL) {
+		अगर (wl->vअगर == शून्य) अणु
 			wl->joined = false;
 			ret = wl1251_cmd_data_path_rx(wl, wl->channel, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = wl1251_join(wl, wl->bss_type, wl->channel,
-					  wl->beacon_int, wl->dtim_period);
-		}
-		if (ret < 0)
-			goto out_sleep;
-	}
+					  wl->beacon_पूर्णांक, wl->dtim_period);
+		पूर्ण
+		अगर (ret < 0)
+			जाओ out_sleep;
+	पूर्ण
 
-	if (wl1251_can_do_pm(conf, wl) && !wl->psm_requested) {
+	अगर (wl1251_can_करो_pm(conf, wl) && !wl->psm_requested) अणु
 		wl1251_debug(DEBUG_PSM, "psm enabled");
 
 		wl->psm_requested = true;
 
 		wl->dtim_period = conf->ps_dtim_period;
 
-		ret = wl1251_acx_wr_tbtt_and_dtim(wl, wl->beacon_int,
+		ret = wl1251_acx_wr_tbtt_and_dtim(wl, wl->beacon_पूर्णांक,
 						  wl->dtim_period);
 
 		/*
-		 * mac80211 enables PSM only if we're already associated.
+		 * mac80211 enables PSM only अगर we're alपढ़ोy associated.
 		 */
 		ret = wl1251_ps_set_mode(wl, STATION_POWER_SAVE_MODE);
-		if (ret < 0)
-			goto out_sleep;
-	} else if (!wl1251_can_do_pm(conf, wl) && wl->psm_requested) {
+		अगर (ret < 0)
+			जाओ out_sleep;
+	पूर्ण अन्यथा अगर (!wl1251_can_करो_pm(conf, wl) && wl->psm_requested) अणु
 		wl1251_debug(DEBUG_PSM, "psm disabled");
 
 		wl->psm_requested = false;
 
-		if (wl->station_mode != STATION_ACTIVE_MODE) {
+		अगर (wl->station_mode != STATION_ACTIVE_MODE) अणु
 			ret = wl1251_ps_set_mode(wl, STATION_ACTIVE_MODE);
-			if (ret < 0)
-				goto out_sleep;
-		}
-	}
+			अगर (ret < 0)
+				जाओ out_sleep;
+		पूर्ण
+	पूर्ण
 
-	if (changed & IEEE80211_CONF_CHANGE_IDLE && !wl->scanning) {
-		if (conf->flags & IEEE80211_CONF_IDLE) {
+	अगर (changed & IEEE80211_CONF_CHANGE_IDLE && !wl->scanning) अणु
+		अगर (conf->flags & IEEE80211_CONF_IDLE) अणु
 			ret = wl1251_ps_set_mode(wl, STATION_IDLE);
-			if (ret < 0)
-				goto out_sleep;
-		} else {
+			अगर (ret < 0)
+				जाओ out_sleep;
+		पूर्ण अन्यथा अणु
 			ret = wl1251_ps_set_mode(wl, STATION_ACTIVE_MODE);
-			if (ret < 0)
-				goto out_sleep;
+			अगर (ret < 0)
+				जाओ out_sleep;
 			ret = wl1251_join(wl, wl->bss_type, wl->channel,
-					  wl->beacon_int, wl->dtim_period);
-			if (ret < 0)
-				goto out_sleep;
-		}
-	}
+					  wl->beacon_पूर्णांक, wl->dtim_period);
+			अगर (ret < 0)
+				जाओ out_sleep;
+		पूर्ण
+	पूर्ण
 
-	if (conf->power_level != wl->power_level) {
-		ret = wl1251_acx_tx_power(wl, conf->power_level);
-		if (ret < 0)
-			goto out_sleep;
+	अगर (conf->घातer_level != wl->घातer_level) अणु
+		ret = wl1251_acx_tx_घातer(wl, conf->घातer_level);
+		अगर (ret < 0)
+			जाओ out_sleep;
 
-		wl->power_level = conf->power_level;
-	}
+		wl->घातer_level = conf->घातer_level;
+	पूर्ण
 
 out_sleep:
 	wl1251_ps_elp_sleep(wl);
@@ -706,112 +707,112 @@ out_sleep:
 out:
 	mutex_unlock(&wl->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct wl1251_filter_params {
+काष्ठा wl1251_filter_params अणु
 	bool enabled;
-	int mc_list_length;
+	पूर्णांक mc_list_length;
 	u8 mc_list[ACX_MC_ADDRESS_GROUP_MAX][ETH_ALEN];
-};
+पूर्ण;
 
-static u64 wl1251_op_prepare_multicast(struct ieee80211_hw *hw,
-				       struct netdev_hw_addr_list *mc_list)
-{
-	struct wl1251_filter_params *fp;
-	struct netdev_hw_addr *ha;
-	struct wl1251 *wl = hw->priv;
+अटल u64 wl1251_op_prepare_multicast(काष्ठा ieee80211_hw *hw,
+				       काष्ठा netdev_hw_addr_list *mc_list)
+अणु
+	काष्ठा wl1251_filter_params *fp;
+	काष्ठा netdev_hw_addr *ha;
+	काष्ठा wl1251 *wl = hw->priv;
 
-	if (unlikely(wl->state == WL1251_STATE_OFF))
-		return 0;
+	अगर (unlikely(wl->state == WL1251_STATE_OFF))
+		वापस 0;
 
-	fp = kzalloc(sizeof(*fp), GFP_ATOMIC);
-	if (!fp) {
+	fp = kzalloc(माप(*fp), GFP_ATOMIC);
+	अगर (!fp) अणु
 		wl1251_error("Out of memory setting filters.");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* update multicast filtering parameters */
 	fp->mc_list_length = 0;
-	if (netdev_hw_addr_list_count(mc_list) > ACX_MC_ADDRESS_GROUP_MAX) {
+	अगर (netdev_hw_addr_list_count(mc_list) > ACX_MC_ADDRESS_GROUP_MAX) अणु
 		fp->enabled = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		fp->enabled = true;
-		netdev_hw_addr_list_for_each(ha, mc_list) {
-			memcpy(fp->mc_list[fp->mc_list_length],
+		netdev_hw_addr_list_क्रम_each(ha, mc_list) अणु
+			स_नकल(fp->mc_list[fp->mc_list_length],
 					ha->addr, ETH_ALEN);
 			fp->mc_list_length++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return (u64)(unsigned long)fp;
-}
+	वापस (u64)(अचिन्हित दीर्घ)fp;
+पूर्ण
 
-#define WL1251_SUPPORTED_FILTERS (FIF_ALLMULTI | \
+#घोषणा WL1251_SUPPORTED_FILTERS (FIF_ALLMULTI | \
 				  FIF_FCSFAIL | \
 				  FIF_BCN_PRBRESP_PROMISC | \
 				  FIF_CONTROL | \
 				  FIF_OTHER_BSS | \
 				  FIF_PROBE_REQ)
 
-static void wl1251_op_configure_filter(struct ieee80211_hw *hw,
-				       unsigned int changed,
-				       unsigned int *total, u64 multicast)
-{
-	struct wl1251_filter_params *fp = (void *)(unsigned long)multicast;
-	struct wl1251 *wl = hw->priv;
-	int ret;
+अटल व्योम wl1251_op_configure_filter(काष्ठा ieee80211_hw *hw,
+				       अचिन्हित पूर्णांक changed,
+				       अचिन्हित पूर्णांक *total, u64 multicast)
+अणु
+	काष्ठा wl1251_filter_params *fp = (व्योम *)(अचिन्हित दीर्घ)multicast;
+	काष्ठा wl1251 *wl = hw->priv;
+	पूर्णांक ret;
 
 	wl1251_debug(DEBUG_MAC80211, "mac80211 configure filter");
 
 	*total &= WL1251_SUPPORTED_FILTERS;
 	changed &= WL1251_SUPPORTED_FILTERS;
 
-	if (changed == 0) {
+	अगर (changed == 0) अणु
 		/* no filters which we support changed */
-		kfree(fp);
-		return;
-	}
+		kमुक्त(fp);
+		वापस;
+	पूर्ण
 
 	mutex_lock(&wl->mutex);
 
 	wl->rx_config = WL1251_DEFAULT_RX_CONFIG;
 	wl->rx_filter = WL1251_DEFAULT_RX_FILTER;
 
-	if (*total & FIF_ALLMULTI)
+	अगर (*total & FIF_ALLMULTI)
 		/*
 		 * CFG_MC_FILTER_EN in rx_config needs to be 0 to receive
 		 * all multicast frames
 		 */
 		wl->rx_config &= ~CFG_MC_FILTER_EN;
-	if (*total & FIF_FCSFAIL)
+	अगर (*total & FIF_FCSFAIL)
 		wl->rx_filter |= CFG_RX_FCS_ERROR;
-	if (*total & FIF_BCN_PRBRESP_PROMISC) {
+	अगर (*total & FIF_BCN_PRBRESP_PROMISC) अणु
 		wl->rx_config &= ~CFG_BSSID_FILTER_EN;
 		wl->rx_config &= ~CFG_SSID_FILTER_EN;
-	}
-	if (*total & FIF_CONTROL)
+	पूर्ण
+	अगर (*total & FIF_CONTROL)
 		wl->rx_filter |= CFG_RX_CTL_EN;
-	if (*total & FIF_OTHER_BSS || is_zero_ether_addr(wl->bssid))
+	अगर (*total & FIF_OTHER_BSS || is_zero_ether_addr(wl->bssid))
 		wl->rx_config &= ~CFG_BSSID_FILTER_EN;
-	if (*total & FIF_PROBE_REQ)
+	अगर (*total & FIF_PROBE_REQ)
 		wl->rx_filter |= CFG_RX_PREQ_EN;
 
-	if (wl->state == WL1251_STATE_OFF)
-		goto out;
+	अगर (wl->state == WL1251_STATE_OFF)
+		जाओ out;
 
 	ret = wl1251_ps_elp_wakeup(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (*total & FIF_ALLMULTI)
-		ret = wl1251_acx_group_address_tbl(wl, false, NULL, 0);
-	else if (fp)
+	अगर (*total & FIF_ALLMULTI)
+		ret = wl1251_acx_group_address_tbl(wl, false, शून्य, 0);
+	अन्यथा अगर (fp)
 		ret = wl1251_acx_group_address_tbl(wl, fp->enabled,
 						   fp->mc_list,
 						   fp->mc_list_length);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	/* send filters to firmware */
 	wl1251_acx_rx_config(wl, wl->rx_config, wl->rx_filter);
@@ -820,69 +821,69 @@ static void wl1251_op_configure_filter(struct ieee80211_hw *hw,
 
 out:
 	mutex_unlock(&wl->mutex);
-	kfree(fp);
-}
+	kमुक्त(fp);
+पूर्ण
 
 /* HW encryption */
-static int wl1251_set_key_type(struct wl1251 *wl,
-			       struct wl1251_cmd_set_keys *key,
-			       enum set_key_cmd cmd,
-			       struct ieee80211_key_conf *mac80211_key,
-			       const u8 *addr)
-{
-	switch (mac80211_key->cipher) {
-	case WLAN_CIPHER_SUITE_WEP40:
-	case WLAN_CIPHER_SUITE_WEP104:
-		if (is_broadcast_ether_addr(addr))
+अटल पूर्णांक wl1251_set_key_type(काष्ठा wl1251 *wl,
+			       काष्ठा wl1251_cmd_set_keys *key,
+			       क्रमागत set_key_cmd cmd,
+			       काष्ठा ieee80211_key_conf *mac80211_key,
+			       स्थिर u8 *addr)
+अणु
+	चयन (mac80211_key->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_WEP40:
+	हाल WLAN_CIPHER_SUITE_WEP104:
+		अगर (is_broadcast_ether_addr(addr))
 			key->key_type = KEY_WEP_DEFAULT;
-		else
+		अन्यथा
 			key->key_type = KEY_WEP_ADDR;
 
 		mac80211_key->hw_key_idx = mac80211_key->keyidx;
-		break;
-	case WLAN_CIPHER_SUITE_TKIP:
-		if (is_broadcast_ether_addr(addr))
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_TKIP:
+		अगर (is_broadcast_ether_addr(addr))
 			key->key_type = KEY_TKIP_MIC_GROUP;
-		else
+		अन्यथा
 			key->key_type = KEY_TKIP_MIC_PAIRWISE;
 
 		mac80211_key->hw_key_idx = mac80211_key->keyidx;
-		break;
-	case WLAN_CIPHER_SUITE_CCMP:
-		if (is_broadcast_ether_addr(addr))
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP:
+		अगर (is_broadcast_ether_addr(addr))
 			key->key_type = KEY_AES_GROUP;
-		else
+		अन्यथा
 			key->key_type = KEY_AES_PAIRWISE;
 		mac80211_key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		wl1251_error("Unknown key cipher 0x%x", mac80211_key->cipher);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wl1251_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
-			     struct ieee80211_vif *vif,
-			     struct ieee80211_sta *sta,
-			     struct ieee80211_key_conf *key)
-{
-	struct wl1251 *wl = hw->priv;
-	struct wl1251_cmd_set_keys *wl_cmd;
-	const u8 *addr;
-	int ret;
+अटल पूर्णांक wl1251_op_set_key(काष्ठा ieee80211_hw *hw, क्रमागत set_key_cmd cmd,
+			     काष्ठा ieee80211_vअगर *vअगर,
+			     काष्ठा ieee80211_sta *sta,
+			     काष्ठा ieee80211_key_conf *key)
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
+	काष्ठा wl1251_cmd_set_keys *wl_cmd;
+	स्थिर u8 *addr;
+	पूर्णांक ret;
 
-	static const u8 bcast_addr[ETH_ALEN] =
-		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+	अटल स्थिर u8 bcast_addr[ETH_ALEN] =
+		अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण;
 
 	wl1251_debug(DEBUG_MAC80211, "mac80211 set key");
 
-	wl_cmd = kzalloc(sizeof(*wl_cmd), GFP_KERNEL);
-	if (!wl_cmd) {
+	wl_cmd = kzalloc(माप(*wl_cmd), GFP_KERNEL);
+	अगर (!wl_cmd) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	addr = sta ? sta->addr : bcast_addr;
 
@@ -892,70 +893,70 @@ static int wl1251_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		     key->cipher, key->keyidx, key->keylen, key->flags);
 	wl1251_dump(DEBUG_CRYPT, "KEY: ", key->key, key->keylen);
 
-	if (is_zero_ether_addr(addr)) {
-		/* We dont support TX only encryption */
+	अगर (is_zero_ether_addr(addr)) अणु
+		/* We करोnt support TX only encryption */
 		ret = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&wl->mutex);
 
-	switch (cmd) {
-	case SET_KEY:
-		if (wl->monitor_present) {
+	चयन (cmd) अणु
+	हाल SET_KEY:
+		अगर (wl->monitor_present) अणु
 			ret = -EOPNOTSUPP;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 		wl_cmd->key_action = KEY_ADD_OR_REPLACE;
-		break;
-	case DISABLE_KEY:
+		अवरोध;
+	हाल DISABLE_KEY:
 		wl_cmd->key_action = KEY_REMOVE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		wl1251_error("Unsupported key cmd 0x%x", cmd);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ret = wl1251_ps_elp_wakeup(wl);
-	if (ret < 0)
-		goto out_unlock;
+	अगर (ret < 0)
+		जाओ out_unlock;
 
 	ret = wl1251_set_key_type(wl, wl_cmd, cmd, key, addr);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		wl1251_error("Set KEY type failed");
-		goto out_sleep;
-	}
+		जाओ out_sleep;
+	पूर्ण
 
-	if (wl_cmd->key_type != KEY_WEP_DEFAULT)
-		memcpy(wl_cmd->addr, addr, ETH_ALEN);
+	अगर (wl_cmd->key_type != KEY_WEP_DEFAULT)
+		स_नकल(wl_cmd->addr, addr, ETH_ALEN);
 
-	if ((wl_cmd->key_type == KEY_TKIP_MIC_GROUP) ||
-	    (wl_cmd->key_type == KEY_TKIP_MIC_PAIRWISE)) {
+	अगर ((wl_cmd->key_type == KEY_TKIP_MIC_GROUP) ||
+	    (wl_cmd->key_type == KEY_TKIP_MIC_PAIRWISE)) अणु
 		/*
-		 * We get the key in the following form:
+		 * We get the key in the following क्रमm:
 		 * TKIP (16 bytes) - TX MIC (8 bytes) - RX MIC (8 bytes)
 		 * but the target is expecting:
 		 * TKIP - RX MIC - TX MIC
 		 */
-		memcpy(wl_cmd->key, key->key, 16);
-		memcpy(wl_cmd->key + 16, key->key + 24, 8);
-		memcpy(wl_cmd->key + 24, key->key + 16, 8);
+		स_नकल(wl_cmd->key, key->key, 16);
+		स_नकल(wl_cmd->key + 16, key->key + 24, 8);
+		स_नकल(wl_cmd->key + 24, key->key + 16, 8);
 
-	} else {
-		memcpy(wl_cmd->key, key->key, key->keylen);
-	}
+	पूर्ण अन्यथा अणु
+		स_नकल(wl_cmd->key, key->key, key->keylen);
+	पूर्ण
 	wl_cmd->key_size = key->keylen;
 
 	wl_cmd->id = key->keyidx;
 	wl_cmd->ssid_profile = 0;
 
-	wl1251_dump(DEBUG_CRYPT, "TARGET KEY: ", wl_cmd, sizeof(*wl_cmd));
+	wl1251_dump(DEBUG_CRYPT, "TARGET KEY: ", wl_cmd, माप(*wl_cmd));
 
-	ret = wl1251_cmd_send(wl, CMD_SET_KEYS, wl_cmd, sizeof(*wl_cmd));
-	if (ret < 0) {
+	ret = wl1251_cmd_send(wl, CMD_SET_KEYS, wl_cmd, माप(*wl_cmd));
+	अगर (ret < 0) अणु
 		wl1251_warning("could not set keys");
-		goto out_sleep;
-	}
+		जाओ out_sleep;
+	पूर्ण
 
 out_sleep:
 	wl1251_ps_elp_sleep(wl);
@@ -964,83 +965,83 @@ out_unlock:
 	mutex_unlock(&wl->mutex);
 
 out:
-	kfree(wl_cmd);
+	kमुक्त(wl_cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wl1251_op_hw_scan(struct ieee80211_hw *hw,
-			     struct ieee80211_vif *vif,
-			     struct ieee80211_scan_request *hw_req)
-{
-	struct cfg80211_scan_request *req = &hw_req->req;
-	struct wl1251 *wl = hw->priv;
-	struct sk_buff *skb;
-	size_t ssid_len = 0;
-	u8 *ssid = NULL;
-	int ret;
+अटल पूर्णांक wl1251_op_hw_scan(काष्ठा ieee80211_hw *hw,
+			     काष्ठा ieee80211_vअगर *vअगर,
+			     काष्ठा ieee80211_scan_request *hw_req)
+अणु
+	काष्ठा cfg80211_scan_request *req = &hw_req->req;
+	काष्ठा wl1251 *wl = hw->priv;
+	काष्ठा sk_buff *skb;
+	माप_प्रकार ssid_len = 0;
+	u8 *ssid = शून्य;
+	पूर्णांक ret;
 
 	wl1251_debug(DEBUG_MAC80211, "mac80211 hw scan");
 
-	if (req->n_ssids) {
+	अगर (req->n_ssids) अणु
 		ssid = req->ssids[0].ssid;
 		ssid_len = req->ssids[0].ssid_len;
-	}
+	पूर्ण
 
 	mutex_lock(&wl->mutex);
 
-	if (wl->scanning) {
+	अगर (wl->scanning) अणु
 		wl1251_debug(DEBUG_SCAN, "scan already in progress");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = wl1251_ps_elp_wakeup(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (hw->conf.flags & IEEE80211_CONF_IDLE) {
+	अगर (hw->conf.flags & IEEE80211_CONF_IDLE) अणु
 		ret = wl1251_ps_set_mode(wl, STATION_ACTIVE_MODE);
-		if (ret < 0)
-			goto out_sleep;
+		अगर (ret < 0)
+			जाओ out_sleep;
 		ret = wl1251_join(wl, wl->bss_type, wl->channel,
-				  wl->beacon_int, wl->dtim_period);
-		if (ret < 0)
-			goto out_sleep;
-	}
+				  wl->beacon_पूर्णांक, wl->dtim_period);
+		अगर (ret < 0)
+			जाओ out_sleep;
+	पूर्ण
 
-	skb = ieee80211_probereq_get(wl->hw, wl->vif->addr, ssid, ssid_len,
+	skb = ieee80211_probereq_get(wl->hw, wl->vअगर->addr, ssid, ssid_len,
 				     req->ie_len);
-	if (!skb) {
+	अगर (!skb) अणु
 		ret = -ENOMEM;
-		goto out_idle;
-	}
-	if (req->ie_len)
+		जाओ out_idle;
+	पूर्ण
+	अगर (req->ie_len)
 		skb_put_data(skb, req->ie, req->ie_len);
 
-	ret = wl1251_cmd_template_set(wl, CMD_PROBE_REQ, skb->data,
+	ret = wl1251_cmd_ढाँचा_set(wl, CMD_PROBE_REQ, skb->data,
 				      skb->len);
-	dev_kfree_skb(skb);
-	if (ret < 0)
-		goto out_idle;
+	dev_kमुक्त_skb(skb);
+	अगर (ret < 0)
+		जाओ out_idle;
 
 	ret = wl1251_cmd_trigger_scan_to(wl, 0);
-	if (ret < 0)
-		goto out_idle;
+	अगर (ret < 0)
+		जाओ out_idle;
 
 	wl->scanning = true;
 
 	ret = wl1251_cmd_scan(wl, ssid, ssid_len, req->channels,
 			      req->n_channels, WL1251_SCAN_NUM_PROBES);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		wl1251_debug(DEBUG_SCAN, "scan failed %d", ret);
 		wl->scanning = false;
-		goto out_idle;
-	}
-	goto out_sleep;
+		जाओ out_idle;
+	पूर्ण
+	जाओ out_sleep;
 
 out_idle:
-	if (hw->conf.flags & IEEE80211_CONF_IDLE)
+	अगर (hw->conf.flags & IEEE80211_CONF_IDLE)
 		ret = wl1251_ps_set_mode(wl, STATION_IDLE);
 out_sleep:
 	wl1251_ps_elp_sleep(wl);
@@ -1048,22 +1049,22 @@ out_sleep:
 out:
 	mutex_unlock(&wl->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wl1251_op_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
-{
-	struct wl1251 *wl = hw->priv;
-	int ret;
+अटल पूर्णांक wl1251_op_set_rts_threshold(काष्ठा ieee80211_hw *hw, u32 value)
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
+	पूर्णांक ret;
 
 	mutex_lock(&wl->mutex);
 
 	ret = wl1251_ps_elp_wakeup(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = wl1251_acx_rts_threshold(wl, (u16) value);
-	if (ret < 0)
+	अगर (ret < 0)
 		wl1251_warning("wl1251_op_set_rts_threshold failed: %d", ret);
 
 	wl1251_ps_elp_sleep(wl);
@@ -1071,250 +1072,250 @@ static int wl1251_op_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
 out:
 	mutex_unlock(&wl->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void wl1251_op_bss_info_changed(struct ieee80211_hw *hw,
-				       struct ieee80211_vif *vif,
-				       struct ieee80211_bss_conf *bss_conf,
+अटल व्योम wl1251_op_bss_info_changed(काष्ठा ieee80211_hw *hw,
+				       काष्ठा ieee80211_vअगर *vअगर,
+				       काष्ठा ieee80211_bss_conf *bss_conf,
 				       u32 changed)
-{
-	struct wl1251 *wl = hw->priv;
-	struct sk_buff *beacon, *skb;
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
+	काष्ठा sk_buff *beacon, *skb;
 	bool enable;
-	int ret;
+	पूर्णांक ret;
 
 	wl1251_debug(DEBUG_MAC80211, "mac80211 bss info changed");
 
 	mutex_lock(&wl->mutex);
 
 	ret = wl1251_ps_elp_wakeup(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (changed & BSS_CHANGED_CQM) {
+	अगर (changed & BSS_CHANGED_CQM) अणु
 		ret = wl1251_acx_low_rssi(wl, bss_conf->cqm_rssi_thold,
 					  WL1251_DEFAULT_LOW_RSSI_WEIGHT,
 					  WL1251_DEFAULT_LOW_RSSI_DEPTH,
 					  WL1251_ACX_LOW_RSSI_TYPE_EDGE);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 		wl->rssi_thold = bss_conf->cqm_rssi_thold;
-	}
+	पूर्ण
 
-	if ((changed & BSS_CHANGED_BSSID) &&
-	    memcmp(wl->bssid, bss_conf->bssid, ETH_ALEN)) {
-		memcpy(wl->bssid, bss_conf->bssid, ETH_ALEN);
+	अगर ((changed & BSS_CHANGED_BSSID) &&
+	    स_भेद(wl->bssid, bss_conf->bssid, ETH_ALEN)) अणु
+		स_नकल(wl->bssid, bss_conf->bssid, ETH_ALEN);
 
-		if (!is_zero_ether_addr(wl->bssid)) {
+		अगर (!is_zero_ether_addr(wl->bssid)) अणु
 			ret = wl1251_build_null_data(wl);
-			if (ret < 0)
-				goto out_sleep;
+			अगर (ret < 0)
+				जाओ out_sleep;
 
 			ret = wl1251_build_qos_null_data(wl);
-			if (ret < 0)
-				goto out_sleep;
+			अगर (ret < 0)
+				जाओ out_sleep;
 
 			ret = wl1251_join(wl, wl->bss_type, wl->channel,
-					  wl->beacon_int, wl->dtim_period);
-			if (ret < 0)
-				goto out_sleep;
-		}
-	}
+					  wl->beacon_पूर्णांक, wl->dtim_period);
+			अगर (ret < 0)
+				जाओ out_sleep;
+		पूर्ण
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ASSOC) {
-		if (bss_conf->assoc) {
-			wl->beacon_int = bss_conf->beacon_int;
+	अगर (changed & BSS_CHANGED_ASSOC) अणु
+		अगर (bss_conf->assoc) अणु
+			wl->beacon_पूर्णांक = bss_conf->beacon_पूर्णांक;
 
-			skb = ieee80211_pspoll_get(wl->hw, wl->vif);
-			if (!skb)
-				goto out_sleep;
+			skb = ieee80211_pspoll_get(wl->hw, wl->vअगर);
+			अगर (!skb)
+				जाओ out_sleep;
 
-			ret = wl1251_cmd_template_set(wl, CMD_PS_POLL,
+			ret = wl1251_cmd_ढाँचा_set(wl, CMD_PS_POLL,
 						      skb->data,
 						      skb->len);
-			dev_kfree_skb(skb);
-			if (ret < 0)
-				goto out_sleep;
+			dev_kमुक्त_skb(skb);
+			अगर (ret < 0)
+				जाओ out_sleep;
 
 			ret = wl1251_acx_aid(wl, bss_conf->aid);
-			if (ret < 0)
-				goto out_sleep;
-		} else {
-			/* use defaults when not associated */
-			wl->beacon_int = WL1251_DEFAULT_BEACON_INT;
+			अगर (ret < 0)
+				जाओ out_sleep;
+		पूर्ण अन्यथा अणु
+			/* use शेषs when not associated */
+			wl->beacon_पूर्णांक = WL1251_DEFAULT_BEACON_INT;
 			wl->dtim_period = WL1251_DEFAULT_DTIM_PERIOD;
-		}
-	}
-	if (changed & BSS_CHANGED_ERP_SLOT) {
-		if (bss_conf->use_short_slot)
+		पूर्ण
+	पूर्ण
+	अगर (changed & BSS_CHANGED_ERP_SLOT) अणु
+		अगर (bss_conf->use_लघु_slot)
 			ret = wl1251_acx_slot(wl, SLOT_TIME_SHORT);
-		else
+		अन्यथा
 			ret = wl1251_acx_slot(wl, SLOT_TIME_LONG);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			wl1251_warning("Set slot time failed %d", ret);
-			goto out_sleep;
-		}
-	}
+			जाओ out_sleep;
+		पूर्ण
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ERP_PREAMBLE) {
-		if (bss_conf->use_short_preamble)
+	अगर (changed & BSS_CHANGED_ERP_PREAMBLE) अणु
+		अगर (bss_conf->use_लघु_preamble)
 			wl1251_acx_set_preamble(wl, ACX_PREAMBLE_SHORT);
-		else
+		अन्यथा
 			wl1251_acx_set_preamble(wl, ACX_PREAMBLE_LONG);
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ERP_CTS_PROT) {
-		if (bss_conf->use_cts_prot)
+	अगर (changed & BSS_CHANGED_ERP_CTS_PROT) अणु
+		अगर (bss_conf->use_cts_prot)
 			ret = wl1251_acx_cts_protect(wl, CTSPROTECT_ENABLE);
-		else
+		अन्यथा
 			ret = wl1251_acx_cts_protect(wl, CTSPROTECT_DISABLE);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			wl1251_warning("Set ctsprotect failed %d", ret);
-			goto out_sleep;
-		}
-	}
+			जाओ out_sleep;
+		पूर्ण
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ARP_FILTER) {
+	अगर (changed & BSS_CHANGED_ARP_FILTER) अणु
 		__be32 addr = bss_conf->arp_addr_list[0];
 		WARN_ON(wl->bss_type != BSS_TYPE_STA_BSS);
 
 		enable = bss_conf->arp_addr_cnt == 1 && bss_conf->assoc;
 		ret = wl1251_acx_arp_ip_filter(wl, enable, addr);
-		if (ret < 0)
-			goto out_sleep;
-	}
+		अगर (ret < 0)
+			जाओ out_sleep;
+	पूर्ण
 
-	if (changed & BSS_CHANGED_BEACON) {
-		beacon = ieee80211_beacon_get(hw, vif);
-		if (!beacon)
-			goto out_sleep;
+	अगर (changed & BSS_CHANGED_BEACON) अणु
+		beacon = ieee80211_beacon_get(hw, vअगर);
+		अगर (!beacon)
+			जाओ out_sleep;
 
-		ret = wl1251_cmd_template_set(wl, CMD_BEACON, beacon->data,
+		ret = wl1251_cmd_ढाँचा_set(wl, CMD_BEACON, beacon->data,
 					      beacon->len);
 
-		if (ret < 0) {
-			dev_kfree_skb(beacon);
-			goto out_sleep;
-		}
+		अगर (ret < 0) अणु
+			dev_kमुक्त_skb(beacon);
+			जाओ out_sleep;
+		पूर्ण
 
-		ret = wl1251_cmd_template_set(wl, CMD_PROBE_RESP, beacon->data,
+		ret = wl1251_cmd_ढाँचा_set(wl, CMD_PROBE_RESP, beacon->data,
 					      beacon->len);
 
-		dev_kfree_skb(beacon);
+		dev_kमुक्त_skb(beacon);
 
-		if (ret < 0)
-			goto out_sleep;
+		अगर (ret < 0)
+			जाओ out_sleep;
 
 		ret = wl1251_join(wl, wl->bss_type, wl->channel,
-				  wl->beacon_int, wl->dtim_period);
+				  wl->beacon_पूर्णांक, wl->dtim_period);
 
-		if (ret < 0)
-			goto out_sleep;
-	}
+		अगर (ret < 0)
+			जाओ out_sleep;
+	पूर्ण
 
 out_sleep:
 	wl1251_ps_elp_sleep(wl);
 
 out:
 	mutex_unlock(&wl->mutex);
-}
+पूर्ण
 
 
-/* can't be const, mac80211 writes to this */
-static struct ieee80211_rate wl1251_rates[] = {
-	{ .bitrate = 10,
+/* can't be स्थिर, mac80211 ग_लिखोs to this */
+अटल काष्ठा ieee80211_rate wl1251_rates[] = अणु
+	अणु .bitrate = 10,
 	  .hw_value = 0x1,
-	  .hw_value_short = 0x1, },
-	{ .bitrate = 20,
+	  .hw_value_लघु = 0x1, पूर्ण,
+	अणु .bitrate = 20,
 	  .hw_value = 0x2,
-	  .hw_value_short = 0x2,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE },
-	{ .bitrate = 55,
+	  .hw_value_लघु = 0x2,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE पूर्ण,
+	अणु .bitrate = 55,
 	  .hw_value = 0x4,
-	  .hw_value_short = 0x4,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE },
-	{ .bitrate = 110,
+	  .hw_value_लघु = 0x4,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE पूर्ण,
+	अणु .bitrate = 110,
 	  .hw_value = 0x20,
-	  .hw_value_short = 0x20,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE },
-	{ .bitrate = 60,
+	  .hw_value_लघु = 0x20,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE पूर्ण,
+	अणु .bitrate = 60,
 	  .hw_value = 0x8,
-	  .hw_value_short = 0x8, },
-	{ .bitrate = 90,
+	  .hw_value_लघु = 0x8, पूर्ण,
+	अणु .bitrate = 90,
 	  .hw_value = 0x10,
-	  .hw_value_short = 0x10, },
-	{ .bitrate = 120,
+	  .hw_value_लघु = 0x10, पूर्ण,
+	अणु .bitrate = 120,
 	  .hw_value = 0x40,
-	  .hw_value_short = 0x40, },
-	{ .bitrate = 180,
+	  .hw_value_लघु = 0x40, पूर्ण,
+	अणु .bitrate = 180,
 	  .hw_value = 0x80,
-	  .hw_value_short = 0x80, },
-	{ .bitrate = 240,
+	  .hw_value_लघु = 0x80, पूर्ण,
+	अणु .bitrate = 240,
 	  .hw_value = 0x200,
-	  .hw_value_short = 0x200, },
-	{ .bitrate = 360,
+	  .hw_value_लघु = 0x200, पूर्ण,
+	अणु .bitrate = 360,
 	 .hw_value = 0x400,
-	 .hw_value_short = 0x400, },
-	{ .bitrate = 480,
+	 .hw_value_लघु = 0x400, पूर्ण,
+	अणु .bitrate = 480,
 	  .hw_value = 0x800,
-	  .hw_value_short = 0x800, },
-	{ .bitrate = 540,
+	  .hw_value_लघु = 0x800, पूर्ण,
+	अणु .bitrate = 540,
 	  .hw_value = 0x1000,
-	  .hw_value_short = 0x1000, },
-};
+	  .hw_value_लघु = 0x1000, पूर्ण,
+पूर्ण;
 
-/* can't be const, mac80211 writes to this */
-static struct ieee80211_channel wl1251_channels[] = {
-	{ .hw_value = 1, .center_freq = 2412},
-	{ .hw_value = 2, .center_freq = 2417},
-	{ .hw_value = 3, .center_freq = 2422},
-	{ .hw_value = 4, .center_freq = 2427},
-	{ .hw_value = 5, .center_freq = 2432},
-	{ .hw_value = 6, .center_freq = 2437},
-	{ .hw_value = 7, .center_freq = 2442},
-	{ .hw_value = 8, .center_freq = 2447},
-	{ .hw_value = 9, .center_freq = 2452},
-	{ .hw_value = 10, .center_freq = 2457},
-	{ .hw_value = 11, .center_freq = 2462},
-	{ .hw_value = 12, .center_freq = 2467},
-	{ .hw_value = 13, .center_freq = 2472},
-};
+/* can't be स्थिर, mac80211 ग_लिखोs to this */
+अटल काष्ठा ieee80211_channel wl1251_channels[] = अणु
+	अणु .hw_value = 1, .center_freq = 2412पूर्ण,
+	अणु .hw_value = 2, .center_freq = 2417पूर्ण,
+	अणु .hw_value = 3, .center_freq = 2422पूर्ण,
+	अणु .hw_value = 4, .center_freq = 2427पूर्ण,
+	अणु .hw_value = 5, .center_freq = 2432पूर्ण,
+	अणु .hw_value = 6, .center_freq = 2437पूर्ण,
+	अणु .hw_value = 7, .center_freq = 2442पूर्ण,
+	अणु .hw_value = 8, .center_freq = 2447पूर्ण,
+	अणु .hw_value = 9, .center_freq = 2452पूर्ण,
+	अणु .hw_value = 10, .center_freq = 2457पूर्ण,
+	अणु .hw_value = 11, .center_freq = 2462पूर्ण,
+	अणु .hw_value = 12, .center_freq = 2467पूर्ण,
+	अणु .hw_value = 13, .center_freq = 2472पूर्ण,
+पूर्ण;
 
-static int wl1251_op_conf_tx(struct ieee80211_hw *hw,
-			     struct ieee80211_vif *vif, u16 queue,
-			     const struct ieee80211_tx_queue_params *params)
-{
-	enum wl1251_acx_ps_scheme ps_scheme;
-	struct wl1251 *wl = hw->priv;
-	int ret;
+अटल पूर्णांक wl1251_op_conf_tx(काष्ठा ieee80211_hw *hw,
+			     काष्ठा ieee80211_vअगर *vअगर, u16 queue,
+			     स्थिर काष्ठा ieee80211_tx_queue_params *params)
+अणु
+	क्रमागत wl1251_acx_ps_scheme ps_scheme;
+	काष्ठा wl1251 *wl = hw->priv;
+	पूर्णांक ret;
 
 	mutex_lock(&wl->mutex);
 
 	wl1251_debug(DEBUG_MAC80211, "mac80211 conf tx %d", queue);
 
 	ret = wl1251_ps_elp_wakeup(wl);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	/* mac80211 uses units of 32 usec */
 	ret = wl1251_acx_ac_cfg(wl, wl1251_tx_get_queue(queue),
 				params->cw_min, params->cw_max,
-				params->aifs, params->txop * 32);
-	if (ret < 0)
-		goto out_sleep;
+				params->aअगरs, params->txop * 32);
+	अगर (ret < 0)
+		जाओ out_sleep;
 
-	if (params->uapsd)
+	अगर (params->uapsd)
 		ps_scheme = WL1251_ACX_PS_SCHEME_UPSD_TRIGGER;
-	else
+	अन्यथा
 		ps_scheme = WL1251_ACX_PS_SCHEME_LEGACY;
 
 	ret = wl1251_acx_tid_cfg(wl, wl1251_tx_get_queue(queue),
 				 CHANNEL_TYPE_EDCF,
 				 wl1251_tx_get_queue(queue), ps_scheme,
 				 WL1251_ACX_ACK_POLICY_LEGACY);
-	if (ret < 0)
-		goto out_sleep;
+	अगर (ret < 0)
+		जाओ out_sleep;
 
 out_sleep:
 	wl1251_ps_elp_sleep(wl);
@@ -1322,38 +1323,38 @@ out_sleep:
 out:
 	mutex_unlock(&wl->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wl1251_op_get_survey(struct ieee80211_hw *hw, int idx,
-				struct survey_info *survey)
-{
-	struct wl1251 *wl = hw->priv;
-	struct ieee80211_conf *conf = &hw->conf;
+अटल पूर्णांक wl1251_op_get_survey(काष्ठा ieee80211_hw *hw, पूर्णांक idx,
+				काष्ठा survey_info *survey)
+अणु
+	काष्ठा wl1251 *wl = hw->priv;
+	काष्ठा ieee80211_conf *conf = &hw->conf;
  
-	if (idx != 0)
-		return -ENOENT;
+	अगर (idx != 0)
+		वापस -ENOENT;
  
 	survey->channel = conf->chandef.chan;
 	survey->filled = SURVEY_INFO_NOISE_DBM;
 	survey->noise = wl->noise;
  
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* can't be const, mac80211 writes to this */
-static struct ieee80211_supported_band wl1251_band_2ghz = {
+/* can't be स्थिर, mac80211 ग_लिखोs to this */
+अटल काष्ठा ieee80211_supported_band wl1251_band_2ghz = अणु
 	.channels = wl1251_channels,
 	.n_channels = ARRAY_SIZE(wl1251_channels),
 	.bitrates = wl1251_rates,
 	.n_bitrates = ARRAY_SIZE(wl1251_rates),
-};
+पूर्ण;
 
-static const struct ieee80211_ops wl1251_ops = {
+अटल स्थिर काष्ठा ieee80211_ops wl1251_ops = अणु
 	.start = wl1251_op_start,
 	.stop = wl1251_op_stop,
-	.add_interface = wl1251_op_add_interface,
-	.remove_interface = wl1251_op_remove_interface,
+	.add_पूर्णांकerface = wl1251_op_add_पूर्णांकerface,
+	.हटाओ_पूर्णांकerface = wl1251_op_हटाओ_पूर्णांकerface,
 	.config = wl1251_op_config,
 	.prepare_multicast = wl1251_op_prepare_multicast,
 	.configure_filter = wl1251_op_configure_filter,
@@ -1364,151 +1365,151 @@ static const struct ieee80211_ops wl1251_ops = {
 	.set_rts_threshold = wl1251_op_set_rts_threshold,
 	.conf_tx = wl1251_op_conf_tx,
 	.get_survey = wl1251_op_get_survey,
-};
+पूर्ण;
 
-static int wl1251_read_eeprom_byte(struct wl1251 *wl, off_t offset, u8 *data)
-{
-	unsigned long timeout;
+अटल पूर्णांक wl1251_पढ़ो_eeprom_byte(काष्ठा wl1251 *wl, off_t offset, u8 *data)
+अणु
+	अचिन्हित दीर्घ समयout;
 
-	wl1251_reg_write32(wl, EE_ADDR, offset);
-	wl1251_reg_write32(wl, EE_CTL, EE_CTL_READ);
+	wl1251_reg_ग_लिखो32(wl, EE_ADDR, offset);
+	wl1251_reg_ग_लिखो32(wl, EE_CTL, EE_CTL_READ);
 
-	/* EE_CTL_READ clears when data is ready */
-	timeout = jiffies + msecs_to_jiffies(100);
-	while (1) {
-		if (!(wl1251_reg_read32(wl, EE_CTL) & EE_CTL_READ))
-			break;
+	/* EE_CTL_READ clears when data is पढ़ोy */
+	समयout = jअगरfies + msecs_to_jअगरfies(100);
+	जबतक (1) अणु
+		अगर (!(wl1251_reg_पढ़ो32(wl, EE_CTL) & EE_CTL_READ))
+			अवरोध;
 
-		if (time_after(jiffies, timeout))
-			return -ETIMEDOUT;
+		अगर (समय_after(jअगरfies, समयout))
+			वापस -ETIMEDOUT;
 
 		msleep(1);
-	}
+	पूर्ण
 
-	*data = wl1251_reg_read32(wl, EE_DATA);
-	return 0;
-}
+	*data = wl1251_reg_पढ़ो32(wl, EE_DATA);
+	वापस 0;
+पूर्ण
 
-static int wl1251_read_eeprom(struct wl1251 *wl, off_t offset,
-			      u8 *data, size_t len)
-{
-	size_t i;
-	int ret;
+अटल पूर्णांक wl1251_पढ़ो_eeprom(काष्ठा wl1251 *wl, off_t offset,
+			      u8 *data, माप_प्रकार len)
+अणु
+	माप_प्रकार i;
+	पूर्णांक ret;
 
-	wl1251_reg_write32(wl, EE_START, 0);
+	wl1251_reg_ग_लिखो32(wl, EE_START, 0);
 
-	for (i = 0; i < len; i++) {
-		ret = wl1251_read_eeprom_byte(wl, offset + i, &data[i]);
-		if (ret < 0)
-			return ret;
-	}
+	क्रम (i = 0; i < len; i++) अणु
+		ret = wl1251_पढ़ो_eeprom_byte(wl, offset + i, &data[i]);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wl1251_read_eeprom_mac(struct wl1251 *wl)
-{
+अटल पूर्णांक wl1251_पढ़ो_eeprom_mac(काष्ठा wl1251 *wl)
+अणु
 	u8 mac[ETH_ALEN];
-	int i, ret;
+	पूर्णांक i, ret;
 
 	wl1251_set_partition(wl, 0, 0, REGISTERS_BASE, REGISTERS_DOWN_SIZE);
 
-	ret = wl1251_read_eeprom(wl, 0x1c, mac, sizeof(mac));
-	if (ret < 0) {
+	ret = wl1251_पढ़ो_eeprom(wl, 0x1c, mac, माप(mac));
+	अगर (ret < 0) अणु
 		wl1251_warning("failed to read MAC address from EEPROM");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* MAC is stored in reverse order */
-	for (i = 0; i < ETH_ALEN; i++)
+	क्रम (i = 0; i < ETH_ALEN; i++)
 		wl->mac_addr[i] = mac[ETH_ALEN - i - 1];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define NVS_OFF_MAC_LEN 0x19
-#define NVS_OFF_MAC_ADDR_LO 0x1a
-#define NVS_OFF_MAC_ADDR_HI 0x1b
-#define NVS_OFF_MAC_DATA 0x1c
+#घोषणा NVS_OFF_MAC_LEN 0x19
+#घोषणा NVS_OFF_MAC_ADDR_LO 0x1a
+#घोषणा NVS_OFF_MAC_ADDR_HI 0x1b
+#घोषणा NVS_OFF_MAC_DATA 0x1c
 
-static int wl1251_check_nvs_mac(struct wl1251 *wl)
-{
-	if (wl->nvs_len < 0x24)
-		return -ENODATA;
+अटल पूर्णांक wl1251_check_nvs_mac(काष्ठा wl1251 *wl)
+अणु
+	अगर (wl->nvs_len < 0x24)
+		वापस -ENODATA;
 
 	/* length is 2 and data address is 0x546c (ANDed with 0xfffe) */
-	if (wl->nvs[NVS_OFF_MAC_LEN] != 2 ||
+	अगर (wl->nvs[NVS_OFF_MAC_LEN] != 2 ||
 	    wl->nvs[NVS_OFF_MAC_ADDR_LO] != 0x6d ||
 	    wl->nvs[NVS_OFF_MAC_ADDR_HI] != 0x54)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wl1251_read_nvs_mac(struct wl1251 *wl)
-{
+अटल पूर्णांक wl1251_पढ़ो_nvs_mac(काष्ठा wl1251 *wl)
+अणु
 	u8 mac[ETH_ALEN];
-	int i, ret;
+	पूर्णांक i, ret;
 
 	ret = wl1251_check_nvs_mac(wl);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* MAC is stored in reverse order */
-	for (i = 0; i < ETH_ALEN; i++)
+	क्रम (i = 0; i < ETH_ALEN; i++)
 		mac[i] = wl->nvs[NVS_OFF_MAC_DATA + ETH_ALEN - i - 1];
 
 	/* 00:00:20:07:03:09 is in example file wl1251-nvs.bin, so invalid */
-	if (ether_addr_equal_unaligned(mac, "\x00\x00\x20\x07\x03\x09"))
-		return -EINVAL;
+	अगर (ether_addr_equal_unaligned(mac, "\x00\x00\x20\x07\x03\x09"))
+		वापस -EINVAL;
 
-	memcpy(wl->mac_addr, mac, ETH_ALEN);
-	return 0;
-}
+	स_नकल(wl->mac_addr, mac, ETH_ALEN);
+	वापस 0;
+पूर्ण
 
-static int wl1251_write_nvs_mac(struct wl1251 *wl)
-{
-	int i, ret;
+अटल पूर्णांक wl1251_ग_लिखो_nvs_mac(काष्ठा wl1251 *wl)
+अणु
+	पूर्णांक i, ret;
 
 	ret = wl1251_check_nvs_mac(wl);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* MAC is stored in reverse order */
-	for (i = 0; i < ETH_ALEN; i++)
+	क्रम (i = 0; i < ETH_ALEN; i++)
 		wl->nvs[NVS_OFF_MAC_DATA + i] = wl->mac_addr[ETH_ALEN - i - 1];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wl1251_register_hw(struct wl1251 *wl)
-{
-	int ret;
+अटल पूर्णांक wl1251_रेजिस्टर_hw(काष्ठा wl1251 *wl)
+अणु
+	पूर्णांक ret;
 
-	if (wl->mac80211_registered)
-		return 0;
+	अगर (wl->mac80211_रेजिस्टरed)
+		वापस 0;
 
 	SET_IEEE80211_PERM_ADDR(wl->hw, wl->mac_addr);
 
-	ret = ieee80211_register_hw(wl->hw);
-	if (ret < 0) {
+	ret = ieee80211_रेजिस्टर_hw(wl->hw);
+	अगर (ret < 0) अणु
 		wl1251_error("unable to register mac80211 hw: %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	wl->mac80211_registered = true;
+	wl->mac80211_रेजिस्टरed = true;
 
 	wl1251_notice("loaded");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int wl1251_init_ieee80211(struct wl1251 *wl)
-{
-	int ret;
+पूर्णांक wl1251_init_ieee80211(काष्ठा wl1251 *wl)
+अणु
+	पूर्णांक ret;
 
 	/* The tx descriptor buffer and the TKIP space */
-	wl->hw->extra_tx_headroom = sizeof(struct tx_double_buffer_desc)
+	wl->hw->extra_tx_headroom = माप(काष्ठा tx_द्विगुन_buffer_desc)
 		+ WL1251_TKIP_IV_SPACE;
 
 	/* unit us */
@@ -1517,44 +1518,44 @@ int wl1251_init_ieee80211(struct wl1251 *wl)
 	ieee80211_hw_set(wl->hw, SIGNAL_DBM);
 	ieee80211_hw_set(wl->hw, SUPPORTS_PS);
 
-	wl->hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
+	wl->hw->wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
 					 BIT(NL80211_IFTYPE_ADHOC);
 	wl->hw->wiphy->max_scan_ssids = 1;
 	wl->hw->wiphy->bands[NL80211_BAND_2GHZ] = &wl1251_band_2ghz;
 
 	wl->hw->queues = 4;
 
-	if (wl->nvs == NULL && !wl->use_eeprom) {
+	अगर (wl->nvs == शून्य && !wl->use_eeprom) अणु
 		ret = wl1251_fetch_nvs(wl);
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
-	if (wl->use_eeprom)
-		ret = wl1251_read_eeprom_mac(wl);
-	else
-		ret = wl1251_read_nvs_mac(wl);
+	अगर (wl->use_eeprom)
+		ret = wl1251_पढ़ो_eeprom_mac(wl);
+	अन्यथा
+		ret = wl1251_पढ़ो_nvs_mac(wl);
 
-	if (ret == 0 && !is_valid_ether_addr(wl->mac_addr))
+	अगर (ret == 0 && !is_valid_ether_addr(wl->mac_addr))
 		ret = -EINVAL;
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		/*
-		 * In case our MAC address is not correctly set,
-		 * we use a random but Nokia MAC.
+		 * In हाल our MAC address is not correctly set,
+		 * we use a अक्रमom but Nokia MAC.
 		 */
-		static const u8 nokia_oui[3] = {0x00, 0x1f, 0xdf};
-		memcpy(wl->mac_addr, nokia_oui, 3);
-		get_random_bytes(wl->mac_addr + 3, 3);
-		if (!wl->use_eeprom)
-			wl1251_write_nvs_mac(wl);
+		अटल स्थिर u8 nokia_oui[3] = अणु0x00, 0x1f, 0xdfपूर्ण;
+		स_नकल(wl->mac_addr, nokia_oui, 3);
+		get_अक्रमom_bytes(wl->mac_addr + 3, 3);
+		अगर (!wl->use_eeprom)
+			wl1251_ग_लिखो_nvs_mac(wl);
 		wl1251_warning("MAC address in eeprom or nvs data is not valid");
 		wl1251_warning("Setting random MAC address: %pM", wl->mac_addr);
-	}
+	पूर्ण
 
-	ret = wl1251_register_hw(wl);
-	if (ret)
-		goto out;
+	ret = wl1251_रेजिस्टर_hw(wl);
+	अगर (ret)
+		जाओ out;
 
 	wl1251_debugfs_init(wl);
 	wl1251_notice("initialized");
@@ -1562,24 +1563,24 @@ int wl1251_init_ieee80211(struct wl1251 *wl)
 	ret = 0;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(wl1251_init_ieee80211);
 
-struct ieee80211_hw *wl1251_alloc_hw(void)
-{
-	struct ieee80211_hw *hw;
-	struct wl1251 *wl;
-	int i;
+काष्ठा ieee80211_hw *wl1251_alloc_hw(व्योम)
+अणु
+	काष्ठा ieee80211_hw *hw;
+	काष्ठा wl1251 *wl;
+	पूर्णांक i;
 
-	hw = ieee80211_alloc_hw(sizeof(*wl), &wl1251_ops);
-	if (!hw) {
+	hw = ieee80211_alloc_hw(माप(*wl), &wl1251_ops);
+	अगर (!hw) अणु
 		wl1251_error("could not alloc ieee80211_hw");
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	wl = hw->priv;
-	memset(wl, 0, sizeof(*wl));
+	स_रखो(wl, 0, माप(*wl));
 
 	wl->hw = hw;
 
@@ -1593,8 +1594,8 @@ struct ieee80211_hw *wl1251_alloc_hw(void)
 	wl->joined = false;
 	wl->scanning = false;
 	wl->bss_type = MAX_BSS_TYPE;
-	wl->default_key = 0;
-	wl->listen_int = 1;
+	wl->शेष_key = 0;
+	wl->listen_पूर्णांक = 1;
 	wl->rx_counter = 0;
 	wl->rx_handled = 0;
 	wl->rx_current_buffer = 0;
@@ -1606,14 +1607,14 @@ struct ieee80211_hw *wl1251_alloc_hw(void)
 	wl->psm_requested = false;
 	wl->psm_entry_retry = 0;
 	wl->tx_queue_stopped = false;
-	wl->power_level = WL1251_DEFAULT_POWER_LEVEL;
+	wl->घातer_level = WL1251_DEFAULT_POWER_LEVEL;
 	wl->rssi_thold = 0;
-	wl->beacon_int = WL1251_DEFAULT_BEACON_INT;
+	wl->beacon_पूर्णांक = WL1251_DEFAULT_BEACON_INT;
 	wl->dtim_period = WL1251_DEFAULT_DTIM_PERIOD;
-	wl->vif = NULL;
+	wl->vअगर = शून्य;
 
-	for (i = 0; i < FW_TX_CMPLT_BLOCK_SIZE; i++)
-		wl->tx_frames[i] = NULL;
+	क्रम (i = 0; i < FW_TX_CMPLT_BLOCK_SIZE; i++)
+		wl->tx_frames[i] = शून्य;
 
 	wl->next_tx_complete = 0;
 
@@ -1627,38 +1628,38 @@ struct ieee80211_hw *wl1251_alloc_hw(void)
 	wl->tx_mgmt_frm_rate = DEFAULT_HW_GEN_TX_RATE;
 	wl->tx_mgmt_frm_mod = DEFAULT_HW_GEN_MODULATION_TYPE;
 
-	wl->rx_descriptor = kmalloc(sizeof(*wl->rx_descriptor), GFP_KERNEL);
-	if (!wl->rx_descriptor) {
+	wl->rx_descriptor = kदो_स्मृति(माप(*wl->rx_descriptor), GFP_KERNEL);
+	अगर (!wl->rx_descriptor) अणु
 		wl1251_error("could not allocate memory for rx descriptor");
-		ieee80211_free_hw(hw);
-		return ERR_PTR(-ENOMEM);
-	}
+		ieee80211_मुक्त_hw(hw);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 EXPORT_SYMBOL_GPL(wl1251_alloc_hw);
 
-int wl1251_free_hw(struct wl1251 *wl)
-{
-	ieee80211_unregister_hw(wl->hw);
+पूर्णांक wl1251_मुक्त_hw(काष्ठा wl1251 *wl)
+अणु
+	ieee80211_unरेजिस्टर_hw(wl->hw);
 
-	wl1251_debugfs_exit(wl);
+	wl1251_debugfs_निकास(wl);
 
-	kfree(wl->target_mem_map);
-	kfree(wl->data_path);
-	vfree(wl->fw);
-	wl->fw = NULL;
-	kfree(wl->nvs);
-	wl->nvs = NULL;
+	kमुक्त(wl->target_mem_map);
+	kमुक्त(wl->data_path);
+	vमुक्त(wl->fw);
+	wl->fw = शून्य;
+	kमुक्त(wl->nvs);
+	wl->nvs = शून्य;
 
-	kfree(wl->rx_descriptor);
-	wl->rx_descriptor = NULL;
+	kमुक्त(wl->rx_descriptor);
+	wl->rx_descriptor = शून्य;
 
-	ieee80211_free_hw(wl->hw);
+	ieee80211_मुक्त_hw(wl->hw);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(wl1251_free_hw);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(wl1251_मुक्त_hw);
 
 MODULE_DESCRIPTION("TI wl1251 Wireless LAN Driver Core");
 MODULE_LICENSE("GPL");

@@ -1,714 +1,715 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018-2020 Intel Corporation.
  * Copyright (C) 2020 Red Hat, Inc.
  *
- * Author: Tiwei Bie <tiwei.bie@intel.com>
+ * Author: Tiwei Bie <tiwei.bie@पूर्णांकel.com>
  *         Jason Wang <jasowang@redhat.com>
  *
- * Thanks Michael S. Tsirkin for the valuable comments and
- * suggestions.  And thanks to Cunming Liang and Zhihong Wang for all
+ * Thanks Michael S. Tsirkin क्रम the valuable comments and
+ * suggestions.  And thanks to Cunming Liang and Zhihong Wang क्रम all
  * their supports.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/cdev.h>
-#include <linux/device.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/iommu.h>
-#include <linux/uuid.h>
-#include <linux/vdpa.h>
-#include <linux/nospec.h>
-#include <linux/vhost.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/uuid.h>
+#समावेश <linux/vdpa.h>
+#समावेश <linux/nospec.h>
+#समावेश <linux/vhost.h>
 
-#include "vhost.h"
+#समावेश "vhost.h"
 
-enum {
+क्रमागत अणु
 	VHOST_VDPA_BACKEND_FEATURES =
 	(1ULL << VHOST_BACKEND_F_IOTLB_MSG_V2) |
 	(1ULL << VHOST_BACKEND_F_IOTLB_BATCH),
-};
+पूर्ण;
 
-#define VHOST_VDPA_DEV_MAX (1U << MINORBITS)
+#घोषणा VHOST_VDPA_DEV_MAX (1U << MINORBITS)
 
-struct vhost_vdpa {
-	struct vhost_dev vdev;
-	struct iommu_domain *domain;
-	struct vhost_virtqueue *vqs;
-	struct completion completion;
-	struct vdpa_device *vdpa;
-	struct device dev;
-	struct cdev cdev;
-	atomic_t opened;
-	int nvqs;
-	int virtio_id;
-	int minor;
-	struct eventfd_ctx *config_ctx;
-	int in_batch;
-	struct vdpa_iova_range range;
-};
+काष्ठा vhost_vdpa अणु
+	काष्ठा vhost_dev vdev;
+	काष्ठा iommu_करोमुख्य *करोमुख्य;
+	काष्ठा vhost_virtqueue *vqs;
+	काष्ठा completion completion;
+	काष्ठा vdpa_device *vdpa;
+	काष्ठा device dev;
+	काष्ठा cdev cdev;
+	atomic_t खोलोed;
+	पूर्णांक nvqs;
+	पूर्णांक virtio_id;
+	पूर्णांक minor;
+	काष्ठा eventfd_ctx *config_ctx;
+	पूर्णांक in_batch;
+	काष्ठा vdpa_iova_range range;
+पूर्ण;
 
-static DEFINE_IDA(vhost_vdpa_ida);
+अटल DEFINE_IDA(vhost_vdpa_ida);
 
-static dev_t vhost_vdpa_major;
+अटल dev_t vhost_vdpa_major;
 
-static void handle_vq_kick(struct vhost_work *work)
-{
-	struct vhost_virtqueue *vq = container_of(work, struct vhost_virtqueue,
+अटल व्योम handle_vq_kick(काष्ठा vhost_work *work)
+अणु
+	काष्ठा vhost_virtqueue *vq = container_of(work, काष्ठा vhost_virtqueue,
 						  poll.work);
-	struct vhost_vdpa *v = container_of(vq->dev, struct vhost_vdpa, vdev);
-	const struct vdpa_config_ops *ops = v->vdpa->config;
+	काष्ठा vhost_vdpa *v = container_of(vq->dev, काष्ठा vhost_vdpa, vdev);
+	स्थिर काष्ठा vdpa_config_ops *ops = v->vdpa->config;
 
 	ops->kick_vq(v->vdpa, vq - v->vqs);
-}
+पूर्ण
 
-static irqreturn_t vhost_vdpa_virtqueue_cb(void *private)
-{
-	struct vhost_virtqueue *vq = private;
-	struct eventfd_ctx *call_ctx = vq->call_ctx.ctx;
+अटल irqवापस_t vhost_vdpa_virtqueue_cb(व्योम *निजी)
+अणु
+	काष्ठा vhost_virtqueue *vq = निजी;
+	काष्ठा eventfd_ctx *call_ctx = vq->call_ctx.ctx;
 
-	if (call_ctx)
-		eventfd_signal(call_ctx, 1);
+	अगर (call_ctx)
+		eventfd_संकेत(call_ctx, 1);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t vhost_vdpa_config_cb(void *private)
-{
-	struct vhost_vdpa *v = private;
-	struct eventfd_ctx *config_ctx = v->config_ctx;
+अटल irqवापस_t vhost_vdpa_config_cb(व्योम *निजी)
+अणु
+	काष्ठा vhost_vdpa *v = निजी;
+	काष्ठा eventfd_ctx *config_ctx = v->config_ctx;
 
-	if (config_ctx)
-		eventfd_signal(config_ctx, 1);
+	अगर (config_ctx)
+		eventfd_संकेत(config_ctx, 1);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void vhost_vdpa_setup_vq_irq(struct vhost_vdpa *v, u16 qid)
-{
-	struct vhost_virtqueue *vq = &v->vqs[qid];
-	const struct vdpa_config_ops *ops = v->vdpa->config;
-	struct vdpa_device *vdpa = v->vdpa;
-	int ret, irq;
+अटल व्योम vhost_vdpa_setup_vq_irq(काष्ठा vhost_vdpa *v, u16 qid)
+अणु
+	काष्ठा vhost_virtqueue *vq = &v->vqs[qid];
+	स्थिर काष्ठा vdpa_config_ops *ops = v->vdpa->config;
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	पूर्णांक ret, irq;
 
-	if (!ops->get_vq_irq)
-		return;
+	अगर (!ops->get_vq_irq)
+		वापस;
 
 	irq = ops->get_vq_irq(vdpa, qid);
-	irq_bypass_unregister_producer(&vq->call_ctx.producer);
-	if (!vq->call_ctx.ctx || irq < 0)
-		return;
+	irq_bypass_unरेजिस्टर_producer(&vq->call_ctx.producer);
+	अगर (!vq->call_ctx.ctx || irq < 0)
+		वापस;
 
 	vq->call_ctx.producer.token = vq->call_ctx.ctx;
 	vq->call_ctx.producer.irq = irq;
-	ret = irq_bypass_register_producer(&vq->call_ctx.producer);
-	if (unlikely(ret))
+	ret = irq_bypass_रेजिस्टर_producer(&vq->call_ctx.producer);
+	अगर (unlikely(ret))
 		dev_info(&v->dev, "vq %u, irq bypass producer (token %p) registration fails, ret =  %d\n",
 			 qid, vq->call_ctx.producer.token, ret);
-}
+पूर्ण
 
-static void vhost_vdpa_unsetup_vq_irq(struct vhost_vdpa *v, u16 qid)
-{
-	struct vhost_virtqueue *vq = &v->vqs[qid];
+अटल व्योम vhost_vdpa_unsetup_vq_irq(काष्ठा vhost_vdpa *v, u16 qid)
+अणु
+	काष्ठा vhost_virtqueue *vq = &v->vqs[qid];
 
-	irq_bypass_unregister_producer(&vq->call_ctx.producer);
-}
+	irq_bypass_unरेजिस्टर_producer(&vq->call_ctx.producer);
+पूर्ण
 
-static void vhost_vdpa_reset(struct vhost_vdpa *v)
-{
-	struct vdpa_device *vdpa = v->vdpa;
+अटल व्योम vhost_vdpa_reset(काष्ठा vhost_vdpa *v)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
 
 	vdpa_reset(vdpa);
 	v->in_batch = 0;
-}
+पूर्ण
 
-static long vhost_vdpa_get_device_id(struct vhost_vdpa *v, u8 __user *argp)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल दीर्घ vhost_vdpa_get_device_id(काष्ठा vhost_vdpa *v, u8 __user *argp)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 	u32 device_id;
 
 	device_id = ops->get_device_id(vdpa);
 
-	if (copy_to_user(argp, &device_id, sizeof(device_id)))
-		return -EFAULT;
+	अगर (copy_to_user(argp, &device_id, माप(device_id)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vhost_vdpa_get_status(struct vhost_vdpa *v, u8 __user *statusp)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल दीर्घ vhost_vdpa_get_status(काष्ठा vhost_vdpa *v, u8 __user *statusp)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 	u8 status;
 
 	status = ops->get_status(vdpa);
 
-	if (copy_to_user(statusp, &status, sizeof(status)))
-		return -EFAULT;
+	अगर (copy_to_user(statusp, &status, माप(status)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vhost_vdpa_set_status(struct vhost_vdpa *v, u8 __user *statusp)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल दीर्घ vhost_vdpa_set_status(काष्ठा vhost_vdpa *v, u8 __user *statusp)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 	u8 status, status_old;
-	int nvqs = v->nvqs;
+	पूर्णांक nvqs = v->nvqs;
 	u16 i;
 
-	if (copy_from_user(&status, statusp, sizeof(status)))
-		return -EFAULT;
+	अगर (copy_from_user(&status, statusp, माप(status)))
+		वापस -EFAULT;
 
 	status_old = ops->get_status(vdpa);
 
 	/*
-	 * Userspace shouldn't remove status bits unless reset the
+	 * Userspace shouldn't हटाओ status bits unless reset the
 	 * status to 0.
 	 */
-	if (status != 0 && (ops->get_status(vdpa) & ~status) != 0)
-		return -EINVAL;
+	अगर (status != 0 && (ops->get_status(vdpa) & ~status) != 0)
+		वापस -EINVAL;
 
 	ops->set_status(vdpa, status);
 
-	if ((status & VIRTIO_CONFIG_S_DRIVER_OK) && !(status_old & VIRTIO_CONFIG_S_DRIVER_OK))
-		for (i = 0; i < nvqs; i++)
+	अगर ((status & VIRTIO_CONFIG_S_DRIVER_OK) && !(status_old & VIRTIO_CONFIG_S_DRIVER_OK))
+		क्रम (i = 0; i < nvqs; i++)
 			vhost_vdpa_setup_vq_irq(v, i);
 
-	if ((status_old & VIRTIO_CONFIG_S_DRIVER_OK) && !(status & VIRTIO_CONFIG_S_DRIVER_OK))
-		for (i = 0; i < nvqs; i++)
+	अगर ((status_old & VIRTIO_CONFIG_S_DRIVER_OK) && !(status & VIRTIO_CONFIG_S_DRIVER_OK))
+		क्रम (i = 0; i < nvqs; i++)
 			vhost_vdpa_unsetup_vq_irq(v, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vhost_vdpa_config_validate(struct vhost_vdpa *v,
-				      struct vhost_vdpa_config *c)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	long size = vdpa->config->get_config_size(vdpa);
+अटल पूर्णांक vhost_vdpa_config_validate(काष्ठा vhost_vdpa *v,
+				      काष्ठा vhost_vdpa_config *c)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	दीर्घ size = vdpa->config->get_config_size(vdpa);
 
-	if (c->len == 0)
-		return -EINVAL;
+	अगर (c->len == 0)
+		वापस -EINVAL;
 
-	if (c->len > size - c->off)
-		return -E2BIG;
+	अगर (c->len > size - c->off)
+		वापस -E2BIG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vhost_vdpa_get_config(struct vhost_vdpa *v,
-				  struct vhost_vdpa_config __user *c)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	struct vhost_vdpa_config config;
-	unsigned long size = offsetof(struct vhost_vdpa_config, buf);
+अटल दीर्घ vhost_vdpa_get_config(काष्ठा vhost_vdpa *v,
+				  काष्ठा vhost_vdpa_config __user *c)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	काष्ठा vhost_vdpa_config config;
+	अचिन्हित दीर्घ size = दुरत्व(काष्ठा vhost_vdpa_config, buf);
 	u8 *buf;
 
-	if (copy_from_user(&config, c, size))
-		return -EFAULT;
-	if (vhost_vdpa_config_validate(v, &config))
-		return -EINVAL;
+	अगर (copy_from_user(&config, c, size))
+		वापस -EFAULT;
+	अगर (vhost_vdpa_config_validate(v, &config))
+		वापस -EINVAL;
 	buf = kvzalloc(config.len, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	vdpa_get_config(vdpa, config.off, buf, config.len);
 
-	if (copy_to_user(c->buf, buf, config.len)) {
-		kvfree(buf);
-		return -EFAULT;
-	}
+	अगर (copy_to_user(c->buf, buf, config.len)) अणु
+		kvमुक्त(buf);
+		वापस -EFAULT;
+	पूर्ण
 
-	kvfree(buf);
-	return 0;
-}
+	kvमुक्त(buf);
+	वापस 0;
+पूर्ण
 
-static long vhost_vdpa_set_config(struct vhost_vdpa *v,
-				  struct vhost_vdpa_config __user *c)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct vhost_vdpa_config config;
-	unsigned long size = offsetof(struct vhost_vdpa_config, buf);
+अटल दीर्घ vhost_vdpa_set_config(काष्ठा vhost_vdpa *v,
+				  काष्ठा vhost_vdpa_config __user *c)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा vhost_vdpa_config config;
+	अचिन्हित दीर्घ size = दुरत्व(काष्ठा vhost_vdpa_config, buf);
 	u8 *buf;
 
-	if (copy_from_user(&config, c, size))
-		return -EFAULT;
-	if (vhost_vdpa_config_validate(v, &config))
-		return -EINVAL;
+	अगर (copy_from_user(&config, c, size))
+		वापस -EFAULT;
+	अगर (vhost_vdpa_config_validate(v, &config))
+		वापस -EINVAL;
 
 	buf = vmemdup_user(c->buf, config.len);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
 	ops->set_config(vdpa, config.off, buf, config.len);
 
-	kvfree(buf);
-	return 0;
-}
+	kvमुक्त(buf);
+	वापस 0;
+पूर्ण
 
-static long vhost_vdpa_get_features(struct vhost_vdpa *v, u64 __user *featurep)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल दीर्घ vhost_vdpa_get_features(काष्ठा vhost_vdpa *v, u64 __user *featurep)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 	u64 features;
 
 	features = ops->get_features(vdpa);
 
-	if (copy_to_user(featurep, &features, sizeof(features)))
-		return -EFAULT;
+	अगर (copy_to_user(featurep, &features, माप(features)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vhost_vdpa_set_features(struct vhost_vdpa *v, u64 __user *featurep)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल दीर्घ vhost_vdpa_set_features(काष्ठा vhost_vdpa *v, u64 __user *featurep)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 	u64 features;
 
 	/*
 	 * It's not allowed to change the features after they have
 	 * been negotiated.
 	 */
-	if (ops->get_status(vdpa) & VIRTIO_CONFIG_S_FEATURES_OK)
-		return -EBUSY;
+	अगर (ops->get_status(vdpa) & VIRTIO_CONFIG_S_FEATURES_OK)
+		वापस -EBUSY;
 
-	if (copy_from_user(&features, featurep, sizeof(features)))
-		return -EFAULT;
+	अगर (copy_from_user(&features, featurep, माप(features)))
+		वापस -EFAULT;
 
-	if (vdpa_set_features(vdpa, features))
-		return -EINVAL;
+	अगर (vdpa_set_features(vdpa, features))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vhost_vdpa_get_vring_num(struct vhost_vdpa *v, u16 __user *argp)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल दीर्घ vhost_vdpa_get_vring_num(काष्ठा vhost_vdpa *v, u16 __user *argp)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 	u16 num;
 
 	num = ops->get_vq_num_max(vdpa);
 
-	if (copy_to_user(argp, &num, sizeof(num)))
-		return -EFAULT;
+	अगर (copy_to_user(argp, &num, माप(num)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vhost_vdpa_config_put(struct vhost_vdpa *v)
-{
-	if (v->config_ctx) {
+अटल व्योम vhost_vdpa_config_put(काष्ठा vhost_vdpa *v)
+अणु
+	अगर (v->config_ctx) अणु
 		eventfd_ctx_put(v->config_ctx);
-		v->config_ctx = NULL;
-	}
-}
+		v->config_ctx = शून्य;
+	पूर्ण
+पूर्ण
 
-static long vhost_vdpa_set_config_call(struct vhost_vdpa *v, u32 __user *argp)
-{
-	struct vdpa_callback cb;
-	int fd;
-	struct eventfd_ctx *ctx;
+अटल दीर्घ vhost_vdpa_set_config_call(काष्ठा vhost_vdpa *v, u32 __user *argp)
+अणु
+	काष्ठा vdpa_callback cb;
+	पूर्णांक fd;
+	काष्ठा eventfd_ctx *ctx;
 
 	cb.callback = vhost_vdpa_config_cb;
-	cb.private = v->vdpa;
-	if (copy_from_user(&fd, argp, sizeof(fd)))
-		return  -EFAULT;
+	cb.निजी = v->vdpa;
+	अगर (copy_from_user(&fd, argp, माप(fd)))
+		वापस  -EFAULT;
 
-	ctx = fd == VHOST_FILE_UNBIND ? NULL : eventfd_ctx_fdget(fd);
+	ctx = fd == VHOST_खाता_UNBIND ? शून्य : eventfd_ctx_fdget(fd);
 	swap(ctx, v->config_ctx);
 
-	if (!IS_ERR_OR_NULL(ctx))
+	अगर (!IS_ERR_OR_शून्य(ctx))
 		eventfd_ctx_put(ctx);
 
-	if (IS_ERR(v->config_ctx)) {
-		long ret = PTR_ERR(v->config_ctx);
+	अगर (IS_ERR(v->config_ctx)) अणु
+		दीर्घ ret = PTR_ERR(v->config_ctx);
 
-		v->config_ctx = NULL;
-		return ret;
-	}
+		v->config_ctx = शून्य;
+		वापस ret;
+	पूर्ण
 
 	v->vdpa->config->set_config_cb(v->vdpa, &cb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vhost_vdpa_get_iova_range(struct vhost_vdpa *v, u32 __user *argp)
-{
-	struct vhost_vdpa_iova_range range = {
+अटल दीर्घ vhost_vdpa_get_iova_range(काष्ठा vhost_vdpa *v, u32 __user *argp)
+अणु
+	काष्ठा vhost_vdpa_iova_range range = अणु
 		.first = v->range.first,
 		.last = v->range.last,
-	};
+	पूर्ण;
 
-	if (copy_to_user(argp, &range, sizeof(range)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(argp, &range, माप(range)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static long vhost_vdpa_vring_ioctl(struct vhost_vdpa *v, unsigned int cmd,
-				   void __user *argp)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct vdpa_vq_state vq_state;
-	struct vdpa_callback cb;
-	struct vhost_virtqueue *vq;
-	struct vhost_vring_state s;
+अटल दीर्घ vhost_vdpa_vring_ioctl(काष्ठा vhost_vdpa *v, अचिन्हित पूर्णांक cmd,
+				   व्योम __user *argp)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा vdpa_vq_state vq_state;
+	काष्ठा vdpa_callback cb;
+	काष्ठा vhost_virtqueue *vq;
+	काष्ठा vhost_vring_state s;
 	u32 idx;
-	long r;
+	दीर्घ r;
 
 	r = get_user(idx, (u32 __user *)argp);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	if (idx >= v->nvqs)
-		return -ENOBUFS;
+	अगर (idx >= v->nvqs)
+		वापस -ENOBUFS;
 
 	idx = array_index_nospec(idx, v->nvqs);
 	vq = &v->vqs[idx];
 
-	switch (cmd) {
-	case VHOST_VDPA_SET_VRING_ENABLE:
-		if (copy_from_user(&s, argp, sizeof(s)))
-			return -EFAULT;
-		ops->set_vq_ready(vdpa, idx, s.num);
-		return 0;
-	case VHOST_GET_VRING_BASE:
+	चयन (cmd) अणु
+	हाल VHOST_VDPA_SET_VRING_ENABLE:
+		अगर (copy_from_user(&s, argp, माप(s)))
+			वापस -EFAULT;
+		ops->set_vq_पढ़ोy(vdpa, idx, s.num);
+		वापस 0;
+	हाल VHOST_GET_VRING_BASE:
 		r = ops->get_vq_state(v->vdpa, idx, &vq_state);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
 		vq->last_avail_idx = vq_state.avail_index;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	r = vhost_vring_ioctl(&v->vdev, cmd, argp);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	switch (cmd) {
-	case VHOST_SET_VRING_ADDR:
-		if (ops->set_vq_address(vdpa, idx,
-					(u64)(uintptr_t)vq->desc,
-					(u64)(uintptr_t)vq->avail,
-					(u64)(uintptr_t)vq->used))
+	चयन (cmd) अणु
+	हाल VHOST_SET_VRING_ADDR:
+		अगर (ops->set_vq_address(vdpa, idx,
+					(u64)(uपूर्णांकptr_t)vq->desc,
+					(u64)(uपूर्णांकptr_t)vq->avail,
+					(u64)(uपूर्णांकptr_t)vq->used))
 			r = -EINVAL;
-		break;
+		अवरोध;
 
-	case VHOST_SET_VRING_BASE:
+	हाल VHOST_SET_VRING_BASE:
 		vq_state.avail_index = vq->last_avail_idx;
-		if (ops->set_vq_state(vdpa, idx, &vq_state))
+		अगर (ops->set_vq_state(vdpa, idx, &vq_state))
 			r = -EINVAL;
-		break;
+		अवरोध;
 
-	case VHOST_SET_VRING_CALL:
-		if (vq->call_ctx.ctx) {
+	हाल VHOST_SET_VRING_CALL:
+		अगर (vq->call_ctx.ctx) अणु
 			cb.callback = vhost_vdpa_virtqueue_cb;
-			cb.private = vq;
-		} else {
-			cb.callback = NULL;
-			cb.private = NULL;
-		}
+			cb.निजी = vq;
+		पूर्ण अन्यथा अणु
+			cb.callback = शून्य;
+			cb.निजी = शून्य;
+		पूर्ण
 		ops->set_vq_cb(vdpa, idx, &cb);
 		vhost_vdpa_setup_vq_irq(v, idx);
-		break;
+		अवरोध;
 
-	case VHOST_SET_VRING_NUM:
+	हाल VHOST_SET_VRING_NUM:
 		ops->set_vq_num(vdpa, idx, vq->num);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static long vhost_vdpa_unlocked_ioctl(struct file *filep,
-				      unsigned int cmd, unsigned long arg)
-{
-	struct vhost_vdpa *v = filep->private_data;
-	struct vhost_dev *d = &v->vdev;
-	void __user *argp = (void __user *)arg;
+अटल दीर्घ vhost_vdpa_unlocked_ioctl(काष्ठा file *filep,
+				      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vhost_vdpa *v = filep->निजी_data;
+	काष्ठा vhost_dev *d = &v->vdev;
+	व्योम __user *argp = (व्योम __user *)arg;
 	u64 __user *featurep = argp;
 	u64 features;
-	long r = 0;
+	दीर्घ r = 0;
 
-	if (cmd == VHOST_SET_BACKEND_FEATURES) {
-		if (copy_from_user(&features, featurep, sizeof(features)))
-			return -EFAULT;
-		if (features & ~VHOST_VDPA_BACKEND_FEATURES)
-			return -EOPNOTSUPP;
+	अगर (cmd == VHOST_SET_BACKEND_FEATURES) अणु
+		अगर (copy_from_user(&features, featurep, माप(features)))
+			वापस -EFAULT;
+		अगर (features & ~VHOST_VDPA_BACKEND_FEATURES)
+			वापस -EOPNOTSUPP;
 		vhost_set_backend_features(&v->vdev, features);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	mutex_lock(&d->mutex);
 
-	switch (cmd) {
-	case VHOST_VDPA_GET_DEVICE_ID:
+	चयन (cmd) अणु
+	हाल VHOST_VDPA_GET_DEVICE_ID:
 		r = vhost_vdpa_get_device_id(v, argp);
-		break;
-	case VHOST_VDPA_GET_STATUS:
+		अवरोध;
+	हाल VHOST_VDPA_GET_STATUS:
 		r = vhost_vdpa_get_status(v, argp);
-		break;
-	case VHOST_VDPA_SET_STATUS:
+		अवरोध;
+	हाल VHOST_VDPA_SET_STATUS:
 		r = vhost_vdpa_set_status(v, argp);
-		break;
-	case VHOST_VDPA_GET_CONFIG:
+		अवरोध;
+	हाल VHOST_VDPA_GET_CONFIG:
 		r = vhost_vdpa_get_config(v, argp);
-		break;
-	case VHOST_VDPA_SET_CONFIG:
+		अवरोध;
+	हाल VHOST_VDPA_SET_CONFIG:
 		r = vhost_vdpa_set_config(v, argp);
-		break;
-	case VHOST_GET_FEATURES:
+		अवरोध;
+	हाल VHOST_GET_FEATURES:
 		r = vhost_vdpa_get_features(v, argp);
-		break;
-	case VHOST_SET_FEATURES:
+		अवरोध;
+	हाल VHOST_SET_FEATURES:
 		r = vhost_vdpa_set_features(v, argp);
-		break;
-	case VHOST_VDPA_GET_VRING_NUM:
+		अवरोध;
+	हाल VHOST_VDPA_GET_VRING_NUM:
 		r = vhost_vdpa_get_vring_num(v, argp);
-		break;
-	case VHOST_SET_LOG_BASE:
-	case VHOST_SET_LOG_FD:
+		अवरोध;
+	हाल VHOST_SET_LOG_BASE:
+	हाल VHOST_SET_LOG_FD:
 		r = -ENOIOCTLCMD;
-		break;
-	case VHOST_VDPA_SET_CONFIG_CALL:
+		अवरोध;
+	हाल VHOST_VDPA_SET_CONFIG_CALL:
 		r = vhost_vdpa_set_config_call(v, argp);
-		break;
-	case VHOST_GET_BACKEND_FEATURES:
+		अवरोध;
+	हाल VHOST_GET_BACKEND_FEATURES:
 		features = VHOST_VDPA_BACKEND_FEATURES;
-		if (copy_to_user(featurep, &features, sizeof(features)))
+		अगर (copy_to_user(featurep, &features, माप(features)))
 			r = -EFAULT;
-		break;
-	case VHOST_VDPA_GET_IOVA_RANGE:
+		अवरोध;
+	हाल VHOST_VDPA_GET_IOVA_RANGE:
 		r = vhost_vdpa_get_iova_range(v, argp);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		r = vhost_dev_ioctl(&v->vdev, cmd, argp);
-		if (r == -ENOIOCTLCMD)
+		अगर (r == -ENOIOCTLCMD)
 			r = vhost_vdpa_vring_ioctl(v, cmd, argp);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&d->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void vhost_vdpa_iotlb_unmap(struct vhost_vdpa *v, u64 start, u64 last)
-{
-	struct vhost_dev *dev = &v->vdev;
-	struct vhost_iotlb *iotlb = dev->iotlb;
-	struct vhost_iotlb_map *map;
-	struct page *page;
-	unsigned long pfn, pinned;
+अटल व्योम vhost_vdpa_iotlb_unmap(काष्ठा vhost_vdpa *v, u64 start, u64 last)
+अणु
+	काष्ठा vhost_dev *dev = &v->vdev;
+	काष्ठा vhost_iotlb *iotlb = dev->iotlb;
+	काष्ठा vhost_iotlb_map *map;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ pfn, pinned;
 
-	while ((map = vhost_iotlb_itree_first(iotlb, start, last)) != NULL) {
+	जबतक ((map = vhost_iotlb_itree_first(iotlb, start, last)) != शून्य) अणु
 		pinned = map->size >> PAGE_SHIFT;
-		for (pfn = map->addr >> PAGE_SHIFT;
-		     pinned > 0; pfn++, pinned--) {
+		क्रम (pfn = map->addr >> PAGE_SHIFT;
+		     pinned > 0; pfn++, pinned--) अणु
 			page = pfn_to_page(pfn);
-			if (map->perm & VHOST_ACCESS_WO)
+			अगर (map->perm & VHOST_ACCESS_WO)
 				set_page_dirty_lock(page);
 			unpin_user_page(page);
-		}
+		पूर्ण
 		atomic64_sub(map->size >> PAGE_SHIFT, &dev->mm->pinned_vm);
-		vhost_iotlb_map_free(iotlb, map);
-	}
-}
+		vhost_iotlb_map_मुक्त(iotlb, map);
+	पूर्ण
+पूर्ण
 
-static void vhost_vdpa_iotlb_free(struct vhost_vdpa *v)
-{
-	struct vhost_dev *dev = &v->vdev;
+अटल व्योम vhost_vdpa_iotlb_मुक्त(काष्ठा vhost_vdpa *v)
+अणु
+	काष्ठा vhost_dev *dev = &v->vdev;
 
 	vhost_vdpa_iotlb_unmap(v, 0ULL, 0ULL - 1);
-	kfree(dev->iotlb);
-	dev->iotlb = NULL;
-}
+	kमुक्त(dev->iotlb);
+	dev->iotlb = शून्य;
+पूर्ण
 
-static int perm_to_iommu_flags(u32 perm)
-{
-	int flags = 0;
+अटल पूर्णांक perm_to_iommu_flags(u32 perm)
+अणु
+	पूर्णांक flags = 0;
 
-	switch (perm) {
-	case VHOST_ACCESS_WO:
+	चयन (perm) अणु
+	हाल VHOST_ACCESS_WO:
 		flags |= IOMMU_WRITE;
-		break;
-	case VHOST_ACCESS_RO:
+		अवरोध;
+	हाल VHOST_ACCESS_RO:
 		flags |= IOMMU_READ;
-		break;
-	case VHOST_ACCESS_RW:
+		अवरोध;
+	हाल VHOST_ACCESS_RW:
 		flags |= (IOMMU_WRITE | IOMMU_READ);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "invalidate vhost IOTLB permission\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return flags | IOMMU_CACHE;
-}
+	वापस flags | IOMMU_CACHE;
+पूर्ण
 
-static int vhost_vdpa_map(struct vhost_vdpa *v,
+अटल पूर्णांक vhost_vdpa_map(काष्ठा vhost_vdpa *v,
 			  u64 iova, u64 size, u64 pa, u32 perm)
-{
-	struct vhost_dev *dev = &v->vdev;
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
-	int r = 0;
+अणु
+	काष्ठा vhost_dev *dev = &v->vdev;
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	पूर्णांक r = 0;
 
 	r = vhost_iotlb_add_range(dev->iotlb, iova, iova + size - 1,
 				  pa, perm);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (ops->dma_map) {
+	अगर (ops->dma_map) अणु
 		r = ops->dma_map(vdpa, iova, size, pa, perm);
-	} else if (ops->set_map) {
-		if (!v->in_batch)
+	पूर्ण अन्यथा अगर (ops->set_map) अणु
+		अगर (!v->in_batch)
 			r = ops->set_map(vdpa, dev->iotlb);
-	} else {
-		r = iommu_map(v->domain, iova, pa, size,
+	पूर्ण अन्यथा अणु
+		r = iommu_map(v->करोमुख्य, iova, pa, size,
 			      perm_to_iommu_flags(perm));
-	}
+	पूर्ण
 
-	if (r)
+	अगर (r)
 		vhost_iotlb_del_range(dev->iotlb, iova, iova + size - 1);
-	else
+	अन्यथा
 		atomic64_add(size >> PAGE_SHIFT, &dev->mm->pinned_vm);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void vhost_vdpa_unmap(struct vhost_vdpa *v, u64 iova, u64 size)
-{
-	struct vhost_dev *dev = &v->vdev;
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल व्योम vhost_vdpa_unmap(काष्ठा vhost_vdpa *v, u64 iova, u64 size)
+अणु
+	काष्ठा vhost_dev *dev = &v->vdev;
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 
 	vhost_vdpa_iotlb_unmap(v, iova, iova + size - 1);
 
-	if (ops->dma_map) {
+	अगर (ops->dma_map) अणु
 		ops->dma_unmap(vdpa, iova, size);
-	} else if (ops->set_map) {
-		if (!v->in_batch)
+	पूर्ण अन्यथा अगर (ops->set_map) अणु
+		अगर (!v->in_batch)
 			ops->set_map(vdpa, dev->iotlb);
-	} else {
-		iommu_unmap(v->domain, iova, size);
-	}
-}
+	पूर्ण अन्यथा अणु
+		iommu_unmap(v->करोमुख्य, iova, size);
+	पूर्ण
+पूर्ण
 
-static int vhost_vdpa_process_iotlb_update(struct vhost_vdpa *v,
-					   struct vhost_iotlb_msg *msg)
-{
-	struct vhost_dev *dev = &v->vdev;
-	struct vhost_iotlb *iotlb = dev->iotlb;
-	struct page **page_list;
-	unsigned long list_size = PAGE_SIZE / sizeof(struct page *);
-	unsigned int gup_flags = FOLL_LONGTERM;
-	unsigned long npages, cur_base, map_pfn, last_pfn = 0;
-	unsigned long lock_limit, sz2pin, nchunks, i;
+अटल पूर्णांक vhost_vdpa_process_iotlb_update(काष्ठा vhost_vdpa *v,
+					   काष्ठा vhost_iotlb_msg *msg)
+अणु
+	काष्ठा vhost_dev *dev = &v->vdev;
+	काष्ठा vhost_iotlb *iotlb = dev->iotlb;
+	काष्ठा page **page_list;
+	अचिन्हित दीर्घ list_size = PAGE_SIZE / माप(काष्ठा page *);
+	अचिन्हित पूर्णांक gup_flags = FOLL_LONGTERM;
+	अचिन्हित दीर्घ npages, cur_base, map_pfn, last_pfn = 0;
+	अचिन्हित दीर्घ lock_limit, sz2pin, nchunks, i;
 	u64 iova = msg->iova;
-	long pinned;
-	int ret = 0;
+	दीर्घ pinned;
+	पूर्णांक ret = 0;
 
-	if (msg->iova < v->range.first ||
+	अगर (msg->iova < v->range.first ||
 	    msg->iova + msg->size - 1 > v->range.last)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (vhost_iotlb_itree_first(iotlb, msg->iova,
+	अगर (vhost_iotlb_itree_first(iotlb, msg->iova,
 				    msg->iova + msg->size - 1))
-		return -EEXIST;
+		वापस -EEXIST;
 
-	/* Limit the use of memory for bookkeeping */
-	page_list = (struct page **) __get_free_page(GFP_KERNEL);
-	if (!page_list)
-		return -ENOMEM;
+	/* Limit the use of memory क्रम bookkeeping */
+	page_list = (काष्ठा page **) __get_मुक्त_page(GFP_KERNEL);
+	अगर (!page_list)
+		वापस -ENOMEM;
 
-	if (msg->perm & VHOST_ACCESS_WO)
+	अगर (msg->perm & VHOST_ACCESS_WO)
 		gup_flags |= FOLL_WRITE;
 
 	npages = PAGE_ALIGN(msg->size + (iova & ~PAGE_MASK)) >> PAGE_SHIFT;
-	if (!npages) {
+	अगर (!npages) अणु
 		ret = -EINVAL;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	mmap_read_lock(dev->mm);
+	mmap_पढ़ो_lock(dev->mm);
 
 	lock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
-	if (npages + atomic64_read(&dev->mm->pinned_vm) > lock_limit) {
+	अगर (npages + atomic64_पढ़ो(&dev->mm->pinned_vm) > lock_limit) अणु
 		ret = -ENOMEM;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	cur_base = msg->uaddr & PAGE_MASK;
 	iova &= PAGE_MASK;
 	nchunks = 0;
 
-	while (npages) {
-		sz2pin = min_t(unsigned long, npages, list_size);
+	जबतक (npages) अणु
+		sz2pin = min_t(अचिन्हित दीर्घ, npages, list_size);
 		pinned = pin_user_pages(cur_base, sz2pin,
-					gup_flags, page_list, NULL);
-		if (sz2pin != pinned) {
-			if (pinned < 0) {
+					gup_flags, page_list, शून्य);
+		अगर (sz2pin != pinned) अणु
+			अगर (pinned < 0) अणु
 				ret = pinned;
-			} else {
+			पूर्ण अन्यथा अणु
 				unpin_user_pages(page_list, pinned);
 				ret = -ENOMEM;
-			}
-			goto out;
-		}
+			पूर्ण
+			जाओ out;
+		पूर्ण
 		nchunks++;
 
-		if (!last_pfn)
+		अगर (!last_pfn)
 			map_pfn = page_to_pfn(page_list[0]);
 
-		for (i = 0; i < pinned; i++) {
-			unsigned long this_pfn = page_to_pfn(page_list[i]);
+		क्रम (i = 0; i < pinned; i++) अणु
+			अचिन्हित दीर्घ this_pfn = page_to_pfn(page_list[i]);
 			u64 csize;
 
-			if (last_pfn && (this_pfn != last_pfn + 1)) {
+			अगर (last_pfn && (this_pfn != last_pfn + 1)) अणु
 				/* Pin a contiguous chunk of memory */
 				csize = (last_pfn - map_pfn + 1) << PAGE_SHIFT;
 				ret = vhost_vdpa_map(v, iova, csize,
 						     map_pfn << PAGE_SHIFT,
 						     msg->perm);
-				if (ret) {
+				अगर (ret) अणु
 					/*
 					 * Unpin the pages that are left unmapped
-					 * from this point on in the current
-					 * page_list. The remaining outstanding
+					 * from this poपूर्णांक on in the current
+					 * page_list. The reमुख्यing outstanding
 					 * ones which may stride across several
 					 * chunks will be covered in the common
 					 * error path subsequently.
 					 */
 					unpin_user_pages(&page_list[i],
 							 pinned - i);
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
 				map_pfn = this_pfn;
 				iova += csize;
 				nchunks = 0;
-			}
+			पूर्ण
 
 			last_pfn = this_pfn;
-		}
+		पूर्ण
 
 		cur_base += pinned << PAGE_SHIFT;
 		npages -= pinned;
-	}
+	पूर्ण
 
 	/* Pin the rest chunk */
 	ret = vhost_vdpa_map(v, iova, (last_pfn - map_pfn + 1) << PAGE_SHIFT,
 			     map_pfn << PAGE_SHIFT, msg->perm);
 out:
-	if (ret) {
-		if (nchunks) {
-			unsigned long pfn;
+	अगर (ret) अणु
+		अगर (nchunks) अणु
+			अचिन्हित दीर्घ pfn;
 
 			/*
 			 * Unpin the outstanding pages which are yet to be
@@ -720,317 +721,317 @@ out:
 			 * vdpa_unmap().
 			 */
 			WARN_ON(!last_pfn);
-			for (pfn = map_pfn; pfn <= last_pfn; pfn++)
+			क्रम (pfn = map_pfn; pfn <= last_pfn; pfn++)
 				unpin_user_page(pfn_to_page(pfn));
-		}
+		पूर्ण
 		vhost_vdpa_unmap(v, msg->iova, msg->size);
-	}
+	पूर्ण
 unlock:
-	mmap_read_unlock(dev->mm);
-free:
-	free_page((unsigned long)page_list);
-	return ret;
-}
+	mmap_पढ़ो_unlock(dev->mm);
+मुक्त:
+	मुक्त_page((अचिन्हित दीर्घ)page_list);
+	वापस ret;
+पूर्ण
 
-static int vhost_vdpa_process_iotlb_msg(struct vhost_dev *dev,
-					struct vhost_iotlb_msg *msg)
-{
-	struct vhost_vdpa *v = container_of(dev, struct vhost_vdpa, vdev);
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
-	int r = 0;
+अटल पूर्णांक vhost_vdpa_process_iotlb_msg(काष्ठा vhost_dev *dev,
+					काष्ठा vhost_iotlb_msg *msg)
+अणु
+	काष्ठा vhost_vdpa *v = container_of(dev, काष्ठा vhost_vdpa, vdev);
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	पूर्णांक r = 0;
 
 	mutex_lock(&dev->mutex);
 
 	r = vhost_dev_check_owner(dev);
-	if (r)
-		goto unlock;
+	अगर (r)
+		जाओ unlock;
 
-	switch (msg->type) {
-	case VHOST_IOTLB_UPDATE:
+	चयन (msg->type) अणु
+	हाल VHOST_IOTLB_UPDATE:
 		r = vhost_vdpa_process_iotlb_update(v, msg);
-		break;
-	case VHOST_IOTLB_INVALIDATE:
+		अवरोध;
+	हाल VHOST_IOTLB_INVALIDATE:
 		vhost_vdpa_unmap(v, msg->iova, msg->size);
-		break;
-	case VHOST_IOTLB_BATCH_BEGIN:
+		अवरोध;
+	हाल VHOST_IOTLB_BATCH_BEGIN:
 		v->in_batch = true;
-		break;
-	case VHOST_IOTLB_BATCH_END:
-		if (v->in_batch && ops->set_map)
+		अवरोध;
+	हाल VHOST_IOTLB_BATCH_END:
+		अगर (v->in_batch && ops->set_map)
 			ops->set_map(vdpa, dev->iotlb);
 		v->in_batch = false;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		r = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 unlock:
 	mutex_unlock(&dev->mutex);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static ssize_t vhost_vdpa_chr_write_iter(struct kiocb *iocb,
-					 struct iov_iter *from)
-{
-	struct file *file = iocb->ki_filp;
-	struct vhost_vdpa *v = file->private_data;
-	struct vhost_dev *dev = &v->vdev;
+अटल sमाप_प्रकार vhost_vdpa_chr_ग_लिखो_iter(काष्ठा kiocb *iocb,
+					 काष्ठा iov_iter *from)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा vhost_vdpa *v = file->निजी_data;
+	काष्ठा vhost_dev *dev = &v->vdev;
 
-	return vhost_chr_write_iter(dev, from);
-}
+	वापस vhost_chr_ग_लिखो_iter(dev, from);
+पूर्ण
 
-static int vhost_vdpa_alloc_domain(struct vhost_vdpa *v)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct device *dma_dev = vdpa_get_dma_dev(vdpa);
-	struct bus_type *bus;
-	int ret;
+अटल पूर्णांक vhost_vdpa_alloc_करोमुख्य(काष्ठा vhost_vdpa *v)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा device *dma_dev = vdpa_get_dma_dev(vdpa);
+	काष्ठा bus_type *bus;
+	पूर्णांक ret;
 
-	/* Device want to do DMA by itself */
-	if (ops->set_map || ops->dma_map)
-		return 0;
+	/* Device want to करो DMA by itself */
+	अगर (ops->set_map || ops->dma_map)
+		वापस 0;
 
 	bus = dma_dev->bus;
-	if (!bus)
-		return -EFAULT;
+	अगर (!bus)
+		वापस -EFAULT;
 
-	if (!iommu_capable(bus, IOMMU_CAP_CACHE_COHERENCY))
-		return -ENOTSUPP;
+	अगर (!iommu_capable(bus, IOMMU_CAP_CACHE_COHERENCY))
+		वापस -ENOTSUPP;
 
-	v->domain = iommu_domain_alloc(bus);
-	if (!v->domain)
-		return -EIO;
+	v->करोमुख्य = iommu_करोमुख्य_alloc(bus);
+	अगर (!v->करोमुख्य)
+		वापस -EIO;
 
-	ret = iommu_attach_device(v->domain, dma_dev);
-	if (ret)
-		goto err_attach;
+	ret = iommu_attach_device(v->करोमुख्य, dma_dev);
+	अगर (ret)
+		जाओ err_attach;
 
-	return 0;
+	वापस 0;
 
 err_attach:
-	iommu_domain_free(v->domain);
-	return ret;
-}
+	iommu_करोमुख्य_मुक्त(v->करोमुख्य);
+	वापस ret;
+पूर्ण
 
-static void vhost_vdpa_free_domain(struct vhost_vdpa *v)
-{
-	struct vdpa_device *vdpa = v->vdpa;
-	struct device *dma_dev = vdpa_get_dma_dev(vdpa);
+अटल व्योम vhost_vdpa_मुक्त_करोमुख्य(काष्ठा vhost_vdpa *v)
+अणु
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	काष्ठा device *dma_dev = vdpa_get_dma_dev(vdpa);
 
-	if (v->domain) {
-		iommu_detach_device(v->domain, dma_dev);
-		iommu_domain_free(v->domain);
-	}
+	अगर (v->करोमुख्य) अणु
+		iommu_detach_device(v->करोमुख्य, dma_dev);
+		iommu_करोमुख्य_मुक्त(v->करोमुख्य);
+	पूर्ण
 
-	v->domain = NULL;
-}
+	v->करोमुख्य = शून्य;
+पूर्ण
 
-static void vhost_vdpa_set_iova_range(struct vhost_vdpa *v)
-{
-	struct vdpa_iova_range *range = &v->range;
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल व्योम vhost_vdpa_set_iova_range(काष्ठा vhost_vdpa *v)
+अणु
+	काष्ठा vdpa_iova_range *range = &v->range;
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 
-	if (ops->get_iova_range) {
+	अगर (ops->get_iova_range) अणु
 		*range = ops->get_iova_range(vdpa);
-	} else if (v->domain && v->domain->geometry.force_aperture) {
-		range->first = v->domain->geometry.aperture_start;
-		range->last = v->domain->geometry.aperture_end;
-	} else {
+	पूर्ण अन्यथा अगर (v->करोमुख्य && v->करोमुख्य->geometry.क्रमce_aperture) अणु
+		range->first = v->करोमुख्य->geometry.aperture_start;
+		range->last = v->करोमुख्य->geometry.aperture_end;
+	पूर्ण अन्यथा अणु
 		range->first = 0;
-		range->last = ULLONG_MAX;
-	}
-}
+		range->last = ULदीर्घ_उच्च;
+	पूर्ण
+पूर्ण
 
-static int vhost_vdpa_open(struct inode *inode, struct file *filep)
-{
-	struct vhost_vdpa *v;
-	struct vhost_dev *dev;
-	struct vhost_virtqueue **vqs;
-	int nvqs, i, r, opened;
+अटल पूर्णांक vhost_vdpa_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा vhost_vdpa *v;
+	काष्ठा vhost_dev *dev;
+	काष्ठा vhost_virtqueue **vqs;
+	पूर्णांक nvqs, i, r, खोलोed;
 
-	v = container_of(inode->i_cdev, struct vhost_vdpa, cdev);
+	v = container_of(inode->i_cdev, काष्ठा vhost_vdpa, cdev);
 
-	opened = atomic_cmpxchg(&v->opened, 0, 1);
-	if (opened)
-		return -EBUSY;
+	खोलोed = atomic_cmpxchg(&v->खोलोed, 0, 1);
+	अगर (खोलोed)
+		वापस -EBUSY;
 
 	nvqs = v->nvqs;
 	vhost_vdpa_reset(v);
 
-	vqs = kmalloc_array(nvqs, sizeof(*vqs), GFP_KERNEL);
-	if (!vqs) {
+	vqs = kदो_स्मृति_array(nvqs, माप(*vqs), GFP_KERNEL);
+	अगर (!vqs) अणु
 		r = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	dev = &v->vdev;
-	for (i = 0; i < nvqs; i++) {
+	क्रम (i = 0; i < nvqs; i++) अणु
 		vqs[i] = &v->vqs[i];
 		vqs[i]->handle_kick = handle_vq_kick;
-	}
+	पूर्ण
 	vhost_dev_init(dev, vqs, nvqs, 0, 0, 0, false,
 		       vhost_vdpa_process_iotlb_msg);
 
 	dev->iotlb = vhost_iotlb_alloc(0, 0);
-	if (!dev->iotlb) {
+	अगर (!dev->iotlb) अणु
 		r = -ENOMEM;
-		goto err_init_iotlb;
-	}
+		जाओ err_init_iotlb;
+	पूर्ण
 
-	r = vhost_vdpa_alloc_domain(v);
-	if (r)
-		goto err_init_iotlb;
+	r = vhost_vdpa_alloc_करोमुख्य(v);
+	अगर (r)
+		जाओ err_init_iotlb;
 
 	vhost_vdpa_set_iova_range(v);
 
-	filep->private_data = v;
+	filep->निजी_data = v;
 
-	return 0;
+	वापस 0;
 
 err_init_iotlb:
 	vhost_dev_cleanup(&v->vdev);
-	kfree(vqs);
+	kमुक्त(vqs);
 err:
-	atomic_dec(&v->opened);
-	return r;
-}
+	atomic_dec(&v->खोलोed);
+	वापस r;
+पूर्ण
 
-static void vhost_vdpa_clean_irq(struct vhost_vdpa *v)
-{
-	int i;
+अटल व्योम vhost_vdpa_clean_irq(काष्ठा vhost_vdpa *v)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < v->nvqs; i++)
+	क्रम (i = 0; i < v->nvqs; i++)
 		vhost_vdpa_unsetup_vq_irq(v, i);
-}
+पूर्ण
 
-static int vhost_vdpa_release(struct inode *inode, struct file *filep)
-{
-	struct vhost_vdpa *v = filep->private_data;
-	struct vhost_dev *d = &v->vdev;
+अटल पूर्णांक vhost_vdpa_release(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा vhost_vdpa *v = filep->निजी_data;
+	काष्ठा vhost_dev *d = &v->vdev;
 
 	mutex_lock(&d->mutex);
-	filep->private_data = NULL;
+	filep->निजी_data = शून्य;
 	vhost_vdpa_reset(v);
 	vhost_dev_stop(&v->vdev);
-	vhost_vdpa_iotlb_free(v);
-	vhost_vdpa_free_domain(v);
+	vhost_vdpa_iotlb_मुक्त(v);
+	vhost_vdpa_मुक्त_करोमुख्य(v);
 	vhost_vdpa_config_put(v);
 	vhost_vdpa_clean_irq(v);
 	vhost_dev_cleanup(&v->vdev);
-	kfree(v->vdev.vqs);
+	kमुक्त(v->vdev.vqs);
 	mutex_unlock(&d->mutex);
 
-	atomic_dec(&v->opened);
+	atomic_dec(&v->खोलोed);
 	complete(&v->completion);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_MMU
-static vm_fault_t vhost_vdpa_fault(struct vm_fault *vmf)
-{
-	struct vhost_vdpa *v = vmf->vma->vm_file->private_data;
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct vdpa_notification_area notify;
-	struct vm_area_struct *vma = vmf->vma;
+#अगर_घोषित CONFIG_MMU
+अटल vm_fault_t vhost_vdpa_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा vhost_vdpa *v = vmf->vma->vm_file->निजी_data;
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा vdpa_notअगरication_area notअगरy;
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
 	u16 index = vma->vm_pgoff;
 
-	notify = ops->get_vq_notification(vdpa, index);
+	notअगरy = ops->get_vq_notअगरication(vdpa, index);
 
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-	if (remap_pfn_range(vma, vmf->address & PAGE_MASK,
-			    notify.addr >> PAGE_SHIFT, PAGE_SIZE,
+	अगर (remap_pfn_range(vma, vmf->address & PAGE_MASK,
+			    notअगरy.addr >> PAGE_SHIFT, PAGE_SIZE,
 			    vma->vm_page_prot))
-		return VM_FAULT_SIGBUS;
+		वापस VM_FAULT_SIGBUS;
 
-	return VM_FAULT_NOPAGE;
-}
+	वापस VM_FAULT_NOPAGE;
+पूर्ण
 
-static const struct vm_operations_struct vhost_vdpa_vm_ops = {
+अटल स्थिर काष्ठा vm_operations_काष्ठा vhost_vdpa_vm_ops = अणु
 	.fault = vhost_vdpa_fault,
-};
+पूर्ण;
 
-static int vhost_vdpa_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	struct vhost_vdpa *v = vma->vm_file->private_data;
-	struct vdpa_device *vdpa = v->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct vdpa_notification_area notify;
-	unsigned long index = vma->vm_pgoff;
+अटल पूर्णांक vhost_vdpa_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा vhost_vdpa *v = vma->vm_file->निजी_data;
+	काष्ठा vdpa_device *vdpa = v->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा vdpa_notअगरication_area notअगरy;
+	अचिन्हित दीर्घ index = vma->vm_pgoff;
 
-	if (vma->vm_end - vma->vm_start != PAGE_SIZE)
-		return -EINVAL;
-	if ((vma->vm_flags & VM_SHARED) == 0)
-		return -EINVAL;
-	if (vma->vm_flags & VM_READ)
-		return -EINVAL;
-	if (index > 65535)
-		return -EINVAL;
-	if (!ops->get_vq_notification)
-		return -ENOTSUPP;
+	अगर (vma->vm_end - vma->vm_start != PAGE_SIZE)
+		वापस -EINVAL;
+	अगर ((vma->vm_flags & VM_SHARED) == 0)
+		वापस -EINVAL;
+	अगर (vma->vm_flags & VM_READ)
+		वापस -EINVAL;
+	अगर (index > 65535)
+		वापस -EINVAL;
+	अगर (!ops->get_vq_notअगरication)
+		वापस -ENOTSUPP;
 
 	/* To be safe and easily modelled by userspace, We only
-	 * support the doorbell which sits on the page boundary and
-	 * does not share the page with other registers.
+	 * support the करोorbell which sits on the page boundary and
+	 * करोes not share the page with other रेजिस्टरs.
 	 */
-	notify = ops->get_vq_notification(vdpa, index);
-	if (notify.addr & (PAGE_SIZE - 1))
-		return -EINVAL;
-	if (vma->vm_end - vma->vm_start != notify.size)
-		return -ENOTSUPP;
+	notअगरy = ops->get_vq_notअगरication(vdpa, index);
+	अगर (notअगरy.addr & (PAGE_SIZE - 1))
+		वापस -EINVAL;
+	अगर (vma->vm_end - vma->vm_start != notअगरy.size)
+		वापस -ENOTSUPP;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP | VM_DONTEXPAND | VM_DONTDUMP;
 	vma->vm_ops = &vhost_vdpa_vm_ops;
-	return 0;
-}
-#endif /* CONFIG_MMU */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MMU */
 
-static const struct file_operations vhost_vdpa_fops = {
+अटल स्थिर काष्ठा file_operations vhost_vdpa_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= vhost_vdpa_open,
+	.खोलो		= vhost_vdpa_खोलो,
 	.release	= vhost_vdpa_release,
-	.write_iter	= vhost_vdpa_chr_write_iter,
+	.ग_लिखो_iter	= vhost_vdpa_chr_ग_लिखो_iter,
 	.unlocked_ioctl	= vhost_vdpa_unlocked_ioctl,
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 	.mmap		= vhost_vdpa_mmap,
-#endif /* CONFIG_MMU */
+#पूर्ण_अगर /* CONFIG_MMU */
 	.compat_ioctl	= compat_ptr_ioctl,
-};
+पूर्ण;
 
-static void vhost_vdpa_release_dev(struct device *device)
-{
-	struct vhost_vdpa *v =
-	       container_of(device, struct vhost_vdpa, dev);
+अटल व्योम vhost_vdpa_release_dev(काष्ठा device *device)
+अणु
+	काष्ठा vhost_vdpa *v =
+	       container_of(device, काष्ठा vhost_vdpa, dev);
 
-	ida_simple_remove(&vhost_vdpa_ida, v->minor);
-	kfree(v->vqs);
-	kfree(v);
-}
+	ida_simple_हटाओ(&vhost_vdpa_ida, v->minor);
+	kमुक्त(v->vqs);
+	kमुक्त(v);
+पूर्ण
 
-static int vhost_vdpa_probe(struct vdpa_device *vdpa)
-{
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct vhost_vdpa *v;
-	int minor;
-	int r;
+अटल पूर्णांक vhost_vdpa_probe(काष्ठा vdpa_device *vdpa)
+अणु
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा vhost_vdpa *v;
+	पूर्णांक minor;
+	पूर्णांक r;
 
-	v = kzalloc(sizeof(*v), GFP_KERNEL | __GFP_RETRY_MAYFAIL);
-	if (!v)
-		return -ENOMEM;
+	v = kzalloc(माप(*v), GFP_KERNEL | __GFP_RETRY_MAYFAIL);
+	अगर (!v)
+		वापस -ENOMEM;
 
 	minor = ida_simple_get(&vhost_vdpa_ida, 0,
 			       VHOST_VDPA_DEV_MAX, GFP_KERNEL);
-	if (minor < 0) {
-		kfree(v);
-		return minor;
-	}
+	अगर (minor < 0) अणु
+		kमुक्त(v);
+		वापस minor;
+	पूर्ण
 
-	atomic_set(&v->opened, 0);
+	atomic_set(&v->खोलोed, 0);
 	v->minor = minor;
 	v->vdpa = vdpa;
 	v->nvqs = vdpa->nvqs;
@@ -1040,87 +1041,87 @@ static int vhost_vdpa_probe(struct vdpa_device *vdpa)
 	v->dev.release = vhost_vdpa_release_dev;
 	v->dev.parent = &vdpa->dev;
 	v->dev.devt = MKDEV(MAJOR(vhost_vdpa_major), minor);
-	v->vqs = kmalloc_array(v->nvqs, sizeof(struct vhost_virtqueue),
+	v->vqs = kदो_स्मृति_array(v->nvqs, माप(काष्ठा vhost_virtqueue),
 			       GFP_KERNEL);
-	if (!v->vqs) {
+	अगर (!v->vqs) अणु
 		r = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	r = dev_set_name(&v->dev, "vhost-vdpa-%u", minor);
-	if (r)
-		goto err;
+	अगर (r)
+		जाओ err;
 
 	cdev_init(&v->cdev, &vhost_vdpa_fops);
 	v->cdev.owner = THIS_MODULE;
 
 	r = cdev_device_add(&v->cdev, &v->dev);
-	if (r)
-		goto err;
+	अगर (r)
+		जाओ err;
 
 	init_completion(&v->completion);
 	vdpa_set_drvdata(vdpa, v);
 
-	return 0;
+	वापस 0;
 
 err:
 	put_device(&v->dev);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void vhost_vdpa_remove(struct vdpa_device *vdpa)
-{
-	struct vhost_vdpa *v = vdpa_get_drvdata(vdpa);
-	int opened;
+अटल व्योम vhost_vdpa_हटाओ(काष्ठा vdpa_device *vdpa)
+अणु
+	काष्ठा vhost_vdpa *v = vdpa_get_drvdata(vdpa);
+	पूर्णांक खोलोed;
 
 	cdev_device_del(&v->cdev, &v->dev);
 
-	do {
-		opened = atomic_cmpxchg(&v->opened, 0, 1);
-		if (!opened)
-			break;
-		wait_for_completion(&v->completion);
-	} while (1);
+	करो अणु
+		खोलोed = atomic_cmpxchg(&v->खोलोed, 0, 1);
+		अगर (!खोलोed)
+			अवरोध;
+		रुको_क्रम_completion(&v->completion);
+	पूर्ण जबतक (1);
 
 	put_device(&v->dev);
-}
+पूर्ण
 
-static struct vdpa_driver vhost_vdpa_driver = {
-	.driver = {
+अटल काष्ठा vdpa_driver vhost_vdpa_driver = अणु
+	.driver = अणु
 		.name	= "vhost_vdpa",
-	},
+	पूर्ण,
 	.probe	= vhost_vdpa_probe,
-	.remove	= vhost_vdpa_remove,
-};
+	.हटाओ	= vhost_vdpa_हटाओ,
+पूर्ण;
 
-static int __init vhost_vdpa_init(void)
-{
-	int r;
+अटल पूर्णांक __init vhost_vdpa_init(व्योम)
+अणु
+	पूर्णांक r;
 
 	r = alloc_chrdev_region(&vhost_vdpa_major, 0, VHOST_VDPA_DEV_MAX,
 				"vhost-vdpa");
-	if (r)
-		goto err_alloc_chrdev;
+	अगर (r)
+		जाओ err_alloc_chrdev;
 
-	r = vdpa_register_driver(&vhost_vdpa_driver);
-	if (r)
-		goto err_vdpa_register_driver;
+	r = vdpa_रेजिस्टर_driver(&vhost_vdpa_driver);
+	अगर (r)
+		जाओ err_vdpa_रेजिस्टर_driver;
 
-	return 0;
+	वापस 0;
 
-err_vdpa_register_driver:
-	unregister_chrdev_region(vhost_vdpa_major, VHOST_VDPA_DEV_MAX);
+err_vdpa_रेजिस्टर_driver:
+	unरेजिस्टर_chrdev_region(vhost_vdpa_major, VHOST_VDPA_DEV_MAX);
 err_alloc_chrdev:
-	return r;
-}
+	वापस r;
+पूर्ण
 module_init(vhost_vdpa_init);
 
-static void __exit vhost_vdpa_exit(void)
-{
-	vdpa_unregister_driver(&vhost_vdpa_driver);
-	unregister_chrdev_region(vhost_vdpa_major, VHOST_VDPA_DEV_MAX);
-}
-module_exit(vhost_vdpa_exit);
+अटल व्योम __निकास vhost_vdpa_निकास(व्योम)
+अणु
+	vdpa_unरेजिस्टर_driver(&vhost_vdpa_driver);
+	unरेजिस्टर_chrdev_region(vhost_vdpa_major, VHOST_VDPA_DEV_MAX);
+पूर्ण
+module_निकास(vhost_vdpa_निकास);
 
 MODULE_VERSION("0.0.1");
 MODULE_LICENSE("GPL v2");

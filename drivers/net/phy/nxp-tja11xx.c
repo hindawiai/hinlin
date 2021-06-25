@@ -1,732 +1,733 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* NXP TJA1100 BroadRReach PHY driver
  *
  * Copyright (C) 2018 Marek Vasut <marex@denx.de>
  */
-#include <linux/delay.h>
-#include <linux/ethtool.h>
-#include <linux/ethtool_netlink.h>
-#include <linux/kernel.h>
-#include <linux/mdio.h>
-#include <linux/mii.h>
-#include <linux/module.h>
-#include <linux/phy.h>
-#include <linux/hwmon.h>
-#include <linux/bitfield.h>
-#include <linux/of_mdio.h>
-#include <linux/of_irq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/ethtool_netlink.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mdपन.स>
+#समावेश <linux/mii.h>
+#समावेश <linux/module.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_irq.h>
 
-#define PHY_ID_MASK			0xfffffff0
-#define PHY_ID_TJA1100			0x0180dc40
-#define PHY_ID_TJA1101			0x0180dd00
-#define PHY_ID_TJA1102			0x0180dc80
+#घोषणा PHY_ID_MASK			0xfffffff0
+#घोषणा PHY_ID_TJA1100			0x0180dc40
+#घोषणा PHY_ID_TJA1101			0x0180dd00
+#घोषणा PHY_ID_TJA1102			0x0180dc80
 
-#define MII_ECTRL			17
-#define MII_ECTRL_LINK_CONTROL		BIT(15)
-#define MII_ECTRL_POWER_MODE_MASK	GENMASK(14, 11)
-#define MII_ECTRL_POWER_MODE_NO_CHANGE	(0x0 << 11)
-#define MII_ECTRL_POWER_MODE_NORMAL	(0x3 << 11)
-#define MII_ECTRL_POWER_MODE_STANDBY	(0xc << 11)
-#define MII_ECTRL_CABLE_TEST		BIT(5)
-#define MII_ECTRL_CONFIG_EN		BIT(2)
-#define MII_ECTRL_WAKE_REQUEST		BIT(0)
+#घोषणा MII_ECTRL			17
+#घोषणा MII_ECTRL_LINK_CONTROL		BIT(15)
+#घोषणा MII_ECTRL_POWER_MODE_MASK	GENMASK(14, 11)
+#घोषणा MII_ECTRL_POWER_MODE_NO_CHANGE	(0x0 << 11)
+#घोषणा MII_ECTRL_POWER_MODE_NORMAL	(0x3 << 11)
+#घोषणा MII_ECTRL_POWER_MODE_STANDBY	(0xc << 11)
+#घोषणा MII_ECTRL_CABLE_TEST		BIT(5)
+#घोषणा MII_ECTRL_CONFIG_EN		BIT(2)
+#घोषणा MII_ECTRL_WAKE_REQUEST		BIT(0)
 
-#define MII_CFG1			18
-#define MII_CFG1_MASTER_SLAVE		BIT(15)
-#define MII_CFG1_AUTO_OP		BIT(14)
-#define MII_CFG1_SLEEP_CONFIRM		BIT(6)
-#define MII_CFG1_LED_MODE_MASK		GENMASK(5, 4)
-#define MII_CFG1_LED_MODE_LINKUP	0
-#define MII_CFG1_LED_ENABLE		BIT(3)
+#घोषणा MII_CFG1			18
+#घोषणा MII_CFG1_MASTER_SLAVE		BIT(15)
+#घोषणा MII_CFG1_AUTO_OP		BIT(14)
+#घोषणा MII_CFG1_SLEEP_CONFIRM		BIT(6)
+#घोषणा MII_CFG1_LED_MODE_MASK		GENMASK(5, 4)
+#घोषणा MII_CFG1_LED_MODE_LINKUP	0
+#घोषणा MII_CFG1_LED_ENABLE		BIT(3)
 
-#define MII_CFG2			19
-#define MII_CFG2_SLEEP_REQUEST_TO	GENMASK(1, 0)
-#define MII_CFG2_SLEEP_REQUEST_TO_16MS	0x3
+#घोषणा MII_CFG2			19
+#घोषणा MII_CFG2_SLEEP_REQUEST_TO	GENMASK(1, 0)
+#घोषणा MII_CFG2_SLEEP_REQUEST_TO_16MS	0x3
 
-#define MII_INTSRC			21
-#define MII_INTSRC_LINK_FAIL		BIT(10)
-#define MII_INTSRC_LINK_UP		BIT(9)
-#define MII_INTSRC_MASK			(MII_INTSRC_LINK_FAIL | MII_INTSRC_LINK_UP)
-#define MII_INTSRC_TEMP_ERR		BIT(1)
-#define MII_INTSRC_UV_ERR		BIT(3)
+#घोषणा MII_INTSRC			21
+#घोषणा MII_INTSRC_LINK_FAIL		BIT(10)
+#घोषणा MII_INTSRC_LINK_UP		BIT(9)
+#घोषणा MII_INTSRC_MASK			(MII_INTSRC_LINK_FAIL | MII_INTSRC_LINK_UP)
+#घोषणा MII_INTSRC_TEMP_ERR		BIT(1)
+#घोषणा MII_INTSRC_UV_ERR		BIT(3)
 
-#define MII_INTEN			22
-#define MII_INTEN_LINK_FAIL		BIT(10)
-#define MII_INTEN_LINK_UP		BIT(9)
+#घोषणा MII_INTEN			22
+#घोषणा MII_INTEN_LINK_FAIL		BIT(10)
+#घोषणा MII_INTEN_LINK_UP		BIT(9)
 
-#define MII_COMMSTAT			23
-#define MII_COMMSTAT_LINK_UP		BIT(15)
-#define MII_COMMSTAT_SQI_STATE		GENMASK(7, 5)
-#define MII_COMMSTAT_SQI_MAX		7
+#घोषणा MII_COMMSTAT			23
+#घोषणा MII_COMMSTAT_LINK_UP		BIT(15)
+#घोषणा MII_COMMSTAT_SQI_STATE		GENMASK(7, 5)
+#घोषणा MII_COMMSTAT_SQI_MAX		7
 
-#define MII_GENSTAT			24
-#define MII_GENSTAT_PLL_LOCKED		BIT(14)
+#घोषणा MII_GENSTAT			24
+#घोषणा MII_GENSTAT_PLL_LOCKED		BIT(14)
 
-#define MII_EXTSTAT			25
-#define MII_EXTSTAT_SHORT_DETECT	BIT(8)
-#define MII_EXTSTAT_OPEN_DETECT		BIT(7)
-#define MII_EXTSTAT_POLARITY_DETECT	BIT(6)
+#घोषणा MII_EXTSTAT			25
+#घोषणा MII_EXTSTAT_SHORT_DETECT	BIT(8)
+#घोषणा MII_EXTSTAT_OPEN_DETECT		BIT(7)
+#घोषणा MII_EXTSTAT_POLARITY_DETECT	BIT(6)
 
-#define MII_COMMCFG			27
-#define MII_COMMCFG_AUTO_OP		BIT(15)
+#घोषणा MII_COMMCFG			27
+#घोषणा MII_COMMCFG_AUTO_OP		BIT(15)
 
-struct tja11xx_priv {
-	char		*hwmon_name;
-	struct device	*hwmon_dev;
-	struct phy_device *phydev;
-	struct work_struct phy_register_work;
-};
+काष्ठा tja11xx_priv अणु
+	अक्षर		*hwmon_name;
+	काष्ठा device	*hwmon_dev;
+	काष्ठा phy_device *phydev;
+	काष्ठा work_काष्ठा phy_रेजिस्टर_work;
+पूर्ण;
 
-struct tja11xx_phy_stats {
-	const char	*string;
+काष्ठा tja11xx_phy_stats अणु
+	स्थिर अक्षर	*string;
 	u8		reg;
 	u8		off;
 	u16		mask;
-};
+पूर्ण;
 
-static struct tja11xx_phy_stats tja11xx_hw_stats[] = {
-	{ "phy_symbol_error_count", 20, 0, GENMASK(15, 0) },
-	{ "phy_polarity_detect", 25, 6, BIT(6) },
-	{ "phy_open_detect", 25, 7, BIT(7) },
-	{ "phy_short_detect", 25, 8, BIT(8) },
-	{ "phy_rem_rcvr_count", 26, 0, GENMASK(7, 0) },
-	{ "phy_loc_rcvr_count", 26, 8, GENMASK(15, 8) },
-};
+अटल काष्ठा tja11xx_phy_stats tja11xx_hw_stats[] = अणु
+	अणु "phy_symbol_error_count", 20, 0, GENMASK(15, 0) पूर्ण,
+	अणु "phy_polarity_detect", 25, 6, BIT(6) पूर्ण,
+	अणु "phy_open_detect", 25, 7, BIT(7) पूर्ण,
+	अणु "phy_short_detect", 25, 8, BIT(8) पूर्ण,
+	अणु "phy_rem_rcvr_count", 26, 0, GENMASK(7, 0) पूर्ण,
+	अणु "phy_loc_rcvr_count", 26, 8, GENMASK(15, 8) पूर्ण,
+पूर्ण;
 
-static int tja11xx_check(struct phy_device *phydev, u8 reg, u16 mask, u16 set)
-{
-	int val;
+अटल पूर्णांक tja11xx_check(काष्ठा phy_device *phydev, u8 reg, u16 mask, u16 set)
+अणु
+	पूर्णांक val;
 
-	return phy_read_poll_timeout(phydev, reg, val, (val & mask) == set,
+	वापस phy_पढ़ो_poll_समयout(phydev, reg, val, (val & mask) == set,
 				     150, 30000, false);
-}
+पूर्ण
 
-static int phy_modify_check(struct phy_device *phydev, u8 reg,
+अटल पूर्णांक phy_modअगरy_check(काष्ठा phy_device *phydev, u8 reg,
 			    u16 mask, u16 set)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	ret = phy_modify(phydev, reg, mask, set);
-	if (ret)
-		return ret;
+	ret = phy_modअगरy(phydev, reg, mask, set);
+	अगर (ret)
+		वापस ret;
 
-	return tja11xx_check(phydev, reg, mask, set);
-}
+	वापस tja11xx_check(phydev, reg, mask, set);
+पूर्ण
 
-static int tja11xx_enable_reg_write(struct phy_device *phydev)
-{
-	return phy_set_bits(phydev, MII_ECTRL, MII_ECTRL_CONFIG_EN);
-}
+अटल पूर्णांक tja11xx_enable_reg_ग_लिखो(काष्ठा phy_device *phydev)
+अणु
+	वापस phy_set_bits(phydev, MII_ECTRL, MII_ECTRL_CONFIG_EN);
+पूर्ण
 
-static int tja11xx_enable_link_control(struct phy_device *phydev)
-{
-	return phy_set_bits(phydev, MII_ECTRL, MII_ECTRL_LINK_CONTROL);
-}
+अटल पूर्णांक tja11xx_enable_link_control(काष्ठा phy_device *phydev)
+अणु
+	वापस phy_set_bits(phydev, MII_ECTRL, MII_ECTRL_LINK_CONTROL);
+पूर्ण
 
-static int tja11xx_disable_link_control(struct phy_device *phydev)
-{
-	return phy_clear_bits(phydev, MII_ECTRL, MII_ECTRL_LINK_CONTROL);
-}
+अटल पूर्णांक tja11xx_disable_link_control(काष्ठा phy_device *phydev)
+अणु
+	वापस phy_clear_bits(phydev, MII_ECTRL, MII_ECTRL_LINK_CONTROL);
+पूर्ण
 
-static int tja11xx_wakeup(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक tja11xx_wakeup(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	ret = phy_read(phydev, MII_ECTRL);
-	if (ret < 0)
-		return ret;
+	ret = phy_पढ़ो(phydev, MII_ECTRL);
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (ret & MII_ECTRL_POWER_MODE_MASK) {
-	case MII_ECTRL_POWER_MODE_NO_CHANGE:
-		break;
-	case MII_ECTRL_POWER_MODE_NORMAL:
+	चयन (ret & MII_ECTRL_POWER_MODE_MASK) अणु
+	हाल MII_ECTRL_POWER_MODE_NO_CHANGE:
+		अवरोध;
+	हाल MII_ECTRL_POWER_MODE_NORMAL:
 		ret = phy_set_bits(phydev, MII_ECTRL, MII_ECTRL_WAKE_REQUEST);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = phy_clear_bits(phydev, MII_ECTRL, MII_ECTRL_WAKE_REQUEST);
-		if (ret)
-			return ret;
-		break;
-	case MII_ECTRL_POWER_MODE_STANDBY:
-		ret = phy_modify_check(phydev, MII_ECTRL,
+		अगर (ret)
+			वापस ret;
+		अवरोध;
+	हाल MII_ECTRL_POWER_MODE_STANDBY:
+		ret = phy_modअगरy_check(phydev, MII_ECTRL,
 				       MII_ECTRL_POWER_MODE_MASK,
 				       MII_ECTRL_POWER_MODE_STANDBY);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = phy_modify(phydev, MII_ECTRL, MII_ECTRL_POWER_MODE_MASK,
+		ret = phy_modअगरy(phydev, MII_ECTRL, MII_ECTRL_POWER_MODE_MASK,
 				 MII_ECTRL_POWER_MODE_NORMAL);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = phy_modify_check(phydev, MII_GENSTAT,
+		ret = phy_modअगरy_check(phydev, MII_GENSTAT,
 				       MII_GENSTAT_PLL_LOCKED,
 				       MII_GENSTAT_PLL_LOCKED);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		return tja11xx_enable_link_control(phydev);
-	default:
-		break;
-	}
+		वापस tja11xx_enable_link_control(phydev);
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tja11xx_soft_reset(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक tja11xx_soft_reset(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	ret = tja11xx_enable_reg_write(phydev);
-	if (ret)
-		return ret;
+	ret = tja11xx_enable_reg_ग_लिखो(phydev);
+	अगर (ret)
+		वापस ret;
 
-	return genphy_soft_reset(phydev);
-}
+	वापस genphy_soft_reset(phydev);
+पूर्ण
 
-static int tja11xx_config_aneg_cable_test(struct phy_device *phydev)
-{
+अटल पूर्णांक tja11xx_config_aneg_cable_test(काष्ठा phy_device *phydev)
+अणु
 	bool finished = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (phydev->link)
-		return 0;
+	अगर (phydev->link)
+		वापस 0;
 
-	if (!phydev->drv->cable_test_start ||
+	अगर (!phydev->drv->cable_test_start ||
 	    !phydev->drv->cable_test_get_status)
-		return 0;
+		वापस 0;
 
 	ret = ethnl_cable_test_alloc(phydev, ETHTOOL_MSG_CABLE_TEST_NTF);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = phydev->drv->cable_test_start(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* According to the documentation this test takes 100 usec */
+	/* According to the करोcumentation this test takes 100 usec */
 	usleep_range(100, 200);
 
 	ret = phydev->drv->cable_test_get_status(phydev, &finished);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (finished)
+	अगर (finished)
 		ethnl_cable_test_finished(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tja11xx_config_aneg(struct phy_device *phydev)
-{
-	int ret, changed = 0;
+अटल पूर्णांक tja11xx_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret, changed = 0;
 	u16 ctl = 0;
 
-	switch (phydev->master_slave_set) {
-	case MASTER_SLAVE_CFG_MASTER_FORCE:
+	चयन (phydev->master_slave_set) अणु
+	हाल MASTER_SLAVE_CFG_MASTER_FORCE:
 		ctl |= MII_CFG1_MASTER_SLAVE;
-		break;
-	case MASTER_SLAVE_CFG_SLAVE_FORCE:
-		break;
-	case MASTER_SLAVE_CFG_UNKNOWN:
-	case MASTER_SLAVE_CFG_UNSUPPORTED:
-		goto do_test;
-	default:
+		अवरोध;
+	हाल MASTER_SLAVE_CFG_SLAVE_FORCE:
+		अवरोध;
+	हाल MASTER_SLAVE_CFG_UNKNOWN:
+	हाल MASTER_SLAVE_CFG_UNSUPPORTED:
+		जाओ करो_test;
+	शेष:
 		phydev_warn(phydev, "Unsupported Master/Slave mode\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	changed = phy_modify_changed(phydev, MII_CFG1, MII_CFG1_MASTER_SLAVE, ctl);
-	if (changed < 0)
-		return changed;
+	changed = phy_modअगरy_changed(phydev, MII_CFG1, MII_CFG1_MASTER_SLAVE, ctl);
+	अगर (changed < 0)
+		वापस changed;
 
-do_test:
+करो_test:
 	ret = tja11xx_config_aneg_cable_test(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return __genphy_config_aneg(phydev, changed);
-}
+	वापस __genphy_config_aneg(phydev, changed);
+पूर्ण
 
-static int tja11xx_config_init(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक tja11xx_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	ret = tja11xx_enable_reg_write(phydev);
-	if (ret)
-		return ret;
+	ret = tja11xx_enable_reg_ग_लिखो(phydev);
+	अगर (ret)
+		वापस ret;
 
-	phydev->autoneg = AUTONEG_DISABLE;
+	phydev->स्वतःneg = AUTONEG_DISABLE;
 	phydev->speed = SPEED_100;
 	phydev->duplex = DUPLEX_FULL;
 
-	switch (phydev->phy_id & PHY_ID_MASK) {
-	case PHY_ID_TJA1100:
-		ret = phy_modify(phydev, MII_CFG1,
+	चयन (phydev->phy_id & PHY_ID_MASK) अणु
+	हाल PHY_ID_TJA1100:
+		ret = phy_modअगरy(phydev, MII_CFG1,
 				 MII_CFG1_AUTO_OP | MII_CFG1_LED_MODE_MASK |
 				 MII_CFG1_LED_ENABLE,
 				 MII_CFG1_AUTO_OP | MII_CFG1_LED_MODE_LINKUP |
 				 MII_CFG1_LED_ENABLE);
-		if (ret)
-			return ret;
-		break;
-	case PHY_ID_TJA1101:
-	case PHY_ID_TJA1102:
+		अगर (ret)
+			वापस ret;
+		अवरोध;
+	हाल PHY_ID_TJA1101:
+	हाल PHY_ID_TJA1102:
 		ret = phy_set_bits(phydev, MII_COMMCFG, MII_COMMCFG_AUTO_OP);
-		if (ret)
-			return ret;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अगर (ret)
+			वापस ret;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = phy_clear_bits(phydev, MII_CFG1, MII_CFG1_SLEEP_CONFIRM);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = phy_modify(phydev, MII_CFG2, MII_CFG2_SLEEP_REQUEST_TO,
+	ret = phy_modअगरy(phydev, MII_CFG2, MII_CFG2_SLEEP_REQUEST_TO,
 			 MII_CFG2_SLEEP_REQUEST_TO_16MS);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = tja11xx_wakeup(phydev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* ACK interrupts by reading the status register */
-	ret = phy_read(phydev, MII_INTSRC);
-	if (ret < 0)
-		return ret;
+	/* ACK पूर्णांकerrupts by पढ़ोing the status रेजिस्टर */
+	ret = phy_पढ़ो(phydev, MII_INTSRC);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tja11xx_read_status(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक tja11xx_पढ़ो_status(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
 	phydev->master_slave_get = MASTER_SLAVE_CFG_UNKNOWN;
 	phydev->master_slave_state = MASTER_SLAVE_STATE_UNSUPPORTED;
 
 	ret = genphy_update_link(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = phy_read(phydev, MII_CFG1);
-	if (ret < 0)
-		return ret;
+	ret = phy_पढ़ो(phydev, MII_CFG1);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret & MII_CFG1_MASTER_SLAVE)
+	अगर (ret & MII_CFG1_MASTER_SLAVE)
 		phydev->master_slave_get = MASTER_SLAVE_CFG_MASTER_FORCE;
-	else
+	अन्यथा
 		phydev->master_slave_get = MASTER_SLAVE_CFG_SLAVE_FORCE;
 
-	if (phydev->link) {
-		ret = phy_read(phydev, MII_COMMSTAT);
-		if (ret < 0)
-			return ret;
+	अगर (phydev->link) अणु
+		ret = phy_पढ़ो(phydev, MII_COMMSTAT);
+		अगर (ret < 0)
+			वापस ret;
 
-		if (!(ret & MII_COMMSTAT_LINK_UP))
+		अगर (!(ret & MII_COMMSTAT_LINK_UP))
 			phydev->link = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tja11xx_get_sqi(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक tja11xx_get_sqi(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	ret = phy_read(phydev, MII_COMMSTAT);
-	if (ret < 0)
-		return ret;
+	ret = phy_पढ़ो(phydev, MII_COMMSTAT);
+	अगर (ret < 0)
+		वापस ret;
 
-	return FIELD_GET(MII_COMMSTAT_SQI_STATE, ret);
-}
+	वापस FIELD_GET(MII_COMMSTAT_SQI_STATE, ret);
+पूर्ण
 
-static int tja11xx_get_sqi_max(struct phy_device *phydev)
-{
-	return MII_COMMSTAT_SQI_MAX;
-}
+अटल पूर्णांक tja11xx_get_sqi_max(काष्ठा phy_device *phydev)
+अणु
+	वापस MII_COMMSTAT_SQI_MAX;
+पूर्ण
 
-static int tja11xx_get_sset_count(struct phy_device *phydev)
-{
-	return ARRAY_SIZE(tja11xx_hw_stats);
-}
+अटल पूर्णांक tja11xx_get_sset_count(काष्ठा phy_device *phydev)
+अणु
+	वापस ARRAY_SIZE(tja11xx_hw_stats);
+पूर्ण
 
-static void tja11xx_get_strings(struct phy_device *phydev, u8 *data)
-{
-	int i;
+अटल व्योम tja11xx_get_strings(काष्ठा phy_device *phydev, u8 *data)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(tja11xx_hw_stats); i++) {
-		strncpy(data + i * ETH_GSTRING_LEN,
+	क्रम (i = 0; i < ARRAY_SIZE(tja11xx_hw_stats); i++) अणु
+		म_नकलन(data + i * ETH_GSTRING_LEN,
 			tja11xx_hw_stats[i].string, ETH_GSTRING_LEN);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void tja11xx_get_stats(struct phy_device *phydev,
-			      struct ethtool_stats *stats, u64 *data)
-{
-	int i, ret;
+अटल व्योम tja11xx_get_stats(काष्ठा phy_device *phydev,
+			      काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < ARRAY_SIZE(tja11xx_hw_stats); i++) {
-		ret = phy_read(phydev, tja11xx_hw_stats[i].reg);
-		if (ret < 0)
+	क्रम (i = 0; i < ARRAY_SIZE(tja11xx_hw_stats); i++) अणु
+		ret = phy_पढ़ो(phydev, tja11xx_hw_stats[i].reg);
+		अगर (ret < 0)
 			data[i] = U64_MAX;
-		else {
+		अन्यथा अणु
 			data[i] = ret & tja11xx_hw_stats[i].mask;
 			data[i] >>= tja11xx_hw_stats[i].off;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int tja11xx_hwmon_read(struct device *dev,
-			      enum hwmon_sensor_types type,
-			      u32 attr, int channel, long *value)
-{
-	struct phy_device *phydev = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक tja11xx_hwmon_पढ़ो(काष्ठा device *dev,
+			      क्रमागत hwmon_sensor_types type,
+			      u32 attr, पूर्णांक channel, दीर्घ *value)
+अणु
+	काष्ठा phy_device *phydev = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (type == hwmon_in && attr == hwmon_in_lcrit_alarm) {
-		ret = phy_read(phydev, MII_INTSRC);
-		if (ret < 0)
-			return ret;
+	अगर (type == hwmon_in && attr == hwmon_in_lcrit_alarm) अणु
+		ret = phy_पढ़ो(phydev, MII_INTSRC);
+		अगर (ret < 0)
+			वापस ret;
 
 		*value = !!(ret & MII_INTSRC_TEMP_ERR);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (type == hwmon_temp && attr == hwmon_temp_crit_alarm) {
-		ret = phy_read(phydev, MII_INTSRC);
-		if (ret < 0)
-			return ret;
+	अगर (type == hwmon_temp && attr == hwmon_temp_crit_alarm) अणु
+		ret = phy_पढ़ो(phydev, MII_INTSRC);
+		अगर (ret < 0)
+			वापस ret;
 
 		*value = !!(ret & MII_INTSRC_UV_ERR);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static umode_t tja11xx_hwmon_is_visible(const void *data,
-					enum hwmon_sensor_types type,
-					u32 attr, int channel)
-{
-	if (type == hwmon_in && attr == hwmon_in_lcrit_alarm)
-		return 0444;
+अटल umode_t tja11xx_hwmon_is_visible(स्थिर व्योम *data,
+					क्रमागत hwmon_sensor_types type,
+					u32 attr, पूर्णांक channel)
+अणु
+	अगर (type == hwmon_in && attr == hwmon_in_lcrit_alarm)
+		वापस 0444;
 
-	if (type == hwmon_temp && attr == hwmon_temp_crit_alarm)
-		return 0444;
+	अगर (type == hwmon_temp && attr == hwmon_temp_crit_alarm)
+		वापस 0444;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hwmon_channel_info *tja11xx_hwmon_info[] = {
+अटल स्थिर काष्ठा hwmon_channel_info *tja11xx_hwmon_info[] = अणु
 	HWMON_CHANNEL_INFO(in, HWMON_I_LCRIT_ALARM),
 	HWMON_CHANNEL_INFO(temp, HWMON_T_CRIT_ALARM),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct hwmon_ops tja11xx_hwmon_hwmon_ops = {
+अटल स्थिर काष्ठा hwmon_ops tja11xx_hwmon_hwmon_ops = अणु
 	.is_visible	= tja11xx_hwmon_is_visible,
-	.read		= tja11xx_hwmon_read,
-};
+	.पढ़ो		= tja11xx_hwmon_पढ़ो,
+पूर्ण;
 
-static const struct hwmon_chip_info tja11xx_hwmon_chip_info = {
+अटल स्थिर काष्ठा hwmon_chip_info tja11xx_hwmon_chip_info = अणु
 	.ops		= &tja11xx_hwmon_hwmon_ops,
 	.info		= tja11xx_hwmon_info,
-};
+पूर्ण;
 
-static int tja11xx_hwmon_register(struct phy_device *phydev,
-				  struct tja11xx_priv *priv)
-{
-	struct device *dev = &phydev->mdio.dev;
-	int i;
+अटल पूर्णांक tja11xx_hwmon_रेजिस्टर(काष्ठा phy_device *phydev,
+				  काष्ठा tja11xx_priv *priv)
+अणु
+	काष्ठा device *dev = &phydev->mdio.dev;
+	पूर्णांक i;
 
 	priv->hwmon_name = devm_kstrdup(dev, dev_name(dev), GFP_KERNEL);
-	if (!priv->hwmon_name)
-		return -ENOMEM;
+	अगर (!priv->hwmon_name)
+		वापस -ENOMEM;
 
-	for (i = 0; priv->hwmon_name[i]; i++)
-		if (hwmon_is_bad_char(priv->hwmon_name[i]))
+	क्रम (i = 0; priv->hwmon_name[i]; i++)
+		अगर (hwmon_is_bad_अक्षर(priv->hwmon_name[i]))
 			priv->hwmon_name[i] = '_';
 
 	priv->hwmon_dev =
-		devm_hwmon_device_register_with_info(dev, priv->hwmon_name,
+		devm_hwmon_device_रेजिस्टर_with_info(dev, priv->hwmon_name,
 						     phydev,
 						     &tja11xx_hwmon_chip_info,
-						     NULL);
+						     शून्य);
 
-	return PTR_ERR_OR_ZERO(priv->hwmon_dev);
-}
+	वापस PTR_ERR_OR_ZERO(priv->hwmon_dev);
+पूर्ण
 
-static int tja11xx_probe(struct phy_device *phydev)
-{
-	struct device *dev = &phydev->mdio.dev;
-	struct tja11xx_priv *priv;
+अटल पूर्णांक tja11xx_probe(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा device *dev = &phydev->mdio.dev;
+	काष्ठा tja11xx_priv *priv;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->phydev = phydev;
 
-	return tja11xx_hwmon_register(phydev, priv);
-}
+	वापस tja11xx_hwmon_रेजिस्टर(phydev, priv);
+पूर्ण
 
-static void tja1102_p1_register(struct work_struct *work)
-{
-	struct tja11xx_priv *priv = container_of(work, struct tja11xx_priv,
-						 phy_register_work);
-	struct phy_device *phydev_phy0 = priv->phydev;
-	struct mii_bus *bus = phydev_phy0->mdio.bus;
-	struct device *dev = &phydev_phy0->mdio.dev;
-	struct device_node *np = dev->of_node;
-	struct device_node *child;
-	int ret;
+अटल व्योम tja1102_p1_रेजिस्टर(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा tja11xx_priv *priv = container_of(work, काष्ठा tja11xx_priv,
+						 phy_रेजिस्टर_work);
+	काष्ठा phy_device *phydev_phy0 = priv->phydev;
+	काष्ठा mii_bus *bus = phydev_phy0->mdio.bus;
+	काष्ठा device *dev = &phydev_phy0->mdio.dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा device_node *child;
+	पूर्णांक ret;
 
-	for_each_available_child_of_node(np, child) {
-		struct phy_device *phy;
-		int addr;
+	क्रम_each_available_child_of_node(np, child) अणु
+		काष्ठा phy_device *phy;
+		पूर्णांक addr;
 
 		addr = of_mdio_parse_addr(dev, child);
-		if (addr < 0) {
+		अगर (addr < 0) अणु
 			dev_err(dev, "Can't parse addr\n");
-			continue;
-		} else if (addr != phydev_phy0->mdio.addr + 1) {
-			/* Currently we care only about double PHY chip TJA1102.
+			जारी;
+		पूर्ण अन्यथा अगर (addr != phydev_phy0->mdio.addr + 1) अणु
+			/* Currently we care only about द्विगुन PHY chip TJA1102.
 			 * If some day NXP will decide to bring chips with more
 			 * PHYs, this logic should be reworked.
 			 */
 			dev_err(dev, "Unexpected address. Should be: %i\n",
 				phydev_phy0->mdio.addr + 1);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (mdiobus_is_registered_device(bus, addr)) {
+		अगर (mdiobus_is_रेजिस्टरed_device(bus, addr)) अणु
 			dev_err(dev, "device is already registered\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Real PHY ID of Port 1 is 0 */
-		phy = phy_device_create(bus, addr, PHY_ID_TJA1102, false, NULL);
-		if (IS_ERR(phy)) {
+		phy = phy_device_create(bus, addr, PHY_ID_TJA1102, false, शून्य);
+		अगर (IS_ERR(phy)) अणु
 			dev_err(dev, "Can't create PHY device for Port 1: %i\n",
 				addr);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Overwrite parent device. phy_device_create() set parent to
-		 * the mii_bus->dev, which is not correct in case.
+		/* Overग_लिखो parent device. phy_device_create() set parent to
+		 * the mii_bus->dev, which is not correct in हाल.
 		 */
 		phy->mdio.dev.parent = dev;
 
-		ret = of_mdiobus_phy_device_register(bus, phy, child, addr);
-		if (ret) {
-			/* All resources needed for Port 1 should be already
-			 * available for Port 0. Both ports use the same
-			 * interrupt line, so -EPROBE_DEFER would make no sense
+		ret = of_mdiobus_phy_device_रेजिस्टर(bus, phy, child, addr);
+		अगर (ret) अणु
+			/* All resources needed क्रम Port 1 should be alपढ़ोy
+			 * available क्रम Port 0. Both ports use the same
+			 * पूर्णांकerrupt line, so -EPROBE_DEFER would make no sense
 			 * here.
 			 */
 			dev_err(dev, "Can't register Port 1. Unexpected error: %i\n",
 				ret);
-			phy_device_free(phy);
-		}
-	}
-}
+			phy_device_मुक्त(phy);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int tja1102_p0_probe(struct phy_device *phydev)
-{
-	struct device *dev = &phydev->mdio.dev;
-	struct tja11xx_priv *priv;
-	int ret;
+अटल पूर्णांक tja1102_p0_probe(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा device *dev = &phydev->mdio.dev;
+	काष्ठा tja11xx_priv *priv;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->phydev = phydev;
-	INIT_WORK(&priv->phy_register_work, tja1102_p1_register);
+	INIT_WORK(&priv->phy_रेजिस्टर_work, tja1102_p1_रेजिस्टर);
 
-	ret = tja11xx_hwmon_register(phydev, priv);
-	if (ret)
-		return ret;
+	ret = tja11xx_hwmon_रेजिस्टर(phydev, priv);
+	अगर (ret)
+		वापस ret;
 
-	schedule_work(&priv->phy_register_work);
+	schedule_work(&priv->phy_रेजिस्टर_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tja1102_match_phy_device(struct phy_device *phydev, bool port0)
-{
-	int ret;
+अटल पूर्णांक tja1102_match_phy_device(काष्ठा phy_device *phydev, bool port0)
+अणु
+	पूर्णांक ret;
 
-	if ((phydev->phy_id & PHY_ID_MASK) != PHY_ID_TJA1102)
-		return 0;
+	अगर ((phydev->phy_id & PHY_ID_MASK) != PHY_ID_TJA1102)
+		वापस 0;
 
-	ret = phy_read(phydev, MII_PHYSID2);
-	if (ret < 0)
-		return ret;
+	ret = phy_पढ़ो(phydev, MII_PHYSID2);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* TJA1102 Port 1 has phyid 0 and doesn't support temperature
+	/* TJA1102 Port 1 has phyid 0 and करोesn't support temperature
 	 * and undervoltage alarms.
 	 */
-	if (port0)
-		return ret ? 1 : 0;
+	अगर (port0)
+		वापस ret ? 1 : 0;
 
-	return !ret;
-}
+	वापस !ret;
+पूर्ण
 
-static int tja1102_p0_match_phy_device(struct phy_device *phydev)
-{
-	return tja1102_match_phy_device(phydev, true);
-}
+अटल पूर्णांक tja1102_p0_match_phy_device(काष्ठा phy_device *phydev)
+अणु
+	वापस tja1102_match_phy_device(phydev, true);
+पूर्ण
 
-static int tja1102_p1_match_phy_device(struct phy_device *phydev)
-{
-	return tja1102_match_phy_device(phydev, false);
-}
+अटल पूर्णांक tja1102_p1_match_phy_device(काष्ठा phy_device *phydev)
+अणु
+	वापस tja1102_match_phy_device(phydev, false);
+पूर्ण
 
-static int tja11xx_ack_interrupt(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक tja11xx_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	ret = phy_read(phydev, MII_INTSRC);
+	ret = phy_पढ़ो(phydev, MII_INTSRC);
 
-	return (ret < 0) ? ret : 0;
-}
+	वापस (ret < 0) ? ret : 0;
+पूर्ण
 
-static int tja11xx_config_intr(struct phy_device *phydev)
-{
-	int value = 0;
-	int err;
+अटल पूर्णांक tja11xx_config_पूर्णांकr(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक value = 0;
+	पूर्णांक err;
 
-	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
-		err = tja11xx_ack_interrupt(phydev);
-		if (err)
-			return err;
+	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
+		err = tja11xx_ack_पूर्णांकerrupt(phydev);
+		अगर (err)
+			वापस err;
 
 		value = MII_INTEN_LINK_FAIL | MII_INTEN_LINK_UP;
-		err = phy_write(phydev, MII_INTEN, value);
-	} else {
-		err = phy_write(phydev, MII_INTEN, value);
-		if (err)
-			return err;
+		err = phy_ग_लिखो(phydev, MII_INTEN, value);
+	पूर्ण अन्यथा अणु
+		err = phy_ग_लिखो(phydev, MII_INTEN, value);
+		अगर (err)
+			वापस err;
 
-		err = tja11xx_ack_interrupt(phydev);
-	}
+		err = tja11xx_ack_पूर्णांकerrupt(phydev);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static irqreturn_t tja11xx_handle_interrupt(struct phy_device *phydev)
-{
-	int irq_status;
+अटल irqवापस_t tja11xx_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक irq_status;
 
-	irq_status = phy_read(phydev, MII_INTSRC);
-	if (irq_status < 0) {
+	irq_status = phy_पढ़ो(phydev, MII_INTSRC);
+	अगर (irq_status < 0) अणु
 		phy_error(phydev);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (!(irq_status & MII_INTSRC_MASK))
-		return IRQ_NONE;
+	अगर (!(irq_status & MII_INTSRC_MASK))
+		वापस IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int tja11xx_cable_test_start(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक tja11xx_cable_test_start(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
 	ret = phy_clear_bits(phydev, MII_COMMCFG, MII_COMMCFG_AUTO_OP);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = tja11xx_wakeup(phydev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = tja11xx_disable_link_control(phydev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return phy_set_bits(phydev, MII_ECTRL, MII_ECTRL_CABLE_TEST);
-}
+	वापस phy_set_bits(phydev, MII_ECTRL, MII_ECTRL_CABLE_TEST);
+पूर्ण
 
 /*
  * | BI_DA+           | BI_DA-                 | Result
- * | open             | open                   | open
- * | + short to -     | - short to +           | short
- * | short to Vdd     | open                   | open
- * | open             | shot to Vdd            | open
- * | short to Vdd     | short to Vdd           | short
- * | shot to GND      | open                   | open
- * | open             | shot to GND            | open
- * | short to GND     | shot to GND            | short
- * | connected to active link partner (master) | shot and open
+ * | खोलो             | खोलो                   | खोलो
+ * | + लघु to -     | - लघु to +           | लघु
+ * | लघु to Vdd     | खोलो                   | खोलो
+ * | खोलो             | shot to Vdd            | खोलो
+ * | लघु to Vdd     | लघु to Vdd           | लघु
+ * | shot to GND      | खोलो                   | खोलो
+ * | खोलो             | shot to GND            | खोलो
+ * | लघु to GND     | shot to GND            | लघु
+ * | connected to active link partner (master) | shot and खोलो
  */
-static int tja11xx_cable_test_report_trans(u32 result)
-{
+अटल पूर्णांक tja11xx_cable_test_report_trans(u32 result)
+अणु
 	u32 mask = MII_EXTSTAT_SHORT_DETECT | MII_EXTSTAT_OPEN_DETECT;
 
-	if ((result & mask) == mask) {
+	अगर ((result & mask) == mask) अणु
 		/* connected to active link partner (master) */
-		return ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC;
-	} else if ((result & mask) == 0) {
-		return ETHTOOL_A_CABLE_RESULT_CODE_OK;
-	} else if (result & MII_EXTSTAT_SHORT_DETECT) {
-		return ETHTOOL_A_CABLE_RESULT_CODE_SAME_SHORT;
-	} else if (result & MII_EXTSTAT_OPEN_DETECT) {
-		return ETHTOOL_A_CABLE_RESULT_CODE_OPEN;
-	} else {
-		return ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC;
-	}
-}
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC;
+	पूर्ण अन्यथा अगर ((result & mask) == 0) अणु
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_OK;
+	पूर्ण अन्यथा अगर (result & MII_EXTSTAT_SHORT_DETECT) अणु
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_SAME_SHORT;
+	पूर्ण अन्यथा अगर (result & MII_EXTSTAT_OPEN_DETECT) अणु
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_OPEN;
+	पूर्ण अन्यथा अणु
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC;
+	पूर्ण
+पूर्ण
 
-static int tja11xx_cable_test_report(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक tja11xx_cable_test_report(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	ret = phy_read(phydev, MII_EXTSTAT);
-	if (ret < 0)
-		return ret;
+	ret = phy_पढ़ो(phydev, MII_EXTSTAT);
+	अगर (ret < 0)
+		वापस ret;
 
 	ethnl_cable_test_result(phydev, ETHTOOL_A_CABLE_PAIR_A,
 				tja11xx_cable_test_report_trans(ret));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tja11xx_cable_test_get_status(struct phy_device *phydev,
+अटल पूर्णांक tja11xx_cable_test_get_status(काष्ठा phy_device *phydev,
 					 bool *finished)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	*finished = false;
 
-	ret = phy_read(phydev, MII_ECTRL);
-	if (ret < 0)
-		return ret;
+	ret = phy_पढ़ो(phydev, MII_ECTRL);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!(ret & MII_ECTRL_CABLE_TEST)) {
+	अगर (!(ret & MII_ECTRL_CABLE_TEST)) अणु
 		*finished = true;
 
 		ret = phy_set_bits(phydev, MII_COMMCFG, MII_COMMCFG_AUTO_OP);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		return tja11xx_cable_test_report(phydev);
-	}
+		वापस tja11xx_cable_test_report(phydev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct phy_driver tja11xx_driver[] = {
-	{
+अटल काष्ठा phy_driver tja11xx_driver[] = अणु
+	अणु
 		PHY_ID_MATCH_MODEL(PHY_ID_TJA1100),
 		.name		= "NXP TJA1100",
 		.features       = PHY_BASIC_T1_FEATURES,
@@ -734,7 +735,7 @@ static struct phy_driver tja11xx_driver[] = {
 		.soft_reset	= tja11xx_soft_reset,
 		.config_aneg	= tja11xx_config_aneg,
 		.config_init	= tja11xx_config_init,
-		.read_status	= tja11xx_read_status,
+		.पढ़ो_status	= tja11xx_पढ़ो_status,
 		.get_sqi	= tja11xx_get_sqi,
 		.get_sqi_max	= tja11xx_get_sqi_max,
 		.suspend	= genphy_suspend,
@@ -744,7 +745,7 @@ static struct phy_driver tja11xx_driver[] = {
 		.get_sset_count = tja11xx_get_sset_count,
 		.get_strings	= tja11xx_get_strings,
 		.get_stats	= tja11xx_get_stats,
-	}, {
+	पूर्ण, अणु
 		PHY_ID_MATCH_MODEL(PHY_ID_TJA1101),
 		.name		= "NXP TJA1101",
 		.features       = PHY_BASIC_T1_FEATURES,
@@ -752,7 +753,7 @@ static struct phy_driver tja11xx_driver[] = {
 		.soft_reset	= tja11xx_soft_reset,
 		.config_aneg	= tja11xx_config_aneg,
 		.config_init	= tja11xx_config_init,
-		.read_status	= tja11xx_read_status,
+		.पढ़ो_status	= tja11xx_पढ़ो_status,
 		.get_sqi	= tja11xx_get_sqi,
 		.get_sqi_max	= tja11xx_get_sqi_max,
 		.suspend	= genphy_suspend,
@@ -762,7 +763,7 @@ static struct phy_driver tja11xx_driver[] = {
 		.get_sset_count = tja11xx_get_sset_count,
 		.get_strings	= tja11xx_get_strings,
 		.get_stats	= tja11xx_get_stats,
-	}, {
+	पूर्ण, अणु
 		.name		= "NXP TJA1102 Port 0",
 		.features       = PHY_BASIC_T1_FEATURES,
 		.flags          = PHY_POLL_CABLE_TEST,
@@ -770,7 +771,7 @@ static struct phy_driver tja11xx_driver[] = {
 		.soft_reset	= tja11xx_soft_reset,
 		.config_aneg	= tja11xx_config_aneg,
 		.config_init	= tja11xx_config_init,
-		.read_status	= tja11xx_read_status,
+		.पढ़ो_status	= tja11xx_पढ़ो_status,
 		.get_sqi	= tja11xx_get_sqi,
 		.get_sqi_max	= tja11xx_get_sqi_max,
 		.match_phy_device = tja1102_p0_match_phy_device,
@@ -781,19 +782,19 @@ static struct phy_driver tja11xx_driver[] = {
 		.get_sset_count = tja11xx_get_sset_count,
 		.get_strings	= tja11xx_get_strings,
 		.get_stats	= tja11xx_get_stats,
-		.config_intr	= tja11xx_config_intr,
-		.handle_interrupt = tja11xx_handle_interrupt,
+		.config_पूर्णांकr	= tja11xx_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = tja11xx_handle_पूर्णांकerrupt,
 		.cable_test_start = tja11xx_cable_test_start,
 		.cable_test_get_status = tja11xx_cable_test_get_status,
-	}, {
+	पूर्ण, अणु
 		.name		= "NXP TJA1102 Port 1",
 		.features       = PHY_BASIC_T1_FEATURES,
 		.flags          = PHY_POLL_CABLE_TEST,
-		/* currently no probe for Port 1 is need */
+		/* currently no probe क्रम Port 1 is need */
 		.soft_reset	= tja11xx_soft_reset,
 		.config_aneg	= tja11xx_config_aneg,
 		.config_init	= tja11xx_config_init,
-		.read_status	= tja11xx_read_status,
+		.पढ़ो_status	= tja11xx_पढ़ो_status,
 		.get_sqi	= tja11xx_get_sqi,
 		.get_sqi_max	= tja11xx_get_sqi_max,
 		.match_phy_device = tja1102_p1_match_phy_device,
@@ -804,21 +805,21 @@ static struct phy_driver tja11xx_driver[] = {
 		.get_sset_count = tja11xx_get_sset_count,
 		.get_strings	= tja11xx_get_strings,
 		.get_stats	= tja11xx_get_stats,
-		.config_intr	= tja11xx_config_intr,
-		.handle_interrupt = tja11xx_handle_interrupt,
+		.config_पूर्णांकr	= tja11xx_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = tja11xx_handle_पूर्णांकerrupt,
 		.cable_test_start = tja11xx_cable_test_start,
 		.cable_test_get_status = tja11xx_cable_test_get_status,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 module_phy_driver(tja11xx_driver);
 
-static struct mdio_device_id __maybe_unused tja11xx_tbl[] = {
-	{ PHY_ID_MATCH_MODEL(PHY_ID_TJA1100) },
-	{ PHY_ID_MATCH_MODEL(PHY_ID_TJA1101) },
-	{ PHY_ID_MATCH_MODEL(PHY_ID_TJA1102) },
-	{ }
-};
+अटल काष्ठा mdio_device_id __maybe_unused tja11xx_tbl[] = अणु
+	अणु PHY_ID_MATCH_MODEL(PHY_ID_TJA1100) पूर्ण,
+	अणु PHY_ID_MATCH_MODEL(PHY_ID_TJA1101) पूर्ण,
+	अणु PHY_ID_MATCH_MODEL(PHY_ID_TJA1102) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(mdio, tja11xx_tbl);
 

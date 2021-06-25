@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * driver/usb/gadget/fsl_qe_udc.c
  *
  * Copyright (c) 2006-2008 Freescale Semiconductor, Inc. All rights reserved.
  *
- * 	Xie Xiaobo <X.Xie@freescale.com>
- * 	Li Yang <leoli@freescale.com>
+ * 	Xie Xiaobo <X.Xie@मुक्तscale.com>
+ * 	Li Yang <leoli@मुक्तscale.com>
  * 	Based on bareboard code from Shlomi Gridish.
  *
  * Description:
@@ -14,83 +15,83 @@
  * MPC8360 Rev 1.1 may need QE mircocode update
  */
 
-#undef USB_TRACE
+#अघोषित USB_TRACE
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/ioport.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/moduleparam.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/dma-mapping.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb/otg.h>
-#include <soc/fsl/qe/qe.h>
-#include <asm/cpm.h>
-#include <asm/dma.h>
-#include <asm/reg.h>
-#include "fsl_qe_udc.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/otg.h>
+#समावेश <soc/fsl/qe/qe.h>
+#समावेश <यंत्र/cpm.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/reg.h>
+#समावेश "fsl_qe_udc.h"
 
-#define DRIVER_DESC     "Freescale QE/CPM USB Device Controller driver"
-#define DRIVER_AUTHOR   "Xie XiaoBo"
-#define DRIVER_VERSION  "1.0"
+#घोषणा DRIVER_DESC     "Freescale QE/CPM USB Device Controller driver"
+#घोषणा DRIVER_AUTHOR   "Xie XiaoBo"
+#घोषणा DRIVER_VERSION  "1.0"
 
-#define DMA_ADDR_INVALID        (~(dma_addr_t)0)
+#घोषणा DMA_ADDR_INVALID        (~(dma_addr_t)0)
 
-static const char driver_name[] = "fsl_qe_udc";
-static const char driver_desc[] = DRIVER_DESC;
+अटल स्थिर अक्षर driver_name[] = "fsl_qe_udc";
+अटल स्थिर अक्षर driver_desc[] = DRIVER_DESC;
 
 /*ep name is important in gadget, it should obey the convention of ep_match()*/
-static const char *const ep_name[] = {
+अटल स्थिर अक्षर *स्थिर ep_name[] = अणु
 	"ep0-control", /* everyone has ep0 */
-	/* 3 configurable endpoints */
+	/* 3 configurable endpoपूर्णांकs */
 	"ep1",
 	"ep2",
 	"ep3",
-};
+पूर्ण;
 
-static const struct usb_endpoint_descriptor qe_ep0_desc = {
+अटल स्थिर काष्ठा usb_endpoपूर्णांक_descriptor qe_ep0_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	0,
+	.bEndpoपूर्णांकAddress =	0,
 	.bmAttributes =		USB_ENDPOINT_XFER_CONTROL,
 	.wMaxPacketSize =	USB_MAX_CTRL_PAYLOAD,
-};
+पूर्ण;
 
 /********************************************************************
  *      Internal Used Function Start
 ********************************************************************/
 /*-----------------------------------------------------------------
- * done() - retire a request; caller blocked irqs
+ * करोne() - retire a request; caller blocked irqs
  *--------------------------------------------------------------*/
-static void done(struct qe_ep *ep, struct qe_req *req, int status)
-{
-	struct qe_udc *udc = ep->udc;
-	unsigned char stopped = ep->stopped;
+अटल व्योम करोne(काष्ठा qe_ep *ep, काष्ठा qe_req *req, पूर्णांक status)
+अणु
+	काष्ठा qe_udc *udc = ep->udc;
+	अचिन्हित अक्षर stopped = ep->stopped;
 
-	/* the req->queue pointer is used by ep_queue() func, in which
-	 * the request will be added into a udc_ep->queue 'd tail
+	/* the req->queue poपूर्णांकer is used by ep_queue() func, in which
+	 * the request will be added पूर्णांकo a udc_ep->queue 'd tail
 	 * so here the req will be dropped from the ep->queue
 	 */
 	list_del_init(&req->queue);
 
 	/* req.status should be set as -EINPROGRESS in ep_queue() */
-	if (req->req.status == -EINPROGRESS)
+	अगर (req->req.status == -EINPROGRESS)
 		req->req.status = status;
-	else
+	अन्यथा
 		status = req->req.status;
 
-	if (req->mapped) {
+	अगर (req->mapped) अणु
 		dma_unmap_single(udc->gadget.dev.parent,
 			req->req.dma, req->req.length,
 			ep_is_in(ep)
@@ -98,19 +99,19 @@ static void done(struct qe_ep *ep, struct qe_req *req, int status)
 				: DMA_FROM_DEVICE);
 		req->req.dma = DMA_ADDR_INVALID;
 		req->mapped = 0;
-	} else
-		dma_sync_single_for_cpu(udc->gadget.dev.parent,
+	पूर्ण अन्यथा
+		dma_sync_single_क्रम_cpu(udc->gadget.dev.parent,
 			req->req.dma, req->req.length,
 			ep_is_in(ep)
 				? DMA_TO_DEVICE
 				: DMA_FROM_DEVICE);
 
-	if (status && (status != -ESHUTDOWN))
+	अगर (status && (status != -ESHUTDOWN))
 		dev_vdbg(udc->dev, "complete %s req %p stat %d len %u/%u\n",
 			ep->ep.name, &req->req, status,
 			req->req.actual, req->req.length);
 
-	/* don't modify queue heads during completion callback */
+	/* करोn't modअगरy queue heads during completion callback */
 	ep->stopped = 1;
 	spin_unlock(&udc->lock);
 
@@ -119,98 +120,98 @@ static void done(struct qe_ep *ep, struct qe_req *req, int status)
 	spin_lock(&udc->lock);
 
 	ep->stopped = stopped;
-}
+पूर्ण
 
 /*-----------------------------------------------------------------
  * nuke(): delete all requests related to this ep
  *--------------------------------------------------------------*/
-static void nuke(struct qe_ep *ep, int status)
-{
+अटल व्योम nuke(काष्ठा qe_ep *ep, पूर्णांक status)
+अणु
 	/* Whether this eq has request linked */
-	while (!list_empty(&ep->queue)) {
-		struct qe_req *req = NULL;
-		req = list_entry(ep->queue.next, struct qe_req, queue);
+	जबतक (!list_empty(&ep->queue)) अणु
+		काष्ठा qe_req *req = शून्य;
+		req = list_entry(ep->queue.next, काष्ठा qe_req, queue);
 
-		done(ep, req, status);
-	}
-}
+		करोne(ep, req, status);
+	पूर्ण
+पूर्ण
 
 /*---------------------------------------------------------------------------*
- * USB and Endpoint manipulate process, include parameter and register       *
+ * USB and Endpoपूर्णांक manipulate process, include parameter and रेजिस्टर       *
  *---------------------------------------------------------------------------*/
 /* @value: 1--set stall 0--clean stall */
-static int qe_eprx_stall_change(struct qe_ep *ep, int value)
-{
+अटल पूर्णांक qe_eprx_stall_change(काष्ठा qe_ep *ep, पूर्णांक value)
+अणु
 	u16 tem_usep;
 	u8 epnum = ep->epnum;
-	struct qe_udc *udc = ep->udc;
+	काष्ठा qe_udc *udc = ep->udc;
 
 	tem_usep = in_be16(&udc->usb_regs->usb_usep[epnum]);
 	tem_usep = tem_usep & ~USB_RHS_MASK;
-	if (value == 1)
+	अगर (value == 1)
 		tem_usep |= USB_RHS_STALL;
-	else if (ep->dir == USB_DIR_IN)
+	अन्यथा अगर (ep->dir == USB_सूची_IN)
 		tem_usep |= USB_RHS_IGNORE_OUT;
 
 	out_be16(&udc->usb_regs->usb_usep[epnum], tem_usep);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_eptx_stall_change(struct qe_ep *ep, int value)
-{
+अटल पूर्णांक qe_eptx_stall_change(काष्ठा qe_ep *ep, पूर्णांक value)
+अणु
 	u16 tem_usep;
 	u8 epnum = ep->epnum;
-	struct qe_udc *udc = ep->udc;
+	काष्ठा qe_udc *udc = ep->udc;
 
 	tem_usep = in_be16(&udc->usb_regs->usb_usep[epnum]);
 	tem_usep = tem_usep & ~USB_THS_MASK;
-	if (value == 1)
+	अगर (value == 1)
 		tem_usep |= USB_THS_STALL;
-	else if (ep->dir == USB_DIR_OUT)
+	अन्यथा अगर (ep->dir == USB_सूची_OUT)
 		tem_usep |= USB_THS_IGNORE_IN;
 
 	out_be16(&udc->usb_regs->usb_usep[epnum], tem_usep);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep0_stall(struct qe_udc *udc)
-{
+अटल पूर्णांक qe_ep0_stall(काष्ठा qe_udc *udc)
+अणु
 	qe_eptx_stall_change(&udc->eps[0], 1);
 	qe_eprx_stall_change(&udc->eps[0], 1);
 	udc->ep0_state = WAIT_FOR_SETUP;
 	udc->ep0_dir = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_eprx_nack(struct qe_ep *ep)
-{
+अटल पूर्णांक qe_eprx_nack(काष्ठा qe_ep *ep)
+अणु
 	u8 epnum = ep->epnum;
-	struct qe_udc *udc = ep->udc;
+	काष्ठा qe_udc *udc = ep->udc;
 
-	if (ep->state == EP_STATE_IDLE) {
+	अगर (ep->state == EP_STATE_IDLE) अणु
 		/* Set the ep's nack */
 		clrsetbits_be16(&udc->usb_regs->usb_usep[epnum],
 				USB_RHS_MASK, USB_RHS_NACK);
 
-		/* Mask Rx and Busy interrupts */
+		/* Mask Rx and Busy पूर्णांकerrupts */
 		clrbits16(&udc->usb_regs->usb_usbmr,
 				(USB_E_RXB_MASK | USB_E_BSY_MASK));
 
 		ep->state = EP_STATE_NACK;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int qe_eprx_normal(struct qe_ep *ep)
-{
-	struct qe_udc *udc = ep->udc;
+अटल पूर्णांक qe_eprx_normal(काष्ठा qe_ep *ep)
+अणु
+	काष्ठा qe_udc *udc = ep->udc;
 
-	if (ep->state == EP_STATE_NACK) {
+	अगर (ep->state == EP_STATE_NACK) अणु
 		clrsetbits_be16(&udc->usb_regs->usb_usep[ep->epnum],
 				USB_RTHS_MASK, USB_THS_IGNORE_IN);
 
-		/* Unmask RX interrupts */
+		/* Unmask RX पूर्णांकerrupts */
 		out_be16(&udc->usb_regs->usb_usber,
 				USB_E_BSY_MASK | USB_E_RXB_MASK);
 		setbits16(&udc->usb_regs->usb_usbmr,
@@ -218,41 +219,41 @@ static int qe_eprx_normal(struct qe_ep *ep)
 
 		ep->state = EP_STATE_IDLE;
 		ep->has_data = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_cmd_stoptx(struct qe_ep *ep)
-{
-	if (ep->udc->soc_type == PORT_CPM)
+अटल पूर्णांक qe_ep_cmd_stoptx(काष्ठा qe_ep *ep)
+अणु
+	अगर (ep->udc->soc_type == PORT_CPM)
 		cpm_command(CPM_USB_STOP_TX | (ep->epnum << CPM_USB_EP_SHIFT),
 				CPM_USB_STOP_TX_OPCODE);
-	else
+	अन्यथा
 		qe_issue_cmd(QE_USB_STOP_TX, QE_CR_SUBBLOCK_USB,
 				ep->epnum, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_cmd_restarttx(struct qe_ep *ep)
-{
-	if (ep->udc->soc_type == PORT_CPM)
+अटल पूर्णांक qe_ep_cmd_restarttx(काष्ठा qe_ep *ep)
+अणु
+	अगर (ep->udc->soc_type == PORT_CPM)
 		cpm_command(CPM_USB_RESTART_TX | (ep->epnum <<
 				CPM_USB_EP_SHIFT), CPM_USB_RESTART_TX_OPCODE);
-	else
+	अन्यथा
 		qe_issue_cmd(QE_USB_RESTART_TX, QE_CR_SUBBLOCK_USB,
 				ep->epnum, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_flushtxfifo(struct qe_ep *ep)
-{
-	struct qe_udc *udc = ep->udc;
-	int i;
+अटल पूर्णांक qe_ep_flushtxfअगरo(काष्ठा qe_ep *ep)
+अणु
+	काष्ठा qe_udc *udc = ep->udc;
+	पूर्णांक i;
 
-	i = (int)ep->epnum;
+	i = (पूर्णांक)ep->epnum;
 
 	qe_ep_cmd_stoptx(ep);
 	out_8(&udc->usb_regs->usb_uscom,
@@ -264,116 +265,116 @@ static int qe_ep_flushtxfifo(struct qe_ep *ep)
 	ep->c_txbd = ep->txbase;
 	ep->n_txbd = ep->txbase;
 	qe_ep_cmd_restarttx(ep);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_filltxfifo(struct qe_ep *ep)
-{
-	struct qe_udc *udc = ep->udc;
+अटल पूर्णांक qe_ep_filltxfअगरo(काष्ठा qe_ep *ep)
+अणु
+	काष्ठा qe_udc *udc = ep->udc;
 
 	out_8(&udc->usb_regs->usb_uscom,
 			USB_CMD_STR_FIFO | (USB_CMD_EP_MASK & (ep->epnum)));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_epbds_reset(struct qe_udc *udc, int pipe_num)
-{
-	struct qe_ep *ep;
+अटल पूर्णांक qe_epbds_reset(काष्ठा qe_udc *udc, पूर्णांक pipe_num)
+अणु
+	काष्ठा qe_ep *ep;
 	u32 bdring_len;
-	struct qe_bd __iomem *bd;
-	int i;
+	काष्ठा qe_bd __iomem *bd;
+	पूर्णांक i;
 
 	ep = &udc->eps[pipe_num];
 
-	if (ep->dir == USB_DIR_OUT)
+	अगर (ep->dir == USB_सूची_OUT)
 		bdring_len = USB_BDRING_LEN_RX;
-	else
+	अन्यथा
 		bdring_len = USB_BDRING_LEN;
 
 	bd = ep->rxbase;
-	for (i = 0; i < (bdring_len - 1); i++) {
+	क्रम (i = 0; i < (bdring_len - 1); i++) अणु
 		out_be32((u32 __iomem *)bd, R_E | R_I);
 		bd++;
-	}
+	पूर्ण
 	out_be32((u32 __iomem *)bd, R_E | R_I | R_W);
 
 	bd = ep->txbase;
-	for (i = 0; i < USB_BDRING_LEN_TX - 1; i++) {
+	क्रम (i = 0; i < USB_BDRING_LEN_TX - 1; i++) अणु
 		out_be32(&bd->buf, 0);
 		out_be32((u32 __iomem *)bd, 0);
 		bd++;
-	}
+	पूर्ण
 	out_be32((u32 __iomem *)bd, T_W);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_reset(struct qe_udc *udc, int pipe_num)
-{
-	struct qe_ep *ep;
-	u16 tmpusep;
+अटल पूर्णांक qe_ep_reset(काष्ठा qe_udc *udc, पूर्णांक pipe_num)
+अणु
+	काष्ठा qe_ep *ep;
+	u16 पंचांगpusep;
 
 	ep = &udc->eps[pipe_num];
-	tmpusep = in_be16(&udc->usb_regs->usb_usep[pipe_num]);
-	tmpusep &= ~USB_RTHS_MASK;
+	पंचांगpusep = in_be16(&udc->usb_regs->usb_usep[pipe_num]);
+	पंचांगpusep &= ~USB_RTHS_MASK;
 
-	switch (ep->dir) {
-	case USB_DIR_BOTH:
-		qe_ep_flushtxfifo(ep);
-		break;
-	case USB_DIR_OUT:
-		tmpusep |= USB_THS_IGNORE_IN;
-		break;
-	case USB_DIR_IN:
-		qe_ep_flushtxfifo(ep);
-		tmpusep |= USB_RHS_IGNORE_OUT;
-		break;
-	default:
-		break;
-	}
-	out_be16(&udc->usb_regs->usb_usep[pipe_num], tmpusep);
+	चयन (ep->dir) अणु
+	हाल USB_सूची_BOTH:
+		qe_ep_flushtxfअगरo(ep);
+		अवरोध;
+	हाल USB_सूची_OUT:
+		पंचांगpusep |= USB_THS_IGNORE_IN;
+		अवरोध;
+	हाल USB_सूची_IN:
+		qe_ep_flushtxfअगरo(ep);
+		पंचांगpusep |= USB_RHS_IGNORE_OUT;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	out_be16(&udc->usb_regs->usb_usep[pipe_num], पंचांगpusep);
 
 	qe_epbds_reset(udc, pipe_num);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_toggledata01(struct qe_ep *ep)
-{
+अटल पूर्णांक qe_ep_toggledata01(काष्ठा qe_ep *ep)
+अणु
 	ep->data01 ^= 0x1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_bd_init(struct qe_udc *udc, unsigned char pipe_num)
-{
-	struct qe_ep *ep = &udc->eps[pipe_num];
-	unsigned long tmp_addr = 0;
-	struct usb_ep_para __iomem *epparam;
-	int i;
-	struct qe_bd __iomem *bd;
-	int bdring_len;
+अटल पूर्णांक qe_ep_bd_init(काष्ठा qe_udc *udc, अचिन्हित अक्षर pipe_num)
+अणु
+	काष्ठा qe_ep *ep = &udc->eps[pipe_num];
+	अचिन्हित दीर्घ पंचांगp_addr = 0;
+	काष्ठा usb_ep_para __iomem *epparam;
+	पूर्णांक i;
+	काष्ठा qe_bd __iomem *bd;
+	पूर्णांक bdring_len;
 
-	if (ep->dir == USB_DIR_OUT)
+	अगर (ep->dir == USB_सूची_OUT)
 		bdring_len = USB_BDRING_LEN_RX;
-	else
+	अन्यथा
 		bdring_len = USB_BDRING_LEN;
 
 	epparam = udc->ep_param[pipe_num];
-	/* alloc multi-ram for BD rings and set the ep parameters */
-	tmp_addr = cpm_muram_alloc(sizeof(struct qe_bd) * (bdring_len +
+	/* alloc multi-ram क्रम BD rings and set the ep parameters */
+	पंचांगp_addr = cpm_muram_alloc(माप(काष्ठा qe_bd) * (bdring_len +
 				USB_BDRING_LEN_TX), QE_ALIGNMENT_OF_BD);
-	if (IS_ERR_VALUE(tmp_addr))
-		return -ENOMEM;
+	अगर (IS_ERR_VALUE(पंचांगp_addr))
+		वापस -ENOMEM;
 
-	out_be16(&epparam->rbase, (u16)tmp_addr);
-	out_be16(&epparam->tbase, (u16)(tmp_addr +
-				(sizeof(struct qe_bd) * bdring_len)));
+	out_be16(&epparam->rbase, (u16)पंचांगp_addr);
+	out_be16(&epparam->tbase, (u16)(पंचांगp_addr +
+				(माप(काष्ठा qe_bd) * bdring_len)));
 
 	out_be16(&epparam->rbptr, in_be16(&epparam->rbase));
 	out_be16(&epparam->tbptr, in_be16(&epparam->tbase));
 
-	ep->rxbase = cpm_muram_addr(tmp_addr);
-	ep->txbase = cpm_muram_addr(tmp_addr + (sizeof(struct qe_bd)
+	ep->rxbase = cpm_muram_addr(पंचांगp_addr);
+	ep->txbase = cpm_muram_addr(पंचांगp_addr + (माप(काष्ठा qe_bd)
 				* bdring_len));
 	ep->n_rxbd = ep->rxbase;
 	ep->e_rxbd = ep->rxbase;
@@ -383,314 +384,314 @@ static int qe_ep_bd_init(struct qe_udc *udc, unsigned char pipe_num)
 
 	/* Init TX and RX bds */
 	bd = ep->rxbase;
-	for (i = 0; i < bdring_len - 1; i++) {
+	क्रम (i = 0; i < bdring_len - 1; i++) अणु
 		out_be32(&bd->buf, 0);
 		out_be32((u32 __iomem *)bd, 0);
 		bd++;
-	}
+	पूर्ण
 	out_be32(&bd->buf, 0);
 	out_be32((u32 __iomem *)bd, R_W);
 
 	bd = ep->txbase;
-	for (i = 0; i < USB_BDRING_LEN_TX - 1; i++) {
+	क्रम (i = 0; i < USB_BDRING_LEN_TX - 1; i++) अणु
 		out_be32(&bd->buf, 0);
 		out_be32((u32 __iomem *)bd, 0);
 		bd++;
-	}
+	पूर्ण
 	out_be32(&bd->buf, 0);
 	out_be32((u32 __iomem *)bd, T_W);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_rxbd_update(struct qe_ep *ep)
-{
-	unsigned int size;
-	int i;
-	unsigned int tmp;
-	struct qe_bd __iomem *bd;
-	unsigned int bdring_len;
+अटल पूर्णांक qe_ep_rxbd_update(काष्ठा qe_ep *ep)
+अणु
+	अचिन्हित पूर्णांक size;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक पंचांगp;
+	काष्ठा qe_bd __iomem *bd;
+	अचिन्हित पूर्णांक bdring_len;
 
-	if (ep->rxbase == NULL)
-		return -EINVAL;
+	अगर (ep->rxbase == शून्य)
+		वापस -EINVAL;
 
 	bd = ep->rxbase;
 
-	ep->rxframe = kmalloc(sizeof(*ep->rxframe), GFP_ATOMIC);
-	if (!ep->rxframe)
-		return -ENOMEM;
+	ep->rxframe = kदो_स्मृति(माप(*ep->rxframe), GFP_ATOMIC);
+	अगर (!ep->rxframe)
+		वापस -ENOMEM;
 
 	qe_frame_init(ep->rxframe);
 
-	if (ep->dir == USB_DIR_OUT)
+	अगर (ep->dir == USB_सूची_OUT)
 		bdring_len = USB_BDRING_LEN_RX;
-	else
+	अन्यथा
 		bdring_len = USB_BDRING_LEN;
 
 	size = (ep->ep.maxpacket + USB_CRC_SIZE + 2) * (bdring_len + 1);
 	ep->rxbuffer = kzalloc(size, GFP_ATOMIC);
-	if (!ep->rxbuffer) {
-		kfree(ep->rxframe);
-		return -ENOMEM;
-	}
+	अगर (!ep->rxbuffer) अणु
+		kमुक्त(ep->rxframe);
+		वापस -ENOMEM;
+	पूर्ण
 
-	ep->rxbuf_d = virt_to_phys((void *)ep->rxbuffer);
-	if (ep->rxbuf_d == DMA_ADDR_INVALID) {
+	ep->rxbuf_d = virt_to_phys((व्योम *)ep->rxbuffer);
+	अगर (ep->rxbuf_d == DMA_ADDR_INVALID) अणु
 		ep->rxbuf_d = dma_map_single(ep->udc->gadget.dev.parent,
 					ep->rxbuffer,
 					size,
 					DMA_FROM_DEVICE);
 		ep->rxbufmap = 1;
-	} else {
-		dma_sync_single_for_device(ep->udc->gadget.dev.parent,
+	पूर्ण अन्यथा अणु
+		dma_sync_single_क्रम_device(ep->udc->gadget.dev.parent,
 					ep->rxbuf_d, size,
 					DMA_FROM_DEVICE);
 		ep->rxbufmap = 0;
-	}
+	पूर्ण
 
 	size = ep->ep.maxpacket + USB_CRC_SIZE + 2;
-	tmp = ep->rxbuf_d;
-	tmp = (u32)(((tmp >> 2) << 2) + 4);
+	पंचांगp = ep->rxbuf_d;
+	पंचांगp = (u32)(((पंचांगp >> 2) << 2) + 4);
 
-	for (i = 0; i < bdring_len - 1; i++) {
-		out_be32(&bd->buf, tmp);
+	क्रम (i = 0; i < bdring_len - 1; i++) अणु
+		out_be32(&bd->buf, पंचांगp);
 		out_be32((u32 __iomem *)bd, (R_E | R_I));
-		tmp = tmp + size;
+		पंचांगp = पंचांगp + size;
 		bd++;
-	}
-	out_be32(&bd->buf, tmp);
+	पूर्ण
+	out_be32(&bd->buf, पंचांगp);
 	out_be32((u32 __iomem *)bd, (R_E | R_I | R_W));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_register_init(struct qe_udc *udc, unsigned char pipe_num)
-{
-	struct qe_ep *ep = &udc->eps[pipe_num];
-	struct usb_ep_para __iomem *epparam;
+अटल पूर्णांक qe_ep_रेजिस्टर_init(काष्ठा qe_udc *udc, अचिन्हित अक्षर pipe_num)
+अणु
+	काष्ठा qe_ep *ep = &udc->eps[pipe_num];
+	काष्ठा usb_ep_para __iomem *epparam;
 	u16 usep, logepnum;
-	u16 tmp;
+	u16 पंचांगp;
 	u8 rtfcr = 0;
 
 	epparam = udc->ep_param[pipe_num];
 
 	usep = 0;
-	logepnum = (ep->ep.desc->bEndpointAddress & USB_ENDPOINT_NUMBER_MASK);
+	logepnum = (ep->ep.desc->bEndpoपूर्णांकAddress & USB_ENDPOINT_NUMBER_MASK);
 	usep |= (logepnum << USB_EPNUM_SHIFT);
 
-	switch (ep->ep.desc->bmAttributes & 0x03) {
-	case USB_ENDPOINT_XFER_BULK:
+	चयन (ep->ep.desc->bmAttributes & 0x03) अणु
+	हाल USB_ENDPOINT_XFER_BULK:
 		usep |= USB_TRANS_BULK;
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
 		usep |=  USB_TRANS_ISO;
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		usep |= USB_TRANS_INT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		usep |= USB_TRANS_CTR;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (ep->dir) {
-	case USB_DIR_OUT:
+	चयन (ep->dir) अणु
+	हाल USB_सूची_OUT:
 		usep |= USB_THS_IGNORE_IN;
-		break;
-	case USB_DIR_IN:
+		अवरोध;
+	हाल USB_सूची_IN:
 		usep |= USB_RHS_IGNORE_OUT;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	out_be16(&udc->usb_regs->usb_usep[pipe_num], usep);
 
 	rtfcr = 0x30;
 	out_8(&epparam->rbmr, rtfcr);
 	out_8(&epparam->tbmr, rtfcr);
 
-	tmp = (u16)(ep->ep.maxpacket + USB_CRC_SIZE);
-	/* MRBLR must be divisble by 4 */
-	tmp = (u16)(((tmp >> 2) << 2) + 4);
-	out_be16(&epparam->mrblr, tmp);
+	पंचांगp = (u16)(ep->ep.maxpacket + USB_CRC_SIZE);
+	/* MRBLR must be भागisble by 4 */
+	पंचांगp = (u16)(((पंचांगp >> 2) << 2) + 4);
+	out_be16(&epparam->mrblr, पंचांगp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_init(struct qe_udc *udc,
-		      unsigned char pipe_num,
-		      const struct usb_endpoint_descriptor *desc)
-{
-	struct qe_ep *ep = &udc->eps[pipe_num];
-	unsigned long flags;
-	int reval = 0;
+अटल पूर्णांक qe_ep_init(काष्ठा qe_udc *udc,
+		      अचिन्हित अक्षर pipe_num,
+		      स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	काष्ठा qe_ep *ep = &udc->eps[pipe_num];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक reval = 0;
 	u16 max = 0;
 
-	max = usb_endpoint_maxp(desc);
+	max = usb_endpoपूर्णांक_maxp(desc);
 
-	/* check the max package size validate for this endpoint */
+	/* check the max package size validate क्रम this endpoपूर्णांक */
 	/* Refer to USB2.0 spec table 9-13,
 	*/
-	if (pipe_num != 0) {
-		switch (desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) {
-		case USB_ENDPOINT_XFER_BULK:
-			if (strstr(ep->ep.name, "-iso")
-					|| strstr(ep->ep.name, "-int"))
-				goto en_done;
-			switch (udc->gadget.speed) {
-			case USB_SPEED_HIGH:
-			if ((max == 128) || (max == 256) || (max == 512))
-				break;
-			default:
-				switch (max) {
-				case 4:
-				case 8:
-				case 16:
-				case 32:
-				case 64:
-					break;
-				default:
-				case USB_SPEED_LOW:
-					goto en_done;
-				}
-			}
-			break;
-		case USB_ENDPOINT_XFER_INT:
-			if (strstr(ep->ep.name, "-iso"))	/* bulk is ok */
-				goto en_done;
-			switch (udc->gadget.speed) {
-			case USB_SPEED_HIGH:
-				if (max <= 1024)
-					break;
-			case USB_SPEED_FULL:
-				if (max <= 64)
-					break;
-			default:
-				if (max <= 8)
-					break;
-				goto en_done;
-			}
-			break;
-		case USB_ENDPOINT_XFER_ISOC:
-			if (strstr(ep->ep.name, "-bulk")
-				|| strstr(ep->ep.name, "-int"))
-				goto en_done;
-			switch (udc->gadget.speed) {
-			case USB_SPEED_HIGH:
-				if (max <= 1024)
-					break;
-			case USB_SPEED_FULL:
-				if (max <= 1023)
-					break;
-			default:
-				goto en_done;
-			}
-			break;
-		case USB_ENDPOINT_XFER_CONTROL:
-			if (strstr(ep->ep.name, "-iso")
-				|| strstr(ep->ep.name, "-int"))
-				goto en_done;
-			switch (udc->gadget.speed) {
-			case USB_SPEED_HIGH:
-			case USB_SPEED_FULL:
-				switch (max) {
-				case 1:
-				case 2:
-				case 4:
-				case 8:
-				case 16:
-				case 32:
-				case 64:
-					break;
-				default:
-					goto en_done;
-				}
-			case USB_SPEED_LOW:
-				switch (max) {
-				case 1:
-				case 2:
-				case 4:
-				case 8:
-					break;
-				default:
-					goto en_done;
-				}
-			default:
-				goto en_done;
-			}
-			break;
+	अगर (pipe_num != 0) अणु
+		चयन (desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) अणु
+		हाल USB_ENDPOINT_XFER_BULK:
+			अगर (म_माला(ep->ep.name, "-iso")
+					|| म_माला(ep->ep.name, "-int"))
+				जाओ en_करोne;
+			चयन (udc->gadget.speed) अणु
+			हाल USB_SPEED_HIGH:
+			अगर ((max == 128) || (max == 256) || (max == 512))
+				अवरोध;
+			शेष:
+				चयन (max) अणु
+				हाल 4:
+				हाल 8:
+				हाल 16:
+				हाल 32:
+				हाल 64:
+					अवरोध;
+				शेष:
+				हाल USB_SPEED_LOW:
+					जाओ en_करोne;
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल USB_ENDPOINT_XFER_INT:
+			अगर (म_माला(ep->ep.name, "-iso"))	/* bulk is ok */
+				जाओ en_करोne;
+			चयन (udc->gadget.speed) अणु
+			हाल USB_SPEED_HIGH:
+				अगर (max <= 1024)
+					अवरोध;
+			हाल USB_SPEED_FULL:
+				अगर (max <= 64)
+					अवरोध;
+			शेष:
+				अगर (max <= 8)
+					अवरोध;
+				जाओ en_करोne;
+			पूर्ण
+			अवरोध;
+		हाल USB_ENDPOINT_XFER_ISOC:
+			अगर (म_माला(ep->ep.name, "-bulk")
+				|| म_माला(ep->ep.name, "-int"))
+				जाओ en_करोne;
+			चयन (udc->gadget.speed) अणु
+			हाल USB_SPEED_HIGH:
+				अगर (max <= 1024)
+					अवरोध;
+			हाल USB_SPEED_FULL:
+				अगर (max <= 1023)
+					अवरोध;
+			शेष:
+				जाओ en_करोne;
+			पूर्ण
+			अवरोध;
+		हाल USB_ENDPOINT_XFER_CONTROL:
+			अगर (म_माला(ep->ep.name, "-iso")
+				|| म_माला(ep->ep.name, "-int"))
+				जाओ en_करोne;
+			चयन (udc->gadget.speed) अणु
+			हाल USB_SPEED_HIGH:
+			हाल USB_SPEED_FULL:
+				चयन (max) अणु
+				हाल 1:
+				हाल 2:
+				हाल 4:
+				हाल 8:
+				हाल 16:
+				हाल 32:
+				हाल 64:
+					अवरोध;
+				शेष:
+					जाओ en_करोne;
+				पूर्ण
+			हाल USB_SPEED_LOW:
+				चयन (max) अणु
+				हाल 1:
+				हाल 2:
+				हाल 4:
+				हाल 8:
+					अवरोध;
+				शेष:
+					जाओ en_करोne;
+				पूर्ण
+			शेष:
+				जाओ en_करोne;
+			पूर्ण
+			अवरोध;
 
-		default:
-			goto en_done;
-		}
-	} /* if ep0*/
+		शेष:
+			जाओ en_करोne;
+		पूर्ण
+	पूर्ण /* अगर ep0*/
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	/* initialize ep structure */
+	/* initialize ep काष्ठाure */
 	ep->ep.maxpacket = max;
-	ep->tm = (u8)(desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK);
+	ep->पंचांग = (u8)(desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK);
 	ep->ep.desc = desc;
 	ep->stopped = 0;
 	ep->init = 1;
 
-	if (pipe_num == 0) {
-		ep->dir = USB_DIR_BOTH;
-		udc->ep0_dir = USB_DIR_OUT;
+	अगर (pipe_num == 0) अणु
+		ep->dir = USB_सूची_BOTH;
+		udc->ep0_dir = USB_सूची_OUT;
 		udc->ep0_state = WAIT_FOR_SETUP;
-	} else	{
-		switch (desc->bEndpointAddress & USB_ENDPOINT_DIR_MASK) {
-		case USB_DIR_OUT:
-			ep->dir = USB_DIR_OUT;
-			break;
-		case USB_DIR_IN:
-			ep->dir = USB_DIR_IN;
-		default:
-			break;
-		}
-	}
+	पूर्ण अन्यथा	अणु
+		चयन (desc->bEndpoपूर्णांकAddress & USB_ENDPOINT_सूची_MASK) अणु
+		हाल USB_सूची_OUT:
+			ep->dir = USB_सूची_OUT;
+			अवरोध;
+		हाल USB_सूची_IN:
+			ep->dir = USB_सूची_IN;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* hardware special operation */
 	qe_ep_bd_init(udc, pipe_num);
-	if ((ep->tm == USBP_TM_CTL) || (ep->dir == USB_DIR_OUT)) {
+	अगर ((ep->पंचांग == USBP_TM_CTL) || (ep->dir == USB_सूची_OUT)) अणु
 		reval = qe_ep_rxbd_update(ep);
-		if (reval)
-			goto en_done1;
-	}
+		अगर (reval)
+			जाओ en_करोne1;
+	पूर्ण
 
-	if ((ep->tm == USBP_TM_CTL) || (ep->dir == USB_DIR_IN)) {
-		ep->txframe = kmalloc(sizeof(*ep->txframe), GFP_ATOMIC);
-		if (!ep->txframe)
-			goto en_done2;
+	अगर ((ep->पंचांग == USBP_TM_CTL) || (ep->dir == USB_सूची_IN)) अणु
+		ep->txframe = kदो_स्मृति(माप(*ep->txframe), GFP_ATOMIC);
+		अगर (!ep->txframe)
+			जाओ en_करोne2;
 		qe_frame_init(ep->txframe);
-	}
+	पूर्ण
 
-	qe_ep_register_init(udc, pipe_num);
+	qe_ep_रेजिस्टर_init(udc, pipe_num);
 
 	/* Now HW will be NAKing transfers to that EP,
 	 * until a buffer is queued to it. */
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
-en_done2:
-	kfree(ep->rxbuffer);
-	kfree(ep->rxframe);
-en_done1:
+	वापस 0;
+en_करोne2:
+	kमुक्त(ep->rxbuffer);
+	kमुक्त(ep->rxframe);
+en_करोne1:
 	spin_unlock_irqrestore(&udc->lock, flags);
-en_done:
+en_करोne:
 	dev_err(udc->dev, "failed to initialize %s\n", ep->ep.name);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static inline void qe_usb_enable(struct qe_udc *udc)
-{
+अटल अंतरभूत व्योम qe_usb_enable(काष्ठा qe_udc *udc)
+अणु
 	setbits8(&udc->usb_regs->usb_usmod, USB_MODE_EN);
-}
+पूर्ण
 
-static inline void qe_usb_disable(struct qe_udc *udc)
-{
+अटल अंतरभूत व्योम qe_usb_disable(काष्ठा qe_udc *udc)
+अणु
 	clrbits8(&udc->usb_regs->usb_usmod, USB_MODE_EN);
-}
+पूर्ण
 
 /*----------------------------------------------------------------------------*
  *		USB and EP basic manipulate function end		      *
@@ -700,377 +701,377 @@ static inline void qe_usb_disable(struct qe_udc *udc)
 /******************************************************************************
 		UDC transmit and receive process
  ******************************************************************************/
-static void recycle_one_rxbd(struct qe_ep *ep)
-{
+अटल व्योम recycle_one_rxbd(काष्ठा qe_ep *ep)
+अणु
 	u32 bdstatus;
 
 	bdstatus = in_be32((u32 __iomem *)ep->e_rxbd);
 	bdstatus = R_I | R_E | (bdstatus & R_W);
 	out_be32((u32 __iomem *)ep->e_rxbd, bdstatus);
 
-	if (bdstatus & R_W)
+	अगर (bdstatus & R_W)
 		ep->e_rxbd = ep->rxbase;
-	else
+	अन्यथा
 		ep->e_rxbd++;
-}
+पूर्ण
 
-static void recycle_rxbds(struct qe_ep *ep, unsigned char stopatnext)
-{
+अटल व्योम recycle_rxbds(काष्ठा qe_ep *ep, अचिन्हित अक्षर stopatnext)
+अणु
 	u32 bdstatus;
-	struct qe_bd __iomem *bd, *nextbd;
-	unsigned char stop = 0;
+	काष्ठा qe_bd __iomem *bd, *nextbd;
+	अचिन्हित अक्षर stop = 0;
 
 	nextbd = ep->n_rxbd;
 	bd = ep->e_rxbd;
 	bdstatus = in_be32((u32 __iomem *)bd);
 
-	while (!(bdstatus & R_E) && !(bdstatus & BD_LENGTH_MASK) && !stop) {
+	जबतक (!(bdstatus & R_E) && !(bdstatus & BD_LENGTH_MASK) && !stop) अणु
 		bdstatus = R_E | R_I | (bdstatus & R_W);
 		out_be32((u32 __iomem *)bd, bdstatus);
 
-		if (bdstatus & R_W)
+		अगर (bdstatus & R_W)
 			bd = ep->rxbase;
-		else
+		अन्यथा
 			bd++;
 
 		bdstatus = in_be32((u32 __iomem *)bd);
-		if (stopatnext && (bd == nextbd))
+		अगर (stopatnext && (bd == nextbd))
 			stop = 1;
-	}
+	पूर्ण
 
 	ep->e_rxbd = bd;
-}
+पूर्ण
 
-static void ep_recycle_rxbds(struct qe_ep *ep)
-{
-	struct qe_bd __iomem *bd = ep->n_rxbd;
+अटल व्योम ep_recycle_rxbds(काष्ठा qe_ep *ep)
+अणु
+	काष्ठा qe_bd __iomem *bd = ep->n_rxbd;
 	u32 bdstatus;
 	u8 epnum = ep->epnum;
-	struct qe_udc *udc = ep->udc;
+	काष्ठा qe_udc *udc = ep->udc;
 
 	bdstatus = in_be32((u32 __iomem *)bd);
-	if (!(bdstatus & R_E) && !(bdstatus & BD_LENGTH_MASK)) {
+	अगर (!(bdstatus & R_E) && !(bdstatus & BD_LENGTH_MASK)) अणु
 		bd = ep->rxbase +
 				((in_be16(&udc->ep_param[epnum]->rbptr) -
 				  in_be16(&udc->ep_param[epnum]->rbase))
 				 >> 3);
 		bdstatus = in_be32((u32 __iomem *)bd);
 
-		if (bdstatus & R_W)
+		अगर (bdstatus & R_W)
 			bd = ep->rxbase;
-		else
+		अन्यथा
 			bd++;
 
 		ep->e_rxbd = bd;
 		recycle_rxbds(ep, 0);
 		ep->e_rxbd = ep->n_rxbd;
-	} else
+	पूर्ण अन्यथा
 		recycle_rxbds(ep, 1);
 
-	if (in_be16(&udc->usb_regs->usb_usber) & USB_E_BSY_MASK)
+	अगर (in_be16(&udc->usb_regs->usb_usber) & USB_E_BSY_MASK)
 		out_be16(&udc->usb_regs->usb_usber, USB_E_BSY_MASK);
 
-	if (ep->has_data <= 0 && (!list_empty(&ep->queue)))
+	अगर (ep->has_data <= 0 && (!list_empty(&ep->queue)))
 		qe_eprx_normal(ep);
 
 	ep->localnack = 0;
-}
+पूर्ण
 
-static void setup_received_handle(struct qe_udc *udc,
-					struct usb_ctrlrequest *setup);
-static int qe_ep_rxframe_handle(struct qe_ep *ep);
-static void ep0_req_complete(struct qe_udc *udc, struct qe_req *req);
+अटल व्योम setup_received_handle(काष्ठा qe_udc *udc,
+					काष्ठा usb_ctrlrequest *setup);
+अटल पूर्णांक qe_ep_rxframe_handle(काष्ठा qe_ep *ep);
+अटल व्योम ep0_req_complete(काष्ठा qe_udc *udc, काष्ठा qe_req *req);
 /* when BD PID is setup, handle the packet */
-static int ep0_setup_handle(struct qe_udc *udc)
-{
-	struct qe_ep *ep = &udc->eps[0];
-	struct qe_frame *pframe;
-	unsigned int fsize;
+अटल पूर्णांक ep0_setup_handle(काष्ठा qe_udc *udc)
+अणु
+	काष्ठा qe_ep *ep = &udc->eps[0];
+	काष्ठा qe_frame *pframe;
+	अचिन्हित पूर्णांक fsize;
 	u8 *cp;
 
 	pframe = ep->rxframe;
-	if ((frame_get_info(pframe) & PID_SETUP)
-			&& (udc->ep0_state == WAIT_FOR_SETUP)) {
+	अगर ((frame_get_info(pframe) & PID_SETUP)
+			&& (udc->ep0_state == WAIT_FOR_SETUP)) अणु
 		fsize = frame_get_length(pframe);
-		if (unlikely(fsize != 8))
-			return -EINVAL;
+		अगर (unlikely(fsize != 8))
+			वापस -EINVAL;
 		cp = (u8 *)&udc->local_setup_buff;
-		memcpy(cp, pframe->data, fsize);
+		स_नकल(cp, pframe->data, fsize);
 		ep->data01 = 1;
 
 		/* handle the usb command base on the usb_ctrlrequest */
 		setup_received_handle(udc, &udc->local_setup_buff);
-		return 0;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int qe_ep0_rx(struct qe_udc *udc)
-{
-	struct qe_ep *ep = &udc->eps[0];
-	struct qe_frame *pframe;
-	struct qe_bd __iomem *bd;
+अटल पूर्णांक qe_ep0_rx(काष्ठा qe_udc *udc)
+अणु
+	काष्ठा qe_ep *ep = &udc->eps[0];
+	काष्ठा qe_frame *pframe;
+	काष्ठा qe_bd __iomem *bd;
 	u32 bdstatus, length;
 	u32 vaddr;
 
 	pframe = ep->rxframe;
 
-	if (ep->dir == USB_DIR_IN) {
+	अगर (ep->dir == USB_सूची_IN) अणु
 		dev_err(udc->dev, "ep0 not a control endpoint\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bd = ep->n_rxbd;
 	bdstatus = in_be32((u32 __iomem *)bd);
 	length = bdstatus & BD_LENGTH_MASK;
 
-	while (!(bdstatus & R_E) && length) {
-		if ((bdstatus & R_F) && (bdstatus & R_L)
-			&& !(bdstatus & R_ERROR)) {
-			if (length == USB_CRC_SIZE) {
+	जबतक (!(bdstatus & R_E) && length) अणु
+		अगर ((bdstatus & R_F) && (bdstatus & R_L)
+			&& !(bdstatus & R_ERROR)) अणु
+			अगर (length == USB_CRC_SIZE) अणु
 				udc->ep0_state = WAIT_FOR_SETUP;
 				dev_vdbg(udc->dev,
 					"receive a ZLP in status phase\n");
-			} else {
+			पूर्ण अन्यथा अणु
 				qe_frame_clean(pframe);
 				vaddr = (u32)phys_to_virt(in_be32(&bd->buf));
 				frame_set_data(pframe, (u8 *)vaddr);
 				frame_set_length(pframe,
 						(length - USB_CRC_SIZE));
 				frame_set_status(pframe, FRAME_OK);
-				switch (bdstatus & R_PID) {
-				case R_PID_SETUP:
+				चयन (bdstatus & R_PID) अणु
+				हाल R_PID_SETUP:
 					frame_set_info(pframe, PID_SETUP);
-					break;
-				case R_PID_DATA1:
+					अवरोध;
+				हाल R_PID_DATA1:
 					frame_set_info(pframe, PID_DATA1);
-					break;
-				default:
+					अवरोध;
+				शेष:
 					frame_set_info(pframe, PID_DATA0);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
-				if ((bdstatus & R_PID) == R_PID_SETUP)
+				अगर ((bdstatus & R_PID) == R_PID_SETUP)
 					ep0_setup_handle(udc);
-				else
+				अन्यथा
 					qe_ep_rxframe_handle(ep);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			dev_err(udc->dev, "The receive frame with error!\n");
-		}
+		पूर्ण
 
-		/* note: don't clear the rxbd's buffer address */
+		/* note: करोn't clear the rxbd's buffer address */
 		recycle_one_rxbd(ep);
 
 		/* Get next BD */
-		if (bdstatus & R_W)
+		अगर (bdstatus & R_W)
 			bd = ep->rxbase;
-		else
+		अन्यथा
 			bd++;
 
 		bdstatus = in_be32((u32 __iomem *)bd);
 		length = bdstatus & BD_LENGTH_MASK;
 
-	}
+	पूर्ण
 
 	ep->n_rxbd = bd;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_rxframe_handle(struct qe_ep *ep)
-{
-	struct qe_frame *pframe;
+अटल पूर्णांक qe_ep_rxframe_handle(काष्ठा qe_ep *ep)
+अणु
+	काष्ठा qe_frame *pframe;
 	u8 framepid = 0;
-	unsigned int fsize;
+	अचिन्हित पूर्णांक fsize;
 	u8 *cp;
-	struct qe_req *req;
+	काष्ठा qe_req *req;
 
 	pframe = ep->rxframe;
 
-	if (frame_get_info(pframe) & PID_DATA1)
+	अगर (frame_get_info(pframe) & PID_DATA1)
 		framepid = 0x1;
 
-	if (framepid != ep->data01) {
+	अगर (framepid != ep->data01) अणु
 		dev_err(ep->udc->dev, "the data01 error!\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	fsize = frame_get_length(pframe);
-	if (list_empty(&ep->queue)) {
+	अगर (list_empty(&ep->queue)) अणु
 		dev_err(ep->udc->dev, "the %s have no requeue!\n", ep->name);
-	} else {
-		req = list_entry(ep->queue.next, struct qe_req, queue);
+	पूर्ण अन्यथा अणु
+		req = list_entry(ep->queue.next, काष्ठा qe_req, queue);
 
 		cp = (u8 *)(req->req.buf) + req->req.actual;
-		if (cp) {
-			memcpy(cp, pframe->data, fsize);
+		अगर (cp) अणु
+			स_नकल(cp, pframe->data, fsize);
 			req->req.actual += fsize;
-			if ((fsize < ep->ep.maxpacket) ||
-					(req->req.actual >= req->req.length)) {
-				if (ep->epnum == 0)
+			अगर ((fsize < ep->ep.maxpacket) ||
+					(req->req.actual >= req->req.length)) अणु
+				अगर (ep->epnum == 0)
 					ep0_req_complete(ep->udc, req);
-				else
-					done(ep, req, 0);
-				if (list_empty(&ep->queue) && ep->epnum != 0)
+				अन्यथा
+					करोne(ep, req, 0);
+				अगर (list_empty(&ep->queue) && ep->epnum != 0)
 					qe_eprx_nack(ep);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	qe_ep_toggledata01(ep);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ep_rx_tasklet(struct tasklet_struct *t)
-{
-	struct qe_udc *udc = from_tasklet(udc, t, rx_tasklet);
-	struct qe_ep *ep;
-	struct qe_frame *pframe;
-	struct qe_bd __iomem *bd;
-	unsigned long flags;
+अटल व्योम ep_rx_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा qe_udc *udc = from_tasklet(udc, t, rx_tasklet);
+	काष्ठा qe_ep *ep;
+	काष्ठा qe_frame *pframe;
+	काष्ठा qe_bd __iomem *bd;
+	अचिन्हित दीर्घ flags;
 	u32 bdstatus, length;
 	u32 vaddr, i;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	for (i = 1; i < USB_MAX_ENDPOINTS; i++) {
+	क्रम (i = 1; i < USB_MAX_ENDPOINTS; i++) अणु
 		ep = &udc->eps[i];
 
-		if (ep->dir == USB_DIR_IN || ep->enable_tasklet == 0) {
+		अगर (ep->dir == USB_सूची_IN || ep->enable_tasklet == 0) अणु
 			dev_dbg(udc->dev,
 				"This is a transmit ep or disable tasklet!\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		pframe = ep->rxframe;
 		bd = ep->n_rxbd;
 		bdstatus = in_be32((u32 __iomem *)bd);
 		length = bdstatus & BD_LENGTH_MASK;
 
-		while (!(bdstatus & R_E) && length) {
-			if (list_empty(&ep->queue)) {
+		जबतक (!(bdstatus & R_E) && length) अणु
+			अगर (list_empty(&ep->queue)) अणु
 				qe_eprx_nack(ep);
 				dev_dbg(udc->dev,
 					"The rxep have noreq %d\n",
 					ep->has_data);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if ((bdstatus & R_F) && (bdstatus & R_L)
-				&& !(bdstatus & R_ERROR)) {
+			अगर ((bdstatus & R_F) && (bdstatus & R_L)
+				&& !(bdstatus & R_ERROR)) अणु
 				qe_frame_clean(pframe);
 				vaddr = (u32)phys_to_virt(in_be32(&bd->buf));
 				frame_set_data(pframe, (u8 *)vaddr);
 				frame_set_length(pframe,
 						(length - USB_CRC_SIZE));
 				frame_set_status(pframe, FRAME_OK);
-				switch (bdstatus & R_PID) {
-				case R_PID_DATA1:
+				चयन (bdstatus & R_PID) अणु
+				हाल R_PID_DATA1:
 					frame_set_info(pframe, PID_DATA1);
-					break;
-				case R_PID_SETUP:
+					अवरोध;
+				हाल R_PID_SETUP:
 					frame_set_info(pframe, PID_SETUP);
-					break;
-				default:
+					अवरोध;
+				शेष:
 					frame_set_info(pframe, PID_DATA0);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				/* handle the rx frame */
 				qe_ep_rxframe_handle(ep);
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_err(udc->dev,
 					"error in received frame\n");
-			}
-			/* note: don't clear the rxbd's buffer address */
+			पूर्ण
+			/* note: करोn't clear the rxbd's buffer address */
 			/*clear the length */
 			out_be32((u32 __iomem *)bd, bdstatus & BD_STATUS_MASK);
 			ep->has_data--;
-			if (!(ep->localnack))
+			अगर (!(ep->localnack))
 				recycle_one_rxbd(ep);
 
 			/* Get next BD */
-			if (bdstatus & R_W)
+			अगर (bdstatus & R_W)
 				bd = ep->rxbase;
-			else
+			अन्यथा
 				bd++;
 
 			bdstatus = in_be32((u32 __iomem *)bd);
 			length = bdstatus & BD_LENGTH_MASK;
-		}
+		पूर्ण
 
 		ep->n_rxbd = bd;
 
-		if (ep->localnack)
+		अगर (ep->localnack)
 			ep_recycle_rxbds(ep);
 
 		ep->enable_tasklet = 0;
-	} /* for i=1 */
+	पूर्ण /* क्रम i=1 */
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-}
+पूर्ण
 
-static int qe_ep_rx(struct qe_ep *ep)
-{
-	struct qe_udc *udc;
-	struct qe_frame *pframe;
-	struct qe_bd __iomem *bd;
+अटल पूर्णांक qe_ep_rx(काष्ठा qe_ep *ep)
+अणु
+	काष्ठा qe_udc *udc;
+	काष्ठा qe_frame *pframe;
+	काष्ठा qe_bd __iomem *bd;
 	u16 swoffs, ucoffs, emptybds;
 
 	udc = ep->udc;
 	pframe = ep->rxframe;
 
-	if (ep->dir == USB_DIR_IN) {
+	अगर (ep->dir == USB_सूची_IN) अणु
 		dev_err(udc->dev, "transmit ep in rx function\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bd = ep->n_rxbd;
 
 	swoffs = (u16)(bd - ep->rxbase);
 	ucoffs = (u16)((in_be16(&udc->ep_param[ep->epnum]->rbptr) -
 			in_be16(&udc->ep_param[ep->epnum]->rbase)) >> 3);
-	if (swoffs < ucoffs)
+	अगर (swoffs < ucoffs)
 		emptybds = USB_BDRING_LEN_RX - ucoffs + swoffs;
-	else
+	अन्यथा
 		emptybds = swoffs - ucoffs;
 
-	if (emptybds < MIN_EMPTY_BDS) {
+	अगर (emptybds < MIN_EMPTY_BDS) अणु
 		qe_eprx_nack(ep);
 		ep->localnack = 1;
 		dev_vdbg(udc->dev, "%d empty bds, send NACK\n", emptybds);
-	}
+	पूर्ण
 	ep->has_data = USB_BDRING_LEN_RX - emptybds;
 
-	if (list_empty(&ep->queue)) {
+	अगर (list_empty(&ep->queue)) अणु
 		qe_eprx_nack(ep);
 		dev_vdbg(udc->dev, "The rxep have no req queued with %d BDs\n",
 				ep->has_data);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	tasklet_schedule(&udc->rx_tasklet);
 	ep->enable_tasklet = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* send data from a frame, no matter what tx_req */
-static int qe_ep_tx(struct qe_ep *ep, struct qe_frame *frame)
-{
-	struct qe_udc *udc = ep->udc;
-	struct qe_bd __iomem *bd;
+अटल पूर्णांक qe_ep_tx(काष्ठा qe_ep *ep, काष्ठा qe_frame *frame)
+अणु
+	काष्ठा qe_udc *udc = ep->udc;
+	काष्ठा qe_bd __iomem *bd;
 	u16 saveusbmr;
 	u32 bdstatus, pidmask;
 	u32 paddr;
 
-	if (ep->dir == USB_DIR_OUT) {
+	अगर (ep->dir == USB_सूची_OUT) अणु
 		dev_err(udc->dev, "receive ep passed to tx function\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Disable the Tx interrupt */
+	/* Disable the Tx पूर्णांकerrupt */
 	saveusbmr = in_be16(&udc->usb_regs->usb_usbmr);
 	out_be16(&udc->usb_regs->usb_usbmr,
 			saveusbmr & ~(USB_E_TXB_MASK | USB_E_TXE_MASK));
@@ -1078,638 +1079,638 @@ static int qe_ep_tx(struct qe_ep *ep, struct qe_frame *frame)
 	bd = ep->n_txbd;
 	bdstatus = in_be32((u32 __iomem *)bd);
 
-	if (!(bdstatus & (T_R | BD_LENGTH_MASK))) {
-		if (frame_get_length(frame) == 0) {
+	अगर (!(bdstatus & (T_R | BD_LENGTH_MASK))) अणु
+		अगर (frame_get_length(frame) == 0) अणु
 			frame_set_data(frame, udc->nullbuf);
 			frame_set_length(frame, 2);
 			frame->info |= (ZLP | NO_CRC);
 			dev_vdbg(udc->dev, "the frame size = 0\n");
-		}
-		paddr = virt_to_phys((void *)frame->data);
+		पूर्ण
+		paddr = virt_to_phys((व्योम *)frame->data);
 		out_be32(&bd->buf, paddr);
 		bdstatus = (bdstatus&T_W);
-		if (!(frame_get_info(frame) & NO_CRC))
+		अगर (!(frame_get_info(frame) & NO_CRC))
 			bdstatus |= T_R | T_I | T_L | T_TC
 					| frame_get_length(frame);
-		else
+		अन्यथा
 			bdstatus |= T_R | T_I | T_L | frame_get_length(frame);
 
-		/* if the packet is a ZLP in status phase */
-		if ((ep->epnum == 0) && (udc->ep0_state == DATA_STATE_NEED_ZLP))
+		/* अगर the packet is a ZLP in status phase */
+		अगर ((ep->epnum == 0) && (udc->ep0_state == DATA_STATE_NEED_ZLP))
 			ep->data01 = 0x1;
 
-		if (ep->data01) {
+		अगर (ep->data01) अणु
 			pidmask = T_PID_DATA1;
 			frame->info |= PID_DATA1;
-		} else {
+		पूर्ण अन्यथा अणु
 			pidmask = T_PID_DATA0;
 			frame->info |= PID_DATA0;
-		}
+		पूर्ण
 		bdstatus |= T_CNF;
 		bdstatus |= pidmask;
 		out_be32((u32 __iomem *)bd, bdstatus);
-		qe_ep_filltxfifo(ep);
+		qe_ep_filltxfअगरo(ep);
 
-		/* enable the TX interrupt */
+		/* enable the TX पूर्णांकerrupt */
 		out_be16(&udc->usb_regs->usb_usbmr, saveusbmr);
 
 		qe_ep_toggledata01(ep);
-		if (bdstatus & T_W)
+		अगर (bdstatus & T_W)
 			ep->n_txbd = ep->txbase;
-		else
+		अन्यथा
 			ep->n_txbd++;
 
-		return 0;
-	} else {
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		out_be16(&udc->usb_regs->usb_usbmr, saveusbmr);
 		dev_vdbg(udc->dev, "The tx bd is not ready!\n");
-		return -EBUSY;
-	}
-}
+		वापस -EBUSY;
+	पूर्ण
+पूर्ण
 
 /* when a bd was transmitted, the function can
  * handle the tx_req, not include ep0           */
-static int txcomplete(struct qe_ep *ep, unsigned char restart)
-{
-	if (ep->tx_req != NULL) {
-		struct qe_req *req = ep->tx_req;
-		unsigned zlp = 0, last_len = 0;
+अटल पूर्णांक txcomplete(काष्ठा qe_ep *ep, अचिन्हित अक्षर restart)
+अणु
+	अगर (ep->tx_req != शून्य) अणु
+		काष्ठा qe_req *req = ep->tx_req;
+		अचिन्हित zlp = 0, last_len = 0;
 
-		last_len = min_t(unsigned, req->req.length - ep->sent,
+		last_len = min_t(अचिन्हित, req->req.length - ep->sent,
 				ep->ep.maxpacket);
 
-		if (!restart) {
-			int asent = ep->last;
+		अगर (!restart) अणु
+			पूर्णांक asent = ep->last;
 			ep->sent += asent;
 			ep->last -= asent;
-		} else {
+		पूर्ण अन्यथा अणु
 			ep->last = 0;
-		}
+		पूर्ण
 
 		/* zlp needed when req->re.zero is set */
-		if (req->req.zero) {
-			if (last_len == 0 ||
+		अगर (req->req.zero) अणु
+			अगर (last_len == 0 ||
 				(req->req.length % ep->ep.maxpacket) != 0)
 				zlp = 0;
-			else
+			अन्यथा
 				zlp = 1;
-		} else
+		पूर्ण अन्यथा
 			zlp = 0;
 
-		/* a request already were transmitted completely */
-		if (((ep->tx_req->req.length - ep->sent) <= 0) && !zlp) {
-			done(ep, ep->tx_req, 0);
-			ep->tx_req = NULL;
+		/* a request alपढ़ोy were transmitted completely */
+		अगर (((ep->tx_req->req.length - ep->sent) <= 0) && !zlp) अणु
+			करोne(ep, ep->tx_req, 0);
+			ep->tx_req = शून्य;
 			ep->last = 0;
 			ep->sent = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* we should gain a new tx_req fot this endpoint */
-	if (ep->tx_req == NULL) {
-		if (!list_empty(&ep->queue)) {
-			ep->tx_req = list_entry(ep->queue.next,	struct qe_req,
+	/* we should gain a new tx_req fot this endpoपूर्णांक */
+	अगर (ep->tx_req == शून्य) अणु
+		अगर (!list_empty(&ep->queue)) अणु
+			ep->tx_req = list_entry(ep->queue.next,	काष्ठा qe_req,
 							queue);
 			ep->last = 0;
 			ep->sent = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* give a frame and a tx_req, send some data */
-static int qe_usb_senddata(struct qe_ep *ep, struct qe_frame *frame)
-{
-	unsigned int size;
+अटल पूर्णांक qe_usb_senddata(काष्ठा qe_ep *ep, काष्ठा qe_frame *frame)
+अणु
+	अचिन्हित पूर्णांक size;
 	u8 *buf;
 
 	qe_frame_clean(frame);
 	size = min_t(u32, (ep->tx_req->req.length - ep->sent),
 				ep->ep.maxpacket);
 	buf = (u8 *)ep->tx_req->req.buf + ep->sent;
-	if (buf && size) {
+	अगर (buf && size) अणु
 		ep->last = size;
 		ep->tx_req->req.actual += size;
 		frame_set_data(frame, buf);
 		frame_set_length(frame, size);
 		frame_set_status(frame, FRAME_OK);
 		frame_set_info(frame, 0);
-		return qe_ep_tx(ep, frame);
-	}
-	return -EIO;
-}
+		वापस qe_ep_tx(ep, frame);
+	पूर्ण
+	वापस -EIO;
+पूर्ण
 
-/* give a frame struct,send a ZLP */
-static int sendnulldata(struct qe_ep *ep, struct qe_frame *frame, uint infor)
-{
-	struct qe_udc *udc = ep->udc;
+/* give a frame काष्ठा,send a ZLP */
+अटल पूर्णांक sendnulldata(काष्ठा qe_ep *ep, काष्ठा qe_frame *frame, uपूर्णांक inक्रम)
+अणु
+	काष्ठा qe_udc *udc = ep->udc;
 
-	if (frame == NULL)
-		return -ENODEV;
+	अगर (frame == शून्य)
+		वापस -ENODEV;
 
 	qe_frame_clean(frame);
 	frame_set_data(frame, (u8 *)udc->nullbuf);
 	frame_set_length(frame, 2);
 	frame_set_status(frame, FRAME_OK);
-	frame_set_info(frame, (ZLP | NO_CRC | infor));
+	frame_set_info(frame, (ZLP | NO_CRC | inक्रम));
 
-	return qe_ep_tx(ep, frame);
-}
+	वापस qe_ep_tx(ep, frame);
+पूर्ण
 
-static int frame_create_tx(struct qe_ep *ep, struct qe_frame *frame)
-{
-	struct qe_req *req = ep->tx_req;
-	int reval;
+अटल पूर्णांक frame_create_tx(काष्ठा qe_ep *ep, काष्ठा qe_frame *frame)
+अणु
+	काष्ठा qe_req *req = ep->tx_req;
+	पूर्णांक reval;
 
-	if (req == NULL)
-		return -ENODEV;
+	अगर (req == शून्य)
+		वापस -ENODEV;
 
-	if ((req->req.length - ep->sent) > 0)
+	अगर ((req->req.length - ep->sent) > 0)
 		reval = qe_usb_senddata(ep, frame);
-	else
+	अन्यथा
 		reval = sendnulldata(ep, frame, 0);
 
-	return reval;
-}
+	वापस reval;
+पूर्ण
 
-/* if direction is DIR_IN, the status is Device->Host
- * if direction is DIR_OUT, the status transaction is Device<-Host
+/* अगर direction is सूची_IN, the status is Device->Host
+ * अगर direction is सूची_OUT, the status transaction is Device<-Host
  * in status phase, udc create a request and gain status */
-static int ep0_prime_status(struct qe_udc *udc, int direction)
-{
+अटल पूर्णांक ep0_prime_status(काष्ठा qe_udc *udc, पूर्णांक direction)
+अणु
 
-	struct qe_ep *ep = &udc->eps[0];
+	काष्ठा qe_ep *ep = &udc->eps[0];
 
-	if (direction == USB_DIR_IN) {
+	अगर (direction == USB_सूची_IN) अणु
 		udc->ep0_state = DATA_STATE_NEED_ZLP;
-		udc->ep0_dir = USB_DIR_IN;
+		udc->ep0_dir = USB_सूची_IN;
 		sendnulldata(ep, ep->txframe, SETUP_STATUS | NO_REQ);
-	} else {
-		udc->ep0_dir = USB_DIR_OUT;
+	पूर्ण अन्यथा अणु
+		udc->ep0_dir = USB_सूची_OUT;
 		udc->ep0_state = WAIT_FOR_OUT_STATUS;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* a request complete in ep0, whether gadget request or udc request */
-static void ep0_req_complete(struct qe_udc *udc, struct qe_req *req)
-{
-	struct qe_ep *ep = &udc->eps[0];
-	/* because usb and ep's status already been set in ch9setaddress() */
+अटल व्योम ep0_req_complete(काष्ठा qe_udc *udc, काष्ठा qe_req *req)
+अणु
+	काष्ठा qe_ep *ep = &udc->eps[0];
+	/* because usb and ep's status alपढ़ोy been set in ch9setaddress() */
 
-	switch (udc->ep0_state) {
-	case DATA_STATE_XMIT:
-		done(ep, req, 0);
+	चयन (udc->ep0_state) अणु
+	हाल DATA_STATE_XMIT:
+		करोne(ep, req, 0);
 		/* receive status phase */
-		if (ep0_prime_status(udc, USB_DIR_OUT))
+		अगर (ep0_prime_status(udc, USB_सूची_OUT))
 			qe_ep0_stall(udc);
-		break;
+		अवरोध;
 
-	case DATA_STATE_NEED_ZLP:
-		done(ep, req, 0);
+	हाल DATA_STATE_NEED_ZLP:
+		करोne(ep, req, 0);
 		udc->ep0_state = WAIT_FOR_SETUP;
-		break;
+		अवरोध;
 
-	case DATA_STATE_RECV:
-		done(ep, req, 0);
+	हाल DATA_STATE_RECV:
+		करोne(ep, req, 0);
 		/* send status phase */
-		if (ep0_prime_status(udc, USB_DIR_IN))
+		अगर (ep0_prime_status(udc, USB_सूची_IN))
 			qe_ep0_stall(udc);
-		break;
+		अवरोध;
 
-	case WAIT_FOR_OUT_STATUS:
-		done(ep, req, 0);
+	हाल WAIT_FOR_OUT_STATUS:
+		करोne(ep, req, 0);
 		udc->ep0_state = WAIT_FOR_SETUP;
-		break;
+		अवरोध;
 
-	case WAIT_FOR_SETUP:
+	हाल WAIT_FOR_SETUP:
 		dev_vdbg(udc->dev, "Unexpected interrupt\n");
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		qe_ep0_stall(udc);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int ep0_txcomplete(struct qe_ep *ep, unsigned char restart)
-{
-	struct qe_req *tx_req = NULL;
-	struct qe_frame *frame = ep->txframe;
+अटल पूर्णांक ep0_txcomplete(काष्ठा qe_ep *ep, अचिन्हित अक्षर restart)
+अणु
+	काष्ठा qe_req *tx_req = शून्य;
+	काष्ठा qe_frame *frame = ep->txframe;
 
-	if ((frame_get_info(frame) & (ZLP | NO_REQ)) == (ZLP | NO_REQ)) {
-		if (!restart)
+	अगर ((frame_get_info(frame) & (ZLP | NO_REQ)) == (ZLP | NO_REQ)) अणु
+		अगर (!restart)
 			ep->udc->ep0_state = WAIT_FOR_SETUP;
-		else
+		अन्यथा
 			sendnulldata(ep, ep->txframe, SETUP_STATUS | NO_REQ);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	tx_req = ep->tx_req;
-	if (tx_req != NULL) {
-		if (!restart) {
-			int asent = ep->last;
+	अगर (tx_req != शून्य) अणु
+		अगर (!restart) अणु
+			पूर्णांक asent = ep->last;
 			ep->sent += asent;
 			ep->last -= asent;
-		} else {
+		पूर्ण अन्यथा अणु
 			ep->last = 0;
-		}
+		पूर्ण
 
-		/* a request already were transmitted completely */
-		if ((ep->tx_req->req.length - ep->sent) <= 0) {
-			ep->tx_req->req.actual = (unsigned int)ep->sent;
+		/* a request alपढ़ोy were transmitted completely */
+		अगर ((ep->tx_req->req.length - ep->sent) <= 0) अणु
+			ep->tx_req->req.actual = (अचिन्हित पूर्णांक)ep->sent;
 			ep0_req_complete(ep->udc, ep->tx_req);
-			ep->tx_req = NULL;
+			ep->tx_req = शून्य;
 			ep->last = 0;
 			ep->sent = 0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_vdbg(ep->udc->dev, "the ep0_controller have no req\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ep0_txframe_handle(struct qe_ep *ep)
-{
-	/* if have error, transmit again */
-	if (frame_get_status(ep->txframe) & FRAME_ERROR) {
-		qe_ep_flushtxfifo(ep);
+अटल पूर्णांक ep0_txframe_handle(काष्ठा qe_ep *ep)
+अणु
+	/* अगर have error, transmit again */
+	अगर (frame_get_status(ep->txframe) & FRAME_ERROR) अणु
+		qe_ep_flushtxfअगरo(ep);
 		dev_vdbg(ep->udc->dev, "The EP0 transmit data have error!\n");
-		if (frame_get_info(ep->txframe) & PID_DATA0)
+		अगर (frame_get_info(ep->txframe) & PID_DATA0)
 			ep->data01 = 0;
-		else
+		अन्यथा
 			ep->data01 = 1;
 
 		ep0_txcomplete(ep, 1);
-	} else
+	पूर्ण अन्यथा
 		ep0_txcomplete(ep, 0);
 
 	frame_create_tx(ep, ep->txframe);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep0_txconf(struct qe_ep *ep)
-{
-	struct qe_bd __iomem *bd;
-	struct qe_frame *pframe;
+अटल पूर्णांक qe_ep0_txconf(काष्ठा qe_ep *ep)
+अणु
+	काष्ठा qe_bd __iomem *bd;
+	काष्ठा qe_frame *pframe;
 	u32 bdstatus;
 
 	bd = ep->c_txbd;
 	bdstatus = in_be32((u32 __iomem *)bd);
-	while (!(bdstatus & T_R) && (bdstatus & ~T_W)) {
+	जबतक (!(bdstatus & T_R) && (bdstatus & ~T_W)) अणु
 		pframe = ep->txframe;
 
 		/* clear and recycle the BD */
 		out_be32((u32 __iomem *)bd, bdstatus & T_W);
 		out_be32(&bd->buf, 0);
-		if (bdstatus & T_W)
+		अगर (bdstatus & T_W)
 			ep->c_txbd = ep->txbase;
-		else
+		अन्यथा
 			ep->c_txbd++;
 
-		if (ep->c_txbd == ep->n_txbd) {
-			if (bdstatus & DEVICE_T_ERROR) {
+		अगर (ep->c_txbd == ep->n_txbd) अणु
+			अगर (bdstatus & DEVICE_T_ERROR) अणु
 				frame_set_status(pframe, FRAME_ERROR);
-				if (bdstatus & T_TO)
+				अगर (bdstatus & T_TO)
 					pframe->status |= TX_ER_TIMEOUT;
-				if (bdstatus & T_UN)
+				अगर (bdstatus & T_UN)
 					pframe->status |= TX_ER_UNDERUN;
-			}
+			पूर्ण
 			ep0_txframe_handle(ep);
-		}
+		पूर्ण
 
 		bd = ep->c_txbd;
 		bdstatus = in_be32((u32 __iomem *)bd);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ep_txframe_handle(struct qe_ep *ep)
-{
-	if (frame_get_status(ep->txframe) & FRAME_ERROR) {
-		qe_ep_flushtxfifo(ep);
+अटल पूर्णांक ep_txframe_handle(काष्ठा qe_ep *ep)
+अणु
+	अगर (frame_get_status(ep->txframe) & FRAME_ERROR) अणु
+		qe_ep_flushtxfअगरo(ep);
 		dev_vdbg(ep->udc->dev, "The EP0 transmit data have error!\n");
-		if (frame_get_info(ep->txframe) & PID_DATA0)
+		अगर (frame_get_info(ep->txframe) & PID_DATA0)
 			ep->data01 = 0;
-		else
+		अन्यथा
 			ep->data01 = 1;
 
 		txcomplete(ep, 1);
-	} else
+	पूर्ण अन्यथा
 		txcomplete(ep, 0);
 
 	frame_create_tx(ep, ep->txframe); /* send the data */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* confirm the already trainsmited bd */
-static int qe_ep_txconf(struct qe_ep *ep)
-{
-	struct qe_bd __iomem *bd;
-	struct qe_frame *pframe = NULL;
+/* confirm the alपढ़ोy trainsmited bd */
+अटल पूर्णांक qe_ep_txconf(काष्ठा qe_ep *ep)
+अणु
+	काष्ठा qe_bd __iomem *bd;
+	काष्ठा qe_frame *pframe = शून्य;
 	u32 bdstatus;
-	unsigned char breakonrxinterrupt = 0;
+	अचिन्हित अक्षर अवरोधonrxपूर्णांकerrupt = 0;
 
 	bd = ep->c_txbd;
 	bdstatus = in_be32((u32 __iomem *)bd);
-	while (!(bdstatus & T_R) && (bdstatus & ~T_W)) {
+	जबतक (!(bdstatus & T_R) && (bdstatus & ~T_W)) अणु
 		pframe = ep->txframe;
-		if (bdstatus & DEVICE_T_ERROR) {
+		अगर (bdstatus & DEVICE_T_ERROR) अणु
 			frame_set_status(pframe, FRAME_ERROR);
-			if (bdstatus & T_TO)
+			अगर (bdstatus & T_TO)
 				pframe->status |= TX_ER_TIMEOUT;
-			if (bdstatus & T_UN)
+			अगर (bdstatus & T_UN)
 				pframe->status |= TX_ER_UNDERUN;
-		}
+		पूर्ण
 
 		/* clear and recycle the BD */
 		out_be32((u32 __iomem *)bd, bdstatus & T_W);
 		out_be32(&bd->buf, 0);
-		if (bdstatus & T_W)
+		अगर (bdstatus & T_W)
 			ep->c_txbd = ep->txbase;
-		else
+		अन्यथा
 			ep->c_txbd++;
 
 		/* handle the tx frame */
 		ep_txframe_handle(ep);
 		bd = ep->c_txbd;
 		bdstatus = in_be32((u32 __iomem *)bd);
-	}
-	if (breakonrxinterrupt)
-		return -EIO;
-	else
-		return 0;
-}
+	पूर्ण
+	अगर (अवरोधonrxपूर्णांकerrupt)
+		वापस -EIO;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 /* Add a request in queue, and try to transmit a packet */
-static int ep_req_send(struct qe_ep *ep, struct qe_req *req)
-{
-	int reval = 0;
+अटल पूर्णांक ep_req_send(काष्ठा qe_ep *ep, काष्ठा qe_req *req)
+अणु
+	पूर्णांक reval = 0;
 
-	if (ep->tx_req == NULL) {
+	अगर (ep->tx_req == शून्य) अणु
 		ep->sent = 0;
 		ep->last = 0;
 		txcomplete(ep, 0); /* can gain a new tx_req */
 		reval = frame_create_tx(ep, ep->txframe);
-	}
-	return reval;
-}
+	पूर्ण
+	वापस reval;
+पूर्ण
 
 /* Maybe this is a good ideal */
-static int ep_req_rx(struct qe_ep *ep, struct qe_req *req)
-{
-	struct qe_udc *udc = ep->udc;
-	struct qe_frame *pframe = NULL;
-	struct qe_bd __iomem *bd;
+अटल पूर्णांक ep_req_rx(काष्ठा qe_ep *ep, काष्ठा qe_req *req)
+अणु
+	काष्ठा qe_udc *udc = ep->udc;
+	काष्ठा qe_frame *pframe = शून्य;
+	काष्ठा qe_bd __iomem *bd;
 	u32 bdstatus, length;
 	u32 vaddr, fsize;
 	u8 *cp;
 	u8 finish_req = 0;
 	u8 framepid;
 
-	if (list_empty(&ep->queue)) {
+	अगर (list_empty(&ep->queue)) अणु
 		dev_vdbg(udc->dev, "the req already finish!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	pframe = ep->rxframe;
 
 	bd = ep->n_rxbd;
 	bdstatus = in_be32((u32 __iomem *)bd);
 	length = bdstatus & BD_LENGTH_MASK;
 
-	while (!(bdstatus & R_E) && length) {
-		if (finish_req)
-			break;
-		if ((bdstatus & R_F) && (bdstatus & R_L)
-					&& !(bdstatus & R_ERROR)) {
+	जबतक (!(bdstatus & R_E) && length) अणु
+		अगर (finish_req)
+			अवरोध;
+		अगर ((bdstatus & R_F) && (bdstatus & R_L)
+					&& !(bdstatus & R_ERROR)) अणु
 			qe_frame_clean(pframe);
 			vaddr = (u32)phys_to_virt(in_be32(&bd->buf));
 			frame_set_data(pframe, (u8 *)vaddr);
 			frame_set_length(pframe, (length - USB_CRC_SIZE));
 			frame_set_status(pframe, FRAME_OK);
-			switch (bdstatus & R_PID) {
-			case R_PID_DATA1:
-				frame_set_info(pframe, PID_DATA1); break;
-			default:
-				frame_set_info(pframe, PID_DATA0); break;
-			}
+			चयन (bdstatus & R_PID) अणु
+			हाल R_PID_DATA1:
+				frame_set_info(pframe, PID_DATA1); अवरोध;
+			शेष:
+				frame_set_info(pframe, PID_DATA0); अवरोध;
+			पूर्ण
 			/* handle the rx frame */
 
-			if (frame_get_info(pframe) & PID_DATA1)
+			अगर (frame_get_info(pframe) & PID_DATA1)
 				framepid = 0x1;
-			else
+			अन्यथा
 				framepid = 0;
 
-			if (framepid != ep->data01) {
+			अगर (framepid != ep->data01) अणु
 				dev_vdbg(udc->dev, "the data01 error!\n");
-			} else {
+			पूर्ण अन्यथा अणु
 				fsize = frame_get_length(pframe);
 
 				cp = (u8 *)(req->req.buf) + req->req.actual;
-				if (cp) {
-					memcpy(cp, pframe->data, fsize);
+				अगर (cp) अणु
+					स_नकल(cp, pframe->data, fsize);
 					req->req.actual += fsize;
-					if ((fsize < ep->ep.maxpacket)
+					अगर ((fsize < ep->ep.maxpacket)
 						|| (req->req.actual >=
-							req->req.length)) {
+							req->req.length)) अणु
 						finish_req = 1;
-						done(ep, req, 0);
-						if (list_empty(&ep->queue))
+						करोne(ep, req, 0);
+						अगर (list_empty(&ep->queue))
 							qe_eprx_nack(ep);
-					}
-				}
+					पूर्ण
+				पूर्ण
 				qe_ep_toggledata01(ep);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			dev_err(udc->dev, "The receive frame with error!\n");
-		}
+		पूर्ण
 
-		/* note: don't clear the rxbd's buffer address *
+		/* note: करोn't clear the rxbd's buffer address *
 		 * only Clear the length */
 		out_be32((u32 __iomem *)bd, (bdstatus & BD_STATUS_MASK));
 		ep->has_data--;
 
 		/* Get next BD */
-		if (bdstatus & R_W)
+		अगर (bdstatus & R_W)
 			bd = ep->rxbase;
-		else
+		अन्यथा
 			bd++;
 
 		bdstatus = in_be32((u32 __iomem *)bd);
 		length = bdstatus & BD_LENGTH_MASK;
-	}
+	पूर्ण
 
 	ep->n_rxbd = bd;
 	ep_recycle_rxbds(ep);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* only add the request in queue */
-static int ep_req_receive(struct qe_ep *ep, struct qe_req *req)
-{
-	if (ep->state == EP_STATE_NACK) {
-		if (ep->has_data <= 0) {
-			/* Enable rx and unmask rx interrupt */
+अटल पूर्णांक ep_req_receive(काष्ठा qe_ep *ep, काष्ठा qe_req *req)
+अणु
+	अगर (ep->state == EP_STATE_NACK) अणु
+		अगर (ep->has_data <= 0) अणु
+			/* Enable rx and unmask rx पूर्णांकerrupt */
 			qe_eprx_normal(ep);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Copy the exist BD data */
 			ep_req_rx(ep, req);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /********************************************************************
 	Internal Used Function End
 ********************************************************************/
 
 /*-----------------------------------------------------------------------
-	Endpoint Management Functions For Gadget
+	Endpoपूर्णांक Management Functions For Gadget
  -----------------------------------------------------------------------*/
-static int qe_ep_enable(struct usb_ep *_ep,
-			 const struct usb_endpoint_descriptor *desc)
-{
-	struct qe_udc *udc;
-	struct qe_ep *ep;
-	int retval = 0;
-	unsigned char epnum;
+अटल पूर्णांक qe_ep_enable(काष्ठा usb_ep *_ep,
+			 स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	काष्ठा qe_udc *udc;
+	काष्ठा qe_ep *ep;
+	पूर्णांक retval = 0;
+	अचिन्हित अक्षर epnum;
 
-	ep = container_of(_ep, struct qe_ep, ep);
+	ep = container_of(_ep, काष्ठा qe_ep, ep);
 
 	/* catch various bogus parameters */
-	if (!_ep || !desc || _ep->name == ep_name[0] ||
+	अगर (!_ep || !desc || _ep->name == ep_name[0] ||
 			(desc->bDescriptorType != USB_DT_ENDPOINT))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	udc = ep->udc;
-	if (!udc->driver || (udc->gadget.speed == USB_SPEED_UNKNOWN))
-		return -ESHUTDOWN;
+	अगर (!udc->driver || (udc->gadget.speed == USB_SPEED_UNKNOWN))
+		वापस -ESHUTDOWN;
 
-	epnum = (u8)desc->bEndpointAddress & 0xF;
+	epnum = (u8)desc->bEndpoपूर्णांकAddress & 0xF;
 
 	retval = qe_ep_init(udc, epnum, desc);
-	if (retval != 0) {
-		cpm_muram_free(cpm_muram_offset(ep->rxbase));
+	अगर (retval != 0) अणु
+		cpm_muram_मुक्त(cpm_muram_offset(ep->rxbase));
 		dev_dbg(udc->dev, "enable ep%d failed\n", ep->epnum);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dev_dbg(udc->dev, "enable ep%d successful\n", ep->epnum);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_disable(struct usb_ep *_ep)
-{
-	struct qe_udc *udc;
-	struct qe_ep *ep;
-	unsigned long flags;
-	unsigned int size;
+अटल पूर्णांक qe_ep_disable(काष्ठा usb_ep *_ep)
+अणु
+	काष्ठा qe_udc *udc;
+	काष्ठा qe_ep *ep;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक size;
 
-	ep = container_of(_ep, struct qe_ep, ep);
+	ep = container_of(_ep, काष्ठा qe_ep, ep);
 	udc = ep->udc;
 
-	if (!_ep || !ep->ep.desc) {
-		dev_dbg(udc->dev, "%s not enabled\n", _ep ? ep->ep.name : NULL);
-		return -EINVAL;
-	}
+	अगर (!_ep || !ep->ep.desc) अणु
+		dev_dbg(udc->dev, "%s not enabled\n", _ep ? ep->ep.name : शून्य);
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&udc->lock, flags);
-	/* Nuke all pending requests (does flush) */
+	/* Nuke all pending requests (करोes flush) */
 	nuke(ep, -ESHUTDOWN);
-	ep->ep.desc = NULL;
+	ep->ep.desc = शून्य;
 	ep->stopped = 1;
-	ep->tx_req = NULL;
+	ep->tx_req = शून्य;
 	qe_ep_reset(udc, ep->epnum);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	cpm_muram_free(cpm_muram_offset(ep->rxbase));
+	cpm_muram_मुक्त(cpm_muram_offset(ep->rxbase));
 
-	if (ep->dir == USB_DIR_OUT)
+	अगर (ep->dir == USB_सूची_OUT)
 		size = (ep->ep.maxpacket + USB_CRC_SIZE + 2) *
 				(USB_BDRING_LEN_RX + 1);
-	else
+	अन्यथा
 		size = (ep->ep.maxpacket + USB_CRC_SIZE + 2) *
 				(USB_BDRING_LEN + 1);
 
-	if (ep->dir != USB_DIR_IN) {
-		kfree(ep->rxframe);
-		if (ep->rxbufmap) {
+	अगर (ep->dir != USB_सूची_IN) अणु
+		kमुक्त(ep->rxframe);
+		अगर (ep->rxbufmap) अणु
 			dma_unmap_single(udc->gadget.dev.parent,
 					ep->rxbuf_d, size,
 					DMA_FROM_DEVICE);
 			ep->rxbuf_d = DMA_ADDR_INVALID;
-		} else {
-			dma_sync_single_for_cpu(
+		पूर्ण अन्यथा अणु
+			dma_sync_single_क्रम_cpu(
 					udc->gadget.dev.parent,
 					ep->rxbuf_d, size,
 					DMA_FROM_DEVICE);
-		}
-		kfree(ep->rxbuffer);
-	}
+		पूर्ण
+		kमुक्त(ep->rxbuffer);
+	पूर्ण
 
-	if (ep->dir != USB_DIR_OUT)
-		kfree(ep->txframe);
+	अगर (ep->dir != USB_सूची_OUT)
+		kमुक्त(ep->txframe);
 
 	dev_dbg(udc->dev, "disabled %s OK\n", _ep->name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct usb_request *qe_alloc_request(struct usb_ep *_ep,	gfp_t gfp_flags)
-{
-	struct qe_req *req;
+अटल काष्ठा usb_request *qe_alloc_request(काष्ठा usb_ep *_ep,	gfp_t gfp_flags)
+अणु
+	काष्ठा qe_req *req;
 
-	req = kzalloc(sizeof(*req), gfp_flags);
-	if (!req)
-		return NULL;
+	req = kzalloc(माप(*req), gfp_flags);
+	अगर (!req)
+		वापस शून्य;
 
 	req->req.dma = DMA_ADDR_INVALID;
 
 	INIT_LIST_HEAD(&req->queue);
 
-	return &req->req;
-}
+	वापस &req->req;
+पूर्ण
 
-static void qe_free_request(struct usb_ep *_ep, struct usb_request *_req)
-{
-	struct qe_req *req;
+अटल व्योम qe_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा qe_req *req;
 
-	req = container_of(_req, struct qe_req, req);
+	req = container_of(_req, काष्ठा qe_req, req);
 
-	if (_req)
-		kfree(req);
-}
+	अगर (_req)
+		kमुक्त(req);
+पूर्ण
 
-static int __qe_ep_queue(struct usb_ep *_ep, struct usb_request *_req)
-{
-	struct qe_ep *ep = container_of(_ep, struct qe_ep, ep);
-	struct qe_req *req = container_of(_req, struct qe_req, req);
-	struct qe_udc *udc;
-	int reval;
+अटल पूर्णांक __qe_ep_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा qe_ep *ep = container_of(_ep, काष्ठा qe_ep, ep);
+	काष्ठा qe_req *req = container_of(_req, काष्ठा qe_req, req);
+	काष्ठा qe_udc *udc;
+	पूर्णांक reval;
 
 	udc = ep->udc;
 	/* catch various bogus parameters */
-	if (!_req || !req->req.complete || !req->req.buf
-			|| !list_empty(&req->queue)) {
+	अगर (!_req || !req->req.complete || !req->req.buf
+			|| !list_empty(&req->queue)) अणु
 		dev_dbg(udc->dev, "bad params\n");
-		return -EINVAL;
-	}
-	if (!_ep || (!ep->ep.desc && ep_index(ep))) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!_ep || (!ep->ep.desc && ep_index(ep))) अणु
 		dev_dbg(udc->dev, "bad ep\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN)
-		return -ESHUTDOWN;
+	अगर (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN)
+		वापस -ESHUTDOWN;
 
 	req->ep = ep;
 
-	/* map virtual address to hardware */
-	if (req->req.dma == DMA_ADDR_INVALID) {
+	/* map भव address to hardware */
+	अगर (req->req.dma == DMA_ADDR_INVALID) अणु
 		req->req.dma = dma_map_single(ep->udc->gadget.dev.parent,
 					req->req.buf,
 					req->req.length,
@@ -1717,14 +1718,14 @@ static int __qe_ep_queue(struct usb_ep *_ep, struct usb_request *_req)
 					? DMA_TO_DEVICE :
 					DMA_FROM_DEVICE);
 		req->mapped = 1;
-	} else {
-		dma_sync_single_for_device(ep->udc->gadget.dev.parent,
+	पूर्ण अन्यथा अणु
+		dma_sync_single_क्रम_device(ep->udc->gadget.dev.parent,
 					req->req.dma, req->req.length,
 					ep_is_in(ep)
 					? DMA_TO_DEVICE :
 					DMA_FROM_DEVICE);
 		req->mapped = 0;
-	}
+	पूर्ण
 
 	req->req.status = -EINPROGRESS;
 	req->req.actual = 0;
@@ -1734,93 +1735,93 @@ static int __qe_ep_queue(struct usb_ep *_ep, struct usb_request *_req)
 			ep->name, req->req.length);
 
 	/* push the request to device */
-	if (ep_is_in(ep))
+	अगर (ep_is_in(ep))
 		reval = ep_req_send(ep, req);
 
 	/* EP0 */
-	if (ep_index(ep) == 0 && req->req.length > 0) {
-		if (ep_is_in(ep))
+	अगर (ep_index(ep) == 0 && req->req.length > 0) अणु
+		अगर (ep_is_in(ep))
 			udc->ep0_state = DATA_STATE_XMIT;
-		else
+		अन्यथा
 			udc->ep0_state = DATA_STATE_RECV;
-	}
+	पूर्ण
 
-	if (ep->dir == USB_DIR_OUT)
+	अगर (ep->dir == USB_सूची_OUT)
 		reval = ep_req_receive(ep, req);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* queues (submits) an I/O request to an endpoint */
-static int qe_ep_queue(struct usb_ep *_ep, struct usb_request *_req,
+/* queues (submits) an I/O request to an endpoपूर्णांक */
+अटल पूर्णांक qe_ep_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
 		       gfp_t gfp_flags)
-{
-	struct qe_ep *ep = container_of(_ep, struct qe_ep, ep);
-	struct qe_udc *udc = ep->udc;
-	unsigned long flags;
-	int ret;
+अणु
+	काष्ठा qe_ep *ep = container_of(_ep, काष्ठा qe_ep, ep);
+	काष्ठा qe_udc *udc = ep->udc;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	ret = __qe_ep_queue(_ep, _req);
 	spin_unlock_irqrestore(&udc->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* dequeues (cancels, unlinks) an I/O request from an endpoint */
-static int qe_ep_dequeue(struct usb_ep *_ep, struct usb_request *_req)
-{
-	struct qe_ep *ep = container_of(_ep, struct qe_ep, ep);
-	struct qe_req *req;
-	unsigned long flags;
+/* dequeues (cancels, unlinks) an I/O request from an endpoपूर्णांक */
+अटल पूर्णांक qe_ep_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा qe_ep *ep = container_of(_ep, काष्ठा qe_ep, ep);
+	काष्ठा qe_req *req;
+	अचिन्हित दीर्घ flags;
 
-	if (!_ep || !_req)
-		return -EINVAL;
+	अगर (!_ep || !_req)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&ep->udc->lock, flags);
 
-	/* make sure it's actually queued on this endpoint */
-	list_for_each_entry(req, &ep->queue, queue) {
-		if (&req->req == _req)
-			break;
-	}
+	/* make sure it's actually queued on this endpoपूर्णांक */
+	list_क्रम_each_entry(req, &ep->queue, queue) अणु
+		अगर (&req->req == _req)
+			अवरोध;
+	पूर्ण
 
-	if (&req->req != _req) {
+	अगर (&req->req != _req) अणु
 		spin_unlock_irqrestore(&ep->udc->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	done(ep, req, -ECONNRESET);
+	करोne(ep, req, -ECONNRESET);
 
 	spin_unlock_irqrestore(&ep->udc->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*-----------------------------------------------------------------
- * modify the endpoint halt feature
- * @ep: the non-isochronous endpoint being stalled
+ * modअगरy the endpoपूर्णांक halt feature
+ * @ep: the non-isochronous endpoपूर्णांक being stalled
  * @value: 1--set halt  0--clear halt
  * Returns zero, or a negative error code.
 *----------------------------------------------------------------*/
-static int qe_ep_set_halt(struct usb_ep *_ep, int value)
-{
-	struct qe_ep *ep;
-	unsigned long flags;
-	int status = -EOPNOTSUPP;
-	struct qe_udc *udc;
+अटल पूर्णांक qe_ep_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
+अणु
+	काष्ठा qe_ep *ep;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक status = -EOPNOTSUPP;
+	काष्ठा qe_udc *udc;
 
-	ep = container_of(_ep, struct qe_ep, ep);
-	if (!_ep || !ep->ep.desc) {
+	ep = container_of(_ep, काष्ठा qe_ep, ep);
+	अगर (!_ep || !ep->ep.desc) अणु
 		status = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	udc = ep->udc;
-	/* Attempt to halt IN ep will fail if any transfer requests
+	/* Attempt to halt IN ep will fail अगर any transfer requests
 	 * are still queue */
-	if (value && ep_is_in(ep) && !list_empty(&ep->queue)) {
+	अगर (value && ep_is_in(ep) && !list_empty(&ep->queue)) अणु
 		status = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	status = 0;
 	spin_lock_irqsave(&ep->udc->lock, flags);
@@ -1828,151 +1829,151 @@ static int qe_ep_set_halt(struct usb_ep *_ep, int value)
 	qe_eprx_stall_change(ep, value);
 	spin_unlock_irqrestore(&ep->udc->lock, flags);
 
-	if (ep->epnum == 0) {
+	अगर (ep->epnum == 0) अणु
 		udc->ep0_state = WAIT_FOR_SETUP;
 		udc->ep0_dir = 0;
-	}
+	पूर्ण
 
 	/* set data toggle to DATA0 on clear halt */
-	if (value == 0)
+	अगर (value == 0)
 		ep->data01 = 0;
 out:
 	dev_vdbg(udc->dev, "%s %s halt stat %d\n", ep->ep.name,
 			value ?  "set" : "clear", status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static const struct usb_ep_ops qe_ep_ops = {
+अटल स्थिर काष्ठा usb_ep_ops qe_ep_ops = अणु
 	.enable = qe_ep_enable,
 	.disable = qe_ep_disable,
 
 	.alloc_request = qe_alloc_request,
-	.free_request = qe_free_request,
+	.मुक्त_request = qe_मुक्त_request,
 
 	.queue = qe_ep_queue,
 	.dequeue = qe_ep_dequeue,
 
 	.set_halt = qe_ep_set_halt,
-};
+पूर्ण;
 
 /*------------------------------------------------------------------------
 	Gadget Driver Layer Operations
  ------------------------------------------------------------------------*/
 
 /* Get the current frame number */
-static int qe_get_frame(struct usb_gadget *gadget)
-{
-	struct qe_udc *udc = container_of(gadget, struct qe_udc, gadget);
-	u16 tmp;
+अटल पूर्णांक qe_get_frame(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा qe_udc *udc = container_of(gadget, काष्ठा qe_udc, gadget);
+	u16 पंचांगp;
 
-	tmp = in_be16(&udc->usb_param->frame_n);
-	if (tmp & 0x8000)
-		return tmp & 0x07ff;
-	return -EINVAL;
-}
+	पंचांगp = in_be16(&udc->usb_param->frame_n);
+	अगर (पंचांगp & 0x8000)
+		वापस पंचांगp & 0x07ff;
+	वापस -EINVAL;
+पूर्ण
 
-static int fsl_qe_start(struct usb_gadget *gadget,
-		struct usb_gadget_driver *driver);
-static int fsl_qe_stop(struct usb_gadget *gadget);
+अटल पूर्णांक fsl_qe_start(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_gadget_driver *driver);
+अटल पूर्णांक fsl_qe_stop(काष्ठा usb_gadget *gadget);
 
 /* defined in usb_gadget.h */
-static const struct usb_gadget_ops qe_gadget_ops = {
+अटल स्थिर काष्ठा usb_gadget_ops qe_gadget_ops = अणु
 	.get_frame = qe_get_frame,
 	.udc_start = fsl_qe_start,
 	.udc_stop = fsl_qe_stop,
-};
+पूर्ण;
 
 /*-------------------------------------------------------------------------
 	USB ep0 Setup process in BUS Enumeration
  -------------------------------------------------------------------------*/
-static int udc_reset_ep_queue(struct qe_udc *udc, u8 pipe)
-{
-	struct qe_ep *ep = &udc->eps[pipe];
+अटल पूर्णांक udc_reset_ep_queue(काष्ठा qe_udc *udc, u8 pipe)
+अणु
+	काष्ठा qe_ep *ep = &udc->eps[pipe];
 
 	nuke(ep, -ECONNRESET);
-	ep->tx_req = NULL;
-	return 0;
-}
+	ep->tx_req = शून्य;
+	वापस 0;
+पूर्ण
 
-static int reset_queues(struct qe_udc *udc)
-{
+अटल पूर्णांक reset_queues(काष्ठा qe_udc *udc)
+अणु
 	u8 pipe;
 
-	for (pipe = 0; pipe < USB_MAX_ENDPOINTS; pipe++)
+	क्रम (pipe = 0; pipe < USB_MAX_ENDPOINTS; pipe++)
 		udc_reset_ep_queue(udc, pipe);
 
-	/* report disconnect; the driver is already quiesced */
+	/* report disconnect; the driver is alपढ़ोy quiesced */
 	spin_unlock(&udc->lock);
 	usb_gadget_udc_reset(&udc->gadget, udc->driver);
 	spin_lock(&udc->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ch9setaddress(struct qe_udc *udc, u16 value, u16 index,
+अटल व्योम ch9setaddress(काष्ठा qe_udc *udc, u16 value, u16 index,
 			u16 length)
-{
-	/* Save the new address to device struct */
+अणु
+	/* Save the new address to device काष्ठा */
 	udc->device_address = (u8) value;
 	/* Update usb state */
 	udc->usb_state = USB_STATE_ADDRESS;
 
 	/* Status phase , send a ZLP */
-	if (ep0_prime_status(udc, USB_DIR_IN))
+	अगर (ep0_prime_status(udc, USB_सूची_IN))
 		qe_ep0_stall(udc);
-}
+पूर्ण
 
-static void ownercomplete(struct usb_ep *_ep, struct usb_request *_req)
-{
-	struct qe_req *req = container_of(_req, struct qe_req, req);
+अटल व्योम ownercomplete(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा qe_req *req = container_of(_req, काष्ठा qe_req, req);
 
-	req->req.buf = NULL;
-	kfree(req);
-}
+	req->req.buf = शून्य;
+	kमुक्त(req);
+पूर्ण
 
-static void ch9getstatus(struct qe_udc *udc, u8 request_type, u16 value,
+अटल व्योम ch9माला_लोtatus(काष्ठा qe_udc *udc, u8 request_type, u16 value,
 			u16 index, u16 length)
-{
+अणु
 	u16 usb_status = 0;
-	struct qe_req *req;
-	struct qe_ep *ep;
-	int status = 0;
+	काष्ठा qe_req *req;
+	काष्ठा qe_ep *ep;
+	पूर्णांक status = 0;
 
 	ep = &udc->eps[0];
-	if ((request_type & USB_RECIP_MASK) == USB_RECIP_DEVICE) {
+	अगर ((request_type & USB_RECIP_MASK) == USB_RECIP_DEVICE) अणु
 		/* Get device status */
 		usb_status = 1 << USB_DEVICE_SELF_POWERED;
-	} else if ((request_type & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
-		/* Get interface status */
-		/* We don't have interface information in udc driver */
+	पूर्ण अन्यथा अगर ((request_type & USB_RECIP_MASK) == USB_RECIP_INTERFACE) अणु
+		/* Get पूर्णांकerface status */
+		/* We करोn't have पूर्णांकerface inक्रमmation in udc driver */
 		usb_status = 0;
-	} else if ((request_type & USB_RECIP_MASK) == USB_RECIP_ENDPOINT) {
-		/* Get endpoint status */
-		int pipe = index & USB_ENDPOINT_NUMBER_MASK;
-		struct qe_ep *target_ep = &udc->eps[pipe];
+	पूर्ण अन्यथा अगर ((request_type & USB_RECIP_MASK) == USB_RECIP_ENDPOINT) अणु
+		/* Get endpoपूर्णांक status */
+		पूर्णांक pipe = index & USB_ENDPOINT_NUMBER_MASK;
+		काष्ठा qe_ep *target_ep = &udc->eps[pipe];
 		u16 usep;
 
-		/* stall if endpoint doesn't exist */
-		if (!target_ep->ep.desc)
-			goto stall;
+		/* stall अगर endpoपूर्णांक करोesn't exist */
+		अगर (!target_ep->ep.desc)
+			जाओ stall;
 
 		usep = in_be16(&udc->usb_regs->usb_usep[pipe]);
-		if (index & USB_DIR_IN) {
-			if (target_ep->dir != USB_DIR_IN)
-				goto stall;
-			if ((usep & USB_THS_MASK) == USB_THS_STALL)
+		अगर (index & USB_सूची_IN) अणु
+			अगर (target_ep->dir != USB_सूची_IN)
+				जाओ stall;
+			अगर ((usep & USB_THS_MASK) == USB_THS_STALL)
 				usb_status = 1 << USB_ENDPOINT_HALT;
-		} else {
-			if (target_ep->dir != USB_DIR_OUT)
-				goto stall;
-			if ((usep & USB_RHS_MASK) == USB_RHS_STALL)
+		पूर्ण अन्यथा अणु
+			अगर (target_ep->dir != USB_सूची_OUT)
+				जाओ stall;
+			अगर ((usep & USB_RHS_MASK) == USB_RHS_STALL)
 				usb_status = 1 << USB_ENDPOINT_HALT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	req = container_of(qe_alloc_request(&ep->ep, GFP_KERNEL),
-					struct qe_req, req);
+					काष्ठा qe_req, req);
 	req->req.length = 2;
 	req->req.buf = udc->statusbuf;
 	*(u16 *)req->req.buf = cpu_to_le16(usb_status);
@@ -1980,22 +1981,22 @@ static void ch9getstatus(struct qe_udc *udc, u8 request_type, u16 value,
 	req->req.actual = 0;
 	req->req.complete = ownercomplete;
 
-	udc->ep0_dir = USB_DIR_IN;
+	udc->ep0_dir = USB_सूची_IN;
 
 	/* data phase */
 	status = __qe_ep_queue(&ep->ep, &req->req);
 
-	if (status == 0)
-		return;
+	अगर (status == 0)
+		वापस;
 stall:
 	dev_err(udc->dev, "Can't respond to getstatus request \n");
 	qe_ep0_stall(udc);
-}
+पूर्ण
 
 /* only handle the setup request, suppose the device in normal status */
-static void setup_received_handle(struct qe_udc *udc,
-				struct usb_ctrlrequest *setup)
-{
+अटल व्योम setup_received_handle(काष्ठा qe_udc *udc,
+				काष्ठा usb_ctrlrequest *setup)
+अणु
 	/* Fix Endian (udc->local_setup_buff is cpu Endian now)*/
 	u16 wValue = le16_to_cpu(setup->wValue);
 	u16 wIndex = le16_to_cpu(setup->wIndex);
@@ -2004,44 +2005,44 @@ static void setup_received_handle(struct qe_udc *udc,
 	/* clear the previous request in the ep0 */
 	udc_reset_ep_queue(udc, 0);
 
-	if (setup->bRequestType & USB_DIR_IN)
-		udc->ep0_dir = USB_DIR_IN;
-	else
-		udc->ep0_dir = USB_DIR_OUT;
+	अगर (setup->bRequestType & USB_सूची_IN)
+		udc->ep0_dir = USB_सूची_IN;
+	अन्यथा
+		udc->ep0_dir = USB_सूची_OUT;
 
-	switch (setup->bRequest) {
-	case USB_REQ_GET_STATUS:
-		/* Data+Status phase form udc */
-		if ((setup->bRequestType & (USB_DIR_IN | USB_TYPE_MASK))
-					!= (USB_DIR_IN | USB_TYPE_STANDARD))
-			break;
-		ch9getstatus(udc, setup->bRequestType, wValue, wIndex,
+	चयन (setup->bRequest) अणु
+	हाल USB_REQ_GET_STATUS:
+		/* Data+Status phase क्रमm udc */
+		अगर ((setup->bRequestType & (USB_सूची_IN | USB_TYPE_MASK))
+					!= (USB_सूची_IN | USB_TYPE_STANDARD))
+			अवरोध;
+		ch9माला_लोtatus(udc, setup->bRequestType, wValue, wIndex,
 					wLength);
-		return;
+		वापस;
 
-	case USB_REQ_SET_ADDRESS:
+	हाल USB_REQ_SET_ADDRESS:
 		/* Status phase from udc */
-		if (setup->bRequestType != (USB_DIR_OUT | USB_TYPE_STANDARD |
+		अगर (setup->bRequestType != (USB_सूची_OUT | USB_TYPE_STANDARD |
 						USB_RECIP_DEVICE))
-			break;
+			अवरोध;
 		ch9setaddress(udc, wValue, wIndex, wLength);
-		return;
+		वापस;
 
-	case USB_REQ_CLEAR_FEATURE:
-	case USB_REQ_SET_FEATURE:
+	हाल USB_REQ_CLEAR_FEATURE:
+	हाल USB_REQ_SET_FEATURE:
 		/* Requests with no data phase, status phase from udc */
-		if ((setup->bRequestType & USB_TYPE_MASK)
+		अगर ((setup->bRequestType & USB_TYPE_MASK)
 					!= USB_TYPE_STANDARD)
-			break;
+			अवरोध;
 
-		if ((setup->bRequestType & USB_RECIP_MASK)
-				== USB_RECIP_ENDPOINT) {
-			int pipe = wIndex & USB_ENDPOINT_NUMBER_MASK;
-			struct qe_ep *ep;
+		अगर ((setup->bRequestType & USB_RECIP_MASK)
+				== USB_RECIP_ENDPOINT) अणु
+			पूर्णांक pipe = wIndex & USB_ENDPOINT_NUMBER_MASK;
+			काष्ठा qe_ep *ep;
 
-			if (wValue != 0 || wLength != 0
+			अगर (wValue != 0 || wLength != 0
 				|| pipe >= USB_MAX_ENDPOINTS)
-				break;
+				अवरोध;
 			ep = &udc->eps[pipe];
 
 			spin_unlock(&udc->lock);
@@ -2049,234 +2050,234 @@ static void setup_received_handle(struct qe_udc *udc,
 					(setup->bRequest == USB_REQ_SET_FEATURE)
 						? 1 : 0);
 			spin_lock(&udc->lock);
-		}
+		पूर्ण
 
-		ep0_prime_status(udc, USB_DIR_IN);
+		ep0_prime_status(udc, USB_सूची_IN);
 
-		return;
+		वापस;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (wLength) {
+	अगर (wLength) अणु
 		/* Data phase from gadget, status phase from udc */
-		if (setup->bRequestType & USB_DIR_IN) {
+		अगर (setup->bRequestType & USB_सूची_IN) अणु
 			udc->ep0_state = DATA_STATE_XMIT;
-			udc->ep0_dir = USB_DIR_IN;
-		} else {
+			udc->ep0_dir = USB_सूची_IN;
+		पूर्ण अन्यथा अणु
 			udc->ep0_state = DATA_STATE_RECV;
-			udc->ep0_dir = USB_DIR_OUT;
-		}
+			udc->ep0_dir = USB_सूची_OUT;
+		पूर्ण
 		spin_unlock(&udc->lock);
-		if (udc->driver->setup(&udc->gadget,
+		अगर (udc->driver->setup(&udc->gadget,
 					&udc->local_setup_buff) < 0)
 			qe_ep0_stall(udc);
 		spin_lock(&udc->lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* No data phase, IN status from gadget */
-		udc->ep0_dir = USB_DIR_IN;
+		udc->ep0_dir = USB_सूची_IN;
 		spin_unlock(&udc->lock);
-		if (udc->driver->setup(&udc->gadget,
+		अगर (udc->driver->setup(&udc->gadget,
 					&udc->local_setup_buff) < 0)
 			qe_ep0_stall(udc);
 		spin_lock(&udc->lock);
 		udc->ep0_state = DATA_STATE_NEED_ZLP;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*-------------------------------------------------------------------------
 	USB Interrupt handlers
  -------------------------------------------------------------------------*/
-static void suspend_irq(struct qe_udc *udc)
-{
+अटल व्योम suspend_irq(काष्ठा qe_udc *udc)
+अणु
 	udc->resume_state = udc->usb_state;
 	udc->usb_state = USB_STATE_SUSPENDED;
 
 	/* report suspend to the driver ,serial.c not support this*/
-	if (udc->driver->suspend)
+	अगर (udc->driver->suspend)
 		udc->driver->suspend(&udc->gadget);
-}
+पूर्ण
 
-static void resume_irq(struct qe_udc *udc)
-{
+अटल व्योम resume_irq(काष्ठा qe_udc *udc)
+अणु
 	udc->usb_state = udc->resume_state;
 	udc->resume_state = 0;
 
 	/* report resume to the driver , serial.c not support this*/
-	if (udc->driver->resume)
+	अगर (udc->driver->resume)
 		udc->driver->resume(&udc->gadget);
-}
+पूर्ण
 
-static void idle_irq(struct qe_udc *udc)
-{
+अटल व्योम idle_irq(काष्ठा qe_udc *udc)
+अणु
 	u8 usbs;
 
 	usbs = in_8(&udc->usb_regs->usb_usbs);
-	if (usbs & USB_IDLE_STATUS_MASK) {
-		if ((udc->usb_state) != USB_STATE_SUSPENDED)
+	अगर (usbs & USB_IDLE_STATUS_MASK) अणु
+		अगर ((udc->usb_state) != USB_STATE_SUSPENDED)
 			suspend_irq(udc);
-	} else {
-		if (udc->usb_state == USB_STATE_SUSPENDED)
+	पूर्ण अन्यथा अणु
+		अगर (udc->usb_state == USB_STATE_SUSPENDED)
 			resume_irq(udc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int reset_irq(struct qe_udc *udc)
-{
-	unsigned char i;
+अटल पूर्णांक reset_irq(काष्ठा qe_udc *udc)
+अणु
+	अचिन्हित अक्षर i;
 
-	if (udc->usb_state == USB_STATE_DEFAULT)
-		return 0;
+	अगर (udc->usb_state == USB_STATE_DEFAULT)
+		वापस 0;
 
 	qe_usb_disable(udc);
 	out_8(&udc->usb_regs->usb_usadr, 0);
 
-	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
-		if (udc->eps[i].init)
+	क्रम (i = 0; i < USB_MAX_ENDPOINTS; i++) अणु
+		अगर (udc->eps[i].init)
 			qe_ep_reset(udc, i);
-	}
+	पूर्ण
 
 	reset_queues(udc);
 	udc->usb_state = USB_STATE_DEFAULT;
 	udc->ep0_state = WAIT_FOR_SETUP;
-	udc->ep0_dir = USB_DIR_OUT;
+	udc->ep0_dir = USB_सूची_OUT;
 	qe_usb_enable(udc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bsy_irq(struct qe_udc *udc)
-{
-	return 0;
-}
+अटल पूर्णांक bsy_irq(काष्ठा qe_udc *udc)
+अणु
+	वापस 0;
+पूर्ण
 
-static int txe_irq(struct qe_udc *udc)
-{
-	return 0;
-}
+अटल पूर्णांक txe_irq(काष्ठा qe_udc *udc)
+अणु
+	वापस 0;
+पूर्ण
 
-/* ep0 tx interrupt also in here */
-static int tx_irq(struct qe_udc *udc)
-{
-	struct qe_ep *ep;
-	struct qe_bd __iomem *bd;
-	int i, res = 0;
+/* ep0 tx पूर्णांकerrupt also in here */
+अटल पूर्णांक tx_irq(काष्ठा qe_udc *udc)
+अणु
+	काष्ठा qe_ep *ep;
+	काष्ठा qe_bd __iomem *bd;
+	पूर्णांक i, res = 0;
 
-	if ((udc->usb_state == USB_STATE_ADDRESS)
+	अगर ((udc->usb_state == USB_STATE_ADDRESS)
 		&& (in_8(&udc->usb_regs->usb_usadr) == 0))
 		out_8(&udc->usb_regs->usb_usadr, udc->device_address);
 
-	for (i = (USB_MAX_ENDPOINTS-1); ((i >= 0) && (res == 0)); i--) {
+	क्रम (i = (USB_MAX_ENDPOINTS-1); ((i >= 0) && (res == 0)); i--) अणु
 		ep = &udc->eps[i];
-		if (ep && ep->init && (ep->dir != USB_DIR_OUT)) {
+		अगर (ep && ep->init && (ep->dir != USB_सूची_OUT)) अणु
 			bd = ep->c_txbd;
-			if (!(in_be32((u32 __iomem *)bd) & T_R)
-						&& (in_be32(&bd->buf))) {
+			अगर (!(in_be32((u32 __iomem *)bd) & T_R)
+						&& (in_be32(&bd->buf))) अणु
 				/* confirm the transmitted bd */
-				if (ep->epnum == 0)
+				अगर (ep->epnum == 0)
 					res = qe_ep0_txconf(ep);
-				else
+				अन्यथा
 					res = qe_ep_txconf(ep);
-			}
-		}
-	}
-	return res;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस res;
+पूर्ण
 
 
 /* setup packect's rx is handle in the function too */
-static void rx_irq(struct qe_udc *udc)
-{
-	struct qe_ep *ep;
-	struct qe_bd __iomem *bd;
-	int i;
+अटल व्योम rx_irq(काष्ठा qe_udc *udc)
+अणु
+	काष्ठा qe_ep *ep;
+	काष्ठा qe_bd __iomem *bd;
+	पूर्णांक i;
 
-	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+	क्रम (i = 0; i < USB_MAX_ENDPOINTS; i++) अणु
 		ep = &udc->eps[i];
-		if (ep && ep->init && (ep->dir != USB_DIR_IN)) {
+		अगर (ep && ep->init && (ep->dir != USB_सूची_IN)) अणु
 			bd = ep->n_rxbd;
-			if (!(in_be32((u32 __iomem *)bd) & R_E)
-						&& (in_be32(&bd->buf))) {
-				if (ep->epnum == 0) {
+			अगर (!(in_be32((u32 __iomem *)bd) & R_E)
+						&& (in_be32(&bd->buf))) अणु
+				अगर (ep->epnum == 0) अणु
 					qe_ep0_rx(udc);
-				} else {
+				पूर्ण अन्यथा अणु
 					/*non-setup package receive*/
 					qe_ep_rx(ep);
-				}
-			}
-		}
-	}
-}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t qe_udc_irq(int irq, void *_udc)
-{
-	struct qe_udc *udc = (struct qe_udc *)_udc;
+अटल irqवापस_t qe_udc_irq(पूर्णांक irq, व्योम *_udc)
+अणु
+	काष्ठा qe_udc *udc = (काष्ठा qe_udc *)_udc;
 	u16 irq_src;
-	irqreturn_t status = IRQ_NONE;
-	unsigned long flags;
+	irqवापस_t status = IRQ_NONE;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
 	irq_src = in_be16(&udc->usb_regs->usb_usber) &
 		in_be16(&udc->usb_regs->usb_usbmr);
-	/* Clear notification bits */
+	/* Clear notअगरication bits */
 	out_be16(&udc->usb_regs->usb_usber, irq_src);
 	/* USB Interrupt */
-	if (irq_src & USB_E_IDLE_MASK) {
+	अगर (irq_src & USB_E_IDLE_MASK) अणु
 		idle_irq(udc);
 		irq_src &= ~USB_E_IDLE_MASK;
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (irq_src & USB_E_TXB_MASK) {
+	अगर (irq_src & USB_E_TXB_MASK) अणु
 		tx_irq(udc);
 		irq_src &= ~USB_E_TXB_MASK;
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (irq_src & USB_E_RXB_MASK) {
+	अगर (irq_src & USB_E_RXB_MASK) अणु
 		rx_irq(udc);
 		irq_src &= ~USB_E_RXB_MASK;
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (irq_src & USB_E_RESET_MASK) {
+	अगर (irq_src & USB_E_RESET_MASK) अणु
 		reset_irq(udc);
 		irq_src &= ~USB_E_RESET_MASK;
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (irq_src & USB_E_BSY_MASK) {
+	अगर (irq_src & USB_E_BSY_MASK) अणु
 		bsy_irq(udc);
 		irq_src &= ~USB_E_BSY_MASK;
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (irq_src & USB_E_TXE_MASK) {
+	अगर (irq_src & USB_E_TXE_MASK) अणु
 		txe_irq(udc);
 		irq_src &= ~USB_E_TXE_MASK;
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*-------------------------------------------------------------------------
-	Gadget driver probe and unregister.
+	Gadget driver probe and unरेजिस्टर.
  --------------------------------------------------------------------------*/
-static int fsl_qe_start(struct usb_gadget *gadget,
-		struct usb_gadget_driver *driver)
-{
-	struct qe_udc *udc;
-	unsigned long flags;
+अटल पूर्णांक fsl_qe_start(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_gadget_driver *driver)
+अणु
+	काष्ठा qe_udc *udc;
+	अचिन्हित दीर्घ flags;
 
-	udc = container_of(gadget, struct qe_udc, gadget);
+	udc = container_of(gadget, काष्ठा qe_udc, gadget);
 	/* lock is needed but whether should use this lock or another */
 	spin_lock_irqsave(&udc->lock, flags);
 
-	driver->driver.bus = NULL;
+	driver->driver.bus = शून्य;
 	/* hook up the driver */
 	udc->driver = driver;
 	udc->gadget.speed = driver->max_speed;
@@ -2288,20 +2289,20 @@ static int fsl_qe_start(struct usb_gadget *gadget,
 	out_be16(&udc->usb_regs->usb_usbmr, USB_E_DEFAULT_DEVICE);
 	udc->usb_state = USB_STATE_ATTACHED;
 	udc->ep0_state = WAIT_FOR_SETUP;
-	udc->ep0_dir = USB_DIR_OUT;
+	udc->ep0_dir = USB_सूची_OUT;
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsl_qe_stop(struct usb_gadget *gadget)
-{
-	struct qe_udc *udc;
-	struct qe_ep *loop_ep;
-	unsigned long flags;
+अटल पूर्णांक fsl_qe_stop(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा qe_udc *udc;
+	काष्ठा qe_ep *loop_ep;
+	अचिन्हित दीर्घ flags;
 
-	udc = container_of(gadget, struct qe_udc, gadget);
-	/* stop usb controller, disable intr */
+	udc = container_of(gadget, काष्ठा qe_udc, gadget);
+	/* stop usb controller, disable पूर्णांकr */
 	qe_usb_disable(udc);
 
 	/* in fact, no needed */
@@ -2313,72 +2314,72 @@ static int fsl_qe_stop(struct usb_gadget *gadget)
 	spin_lock_irqsave(&udc->lock, flags);
 	udc->gadget.speed = USB_SPEED_UNKNOWN;
 	nuke(&udc->eps[0], -ESHUTDOWN);
-	list_for_each_entry(loop_ep, &udc->gadget.ep_list, ep.ep_list)
+	list_क्रम_each_entry(loop_ep, &udc->gadget.ep_list, ep.ep_list)
 		nuke(loop_ep, -ESHUTDOWN);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	udc->driver = NULL;
+	udc->driver = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* udc structure's alloc and setup, include ep-param alloc */
-static struct qe_udc *qe_udc_config(struct platform_device *ofdev)
-{
-	struct qe_udc *udc;
-	struct device_node *np = ofdev->dev.of_node;
-	unsigned long tmp_addr = 0;
-	struct usb_device_para __iomem *usbpram;
-	unsigned int i;
+/* udc काष्ठाure's alloc and setup, include ep-param alloc */
+अटल काष्ठा qe_udc *qe_udc_config(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा qe_udc *udc;
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	अचिन्हित दीर्घ पंचांगp_addr = 0;
+	काष्ठा usb_device_para __iomem *usbpram;
+	अचिन्हित पूर्णांक i;
 	u64 size;
 	u32 offset;
 
-	udc = kzalloc(sizeof(*udc), GFP_KERNEL);
-	if (!udc)
-		goto cleanup;
+	udc = kzalloc(माप(*udc), GFP_KERNEL);
+	अगर (!udc)
+		जाओ cleanup;
 
 	udc->dev = &ofdev->dev;
 
-	/* get default address of usb parameter in MURAM from device tree */
-	offset = *of_get_address(np, 1, &size, NULL);
+	/* get शेष address of usb parameter in MURAM from device tree */
+	offset = *of_get_address(np, 1, &size, शून्य);
 	udc->usb_param = cpm_muram_addr(offset);
-	memset_io(udc->usb_param, 0, size);
+	स_रखो_io(udc->usb_param, 0, size);
 
 	usbpram = udc->usb_param;
 	out_be16(&usbpram->frame_n, 0);
 	out_be32(&usbpram->rstate, 0);
 
-	tmp_addr = cpm_muram_alloc((USB_MAX_ENDPOINTS *
-					sizeof(struct usb_ep_para)),
+	पंचांगp_addr = cpm_muram_alloc((USB_MAX_ENDPOINTS *
+					माप(काष्ठा usb_ep_para)),
 					   USB_EP_PARA_ALIGNMENT);
-	if (IS_ERR_VALUE(tmp_addr))
-		goto cleanup;
+	अगर (IS_ERR_VALUE(पंचांगp_addr))
+		जाओ cleanup;
 
-	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
-		out_be16(&usbpram->epptr[i], (u16)tmp_addr);
-		udc->ep_param[i] = cpm_muram_addr(tmp_addr);
-		tmp_addr += 32;
-	}
+	क्रम (i = 0; i < USB_MAX_ENDPOINTS; i++) अणु
+		out_be16(&usbpram->epptr[i], (u16)पंचांगp_addr);
+		udc->ep_param[i] = cpm_muram_addr(पंचांगp_addr);
+		पंचांगp_addr += 32;
+	पूर्ण
 
-	memset_io(udc->ep_param[0], 0,
-			USB_MAX_ENDPOINTS * sizeof(struct usb_ep_para));
+	स_रखो_io(udc->ep_param[0], 0,
+			USB_MAX_ENDPOINTS * माप(काष्ठा usb_ep_para));
 
 	udc->resume_state = USB_STATE_NOTATTACHED;
 	udc->usb_state = USB_STATE_POWERED;
 	udc->ep0_dir = 0;
 
 	spin_lock_init(&udc->lock);
-	return udc;
+	वापस udc;
 
 cleanup:
-	kfree(udc);
-	return NULL;
-}
+	kमुक्त(udc);
+	वापस शून्य;
+पूर्ण
 
-/* USB Controller register init */
-static int qe_udc_reg_init(struct qe_udc *udc)
-{
-	struct usb_ctlr __iomem *qe_usbregs;
+/* USB Controller रेजिस्टर init */
+अटल पूर्णांक qe_udc_reg_init(काष्ठा qe_udc *udc)
+अणु
+	काष्ठा usb_ctlr __iomem *qe_usbregs;
 	qe_usbregs = udc->usb_regs;
 
 	/* Spec says that we must enable the USB controller to change mode. */
@@ -2391,323 +2392,323 @@ static int qe_udc_reg_init(struct qe_udc *udc)
 	out_8(&qe_usbregs->usb_uscom, 0);
 	out_be16(&qe_usbregs->usb_usber, USBER_ALL_CLEAR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_ep_config(struct qe_udc *udc, unsigned char pipe_num)
-{
-	struct qe_ep *ep = &udc->eps[pipe_num];
+अटल पूर्णांक qe_ep_config(काष्ठा qe_udc *udc, अचिन्हित अक्षर pipe_num)
+अणु
+	काष्ठा qe_ep *ep = &udc->eps[pipe_num];
 
 	ep->udc = udc;
-	strcpy(ep->name, ep_name[pipe_num]);
+	म_नकल(ep->name, ep_name[pipe_num]);
 	ep->ep.name = ep_name[pipe_num];
 
-	if (pipe_num == 0) {
+	अगर (pipe_num == 0) अणु
 		ep->ep.caps.type_control = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		ep->ep.caps.type_iso = true;
 		ep->ep.caps.type_bulk = true;
-		ep->ep.caps.type_int = true;
-	}
+		ep->ep.caps.type_पूर्णांक = true;
+	पूर्ण
 
 	ep->ep.caps.dir_in = true;
 	ep->ep.caps.dir_out = true;
 
 	ep->ep.ops = &qe_ep_ops;
 	ep->stopped = 1;
-	usb_ep_set_maxpacket_limit(&ep->ep, (unsigned short) ~0);
-	ep->ep.desc = NULL;
+	usb_ep_set_maxpacket_limit(&ep->ep, (अचिन्हित लघु) ~0);
+	ep->ep.desc = शून्य;
 	ep->dir = 0xff;
 	ep->epnum = (u8)pipe_num;
 	ep->sent = 0;
 	ep->last = 0;
 	ep->init = 0;
-	ep->rxframe = NULL;
-	ep->txframe = NULL;
-	ep->tx_req = NULL;
+	ep->rxframe = शून्य;
+	ep->txframe = शून्य;
+	ep->tx_req = शून्य;
 	ep->state = EP_STATE_IDLE;
 	ep->has_data = 0;
 
-	/* the queue lists any req for this ep */
+	/* the queue lists any req क्रम this ep */
 	INIT_LIST_HEAD(&ep->queue);
 
-	/* gagdet.ep_list used for ep_autoconfig so no ep0*/
-	if (pipe_num != 0)
+	/* gagdet.ep_list used क्रम ep_स्वतःconfig so no ep0*/
+	अगर (pipe_num != 0)
 		list_add_tail(&ep->ep.ep_list, &udc->gadget.ep_list);
 
 	ep->gadget = &udc->gadget;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*-----------------------------------------------------------------------
  *	UDC device Driver operation functions				*
  *----------------------------------------------------------------------*/
-static void qe_udc_release(struct device *dev)
-{
-	struct qe_udc *udc = container_of(dev, struct qe_udc, gadget.dev);
-	int i;
+अटल व्योम qe_udc_release(काष्ठा device *dev)
+अणु
+	काष्ठा qe_udc *udc = container_of(dev, काष्ठा qe_udc, gadget.dev);
+	पूर्णांक i;
 
-	complete(udc->done);
-	cpm_muram_free(cpm_muram_offset(udc->ep_param[0]));
-	for (i = 0; i < USB_MAX_ENDPOINTS; i++)
-		udc->ep_param[i] = NULL;
+	complete(udc->करोne);
+	cpm_muram_मुक्त(cpm_muram_offset(udc->ep_param[0]));
+	क्रम (i = 0; i < USB_MAX_ENDPOINTS; i++)
+		udc->ep_param[i] = शून्य;
 
-	kfree(udc);
-}
+	kमुक्त(udc);
+पूर्ण
 
 /* Driver probe functions */
-static const struct of_device_id qe_udc_match[];
-static int qe_udc_probe(struct platform_device *ofdev)
-{
-	struct qe_udc *udc;
-	const struct of_device_id *match;
-	struct device_node *np = ofdev->dev.of_node;
-	struct qe_ep *ep;
-	unsigned int ret = 0;
-	unsigned int i;
-	const void *prop;
+अटल स्थिर काष्ठा of_device_id qe_udc_match[];
+अटल पूर्णांक qe_udc_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा qe_udc *udc;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा qe_ep *ep;
+	अचिन्हित पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक i;
+	स्थिर व्योम *prop;
 
 	match = of_match_device(qe_udc_match, &ofdev->dev);
-	if (!match)
-		return -EINVAL;
+	अगर (!match)
+		वापस -EINVAL;
 
-	prop = of_get_property(np, "mode", NULL);
-	if (!prop || strcmp(prop, "peripheral"))
-		return -ENODEV;
+	prop = of_get_property(np, "mode", शून्य);
+	अगर (!prop || म_भेद(prop, "peripheral"))
+		वापस -ENODEV;
 
-	/* Initialize the udc structure including QH member and other member */
+	/* Initialize the udc काष्ठाure including QH member and other member */
 	udc = qe_udc_config(ofdev);
-	if (!udc) {
+	अगर (!udc) अणु
 		dev_err(&ofdev->dev, "failed to initialize\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	udc->soc_type = (unsigned long)match->data;
+	udc->soc_type = (अचिन्हित दीर्घ)match->data;
 	udc->usb_regs = of_iomap(np, 0);
-	if (!udc->usb_regs) {
+	अगर (!udc->usb_regs) अणु
 		ret = -ENOMEM;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	/* initialize usb hw reg except for regs for EP,
-	 * leave usbintr reg untouched*/
+	/* initialize usb hw reg except क्रम regs क्रम EP,
+	 * leave usbपूर्णांकr reg untouched*/
 	qe_udc_reg_init(udc);
 
-	/* here comes the stand operations for probe
+	/* here comes the stand operations क्रम probe
 	 * set the qe_udc->gadget.xxx */
 	udc->gadget.ops = &qe_gadget_ops;
 
-	/* gadget.ep0 is a pointer */
+	/* gadget.ep0 is a poपूर्णांकer */
 	udc->gadget.ep0 = &udc->eps[0].ep;
 
 	INIT_LIST_HEAD(&udc->gadget.ep_list);
 
-	/* modify in register gadget process */
+	/* modअगरy in रेजिस्टर gadget process */
 	udc->gadget.speed = USB_SPEED_UNKNOWN;
 
-	/* name: Identifies the controller hardware type. */
+	/* name: Identअगरies the controller hardware type. */
 	udc->gadget.name = driver_name;
 	udc->gadget.dev.parent = &ofdev->dev;
 
-	/* initialize qe_ep struct */
-	for (i = 0; i < USB_MAX_ENDPOINTS ; i++) {
+	/* initialize qe_ep काष्ठा */
+	क्रम (i = 0; i < USB_MAX_ENDPOINTS ; i++) अणु
 		/* because the ep type isn't decide here so
 		 * qe_ep_init() should be called in ep_enable() */
 
-		/* setup the qe_ep struct and link ep.ep.list
-		 * into gadget.ep_list */
-		qe_ep_config(udc, (unsigned char)i);
-	}
+		/* setup the qe_ep काष्ठा and link ep.ep.list
+		 * पूर्णांकo gadget.ep_list */
+		qe_ep_config(udc, (अचिन्हित अक्षर)i);
+	पूर्ण
 
 	/* ep0 initialization in here */
 	ret = qe_ep_init(udc, 0, &qe_ep0_desc);
-	if (ret)
-		goto err2;
+	अगर (ret)
+		जाओ err2;
 
-	/* create a buf for ZLP send, need to remain zeroed */
+	/* create a buf क्रम ZLP send, need to reमुख्य zeroed */
 	udc->nullbuf = devm_kzalloc(&ofdev->dev, 256, GFP_KERNEL);
-	if (udc->nullbuf == NULL) {
+	अगर (udc->nullbuf == शून्य) अणु
 		ret = -ENOMEM;
-		goto err3;
-	}
+		जाओ err3;
+	पूर्ण
 
-	/* buffer for data of get_status request */
+	/* buffer क्रम data of get_status request */
 	udc->statusbuf = devm_kzalloc(&ofdev->dev, 2, GFP_KERNEL);
-	if (udc->statusbuf == NULL) {
+	अगर (udc->statusbuf == शून्य) अणु
 		ret = -ENOMEM;
-		goto err3;
-	}
+		जाओ err3;
+	पूर्ण
 
-	udc->nullp = virt_to_phys((void *)udc->nullbuf);
-	if (udc->nullp == DMA_ADDR_INVALID) {
+	udc->nullp = virt_to_phys((व्योम *)udc->nullbuf);
+	अगर (udc->nullp == DMA_ADDR_INVALID) अणु
 		udc->nullp = dma_map_single(
 					udc->gadget.dev.parent,
 					udc->nullbuf,
 					256,
 					DMA_TO_DEVICE);
 		udc->nullmap = 1;
-	} else {
-		dma_sync_single_for_device(udc->gadget.dev.parent,
+	पूर्ण अन्यथा अणु
+		dma_sync_single_क्रम_device(udc->gadget.dev.parent,
 					udc->nullp, 256,
 					DMA_TO_DEVICE);
-	}
+	पूर्ण
 
 	tasklet_setup(&udc->rx_tasklet, ep_rx_tasklet);
 	/* request irq and disable DR  */
 	udc->usb_irq = irq_of_parse_and_map(np, 0);
-	if (!udc->usb_irq) {
+	अगर (!udc->usb_irq) अणु
 		ret = -EINVAL;
-		goto err_noirq;
-	}
+		जाओ err_noirq;
+	पूर्ण
 
 	ret = request_irq(udc->usb_irq, qe_udc_irq, 0,
 				driver_name, udc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(udc->dev, "cannot request irq %d err %d\n",
 				udc->usb_irq, ret);
-		goto err4;
-	}
+		जाओ err4;
+	पूर्ण
 
 	ret = usb_add_gadget_udc_release(&ofdev->dev, &udc->gadget,
 			qe_udc_release);
-	if (ret)
-		goto err5;
+	अगर (ret)
+		जाओ err5;
 
-	platform_set_drvdata(ofdev, udc);
+	platक्रमm_set_drvdata(ofdev, udc);
 	dev_info(udc->dev,
 			"%s USB controller initialized as device\n",
 			(udc->soc_type == PORT_QE) ? "QE" : "CPM");
-	return 0;
+	वापस 0;
 
 err5:
-	free_irq(udc->usb_irq, udc);
+	मुक्त_irq(udc->usb_irq, udc);
 err4:
 	irq_dispose_mapping(udc->usb_irq);
 err_noirq:
-	if (udc->nullmap) {
+	अगर (udc->nullmap) अणु
 		dma_unmap_single(udc->gadget.dev.parent,
 			udc->nullp, 256,
 				DMA_TO_DEVICE);
 			udc->nullp = DMA_ADDR_INVALID;
-	} else {
-		dma_sync_single_for_cpu(udc->gadget.dev.parent,
+	पूर्ण अन्यथा अणु
+		dma_sync_single_क्रम_cpu(udc->gadget.dev.parent,
 			udc->nullp, 256,
 				DMA_TO_DEVICE);
-	}
+	पूर्ण
 err3:
 	ep = &udc->eps[0];
-	cpm_muram_free(cpm_muram_offset(ep->rxbase));
-	kfree(ep->rxframe);
-	kfree(ep->rxbuffer);
-	kfree(ep->txframe);
+	cpm_muram_मुक्त(cpm_muram_offset(ep->rxbase));
+	kमुक्त(ep->rxframe);
+	kमुक्त(ep->rxbuffer);
+	kमुक्त(ep->txframe);
 err2:
 	iounmap(udc->usb_regs);
 err1:
-	kfree(udc);
-	return ret;
-}
+	kमुक्त(udc);
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int qe_udc_suspend(struct platform_device *dev, pm_message_t state)
-{
-	return -ENOTSUPP;
-}
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक qe_udc_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int qe_udc_resume(struct platform_device *dev)
-{
-	return -ENOTSUPP;
-}
-#endif
+अटल पूर्णांक qe_udc_resume(काष्ठा platक्रमm_device *dev)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-static int qe_udc_remove(struct platform_device *ofdev)
-{
-	struct qe_udc *udc = platform_get_drvdata(ofdev);
-	struct qe_ep *ep;
-	unsigned int size;
-	DECLARE_COMPLETION_ONSTACK(done);
+अटल पूर्णांक qe_udc_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा qe_udc *udc = platक्रमm_get_drvdata(ofdev);
+	काष्ठा qe_ep *ep;
+	अचिन्हित पूर्णांक size;
+	DECLARE_COMPLETION_ONSTACK(करोne);
 
 	usb_del_gadget_udc(&udc->gadget);
 
-	udc->done = &done;
+	udc->करोne = &करोne;
 	tasklet_disable(&udc->rx_tasklet);
 
-	if (udc->nullmap) {
+	अगर (udc->nullmap) अणु
 		dma_unmap_single(udc->gadget.dev.parent,
 			udc->nullp, 256,
 				DMA_TO_DEVICE);
 			udc->nullp = DMA_ADDR_INVALID;
-	} else {
-		dma_sync_single_for_cpu(udc->gadget.dev.parent,
+	पूर्ण अन्यथा अणु
+		dma_sync_single_क्रम_cpu(udc->gadget.dev.parent,
 			udc->nullp, 256,
 				DMA_TO_DEVICE);
-	}
+	पूर्ण
 
 	ep = &udc->eps[0];
-	cpm_muram_free(cpm_muram_offset(ep->rxbase));
+	cpm_muram_मुक्त(cpm_muram_offset(ep->rxbase));
 	size = (ep->ep.maxpacket + USB_CRC_SIZE + 2) * (USB_BDRING_LEN + 1);
 
-	kfree(ep->rxframe);
-	if (ep->rxbufmap) {
+	kमुक्त(ep->rxframe);
+	अगर (ep->rxbufmap) अणु
 		dma_unmap_single(udc->gadget.dev.parent,
 				ep->rxbuf_d, size,
 				DMA_FROM_DEVICE);
 		ep->rxbuf_d = DMA_ADDR_INVALID;
-	} else {
-		dma_sync_single_for_cpu(udc->gadget.dev.parent,
+	पूर्ण अन्यथा अणु
+		dma_sync_single_क्रम_cpu(udc->gadget.dev.parent,
 				ep->rxbuf_d, size,
 				DMA_FROM_DEVICE);
-	}
+	पूर्ण
 
-	kfree(ep->rxbuffer);
-	kfree(ep->txframe);
+	kमुक्त(ep->rxbuffer);
+	kमुक्त(ep->txframe);
 
-	free_irq(udc->usb_irq, udc);
+	मुक्त_irq(udc->usb_irq, udc);
 	irq_dispose_mapping(udc->usb_irq);
 
-	tasklet_kill(&udc->rx_tasklet);
+	tasklet_समाप्त(&udc->rx_tasklet);
 
 	iounmap(udc->usb_regs);
 
-	/* wait for release() of gadget.dev to free udc */
-	wait_for_completion(&done);
+	/* रुको क्रम release() of gadget.dev to मुक्त udc */
+	रुको_क्रम_completion(&करोne);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
-static const struct of_device_id qe_udc_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id qe_udc_match[] = अणु
+	अणु
 		.compatible = "fsl,mpc8323-qe-usb",
-		.data = (void *)PORT_QE,
-	},
-	{
+		.data = (व्योम *)PORT_QE,
+	पूर्ण,
+	अणु
 		.compatible = "fsl,mpc8360-qe-usb",
-		.data = (void *)PORT_QE,
-	},
-	{
+		.data = (व्योम *)PORT_QE,
+	पूर्ण,
+	अणु
 		.compatible = "fsl,mpc8272-cpm-usb",
-		.data = (void *)PORT_CPM,
-	},
-	{},
-};
+		.data = (व्योम *)PORT_CPM,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, qe_udc_match);
 
-static struct platform_driver udc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver udc_driver = अणु
+	.driver = अणु
 		.name = driver_name,
 		.of_match_table = qe_udc_match,
-	},
+	पूर्ण,
 	.probe          = qe_udc_probe,
-	.remove         = qe_udc_remove,
-#ifdef CONFIG_PM
+	.हटाओ         = qe_udc_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.suspend        = qe_udc_suspend,
 	.resume         = qe_udc_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-module_platform_driver(udc_driver);
+module_platक्रमm_driver(udc_driver);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR(DRIVER_AUTHOR);

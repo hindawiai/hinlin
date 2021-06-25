@@ -1,44 +1,45 @@
+<शैली गुरु>
 /*
- * arch/xtensa/include/asm/stacktrace.h
+ * arch/xtensa/include/यंत्र/stacktrace.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2013 Tensilica Inc.
  */
-#ifndef _XTENSA_STACKTRACE_H
-#define _XTENSA_STACKTRACE_H
+#अगर_अघोषित _XTENSA_STACKTRACE_H
+#घोषणा _XTENSA_STACKTRACE_H
 
-#include <linux/sched.h>
+#समावेश <linux/sched.h>
 
-struct stackframe {
-	unsigned long pc;
-	unsigned long sp;
-};
+काष्ठा stackframe अणु
+	अचिन्हित दीर्घ pc;
+	अचिन्हित दीर्घ sp;
+पूर्ण;
 
-static __always_inline unsigned long *stack_pointer(struct task_struct *task)
-{
-	unsigned long *sp;
+अटल __always_अंतरभूत अचिन्हित दीर्घ *stack_poपूर्णांकer(काष्ठा task_काष्ठा *task)
+अणु
+	अचिन्हित दीर्घ *sp;
 
-	if (!task || task == current)
-		__asm__ __volatile__ ("mov %0, a1\n" : "=a"(sp));
-	else
-		sp = (unsigned long *)task->thread.sp;
+	अगर (!task || task == current)
+		__यंत्र__ __अस्थिर__ ("mov %0, a1\n" : "=a"(sp));
+	अन्यथा
+		sp = (अचिन्हित दीर्घ *)task->thपढ़ो.sp;
 
-	return sp;
-}
+	वापस sp;
+पूर्ण
 
-void walk_stackframe(unsigned long *sp,
-		int (*fn)(struct stackframe *frame, void *data),
-		void *data);
+व्योम walk_stackframe(अचिन्हित दीर्घ *sp,
+		पूर्णांक (*fn)(काष्ठा stackframe *frame, व्योम *data),
+		व्योम *data);
 
-void xtensa_backtrace_kernel(struct pt_regs *regs, unsigned int depth,
-			     int (*kfn)(struct stackframe *frame, void *data),
-			     int (*ufn)(struct stackframe *frame, void *data),
-			     void *data);
-void xtensa_backtrace_user(struct pt_regs *regs, unsigned int depth,
-			   int (*ufn)(struct stackframe *frame, void *data),
-			   void *data);
+व्योम xtensa_backtrace_kernel(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक depth,
+			     पूर्णांक (*kfn)(काष्ठा stackframe *frame, व्योम *data),
+			     पूर्णांक (*ufn)(काष्ठा stackframe *frame, व्योम *data),
+			     व्योम *data);
+व्योम xtensa_backtrace_user(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक depth,
+			   पूर्णांक (*ufn)(काष्ठा stackframe *frame, व्योम *data),
+			   व्योम *data);
 
-#endif /* _XTENSA_STACKTRACE_H */
+#पूर्ण_अगर /* _XTENSA_STACKTRACE_H */

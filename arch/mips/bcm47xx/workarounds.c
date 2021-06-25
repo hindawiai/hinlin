@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "bcm47xx_private.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "bcm47xx_private.h"
 
-#include <linux/gpio.h>
-#include <bcm47xx_board.h>
-#include <bcm47xx.h>
+#समावेश <linux/gpपन.स>
+#समावेश <bcm47xx_board.h>
+#समावेश <bcm47xx.h>
 
-static void __init bcm47xx_workarounds_enable_usb_power(int usb_power)
-{
-	int err;
+अटल व्योम __init bcm47xx_workarounds_enable_usb_घातer(पूर्णांक usb_घातer)
+अणु
+	पूर्णांक err;
 
-	err = gpio_request_one(usb_power, GPIOF_OUT_INIT_HIGH, "usb_power");
-	if (err)
+	err = gpio_request_one(usb_घातer, GPIOF_OUT_INIT_HIGH, "usb_power");
+	अगर (err)
 		pr_err("Failed to request USB power gpio: %d\n", err);
-	else
-		gpio_free(usb_power);
-}
+	अन्यथा
+		gpio_मुक्त(usb_घातer);
+पूर्ण
 
-void __init bcm47xx_workarounds(void)
-{
-	enum bcm47xx_board board = bcm47xx_board_get();
+व्योम __init bcm47xx_workarounds(व्योम)
+अणु
+	क्रमागत bcm47xx_board board = bcm47xx_board_get();
 
-	switch (board) {
-	case BCM47XX_BOARD_NETGEAR_WNR3500L:
-		bcm47xx_workarounds_enable_usb_power(12);
-		break;
-	case BCM47XX_BOARD_NETGEAR_WNDR3400V2:
-	case BCM47XX_BOARD_NETGEAR_WNDR3400_V3:
-		bcm47xx_workarounds_enable_usb_power(21);
-		break;
-	default:
+	चयन (board) अणु
+	हाल BCM47XX_BOARD_NETGEAR_WNR3500L:
+		bcm47xx_workarounds_enable_usb_घातer(12);
+		अवरोध;
+	हाल BCM47XX_BOARD_NETGEAR_WNDR3400V2:
+	हाल BCM47XX_BOARD_NETGEAR_WNDR3400_V3:
+		bcm47xx_workarounds_enable_usb_घातer(21);
+		अवरोध;
+	शेष:
 		/* No workaround(s) needed */
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण

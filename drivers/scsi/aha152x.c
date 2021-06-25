@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* aha152x.c -- Adaptec AHA-152x driver
- * Author: Jürgen E. Fischer, fischer@norbit.de
- * Copyright 1993-2004 Jürgen E. Fischer
+ * Author: Jथञrgen E. Fischer, fischer@norbit.de
+ * Copyright 1993-2004 Jथञrgen E. Fischer
  *
  * $Id: aha152x.c,v 2.7 2004/01/24 11:42:59 fischer Exp $
  *
  * $Log: aha152x.c,v $
  * Revision 2.7  2004/01/24 11:42:59  fischer
  * - gather code that is not used by PCMCIA at the end
- * - move request_region for !PCMCIA case to detection
- * - migration to new scsi host api (remove legacy code)
- * - free host scribble before scsi_done
+ * - move request_region क्रम !PCMCIA हाल to detection
+ * - migration to new scsi host api (हटाओ legacy code)
+ * - मुक्त host scribble beक्रमe scsi_करोne
  * - fix error handling
  * - one isapnp device added to id_table
  *
  * Revision 2.6  2003/10/30 20:52:47  fischer
- * - interfaces changes for kernel 2.6
- * - aha152x_probe_one introduced for pcmcia stub
+ * - पूर्णांकerfaces changes क्रम kernel 2.6
+ * - aha152x_probe_one पूर्णांकroduced क्रम pcmcia stub
  * - fixed pnpdev handling
- * - instead of allocation a new one, reuse command for request sense after check condition and reset
+ * - instead of allocation a new one, reuse command क्रम request sense after check condition and reset
  * - fixes race in is_complete
  *
  * Revision 2.5  2002/04/14 11:24:53  fischer
  * - isapnp support
- * - abort fixed
+ * - पात fixed
  * - 2.5 support
  *
  * Revision 2.4  2000/12/16 12:53:56  fischer
  * - allow REQUEST SENSE to be queued
- * - handle shared PCI interrupts
+ * - handle shared PCI पूर्णांकerrupts
  *
  * Revision 2.3  2000/11/04 16:40:26  fischer
  * - handle data overruns
- * - extend timeout for data phases
+ * - extend समयout क्रम data phases
  *
  * Revision 2.2  2000/08/08 19:54:53  fischer
  * - minor changes
  *
  * Revision 2.1  2000/05/17 16:23:17  fischer
  * - signature update
- * - fix for data out w/o scatter gather
+ * - fix क्रम data out w/o scatter gather
  *
  * Revision 2.0  1999/12/25 15:07:32  fischer
- * - interrupt routine completly reworked
- * - basic support for new eh code
+ * - पूर्णांकerrupt routine completly reworked
+ * - basic support क्रम new eh code
  *
  * Revision 1.21  1999/11/10 23:46:36  fischer
- * - default to synchronous operation
+ * - शेष to synchronous operation
  * - synchronous negotiation fixed
- * - added timeout to loops
+ * - added समयout to loops
  * - debugging output can be controlled through procfs
  *
  * Revision 1.20  1999/11/07 18:37:31  fischer
  * - synchronous operation works
- * - resid support for sg driver
+ * - resid support क्रम sg driver
  *
  * Revision 1.19  1999/11/02 22:39:59  fischer
  * - moved leading comments to README.aha152x
  * - new additional module parameters
- * - updates for 2.3
- * - support for the Tripace TC1550 controller
- * - interrupt handling changed
+ * - updates क्रम 2.3
+ * - support क्रम the Tripace TC1550 controller
+ * - पूर्णांकerrupt handling changed
  *
  * Revision 1.18  1996/09/07 20:10:40  fischer
  * - fixed can_queue handling (multiple outstanding commands working again)
  *
  * Revision 1.17  1996/08/17 16:05:14  fischer
  * - biosparam improved
- * - interrupt verification
- * - updated documentation
+ * - पूर्णांकerrupt verअगरication
+ * - updated करोcumentation
  * - cleanups
  *
  * Revision 1.16  1996/06/09 00:04:56  root
- * - added configuration symbols for insmod (aha152x/aha152x1)
+ * - added configuration symbols क्रम insmod (aha152x/aha152x1)
  *
  * Revision 1.15  1996/04/30 14:52:06  fischer
  * - proc info fixed
- * - support for extended translation for >1GB disks
+ * - support क्रम extended translation क्रम >1GB disks
  *
  * Revision 1.14  1996/01/17  15:11:20  fischer
  * - fixed lockup in MESSAGE IN phase after reconnection
@@ -84,7 +85,7 @@
  * Revision 1.13  1996/01/09  02:15:53  fischer
  * - some cleanups
  * - moved request_irq behind controller initialization
- *   (to avoid spurious interrupts)
+ *   (to aव्योम spurious पूर्णांकerrupts)
  *
  * Revision 1.12  1995/12/16  12:26:07  fischer
  * - barrier()s added
@@ -94,45 +95,45 @@
  * - some minor updates
  *
  * Revision 1.10  1995/07/22  19:18:45  fischer
- * - support for 2 controllers
+ * - support क्रम 2 controllers
  * - started synchronous data transfers (not working yet)
  *
  * Revision 1.9  1995/03/18  09:20:24  root
- * - patches for PCMCIA and modules
+ * - patches क्रम PCMCIA and modules
  *
  * Revision 1.8  1995/01/21  22:07:19  root
  * - snarf_region => request_region
- * - aha152x_intr interface change
+ * - aha152x_पूर्णांकr पूर्णांकerface change
  *
  * Revision 1.7  1995/01/02  23:19:36  root
  * - updated COMMAND_SIZE to cmd_len
  * - changed sti() to restore_flags()
- * - fixed some #ifdef which generated warnings
+ * - fixed some #अगर_घोषित which generated warnings
  *
  * Revision 1.6  1994/11/24  20:35:27  root
- * - problem with odd number of bytes in fifo fixed
+ * - problem with odd number of bytes in fअगरo fixed
  *
  * Revision 1.5  1994/10/30  14:39:56  root
- * - abort code fixed
+ * - पात code fixed
  * - debugging improved
  *
  * Revision 1.4  1994/09/12  11:33:01  root
  * - irqaction to request_irq
- * - abortion updated
+ * - पातion updated
  *
  * Revision 1.3  1994/08/04  13:53:05  root
- * - updates for mid-level-driver changes
+ * - updates क्रम mid-level-driver changes
  * - accept unexpected BUSFREE phase as error condition
  * - parity check now configurable
  *
  * Revision 1.2  1994/07/03  12:56:36  root
  * - cleaned up debugging code
  * - more tweaking on reset delays
- * - updated abort/reset code (pretty untested...)
+ * - updated पात/reset code (pretty untested...)
  *
  * Revision 1.1  1994/05/28  21:18:49  root
- * - update for mid-level interface change (abort-reset)
- * - delays after resets adjusted for some slow devices
+ * - update क्रम mid-level पूर्णांकerface change (पात-reset)
+ * - delays after resets adjusted क्रम some slow devices
  *
  * Revision 1.0  1994/03/25  12:52:00  root
  * - Fixed "more data than expected" problem
@@ -142,22 +143,22 @@
  * - minor changes in insw/outsw handling
  *
  * Revision 0.101  1993/12/13  01:16:27  root
- * - fixed STATUS phase (non-GOOD stati were dropped sometimes;
+ * - fixed STATUS phase (non-GOOD stati were dropped someबार;
  *   fixes problems with CD-ROM sector size detection & media change)
  *
  * Revision 0.100  1993/12/10  16:58:47  root
- * - fix for unsuccessful selections in case of non-continuous id assignments
+ * - fix क्रम unsuccessful selections in हाल of non-continuous id assignments
  *   on the scsi bus.
  *
  * Revision 0.99  1993/10/24  16:19:59  root
- * - fixed DATA IN (rare read errors gone)
+ * - fixed DATA IN (rare पढ़ो errors gone)
  *
  * Revision 0.98  1993/10/17  12:54:44  root
  * - fixed some recent fixes (shame on me)
  * - moved initialization of scratch area to aha152x_queue
  *
  * Revision 0.97  1993/10/09  18:53:53  root
- * - DATA IN fixed. Rarely left data in the fifo.
+ * - DATA IN fixed. Rarely left data in the fअगरo.
  *
  * Revision 0.96  1993/10/03  00:53:59  root
  * - minor changes on DATA IN
@@ -170,7 +171,7 @@
  * Revision 0.94  1993/09/18  14:08:22  root
  * - fixed bug in multiple outstanding command code
  * - changed detection
- * - support for kernel command line configuration
+ * - support क्रम kernel command line configuration
  * - reset corrected
  * - changed message handling
  *
@@ -182,15 +183,15 @@
  *
  * Revision 0.91  1993/09/12  20:51:46  root
  * added multiple outstanding commands
- * (some problem with this $%&? IBM device remain)
+ * (some problem with this $%&? IBM device reमुख्य)
  *
  * Revision 0.9  1993/09/12  11:11:22  root
- * - corrected auto-configuration
- * - changed the auto-configuration (added some '#define's)
- * - added support for dis-/reconnection
+ * - corrected स्वतः-configuration
+ * - changed the स्वतः-configuration (added some '#define's)
+ * - added support क्रम dis-/reconnection
  *
  * Revision 0.8  1993/09/06  23:09:39  root
- * - added support for the drive activity light
+ * - added support क्रम the drive activity light
  * - minor changes
  *
  * Revision 0.7  1993/09/05  14:30:15  root
@@ -198,19 +199,19 @@
  * - now using the new snarf_region code of 0.99pl13
  *
  * Revision 0.6  1993/09/02  11:01:38  root
- * first public release; added some signatures and biosparam()
+ * first खुला release; added some signatures and biosparam()
  *
  * Revision 0.5  1993/08/30  10:23:30  root
  * fixed timing problems with my IBM drive
  *
  * Revision 0.4  1993/08/29  14:06:52  root
- * fixed some problems with timeouts due incomplete commands
+ * fixed some problems with समयouts due incomplete commands
  *
  * Revision 0.3  1993/08/28  15:55:03  root
- * writing data works too.  mounted and worked on a dos partition
+ * writing data works too.  mounted and worked on a करोs partition
  *
  * Revision 0.2  1993/08/27  22:42:07  root
- * reading data works.  Mounted a msdos partition.
+ * पढ़ोing data works.  Mounted a msकरोs partition.
  *
  * Revision 0.1  1993/08/25  13:38:30  root
  * first "damn thing doesn't work" version
@@ -220,181 +221,181 @@
  *
  **************************************************************************
 
- see Documentation/scsi/aha152x.rst for configuration details
+ see Documentation/scsi/aha152x.rst क्रम configuration details
 
  **************************************************************************/
 
-#include <linux/module.h>
-#include <asm/irq.h>
-#include <linux/io.h>
-#include <linux/blkdev.h>
-#include <linux/completion.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/wait.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/proc_fs.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/isapnp.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <scsi/scsicam.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/isapnp.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <scsi/scsicam.h>
 
-#include "scsi.h"
-#include <scsi/scsi_dbg.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_transport_spi.h>
-#include <scsi/scsi_eh.h>
-#include "aha152x.h"
+#समावेश "scsi.h"
+#समावेश <scsi/scsi_dbg.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_transport_spi.h>
+#समावेश <scsi/scsi_eh.h>
+#समावेश "aha152x.h"
 
-static LIST_HEAD(aha152x_host_list);
+अटल LIST_HEAD(aha152x_host_list);
 
 
 /* DEFINES */
 
 /* For PCMCIA cards, always use AUTOCONF */
-#if defined(AHA152X_PCMCIA) || defined(MODULE)
-#if !defined(AUTOCONF)
-#define AUTOCONF
-#endif
-#endif
+#अगर defined(AHA152X_PCMCIA) || defined(MODULE)
+#अगर !defined(AUTOCONF)
+#घोषणा AUTOCONF
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#if !defined(AUTOCONF) && !defined(SETUP0)
-#error define AUTOCONF or SETUP0
-#endif
+#अगर !defined(AUTOCONF) && !defined(SETUP0)
+#त्रुटि define AUTOCONF or SETUP0
+#पूर्ण_अगर
 
-#define	DO_LOCK(flags)		spin_lock_irqsave(&QLOCK,flags)
-#define	DO_UNLOCK(flags)	spin_unlock_irqrestore(&QLOCK,flags)
+#घोषणा	DO_LOCK(flags)		spin_lock_irqsave(&QLOCK,flags)
+#घोषणा	DO_UNLOCK(flags)	spin_unlock_irqrestore(&QLOCK,flags)
 
-#define LEAD		"(scsi%d:%d:%d) "
-#define INFO_LEAD	KERN_INFO	LEAD
-#define CMDINFO(cmd) \
+#घोषणा LEAD		"(scsi%d:%d:%d) "
+#घोषणा INFO_LEAD	KERN_INFO	LEAD
+#घोषणा CMDINFO(cmd) \
 			(cmd) ? ((cmd)->device->host->host_no) : -1, \
                         (cmd) ? ((cmd)->device->id & 0x0f) : -1, \
 			(cmd) ? ((u8)(cmd)->device->lun & 0x07) : -1
 
-static inline void
-CMD_INC_RESID(struct scsi_cmnd *cmd, int inc)
-{
+अटल अंतरभूत व्योम
+CMD_INC_RESID(काष्ठा scsi_cmnd *cmd, पूर्णांक inc)
+अणु
 	scsi_set_resid(cmd, scsi_get_resid(cmd) + inc);
-}
+पूर्ण
 
-#define DELAY_DEFAULT 1000
+#घोषणा DELAY_DEFAULT 1000
 
-#if defined(AHA152X_PCMCIA)
-#define IRQ_MIN 0
-#define IRQ_MAX 16
-#else
-#define IRQ_MIN 9
-#if defined(__PPC)
-#define IRQ_MAX (nr_irqs-1)
-#else
-#define IRQ_MAX 12
-#endif
-#endif
+#अगर defined(AHA152X_PCMCIA)
+#घोषणा IRQ_MIN 0
+#घोषणा IRQ_MAX 16
+#अन्यथा
+#घोषणा IRQ_MIN 9
+#अगर defined(__PPC)
+#घोषणा IRQ_MAX (nr_irqs-1)
+#अन्यथा
+#घोषणा IRQ_MAX 12
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-enum {
+क्रमागत अणु
 	not_issued	= 0x0001,	/* command not yet issued */
 	selecting	= 0x0002,	/* target is being selected */
-	identified	= 0x0004,	/* IDENTIFY was sent */
+	identअगरied	= 0x0004,	/* IDENTIFY was sent */
 	disconnected	= 0x0008,	/* target disconnected */
 	completed	= 0x0010,	/* target sent COMMAND COMPLETE */
-	aborted		= 0x0020,	/* ABORT was sent */
+	पातed		= 0x0020,	/* ABORT was sent */
 	resetted	= 0x0040,	/* BUS DEVICE RESET was sent */
-	spiordy		= 0x0080,	/* waiting for SPIORDY to raise */
+	spiordy		= 0x0080,	/* रुकोing क्रम SPIORDY to उठाओ */
 	syncneg		= 0x0100,	/* synchronous negotiation in progress */
-	aborting	= 0x0200,	/* ABORT is pending */
+	पातing	= 0x0200,	/* ABORT is pending */
 	resetting	= 0x0400,	/* BUS DEVICE RESET is pending */
 	check_condition = 0x0800,	/* requesting sense after CHECK CONDITION */
-};
+पूर्ण;
 
-MODULE_AUTHOR("Jürgen Fischer");
+MODULE_AUTHOR("Jथञrgen Fischer");
 MODULE_DESCRIPTION(AHA152X_REVID);
 MODULE_LICENSE("GPL");
 
-#if !defined(AHA152X_PCMCIA)
-#if defined(MODULE)
-static int io[] = {0, 0};
-module_param_hw_array(io, int, ioport, NULL, 0);
+#अगर !defined(AHA152X_PCMCIA)
+#अगर defined(MODULE)
+अटल पूर्णांक io[] = अणु0, 0पूर्ण;
+module_param_hw_array(io, पूर्णांक, ioport, शून्य, 0);
 MODULE_PARM_DESC(io,"base io address of controller");
 
-static int irq[] = {0, 0};
-module_param_hw_array(irq, int, irq, NULL, 0);
+अटल पूर्णांक irq[] = अणु0, 0पूर्ण;
+module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0);
 MODULE_PARM_DESC(irq,"interrupt for controller");
 
-static int scsiid[] = {7, 7};
-module_param_array(scsiid, int, NULL, 0);
+अटल पूर्णांक scsiid[] = अणु7, 7पूर्ण;
+module_param_array(scsiid, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(scsiid,"scsi id of controller");
 
-static int reconnect[] = {1, 1};
-module_param_array(reconnect, int, NULL, 0);
+अटल पूर्णांक reconnect[] = अणु1, 1पूर्ण;
+module_param_array(reconnect, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(reconnect,"allow targets to disconnect");
 
-static int parity[] = {1, 1};
-module_param_array(parity, int, NULL, 0);
+अटल पूर्णांक parity[] = अणु1, 1पूर्ण;
+module_param_array(parity, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(parity,"use scsi parity");
 
-static int sync[] = {1, 1};
-module_param_array(sync, int, NULL, 0);
+अटल पूर्णांक sync[] = अणु1, 1पूर्ण;
+module_param_array(sync, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(sync,"use synchronous transfers");
 
-static int delay[] = {DELAY_DEFAULT, DELAY_DEFAULT};
-module_param_array(delay, int, NULL, 0);
+अटल पूर्णांक delay[] = अणुDELAY_DEFAULT, DELAY_DEFAULTपूर्ण;
+module_param_array(delay, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(delay,"scsi reset delay");
 
-static int exttrans[] = {0, 0};
-module_param_array(exttrans, int, NULL, 0);
+अटल पूर्णांक exttrans[] = अणु0, 0पूर्ण;
+module_param_array(exttrans, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(exttrans,"use extended translation");
 
-static int aha152x[] = {0, 11, 7, 1, 1, 0, DELAY_DEFAULT, 0};
-module_param_array(aha152x, int, NULL, 0);
+अटल पूर्णांक aha152x[] = अणु0, 11, 7, 1, 1, 0, DELAY_DEFAULT, 0पूर्ण;
+module_param_array(aha152x, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(aha152x, "parameters for first controller");
 
-static int aha152x1[] = {0, 11, 7, 1, 1, 0, DELAY_DEFAULT, 0};
-module_param_array(aha152x1, int, NULL, 0);
+अटल पूर्णांक aha152x1[] = अणु0, 11, 7, 1, 1, 0, DELAY_DEFAULT, 0पूर्ण;
+module_param_array(aha152x1, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(aha152x1, "parameters for second controller");
-#endif /* MODULE */
+#पूर्ण_अगर /* MODULE */
 
-#ifdef __ISAPNP__
-static struct isapnp_device_id id_table[] = {
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1502), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1505), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1510), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1515), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1520), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x2015), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1522), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x2215), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1530), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x3015), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1532), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x3215), 0 },
-	{ ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x6360), 0 },
-	{ ISAPNP_DEVICE_SINGLE_END, }
-};
+#अगर_घोषित __ISAPNP__
+अटल काष्ठा isapnp_device_id id_table[] = अणु
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1502), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1505), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1510), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1515), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1520), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x2015), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1522), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x2215), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1530), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x3015), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x1532), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x3215), 0 पूर्ण,
+	अणु ISAPNP_ANY_ID, ISAPNP_ANY_ID,	ISAPNP_VENDOR('A', 'D', 'P'), ISAPNP_FUNCTION(0x6360), 0 पूर्ण,
+	अणु ISAPNP_DEVICE_SINGLE_END, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(isapnp, id_table);
-#endif /* ISAPNP */
+#पूर्ण_अगर /* ISAPNP */
 
-#endif /* !AHA152X_PCMCIA */
+#पूर्ण_अगर /* !AHA152X_PCMCIA */
 
-static struct scsi_host_template aha152x_driver_template;
+अटल काष्ठा scsi_host_ढाँचा aha152x_driver_ढाँचा;
 
 /*
- * internal states of the host
+ * पूर्णांकernal states of the host
  *
  */
-enum aha152x_state {
+क्रमागत aha152x_state अणु
 	idle=0,
 	unknown,
-	seldo,
+	selकरो,
 	seldi,
 	selto,
-	busfree,
+	busमुक्त,
 	msgo,
 	cmd,
 	msgi,
@@ -404,340 +405,340 @@ enum aha152x_state {
 	parerr,
 	rsti,
 	maxstate
-};
+पूर्ण;
 
 /*
- * current state information of the host
+ * current state inक्रमmation of the host
  *
  */
-struct aha152x_hostdata {
-	struct scsi_cmnd *issue_SC;
+काष्ठा aha152x_hostdata अणु
+	काष्ठा scsi_cmnd *issue_SC;
 		/* pending commands to issue */
 
-	struct scsi_cmnd *current_SC;
+	काष्ठा scsi_cmnd *current_SC;
 		/* current command on the bus */
 
-	struct scsi_cmnd *disconnected_SC;
+	काष्ठा scsi_cmnd *disconnected_SC;
 		/* commands that disconnected */
 
-	struct scsi_cmnd *done_SC;
+	काष्ठा scsi_cmnd *करोne_SC;
 		/* command that was completed */
 
 	spinlock_t lock;
 		/* host lock */
 
-#if defined(AHA152X_STAT)
-	int	      total_commands;
-	int	      disconnections;
-	int	      busfree_without_any_action;
-	int	      busfree_without_old_command;
-	int	      busfree_without_new_command;
-	int	      busfree_without_done_command;
-	int	      busfree_with_check_condition;
-	int	      count[maxstate];
-	int	      count_trans[maxstate];
-	unsigned long time[maxstate];
-#endif
+#अगर defined(AHA152X_STAT)
+	पूर्णांक	      total_commands;
+	पूर्णांक	      disconnections;
+	पूर्णांक	      busमुक्त_without_any_action;
+	पूर्णांक	      busमुक्त_without_old_command;
+	पूर्णांक	      busमुक्त_without_new_command;
+	पूर्णांक	      busमुक्त_without_करोne_command;
+	पूर्णांक	      busमुक्त_with_check_condition;
+	पूर्णांक	      count[maxstate];
+	पूर्णांक	      count_trans[maxstate];
+	अचिन्हित दीर्घ समय[maxstate];
+#पूर्ण_अगर
 
-	int commands;		/* current number of commands */
+	पूर्णांक commands;		/* current number of commands */
 
-	int reconnect;		/* disconnection allowed */
-	int parity;		/* parity checking enabled */
-	int synchronous;	/* synchronous transferes enabled */
-	int delay;		/* reset out delay */
-	int ext_trans;		/* extended translation enabled */
+	पूर्णांक reconnect;		/* disconnection allowed */
+	पूर्णांक parity;		/* parity checking enabled */
+	पूर्णांक synchronous;	/* synchronous transferes enabled */
+	पूर्णांक delay;		/* reset out delay */
+	पूर्णांक ext_trans;		/* extended translation enabled */
 
-	int swint;		/* software-interrupt was fired during detect() */
-	int service;		/* bh needs to be run */
-	int in_intr;		/* bh is running */
+	पूर्णांक swपूर्णांक;		/* software-पूर्णांकerrupt was fired during detect() */
+	पूर्णांक service;		/* bh needs to be run */
+	पूर्णांक in_पूर्णांकr;		/* bh is running */
 
 	/* current state,
 	   previous state,
-	   last state different from current state */
-	enum aha152x_state state, prevstate, laststate;
+	   last state dअगरferent from current state */
+	क्रमागत aha152x_state state, prevstate, laststate;
 
-	int target;
+	पूर्णांक target;
 		/* reconnecting target */
 
-	unsigned char syncrate[8];
+	अचिन्हित अक्षर syncrate[8];
 		/* current synchronous transfer agreements */
 
-	unsigned char syncneg[8];
+	अचिन्हित अक्षर syncneg[8];
 		/* 0: no negotiation;
 		 * 1: negotiation in progress;
 		 * 2: negotiation completed
 		 */
 
-	int cmd_i;
+	पूर्णांक cmd_i;
 		/* number of sent bytes of current command */
 
-	int msgi_len;
+	पूर्णांक msgi_len;
 		/* number of received message bytes */
-	unsigned char msgi[256];
+	अचिन्हित अक्षर msgi[256];
 		/* received message bytes */
 
-	int msgo_i, msgo_len;
+	पूर्णांक msgo_i, msgo_len;
 		/* number of sent bytes and length of current messages */
-	unsigned char msgo[256];
+	अचिन्हित अक्षर msgo[256];
 		/* pending messages */
 
-	int data_len;
+	पूर्णांक data_len;
 		/* number of sent/received bytes in dataphase */
 
-	unsigned long io_port0;
-	unsigned long io_port1;
+	अचिन्हित दीर्घ io_port0;
+	अचिन्हित दीर्घ io_port1;
 
-#ifdef __ISAPNP__
-	struct pnp_dev *pnpdev;
-#endif
-	struct list_head host_list;
-};
+#अगर_घोषित __ISAPNP__
+	काष्ठा pnp_dev *pnpdev;
+#पूर्ण_अगर
+	काष्ठा list_head host_list;
+पूर्ण;
 
 
 /*
- * host specific command extension
+ * host specअगरic command extension
  *
  */
-struct aha152x_scdata {
-	struct scsi_cmnd *next;	/* next sc in queue */
-	struct completion *done;/* semaphore to block on */
-	struct scsi_eh_save ses;
-};
+काष्ठा aha152x_scdata अणु
+	काष्ठा scsi_cmnd *next;	/* next sc in queue */
+	काष्ठा completion *करोne;/* semaphore to block on */
+	काष्ठा scsi_eh_save ses;
+पूर्ण;
 
-/* access macros for hostdata */
+/* access macros क्रम hostdata */
 
-#define HOSTDATA(shpnt)		((struct aha152x_hostdata *) &shpnt->hostdata)
+#घोषणा HOSTDATA(shpnt)		((काष्ठा aha152x_hostdata *) &shpnt->hostdata)
 
-#define HOSTNO			((shpnt)->host_no)
+#घोषणा HOSTNO			((shpnt)->host_no)
 
-#define CURRENT_SC		(HOSTDATA(shpnt)->current_SC)
-#define DONE_SC			(HOSTDATA(shpnt)->done_SC)
-#define ISSUE_SC		(HOSTDATA(shpnt)->issue_SC)
-#define DISCONNECTED_SC		(HOSTDATA(shpnt)->disconnected_SC)
-#define QLOCK			(HOSTDATA(shpnt)->lock)
-#define QLOCKER			(HOSTDATA(shpnt)->locker)
-#define QLOCKERL		(HOSTDATA(shpnt)->lockerl)
+#घोषणा CURRENT_SC		(HOSTDATA(shpnt)->current_SC)
+#घोषणा DONE_SC			(HOSTDATA(shpnt)->करोne_SC)
+#घोषणा ISSUE_SC		(HOSTDATA(shpnt)->issue_SC)
+#घोषणा DISCONNECTED_SC		(HOSTDATA(shpnt)->disconnected_SC)
+#घोषणा QLOCK			(HOSTDATA(shpnt)->lock)
+#घोषणा QLOCKER			(HOSTDATA(shpnt)->locker)
+#घोषणा QLOCKERL		(HOSTDATA(shpnt)->lockerl)
 
-#define STATE			(HOSTDATA(shpnt)->state)
-#define PREVSTATE		(HOSTDATA(shpnt)->prevstate)
-#define LASTSTATE		(HOSTDATA(shpnt)->laststate)
+#घोषणा STATE			(HOSTDATA(shpnt)->state)
+#घोषणा PREVSTATE		(HOSTDATA(shpnt)->prevstate)
+#घोषणा LASTSTATE		(HOSTDATA(shpnt)->laststate)
 
-#define RECONN_TARGET		(HOSTDATA(shpnt)->target)
+#घोषणा RECONN_TARGET		(HOSTDATA(shpnt)->target)
 
-#define CMD_I			(HOSTDATA(shpnt)->cmd_i)
+#घोषणा CMD_I			(HOSTDATA(shpnt)->cmd_i)
 
-#define MSGO(i)			(HOSTDATA(shpnt)->msgo[i])
-#define MSGO_I			(HOSTDATA(shpnt)->msgo_i)
-#define MSGOLEN			(HOSTDATA(shpnt)->msgo_len)
-#define ADDMSGO(x)		(MSGOLEN<256 ? (void)(MSGO(MSGOLEN++)=x) : aha152x_error(shpnt,"MSGO overflow"))
+#घोषणा MSGO(i)			(HOSTDATA(shpnt)->msgo[i])
+#घोषणा MSGO_I			(HOSTDATA(shpnt)->msgo_i)
+#घोषणा MSGOLEN			(HOSTDATA(shpnt)->msgo_len)
+#घोषणा ADDMSGO(x)		(MSGOLEN<256 ? (व्योम)(MSGO(MSGOLEN++)=x) : aha152x_error(shpnt,"MSGO overflow"))
 
-#define MSGI(i)			(HOSTDATA(shpnt)->msgi[i])
-#define MSGILEN			(HOSTDATA(shpnt)->msgi_len)
-#define ADDMSGI(x)		(MSGILEN<256 ? (void)(MSGI(MSGILEN++)=x) : aha152x_error(shpnt,"MSGI overflow"))
+#घोषणा MSGI(i)			(HOSTDATA(shpnt)->msgi[i])
+#घोषणा MSGILEN			(HOSTDATA(shpnt)->msgi_len)
+#घोषणा ADDMSGI(x)		(MSGILEN<256 ? (व्योम)(MSGI(MSGILEN++)=x) : aha152x_error(shpnt,"MSGI overflow"))
 
-#define DATA_LEN		(HOSTDATA(shpnt)->data_len)
+#घोषणा DATA_LEN		(HOSTDATA(shpnt)->data_len)
 
-#define SYNCRATE		(HOSTDATA(shpnt)->syncrate[CURRENT_SC->device->id])
-#define SYNCNEG			(HOSTDATA(shpnt)->syncneg[CURRENT_SC->device->id])
+#घोषणा SYNCRATE		(HOSTDATA(shpnt)->syncrate[CURRENT_SC->device->id])
+#घोषणा SYNCNEG			(HOSTDATA(shpnt)->syncneg[CURRENT_SC->device->id])
 
-#define DELAY			(HOSTDATA(shpnt)->delay)
-#define EXT_TRANS		(HOSTDATA(shpnt)->ext_trans)
-#define TC1550			(HOSTDATA(shpnt)->tc1550)
-#define RECONNECT		(HOSTDATA(shpnt)->reconnect)
-#define PARITY			(HOSTDATA(shpnt)->parity)
-#define SYNCHRONOUS		(HOSTDATA(shpnt)->synchronous)
+#घोषणा DELAY			(HOSTDATA(shpnt)->delay)
+#घोषणा EXT_TRANS		(HOSTDATA(shpnt)->ext_trans)
+#घोषणा TC1550			(HOSTDATA(shpnt)->tc1550)
+#घोषणा RECONNECT		(HOSTDATA(shpnt)->reconnect)
+#घोषणा PARITY			(HOSTDATA(shpnt)->parity)
+#घोषणा SYNCHRONOUS		(HOSTDATA(shpnt)->synchronous)
 
-#define HOSTIOPORT0		(HOSTDATA(shpnt)->io_port0)
-#define HOSTIOPORT1		(HOSTDATA(shpnt)->io_port1)
+#घोषणा HOSTIOPORT0		(HOSTDATA(shpnt)->io_port0)
+#घोषणा HOSTIOPORT1		(HOSTDATA(shpnt)->io_port1)
 
-#define SCDATA(SCpnt)		((struct aha152x_scdata *) (SCpnt)->host_scribble)
-#define SCNEXT(SCpnt)		SCDATA(SCpnt)->next
-#define SCSEM(SCpnt)		SCDATA(SCpnt)->done
+#घोषणा SCDATA(SCpnt)		((काष्ठा aha152x_scdata *) (SCpnt)->host_scribble)
+#घोषणा SCNEXT(SCpnt)		SCDATA(SCpnt)->next
+#घोषणा SCSEM(SCpnt)		SCDATA(SCpnt)->करोne
 
-#define SG_ADDRESS(buffer)	((char *) sg_virt((buffer)))
+#घोषणा SG_ADDRESS(buffer)	((अक्षर *) sg_virt((buffer)))
 
 /* state handling */
-static void seldi_run(struct Scsi_Host *shpnt);
-static void seldo_run(struct Scsi_Host *shpnt);
-static void selto_run(struct Scsi_Host *shpnt);
-static void busfree_run(struct Scsi_Host *shpnt);
+अटल व्योम seldi_run(काष्ठा Scsi_Host *shpnt);
+अटल व्योम selकरो_run(काष्ठा Scsi_Host *shpnt);
+अटल व्योम selto_run(काष्ठा Scsi_Host *shpnt);
+अटल व्योम busमुक्त_run(काष्ठा Scsi_Host *shpnt);
 
-static void msgo_init(struct Scsi_Host *shpnt);
-static void msgo_run(struct Scsi_Host *shpnt);
-static void msgo_end(struct Scsi_Host *shpnt);
+अटल व्योम msgo_init(काष्ठा Scsi_Host *shpnt);
+अटल व्योम msgo_run(काष्ठा Scsi_Host *shpnt);
+अटल व्योम msgo_end(काष्ठा Scsi_Host *shpnt);
 
-static void cmd_init(struct Scsi_Host *shpnt);
-static void cmd_run(struct Scsi_Host *shpnt);
-static void cmd_end(struct Scsi_Host *shpnt);
+अटल व्योम cmd_init(काष्ठा Scsi_Host *shpnt);
+अटल व्योम cmd_run(काष्ठा Scsi_Host *shpnt);
+अटल व्योम cmd_end(काष्ठा Scsi_Host *shpnt);
 
-static void datai_init(struct Scsi_Host *shpnt);
-static void datai_run(struct Scsi_Host *shpnt);
-static void datai_end(struct Scsi_Host *shpnt);
+अटल व्योम datai_init(काष्ठा Scsi_Host *shpnt);
+अटल व्योम datai_run(काष्ठा Scsi_Host *shpnt);
+अटल व्योम datai_end(काष्ठा Scsi_Host *shpnt);
 
-static void datao_init(struct Scsi_Host *shpnt);
-static void datao_run(struct Scsi_Host *shpnt);
-static void datao_end(struct Scsi_Host *shpnt);
+अटल व्योम datao_init(काष्ठा Scsi_Host *shpnt);
+अटल व्योम datao_run(काष्ठा Scsi_Host *shpnt);
+अटल व्योम datao_end(काष्ठा Scsi_Host *shpnt);
 
-static void status_run(struct Scsi_Host *shpnt);
+अटल व्योम status_run(काष्ठा Scsi_Host *shpnt);
 
-static void msgi_run(struct Scsi_Host *shpnt);
-static void msgi_end(struct Scsi_Host *shpnt);
+अटल व्योम msgi_run(काष्ठा Scsi_Host *shpnt);
+अटल व्योम msgi_end(काष्ठा Scsi_Host *shpnt);
 
-static void parerr_run(struct Scsi_Host *shpnt);
-static void rsti_run(struct Scsi_Host *shpnt);
+अटल व्योम parerr_run(काष्ठा Scsi_Host *shpnt);
+अटल व्योम rsti_run(काष्ठा Scsi_Host *shpnt);
 
-static void is_complete(struct Scsi_Host *shpnt);
+अटल व्योम is_complete(काष्ठा Scsi_Host *shpnt);
 
 /*
  * driver states
  *
  */
-static struct {
-	char		*name;
-	void		(*init)(struct Scsi_Host *);
-	void		(*run)(struct Scsi_Host *);
-	void		(*end)(struct Scsi_Host *);
-	int		spio;
-} states[] = {
-	{ "idle",	NULL,		NULL,		NULL,		0},
-	{ "unknown",	NULL,		NULL,		NULL,		0},
-	{ "seldo",	NULL,		seldo_run,	NULL,		0},
-	{ "seldi",	NULL,		seldi_run,	NULL,		0},
-	{ "selto",	NULL,		selto_run,	NULL,		0},
-	{ "busfree",	NULL,		busfree_run,	NULL,		0},
-	{ "msgo",	msgo_init,	msgo_run,	msgo_end,	1},
-	{ "cmd",	cmd_init,	cmd_run,	cmd_end,	1},
-	{ "msgi",	NULL,		msgi_run,	msgi_end,	1},
-	{ "status",	NULL,		status_run,	NULL,		1},
-	{ "datai",	datai_init,	datai_run,	datai_end,	0},
-	{ "datao",	datao_init,	datao_run,	datao_end,	0},
-	{ "parerr",	NULL,		parerr_run,	NULL,		0},
-	{ "rsti",	NULL,		rsti_run,	NULL,		0},
-};
+अटल काष्ठा अणु
+	अक्षर		*name;
+	व्योम		(*init)(काष्ठा Scsi_Host *);
+	व्योम		(*run)(काष्ठा Scsi_Host *);
+	व्योम		(*end)(काष्ठा Scsi_Host *);
+	पूर्णांक		spio;
+पूर्ण states[] = अणु
+	अणु "idle",	शून्य,		शून्य,		शून्य,		0पूर्ण,
+	अणु "unknown",	शून्य,		शून्य,		शून्य,		0पूर्ण,
+	अणु "seldo",	शून्य,		selकरो_run,	शून्य,		0पूर्ण,
+	अणु "seldi",	शून्य,		seldi_run,	शून्य,		0पूर्ण,
+	अणु "selto",	शून्य,		selto_run,	शून्य,		0पूर्ण,
+	अणु "busfree",	शून्य,		busमुक्त_run,	शून्य,		0पूर्ण,
+	अणु "msgo",	msgo_init,	msgo_run,	msgo_end,	1पूर्ण,
+	अणु "cmd",	cmd_init,	cmd_run,	cmd_end,	1पूर्ण,
+	अणु "msgi",	शून्य,		msgi_run,	msgi_end,	1पूर्ण,
+	अणु "status",	शून्य,		status_run,	शून्य,		1पूर्ण,
+	अणु "datai",	datai_init,	datai_run,	datai_end,	0पूर्ण,
+	अणु "datao",	datao_init,	datao_run,	datao_end,	0पूर्ण,
+	अणु "parerr",	शून्य,		parerr_run,	शून्य,		0पूर्ण,
+	अणु "rsti",	शून्य,		rsti_run,	शून्य,		0पूर्ण,
+पूर्ण;
 
-/* setup & interrupt */
-static irqreturn_t intr(int irq, void *dev_id);
-static void reset_ports(struct Scsi_Host *shpnt);
-static void aha152x_error(struct Scsi_Host *shpnt, char *msg);
-static void done(struct Scsi_Host *shpnt, int error);
+/* setup & पूर्णांकerrupt */
+अटल irqवापस_t पूर्णांकr(पूर्णांक irq, व्योम *dev_id);
+अटल व्योम reset_ports(काष्ठा Scsi_Host *shpnt);
+अटल व्योम aha152x_error(काष्ठा Scsi_Host *shpnt, अक्षर *msg);
+अटल व्योम करोne(काष्ठा Scsi_Host *shpnt, पूर्णांक error);
 
 /* diagnostics */
-static void show_command(struct scsi_cmnd * ptr);
-static void show_queues(struct Scsi_Host *shpnt);
-static void disp_enintr(struct Scsi_Host *shpnt);
+अटल व्योम show_command(काष्ठा scsi_cmnd * ptr);
+अटल व्योम show_queues(काष्ठा Scsi_Host *shpnt);
+अटल व्योम disp_enपूर्णांकr(काष्ठा Scsi_Host *shpnt);
 
 
 /*
  *  queue services:
  *
  */
-static inline void append_SC(struct scsi_cmnd **SC, struct scsi_cmnd *new_SC)
-{
-	struct scsi_cmnd *end;
+अटल अंतरभूत व्योम append_SC(काष्ठा scsi_cmnd **SC, काष्ठा scsi_cmnd *new_SC)
+अणु
+	काष्ठा scsi_cmnd *end;
 
-	SCNEXT(new_SC) = NULL;
-	if (!*SC)
+	SCNEXT(new_SC) = शून्य;
+	अगर (!*SC)
 		*SC = new_SC;
-	else {
-		for (end = *SC; SCNEXT(end); end = SCNEXT(end))
+	अन्यथा अणु
+		क्रम (end = *SC; SCNEXT(end); end = SCNEXT(end))
 			;
 		SCNEXT(end) = new_SC;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline struct scsi_cmnd *remove_first_SC(struct scsi_cmnd ** SC)
-{
-	struct scsi_cmnd *ptr;
+अटल अंतरभूत काष्ठा scsi_cmnd *हटाओ_first_SC(काष्ठा scsi_cmnd ** SC)
+अणु
+	काष्ठा scsi_cmnd *ptr;
 
 	ptr = *SC;
-	if (ptr) {
+	अगर (ptr) अणु
 		*SC = SCNEXT(*SC);
-		SCNEXT(ptr)=NULL;
-	}
-	return ptr;
-}
+		SCNEXT(ptr)=शून्य;
+	पूर्ण
+	वापस ptr;
+पूर्ण
 
-static inline struct scsi_cmnd *remove_lun_SC(struct scsi_cmnd ** SC,
-					      int target, int lun)
-{
-	struct scsi_cmnd *ptr, *prev;
+अटल अंतरभूत काष्ठा scsi_cmnd *हटाओ_lun_SC(काष्ठा scsi_cmnd ** SC,
+					      पूर्णांक target, पूर्णांक lun)
+अणु
+	काष्ठा scsi_cmnd *ptr, *prev;
 
-	for (ptr = *SC, prev = NULL;
+	क्रम (ptr = *SC, prev = शून्य;
 	     ptr && ((ptr->device->id != target) || (ptr->device->lun != lun));
 	     prev = ptr, ptr = SCNEXT(ptr))
 	     ;
 
-	if (ptr) {
-		if (prev)
+	अगर (ptr) अणु
+		अगर (prev)
 			SCNEXT(prev) = SCNEXT(ptr);
-		else
+		अन्यथा
 			*SC = SCNEXT(ptr);
 
-		SCNEXT(ptr)=NULL;
-	}
+		SCNEXT(ptr)=शून्य;
+	पूर्ण
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static inline struct scsi_cmnd *remove_SC(struct scsi_cmnd **SC,
-					  struct scsi_cmnd *SCp)
-{
-	struct scsi_cmnd *ptr, *prev;
+अटल अंतरभूत काष्ठा scsi_cmnd *हटाओ_SC(काष्ठा scsi_cmnd **SC,
+					  काष्ठा scsi_cmnd *SCp)
+अणु
+	काष्ठा scsi_cmnd *ptr, *prev;
 
-	for (ptr = *SC, prev = NULL;
+	क्रम (ptr = *SC, prev = शून्य;
 	     ptr && SCp!=ptr;
 	     prev = ptr, ptr = SCNEXT(ptr))
 	     ;
 
-	if (ptr) {
-		if (prev)
+	अगर (ptr) अणु
+		अगर (prev)
 			SCNEXT(prev) = SCNEXT(ptr);
-		else
+		अन्यथा
 			*SC = SCNEXT(ptr);
 
-		SCNEXT(ptr)=NULL;
-	}
+		SCNEXT(ptr)=शून्य;
+	पूर्ण
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static irqreturn_t swintr(int irqno, void *dev_id)
-{
-	struct Scsi_Host *shpnt = dev_id;
+अटल irqवापस_t swपूर्णांकr(पूर्णांक irqno, व्योम *dev_id)
+अणु
+	काष्ठा Scsi_Host *shpnt = dev_id;
 
-	HOSTDATA(shpnt)->swint++;
+	HOSTDATA(shpnt)->swपूर्णांक++;
 
 	SETPORT(DMACNTRL0, INTEN);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-struct Scsi_Host *aha152x_probe_one(struct aha152x_setup *setup)
-{
-	struct Scsi_Host *shpnt;
+काष्ठा Scsi_Host *aha152x_probe_one(काष्ठा aha152x_setup *setup)
+अणु
+	काष्ठा Scsi_Host *shpnt;
 
-	shpnt = scsi_host_alloc(&aha152x_driver_template, sizeof(struct aha152x_hostdata));
-	if (!shpnt) {
-		printk(KERN_ERR "aha152x: scsi_host_alloc failed\n");
-		return NULL;
-	}
+	shpnt = scsi_host_alloc(&aha152x_driver_ढाँचा, माप(काष्ठा aha152x_hostdata));
+	अगर (!shpnt) अणु
+		prपूर्णांकk(KERN_ERR "aha152x: scsi_host_alloc failed\n");
+		वापस शून्य;
+	पूर्ण
 
-	memset(HOSTDATA(shpnt), 0, sizeof *HOSTDATA(shpnt));
+	स_रखो(HOSTDATA(shpnt), 0, माप *HOSTDATA(shpnt));
 	INIT_LIST_HEAD(&HOSTDATA(shpnt)->host_list);
 
-	/* need to have host registered before triggering any interrupt */
+	/* need to have host रेजिस्टरed beक्रमe triggering any पूर्णांकerrupt */
 	list_add_tail(&HOSTDATA(shpnt)->host_list, &aha152x_host_list);
 
 	shpnt->io_port   = setup->io_port;
 	shpnt->n_io_port = IO_RANGE;
 	shpnt->irq       = setup->irq;
 
-	if (!setup->tc1550) {
+	अगर (!setup->tc1550) अणु
 		HOSTIOPORT0 = setup->io_port;
 		HOSTIOPORT1 = setup->io_port;
-	} else {
+	पूर्ण अन्यथा अणु
 		HOSTIOPORT0 = setup->io_port+0x10;
 		HOSTIOPORT1 = setup->io_port-0x10;
-	}
+	पूर्ण
 
 	spin_lock_init(&QLOCK);
 	RECONNECT   = setup->reconnect;
@@ -749,11 +750,11 @@ struct Scsi_Host *aha152x_probe_one(struct aha152x_setup *setup)
 	SETPORT(SCSIID, setup->scsiid << 4);
 	shpnt->this_id = setup->scsiid;
 
-	if (setup->reconnect)
+	अगर (setup->reconnect)
 		shpnt->can_queue = AHA152X_MAXQUEUE;
 
 	/* RESET OUT */
-	printk("aha152x: resetting bus...\n");
+	prपूर्णांकk("aha152x: resetting bus...\n");
 	SETPORT(SCSISEQ, SCSIRSTO);
 	mdelay(256);
 	SETPORT(SCSISEQ, 0);
@@ -761,7 +762,7 @@ struct Scsi_Host *aha152x_probe_one(struct aha152x_setup *setup)
 
 	reset_ports(shpnt);
 
-	printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO
 	       "aha152x%d%s: "
 	       "vital data: rev=%x, "
 	       "io=0x%03lx (0x%03lx/0x%03lx), "
@@ -783,399 +784,399 @@ struct Scsi_Host *aha152x_probe_one(struct aha152x_setup *setup)
 	       DELAY,
 	       EXT_TRANS ? "enabled" : "disabled");
 
-	/* not expecting any interrupts */
+	/* not expecting any पूर्णांकerrupts */
 	SETPORT(SIMODE0, 0);
 	SETPORT(SIMODE1, 0);
 
-	if (request_irq(shpnt->irq, swintr, IRQF_SHARED, "aha152x", shpnt)) {
-		printk(KERN_ERR "aha152x%d: irq %d busy.\n", shpnt->host_no, shpnt->irq);
-		goto out_host_put;
-	}
+	अगर (request_irq(shpnt->irq, swपूर्णांकr, IRQF_SHARED, "aha152x", shpnt)) अणु
+		prपूर्णांकk(KERN_ERR "aha152x%d: irq %d busy.\n", shpnt->host_no, shpnt->irq);
+		जाओ out_host_put;
+	पूर्ण
 
-	HOSTDATA(shpnt)->swint = 0;
+	HOSTDATA(shpnt)->swपूर्णांक = 0;
 
-	printk(KERN_INFO "aha152x%d: trying software interrupt, ", shpnt->host_no);
+	prपूर्णांकk(KERN_INFO "aha152x%d: trying software interrupt, ", shpnt->host_no);
 
 	mb();
 	SETPORT(DMACNTRL0, SWINT|INTEN);
 	mdelay(1000);
-	free_irq(shpnt->irq, shpnt);
+	मुक्त_irq(shpnt->irq, shpnt);
 
-	if (!HOSTDATA(shpnt)->swint) {
-		if (TESTHI(DMASTAT, INTSTAT)) {
-			printk("lost.\n");
-		} else {
-			printk("failed.\n");
-		}
+	अगर (!HOSTDATA(shpnt)->swपूर्णांक) अणु
+		अगर (TESTHI(DMASTAT, INTSTAT)) अणु
+			prपूर्णांकk("lost.\n");
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk("failed.\n");
+		पूर्ण
 
 		SETPORT(DMACNTRL0, INTEN);
 
-		printk(KERN_ERR "aha152x%d: irq %d possibly wrong.  "
+		prपूर्णांकk(KERN_ERR "aha152x%d: irq %d possibly wrong.  "
 				"Please verify.\n", shpnt->host_no, shpnt->irq);
-		goto out_host_put;
-	}
-	printk("ok.\n");
+		जाओ out_host_put;
+	पूर्ण
+	prपूर्णांकk("ok.\n");
 
 
-	/* clear interrupts */
+	/* clear पूर्णांकerrupts */
 	SETPORT(SSTAT0, 0x7f);
 	SETPORT(SSTAT1, 0xef);
 
-	if (request_irq(shpnt->irq, intr, IRQF_SHARED, "aha152x", shpnt)) {
-		printk(KERN_ERR "aha152x%d: failed to reassign irq %d.\n", shpnt->host_no, shpnt->irq);
-		goto out_host_put;
-	}
+	अगर (request_irq(shpnt->irq, पूर्णांकr, IRQF_SHARED, "aha152x", shpnt)) अणु
+		prपूर्णांकk(KERN_ERR "aha152x%d: failed to reassign irq %d.\n", shpnt->host_no, shpnt->irq);
+		जाओ out_host_put;
+	पूर्ण
 
-	if( scsi_add_host(shpnt, NULL) ) {
-		free_irq(shpnt->irq, shpnt);
-		printk(KERN_ERR "aha152x%d: failed to add host.\n", shpnt->host_no);
-		goto out_host_put;
-	}
+	अगर( scsi_add_host(shpnt, शून्य) ) अणु
+		मुक्त_irq(shpnt->irq, shpnt);
+		prपूर्णांकk(KERN_ERR "aha152x%d: failed to add host.\n", shpnt->host_no);
+		जाओ out_host_put;
+	पूर्ण
 
 	scsi_scan_host(shpnt);
 
-	return shpnt;
+	वापस shpnt;
 
 out_host_put:
 	list_del(&HOSTDATA(shpnt)->host_list);
 	scsi_host_put(shpnt);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void aha152x_release(struct Scsi_Host *shpnt)
-{
-	if (!shpnt)
-		return;
+व्योम aha152x_release(काष्ठा Scsi_Host *shpnt)
+अणु
+	अगर (!shpnt)
+		वापस;
 
-	scsi_remove_host(shpnt);
-	if (shpnt->irq)
-		free_irq(shpnt->irq, shpnt);
+	scsi_हटाओ_host(shpnt);
+	अगर (shpnt->irq)
+		मुक्त_irq(shpnt->irq, shpnt);
 
-#if !defined(AHA152X_PCMCIA)
-	if (shpnt->io_port)
+#अगर !defined(AHA152X_PCMCIA)
+	अगर (shpnt->io_port)
 		release_region(shpnt->io_port, IO_RANGE);
-#endif
+#पूर्ण_अगर
 
-#ifdef __ISAPNP__
-	if (HOSTDATA(shpnt)->pnpdev)
+#अगर_घोषित __ISAPNP__
+	अगर (HOSTDATA(shpnt)->pnpdev)
 		pnp_device_detach(HOSTDATA(shpnt)->pnpdev);
-#endif
+#पूर्ण_अगर
 
 	list_del(&HOSTDATA(shpnt)->host_list);
 	scsi_host_put(shpnt);
-}
+पूर्ण
 
 
 /*
- * setup controller to generate interrupts depending
+ * setup controller to generate पूर्णांकerrupts depending
  * on current state (lock has to be acquired)
  *
  */
-static int setup_expected_interrupts(struct Scsi_Host *shpnt)
-{
-	if(CURRENT_SC) {
+अटल पूर्णांक setup_expected_पूर्णांकerrupts(काष्ठा Scsi_Host *shpnt)
+अणु
+	अगर(CURRENT_SC) अणु
 		CURRENT_SC->SCp.phase |= 1 << 16;
 
-		if(CURRENT_SC->SCp.phase & selecting) {
+		अगर(CURRENT_SC->SCp.phase & selecting) अणु
 			SETPORT(SSTAT1, SELTO);
 			SETPORT(SIMODE0, ENSELDO | (DISCONNECTED_SC ? ENSELDI : 0));
 			SETPORT(SIMODE1, ENSELTIMO);
-		} else {
+		पूर्ण अन्यथा अणु
 			SETPORT(SIMODE0, (CURRENT_SC->SCp.phase & spiordy) ? ENSPIORDY : 0);
 			SETPORT(SIMODE1, ENPHASEMIS | ENSCSIRST | ENSCSIPERR | ENBUSFREE);
-		}
-	} else if(STATE==seldi) {
+		पूर्ण
+	पूर्ण अन्यथा अगर(STATE==seldi) अणु
 		SETPORT(SIMODE0, 0);
 		SETPORT(SIMODE1, ENPHASEMIS | ENSCSIRST | ENSCSIPERR | ENBUSFREE);
-	} else {
+	पूर्ण अन्यथा अणु
 		SETPORT(SIMODE0, DISCONNECTED_SC ? ENSELDI : 0);
 		SETPORT(SIMODE1, ENSCSIRST | ( (ISSUE_SC||DONE_SC) ? ENBUSFREE : 0));
-	}
+	पूर्ण
 
-	if(!HOSTDATA(shpnt)->in_intr)
+	अगर(!HOSTDATA(shpnt)->in_पूर्णांकr)
 		SETBITS(DMACNTRL0, INTEN);
 
-	return TESTHI(DMASTAT, INTSTAT);
-}
+	वापस TESTHI(DMASTAT, INTSTAT);
+पूर्ण
 
 
 /*
- *  Queue a command and setup interrupts for a free bus.
+ *  Queue a command and setup पूर्णांकerrupts क्रम a मुक्त bus.
  */
-static int aha152x_internal_queue(struct scsi_cmnd *SCpnt,
-				  struct completion *complete,
-				  int phase, void (*done)(struct scsi_cmnd *))
-{
-	struct Scsi_Host *shpnt = SCpnt->device->host;
-	unsigned long flags;
+अटल पूर्णांक aha152x_पूर्णांकernal_queue(काष्ठा scsi_cmnd *SCpnt,
+				  काष्ठा completion *complete,
+				  पूर्णांक phase, व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
+	काष्ठा Scsi_Host *shpnt = SCpnt->device->host;
+	अचिन्हित दीर्घ flags;
 
-	SCpnt->scsi_done	= done;
+	SCpnt->scsi_करोne	= करोne;
 	SCpnt->SCp.phase	= not_issued | phase;
 	SCpnt->SCp.Status	= 0x1; /* Ilegal status by SCSI standard */
 	SCpnt->SCp.Message	= 0;
 	SCpnt->SCp.have_data_in	= 0;
 	SCpnt->SCp.sent_command	= 0;
 
-	if(SCpnt->SCp.phase & (resetting|check_condition)) {
-		if (!SCpnt->host_scribble || SCSEM(SCpnt) || SCNEXT(SCpnt)) {
-			scmd_printk(KERN_ERR, SCpnt, "cannot reuse command\n");
-			return FAILED;
-		}
-	} else {
-		SCpnt->host_scribble = kmalloc(sizeof(struct aha152x_scdata), GFP_ATOMIC);
-		if(!SCpnt->host_scribble) {
-			scmd_printk(KERN_ERR, SCpnt, "allocation failed\n");
-			return FAILED;
-		}
-	}
+	अगर(SCpnt->SCp.phase & (resetting|check_condition)) अणु
+		अगर (!SCpnt->host_scribble || SCSEM(SCpnt) || SCNEXT(SCpnt)) अणु
+			scmd_prपूर्णांकk(KERN_ERR, SCpnt, "cannot reuse command\n");
+			वापस FAILED;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		SCpnt->host_scribble = kदो_स्मृति(माप(काष्ठा aha152x_scdata), GFP_ATOMIC);
+		अगर(!SCpnt->host_scribble) अणु
+			scmd_prपूर्णांकk(KERN_ERR, SCpnt, "allocation failed\n");
+			वापस FAILED;
+		पूर्ण
+	पूर्ण
 
-	SCNEXT(SCpnt)		= NULL;
+	SCNEXT(SCpnt)		= शून्य;
 	SCSEM(SCpnt)		= complete;
 
 	/* setup scratch area
-	   SCp.ptr              : buffer pointer
+	   SCp.ptr              : buffer poपूर्णांकer
 	   SCp.this_residual    : buffer length
 	   SCp.buffer           : next buffer
 	   SCp.phase            : current state of the command */
 
-	if ((phase & resetting) || !scsi_sglist(SCpnt)) {
-		SCpnt->SCp.ptr           = NULL;
+	अगर ((phase & resetting) || !scsi_sglist(SCpnt)) अणु
+		SCpnt->SCp.ptr           = शून्य;
 		SCpnt->SCp.this_residual = 0;
 		scsi_set_resid(SCpnt, 0);
-		SCpnt->SCp.buffer           = NULL;
-	} else {
+		SCpnt->SCp.buffer           = शून्य;
+	पूर्ण अन्यथा अणु
 		scsi_set_resid(SCpnt, scsi_bufflen(SCpnt));
 		SCpnt->SCp.buffer           = scsi_sglist(SCpnt);
 		SCpnt->SCp.ptr              = SG_ADDRESS(SCpnt->SCp.buffer);
 		SCpnt->SCp.this_residual    = SCpnt->SCp.buffer->length;
-	}
+	पूर्ण
 
 	DO_LOCK(flags);
 
-#if defined(AHA152X_STAT)
+#अगर defined(AHA152X_STAT)
 	HOSTDATA(shpnt)->total_commands++;
-#endif
+#पूर्ण_अगर
 
 	/* Turn led on, when this is the first command. */
 	HOSTDATA(shpnt)->commands++;
-	if (HOSTDATA(shpnt)->commands==1)
+	अगर (HOSTDATA(shpnt)->commands==1)
 		SETPORT(PORTA, 1);
 
 	append_SC(&ISSUE_SC, SCpnt);
 
-	if(!HOSTDATA(shpnt)->in_intr)
-		setup_expected_interrupts(shpnt);
+	अगर(!HOSTDATA(shpnt)->in_पूर्णांकr)
+		setup_expected_पूर्णांकerrupts(shpnt);
 
 	DO_UNLOCK(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *  queue a command
  *
  */
-static int aha152x_queue_lck(struct scsi_cmnd *SCpnt,
-			     void (*done)(struct scsi_cmnd *))
-{
-	return aha152x_internal_queue(SCpnt, NULL, 0, done);
-}
+अटल पूर्णांक aha152x_queue_lck(काष्ठा scsi_cmnd *SCpnt,
+			     व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
+	वापस aha152x_पूर्णांकernal_queue(SCpnt, शून्य, 0, करोne);
+पूर्ण
 
-static DEF_SCSI_QCMD(aha152x_queue)
+अटल DEF_SCSI_QCMD(aha152x_queue)
 
 
 /*
  *
  */
-static void reset_done(struct scsi_cmnd *SCpnt)
-{
-	if(SCSEM(SCpnt)) {
+अटल व्योम reset_करोne(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	अगर(SCSEM(SCpnt)) अणु
 		complete(SCSEM(SCpnt));
-	} else {
-		printk(KERN_ERR "aha152x: reset_done w/o completion\n");
-	}
-}
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "aha152x: reset_done w/o completion\n");
+	पूर्ण
+पूर्ण
 
 /*
  *  Abort a command
  *
  */
-static int aha152x_abort(struct scsi_cmnd *SCpnt)
-{
-	struct Scsi_Host *shpnt = SCpnt->device->host;
-	struct scsi_cmnd *ptr;
-	unsigned long flags;
+अटल पूर्णांक aha152x_पात(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	काष्ठा Scsi_Host *shpnt = SCpnt->device->host;
+	काष्ठा scsi_cmnd *ptr;
+	अचिन्हित दीर्घ flags;
 
 	DO_LOCK(flags);
 
-	ptr=remove_SC(&ISSUE_SC, SCpnt);
+	ptr=हटाओ_SC(&ISSUE_SC, SCpnt);
 
-	if(ptr) {
+	अगर(ptr) अणु
 		HOSTDATA(shpnt)->commands--;
-		if (!HOSTDATA(shpnt)->commands)
+		अगर (!HOSTDATA(shpnt)->commands)
 			SETPORT(PORTA, 0);
 		DO_UNLOCK(flags);
 
-		kfree(SCpnt->host_scribble);
-		SCpnt->host_scribble=NULL;
+		kमुक्त(SCpnt->host_scribble);
+		SCpnt->host_scribble=शून्य;
 
-		return SUCCESS;
-	}
+		वापस SUCCESS;
+	पूर्ण
 
 	DO_UNLOCK(flags);
 
 	/*
 	 * FIXME:
-	 * for current command: queue ABORT for message out and raise ATN
-	 * for disconnected command: pseudo SC with ABORT message or ABORT on reselection?
+	 * क्रम current command: queue ABORT क्रम message out and उठाओ ATN
+	 * क्रम disconnected command: pseuकरो SC with ABORT message or ABORT on reselection?
 	 *
 	 */
 
-	scmd_printk(KERN_ERR, SCpnt,
+	scmd_prपूर्णांकk(KERN_ERR, SCpnt,
 		    "cannot abort running or disconnected command\n");
 
-	return FAILED;
-}
+	वापस FAILED;
+पूर्ण
 
 /*
  * Reset a device
  *
  */
-static int aha152x_device_reset(struct scsi_cmnd * SCpnt)
-{
-	struct Scsi_Host *shpnt = SCpnt->device->host;
-	DECLARE_COMPLETION(done);
-	int ret, issued, disconnected;
-	unsigned char old_cmd_len = SCpnt->cmd_len;
-	unsigned long flags;
-	unsigned long timeleft;
+अटल पूर्णांक aha152x_device_reset(काष्ठा scsi_cmnd * SCpnt)
+अणु
+	काष्ठा Scsi_Host *shpnt = SCpnt->device->host;
+	DECLARE_COMPLETION(करोne);
+	पूर्णांक ret, issued, disconnected;
+	अचिन्हित अक्षर old_cmd_len = SCpnt->cmd_len;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ समयleft;
 
-	if(CURRENT_SC==SCpnt) {
-		scmd_printk(KERN_ERR, SCpnt, "cannot reset current device\n");
-		return FAILED;
-	}
+	अगर(CURRENT_SC==SCpnt) अणु
+		scmd_prपूर्णांकk(KERN_ERR, SCpnt, "cannot reset current device\n");
+		वापस FAILED;
+	पूर्ण
 
 	DO_LOCK(flags);
-	issued       = remove_SC(&ISSUE_SC, SCpnt) == NULL;
-	disconnected = issued && remove_SC(&DISCONNECTED_SC, SCpnt);
+	issued       = हटाओ_SC(&ISSUE_SC, SCpnt) == शून्य;
+	disconnected = issued && हटाओ_SC(&DISCONNECTED_SC, SCpnt);
 	DO_UNLOCK(flags);
 
 	SCpnt->cmd_len         = 0;
 
-	aha152x_internal_queue(SCpnt, &done, resetting, reset_done);
+	aha152x_पूर्णांकernal_queue(SCpnt, &करोne, resetting, reset_करोne);
 
-	timeleft = wait_for_completion_timeout(&done, 100*HZ);
-	if (!timeleft) {
-		/* remove command from issue queue */
+	समयleft = रुको_क्रम_completion_समयout(&करोne, 100*HZ);
+	अगर (!समयleft) अणु
+		/* हटाओ command from issue queue */
 		DO_LOCK(flags);
-		remove_SC(&ISSUE_SC, SCpnt);
+		हटाओ_SC(&ISSUE_SC, SCpnt);
 		DO_UNLOCK(flags);
-	}
+	पूर्ण
 
 	SCpnt->cmd_len         = old_cmd_len;
 
 	DO_LOCK(flags);
 
-	if(SCpnt->SCp.phase & resetted) {
+	अगर(SCpnt->SCp.phase & resetted) अणु
 		HOSTDATA(shpnt)->commands--;
-		if (!HOSTDATA(shpnt)->commands)
+		अगर (!HOSTDATA(shpnt)->commands)
 			SETPORT(PORTA, 0);
-		kfree(SCpnt->host_scribble);
-		SCpnt->host_scribble=NULL;
+		kमुक्त(SCpnt->host_scribble);
+		SCpnt->host_scribble=शून्य;
 
 		ret = SUCCESS;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* requeue */
-		if(!issued) {
+		अगर(!issued) अणु
 			append_SC(&ISSUE_SC, SCpnt);
-		} else if(disconnected) {
+		पूर्ण अन्यथा अगर(disconnected) अणु
 			append_SC(&DISCONNECTED_SC, SCpnt);
-		}
+		पूर्ण
 
 		ret = FAILED;
-	}
+	पूर्ण
 
 	DO_UNLOCK(flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void free_hard_reset_SCs(struct Scsi_Host *shpnt,
-				struct scsi_cmnd **SCs)
-{
-	struct scsi_cmnd *ptr;
+अटल व्योम मुक्त_hard_reset_SCs(काष्ठा Scsi_Host *shpnt,
+				काष्ठा scsi_cmnd **SCs)
+अणु
+	काष्ठा scsi_cmnd *ptr;
 
 	ptr=*SCs;
-	while(ptr) {
-		struct scsi_cmnd *next;
+	जबतक(ptr) अणु
+		काष्ठा scsi_cmnd *next;
 
-		if(SCDATA(ptr)) {
+		अगर(SCDATA(ptr)) अणु
 			next = SCNEXT(ptr);
-		} else {
-			scmd_printk(KERN_DEBUG, ptr,
+		पूर्ण अन्यथा अणु
+			scmd_prपूर्णांकk(KERN_DEBUG, ptr,
 				    "queue corrupted at %p\n", ptr);
-			next = NULL;
-		}
+			next = शून्य;
+		पूर्ण
 
-		if (!ptr->device->soft_reset) {
-			remove_SC(SCs, ptr);
+		अगर (!ptr->device->soft_reset) अणु
+			हटाओ_SC(SCs, ptr);
 			HOSTDATA(shpnt)->commands--;
-			kfree(ptr->host_scribble);
-			ptr->host_scribble=NULL;
-		}
+			kमुक्त(ptr->host_scribble);
+			ptr->host_scribble=शून्य;
+		पूर्ण
 
 		ptr = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Reset the bus
  *
- * AIC-6260 has a hard reset (MRST signal), but apparently
+ * AIC-6260 has a hard reset (MRST संकेत), but apparently
  * one cannot trigger it via software. So live with
  * a soft reset; no-one seemed to have cared.
  */
-static int aha152x_bus_reset_host(struct Scsi_Host *shpnt)
-{
-	unsigned long flags;
+अटल पूर्णांक aha152x_bus_reset_host(काष्ठा Scsi_Host *shpnt)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	DO_LOCK(flags);
 
-	free_hard_reset_SCs(shpnt, &ISSUE_SC);
-	free_hard_reset_SCs(shpnt, &DISCONNECTED_SC);
+	मुक्त_hard_reset_SCs(shpnt, &ISSUE_SC);
+	मुक्त_hard_reset_SCs(shpnt, &DISCONNECTED_SC);
 
 	SETPORT(SCSISEQ, SCSIRSTO);
 	mdelay(256);
 	SETPORT(SCSISEQ, 0);
 	mdelay(DELAY);
 
-	setup_expected_interrupts(shpnt);
-	if(HOSTDATA(shpnt)->commands==0)
+	setup_expected_पूर्णांकerrupts(shpnt);
+	अगर(HOSTDATA(shpnt)->commands==0)
 		SETPORT(PORTA, 0);
 
 	DO_UNLOCK(flags);
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
 /*
  * Reset the bus
  *
  */
-static int aha152x_bus_reset(struct scsi_cmnd *SCpnt)
-{
-	return aha152x_bus_reset_host(SCpnt->device->host);
-}
+अटल पूर्णांक aha152x_bus_reset(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	वापस aha152x_bus_reset_host(SCpnt->device->host);
+पूर्ण
 
 /*
- *  Restore default values to the AIC-6260 registers and reset the fifos
+ *  Restore शेष values to the AIC-6260 रेजिस्टरs and reset the fअगरos
  *
  */
-static void reset_ports(struct Scsi_Host *shpnt)
-{
-	unsigned long flags;
+अटल व्योम reset_ports(काष्ठा Scsi_Host *shpnt)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	/* disable interrupts */
+	/* disable पूर्णांकerrupts */
 	SETPORT(DMACNTRL0, RSTFIFO);
 
 	SETPORT(SCSISEQ, 0);
@@ -1184,7 +1185,7 @@ static void reset_ports(struct Scsi_Host *shpnt)
 	SETPORT(SCSISIG, 0);
 	SETRATE(0);
 
-	/* clear all interrupt conditions */
+	/* clear all पूर्णांकerrupt conditions */
 	SETPORT(SSTAT0, 0x7f);
 	SETPORT(SSTAT1, 0xef);
 
@@ -1195,315 +1196,315 @@ static void reset_ports(struct Scsi_Host *shpnt)
 
 	SETPORT(BRSTCNTRL, 0xf1);
 
-	/* clear SCSI fifos and transfer count */
+	/* clear SCSI fअगरos and transfer count */
 	SETPORT(SXFRCTL0, CH1|CLRCH1|CLRSTCNT);
 	SETPORT(SXFRCTL0, CH1);
 
 	DO_LOCK(flags);
-	setup_expected_interrupts(shpnt);
+	setup_expected_पूर्णांकerrupts(shpnt);
 	DO_UNLOCK(flags);
-}
+पूर्ण
 
 /*
  * Reset the host (bus and controller)
  *
  */
-int aha152x_host_reset_host(struct Scsi_Host *shpnt)
-{
+पूर्णांक aha152x_host_reset_host(काष्ठा Scsi_Host *shpnt)
+अणु
 	aha152x_bus_reset_host(shpnt);
 	reset_ports(shpnt);
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
 /*
  * Return the "logical geometry"
  *
  */
-static int aha152x_biosparam(struct scsi_device *sdev, struct block_device *bdev,
-		sector_t capacity, int *info_array)
-{
-	struct Scsi_Host *shpnt = sdev->host;
+अटल पूर्णांक aha152x_biosparam(काष्ठा scsi_device *sdev, काष्ठा block_device *bdev,
+		sector_t capacity, पूर्णांक *info_array)
+अणु
+	काष्ठा Scsi_Host *shpnt = sdev->host;
 
-	/* try default translation */
+	/* try शेष translation */
 	info_array[0] = 64;
 	info_array[1] = 32;
-	info_array[2] = (unsigned long)capacity / (64 * 32);
+	info_array[2] = (अचिन्हित दीर्घ)capacity / (64 * 32);
 
-	/* for disks >1GB do some guessing */
-	if (info_array[2] >= 1024) {
-		int info[3];
+	/* क्रम disks >1GB करो some guessing */
+	अगर (info_array[2] >= 1024) अणु
+		पूर्णांक info[3];
 
 		/* try to figure out the geometry from the partition table */
-		if (scsicam_bios_param(bdev, capacity, info) < 0 ||
-		    !((info[0] == 64 && info[1] == 32) || (info[0] == 255 && info[1] == 63))) {
-			if (EXT_TRANS) {
-				printk(KERN_NOTICE
+		अगर (scsicam_bios_param(bdev, capacity, info) < 0 ||
+		    !((info[0] == 64 && info[1] == 32) || (info[0] == 255 && info[1] == 63))) अणु
+			अगर (EXT_TRANS) अणु
+				prपूर्णांकk(KERN_NOTICE
 				       "aha152x: unable to verify geometry for disk with >1GB.\n"
 				       "         using extended translation.\n");
 				info_array[0] = 255;
 				info_array[1] = 63;
-				info_array[2] = (unsigned long)capacity / (255 * 63);
-			} else {
-				printk(KERN_NOTICE
+				info_array[2] = (अचिन्हित दीर्घ)capacity / (255 * 63);
+			पूर्ण अन्यथा अणु
+				prपूर्णांकk(KERN_NOTICE
 				       "aha152x: unable to verify geometry for disk with >1GB.\n"
 				       "         Using default translation. Please verify yourself.\n"
 				       "         Perhaps you need to enable extended translation in the driver.\n"
 				       "         See Documentation/scsi/aha152x.rst for details.\n");
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			info_array[0] = info[0];
 			info_array[1] = info[1];
 			info_array[2] = info[2];
 
-			if (info[0] == 255 && !EXT_TRANS) {
-				printk(KERN_NOTICE
+			अगर (info[0] == 255 && !EXT_TRANS) अणु
+				prपूर्णांकk(KERN_NOTICE
 				       "aha152x: current partition table is using extended translation.\n"
 				       "         using it also, although it's not explicitly enabled.\n");
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *  Internal done function
+ *  Internal करोne function
  *
  */
-static void done(struct Scsi_Host *shpnt, int error)
-{
-	if (CURRENT_SC) {
-		if(DONE_SC)
-			scmd_printk(KERN_ERR, CURRENT_SC,
+अटल व्योम करोne(काष्ठा Scsi_Host *shpnt, पूर्णांक error)
+अणु
+	अगर (CURRENT_SC) अणु
+		अगर(DONE_SC)
+			scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 				    "there's already a completed command %p "
 				    "- will cause abort\n", DONE_SC);
 
 		DONE_SC = CURRENT_SC;
-		CURRENT_SC = NULL;
+		CURRENT_SC = शून्य;
 		DONE_SC->result = error;
-	} else
-		printk(KERN_ERR "aha152x: done() called outside of command\n");
-}
+	पूर्ण अन्यथा
+		prपूर्णांकk(KERN_ERR "aha152x: done() called outside of command\n");
+पूर्ण
 
-static struct work_struct aha152x_tq;
+अटल काष्ठा work_काष्ठा aha152x_tq;
 
 /*
- * Run service completions on the card with interrupts enabled.
+ * Run service completions on the card with पूर्णांकerrupts enabled.
  *
  */
-static void run(struct work_struct *work)
-{
-	struct aha152x_hostdata *hd;
+अटल व्योम run(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा aha152x_hostdata *hd;
 
-	list_for_each_entry(hd, &aha152x_host_list, host_list) {
-		struct Scsi_Host *shost = container_of((void *)hd, struct Scsi_Host, hostdata);
+	list_क्रम_each_entry(hd, &aha152x_host_list, host_list) अणु
+		काष्ठा Scsi_Host *shost = container_of((व्योम *)hd, काष्ठा Scsi_Host, hostdata);
 
 		is_complete(shost);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Interrupt handler
  *
  */
-static irqreturn_t intr(int irqno, void *dev_id)
-{
-	struct Scsi_Host *shpnt = dev_id;
-	unsigned long flags;
-	unsigned char rev, dmacntrl0;
+अटल irqवापस_t पूर्णांकr(पूर्णांक irqno, व्योम *dev_id)
+अणु
+	काष्ठा Scsi_Host *shpnt = dev_id;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर rev, dmacntrl0;
 
 	/*
-	 * Read a couple of registers that are known to not be all 1's. If
-	 * we read all 1's (-1), that means that either:
+	 * Read a couple of रेजिस्टरs that are known to not be all 1's. If
+	 * we पढ़ो all 1's (-1), that means that either:
 	 *
 	 * a. The host adapter chip has gone bad, and we cannot control it,
 	 *	OR
 	 * b. The host adapter is a PCMCIA card that has been ejected
 	 *
-	 * In either case, we cannot do anything with the host adapter at
-	 * this point in time. So just ignore the interrupt and return.
-	 * In the latter case, the interrupt might actually be meant for
-	 * someone else sharing this IRQ, and that driver will handle it.
+	 * In either हाल, we cannot करो anything with the host adapter at
+	 * this poपूर्णांक in समय. So just ignore the पूर्णांकerrupt and वापस.
+	 * In the latter हाल, the पूर्णांकerrupt might actually be meant क्रम
+	 * someone अन्यथा sharing this IRQ, and that driver will handle it.
 	 */
 	rev = GETPORT(REV);
 	dmacntrl0 = GETPORT(DMACNTRL0);
-	if ((rev == 0xFF) && (dmacntrl0 == 0xFF))
-		return IRQ_NONE;
+	अगर ((rev == 0xFF) && (dmacntrl0 == 0xFF))
+		वापस IRQ_NONE;
 
-	if( TESTLO(DMASTAT, INTSTAT) )
-		return IRQ_NONE;
+	अगर( TESTLO(DMASTAT, INTSTAT) )
+		वापस IRQ_NONE;
 
-	/* no more interrupts from the controller, while we're busy.
+	/* no more पूर्णांकerrupts from the controller, जबतक we're busy.
 	   INTEN is restored by the BH handler */
 	CLRBITS(DMACNTRL0, INTEN);
 
 	DO_LOCK(flags);
-	if( HOSTDATA(shpnt)->service==0 ) {
+	अगर( HOSTDATA(shpnt)->service==0 ) अणु
 		HOSTDATA(shpnt)->service=1;
 
 		/* Poke the BH handler */
 		INIT_WORK(&aha152x_tq, run);
 		schedule_work(&aha152x_tq);
-	}
+	पूर्ण
 	DO_UNLOCK(flags);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * busfree phase
+ * busमुक्त phase
  * - handle completition/disconnection/error of current command
- * - start selection for next command (if any)
+ * - start selection क्रम next command (अगर any)
  */
-static void busfree_run(struct Scsi_Host *shpnt)
-{
-	unsigned long flags;
-#if defined(AHA152X_STAT)
-	int action=0;
-#endif
+अटल व्योम busमुक्त_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	अचिन्हित दीर्घ flags;
+#अगर defined(AHA152X_STAT)
+	पूर्णांक action=0;
+#पूर्ण_अगर
 
 	SETPORT(SXFRCTL0, CH1|CLRCH1|CLRSTCNT);
 	SETPORT(SXFRCTL0, CH1);
 
 	SETPORT(SSTAT1, CLRBUSFREE);
 
-	if(CURRENT_SC) {
-#if defined(AHA152X_STAT)
+	अगर(CURRENT_SC) अणु
+#अगर defined(AHA152X_STAT)
 		action++;
-#endif
+#पूर्ण_अगर
 		CURRENT_SC->SCp.phase &= ~syncneg;
 
-		if(CURRENT_SC->SCp.phase & completed) {
+		अगर(CURRENT_SC->SCp.phase & completed) अणु
 			/* target sent COMMAND COMPLETE */
-			done(shpnt, (CURRENT_SC->SCp.Status & 0xff) | ((CURRENT_SC->SCp.Message & 0xff) << 8) | (DID_OK << 16));
+			करोne(shpnt, (CURRENT_SC->SCp.Status & 0xff) | ((CURRENT_SC->SCp.Message & 0xff) << 8) | (DID_OK << 16));
 
-		} else if(CURRENT_SC->SCp.phase & aborted) {
-			done(shpnt, (CURRENT_SC->SCp.Status & 0xff) | ((CURRENT_SC->SCp.Message & 0xff) << 8) | (DID_ABORT << 16));
+		पूर्ण अन्यथा अगर(CURRENT_SC->SCp.phase & पातed) अणु
+			करोne(shpnt, (CURRENT_SC->SCp.Status & 0xff) | ((CURRENT_SC->SCp.Message & 0xff) << 8) | (DID_ABORT << 16));
 
-		} else if(CURRENT_SC->SCp.phase & resetted) {
-			done(shpnt, (CURRENT_SC->SCp.Status & 0xff) | ((CURRENT_SC->SCp.Message & 0xff) << 8) | (DID_RESET << 16));
+		पूर्ण अन्यथा अगर(CURRENT_SC->SCp.phase & resetted) अणु
+			करोne(shpnt, (CURRENT_SC->SCp.Status & 0xff) | ((CURRENT_SC->SCp.Message & 0xff) << 8) | (DID_RESET << 16));
 
-		} else if(CURRENT_SC->SCp.phase & disconnected) {
+		पूर्ण अन्यथा अगर(CURRENT_SC->SCp.phase & disconnected) अणु
 			/* target sent DISCONNECT */
-#if defined(AHA152X_STAT)
+#अगर defined(AHA152X_STAT)
 			HOSTDATA(shpnt)->disconnections++;
-#endif
+#पूर्ण_अगर
 			append_SC(&DISCONNECTED_SC, CURRENT_SC);
 			CURRENT_SC->SCp.phase |= 1 << 16;
-			CURRENT_SC = NULL;
+			CURRENT_SC = शून्य;
 
-		} else {
-			done(shpnt, DID_ERROR << 16);
-		}
-#if defined(AHA152X_STAT)
-	} else {
-		HOSTDATA(shpnt)->busfree_without_old_command++;
-#endif
-	}
+		पूर्ण अन्यथा अणु
+			करोne(shpnt, DID_ERROR << 16);
+		पूर्ण
+#अगर defined(AHA152X_STAT)
+	पूर्ण अन्यथा अणु
+		HOSTDATA(shpnt)->busमुक्त_without_old_command++;
+#पूर्ण_अगर
+	पूर्ण
 
 	DO_LOCK(flags);
 
-	if(DONE_SC) {
-#if defined(AHA152X_STAT)
+	अगर(DONE_SC) अणु
+#अगर defined(AHA152X_STAT)
 		action++;
-#endif
+#पूर्ण_अगर
 
-		if(DONE_SC->SCp.phase & check_condition) {
-			struct scsi_cmnd *cmd = HOSTDATA(shpnt)->done_SC;
-			struct aha152x_scdata *sc = SCDATA(cmd);
+		अगर(DONE_SC->SCp.phase & check_condition) अणु
+			काष्ठा scsi_cmnd *cmd = HOSTDATA(shpnt)->करोne_SC;
+			काष्ठा aha152x_scdata *sc = SCDATA(cmd);
 
 			scsi_eh_restore_cmnd(cmd, &sc->ses);
 
 			cmd->SCp.Status = SAM_STAT_CHECK_CONDITION;
 
 			HOSTDATA(shpnt)->commands--;
-			if (!HOSTDATA(shpnt)->commands)
+			अगर (!HOSTDATA(shpnt)->commands)
 				SETPORT(PORTA, 0);	/* turn led off */
-		} else if(DONE_SC->SCp.Status==SAM_STAT_CHECK_CONDITION) {
-#if defined(AHA152X_STAT)
-			HOSTDATA(shpnt)->busfree_with_check_condition++;
-#endif
+		पूर्ण अन्यथा अगर(DONE_SC->SCp.Status==SAM_STAT_CHECK_CONDITION) अणु
+#अगर defined(AHA152X_STAT)
+			HOSTDATA(shpnt)->busमुक्त_with_check_condition++;
+#पूर्ण_अगर
 
-			if(!(DONE_SC->SCp.phase & not_issued)) {
-				struct aha152x_scdata *sc;
-				struct scsi_cmnd *ptr = DONE_SC;
-				DONE_SC=NULL;
+			अगर(!(DONE_SC->SCp.phase & not_issued)) अणु
+				काष्ठा aha152x_scdata *sc;
+				काष्ठा scsi_cmnd *ptr = DONE_SC;
+				DONE_SC=शून्य;
 
 				sc = SCDATA(ptr);
-				/* It was allocated in aha152x_internal_queue? */
+				/* It was allocated in aha152x_पूर्णांकernal_queue? */
 				BUG_ON(!sc);
-				scsi_eh_prep_cmnd(ptr, &sc->ses, NULL, 0, ~0);
+				scsi_eh_prep_cmnd(ptr, &sc->ses, शून्य, 0, ~0);
 
 				DO_UNLOCK(flags);
-				aha152x_internal_queue(ptr, NULL, check_condition, ptr->scsi_done);
+				aha152x_पूर्णांकernal_queue(ptr, शून्य, check_condition, ptr->scsi_करोne);
 				DO_LOCK(flags);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if(DONE_SC && DONE_SC->scsi_done) {
-			struct scsi_cmnd *ptr = DONE_SC;
-			DONE_SC=NULL;
+		अगर(DONE_SC && DONE_SC->scsi_करोne) अणु
+			काष्ठा scsi_cmnd *ptr = DONE_SC;
+			DONE_SC=शून्य;
 
 			/* turn led off, when no commands are in the driver */
 			HOSTDATA(shpnt)->commands--;
-			if (!HOSTDATA(shpnt)->commands)
+			अगर (!HOSTDATA(shpnt)->commands)
 				SETPORT(PORTA, 0);	/* turn led off */
 
-			if(ptr->scsi_done != reset_done) {
-				kfree(ptr->host_scribble);
-				ptr->host_scribble=NULL;
-			}
+			अगर(ptr->scsi_करोne != reset_करोne) अणु
+				kमुक्त(ptr->host_scribble);
+				ptr->host_scribble=शून्य;
+			पूर्ण
 
 			DO_UNLOCK(flags);
-			ptr->scsi_done(ptr);
+			ptr->scsi_करोne(ptr);
 			DO_LOCK(flags);
-		}
+		पूर्ण
 
-		DONE_SC=NULL;
-#if defined(AHA152X_STAT)
-	} else {
-		HOSTDATA(shpnt)->busfree_without_done_command++;
-#endif
-	}
+		DONE_SC=शून्य;
+#अगर defined(AHA152X_STAT)
+	पूर्ण अन्यथा अणु
+		HOSTDATA(shpnt)->busमुक्त_without_करोne_command++;
+#पूर्ण_अगर
+	पूर्ण
 
-	if(ISSUE_SC)
-		CURRENT_SC = remove_first_SC(&ISSUE_SC);
+	अगर(ISSUE_SC)
+		CURRENT_SC = हटाओ_first_SC(&ISSUE_SC);
 
 	DO_UNLOCK(flags);
 
-	if(CURRENT_SC) {
-#if defined(AHA152X_STAT)
+	अगर(CURRENT_SC) अणु
+#अगर defined(AHA152X_STAT)
 		action++;
-#endif
+#पूर्ण_अगर
 		CURRENT_SC->SCp.phase |= selecting;
 
-		/* clear selection timeout */
+		/* clear selection समयout */
 		SETPORT(SSTAT1, SELTO);
 
 		SETPORT(SCSIID, (shpnt->this_id << OID_) | CURRENT_SC->device->id);
 		SETPORT(SXFRCTL1, (PARITY ? ENSPCHK : 0 ) | ENSTIMER);
 		SETPORT(SCSISEQ, ENSELO | ENAUTOATNO | (DISCONNECTED_SC ? ENRESELI : 0));
-	} else {
-#if defined(AHA152X_STAT)
-		HOSTDATA(shpnt)->busfree_without_new_command++;
-#endif
+	पूर्ण अन्यथा अणु
+#अगर defined(AHA152X_STAT)
+		HOSTDATA(shpnt)->busमुक्त_without_new_command++;
+#पूर्ण_अगर
 		SETPORT(SCSISEQ, DISCONNECTED_SC ? ENRESELI : 0);
-	}
+	पूर्ण
 
-#if defined(AHA152X_STAT)
-	if(!action)
-		HOSTDATA(shpnt)->busfree_without_any_action++;
-#endif
-}
+#अगर defined(AHA152X_STAT)
+	अगर(!action)
+		HOSTDATA(shpnt)->busमुक्त_without_any_action++;
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Selection done (OUT)
- * - queue IDENTIFY message and SDTR to selected target for message out
- *   (ATN asserted automagically via ENAUTOATNO in busfree())
+ * Selection करोne (OUT)
+ * - queue IDENTIFY message and SDTR to selected target क्रम message out
+ *   (ATN निश्चितed स्वतःmagically via ENAUTOATNO in busमुक्त())
  */
-static void seldo_run(struct Scsi_Host *shpnt)
-{
+अटल व्योम selकरो_run(काष्ठा Scsi_Host *shpnt)
+अणु
 	SETPORT(SCSISIG, 0);
 	SETPORT(SSTAT1, CLRBUSFREE);
 	SETPORT(SSTAT1, CLRPHASECHG);
@@ -1512,104 +1513,104 @@ static void seldo_run(struct Scsi_Host *shpnt)
 
 	SETPORT(SCSISEQ, 0);
 
-	if (TESTLO(SSTAT0, SELDO)) {
-		scmd_printk(KERN_ERR, CURRENT_SC,
+	अगर (TESTLO(SSTAT0, SELDO)) अणु
+		scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 			    "aha152x: passing bus free condition\n");
-		done(shpnt, DID_NO_CONNECT << 16);
-		return;
-	}
+		करोne(shpnt, DID_NO_CONNECT << 16);
+		वापस;
+	पूर्ण
 
 	SETPORT(SSTAT0, CLRSELDO);
 
 	ADDMSGO(IDENTIFY(RECONNECT, CURRENT_SC->device->lun));
 
-	if (CURRENT_SC->SCp.phase & aborting) {
+	अगर (CURRENT_SC->SCp.phase & पातing) अणु
 		ADDMSGO(ABORT);
-	} else if (CURRENT_SC->SCp.phase & resetting) {
+	पूर्ण अन्यथा अगर (CURRENT_SC->SCp.phase & resetting) अणु
 		ADDMSGO(BUS_DEVICE_RESET);
-	} else if (SYNCNEG==0 && SYNCHRONOUS) {
+	पूर्ण अन्यथा अगर (SYNCNEG==0 && SYNCHRONOUS) अणु
 		CURRENT_SC->SCp.phase |= syncneg;
 		MSGOLEN += spi_populate_sync_msg(&MSGO(MSGOLEN), 50, 8);
 		SYNCNEG=1;		/* negotiation in progress */
-	}
+	पूर्ण
 
 	SETRATE(SYNCRATE);
-}
+पूर्ण
 
 /*
- * Selection timeout
- * - return command to mid-level with failure cause
+ * Selection समयout
+ * - वापस command to mid-level with failure cause
  *
  */
-static void selto_run(struct Scsi_Host *shpnt)
-{
+अटल व्योम selto_run(काष्ठा Scsi_Host *shpnt)
+अणु
 	SETPORT(SCSISEQ, 0);
 	SETPORT(SSTAT1, CLRSELTIMO);
 
-	if (!CURRENT_SC)
-		return;
+	अगर (!CURRENT_SC)
+		वापस;
 
 	CURRENT_SC->SCp.phase &= ~selecting;
 
-	if (CURRENT_SC->SCp.phase & aborted)
-		done(shpnt, DID_ABORT << 16);
-	else if (TESTLO(SSTAT0, SELINGO))
-		done(shpnt, DID_BUS_BUSY << 16);
-	else
+	अगर (CURRENT_SC->SCp.phase & पातed)
+		करोne(shpnt, DID_ABORT << 16);
+	अन्यथा अगर (TESTLO(SSTAT0, SELINGO))
+		करोne(shpnt, DID_BUS_BUSY << 16);
+	अन्यथा
 		/* ARBITRATION won, but SELECTION failed */
-		done(shpnt, DID_NO_CONNECT << 16);
-}
+		करोne(shpnt, DID_NO_CONNECT << 16);
+पूर्ण
 
 /*
- * Selection in done
+ * Selection in करोne
  * - put current command back to issue queue
  *   (reconnection of a disconnected nexus instead
  *    of successful selection out)
  *
  */
-static void seldi_run(struct Scsi_Host *shpnt)
-{
-	int selid;
-	int target;
-	unsigned long flags;
+अटल व्योम seldi_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	पूर्णांक selid;
+	पूर्णांक target;
+	अचिन्हित दीर्घ flags;
 
 	SETPORT(SCSISIG, 0);
 	SETPORT(SSTAT0, CLRSELDI);
 	SETPORT(SSTAT1, CLRBUSFREE);
 	SETPORT(SSTAT1, CLRPHASECHG);
 
-	if(CURRENT_SC) {
-		if(!(CURRENT_SC->SCp.phase & not_issued))
-			scmd_printk(KERN_ERR, CURRENT_SC,
+	अगर(CURRENT_SC) अणु
+		अगर(!(CURRENT_SC->SCp.phase & not_issued))
+			scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 				    "command should not have been issued yet\n");
 
 		DO_LOCK(flags);
 		append_SC(&ISSUE_SC, CURRENT_SC);
 		DO_UNLOCK(flags);
 
-		CURRENT_SC = NULL;
-	}
+		CURRENT_SC = शून्य;
+	पूर्ण
 
-	if (!DISCONNECTED_SC)
-		return;
+	अगर (!DISCONNECTED_SC)
+		वापस;
 
 	RECONN_TARGET=-1;
 
 	selid = GETPORT(SELID) & ~(1 << shpnt->this_id);
 
-	if (selid==0) {
-		shost_printk(KERN_INFO, shpnt,
+	अगर (selid==0) अणु
+		shost_prपूर्णांकk(KERN_INFO, shpnt,
 			     "target id unknown (%02x)\n", selid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for(target=7; !(selid & (1 << target)); target--)
+	क्रम(target=7; !(selid & (1 << target)); target--)
 		;
 
-	if(selid & ~(1 << target)) {
-		shost_printk(KERN_INFO, shpnt,
+	अगर(selid & ~(1 << target)) अणु
+		shost_prपूर्णांकk(KERN_INFO, shpnt,
 			     "multiple targets reconnected (%02x)\n", selid);
-	}
+	पूर्ण
 
 
 	SETPORT(SCSIID, (shpnt->this_id << OID_) | target);
@@ -1618,329 +1619,329 @@ static void seldi_run(struct Scsi_Host *shpnt)
 	SETRATE(HOSTDATA(shpnt)->syncrate[target]);
 
 	RECONN_TARGET=target;
-}
+पूर्ण
 
 /*
  * message in phase
- * - handle initial message after reconnection to identify
+ * - handle initial message after reconnection to identअगरy
  *   reconnecting nexus
  * - queue command on DISCONNECTED_SC on DISCONNECT message
  * - set completed flag on COMMAND COMPLETE
- *   (other completition code moved to busfree_run)
+ *   (other completition code moved to busमुक्त_run)
  * - handle response to SDTR
  * - clear synchronous transfer agreements on BUS RESET
  *
  * FIXME: what about SAVE POINTERS, RESTORE POINTERS?
  *
  */
-static void msgi_run(struct Scsi_Host *shpnt)
-{
-	for(;;) {
-		int sstat1 = GETPORT(SSTAT1);
+अटल व्योम msgi_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	क्रम(;;) अणु
+		पूर्णांक sstat1 = GETPORT(SSTAT1);
 
-		if(sstat1 & (PHASECHG|PHASEMIS|BUSFREE) || !(sstat1 & REQINIT))
-			return;
+		अगर(sstat1 & (PHASECHG|PHASEMIS|BUSFREE) || !(sstat1 & REQINIT))
+			वापस;
 
-		if (TESTLO(SSTAT0, SPIORDY))
-			return;
+		अगर (TESTLO(SSTAT0, SPIORDY))
+			वापस;
 
 		ADDMSGI(GETPORT(SCSIDAT));
 
-		if(!CURRENT_SC) {
-			if(LASTSTATE!=seldi) {
-				shost_printk(KERN_ERR, shpnt,
+		अगर(!CURRENT_SC) अणु
+			अगर(LASTSTATE!=seldi) अणु
+				shost_prपूर्णांकk(KERN_ERR, shpnt,
 					     "message in w/o current command"
 					     " not after reselection\n");
-			}
+			पूर्ण
 
 			/*
 			 * Handle reselection
 			 */
-			if(!(MSGI(0) & IDENTIFY_BASE)) {
-				shost_printk(KERN_ERR, shpnt,
+			अगर(!(MSGI(0) & IDENTIFY_BASE)) अणु
+				shost_prपूर्णांकk(KERN_ERR, shpnt,
 					     "target didn't identify after reselection\n");
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			CURRENT_SC = remove_lun_SC(&DISCONNECTED_SC, RECONN_TARGET, MSGI(0) & 0x3f);
+			CURRENT_SC = हटाओ_lun_SC(&DISCONNECTED_SC, RECONN_TARGET, MSGI(0) & 0x3f);
 
-			if (!CURRENT_SC) {
+			अगर (!CURRENT_SC) अणु
 				show_queues(shpnt);
-				shost_printk(KERN_ERR, shpnt,
+				shost_prपूर्णांकk(KERN_ERR, shpnt,
 					     "no disconnected command"
 					     " for target %d/%d\n",
 					     RECONN_TARGET, MSGI(0) & 0x3f);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			CURRENT_SC->SCp.Message = MSGI(0);
 			CURRENT_SC->SCp.phase &= ~disconnected;
 
 			MSGILEN=0;
 
-			/* next message if any */
-			continue;
-		}
+			/* next message अगर any */
+			जारी;
+		पूर्ण
 
 		CURRENT_SC->SCp.Message = MSGI(0);
 
-		switch (MSGI(0)) {
-		case DISCONNECT:
-			if (!RECONNECT)
-				scmd_printk(KERN_WARNING, CURRENT_SC,
+		चयन (MSGI(0)) अणु
+		हाल DISCONNECT:
+			अगर (!RECONNECT)
+				scmd_prपूर्णांकk(KERN_WARNING, CURRENT_SC,
 					    "target was not allowed to disconnect\n");
 
 			CURRENT_SC->SCp.phase |= disconnected;
-			break;
+			अवरोध;
 
-		case COMMAND_COMPLETE:
+		हाल COMMAND_COMPLETE:
 			CURRENT_SC->SCp.phase |= completed;
-			break;
+			अवरोध;
 
-		case MESSAGE_REJECT:
-			if (SYNCNEG==1) {
-				scmd_printk(KERN_INFO, CURRENT_SC,
+		हाल MESSAGE_REJECT:
+			अगर (SYNCNEG==1) अणु
+				scmd_prपूर्णांकk(KERN_INFO, CURRENT_SC,
 					    "Synchronous Data Transfer Request"
 					    " was rejected\n");
 				SYNCNEG=2;	/* negotiation completed */
-			} else
-				scmd_printk(KERN_INFO, CURRENT_SC,
+			पूर्ण अन्यथा
+				scmd_prपूर्णांकk(KERN_INFO, CURRENT_SC,
 					    "inbound message (MESSAGE REJECT)\n");
-			break;
+			अवरोध;
 
-		case SAVE_POINTERS:
-			break;
+		हाल SAVE_POINTERS:
+			अवरोध;
 
-		case RESTORE_POINTERS:
-			break;
+		हाल RESTORE_POINTERS:
+			अवरोध;
 
-		case EXTENDED_MESSAGE:
-			if(MSGILEN<2 || MSGILEN<MSGI(1)+2) {
+		हाल EXTENDED_MESSAGE:
+			अगर(MSGILEN<2 || MSGILEN<MSGI(1)+2) अणु
 				/* not yet completed */
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			switch (MSGI(2)) {
-			case EXTENDED_SDTR:
-				{
-					long ticks;
+			चयन (MSGI(2)) अणु
+			हाल EXTENDED_SDTR:
+				अणु
+					दीर्घ ticks;
 
-					if (MSGI(1) != 3) {
-						scmd_printk(KERN_ERR, CURRENT_SC,
+					अगर (MSGI(1) != 3) अणु
+						scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 							    "SDTR message length!=3\n");
-						break;
-					}
+						अवरोध;
+					पूर्ण
 
-					if (!HOSTDATA(shpnt)->synchronous)
-						break;
+					अगर (!HOSTDATA(shpnt)->synchronous)
+						अवरोध;
 
-					printk(INFO_LEAD, CMDINFO(CURRENT_SC));
-					spi_print_msg(&MSGI(0));
-					printk("\n");
+					prपूर्णांकk(INFO_LEAD, CMDINFO(CURRENT_SC));
+					spi_prपूर्णांक_msg(&MSGI(0));
+					prपूर्णांकk("\n");
 
 					ticks = (MSGI(3) * 4 + 49) / 50;
 
-					if (syncneg) {
+					अगर (syncneg) अणु
 						/* negotiation in progress */
-						if (ticks > 9 || MSGI(4) < 1 || MSGI(4) > 8) {
+						अगर (ticks > 9 || MSGI(4) < 1 || MSGI(4) > 8) अणु
 							ADDMSGO(MESSAGE_REJECT);
-							scmd_printk(KERN_INFO,
+							scmd_prपूर्णांकk(KERN_INFO,
 								    CURRENT_SC,
 								    "received Synchronous Data Transfer Request invalid - rejected\n");
-							break;
-						}
+							अवरोध;
+						पूर्ण
 
 						SYNCRATE |= ((ticks - 2) << 4) + MSGI(4);
-					} else if (ticks <= 9 && MSGI(4) >= 1) {
+					पूर्ण अन्यथा अगर (ticks <= 9 && MSGI(4) >= 1) अणु
 						ADDMSGO(EXTENDED_MESSAGE);
 						ADDMSGO(3);
 						ADDMSGO(EXTENDED_SDTR);
-						if (ticks < 4) {
+						अगर (ticks < 4) अणु
 							ticks = 4;
 							ADDMSGO(50);
-						} else
+						पूर्ण अन्यथा
 							ADDMSGO(MSGI(3));
 
-						if (MSGI(4) > 8)
+						अगर (MSGI(4) > 8)
 							MSGI(4) = 8;
 
 						ADDMSGO(MSGI(4));
 
 						SYNCRATE |= ((ticks - 2) << 4) + MSGI(4);
-					} else {
-						/* requested SDTR is too slow, do it asynchronously */
-						scmd_printk(KERN_INFO,
+					पूर्ण अन्यथा अणु
+						/* requested SDTR is too slow, करो it asynchronously */
+						scmd_prपूर्णांकk(KERN_INFO,
 							    CURRENT_SC,
 							    "Synchronous Data Transfer Request too slow - Rejecting\n");
 						ADDMSGO(MESSAGE_REJECT);
-					}
+					पूर्ण
 
 					/* negotiation completed */
 					SYNCNEG=2;
 					SETRATE(SYNCRATE);
-				}
-				break;
+				पूर्ण
+				अवरोध;
 
-			case BUS_DEVICE_RESET:
-				{
-					int i;
+			हाल BUS_DEVICE_RESET:
+				अणु
+					पूर्णांक i;
 
-					for(i=0; i<8; i++) {
+					क्रम(i=0; i<8; i++) अणु
 						HOSTDATA(shpnt)->syncrate[i]=0;
 						HOSTDATA(shpnt)->syncneg[i]=0;
-					}
+					पूर्ण
 
-				}
-				break;
+				पूर्ण
+				अवरोध;
 
-			case EXTENDED_MODIFY_DATA_POINTER:
-			case EXTENDED_EXTENDED_IDENTIFY:
-			case EXTENDED_WDTR:
-			default:
+			हाल EXTENDED_MODIFY_DATA_POINTER:
+			हाल EXTENDED_EXTENDED_IDENTIFY:
+			हाल EXTENDED_WDTR:
+			शेष:
 				ADDMSGO(MESSAGE_REJECT);
-				break;
-			}
-			break;
-		}
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		MSGILEN=0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void msgi_end(struct Scsi_Host *shpnt)
-{
-	if(MSGILEN>0)
-		scmd_printk(KERN_WARNING, CURRENT_SC,
+अटल व्योम msgi_end(काष्ठा Scsi_Host *shpnt)
+अणु
+	अगर(MSGILEN>0)
+		scmd_prपूर्णांकk(KERN_WARNING, CURRENT_SC,
 			    "target left before message completed (%d)\n",
 			    MSGILEN);
 
-	if (MSGOLEN > 0 && !(GETPORT(SSTAT1) & BUSFREE))
+	अगर (MSGOLEN > 0 && !(GETPORT(SSTAT1) & BUSFREE))
 		SETPORT(SCSISIG, P_MSGI | SIG_ATNO);
-}
+पूर्ण
 
 /*
  * message out phase
  *
  */
-static void msgo_init(struct Scsi_Host *shpnt)
-{
-	if(MSGOLEN==0) {
-		if((CURRENT_SC->SCp.phase & syncneg) && SYNCNEG==2 && SYNCRATE==0) {
+अटल व्योम msgo_init(काष्ठा Scsi_Host *shpnt)
+अणु
+	अगर(MSGOLEN==0) अणु
+		अगर((CURRENT_SC->SCp.phase & syncneg) && SYNCNEG==2 && SYNCRATE==0) अणु
 			ADDMSGO(IDENTIFY(RECONNECT, CURRENT_SC->device->lun));
-		} else {
-			scmd_printk(KERN_INFO, CURRENT_SC,
+		पूर्ण अन्यथा अणु
+			scmd_prपूर्णांकk(KERN_INFO, CURRENT_SC,
 				    "unexpected MESSAGE OUT phase; rejecting\n");
 			ADDMSGO(MESSAGE_REJECT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 
 /*
  * message out phase
  *
  */
-static void msgo_run(struct Scsi_Host *shpnt)
-{
-	while(MSGO_I<MSGOLEN) {
-		if (TESTLO(SSTAT0, SPIORDY))
-			return;
+अटल व्योम msgo_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	जबतक(MSGO_I<MSGOLEN) अणु
+		अगर (TESTLO(SSTAT0, SPIORDY))
+			वापस;
 
-		if (MSGO_I==MSGOLEN-1) {
+		अगर (MSGO_I==MSGOLEN-1) अणु
 			/* Leave MESSAGE OUT after transfer */
 			SETPORT(SSTAT1, CLRATNO);
-		}
+		पूर्ण
 
 
-		if (MSGO(MSGO_I) & IDENTIFY_BASE)
-			CURRENT_SC->SCp.phase |= identified;
+		अगर (MSGO(MSGO_I) & IDENTIFY_BASE)
+			CURRENT_SC->SCp.phase |= identअगरied;
 
-		if (MSGO(MSGO_I)==ABORT)
-			CURRENT_SC->SCp.phase |= aborted;
+		अगर (MSGO(MSGO_I)==ABORT)
+			CURRENT_SC->SCp.phase |= पातed;
 
-		if (MSGO(MSGO_I)==BUS_DEVICE_RESET)
+		अगर (MSGO(MSGO_I)==BUS_DEVICE_RESET)
 			CURRENT_SC->SCp.phase |= resetted;
 
 		SETPORT(SCSIDAT, MSGO(MSGO_I++));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void msgo_end(struct Scsi_Host *shpnt)
-{
-	if(MSGO_I<MSGOLEN) {
-		scmd_printk(KERN_ERR, CURRENT_SC,
+अटल व्योम msgo_end(काष्ठा Scsi_Host *shpnt)
+अणु
+	अगर(MSGO_I<MSGOLEN) अणु
+		scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 			    "message sent incompletely (%d/%d)\n",
 			    MSGO_I, MSGOLEN);
-		if(SYNCNEG==1) {
-			scmd_printk(KERN_INFO, CURRENT_SC,
+		अगर(SYNCNEG==1) अणु
+			scmd_prपूर्णांकk(KERN_INFO, CURRENT_SC,
 				    "Synchronous Data Transfer Request was rejected\n");
 			SYNCNEG=2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	MSGO_I  = 0;
 	MSGOLEN = 0;
-}
+पूर्ण
 
 /*
  * command phase
  *
  */
-static void cmd_init(struct Scsi_Host *shpnt)
-{
-	if (CURRENT_SC->SCp.sent_command) {
-		scmd_printk(KERN_ERR, CURRENT_SC,
+अटल व्योम cmd_init(काष्ठा Scsi_Host *shpnt)
+अणु
+	अगर (CURRENT_SC->SCp.sent_command) अणु
+		scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 			    "command already sent\n");
-		done(shpnt, DID_ERROR << 16);
-		return;
-	}
+		करोne(shpnt, DID_ERROR << 16);
+		वापस;
+	पूर्ण
 
 	CMD_I=0;
-}
+पूर्ण
 
 /*
  * command phase
  *
  */
-static void cmd_run(struct Scsi_Host *shpnt)
-{
-	while(CMD_I<CURRENT_SC->cmd_len) {
-		if (TESTLO(SSTAT0, SPIORDY))
-			return;
+अटल व्योम cmd_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	जबतक(CMD_I<CURRENT_SC->cmd_len) अणु
+		अगर (TESTLO(SSTAT0, SPIORDY))
+			वापस;
 
 		SETPORT(SCSIDAT, CURRENT_SC->cmnd[CMD_I++]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cmd_end(struct Scsi_Host *shpnt)
-{
-	if(CMD_I<CURRENT_SC->cmd_len)
-		scmd_printk(KERN_ERR, CURRENT_SC,
+अटल व्योम cmd_end(काष्ठा Scsi_Host *shpnt)
+अणु
+	अगर(CMD_I<CURRENT_SC->cmd_len)
+		scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 			    "command sent incompletely (%d/%d)\n",
 			    CMD_I, CURRENT_SC->cmd_len);
-	else
+	अन्यथा
 		CURRENT_SC->SCp.sent_command++;
-}
+पूर्ण
 
 /*
  * status phase
  *
  */
-static void status_run(struct Scsi_Host *shpnt)
-{
-	if (TESTLO(SSTAT0, SPIORDY))
-		return;
+अटल व्योम status_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	अगर (TESTLO(SSTAT0, SPIORDY))
+		वापस;
 
 	CURRENT_SC->SCp.Status = GETPORT(SCSIDAT);
 
-}
+पूर्ण
 
 /*
  * data in phase
  *
  */
-static void datai_init(struct Scsi_Host *shpnt)
-{
+अटल व्योम datai_init(काष्ठा Scsi_Host *shpnt)
+अणु
 	SETPORT(DMACNTRL0, RSTFIFO);
 	SETPORT(DMACNTRL0, RSTFIFO|ENDMA);
 
@@ -1951,129 +1952,129 @@ static void datai_init(struct Scsi_Host *shpnt)
 	SETPORT(SIMODE1, ENSCSIPERR | ENSCSIRST | ENPHASEMIS | ENBUSFREE);
 
 	DATA_LEN=0;
-}
+पूर्ण
 
-static void datai_run(struct Scsi_Host *shpnt)
-{
-	unsigned long the_time;
-	int fifodata, data_count;
+अटल व्योम datai_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	अचिन्हित दीर्घ the_समय;
+	पूर्णांक fअगरodata, data_count;
 
 	/*
-	 * loop while the phase persists or the fifos are not empty
+	 * loop जबतक the phase persists or the fअगरos are not empty
 	 *
 	 */
-	while(TESTLO(DMASTAT, INTSTAT) || TESTLO(DMASTAT, DFIFOEMP) || TESTLO(SSTAT2, SEMPTY)) {
-		/* FIXME: maybe this should be done by setting up
-		 * STCNT to trigger ENSWRAP interrupt, instead of
-		 * polling for DFIFOFULL
+	जबतक(TESTLO(DMASTAT, INTSTAT) || TESTLO(DMASTAT, DFIFOEMP) || TESTLO(SSTAT2, SEMPTY)) अणु
+		/* FIXME: maybe this should be करोne by setting up
+		 * STCNT to trigger ENSWRAP पूर्णांकerrupt, instead of
+		 * polling क्रम DFIFOFULL
 		 */
-		the_time=jiffies + 100*HZ;
-		while(TESTLO(DMASTAT, DFIFOFULL|INTSTAT) && time_before(jiffies,the_time))
+		the_समय=jअगरfies + 100*HZ;
+		जबतक(TESTLO(DMASTAT, DFIFOFULL|INTSTAT) && समय_beक्रमe(jअगरfies,the_समय))
 			barrier();
 
-		if(TESTLO(DMASTAT, DFIFOFULL|INTSTAT)) {
-			scmd_printk(KERN_ERR, CURRENT_SC, "datai timeout\n");
-			break;
-		}
+		अगर(TESTLO(DMASTAT, DFIFOFULL|INTSTAT)) अणु
+			scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC, "datai timeout\n");
+			अवरोध;
+		पूर्ण
 
-		if(TESTHI(DMASTAT, DFIFOFULL)) {
-			fifodata = 128;
-		} else {
-			the_time=jiffies + 100*HZ;
-			while(TESTLO(SSTAT2, SEMPTY) && time_before(jiffies,the_time))
+		अगर(TESTHI(DMASTAT, DFIFOFULL)) अणु
+			fअगरodata = 128;
+		पूर्ण अन्यथा अणु
+			the_समय=jअगरfies + 100*HZ;
+			जबतक(TESTLO(SSTAT2, SEMPTY) && समय_beक्रमe(jअगरfies,the_समय))
 				barrier();
 
-			if(TESTLO(SSTAT2, SEMPTY)) {
-				scmd_printk(KERN_ERR, CURRENT_SC,
+			अगर(TESTLO(SSTAT2, SEMPTY)) अणु
+				scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 					    "datai sempty timeout");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			fifodata = GETPORT(FIFOSTAT);
-		}
+			fअगरodata = GETPORT(FIFOSTAT);
+		पूर्ण
 
-		if(CURRENT_SC->SCp.this_residual>0) {
-			while(fifodata>0 && CURRENT_SC->SCp.this_residual>0) {
-				data_count = fifodata > CURRENT_SC->SCp.this_residual ?
+		अगर(CURRENT_SC->SCp.this_residual>0) अणु
+			जबतक(fअगरodata>0 && CURRENT_SC->SCp.this_residual>0) अणु
+				data_count = fअगरodata > CURRENT_SC->SCp.this_residual ?
 						CURRENT_SC->SCp.this_residual :
-						fifodata;
-				fifodata -= data_count;
+						fअगरodata;
+				fअगरodata -= data_count;
 
-				if (data_count & 1) {
+				अगर (data_count & 1) अणु
 					SETPORT(DMACNTRL0, ENDMA|_8BIT);
 					*CURRENT_SC->SCp.ptr++ = GETPORT(DATAPORT);
 					CURRENT_SC->SCp.this_residual--;
 					DATA_LEN++;
 					SETPORT(DMACNTRL0, ENDMA);
-				}
+				पूर्ण
 
-				if (data_count > 1) {
+				अगर (data_count > 1) अणु
 					data_count >>= 1;
 					insw(DATAPORT, CURRENT_SC->SCp.ptr, data_count);
 					CURRENT_SC->SCp.ptr += 2 * data_count;
 					CURRENT_SC->SCp.this_residual -= 2 * data_count;
 					DATA_LEN += 2 * data_count;
-				}
+				पूर्ण
 
-				if (CURRENT_SC->SCp.this_residual == 0 &&
-				    !sg_is_last(CURRENT_SC->SCp.buffer)) {
+				अगर (CURRENT_SC->SCp.this_residual == 0 &&
+				    !sg_is_last(CURRENT_SC->SCp.buffer)) अणु
 					/* advance to next buffer */
 					CURRENT_SC->SCp.buffer = sg_next(CURRENT_SC->SCp.buffer);
 					CURRENT_SC->SCp.ptr           = SG_ADDRESS(CURRENT_SC->SCp.buffer);
 					CURRENT_SC->SCp.this_residual = CURRENT_SC->SCp.buffer->length;
-				}
-			}
-		} else if (fifodata > 0) {
-			scmd_printk(KERN_ERR, CURRENT_SC,
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अगर (fअगरodata > 0) अणु
+			scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 				    "no buffers left for %d(%d) bytes"
 				    " (data overrun!?)\n",
-				    fifodata, GETPORT(FIFOSTAT));
+				    fअगरodata, GETPORT(FIFOSTAT));
 			SETPORT(DMACNTRL0, ENDMA|_8BIT);
-			while(fifodata>0) {
+			जबतक(fअगरodata>0) अणु
 				GETPORT(DATAPORT);
-				fifodata--;
+				fअगरodata--;
 				DATA_LEN++;
-			}
+			पूर्ण
 			SETPORT(DMACNTRL0, ENDMA|_8BIT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if(TESTLO(DMASTAT, INTSTAT) ||
+	अगर(TESTLO(DMASTAT, INTSTAT) ||
 	   TESTLO(DMASTAT, DFIFOEMP) ||
 	   TESTLO(SSTAT2, SEMPTY) ||
-	   GETPORT(FIFOSTAT)>0) {
+	   GETPORT(FIFOSTAT)>0) अणु
 		/*
-		 * something went wrong, if there's something left in the fifos
+		 * something went wrong, अगर there's something left in the fअगरos
 		 * or the phase didn't change
 		 */
-		scmd_printk(KERN_ERR, CURRENT_SC,
+		scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 			    "fifos should be empty and phase should have changed\n");
-	}
+	पूर्ण
 
-	if(DATA_LEN!=GETSTCNT()) {
-		scmd_printk(KERN_ERR, CURRENT_SC,
+	अगर(DATA_LEN!=GETSTCNT()) अणु
+		scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 			    "manual transfer count differs from automatic "
 			    "(count=%d;stcnt=%d;diff=%d;fifostat=%d)",
 			    DATA_LEN, GETSTCNT(), GETSTCNT()-DATA_LEN,
 			    GETPORT(FIFOSTAT));
 		mdelay(10000);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void datai_end(struct Scsi_Host *shpnt)
-{
+अटल व्योम datai_end(काष्ठा Scsi_Host *shpnt)
+अणु
 	CMD_INC_RESID(CURRENT_SC, -GETSTCNT());
 
 	SETPORT(SXFRCTL0, CH1|CLRSTCNT);
 	SETPORT(DMACNTRL0, 0);
-}
+पूर्ण
 
 /*
  * data out phase
  *
  */
-static void datao_init(struct Scsi_Host *shpnt)
-{
+अटल व्योम datao_init(काष्ठा Scsi_Host *shpnt)
+अणु
 	SETPORT(DMACNTRL0, WRITE_READ | RSTFIFO);
 	SETPORT(DMACNTRL0, WRITE_READ | ENDMA);
 
@@ -2084,143 +2085,143 @@ static void datao_init(struct Scsi_Host *shpnt)
 	SETPORT(SIMODE1, ENSCSIPERR | ENSCSIRST | ENPHASEMIS | ENBUSFREE );
 
 	DATA_LEN = scsi_get_resid(CURRENT_SC);
-}
+पूर्ण
 
-static void datao_run(struct Scsi_Host *shpnt)
-{
-	unsigned long the_time;
-	int data_count;
+अटल व्योम datao_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	अचिन्हित दीर्घ the_समय;
+	पूर्णांक data_count;
 
 	/* until phase changes or all data sent */
-	while(TESTLO(DMASTAT, INTSTAT) && CURRENT_SC->SCp.this_residual>0) {
+	जबतक(TESTLO(DMASTAT, INTSTAT) && CURRENT_SC->SCp.this_residual>0) अणु
 		data_count = 128;
-		if(data_count > CURRENT_SC->SCp.this_residual)
+		अगर(data_count > CURRENT_SC->SCp.this_residual)
 			data_count=CURRENT_SC->SCp.this_residual;
 
-		if(TESTLO(DMASTAT, DFIFOEMP)) {
-			scmd_printk(KERN_ERR, CURRENT_SC,
+		अगर(TESTLO(DMASTAT, DFIFOEMP)) अणु
+			scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 				    "datao fifo not empty (%d)",
 				    GETPORT(FIFOSTAT));
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if(data_count & 1) {
+		अगर(data_count & 1) अणु
 			SETPORT(DMACNTRL0,WRITE_READ|ENDMA|_8BIT);
 			SETPORT(DATAPORT, *CURRENT_SC->SCp.ptr++);
 			CURRENT_SC->SCp.this_residual--;
 			CMD_INC_RESID(CURRENT_SC, -1);
 			SETPORT(DMACNTRL0,WRITE_READ|ENDMA);
-		}
+		पूर्ण
 
-		if(data_count > 1) {
+		अगर(data_count > 1) अणु
 			data_count >>= 1;
 			outsw(DATAPORT, CURRENT_SC->SCp.ptr, data_count);
 			CURRENT_SC->SCp.ptr           += 2 * data_count;
 			CURRENT_SC->SCp.this_residual -= 2 * data_count;
 			CMD_INC_RESID(CURRENT_SC, -2 * data_count);
-		}
+		पूर्ण
 
-		if (CURRENT_SC->SCp.this_residual == 0 &&
-		    !sg_is_last(CURRENT_SC->SCp.buffer)) {
+		अगर (CURRENT_SC->SCp.this_residual == 0 &&
+		    !sg_is_last(CURRENT_SC->SCp.buffer)) अणु
 			/* advance to next buffer */
 			CURRENT_SC->SCp.buffer = sg_next(CURRENT_SC->SCp.buffer);
 			CURRENT_SC->SCp.ptr           = SG_ADDRESS(CURRENT_SC->SCp.buffer);
 			CURRENT_SC->SCp.this_residual = CURRENT_SC->SCp.buffer->length;
-		}
+		पूर्ण
 
-		the_time=jiffies + 100*HZ;
-		while(TESTLO(DMASTAT, DFIFOEMP|INTSTAT) && time_before(jiffies,the_time))
+		the_समय=jअगरfies + 100*HZ;
+		जबतक(TESTLO(DMASTAT, DFIFOEMP|INTSTAT) && समय_beक्रमe(jअगरfies,the_समय))
 			barrier();
 
-		if(TESTLO(DMASTAT, DFIFOEMP|INTSTAT)) {
-			scmd_printk(KERN_ERR, CURRENT_SC, "dataout timeout\n");
-			break;
-		}
-	}
-}
+		अगर(TESTLO(DMASTAT, DFIFOEMP|INTSTAT)) अणु
+			scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC, "dataout timeout\n");
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void datao_end(struct Scsi_Host *shpnt)
-{
-	if(TESTLO(DMASTAT, DFIFOEMP)) {
+अटल व्योम datao_end(काष्ठा Scsi_Host *shpnt)
+अणु
+	अगर(TESTLO(DMASTAT, DFIFOEMP)) अणु
 		u32 datao_cnt = GETSTCNT();
-		int datao_out = DATA_LEN - scsi_get_resid(CURRENT_SC);
-		int done;
-		struct scatterlist *sg = scsi_sglist(CURRENT_SC);
+		पूर्णांक datao_out = DATA_LEN - scsi_get_resid(CURRENT_SC);
+		पूर्णांक करोne;
+		काष्ठा scatterlist *sg = scsi_sglist(CURRENT_SC);
 
 		CMD_INC_RESID(CURRENT_SC, datao_out - datao_cnt);
 
-		done = scsi_bufflen(CURRENT_SC) - scsi_get_resid(CURRENT_SC);
+		करोne = scsi_bufflen(CURRENT_SC) - scsi_get_resid(CURRENT_SC);
 		/* Locate the first SG entry not yet sent */
-		while (done > 0 && !sg_is_last(sg)) {
-			if (done < sg->length)
-				break;
-			done -= sg->length;
+		जबतक (करोne > 0 && !sg_is_last(sg)) अणु
+			अगर (करोne < sg->length)
+				अवरोध;
+			करोne -= sg->length;
 			sg = sg_next(sg);
-		}
+		पूर्ण
 
 		CURRENT_SC->SCp.buffer = sg;
-		CURRENT_SC->SCp.ptr = SG_ADDRESS(CURRENT_SC->SCp.buffer) + done;
+		CURRENT_SC->SCp.ptr = SG_ADDRESS(CURRENT_SC->SCp.buffer) + करोne;
 		CURRENT_SC->SCp.this_residual = CURRENT_SC->SCp.buffer->length -
-			done;
-	}
+			करोne;
+	पूर्ण
 
 	SETPORT(SXFRCTL0, CH1|CLRCH1|CLRSTCNT);
 	SETPORT(SXFRCTL0, CH1);
 
 	SETPORT(DMACNTRL0, 0);
-}
+पूर्ण
 
 /*
  * figure out what state we're in
  *
  */
-static int update_state(struct Scsi_Host *shpnt)
-{
-	int dataphase=0;
-	unsigned int stat0 = GETPORT(SSTAT0);
-	unsigned int stat1 = GETPORT(SSTAT1);
+अटल पूर्णांक update_state(काष्ठा Scsi_Host *shpnt)
+अणु
+	पूर्णांक dataphase=0;
+	अचिन्हित पूर्णांक stat0 = GETPORT(SSTAT0);
+	अचिन्हित पूर्णांक stat1 = GETPORT(SSTAT1);
 
 	PREVSTATE = STATE;
 	STATE=unknown;
 
-	if(stat1 & SCSIRSTI) {
+	अगर(stat1 & SCSIRSTI) अणु
 		STATE=rsti;
 		SETPORT(SCSISEQ,0);
 		SETPORT(SSTAT1,SCSIRSTI);
-	} else if (stat0 & SELDI && PREVSTATE == busfree) {
+	पूर्ण अन्यथा अगर (stat0 & SELDI && PREVSTATE == busमुक्त) अणु
 		STATE=seldi;
-	} else if(stat0 & SELDO && CURRENT_SC && (CURRENT_SC->SCp.phase & selecting)) {
-		STATE=seldo;
-	} else if(stat1 & SELTO) {
+	पूर्ण अन्यथा अगर(stat0 & SELDO && CURRENT_SC && (CURRENT_SC->SCp.phase & selecting)) अणु
+		STATE=selकरो;
+	पूर्ण अन्यथा अगर(stat1 & SELTO) अणु
 		STATE=selto;
-	} else if(stat1 & BUSFREE) {
-		STATE=busfree;
+	पूर्ण अन्यथा अगर(stat1 & BUSFREE) अणु
+		STATE=busमुक्त;
 		SETPORT(SSTAT1,BUSFREE);
-	} else if(stat1 & SCSIPERR) {
+	पूर्ण अन्यथा अगर(stat1 & SCSIPERR) अणु
 		STATE=parerr;
 		SETPORT(SSTAT1,SCSIPERR);
-	} else if(stat1 & REQINIT) {
-		switch(GETPORT(SCSISIG) & P_MASK) {
-		case P_MSGI:	STATE=msgi;	break;
-		case P_MSGO:	STATE=msgo;	break;
-		case P_DATAO:	STATE=datao;	break;
-		case P_DATAI:	STATE=datai;	break;
-		case P_STATUS:	STATE=status;	break;
-		case P_CMD:	STATE=cmd;	break;
-		}
+	पूर्ण अन्यथा अगर(stat1 & REQINIT) अणु
+		चयन(GETPORT(SCSISIG) & P_MASK) अणु
+		हाल P_MSGI:	STATE=msgi;	अवरोध;
+		हाल P_MSGO:	STATE=msgo;	अवरोध;
+		हाल P_DATAO:	STATE=datao;	अवरोध;
+		हाल P_DATAI:	STATE=datai;	अवरोध;
+		हाल P_STATUS:	STATE=status;	अवरोध;
+		हाल P_CMD:	STATE=cmd;	अवरोध;
+		पूर्ण
 		dataphase=1;
-	}
+	पूर्ण
 
-	if((stat0 & SELDI) && STATE!=seldi && !dataphase) {
-		scmd_printk(KERN_INFO, CURRENT_SC, "reselection missed?");
-	}
+	अगर((stat0 & SELDI) && STATE!=seldi && !dataphase) अणु
+		scmd_prपूर्णांकk(KERN_INFO, CURRENT_SC, "reselection missed?");
+	पूर्ण
 
-	if(STATE!=PREVSTATE) {
+	अगर(STATE!=PREVSTATE) अणु
 		LASTSTATE=PREVSTATE;
-	}
+	पूर्ण
 
-	return dataphase;
-}
+	वापस dataphase;
+पूर्ण
 
 /*
  * handle parity error
@@ -2228,79 +2229,79 @@ static int update_state(struct Scsi_Host *shpnt)
  * FIXME: in which phase?
  *
  */
-static void parerr_run(struct Scsi_Host *shpnt)
-{
-	scmd_printk(KERN_ERR, CURRENT_SC, "parity error\n");
-	done(shpnt, DID_PARITY << 16);
-}
+अटल व्योम parerr_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC, "parity error\n");
+	करोne(shpnt, DID_PARITY << 16);
+पूर्ण
 
 /*
  * handle reset in
  *
  */
-static void rsti_run(struct Scsi_Host *shpnt)
-{
-	struct scsi_cmnd *ptr;
+अटल व्योम rsti_run(काष्ठा Scsi_Host *shpnt)
+अणु
+	काष्ठा scsi_cmnd *ptr;
 
-	shost_printk(KERN_NOTICE, shpnt, "scsi reset in\n");
+	shost_prपूर्णांकk(KERN_NOTICE, shpnt, "scsi reset in\n");
 
 	ptr=DISCONNECTED_SC;
-	while(ptr) {
-		struct scsi_cmnd *next = SCNEXT(ptr);
+	जबतक(ptr) अणु
+		काष्ठा scsi_cmnd *next = SCNEXT(ptr);
 
-		if (!ptr->device->soft_reset) {
-			remove_SC(&DISCONNECTED_SC, ptr);
+		अगर (!ptr->device->soft_reset) अणु
+			हटाओ_SC(&DISCONNECTED_SC, ptr);
 
-			kfree(ptr->host_scribble);
-			ptr->host_scribble=NULL;
+			kमुक्त(ptr->host_scribble);
+			ptr->host_scribble=शून्य;
 
 			ptr->result =  DID_RESET << 16;
-			ptr->scsi_done(ptr);
-		}
+			ptr->scsi_करोne(ptr);
+		पूर्ण
 
 		ptr = next;
-	}
+	पूर्ण
 
-	if(CURRENT_SC && !CURRENT_SC->device->soft_reset)
-		done(shpnt, DID_RESET << 16 );
-}
+	अगर(CURRENT_SC && !CURRENT_SC->device->soft_reset)
+		करोne(shpnt, DID_RESET << 16 );
+पूर्ण
 
 
 /*
  * bottom-half handler
  *
  */
-static void is_complete(struct Scsi_Host *shpnt)
-{
-	int dataphase;
-	unsigned long flags;
-	int pending;
+अटल व्योम is_complete(काष्ठा Scsi_Host *shpnt)
+अणु
+	पूर्णांक dataphase;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक pending;
 
-	if(!shpnt)
-		return;
+	अगर(!shpnt)
+		वापस;
 
 	DO_LOCK(flags);
 
-	if( HOSTDATA(shpnt)->service==0 )  {
+	अगर( HOSTDATA(shpnt)->service==0 )  अणु
 		DO_UNLOCK(flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	HOSTDATA(shpnt)->service = 0;
 
-	if(HOSTDATA(shpnt)->in_intr) {
+	अगर(HOSTDATA(shpnt)->in_पूर्णांकr) अणु
 		DO_UNLOCK(flags);
-		/* aha152x_error never returns.. */
+		/* aha152x_error never वापसs.. */
 		aha152x_error(shpnt, "bottom-half already running!?");
-	}
-	HOSTDATA(shpnt)->in_intr++;
+	पूर्ण
+	HOSTDATA(shpnt)->in_पूर्णांकr++;
 
 	/*
-	 * loop while there are interrupt conditions pending
+	 * loop जबतक there are पूर्णांकerrupt conditions pending
 	 *
 	 */
-	do {
-		unsigned long start = jiffies;
+	करो अणु
+		अचिन्हित दीर्घ start = jअगरfies;
 		DO_UNLOCK(flags);
 
 		dataphase=update_state(shpnt);
@@ -2309,108 +2310,108 @@ static void is_complete(struct Scsi_Host *shpnt)
 		 * end previous state
 		 *
 		 */
-		if(PREVSTATE!=STATE && states[PREVSTATE].end)
+		अगर(PREVSTATE!=STATE && states[PREVSTATE].end)
 			states[PREVSTATE].end(shpnt);
 
 		/*
-		 * disable SPIO mode if previous phase used it
-		 * and this one doesn't
+		 * disable SPIO mode अगर previous phase used it
+		 * and this one करोesn't
 		 *
 		 */
-		if(states[PREVSTATE].spio && !states[STATE].spio) {
+		अगर(states[PREVSTATE].spio && !states[STATE].spio) अणु
 			SETPORT(SXFRCTL0, CH1);
 			SETPORT(DMACNTRL0, 0);
-			if(CURRENT_SC)
+			अगर(CURRENT_SC)
 				CURRENT_SC->SCp.phase &= ~spiordy;
-		}
+		पूर्ण
 
 		/*
 		 * accept current dataphase phase
 		 *
 		 */
-		if(dataphase) {
+		अगर(dataphase) अणु
 			SETPORT(SSTAT0, REQINIT);
 			SETPORT(SCSISIG, GETPORT(SCSISIG) & P_MASK);
 			SETPORT(SSTAT1, PHASECHG);
-		}
+		पूर्ण
 
 		/*
-		 * enable SPIO mode if previous didn't use it
-		 * and this one does
+		 * enable SPIO mode अगर previous didn't use it
+		 * and this one करोes
 		 *
 		 */
-		if(!states[PREVSTATE].spio && states[STATE].spio) {
+		अगर(!states[PREVSTATE].spio && states[STATE].spio) अणु
 			SETPORT(DMACNTRL0, 0);
 			SETPORT(SXFRCTL0, CH1|SPIOEN);
-			if(CURRENT_SC)
+			अगर(CURRENT_SC)
 				CURRENT_SC->SCp.phase |= spiordy;
-		}
+		पूर्ण
 
 		/*
-		 * initialize for new state
+		 * initialize क्रम new state
 		 *
 		 */
-		if(PREVSTATE!=STATE && states[STATE].init)
+		अगर(PREVSTATE!=STATE && states[STATE].init)
 			states[STATE].init(shpnt);
 
 		/*
 		 * handle current state
 		 *
 		 */
-		if(states[STATE].run)
+		अगर(states[STATE].run)
 			states[STATE].run(shpnt);
-		else
-			scmd_printk(KERN_ERR, CURRENT_SC,
+		अन्यथा
+			scmd_prपूर्णांकk(KERN_ERR, CURRENT_SC,
 				    "unexpected state (%x)\n", STATE);
 
 		/*
-		 * setup controller to interrupt on
+		 * setup controller to पूर्णांकerrupt on
 		 * the next expected condition and
-		 * loop if it's already there
+		 * loop अगर it's alपढ़ोy there
 		 *
 		 */
 		DO_LOCK(flags);
-		pending=setup_expected_interrupts(shpnt);
-#if defined(AHA152X_STAT)
+		pending=setup_expected_पूर्णांकerrupts(shpnt);
+#अगर defined(AHA152X_STAT)
 		HOSTDATA(shpnt)->count[STATE]++;
-		if(PREVSTATE!=STATE)
+		अगर(PREVSTATE!=STATE)
 			HOSTDATA(shpnt)->count_trans[STATE]++;
-		HOSTDATA(shpnt)->time[STATE] += jiffies-start;
-#endif
+		HOSTDATA(shpnt)->समय[STATE] += jअगरfies-start;
+#पूर्ण_अगर
 
-	} while(pending);
+	पूर्ण जबतक(pending);
 
 	/*
-	 * enable interrupts and leave bottom-half
+	 * enable पूर्णांकerrupts and leave bottom-half
 	 *
 	 */
-	HOSTDATA(shpnt)->in_intr--;
+	HOSTDATA(shpnt)->in_पूर्णांकr--;
 	SETBITS(DMACNTRL0, INTEN);
 	DO_UNLOCK(flags);
-}
+पूर्ण
 
 
 /*
  * Dump the current driver status and panic
  */
-static void aha152x_error(struct Scsi_Host *shpnt, char *msg)
-{
-	shost_printk(KERN_EMERG, shpnt, "%s\n", msg);
+अटल व्योम aha152x_error(काष्ठा Scsi_Host *shpnt, अक्षर *msg)
+अणु
+	shost_prपूर्णांकk(KERN_EMERG, shpnt, "%s\n", msg);
 	show_queues(shpnt);
 	panic("aha152x panic\n");
-}
+पूर्ण
 
 /*
- * display enabled interrupts
+ * display enabled पूर्णांकerrupts
  */
-static void disp_enintr(struct Scsi_Host *shpnt)
-{
-	int s0, s1;
+अटल व्योम disp_enपूर्णांकr(काष्ठा Scsi_Host *shpnt)
+अणु
+	पूर्णांक s0, s1;
 
 	s0 = GETPORT(SIMODE0);
 	s1 = GETPORT(SIMODE1);
 
-	shost_printk(KERN_DEBUG, shpnt,
+	shost_prपूर्णांकk(KERN_DEBUG, shpnt,
 		     "enabled interrupts (%s%s%s%s%s%s%s%s%s%s%s%s%s%s)\n",
 		     (s0 & ENSELDO) ? "ENSELDO " : "",
 		     (s0 & ENSELDI) ? "ENSELDI " : "",
@@ -2426,439 +2427,439 @@ static void disp_enintr(struct Scsi_Host *shpnt)
 		     (s1 & ENSCSIPERR) ? "ENSCSIPERR " : "",
 		     (s1 & ENPHASECHG) ? "ENPHASECHG " : "",
 		     (s1 & ENREQINIT) ? "ENREQINIT " : "");
-}
+पूर्ण
 
 /*
  * Show the command data of a command
  */
-static void show_command(struct scsi_cmnd *ptr)
-{
-	scsi_print_command(ptr);
-	scmd_printk(KERN_DEBUG, ptr,
+अटल व्योम show_command(काष्ठा scsi_cmnd *ptr)
+अणु
+	scsi_prपूर्णांक_command(ptr);
+	scmd_prपूर्णांकk(KERN_DEBUG, ptr,
 		    "request_bufflen=%d; resid=%d; "
 		    "phase |%s%s%s%s%s%s%s%s%s; next=0x%p",
 		    scsi_bufflen(ptr), scsi_get_resid(ptr),
 		    (ptr->SCp.phase & not_issued) ? "not issued|" : "",
 		    (ptr->SCp.phase & selecting) ? "selecting|" : "",
-		    (ptr->SCp.phase & identified) ? "identified|" : "",
+		    (ptr->SCp.phase & identअगरied) ? "identified|" : "",
 		    (ptr->SCp.phase & disconnected) ? "disconnected|" : "",
 		    (ptr->SCp.phase & completed) ? "completed|" : "",
 		    (ptr->SCp.phase & spiordy) ? "spiordy|" : "",
 		    (ptr->SCp.phase & syncneg) ? "syncneg|" : "",
-		    (ptr->SCp.phase & aborted) ? "aborted|" : "",
+		    (ptr->SCp.phase & पातed) ? "aborted|" : "",
 		    (ptr->SCp.phase & resetted) ? "resetted|" : "",
-		    (SCDATA(ptr)) ? SCNEXT(ptr) : NULL);
-}
+		    (SCDATA(ptr)) ? SCNEXT(ptr) : शून्य);
+पूर्ण
 
 /*
  * Dump the queued data
  */
-static void show_queues(struct Scsi_Host *shpnt)
-{
-	struct scsi_cmnd *ptr;
-	unsigned long flags;
+अटल व्योम show_queues(काष्ठा Scsi_Host *shpnt)
+अणु
+	काष्ठा scsi_cmnd *ptr;
+	अचिन्हित दीर्घ flags;
 
 	DO_LOCK(flags);
-	printk(KERN_DEBUG "\nqueue status:\nissue_SC:\n");
-	for (ptr = ISSUE_SC; ptr; ptr = SCNEXT(ptr))
+	prपूर्णांकk(KERN_DEBUG "\nqueue status:\nissue_SC:\n");
+	क्रम (ptr = ISSUE_SC; ptr; ptr = SCNEXT(ptr))
 		show_command(ptr);
 	DO_UNLOCK(flags);
 
-	printk(KERN_DEBUG "current_SC:\n");
-	if (CURRENT_SC)
+	prपूर्णांकk(KERN_DEBUG "current_SC:\n");
+	अगर (CURRENT_SC)
 		show_command(CURRENT_SC);
-	else
-		printk(KERN_DEBUG "none\n");
+	अन्यथा
+		prपूर्णांकk(KERN_DEBUG "none\n");
 
-	printk(KERN_DEBUG "disconnected_SC:\n");
-	for (ptr = DISCONNECTED_SC; ptr; ptr = SCDATA(ptr) ? SCNEXT(ptr) : NULL)
+	prपूर्णांकk(KERN_DEBUG "disconnected_SC:\n");
+	क्रम (ptr = DISCONNECTED_SC; ptr; ptr = SCDATA(ptr) ? SCNEXT(ptr) : शून्य)
 		show_command(ptr);
 
-	disp_enintr(shpnt);
-}
+	disp_enपूर्णांकr(shpnt);
+पूर्ण
 
-static void get_command(struct seq_file *m, struct scsi_cmnd * ptr)
-{
-	int i;
+अटल व्योम get_command(काष्ठा seq_file *m, काष्ठा scsi_cmnd * ptr)
+अणु
+	पूर्णांक i;
 
-	seq_printf(m, "%p: target=%d; lun=%d; cmnd=( ",
+	seq_म_लिखो(m, "%p: target=%d; lun=%d; cmnd=( ",
 		ptr, ptr->device->id, (u8)ptr->device->lun);
 
-	for (i = 0; i < COMMAND_SIZE(ptr->cmnd[0]); i++)
-		seq_printf(m, "0x%02x ", ptr->cmnd[i]);
+	क्रम (i = 0; i < COMMAND_SIZE(ptr->cmnd[0]); i++)
+		seq_म_लिखो(m, "0x%02x ", ptr->cmnd[i]);
 
-	seq_printf(m, "); resid=%d; residual=%d; buffers=%d; phase |",
+	seq_म_लिखो(m, "); resid=%d; residual=%d; buffers=%d; phase |",
 		scsi_get_resid(ptr), ptr->SCp.this_residual,
 		sg_nents(ptr->SCp.buffer) - 1);
 
-	if (ptr->SCp.phase & not_issued)
-		seq_puts(m, "not issued|");
-	if (ptr->SCp.phase & selecting)
-		seq_puts(m, "selecting|");
-	if (ptr->SCp.phase & disconnected)
-		seq_puts(m, "disconnected|");
-	if (ptr->SCp.phase & aborted)
-		seq_puts(m, "aborted|");
-	if (ptr->SCp.phase & identified)
-		seq_puts(m, "identified|");
-	if (ptr->SCp.phase & completed)
-		seq_puts(m, "completed|");
-	if (ptr->SCp.phase & spiordy)
-		seq_puts(m, "spiordy|");
-	if (ptr->SCp.phase & syncneg)
-		seq_puts(m, "syncneg|");
-	seq_printf(m, "; next=0x%p\n", SCNEXT(ptr));
-}
+	अगर (ptr->SCp.phase & not_issued)
+		seq_माला_दो(m, "not issued|");
+	अगर (ptr->SCp.phase & selecting)
+		seq_माला_दो(m, "selecting|");
+	अगर (ptr->SCp.phase & disconnected)
+		seq_माला_दो(m, "disconnected|");
+	अगर (ptr->SCp.phase & पातed)
+		seq_माला_दो(m, "aborted|");
+	अगर (ptr->SCp.phase & identअगरied)
+		seq_माला_दो(m, "identified|");
+	अगर (ptr->SCp.phase & completed)
+		seq_माला_दो(m, "completed|");
+	अगर (ptr->SCp.phase & spiordy)
+		seq_माला_दो(m, "spiordy|");
+	अगर (ptr->SCp.phase & syncneg)
+		seq_माला_दो(m, "syncneg|");
+	seq_म_लिखो(m, "; next=0x%p\n", SCNEXT(ptr));
+पूर्ण
 
-static void get_ports(struct seq_file *m, struct Scsi_Host *shpnt)
-{
-	int s;
+अटल व्योम get_ports(काष्ठा seq_file *m, काष्ठा Scsi_Host *shpnt)
+अणु
+	पूर्णांक s;
 
-	seq_printf(m, "\n%s: %s(%s) ", CURRENT_SC ? "on bus" : "waiting", states[STATE].name, states[PREVSTATE].name);
+	seq_म_लिखो(m, "\n%s: %s(%s) ", CURRENT_SC ? "on bus" : "waiting", states[STATE].name, states[PREVSTATE].name);
 
 	s = GETPORT(SCSISEQ);
-	seq_puts(m, "SCSISEQ( ");
-	if (s & TEMODEO)
-		seq_puts(m, "TARGET MODE ");
-	if (s & ENSELO)
-		seq_puts(m, "SELO ");
-	if (s & ENSELI)
-		seq_puts(m, "SELI ");
-	if (s & ENRESELI)
-		seq_puts(m, "RESELI ");
-	if (s & ENAUTOATNO)
-		seq_puts(m, "AUTOATNO ");
-	if (s & ENAUTOATNI)
-		seq_puts(m, "AUTOATNI ");
-	if (s & ENAUTOATNP)
-		seq_puts(m, "AUTOATNP ");
-	if (s & SCSIRSTO)
-		seq_puts(m, "SCSIRSTO ");
-	seq_puts(m, ");");
+	seq_माला_दो(m, "SCSISEQ( ");
+	अगर (s & TEMODEO)
+		seq_माला_दो(m, "TARGET MODE ");
+	अगर (s & ENSELO)
+		seq_माला_दो(m, "SELO ");
+	अगर (s & ENSELI)
+		seq_माला_दो(m, "SELI ");
+	अगर (s & ENRESELI)
+		seq_माला_दो(m, "RESELI ");
+	अगर (s & ENAUTOATNO)
+		seq_माला_दो(m, "AUTOATNO ");
+	अगर (s & ENAUTOATNI)
+		seq_माला_दो(m, "AUTOATNI ");
+	अगर (s & ENAUTOATNP)
+		seq_माला_दो(m, "AUTOATNP ");
+	अगर (s & SCSIRSTO)
+		seq_माला_दो(m, "SCSIRSTO ");
+	seq_माला_दो(m, ");");
 
-	seq_puts(m, " SCSISIG(");
+	seq_माला_दो(m, " SCSISIG(");
 	s = GETPORT(SCSISIG);
-	switch (s & P_MASK) {
-	case P_DATAO:
-		seq_puts(m, "DATA OUT");
-		break;
-	case P_DATAI:
-		seq_puts(m, "DATA IN");
-		break;
-	case P_CMD:
-		seq_puts(m, "COMMAND");
-		break;
-	case P_STATUS:
-		seq_puts(m, "STATUS");
-		break;
-	case P_MSGO:
-		seq_puts(m, "MESSAGE OUT");
-		break;
-	case P_MSGI:
-		seq_puts(m, "MESSAGE IN");
-		break;
-	default:
-		seq_puts(m, "*invalid*");
-		break;
-	}
+	चयन (s & P_MASK) अणु
+	हाल P_DATAO:
+		seq_माला_दो(m, "DATA OUT");
+		अवरोध;
+	हाल P_DATAI:
+		seq_माला_दो(m, "DATA IN");
+		अवरोध;
+	हाल P_CMD:
+		seq_माला_दो(m, "COMMAND");
+		अवरोध;
+	हाल P_STATUS:
+		seq_माला_दो(m, "STATUS");
+		अवरोध;
+	हाल P_MSGO:
+		seq_माला_दो(m, "MESSAGE OUT");
+		अवरोध;
+	हाल P_MSGI:
+		seq_माला_दो(m, "MESSAGE IN");
+		अवरोध;
+	शेष:
+		seq_माला_दो(m, "*invalid*");
+		अवरोध;
+	पूर्ण
 
-	seq_puts(m, "); ");
+	seq_माला_दो(m, "); ");
 
-	seq_printf(m, "INTSTAT (%s); ", TESTHI(DMASTAT, INTSTAT) ? "hi" : "lo");
+	seq_म_लिखो(m, "INTSTAT (%s); ", TESTHI(DMASTAT, INTSTAT) ? "hi" : "lo");
 
-	seq_puts(m, "SSTAT( ");
+	seq_माला_दो(m, "SSTAT( ");
 	s = GETPORT(SSTAT0);
-	if (s & TARGET)
-		seq_puts(m, "TARGET ");
-	if (s & SELDO)
-		seq_puts(m, "SELDO ");
-	if (s & SELDI)
-		seq_puts(m, "SELDI ");
-	if (s & SELINGO)
-		seq_puts(m, "SELINGO ");
-	if (s & SWRAP)
-		seq_puts(m, "SWRAP ");
-	if (s & SDONE)
-		seq_puts(m, "SDONE ");
-	if (s & SPIORDY)
-		seq_puts(m, "SPIORDY ");
-	if (s & DMADONE)
-		seq_puts(m, "DMADONE ");
+	अगर (s & TARGET)
+		seq_माला_दो(m, "TARGET ");
+	अगर (s & SELDO)
+		seq_माला_दो(m, "SELDO ");
+	अगर (s & SELDI)
+		seq_माला_दो(m, "SELDI ");
+	अगर (s & SELINGO)
+		seq_माला_दो(m, "SELINGO ");
+	अगर (s & SWRAP)
+		seq_माला_दो(m, "SWRAP ");
+	अगर (s & SDONE)
+		seq_माला_दो(m, "SDONE ");
+	अगर (s & SPIORDY)
+		seq_माला_दो(m, "SPIORDY ");
+	अगर (s & DMADONE)
+		seq_माला_दो(m, "DMADONE ");
 
 	s = GETPORT(SSTAT1);
-	if (s & SELTO)
-		seq_puts(m, "SELTO ");
-	if (s & ATNTARG)
-		seq_puts(m, "ATNTARG ");
-	if (s & SCSIRSTI)
-		seq_puts(m, "SCSIRSTI ");
-	if (s & PHASEMIS)
-		seq_puts(m, "PHASEMIS ");
-	if (s & BUSFREE)
-		seq_puts(m, "BUSFREE ");
-	if (s & SCSIPERR)
-		seq_puts(m, "SCSIPERR ");
-	if (s & PHASECHG)
-		seq_puts(m, "PHASECHG ");
-	if (s & REQINIT)
-		seq_puts(m, "REQINIT ");
-	seq_puts(m, "); ");
+	अगर (s & SELTO)
+		seq_माला_दो(m, "SELTO ");
+	अगर (s & ATNTARG)
+		seq_माला_दो(m, "ATNTARG ");
+	अगर (s & SCSIRSTI)
+		seq_माला_दो(m, "SCSIRSTI ");
+	अगर (s & PHASEMIS)
+		seq_माला_दो(m, "PHASEMIS ");
+	अगर (s & BUSFREE)
+		seq_माला_दो(m, "BUSFREE ");
+	अगर (s & SCSIPERR)
+		seq_माला_दो(m, "SCSIPERR ");
+	अगर (s & PHASECHG)
+		seq_माला_दो(m, "PHASECHG ");
+	अगर (s & REQINIT)
+		seq_माला_दो(m, "REQINIT ");
+	seq_माला_दो(m, "); ");
 
 
-	seq_puts(m, "SSTAT( ");
+	seq_माला_दो(m, "SSTAT( ");
 
 	s = GETPORT(SSTAT0) & GETPORT(SIMODE0);
 
-	if (s & TARGET)
-		seq_puts(m, "TARGET ");
-	if (s & SELDO)
-		seq_puts(m, "SELDO ");
-	if (s & SELDI)
-		seq_puts(m, "SELDI ");
-	if (s & SELINGO)
-		seq_puts(m, "SELINGO ");
-	if (s & SWRAP)
-		seq_puts(m, "SWRAP ");
-	if (s & SDONE)
-		seq_puts(m, "SDONE ");
-	if (s & SPIORDY)
-		seq_puts(m, "SPIORDY ");
-	if (s & DMADONE)
-		seq_puts(m, "DMADONE ");
+	अगर (s & TARGET)
+		seq_माला_दो(m, "TARGET ");
+	अगर (s & SELDO)
+		seq_माला_दो(m, "SELDO ");
+	अगर (s & SELDI)
+		seq_माला_दो(m, "SELDI ");
+	अगर (s & SELINGO)
+		seq_माला_दो(m, "SELINGO ");
+	अगर (s & SWRAP)
+		seq_माला_दो(m, "SWRAP ");
+	अगर (s & SDONE)
+		seq_माला_दो(m, "SDONE ");
+	अगर (s & SPIORDY)
+		seq_माला_दो(m, "SPIORDY ");
+	अगर (s & DMADONE)
+		seq_माला_दो(m, "DMADONE ");
 
 	s = GETPORT(SSTAT1) & GETPORT(SIMODE1);
 
-	if (s & SELTO)
-		seq_puts(m, "SELTO ");
-	if (s & ATNTARG)
-		seq_puts(m, "ATNTARG ");
-	if (s & SCSIRSTI)
-		seq_puts(m, "SCSIRSTI ");
-	if (s & PHASEMIS)
-		seq_puts(m, "PHASEMIS ");
-	if (s & BUSFREE)
-		seq_puts(m, "BUSFREE ");
-	if (s & SCSIPERR)
-		seq_puts(m, "SCSIPERR ");
-	if (s & PHASECHG)
-		seq_puts(m, "PHASECHG ");
-	if (s & REQINIT)
-		seq_puts(m, "REQINIT ");
-	seq_puts(m, "); ");
+	अगर (s & SELTO)
+		seq_माला_दो(m, "SELTO ");
+	अगर (s & ATNTARG)
+		seq_माला_दो(m, "ATNTARG ");
+	अगर (s & SCSIRSTI)
+		seq_माला_दो(m, "SCSIRSTI ");
+	अगर (s & PHASEMIS)
+		seq_माला_दो(m, "PHASEMIS ");
+	अगर (s & BUSFREE)
+		seq_माला_दो(m, "BUSFREE ");
+	अगर (s & SCSIPERR)
+		seq_माला_दो(m, "SCSIPERR ");
+	अगर (s & PHASECHG)
+		seq_माला_दो(m, "PHASECHG ");
+	अगर (s & REQINIT)
+		seq_माला_दो(m, "REQINIT ");
+	seq_माला_दो(m, "); ");
 
-	seq_puts(m, "SXFRCTL0( ");
+	seq_माला_दो(m, "SXFRCTL0( ");
 
 	s = GETPORT(SXFRCTL0);
-	if (s & SCSIEN)
-		seq_puts(m, "SCSIEN ");
-	if (s & DMAEN)
-		seq_puts(m, "DMAEN ");
-	if (s & CH1)
-		seq_puts(m, "CH1 ");
-	if (s & CLRSTCNT)
-		seq_puts(m, "CLRSTCNT ");
-	if (s & SPIOEN)
-		seq_puts(m, "SPIOEN ");
-	if (s & CLRCH1)
-		seq_puts(m, "CLRCH1 ");
-	seq_puts(m, "); ");
+	अगर (s & SCSIEN)
+		seq_माला_दो(m, "SCSIEN ");
+	अगर (s & DMAEN)
+		seq_माला_दो(m, "DMAEN ");
+	अगर (s & CH1)
+		seq_माला_दो(m, "CH1 ");
+	अगर (s & CLRSTCNT)
+		seq_माला_दो(m, "CLRSTCNT ");
+	अगर (s & SPIOEN)
+		seq_माला_दो(m, "SPIOEN ");
+	अगर (s & CLRCH1)
+		seq_माला_दो(m, "CLRCH1 ");
+	seq_माला_दो(m, "); ");
 
-	seq_puts(m, "SIGNAL( ");
+	seq_माला_दो(m, "SIGNAL( ");
 
 	s = GETPORT(SCSISIG);
-	if (s & SIG_ATNI)
-		seq_puts(m, "ATNI ");
-	if (s & SIG_SELI)
-		seq_puts(m, "SELI ");
-	if (s & SIG_BSYI)
-		seq_puts(m, "BSYI ");
-	if (s & SIG_REQI)
-		seq_puts(m, "REQI ");
-	if (s & SIG_ACKI)
-		seq_puts(m, "ACKI ");
-	seq_puts(m, "); ");
+	अगर (s & SIG_ATNI)
+		seq_माला_दो(m, "ATNI ");
+	अगर (s & SIG_SELI)
+		seq_माला_दो(m, "SELI ");
+	अगर (s & SIG_BSYI)
+		seq_माला_दो(m, "BSYI ");
+	अगर (s & SIG_REQI)
+		seq_माला_दो(m, "REQI ");
+	अगर (s & SIG_ACKI)
+		seq_माला_दो(m, "ACKI ");
+	seq_माला_दो(m, "); ");
 
-	seq_printf(m, "SELID(%02x), ", GETPORT(SELID));
+	seq_म_लिखो(m, "SELID(%02x), ", GETPORT(SELID));
 
-	seq_printf(m, "STCNT(%d), ", GETSTCNT());
+	seq_म_लिखो(m, "STCNT(%d), ", GETSTCNT());
 
-	seq_puts(m, "SSTAT2( ");
+	seq_माला_दो(m, "SSTAT2( ");
 
 	s = GETPORT(SSTAT2);
-	if (s & SOFFSET)
-		seq_puts(m, "SOFFSET ");
-	if (s & SEMPTY)
-		seq_puts(m, "SEMPTY ");
-	if (s & SFULL)
-		seq_puts(m, "SFULL ");
-	seq_printf(m, "); SFCNT (%d); ", s & (SFULL | SFCNT));
+	अगर (s & SOFFSET)
+		seq_माला_दो(m, "SOFFSET ");
+	अगर (s & SEMPTY)
+		seq_माला_दो(m, "SEMPTY ");
+	अगर (s & SFULL)
+		seq_माला_दो(m, "SFULL ");
+	seq_म_लिखो(m, "); SFCNT (%d); ", s & (SFULL | SFCNT));
 
 	s = GETPORT(SSTAT3);
-	seq_printf(m, "SCSICNT (%d), OFFCNT(%d), ", (s & 0xf0) >> 4, s & 0x0f);
+	seq_म_लिखो(m, "SCSICNT (%d), OFFCNT(%d), ", (s & 0xf0) >> 4, s & 0x0f);
 
-	seq_puts(m, "SSTAT4( ");
+	seq_माला_दो(m, "SSTAT4( ");
 	s = GETPORT(SSTAT4);
-	if (s & SYNCERR)
-		seq_puts(m, "SYNCERR ");
-	if (s & FWERR)
-		seq_puts(m, "FWERR ");
-	if (s & FRERR)
-		seq_puts(m, "FRERR ");
-	seq_puts(m, "); ");
+	अगर (s & SYNCERR)
+		seq_माला_दो(m, "SYNCERR ");
+	अगर (s & FWERR)
+		seq_माला_दो(m, "FWERR ");
+	अगर (s & FRERR)
+		seq_माला_दो(m, "FRERR ");
+	seq_माला_दो(m, "); ");
 
-	seq_puts(m, "DMACNTRL0( ");
+	seq_माला_दो(m, "DMACNTRL0( ");
 	s = GETPORT(DMACNTRL0);
-	seq_printf(m, "%s ", s & _8BIT ? "8BIT" : "16BIT");
-	seq_printf(m, "%s ", s & DMA ? "DMA" : "PIO");
-	seq_printf(m, "%s ", s & WRITE_READ ? "WRITE" : "READ");
-	if (s & ENDMA)
-		seq_puts(m, "ENDMA ");
-	if (s & INTEN)
-		seq_puts(m, "INTEN ");
-	if (s & RSTFIFO)
-		seq_puts(m, "RSTFIFO ");
-	if (s & SWINT)
-		seq_puts(m, "SWINT ");
-	seq_puts(m, "); ");
+	seq_म_लिखो(m, "%s ", s & _8BIT ? "8BIT" : "16BIT");
+	seq_म_लिखो(m, "%s ", s & DMA ? "DMA" : "PIO");
+	seq_म_लिखो(m, "%s ", s & WRITE_READ ? "WRITE" : "READ");
+	अगर (s & ENDMA)
+		seq_माला_दो(m, "ENDMA ");
+	अगर (s & INTEN)
+		seq_माला_दो(m, "INTEN ");
+	अगर (s & RSTFIFO)
+		seq_माला_दो(m, "RSTFIFO ");
+	अगर (s & SWINT)
+		seq_माला_दो(m, "SWINT ");
+	seq_माला_दो(m, "); ");
 
-	seq_puts(m, "DMASTAT( ");
+	seq_माला_दो(m, "DMASTAT( ");
 	s = GETPORT(DMASTAT);
-	if (s & ATDONE)
-		seq_puts(m, "ATDONE ");
-	if (s & WORDRDY)
-		seq_puts(m, "WORDRDY ");
-	if (s & DFIFOFULL)
-		seq_puts(m, "DFIFOFULL ");
-	if (s & DFIFOEMP)
-		seq_puts(m, "DFIFOEMP ");
-	seq_puts(m, ")\n");
+	अगर (s & ATDONE)
+		seq_माला_दो(m, "ATDONE ");
+	अगर (s & WORDRDY)
+		seq_माला_दो(m, "WORDRDY ");
+	अगर (s & DFIFOFULL)
+		seq_माला_दो(m, "DFIFOFULL ");
+	अगर (s & DFIFOEMP)
+		seq_माला_दो(m, "DFIFOEMP ");
+	seq_माला_दो(m, ")\n");
 
-	seq_puts(m, "enabled interrupts( ");
+	seq_माला_दो(m, "enabled interrupts( ");
 
 	s = GETPORT(SIMODE0);
-	if (s & ENSELDO)
-		seq_puts(m, "ENSELDO ");
-	if (s & ENSELDI)
-		seq_puts(m, "ENSELDI ");
-	if (s & ENSELINGO)
-		seq_puts(m, "ENSELINGO ");
-	if (s & ENSWRAP)
-		seq_puts(m, "ENSWRAP ");
-	if (s & ENSDONE)
-		seq_puts(m, "ENSDONE ");
-	if (s & ENSPIORDY)
-		seq_puts(m, "ENSPIORDY ");
-	if (s & ENDMADONE)
-		seq_puts(m, "ENDMADONE ");
+	अगर (s & ENSELDO)
+		seq_माला_दो(m, "ENSELDO ");
+	अगर (s & ENSELDI)
+		seq_माला_दो(m, "ENSELDI ");
+	अगर (s & ENSELINGO)
+		seq_माला_दो(m, "ENSELINGO ");
+	अगर (s & ENSWRAP)
+		seq_माला_दो(m, "ENSWRAP ");
+	अगर (s & ENSDONE)
+		seq_माला_दो(m, "ENSDONE ");
+	अगर (s & ENSPIORDY)
+		seq_माला_दो(m, "ENSPIORDY ");
+	अगर (s & ENDMADONE)
+		seq_माला_दो(m, "ENDMADONE ");
 
 	s = GETPORT(SIMODE1);
-	if (s & ENSELTIMO)
-		seq_puts(m, "ENSELTIMO ");
-	if (s & ENATNTARG)
-		seq_puts(m, "ENATNTARG ");
-	if (s & ENPHASEMIS)
-		seq_puts(m, "ENPHASEMIS ");
-	if (s & ENBUSFREE)
-		seq_puts(m, "ENBUSFREE ");
-	if (s & ENSCSIPERR)
-		seq_puts(m, "ENSCSIPERR ");
-	if (s & ENPHASECHG)
-		seq_puts(m, "ENPHASECHG ");
-	if (s & ENREQINIT)
-		seq_puts(m, "ENREQINIT ");
-	seq_puts(m, ")\n");
-}
+	अगर (s & ENSELTIMO)
+		seq_माला_दो(m, "ENSELTIMO ");
+	अगर (s & ENATNTARG)
+		seq_माला_दो(m, "ENATNTARG ");
+	अगर (s & ENPHASEMIS)
+		seq_माला_दो(m, "ENPHASEMIS ");
+	अगर (s & ENBUSFREE)
+		seq_माला_दो(m, "ENBUSFREE ");
+	अगर (s & ENSCSIPERR)
+		seq_माला_दो(m, "ENSCSIPERR ");
+	अगर (s & ENPHASECHG)
+		seq_माला_दो(m, "ENPHASECHG ");
+	अगर (s & ENREQINIT)
+		seq_माला_दो(m, "ENREQINIT ");
+	seq_माला_दो(m, ")\n");
+पूर्ण
 
-static int aha152x_set_info(struct Scsi_Host *shpnt, char *buffer, int length)
-{
-	if(!shpnt || !buffer || length<8 || strncmp("aha152x ", buffer, 8)!=0)
-		return -EINVAL;
+अटल पूर्णांक aha152x_set_info(काष्ठा Scsi_Host *shpnt, अक्षर *buffer, पूर्णांक length)
+अणु
+	अगर(!shpnt || !buffer || length<8 || म_भेदन("aha152x ", buffer, 8)!=0)
+		वापस -EINVAL;
 
-#if defined(AHA152X_STAT)
-	if(length>13 && strncmp("reset", buffer+8, 5)==0) {
-		int i;
+#अगर defined(AHA152X_STAT)
+	अगर(length>13 && म_भेदन("reset", buffer+8, 5)==0) अणु
+		पूर्णांक i;
 
 		HOSTDATA(shpnt)->total_commands=0;
 		HOSTDATA(shpnt)->disconnections=0;
-		HOSTDATA(shpnt)->busfree_without_any_action=0;
-		HOSTDATA(shpnt)->busfree_without_old_command=0;
-		HOSTDATA(shpnt)->busfree_without_new_command=0;
-		HOSTDATA(shpnt)->busfree_without_done_command=0;
-		HOSTDATA(shpnt)->busfree_with_check_condition=0;
-		for (i = idle; i<maxstate; i++) {
+		HOSTDATA(shpnt)->busमुक्त_without_any_action=0;
+		HOSTDATA(shpnt)->busमुक्त_without_old_command=0;
+		HOSTDATA(shpnt)->busमुक्त_without_new_command=0;
+		HOSTDATA(shpnt)->busमुक्त_without_करोne_command=0;
+		HOSTDATA(shpnt)->busमुक्त_with_check_condition=0;
+		क्रम (i = idle; i<maxstate; i++) अणु
 			HOSTDATA(shpnt)->count[i]=0;
 			HOSTDATA(shpnt)->count_trans[i]=0;
-			HOSTDATA(shpnt)->time[i]=0;
-		}
+			HOSTDATA(shpnt)->समय[i]=0;
+		पूर्ण
 
-		shost_printk(KERN_INFO, shpnt, "aha152x: stats reset.\n");
+		shost_prपूर्णांकk(KERN_INFO, shpnt, "aha152x: stats reset.\n");
 
-	} else
-#endif
-	{
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
+		वापस -EINVAL;
+	पूर्ण
 
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
-static int aha152x_show_info(struct seq_file *m, struct Scsi_Host *shpnt)
-{
-	int i;
-	struct scsi_cmnd *ptr;
-	unsigned long flags;
+अटल पूर्णांक aha152x_show_info(काष्ठा seq_file *m, काष्ठा Scsi_Host *shpnt)
+अणु
+	पूर्णांक i;
+	काष्ठा scsi_cmnd *ptr;
+	अचिन्हित दीर्घ flags;
 
-	seq_puts(m, AHA152X_REVID "\n");
+	seq_माला_दो(m, AHA152X_REVID "\n");
 
-	seq_printf(m, "ioports 0x%04lx to 0x%04lx\n",
+	seq_म_लिखो(m, "ioports 0x%04lx to 0x%04lx\n",
 		shpnt->io_port, shpnt->io_port + shpnt->n_io_port - 1);
-	seq_printf(m, "interrupt 0x%02x\n", shpnt->irq);
-	seq_printf(m, "disconnection/reconnection %s\n",
+	seq_म_लिखो(m, "interrupt 0x%02x\n", shpnt->irq);
+	seq_म_लिखो(m, "disconnection/reconnection %s\n",
 		RECONNECT ? "enabled" : "disabled");
-	seq_printf(m, "parity checking %s\n",
+	seq_म_लिखो(m, "parity checking %s\n",
 		PARITY ? "enabled" : "disabled");
-	seq_printf(m, "synchronous transfers %s\n",
+	seq_म_लिखो(m, "synchronous transfers %s\n",
 		SYNCHRONOUS ? "enabled" : "disabled");
-	seq_printf(m, "%d commands currently queued\n", HOSTDATA(shpnt)->commands);
+	seq_म_लिखो(m, "%d commands currently queued\n", HOSTDATA(shpnt)->commands);
 
-	if(SYNCHRONOUS) {
-		seq_puts(m, "synchronously operating targets (tick=50 ns):\n");
-		for (i = 0; i < 8; i++)
-			if (HOSTDATA(shpnt)->syncrate[i] & 0x7f)
-				seq_printf(m, "target %d: period %dT/%dns; req/ack offset %d\n",
+	अगर(SYNCHRONOUS) अणु
+		seq_माला_दो(m, "synchronously operating targets (tick=50 ns):\n");
+		क्रम (i = 0; i < 8; i++)
+			अगर (HOSTDATA(shpnt)->syncrate[i] & 0x7f)
+				seq_म_लिखो(m, "target %d: period %dT/%dns; req/ack offset %d\n",
 					i,
 					(((HOSTDATA(shpnt)->syncrate[i] & 0x70) >> 4) + 2),
 					(((HOSTDATA(shpnt)->syncrate[i] & 0x70) >> 4) + 2) * 50,
 				    HOSTDATA(shpnt)->syncrate[i] & 0x0f);
-	}
-	seq_puts(m, "\nqueue status:\n");
+	पूर्ण
+	seq_माला_दो(m, "\nqueue status:\n");
 	DO_LOCK(flags);
-	if (ISSUE_SC) {
-		seq_puts(m, "not yet issued commands:\n");
-		for (ptr = ISSUE_SC; ptr; ptr = SCNEXT(ptr))
+	अगर (ISSUE_SC) अणु
+		seq_माला_दो(m, "not yet issued commands:\n");
+		क्रम (ptr = ISSUE_SC; ptr; ptr = SCNEXT(ptr))
 			get_command(m, ptr);
-	} else
-		seq_puts(m, "no not yet issued commands\n");
+	पूर्ण अन्यथा
+		seq_माला_दो(m, "no not yet issued commands\n");
 	DO_UNLOCK(flags);
 
-	if (CURRENT_SC) {
-		seq_puts(m, "current command:\n");
+	अगर (CURRENT_SC) अणु
+		seq_माला_दो(m, "current command:\n");
 		get_command(m, CURRENT_SC);
-	} else
-		seq_puts(m, "no current command\n");
+	पूर्ण अन्यथा
+		seq_माला_दो(m, "no current command\n");
 
-	if (DISCONNECTED_SC) {
-		seq_puts(m, "disconnected commands:\n");
-		for (ptr = DISCONNECTED_SC; ptr; ptr = SCNEXT(ptr))
+	अगर (DISCONNECTED_SC) अणु
+		seq_माला_दो(m, "disconnected commands:\n");
+		क्रम (ptr = DISCONNECTED_SC; ptr; ptr = SCNEXT(ptr))
 			get_command(m, ptr);
-	} else
-		seq_puts(m, "no disconnected commands\n");
+	पूर्ण अन्यथा
+		seq_माला_दो(m, "no disconnected commands\n");
 
 	get_ports(m, shpnt);
 
-#if defined(AHA152X_STAT)
-	seq_printf(m, "statistics:\n"
+#अगर defined(AHA152X_STAT)
+	seq_म_लिखो(m, "statistics:\n"
 		"total commands:               %d\n"
 		"disconnections:               %d\n"
 		"busfree with check condition: %d\n"
@@ -2872,36 +2873,36 @@ static int aha152x_show_info(struct seq_file *m, struct Scsi_Host *shpnt)
 		"time\n",
 		HOSTDATA(shpnt)->total_commands,
 		HOSTDATA(shpnt)->disconnections,
-		HOSTDATA(shpnt)->busfree_with_check_condition,
-		HOSTDATA(shpnt)->busfree_without_old_command,
-		HOSTDATA(shpnt)->busfree_without_new_command,
-		HOSTDATA(shpnt)->busfree_without_done_command,
-		HOSTDATA(shpnt)->busfree_without_any_action);
-	for(i=0; i<maxstate; i++) {
-		seq_printf(m, "%-10s %-12d %-12d %-12ld\n",
+		HOSTDATA(shpnt)->busमुक्त_with_check_condition,
+		HOSTDATA(shpnt)->busमुक्त_without_old_command,
+		HOSTDATA(shpnt)->busमुक्त_without_new_command,
+		HOSTDATA(shpnt)->busमुक्त_without_करोne_command,
+		HOSTDATA(shpnt)->busमुक्त_without_any_action);
+	क्रम(i=0; i<maxstate; i++) अणु
+		seq_म_लिखो(m, "%-10s %-12d %-12d %-12ld\n",
 			states[i].name,
 			HOSTDATA(shpnt)->count_trans[i],
 			HOSTDATA(shpnt)->count[i],
-			HOSTDATA(shpnt)->time[i]);
-	}
-#endif
-	return 0;
-}
+			HOSTDATA(shpnt)->समय[i]);
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int aha152x_adjust_queue(struct scsi_device *device)
-{
+अटल पूर्णांक aha152x_adjust_queue(काष्ठा scsi_device *device)
+अणु
 	blk_queue_bounce_limit(device->request_queue, BLK_BOUNCE_HIGH);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct scsi_host_template aha152x_driver_template = {
+अटल काष्ठा scsi_host_ढाँचा aha152x_driver_ढाँचा = अणु
 	.module				= THIS_MODULE,
 	.name				= AHA152X_REVID,
 	.proc_name			= "aha152x",
 	.show_info			= aha152x_show_info,
-	.write_info			= aha152x_set_info,
+	.ग_लिखो_info			= aha152x_set_info,
 	.queuecommand			= aha152x_queue,
-	.eh_abort_handler		= aha152x_abort,
+	.eh_पात_handler		= aha152x_पात,
 	.eh_device_reset_handler	= aha152x_device_reset,
 	.eh_bus_reset_handler		= aha152x_bus_reset,
 	.bios_param			= aha152x_biosparam,
@@ -2910,20 +2911,20 @@ static struct scsi_host_template aha152x_driver_template = {
 	.sg_tablesize			= SG_ALL,
 	.dma_boundary			= PAGE_SIZE - 1,
 	.slave_alloc			= aha152x_adjust_queue,
-};
+पूर्ण;
 
-#if !defined(AHA152X_PCMCIA)
-static int setup_count;
-static struct aha152x_setup setup[2];
+#अगर !defined(AHA152X_PCMCIA)
+अटल पूर्णांक setup_count;
+अटल काष्ठा aha152x_setup setup[2];
 
-/* possible i/o addresses for the AIC-6260; default first */
-static unsigned short ports[] = { 0x340, 0x140 };
+/* possible i/o addresses क्रम the AIC-6260; शेष first */
+अटल अचिन्हित लघु ports[] = अणु 0x340, 0x140 पूर्ण;
 
-#if !defined(SKIP_BIOSTEST)
-/* possible locations for the Adaptec BIOS; defaults first */
-static unsigned int addresses[] =
-{
-	0xdc000,		/* default first */
+#अगर !defined(SKIP_BIOSTEST)
+/* possible locations क्रम the Adaptec BIOS; शेषs first */
+अटल अचिन्हित पूर्णांक addresses[] =
+अणु
+	0xdc000,		/* शेष first */
 	0xc8000,
 	0xcc000,
 	0xd0000,
@@ -2932,162 +2933,162 @@ static unsigned int addresses[] =
 	0xe0000,
 	0xeb800,		/* VTech Platinum SMP */
 	0xf0000,
-};
+पूर्ण;
 
-/* signatures for various AIC-6[23]60 based controllers.
-   The point in detecting signatures is to avoid useless and maybe
+/* signatures क्रम various AIC-6[23]60 based controllers.
+   The poपूर्णांक in detecting signatures is to aव्योम useless and maybe
    harmful probes on ports. I'm not sure that all listed boards pass
-   auto-configuration. For those which fail the BIOS signature is
-   obsolete, because user intervention to supply the configuration is
-   needed anyway.  May be an information whether or not the BIOS supports
+   स्वतः-configuration. For those which fail the BIOS signature is
+   obsolete, because user पूर्णांकervention to supply the configuration is
+   needed anyway.  May be an inक्रमmation whether or not the BIOS supports
    extended translation could be also useful here. */
-static struct signature {
-	unsigned char *signature;
-	int sig_offset;
-	int sig_length;
-} signatures[] =
-{
-	{ "Adaptec AHA-1520 BIOS",	0x102e, 21 },
+अटल काष्ठा signature अणु
+	अचिन्हित अक्षर *signature;
+	पूर्णांक sig_offset;
+	पूर्णांक sig_length;
+पूर्ण signatures[] =
+अणु
+	अणु "Adaptec AHA-1520 BIOS",	0x102e, 21 पूर्ण,
 		/* Adaptec 152x */
-	{ "Adaptec AHA-1520B",		0x000b, 17 },
+	अणु "Adaptec AHA-1520B",		0x000b, 17 पूर्ण,
 		/* Adaptec 152x rev B */
-	{ "Adaptec AHA-1520B",		0x0026, 17 },
+	अणु "Adaptec AHA-1520B",		0x0026, 17 पूर्ण,
 		/* Iomega Jaz Jet ISA (AIC6370Q) */
-	{ "Adaptec ASW-B626 BIOS",	0x1029, 21 },
+	अणु "Adaptec ASW-B626 BIOS",	0x1029, 21 पूर्ण,
 		/* on-board controller */
-	{ "Adaptec BIOS: ASW-B626",	0x000f, 22 },
+	अणु "Adaptec BIOS: ASW-B626",	0x000f, 22 पूर्ण,
 		/* on-board controller */
-	{ "Adaptec ASW-B626 S2",	0x2e6c, 19 },
+	अणु "Adaptec ASW-B626 S2",	0x2e6c, 19 पूर्ण,
 		/* on-board controller */
-	{ "Adaptec BIOS:AIC-6360",	0x000c, 21 },
+	अणु "Adaptec BIOS:AIC-6360",	0x000c, 21 पूर्ण,
 		/* on-board controller */
-	{ "ScsiPro SP-360 BIOS",	0x2873, 19 },
+	अणु "ScsiPro SP-360 BIOS",	0x2873, 19 पूर्ण,
 		/* ScsiPro-Controller  */
-	{ "GA-400 LOCAL BUS SCSI BIOS", 0x102e, 26 },
+	अणु "GA-400 LOCAL BUS SCSI BIOS", 0x102e, 26 पूर्ण,
 		/* Gigabyte Local-Bus-SCSI */
-	{ "Adaptec BIOS:AVA-282X",	0x000c, 21 },
+	अणु "Adaptec BIOS:AVA-282X",	0x000c, 21 पूर्ण,
 		/* Adaptec 282x */
-	{ "Adaptec IBM Dock II SCSI",   0x2edd, 24 },
+	अणु "Adaptec IBM Dock II SCSI",   0x2edd, 24 पूर्ण,
 		/* IBM Thinkpad Dock II */
-	{ "Adaptec BIOS:AHA-1532P",     0x001c, 22 },
+	अणु "Adaptec BIOS:AHA-1532P",     0x001c, 22 पूर्ण,
 		/* IBM Thinkpad Dock II SCSI */
-	{ "DTC3520A Host Adapter BIOS", 0x318a, 26 },
+	अणु "DTC3520A Host Adapter BIOS", 0x318a, 26 पूर्ण,
 		/* DTC 3520A ISA SCSI */
-};
-#endif /* !SKIP_BIOSTEST */
+पूर्ण;
+#पूर्ण_अगर /* !SKIP_BIOSTEST */
 
 /*
- * Test, if port_base is valid.
+ * Test, अगर port_base is valid.
  *
  */
-static int aha152x_porttest(int io_port)
-{
-	int i;
+अटल पूर्णांक aha152x_porttest(पूर्णांक io_port)
+अणु
+	पूर्णांक i;
 
-	SETPORT(io_port + O_DMACNTRL1, 0);	/* reset stack pointer */
-	for (i = 0; i < 16; i++)
+	SETPORT(io_port + O_DMACNTRL1, 0);	/* reset stack poपूर्णांकer */
+	क्रम (i = 0; i < 16; i++)
 		SETPORT(io_port + O_STACK, i);
 
-	SETPORT(io_port + O_DMACNTRL1, 0);	/* reset stack pointer */
-	for (i = 0; i < 16 && GETPORT(io_port + O_STACK) == i; i++)
+	SETPORT(io_port + O_DMACNTRL1, 0);	/* reset stack poपूर्णांकer */
+	क्रम (i = 0; i < 16 && GETPORT(io_port + O_STACK) == i; i++)
 		;
 
-	return (i == 16);
-}
+	वापस (i == 16);
+पूर्ण
 
-static int tc1550_porttest(int io_port)
-{
-	int i;
+अटल पूर्णांक tc1550_porttest(पूर्णांक io_port)
+अणु
+	पूर्णांक i;
 
-	SETPORT(io_port + O_TC_DMACNTRL1, 0);	/* reset stack pointer */
-	for (i = 0; i < 16; i++)
+	SETPORT(io_port + O_TC_DMACNTRL1, 0);	/* reset stack poपूर्णांकer */
+	क्रम (i = 0; i < 16; i++)
 		SETPORT(io_port + O_STACK, i);
 
-	SETPORT(io_port + O_TC_DMACNTRL1, 0);	/* reset stack pointer */
-	for (i = 0; i < 16 && GETPORT(io_port + O_TC_STACK) == i; i++)
+	SETPORT(io_port + O_TC_DMACNTRL1, 0);	/* reset stack poपूर्णांकer */
+	क्रम (i = 0; i < 16 && GETPORT(io_port + O_TC_STACK) == i; i++)
 		;
 
-	return (i == 16);
-}
+	वापस (i == 16);
+पूर्ण
 
 
-static int checksetup(struct aha152x_setup *setup)
-{
-	int i;
-	for (i = 0; i < ARRAY_SIZE(ports) && (setup->io_port != ports[i]); i++)
+अटल पूर्णांक checksetup(काष्ठा aha152x_setup *setup)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < ARRAY_SIZE(ports) && (setup->io_port != ports[i]); i++)
 		;
 
-	if (i == ARRAY_SIZE(ports))
-		return 0;
+	अगर (i == ARRAY_SIZE(ports))
+		वापस 0;
 
-	if (!request_region(setup->io_port, IO_RANGE, "aha152x")) {
-		printk(KERN_ERR "aha152x: io port 0x%x busy.\n", setup->io_port);
-		return 0;
-	}
+	अगर (!request_region(setup->io_port, IO_RANGE, "aha152x")) अणु
+		prपूर्णांकk(KERN_ERR "aha152x: io port 0x%x busy.\n", setup->io_port);
+		वापस 0;
+	पूर्ण
 
-	if( aha152x_porttest(setup->io_port) ) {
+	अगर( aha152x_porttest(setup->io_port) ) अणु
 		setup->tc1550=0;
-	} else if( tc1550_porttest(setup->io_port) ) {
+	पूर्ण अन्यथा अगर( tc1550_porttest(setup->io_port) ) अणु
 		setup->tc1550=1;
-	} else {
+	पूर्ण अन्यथा अणु
 		release_region(setup->io_port, IO_RANGE);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	release_region(setup->io_port, IO_RANGE);
 
-	if ((setup->irq < IRQ_MIN) || (setup->irq > IRQ_MAX))
-		return 0;
+	अगर ((setup->irq < IRQ_MIN) || (setup->irq > IRQ_MAX))
+		वापस 0;
 
-	if ((setup->scsiid < 0) || (setup->scsiid > 7))
-		return 0;
+	अगर ((setup->scsiid < 0) || (setup->scsiid > 7))
+		वापस 0;
 
-	if ((setup->reconnect < 0) || (setup->reconnect > 1))
-		return 0;
+	अगर ((setup->reconnect < 0) || (setup->reconnect > 1))
+		वापस 0;
 
-	if ((setup->parity < 0) || (setup->parity > 1))
-		return 0;
+	अगर ((setup->parity < 0) || (setup->parity > 1))
+		वापस 0;
 
-	if ((setup->synchronous < 0) || (setup->synchronous > 1))
-		return 0;
+	अगर ((setup->synchronous < 0) || (setup->synchronous > 1))
+		वापस 0;
 
-	if ((setup->ext_trans < 0) || (setup->ext_trans > 1))
-		return 0;
-
-
-	return 1;
-}
+	अगर ((setup->ext_trans < 0) || (setup->ext_trans > 1))
+		वापस 0;
 
 
-static int __init aha152x_init(void)
-{
-	int i, j, ok;
-#if defined(AUTOCONF)
+	वापस 1;
+पूर्ण
+
+
+अटल पूर्णांक __init aha152x_init(व्योम)
+अणु
+	पूर्णांक i, j, ok;
+#अगर defined(AUTOCONF)
 	aha152x_config conf;
-#endif
-#ifdef __ISAPNP__
-	struct pnp_dev *dev=NULL, *pnpdev[2] = {NULL, NULL};
-#endif
+#पूर्ण_अगर
+#अगर_घोषित __ISAPNP__
+	काष्ठा pnp_dev *dev=शून्य, *pnpdev[2] = अणुशून्य, शून्यपूर्ण;
+#पूर्ण_अगर
 
-	if ( setup_count ) {
-		printk(KERN_INFO "aha152x: processing commandline: ");
+	अगर ( setup_count ) अणु
+		prपूर्णांकk(KERN_INFO "aha152x: processing commandline: ");
 
-		for (i = 0; i<setup_count; i++) {
-			if (!checksetup(&setup[i])) {
-				printk(KERN_ERR "\naha152x: %s\n", setup[i].conf);
-				printk(KERN_ERR "aha152x: invalid line\n");
-			}
-		}
-		printk("ok\n");
-	}
+		क्रम (i = 0; i<setup_count; i++) अणु
+			अगर (!checksetup(&setup[i])) अणु
+				prपूर्णांकk(KERN_ERR "\naha152x: %s\n", setup[i].conf);
+				prपूर्णांकk(KERN_ERR "aha152x: invalid line\n");
+			पूर्ण
+		पूर्ण
+		prपूर्णांकk("ok\n");
+	पूर्ण
 
-#if defined(SETUP0)
-	if (setup_count < ARRAY_SIZE(setup)) {
-		struct aha152x_setup override = SETUP0;
+#अगर defined(SETUP0)
+	अगर (setup_count < ARRAY_SIZE(setup)) अणु
+		काष्ठा aha152x_setup override = SETUP0;
 
-		if (setup_count == 0 || (override.io_port != setup[0].io_port)) {
-			if (!checksetup(&override)) {
-				printk(KERN_ERR "\naha152x: invalid override SETUP0={0x%x,%d,%d,%d,%d,%d,%d,%d}\n",
+		अगर (setup_count == 0 || (override.io_port != setup[0].io_port)) अणु
+			अगर (!checksetup(&override)) अणु
+				prपूर्णांकk(KERN_ERR "\naha152x: invalid override SETUP0={0x%x,%d,%d,%d,%d,%d,%d,%d}\n",
 				       override.io_port,
 				       override.irq,
 				       override.scsiid,
@@ -3096,19 +3097,19 @@ static int __init aha152x_init(void)
 				       override.synchronous,
 				       override.delay,
 				       override.ext_trans);
-			} else
+			पूर्ण अन्यथा
 				setup[setup_count++] = override;
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-#if defined(SETUP1)
-	if (setup_count < ARRAY_SIZE(setup)) {
-		struct aha152x_setup override = SETUP1;
+#अगर defined(SETUP1)
+	अगर (setup_count < ARRAY_SIZE(setup)) अणु
+		काष्ठा aha152x_setup override = SETUP1;
 
-		if (setup_count == 0 || (override.io_port != setup[0].io_port)) {
-			if (!checksetup(&override)) {
-				printk(KERN_ERR "\naha152x: invalid override SETUP1={0x%x,%d,%d,%d,%d,%d,%d,%d}\n",
+		अगर (setup_count == 0 || (override.io_port != setup[0].io_port)) अणु
+			अगर (!checksetup(&override)) अणु
+				prपूर्णांकk(KERN_ERR "\naha152x: invalid override SETUP1={0x%x,%d,%d,%d,%d,%d,%d,%d}\n",
 				       override.io_port,
 				       override.irq,
 				       override.scsiid,
@@ -3117,15 +3118,15 @@ static int __init aha152x_init(void)
 				       override.synchronous,
 				       override.delay,
 				       override.ext_trans);
-			} else
+			पूर्ण अन्यथा
 				setup[setup_count++] = override;
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-#if defined(MODULE)
-	if (setup_count<ARRAY_SIZE(setup) && (aha152x[0]!=0 || io[0]!=0 || irq[0]!=0)) {
-		if(aha152x[0]!=0) {
+#अगर defined(MODULE)
+	अगर (setup_count<ARRAY_SIZE(setup) && (aha152x[0]!=0 || io[0]!=0 || irq[0]!=0)) अणु
+		अगर(aha152x[0]!=0) अणु
 			setup[setup_count].conf        = "";
 			setup[setup_count].io_port     = aha152x[0];
 			setup[setup_count].irq         = aha152x[1];
@@ -3135,9 +3136,9 @@ static int __init aha152x_init(void)
 			setup[setup_count].synchronous = aha152x[5];
 			setup[setup_count].delay       = aha152x[6];
 			setup[setup_count].ext_trans   = aha152x[7];
-		} else if (io[0] != 0 || irq[0] != 0) {
-			if(io[0]!=0)  setup[setup_count].io_port = io[0];
-			if(irq[0]!=0) setup[setup_count].irq     = irq[0];
+		पूर्ण अन्यथा अगर (io[0] != 0 || irq[0] != 0) अणु
+			अगर(io[0]!=0)  setup[setup_count].io_port = io[0];
+			अगर(irq[0]!=0) setup[setup_count].irq     = irq[0];
 
 			setup[setup_count].scsiid      = scsiid[0];
 			setup[setup_count].reconnect   = reconnect[0];
@@ -3145,12 +3146,12 @@ static int __init aha152x_init(void)
 			setup[setup_count].synchronous = sync[0];
 			setup[setup_count].delay       = delay[0];
 			setup[setup_count].ext_trans   = exttrans[0];
-		}
+		पूर्ण
 
-		if (checksetup(&setup[setup_count]))
+		अगर (checksetup(&setup[setup_count]))
 			setup_count++;
-		else
-			printk(KERN_ERR "aha152x: invalid module params io=0x%x, irq=%d,scsiid=%d,reconnect=%d,parity=%d,sync=%d,delay=%d,exttrans=%d\n",
+		अन्यथा
+			prपूर्णांकk(KERN_ERR "aha152x: invalid module params io=0x%x, irq=%d,scsiid=%d,reconnect=%d,parity=%d,sync=%d,delay=%d,exttrans=%d\n",
 			       setup[setup_count].io_port,
 			       setup[setup_count].irq,
 			       setup[setup_count].scsiid,
@@ -3159,10 +3160,10 @@ static int __init aha152x_init(void)
 			       setup[setup_count].synchronous,
 			       setup[setup_count].delay,
 			       setup[setup_count].ext_trans);
-	}
+	पूर्ण
 
-	if (setup_count<ARRAY_SIZE(setup) && (aha152x1[0]!=0 || io[1]!=0 || irq[1]!=0)) {
-		if(aha152x1[0]!=0) {
+	अगर (setup_count<ARRAY_SIZE(setup) && (aha152x1[0]!=0 || io[1]!=0 || irq[1]!=0)) अणु
+		अगर(aha152x1[0]!=0) अणु
 			setup[setup_count].conf        = "";
 			setup[setup_count].io_port     = aha152x1[0];
 			setup[setup_count].irq         = aha152x1[1];
@@ -3172,9 +3173,9 @@ static int __init aha152x_init(void)
 			setup[setup_count].synchronous = aha152x1[5];
 			setup[setup_count].delay       = aha152x1[6];
 			setup[setup_count].ext_trans   = aha152x1[7];
-		} else if (io[1] != 0 || irq[1] != 0) {
-			if(io[1]!=0)  setup[setup_count].io_port = io[1];
-			if(irq[1]!=0) setup[setup_count].irq     = irq[1];
+		पूर्ण अन्यथा अगर (io[1] != 0 || irq[1] != 0) अणु
+			अगर(io[1]!=0)  setup[setup_count].io_port = io[1];
+			अगर(irq[1]!=0) setup[setup_count].irq     = irq[1];
 
 			setup[setup_count].scsiid      = scsiid[1];
 			setup[setup_count].reconnect   = reconnect[1];
@@ -3182,11 +3183,11 @@ static int __init aha152x_init(void)
 			setup[setup_count].synchronous = sync[1];
 			setup[setup_count].delay       = delay[1];
 			setup[setup_count].ext_trans   = exttrans[1];
-		}
-		if (checksetup(&setup[setup_count]))
+		पूर्ण
+		अगर (checksetup(&setup[setup_count]))
 			setup_count++;
-		else
-			printk(KERN_ERR "aha152x: invalid module params io=0x%x, irq=%d,scsiid=%d,reconnect=%d,parity=%d,sync=%d,delay=%d,exttrans=%d\n",
+		अन्यथा
+			prपूर्णांकk(KERN_ERR "aha152x: invalid module params io=0x%x, irq=%d,scsiid=%d,reconnect=%d,parity=%d,sync=%d,delay=%d,exttrans=%d\n",
 			       setup[setup_count].io_port,
 			       setup[setup_count].irq,
 			       setup[setup_count].scsiid,
@@ -3195,30 +3196,30 @@ static int __init aha152x_init(void)
 			       setup[setup_count].synchronous,
 			       setup[setup_count].delay,
 			       setup[setup_count].ext_trans);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef __ISAPNP__
-	for(i=0; setup_count<ARRAY_SIZE(setup) && id_table[i].vendor; i++) {
-		while ( setup_count<ARRAY_SIZE(setup) &&
-			(dev=pnp_find_dev(NULL, id_table[i].vendor, id_table[i].function, dev)) ) {
-			if (pnp_device_attach(dev) < 0)
-				continue;
+#अगर_घोषित __ISAPNP__
+	क्रम(i=0; setup_count<ARRAY_SIZE(setup) && id_table[i].venकरोr; i++) अणु
+		जबतक ( setup_count<ARRAY_SIZE(setup) &&
+			(dev=pnp_find_dev(शून्य, id_table[i].venकरोr, id_table[i].function, dev)) ) अणु
+			अगर (pnp_device_attach(dev) < 0)
+				जारी;
 
-			if (pnp_activate_dev(dev) < 0) {
+			अगर (pnp_activate_dev(dev) < 0) अणु
 				pnp_device_detach(dev);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (!pnp_port_valid(dev, 0)) {
+			अगर (!pnp_port_valid(dev, 0)) अणु
 				pnp_device_detach(dev);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (setup_count==1 && pnp_port_start(dev, 0)==setup[0].io_port) {
+			अगर (setup_count==1 && pnp_port_start(dev, 0)==setup[0].io_port) अणु
 				pnp_device_detach(dev);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			setup[setup_count].io_port     = pnp_port_start(dev, 0);
 			setup[setup_count].irq         = pnp_irq(dev, 0);
@@ -3228,62 +3229,62 @@ static int __init aha152x_init(void)
 			setup[setup_count].synchronous = 1;
 			setup[setup_count].delay       = DELAY_DEFAULT;
 			setup[setup_count].ext_trans   = 0;
-#if defined(__ISAPNP__)
+#अगर defined(__ISAPNP__)
 			pnpdev[setup_count]            = dev;
-#endif
-			printk (KERN_INFO
+#पूर्ण_अगर
+			prपूर्णांकk (KERN_INFO
 				"aha152x: found ISAPnP adapter at io=0x%03x, irq=%d\n",
 				setup[setup_count].io_port, setup[setup_count].irq);
 			setup_count++;
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-#if defined(AUTOCONF)
-	if (setup_count<ARRAY_SIZE(setup)) {
-#if !defined(SKIP_BIOSTEST)
+#अगर defined(AUTOCONF)
+	अगर (setup_count<ARRAY_SIZE(setup)) अणु
+#अगर !defined(SKIP_BIOSTEST)
 		ok = 0;
-		for (i = 0; i < ARRAY_SIZE(addresses) && !ok; i++) {
-			void __iomem *p = ioremap(addresses[i], 0x4000);
-			if (!p)
-				continue;
-			for (j = 0; j<ARRAY_SIZE(signatures) && !ok; j++)
+		क्रम (i = 0; i < ARRAY_SIZE(addresses) && !ok; i++) अणु
+			व्योम __iomem *p = ioremap(addresses[i], 0x4000);
+			अगर (!p)
+				जारी;
+			क्रम (j = 0; j<ARRAY_SIZE(signatures) && !ok; j++)
 				ok = check_signature(p + signatures[j].sig_offset,
 								signatures[j].signature, signatures[j].sig_length);
 			iounmap(p);
-		}
-		if (!ok && setup_count == 0)
-			return -ENODEV;
+		पूर्ण
+		अगर (!ok && setup_count == 0)
+			वापस -ENODEV;
 
-		printk(KERN_INFO "aha152x: BIOS test: passed, ");
-#else
-		printk(KERN_INFO "aha152x: ");
-#endif				/* !SKIP_BIOSTEST */
+		prपूर्णांकk(KERN_INFO "aha152x: BIOS test: passed, ");
+#अन्यथा
+		prपूर्णांकk(KERN_INFO "aha152x: ");
+#पूर्ण_अगर				/* !SKIP_BIOSTEST */
 
 		ok = 0;
-		for (i = 0; i < ARRAY_SIZE(ports) && setup_count < 2; i++) {
-			if ((setup_count == 1) && (setup[0].io_port == ports[i]))
-				continue;
+		क्रम (i = 0; i < ARRAY_SIZE(ports) && setup_count < 2; i++) अणु
+			अगर ((setup_count == 1) && (setup[0].io_port == ports[i]))
+				जारी;
 
-			if (!request_region(ports[i], IO_RANGE, "aha152x")) {
-				printk(KERN_ERR "aha152x: io port 0x%x busy.\n", ports[i]);
-				continue;
-			}
+			अगर (!request_region(ports[i], IO_RANGE, "aha152x")) अणु
+				prपूर्णांकk(KERN_ERR "aha152x: io port 0x%x busy.\n", ports[i]);
+				जारी;
+			पूर्ण
 
-			if (aha152x_porttest(ports[i])) {
+			अगर (aha152x_porttest(ports[i])) अणु
 				setup[setup_count].tc1550  = 0;
 
 				conf.cf_port =
 				    (GETPORT(ports[i] + O_PORTA) << 8) + GETPORT(ports[i] + O_PORTB);
-			} else if (tc1550_porttest(ports[i])) {
+			पूर्ण अन्यथा अगर (tc1550_porttest(ports[i])) अणु
 				setup[setup_count].tc1550  = 1;
 
 				conf.cf_port =
 				    (GETPORT(ports[i] + O_TC_PORTA) << 8) + GETPORT(ports[i] + O_TC_PORTB);
-			} else {
+			पूर्ण अन्यथा अणु
 				release_region(ports[i], IO_RANGE);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			release_region(ports[i], IO_RANGE);
 
@@ -3298,86 +3299,86 @@ static int __init aha152x_init(void)
 			setup[setup_count].ext_trans = 0;
 			setup_count++;
 
-		}
+		पूर्ण
 
-		if (ok)
-			printk("auto configuration: ok, ");
-	}
-#endif
+		अगर (ok)
+			prपूर्णांकk("auto configuration: ok, ");
+	पूर्ण
+#पूर्ण_अगर
 
-	printk("%d controller(s) configured\n", setup_count);
+	prपूर्णांकk("%d controller(s) configured\n", setup_count);
 
-	for (i=0; i<setup_count; i++) {
-		if ( request_region(setup[i].io_port, IO_RANGE, "aha152x") ) {
-			struct Scsi_Host *shpnt = aha152x_probe_one(&setup[i]);
+	क्रम (i=0; i<setup_count; i++) अणु
+		अगर ( request_region(setup[i].io_port, IO_RANGE, "aha152x") ) अणु
+			काष्ठा Scsi_Host *shpnt = aha152x_probe_one(&setup[i]);
 
-			if( !shpnt ) {
+			अगर( !shpnt ) अणु
 				release_region(setup[i].io_port, IO_RANGE);
-#if defined(__ISAPNP__)
-			} else if( pnpdev[i] ) {
+#अगर defined(__ISAPNP__)
+			पूर्ण अन्यथा अगर( pnpdev[i] ) अणु
 				HOSTDATA(shpnt)->pnpdev=pnpdev[i];
-				pnpdev[i]=NULL;
-#endif
-			}
-		} else {
-			printk(KERN_ERR "aha152x: io port 0x%x busy.\n", setup[i].io_port);
-		}
+				pnpdev[i]=शून्य;
+#पूर्ण_अगर
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_ERR "aha152x: io port 0x%x busy.\n", setup[i].io_port);
+		पूर्ण
 
-#if defined(__ISAPNP__)
-		if( pnpdev[i] )
+#अगर defined(__ISAPNP__)
+		अगर( pnpdev[i] )
 			pnp_device_detach(pnpdev[i]);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit aha152x_exit(void)
-{
-	struct aha152x_hostdata *hd, *tmp;
+अटल व्योम __निकास aha152x_निकास(व्योम)
+अणु
+	काष्ठा aha152x_hostdata *hd, *पंचांगp;
 
-	list_for_each_entry_safe(hd, tmp, &aha152x_host_list, host_list) {
-		struct Scsi_Host *shost = container_of((void *)hd, struct Scsi_Host, hostdata);
+	list_क्रम_each_entry_safe(hd, पंचांगp, &aha152x_host_list, host_list) अणु
+		काष्ठा Scsi_Host *shost = container_of((व्योम *)hd, काष्ठा Scsi_Host, hostdata);
 
 		aha152x_release(shost);
-	}
-}
+	पूर्ण
+पूर्ण
 
 module_init(aha152x_init);
-module_exit(aha152x_exit);
+module_निकास(aha152x_निकास);
 
-#if !defined(MODULE)
-static int __init aha152x_setup(char *str)
-{
-	int ints[10];
+#अगर !defined(MODULE)
+अटल पूर्णांक __init aha152x_setup(अक्षर *str)
+अणु
+	पूर्णांक पूर्णांकs[10];
 
-	get_options(str, ARRAY_SIZE(ints), ints);
+	get_options(str, ARRAY_SIZE(पूर्णांकs), पूर्णांकs);
 
-	if(setup_count>=ARRAY_SIZE(setup)) {
-		printk(KERN_ERR "aha152x: you can only configure up to two controllers\n");
-		return 1;
-	}
+	अगर(setup_count>=ARRAY_SIZE(setup)) अणु
+		prपूर्णांकk(KERN_ERR "aha152x: you can only configure up to two controllers\n");
+		वापस 1;
+	पूर्ण
 
 	setup[setup_count].conf        = str;
-	setup[setup_count].io_port     = ints[0] >= 1 ? ints[1] : 0x340;
-	setup[setup_count].irq         = ints[0] >= 2 ? ints[2] : 11;
-	setup[setup_count].scsiid      = ints[0] >= 3 ? ints[3] : 7;
-	setup[setup_count].reconnect   = ints[0] >= 4 ? ints[4] : 1;
-	setup[setup_count].parity      = ints[0] >= 5 ? ints[5] : 1;
-	setup[setup_count].synchronous = ints[0] >= 6 ? ints[6] : 1;
-	setup[setup_count].delay       = ints[0] >= 7 ? ints[7] : DELAY_DEFAULT;
-	setup[setup_count].ext_trans   = ints[0] >= 8 ? ints[8] : 0;
-	if (ints[0] > 8) {                                                /*}*/
-		printk(KERN_NOTICE "aha152x: usage: aha152x=<IOBASE>[,<IRQ>[,<SCSI ID>"
+	setup[setup_count].io_port     = पूर्णांकs[0] >= 1 ? पूर्णांकs[1] : 0x340;
+	setup[setup_count].irq         = पूर्णांकs[0] >= 2 ? पूर्णांकs[2] : 11;
+	setup[setup_count].scsiid      = पूर्णांकs[0] >= 3 ? पूर्णांकs[3] : 7;
+	setup[setup_count].reconnect   = पूर्णांकs[0] >= 4 ? पूर्णांकs[4] : 1;
+	setup[setup_count].parity      = पूर्णांकs[0] >= 5 ? पूर्णांकs[5] : 1;
+	setup[setup_count].synchronous = पूर्णांकs[0] >= 6 ? पूर्णांकs[6] : 1;
+	setup[setup_count].delay       = पूर्णांकs[0] >= 7 ? पूर्णांकs[7] : DELAY_DEFAULT;
+	setup[setup_count].ext_trans   = पूर्णांकs[0] >= 8 ? पूर्णांकs[8] : 0;
+	अगर (पूर्णांकs[0] > 8) अणु                                                /*पूर्ण*/
+		prपूर्णांकk(KERN_NOTICE "aha152x: usage: aha152x=<IOBASE>[,<IRQ>[,<SCSI ID>"
 		       "[,<RECONNECT>[,<PARITY>[,<SYNCHRONOUS>[,<DELAY>[,<EXT_TRANS>]]]]]]]\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		setup_count++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("aha152x=", aha152x_setup);
-#endif
+#पूर्ण_अगर
 
-#endif /* !AHA152X_PCMCIA */
+#पूर्ण_अगर /* !AHA152X_PCMCIA */

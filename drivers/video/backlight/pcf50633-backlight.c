@@ -1,153 +1,154 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2009-2010, Lars-Peter Clausen <lars@metafoo.de>
  *      PCF50633 backlight device driver
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/backlight.h>
-#include <linux/fb.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/fb.h>
 
-#include <linux/mfd/pcf50633/core.h>
-#include <linux/mfd/pcf50633/backlight.h>
+#समावेश <linux/mfd/pcf50633/core.h>
+#समावेश <linux/mfd/pcf50633/backlight.h>
 
-struct pcf50633_bl {
-	struct pcf50633 *pcf;
-	struct backlight_device *bl;
+काष्ठा pcf50633_bl अणु
+	काष्ठा pcf50633 *pcf;
+	काष्ठा backlight_device *bl;
 
-	unsigned int brightness;
-	unsigned int brightness_limit;
-};
+	अचिन्हित पूर्णांक brightness;
+	अचिन्हित पूर्णांक brightness_limit;
+पूर्ण;
 
 /*
  * pcf50633_bl_set_brightness_limit
  *
- * Update the brightness limit for the pc50633 backlight. The actual brightness
- * will not go above the limit. This is useful to limit power drain for example
+ * Update the brightness limit क्रम the pc50633 backlight. The actual brightness
+ * will not go above the limit. This is useful to limit घातer drain क्रम example
  * on low battery.
  *
- * @dev: Pointer to a pcf50633 device
+ * @dev: Poपूर्णांकer to a pcf50633 device
  * @limit: The brightness limit. Valid values are 0-63
  */
-int pcf50633_bl_set_brightness_limit(struct pcf50633 *pcf, unsigned int limit)
-{
-	struct pcf50633_bl *pcf_bl = platform_get_drvdata(pcf->bl_pdev);
+पूर्णांक pcf50633_bl_set_brightness_limit(काष्ठा pcf50633 *pcf, अचिन्हित पूर्णांक limit)
+अणु
+	काष्ठा pcf50633_bl *pcf_bl = platक्रमm_get_drvdata(pcf->bl_pdev);
 
-	if (!pcf_bl)
-		return -ENODEV;
+	अगर (!pcf_bl)
+		वापस -ENODEV;
 
 	pcf_bl->brightness_limit = limit & 0x3f;
 	backlight_update_status(pcf_bl->bl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcf50633_bl_update_status(struct backlight_device *bl)
-{
-	struct pcf50633_bl *pcf_bl = bl_get_data(bl);
-	unsigned int new_brightness;
+अटल पूर्णांक pcf50633_bl_update_status(काष्ठा backlight_device *bl)
+अणु
+	काष्ठा pcf50633_bl *pcf_bl = bl_get_data(bl);
+	अचिन्हित पूर्णांक new_brightness;
 
 
-	if (bl->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK) ||
-		bl->props.power != FB_BLANK_UNBLANK)
+	अगर (bl->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK) ||
+		bl->props.घातer != FB_BLANK_UNBLANK)
 		new_brightness = 0;
-	else if (bl->props.brightness < pcf_bl->brightness_limit)
+	अन्यथा अगर (bl->props.brightness < pcf_bl->brightness_limit)
 		new_brightness = bl->props.brightness;
-	else
+	अन्यथा
 		new_brightness = pcf_bl->brightness_limit;
 
 
-	if (pcf_bl->brightness == new_brightness)
-		return 0;
+	अगर (pcf_bl->brightness == new_brightness)
+		वापस 0;
 
-	if (new_brightness) {
-		pcf50633_reg_write(pcf_bl->pcf, PCF50633_REG_LEDOUT,
+	अगर (new_brightness) अणु
+		pcf50633_reg_ग_लिखो(pcf_bl->pcf, PCF50633_REG_LEDOUT,
 					new_brightness);
-		if (!pcf_bl->brightness)
-			pcf50633_reg_write(pcf_bl->pcf, PCF50633_REG_LEDENA, 1);
-	} else {
-		pcf50633_reg_write(pcf_bl->pcf, PCF50633_REG_LEDENA, 0);
-	}
+		अगर (!pcf_bl->brightness)
+			pcf50633_reg_ग_लिखो(pcf_bl->pcf, PCF50633_REG_LEDENA, 1);
+	पूर्ण अन्यथा अणु
+		pcf50633_reg_ग_लिखो(pcf_bl->pcf, PCF50633_REG_LEDENA, 0);
+	पूर्ण
 
 	pcf_bl->brightness = new_brightness;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcf50633_bl_get_brightness(struct backlight_device *bl)
-{
-	struct pcf50633_bl *pcf_bl = bl_get_data(bl);
+अटल पूर्णांक pcf50633_bl_get_brightness(काष्ठा backlight_device *bl)
+अणु
+	काष्ठा pcf50633_bl *pcf_bl = bl_get_data(bl);
 
-	return pcf_bl->brightness;
-}
+	वापस pcf_bl->brightness;
+पूर्ण
 
-static const struct backlight_ops pcf50633_bl_ops = {
+अटल स्थिर काष्ठा backlight_ops pcf50633_bl_ops = अणु
 	.get_brightness = pcf50633_bl_get_brightness,
 	.update_status	= pcf50633_bl_update_status,
 	.options	= BL_CORE_SUSPENDRESUME,
-};
+पूर्ण;
 
-static int pcf50633_bl_probe(struct platform_device *pdev)
-{
-	struct pcf50633_bl *pcf_bl;
-	struct device *parent = pdev->dev.parent;
-	struct pcf50633_platform_data *pcf50633_data = dev_get_platdata(parent);
-	struct pcf50633_bl_platform_data *pdata = pcf50633_data->backlight_data;
-	struct backlight_properties bl_props;
+अटल पूर्णांक pcf50633_bl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pcf50633_bl *pcf_bl;
+	काष्ठा device *parent = pdev->dev.parent;
+	काष्ठा pcf50633_platक्रमm_data *pcf50633_data = dev_get_platdata(parent);
+	काष्ठा pcf50633_bl_platक्रमm_data *pdata = pcf50633_data->backlight_data;
+	काष्ठा backlight_properties bl_props;
 
-	pcf_bl = devm_kzalloc(&pdev->dev, sizeof(*pcf_bl), GFP_KERNEL);
-	if (!pcf_bl)
-		return -ENOMEM;
+	pcf_bl = devm_kzalloc(&pdev->dev, माप(*pcf_bl), GFP_KERNEL);
+	अगर (!pcf_bl)
+		वापस -ENOMEM;
 
-	memset(&bl_props, 0, sizeof(bl_props));
+	स_रखो(&bl_props, 0, माप(bl_props));
 	bl_props.type = BACKLIGHT_RAW;
 	bl_props.max_brightness = 0x3f;
-	bl_props.power = FB_BLANK_UNBLANK;
+	bl_props.घातer = FB_BLANK_UNBLANK;
 
-	if (pdata) {
-		bl_props.brightness = pdata->default_brightness;
-		pcf_bl->brightness_limit = pdata->default_brightness_limit;
-	} else {
+	अगर (pdata) अणु
+		bl_props.brightness = pdata->शेष_brightness;
+		pcf_bl->brightness_limit = pdata->शेष_brightness_limit;
+	पूर्ण अन्यथा अणु
 		bl_props.brightness = 0x3f;
 		pcf_bl->brightness_limit = 0x3f;
-	}
+	पूर्ण
 
 	pcf_bl->pcf = dev_to_pcf50633(pdev->dev.parent);
 
-	pcf_bl->bl = devm_backlight_device_register(&pdev->dev, pdev->name,
+	pcf_bl->bl = devm_backlight_device_रेजिस्टर(&pdev->dev, pdev->name,
 						&pdev->dev, pcf_bl,
 						&pcf50633_bl_ops, &bl_props);
 
-	if (IS_ERR(pcf_bl->bl))
-		return PTR_ERR(pcf_bl->bl);
+	अगर (IS_ERR(pcf_bl->bl))
+		वापस PTR_ERR(pcf_bl->bl);
 
-	platform_set_drvdata(pdev, pcf_bl);
+	platक्रमm_set_drvdata(pdev, pcf_bl);
 
-	pcf50633_reg_write(pcf_bl->pcf, PCF50633_REG_LEDDIM, pdata->ramp_time);
+	pcf50633_reg_ग_लिखो(pcf_bl->pcf, PCF50633_REG_LEDDIM, pdata->ramp_समय);
 
 	/*
-	 * Should be different from bl_props.brightness, so we do not exit
-	 * update_status early the first time it's called
+	 * Should be dअगरferent from bl_props.brightness, so we करो not निकास
+	 * update_status early the first समय it's called
 	 */
 	pcf_bl->brightness = pcf_bl->bl->props.brightness + 1;
 
 	backlight_update_status(pcf_bl->bl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pcf50633_bl_driver = {
+अटल काष्ठा platक्रमm_driver pcf50633_bl_driver = अणु
 	.probe =	pcf50633_bl_probe,
-	.driver = {
+	.driver = अणु
 		.name = "pcf50633-backlight",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(pcf50633_bl_driver);
+module_platक्रमm_driver(pcf50633_bl_driver);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");
 MODULE_DESCRIPTION("PCF50633 backlight driver");

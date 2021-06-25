@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ISHTP client logic
  *
  * Copyright (c) 2003-2016, Intel Corporation.
  */
 
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include "hbm.h"
-#include "client.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश "hbm.h"
+#समावेश "client.h"
 
-int ishtp_cl_get_tx_free_buffer_size(struct ishtp_cl *cl)
-{
-	unsigned long tx_free_flags;
-	int size;
+पूर्णांक ishtp_cl_get_tx_मुक्त_buffer_size(काष्ठा ishtp_cl *cl)
+अणु
+	अचिन्हित दीर्घ tx_मुक्त_flags;
+	पूर्णांक size;
 
-	spin_lock_irqsave(&cl->tx_free_list_spinlock, tx_free_flags);
-	size = cl->tx_ring_free_size * cl->device->fw_client->props.max_msg_length;
-	spin_unlock_irqrestore(&cl->tx_free_list_spinlock, tx_free_flags);
+	spin_lock_irqsave(&cl->tx_मुक्त_list_spinlock, tx_मुक्त_flags);
+	size = cl->tx_ring_मुक्त_size * cl->device->fw_client->props.max_msg_length;
+	spin_unlock_irqrestore(&cl->tx_मुक्त_list_spinlock, tx_मुक्त_flags);
 
-	return size;
-}
-EXPORT_SYMBOL(ishtp_cl_get_tx_free_buffer_size);
+	वापस size;
+पूर्ण
+EXPORT_SYMBOL(ishtp_cl_get_tx_मुक्त_buffer_size);
 
-int ishtp_cl_get_tx_free_rings(struct ishtp_cl *cl)
-{
-	return cl->tx_ring_free_size;
-}
-EXPORT_SYMBOL(ishtp_cl_get_tx_free_rings);
+पूर्णांक ishtp_cl_get_tx_मुक्त_rings(काष्ठा ishtp_cl *cl)
+अणु
+	वापस cl->tx_ring_मुक्त_size;
+पूर्ण
+EXPORT_SYMBOL(ishtp_cl_get_tx_मुक्त_rings);
 
 /**
- * ishtp_read_list_flush() - Flush read queue
+ * ishtp_पढ़ो_list_flush() - Flush पढ़ो queue
  * @cl: ishtp client instance
  *
- * Used to remove all entries from read queue for a client
+ * Used to हटाओ all entries from पढ़ो queue क्रम a client
  */
-static void ishtp_read_list_flush(struct ishtp_cl *cl)
-{
-	struct ishtp_cl_rb *rb;
-	struct ishtp_cl_rb *next;
-	unsigned long	flags;
+अटल व्योम ishtp_पढ़ो_list_flush(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_cl_rb *rb;
+	काष्ठा ishtp_cl_rb *next;
+	अचिन्हित दीर्घ	flags;
 
-	spin_lock_irqsave(&cl->dev->read_list_spinlock, flags);
-	list_for_each_entry_safe(rb, next, &cl->dev->read_list.list, list)
-		if (rb->cl && ishtp_cl_cmp_id(cl, rb->cl)) {
+	spin_lock_irqsave(&cl->dev->पढ़ो_list_spinlock, flags);
+	list_क्रम_each_entry_safe(rb, next, &cl->dev->पढ़ो_list.list, list)
+		अगर (rb->cl && ishtp_cl_cmp_id(cl, rb->cl)) अणु
 			list_del(&rb->list);
-			ishtp_io_rb_free(rb);
-		}
-	spin_unlock_irqrestore(&cl->dev->read_list_spinlock, flags);
-}
+			ishtp_io_rb_मुक्त(rb);
+		पूर्ण
+	spin_unlock_irqrestore(&cl->dev->पढ़ो_list_spinlock, flags);
+पूर्ण
 
 /**
- * ishtp_cl_flush_queues() - Flush all queues for a client
+ * ishtp_cl_flush_queues() - Flush all queues क्रम a client
  * @cl: ishtp client instance
  *
- * Used to remove all queues for a client. This is called when a client device
+ * Used to हटाओ all queues क्रम a client. This is called when a client device
  * needs reset due to error, S3 resume or during module removal
  *
- * Return: 0 on success else -EINVAL if device is NULL
+ * Return: 0 on success अन्यथा -EINVAL अगर device is शून्य
  */
-int ishtp_cl_flush_queues(struct ishtp_cl *cl)
-{
-	if (WARN_ON(!cl || !cl->dev))
-		return -EINVAL;
+पूर्णांक ishtp_cl_flush_queues(काष्ठा ishtp_cl *cl)
+अणु
+	अगर (WARN_ON(!cl || !cl->dev))
+		वापस -EINVAL;
 
-	ishtp_read_list_flush(cl);
+	ishtp_पढ़ो_list_flush(cl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_flush_queues);
 
 /**
@@ -81,125 +82,125 @@ EXPORT_SYMBOL(ishtp_cl_flush_queues);
  * Initializes a client device fields: Init spinlocks, init queues etc.
  * This function is called during new client creation
  */
-static void ishtp_cl_init(struct ishtp_cl *cl, struct ishtp_device *dev)
-{
-	memset(cl, 0, sizeof(struct ishtp_cl));
-	init_waitqueue_head(&cl->wait_ctrl_res);
-	spin_lock_init(&cl->free_list_spinlock);
+अटल व्योम ishtp_cl_init(काष्ठा ishtp_cl *cl, काष्ठा ishtp_device *dev)
+अणु
+	स_रखो(cl, 0, माप(काष्ठा ishtp_cl));
+	init_रुकोqueue_head(&cl->रुको_ctrl_res);
+	spin_lock_init(&cl->मुक्त_list_spinlock);
 	spin_lock_init(&cl->in_process_spinlock);
 	spin_lock_init(&cl->tx_list_spinlock);
-	spin_lock_init(&cl->tx_free_list_spinlock);
+	spin_lock_init(&cl->tx_मुक्त_list_spinlock);
 	spin_lock_init(&cl->fc_spinlock);
 	INIT_LIST_HEAD(&cl->link);
 	cl->dev = dev;
 
-	INIT_LIST_HEAD(&cl->free_rb_list.list);
+	INIT_LIST_HEAD(&cl->मुक्त_rb_list.list);
 	INIT_LIST_HEAD(&cl->tx_list.list);
-	INIT_LIST_HEAD(&cl->tx_free_list.list);
+	INIT_LIST_HEAD(&cl->tx_मुक्त_list.list);
 	INIT_LIST_HEAD(&cl->in_process_list.list);
 
 	cl->rx_ring_size = CL_DEF_RX_RING_SIZE;
 	cl->tx_ring_size = CL_DEF_TX_RING_SIZE;
-	cl->tx_ring_free_size = cl->tx_ring_size;
+	cl->tx_ring_मुक्त_size = cl->tx_ring_size;
 
 	/* dma */
 	cl->last_tx_path = CL_TX_PATH_IPC;
 	cl->last_dma_acked = 1;
-	cl->last_dma_addr = NULL;
+	cl->last_dma_addr = शून्य;
 	cl->last_ipc_acked = 1;
-}
+पूर्ण
 
 /**
- * ishtp_cl_allocate() - allocates client structure and sets it up.
+ * ishtp_cl_allocate() - allocates client काष्ठाure and sets it up.
  * @dev: ishtp device
  *
- * Allocate memory for new client device and call to initialize each field.
+ * Allocate memory क्रम new client device and call to initialize each field.
  *
- * Return: The allocated client instance or NULL on failure
+ * Return: The allocated client instance or शून्य on failure
  */
-struct ishtp_cl *ishtp_cl_allocate(struct ishtp_cl_device *cl_device)
-{
-	struct ishtp_cl *cl;
+काष्ठा ishtp_cl *ishtp_cl_allocate(काष्ठा ishtp_cl_device *cl_device)
+अणु
+	काष्ठा ishtp_cl *cl;
 
-	cl = kmalloc(sizeof(struct ishtp_cl), GFP_KERNEL);
-	if (!cl)
-		return NULL;
+	cl = kदो_स्मृति(माप(काष्ठा ishtp_cl), GFP_KERNEL);
+	अगर (!cl)
+		वापस शून्य;
 
 	ishtp_cl_init(cl, cl_device->ishtp_dev);
-	return cl;
-}
+	वापस cl;
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_allocate);
 
 /**
- * ishtp_cl_free() - Frees a client device
+ * ishtp_cl_मुक्त() - Frees a client device
  * @cl: client device instance
  *
  * Frees a client device
  */
-void	ishtp_cl_free(struct ishtp_cl *cl)
-{
-	struct ishtp_device *dev;
-	unsigned long flags;
+व्योम	ishtp_cl_मुक्त(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_device *dev;
+	अचिन्हित दीर्घ flags;
 
-	if (!cl)
-		return;
+	अगर (!cl)
+		वापस;
 
 	dev = cl->dev;
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
 	spin_lock_irqsave(&dev->cl_list_lock, flags);
-	ishtp_cl_free_rx_ring(cl);
-	ishtp_cl_free_tx_ring(cl);
-	kfree(cl);
+	ishtp_cl_मुक्त_rx_ring(cl);
+	ishtp_cl_मुक्त_tx_ring(cl);
+	kमुक्त(cl);
 	spin_unlock_irqrestore(&dev->cl_list_lock, flags);
-}
-EXPORT_SYMBOL(ishtp_cl_free);
+पूर्ण
+EXPORT_SYMBOL(ishtp_cl_मुक्त);
 
 /**
  * ishtp_cl_link() - Reserve a host id and link the client instance
  * @cl: client device instance
  *
- * This allocates a single bit in the hostmap. This function will make sure
- * that not many client sessions are opened at the same time. Once allocated
+ * This allocates a single bit in the hosपंचांगap. This function will make sure
+ * that not many client sessions are खोलोed at the same समय. Once allocated
  * the client device instance is added to the ishtp device in the current
  * client list
  *
  * Return: 0 or error code on failure
  */
-int ishtp_cl_link(struct ishtp_cl *cl)
-{
-	struct ishtp_device *dev;
-	unsigned long flags, flags_cl;
-	int id, ret = 0;
+पूर्णांक ishtp_cl_link(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_device *dev;
+	अचिन्हित दीर्घ flags, flags_cl;
+	पूर्णांक id, ret = 0;
 
-	if (WARN_ON(!cl || !cl->dev))
-		return -EINVAL;
+	अगर (WARN_ON(!cl || !cl->dev))
+		वापस -EINVAL;
 
 	dev = cl->dev;
 
 	spin_lock_irqsave(&dev->device_lock, flags);
 
-	if (dev->open_handle_count >= ISHTP_MAX_OPEN_HANDLE_COUNT) {
-		ret = -EMFILE;
-		goto unlock_dev;
-	}
+	अगर (dev->खोलो_handle_count >= ISHTP_MAX_OPEN_HANDLE_COUNT) अणु
+		ret = -EMखाता;
+		जाओ unlock_dev;
+	पूर्ण
 
 	id = find_first_zero_bit(dev->host_clients_map, ISHTP_CLIENTS_MAX);
 
-	if (id >= ISHTP_CLIENTS_MAX) {
+	अगर (id >= ISHTP_CLIENTS_MAX) अणु
 		spin_unlock_irqrestore(&dev->device_lock, flags);
 		dev_err(&cl->device->dev, "id exceeded %d", ISHTP_CLIENTS_MAX);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	dev->open_handle_count++;
+	dev->खोलो_handle_count++;
 	cl->host_client_id = id;
 	spin_lock_irqsave(&dev->cl_list_lock, flags_cl);
-	if (dev->dev_state != ISHTP_DEV_ENABLED) {
+	अगर (dev->dev_state != ISHTP_DEV_ENABLED) अणु
 		ret = -ENODEV;
-		goto unlock_cl;
-	}
+		जाओ unlock_cl;
+	पूर्ण
 	list_add_tail(&cl->link, &dev->cl_list);
 	set_bit(id, dev->host_clients_map);
 	cl->state = ISHTP_CL_INITIALIZING;
@@ -208,279 +209,279 @@ unlock_cl:
 	spin_unlock_irqrestore(&dev->cl_list_lock, flags_cl);
 unlock_dev:
 	spin_unlock_irqrestore(&dev->device_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_link);
 
 /**
- * ishtp_cl_unlink() - remove fw_cl from the client device list
+ * ishtp_cl_unlink() - हटाओ fw_cl from the client device list
  * @cl: client device instance
  *
  * Remove a previously linked device to a ishtp device
  */
-void ishtp_cl_unlink(struct ishtp_cl *cl)
-{
-	struct ishtp_device *dev;
-	struct ishtp_cl *pos;
-	unsigned long	flags;
+व्योम ishtp_cl_unlink(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_device *dev;
+	काष्ठा ishtp_cl *pos;
+	अचिन्हित दीर्घ	flags;
 
-	/* don't shout on error exit path */
-	if (!cl || !cl->dev)
-		return;
+	/* करोn't shout on error निकास path */
+	अगर (!cl || !cl->dev)
+		वापस;
 
 	dev = cl->dev;
 
 	spin_lock_irqsave(&dev->device_lock, flags);
-	if (dev->open_handle_count > 0) {
+	अगर (dev->खोलो_handle_count > 0) अणु
 		clear_bit(cl->host_client_id, dev->host_clients_map);
-		dev->open_handle_count--;
-	}
+		dev->खोलो_handle_count--;
+	पूर्ण
 	spin_unlock_irqrestore(&dev->device_lock, flags);
 
 	/*
-	 * This checks that 'cl' is actually linked into device's structure,
-	 * before attempting 'list_del'
+	 * This checks that 'cl' is actually linked into device's काष्ठाure,
+	 * beक्रमe attempting 'list_del'
 	 */
 	spin_lock_irqsave(&dev->cl_list_lock, flags);
-	list_for_each_entry(pos, &dev->cl_list, link)
-		if (cl->host_client_id == pos->host_client_id) {
+	list_क्रम_each_entry(pos, &dev->cl_list, link)
+		अगर (cl->host_client_id == pos->host_client_id) अणु
 			list_del_init(&pos->link);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 	spin_unlock_irqrestore(&dev->cl_list_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_unlink);
 
 /**
  * ishtp_cl_disconnect() - Send disconnect request to firmware
  * @cl: client device instance
  *
- * Send a disconnect request for a client to firmware.
+ * Send a disconnect request क्रम a client to firmware.
  *
- * Return: 0 if successful disconnect response from the firmware or error
+ * Return: 0 अगर successful disconnect response from the firmware or error
  * code on failure
  */
-int ishtp_cl_disconnect(struct ishtp_cl *cl)
-{
-	struct ishtp_device *dev;
-	int err;
+पूर्णांक ishtp_cl_disconnect(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_device *dev;
+	पूर्णांक err;
 
-	if (WARN_ON(!cl || !cl->dev))
-		return -ENODEV;
+	अगर (WARN_ON(!cl || !cl->dev))
+		वापस -ENODEV;
 
 	dev = cl->dev;
 
-	dev->print_log(dev, "%s() state %d\n", __func__, cl->state);
+	dev->prपूर्णांक_log(dev, "%s() state %d\n", __func__, cl->state);
 
-	if (cl->state != ISHTP_CL_DISCONNECTING) {
-		dev->print_log(dev, "%s() Disconnect in progress\n", __func__);
-		return 0;
-	}
+	अगर (cl->state != ISHTP_CL_DISCONNECTING) अणु
+		dev->prपूर्णांक_log(dev, "%s() Disconnect in progress\n", __func__);
+		वापस 0;
+	पूर्ण
 
-	if (ishtp_hbm_cl_disconnect_req(dev, cl)) {
-		dev->print_log(dev, "%s() Failed to disconnect\n", __func__);
+	अगर (ishtp_hbm_cl_disconnect_req(dev, cl)) अणु
+		dev->prपूर्णांक_log(dev, "%s() Failed to disconnect\n", __func__);
 		dev_err(&cl->device->dev, "failed to disconnect.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	err = wait_event_interruptible_timeout(cl->wait_ctrl_res,
+	err = रुको_event_पूर्णांकerruptible_समयout(cl->रुको_ctrl_res,
 			(dev->dev_state != ISHTP_DEV_ENABLED ||
 			cl->state == ISHTP_CL_DISCONNECTED),
-			ishtp_secs_to_jiffies(ISHTP_CL_CONNECT_TIMEOUT));
+			ishtp_secs_to_jअगरfies(ISHTP_CL_CONNECT_TIMEOUT));
 
 	/*
 	 * If FW reset arrived, this will happen. Don't check cl->,
-	 * as 'cl' may be freed already
+	 * as 'cl' may be मुक्तd alपढ़ोy
 	 */
-	if (dev->dev_state != ISHTP_DEV_ENABLED) {
-		dev->print_log(dev, "%s() dev_state != ISHTP_DEV_ENABLED\n",
+	अगर (dev->dev_state != ISHTP_DEV_ENABLED) अणु
+		dev->prपूर्णांक_log(dev, "%s() dev_state != ISHTP_DEV_ENABLED\n",
 			       __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (cl->state == ISHTP_CL_DISCONNECTED) {
-		dev->print_log(dev, "%s() successful\n", __func__);
-		return 0;
-	}
+	अगर (cl->state == ISHTP_CL_DISCONNECTED) अणु
+		dev->prपूर्णांक_log(dev, "%s() successful\n", __func__);
+		वापस 0;
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_disconnect);
 
 /**
  * ishtp_cl_is_other_connecting() - Check other client is connecting
  * @cl: client device instance
  *
- * Checks if other client with the same fw client id is connecting
+ * Checks अगर other client with the same fw client id is connecting
  *
- * Return: true if other client is connected else false
+ * Return: true अगर other client is connected अन्यथा false
  */
-static bool ishtp_cl_is_other_connecting(struct ishtp_cl *cl)
-{
-	struct ishtp_device *dev;
-	struct ishtp_cl *pos;
-	unsigned long	flags;
+अटल bool ishtp_cl_is_other_connecting(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_device *dev;
+	काष्ठा ishtp_cl *pos;
+	अचिन्हित दीर्घ	flags;
 
-	if (WARN_ON(!cl || !cl->dev))
-		return false;
+	अगर (WARN_ON(!cl || !cl->dev))
+		वापस false;
 
 	dev = cl->dev;
 	spin_lock_irqsave(&dev->cl_list_lock, flags);
-	list_for_each_entry(pos, &dev->cl_list, link) {
-		if ((pos->state == ISHTP_CL_CONNECTING) && (pos != cl) &&
-				cl->fw_client_id == pos->fw_client_id) {
+	list_क्रम_each_entry(pos, &dev->cl_list, link) अणु
+		अगर ((pos->state == ISHTP_CL_CONNECTING) && (pos != cl) &&
+				cl->fw_client_id == pos->fw_client_id) अणु
 			spin_unlock_irqrestore(&dev->cl_list_lock, flags);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&dev->cl_list_lock, flags);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * ishtp_cl_connect() - Send connect request to firmware
  * @cl: client device instance
  *
- * Send a connect request for a client to firmware. If successful it will
+ * Send a connect request क्रम a client to firmware. If successful it will
  * RX and TX ring buffers
  *
- * Return: 0 if successful connect response from the firmware and able
+ * Return: 0 अगर successful connect response from the firmware and able
  * to bind and allocate ring buffers or error code on failure
  */
-int ishtp_cl_connect(struct ishtp_cl *cl)
-{
-	struct ishtp_device *dev;
-	int rets;
+पूर्णांक ishtp_cl_connect(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_device *dev;
+	पूर्णांक rets;
 
-	if (WARN_ON(!cl || !cl->dev))
-		return -ENODEV;
+	अगर (WARN_ON(!cl || !cl->dev))
+		वापस -ENODEV;
 
 	dev = cl->dev;
 
-	dev->print_log(dev, "%s() current_state = %d\n", __func__, cl->state);
+	dev->prपूर्णांक_log(dev, "%s() current_state = %d\n", __func__, cl->state);
 
-	if (ishtp_cl_is_other_connecting(cl)) {
-		dev->print_log(dev, "%s() Busy\n", __func__);
-		return	-EBUSY;
-	}
+	अगर (ishtp_cl_is_other_connecting(cl)) अणु
+		dev->prपूर्णांक_log(dev, "%s() Busy\n", __func__);
+		वापस	-EBUSY;
+	पूर्ण
 
-	if (ishtp_hbm_cl_connect_req(dev, cl)) {
-		dev->print_log(dev, "%s() HBM connect req fail\n", __func__);
-		return -ENODEV;
-	}
+	अगर (ishtp_hbm_cl_connect_req(dev, cl)) अणु
+		dev->prपूर्णांक_log(dev, "%s() HBM connect req fail\n", __func__);
+		वापस -ENODEV;
+	पूर्ण
 
-	rets = wait_event_interruptible_timeout(cl->wait_ctrl_res,
+	rets = रुको_event_पूर्णांकerruptible_समयout(cl->रुको_ctrl_res,
 				(dev->dev_state == ISHTP_DEV_ENABLED &&
 				(cl->state == ISHTP_CL_CONNECTED ||
 				 cl->state == ISHTP_CL_DISCONNECTED)),
-				ishtp_secs_to_jiffies(
+				ishtp_secs_to_jअगरfies(
 					ISHTP_CL_CONNECT_TIMEOUT));
 	/*
 	 * If FW reset arrived, this will happen. Don't check cl->,
-	 * as 'cl' may be freed already
+	 * as 'cl' may be मुक्तd alपढ़ोy
 	 */
-	if (dev->dev_state != ISHTP_DEV_ENABLED) {
-		dev->print_log(dev, "%s() dev_state != ISHTP_DEV_ENABLED\n",
+	अगर (dev->dev_state != ISHTP_DEV_ENABLED) अणु
+		dev->prपूर्णांक_log(dev, "%s() dev_state != ISHTP_DEV_ENABLED\n",
 			       __func__);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (cl->state != ISHTP_CL_CONNECTED) {
-		dev->print_log(dev, "%s() state != ISHTP_CL_CONNECTED\n",
+	अगर (cl->state != ISHTP_CL_CONNECTED) अणु
+		dev->prपूर्णांक_log(dev, "%s() state != ISHTP_CL_CONNECTED\n",
 			       __func__);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	rets = cl->status;
-	if (rets) {
-		dev->print_log(dev, "%s() Invalid status\n", __func__);
-		return rets;
-	}
+	अगर (rets) अणु
+		dev->prपूर्णांक_log(dev, "%s() Invalid status\n", __func__);
+		वापस rets;
+	पूर्ण
 
 	rets = ishtp_cl_device_bind(cl);
-	if (rets) {
-		dev->print_log(dev, "%s() Bind error\n", __func__);
+	अगर (rets) अणु
+		dev->prपूर्णांक_log(dev, "%s() Bind error\n", __func__);
 		ishtp_cl_disconnect(cl);
-		return rets;
-	}
+		वापस rets;
+	पूर्ण
 
 	rets = ishtp_cl_alloc_rx_ring(cl);
-	if (rets) {
-		dev->print_log(dev, "%s() Alloc RX ring failed\n", __func__);
-		/* if failed allocation, disconnect */
+	अगर (rets) अणु
+		dev->prपूर्णांक_log(dev, "%s() Alloc RX ring failed\n", __func__);
+		/* अगर failed allocation, disconnect */
 		ishtp_cl_disconnect(cl);
-		return rets;
-	}
+		वापस rets;
+	पूर्ण
 
 	rets = ishtp_cl_alloc_tx_ring(cl);
-	if (rets) {
-		dev->print_log(dev, "%s() Alloc TX ring failed\n", __func__);
-		/* if failed allocation, disconnect */
-		ishtp_cl_free_rx_ring(cl);
+	अगर (rets) अणु
+		dev->prपूर्णांक_log(dev, "%s() Alloc TX ring failed\n", __func__);
+		/* अगर failed allocation, disconnect */
+		ishtp_cl_मुक्त_rx_ring(cl);
 		ishtp_cl_disconnect(cl);
-		return rets;
-	}
+		वापस rets;
+	पूर्ण
 
 	/* Upon successful connection and allocation, emit flow-control */
-	rets = ishtp_cl_read_start(cl);
+	rets = ishtp_cl_पढ़ो_start(cl);
 
-	dev->print_log(dev, "%s() successful\n", __func__);
+	dev->prपूर्णांक_log(dev, "%s() successful\n", __func__);
 
-	return rets;
-}
+	वापस rets;
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_connect);
 
 /**
- * ishtp_cl_read_start() - Prepare to read client message
+ * ishtp_cl_पढ़ो_start() - Prepare to पढ़ो client message
  * @cl: client device instance
  *
- * Get a free buffer from pool of free read buffers and add to read buffer
+ * Get a मुक्त buffer from pool of मुक्त पढ़ो buffers and add to पढ़ो buffer
  * pool to add contents. Send a flow control request to firmware to be able
  * send next message.
  *
- * Return: 0 if successful or error code on failure
+ * Return: 0 अगर successful or error code on failure
  */
-int ishtp_cl_read_start(struct ishtp_cl *cl)
-{
-	struct ishtp_device *dev;
-	struct ishtp_cl_rb *rb;
-	int rets;
-	int i;
-	unsigned long	flags;
-	unsigned long	dev_flags;
+पूर्णांक ishtp_cl_पढ़ो_start(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_device *dev;
+	काष्ठा ishtp_cl_rb *rb;
+	पूर्णांक rets;
+	पूर्णांक i;
+	अचिन्हित दीर्घ	flags;
+	अचिन्हित दीर्घ	dev_flags;
 
-	if (WARN_ON(!cl || !cl->dev))
-		return -ENODEV;
+	अगर (WARN_ON(!cl || !cl->dev))
+		वापस -ENODEV;
 
 	dev = cl->dev;
 
-	if (cl->state != ISHTP_CL_CONNECTED)
-		return -ENODEV;
+	अगर (cl->state != ISHTP_CL_CONNECTED)
+		वापस -ENODEV;
 
-	if (dev->dev_state != ISHTP_DEV_ENABLED)
-		return -ENODEV;
+	अगर (dev->dev_state != ISHTP_DEV_ENABLED)
+		वापस -ENODEV;
 
 	i = ishtp_fw_cl_by_id(dev, cl->fw_client_id);
-	if (i < 0) {
+	अगर (i < 0) अणु
 		dev_err(&cl->device->dev, "no such fw client %d\n",
 			cl->fw_client_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* The current rb is the head of the free rb list */
-	spin_lock_irqsave(&cl->free_list_spinlock, flags);
-	if (list_empty(&cl->free_rb_list.list)) {
+	/* The current rb is the head of the मुक्त rb list */
+	spin_lock_irqsave(&cl->मुक्त_list_spinlock, flags);
+	अगर (list_empty(&cl->मुक्त_rb_list.list)) अणु
 		dev_warn(&cl->device->dev,
 			 "[ishtp-ish] Rx buffers pool is empty\n");
 		rets = -ENOMEM;
-		rb = NULL;
-		spin_unlock_irqrestore(&cl->free_list_spinlock, flags);
-		goto out;
-	}
-	rb = list_entry(cl->free_rb_list.list.next, struct ishtp_cl_rb, list);
+		rb = शून्य;
+		spin_unlock_irqrestore(&cl->मुक्त_list_spinlock, flags);
+		जाओ out;
+	पूर्ण
+	rb = list_entry(cl->मुक्त_rb_list.list.next, काष्ठा ishtp_cl_rb, list);
 	list_del_init(&rb->list);
-	spin_unlock_irqrestore(&cl->free_list_spinlock, flags);
+	spin_unlock_irqrestore(&cl->मुक्त_list_spinlock, flags);
 
 	rb->cl = cl;
 	rb->buf_idx = 0;
@@ -492,26 +493,26 @@ int ishtp_cl_read_start(struct ishtp_cl *cl)
 	 * This must be BEFORE sending flow control -
 	 * response in ISR may come too fast...
 	 */
-	spin_lock_irqsave(&dev->read_list_spinlock, dev_flags);
-	list_add_tail(&rb->list, &dev->read_list.list);
-	spin_unlock_irqrestore(&dev->read_list_spinlock, dev_flags);
-	if (ishtp_hbm_cl_flow_control_req(dev, cl)) {
+	spin_lock_irqsave(&dev->पढ़ो_list_spinlock, dev_flags);
+	list_add_tail(&rb->list, &dev->पढ़ो_list.list);
+	spin_unlock_irqrestore(&dev->पढ़ो_list_spinlock, dev_flags);
+	अगर (ishtp_hbm_cl_flow_control_req(dev, cl)) अणु
 		rets = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 out:
-	/* if ishtp_hbm_cl_flow_control_req failed, return rb to free list */
-	if (rets && rb) {
-		spin_lock_irqsave(&dev->read_list_spinlock, dev_flags);
+	/* अगर ishtp_hbm_cl_flow_control_req failed, वापस rb to मुक्त list */
+	अगर (rets && rb) अणु
+		spin_lock_irqsave(&dev->पढ़ो_list_spinlock, dev_flags);
 		list_del(&rb->list);
-		spin_unlock_irqrestore(&dev->read_list_spinlock, dev_flags);
+		spin_unlock_irqrestore(&dev->पढ़ो_list_spinlock, dev_flags);
 
-		spin_lock_irqsave(&cl->free_list_spinlock, flags);
-		list_add_tail(&rb->list, &cl->free_rb_list.list);
-		spin_unlock_irqrestore(&cl->free_list_spinlock, flags);
-	}
-	return rets;
-}
+		spin_lock_irqsave(&cl->मुक्त_list_spinlock, flags);
+		list_add_tail(&rb->list, &cl->मुक्त_rb_list.list);
+		spin_unlock_irqrestore(&cl->मुक्त_list_spinlock, flags);
+	पूर्ण
+	वापस rets;
+पूर्ण
 
 /**
  * ishtp_cl_send() - Send a message to firmware
@@ -519,161 +520,161 @@ out:
  * @buf: message buffer
  * @length: length of message
  *
- * If the client is correct state to send message, this function gets a buffer
+ * If the client is correct state to send message, this function माला_लो a buffer
  * from tx ring buffers, copy the message data and call to send the message
  * using ishtp_cl_send_msg()
  *
- * Return: 0 if successful or error code on failure
+ * Return: 0 अगर successful or error code on failure
  */
-int ishtp_cl_send(struct ishtp_cl *cl, uint8_t *buf, size_t length)
-{
-	struct ishtp_device	*dev;
-	int	id;
-	struct ishtp_cl_tx_ring	*cl_msg;
-	int	have_msg_to_send = 0;
-	unsigned long	tx_flags, tx_free_flags;
+पूर्णांक ishtp_cl_send(काष्ठा ishtp_cl *cl, uपूर्णांक8_t *buf, माप_प्रकार length)
+अणु
+	काष्ठा ishtp_device	*dev;
+	पूर्णांक	id;
+	काष्ठा ishtp_cl_tx_ring	*cl_msg;
+	पूर्णांक	have_msg_to_send = 0;
+	अचिन्हित दीर्घ	tx_flags, tx_मुक्त_flags;
 
-	if (WARN_ON(!cl || !cl->dev))
-		return -ENODEV;
+	अगर (WARN_ON(!cl || !cl->dev))
+		वापस -ENODEV;
 
 	dev = cl->dev;
 
-	if (cl->state != ISHTP_CL_CONNECTED) {
+	अगर (cl->state != ISHTP_CL_CONNECTED) अणु
 		++cl->err_send_msg;
-		return -EPIPE;
-	}
+		वापस -EPIPE;
+	पूर्ण
 
-	if (dev->dev_state != ISHTP_DEV_ENABLED) {
+	अगर (dev->dev_state != ISHTP_DEV_ENABLED) अणु
 		++cl->err_send_msg;
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Check if we have fw client device */
+	/* Check अगर we have fw client device */
 	id = ishtp_fw_cl_by_id(dev, cl->fw_client_id);
-	if (id < 0) {
+	अगर (id < 0) अणु
 		++cl->err_send_msg;
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	if (length > dev->fw_clients[id].props.max_msg_length) {
+	अगर (length > dev->fw_clients[id].props.max_msg_length) अणु
 		++cl->err_send_msg;
-		return -EMSGSIZE;
-	}
+		वापस -EMSGSIZE;
+	पूर्ण
 
-	/* No free bufs */
-	spin_lock_irqsave(&cl->tx_free_list_spinlock, tx_free_flags);
-	if (list_empty(&cl->tx_free_list.list)) {
-		spin_unlock_irqrestore(&cl->tx_free_list_spinlock,
-			tx_free_flags);
+	/* No मुक्त bufs */
+	spin_lock_irqsave(&cl->tx_मुक्त_list_spinlock, tx_मुक्त_flags);
+	अगर (list_empty(&cl->tx_मुक्त_list.list)) अणु
+		spin_unlock_irqrestore(&cl->tx_मुक्त_list_spinlock,
+			tx_मुक्त_flags);
 		++cl->err_send_msg;
-		return	-ENOMEM;
-	}
+		वापस	-ENOMEM;
+	पूर्ण
 
-	cl_msg = list_first_entry(&cl->tx_free_list.list,
-		struct ishtp_cl_tx_ring, list);
-	if (!cl_msg->send_buf.data) {
-		spin_unlock_irqrestore(&cl->tx_free_list_spinlock,
-			tx_free_flags);
-		return	-EIO;
-		/* Should not happen, as free list is pre-allocated */
-	}
+	cl_msg = list_first_entry(&cl->tx_मुक्त_list.list,
+		काष्ठा ishtp_cl_tx_ring, list);
+	अगर (!cl_msg->send_buf.data) अणु
+		spin_unlock_irqrestore(&cl->tx_मुक्त_list_spinlock,
+			tx_मुक्त_flags);
+		वापस	-EIO;
+		/* Should not happen, as मुक्त list is pre-allocated */
+	पूर्ण
 	/*
-	 * This is safe, as 'length' is already checked for not exceeding
+	 * This is safe, as 'length' is alपढ़ोy checked क्रम not exceeding
 	 * max ISHTP message size per client
 	 */
 	list_del_init(&cl_msg->list);
-	--cl->tx_ring_free_size;
+	--cl->tx_ring_मुक्त_size;
 
-	spin_unlock_irqrestore(&cl->tx_free_list_spinlock, tx_free_flags);
-	memcpy(cl_msg->send_buf.data, buf, length);
+	spin_unlock_irqrestore(&cl->tx_मुक्त_list_spinlock, tx_मुक्त_flags);
+	स_नकल(cl_msg->send_buf.data, buf, length);
 	cl_msg->send_buf.size = length;
 	spin_lock_irqsave(&cl->tx_list_spinlock, tx_flags);
 	have_msg_to_send = !list_empty(&cl->tx_list.list);
 	list_add_tail(&cl_msg->list, &cl->tx_list.list);
 	spin_unlock_irqrestore(&cl->tx_list_spinlock, tx_flags);
 
-	if (!have_msg_to_send && cl->ishtp_flow_ctrl_creds > 0)
+	अगर (!have_msg_to_send && cl->ishtp_flow_ctrl_creds > 0)
 		ishtp_cl_send_msg(dev, cl);
 
-	return	0;
-}
+	वापस	0;
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_send);
 
 /**
- * ishtp_cl_read_complete() - read complete
- * @rb: Pointer to client request block
+ * ishtp_cl_पढ़ो_complete() - पढ़ो complete
+ * @rb: Poपूर्णांकer to client request block
  *
  * If the message is completely received call ishtp_cl_bus_rx_event()
  * to process message
  */
-static void ishtp_cl_read_complete(struct ishtp_cl_rb *rb)
-{
-	unsigned long	flags;
-	int	schedule_work_flag = 0;
-	struct ishtp_cl	*cl = rb->cl;
+अटल व्योम ishtp_cl_पढ़ो_complete(काष्ठा ishtp_cl_rb *rb)
+अणु
+	अचिन्हित दीर्घ	flags;
+	पूर्णांक	schedule_work_flag = 0;
+	काष्ठा ishtp_cl	*cl = rb->cl;
 
 	spin_lock_irqsave(&cl->in_process_spinlock, flags);
 	/*
-	 * if in-process list is empty, then need to schedule
-	 * the processing thread
+	 * अगर in-process list is empty, then need to schedule
+	 * the processing thपढ़ो
 	 */
 	schedule_work_flag = list_empty(&cl->in_process_list.list);
 	list_add_tail(&rb->list, &cl->in_process_list.list);
 	spin_unlock_irqrestore(&cl->in_process_spinlock, flags);
 
-	if (schedule_work_flag)
+	अगर (schedule_work_flag)
 		ishtp_cl_bus_rx_event(cl->device);
-}
+पूर्ण
 
 /**
  * ipc_tx_callback() - IPC tx callback function
- * @prm: Pointer to client device instance
+ * @prm: Poपूर्णांकer to client device instance
  *
- * Send message over IPC either first time or on callback on previous message
+ * Send message over IPC either first समय or on callback on previous message
  * completion
  */
-static void ipc_tx_callback(void *prm)
-{
-	struct ishtp_cl	*cl = prm;
-	struct ishtp_cl_tx_ring	*cl_msg;
-	size_t	rem;
-	struct ishtp_device	*dev = (cl ? cl->dev : NULL);
-	struct ishtp_msg_hdr	ishtp_hdr;
-	unsigned long	tx_flags, tx_free_flags;
-	unsigned char	*pmsg;
+अटल व्योम ipc_tx_callback(व्योम *prm)
+अणु
+	काष्ठा ishtp_cl	*cl = prm;
+	काष्ठा ishtp_cl_tx_ring	*cl_msg;
+	माप_प्रकार	rem;
+	काष्ठा ishtp_device	*dev = (cl ? cl->dev : शून्य);
+	काष्ठा ishtp_msg_hdr	ishtp_hdr;
+	अचिन्हित दीर्घ	tx_flags, tx_मुक्त_flags;
+	अचिन्हित अक्षर	*pmsg;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
 	/*
-	 * Other conditions if some critical error has
-	 * occurred before this callback is called
+	 * Other conditions अगर some critical error has
+	 * occurred beक्रमe this callback is called
 	 */
-	if (dev->dev_state != ISHTP_DEV_ENABLED)
-		return;
+	अगर (dev->dev_state != ISHTP_DEV_ENABLED)
+		वापस;
 
-	if (cl->state != ISHTP_CL_CONNECTED)
-		return;
+	अगर (cl->state != ISHTP_CL_CONNECTED)
+		वापस;
 
 	spin_lock_irqsave(&cl->tx_list_spinlock, tx_flags);
-	if (list_empty(&cl->tx_list.list)) {
+	अगर (list_empty(&cl->tx_list.list)) अणु
 		spin_unlock_irqrestore(&cl->tx_list_spinlock, tx_flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (cl->ishtp_flow_ctrl_creds != 1 && !cl->sending) {
+	अगर (cl->ishtp_flow_ctrl_creds != 1 && !cl->sending) अणु
 		spin_unlock_irqrestore(&cl->tx_list_spinlock, tx_flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!cl->sending) {
+	अगर (!cl->sending) अणु
 		--cl->ishtp_flow_ctrl_creds;
 		cl->last_ipc_acked = 0;
 		cl->last_tx_path = CL_TX_PATH_IPC;
 		cl->sending = 1;
-	}
+	पूर्ण
 
-	cl_msg = list_entry(cl->tx_list.list.next, struct ishtp_cl_tx_ring,
+	cl_msg = list_entry(cl->tx_list.list.next, काष्ठा ishtp_cl_tx_ring,
 			    list);
 	rem = cl_msg->send_buf.size - cl->tx_offs;
 
@@ -682,87 +683,87 @@ static void ipc_tx_callback(void *prm)
 	ishtp_hdr.reserved = 0;
 	pmsg = cl_msg->send_buf.data + cl->tx_offs;
 
-	if (rem <= dev->mtu) {
+	अगर (rem <= dev->mtu) अणु
 		ishtp_hdr.length = rem;
 		ishtp_hdr.msg_complete = 1;
 		cl->sending = 0;
-		list_del_init(&cl_msg->list);	/* Must be before write */
+		list_del_init(&cl_msg->list);	/* Must be beक्रमe ग_लिखो */
 		spin_unlock_irqrestore(&cl->tx_list_spinlock, tx_flags);
 		/* Submit to IPC queue with no callback */
-		ishtp_write_message(dev, &ishtp_hdr, pmsg);
-		spin_lock_irqsave(&cl->tx_free_list_spinlock, tx_free_flags);
-		list_add_tail(&cl_msg->list, &cl->tx_free_list.list);
-		++cl->tx_ring_free_size;
-		spin_unlock_irqrestore(&cl->tx_free_list_spinlock,
-			tx_free_flags);
-	} else {
+		ishtp_ग_लिखो_message(dev, &ishtp_hdr, pmsg);
+		spin_lock_irqsave(&cl->tx_मुक्त_list_spinlock, tx_मुक्त_flags);
+		list_add_tail(&cl_msg->list, &cl->tx_मुक्त_list.list);
+		++cl->tx_ring_मुक्त_size;
+		spin_unlock_irqrestore(&cl->tx_मुक्त_list_spinlock,
+			tx_मुक्त_flags);
+	पूर्ण अन्यथा अणु
 		/* Send IPC fragment */
 		spin_unlock_irqrestore(&cl->tx_list_spinlock, tx_flags);
 		cl->tx_offs += dev->mtu;
 		ishtp_hdr.length = dev->mtu;
 		ishtp_hdr.msg_complete = 0;
 		ishtp_send_msg(dev, &ishtp_hdr, pmsg, ipc_tx_callback, cl);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ishtp_cl_send_msg_ipc() -Send message using IPC
  * @dev: ISHTP device instance
- * @cl: Pointer to client device instance
+ * @cl: Poपूर्णांकer to client device instance
  *
  * Send message over IPC not using DMA
  */
-static void ishtp_cl_send_msg_ipc(struct ishtp_device *dev,
-				  struct ishtp_cl *cl)
-{
+अटल व्योम ishtp_cl_send_msg_ipc(काष्ठा ishtp_device *dev,
+				  काष्ठा ishtp_cl *cl)
+अणु
 	/* If last DMA message wasn't acked yet, leave this one in Tx queue */
-	if (cl->last_tx_path == CL_TX_PATH_DMA && cl->last_dma_acked == 0)
-		return;
+	अगर (cl->last_tx_path == CL_TX_PATH_DMA && cl->last_dma_acked == 0)
+		वापस;
 
 	cl->tx_offs = 0;
 	ipc_tx_callback(cl);
 	++cl->send_msg_cnt_ipc;
-}
+पूर्ण
 
 /**
  * ishtp_cl_send_msg_dma() -Send message using DMA
  * @dev: ISHTP device instance
- * @cl: Pointer to client device instance
+ * @cl: Poपूर्णांकer to client device instance
  *
  * Send message using DMA
  */
-static void ishtp_cl_send_msg_dma(struct ishtp_device *dev,
-	struct ishtp_cl *cl)
-{
-	struct ishtp_msg_hdr	hdr;
-	struct dma_xfer_hbm	dma_xfer;
-	unsigned char	*msg_addr;
-	int off;
-	struct ishtp_cl_tx_ring	*cl_msg;
-	unsigned long tx_flags, tx_free_flags;
+अटल व्योम ishtp_cl_send_msg_dma(काष्ठा ishtp_device *dev,
+	काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_msg_hdr	hdr;
+	काष्ठा dma_xfer_hbm	dma_xfer;
+	अचिन्हित अक्षर	*msg_addr;
+	पूर्णांक off;
+	काष्ठा ishtp_cl_tx_ring	*cl_msg;
+	अचिन्हित दीर्घ tx_flags, tx_मुक्त_flags;
 
 	/* If last IPC message wasn't acked yet, leave this one in Tx queue */
-	if (cl->last_tx_path == CL_TX_PATH_IPC && cl->last_ipc_acked == 0)
-		return;
+	अगर (cl->last_tx_path == CL_TX_PATH_IPC && cl->last_ipc_acked == 0)
+		वापस;
 
 	spin_lock_irqsave(&cl->tx_list_spinlock, tx_flags);
-	if (list_empty(&cl->tx_list.list)) {
+	अगर (list_empty(&cl->tx_list.list)) अणु
 		spin_unlock_irqrestore(&cl->tx_list_spinlock, tx_flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	cl_msg = list_entry(cl->tx_list.list.next, struct ishtp_cl_tx_ring,
+	cl_msg = list_entry(cl->tx_list.list.next, काष्ठा ishtp_cl_tx_ring,
 		list);
 
 	msg_addr = ishtp_cl_get_dma_send_buf(dev, cl_msg->send_buf.size);
-	if (!msg_addr) {
+	अगर (!msg_addr) अणु
 		spin_unlock_irqrestore(&cl->tx_list_spinlock, tx_flags);
-		if (dev->transfer_path == CL_TX_PATH_DEFAULT)
+		अगर (dev->transfer_path == CL_TX_PATH_DEFAULT)
 			ishtp_cl_send_msg_ipc(dev, cl);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_del_init(&cl_msg->list);	/* Must be before write */
+	list_del_init(&cl_msg->list);	/* Must be beक्रमe ग_लिखो */
 	spin_unlock_irqrestore(&cl->tx_list_spinlock, tx_flags);
 
 	--cl->ishtp_flow_ctrl_creds;
@@ -770,12 +771,12 @@ static void ishtp_cl_send_msg_dma(struct ishtp_device *dev,
 	cl->last_dma_addr = msg_addr;
 	cl->last_tx_path = CL_TX_PATH_DMA;
 
-	/* write msg to dma buf */
-	memcpy(msg_addr, cl_msg->send_buf.data, cl_msg->send_buf.size);
+	/* ग_लिखो msg to dma buf */
+	स_नकल(msg_addr, cl_msg->send_buf.data, cl_msg->send_buf.size);
 
 	/* send dma_xfer hbm msg */
-	off = msg_addr - (unsigned char *)dev->ishtp_host_dma_tx_buf;
-	ishtp_hbm_hdr(&hdr, sizeof(struct dma_xfer_hbm));
+	off = msg_addr - (अचिन्हित अक्षर *)dev->ishtp_host_dma_tx_buf;
+	ishtp_hbm_hdr(&hdr, माप(काष्ठा dma_xfer_hbm));
 	dma_xfer.hbm = DMA_XFER;
 	dma_xfer.fw_client_id = cl->fw_client_id;
 	dma_xfer.host_client_id = cl->host_client_id;
@@ -783,88 +784,88 @@ static void ishtp_cl_send_msg_dma(struct ishtp_device *dev,
 	dma_xfer.msg_addr = dev->ishtp_host_dma_tx_buf_phys + off;
 	dma_xfer.msg_length = cl_msg->send_buf.size;
 	dma_xfer.reserved2 = 0;
-	ishtp_write_message(dev, &hdr, (unsigned char *)&dma_xfer);
-	spin_lock_irqsave(&cl->tx_free_list_spinlock, tx_free_flags);
-	list_add_tail(&cl_msg->list, &cl->tx_free_list.list);
-	++cl->tx_ring_free_size;
-	spin_unlock_irqrestore(&cl->tx_free_list_spinlock, tx_free_flags);
+	ishtp_ग_लिखो_message(dev, &hdr, (अचिन्हित अक्षर *)&dma_xfer);
+	spin_lock_irqsave(&cl->tx_मुक्त_list_spinlock, tx_मुक्त_flags);
+	list_add_tail(&cl_msg->list, &cl->tx_मुक्त_list.list);
+	++cl->tx_ring_मुक्त_size;
+	spin_unlock_irqrestore(&cl->tx_मुक्त_list_spinlock, tx_मुक्त_flags);
 	++cl->send_msg_cnt_dma;
-}
+पूर्ण
 
 /**
  * ishtp_cl_send_msg() -Send message using DMA or IPC
  * @dev: ISHTP device instance
- * @cl: Pointer to client device instance
+ * @cl: Poपूर्णांकer to client device instance
  *
  * Send message using DMA or IPC based on transfer_path
  */
-void ishtp_cl_send_msg(struct ishtp_device *dev, struct ishtp_cl *cl)
-{
-	if (dev->transfer_path == CL_TX_PATH_DMA)
+व्योम ishtp_cl_send_msg(काष्ठा ishtp_device *dev, काष्ठा ishtp_cl *cl)
+अणु
+	अगर (dev->transfer_path == CL_TX_PATH_DMA)
 		ishtp_cl_send_msg_dma(dev, cl);
-	else
+	अन्यथा
 		ishtp_cl_send_msg_ipc(dev, cl);
-}
+पूर्ण
 
 /**
  * recv_ishtp_cl_msg() -Receive client message
  * @dev: ISHTP device instance
- * @ishtp_hdr: Pointer to message header
+ * @ishtp_hdr: Poपूर्णांकer to message header
  *
  * Receive and dispatch ISHTP client messages. This function executes in ISR
  * or work queue context
  */
-void recv_ishtp_cl_msg(struct ishtp_device *dev,
-		       struct ishtp_msg_hdr *ishtp_hdr)
-{
-	struct ishtp_cl *cl;
-	struct ishtp_cl_rb *rb;
-	struct ishtp_cl_rb *new_rb;
-	unsigned char *buffer = NULL;
-	struct ishtp_cl_rb *complete_rb = NULL;
-	unsigned long	flags;
-	int	rb_count;
+व्योम recv_ishtp_cl_msg(काष्ठा ishtp_device *dev,
+		       काष्ठा ishtp_msg_hdr *ishtp_hdr)
+अणु
+	काष्ठा ishtp_cl *cl;
+	काष्ठा ishtp_cl_rb *rb;
+	काष्ठा ishtp_cl_rb *new_rb;
+	अचिन्हित अक्षर *buffer = शून्य;
+	काष्ठा ishtp_cl_rb *complete_rb = शून्य;
+	अचिन्हित दीर्घ	flags;
+	पूर्णांक	rb_count;
 
-	if (ishtp_hdr->reserved) {
+	अगर (ishtp_hdr->reserved) अणु
 		dev_err(dev->devc, "corrupted message header.\n");
-		goto	eoi;
-	}
+		जाओ	eoi;
+	पूर्ण
 
-	if (ishtp_hdr->length > IPC_PAYLOAD_SIZE) {
+	अगर (ishtp_hdr->length > IPC_PAYLOAD_SIZE) अणु
 		dev_err(dev->devc,
 			"ISHTP message length in hdr exceeds IPC MTU\n");
-		goto	eoi;
-	}
+		जाओ	eoi;
+	पूर्ण
 
-	spin_lock_irqsave(&dev->read_list_spinlock, flags);
+	spin_lock_irqsave(&dev->पढ़ो_list_spinlock, flags);
 	rb_count = -1;
-	list_for_each_entry(rb, &dev->read_list.list, list) {
+	list_क्रम_each_entry(rb, &dev->पढ़ो_list.list, list) अणु
 		++rb_count;
 		cl = rb->cl;
-		if (!cl || !(cl->host_client_id == ishtp_hdr->host_addr &&
+		अगर (!cl || !(cl->host_client_id == ishtp_hdr->host_addr &&
 				cl->fw_client_id == ishtp_hdr->fw_addr) ||
 				!(cl->state == ISHTP_CL_CONNECTED))
-			continue;
+			जारी;
 
 		 /* If no Rx buffer is allocated, disband the rb */
-		if (rb->buffer.size == 0 || rb->buffer.data == NULL) {
-			spin_unlock_irqrestore(&dev->read_list_spinlock, flags);
+		अगर (rb->buffer.size == 0 || rb->buffer.data == शून्य) अणु
+			spin_unlock_irqrestore(&dev->पढ़ो_list_spinlock, flags);
 			dev_err(&cl->device->dev,
 				"Rx buffer is not allocated.\n");
 			list_del(&rb->list);
-			ishtp_io_rb_free(rb);
+			ishtp_io_rb_मुक्त(rb);
 			cl->status = -ENOMEM;
-			goto	eoi;
-		}
+			जाओ	eoi;
+		पूर्ण
 
 		/*
 		 * If message buffer overflown (exceeds max. client msg
-		 * size, drop message and return to free buffer.
-		 * Do we need to disconnect such a client? (We don't send
+		 * size, drop message and वापस to मुक्त buffer.
+		 * Do we need to disconnect such a client? (We करोn't send
 		 * back FC, so communication will be stuck anyway)
 		 */
-		if (rb->buffer.size < ishtp_hdr->length + rb->buf_idx) {
-			spin_unlock_irqrestore(&dev->read_list_spinlock, flags);
+		अगर (rb->buffer.size < ishtp_hdr->length + rb->buf_idx) अणु
+			spin_unlock_irqrestore(&dev->पढ़ो_list_spinlock, flags);
 			dev_err(&cl->device->dev,
 				"message overflow. size %d len %d idx %ld\n",
 				rb->buffer.size, ishtp_hdr->length,
@@ -872,14 +873,14 @@ void recv_ishtp_cl_msg(struct ishtp_device *dev,
 			list_del(&rb->list);
 			ishtp_cl_io_rb_recycle(rb);
 			cl->status = -EIO;
-			goto	eoi;
-		}
+			जाओ	eoi;
+		पूर्ण
 
 		buffer = rb->buffer.data + rb->buf_idx;
-		dev->ops->ishtp_read(dev, buffer, ishtp_hdr->length);
+		dev->ops->ishtp_पढ़ो(dev, buffer, ishtp_hdr->length);
 
 		rb->buf_idx += ishtp_hdr->length;
-		if (ishtp_hdr->msg_complete) {
+		अगर (ishtp_hdr->msg_complete) अणु
 			/* Last fragment in message - it's complete */
 			cl->status = 0;
 			list_del(&rb->list);
@@ -888,116 +889,116 @@ void recv_ishtp_cl_msg(struct ishtp_device *dev,
 			--cl->out_flow_ctrl_creds;
 			/*
 			 * the whole msg arrived, send a new FC, and add a new
-			 * rb buffer for the next coming msg
+			 * rb buffer क्रम the next coming msg
 			 */
-			spin_lock(&cl->free_list_spinlock);
+			spin_lock(&cl->मुक्त_list_spinlock);
 
-			if (!list_empty(&cl->free_rb_list.list)) {
-				new_rb = list_entry(cl->free_rb_list.list.next,
-					struct ishtp_cl_rb, list);
+			अगर (!list_empty(&cl->मुक्त_rb_list.list)) अणु
+				new_rb = list_entry(cl->मुक्त_rb_list.list.next,
+					काष्ठा ishtp_cl_rb, list);
 				list_del_init(&new_rb->list);
-				spin_unlock(&cl->free_list_spinlock);
+				spin_unlock(&cl->मुक्त_list_spinlock);
 				new_rb->cl = cl;
 				new_rb->buf_idx = 0;
 				INIT_LIST_HEAD(&new_rb->list);
 				list_add_tail(&new_rb->list,
-					&dev->read_list.list);
+					&dev->पढ़ो_list.list);
 
 				ishtp_hbm_cl_flow_control_req(dev, cl);
-			} else {
-				spin_unlock(&cl->free_list_spinlock);
-			}
-		}
-		/* One more fragment in message (even if this was last) */
+			पूर्ण अन्यथा अणु
+				spin_unlock(&cl->मुक्त_list_spinlock);
+			पूर्ण
+		पूर्ण
+		/* One more fragment in message (even अगर this was last) */
 		++cl->recv_msg_num_frags;
 
 		/*
-		 * We can safely break here (and in BH too),
+		 * We can safely अवरोध here (and in BH too),
 		 * a single input message can go only to a single request!
 		 */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	spin_unlock_irqrestore(&dev->read_list_spinlock, flags);
-	/* If it's nobody's message, just read and discard it */
-	if (!buffer) {
-		uint8_t	rd_msg_buf[ISHTP_RD_MSG_BUF_SIZE];
+	spin_unlock_irqrestore(&dev->पढ़ो_list_spinlock, flags);
+	/* If it's nobody's message, just पढ़ो and discard it */
+	अगर (!buffer) अणु
+		uपूर्णांक8_t	rd_msg_buf[ISHTP_RD_MSG_BUF_SIZE];
 
 		dev_err(dev->devc, "Dropped Rx msg - no request\n");
-		dev->ops->ishtp_read(dev, rd_msg_buf, ishtp_hdr->length);
-		goto	eoi;
-	}
+		dev->ops->ishtp_पढ़ो(dev, rd_msg_buf, ishtp_hdr->length);
+		जाओ	eoi;
+	पूर्ण
 
-	if (complete_rb) {
+	अगर (complete_rb) अणु
 		cl = complete_rb->cl;
-		cl->ts_rx = ktime_get();
+		cl->ts_rx = kसमय_get();
 		++cl->recv_msg_cnt_ipc;
-		ishtp_cl_read_complete(complete_rb);
-	}
+		ishtp_cl_पढ़ो_complete(complete_rb);
+	पूर्ण
 eoi:
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
  * recv_ishtp_cl_msg_dma() -Receive client message
  * @dev: ISHTP device instance
- * @msg: message pointer
+ * @msg: message poपूर्णांकer
  * @hbm: hbm buffer
  *
  * Receive and dispatch ISHTP client messages using DMA. This function executes
  * in ISR or work queue context
  */
-void recv_ishtp_cl_msg_dma(struct ishtp_device *dev, void *msg,
-			   struct dma_xfer_hbm *hbm)
-{
-	struct ishtp_cl *cl;
-	struct ishtp_cl_rb *rb;
-	struct ishtp_cl_rb *new_rb;
-	unsigned char *buffer = NULL;
-	struct ishtp_cl_rb *complete_rb = NULL;
-	unsigned long	flags;
+व्योम recv_ishtp_cl_msg_dma(काष्ठा ishtp_device *dev, व्योम *msg,
+			   काष्ठा dma_xfer_hbm *hbm)
+अणु
+	काष्ठा ishtp_cl *cl;
+	काष्ठा ishtp_cl_rb *rb;
+	काष्ठा ishtp_cl_rb *new_rb;
+	अचिन्हित अक्षर *buffer = शून्य;
+	काष्ठा ishtp_cl_rb *complete_rb = शून्य;
+	अचिन्हित दीर्घ	flags;
 
-	spin_lock_irqsave(&dev->read_list_spinlock, flags);
+	spin_lock_irqsave(&dev->पढ़ो_list_spinlock, flags);
 
-	list_for_each_entry(rb, &dev->read_list.list, list) {
+	list_क्रम_each_entry(rb, &dev->पढ़ो_list.list, list) अणु
 		cl = rb->cl;
-		if (!cl || !(cl->host_client_id == hbm->host_client_id &&
+		अगर (!cl || !(cl->host_client_id == hbm->host_client_id &&
 				cl->fw_client_id == hbm->fw_client_id) ||
 				!(cl->state == ISHTP_CL_CONNECTED))
-			continue;
+			जारी;
 
 		/*
 		 * If no Rx buffer is allocated, disband the rb
 		 */
-		if (rb->buffer.size == 0 || rb->buffer.data == NULL) {
-			spin_unlock_irqrestore(&dev->read_list_spinlock, flags);
+		अगर (rb->buffer.size == 0 || rb->buffer.data == शून्य) अणु
+			spin_unlock_irqrestore(&dev->पढ़ो_list_spinlock, flags);
 			dev_err(&cl->device->dev,
 				"response buffer is not allocated.\n");
 			list_del(&rb->list);
-			ishtp_io_rb_free(rb);
+			ishtp_io_rb_मुक्त(rb);
 			cl->status = -ENOMEM;
-			goto	eoi;
-		}
+			जाओ	eoi;
+		पूर्ण
 
 		/*
 		 * If message buffer overflown (exceeds max. client msg
-		 * size, drop message and return to free buffer.
-		 * Do we need to disconnect such a client? (We don't send
+		 * size, drop message and वापस to मुक्त buffer.
+		 * Do we need to disconnect such a client? (We करोn't send
 		 * back FC, so communication will be stuck anyway)
 		 */
-		if (rb->buffer.size < hbm->msg_length) {
-			spin_unlock_irqrestore(&dev->read_list_spinlock, flags);
+		अगर (rb->buffer.size < hbm->msg_length) अणु
+			spin_unlock_irqrestore(&dev->पढ़ो_list_spinlock, flags);
 			dev_err(&cl->device->dev,
 				"message overflow. size %d len %d idx %ld\n",
 				rb->buffer.size, hbm->msg_length, rb->buf_idx);
 			list_del(&rb->list);
 			ishtp_cl_io_rb_recycle(rb);
 			cl->status = -EIO;
-			goto	eoi;
-		}
+			जाओ	eoi;
+		पूर्ण
 
 		buffer = rb->buffer.data;
-		memcpy(buffer, msg, hbm->msg_length);
+		स_नकल(buffer, msg, hbm->msg_length);
 		rb->buf_idx = hbm->msg_length;
 
 		/* Last fragment in message - it's complete */
@@ -1008,91 +1009,91 @@ void recv_ishtp_cl_msg_dma(struct ishtp_device *dev, void *msg,
 		--cl->out_flow_ctrl_creds;
 		/*
 		 * the whole msg arrived, send a new FC, and add a new
-		 * rb buffer for the next coming msg
+		 * rb buffer क्रम the next coming msg
 		 */
-		spin_lock(&cl->free_list_spinlock);
+		spin_lock(&cl->मुक्त_list_spinlock);
 
-		if (!list_empty(&cl->free_rb_list.list)) {
-			new_rb = list_entry(cl->free_rb_list.list.next,
-				struct ishtp_cl_rb, list);
+		अगर (!list_empty(&cl->मुक्त_rb_list.list)) अणु
+			new_rb = list_entry(cl->मुक्त_rb_list.list.next,
+				काष्ठा ishtp_cl_rb, list);
 			list_del_init(&new_rb->list);
-			spin_unlock(&cl->free_list_spinlock);
+			spin_unlock(&cl->मुक्त_list_spinlock);
 			new_rb->cl = cl;
 			new_rb->buf_idx = 0;
 			INIT_LIST_HEAD(&new_rb->list);
 			list_add_tail(&new_rb->list,
-				&dev->read_list.list);
+				&dev->पढ़ो_list.list);
 
 			ishtp_hbm_cl_flow_control_req(dev, cl);
-		} else {
-			spin_unlock(&cl->free_list_spinlock);
-		}
+		पूर्ण अन्यथा अणु
+			spin_unlock(&cl->मुक्त_list_spinlock);
+		पूर्ण
 
 		/* One more fragment in message (this is always last) */
 		++cl->recv_msg_num_frags;
 
 		/*
-		 * We can safely break here (and in BH too),
+		 * We can safely अवरोध here (and in BH too),
 		 * a single input message can go only to a single request!
 		 */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	spin_unlock_irqrestore(&dev->read_list_spinlock, flags);
-	/* If it's nobody's message, just read and discard it */
-	if (!buffer) {
+	spin_unlock_irqrestore(&dev->पढ़ो_list_spinlock, flags);
+	/* If it's nobody's message, just पढ़ो and discard it */
+	अगर (!buffer) अणु
 		dev_err(dev->devc, "Dropped Rx (DMA) msg - no request\n");
-		goto	eoi;
-	}
+		जाओ	eoi;
+	पूर्ण
 
-	if (complete_rb) {
+	अगर (complete_rb) अणु
 		cl = complete_rb->cl;
-		cl->ts_rx = ktime_get();
+		cl->ts_rx = kसमय_get();
 		++cl->recv_msg_cnt_dma;
-		ishtp_cl_read_complete(complete_rb);
-	}
+		ishtp_cl_पढ़ो_complete(complete_rb);
+	पूर्ण
 eoi:
-	return;
-}
+	वापस;
+पूर्ण
 
-void *ishtp_get_client_data(struct ishtp_cl *cl)
-{
-	return cl->client_data;
-}
+व्योम *ishtp_get_client_data(काष्ठा ishtp_cl *cl)
+अणु
+	वापस cl->client_data;
+पूर्ण
 EXPORT_SYMBOL(ishtp_get_client_data);
 
-void ishtp_set_client_data(struct ishtp_cl *cl, void *data)
-{
+व्योम ishtp_set_client_data(काष्ठा ishtp_cl *cl, व्योम *data)
+अणु
 	cl->client_data = data;
-}
+पूर्ण
 EXPORT_SYMBOL(ishtp_set_client_data);
 
-struct ishtp_device *ishtp_get_ishtp_device(struct ishtp_cl *cl)
-{
-	return cl->dev;
-}
+काष्ठा ishtp_device *ishtp_get_ishtp_device(काष्ठा ishtp_cl *cl)
+अणु
+	वापस cl->dev;
+पूर्ण
 EXPORT_SYMBOL(ishtp_get_ishtp_device);
 
-void ishtp_set_tx_ring_size(struct ishtp_cl *cl, int size)
-{
+व्योम ishtp_set_tx_ring_size(काष्ठा ishtp_cl *cl, पूर्णांक size)
+अणु
 	cl->tx_ring_size = size;
-}
+पूर्ण
 EXPORT_SYMBOL(ishtp_set_tx_ring_size);
 
-void ishtp_set_rx_ring_size(struct ishtp_cl *cl, int size)
-{
+व्योम ishtp_set_rx_ring_size(काष्ठा ishtp_cl *cl, पूर्णांक size)
+अणु
 	cl->rx_ring_size = size;
-}
+पूर्ण
 EXPORT_SYMBOL(ishtp_set_rx_ring_size);
 
-void ishtp_set_connection_state(struct ishtp_cl *cl, int state)
-{
+व्योम ishtp_set_connection_state(काष्ठा ishtp_cl *cl, पूर्णांक state)
+अणु
 	cl->state = state;
-}
+पूर्ण
 EXPORT_SYMBOL(ishtp_set_connection_state);
 
-void ishtp_cl_set_fw_client_id(struct ishtp_cl *cl, int fw_client_id)
-{
+व्योम ishtp_cl_set_fw_client_id(काष्ठा ishtp_cl *cl, पूर्णांक fw_client_id)
+अणु
 	cl->fw_client_id = fw_client_id;
-}
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_set_fw_client_id);

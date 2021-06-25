@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_BTRFS_H
-#define _LINUX_BTRFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_BTRFS_H
+#घोषणा _LINUX_BTRFS_H
 
-#include <uapi/linux/btrfs.h>
+#समावेश <uapi/linux/btrfs.h>
 
-#endif /* _LINUX_BTRFS_H */
+#पूर्ण_अगर /* _LINUX_BTRFS_H */

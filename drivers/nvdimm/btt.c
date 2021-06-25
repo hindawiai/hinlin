@@ -1,112 +1,113 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Block Translation Table
  * Copyright (c) 2014-2015, Intel Corporation.
  */
-#include <linux/highmem.h>
-#include <linux/debugfs.h>
-#include <linux/blkdev.h>
-#include <linux/pagemap.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/mutex.h>
-#include <linux/hdreg.h>
-#include <linux/genhd.h>
-#include <linux/sizes.h>
-#include <linux/ndctl.h>
-#include <linux/fs.h>
-#include <linux/nd.h>
-#include <linux/backing-dev.h>
-#include "btt.h"
-#include "nd.h"
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/ndctl.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/nd.h>
+#समावेश <linux/backing-dev.h>
+#समावेश "btt.h"
+#समावेश "nd.h"
 
-enum log_ent_request {
+क्रमागत log_ent_request अणु
 	LOG_NEW_ENT = 0,
 	LOG_OLD_ENT
-};
+पूर्ण;
 
-static struct device *to_dev(struct arena_info *arena)
-{
-	return &arena->nd_btt->dev;
-}
+अटल काष्ठा device *to_dev(काष्ठा arena_info *arena)
+अणु
+	वापस &arena->nd_btt->dev;
+पूर्ण
 
-static u64 adjust_initial_offset(struct nd_btt *nd_btt, u64 offset)
-{
-	return offset + nd_btt->initial_offset;
-}
+अटल u64 adjust_initial_offset(काष्ठा nd_btt *nd_btt, u64 offset)
+अणु
+	वापस offset + nd_btt->initial_offset;
+पूर्ण
 
-static int arena_read_bytes(struct arena_info *arena, resource_size_t offset,
-		void *buf, size_t n, unsigned long flags)
-{
-	struct nd_btt *nd_btt = arena->nd_btt;
-	struct nd_namespace_common *ndns = nd_btt->ndns;
+अटल पूर्णांक arena_पढ़ो_bytes(काष्ठा arena_info *arena, resource_माप_प्रकार offset,
+		व्योम *buf, माप_प्रकार n, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा nd_btt *nd_btt = arena->nd_btt;
+	काष्ठा nd_namespace_common *ndns = nd_btt->ndns;
 
-	/* arena offsets may be shifted from the base of the device */
+	/* arena offsets may be shअगरted from the base of the device */
 	offset = adjust_initial_offset(nd_btt, offset);
-	return nvdimm_read_bytes(ndns, offset, buf, n, flags);
-}
+	वापस nvdimm_पढ़ो_bytes(ndns, offset, buf, n, flags);
+पूर्ण
 
-static int arena_write_bytes(struct arena_info *arena, resource_size_t offset,
-		void *buf, size_t n, unsigned long flags)
-{
-	struct nd_btt *nd_btt = arena->nd_btt;
-	struct nd_namespace_common *ndns = nd_btt->ndns;
+अटल पूर्णांक arena_ग_लिखो_bytes(काष्ठा arena_info *arena, resource_माप_प्रकार offset,
+		व्योम *buf, माप_प्रकार n, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा nd_btt *nd_btt = arena->nd_btt;
+	काष्ठा nd_namespace_common *ndns = nd_btt->ndns;
 
-	/* arena offsets may be shifted from the base of the device */
+	/* arena offsets may be shअगरted from the base of the device */
 	offset = adjust_initial_offset(nd_btt, offset);
-	return nvdimm_write_bytes(ndns, offset, buf, n, flags);
-}
+	वापस nvdimm_ग_लिखो_bytes(ndns, offset, buf, n, flags);
+पूर्ण
 
-static int btt_info_write(struct arena_info *arena, struct btt_sb *super)
-{
-	int ret;
+अटल पूर्णांक btt_info_ग_लिखो(काष्ठा arena_info *arena, काष्ठा btt_sb *super)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * infooff and info2off should always be at least 512B aligned.
-	 * We rely on that to make sure rw_bytes does error clearing
-	 * correctly, so make sure that is the case.
+	 * We rely on that to make sure rw_bytes करोes error clearing
+	 * correctly, so make sure that is the हाल.
 	 */
 	dev_WARN_ONCE(to_dev(arena), !IS_ALIGNED(arena->infooff, 512),
 		"arena->infooff: %#llx is unaligned\n", arena->infooff);
 	dev_WARN_ONCE(to_dev(arena), !IS_ALIGNED(arena->info2off, 512),
 		"arena->info2off: %#llx is unaligned\n", arena->info2off);
 
-	ret = arena_write_bytes(arena, arena->info2off, super,
-			sizeof(struct btt_sb), 0);
-	if (ret)
-		return ret;
+	ret = arena_ग_लिखो_bytes(arena, arena->info2off, super,
+			माप(काष्ठा btt_sb), 0);
+	अगर (ret)
+		वापस ret;
 
-	return arena_write_bytes(arena, arena->infooff, super,
-			sizeof(struct btt_sb), 0);
-}
+	वापस arena_ग_लिखो_bytes(arena, arena->infooff, super,
+			माप(काष्ठा btt_sb), 0);
+पूर्ण
 
-static int btt_info_read(struct arena_info *arena, struct btt_sb *super)
-{
-	return arena_read_bytes(arena, arena->infooff, super,
-			sizeof(struct btt_sb), 0);
-}
+अटल पूर्णांक btt_info_पढ़ो(काष्ठा arena_info *arena, काष्ठा btt_sb *super)
+अणु
+	वापस arena_पढ़ो_bytes(arena, arena->infooff, super,
+			माप(काष्ठा btt_sb), 0);
+पूर्ण
 
 /*
- * 'raw' version of btt_map write
+ * 'raw' version of btt_map ग_लिखो
  * Assumptions:
  *   mapping is in little-endian
  *   mapping contains 'E' and 'Z' flags as desired
  */
-static int __btt_map_write(struct arena_info *arena, u32 lba, __le32 mapping,
-		unsigned long flags)
-{
+अटल पूर्णांक __btt_map_ग_लिखो(काष्ठा arena_info *arena, u32 lba, __le32 mapping,
+		अचिन्हित दीर्घ flags)
+अणु
 	u64 ns_off = arena->mapoff + (lba * MAP_ENT_SIZE);
 
-	if (unlikely(lba >= arena->external_nlba))
+	अगर (unlikely(lba >= arena->बाह्यal_nlba))
 		dev_err_ratelimited(to_dev(arena),
 			"%s: lba %#x out of range (max: %#x)\n",
-			__func__, lba, arena->external_nlba);
-	return arena_write_bytes(arena, ns_off, &mapping, MAP_ENT_SIZE, flags);
-}
+			__func__, lba, arena->बाह्यal_nlba);
+	वापस arena_ग_लिखो_bytes(arena, ns_off, &mapping, MAP_ENT_SIZE, flags);
+पूर्ण
 
-static int btt_map_write(struct arena_info *arena, u32 lba, u32 mapping,
-			u32 z_flag, u32 e_flag, unsigned long rwb_flags)
-{
+अटल पूर्णांक btt_map_ग_लिखो(काष्ठा arena_info *arena, u32 lba, u32 mapping,
+			u32 z_flag, u32 e_flag, अचिन्हित दीर्घ rwb_flags)
+अणु
 	u32 ze;
 	__le32 mapping_le;
 
@@ -117,8 +118,8 @@ static int btt_map_write(struct arena_info *arena, u32 lba, u32 mapping,
 	mapping = ent_lba(mapping);
 
 	ze = (z_flag << 1) + e_flag;
-	switch (ze) {
-	case 0:
+	चयन (ze) अणु
+	हाल 0:
 		/*
 		 * We want to set neither of the Z or E flags, and
 		 * in the actual layout, this means setting the bit
@@ -126,120 +127,120 @@ static int btt_map_write(struct arena_info *arena, u32 lba, u32 mapping,
 		 * map entry
 		 */
 		mapping |= MAP_ENT_NORMAL;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		mapping |= (1 << MAP_ERR_SHIFT);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		mapping |= (1 << MAP_TRIM_SHIFT);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/*
-		 * The case where Z and E are both sent in as '1' could be
-		 * construed as a valid 'normal' case, but we decide not to,
-		 * to avoid confusion
+		 * The हाल where Z and E are both sent in as '1' could be
+		 * स्थिरrued as a valid 'normal' हाल, but we decide not to,
+		 * to aव्योम confusion
 		 */
 		dev_err_ratelimited(to_dev(arena),
 			"Invalid use of Z and E flags\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	mapping_le = cpu_to_le32(mapping);
-	return __btt_map_write(arena, lba, mapping_le, rwb_flags);
-}
+	वापस __btt_map_ग_लिखो(arena, lba, mapping_le, rwb_flags);
+पूर्ण
 
-static int btt_map_read(struct arena_info *arena, u32 lba, u32 *mapping,
-			int *trim, int *error, unsigned long rwb_flags)
-{
-	int ret;
+अटल पूर्णांक btt_map_पढ़ो(काष्ठा arena_info *arena, u32 lba, u32 *mapping,
+			पूर्णांक *trim, पूर्णांक *error, अचिन्हित दीर्घ rwb_flags)
+अणु
+	पूर्णांक ret;
 	__le32 in;
-	u32 raw_mapping, postmap, ze, z_flag, e_flag;
+	u32 raw_mapping, posपंचांगap, ze, z_flag, e_flag;
 	u64 ns_off = arena->mapoff + (lba * MAP_ENT_SIZE);
 
-	if (unlikely(lba >= arena->external_nlba))
+	अगर (unlikely(lba >= arena->बाह्यal_nlba))
 		dev_err_ratelimited(to_dev(arena),
 			"%s: lba %#x out of range (max: %#x)\n",
-			__func__, lba, arena->external_nlba);
+			__func__, lba, arena->बाह्यal_nlba);
 
-	ret = arena_read_bytes(arena, ns_off, &in, MAP_ENT_SIZE, rwb_flags);
-	if (ret)
-		return ret;
+	ret = arena_पढ़ो_bytes(arena, ns_off, &in, MAP_ENT_SIZE, rwb_flags);
+	अगर (ret)
+		वापस ret;
 
 	raw_mapping = le32_to_cpu(in);
 
 	z_flag = ent_z_flag(raw_mapping);
 	e_flag = ent_e_flag(raw_mapping);
 	ze = (z_flag << 1) + e_flag;
-	postmap = ent_lba(raw_mapping);
+	posपंचांगap = ent_lba(raw_mapping);
 
-	/* Reuse the {z,e}_flag variables for *trim and *error */
+	/* Reuse the अणुz,eपूर्ण_flag variables क्रम *trim and *error */
 	z_flag = 0;
 	e_flag = 0;
 
-	switch (ze) {
-	case 0:
-		/* Initial state. Return postmap = premap */
+	चयन (ze) अणु
+	हाल 0:
+		/* Initial state. Return posपंचांगap = premap */
 		*mapping = lba;
-		break;
-	case 1:
-		*mapping = postmap;
+		अवरोध;
+	हाल 1:
+		*mapping = posपंचांगap;
 		e_flag = 1;
-		break;
-	case 2:
-		*mapping = postmap;
+		अवरोध;
+	हाल 2:
+		*mapping = posपंचांगap;
 		z_flag = 1;
-		break;
-	case 3:
-		*mapping = postmap;
-		break;
-	default:
-		return -EIO;
-	}
+		अवरोध;
+	हाल 3:
+		*mapping = posपंचांगap;
+		अवरोध;
+	शेष:
+		वापस -EIO;
+	पूर्ण
 
-	if (trim)
+	अगर (trim)
 		*trim = z_flag;
-	if (error)
+	अगर (error)
 		*error = e_flag;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btt_log_group_read(struct arena_info *arena, u32 lane,
-			struct log_group *log)
-{
-	return arena_read_bytes(arena,
+अटल पूर्णांक btt_log_group_पढ़ो(काष्ठा arena_info *arena, u32 lane,
+			काष्ठा log_group *log)
+अणु
+	वापस arena_पढ़ो_bytes(arena,
 			arena->logoff + (lane * LOG_GRP_SIZE), log,
 			LOG_GRP_SIZE, 0);
-}
+पूर्ण
 
-static struct dentry *debugfs_root;
+अटल काष्ठा dentry *debugfs_root;
 
-static void arena_debugfs_init(struct arena_info *a, struct dentry *parent,
-				int idx)
-{
-	char dirname[32];
-	struct dentry *d;
+अटल व्योम arena_debugfs_init(काष्ठा arena_info *a, काष्ठा dentry *parent,
+				पूर्णांक idx)
+अणु
+	अक्षर स_नाम[32];
+	काष्ठा dentry *d;
 
-	/* If for some reason, parent bttN was not created, exit */
-	if (!parent)
-		return;
+	/* If क्रम some reason, parent bttN was not created, निकास */
+	अगर (!parent)
+		वापस;
 
-	snprintf(dirname, 32, "arena%d", idx);
-	d = debugfs_create_dir(dirname, parent);
-	if (IS_ERR_OR_NULL(d))
-		return;
+	snम_लिखो(स_नाम, 32, "arena%d", idx);
+	d = debugfs_create_dir(स_नाम, parent);
+	अगर (IS_ERR_OR_शून्य(d))
+		वापस;
 	a->debugfs_dir = d;
 
 	debugfs_create_x64("size", S_IRUGO, d, &a->size);
 	debugfs_create_x64("external_lba_start", S_IRUGO, d,
-				&a->external_lba_start);
-	debugfs_create_x32("internal_nlba", S_IRUGO, d, &a->internal_nlba);
+				&a->बाह्यal_lba_start);
+	debugfs_create_x32("internal_nlba", S_IRUGO, d, &a->पूर्णांकernal_nlba);
 	debugfs_create_u32("internal_lbasize", S_IRUGO, d,
-				&a->internal_lbasize);
-	debugfs_create_x32("external_nlba", S_IRUGO, d, &a->external_nlba);
+				&a->पूर्णांकernal_lbasize);
+	debugfs_create_x32("external_nlba", S_IRUGO, d, &a->बाह्यal_nlba);
 	debugfs_create_u32("external_lbasize", S_IRUGO, d,
-				&a->external_lbasize);
-	debugfs_create_u32("nfree", S_IRUGO, d, &a->nfree);
+				&a->बाह्यal_lbasize);
+	debugfs_create_u32("nfree", S_IRUGO, d, &a->nमुक्त);
 	debugfs_create_u16("version_major", S_IRUGO, d, &a->version_major);
 	debugfs_create_u16("version_minor", S_IRUGO, d, &a->version_minor);
 	debugfs_create_x64("nextoff", S_IRUGO, d, &a->nextoff);
@@ -251,540 +252,540 @@ static void arena_debugfs_init(struct arena_info *a, struct dentry *parent,
 	debugfs_create_x32("flags", S_IRUGO, d, &a->flags);
 	debugfs_create_u32("log_index_0", S_IRUGO, d, &a->log_index[0]);
 	debugfs_create_u32("log_index_1", S_IRUGO, d, &a->log_index[1]);
-}
+पूर्ण
 
-static void btt_debugfs_init(struct btt *btt)
-{
-	int i = 0;
-	struct arena_info *arena;
+अटल व्योम btt_debugfs_init(काष्ठा btt *btt)
+अणु
+	पूर्णांक i = 0;
+	काष्ठा arena_info *arena;
 
 	btt->debugfs_dir = debugfs_create_dir(dev_name(&btt->nd_btt->dev),
 						debugfs_root);
-	if (IS_ERR_OR_NULL(btt->debugfs_dir))
-		return;
+	अगर (IS_ERR_OR_शून्य(btt->debugfs_dir))
+		वापस;
 
-	list_for_each_entry(arena, &btt->arena_list, list) {
+	list_क्रम_each_entry(arena, &btt->arena_list, list) अणु
 		arena_debugfs_init(arena, btt->debugfs_dir, i);
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u32 log_seq(struct log_group *log, int log_idx)
-{
-	return le32_to_cpu(log->ent[log_idx].seq);
-}
+अटल u32 log_seq(काष्ठा log_group *log, पूर्णांक log_idx)
+अणु
+	वापस le32_to_cpu(log->ent[log_idx].seq);
+पूर्ण
 
 /*
  * This function accepts two log entries, and uses the
  * sequence number to find the 'older' entry.
  * It also updates the sequence number in this old entry to
- * make it the 'new' one if the mark_flag is set.
- * Finally, it returns which of the entries was the older one.
+ * make it the 'new' one अगर the mark_flag is set.
+ * Finally, it वापसs which of the entries was the older one.
  *
  * TODO The logic feels a bit kludge-y. make it better..
  */
-static int btt_log_get_old(struct arena_info *a, struct log_group *log)
-{
-	int idx0 = a->log_index[0];
-	int idx1 = a->log_index[1];
-	int old;
+अटल पूर्णांक btt_log_get_old(काष्ठा arena_info *a, काष्ठा log_group *log)
+अणु
+	पूर्णांक idx0 = a->log_index[0];
+	पूर्णांक idx1 = a->log_index[1];
+	पूर्णांक old;
 
 	/*
-	 * the first ever time this is seen, the entry goes into [0]
-	 * the next time, the following logic works out to put this
-	 * (next) entry into [1]
+	 * the first ever समय this is seen, the entry goes पूर्णांकo [0]
+	 * the next समय, the following logic works out to put this
+	 * (next) entry पूर्णांकo [1]
 	 */
-	if (log_seq(log, idx0) == 0) {
+	अगर (log_seq(log, idx0) == 0) अणु
 		log->ent[idx0].seq = cpu_to_le32(1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (log_seq(log, idx0) == log_seq(log, idx1))
-		return -EINVAL;
-	if (log_seq(log, idx0) + log_seq(log, idx1) > 5)
-		return -EINVAL;
+	अगर (log_seq(log, idx0) == log_seq(log, idx1))
+		वापस -EINVAL;
+	अगर (log_seq(log, idx0) + log_seq(log, idx1) > 5)
+		वापस -EINVAL;
 
-	if (log_seq(log, idx0) < log_seq(log, idx1)) {
-		if ((log_seq(log, idx1) - log_seq(log, idx0)) == 1)
+	अगर (log_seq(log, idx0) < log_seq(log, idx1)) अणु
+		अगर ((log_seq(log, idx1) - log_seq(log, idx0)) == 1)
 			old = 0;
-		else
+		अन्यथा
 			old = 1;
-	} else {
-		if ((log_seq(log, idx0) - log_seq(log, idx1)) == 1)
+	पूर्ण अन्यथा अणु
+		अगर ((log_seq(log, idx0) - log_seq(log, idx1)) == 1)
 			old = 1;
-		else
+		अन्यथा
 			old = 0;
-	}
+	पूर्ण
 
-	return old;
-}
+	वापस old;
+पूर्ण
 
 /*
- * This function copies the desired (old/new) log entry into ent if
- * it is not NULL. It returns the sub-slot number (0 or 1)
- * where the desired log entry was found. Negative return values
+ * This function copies the desired (old/new) log entry पूर्णांकo ent अगर
+ * it is not शून्य. It वापसs the sub-slot number (0 or 1)
+ * where the desired log entry was found. Negative वापस values
  * indicate errors.
  */
-static int btt_log_read(struct arena_info *arena, u32 lane,
-			struct log_entry *ent, int old_flag)
-{
-	int ret;
-	int old_ent, ret_ent;
-	struct log_group log;
+अटल पूर्णांक btt_log_पढ़ो(काष्ठा arena_info *arena, u32 lane,
+			काष्ठा log_entry *ent, पूर्णांक old_flag)
+अणु
+	पूर्णांक ret;
+	पूर्णांक old_ent, ret_ent;
+	काष्ठा log_group log;
 
-	ret = btt_log_group_read(arena, lane, &log);
-	if (ret)
-		return -EIO;
+	ret = btt_log_group_पढ़ो(arena, lane, &log);
+	अगर (ret)
+		वापस -EIO;
 
 	old_ent = btt_log_get_old(arena, &log);
-	if (old_ent < 0 || old_ent > 1) {
+	अगर (old_ent < 0 || old_ent > 1) अणु
 		dev_err(to_dev(arena),
 				"log corruption (%d): lane %d seq [%d, %d]\n",
 				old_ent, lane, log.ent[arena->log_index[0]].seq,
 				log.ent[arena->log_index[1]].seq);
 		/* TODO set error state? */
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	ret_ent = (old_flag ? old_ent : (1 - old_ent));
 
-	if (ent != NULL)
-		memcpy(ent, &log.ent[arena->log_index[ret_ent]], LOG_ENT_SIZE);
+	अगर (ent != शून्य)
+		स_नकल(ent, &log.ent[arena->log_index[ret_ent]], LOG_ENT_SIZE);
 
-	return ret_ent;
-}
+	वापस ret_ent;
+पूर्ण
 
 /*
  * This function commits a log entry to media
- * It does _not_ prepare the freelist entry for the next write
- * btt_flog_write is the wrapper for updating the freelist elements
+ * It करोes _not_ prepare the मुक्तlist entry क्रम the next ग_लिखो
+ * btt_flog_ग_लिखो is the wrapper क्रम updating the मुक्तlist elements
  */
-static int __btt_log_write(struct arena_info *arena, u32 lane,
-			u32 sub, struct log_entry *ent, unsigned long flags)
-{
-	int ret;
+अटल पूर्णांक __btt_log_ग_लिखो(काष्ठा arena_info *arena, u32 lane,
+			u32 sub, काष्ठा log_entry *ent, अचिन्हित दीर्घ flags)
+अणु
+	पूर्णांक ret;
 	u32 group_slot = arena->log_index[sub];
-	unsigned int log_half = LOG_ENT_SIZE / 2;
-	void *src = ent;
+	अचिन्हित पूर्णांक log_half = LOG_ENT_SIZE / 2;
+	व्योम *src = ent;
 	u64 ns_off;
 
 	ns_off = arena->logoff + (lane * LOG_GRP_SIZE) +
 		(group_slot * LOG_ENT_SIZE);
-	/* split the 16B write into atomic, durable halves */
-	ret = arena_write_bytes(arena, ns_off, src, log_half, flags);
-	if (ret)
-		return ret;
+	/* split the 16B ग_लिखो पूर्णांकo atomic, durable halves */
+	ret = arena_ग_लिखो_bytes(arena, ns_off, src, log_half, flags);
+	अगर (ret)
+		वापस ret;
 
 	ns_off += log_half;
 	src += log_half;
-	return arena_write_bytes(arena, ns_off, src, log_half, flags);
-}
+	वापस arena_ग_लिखो_bytes(arena, ns_off, src, log_half, flags);
+पूर्ण
 
-static int btt_flog_write(struct arena_info *arena, u32 lane, u32 sub,
-			struct log_entry *ent)
-{
-	int ret;
+अटल पूर्णांक btt_flog_ग_लिखो(काष्ठा arena_info *arena, u32 lane, u32 sub,
+			काष्ठा log_entry *ent)
+अणु
+	पूर्णांक ret;
 
-	ret = __btt_log_write(arena, lane, sub, ent, NVDIMM_IO_ATOMIC);
-	if (ret)
-		return ret;
+	ret = __btt_log_ग_लिखो(arena, lane, sub, ent, NVDIMM_IO_ATOMIC);
+	अगर (ret)
+		वापस ret;
 
-	/* prepare the next free entry */
-	arena->freelist[lane].sub = 1 - arena->freelist[lane].sub;
-	if (++(arena->freelist[lane].seq) == 4)
-		arena->freelist[lane].seq = 1;
-	if (ent_e_flag(le32_to_cpu(ent->old_map)))
-		arena->freelist[lane].has_err = 1;
-	arena->freelist[lane].block = ent_lba(le32_to_cpu(ent->old_map));
+	/* prepare the next मुक्त entry */
+	arena->मुक्तlist[lane].sub = 1 - arena->मुक्तlist[lane].sub;
+	अगर (++(arena->मुक्तlist[lane].seq) == 4)
+		arena->मुक्तlist[lane].seq = 1;
+	अगर (ent_e_flag(le32_to_cpu(ent->old_map)))
+		arena->मुक्तlist[lane].has_err = 1;
+	arena->मुक्तlist[lane].block = ent_lba(le32_to_cpu(ent->old_map));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This function initializes the BTT map to the initial state, which is
  * all-zeroes, and indicates an identity mapping
  */
-static int btt_map_init(struct arena_info *arena)
-{
-	int ret = -EINVAL;
-	void *zerobuf;
-	size_t offset = 0;
-	size_t chunk_size = SZ_2M;
-	size_t mapsize = arena->logoff - arena->mapoff;
+अटल पूर्णांक btt_map_init(काष्ठा arena_info *arena)
+अणु
+	पूर्णांक ret = -EINVAL;
+	व्योम *zerobuf;
+	माप_प्रकार offset = 0;
+	माप_प्रकार chunk_size = SZ_2M;
+	माप_प्रकार mapsize = arena->logoff - arena->mapoff;
 
 	zerobuf = kzalloc(chunk_size, GFP_KERNEL);
-	if (!zerobuf)
-		return -ENOMEM;
+	अगर (!zerobuf)
+		वापस -ENOMEM;
 
 	/*
 	 * mapoff should always be at least 512B  aligned. We rely on that to
-	 * make sure rw_bytes does error clearing correctly, so make sure that
-	 * is the case.
+	 * make sure rw_bytes करोes error clearing correctly, so make sure that
+	 * is the हाल.
 	 */
 	dev_WARN_ONCE(to_dev(arena), !IS_ALIGNED(arena->mapoff, 512),
 		"arena->mapoff: %#llx is unaligned\n", arena->mapoff);
 
-	while (mapsize) {
-		size_t size = min(mapsize, chunk_size);
+	जबतक (mapsize) अणु
+		माप_प्रकार size = min(mapsize, chunk_size);
 
 		dev_WARN_ONCE(to_dev(arena), size < 512,
 			"chunk size: %#zx is unaligned\n", size);
-		ret = arena_write_bytes(arena, arena->mapoff + offset, zerobuf,
+		ret = arena_ग_लिखो_bytes(arena, arena->mapoff + offset, zerobuf,
 				size, 0);
-		if (ret)
-			goto free;
+		अगर (ret)
+			जाओ मुक्त;
 
 		offset += size;
 		mapsize -= size;
 		cond_resched();
-	}
+	पूर्ण
 
- free:
-	kfree(zerobuf);
-	return ret;
-}
+ मुक्त:
+	kमुक्त(zerobuf);
+	वापस ret;
+पूर्ण
 
 /*
- * This function initializes the BTT log with 'fake' entries pointing
- * to the initial reserved set of blocks as being free
+ * This function initializes the BTT log with 'fake' entries poपूर्णांकing
+ * to the initial reserved set of blocks as being मुक्त
  */
-static int btt_log_init(struct arena_info *arena)
-{
-	size_t logsize = arena->info2off - arena->logoff;
-	size_t chunk_size = SZ_4K, offset = 0;
-	struct log_entry ent;
-	void *zerobuf;
-	int ret;
+अटल पूर्णांक btt_log_init(काष्ठा arena_info *arena)
+अणु
+	माप_प्रकार logsize = arena->info2off - arena->logoff;
+	माप_प्रकार chunk_size = SZ_4K, offset = 0;
+	काष्ठा log_entry ent;
+	व्योम *zerobuf;
+	पूर्णांक ret;
 	u32 i;
 
 	zerobuf = kzalloc(chunk_size, GFP_KERNEL);
-	if (!zerobuf)
-		return -ENOMEM;
+	अगर (!zerobuf)
+		वापस -ENOMEM;
 	/*
 	 * logoff should always be at least 512B  aligned. We rely on that to
-	 * make sure rw_bytes does error clearing correctly, so make sure that
-	 * is the case.
+	 * make sure rw_bytes करोes error clearing correctly, so make sure that
+	 * is the हाल.
 	 */
 	dev_WARN_ONCE(to_dev(arena), !IS_ALIGNED(arena->logoff, 512),
 		"arena->logoff: %#llx is unaligned\n", arena->logoff);
 
-	while (logsize) {
-		size_t size = min(logsize, chunk_size);
+	जबतक (logsize) अणु
+		माप_प्रकार size = min(logsize, chunk_size);
 
 		dev_WARN_ONCE(to_dev(arena), size < 512,
 			"chunk size: %#zx is unaligned\n", size);
-		ret = arena_write_bytes(arena, arena->logoff + offset, zerobuf,
+		ret = arena_ग_लिखो_bytes(arena, arena->logoff + offset, zerobuf,
 				size, 0);
-		if (ret)
-			goto free;
+		अगर (ret)
+			जाओ मुक्त;
 
 		offset += size;
 		logsize -= size;
 		cond_resched();
-	}
+	पूर्ण
 
-	for (i = 0; i < arena->nfree; i++) {
+	क्रम (i = 0; i < arena->nमुक्त; i++) अणु
 		ent.lba = cpu_to_le32(i);
-		ent.old_map = cpu_to_le32(arena->external_nlba + i);
-		ent.new_map = cpu_to_le32(arena->external_nlba + i);
+		ent.old_map = cpu_to_le32(arena->बाह्यal_nlba + i);
+		ent.new_map = cpu_to_le32(arena->बाह्यal_nlba + i);
 		ent.seq = cpu_to_le32(LOG_SEQ_INIT);
-		ret = __btt_log_write(arena, i, 0, &ent, 0);
-		if (ret)
-			goto free;
-	}
+		ret = __btt_log_ग_लिखो(arena, i, 0, &ent, 0);
+		अगर (ret)
+			जाओ मुक्त;
+	पूर्ण
 
- free:
-	kfree(zerobuf);
-	return ret;
-}
+ मुक्त:
+	kमुक्त(zerobuf);
+	वापस ret;
+पूर्ण
 
-static u64 to_namespace_offset(struct arena_info *arena, u64 lba)
-{
-	return arena->dataoff + ((u64)lba * arena->internal_lbasize);
-}
+अटल u64 to_namespace_offset(काष्ठा arena_info *arena, u64 lba)
+अणु
+	वापस arena->dataoff + ((u64)lba * arena->पूर्णांकernal_lbasize);
+पूर्ण
 
-static int arena_clear_freelist_error(struct arena_info *arena, u32 lane)
-{
-	int ret = 0;
+अटल पूर्णांक arena_clear_मुक्तlist_error(काष्ठा arena_info *arena, u32 lane)
+अणु
+	पूर्णांक ret = 0;
 
-	if (arena->freelist[lane].has_err) {
-		void *zero_page = page_address(ZERO_PAGE(0));
-		u32 lba = arena->freelist[lane].block;
+	अगर (arena->मुक्तlist[lane].has_err) अणु
+		व्योम *zero_page = page_address(ZERO_PAGE(0));
+		u32 lba = arena->मुक्तlist[lane].block;
 		u64 nsoff = to_namespace_offset(arena, lba);
-		unsigned long len = arena->sector_size;
+		अचिन्हित दीर्घ len = arena->sector_size;
 
 		mutex_lock(&arena->err_lock);
 
-		while (len) {
-			unsigned long chunk = min(len, PAGE_SIZE);
+		जबतक (len) अणु
+			अचिन्हित दीर्घ chunk = min(len, PAGE_SIZE);
 
-			ret = arena_write_bytes(arena, nsoff, zero_page,
+			ret = arena_ग_लिखो_bytes(arena, nsoff, zero_page,
 				chunk, 0);
-			if (ret)
-				break;
+			अगर (ret)
+				अवरोध;
 			len -= chunk;
 			nsoff += chunk;
-			if (len == 0)
-				arena->freelist[lane].has_err = 0;
-		}
+			अगर (len == 0)
+				arena->मुक्तlist[lane].has_err = 0;
+		पूर्ण
 		mutex_unlock(&arena->err_lock);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int btt_freelist_init(struct arena_info *arena)
-{
-	int new, ret;
-	struct log_entry log_new;
+अटल पूर्णांक btt_मुक्तlist_init(काष्ठा arena_info *arena)
+अणु
+	पूर्णांक new, ret;
+	काष्ठा log_entry log_new;
 	u32 i, map_entry, log_oldmap, log_newmap;
 
-	arena->freelist = kcalloc(arena->nfree, sizeof(struct free_entry),
+	arena->मुक्तlist = kसुस्मृति(arena->nमुक्त, माप(काष्ठा मुक्त_entry),
 					GFP_KERNEL);
-	if (!arena->freelist)
-		return -ENOMEM;
+	अगर (!arena->मुक्तlist)
+		वापस -ENOMEM;
 
-	for (i = 0; i < arena->nfree; i++) {
-		new = btt_log_read(arena, i, &log_new, LOG_NEW_ENT);
-		if (new < 0)
-			return new;
+	क्रम (i = 0; i < arena->nमुक्त; i++) अणु
+		new = btt_log_पढ़ो(arena, i, &log_new, LOG_NEW_ENT);
+		अगर (new < 0)
+			वापस new;
 
 		/* old and new map entries with any flags stripped out */
 		log_oldmap = ent_lba(le32_to_cpu(log_new.old_map));
 		log_newmap = ent_lba(le32_to_cpu(log_new.new_map));
 
-		/* sub points to the next one to be overwritten */
-		arena->freelist[i].sub = 1 - new;
-		arena->freelist[i].seq = nd_inc_seq(le32_to_cpu(log_new.seq));
-		arena->freelist[i].block = log_oldmap;
+		/* sub poपूर्णांकs to the next one to be overwritten */
+		arena->मुक्तlist[i].sub = 1 - new;
+		arena->मुक्तlist[i].seq = nd_inc_seq(le32_to_cpu(log_new.seq));
+		arena->मुक्तlist[i].block = log_oldmap;
 
 		/*
-		 * FIXME: if error clearing fails during init, we want to make
-		 * the BTT read-only
+		 * FIXME: अगर error clearing fails during init, we want to make
+		 * the BTT पढ़ो-only
 		 */
-		if (ent_e_flag(le32_to_cpu(log_new.old_map)) &&
-		    !ent_normal(le32_to_cpu(log_new.old_map))) {
-			arena->freelist[i].has_err = 1;
-			ret = arena_clear_freelist_error(arena, i);
-			if (ret)
+		अगर (ent_e_flag(le32_to_cpu(log_new.old_map)) &&
+		    !ent_normal(le32_to_cpu(log_new.old_map))) अणु
+			arena->मुक्तlist[i].has_err = 1;
+			ret = arena_clear_मुक्तlist_error(arena, i);
+			अगर (ret)
 				dev_err_ratelimited(to_dev(arena),
 					"Unable to clear known errors\n");
-		}
+		पूर्ण
 
 		/* This implies a newly created or untouched flog entry */
-		if (log_oldmap == log_newmap)
-			continue;
+		अगर (log_oldmap == log_newmap)
+			जारी;
 
-		/* Check if map recovery is needed */
-		ret = btt_map_read(arena, le32_to_cpu(log_new.lba), &map_entry,
-				NULL, NULL, 0);
-		if (ret)
-			return ret;
+		/* Check अगर map recovery is needed */
+		ret = btt_map_पढ़ो(arena, le32_to_cpu(log_new.lba), &map_entry,
+				शून्य, शून्य, 0);
+		अगर (ret)
+			वापस ret;
 
 		/*
-		 * The map_entry from btt_read_map is stripped of any flag bits,
-		 * so use the stripped out versions from the log as well for
+		 * The map_entry from btt_पढ़ो_map is stripped of any flag bits,
+		 * so use the stripped out versions from the log as well क्रम
 		 * testing whether recovery is needed. For restoration, use the
 		 * 'raw' version of the log entries as that captured what we
-		 * were going to write originally.
+		 * were going to ग_लिखो originally.
 		 */
-		if ((log_newmap != map_entry) && (log_oldmap == map_entry)) {
+		अगर ((log_newmap != map_entry) && (log_oldmap == map_entry)) अणु
 			/*
 			 * Last transaction wrote the flog, but wasn't able
-			 * to complete the map write. So fix up the map.
+			 * to complete the map ग_लिखो. So fix up the map.
 			 */
-			ret = btt_map_write(arena, le32_to_cpu(log_new.lba),
+			ret = btt_map_ग_लिखो(arena, le32_to_cpu(log_new.lba),
 					le32_to_cpu(log_new.new_map), 0, 0, 0);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool ent_is_padding(struct log_entry *ent)
-{
-	return (ent->lba == 0) && (ent->old_map == 0) && (ent->new_map == 0)
+अटल bool ent_is_padding(काष्ठा log_entry *ent)
+अणु
+	वापस (ent->lba == 0) && (ent->old_map == 0) && (ent->new_map == 0)
 		&& (ent->seq == 0);
-}
+पूर्ण
 
 /*
- * Detecting valid log indices: We read a log group (see the comments in btt.h
- * for a description of a 'log_group' and its 'slots'), and iterate over its
+ * Detecting valid log indices: We पढ़ो a log group (see the comments in btt.h
+ * क्रम a description of a 'log_group' and its 'slots'), and iterate over its
  * four slots. We expect that a padding slot will be all-zeroes, and use this
  * to detect a padding slot vs. an actual entry.
  *
  * If a log_group is in the initial state, i.e. hasn't been used since the
  * creation of this BTT layout, it will have three of the four slots with
- * zeroes. We skip over these log_groups for the detection of log_index. If
+ * zeroes. We skip over these log_groups क्रम the detection of log_index. If
  * all log_groups are in the initial state (i.e. the BTT has never been
  * written to), it is safe to assume the 'new format' of log entries in slots
  * (0, 1).
  */
-static int log_set_indices(struct arena_info *arena)
-{
+अटल पूर्णांक log_set_indices(काष्ठा arena_info *arena)
+अणु
 	bool idx_set = false, initial_state = true;
-	int ret, log_index[2] = {-1, -1};
+	पूर्णांक ret, log_index[2] = अणु-1, -1पूर्ण;
 	u32 i, j, next_idx = 0;
-	struct log_group log;
+	काष्ठा log_group log;
 	u32 pad_count = 0;
 
-	for (i = 0; i < arena->nfree; i++) {
-		ret = btt_log_group_read(arena, i, &log);
-		if (ret < 0)
-			return ret;
+	क्रम (i = 0; i < arena->nमुक्त; i++) अणु
+		ret = btt_log_group_पढ़ो(arena, i, &log);
+		अगर (ret < 0)
+			वापस ret;
 
-		for (j = 0; j < 4; j++) {
-			if (!idx_set) {
-				if (ent_is_padding(&log.ent[j])) {
+		क्रम (j = 0; j < 4; j++) अणु
+			अगर (!idx_set) अणु
+				अगर (ent_is_padding(&log.ent[j])) अणु
 					pad_count++;
-					continue;
-				} else {
-					/* Skip if index has been recorded */
-					if ((next_idx == 1) &&
+					जारी;
+				पूर्ण अन्यथा अणु
+					/* Skip अगर index has been recorded */
+					अगर ((next_idx == 1) &&
 						(j == log_index[0]))
-						continue;
+						जारी;
 					/* valid entry, record index */
 					log_index[next_idx] = j;
 					next_idx++;
-				}
-				if (next_idx == 2) {
+				पूर्ण
+				अगर (next_idx == 2) अणु
 					/* two valid entries found */
 					idx_set = true;
-				} else if (next_idx > 2) {
+				पूर्ण अन्यथा अगर (next_idx > 2) अणु
 					/* too many valid indices */
-					return -ENXIO;
-				}
-			} else {
+					वापस -ENXIO;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/*
-				 * once the indices have been set, just verify
+				 * once the indices have been set, just verअगरy
 				 * that all subsequent log groups are either in
 				 * their initial state or follow the same
 				 * indices.
 				 */
-				if (j == log_index[0]) {
+				अगर (j == log_index[0]) अणु
 					/* entry must be 'valid' */
-					if (ent_is_padding(&log.ent[j]))
-						return -ENXIO;
-				} else if (j == log_index[1]) {
+					अगर (ent_is_padding(&log.ent[j]))
+						वापस -ENXIO;
+				पूर्ण अन्यथा अगर (j == log_index[1]) अणु
 					;
 					/*
-					 * log_index[1] can be padding if the
+					 * log_index[1] can be padding अगर the
 					 * lane never got used and it is still
 					 * in the initial state (three 'padding'
 					 * entries)
 					 */
-				} else {
+				पूर्ण अन्यथा अणु
 					/* entry must be invalid (padding) */
-					if (!ent_is_padding(&log.ent[j]))
-						return -ENXIO;
-				}
-			}
-		}
+					अगर (!ent_is_padding(&log.ent[j]))
+						वापस -ENXIO;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 		/*
 		 * If any of the log_groups have more than one valid,
-		 * non-padding entry, then the we are no longer in the
+		 * non-padding entry, then the we are no दीर्घer in the
 		 * initial_state
 		 */
-		if (pad_count < 3)
+		अगर (pad_count < 3)
 			initial_state = false;
 		pad_count = 0;
-	}
+	पूर्ण
 
-	if (!initial_state && !idx_set)
-		return -ENXIO;
+	अगर (!initial_state && !idx_set)
+		वापस -ENXIO;
 
 	/*
 	 * If all the entries in the log were in the initial state,
 	 * assume new padding scheme
 	 */
-	if (initial_state)
+	अगर (initial_state)
 		log_index[1] = 1;
 
 	/*
 	 * Only allow the known permutations of log/padding indices,
 	 * i.e. (0, 1), and (0, 2)
 	 */
-	if ((log_index[0] == 0) && ((log_index[1] == 1) || (log_index[1] == 2)))
+	अगर ((log_index[0] == 0) && ((log_index[1] == 1) || (log_index[1] == 2)))
 		; /* known index possibilities */
-	else {
+	अन्यथा अणु
 		dev_err(to_dev(arena), "Found an unknown padding scheme\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	arena->log_index[0] = log_index[0];
 	arena->log_index[1] = log_index[1];
 	dev_dbg(to_dev(arena), "log_index_0 = %d\n", log_index[0]);
 	dev_dbg(to_dev(arena), "log_index_1 = %d\n", log_index[1]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btt_rtt_init(struct arena_info *arena)
-{
-	arena->rtt = kcalloc(arena->nfree, sizeof(u32), GFP_KERNEL);
-	if (arena->rtt == NULL)
-		return -ENOMEM;
+अटल पूर्णांक btt_rtt_init(काष्ठा arena_info *arena)
+अणु
+	arena->rtt = kसुस्मृति(arena->nमुक्त, माप(u32), GFP_KERNEL);
+	अगर (arena->rtt == शून्य)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btt_maplocks_init(struct arena_info *arena)
-{
+अटल पूर्णांक btt_maplocks_init(काष्ठा arena_info *arena)
+अणु
 	u32 i;
 
-	arena->map_locks = kcalloc(arena->nfree, sizeof(struct aligned_lock),
+	arena->map_locks = kसुस्मृति(arena->nमुक्त, माप(काष्ठा aligned_lock),
 				GFP_KERNEL);
-	if (!arena->map_locks)
-		return -ENOMEM;
+	अगर (!arena->map_locks)
+		वापस -ENOMEM;
 
-	for (i = 0; i < arena->nfree; i++)
+	क्रम (i = 0; i < arena->nमुक्त; i++)
 		spin_lock_init(&arena->map_locks[i].lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct arena_info *alloc_arena(struct btt *btt, size_t size,
-				size_t start, size_t arena_off)
-{
-	struct arena_info *arena;
+अटल काष्ठा arena_info *alloc_arena(काष्ठा btt *btt, माप_प्रकार size,
+				माप_प्रकार start, माप_प्रकार arena_off)
+अणु
+	काष्ठा arena_info *arena;
 	u64 logsize, mapsize, datasize;
 	u64 available = size;
 
-	arena = kzalloc(sizeof(struct arena_info), GFP_KERNEL);
-	if (!arena)
-		return NULL;
+	arena = kzalloc(माप(काष्ठा arena_info), GFP_KERNEL);
+	अगर (!arena)
+		वापस शून्य;
 	arena->nd_btt = btt->nd_btt;
 	arena->sector_size = btt->sector_size;
 	mutex_init(&arena->err_lock);
 
-	if (!size)
-		return arena;
+	अगर (!size)
+		वापस arena;
 
 	arena->size = size;
-	arena->external_lba_start = start;
-	arena->external_lbasize = btt->lbasize;
-	arena->internal_lbasize = roundup(arena->external_lbasize,
+	arena->बाह्यal_lba_start = start;
+	arena->बाह्यal_lbasize = btt->lbasize;
+	arena->पूर्णांकernal_lbasize = roundup(arena->बाह्यal_lbasize,
 					INT_LBASIZE_ALIGNMENT);
-	arena->nfree = BTT_DEFAULT_NFREE;
+	arena->nमुक्त = BTT_DEFAULT_NFREE;
 	arena->version_major = btt->nd_btt->version_major;
 	arena->version_minor = btt->nd_btt->version_minor;
 
-	if (available % BTT_PG_SIZE)
+	अगर (available % BTT_PG_SIZE)
 		available -= (available % BTT_PG_SIZE);
 
-	/* Two pages are reserved for the super block and its copy */
+	/* Two pages are reserved क्रम the super block and its copy */
 	available -= 2 * BTT_PG_SIZE;
 
-	/* The log takes a fixed amount of space based on nfree */
-	logsize = roundup(arena->nfree * LOG_GRP_SIZE, BTT_PG_SIZE);
+	/* The log takes a fixed amount of space based on nमुक्त */
+	logsize = roundup(arena->nमुक्त * LOG_GRP_SIZE, BTT_PG_SIZE);
 	available -= logsize;
 
 	/* Calculate optimal split between map and data area */
-	arena->internal_nlba = div_u64(available - BTT_PG_SIZE,
-			arena->internal_lbasize + MAP_ENT_SIZE);
-	arena->external_nlba = arena->internal_nlba - arena->nfree;
+	arena->पूर्णांकernal_nlba = भाग_u64(available - BTT_PG_SIZE,
+			arena->पूर्णांकernal_lbasize + MAP_ENT_SIZE);
+	arena->बाह्यal_nlba = arena->पूर्णांकernal_nlba - arena->nमुक्त;
 
-	mapsize = roundup((arena->external_nlba * MAP_ENT_SIZE), BTT_PG_SIZE);
+	mapsize = roundup((arena->बाह्यal_nlba * MAP_ENT_SIZE), BTT_PG_SIZE);
 	datasize = available - mapsize;
 
 	/* 'Absolute' values, relative to start of storage space */
@@ -797,35 +798,35 @@ static struct arena_info *alloc_arena(struct btt *btt, size_t size,
 	/* Default log indices are (0,1) */
 	arena->log_index[0] = 0;
 	arena->log_index[1] = 1;
-	return arena;
-}
+	वापस arena;
+पूर्ण
 
-static void free_arenas(struct btt *btt)
-{
-	struct arena_info *arena, *next;
+अटल व्योम मुक्त_arenas(काष्ठा btt *btt)
+अणु
+	काष्ठा arena_info *arena, *next;
 
-	list_for_each_entry_safe(arena, next, &btt->arena_list, list) {
+	list_क्रम_each_entry_safe(arena, next, &btt->arena_list, list) अणु
 		list_del(&arena->list);
-		kfree(arena->rtt);
-		kfree(arena->map_locks);
-		kfree(arena->freelist);
-		debugfs_remove_recursive(arena->debugfs_dir);
-		kfree(arena);
-	}
-}
+		kमुक्त(arena->rtt);
+		kमुक्त(arena->map_locks);
+		kमुक्त(arena->मुक्तlist);
+		debugfs_हटाओ_recursive(arena->debugfs_dir);
+		kमुक्त(arena);
+	पूर्ण
+पूर्ण
 
 /*
- * This function reads an existing valid btt superblock and
- * populates the corresponding arena_info struct
+ * This function पढ़ोs an existing valid btt superblock and
+ * populates the corresponding arena_info काष्ठा
  */
-static void parse_arena_meta(struct arena_info *arena, struct btt_sb *super,
+अटल व्योम parse_arena_meta(काष्ठा arena_info *arena, काष्ठा btt_sb *super,
 				u64 arena_off)
-{
-	arena->internal_nlba = le32_to_cpu(super->internal_nlba);
-	arena->internal_lbasize = le32_to_cpu(super->internal_lbasize);
-	arena->external_nlba = le32_to_cpu(super->external_nlba);
-	arena->external_lbasize = le32_to_cpu(super->external_lbasize);
-	arena->nfree = le32_to_cpu(super->nfree);
+अणु
+	arena->पूर्णांकernal_nlba = le32_to_cpu(super->पूर्णांकernal_nlba);
+	arena->पूर्णांकernal_lbasize = le32_to_cpu(super->पूर्णांकernal_lbasize);
+	arena->बाह्यal_nlba = le32_to_cpu(super->बाह्यal_nlba);
+	arena->बाह्यal_lbasize = le32_to_cpu(super->बाह्यal_lbasize);
+	arena->nमुक्त = le32_to_cpu(super->nमुक्त);
 	arena->version_major = le16_to_cpu(super->version_major);
 	arena->version_minor = le16_to_cpu(super->version_minor);
 
@@ -842,163 +843,163 @@ static void parse_arena_meta(struct arena_info *arena, struct btt_sb *super,
 		: (arena->info2off - arena->infooff + BTT_PG_SIZE);
 
 	arena->flags = le32_to_cpu(super->flags);
-}
+पूर्ण
 
-static int discover_arenas(struct btt *btt)
-{
-	int ret = 0;
-	struct arena_info *arena;
-	struct btt_sb *super;
-	size_t remaining = btt->rawsize;
+अटल पूर्णांक discover_arenas(काष्ठा btt *btt)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा arena_info *arena;
+	काष्ठा btt_sb *super;
+	माप_प्रकार reमुख्यing = btt->rawsize;
 	u64 cur_nlba = 0;
-	size_t cur_off = 0;
-	int num_arenas = 0;
+	माप_प्रकार cur_off = 0;
+	पूर्णांक num_arenas = 0;
 
-	super = kzalloc(sizeof(*super), GFP_KERNEL);
-	if (!super)
-		return -ENOMEM;
+	super = kzalloc(माप(*super), GFP_KERNEL);
+	अगर (!super)
+		वापस -ENOMEM;
 
-	while (remaining) {
-		/* Alloc memory for arena */
+	जबतक (reमुख्यing) अणु
+		/* Alloc memory क्रम arena */
 		arena = alloc_arena(btt, 0, 0, 0);
-		if (!arena) {
+		अगर (!arena) अणु
 			ret = -ENOMEM;
-			goto out_super;
-		}
+			जाओ out_super;
+		पूर्ण
 
 		arena->infooff = cur_off;
-		ret = btt_info_read(arena, super);
-		if (ret)
-			goto out;
+		ret = btt_info_पढ़ो(arena, super);
+		अगर (ret)
+			जाओ out;
 
-		if (!nd_btt_arena_is_valid(btt->nd_btt, super)) {
-			if (remaining == btt->rawsize) {
+		अगर (!nd_btt_arena_is_valid(btt->nd_btt, super)) अणु
+			अगर (reमुख्यing == btt->rawsize) अणु
 				btt->init_state = INIT_NOTFOUND;
 				dev_info(to_dev(arena), "No existing arenas\n");
-				goto out;
-			} else {
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				dev_err(to_dev(arena),
 						"Found corrupted metadata!\n");
 				ret = -ENODEV;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		arena->external_lba_start = cur_nlba;
+		arena->बाह्यal_lba_start = cur_nlba;
 		parse_arena_meta(arena, super, cur_off);
 
 		ret = log_set_indices(arena);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(to_dev(arena),
 				"Unable to deduce log/padding indices\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		ret = btt_freelist_init(arena);
-		if (ret)
-			goto out;
+		ret = btt_मुक्तlist_init(arena);
+		अगर (ret)
+			जाओ out;
 
 		ret = btt_rtt_init(arena);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		ret = btt_maplocks_init(arena);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		list_add_tail(&arena->list, &btt->arena_list);
 
-		remaining -= arena->size;
+		reमुख्यing -= arena->size;
 		cur_off += arena->size;
-		cur_nlba += arena->external_nlba;
+		cur_nlba += arena->बाह्यal_nlba;
 		num_arenas++;
 
-		if (arena->nextoff == 0)
-			break;
-	}
+		अगर (arena->nextoff == 0)
+			अवरोध;
+	पूर्ण
 	btt->num_arenas = num_arenas;
 	btt->nlba = cur_nlba;
 	btt->init_state = INIT_READY;
 
-	kfree(super);
-	return ret;
+	kमुक्त(super);
+	वापस ret;
 
  out:
-	kfree(arena);
-	free_arenas(btt);
+	kमुक्त(arena);
+	मुक्त_arenas(btt);
  out_super:
-	kfree(super);
-	return ret;
-}
+	kमुक्त(super);
+	वापस ret;
+पूर्ण
 
-static int create_arenas(struct btt *btt)
-{
-	size_t remaining = btt->rawsize;
-	size_t cur_off = 0;
+अटल पूर्णांक create_arenas(काष्ठा btt *btt)
+अणु
+	माप_प्रकार reमुख्यing = btt->rawsize;
+	माप_प्रकार cur_off = 0;
 
-	while (remaining) {
-		struct arena_info *arena;
-		size_t arena_size = min_t(u64, ARENA_MAX_SIZE, remaining);
+	जबतक (reमुख्यing) अणु
+		काष्ठा arena_info *arena;
+		माप_प्रकार arena_size = min_t(u64, ARENA_MAX_SIZE, reमुख्यing);
 
-		remaining -= arena_size;
-		if (arena_size < ARENA_MIN_SIZE)
-			break;
+		reमुख्यing -= arena_size;
+		अगर (arena_size < ARENA_MIN_SIZE)
+			अवरोध;
 
 		arena = alloc_arena(btt, arena_size, btt->nlba, cur_off);
-		if (!arena) {
-			free_arenas(btt);
-			return -ENOMEM;
-		}
-		btt->nlba += arena->external_nlba;
-		if (remaining >= ARENA_MIN_SIZE)
+		अगर (!arena) अणु
+			मुक्त_arenas(btt);
+			वापस -ENOMEM;
+		पूर्ण
+		btt->nlba += arena->बाह्यal_nlba;
+		अगर (reमुख्यing >= ARENA_MIN_SIZE)
 			arena->nextoff = arena->size;
-		else
+		अन्यथा
 			arena->nextoff = 0;
 		cur_off += arena_size;
 		list_add_tail(&arena->list, &btt->arena_list);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function completes arena initialization by writing
  * all the metadata.
- * It is only called for an uninitialized arena when a write
- * to that arena occurs for the first time.
+ * It is only called क्रम an uninitialized arena when a ग_लिखो
+ * to that arena occurs क्रम the first समय.
  */
-static int btt_arena_write_layout(struct arena_info *arena)
-{
-	int ret;
+अटल पूर्णांक btt_arena_ग_लिखो_layout(काष्ठा arena_info *arena)
+अणु
+	पूर्णांक ret;
 	u64 sum;
-	struct btt_sb *super;
-	struct nd_btt *nd_btt = arena->nd_btt;
-	const u8 *parent_uuid = nd_dev_to_uuid(&nd_btt->ndns->dev);
+	काष्ठा btt_sb *super;
+	काष्ठा nd_btt *nd_btt = arena->nd_btt;
+	स्थिर u8 *parent_uuid = nd_dev_to_uuid(&nd_btt->ndns->dev);
 
 	ret = btt_map_init(arena);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = btt_log_init(arena);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	super = kzalloc(sizeof(struct btt_sb), GFP_NOIO);
-	if (!super)
-		return -ENOMEM;
+	super = kzalloc(माप(काष्ठा btt_sb), GFP_NOIO);
+	अगर (!super)
+		वापस -ENOMEM;
 
-	strncpy(super->signature, BTT_SIG, BTT_SIG_LEN);
-	memcpy(super->uuid, nd_btt->uuid, 16);
-	memcpy(super->parent_uuid, parent_uuid, 16);
+	म_नकलन(super->signature, BTT_SIG, BTT_SIG_LEN);
+	स_नकल(super->uuid, nd_btt->uuid, 16);
+	स_नकल(super->parent_uuid, parent_uuid, 16);
 	super->flags = cpu_to_le32(arena->flags);
 	super->version_major = cpu_to_le16(arena->version_major);
 	super->version_minor = cpu_to_le16(arena->version_minor);
-	super->external_lbasize = cpu_to_le32(arena->external_lbasize);
-	super->external_nlba = cpu_to_le32(arena->external_nlba);
-	super->internal_lbasize = cpu_to_le32(arena->internal_lbasize);
-	super->internal_nlba = cpu_to_le32(arena->internal_nlba);
-	super->nfree = cpu_to_le32(arena->nfree);
-	super->infosize = cpu_to_le32(sizeof(struct btt_sb));
+	super->बाह्यal_lbasize = cpu_to_le32(arena->बाह्यal_lbasize);
+	super->बाह्यal_nlba = cpu_to_le32(arena->बाह्यal_nlba);
+	super->पूर्णांकernal_lbasize = cpu_to_le32(arena->पूर्णांकernal_lbasize);
+	super->पूर्णांकernal_nlba = cpu_to_le32(arena->पूर्णांकernal_nlba);
+	super->nमुक्त = cpu_to_le32(arena->nमुक्त);
+	super->infosize = cpu_to_le32(माप(काष्ठा btt_sb));
 	super->nextoff = cpu_to_le64(arena->nextoff);
 	/*
 	 * Subtract arena->infooff (arena start) so numbers are relative
@@ -1010,271 +1011,271 @@ static int btt_arena_write_layout(struct arena_info *arena)
 	super->info2off = cpu_to_le64(arena->info2off - arena->infooff);
 
 	super->flags = 0;
-	sum = nd_sb_checksum((struct nd_gen_sb *) super);
+	sum = nd_sb_checksum((काष्ठा nd_gen_sb *) super);
 	super->checksum = cpu_to_le64(sum);
 
-	ret = btt_info_write(arena, super);
+	ret = btt_info_ग_लिखो(arena, super);
 
-	kfree(super);
-	return ret;
-}
+	kमुक्त(super);
+	वापस ret;
+पूर्ण
 
 /*
- * This function completes the initialization for the BTT namespace
- * such that it is ready to accept IOs
+ * This function completes the initialization क्रम the BTT namespace
+ * such that it is पढ़ोy to accept IOs
  */
-static int btt_meta_init(struct btt *btt)
-{
-	int ret = 0;
-	struct arena_info *arena;
+अटल पूर्णांक btt_meta_init(काष्ठा btt *btt)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा arena_info *arena;
 
 	mutex_lock(&btt->init_lock);
-	list_for_each_entry(arena, &btt->arena_list, list) {
-		ret = btt_arena_write_layout(arena);
-		if (ret)
-			goto unlock;
+	list_क्रम_each_entry(arena, &btt->arena_list, list) अणु
+		ret = btt_arena_ग_लिखो_layout(arena);
+		अगर (ret)
+			जाओ unlock;
 
-		ret = btt_freelist_init(arena);
-		if (ret)
-			goto unlock;
+		ret = btt_मुक्तlist_init(arena);
+		अगर (ret)
+			जाओ unlock;
 
 		ret = btt_rtt_init(arena);
-		if (ret)
-			goto unlock;
+		अगर (ret)
+			जाओ unlock;
 
 		ret = btt_maplocks_init(arena);
-		if (ret)
-			goto unlock;
-	}
+		अगर (ret)
+			जाओ unlock;
+	पूर्ण
 
 	btt->init_state = INIT_READY;
 
  unlock:
 	mutex_unlock(&btt->init_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 btt_meta_size(struct btt *btt)
-{
-	return btt->lbasize - btt->sector_size;
-}
+अटल u32 btt_meta_size(काष्ठा btt *btt)
+अणु
+	वापस btt->lbasize - btt->sector_size;
+पूर्ण
 
 /*
  * This function calculates the arena in which the given LBA lies
- * by doing a linear walk. This is acceptable since we expect only
+ * by करोing a linear walk. This is acceptable since we expect only
  * a few arenas. If we have backing devices that get much larger,
- * we can construct a balanced binary tree of arenas at init time
+ * we can स्थिरruct a balanced binary tree of arenas at init समय
  * so that this range search becomes faster.
  */
-static int lba_to_arena(struct btt *btt, sector_t sector, __u32 *premap,
-				struct arena_info **arena)
-{
-	struct arena_info *arena_list;
-	__u64 lba = div_u64(sector << SECTOR_SHIFT, btt->sector_size);
+अटल पूर्णांक lba_to_arena(काष्ठा btt *btt, sector_t sector, __u32 *premap,
+				काष्ठा arena_info **arena)
+अणु
+	काष्ठा arena_info *arena_list;
+	__u64 lba = भाग_u64(sector << SECTOR_SHIFT, btt->sector_size);
 
-	list_for_each_entry(arena_list, &btt->arena_list, list) {
-		if (lba < arena_list->external_nlba) {
+	list_क्रम_each_entry(arena_list, &btt->arena_list, list) अणु
+		अगर (lba < arena_list->बाह्यal_nlba) अणु
 			*arena = arena_list;
 			*premap = lba;
-			return 0;
-		}
-		lba -= arena_list->external_nlba;
-	}
+			वापस 0;
+		पूर्ण
+		lba -= arena_list->बाह्यal_nlba;
+	पूर्ण
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
  * The following (lock_map, unlock_map) are mostly just to improve
- * readability, since they index into an array of locks
+ * पढ़ोability, since they index पूर्णांकo an array of locks
  */
-static void lock_map(struct arena_info *arena, u32 premap)
+अटल व्योम lock_map(काष्ठा arena_info *arena, u32 premap)
 		__acquires(&arena->map_locks[idx].lock)
-{
-	u32 idx = (premap * MAP_ENT_SIZE / L1_CACHE_BYTES) % arena->nfree;
+अणु
+	u32 idx = (premap * MAP_ENT_SIZE / L1_CACHE_BYTES) % arena->nमुक्त;
 
 	spin_lock(&arena->map_locks[idx].lock);
-}
+पूर्ण
 
-static void unlock_map(struct arena_info *arena, u32 premap)
+अटल व्योम unlock_map(काष्ठा arena_info *arena, u32 premap)
 		__releases(&arena->map_locks[idx].lock)
-{
-	u32 idx = (premap * MAP_ENT_SIZE / L1_CACHE_BYTES) % arena->nfree;
+अणु
+	u32 idx = (premap * MAP_ENT_SIZE / L1_CACHE_BYTES) % arena->nमुक्त;
 
 	spin_unlock(&arena->map_locks[idx].lock);
-}
+पूर्ण
 
-static int btt_data_read(struct arena_info *arena, struct page *page,
-			unsigned int off, u32 lba, u32 len)
-{
-	int ret;
+अटल पूर्णांक btt_data_पढ़ो(काष्ठा arena_info *arena, काष्ठा page *page,
+			अचिन्हित पूर्णांक off, u32 lba, u32 len)
+अणु
+	पूर्णांक ret;
 	u64 nsoff = to_namespace_offset(arena, lba);
-	void *mem = kmap_atomic(page);
+	व्योम *mem = kmap_atomic(page);
 
-	ret = arena_read_bytes(arena, nsoff, mem + off, len, NVDIMM_IO_ATOMIC);
+	ret = arena_पढ़ो_bytes(arena, nsoff, mem + off, len, NVDIMM_IO_ATOMIC);
 	kunmap_atomic(mem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btt_data_write(struct arena_info *arena, u32 lba,
-			struct page *page, unsigned int off, u32 len)
-{
-	int ret;
+अटल पूर्णांक btt_data_ग_लिखो(काष्ठा arena_info *arena, u32 lba,
+			काष्ठा page *page, अचिन्हित पूर्णांक off, u32 len)
+अणु
+	पूर्णांक ret;
 	u64 nsoff = to_namespace_offset(arena, lba);
-	void *mem = kmap_atomic(page);
+	व्योम *mem = kmap_atomic(page);
 
-	ret = arena_write_bytes(arena, nsoff, mem + off, len, NVDIMM_IO_ATOMIC);
+	ret = arena_ग_लिखो_bytes(arena, nsoff, mem + off, len, NVDIMM_IO_ATOMIC);
 	kunmap_atomic(mem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void zero_fill_data(struct page *page, unsigned int off, u32 len)
-{
-	void *mem = kmap_atomic(page);
+अटल व्योम zero_fill_data(काष्ठा page *page, अचिन्हित पूर्णांक off, u32 len)
+अणु
+	व्योम *mem = kmap_atomic(page);
 
-	memset(mem + off, 0, len);
+	स_रखो(mem + off, 0, len);
 	kunmap_atomic(mem);
-}
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_INTEGRITY
-static int btt_rw_integrity(struct btt *btt, struct bio_integrity_payload *bip,
-			struct arena_info *arena, u32 postmap, int rw)
-{
-	unsigned int len = btt_meta_size(btt);
+#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
+अटल पूर्णांक btt_rw_पूर्णांकegrity(काष्ठा btt *btt, काष्ठा bio_पूर्णांकegrity_payload *bip,
+			काष्ठा arena_info *arena, u32 posपंचांगap, पूर्णांक rw)
+अणु
+	अचिन्हित पूर्णांक len = btt_meta_size(btt);
 	u64 meta_nsoff;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (bip == NULL)
-		return 0;
+	अगर (bip == शून्य)
+		वापस 0;
 
-	meta_nsoff = to_namespace_offset(arena, postmap) + btt->sector_size;
+	meta_nsoff = to_namespace_offset(arena, posपंचांगap) + btt->sector_size;
 
-	while (len) {
-		unsigned int cur_len;
-		struct bio_vec bv;
-		void *mem;
+	जबतक (len) अणु
+		अचिन्हित पूर्णांक cur_len;
+		काष्ठा bio_vec bv;
+		व्योम *mem;
 
 		bv = bvec_iter_bvec(bip->bip_vec, bip->bip_iter);
 		/*
 		 * The 'bv' obtained from bvec_iter_bvec has its .bv_len and
-		 * .bv_offset already adjusted for iter->bi_bvec_done, and we
+		 * .bv_offset alपढ़ोy adjusted क्रम iter->bi_bvec_करोne, and we
 		 * can use those directly
 		 */
 
 		cur_len = min(len, bv.bv_len);
 		mem = kmap_atomic(bv.bv_page);
-		if (rw)
-			ret = arena_write_bytes(arena, meta_nsoff,
+		अगर (rw)
+			ret = arena_ग_लिखो_bytes(arena, meta_nsoff,
 					mem + bv.bv_offset, cur_len,
 					NVDIMM_IO_ATOMIC);
-		else
-			ret = arena_read_bytes(arena, meta_nsoff,
+		अन्यथा
+			ret = arena_पढ़ो_bytes(arena, meta_nsoff,
 					mem + bv.bv_offset, cur_len,
 					NVDIMM_IO_ATOMIC);
 
 		kunmap_atomic(mem);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		len -= cur_len;
 		meta_nsoff += cur_len;
-		if (!bvec_iter_advance(bip->bip_vec, &bip->bip_iter, cur_len))
-			return -EIO;
-	}
+		अगर (!bvec_iter_advance(bip->bip_vec, &bip->bip_iter, cur_len))
+			वापस -EIO;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#else /* CONFIG_BLK_DEV_INTEGRITY */
-static int btt_rw_integrity(struct btt *btt, struct bio_integrity_payload *bip,
-			struct arena_info *arena, u32 postmap, int rw)
-{
-	return 0;
-}
-#endif
+#अन्यथा /* CONFIG_BLK_DEV_INTEGRITY */
+अटल पूर्णांक btt_rw_पूर्णांकegrity(काष्ठा btt *btt, काष्ठा bio_पूर्णांकegrity_payload *bip,
+			काष्ठा arena_info *arena, u32 posपंचांगap, पूर्णांक rw)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int btt_read_pg(struct btt *btt, struct bio_integrity_payload *bip,
-			struct page *page, unsigned int off, sector_t sector,
-			unsigned int len)
-{
-	int ret = 0;
-	int t_flag, e_flag;
-	struct arena_info *arena = NULL;
-	u32 lane = 0, premap, postmap;
+अटल पूर्णांक btt_पढ़ो_pg(काष्ठा btt *btt, काष्ठा bio_पूर्णांकegrity_payload *bip,
+			काष्ठा page *page, अचिन्हित पूर्णांक off, sector_t sector,
+			अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक t_flag, e_flag;
+	काष्ठा arena_info *arena = शून्य;
+	u32 lane = 0, premap, posपंचांगap;
 
-	while (len) {
+	जबतक (len) अणु
 		u32 cur_len;
 
 		lane = nd_region_acquire_lane(btt->nd_region);
 
 		ret = lba_to_arena(btt, sector, &premap, &arena);
-		if (ret)
-			goto out_lane;
+		अगर (ret)
+			जाओ out_lane;
 
 		cur_len = min(btt->sector_size, len);
 
-		ret = btt_map_read(arena, premap, &postmap, &t_flag, &e_flag,
+		ret = btt_map_पढ़ो(arena, premap, &posपंचांगap, &t_flag, &e_flag,
 				NVDIMM_IO_ATOMIC);
-		if (ret)
-			goto out_lane;
+		अगर (ret)
+			जाओ out_lane;
 
 		/*
 		 * We loop to make sure that the post map LBA didn't change
-		 * from under us between writing the RTT and doing the actual
-		 * read.
+		 * from under us between writing the RTT and करोing the actual
+		 * पढ़ो.
 		 */
-		while (1) {
+		जबतक (1) अणु
 			u32 new_map;
-			int new_t, new_e;
+			पूर्णांक new_t, new_e;
 
-			if (t_flag) {
+			अगर (t_flag) अणु
 				zero_fill_data(page, off, cur_len);
-				goto out_lane;
-			}
+				जाओ out_lane;
+			पूर्ण
 
-			if (e_flag) {
+			अगर (e_flag) अणु
 				ret = -EIO;
-				goto out_lane;
-			}
+				जाओ out_lane;
+			पूर्ण
 
-			arena->rtt[lane] = RTT_VALID | postmap;
+			arena->rtt[lane] = RTT_VALID | posपंचांगap;
 			/*
-			 * Barrier to make sure this write is not reordered
-			 * to do the verification map_read before the RTT store
+			 * Barrier to make sure this ग_लिखो is not reordered
+			 * to करो the verअगरication map_पढ़ो beक्रमe the RTT store
 			 */
 			barrier();
 
-			ret = btt_map_read(arena, premap, &new_map, &new_t,
+			ret = btt_map_पढ़ो(arena, premap, &new_map, &new_t,
 						&new_e, NVDIMM_IO_ATOMIC);
-			if (ret)
-				goto out_rtt;
+			अगर (ret)
+				जाओ out_rtt;
 
-			if ((postmap == new_map) && (t_flag == new_t) &&
+			अगर ((posपंचांगap == new_map) && (t_flag == new_t) &&
 					(e_flag == new_e))
-				break;
+				अवरोध;
 
-			postmap = new_map;
+			posपंचांगap = new_map;
 			t_flag = new_t;
 			e_flag = new_e;
-		}
+		पूर्ण
 
-		ret = btt_data_read(arena, page, off, postmap, cur_len);
-		if (ret) {
+		ret = btt_data_पढ़ो(arena, page, off, posपंचांगap, cur_len);
+		अगर (ret) अणु
 			/* Media error - set the e_flag */
-			if (btt_map_write(arena, premap, postmap, 0, 1, NVDIMM_IO_ATOMIC))
+			अगर (btt_map_ग_लिखो(arena, premap, posपंचांगap, 0, 1, NVDIMM_IO_ATOMIC))
 				dev_warn_ratelimited(to_dev(arena),
 					"Error persistently tracking bad blocks at %#x\n",
 					premap);
-			goto out_rtt;
-		}
+			जाओ out_rtt;
+		पूर्ण
 
-		if (bip) {
-			ret = btt_rw_integrity(btt, bip, arena, postmap, READ);
-			if (ret)
-				goto out_rtt;
-		}
+		अगर (bip) अणु
+			ret = btt_rw_पूर्णांकegrity(btt, bip, arena, posपंचांगap, READ);
+			अगर (ret)
+				जाओ out_rtt;
+		पूर्ण
 
 		arena->rtt[lane] = RTT_INVALID;
 		nd_region_release_lane(btt->nd_region, lane);
@@ -1282,320 +1283,320 @@ static int btt_read_pg(struct btt *btt, struct bio_integrity_payload *bip,
 		len -= cur_len;
 		off += cur_len;
 		sector += btt->sector_size >> SECTOR_SHIFT;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  out_rtt:
 	arena->rtt[lane] = RTT_INVALID;
  out_lane:
 	nd_region_release_lane(btt->nd_region, lane);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Normally, arena_{read,write}_bytes will take care of the initial offset
- * adjustment, but in the case of btt_is_badblock, where we query is_bad_pmem,
+ * Normally, arena_अणुपढ़ो,ग_लिखोपूर्ण_bytes will take care of the initial offset
+ * adjusपंचांगent, but in the हाल of btt_is_badblock, where we query is_bad_pmem,
  * we need the final, raw namespace offset here
  */
-static bool btt_is_badblock(struct btt *btt, struct arena_info *arena,
-		u32 postmap)
-{
+अटल bool btt_is_badblock(काष्ठा btt *btt, काष्ठा arena_info *arena,
+		u32 posपंचांगap)
+अणु
 	u64 nsoff = adjust_initial_offset(arena->nd_btt,
-			to_namespace_offset(arena, postmap));
+			to_namespace_offset(arena, posपंचांगap));
 	sector_t phys_sector = nsoff >> 9;
 
-	return is_bad_pmem(btt->phys_bb, phys_sector, arena->internal_lbasize);
-}
+	वापस is_bad_pmem(btt->phys_bb, phys_sector, arena->पूर्णांकernal_lbasize);
+पूर्ण
 
-static int btt_write_pg(struct btt *btt, struct bio_integrity_payload *bip,
-			sector_t sector, struct page *page, unsigned int off,
-			unsigned int len)
-{
-	int ret = 0;
-	struct arena_info *arena = NULL;
-	u32 premap = 0, old_postmap, new_postmap, lane = 0, i;
-	struct log_entry log;
-	int sub;
+अटल पूर्णांक btt_ग_लिखो_pg(काष्ठा btt *btt, काष्ठा bio_पूर्णांकegrity_payload *bip,
+			sector_t sector, काष्ठा page *page, अचिन्हित पूर्णांक off,
+			अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा arena_info *arena = शून्य;
+	u32 premap = 0, old_posपंचांगap, new_posपंचांगap, lane = 0, i;
+	काष्ठा log_entry log;
+	पूर्णांक sub;
 
-	while (len) {
+	जबतक (len) अणु
 		u32 cur_len;
-		int e_flag;
+		पूर्णांक e_flag;
 
  retry:
 		lane = nd_region_acquire_lane(btt->nd_region);
 
 		ret = lba_to_arena(btt, sector, &premap, &arena);
-		if (ret)
-			goto out_lane;
+		अगर (ret)
+			जाओ out_lane;
 		cur_len = min(btt->sector_size, len);
 
-		if ((arena->flags & IB_FLAG_ERROR_MASK) != 0) {
+		अगर ((arena->flags & IB_FLAG_ERROR_MASK) != 0) अणु
 			ret = -EIO;
-			goto out_lane;
-		}
+			जाओ out_lane;
+		पूर्ण
 
-		if (btt_is_badblock(btt, arena, arena->freelist[lane].block))
-			arena->freelist[lane].has_err = 1;
+		अगर (btt_is_badblock(btt, arena, arena->मुक्तlist[lane].block))
+			arena->मुक्तlist[lane].has_err = 1;
 
-		if (mutex_is_locked(&arena->err_lock)
-				|| arena->freelist[lane].has_err) {
+		अगर (mutex_is_locked(&arena->err_lock)
+				|| arena->मुक्तlist[lane].has_err) अणु
 			nd_region_release_lane(btt->nd_region, lane);
 
-			ret = arena_clear_freelist_error(arena, lane);
-			if (ret)
-				return ret;
+			ret = arena_clear_मुक्तlist_error(arena, lane);
+			अगर (ret)
+				वापस ret;
 
-			/* OK to acquire a different lane/free block */
-			goto retry;
-		}
+			/* OK to acquire a dअगरferent lane/मुक्त block */
+			जाओ retry;
+		पूर्ण
 
-		new_postmap = arena->freelist[lane].block;
+		new_posपंचांगap = arena->मुक्तlist[lane].block;
 
-		/* Wait if the new block is being read from */
-		for (i = 0; i < arena->nfree; i++)
-			while (arena->rtt[i] == (RTT_VALID | new_postmap))
+		/* Wait अगर the new block is being पढ़ो from */
+		क्रम (i = 0; i < arena->nमुक्त; i++)
+			जबतक (arena->rtt[i] == (RTT_VALID | new_posपंचांगap))
 				cpu_relax();
 
 
-		if (new_postmap >= arena->internal_nlba) {
+		अगर (new_posपंचांगap >= arena->पूर्णांकernal_nlba) अणु
 			ret = -EIO;
-			goto out_lane;
-		}
+			जाओ out_lane;
+		पूर्ण
 
-		ret = btt_data_write(arena, new_postmap, page, off, cur_len);
-		if (ret)
-			goto out_lane;
+		ret = btt_data_ग_लिखो(arena, new_posपंचांगap, page, off, cur_len);
+		अगर (ret)
+			जाओ out_lane;
 
-		if (bip) {
-			ret = btt_rw_integrity(btt, bip, arena, new_postmap,
+		अगर (bip) अणु
+			ret = btt_rw_पूर्णांकegrity(btt, bip, arena, new_posपंचांगap,
 						WRITE);
-			if (ret)
-				goto out_lane;
-		}
+			अगर (ret)
+				जाओ out_lane;
+		पूर्ण
 
 		lock_map(arena, premap);
-		ret = btt_map_read(arena, premap, &old_postmap, NULL, &e_flag,
+		ret = btt_map_पढ़ो(arena, premap, &old_posपंचांगap, शून्य, &e_flag,
 				NVDIMM_IO_ATOMIC);
-		if (ret)
-			goto out_map;
-		if (old_postmap >= arena->internal_nlba) {
+		अगर (ret)
+			जाओ out_map;
+		अगर (old_posपंचांगap >= arena->पूर्णांकernal_nlba) अणु
 			ret = -EIO;
-			goto out_map;
-		}
-		if (e_flag)
-			set_e_flag(old_postmap);
+			जाओ out_map;
+		पूर्ण
+		अगर (e_flag)
+			set_e_flag(old_posपंचांगap);
 
 		log.lba = cpu_to_le32(premap);
-		log.old_map = cpu_to_le32(old_postmap);
-		log.new_map = cpu_to_le32(new_postmap);
-		log.seq = cpu_to_le32(arena->freelist[lane].seq);
-		sub = arena->freelist[lane].sub;
-		ret = btt_flog_write(arena, lane, sub, &log);
-		if (ret)
-			goto out_map;
+		log.old_map = cpu_to_le32(old_posपंचांगap);
+		log.new_map = cpu_to_le32(new_posपंचांगap);
+		log.seq = cpu_to_le32(arena->मुक्तlist[lane].seq);
+		sub = arena->मुक्तlist[lane].sub;
+		ret = btt_flog_ग_लिखो(arena, lane, sub, &log);
+		अगर (ret)
+			जाओ out_map;
 
-		ret = btt_map_write(arena, premap, new_postmap, 0, 0,
+		ret = btt_map_ग_लिखो(arena, premap, new_posपंचांगap, 0, 0,
 			NVDIMM_IO_ATOMIC);
-		if (ret)
-			goto out_map;
+		अगर (ret)
+			जाओ out_map;
 
 		unlock_map(arena, premap);
 		nd_region_release_lane(btt->nd_region, lane);
 
-		if (e_flag) {
-			ret = arena_clear_freelist_error(arena, lane);
-			if (ret)
-				return ret;
-		}
+		अगर (e_flag) अणु
+			ret = arena_clear_मुक्तlist_error(arena, lane);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
 		len -= cur_len;
 		off += cur_len;
 		sector += btt->sector_size >> SECTOR_SHIFT;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  out_map:
 	unlock_map(arena, premap);
  out_lane:
 	nd_region_release_lane(btt->nd_region, lane);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btt_do_bvec(struct btt *btt, struct bio_integrity_payload *bip,
-			struct page *page, unsigned int len, unsigned int off,
-			unsigned int op, sector_t sector)
-{
-	int ret;
+अटल पूर्णांक btt_करो_bvec(काष्ठा btt *btt, काष्ठा bio_पूर्णांकegrity_payload *bip,
+			काष्ठा page *page, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off,
+			अचिन्हित पूर्णांक op, sector_t sector)
+अणु
+	पूर्णांक ret;
 
-	if (!op_is_write(op)) {
-		ret = btt_read_pg(btt, bip, page, off, sector, len);
+	अगर (!op_is_ग_लिखो(op)) अणु
+		ret = btt_पढ़ो_pg(btt, bip, page, off, sector, len);
 		flush_dcache_page(page);
-	} else {
+	पूर्ण अन्यथा अणु
 		flush_dcache_page(page);
-		ret = btt_write_pg(btt, bip, sector, page, off, len);
-	}
+		ret = btt_ग_लिखो_pg(btt, bip, sector, page, off, len);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static blk_qc_t btt_submit_bio(struct bio *bio)
-{
-	struct bio_integrity_payload *bip = bio_integrity(bio);
-	struct btt *btt = bio->bi_bdev->bd_disk->private_data;
-	struct bvec_iter iter;
-	unsigned long start;
-	struct bio_vec bvec;
-	int err = 0;
-	bool do_acct;
+अटल blk_qc_t btt_submit_bio(काष्ठा bio *bio)
+अणु
+	काष्ठा bio_पूर्णांकegrity_payload *bip = bio_पूर्णांकegrity(bio);
+	काष्ठा btt *btt = bio->bi_bdev->bd_disk->निजी_data;
+	काष्ठा bvec_iter iter;
+	अचिन्हित दीर्घ start;
+	काष्ठा bio_vec bvec;
+	पूर्णांक err = 0;
+	bool करो_acct;
 
-	if (!bio_integrity_prep(bio))
-		return BLK_QC_T_NONE;
+	अगर (!bio_पूर्णांकegrity_prep(bio))
+		वापस BLK_QC_T_NONE;
 
-	do_acct = blk_queue_io_stat(bio->bi_bdev->bd_disk->queue);
-	if (do_acct)
+	करो_acct = blk_queue_io_stat(bio->bi_bdev->bd_disk->queue);
+	अगर (करो_acct)
 		start = bio_start_io_acct(bio);
-	bio_for_each_segment(bvec, bio, iter) {
-		unsigned int len = bvec.bv_len;
+	bio_क्रम_each_segment(bvec, bio, iter) अणु
+		अचिन्हित पूर्णांक len = bvec.bv_len;
 
-		if (len > PAGE_SIZE || len < btt->sector_size ||
-				len % btt->sector_size) {
+		अगर (len > PAGE_SIZE || len < btt->sector_size ||
+				len % btt->sector_size) अणु
 			dev_err_ratelimited(&btt->nd_btt->dev,
 				"unaligned bio segment (len: %d)\n", len);
 			bio->bi_status = BLK_STS_IOERR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		err = btt_do_bvec(btt, bip, bvec.bv_page, len, bvec.bv_offset,
+		err = btt_करो_bvec(btt, bip, bvec.bv_page, len, bvec.bv_offset,
 				  bio_op(bio), iter.bi_sector);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&btt->nd_btt->dev,
 					"io error in %s sector %lld, len %d,\n",
-					(op_is_write(bio_op(bio))) ? "WRITE" :
+					(op_is_ग_लिखो(bio_op(bio))) ? "WRITE" :
 					"READ",
-					(unsigned long long) iter.bi_sector, len);
-			bio->bi_status = errno_to_blk_status(err);
-			break;
-		}
-	}
-	if (do_acct)
+					(अचिन्हित दीर्घ दीर्घ) iter.bi_sector, len);
+			bio->bi_status = त्रुटि_सं_to_blk_status(err);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (करो_acct)
 		bio_end_io_acct(bio, start);
 
 	bio_endio(bio);
-	return BLK_QC_T_NONE;
-}
+	वापस BLK_QC_T_NONE;
+पूर्ण
 
-static int btt_rw_page(struct block_device *bdev, sector_t sector,
-		struct page *page, unsigned int op)
-{
-	struct btt *btt = bdev->bd_disk->private_data;
-	int rc;
+अटल पूर्णांक btt_rw_page(काष्ठा block_device *bdev, sector_t sector,
+		काष्ठा page *page, अचिन्हित पूर्णांक op)
+अणु
+	काष्ठा btt *btt = bdev->bd_disk->निजी_data;
+	पूर्णांक rc;
 
-	rc = btt_do_bvec(btt, NULL, page, thp_size(page), 0, op, sector);
-	if (rc == 0)
-		page_endio(page, op_is_write(op), 0);
+	rc = btt_करो_bvec(btt, शून्य, page, thp_size(page), 0, op, sector);
+	अगर (rc == 0)
+		page_endio(page, op_is_ग_लिखो(op), 0);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-static int btt_getgeo(struct block_device *bd, struct hd_geometry *geo)
-{
+अटल पूर्णांक btt_getgeo(काष्ठा block_device *bd, काष्ठा hd_geometry *geo)
+अणु
 	/* some standard values */
 	geo->heads = 1 << 6;
 	geo->sectors = 1 << 5;
 	geo->cylinders = get_capacity(bd->bd_disk) >> 11;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct block_device_operations btt_fops = {
+अटल स्थिर काष्ठा block_device_operations btt_fops = अणु
 	.owner =		THIS_MODULE,
 	.submit_bio =		btt_submit_bio,
 	.rw_page =		btt_rw_page,
 	.getgeo =		btt_getgeo,
-};
+पूर्ण;
 
-static int btt_blk_init(struct btt *btt)
-{
-	struct nd_btt *nd_btt = btt->nd_btt;
-	struct nd_namespace_common *ndns = nd_btt->ndns;
+अटल पूर्णांक btt_blk_init(काष्ठा btt *btt)
+अणु
+	काष्ठा nd_btt *nd_btt = btt->nd_btt;
+	काष्ठा nd_namespace_common *ndns = nd_btt->ndns;
 
-	/* create a new disk and request queue for btt */
+	/* create a new disk and request queue क्रम btt */
 	btt->btt_queue = blk_alloc_queue(NUMA_NO_NODE);
-	if (!btt->btt_queue)
-		return -ENOMEM;
+	अगर (!btt->btt_queue)
+		वापस -ENOMEM;
 
 	btt->btt_disk = alloc_disk(0);
-	if (!btt->btt_disk) {
+	अगर (!btt->btt_disk) अणु
 		blk_cleanup_queue(btt->btt_queue);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	nvdimm_namespace_disk_name(ndns, btt->btt_disk->disk_name);
 	btt->btt_disk->first_minor = 0;
 	btt->btt_disk->fops = &btt_fops;
-	btt->btt_disk->private_data = btt;
+	btt->btt_disk->निजी_data = btt;
 	btt->btt_disk->queue = btt->btt_queue;
 	btt->btt_disk->flags = GENHD_FL_EXT_DEVT;
 
 	blk_queue_logical_block_size(btt->btt_queue, btt->sector_size);
-	blk_queue_max_hw_sectors(btt->btt_queue, UINT_MAX);
+	blk_queue_max_hw_sectors(btt->btt_queue, अच_पूर्णांक_उच्च);
 	blk_queue_flag_set(QUEUE_FLAG_NONROT, btt->btt_queue);
 
-	if (btt_meta_size(btt)) {
-		int rc = nd_integrity_init(btt->btt_disk, btt_meta_size(btt));
+	अगर (btt_meta_size(btt)) अणु
+		पूर्णांक rc = nd_पूर्णांकegrity_init(btt->btt_disk, btt_meta_size(btt));
 
-		if (rc) {
+		अगर (rc) अणु
 			del_gendisk(btt->btt_disk);
 			put_disk(btt->btt_disk);
 			blk_cleanup_queue(btt->btt_queue);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 	set_capacity(btt->btt_disk, btt->nlba * btt->sector_size >> 9);
-	device_add_disk(&btt->nd_btt->dev, btt->btt_disk, NULL);
+	device_add_disk(&btt->nd_btt->dev, btt->btt_disk, शून्य);
 	btt->nd_btt->size = btt->nlba * (u64)btt->sector_size;
 	nvdimm_check_and_set_ro(btt->btt_disk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void btt_blk_cleanup(struct btt *btt)
-{
+अटल व्योम btt_blk_cleanup(काष्ठा btt *btt)
+अणु
 	del_gendisk(btt->btt_disk);
 	put_disk(btt->btt_disk);
 	blk_cleanup_queue(btt->btt_queue);
-}
+पूर्ण
 
 /**
- * btt_init - initialize a block translation table for the given device
+ * btt_init - initialize a block translation table क्रम the given device
  * @nd_btt:	device with BTT geometry and backing device info
  * @rawsize:	raw size in bytes of the backing device
  * @lbasize:	lba size of the backing device
- * @uuid:	A uuid for the backing device - this is stored on media
+ * @uuid:	A uuid क्रम the backing device - this is stored on media
  * @maxlane:	maximum number of parallel requests the device can handle
  *
  * Initialize a Block Translation Table on a backing device to provide
- * single sector power fail atomicity.
+ * single sector घातer fail atomicity.
  *
  * Context:
  * Might sleep.
  *
  * Returns:
- * Pointer to a new struct btt on success, NULL on failure.
+ * Poपूर्णांकer to a new काष्ठा btt on success, शून्य on failure.
  */
-static struct btt *btt_init(struct nd_btt *nd_btt, unsigned long long rawsize,
-		u32 lbasize, u8 *uuid, struct nd_region *nd_region)
-{
-	int ret;
-	struct btt *btt;
-	struct nd_namespace_io *nsio;
-	struct device *dev = &nd_btt->dev;
+अटल काष्ठा btt *btt_init(काष्ठा nd_btt *nd_btt, अचिन्हित दीर्घ दीर्घ rawsize,
+		u32 lbasize, u8 *uuid, काष्ठा nd_region *nd_region)
+अणु
+	पूर्णांक ret;
+	काष्ठा btt *btt;
+	काष्ठा nd_namespace_io *nsio;
+	काष्ठा device *dev = &nd_btt->dev;
 
-	btt = devm_kzalloc(dev, sizeof(struct btt), GFP_KERNEL);
-	if (!btt)
-		return NULL;
+	btt = devm_kzalloc(dev, माप(काष्ठा btt), GFP_KERNEL);
+	अगर (!btt)
+		वापस शून्य;
 
 	btt->nd_btt = nd_btt;
 	btt->rawsize = rawsize;
@@ -1608,44 +1609,44 @@ static struct btt *btt_init(struct nd_btt *nd_btt, unsigned long long rawsize,
 	btt->phys_bb = &nsio->bb;
 
 	ret = discover_arenas(btt);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "init: error in arena_discover: %d\n", ret);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (btt->init_state != INIT_READY && nd_region->ro) {
+	अगर (btt->init_state != INIT_READY && nd_region->ro) अणु
 		dev_warn(dev, "%s is read-only, unable to init btt metadata\n",
 				dev_name(&nd_region->dev));
-		return NULL;
-	} else if (btt->init_state != INIT_READY) {
+		वापस शून्य;
+	पूर्ण अन्यथा अगर (btt->init_state != INIT_READY) अणु
 		btt->num_arenas = (rawsize / ARENA_MAX_SIZE) +
 			((rawsize % ARENA_MAX_SIZE) ? 1 : 0);
 		dev_dbg(dev, "init: %d arenas for %llu rawsize\n",
 				btt->num_arenas, rawsize);
 
 		ret = create_arenas(btt);
-		if (ret) {
+		अगर (ret) अणु
 			dev_info(dev, "init: create_arenas: %d\n", ret);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
 		ret = btt_meta_init(btt);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "init: error in meta_init: %d\n", ret);
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	ret = btt_blk_init(btt);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "init: error in blk_init: %d\n", ret);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	btt_debugfs_init(btt);
 
-	return btt;
-}
+	वापस btt;
+पूर्ण
 
 /**
  * btt_fini - de-initialize a BTT
@@ -1656,40 +1657,40 @@ static struct btt *btt_init(struct nd_btt *nd_btt, unsigned long long rawsize,
  * Context:
  * Might sleep.
  */
-static void btt_fini(struct btt *btt)
-{
-	if (btt) {
+अटल व्योम btt_fini(काष्ठा btt *btt)
+अणु
+	अगर (btt) अणु
 		btt_blk_cleanup(btt);
-		free_arenas(btt);
-		debugfs_remove_recursive(btt->debugfs_dir);
-	}
-}
+		मुक्त_arenas(btt);
+		debugfs_हटाओ_recursive(btt->debugfs_dir);
+	पूर्ण
+पूर्ण
 
-int nvdimm_namespace_attach_btt(struct nd_namespace_common *ndns)
-{
-	struct nd_btt *nd_btt = to_nd_btt(ndns->claim);
-	struct nd_region *nd_region;
-	struct btt_sb *btt_sb;
-	struct btt *btt;
-	size_t size, rawsize;
-	int rc;
+पूर्णांक nvdimm_namespace_attach_btt(काष्ठा nd_namespace_common *ndns)
+अणु
+	काष्ठा nd_btt *nd_btt = to_nd_btt(ndns->claim);
+	काष्ठा nd_region *nd_region;
+	काष्ठा btt_sb *btt_sb;
+	काष्ठा btt *btt;
+	माप_प्रकार size, rawsize;
+	पूर्णांक rc;
 
-	if (!nd_btt->uuid || !nd_btt->ndns || !nd_btt->lbasize) {
+	अगर (!nd_btt->uuid || !nd_btt->ndns || !nd_btt->lbasize) अणु
 		dev_dbg(&nd_btt->dev, "incomplete btt configuration\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	btt_sb = devm_kzalloc(&nd_btt->dev, sizeof(*btt_sb), GFP_KERNEL);
-	if (!btt_sb)
-		return -ENOMEM;
+	btt_sb = devm_kzalloc(&nd_btt->dev, माप(*btt_sb), GFP_KERNEL);
+	अगर (!btt_sb)
+		वापस -ENOMEM;
 
 	size = nvdimm_namespace_capacity(ndns);
 	rc = devm_namespace_enable(&nd_btt->dev, ndns, size);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/*
-	 * If this returns < 0, that is ok as it just means there wasn't
+	 * If this वापसs < 0, that is ok as it just means there wasn't
 	 * an existing BTT, and we're creating a new one. We still need to
 	 * call this as we need the version dependent fields in nd_btt to be
 	 * set correctly based on the holder class
@@ -1697,52 +1698,52 @@ int nvdimm_namespace_attach_btt(struct nd_namespace_common *ndns)
 	nd_btt_version(nd_btt, ndns, btt_sb);
 
 	rawsize = size - nd_btt->initial_offset;
-	if (rawsize < ARENA_MIN_SIZE) {
+	अगर (rawsize < ARENA_MIN_SIZE) अणु
 		dev_dbg(&nd_btt->dev, "%s must be at least %ld bytes\n",
 				dev_name(&ndns->dev),
 				ARENA_MIN_SIZE + nd_btt->initial_offset);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	nd_region = to_nd_region(nd_btt->dev.parent);
 	btt = btt_init(nd_btt, rawsize, nd_btt->lbasize, nd_btt->uuid,
 			nd_region);
-	if (!btt)
-		return -ENOMEM;
+	अगर (!btt)
+		वापस -ENOMEM;
 	nd_btt->btt = btt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nvdimm_namespace_attach_btt);
 
-int nvdimm_namespace_detach_btt(struct nd_btt *nd_btt)
-{
-	struct btt *btt = nd_btt->btt;
+पूर्णांक nvdimm_namespace_detach_btt(काष्ठा nd_btt *nd_btt)
+अणु
+	काष्ठा btt *btt = nd_btt->btt;
 
 	btt_fini(btt);
-	nd_btt->btt = NULL;
+	nd_btt->btt = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nvdimm_namespace_detach_btt);
 
-static int __init nd_btt_init(void)
-{
-	int rc = 0;
+अटल पूर्णांक __init nd_btt_init(व्योम)
+अणु
+	पूर्णांक rc = 0;
 
-	debugfs_root = debugfs_create_dir("btt", NULL);
-	if (IS_ERR_OR_NULL(debugfs_root))
+	debugfs_root = debugfs_create_dir("btt", शून्य);
+	अगर (IS_ERR_OR_शून्य(debugfs_root))
 		rc = -ENXIO;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit nd_btt_exit(void)
-{
-	debugfs_remove_recursive(debugfs_root);
-}
+अटल व्योम __निकास nd_btt_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(debugfs_root);
+पूर्ण
 
 MODULE_ALIAS_ND_DEVICE(ND_DEVICE_BTT);
 MODULE_AUTHOR("Vishal Verma <vishal.l.verma@linux.intel.com>");
 MODULE_LICENSE("GPL v2");
 module_init(nd_btt_init);
-module_exit(nd_btt_exit);
+module_निकास(nd_btt_निकास);

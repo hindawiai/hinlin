@@ -1,182 +1,183 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include "perf-sys.h"
-#include "debug.h"
-#include "tests/tests.h"
-#include "cloexec.h"
-#include "event.h"
-#include <internal/lib.h> // page_size
-#include "arch-tests.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <संकेत.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश "perf-sys.h"
+#समावेश "debug.h"
+#समावेश "tests/tests.h"
+#समावेश "cloexec.h"
+#समावेश "event.h"
+#समावेश <पूर्णांकernal/lib.h> // page_size
+#समावेश "arch-tests.h"
 
-static u64 rdpmc(unsigned int counter)
-{
-	unsigned int low, high;
+अटल u64 rdpmc(अचिन्हित पूर्णांक counter)
+अणु
+	अचिन्हित पूर्णांक low, high;
 
-	asm volatile("rdpmc" : "=a" (low), "=d" (high) : "c" (counter));
+	यंत्र अस्थिर("rdpmc" : "=a" (low), "=d" (high) : "c" (counter));
 
-	return low | ((u64)high) << 32;
-}
+	वापस low | ((u64)high) << 32;
+पूर्ण
 
-static u64 rdtsc(void)
-{
-	unsigned int low, high;
+अटल u64 rdtsc(व्योम)
+अणु
+	अचिन्हित पूर्णांक low, high;
 
-	asm volatile("rdtsc" : "=a" (low), "=d" (high));
+	यंत्र अस्थिर("rdtsc" : "=a" (low), "=d" (high));
 
-	return low | ((u64)high) << 32;
-}
+	वापस low | ((u64)high) << 32;
+पूर्ण
 
-static u64 mmap_read_self(void *addr)
-{
-	struct perf_event_mmap_page *pc = addr;
-	u32 seq, idx, time_mult = 0, time_shift = 0;
-	u64 count, cyc = 0, time_offset = 0, enabled, running, delta;
+अटल u64 mmap_पढ़ो_self(व्योम *addr)
+अणु
+	काष्ठा perf_event_mmap_page *pc = addr;
+	u32 seq, idx, समय_mult = 0, समय_shअगरt = 0;
+	u64 count, cyc = 0, समय_offset = 0, enabled, running, delta;
 
-	do {
+	करो अणु
 		seq = pc->lock;
 		barrier();
 
-		enabled = pc->time_enabled;
-		running = pc->time_running;
+		enabled = pc->समय_enabled;
+		running = pc->समय_running;
 
-		if (enabled != running) {
+		अगर (enabled != running) अणु
 			cyc = rdtsc();
-			time_mult = pc->time_mult;
-			time_shift = pc->time_shift;
-			time_offset = pc->time_offset;
-		}
+			समय_mult = pc->समय_mult;
+			समय_shअगरt = pc->समय_shअगरt;
+			समय_offset = pc->समय_offset;
+		पूर्ण
 
 		idx = pc->index;
 		count = pc->offset;
-		if (idx)
+		अगर (idx)
 			count += rdpmc(idx - 1);
 
 		barrier();
-	} while (pc->lock != seq);
+	पूर्ण जबतक (pc->lock != seq);
 
-	if (enabled != running) {
+	अगर (enabled != running) अणु
 		u64 quot, rem;
 
-		quot = (cyc >> time_shift);
-		rem = cyc & (((u64)1 << time_shift) - 1);
-		delta = time_offset + quot * time_mult +
-			((rem * time_mult) >> time_shift);
+		quot = (cyc >> समय_shअगरt);
+		rem = cyc & (((u64)1 << समय_shअगरt) - 1);
+		delta = समय_offset + quot * समय_mult +
+			((rem * समय_mult) >> समय_shअगरt);
 
 		enabled += delta;
-		if (idx)
+		अगर (idx)
 			running += delta;
 
 		quot = count / running;
 		rem = count % running;
 		count = quot * enabled + (rem * enabled) / running;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * If the RDPMC instruction faults then signal this back to the test parent task:
+ * If the RDPMC inकाष्ठाion faults then संकेत this back to the test parent task:
  */
-static void segfault_handler(int sig __maybe_unused,
+अटल व्योम segfault_handler(पूर्णांक sig __maybe_unused,
 			     siginfo_t *info __maybe_unused,
-			     void *uc __maybe_unused)
-{
-	exit(-1);
-}
+			     व्योम *uc __maybe_unused)
+अणु
+	निकास(-1);
+पूर्ण
 
-static int __test__rdpmc(void)
-{
-	volatile int tmp = 0;
+अटल पूर्णांक __test__rdpmc(व्योम)
+अणु
+	अस्थिर पूर्णांक पंचांगp = 0;
 	u64 i, loops = 1000;
-	int n;
-	int fd;
-	void *addr;
-	struct perf_event_attr attr = {
+	पूर्णांक n;
+	पूर्णांक fd;
+	व्योम *addr;
+	काष्ठा perf_event_attr attr = अणु
 		.type = PERF_TYPE_HARDWARE,
 		.config = PERF_COUNT_HW_INSTRUCTIONS,
 		.exclude_kernel = 1,
-	};
+	पूर्ण;
 	u64 delta_sum = 0;
-        struct sigaction sa;
-	char sbuf[STRERR_BUFSIZE];
+        काष्ठा sigaction sa;
+	अक्षर sbuf[STRERR_बफ_मानE];
 
 	sigfillset(&sa.sa_mask);
 	sa.sa_sigaction = segfault_handler;
 	sa.sa_flags = 0;
-	sigaction(SIGSEGV, &sa, NULL);
+	sigaction(संक_अंश, &sa, शून्य);
 
-	fd = sys_perf_event_open(&attr, 0, -1, -1,
-				 perf_event_open_cloexec_flag());
-	if (fd < 0) {
+	fd = sys_perf_event_खोलो(&attr, 0, -1, -1,
+				 perf_event_खोलो_cloexec_flag());
+	अगर (fd < 0) अणु
 		pr_err("Error: sys_perf_event_open() syscall returned "
 		       "with %d (%s)\n", fd,
-		       str_error_r(errno, sbuf, sizeof(sbuf)));
-		return -1;
-	}
+		       str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		वापस -1;
+	पूर्ण
 
-	addr = mmap(NULL, page_size, PROT_READ, MAP_SHARED, fd, 0);
-	if (addr == (void *)(-1)) {
+	addr = mmap(शून्य, page_size, PROT_READ, MAP_SHARED, fd, 0);
+	अगर (addr == (व्योम *)(-1)) अणु
 		pr_err("Error: mmap() syscall returned with (%s)\n",
-		       str_error_r(errno, sbuf, sizeof(sbuf)));
-		goto out_close;
-	}
+		       str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		जाओ out_बंद;
+	पूर्ण
 
-	for (n = 0; n < 6; n++) {
+	क्रम (n = 0; n < 6; n++) अणु
 		u64 stamp, now, delta;
 
-		stamp = mmap_read_self(addr);
+		stamp = mmap_पढ़ो_self(addr);
 
-		for (i = 0; i < loops; i++)
-			tmp++;
+		क्रम (i = 0; i < loops; i++)
+			पंचांगp++;
 
-		now = mmap_read_self(addr);
+		now = mmap_पढ़ो_self(addr);
 		loops *= 10;
 
 		delta = now - stamp;
-		pr_debug("%14d: %14Lu\n", n, (long long)delta);
+		pr_debug("%14d: %14Lu\n", n, (दीर्घ दीर्घ)delta);
 
 		delta_sum += delta;
-	}
+	पूर्ण
 
 	munmap(addr, page_size);
 	pr_debug("   ");
-out_close:
-	close(fd);
+out_बंद:
+	बंद(fd);
 
-	if (!delta_sum)
-		return -1;
+	अगर (!delta_sum)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int test__rdpmc(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	int status = 0;
-	int wret = 0;
-	int ret;
-	int pid;
+पूर्णांक test__rdpmc(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	पूर्णांक status = 0;
+	पूर्णांक wret = 0;
+	पूर्णांक ret;
+	पूर्णांक pid;
 
-	pid = fork();
-	if (pid < 0)
-		return -1;
+	pid = विभाजन();
+	अगर (pid < 0)
+		वापस -1;
 
-	if (!pid) {
+	अगर (!pid) अणु
 		ret = __test__rdpmc();
 
-		exit(ret);
-	}
+		निकास(ret);
+	पूर्ण
 
-	wret = waitpid(pid, &status, 0);
-	if (wret < 0 || status)
-		return -1;
+	wret = रुकोpid(pid, &status, 0);
+	अगर (wret < 0 || status)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

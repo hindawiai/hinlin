@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cadence CDNSP DRD Driver.
  *
@@ -10,111 +11,111 @@
  * Origin: Copyright (C) 2008 Intel Corp.
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
 
-#include "cdnsp-gadget.h"
-#include "cdnsp-trace.h"
+#समावेश "cdnsp-gadget.h"
+#समावेश "cdnsp-trace.h"
 
-static void cdnsp_free_stream_info(struct cdnsp_device *pdev,
-				   struct cdnsp_ep *pep);
+अटल व्योम cdnsp_मुक्त_stream_info(काष्ठा cdnsp_device *pdev,
+				   काष्ठा cdnsp_ep *pep);
 /*
  * Allocates a generic ring segment from the ring pool, sets the dma address,
- * initializes the segment to zero, and sets the private next pointer to NULL.
+ * initializes the segment to zero, and sets the निजी next poपूर्णांकer to शून्य.
  *
  * "All components of all Command and Transfer TRBs shall be initialized to '0'"
  */
-static struct cdnsp_segment *cdnsp_segment_alloc(struct cdnsp_device *pdev,
-						 unsigned int cycle_state,
-						 unsigned int max_packet,
+अटल काष्ठा cdnsp_segment *cdnsp_segment_alloc(काष्ठा cdnsp_device *pdev,
+						 अचिन्हित पूर्णांक cycle_state,
+						 अचिन्हित पूर्णांक max_packet,
 						 gfp_t flags)
-{
-	struct cdnsp_segment *seg;
+अणु
+	काष्ठा cdnsp_segment *seg;
 	dma_addr_t dma;
-	int i;
+	पूर्णांक i;
 
-	seg = kzalloc(sizeof(*seg), flags);
-	if (!seg)
-		return NULL;
+	seg = kzalloc(माप(*seg), flags);
+	अगर (!seg)
+		वापस शून्य;
 
 	seg->trbs = dma_pool_zalloc(pdev->segment_pool, flags, &dma);
-	if (!seg->trbs) {
-		kfree(seg);
-		return NULL;
-	}
+	अगर (!seg->trbs) अणु
+		kमुक्त(seg);
+		वापस शून्य;
+	पूर्ण
 
-	if (max_packet) {
+	अगर (max_packet) अणु
 		seg->bounce_buf = kzalloc(max_packet, flags | GFP_DMA);
-		if (!seg->bounce_buf)
-			goto free_dma;
-	}
+		अगर (!seg->bounce_buf)
+			जाओ मुक्त_dma;
+	पूर्ण
 
-	/* If the cycle state is 0, set the cycle bit to 1 for all the TRBs. */
-	if (cycle_state == 0) {
-		for (i = 0; i < TRBS_PER_SEGMENT; i++)
+	/* If the cycle state is 0, set the cycle bit to 1 क्रम all the TRBs. */
+	अगर (cycle_state == 0) अणु
+		क्रम (i = 0; i < TRBS_PER_SEGMENT; i++)
 			seg->trbs[i].link.control |= cpu_to_le32(TRB_CYCLE);
-	}
+	पूर्ण
 	seg->dma = dma;
-	seg->next = NULL;
+	seg->next = शून्य;
 
-	return seg;
+	वापस seg;
 
-free_dma:
-	dma_pool_free(pdev->segment_pool, seg->trbs, dma);
-	kfree(seg);
+मुक्त_dma:
+	dma_pool_मुक्त(pdev->segment_pool, seg->trbs, dma);
+	kमुक्त(seg);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void cdnsp_segment_free(struct cdnsp_device *pdev,
-			       struct cdnsp_segment *seg)
-{
-	if (seg->trbs)
-		dma_pool_free(pdev->segment_pool, seg->trbs, seg->dma);
+अटल व्योम cdnsp_segment_मुक्त(काष्ठा cdnsp_device *pdev,
+			       काष्ठा cdnsp_segment *seg)
+अणु
+	अगर (seg->trbs)
+		dma_pool_मुक्त(pdev->segment_pool, seg->trbs, seg->dma);
 
-	kfree(seg->bounce_buf);
-	kfree(seg);
-}
+	kमुक्त(seg->bounce_buf);
+	kमुक्त(seg);
+पूर्ण
 
-static void cdnsp_free_segments_for_ring(struct cdnsp_device *pdev,
-					 struct cdnsp_segment *first)
-{
-	struct cdnsp_segment *seg;
+अटल व्योम cdnsp_मुक्त_segments_क्रम_ring(काष्ठा cdnsp_device *pdev,
+					 काष्ठा cdnsp_segment *first)
+अणु
+	काष्ठा cdnsp_segment *seg;
 
 	seg = first->next;
 
-	while (seg != first) {
-		struct cdnsp_segment *next = seg->next;
+	जबतक (seg != first) अणु
+		काष्ठा cdnsp_segment *next = seg->next;
 
-		cdnsp_segment_free(pdev, seg);
+		cdnsp_segment_मुक्त(pdev, seg);
 		seg = next;
-	}
+	पूर्ण
 
-	cdnsp_segment_free(pdev, first);
-}
+	cdnsp_segment_मुक्त(pdev, first);
+पूर्ण
 
 /*
- * Make the prev segment point to the next segment.
+ * Make the prev segment poपूर्णांक to the next segment.
  *
- * Change the last TRB in the prev segment to be a Link TRB which points to the
+ * Change the last TRB in the prev segment to be a Link TRB which poपूर्णांकs to the
  * DMA address of the next segment. The caller needs to set any Link TRB
  * related flags, such as End TRB, Toggle Cycle, and no snoop.
  */
-static void cdnsp_link_segments(struct cdnsp_device *pdev,
-				struct cdnsp_segment *prev,
-				struct cdnsp_segment *next,
-				enum cdnsp_ring_type type)
-{
-	struct cdnsp_link_trb *link;
+अटल व्योम cdnsp_link_segments(काष्ठा cdnsp_device *pdev,
+				काष्ठा cdnsp_segment *prev,
+				काष्ठा cdnsp_segment *next,
+				क्रमागत cdnsp_ring_type type)
+अणु
+	काष्ठा cdnsp_link_trb *link;
 	u32 val;
 
-	if (!prev || !next)
-		return;
+	अगर (!prev || !next)
+		वापस;
 
 	prev->next = next;
-	if (type != TYPE_EVENT) {
+	अगर (type != TYPE_EVENT) अणु
 		link = &prev->trbs[TRBS_PER_SEGMENT - 1].link;
 		link->segment_ptr = cpu_to_le64(next->dma);
 
@@ -126,45 +127,45 @@ static void cdnsp_link_segments(struct cdnsp_device *pdev,
 		val &= ~TRB_TYPE_BITMASK;
 		val |= TRB_TYPE(TRB_LINK);
 		link->control = cpu_to_le32(val);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Link the ring to the new segments.
- * Set Toggle Cycle for the new ring if needed.
+ * Set Toggle Cycle क्रम the new ring अगर needed.
  */
-static void cdnsp_link_rings(struct cdnsp_device *pdev,
-			     struct cdnsp_ring *ring,
-			     struct cdnsp_segment *first,
-			     struct cdnsp_segment *last,
-			     unsigned int num_segs)
-{
-	struct cdnsp_segment *next;
+अटल व्योम cdnsp_link_rings(काष्ठा cdnsp_device *pdev,
+			     काष्ठा cdnsp_ring *ring,
+			     काष्ठा cdnsp_segment *first,
+			     काष्ठा cdnsp_segment *last,
+			     अचिन्हित पूर्णांक num_segs)
+अणु
+	काष्ठा cdnsp_segment *next;
 
-	if (!ring || !first || !last)
-		return;
+	अगर (!ring || !first || !last)
+		वापस;
 
 	next = ring->enq_seg->next;
 	cdnsp_link_segments(pdev, ring->enq_seg, first, ring->type);
 	cdnsp_link_segments(pdev, last, next, ring->type);
 	ring->num_segs += num_segs;
-	ring->num_trbs_free += (TRBS_PER_SEGMENT - 1) * num_segs;
+	ring->num_trbs_मुक्त += (TRBS_PER_SEGMENT - 1) * num_segs;
 
-	if (ring->type != TYPE_EVENT && ring->enq_seg == ring->last_seg) {
+	अगर (ring->type != TYPE_EVENT && ring->enq_seg == ring->last_seg) अणु
 		ring->last_seg->trbs[TRBS_PER_SEGMENT - 1].link.control &=
 			~cpu_to_le32(LINK_TOGGLE);
 		last->trbs[TRBS_PER_SEGMENT - 1].link.control |=
 			cpu_to_le32(LINK_TOGGLE);
 		ring->last_seg = last;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * We need a radix tree for mapping physical addresses of TRBs to which stream
- * ID they belong to. We need to do this because the device controller won't
+ * We need a radix tree क्रम mapping physical addresses of TRBs to which stream
+ * ID they beदीर्घ to. We need to करो this because the device controller won't
  * tell us which stream ring the TRB came from. We could store the stream ID
- * in an event data TRB, but that doesn't help us for the cancellation case,
- * since the endpoint may stop before it reaches that event data TRB.
+ * in an event data TRB, but that करोesn't help us क्रम the cancellation हाल,
+ * since the endpoपूर्णांक may stop beक्रमe it reaches that event data TRB.
  *
  * The radix tree maps the upper portion of the TRB DMA address to a ring
  * segment that has the same upper portion of DMA addresses. For example,
@@ -178,289 +179,289 @@ static void cdnsp_link_rings(struct cdnsp_device *pdev,
  *	0x10c91400 >> 10 = 0x43245
  *
  * Obviously, only those TRBs with DMA addresses that are within the segment
- * will make the radix tree return the stream ID for that ring.
+ * will make the radix tree वापस the stream ID क्रम that ring.
  *
- * Caveats for the radix tree:
+ * Caveats क्रम the radix tree:
  *
- * The radix tree uses an unsigned long as a key pair. On 32-bit systems, an
- * unsigned long will be 32-bits; on a 64-bit system an unsigned long will be
+ * The radix tree uses an अचिन्हित दीर्घ as a key pair. On 32-bit प्रणालीs, an
+ * अचिन्हित दीर्घ will be 32-bits; on a 64-bit प्रणाली an अचिन्हित दीर्घ will be
  * 64-bits. Since we only request 32-bit DMA addresses, we can use that as the
- * key on 32-bit or 64-bit systems (it would also be fine if we asked for 64-bit
- * PCI DMA addresses on a 64-bit system). There might be a problem on 32-bit
- * extended systems (where the DMA address can be bigger than 32-bits),
- * if we allow the PCI dma mask to be bigger than 32-bits. So don't do that.
+ * key on 32-bit or 64-bit प्रणालीs (it would also be fine अगर we asked क्रम 64-bit
+ * PCI DMA addresses on a 64-bit प्रणाली). There might be a problem on 32-bit
+ * extended प्रणालीs (where the DMA address can be bigger than 32-bits),
+ * अगर we allow the PCI dma mask to be bigger than 32-bits. So करोn't करो that.
  */
-static int cdnsp_insert_segment_mapping(struct radix_tree_root *trb_address_map,
-					struct cdnsp_ring *ring,
-					struct cdnsp_segment *seg,
+अटल पूर्णांक cdnsp_insert_segment_mapping(काष्ठा radix_tree_root *trb_address_map,
+					काष्ठा cdnsp_ring *ring,
+					काष्ठा cdnsp_segment *seg,
 					gfp_t mem_flags)
-{
-	unsigned long key;
-	int ret;
+अणु
+	अचिन्हित दीर्घ key;
+	पूर्णांक ret;
 
-	key = (unsigned long)(seg->dma >> TRB_SEGMENT_SHIFT);
+	key = (अचिन्हित दीर्घ)(seg->dma >> TRB_SEGMENT_SHIFT);
 
-	/* Skip any segments that were already added. */
-	if (radix_tree_lookup(trb_address_map, key))
-		return 0;
+	/* Skip any segments that were alपढ़ोy added. */
+	अगर (radix_tree_lookup(trb_address_map, key))
+		वापस 0;
 
 	ret = radix_tree_maybe_preload(mem_flags);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = radix_tree_insert(trb_address_map, key, ring);
 	radix_tree_preload_end();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cdnsp_remove_segment_mapping(struct radix_tree_root *trb_address_map,
-					 struct cdnsp_segment *seg)
-{
-	unsigned long key;
+अटल व्योम cdnsp_हटाओ_segment_mapping(काष्ठा radix_tree_root *trb_address_map,
+					 काष्ठा cdnsp_segment *seg)
+अणु
+	अचिन्हित दीर्घ key;
 
-	key = (unsigned long)(seg->dma >> TRB_SEGMENT_SHIFT);
-	if (radix_tree_lookup(trb_address_map, key))
+	key = (अचिन्हित दीर्घ)(seg->dma >> TRB_SEGMENT_SHIFT);
+	अगर (radix_tree_lookup(trb_address_map, key))
 		radix_tree_delete(trb_address_map, key);
-}
+पूर्ण
 
-static int cdnsp_update_stream_segment_mapping(struct radix_tree_root *trb_address_map,
-					       struct cdnsp_ring *ring,
-					       struct cdnsp_segment *first_seg,
-					       struct cdnsp_segment *last_seg,
+अटल पूर्णांक cdnsp_update_stream_segment_mapping(काष्ठा radix_tree_root *trb_address_map,
+					       काष्ठा cdnsp_ring *ring,
+					       काष्ठा cdnsp_segment *first_seg,
+					       काष्ठा cdnsp_segment *last_seg,
 					       gfp_t mem_flags)
-{
-	struct cdnsp_segment *failed_seg;
-	struct cdnsp_segment *seg;
-	int ret;
+अणु
+	काष्ठा cdnsp_segment *failed_seg;
+	काष्ठा cdnsp_segment *seg;
+	पूर्णांक ret;
 
 	seg = first_seg;
-	do {
+	करो अणु
 		ret = cdnsp_insert_segment_mapping(trb_address_map, ring, seg,
 						   mem_flags);
-		if (ret)
-			goto remove_streams;
-		if (seg == last_seg)
-			return 0;
+		अगर (ret)
+			जाओ हटाओ_streams;
+		अगर (seg == last_seg)
+			वापस 0;
 		seg = seg->next;
-	} while (seg != first_seg);
+	पूर्ण जबतक (seg != first_seg);
 
-	return 0;
+	वापस 0;
 
-remove_streams:
+हटाओ_streams:
 	failed_seg = seg;
 	seg = first_seg;
-	do {
-		cdnsp_remove_segment_mapping(trb_address_map, seg);
-		if (seg == failed_seg)
-			return ret;
+	करो अणु
+		cdnsp_हटाओ_segment_mapping(trb_address_map, seg);
+		अगर (seg == failed_seg)
+			वापस ret;
 		seg = seg->next;
-	} while (seg != first_seg);
+	पूर्ण जबतक (seg != first_seg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cdnsp_remove_stream_mapping(struct cdnsp_ring *ring)
-{
-	struct cdnsp_segment *seg;
+अटल व्योम cdnsp_हटाओ_stream_mapping(काष्ठा cdnsp_ring *ring)
+अणु
+	काष्ठा cdnsp_segment *seg;
 
 	seg = ring->first_seg;
-	do {
-		cdnsp_remove_segment_mapping(ring->trb_address_map, seg);
+	करो अणु
+		cdnsp_हटाओ_segment_mapping(ring->trb_address_map, seg);
 		seg = seg->next;
-	} while (seg != ring->first_seg);
-}
+	पूर्ण जबतक (seg != ring->first_seg);
+पूर्ण
 
-static int cdnsp_update_stream_mapping(struct cdnsp_ring *ring)
-{
-	return cdnsp_update_stream_segment_mapping(ring->trb_address_map, ring,
+अटल पूर्णांक cdnsp_update_stream_mapping(काष्ठा cdnsp_ring *ring)
+अणु
+	वापस cdnsp_update_stream_segment_mapping(ring->trb_address_map, ring,
 			ring->first_seg, ring->last_seg, GFP_ATOMIC);
-}
+पूर्ण
 
-static void cdnsp_ring_free(struct cdnsp_device *pdev, struct cdnsp_ring *ring)
-{
-	if (!ring)
-		return;
+अटल व्योम cdnsp_ring_मुक्त(काष्ठा cdnsp_device *pdev, काष्ठा cdnsp_ring *ring)
+अणु
+	अगर (!ring)
+		वापस;
 
-	trace_cdnsp_ring_free(ring);
+	trace_cdnsp_ring_मुक्त(ring);
 
-	if (ring->first_seg) {
-		if (ring->type == TYPE_STREAM)
-			cdnsp_remove_stream_mapping(ring);
+	अगर (ring->first_seg) अणु
+		अगर (ring->type == TYPE_STREAM)
+			cdnsp_हटाओ_stream_mapping(ring);
 
-		cdnsp_free_segments_for_ring(pdev, ring->first_seg);
-	}
+		cdnsp_मुक्त_segments_क्रम_ring(pdev, ring->first_seg);
+	पूर्ण
 
-	kfree(ring);
-}
+	kमुक्त(ring);
+पूर्ण
 
-void cdnsp_initialize_ring_info(struct cdnsp_ring *ring)
-{
+व्योम cdnsp_initialize_ring_info(काष्ठा cdnsp_ring *ring)
+अणु
 	ring->enqueue = ring->first_seg->trbs;
 	ring->enq_seg = ring->first_seg;
 	ring->dequeue = ring->enqueue;
 	ring->deq_seg = ring->first_seg;
 
 	/*
-	 * The ring is initialized to 0. The producer must write 1 to the cycle
-	 * bit to handover ownership of the TRB, so PCS = 1. The consumer must
+	 * The ring is initialized to 0. The producer must ग_लिखो 1 to the cycle
+	 * bit to hanकरोver ownership of the TRB, so PCS = 1. The consumer must
 	 * compare CCS to the cycle bit to check ownership, so CCS = 1.
 	 *
-	 * New rings are initialized with cycle state equal to 1; if we are
+	 * New rings are initialized with cycle state equal to 1; अगर we are
 	 * handling ring expansion, set the cycle state equal to the old ring.
 	 */
 	ring->cycle_state = 1;
 
 	/*
-	 * Each segment has a link TRB, and leave an extra TRB for SW
+	 * Each segment has a link TRB, and leave an extra TRB क्रम SW
 	 * accounting purpose
 	 */
-	ring->num_trbs_free = ring->num_segs * (TRBS_PER_SEGMENT - 1) - 1;
-}
+	ring->num_trbs_मुक्त = ring->num_segs * (TRBS_PER_SEGMENT - 1) - 1;
+पूर्ण
 
-/* Allocate segments and link them for a ring. */
-static int cdnsp_alloc_segments_for_ring(struct cdnsp_device *pdev,
-					 struct cdnsp_segment **first,
-					 struct cdnsp_segment **last,
-					 unsigned int num_segs,
-					 unsigned int cycle_state,
-					 enum cdnsp_ring_type type,
-					 unsigned int max_packet,
+/* Allocate segments and link them क्रम a ring. */
+अटल पूर्णांक cdnsp_alloc_segments_क्रम_ring(काष्ठा cdnsp_device *pdev,
+					 काष्ठा cdnsp_segment **first,
+					 काष्ठा cdnsp_segment **last,
+					 अचिन्हित पूर्णांक num_segs,
+					 अचिन्हित पूर्णांक cycle_state,
+					 क्रमागत cdnsp_ring_type type,
+					 अचिन्हित पूर्णांक max_packet,
 					 gfp_t flags)
-{
-	struct cdnsp_segment *prev;
+अणु
+	काष्ठा cdnsp_segment *prev;
 
 	/* Allocate first segment. */
 	prev = cdnsp_segment_alloc(pdev, cycle_state, max_packet, flags);
-	if (!prev)
-		return -ENOMEM;
+	अगर (!prev)
+		वापस -ENOMEM;
 
 	num_segs--;
 	*first = prev;
 
 	/* Allocate all other segments. */
-	while (num_segs > 0) {
-		struct cdnsp_segment	*next;
+	जबतक (num_segs > 0) अणु
+		काष्ठा cdnsp_segment	*next;
 
 		next = cdnsp_segment_alloc(pdev, cycle_state,
 					   max_packet, flags);
-		if (!next) {
-			cdnsp_free_segments_for_ring(pdev, *first);
-			return -ENOMEM;
-		}
+		अगर (!next) अणु
+			cdnsp_मुक्त_segments_क्रम_ring(pdev, *first);
+			वापस -ENOMEM;
+		पूर्ण
 
 		cdnsp_link_segments(pdev, prev, next, type);
 
 		prev = next;
 		num_segs--;
-	}
+	पूर्ण
 
 	cdnsp_link_segments(pdev, prev, *first, type);
 	*last = prev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Create a new ring with zero or more segments.
  *
- * Link each segment together into a ring.
+ * Link each segment together पूर्णांकo a ring.
  * Set the end flag and the cycle toggle bit on the last segment.
  */
-static struct cdnsp_ring *cdnsp_ring_alloc(struct cdnsp_device *pdev,
-					   unsigned int num_segs,
-					   enum cdnsp_ring_type type,
-					   unsigned int max_packet,
+अटल काष्ठा cdnsp_ring *cdnsp_ring_alloc(काष्ठा cdnsp_device *pdev,
+					   अचिन्हित पूर्णांक num_segs,
+					   क्रमागत cdnsp_ring_type type,
+					   अचिन्हित पूर्णांक max_packet,
 					   gfp_t flags)
-{
-	struct cdnsp_ring *ring;
-	int ret;
+अणु
+	काष्ठा cdnsp_ring *ring;
+	पूर्णांक ret;
 
-	ring = kzalloc(sizeof *(ring), flags);
-	if (!ring)
-		return NULL;
+	ring = kzalloc(माप *(ring), flags);
+	अगर (!ring)
+		वापस शून्य;
 
 	ring->num_segs = num_segs;
 	ring->bounce_buf_len = max_packet;
 	INIT_LIST_HEAD(&ring->td_list);
 	ring->type = type;
 
-	if (num_segs == 0)
-		return ring;
+	अगर (num_segs == 0)
+		वापस ring;
 
-	ret = cdnsp_alloc_segments_for_ring(pdev, &ring->first_seg,
+	ret = cdnsp_alloc_segments_क्रम_ring(pdev, &ring->first_seg,
 					    &ring->last_seg, num_segs,
 					    1, type, max_packet, flags);
-	if (ret)
-		goto fail;
+	अगर (ret)
+		जाओ fail;
 
-	/* Only event ring does not use link TRB. */
-	if (type != TYPE_EVENT)
+	/* Only event ring करोes not use link TRB. */
+	अगर (type != TYPE_EVENT)
 		ring->last_seg->trbs[TRBS_PER_SEGMENT - 1].link.control |=
 			cpu_to_le32(LINK_TOGGLE);
 
 	cdnsp_initialize_ring_info(ring);
 	trace_cdnsp_ring_alloc(ring);
-	return ring;
+	वापस ring;
 fail:
-	kfree(ring);
-	return NULL;
-}
+	kमुक्त(ring);
+	वापस शून्य;
+पूर्ण
 
-void cdnsp_free_endpoint_rings(struct cdnsp_device *pdev, struct cdnsp_ep *pep)
-{
-	cdnsp_ring_free(pdev, pep->ring);
-	pep->ring = NULL;
-	cdnsp_free_stream_info(pdev, pep);
-}
+व्योम cdnsp_मुक्त_endpoपूर्णांक_rings(काष्ठा cdnsp_device *pdev, काष्ठा cdnsp_ep *pep)
+अणु
+	cdnsp_ring_मुक्त(pdev, pep->ring);
+	pep->ring = शून्य;
+	cdnsp_मुक्त_stream_info(pdev, pep);
+पूर्ण
 
 /*
  * Expand an existing ring.
  * Allocate a new ring which has same segment numbers and link the two rings.
  */
-int cdnsp_ring_expansion(struct cdnsp_device *pdev,
-			 struct cdnsp_ring *ring,
-			 unsigned int num_trbs,
+पूर्णांक cdnsp_ring_expansion(काष्ठा cdnsp_device *pdev,
+			 काष्ठा cdnsp_ring *ring,
+			 अचिन्हित पूर्णांक num_trbs,
 			 gfp_t flags)
-{
-	unsigned int num_segs_needed;
-	struct cdnsp_segment *first;
-	struct cdnsp_segment *last;
-	unsigned int num_segs;
-	int ret;
+अणु
+	अचिन्हित पूर्णांक num_segs_needed;
+	काष्ठा cdnsp_segment *first;
+	काष्ठा cdnsp_segment *last;
+	अचिन्हित पूर्णांक num_segs;
+	पूर्णांक ret;
 
 	num_segs_needed = (num_trbs + (TRBS_PER_SEGMENT - 1) - 1) /
 			(TRBS_PER_SEGMENT - 1);
 
-	/* Allocate number of segments we needed, or double the ring size. */
+	/* Allocate number of segments we needed, or द्विगुन the ring size. */
 	num_segs = max(ring->num_segs, num_segs_needed);
 
-	ret = cdnsp_alloc_segments_for_ring(pdev, &first, &last, num_segs,
+	ret = cdnsp_alloc_segments_क्रम_ring(pdev, &first, &last, num_segs,
 					    ring->cycle_state, ring->type,
 					    ring->bounce_buf_len, flags);
-	if (ret)
-		return -ENOMEM;
+	अगर (ret)
+		वापस -ENOMEM;
 
-	if (ring->type == TYPE_STREAM)
+	अगर (ring->type == TYPE_STREAM)
 		ret = cdnsp_update_stream_segment_mapping(ring->trb_address_map,
 							  ring, first,
 							  last, flags);
 
-	if (ret) {
-		cdnsp_free_segments_for_ring(pdev, first);
+	अगर (ret) अणु
+		cdnsp_मुक्त_segments_क्रम_ring(pdev, first);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	cdnsp_link_rings(pdev, ring, first, last, num_segs);
 	trace_cdnsp_ring_expansion(ring);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdnsp_init_device_ctx(struct cdnsp_device *pdev)
-{
-	int size = HCC_64BYTE_CONTEXT(pdev->hcc_params) ? 2048 : 1024;
+अटल पूर्णांक cdnsp_init_device_ctx(काष्ठा cdnsp_device *pdev)
+अणु
+	पूर्णांक size = HCC_64BYTE_CONTEXT(pdev->hcc_params) ? 2048 : 1024;
 
 	pdev->out_ctx.type = CDNSP_CTX_TYPE_DEVICE;
 	pdev->out_ctx.size = size;
@@ -468,8 +469,8 @@ static int cdnsp_init_device_ctx(struct cdnsp_device *pdev)
 	pdev->out_ctx.bytes = dma_pool_zalloc(pdev->device_pool, GFP_ATOMIC,
 					      &pdev->out_ctx.dma);
 
-	if (!pdev->out_ctx.bytes)
-		return -ENOMEM;
+	अगर (!pdev->out_ctx.bytes)
+		वापस -ENOMEM;
 
 	pdev->in_ctx.type = CDNSP_CTX_TYPE_INPUT;
 	pdev->in_ctx.ctx_size = pdev->out_ctx.ctx_size;
@@ -477,132 +478,132 @@ static int cdnsp_init_device_ctx(struct cdnsp_device *pdev)
 	pdev->in_ctx.bytes = dma_pool_zalloc(pdev->device_pool, GFP_ATOMIC,
 					     &pdev->in_ctx.dma);
 
-	if (!pdev->in_ctx.bytes) {
-		dma_pool_free(pdev->device_pool, pdev->out_ctx.bytes,
+	अगर (!pdev->in_ctx.bytes) अणु
+		dma_pool_मुक्त(pdev->device_pool, pdev->out_ctx.bytes,
 			      pdev->out_ctx.dma);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct cdnsp_input_control_ctx
-	*cdnsp_get_input_control_ctx(struct cdnsp_container_ctx *ctx)
-{
-	if (ctx->type != CDNSP_CTX_TYPE_INPUT)
-		return NULL;
+काष्ठा cdnsp_input_control_ctx
+	*cdnsp_get_input_control_ctx(काष्ठा cdnsp_container_ctx *ctx)
+अणु
+	अगर (ctx->type != CDNSP_CTX_TYPE_INPUT)
+		वापस शून्य;
 
-	return (struct cdnsp_input_control_ctx *)ctx->bytes;
-}
+	वापस (काष्ठा cdnsp_input_control_ctx *)ctx->bytes;
+पूर्ण
 
-struct cdnsp_slot_ctx *cdnsp_get_slot_ctx(struct cdnsp_container_ctx *ctx)
-{
-	if (ctx->type == CDNSP_CTX_TYPE_DEVICE)
-		return (struct cdnsp_slot_ctx *)ctx->bytes;
+काष्ठा cdnsp_slot_ctx *cdnsp_get_slot_ctx(काष्ठा cdnsp_container_ctx *ctx)
+अणु
+	अगर (ctx->type == CDNSP_CTX_TYPE_DEVICE)
+		वापस (काष्ठा cdnsp_slot_ctx *)ctx->bytes;
 
-	return (struct cdnsp_slot_ctx *)(ctx->bytes + ctx->ctx_size);
-}
+	वापस (काष्ठा cdnsp_slot_ctx *)(ctx->bytes + ctx->ctx_size);
+पूर्ण
 
-struct cdnsp_ep_ctx *cdnsp_get_ep_ctx(struct cdnsp_container_ctx *ctx,
-				      unsigned int ep_index)
-{
+काष्ठा cdnsp_ep_ctx *cdnsp_get_ep_ctx(काष्ठा cdnsp_container_ctx *ctx,
+				      अचिन्हित पूर्णांक ep_index)
+अणु
 	/* Increment ep index by offset of start of ep ctx array. */
 	ep_index++;
-	if (ctx->type == CDNSP_CTX_TYPE_INPUT)
+	अगर (ctx->type == CDNSP_CTX_TYPE_INPUT)
 		ep_index++;
 
-	return (struct cdnsp_ep_ctx *)(ctx->bytes + (ep_index * ctx->ctx_size));
-}
+	वापस (काष्ठा cdnsp_ep_ctx *)(ctx->bytes + (ep_index * ctx->ctx_size));
+पूर्ण
 
-static void cdnsp_free_stream_ctx(struct cdnsp_device *pdev,
-				  struct cdnsp_ep *pep)
-{
-	dma_pool_free(pdev->device_pool, pep->stream_info.stream_ctx_array,
+अटल व्योम cdnsp_मुक्त_stream_ctx(काष्ठा cdnsp_device *pdev,
+				  काष्ठा cdnsp_ep *pep)
+अणु
+	dma_pool_मुक्त(pdev->device_pool, pep->stream_info.stream_ctx_array,
 		      pep->stream_info.ctx_array_dma);
-}
+पूर्ण
 
-/* The stream context array must be a power of 2. */
-static struct cdnsp_stream_ctx
-	*cdnsp_alloc_stream_ctx(struct cdnsp_device *pdev, struct cdnsp_ep *pep)
-{
-	size_t size = sizeof(struct cdnsp_stream_ctx) *
+/* The stream context array must be a घातer of 2. */
+अटल काष्ठा cdnsp_stream_ctx
+	*cdnsp_alloc_stream_ctx(काष्ठा cdnsp_device *pdev, काष्ठा cdnsp_ep *pep)
+अणु
+	माप_प्रकार size = माप(काष्ठा cdnsp_stream_ctx) *
 		      pep->stream_info.num_stream_ctxs;
 
-	if (size > CDNSP_CTX_SIZE)
-		return NULL;
+	अगर (size > CDNSP_CTX_SIZE)
+		वापस शून्य;
 
 	/**
-	 * Driver uses intentionally the device_pool to allocated stream
+	 * Driver uses पूर्णांकentionally the device_pool to allocated stream
 	 * context array. Device Pool has 2048 bytes of size what gives us
 	 * 128 entries.
 	 */
-	return dma_pool_zalloc(pdev->device_pool, GFP_DMA32 | GFP_ATOMIC,
+	वापस dma_pool_zalloc(pdev->device_pool, GFP_DMA32 | GFP_ATOMIC,
 			       &pep->stream_info.ctx_array_dma);
-}
+पूर्ण
 
-struct cdnsp_ring *cdnsp_dma_to_transfer_ring(struct cdnsp_ep *pep, u64 address)
-{
-	if (pep->ep_state & EP_HAS_STREAMS)
-		return radix_tree_lookup(&pep->stream_info.trb_address_map,
+काष्ठा cdnsp_ring *cdnsp_dma_to_transfer_ring(काष्ठा cdnsp_ep *pep, u64 address)
+अणु
+	अगर (pep->ep_state & EP_HAS_STREAMS)
+		वापस radix_tree_lookup(&pep->stream_info.trb_address_map,
 					 address >> TRB_SEGMENT_SHIFT);
 
-	return pep->ring;
-}
+	वापस pep->ring;
+पूर्ण
 
 /*
- * Change an endpoint's internal structure so it supports stream IDs.
+ * Change an endpoपूर्णांक's पूर्णांकernal काष्ठाure so it supports stream IDs.
  * The number of requested streams includes stream 0, which cannot be used by
  * driver.
  *
  * The number of stream contexts in the stream context array may be bigger than
  * the number of streams the driver wants to use. This is because the number of
- * stream context array entries must be a power of two.
+ * stream context array entries must be a घातer of two.
  */
-int cdnsp_alloc_stream_info(struct cdnsp_device *pdev,
-			    struct cdnsp_ep *pep,
-			    unsigned int num_stream_ctxs,
-			    unsigned int num_streams)
-{
-	struct cdnsp_stream_info *stream_info;
-	struct cdnsp_ring *cur_ring;
+पूर्णांक cdnsp_alloc_stream_info(काष्ठा cdnsp_device *pdev,
+			    काष्ठा cdnsp_ep *pep,
+			    अचिन्हित पूर्णांक num_stream_ctxs,
+			    अचिन्हित पूर्णांक num_streams)
+अणु
+	काष्ठा cdnsp_stream_info *stream_info;
+	काष्ठा cdnsp_ring *cur_ring;
 	u32 cur_stream;
 	u64 addr;
-	int ret;
-	int mps;
+	पूर्णांक ret;
+	पूर्णांक mps;
 
 	stream_info = &pep->stream_info;
 	stream_info->num_streams = num_streams;
 	stream_info->num_stream_ctxs = num_stream_ctxs;
 
-	/* Initialize the array of virtual pointers to stream rings. */
-	stream_info->stream_rings = kcalloc(num_streams,
-					    sizeof(struct cdnsp_ring *),
+	/* Initialize the array of भव poपूर्णांकers to stream rings. */
+	stream_info->stream_rings = kसुस्मृति(num_streams,
+					    माप(काष्ठा cdnsp_ring *),
 					    GFP_ATOMIC);
-	if (!stream_info->stream_rings)
-		return -ENOMEM;
+	अगर (!stream_info->stream_rings)
+		वापस -ENOMEM;
 
-	/* Initialize the array of DMA addresses for stream rings for the HW. */
+	/* Initialize the array of DMA addresses क्रम stream rings क्रम the HW. */
 	stream_info->stream_ctx_array = cdnsp_alloc_stream_ctx(pdev, pep);
-	if (!stream_info->stream_ctx_array)
-		goto cleanup_stream_rings;
+	अगर (!stream_info->stream_ctx_array)
+		जाओ cleanup_stream_rings;
 
-	memset(stream_info->stream_ctx_array, 0,
-	       sizeof(struct cdnsp_stream_ctx) * num_stream_ctxs);
+	स_रखो(stream_info->stream_ctx_array, 0,
+	       माप(काष्ठा cdnsp_stream_ctx) * num_stream_ctxs);
 	INIT_RADIX_TREE(&stream_info->trb_address_map, GFP_ATOMIC);
-	mps = usb_endpoint_maxp(pep->endpoint.desc);
+	mps = usb_endpoपूर्णांक_maxp(pep->endpoपूर्णांक.desc);
 
 	/*
-	 * Allocate rings for all the streams that the driver will use,
+	 * Allocate rings क्रम all the streams that the driver will use,
 	 * and add their segment DMA addresses to the radix tree.
 	 * Stream 0 is reserved.
 	 */
-	for (cur_stream = 1; cur_stream < num_streams; cur_stream++) {
+	क्रम (cur_stream = 1; cur_stream < num_streams; cur_stream++) अणु
 		cur_ring = cdnsp_ring_alloc(pdev, 2, TYPE_STREAM, mps,
 					    GFP_ATOMIC);
 		stream_info->stream_rings[cur_stream] = cur_ring;
 
-		if (!cur_ring)
-			goto cleanup_rings;
+		अगर (!cur_ring)
+			जाओ cleanup_rings;
 
 		cur_ring->stream_id = cur_stream;
 		cur_ring->trb_address_map = &stream_info->trb_address_map;
@@ -617,145 +618,145 @@ int cdnsp_alloc_stream_info(struct cdnsp_device *pdev,
 		trace_cdnsp_set_stream_ring(cur_ring);
 
 		ret = cdnsp_update_stream_mapping(cur_ring);
-		if (ret)
-			goto cleanup_rings;
-	}
+		अगर (ret)
+			जाओ cleanup_rings;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup_rings:
-	for (cur_stream = 1; cur_stream < num_streams; cur_stream++) {
+	क्रम (cur_stream = 1; cur_stream < num_streams; cur_stream++) अणु
 		cur_ring = stream_info->stream_rings[cur_stream];
-		if (cur_ring) {
-			cdnsp_ring_free(pdev, cur_ring);
-			stream_info->stream_rings[cur_stream] = NULL;
-		}
-	}
+		अगर (cur_ring) अणु
+			cdnsp_ring_मुक्त(pdev, cur_ring);
+			stream_info->stream_rings[cur_stream] = शून्य;
+		पूर्ण
+	पूर्ण
 
 cleanup_stream_rings:
-	kfree(pep->stream_info.stream_rings);
+	kमुक्त(pep->stream_info.stream_rings);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-/* Frees all stream contexts associated with the endpoint. */
-static void cdnsp_free_stream_info(struct cdnsp_device *pdev,
-				   struct cdnsp_ep *pep)
-{
-	struct cdnsp_stream_info *stream_info = &pep->stream_info;
-	struct cdnsp_ring *cur_ring;
-	int cur_stream;
+/* Frees all stream contexts associated with the endpoपूर्णांक. */
+अटल व्योम cdnsp_मुक्त_stream_info(काष्ठा cdnsp_device *pdev,
+				   काष्ठा cdnsp_ep *pep)
+अणु
+	काष्ठा cdnsp_stream_info *stream_info = &pep->stream_info;
+	काष्ठा cdnsp_ring *cur_ring;
+	पूर्णांक cur_stream;
 
-	if (!(pep->ep_state & EP_HAS_STREAMS))
-		return;
+	अगर (!(pep->ep_state & EP_HAS_STREAMS))
+		वापस;
 
-	for (cur_stream = 1; cur_stream < stream_info->num_streams;
-	     cur_stream++) {
+	क्रम (cur_stream = 1; cur_stream < stream_info->num_streams;
+	     cur_stream++) अणु
 		cur_ring = stream_info->stream_rings[cur_stream];
-		if (cur_ring) {
-			cdnsp_ring_free(pdev, cur_ring);
-			stream_info->stream_rings[cur_stream] = NULL;
-		}
-	}
+		अगर (cur_ring) अणु
+			cdnsp_ring_मुक्त(pdev, cur_ring);
+			stream_info->stream_rings[cur_stream] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (stream_info->stream_ctx_array)
-		cdnsp_free_stream_ctx(pdev, pep);
+	अगर (stream_info->stream_ctx_array)
+		cdnsp_मुक्त_stream_ctx(pdev, pep);
 
-	kfree(stream_info->stream_rings);
+	kमुक्त(stream_info->stream_rings);
 	pep->ep_state &= ~EP_HAS_STREAMS;
-}
+पूर्ण
 
-/* All the cdnsp_tds in the ring's TD list should be freed at this point.*/
-static void cdnsp_free_priv_device(struct cdnsp_device *pdev)
-{
+/* All the cdnsp_tds in the ring's TD list should be मुक्तd at this poपूर्णांक.*/
+अटल व्योम cdnsp_मुक्त_priv_device(काष्ठा cdnsp_device *pdev)
+अणु
 	pdev->dcbaa->dev_context_ptrs[1] = 0;
 
-	cdnsp_free_endpoint_rings(pdev, &pdev->eps[0]);
+	cdnsp_मुक्त_endpoपूर्णांक_rings(pdev, &pdev->eps[0]);
 
-	if (pdev->in_ctx.bytes)
-		dma_pool_free(pdev->device_pool, pdev->in_ctx.bytes,
+	अगर (pdev->in_ctx.bytes)
+		dma_pool_मुक्त(pdev->device_pool, pdev->in_ctx.bytes,
 			      pdev->in_ctx.dma);
 
-	if (pdev->out_ctx.bytes)
-		dma_pool_free(pdev->device_pool, pdev->out_ctx.bytes,
+	अगर (pdev->out_ctx.bytes)
+		dma_pool_मुक्त(pdev->device_pool, pdev->out_ctx.bytes,
 			      pdev->out_ctx.dma);
 
-	pdev->in_ctx.bytes = NULL;
-	pdev->out_ctx.bytes = NULL;
-}
+	pdev->in_ctx.bytes = शून्य;
+	pdev->out_ctx.bytes = शून्य;
+पूर्ण
 
-static int cdnsp_alloc_priv_device(struct cdnsp_device *pdev)
-{
-	int ret;
+अटल पूर्णांक cdnsp_alloc_priv_device(काष्ठा cdnsp_device *pdev)
+अणु
+	पूर्णांक ret;
 
 	ret = cdnsp_init_device_ctx(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Allocate endpoint 0 ring. */
+	/* Allocate endpoपूर्णांक 0 ring. */
 	pdev->eps[0].ring = cdnsp_ring_alloc(pdev, 2, TYPE_CTRL, 0, GFP_ATOMIC);
-	if (!pdev->eps[0].ring)
-		goto fail;
+	अगर (!pdev->eps[0].ring)
+		जाओ fail;
 
-	/* Point to output device context in dcbaa. */
+	/* Poपूर्णांक to output device context in dcbaa. */
 	pdev->dcbaa->dev_context_ptrs[1] = cpu_to_le64(pdev->out_ctx.dma);
 	pdev->cmd.in_ctx = &pdev->in_ctx;
 
 	trace_cdnsp_alloc_priv_device(pdev);
-	return 0;
+	वापस 0;
 fail:
-	dma_pool_free(pdev->device_pool, pdev->out_ctx.bytes,
+	dma_pool_मुक्त(pdev->device_pool, pdev->out_ctx.bytes,
 		      pdev->out_ctx.dma);
-	dma_pool_free(pdev->device_pool, pdev->in_ctx.bytes,
+	dma_pool_मुक्त(pdev->device_pool, pdev->in_ctx.bytes,
 		      pdev->in_ctx.dma);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void cdnsp_copy_ep0_dequeue_into_input_ctx(struct cdnsp_device *pdev)
-{
-	struct cdnsp_ep_ctx *ep0_ctx = pdev->eps[0].in_ctx;
-	struct cdnsp_ring *ep_ring = pdev->eps[0].ring;
+व्योम cdnsp_copy_ep0_dequeue_पूर्णांकo_input_ctx(काष्ठा cdnsp_device *pdev)
+अणु
+	काष्ठा cdnsp_ep_ctx *ep0_ctx = pdev->eps[0].in_ctx;
+	काष्ठा cdnsp_ring *ep_ring = pdev->eps[0].ring;
 	dma_addr_t dma;
 
 	dma = cdnsp_trb_virt_to_dma(ep_ring->enq_seg, ep_ring->enqueue);
 	ep0_ctx->deq = cpu_to_le64(dma | ep_ring->cycle_state);
-}
+पूर्ण
 
-/* Setup an controller private device for a Set Address command. */
-int cdnsp_setup_addressable_priv_dev(struct cdnsp_device *pdev)
-{
-	struct cdnsp_slot_ctx *slot_ctx;
-	struct cdnsp_ep_ctx *ep0_ctx;
+/* Setup an controller निजी device क्रम a Set Address command. */
+पूर्णांक cdnsp_setup_addressable_priv_dev(काष्ठा cdnsp_device *pdev)
+अणु
+	काष्ठा cdnsp_slot_ctx *slot_ctx;
+	काष्ठा cdnsp_ep_ctx *ep0_ctx;
 	u32 max_packets, port;
 
 	ep0_ctx = cdnsp_get_ep_ctx(&pdev->in_ctx, 0);
 	slot_ctx = cdnsp_get_slot_ctx(&pdev->in_ctx);
 
-	/* Only the control endpoint is valid - one endpoint context. */
+	/* Only the control endpoपूर्णांक is valid - one endpoपूर्णांक context. */
 	slot_ctx->dev_info |= cpu_to_le32(LAST_CTX(1));
 
-	switch (pdev->gadget.speed) {
-	case USB_SPEED_SUPER_PLUS:
+	चयन (pdev->gadget.speed) अणु
+	हाल USB_SPEED_SUPER_PLUS:
 		slot_ctx->dev_info |= cpu_to_le32(SLOT_SPEED_SSP);
 		max_packets = MAX_PACKET(512);
-		break;
-	case USB_SPEED_SUPER:
+		अवरोध;
+	हाल USB_SPEED_SUPER:
 		slot_ctx->dev_info |= cpu_to_le32(SLOT_SPEED_SS);
 		max_packets = MAX_PACKET(512);
-		break;
-	case USB_SPEED_HIGH:
+		अवरोध;
+	हाल USB_SPEED_HIGH:
 		slot_ctx->dev_info |= cpu_to_le32(SLOT_SPEED_HS);
 		max_packets = MAX_PACKET(64);
-		break;
-	case USB_SPEED_FULL:
+		अवरोध;
+	हाल USB_SPEED_FULL:
 		slot_ctx->dev_info |= cpu_to_le32(SLOT_SPEED_FS);
 		max_packets = MAX_PACKET(64);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Speed was not set , this shouldn't happen. */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	port = DEV_PORT(pdev->active_port->port_num);
 	slot_ctx->dev_port |= cpu_to_le32(port);
@@ -771,228 +772,228 @@ int cdnsp_setup_addressable_priv_dev(struct cdnsp_device *pdev)
 
 	trace_cdnsp_setup_addressable_priv_device(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Convert interval expressed as 2^(bInterval - 1) == interval into
- * straight exponent value 2^n == interval.
+ * Convert पूर्णांकerval expressed as 2^(bInterval - 1) == पूर्णांकerval पूर्णांकo
+ * straight exponent value 2^n == पूर्णांकerval.
  */
-static unsigned int cdnsp_parse_exponent_interval(struct usb_gadget *g,
-						  struct cdnsp_ep *pep)
-{
-	unsigned int interval;
+अटल अचिन्हित पूर्णांक cdnsp_parse_exponent_पूर्णांकerval(काष्ठा usb_gadget *g,
+						  काष्ठा cdnsp_ep *pep)
+अणु
+	अचिन्हित पूर्णांक पूर्णांकerval;
 
-	interval = clamp_val(pep->endpoint.desc->bInterval, 1, 16) - 1;
-	if (interval != pep->endpoint.desc->bInterval - 1)
+	पूर्णांकerval = clamp_val(pep->endpoपूर्णांक.desc->bInterval, 1, 16) - 1;
+	अगर (पूर्णांकerval != pep->endpoपूर्णांक.desc->bInterval - 1)
 		dev_warn(&g->dev, "ep %s - rounding interval to %d %sframes\n",
-			 pep->name, 1 << interval,
+			 pep->name, 1 << पूर्णांकerval,
 			 g->speed == USB_SPEED_FULL ? "" : "micro");
 
 	/*
-	 * Full speed isoc endpoints specify interval in frames,
+	 * Full speed isoc endpoपूर्णांकs specअगरy पूर्णांकerval in frames,
 	 * not microframes. We are using microframes everywhere,
 	 * so adjust accordingly.
 	 */
-	if (g->speed == USB_SPEED_FULL)
-		interval += 3;	/* 1 frame = 2^3 uframes */
+	अगर (g->speed == USB_SPEED_FULL)
+		पूर्णांकerval += 3;	/* 1 frame = 2^3 uframes */
 
 	/* Controller handles only up to 512ms (2^12). */
-	if (interval > 12)
-		interval = 12;
+	अगर (पूर्णांकerval > 12)
+		पूर्णांकerval = 12;
 
-	return interval;
-}
+	वापस पूर्णांकerval;
+पूर्ण
 
 /*
  * Convert bInterval expressed in microframes (in 1-255 range) to exponent of
- * microframes, rounded down to nearest power of 2.
+ * microframes, rounded करोwn to nearest घातer of 2.
  */
-static unsigned int cdnsp_microframes_to_exponent(struct usb_gadget *g,
-						  struct cdnsp_ep *pep,
-						  unsigned int desc_interval,
-						  unsigned int min_exponent,
-						  unsigned int max_exponent)
-{
-	unsigned int interval;
+अटल अचिन्हित पूर्णांक cdnsp_microframes_to_exponent(काष्ठा usb_gadget *g,
+						  काष्ठा cdnsp_ep *pep,
+						  अचिन्हित पूर्णांक desc_पूर्णांकerval,
+						  अचिन्हित पूर्णांक min_exponent,
+						  अचिन्हित पूर्णांक max_exponent)
+अणु
+	अचिन्हित पूर्णांक पूर्णांकerval;
 
-	interval = fls(desc_interval) - 1;
-	return clamp_val(interval, min_exponent, max_exponent);
-}
+	पूर्णांकerval = fls(desc_पूर्णांकerval) - 1;
+	वापस clamp_val(पूर्णांकerval, min_exponent, max_exponent);
+पूर्ण
 
 /*
- * Return the polling interval.
+ * Return the polling पूर्णांकerval.
  *
- * The polling interval is expressed in "microframes". If controllers's Interval
- * field is set to N, it will service the endpoint every 2^(Interval)*125us.
+ * The polling पूर्णांकerval is expressed in "microframes". If controllers's Interval
+ * field is set to N, it will service the endpoपूर्णांक every 2^(Interval)*125us.
  */
-static unsigned int cdnsp_get_endpoint_interval(struct usb_gadget *g,
-						struct cdnsp_ep *pep)
-{
-	unsigned int interval = 0;
+अटल अचिन्हित पूर्णांक cdnsp_get_endpoपूर्णांक_पूर्णांकerval(काष्ठा usb_gadget *g,
+						काष्ठा cdnsp_ep *pep)
+अणु
+	अचिन्हित पूर्णांक पूर्णांकerval = 0;
 
-	switch (g->speed) {
-	case USB_SPEED_HIGH:
-	case USB_SPEED_SUPER_PLUS:
-	case USB_SPEED_SUPER:
-		if (usb_endpoint_xfer_int(pep->endpoint.desc) ||
-		    usb_endpoint_xfer_isoc(pep->endpoint.desc))
-			interval = cdnsp_parse_exponent_interval(g, pep);
-		break;
-	case USB_SPEED_FULL:
-		if (usb_endpoint_xfer_isoc(pep->endpoint.desc)) {
-			interval = cdnsp_parse_exponent_interval(g, pep);
-		} else if (usb_endpoint_xfer_int(pep->endpoint.desc)) {
-			interval = pep->endpoint.desc->bInterval << 3;
-			interval = cdnsp_microframes_to_exponent(g, pep,
-								 interval,
+	चयन (g->speed) अणु
+	हाल USB_SPEED_HIGH:
+	हाल USB_SPEED_SUPER_PLUS:
+	हाल USB_SPEED_SUPER:
+		अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(pep->endpoपूर्णांक.desc) ||
+		    usb_endpoपूर्णांक_xfer_isoc(pep->endpoपूर्णांक.desc))
+			पूर्णांकerval = cdnsp_parse_exponent_पूर्णांकerval(g, pep);
+		अवरोध;
+	हाल USB_SPEED_FULL:
+		अगर (usb_endpoपूर्णांक_xfer_isoc(pep->endpoपूर्णांक.desc)) अणु
+			पूर्णांकerval = cdnsp_parse_exponent_पूर्णांकerval(g, pep);
+		पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(pep->endpoपूर्णांक.desc)) अणु
+			पूर्णांकerval = pep->endpoपूर्णांक.desc->bInterval << 3;
+			पूर्णांकerval = cdnsp_microframes_to_exponent(g, pep,
+								 पूर्णांकerval,
 								 3, 10);
-		}
+		पूर्ण
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	return interval;
-}
+	वापस पूर्णांकerval;
+पूर्ण
 
 /*
- * The "Mult" field in the endpoint context is only set for SuperSpeed isoc eps.
- * High speed endpoint descriptors can define "the number of additional
+ * The "Mult" field in the endpoपूर्णांक context is only set क्रम SuperSpeed isoc eps.
+ * High speed endpoपूर्णांक descriptors can define "the number of additional
  * transaction opportunities per microframe", but that goes in the Max Burst
- * endpoint context field.
+ * endpoपूर्णांक context field.
  */
-static u32 cdnsp_get_endpoint_mult(struct usb_gadget *g, struct cdnsp_ep *pep)
-{
-	if (g->speed < USB_SPEED_SUPER ||
-	    !usb_endpoint_xfer_isoc(pep->endpoint.desc))
-		return 0;
+अटल u32 cdnsp_get_endpoपूर्णांक_mult(काष्ठा usb_gadget *g, काष्ठा cdnsp_ep *pep)
+अणु
+	अगर (g->speed < USB_SPEED_SUPER ||
+	    !usb_endpoपूर्णांक_xfer_isoc(pep->endpoपूर्णांक.desc))
+		वापस 0;
 
-	return pep->endpoint.comp_desc->bmAttributes;
-}
+	वापस pep->endpoपूर्णांक.comp_desc->bmAttributes;
+पूर्ण
 
-static u32 cdnsp_get_endpoint_max_burst(struct usb_gadget *g,
-					struct cdnsp_ep *pep)
-{
+अटल u32 cdnsp_get_endpoपूर्णांक_max_burst(काष्ठा usb_gadget *g,
+					काष्ठा cdnsp_ep *pep)
+अणु
 	/* Super speed and Plus have max burst in ep companion desc */
-	if (g->speed >= USB_SPEED_SUPER)
-		return pep->endpoint.comp_desc->bMaxBurst;
+	अगर (g->speed >= USB_SPEED_SUPER)
+		वापस pep->endpoपूर्णांक.comp_desc->bMaxBurst;
 
-	if (g->speed == USB_SPEED_HIGH &&
-	    (usb_endpoint_xfer_isoc(pep->endpoint.desc) ||
-	     usb_endpoint_xfer_int(pep->endpoint.desc)))
-		return (usb_endpoint_maxp(pep->endpoint.desc) & 0x1800) >> 11;
+	अगर (g->speed == USB_SPEED_HIGH &&
+	    (usb_endpoपूर्णांक_xfer_isoc(pep->endpoपूर्णांक.desc) ||
+	     usb_endpoपूर्णांक_xfer_पूर्णांक(pep->endpoपूर्णांक.desc)))
+		वापस (usb_endpoपूर्णांक_maxp(pep->endpoपूर्णांक.desc) & 0x1800) >> 11;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 cdnsp_get_endpoint_type(const struct usb_endpoint_descriptor *desc)
-{
-	int in;
+अटल u32 cdnsp_get_endpoपूर्णांक_type(स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	पूर्णांक in;
 
-	in = usb_endpoint_dir_in(desc);
+	in = usb_endpoपूर्णांक_dir_in(desc);
 
-	switch (usb_endpoint_type(desc)) {
-	case USB_ENDPOINT_XFER_CONTROL:
-		return CTRL_EP;
-	case USB_ENDPOINT_XFER_BULK:
-		return in ? BULK_IN_EP : BULK_OUT_EP;
-	case USB_ENDPOINT_XFER_ISOC:
-		return in ? ISOC_IN_EP : ISOC_OUT_EP;
-	case USB_ENDPOINT_XFER_INT:
-		return in ? INT_IN_EP : INT_OUT_EP;
-	}
+	चयन (usb_endpoपूर्णांक_type(desc)) अणु
+	हाल USB_ENDPOINT_XFER_CONTROL:
+		वापस CTRL_EP;
+	हाल USB_ENDPOINT_XFER_BULK:
+		वापस in ? BULK_IN_EP : BULK_OUT_EP;
+	हाल USB_ENDPOINT_XFER_ISOC:
+		वापस in ? ISOC_IN_EP : ISOC_OUT_EP;
+	हाल USB_ENDPOINT_XFER_INT:
+		वापस in ? INT_IN_EP : INT_OUT_EP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Return the maximum endpoint service interval time (ESIT) payload.
+ * Return the maximum endpoपूर्णांक service पूर्णांकerval समय (ESIT) payload.
  * Basically, this is the maxpacket size, multiplied by the burst size
  * and mult size.
  */
-static u32 cdnsp_get_max_esit_payload(struct usb_gadget *g,
-				      struct cdnsp_ep *pep)
-{
-	int max_packet;
-	int max_burst;
+अटल u32 cdnsp_get_max_esit_payload(काष्ठा usb_gadget *g,
+				      काष्ठा cdnsp_ep *pep)
+अणु
+	पूर्णांक max_packet;
+	पूर्णांक max_burst;
 
-	/* Only applies for interrupt or isochronous endpoints*/
-	if (usb_endpoint_xfer_control(pep->endpoint.desc) ||
-	    usb_endpoint_xfer_bulk(pep->endpoint.desc))
-		return 0;
+	/* Only applies क्रम पूर्णांकerrupt or isochronous endpoपूर्णांकs*/
+	अगर (usb_endpoपूर्णांक_xfer_control(pep->endpoपूर्णांक.desc) ||
+	    usb_endpoपूर्णांक_xfer_bulk(pep->endpoपूर्णांक.desc))
+		वापस 0;
 
 	/* SuperSpeedPlus Isoc ep sending over 48k per EIST. */
-	if (g->speed >= USB_SPEED_SUPER_PLUS &&
-	    USB_SS_SSP_ISOC_COMP(pep->endpoint.desc->bmAttributes))
-		return le16_to_cpu(pep->endpoint.comp_desc->wBytesPerInterval);
+	अगर (g->speed >= USB_SPEED_SUPER_PLUS &&
+	    USB_SS_SSP_ISOC_COMP(pep->endpoपूर्णांक.desc->bmAttributes))
+		वापस le16_to_cpu(pep->endpoपूर्णांक.comp_desc->wBytesPerInterval);
 	/* SuperSpeed or SuperSpeedPlus Isoc ep with less than 48k per esit */
-	else if (g->speed >= USB_SPEED_SUPER)
-		return le16_to_cpu(pep->endpoint.comp_desc->wBytesPerInterval);
+	अन्यथा अगर (g->speed >= USB_SPEED_SUPER)
+		वापस le16_to_cpu(pep->endpoपूर्णांक.comp_desc->wBytesPerInterval);
 
-	max_packet = usb_endpoint_maxp(pep->endpoint.desc);
-	max_burst = usb_endpoint_maxp_mult(pep->endpoint.desc);
+	max_packet = usb_endpoपूर्णांक_maxp(pep->endpoपूर्णांक.desc);
+	max_burst = usb_endpoपूर्णांक_maxp_mult(pep->endpoपूर्णांक.desc);
 
 	/* A 0 in max burst means 1 transfer per ESIT */
-	return max_packet * max_burst;
-}
+	वापस max_packet * max_burst;
+पूर्ण
 
-int cdnsp_endpoint_init(struct cdnsp_device *pdev,
-			struct cdnsp_ep *pep,
+पूर्णांक cdnsp_endpoपूर्णांक_init(काष्ठा cdnsp_device *pdev,
+			काष्ठा cdnsp_ep *pep,
 			gfp_t mem_flags)
-{
-	enum cdnsp_ring_type ring_type;
-	struct cdnsp_ep_ctx *ep_ctx;
-	unsigned int err_count = 0;
-	unsigned int avg_trb_len;
-	unsigned int max_packet;
-	unsigned int max_burst;
-	unsigned int interval;
+अणु
+	क्रमागत cdnsp_ring_type ring_type;
+	काष्ठा cdnsp_ep_ctx *ep_ctx;
+	अचिन्हित पूर्णांक err_count = 0;
+	अचिन्हित पूर्णांक avg_trb_len;
+	अचिन्हित पूर्णांक max_packet;
+	अचिन्हित पूर्णांक max_burst;
+	अचिन्हित पूर्णांक पूर्णांकerval;
 	u32 max_esit_payload;
-	unsigned int mult;
-	u32 endpoint_type;
-	int ret;
+	अचिन्हित पूर्णांक mult;
+	u32 endpoपूर्णांक_type;
+	पूर्णांक ret;
 
 	ep_ctx = pep->in_ctx;
 
-	endpoint_type = cdnsp_get_endpoint_type(pep->endpoint.desc);
-	if (!endpoint_type)
-		return -EINVAL;
+	endpoपूर्णांक_type = cdnsp_get_endpoपूर्णांक_type(pep->endpoपूर्णांक.desc);
+	अगर (!endpoपूर्णांक_type)
+		वापस -EINVAL;
 
-	ring_type = usb_endpoint_type(pep->endpoint.desc);
+	ring_type = usb_endpoपूर्णांक_type(pep->endpoपूर्णांक.desc);
 
 	/*
-	 * Get values to fill the endpoint context, mostly from ep descriptor.
-	 * The average TRB buffer length for bulk endpoints is unclear as we
+	 * Get values to fill the endpoपूर्णांक context, mostly from ep descriptor.
+	 * The average TRB buffer length क्रम bulk endpoपूर्णांकs is unclear as we
 	 * have no clue on scatter gather list entry size. For Isoc and Int,
 	 * set it to max available.
 	 */
 	max_esit_payload = cdnsp_get_max_esit_payload(&pdev->gadget, pep);
-	interval = cdnsp_get_endpoint_interval(&pdev->gadget, pep);
-	mult = cdnsp_get_endpoint_mult(&pdev->gadget, pep);
-	max_packet = usb_endpoint_maxp(pep->endpoint.desc);
-	max_burst = cdnsp_get_endpoint_max_burst(&pdev->gadget, pep);
+	पूर्णांकerval = cdnsp_get_endpoपूर्णांक_पूर्णांकerval(&pdev->gadget, pep);
+	mult = cdnsp_get_endpoपूर्णांक_mult(&pdev->gadget, pep);
+	max_packet = usb_endpoपूर्णांक_maxp(pep->endpoपूर्णांक.desc);
+	max_burst = cdnsp_get_endpoपूर्णांक_max_burst(&pdev->gadget, pep);
 	avg_trb_len = max_esit_payload;
 
-	/* Allow 3 retries for everything but isoc, set CErr = 3. */
-	if (!usb_endpoint_xfer_isoc(pep->endpoint.desc))
+	/* Allow 3 retries क्रम everything but isoc, set CErr = 3. */
+	अगर (!usb_endpoपूर्णांक_xfer_isoc(pep->endpoपूर्णांक.desc))
 		err_count = 3;
-	if (usb_endpoint_xfer_bulk(pep->endpoint.desc) &&
+	अगर (usb_endpoपूर्णांक_xfer_bulk(pep->endpoपूर्णांक.desc) &&
 	    pdev->gadget.speed == USB_SPEED_HIGH)
 		max_packet = 512;
 	/* Controller spec indicates that ctrl ep avg TRB Length should be 8. */
-	if (usb_endpoint_xfer_control(pep->endpoint.desc))
+	अगर (usb_endpoपूर्णांक_xfer_control(pep->endpoपूर्णांक.desc))
 		avg_trb_len = 8;
 
-	/* Set up the endpoint ring. */
+	/* Set up the endpoपूर्णांक ring. */
 	pep->ring = cdnsp_ring_alloc(pdev, 2, ring_type, max_packet, mem_flags);
 	pep->skip = false;
 
-	/* Fill the endpoint context */
+	/* Fill the endpoपूर्णांक context */
 	ep_ctx->ep_info = cpu_to_le32(EP_MAX_ESIT_PAYLOAD_HI(max_esit_payload) |
-				EP_INTERVAL(interval) | EP_MULT(mult));
-	ep_ctx->ep_info2 = cpu_to_le32(EP_TYPE(endpoint_type) |
+				EP_INTERVAL(पूर्णांकerval) | EP_MULT(mult));
+	ep_ctx->ep_info2 = cpu_to_le32(EP_TYPE(endpoपूर्णांक_type) |
 				MAX_PACKET(max_packet) | MAX_BURST(max_burst) |
 				ERROR_COUNT(err_count));
 	ep_ctx->deq = cpu_to_le64(pep->ring->first_seg->dma |
@@ -1001,110 +1002,110 @@ int cdnsp_endpoint_init(struct cdnsp_device *pdev,
 	ep_ctx->tx_info = cpu_to_le32(EP_MAX_ESIT_PAYLOAD_LO(max_esit_payload) |
 				EP_AVG_TRB_LENGTH(avg_trb_len));
 
-	if (usb_endpoint_xfer_bulk(pep->endpoint.desc) &&
-	    pdev->gadget.speed > USB_SPEED_HIGH) {
+	अगर (usb_endpoपूर्णांक_xfer_bulk(pep->endpoपूर्णांक.desc) &&
+	    pdev->gadget.speed > USB_SPEED_HIGH) अणु
 		ret = cdnsp_alloc_streams(pdev, pep);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void cdnsp_endpoint_zero(struct cdnsp_device *pdev, struct cdnsp_ep *pep)
-{
+व्योम cdnsp_endpoपूर्णांक_zero(काष्ठा cdnsp_device *pdev, काष्ठा cdnsp_ep *pep)
+अणु
 	pep->in_ctx->ep_info = 0;
 	pep->in_ctx->ep_info2 = 0;
 	pep->in_ctx->deq = 0;
 	pep->in_ctx->tx_info = 0;
-}
+पूर्ण
 
-static int cdnsp_alloc_erst(struct cdnsp_device *pdev,
-			    struct cdnsp_ring *evt_ring,
-			    struct cdnsp_erst *erst)
-{
-	struct cdnsp_erst_entry *entry;
-	struct cdnsp_segment *seg;
-	unsigned int val;
-	size_t size;
+अटल पूर्णांक cdnsp_alloc_erst(काष्ठा cdnsp_device *pdev,
+			    काष्ठा cdnsp_ring *evt_ring,
+			    काष्ठा cdnsp_erst *erst)
+अणु
+	काष्ठा cdnsp_erst_entry *entry;
+	काष्ठा cdnsp_segment *seg;
+	अचिन्हित पूर्णांक val;
+	माप_प्रकार size;
 
-	size = sizeof(struct cdnsp_erst_entry) * evt_ring->num_segs;
+	size = माप(काष्ठा cdnsp_erst_entry) * evt_ring->num_segs;
 	erst->entries = dma_alloc_coherent(pdev->dev, size,
 					   &erst->erst_dma_addr, GFP_KERNEL);
-	if (!erst->entries)
-		return -ENOMEM;
+	अगर (!erst->entries)
+		वापस -ENOMEM;
 
 	erst->num_entries = evt_ring->num_segs;
 
 	seg = evt_ring->first_seg;
-	for (val = 0; val < evt_ring->num_segs; val++) {
+	क्रम (val = 0; val < evt_ring->num_segs; val++) अणु
 		entry = &erst->entries[val];
 		entry->seg_addr = cpu_to_le64(seg->dma);
 		entry->seg_size = cpu_to_le32(TRBS_PER_SEGMENT);
 		entry->rsvd = 0;
 		seg = seg->next;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cdnsp_free_erst(struct cdnsp_device *pdev, struct cdnsp_erst *erst)
-{
-	size_t size = sizeof(struct cdnsp_erst_entry) * (erst->num_entries);
-	struct device *dev = pdev->dev;
+अटल व्योम cdnsp_मुक्त_erst(काष्ठा cdnsp_device *pdev, काष्ठा cdnsp_erst *erst)
+अणु
+	माप_प्रकार size = माप(काष्ठा cdnsp_erst_entry) * (erst->num_entries);
+	काष्ठा device *dev = pdev->dev;
 
-	if (erst->entries)
-		dma_free_coherent(dev, size, erst->entries,
+	अगर (erst->entries)
+		dma_मुक्त_coherent(dev, size, erst->entries,
 				  erst->erst_dma_addr);
 
-	erst->entries = NULL;
-}
+	erst->entries = शून्य;
+पूर्ण
 
-void cdnsp_mem_cleanup(struct cdnsp_device *pdev)
-{
-	struct device *dev = pdev->dev;
+व्योम cdnsp_mem_cleanup(काष्ठा cdnsp_device *pdev)
+अणु
+	काष्ठा device *dev = pdev->dev;
 
-	cdnsp_free_priv_device(pdev);
-	cdnsp_free_erst(pdev, &pdev->erst);
+	cdnsp_मुक्त_priv_device(pdev);
+	cdnsp_मुक्त_erst(pdev, &pdev->erst);
 
-	if (pdev->event_ring)
-		cdnsp_ring_free(pdev, pdev->event_ring);
+	अगर (pdev->event_ring)
+		cdnsp_ring_मुक्त(pdev, pdev->event_ring);
 
-	pdev->event_ring = NULL;
+	pdev->event_ring = शून्य;
 
-	if (pdev->cmd_ring)
-		cdnsp_ring_free(pdev, pdev->cmd_ring);
+	अगर (pdev->cmd_ring)
+		cdnsp_ring_मुक्त(pdev, pdev->cmd_ring);
 
-	pdev->cmd_ring = NULL;
+	pdev->cmd_ring = शून्य;
 
 	dma_pool_destroy(pdev->segment_pool);
-	pdev->segment_pool = NULL;
+	pdev->segment_pool = शून्य;
 	dma_pool_destroy(pdev->device_pool);
-	pdev->device_pool = NULL;
+	pdev->device_pool = शून्य;
 
-	if (pdev->dcbaa)
-		dma_free_coherent(dev, sizeof(*pdev->dcbaa),
+	अगर (pdev->dcbaa)
+		dma_मुक्त_coherent(dev, माप(*pdev->dcbaa),
 				  pdev->dcbaa, pdev->dcbaa->dma);
 
-	pdev->dcbaa = NULL;
+	pdev->dcbaa = शून्य;
 
 	pdev->usb2_port.exist = 0;
 	pdev->usb3_port.exist = 0;
 	pdev->usb2_port.port_num = 0;
 	pdev->usb3_port.port_num = 0;
-	pdev->active_port = NULL;
-}
+	pdev->active_port = शून्य;
+पूर्ण
 
-static void cdnsp_set_event_deq(struct cdnsp_device *pdev)
-{
+अटल व्योम cdnsp_set_event_deq(काष्ठा cdnsp_device *pdev)
+अणु
 	dma_addr_t deq;
 	u64 temp;
 
 	deq = cdnsp_trb_virt_to_dma(pdev->event_ring->deq_seg,
 				    pdev->event_ring->dequeue);
 
-	/* Update controller event ring dequeue pointer */
-	temp = cdnsp_read_64(&pdev->ir_set->erst_dequeue);
+	/* Update controller event ring dequeue poपूर्णांकer */
+	temp = cdnsp_पढ़ो_64(&pdev->ir_set->erst_dequeue);
 	temp &= ERST_PTR_MASK;
 
 	/*
@@ -1113,22 +1114,22 @@ static void cdnsp_set_event_deq(struct cdnsp_device *pdev)
 	 */
 	temp &= ~ERST_EHB;
 
-	cdnsp_write_64(((u64)deq & (u64)~ERST_PTR_MASK) | temp,
+	cdnsp_ग_लिखो_64(((u64)deq & (u64)~ERST_PTR_MASK) | temp,
 		       &pdev->ir_set->erst_dequeue);
-}
+पूर्ण
 
-static void cdnsp_add_in_port(struct cdnsp_device *pdev,
-			      struct cdnsp_port *port,
+अटल व्योम cdnsp_add_in_port(काष्ठा cdnsp_device *pdev,
+			      काष्ठा cdnsp_port *port,
 			      __le32 __iomem *addr)
-{
+अणु
 	u32 temp, port_offset, port_count;
 
-	temp = readl(addr);
+	temp = पढ़ोl(addr);
 	port->maj_rev = CDNSP_EXT_PORT_MAJOR(temp);
 	port->min_rev = CDNSP_EXT_PORT_MINOR(temp);
 
 	/* Port offset and count in the third dword.*/
-	temp = readl(addr + 2);
+	temp = पढ़ोl(addr + 2);
 	port_offset = CDNSP_EXT_PORT_OFF(temp);
 	port_count = CDNSP_EXT_PORT_COUNT(temp);
 
@@ -1136,17 +1137,17 @@ static void cdnsp_add_in_port(struct cdnsp_device *pdev,
 
 	port->port_num = port_offset;
 	port->exist = 1;
-}
+पूर्ण
 
 /*
- * Scan the Extended Capabilities for the "Supported Protocol Capabilities" that
- * specify what speeds each port is supposed to be.
+ * Scan the Extended Capabilities क्रम the "Supported Protocol Capabilities" that
+ * specअगरy what speeds each port is supposed to be.
  */
-static int cdnsp_setup_port_arrays(struct cdnsp_device *pdev)
-{
-	void __iomem *base;
+अटल पूर्णांक cdnsp_setup_port_arrays(काष्ठा cdnsp_device *pdev)
+अणु
+	व्योम __iomem *base;
 	u32 offset;
-	int i;
+	पूर्णांक i;
 
 	base = &pdev->cap_regs->hc_capbase;
 	offset = cdnsp_find_next_ext_cap(base, 0,
@@ -1160,54 +1161,54 @@ static int cdnsp_setup_port_arrays(struct cdnsp_device *pdev)
 	base = &pdev->cap_regs->hc_capbase;
 
 	/* Driver expects max 2 extended protocol capability. */
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		u32 temp;
 
 		offset = cdnsp_find_next_ext_cap(base, offset,
 						 EXT_CAPS_PROTOCOL);
-		temp = readl(base + offset);
+		temp = पढ़ोl(base + offset);
 
-		if (CDNSP_EXT_PORT_MAJOR(temp) == 0x03 &&
+		अगर (CDNSP_EXT_PORT_MAJOR(temp) == 0x03 &&
 		    !pdev->usb3_port.port_num)
 			cdnsp_add_in_port(pdev, &pdev->usb3_port,
 					  base + offset);
 
-		if (CDNSP_EXT_PORT_MAJOR(temp) == 0x02 &&
+		अगर (CDNSP_EXT_PORT_MAJOR(temp) == 0x02 &&
 		    !pdev->usb2_port.port_num)
 			cdnsp_add_in_port(pdev, &pdev->usb2_port,
 					  base + offset);
-	}
+	पूर्ण
 
-	if (!pdev->usb2_port.exist || !pdev->usb3_port.exist) {
+	अगर (!pdev->usb2_port.exist || !pdev->usb3_port.exist) अणु
 		dev_err(pdev->dev, "Error: Only one port detected\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	trace_cdnsp_init("Found USB 2.0 ports and  USB 3.0 ports.");
 
-	pdev->usb2_port.regs = (struct cdnsp_port_regs __iomem *)
+	pdev->usb2_port.regs = (काष्ठा cdnsp_port_regs __iomem *)
 			       (&pdev->op_regs->port_reg_base + NUM_PORT_REGS *
 				(pdev->usb2_port.port_num - 1));
 
-	pdev->usb3_port.regs = (struct cdnsp_port_regs __iomem *)
+	pdev->usb3_port.regs = (काष्ठा cdnsp_port_regs __iomem *)
 			       (&pdev->op_regs->port_reg_base + NUM_PORT_REGS *
 				(pdev->usb3_port.port_num - 1));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Initialize memory for CDNSP (one-time init).
+ * Initialize memory क्रम CDNSP (one-समय init).
  *
- * Program the PAGESIZE register, initialize the device context array, create
+ * Program the PAGESIZE रेजिस्टर, initialize the device context array, create
  * device contexts, set up a command ring segment, create event
- * ring (one for now).
+ * ring (one क्रम now).
  */
-int cdnsp_mem_init(struct cdnsp_device *pdev)
-{
-	struct device *dev = pdev->dev;
-	int ret = -ENOMEM;
-	unsigned int val;
+पूर्णांक cdnsp_mem_init(काष्ठा cdnsp_device *pdev)
+अणु
+	काष्ठा device *dev = pdev->dev;
+	पूर्णांक ret = -ENOMEM;
+	अचिन्हित पूर्णांक val;
 	dma_addr_t dma;
 	u32 page_size;
 	u64 val_64;
@@ -1218,26 +1219,26 @@ int cdnsp_mem_init(struct cdnsp_device *pdev)
 	 */
 	page_size = 1 << 12;
 
-	val = readl(&pdev->op_regs->config_reg);
+	val = पढ़ोl(&pdev->op_regs->config_reg);
 	val |= ((val & ~MAX_DEVS) | CDNSP_DEV_MAX_SLOTS) | CONFIG_U3E;
-	writel(val, &pdev->op_regs->config_reg);
+	ग_लिखोl(val, &pdev->op_regs->config_reg);
 
 	/*
 	 * Doorbell array must be physically contiguous
 	 * and 64-byte (cache line) aligned.
 	 */
-	pdev->dcbaa = dma_alloc_coherent(dev, sizeof(*pdev->dcbaa),
+	pdev->dcbaa = dma_alloc_coherent(dev, माप(*pdev->dcbaa),
 					 &dma, GFP_KERNEL);
-	if (!pdev->dcbaa)
-		return -ENOMEM;
+	अगर (!pdev->dcbaa)
+		वापस -ENOMEM;
 
 	pdev->dcbaa->dma = dma;
 
-	cdnsp_write_64(dma, &pdev->op_regs->dcbaa_ptr);
+	cdnsp_ग_लिखो_64(dma, &pdev->op_regs->dcbaa_ptr);
 
 	/*
 	 * Initialize the ring segment pool.  The ring must be a contiguous
-	 * structure comprised of TRBs. The TRBs must be 16 byte aligned,
+	 * काष्ठाure comprised of TRBs. The TRBs must be 16 byte aligned,
 	 * however, the command ring segment needs 64-byte aligned segments
 	 * and our use of dma addresses in the trb_address_map radix tree needs
 	 * TRB_SEGMENT_SIZE alignment, so driver pick the greater alignment
@@ -1246,32 +1247,32 @@ int cdnsp_mem_init(struct cdnsp_device *pdev)
 	pdev->segment_pool = dma_pool_create("CDNSP ring segments", dev,
 					     TRB_SEGMENT_SIZE, TRB_SEGMENT_SIZE,
 					     page_size);
-	if (!pdev->segment_pool)
-		goto release_dcbaa;
+	अगर (!pdev->segment_pool)
+		जाओ release_dcbaa;
 
 	pdev->device_pool = dma_pool_create("CDNSP input/output contexts", dev,
 					    CDNSP_CTX_SIZE, 64, page_size);
-	if (!pdev->device_pool)
-		goto destroy_segment_pool;
+	अगर (!pdev->device_pool)
+		जाओ destroy_segment_pool;
 
 
-	/* Set up the command ring to have one segments for now. */
+	/* Set up the command ring to have one segments क्रम now. */
 	pdev->cmd_ring = cdnsp_ring_alloc(pdev, 1, TYPE_COMMAND, 0, GFP_KERNEL);
-	if (!pdev->cmd_ring)
-		goto destroy_device_pool;
+	अगर (!pdev->cmd_ring)
+		जाओ destroy_device_pool;
 
-	/* Set the address in the Command Ring Control register */
-	val_64 = cdnsp_read_64(&pdev->op_regs->cmd_ring);
+	/* Set the address in the Command Ring Control रेजिस्टर */
+	val_64 = cdnsp_पढ़ो_64(&pdev->op_regs->cmd_ring);
 	val_64 = (val_64 & (u64)CMD_RING_RSVD_BITS) |
 		 (pdev->cmd_ring->first_seg->dma & (u64)~CMD_RING_RSVD_BITS) |
 		 pdev->cmd_ring->cycle_state;
-	cdnsp_write_64(val_64, &pdev->op_regs->cmd_ring);
+	cdnsp_ग_लिखो_64(val_64, &pdev->op_regs->cmd_ring);
 
-	val = readl(&pdev->cap_regs->db_off);
+	val = पढ़ोl(&pdev->cap_regs->db_off);
 	val &= DBOFF_MASK;
-	pdev->dba = (void __iomem *)pdev->cap_regs + val;
+	pdev->dba = (व्योम __iomem *)pdev->cap_regs + val;
 
-	/* Set ir_set to interrupt register set 0 */
+	/* Set ir_set to पूर्णांकerrupt रेजिस्टर set 0 */
 	pdev->ir_set = &pdev->run_regs->ir_set[0];
 
 	/*
@@ -1280,56 +1281,56 @@ int cdnsp_mem_init(struct cdnsp_device *pdev)
 	 */
 	pdev->event_ring = cdnsp_ring_alloc(pdev, ERST_NUM_SEGS, TYPE_EVENT,
 					    0, GFP_KERNEL);
-	if (!pdev->event_ring)
-		goto free_cmd_ring;
+	अगर (!pdev->event_ring)
+		जाओ मुक्त_cmd_ring;
 
 	ret = cdnsp_alloc_erst(pdev, pdev->event_ring, &pdev->erst);
-	if (ret)
-		goto free_event_ring;
+	अगर (ret)
+		जाओ मुक्त_event_ring;
 
 	/* Set ERST count with the number of entries in the segment table. */
-	val = readl(&pdev->ir_set->erst_size);
+	val = पढ़ोl(&pdev->ir_set->erst_size);
 	val &= ERST_SIZE_MASK;
 	val |= ERST_NUM_SEGS;
-	writel(val, &pdev->ir_set->erst_size);
+	ग_लिखोl(val, &pdev->ir_set->erst_size);
 
 	/* Set the segment table base address. */
-	val_64 = cdnsp_read_64(&pdev->ir_set->erst_base);
+	val_64 = cdnsp_पढ़ो_64(&pdev->ir_set->erst_base);
 	val_64 &= ERST_PTR_MASK;
 	val_64 |= (pdev->erst.erst_dma_addr & (u64)~ERST_PTR_MASK);
-	cdnsp_write_64(val_64, &pdev->ir_set->erst_base);
+	cdnsp_ग_लिखो_64(val_64, &pdev->ir_set->erst_base);
 
 	/* Set the event ring dequeue address. */
 	cdnsp_set_event_deq(pdev);
 
 	ret = cdnsp_setup_port_arrays(pdev);
-	if (ret)
-		goto free_erst;
+	अगर (ret)
+		जाओ मुक्त_erst;
 
 	ret = cdnsp_alloc_priv_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pdev->dev,
 			"Could not allocate cdnsp_device data structures\n");
-		goto free_erst;
-	}
+		जाओ मुक्त_erst;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_erst:
-	cdnsp_free_erst(pdev, &pdev->erst);
-free_event_ring:
-	cdnsp_ring_free(pdev, pdev->event_ring);
-free_cmd_ring:
-	cdnsp_ring_free(pdev, pdev->cmd_ring);
+मुक्त_erst:
+	cdnsp_मुक्त_erst(pdev, &pdev->erst);
+मुक्त_event_ring:
+	cdnsp_ring_मुक्त(pdev, pdev->event_ring);
+मुक्त_cmd_ring:
+	cdnsp_ring_मुक्त(pdev, pdev->cmd_ring);
 destroy_device_pool:
 	dma_pool_destroy(pdev->device_pool);
 destroy_segment_pool:
 	dma_pool_destroy(pdev->segment_pool);
 release_dcbaa:
-	dma_free_coherent(dev, sizeof(*pdev->dcbaa), pdev->dcbaa,
+	dma_मुक्त_coherent(dev, माप(*pdev->dcbaa), pdev->dcbaa,
 			  pdev->dcbaa->dma);
 
 	cdnsp_reset(pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Modified 1999
+ * Modअगरied 1999
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  *
  * 99/01/28	Added N_IRDA and N_SMSBLOCK
  */
-#ifndef _ASM_IA64_TERMIOS_H
-#define _ASM_IA64_TERMIOS_H
+#अगर_अघोषित _ASM_IA64_TERMIOS_H
+#घोषणा _ASM_IA64_TERMIOS_H
 
-#include <uapi/asm/termios.h>
+#समावेश <uapi/यंत्र/termios.h>
 
 
-/*	intr=^C		quit=^\		erase=del	kill=^U
-	eof=^D		vtime=\0	vmin=\1		sxtc=\0
+/*	पूर्णांकr=^C		quit=^\		erase=del	समाप्त=^U
+	eof=^D		vसमय=\0	vmin=\1		sxtc=\0
 	start=^Q	stop=^S		susp=^Z		eol=\0
-	reprint=^R	discard=^U	werase=^W	lnext=^V
+	reprपूर्णांक=^R	discard=^U	werase=^W	lnext=^V
 	eol2=\0
 */
-#define INIT_C_CC "\003\034\177\025\004\0\1\0\021\023\032\0\022\017\027\026\0"
+#घोषणा INIT_C_CC "\003\034\177\025\004\0\1\0\021\023\032\0\022\017\027\026\0"
 
 /*
- * Translate a "termio" structure into a "termios". Ugh.
+ * Translate a "termio" काष्ठाure पूर्णांकo a "termios". Ugh.
  */
-#define SET_LOW_TERMIOS_BITS(termios, termio, x) {	\
-	unsigned short __tmp;				\
-	get_user(__tmp,&(termio)->x);			\
-	*(unsigned short *) &(termios)->x = __tmp;	\
-}
+#घोषणा SET_LOW_TERMIOS_BITS(termios, termio, x) अणु	\
+	अचिन्हित लघु __पंचांगp;				\
+	get_user(__पंचांगp,&(termio)->x);			\
+	*(अचिन्हित लघु *) &(termios)->x = __पंचांगp;	\
+पूर्ण
 
-#define user_termio_to_kernel_termios(termios, termio)		\
-({								\
-	SET_LOW_TERMIOS_BITS(termios, termio, c_iflag);		\
+#घोषणा user_termio_to_kernel_termios(termios, termio)		\
+(अणु								\
+	SET_LOW_TERMIOS_BITS(termios, termio, c_अगरlag);		\
 	SET_LOW_TERMIOS_BITS(termios, termio, c_oflag);		\
 	SET_LOW_TERMIOS_BITS(termios, termio, c_cflag);		\
 	SET_LOW_TERMIOS_BITS(termios, termio, c_lflag);		\
 	copy_from_user((termios)->c_cc, (termio)->c_cc, NCC);	\
-})
+पूर्ण)
 
 /*
- * Translate a "termios" structure into a "termio". Ugh.
+ * Translate a "termios" काष्ठाure पूर्णांकo a "termio". Ugh.
  */
-#define kernel_termios_to_user_termio(termio, termios)		\
-({								\
-	put_user((termios)->c_iflag, &(termio)->c_iflag);	\
+#घोषणा kernel_termios_to_user_termio(termio, termios)		\
+(अणु								\
+	put_user((termios)->c_अगरlag, &(termio)->c_अगरlag);	\
 	put_user((termios)->c_oflag, &(termio)->c_oflag);	\
 	put_user((termios)->c_cflag, &(termio)->c_cflag);	\
 	put_user((termios)->c_lflag, &(termio)->c_lflag);	\
 	put_user((termios)->c_line,  &(termio)->c_line);	\
 	copy_to_user((termio)->c_cc, (termios)->c_cc, NCC);	\
-})
+पूर्ण)
 
-#define user_termios_to_kernel_termios(k, u) copy_from_user(k, u, sizeof(struct termios2))
-#define kernel_termios_to_user_termios(u, k) copy_to_user(u, k, sizeof(struct termios2))
-#define user_termios_to_kernel_termios_1(k, u) copy_from_user(k, u, sizeof(struct termios))
-#define kernel_termios_to_user_termios_1(u, k) copy_to_user(u, k, sizeof(struct termios))
+#घोषणा user_termios_to_kernel_termios(k, u) copy_from_user(k, u, माप(काष्ठा termios2))
+#घोषणा kernel_termios_to_user_termios(u, k) copy_to_user(u, k, माप(काष्ठा termios2))
+#घोषणा user_termios_to_kernel_termios_1(k, u) copy_from_user(k, u, माप(काष्ठा termios))
+#घोषणा kernel_termios_to_user_termios_1(u, k) copy_to_user(u, k, माप(काष्ठा termios))
 
-#endif /* _ASM_IA64_TERMIOS_H */
+#पूर्ण_अगर /* _ASM_IA64_TERMIOS_H */

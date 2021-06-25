@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_SPI_CORGI_LCD_H
-#define __LINUX_SPI_CORGI_LCD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_SPI_CORGI_LCD_H
+#घोषणा __LINUX_SPI_CORGI_LCD_H
 
-#define CORGI_LCD_MODE_QVGA	1
-#define CORGI_LCD_MODE_VGA	2
+#घोषणा CORGI_LCD_MODE_QVGA	1
+#घोषणा CORGI_LCD_MODE_VGA	2
 
-struct corgi_lcd_platform_data {
-	int	init_mode;
-	int	max_intensity;
-	int	default_intensity;
-	int	limit_mask;
+काष्ठा corgi_lcd_platक्रमm_data अणु
+	पूर्णांक	init_mode;
+	पूर्णांक	max_पूर्णांकensity;
+	पूर्णांक	शेष_पूर्णांकensity;
+	पूर्णांक	limit_mask;
 
-	void (*notify)(int intensity);
-	void (*kick_battery)(void);
-};
+	व्योम (*notअगरy)(पूर्णांक पूर्णांकensity);
+	व्योम (*kick_battery)(व्योम);
+पूर्ण;
 
-#endif /* __LINUX_SPI_CORGI_LCD_H */
+#पूर्ण_अगर /* __LINUX_SPI_CORGI_LCD_H */

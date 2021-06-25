@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AFE4403 Heart Rate Monitors and Low-Cost Pulse Oximeters
  *
@@ -6,34 +7,34 @@
  *	Andrew F. Davis <afd@ti.com>
  */
 
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
-#include <linux/sysfs.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/trigger_consumer.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "afe440x.h"
+#समावेश "afe440x.h"
 
-#define AFE4403_DRIVER_NAME		"afe4403"
+#घोषणा AFE4403_DRIVER_NAME		"afe4403"
 
 /* AFE4403 Registers */
-#define AFE4403_TIAGAIN			0x20
-#define AFE4403_TIA_AMB_GAIN		0x21
+#घोषणा AFE4403_TIAGAIN			0x20
+#घोषणा AFE4403_TIA_AMB_GAIN		0x21
 
-enum afe4403_fields {
+क्रमागत afe4403_fields अणु
 	/* Gains */
 	F_RF_LED1, F_CF_LED1,
 	F_RF_LED, F_CF_LED,
@@ -43,9 +44,9 @@ enum afe4403_fields {
 
 	/* sentinel */
 	F_MAX_FIELDS
-};
+पूर्ण;
 
-static const struct reg_field afe4403_reg_fields[] = {
+अटल स्थिर काष्ठा reg_field afe4403_reg_fields[] = अणु
 	/* Gains */
 	[F_RF_LED1]	= REG_FIELD(AFE4403_TIAGAIN, 0, 2),
 	[F_CF_LED1]	= REG_FIELD(AFE4403_TIAGAIN, 3, 7),
@@ -54,55 +55,55 @@ static const struct reg_field afe4403_reg_fields[] = {
 	/* LED Current */
 	[F_ILED1]	= REG_FIELD(AFE440X_LEDCNTRL, 0, 7),
 	[F_ILED2]	= REG_FIELD(AFE440X_LEDCNTRL, 8, 15),
-};
+पूर्ण;
 
 /**
- * struct afe4403_data - AFE4403 device instance data
- * @dev: Device structure
+ * काष्ठा afe4403_data - AFE4403 device instance data
+ * @dev: Device काष्ठाure
  * @spi: SPI device handle
  * @regmap: Register map of the device
  * @fields: Register fields of the device
- * @regulator: Pointer to the regulator for the IC
- * @trig: IIO trigger for this device
- * @irq: ADC_RDY line interrupt number
- * @buffer: Used to construct data layout to push into IIO buffer.
+ * @regulator: Poपूर्णांकer to the regulator क्रम the IC
+ * @trig: IIO trigger क्रम this device
+ * @irq: ADC_RDY line पूर्णांकerrupt number
+ * @buffer: Used to स्थिरruct data layout to push पूर्णांकo IIO buffer.
  */
-struct afe4403_data {
-	struct device *dev;
-	struct spi_device *spi;
-	struct regmap *regmap;
-	struct regmap_field *fields[F_MAX_FIELDS];
-	struct regulator *regulator;
-	struct iio_trigger *trig;
-	int irq;
-	/* Ensure suitable alignment for timestamp */
+काष्ठा afe4403_data अणु
+	काष्ठा device *dev;
+	काष्ठा spi_device *spi;
+	काष्ठा regmap *regmap;
+	काष्ठा regmap_field *fields[F_MAX_FIELDS];
+	काष्ठा regulator *regulator;
+	काष्ठा iio_trigger *trig;
+	पूर्णांक irq;
+	/* Ensure suitable alignment क्रम बारtamp */
 	s32 buffer[8] __aligned(8);
-};
+पूर्ण;
 
-enum afe4403_chan_id {
+क्रमागत afe4403_chan_id अणु
 	LED2 = 1,
 	ALED2,
 	LED1,
 	ALED1,
 	LED2_ALED2,
 	LED1_ALED1,
-};
+पूर्ण;
 
-static const unsigned int afe4403_channel_values[] = {
+अटल स्थिर अचिन्हित पूर्णांक afe4403_channel_values[] = अणु
 	[LED2] = AFE440X_LED2VAL,
 	[ALED2] = AFE440X_ALED2VAL,
 	[LED1] = AFE440X_LED1VAL,
 	[ALED1] = AFE440X_ALED1VAL,
 	[LED2_ALED2] = AFE440X_LED2_ALED2VAL,
 	[LED1_ALED1] = AFE440X_LED1_ALED1VAL,
-};
+पूर्ण;
 
-static const unsigned int afe4403_channel_leds[] = {
+अटल स्थिर अचिन्हित पूर्णांक afe4403_channel_leds[] = अणु
 	[LED2] = F_ILED2,
 	[LED1] = F_ILED1,
-};
+पूर्ण;
 
-static const struct iio_chan_spec afe4403_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec afe4403_channels[] = अणु
 	/* ADC values */
 	AFE440X_INTENSITY_CHAN(LED2, 0),
 	AFE440X_INTENSITY_CHAN(ALED2, 0),
@@ -113,356 +114,356 @@ static const struct iio_chan_spec afe4403_channels[] = {
 	/* LED current */
 	AFE440X_CURRENT_CHAN(LED2),
 	AFE440X_CURRENT_CHAN(LED1),
-};
+पूर्ण;
 
-static const struct afe440x_val_table afe4403_res_table[] = {
-	{ 500000 }, { 250000 }, { 100000 }, { 50000 },
-	{ 25000 }, { 10000 }, { 1000000 }, { 0 },
-};
-AFE440X_TABLE_ATTR(in_intensity_resistance_available, afe4403_res_table);
+अटल स्थिर काष्ठा afe440x_val_table afe4403_res_table[] = अणु
+	अणु 500000 पूर्ण, अणु 250000 पूर्ण, अणु 100000 पूर्ण, अणु 50000 पूर्ण,
+	अणु 25000 पूर्ण, अणु 10000 पूर्ण, अणु 1000000 पूर्ण, अणु 0 पूर्ण,
+पूर्ण;
+AFE440X_TABLE_ATTR(in_पूर्णांकensity_resistance_available, afe4403_res_table);
 
-static const struct afe440x_val_table afe4403_cap_table[] = {
-	{ 0, 5000 }, { 0, 10000 }, { 0, 20000 }, { 0, 25000 },
-	{ 0, 30000 }, { 0, 35000 }, { 0, 45000 }, { 0, 50000 },
-	{ 0, 55000 }, { 0, 60000 }, { 0, 70000 }, { 0, 75000 },
-	{ 0, 80000 }, { 0, 85000 }, { 0, 95000 }, { 0, 100000 },
-	{ 0, 155000 }, { 0, 160000 }, { 0, 170000 }, { 0, 175000 },
-	{ 0, 180000 }, { 0, 185000 }, { 0, 195000 }, { 0, 200000 },
-	{ 0, 205000 }, { 0, 210000 }, { 0, 220000 }, { 0, 225000 },
-	{ 0, 230000 }, { 0, 235000 }, { 0, 245000 }, { 0, 250000 },
-};
-AFE440X_TABLE_ATTR(in_intensity_capacitance_available, afe4403_cap_table);
+अटल स्थिर काष्ठा afe440x_val_table afe4403_cap_table[] = अणु
+	अणु 0, 5000 पूर्ण, अणु 0, 10000 पूर्ण, अणु 0, 20000 पूर्ण, अणु 0, 25000 पूर्ण,
+	अणु 0, 30000 पूर्ण, अणु 0, 35000 पूर्ण, अणु 0, 45000 पूर्ण, अणु 0, 50000 पूर्ण,
+	अणु 0, 55000 पूर्ण, अणु 0, 60000 पूर्ण, अणु 0, 70000 पूर्ण, अणु 0, 75000 पूर्ण,
+	अणु 0, 80000 पूर्ण, अणु 0, 85000 पूर्ण, अणु 0, 95000 पूर्ण, अणु 0, 100000 पूर्ण,
+	अणु 0, 155000 पूर्ण, अणु 0, 160000 पूर्ण, अणु 0, 170000 पूर्ण, अणु 0, 175000 पूर्ण,
+	अणु 0, 180000 पूर्ण, अणु 0, 185000 पूर्ण, अणु 0, 195000 पूर्ण, अणु 0, 200000 पूर्ण,
+	अणु 0, 205000 पूर्ण, अणु 0, 210000 पूर्ण, अणु 0, 220000 पूर्ण, अणु 0, 225000 पूर्ण,
+	अणु 0, 230000 पूर्ण, अणु 0, 235000 पूर्ण, अणु 0, 245000 पूर्ण, अणु 0, 250000 पूर्ण,
+पूर्ण;
+AFE440X_TABLE_ATTR(in_पूर्णांकensity_capacitance_available, afe4403_cap_table);
 
-static ssize_t afe440x_show_register(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct afe4403_data *afe = iio_priv(indio_dev);
-	struct afe440x_attr *afe440x_attr = to_afe440x_attr(attr);
-	unsigned int reg_val;
-	int vals[2];
-	int ret;
+अटल sमाप_प्रकार afe440x_show_रेजिस्टर(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा afe4403_data *afe = iio_priv(indio_dev);
+	काष्ठा afe440x_attr *afe440x_attr = to_afe440x_attr(attr);
+	अचिन्हित पूर्णांक reg_val;
+	पूर्णांक vals[2];
+	पूर्णांक ret;
 
-	ret = regmap_field_read(afe->fields[afe440x_attr->field], &reg_val);
-	if (ret)
-		return ret;
+	ret = regmap_field_पढ़ो(afe->fields[afe440x_attr->field], &reg_val);
+	अगर (ret)
+		वापस ret;
 
-	if (reg_val >= afe440x_attr->table_size)
-		return -EINVAL;
+	अगर (reg_val >= afe440x_attr->table_size)
+		वापस -EINVAL;
 
-	vals[0] = afe440x_attr->val_table[reg_val].integer;
+	vals[0] = afe440x_attr->val_table[reg_val].पूर्णांकeger;
 	vals[1] = afe440x_attr->val_table[reg_val].fract;
 
-	return iio_format_value(buf, IIO_VAL_INT_PLUS_MICRO, 2, vals);
-}
+	वापस iio_क्रमmat_value(buf, IIO_VAL_INT_PLUS_MICRO, 2, vals);
+पूर्ण
 
-static ssize_t afe440x_store_register(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t count)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct afe4403_data *afe = iio_priv(indio_dev);
-	struct afe440x_attr *afe440x_attr = to_afe440x_attr(attr);
-	int val, integer, fract, ret;
+अटल sमाप_प्रकार afe440x_store_रेजिस्टर(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा afe4403_data *afe = iio_priv(indio_dev);
+	काष्ठा afe440x_attr *afe440x_attr = to_afe440x_attr(attr);
+	पूर्णांक val, पूर्णांकeger, fract, ret;
 
-	ret = iio_str_to_fixpoint(buf, 100000, &integer, &fract);
-	if (ret)
-		return ret;
+	ret = iio_str_to_fixpoपूर्णांक(buf, 100000, &पूर्णांकeger, &fract);
+	अगर (ret)
+		वापस ret;
 
-	for (val = 0; val < afe440x_attr->table_size; val++)
-		if (afe440x_attr->val_table[val].integer == integer &&
+	क्रम (val = 0; val < afe440x_attr->table_size; val++)
+		अगर (afe440x_attr->val_table[val].पूर्णांकeger == पूर्णांकeger &&
 		    afe440x_attr->val_table[val].fract == fract)
-			break;
-	if (val == afe440x_attr->table_size)
-		return -EINVAL;
+			अवरोध;
+	अगर (val == afe440x_attr->table_size)
+		वापस -EINVAL;
 
-	ret = regmap_field_write(afe->fields[afe440x_attr->field], val);
-	if (ret)
-		return ret;
+	ret = regmap_field_ग_लिखो(afe->fields[afe440x_attr->field], val);
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static AFE440X_ATTR(in_intensity1_resistance, F_RF_LED, afe4403_res_table);
-static AFE440X_ATTR(in_intensity1_capacitance, F_CF_LED, afe4403_cap_table);
+अटल AFE440X_ATTR(in_पूर्णांकensity1_resistance, F_RF_LED, afe4403_res_table);
+अटल AFE440X_ATTR(in_पूर्णांकensity1_capacitance, F_CF_LED, afe4403_cap_table);
 
-static AFE440X_ATTR(in_intensity2_resistance, F_RF_LED, afe4403_res_table);
-static AFE440X_ATTR(in_intensity2_capacitance, F_CF_LED, afe4403_cap_table);
+अटल AFE440X_ATTR(in_पूर्णांकensity2_resistance, F_RF_LED, afe4403_res_table);
+अटल AFE440X_ATTR(in_पूर्णांकensity2_capacitance, F_CF_LED, afe4403_cap_table);
 
-static AFE440X_ATTR(in_intensity3_resistance, F_RF_LED1, afe4403_res_table);
-static AFE440X_ATTR(in_intensity3_capacitance, F_CF_LED1, afe4403_cap_table);
+अटल AFE440X_ATTR(in_पूर्णांकensity3_resistance, F_RF_LED1, afe4403_res_table);
+अटल AFE440X_ATTR(in_पूर्णांकensity3_capacitance, F_CF_LED1, afe4403_cap_table);
 
-static AFE440X_ATTR(in_intensity4_resistance, F_RF_LED1, afe4403_res_table);
-static AFE440X_ATTR(in_intensity4_capacitance, F_CF_LED1, afe4403_cap_table);
+अटल AFE440X_ATTR(in_पूर्णांकensity4_resistance, F_RF_LED1, afe4403_res_table);
+अटल AFE440X_ATTR(in_पूर्णांकensity4_capacitance, F_CF_LED1, afe4403_cap_table);
 
-static struct attribute *afe440x_attributes[] = {
-	&dev_attr_in_intensity_resistance_available.attr,
-	&dev_attr_in_intensity_capacitance_available.attr,
-	&afe440x_attr_in_intensity1_resistance.dev_attr.attr,
-	&afe440x_attr_in_intensity1_capacitance.dev_attr.attr,
-	&afe440x_attr_in_intensity2_resistance.dev_attr.attr,
-	&afe440x_attr_in_intensity2_capacitance.dev_attr.attr,
-	&afe440x_attr_in_intensity3_resistance.dev_attr.attr,
-	&afe440x_attr_in_intensity3_capacitance.dev_attr.attr,
-	&afe440x_attr_in_intensity4_resistance.dev_attr.attr,
-	&afe440x_attr_in_intensity4_capacitance.dev_attr.attr,
-	NULL
-};
+अटल काष्ठा attribute *afe440x_attributes[] = अणु
+	&dev_attr_in_पूर्णांकensity_resistance_available.attr,
+	&dev_attr_in_पूर्णांकensity_capacitance_available.attr,
+	&afe440x_attr_in_पूर्णांकensity1_resistance.dev_attr.attr,
+	&afe440x_attr_in_पूर्णांकensity1_capacitance.dev_attr.attr,
+	&afe440x_attr_in_पूर्णांकensity2_resistance.dev_attr.attr,
+	&afe440x_attr_in_पूर्णांकensity2_capacitance.dev_attr.attr,
+	&afe440x_attr_in_पूर्णांकensity3_resistance.dev_attr.attr,
+	&afe440x_attr_in_पूर्णांकensity3_capacitance.dev_attr.attr,
+	&afe440x_attr_in_पूर्णांकensity4_resistance.dev_attr.attr,
+	&afe440x_attr_in_पूर्णांकensity4_capacitance.dev_attr.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group afe440x_attribute_group = {
+अटल स्थिर काष्ठा attribute_group afe440x_attribute_group = अणु
 	.attrs = afe440x_attributes
-};
+पूर्ण;
 
-static int afe4403_read(struct afe4403_data *afe, unsigned int reg, u32 *val)
-{
-	u8 tx[4] = {AFE440X_CONTROL0, 0x0, 0x0, AFE440X_CONTROL0_READ};
+अटल पूर्णांक afe4403_पढ़ो(काष्ठा afe4403_data *afe, अचिन्हित पूर्णांक reg, u32 *val)
+अणु
+	u8 tx[4] = अणुAFE440X_CONTROL0, 0x0, 0x0, AFE440X_CONTROL0_READपूर्ण;
 	u8 rx[3];
-	int ret;
+	पूर्णांक ret;
 
-	/* Enable reading from the device */
-	ret = spi_write_then_read(afe->spi, tx, 4, NULL, 0);
-	if (ret)
-		return ret;
+	/* Enable पढ़ोing from the device */
+	ret = spi_ग_लिखो_then_पढ़ो(afe->spi, tx, 4, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	ret = spi_write_then_read(afe->spi, &reg, 1, rx, sizeof(rx));
-	if (ret)
-		return ret;
+	ret = spi_ग_लिखो_then_पढ़ो(afe->spi, &reg, 1, rx, माप(rx));
+	अगर (ret)
+		वापस ret;
 
 	*val = get_unaligned_be24(&rx[0]);
 
-	/* Disable reading from the device */
+	/* Disable पढ़ोing from the device */
 	tx[3] = AFE440X_CONTROL0_WRITE;
-	ret = spi_write_then_read(afe->spi, tx, 4, NULL, 0);
-	if (ret)
-		return ret;
+	ret = spi_ग_लिखो_then_पढ़ो(afe->spi, tx, 4, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int afe4403_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *chan,
-			    int *val, int *val2, long mask)
-{
-	struct afe4403_data *afe = iio_priv(indio_dev);
-	unsigned int reg = afe4403_channel_values[chan->address];
-	unsigned int field = afe4403_channel_leds[chan->address];
-	int ret;
+अटल पूर्णांक afe4403_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan,
+			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा afe4403_data *afe = iio_priv(indio_dev);
+	अचिन्हित पूर्णांक reg = afe4403_channel_values[chan->address];
+	अचिन्हित पूर्णांक field = afe4403_channel_leds[chan->address];
+	पूर्णांक ret;
 
-	switch (chan->type) {
-	case IIO_INTENSITY:
-		switch (mask) {
-		case IIO_CHAN_INFO_RAW:
-			ret = afe4403_read(afe, reg, val);
-			if (ret)
-				return ret;
-			return IIO_VAL_INT;
-		}
-		break;
-	case IIO_CURRENT:
-		switch (mask) {
-		case IIO_CHAN_INFO_RAW:
-			ret = regmap_field_read(afe->fields[field], val);
-			if (ret)
-				return ret;
-			return IIO_VAL_INT;
-		case IIO_CHAN_INFO_SCALE:
+	चयन (chan->type) अणु
+	हाल IIO_INTENSITY:
+		चयन (mask) अणु
+		हाल IIO_CHAN_INFO_RAW:
+			ret = afe4403_पढ़ो(afe, reg, val);
+			अगर (ret)
+				वापस ret;
+			वापस IIO_VAL_INT;
+		पूर्ण
+		अवरोध;
+	हाल IIO_CURRENT:
+		चयन (mask) अणु
+		हाल IIO_CHAN_INFO_RAW:
+			ret = regmap_field_पढ़ो(afe->fields[field], val);
+			अगर (ret)
+				वापस ret;
+			वापस IIO_VAL_INT;
+		हाल IIO_CHAN_INFO_SCALE:
 			*val = 0;
 			*val2 = 800000;
-			return IIO_VAL_INT_PLUS_MICRO;
-		}
-		break;
-	default:
-		break;
-	}
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int afe4403_write_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan,
-			     int val, int val2, long mask)
-{
-	struct afe4403_data *afe = iio_priv(indio_dev);
-	unsigned int field = afe4403_channel_leds[chan->address];
+अटल पूर्णांक afe4403_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan,
+			     पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा afe4403_data *afe = iio_priv(indio_dev);
+	अचिन्हित पूर्णांक field = afe4403_channel_leds[chan->address];
 
-	switch (chan->type) {
-	case IIO_CURRENT:
-		switch (mask) {
-		case IIO_CHAN_INFO_RAW:
-			return regmap_field_write(afe->fields[field], val);
-		}
-		break;
-	default:
-		break;
-	}
+	चयन (chan->type) अणु
+	हाल IIO_CURRENT:
+		चयन (mask) अणु
+		हाल IIO_CHAN_INFO_RAW:
+			वापस regmap_field_ग_लिखो(afe->fields[field], val);
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_info afe4403_iio_info = {
+अटल स्थिर काष्ठा iio_info afe4403_iio_info = अणु
 	.attrs = &afe440x_attribute_group,
-	.read_raw = afe4403_read_raw,
-	.write_raw = afe4403_write_raw,
-};
+	.पढ़ो_raw = afe4403_पढ़ो_raw,
+	.ग_लिखो_raw = afe4403_ग_लिखो_raw,
+पूर्ण;
 
-static irqreturn_t afe4403_trigger_handler(int irq, void *private)
-{
-	struct iio_poll_func *pf = private;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct afe4403_data *afe = iio_priv(indio_dev);
-	int ret, bit, i = 0;
-	u8 tx[4] = {AFE440X_CONTROL0, 0x0, 0x0, AFE440X_CONTROL0_READ};
+अटल irqवापस_t afe4403_trigger_handler(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा iio_poll_func *pf = निजी;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा afe4403_data *afe = iio_priv(indio_dev);
+	पूर्णांक ret, bit, i = 0;
+	u8 tx[4] = अणुAFE440X_CONTROL0, 0x0, 0x0, AFE440X_CONTROL0_READपूर्ण;
 	u8 rx[3];
 
-	/* Enable reading from the device */
-	ret = spi_write_then_read(afe->spi, tx, 4, NULL, 0);
-	if (ret)
-		goto err;
+	/* Enable पढ़ोing from the device */
+	ret = spi_ग_लिखो_then_पढ़ो(afe->spi, tx, 4, शून्य, 0);
+	अगर (ret)
+		जाओ err;
 
-	for_each_set_bit(bit, indio_dev->active_scan_mask,
-			 indio_dev->masklength) {
-		ret = spi_write_then_read(afe->spi,
+	क्रम_each_set_bit(bit, indio_dev->active_scan_mask,
+			 indio_dev->masklength) अणु
+		ret = spi_ग_लिखो_then_पढ़ो(afe->spi,
 					  &afe4403_channel_values[bit], 1,
-					  rx, sizeof(rx));
-		if (ret)
-			goto err;
+					  rx, माप(rx));
+		अगर (ret)
+			जाओ err;
 
 		afe->buffer[i++] = get_unaligned_be24(&rx[0]);
-	}
+	पूर्ण
 
-	/* Disable reading from the device */
+	/* Disable पढ़ोing from the device */
 	tx[3] = AFE440X_CONTROL0_WRITE;
-	ret = spi_write_then_read(afe->spi, tx, 4, NULL, 0);
-	if (ret)
-		goto err;
+	ret = spi_ग_लिखो_then_पढ़ो(afe->spi, tx, 4, शून्य, 0);
+	अगर (ret)
+		जाओ err;
 
-	iio_push_to_buffers_with_timestamp(indio_dev, afe->buffer,
-					   pf->timestamp);
+	iio_push_to_buffers_with_बारtamp(indio_dev, afe->buffer,
+					   pf->बारtamp);
 err:
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct iio_trigger_ops afe4403_trigger_ops = {
-};
+अटल स्थिर काष्ठा iio_trigger_ops afe4403_trigger_ops = अणु
+पूर्ण;
 
-#define AFE4403_TIMING_PAIRS			\
-	{ AFE440X_LED2STC,	0x000050 },	\
-	{ AFE440X_LED2ENDC,	0x0003e7 },	\
-	{ AFE440X_LED1LEDSTC,	0x0007d0 },	\
-	{ AFE440X_LED1LEDENDC,	0x000bb7 },	\
-	{ AFE440X_ALED2STC,	0x000438 },	\
-	{ AFE440X_ALED2ENDC,	0x0007cf },	\
-	{ AFE440X_LED1STC,	0x000820 },	\
-	{ AFE440X_LED1ENDC,	0x000bb7 },	\
-	{ AFE440X_LED2LEDSTC,	0x000000 },	\
-	{ AFE440X_LED2LEDENDC,	0x0003e7 },	\
-	{ AFE440X_ALED1STC,	0x000c08 },	\
-	{ AFE440X_ALED1ENDC,	0x000f9f },	\
-	{ AFE440X_LED2CONVST,	0x0003ef },	\
-	{ AFE440X_LED2CONVEND,	0x0007cf },	\
-	{ AFE440X_ALED2CONVST,	0x0007d7 },	\
-	{ AFE440X_ALED2CONVEND,	0x000bb7 },	\
-	{ AFE440X_LED1CONVST,	0x000bbf },	\
-	{ AFE440X_LED1CONVEND,	0x009c3f },	\
-	{ AFE440X_ALED1CONVST,	0x000fa7 },	\
-	{ AFE440X_ALED1CONVEND,	0x001387 },	\
-	{ AFE440X_ADCRSTSTCT0,	0x0003e8 },	\
-	{ AFE440X_ADCRSTENDCT0,	0x0003eb },	\
-	{ AFE440X_ADCRSTSTCT1,	0x0007d0 },	\
-	{ AFE440X_ADCRSTENDCT1,	0x0007d3 },	\
-	{ AFE440X_ADCRSTSTCT2,	0x000bb8 },	\
-	{ AFE440X_ADCRSTENDCT2,	0x000bbb },	\
-	{ AFE440X_ADCRSTSTCT3,	0x000fa0 },	\
-	{ AFE440X_ADCRSTENDCT3,	0x000fa3 },	\
-	{ AFE440X_PRPCOUNT,	0x009c3f },	\
-	{ AFE440X_PDNCYCLESTC,	0x001518 },	\
-	{ AFE440X_PDNCYCLEENDC,	0x00991f }
+#घोषणा AFE4403_TIMING_PAIRS			\
+	अणु AFE440X_LED2STC,	0x000050 पूर्ण,	\
+	अणु AFE440X_LED2ENDC,	0x0003e7 पूर्ण,	\
+	अणु AFE440X_LED1LEDSTC,	0x0007d0 पूर्ण,	\
+	अणु AFE440X_LED1LEDENDC,	0x000bb7 पूर्ण,	\
+	अणु AFE440X_ALED2STC,	0x000438 पूर्ण,	\
+	अणु AFE440X_ALED2ENDC,	0x0007cf पूर्ण,	\
+	अणु AFE440X_LED1STC,	0x000820 पूर्ण,	\
+	अणु AFE440X_LED1ENDC,	0x000bb7 पूर्ण,	\
+	अणु AFE440X_LED2LEDSTC,	0x000000 पूर्ण,	\
+	अणु AFE440X_LED2LEDENDC,	0x0003e7 पूर्ण,	\
+	अणु AFE440X_ALED1STC,	0x000c08 पूर्ण,	\
+	अणु AFE440X_ALED1ENDC,	0x000f9f पूर्ण,	\
+	अणु AFE440X_LED2CONVST,	0x0003ef पूर्ण,	\
+	अणु AFE440X_LED2CONVEND,	0x0007cf पूर्ण,	\
+	अणु AFE440X_ALED2CONVST,	0x0007d7 पूर्ण,	\
+	अणु AFE440X_ALED2CONVEND,	0x000bb7 पूर्ण,	\
+	अणु AFE440X_LED1CONVST,	0x000bbf पूर्ण,	\
+	अणु AFE440X_LED1CONVEND,	0x009c3f पूर्ण,	\
+	अणु AFE440X_ALED1CONVST,	0x000fa7 पूर्ण,	\
+	अणु AFE440X_ALED1CONVEND,	0x001387 पूर्ण,	\
+	अणु AFE440X_ADCRSTSTCT0,	0x0003e8 पूर्ण,	\
+	अणु AFE440X_ADCRSTENDCT0,	0x0003eb पूर्ण,	\
+	अणु AFE440X_ADCRSTSTCT1,	0x0007d0 पूर्ण,	\
+	अणु AFE440X_ADCRSTENDCT1,	0x0007d3 पूर्ण,	\
+	अणु AFE440X_ADCRSTSTCT2,	0x000bb8 पूर्ण,	\
+	अणु AFE440X_ADCRSTENDCT2,	0x000bbb पूर्ण,	\
+	अणु AFE440X_ADCRSTSTCT3,	0x000fa0 पूर्ण,	\
+	अणु AFE440X_ADCRSTENDCT3,	0x000fa3 पूर्ण,	\
+	अणु AFE440X_PRPCOUNT,	0x009c3f पूर्ण,	\
+	अणु AFE440X_PDNCYCLESTC,	0x001518 पूर्ण,	\
+	अणु AFE440X_PDNCYCLEENDC,	0x00991f पूर्ण
 
-static const struct reg_sequence afe4403_reg_sequences[] = {
+अटल स्थिर काष्ठा reg_sequence afe4403_reg_sequences[] = अणु
 	AFE4403_TIMING_PAIRS,
-	{ AFE440X_CONTROL1, AFE440X_CONTROL1_TIMEREN },
-	{ AFE4403_TIAGAIN, AFE440X_TIAGAIN_ENSEPGAIN },
-};
+	अणु AFE440X_CONTROL1, AFE440X_CONTROL1_TIMEREN पूर्ण,
+	अणु AFE4403_TIAGAIN, AFE440X_TIAGAIN_ENSEPGAIN पूर्ण,
+पूर्ण;
 
-static const struct regmap_range afe4403_yes_ranges[] = {
+अटल स्थिर काष्ठा regmap_range afe4403_yes_ranges[] = अणु
 	regmap_reg_range(AFE440X_LED2VAL, AFE440X_LED1_ALED1VAL),
-};
+पूर्ण;
 
-static const struct regmap_access_table afe4403_volatile_table = {
+अटल स्थिर काष्ठा regmap_access_table afe4403_अस्थिर_table = अणु
 	.yes_ranges = afe4403_yes_ranges,
 	.n_yes_ranges = ARRAY_SIZE(afe4403_yes_ranges),
-};
+पूर्ण;
 
-static const struct regmap_config afe4403_regmap_config = {
+अटल स्थिर काष्ठा regmap_config afe4403_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 24,
 
-	.max_register = AFE440X_PDNCYCLEENDC,
+	.max_रेजिस्टर = AFE440X_PDNCYCLEENDC,
 	.cache_type = REGCACHE_RBTREE,
-	.volatile_table = &afe4403_volatile_table,
-};
+	.अस्थिर_table = &afe4403_अस्थिर_table,
+पूर्ण;
 
-static const struct of_device_id afe4403_of_match[] = {
-	{ .compatible = "ti,afe4403", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id afe4403_of_match[] = अणु
+	अणु .compatible = "ti,afe4403", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, afe4403_of_match);
 
-static int __maybe_unused afe4403_suspend(struct device *dev)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(to_spi_device(dev));
-	struct afe4403_data *afe = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक __maybe_unused afe4403_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(to_spi_device(dev));
+	काष्ठा afe4403_data *afe = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(afe->regmap, AFE440X_CONTROL2,
 				 AFE440X_CONTROL2_PDN_AFE,
 				 AFE440X_CONTROL2_PDN_AFE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = regulator_disable(afe->regulator);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Unable to disable regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused afe4403_resume(struct device *dev)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(to_spi_device(dev));
-	struct afe4403_data *afe = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक __maybe_unused afe4403_resume(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(to_spi_device(dev));
+	काष्ठा afe4403_data *afe = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	ret = regulator_enable(afe->regulator);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Unable to enable regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regmap_update_bits(afe->regmap, AFE440X_CONTROL2,
 				 AFE440X_CONTROL2_PDN_AFE, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(afe4403_pm_ops, afe4403_suspend, afe4403_resume);
+अटल SIMPLE_DEV_PM_OPS(afe4403_pm_ops, afe4403_suspend, afe4403_resume);
 
-static int afe4403_probe(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev;
-	struct afe4403_data *afe;
-	int i, ret;
+अटल पूर्णांक afe4403_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा afe4403_data *afe;
+	पूर्णांक i, ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*afe));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*afe));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	afe = iio_priv(indio_dev);
 	spi_set_drvdata(spi, indio_dev);
@@ -472,147 +473,147 @@ static int afe4403_probe(struct spi_device *spi)
 	afe->irq = spi->irq;
 
 	afe->regmap = devm_regmap_init_spi(spi, &afe4403_regmap_config);
-	if (IS_ERR(afe->regmap)) {
+	अगर (IS_ERR(afe->regmap)) अणु
 		dev_err(afe->dev, "Unable to allocate register map\n");
-		return PTR_ERR(afe->regmap);
-	}
+		वापस PTR_ERR(afe->regmap);
+	पूर्ण
 
-	for (i = 0; i < F_MAX_FIELDS; i++) {
+	क्रम (i = 0; i < F_MAX_FIELDS; i++) अणु
 		afe->fields[i] = devm_regmap_field_alloc(afe->dev, afe->regmap,
 							 afe4403_reg_fields[i]);
-		if (IS_ERR(afe->fields[i])) {
+		अगर (IS_ERR(afe->fields[i])) अणु
 			dev_err(afe->dev, "Unable to allocate regmap fields\n");
-			return PTR_ERR(afe->fields[i]);
-		}
-	}
+			वापस PTR_ERR(afe->fields[i]);
+		पूर्ण
+	पूर्ण
 
 	afe->regulator = devm_regulator_get(afe->dev, "tx_sup");
-	if (IS_ERR(afe->regulator)) {
+	अगर (IS_ERR(afe->regulator)) अणु
 		dev_err(afe->dev, "Unable to get regulator\n");
-		return PTR_ERR(afe->regulator);
-	}
+		वापस PTR_ERR(afe->regulator);
+	पूर्ण
 	ret = regulator_enable(afe->regulator);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(afe->dev, "Unable to enable regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = regmap_write(afe->regmap, AFE440X_CONTROL0,
+	ret = regmap_ग_लिखो(afe->regmap, AFE440X_CONTROL0,
 			   AFE440X_CONTROL0_SW_RESET);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(afe->dev, "Unable to reset device\n");
-		goto err_disable_reg;
-	}
+		जाओ err_disable_reg;
+	पूर्ण
 
-	ret = regmap_multi_reg_write(afe->regmap, afe4403_reg_sequences,
+	ret = regmap_multi_reg_ग_लिखो(afe->regmap, afe4403_reg_sequences,
 				     ARRAY_SIZE(afe4403_reg_sequences));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(afe->dev, "Unable to set register defaults\n");
-		goto err_disable_reg;
-	}
+		जाओ err_disable_reg;
+	पूर्ण
 
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = afe4403_channels;
 	indio_dev->num_channels = ARRAY_SIZE(afe4403_channels);
 	indio_dev->name = AFE4403_DRIVER_NAME;
 	indio_dev->info = &afe4403_iio_info;
 
-	if (afe->irq > 0) {
+	अगर (afe->irq > 0) अणु
 		afe->trig = devm_iio_trigger_alloc(afe->dev,
 						   "%s-dev%d",
 						   indio_dev->name,
 						   indio_dev->id);
-		if (!afe->trig) {
+		अगर (!afe->trig) अणु
 			dev_err(afe->dev, "Unable to allocate IIO trigger\n");
 			ret = -ENOMEM;
-			goto err_disable_reg;
-		}
+			जाओ err_disable_reg;
+		पूर्ण
 
 		iio_trigger_set_drvdata(afe->trig, indio_dev);
 
 		afe->trig->ops = &afe4403_trigger_ops;
 
-		ret = iio_trigger_register(afe->trig);
-		if (ret) {
+		ret = iio_trigger_रेजिस्टर(afe->trig);
+		अगर (ret) अणु
 			dev_err(afe->dev, "Unable to register IIO trigger\n");
-			goto err_disable_reg;
-		}
+			जाओ err_disable_reg;
+		पूर्ण
 
-		ret = devm_request_threaded_irq(afe->dev, afe->irq,
+		ret = devm_request_thपढ़ोed_irq(afe->dev, afe->irq,
 						iio_trigger_generic_data_rdy_poll,
-						NULL, IRQF_ONESHOT,
+						शून्य, IRQF_ONESHOT,
 						AFE4403_DRIVER_NAME,
 						afe->trig);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(afe->dev, "Unable to request IRQ\n");
-			goto err_trig;
-		}
-	}
+			जाओ err_trig;
+		पूर्ण
+	पूर्ण
 
-	ret = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_time,
-					 afe4403_trigger_handler, NULL);
-	if (ret) {
+	ret = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_समय,
+					 afe4403_trigger_handler, शून्य);
+	अगर (ret) अणु
 		dev_err(afe->dev, "Unable to setup buffer\n");
-		goto err_trig;
-	}
+		जाओ err_trig;
+	पूर्ण
 
-	ret = iio_device_register(indio_dev);
-	if (ret) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret) अणु
 		dev_err(afe->dev, "Unable to register IIO device\n");
-		goto err_buff;
-	}
+		जाओ err_buff;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_buff:
 	iio_triggered_buffer_cleanup(indio_dev);
 err_trig:
-	if (afe->irq > 0)
-		iio_trigger_unregister(afe->trig);
+	अगर (afe->irq > 0)
+		iio_trigger_unरेजिस्टर(afe->trig);
 err_disable_reg:
 	regulator_disable(afe->regulator);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int afe4403_remove(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-	struct afe4403_data *afe = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक afe4403_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
+	काष्ठा afe4403_data *afe = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 
 	iio_triggered_buffer_cleanup(indio_dev);
 
-	if (afe->irq > 0)
-		iio_trigger_unregister(afe->trig);
+	अगर (afe->irq > 0)
+		iio_trigger_unरेजिस्टर(afe->trig);
 
 	ret = regulator_disable(afe->regulator);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(afe->dev, "Unable to disable regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id afe4403_ids[] = {
-	{ "afe4403", 0 },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा spi_device_id afe4403_ids[] = अणु
+	अणु "afe4403", 0 पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, afe4403_ids);
 
-static struct spi_driver afe4403_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver afe4403_spi_driver = अणु
+	.driver = अणु
 		.name = AFE4403_DRIVER_NAME,
 		.of_match_table = afe4403_of_match,
 		.pm = &afe4403_pm_ops,
-	},
+	पूर्ण,
 	.probe = afe4403_probe,
-	.remove = afe4403_remove,
+	.हटाओ = afe4403_हटाओ,
 	.id_table = afe4403_ids,
-};
+पूर्ण;
 module_spi_driver(afe4403_spi_driver);
 
 MODULE_AUTHOR("Andrew F. Davis <afd@ti.com>");

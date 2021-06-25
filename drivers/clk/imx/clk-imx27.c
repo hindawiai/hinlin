@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <dt-bindings/clock/imx27-clock.h>
-#include <soc/imx/revision.h>
-#include <soc/imx/timer.h>
-#include <asm/irq.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <dt-bindings/घड़ी/imx27-घड़ी.h>
+#समावेश <soc/imx/revision.h>
+#समावेश <soc/imx/समयr.h>
+#समावेश <यंत्र/irq.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-#define MX27_CCM_BASE_ADDR	0x10027000
-#define MX27_GPT1_BASE_ADDR	0x10003000
-#define MX27_INT_GPT1		(NR_IRQS_LEGACY + 26)
+#घोषणा MX27_CCM_BASE_ADDR	0x10027000
+#घोषणा MX27_GPT1_BASE_ADDR	0x10003000
+#घोषणा MX27_INT_GPT1		(NR_IRQS_LEGACY + 26)
 
-static void __iomem *ccm __initdata;
+अटल व्योम __iomem *ccm __initdata;
 
 /* Register offsets */
-#define CCM_CSCR		(ccm + 0x00)
-#define CCM_MPCTL0		(ccm + 0x04)
-#define CCM_MPCTL1		(ccm + 0x08)
-#define CCM_SPCTL0		(ccm + 0x0c)
-#define CCM_SPCTL1		(ccm + 0x10)
-#define CCM_PCDR0		(ccm + 0x18)
-#define CCM_PCDR1		(ccm + 0x1c)
-#define CCM_PCCR0		(ccm + 0x20)
-#define CCM_PCCR1		(ccm + 0x24)
-#define CCM_CCSR		(ccm + 0x28)
+#घोषणा CCM_CSCR		(ccm + 0x00)
+#घोषणा CCM_MPCTL0		(ccm + 0x04)
+#घोषणा CCM_MPCTL1		(ccm + 0x08)
+#घोषणा CCM_SPCTL0		(ccm + 0x0c)
+#घोषणा CCM_SPCTL1		(ccm + 0x10)
+#घोषणा CCM_PCDR0		(ccm + 0x18)
+#घोषणा CCM_PCDR1		(ccm + 0x1c)
+#घोषणा CCM_PCCR0		(ccm + 0x20)
+#घोषणा CCM_PCCR1		(ccm + 0x24)
+#घोषणा CCM_CCSR		(ccm + 0x28)
 
-static const char *vpu_sel_clks[] = { "spll", "mpll_main2", };
-static const char *cpu_sel_clks[] = { "mpll_main2", "mpll", };
-static const char *mpll_sel_clks[] = { "fpm", "mpll_osc_sel", };
-static const char *mpll_osc_sel_clks[] = { "ckih_gate", "ckih_div1p5", };
-static const char *clko_sel_clks[] = {
+अटल स्थिर अक्षर *vpu_sel_clks[] = अणु "spll", "mpll_main2", पूर्ण;
+अटल स्थिर अक्षर *cpu_sel_clks[] = अणु "mpll_main2", "mpll", पूर्ण;
+अटल स्थिर अक्षर *mpll_sel_clks[] = अणु "fpm", "mpll_osc_sel", पूर्ण;
+अटल स्थिर अक्षर *mpll_osc_sel_clks[] = अणु "ckih_gate", "ckih_div1p5", पूर्ण;
+अटल स्थिर अक्षर *clko_sel_clks[] = अणु
 	"ckil", "fpm", "ckih_gate", "ckih_gate",
 	"ckih_gate", "mpll", "spll", "cpu_div",
 	"ahb", "ipg", "per1_div", "per2_div",
 	"per3_div", "per4_div", "ssi1_div", "ssi2_div",
 	"nfc_div", "mshc_div", "vpu_div", "60m",
 	"32k", "usb_div", "dptc",
-};
+पूर्ण;
 
-static const char *ssi_sel_clks[] = { "spll_gate", "mpll", };
+अटल स्थिर अक्षर *ssi_sel_clks[] = अणु "spll_gate", "mpll", पूर्ण;
 
-static struct clk *clk[IMX27_CLK_MAX];
-static struct clk_onecell_data clk_data;
+अटल काष्ठा clk *clk[IMX27_CLK_MAX];
+अटल काष्ठा clk_onecell_data clk_data;
 
-static void __init _mx27_clocks_init(unsigned long fref)
-{
+अटल व्योम __init _mx27_घड़ीs_init(अचिन्हित दीर्घ fref)
+अणु
 	BUG_ON(!ccm);
 
 	clk[IMX27_CLK_DUMMY] = imx_clk_fixed("dummy", 0);
@@ -66,36 +67,36 @@ static void __init _mx27_clocks_init(unsigned long fref)
 	clk[IMX27_CLK_SPLL_GATE] = imx_clk_gate("spll_gate", "spll", CCM_CSCR, 1);
 	clk[IMX27_CLK_MPLL_MAIN2] = imx_clk_fixed_factor("mpll_main2", "mpll", 2, 3);
 
-	if (mx27_revision() >= IMX_CHIP_REVISION_2_0) {
-		clk[IMX27_CLK_AHB] = imx_clk_divider("ahb", "mpll_main2", CCM_CSCR, 8, 2);
+	अगर (mx27_revision() >= IMX_CHIP_REVISION_2_0) अणु
+		clk[IMX27_CLK_AHB] = imx_clk_भागider("ahb", "mpll_main2", CCM_CSCR, 8, 2);
 		clk[IMX27_CLK_IPG] = imx_clk_fixed_factor("ipg", "ahb", 1, 2);
-	} else {
-		clk[IMX27_CLK_AHB] = imx_clk_divider("ahb", "mpll_main2", CCM_CSCR, 9, 4);
-		clk[IMX27_CLK_IPG] = imx_clk_divider("ipg", "ahb", CCM_CSCR, 8, 1);
-	}
+	पूर्ण अन्यथा अणु
+		clk[IMX27_CLK_AHB] = imx_clk_भागider("ahb", "mpll_main2", CCM_CSCR, 9, 4);
+		clk[IMX27_CLK_IPG] = imx_clk_भागider("ipg", "ahb", CCM_CSCR, 8, 1);
+	पूर्ण
 
-	clk[IMX27_CLK_MSHC_DIV] = imx_clk_divider("mshc_div", "ahb", CCM_PCDR0, 0, 6);
-	clk[IMX27_CLK_NFC_DIV] = imx_clk_divider("nfc_div", "ahb", CCM_PCDR0, 6, 4);
-	clk[IMX27_CLK_PER1_DIV] = imx_clk_divider("per1_div", "mpll_main2", CCM_PCDR1, 0, 6);
-	clk[IMX27_CLK_PER2_DIV] = imx_clk_divider("per2_div", "mpll_main2", CCM_PCDR1, 8, 6);
-	clk[IMX27_CLK_PER3_DIV] = imx_clk_divider("per3_div", "mpll_main2", CCM_PCDR1, 16, 6);
-	clk[IMX27_CLK_PER4_DIV] = imx_clk_divider("per4_div", "mpll_main2", CCM_PCDR1, 24, 6);
+	clk[IMX27_CLK_MSHC_DIV] = imx_clk_भागider("mshc_div", "ahb", CCM_PCDR0, 0, 6);
+	clk[IMX27_CLK_NFC_DIV] = imx_clk_भागider("nfc_div", "ahb", CCM_PCDR0, 6, 4);
+	clk[IMX27_CLK_PER1_DIV] = imx_clk_भागider("per1_div", "mpll_main2", CCM_PCDR1, 0, 6);
+	clk[IMX27_CLK_PER2_DIV] = imx_clk_भागider("per2_div", "mpll_main2", CCM_PCDR1, 8, 6);
+	clk[IMX27_CLK_PER3_DIV] = imx_clk_भागider("per3_div", "mpll_main2", CCM_PCDR1, 16, 6);
+	clk[IMX27_CLK_PER4_DIV] = imx_clk_भागider("per4_div", "mpll_main2", CCM_PCDR1, 24, 6);
 	clk[IMX27_CLK_VPU_SEL] = imx_clk_mux("vpu_sel", CCM_CSCR, 21, 1, vpu_sel_clks, ARRAY_SIZE(vpu_sel_clks));
-	clk[IMX27_CLK_VPU_DIV] = imx_clk_divider("vpu_div", "vpu_sel", CCM_PCDR0, 10, 6);
-	clk[IMX27_CLK_USB_DIV] = imx_clk_divider("usb_div", "spll_gate", CCM_CSCR, 28, 3);
+	clk[IMX27_CLK_VPU_DIV] = imx_clk_भागider("vpu_div", "vpu_sel", CCM_PCDR0, 10, 6);
+	clk[IMX27_CLK_USB_DIV] = imx_clk_भागider("usb_div", "spll_gate", CCM_CSCR, 28, 3);
 	clk[IMX27_CLK_CPU_SEL] = imx_clk_mux("cpu_sel", CCM_CSCR, 15, 1, cpu_sel_clks, ARRAY_SIZE(cpu_sel_clks));
 	clk[IMX27_CLK_CLKO_SEL] = imx_clk_mux("clko_sel", CCM_CCSR, 0, 5, clko_sel_clks, ARRAY_SIZE(clko_sel_clks));
 
-	if (mx27_revision() >= IMX_CHIP_REVISION_2_0)
-		clk[IMX27_CLK_CPU_DIV] = imx_clk_divider("cpu_div", "cpu_sel", CCM_CSCR, 12, 2);
-	else
-		clk[IMX27_CLK_CPU_DIV] = imx_clk_divider("cpu_div", "cpu_sel", CCM_CSCR, 13, 3);
+	अगर (mx27_revision() >= IMX_CHIP_REVISION_2_0)
+		clk[IMX27_CLK_CPU_DIV] = imx_clk_भागider("cpu_div", "cpu_sel", CCM_CSCR, 12, 2);
+	अन्यथा
+		clk[IMX27_CLK_CPU_DIV] = imx_clk_भागider("cpu_div", "cpu_sel", CCM_CSCR, 13, 3);
 
-	clk[IMX27_CLK_CLKO_DIV] = imx_clk_divider("clko_div", "clko_sel", CCM_PCDR0, 22, 3);
+	clk[IMX27_CLK_CLKO_DIV] = imx_clk_भागider("clko_div", "clko_sel", CCM_PCDR0, 22, 3);
 	clk[IMX27_CLK_SSI1_SEL] = imx_clk_mux("ssi1_sel", CCM_CSCR, 22, 1, ssi_sel_clks, ARRAY_SIZE(ssi_sel_clks));
 	clk[IMX27_CLK_SSI2_SEL] = imx_clk_mux("ssi2_sel", CCM_CSCR, 23, 1, ssi_sel_clks, ARRAY_SIZE(ssi_sel_clks));
-	clk[IMX27_CLK_SSI1_DIV] = imx_clk_divider("ssi1_div", "ssi1_sel", CCM_PCDR0, 16, 6);
-	clk[IMX27_CLK_SSI2_DIV] = imx_clk_divider("ssi2_div", "ssi2_sel", CCM_PCDR0, 26, 6);
+	clk[IMX27_CLK_SSI1_DIV] = imx_clk_भागider("ssi1_div", "ssi1_sel", CCM_PCDR0, 16, 6);
+	clk[IMX27_CLK_SSI2_DIV] = imx_clk_भागider("ssi2_div", "ssi2_sel", CCM_PCDR0, 26, 6);
 	clk[IMX27_CLK_CLKO_EN] = imx_clk_gate("clko_en", "clko_div", CCM_PCCR0, 0);
 	clk[IMX27_CLK_SSI2_IPG_GATE] = imx_clk_gate("ssi2_ipg_gate", "ipg", CCM_PCCR0, 0);
 	clk[IMX27_CLK_SSI1_IPG_GATE] = imx_clk_gate("ssi1_ipg_gate", "ipg", CCM_PCCR0, 1);
@@ -159,38 +160,38 @@ static void __init _mx27_clocks_init(unsigned long fref)
 	clk[IMX27_CLK_UART2_IPG_GATE] = imx_clk_gate("uart2_ipg_gate", "ipg", CCM_PCCR1, 30);
 	clk[IMX27_CLK_UART1_IPG_GATE] = imx_clk_gate("uart1_ipg_gate", "ipg", CCM_PCCR1, 31);
 
-	imx_check_clocks(clk, ARRAY_SIZE(clk));
+	imx_check_घड़ीs(clk, ARRAY_SIZE(clk));
 
-	clk_register_clkdev(clk[IMX27_CLK_CPU_DIV], NULL, "cpu0");
+	clk_रेजिस्टर_clkdev(clk[IMX27_CLK_CPU_DIV], शून्य, "cpu0");
 
 	clk_prepare_enable(clk[IMX27_CLK_EMI_AHB_GATE]);
 
-	imx_register_uart_clocks(7);
+	imx_रेजिस्टर_uart_घड़ीs(7);
 
-	imx_print_silicon_rev("i.MX27", mx27_revision());
-}
+	imx_prपूर्णांक_silicon_rev("i.MX27", mx27_revision());
+पूर्ण
 
-static void __init mx27_clocks_init_dt(struct device_node *np)
-{
-	struct device_node *refnp;
-	u32 fref = 26000000; /* default */
+अटल व्योम __init mx27_घड़ीs_init_dt(काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *refnp;
+	u32 fref = 26000000; /* शेष */
 
-	for_each_compatible_node(refnp, NULL, "fixed-clock") {
-		if (!of_device_is_compatible(refnp, "fsl,imx-osc26m"))
-			continue;
+	क्रम_each_compatible_node(refnp, शून्य, "fixed-clock") अणु
+		अगर (!of_device_is_compatible(refnp, "fsl,imx-osc26m"))
+			जारी;
 
-		if (!of_property_read_u32(refnp, "clock-frequency", &fref)) {
+		अगर (!of_property_पढ़ो_u32(refnp, "clock-frequency", &fref)) अणु
 			of_node_put(refnp);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ccm = of_iomap(np, 0);
 
-	_mx27_clocks_init(fref);
+	_mx27_घड़ीs_init(fref);
 
 	clk_data.clks = clk;
 	clk_data.clk_num = ARRAY_SIZE(clk);
 	of_clk_add_provider(np, of_clk_src_onecell_get, &clk_data);
-}
-CLK_OF_DECLARE(imx27_ccm, "fsl,imx27-ccm", mx27_clocks_init_dt);
+पूर्ण
+CLK_OF_DECLARE(imx27_ccm, "fsl,imx27-ccm", mx27_घड़ीs_init_dt);

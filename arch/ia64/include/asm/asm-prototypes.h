@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_ASM_PROTOTYPES_H
-#define _ASM_IA64_ASM_PROTOTYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_ASM_PROTOTYPES_H
+#घोषणा _ASM_IA64_ASM_PROTOTYPES_H
 
-#include <asm/cacheflush.h>
-#include <asm/checksum.h>
-#include <asm/esi.h>
-#include <asm/ftrace.h>
-#include <asm/page.h>
-#include <asm/pal.h>
-#include <asm/string.h>
-#include <linux/uaccess.h>
-#include <asm/unwind.h>
-#include <asm/xor.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/checksum.h>
+#समावेश <यंत्र/esi.h>
+#समावेश <यंत्र/ftrace.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/pal.h>
+#समावेश <यंत्र/माला.स>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unwind.h>
+#समावेश <यंत्र/xor.h>
 
-extern const char ia64_ivt[];
+बाह्य स्थिर अक्षर ia64_ivt[];
 
-signed int __divsi3(signed int, unsigned int);
-signed int __modsi3(signed int, unsigned int);
+चिन्हित पूर्णांक __भागsi3(चिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+चिन्हित पूर्णांक __modsi3(चिन्हित पूर्णांक, अचिन्हित पूर्णांक);
 
-signed long long __divdi3(signed long long, unsigned long long);
-signed long long __moddi3(signed long long, unsigned long long);
+चिन्हित दीर्घ दीर्घ __भागdi3(चिन्हित दीर्घ दीर्घ, अचिन्हित दीर्घ दीर्घ);
+चिन्हित दीर्घ दीर्घ __moddi3(चिन्हित दीर्घ दीर्घ, अचिन्हित दीर्घ दीर्घ);
 
-unsigned int __udivsi3(unsigned int, unsigned int);
-unsigned int __umodsi3(unsigned int, unsigned int);
+अचिन्हित पूर्णांक __uभागsi3(अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+अचिन्हित पूर्णांक __umodsi3(अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
 
-unsigned long long __udivdi3(unsigned long long, unsigned long long);
-unsigned long long __umoddi3(unsigned long long, unsigned long long);
+अचिन्हित दीर्घ दीर्घ __uभागdi3(अचिन्हित दीर्घ दीर्घ, अचिन्हित दीर्घ दीर्घ);
+अचिन्हित दीर्घ दीर्घ __umoddi3(अचिन्हित दीर्घ दीर्घ, अचिन्हित दीर्घ दीर्घ);
 
-#endif /* _ASM_IA64_ASM_PROTOTYPES_H */
+#पूर्ण_अगर /* _ASM_IA64_ASM_PROTOTYPES_H */

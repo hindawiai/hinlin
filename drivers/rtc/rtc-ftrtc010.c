@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Faraday Technology FTRTC010 driver
  *
  *  Copyright (C) 2009 Janos Laube <janos.dev@gmail.com>
  *
- * Original code for older kernel 2.6.15 are from Stormlinksemi
- * first update from Janos Laube for > 2.6.29 kernels
+ * Original code क्रम older kernel 2.6.15 are from Stormlinksemi
+ * first update from Janos Laube क्रम > 2.6.29 kernels
  *
  * checkpatch fixes and usage of rtc-lib code
  * Hans Ulli Kroll <ulli.kroll@googlemail.com>
  */
 
-#include <linux/rtc.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/clk.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/clk.h>
 
-#define DRV_NAME        "rtc-ftrtc010"
+#घोषणा DRV_NAME        "rtc-ftrtc010"
 
 MODULE_AUTHOR("Hans Ulli Kroll <ulli.kroll@googlemail.com>");
 MODULE_DESCRIPTION("RTC driver for Gemini SoC");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:" DRV_NAME);
 
-struct ftrtc010_rtc {
-	struct rtc_device	*rtc_dev;
-	void __iomem		*rtc_base;
-	int			rtc_irq;
-	struct clk		*pclk;
-	struct clk		*extclk;
-};
+काष्ठा ftrtc010_rtc अणु
+	काष्ठा rtc_device	*rtc_dev;
+	व्योम __iomem		*rtc_base;
+	पूर्णांक			rtc_irq;
+	काष्ठा clk		*pclk;
+	काष्ठा clk		*extclk;
+पूर्ण;
 
-enum ftrtc010_rtc_offsets {
+क्रमागत ftrtc010_rtc_offsets अणु
 	FTRTC010_RTC_SECOND		= 0x00,
 	FTRTC010_RTC_MINUTE		= 0x04,
 	FTRTC010_RTC_HOUR		= 0x08,
@@ -45,166 +46,166 @@ enum ftrtc010_rtc_offsets {
 	FTRTC010_RTC_ALARM_HOUR		= 0x18,
 	FTRTC010_RTC_RECORD		= 0x1C,
 	FTRTC010_RTC_CR			= 0x20,
-};
+पूर्ण;
 
-static irqreturn_t ftrtc010_rtc_interrupt(int irq, void *dev)
-{
-	return IRQ_HANDLED;
-}
+अटल irqवापस_t ftrtc010_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
+अणु
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * Looks like the RTC in the Gemini SoC is (totaly) broken
- * We can't read/write directly the time from RTC registers.
- * We must do some "offset" calculation to get the real time
+ * We can't पढ़ो/ग_लिखो directly the समय from RTC रेजिस्टरs.
+ * We must करो some "offset" calculation to get the real समय
  *
- * This FIX works pretty fine and Stormlinksemi aka Cortina-Networks does
+ * This FIX works pretty fine and Stormlinksemi aka Cortina-Networks करोes
  * the same thing, without the rtc-lib.c calls.
  */
 
-static int ftrtc010_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct ftrtc010_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक ftrtc010_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा ftrtc010_rtc *rtc = dev_get_drvdata(dev);
 
 	u32 days, hour, min, sec, offset;
-	timeu64_t time;
+	समयu64_t समय;
 
-	sec  = readl(rtc->rtc_base + FTRTC010_RTC_SECOND);
-	min  = readl(rtc->rtc_base + FTRTC010_RTC_MINUTE);
-	hour = readl(rtc->rtc_base + FTRTC010_RTC_HOUR);
-	days = readl(rtc->rtc_base + FTRTC010_RTC_DAYS);
-	offset = readl(rtc->rtc_base + FTRTC010_RTC_RECORD);
+	sec  = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_SECOND);
+	min  = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_MINUTE);
+	hour = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_HOUR);
+	days = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_DAYS);
+	offset = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_RECORD);
 
-	time = offset + days * 86400 + hour * 3600 + min * 60 + sec;
+	समय = offset + days * 86400 + hour * 3600 + min * 60 + sec;
 
-	rtc_time64_to_tm(time, tm);
+	rtc_समय64_to_पंचांग(समय, पंचांग);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ftrtc010_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct ftrtc010_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक ftrtc010_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा ftrtc010_rtc *rtc = dev_get_drvdata(dev);
 	u32 sec, min, hour, day, offset;
-	timeu64_t time;
+	समयu64_t समय;
 
-	time = rtc_tm_to_time64(tm);
+	समय = rtc_पंचांग_to_समय64(पंचांग);
 
-	sec = readl(rtc->rtc_base + FTRTC010_RTC_SECOND);
-	min = readl(rtc->rtc_base + FTRTC010_RTC_MINUTE);
-	hour = readl(rtc->rtc_base + FTRTC010_RTC_HOUR);
-	day = readl(rtc->rtc_base + FTRTC010_RTC_DAYS);
+	sec = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_SECOND);
+	min = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_MINUTE);
+	hour = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_HOUR);
+	day = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_DAYS);
 
-	offset = time - (day * 86400 + hour * 3600 + min * 60 + sec);
+	offset = समय - (day * 86400 + hour * 3600 + min * 60 + sec);
 
-	writel(offset, rtc->rtc_base + FTRTC010_RTC_RECORD);
-	writel(0x01, rtc->rtc_base + FTRTC010_RTC_CR);
+	ग_लिखोl(offset, rtc->rtc_base + FTRTC010_RTC_RECORD);
+	ग_लिखोl(0x01, rtc->rtc_base + FTRTC010_RTC_CR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops ftrtc010_rtc_ops = {
-	.read_time     = ftrtc010_rtc_read_time,
-	.set_time      = ftrtc010_rtc_set_time,
-};
+अटल स्थिर काष्ठा rtc_class_ops ftrtc010_rtc_ops = अणु
+	.पढ़ो_समय     = ftrtc010_rtc_पढ़ो_समय,
+	.set_समय      = ftrtc010_rtc_set_समय,
+पूर्ण;
 
-static int ftrtc010_rtc_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक ftrtc010_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	u32 days, hour, min, sec;
-	struct ftrtc010_rtc *rtc;
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	int ret;
+	काष्ठा ftrtc010_rtc *rtc;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	rtc = devm_kzalloc(&pdev->dev, sizeof(*rtc), GFP_KERNEL);
-	if (unlikely(!rtc))
-		return -ENOMEM;
-	platform_set_drvdata(pdev, rtc);
+	rtc = devm_kzalloc(&pdev->dev, माप(*rtc), GFP_KERNEL);
+	अगर (unlikely(!rtc))
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, rtc);
 
 	rtc->pclk = devm_clk_get(dev, "PCLK");
-	if (IS_ERR(rtc->pclk)) {
+	अगर (IS_ERR(rtc->pclk)) अणु
 		dev_err(dev, "could not get PCLK\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = clk_prepare_enable(rtc->pclk);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "failed to enable PCLK\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	rtc->extclk = devm_clk_get(dev, "EXTCLK");
-	if (IS_ERR(rtc->extclk)) {
+	अगर (IS_ERR(rtc->extclk)) अणु
 		dev_err(dev, "could not get EXTCLK\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = clk_prepare_enable(rtc->extclk);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "failed to enable EXTCLK\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
 	rtc->rtc_irq = res->start;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
 	rtc->rtc_base = devm_ioremap(dev, res->start,
 				     resource_size(res));
-	if (!rtc->rtc_base)
-		return -ENOMEM;
+	अगर (!rtc->rtc_base)
+		वापस -ENOMEM;
 
 	rtc->rtc_dev = devm_rtc_allocate_device(dev);
-	if (IS_ERR(rtc->rtc_dev))
-		return PTR_ERR(rtc->rtc_dev);
+	अगर (IS_ERR(rtc->rtc_dev))
+		वापस PTR_ERR(rtc->rtc_dev);
 
 	rtc->rtc_dev->ops = &ftrtc010_rtc_ops;
 
-	sec  = readl(rtc->rtc_base + FTRTC010_RTC_SECOND);
-	min  = readl(rtc->rtc_base + FTRTC010_RTC_MINUTE);
-	hour = readl(rtc->rtc_base + FTRTC010_RTC_HOUR);
-	days = readl(rtc->rtc_base + FTRTC010_RTC_DAYS);
+	sec  = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_SECOND);
+	min  = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_MINUTE);
+	hour = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_HOUR);
+	days = पढ़ोl(rtc->rtc_base + FTRTC010_RTC_DAYS);
 
 	rtc->rtc_dev->range_min = (u64)days * 86400 + hour * 3600 +
 				  min * 60 + sec;
 	rtc->rtc_dev->range_max = U32_MAX + rtc->rtc_dev->range_min;
 
-	ret = devm_request_irq(dev, rtc->rtc_irq, ftrtc010_rtc_interrupt,
+	ret = devm_request_irq(dev, rtc->rtc_irq, ftrtc010_rtc_पूर्णांकerrupt,
 			       IRQF_SHARED, pdev->name, dev);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	return devm_rtc_register_device(rtc->rtc_dev);
-}
+	वापस devm_rtc_रेजिस्टर_device(rtc->rtc_dev);
+पूर्ण
 
-static int ftrtc010_rtc_remove(struct platform_device *pdev)
-{
-	struct ftrtc010_rtc *rtc = platform_get_drvdata(pdev);
+अटल पूर्णांक ftrtc010_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ftrtc010_rtc *rtc = platक्रमm_get_drvdata(pdev);
 
-	if (!IS_ERR(rtc->extclk))
+	अगर (!IS_ERR(rtc->extclk))
 		clk_disable_unprepare(rtc->extclk);
-	if (!IS_ERR(rtc->pclk))
+	अगर (!IS_ERR(rtc->pclk))
 		clk_disable_unprepare(rtc->pclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ftrtc010_rtc_dt_match[] = {
-	{ .compatible = "cortina,gemini-rtc" },
-	{ .compatible = "faraday,ftrtc010" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id ftrtc010_rtc_dt_match[] = अणु
+	अणु .compatible = "cortina,gemini-rtc" पूर्ण,
+	अणु .compatible = "faraday,ftrtc010" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ftrtc010_rtc_dt_match);
 
-static struct platform_driver ftrtc010_rtc_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver ftrtc010_rtc_driver = अणु
+	.driver		= अणु
 		.name	= DRV_NAME,
 		.of_match_table = ftrtc010_rtc_dt_match,
-	},
+	पूर्ण,
 	.probe		= ftrtc010_rtc_probe,
-	.remove		= ftrtc010_rtc_remove,
-};
+	.हटाओ		= ftrtc010_rtc_हटाओ,
+पूर्ण;
 
-module_platform_driver_probe(ftrtc010_rtc_driver, ftrtc010_rtc_probe);
+module_platक्रमm_driver_probe(ftrtc010_rtc_driver, ftrtc010_rtc_probe);

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Roccat Savu driver for Linux
+ * Roccat Savu driver क्रम Linux
  *
- * Copyright (c) 2012 Stefan Achatz <erazor_de@users.sourceforge.net>
+ * Copyright (c) 2012 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
  */
 
 /*
@@ -12,17 +13,17 @@
  * 5 profiles.
  */
 
-#include <linux/device.h>
-#include <linux/input.h>
-#include <linux/hid.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/hid-roccat.h>
-#include "hid-ids.h"
-#include "hid-roccat-common.h"
-#include "hid-roccat-savu.h"
+#समावेश <linux/device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hid-roccat.h>
+#समावेश "hid-ids.h"
+#समावेश "hid-roccat-common.h"
+#समावेश "hid-roccat-savu.h"
 
-static struct class *savu_class;
+अटल काष्ठा class *savu_class;
 
 ROCCAT_COMMON2_BIN_ATTRIBUTE_W(control, 0x4, 0x03);
 ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(profile, 0x5, 0x03);
@@ -32,7 +33,7 @@ ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(macro, 0x8, 0x0823);
 ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(info, 0x9, 0x08);
 ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(sensor, 0xc, 0x04);
 
-static struct bin_attribute *savu_bin_attrs[] = {
+अटल काष्ठा bin_attribute *savu_bin_attrs[] = अणु
 	&bin_attr_control,
 	&bin_attr_profile,
 	&bin_attr_general,
@@ -40,186 +41,186 @@ static struct bin_attribute *savu_bin_attrs[] = {
 	&bin_attr_macro,
 	&bin_attr_info,
 	&bin_attr_sensor,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group savu_group = {
+अटल स्थिर काष्ठा attribute_group savu_group = अणु
 	.bin_attrs = savu_bin_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *savu_groups[] = {
+अटल स्थिर काष्ठा attribute_group *savu_groups[] = अणु
 	&savu_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int savu_init_specials(struct hid_device *hdev)
-{
-	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
-	struct usb_device *usb_dev = interface_to_usbdev(intf);
-	struct roccat_common2_device *savu;
-	int retval;
+अटल पूर्णांक savu_init_specials(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
+	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा roccat_common2_device *savu;
+	पूर्णांक retval;
 
-	if (intf->cur_altsetting->desc.bInterfaceProtocol
-			!= USB_INTERFACE_PROTOCOL_MOUSE) {
-		hid_set_drvdata(hdev, NULL);
-		return 0;
-	}
+	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
+			!= USB_INTERFACE_PROTOCOL_MOUSE) अणु
+		hid_set_drvdata(hdev, शून्य);
+		वापस 0;
+	पूर्ण
 
-	savu = kzalloc(sizeof(*savu), GFP_KERNEL);
-	if (!savu) {
+	savu = kzalloc(माप(*savu), GFP_KERNEL);
+	अगर (!savu) अणु
 		hid_err(hdev, "can't alloc device descriptor\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	hid_set_drvdata(hdev, savu);
 
-	retval = roccat_common2_device_init_struct(usb_dev, savu);
-	if (retval) {
+	retval = roccat_common2_device_init_काष्ठा(usb_dev, savu);
+	अगर (retval) अणु
 		hid_err(hdev, "couldn't init Savu device\n");
-		goto exit_free;
-	}
+		जाओ निकास_मुक्त;
+	पूर्ण
 
 	retval = roccat_connect(savu_class, hdev,
-			sizeof(struct savu_roccat_report));
-	if (retval < 0) {
+			माप(काष्ठा savu_roccat_report));
+	अगर (retval < 0) अणु
 		hid_err(hdev, "couldn't init char dev\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		savu->chrdev_minor = retval;
 		savu->roccat_claimed = 1;
-	}
+	पूर्ण
 
-	return 0;
-exit_free:
-	kfree(savu);
-	return retval;
-}
+	वापस 0;
+निकास_मुक्त:
+	kमुक्त(savu);
+	वापस retval;
+पूर्ण
 
-static void savu_remove_specials(struct hid_device *hdev)
-{
-	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
-	struct roccat_common2_device *savu;
+अटल व्योम savu_हटाओ_specials(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
+	काष्ठा roccat_common2_device *savu;
 
-	if (intf->cur_altsetting->desc.bInterfaceProtocol
+	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
 			!= USB_INTERFACE_PROTOCOL_MOUSE)
-		return;
+		वापस;
 
 	savu = hid_get_drvdata(hdev);
-	if (savu->roccat_claimed)
+	अगर (savu->roccat_claimed)
 		roccat_disconnect(savu->chrdev_minor);
-	kfree(savu);
-}
+	kमुक्त(savu);
+पूर्ण
 
-static int savu_probe(struct hid_device *hdev,
-		const struct hid_device_id *id)
-{
-	int retval;
+अटल पूर्णांक savu_probe(काष्ठा hid_device *hdev,
+		स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक retval;
 
 	retval = hid_parse(hdev);
-	if (retval) {
+	अगर (retval) अणु
 		hid_err(hdev, "parse failed\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	retval = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	if (retval) {
+	अगर (retval) अणु
 		hid_err(hdev, "hw start failed\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	retval = savu_init_specials(hdev);
-	if (retval) {
+	अगर (retval) अणु
 		hid_err(hdev, "couldn't install mouse\n");
-		goto exit_stop;
-	}
+		जाओ निकास_stop;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit_stop:
+निकास_stop:
 	hid_hw_stop(hdev);
-exit:
-	return retval;
-}
+निकास:
+	वापस retval;
+पूर्ण
 
-static void savu_remove(struct hid_device *hdev)
-{
-	savu_remove_specials(hdev);
+अटल व्योम savu_हटाओ(काष्ठा hid_device *hdev)
+अणु
+	savu_हटाओ_specials(hdev);
 	hid_hw_stop(hdev);
-}
+पूर्ण
 
-static void savu_report_to_chrdev(struct roccat_common2_device const *savu,
-		u8 const *data)
-{
-	struct savu_roccat_report roccat_report;
-	struct savu_mouse_report_special const *special_report;
+अटल व्योम savu_report_to_chrdev(काष्ठा roccat_common2_device स्थिर *savu,
+		u8 स्थिर *data)
+अणु
+	काष्ठा savu_roccat_report roccat_report;
+	काष्ठा savu_mouse_report_special स्थिर *special_report;
 
-	if (data[0] != SAVU_MOUSE_REPORT_NUMBER_SPECIAL)
-		return;
+	अगर (data[0] != SAVU_MOUSE_REPORT_NUMBER_SPECIAL)
+		वापस;
 
-	special_report = (struct savu_mouse_report_special const *)data;
+	special_report = (काष्ठा savu_mouse_report_special स्थिर *)data;
 
 	roccat_report.type = special_report->type;
 	roccat_report.data[0] = special_report->data[0];
 	roccat_report.data[1] = special_report->data[1];
 	roccat_report_event(savu->chrdev_minor,
-			(uint8_t const *)&roccat_report);
-}
+			(uपूर्णांक8_t स्थिर *)&roccat_report);
+पूर्ण
 
-static int savu_raw_event(struct hid_device *hdev,
-		struct hid_report *report, u8 *data, int size)
-{
-	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
-	struct roccat_common2_device *savu = hid_get_drvdata(hdev);
+अटल पूर्णांक savu_raw_event(काष्ठा hid_device *hdev,
+		काष्ठा hid_report *report, u8 *data, पूर्णांक size)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
+	काष्ठा roccat_common2_device *savu = hid_get_drvdata(hdev);
 
-	if (intf->cur_altsetting->desc.bInterfaceProtocol
+	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
 			!= USB_INTERFACE_PROTOCOL_MOUSE)
-		return 0;
+		वापस 0;
 
-	if (savu == NULL)
-		return 0;
+	अगर (savu == शून्य)
+		वापस 0;
 
-	if (savu->roccat_claimed)
+	अगर (savu->roccat_claimed)
 		savu_report_to_chrdev(savu, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hid_device_id savu_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_SAVU) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id savu_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_SAVU) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(hid, savu_devices);
 
-static struct hid_driver savu_driver = {
+अटल काष्ठा hid_driver savu_driver = अणु
 		.name = "savu",
 		.id_table = savu_devices,
 		.probe = savu_probe,
-		.remove = savu_remove,
+		.हटाओ = savu_हटाओ,
 		.raw_event = savu_raw_event
-};
+पूर्ण;
 
-static int __init savu_init(void)
-{
-	int retval;
+अटल पूर्णांक __init savu_init(व्योम)
+अणु
+	पूर्णांक retval;
 
 	savu_class = class_create(THIS_MODULE, "savu");
-	if (IS_ERR(savu_class))
-		return PTR_ERR(savu_class);
+	अगर (IS_ERR(savu_class))
+		वापस PTR_ERR(savu_class);
 	savu_class->dev_groups = savu_groups;
 
-	retval = hid_register_driver(&savu_driver);
-	if (retval)
+	retval = hid_रेजिस्टर_driver(&savu_driver);
+	अगर (retval)
 		class_destroy(savu_class);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void __exit savu_exit(void)
-{
-	hid_unregister_driver(&savu_driver);
+अटल व्योम __निकास savu_निकास(व्योम)
+अणु
+	hid_unरेजिस्टर_driver(&savu_driver);
 	class_destroy(savu_class);
-}
+पूर्ण
 
 module_init(savu_init);
-module_exit(savu_exit);
+module_निकास(savu_निकास);
 
 MODULE_AUTHOR("Stefan Achatz");
 MODULE_DESCRIPTION("USB Roccat Savu driver");

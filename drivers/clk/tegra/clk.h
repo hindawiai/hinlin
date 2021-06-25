@@ -1,147 +1,148 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 	/*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#ifndef __TEGRA_CLK_H
-#define __TEGRA_CLK_H
+#अगर_अघोषित __TEGRA_CLK_H
+#घोषणा __TEGRA_CLK_H
 
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/delay.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/delay.h>
 
-#define CLK_OUT_ENB_L			0x010
-#define CLK_OUT_ENB_H			0x014
-#define CLK_OUT_ENB_U			0x018
-#define CLK_OUT_ENB_V			0x360
-#define CLK_OUT_ENB_W			0x364
-#define CLK_OUT_ENB_X			0x280
-#define CLK_OUT_ENB_Y			0x298
-#define CLK_ENB_PLLP_OUT_CPU		BIT(31)
-#define CLK_OUT_ENB_SET_L		0x320
-#define CLK_OUT_ENB_CLR_L		0x324
-#define CLK_OUT_ENB_SET_H		0x328
-#define CLK_OUT_ENB_CLR_H		0x32c
-#define CLK_OUT_ENB_SET_U		0x330
-#define CLK_OUT_ENB_CLR_U		0x334
-#define CLK_OUT_ENB_SET_V		0x440
-#define CLK_OUT_ENB_CLR_V		0x444
-#define CLK_OUT_ENB_SET_W		0x448
-#define CLK_OUT_ENB_CLR_W		0x44c
-#define CLK_OUT_ENB_SET_X		0x284
-#define CLK_OUT_ENB_CLR_X		0x288
-#define CLK_OUT_ENB_SET_Y		0x29c
-#define CLK_OUT_ENB_CLR_Y		0x2a0
+#घोषणा CLK_OUT_ENB_L			0x010
+#घोषणा CLK_OUT_ENB_H			0x014
+#घोषणा CLK_OUT_ENB_U			0x018
+#घोषणा CLK_OUT_ENB_V			0x360
+#घोषणा CLK_OUT_ENB_W			0x364
+#घोषणा CLK_OUT_ENB_X			0x280
+#घोषणा CLK_OUT_ENB_Y			0x298
+#घोषणा CLK_ENB_PLLP_OUT_CPU		BIT(31)
+#घोषणा CLK_OUT_ENB_SET_L		0x320
+#घोषणा CLK_OUT_ENB_CLR_L		0x324
+#घोषणा CLK_OUT_ENB_SET_H		0x328
+#घोषणा CLK_OUT_ENB_CLR_H		0x32c
+#घोषणा CLK_OUT_ENB_SET_U		0x330
+#घोषणा CLK_OUT_ENB_CLR_U		0x334
+#घोषणा CLK_OUT_ENB_SET_V		0x440
+#घोषणा CLK_OUT_ENB_CLR_V		0x444
+#घोषणा CLK_OUT_ENB_SET_W		0x448
+#घोषणा CLK_OUT_ENB_CLR_W		0x44c
+#घोषणा CLK_OUT_ENB_SET_X		0x284
+#घोषणा CLK_OUT_ENB_CLR_X		0x288
+#घोषणा CLK_OUT_ENB_SET_Y		0x29c
+#घोषणा CLK_OUT_ENB_CLR_Y		0x2a0
 
-#define RST_DEVICES_L			0x004
-#define RST_DEVICES_H			0x008
-#define RST_DEVICES_U			0x00C
-#define RST_DEVICES_V			0x358
-#define RST_DEVICES_W			0x35C
-#define RST_DEVICES_X			0x28C
-#define RST_DEVICES_Y			0x2a4
-#define RST_DEVICES_SET_L		0x300
-#define RST_DEVICES_CLR_L		0x304
-#define RST_DEVICES_SET_H		0x308
-#define RST_DEVICES_CLR_H		0x30c
-#define RST_DEVICES_SET_U		0x310
-#define RST_DEVICES_CLR_U		0x314
-#define RST_DEVICES_SET_V		0x430
-#define RST_DEVICES_CLR_V		0x434
-#define RST_DEVICES_SET_W		0x438
-#define RST_DEVICES_CLR_W		0x43c
-#define RST_DEVICES_SET_X		0x290
-#define RST_DEVICES_CLR_X		0x294
-#define RST_DEVICES_SET_Y		0x2a8
-#define RST_DEVICES_CLR_Y		0x2ac
+#घोषणा RST_DEVICES_L			0x004
+#घोषणा RST_DEVICES_H			0x008
+#घोषणा RST_DEVICES_U			0x00C
+#घोषणा RST_DEVICES_V			0x358
+#घोषणा RST_DEVICES_W			0x35C
+#घोषणा RST_DEVICES_X			0x28C
+#घोषणा RST_DEVICES_Y			0x2a4
+#घोषणा RST_DEVICES_SET_L		0x300
+#घोषणा RST_DEVICES_CLR_L		0x304
+#घोषणा RST_DEVICES_SET_H		0x308
+#घोषणा RST_DEVICES_CLR_H		0x30c
+#घोषणा RST_DEVICES_SET_U		0x310
+#घोषणा RST_DEVICES_CLR_U		0x314
+#घोषणा RST_DEVICES_SET_V		0x430
+#घोषणा RST_DEVICES_CLR_V		0x434
+#घोषणा RST_DEVICES_SET_W		0x438
+#घोषणा RST_DEVICES_CLR_W		0x43c
+#घोषणा RST_DEVICES_SET_X		0x290
+#घोषणा RST_DEVICES_CLR_X		0x294
+#घोषणा RST_DEVICES_SET_Y		0x2a8
+#घोषणा RST_DEVICES_CLR_Y		0x2ac
 
 /*
- * Tegra CLK_OUT_ENB registers have some undefined bits which are not used and
- * any accidental write of 1 to these bits can cause PSLVERR.
- * So below are the valid mask defines for each CLK_OUT_ENB register used to
- * turn ON only the valid clocks.
+ * Tegra CLK_OUT_ENB रेजिस्टरs have some undefined bits which are not used and
+ * any accidental ग_लिखो of 1 to these bits can cause PSLVERR.
+ * So below are the valid mask defines क्रम each CLK_OUT_ENB रेजिस्टर used to
+ * turn ON only the valid घड़ीs.
  */
-#define TEGRA210_CLK_ENB_VLD_MSK_L	0xdcd7dff9
-#define TEGRA210_CLK_ENB_VLD_MSK_H	0x87d1f3e7
-#define TEGRA210_CLK_ENB_VLD_MSK_U	0xf3fed3fa
-#define TEGRA210_CLK_ENB_VLD_MSK_V	0xffc18cfb
-#define TEGRA210_CLK_ENB_VLD_MSK_W	0x793fb7ff
-#define TEGRA210_CLK_ENB_VLD_MSK_X	0x3fe66fff
-#define TEGRA210_CLK_ENB_VLD_MSK_Y	0xfc1fc7ff
+#घोषणा TEGRA210_CLK_ENB_VLD_MSK_L	0xdcd7dff9
+#घोषणा TEGRA210_CLK_ENB_VLD_MSK_H	0x87d1f3e7
+#घोषणा TEGRA210_CLK_ENB_VLD_MSK_U	0xf3fed3fa
+#घोषणा TEGRA210_CLK_ENB_VLD_MSK_V	0xffc18cfb
+#घोषणा TEGRA210_CLK_ENB_VLD_MSK_W	0x793fb7ff
+#घोषणा TEGRA210_CLK_ENB_VLD_MSK_X	0x3fe66fff
+#घोषणा TEGRA210_CLK_ENB_VLD_MSK_Y	0xfc1fc7ff
 
 /**
- * struct tegra_clk_sync_source - external clock source from codec
+ * काष्ठा tegra_clk_sync_source - बाह्यal घड़ी source from codec
  *
- * @hw: handle between common and hardware-specific interfaces
+ * @hw: handle between common and hardware-specअगरic पूर्णांकerfaces
  * @rate: input frequency from source
  * @max_rate: max rate allowed
  */
-struct tegra_clk_sync_source {
-	struct		clk_hw hw;
-	unsigned long	rate;
-	unsigned long	max_rate;
-};
+काष्ठा tegra_clk_sync_source अणु
+	काष्ठा		clk_hw hw;
+	अचिन्हित दीर्घ	rate;
+	अचिन्हित दीर्घ	max_rate;
+पूर्ण;
 
-#define to_clk_sync_source(_hw)					\
-	container_of(_hw, struct tegra_clk_sync_source, hw)
+#घोषणा to_clk_sync_source(_hw)					\
+	container_of(_hw, काष्ठा tegra_clk_sync_source, hw)
 
-extern const struct clk_ops tegra_clk_sync_source_ops;
-extern int *periph_clk_enb_refcnt;
+बाह्य स्थिर काष्ठा clk_ops tegra_clk_sync_source_ops;
+बाह्य पूर्णांक *periph_clk_enb_refcnt;
 
-struct clk *tegra_clk_register_sync_source(const char *name,
-					   unsigned long max_rate);
+काष्ठा clk *tegra_clk_रेजिस्टर_sync_source(स्थिर अक्षर *name,
+					   अचिन्हित दीर्घ max_rate);
 
 /**
- * struct tegra_clk_frac_div - fractional divider clock
+ * काष्ठा tegra_clk_frac_भाग - fractional भागider घड़ी
  *
- * @hw:		handle between common and hardware-specific interfaces
- * @reg:	register containing divider
- * @flags:	hardware-specific flags
- * @shift:	shift to the divider bit field
- * @width:	width of the divider bit field
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @reg:	रेजिस्टर containing भागider
+ * @flags:	hardware-specअगरic flags
+ * @shअगरt:	shअगरt to the भागider bit field
+ * @width:	width of the भागider bit field
  * @frac_width:	width of the fractional bit field
- * @lock:	register lock
+ * @lock:	रेजिस्टर lock
  *
  * Flags:
- * TEGRA_DIVIDER_ROUND_UP - This flags indicates to round up the divider value.
- * TEGRA_DIVIDER_FIXED - Fixed rate PLL dividers has addition override bit, this
- *      flag indicates that this divider is for fixed rate PLL.
+ * TEGRA_DIVIDER_ROUND_UP - This flags indicates to round up the भागider value.
+ * TEGRA_DIVIDER_FIXED - Fixed rate PLL भागiders has addition override bit, this
+ *      flag indicates that this भागider is क्रम fixed rate PLL.
  * TEGRA_DIVIDER_INT - Some modules can not cope with the duty cycle when
- *      fraction bit is set. This flags indicates to calculate divider for which
+ *      fraction bit is set. This flags indicates to calculate भागider क्रम which
  *      fracton bit will be zero.
- * TEGRA_DIVIDER_UART - UART module divider has additional enable bit which is
- *      set when divider value is not 0. This flags indicates that the divider
- *      is for UART module.
+ * TEGRA_DIVIDER_UART - UART module भागider has additional enable bit which is
+ *      set when भागider value is not 0. This flags indicates that the भागider
+ *      is क्रम UART module.
  */
-struct tegra_clk_frac_div {
-	struct clk_hw	hw;
-	void __iomem	*reg;
+काष्ठा tegra_clk_frac_भाग अणु
+	काष्ठा clk_hw	hw;
+	व्योम __iomem	*reg;
 	u8		flags;
-	u8		shift;
+	u8		shअगरt;
 	u8		width;
 	u8		frac_width;
 	spinlock_t	*lock;
-};
+पूर्ण;
 
-#define to_clk_frac_div(_hw) container_of(_hw, struct tegra_clk_frac_div, hw)
+#घोषणा to_clk_frac_भाग(_hw) container_of(_hw, काष्ठा tegra_clk_frac_भाग, hw)
 
-#define TEGRA_DIVIDER_ROUND_UP BIT(0)
-#define TEGRA_DIVIDER_FIXED BIT(1)
-#define TEGRA_DIVIDER_INT BIT(2)
-#define TEGRA_DIVIDER_UART BIT(3)
+#घोषणा TEGRA_DIVIDER_ROUND_UP BIT(0)
+#घोषणा TEGRA_DIVIDER_FIXED BIT(1)
+#घोषणा TEGRA_DIVIDER_INT BIT(2)
+#घोषणा TEGRA_DIVIDER_UART BIT(3)
 
-extern const struct clk_ops tegra_clk_frac_div_ops;
-struct clk *tegra_clk_register_divider(const char *name,
-		const char *parent_name, void __iomem *reg,
-		unsigned long flags, u8 clk_divider_flags, u8 shift, u8 width,
+बाह्य स्थिर काष्ठा clk_ops tegra_clk_frac_भाग_ops;
+काष्ठा clk *tegra_clk_रेजिस्टर_भागider(स्थिर अक्षर *name,
+		स्थिर अक्षर *parent_name, व्योम __iomem *reg,
+		अचिन्हित दीर्घ flags, u8 clk_भागider_flags, u8 shअगरt, u8 width,
 		u8 frac_width, spinlock_t *lock);
-struct clk *tegra_clk_register_mc(const char *name, const char *parent_name,
-				  void __iomem *reg, spinlock_t *lock);
+काष्ठा clk *tegra_clk_रेजिस्टर_mc(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+				  व्योम __iomem *reg, spinlock_t *lock);
 
 /*
  * Tegra PLL:
  *
- * In general, there are 3 requirements for each PLL
+ * In general, there are 3 requirements क्रम each PLL
  * that SW needs to be comply with.
  * (1) Input frequency range (REF).
  * (2) Comparison frequency range (CF). CF = REF/DIVM.
@@ -151,68 +152,68 @@ struct clk *tegra_clk_register_mc(const char *name, const char *parent_name,
  */
 
 /**
- * struct tegra_clk_pll_freq_table - PLL frequecy table
+ * काष्ठा tegra_clk_pll_freq_table - PLL frequecy table
  *
  * @input_rate:		input rate from source
- * @output_rate:	output rate from PLL for the input rate
- * @n:			feedback divider
- * @m:			input divider
- * @p:			post divider
- * @cpcon:		charge pump current
- * @sdm_data:		fraction divider setting (0 = disabled)
+ * @output_rate:	output rate from PLL क्रम the input rate
+ * @n:			feedback भागider
+ * @m:			input भागider
+ * @p:			post भागider
+ * @cpcon:		अक्षरge pump current
+ * @sdm_data:		fraction भागider setting (0 = disabled)
  */
-struct tegra_clk_pll_freq_table {
-	unsigned long	input_rate;
-	unsigned long	output_rate;
+काष्ठा tegra_clk_pll_freq_table अणु
+	अचिन्हित दीर्घ	input_rate;
+	अचिन्हित दीर्घ	output_rate;
 	u32		n;
 	u32		m;
 	u8		p;
 	u8		cpcon;
 	u16		sdm_data;
-};
+पूर्ण;
 
 /**
- * struct pdiv_map - map post divider to hw value
+ * काष्ठा pभाग_map - map post भागider to hw value
  *
- * @pdiv:		post divider
+ * @pभाग:		post भागider
  * @hw_val:		value to be written to the PLL hw
  */
-struct pdiv_map {
-	u8 pdiv;
+काष्ठा pभाग_map अणु
+	u8 pभाग;
 	u8 hw_val;
-};
+पूर्ण;
 
 /**
- * struct div_nmp - offset and width of m,n and p fields
+ * काष्ठा भाग_nmp - offset and width of m,n and p fields
  *
- * @divn_shift:	shift to the feedback divider bit field
- * @divn_width:	width of the feedback divider bit field
- * @divm_shift:	shift to the input divider bit field
- * @divm_width:	width of the input divider bit field
- * @divp_shift:	shift to the post divider bit field
- * @divp_width:	width of the post divider bit field
- * @override_divn_shift: shift to the feedback divider bitfield in override reg
- * @override_divm_shift: shift to the input divider bitfield in override reg
- * @override_divp_shift: shift to the post divider bitfield in override reg
+ * @भागn_shअगरt:	shअगरt to the feedback भागider bit field
+ * @भागn_width:	width of the feedback भागider bit field
+ * @भागm_shअगरt:	shअगरt to the input भागider bit field
+ * @भागm_width:	width of the input भागider bit field
+ * @भागp_shअगरt:	shअगरt to the post भागider bit field
+ * @भागp_width:	width of the post भागider bit field
+ * @override_भागn_shअगरt: shअगरt to the feedback भागider bitfield in override reg
+ * @override_भागm_shअगरt: shअगरt to the input भागider bitfield in override reg
+ * @override_भागp_shअगरt: shअगरt to the post भागider bitfield in override reg
  */
-struct div_nmp {
-	u8		divn_shift;
-	u8		divn_width;
-	u8		divm_shift;
-	u8		divm_width;
-	u8		divp_shift;
-	u8		divp_width;
-	u8		override_divn_shift;
-	u8		override_divm_shift;
-	u8		override_divp_shift;
-};
+काष्ठा भाग_nmp अणु
+	u8		भागn_shअगरt;
+	u8		भागn_width;
+	u8		भागm_shअगरt;
+	u8		भागm_width;
+	u8		भागp_shअगरt;
+	u8		भागp_width;
+	u8		override_भागn_shअगरt;
+	u8		override_भागm_shअगरt;
+	u8		override_भागp_shअगरt;
+पूर्ण;
 
-#define MAX_PLL_MISC_REG_COUNT	6
+#घोषणा MAX_PLL_MISC_REG_COUNT	6
 
-struct tegra_clk_pll;
+काष्ठा tegra_clk_pll;
 
 /**
- * struct tegra_clk_pll_params - PLL parameters
+ * काष्ठा tegra_clk_pll_params - PLL parameters
  *
  * @input_min:			Minimum input frequency
  * @input_max:			Maximum input frequency
@@ -223,87 +224,87 @@ struct tegra_clk_pll;
  * @base_reg:			PLL base reg offset
  * @misc_reg:			PLL misc reg offset
  * @lock_reg:			PLL lock reg offset
- * @lock_mask:			Bitmask for PLL lock status
+ * @lock_mask:			Biपंचांगask क्रम PLL lock status
  * @lock_enable_bit_idx:	Bit index to enable PLL lock
- * @iddq_reg:			PLL IDDQ register offset
+ * @iddq_reg:			PLL IDDQ रेजिस्टर offset
  * @iddq_bit_idx:		Bit index to enable PLL IDDQ
  * @reset_reg:			Register offset of where RESET bit is
- * @reset_bit_idx:		Shift of reset bit in reset_reg
+ * @reset_bit_idx:		Shअगरt of reset bit in reset_reg
  * @sdm_din_reg:		Register offset where SDM settings are
- * @sdm_din_mask:		Mask of SDM divider bits
+ * @sdm_din_mask:		Mask of SDM भागider bits
  * @sdm_ctrl_reg:		Register offset where SDM enable is
  * @sdm_ctrl_en_mask:		Mask of SDM enable bit
  * @ssc_ctrl_reg:		Register offset where SSC settings are
  * @ssc_ctrl_en_mask:		Mask of SSC enable bit
- * @aux_reg:			AUX register offset
- * @dyn_ramp_reg:		Dynamic ramp control register offset
- * @ext_misc_reg:		Miscellaneous control register offsets
- * @pmc_divnm_reg:		n, m divider PMC override register offset (PLLM)
- * @pmc_divp_reg:		p divider PMC override register offset (PLLM)
+ * @aux_reg:			AUX रेजिस्टर offset
+ * @dyn_ramp_reg:		Dynamic ramp control रेजिस्टर offset
+ * @ext_misc_reg:		Miscellaneous control रेजिस्टर offsets
+ * @pmc_भागnm_reg:		n, m भागider PMC override रेजिस्टर offset (PLLM)
+ * @pmc_भागp_reg:		p भागider PMC override रेजिस्टर offset (PLLM)
  * @flags:			PLL flags
- * @stepa_shift:		Dynamic ramp step A field shift
- * @stepb_shift:		Dynamic ramp step B field shift
- * @lock_delay:			Delay in us if PLL lock is not used
- * @max_p:			maximum value for the p divider
- * @defaults_set:		Boolean signaling all reg defaults for PLL set.
- * @pdiv_tohw:			mapping of p divider to register values
- * @div_nmp:			offsets and widths on n, m and p fields
+ * @stepa_shअगरt:		Dynamic ramp step A field shअगरt
+ * @stepb_shअगरt:		Dynamic ramp step B field shअगरt
+ * @lock_delay:			Delay in us अगर PLL lock is not used
+ * @max_p:			maximum value क्रम the p भागider
+ * @शेषs_set:		Boolean संकेतing all reg शेषs क्रम PLL set.
+ * @pभाग_प्रकारohw:			mapping of p भागider to रेजिस्टर values
+ * @भाग_nmp:			offsets and widths on n, m and p fields
  * @freq_table:			array of frequencies supported by PLL
- * @fixed_rate:			PLL rate if it is fixed
- * @mdiv_default:		Default value for fixed mdiv for this PLL
- * @round_p_to_pdiv:		Callback used to round p to the closed pdiv
- * @set_gain:			Callback to adjust N div for SDM enabled
- *				PLL's based on fractional divider value.
+ * @fixed_rate:			PLL rate अगर it is fixed
+ * @mभाग_शेष:		Default value क्रम fixed mभाग क्रम this PLL
+ * @round_p_to_pभाग:		Callback used to round p to the बंदd pभाग
+ * @set_gain:			Callback to adjust N भाग क्रम SDM enabled
+ *				PLL's based on fractional भागider value.
  * @calc_rate:			Callback used to change how out of table
- *				rates (dividers and multipler) are calculated.
+ *				rates (भागiders and multipler) are calculated.
  * @adjust_vco:			Callback to adjust the programming range of the
- *				divider range (if SDM is present)
- * @set_defaults:		Callback which will try to initialize PLL
- *				registers to sane default values. This is first
- *				tried during PLL registration, but if the PLL
- *				is already enabled, it will be done the first
- *				time the rate is changed while the PLL is
+ *				भागider range (अगर SDM is present)
+ * @set_शेषs:		Callback which will try to initialize PLL
+ *				रेजिस्टरs to sane शेष values. This is first
+ *				tried during PLL registration, but अगर the PLL
+ *				is alपढ़ोy enabled, it will be करोne the first
+ *				समय the rate is changed जबतक the PLL is
  *				disabled.
  * @dyn_ramp:			Callback which can be used to define a custom
- *				dynamic ramp function for a given PLL.
- * @pre_rate_change:		Callback which is invoked just before changing
+ *				dynamic ramp function क्रम a given PLL.
+ * @pre_rate_change:		Callback which is invoked just beक्रमe changing
  *				PLL's rate.
  * @post_rate_change:		Callback which is invoked right after changing
  *				PLL's rate.
  *
  * Flags:
- * TEGRA_PLL_USE_LOCK - This flag indicated to use lock bits for
- *     PLL locking. If not set it will use lock_delay value to wait.
+ * TEGRA_PLL_USE_LOCK - This flag indicated to use lock bits क्रम
+ *     PLL locking. If not set it will use lock_delay value to रुको.
  * TEGRA_PLL_HAS_CPCON - This flag indicates that CPCON value needs
  *     to be programmed to change output frequency of the PLL.
  * TEGRA_PLL_SET_LFCON - This flag indicates that LFCON value needs
  *     to be programmed to change output frequency of the PLL.
  * TEGRA_PLL_SET_DCCON - This flag indicates that DCCON value needs
  *     to be programmed to change output frequency of the PLL.
- * TEGRA_PLLU - PLLU has inverted post divider. This flags indicated
- *     that it is PLLU and invert post divider value.
+ * TEGRA_PLLU - PLLU has inverted post भागider. This flags indicated
+ *     that it is PLLU and invert post भागider value.
  * TEGRA_PLLM - PLLM has additional override settings in PMC. This
  *     flag indicates that it is PLLM and use override settings.
  * TEGRA_PLL_FIXED - We are not supposed to change output frequency
  *     of some plls.
  * TEGRA_PLLE_CONFIGURE - Configure PLLE when enabling.
- * TEGRA_PLL_LOCK_MISC - Lock bit is in the misc register instead of the
- *     base register.
+ * TEGRA_PLL_LOCK_MISC - Lock bit is in the misc रेजिस्टर instead of the
+ *     base रेजिस्टर.
  * TEGRA_PLL_BYPASS - PLL has bypass bit
  * TEGRA_PLL_HAS_LOCK_ENABLE - PLL has bit to enable lock monitoring
- * TEGRA_MDIV_NEW - Switch to new method for calculating fixed mdiv
- *     it may be more accurate (especially if SDM present)
+ * TEGRA_MDIV_NEW - Switch to new method क्रम calculating fixed mभाग
+ *     it may be more accurate (especially अगर SDM present)
  * TEGRA_PLLMB - PLLMB has should be treated similar to PLLM. This
  *     flag indicated that it is PLLMB.
  * TEGRA_PLL_VCO_OUT - Used to indicate that the PLL has a VCO output
  */
-struct tegra_clk_pll_params {
-	unsigned long	input_min;
-	unsigned long	input_max;
-	unsigned long	cf_min;
-	unsigned long	cf_max;
-	unsigned long	vco_min;
-	unsigned long	vco_max;
+काष्ठा tegra_clk_pll_params अणु
+	अचिन्हित दीर्घ	input_min;
+	अचिन्हित दीर्घ	input_max;
+	अचिन्हित दीर्घ	cf_min;
+	अचिन्हित दीर्घ	cf_max;
+	अचिन्हित दीर्घ	vco_min;
+	अचिन्हित दीर्घ	vco_max;
 
 	u32		base_reg;
 	u32		misc_reg;
@@ -323,612 +324,612 @@ struct tegra_clk_pll_params {
 	u32		aux_reg;
 	u32		dyn_ramp_reg;
 	u32		ext_misc_reg[MAX_PLL_MISC_REG_COUNT];
-	u32		pmc_divnm_reg;
-	u32		pmc_divp_reg;
+	u32		pmc_भागnm_reg;
+	u32		pmc_भागp_reg;
 	u32		flags;
-	int		stepa_shift;
-	int		stepb_shift;
-	int		lock_delay;
-	int		max_p;
-	bool		defaults_set;
-	const struct pdiv_map *pdiv_tohw;
-	struct div_nmp	*div_nmp;
-	struct tegra_clk_pll_freq_table	*freq_table;
-	unsigned long	fixed_rate;
-	u16		mdiv_default;
-	u32	(*round_p_to_pdiv)(u32 p, u32 *pdiv);
-	void	(*set_gain)(struct tegra_clk_pll_freq_table *cfg);
-	int	(*calc_rate)(struct clk_hw *hw,
-			struct tegra_clk_pll_freq_table *cfg,
-			unsigned long rate, unsigned long parent_rate);
-	unsigned long	(*adjust_vco)(struct tegra_clk_pll_params *pll_params,
-				unsigned long parent_rate);
-	void	(*set_defaults)(struct tegra_clk_pll *pll);
-	int	(*dyn_ramp)(struct tegra_clk_pll *pll,
-			struct tegra_clk_pll_freq_table *cfg);
-	int	(*pre_rate_change)(void);
-	void	(*post_rate_change)(void);
-};
+	पूर्णांक		stepa_shअगरt;
+	पूर्णांक		stepb_shअगरt;
+	पूर्णांक		lock_delay;
+	पूर्णांक		max_p;
+	bool		शेषs_set;
+	स्थिर काष्ठा pभाग_map *pभाग_प्रकारohw;
+	काष्ठा भाग_nmp	*भाग_nmp;
+	काष्ठा tegra_clk_pll_freq_table	*freq_table;
+	अचिन्हित दीर्घ	fixed_rate;
+	u16		mभाग_शेष;
+	u32	(*round_p_to_pभाग)(u32 p, u32 *pभाग);
+	व्योम	(*set_gain)(काष्ठा tegra_clk_pll_freq_table *cfg);
+	पूर्णांक	(*calc_rate)(काष्ठा clk_hw *hw,
+			काष्ठा tegra_clk_pll_freq_table *cfg,
+			अचिन्हित दीर्घ rate, अचिन्हित दीर्घ parent_rate);
+	अचिन्हित दीर्घ	(*adjust_vco)(काष्ठा tegra_clk_pll_params *pll_params,
+				अचिन्हित दीर्घ parent_rate);
+	व्योम	(*set_शेषs)(काष्ठा tegra_clk_pll *pll);
+	पूर्णांक	(*dyn_ramp)(काष्ठा tegra_clk_pll *pll,
+			काष्ठा tegra_clk_pll_freq_table *cfg);
+	पूर्णांक	(*pre_rate_change)(व्योम);
+	व्योम	(*post_rate_change)(व्योम);
+पूर्ण;
 
-#define TEGRA_PLL_USE_LOCK BIT(0)
-#define TEGRA_PLL_HAS_CPCON BIT(1)
-#define TEGRA_PLL_SET_LFCON BIT(2)
-#define TEGRA_PLL_SET_DCCON BIT(3)
-#define TEGRA_PLLU BIT(4)
-#define TEGRA_PLLM BIT(5)
-#define TEGRA_PLL_FIXED BIT(6)
-#define TEGRA_PLLE_CONFIGURE BIT(7)
-#define TEGRA_PLL_LOCK_MISC BIT(8)
-#define TEGRA_PLL_BYPASS BIT(9)
-#define TEGRA_PLL_HAS_LOCK_ENABLE BIT(10)
-#define TEGRA_MDIV_NEW BIT(11)
-#define TEGRA_PLLMB BIT(12)
-#define TEGRA_PLL_VCO_OUT BIT(13)
+#घोषणा TEGRA_PLL_USE_LOCK BIT(0)
+#घोषणा TEGRA_PLL_HAS_CPCON BIT(1)
+#घोषणा TEGRA_PLL_SET_LFCON BIT(2)
+#घोषणा TEGRA_PLL_SET_DCCON BIT(3)
+#घोषणा TEGRA_PLLU BIT(4)
+#घोषणा TEGRA_PLLM BIT(5)
+#घोषणा TEGRA_PLL_FIXED BIT(6)
+#घोषणा TEGRA_PLLE_CONFIGURE BIT(7)
+#घोषणा TEGRA_PLL_LOCK_MISC BIT(8)
+#घोषणा TEGRA_PLL_BYPASS BIT(9)
+#घोषणा TEGRA_PLL_HAS_LOCK_ENABLE BIT(10)
+#घोषणा TEGRA_MDIV_NEW BIT(11)
+#घोषणा TEGRA_PLLMB BIT(12)
+#घोषणा TEGRA_PLL_VCO_OUT BIT(13)
 
 /**
- * struct tegra_clk_pll - Tegra PLL clock
+ * काष्ठा tegra_clk_pll - Tegra PLL घड़ी
  *
- * @hw:		handle between common and hardware-specifix interfaces
+ * @hw:		handle between common and hardware-specअगरix पूर्णांकerfaces
  * @clk_base:	address of CAR controller
- * @pmc:	address of PMC, required to read override bits
- * @lock:	register lock
+ * @pmc:	address of PMC, required to पढ़ो override bits
+ * @lock:	रेजिस्टर lock
  * @params:	PLL parameters
  */
-struct tegra_clk_pll {
-	struct clk_hw	hw;
-	void __iomem	*clk_base;
-	void __iomem	*pmc;
+काष्ठा tegra_clk_pll अणु
+	काष्ठा clk_hw	hw;
+	व्योम __iomem	*clk_base;
+	व्योम __iomem	*pmc;
 	spinlock_t	*lock;
-	struct tegra_clk_pll_params	*params;
-};
+	काष्ठा tegra_clk_pll_params	*params;
+पूर्ण;
 
-#define to_clk_pll(_hw) container_of(_hw, struct tegra_clk_pll, hw)
+#घोषणा to_clk_pll(_hw) container_of(_hw, काष्ठा tegra_clk_pll, hw)
 
 /**
- * struct tegra_audio_clk_info - Tegra Audio Clk Information
+ * काष्ठा tegra_audio_clk_info - Tegra Audio Clk Inक्रमmation
  *
- * @name:	name for the audio pll
- * @pll_params:	pll_params for audio pll
- * @clk_id:	clk_ids for the audio pll
+ * @name:	name क्रम the audio pll
+ * @pll_params:	pll_params क्रम audio pll
+ * @clk_id:	clk_ids क्रम the audio pll
  * @parent:	name of the parent of the audio pll
  */
-struct tegra_audio_clk_info {
-	char *name;
-	struct tegra_clk_pll_params *pll_params;
-	int clk_id;
-	char *parent;
-};
+काष्ठा tegra_audio_clk_info अणु
+	अक्षर *name;
+	काष्ठा tegra_clk_pll_params *pll_params;
+	पूर्णांक clk_id;
+	अक्षर *parent;
+पूर्ण;
 
-extern const struct clk_ops tegra_clk_pll_ops;
-extern const struct clk_ops tegra_clk_plle_ops;
-struct clk *tegra_clk_register_pll(const char *name, const char *parent_name,
-		void __iomem *clk_base, void __iomem *pmc,
-		unsigned long flags, struct tegra_clk_pll_params *pll_params,
+बाह्य स्थिर काष्ठा clk_ops tegra_clk_pll_ops;
+बाह्य स्थिर काष्ठा clk_ops tegra_clk_plle_ops;
+काष्ठा clk *tegra_clk_रेजिस्टर_pll(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+		व्योम __iomem *clk_base, व्योम __iomem *pmc,
+		अचिन्हित दीर्घ flags, काष्ठा tegra_clk_pll_params *pll_params,
 		spinlock_t *lock);
 
-struct clk *tegra_clk_register_plle(const char *name, const char *parent_name,
-		void __iomem *clk_base, void __iomem *pmc,
-		unsigned long flags, struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_plle(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+		व्योम __iomem *clk_base, व्योम __iomem *pmc,
+		अचिन्हित दीर्घ flags, काष्ठा tegra_clk_pll_params *pll_params,
 		spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllxc(const char *name, const char *parent_name,
-			    void __iomem *clk_base, void __iomem *pmc,
-			    unsigned long flags,
-			    struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllxc(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+			    व्योम __iomem *clk_base, व्योम __iomem *pmc,
+			    अचिन्हित दीर्घ flags,
+			    काष्ठा tegra_clk_pll_params *pll_params,
 			    spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllm(const char *name, const char *parent_name,
-			   void __iomem *clk_base, void __iomem *pmc,
-			   unsigned long flags,
-			   struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllm(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+			   व्योम __iomem *clk_base, व्योम __iomem *pmc,
+			   अचिन्हित दीर्घ flags,
+			   काष्ठा tegra_clk_pll_params *pll_params,
 			   spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllc(const char *name, const char *parent_name,
-			   void __iomem *clk_base, void __iomem *pmc,
-			   unsigned long flags,
-			   struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllc(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+			   व्योम __iomem *clk_base, व्योम __iomem *pmc,
+			   अचिन्हित दीर्घ flags,
+			   काष्ठा tegra_clk_pll_params *pll_params,
 			   spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllre(const char *name, const char *parent_name,
-			   void __iomem *clk_base, void __iomem *pmc,
-			   unsigned long flags,
-			   struct tegra_clk_pll_params *pll_params,
-			   spinlock_t *lock, unsigned long parent_rate);
+काष्ठा clk *tegra_clk_रेजिस्टर_pllre(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+			   व्योम __iomem *clk_base, व्योम __iomem *pmc,
+			   अचिन्हित दीर्घ flags,
+			   काष्ठा tegra_clk_pll_params *pll_params,
+			   spinlock_t *lock, अचिन्हित दीर्घ parent_rate);
 
-struct clk *tegra_clk_register_pllre_tegra210(const char *name,
-			   const char *parent_name, void __iomem *clk_base,
-			   void __iomem *pmc, unsigned long flags,
-			   struct tegra_clk_pll_params *pll_params,
-			   spinlock_t *lock, unsigned long parent_rate);
+काष्ठा clk *tegra_clk_रेजिस्टर_pllre_tegra210(स्थिर अक्षर *name,
+			   स्थिर अक्षर *parent_name, व्योम __iomem *clk_base,
+			   व्योम __iomem *pmc, अचिन्हित दीर्घ flags,
+			   काष्ठा tegra_clk_pll_params *pll_params,
+			   spinlock_t *lock, अचिन्हित दीर्घ parent_rate);
 
-struct clk *tegra_clk_register_plle_tegra114(const char *name,
-				const char *parent_name,
-				void __iomem *clk_base, unsigned long flags,
-				struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_plle_tegra114(स्थिर अक्षर *name,
+				स्थिर अक्षर *parent_name,
+				व्योम __iomem *clk_base, अचिन्हित दीर्घ flags,
+				काष्ठा tegra_clk_pll_params *pll_params,
 				spinlock_t *lock);
 
-struct clk *tegra_clk_register_plle_tegra210(const char *name,
-				const char *parent_name,
-				void __iomem *clk_base, unsigned long flags,
-				struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_plle_tegra210(स्थिर अक्षर *name,
+				स्थिर अक्षर *parent_name,
+				व्योम __iomem *clk_base, अचिन्हित दीर्घ flags,
+				काष्ठा tegra_clk_pll_params *pll_params,
 				spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllc_tegra210(const char *name,
-				const char *parent_name, void __iomem *clk_base,
-				void __iomem *pmc, unsigned long flags,
-				struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllc_tegra210(स्थिर अक्षर *name,
+				स्थिर अक्षर *parent_name, व्योम __iomem *clk_base,
+				व्योम __iomem *pmc, अचिन्हित दीर्घ flags,
+				काष्ठा tegra_clk_pll_params *pll_params,
 				spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllss_tegra210(const char *name,
-				const char *parent_name, void __iomem *clk_base,
-				unsigned long flags,
-				struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllss_tegra210(स्थिर अक्षर *name,
+				स्थिर अक्षर *parent_name, व्योम __iomem *clk_base,
+				अचिन्हित दीर्घ flags,
+				काष्ठा tegra_clk_pll_params *pll_params,
 				spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllss(const char *name, const char *parent_name,
-			   void __iomem *clk_base, unsigned long flags,
-			   struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllss(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+			   व्योम __iomem *clk_base, अचिन्हित दीर्घ flags,
+			   काष्ठा tegra_clk_pll_params *pll_params,
 			   spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllmb(const char *name, const char *parent_name,
-			   void __iomem *clk_base, void __iomem *pmc,
-			   unsigned long flags,
-			   struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllmb(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+			   व्योम __iomem *clk_base, व्योम __iomem *pmc,
+			   अचिन्हित दीर्घ flags,
+			   काष्ठा tegra_clk_pll_params *pll_params,
 			   spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllu(const char *name, const char *parent_name,
-				void __iomem *clk_base, unsigned long flags,
-				struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllu(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+				व्योम __iomem *clk_base, अचिन्हित दीर्घ flags,
+				काष्ठा tegra_clk_pll_params *pll_params,
 				spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllu_tegra114(const char *name,
-				const char *parent_name,
-				void __iomem *clk_base, unsigned long flags,
-				struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllu_tegra114(स्थिर अक्षर *name,
+				स्थिर अक्षर *parent_name,
+				व्योम __iomem *clk_base, अचिन्हित दीर्घ flags,
+				काष्ठा tegra_clk_pll_params *pll_params,
 				spinlock_t *lock);
 
-struct clk *tegra_clk_register_pllu_tegra210(const char *name,
-				const char *parent_name,
-				void __iomem *clk_base, unsigned long flags,
-				struct tegra_clk_pll_params *pll_params,
+काष्ठा clk *tegra_clk_रेजिस्टर_pllu_tegra210(स्थिर अक्षर *name,
+				स्थिर अक्षर *parent_name,
+				व्योम __iomem *clk_base, अचिन्हित दीर्घ flags,
+				काष्ठा tegra_clk_pll_params *pll_params,
 				spinlock_t *lock);
 
 /**
- * struct tegra_clk_pll_out - PLL divider down clock
+ * काष्ठा tegra_clk_pll_out - PLL भागider करोwn घड़ी
  *
- * @hw:			handle between common and hardware-specific interfaces
- * @reg:		register containing the PLL divider
- * @enb_bit_idx:	bit to enable/disable PLL divider
- * @rst_bit_idx:	bit to reset PLL divider
- * @lock:		register lock
- * @flags:		hardware-specific flags
+ * @hw:			handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @reg:		रेजिस्टर containing the PLL भागider
+ * @enb_bit_idx:	bit to enable/disable PLL भागider
+ * @rst_bit_idx:	bit to reset PLL भागider
+ * @lock:		रेजिस्टर lock
+ * @flags:		hardware-specअगरic flags
  */
-struct tegra_clk_pll_out {
-	struct clk_hw	hw;
-	void __iomem	*reg;
+काष्ठा tegra_clk_pll_out अणु
+	काष्ठा clk_hw	hw;
+	व्योम __iomem	*reg;
 	u8		enb_bit_idx;
 	u8		rst_bit_idx;
 	spinlock_t	*lock;
 	u8		flags;
-};
+पूर्ण;
 
-#define to_clk_pll_out(_hw) container_of(_hw, struct tegra_clk_pll_out, hw)
+#घोषणा to_clk_pll_out(_hw) container_of(_hw, काष्ठा tegra_clk_pll_out, hw)
 
-extern const struct clk_ops tegra_clk_pll_out_ops;
-struct clk *tegra_clk_register_pll_out(const char *name,
-		const char *parent_name, void __iomem *reg, u8 enb_bit_idx,
-		u8 rst_bit_idx, unsigned long flags, u8 pll_div_flags,
+बाह्य स्थिर काष्ठा clk_ops tegra_clk_pll_out_ops;
+काष्ठा clk *tegra_clk_रेजिस्टर_pll_out(स्थिर अक्षर *name,
+		स्थिर अक्षर *parent_name, व्योम __iomem *reg, u8 enb_bit_idx,
+		u8 rst_bit_idx, अचिन्हित दीर्घ flags, u8 pll_भाग_flags,
 		spinlock_t *lock);
 
 /**
- * struct tegra_clk_periph_regs -  Registers controlling peripheral clock
+ * काष्ठा tegra_clk_periph_regs -  Registers controlling peripheral घड़ी
  *
- * @enb_reg:		read the enable status
- * @enb_set_reg:	write 1 to enable clock
- * @enb_clr_reg:	write 1 to disable clock
- * @rst_reg:		read the reset status
- * @rst_set_reg:	write 1 to assert the reset of peripheral
- * @rst_clr_reg:	write 1 to deassert the reset of peripheral
+ * @enb_reg:		पढ़ो the enable status
+ * @enb_set_reg:	ग_लिखो 1 to enable घड़ी
+ * @enb_clr_reg:	ग_लिखो 1 to disable घड़ी
+ * @rst_reg:		पढ़ो the reset status
+ * @rst_set_reg:	ग_लिखो 1 to निश्चित the reset of peripheral
+ * @rst_clr_reg:	ग_लिखो 1 to deनिश्चित the reset of peripheral
  */
-struct tegra_clk_periph_regs {
+काष्ठा tegra_clk_periph_regs अणु
 	u32 enb_reg;
 	u32 enb_set_reg;
 	u32 enb_clr_reg;
 	u32 rst_reg;
 	u32 rst_set_reg;
 	u32 rst_clr_reg;
-};
+पूर्ण;
 
 /**
- * struct tegra_clk_periph_gate - peripheral gate clock
+ * काष्ठा tegra_clk_periph_gate - peripheral gate घड़ी
  *
  * @magic:		magic number to validate type
- * @hw:			handle between common and hardware-specific interfaces
+ * @hw:			handle between common and hardware-specअगरic पूर्णांकerfaces
  * @clk_base:		address of CAR controller
  * @regs:		Registers to control the peripheral
- * @flags:		hardware-specific flags
+ * @flags:		hardware-specअगरic flags
  * @clk_num:		Clock number
- * @enable_refcnt:	array to maintain reference count of the clock
+ * @enable_refcnt:	array to मुख्यtain reference count of the घड़ी
  *
  * Flags:
  * TEGRA_PERIPH_NO_RESET - This flag indicates that reset is not allowed
- *     for this module.
+ *     क्रम this module.
  * TEGRA_PERIPH_MANUAL_RESET - This flag indicates not to reset module
- *     after clock enable and driver for the module is responsible for
- *     doing reset.
- * TEGRA_PERIPH_ON_APB - If peripheral is in the APB bus then read the
- *     bus to flush the write operation in apb bus. This flag indicates
+ *     after घड़ी enable and driver क्रम the module is responsible क्रम
+ *     करोing reset.
+ * TEGRA_PERIPH_ON_APB - If peripheral is in the APB bus then पढ़ो the
+ *     bus to flush the ग_लिखो operation in apb bus. This flag indicates
  *     that this peripheral is in apb bus.
- * TEGRA_PERIPH_WAR_1005168 - Apply workaround for Tegra114 MSENC bug
+ * TEGRA_PERIPH_WAR_1005168 - Apply workaround क्रम Tegra114 MSENC bug
  */
-struct tegra_clk_periph_gate {
+काष्ठा tegra_clk_periph_gate अणु
 	u32			magic;
-	struct clk_hw		hw;
-	void __iomem		*clk_base;
+	काष्ठा clk_hw		hw;
+	व्योम __iomem		*clk_base;
 	u8			flags;
-	int			clk_num;
-	int			*enable_refcnt;
-	const struct tegra_clk_periph_regs *regs;
-};
+	पूर्णांक			clk_num;
+	पूर्णांक			*enable_refcnt;
+	स्थिर काष्ठा tegra_clk_periph_regs *regs;
+पूर्ण;
 
-#define to_clk_periph_gate(_hw)					\
-	container_of(_hw, struct tegra_clk_periph_gate, hw)
+#घोषणा to_clk_periph_gate(_hw)					\
+	container_of(_hw, काष्ठा tegra_clk_periph_gate, hw)
 
-#define TEGRA_CLK_PERIPH_GATE_MAGIC 0x17760309
+#घोषणा TEGRA_CLK_PERIPH_GATE_MAGIC 0x17760309
 
-#define TEGRA_PERIPH_NO_RESET BIT(0)
-#define TEGRA_PERIPH_MANUAL_RESET BIT(1)
-#define TEGRA_PERIPH_ON_APB BIT(2)
-#define TEGRA_PERIPH_WAR_1005168 BIT(3)
-#define TEGRA_PERIPH_NO_DIV BIT(4)
-#define TEGRA_PERIPH_NO_GATE BIT(5)
+#घोषणा TEGRA_PERIPH_NO_RESET BIT(0)
+#घोषणा TEGRA_PERIPH_MANUAL_RESET BIT(1)
+#घोषणा TEGRA_PERIPH_ON_APB BIT(2)
+#घोषणा TEGRA_PERIPH_WAR_1005168 BIT(3)
+#घोषणा TEGRA_PERIPH_NO_DIV BIT(4)
+#घोषणा TEGRA_PERIPH_NO_GATE BIT(5)
 
-extern const struct clk_ops tegra_clk_periph_gate_ops;
-struct clk *tegra_clk_register_periph_gate(const char *name,
-		const char *parent_name, u8 gate_flags, void __iomem *clk_base,
-		unsigned long flags, int clk_num, int *enable_refcnt);
+बाह्य स्थिर काष्ठा clk_ops tegra_clk_periph_gate_ops;
+काष्ठा clk *tegra_clk_रेजिस्टर_periph_gate(स्थिर अक्षर *name,
+		स्थिर अक्षर *parent_name, u8 gate_flags, व्योम __iomem *clk_base,
+		अचिन्हित दीर्घ flags, पूर्णांक clk_num, पूर्णांक *enable_refcnt);
 
-struct tegra_clk_periph_fixed {
-	struct clk_hw hw;
-	void __iomem *base;
-	const struct tegra_clk_periph_regs *regs;
-	unsigned int mul;
-	unsigned int div;
-	unsigned int num;
-};
+काष्ठा tegra_clk_periph_fixed अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *base;
+	स्थिर काष्ठा tegra_clk_periph_regs *regs;
+	अचिन्हित पूर्णांक mul;
+	अचिन्हित पूर्णांक भाग;
+	अचिन्हित पूर्णांक num;
+पूर्ण;
 
-struct clk *tegra_clk_register_periph_fixed(const char *name,
-					    const char *parent,
-					    unsigned long flags,
-					    void __iomem *base,
-					    unsigned int mul,
-					    unsigned int div,
-					    unsigned int num);
+काष्ठा clk *tegra_clk_रेजिस्टर_periph_fixed(स्थिर अक्षर *name,
+					    स्थिर अक्षर *parent,
+					    अचिन्हित दीर्घ flags,
+					    व्योम __iomem *base,
+					    अचिन्हित पूर्णांक mul,
+					    अचिन्हित पूर्णांक भाग,
+					    अचिन्हित पूर्णांक num);
 
 /**
- * struct clk-periph - peripheral clock
+ * काष्ठा clk-periph - peripheral घड़ी
  *
  * @magic:	magic number to validate type
- * @hw:		handle between common and hardware-specific interfaces
- * @mux:	mux clock
- * @divider:	divider clock
- * @gate:	gate clock
- * @mux_ops:	mux clock ops
- * @div_ops:	divider clock ops
- * @gate_ops:	gate clock ops
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @mux:	mux घड़ी
+ * @भागider:	भागider घड़ी
+ * @gate:	gate घड़ी
+ * @mux_ops:	mux घड़ी ops
+ * @भाग_ops:	भागider घड़ी ops
+ * @gate_ops:	gate घड़ी ops
  */
-struct tegra_clk_periph {
+काष्ठा tegra_clk_periph अणु
 	u32			magic;
-	struct clk_hw		hw;
-	struct clk_mux		mux;
-	struct tegra_clk_frac_div	divider;
-	struct tegra_clk_periph_gate	gate;
+	काष्ठा clk_hw		hw;
+	काष्ठा clk_mux		mux;
+	काष्ठा tegra_clk_frac_भाग	भागider;
+	काष्ठा tegra_clk_periph_gate	gate;
 
-	const struct clk_ops	*mux_ops;
-	const struct clk_ops	*div_ops;
-	const struct clk_ops	*gate_ops;
-};
+	स्थिर काष्ठा clk_ops	*mux_ops;
+	स्थिर काष्ठा clk_ops	*भाग_ops;
+	स्थिर काष्ठा clk_ops	*gate_ops;
+पूर्ण;
 
-#define to_clk_periph(_hw) container_of(_hw, struct tegra_clk_periph, hw)
+#घोषणा to_clk_periph(_hw) container_of(_hw, काष्ठा tegra_clk_periph, hw)
 
-#define TEGRA_CLK_PERIPH_MAGIC 0x18221223
+#घोषणा TEGRA_CLK_PERIPH_MAGIC 0x18221223
 
-extern const struct clk_ops tegra_clk_periph_ops;
-struct clk *tegra_clk_register_periph(const char *name,
-		const char * const *parent_names, int num_parents,
-		struct tegra_clk_periph *periph, void __iomem *clk_base,
-		u32 offset, unsigned long flags);
-struct clk *tegra_clk_register_periph_nodiv(const char *name,
-		const char * const *parent_names, int num_parents,
-		struct tegra_clk_periph *periph, void __iomem *clk_base,
+बाह्य स्थिर काष्ठा clk_ops tegra_clk_periph_ops;
+काष्ठा clk *tegra_clk_रेजिस्टर_periph(स्थिर अक्षर *name,
+		स्थिर अक्षर * स्थिर *parent_names, पूर्णांक num_parents,
+		काष्ठा tegra_clk_periph *periph, व्योम __iomem *clk_base,
+		u32 offset, अचिन्हित दीर्घ flags);
+काष्ठा clk *tegra_clk_रेजिस्टर_periph_noभाग(स्थिर अक्षर *name,
+		स्थिर अक्षर * स्थिर *parent_names, पूर्णांक num_parents,
+		काष्ठा tegra_clk_periph *periph, व्योम __iomem *clk_base,
 		u32 offset);
 
-#define TEGRA_CLK_PERIPH(_mux_shift, _mux_mask, _mux_flags,		\
-			 _div_shift, _div_width, _div_frac_width,	\
-			 _div_flags, _clk_num,\
+#घोषणा TEGRA_CLK_PERIPH(_mux_shअगरt, _mux_mask, _mux_flags,		\
+			 _भाग_shअगरt, _भाग_width, _भाग_frac_width,	\
+			 _भाग_flags, _clk_num,\
 			 _gate_flags, _table, _lock)			\
-	{								\
-		.mux = {						\
+	अणु								\
+		.mux = अणु						\
 			.flags = _mux_flags,				\
-			.shift = _mux_shift,				\
+			.shअगरt = _mux_shअगरt,				\
 			.mask = _mux_mask,				\
 			.table = _table,				\
 			.lock = _lock,					\
-		},							\
-		.divider = {						\
-			.flags = _div_flags,				\
-			.shift = _div_shift,				\
-			.width = _div_width,				\
-			.frac_width = _div_frac_width,			\
+		पूर्ण,							\
+		.भागider = अणु						\
+			.flags = _भाग_flags,				\
+			.shअगरt = _भाग_shअगरt,				\
+			.width = _भाग_width,				\
+			.frac_width = _भाग_frac_width,			\
 			.lock = _lock,					\
-		},							\
-		.gate = {						\
+		पूर्ण,							\
+		.gate = अणु						\
 			.flags = _gate_flags,				\
 			.clk_num = _clk_num,				\
-		},							\
+		पूर्ण,							\
 		.mux_ops = &clk_mux_ops,				\
-		.div_ops = &tegra_clk_frac_div_ops,			\
+		.भाग_ops = &tegra_clk_frac_भाग_ops,			\
 		.gate_ops = &tegra_clk_periph_gate_ops,			\
-	}
+	पूर्ण
 
-struct tegra_periph_init_data {
-	const char *name;
-	int clk_id;
-	union {
-		const char *const *parent_names;
-		const char *parent_name;
-	} p;
-	int num_parents;
-	struct tegra_clk_periph periph;
+काष्ठा tegra_periph_init_data अणु
+	स्थिर अक्षर *name;
+	पूर्णांक clk_id;
+	जोड़ अणु
+		स्थिर अक्षर *स्थिर *parent_names;
+		स्थिर अक्षर *parent_name;
+	पूर्ण p;
+	पूर्णांक num_parents;
+	काष्ठा tegra_clk_periph periph;
 	u32 offset;
-	const char *con_id;
-	const char *dev_id;
-	unsigned long flags;
-};
+	स्थिर अक्षर *con_id;
+	स्थिर अक्षर *dev_id;
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-#define TEGRA_INIT_DATA_TABLE(_name, _con_id, _dev_id, _parent_names, _offset,\
-			_mux_shift, _mux_mask, _mux_flags, _div_shift,	\
-			_div_width, _div_frac_width, _div_flags,	\
+#घोषणा TEGRA_INIT_DATA_TABLE(_name, _con_id, _dev_id, _parent_names, _offset,\
+			_mux_shअगरt, _mux_mask, _mux_flags, _भाग_shअगरt,	\
+			_भाग_width, _भाग_frac_width, _भाग_flags,	\
 			_clk_num, _gate_flags, _clk_id, _table,		\
 			_flags, _lock) \
-	{								\
+	अणु								\
 		.name = _name,						\
 		.clk_id = _clk_id,					\
 		.p.parent_names = _parent_names,			\
 		.num_parents = ARRAY_SIZE(_parent_names),		\
-		.periph = TEGRA_CLK_PERIPH(_mux_shift, _mux_mask,	\
-					   _mux_flags, _div_shift,	\
-					   _div_width, _div_frac_width,	\
-					   _div_flags, _clk_num,	\
+		.periph = TEGRA_CLK_PERIPH(_mux_shअगरt, _mux_mask,	\
+					   _mux_flags, _भाग_shअगरt,	\
+					   _भाग_width, _भाग_frac_width,	\
+					   _भाग_flags, _clk_num,	\
 					   _gate_flags, _table, _lock),	\
 		.offset = _offset,					\
 		.con_id = _con_id,					\
 		.dev_id = _dev_id,					\
 		.flags = _flags						\
-	}
+	पूर्ण
 
-#define TEGRA_INIT_DATA(_name, _con_id, _dev_id, _parent_names, _offset,\
-			_mux_shift, _mux_width, _mux_flags, _div_shift,	\
-			_div_width, _div_frac_width, _div_flags, \
+#घोषणा TEGRA_INIT_DATA(_name, _con_id, _dev_id, _parent_names, _offset,\
+			_mux_shअगरt, _mux_width, _mux_flags, _भाग_shअगरt,	\
+			_भाग_width, _भाग_frac_width, _भाग_flags, \
 			_clk_num, _gate_flags, _clk_id)	\
 	TEGRA_INIT_DATA_TABLE(_name, _con_id, _dev_id, _parent_names, _offset,\
-			_mux_shift, BIT(_mux_width) - 1, _mux_flags,	\
-			_div_shift, _div_width, _div_frac_width, _div_flags, \
+			_mux_shअगरt, BIT(_mux_width) - 1, _mux_flags,	\
+			_भाग_shअगरt, _भाग_width, _भाग_frac_width, _भाग_flags, \
 			_clk_num, _gate_flags, _clk_id,\
-			NULL, 0, NULL)
+			शून्य, 0, शून्य)
 
-struct clk *tegra_clk_register_periph_data(void __iomem *clk_base,
-					   struct tegra_periph_init_data *init);
+काष्ठा clk *tegra_clk_रेजिस्टर_periph_data(व्योम __iomem *clk_base,
+					   काष्ठा tegra_periph_init_data *init);
 
 /**
- * struct clk_super_mux - super clock
+ * काष्ठा clk_super_mux - super घड़ी
  *
- * @hw:		handle between common and hardware-specific interfaces
- * @reg:	register controlling multiplexer
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @reg:	रेजिस्टर controlling multiplexer
  * @width:	width of the multiplexer bit field
- * @flags:	hardware-specific flags
- * @div2_index:	bit controlling divide-by-2
+ * @flags:	hardware-specअगरic flags
+ * @भाग2_index:	bit controlling भागide-by-2
  * @pllx_index:	PLLX index in the parent list
- * @lock:	register lock
+ * @lock:	रेजिस्टर lock
  *
  * Flags:
- * TEGRA_DIVIDER_2 - LP cluster has additional divider. This flag indicates
- *     that this is LP cluster clock.
- * TEGRA210_CPU_CLK - This flag is used to identify CPU cluster for gen5
+ * TEGRA_DIVIDER_2 - LP cluster has additional भागider. This flag indicates
+ *     that this is LP cluster घड़ी.
+ * TEGRA210_CPU_CLK - This flag is used to identअगरy CPU cluster क्रम gen5
  *     super mux parent using PLLP branches. To use PLLP branches to CPU, need
- *     to configure additional bit PLLP_OUT_CPU in the clock registers.
- * TEGRA20_SUPER_CLK - Tegra20 doesn't have a dedicated divider for Super
- *     clocks, it only has a clock-skipper.
+ *     to configure additional bit PLLP_OUT_CPU in the घड़ी रेजिस्टरs.
+ * TEGRA20_SUPER_CLK - Tegra20 करोesn't have a dedicated भागider क्रम Super
+ *     घड़ीs, it only has a घड़ी-skipper.
  */
-struct tegra_clk_super_mux {
-	struct clk_hw	hw;
-	void __iomem	*reg;
-	struct tegra_clk_frac_div frac_div;
-	const struct clk_ops	*div_ops;
+काष्ठा tegra_clk_super_mux अणु
+	काष्ठा clk_hw	hw;
+	व्योम __iomem	*reg;
+	काष्ठा tegra_clk_frac_भाग frac_भाग;
+	स्थिर काष्ठा clk_ops	*भाग_ops;
 	u8		width;
 	u8		flags;
-	u8		div2_index;
+	u8		भाग2_index;
 	u8		pllx_index;
 	spinlock_t	*lock;
-};
+पूर्ण;
 
-#define to_clk_super_mux(_hw) container_of(_hw, struct tegra_clk_super_mux, hw)
+#घोषणा to_clk_super_mux(_hw) container_of(_hw, काष्ठा tegra_clk_super_mux, hw)
 
-#define TEGRA_DIVIDER_2 BIT(0)
-#define TEGRA210_CPU_CLK BIT(1)
-#define TEGRA20_SUPER_CLK BIT(2)
+#घोषणा TEGRA_DIVIDER_2 BIT(0)
+#घोषणा TEGRA210_CPU_CLK BIT(1)
+#घोषणा TEGRA20_SUPER_CLK BIT(2)
 
-extern const struct clk_ops tegra_clk_super_ops;
-struct clk *tegra_clk_register_super_mux(const char *name,
-		const char **parent_names, u8 num_parents,
-		unsigned long flags, void __iomem *reg, u8 clk_super_flags,
-		u8 width, u8 pllx_index, u8 div2_index, spinlock_t *lock);
-struct clk *tegra_clk_register_super_clk(const char *name,
-		const char * const *parent_names, u8 num_parents,
-		unsigned long flags, void __iomem *reg, u8 clk_super_flags,
+बाह्य स्थिर काष्ठा clk_ops tegra_clk_super_ops;
+काष्ठा clk *tegra_clk_रेजिस्टर_super_mux(स्थिर अक्षर *name,
+		स्थिर अक्षर **parent_names, u8 num_parents,
+		अचिन्हित दीर्घ flags, व्योम __iomem *reg, u8 clk_super_flags,
+		u8 width, u8 pllx_index, u8 भाग2_index, spinlock_t *lock);
+काष्ठा clk *tegra_clk_रेजिस्टर_super_clk(स्थिर अक्षर *name,
+		स्थिर अक्षर * स्थिर *parent_names, u8 num_parents,
+		अचिन्हित दीर्घ flags, व्योम __iomem *reg, u8 clk_super_flags,
 		spinlock_t *lock);
-struct clk *tegra_clk_register_super_cclk(const char *name,
-		const char * const *parent_names, u8 num_parents,
-		unsigned long flags, void __iomem *reg, u8 clk_super_flags,
+काष्ठा clk *tegra_clk_रेजिस्टर_super_cclk(स्थिर अक्षर *name,
+		स्थिर अक्षर * स्थिर *parent_names, u8 num_parents,
+		अचिन्हित दीर्घ flags, व्योम __iomem *reg, u8 clk_super_flags,
 		spinlock_t *lock);
-int tegra_cclk_pre_pllx_rate_change(void);
-void tegra_cclk_post_pllx_rate_change(void);
+पूर्णांक tegra_cclk_pre_pllx_rate_change(व्योम);
+व्योम tegra_cclk_post_pllx_rate_change(व्योम);
 
 /**
- * struct tegra_sdmmc_mux - switch divider with Low Jitter inputs for SDMMC
+ * काष्ठा tegra_sdmmc_mux - चयन भागider with Low Jitter inमाला_दो क्रम SDMMC
  *
- * @hw:		handle between common and hardware-specific interfaces
- * @reg:	register controlling mux and divider
- * @flags:	hardware-specific flags
- * @lock:	optional register lock
- * @gate:	gate clock
- * @gate_ops:	gate clock ops
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @reg:	रेजिस्टर controlling mux and भागider
+ * @flags:	hardware-specअगरic flags
+ * @lock:	optional रेजिस्टर lock
+ * @gate:	gate घड़ी
+ * @gate_ops:	gate घड़ी ops
  */
-struct tegra_sdmmc_mux {
-	struct clk_hw		hw;
-	void __iomem		*reg;
+काष्ठा tegra_sdmmc_mux अणु
+	काष्ठा clk_hw		hw;
+	व्योम __iomem		*reg;
 	spinlock_t		*lock;
-	const struct clk_ops	*gate_ops;
-	struct tegra_clk_periph_gate	gate;
-	u8			div_flags;
-};
+	स्थिर काष्ठा clk_ops	*gate_ops;
+	काष्ठा tegra_clk_periph_gate	gate;
+	u8			भाग_flags;
+पूर्ण;
 
-#define to_clk_sdmmc_mux(_hw) container_of(_hw, struct tegra_sdmmc_mux, hw)
+#घोषणा to_clk_sdmmc_mux(_hw) container_of(_hw, काष्ठा tegra_sdmmc_mux, hw)
 
-struct clk *tegra_clk_register_sdmmc_mux_div(const char *name,
-		void __iomem *clk_base, u32 offset, u32 clk_num, u8 div_flags,
-		unsigned long flags, void *lock);
+काष्ठा clk *tegra_clk_रेजिस्टर_sdmmc_mux_भाग(स्थिर अक्षर *name,
+		व्योम __iomem *clk_base, u32 offset, u32 clk_num, u8 भाग_flags,
+		अचिन्हित दीर्घ flags, व्योम *lock);
 
 /**
- * struct clk_init_table - clock initialization table
- * @clk_id:	clock id as mentioned in device tree bindings
- * @parent_id:	parent clock id as mentioned in device tree bindings
+ * काष्ठा clk_init_table - घड़ी initialization table
+ * @clk_id:	घड़ी id as mentioned in device tree bindings
+ * @parent_id:	parent घड़ी id as mentioned in device tree bindings
  * @rate:	rate to set
  * @state:	enable/disable
  */
-struct tegra_clk_init_table {
-	unsigned int	clk_id;
-	unsigned int	parent_id;
-	unsigned long	rate;
-	int		state;
-};
+काष्ठा tegra_clk_init_table अणु
+	अचिन्हित पूर्णांक	clk_id;
+	अचिन्हित पूर्णांक	parent_id;
+	अचिन्हित दीर्घ	rate;
+	पूर्णांक		state;
+पूर्ण;
 
 /**
- * struct clk_duplicate - duplicate clocks
- * @clk_id:	clock id as mentioned in device tree bindings
- * @lookup:	duplicate lookup entry for the clock
+ * काष्ठा clk_duplicate - duplicate घड़ीs
+ * @clk_id:	घड़ी id as mentioned in device tree bindings
+ * @lookup:	duplicate lookup entry क्रम the घड़ी
  */
-struct tegra_clk_duplicate {
-	int			clk_id;
-	struct clk_lookup	lookup;
-};
+काष्ठा tegra_clk_duplicate अणु
+	पूर्णांक			clk_id;
+	काष्ठा clk_lookup	lookup;
+पूर्ण;
 
-#define TEGRA_CLK_DUPLICATE(_clk_id, _dev, _con) \
-	{					\
+#घोषणा TEGRA_CLK_DUPLICATE(_clk_id, _dev, _con) \
+	अणु					\
 		.clk_id = _clk_id,		\
-		.lookup = {			\
+		.lookup = अणु			\
 			.dev_id = _dev,		\
 			.con_id = _con,		\
-		},				\
-	}
+		पूर्ण,				\
+	पूर्ण
 
-struct tegra_clk {
-	int			dt_id;
+काष्ठा tegra_clk अणु
+	पूर्णांक			dt_id;
 	bool			present;
-};
+पूर्ण;
 
-struct tegra_devclk {
-	int		dt_id;
-	char		*dev_id;
-	char		*con_id;
-};
+काष्ठा tegra_devclk अणु
+	पूर्णांक		dt_id;
+	अक्षर		*dev_id;
+	अक्षर		*con_id;
+पूर्ण;
 
-void tegra_init_special_resets(unsigned int num, int (*assert)(unsigned long),
-			       int (*deassert)(unsigned long));
+व्योम tegra_init_special_resets(अचिन्हित पूर्णांक num, पूर्णांक (*निश्चित)(अचिन्हित दीर्घ),
+			       पूर्णांक (*deनिश्चित)(अचिन्हित दीर्घ));
 
-void tegra_init_from_table(struct tegra_clk_init_table *tbl,
-		struct clk *clks[], int clk_max);
+व्योम tegra_init_from_table(काष्ठा tegra_clk_init_table *tbl,
+		काष्ठा clk *clks[], पूर्णांक clk_max);
 
-void tegra_init_dup_clks(struct tegra_clk_duplicate *dup_list,
-		struct clk *clks[], int clk_max);
+व्योम tegra_init_dup_clks(काष्ठा tegra_clk_duplicate *dup_list,
+		काष्ठा clk *clks[], पूर्णांक clk_max);
 
-const struct tegra_clk_periph_regs *get_reg_bank(int clkid);
-struct clk **tegra_clk_init(void __iomem *clk_base, int num, int periph_banks);
+स्थिर काष्ठा tegra_clk_periph_regs *get_reg_bank(पूर्णांक clkid);
+काष्ठा clk **tegra_clk_init(व्योम __iomem *clk_base, पूर्णांक num, पूर्णांक periph_banks);
 
-struct clk **tegra_lookup_dt_id(int clk_id, struct tegra_clk *tegra_clk);
+काष्ठा clk **tegra_lookup_dt_id(पूर्णांक clk_id, काष्ठा tegra_clk *tegra_clk);
 
-void tegra_add_of_provider(struct device_node *np, void *clk_src_onecell_get);
-void tegra_register_devclks(struct tegra_devclk *dev_clks, int num);
+व्योम tegra_add_of_provider(काष्ठा device_node *np, व्योम *clk_src_onecell_get);
+व्योम tegra_रेजिस्टर_devclks(काष्ठा tegra_devclk *dev_clks, पूर्णांक num);
 
-void tegra_audio_clk_init(void __iomem *clk_base,
-			void __iomem *pmc_base, struct tegra_clk *tegra_clks,
-			struct tegra_audio_clk_info *audio_info,
-			unsigned int num_plls, unsigned long sync_max_rate);
+व्योम tegra_audio_clk_init(व्योम __iomem *clk_base,
+			व्योम __iomem *pmc_base, काष्ठा tegra_clk *tegra_clks,
+			काष्ठा tegra_audio_clk_info *audio_info,
+			अचिन्हित पूर्णांक num_plls, अचिन्हित दीर्घ sync_max_rate);
 
-void tegra_periph_clk_init(void __iomem *clk_base, void __iomem *pmc_base,
-			struct tegra_clk *tegra_clks,
-			struct tegra_clk_pll_params *pll_params);
+व्योम tegra_periph_clk_init(व्योम __iomem *clk_base, व्योम __iomem *pmc_base,
+			काष्ठा tegra_clk *tegra_clks,
+			काष्ठा tegra_clk_pll_params *pll_params);
 
-void tegra_fixed_clk_init(struct tegra_clk *tegra_clks);
-int tegra_osc_clk_init(void __iomem *clk_base, struct tegra_clk *clks,
-		       unsigned long *input_freqs, unsigned int num,
-		       unsigned int clk_m_div, unsigned long *osc_freq,
-		       unsigned long *pll_ref_freq);
-void tegra_super_clk_gen4_init(void __iomem *clk_base,
-			void __iomem *pmc_base, struct tegra_clk *tegra_clks,
-			struct tegra_clk_pll_params *pll_params);
-void tegra_super_clk_gen5_init(void __iomem *clk_base,
-			void __iomem *pmc_base, struct tegra_clk *tegra_clks,
-			struct tegra_clk_pll_params *pll_params);
+व्योम tegra_fixed_clk_init(काष्ठा tegra_clk *tegra_clks);
+पूर्णांक tegra_osc_clk_init(व्योम __iomem *clk_base, काष्ठा tegra_clk *clks,
+		       अचिन्हित दीर्घ *input_freqs, अचिन्हित पूर्णांक num,
+		       अचिन्हित पूर्णांक clk_m_भाग, अचिन्हित दीर्घ *osc_freq,
+		       अचिन्हित दीर्घ *pll_ref_freq);
+व्योम tegra_super_clk_gen4_init(व्योम __iomem *clk_base,
+			व्योम __iomem *pmc_base, काष्ठा tegra_clk *tegra_clks,
+			काष्ठा tegra_clk_pll_params *pll_params);
+व्योम tegra_super_clk_gen5_init(व्योम __iomem *clk_base,
+			व्योम __iomem *pmc_base, काष्ठा tegra_clk *tegra_clks,
+			काष्ठा tegra_clk_pll_params *pll_params);
 
-#ifdef CONFIG_TEGRA124_CLK_EMC
-struct clk *tegra124_clk_register_emc(void __iomem *base, struct device_node *np,
+#अगर_घोषित CONFIG_TEGRA124_CLK_EMC
+काष्ठा clk *tegra124_clk_रेजिस्टर_emc(व्योम __iomem *base, काष्ठा device_node *np,
 				      spinlock_t *lock);
-bool tegra124_clk_emc_driver_available(struct clk_hw *emc_hw);
-#else
-static inline struct clk *
-tegra124_clk_register_emc(void __iomem *base, struct device_node *np,
+bool tegra124_clk_emc_driver_available(काष्ठा clk_hw *emc_hw);
+#अन्यथा
+अटल अंतरभूत काष्ठा clk *
+tegra124_clk_रेजिस्टर_emc(व्योम __iomem *base, काष्ठा device_node *np,
 			  spinlock_t *lock)
-{
-	return NULL;
-}
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool tegra124_clk_emc_driver_available(struct clk_hw *emc_hw)
-{
-	return false;
-}
-#endif
+अटल अंतरभूत bool tegra124_clk_emc_driver_available(काष्ठा clk_hw *emc_hw)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-void tegra114_clock_tune_cpu_trimmers_high(void);
-void tegra114_clock_tune_cpu_trimmers_low(void);
-void tegra114_clock_tune_cpu_trimmers_init(void);
-void tegra114_clock_assert_dfll_dvco_reset(void);
-void tegra114_clock_deassert_dfll_dvco_reset(void);
+व्योम tegra114_घड़ी_प्रकारune_cpu_trimmers_high(व्योम);
+व्योम tegra114_घड़ी_प्रकारune_cpu_trimmers_low(व्योम);
+व्योम tegra114_घड़ी_प्रकारune_cpu_trimmers_init(व्योम);
+व्योम tegra114_घड़ी_निश्चित_dfll_dvco_reset(व्योम);
+व्योम tegra114_घड़ी_deनिश्चित_dfll_dvco_reset(व्योम);
 
-typedef void (*tegra_clk_apply_init_table_func)(void);
-extern tegra_clk_apply_init_table_func tegra_clk_apply_init_table;
-int tegra_pll_wait_for_lock(struct tegra_clk_pll *pll);
-u16 tegra_pll_get_fixed_mdiv(struct clk_hw *hw, unsigned long input_rate);
-int tegra_pll_p_div_to_hw(struct tegra_clk_pll *pll, u8 p_div);
-int div_frac_get(unsigned long rate, unsigned parent_rate, u8 width,
+प्रकार व्योम (*tegra_clk_apply_init_table_func)(व्योम);
+बाह्य tegra_clk_apply_init_table_func tegra_clk_apply_init_table;
+पूर्णांक tegra_pll_रुको_क्रम_lock(काष्ठा tegra_clk_pll *pll);
+u16 tegra_pll_get_fixed_mभाग(काष्ठा clk_hw *hw, अचिन्हित दीर्घ input_rate);
+पूर्णांक tegra_pll_p_भाग_प्रकारo_hw(काष्ठा tegra_clk_pll *pll, u8 p_भाग);
+पूर्णांक भाग_frac_get(अचिन्हित दीर्घ rate, अचिन्हित parent_rate, u8 width,
 		 u8 frac_width, u8 flags);
-void tegra_clk_osc_resume(void __iomem *clk_base);
-void tegra_clk_set_pllp_out_cpu(bool enable);
-void tegra_clk_periph_suspend(void);
-void tegra_clk_periph_resume(void);
+व्योम tegra_clk_osc_resume(व्योम __iomem *clk_base);
+व्योम tegra_clk_set_pllp_out_cpu(bool enable);
+व्योम tegra_clk_periph_suspend(व्योम);
+व्योम tegra_clk_periph_resume(व्योम);
 
 
-/* Combined read fence with delay */
-#define fence_udelay(delay, reg)	\
-	do {				\
-		readl(reg);		\
+/* Combined पढ़ो fence with delay */
+#घोषणा fence_udelay(delay, reg)	\
+	करो अणु				\
+		पढ़ोl(reg);		\
 		udelay(delay);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-bool tegra20_clk_emc_driver_available(struct clk_hw *emc_hw);
-struct clk *tegra20_clk_register_emc(void __iomem *ioaddr, bool low_jitter);
+bool tegra20_clk_emc_driver_available(काष्ठा clk_hw *emc_hw);
+काष्ठा clk *tegra20_clk_रेजिस्टर_emc(व्योम __iomem *ioaddr, bool low_jitter);
 
-struct clk *tegra210_clk_register_emc(struct device_node *np,
-				      void __iomem *regs);
+काष्ठा clk *tegra210_clk_रेजिस्टर_emc(काष्ठा device_node *np,
+				      व्योम __iomem *regs);
 
-#endif /* TEGRA_CLK_H */
+#पूर्ण_अगर /* TEGRA_CLK_H */

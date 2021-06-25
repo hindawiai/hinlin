@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: James Liao <jamesjj.liao@mediatek.com>
  */
 
-#include <linux/of.h>
-#include <linux/of_address.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
 
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/clkdev.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clkdev.h>
 
-#include "clk-mtk.h"
-#include "clk-gate.h"
+#समावेश "clk-mtk.h"
+#समावेश "clk-gate.h"
 
-static int mtk_cg_bit_is_cleared(struct clk_hw *hw)
-{
-	struct mtk_clk_gate *cg = to_mtk_clk_gate(hw);
+अटल पूर्णांक mtk_cg_bit_is_cleared(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mtk_clk_gate *cg = to_mtk_clk_gate(hw);
 	u32 val;
 
-	regmap_read(cg->regmap, cg->sta_ofs, &val);
+	regmap_पढ़ो(cg->regmap, cg->sta_ofs, &val);
 
 	val &= BIT(cg->bit);
 
-	return val == 0;
-}
+	वापस val == 0;
+पूर्ण
 
-static int mtk_cg_bit_is_set(struct clk_hw *hw)
-{
-	struct mtk_clk_gate *cg = to_mtk_clk_gate(hw);
+अटल पूर्णांक mtk_cg_bit_is_set(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mtk_clk_gate *cg = to_mtk_clk_gate(hw);
 	u32 val;
 
-	regmap_read(cg->regmap, cg->sta_ofs, &val);
+	regmap_पढ़ो(cg->regmap, cg->sta_ofs, &val);
 
 	val &= BIT(cg->bit);
 
-	return val != 0;
-}
+	वापस val != 0;
+पूर्ण
 
-static void mtk_cg_set_bit(struct clk_hw *hw)
-{
-	struct mtk_clk_gate *cg = to_mtk_clk_gate(hw);
+अटल व्योम mtk_cg_set_bit(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mtk_clk_gate *cg = to_mtk_clk_gate(hw);
 
-	regmap_write(cg->regmap, cg->set_ofs, BIT(cg->bit));
-}
+	regmap_ग_लिखो(cg->regmap, cg->set_ofs, BIT(cg->bit));
+पूर्ण
 
-static void mtk_cg_clr_bit(struct clk_hw *hw)
-{
-	struct mtk_clk_gate *cg = to_mtk_clk_gate(hw);
+अटल व्योम mtk_cg_clr_bit(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mtk_clk_gate *cg = to_mtk_clk_gate(hw);
 
-	regmap_write(cg->regmap, cg->clr_ofs, BIT(cg->bit));
-}
+	regmap_ग_लिखो(cg->regmap, cg->clr_ofs, BIT(cg->bit));
+पूर्ण
 
-static void mtk_cg_set_bit_no_setclr(struct clk_hw *hw)
-{
-	struct mtk_clk_gate *cg = to_mtk_clk_gate(hw);
+अटल व्योम mtk_cg_set_bit_no_setclr(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mtk_clk_gate *cg = to_mtk_clk_gate(hw);
 	u32 cgbit = BIT(cg->bit);
 
 	regmap_update_bits(cg->regmap, cg->sta_ofs, cgbit, cgbit);
-}
+पूर्ण
 
-static void mtk_cg_clr_bit_no_setclr(struct clk_hw *hw)
-{
-	struct mtk_clk_gate *cg = to_mtk_clk_gate(hw);
+अटल व्योम mtk_cg_clr_bit_no_setclr(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mtk_clk_gate *cg = to_mtk_clk_gate(hw);
 	u32 cgbit = BIT(cg->bit);
 
 	regmap_update_bits(cg->regmap, cg->sta_ofs, cgbit, 0);
-}
+पूर्ण
 
-static int mtk_cg_enable(struct clk_hw *hw)
-{
+अटल पूर्णांक mtk_cg_enable(काष्ठा clk_hw *hw)
+अणु
 	mtk_cg_clr_bit(hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_cg_disable(struct clk_hw *hw)
-{
+अटल व्योम mtk_cg_disable(काष्ठा clk_hw *hw)
+अणु
 	mtk_cg_set_bit(hw);
-}
+पूर्ण
 
-static int mtk_cg_enable_inv(struct clk_hw *hw)
-{
+अटल पूर्णांक mtk_cg_enable_inv(काष्ठा clk_hw *hw)
+अणु
 	mtk_cg_set_bit(hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_cg_disable_inv(struct clk_hw *hw)
-{
+अटल व्योम mtk_cg_disable_inv(काष्ठा clk_hw *hw)
+अणु
 	mtk_cg_clr_bit(hw);
-}
+पूर्ण
 
-static int mtk_cg_enable_no_setclr(struct clk_hw *hw)
-{
+अटल पूर्णांक mtk_cg_enable_no_setclr(काष्ठा clk_hw *hw)
+अणु
 	mtk_cg_clr_bit_no_setclr(hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_cg_disable_no_setclr(struct clk_hw *hw)
-{
+अटल व्योम mtk_cg_disable_no_setclr(काष्ठा clk_hw *hw)
+अणु
 	mtk_cg_set_bit_no_setclr(hw);
-}
+पूर्ण
 
-static int mtk_cg_enable_inv_no_setclr(struct clk_hw *hw)
-{
+अटल पूर्णांक mtk_cg_enable_inv_no_setclr(काष्ठा clk_hw *hw)
+अणु
 	mtk_cg_set_bit_no_setclr(hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_cg_disable_inv_no_setclr(struct clk_hw *hw)
-{
+अटल व्योम mtk_cg_disable_inv_no_setclr(काष्ठा clk_hw *hw)
+अणु
 	mtk_cg_clr_bit_no_setclr(hw);
-}
+पूर्ण
 
-const struct clk_ops mtk_clk_gate_ops_setclr = {
+स्थिर काष्ठा clk_ops mtk_clk_gate_ops_setclr = अणु
 	.is_enabled	= mtk_cg_bit_is_cleared,
 	.enable		= mtk_cg_enable,
 	.disable	= mtk_cg_disable,
-};
+पूर्ण;
 
-const struct clk_ops mtk_clk_gate_ops_setclr_inv = {
+स्थिर काष्ठा clk_ops mtk_clk_gate_ops_setclr_inv = अणु
 	.is_enabled	= mtk_cg_bit_is_set,
 	.enable		= mtk_cg_enable_inv,
 	.disable	= mtk_cg_disable_inv,
-};
+पूर्ण;
 
-const struct clk_ops mtk_clk_gate_ops_no_setclr = {
+स्थिर काष्ठा clk_ops mtk_clk_gate_ops_no_setclr = अणु
 	.is_enabled	= mtk_cg_bit_is_cleared,
 	.enable		= mtk_cg_enable_no_setclr,
 	.disable	= mtk_cg_disable_no_setclr,
-};
+पूर्ण;
 
-const struct clk_ops mtk_clk_gate_ops_no_setclr_inv = {
+स्थिर काष्ठा clk_ops mtk_clk_gate_ops_no_setclr_inv = अणु
 	.is_enabled	= mtk_cg_bit_is_set,
 	.enable		= mtk_cg_enable_inv_no_setclr,
 	.disable	= mtk_cg_disable_inv_no_setclr,
-};
+पूर्ण;
 
-struct clk *mtk_clk_register_gate(
-		const char *name,
-		const char *parent_name,
-		struct regmap *regmap,
-		int set_ofs,
-		int clr_ofs,
-		int sta_ofs,
+काष्ठा clk *mtk_clk_रेजिस्टर_gate(
+		स्थिर अक्षर *name,
+		स्थिर अक्षर *parent_name,
+		काष्ठा regmap *regmap,
+		पूर्णांक set_ofs,
+		पूर्णांक clr_ofs,
+		पूर्णांक sta_ofs,
 		u8 bit,
-		const struct clk_ops *ops,
-		unsigned long flags,
-		struct device *dev)
-{
-	struct mtk_clk_gate *cg;
-	struct clk *clk;
-	struct clk_init_data init = {};
+		स्थिर काष्ठा clk_ops *ops,
+		अचिन्हित दीर्घ flags,
+		काष्ठा device *dev)
+अणु
+	काष्ठा mtk_clk_gate *cg;
+	काष्ठा clk *clk;
+	काष्ठा clk_init_data init = अणुपूर्ण;
 
-	cg = kzalloc(sizeof(*cg), GFP_KERNEL);
-	if (!cg)
-		return ERR_PTR(-ENOMEM);
+	cg = kzalloc(माप(*cg), GFP_KERNEL);
+	अगर (!cg)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.flags = flags | CLK_SET_RATE_PARENT;
-	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_names = parent_name ? &parent_name : शून्य;
 	init.num_parents = parent_name ? 1 : 0;
 	init.ops = ops;
 
@@ -175,9 +176,9 @@ struct clk *mtk_clk_register_gate(
 
 	cg->hw.init = &init;
 
-	clk = clk_register(dev, &cg->hw);
-	if (IS_ERR(clk))
-		kfree(cg);
+	clk = clk_रेजिस्टर(dev, &cg->hw);
+	अगर (IS_ERR(clk))
+		kमुक्त(cg);
 
-	return clk;
-}
+	वापस clk;
+पूर्ण

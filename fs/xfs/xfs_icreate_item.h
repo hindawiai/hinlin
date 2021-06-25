@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2008-2010, Dave Chinner
  * All Rights Reserved.
  */
-#ifndef XFS_ICREATE_ITEM_H
-#define XFS_ICREATE_ITEM_H	1
+#अगर_अघोषित XFS_ICREATE_ITEM_H
+#घोषणा XFS_ICREATE_ITEM_H	1
 
-/* in memory log item structure */
-struct xfs_icreate_item {
-	struct xfs_log_item	ic_item;
-	struct xfs_icreate_log	ic_format;
-};
+/* in memory log item काष्ठाure */
+काष्ठा xfs_icreate_item अणु
+	काष्ठा xfs_log_item	ic_item;
+	काष्ठा xfs_icreate_log	ic_क्रमmat;
+पूर्ण;
 
-extern kmem_zone_t *xfs_icreate_zone;	/* inode create item zone */
+बाह्य kmem_zone_t *xfs_icreate_zone;	/* inode create item zone */
 
-void xfs_icreate_log(struct xfs_trans *tp, xfs_agnumber_t agno,
-			xfs_agblock_t agbno, unsigned int count,
-			unsigned int inode_size, xfs_agblock_t length,
-			unsigned int generation);
+व्योम xfs_icreate_log(काष्ठा xfs_trans *tp, xfs_agnumber_t agno,
+			xfs_agblock_t agbno, अचिन्हित पूर्णांक count,
+			अचिन्हित पूर्णांक inode_size, xfs_agblock_t length,
+			अचिन्हित पूर्णांक generation);
 
-#endif	/* XFS_ICREATE_ITEM_H */
+#पूर्ण_अगर	/* XFS_ICREATE_ITEM_H */

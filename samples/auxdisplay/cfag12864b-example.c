@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *    Filename: cfag12864b-example.c
  *     Version: 0.1.0
@@ -14,164 +15,164 @@
  * ------------------------
  */
 
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
+#समावेश <माला.स>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/mman.h>
 
-#define CFAG12864B_WIDTH		(128)
-#define CFAG12864B_HEIGHT		(64)
-#define CFAG12864B_SIZE			(128 * 64 / 8)
-#define CFAG12864B_BPB			(8)
-#define CFAG12864B_ADDRESS(x, y)	((y) * CFAG12864B_WIDTH / \
+#घोषणा CFAG12864B_WIDTH		(128)
+#घोषणा CFAG12864B_HEIGHT		(64)
+#घोषणा CFAG12864B_SIZE			(128 * 64 / 8)
+#घोषणा CFAG12864B_BPB			(8)
+#घोषणा CFAG12864B_ADDRESS(x, y)	((y) * CFAG12864B_WIDTH / \
 					CFAG12864B_BPB + (x) / CFAG12864B_BPB)
-#define CFAG12864B_BIT(n)		(((unsigned char) 1) << (n))
+#घोषणा CFAG12864B_BIT(n)		(((अचिन्हित अक्षर) 1) << (n))
 
-#undef CFAG12864B_DOCHECK
-#ifdef CFAG12864B_DOCHECK
-	#define CFAG12864B_CHECK(x, y)		((x) < CFAG12864B_WIDTH && \
+#अघोषित CFAG12864B_DOCHECK
+#अगर_घोषित CFAG12864B_DOCHECK
+	#घोषणा CFAG12864B_CHECK(x, y)		((x) < CFAG12864B_WIDTH && \
 						(y) < CFAG12864B_HEIGHT)
-#else
-	#define CFAG12864B_CHECK(x, y)		(1)
-#endif
+#अन्यथा
+	#घोषणा CFAG12864B_CHECK(x, y)		(1)
+#पूर्ण_अगर
 
-int cfag12864b_fd;
-unsigned char * cfag12864b_mem;
-unsigned char cfag12864b_buffer[CFAG12864B_SIZE];
+पूर्णांक cfag12864b_fd;
+अचिन्हित अक्षर * cfag12864b_mem;
+अचिन्हित अक्षर cfag12864b_buffer[CFAG12864B_SIZE];
 
 /*
  * init a cfag12864b framebuffer device
  *
- * No error:       return = 0
- * Unable to open: return = -1
- * Unable to mmap: return = -2
+ * No error:       वापस = 0
+ * Unable to खोलो: वापस = -1
+ * Unable to mmap: वापस = -2
  */
-static int cfag12864b_init(char *path)
-{
-	cfag12864b_fd = open(path, O_RDWR);
-	if (cfag12864b_fd == -1)
-		return -1;
+अटल पूर्णांक cfag12864b_init(अक्षर *path)
+अणु
+	cfag12864b_fd = खोलो(path, O_RDWR);
+	अगर (cfag12864b_fd == -1)
+		वापस -1;
 
 	cfag12864b_mem = mmap(0, CFAG12864B_SIZE, PROT_READ | PROT_WRITE,
 		MAP_SHARED, cfag12864b_fd, 0);
-	if (cfag12864b_mem == MAP_FAILED) {
-		close(cfag12864b_fd);
-		return -2;
-	}
+	अगर (cfag12864b_mem == MAP_FAILED) अणु
+		बंद(cfag12864b_fd);
+		वापस -2;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * exit a cfag12864b framebuffer device
+ * निकास a cfag12864b framebuffer device
  */
-static void cfag12864b_exit(void)
-{
+अटल व्योम cfag12864b_निकास(व्योम)
+अणु
 	munmap(cfag12864b_mem, CFAG12864B_SIZE);
-	close(cfag12864b_fd);
-}
+	बंद(cfag12864b_fd);
+पूर्ण
 
 /*
  * set (x, y) pixel
  */
-static void cfag12864b_set(unsigned char x, unsigned char y)
-{
-	if (CFAG12864B_CHECK(x, y))
+अटल व्योम cfag12864b_set(अचिन्हित अक्षर x, अचिन्हित अक्षर y)
+अणु
+	अगर (CFAG12864B_CHECK(x, y))
 		cfag12864b_buffer[CFAG12864B_ADDRESS(x, y)] |=
 			CFAG12864B_BIT(x % CFAG12864B_BPB);
-}
+पूर्ण
 
 /*
  * unset (x, y) pixel
  */
-static void cfag12864b_unset(unsigned char x, unsigned char y)
-{
-	if (CFAG12864B_CHECK(x, y))
+अटल व्योम cfag12864b_unset(अचिन्हित अक्षर x, अचिन्हित अक्षर y)
+अणु
+	अगर (CFAG12864B_CHECK(x, y))
 		cfag12864b_buffer[CFAG12864B_ADDRESS(x, y)] &=
 			~CFAG12864B_BIT(x % CFAG12864B_BPB);
-}
+पूर्ण
 
 /*
  * is set (x, y) pixel?
  *
- * Pixel off: return = 0
- * Pixel on:  return = 1
+ * Pixel off: वापस = 0
+ * Pixel on:  वापस = 1
  */
-static unsigned char cfag12864b_isset(unsigned char x, unsigned char y)
-{
-	if (CFAG12864B_CHECK(x, y))
-		if (cfag12864b_buffer[CFAG12864B_ADDRESS(x, y)] &
+अटल अचिन्हित अक्षर cfag12864b_isset(अचिन्हित अक्षर x, अचिन्हित अक्षर y)
+अणु
+	अगर (CFAG12864B_CHECK(x, y))
+		अगर (cfag12864b_buffer[CFAG12864B_ADDRESS(x, y)] &
 			CFAG12864B_BIT(x % CFAG12864B_BPB))
-			return 1;
+			वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * not (x, y) pixel
  */
-static void cfag12864b_not(unsigned char x, unsigned char y)
-{
-	if (cfag12864b_isset(x, y))
+अटल व्योम cfag12864b_not(अचिन्हित अक्षर x, अचिन्हित अक्षर y)
+अणु
+	अगर (cfag12864b_isset(x, y))
 		cfag12864b_unset(x, y);
-	else
+	अन्यथा
 		cfag12864b_set(x, y);
-}
+पूर्ण
 
 /*
  * fill (set all pixels)
  */
-static void cfag12864b_fill(void)
-{
-	unsigned short i;
+अटल व्योम cfag12864b_fill(व्योम)
+अणु
+	अचिन्हित लघु i;
 
-	for (i = 0; i < CFAG12864B_SIZE; i++)
+	क्रम (i = 0; i < CFAG12864B_SIZE; i++)
 		cfag12864b_buffer[i] = 0xFF;
-}
+पूर्ण
 
 /*
  * clear (unset all pixels)
  */
-static void cfag12864b_clear(void)
-{
-	unsigned short i;
+अटल व्योम cfag12864b_clear(व्योम)
+अणु
+	अचिन्हित लघु i;
 
-	for (i = 0; i < CFAG12864B_SIZE; i++)
+	क्रम (i = 0; i < CFAG12864B_SIZE; i++)
 		cfag12864b_buffer[i] = 0;
-}
+पूर्ण
 
 /*
- * format a [128*64] matrix
+ * क्रमmat a [128*64] matrix
  *
  * Pixel off: src[i] = 0
  * Pixel on:  src[i] > 0
  */
-static void cfag12864b_format(unsigned char * matrix)
-{
-	unsigned char i, j, n;
+अटल व्योम cfag12864b_क्रमmat(अचिन्हित अक्षर * matrix)
+अणु
+	अचिन्हित अक्षर i, j, n;
 
-	for (i = 0; i < CFAG12864B_HEIGHT; i++)
-	for (j = 0; j < CFAG12864B_WIDTH / CFAG12864B_BPB; j++) {
+	क्रम (i = 0; i < CFAG12864B_HEIGHT; i++)
+	क्रम (j = 0; j < CFAG12864B_WIDTH / CFAG12864B_BPB; j++) अणु
 		cfag12864b_buffer[i * CFAG12864B_WIDTH / CFAG12864B_BPB +
 			j] = 0;
-		for (n = 0; n < CFAG12864B_BPB; n++)
-			if (matrix[i * CFAG12864B_WIDTH +
+		क्रम (n = 0; n < CFAG12864B_BPB; n++)
+			अगर (matrix[i * CFAG12864B_WIDTH +
 				j * CFAG12864B_BPB + n])
 				cfag12864b_buffer[i * CFAG12864B_WIDTH /
 					CFAG12864B_BPB + j] |=
 					CFAG12864B_BIT(n);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * blit buffer to lcd
  */
-static void cfag12864b_blit(void)
-{
-	memcpy(cfag12864b_mem, cfag12864b_buffer, CFAG12864B_SIZE);
-}
+अटल व्योम cfag12864b_blit(व्योम)
+अणु
+	स_नकल(cfag12864b_mem, cfag12864b_buffer, CFAG12864B_SIZE);
+पूर्ण
 
 /*
  * ----------------------
@@ -179,89 +180,89 @@ static void cfag12864b_blit(void)
  * ----------------------
  */
 
-#include <stdio.h>
+#समावेश <मानकपन.स>
 
-#define EXAMPLES	6
+#घोषणा EXAMPLES	6
 
-static void example(unsigned char n)
-{
-	unsigned short i, j;
-	unsigned char matrix[CFAG12864B_WIDTH * CFAG12864B_HEIGHT];
+अटल व्योम example(अचिन्हित अक्षर n)
+अणु
+	अचिन्हित लघु i, j;
+	अचिन्हित अक्षर matrix[CFAG12864B_WIDTH * CFAG12864B_HEIGHT];
 
-	if (n > EXAMPLES)
-		return;
+	अगर (n > EXAMPLES)
+		वापस;
 
-	printf("Example %i/%i - ", n, EXAMPLES);
+	म_लिखो("Example %i/%i - ", n, EXAMPLES);
 
-	switch (n) {
-	case 1:
-		printf("Draw points setting bits");
+	चयन (n) अणु
+	हाल 1:
+		म_लिखो("Draw points setting bits");
 		cfag12864b_clear();
-		for (i = 0; i < CFAG12864B_WIDTH; i += 2)
-			for (j = 0; j < CFAG12864B_HEIGHT; j += 2)
+		क्रम (i = 0; i < CFAG12864B_WIDTH; i += 2)
+			क्रम (j = 0; j < CFAG12864B_HEIGHT; j += 2)
 				cfag12864b_set(i, j);
-		break;
+		अवरोध;
 
-	case 2:
-		printf("Clear the LCD");
+	हाल 2:
+		म_लिखो("Clear the LCD");
 		cfag12864b_clear();
-		break;
+		अवरोध;
 
-	case 3:
-		printf("Draw rows formatting a [128*64] matrix");
-		memset(matrix, 0, CFAG12864B_WIDTH * CFAG12864B_HEIGHT);
-		for (i = 0; i < CFAG12864B_WIDTH; i++)
-			for (j = 0; j < CFAG12864B_HEIGHT; j += 2)
+	हाल 3:
+		म_लिखो("Draw rows formatting a [128*64] matrix");
+		स_रखो(matrix, 0, CFAG12864B_WIDTH * CFAG12864B_HEIGHT);
+		क्रम (i = 0; i < CFAG12864B_WIDTH; i++)
+			क्रम (j = 0; j < CFAG12864B_HEIGHT; j += 2)
 				matrix[j * CFAG12864B_WIDTH + i] = 1;
-		cfag12864b_format(matrix);
-		break;
+		cfag12864b_क्रमmat(matrix);
+		अवरोध;
 
-	case 4:
-		printf("Fill the lcd");
+	हाल 4:
+		म_लिखो("Fill the lcd");
 		cfag12864b_fill();
-		break;
+		अवरोध;
 
-	case 5:
-		printf("Draw columns unsetting bits");
-		for (i = 0; i < CFAG12864B_WIDTH; i += 2)
-			for (j = 0; j < CFAG12864B_HEIGHT; j++)
+	हाल 5:
+		म_लिखो("Draw columns unsetting bits");
+		क्रम (i = 0; i < CFAG12864B_WIDTH; i += 2)
+			क्रम (j = 0; j < CFAG12864B_HEIGHT; j++)
 				cfag12864b_unset(i, j);
-		break;
+		अवरोध;
 
-	case 6:
-		printf("Do negative not-ing all bits");
-		for (i = 0; i < CFAG12864B_WIDTH; i++)
-			for (j = 0; j < CFAG12864B_HEIGHT; j ++)
+	हाल 6:
+		म_लिखो("Do negative not-ing all bits");
+		क्रम (i = 0; i < CFAG12864B_WIDTH; i++)
+			क्रम (j = 0; j < CFAG12864B_HEIGHT; j ++)
 				cfag12864b_not(i, j);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	puts(" - [Press Enter]");
-}
+	माला_दो(" - [Press Enter]");
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	unsigned char n;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	अचिन्हित अक्षर n;
 
-	if (argc != 2) {
-		printf(
+	अगर (argc != 2) अणु
+		म_लिखो(
 			"Syntax:  %s fbdev\n"
 			"Usually: /dev/fb0, /dev/fb1...\n", argv[0]);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (cfag12864b_init(argv[1])) {
-		printf("Can't init %s fbdev\n", argv[1]);
-		return -2;
-	}
+	अगर (cfag12864b_init(argv[1])) अणु
+		म_लिखो("Can't init %s fbdev\n", argv[1]);
+		वापस -2;
+	पूर्ण
 
-	for (n = 1; n <= EXAMPLES; n++) {
+	क्रम (n = 1; n <= EXAMPLES; n++) अणु
 		example(n);
 		cfag12864b_blit();
-		while (getchar() != '\n');
-	}
+		जबतक (अक्षर_लो() != '\n');
+	पूर्ण
 
-	cfag12864b_exit();
+	cfag12864b_निकास();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

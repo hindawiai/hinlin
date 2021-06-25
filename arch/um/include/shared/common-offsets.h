@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* for use by sys-$SUBARCH/kernel-offsets.c */
-#include <stub-data.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* क्रम use by sys-$SUBARCH/kernel-offsets.c */
+#समावेश <stub-data.h>
 
 DEFINE(KERNEL_MADV_REMOVE, MADV_REMOVE);
 
@@ -19,7 +20,7 @@ DEFINE(UM_GFP_KERNEL, GFP_KERNEL);
 DEFINE(UM_GFP_ATOMIC, GFP_ATOMIC);
 
 /* For crypto assembler code. */
-DEFINE(crypto_tfm_ctx_offset, offsetof(struct crypto_tfm, __crt_ctx));
+DEFINE(crypto_tfm_ctx_offset, दुरत्व(काष्ठा crypto_tfm, __crt_ctx));
 
 DEFINE(UM_THREAD_SIZE, THREAD_SIZE);
 
@@ -29,23 +30,23 @@ DEFINE(UM_USEC_PER_SEC, USEC_PER_SEC);
 DEFINE(UM_NSEC_PER_SEC, NSEC_PER_SEC);
 DEFINE(UM_NSEC_PER_USEC, NSEC_PER_USEC);
 
-#ifdef CONFIG_PRINTK
+#अगर_घोषित CONFIG_PRINTK
 DEFINE(UML_CONFIG_PRINTK, CONFIG_PRINTK);
-#endif
-#ifdef CONFIG_NO_HZ_COMMON
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NO_HZ_COMMON
 DEFINE(UML_CONFIG_NO_HZ_COMMON, CONFIG_NO_HZ_COMMON);
-#endif
-#ifdef CONFIG_UML_X86
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_UML_X86
 DEFINE(UML_CONFIG_UML_X86, CONFIG_UML_X86);
-#endif
-#ifdef CONFIG_64BIT
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_64BIT
 DEFINE(UML_CONFIG_64BIT, CONFIG_64BIT);
-#endif
-#ifdef CONFIG_UML_TIME_TRAVEL_SUPPORT
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_UML_TIME_TRAVEL_SUPPORT
 DEFINE(UML_CONFIG_UML_TIME_TRAVEL_SUPPORT, CONFIG_UML_TIME_TRAVEL_SUPPORT);
-#endif
+#पूर्ण_अगर
 
-/* for stub */
-DEFINE(UML_STUB_FIELD_OFFSET, offsetof(struct stub_data, offset));
-DEFINE(UML_STUB_FIELD_CHILD_ERR, offsetof(struct stub_data, child_err));
-DEFINE(UML_STUB_FIELD_FD, offsetof(struct stub_data, fd));
+/* क्रम stub */
+DEFINE(UML_STUB_FIELD_OFFSET, दुरत्व(काष्ठा stub_data, offset));
+DEFINE(UML_STUB_FIELD_CHILD_ERR, दुरत्व(काष्ठा stub_data, child_err));
+DEFINE(UML_STUB_FIELD_FD, दुरत्व(काष्ठा stub_data, fd));

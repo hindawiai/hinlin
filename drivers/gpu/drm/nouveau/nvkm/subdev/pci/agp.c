@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Nouveau Project
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,54 +20,54 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "agp.h"
-#ifdef __NVKM_PCI_AGP_H__
-#include <core/option.h>
+#समावेश "agp.h"
+#अगर_घोषित __NVKM_PCI_AGP_H__
+#समावेश <core/option.h>
 
-struct nvkm_device_agp_quirk {
-	u16 hostbridge_vendor;
+काष्ठा nvkm_device_agp_quirk अणु
+	u16 hostbridge_venकरोr;
 	u16 hostbridge_device;
-	u16 chip_vendor;
+	u16 chip_venकरोr;
 	u16 chip_device;
-	int mode;
-};
+	पूर्णांक mode;
+पूर्ण;
 
-static const struct nvkm_device_agp_quirk
-nvkm_device_agp_quirks[] = {
-	/* VIA Apollo PRO133x / GeForce FX 5600 Ultra - fdo#20341 */
-	{ PCI_VENDOR_ID_VIA, 0x0691, PCI_VENDOR_ID_NVIDIA, 0x0311, 2 },
-	/* SiS 761 does not support AGP cards, use PCI mode */
-	{ PCI_VENDOR_ID_SI, 0x0761, PCI_ANY_ID, PCI_ANY_ID, 0 },
-	{},
-};
+अटल स्थिर काष्ठा nvkm_device_agp_quirk
+nvkm_device_agp_quirks[] = अणु
+	/* VIA Apollo PRO133x / GeForce FX 5600 Ultra - fकरो#20341 */
+	अणु PCI_VENDOR_ID_VIA, 0x0691, PCI_VENDOR_ID_NVIDIA, 0x0311, 2 पूर्ण,
+	/* SiS 761 करोes not support AGP cards, use PCI mode */
+	अणु PCI_VENDOR_ID_SI, 0x0761, PCI_ANY_ID, PCI_ANY_ID, 0 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-void
-nvkm_agp_fini(struct nvkm_pci *pci)
-{
-	if (pci->agp.acquired) {
+व्योम
+nvkm_agp_fini(काष्ठा nvkm_pci *pci)
+अणु
+	अगर (pci->agp.acquired) अणु
 		agp_backend_release(pci->agp.bridge);
 		pci->agp.acquired = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Ensure AGP controller is in a consistent state in case we need to
+/* Ensure AGP controller is in a consistent state in हाल we need to
  * execute the VBIOS DEVINIT scripts.
  */
-void
-nvkm_agp_preinit(struct nvkm_pci *pci)
-{
-	struct nvkm_device *device = pci->subdev.device;
+व्योम
+nvkm_agp_preinit(काष्ठा nvkm_pci *pci)
+अणु
+	काष्ठा nvkm_device *device = pci->subdev.device;
 	u32 mode = nvkm_pci_rd32(pci, 0x004c);
 	u32 save[2];
 
-	/* First of all, disable fast writes, otherwise if it's already
+	/* First of all, disable fast ग_लिखोs, otherwise अगर it's alपढ़ोy
 	 * enabled in the AGP bridge and we disable the card's AGP
 	 * controller we might be locking ourselves out of it.
 	 */
-	if ((mode | pci->agp.mode) & PCI_AGP_COMMAND_FW) {
+	अगर ((mode | pci->agp.mode) & PCI_AGP_COMMAND_FW) अणु
 		mode = pci->agp.mode & ~PCI_AGP_COMMAND_FW;
 		agp_enable(pci->agp.bridge, mode);
-	}
+	पूर्ण
 
 	/* clear busmaster bit, and disable AGP */
 	save[0] = nvkm_pci_rd32(pci, 0x0004);
@@ -79,53 +80,53 @@ nvkm_agp_preinit(struct nvkm_pci *pci)
 
 	/* and restore busmaster bit (gives effect of resetting AGP) */
 	nvkm_pci_wr32(pci, 0x0004, save[0]);
-}
+पूर्ण
 
-int
-nvkm_agp_init(struct nvkm_pci *pci)
-{
-	if (!agp_backend_acquire(pci->pdev)) {
+पूर्णांक
+nvkm_agp_init(काष्ठा nvkm_pci *pci)
+अणु
+	अगर (!agp_backend_acquire(pci->pdev)) अणु
 		nvkm_error(&pci->subdev, "failed to acquire agp\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	agp_enable(pci->agp.bridge, pci->agp.mode);
 	pci->agp.acquired = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-nvkm_agp_dtor(struct nvkm_pci *pci)
-{
+व्योम
+nvkm_agp_dtor(काष्ठा nvkm_pci *pci)
+अणु
 	arch_phys_wc_del(pci->agp.mtrr);
-}
+पूर्ण
 
-void
-nvkm_agp_ctor(struct nvkm_pci *pci)
-{
-	const struct nvkm_device_agp_quirk *quirk = nvkm_device_agp_quirks;
-	struct nvkm_subdev *subdev = &pci->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct agp_kern_info info;
-	int mode = -1;
+व्योम
+nvkm_agp_ctor(काष्ठा nvkm_pci *pci)
+अणु
+	स्थिर काष्ठा nvkm_device_agp_quirk *quirk = nvkm_device_agp_quirks;
+	काष्ठा nvkm_subdev *subdev = &pci->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा agp_kern_info info;
+	पूर्णांक mode = -1;
 
-#ifdef __powerpc__
-	/* Disable AGP by default on all PowerPC machines for now -- At
+#अगर_घोषित __घातerpc__
+	/* Disable AGP by शेष on all PowerPC machines क्रम now -- At
 	 * least some UniNorth-2 AGP bridges are known to be broken:
-	 * DMA from the host to the card works just fine, but writeback
+	 * DMA from the host to the card works just fine, but ग_लिखोback
 	 * from the card to the host goes straight to memory
 	 * untranslated bypassing that GATT somehow, making them quite
 	 * painful to deal with...
 	 */
 	mode = 0;
-#endif
-	mode = nvkm_longopt(device->cfgopt, "NvAGP", mode);
+#पूर्ण_अगर
+	mode = nvkm_दीर्घopt(device->cfgopt, "NvAGP", mode);
 
 	/* acquire bridge temporarily, so that we can copy its info */
-	if (!(pci->agp.bridge = agp_backend_acquire(pci->pdev))) {
+	अगर (!(pci->agp.bridge = agp_backend_acquire(pci->pdev))) अणु
 		nvkm_warn(subdev, "failed to acquire agp\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	agp_copy_info(pci->agp.bridge, &info);
 	agp_backend_release(pci->agp.bridge);
 
@@ -135,41 +136,41 @@ nvkm_agp_ctor(struct nvkm_pci *pci)
 	pci->agp.cma  = info.cant_use_aperture;
 	pci->agp.mtrr = -1;
 
-	/* determine if bridge + chipset combination needs a workaround */
-	while (quirk->hostbridge_vendor) {
-		if (info.device->vendor == quirk->hostbridge_vendor &&
+	/* determine अगर bridge + chipset combination needs a workaround */
+	जबतक (quirk->hostbridge_venकरोr) अणु
+		अगर (info.device->venकरोr == quirk->hostbridge_venकरोr &&
 		    info.device->device == quirk->hostbridge_device &&
-		    (quirk->chip_vendor == (u16)PCI_ANY_ID ||
-		    pci->pdev->vendor == quirk->chip_vendor) &&
+		    (quirk->chip_venकरोr == (u16)PCI_ANY_ID ||
+		    pci->pdev->venकरोr == quirk->chip_venकरोr) &&
 		    (quirk->chip_device == (u16)PCI_ANY_ID ||
-		    pci->pdev->device == quirk->chip_device)) {
+		    pci->pdev->device == quirk->chip_device)) अणु
 			nvkm_info(subdev, "forcing default agp mode to %dX, "
 					  "use NvAGP=<mode> to override\n",
 				  quirk->mode);
 			mode = quirk->mode;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		quirk++;
-	}
+	पूर्ण
 
-	/* apply quirk / user-specified mode */
-	if (mode >= 1) {
-		if (pci->agp.mode & 0x00000008)
+	/* apply quirk / user-specअगरied mode */
+	अगर (mode >= 1) अणु
+		अगर (pci->agp.mode & 0x00000008)
 			mode /= 4; /* AGPv3 */
 		pci->agp.mode &= ~0x00000007;
 		pci->agp.mode |= (mode & 0x7);
-	} else
-	if (mode == 0) {
-		pci->agp.bridge = NULL;
-		return;
-	}
+	पूर्ण अन्यथा
+	अगर (mode == 0) अणु
+		pci->agp.bridge = शून्य;
+		वापस;
+	पूर्ण
 
-	/* fast writes appear to be broken on nv18, they make the card
-	 * lock up randomly.
+	/* fast ग_लिखोs appear to be broken on nv18, they make the card
+	 * lock up अक्रमomly.
 	 */
-	if (device->chipset == 0x18)
+	अगर (device->chipset == 0x18)
 		pci->agp.mode &= ~PCI_AGP_COMMAND_FW;
 
 	pci->agp.mtrr = arch_phys_wc_add(pci->agp.base, pci->agp.size);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

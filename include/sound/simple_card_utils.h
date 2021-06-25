@@ -1,262 +1,263 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
  * simple_card_utils.h
  *
  * Copyright (c) 2016 Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
 
-#ifndef __SIMPLE_CARD_UTILS_H
-#define __SIMPLE_CARD_UTILS_H
+#अगर_अघोषित __SIMPLE_CARD_UTILS_H
+#घोषणा __SIMPLE_CARD_UTILS_H
 
-#include <linux/clk.h>
-#include <sound/soc.h>
+#समावेश <linux/clk.h>
+#समावेश <sound/soc.h>
 
-#define asoc_simple_init_hp(card, sjack, prefix) \
-	asoc_simple_init_jack(card, sjack, 1, prefix, NULL)
-#define asoc_simple_init_mic(card, sjack, prefix) \
-	asoc_simple_init_jack(card, sjack, 0, prefix, NULL)
+#घोषणा asoc_simple_init_hp(card, sjack, prefix) \
+	asoc_simple_init_jack(card, sjack, 1, prefix, शून्य)
+#घोषणा asoc_simple_init_mic(card, sjack, prefix) \
+	asoc_simple_init_jack(card, sjack, 0, prefix, शून्य)
 
-struct asoc_simple_dai {
-	const char *name;
-	unsigned int sysclk;
-	int clk_direction;
-	int slots;
-	int slot_width;
-	unsigned int tx_slot_mask;
-	unsigned int rx_slot_mask;
-	struct clk *clk;
-};
+काष्ठा asoc_simple_dai अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक sysclk;
+	पूर्णांक clk_direction;
+	पूर्णांक slots;
+	पूर्णांक slot_width;
+	अचिन्हित पूर्णांक tx_slot_mask;
+	अचिन्हित पूर्णांक rx_slot_mask;
+	काष्ठा clk *clk;
+पूर्ण;
 
-struct asoc_simple_data {
+काष्ठा asoc_simple_data अणु
 	u32 convert_rate;
 	u32 convert_channels;
-};
+पूर्ण;
 
-struct asoc_simple_jack {
-	struct snd_soc_jack jack;
-	struct snd_soc_jack_pin pin;
-	struct snd_soc_jack_gpio gpio;
-};
+काष्ठा asoc_simple_jack अणु
+	काष्ठा snd_soc_jack jack;
+	काष्ठा snd_soc_jack_pin pin;
+	काष्ठा snd_soc_jack_gpio gpio;
+पूर्ण;
 
-struct prop_nums {
-	int cpus;
-	int codecs;
-	int platforms;
-};
+काष्ठा prop_nums अणु
+	पूर्णांक cpus;
+	पूर्णांक codecs;
+	पूर्णांक platक्रमms;
+पूर्ण;
 
-struct asoc_simple_priv {
-	struct snd_soc_card snd_card;
-	struct simple_dai_props {
-		struct asoc_simple_dai *cpu_dai;
-		struct asoc_simple_dai *codec_dai;
-		struct snd_soc_dai_link_component *cpus;
-		struct snd_soc_dai_link_component *codecs;
-		struct snd_soc_dai_link_component *platforms;
-		struct asoc_simple_data adata;
-		struct snd_soc_codec_conf *codec_conf;
-		struct prop_nums num;
-		unsigned int mclk_fs;
-	} *dai_props;
-	struct asoc_simple_jack hp_jack;
-	struct asoc_simple_jack mic_jack;
-	struct snd_soc_dai_link *dai_link;
-	struct asoc_simple_dai *dais;
-	struct snd_soc_dai_link_component *dlcs;
-	struct snd_soc_dai_link_component dummy;
-	struct snd_soc_codec_conf *codec_conf;
-	struct gpio_desc *pa_gpio;
-	const struct snd_soc_ops *ops;
-	unsigned int dpcm_selectable:1;
-	unsigned int force_dpcm:1;
-};
-#define simple_priv_to_card(priv)	(&(priv)->snd_card)
-#define simple_priv_to_props(priv, i)	((priv)->dai_props + (i))
-#define simple_priv_to_dev(priv)	(simple_priv_to_card(priv)->dev)
-#define simple_priv_to_link(priv, i)	(simple_priv_to_card(priv)->dai_link + (i))
+काष्ठा asoc_simple_priv अणु
+	काष्ठा snd_soc_card snd_card;
+	काष्ठा simple_dai_props अणु
+		काष्ठा asoc_simple_dai *cpu_dai;
+		काष्ठा asoc_simple_dai *codec_dai;
+		काष्ठा snd_soc_dai_link_component *cpus;
+		काष्ठा snd_soc_dai_link_component *codecs;
+		काष्ठा snd_soc_dai_link_component *platक्रमms;
+		काष्ठा asoc_simple_data adata;
+		काष्ठा snd_soc_codec_conf *codec_conf;
+		काष्ठा prop_nums num;
+		अचिन्हित पूर्णांक mclk_fs;
+	पूर्ण *dai_props;
+	काष्ठा asoc_simple_jack hp_jack;
+	काष्ठा asoc_simple_jack mic_jack;
+	काष्ठा snd_soc_dai_link *dai_link;
+	काष्ठा asoc_simple_dai *dais;
+	काष्ठा snd_soc_dai_link_component *dlcs;
+	काष्ठा snd_soc_dai_link_component dummy;
+	काष्ठा snd_soc_codec_conf *codec_conf;
+	काष्ठा gpio_desc *pa_gpio;
+	स्थिर काष्ठा snd_soc_ops *ops;
+	अचिन्हित पूर्णांक dpcm_selectable:1;
+	अचिन्हित पूर्णांक क्रमce_dpcm:1;
+पूर्ण;
+#घोषणा simple_priv_to_card(priv)	(&(priv)->snd_card)
+#घोषणा simple_priv_to_props(priv, i)	((priv)->dai_props + (i))
+#घोषणा simple_priv_to_dev(priv)	(simple_priv_to_card(priv)->dev)
+#घोषणा simple_priv_to_link(priv, i)	(simple_priv_to_card(priv)->dai_link + (i))
 
-#define simple_props_to_dlc_cpu(props, i)	((props)->cpus + i)
-#define simple_props_to_dlc_codec(props, i)	((props)->codecs + i)
-#define simple_props_to_dlc_platform(props, i)	((props)->platforms + i)
+#घोषणा simple_props_to_dlc_cpu(props, i)	((props)->cpus + i)
+#घोषणा simple_props_to_dlc_codec(props, i)	((props)->codecs + i)
+#घोषणा simple_props_to_dlc_platक्रमm(props, i)	((props)->platक्रमms + i)
 
-#define simple_props_to_dai_cpu(props, i)	((props)->cpu_dai + i)
-#define simple_props_to_dai_codec(props, i)	((props)->codec_dai + i)
-#define simple_props_to_codec_conf(props, i)	((props)->codec_conf + i)
+#घोषणा simple_props_to_dai_cpu(props, i)	((props)->cpu_dai + i)
+#घोषणा simple_props_to_dai_codec(props, i)	((props)->codec_dai + i)
+#घोषणा simple_props_to_codec_conf(props, i)	((props)->codec_conf + i)
 
-#define for_each_prop_dlc_cpus(props, i, cpu)				\
-	for ((i) = 0;							\
+#घोषणा क्रम_each_prop_dlc_cpus(props, i, cpu)				\
+	क्रम ((i) = 0;							\
 	     ((i) < (props)->num.cpus) &&				\
 		     ((cpu) = simple_props_to_dlc_cpu(props, i));	\
 	     (i)++)
-#define for_each_prop_dlc_codecs(props, i, codec)			\
-	for ((i) = 0;							\
+#घोषणा क्रम_each_prop_dlc_codecs(props, i, codec)			\
+	क्रम ((i) = 0;							\
 	     ((i) < (props)->num.codecs) &&				\
 		     ((codec) = simple_props_to_dlc_codec(props, i));	\
 	     (i)++)
-#define for_each_prop_dlc_platforms(props, i, platform)			\
-	for ((i) = 0;							\
-	     ((i) < (props)->num.platforms) &&				\
-		     ((platform) = simple_props_to_dlc_platform(props, i)); \
+#घोषणा क्रम_each_prop_dlc_platक्रमms(props, i, platक्रमm)			\
+	क्रम ((i) = 0;							\
+	     ((i) < (props)->num.platक्रमms) &&				\
+		     ((platक्रमm) = simple_props_to_dlc_platक्रमm(props, i)); \
 	     (i)++)
-#define for_each_prop_codec_conf(props, i, conf)			\
-	for ((i) = 0;							\
+#घोषणा क्रम_each_prop_codec_conf(props, i, conf)			\
+	क्रम ((i) = 0;							\
 	     ((i) < (props)->num.codecs) &&				\
 		     (props)->codec_conf &&				\
 		     ((conf) = simple_props_to_codec_conf(props, i));	\
 	     (i)++)
 
-#define for_each_prop_dai_cpu(props, i, cpu)				\
-	for ((i) = 0;							\
+#घोषणा क्रम_each_prop_dai_cpu(props, i, cpu)				\
+	क्रम ((i) = 0;							\
 	     ((i) < (props)->num.cpus) &&				\
 		     ((cpu) = simple_props_to_dai_cpu(props, i));	\
 	     (i)++)
-#define for_each_prop_dai_codec(props, i, codec)			\
-	for ((i) = 0;							\
+#घोषणा क्रम_each_prop_dai_codec(props, i, codec)			\
+	क्रम ((i) = 0;							\
 	     ((i) < (props)->num.codecs) &&				\
 		     ((codec) = simple_props_to_dai_codec(props, i));	\
 	     (i)++)
 
-#define SNDRV_MAX_LINKS 128
+#घोषणा SNDRV_MAX_LINKS 128
 
-struct link_info {
-	int link; /* number of link */
-	int cpu;  /* turn for CPU / Codec */
-	struct prop_nums num[SNDRV_MAX_LINKS];
-};
+काष्ठा link_info अणु
+	पूर्णांक link; /* number of link */
+	पूर्णांक cpu;  /* turn क्रम CPU / Codec */
+	काष्ठा prop_nums num[SNDRV_MAX_LINKS];
+पूर्ण;
 
-int asoc_simple_parse_daifmt(struct device *dev,
-			     struct device_node *node,
-			     struct device_node *codec,
-			     char *prefix,
-			     unsigned int *retfmt);
-__printf(3, 4)
-int asoc_simple_set_dailink_name(struct device *dev,
-				 struct snd_soc_dai_link *dai_link,
-				 const char *fmt, ...);
-int asoc_simple_parse_card_name(struct snd_soc_card *card,
-				char *prefix);
+पूर्णांक asoc_simple_parse_daअगरmt(काष्ठा device *dev,
+			     काष्ठा device_node *node,
+			     काष्ठा device_node *codec,
+			     अक्षर *prefix,
+			     अचिन्हित पूर्णांक *retfmt);
+__म_लिखो(3, 4)
+पूर्णांक asoc_simple_set_dailink_name(काष्ठा device *dev,
+				 काष्ठा snd_soc_dai_link *dai_link,
+				 स्थिर अक्षर *fmt, ...);
+पूर्णांक asoc_simple_parse_card_name(काष्ठा snd_soc_card *card,
+				अक्षर *prefix);
 
-int asoc_simple_parse_clk(struct device *dev,
-			  struct device_node *node,
-			  struct asoc_simple_dai *simple_dai,
-			  struct snd_soc_dai_link_component *dlc);
-int asoc_simple_startup(struct snd_pcm_substream *substream);
-void asoc_simple_shutdown(struct snd_pcm_substream *substream);
-int asoc_simple_hw_params(struct snd_pcm_substream *substream,
-			  struct snd_pcm_hw_params *params);
-int asoc_simple_dai_init(struct snd_soc_pcm_runtime *rtd);
-int asoc_simple_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
-				   struct snd_pcm_hw_params *params);
+पूर्णांक asoc_simple_parse_clk(काष्ठा device *dev,
+			  काष्ठा device_node *node,
+			  काष्ठा asoc_simple_dai *simple_dai,
+			  काष्ठा snd_soc_dai_link_component *dlc);
+पूर्णांक asoc_simple_startup(काष्ठा snd_pcm_substream *substream);
+व्योम asoc_simple_shutकरोwn(काष्ठा snd_pcm_substream *substream);
+पूर्णांक asoc_simple_hw_params(काष्ठा snd_pcm_substream *substream,
+			  काष्ठा snd_pcm_hw_params *params);
+पूर्णांक asoc_simple_dai_init(काष्ठा snd_soc_pcm_runसमय *rtd);
+पूर्णांक asoc_simple_be_hw_params_fixup(काष्ठा snd_soc_pcm_runसमय *rtd,
+				   काष्ठा snd_pcm_hw_params *params);
 
-#define asoc_simple_parse_tdm(np, dai)			\
+#घोषणा asoc_simple_parse_tdm(np, dai)			\
 	snd_soc_of_parse_tdm_slot(np,	&(dai)->tx_slot_mask,	\
 					&(dai)->rx_slot_mask,	\
 					&(dai)->slots,		\
 					&(dai)->slot_width);
 
-void asoc_simple_canonicalize_platform(struct snd_soc_dai_link_component *platforms,
-				       struct snd_soc_dai_link_component *cpus);
-void asoc_simple_canonicalize_cpu(struct snd_soc_dai_link_component *cpus,
-				  int is_single_links);
+व्योम asoc_simple_canonicalize_platक्रमm(काष्ठा snd_soc_dai_link_component *platक्रमms,
+				       काष्ठा snd_soc_dai_link_component *cpus);
+व्योम asoc_simple_canonicalize_cpu(काष्ठा snd_soc_dai_link_component *cpus,
+				  पूर्णांक is_single_links);
 
-int asoc_simple_clean_reference(struct snd_soc_card *card);
+पूर्णांक asoc_simple_clean_reference(काष्ठा snd_soc_card *card);
 
-void asoc_simple_convert_fixup(struct asoc_simple_data *data,
-				      struct snd_pcm_hw_params *params);
-void asoc_simple_parse_convert(struct device_node *np, char *prefix,
-			       struct asoc_simple_data *data);
+व्योम asoc_simple_convert_fixup(काष्ठा asoc_simple_data *data,
+				      काष्ठा snd_pcm_hw_params *params);
+व्योम asoc_simple_parse_convert(काष्ठा device_node *np, अक्षर *prefix,
+			       काष्ठा asoc_simple_data *data);
 
-int asoc_simple_parse_routing(struct snd_soc_card *card,
-				      char *prefix);
-int asoc_simple_parse_widgets(struct snd_soc_card *card,
-				      char *prefix);
-int asoc_simple_parse_pin_switches(struct snd_soc_card *card,
-				   char *prefix);
+पूर्णांक asoc_simple_parse_routing(काष्ठा snd_soc_card *card,
+				      अक्षर *prefix);
+पूर्णांक asoc_simple_parse_widमाला_लो(काष्ठा snd_soc_card *card,
+				      अक्षर *prefix);
+पूर्णांक asoc_simple_parse_pin_चयनes(काष्ठा snd_soc_card *card,
+				   अक्षर *prefix);
 
-int asoc_simple_init_jack(struct snd_soc_card *card,
-			       struct asoc_simple_jack *sjack,
-			       int is_hp, char *prefix, char *pin);
-int asoc_simple_init_priv(struct asoc_simple_priv *priv,
-			       struct link_info *li);
-int asoc_simple_remove(struct platform_device *pdev);
+पूर्णांक asoc_simple_init_jack(काष्ठा snd_soc_card *card,
+			       काष्ठा asoc_simple_jack *sjack,
+			       पूर्णांक is_hp, अक्षर *prefix, अक्षर *pin);
+पूर्णांक asoc_simple_init_priv(काष्ठा asoc_simple_priv *priv,
+			       काष्ठा link_info *li);
+पूर्णांक asoc_simple_हटाओ(काष्ठा platक्रमm_device *pdev);
 
-int asoc_graph_card_probe(struct snd_soc_card *card);
+पूर्णांक asoc_graph_card_probe(काष्ठा snd_soc_card *card);
 
-#ifdef DEBUG
-static inline void asoc_simple_debug_dai(struct asoc_simple_priv *priv,
-					 char *name,
-					 struct asoc_simple_dai *dai)
-{
-	struct device *dev = simple_priv_to_dev(priv);
+#अगर_घोषित DEBUG
+अटल अंतरभूत व्योम asoc_simple_debug_dai(काष्ठा asoc_simple_priv *priv,
+					 अक्षर *name,
+					 काष्ठा asoc_simple_dai *dai)
+अणु
+	काष्ठा device *dev = simple_priv_to_dev(priv);
 
-	/* dai might be NULL */
-	if (!dai)
-		return;
+	/* dai might be शून्य */
+	अगर (!dai)
+		वापस;
 
-	if (dai->name)
+	अगर (dai->name)
 		dev_dbg(dev, "%s dai name = %s\n",
 			name, dai->name);
 
-	if (dai->slots)
+	अगर (dai->slots)
 		dev_dbg(dev, "%s slots = %d\n", name, dai->slots);
-	if (dai->slot_width)
+	अगर (dai->slot_width)
 		dev_dbg(dev, "%s slot width = %d\n", name, dai->slot_width);
-	if (dai->tx_slot_mask)
+	अगर (dai->tx_slot_mask)
 		dev_dbg(dev, "%s tx slot mask = %d\n", name, dai->tx_slot_mask);
-	if (dai->rx_slot_mask)
+	अगर (dai->rx_slot_mask)
 		dev_dbg(dev, "%s rx slot mask = %d\n", name, dai->rx_slot_mask);
-	if (dai->clk)
+	अगर (dai->clk)
 		dev_dbg(dev, "%s clk %luHz\n", name, clk_get_rate(dai->clk));
-	if (dai->sysclk)
+	अगर (dai->sysclk)
 		dev_dbg(dev, "%s sysclk = %dHz\n",
 			name, dai->sysclk);
-	if (dai->clk || dai->sysclk)
+	अगर (dai->clk || dai->sysclk)
 		dev_dbg(dev, "%s direction = %s\n",
 			name, dai->clk_direction ? "OUT" : "IN");
-}
+पूर्ण
 
-static inline void asoc_simple_debug_info(struct asoc_simple_priv *priv)
-{
-	struct snd_soc_card *card = simple_priv_to_card(priv);
-	struct device *dev = simple_priv_to_dev(priv);
+अटल अंतरभूत व्योम asoc_simple_debug_info(काष्ठा asoc_simple_priv *priv)
+अणु
+	काष्ठा snd_soc_card *card = simple_priv_to_card(priv);
+	काष्ठा device *dev = simple_priv_to_dev(priv);
 
-	int i;
+	पूर्णांक i;
 
-	if (card->name)
+	अगर (card->name)
 		dev_dbg(dev, "Card Name: %s\n", card->name);
 
-	for (i = 0; i < card->num_links; i++) {
-		struct simple_dai_props *props = simple_priv_to_props(priv, i);
-		struct snd_soc_dai_link *link = simple_priv_to_link(priv, i);
-		struct asoc_simple_dai *dai;
-		struct snd_soc_codec_conf *cnf;
-		int j;
+	क्रम (i = 0; i < card->num_links; i++) अणु
+		काष्ठा simple_dai_props *props = simple_priv_to_props(priv, i);
+		काष्ठा snd_soc_dai_link *link = simple_priv_to_link(priv, i);
+		काष्ठा asoc_simple_dai *dai;
+		काष्ठा snd_soc_codec_conf *cnf;
+		पूर्णांक j;
 
 		dev_dbg(dev, "DAI%d\n", i);
 
 		dev_dbg(dev, "cpu num = %d\n", link->num_cpus);
-		for_each_prop_dai_cpu(props, j, dai)
+		क्रम_each_prop_dai_cpu(props, j, dai)
 			asoc_simple_debug_dai(priv, "cpu", dai);
 		dev_dbg(dev, "codec num = %d\n", link->num_codecs);
-		for_each_prop_dai_codec(props, j, dai)
+		क्रम_each_prop_dai_codec(props, j, dai)
 			asoc_simple_debug_dai(priv, "codec", dai);
 
-		if (link->name)
+		अगर (link->name)
 			dev_dbg(dev, "dai name = %s\n", link->name);
-		if (link->dai_fmt)
+		अगर (link->dai_fmt)
 			dev_dbg(dev, "dai format = %04x\n", link->dai_fmt);
-		if (props->adata.convert_rate)
+		अगर (props->adata.convert_rate)
 			dev_dbg(dev, "convert_rate = %d\n", props->adata.convert_rate);
-		if (props->adata.convert_channels)
+		अगर (props->adata.convert_channels)
 			dev_dbg(dev, "convert_channels = %d\n", props->adata.convert_channels);
-		for_each_prop_codec_conf(props, j, cnf)
-			if (cnf->name_prefix)
+		क्रम_each_prop_codec_conf(props, j, cnf)
+			अगर (cnf->name_prefix)
 				dev_dbg(dev, "name prefix = %s\n", cnf->name_prefix);
-		if (props->mclk_fs)
+		अगर (props->mclk_fs)
 			dev_dbg(dev, "mclk-fs = %d\n", props->mclk_fs);
-	}
-}
-#else
-#define  asoc_simple_debug_info(priv)
-#endif /* DEBUG */
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा  asoc_simple_debug_info(priv)
+#पूर्ण_अगर /* DEBUG */
 
-#endif /* __SIMPLE_CARD_UTILS_H */
+#पूर्ण_अगर /* __SIMPLE_CARD_UTILS_H */

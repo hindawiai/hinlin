@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Logitech PS/2++ mouse driver header
  *
  * Copyright (c) 2003 Vojtech Pavlik <vojtech@suse.cz>
  */
 
-#ifndef _LOGIPS2PP_H
-#define _LOGIPS2PP_H
+#अगर_अघोषित _LOGIPS2PP_H
+#घोषणा _LOGIPS2PP_H
 
-int ps2pp_detect(struct psmouse *psmouse, bool set_properties);
+पूर्णांक ps2pp_detect(काष्ठा psmouse *psmouse, bool set_properties);
 
-#endif
+#पूर्ण_अगर

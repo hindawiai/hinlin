@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* 10G controller driver for Samsung SoCs
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* 10G controller driver क्रम Samsung SoCs
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -7,34 +8,34 @@
  * Author: Siva Reddy Kallam <siva.kallam@samsung.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/clk.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/net_tstamp.h>
-#include <linux/phy.h>
-#include <linux/ptp_clock_kernel.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/net_tstamp.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/ptp_घड़ी_kernel.h>
 
-#include "sxgbe_common.h"
-#include "sxgbe_reg.h"
-#include "sxgbe_dma.h"
+#समावेश "sxgbe_common.h"
+#समावेश "sxgbe_reg.h"
+#समावेश "sxgbe_dma.h"
 
-struct sxgbe_stats {
-	char stat_string[ETH_GSTRING_LEN];
-	int sizeof_stat;
-	int stat_offset;
-};
+काष्ठा sxgbe_stats अणु
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+पूर्ण;
 
-#define SXGBE_STAT(m)						\
-{								\
+#घोषणा SXGBE_STAT(m)						\
+अणु								\
 	#m,							\
-	sizeof_field(struct sxgbe_extra_stats, m),		\
-	offsetof(struct sxgbe_priv_data, xstats.m)		\
-}
+	माप_field(काष्ठा sxgbe_extra_stats, m),		\
+	दुरत्व(काष्ठा sxgbe_priv_data, xstats.m)		\
+पूर्ण
 
-static const struct sxgbe_stats sxgbe_gstrings_stats[] = {
+अटल स्थिर काष्ठा sxgbe_stats sxgbe_gstrings_stats[] = अणु
 	/* TX/RX IRQ events */
 	SXGBE_STAT(tx_process_stopped_irq),
 	SXGBE_STAT(tx_ctxt_desc_err),
@@ -53,30 +54,30 @@ static const struct sxgbe_stats sxgbe_gstrings_stats[] = {
 
 	/* Bus access errors */
 	SXGBE_STAT(fatal_bus_error_irq),
-	SXGBE_STAT(tx_read_transfer_err),
-	SXGBE_STAT(tx_write_transfer_err),
+	SXGBE_STAT(tx_पढ़ो_transfer_err),
+	SXGBE_STAT(tx_ग_लिखो_transfer_err),
 	SXGBE_STAT(tx_desc_access_err),
 	SXGBE_STAT(tx_buffer_access_err),
 	SXGBE_STAT(tx_data_transfer_err),
-	SXGBE_STAT(rx_read_transfer_err),
-	SXGBE_STAT(rx_write_transfer_err),
+	SXGBE_STAT(rx_पढ़ो_transfer_err),
+	SXGBE_STAT(rx_ग_लिखो_transfer_err),
 	SXGBE_STAT(rx_desc_access_err),
 	SXGBE_STAT(rx_buffer_access_err),
 	SXGBE_STAT(rx_data_transfer_err),
 
 	/* EEE-LPI stats */
 	SXGBE_STAT(tx_lpi_entry_n),
-	SXGBE_STAT(tx_lpi_exit_n),
+	SXGBE_STAT(tx_lpi_निकास_n),
 	SXGBE_STAT(rx_lpi_entry_n),
-	SXGBE_STAT(rx_lpi_exit_n),
+	SXGBE_STAT(rx_lpi_निकास_n),
 	SXGBE_STAT(eee_wakeup_error_n),
 
-	/* RX specific */
+	/* RX specअगरic */
 	/* L2 error */
 	SXGBE_STAT(rx_code_gmii_err),
-	SXGBE_STAT(rx_watchdog_err),
+	SXGBE_STAT(rx_watchकरोg_err),
 	SXGBE_STAT(rx_crc_err),
-	SXGBE_STAT(rx_gaint_pkt_err),
+	SXGBE_STAT(rx_gaपूर्णांक_pkt_err),
 	SXGBE_STAT(ip_hdr_err),
 	SXGBE_STAT(ip_payload_err),
 	SXGBE_STAT(overflow_error),
@@ -107,7 +108,7 @@ static const struct sxgbe_stats sxgbe_gstrings_stats[] = {
 	SXGBE_STAT(ip6_icmp_pkt),
 	SXGBE_STAT(ip6_unknown_pkt),
 
-	/* Filter specific */
+	/* Filter specअगरic */
 	SXGBE_STAT(vlan_filter_match),
 	SXGBE_STAT(sa_filter_fail),
 	SXGBE_STAT(da_filter_fail),
@@ -115,8 +116,8 @@ static const struct sxgbe_stats sxgbe_gstrings_stats[] = {
 	SXGBE_STAT(l3_filter_match),
 	SXGBE_STAT(l4_filter_match),
 
-	/* RX context specific */
-	SXGBE_STAT(timestamp_dropped),
+	/* RX context specअगरic */
+	SXGBE_STAT(बारtamp_dropped),
 	SXGBE_STAT(rx_msg_type_no_ptp),
 	SXGBE_STAT(rx_ptp_type_sync),
 	SXGBE_STAT(rx_ptp_type_follow_up),
@@ -127,359 +128,359 @@ static const struct sxgbe_stats sxgbe_gstrings_stats[] = {
 	SXGBE_STAT(rx_ptp_type_pdelay_follow_up),
 	SXGBE_STAT(rx_ptp_announce),
 	SXGBE_STAT(rx_ptp_mgmt),
-	SXGBE_STAT(rx_ptp_signal),
+	SXGBE_STAT(rx_ptp_संकेत),
 	SXGBE_STAT(rx_ptp_resv_msg_type),
-};
-#define SXGBE_STATS_LEN ARRAY_SIZE(sxgbe_gstrings_stats)
+पूर्ण;
+#घोषणा SXGBE_STATS_LEN ARRAY_SIZE(sxgbe_gstrings_stats)
 
-static int sxgbe_get_eee(struct net_device *dev,
-			 struct ethtool_eee *edata)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
+अटल पूर्णांक sxgbe_get_eee(काष्ठा net_device *dev,
+			 काष्ठा ethtool_eee *edata)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
 
-	if (!priv->hw_cap.eee)
-		return -EOPNOTSUPP;
+	अगर (!priv->hw_cap.eee)
+		वापस -EOPNOTSUPP;
 
 	edata->eee_enabled = priv->eee_enabled;
 	edata->eee_active = priv->eee_active;
-	edata->tx_lpi_timer = priv->tx_lpi_timer;
+	edata->tx_lpi_समयr = priv->tx_lpi_समयr;
 
-	return phy_ethtool_get_eee(dev->phydev, edata);
-}
+	वापस phy_ethtool_get_eee(dev->phydev, edata);
+पूर्ण
 
-static int sxgbe_set_eee(struct net_device *dev,
-			 struct ethtool_eee *edata)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
+अटल पूर्णांक sxgbe_set_eee(काष्ठा net_device *dev,
+			 काष्ठा ethtool_eee *edata)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
 
 	priv->eee_enabled = edata->eee_enabled;
 
-	if (!priv->eee_enabled) {
+	अगर (!priv->eee_enabled) अणु
 		sxgbe_disable_eee_mode(priv);
-	} else {
-		/* We are asking for enabling the EEE but it is safe
-		 * to verify all by invoking the eee_init function.
-		 * In case of failure it will return an error.
+	पूर्ण अन्यथा अणु
+		/* We are asking क्रम enabling the EEE but it is safe
+		 * to verअगरy all by invoking the eee_init function.
+		 * In हाल of failure it will वापस an error.
 		 */
 		priv->eee_enabled = sxgbe_eee_init(priv);
-		if (!priv->eee_enabled)
-			return -EOPNOTSUPP;
+		अगर (!priv->eee_enabled)
+			वापस -EOPNOTSUPP;
 
-		/* Do not change tx_lpi_timer in case of failure */
-		priv->tx_lpi_timer = edata->tx_lpi_timer;
-	}
+		/* Do not change tx_lpi_समयr in हाल of failure */
+		priv->tx_lpi_समयr = edata->tx_lpi_समयr;
+	पूर्ण
 
-	return phy_ethtool_set_eee(dev->phydev, edata);
-}
+	वापस phy_ethtool_set_eee(dev->phydev, edata);
+पूर्ण
 
-static void sxgbe_getdrvinfo(struct net_device *dev,
-			     struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, KBUILD_MODNAME, sizeof(info->driver));
-	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
-}
+अटल व्योम sxgbe_getdrvinfo(काष्ठा net_device *dev,
+			     काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, KBUILD_MODNAME, माप(info->driver));
+	strlcpy(info->version, DRV_VERSION, माप(info->version));
+पूर्ण
 
-static u32 sxgbe_getmsglevel(struct net_device *dev)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
-	return priv->msg_enable;
-}
+अटल u32 sxgbe_geपंचांगsglevel(काष्ठा net_device *dev)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
+	वापस priv->msg_enable;
+पूर्ण
 
-static void sxgbe_setmsglevel(struct net_device *dev, u32 level)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
+अटल व्योम sxgbe_seपंचांगsglevel(काष्ठा net_device *dev, u32 level)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
 	priv->msg_enable = level;
-}
+पूर्ण
 
-static void sxgbe_get_strings(struct net_device *dev, u32 stringset, u8 *data)
-{
-	int i;
+अटल व्योम sxgbe_get_strings(काष्ठा net_device *dev, u32 stringset, u8 *data)
+अणु
+	पूर्णांक i;
 	u8 *p = data;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < SXGBE_STATS_LEN; i++) {
-			memcpy(p, sxgbe_gstrings_stats[i].stat_string,
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < SXGBE_STATS_LEN; i++) अणु
+			स_नकल(p, sxgbe_gstrings_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int sxgbe_get_sset_count(struct net_device *netdev, int sset)
-{
-	int len;
+अटल पूर्णांक sxgbe_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	पूर्णांक len;
 
-	switch (sset) {
-	case ETH_SS_STATS:
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
 		len = SXGBE_STATS_LEN;
-		return len;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस len;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void sxgbe_get_ethtool_stats(struct net_device *dev,
-				    struct ethtool_stats *dummy, u64 *data)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
-	int i;
-	char *p;
+अटल व्योम sxgbe_get_ethtool_stats(काष्ठा net_device *dev,
+				    काष्ठा ethtool_stats *dummy, u64 *data)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
+	पूर्णांक i;
+	अक्षर *p;
 
-	if (priv->eee_enabled) {
-		int val = phy_get_eee_err(dev->phydev);
+	अगर (priv->eee_enabled) अणु
+		पूर्णांक val = phy_get_eee_err(dev->phydev);
 
-		if (val)
+		अगर (val)
 			priv->xstats.eee_wakeup_error_n = val;
-	}
+	पूर्ण
 
-	for (i = 0; i < SXGBE_STATS_LEN; i++) {
-		p = (char *)priv + sxgbe_gstrings_stats[i].stat_offset;
-		data[i] = (sxgbe_gstrings_stats[i].sizeof_stat == sizeof(u64))
+	क्रम (i = 0; i < SXGBE_STATS_LEN; i++) अणु
+		p = (अक्षर *)priv + sxgbe_gstrings_stats[i].stat_offset;
+		data[i] = (sxgbe_gstrings_stats[i].माप_stat == माप(u64))
 			? (*(u64 *)p) : (*(u32 *)p);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sxgbe_get_channels(struct net_device *dev,
-			       struct ethtool_channels *channel)
-{
+अटल व्योम sxgbe_get_channels(काष्ठा net_device *dev,
+			       काष्ठा ethtool_channels *channel)
+अणु
 	channel->max_rx = SXGBE_MAX_RX_CHANNELS;
 	channel->max_tx = SXGBE_MAX_TX_CHANNELS;
 	channel->rx_count = SXGBE_RX_QUEUES;
 	channel->tx_count = SXGBE_TX_QUEUES;
-}
+पूर्ण
 
-static u32 sxgbe_riwt2usec(u32 riwt, struct sxgbe_priv_data *priv)
-{
-	unsigned long clk = clk_get_rate(priv->sxgbe_clk);
+अटल u32 sxgbe_riwt2usec(u32 riwt, काष्ठा sxgbe_priv_data *priv)
+अणु
+	अचिन्हित दीर्घ clk = clk_get_rate(priv->sxgbe_clk);
 
-	if (!clk)
-		return 0;
+	अगर (!clk)
+		वापस 0;
 
-	return (riwt * 256) / (clk / 1000000);
-}
+	वापस (riwt * 256) / (clk / 1000000);
+पूर्ण
 
-static u32 sxgbe_usec2riwt(u32 usec, struct sxgbe_priv_data *priv)
-{
-	unsigned long clk = clk_get_rate(priv->sxgbe_clk);
+अटल u32 sxgbe_usec2riwt(u32 usec, काष्ठा sxgbe_priv_data *priv)
+अणु
+	अचिन्हित दीर्घ clk = clk_get_rate(priv->sxgbe_clk);
 
-	if (!clk)
-		return 0;
+	अगर (!clk)
+		वापस 0;
 
-	return (usec * (clk / 1000000)) / 256;
-}
+	वापस (usec * (clk / 1000000)) / 256;
+पूर्ण
 
-static int sxgbe_get_coalesce(struct net_device *dev,
-			      struct ethtool_coalesce *ec)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
+अटल पूर्णांक sxgbe_get_coalesce(काष्ठा net_device *dev,
+			      काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
 
-	if (priv->use_riwt)
+	अगर (priv->use_riwt)
 		ec->rx_coalesce_usecs = sxgbe_riwt2usec(priv->rx_riwt, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sxgbe_set_coalesce(struct net_device *dev,
-			      struct ethtool_coalesce *ec)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
-	unsigned int rx_riwt;
+अटल पूर्णांक sxgbe_set_coalesce(काष्ठा net_device *dev,
+			      काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
+	अचिन्हित पूर्णांक rx_riwt;
 
-	if (!ec->rx_coalesce_usecs)
-		return -EINVAL;
+	अगर (!ec->rx_coalesce_usecs)
+		वापस -EINVAL;
 
 	rx_riwt = sxgbe_usec2riwt(ec->rx_coalesce_usecs, priv);
 
-	if ((rx_riwt > SXGBE_MAX_DMA_RIWT) || (rx_riwt < SXGBE_MIN_DMA_RIWT))
-		return -EINVAL;
-	else if (!priv->use_riwt)
-		return -EOPNOTSUPP;
+	अगर ((rx_riwt > SXGBE_MAX_DMA_RIWT) || (rx_riwt < SXGBE_MIN_DMA_RIWT))
+		वापस -EINVAL;
+	अन्यथा अगर (!priv->use_riwt)
+		वापस -EOPNOTSUPP;
 
 	priv->rx_riwt = rx_riwt;
-	priv->hw->dma->rx_watchdog(priv->ioaddr, priv->rx_riwt);
+	priv->hw->dma->rx_watchकरोg(priv->ioaddr, priv->rx_riwt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sxgbe_get_rss_hash_opts(struct sxgbe_priv_data *priv,
-				   struct ethtool_rxnfc *cmd)
-{
+अटल पूर्णांक sxgbe_get_rss_hash_opts(काष्ठा sxgbe_priv_data *priv,
+				   काष्ठा ethtool_rxnfc *cmd)
+अणु
 	cmd->data = 0;
 
-	/* Report default options for RSS on sxgbe */
-	switch (cmd->flow_type) {
-	case TCP_V4_FLOW:
-	case UDP_V4_FLOW:
+	/* Report शेष options क्रम RSS on sxgbe */
+	चयन (cmd->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल UDP_V4_FLOW:
 		cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	case SCTP_V4_FLOW:
-	case AH_ESP_V4_FLOW:
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
-	case IPV4_FLOW:
+	हाल SCTP_V4_FLOW:
+	हाल AH_ESP_V4_FLOW:
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल IPV4_FLOW:
 		cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		break;
-	case TCP_V6_FLOW:
-	case UDP_V6_FLOW:
+		अवरोध;
+	हाल TCP_V6_FLOW:
+	हाल UDP_V6_FLOW:
 		cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	case SCTP_V6_FLOW:
-	case AH_ESP_V6_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-	case IPV6_FLOW:
+	हाल SCTP_V6_FLOW:
+	हाल AH_ESP_V6_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल IPV6_FLOW:
 		cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sxgbe_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd,
+अटल पूर्णांक sxgbe_get_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd,
 			   u32 *rule_locs)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
-	int ret = -EOPNOTSUPP;
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	switch (cmd->cmd) {
-	case ETHTOOL_GRXFH:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_GRXFH:
 		ret = sxgbe_get_rss_hash_opts(priv, cmd);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sxgbe_set_rss_hash_opt(struct sxgbe_priv_data *priv,
-				  struct ethtool_rxnfc *cmd)
-{
+अटल पूर्णांक sxgbe_set_rss_hash_opt(काष्ठा sxgbe_priv_data *priv,
+				  काष्ठा ethtool_rxnfc *cmd)
+अणु
 	u32 reg_val = 0;
 
-	/* RSS does not support anything other than hashing
+	/* RSS करोes not support anything other than hashing
 	 * to queues on src and dst IPs and ports
 	 */
-	if (cmd->data & ~(RXH_IP_SRC | RXH_IP_DST |
+	अगर (cmd->data & ~(RXH_IP_SRC | RXH_IP_DST |
 			  RXH_L4_B_0_1 | RXH_L4_B_2_3))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	switch (cmd->flow_type) {
-	case TCP_V4_FLOW:
-	case TCP_V6_FLOW:
-		if (!(cmd->data & RXH_IP_SRC) ||
+	चयन (cmd->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल TCP_V6_FLOW:
+		अगर (!(cmd->data & RXH_IP_SRC) ||
 		    !(cmd->data & RXH_IP_DST) ||
 		    !(cmd->data & RXH_L4_B_0_1) ||
 		    !(cmd->data & RXH_L4_B_2_3))
-			return -EINVAL;
+			वापस -EINVAL;
 		reg_val = SXGBE_CORE_RSS_CTL_TCP4TE;
-		break;
-	case UDP_V4_FLOW:
-	case UDP_V6_FLOW:
-		if (!(cmd->data & RXH_IP_SRC) ||
+		अवरोध;
+	हाल UDP_V4_FLOW:
+	हाल UDP_V6_FLOW:
+		अगर (!(cmd->data & RXH_IP_SRC) ||
 		    !(cmd->data & RXH_IP_DST) ||
 		    !(cmd->data & RXH_L4_B_0_1) ||
 		    !(cmd->data & RXH_L4_B_2_3))
-			return -EINVAL;
+			वापस -EINVAL;
 		reg_val = SXGBE_CORE_RSS_CTL_UDP4TE;
-		break;
-	case SCTP_V4_FLOW:
-	case AH_ESP_V4_FLOW:
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
-	case AH_ESP_V6_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-	case SCTP_V6_FLOW:
-	case IPV4_FLOW:
-	case IPV6_FLOW:
-		if (!(cmd->data & RXH_IP_SRC) ||
+		अवरोध;
+	हाल SCTP_V4_FLOW:
+	हाल AH_ESP_V4_FLOW:
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल AH_ESP_V6_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल SCTP_V6_FLOW:
+	हाल IPV4_FLOW:
+	हाल IPV6_FLOW:
+		अगर (!(cmd->data & RXH_IP_SRC) ||
 		    !(cmd->data & RXH_IP_DST) ||
 		    (cmd->data & RXH_L4_B_0_1) ||
 		    (cmd->data & RXH_L4_B_2_3))
-			return -EINVAL;
+			वापस -EINVAL;
 		reg_val = SXGBE_CORE_RSS_CTL_IP2TE;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Read SXGBE RSS control register and update */
-	reg_val |= readl(priv->ioaddr + SXGBE_CORE_RSS_CTL_REG);
-	writel(reg_val, priv->ioaddr + SXGBE_CORE_RSS_CTL_REG);
-	readl(priv->ioaddr + SXGBE_CORE_RSS_CTL_REG);
+	/* Read SXGBE RSS control रेजिस्टर and update */
+	reg_val |= पढ़ोl(priv->ioaddr + SXGBE_CORE_RSS_CTL_REG);
+	ग_लिखोl(reg_val, priv->ioaddr + SXGBE_CORE_RSS_CTL_REG);
+	पढ़ोl(priv->ioaddr + SXGBE_CORE_RSS_CTL_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sxgbe_set_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक sxgbe_set_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	switch (cmd->cmd) {
-	case ETHTOOL_SRXFH:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_SRXFH:
 		ret = sxgbe_set_rss_hash_opt(priv, cmd);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sxgbe_get_regs(struct net_device *dev,
-			   struct ethtool_regs *regs, void *space)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(dev);
+अटल व्योम sxgbe_get_regs(काष्ठा net_device *dev,
+			   काष्ठा ethtool_regs *regs, व्योम *space)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(dev);
 	u32 *reg_space = (u32 *)space;
-	int reg_offset;
-	int reg_ix = 0;
-	void __iomem *ioaddr = priv->ioaddr;
+	पूर्णांक reg_offset;
+	पूर्णांक reg_ix = 0;
+	व्योम __iomem *ioaddr = priv->ioaddr;
 
-	memset(reg_space, 0x0, REG_SPACE_SIZE);
+	स_रखो(reg_space, 0x0, REG_SPACE_SIZE);
 
-	/* MAC registers */
-	for (reg_offset = START_MAC_REG_OFFSET;
-	     reg_offset <= MAX_MAC_REG_OFFSET; reg_offset += 4) {
-		reg_space[reg_ix] = readl(ioaddr + reg_offset);
+	/* MAC रेजिस्टरs */
+	क्रम (reg_offset = START_MAC_REG_OFFSET;
+	     reg_offset <= MAX_MAC_REG_OFFSET; reg_offset += 4) अणु
+		reg_space[reg_ix] = पढ़ोl(ioaddr + reg_offset);
 		reg_ix++;
-	}
+	पूर्ण
 
-	/* MTL registers */
-	for (reg_offset = START_MTL_REG_OFFSET;
-	     reg_offset <= MAX_MTL_REG_OFFSET; reg_offset += 4) {
-		reg_space[reg_ix] = readl(ioaddr + reg_offset);
+	/* MTL रेजिस्टरs */
+	क्रम (reg_offset = START_MTL_REG_OFFSET;
+	     reg_offset <= MAX_MTL_REG_OFFSET; reg_offset += 4) अणु
+		reg_space[reg_ix] = पढ़ोl(ioaddr + reg_offset);
 		reg_ix++;
-	}
+	पूर्ण
 
-	/* DMA registers */
-	for (reg_offset = START_DMA_REG_OFFSET;
-	     reg_offset <= MAX_DMA_REG_OFFSET; reg_offset += 4) {
-		reg_space[reg_ix] = readl(ioaddr + reg_offset);
+	/* DMA रेजिस्टरs */
+	क्रम (reg_offset = START_DMA_REG_OFFSET;
+	     reg_offset <= MAX_DMA_REG_OFFSET; reg_offset += 4) अणु
+		reg_space[reg_ix] = पढ़ोl(ioaddr + reg_offset);
 		reg_ix++;
-	}
+	पूर्ण
 
 	BUG_ON(reg_ix * 4 > REG_SPACE_SIZE);
-}
+पूर्ण
 
-static int sxgbe_get_regs_len(struct net_device *dev)
-{
-	return REG_SPACE_SIZE;
-}
+अटल पूर्णांक sxgbe_get_regs_len(काष्ठा net_device *dev)
+अणु
+	वापस REG_SPACE_SIZE;
+पूर्ण
 
-static const struct ethtool_ops sxgbe_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops sxgbe_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_RX_USECS,
 	.get_drvinfo = sxgbe_getdrvinfo,
-	.get_msglevel = sxgbe_getmsglevel,
-	.set_msglevel = sxgbe_setmsglevel,
+	.get_msglevel = sxgbe_geपंचांगsglevel,
+	.set_msglevel = sxgbe_seपंचांगsglevel,
 	.get_link = ethtool_op_get_link,
 	.get_strings = sxgbe_get_strings,
 	.get_ethtool_stats = sxgbe_get_ethtool_stats,
@@ -495,9 +496,9 @@ static const struct ethtool_ops sxgbe_ethtool_ops = {
 	.set_eee = sxgbe_set_eee,
 	.get_link_ksettings = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
-};
+पूर्ण;
 
-void sxgbe_set_ethtool_ops(struct net_device *netdev)
-{
+व्योम sxgbe_set_ethtool_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &sxgbe_ethtool_ops;
-}
+पूर्ण

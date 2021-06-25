@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_XEN_EVENTS_H
-#define _ASM_X86_XEN_EVENTS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_XEN_EVENTS_H
+#घोषणा _ASM_X86_XEN_EVENTS_H
 
-#include <xen/xen.h>
+#समावेश <xen/xen.h>
 
-enum ipi_vector {
+क्रमागत ipi_vector अणु
 	XEN_RESCHEDULE_VECTOR,
 	XEN_CALL_FUNCTION_VECTOR,
 	XEN_CALL_FUNCTION_SINGLE_VECTOR,
@@ -13,25 +14,25 @@ enum ipi_vector {
 	XEN_NMI_VECTOR,
 
 	XEN_NR_IPIS,
-};
+पूर्ण;
 
-static inline int xen_irqs_disabled(struct pt_regs *regs)
-{
-	return raw_irqs_disabled_flags(regs->flags);
-}
+अटल अंतरभूत पूर्णांक xen_irqs_disabled(काष्ठा pt_regs *regs)
+अणु
+	वापस raw_irqs_disabled_flags(regs->flags);
+पूर्ण
 
-/* No need for a barrier -- XCHG is a barrier on x86. */
-#define xchg_xen_ulong(ptr, val) xchg((ptr), (val))
+/* No need क्रम a barrier -- XCHG is a barrier on x86. */
+#घोषणा xchg_xen_uदीर्घ(ptr, val) xchg((ptr), (val))
 
-extern int xen_have_vector_callback;
+बाह्य पूर्णांक xen_have_vector_callback;
 
 /*
- * Events delivered via platform PCI interrupts are always
+ * Events delivered via platक्रमm PCI पूर्णांकerrupts are always
  * routed to vcpu 0 and hence cannot be rebound.
  */
-static inline bool xen_support_evtchn_rebind(void)
-{
-	return (!xen_hvm_domain() || xen_have_vector_callback);
-}
+अटल अंतरभूत bool xen_support_evtchn_rebind(व्योम)
+अणु
+	वापस (!xen_hvm_करोमुख्य() || xen_have_vector_callback);
+पूर्ण
 
-#endif /* _ASM_X86_XEN_EVENTS_H */
+#पूर्ण_अगर /* _ASM_X86_XEN_EVENTS_H */

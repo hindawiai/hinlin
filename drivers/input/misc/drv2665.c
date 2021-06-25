@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * DRV2665 haptics driver family
  *
@@ -7,192 +8,192 @@
  * Copyright: (C) 2015 Texas Instruments, Inc.
  */
 
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/regulator/consumer.h>
 
-/* Contol registers */
-#define DRV2665_STATUS	0x00
-#define DRV2665_CTRL_1	0x01
-#define DRV2665_CTRL_2	0x02
-#define DRV2665_FIFO	0x0b
+/* Contol रेजिस्टरs */
+#घोषणा DRV2665_STATUS	0x00
+#घोषणा DRV2665_CTRL_1	0x01
+#घोषणा DRV2665_CTRL_2	0x02
+#घोषणा DRV2665_FIFO	0x0b
 
 /* Status Register */
-#define DRV2665_FIFO_FULL		BIT(0)
-#define DRV2665_FIFO_EMPTY		BIT(1)
+#घोषणा DRV2665_FIFO_FULL		BIT(0)
+#घोषणा DRV2665_FIFO_EMPTY		BIT(1)
 
 /* Control 1 Register */
-#define DRV2665_25_VPP_GAIN		0x00
-#define DRV2665_50_VPP_GAIN		0x01
-#define DRV2665_75_VPP_GAIN		0x02
-#define DRV2665_100_VPP_GAIN		0x03
-#define DRV2665_DIGITAL_IN		0xfc
-#define DRV2665_ANALOG_IN		BIT(2)
+#घोषणा DRV2665_25_VPP_GAIN		0x00
+#घोषणा DRV2665_50_VPP_GAIN		0x01
+#घोषणा DRV2665_75_VPP_GAIN		0x02
+#घोषणा DRV2665_100_VPP_GAIN		0x03
+#घोषणा DRV2665_DIGITAL_IN		0xfc
+#घोषणा DRV2665_ANALOG_IN		BIT(2)
 
 /* Control 2 Register */
-#define DRV2665_BOOST_EN		BIT(1)
-#define DRV2665_STANDBY			BIT(6)
-#define DRV2665_DEV_RST			BIT(7)
-#define DRV2665_5_MS_IDLE_TOUT		0x00
-#define DRV2665_10_MS_IDLE_TOUT		0x04
-#define DRV2665_15_MS_IDLE_TOUT		0x08
-#define DRV2665_20_MS_IDLE_TOUT		0x0c
+#घोषणा DRV2665_BOOST_EN		BIT(1)
+#घोषणा DRV2665_STANDBY			BIT(6)
+#घोषणा DRV2665_DEV_RST			BIT(7)
+#घोषणा DRV2665_5_MS_IDLE_TOUT		0x00
+#घोषणा DRV2665_10_MS_IDLE_TOUT		0x04
+#घोषणा DRV2665_15_MS_IDLE_TOUT		0x08
+#घोषणा DRV2665_20_MS_IDLE_TOUT		0x0c
 
 /**
- * struct drv2665_data -
- * @input_dev: Pointer to the input device
- * @client: Pointer to the I2C client
+ * काष्ठा drv2665_data -
+ * @input_dev: Poपूर्णांकer to the input device
+ * @client: Poपूर्णांकer to the I2C client
  * @regmap: Register map of the device
  * @work: Work item used to off load the enable/disable of the vibration
- * @regulator: Pointer to the regulator for the IC
+ * @regulator: Poपूर्णांकer to the regulator क्रम the IC
  */
-struct drv2665_data {
-	struct input_dev *input_dev;
-	struct i2c_client *client;
-	struct regmap *regmap;
-	struct work_struct work;
-	struct regulator *regulator;
-};
+काष्ठा drv2665_data अणु
+	काष्ठा input_dev *input_dev;
+	काष्ठा i2c_client *client;
+	काष्ठा regmap *regmap;
+	काष्ठा work_काष्ठा work;
+	काष्ठा regulator *regulator;
+पूर्ण;
 
 /* 8kHz Sine wave to stream to the FIFO */
-static const u8 drv2665_sine_wave_form[] = {
+अटल स्थिर u8 drv2665_sine_wave_क्रमm[] = अणु
 	0x00, 0x10, 0x20, 0x2e, 0x3c, 0x48, 0x53, 0x5b, 0x61, 0x65, 0x66,
 	0x65, 0x61, 0x5b, 0x53, 0x48, 0x3c, 0x2e, 0x20, 0x10,
 	0x00, 0xf0, 0xe0, 0xd2, 0xc4, 0xb8, 0xad, 0xa5, 0x9f, 0x9b, 0x9a,
 	0x9b, 0x9f, 0xa5, 0xad, 0xb8, 0xc4, 0xd2, 0xe0, 0xf0, 0x00,
-};
+पूर्ण;
 
-static const struct reg_default drv2665_reg_defs[] = {
-	{ DRV2665_STATUS, 0x02 },
-	{ DRV2665_CTRL_1, 0x28 },
-	{ DRV2665_CTRL_2, 0x40 },
-	{ DRV2665_FIFO, 0x00 },
-};
+अटल स्थिर काष्ठा reg_शेष drv2665_reg_defs[] = अणु
+	अणु DRV2665_STATUS, 0x02 पूर्ण,
+	अणु DRV2665_CTRL_1, 0x28 पूर्ण,
+	अणु DRV2665_CTRL_2, 0x40 पूर्ण,
+	अणु DRV2665_FIFO, 0x00 पूर्ण,
+पूर्ण;
 
-static void drv2665_worker(struct work_struct *work)
-{
-	struct drv2665_data *haptics =
-				container_of(work, struct drv2665_data, work);
-	unsigned int read_buf;
-	int error;
+अटल व्योम drv2665_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा drv2665_data *haptics =
+				container_of(work, काष्ठा drv2665_data, work);
+	अचिन्हित पूर्णांक पढ़ो_buf;
+	पूर्णांक error;
 
-	error = regmap_read(haptics->regmap, DRV2665_STATUS, &read_buf);
-	if (error) {
+	error = regmap_पढ़ो(haptics->regmap, DRV2665_STATUS, &पढ़ो_buf);
+	अगर (error) अणु
 		dev_err(&haptics->client->dev,
 			"Failed to read status: %d\n", error);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (read_buf & DRV2665_FIFO_EMPTY) {
-		error = regmap_bulk_write(haptics->regmap,
+	अगर (पढ़ो_buf & DRV2665_FIFO_EMPTY) अणु
+		error = regmap_bulk_ग_लिखो(haptics->regmap,
 					  DRV2665_FIFO,
-					  drv2665_sine_wave_form,
-					  ARRAY_SIZE(drv2665_sine_wave_form));
-		if (error) {
+					  drv2665_sine_wave_क्रमm,
+					  ARRAY_SIZE(drv2665_sine_wave_क्रमm));
+		अगर (error) अणु
 			dev_err(&haptics->client->dev,
 				"Failed to write FIFO: %d\n", error);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int drv2665_haptics_play(struct input_dev *input, void *data,
-				struct ff_effect *effect)
-{
-	struct drv2665_data *haptics = input_get_drvdata(input);
+अटल पूर्णांक drv2665_haptics_play(काष्ठा input_dev *input, व्योम *data,
+				काष्ठा ff_effect *effect)
+अणु
+	काष्ठा drv2665_data *haptics = input_get_drvdata(input);
 
 	schedule_work(&haptics->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void drv2665_close(struct input_dev *input)
-{
-	struct drv2665_data *haptics = input_get_drvdata(input);
-	int error;
+अटल व्योम drv2665_बंद(काष्ठा input_dev *input)
+अणु
+	काष्ठा drv2665_data *haptics = input_get_drvdata(input);
+	पूर्णांक error;
 
 	cancel_work_sync(&haptics->work);
 
 	error = regmap_update_bits(haptics->regmap, DRV2665_CTRL_2,
 				   DRV2665_STANDBY, DRV2665_STANDBY);
-	if (error)
+	अगर (error)
 		dev_err(&haptics->client->dev,
 			"Failed to enter standby mode: %d\n", error);
-}
+पूर्ण
 
-static const struct reg_sequence drv2665_init_regs[] = {
-	{ DRV2665_CTRL_2, 0 | DRV2665_10_MS_IDLE_TOUT },
-	{ DRV2665_CTRL_1, DRV2665_25_VPP_GAIN },
-};
+अटल स्थिर काष्ठा reg_sequence drv2665_init_regs[] = अणु
+	अणु DRV2665_CTRL_2, 0 | DRV2665_10_MS_IDLE_TOUT पूर्ण,
+	अणु DRV2665_CTRL_1, DRV2665_25_VPP_GAIN पूर्ण,
+पूर्ण;
 
-static int drv2665_init(struct drv2665_data *haptics)
-{
-	int error;
+अटल पूर्णांक drv2665_init(काष्ठा drv2665_data *haptics)
+अणु
+	पूर्णांक error;
 
-	error = regmap_register_patch(haptics->regmap,
+	error = regmap_रेजिस्टर_patch(haptics->regmap,
 				      drv2665_init_regs,
 				      ARRAY_SIZE(drv2665_init_regs));
-	if (error) {
+	अगर (error) अणु
 		dev_err(&haptics->client->dev,
 			"Failed to write init registers: %d\n",
 			error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_config drv2665_regmap_config = {
+अटल स्थिर काष्ठा regmap_config drv2665_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = DRV2665_FIFO,
-	.reg_defaults = drv2665_reg_defs,
-	.num_reg_defaults = ARRAY_SIZE(drv2665_reg_defs),
+	.max_रेजिस्टर = DRV2665_FIFO,
+	.reg_शेषs = drv2665_reg_defs,
+	.num_reg_शेषs = ARRAY_SIZE(drv2665_reg_defs),
 	.cache_type = REGCACHE_NONE,
-};
+पूर्ण;
 
-static int drv2665_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct drv2665_data *haptics;
-	int error;
+अटल पूर्णांक drv2665_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा drv2665_data *haptics;
+	पूर्णांक error;
 
-	haptics = devm_kzalloc(&client->dev, sizeof(*haptics), GFP_KERNEL);
-	if (!haptics)
-		return -ENOMEM;
+	haptics = devm_kzalloc(&client->dev, माप(*haptics), GFP_KERNEL);
+	अगर (!haptics)
+		वापस -ENOMEM;
 
 	haptics->regulator = devm_regulator_get(&client->dev, "vbat");
-	if (IS_ERR(haptics->regulator)) {
+	अगर (IS_ERR(haptics->regulator)) अणु
 		error = PTR_ERR(haptics->regulator);
 		dev_err(&client->dev,
 			"unable to get regulator, error: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	haptics->input_dev = devm_input_allocate_device(&client->dev);
-	if (!haptics->input_dev) {
+	अगर (!haptics->input_dev) अणु
 		dev_err(&client->dev, "Failed to allocate input device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	haptics->input_dev->name = "drv2665:haptics";
 	haptics->input_dev->dev.parent = client->dev.parent;
-	haptics->input_dev->close = drv2665_close;
+	haptics->input_dev->बंद = drv2665_बंद;
 	input_set_drvdata(haptics->input_dev, haptics);
 	input_set_capability(haptics->input_dev, EV_FF, FF_RUMBLE);
 
-	error = input_ff_create_memless(haptics->input_dev, NULL,
+	error = input_ff_create_memless(haptics->input_dev, शून्य,
 					drv2665_haptics_play);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "input_ff_create() failed: %d\n",
 			error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	INIT_WORK(&haptics->work, drv2665_worker);
 
@@ -200,112 +201,112 @@ static int drv2665_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, haptics);
 
 	haptics->regmap = devm_regmap_init_i2c(client, &drv2665_regmap_config);
-	if (IS_ERR(haptics->regmap)) {
+	अगर (IS_ERR(haptics->regmap)) अणु
 		error = PTR_ERR(haptics->regmap);
 		dev_err(&client->dev, "Failed to allocate register map: %d\n",
 			error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = drv2665_init(haptics);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Device init failed: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(haptics->input_dev);
-	if (error) {
+	error = input_रेजिस्टर_device(haptics->input_dev);
+	अगर (error) अणु
 		dev_err(&client->dev, "couldn't register input device: %d\n",
 			error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused drv2665_suspend(struct device *dev)
-{
-	struct drv2665_data *haptics = dev_get_drvdata(dev);
-	int ret = 0;
+अटल पूर्णांक __maybe_unused drv2665_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा drv2665_data *haptics = dev_get_drvdata(dev);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&haptics->input_dev->mutex);
 
-	if (input_device_enabled(haptics->input_dev)) {
+	अगर (input_device_enabled(haptics->input_dev)) अणु
 		ret = regmap_update_bits(haptics->regmap, DRV2665_CTRL_2,
 					 DRV2665_STANDBY, DRV2665_STANDBY);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to set standby mode\n");
 			regulator_disable(haptics->regulator);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = regulator_disable(haptics->regulator);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to disable regulator\n");
 			regmap_update_bits(haptics->regmap,
 					   DRV2665_CTRL_2,
 					   DRV2665_STANDBY, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	mutex_unlock(&haptics->input_dev->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused drv2665_resume(struct device *dev)
-{
-	struct drv2665_data *haptics = dev_get_drvdata(dev);
-	int ret = 0;
+अटल पूर्णांक __maybe_unused drv2665_resume(काष्ठा device *dev)
+अणु
+	काष्ठा drv2665_data *haptics = dev_get_drvdata(dev);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&haptics->input_dev->mutex);
 
-	if (input_device_enabled(haptics->input_dev)) {
+	अगर (input_device_enabled(haptics->input_dev)) अणु
 		ret = regulator_enable(haptics->regulator);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to enable regulator\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = regmap_update_bits(haptics->regmap, DRV2665_CTRL_2,
 					 DRV2665_STANDBY, 0);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to unset standby mode\n");
 			regulator_disable(haptics->regulator);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&haptics->input_dev->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(drv2665_pm_ops, drv2665_suspend, drv2665_resume);
+अटल SIMPLE_DEV_PM_OPS(drv2665_pm_ops, drv2665_suspend, drv2665_resume);
 
-static const struct i2c_device_id drv2665_id[] = {
-	{ "drv2665", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id drv2665_id[] = अणु
+	अणु "drv2665", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, drv2665_id);
 
-#ifdef CONFIG_OF
-static const struct of_device_id drv2665_of_match[] = {
-	{ .compatible = "ti,drv2665", },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id drv2665_of_match[] = अणु
+	अणु .compatible = "ti,drv2665", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, drv2665_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver drv2665_driver = {
+अटल काष्ठा i2c_driver drv2665_driver = अणु
 	.probe		= drv2665_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "drv2665-haptics",
 		.of_match_table = of_match_ptr(drv2665_of_match),
 		.pm	= &drv2665_pm_ops,
-	},
+	पूर्ण,
 	.id_table = drv2665_id,
-};
+पूर्ण;
 module_i2c_driver(drv2665_driver);
 
 MODULE_DESCRIPTION("TI DRV2665 haptics driver");

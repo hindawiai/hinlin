@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
 *
 * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
 *
 ******************************************************************************/
 
-#include <linux/kernel.h>
-#include "odm_precomp.h"
+#समावेश <linux/kernel.h>
+#समावेश "odm_precomp.h"
 
-static bool CheckPositive(
-	struct dm_odm_t *pDM_Odm, const u32 Condition1, const u32 Condition2
+अटल bool CheckPositive(
+	काष्ठा dm_odm_t *pDM_Odm, स्थिर u32 Condition1, स्थिर u32 Condition2
 )
-{
+अणु
 	u8 _BoardType =
 		((pDM_Odm->BoardType & BIT4) >> 4) << 0 | /*  _GLNA */
 		((pDM_Odm->BoardType & BIT3) >> 3) << 1 | /*  _GPA */
@@ -22,7 +23,7 @@ static bool CheckPositive(
 	u32   cond1   = Condition1, cond2 = Condition2;
 	u32    driver1 =
 		pDM_Odm->CutVersion       << 24 |
-		pDM_Odm->SupportPlatform  << 16 |
+		pDM_Odm->SupportPlatक्रमm  << 16 |
 		pDM_Odm->PackageType      << 12 |
 		pDM_Odm->SupportInterface << 8  |
 		_BoardType;
@@ -60,7 +61,7 @@ static bool CheckPositive(
 		ODM_DBG_TRACE,
 		(
 			"	(Platform, Interface) = (0x%X, 0x%X)\n",
-			pDM_Odm->SupportPlatform,
+			pDM_Odm->SupportPlatक्रमm,
 			pDM_Odm->SupportInterface
 		)
 	);
@@ -77,51 +78,51 @@ static bool CheckPositive(
 
 
 	/*  Value Defined Check =============== */
-	/* QFN Type [15:12] and Cut Version [27:24] need to do value check */
+	/* QFN Type [15:12] and Cut Version [27:24] need to करो value check */
 
-	if (((cond1 & 0x0000F000) != 0) && ((cond1 & 0x0000F000) != (driver1 & 0x0000F000)))
-		return false;
-	if (((cond1 & 0x0F000000) != 0) && ((cond1 & 0x0F000000) != (driver1 & 0x0F000000)))
-		return false;
+	अगर (((cond1 & 0x0000F000) != 0) && ((cond1 & 0x0000F000) != (driver1 & 0x0000F000)))
+		वापस false;
+	अगर (((cond1 & 0x0F000000) != 0) && ((cond1 & 0x0F000000) != (driver1 & 0x0F000000)))
+		वापस false;
 
 	/*  Bit Defined Check ================ */
-	/*  We don't care [31:28] and [23:20] */
+	/*  We करोn't care [31:28] and [23:20] */
 	/*  */
 	cond1   &= 0x000F0FFF;
 	driver1 &= 0x000F0FFF;
 
-	if ((cond1 & driver1) == cond1) {
+	अगर ((cond1 & driver1) == cond1) अणु
 		u32 bitMask = 0;
-		if ((cond1 & 0x0F) == 0) /*  BoardType is DONTCARE */
-			return true;
+		अगर ((cond1 & 0x0F) == 0) /*  BoardType is DONTCARE */
+			वापस true;
 
-		if ((cond1 & BIT0) != 0) /* GLNA */
+		अगर ((cond1 & BIT0) != 0) /* GLNA */
 			bitMask |= 0x000000FF;
-		if ((cond1 & BIT1) != 0) /* GPA */
+		अगर ((cond1 & BIT1) != 0) /* GPA */
 			bitMask |= 0x0000FF00;
-		if ((cond1 & BIT2) != 0) /* ALNA */
+		अगर ((cond1 & BIT2) != 0) /* ALNA */
 			bitMask |= 0x00FF0000;
-		if ((cond1 & BIT3) != 0) /* APA */
+		अगर ((cond1 & BIT3) != 0) /* APA */
 			bitMask |= 0xFF000000;
 
-		if ((cond2 & bitMask) == (driver2 & bitMask)) /*  BoardType of each RF path is matched */
-			return true;
-	}
-	return false;
-}
+		अगर ((cond2 & bitMask) == (driver2 & bitMask)) /*  BoardType of each RF path is matched */
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool CheckNegative(
-	struct dm_odm_t *pDM_Odm, const u32 Condition1, const u32 Condition2
+अटल bool CheckNegative(
+	काष्ठा dm_odm_t *pDM_Odm, स्थिर u32 Condition1, स्थिर u32 Condition2
 )
-{
-	return true;
-}
+अणु
+	वापस true;
+पूर्ण
 
 /******************************************************************************
 *                           MAC_REG.TXT
 ******************************************************************************/
 
-static u32 Array_MP_8723B_MAC_REG[] = {
+अटल u32 Array_MP_8723B_MAC_REG[] = अणु
 		0x02F, 0x00000030,
 		0x035, 0x00000000,
 		0x039, 0x00000008,
@@ -226,10 +227,10 @@ static u32 Array_MP_8723B_MAC_REG[] = {
 		0x765, 0x00000018,
 		0x76E, 0x00000004,
 
-};
+पूर्ण;
 
-void ODM_ReadAndConfig_MP_8723B_MAC_REG(struct dm_odm_t *pDM_Odm)
-{
+व्योम ODM_ReadAndConfig_MP_8723B_MAC_REG(काष्ठा dm_odm_t *pDM_Odm)
+अणु
 	u32 i = 0;
 	u32 ArrayLen = ARRAY_SIZE(Array_MP_8723B_MAC_REG);
 	u32 *Array = Array_MP_8723B_MAC_REG;
@@ -241,54 +242,54 @@ void ODM_ReadAndConfig_MP_8723B_MAC_REG(struct dm_odm_t *pDM_Odm)
 		("===> ODM_ReadAndConfig_MP_8723B_MAC_REG\n")
 	);
 
-	for (i = 0; i < ArrayLen; i += 2) {
+	क्रम (i = 0; i < ArrayLen; i += 2) अणु
 		u32 v1 = Array[i];
 		u32 v2 = Array[i+1];
 
-		/*  This (offset, data) pair doesn't care the condition. */
-		if (v1 < 0x40000000) {
+		/*  This (offset, data) pair करोesn't care the condition. */
+		अगर (v1 < 0x40000000) अणु
 			odm_ConfigMAC_8723B(pDM_Odm, v1, (u8)v2);
-			continue;
-		} else {
+			जारी;
+		पूर्ण अन्यथा अणु
 			/*  This line is the beginning of branch. */
 			bool bMatched = true;
 			u8  cCond  = (u8)((v1 & (BIT29|BIT28)) >> 28);
 
-			if (cCond == COND_ELSE) { /*  ELSE, ENDIF */
+			अगर (cCond == COND_ELSE) अणु /*  ELSE, ENDIF */
 				bMatched = true;
 				READ_NEXT_PAIR(v1, v2, i);
-			} else if (!CheckPositive(pDM_Odm, v1, v2)) {
+			पूर्ण अन्यथा अगर (!CheckPositive(pDM_Odm, v1, v2)) अणु
 				bMatched = false;
 				READ_NEXT_PAIR(v1, v2, i);
 				READ_NEXT_PAIR(v1, v2, i);
-			} else {
+			पूर्ण अन्यथा अणु
 				READ_NEXT_PAIR(v1, v2, i);
-				if (!CheckNegative(pDM_Odm, v1, v2))
+				अगर (!CheckNegative(pDM_Odm, v1, v2))
 					bMatched = false;
-				else
+				अन्यथा
 					bMatched = true;
 				READ_NEXT_PAIR(v1, v2, i);
-			}
+			पूर्ण
 
-			if (!bMatched) {
+			अगर (!bMatched) अणु
 				/*  Condition isn't matched. Discard the following (offset, data) pairs. */
-				while (v1 < 0x40000000 && i < ArrayLen-2)
+				जबतक (v1 < 0x40000000 && i < ArrayLen-2)
 					READ_NEXT_PAIR(v1, v2, i);
 
-				i -= 2; /*  prevent from for-loop += 2 */
-			} else { /*  Configure matched pairs and skip to end of if-else. */
-				while (v1 < 0x40000000 && i < ArrayLen-2) {
+				i -= 2; /*  prevent from क्रम-loop += 2 */
+			पूर्ण अन्यथा अणु /*  Configure matched pairs and skip to end of अगर-अन्यथा. */
+				जबतक (v1 < 0x40000000 && i < ArrayLen-2) अणु
 					odm_ConfigMAC_8723B(pDM_Odm, v1, (u8)v2);
 					READ_NEXT_PAIR(v1, v2, i);
-				}
+				पूर्ण
 
-				/*  Keeps reading until ENDIF. */
+				/*  Keeps पढ़ोing until ENDIF. */
 				cCond = (u8)((v1 & (BIT29|BIT28)) >> 28);
-				while (cCond != COND_ENDIF && i < ArrayLen-2) {
+				जबतक (cCond != COND_ENDIF && i < ArrayLen-2) अणु
 					READ_NEXT_PAIR(v1, v2, i);
 					cCond = (u8)((v1 & (BIT29|BIT28)) >> 28);
-				}
-			}
-		}
-	}
-}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण

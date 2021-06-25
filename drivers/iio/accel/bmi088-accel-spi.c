@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * 3-axis accelerometer driver supporting following Bosch-Sensortec chips:
  *  - BMI088
@@ -6,76 +7,76 @@
  * Copyright (c) 2018-2020, Topic Embedded Products
  */
 
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
 
-#include "bmi088-accel.h"
+#समावेश "bmi088-accel.h"
 
-static int bmi088_regmap_spi_write(void *context, const void *data, size_t count)
-{
-	struct spi_device *spi = context;
+अटल पूर्णांक bmi088_regmap_spi_ग_लिखो(व्योम *context, स्थिर व्योम *data, माप_प्रकार count)
+अणु
+	काष्ठा spi_device *spi = context;
 
-	/* Write register is same as generic SPI */
-	return spi_write(spi, data, count);
-}
+	/* Write रेजिस्टर is same as generic SPI */
+	वापस spi_ग_लिखो(spi, data, count);
+पूर्ण
 
-static int bmi088_regmap_spi_read(void *context, const void *reg,
-				size_t reg_size, void *val, size_t val_size)
-{
-	struct spi_device *spi = context;
+अटल पूर्णांक bmi088_regmap_spi_पढ़ो(व्योम *context, स्थिर व्योम *reg,
+				माप_प्रकार reg_size, व्योम *val, माप_प्रकार val_size)
+अणु
+	काष्ठा spi_device *spi = context;
 	u8 addr[2];
 
 	addr[0] = *(u8 *)reg;
 	addr[0] |= BIT(7); /* Set RW = '1' */
 	addr[1] = 0; /* Read requires a dummy byte transfer */
 
-	return spi_write_then_read(spi, addr, sizeof(addr), val, val_size);
-}
+	वापस spi_ग_लिखो_then_पढ़ो(spi, addr, माप(addr), val, val_size);
+पूर्ण
 
-static struct regmap_bus bmi088_regmap_bus = {
-	.write = bmi088_regmap_spi_write,
-	.read = bmi088_regmap_spi_read,
-};
+अटल काष्ठा regmap_bus bmi088_regmap_bus = अणु
+	.ग_लिखो = bmi088_regmap_spi_ग_लिखो,
+	.पढ़ो = bmi088_regmap_spi_पढ़ो,
+पूर्ण;
 
-static int bmi088_accel_probe(struct spi_device *spi)
-{
-	struct regmap *regmap;
-	const struct spi_device_id *id = spi_get_device_id(spi);
+अटल पूर्णांक bmi088_accel_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap *regmap;
+	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
 
 	regmap = devm_regmap_init(&spi->dev, &bmi088_regmap_bus,
 			spi, &bmi088_regmap_conf);
 
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&spi->dev, "Failed to initialize spi regmap\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return bmi088_accel_core_probe(&spi->dev, regmap, spi->irq, id->name,
+	वापस bmi088_accel_core_probe(&spi->dev, regmap, spi->irq, id->name,
 				       true);
-}
+पूर्ण
 
-static int bmi088_accel_remove(struct spi_device *spi)
-{
-	return bmi088_accel_core_remove(&spi->dev);
-}
+अटल पूर्णांक bmi088_accel_हटाओ(काष्ठा spi_device *spi)
+अणु
+	वापस bmi088_accel_core_हटाओ(&spi->dev);
+पूर्ण
 
-static const struct spi_device_id bmi088_accel_id[] = {
-	{"bmi088-accel", },
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id bmi088_accel_id[] = अणु
+	अणु"bmi088-accel", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, bmi088_accel_id);
 
-static struct spi_driver bmi088_accel_driver = {
-	.driver = {
+अटल काष्ठा spi_driver bmi088_accel_driver = अणु
+	.driver = अणु
 		.name	= "bmi088_accel_spi",
 		.pm	= &bmi088_accel_pm_ops,
-	},
+	पूर्ण,
 	.probe		= bmi088_accel_probe,
-	.remove		= bmi088_accel_remove,
+	.हटाओ		= bmi088_accel_हटाओ,
 	.id_table	= bmi088_accel_id,
-};
+पूर्ण;
 module_spi_driver(bmi088_accel_driver);
 
 MODULE_AUTHOR("Niek van Agt <niek.van.agt@topicproducts.com>");

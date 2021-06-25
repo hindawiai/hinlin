@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* Glue code for SHA512 hashing optimized for sparc64 crypto opcodes.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* Glue code क्रम SHA512 hashing optimized क्रम sparc64 crypto opcodes.
  *
  * This is based largely upon crypto/sha512_generic.c
  *
  * Copyright (c) Jean-Luc Cooke <jlcooke@certainkey.com>
- * Copyright (c) Andrew McDonald <andrew@mcdonald.org.uk>
+ * Copyright (c) Andrew McDonald <andrew@mcकरोnald.org.uk>
  * Copyright (c) 2003 Kyle McMartin <kyle@debian.org>
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <crypto/internal/hash.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <crypto/sha2.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/sha2.h>
 
-#include <asm/pstate.h>
-#include <asm/elf.h>
+#समावेश <यंत्र/pstate.h>
+#समावेश <यंत्र/elf.h>
 
-#include "opcodes.h"
+#समावेश "opcodes.h"
 
-asmlinkage void sha512_sparc64_transform(u64 *digest, const char *data,
-					 unsigned int rounds);
+यंत्रlinkage व्योम sha512_sparc64_transक्रमm(u64 *digest, स्थिर अक्षर *data,
+					 अचिन्हित पूर्णांक rounds);
 
-static int sha512_sparc64_init(struct shash_desc *desc)
-{
-	struct sha512_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक sha512_sparc64_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
 	sctx->state[0] = SHA512_H0;
 	sctx->state[1] = SHA512_H1;
 	sctx->state[2] = SHA512_H2;
@@ -38,12 +39,12 @@ static int sha512_sparc64_init(struct shash_desc *desc)
 	sctx->state[7] = SHA512_H7;
 	sctx->count[0] = sctx->count[1] = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sha384_sparc64_init(struct shash_desc *desc)
-{
-	struct sha512_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक sha384_sparc64_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
 	sctx->state[0] = SHA384_H0;
 	sctx->state[1] = SHA384_H1;
 	sctx->state[2] = SHA384_H2;
@@ -54,55 +55,55 @@ static int sha384_sparc64_init(struct shash_desc *desc)
 	sctx->state[7] = SHA384_H7;
 	sctx->count[0] = sctx->count[1] = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __sha512_sparc64_update(struct sha512_state *sctx, const u8 *data,
-				    unsigned int len, unsigned int partial)
-{
-	unsigned int done = 0;
+अटल व्योम __sha512_sparc64_update(काष्ठा sha512_state *sctx, स्थिर u8 *data,
+				    अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक partial)
+अणु
+	अचिन्हित पूर्णांक करोne = 0;
 
-	if ((sctx->count[0] += len) < len)
+	अगर ((sctx->count[0] += len) < len)
 		sctx->count[1]++;
-	if (partial) {
-		done = SHA512_BLOCK_SIZE - partial;
-		memcpy(sctx->buf + partial, data, done);
-		sha512_sparc64_transform(sctx->state, sctx->buf, 1);
-	}
-	if (len - done >= SHA512_BLOCK_SIZE) {
-		const unsigned int rounds = (len - done) / SHA512_BLOCK_SIZE;
+	अगर (partial) अणु
+		करोne = SHA512_BLOCK_SIZE - partial;
+		स_नकल(sctx->buf + partial, data, करोne);
+		sha512_sparc64_transक्रमm(sctx->state, sctx->buf, 1);
+	पूर्ण
+	अगर (len - करोne >= SHA512_BLOCK_SIZE) अणु
+		स्थिर अचिन्हित पूर्णांक rounds = (len - करोne) / SHA512_BLOCK_SIZE;
 
-		sha512_sparc64_transform(sctx->state, data + done, rounds);
-		done += rounds * SHA512_BLOCK_SIZE;
-	}
+		sha512_sparc64_transक्रमm(sctx->state, data + करोne, rounds);
+		करोne += rounds * SHA512_BLOCK_SIZE;
+	पूर्ण
 
-	memcpy(sctx->buf, data + done, len - done);
-}
+	स_नकल(sctx->buf, data + करोne, len - करोne);
+पूर्ण
 
-static int sha512_sparc64_update(struct shash_desc *desc, const u8 *data,
-				 unsigned int len)
-{
-	struct sha512_state *sctx = shash_desc_ctx(desc);
-	unsigned int partial = sctx->count[0] % SHA512_BLOCK_SIZE;
+अटल पूर्णांक sha512_sparc64_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+				 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial = sctx->count[0] % SHA512_BLOCK_SIZE;
 
-	/* Handle the fast case right here */
-	if (partial + len < SHA512_BLOCK_SIZE) {
-		if ((sctx->count[0] += len) < len)
+	/* Handle the fast हाल right here */
+	अगर (partial + len < SHA512_BLOCK_SIZE) अणु
+		अगर ((sctx->count[0] += len) < len)
 			sctx->count[1]++;
-		memcpy(sctx->buf + partial, data, len);
-	} else
+		स_नकल(sctx->buf + partial, data, len);
+	पूर्ण अन्यथा
 		__sha512_sparc64_update(sctx, data, len, partial);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sha512_sparc64_final(struct shash_desc *desc, u8 *out)
-{
-	struct sha512_state *sctx = shash_desc_ctx(desc);
-	unsigned int i, index, padlen;
+अटल पूर्णांक sha512_sparc64_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक i, index, padlen;
 	__be64 *dst = (__be64 *)out;
 	__be64 bits[2];
-	static const u8 padding[SHA512_BLOCK_SIZE] = { 0x80, };
+	अटल स्थिर u8 padding[SHA512_BLOCK_SIZE] = अणु 0x80, पूर्ण;
 
 	/* Save number of bits */
 	bits[1] = cpu_to_be64(sctx->count[0] << 3);
@@ -112,110 +113,110 @@ static int sha512_sparc64_final(struct shash_desc *desc, u8 *out)
 	index = sctx->count[0] % SHA512_BLOCK_SIZE;
 	padlen = (index < 112) ? (112 - index) : ((SHA512_BLOCK_SIZE+112) - index);
 
-	/* We need to fill a whole block for __sha512_sparc64_update() */
-	if (padlen <= 112) {
-		if ((sctx->count[0] += padlen) < padlen)
+	/* We need to fill a whole block क्रम __sha512_sparc64_update() */
+	अगर (padlen <= 112) अणु
+		अगर ((sctx->count[0] += padlen) < padlen)
 			sctx->count[1]++;
-		memcpy(sctx->buf + index, padding, padlen);
-	} else {
+		स_नकल(sctx->buf + index, padding, padlen);
+	पूर्ण अन्यथा अणु
 		__sha512_sparc64_update(sctx, padding, padlen, index);
-	}
-	__sha512_sparc64_update(sctx, (const u8 *)&bits, sizeof(bits), 112);
+	पूर्ण
+	__sha512_sparc64_update(sctx, (स्थिर u8 *)&bits, माप(bits), 112);
 
 	/* Store state in digest */
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		dst[i] = cpu_to_be64(sctx->state[i]);
 
 	/* Wipe context */
-	memset(sctx, 0, sizeof(*sctx));
+	स_रखो(sctx, 0, माप(*sctx));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sha384_sparc64_final(struct shash_desc *desc, u8 *hash)
-{
+अटल पूर्णांक sha384_sparc64_final(काष्ठा shash_desc *desc, u8 *hash)
+अणु
 	u8 D[64];
 
 	sha512_sparc64_final(desc, D);
 
-	memcpy(hash, D, 48);
+	स_नकल(hash, D, 48);
 	memzero_explicit(D, 64);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shash_alg sha512 = {
+अटल काष्ठा shash_alg sha512 = अणु
 	.digestsize	=	SHA512_DIGEST_SIZE,
 	.init		=	sha512_sparc64_init,
 	.update		=	sha512_sparc64_update,
 	.final		=	sha512_sparc64_final,
-	.descsize	=	sizeof(struct sha512_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha512_state),
+	.base		=	अणु
 		.cra_name	=	"sha512",
 		.cra_driver_name=	"sha512-sparc64",
 		.cra_priority	=	SPARC_CR_OPCODE_PRIORITY,
 		.cra_blocksize	=	SHA512_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct shash_alg sha384 = {
+अटल काष्ठा shash_alg sha384 = अणु
 	.digestsize	=	SHA384_DIGEST_SIZE,
 	.init		=	sha384_sparc64_init,
 	.update		=	sha512_sparc64_update,
 	.final		=	sha384_sparc64_final,
-	.descsize	=	sizeof(struct sha512_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha512_state),
+	.base		=	अणु
 		.cra_name	=	"sha384",
 		.cra_driver_name=	"sha384-sparc64",
 		.cra_priority	=	SPARC_CR_OPCODE_PRIORITY,
 		.cra_blocksize	=	SHA384_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static bool __init sparc64_has_sha512_opcode(void)
-{
-	unsigned long cfr;
+अटल bool __init sparc64_has_sha512_opcode(व्योम)
+अणु
+	अचिन्हित दीर्घ cfr;
 
-	if (!(sparc64_elf_hwcap & HWCAP_SPARC_CRYPTO))
-		return false;
+	अगर (!(sparc64_elf_hwcap & HWCAP_SPARC_CRYPTO))
+		वापस false;
 
-	__asm__ __volatile__("rd %%asr26, %0" : "=r" (cfr));
-	if (!(cfr & CFR_SHA512))
-		return false;
+	__यंत्र__ __अस्थिर__("rd %%asr26, %0" : "=r" (cfr));
+	अगर (!(cfr & CFR_SHA512))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int __init sha512_sparc64_mod_init(void)
-{
-	if (sparc64_has_sha512_opcode()) {
-		int ret = crypto_register_shash(&sha384);
-		if (ret < 0)
-			return ret;
+अटल पूर्णांक __init sha512_sparc64_mod_init(व्योम)
+अणु
+	अगर (sparc64_has_sha512_opcode()) अणु
+		पूर्णांक ret = crypto_रेजिस्टर_shash(&sha384);
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = crypto_register_shash(&sha512);
-		if (ret < 0) {
-			crypto_unregister_shash(&sha384);
-			return ret;
-		}
+		ret = crypto_रेजिस्टर_shash(&sha512);
+		अगर (ret < 0) अणु
+			crypto_unरेजिस्टर_shash(&sha384);
+			वापस ret;
+		पूर्ण
 
 		pr_info("Using sparc64 sha512 opcode optimized SHA-512/SHA-384 implementation\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	pr_info("sparc64 sha512 opcode not available.\n");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void __exit sha512_sparc64_mod_fini(void)
-{
-	crypto_unregister_shash(&sha384);
-	crypto_unregister_shash(&sha512);
-}
+अटल व्योम __निकास sha512_sparc64_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&sha384);
+	crypto_unरेजिस्टर_shash(&sha512);
+पूर्ण
 
 module_init(sha512_sparc64_mod_init);
-module_exit(sha512_sparc64_mod_fini);
+module_निकास(sha512_sparc64_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA-384 and SHA-512 Secure Hash Algorithm, sparc64 sha512 opcode accelerated");
@@ -223,4 +224,4 @@ MODULE_DESCRIPTION("SHA-384 and SHA-512 Secure Hash Algorithm, sparc64 sha512 op
 MODULE_ALIAS_CRYPTO("sha384");
 MODULE_ALIAS_CRYPTO("sha512");
 
-#include "crop_devid.c"
+#समावेश "crop_devid.c"

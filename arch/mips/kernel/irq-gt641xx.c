@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  GT641xx IRQ routines.
  *
  *  Copyright (C) 2007	Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#include <linux/hardirq.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
 
-#include <asm/gt64120.h>
+#समावेश <यंत्र/gt64120.h>
 
-#define GT641XX_IRQ_TO_BIT(irq) (1U << (irq - GT641XX_IRQ_BASE))
+#घोषणा GT641XX_IRQ_TO_BIT(irq) (1U << (irq - GT641XX_IRQ_BASE))
 
-static DEFINE_RAW_SPINLOCK(gt641xx_irq_lock);
+अटल DEFINE_RAW_SPINLOCK(gt641xx_irq_lock);
 
-static void ack_gt641xx_irq(struct irq_data *d)
-{
-	unsigned long flags;
+अटल व्योम ack_gt641xx_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 cause;
 
 	raw_spin_lock_irqsave(&gt641xx_irq_lock, flags);
@@ -26,11 +27,11 @@ static void ack_gt641xx_irq(struct irq_data *d)
 	cause &= ~GT641XX_IRQ_TO_BIT(d->irq);
 	GT_WRITE(GT_INTRCAUSE_OFS, cause);
 	raw_spin_unlock_irqrestore(&gt641xx_irq_lock, flags);
-}
+पूर्ण
 
-static void mask_gt641xx_irq(struct irq_data *d)
-{
-	unsigned long flags;
+अटल व्योम mask_gt641xx_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 mask;
 
 	raw_spin_lock_irqsave(&gt641xx_irq_lock, flags);
@@ -38,11 +39,11 @@ static void mask_gt641xx_irq(struct irq_data *d)
 	mask &= ~GT641XX_IRQ_TO_BIT(d->irq);
 	GT_WRITE(GT_INTRMASK_OFS, mask);
 	raw_spin_unlock_irqrestore(&gt641xx_irq_lock, flags);
-}
+पूर्ण
 
-static void mask_ack_gt641xx_irq(struct irq_data *d)
-{
-	unsigned long flags;
+अटल व्योम mask_ack_gt641xx_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 cause, mask;
 
 	raw_spin_lock_irqsave(&gt641xx_irq_lock, flags);
@@ -54,11 +55,11 @@ static void mask_ack_gt641xx_irq(struct irq_data *d)
 	cause &= ~GT641XX_IRQ_TO_BIT(d->irq);
 	GT_WRITE(GT_INTRCAUSE_OFS, cause);
 	raw_spin_unlock_irqrestore(&gt641xx_irq_lock, flags);
-}
+पूर्ण
 
-static void unmask_gt641xx_irq(struct irq_data *d)
-{
-	unsigned long flags;
+अटल व्योम unmask_gt641xx_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 mask;
 
 	raw_spin_lock_irqsave(&gt641xx_irq_lock, flags);
@@ -66,53 +67,53 @@ static void unmask_gt641xx_irq(struct irq_data *d)
 	mask |= GT641XX_IRQ_TO_BIT(d->irq);
 	GT_WRITE(GT_INTRMASK_OFS, mask);
 	raw_spin_unlock_irqrestore(&gt641xx_irq_lock, flags);
-}
+पूर्ण
 
-static struct irq_chip gt641xx_irq_chip = {
+अटल काष्ठा irq_chip gt641xx_irq_chip = अणु
 	.name		= "GT641xx",
 	.irq_ack	= ack_gt641xx_irq,
 	.irq_mask	= mask_gt641xx_irq,
 	.irq_mask_ack	= mask_ack_gt641xx_irq,
 	.irq_unmask	= unmask_gt641xx_irq,
-};
+पूर्ण;
 
-void gt641xx_irq_dispatch(void)
-{
+व्योम gt641xx_irq_dispatch(व्योम)
+अणु
 	u32 cause, mask;
-	int i;
+	पूर्णांक i;
 
 	cause = GT_READ(GT_INTRCAUSE_OFS);
 	mask = GT_READ(GT_INTRMASK_OFS);
 	cause &= mask;
 
 	/*
-	 * bit0 : logical or of all the interrupt bits.
+	 * bit0 : logical or of all the पूर्णांकerrupt bits.
 	 * bit30: logical or of bits[29:26,20:1].
 	 * bit31: logical or of bits[25:1].
 	 */
-	for (i = 1; i < 30; i++) {
-		if (cause & (1U << i)) {
-			do_IRQ(GT641XX_IRQ_BASE + i);
-			return;
-		}
-	}
+	क्रम (i = 1; i < 30; i++) अणु
+		अगर (cause & (1U << i)) अणु
+			करो_IRQ(GT641XX_IRQ_BASE + i);
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	atomic_inc(&irq_err_count);
-}
+पूर्ण
 
-void __init gt641xx_irq_init(void)
-{
-	int i;
+व्योम __init gt641xx_irq_init(व्योम)
+अणु
+	पूर्णांक i;
 
 	GT_WRITE(GT_INTRMASK_OFS, 0);
 	GT_WRITE(GT_INTRCAUSE_OFS, 0);
 
 	/*
-	 * bit0 : logical or of all the interrupt bits.
+	 * bit0 : logical or of all the पूर्णांकerrupt bits.
 	 * bit30: logical or of bits[29:26,20:1].
 	 * bit31: logical or of bits[25:1].
 	 */
-	for (i = 1; i < 30; i++)
+	क्रम (i = 1; i < 30; i++)
 		irq_set_chip_and_handler(GT641XX_IRQ_BASE + i,
 					 &gt641xx_irq_chip, handle_level_irq);
-}
+पूर्ण

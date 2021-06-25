@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2020, Linaro Limited
  */
 
-#ifndef QCOM_GPI_DMA_H
-#define QCOM_GPI_DMA_H
+#अगर_अघोषित QCOM_GPI_DMA_H
+#घोषणा QCOM_GPI_DMA_H
 
 /**
- * enum spi_transfer_cmd - spi transfer commands
+ * क्रमागत spi_transfer_cmd - spi transfer commands
  */
-enum spi_transfer_cmd {
+क्रमागत spi_transfer_cmd अणु
 	SPI_TX = 1,
 	SPI_RX,
 	SPI_DUPLEX,
-};
+पूर्ण;
 
 /**
- * struct gpi_spi_config - spi config for peripheral
+ * काष्ठा gpi_spi_config - spi config क्रम peripheral
  *
  * @loopback_en: spi loopback enable when set
- * @clock_pol_high: clock polarity
+ * @घड़ी_pol_high: घड़ी polarity
  * @data_pol_high: data polarity
  * @pack_en: process tx/rx buffers as packed
  * @word_len: spi word length
- * @clk_div: source clock divider
- * @clk_src: serial clock
+ * @clk_भाग: source घड़ी भागider
+ * @clk_src: serial घड़ी
  * @cmd: spi cmd
  * @fragmentation: keep CS assserted at end of sequence
  * @cs: chip select toggle
  * @set_config: set peripheral config
- * @rx_len: receive length for buffer
+ * @rx_len: receive length क्रम buffer
  */
-struct gpi_spi_config {
+काष्ठा gpi_spi_config अणु
 	u8 set_config;
 	u8 loopback_en;
-	u8 clock_pol_high;
+	u8 घड़ी_pol_high;
 	u8 data_pol_high;
 	u8 pack_en;
 	u8 word_len;
 	u8 fragmentation;
 	u8 cs;
-	u32 clk_div;
+	u32 clk_भाग;
 	u32 clk_src;
-	enum spi_transfer_cmd cmd;
+	क्रमागत spi_transfer_cmd cmd;
 	u32 rx_len;
-};
+पूर्ण;
 
-enum i2c_op {
+क्रमागत i2c_op अणु
 	I2C_WRITE = 1,
 	I2C_READ,
-};
+पूर्ण;
 
 /**
- * struct gpi_i2c_config - i2c config for peripheral
+ * काष्ठा gpi_i2c_config - i2c config क्रम peripheral
  *
  * @pack_enable: process tx/rx buffers as packed
- * @cycle_count: clock cycles to be sent
- * @high_count: high period of clock
- * @low_count: low period of clock
- * @clk_div: source clock divider
+ * @cycle_count: घड़ी cycles to be sent
+ * @high_count: high period of घड़ी
+ * @low_count: low period of घड़ी
+ * @clk_भाग: source घड़ी भागider
  * @addr: i2c bus address
- * @stretch: stretch the clock at eot
+ * @stretch: stretch the घड़ी at eot
  * @set_config: set peripheral config
- * @rx_len: receive length for buffer
+ * @rx_len: receive length क्रम buffer
  * @op: i2c cmd
  * @muli-msg: is part of multi i2c r-w msgs
  */
-struct gpi_i2c_config {
+काष्ठा gpi_i2c_config अणु
 	u8 set_config;
 	u8 pack_enable;
 	u8 cycle_count;
@@ -74,10 +75,10 @@ struct gpi_i2c_config {
 	u8 low_count;
 	u8 addr;
 	u8 stretch;
-	u16 clk_div;
+	u16 clk_भाग;
 	u32 rx_len;
-	enum i2c_op op;
+	क्रमागत i2c_op op;
 	bool multi_msg;
-};
+पूर्ण;
 
-#endif /* QCOM_GPI_DMA_H */
+#पूर्ण_अगर /* QCOM_GPI_DMA_H */

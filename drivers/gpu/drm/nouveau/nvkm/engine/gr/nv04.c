@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2007 Stephane Marchesin
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragr) shall be included in all copies or substantial portions of the
@@ -21,18 +22,18 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include "priv.h"
-#include "regs.h"
+#समावेश "priv.h"
+#समावेश "regs.h"
 
-#include <core/client.h>
-#include <core/gpuobj.h>
-#include <engine/fifo.h>
-#include <engine/fifo/chan.h>
-#include <subdev/instmem.h>
-#include <subdev/timer.h>
+#समावेश <core/client.h>
+#समावेश <core/gpuobj.h>
+#समावेश <engine/fअगरo.h>
+#समावेश <engine/fअगरo/chan.h>
+#समावेश <subdev/insपंचांगem.h>
+#समावेश <subdev/समयr.h>
 
-static u32
-nv04_gr_ctx_regs[] = {
+अटल u32
+nv04_gr_ctx_regs[] = अणु
 	0x0040053c,
 	0x00400544,
 	0x00400540,
@@ -344,24 +345,24 @@ nv04_gr_ctx_regs[] = {
 	NV04_PGRAPH_VALID1,
 	NV04_PGRAPH_VALID2,
 	NV04_PGRAPH_DEBUG_3
-};
+पूर्ण;
 
-#define nv04_gr(p) container_of((p), struct nv04_gr, base)
+#घोषणा nv04_gr(p) container_of((p), काष्ठा nv04_gr, base)
 
-struct nv04_gr {
-	struct nvkm_gr base;
-	struct nv04_gr_chan *chan[16];
+काष्ठा nv04_gr अणु
+	काष्ठा nvkm_gr base;
+	काष्ठा nv04_gr_chan *chan[16];
 	spinlock_t lock;
-};
+पूर्ण;
 
-#define nv04_gr_chan(p) container_of((p), struct nv04_gr_chan, object)
+#घोषणा nv04_gr_chan(p) container_of((p), काष्ठा nv04_gr_chan, object)
 
-struct nv04_gr_chan {
-	struct nvkm_object object;
-	struct nv04_gr *gr;
-	int chid;
+काष्ठा nv04_gr_chan अणु
+	काष्ठा nvkm_object object;
+	काष्ठा nv04_gr *gr;
+	पूर्णांक chid;
 	u32 nv04[ARRAY_SIZE(nv04_gr_ctx_regs)];
-};
+पूर्ण;
 
 /*******************************************************************************
  * Graphics object classes
@@ -372,22 +373,22 @@ struct nv04_gr_chan {
  *
  * NV04 and NV05 keep most of the state in PGRAPH context itself, but some
  * 2d engine settings are kept inside the grobjs themselves. The grobjs are
- * 3 words long on both. grobj format on NV04 is:
+ * 3 words दीर्घ on both. grobj क्रमmat on NV04 is:
  *
  * word 0:
  *  - bits 0-7: class
  *  - bit 12: color key active
  *  - bit 13: clip rect active
- *  - bit 14: if set, destination surface is swizzled and taken from buffer 5
+ *  - bit 14: अगर set, destination surface is swizzled and taken from buffer 5
  *            [set by NV04_SWIZZLED_SURFACE], otherwise it's linear and taken
  *            from buffer 0 [set by NV04_CONTEXT_SURFACES_2D or
  *            NV03_CONTEXT_SURFACE_DST].
  *  - bits 15-17: 2d operation [aka patch config]
  *  - bit 24: patch valid [enables rendering using this object]
- *  - bit 25: surf3d valid [for tex_tri and multitex_tri only]
+ *  - bit 25: surf3d valid [क्रम tex_tri and multitex_tri only]
  * word 1:
- *  - bits 0-1: mono format
- *  - bits 8-13: color format
+ *  - bits 0-1: mono क्रमmat
+ *  - bits 8-13: color क्रमmat
  *  - bits 16-31: DMA_NOTIFY instance
  * word 2:
  *  - bits 0-15: DMA_A instance
@@ -399,7 +400,7 @@ struct nv04_gr_chan {
  *  - bits 0-7: class
  *  - bit 12: color key active
  *  - bit 13: clip rect active
- *  - bit 14: if set, destination surface is swizzled and taken from buffer 5
+ *  - bit 14: अगर set, destination surface is swizzled and taken from buffer 5
  *            [set by NV04_SWIZZLED_SURFACE], otherwise it's linear and taken
  *            from buffer 0 [set by NV04_CONTEXT_SURFACES_2D or
  *            NV03_CONTEXT_SURFACE_DST].
@@ -413,786 +414,786 @@ struct nv04_gr_chan {
  *  - bit 29: beta1 valid
  *  - bit 30: beta4 valid
  * word 1:
- *  - bits 0-1: mono format
- *  - bits 8-13: color format
+ *  - bits 0-1: mono क्रमmat
+ *  - bits 8-13: color क्रमmat
  *  - bits 16-31: DMA_NOTIFY instance
  * word 2:
  *  - bits 0-15: DMA_A instance
  *  - bits 16-31: DMA_B instance
  *
  * NV05 will set/unset the relevant valid bits when you poke the relevant
- * object-binding methods with object of the proper type, or with the NULL
- * type. It'll only allow rendering using the grobj if all needed objects
- * are bound. The needed set of objects depends on selected operation: for
+ * object-binding methods with object of the proper type, or with the शून्य
+ * type. It'll only allow rendering using the grobj अगर all needed objects
+ * are bound. The needed set of objects depends on selected operation: क्रम
  * example rop object is needed by ROP_AND, but not by SRCCOPY_AND.
  *
- * NV04 doesn't have these methods implemented at all, and doesn't have the
+ * NV04 करोesn't have these methods implemented at all, and doesn't have the
  * relevant bits in grobj. Instead, it'll allow rendering whenever bit 24
- * is set. So we have to emulate them in software, internally keeping the
- * same bits as NV05 does. Since grobjs are aligned to 16 bytes on nv04,
- * but the last word isn't actually used for anything, we abuse it for this
+ * is set. So we have to emulate them in software, पूर्णांकernally keeping the
+ * same bits as NV05 करोes. Since grobjs are aligned to 16 bytes on nv04,
+ * but the last word isn't actually used क्रम anything, we abuse it क्रम this
  * purpose.
  *
  * Actually, NV05 can optionally check bit 24 too, but we disable this since
- * there's no use for it.
+ * there's no use क्रम it.
  *
  * For unknown reasons, NV04 implements surf3d binding in hardware as an
- * exception. Also for unknown reasons, NV04 doesn't implement the clipping
+ * exception. Also क्रम unknown reasons, NV04 करोesn't implement the clipping
  * methods on the surf3d object, so we have to emulate them too.
  */
 
-static void
-nv04_gr_set_ctx1(struct nvkm_device *device, u32 inst, u32 mask, u32 value)
-{
-	int subc = (nvkm_rd32(device, NV04_PGRAPH_TRAPPED_ADDR) >> 13) & 0x7;
-	u32 tmp;
+अटल व्योम
+nv04_gr_set_ctx1(काष्ठा nvkm_device *device, u32 inst, u32 mask, u32 value)
+अणु
+	पूर्णांक subc = (nvkm_rd32(device, NV04_PGRAPH_TRAPPED_ADDR) >> 13) & 0x7;
+	u32 पंचांगp;
 
-	tmp  = nvkm_rd32(device, 0x700000 + inst);
-	tmp &= ~mask;
-	tmp |= value;
-	nvkm_wr32(device, 0x700000 + inst, tmp);
+	पंचांगp  = nvkm_rd32(device, 0x700000 + inst);
+	पंचांगp &= ~mask;
+	पंचांगp |= value;
+	nvkm_wr32(device, 0x700000 + inst, पंचांगp);
 
-	nvkm_wr32(device, NV04_PGRAPH_CTX_SWITCH1, tmp);
-	nvkm_wr32(device, NV04_PGRAPH_CTX_CACHE1 + (subc << 2), tmp);
-}
+	nvkm_wr32(device, NV04_PGRAPH_CTX_SWITCH1, पंचांगp);
+	nvkm_wr32(device, NV04_PGRAPH_CTX_CACHE1 + (subc << 2), पंचांगp);
+पूर्ण
 
-static void
-nv04_gr_set_ctx_val(struct nvkm_device *device, u32 inst, u32 mask, u32 value)
-{
-	int class, op, valid = 1;
-	u32 tmp, ctx1;
+अटल व्योम
+nv04_gr_set_ctx_val(काष्ठा nvkm_device *device, u32 inst, u32 mask, u32 value)
+अणु
+	पूर्णांक class, op, valid = 1;
+	u32 पंचांगp, ctx1;
 
 	ctx1 = nvkm_rd32(device, 0x700000 + inst);
 	class = ctx1 & 0xff;
 	op = (ctx1 >> 15) & 7;
 
-	tmp = nvkm_rd32(device, 0x70000c + inst);
-	tmp &= ~mask;
-	tmp |= value;
-	nvkm_wr32(device, 0x70000c + inst, tmp);
+	पंचांगp = nvkm_rd32(device, 0x70000c + inst);
+	पंचांगp &= ~mask;
+	पंचांगp |= value;
+	nvkm_wr32(device, 0x70000c + inst, पंचांगp);
 
-	/* check for valid surf2d/surf_dst/surf_color */
-	if (!(tmp & 0x02000000))
+	/* check क्रम valid surf2d/surf_dst/surf_color */
+	अगर (!(पंचांगp & 0x02000000))
 		valid = 0;
-	/* check for valid surf_src/surf_zeta */
-	if ((class == 0x1f || class == 0x48) && !(tmp & 0x04000000))
+	/* check क्रम valid surf_src/surf_zeta */
+	अगर ((class == 0x1f || class == 0x48) && !(पंचांगp & 0x04000000))
 		valid = 0;
 
-	switch (op) {
+	चयन (op) अणु
 	/* SRCCOPY_AND, SRCCOPY: no extra objects required */
-	case 0:
-	case 3:
-		break;
+	हाल 0:
+	हाल 3:
+		अवरोध;
 	/* ROP_AND: requires pattern and rop */
-	case 1:
-		if (!(tmp & 0x18000000))
+	हाल 1:
+		अगर (!(पंचांगp & 0x18000000))
 			valid = 0;
-		break;
+		अवरोध;
 	/* BLEND_AND: requires beta1 */
-	case 2:
-		if (!(tmp & 0x20000000))
+	हाल 2:
+		अगर (!(पंचांगp & 0x20000000))
 			valid = 0;
-		break;
+		अवरोध;
 	/* SRCCOPY_PREMULT, BLEND_PREMULT: beta4 required */
-	case 4:
-	case 5:
-		if (!(tmp & 0x40000000))
+	हाल 4:
+	हाल 5:
+		अगर (!(पंचांगp & 0x40000000))
 			valid = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	nv04_gr_set_ctx1(device, inst, 0x01000000, valid << 24);
-}
+पूर्ण
 
-static bool
-nv04_gr_mthd_set_operation(struct nvkm_device *device, u32 inst, u32 data)
-{
+अटल bool
+nv04_gr_mthd_set_operation(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
 	u8 class = nvkm_rd32(device, 0x700000) & 0x000000ff;
-	if (data > 5)
-		return false;
+	अगर (data > 5)
+		वापस false;
 	/* Old versions of the objects only accept first three operations. */
-	if (data > 2 && class < 0x40)
-		return false;
+	अगर (data > 2 && class < 0x40)
+		वापस false;
 	nv04_gr_set_ctx1(device, inst, 0x00038000, data << 15);
-	/* changing operation changes set of objects needed for validation */
+	/* changing operation changes set of objects needed क्रम validation */
 	nv04_gr_set_ctx_val(device, inst, 0, 0);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool
-nv04_gr_mthd_surf3d_clip_h(struct nvkm_device *device, u32 inst, u32 data)
-{
+अटल bool
+nv04_gr_mthd_surf3d_clip_h(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
 	u32 min = data & 0xffff, max;
 	u32 w = data >> 16;
-	if (min & 0x8000)
+	अगर (min & 0x8000)
 		/* too large */
-		return false;
-	if (w & 0x8000)
-		/* yes, it accepts negative for some reason. */
+		वापस false;
+	अगर (w & 0x8000)
+		/* yes, it accepts negative क्रम some reason. */
 		w |= 0xffff0000;
 	max = min + w;
 	max &= 0x3ffff;
 	nvkm_wr32(device, 0x40053c, min);
 	nvkm_wr32(device, 0x400544, max);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool
-nv04_gr_mthd_surf3d_clip_v(struct nvkm_device *device, u32 inst, u32 data)
-{
+अटल bool
+nv04_gr_mthd_surf3d_clip_v(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
 	u32 min = data & 0xffff, max;
 	u32 w = data >> 16;
-	if (min & 0x8000)
+	अगर (min & 0x8000)
 		/* too large */
-		return false;
-	if (w & 0x8000)
-		/* yes, it accepts negative for some reason. */
+		वापस false;
+	अगर (w & 0x8000)
+		/* yes, it accepts negative क्रम some reason. */
 		w |= 0xffff0000;
 	max = min + w;
 	max &= 0x3ffff;
 	nvkm_wr32(device, 0x400540, min);
 	nvkm_wr32(device, 0x400548, max);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static u8
-nv04_gr_mthd_bind_class(struct nvkm_device *device, u32 inst)
-{
-	return nvkm_rd32(device, 0x700000 + (inst << 4));
-}
+अटल u8
+nv04_gr_mthd_bind_class(काष्ठा nvkm_device *device, u32 inst)
+अणु
+	वापस nvkm_rd32(device, 0x700000 + (inst << 4));
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_surf2d(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_surf2d(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx1(device, inst, 0x00004000, 0);
 		nv04_gr_set_ctx_val(device, inst, 0x02000000, 0);
-		return true;
-	case 0x42:
+		वापस true;
+	हाल 0x42:
 		nv04_gr_set_ctx1(device, inst, 0x00004000, 0);
 		nv04_gr_set_ctx_val(device, inst, 0x02000000, 0x02000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_surf2d_swzsurf(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_surf2d_swzsurf(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx1(device, inst, 0x00004000, 0);
 		nv04_gr_set_ctx_val(device, inst, 0x02000000, 0);
-		return true;
-	case 0x42:
+		वापस true;
+	हाल 0x42:
 		nv04_gr_set_ctx1(device, inst, 0x00004000, 0);
 		nv04_gr_set_ctx_val(device, inst, 0x02000000, 0x02000000);
-		return true;
-	case 0x52:
+		वापस true;
+	हाल 0x52:
 		nv04_gr_set_ctx1(device, inst, 0x00004000, 0x00004000);
 		nv04_gr_set_ctx_val(device, inst, 0x02000000, 0x02000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv01_gr_mthd_bind_patt(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv01_gr_mthd_bind_patt(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx_val(device, inst, 0x08000000, 0);
-		return true;
-	case 0x18:
+		वापस true;
+	हाल 0x18:
 		nv04_gr_set_ctx_val(device, inst, 0x08000000, 0x08000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_patt(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_patt(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx_val(device, inst, 0x08000000, 0);
-		return true;
-	case 0x44:
+		वापस true;
+	हाल 0x44:
 		nv04_gr_set_ctx_val(device, inst, 0x08000000, 0x08000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_rop(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_rop(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx_val(device, inst, 0x10000000, 0);
-		return true;
-	case 0x43:
+		वापस true;
+	हाल 0x43:
 		nv04_gr_set_ctx_val(device, inst, 0x10000000, 0x10000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_beta1(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_beta1(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx_val(device, inst, 0x20000000, 0);
-		return true;
-	case 0x12:
+		वापस true;
+	हाल 0x12:
 		nv04_gr_set_ctx_val(device, inst, 0x20000000, 0x20000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_beta4(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_beta4(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx_val(device, inst, 0x40000000, 0);
-		return true;
-	case 0x72:
+		वापस true;
+	हाल 0x72:
 		nv04_gr_set_ctx_val(device, inst, 0x40000000, 0x40000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_surf_dst(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_surf_dst(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx_val(device, inst, 0x02000000, 0);
-		return true;
-	case 0x58:
+		वापस true;
+	हाल 0x58:
 		nv04_gr_set_ctx_val(device, inst, 0x02000000, 0x02000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_surf_src(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_surf_src(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx_val(device, inst, 0x04000000, 0);
-		return true;
-	case 0x59:
+		वापस true;
+	हाल 0x59:
 		nv04_gr_set_ctx_val(device, inst, 0x04000000, 0x04000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_surf_color(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_surf_color(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx_val(device, inst, 0x02000000, 0);
-		return true;
-	case 0x5a:
+		वापस true;
+	हाल 0x5a:
 		nv04_gr_set_ctx_val(device, inst, 0x02000000, 0x02000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv04_gr_mthd_bind_surf_zeta(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv04_gr_mthd_bind_surf_zeta(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx_val(device, inst, 0x04000000, 0);
-		return true;
-	case 0x5b:
+		वापस true;
+	हाल 0x5b:
 		nv04_gr_set_ctx_val(device, inst, 0x04000000, 0x04000000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv01_gr_mthd_bind_clip(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv01_gr_mthd_bind_clip(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx1(device, inst, 0x2000, 0);
-		return true;
-	case 0x19:
+		वापस true;
+	हाल 0x19:
 		nv04_gr_set_ctx1(device, inst, 0x2000, 0x2000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv01_gr_mthd_bind_chroma(struct nvkm_device *device, u32 inst, u32 data)
-{
-	switch (nv04_gr_mthd_bind_class(device, data)) {
-	case 0x30:
+अटल bool
+nv01_gr_mthd_bind_chroma(काष्ठा nvkm_device *device, u32 inst, u32 data)
+अणु
+	चयन (nv04_gr_mthd_bind_class(device, data)) अणु
+	हाल 0x30:
 		nv04_gr_set_ctx1(device, inst, 0x1000, 0);
-		return true;
-	/* Yes, for some reason even the old versions of objects
+		वापस true;
+	/* Yes, क्रम some reason even the old versions of objects
 	 * accept 0x57 and not 0x17. Consistency be damned.
 	 */
-	case 0x57:
+	हाल 0x57:
 		nv04_gr_set_ctx1(device, inst, 0x1000, 0x1000);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool
-nv03_gr_mthd_gdi(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0184: func = nv01_gr_mthd_bind_patt; break;
-	case 0x0188: func = nv04_gr_mthd_bind_rop; break;
-	case 0x018c: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0190: func = nv04_gr_mthd_bind_surf_dst; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv03_gr_mthd_gdi(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0184: func = nv01_gr_mthd_bind_patt; अवरोध;
+	हाल 0x0188: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_surf_dst; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv04_gr_mthd_gdi(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0188: func = nv04_gr_mthd_bind_patt; break;
-	case 0x018c: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0190: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0194: func = nv04_gr_mthd_bind_beta4; break;
-	case 0x0198: func = nv04_gr_mthd_bind_surf2d; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv04_gr_mthd_gdi(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0188: func = nv04_gr_mthd_bind_patt; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_beta4; अवरोध;
+	हाल 0x0198: func = nv04_gr_mthd_bind_surf2d; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv01_gr_mthd_blit(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0184: func = nv01_gr_mthd_bind_chroma; break;
-	case 0x0188: func = nv01_gr_mthd_bind_clip; break;
-	case 0x018c: func = nv01_gr_mthd_bind_patt; break;
-	case 0x0190: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0194: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0198: func = nv04_gr_mthd_bind_surf_dst; break;
-	case 0x019c: func = nv04_gr_mthd_bind_surf_src; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv01_gr_mthd_blit(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0184: func = nv01_gr_mthd_bind_chroma; अवरोध;
+	हाल 0x0188: func = nv01_gr_mthd_bind_clip; अवरोध;
+	हाल 0x018c: func = nv01_gr_mthd_bind_patt; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0198: func = nv04_gr_mthd_bind_surf_dst; अवरोध;
+	हाल 0x019c: func = nv04_gr_mthd_bind_surf_src; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv04_gr_mthd_blit(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0184: func = nv01_gr_mthd_bind_chroma; break;
-	case 0x0188: func = nv01_gr_mthd_bind_clip; break;
-	case 0x018c: func = nv04_gr_mthd_bind_patt; break;
-	case 0x0190: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0194: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0198: func = nv04_gr_mthd_bind_beta4; break;
-	case 0x019c: func = nv04_gr_mthd_bind_surf2d; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv04_gr_mthd_blit(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0184: func = nv01_gr_mthd_bind_chroma; अवरोध;
+	हाल 0x0188: func = nv01_gr_mthd_bind_clip; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_patt; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0198: func = nv04_gr_mthd_bind_beta4; अवरोध;
+	हाल 0x019c: func = nv04_gr_mthd_bind_surf2d; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv04_gr_mthd_iifc(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0188: func = nv01_gr_mthd_bind_chroma; break;
-	case 0x018c: func = nv01_gr_mthd_bind_clip; break;
-	case 0x0190: func = nv04_gr_mthd_bind_patt; break;
-	case 0x0194: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0198: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x019c: func = nv04_gr_mthd_bind_beta4; break;
-	case 0x01a0: func = nv04_gr_mthd_bind_surf2d_swzsurf; break;
-	case 0x03e4: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv04_gr_mthd_iअगरc(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0188: func = nv01_gr_mthd_bind_chroma; अवरोध;
+	हाल 0x018c: func = nv01_gr_mthd_bind_clip; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_patt; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0198: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x019c: func = nv04_gr_mthd_bind_beta4; अवरोध;
+	हाल 0x01a0: func = nv04_gr_mthd_bind_surf2d_swzsurf; अवरोध;
+	हाल 0x03e4: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv01_gr_mthd_ifc(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0184: func = nv01_gr_mthd_bind_chroma; break;
-	case 0x0188: func = nv01_gr_mthd_bind_clip; break;
-	case 0x018c: func = nv01_gr_mthd_bind_patt; break;
-	case 0x0190: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0194: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0198: func = nv04_gr_mthd_bind_surf_dst; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv01_gr_mthd_अगरc(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0184: func = nv01_gr_mthd_bind_chroma; अवरोध;
+	हाल 0x0188: func = nv01_gr_mthd_bind_clip; अवरोध;
+	हाल 0x018c: func = nv01_gr_mthd_bind_patt; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0198: func = nv04_gr_mthd_bind_surf_dst; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv04_gr_mthd_ifc(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0184: func = nv01_gr_mthd_bind_chroma; break;
-	case 0x0188: func = nv01_gr_mthd_bind_clip; break;
-	case 0x018c: func = nv04_gr_mthd_bind_patt; break;
-	case 0x0190: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0194: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0198: func = nv04_gr_mthd_bind_beta4; break;
-	case 0x019c: func = nv04_gr_mthd_bind_surf2d; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv04_gr_mthd_अगरc(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0184: func = nv01_gr_mthd_bind_chroma; अवरोध;
+	हाल 0x0188: func = nv01_gr_mthd_bind_clip; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_patt; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0198: func = nv04_gr_mthd_bind_beta4; अवरोध;
+	हाल 0x019c: func = nv04_gr_mthd_bind_surf2d; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv03_gr_mthd_sifc(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0184: func = nv01_gr_mthd_bind_chroma; break;
-	case 0x0188: func = nv01_gr_mthd_bind_patt; break;
-	case 0x018c: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0190: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0194: func = nv04_gr_mthd_bind_surf_dst; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv03_gr_mthd_sअगरc(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0184: func = nv01_gr_mthd_bind_chroma; अवरोध;
+	हाल 0x0188: func = nv01_gr_mthd_bind_patt; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_surf_dst; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv04_gr_mthd_sifc(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0184: func = nv01_gr_mthd_bind_chroma; break;
-	case 0x0188: func = nv04_gr_mthd_bind_patt; break;
-	case 0x018c: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0190: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0194: func = nv04_gr_mthd_bind_beta4; break;
-	case 0x0198: func = nv04_gr_mthd_bind_surf2d; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv04_gr_mthd_sअगरc(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0184: func = nv01_gr_mthd_bind_chroma; अवरोध;
+	हाल 0x0188: func = nv04_gr_mthd_bind_patt; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_beta4; अवरोध;
+	हाल 0x0198: func = nv04_gr_mthd_bind_surf2d; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv03_gr_mthd_sifm(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0188: func = nv01_gr_mthd_bind_patt; break;
-	case 0x018c: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0190: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0194: func = nv04_gr_mthd_bind_surf_dst; break;
-	case 0x0304: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv03_gr_mthd_sअगरm(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0188: func = nv01_gr_mthd_bind_patt; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_surf_dst; अवरोध;
+	हाल 0x0304: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv04_gr_mthd_sifm(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0188: func = nv04_gr_mthd_bind_patt; break;
-	case 0x018c: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0190: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0194: func = nv04_gr_mthd_bind_beta4; break;
-	case 0x0198: func = nv04_gr_mthd_bind_surf2d; break;
-	case 0x0304: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv04_gr_mthd_sअगरm(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0188: func = nv04_gr_mthd_bind_patt; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_beta4; अवरोध;
+	हाल 0x0198: func = nv04_gr_mthd_bind_surf2d; अवरोध;
+	हाल 0x0304: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv04_gr_mthd_surf3d(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x02f8: func = nv04_gr_mthd_surf3d_clip_h; break;
-	case 0x02fc: func = nv04_gr_mthd_surf3d_clip_v; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv04_gr_mthd_surf3d(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x02f8: func = nv04_gr_mthd_surf3d_clip_h; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_surf3d_clip_v; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv03_gr_mthd_ttri(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0188: func = nv01_gr_mthd_bind_clip; break;
-	case 0x018c: func = nv04_gr_mthd_bind_surf_color; break;
-	case 0x0190: func = nv04_gr_mthd_bind_surf_zeta; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv03_gr_mthd_ttri(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0188: func = nv01_gr_mthd_bind_clip; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_surf_color; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_surf_zeta; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv01_gr_mthd_prim(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0184: func = nv01_gr_mthd_bind_clip; break;
-	case 0x0188: func = nv01_gr_mthd_bind_patt; break;
-	case 0x018c: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0190: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0194: func = nv04_gr_mthd_bind_surf_dst; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv01_gr_mthd_prim(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0184: func = nv01_gr_mthd_bind_clip; अवरोध;
+	हाल 0x0188: func = nv01_gr_mthd_bind_patt; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_surf_dst; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv04_gr_mthd_prim(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32);
-	switch (mthd) {
-	case 0x0184: func = nv01_gr_mthd_bind_clip; break;
-	case 0x0188: func = nv04_gr_mthd_bind_patt; break;
-	case 0x018c: func = nv04_gr_mthd_bind_rop; break;
-	case 0x0190: func = nv04_gr_mthd_bind_beta1; break;
-	case 0x0194: func = nv04_gr_mthd_bind_beta4; break;
-	case 0x0198: func = nv04_gr_mthd_bind_surf2d; break;
-	case 0x02fc: func = nv04_gr_mthd_set_operation; break;
-	default:
-		return false;
-	}
-	return func(device, inst, data);
-}
+अटल bool
+nv04_gr_mthd_prim(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32);
+	चयन (mthd) अणु
+	हाल 0x0184: func = nv01_gr_mthd_bind_clip; अवरोध;
+	हाल 0x0188: func = nv04_gr_mthd_bind_patt; अवरोध;
+	हाल 0x018c: func = nv04_gr_mthd_bind_rop; अवरोध;
+	हाल 0x0190: func = nv04_gr_mthd_bind_beta1; अवरोध;
+	हाल 0x0194: func = nv04_gr_mthd_bind_beta4; अवरोध;
+	हाल 0x0198: func = nv04_gr_mthd_bind_surf2d; अवरोध;
+	हाल 0x02fc: func = nv04_gr_mthd_set_operation; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, data);
+पूर्ण
 
-static bool
-nv04_gr_mthd(struct nvkm_device *device, u32 inst, u32 mthd, u32 data)
-{
-	bool (*func)(struct nvkm_device *, u32, u32, u32);
-	switch (nvkm_rd32(device, 0x700000 + inst) & 0x000000ff) {
-	case 0x1c ... 0x1e:
-		   func = nv01_gr_mthd_prim; break;
-	case 0x1f: func = nv01_gr_mthd_blit; break;
-	case 0x21: func = nv01_gr_mthd_ifc; break;
-	case 0x36: func = nv03_gr_mthd_sifc; break;
-	case 0x37: func = nv03_gr_mthd_sifm; break;
-	case 0x48: func = nv03_gr_mthd_ttri; break;
-	case 0x4a: func = nv04_gr_mthd_gdi; break;
-	case 0x4b: func = nv03_gr_mthd_gdi; break;
-	case 0x53: func = nv04_gr_mthd_surf3d; break;
-	case 0x5c ... 0x5e:
-		   func = nv04_gr_mthd_prim; break;
-	case 0x5f: func = nv04_gr_mthd_blit; break;
-	case 0x60: func = nv04_gr_mthd_iifc; break;
-	case 0x61: func = nv04_gr_mthd_ifc; break;
-	case 0x76: func = nv04_gr_mthd_sifc; break;
-	case 0x77: func = nv04_gr_mthd_sifm; break;
-	default:
-		return false;
-	}
-	return func(device, inst, mthd, data);
-}
+अटल bool
+nv04_gr_mthd(काष्ठा nvkm_device *device, u32 inst, u32 mthd, u32 data)
+अणु
+	bool (*func)(काष्ठा nvkm_device *, u32, u32, u32);
+	चयन (nvkm_rd32(device, 0x700000 + inst) & 0x000000ff) अणु
+	हाल 0x1c ... 0x1e:
+		   func = nv01_gr_mthd_prim; अवरोध;
+	हाल 0x1f: func = nv01_gr_mthd_blit; अवरोध;
+	हाल 0x21: func = nv01_gr_mthd_अगरc; अवरोध;
+	हाल 0x36: func = nv03_gr_mthd_sअगरc; अवरोध;
+	हाल 0x37: func = nv03_gr_mthd_sअगरm; अवरोध;
+	हाल 0x48: func = nv03_gr_mthd_ttri; अवरोध;
+	हाल 0x4a: func = nv04_gr_mthd_gdi; अवरोध;
+	हाल 0x4b: func = nv03_gr_mthd_gdi; अवरोध;
+	हाल 0x53: func = nv04_gr_mthd_surf3d; अवरोध;
+	हाल 0x5c ... 0x5e:
+		   func = nv04_gr_mthd_prim; अवरोध;
+	हाल 0x5f: func = nv04_gr_mthd_blit; अवरोध;
+	हाल 0x60: func = nv04_gr_mthd_iअगरc; अवरोध;
+	हाल 0x61: func = nv04_gr_mthd_अगरc; अवरोध;
+	हाल 0x76: func = nv04_gr_mthd_sअगरc; अवरोध;
+	हाल 0x77: func = nv04_gr_mthd_sअगरm; अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस func(device, inst, mthd, data);
+पूर्ण
 
-static int
-nv04_gr_object_bind(struct nvkm_object *object, struct nvkm_gpuobj *parent,
-		    int align, struct nvkm_gpuobj **pgpuobj)
-{
-	int ret = nvkm_gpuobj_new(object->engine->subdev.device, 16, align,
+अटल पूर्णांक
+nv04_gr_object_bind(काष्ठा nvkm_object *object, काष्ठा nvkm_gpuobj *parent,
+		    पूर्णांक align, काष्ठा nvkm_gpuobj **pgpuobj)
+अणु
+	पूर्णांक ret = nvkm_gpuobj_new(object->engine->subdev.device, 16, align,
 				  false, parent, pgpuobj);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		nvkm_kmap(*pgpuobj);
 		nvkm_wo32(*pgpuobj, 0x00, object->oclass);
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 		nvkm_mo32(*pgpuobj, 0x00, 0x00080000, 0x00080000);
-#endif
+#पूर्ण_अगर
 		nvkm_wo32(*pgpuobj, 0x04, 0x00000000);
 		nvkm_wo32(*pgpuobj, 0x08, 0x00000000);
 		nvkm_wo32(*pgpuobj, 0x0c, 0x00000000);
-		nvkm_done(*pgpuobj);
-	}
-	return ret;
-}
+		nvkm_करोne(*pgpuobj);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-const struct nvkm_object_func
-nv04_gr_object = {
+स्थिर काष्ठा nvkm_object_func
+nv04_gr_object = अणु
 	.bind = nv04_gr_object_bind,
-};
+पूर्ण;
 
 /*******************************************************************************
  * PGRAPH context
  ******************************************************************************/
 
-static struct nv04_gr_chan *
-nv04_gr_channel(struct nv04_gr *gr)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
-	struct nv04_gr_chan *chan = NULL;
-	if (nvkm_rd32(device, NV04_PGRAPH_CTX_CONTROL) & 0x00010000) {
-		int chid = nvkm_rd32(device, NV04_PGRAPH_CTX_USER) >> 24;
-		if (chid < ARRAY_SIZE(gr->chan))
+अटल काष्ठा nv04_gr_chan *
+nv04_gr_channel(काष्ठा nv04_gr *gr)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+	काष्ठा nv04_gr_chan *chan = शून्य;
+	अगर (nvkm_rd32(device, NV04_PGRAPH_CTX_CONTROL) & 0x00010000) अणु
+		पूर्णांक chid = nvkm_rd32(device, NV04_PGRAPH_CTX_USER) >> 24;
+		अगर (chid < ARRAY_SIZE(gr->chan))
 			chan = gr->chan[chid];
-	}
-	return chan;
-}
+	पूर्ण
+	वापस chan;
+पूर्ण
 
-static int
-nv04_gr_load_context(struct nv04_gr_chan *chan, int chid)
-{
-	struct nvkm_device *device = chan->gr->base.engine.subdev.device;
-	int i;
+अटल पूर्णांक
+nv04_gr_load_context(काष्ठा nv04_gr_chan *chan, पूर्णांक chid)
+अणु
+	काष्ठा nvkm_device *device = chan->gr->base.engine.subdev.device;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nv04_gr_ctx_regs); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(nv04_gr_ctx_regs); i++)
 		nvkm_wr32(device, nv04_gr_ctx_regs[i], chan->nv04[i]);
 
 	nvkm_wr32(device, NV04_PGRAPH_CTX_CONTROL, 0x10010100);
 	nvkm_mask(device, NV04_PGRAPH_CTX_USER, 0xff000000, chid << 24);
 	nvkm_mask(device, NV04_PGRAPH_FFINTFC_ST2, 0xfff00000, 0x00000000);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nv04_gr_unload_context(struct nv04_gr_chan *chan)
-{
-	struct nvkm_device *device = chan->gr->base.engine.subdev.device;
-	int i;
+अटल पूर्णांक
+nv04_gr_unload_context(काष्ठा nv04_gr_chan *chan)
+अणु
+	काष्ठा nvkm_device *device = chan->gr->base.engine.subdev.device;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nv04_gr_ctx_regs); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(nv04_gr_ctx_regs); i++)
 		chan->nv04[i] = nvkm_rd32(device, nv04_gr_ctx_regs[i]);
 
 	nvkm_wr32(device, NV04_PGRAPH_CTX_CONTROL, 0x10000000);
 	nvkm_mask(device, NV04_PGRAPH_CTX_USER, 0xff000000, 0x0f000000);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-nv04_gr_context_switch(struct nv04_gr *gr)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
-	struct nv04_gr_chan *prev = NULL;
-	struct nv04_gr_chan *next = NULL;
-	int chid;
+अटल व्योम
+nv04_gr_context_चयन(काष्ठा nv04_gr *gr)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+	काष्ठा nv04_gr_chan *prev = शून्य;
+	काष्ठा nv04_gr_chan *next = शून्य;
+	पूर्णांक chid;
 
 	nv04_gr_idle(&gr->base);
 
 	/* If previous context is valid, we need to save it */
 	prev = nv04_gr_channel(gr);
-	if (prev)
+	अगर (prev)
 		nv04_gr_unload_context(prev);
 
-	/* load context for next channel */
+	/* load context क्रम next channel */
 	chid = (nvkm_rd32(device, NV04_PGRAPH_TRAPPED_ADDR) >> 24) & 0x0f;
 	next = gr->chan[chid];
-	if (next)
+	अगर (next)
 		nv04_gr_load_context(next, chid);
-}
+पूर्ण
 
-static u32 *ctx_reg(struct nv04_gr_chan *chan, u32 reg)
-{
-	int i;
+अटल u32 *ctx_reg(काष्ठा nv04_gr_chan *chan, u32 reg)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nv04_gr_ctx_regs); i++) {
-		if (nv04_gr_ctx_regs[i] == reg)
-			return &chan->nv04[i];
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(nv04_gr_ctx_regs); i++) अणु
+		अगर (nv04_gr_ctx_regs[i] == reg)
+			वापस &chan->nv04[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *
-nv04_gr_chan_dtor(struct nvkm_object *object)
-{
-	struct nv04_gr_chan *chan = nv04_gr_chan(object);
-	struct nv04_gr *gr = chan->gr;
-	unsigned long flags;
+अटल व्योम *
+nv04_gr_chan_dtor(काष्ठा nvkm_object *object)
+अणु
+	काष्ठा nv04_gr_chan *chan = nv04_gr_chan(object);
+	काष्ठा nv04_gr *gr = chan->gr;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gr->lock, flags);
-	gr->chan[chan->chid] = NULL;
+	gr->chan[chan->chid] = शून्य;
 	spin_unlock_irqrestore(&gr->lock, flags);
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
-static int
-nv04_gr_chan_fini(struct nvkm_object *object, bool suspend)
-{
-	struct nv04_gr_chan *chan = nv04_gr_chan(object);
-	struct nv04_gr *gr = chan->gr;
-	struct nvkm_device *device = gr->base.engine.subdev.device;
-	unsigned long flags;
+अटल पूर्णांक
+nv04_gr_chan_fini(काष्ठा nvkm_object *object, bool suspend)
+अणु
+	काष्ठा nv04_gr_chan *chan = nv04_gr_chan(object);
+	काष्ठा nv04_gr *gr = chan->gr;
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gr->lock, flags);
 	nvkm_mask(device, NV04_PGRAPH_FIFO, 0x00000001, 0x00000000);
-	if (nv04_gr_channel(gr) == chan)
+	अगर (nv04_gr_channel(gr) == chan)
 		nv04_gr_unload_context(chan);
 	nvkm_mask(device, NV04_PGRAPH_FIFO, 0x00000001, 0x00000001);
 	spin_unlock_irqrestore(&gr->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_object_func
-nv04_gr_chan = {
+अटल स्थिर काष्ठा nvkm_object_func
+nv04_gr_chan = अणु
 	.dtor = nv04_gr_chan_dtor,
 	.fini = nv04_gr_chan_fini,
-};
+पूर्ण;
 
-static int
-nv04_gr_chan_new(struct nvkm_gr *base, struct nvkm_fifo_chan *fifoch,
-		 const struct nvkm_oclass *oclass, struct nvkm_object **pobject)
-{
-	struct nv04_gr *gr = nv04_gr(base);
-	struct nv04_gr_chan *chan;
-	unsigned long flags;
+अटल पूर्णांक
+nv04_gr_chan_new(काष्ठा nvkm_gr *base, काष्ठा nvkm_fअगरo_chan *fअगरoch,
+		 स्थिर काष्ठा nvkm_oclass *oclass, काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nv04_gr *gr = nv04_gr(base);
+	काष्ठा nv04_gr_chan *chan;
+	अचिन्हित दीर्घ flags;
 
-	if (!(chan = kzalloc(sizeof(*chan), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(chan = kzalloc(माप(*chan), GFP_KERNEL)))
+		वापस -ENOMEM;
 	nvkm_object_ctor(&nv04_gr_chan, oclass, &chan->object);
 	chan->gr = gr;
-	chan->chid = fifoch->chid;
+	chan->chid = fअगरoch->chid;
 	*pobject = &chan->object;
 
 	*ctx_reg(chan, NV04_PGRAPH_DEBUG_3) = 0xfad4ff31;
@@ -1200,80 +1201,80 @@ nv04_gr_chan_new(struct nvkm_gr *base, struct nvkm_fifo_chan *fifoch,
 	spin_lock_irqsave(&gr->lock, flags);
 	gr->chan[chan->chid] = chan;
 	spin_unlock_irqrestore(&gr->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*******************************************************************************
  * PGRAPH engine/subdev functions
  ******************************************************************************/
 
 bool
-nv04_gr_idle(struct nvkm_gr *gr)
-{
-	struct nvkm_subdev *subdev = &gr->engine.subdev;
-	struct nvkm_device *device = subdev->device;
+nv04_gr_idle(काष्ठा nvkm_gr *gr)
+अणु
+	काष्ठा nvkm_subdev *subdev = &gr->engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 mask = 0xffffffff;
 
-	if (device->card_type == NV_40)
+	अगर (device->card_type == NV_40)
 		mask &= ~NV40_PGRAPH_STATUS_SYNC_STALL;
 
-	if (nvkm_msec(device, 2000,
-		if (!(nvkm_rd32(device, NV04_PGRAPH_STATUS) & mask))
-			break;
-	) < 0) {
+	अगर (nvkm_msec(device, 2000,
+		अगर (!(nvkm_rd32(device, NV04_PGRAPH_STATUS) & mask))
+			अवरोध;
+	) < 0) अणु
 		nvkm_error(subdev, "idle timed out with status %08x\n",
 			   nvkm_rd32(device, NV04_PGRAPH_STATUS));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static const struct nvkm_bitfield
-nv04_gr_intr_name[] = {
-	{ NV_PGRAPH_INTR_NOTIFY, "NOTIFY" },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_bitfield
+nv04_gr_पूर्णांकr_name[] = अणु
+	अणु NV_PGRAPH_INTR_NOTIFY, "NOTIFY" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct nvkm_bitfield
-nv04_gr_nstatus[] = {
-	{ NV04_PGRAPH_NSTATUS_STATE_IN_USE,       "STATE_IN_USE" },
-	{ NV04_PGRAPH_NSTATUS_INVALID_STATE,      "INVALID_STATE" },
-	{ NV04_PGRAPH_NSTATUS_BAD_ARGUMENT,       "BAD_ARGUMENT" },
-	{ NV04_PGRAPH_NSTATUS_PROTECTION_FAULT,   "PROTECTION_FAULT" },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_bitfield
+nv04_gr_nstatus[] = अणु
+	अणु NV04_PGRAPH_NSTATUS_STATE_IN_USE,       "STATE_IN_USE" पूर्ण,
+	अणु NV04_PGRAPH_NSTATUS_INVALID_STATE,      "INVALID_STATE" पूर्ण,
+	अणु NV04_PGRAPH_NSTATUS_BAD_ARGUMENT,       "BAD_ARGUMENT" पूर्ण,
+	अणु NV04_PGRAPH_NSTATUS_PROTECTION_FAULT,   "PROTECTION_FAULT" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-const struct nvkm_bitfield
-nv04_gr_nsource[] = {
-	{ NV03_PGRAPH_NSOURCE_NOTIFICATION,       "NOTIFICATION" },
-	{ NV03_PGRAPH_NSOURCE_DATA_ERROR,         "DATA_ERROR" },
-	{ NV03_PGRAPH_NSOURCE_PROTECTION_ERROR,   "PROTECTION_ERROR" },
-	{ NV03_PGRAPH_NSOURCE_RANGE_EXCEPTION,    "RANGE_EXCEPTION" },
-	{ NV03_PGRAPH_NSOURCE_LIMIT_COLOR,        "LIMIT_COLOR" },
-	{ NV03_PGRAPH_NSOURCE_LIMIT_ZETA,         "LIMIT_ZETA" },
-	{ NV03_PGRAPH_NSOURCE_ILLEGAL_MTHD,       "ILLEGAL_MTHD" },
-	{ NV03_PGRAPH_NSOURCE_DMA_R_PROTECTION,   "DMA_R_PROTECTION" },
-	{ NV03_PGRAPH_NSOURCE_DMA_W_PROTECTION,   "DMA_W_PROTECTION" },
-	{ NV03_PGRAPH_NSOURCE_FORMAT_EXCEPTION,   "FORMAT_EXCEPTION" },
-	{ NV03_PGRAPH_NSOURCE_PATCH_EXCEPTION,    "PATCH_EXCEPTION" },
-	{ NV03_PGRAPH_NSOURCE_STATE_INVALID,      "STATE_INVALID" },
-	{ NV03_PGRAPH_NSOURCE_DOUBLE_NOTIFY,      "DOUBLE_NOTIFY" },
-	{ NV03_PGRAPH_NSOURCE_NOTIFY_IN_USE,      "NOTIFY_IN_USE" },
-	{ NV03_PGRAPH_NSOURCE_METHOD_CNT,         "METHOD_CNT" },
-	{ NV03_PGRAPH_NSOURCE_BFR_NOTIFICATION,   "BFR_NOTIFICATION" },
-	{ NV03_PGRAPH_NSOURCE_DMA_VTX_PROTECTION, "DMA_VTX_PROTECTION" },
-	{ NV03_PGRAPH_NSOURCE_DMA_WIDTH_A,        "DMA_WIDTH_A" },
-	{ NV03_PGRAPH_NSOURCE_DMA_WIDTH_B,        "DMA_WIDTH_B" },
-	{}
-};
+स्थिर काष्ठा nvkm_bitfield
+nv04_gr_nsource[] = अणु
+	अणु NV03_PGRAPH_NSOURCE_NOTIFICATION,       "NOTIFICATION" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_DATA_ERROR,         "DATA_ERROR" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_PROTECTION_ERROR,   "PROTECTION_ERROR" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_RANGE_EXCEPTION,    "RANGE_EXCEPTION" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_LIMIT_COLOR,        "LIMIT_COLOR" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_LIMIT_ZETA,         "LIMIT_ZETA" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_ILLEGAL_MTHD,       "ILLEGAL_MTHD" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_DMA_R_PROTECTION,   "DMA_R_PROTECTION" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_DMA_W_PROTECTION,   "DMA_W_PROTECTION" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_FORMAT_EXCEPTION,   "FORMAT_EXCEPTION" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_PATCH_EXCEPTION,    "PATCH_EXCEPTION" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_STATE_INVALID,      "STATE_INVALID" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_DOUBLE_NOTIFY,      "DOUBLE_NOTIFY" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_NOTIFY_IN_USE,      "NOTIFY_IN_USE" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_METHOD_CNT,         "METHOD_CNT" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_BFR_NOTIFICATION,   "BFR_NOTIFICATION" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_DMA_VTX_PROTECTION, "DMA_VTX_PROTECTION" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_DMA_WIDTH_A,        "DMA_WIDTH_A" पूर्ण,
+	अणु NV03_PGRAPH_NSOURCE_DMA_WIDTH_B,        "DMA_WIDTH_B" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void
-nv04_gr_intr(struct nvkm_gr *base)
-{
-	struct nv04_gr *gr = nv04_gr(base);
-	struct nvkm_subdev *subdev = &gr->base.engine.subdev;
-	struct nvkm_device *device = subdev->device;
+अटल व्योम
+nv04_gr_पूर्णांकr(काष्ठा nvkm_gr *base)
+अणु
+	काष्ठा nv04_gr *gr = nv04_gr(base);
+	काष्ठा nvkm_subdev *subdev = &gr->base.engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 stat = nvkm_rd32(device, NV03_PGRAPH_INTR);
 	u32 nsource = nvkm_rd32(device, NV03_PGRAPH_NSOURCE);
 	u32 nstatus = nvkm_rd32(device, NV03_PGRAPH_NSTATUS);
@@ -1285,52 +1286,52 @@ nv04_gr_intr(struct nvkm_gr *base)
 	u32 class = nvkm_rd32(device, 0x400180 + subc * 4) & 0xff;
 	u32 inst = (nvkm_rd32(device, 0x40016c) & 0xffff) << 4;
 	u32 show = stat;
-	char msg[128], src[128], sta[128];
-	struct nv04_gr_chan *chan;
-	unsigned long flags;
+	अक्षर msg[128], src[128], sta[128];
+	काष्ठा nv04_gr_chan *chan;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gr->lock, flags);
 	chan = gr->chan[chid];
 
-	if (stat & NV_PGRAPH_INTR_NOTIFY) {
-		if (chan && (nsource & NV03_PGRAPH_NSOURCE_ILLEGAL_MTHD)) {
-			if (!nv04_gr_mthd(device, inst, mthd, data))
+	अगर (stat & NV_PGRAPH_INTR_NOTIFY) अणु
+		अगर (chan && (nsource & NV03_PGRAPH_NSOURCE_ILLEGAL_MTHD)) अणु
+			अगर (!nv04_gr_mthd(device, inst, mthd, data))
 				show &= ~NV_PGRAPH_INTR_NOTIFY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (stat & NV_PGRAPH_INTR_CONTEXT_SWITCH) {
+	अगर (stat & NV_PGRAPH_INTR_CONTEXT_SWITCH) अणु
 		nvkm_wr32(device, NV03_PGRAPH_INTR, NV_PGRAPH_INTR_CONTEXT_SWITCH);
 		stat &= ~NV_PGRAPH_INTR_CONTEXT_SWITCH;
 		show &= ~NV_PGRAPH_INTR_CONTEXT_SWITCH;
-		nv04_gr_context_switch(gr);
-	}
+		nv04_gr_context_चयन(gr);
+	पूर्ण
 
 	nvkm_wr32(device, NV03_PGRAPH_INTR, stat);
 	nvkm_wr32(device, NV04_PGRAPH_FIFO, 0x00000001);
 
-	if (show) {
-		nvkm_snprintbf(msg, sizeof(msg), nv04_gr_intr_name, show);
-		nvkm_snprintbf(src, sizeof(src), nv04_gr_nsource, nsource);
-		nvkm_snprintbf(sta, sizeof(sta), nv04_gr_nstatus, nstatus);
+	अगर (show) अणु
+		nvkm_snprपूर्णांकbf(msg, माप(msg), nv04_gr_पूर्णांकr_name, show);
+		nvkm_snprपूर्णांकbf(src, माप(src), nv04_gr_nsource, nsource);
+		nvkm_snprपूर्णांकbf(sta, माप(sta), nv04_gr_nstatus, nstatus);
 		nvkm_error(subdev, "intr %08x [%s] nsource %08x [%s] "
 				   "nstatus %08x [%s] ch %d [%s] subc %d "
 				   "class %04x mthd %04x data %08x\n",
 			   show, msg, nsource, src, nstatus, sta, chid,
 			   chan ? chan->object.client->name : "unknown",
 			   subc, class, mthd, data);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&gr->lock, flags);
-}
+पूर्ण
 
-static int
-nv04_gr_init(struct nvkm_gr *base)
-{
-	struct nv04_gr *gr = nv04_gr(base);
-	struct nvkm_device *device = gr->base.engine.subdev.device;
+अटल पूर्णांक
+nv04_gr_init(काष्ठा nvkm_gr *base)
+अणु
+	काष्ठा nv04_gr *gr = nv04_gr(base);
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
 
-	/* Enable PGRAPH interrupts */
+	/* Enable PGRAPH पूर्णांकerrupts */
 	nvkm_wr32(device, NV03_PGRAPH_INTR, 0xFFFFFFFF);
 	nvkm_wr32(device, NV03_PGRAPH_INTR_EN, 0xFFFFFFFF);
 
@@ -1355,72 +1356,72 @@ nv04_gr_init(struct nvkm_gr *base)
 	nvkm_wr32(device, NV04_PGRAPH_CTX_CONTROL  , 0x10000100);
 	nvkm_mask(device, NV04_PGRAPH_CTX_USER, 0xff000000, 0x0f000000);
 
-	/* These don't belong here, they're part of a per-channel context */
+	/* These करोn't belong here, they're part of a per-channel context */
 	nvkm_wr32(device, NV04_PGRAPH_PATTERN_SHAPE, 0x00000000);
 	nvkm_wr32(device, NV04_PGRAPH_BETA_AND     , 0xFFFFFFFF);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_gr_func
-nv04_gr = {
+अटल स्थिर काष्ठा nvkm_gr_func
+nv04_gr = अणु
 	.init = nv04_gr_init,
-	.intr = nv04_gr_intr,
+	.पूर्णांकr = nv04_gr_पूर्णांकr,
 	.chan_new = nv04_gr_chan_new,
-	.sclass = {
-		{ -1, -1, 0x0012, &nv04_gr_object }, /* beta1 */
-		{ -1, -1, 0x0017, &nv04_gr_object }, /* chroma */
-		{ -1, -1, 0x0018, &nv04_gr_object }, /* pattern (nv01) */
-		{ -1, -1, 0x0019, &nv04_gr_object }, /* clip */
-		{ -1, -1, 0x001c, &nv04_gr_object }, /* line */
-		{ -1, -1, 0x001d, &nv04_gr_object }, /* tri */
-		{ -1, -1, 0x001e, &nv04_gr_object }, /* rect */
-		{ -1, -1, 0x001f, &nv04_gr_object },
-		{ -1, -1, 0x0021, &nv04_gr_object },
-		{ -1, -1, 0x0030, &nv04_gr_object }, /* null */
-		{ -1, -1, 0x0036, &nv04_gr_object },
-		{ -1, -1, 0x0037, &nv04_gr_object },
-		{ -1, -1, 0x0038, &nv04_gr_object }, /* dvd subpicture */
-		{ -1, -1, 0x0039, &nv04_gr_object }, /* m2mf */
-		{ -1, -1, 0x0042, &nv04_gr_object }, /* surf2d */
-		{ -1, -1, 0x0043, &nv04_gr_object }, /* rop */
-		{ -1, -1, 0x0044, &nv04_gr_object }, /* pattern */
-		{ -1, -1, 0x0048, &nv04_gr_object },
-		{ -1, -1, 0x004a, &nv04_gr_object },
-		{ -1, -1, 0x004b, &nv04_gr_object },
-		{ -1, -1, 0x0052, &nv04_gr_object }, /* swzsurf */
-		{ -1, -1, 0x0053, &nv04_gr_object },
-		{ -1, -1, 0x0054, &nv04_gr_object }, /* ttri */
-		{ -1, -1, 0x0055, &nv04_gr_object }, /* mtri */
-		{ -1, -1, 0x0057, &nv04_gr_object }, /* chroma */
-		{ -1, -1, 0x0058, &nv04_gr_object }, /* surf_dst */
-		{ -1, -1, 0x0059, &nv04_gr_object }, /* surf_src */
-		{ -1, -1, 0x005a, &nv04_gr_object }, /* surf_color */
-		{ -1, -1, 0x005b, &nv04_gr_object }, /* surf_zeta */
-		{ -1, -1, 0x005c, &nv04_gr_object }, /* line */
-		{ -1, -1, 0x005d, &nv04_gr_object }, /* tri */
-		{ -1, -1, 0x005e, &nv04_gr_object }, /* rect */
-		{ -1, -1, 0x005f, &nv04_gr_object },
-		{ -1, -1, 0x0060, &nv04_gr_object },
-		{ -1, -1, 0x0061, &nv04_gr_object },
-		{ -1, -1, 0x0064, &nv04_gr_object }, /* iifc (nv05) */
-		{ -1, -1, 0x0065, &nv04_gr_object }, /* ifc (nv05) */
-		{ -1, -1, 0x0066, &nv04_gr_object }, /* sifc (nv05) */
-		{ -1, -1, 0x0072, &nv04_gr_object }, /* beta4 */
-		{ -1, -1, 0x0076, &nv04_gr_object },
-		{ -1, -1, 0x0077, &nv04_gr_object },
-		{}
-	}
-};
+	.sclass = अणु
+		अणु -1, -1, 0x0012, &nv04_gr_object पूर्ण, /* beta1 */
+		अणु -1, -1, 0x0017, &nv04_gr_object पूर्ण, /* chroma */
+		अणु -1, -1, 0x0018, &nv04_gr_object पूर्ण, /* pattern (nv01) */
+		अणु -1, -1, 0x0019, &nv04_gr_object पूर्ण, /* clip */
+		अणु -1, -1, 0x001c, &nv04_gr_object पूर्ण, /* line */
+		अणु -1, -1, 0x001d, &nv04_gr_object पूर्ण, /* tri */
+		अणु -1, -1, 0x001e, &nv04_gr_object पूर्ण, /* rect */
+		अणु -1, -1, 0x001f, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0021, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0030, &nv04_gr_object पूर्ण, /* null */
+		अणु -1, -1, 0x0036, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0037, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0038, &nv04_gr_object पूर्ण, /* dvd subpicture */
+		अणु -1, -1, 0x0039, &nv04_gr_object पूर्ण, /* m2mf */
+		अणु -1, -1, 0x0042, &nv04_gr_object पूर्ण, /* surf2d */
+		अणु -1, -1, 0x0043, &nv04_gr_object पूर्ण, /* rop */
+		अणु -1, -1, 0x0044, &nv04_gr_object पूर्ण, /* pattern */
+		अणु -1, -1, 0x0048, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x004a, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x004b, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0052, &nv04_gr_object पूर्ण, /* swzsurf */
+		अणु -1, -1, 0x0053, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0054, &nv04_gr_object पूर्ण, /* ttri */
+		अणु -1, -1, 0x0055, &nv04_gr_object पूर्ण, /* mtri */
+		अणु -1, -1, 0x0057, &nv04_gr_object पूर्ण, /* chroma */
+		अणु -1, -1, 0x0058, &nv04_gr_object पूर्ण, /* surf_dst */
+		अणु -1, -1, 0x0059, &nv04_gr_object पूर्ण, /* surf_src */
+		अणु -1, -1, 0x005a, &nv04_gr_object पूर्ण, /* surf_color */
+		अणु -1, -1, 0x005b, &nv04_gr_object पूर्ण, /* surf_zeta */
+		अणु -1, -1, 0x005c, &nv04_gr_object पूर्ण, /* line */
+		अणु -1, -1, 0x005d, &nv04_gr_object पूर्ण, /* tri */
+		अणु -1, -1, 0x005e, &nv04_gr_object पूर्ण, /* rect */
+		अणु -1, -1, 0x005f, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0060, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0061, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0064, &nv04_gr_object पूर्ण, /* iअगरc (nv05) */
+		अणु -1, -1, 0x0065, &nv04_gr_object पूर्ण, /* अगरc (nv05) */
+		अणु -1, -1, 0x0066, &nv04_gr_object पूर्ण, /* sअगरc (nv05) */
+		अणु -1, -1, 0x0072, &nv04_gr_object पूर्ण, /* beta4 */
+		अणु -1, -1, 0x0076, &nv04_gr_object पूर्ण,
+		अणु -1, -1, 0x0077, &nv04_gr_object पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-nv04_gr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
-{
-	struct nv04_gr *gr;
+पूर्णांक
+nv04_gr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
+अणु
+	काष्ठा nv04_gr *gr;
 
-	if (!(gr = kzalloc(sizeof(*gr), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(gr = kzalloc(माप(*gr), GFP_KERNEL)))
+		वापस -ENOMEM;
 	spin_lock_init(&gr->lock);
 	*pgr = &gr->base;
 
-	return nvkm_gr_ctor(&nv04_gr, device, type, inst, true, &gr->base);
-}
+	वापस nvkm_gr_ctor(&nv04_gr, device, type, inst, true, &gr->base);
+पूर्ण

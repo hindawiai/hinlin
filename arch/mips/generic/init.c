@@ -1,203 +1,204 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Imagination Technologies
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
-#include <linux/clk.h>
-#include <linux/clocksource.h>
-#include <linux/init.h>
-#include <linux/irqchip.h>
-#include <linux/of_clk.h>
-#include <linux/of_fdt.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/of_fdt.h>
 
-#include <asm/bootinfo.h>
-#include <asm/fw/fw.h>
-#include <asm/irq_cpu.h>
-#include <asm/machine.h>
-#include <asm/mips-cps.h>
-#include <asm/prom.h>
-#include <asm/smp-ops.h>
-#include <asm/time.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/fw/fw.h>
+#समावेश <यंत्र/irq_cpu.h>
+#समावेश <यंत्र/machine.h>
+#समावेश <यंत्र/mips-cps.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/smp-ops.h>
+#समावेश <यंत्र/समय.स>
 
-static __initconst const void *fdt;
-static __initconst const struct mips_machine *mach;
-static __initconst const void *mach_match_data;
+अटल __initस्थिर स्थिर व्योम *fdt;
+अटल __initस्थिर स्थिर काष्ठा mips_machine *mach;
+अटल __initस्थिर स्थिर व्योम *mach_match_data;
 
-void __init prom_init(void)
-{
+व्योम __init prom_init(व्योम)
+अणु
 	plat_get_fdt();
 	BUG_ON(!fdt);
-}
+पूर्ण
 
-void __init *plat_get_fdt(void)
-{
-	const struct mips_machine *check_mach;
-	const struct of_device_id *match;
+व्योम __init *plat_get_fdt(व्योम)
+अणु
+	स्थिर काष्ठा mips_machine *check_mach;
+	स्थिर काष्ठा of_device_id *match;
 
-	if (fdt)
-		/* Already set up */
-		return (void *)fdt;
+	अगर (fdt)
+		/* Alपढ़ोy set up */
+		वापस (व्योम *)fdt;
 
-	fdt = (void *)get_fdt();
-	if (fdt && !fdt_check_header(fdt)) {
+	fdt = (व्योम *)get_fdt();
+	अगर (fdt && !fdt_check_header(fdt)) अणु
 		/*
-		 * We have been provided with the appropriate device tree for
-		 * the board. Make use of it & search for any machine struct
+		 * We have been provided with the appropriate device tree क्रम
+		 * the board. Make use of it & search क्रम any machine काष्ठा
 		 * based upon the root compatible string.
 		 */
-		for_each_mips_machine(check_mach) {
+		क्रम_each_mips_machine(check_mach) अणु
 			match = mips_machine_is_compatible(check_mach, fdt);
-			if (match) {
+			अगर (match) अणु
 				mach = check_mach;
 				mach_match_data = match->data;
-				break;
-			}
-		}
-	} else if (IS_ENABLED(CONFIG_LEGACY_BOARDS)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_LEGACY_BOARDS)) अणु
 		/*
-		 * We weren't booted using the UHI boot protocol, but do
+		 * We weren't booted using the UHI boot protocol, but करो
 		 * support some number of boards with legacy boot protocols.
 		 * Attempt to find the right one.
 		 */
-		for_each_mips_machine(check_mach) {
-			if (!check_mach->detect)
-				continue;
+		क्रम_each_mips_machine(check_mach) अणु
+			अगर (!check_mach->detect)
+				जारी;
 
-			if (!check_mach->detect())
-				continue;
+			अगर (!check_mach->detect())
+				जारी;
 
 			mach = check_mach;
-		}
+		पूर्ण
 
 		/*
-		 * If we don't recognise the machine then we can't continue, so
+		 * If we करोn't recognise the machine then we can't जारी, so
 		 * die here.
 		 */
 		BUG_ON(!mach);
 
 		/* Retrieve the machine's FDT */
 		fdt = mach->fdt;
-	}
-	return (void *)fdt;
-}
+	पूर्ण
+	वापस (व्योम *)fdt;
+पूर्ण
 
-#ifdef CONFIG_RELOCATABLE
+#अगर_घोषित CONFIG_RELOCATABLE
 
-void __init plat_fdt_relocated(void *new_location)
-{
+व्योम __init plat_fdt_relocated(व्योम *new_location)
+अणु
 	/*
-	 * reset fdt as the cached value would point to the location
-	 * before relocations happened and update the location argument
-	 * if it was passed using UHI
+	 * reset fdt as the cached value would poपूर्णांक to the location
+	 * beक्रमe relocations happened and update the location argument
+	 * अगर it was passed using UHI
 	 */
-	fdt = NULL;
+	fdt = शून्य;
 
-	if (fw_arg0 == -2)
-		fw_arg1 = (unsigned long)new_location;
-}
+	अगर (fw_arg0 == -2)
+		fw_arg1 = (अचिन्हित दीर्घ)new_location;
+पूर्ण
 
-#endif /* CONFIG_RELOCATABLE */
+#पूर्ण_अगर /* CONFIG_RELOCATABLE */
 
-void __init plat_mem_setup(void)
-{
-	if (mach && mach->fixup_fdt)
+व्योम __init plat_mem_setup(व्योम)
+अणु
+	अगर (mach && mach->fixup_fdt)
 		fdt = mach->fixup_fdt(fdt, mach_match_data);
 
 	fw_init_cmdline();
-	__dt_setup_arch((void *)fdt);
-}
+	__dt_setup_arch((व्योम *)fdt);
+पूर्ण
 
-void __init device_tree_init(void)
-{
-	int err;
+व्योम __init device_tree_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	unflatten_and_copy_device_tree();
 	mips_cpc_probe();
 
-	err = register_cps_smp_ops();
-	if (err)
-		err = register_up_smp_ops();
-}
+	err = रेजिस्टर_cps_smp_ops();
+	अगर (err)
+		err = रेजिस्टर_up_smp_ops();
+पूर्ण
 
-int __init apply_mips_fdt_fixups(void *fdt_out, size_t fdt_out_size,
-				 const void *fdt_in,
-				 const struct mips_fdt_fixup *fixups)
-{
-	int err;
+पूर्णांक __init apply_mips_fdt_fixups(व्योम *fdt_out, माप_प्रकार fdt_out_size,
+				 स्थिर व्योम *fdt_in,
+				 स्थिर काष्ठा mips_fdt_fixup *fixups)
+अणु
+	पूर्णांक err;
 
-	err = fdt_open_into(fdt_in, fdt_out, fdt_out_size);
-	if (err) {
+	err = fdt_खोलो_पूर्णांकo(fdt_in, fdt_out, fdt_out_size);
+	अगर (err) अणु
 		pr_err("Failed to open FDT\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	for (; fixups->apply; fixups++) {
+	क्रम (; fixups->apply; fixups++) अणु
 		err = fixups->apply(fdt_out);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Failed to apply FDT fixup \"%s\"\n",
 			       fixups->description);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	err = fdt_pack(fdt_out);
-	if (err)
+	अगर (err)
 		pr_err("Failed to pack FDT\n");
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void __init plat_time_init(void)
-{
-	struct device_node *np;
-	struct clk *clk;
+व्योम __init plat_समय_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा clk *clk;
 
-	of_clk_init(NULL);
+	of_clk_init(शून्य);
 
-	if (!cpu_has_counter) {
+	अगर (!cpu_has_counter) अणु
 		mips_hpt_frequency = 0;
-	} else if (mach && mach->measure_hpt_freq) {
+	पूर्ण अन्यथा अगर (mach && mach->measure_hpt_freq) अणु
 		mips_hpt_frequency = mach->measure_hpt_freq();
-	} else {
-		np = of_get_cpu_node(0, NULL);
-		if (!np) {
+	पूर्ण अन्यथा अणु
+		np = of_get_cpu_node(0, शून्य);
+		अगर (!np) अणु
 			pr_err("Failed to get CPU node\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		clk = of_clk_get(np, 0);
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			pr_err("Failed to get CPU clock: %ld\n", PTR_ERR(clk));
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		mips_hpt_frequency = clk_get_rate(clk);
 		clk_put(clk);
 
-		switch (boot_cpu_type()) {
-		case CPU_20KC:
-		case CPU_25KF:
-			/* The counter runs at the CPU clock rate */
-			break;
-		default:
-			/* The counter runs at half the CPU clock rate */
+		चयन (boot_cpu_type()) अणु
+		हाल CPU_20KC:
+		हाल CPU_25KF:
+			/* The counter runs at the CPU घड़ी rate */
+			अवरोध;
+		शेष:
+			/* The counter runs at half the CPU घड़ी rate */
 			mips_hpt_frequency /= 2;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	timer_probe();
-}
+	समयr_probe();
+पूर्ण
 
-void __init arch_init_irq(void)
-{
-	struct device_node *intc_node;
+व्योम __init arch_init_irq(व्योम)
+अणु
+	काष्ठा device_node *पूर्णांकc_node;
 
-	intc_node = of_find_compatible_node(NULL, NULL,
+	पूर्णांकc_node = of_find_compatible_node(शून्य, शून्य,
 					    "mti,cpu-interrupt-controller");
-	if (!cpu_has_veic && !intc_node)
+	अगर (!cpu_has_veic && !पूर्णांकc_node)
 		mips_cpu_irq_init();
-	of_node_put(intc_node);
+	of_node_put(पूर्णांकc_node);
 
 	irqchip_init();
-}
+पूर्ण

@@ -1,149 +1,150 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 2002 Intersil Americas Inc.
  *  Copyright (C) 2003 Herbert Valerio Riedel <hvr@gnu.org>
  *  Copyright (C) 2003 Luis R. Rodriguez <mcgrof@ruslug.rutgers.edu>
  */
 
-#include <linux/hardirq.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <linux/netdevice.h>
-#include <linux/ethtool.h>
-#include <linux/pci.h>
-#include <linux/sched.h>
-#include <linux/etherdevice.h>
-#include <linux/delay.h>
-#include <linux/if_arp.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/अगर_arp.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#include "prismcompat.h"
-#include "isl_38xx.h"
-#include "isl_ioctl.h"
-#include "islpci_dev.h"
-#include "islpci_mgt.h"
-#include "islpci_eth.h"
-#include "oid_mgt.h"
+#समावेश "prismcompat.h"
+#समावेश "isl_38xx.h"
+#समावेश "isl_ioctl.h"
+#समावेश "islpci_dev.h"
+#समावेश "islpci_mgt.h"
+#समावेश "islpci_eth.h"
+#समावेश "oid_mgt.h"
 
-#define ISL3877_IMAGE_FILE	"isl3877"
-#define ISL3886_IMAGE_FILE	"isl3886"
-#define ISL3890_IMAGE_FILE	"isl3890"
-MODULE_FIRMWARE(ISL3877_IMAGE_FILE);
-MODULE_FIRMWARE(ISL3886_IMAGE_FILE);
-MODULE_FIRMWARE(ISL3890_IMAGE_FILE);
+#घोषणा ISL3877_IMAGE_खाता	"isl3877"
+#घोषणा ISL3886_IMAGE_खाता	"isl3886"
+#घोषणा ISL3890_IMAGE_खाता	"isl3890"
+MODULE_FIRMWARE(ISL3877_IMAGE_खाता);
+MODULE_FIRMWARE(ISL3886_IMAGE_खाता);
+MODULE_FIRMWARE(ISL3890_IMAGE_खाता);
 
-static int prism54_bring_down(islpci_private *);
-static int islpci_alloc_memory(islpci_private *);
+अटल पूर्णांक prism54_bring_करोwn(islpci_निजी *);
+अटल पूर्णांक islpci_alloc_memory(islpci_निजी *);
 
 /* Temporary dummy MAC address to use until firmware is loaded.
- * The idea there is that some tools (such as nameif) may query
- * the MAC address before the netdev is 'open'. By using a valid
+ * The idea there is that some tools (such as nameअगर) may query
+ * the MAC address beक्रमe the netdev is 'open'. By using a valid
  * OUI prefix, they can process the netdev properly.
- * Of course, this is not the final/real MAC address. It doesn't
- * matter, as you are suppose to be able to change it anytime via
+ * Of course, this is not the final/real MAC address. It करोesn't
+ * matter, as you are suppose to be able to change it anyसमय via
  * ndev->set_mac_address. Jean II */
-static const unsigned char	dummy_mac[6] = { 0x00, 0x30, 0xB4, 0x00, 0x00, 0x00 };
+अटल स्थिर अचिन्हित अक्षर	dummy_mac[6] = अणु 0x00, 0x30, 0xB4, 0x00, 0x00, 0x00 पूर्ण;
 
-static int
-isl_upload_firmware(islpci_private *priv)
-{
+अटल पूर्णांक
+isl_upload_firmware(islpci_निजी *priv)
+अणु
 	u32 reg, rc;
-	void __iomem *device_base = priv->device_base;
+	व्योम __iomem *device_base = priv->device_base;
 
 	/* clear the RAMBoot and the Reset bit */
-	reg = readl(device_base + ISL38XX_CTRL_STAT_REG);
+	reg = पढ़ोl(device_base + ISL38XX_CTRL_STAT_REG);
 	reg &= ~ISL38XX_CTRL_STAT_RESET;
 	reg &= ~ISL38XX_CTRL_STAT_RAMBOOT;
-	writel(reg, device_base + ISL38XX_CTRL_STAT_REG);
+	ग_लिखोl(reg, device_base + ISL38XX_CTRL_STAT_REG);
 	wmb();
 	udelay(ISL38XX_WRITEIO_DELAY);
 
-	/* set the Reset bit without reading the register ! */
+	/* set the Reset bit without पढ़ोing the रेजिस्टर ! */
 	reg |= ISL38XX_CTRL_STAT_RESET;
-	writel(reg, device_base + ISL38XX_CTRL_STAT_REG);
+	ग_लिखोl(reg, device_base + ISL38XX_CTRL_STAT_REG);
 	wmb();
 	udelay(ISL38XX_WRITEIO_DELAY);
 
 	/* clear the Reset bit */
 	reg &= ~ISL38XX_CTRL_STAT_RESET;
-	writel(reg, device_base + ISL38XX_CTRL_STAT_REG);
+	ग_लिखोl(reg, device_base + ISL38XX_CTRL_STAT_REG);
 	wmb();
 
-	/* wait a while for the device to reboot */
+	/* रुको a जबतक क्रम the device to reboot */
 	mdelay(50);
 
-	{
-		const struct firmware *fw_entry = NULL;
-		long fw_len;
-		const u32 *fw_ptr;
+	अणु
+		स्थिर काष्ठा firmware *fw_entry = शून्य;
+		दीर्घ fw_len;
+		स्थिर u32 *fw_ptr;
 
 		rc = request_firmware(&fw_entry, priv->firmware, PRISM_FW_PDEV);
-		if (rc) {
-			printk(KERN_ERR
+		अगर (rc) अणु
+			prपूर्णांकk(KERN_ERR
 			       "%s: request_firmware() failed for '%s'\n",
 			       "prism54", priv->firmware);
-			return rc;
-		}
-		/* prepare the Direct Memory Base register */
+			वापस rc;
+		पूर्ण
+		/* prepare the Direct Memory Base रेजिस्टर */
 		reg = ISL38XX_DEV_FIRMWARE_ADDRES;
 
 		fw_ptr = (u32 *) fw_entry->data;
 		fw_len = fw_entry->size;
 
-		if (fw_len % 4) {
-			printk(KERN_ERR
+		अगर (fw_len % 4) अणु
+			prपूर्णांकk(KERN_ERR
 			       "%s: firmware '%s' size is not multiple of 32bit, aborting!\n",
 			       "prism54", priv->firmware);
 			release_firmware(fw_entry);
-			return -EILSEQ; /* Illegal byte sequence  */;
-		}
+			वापस -EILSEQ; /* Illegal byte sequence  */;
+		पूर्ण
 
-		while (fw_len > 0) {
-			long _fw_len =
+		जबतक (fw_len > 0) अणु
+			दीर्घ _fw_len =
 			    (fw_len >
 			     ISL38XX_MEMORY_WINDOW_SIZE) ?
 			    ISL38XX_MEMORY_WINDOW_SIZE : fw_len;
-			u32 __iomem *dev_fw_ptr = device_base + ISL38XX_DIRECT_MEM_WIN;
+			u32 __iomem *dev_fw_ptr = device_base + ISL38XX_सूचीECT_MEM_WIN;
 
-			/* set the card's base address for writing the data */
+			/* set the card's base address क्रम writing the data */
 			isl38xx_w32_flush(device_base, reg,
-					  ISL38XX_DIR_MEM_BASE_REG);
+					  ISL38XX_सूची_MEM_BASE_REG);
 			wmb();	/* be paranoid */
 
-			/* increment the write address for next iteration */
+			/* increment the ग_लिखो address क्रम next iteration */
 			reg += _fw_len;
 			fw_len -= _fw_len;
 
-			/* write the data to the Direct Memory Window 32bit-wise */
-			/* memcpy_toio() doesn't guarantee 32bit writes :-| */
-			while (_fw_len > 0) {
-				/* use non-swapping writel() */
-				__raw_writel(*fw_ptr, dev_fw_ptr);
+			/* ग_लिखो the data to the Direct Memory Winकरोw 32bit-wise */
+			/* स_नकल_toio() करोesn't guarantee 32bit ग_लिखोs :-| */
+			जबतक (_fw_len > 0) अणु
+				/* use non-swapping ग_लिखोl() */
+				__raw_ग_लिखोl(*fw_ptr, dev_fw_ptr);
 				fw_ptr++, dev_fw_ptr++;
 				_fw_len -= 4;
-			}
+			पूर्ण
 
 			/* flush PCI posting */
-			(void) readl(device_base + ISL38XX_PCI_POSTING_FLUSH);
+			(व्योम) पढ़ोl(device_base + ISL38XX_PCI_POSTING_FLUSH);
 			wmb();	/* be paranoid again */
 
 			BUG_ON(_fw_len != 0);
-		}
+		पूर्ण
 
 		BUG_ON(fw_len != 0);
 
-		/* Firmware version is at offset 40 (also for "newmac") */
-		printk(KERN_DEBUG "%s: firmware version: %.8s\n",
+		/* Firmware version is at offset 40 (also क्रम "newmac") */
+		prपूर्णांकk(KERN_DEBUG "%s: firmware version: %.8s\n",
 		       priv->ndev->name, fw_entry->data + 40);
 
 		release_firmware(fw_entry);
-	}
+	पूर्ण
 
 	/* now reset the device
 	 * clear the Reset & ClkRun bit, set the RAMBoot bit */
-	reg = readl(device_base + ISL38XX_CTRL_STAT_REG);
+	reg = पढ़ोl(device_base + ISL38XX_CTRL_STAT_REG);
 	reg &= ~ISL38XX_CTRL_STAT_CLKRUN;
 	reg &= ~ISL38XX_CTRL_STAT_RESET;
 	reg |= ISL38XX_CTRL_STAT_RAMBOOT;
@@ -152,76 +153,76 @@ isl_upload_firmware(islpci_private *priv)
 	udelay(ISL38XX_WRITEIO_DELAY);
 
 	/* set the reset bit latches the host override and RAMBoot bits
-	 * into the device for operation when the reset bit is reset */
+	 * पूर्णांकo the device क्रम operation when the reset bit is reset */
 	reg |= ISL38XX_CTRL_STAT_RESET;
-	writel(reg, device_base + ISL38XX_CTRL_STAT_REG);
-	/* don't do flush PCI posting here! */
+	ग_लिखोl(reg, device_base + ISL38XX_CTRL_STAT_REG);
+	/* करोn't करो flush PCI posting here! */
 	wmb();
 	udelay(ISL38XX_WRITEIO_DELAY);
 
 	/* clear the reset bit should start the whole circus */
 	reg &= ~ISL38XX_CTRL_STAT_RESET;
-	writel(reg, device_base + ISL38XX_CTRL_STAT_REG);
-	/* don't do flush PCI posting here! */
+	ग_लिखोl(reg, device_base + ISL38XX_CTRL_STAT_REG);
+	/* करोn't करो flush PCI posting here! */
 	wmb();
 	udelay(ISL38XX_WRITEIO_DELAY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /******************************************************************************
     Device Interrupt Handler
 ******************************************************************************/
 
-irqreturn_t
-islpci_interrupt(int irq, void *config)
-{
+irqवापस_t
+islpci_पूर्णांकerrupt(पूर्णांक irq, व्योम *config)
+अणु
 	u32 reg;
-	islpci_private *priv = config;
-	struct net_device *ndev = priv->ndev;
-	void __iomem *device = priv->device_base;
-	int powerstate = ISL38XX_PSM_POWERSAVE_STATE;
+	islpci_निजी *priv = config;
+	काष्ठा net_device *ndev = priv->ndev;
+	व्योम __iomem *device = priv->device_base;
+	पूर्णांक घातerstate = ISL38XX_PSM_POWERSAVE_STATE;
 
-	/* lock the interrupt handler */
+	/* lock the पूर्णांकerrupt handler */
 	spin_lock(&priv->slock);
 
-	/* received an interrupt request on a shared IRQ line
+	/* received an पूर्णांकerrupt request on a shared IRQ line
 	 * first check whether the device is in sleep mode */
-	reg = readl(device + ISL38XX_CTRL_STAT_REG);
-	if (reg & ISL38XX_CTRL_STAT_SLEEPMODE)
-		/* device is in sleep mode, IRQ was generated by someone else */
-	{
-#if VERBOSE > SHOW_ERROR_MESSAGES
+	reg = पढ़ोl(device + ISL38XX_CTRL_STAT_REG);
+	अगर (reg & ISL38XX_CTRL_STAT_SLEEPMODE)
+		/* device is in sleep mode, IRQ was generated by someone अन्यथा */
+	अणु
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 		DEBUG(SHOW_TRACING, "Assuming someone else called the IRQ\n");
-#endif
+#पूर्ण_अगर
 		spin_unlock(&priv->slock);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 
-	/* check whether there is any source of interrupt on the device */
-	reg = readl(device + ISL38XX_INT_IDENT_REG);
+	/* check whether there is any source of पूर्णांकerrupt on the device */
+	reg = पढ़ोl(device + ISL38XX_INT_IDENT_REG);
 
 	/* also check the contents of the Interrupt Enable Register, because this
-	 * will filter out interrupt sources from other devices on the same irq ! */
-	reg &= readl(device + ISL38XX_INT_EN_REG);
+	 * will filter out पूर्णांकerrupt sources from other devices on the same irq ! */
+	reg &= पढ़ोl(device + ISL38XX_INT_EN_REG);
 	reg &= ISL38XX_INT_SOURCES;
 
-	if (reg != 0) {
-		if (islpci_get_state(priv) != PRV_STATE_SLEEP)
-			powerstate = ISL38XX_PSM_ACTIVE_STATE;
+	अगर (reg != 0) अणु
+		अगर (islpci_get_state(priv) != PRV_STATE_SLEEP)
+			घातerstate = ISL38XX_PSM_ACTIVE_STATE;
 
-		/* reset the request bits in the Identification register */
+		/* reset the request bits in the Identअगरication रेजिस्टर */
 		isl38xx_w32_flush(device, reg, ISL38XX_INT_ACK_REG);
 
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 		DEBUG(SHOW_FUNCTION_CALLS,
 		      "IRQ: Identification register 0x%p 0x%x\n", device, reg);
-#endif
+#पूर्ण_अगर
 
-		/* check for each bit in the register separately */
-		if (reg & ISL38XX_INT_IDENT_UPDATE) {
-#if VERBOSE > SHOW_ERROR_MESSAGES
+		/* check क्रम each bit in the रेजिस्टर separately */
+		अगर (reg & ISL38XX_INT_IDENT_UPDATE) अणु
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 			/* Queue has been updated */
 			DEBUG(SHOW_TRACING, "IRQ: Update flag\n");
 
@@ -256,24 +257,24 @@ islpci_interrupt(int irq, void *config)
 			      le32_to_cpu(priv->control_block->
 					  device_curr_frag[5])
 			    );
-#endif
+#पूर्ण_अगर
 
 			/* cleanup the data low transmit queue */
 			islpci_eth_cleanup_transmit(priv, priv->control_block);
 
 			/* device is in active state, update the
-			 * powerstate flag if necessary */
-			powerstate = ISL38XX_PSM_ACTIVE_STATE;
+			 * घातerstate flag अगर necessary */
+			घातerstate = ISL38XX_PSM_ACTIVE_STATE;
 
 			/* check all three queues in priority order
 			 * call the PIMFOR receive function until the
 			 * queue is empty */
-			if (isl38xx_in_queue(priv->control_block,
-						ISL38XX_CB_RX_MGMTQ) != 0) {
-#if VERBOSE > SHOW_ERROR_MESSAGES
+			अगर (isl38xx_in_queue(priv->control_block,
+						ISL38XX_CB_RX_MGMTQ) != 0) अणु
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 				DEBUG(SHOW_TRACING,
 				      "Received frame in Management Queue\n");
-#endif
+#पूर्ण_अगर
 				islpci_mgt_receive(ndev);
 
 				islpci_mgt_cleanup_transmit(ndev);
@@ -282,299 +283,299 @@ islpci_interrupt(int irq, void *config)
 				islpci_mgmt_rx_fill(ndev);
 
 				/* no need to trigger the device, next
-                                   islpci_mgt_transaction does it */
-			}
+                                   islpci_mgt_transaction करोes it */
+			पूर्ण
 
-			while (isl38xx_in_queue(priv->control_block,
-						ISL38XX_CB_RX_DATA_LQ) != 0) {
-#if VERBOSE > SHOW_ERROR_MESSAGES
+			जबतक (isl38xx_in_queue(priv->control_block,
+						ISL38XX_CB_RX_DATA_LQ) != 0) अणु
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 				DEBUG(SHOW_TRACING,
 				      "Received frame in Data Low Queue\n");
-#endif
+#पूर्ण_अगर
 				islpci_eth_receive(priv);
-			}
+			पूर्ण
 
 			/* check whether the data transmit queues were full */
-			if (priv->data_low_tx_full) {
+			अगर (priv->data_low_tx_full) अणु
 				/* check whether the transmit is not full anymore */
-				if (ISL38XX_CB_TX_QSIZE -
+				अगर (ISL38XX_CB_TX_QSIZE -
 				    isl38xx_in_queue(priv->control_block,
 						     ISL38XX_CB_TX_DATA_LQ) >=
-				    ISL38XX_MIN_QTHRESHOLD) {
-					/* nope, the driver is ready for more network frames */
-					netif_wake_queue(priv->ndev);
+				    ISL38XX_MIN_QTHRESHOLD) अणु
+					/* nope, the driver is पढ़ोy क्रम more network frames */
+					netअगर_wake_queue(priv->ndev);
 
 					/* reset the full flag */
 					priv->data_low_tx_full = 0;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (reg & ISL38XX_INT_IDENT_INIT) {
+		अगर (reg & ISL38XX_INT_IDENT_INIT) अणु
 			/* Device has been initialized */
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 			DEBUG(SHOW_TRACING,
 			      "IRQ: Init flag, device initialized\n");
-#endif
-			wake_up(&priv->reset_done);
-		}
+#पूर्ण_अगर
+			wake_up(&priv->reset_करोne);
+		पूर्ण
 
-		if (reg & ISL38XX_INT_IDENT_SLEEP) {
-			/* Device intends to move to powersave state */
-#if VERBOSE > SHOW_ERROR_MESSAGES
+		अगर (reg & ISL38XX_INT_IDENT_SLEEP) अणु
+			/* Device पूर्णांकends to move to घातersave state */
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 			DEBUG(SHOW_TRACING, "IRQ: Sleep flag\n");
-#endif
+#पूर्ण_अगर
 			isl38xx_handle_sleep_request(priv->control_block,
-						     &powerstate,
+						     &घातerstate,
 						     priv->device_base);
-		}
+		पूर्ण
 
-		if (reg & ISL38XX_INT_IDENT_WAKEUP) {
+		अगर (reg & ISL38XX_INT_IDENT_WAKEUP) अणु
 			/* Device has been woken up to active state */
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 			DEBUG(SHOW_TRACING, "IRQ: Wakeup flag\n");
-#endif
+#पूर्ण_अगर
 
 			isl38xx_handle_wakeup(priv->control_block,
-					      &powerstate, priv->device_base);
-		}
-	} else {
-#if VERBOSE > SHOW_ERROR_MESSAGES
+					      &घातerstate, priv->device_base);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 		DEBUG(SHOW_TRACING, "Assuming someone else called the IRQ\n");
-#endif
+#पूर्ण_अगर
 		spin_unlock(&priv->slock);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	/* sleep -> ready */
-	if (islpci_get_state(priv) == PRV_STATE_SLEEP
-	    && powerstate == ISL38XX_PSM_ACTIVE_STATE)
+	/* sleep -> पढ़ोy */
+	अगर (islpci_get_state(priv) == PRV_STATE_SLEEP
+	    && घातerstate == ISL38XX_PSM_ACTIVE_STATE)
 		islpci_set_state(priv, PRV_STATE_READY);
 
 	/* !sleep -> sleep */
-	if (islpci_get_state(priv) != PRV_STATE_SLEEP
-	    && powerstate == ISL38XX_PSM_POWERSAVE_STATE)
+	अगर (islpci_get_state(priv) != PRV_STATE_SLEEP
+	    && घातerstate == ISL38XX_PSM_POWERSAVE_STATE)
 		islpci_set_state(priv, PRV_STATE_SLEEP);
 
-	/* unlock the interrupt handler */
+	/* unlock the पूर्णांकerrupt handler */
 	spin_unlock(&priv->slock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /******************************************************************************
     Network Interface Control & Statistical functions
 ******************************************************************************/
-static int
-islpci_open(struct net_device *ndev)
-{
+अटल पूर्णांक
+islpci_खोलो(काष्ठा net_device *ndev)
+अणु
 	u32 rc;
-	islpci_private *priv = netdev_priv(ndev);
+	islpci_निजी *priv = netdev_priv(ndev);
 
-	/* reset data structures, upload firmware and reset device */
+	/* reset data काष्ठाures, upload firmware and reset device */
 	rc = islpci_reset(priv,1);
-	if (rc) {
-		prism54_bring_down(priv);
-		return rc; /* Returns informative message */
-	}
+	अगर (rc) अणु
+		prism54_bring_करोwn(priv);
+		वापस rc; /* Returns inक्रमmative message */
+	पूर्ण
 
-	netif_start_queue(ndev);
+	netअगर_start_queue(ndev);
 
-	/* Turn off carrier if in STA or Ad-hoc mode. It will be turned on
+	/* Turn off carrier अगर in STA or Ad-hoc mode. It will be turned on
 	 * once the firmware receives a trap of being associated
 	 * (GEN_OID_LINKSTATE). In other modes (AP or WDS or monitor) we
 	 * should just leave the carrier on as its expected the firmware
 	 * won't send us a trigger. */
-	if (priv->iw_mode == IW_MODE_INFRA || priv->iw_mode == IW_MODE_ADHOC)
-		netif_carrier_off(ndev);
-	else
-		netif_carrier_on(ndev);
+	अगर (priv->iw_mode == IW_MODE_INFRA || priv->iw_mode == IW_MODE_ADHOC)
+		netअगर_carrier_off(ndev);
+	अन्यथा
+		netअगर_carrier_on(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-islpci_close(struct net_device *ndev)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+islpci_बंद(काष्ठा net_device *ndev)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
-	printk(KERN_DEBUG "%s: islpci_close ()\n", ndev->name);
+	prपूर्णांकk(KERN_DEBUG "%s: islpci_close ()\n", ndev->name);
 
-	netif_stop_queue(ndev);
+	netअगर_stop_queue(ndev);
 
-	return prism54_bring_down(priv);
-}
+	वापस prism54_bring_करोwn(priv);
+पूर्ण
 
-static int
-prism54_bring_down(islpci_private *priv)
-{
-	void __iomem *device_base = priv->device_base;
+अटल पूर्णांक
+prism54_bring_करोwn(islpci_निजी *priv)
+अणु
+	व्योम __iomem *device_base = priv->device_base;
 	u32 reg;
-	/* we are going to shutdown the device */
+	/* we are going to shutकरोwn the device */
 	islpci_set_state(priv, PRV_STATE_PREBOOT);
 
-	/* disable all device interrupts in case they weren't */
-	isl38xx_disable_interrupts(priv->device_base);
+	/* disable all device पूर्णांकerrupts in हाल they weren't */
+	isl38xx_disable_पूर्णांकerrupts(priv->device_base);
 
 	/* For safety reasons, we may want to ensure that no DMA transfer is
 	 * currently in progress by emptying the TX and RX queues. */
 
-	/* wait until interrupts have finished executing on other CPUs */
+	/* रुको until पूर्णांकerrupts have finished executing on other CPUs */
 	synchronize_irq(priv->pdev->irq);
 
-	reg = readl(device_base + ISL38XX_CTRL_STAT_REG);
+	reg = पढ़ोl(device_base + ISL38XX_CTRL_STAT_REG);
 	reg &= ~(ISL38XX_CTRL_STAT_RESET | ISL38XX_CTRL_STAT_RAMBOOT);
-	writel(reg, device_base + ISL38XX_CTRL_STAT_REG);
+	ग_लिखोl(reg, device_base + ISL38XX_CTRL_STAT_REG);
 	wmb();
 	udelay(ISL38XX_WRITEIO_DELAY);
 
 	reg |= ISL38XX_CTRL_STAT_RESET;
-	writel(reg, device_base + ISL38XX_CTRL_STAT_REG);
+	ग_लिखोl(reg, device_base + ISL38XX_CTRL_STAT_REG);
 	wmb();
 	udelay(ISL38XX_WRITEIO_DELAY);
 
 	/* clear the Reset bit */
 	reg &= ~ISL38XX_CTRL_STAT_RESET;
-	writel(reg, device_base + ISL38XX_CTRL_STAT_REG);
+	ग_लिखोl(reg, device_base + ISL38XX_CTRL_STAT_REG);
 	wmb();
 
-	/* wait a while for the device to reset */
-	schedule_timeout_uninterruptible(msecs_to_jiffies(50));
+	/* रुको a जबतक क्रम the device to reset */
+	schedule_समयout_unपूर्णांकerruptible(msecs_to_jअगरfies(50));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-islpci_upload_fw(islpci_private *priv)
-{
+अटल पूर्णांक
+islpci_upload_fw(islpci_निजी *priv)
+अणु
 	islpci_state_t old_state;
 	u32 rc;
 
 	old_state = islpci_set_state(priv, PRV_STATE_BOOT);
 
-	printk(KERN_DEBUG "%s: uploading firmware...\n", priv->ndev->name);
+	prपूर्णांकk(KERN_DEBUG "%s: uploading firmware...\n", priv->ndev->name);
 
 	rc = isl_upload_firmware(priv);
-	if (rc) {
+	अगर (rc) अणु
 		/* error uploading the firmware */
-		printk(KERN_ERR "%s: could not upload firmware ('%s')\n",
+		prपूर्णांकk(KERN_ERR "%s: could not upload firmware ('%s')\n",
 		       priv->ndev->name, priv->firmware);
 
 		islpci_set_state(priv, old_state);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	printk(KERN_DEBUG "%s: firmware upload complete\n",
+	prपूर्णांकk(KERN_DEBUG "%s: firmware upload complete\n",
 	       priv->ndev->name);
 
 	islpci_set_state(priv, PRV_STATE_POSTBOOT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-islpci_reset_if(islpci_private *priv)
-{
-	long remaining;
-	int result = -ETIME;
-	int count;
+अटल पूर्णांक
+islpci_reset_अगर(islpci_निजी *priv)
+अणु
+	दीर्घ reमुख्यing;
+	पूर्णांक result = -ETIME;
+	पूर्णांक count;
 
-	DEFINE_WAIT(wait);
-	prepare_to_wait(&priv->reset_done, &wait, TASK_UNINTERRUPTIBLE);
+	DEFINE_WAIT(रुको);
+	prepare_to_रुको(&priv->reset_करोne, &रुको, TASK_UNINTERRUPTIBLE);
 
-	/* now the last step is to reset the interface */
-	isl38xx_interface_reset(priv->device_base, priv->device_host_address);
+	/* now the last step is to reset the पूर्णांकerface */
+	isl38xx_पूर्णांकerface_reset(priv->device_base, priv->device_host_address);
 	islpci_set_state(priv, PRV_STATE_PREINIT);
 
-        for(count = 0; count < 2 && result; count++) {
+        क्रम(count = 0; count < 2 && result; count++) अणु
 		/* The software reset acknowledge needs about 220 msec here.
-		 * Be conservative and wait for up to one second. */
+		 * Be conservative and रुको क्रम up to one second. */
 
-		remaining = schedule_timeout_uninterruptible(HZ);
+		reमुख्यing = schedule_समयout_unपूर्णांकerruptible(HZ);
 
-		if(remaining > 0) {
+		अगर(reमुख्यing > 0) अणु
 			result = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* If we're here it's because our IRQ hasn't yet gone through.
 		 * Retry a bit more...
 		 */
-		printk(KERN_ERR "%s: no 'reset complete' IRQ seen - retrying\n",
+		prपूर्णांकk(KERN_ERR "%s: no 'reset complete' IRQ seen - retrying\n",
 			priv->ndev->name);
-	}
+	पूर्ण
 
-	finish_wait(&priv->reset_done, &wait);
+	finish_रुको(&priv->reset_करोne, &रुको);
 
-	if (result) {
-		printk(KERN_ERR "%s: interface reset failure\n", priv->ndev->name);
-		return result;
-	}
+	अगर (result) अणु
+		prपूर्णांकk(KERN_ERR "%s: interface reset failure\n", priv->ndev->name);
+		वापस result;
+	पूर्ण
 
 	islpci_set_state(priv, PRV_STATE_INIT);
 
 	/* Now that the device is 100% up, let's allow
-	 * for the other interrupts --
+	 * क्रम the other पूर्णांकerrupts --
 	 * NOTE: this is not *yet* true since we've only allowed the
-	 * INIT interrupt on the IRQ line. We can perhaps poll
-	 * the IRQ line until we know for sure the reset went through */
-	isl38xx_enable_common_interrupts(priv->device_base);
+	 * INIT पूर्णांकerrupt on the IRQ line. We can perhaps poll
+	 * the IRQ line until we know क्रम sure the reset went through */
+	isl38xx_enable_common_पूर्णांकerrupts(priv->device_base);
 
-	down_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
 	result = mgt_commit(priv);
-	if (result) {
-		printk(KERN_ERR "%s: interface reset failure\n", priv->ndev->name);
-		up_write(&priv->mib_sem);
-		return result;
-	}
-	up_write(&priv->mib_sem);
+	अगर (result) अणु
+		prपूर्णांकk(KERN_ERR "%s: interface reset failure\n", priv->ndev->name);
+		up_ग_लिखो(&priv->mib_sem);
+		वापस result;
+	पूर्ण
+	up_ग_लिखो(&priv->mib_sem);
 
 	islpci_set_state(priv, PRV_STATE_READY);
 
-	printk(KERN_DEBUG "%s: interface reset complete\n", priv->ndev->name);
-	return 0;
-}
+	prपूर्णांकk(KERN_DEBUG "%s: interface reset complete\n", priv->ndev->name);
+	वापस 0;
+पूर्ण
 
-int
-islpci_reset(islpci_private *priv, int reload_firmware)
-{
-	isl38xx_control_block *cb =    /* volatile not needed */
+पूर्णांक
+islpci_reset(islpci_निजी *priv, पूर्णांक reload_firmware)
+अणु
+	isl38xx_control_block *cb =    /* अस्थिर not needed */
 		(isl38xx_control_block *) priv->control_block;
-	unsigned counter;
-	int rc;
+	अचिन्हित counter;
+	पूर्णांक rc;
 
-	if (reload_firmware)
+	अगर (reload_firmware)
 		islpci_set_state(priv, PRV_STATE_PREBOOT);
-	else
+	अन्यथा
 		islpci_set_state(priv, PRV_STATE_POSTBOOT);
 
-	printk(KERN_DEBUG "%s: resetting device...\n", priv->ndev->name);
+	prपूर्णांकk(KERN_DEBUG "%s: resetting device...\n", priv->ndev->name);
 
-	/* disable all device interrupts in case they weren't */
-	isl38xx_disable_interrupts(priv->device_base);
+	/* disable all device पूर्णांकerrupts in हाल they weren't */
+	isl38xx_disable_पूर्णांकerrupts(priv->device_base);
 
 	/* flush all management queues */
 	priv->index_mgmt_tx = 0;
 	priv->index_mgmt_rx = 0;
 
-	/* clear the indexes in the frame pointer */
-	for (counter = 0; counter < ISL38XX_CB_QCOUNT; counter++) {
+	/* clear the indexes in the frame poपूर्णांकer */
+	क्रम (counter = 0; counter < ISL38XX_CB_QCOUNT; counter++) अणु
 		cb->driver_curr_frag[counter] = cpu_to_le32(0);
 		cb->device_curr_frag[counter] = cpu_to_le32(0);
-	}
+	पूर्ण
 
 	/* reset the mgmt receive queue */
-	for (counter = 0; counter < ISL38XX_CB_MGMT_QSIZE; counter++) {
+	क्रम (counter = 0; counter < ISL38XX_CB_MGMT_QSIZE; counter++) अणु
 		isl38xx_fragment *frag = &cb->rx_data_mgmt[counter];
 		frag->size = cpu_to_le16(MGMT_FRAME_SIZE);
 		frag->flags = 0;
 		frag->address = cpu_to_le32(priv->mgmt_rx[counter].pci_addr);
-	}
+	पूर्ण
 
-	for (counter = 0; counter < ISL38XX_CB_RX_QSIZE; counter++) {
+	क्रम (counter = 0; counter < ISL38XX_CB_RX_QSIZE; counter++) अणु
 		cb->rx_data_low[counter].address =
 		    cpu_to_le32((u32) priv->pci_map_rx_address[counter]);
-	}
+	पूर्ण
 
 	/* since the receive queues are filled with empty fragments, now we can
 	 * set the corresponding indexes in the Control Block */
@@ -583,254 +584,254 @@ islpci_reset(islpci_private *priv, int reload_firmware)
 	priv->control_block->driver_curr_frag[ISL38XX_CB_RX_MGMTQ] =
 	    cpu_to_le32(ISL38XX_CB_MGMT_QSIZE);
 
-	/* reset the remaining real index registers and full flags */
-	priv->free_data_rx = 0;
-	priv->free_data_tx = 0;
+	/* reset the reमुख्यing real index रेजिस्टरs and full flags */
+	priv->मुक्त_data_rx = 0;
+	priv->मुक्त_data_tx = 0;
 	priv->data_low_tx_full = 0;
 
-	if (reload_firmware) { /* Should we load the firmware ? */
-	/* now that the data structures are cleaned up, upload
-	 * firmware and reset interface */
+	अगर (reload_firmware) अणु /* Should we load the firmware ? */
+	/* now that the data काष्ठाures are cleaned up, upload
+	 * firmware and reset पूर्णांकerface */
 		rc = islpci_upload_fw(priv);
-		if (rc) {
-			printk(KERN_ERR "%s: islpci_reset: failure\n",
+		अगर (rc) अणु
+			prपूर्णांकk(KERN_ERR "%s: islpci_reset: failure\n",
 				priv->ndev->name);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	/* finally reset interface */
-	rc = islpci_reset_if(priv);
-	if (rc)
-		printk(KERN_ERR "prism54: Your card/socket may be faulty, or IRQ line too busy :(\n");
-	return rc;
-}
+	/* finally reset पूर्णांकerface */
+	rc = islpci_reset_अगर(priv);
+	अगर (rc)
+		prपूर्णांकk(KERN_ERR "prism54: Your card/socket may be faulty, or IRQ line too busy :(\n");
+	वापस rc;
+पूर्ण
 
 /******************************************************************************
     Network device configuration functions
 ******************************************************************************/
-static int
-islpci_alloc_memory(islpci_private *priv)
-{
-	int counter;
+अटल पूर्णांक
+islpci_alloc_memory(islpci_निजी *priv)
+अणु
+	पूर्णांक counter;
 
-#if VERBOSE > SHOW_ERROR_MESSAGES
-	printk(KERN_DEBUG "islpci_alloc_memory\n");
-#endif
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
+	prपूर्णांकk(KERN_DEBUG "islpci_alloc_memory\n");
+#पूर्ण_अगर
 
 	/* remap the PCI device base address to accessible */
-	if (!(priv->device_base =
+	अगर (!(priv->device_base =
 	      ioremap(pci_resource_start(priv->pdev, 0),
-		      ISL38XX_PCI_MEM_SIZE))) {
+		      ISL38XX_PCI_MEM_SIZE))) अणु
 		/* error in remapping the PCI device memory address range */
-		printk(KERN_ERR "PCI memory remapping failed\n");
-		return -1;
-	}
+		prपूर्णांकk(KERN_ERR "PCI memory remapping failed\n");
+		वापस -1;
+	पूर्ण
 
-	/* memory layout for consistent DMA region:
+	/* memory layout क्रम consistent DMA region:
 	 *
-	 * Area 1: Control Block for the device interface
-	 * Area 2: Power Save Mode Buffer for temporary frame storage. Be aware that
+	 * Area 1: Control Block क्रम the device पूर्णांकerface
+	 * Area 2: Power Save Mode Buffer क्रम temporary frame storage. Be aware that
 	 *         the number of supported stations in the AP determines the minimal
 	 *         size of the buffer !
 	 */
 
-	/* perform the allocation */
+	/* perक्रमm the allocation */
 	priv->driver_mem_address = dma_alloc_coherent(&priv->pdev->dev,
 						      HOST_MEM_BLOCK,
 						      &priv->device_host_address,
 						      GFP_KERNEL);
 
-	if (!priv->driver_mem_address) {
+	अगर (!priv->driver_mem_address) अणु
 		/* error allocating the block of PCI memory */
-		printk(KERN_ERR "%s: could not allocate DMA memory, aborting!",
+		prपूर्णांकk(KERN_ERR "%s: could not allocate DMA memory, aborting!",
 		       "prism54");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* assign the Control Block to the first address of the allocated area */
 	priv->control_block =
 	    (isl38xx_control_block *) priv->driver_mem_address;
 
-	/* set the Power Save Buffer pointer directly behind the CB */
+	/* set the Power Save Buffer poपूर्णांकer directly behind the CB */
 	priv->device_psm_buffer =
 		priv->device_host_address + CONTROL_BLOCK_SIZE;
 
-	/* make sure all buffer pointers are initialized */
-	for (counter = 0; counter < ISL38XX_CB_QCOUNT; counter++) {
+	/* make sure all buffer poपूर्णांकers are initialized */
+	क्रम (counter = 0; counter < ISL38XX_CB_QCOUNT; counter++) अणु
 		priv->control_block->driver_curr_frag[counter] = cpu_to_le32(0);
 		priv->control_block->device_curr_frag[counter] = cpu_to_le32(0);
-	}
+	पूर्ण
 
 	priv->index_mgmt_rx = 0;
-	memset(priv->mgmt_rx, 0, sizeof(priv->mgmt_rx));
-	memset(priv->mgmt_tx, 0, sizeof(priv->mgmt_tx));
+	स_रखो(priv->mgmt_rx, 0, माप(priv->mgmt_rx));
+	स_रखो(priv->mgmt_tx, 0, माप(priv->mgmt_tx));
 
-	/* allocate rx queue for management frames */
-	if (islpci_mgmt_rx_fill(priv->ndev) < 0)
-		goto out_free;
+	/* allocate rx queue क्रम management frames */
+	अगर (islpci_mgmt_rx_fill(priv->ndev) < 0)
+		जाओ out_मुक्त;
 
 	/* now get the data rx skb's */
-	memset(priv->data_low_rx, 0, sizeof (priv->data_low_rx));
-	memset(priv->pci_map_rx_address, 0, sizeof (priv->pci_map_rx_address));
+	स_रखो(priv->data_low_rx, 0, माप (priv->data_low_rx));
+	स_रखो(priv->pci_map_rx_address, 0, माप (priv->pci_map_rx_address));
 
-	for (counter = 0; counter < ISL38XX_CB_RX_QSIZE; counter++) {
-		struct sk_buff *skb;
+	क्रम (counter = 0; counter < ISL38XX_CB_RX_QSIZE; counter++) अणु
+		काष्ठा sk_buff *skb;
 
-		/* allocate an sk_buff for received data frames storage
+		/* allocate an sk_buff क्रम received data frames storage
 		 * each frame on receive size consists of 1 fragment
 		 * include any required allignment operations */
-		if (!(skb = dev_alloc_skb(MAX_FRAGMENT_SIZE_RX + 2))) {
-			/* error allocating an sk_buff structure elements */
-			printk(KERN_ERR "Error allocating skb.\n");
-			skb = NULL;
-			goto out_free;
-		}
-		skb_reserve(skb, (4 - (long) skb->data) & 0x03);
+		अगर (!(skb = dev_alloc_skb(MAX_FRAGMENT_SIZE_RX + 2))) अणु
+			/* error allocating an sk_buff काष्ठाure elements */
+			prपूर्णांकk(KERN_ERR "Error allocating skb.\n");
+			skb = शून्य;
+			जाओ out_मुक्त;
+		पूर्ण
+		skb_reserve(skb, (4 - (दीर्घ) skb->data) & 0x03);
 		/* add the new allocated sk_buff to the buffer array */
 		priv->data_low_rx[counter] = skb;
 
 		/* map the allocated skb data area to pci */
 		priv->pci_map_rx_address[counter] =
-		    dma_map_single(&priv->pdev->dev, (void *)skb->data,
+		    dma_map_single(&priv->pdev->dev, (व्योम *)skb->data,
 				   MAX_FRAGMENT_SIZE_RX + 2, DMA_FROM_DEVICE);
-		if (dma_mapping_error(&priv->pdev->dev, priv->pci_map_rx_address[counter])) {
+		अगर (dma_mapping_error(&priv->pdev->dev, priv->pci_map_rx_address[counter])) अणु
 			priv->pci_map_rx_address[counter] = 0;
 			/* error mapping the buffer to device
 			   accessible memory address */
-			printk(KERN_ERR "failed to map skb DMA'able\n");
-			goto out_free;
-		}
-	}
+			prपूर्णांकk(KERN_ERR "failed to map skb DMA'able\n");
+			जाओ out_मुक्त;
+		पूर्ण
+	पूर्ण
 
 	prism54_acl_init(&priv->acl);
 	prism54_wpa_bss_ie_init(priv);
-	if (mgt_init(priv))
-		goto out_free;
+	अगर (mgt_init(priv))
+		जाओ out_मुक्त;
 
-	return 0;
- out_free:
-	islpci_free_memory(priv);
-	return -1;
-}
+	वापस 0;
+ out_मुक्त:
+	islpci_मुक्त_memory(priv);
+	वापस -1;
+पूर्ण
 
-int
-islpci_free_memory(islpci_private *priv)
-{
-	int counter;
+पूर्णांक
+islpci_मुक्त_memory(islpci_निजी *priv)
+अणु
+	पूर्णांक counter;
 
-	if (priv->device_base)
+	अगर (priv->device_base)
 		iounmap(priv->device_base);
-	priv->device_base = NULL;
+	priv->device_base = शून्य;
 
-	/* free consistent DMA area... */
-	if (priv->driver_mem_address)
-		dma_free_coherent(&priv->pdev->dev, HOST_MEM_BLOCK,
+	/* मुक्त consistent DMA area... */
+	अगर (priv->driver_mem_address)
+		dma_मुक्त_coherent(&priv->pdev->dev, HOST_MEM_BLOCK,
 				  priv->driver_mem_address,
 				  priv->device_host_address);
 
-	/* clear some dangling pointers */
-	priv->driver_mem_address = NULL;
+	/* clear some dangling poपूर्णांकers */
+	priv->driver_mem_address = शून्य;
 	priv->device_host_address = 0;
 	priv->device_psm_buffer = 0;
-	priv->control_block = NULL;
+	priv->control_block = शून्य;
 
         /* clean up mgmt rx buffers */
-        for (counter = 0; counter < ISL38XX_CB_MGMT_QSIZE; counter++) {
-		struct islpci_membuf *buf = &priv->mgmt_rx[counter];
-		if (buf->pci_addr)
+        क्रम (counter = 0; counter < ISL38XX_CB_MGMT_QSIZE; counter++) अणु
+		काष्ठा islpci_membuf *buf = &priv->mgmt_rx[counter];
+		अगर (buf->pci_addr)
 			dma_unmap_single(&priv->pdev->dev, buf->pci_addr,
 					 buf->size, DMA_FROM_DEVICE);
 		buf->pci_addr = 0;
-		kfree(buf->mem);
+		kमुक्त(buf->mem);
 		buf->size = 0;
-		buf->mem = NULL;
-        }
+		buf->mem = शून्य;
+        पूर्ण
 
 	/* clean up data rx buffers */
-	for (counter = 0; counter < ISL38XX_CB_RX_QSIZE; counter++) {
-		if (priv->pci_map_rx_address[counter])
+	क्रम (counter = 0; counter < ISL38XX_CB_RX_QSIZE; counter++) अणु
+		अगर (priv->pci_map_rx_address[counter])
 			dma_unmap_single(&priv->pdev->dev,
 					 priv->pci_map_rx_address[counter],
 					 MAX_FRAGMENT_SIZE_RX + 2,
 					 DMA_FROM_DEVICE);
 		priv->pci_map_rx_address[counter] = 0;
 
-		if (priv->data_low_rx[counter])
-			dev_kfree_skb(priv->data_low_rx[counter]);
-		priv->data_low_rx[counter] = NULL;
-	}
+		अगर (priv->data_low_rx[counter])
+			dev_kमुक्त_skb(priv->data_low_rx[counter]);
+		priv->data_low_rx[counter] = शून्य;
+	पूर्ण
 
 	/* Free the access control list and the WPA list */
 	prism54_acl_clean(&priv->acl);
 	prism54_wpa_bss_ie_clean(priv);
 	mgt_clean(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if 0
-static void
-islpci_set_multicast_list(struct net_device *dev)
-{
-	/* put device into promisc mode and let network layer handle it */
-}
-#endif
+#अगर 0
+अटल व्योम
+islpci_set_multicast_list(काष्ठा net_device *dev)
+अणु
+	/* put device पूर्णांकo promisc mode and let network layer handle it */
+पूर्ण
+#पूर्ण_अगर
 
-static void islpci_ethtool_get_drvinfo(struct net_device *dev,
-                                       struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
-	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
-}
+अटल व्योम islpci_ethtool_get_drvinfo(काष्ठा net_device *dev,
+                                       काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, DRV_NAME, माप(info->driver));
+	strlcpy(info->version, DRV_VERSION, माप(info->version));
+पूर्ण
 
-static const struct ethtool_ops islpci_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops islpci_ethtool_ops = अणु
 	.get_drvinfo = islpci_ethtool_get_drvinfo,
-};
+पूर्ण;
 
-static const struct net_device_ops islpci_netdev_ops = {
-	.ndo_open 		= islpci_open,
-	.ndo_stop		= islpci_close,
-	.ndo_start_xmit		= islpci_eth_transmit,
-	.ndo_tx_timeout		= islpci_eth_tx_timeout,
-	.ndo_set_mac_address 	= prism54_set_mac_address,
-	.ndo_validate_addr	= eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops islpci_netdev_ops = अणु
+	.nकरो_खोलो 		= islpci_खोलो,
+	.nकरो_stop		= islpci_बंद,
+	.nकरो_start_xmit		= islpci_eth_transmit,
+	.nकरो_tx_समयout		= islpci_eth_tx_समयout,
+	.nकरो_set_mac_address 	= prism54_set_mac_address,
+	.nकरो_validate_addr	= eth_validate_addr,
+पूर्ण;
 
-static struct device_type wlan_type = {
+अटल काष्ठा device_type wlan_type = अणु
 	.name	= "wlan",
-};
+पूर्ण;
 
-struct net_device *
-islpci_setup(struct pci_dev *pdev)
-{
-	islpci_private *priv;
-	struct net_device *ndev = alloc_etherdev(sizeof (islpci_private));
+काष्ठा net_device *
+islpci_setup(काष्ठा pci_dev *pdev)
+अणु
+	islpci_निजी *priv;
+	काष्ठा net_device *ndev = alloc_etherdev(माप (islpci_निजी));
 
-	if (!ndev)
-		return ndev;
+	अगर (!ndev)
+		वापस ndev;
 
 	pci_set_drvdata(pdev, ndev);
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 	SET_NETDEV_DEVTYPE(ndev, &wlan_type);
 
-	/* setup the structure members */
+	/* setup the काष्ठाure members */
 	ndev->base_addr = pci_resource_start(pdev, 0);
 	ndev->irq = pdev->irq;
 
-	/* initialize the function pointers */
+	/* initialize the function poपूर्णांकers */
 	ndev->netdev_ops = &islpci_netdev_ops;
 	ndev->wireless_handlers = &prism54_handler_def;
 	ndev->ethtool_ops = &islpci_ethtool_ops;
 
 	/* ndev->set_multicast_list = &islpci_set_multicast_list; */
 	ndev->addr_len = ETH_ALEN;
-	/* Get a non-zero dummy MAC address for nameif. Jean II */
-	memcpy(ndev->dev_addr, dummy_mac, ETH_ALEN);
+	/* Get a non-zero dummy MAC address क्रम nameअगर. Jean II */
+	स_नकल(ndev->dev_addr, dummy_mac, ETH_ALEN);
 
-	ndev->watchdog_timeo = ISLPCI_TX_TIMEOUT;
+	ndev->watchकरोg_समयo = ISLPCI_TX_TIMEOUT;
 
-	/* allocate a private device structure to the network device  */
+	/* allocate a निजी device काष्ठाure to the network device  */
 	priv = netdev_priv(ndev);
 	priv->ndev = ndev;
 	priv->pdev = pdev;
@@ -838,24 +839,24 @@ islpci_setup(struct pci_dev *pdev)
 	priv->ndev->type = (priv->iw_mode == IW_MODE_MONITOR) ?
 		priv->monitor_type : ARPHRD_ETHER;
 
-	/* Add pointers to enable iwspy support. */
+	/* Add poपूर्णांकers to enable iwspy support. */
 	priv->wireless_data.spy_data = &priv->spy_data;
 	ndev->wireless_data = &priv->wireless_data;
 
 	/* save the start and end address of the PCI memory area */
-	ndev->mem_start = (unsigned long) priv->device_base;
+	ndev->mem_start = (अचिन्हित दीर्घ) priv->device_base;
 	ndev->mem_end = ndev->mem_start + ISL38XX_PCI_MEM_SIZE;
 
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 	DEBUG(SHOW_TRACING, "PCI Memory remapped to 0x%p\n", priv->device_base);
-#endif
+#पूर्ण_अगर
 
-	init_waitqueue_head(&priv->reset_done);
+	init_रुकोqueue_head(&priv->reset_करोne);
 
-	/* init the queue read locks, process wait counter */
+	/* init the queue पढ़ो locks, process रुको counter */
 	mutex_init(&priv->mgmt_lock);
-	priv->mgmt_received = NULL;
-	init_waitqueue_head(&priv->mgmt_wqueue);
+	priv->mgmt_received = शून्य;
+	init_रुकोqueue_head(&priv->mgmt_wqueue);
 	mutex_init(&priv->stats_lock);
 	spin_lock_init(&priv->slock);
 
@@ -865,49 +866,49 @@ islpci_setup(struct pci_dev *pdev)
 
 	/* initialize workqueue's */
 	INIT_WORK(&priv->stats_work, prism54_update_stats);
-	priv->stats_timestamp = 0;
+	priv->stats_बारtamp = 0;
 
-	INIT_WORK(&priv->reset_task, islpci_do_reset_and_wake);
+	INIT_WORK(&priv->reset_task, islpci_करो_reset_and_wake);
 	priv->reset_task_pending = 0;
 
 	/* allocate various memory areas */
-	if (islpci_alloc_memory(priv))
-		goto do_free_netdev;
+	अगर (islpci_alloc_memory(priv))
+		जाओ करो_मुक्त_netdev;
 
 	/* select the firmware file depending on the device id */
-	switch (pdev->device) {
-	case 0x3877:
-		strcpy(priv->firmware, ISL3877_IMAGE_FILE);
-		break;
+	चयन (pdev->device) अणु
+	हाल 0x3877:
+		म_नकल(priv->firmware, ISL3877_IMAGE_खाता);
+		अवरोध;
 
-	case 0x3886:
-		strcpy(priv->firmware, ISL3886_IMAGE_FILE);
-		break;
+	हाल 0x3886:
+		म_नकल(priv->firmware, ISL3886_IMAGE_खाता);
+		अवरोध;
 
-	default:
-		strcpy(priv->firmware, ISL3890_IMAGE_FILE);
-		break;
-	}
+	शेष:
+		म_नकल(priv->firmware, ISL3890_IMAGE_खाता);
+		अवरोध;
+	पूर्ण
 
-	if (register_netdev(ndev)) {
+	अगर (रेजिस्टर_netdev(ndev)) अणु
 		DEBUG(SHOW_ERROR_MESSAGES,
 		      "ERROR: register_netdev() failed\n");
-		goto do_islpci_free_memory;
-	}
+		जाओ करो_islpci_मुक्त_memory;
+	पूर्ण
 
-	return ndev;
+	वापस ndev;
 
-      do_islpci_free_memory:
-	islpci_free_memory(priv);
-      do_free_netdev:
-	free_netdev(ndev);
-	priv = NULL;
-	return NULL;
-}
+      करो_islpci_मुक्त_memory:
+	islpci_मुक्त_memory(priv);
+      करो_मुक्त_netdev:
+	मुक्त_netdev(ndev);
+	priv = शून्य;
+	वापस शून्य;
+पूर्ण
 
 islpci_state_t
-islpci_set_state(islpci_private *priv, islpci_state_t new_state)
-{
+islpci_set_state(islpci_निजी *priv, islpci_state_t new_state)
+अणु
 	islpci_state_t old_state;
 
 	/* lock */
@@ -915,31 +916,31 @@ islpci_set_state(islpci_private *priv, islpci_state_t new_state)
 
 	/* this means either a race condition or some serious error in
 	 * the driver code */
-	switch (new_state) {
-	case PRV_STATE_OFF:
+	चयन (new_state) अणु
+	हाल PRV_STATE_OFF:
 		priv->state_off++;
 		fallthrough;
-	default:
+	शेष:
 		priv->state = new_state;
-		break;
+		अवरोध;
 
-	case PRV_STATE_PREBOOT:
-		/* there are actually many off-states, enumerated by
+	हाल PRV_STATE_PREBOOT:
+		/* there are actually many off-states, क्रमागतerated by
 		 * state_off */
-		if (old_state == PRV_STATE_OFF)
+		अगर (old_state == PRV_STATE_OFF)
 			priv->state_off--;
 
-		/* only if hw_unavailable is zero now it means we either
+		/* only अगर hw_unavailable is zero now it means we either
 		 * were in off#1 state, or came here from
-		 * somewhere else */
-		if (!priv->state_off)
+		 * somewhere अन्यथा */
+		अगर (!priv->state_off)
 			priv->state = new_state;
-		break;
-	}
-#if 0
-	printk(KERN_DEBUG "%s: state transition %d -> %d (off#%d)\n",
+		अवरोध;
+	पूर्ण
+#अगर 0
+	prपूर्णांकk(KERN_DEBUG "%s: state transition %d -> %d (off#%d)\n",
 	       priv->ndev->name, old_state, new_state, priv->state_off);
-#endif
+#पूर्ण_अगर
 
 	/* invariants */
 	BUG_ON(priv->state_off < 0);
@@ -947,5 +948,5 @@ islpci_set_state(islpci_private *priv, islpci_state_t new_state)
 	BUG_ON(!priv->state_off && (priv->state == PRV_STATE_OFF));
 
 	/* unlock */
-	return old_state;
-}
+	वापस old_state;
+पूर्ण

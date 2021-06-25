@@ -1,131 +1,132 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * Time operations for IP22 machines. Original code may come from
+ * Time operations क्रम IP22 machines. Original code may come from
  * Ralf Baechle or David S. Miller (sorry guys, i'm really not sure)
  *
  * Copyright (C) 2001 by Ladislav Michl
  * Copyright (C) 2003, 06 Ralf Baechle (ralf@linux-mips.org)
  */
-#include <linux/bcd.h>
-#include <linux/i8253.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/kernel_stat.h>
-#include <linux/time.h>
-#include <linux/ftrace.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/i8253.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/ftrace.h>
 
-#include <asm/cpu.h>
-#include <asm/mipsregs.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/time.h>
-#include <asm/sgialib.h>
-#include <asm/sgi/ioc.h>
-#include <asm/sgi/hpc3.h>
-#include <asm/sgi/ip22.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/sgialib.h>
+#समावेश <यंत्र/sgi/ioc.h>
+#समावेश <यंत्र/sgi/hpc3.h>
+#समावेश <यंत्र/sgi/ip22.h>
 
-static unsigned long dosample(void)
-{
+अटल अचिन्हित दीर्घ करोsample(व्योम)
+अणु
 	u32 ct0, ct1;
 	u8 msb;
 
 	/* Start the counter. */
-	sgint->tcword = (SGINT_TCWORD_CNT2 | SGINT_TCWORD_CALL |
+	sgपूर्णांक->tcword = (SGINT_TCWORD_CNT2 | SGINT_TCWORD_CALL |
 			 SGINT_TCWORD_MRGEN);
-	sgint->tcnt2 = SGINT_TCSAMP_COUNTER & 0xff;
-	sgint->tcnt2 = SGINT_TCSAMP_COUNTER >> 8;
+	sgपूर्णांक->tcnt2 = SGINT_TCSAMP_COUNTER & 0xff;
+	sgपूर्णांक->tcnt2 = SGINT_TCSAMP_COUNTER >> 8;
 
 	/* Get initial counter invariant */
-	ct0 = read_c0_count();
+	ct0 = पढ़ो_c0_count();
 
 	/* Latch and spin until top byte of counter2 is zero */
-	do {
-		writeb(SGINT_TCWORD_CNT2 | SGINT_TCWORD_CLAT, &sgint->tcword);
-		(void) readb(&sgint->tcnt2);
-		msb = readb(&sgint->tcnt2);
-		ct1 = read_c0_count();
-	} while (msb);
+	करो अणु
+		ग_लिखोb(SGINT_TCWORD_CNT2 | SGINT_TCWORD_CLAT, &sgपूर्णांक->tcword);
+		(व्योम) पढ़ोb(&sgपूर्णांक->tcnt2);
+		msb = पढ़ोb(&sgपूर्णांक->tcnt2);
+		ct1 = पढ़ो_c0_count();
+	पूर्ण जबतक (msb);
 
 	/* Stop the counter. */
-	writeb(SGINT_TCWORD_CNT2 | SGINT_TCWORD_CALL | SGINT_TCWORD_MSWST,
-	       &sgint->tcword);
+	ग_लिखोb(SGINT_TCWORD_CNT2 | SGINT_TCWORD_CALL | SGINT_TCWORD_MSWST,
+	       &sgपूर्णांक->tcword);
 	/*
-	 * Return the difference, this is how far the r4k counter increments
-	 * for every 1/HZ seconds. We round off the nearest 1 MHz of master
-	 * clock (= 1000000 / HZ / 2).
+	 * Return the dअगरference, this is how far the r4k counter increments
+	 * क्रम every 1/HZ seconds. We round off the nearest 1 MHz of master
+	 * घड़ी (= 1000000 / HZ / 2).
 	 */
 
-	return (ct1 - ct0) / (500000/HZ) * (500000/HZ);
-}
+	वापस (ct1 - ct0) / (500000/HZ) * (500000/HZ);
+पूर्ण
 
 /*
- * Here we need to calibrate the cycle counter to at least be close.
+ * Here we need to calibrate the cycle counter to at least be बंद.
  */
-__init void plat_time_init(void)
-{
-	unsigned long r4k_ticks[3];
-	unsigned long r4k_tick;
+__init व्योम plat_समय_init(व्योम)
+अणु
+	अचिन्हित दीर्घ r4k_ticks[3];
+	अचिन्हित दीर्घ r4k_tick;
 
 	/*
 	 * Figure out the r4k offset, the algorithm is very simple and works in
-	 * _all_ cases as long as the 8254 counter register itself works ok (as
-	 * an interrupt driving timer it does not because of bug, this is why
-	 * we are using the onchip r4k counter/compare register to serve this
-	 * purpose, but for r4k_offset calculation it will work ok for us).
-	 * There are other very complicated ways of performing this calculation
+	 * _all_ हालs as दीर्घ as the 8254 counter रेजिस्टर itself works ok (as
+	 * an पूर्णांकerrupt driving समयr it करोes not because of bug, this is why
+	 * we are using the onchip r4k counter/compare रेजिस्टर to serve this
+	 * purpose, but क्रम r4k_offset calculation it will work ok क्रम us).
+	 * There are other very complicated ways of perक्रमming this calculation
 	 * but this one works just fine so I am not going to futz around. ;-)
 	 */
-	printk(KERN_INFO "Calibrating system timer... ");
-	dosample();	/* Prime cache. */
-	dosample();	/* Prime cache. */
+	prपूर्णांकk(KERN_INFO "Calibrating system timer... ");
+	करोsample();	/* Prime cache. */
+	करोsample();	/* Prime cache. */
 	/* Zero is NOT an option. */
-	do {
-		r4k_ticks[0] = dosample();
-	} while (!r4k_ticks[0]);
-	do {
-		r4k_ticks[1] = dosample();
-	} while (!r4k_ticks[1]);
+	करो अणु
+		r4k_ticks[0] = करोsample();
+	पूर्ण जबतक (!r4k_ticks[0]);
+	करो अणु
+		r4k_ticks[1] = करोsample();
+	पूर्ण जबतक (!r4k_ticks[1]);
 
-	if (r4k_ticks[0] != r4k_ticks[1]) {
-		printk("warning: timer counts differ, retrying... ");
-		r4k_ticks[2] = dosample();
-		if (r4k_ticks[2] == r4k_ticks[0]
+	अगर (r4k_ticks[0] != r4k_ticks[1]) अणु
+		prपूर्णांकk("warning: timer counts differ, retrying... ");
+		r4k_ticks[2] = करोsample();
+		अगर (r4k_ticks[2] == r4k_ticks[0]
 		    || r4k_ticks[2] == r4k_ticks[1])
 			r4k_tick = r4k_ticks[2];
-		else {
-			printk("disagreement, using average... ");
+		अन्यथा अणु
+			prपूर्णांकk("disagreement, using average... ");
 			r4k_tick = (r4k_ticks[0] + r4k_ticks[1]
 				   + r4k_ticks[2]) / 3;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		r4k_tick = r4k_ticks[0];
 
-	printk("%d [%d.%04d MHz CPU]\n", (int) r4k_tick,
-		(int) (r4k_tick / (500000 / HZ)),
-		(int) (r4k_tick % (500000 / HZ)));
+	prपूर्णांकk("%d [%d.%04d MHz CPU]\n", (पूर्णांक) r4k_tick,
+		(पूर्णांक) (r4k_tick / (500000 / HZ)),
+		(पूर्णांक) (r4k_tick % (500000 / HZ)));
 
 	mips_hpt_frequency = r4k_tick * HZ;
 
-	if (ip22_is_fullhouse())
-		setup_pit_timer();
-}
+	अगर (ip22_is_fullhouse())
+		setup_pit_समयr();
+पूर्ण
 
-/* Generic SGI handler for (spurious) 8254 interrupts */
-void __irq_entry indy_8254timer_irq(void)
-{
-	int irq = SGI_8254_0_IRQ;
+/* Generic SGI handler क्रम (spurious) 8254 पूर्णांकerrupts */
+व्योम __irq_entry indy_8254समयr_irq(व्योम)
+अणु
+	पूर्णांक irq = SGI_8254_0_IRQ;
 	ULONG cnt;
-	char c;
+	अक्षर c;
 
 	irq_enter();
 	kstat_incr_irq_this_cpu(irq);
-	printk(KERN_ALERT "Oops, got 8254 interrupt.\n");
+	prपूर्णांकk(KERN_ALERT "Oops, got 8254 interrupt.\n");
 	ArcRead(0, &c, 1, &cnt);
 	ArcEnterInteractiveMode();
-	irq_exit();
-}
+	irq_निकास();
+पूर्ण

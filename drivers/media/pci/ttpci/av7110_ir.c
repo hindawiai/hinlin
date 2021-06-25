@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for the remote control of SAA7146 based AV7110 cards
+ * Driver क्रम the remote control of SAA7146 based AV7110 cards
  *
  * Copyright (C) 1999-2003 Holger Waechtler <holger@convergence.de>
  * Copyright (C) 2003-2007 Oliver Endriss <o.endriss@gmx.de>
  * Copyright (C) 2019 Sean Young <sean@mess.org>
  */
 
-#include <linux/kernel.h>
-#include <media/rc-core.h>
+#समावेश <linux/kernel.h>
+#समावेश <media/rc-core.h>
 
-#include "av7110.h"
-#include "av7110_hw.h"
+#समावेश "av7110.h"
+#समावेश "av7110_hw.h"
 
-#define IR_RC5		0
-#define IR_RCMM		1
-#define IR_RC5_EXT	2 /* internal only */
+#घोषणा IR_RC5		0
+#घोषणा IR_RCMM		1
+#घोषणा IR_RC5_EXT	2 /* पूर्णांकernal only */
 
-/* interrupt handler */
-void av7110_ir_handler(struct av7110 *av7110, u32 ircom)
-{
-	struct rc_dev *rcdev = av7110->ir.rcdev;
-	enum rc_proto proto;
+/* पूर्णांकerrupt handler */
+व्योम av7110_ir_handler(काष्ठा av7110 *av7110, u32 ircom)
+अणु
+	काष्ठा rc_dev *rcdev = av7110->ir.rcdev;
+	क्रमागत rc_proto proto;
 	u32 command, addr, scancode;
 	u32 toggle;
 
-	dprintk(4, "ir command = %08x\n", ircom);
+	dprपूर्णांकk(4, "ir command = %08x\n", ircom);
 
-	if (rcdev) {
-		switch (av7110->ir.ir_config) {
-		case IR_RC5: /* RC5: 5 bits device address, 6 bits command */
+	अगर (rcdev) अणु
+		चयन (av7110->ir.ir_config) अणु
+		हाल IR_RC5: /* RC5: 5 bits device address, 6 bits command */
 			command = ircom & 0x3f;
 			addr = (ircom >> 6) & 0x1f;
 			scancode = RC_SCANCODE_RC5(addr, command);
 			toggle = ircom & 0x0800;
 			proto = RC_PROTO_RC5;
-			break;
+			अवरोध;
 
-		case IR_RCMM: /* RCMM: 32 bits scancode */
+		हाल IR_RCMM: /* RCMM: 32 bits scancode */
 			scancode = ircom & ~0x8000;
 			toggle = ircom & 0x8000;
 			proto = RC_PROTO_RCMM32;
-			break;
+			अवरोध;
 
-		case IR_RC5_EXT:
+		हाल IR_RC5_EXT:
 			/*
 			 * extended RC5: 5 bits device address, 7 bits command
 			 *
 			 * Extended RC5 uses only one start bit. The second
-			 * start bit is re-assigned bit 6 of the command bit.
+			 * start bit is re-asचिन्हित bit 6 of the command bit.
 			 */
 			command = ircom & 0x3f;
 			addr = (ircom >> 6) & 0x1f;
-			if (!(ircom & 0x1000))
+			अगर (!(ircom & 0x1000))
 				command |= 0x40;
 			scancode = RC_SCANCODE_RC5(addr, command);
 			toggle = ircom & 0x0800;
 			proto = RC_PROTO_RC5;
-			break;
-		default:
-			dprintk(2, "unknown ir config %d\n",
+			अवरोध;
+		शेष:
+			dprपूर्णांकk(2, "unknown ir config %d\n",
 				av7110->ir.ir_config);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		rc_keydown(rcdev, proto, scancode, toggle != 0);
-	}
-}
+		rc_keyकरोwn(rcdev, proto, scancode, toggle != 0);
+	पूर्ण
+पूर्ण
 
-int av7110_set_ir_config(struct av7110 *av7110)
-{
-	dprintk(4, "ir config = %08x\n", av7110->ir.ir_config);
+पूर्णांक av7110_set_ir_config(काष्ठा av7110 *av7110)
+अणु
+	dprपूर्णांकk(4, "ir config = %08x\n", av7110->ir.ir_config);
 
-	return av7110_fw_cmd(av7110, COMTYPE_PIDFILTER, SetIR, 1,
+	वापस av7110_fw_cmd(av7110, COMTYPE_PIDFILTER, SetIR, 1,
 			     av7110->ir.ir_config);
-}
+पूर्ण
 
-static int change_protocol(struct rc_dev *rcdev, u64 *rc_type)
-{
-	struct av7110 *av7110 = rcdev->priv;
+अटल पूर्णांक change_protocol(काष्ठा rc_dev *rcdev, u64 *rc_type)
+अणु
+	काष्ठा av7110 *av7110 = rcdev->priv;
 	u32 ir_config;
 
-	if (*rc_type & RC_PROTO_BIT_RCMM32) {
+	अगर (*rc_type & RC_PROTO_BIT_RCMM32) अणु
 		ir_config = IR_RCMM;
 		*rc_type = RC_PROTO_BIT_RCMM32;
-	} else if (*rc_type & RC_PROTO_BIT_RC5) {
-		if (FW_VERSION(av7110->arm_app) >= 0x2620)
+	पूर्ण अन्यथा अगर (*rc_type & RC_PROTO_BIT_RC5) अणु
+		अगर (FW_VERSION(av7110->arm_app) >= 0x2620)
 			ir_config = IR_RC5_EXT;
-		else
+		अन्यथा
 			ir_config = IR_RC5;
 		*rc_type = RC_PROTO_BIT_RC5;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ir_config == av7110->ir.ir_config)
-		return 0;
+	अगर (ir_config == av7110->ir.ir_config)
+		वापस 0;
 
 	av7110->ir.ir_config = ir_config;
 
-	return av7110_set_ir_config(av7110);
-}
+	वापस av7110_set_ir_config(av7110);
+पूर्ण
 
-int av7110_ir_init(struct av7110 *av7110)
-{
-	struct rc_dev *rcdev;
-	struct pci_dev *pci;
-	int ret;
+पूर्णांक av7110_ir_init(काष्ठा av7110 *av7110)
+अणु
+	काष्ठा rc_dev *rcdev;
+	काष्ठा pci_dev *pci;
+	पूर्णांक ret;
 
 	rcdev = rc_allocate_device(RC_DRIVER_SCANCODE);
-	if (!rcdev)
-		return -ENOMEM;
+	अगर (!rcdev)
+		वापस -ENOMEM;
 
 	pci = av7110->dev->pci;
 
-	snprintf(av7110->ir.input_phys, sizeof(av7110->ir.input_phys),
+	snम_लिखो(av7110->ir.input_phys, माप(av7110->ir.input_phys),
 		 "pci-%s/ir0", pci_name(pci));
 
 	rcdev->device_name = av7110->card_name;
@@ -122,13 +123,13 @@ int av7110_ir_init(struct av7110 *av7110)
 	rcdev->input_phys = av7110->ir.input_phys;
 	rcdev->input_id.bustype = BUS_PCI;
 	rcdev->input_id.version = 2;
-	if (pci->subsystem_vendor) {
-		rcdev->input_id.vendor	= pci->subsystem_vendor;
-		rcdev->input_id.product = pci->subsystem_device;
-	} else {
-		rcdev->input_id.vendor	= pci->vendor;
+	अगर (pci->subप्रणाली_venकरोr) अणु
+		rcdev->input_id.venकरोr	= pci->subप्रणाली_venकरोr;
+		rcdev->input_id.product = pci->subप्रणाली_device;
+	पूर्ण अन्यथा अणु
+		rcdev->input_id.venकरोr	= pci->venकरोr;
 		rcdev->input_id.product = pci->device;
-	}
+	पूर्ण
 
 	rcdev->dev.parent = &pci->dev;
 	rcdev->allowed_protocols = RC_PROTO_BIT_RC5 | RC_PROTO_BIT_RCMM32;
@@ -140,19 +141,19 @@ int av7110_ir_init(struct av7110 *av7110)
 	av7110->ir.ir_config = IR_RC5;
 	av7110_set_ir_config(av7110);
 
-	ret = rc_register_device(rcdev);
-	if (ret) {
-		av7110->ir.rcdev = NULL;
-		rc_free_device(rcdev);
-	}
+	ret = rc_रेजिस्टर_device(rcdev);
+	अगर (ret) अणु
+		av7110->ir.rcdev = शून्य;
+		rc_मुक्त_device(rcdev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void av7110_ir_exit(struct av7110 *av7110)
-{
-	rc_unregister_device(av7110->ir.rcdev);
-}
+व्योम av7110_ir_निकास(काष्ठा av7110 *av7110)
+अणु
+	rc_unरेजिस्टर_device(av7110->ir.rcdev);
+पूर्ण
 
 //MODULE_AUTHOR("Holger Waechtler <holger@convergence.de>, Oliver Endriss <o.endriss@gmx.de>");
 //MODULE_LICENSE("GPL");

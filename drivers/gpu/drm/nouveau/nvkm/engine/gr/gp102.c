@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,83 +22,83 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "gf100.h"
-#include "ctxgf100.h"
+#समावेश "gf100.h"
+#समावेश "ctxgf100.h"
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-static void
-gp102_gr_zbc_clear_stencil(struct gf100_gr *gr, int zbc)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
-	const int znum =  zbc - 1;
-	const u32 zoff = znum * 4;
+अटल व्योम
+gp102_gr_zbc_clear_stencil(काष्ठा gf100_gr *gr, पूर्णांक zbc)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+	स्थिर पूर्णांक znum =  zbc - 1;
+	स्थिर u32 zoff = znum * 4;
 
-	if (gr->zbc_stencil[zbc].format)
+	अगर (gr->zbc_stencil[zbc].क्रमmat)
 		nvkm_wr32(device, 0x41815c + zoff, gr->zbc_stencil[zbc].ds);
 	nvkm_mask(device, 0x418198 + ((znum / 4) * 4),
 			  0x0000007f << ((znum % 4) * 7),
-			  gr->zbc_stencil[zbc].format << ((znum % 4) * 7));
-}
+			  gr->zbc_stencil[zbc].क्रमmat << ((znum % 4) * 7));
+पूर्ण
 
-static int
-gp102_gr_zbc_stencil_get(struct gf100_gr *gr, int format,
-			 const u32 ds, const u32 l2)
-{
-	struct nvkm_ltc *ltc = gr->base.engine.subdev.device->ltc;
-	int zbc = -ENOSPC, i;
+अटल पूर्णांक
+gp102_gr_zbc_stencil_get(काष्ठा gf100_gr *gr, पूर्णांक क्रमmat,
+			 स्थिर u32 ds, स्थिर u32 l2)
+अणु
+	काष्ठा nvkm_ltc *ltc = gr->base.engine.subdev.device->ltc;
+	पूर्णांक zbc = -ENOSPC, i;
 
-	for (i = ltc->zbc_min; i <= ltc->zbc_max; i++) {
-		if (gr->zbc_stencil[i].format) {
-			if (gr->zbc_stencil[i].format != format)
-				continue;
-			if (gr->zbc_stencil[i].ds != ds)
-				continue;
-			if (gr->zbc_stencil[i].l2 != l2) {
+	क्रम (i = ltc->zbc_min; i <= ltc->zbc_max; i++) अणु
+		अगर (gr->zbc_stencil[i].क्रमmat) अणु
+			अगर (gr->zbc_stencil[i].क्रमmat != क्रमmat)
+				जारी;
+			अगर (gr->zbc_stencil[i].ds != ds)
+				जारी;
+			अगर (gr->zbc_stencil[i].l2 != l2) अणु
 				WARN_ON(1);
-				return -EINVAL;
-			}
-			return i;
-		} else {
+				वापस -EINVAL;
+			पूर्ण
+			वापस i;
+		पूर्ण अन्यथा अणु
 			zbc = (zbc < 0) ? i : zbc;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (zbc < 0)
-		return zbc;
+	अगर (zbc < 0)
+		वापस zbc;
 
-	gr->zbc_stencil[zbc].format = format;
+	gr->zbc_stencil[zbc].क्रमmat = क्रमmat;
 	gr->zbc_stencil[zbc].ds = ds;
 	gr->zbc_stencil[zbc].l2 = l2;
 	nvkm_ltc_zbc_stencil_get(ltc, zbc, l2);
 	gr->func->zbc->clear_stencil(gr, zbc);
-	return zbc;
-}
+	वापस zbc;
+पूर्ण
 
-const struct gf100_gr_func_zbc
-gp102_gr_zbc = {
+स्थिर काष्ठा gf100_gr_func_zbc
+gp102_gr_zbc = अणु
 	.clear_color = gp100_gr_zbc_clear_color,
 	.clear_depth = gp100_gr_zbc_clear_depth,
 	.stencil_get = gp102_gr_zbc_stencil_get,
 	.clear_stencil = gp102_gr_zbc_clear_stencil,
-};
+पूर्ण;
 
-void
-gp102_gr_init_swdx_pes_mask(struct gf100_gr *gr)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
+व्योम
+gp102_gr_init_swdx_pes_mask(काष्ठा gf100_gr *gr)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
 	u32 mask = 0, data, gpc;
 
-	for (gpc = 0; gpc < gr->gpc_nr; gpc++) {
+	क्रम (gpc = 0; gpc < gr->gpc_nr; gpc++) अणु
 		data = nvkm_rd32(device, GPC_UNIT(gpc, 0x0c50)) & 0x0000000f;
 		mask |= data << (gpc * 4);
-	}
+	पूर्ण
 
 	nvkm_wr32(device, 0x4181d0, mask);
-}
+पूर्ण
 
-static const struct gf100_gr_func
-gp102_gr = {
+अटल स्थिर काष्ठा gf100_gr_func
+gp102_gr = अणु
 	.oneinit_tiles = gm200_gr_oneinit_tiles,
 	.oneinit_sm_id = gm200_gr_oneinit_sm_id,
 	.init = gf100_gr_init,
@@ -122,14 +123,14 @@ gp102_gr = {
 	.ppc_nr = 3,
 	.grctx = &gp102_grctx,
 	.zbc = &gp102_gr_zbc,
-	.sclass = {
-		{ -1, -1, FERMI_TWOD_A },
-		{ -1, -1, KEPLER_INLINE_TO_MEMORY_B },
-		{ -1, -1, PASCAL_B, &gf100_fermi },
-		{ -1, -1, PASCAL_COMPUTE_B },
-		{}
-	}
-};
+	.sclass = अणु
+		अणु -1, -1, FERMI_TWOD_A पूर्ण,
+		अणु -1, -1, KEPLER_INLINE_TO_MEMORY_B पूर्ण,
+		अणु -1, -1, PASCAL_B, &gf100_fermi पूर्ण,
+		अणु -1, -1, PASCAL_COMPUTE_B पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
 MODULE_FIRMWARE("nvidia/gp102/gr/fecs_bl.bin");
 MODULE_FIRMWARE("nvidia/gp102/gr/fecs_inst.bin");
@@ -144,15 +145,15 @@ MODULE_FIRMWARE("nvidia/gp102/gr/sw_nonctx.bin");
 MODULE_FIRMWARE("nvidia/gp102/gr/sw_bundle_init.bin");
 MODULE_FIRMWARE("nvidia/gp102/gr/sw_method_init.bin");
 
-static const struct gf100_gr_fwif
-gp102_gr_fwif[] = {
-	{  0, gm200_gr_load, &gp102_gr, &gm200_gr_fecs_acr, &gm200_gr_gpccs_acr },
-	{ -1, gm200_gr_nofw },
-	{}
-};
+अटल स्थिर काष्ठा gf100_gr_fwअगर
+gp102_gr_fwअगर[] = अणु
+	अणु  0, gm200_gr_load, &gp102_gr, &gm200_gr_fecs_acr, &gm200_gr_gpccs_acr पूर्ण,
+	अणु -1, gm200_gr_nofw पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gp102_gr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
-{
-	return gf100_gr_new_(gp102_gr_fwif, device, type, inst, pgr);
-}
+पूर्णांक
+gp102_gr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
+अणु
+	वापस gf100_gr_new_(gp102_gr_fwअगर, device, type, inst, pgr);
+पूर्ण

@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
- * BTF-to-C dumper tests for implicit and explicit padding between fields and
- * at the end of a struct.
+ * BTF-to-C dumper tests क्रम implicit and explicit padding between fields and
+ * at the end of a काष्ठा.
  *
  * Copyright (c) 2019 Facebook
  */
 /* ----- START-EXPECTED-OUTPUT ----- */
-struct padded_implicitly {
-	int a;
-	long int b;
-	char c;
-};
+काष्ठा padded_implicitly अणु
+	पूर्णांक a;
+	दीर्घ पूर्णांक b;
+	अक्षर c;
+पूर्ण;
 
 /* ------ END-EXPECTED-OUTPUT ------ */
 
 /* ----- START-EXPECTED-OUTPUT ----- */
 /*
- *struct padded_explicitly {
- *	int a;
- *	int: 32;
- *	int b;
- *};
+ *काष्ठा padded_explicitly अणु
+ *	पूर्णांक a;
+ *	पूर्णांक: 32;
+ *	पूर्णांक b;
+ *पूर्ण;
  *
  */
 /* ------ END-EXPECTED-OUTPUT ------ */
 
-struct padded_explicitly {
-	int a;
-	int: 1; /* algo will explicitly pad with full 32 bits here */
-	int b;
-};
+काष्ठा padded_explicitly अणु
+	पूर्णांक a;
+	पूर्णांक: 1; /* algo will explicitly pad with full 32 bits here */
+	पूर्णांक b;
+पूर्ण;
 
 /* ----- START-EXPECTED-OUTPUT ----- */
 /*
- *struct padded_a_lot {
- *	int a;
- *	long: 32;
- *	long: 64;
- *	long: 64;
- *	int b;
- *};
+ *काष्ठा padded_a_lot अणु
+ *	पूर्णांक a;
+ *	दीर्घ: 32;
+ *	दीर्घ: 64;
+ *	दीर्घ: 64;
+ *	पूर्णांक b;
+ *पूर्ण;
  *
  */
 /* ------ END-EXPECTED-OUTPUT ------ */
 
-struct padded_a_lot {
-	int a;
+काष्ठा padded_a_lot अणु
+	पूर्णांक a;
 	/* 32 bit of implicit padding here, which algo will make explicit */
-	long: 64;
-	long: 64;
-	int b;
-};
+	दीर्घ: 64;
+	दीर्घ: 64;
+	पूर्णांक b;
+पूर्ण;
 
 /* ----- START-EXPECTED-OUTPUT ----- */
 /*
- *struct padded_cache_line {
- *	int a;
- *	long: 32;
- *	long: 64;
- *	long: 64;
- *	long: 64;
- *	int b;
- *	long: 32;
- *	long: 64;
- *	long: 64;
- *	long: 64;
- *};
+ *काष्ठा padded_cache_line अणु
+ *	पूर्णांक a;
+ *	दीर्घ: 32;
+ *	दीर्घ: 64;
+ *	दीर्घ: 64;
+ *	दीर्घ: 64;
+ *	पूर्णांक b;
+ *	दीर्घ: 32;
+ *	दीर्घ: 64;
+ *	दीर्घ: 64;
+ *	दीर्घ: 64;
+ *पूर्ण;
  *
  */
 /* ------ END-EXPECTED-OUTPUT ------ */
 
-struct padded_cache_line {
-	int a;
-	int b __attribute__((aligned(32)));
-};
+काष्ठा padded_cache_line अणु
+	पूर्णांक a;
+	पूर्णांक b __attribute__((aligned(32)));
+पूर्ण;
 
 /* ----- START-EXPECTED-OUTPUT ----- */
 /*
- *struct zone_padding {
- *	char x[0];
- *};
+ *काष्ठा zone_padding अणु
+ *	अक्षर x[0];
+ *पूर्ण;
  *
- *struct zone {
- *	int a;
- *	short b;
- *	short: 16;
- *	struct zone_padding __pad__;
- *};
+ *काष्ठा zone अणु
+ *	पूर्णांक a;
+ *	लघु b;
+ *	लघु: 16;
+ *	काष्ठा zone_padding __pad__;
+ *पूर्ण;
  *
  */
 /* ------ END-EXPECTED-OUTPUT ------ */
 
-struct zone_padding {
-	char x[0];
-} __attribute__((__aligned__(8)));
+काष्ठा zone_padding अणु
+	अक्षर x[0];
+पूर्ण __attribute__((__aligned__(8)));
 
-struct zone {
-	int a;
-	short b;
-	struct zone_padding __pad__;
-};
+काष्ठा zone अणु
+	पूर्णांक a;
+	लघु b;
+	काष्ठा zone_padding __pad__;
+पूर्ण;
 
-int f(struct {
-	struct padded_implicitly _1;
-	struct padded_explicitly _2;
-	struct padded_a_lot _3;
-	struct padded_cache_line _4;
-	struct zone _5;
-} *_)
-{
-	return 0;
-}
+पूर्णांक f(काष्ठा अणु
+	काष्ठा padded_implicitly _1;
+	काष्ठा padded_explicitly _2;
+	काष्ठा padded_a_lot _3;
+	काष्ठा padded_cache_line _4;
+	काष्ठा zone _5;
+पूर्ण *_)
+अणु
+	वापस 0;
+पूर्ण

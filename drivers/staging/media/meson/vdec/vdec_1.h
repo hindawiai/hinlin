@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (C) 2018 BayLibre, SAS
  * Author: Maxime Jourdan <mjourdan@baylibre.com>
  */
 
-#ifndef __MESON_VDEC_VDEC_1_H_
-#define __MESON_VDEC_VDEC_1_H_
+#अगर_अघोषित __MESON_VDEC_VDEC_1_H_
+#घोषणा __MESON_VDEC_VDEC_1_H_
 
-#include "vdec.h"
+#समावेश "vdec.h"
 
-extern struct amvdec_ops vdec_1_ops;
+बाह्य काष्ठा amvdec_ops vdec_1_ops;
 
-#endif
+#पूर्ण_अगर

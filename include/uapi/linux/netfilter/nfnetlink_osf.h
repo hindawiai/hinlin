@@ -1,83 +1,84 @@
-#ifndef _NF_OSF_H
-#define _NF_OSF_H
+<शैली गुरु>
+#अगर_अघोषित _NF_OSF_H
+#घोषणा _NF_OSF_H
 
-#include <linux/types.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
 
-#define MAXGENRELEN	32
+#घोषणा MAXGENRELEN	32
 
-#define NF_OSF_GENRE	(1 << 0)
-#define NF_OSF_TTL	(1 << 1)
-#define NF_OSF_LOG	(1 << 2)
-#define NF_OSF_INVERT	(1 << 3)
+#घोषणा NF_OSF_GENRE	(1 << 0)
+#घोषणा NF_OSF_TTL	(1 << 1)
+#घोषणा NF_OSF_LOG	(1 << 2)
+#घोषणा NF_OSF_INVERT	(1 << 3)
 
-#define NF_OSF_LOGLEVEL_ALL		0	/* log all matched fingerprints */
-#define NF_OSF_LOGLEVEL_FIRST		1	/* log only the first matced fingerprint */
-#define NF_OSF_LOGLEVEL_ALL_KNOWN	2	/* do not log unknown packets */
+#घोषणा NF_OSF_LOGLEVEL_ALL		0	/* log all matched fingerprपूर्णांकs */
+#घोषणा NF_OSF_LOGLEVEL_FIRST		1	/* log only the first matced fingerprपूर्णांक */
+#घोषणा NF_OSF_LOGLEVEL_ALL_KNOWN	2	/* करो not log unknown packets */
 
-#define NF_OSF_TTL_TRUE			0	/* True ip and fingerprint TTL comparison */
+#घोषणा NF_OSF_TTL_TRUE			0	/* True ip and fingerprपूर्णांक TTL comparison */
 
-/* Check if ip TTL is less than fingerprint one */
-#define NF_OSF_TTL_LESS			1
+/* Check अगर ip TTL is less than fingerprपूर्णांक one */
+#घोषणा NF_OSF_TTL_LESS			1
 
-/* Do not compare ip and fingerprint TTL at all */
-#define NF_OSF_TTL_NOCHECK		2
+/* Do not compare ip and fingerprपूर्णांक TTL at all */
+#घोषणा NF_OSF_TTL_NOCHECK		2
 
-#define NF_OSF_FLAGMASK		(NF_OSF_GENRE | NF_OSF_TTL | \
+#घोषणा NF_OSF_FLAGMASK		(NF_OSF_GENRE | NF_OSF_TTL | \
 				 NF_OSF_LOG | NF_OSF_INVERT)
 /* Wildcard MSS (kind of).
- * It is used to implement a state machine for the different wildcard values
- * of the MSS and window sizes.
+ * It is used to implement a state machine क्रम the dअगरferent wildcard values
+ * of the MSS and winकरोw sizes.
  */
-struct nf_osf_wc {
+काष्ठा nf_osf_wc अणु
 	__u32	wc;
 	__u32	val;
-};
+पूर्ण;
 
-/* This struct represents IANA options
+/* This काष्ठा represents IANA options
  * http://www.iana.org/assignments/tcp-parameters
  */
-struct nf_osf_opt {
+काष्ठा nf_osf_opt अणु
 	__u16			kind, length;
-	struct nf_osf_wc	wc;
-};
+	काष्ठा nf_osf_wc	wc;
+पूर्ण;
 
-struct nf_osf_info {
-	char	genre[MAXGENRELEN];
+काष्ठा nf_osf_info अणु
+	अक्षर	genre[MAXGENRELEN];
 	__u32	len;
 	__u32	flags;
 	__u32	loglevel;
 	__u32	ttl;
-};
+पूर्ण;
 
-struct nf_osf_user_finger {
-	struct nf_osf_wc	wss;
+काष्ठा nf_osf_user_finger अणु
+	काष्ठा nf_osf_wc	wss;
 
 	__u8	ttl, df;
 	__u16	ss, mss;
 	__u16	opt_num;
 
-	char	genre[MAXGENRELEN];
-	char	version[MAXGENRELEN];
-	char	subtype[MAXGENRELEN];
+	अक्षर	genre[MAXGENRELEN];
+	अक्षर	version[MAXGENRELEN];
+	अक्षर	subtype[MAXGENRELEN];
 
-	/* MAX_IPOPTLEN is maximum if all options are NOPs or EOLs */
-	struct nf_osf_opt	opt[MAX_IPOPTLEN];
-};
+	/* MAX_IPOPTLEN is maximum अगर all options are NOPs or EOLs */
+	काष्ठा nf_osf_opt	opt[MAX_IPOPTLEN];
+पूर्ण;
 
-struct nf_osf_nlmsg {
-	struct nf_osf_user_finger	f;
-	struct iphdr			ip;
-	struct tcphdr			tcp;
-};
+काष्ठा nf_osf_nlmsg अणु
+	काष्ठा nf_osf_user_finger	f;
+	काष्ठा iphdr			ip;
+	काष्ठा tcphdr			tcp;
+पूर्ण;
 
-/* Defines for IANA option kinds */
-enum iana_options {
+/* Defines क्रम IANA option kinds */
+क्रमागत iana_options अणु
 	OSFOPT_EOL = 0,		/* End of options */
 	OSFOPT_NOP,		/* NOP */
 	OSFOPT_MSS,		/* Maximum segment size */
-	OSFOPT_WSO,		/* Window scale option */
+	OSFOPT_WSO,		/* Winकरोw scale option */
 	OSFOPT_SACKP,		/* SACK permitted */
 	OSFOPT_SACK,		/* SACK */
 	OSFOPT_ECHO,
@@ -88,33 +89,33 @@ enum iana_options {
 
 	/* Others are not used in the current OSF */
 	OSFOPT_EMPTY = 255,
-};
+पूर्ण;
 
-/* Initial window size option state machine: multiple of mss, mtu or
+/* Initial winकरोw size option state machine: multiple of mss, mtu or
  * plain numeric value. Can also be made as plain numeric value which
- * is not a multiple of specified value.
+ * is not a multiple of specअगरied value.
  */
-enum nf_osf_window_size_options {
+क्रमागत nf_osf_winकरोw_size_options अणु
 	OSF_WSS_PLAIN	= 0,
 	OSF_WSS_MSS,
 	OSF_WSS_MTU,
 	OSF_WSS_MODULO,
 	OSF_WSS_MAX,
-};
+पूर्ण;
 
-enum nf_osf_attr_type {
+क्रमागत nf_osf_attr_type अणु
 	OSF_ATTR_UNSPEC,
 	OSF_ATTR_FINGER,
 	OSF_ATTR_MAX,
-};
+पूर्ण;
 
 /*
- * Add/remove fingerprint from the kernel.
+ * Add/हटाओ fingerprपूर्णांक from the kernel.
  */
-enum nf_osf_msg_types {
+क्रमागत nf_osf_msg_types अणु
 	OSF_MSG_ADD,
 	OSF_MSG_REMOVE,
 	OSF_MSG_MAX,
-};
+पूर्ण;
 
-#endif /* _NF_OSF_H */
+#पूर्ण_अगर /* _NF_OSF_H */

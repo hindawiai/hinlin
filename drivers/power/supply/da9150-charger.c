@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * DA9150 Charger Driver
  *
@@ -7,306 +8,306 @@
  * Author: Adam Thomson <Adam.Thomson.Opensource@diasemi.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/interrupt.h>
-#include <linux/power_supply.h>
-#include <linux/notifier.h>
-#include <linux/usb/phy.h>
-#include <linux/iio/consumer.h>
-#include <linux/mfd/da9150/core.h>
-#include <linux/mfd/da9150/registers.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/usb/phy.h>
+#समावेश <linux/iio/consumer.h>
+#समावेश <linux/mfd/da9150/core.h>
+#समावेश <linux/mfd/da9150/रेजिस्टरs.h>
 
 /* Private data */
-struct da9150_charger {
-	struct da9150 *da9150;
-	struct device *dev;
+काष्ठा da9150_अक्षरger अणु
+	काष्ठा da9150 *da9150;
+	काष्ठा device *dev;
 
-	struct power_supply *usb;
-	struct power_supply *battery;
-	struct power_supply *supply_online;
+	काष्ठा घातer_supply *usb;
+	काष्ठा घातer_supply *battery;
+	काष्ठा घातer_supply *supply_online;
 
-	struct usb_phy *usb_phy;
-	struct notifier_block otg_nb;
-	struct work_struct otg_work;
-	unsigned long usb_event;
+	काष्ठा usb_phy *usb_phy;
+	काष्ठा notअगरier_block otg_nb;
+	काष्ठा work_काष्ठा otg_work;
+	अचिन्हित दीर्घ usb_event;
 
-	struct iio_channel *ibus_chan;
-	struct iio_channel *vbus_chan;
-	struct iio_channel *tjunc_chan;
-	struct iio_channel *vbat_chan;
-};
+	काष्ठा iio_channel *ibus_chan;
+	काष्ठा iio_channel *vbus_chan;
+	काष्ठा iio_channel *tjunc_chan;
+	काष्ठा iio_channel *vbat_chan;
+पूर्ण;
 
-static inline int da9150_charger_supply_online(struct da9150_charger *charger,
-					       struct power_supply *psy,
-					       union power_supply_propval *val)
-{
-	val->intval = (psy == charger->supply_online) ? 1 : 0;
+अटल अंतरभूत पूर्णांक da9150_अक्षरger_supply_online(काष्ठा da9150_अक्षरger *अक्षरger,
+					       काष्ठा घातer_supply *psy,
+					       जोड़ घातer_supply_propval *val)
+अणु
+	val->पूर्णांकval = (psy == अक्षरger->supply_online) ? 1 : 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Charger Properties */
-static int da9150_charger_vbus_voltage_now(struct da9150_charger *charger,
-					   union power_supply_propval *val)
-{
-	int v_val, ret;
+अटल पूर्णांक da9150_अक्षरger_vbus_voltage_now(काष्ठा da9150_अक्षरger *अक्षरger,
+					   जोड़ घातer_supply_propval *val)
+अणु
+	पूर्णांक v_val, ret;
 
 	/* Read processed value - mV units */
-	ret = iio_read_channel_processed(charger->vbus_chan, &v_val);
-	if (ret < 0)
-		return ret;
+	ret = iio_पढ़ो_channel_processed(अक्षरger->vbus_chan, &v_val);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Convert voltage to expected uV units */
-	val->intval = v_val * 1000;
+	val->पूर्णांकval = v_val * 1000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_charger_ibus_current_avg(struct da9150_charger *charger,
-					   union power_supply_propval *val)
-{
-	int i_val, ret;
+अटल पूर्णांक da9150_अक्षरger_ibus_current_avg(काष्ठा da9150_अक्षरger *अक्षरger,
+					   जोड़ घातer_supply_propval *val)
+अणु
+	पूर्णांक i_val, ret;
 
 	/* Read processed value - mA units */
-	ret = iio_read_channel_processed(charger->ibus_chan, &i_val);
-	if (ret < 0)
-		return ret;
+	ret = iio_पढ़ो_channel_processed(अक्षरger->ibus_chan, &i_val);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Convert current to expected uA units */
-	val->intval = i_val * 1000;
+	val->पूर्णांकval = i_val * 1000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_charger_tjunc_temp(struct da9150_charger *charger,
-				     union power_supply_propval *val)
-{
-	int t_val, ret;
+अटल पूर्णांक da9150_अक्षरger_tjunc_temp(काष्ठा da9150_अक्षरger *अक्षरger,
+				     जोड़ घातer_supply_propval *val)
+अणु
+	पूर्णांक t_val, ret;
 
 	/* Read processed value - 0.001 degrees C units */
-	ret = iio_read_channel_processed(charger->tjunc_chan, &t_val);
-	if (ret < 0)
-		return ret;
+	ret = iio_पढ़ो_channel_processed(अक्षरger->tjunc_chan, &t_val);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Convert temp to expect 0.1 degrees C units */
-	val->intval = t_val / 100;
+	val->पूर्णांकval = t_val / 100;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum power_supply_property da9150_charger_props[] = {
+अटल क्रमागत घातer_supply_property da9150_अक्षरger_props[] = अणु
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_AVG,
 	POWER_SUPPLY_PROP_TEMP,
-};
+पूर्ण;
 
-static int da9150_charger_get_prop(struct power_supply *psy,
-				   enum power_supply_property psp,
-				   union power_supply_propval *val)
-{
-	struct da9150_charger *charger = dev_get_drvdata(psy->dev.parent);
-	int ret;
+अटल पूर्णांक da9150_अक्षरger_get_prop(काष्ठा घातer_supply *psy,
+				   क्रमागत घातer_supply_property psp,
+				   जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा da9150_अक्षरger *अक्षरger = dev_get_drvdata(psy->dev.parent);
+	पूर्णांक ret;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		ret = da9150_charger_supply_online(charger, psy, val);
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = da9150_charger_vbus_voltage_now(charger, val);
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_AVG:
-		ret = da9150_charger_ibus_current_avg(charger, val);
-		break;
-	case POWER_SUPPLY_PROP_TEMP:
-		ret = da9150_charger_tjunc_temp(charger, val);
-		break;
-	default:
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		ret = da9150_अक्षरger_supply_online(अक्षरger, psy, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = da9150_अक्षरger_vbus_voltage_now(अक्षरger, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
+		ret = da9150_अक्षरger_ibus_current_avg(अक्षरger, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TEMP:
+		ret = da9150_अक्षरger_tjunc_temp(अक्षरger, val);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Battery Properties */
-static int da9150_charger_battery_status(struct da9150_charger *charger,
-					 union power_supply_propval *val)
-{
+अटल पूर्णांक da9150_अक्षरger_battery_status(काष्ठा da9150_अक्षरger *अक्षरger,
+					 जोड़ घातer_supply_propval *val)
+अणु
 	u8 reg;
 
-	/* Check to see if battery is discharging */
-	reg = da9150_reg_read(charger->da9150, DA9150_STATUS_H);
+	/* Check to see अगर battery is disअक्षरging */
+	reg = da9150_reg_पढ़ो(अक्षरger->da9150, DA9150_STATUS_H);
 
-	if (((reg & DA9150_VBUS_STAT_MASK) == DA9150_VBUS_STAT_OFF) ||
-	    ((reg & DA9150_VBUS_STAT_MASK) == DA9150_VBUS_STAT_WAIT)) {
-		val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+	अगर (((reg & DA9150_VBUS_STAT_MASK) == DA9150_VBUS_STAT_OFF) ||
+	    ((reg & DA9150_VBUS_STAT_MASK) == DA9150_VBUS_STAT_WAIT)) अणु
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	reg = da9150_reg_read(charger->da9150, DA9150_STATUS_J);
+	reg = da9150_reg_पढ़ो(अक्षरger->da9150, DA9150_STATUS_J);
 
-	/* Now check for other states */
-	switch (reg & DA9150_CHG_STAT_MASK) {
-	case DA9150_CHG_STAT_ACT:
-	case DA9150_CHG_STAT_PRE:
-	case DA9150_CHG_STAT_CC:
-	case DA9150_CHG_STAT_CV:
-		val->intval = POWER_SUPPLY_STATUS_CHARGING;
-		break;
-	case DA9150_CHG_STAT_OFF:
-	case DA9150_CHG_STAT_SUSP:
-	case DA9150_CHG_STAT_TEMP:
-	case DA9150_CHG_STAT_TIME:
-	case DA9150_CHG_STAT_BAT:
-		val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
-		break;
-	case DA9150_CHG_STAT_FULL:
-		val->intval = POWER_SUPPLY_STATUS_FULL;
-		break;
-	default:
-		val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
-		break;
-	}
+	/* Now check क्रम other states */
+	चयन (reg & DA9150_CHG_STAT_MASK) अणु
+	हाल DA9150_CHG_STAT_ACT:
+	हाल DA9150_CHG_STAT_PRE:
+	हाल DA9150_CHG_STAT_CC:
+	हाल DA9150_CHG_STAT_CV:
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
+		अवरोध;
+	हाल DA9150_CHG_STAT_OFF:
+	हाल DA9150_CHG_STAT_SUSP:
+	हाल DA9150_CHG_STAT_TEMP:
+	हाल DA9150_CHG_STAT_TIME:
+	हाल DA9150_CHG_STAT_BAT:
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+		अवरोध;
+	हाल DA9150_CHG_STAT_FULL:
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
+		अवरोध;
+	शेष:
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_UNKNOWN;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_charger_battery_health(struct da9150_charger *charger,
-					 union power_supply_propval *val)
-{
+अटल पूर्णांक da9150_अक्षरger_battery_health(काष्ठा da9150_अक्षरger *अक्षरger,
+					 जोड़ घातer_supply_propval *val)
+अणु
 	u8 reg;
 
-	reg = da9150_reg_read(charger->da9150, DA9150_STATUS_J);
+	reg = da9150_reg_पढ़ो(अक्षरger->da9150, DA9150_STATUS_J);
 
-	/* Check if temperature limit reached */
-	switch (reg & DA9150_CHG_TEMP_MASK) {
-	case DA9150_CHG_TEMP_UNDER:
-		val->intval = POWER_SUPPLY_HEALTH_COLD;
-		return 0;
-	case DA9150_CHG_TEMP_OVER:
-		val->intval = POWER_SUPPLY_HEALTH_OVERHEAT;
-		return 0;
-	default:
-		break;
-	}
+	/* Check अगर temperature limit reached */
+	चयन (reg & DA9150_CHG_TEMP_MASK) अणु
+	हाल DA9150_CHG_TEMP_UNDER:
+		val->पूर्णांकval = POWER_SUPPLY_HEALTH_COLD;
+		वापस 0;
+	हाल DA9150_CHG_TEMP_OVER:
+		val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERHEAT;
+		वापस 0;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* Check for other health states */
-	switch (reg & DA9150_CHG_STAT_MASK) {
-	case DA9150_CHG_STAT_ACT:
-	case DA9150_CHG_STAT_PRE:
-		val->intval = POWER_SUPPLY_HEALTH_DEAD;
-		break;
-	case DA9150_CHG_STAT_TIME:
-		val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		break;
-	default:
-		val->intval = POWER_SUPPLY_HEALTH_GOOD;
-		break;
-	}
+	/* Check क्रम other health states */
+	चयन (reg & DA9150_CHG_STAT_MASK) अणु
+	हाल DA9150_CHG_STAT_ACT:
+	हाल DA9150_CHG_STAT_PRE:
+		val->पूर्णांकval = POWER_SUPPLY_HEALTH_DEAD;
+		अवरोध;
+	हाल DA9150_CHG_STAT_TIME:
+		val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		अवरोध;
+	शेष:
+		val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_charger_battery_present(struct da9150_charger *charger,
-					  union power_supply_propval *val)
-{
+अटल पूर्णांक da9150_अक्षरger_battery_present(काष्ठा da9150_अक्षरger *अक्षरger,
+					  जोड़ घातer_supply_propval *val)
+अणु
 	u8 reg;
 
-	/* Check if battery present or removed */
-	reg = da9150_reg_read(charger->da9150, DA9150_STATUS_J);
-	if ((reg & DA9150_CHG_STAT_MASK) == DA9150_CHG_STAT_BAT)
-		val->intval = 0;
-	else
-		val->intval = 1;
+	/* Check अगर battery present or हटाओd */
+	reg = da9150_reg_पढ़ो(अक्षरger->da9150, DA9150_STATUS_J);
+	अगर ((reg & DA9150_CHG_STAT_MASK) == DA9150_CHG_STAT_BAT)
+		val->पूर्णांकval = 0;
+	अन्यथा
+		val->पूर्णांकval = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_charger_battery_charge_type(struct da9150_charger *charger,
-					      union power_supply_propval *val)
-{
+अटल पूर्णांक da9150_अक्षरger_battery_अक्षरge_type(काष्ठा da9150_अक्षरger *अक्षरger,
+					      जोड़ घातer_supply_propval *val)
+अणु
 	u8 reg;
 
-	reg = da9150_reg_read(charger->da9150, DA9150_STATUS_J);
+	reg = da9150_reg_पढ़ो(अक्षरger->da9150, DA9150_STATUS_J);
 
-	switch (reg & DA9150_CHG_STAT_MASK) {
-	case DA9150_CHG_STAT_CC:
-		val->intval = POWER_SUPPLY_CHARGE_TYPE_FAST;
-		break;
-	case DA9150_CHG_STAT_ACT:
-	case DA9150_CHG_STAT_PRE:
-	case DA9150_CHG_STAT_CV:
-		val->intval = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
-		break;
-	default:
-		val->intval = POWER_SUPPLY_CHARGE_TYPE_NONE;
-		break;
-	}
+	चयन (reg & DA9150_CHG_STAT_MASK) अणु
+	हाल DA9150_CHG_STAT_CC:
+		val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_FAST;
+		अवरोध;
+	हाल DA9150_CHG_STAT_ACT:
+	हाल DA9150_CHG_STAT_PRE:
+	हाल DA9150_CHG_STAT_CV:
+		val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
+		अवरोध;
+	शेष:
+		val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_NONE;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_charger_battery_voltage_min(struct da9150_charger *charger,
-					      union power_supply_propval *val)
-{
+अटल पूर्णांक da9150_अक्षरger_battery_voltage_min(काष्ठा da9150_अक्षरger *अक्षरger,
+					      जोड़ घातer_supply_propval *val)
+अणु
 	u8 reg;
 
-	reg = da9150_reg_read(charger->da9150, DA9150_PPR_CHGCTRL_C);
+	reg = da9150_reg_पढ़ो(अक्षरger->da9150, DA9150_PPR_CHGCTRL_C);
 
 	/* Value starts at 2500 mV, 50 mV increments, presented in uV */
-	val->intval = ((reg & DA9150_CHG_VFAULT_MASK) * 50000) + 2500000;
+	val->पूर्णांकval = ((reg & DA9150_CHG_VFAULT_MASK) * 50000) + 2500000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_charger_battery_voltage_now(struct da9150_charger *charger,
-					      union power_supply_propval *val)
-{
-	int v_val, ret;
+अटल पूर्णांक da9150_अक्षरger_battery_voltage_now(काष्ठा da9150_अक्षरger *अक्षरger,
+					      जोड़ घातer_supply_propval *val)
+अणु
+	पूर्णांक v_val, ret;
 
 	/* Read processed value - mV units */
-	ret = iio_read_channel_processed(charger->vbat_chan, &v_val);
-	if (ret < 0)
-		return ret;
+	ret = iio_पढ़ो_channel_processed(अक्षरger->vbat_chan, &v_val);
+	अगर (ret < 0)
+		वापस ret;
 
-	val->intval = v_val * 1000;
+	val->पूर्णांकval = v_val * 1000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_charger_battery_current_max(struct da9150_charger *charger,
-					      union power_supply_propval *val)
-{
-	int reg;
+अटल पूर्णांक da9150_अक्षरger_battery_current_max(काष्ठा da9150_अक्षरger *अक्षरger,
+					      जोड़ घातer_supply_propval *val)
+अणु
+	पूर्णांक reg;
 
-	reg = da9150_reg_read(charger->da9150, DA9150_PPR_CHGCTRL_D);
+	reg = da9150_reg_पढ़ो(अक्षरger->da9150, DA9150_PPR_CHGCTRL_D);
 
 	/* 25mA increments */
-	val->intval = reg * 25000;
+	val->पूर्णांकval = reg * 25000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9150_charger_battery_voltage_max(struct da9150_charger *charger,
-					      union power_supply_propval *val)
-{
+अटल पूर्णांक da9150_अक्षरger_battery_voltage_max(काष्ठा da9150_अक्षरger *अक्षरger,
+					      जोड़ घातer_supply_propval *val)
+अणु
 	u8 reg;
 
-	reg = da9150_reg_read(charger->da9150, DA9150_PPR_CHGCTRL_B);
+	reg = da9150_reg_पढ़ो(अक्षरger->da9150, DA9150_PPR_CHGCTRL_B);
 
 	/* Value starts at 3650 mV, 25 mV increments, presented in uV */
-	val->intval = ((reg & DA9150_CHG_VBAT_MASK) * 25000) + 3650000;
-	return 0;
-}
+	val->पूर्णांकval = ((reg & DA9150_CHG_VBAT_MASK) * 25000) + 3650000;
+	वापस 0;
+पूर्ण
 
-static enum power_supply_property da9150_charger_bat_props[] = {
+अटल क्रमागत घातer_supply_property da9150_अक्षरger_bat_props[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_HEALTH,
@@ -316,374 +317,374 @@ static enum power_supply_property da9150_charger_bat_props[] = {
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX,
-};
+पूर्ण;
 
-static int da9150_charger_battery_get_prop(struct power_supply *psy,
-					   enum power_supply_property psp,
-					   union power_supply_propval *val)
-{
-	struct da9150_charger *charger = dev_get_drvdata(psy->dev.parent);
-	int ret;
+अटल पूर्णांक da9150_अक्षरger_battery_get_prop(काष्ठा घातer_supply *psy,
+					   क्रमागत घातer_supply_property psp,
+					   जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा da9150_अक्षरger *अक्षरger = dev_get_drvdata(psy->dev.parent);
+	पूर्णांक ret;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		ret = da9150_charger_battery_status(charger, val);
-		break;
-	case POWER_SUPPLY_PROP_ONLINE:
-		ret = da9150_charger_supply_online(charger, psy, val);
-		break;
-	case POWER_SUPPLY_PROP_HEALTH:
-		ret = da9150_charger_battery_health(charger, val);
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		ret = da9150_charger_battery_present(charger, val);
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-		ret = da9150_charger_battery_charge_type(charger, val);
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
-		ret = da9150_charger_battery_voltage_min(charger, val);
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = da9150_charger_battery_voltage_now(charger, val);
-		break;
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
-		ret = da9150_charger_battery_current_max(charger, val);
-		break;
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
-		ret = da9150_charger_battery_voltage_max(charger, val);
-		break;
-	default:
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		ret = da9150_अक्षरger_battery_status(अक्षरger, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		ret = da9150_अक्षरger_supply_online(अक्षरger, psy, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		ret = da9150_अक्षरger_battery_health(अक्षरger, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		ret = da9150_अक्षरger_battery_present(अक्षरger, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
+		ret = da9150_अक्षरger_battery_अक्षरge_type(अक्षरger, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
+		ret = da9150_अक्षरger_battery_voltage_min(अक्षरger, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = da9150_अक्षरger_battery_voltage_now(अक्षरger, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
+		ret = da9150_अक्षरger_battery_current_max(अक्षरger, val);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
+		ret = da9150_अक्षरger_battery_voltage_max(अक्षरger, val);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t da9150_charger_chg_irq(int irq, void *data)
-{
-	struct da9150_charger *charger = data;
+अटल irqवापस_t da9150_अक्षरger_chg_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da9150_अक्षरger *अक्षरger = data;
 
-	power_supply_changed(charger->battery);
+	घातer_supply_changed(अक्षरger->battery);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t da9150_charger_tjunc_irq(int irq, void *data)
-{
-	struct da9150_charger *charger = data;
+अटल irqवापस_t da9150_अक्षरger_tjunc_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da9150_अक्षरger *अक्षरger = data;
 
-	/* Nothing we can really do except report this. */
-	dev_crit(charger->dev, "TJunc over temperature!!!\n");
-	power_supply_changed(charger->usb);
+	/* Nothing we can really करो except report this. */
+	dev_crit(अक्षरger->dev, "TJunc over temperature!!!\n");
+	घातer_supply_changed(अक्षरger->usb);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t da9150_charger_vfault_irq(int irq, void *data)
-{
-	struct da9150_charger *charger = data;
+अटल irqवापस_t da9150_अक्षरger_vfault_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da9150_अक्षरger *अक्षरger = data;
 
-	/* Nothing we can really do except report this. */
-	dev_crit(charger->dev, "VSYS under voltage!!!\n");
-	power_supply_changed(charger->usb);
-	power_supply_changed(charger->battery);
+	/* Nothing we can really करो except report this. */
+	dev_crit(अक्षरger->dev, "VSYS under voltage!!!\n");
+	घातer_supply_changed(अक्षरger->usb);
+	घातer_supply_changed(अक्षरger->battery);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t da9150_charger_vbus_irq(int irq, void *data)
-{
-	struct da9150_charger *charger = data;
+अटल irqवापस_t da9150_अक्षरger_vbus_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da9150_अक्षरger *अक्षरger = data;
 	u8 reg;
 
-	reg = da9150_reg_read(charger->da9150, DA9150_STATUS_H);
+	reg = da9150_reg_पढ़ो(अक्षरger->da9150, DA9150_STATUS_H);
 
 	/* Charger plugged in or battery only */
-	switch (reg & DA9150_VBUS_STAT_MASK) {
-	case DA9150_VBUS_STAT_OFF:
-	case DA9150_VBUS_STAT_WAIT:
-		charger->supply_online = charger->battery;
-		break;
-	case DA9150_VBUS_STAT_CHG:
-		charger->supply_online = charger->usb;
-		break;
-	default:
-		dev_warn(charger->dev, "Unknown VBUS state - reg = 0x%x\n",
+	चयन (reg & DA9150_VBUS_STAT_MASK) अणु
+	हाल DA9150_VBUS_STAT_OFF:
+	हाल DA9150_VBUS_STAT_WAIT:
+		अक्षरger->supply_online = अक्षरger->battery;
+		अवरोध;
+	हाल DA9150_VBUS_STAT_CHG:
+		अक्षरger->supply_online = अक्षरger->usb;
+		अवरोध;
+	शेष:
+		dev_warn(अक्षरger->dev, "Unknown VBUS state - reg = 0x%x\n",
 			 reg);
-		charger->supply_online = NULL;
-		break;
-	}
+		अक्षरger->supply_online = शून्य;
+		अवरोध;
+	पूर्ण
 
-	power_supply_changed(charger->usb);
-	power_supply_changed(charger->battery);
+	घातer_supply_changed(अक्षरger->usb);
+	घातer_supply_changed(अक्षरger->battery);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void da9150_charger_otg_work(struct work_struct *data)
-{
-	struct da9150_charger *charger =
-		container_of(data, struct da9150_charger, otg_work);
+अटल व्योम da9150_अक्षरger_otg_work(काष्ठा work_काष्ठा *data)
+अणु
+	काष्ठा da9150_अक्षरger *अक्षरger =
+		container_of(data, काष्ठा da9150_अक्षरger, otg_work);
 
-	switch (charger->usb_event) {
-	case USB_EVENT_ID:
+	चयन (अक्षरger->usb_event) अणु
+	हाल USB_EVENT_ID:
 		/* Enable OTG Boost */
-		da9150_set_bits(charger->da9150, DA9150_PPR_BKCTRL_A,
+		da9150_set_bits(अक्षरger->da9150, DA9150_PPR_BKCTRL_A,
 				DA9150_VBUS_MODE_MASK, DA9150_VBUS_MODE_OTG);
-		break;
-	case USB_EVENT_NONE:
-		/* Revert to charge mode */
-		power_supply_changed(charger->usb);
-		power_supply_changed(charger->battery);
-		da9150_set_bits(charger->da9150, DA9150_PPR_BKCTRL_A,
+		अवरोध;
+	हाल USB_EVENT_NONE:
+		/* Revert to अक्षरge mode */
+		घातer_supply_changed(अक्षरger->usb);
+		घातer_supply_changed(अक्षरger->battery);
+		da9150_set_bits(अक्षरger->da9150, DA9150_PPR_BKCTRL_A,
 				DA9150_VBUS_MODE_MASK, DA9150_VBUS_MODE_CHG);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int da9150_charger_otg_ncb(struct notifier_block *nb, unsigned long val,
-				  void *priv)
-{
-	struct da9150_charger *charger =
-		container_of(nb, struct da9150_charger, otg_nb);
+अटल पूर्णांक da9150_अक्षरger_otg_ncb(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
+				  व्योम *priv)
+अणु
+	काष्ठा da9150_अक्षरger *अक्षरger =
+		container_of(nb, काष्ठा da9150_अक्षरger, otg_nb);
 
-	dev_dbg(charger->dev, "DA9150 OTG notify %lu\n", val);
+	dev_dbg(अक्षरger->dev, "DA9150 OTG notify %lu\n", val);
 
-	charger->usb_event = val;
-	schedule_work(&charger->otg_work);
+	अक्षरger->usb_event = val;
+	schedule_work(&अक्षरger->otg_work);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int da9150_charger_register_irq(struct platform_device *pdev,
+अटल पूर्णांक da9150_अक्षरger_रेजिस्टर_irq(काष्ठा platक्रमm_device *pdev,
 				       irq_handler_t handler,
-				       const char *irq_name)
-{
-	struct device *dev = &pdev->dev;
-	struct da9150_charger *charger = platform_get_drvdata(pdev);
-	int irq, ret;
+				       स्थिर अक्षर *irq_name)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा da9150_अक्षरger *अक्षरger = platक्रमm_get_drvdata(pdev);
+	पूर्णांक irq, ret;
 
-	irq = platform_get_irq_byname(pdev, irq_name);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq_byname(pdev, irq_name);
+	अगर (irq < 0) अणु
 		dev_err(dev, "Failed to get IRQ CHG_STATUS: %d\n", irq);
-		return irq;
-	}
+		वापस irq;
+	पूर्ण
 
-	ret = request_threaded_irq(irq, NULL, handler, IRQF_ONESHOT, irq_name,
-				   charger);
-	if (ret)
+	ret = request_thपढ़ोed_irq(irq, शून्य, handler, IRQF_ONESHOT, irq_name,
+				   अक्षरger);
+	अगर (ret)
 		dev_err(dev, "Failed to request IRQ %d: %d\n", irq, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void da9150_charger_unregister_irq(struct platform_device *pdev,
-					  const char *irq_name)
-{
-	struct device *dev = &pdev->dev;
-	struct da9150_charger *charger = platform_get_drvdata(pdev);
-	int irq;
+अटल व्योम da9150_अक्षरger_unरेजिस्टर_irq(काष्ठा platक्रमm_device *pdev,
+					  स्थिर अक्षर *irq_name)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा da9150_अक्षरger *अक्षरger = platक्रमm_get_drvdata(pdev);
+	पूर्णांक irq;
 
-	irq = platform_get_irq_byname(pdev, irq_name);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq_byname(pdev, irq_name);
+	अगर (irq < 0) अणु
 		dev_err(dev, "Failed to get IRQ CHG_STATUS: %d\n", irq);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	free_irq(irq, charger);
-}
+	मुक्त_irq(irq, अक्षरger);
+पूर्ण
 
-static const struct power_supply_desc usb_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc usb_desc = अणु
 	.name		= "da9150-usb",
 	.type		= POWER_SUPPLY_TYPE_USB,
-	.properties	= da9150_charger_props,
-	.num_properties	= ARRAY_SIZE(da9150_charger_props),
-	.get_property	= da9150_charger_get_prop,
-};
+	.properties	= da9150_अक्षरger_props,
+	.num_properties	= ARRAY_SIZE(da9150_अक्षरger_props),
+	.get_property	= da9150_अक्षरger_get_prop,
+पूर्ण;
 
-static const struct power_supply_desc battery_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc battery_desc = अणु
 	.name		= "da9150-battery",
 	.type		= POWER_SUPPLY_TYPE_BATTERY,
-	.properties	= da9150_charger_bat_props,
-	.num_properties	= ARRAY_SIZE(da9150_charger_bat_props),
-	.get_property	= da9150_charger_battery_get_prop,
-};
+	.properties	= da9150_अक्षरger_bat_props,
+	.num_properties	= ARRAY_SIZE(da9150_अक्षरger_bat_props),
+	.get_property	= da9150_अक्षरger_battery_get_prop,
+पूर्ण;
 
-static int da9150_charger_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct da9150 *da9150 = dev_get_drvdata(dev->parent);
-	struct da9150_charger *charger;
+अटल पूर्णांक da9150_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा da9150 *da9150 = dev_get_drvdata(dev->parent);
+	काष्ठा da9150_अक्षरger *अक्षरger;
 	u8 reg;
-	int ret;
+	पूर्णांक ret;
 
-	charger = devm_kzalloc(dev, sizeof(struct da9150_charger), GFP_KERNEL);
-	if (!charger)
-		return -ENOMEM;
+	अक्षरger = devm_kzalloc(dev, माप(काष्ठा da9150_अक्षरger), GFP_KERNEL);
+	अगर (!अक्षरger)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, charger);
-	charger->da9150 = da9150;
-	charger->dev = dev;
+	platक्रमm_set_drvdata(pdev, अक्षरger);
+	अक्षरger->da9150 = da9150;
+	अक्षरger->dev = dev;
 
 	/* Acquire ADC channels */
-	charger->ibus_chan = iio_channel_get(dev, "CHAN_IBUS");
-	if (IS_ERR(charger->ibus_chan)) {
-		ret = PTR_ERR(charger->ibus_chan);
-		goto ibus_chan_fail;
-	}
+	अक्षरger->ibus_chan = iio_channel_get(dev, "CHAN_IBUS");
+	अगर (IS_ERR(अक्षरger->ibus_chan)) अणु
+		ret = PTR_ERR(अक्षरger->ibus_chan);
+		जाओ ibus_chan_fail;
+	पूर्ण
 
-	charger->vbus_chan = iio_channel_get(dev, "CHAN_VBUS");
-	if (IS_ERR(charger->vbus_chan)) {
-		ret = PTR_ERR(charger->vbus_chan);
-		goto vbus_chan_fail;
-	}
+	अक्षरger->vbus_chan = iio_channel_get(dev, "CHAN_VBUS");
+	अगर (IS_ERR(अक्षरger->vbus_chan)) अणु
+		ret = PTR_ERR(अक्षरger->vbus_chan);
+		जाओ vbus_chan_fail;
+	पूर्ण
 
-	charger->tjunc_chan = iio_channel_get(dev, "CHAN_TJUNC");
-	if (IS_ERR(charger->tjunc_chan)) {
-		ret = PTR_ERR(charger->tjunc_chan);
-		goto tjunc_chan_fail;
-	}
+	अक्षरger->tjunc_chan = iio_channel_get(dev, "CHAN_TJUNC");
+	अगर (IS_ERR(अक्षरger->tjunc_chan)) अणु
+		ret = PTR_ERR(अक्षरger->tjunc_chan);
+		जाओ tjunc_chan_fail;
+	पूर्ण
 
-	charger->vbat_chan = iio_channel_get(dev, "CHAN_VBAT");
-	if (IS_ERR(charger->vbat_chan)) {
-		ret = PTR_ERR(charger->vbat_chan);
-		goto vbat_chan_fail;
-	}
+	अक्षरger->vbat_chan = iio_channel_get(dev, "CHAN_VBAT");
+	अगर (IS_ERR(अक्षरger->vbat_chan)) अणु
+		ret = PTR_ERR(अक्षरger->vbat_chan);
+		जाओ vbat_chan_fail;
+	पूर्ण
 
-	/* Register power supplies */
-	charger->usb = power_supply_register(dev, &usb_desc, NULL);
-	if (IS_ERR(charger->usb)) {
-		ret = PTR_ERR(charger->usb);
-		goto usb_fail;
-	}
+	/* Register घातer supplies */
+	अक्षरger->usb = घातer_supply_रेजिस्टर(dev, &usb_desc, शून्य);
+	अगर (IS_ERR(अक्षरger->usb)) अणु
+		ret = PTR_ERR(अक्षरger->usb);
+		जाओ usb_fail;
+	पूर्ण
 
-	charger->battery = power_supply_register(dev, &battery_desc, NULL);
-	if (IS_ERR(charger->battery)) {
-		ret = PTR_ERR(charger->battery);
-		goto battery_fail;
-	}
+	अक्षरger->battery = घातer_supply_रेजिस्टर(dev, &battery_desc, शून्य);
+	अगर (IS_ERR(अक्षरger->battery)) अणु
+		ret = PTR_ERR(अक्षरger->battery);
+		जाओ battery_fail;
+	पूर्ण
 
 	/* Get initial online supply */
-	reg = da9150_reg_read(da9150, DA9150_STATUS_H);
+	reg = da9150_reg_पढ़ो(da9150, DA9150_STATUS_H);
 
-	switch (reg & DA9150_VBUS_STAT_MASK) {
-	case DA9150_VBUS_STAT_OFF:
-	case DA9150_VBUS_STAT_WAIT:
-		charger->supply_online = charger->battery;
-		break;
-	case DA9150_VBUS_STAT_CHG:
-		charger->supply_online = charger->usb;
-		break;
-	default:
+	चयन (reg & DA9150_VBUS_STAT_MASK) अणु
+	हाल DA9150_VBUS_STAT_OFF:
+	हाल DA9150_VBUS_STAT_WAIT:
+		अक्षरger->supply_online = अक्षरger->battery;
+		अवरोध;
+	हाल DA9150_VBUS_STAT_CHG:
+		अक्षरger->supply_online = अक्षरger->usb;
+		अवरोध;
+	शेष:
 		dev_warn(dev, "Unknown VBUS state - reg = 0x%x\n", reg);
-		charger->supply_online = NULL;
-		break;
-	}
+		अक्षरger->supply_online = शून्य;
+		अवरोध;
+	पूर्ण
 
 	/* Setup OTG reporting & configuration */
-	charger->usb_phy = devm_usb_get_phy(dev, USB_PHY_TYPE_USB2);
-	if (!IS_ERR_OR_NULL(charger->usb_phy)) {
-		INIT_WORK(&charger->otg_work, da9150_charger_otg_work);
-		charger->otg_nb.notifier_call = da9150_charger_otg_ncb;
-		usb_register_notifier(charger->usb_phy, &charger->otg_nb);
-	}
+	अक्षरger->usb_phy = devm_usb_get_phy(dev, USB_PHY_TYPE_USB2);
+	अगर (!IS_ERR_OR_शून्य(अक्षरger->usb_phy)) अणु
+		INIT_WORK(&अक्षरger->otg_work, da9150_अक्षरger_otg_work);
+		अक्षरger->otg_nb.notअगरier_call = da9150_अक्षरger_otg_ncb;
+		usb_रेजिस्टर_notअगरier(अक्षरger->usb_phy, &अक्षरger->otg_nb);
+	पूर्ण
 
 	/* Register IRQs */
-	ret = da9150_charger_register_irq(pdev, da9150_charger_chg_irq,
+	ret = da9150_अक्षरger_रेजिस्टर_irq(pdev, da9150_अक्षरger_chg_irq,
 					  "CHG_STATUS");
-	if (ret < 0)
-		goto chg_irq_fail;
+	अगर (ret < 0)
+		जाओ chg_irq_fail;
 
-	ret = da9150_charger_register_irq(pdev, da9150_charger_tjunc_irq,
+	ret = da9150_अक्षरger_रेजिस्टर_irq(pdev, da9150_अक्षरger_tjunc_irq,
 					  "CHG_TJUNC");
-	if (ret < 0)
-		goto tjunc_irq_fail;
+	अगर (ret < 0)
+		जाओ tjunc_irq_fail;
 
-	ret = da9150_charger_register_irq(pdev, da9150_charger_vfault_irq,
+	ret = da9150_अक्षरger_रेजिस्टर_irq(pdev, da9150_अक्षरger_vfault_irq,
 					  "CHG_VFAULT");
-	if (ret < 0)
-		goto vfault_irq_fail;
+	अगर (ret < 0)
+		जाओ vfault_irq_fail;
 
-	ret = da9150_charger_register_irq(pdev, da9150_charger_vbus_irq,
+	ret = da9150_अक्षरger_रेजिस्टर_irq(pdev, da9150_अक्षरger_vbus_irq,
 					  "CHG_VBUS");
-	if (ret < 0)
-		goto vbus_irq_fail;
+	अगर (ret < 0)
+		जाओ vbus_irq_fail;
 
-	return 0;
+	वापस 0;
 
 
 vbus_irq_fail:
-	da9150_charger_unregister_irq(pdev, "CHG_VFAULT");
+	da9150_अक्षरger_unरेजिस्टर_irq(pdev, "CHG_VFAULT");
 vfault_irq_fail:
-	da9150_charger_unregister_irq(pdev, "CHG_TJUNC");
+	da9150_अक्षरger_unरेजिस्टर_irq(pdev, "CHG_TJUNC");
 tjunc_irq_fail:
-	da9150_charger_unregister_irq(pdev, "CHG_STATUS");
+	da9150_अक्षरger_unरेजिस्टर_irq(pdev, "CHG_STATUS");
 chg_irq_fail:
-	if (!IS_ERR_OR_NULL(charger->usb_phy))
-		usb_unregister_notifier(charger->usb_phy, &charger->otg_nb);
+	अगर (!IS_ERR_OR_शून्य(अक्षरger->usb_phy))
+		usb_unरेजिस्टर_notअगरier(अक्षरger->usb_phy, &अक्षरger->otg_nb);
 battery_fail:
-	power_supply_unregister(charger->usb);
+	घातer_supply_unरेजिस्टर(अक्षरger->usb);
 
 usb_fail:
-	iio_channel_release(charger->vbat_chan);
+	iio_channel_release(अक्षरger->vbat_chan);
 
 vbat_chan_fail:
-	iio_channel_release(charger->tjunc_chan);
+	iio_channel_release(अक्षरger->tjunc_chan);
 
 tjunc_chan_fail:
-	iio_channel_release(charger->vbus_chan);
+	iio_channel_release(अक्षरger->vbus_chan);
 
 vbus_chan_fail:
-	iio_channel_release(charger->ibus_chan);
+	iio_channel_release(अक्षरger->ibus_chan);
 
 ibus_chan_fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9150_charger_remove(struct platform_device *pdev)
-{
-	struct da9150_charger *charger = platform_get_drvdata(pdev);
-	int irq;
+अटल पूर्णांक da9150_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा da9150_अक्षरger *अक्षरger = platक्रमm_get_drvdata(pdev);
+	पूर्णांक irq;
 
-	/* Make sure IRQs are released before unregistering power supplies */
-	irq = platform_get_irq_byname(pdev, "CHG_VBUS");
-	free_irq(irq, charger);
+	/* Make sure IRQs are released beक्रमe unरेजिस्टरing घातer supplies */
+	irq = platक्रमm_get_irq_byname(pdev, "CHG_VBUS");
+	मुक्त_irq(irq, अक्षरger);
 
-	irq = platform_get_irq_byname(pdev, "CHG_VFAULT");
-	free_irq(irq, charger);
+	irq = platक्रमm_get_irq_byname(pdev, "CHG_VFAULT");
+	मुक्त_irq(irq, अक्षरger);
 
-	irq = platform_get_irq_byname(pdev, "CHG_TJUNC");
-	free_irq(irq, charger);
+	irq = platक्रमm_get_irq_byname(pdev, "CHG_TJUNC");
+	मुक्त_irq(irq, अक्षरger);
 
-	irq = platform_get_irq_byname(pdev, "CHG_STATUS");
-	free_irq(irq, charger);
+	irq = platक्रमm_get_irq_byname(pdev, "CHG_STATUS");
+	मुक्त_irq(irq, अक्षरger);
 
-	if (!IS_ERR_OR_NULL(charger->usb_phy))
-		usb_unregister_notifier(charger->usb_phy, &charger->otg_nb);
+	अगर (!IS_ERR_OR_शून्य(अक्षरger->usb_phy))
+		usb_unरेजिस्टर_notअगरier(अक्षरger->usb_phy, &अक्षरger->otg_nb);
 
-	power_supply_unregister(charger->battery);
-	power_supply_unregister(charger->usb);
+	घातer_supply_unरेजिस्टर(अक्षरger->battery);
+	घातer_supply_unरेजिस्टर(अक्षरger->usb);
 
 	/* Release ADC channels */
-	iio_channel_release(charger->ibus_chan);
-	iio_channel_release(charger->vbus_chan);
-	iio_channel_release(charger->tjunc_chan);
-	iio_channel_release(charger->vbat_chan);
+	iio_channel_release(अक्षरger->ibus_chan);
+	iio_channel_release(अक्षरger->vbus_chan);
+	iio_channel_release(अक्षरger->tjunc_chan);
+	iio_channel_release(अक्षरger->vbat_chan);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver da9150_charger_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver da9150_अक्षरger_driver = अणु
+	.driver = अणु
 		.name = "da9150-charger",
-	},
-	.probe = da9150_charger_probe,
-	.remove = da9150_charger_remove,
-};
+	पूर्ण,
+	.probe = da9150_अक्षरger_probe,
+	.हटाओ = da9150_अक्षरger_हटाओ,
+पूर्ण;
 
-module_platform_driver(da9150_charger_driver);
+module_platक्रमm_driver(da9150_अक्षरger_driver);
 
 MODULE_DESCRIPTION("Charger Driver for DA9150");
 MODULE_AUTHOR("Adam Thomson <Adam.Thomson.Opensource@diasemi.com>");

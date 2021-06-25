@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * NinjaSCSI-32Bi Cardbus, NinjaSCSI-32UDE PCI/CardBus SCSI driver
  * Copyright (C) 2001, 2002, 2003
  *      YOKOTA Hiroshi <yokota@netlab.is.tsukuba.ac.jp>
- *      GOTO Masanori <gotom@debian.or.jp>, <gotom@debian.org>
+ *      GOTO Masanori <जाओm@debian.or.jp>, <जाओm@debian.org>
  *
  * Revision History:
  *   1.0: Initial Release.
@@ -13,46 +14,46 @@
  *   1.2: PowerPC (big endian) support.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/ioport.h>
-#include <linux/major.h>
-#include <linux/blkdev.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/ctype.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/major.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/dma-mapping.h>
 
-#include <asm/dma.h>
-#include <asm/io.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/पन.स>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_ioctl.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_ioctl.h>
 
-#include "nsp32.h"
+#समावेश "nsp32.h"
 
 
 /***********************************************************************
  * Module parameters
  */
-static int       trans_mode = 0;	/* default: BIOS */
-module_param     (trans_mode, int, 0);
+अटल पूर्णांक       trans_mode = 0;	/* शेष: BIOS */
+module_param     (trans_mode, पूर्णांक, 0);
 MODULE_PARM_DESC(trans_mode, "transfer mode (0: BIOS(default) 1: Async 2: Ultra20M");
-#define ASYNC_MODE    1
-#define ULTRA20M_MODE 2
+#घोषणा ASYNC_MODE    1
+#घोषणा ULTRA20M_MODE 2
 
-static bool      auto_param = 0;	/* default: ON */
-module_param     (auto_param, bool, 0);
-MODULE_PARM_DESC(auto_param, "AutoParameter mode (0: ON(default) 1: OFF)");
+अटल bool      स्वतः_param = 0;	/* शेष: ON */
+module_param     (स्वतः_param, bool, 0);
+MODULE_PARM_DESC(स्वतः_param, "AutoParameter mode (0: ON(default) 1: OFF)");
 
-static bool      disc_priv  = 1;	/* default: OFF */
+अटल bool      disc_priv  = 1;	/* शेष: OFF */
 module_param     (disc_priv, bool, 0);
 MODULE_PARM_DESC(disc_priv,  "disconnection privilege mode (0: ON 1: OFF(default))");
 
@@ -60,74 +61,74 @@ MODULE_AUTHOR("YOKOTA Hiroshi <yokota@netlab.is.tsukuba.ac.jp>, GOTO Masanori <g
 MODULE_DESCRIPTION("Workbit NinjaSCSI-32Bi/UDE CardBus/PCI SCSI host bus adapter module");
 MODULE_LICENSE("GPL");
 
-static const char *nsp32_release_version = "1.2";
+अटल स्थिर अक्षर *nsp32_release_version = "1.2";
 
 
 /****************************************************************************
  * Supported hardware
  */
-static struct pci_device_id nsp32_pci_table[] = {
-	{
-		.vendor      = PCI_VENDOR_ID_IODATA,
+अटल काष्ठा pci_device_id nsp32_pci_table[] = अणु
+	अणु
+		.venकरोr      = PCI_VENDOR_ID_IODATA,
 		.device      = PCI_DEVICE_ID_NINJASCSI_32BI_CBSC_II,
-		.subvendor   = PCI_ANY_ID,
+		.subvenकरोr   = PCI_ANY_ID,
 		.subdevice   = PCI_ANY_ID,
 		.driver_data = MODEL_IODATA,
-	},
-	{
-		.vendor      = PCI_VENDOR_ID_WORKBIT,
+	पूर्ण,
+	अणु
+		.venकरोr      = PCI_VENDOR_ID_WORKBIT,
 		.device      = PCI_DEVICE_ID_NINJASCSI_32BI_KME,
-		.subvendor   = PCI_ANY_ID,
+		.subvenकरोr   = PCI_ANY_ID,
 		.subdevice   = PCI_ANY_ID,
 		.driver_data = MODEL_KME,
-	},
-	{
-		.vendor      = PCI_VENDOR_ID_WORKBIT,
+	पूर्ण,
+	अणु
+		.venकरोr      = PCI_VENDOR_ID_WORKBIT,
 		.device      = PCI_DEVICE_ID_NINJASCSI_32BI_WBT,
-		.subvendor   = PCI_ANY_ID,
+		.subvenकरोr   = PCI_ANY_ID,
 		.subdevice   = PCI_ANY_ID,
 		.driver_data = MODEL_WORKBIT,
-	},
-	{
-		.vendor      = PCI_VENDOR_ID_WORKBIT,
+	पूर्ण,
+	अणु
+		.venकरोr      = PCI_VENDOR_ID_WORKBIT,
 		.device      = PCI_DEVICE_ID_WORKBIT_STANDARD,
-		.subvendor   = PCI_ANY_ID,
+		.subvenकरोr   = PCI_ANY_ID,
 		.subdevice   = PCI_ANY_ID,
 		.driver_data = MODEL_PCI_WORKBIT,
-	},
-	{
-		.vendor      = PCI_VENDOR_ID_WORKBIT,
+	पूर्ण,
+	अणु
+		.venकरोr      = PCI_VENDOR_ID_WORKBIT,
 		.device      = PCI_DEVICE_ID_NINJASCSI_32BI_LOGITEC,
-		.subvendor   = PCI_ANY_ID,
+		.subvenकरोr   = PCI_ANY_ID,
 		.subdevice   = PCI_ANY_ID,
 		.driver_data = MODEL_LOGITEC,
-	},
-	{
-		.vendor      = PCI_VENDOR_ID_WORKBIT,
+	पूर्ण,
+	अणु
+		.venकरोr      = PCI_VENDOR_ID_WORKBIT,
 		.device      = PCI_DEVICE_ID_NINJASCSI_32BIB_LOGITEC,
-		.subvendor   = PCI_ANY_ID,
+		.subvenकरोr   = PCI_ANY_ID,
 		.subdevice   = PCI_ANY_ID,
 		.driver_data = MODEL_PCI_LOGITEC,
-	},
-	{
-		.vendor      = PCI_VENDOR_ID_WORKBIT,
+	पूर्ण,
+	अणु
+		.venकरोr      = PCI_VENDOR_ID_WORKBIT,
 		.device      = PCI_DEVICE_ID_NINJASCSI_32UDE_MELCO,
-		.subvendor   = PCI_ANY_ID,
+		.subvenकरोr   = PCI_ANY_ID,
 		.subdevice   = PCI_ANY_ID,
 		.driver_data = MODEL_PCI_MELCO,
-	},
-	{
-		.vendor      = PCI_VENDOR_ID_WORKBIT,
+	पूर्ण,
+	अणु
+		.venकरोr      = PCI_VENDOR_ID_WORKBIT,
 		.device      = PCI_DEVICE_ID_NINJASCSI_32UDE_MELCO_II,
-		.subvendor   = PCI_ANY_ID,
+		.subvenकरोr   = PCI_ANY_ID,
 		.subdevice   = PCI_ANY_ID,
 		.driver_data = MODEL_PCI_MELCO,
-	},
-	{0,0,},
-};
+	पूर्ण,
+	अणु0,0,पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, nsp32_pci_table);
 
-static nsp32_hw_data nsp32_data_base;  /* probe <-> detect glue */
+अटल nsp32_hw_data nsp32_data_base;  /* probe <-> detect glue */
 
 
 /*
@@ -135,126 +136,126 @@ static nsp32_hw_data nsp32_data_base;  /* probe <-> detect glue */
  *
  * Note: This period/ackwidth speed table must be in descending order.
  */
-static nsp32_sync_table nsp32_sync_table_40M[] = {
-     /* {PNo, AW,   SP,   EP, SREQ smpl}  Speed(MB/s) Period AckWidth */
-	{0x1,  0, 0x0c, 0x0c, SMPL_40M},  /*  20.0 :  50ns,  25ns */
-	{0x2,  0, 0x0d, 0x18, SMPL_40M},  /*  13.3 :  75ns,  25ns */
-	{0x3,  1, 0x19, 0x19, SMPL_40M},  /*  10.0 : 100ns,  50ns */
-	{0x4,  1, 0x1a, 0x1f, SMPL_20M},  /*   8.0 : 125ns,  50ns */
-	{0x5,  2, 0x20, 0x25, SMPL_20M},  /*   6.7 : 150ns,  75ns */
-	{0x6,  2, 0x26, 0x31, SMPL_20M},  /*   5.7 : 175ns,  75ns */
-	{0x7,  3, 0x32, 0x32, SMPL_20M},  /*   5.0 : 200ns, 100ns */
-	{0x8,  3, 0x33, 0x38, SMPL_10M},  /*   4.4 : 225ns, 100ns */
-	{0x9,  3, 0x39, 0x3e, SMPL_10M},  /*   4.0 : 250ns, 100ns */
-};
+अटल nsp32_sync_table nsp32_sync_table_40M[] = अणु
+     /* अणुPNo, AW,   SP,   EP, SREQ smplपूर्ण  Speed(MB/s) Period AckWidth */
+	अणु0x1,  0, 0x0c, 0x0c, SMPL_40Mपूर्ण,  /*  20.0 :  50ns,  25ns */
+	अणु0x2,  0, 0x0d, 0x18, SMPL_40Mपूर्ण,  /*  13.3 :  75ns,  25ns */
+	अणु0x3,  1, 0x19, 0x19, SMPL_40Mपूर्ण,  /*  10.0 : 100ns,  50ns */
+	अणु0x4,  1, 0x1a, 0x1f, SMPL_20Mपूर्ण,  /*   8.0 : 125ns,  50ns */
+	अणु0x5,  2, 0x20, 0x25, SMPL_20Mपूर्ण,  /*   6.7 : 150ns,  75ns */
+	अणु0x6,  2, 0x26, 0x31, SMPL_20Mपूर्ण,  /*   5.7 : 175ns,  75ns */
+	अणु0x7,  3, 0x32, 0x32, SMPL_20Mपूर्ण,  /*   5.0 : 200ns, 100ns */
+	अणु0x8,  3, 0x33, 0x38, SMPL_10Mपूर्ण,  /*   4.4 : 225ns, 100ns */
+	अणु0x9,  3, 0x39, 0x3e, SMPL_10Mपूर्ण,  /*   4.0 : 250ns, 100ns */
+पूर्ण;
 
-static nsp32_sync_table nsp32_sync_table_20M[] = {
-	{0x1,  0, 0x19, 0x19, SMPL_40M},  /* 10.0 : 100ns,  50ns */
-	{0x2,  0, 0x1a, 0x25, SMPL_20M},  /*  6.7 : 150ns,  50ns */
-	{0x3,  1, 0x26, 0x32, SMPL_20M},  /*  5.0 : 200ns, 100ns */
-	{0x4,  1, 0x33, 0x3e, SMPL_10M},  /*  4.0 : 250ns, 100ns */
-	{0x5,  2, 0x3f, 0x4b, SMPL_10M},  /*  3.3 : 300ns, 150ns */
-	{0x6,  2, 0x4c, 0x57, SMPL_10M},  /*  2.8 : 350ns, 150ns */
-	{0x7,  3, 0x58, 0x64, SMPL_10M},  /*  2.5 : 400ns, 200ns */
-	{0x8,  3, 0x65, 0x70, SMPL_10M},  /*  2.2 : 450ns, 200ns */
-	{0x9,  3, 0x71, 0x7d, SMPL_10M},  /*  2.0 : 500ns, 200ns */
-};
+अटल nsp32_sync_table nsp32_sync_table_20M[] = अणु
+	अणु0x1,  0, 0x19, 0x19, SMPL_40Mपूर्ण,  /* 10.0 : 100ns,  50ns */
+	अणु0x2,  0, 0x1a, 0x25, SMPL_20Mपूर्ण,  /*  6.7 : 150ns,  50ns */
+	अणु0x3,  1, 0x26, 0x32, SMPL_20Mपूर्ण,  /*  5.0 : 200ns, 100ns */
+	अणु0x4,  1, 0x33, 0x3e, SMPL_10Mपूर्ण,  /*  4.0 : 250ns, 100ns */
+	अणु0x5,  2, 0x3f, 0x4b, SMPL_10Mपूर्ण,  /*  3.3 : 300ns, 150ns */
+	अणु0x6,  2, 0x4c, 0x57, SMPL_10Mपूर्ण,  /*  2.8 : 350ns, 150ns */
+	अणु0x7,  3, 0x58, 0x64, SMPL_10Mपूर्ण,  /*  2.5 : 400ns, 200ns */
+	अणु0x8,  3, 0x65, 0x70, SMPL_10Mपूर्ण,  /*  2.2 : 450ns, 200ns */
+	अणु0x9,  3, 0x71, 0x7d, SMPL_10Mपूर्ण,  /*  2.0 : 500ns, 200ns */
+पूर्ण;
 
-static nsp32_sync_table nsp32_sync_table_pci[] = {
-	{0x1,  0, 0x0c, 0x0f, SMPL_40M},  /* 16.6 :  60ns,  30ns */
-	{0x2,  0, 0x10, 0x16, SMPL_40M},  /* 11.1 :  90ns,  30ns */
-	{0x3,  1, 0x17, 0x1e, SMPL_20M},  /*  8.3 : 120ns,  60ns */
-	{0x4,  1, 0x1f, 0x25, SMPL_20M},  /*  6.7 : 150ns,  60ns */
-	{0x5,  2, 0x26, 0x2d, SMPL_20M},  /*  5.6 : 180ns,  90ns */
-	{0x6,  2, 0x2e, 0x34, SMPL_10M},  /*  4.8 : 210ns,  90ns */
-	{0x7,  3, 0x35, 0x3c, SMPL_10M},  /*  4.2 : 240ns, 120ns */
-	{0x8,  3, 0x3d, 0x43, SMPL_10M},  /*  3.7 : 270ns, 120ns */
-	{0x9,  3, 0x44, 0x4b, SMPL_10M},  /*  3.3 : 300ns, 120ns */
-};
+अटल nsp32_sync_table nsp32_sync_table_pci[] = अणु
+	अणु0x1,  0, 0x0c, 0x0f, SMPL_40Mपूर्ण,  /* 16.6 :  60ns,  30ns */
+	अणु0x2,  0, 0x10, 0x16, SMPL_40Mपूर्ण,  /* 11.1 :  90ns,  30ns */
+	अणु0x3,  1, 0x17, 0x1e, SMPL_20Mपूर्ण,  /*  8.3 : 120ns,  60ns */
+	अणु0x4,  1, 0x1f, 0x25, SMPL_20Mपूर्ण,  /*  6.7 : 150ns,  60ns */
+	अणु0x5,  2, 0x26, 0x2d, SMPL_20Mपूर्ण,  /*  5.6 : 180ns,  90ns */
+	अणु0x6,  2, 0x2e, 0x34, SMPL_10Mपूर्ण,  /*  4.8 : 210ns,  90ns */
+	अणु0x7,  3, 0x35, 0x3c, SMPL_10Mपूर्ण,  /*  4.2 : 240ns, 120ns */
+	अणु0x8,  3, 0x3d, 0x43, SMPL_10Mपूर्ण,  /*  3.7 : 270ns, 120ns */
+	अणु0x9,  3, 0x44, 0x4b, SMPL_10Mपूर्ण,  /*  3.3 : 300ns, 120ns */
+पूर्ण;
 
 /*
  * function declaration
  */
-/* module entry point */
-static int         nsp32_probe (struct pci_dev *, const struct pci_device_id *);
-static void        nsp32_remove(struct pci_dev *);
-static int  __init init_nsp32  (void);
-static void __exit exit_nsp32  (void);
+/* module entry poपूर्णांक */
+अटल पूर्णांक         nsp32_probe (काष्ठा pci_dev *, स्थिर काष्ठा pci_device_id *);
+अटल व्योम        nsp32_हटाओ(काष्ठा pci_dev *);
+अटल पूर्णांक  __init init_nsp32  (व्योम);
+अटल व्योम __निकास निकास_nsp32  (व्योम);
 
-/* struct struct scsi_host_template */
-static int         nsp32_show_info   (struct seq_file *, struct Scsi_Host *);
+/* काष्ठा काष्ठा scsi_host_ढाँचा */
+अटल पूर्णांक         nsp32_show_info   (काष्ठा seq_file *, काष्ठा Scsi_Host *);
 
-static int         nsp32_detect      (struct pci_dev *pdev);
-static int         nsp32_queuecommand(struct Scsi_Host *, struct scsi_cmnd *);
-static const char *nsp32_info        (struct Scsi_Host *);
-static int         nsp32_release     (struct Scsi_Host *);
+अटल पूर्णांक         nsp32_detect      (काष्ठा pci_dev *pdev);
+अटल पूर्णांक         nsp32_queuecommand(काष्ठा Scsi_Host *, काष्ठा scsi_cmnd *);
+अटल स्थिर अक्षर *nsp32_info        (काष्ठा Scsi_Host *);
+अटल पूर्णांक         nsp32_release     (काष्ठा Scsi_Host *);
 
 /* SCSI error handler */
-static int         nsp32_eh_abort     (struct scsi_cmnd *);
-static int         nsp32_eh_host_reset(struct scsi_cmnd *);
+अटल पूर्णांक         nsp32_eh_पात     (काष्ठा scsi_cmnd *);
+अटल पूर्णांक         nsp32_eh_host_reset(काष्ठा scsi_cmnd *);
 
 /* generate SCSI message */
-static void nsp32_build_identify(struct scsi_cmnd *);
-static void nsp32_build_nop     (struct scsi_cmnd *);
-static void nsp32_build_reject  (struct scsi_cmnd *);
-static void nsp32_build_sdtr    (struct scsi_cmnd *, unsigned char, unsigned char);
+अटल व्योम nsp32_build_identअगरy(काष्ठा scsi_cmnd *);
+अटल व्योम nsp32_build_nop     (काष्ठा scsi_cmnd *);
+अटल व्योम nsp32_build_reject  (काष्ठा scsi_cmnd *);
+अटल व्योम nsp32_build_sdtr    (काष्ठा scsi_cmnd *, अचिन्हित अक्षर, अचिन्हित अक्षर);
 
 /* SCSI message handler */
-static int  nsp32_busfree_occur(struct scsi_cmnd *, unsigned short);
-static void nsp32_msgout_occur (struct scsi_cmnd *);
-static void nsp32_msgin_occur  (struct scsi_cmnd *, unsigned long, unsigned short);
+अटल पूर्णांक  nsp32_busमुक्त_occur(काष्ठा scsi_cmnd *, अचिन्हित लघु);
+अटल व्योम nsp32_msgout_occur (काष्ठा scsi_cmnd *);
+अटल व्योम nsp32_msgin_occur  (काष्ठा scsi_cmnd *, अचिन्हित दीर्घ, अचिन्हित लघु);
 
-static int  nsp32_setup_sg_table    (struct scsi_cmnd *);
-static int  nsp32_selection_autopara(struct scsi_cmnd *);
-static int  nsp32_selection_autoscsi(struct scsi_cmnd *);
-static void nsp32_scsi_done         (struct scsi_cmnd *);
-static int  nsp32_arbitration       (struct scsi_cmnd *, unsigned int);
-static int  nsp32_reselection       (struct scsi_cmnd *, unsigned char);
-static void nsp32_adjust_busfree    (struct scsi_cmnd *, unsigned int);
-static void nsp32_restart_autoscsi  (struct scsi_cmnd *, unsigned short);
+अटल पूर्णांक  nsp32_setup_sg_table    (काष्ठा scsi_cmnd *);
+अटल पूर्णांक  nsp32_selection_स्वतःpara(काष्ठा scsi_cmnd *);
+अटल पूर्णांक  nsp32_selection_स्वतःscsi(काष्ठा scsi_cmnd *);
+अटल व्योम nsp32_scsi_करोne         (काष्ठा scsi_cmnd *);
+अटल पूर्णांक  nsp32_arbitration       (काष्ठा scsi_cmnd *, अचिन्हित पूर्णांक);
+अटल पूर्णांक  nsp32_reselection       (काष्ठा scsi_cmnd *, अचिन्हित अक्षर);
+अटल व्योम nsp32_adjust_busमुक्त    (काष्ठा scsi_cmnd *, अचिन्हित पूर्णांक);
+अटल व्योम nsp32_restart_स्वतःscsi  (काष्ठा scsi_cmnd *, अचिन्हित लघु);
 
 /* SCSI SDTR */
-static void nsp32_analyze_sdtr       (struct scsi_cmnd *);
-static int  nsp32_search_period_entry(nsp32_hw_data *, nsp32_target *, unsigned char);
-static void nsp32_set_async          (nsp32_hw_data *, nsp32_target *);
-static void nsp32_set_max_sync       (nsp32_hw_data *, nsp32_target *, unsigned char *, unsigned char *);
-static void nsp32_set_sync_entry     (nsp32_hw_data *, nsp32_target *, int, unsigned char);
+अटल व्योम nsp32_analyze_sdtr       (काष्ठा scsi_cmnd *);
+अटल पूर्णांक  nsp32_search_period_entry(nsp32_hw_data *, nsp32_target *, अचिन्हित अक्षर);
+अटल व्योम nsp32_set_async          (nsp32_hw_data *, nsp32_target *);
+अटल व्योम nsp32_set_max_sync       (nsp32_hw_data *, nsp32_target *, अचिन्हित अक्षर *, अचिन्हित अक्षर *);
+अटल व्योम nsp32_set_sync_entry     (nsp32_hw_data *, nsp32_target *, पूर्णांक, अचिन्हित अक्षर);
 
 /* SCSI bus status handler */
-static void nsp32_wait_req    (nsp32_hw_data *, int);
-static void nsp32_wait_sack   (nsp32_hw_data *, int);
-static void nsp32_sack_assert (nsp32_hw_data *);
-static void nsp32_sack_negate (nsp32_hw_data *);
-static void nsp32_do_bus_reset(nsp32_hw_data *);
+अटल व्योम nsp32_रुको_req    (nsp32_hw_data *, पूर्णांक);
+अटल व्योम nsp32_रुको_sack   (nsp32_hw_data *, पूर्णांक);
+अटल व्योम nsp32_sack_निश्चित (nsp32_hw_data *);
+अटल व्योम nsp32_sack_negate (nsp32_hw_data *);
+अटल व्योम nsp32_करो_bus_reset(nsp32_hw_data *);
 
-/* hardware interrupt handler */
-static irqreturn_t do_nsp32_isr(int, void *);
+/* hardware पूर्णांकerrupt handler */
+अटल irqवापस_t करो_nsp32_isr(पूर्णांक, व्योम *);
 
 /* initialize hardware */
-static int  nsp32hw_init(nsp32_hw_data *);
+अटल पूर्णांक  nsp32hw_init(nsp32_hw_data *);
 
 /* EEPROM handler */
-static        int  nsp32_getprom_param (nsp32_hw_data *);
-static        int  nsp32_getprom_at24  (nsp32_hw_data *);
-static        int  nsp32_getprom_c16   (nsp32_hw_data *);
-static        void nsp32_prom_start    (nsp32_hw_data *);
-static        void nsp32_prom_stop     (nsp32_hw_data *);
-static        int  nsp32_prom_read     (nsp32_hw_data *, int);
-static        int  nsp32_prom_read_bit (nsp32_hw_data *);
-static        void nsp32_prom_write_bit(nsp32_hw_data *, int);
-static        void nsp32_prom_set      (nsp32_hw_data *, int, int);
-static        int  nsp32_prom_get      (nsp32_hw_data *, int);
+अटल        पूर्णांक  nsp32_getprom_param (nsp32_hw_data *);
+अटल        पूर्णांक  nsp32_getprom_at24  (nsp32_hw_data *);
+अटल        पूर्णांक  nsp32_getprom_c16   (nsp32_hw_data *);
+अटल        व्योम nsp32_prom_start    (nsp32_hw_data *);
+अटल        व्योम nsp32_prom_stop     (nsp32_hw_data *);
+अटल        पूर्णांक  nsp32_prom_पढ़ो     (nsp32_hw_data *, पूर्णांक);
+अटल        पूर्णांक  nsp32_prom_पढ़ो_bit (nsp32_hw_data *);
+अटल        व्योम nsp32_prom_ग_लिखो_bit(nsp32_hw_data *, पूर्णांक);
+अटल        व्योम nsp32_prom_set      (nsp32_hw_data *, पूर्णांक, पूर्णांक);
+अटल        पूर्णांक  nsp32_prom_get      (nsp32_hw_data *, पूर्णांक);
 
 /* debug/warning/info message */
-static void nsp32_message (const char *, int, char *, char *, ...);
-#ifdef NSP32_DEBUG
-static void nsp32_dmessage(const char *, int, int,    char *, ...);
-#endif
+अटल व्योम nsp32_message (स्थिर अक्षर *, पूर्णांक, अक्षर *, अक्षर *, ...);
+#अगर_घोषित NSP32_DEBUG
+अटल व्योम nsp32_dmessage(स्थिर अक्षर *, पूर्णांक, पूर्णांक,    अक्षर *, ...);
+#पूर्ण_अगर
 
 /*
  * max_sectors is currently limited up to 128.
  */
-static struct scsi_host_template nsp32_template = {
+अटल काष्ठा scsi_host_ढाँचा nsp32_ढाँचा = अणु
 	.proc_name			= "nsp32",
 	.name				= "Workbit NinjaSCSI-32Bi/UDE",
 	.show_info			= nsp32_show_info,
@@ -265,119 +266,119 @@ static struct scsi_host_template nsp32_template = {
 	.max_sectors			= 128,
 	.this_id			= NSP32_HOST_SCSIID,
 	.dma_boundary			= PAGE_SIZE - 1,
-	.eh_abort_handler		= nsp32_eh_abort,
+	.eh_पात_handler		= nsp32_eh_पात,
 	.eh_host_reset_handler		= nsp32_eh_host_reset,
 /*	.highmem_io			= 1, */
-};
+पूर्ण;
 
-#include "nsp32_io.h"
+#समावेश "nsp32_io.h"
 
 /***********************************************************************
- * debug, error print
+ * debug, error prपूर्णांक
  */
-#ifndef NSP32_DEBUG
+#अगर_अघोषित NSP32_DEBUG
 # define NSP32_DEBUG_MASK	      0x000000
 # define nsp32_msg(type, args...)     nsp32_message ("", 0, (type), args)
 # define nsp32_dbg(mask, args...)     /* */
-#else
+#अन्यथा
 # define NSP32_DEBUG_MASK	      0xffffff
 # define nsp32_msg(type, args...) \
 	nsp32_message (__func__, __LINE__, (type), args)
 # define nsp32_dbg(mask, args...) \
 	nsp32_dmessage(__func__, __LINE__, (mask), args)
-#endif
+#पूर्ण_अगर
 
-#define NSP32_DEBUG_QUEUECOMMAND	BIT(0)
-#define NSP32_DEBUG_REGISTER		BIT(1)
-#define NSP32_DEBUG_AUTOSCSI		BIT(2)
-#define NSP32_DEBUG_INTR		BIT(3)
-#define NSP32_DEBUG_SGLIST		BIT(4)
-#define NSP32_DEBUG_BUSFREE		BIT(5)
-#define NSP32_DEBUG_CDB_CONTENTS	BIT(6)
-#define NSP32_DEBUG_RESELECTION		BIT(7)
-#define NSP32_DEBUG_MSGINOCCUR		BIT(8)
-#define NSP32_DEBUG_EEPROM		BIT(9)
-#define NSP32_DEBUG_MSGOUTOCCUR		BIT(10)
-#define NSP32_DEBUG_BUSRESET		BIT(11)
-#define NSP32_DEBUG_RESTART		BIT(12)
-#define NSP32_DEBUG_SYNC		BIT(13)
-#define NSP32_DEBUG_WAIT		BIT(14)
-#define NSP32_DEBUG_TARGETFLAG		BIT(15)
-#define NSP32_DEBUG_PROC		BIT(16)
-#define NSP32_DEBUG_INIT		BIT(17)
-#define NSP32_SPECIAL_PRINT_REGISTER	BIT(20)
+#घोषणा NSP32_DEBUG_QUEUECOMMAND	BIT(0)
+#घोषणा NSP32_DEBUG_REGISTER		BIT(1)
+#घोषणा NSP32_DEBUG_AUTOSCSI		BIT(2)
+#घोषणा NSP32_DEBUG_INTR		BIT(3)
+#घोषणा NSP32_DEBUG_SGLIST		BIT(4)
+#घोषणा NSP32_DEBUG_BUSFREE		BIT(5)
+#घोषणा NSP32_DEBUG_CDB_CONTENTS	BIT(6)
+#घोषणा NSP32_DEBUG_RESELECTION		BIT(7)
+#घोषणा NSP32_DEBUG_MSGINOCCUR		BIT(8)
+#घोषणा NSP32_DEBUG_EEPROM		BIT(9)
+#घोषणा NSP32_DEBUG_MSGOUTOCCUR		BIT(10)
+#घोषणा NSP32_DEBUG_BUSRESET		BIT(11)
+#घोषणा NSP32_DEBUG_RESTART		BIT(12)
+#घोषणा NSP32_DEBUG_SYNC		BIT(13)
+#घोषणा NSP32_DEBUG_WAIT		BIT(14)
+#घोषणा NSP32_DEBUG_TARGETFLAG		BIT(15)
+#घोषणा NSP32_DEBUG_PROC		BIT(16)
+#घोषणा NSP32_DEBUG_INIT		BIT(17)
+#घोषणा NSP32_SPECIAL_PRINT_REGISTER	BIT(20)
 
-#define NSP32_DEBUG_BUF_LEN		100
+#घोषणा NSP32_DEBUG_BUF_LEN		100
 
-__printf(4, 5)
-static void nsp32_message(const char *func, int line, char *type, char *fmt, ...)
-{
-	va_list args;
-	char buf[NSP32_DEBUG_BUF_LEN];
+__म_लिखो(4, 5)
+अटल व्योम nsp32_message(स्थिर अक्षर *func, पूर्णांक line, अक्षर *type, अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	अक्षर buf[NSP32_DEBUG_BUF_LEN];
 
-	va_start(args, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	vsnम_लिखो(buf, माप(buf), fmt, args);
+	बहु_पूर्ण(args);
 
-#ifndef NSP32_DEBUG
-	printk("%snsp32: %s\n", type, buf);
-#else
-	printk("%snsp32: %s (%d): %s\n", type, func, line, buf);
-#endif
-}
+#अगर_अघोषित NSP32_DEBUG
+	prपूर्णांकk("%snsp32: %s\n", type, buf);
+#अन्यथा
+	prपूर्णांकk("%snsp32: %s (%d): %s\n", type, func, line, buf);
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef NSP32_DEBUG
-static void nsp32_dmessage(const char *func, int line, int mask, char *fmt, ...)
-{
-	va_list args;
-	char buf[NSP32_DEBUG_BUF_LEN];
+#अगर_घोषित NSP32_DEBUG
+अटल व्योम nsp32_dmessage(स्थिर अक्षर *func, पूर्णांक line, पूर्णांक mask, अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	अक्षर buf[NSP32_DEBUG_BUF_LEN];
 
-	va_start(args, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	vsnम_लिखो(buf, माप(buf), fmt, args);
+	बहु_पूर्ण(args);
 
-	if (mask & NSP32_DEBUG_MASK) {
-		printk("nsp32-debug: 0x%x %s (%d): %s\n", mask, func, line, buf);
-	}
-}
-#endif
+	अगर (mask & NSP32_DEBUG_MASK) अणु
+		prपूर्णांकk("nsp32-debug: 0x%x %s (%d): %s\n", mask, func, line, buf);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef NSP32_DEBUG
+#अगर_घोषित NSP32_DEBUG
 # include "nsp32_debug.c"
-#else
+#अन्यथा
 # define show_command(arg)   /* */
 # define show_busphase(arg)  /* */
-# define show_autophase(arg) /* */
-#endif
+# define show_स्वतःphase(arg) /* */
+#पूर्ण_अगर
 
 /*
  * IDENTIFY Message
  */
-static void nsp32_build_identify(struct scsi_cmnd *SCpnt)
-{
+अटल व्योम nsp32_build_identअगरy(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	int pos             = data->msgout_len;
-	int mode            = FALSE;
+	पूर्णांक pos             = data->msgout_len;
+	पूर्णांक mode            = FALSE;
 
 	/* XXX: Auto DiscPriv detection is progressing... */
-	if (disc_priv == 0) {
+	अगर (disc_priv == 0) अणु
 		/* mode = TRUE; */
-	}
+	पूर्ण
 
 	data->msgoutbuf[pos] = IDENTIFY(mode, SCpnt->device->lun); pos++;
 
 	data->msgout_len = pos;
-}
+पूर्ण
 
 /*
  * SDTR Message Routine
  */
-static void nsp32_build_sdtr(struct scsi_cmnd    *SCpnt,
-			     unsigned char period,
-			     unsigned char offset)
-{
+अटल व्योम nsp32_build_sdtr(काष्ठा scsi_cmnd    *SCpnt,
+			     अचिन्हित अक्षर period,
+			     अचिन्हित अक्षर offset)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	int pos             = data->msgout_len;
+	पूर्णांक pos             = data->msgout_len;
 
 	data->msgoutbuf[pos] = EXTENDED_MESSAGE;  pos++;
 	data->msgoutbuf[pos] = EXTENDED_SDTR_LEN; pos++;
@@ -386,84 +387,84 @@ static void nsp32_build_sdtr(struct scsi_cmnd    *SCpnt,
 	data->msgoutbuf[pos] = offset;            pos++;
 
 	data->msgout_len = pos;
-}
+पूर्ण
 
 /*
  * No Operation Message
  */
-static void nsp32_build_nop(struct scsi_cmnd *SCpnt)
-{
+अटल व्योम nsp32_build_nop(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	int            pos  = data->msgout_len;
+	पूर्णांक            pos  = data->msgout_len;
 
-	if (pos != 0) {
+	अगर (pos != 0) अणु
 		nsp32_msg(KERN_WARNING,
 			  "Some messages are already contained!");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	data->msgoutbuf[pos] = NOP; pos++;
 	data->msgout_len = pos;
-}
+पूर्ण
 
 /*
  * Reject Message
  */
-static void nsp32_build_reject(struct scsi_cmnd *SCpnt)
-{
+अटल व्योम nsp32_build_reject(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	int            pos  = data->msgout_len;
+	पूर्णांक            pos  = data->msgout_len;
 
 	data->msgoutbuf[pos] = MESSAGE_REJECT; pos++;
 	data->msgout_len = pos;
-}
+पूर्ण
 	
 /*
- * timer
+ * समयr
  */
-#if 0
-static void nsp32_start_timer(struct scsi_cmnd *SCpnt, int time)
-{
-	unsigned int base = SCpnt->host->io_port;
+#अगर 0
+अटल व्योम nsp32_start_समयr(काष्ठा scsi_cmnd *SCpnt, पूर्णांक समय)
+अणु
+	अचिन्हित पूर्णांक base = SCpnt->host->io_port;
 
-	nsp32_dbg(NSP32_DEBUG_INTR, "timer=%d", time);
+	nsp32_dbg(NSP32_DEBUG_INTR, "timer=%d", समय);
 
-	if (time & (~TIMER_CNT_MASK)) {
+	अगर (समय & (~TIMER_CNT_MASK)) अणु
 		nsp32_dbg(NSP32_DEBUG_INTR, "timer set overflow");
-	}
+	पूर्ण
 
-	nsp32_write2(base, TIMER_SET, time & TIMER_CNT_MASK);
-}
-#endif
+	nsp32_ग_लिखो2(base, TIMER_SET, समय & TIMER_CNT_MASK);
+पूर्ण
+#पूर्ण_अगर
 
 
 /*
  * set SCSI command and other parameter to asic, and start selection phase
  */
-static int nsp32_selection_autopara(struct scsi_cmnd *SCpnt)
-{
+अटल पूर्णांक nsp32_selection_स्वतःpara(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data  *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	unsigned int	base    = SCpnt->device->host->io_port;
-	unsigned int	host_id = SCpnt->device->host->this_id;
-	unsigned char	target  = scmd_id(SCpnt);
-	nsp32_autoparam *param  = data->autoparam;
-	unsigned char	phase;
-	int		i, ret;
-	unsigned int	msgout;
+	अचिन्हित पूर्णांक	base    = SCpnt->device->host->io_port;
+	अचिन्हित पूर्णांक	host_id = SCpnt->device->host->this_id;
+	अचिन्हित अक्षर	target  = scmd_id(SCpnt);
+	nsp32_स्वतःparam *param  = data->स्वतःparam;
+	अचिन्हित अक्षर	phase;
+	पूर्णांक		i, ret;
+	अचिन्हित पूर्णांक	msgout;
 	u16_le	        s;
 
 	nsp32_dbg(NSP32_DEBUG_AUTOSCSI, "in");
 
 	/*
-	 * check bus free
+	 * check bus मुक्त
 	 */
-	phase = nsp32_read1(base, SCSI_BUS_MONITOR);
-	if (phase != BUSMON_BUS_FREE) {
+	phase = nsp32_पढ़ो1(base, SCSI_BUS_MONITOR);
+	अगर (phase != BUSMON_BUS_FREE) अणु
 		nsp32_msg(KERN_WARNING, "bus busy");
 		show_busphase(phase & BUSMON_PHASE_MASK);
 		SCpnt->result = DID_BUS_BUSY << 16;
-		return FALSE;
-	}
+		वापस FALSE;
+	पूर्ण
 
 	/*
 	 * message out
@@ -471,13 +472,13 @@ static int nsp32_selection_autopara(struct scsi_cmnd *SCpnt)
 	 * Note: If the range of msgout_len is 1 - 3, fill scsi_msgout.
 	 *       over 3 messages needs another routine.
 	 */
-	if (data->msgout_len == 0) {
+	अगर (data->msgout_len == 0) अणु
 		nsp32_msg(KERN_ERR, "SCSI MsgOut without any message!");
 		SCpnt->result = DID_ERROR << 16;
-		return FALSE;
-	} else if (data->msgout_len > 0 && data->msgout_len <= 3) {
+		वापस FALSE;
+	पूर्ण अन्यथा अगर (data->msgout_len > 0 && data->msgout_len <= 3) अणु
 		msgout = 0;
-		for (i = 0; i < data->msgout_len; i++) {
+		क्रम (i = 0; i < data->msgout_len; i++) अणु
 			/*
 			 * the sending order of the message is:
 			 *  MCNT 3: MSG#0 -> MSG#1 -> MSG#2
@@ -485,27 +486,27 @@ static int nsp32_selection_autopara(struct scsi_cmnd *SCpnt)
 			 *  MCNT 1:                   MSG#2    
 			 */
 			msgout >>= 8;
-			msgout |= ((unsigned int)(data->msgoutbuf[i]) << 24);
-		}
+			msgout |= ((अचिन्हित पूर्णांक)(data->msgoutbuf[i]) << 24);
+		पूर्ण
 		msgout |= MV_VALID;	/* MV valid */
-		msgout |= (unsigned int)data->msgout_len; /* len */
-	} else {
+		msgout |= (अचिन्हित पूर्णांक)data->msgout_len; /* len */
+	पूर्ण अन्यथा अणु
 		/* data->msgout_len > 3 */
 		msgout = 0;
-	}
+	पूर्ण
 
-	// nsp_dbg(NSP32_DEBUG_AUTOSCSI, "sel time out=0x%x\n", nsp32_read2(base, SEL_TIME_OUT));
-	// nsp32_write2(base, SEL_TIME_OUT,   SEL_TIMEOUT_TIME);
+	// nsp_dbg(NSP32_DEBUG_AUTOSCSI, "sel time out=0x%x\n", nsp32_पढ़ो2(base, SEL_TIME_OUT));
+	// nsp32_ग_लिखो2(base, SEL_TIME_OUT,   SEL_TIMEOUT_TIME);
 
 	/*
 	 * setup asic parameter
 	 */
-	memset(param, 0, sizeof(nsp32_autoparam));
+	स_रखो(param, 0, माप(nsp32_स्वतःparam));
 
 	/* cdb */
-	for (i = 0; i < SCpnt->cmd_len; i++) {
+	क्रम (i = 0; i < SCpnt->cmd_len; i++) अणु
 		param->cdb[4 * i] = SCpnt->cmnd[i];
-	}
+	पूर्ण
 
 	/* outgoing messages */
 	param->msgout = cpu_to_le32(msgout);
@@ -528,35 +529,35 @@ static int nsp32_selection_autopara(struct scsi_cmnd *SCpnt)
 
 	/* transfer control */
 	s = 0;
-	switch (data->trans_method) {
-	case NSP32_TRANSFER_BUSMASTER:
+	चयन (data->trans_method) अणु
+	हाल NSP32_TRANSFER_BUSMASTER:
 		s |= BM_START;
-		break;
-	case NSP32_TRANSFER_MMIO:
+		अवरोध;
+	हाल NSP32_TRANSFER_MMIO:
 		s |= CB_MMIO_MODE;
-		break;
-	case NSP32_TRANSFER_PIO:
+		अवरोध;
+	हाल NSP32_TRANSFER_PIO:
 		s |= CB_IO_MODE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		nsp32_msg(KERN_ERR, "unknown trans_method");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/*
-	 * OR-ed BLIEND_MODE, FIFO intr is decreased, instead of PCI bus waits.
+	 * OR-ed BLIEND_MODE, FIFO पूर्णांकr is decreased, instead of PCI bus रुकोs.
 	 * For bus master transfer, it's taken off.
 	 */
 	s |= (TRANSFER_GO | ALL_COUNTER_CLR);
 	param->transfer_control = cpu_to_le16(s);
 
 	/* sg table addr */
-	param->sgt_pointer = cpu_to_le32(data->cur_lunt->sglun_paddr);
+	param->sgt_poपूर्णांकer = cpu_to_le32(data->cur_lunt->sglun_paddr);
 
 	/*
 	 * transfer parameter to ASIC
 	 */
-	nsp32_write4(base, SGT_ADR,         data->auto_paddr);
-	nsp32_write2(base, COMMAND_CONTROL, CLEAR_CDB_FIFO_POINTER |
+	nsp32_ग_लिखो4(base, SGT_ADR,         data->स्वतः_paddr);
+	nsp32_ग_लिखो2(base, COMMAND_CONTROL, CLEAR_CDB_FIFO_POINTER |
 		                            AUTO_PARAMETER         );
 
 	/*
@@ -564,65 +565,65 @@ static int nsp32_selection_autopara(struct scsi_cmnd *SCpnt)
 	 */
 	ret = nsp32_arbitration(SCpnt, base);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /*
  * Selection with AUTO SCSI (without AUTO PARAMETER)
  */
-static int nsp32_selection_autoscsi(struct scsi_cmnd *SCpnt)
-{
+अटल पूर्णांक nsp32_selection_स्वतःscsi(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data  *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	unsigned int	base    = SCpnt->device->host->io_port;
-	unsigned int	host_id = SCpnt->device->host->this_id;
-	unsigned char	target  = scmd_id(SCpnt);
-	unsigned char	phase;
-	int		status;
-	unsigned short	command	= 0;
-	unsigned int	msgout  = 0;
-	int		i;
+	अचिन्हित पूर्णांक	base    = SCpnt->device->host->io_port;
+	अचिन्हित पूर्णांक	host_id = SCpnt->device->host->this_id;
+	अचिन्हित अक्षर	target  = scmd_id(SCpnt);
+	अचिन्हित अक्षर	phase;
+	पूर्णांक		status;
+	अचिन्हित लघु	command	= 0;
+	अचिन्हित पूर्णांक	msgout  = 0;
+	पूर्णांक		i;
 
 	nsp32_dbg(NSP32_DEBUG_AUTOSCSI, "in");
 
 	/*
 	 * IRQ disable
 	 */
-	nsp32_write2(base, IRQ_CONTROL, IRQ_CONTROL_ALL_IRQ_MASK);
+	nsp32_ग_लिखो2(base, IRQ_CONTROL, IRQ_CONTROL_ALL_IRQ_MASK);
 
 	/*
 	 * check bus line
 	 */
-	phase = nsp32_read1(base, SCSI_BUS_MONITOR);
-	if ((phase & BUSMON_BSY) || (phase & BUSMON_SEL)) {
+	phase = nsp32_पढ़ो1(base, SCSI_BUS_MONITOR);
+	अगर ((phase & BUSMON_BSY) || (phase & BUSMON_SEL)) अणु
 		nsp32_msg(KERN_WARNING, "bus busy");
 		SCpnt->result = DID_BUS_BUSY << 16;
 		status = 1;
-		goto out;
-        }
+		जाओ out;
+        पूर्ण
 
 	/*
 	 * clear execph
 	 */
-	nsp32_read2(base, SCSI_EXECUTE_PHASE);
+	nsp32_पढ़ो2(base, SCSI_EXECUTE_PHASE);
 
 	/*
 	 * clear FIFO counter to set CDBs
 	 */
-	nsp32_write2(base, COMMAND_CONTROL, CLEAR_CDB_FIFO_POINTER);
+	nsp32_ग_लिखो2(base, COMMAND_CONTROL, CLEAR_CDB_FIFO_POINTER);
 
 	/*
 	 * set CDB0 - CDB15
 	 */
-	for (i = 0; i < SCpnt->cmd_len; i++) {
-		nsp32_write1(base, COMMAND_DATA, SCpnt->cmnd[i]);
-        }
+	क्रम (i = 0; i < SCpnt->cmd_len; i++) अणु
+		nsp32_ग_लिखो1(base, COMMAND_DATA, SCpnt->cmnd[i]);
+        पूर्ण
 	nsp32_dbg(NSP32_DEBUG_CDB_CONTENTS, "CDB[0]=[0x%x]", SCpnt->cmnd[0]);
 
 	/*
 	 * set SCSIOUT LATCH(initiator)/TARGET(target) (OR-ed) ID
 	 */
-	nsp32_write1(base, SCSI_OUT_LATCH_TARGET_ID, BIT(host_id) | BIT(target));
+	nsp32_ग_लिखो1(base, SCSI_OUT_LATCH_TARGET_ID, BIT(host_id) | BIT(target));
 
 	/*
 	 * set SCSI MSGOUT REG
@@ -630,14 +631,14 @@ static int nsp32_selection_autoscsi(struct scsi_cmnd *SCpnt)
 	 * Note: If the range of msgout_len is 1 - 3, fill scsi_msgout.
 	 *       over 3 messages needs another routine.
 	 */
-	if (data->msgout_len == 0) {
+	अगर (data->msgout_len == 0) अणु
 		nsp32_msg(KERN_ERR, "SCSI MsgOut without any message!");
 		SCpnt->result = DID_ERROR << 16;
 		status = 1;
-		goto out;
-	} else if (data->msgout_len > 0 && data->msgout_len <= 3) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (data->msgout_len > 0 && data->msgout_len <= 3) अणु
 		msgout = 0;
-		for (i = 0; i < data->msgout_len; i++) {
+		क्रम (i = 0; i < data->msgout_len; i++) अणु
 			/*
 			 * the sending order of the message is:
 			 *  MCNT 3: MSG#0 -> MSG#1 -> MSG#2
@@ -645,72 +646,72 @@ static int nsp32_selection_autoscsi(struct scsi_cmnd *SCpnt)
 			 *  MCNT 1:                   MSG#2    
 			 */
 			msgout >>= 8;
-			msgout |= ((unsigned int)(data->msgoutbuf[i]) << 24);
-		}
+			msgout |= ((अचिन्हित पूर्णांक)(data->msgoutbuf[i]) << 24);
+		पूर्ण
 		msgout |= MV_VALID;	/* MV valid */
-		msgout |= (unsigned int)data->msgout_len; /* len */
-		nsp32_write4(base, SCSI_MSG_OUT, msgout);
-	} else {
+		msgout |= (अचिन्हित पूर्णांक)data->msgout_len; /* len */
+		nsp32_ग_लिखो4(base, SCSI_MSG_OUT, msgout);
+	पूर्ण अन्यथा अणु
 		/* data->msgout_len > 3 */
-		nsp32_write4(base, SCSI_MSG_OUT, 0);
-	}
+		nsp32_ग_लिखो4(base, SCSI_MSG_OUT, 0);
+	पूर्ण
 
 	/*
-	 * set selection timeout(= 250ms)
+	 * set selection समयout(= 250ms)
 	 */
-	nsp32_write2(base, SEL_TIME_OUT,   SEL_TIMEOUT_TIME);
+	nsp32_ग_लिखो2(base, SEL_TIME_OUT,   SEL_TIMEOUT_TIME);
 
 	/*
-	 * set SREQ hazard killer sampling rate
+	 * set SREQ hazard समाप्तer sampling rate
 	 * 
-	 * TODO: sample_rate (BASE+0F) is 0 when internal clock = 40MHz.
-	 *      check other internal clock!
+	 * TODO: sample_rate (BASE+0F) is 0 when पूर्णांकernal घड़ी = 40MHz.
+	 *      check other पूर्णांकernal घड़ी!
 	 */
-	nsp32_write1(base, SREQ_SMPL_RATE, data->cur_target->sample_reg);
+	nsp32_ग_लिखो1(base, SREQ_SMPL_RATE, data->cur_target->sample_reg);
 
 	/*
 	 * clear Arbit
 	 */
-	nsp32_write1(base, SET_ARBIT,      ARBIT_CLEAR);
+	nsp32_ग_लिखो1(base, SET_ARBIT,      ARBIT_CLEAR);
 
 	/*
 	 * set SYNCREG
-	 * Don't set BM_START_ADR before setting this register.
+	 * Don't set BM_START_ADR beक्रमe setting this रेजिस्टर.
 	 */
-	nsp32_write1(base, SYNC_REG,  data->cur_target->syncreg);
+	nsp32_ग_लिखो1(base, SYNC_REG,  data->cur_target->syncreg);
 
 	/*
 	 * set ACKWIDTH
 	 */
-	nsp32_write1(base, ACK_WIDTH, data->cur_target->ackwidth);
+	nsp32_ग_लिखो1(base, ACK_WIDTH, data->cur_target->ackwidth);
 
 	nsp32_dbg(NSP32_DEBUG_AUTOSCSI,
 		  "syncreg=0x%x, ackwidth=0x%x, sgtpaddr=0x%x, id=0x%x",
-		  nsp32_read1(base, SYNC_REG), nsp32_read1(base, ACK_WIDTH),
-		  nsp32_read4(base, SGT_ADR), nsp32_read1(base, SCSI_OUT_LATCH_TARGET_ID));
+		  nsp32_पढ़ो1(base, SYNC_REG), nsp32_पढ़ो1(base, ACK_WIDTH),
+		  nsp32_पढ़ो4(base, SGT_ADR), nsp32_पढ़ो1(base, SCSI_OUT_LATCH_TARGET_ID));
 	nsp32_dbg(NSP32_DEBUG_AUTOSCSI, "msgout_len=%d, msgout=0x%x",
 		  data->msgout_len, msgout);
 
 	/*
 	 * set SGT ADDR (physical address)
 	 */
-	nsp32_write4(base, SGT_ADR, data->cur_lunt->sglun_paddr);
+	nsp32_ग_लिखो4(base, SGT_ADR, data->cur_lunt->sglun_paddr);
 
 	/*
 	 * set TRANSFER CONTROL REG
 	 */
 	command = 0;
 	command |= (TRANSFER_GO | ALL_COUNTER_CLR);
-	if (data->trans_method & NSP32_TRANSFER_BUSMASTER) {
-		if (scsi_bufflen(SCpnt) > 0) {
+	अगर (data->trans_method & NSP32_TRANSFER_BUSMASTER) अणु
+		अगर (scsi_bufflen(SCpnt) > 0) अणु
 			command |= BM_START;
-		}
-	} else if (data->trans_method & NSP32_TRANSFER_MMIO) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (data->trans_method & NSP32_TRANSFER_MMIO) अणु
 		command |= CB_MMIO_MODE;
-	} else if (data->trans_method & NSP32_TRANSFER_PIO) {
+	पूर्ण अन्यथा अगर (data->trans_method & NSP32_TRANSFER_PIO) अणु
 		command |= CB_IO_MODE;
-	}
-	nsp32_write2(base, TRANSFER_CONTROL, command);
+	पूर्ण
+	nsp32_ग_लिखो2(base, TRANSFER_CONTROL, command);
 
 	/*
 	 * start AUTO SCSI, kick off arbitration
@@ -720,7 +721,7 @@ static int nsp32_selection_autoscsi(struct scsi_cmnd *SCpnt)
 		   AUTO_MSGIN_00_OR_04    |
 		   AUTO_MSGIN_02          |
 		   AUTO_ATN                );
-	nsp32_write2(base, COMMAND_CONTROL, command);
+	nsp32_ग_लिखो2(base, COMMAND_CONTROL, command);
 
 	/*
 	 * Check arbitration
@@ -731,104 +732,104 @@ static int nsp32_selection_autoscsi(struct scsi_cmnd *SCpnt)
 	/*
 	 * IRQ enable
 	 */
-	nsp32_write2(base, IRQ_CONTROL, 0);
+	nsp32_ग_लिखो2(base, IRQ_CONTROL, 0);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 
 /*
  * Arbitration Status Check
  *	
- * Note: Arbitration counter is waited during ARBIT_GO is not lifting.
- *	 Using udelay(1) consumes CPU time and system time, but 
- *	 arbitration delay time is defined minimal 2.4us in SCSI
- *	 specification, thus udelay works as coarse grained wait timer.
+ * Note: Arbitration counter is रुकोed during ARBIT_GO is not lअगरting.
+ *	 Using udelay(1) consumes CPU समय and प्रणाली समय, but 
+ *	 arbitration delay समय is defined minimal 2.4us in SCSI
+ *	 specअगरication, thus udelay works as coarse grained रुको समयr.
  */
-static int nsp32_arbitration(struct scsi_cmnd *SCpnt, unsigned int base)
-{
-	unsigned char arbit;
-	int	      status = TRUE;
-	int	      time   = 0;
+अटल पूर्णांक nsp32_arbitration(काष्ठा scsi_cmnd *SCpnt, अचिन्हित पूर्णांक base)
+अणु
+	अचिन्हित अक्षर arbit;
+	पूर्णांक	      status = TRUE;
+	पूर्णांक	      समय   = 0;
 
-	do {
-		arbit = nsp32_read1(base, ARBIT_STATUS);
-		time++;
-	} while ((arbit & (ARBIT_WIN | ARBIT_FAIL)) == 0 &&
-		 (time <= ARBIT_TIMEOUT_TIME));
+	करो अणु
+		arbit = nsp32_पढ़ो1(base, ARBIT_STATUS);
+		समय++;
+	पूर्ण जबतक ((arbit & (ARBIT_WIN | ARBIT_FAIL)) == 0 &&
+		 (समय <= ARBIT_TIMEOUT_TIME));
 
 	nsp32_dbg(NSP32_DEBUG_AUTOSCSI,
-		  "arbit: 0x%x, delay time: %d", arbit, time);
+		  "arbit: 0x%x, delay time: %d", arbit, समय);
 
-	if (arbit & ARBIT_WIN) {
+	अगर (arbit & ARBIT_WIN) अणु
 		/* Arbitration succeeded */
 		SCpnt->result = DID_OK << 16;
-		nsp32_index_write1(base, EXT_PORT, LED_ON); /* PCI LED on */
-	} else if (arbit & ARBIT_FAIL) {
+		nsp32_index_ग_लिखो1(base, EXT_PORT, LED_ON); /* PCI LED on */
+	पूर्ण अन्यथा अगर (arbit & ARBIT_FAIL) अणु
 		/* Arbitration failed */
 		SCpnt->result = DID_BUS_BUSY << 16;
 		status = FALSE;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * unknown error or ARBIT_GO timeout,
+		 * unknown error or ARBIT_GO समयout,
 		 * something lock up! guess no connection.
 		 */
 		nsp32_dbg(NSP32_DEBUG_AUTOSCSI, "arbit timeout");
 		SCpnt->result = DID_NO_CONNECT << 16;
 		status = FALSE;
-        }
+        पूर्ण
 
 	/*
 	 * clear Arbit
 	 */
-	nsp32_write1(base, SET_ARBIT, ARBIT_CLEAR);
+	nsp32_ग_लिखो1(base, SET_ARBIT, ARBIT_CLEAR);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 
 /*
  * reselection
  *
  * Note: This reselection routine is called from msgin_occur,
- *	 reselection target id&lun must be already set.
+ *	 reselection target id&lun must be alपढ़ोy set.
  *	 SCSI-2 says IDENTIFY implies RESTORE_POINTER operation.
  */
-static int nsp32_reselection(struct scsi_cmnd *SCpnt, unsigned char newlun)
-{
+अटल पूर्णांक nsp32_reselection(काष्ठा scsi_cmnd *SCpnt, अचिन्हित अक्षर newlun)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	unsigned int   host_id = SCpnt->device->host->this_id;
-	unsigned int   base    = SCpnt->device->host->io_port;
-	unsigned char  tmpid, newid;
+	अचिन्हित पूर्णांक   host_id = SCpnt->device->host->this_id;
+	अचिन्हित पूर्णांक   base    = SCpnt->device->host->io_port;
+	अचिन्हित अक्षर  पंचांगpid, newid;
 
 	nsp32_dbg(NSP32_DEBUG_RESELECTION, "enter");
 
 	/*
 	 * calculate reselected SCSI ID
 	 */
-	tmpid = nsp32_read1(base, RESELECT_ID);
-	tmpid &= (~BIT(host_id));
+	पंचांगpid = nsp32_पढ़ो1(base, RESELECT_ID);
+	पंचांगpid &= (~BIT(host_id));
 	newid = 0;
-	while (tmpid) {
-		if (tmpid & 1) {
-			break;
-		}
-		tmpid >>= 1;
+	जबतक (पंचांगpid) अणु
+		अगर (पंचांगpid & 1) अणु
+			अवरोध;
+		पूर्ण
+		पंचांगpid >>= 1;
 		newid++;
-	}
+	पूर्ण
 
 	/*
 	 * If reselected New ID:LUN is not existed
 	 * or current nexus is not existed, unexpected
 	 * reselection is occurred. Send reject message.
 	 */
-	if (newid >= ARRAY_SIZE(data->lunt) || newlun >= ARRAY_SIZE(data->lunt[0])) {
+	अगर (newid >= ARRAY_SIZE(data->lunt) || newlun >= ARRAY_SIZE(data->lunt[0])) अणु
 		nsp32_msg(KERN_WARNING, "unknown id/lun");
-		return FALSE;
-	} else if(data->lunt[newid][newlun].SCpnt == NULL) {
+		वापस FALSE;
+	पूर्ण अन्यथा अगर(data->lunt[newid][newlun].SCpnt == शून्य) अणु
 		nsp32_msg(KERN_WARNING, "no SCSI command is processing");
-		return FALSE;
-	}
+		वापस FALSE;
+	पूर्ण
 
 	data->cur_id    = newid;
 	data->cur_lun   = newlun;
@@ -836,70 +837,70 @@ static int nsp32_reselection(struct scsi_cmnd *SCpnt, unsigned char newlun)
 	data->cur_lunt   = &(data->lunt[newid][newlun]);
 
 	/* reset SACK/SavedACK counter (or ALL clear?) */
-	nsp32_write4(base, CLR_COUNTER, CLRCOUNTER_ALLMASK);
+	nsp32_ग_लिखो4(base, CLR_COUNTER, CLRCOUNTER_ALLMASK);
 
-	return TRUE;
-}
+	वापस TRUE;
+पूर्ण
 
 
 /*
- * nsp32_setup_sg_table - build scatter gather list for transfer data
+ * nsp32_setup_sg_table - build scatter gather list क्रम transfer data
  *			    with bus master.
  *
- * Note: NinjaSCSI-32Bi/UDE bus master can not transfer over 64KB at a time.
+ * Note: NinjaSCSI-32Bi/UDE bus master can not transfer over 64KB at a समय.
  */
-static int nsp32_setup_sg_table(struct scsi_cmnd *SCpnt)
-{
+अटल पूर्णांक nsp32_setup_sg_table(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	struct scatterlist *sg;
+	काष्ठा scatterlist *sg;
 	nsp32_sgtable *sgt = data->cur_lunt->sglun->sgt;
-	int num, i;
+	पूर्णांक num, i;
 	u32_le l;
 
-	if (sgt == NULL) {
+	अगर (sgt == शून्य) अणु
 		nsp32_dbg(NSP32_DEBUG_SGLIST, "SGT == null");
-		return FALSE;
-	}
+		वापस FALSE;
+	पूर्ण
 
 	num = scsi_dma_map(SCpnt);
-	if (!num)
-		return TRUE;
-	else if (num < 0)
-		return FALSE;
-	else {
-		scsi_for_each_sg(SCpnt, sg, num, i) {
+	अगर (!num)
+		वापस TRUE;
+	अन्यथा अगर (num < 0)
+		वापस FALSE;
+	अन्यथा अणु
+		scsi_क्रम_each_sg(SCpnt, sg, num, i) अणु
 			/*
 			 * Build nsp32_sglist, substitute sg dma addresses.
 			 */
 			sgt[i].addr = cpu_to_le32(sg_dma_address(sg));
 			sgt[i].len  = cpu_to_le32(sg_dma_len(sg));
 
-			if (le32_to_cpu(sgt[i].len) > 0x10000) {
+			अगर (le32_to_cpu(sgt[i].len) > 0x10000) अणु
 				nsp32_msg(KERN_ERR,
 					"can't transfer over 64KB at a time, size=0x%x", le32_to_cpu(sgt[i].len));
-				return FALSE;
-			}
+				वापस FALSE;
+			पूर्ण
 			nsp32_dbg(NSP32_DEBUG_SGLIST,
 				  "num 0x%x : addr 0x%lx len 0x%lx",
 				  i,
 				  le32_to_cpu(sgt[i].addr),
 				  le32_to_cpu(sgt[i].len ));
-		}
+		पूर्ण
 
 		/* set end mark */
 		l = le32_to_cpu(sgt[num-1].len);
 		sgt[num-1].len = cpu_to_le32(l | SGTEND);
-	}
+	पूर्ण
 
-	return TRUE;
-}
+	वापस TRUE;
+पूर्ण
 
-static int nsp32_queuecommand_lck(struct scsi_cmnd *SCpnt, void (*done)(struct scsi_cmnd *))
-{
+अटल पूर्णांक nsp32_queuecommand_lck(काष्ठा scsi_cmnd *SCpnt, व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
 	nsp32_target *target;
 	nsp32_lunt   *cur_lunt;
-	int ret;
+	पूर्णांक ret;
 
 	nsp32_dbg(NSP32_DEBUG_QUEUECOMMAND,
 		  "enter. target: 0x%x LUN: 0x%llx cmnd: 0x%x cmndlen: 0x%x "
@@ -907,41 +908,41 @@ static int nsp32_queuecommand_lck(struct scsi_cmnd *SCpnt, void (*done)(struct s
 		  SCpnt->device->id, SCpnt->device->lun, SCpnt->cmnd[0], SCpnt->cmd_len,
 		  scsi_sg_count(SCpnt), scsi_sglist(SCpnt), scsi_bufflen(SCpnt));
 
-	if (data->CurrentSC != NULL) {
+	अगर (data->CurrentSC != शून्य) अणु
 		nsp32_msg(KERN_ERR, "Currentsc != NULL. Cancel this command request");
-		data->CurrentSC = NULL;
+		data->CurrentSC = शून्य;
 		SCpnt->result   = DID_NO_CONNECT << 16;
-		done(SCpnt);
-		return 0;
-	}
+		करोne(SCpnt);
+		वापस 0;
+	पूर्ण
 
 	/* check target ID is not same as this initiator ID */
-	if (scmd_id(SCpnt) == SCpnt->device->host->this_id) {
+	अगर (scmd_id(SCpnt) == SCpnt->device->host->this_id) अणु
 		nsp32_dbg(NSP32_DEBUG_QUEUECOMMAND, "target==host???");
 		SCpnt->result = DID_BAD_TARGET << 16;
-		done(SCpnt);
-		return 0;
-	}
+		करोne(SCpnt);
+		वापस 0;
+	पूर्ण
 
 	/* check target LUN is allowable value */
-	if (SCpnt->device->lun >= MAX_LUN) {
+	अगर (SCpnt->device->lun >= MAX_LUN) अणु
 		nsp32_dbg(NSP32_DEBUG_QUEUECOMMAND, "no more lun");
 		SCpnt->result = DID_BAD_TARGET << 16;
-		done(SCpnt);
-		return 0;
-	}
+		करोne(SCpnt);
+		वापस 0;
+	पूर्ण
 
 	show_command(SCpnt);
 
-	SCpnt->scsi_done     = done;
+	SCpnt->scsi_करोne     = करोne;
 	data->CurrentSC      = SCpnt;
 	SCpnt->SCp.Status    = SAM_STAT_CHECK_CONDITION;
 	SCpnt->SCp.Message   = 0;
 	scsi_set_resid(SCpnt, scsi_bufflen(SCpnt));
 
-	SCpnt->SCp.ptr		    = (char *)scsi_sglist(SCpnt);
+	SCpnt->SCp.ptr		    = (अक्षर *)scsi_sglist(SCpnt);
 	SCpnt->SCp.this_residual    = scsi_bufflen(SCpnt);
-	SCpnt->SCp.buffer	    = NULL;
+	SCpnt->SCp.buffer	    = शून्य;
 	SCpnt->SCp.buffers_residual = 0;
 
 	/* initialize data */
@@ -956,44 +957,44 @@ static int nsp32_queuecommand_lck(struct scsi_cmnd *SCpnt, void (*done)(struct s
 	data->cur_lun		= SCpnt->device->lun;
 
 	ret = nsp32_setup_sg_table(SCpnt);
-	if (ret == FALSE) {
+	अगर (ret == FALSE) अणु
 		nsp32_msg(KERN_ERR, "SGT fail");
 		SCpnt->result = DID_ERROR << 16;
-		nsp32_scsi_done(SCpnt);
-		return 0;
-	}
+		nsp32_scsi_करोne(SCpnt);
+		वापस 0;
+	पूर्ण
 
 	/* Build IDENTIFY */
-	nsp32_build_identify(SCpnt);
+	nsp32_build_identअगरy(SCpnt);
 
 	/* 
-	 * If target is the first time to transfer after the reset
-	 * (target don't have SDTR_DONE and SDTR_INITIATOR), sync
-	 * message SDTR is needed to do synchronous transfer.
+	 * If target is the first समय to transfer after the reset
+	 * (target करोn't have SDTR_DONE and SDTR_INITIATOR), sync
+	 * message SDTR is needed to करो synchronous transfer.
 	 */
 	target = &data->target[scmd_id(SCpnt)];
 	data->cur_target = target;
 
-	if (!(target->sync_flag & (SDTR_DONE | SDTR_INITIATOR | SDTR_TARGET))) {
-		unsigned char period, offset;
+	अगर (!(target->sync_flag & (SDTR_DONE | SDTR_INITIATOR | SDTR_TARGET))) अणु
+		अचिन्हित अक्षर period, offset;
 
-		if (trans_mode != ASYNC_MODE) {
+		अगर (trans_mode != ASYNC_MODE) अणु
 			nsp32_set_max_sync(data, target, &period, &offset);
 			nsp32_build_sdtr(SCpnt, period, offset);
 			target->sync_flag |= SDTR_INITIATOR;
-		} else {
+		पूर्ण अन्यथा अणु
 			nsp32_set_async(data, target);
 			target->sync_flag |= SDTR_DONE;
-		}
+		पूर्ण
 
 		nsp32_dbg(NSP32_DEBUG_QUEUECOMMAND,
 			  "SDTR: entry: %d start_period: 0x%x offset: 0x%x\n",
 			  target->limit_entry, period, offset);
-	} else if (target->sync_flag & SDTR_INITIATOR) {
+	पूर्ण अन्यथा अगर (target->sync_flag & SDTR_INITIATOR) अणु
 		/*
 		 * It was negotiating SDTR with target, sending from the
-		 * initiator, but there are no chance to remove this flag.
-		 * Set async because we don't get proper negotiation.
+		 * initiator, but there are no chance to हटाओ this flag.
+		 * Set async because we करोn't get proper negotiation.
 		 */
 		nsp32_set_async(data, target);
 		target->sync_flag &= ~SDTR_INITIATOR;
@@ -1001,11 +1002,11 @@ static int nsp32_queuecommand_lck(struct scsi_cmnd *SCpnt, void (*done)(struct s
 
 		nsp32_dbg(NSP32_DEBUG_QUEUECOMMAND,
 			  "SDTR_INITIATOR: fall back to async");
-	} else if (target->sync_flag & SDTR_TARGET) {
+	पूर्ण अन्यथा अगर (target->sync_flag & SDTR_TARGET) अणु
 		/*
 		 * It was negotiating SDTR with target, sending from target,
-		 * but there are no chance to remove this flag.  Set async
-		 * because we don't get proper negotiation.
+		 * but there are no chance to हटाओ this flag.  Set async
+		 * because we करोn't get proper negotiation.
 		 */
 		nsp32_set_async(data, target);
 		target->sync_flag &= ~SDTR_TARGET;
@@ -1013,7 +1014,7 @@ static int nsp32_queuecommand_lck(struct scsi_cmnd *SCpnt, void (*done)(struct s
 
 		nsp32_dbg(NSP32_DEBUG_QUEUECOMMAND,
 			  "Unknown SDTR from target is reached, fall back to async.");
-	}
+	पूर्ण
 
 	nsp32_dbg(NSP32_DEBUG_TARGETFLAG,
 		  "target: %d sync_flag: 0x%x syncreg: 0x%x ackwidth: 0x%x",
@@ -1021,111 +1022,111 @@ static int nsp32_queuecommand_lck(struct scsi_cmnd *SCpnt, void (*done)(struct s
 		  target->ackwidth);
 
 	/* Selection */
-	if (auto_param == 0) {
-		ret = nsp32_selection_autopara(SCpnt);
-	} else {
-		ret = nsp32_selection_autoscsi(SCpnt);
-	}
+	अगर (स्वतः_param == 0) अणु
+		ret = nsp32_selection_स्वतःpara(SCpnt);
+	पूर्ण अन्यथा अणु
+		ret = nsp32_selection_स्वतःscsi(SCpnt);
+	पूर्ण
 
-	if (ret != TRUE) {
+	अगर (ret != TRUE) अणु
 		nsp32_dbg(NSP32_DEBUG_QUEUECOMMAND, "selection fail");
-		nsp32_scsi_done(SCpnt);
-	}
+		nsp32_scsi_करोne(SCpnt);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static DEF_SCSI_QCMD(nsp32_queuecommand)
+अटल DEF_SCSI_QCMD(nsp32_queuecommand)
 
 /* initialize asic */
-static int nsp32hw_init(nsp32_hw_data *data)
-{
-	unsigned int   base = data->BaseAddress;
-	unsigned short irq_stat;
-	unsigned long  lc_reg;
-	unsigned char  power;
+अटल पूर्णांक nsp32hw_init(nsp32_hw_data *data)
+अणु
+	अचिन्हित पूर्णांक   base = data->BaseAddress;
+	अचिन्हित लघु irq_stat;
+	अचिन्हित दीर्घ  lc_reg;
+	अचिन्हित अक्षर  घातer;
 
-	lc_reg = nsp32_index_read4(base, CFG_LATE_CACHE);
-	if ((lc_reg & 0xff00) == 0) {
+	lc_reg = nsp32_index_पढ़ो4(base, CFG_LATE_CACHE);
+	अगर ((lc_reg & 0xff00) == 0) अणु
 		lc_reg |= (0x20 << 8);
-		nsp32_index_write2(base, CFG_LATE_CACHE, lc_reg & 0xffff);
-	}
+		nsp32_index_ग_लिखो2(base, CFG_LATE_CACHE, lc_reg & 0xffff);
+	पूर्ण
 
-	nsp32_write2(base, IRQ_CONTROL,        IRQ_CONTROL_ALL_IRQ_MASK);
-	nsp32_write2(base, TRANSFER_CONTROL,   0);
-	nsp32_write4(base, BM_CNT,             0);
-	nsp32_write2(base, SCSI_EXECUTE_PHASE, 0);
+	nsp32_ग_लिखो2(base, IRQ_CONTROL,        IRQ_CONTROL_ALL_IRQ_MASK);
+	nsp32_ग_लिखो2(base, TRANSFER_CONTROL,   0);
+	nsp32_ग_लिखो4(base, BM_CNT,             0);
+	nsp32_ग_लिखो2(base, SCSI_EXECUTE_PHASE, 0);
 
-	do {
-		irq_stat = nsp32_read2(base, IRQ_STATUS);
+	करो अणु
+		irq_stat = nsp32_पढ़ो2(base, IRQ_STATUS);
 		nsp32_dbg(NSP32_DEBUG_INIT, "irq_stat 0x%x", irq_stat);
-	} while (irq_stat & IRQSTATUS_ANY_IRQ);
+	पूर्ण जबतक (irq_stat & IRQSTATUS_ANY_IRQ);
 
 	/*
 	 * Fill FIFO_FULL_SHLD, FIFO_EMPTY_SHLD. Below parameter is
-	 *  designated by specification.
+	 *  designated by specअगरication.
 	 */
-	if ((data->trans_method & NSP32_TRANSFER_PIO) ||
-	    (data->trans_method & NSP32_TRANSFER_MMIO)) {
-		nsp32_index_write1(base, FIFO_FULL_SHLD_COUNT,  0x40);
-		nsp32_index_write1(base, FIFO_EMPTY_SHLD_COUNT, 0x40);
-	} else if (data->trans_method & NSP32_TRANSFER_BUSMASTER) {
-		nsp32_index_write1(base, FIFO_FULL_SHLD_COUNT,  0x10);
-		nsp32_index_write1(base, FIFO_EMPTY_SHLD_COUNT, 0x60);
-	} else {
+	अगर ((data->trans_method & NSP32_TRANSFER_PIO) ||
+	    (data->trans_method & NSP32_TRANSFER_MMIO)) अणु
+		nsp32_index_ग_लिखो1(base, FIFO_FULL_SHLD_COUNT,  0x40);
+		nsp32_index_ग_लिखो1(base, FIFO_EMPTY_SHLD_COUNT, 0x40);
+	पूर्ण अन्यथा अगर (data->trans_method & NSP32_TRANSFER_BUSMASTER) अणु
+		nsp32_index_ग_लिखो1(base, FIFO_FULL_SHLD_COUNT,  0x10);
+		nsp32_index_ग_लिखो1(base, FIFO_EMPTY_SHLD_COUNT, 0x60);
+	पूर्ण अन्यथा अणु
 		nsp32_dbg(NSP32_DEBUG_INIT, "unknown transfer mode");
-	}
+	पूर्ण
 
 	nsp32_dbg(NSP32_DEBUG_INIT, "full 0x%x emp 0x%x",
-		  nsp32_index_read1(base, FIFO_FULL_SHLD_COUNT),
-		  nsp32_index_read1(base, FIFO_EMPTY_SHLD_COUNT));
+		  nsp32_index_पढ़ो1(base, FIFO_FULL_SHLD_COUNT),
+		  nsp32_index_पढ़ो1(base, FIFO_EMPTY_SHLD_COUNT));
 
-	nsp32_index_write1(base, CLOCK_DIV, data->clock);
-	nsp32_index_write1(base, BM_CYCLE,  MEMRD_CMD1 | SGT_AUTO_PARA_MEMED_CMD);
-	nsp32_write1(base, PARITY_CONTROL, 0);	/* parity check is disable */
+	nsp32_index_ग_लिखो1(base, CLOCK_DIV, data->घड़ी);
+	nsp32_index_ग_लिखो1(base, BM_CYCLE,  MEMRD_CMD1 | SGT_AUTO_PARA_MEMED_CMD);
+	nsp32_ग_लिखो1(base, PARITY_CONTROL, 0);	/* parity check is disable */
 
 	/*
-	 * initialize MISC_WRRD register
+	 * initialize MISC_WRRD रेजिस्टर
 	 * 
 	 * Note: Designated parameters is obeyed as following:
-	 *	MISC_SCSI_DIRECTION_DETECTOR_SELECT: It must be set.
+	 *	MISC_SCSI_सूचीECTION_DETECTOR_SELECT: It must be set.
 	 *	MISC_MASTER_TERMINATION_SELECT:      It must be set.
 	 *	MISC_BMREQ_NEGATE_TIMING_SEL:	     It should be set.
 	 *	MISC_AUTOSEL_TIMING_SEL:	     It should be set.
 	 *	MISC_BMSTOP_CHANGE2_NONDATA_PHASE:   It should be set.
-	 *	MISC_DELAYED_BMSTART:		     It's selected for safety.
+	 *	MISC_DELAYED_BMSTART:		     It's selected क्रम safety.
 	 *
 	 * Note: If MISC_BMSTOP_CHANGE2_NONDATA_PHASE is set, then
 	 *	we have to set TRANSFERCONTROL_BM_START as 0 and set
-	 *	appropriate value before restarting bus master transfer.
+	 *	appropriate value beक्रमe restarting bus master transfer.
 	 */
-	nsp32_index_write2(base, MISC_WR,
-			   (SCSI_DIRECTION_DETECTOR_SELECT |
+	nsp32_index_ग_लिखो2(base, MISC_WR,
+			   (SCSI_सूचीECTION_DETECTOR_SELECT |
 			    DELAYED_BMSTART                |
 			    MASTER_TERMINATION_SELECT      |
 			    BMREQ_NEGATE_TIMING_SEL        |
 			    AUTOSEL_TIMING_SEL             |
 			    BMSTOP_CHANGE2_NONDATA_PHASE));
 
-	nsp32_index_write1(base, TERM_PWR_CONTROL, 0);
-	power = nsp32_index_read1(base, TERM_PWR_CONTROL);
-	if (!(power & SENSE)) {
+	nsp32_index_ग_लिखो1(base, TERM_PWR_CONTROL, 0);
+	घातer = nsp32_index_पढ़ो1(base, TERM_PWR_CONTROL);
+	अगर (!(घातer & SENSE)) अणु
 		nsp32_msg(KERN_INFO, "term power on");
-		nsp32_index_write1(base, TERM_PWR_CONTROL, BPWR);
-	}
+		nsp32_index_ग_लिखो1(base, TERM_PWR_CONTROL, BPWR);
+	पूर्ण
 
-	nsp32_write2(base, TIMER_SET, TIMER_STOP);
-	nsp32_write2(base, TIMER_SET, TIMER_STOP); /* Required 2 times */
+	nsp32_ग_लिखो2(base, TIMER_SET, TIMER_STOP);
+	nsp32_ग_लिखो2(base, TIMER_SET, TIMER_STOP); /* Required 2 बार */
 
-	nsp32_write1(base, SYNC_REG,     0);
-	nsp32_write1(base, ACK_WIDTH,    0);
-	nsp32_write2(base, SEL_TIME_OUT, SEL_TIMEOUT_TIME);
+	nsp32_ग_लिखो1(base, SYNC_REG,     0);
+	nsp32_ग_लिखो1(base, ACK_WIDTH,    0);
+	nsp32_ग_लिखो2(base, SEL_TIME_OUT, SEL_TIMEOUT_TIME);
 
 	/*
-	 * enable to select designated IRQ (except for
+	 * enable to select designated IRQ (except क्रम
 	 * IRQSELECT_SERR, IRQSELECT_PERR, IRQSELECT_BMCNTERR)
 	 */
-	nsp32_index_write2(base, IRQ_SELECT, IRQSELECT_TIMER_IRQ         |
+	nsp32_index_ग_लिखो2(base, IRQ_SELECT, IRQSELECT_TIMER_IRQ         |
 			                     IRQSELECT_SCSIRESET_IRQ     |
 			                     IRQSELECT_FIFO_SHLD_IRQ     |
 			                     IRQSELECT_RESELECT_IRQ      |
@@ -1134,498 +1135,498 @@ static int nsp32hw_init(nsp32_hw_data *data)
 			                  //   IRQSELECT_BMCNTERR_IRQ      |
 			                     IRQSELECT_TARGET_ABORT_IRQ  |
 			                     IRQSELECT_MASTER_ABORT_IRQ );
-	nsp32_write2(base, IRQ_CONTROL, 0);
+	nsp32_ग_लिखो2(base, IRQ_CONTROL, 0);
 
 	/* PCI LED off */
-	nsp32_index_write1(base, EXT_PORT_DDR, LED_OFF);
-	nsp32_index_write1(base, EXT_PORT,     LED_OFF);
+	nsp32_index_ग_लिखो1(base, EXT_PORT_DDR, LED_OFF);
+	nsp32_index_ग_लिखो1(base, EXT_PORT,     LED_OFF);
 
-	return TRUE;
-}
+	वापस TRUE;
+पूर्ण
 
 
-/* interrupt routine */
-static irqreturn_t do_nsp32_isr(int irq, void *dev_id)
-{
+/* पूर्णांकerrupt routine */
+अटल irqवापस_t करो_nsp32_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
 	nsp32_hw_data *data = dev_id;
-	unsigned int base = data->BaseAddress;
-	struct scsi_cmnd *SCpnt = data->CurrentSC;
-	unsigned short auto_stat, irq_stat, trans_stat;
-	unsigned char busmon, busphase;
-	unsigned long flags;
-	int ret;
-	int handled = 0;
-	struct Scsi_Host *host = data->Host;
+	अचिन्हित पूर्णांक base = data->BaseAddress;
+	काष्ठा scsi_cmnd *SCpnt = data->CurrentSC;
+	अचिन्हित लघु स्वतः_stat, irq_stat, trans_stat;
+	अचिन्हित अक्षर busmon, busphase;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
+	पूर्णांक handled = 0;
+	काष्ठा Scsi_Host *host = data->Host;
 
 	spin_lock_irqsave(host->host_lock, flags);
 
 	/*
 	 * IRQ check, then enable IRQ mask
 	 */
-	irq_stat = nsp32_read2(base, IRQ_STATUS);
+	irq_stat = nsp32_पढ़ो2(base, IRQ_STATUS);
 	nsp32_dbg(NSP32_DEBUG_INTR, 
 		  "enter IRQ: %d, IRQstatus: 0x%x", irq, irq_stat);
-	/* is this interrupt comes from Ninja asic? */
-	if ((irq_stat & IRQSTATUS_ANY_IRQ) == 0) {
+	/* is this पूर्णांकerrupt comes from Ninja asic? */
+	अगर ((irq_stat & IRQSTATUS_ANY_IRQ) == 0) अणु
 		nsp32_dbg(NSP32_DEBUG_INTR, "shared interrupt: irq other 0x%x", irq_stat);
-		goto out2;
-	}
+		जाओ out2;
+	पूर्ण
 	handled = 1;
-	nsp32_write2(base, IRQ_CONTROL, IRQ_CONTROL_ALL_IRQ_MASK);
+	nsp32_ग_लिखो2(base, IRQ_CONTROL, IRQ_CONTROL_ALL_IRQ_MASK);
 
-	busmon = nsp32_read1(base, SCSI_BUS_MONITOR);
+	busmon = nsp32_पढ़ो1(base, SCSI_BUS_MONITOR);
 	busphase = busmon & BUSMON_PHASE_MASK;
 
-	trans_stat = nsp32_read2(base, TRANSFER_STATUS);
-	if ((irq_stat == 0xffff) && (trans_stat == 0xffff)) {
+	trans_stat = nsp32_पढ़ो2(base, TRANSFER_STATUS);
+	अगर ((irq_stat == 0xffff) && (trans_stat == 0xffff)) अणु
 		nsp32_msg(KERN_INFO, "card disconnect");
-		if (data->CurrentSC != NULL) {
+		अगर (data->CurrentSC != शून्य) अणु
 			nsp32_msg(KERN_INFO, "clean up current SCSI command");
 			SCpnt->result = DID_BAD_TARGET << 16;
-			nsp32_scsi_done(SCpnt);
-		}
-		goto out;
-	}
+			nsp32_scsi_करोne(SCpnt);
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 	/* Timer IRQ */
-	if (irq_stat & IRQSTATUS_TIMER_IRQ) {
+	अगर (irq_stat & IRQSTATUS_TIMER_IRQ) अणु
 		nsp32_dbg(NSP32_DEBUG_INTR, "timer stop");
-		nsp32_write2(base, TIMER_SET, TIMER_STOP);
-		goto out;
-	}
+		nsp32_ग_लिखो2(base, TIMER_SET, TIMER_STOP);
+		जाओ out;
+	पूर्ण
 
 	/* SCSI reset */
-	if (irq_stat & IRQSTATUS_SCSIRESET_IRQ) {
+	अगर (irq_stat & IRQSTATUS_SCSIRESET_IRQ) अणु
 		nsp32_msg(KERN_INFO, "detected someone do bus reset");
-		nsp32_do_bus_reset(data);
-		if (SCpnt != NULL) {
+		nsp32_करो_bus_reset(data);
+		अगर (SCpnt != शून्य) अणु
 			SCpnt->result = DID_RESET << 16;
-			nsp32_scsi_done(SCpnt);
-		}
-		goto out;
-	}
+			nsp32_scsi_करोne(SCpnt);
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	if (SCpnt == NULL) {
+	अगर (SCpnt == शून्य) अणु
 		nsp32_msg(KERN_WARNING, "SCpnt==NULL this can't be happened");
 		nsp32_msg(KERN_WARNING, "irq_stat=0x%x trans_stat=0x%x", irq_stat, trans_stat);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * AutoSCSI Interrupt.
-	 * Note: This interrupt is occurred when AutoSCSI is finished.  Then
-	 * check SCSIEXECUTEPHASE, and do appropriate action.  Each phases are
+	 * Note: This पूर्णांकerrupt is occurred when AutoSCSI is finished.  Then
+	 * check SCSIEXECUTEPHASE, and करो appropriate action.  Each phases are
 	 * recorded when AutoSCSI sequencer has been processed.
 	 */
-	if(irq_stat & IRQSTATUS_AUTOSCSI_IRQ) {
+	अगर(irq_stat & IRQSTATUS_AUTOSCSI_IRQ) अणु
 		/* getting SCSI executed phase */
-		auto_stat = nsp32_read2(base, SCSI_EXECUTE_PHASE);
-		nsp32_write2(base, SCSI_EXECUTE_PHASE, 0);
+		स्वतः_stat = nsp32_पढ़ो2(base, SCSI_EXECUTE_PHASE);
+		nsp32_ग_लिखो2(base, SCSI_EXECUTE_PHASE, 0);
 
-		/* Selection Timeout, go busfree phase. */
-		if (auto_stat & SELECTION_TIMEOUT) {
+		/* Selection Timeout, go busमुक्त phase. */
+		अगर (स्वतः_stat & SELECTION_TIMEOUT) अणु
 			nsp32_dbg(NSP32_DEBUG_INTR,
 				  "selection timeout occurred");
 
 			SCpnt->result = DID_TIME_OUT << 16;
-			nsp32_scsi_done(SCpnt);
-			goto out;
-		}
+			nsp32_scsi_करोne(SCpnt);
+			जाओ out;
+		पूर्ण
 
-		if (auto_stat & MSGOUT_PHASE) {
+		अगर (स्वतः_stat & MSGOUT_PHASE) अणु
 			/*
 			 * MsgOut phase was processed.
 			 * If MSG_IN_OCCUER is not set, then MsgOut phase is
 			 * completed. Thus, msgout_len must reset.  Otherwise,
-			 * nothing to do here. If MSG_OUT_OCCUER is occurred,
+			 * nothing to करो here. If MSG_OUT_OCCUER is occurred,
 			 * then we will encounter the condition and check.
 			 */
-			if (!(auto_stat & MSG_IN_OCCUER) &&
-			     (data->msgout_len <= 3)) {
+			अगर (!(स्वतः_stat & MSG_IN_OCCUER) &&
+			     (data->msgout_len <= 3)) अणु
 				/*
 				 * !MSG_IN_OCCUER && msgout_len <=3
 				 *   ---> AutoSCSI with MSGOUTreg is processed.
 				 */
 				data->msgout_len = 0;
-			}
+			पूर्ण
 
 			nsp32_dbg(NSP32_DEBUG_INTR, "MsgOut phase processed");
-		}
+		पूर्ण
 
-		if ((auto_stat & DATA_IN_PHASE) &&
+		अगर ((स्वतः_stat & DATA_IN_PHASE) &&
 		    (scsi_get_resid(SCpnt) > 0) &&
-		    ((nsp32_read2(base, FIFO_REST_CNT) & FIFO_REST_MASK) != 0)) {
-			printk( "auto+fifo\n");
-			//nsp32_pio_read(SCpnt);
-		}
+		    ((nsp32_पढ़ो2(base, FIFO_REST_CNT) & FIFO_REST_MASK) != 0)) अणु
+			prपूर्णांकk( "auto+fifo\n");
+			//nsp32_pio_पढ़ो(SCpnt);
+		पूर्ण
 
-		if (auto_stat & (DATA_IN_PHASE | DATA_OUT_PHASE)) {
+		अगर (स्वतः_stat & (DATA_IN_PHASE | DATA_OUT_PHASE)) अणु
 			/* DATA_IN_PHASE/DATA_OUT_PHASE was processed. */
 			nsp32_dbg(NSP32_DEBUG_INTR,
 				  "Data in/out phase processed");
 
-			/* read BMCNT, SGT pointer addr */
+			/* पढ़ो BMCNT, SGT poपूर्णांकer addr */
 			nsp32_dbg(NSP32_DEBUG_INTR, "BMCNT=0x%lx", 
-				    nsp32_read4(base, BM_CNT));
+				    nsp32_पढ़ो4(base, BM_CNT));
 			nsp32_dbg(NSP32_DEBUG_INTR, "addr=0x%lx", 
-				    nsp32_read4(base, SGT_ADR));
+				    nsp32_पढ़ो4(base, SGT_ADR));
 			nsp32_dbg(NSP32_DEBUG_INTR, "SACK=0x%lx", 
-				    nsp32_read4(base, SACK_CNT));
+				    nsp32_पढ़ो4(base, SACK_CNT));
 			nsp32_dbg(NSP32_DEBUG_INTR, "SSACK=0x%lx", 
-				    nsp32_read4(base, SAVED_SACK_CNT));
+				    nsp32_पढ़ो4(base, SAVED_SACK_CNT));
 
 			scsi_set_resid(SCpnt, 0); /* all data transferred! */
-		}
+		पूर्ण
 
 		/*
 		 * MsgIn Occur
 		 */
-		if (auto_stat & MSG_IN_OCCUER) {
-			nsp32_msgin_occur(SCpnt, irq_stat, auto_stat);
-		}
+		अगर (स्वतः_stat & MSG_IN_OCCUER) अणु
+			nsp32_msgin_occur(SCpnt, irq_stat, स्वतः_stat);
+		पूर्ण
 
 		/*
 		 * MsgOut Occur
 		 */
-		if (auto_stat & MSG_OUT_OCCUER) {
+		अगर (स्वतः_stat & MSG_OUT_OCCUER) अणु
 			nsp32_msgout_occur(SCpnt);
-		}
+		पूर्ण
 
 		/*
 		 * Bus Free Occur
 		 */
-		if (auto_stat & BUS_FREE_OCCUER) {
-			ret = nsp32_busfree_occur(SCpnt, auto_stat);
-			if (ret == TRUE) {
-				goto out;
-			}
-		}
+		अगर (स्वतः_stat & BUS_FREE_OCCUER) अणु
+			ret = nsp32_busमुक्त_occur(SCpnt, स्वतः_stat);
+			अगर (ret == TRUE) अणु
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		if (auto_stat & STATUS_PHASE) {
+		अगर (स्वतः_stat & STATUS_PHASE) अणु
 			/*
-			 * Read CSB and substitute CSB for SCpnt->result
+			 * Read CSB and substitute CSB क्रम SCpnt->result
 			 * to save status phase stutas byte.
 			 * scsi error handler checks host_byte (DID_*:
 			 * low level driver to indicate status), then checks 
 			 * status_byte (SCSI status byte).
 			 */
-			SCpnt->result =	(int)nsp32_read1(base, SCSI_CSB_IN);
-		}
+			SCpnt->result =	(पूर्णांक)nsp32_पढ़ो1(base, SCSI_CSB_IN);
+		पूर्ण
 
-		if (auto_stat & ILLEGAL_PHASE) {
+		अगर (स्वतः_stat & ILLEGAL_PHASE) अणु
 			/* Illegal phase is detected. SACK is not back. */
 			nsp32_msg(KERN_WARNING, 
 				  "AUTO SCSI ILLEGAL PHASE OCCUR!!!!");
 
-			/* TODO: currently we don't have any action... bus reset? */
+			/* TODO: currently we करोn't have any action... bus reset? */
 
 			/*
-			 * To send back SACK, assert, wait, and negate.
+			 * To send back SACK, निश्चित, रुको, and negate.
 			 */
-			nsp32_sack_assert(data);
-			nsp32_wait_req(data, NEGATE);
+			nsp32_sack_निश्चित(data);
+			nsp32_रुको_req(data, NEGATE);
 			nsp32_sack_negate(data);
 
-		}
+		पूर्ण
 
-		if (auto_stat & COMMAND_PHASE) {
-			/* nothing to do */
+		अगर (स्वतः_stat & COMMAND_PHASE) अणु
+			/* nothing to करो */
 			nsp32_dbg(NSP32_DEBUG_INTR, "Command phase processed");
-		}
+		पूर्ण
 
-		if (auto_stat & AUTOSCSI_BUSY) {
+		अगर (स्वतः_stat & AUTOSCSI_BUSY) अणु
 			/* AutoSCSI is running */
-		}
+		पूर्ण
 
-		show_autophase(auto_stat);
-	}
+		show_स्वतःphase(स्वतः_stat);
+	पूर्ण
 
 	/* FIFO_SHLD_IRQ */
-	if (irq_stat & IRQSTATUS_FIFO_SHLD_IRQ) {
+	अगर (irq_stat & IRQSTATUS_FIFO_SHLD_IRQ) अणु
 		nsp32_dbg(NSP32_DEBUG_INTR, "FIFO IRQ");
 
-		switch(busphase) {
-		case BUSPHASE_DATA_OUT:
+		चयन(busphase) अणु
+		हाल BUSPHASE_DATA_OUT:
 			nsp32_dbg(NSP32_DEBUG_INTR, "fifo/write");
 
-			//nsp32_pio_write(SCpnt);
+			//nsp32_pio_ग_लिखो(SCpnt);
 
-			break;
+			अवरोध;
 
-		case BUSPHASE_DATA_IN:
+		हाल BUSPHASE_DATA_IN:
 			nsp32_dbg(NSP32_DEBUG_INTR, "fifo/read");
 
-			//nsp32_pio_read(SCpnt);
+			//nsp32_pio_पढ़ो(SCpnt);
 
-			break;
+			अवरोध;
 
-		case BUSPHASE_STATUS:
+		हाल BUSPHASE_STATUS:
 			nsp32_dbg(NSP32_DEBUG_INTR, "fifo/status");
 
-			SCpnt->SCp.Status = nsp32_read1(base, SCSI_CSB_IN);
+			SCpnt->SCp.Status = nsp32_पढ़ो1(base, SCSI_CSB_IN);
 
-			break;
-		default:
+			अवरोध;
+		शेष:
 			nsp32_dbg(NSP32_DEBUG_INTR, "fifo/other phase");
 			nsp32_dbg(NSP32_DEBUG_INTR, "irq_stat=0x%x trans_stat=0x%x", irq_stat, trans_stat);
 			show_busphase(busphase);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Phase Change IRQ */
-	if (irq_stat & IRQSTATUS_PHASE_CHANGE_IRQ) {
+	अगर (irq_stat & IRQSTATUS_PHASE_CHANGE_IRQ) अणु
 		nsp32_dbg(NSP32_DEBUG_INTR, "phase change IRQ");
 
-		switch(busphase) {
-		case BUSPHASE_MESSAGE_IN:
+		चयन(busphase) अणु
+		हाल BUSPHASE_MESSAGE_IN:
 			nsp32_dbg(NSP32_DEBUG_INTR, "phase chg/msg in");
 			nsp32_msgin_occur(SCpnt, irq_stat, 0);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			nsp32_msg(KERN_WARNING, "phase chg/other phase?");
 			nsp32_msg(KERN_WARNING, "irq_stat=0x%x trans_stat=0x%x\n",
 				  irq_stat, trans_stat);
 			show_busphase(busphase);
-			break;
-		}
-		goto out;
-	}
+			अवरोध;
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 	/* PCI_IRQ */
-	if (irq_stat & IRQSTATUS_PCI_IRQ) {
+	अगर (irq_stat & IRQSTATUS_PCI_IRQ) अणु
 		nsp32_dbg(NSP32_DEBUG_INTR, "PCI IRQ occurred");
 		/* Do nothing */
-	}
+	पूर्ण
 
 	/* BMCNTERR_IRQ */
-	if (irq_stat & IRQSTATUS_BMCNTERR_IRQ) {
+	अगर (irq_stat & IRQSTATUS_BMCNTERR_IRQ) अणु
 		nsp32_msg(KERN_ERR, "Received unexpected BMCNTERR IRQ! ");
 		/*
 		 * TODO: To be implemented improving bus master
 		 * transfer reliability when BMCNTERR is occurred in
-		 * AutoSCSI phase described in specification.
+		 * AutoSCSI phase described in specअगरication.
 		 */
-	}
+	पूर्ण
 
-#if 0
+#अगर 0
 	nsp32_dbg(NSP32_DEBUG_INTR,
 		  "irq_stat=0x%x trans_stat=0x%x", irq_stat, trans_stat);
 	show_busphase(busphase);
-#endif
+#पूर्ण_अगर
 
  out:
 	/* disable IRQ mask */
-	nsp32_write2(base, IRQ_CONTROL, 0);
+	nsp32_ग_लिखो2(base, IRQ_CONTROL, 0);
 
  out2:
 	spin_unlock_irqrestore(host->host_lock, flags);
 
 	nsp32_dbg(NSP32_DEBUG_INTR, "exit");
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
 
-static int nsp32_show_info(struct seq_file *m, struct Scsi_Host *host)
-{
-	unsigned long     flags;
+अटल पूर्णांक nsp32_show_info(काष्ठा seq_file *m, काष्ठा Scsi_Host *host)
+अणु
+	अचिन्हित दीर्घ     flags;
 	nsp32_hw_data    *data;
-	int               hostno;
-	unsigned int      base;
-	unsigned char     mode_reg;
-	int               id, speed;
-	long              model;
+	पूर्णांक               hostno;
+	अचिन्हित पूर्णांक      base;
+	अचिन्हित अक्षर     mode_reg;
+	पूर्णांक               id, speed;
+	दीर्घ              model;
 
 	hostno = host->host_no;
 	data = (nsp32_hw_data *)host->hostdata;
 	base = host->io_port;
 
-	seq_puts(m, "NinjaSCSI-32 status\n\n");
-	seq_printf(m, "Driver version:        %s, $Revision: 1.33 $\n", nsp32_release_version);
-	seq_printf(m, "SCSI host No.:         %d\n",		hostno);
-	seq_printf(m, "IRQ:                   %d\n",		host->irq);
-	seq_printf(m, "IO:                    0x%lx-0x%lx\n", host->io_port, host->io_port + host->n_io_port - 1);
-	seq_printf(m, "MMIO(virtual address): 0x%lx-0x%lx\n",	host->base, host->base + data->MmioLength - 1);
-	seq_printf(m, "sg_tablesize:          %d\n",		host->sg_tablesize);
-	seq_printf(m, "Chip revision:         0x%x\n",		(nsp32_read2(base, INDEX_REG) >> 8) & 0xff);
+	seq_माला_दो(m, "NinjaSCSI-32 status\n\n");
+	seq_म_लिखो(m, "Driver version:        %s, $Revision: 1.33 $\n", nsp32_release_version);
+	seq_म_लिखो(m, "SCSI host No.:         %d\n",		hostno);
+	seq_म_लिखो(m, "IRQ:                   %d\n",		host->irq);
+	seq_म_लिखो(m, "IO:                    0x%lx-0x%lx\n", host->io_port, host->io_port + host->n_io_port - 1);
+	seq_म_लिखो(m, "MMIO(virtual address): 0x%lx-0x%lx\n",	host->base, host->base + data->MmioLength - 1);
+	seq_म_लिखो(m, "sg_tablesize:          %d\n",		host->sg_tablesize);
+	seq_म_लिखो(m, "Chip revision:         0x%x\n",		(nsp32_पढ़ो2(base, INDEX_REG) >> 8) & 0xff);
 
-	mode_reg = nsp32_index_read1(base, CHIP_MODE);
+	mode_reg = nsp32_index_पढ़ो1(base, CHIP_MODE);
 	model    = data->pci_devid->driver_data;
 
-#ifdef CONFIG_PM
-	seq_printf(m, "Power Management:      %s\n",          (mode_reg & OPTF) ? "yes" : "no");
-#endif
-	seq_printf(m, "OEM:                   %ld, %s\n",     (mode_reg & (OEM0|OEM1)), nsp32_model[model]);
+#अगर_घोषित CONFIG_PM
+	seq_म_लिखो(m, "Power Management:      %s\n",          (mode_reg & OPTF) ? "yes" : "no");
+#पूर्ण_अगर
+	seq_म_लिखो(m, "OEM:                   %ld, %s\n",     (mode_reg & (OEM0|OEM1)), nsp32_model[model]);
 
 	spin_lock_irqsave(&(data->Lock), flags);
-	seq_printf(m, "CurrentSC:             0x%p\n\n",      data->CurrentSC);
+	seq_म_लिखो(m, "CurrentSC:             0x%p\n\n",      data->CurrentSC);
 	spin_unlock_irqrestore(&(data->Lock), flags);
 
 
-	seq_puts(m, "SDTR status\n");
-	for (id = 0; id < ARRAY_SIZE(data->target); id++) {
+	seq_माला_दो(m, "SDTR status\n");
+	क्रम (id = 0; id < ARRAY_SIZE(data->target); id++) अणु
 
-		seq_printf(m, "id %d: ", id);
+		seq_म_लिखो(m, "id %d: ", id);
 
-		if (id == host->this_id) {
-			seq_puts(m, "----- NinjaSCSI-32 host adapter\n");
-			continue;
-		}
+		अगर (id == host->this_id) अणु
+			seq_माला_दो(m, "----- NinjaSCSI-32 host adapter\n");
+			जारी;
+		पूर्ण
 
-		if (data->target[id].sync_flag == SDTR_DONE) {
-			if (data->target[id].period == 0            &&
-			    data->target[id].offset == ASYNC_OFFSET ) {
-				seq_puts(m, "async");
-			} else {
-				seq_puts(m, " sync");
-			}
-		} else {
-			seq_puts(m, " none");
-		}
+		अगर (data->target[id].sync_flag == SDTR_DONE) अणु
+			अगर (data->target[id].period == 0            &&
+			    data->target[id].offset == ASYNC_OFFSET ) अणु
+				seq_माला_दो(m, "async");
+			पूर्ण अन्यथा अणु
+				seq_माला_दो(m, " sync");
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			seq_माला_दो(m, " none");
+		पूर्ण
 
-		if (data->target[id].period != 0) {
+		अगर (data->target[id].period != 0) अणु
 
 			speed = 1000000 / (data->target[id].period * 4);
 
-			seq_printf(m, " transfer %d.%dMB/s, offset %d",
+			seq_म_लिखो(m, " transfer %d.%dMB/s, offset %d",
 				speed / 1000,
 				speed % 1000,
 				data->target[id].offset
 				);
-		}
-		seq_putc(m, '\n');
-	}
-	return 0;
-}
+		पूर्ण
+		seq_अ_दो(m, '\n');
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 
 /*
- * Reset parameters and call scsi_done for data->cur_lunt.
- * Be careful setting SCpnt->result = DID_* before calling this function.
+ * Reset parameters and call scsi_करोne क्रम data->cur_lunt.
+ * Be careful setting SCpnt->result = DID_* beक्रमe calling this function.
  */
-static void nsp32_scsi_done(struct scsi_cmnd *SCpnt)
-{
+अटल व्योम nsp32_scsi_करोne(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	unsigned int   base = SCpnt->device->host->io_port;
+	अचिन्हित पूर्णांक   base = SCpnt->device->host->io_port;
 
 	scsi_dma_unmap(SCpnt);
 
 	/*
 	 * clear TRANSFERCONTROL_BM_START
 	 */
-	nsp32_write2(base, TRANSFER_CONTROL, 0);
-	nsp32_write4(base, BM_CNT,           0);
+	nsp32_ग_लिखो2(base, TRANSFER_CONTROL, 0);
+	nsp32_ग_लिखो4(base, BM_CNT,           0);
 
 	/*
-	 * call scsi_done
+	 * call scsi_करोne
 	 */
-	(*SCpnt->scsi_done)(SCpnt);
+	(*SCpnt->scsi_करोne)(SCpnt);
 
 	/*
 	 * reset parameters
 	 */
-	data->cur_lunt->SCpnt = NULL;
-	data->cur_lunt        = NULL;
-	data->cur_target      = NULL;
-	data->CurrentSC      = NULL;
-}
+	data->cur_lunt->SCpnt = शून्य;
+	data->cur_lunt        = शून्य;
+	data->cur_target      = शून्य;
+	data->CurrentSC      = शून्य;
+पूर्ण
 
 
 /*
  * Bus Free Occur
  *
- * Current Phase is BUSFREE. AutoSCSI is automatically execute BUSFREE phase
+ * Current Phase is BUSFREE. AutoSCSI is स्वतःmatically execute BUSFREE phase
  * with ACK reply when below condition is matched:
  *	MsgIn 00: Command Complete.
- *	MsgIn 02: Save Data Pointer.
+ *	MsgIn 02: Save Data Poपूर्णांकer.
  *	MsgIn 04: Disconnect.
- * In other case, unexpected BUSFREE is detected.
+ * In other हाल, unexpected BUSFREE is detected.
  */
-static int nsp32_busfree_occur(struct scsi_cmnd *SCpnt, unsigned short execph)
-{
+अटल पूर्णांक nsp32_busमुक्त_occur(काष्ठा scsi_cmnd *SCpnt, अचिन्हित लघु execph)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	unsigned int base   = SCpnt->device->host->io_port;
+	अचिन्हित पूर्णांक base   = SCpnt->device->host->io_port;
 
 	nsp32_dbg(NSP32_DEBUG_BUSFREE, "enter execph=0x%x", execph);
-	show_autophase(execph);
+	show_स्वतःphase(execph);
 
-	nsp32_write4(base, BM_CNT,           0);
-	nsp32_write2(base, TRANSFER_CONTROL, 0);
+	nsp32_ग_लिखो4(base, BM_CNT,           0);
+	nsp32_ग_लिखो2(base, TRANSFER_CONTROL, 0);
 
 	/*
-	 * MsgIn 02: Save Data Pointer
+	 * MsgIn 02: Save Data Poपूर्णांकer
 	 *
 	 * VALID:
-	 *   Save Data Pointer is received. Adjust pointer.
+	 *   Save Data Poपूर्णांकer is received. Adjust poपूर्णांकer.
 	 *   
 	 * NO-VALID:
-	 *   SCSI-3 says if Save Data Pointer is not received, then we restart
-	 *   processing and we can't adjust any SCSI data pointer in next data
+	 *   SCSI-3 says अगर Save Data Poपूर्णांकer is not received, then we restart
+	 *   processing and we can't adjust any SCSI data poपूर्णांकer in next data
 	 *   phase.
 	 */
-	if (execph & MSGIN_02_VALID) {
+	अगर (execph & MSGIN_02_VALID) अणु
 		nsp32_dbg(NSP32_DEBUG_BUSFREE, "MsgIn02_Valid");
 
 		/*
-		 * Check sack_cnt/saved_sack_cnt, then adjust sg table if
+		 * Check sack_cnt/saved_sack_cnt, then adjust sg table अगर
 		 * needed.
 		 */
-		if (!(execph & MSGIN_00_VALID) && 
-		    ((execph & DATA_IN_PHASE) || (execph & DATA_OUT_PHASE))) {
-			unsigned int sacklen, s_sacklen;
+		अगर (!(execph & MSGIN_00_VALID) && 
+		    ((execph & DATA_IN_PHASE) || (execph & DATA_OUT_PHASE))) अणु
+			अचिन्हित पूर्णांक sacklen, s_sacklen;
 
 			/*
 			 * Read SACK count and SAVEDSACK count, then compare.
 			 */
-			sacklen   = nsp32_read4(base, SACK_CNT      );
-			s_sacklen = nsp32_read4(base, SAVED_SACK_CNT);
+			sacklen   = nsp32_पढ़ो4(base, SACK_CNT      );
+			s_sacklen = nsp32_पढ़ो4(base, SAVED_SACK_CNT);
 
 			/*
-			 * If SAVEDSACKCNT == 0, it means SavedDataPointer is
+			 * If SAVEDSACKCNT == 0, it means SavedDataPoपूर्णांकer is
 			 * come after data transferring.
 			 */
-			if (s_sacklen > 0) {
+			अगर (s_sacklen > 0) अणु
 				/*
 				 * Comparing between sack and savedsack to
 				 * check the condition of AutoMsgIn03.
 				 *
 				 * If they are same, set msgin03 == TRUE,
 				 * COMMANDCONTROL_AUTO_MSGIN_03 is enabled at
-				 * reselection.  On the other hand, if they
+				 * reselection.  On the other hand, अगर they
 				 * aren't same, set msgin03 == FALSE, and
 				 * COMMANDCONTROL_AUTO_MSGIN_03 is disabled at
 				 * reselection.
 				 */
-				if (sacklen != s_sacklen) {
+				अगर (sacklen != s_sacklen) अणु
 					data->cur_lunt->msgin03 = FALSE;
-				} else {
+				पूर्ण अन्यथा अणु
 					data->cur_lunt->msgin03 = TRUE;
-				}
+				पूर्ण
 
-				nsp32_adjust_busfree(SCpnt, s_sacklen);
-			}
-		}
+				nsp32_adjust_busमुक्त(SCpnt, s_sacklen);
+			पूर्ण
+		पूर्ण
 
 		/* This value has not substitude with valid value yet... */
 		//data->cur_lunt->save_datp = data->cur_datp;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * no processing.
 		 */
-	}
+	पूर्ण
 	
-	if (execph & MSGIN_03_VALID) {
+	अगर (execph & MSGIN_03_VALID) अणु
 		/* MsgIn03 was valid to be processed. No need processing. */
-	}
+	पूर्ण
 
 	/*
 	 * target SDTR check
 	 */
-	if (data->cur_target->sync_flag & SDTR_INITIATOR) {
+	अगर (data->cur_target->sync_flag & SDTR_INITIATOR) अणु
 		/*
 		 * SDTR negotiation pulled by the initiator has not
 		 * finished yet. Fall back to ASYNC mode.
@@ -1633,39 +1634,39 @@ static int nsp32_busfree_occur(struct scsi_cmnd *SCpnt, unsigned short execph)
 		nsp32_set_async(data, data->cur_target);
 		data->cur_target->sync_flag &= ~SDTR_INITIATOR;
 		data->cur_target->sync_flag |= SDTR_DONE;
-	} else if (data->cur_target->sync_flag & SDTR_TARGET) {
+	पूर्ण अन्यथा अगर (data->cur_target->sync_flag & SDTR_TARGET) अणु
 		/*
 		 * SDTR negotiation pulled by the target has been
 		 * negotiating.
 		 */
-		if (execph & (MSGIN_00_VALID | MSGIN_04_VALID)) {
+		अगर (execph & (MSGIN_00_VALID | MSGIN_04_VALID)) अणु
 			/* 
 			 * If valid message is received, then
 			 * negotiation is succeeded.
 			 */
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * On the contrary, if unexpected bus free is
+			 * On the contrary, अगर unexpected bus मुक्त is
 			 * occurred, then negotiation is failed. Fall
 			 * back to ASYNC mode.
 			 */
 			nsp32_set_async(data, data->cur_target);
-		}
+		पूर्ण
 		data->cur_target->sync_flag &= ~SDTR_TARGET;
 		data->cur_target->sync_flag |= SDTR_DONE;
-	}
+	पूर्ण
 
 	/*
 	 * It is always ensured by SCSI standard that initiator
-	 * switches into Bus Free Phase after
+	 * चयनes पूर्णांकo Bus Free Phase after
 	 * receiving message 00 (Command Complete), 04 (Disconnect).
 	 * It's the reason that processing here is valid.
 	 */
-	if (execph & MSGIN_00_VALID) {
+	अगर (execph & MSGIN_00_VALID) अणु
 		/* MsgIn 00: Command Complete */
 		nsp32_dbg(NSP32_DEBUG_BUSFREE, "command complete");
 
-		SCpnt->SCp.Status  = nsp32_read1(base, SCSI_CSB_IN);
+		SCpnt->SCp.Status  = nsp32_पढ़ो1(base, SCSI_CSB_IN);
 		SCpnt->SCp.Message = 0;
 		nsp32_dbg(NSP32_DEBUG_BUSFREE, 
 			  "normal end stat=0x%x resid=0x%x\n",
@@ -1673,44 +1674,44 @@ static int nsp32_busfree_occur(struct scsi_cmnd *SCpnt, unsigned short execph)
 		SCpnt->result = (DID_OK             << 16) |
 			        (SCpnt->SCp.Message <<  8) |
 			        (SCpnt->SCp.Status  <<  0);
-		nsp32_scsi_done(SCpnt);
-		/* All operation is done */
-		return TRUE;
-	} else if (execph & MSGIN_04_VALID) {
+		nsp32_scsi_करोne(SCpnt);
+		/* All operation is करोne */
+		वापस TRUE;
+	पूर्ण अन्यथा अगर (execph & MSGIN_04_VALID) अणु
 		/* MsgIn 04: Disconnect */
-		SCpnt->SCp.Status  = nsp32_read1(base, SCSI_CSB_IN);
+		SCpnt->SCp.Status  = nsp32_पढ़ो1(base, SCSI_CSB_IN);
 		SCpnt->SCp.Message = 4;
 		
 		nsp32_dbg(NSP32_DEBUG_BUSFREE, "disconnect");
-		return TRUE;
-	} else {
-		/* Unexpected bus free */
+		वापस TRUE;
+	पूर्ण अन्यथा अणु
+		/* Unexpected bus मुक्त */
 		nsp32_msg(KERN_WARNING, "unexpected bus free occurred");
 
 		/* DID_ERROR? */
 		//SCpnt->result   = (DID_OK << 16) | (SCpnt->SCp.Message << 8) | (SCpnt->SCp.Status << 0);
 		SCpnt->result = DID_ERROR << 16;
-		nsp32_scsi_done(SCpnt);
-		return TRUE;
-	}
-	return FALSE;
-}
+		nsp32_scsi_करोne(SCpnt);
+		वापस TRUE;
+	पूर्ण
+	वापस FALSE;
+पूर्ण
 
 
 /*
- * nsp32_adjust_busfree - adjusting SG table
+ * nsp32_adjust_busमुक्त - adjusting SG table
  *
  * Note: This driver adjust the SG table using SCSI ACK
  *       counter instead of BMCNT counter!
  */
-static void nsp32_adjust_busfree(struct scsi_cmnd *SCpnt, unsigned int s_sacklen)
-{
+अटल व्योम nsp32_adjust_busमुक्त(काष्ठा scsi_cmnd *SCpnt, अचिन्हित पूर्णांक s_sacklen)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	int                   old_entry = data->cur_entry;
-	int                   new_entry;
-	int                   sg_num = data->cur_lunt->sg_num;
+	पूर्णांक                   old_entry = data->cur_entry;
+	पूर्णांक                   new_entry;
+	पूर्णांक                   sg_num = data->cur_lunt->sg_num;
 	nsp32_sgtable *sgt    = data->cur_lunt->sglun->sgt;
-	unsigned int          restlen, sentlen;
+	अचिन्हित पूर्णांक          restlen, sentlen;
 	u32_le                len, addr;
 
 	nsp32_dbg(NSP32_DEBUG_SGLIST, "old resid=0x%x", scsi_get_resid(SCpnt));
@@ -1720,28 +1721,28 @@ static void nsp32_adjust_busfree(struct scsi_cmnd *SCpnt, unsigned int s_sacklen
 
 	/*
 	 * calculate new_entry from sack count and each sgt[].len 
-	 * calculate the byte which is intent to send
+	 * calculate the byte which is पूर्णांकent to send
 	 */
 	sentlen = 0;
-	for (new_entry = old_entry; new_entry < sg_num; new_entry++) {
+	क्रम (new_entry = old_entry; new_entry < sg_num; new_entry++) अणु
 		sentlen += (le32_to_cpu(sgt[new_entry].len) & ~SGTEND);
-		if (sentlen > s_sacklen) {
-			break;
-		}
-	}
+		अगर (sentlen > s_sacklen) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* all sgt is processed */
-	if (new_entry == sg_num) {
-		goto last;
-	}
+	अगर (new_entry == sg_num) अणु
+		जाओ last;
+	पूर्ण
 
-	if (sentlen == s_sacklen) {
+	अगर (sentlen == s_sacklen) अणु
 		/* XXX: confirm it's ok or not */
-		/* In this case, it's ok because we are at 
+		/* In this हाल, it's ok because we are at 
 		   the head element of the sg. restlen is correctly calculated. */
-	}
+	पूर्ण
 
-	/* calculate the rest length for transferring */
+	/* calculate the rest length क्रम transferring */
 	restlen = sentlen - s_sacklen;
 
 	/* update adjusting current SG table entry */
@@ -1754,33 +1755,33 @@ static void nsp32_adjust_busfree(struct scsi_cmnd *SCpnt, unsigned int s_sacklen
 	/* set cur_entry with new_entry */
 	data->cur_entry = new_entry;
  
-	return;
+	वापस;
 
  last:
-	if (scsi_get_resid(SCpnt) < sentlen) {
+	अगर (scsi_get_resid(SCpnt) < sentlen) अणु
 		nsp32_msg(KERN_ERR, "resid underflow");
-	}
+	पूर्ण
 
 	scsi_set_resid(SCpnt, scsi_get_resid(SCpnt) - sentlen);
 	nsp32_dbg(NSP32_DEBUG_SGLIST, "new resid=0x%x", scsi_get_resid(SCpnt));
 
 	/* update hostdata and lun */
 
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /*
  * It's called MsgOut phase occur.
- * NinjaSCSI-32Bi/UDE automatically processes up to 3 messages in
+ * NinjaSCSI-32Bi/UDE स्वतःmatically processes up to 3 messages in
  * message out phase. It, however, has more than 3 messages,
- * HBA creates the interrupt and we have to process by hand.
+ * HBA creates the पूर्णांकerrupt and we have to process by hand.
  */
-static void nsp32_msgout_occur(struct scsi_cmnd *SCpnt)
-{
+अटल व्योम nsp32_msgout_occur(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	unsigned int base   = SCpnt->device->host->io_port;
-	int i;
+	अचिन्हित पूर्णांक base   = SCpnt->device->host->io_port;
+	पूर्णांक i;
 	
 	nsp32_dbg(NSP32_DEBUG_MSGOUTOCCUR,
 		  "enter: msgout_len: 0x%x", data->msgout_len);
@@ -1789,52 +1790,52 @@ static void nsp32_msgout_occur(struct scsi_cmnd *SCpnt)
 	 * If MsgOut phase is occurred without having any
 	 * message, then No_Operation is sent (SCSI-2).
 	 */
-	if (data->msgout_len == 0) {
+	अगर (data->msgout_len == 0) अणु
 		nsp32_build_nop(SCpnt);
-	}
+	पूर्ण
 
 	/*
 	 * send messages
 	 */
-	for (i = 0; i < data->msgout_len; i++) {
+	क्रम (i = 0; i < data->msgout_len; i++) अणु
 		nsp32_dbg(NSP32_DEBUG_MSGOUTOCCUR,
 			  "%d : 0x%x", i, data->msgoutbuf[i]);
 
 		/*
-		 * Check REQ is asserted.
+		 * Check REQ is निश्चितed.
 		 */
-		nsp32_wait_req(data, ASSERT);
+		nsp32_रुको_req(data, ASSERT);
 
-		if (i == (data->msgout_len - 1)) {
+		अगर (i == (data->msgout_len - 1)) अणु
 			/*
 			 * If the last message, set the AutoSCSI restart
-			 * before send back the ack message. AutoSCSI
-			 * restart automatically negate ATN signal.
+			 * beक्रमe send back the ack message. AutoSCSI
+			 * restart स्वतःmatically negate ATN संकेत.
 			 */
 			//command = (AUTO_MSGIN_00_OR_04 | AUTO_MSGIN_02);
-			//nsp32_restart_autoscsi(SCpnt, command);
-			nsp32_write2(base, COMMAND_CONTROL,
+			//nsp32_restart_स्वतःscsi(SCpnt, command);
+			nsp32_ग_लिखो2(base, COMMAND_CONTROL,
 					 (CLEAR_CDB_FIFO_POINTER |
 					  AUTO_COMMAND_PHASE     |
 					  AUTOSCSI_RESTART       |
 					  AUTO_MSGIN_00_OR_04    |
 					  AUTO_MSGIN_02          ));
-		}
+		पूर्ण
 		/*
-		 * Write data with SACK, then wait sack is
-		 * automatically negated.
+		 * Write data with SACK, then रुको sack is
+		 * स्वतःmatically negated.
 		 */
-		nsp32_write1(base, SCSI_DATA_WITH_ACK, data->msgoutbuf[i]);
-		nsp32_wait_sack(data, NEGATE);
+		nsp32_ग_लिखो1(base, SCSI_DATA_WITH_ACK, data->msgoutbuf[i]);
+		nsp32_रुको_sack(data, NEGATE);
 
 		nsp32_dbg(NSP32_DEBUG_MSGOUTOCCUR, "bus: 0x%x\n",
-			  nsp32_read1(base, SCSI_BUS_MONITOR));
-	}
+			  nsp32_पढ़ो1(base, SCSI_BUS_MONITOR));
+	पूर्ण
 
 	data->msgout_len = 0;
 
 	nsp32_dbg(NSP32_DEBUG_MSGOUTOCCUR, "exit");
-}
+पूर्ण
 
 /*
  * Restart AutoSCSI
@@ -1842,54 +1843,54 @@ static void nsp32_msgout_occur(struct scsi_cmnd *SCpnt)
  * Note: Restarting AutoSCSI needs set:
  *		SYNC_REG, ACK_WIDTH, SGT_ADR, TRANSFER_CONTROL
  */
-static void nsp32_restart_autoscsi(struct scsi_cmnd *SCpnt, unsigned short command)
-{
+अटल व्योम nsp32_restart_स्वतःscsi(काष्ठा scsi_cmnd *SCpnt, अचिन्हित लघु command)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	unsigned int   base = data->BaseAddress;
-	unsigned short transfer = 0;
+	अचिन्हित पूर्णांक   base = data->BaseAddress;
+	अचिन्हित लघु transfer = 0;
 
 	nsp32_dbg(NSP32_DEBUG_RESTART, "enter");
 
-	if (data->cur_target == NULL || data->cur_lunt == NULL) {
+	अगर (data->cur_target == शून्य || data->cur_lunt == शून्य) अणु
 		nsp32_msg(KERN_ERR, "Target or Lun is invalid");
-	}
+	पूर्ण
 
 	/*
 	 * set SYNC_REG
-	 * Don't set BM_START_ADR before setting this register.
+	 * Don't set BM_START_ADR beक्रमe setting this रेजिस्टर.
 	 */
-	nsp32_write1(base, SYNC_REG, data->cur_target->syncreg);
+	nsp32_ग_लिखो1(base, SYNC_REG, data->cur_target->syncreg);
 
 	/*
 	 * set ACKWIDTH
 	 */
-	nsp32_write1(base, ACK_WIDTH, data->cur_target->ackwidth);
+	nsp32_ग_लिखो1(base, ACK_WIDTH, data->cur_target->ackwidth);
 
 	/*
-	 * set SREQ hazard killer sampling rate
+	 * set SREQ hazard समाप्तer sampling rate
 	 */
-	nsp32_write1(base, SREQ_SMPL_RATE, data->cur_target->sample_reg);
+	nsp32_ग_लिखो1(base, SREQ_SMPL_RATE, data->cur_target->sample_reg);
 
 	/*
 	 * set SGT ADDR (physical address)
 	 */
-	nsp32_write4(base, SGT_ADR, data->cur_lunt->sglun_paddr);
+	nsp32_ग_लिखो4(base, SGT_ADR, data->cur_lunt->sglun_paddr);
 
 	/*
 	 * set TRANSFER CONTROL REG
 	 */
 	transfer = 0;
 	transfer |= (TRANSFER_GO | ALL_COUNTER_CLR);
-	if (data->trans_method & NSP32_TRANSFER_BUSMASTER) {
-		if (scsi_bufflen(SCpnt) > 0) {
+	अगर (data->trans_method & NSP32_TRANSFER_BUSMASTER) अणु
+		अगर (scsi_bufflen(SCpnt) > 0) अणु
 			transfer |= BM_START;
-		}
-	} else if (data->trans_method & NSP32_TRANSFER_MMIO) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (data->trans_method & NSP32_TRANSFER_MMIO) अणु
 		transfer |= CB_MMIO_MODE;
-	} else if (data->trans_method & NSP32_TRANSFER_PIO) {
+	पूर्ण अन्यथा अगर (data->trans_method & NSP32_TRANSFER_PIO) अणु
 		transfer |= CB_IO_MODE;
-	}
-	nsp32_write2(base, TRANSFER_CONTROL, transfer);
+	पूर्ण
+	nsp32_ग_लिखो2(base, TRANSFER_CONTROL, transfer);
 
 	/*
 	 * restart AutoSCSI
@@ -1899,36 +1900,36 @@ static void nsp32_restart_autoscsi(struct scsi_cmnd *SCpnt, unsigned short comma
 	command |= (CLEAR_CDB_FIFO_POINTER |
 		    AUTO_COMMAND_PHASE     |
 		    AUTOSCSI_RESTART       );
-	nsp32_write2(base, COMMAND_CONTROL, command);
+	nsp32_ग_लिखो2(base, COMMAND_CONTROL, command);
 
 	nsp32_dbg(NSP32_DEBUG_RESTART, "exit");
-}
+पूर्ण
 
 
 /*
- * cannot run automatically message in occur
+ * cannot run स्वतःmatically message in occur
  */
-static void nsp32_msgin_occur(struct scsi_cmnd     *SCpnt,
-			      unsigned long  irq_status,
-			      unsigned short execph)
-{
+अटल व्योम nsp32_msgin_occur(काष्ठा scsi_cmnd     *SCpnt,
+			      अचिन्हित दीर्घ  irq_status,
+			      अचिन्हित लघु execph)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	unsigned int   base = SCpnt->device->host->io_port;
-	unsigned char  msg;
-	unsigned char  msgtype;
-	unsigned char  newlun;
-	unsigned short command  = 0;
-	int            msgclear = TRUE;
-	long           new_sgtp;
-	int            ret;
+	अचिन्हित पूर्णांक   base = SCpnt->device->host->io_port;
+	अचिन्हित अक्षर  msg;
+	अचिन्हित अक्षर  msgtype;
+	अचिन्हित अक्षर  newlun;
+	अचिन्हित लघु command  = 0;
+	पूर्णांक            msgclear = TRUE;
+	दीर्घ           new_sgtp;
+	पूर्णांक            ret;
 
 	/*
-	 * read first message
+	 * पढ़ो first message
 	 *    Use SCSIDATA_W_ACK instead of SCSIDATAIN, because the procedure
-	 *    of Message-In have to be processed before sending back SCSI ACK.
+	 *    of Message-In have to be processed beक्रमe sending back SCSI ACK.
 	 */
-	msg = nsp32_read1(base, SCSI_DATA_IN);
-	data->msginbuf[(unsigned char)data->msgin_len] = msg;
+	msg = nsp32_पढ़ो1(base, SCSI_DATA_IN);
+	data->msginbuf[(अचिन्हित अक्षर)data->msgin_len] = msg;
 	msgtype = data->msginbuf[0];
 	nsp32_dbg(NSP32_DEBUG_MSGINOCCUR,
 		  "enter: msglen: 0x%x msgin: 0x%x msgtype: 0x%x",
@@ -1939,79 +1940,79 @@ static void nsp32_msgin_occur(struct scsi_cmnd     *SCpnt,
 	 */
 
 	/*
-	 * assert SCSI ACK
+	 * निश्चित SCSI ACK
 	 */
-	nsp32_sack_assert(data);
+	nsp32_sack_निश्चित(data);
 
 	/*
 	 * processing IDENTIFY
 	 */
-	if (msgtype & 0x80) {
-		if (!(irq_status & IRQSTATUS_RESELECT_OCCUER)) {
+	अगर (msgtype & 0x80) अणु
+		अगर (!(irq_status & IRQSTATUS_RESELECT_OCCUER)) अणु
 			/* Invalid (non reselect) phase */
-			goto reject;
-		}
+			जाओ reject;
+		पूर्ण
 
 		newlun = msgtype & 0x1f; /* TODO: SPI-3 compliant? */
 		ret = nsp32_reselection(SCpnt, newlun);
-		if (ret == TRUE) {
-			goto restart;
-		} else {
-			goto reject;
-		}
-	}
+		अगर (ret == TRUE) अणु
+			जाओ restart;
+		पूर्ण अन्यथा अणु
+			जाओ reject;
+		पूर्ण
+	पूर्ण
 	
 	/*
-	 * processing messages except for IDENTIFY
+	 * processing messages except क्रम IDENTIFY
 	 *
 	 * TODO: Messages are all SCSI-2 terminology. SCSI-3 compliance is TODO.
 	 */
-	switch (msgtype) {
+	चयन (msgtype) अणु
 	/*
 	 * 1-byte message
 	 */
-	case COMMAND_COMPLETE:
-	case DISCONNECT:
+	हाल COMMAND_COMPLETE:
+	हाल DISCONNECT:
 		/*
 		 * These messages should not be occurred.
 		 * They should be processed on AutoSCSI sequencer.
 		 */
 		nsp32_msg(KERN_WARNING, 
 			   "unexpected message of AutoSCSI MsgIn: 0x%x", msg);
-		break;
+		अवरोध;
 		
-	case RESTORE_POINTERS:
+	हाल RESTORE_POINTERS:
 		/*
-		 * AutoMsgIn03 is disabled, and HBA gets this message.
+		 * AutoMsgIn03 is disabled, and HBA माला_लो this message.
 		 */
 
-		if ((execph & DATA_IN_PHASE) || (execph & DATA_OUT_PHASE)) {
-			unsigned int s_sacklen;
+		अगर ((execph & DATA_IN_PHASE) || (execph & DATA_OUT_PHASE)) अणु
+			अचिन्हित पूर्णांक s_sacklen;
 
-			s_sacklen = nsp32_read4(base, SAVED_SACK_CNT);
-			if ((execph & MSGIN_02_VALID) && (s_sacklen > 0)) {
-				nsp32_adjust_busfree(SCpnt, s_sacklen);
-			} else {
-				/* No need to rewrite SGT */
-			}
-		}
+			s_sacklen = nsp32_पढ़ो4(base, SAVED_SACK_CNT);
+			अगर ((execph & MSGIN_02_VALID) && (s_sacklen > 0)) अणु
+				nsp32_adjust_busमुक्त(SCpnt, s_sacklen);
+			पूर्ण अन्यथा अणु
+				/* No need to reग_लिखो SGT */
+			पूर्ण
+		पूर्ण
 		data->cur_lunt->msgin03 = FALSE;
 
 		/* Update with the new value */
 
 		/* reset SACK/SavedACK counter (or ALL clear?) */
-		nsp32_write4(base, CLR_COUNTER, CLRCOUNTER_ALLMASK);
+		nsp32_ग_लिखो4(base, CLR_COUNTER, CLRCOUNTER_ALLMASK);
 
 		/*
-		 * set new sg pointer
+		 * set new sg poपूर्णांकer
 		 */
 		new_sgtp = data->cur_lunt->sglun_paddr + 
-			(data->cur_lunt->cur_entry * sizeof(nsp32_sgtable));
-		nsp32_write4(base, SGT_ADR, new_sgtp);
+			(data->cur_lunt->cur_entry * माप(nsp32_sgtable));
+		nsp32_ग_लिखो4(base, SGT_ADR, new_sgtp);
 
-		break;
+		अवरोध;
 
-	case SAVE_POINTERS:
+	हाल SAVE_POINTERS:
 		/*
 		 * These messages should not be occurred.
 		 * They should be processed on AutoSCSI sequencer.
@@ -2019,13 +2020,13 @@ static void nsp32_msgin_occur(struct scsi_cmnd     *SCpnt,
 		nsp32_msg (KERN_WARNING, 
 			   "unexpected message of AutoSCSI MsgIn: SAVE_POINTERS");
 		
-		break;
+		अवरोध;
 		
-	case MESSAGE_REJECT:
+	हाल MESSAGE_REJECT:
 		/* If previous message_out is sending SDTR, and get 
 		   message_reject from target, SDTR negotiation is failed */
-		if (data->cur_target->sync_flag &
-				(SDTR_INITIATOR | SDTR_TARGET)) {
+		अगर (data->cur_target->sync_flag &
+				(SDTR_INITIATOR | SDTR_TARGET)) अणु
 			/*
 			 * Current target is negotiating SDTR, but it's
 			 * failed.  Fall back to async transfer mode, and set
@@ -2035,125 +2036,125 @@ static void nsp32_msgin_occur(struct scsi_cmnd     *SCpnt,
 			data->cur_target->sync_flag &= ~SDTR_INITIATOR;
 			data->cur_target->sync_flag |= SDTR_DONE;
 
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case LINKED_CMD_COMPLETE:
-	case LINKED_FLG_CMD_COMPLETE:
+	हाल LINKED_CMD_COMPLETE:
+	हाल LINKED_FLG_CMD_COMPLETE:
 		/* queue tag is not supported currently */
 		nsp32_msg (KERN_WARNING, 
 			   "unsupported message: 0x%x", msgtype);
-		break;
+		अवरोध;
 
-	case INITIATE_RECOVERY:
+	हाल INITIATE_RECOVERY:
 		/* staring ECA (Extended Contingent Allegiance) state. */
 		/* This message is declined in SPI2 or later. */
 
-		goto reject;
+		जाओ reject;
 
 	/*
 	 * 2-byte message
 	 */
-	case SIMPLE_QUEUE_TAG:
-	case 0x23:
+	हाल SIMPLE_QUEUE_TAG:
+	हाल 0x23:
 		/*
 		 * 0x23: Ignore_Wide_Residue is not declared in scsi.h.
 		 * No support is needed.
 		 */
-		if (data->msgin_len >= 1) {
-			goto reject;
-		}
+		अगर (data->msgin_len >= 1) अणु
+			जाओ reject;
+		पूर्ण
 
 		/* current position is 1-byte of 2 byte */
 		msgclear = FALSE;
 
-		break;
+		अवरोध;
 
 	/*
 	 * extended message
 	 */
-	case EXTENDED_MESSAGE:
-		if (data->msgin_len < 1) {
+	हाल EXTENDED_MESSAGE:
+		अगर (data->msgin_len < 1) अणु
 			/*
-			 * Current position does not reach 2-byte
+			 * Current position करोes not reach 2-byte
 			 * (2-byte is extended message length).
 			 */
 			msgclear = FALSE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if ((data->msginbuf[1] + 1) > data->msgin_len) {
+		अगर ((data->msginbuf[1] + 1) > data->msgin_len) अणु
 			/*
 			 * Current extended message has msginbuf[1] + 2
 			 * (msgin_len starts counting from 0, so buf[1] + 1).
 			 * If current message position is not finished,
-			 * continue receiving message.
+			 * जारी receiving message.
 			 */
 			msgclear = FALSE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * Reach here means regular length of each type of 
 		 * extended messages.
 		 */
-		switch (data->msginbuf[2]) {
-		case EXTENDED_MODIFY_DATA_POINTER:
+		चयन (data->msginbuf[2]) अणु
+		हाल EXTENDED_MODIFY_DATA_POINTER:
 			/* TODO */
-			goto reject; /* not implemented yet */
-			break;
+			जाओ reject; /* not implemented yet */
+			अवरोध;
 
-		case EXTENDED_SDTR:
+		हाल EXTENDED_SDTR:
 			/*
 			 * Exchange this message between initiator and target.
 			 */
-			if (data->msgin_len != EXTENDED_SDTR_LEN + 1) {
+			अगर (data->msgin_len != EXTENDED_SDTR_LEN + 1) अणु
 				/*
 				 * received inappropriate message.
 				 */
-				goto reject;
-				break;
-			}
+				जाओ reject;
+				अवरोध;
+			पूर्ण
 
 			nsp32_analyze_sdtr(SCpnt);
 
-			break;
+			अवरोध;
 
-		case EXTENDED_EXTENDED_IDENTIFY:
+		हाल EXTENDED_EXTENDED_IDENTIFY:
 			/* SCSI-I only, not supported. */
-			goto reject; /* not implemented yet */
+			जाओ reject; /* not implemented yet */
 
-			break;
+			अवरोध;
 
-		case EXTENDED_WDTR:
-			goto reject; /* not implemented yet */
+		हाल EXTENDED_WDTR:
+			जाओ reject; /* not implemented yet */
 
-			break;
+			अवरोध;
 			
-		default:
-			goto reject;
-		}
-		break;
+		शेष:
+			जाओ reject;
+		पूर्ण
+		अवरोध;
 		
-	default:
-		goto reject;
-	}
+	शेष:
+		जाओ reject;
+	पूर्ण
 
  restart:
-	if (msgclear == TRUE) {
+	अगर (msgclear == TRUE) अणु
 		data->msgin_len = 0;
 
 		/*
 		 * If restarting AutoSCSI, but there are some message to out
 		 * (msgout_len > 0), set AutoATN, and set SCSIMSGOUT as 0
 		 * (MV_VALID = 0). When commandcontrol is written with
-		 * AutoSCSI restart, at the same time MsgOutOccur should be
+		 * AutoSCSI restart, at the same समय MsgOutOccur should be
 		 * happened (however, such situation is really possible...?).
 		 */
-		if (data->msgout_len > 0) {	
-			nsp32_write4(base, SCSI_MSG_OUT, 0);
+		अगर (data->msgout_len > 0) अणु	
+			nsp32_ग_लिखो4(base, SCSI_MSG_OUT, 0);
 			command |= AUTO_ATN;
-		}
+		पूर्ण
 
 		/*
 		 * restart AutoSCSI
@@ -2164,23 +2165,23 @@ static void nsp32_msgin_occur(struct scsi_cmnd     *SCpnt,
 		/*
 		 * If current msgin03 is TRUE, then flag on.
 		 */
-		if (data->cur_lunt->msgin03 == TRUE) {
+		अगर (data->cur_lunt->msgin03 == TRUE) अणु
 			command |= AUTO_MSGIN_03;
-		}
+		पूर्ण
 		data->cur_lunt->msgin03 = FALSE;
-	} else {
+	पूर्ण अन्यथा अणु
 		data->msgin_len++;
-	}
+	पूर्ण
 
 	/*
 	 * restart AutoSCSI
 	 */
-	nsp32_restart_autoscsi(SCpnt, command);
+	nsp32_restart_स्वतःscsi(SCpnt, command);
 
 	/*
-	 * wait SCSI REQ negate for REQ-ACK handshake
+	 * रुको SCSI REQ negate क्रम REQ-ACK handshake
 	 */
-	nsp32_wait_req(data, NEGATE);
+	nsp32_रुको_req(data, NEGATE);
 
 	/*
 	 * negate SCSI ACK
@@ -2189,7 +2190,7 @@ static void nsp32_msgin_occur(struct scsi_cmnd     *SCpnt,
 
 	nsp32_dbg(NSP32_DEBUG_MSGINOCCUR, "exit");
 
-	return;
+	वापस;
 
  reject:
 	nsp32_msg(KERN_WARNING, 
@@ -2199,19 +2200,19 @@ static void nsp32_msgin_occur(struct scsi_cmnd     *SCpnt,
 	nsp32_build_reject(SCpnt);
 	data->msgin_len = 0;
 
-	goto restart;
-}
+	जाओ restart;
+पूर्ण
 
 /*
  * 
  */
-static void nsp32_analyze_sdtr(struct scsi_cmnd *SCpnt)
-{
+अटल व्योम nsp32_analyze_sdtr(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data   *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
 	nsp32_target     *target     = data->cur_target;
-	unsigned char     get_period = data->msginbuf[3];
-	unsigned char     get_offset = data->msginbuf[4];
-	int               entry;
+	अचिन्हित अक्षर     get_period = data->msginbuf[3];
+	अचिन्हित अक्षर     get_offset = data->msginbuf[4];
+	पूर्णांक               entry;
 
 	nsp32_dbg(NSP32_DEBUG_MSGINOCCUR, "enter");
 
@@ -2222,7 +2223,7 @@ static void nsp32_analyze_sdtr(struct scsi_cmnd *SCpnt)
 	 * If initiator did not send the SDTR, but target sends SDTR, 
 	 * initiator calculator the appropriate parameter and send back SDTR.
 	 */	
-	if (target->sync_flag & SDTR_INITIATOR) {
+	अगर (target->sync_flag & SDTR_INITIATOR) अणु
 		/*
 		 * Initiator sent SDTR, the target responds and
 		 * send back negotiation SDTR.
@@ -2235,25 +2236,25 @@ static void nsp32_analyze_sdtr(struct scsi_cmnd *SCpnt)
 		/*
 		 * offset:
 		 */
-		if (get_offset > SYNC_OFFSET) {
+		अगर (get_offset > SYNC_OFFSET) अणु
 			/*
 			 * Negotiation is failed, the target send back
 			 * unexpected offset value.
 			 */
-			goto reject;
-		}
+			जाओ reject;
+		पूर्ण
 		
-		if (get_offset == ASYNC_OFFSET) {
+		अगर (get_offset == ASYNC_OFFSET) अणु
 			/*
 			 * Negotiation is succeeded, the target want
-			 * to fall back into asynchronous transfer mode.
+			 * to fall back पूर्णांकo asynchronous transfer mode.
 			 */
-			goto async;
-		}
+			जाओ async;
+		पूर्ण
 
 		/*
 		 * period:
-		 *    Check whether sync period is too short. If too short,
+		 *    Check whether sync period is too लघु. If too लघु,
 		 *    fall back to async mode. If it's ok, then investigate
 		 *    the received sync period. If sync period is acceptable
 		 *    between sync table start_period and end_period, then
@@ -2261,59 +2262,59 @@ static void nsp32_analyze_sdtr(struct scsi_cmnd *SCpnt)
 		 *    If it's not acceptable, send back reject and fall back
 		 *    to async mode.
 		 */
-		if (get_period < data->synct[0].period_num) {
+		अगर (get_period < data->synct[0].period_num) अणु
 			/*
 			 * Negotiation is failed, the target send back
 			 * unexpected period value.
 			 */
-			goto reject;
-		}
+			जाओ reject;
+		पूर्ण
 
 		entry = nsp32_search_period_entry(data, target, get_period);
 
-		if (entry < 0) {
+		अगर (entry < 0) अणु
 			/*
-			 * Target want to use long period which is not 
+			 * Target want to use दीर्घ period which is not 
 			 * acceptable NinjaSCSI-32Bi/UDE.
 			 */
-			goto reject;
-		}
+			जाओ reject;
+		पूर्ण
 
 		/*
 		 * Set new sync table and offset in this I_T nexus.
 		 */
 		nsp32_set_sync_entry(data, target, entry, get_offset);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Target send SDTR to initiator. */
 		nsp32_dbg(NSP32_DEBUG_MSGINOCCUR, "target send SDTR");
 	
 		target->sync_flag |= SDTR_INITIATOR;
 
 		/* offset: */
-		if (get_offset > SYNC_OFFSET) {
+		अगर (get_offset > SYNC_OFFSET) अणु
 			/* send back as SYNC_OFFSET */
 			get_offset = SYNC_OFFSET;
-		}
+		पूर्ण
 
 		/* period: */
-		if (get_period < data->synct[0].period_num) {
+		अगर (get_period < data->synct[0].period_num) अणु
 			get_period = data->synct[0].period_num;
-		}
+		पूर्ण
 
 		entry = nsp32_search_period_entry(data, target, get_period);
 
-		if (get_offset == ASYNC_OFFSET || entry < 0) {
+		अगर (get_offset == ASYNC_OFFSET || entry < 0) अणु
 			nsp32_set_async(data, target);
 			nsp32_build_sdtr(SCpnt, 0, ASYNC_OFFSET);
-		} else {
+		पूर्ण अन्यथा अणु
 			nsp32_set_sync_entry(data, target, entry, get_offset);
 			nsp32_build_sdtr(SCpnt, get_period, get_offset);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	target->period = get_period;
 	nsp32_dbg(NSP32_DEBUG_MSGINOCCUR, "exit");
-	return;
+	वापस;
 
  reject:
 	/*
@@ -2327,50 +2328,50 @@ static void nsp32_analyze_sdtr(struct scsi_cmnd *SCpnt)
 
 	target->period = 0;
 	nsp32_dbg(NSP32_DEBUG_MSGINOCCUR, "exit: set async");
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /*
  * Search config entry number matched in sync_table from given
- * target and speed period value. If failed to search, return negative value.
+ * target and speed period value. If failed to search, वापस negative value.
  */
-static int nsp32_search_period_entry(nsp32_hw_data *data,
+अटल पूर्णांक nsp32_search_period_entry(nsp32_hw_data *data,
 				     nsp32_target  *target,
-				     unsigned char  period)
-{
-	int i;
+				     अचिन्हित अक्षर  period)
+अणु
+	पूर्णांक i;
 
-	if (target->limit_entry >= data->syncnum) {
+	अगर (target->limit_entry >= data->syncnum) अणु
 		nsp32_msg(KERN_ERR, "limit_entry exceeds syncnum!");
 		target->limit_entry = 0;
-	}
+	पूर्ण
 
-	for (i = target->limit_entry; i < data->syncnum; i++) {
-		if (period >= data->synct[i].start_period &&
-		    period <= data->synct[i].end_period) {
-				break;
-		}
-	}
+	क्रम (i = target->limit_entry; i < data->syncnum; i++) अणु
+		अगर (period >= data->synct[i].start_period &&
+		    period <= data->synct[i].end_period) अणु
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Check given period value is over the sync_table value.
-	 * If so, return max value.
+	 * If so, वापस max value.
 	 */
-	if (i == data->syncnum) {
+	अगर (i == data->syncnum) अणु
 		i = -1;
-	}
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 
 /*
  * target <-> initiator use ASYNC transfer
  */
-static void nsp32_set_async(nsp32_hw_data *data, nsp32_target *target)
-{
-	unsigned char period = data->synct[target->limit_entry].period_num;
+अटल व्योम nsp32_set_async(nsp32_hw_data *data, nsp32_target *target)
+अणु
+	अचिन्हित अक्षर period = data->synct[target->limit_entry].period_num;
 
 	target->offset     = ASYNC_OFFSET;
 	target->period     = 0;
@@ -2379,18 +2380,18 @@ static void nsp32_set_async(nsp32_hw_data *data, nsp32_target *target)
 	target->sample_reg = 0;
 
 	nsp32_dbg(NSP32_DEBUG_SYNC, "set async");
-}
+पूर्ण
 
 
 /*
  * target <-> initiator use maximum SYNC transfer
  */
-static void nsp32_set_max_sync(nsp32_hw_data *data,
+अटल व्योम nsp32_set_max_sync(nsp32_hw_data *data,
 			       nsp32_target  *target,
-			       unsigned char *period,
-			       unsigned char *offset)
-{
-	unsigned char period_num, ackwidth;
+			       अचिन्हित अक्षर *period,
+			       अचिन्हित अक्षर *offset)
+अणु
+	अचिन्हित अक्षर period_num, ackwidth;
 
 	period_num = data->synct[target->limit_entry].period_num;
 	*period    = data->synct[target->limit_entry].start_period;
@@ -2401,18 +2402,18 @@ static void nsp32_set_max_sync(nsp32_hw_data *data,
 	target->ackwidth   = ackwidth;
 	target->offset     = *offset;
 	target->sample_reg = 0;       /* disable SREQ sampling */
-}
+पूर्ण
 
 
 /*
  * target <-> initiator use entry number speed
  */
-static void nsp32_set_sync_entry(nsp32_hw_data *data,
+अटल व्योम nsp32_set_sync_entry(nsp32_hw_data *data,
 				 nsp32_target  *target,
-				 int            entry,
-				 unsigned char  offset)
-{
-	unsigned char period, ackwidth, sample_rate;
+				 पूर्णांक            entry,
+				 अचिन्हित अक्षर  offset)
+अणु
+	अचिन्हित अक्षर period, ackwidth, sample_rate;
 
 	period      = data->synct[entry].period_num;
 	ackwidth    = data->synct[entry].ackwidth;
@@ -2424,146 +2425,146 @@ static void nsp32_set_sync_entry(nsp32_hw_data *data,
 	target->sample_reg = sample_rate | SAMPLING_ENABLE;
 
 	nsp32_dbg(NSP32_DEBUG_SYNC, "set sync");
-}
+पूर्ण
 
 
 /*
- * It waits until SCSI REQ becomes assertion or negation state.
+ * It रुकोs until SCSI REQ becomes निश्चितion or negation state.
  *
- * Note: If nsp32_msgin_occur is called, we asserts SCSI ACK. Then
- *     connected target responds SCSI REQ negation.  We have to wait
- *     SCSI REQ becomes negation in order to negate SCSI ACK signal for
+ * Note: If nsp32_msgin_occur is called, we निश्चितs SCSI ACK. Then
+ *     connected target responds SCSI REQ negation.  We have to रुको
+ *     SCSI REQ becomes negation in order to negate SCSI ACK संकेत क्रम
  *     REQ-ACK handshake.
  */
-static void nsp32_wait_req(nsp32_hw_data *data, int state)
-{
-	unsigned int  base      = data->BaseAddress;
-	int           wait_time = 0;
-	unsigned char bus, req_bit;
+अटल व्योम nsp32_रुको_req(nsp32_hw_data *data, पूर्णांक state)
+अणु
+	अचिन्हित पूर्णांक  base      = data->BaseAddress;
+	पूर्णांक           रुको_समय = 0;
+	अचिन्हित अक्षर bus, req_bit;
 
-	if (!((state == ASSERT) || (state == NEGATE))) {
+	अगर (!((state == ASSERT) || (state == NEGATE))) अणु
 		nsp32_msg(KERN_ERR, "unknown state designation");
-	}
+	पूर्ण
 	/* REQ is BIT(5) */
 	req_bit = (state == ASSERT ? BUSMON_REQ : 0);
 
-	do {
-		bus = nsp32_read1(base, SCSI_BUS_MONITOR);
-		if ((bus & BUSMON_REQ) == req_bit) {
+	करो अणु
+		bus = nsp32_पढ़ो1(base, SCSI_BUS_MONITOR);
+		अगर ((bus & BUSMON_REQ) == req_bit) अणु
 			nsp32_dbg(NSP32_DEBUG_WAIT, 
-				  "wait_time: %d", wait_time);
-			return;
-		}
+				  "wait_time: %d", रुको_समय);
+			वापस;
+		पूर्ण
 		udelay(1);
-		wait_time++;
-	} while (wait_time < REQSACK_TIMEOUT_TIME);
+		रुको_समय++;
+	पूर्ण जबतक (रुको_समय < REQSACK_TIMEOUT_TIME);
 
 	nsp32_msg(KERN_WARNING, "wait REQ timeout, req_bit: 0x%x", req_bit);
-}
+पूर्ण
 
 /*
- * It waits until SCSI SACK becomes assertion or negation state.
+ * It रुकोs until SCSI SACK becomes निश्चितion or negation state.
  */
-static void nsp32_wait_sack(nsp32_hw_data *data, int state)
-{
-	unsigned int  base      = data->BaseAddress;
-	int           wait_time = 0;
-	unsigned char bus, ack_bit;
+अटल व्योम nsp32_रुको_sack(nsp32_hw_data *data, पूर्णांक state)
+अणु
+	अचिन्हित पूर्णांक  base      = data->BaseAddress;
+	पूर्णांक           रुको_समय = 0;
+	अचिन्हित अक्षर bus, ack_bit;
 
-	if (!((state == ASSERT) || (state == NEGATE))) {
+	अगर (!((state == ASSERT) || (state == NEGATE))) अणु
 		nsp32_msg(KERN_ERR, "unknown state designation");
-	}
+	पूर्ण
 	/* ACK is BIT(4) */
 	ack_bit = (state == ASSERT ? BUSMON_ACK : 0);
 
-	do {
-		bus = nsp32_read1(base, SCSI_BUS_MONITOR);
-		if ((bus & BUSMON_ACK) == ack_bit) {
+	करो अणु
+		bus = nsp32_पढ़ो1(base, SCSI_BUS_MONITOR);
+		अगर ((bus & BUSMON_ACK) == ack_bit) अणु
 			nsp32_dbg(NSP32_DEBUG_WAIT,
-				  "wait_time: %d", wait_time);
-			return;
-		}
+				  "wait_time: %d", रुको_समय);
+			वापस;
+		पूर्ण
 		udelay(1);
-		wait_time++;
-	} while (wait_time < REQSACK_TIMEOUT_TIME);
+		रुको_समय++;
+	पूर्ण जबतक (रुको_समय < REQSACK_TIMEOUT_TIME);
 
 	nsp32_msg(KERN_WARNING, "wait SACK timeout, ack_bit: 0x%x", ack_bit);
-}
+पूर्ण
 
 /*
- * assert SCSI ACK
+ * निश्चित SCSI ACK
  *
- * Note: SCSI ACK assertion needs with ACKENB=1, AUTODIRECTION=1.
+ * Note: SCSI ACK निश्चितion needs with ACKENB=1, AUTOसूचीECTION=1.
  */
-static void nsp32_sack_assert(nsp32_hw_data *data)
-{
-	unsigned int  base = data->BaseAddress;
-	unsigned char busctrl;
+अटल व्योम nsp32_sack_निश्चित(nsp32_hw_data *data)
+अणु
+	अचिन्हित पूर्णांक  base = data->BaseAddress;
+	अचिन्हित अक्षर busctrl;
 
-	busctrl  = nsp32_read1(base, SCSI_BUS_CONTROL);
-	busctrl	|= (BUSCTL_ACK | AUTODIRECTION | ACKENB);
-	nsp32_write1(base, SCSI_BUS_CONTROL, busctrl);
-}
+	busctrl  = nsp32_पढ़ो1(base, SCSI_BUS_CONTROL);
+	busctrl	|= (BUSCTL_ACK | AUTOसूचीECTION | ACKENB);
+	nsp32_ग_लिखो1(base, SCSI_BUS_CONTROL, busctrl);
+पूर्ण
 
 /*
  * negate SCSI ACK
  */
-static void nsp32_sack_negate(nsp32_hw_data *data)
-{
-	unsigned int  base = data->BaseAddress;
-	unsigned char busctrl;
+अटल व्योम nsp32_sack_negate(nsp32_hw_data *data)
+अणु
+	अचिन्हित पूर्णांक  base = data->BaseAddress;
+	अचिन्हित अक्षर busctrl;
 
-	busctrl  = nsp32_read1(base, SCSI_BUS_CONTROL);
+	busctrl  = nsp32_पढ़ो1(base, SCSI_BUS_CONTROL);
 	busctrl	&= ~BUSCTL_ACK;
-	nsp32_write1(base, SCSI_BUS_CONTROL, busctrl);
-}
+	nsp32_ग_लिखो1(base, SCSI_BUS_CONTROL, busctrl);
+पूर्ण
 
 
 
 /*
- * Note: n_io_port is defined as 0x7f because I/O register port is
- *	 assigned as:
+ * Note: n_io_port is defined as 0x7f because I/O रेजिस्टर port is
+ *	 asचिन्हित as:
  *	0x800-0x8ff: memory mapped I/O port
  *	0x900-0xbff: (map same 0x800-0x8ff I/O port image repeatedly)
- *	0xc00-0xfff: CardBus status registers
+ *	0xc00-0xfff: CardBus status रेजिस्टरs
  */
-static int nsp32_detect(struct pci_dev *pdev)
-{
-	struct Scsi_Host *host;	/* registered host structure */
-	struct resource  *res;
+अटल पूर्णांक nsp32_detect(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा Scsi_Host *host;	/* रेजिस्टरed host काष्ठाure */
+	काष्ठा resource  *res;
 	nsp32_hw_data    *data;
-	int               ret;
-	int               i, j;
+	पूर्णांक               ret;
+	पूर्णांक               i, j;
 
 	nsp32_dbg(NSP32_DEBUG_REGISTER, "enter");
 
 	/*
-	 * register this HBA as SCSI device
+	 * रेजिस्टर this HBA as SCSI device
 	 */
-	host = scsi_host_alloc(&nsp32_template, sizeof(nsp32_hw_data));
-	if (host == NULL) {
+	host = scsi_host_alloc(&nsp32_ढाँचा, माप(nsp32_hw_data));
+	अगर (host == शून्य) अणु
 		nsp32_msg (KERN_ERR, "failed to scsi register");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
 	 * set nsp32_hw_data
 	 */
 	data = (nsp32_hw_data *)host->hostdata;
 
-	memcpy(data, &nsp32_data_base, sizeof(nsp32_hw_data));
+	स_नकल(data, &nsp32_data_base, माप(nsp32_hw_data));
 
 	host->irq       = data->IrqNumber;
 	host->io_port   = data->BaseAddress;
 	host->unique_id = data->BaseAddress;
 	host->n_io_port	= data->NumAddress;
-	host->base      = (unsigned long)data->MmioAddress;
+	host->base      = (अचिन्हित दीर्घ)data->MmioAddress;
 
 	data->Host      = host;
 	spin_lock_init(&(data->Lock));
 
-	data->cur_lunt   = NULL;
-	data->cur_target = NULL;
+	data->cur_lunt   = शून्य;
+	data->cur_target = शून्य;
 
 	/*
 	 * Bus master transfer mode is supported currently.
@@ -2571,39 +2572,39 @@ static int nsp32_detect(struct pci_dev *pdev)
 	data->trans_method = NSP32_TRANSFER_BUSMASTER;
 
 	/*
-	 * Set clock div, CLOCK_4 (HBA has own external clock, and
-	 * dividing * 100ns/4).
-	 * Currently CLOCK_4 has only tested, not for CLOCK_2/PCICLK yet.
+	 * Set घड़ी भाग, CLOCK_4 (HBA has own बाह्यal घड़ी, and
+	 * भागiding * 100ns/4).
+	 * Currently CLOCK_4 has only tested, not क्रम CLOCK_2/PCICLK yet.
 	 */
-	data->clock = CLOCK_4;
+	data->घड़ी = CLOCK_4;
 
 	/*
 	 * Select appropriate nsp32_sync_table and set I_CLOCKDIV.
 	 */
-	switch (data->clock) {
-	case CLOCK_4:
-		/* If data->clock is CLOCK_4, then select 40M sync table. */
+	चयन (data->घड़ी) अणु
+	हाल CLOCK_4:
+		/* If data->घड़ी is CLOCK_4, then select 40M sync table. */
 		data->synct   = nsp32_sync_table_40M;
 		data->syncnum = ARRAY_SIZE(nsp32_sync_table_40M);
-		break;
-	case CLOCK_2:
-		/* If data->clock is CLOCK_2, then select 20M sync table. */
+		अवरोध;
+	हाल CLOCK_2:
+		/* If data->घड़ी is CLOCK_2, then select 20M sync table. */
 		data->synct   = nsp32_sync_table_20M;
 		data->syncnum = ARRAY_SIZE(nsp32_sync_table_20M);
-		break;
-	case PCICLK:
-		/* If data->clock is PCICLK, then select pci sync table. */
+		अवरोध;
+	हाल PCICLK:
+		/* If data->घड़ी is PCICLK, then select pci sync table. */
 		data->synct   = nsp32_sync_table_pci;
 		data->syncnum = ARRAY_SIZE(nsp32_sync_table_pci);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		nsp32_msg(KERN_WARNING,
 			  "Invalid clock div is selected, set CLOCK_4.");
-		/* Use default value CLOCK_4 */
-		data->clock   = CLOCK_4;
+		/* Use शेष value CLOCK_4 */
+		data->घड़ी   = CLOCK_4;
 		data->synct   = nsp32_sync_table_40M;
 		data->syncnum = ARRAY_SIZE(nsp32_sync_table_40M);
-	}
+	पूर्ण
 
 	/*
 	 * setup nsp32_lunt
@@ -2612,74 +2613,74 @@ static int nsp32_detect(struct pci_dev *pdev)
 	/*
 	 * setup DMA 
 	 */
-	if (dma_set_mask(&pdev->dev, DMA_BIT_MASK(32)) != 0) {
+	अगर (dma_set_mask(&pdev->dev, DMA_BIT_MASK(32)) != 0) अणु
 		nsp32_msg (KERN_ERR, "failed to set PCI DMA mask");
-		goto scsi_unregister;
-	}
+		जाओ scsi_unरेजिस्टर;
+	पूर्ण
 
 	/*
-	 * allocate autoparam DMA resource.
+	 * allocate स्वतःparam DMA resource.
 	 */
-	data->autoparam = dma_alloc_coherent(&pdev->dev,
-			sizeof(nsp32_autoparam), &(data->auto_paddr),
+	data->स्वतःparam = dma_alloc_coherent(&pdev->dev,
+			माप(nsp32_स्वतःparam), &(data->स्वतः_paddr),
 			GFP_KERNEL);
-	if (data->autoparam == NULL) {
+	अगर (data->स्वतःparam == शून्य) अणु
 		nsp32_msg(KERN_ERR, "failed to allocate DMA memory");
-		goto scsi_unregister;
-	}
+		जाओ scsi_unरेजिस्टर;
+	पूर्ण
 
 	/*
 	 * allocate scatter-gather DMA resource.
 	 */
 	data->sg_list = dma_alloc_coherent(&pdev->dev, NSP32_SG_TABLE_SIZE,
 			&data->sg_paddr, GFP_KERNEL);
-	if (data->sg_list == NULL) {
+	अगर (data->sg_list == शून्य) अणु
 		nsp32_msg(KERN_ERR, "failed to allocate DMA memory");
-		goto free_autoparam;
-	}
+		जाओ मुक्त_स्वतःparam;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(data->lunt); i++) {
-		for (j = 0; j < ARRAY_SIZE(data->lunt[0]); j++) {
-			int offset = i * ARRAY_SIZE(data->lunt[0]) + j;
-			nsp32_lunt tmp = {
-				.SCpnt       = NULL,
+	क्रम (i = 0; i < ARRAY_SIZE(data->lunt); i++) अणु
+		क्रम (j = 0; j < ARRAY_SIZE(data->lunt[0]); j++) अणु
+			पूर्णांक offset = i * ARRAY_SIZE(data->lunt[0]) + j;
+			nsp32_lunt पंचांगp = अणु
+				.SCpnt       = शून्य,
 				.save_datp   = 0,
 				.msgin03     = FALSE,
 				.sg_num      = 0,
 				.cur_entry   = 0,
 				.sglun       = &(data->sg_list[offset]),
-				.sglun_paddr = data->sg_paddr + (offset * sizeof(nsp32_sglun)),
-			};
+				.sglun_paddr = data->sg_paddr + (offset * माप(nsp32_sglun)),
+			पूर्ण;
 
-			data->lunt[i][j] = tmp;
-		}
-	}
+			data->lunt[i][j] = पंचांगp;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * setup target
 	 */
-	for (i = 0; i < ARRAY_SIZE(data->target); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(data->target); i++) अणु
 		nsp32_target *target = &(data->target[i]);
 
 		target->limit_entry  = 0;
 		target->sync_flag    = 0;
 		nsp32_set_async(data, target);
-	}
+	पूर्ण
 
 	/*
 	 * EEPROM check
 	 */
 	ret = nsp32_getprom_param(data);
-	if (ret == FALSE) {
-		data->resettime = 3;	/* default 3 */
-	}
+	अगर (ret == FALSE) अणु
+		data->reसमय_रखो = 3;	/* शेष 3 */
+	पूर्ण
 
 	/*
 	 * setup HBA
 	 */
 	nsp32hw_init(data);
 
-	snprintf(data->info_str, sizeof(data->info_str),
+	snम_लिखो(data->info_str, माप(data->info_str),
 		 "NinjaSCSI-32Bi/UDE: irq %d, io 0x%lx+0x%x",
 		 host->irq, host->io_port, host->n_io_port);
 
@@ -2688,142 +2689,142 @@ static int nsp32_detect(struct pci_dev *pdev)
 	 *
 	 * Note: It's important to reset SCSI bus in initialization phase.
 	 *     NinjaSCSI-32Bi/UDE HBA EEPROM seems to exchange SDTR when
-	 *     system is coming up, so SCSI devices connected to HBA is set as
+	 *     प्रणाली is coming up, so SCSI devices connected to HBA is set as
 	 *     un-asynchronous mode.  It brings the merit that this HBA is
-	 *     ready to start synchronous transfer without any preparation,
-	 *     but we are difficult to control transfer speed.  In addition,
+	 *     पढ़ोy to start synchronous transfer without any preparation,
+	 *     but we are dअगरficult to control transfer speed.  In addition,
 	 *     it prevents device transfer speed from effecting EEPROM start-up
-	 *     SDTR.  NinjaSCSI-32Bi/UDE has the feature if EEPROM is set as
+	 *     SDTR.  NinjaSCSI-32Bi/UDE has the feature अगर EEPROM is set as
 	 *     Auto Mode, then FAST-10M is selected when SCSI devices are
-	 *     connected same or more than 4 devices.  It should be avoided
-	 *     depending on this specification. Thus, resetting the SCSI bus
+	 *     connected same or more than 4 devices.  It should be aव्योमed
+	 *     depending on this specअगरication. Thus, resetting the SCSI bus
 	 *     restores all connected SCSI devices to asynchronous mode, then
 	 *     this driver set SDTR safely later, and we can control all SCSI
 	 *     device transfer mode.
 	 */
-	nsp32_do_bus_reset(data);
+	nsp32_करो_bus_reset(data);
 
-	ret = request_irq(host->irq, do_nsp32_isr, IRQF_SHARED, "nsp32", data);
-	if (ret < 0) {
+	ret = request_irq(host->irq, करो_nsp32_isr, IRQF_SHARED, "nsp32", data);
+	अगर (ret < 0) अणु
 		nsp32_msg(KERN_ERR, "Unable to allocate IRQ for NinjaSCSI32 "
 			  "SCSI PCI controller. Interrupt: %d", host->irq);
-		goto free_sg_list;
-	}
+		जाओ मुक्त_sg_list;
+	पूर्ण
 
         /*
-         * PCI IO register
+         * PCI IO रेजिस्टर
          */
 	res = request_region(host->io_port, host->n_io_port, "nsp32");
-	if (res == NULL) {
+	अगर (res == शून्य) अणु
 		nsp32_msg(KERN_ERR, 
 			  "I/O region 0x%x+0x%x is already used",
 			  data->BaseAddress, data->NumAddress);
-		goto free_irq;
-        }
+		जाओ मुक्त_irq;
+        पूर्ण
 
 	ret = scsi_add_host(host, &pdev->dev);
-	if (ret) {
+	अगर (ret) अणु
 		nsp32_msg(KERN_ERR, "failed to add scsi host");
-		goto free_region;
-	}
+		जाओ मुक्त_region;
+	पूर्ण
 	scsi_scan_host(host);
 	pci_set_drvdata(pdev, host);
-	return 0;
+	वापस 0;
 
- free_region:
+ मुक्त_region:
 	release_region(host->io_port, host->n_io_port);
 
- free_irq:
-	free_irq(host->irq, data);
+ मुक्त_irq:
+	मुक्त_irq(host->irq, data);
 
- free_sg_list:
-	dma_free_coherent(&pdev->dev, NSP32_SG_TABLE_SIZE,
+ मुक्त_sg_list:
+	dma_मुक्त_coherent(&pdev->dev, NSP32_SG_TABLE_SIZE,
 			    data->sg_list, data->sg_paddr);
 
- free_autoparam:
-	dma_free_coherent(&pdev->dev, sizeof(nsp32_autoparam),
-			    data->autoparam, data->auto_paddr);
+ मुक्त_स्वतःparam:
+	dma_मुक्त_coherent(&pdev->dev, माप(nsp32_स्वतःparam),
+			    data->स्वतःparam, data->स्वतः_paddr);
 	
- scsi_unregister:
+ scsi_unरेजिस्टर:
 	scsi_host_put(host);
 
  err:
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int nsp32_release(struct Scsi_Host *host)
-{
+अटल पूर्णांक nsp32_release(काष्ठा Scsi_Host *host)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)host->hostdata;
 
-	if (data->autoparam) {
-		dma_free_coherent(&data->Pci->dev, sizeof(nsp32_autoparam),
-				    data->autoparam, data->auto_paddr);
-	}
+	अगर (data->स्वतःparam) अणु
+		dma_मुक्त_coherent(&data->Pci->dev, माप(nsp32_स्वतःparam),
+				    data->स्वतःparam, data->स्वतः_paddr);
+	पूर्ण
 
-	if (data->sg_list) {
-		dma_free_coherent(&data->Pci->dev, NSP32_SG_TABLE_SIZE,
+	अगर (data->sg_list) अणु
+		dma_मुक्त_coherent(&data->Pci->dev, NSP32_SG_TABLE_SIZE,
 				    data->sg_list, data->sg_paddr);
-	}
+	पूर्ण
 
-	if (host->irq) {
-		free_irq(host->irq, data);
-	}
+	अगर (host->irq) अणु
+		मुक्त_irq(host->irq, data);
+	पूर्ण
 
-	if (host->io_port && host->n_io_port) {
+	अगर (host->io_port && host->n_io_port) अणु
 		release_region(host->io_port, host->n_io_port);
-	}
+	पूर्ण
 
-	if (data->MmioAddress) {
+	अगर (data->MmioAddress) अणु
 		iounmap(data->MmioAddress);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *nsp32_info(struct Scsi_Host *shpnt)
-{
+अटल स्थिर अक्षर *nsp32_info(काष्ठा Scsi_Host *shpnt)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)shpnt->hostdata;
 
-	return data->info_str;
-}
+	वापस data->info_str;
+पूर्ण
 
 
 /****************************************************************************
  * error handler
  */
-static int nsp32_eh_abort(struct scsi_cmnd *SCpnt)
-{
+अटल पूर्णांक nsp32_eh_पात(काष्ठा scsi_cmnd *SCpnt)
+अणु
 	nsp32_hw_data *data = (nsp32_hw_data *)SCpnt->device->host->hostdata;
-	unsigned int   base = SCpnt->device->host->io_port;
+	अचिन्हित पूर्णांक   base = SCpnt->device->host->io_port;
 
 	nsp32_msg(KERN_WARNING, "abort");
 
-	if (data->cur_lunt->SCpnt == NULL) {
+	अगर (data->cur_lunt->SCpnt == शून्य) अणु
 		nsp32_dbg(NSP32_DEBUG_BUSRESET, "abort failed");
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
-	if (data->cur_target->sync_flag & (SDTR_INITIATOR | SDTR_TARGET)) {
+	अगर (data->cur_target->sync_flag & (SDTR_INITIATOR | SDTR_TARGET)) अणु
 		/* reset SDTR negotiation */
 		data->cur_target->sync_flag = 0;
 		nsp32_set_async(data, data->cur_target);
-	}
+	पूर्ण
 
-	nsp32_write2(base, TRANSFER_CONTROL, 0);
-	nsp32_write2(base, BM_CNT,           0);
+	nsp32_ग_लिखो2(base, TRANSFER_CONTROL, 0);
+	nsp32_ग_लिखो2(base, BM_CNT,           0);
 
 	SCpnt->result = DID_ABORT << 16;
-	nsp32_scsi_done(SCpnt);
+	nsp32_scsi_करोne(SCpnt);
 
 	nsp32_dbg(NSP32_DEBUG_BUSRESET, "abort success");
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
-static void nsp32_do_bus_reset(nsp32_hw_data *data)
-{
-	unsigned int   base = data->BaseAddress;
-	int i;
-	unsigned short __maybe_unused intrdat;
+अटल व्योम nsp32_करो_bus_reset(nsp32_hw_data *data)
+अणु
+	अचिन्हित पूर्णांक   base = data->BaseAddress;
+	पूर्णांक i;
+	अचिन्हित लघु __maybe_unused पूर्णांकrdat;
 
 	nsp32_dbg(NSP32_DEBUG_BUSRESET, "in");
 
@@ -2832,39 +2833,39 @@ static void nsp32_do_bus_reset(nsp32_hw_data *data)
 	 * clear TRANSFERCONTROL_BM_START
 	 * clear counter
 	 */
-	nsp32_write2(base, TRANSFER_CONTROL, 0);
-	nsp32_write4(base, BM_CNT,           0);
-	nsp32_write4(base, CLR_COUNTER,      CLRCOUNTER_ALLMASK);
+	nsp32_ग_लिखो2(base, TRANSFER_CONTROL, 0);
+	nsp32_ग_लिखो4(base, BM_CNT,           0);
+	nsp32_ग_लिखो4(base, CLR_COUNTER,      CLRCOUNTER_ALLMASK);
 
 	/*
 	 * fall back to asynchronous transfer mode
 	 * initialize SDTR negotiation flag
 	 */
-	for (i = 0; i < ARRAY_SIZE(data->target); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(data->target); i++) अणु
 		nsp32_target *target = &data->target[i];
 
 		target->sync_flag = 0;
 		nsp32_set_async(data, target);
-	}
+	पूर्ण
 
 	/*
 	 * reset SCSI bus
 	 */
-	nsp32_write1(base, SCSI_BUS_CONTROL, BUSCTL_RST);
+	nsp32_ग_लिखो1(base, SCSI_BUS_CONTROL, BUSCTL_RST);
 	mdelay(RESET_HOLD_TIME / 1000);
-	nsp32_write1(base, SCSI_BUS_CONTROL, 0);
-	for(i = 0; i < 5; i++) {
-		intrdat = nsp32_read2(base, IRQ_STATUS); /* dummy read */
-		nsp32_dbg(NSP32_DEBUG_BUSRESET, "irq:1: 0x%x", intrdat);
-        }
+	nsp32_ग_लिखो1(base, SCSI_BUS_CONTROL, 0);
+	क्रम(i = 0; i < 5; i++) अणु
+		पूर्णांकrdat = nsp32_पढ़ो2(base, IRQ_STATUS); /* dummy पढ़ो */
+		nsp32_dbg(NSP32_DEBUG_BUSRESET, "irq:1: 0x%x", पूर्णांकrdat);
+        पूर्ण
 
-	data->CurrentSC = NULL;
-}
+	data->CurrentSC = शून्य;
+पूर्ण
 
-static int nsp32_eh_host_reset(struct scsi_cmnd *SCpnt)
-{
-	struct Scsi_Host *host = SCpnt->device->host;
-	unsigned int      base = SCpnt->device->host->io_port;
+अटल पूर्णांक nsp32_eh_host_reset(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	काष्ठा Scsi_Host *host = SCpnt->device->host;
+	अचिन्हित पूर्णांक      base = SCpnt->device->host->io_port;
 	nsp32_hw_data    *data = (nsp32_hw_data *)host->hostdata;
 
 	nsp32_msg(KERN_INFO, "Host Reset");	
@@ -2873,13 +2874,13 @@ static int nsp32_eh_host_reset(struct scsi_cmnd *SCpnt)
 	spin_lock_irq(SCpnt->device->host->host_lock);
 
 	nsp32hw_init(data);
-	nsp32_write2(base, IRQ_CONTROL, IRQ_CONTROL_ALL_IRQ_MASK);
-	nsp32_do_bus_reset(data);
-	nsp32_write2(base, IRQ_CONTROL, 0);
+	nsp32_ग_लिखो2(base, IRQ_CONTROL, IRQ_CONTROL_ALL_IRQ_MASK);
+	nsp32_करो_bus_reset(data);
+	nsp32_ग_लिखो2(base, IRQ_CONTROL, 0);
 
 	spin_unlock_irq(SCpnt->device->host->host_lock);
-	return SUCCESS;	/* Host reset is succeeded at any time. */
-}
+	वापस SUCCESS;	/* Host reset is succeeded at any समय. */
+पूर्ण
 
 
 /**************************************************************************
@@ -2889,53 +2890,53 @@ static int nsp32_eh_host_reset(struct scsi_cmnd *SCpnt)
 /*
  * getting EEPROM parameter
  */
-static int nsp32_getprom_param(nsp32_hw_data *data)
-{
-	int vendor = data->pci_devid->vendor;
-	int device = data->pci_devid->device;
-	int ret, i;
-	int __maybe_unused val;
+अटल पूर्णांक nsp32_getprom_param(nsp32_hw_data *data)
+अणु
+	पूर्णांक venकरोr = data->pci_devid->venकरोr;
+	पूर्णांक device = data->pci_devid->device;
+	पूर्णांक ret, i;
+	पूर्णांक __maybe_unused val;
 
 	/*
 	 * EEPROM checking.
 	 */
-	ret = nsp32_prom_read(data, 0x7e);
-	if (ret != 0x55) {
+	ret = nsp32_prom_पढ़ो(data, 0x7e);
+	अगर (ret != 0x55) अणु
 		nsp32_msg(KERN_INFO, "No EEPROM detected: 0x%x", ret);
-		return FALSE;
-	}
-	ret = nsp32_prom_read(data, 0x7f);
-	if (ret != 0xaa) {
+		वापस FALSE;
+	पूर्ण
+	ret = nsp32_prom_पढ़ो(data, 0x7f);
+	अगर (ret != 0xaa) अणु
 		nsp32_msg(KERN_INFO, "Invalid number: 0x%x", ret);
-		return FALSE;
-	}
+		वापस FALSE;
+	पूर्ण
 
 	/*
 	 * check EEPROM type
 	 */
-	if (vendor == PCI_VENDOR_ID_WORKBIT &&
-	    device == PCI_DEVICE_ID_WORKBIT_STANDARD) {
+	अगर (venकरोr == PCI_VENDOR_ID_WORKBIT &&
+	    device == PCI_DEVICE_ID_WORKBIT_STANDARD) अणु
 		ret = nsp32_getprom_c16(data);
-	} else if (vendor == PCI_VENDOR_ID_WORKBIT &&
-		   device == PCI_DEVICE_ID_NINJASCSI_32BIB_LOGITEC) {
+	पूर्ण अन्यथा अगर (venकरोr == PCI_VENDOR_ID_WORKBIT &&
+		   device == PCI_DEVICE_ID_NINJASCSI_32BIB_LOGITEC) अणु
 		ret = nsp32_getprom_at24(data);
-	} else if (vendor == PCI_VENDOR_ID_WORKBIT &&
-		   device == PCI_DEVICE_ID_NINJASCSI_32UDE_MELCO ) {
+	पूर्ण अन्यथा अगर (venकरोr == PCI_VENDOR_ID_WORKBIT &&
+		   device == PCI_DEVICE_ID_NINJASCSI_32UDE_MELCO ) अणु
 		ret = nsp32_getprom_at24(data);
-	} else {
+	पूर्ण अन्यथा अणु
 		nsp32_msg(KERN_WARNING, "Unknown EEPROM");
 		ret = FALSE;
-	}
+	पूर्ण
 
-	/* for debug : SPROM data full checking */
-	for (i = 0; i <= 0x1f; i++) {
-		val = nsp32_prom_read(data, i);
+	/* क्रम debug : SPROM data full checking */
+	क्रम (i = 0; i <= 0x1f; i++) अणु
+		val = nsp32_prom_पढ़ो(data, i);
 		nsp32_dbg(NSP32_DEBUG_EEPROM,
 			  "rom address 0x%x : 0x%x", i, val);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /*
@@ -2959,77 +2960,77 @@ static int nsp32_getprom_param(nsp32_hw_data *data)
  * 			      |    SCSI ID: Value 0: Skip, 1: YES
  *			      |->  Value 0: ALL scan,  Value 1: Manual
  *   0x15 - 0x1b :  Not Used? (0)
- *   0x1c        :  Constant? (0x01) (clock div?)
+ *   0x1c        :  Constant? (0x01) (घड़ी भाग?)
  *   0x1d - 0x7c :  Not Used (0xff)
  *   0x7d	 :  Not Used? (0xff)
  *   0x7e        :  Constant (0x55), Validity signature
  *   0x7f        :  Constant (0xaa), Validity signature
  */
-static int nsp32_getprom_at24(nsp32_hw_data *data)
-{
-	int           ret, i;
-	int           auto_sync;
+अटल पूर्णांक nsp32_getprom_at24(nsp32_hw_data *data)
+अणु
+	पूर्णांक           ret, i;
+	पूर्णांक           स्वतः_sync;
 	nsp32_target *target;
-	int           entry;
+	पूर्णांक           entry;
 
 	/*
-	 * Reset time which is designated by EEPROM.
+	 * Reset समय which is designated by EEPROM.
 	 *
 	 * TODO: Not used yet.
 	 */
-	data->resettime = nsp32_prom_read(data, 0x12);
+	data->reसमय_रखो = nsp32_prom_पढ़ो(data, 0x12);
 
 	/*
 	 * HBA Synchronous Transfer Period
 	 *
-	 * Note: auto_sync = 0: auto, 1: manual.  Ninja SCSI HBA spec says
-	 *	that if auto_sync is 0 (auto), and connected SCSI devices are
+	 * Note: स्वतः_sync = 0: स्वतः, 1: manual.  Ninja SCSI HBA spec says
+	 *	that अगर स्वतः_sync is 0 (स्वतः), and connected SCSI devices are
 	 *	same or lower than 3, then transfer speed is set as ULTRA-20M.
-	 *	On the contrary if connected SCSI devices are same or higher
+	 *	On the contrary अगर connected SCSI devices are same or higher
 	 *	than 4, then transfer speed is set as FAST-10M.
 	 *
-	 *	I break this rule. The number of connected SCSI devices are
-	 *	only ignored. If auto_sync is 0 (auto), then transfer speed is
-	 *	forced as ULTRA-20M.
+	 *	I अवरोध this rule. The number of connected SCSI devices are
+	 *	only ignored. If स्वतः_sync is 0 (स्वतः), then transfer speed is
+	 *	क्रमced as ULTRA-20M.
 	 */
-	ret = nsp32_prom_read(data, 0x07);
-	switch (ret) {
-	case 0:
-		auto_sync = TRUE;
-		break;
-	case 1:
-		auto_sync = FALSE;
-		break;
-	default:
+	ret = nsp32_prom_पढ़ो(data, 0x07);
+	चयन (ret) अणु
+	हाल 0:
+		स्वतः_sync = TRUE;
+		अवरोध;
+	हाल 1:
+		स्वतः_sync = FALSE;
+		अवरोध;
+	शेष:
 		nsp32_msg(KERN_WARNING,
 			  "Unsupported Auto Sync mode. Fall back to manual mode.");
-		auto_sync = TRUE;
-	}
+		स्वतः_sync = TRUE;
+	पूर्ण
 
-	if (trans_mode == ULTRA20M_MODE) {
-		auto_sync = TRUE;
-	}
+	अगर (trans_mode == ULTRA20M_MODE) अणु
+		स्वतः_sync = TRUE;
+	पूर्ण
 
 	/*
 	 * each device Synchronous Transfer Period
 	 */
-	for (i = 0; i < NSP32_HOST_SCSIID; i++) {
+	क्रम (i = 0; i < NSP32_HOST_SCSIID; i++) अणु
 		target = &data->target[i];
-		if (auto_sync == TRUE) {
+		अगर (स्वतः_sync == TRUE) अणु
 			target->limit_entry = 0;   /* set as ULTRA20M */
-		} else {
-			ret   = nsp32_prom_read(data, i);
+		पूर्ण अन्यथा अणु
+			ret   = nsp32_prom_पढ़ो(data, i);
 			entry = nsp32_search_period_entry(data, target, ret);
-			if (entry < 0) {
+			अगर (entry < 0) अणु
 				/* search failed... set maximum speed */
 				entry = 0;
-			}
+			पूर्ण
 			target->limit_entry = entry;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return TRUE;
-}
+	वापस TRUE;
+पूर्ण
 
 
 /*
@@ -3052,164 +3053,164 @@ static int nsp32_getprom_at24(nsp32_hw_data *data)
  *   0x7e        :  Constant (0x55), Validity signature
  *   0x7f        :  Constant (0xaa), Validity signature
  */
-static int nsp32_getprom_c16(nsp32_hw_data *data)
-{
-	int           ret, i;
+अटल पूर्णांक nsp32_getprom_c16(nsp32_hw_data *data)
+अणु
+	पूर्णांक           ret, i;
 	nsp32_target *target;
-	int           entry, val;
+	पूर्णांक           entry, val;
 
 	/*
-	 * Reset time which is designated by EEPROM.
+	 * Reset समय which is designated by EEPROM.
 	 *
 	 * TODO: Not used yet.
 	 */
-	data->resettime = nsp32_prom_read(data, 0x11);
+	data->reसमय_रखो = nsp32_prom_पढ़ो(data, 0x11);
 
 	/*
 	 * each device Synchronous Transfer Period
 	 */
-	for (i = 0; i < NSP32_HOST_SCSIID; i++) {
+	क्रम (i = 0; i < NSP32_HOST_SCSIID; i++) अणु
 		target = &data->target[i];
-		ret = nsp32_prom_read(data, i);
-		switch (ret) {
-		case 0:		/* 20MB/s */
+		ret = nsp32_prom_पढ़ो(data, i);
+		चयन (ret) अणु
+		हाल 0:		/* 20MB/s */
 			val = 0x0c;
-			break;
-		case 1:		/* 10MB/s */
+			अवरोध;
+		हाल 1:		/* 10MB/s */
 			val = 0x19;
-			break;
-		case 2:		/* 5MB/s */
+			अवरोध;
+		हाल 2:		/* 5MB/s */
 			val = 0x32;
-			break;
-		case 3:		/* ASYNC */
+			अवरोध;
+		हाल 3:		/* ASYNC */
 			val = 0x00;
-			break;
-		default:	/* default 20MB/s */
+			अवरोध;
+		शेष:	/* शेष 20MB/s */
 			val = 0x0c;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		entry = nsp32_search_period_entry(data, target, val);
-		if (entry < 0 || trans_mode == ULTRA20M_MODE) {
+		अगर (entry < 0 || trans_mode == ULTRA20M_MODE) अणु
 			/* search failed... set maximum speed */
 			entry = 0;
-		}
+		पूर्ण
 		target->limit_entry = entry;
-	}
+	पूर्ण
 
-	return TRUE;
-}
+	वापस TRUE;
+पूर्ण
 
 
 /*
- * Atmel AT24C01A (drived in 5V) serial EEPROM routines
+ * Aपंचांगel AT24C01A (drived in 5V) serial EEPROM routines
  */
-static int nsp32_prom_read(nsp32_hw_data *data, int romaddr)
-{
-	int i, val;
+अटल पूर्णांक nsp32_prom_पढ़ो(nsp32_hw_data *data, पूर्णांक romaddr)
+अणु
+	पूर्णांक i, val;
 
 	/* start condition */
 	nsp32_prom_start(data);
 
 	/* device address */
-	nsp32_prom_write_bit(data, 1);	/* 1 */
-	nsp32_prom_write_bit(data, 0);	/* 0 */
-	nsp32_prom_write_bit(data, 1);	/* 1 */
-	nsp32_prom_write_bit(data, 0);	/* 0 */
-	nsp32_prom_write_bit(data, 0);	/* A2: 0 (GND) */
-	nsp32_prom_write_bit(data, 0);	/* A1: 0 (GND) */
-	nsp32_prom_write_bit(data, 0);	/* A0: 0 (GND) */
+	nsp32_prom_ग_लिखो_bit(data, 1);	/* 1 */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* 0 */
+	nsp32_prom_ग_लिखो_bit(data, 1);	/* 1 */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* 0 */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* A2: 0 (GND) */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* A1: 0 (GND) */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* A0: 0 (GND) */
 
-	/* R/W: W for dummy write */
-	nsp32_prom_write_bit(data, 0);
+	/* R/W: W क्रम dummy ग_लिखो */
+	nsp32_prom_ग_लिखो_bit(data, 0);
 
 	/* ack */
-	nsp32_prom_write_bit(data, 0);
+	nsp32_prom_ग_लिखो_bit(data, 0);
 
 	/* word address */
-	for (i = 7; i >= 0; i--) {
-		nsp32_prom_write_bit(data, ((romaddr >> i) & 1));
-	}
+	क्रम (i = 7; i >= 0; i--) अणु
+		nsp32_prom_ग_लिखो_bit(data, ((romaddr >> i) & 1));
+	पूर्ण
 
 	/* ack */
-	nsp32_prom_write_bit(data, 0);
+	nsp32_prom_ग_लिखो_bit(data, 0);
 
 	/* start condition */
 	nsp32_prom_start(data);
 
 	/* device address */
-	nsp32_prom_write_bit(data, 1);	/* 1 */
-	nsp32_prom_write_bit(data, 0);	/* 0 */
-	nsp32_prom_write_bit(data, 1);	/* 1 */
-	nsp32_prom_write_bit(data, 0);	/* 0 */
-	nsp32_prom_write_bit(data, 0);	/* A2: 0 (GND) */
-	nsp32_prom_write_bit(data, 0);	/* A1: 0 (GND) */
-	nsp32_prom_write_bit(data, 0);	/* A0: 0 (GND) */
+	nsp32_prom_ग_लिखो_bit(data, 1);	/* 1 */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* 0 */
+	nsp32_prom_ग_लिखो_bit(data, 1);	/* 1 */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* 0 */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* A2: 0 (GND) */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* A1: 0 (GND) */
+	nsp32_prom_ग_लिखो_bit(data, 0);	/* A0: 0 (GND) */
 
 	/* R/W: R */
-	nsp32_prom_write_bit(data, 1);
+	nsp32_prom_ग_लिखो_bit(data, 1);
 
 	/* ack */
-	nsp32_prom_write_bit(data, 0);
+	nsp32_prom_ग_लिखो_bit(data, 0);
 
 	/* data... */
 	val = 0;
-	for (i = 7; i >= 0; i--) {
-		val += (nsp32_prom_read_bit(data) << i);
-	}
+	क्रम (i = 7; i >= 0; i--) अणु
+		val += (nsp32_prom_पढ़ो_bit(data) << i);
+	पूर्ण
 	
 	/* no ack */
-	nsp32_prom_write_bit(data, 1);
+	nsp32_prom_ग_लिखो_bit(data, 1);
 
 	/* stop condition */
 	nsp32_prom_stop(data);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void nsp32_prom_set(nsp32_hw_data *data, int bit, int val)
-{
-	int base = data->BaseAddress;
-	int tmp;
+अटल व्योम nsp32_prom_set(nsp32_hw_data *data, पूर्णांक bit, पूर्णांक val)
+अणु
+	पूर्णांक base = data->BaseAddress;
+	पूर्णांक पंचांगp;
 
-	tmp = nsp32_index_read1(base, SERIAL_ROM_CTL);
+	पंचांगp = nsp32_index_पढ़ो1(base, SERIAL_ROM_CTL);
 
-	if (val == 0) {
-		tmp &= ~bit;
-	} else {
-		tmp |=  bit;
-	}
+	अगर (val == 0) अणु
+		पंचांगp &= ~bit;
+	पूर्ण अन्यथा अणु
+		पंचांगp |=  bit;
+	पूर्ण
 
-	nsp32_index_write1(base, SERIAL_ROM_CTL, tmp);
+	nsp32_index_ग_लिखो1(base, SERIAL_ROM_CTL, पंचांगp);
 
 	udelay(10);
-}
+पूर्ण
 
-static int nsp32_prom_get(nsp32_hw_data *data, int bit)
-{
-	int base = data->BaseAddress;
-	int tmp, ret;
+अटल पूर्णांक nsp32_prom_get(nsp32_hw_data *data, पूर्णांक bit)
+अणु
+	पूर्णांक base = data->BaseAddress;
+	पूर्णांक पंचांगp, ret;
 
-	if (bit != SDA) {
+	अगर (bit != SDA) अणु
 		nsp32_msg(KERN_ERR, "return value is not appropriate");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 
-	tmp = nsp32_index_read1(base, SERIAL_ROM_CTL) & bit;
+	पंचांगp = nsp32_index_पढ़ो1(base, SERIAL_ROM_CTL) & bit;
 
-	if (tmp == 0) {
+	अगर (पंचांगp == 0) अणु
 		ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 1;
-	}
+	पूर्ण
 
 	udelay(10);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nsp32_prom_start (nsp32_hw_data *data)
-{
+अटल व्योम nsp32_prom_start (nsp32_hw_data *data)
+अणु
 	/* start condition */
 	nsp32_prom_set(data, SCL, 1);
 	nsp32_prom_set(data, SDA, 1);
@@ -3217,31 +3218,31 @@ static void nsp32_prom_start (nsp32_hw_data *data)
 	nsp32_prom_set(data, SDA, 0);	/* keeping SCL=1 and transiting
 					 * SDA 1->0 is start condition */
 	nsp32_prom_set(data, SCL, 0);
-}
+पूर्ण
 
-static void nsp32_prom_stop (nsp32_hw_data *data)
-{
+अटल व्योम nsp32_prom_stop (nsp32_hw_data *data)
+अणु
 	/* stop condition */
 	nsp32_prom_set(data, SCL, 1);
 	nsp32_prom_set(data, SDA, 0);
 	nsp32_prom_set(data, ENA, 1);	/* output mode */
 	nsp32_prom_set(data, SDA, 1);
 	nsp32_prom_set(data, SCL, 0);
-}
+पूर्ण
 
-static void nsp32_prom_write_bit(nsp32_hw_data *data, int val)
-{
-	/* write */
+अटल व्योम nsp32_prom_ग_लिखो_bit(nsp32_hw_data *data, पूर्णांक val)
+अणु
+	/* ग_लिखो */
 	nsp32_prom_set(data, SDA, val);
 	nsp32_prom_set(data, SCL, 1  );
 	nsp32_prom_set(data, SCL, 0  );
-}
+पूर्ण
 
-static int nsp32_prom_read_bit(nsp32_hw_data *data)
-{
-	int val;
+अटल पूर्णांक nsp32_prom_पढ़ो_bit(nsp32_hw_data *data)
+अणु
+	पूर्णांक val;
 
-	/* read */
+	/* पढ़ो */
 	nsp32_prom_set(data, ENA, 0);	/* input mode */
 	nsp32_prom_set(data, SCL, 1);
 
@@ -3250,77 +3251,77 @@ static int nsp32_prom_read_bit(nsp32_hw_data *data)
 	nsp32_prom_set(data, SCL, 0);
 	nsp32_prom_set(data, ENA, 1);	/* output mode */
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 
 /**************************************************************************
  * Power Management
  */
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
 /* Device suspended */
-static int nsp32_suspend(struct pci_dev *pdev, pm_message_t state)
-{
-	struct Scsi_Host *host = pci_get_drvdata(pdev);
+अटल पूर्णांक nsp32_suspend(काष्ठा pci_dev *pdev, pm_message_t state)
+अणु
+	काष्ठा Scsi_Host *host = pci_get_drvdata(pdev);
 
 	nsp32_msg(KERN_INFO, "pci-suspend: pdev=0x%p, state.event=%x, slot=%s, host=0x%p",
 		  pdev, state.event, pci_name(pdev), host);
 
 	pci_save_state     (pdev);
 	pci_disable_device (pdev);
-	pci_set_power_state(pdev, pci_choose_state(pdev, state));
+	pci_set_घातer_state(pdev, pci_choose_state(pdev, state));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Device woken up */
-static int nsp32_resume(struct pci_dev *pdev)
-{
-	struct Scsi_Host *host = pci_get_drvdata(pdev);
+अटल पूर्णांक nsp32_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा Scsi_Host *host = pci_get_drvdata(pdev);
 	nsp32_hw_data    *data = (nsp32_hw_data *)host->hostdata;
-	unsigned short    reg;
+	अचिन्हित लघु    reg;
 
 	nsp32_msg(KERN_INFO, "pci-resume: pdev=0x%p, slot=%s, host=0x%p", pdev, pci_name(pdev), host);
 
-	pci_set_power_state(pdev, PCI_D0);
+	pci_set_घातer_state(pdev, PCI_D0);
 	pci_enable_wake    (pdev, PCI_D0, 0);
 	pci_restore_state  (pdev);
 
-	reg = nsp32_read2(data->BaseAddress, INDEX_REG);
+	reg = nsp32_पढ़ो2(data->BaseAddress, INDEX_REG);
 
 	nsp32_msg(KERN_INFO, "io=0x%x reg=0x%x", data->BaseAddress, reg);
 
-	if (reg == 0xffff) {
+	अगर (reg == 0xffff) अणु
 		nsp32_msg(KERN_INFO, "missing device. abort resume.");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	nsp32hw_init      (data);
-	nsp32_do_bus_reset(data);
+	nsp32_करो_bus_reset(data);
 
 	nsp32_msg(KERN_INFO, "resume success");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /************************************************************************
- * PCI/Cardbus probe/remove routine
+ * PCI/Cardbus probe/हटाओ routine
  */
-static int nsp32_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	int ret;
+अटल पूर्णांक nsp32_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक ret;
 	nsp32_hw_data *data = &nsp32_data_base;
 
 	nsp32_dbg(NSP32_DEBUG_REGISTER, "enter");
 
         ret = pci_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		nsp32_msg(KERN_ERR, "failed to enable pci device");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	data->Pci         = pdev;
 	data->pci_devid   = id;
@@ -3342,47 +3343,47 @@ static int nsp32_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	nsp32_dbg(NSP32_DEBUG_REGISTER, "exit %d", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nsp32_remove(struct pci_dev *pdev)
-{
-	struct Scsi_Host *host = pci_get_drvdata(pdev);
+अटल व्योम nsp32_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा Scsi_Host *host = pci_get_drvdata(pdev);
 
 	nsp32_dbg(NSP32_DEBUG_REGISTER, "enter");
 
-        scsi_remove_host(host);
+        scsi_हटाओ_host(host);
 
 	nsp32_release(host);
 
 	scsi_host_put(host);
-}
+पूर्ण
 
-static struct pci_driver nsp32_driver = {
+अटल काष्ठा pci_driver nsp32_driver = अणु
 	.name		= "nsp32",
 	.id_table	= nsp32_pci_table,
 	.probe		= nsp32_probe,
-	.remove		= nsp32_remove,
-#ifdef CONFIG_PM
+	.हटाओ		= nsp32_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.suspend	= nsp32_suspend, 
 	.resume		= nsp32_resume, 
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*********************************************************************
- * Moule entry point
+ * Moule entry poपूर्णांक
  */
-static int __init init_nsp32(void) {
+अटल पूर्णांक __init init_nsp32(व्योम) अणु
 	nsp32_msg(KERN_INFO, "loading...");
-	return pci_register_driver(&nsp32_driver);
-}
+	वापस pci_रेजिस्टर_driver(&nsp32_driver);
+पूर्ण
 
-static void __exit exit_nsp32(void) {
+अटल व्योम __निकास निकास_nsp32(व्योम) अणु
 	nsp32_msg(KERN_INFO, "unloading...");
-	pci_unregister_driver(&nsp32_driver);
-}
+	pci_unरेजिस्टर_driver(&nsp32_driver);
+पूर्ण
 
 module_init(init_nsp32);
-module_exit(exit_nsp32);
+module_निकास(निकास_nsp32);
 
 /* end */

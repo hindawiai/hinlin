@@ -1,179 +1,180 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
-#include "hclge_mbx.h"
-#include "hclgevf_main.h"
-#include "hnae3.h"
+#समावेश "hclge_mbx.h"
+#समावेश "hclgevf_main.h"
+#समावेश "hnae3.h"
 
-#define CREATE_TRACE_POINTS
-#include "hclgevf_trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "hclgevf_trace.h"
 
-static int hclgevf_resp_to_errno(u16 resp_code)
-{
-	return resp_code ? -resp_code : 0;
-}
+अटल पूर्णांक hclgevf_resp_to_त्रुटि_सं(u16 resp_code)
+अणु
+	वापस resp_code ? -resp_code : 0;
+पूर्ण
 
-static void hclgevf_reset_mbx_resp_status(struct hclgevf_dev *hdev)
-{
+अटल व्योम hclgevf_reset_mbx_resp_status(काष्ठा hclgevf_dev *hdev)
+अणु
 	/* this function should be called with mbx_resp.mbx_mutex held
 	 * to prtect the received_response from race condition
 	 */
 	hdev->mbx_resp.received_resp  = false;
 	hdev->mbx_resp.origin_mbx_msg = 0;
 	hdev->mbx_resp.resp_status    = 0;
-	memset(hdev->mbx_resp.additional_info, 0, HCLGE_MBX_MAX_RESP_DATA_SIZE);
-}
+	स_रखो(hdev->mbx_resp.additional_info, 0, HCLGE_MBX_MAX_RESP_DATA_SIZE);
+पूर्ण
 
 /* hclgevf_get_mbx_resp: used to get a response from PF after VF sends a mailbox
  * message to PF.
- * @hdev: pointer to struct hclgevf_dev
- * @resp_msg: pointer to store the original message type and response status
+ * @hdev: poपूर्णांकer to काष्ठा hclgevf_dev
+ * @resp_msg: poपूर्णांकer to store the original message type and response status
  * @len: the resp_msg data array length.
  */
-static int hclgevf_get_mbx_resp(struct hclgevf_dev *hdev, u16 code0, u16 code1,
+अटल पूर्णांक hclgevf_get_mbx_resp(काष्ठा hclgevf_dev *hdev, u16 code0, u16 code1,
 				u8 *resp_data, u16 resp_len)
-{
-#define HCLGEVF_MAX_TRY_TIMES	500
-#define HCLGEVF_SLEEP_USECOND	1000
-	struct hclgevf_mbx_resp_status *mbx_resp;
+अणु
+#घोषणा HCLGEVF_MAX_TRY_TIMES	500
+#घोषणा HCLGEVF_SLEEP_USECOND	1000
+	काष्ठा hclgevf_mbx_resp_status *mbx_resp;
 	u16 r_code0, r_code1;
-	int i = 0;
+	पूर्णांक i = 0;
 
-	if (resp_len > HCLGE_MBX_MAX_RESP_DATA_SIZE) {
+	अगर (resp_len > HCLGE_MBX_MAX_RESP_DATA_SIZE) अणु
 		dev_err(&hdev->pdev->dev,
 			"VF mbx response len(=%u) exceeds maximum(=%u)\n",
 			resp_len,
 			HCLGE_MBX_MAX_RESP_DATA_SIZE);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	while ((!hdev->mbx_resp.received_resp) && (i < HCLGEVF_MAX_TRY_TIMES)) {
-		if (test_bit(HCLGEVF_STATE_CMD_DISABLE, &hdev->state))
-			return -EIO;
+	जबतक ((!hdev->mbx_resp.received_resp) && (i < HCLGEVF_MAX_TRY_TIMES)) अणु
+		अगर (test_bit(HCLGEVF_STATE_CMD_DISABLE, &hdev->state))
+			वापस -EIO;
 
 		usleep_range(HCLGEVF_SLEEP_USECOND, HCLGEVF_SLEEP_USECOND * 2);
 		i++;
-	}
+	पूर्ण
 
-	if (i >= HCLGEVF_MAX_TRY_TIMES) {
+	अगर (i >= HCLGEVF_MAX_TRY_TIMES) अणु
 		dev_err(&hdev->pdev->dev,
 			"VF could not get mbx(%u,%u) resp(=%d) from PF in %d tries\n",
 			code0, code1, hdev->mbx_resp.received_resp, i);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	mbx_resp = &hdev->mbx_resp;
 	r_code0 = (u16)(mbx_resp->origin_mbx_msg >> 16);
 	r_code1 = (u16)(mbx_resp->origin_mbx_msg & 0xff);
 
-	if (mbx_resp->resp_status)
-		return mbx_resp->resp_status;
+	अगर (mbx_resp->resp_status)
+		वापस mbx_resp->resp_status;
 
-	if (resp_data)
-		memcpy(resp_data, &mbx_resp->additional_info[0], resp_len);
+	अगर (resp_data)
+		स_नकल(resp_data, &mbx_resp->additional_info[0], resp_len);
 
 	hclgevf_reset_mbx_resp_status(hdev);
 
-	if (!(r_code0 == code0 && r_code1 == code1 && !mbx_resp->resp_status)) {
+	अगर (!(r_code0 == code0 && r_code1 == code1 && !mbx_resp->resp_status)) अणु
 		dev_err(&hdev->pdev->dev,
 			"VF could not match resp code(code0=%u,code1=%u), %d\n",
 			code0, code1, mbx_resp->resp_status);
 		dev_err(&hdev->pdev->dev,
 			"VF could not match resp r_code(r_code0=%u,r_code1=%u)\n",
 			r_code0, r_code1);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hclgevf_send_mbx_msg(struct hclgevf_dev *hdev,
-			 struct hclge_vf_to_pf_msg *send_msg, bool need_resp,
+पूर्णांक hclgevf_send_mbx_msg(काष्ठा hclgevf_dev *hdev,
+			 काष्ठा hclge_vf_to_pf_msg *send_msg, bool need_resp,
 			 u8 *resp_data, u16 resp_len)
-{
-	struct hclge_mbx_vf_to_pf_cmd *req;
-	struct hclgevf_desc desc;
-	int status;
+अणु
+	काष्ठा hclge_mbx_vf_to_pf_cmd *req;
+	काष्ठा hclgevf_desc desc;
+	पूर्णांक status;
 
-	req = (struct hclge_mbx_vf_to_pf_cmd *)desc.data;
+	req = (काष्ठा hclge_mbx_vf_to_pf_cmd *)desc.data;
 
-	if (!send_msg) {
+	अगर (!send_msg) अणु
 		dev_err(&hdev->pdev->dev,
 			"failed to send mbx, msg is NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	hclgevf_cmd_setup_basic_desc(&desc, HCLGEVF_OPC_MBX_VF_TO_PF, false);
-	if (need_resp)
+	अगर (need_resp)
 		hnae3_set_bit(req->mbx_need_resp, HCLGE_MBX_NEED_RESP_B, 1);
 
-	memcpy(&req->msg, send_msg, sizeof(struct hclge_vf_to_pf_msg));
+	स_नकल(&req->msg, send_msg, माप(काष्ठा hclge_vf_to_pf_msg));
 
 	trace_hclge_vf_mbx_send(hdev, req);
 
 	/* synchronous send */
-	if (need_resp) {
+	अगर (need_resp) अणु
 		mutex_lock(&hdev->mbx_resp.mbx_mutex);
 		hclgevf_reset_mbx_resp_status(hdev);
 		status = hclgevf_cmd_send(&hdev->hw, &desc, 1);
-		if (status) {
+		अगर (status) अणु
 			dev_err(&hdev->pdev->dev,
 				"VF failed(=%d) to send mbx message to PF\n",
 				status);
 			mutex_unlock(&hdev->mbx_resp.mbx_mutex);
-			return status;
-		}
+			वापस status;
+		पूर्ण
 
 		status = hclgevf_get_mbx_resp(hdev, send_msg->code,
 					      send_msg->subcode, resp_data,
 					      resp_len);
 		mutex_unlock(&hdev->mbx_resp.mbx_mutex);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* asynchronous send */
 		status = hclgevf_cmd_send(&hdev->hw, &desc, 1);
-		if (status) {
+		अगर (status) अणु
 			dev_err(&hdev->pdev->dev,
 				"VF failed(=%d) to send mbx message to PF\n",
 				status);
-			return status;
-		}
-	}
+			वापस status;
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static bool hclgevf_cmd_crq_empty(struct hclgevf_hw *hw)
-{
-	u32 tail = hclgevf_read_dev(hw, HCLGEVF_NIC_CRQ_TAIL_REG);
+अटल bool hclgevf_cmd_crq_empty(काष्ठा hclgevf_hw *hw)
+अणु
+	u32 tail = hclgevf_पढ़ो_dev(hw, HCLGEVF_NIC_CRQ_TAIL_REG);
 
-	return tail == hw->cmq.crq.next_to_use;
-}
+	वापस tail == hw->cmq.crq.next_to_use;
+पूर्ण
 
-void hclgevf_mbx_handler(struct hclgevf_dev *hdev)
-{
-	struct hclgevf_mbx_resp_status *resp;
-	struct hclge_mbx_pf_to_vf_cmd *req;
-	struct hclgevf_cmq_ring *crq;
-	struct hclgevf_desc *desc;
+व्योम hclgevf_mbx_handler(काष्ठा hclgevf_dev *hdev)
+अणु
+	काष्ठा hclgevf_mbx_resp_status *resp;
+	काष्ठा hclge_mbx_pf_to_vf_cmd *req;
+	काष्ठा hclgevf_cmq_ring *crq;
+	काष्ठा hclgevf_desc *desc;
 	u16 *msg_q;
 	u16 flag;
 	u8 *temp;
-	int i;
+	पूर्णांक i;
 
 	resp = &hdev->mbx_resp;
 	crq = &hdev->hw.cmq.crq;
 
-	while (!hclgevf_cmd_crq_empty(&hdev->hw)) {
-		if (test_bit(HCLGEVF_STATE_CMD_DISABLE, &hdev->state)) {
+	जबतक (!hclgevf_cmd_crq_empty(&hdev->hw)) अणु
+		अगर (test_bit(HCLGEVF_STATE_CMD_DISABLE, &hdev->state)) अणु
 			dev_info(&hdev->pdev->dev, "vf crq need init\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		desc = &crq->desc[crq->next_to_use];
-		req = (struct hclge_mbx_pf_to_vf_cmd *)desc->data;
+		req = (काष्ठा hclge_mbx_pf_to_vf_cmd *)desc->data;
 
 		flag = le16_to_cpu(crq->desc[crq->next_to_use].flag);
-		if (unlikely(!hnae3_get_bit(flag, HCLGEVF_CMDQ_RX_OUTVLD_B))) {
+		अगर (unlikely(!hnae3_get_bit(flag, HCLGEVF_CMDQ_RX_OUTVLD_B))) अणु
 			dev_warn(&hdev->pdev->dev,
 				 "dropped invalid mailbox message, code = %u\n",
 				 req->msg.code);
@@ -181,20 +182,20 @@ void hclgevf_mbx_handler(struct hclgevf_dev *hdev)
 			/* dropping/not processing this invalid message */
 			crq->desc[crq->next_to_use].flag = 0;
 			hclge_mbx_ring_ptr_move_crq(crq);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		trace_hclge_vf_mbx_get(hdev, req);
 
-		/* synchronous messages are time critical and need preferential
-		 * treatment. Therefore, we need to acknowledge all the sync
-		 * responses as quickly as possible so that waiting tasks do not
-		 * timeout and simultaneously queue the async messages for later
+		/* synchronous messages are समय critical and need preferential
+		 * treaपंचांगent. Thereक्रमe, we need to acknowledge all the sync
+		 * responses as quickly as possible so that रुकोing tasks करो not
+		 * समयout and simultaneously queue the async messages क्रम later
 		 * prcessing in context of mailbox task i.e. the slow path.
 		 */
-		switch (req->msg.code) {
-		case HCLGE_MBX_PF_VF_RESP:
-			if (resp->received_resp)
+		चयन (req->msg.code) अणु
+		हाल HCLGE_MBX_PF_VF_RESP:
+			अगर (resp->received_resp)
 				dev_warn(&hdev->pdev->dev,
 					 "VF mbx resp flag not clear(%u)\n",
 					 req->msg.vf_mbx_msg_code);
@@ -204,73 +205,73 @@ void hclgevf_mbx_handler(struct hclgevf_dev *hdev)
 					(req->msg.vf_mbx_msg_code << 16);
 			resp->origin_mbx_msg |= req->msg.vf_mbx_msg_subcode;
 			resp->resp_status =
-				hclgevf_resp_to_errno(req->msg.resp_status);
+				hclgevf_resp_to_त्रुटि_सं(req->msg.resp_status);
 
 			temp = (u8 *)req->msg.resp_data;
-			for (i = 0; i < HCLGE_MBX_MAX_RESP_DATA_SIZE; i++) {
+			क्रम (i = 0; i < HCLGE_MBX_MAX_RESP_DATA_SIZE; i++) अणु
 				resp->additional_info[i] = *temp;
 				temp++;
-			}
-			break;
-		case HCLGE_MBX_LINK_STAT_CHANGE:
-		case HCLGE_MBX_ASSERTING_RESET:
-		case HCLGE_MBX_LINK_STAT_MODE:
-		case HCLGE_MBX_PUSH_VLAN_INFO:
-		case HCLGE_MBX_PUSH_PROMISC_INFO:
+			पूर्ण
+			अवरोध;
+		हाल HCLGE_MBX_LINK_STAT_CHANGE:
+		हाल HCLGE_MBX_ASSERTING_RESET:
+		हाल HCLGE_MBX_LINK_STAT_MODE:
+		हाल HCLGE_MBX_PUSH_VLAN_INFO:
+		हाल HCLGE_MBX_PUSH_PROMISC_INFO:
 			/* set this mbx event as pending. This is required as we
-			 * might loose interrupt event when mbx task is busy
+			 * might loose पूर्णांकerrupt event when mbx task is busy
 			 * handling. This shall be cleared when mbx task just
 			 * enters handling state.
 			 */
 			hdev->mbx_event_pending = true;
 
-			/* we will drop the async msg if we find ARQ as full
-			 * and continue with next message
+			/* we will drop the async msg अगर we find ARQ as full
+			 * and जारी with next message
 			 */
-			if (atomic_read(&hdev->arq.count) >=
-			    HCLGE_MBX_MAX_ARQ_MSG_NUM) {
+			अगर (atomic_पढ़ो(&hdev->arq.count) >=
+			    HCLGE_MBX_MAX_ARQ_MSG_NUM) अणु
 				dev_warn(&hdev->pdev->dev,
 					 "Async Q full, dropping msg(%u)\n",
 					 req->msg.code);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* tail the async message in arq */
 			msg_q = hdev->arq.msg_q[hdev->arq.tail];
-			memcpy(&msg_q[0], &req->msg,
-			       HCLGE_MBX_MAX_ARQ_MSG_SIZE * sizeof(u16));
+			स_नकल(&msg_q[0], &req->msg,
+			       HCLGE_MBX_MAX_ARQ_MSG_SIZE * माप(u16));
 			hclge_mbx_tail_ptr_move_arq(hdev->arq);
 			atomic_inc(&hdev->arq.count);
 
 			hclgevf_mbx_task_schedule(hdev);
 
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(&hdev->pdev->dev,
 				"VF received unsupported(%u) mbx msg from PF\n",
 				req->msg.code);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		crq->desc[crq->next_to_use].flag = 0;
 		hclge_mbx_ring_ptr_move_crq(crq);
-	}
+	पूर्ण
 
-	/* Write back CMDQ_RQ header pointer, M7 need this pointer */
-	hclgevf_write_dev(&hdev->hw, HCLGEVF_NIC_CRQ_HEAD_REG,
+	/* Write back CMDQ_RQ header poपूर्णांकer, M7 need this poपूर्णांकer */
+	hclgevf_ग_लिखो_dev(&hdev->hw, HCLGEVF_NIC_CRQ_HEAD_REG,
 			  crq->next_to_use);
-}
+पूर्ण
 
-static void hclgevf_parse_promisc_info(struct hclgevf_dev *hdev,
+अटल व्योम hclgevf_parse_promisc_info(काष्ठा hclgevf_dev *hdev,
 				       u16 promisc_info)
-{
-	if (!promisc_info)
+अणु
+	अगर (!promisc_info)
 		dev_info(&hdev->pdev->dev,
 			 "Promisc mode is closed by host for being untrusted.\n");
-}
+पूर्ण
 
-void hclgevf_mbx_async_handler(struct hclgevf_dev *hdev)
-{
-	enum hnae3_reset_type reset_type;
+व्योम hclgevf_mbx_async_handler(काष्ठा hclgevf_dev *hdev)
+अणु
+	क्रमागत hnae3_reset_type reset_type;
 	u16 link_status, state;
 	u16 *msg_q, *vlan_info;
 	u8 duplex;
@@ -287,19 +288,19 @@ void hclgevf_mbx_async_handler(struct hclgevf_dev *hdev)
 	tail = hdev->arq.tail;
 
 	/* process all the async queue messages */
-	while (tail != hdev->arq.head) {
-		if (test_bit(HCLGEVF_STATE_CMD_DISABLE, &hdev->state)) {
+	जबतक (tail != hdev->arq.head) अणु
+		अगर (test_bit(HCLGEVF_STATE_CMD_DISABLE, &hdev->state)) अणु
 			dev_info(&hdev->pdev->dev,
 				 "vf crq need init in async\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		msg_q = hdev->arq.msg_q[hdev->arq.head];
 
-		switch (msg_q[0]) {
-		case HCLGE_MBX_LINK_STAT_CHANGE:
+		चयन (msg_q[0]) अणु
+		हाल HCLGE_MBX_LINK_STAT_CHANGE:
 			link_status = msg_q[1];
-			memcpy(&speed, &msg_q[2], sizeof(speed));
+			स_नकल(&speed, &msg_q[2], माप(speed));
 			duplex = (u8)msg_q[4];
 			flag = (u8)msg_q[5];
 
@@ -307,50 +308,50 @@ void hclgevf_mbx_async_handler(struct hclgevf_dev *hdev)
 			hclgevf_update_link_status(hdev, link_status);
 			hclgevf_update_speed_duplex(hdev, speed, duplex);
 
-			if (flag & HCLGE_MBX_PUSH_LINK_STATUS_EN)
+			अगर (flag & HCLGE_MBX_PUSH_LINK_STATUS_EN)
 				set_bit(HCLGEVF_STATE_PF_PUSH_LINK_STATUS,
 					&hdev->state);
 
-			break;
-		case HCLGE_MBX_LINK_STAT_MODE:
+			अवरोध;
+		हाल HCLGE_MBX_LINK_STAT_MODE:
 			idx = (u8)msg_q[1];
-			if (idx)
-				memcpy(&hdev->hw.mac.supported, &msg_q[2],
-				       sizeof(unsigned long));
-			else
-				memcpy(&hdev->hw.mac.advertising, &msg_q[2],
-				       sizeof(unsigned long));
-			break;
-		case HCLGE_MBX_ASSERTING_RESET:
-			/* PF has asserted reset hence VF should go in pending
-			 * state and poll for the hardware reset status till it
+			अगर (idx)
+				स_नकल(&hdev->hw.mac.supported, &msg_q[2],
+				       माप(अचिन्हित दीर्घ));
+			अन्यथा
+				स_नकल(&hdev->hw.mac.advertising, &msg_q[2],
+				       माप(अचिन्हित दीर्घ));
+			अवरोध;
+		हाल HCLGE_MBX_ASSERTING_RESET:
+			/* PF has निश्चितed reset hence VF should go in pending
+			 * state and poll क्रम the hardware reset status till it
 			 * has been completely reset. After this stack should
 			 * eventually be re-initialized.
 			 */
-			reset_type = (enum hnae3_reset_type)msg_q[1];
+			reset_type = (क्रमागत hnae3_reset_type)msg_q[1];
 			set_bit(reset_type, &hdev->reset_pending);
 			set_bit(HCLGEVF_RESET_PENDING, &hdev->reset_state);
 			hclgevf_reset_task_schedule(hdev);
 
-			break;
-		case HCLGE_MBX_PUSH_VLAN_INFO:
+			अवरोध;
+		हाल HCLGE_MBX_PUSH_VLAN_INFO:
 			state = msg_q[1];
 			vlan_info = &msg_q[1];
 			hclgevf_update_port_base_vlan_info(hdev, state,
 							   (u8 *)vlan_info, 8);
-			break;
-		case HCLGE_MBX_PUSH_PROMISC_INFO:
+			अवरोध;
+		हाल HCLGE_MBX_PUSH_PROMISC_INFO:
 			hclgevf_parse_promisc_info(hdev, msg_q[1]);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(&hdev->pdev->dev,
 				"fetched unsupported(%u) message from arq\n",
 				msg_q[0]);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		hclge_mbx_head_ptr_move_arq(hdev->arq);
 		atomic_dec(&hdev->arq.count);
 		msg_q = hdev->arq.msg_q[hdev->arq.head];
-	}
-}
+	पूर्ण
+पूर्ण

@@ -1,327 +1,328 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* xfrm6_protocol.c - Generic xfrm protocol multiplexer for ipv6.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* xfrm6_protocol.c - Generic xfrm protocol multiplexer क्रम ipv6.
  *
  * Copyright (C) 2013 secunet Security Networks AG
  *
  * Author:
- * Steffen Klassert <steffen.klassert@secunet.com>
+ * Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
  *
  * Based on:
  * net/ipv4/xfrm4_protocol.c
  */
 
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include <linux/skbuff.h>
-#include <linux/icmpv6.h>
-#include <net/ip6_route.h>
-#include <net/ipv6.h>
-#include <net/protocol.h>
-#include <net/xfrm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/protocol.h>
+#समावेश <net/xfrm.h>
 
-static struct xfrm6_protocol __rcu *esp6_handlers __read_mostly;
-static struct xfrm6_protocol __rcu *ah6_handlers __read_mostly;
-static struct xfrm6_protocol __rcu *ipcomp6_handlers __read_mostly;
-static DEFINE_MUTEX(xfrm6_protocol_mutex);
+अटल काष्ठा xfrm6_protocol __rcu *esp6_handlers __पढ़ो_mostly;
+अटल काष्ठा xfrm6_protocol __rcu *ah6_handlers __पढ़ो_mostly;
+अटल काष्ठा xfrm6_protocol __rcu *ipcomp6_handlers __पढ़ो_mostly;
+अटल DEFINE_MUTEX(xfrm6_protocol_mutex);
 
-static inline struct xfrm6_protocol __rcu **proto_handlers(u8 protocol)
-{
-	switch (protocol) {
-	case IPPROTO_ESP:
-		return &esp6_handlers;
-	case IPPROTO_AH:
-		return &ah6_handlers;
-	case IPPROTO_COMP:
-		return &ipcomp6_handlers;
-	}
+अटल अंतरभूत काष्ठा xfrm6_protocol __rcu **proto_handlers(u8 protocol)
+अणु
+	चयन (protocol) अणु
+	हाल IPPROTO_ESP:
+		वापस &esp6_handlers;
+	हाल IPPROTO_AH:
+		वापस &ah6_handlers;
+	हाल IPPROTO_COMP:
+		वापस &ipcomp6_handlers;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#define for_each_protocol_rcu(head, handler)		\
-	for (handler = rcu_dereference(head);		\
-	     handler != NULL;				\
+#घोषणा क्रम_each_protocol_rcu(head, handler)		\
+	क्रम (handler = rcu_dereference(head);		\
+	     handler != शून्य;				\
 	     handler = rcu_dereference(handler->next))	\
 
-static int xfrm6_rcv_cb(struct sk_buff *skb, u8 protocol, int err)
-{
-	int ret;
-	struct xfrm6_protocol *handler;
-	struct xfrm6_protocol __rcu **head = proto_handlers(protocol);
+अटल पूर्णांक xfrm6_rcv_cb(काष्ठा sk_buff *skb, u8 protocol, पूर्णांक err)
+अणु
+	पूर्णांक ret;
+	काष्ठा xfrm6_protocol *handler;
+	काष्ठा xfrm6_protocol __rcu **head = proto_handlers(protocol);
 
-	if (!head)
-		return 0;
+	अगर (!head)
+		वापस 0;
 
-	for_each_protocol_rcu(*proto_handlers(protocol), handler)
-		if ((ret = handler->cb_handler(skb, err)) <= 0)
-			return ret;
+	क्रम_each_protocol_rcu(*proto_handlers(protocol), handler)
+		अगर ((ret = handler->cb_handler(skb, err)) <= 0)
+			वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int xfrm6_rcv_encap(struct sk_buff *skb, int nexthdr, __be32 spi,
-		    int encap_type)
-{
-	int ret;
-	struct xfrm6_protocol *handler;
-	struct xfrm6_protocol __rcu **head = proto_handlers(nexthdr);
+पूर्णांक xfrm6_rcv_encap(काष्ठा sk_buff *skb, पूर्णांक nexthdr, __be32 spi,
+		    पूर्णांक encap_type)
+अणु
+	पूर्णांक ret;
+	काष्ठा xfrm6_protocol *handler;
+	काष्ठा xfrm6_protocol __rcu **head = proto_handlers(nexthdr);
 
-	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = NULL;
+	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = शून्य;
 	XFRM_SPI_SKB_CB(skb)->family = AF_INET6;
-	XFRM_SPI_SKB_CB(skb)->daddroff = offsetof(struct ipv6hdr, daddr);
+	XFRM_SPI_SKB_CB(skb)->daddroff = दुरत्व(काष्ठा ipv6hdr, daddr);
 
-	if (!head)
-		goto out;
+	अगर (!head)
+		जाओ out;
 
-	if (!skb_dst(skb)) {
-		const struct ipv6hdr *ip6h = ipv6_hdr(skb);
-		int flags = RT6_LOOKUP_F_HAS_SADDR;
-		struct dst_entry *dst;
-		struct flowi6 fl6 = {
-			.flowi6_iif   = skb->dev->ifindex,
+	अगर (!skb_dst(skb)) अणु
+		स्थिर काष्ठा ipv6hdr *ip6h = ipv6_hdr(skb);
+		पूर्णांक flags = RT6_LOOKUP_F_HAS_SADDR;
+		काष्ठा dst_entry *dst;
+		काष्ठा flowi6 fl6 = अणु
+			.flowi6_iअगर   = skb->dev->अगरindex,
 			.daddr        = ip6h->daddr,
 			.saddr        = ip6h->saddr,
 			.flowlabel    = ip6_flowinfo(ip6h),
 			.flowi6_mark  = skb->mark,
 			.flowi6_proto = ip6h->nexthdr,
-		};
+		पूर्ण;
 
 		dst = ip6_route_input_lookup(dev_net(skb->dev), skb->dev, &fl6,
 					     skb, flags);
-		if (dst->error)
-			goto drop;
+		अगर (dst->error)
+			जाओ drop;
 		skb_dst_set(skb, dst);
-	}
+	पूर्ण
 
-	for_each_protocol_rcu(*head, handler)
-		if ((ret = handler->input_handler(skb, nexthdr, spi, encap_type)) != -EINVAL)
-			return ret;
+	क्रम_each_protocol_rcu(*head, handler)
+		अगर ((ret = handler->input_handler(skb, nexthdr, spi, encap_type)) != -EINVAL)
+			वापस ret;
 
 out:
 	icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
 
 drop:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(xfrm6_rcv_encap);
 
-static int xfrm6_esp_rcv(struct sk_buff *skb)
-{
-	int ret;
-	struct xfrm6_protocol *handler;
+अटल पूर्णांक xfrm6_esp_rcv(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
+	काष्ठा xfrm6_protocol *handler;
 
-	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = NULL;
+	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = शून्य;
 
-	for_each_protocol_rcu(esp6_handlers, handler)
-		if ((ret = handler->handler(skb)) != -EINVAL)
-			return ret;
-
-	icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
-
-	kfree_skb(skb);
-	return 0;
-}
-
-static int xfrm6_esp_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
-			  u8 type, u8 code, int offset, __be32 info)
-{
-	struct xfrm6_protocol *handler;
-
-	for_each_protocol_rcu(esp6_handlers, handler)
-		if (!handler->err_handler(skb, opt, type, code, offset, info))
-			return 0;
-
-	return -ENOENT;
-}
-
-static int xfrm6_ah_rcv(struct sk_buff *skb)
-{
-	int ret;
-	struct xfrm6_protocol *handler;
-
-	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = NULL;
-
-	for_each_protocol_rcu(ah6_handlers, handler)
-		if ((ret = handler->handler(skb)) != -EINVAL)
-			return ret;
+	क्रम_each_protocol_rcu(esp6_handlers, handler)
+		अगर ((ret = handler->handler(skb)) != -EINVAL)
+			वापस ret;
 
 	icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
 
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int xfrm6_ah_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
-			 u8 type, u8 code, int offset, __be32 info)
-{
-	struct xfrm6_protocol *handler;
+अटल पूर्णांक xfrm6_esp_err(काष्ठा sk_buff *skb, काष्ठा inet6_skb_parm *opt,
+			  u8 type, u8 code, पूर्णांक offset, __be32 info)
+अणु
+	काष्ठा xfrm6_protocol *handler;
 
-	for_each_protocol_rcu(ah6_handlers, handler)
-		if (!handler->err_handler(skb, opt, type, code, offset, info))
-			return 0;
+	क्रम_each_protocol_rcu(esp6_handlers, handler)
+		अगर (!handler->err_handler(skb, opt, type, code, offset, info))
+			वापस 0;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int xfrm6_ipcomp_rcv(struct sk_buff *skb)
-{
-	int ret;
-	struct xfrm6_protocol *handler;
+अटल पूर्णांक xfrm6_ah_rcv(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
+	काष्ठा xfrm6_protocol *handler;
 
-	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = NULL;
+	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = शून्य;
 
-	for_each_protocol_rcu(ipcomp6_handlers, handler)
-		if ((ret = handler->handler(skb)) != -EINVAL)
-			return ret;
+	क्रम_each_protocol_rcu(ah6_handlers, handler)
+		अगर ((ret = handler->handler(skb)) != -EINVAL)
+			वापस ret;
 
 	icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
 
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int xfrm6_ipcomp_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
-			     u8 type, u8 code, int offset, __be32 info)
-{
-	struct xfrm6_protocol *handler;
+अटल पूर्णांक xfrm6_ah_err(काष्ठा sk_buff *skb, काष्ठा inet6_skb_parm *opt,
+			 u8 type, u8 code, पूर्णांक offset, __be32 info)
+अणु
+	काष्ठा xfrm6_protocol *handler;
 
-	for_each_protocol_rcu(ipcomp6_handlers, handler)
-		if (!handler->err_handler(skb, opt, type, code, offset, info))
-			return 0;
+	क्रम_each_protocol_rcu(ah6_handlers, handler)
+		अगर (!handler->err_handler(skb, opt, type, code, offset, info))
+			वापस 0;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static const struct inet6_protocol esp6_protocol = {
+अटल पूर्णांक xfrm6_ipcomp_rcv(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
+	काष्ठा xfrm6_protocol *handler;
+
+	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = शून्य;
+
+	क्रम_each_protocol_rcu(ipcomp6_handlers, handler)
+		अगर ((ret = handler->handler(skb)) != -EINVAL)
+			वापस ret;
+
+	icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
+
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक xfrm6_ipcomp_err(काष्ठा sk_buff *skb, काष्ठा inet6_skb_parm *opt,
+			     u8 type, u8 code, पूर्णांक offset, __be32 info)
+अणु
+	काष्ठा xfrm6_protocol *handler;
+
+	क्रम_each_protocol_rcu(ipcomp6_handlers, handler)
+		अगर (!handler->err_handler(skb, opt, type, code, offset, info))
+			वापस 0;
+
+	वापस -ENOENT;
+पूर्ण
+
+अटल स्थिर काष्ठा inet6_protocol esp6_protocol = अणु
 	.handler	=	xfrm6_esp_rcv,
 	.err_handler	=	xfrm6_esp_err,
 	.flags		=	INET6_PROTO_NOPOLICY,
-};
+पूर्ण;
 
-static const struct inet6_protocol ah6_protocol = {
+अटल स्थिर काष्ठा inet6_protocol ah6_protocol = अणु
 	.handler	=	xfrm6_ah_rcv,
 	.err_handler	=	xfrm6_ah_err,
 	.flags		=	INET6_PROTO_NOPOLICY,
-};
+पूर्ण;
 
-static const struct inet6_protocol ipcomp6_protocol = {
+अटल स्थिर काष्ठा inet6_protocol ipcomp6_protocol = अणु
 	.handler	=	xfrm6_ipcomp_rcv,
 	.err_handler	=	xfrm6_ipcomp_err,
 	.flags		=	INET6_PROTO_NOPOLICY,
-};
+पूर्ण;
 
-static const struct xfrm_input_afinfo xfrm6_input_afinfo = {
+अटल स्थिर काष्ठा xfrm_input_afinfo xfrm6_input_afinfo = अणु
 	.family		=	AF_INET6,
 	.callback	=	xfrm6_rcv_cb,
-};
+पूर्ण;
 
-static inline const struct inet6_protocol *netproto(unsigned char protocol)
-{
-	switch (protocol) {
-	case IPPROTO_ESP:
-		return &esp6_protocol;
-	case IPPROTO_AH:
-		return &ah6_protocol;
-	case IPPROTO_COMP:
-		return &ipcomp6_protocol;
-	}
+अटल अंतरभूत स्थिर काष्ठा inet6_protocol *netproto(अचिन्हित अक्षर protocol)
+अणु
+	चयन (protocol) अणु
+	हाल IPPROTO_ESP:
+		वापस &esp6_protocol;
+	हाल IPPROTO_AH:
+		वापस &ah6_protocol;
+	हाल IPPROTO_COMP:
+		वापस &ipcomp6_protocol;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int xfrm6_protocol_register(struct xfrm6_protocol *handler,
-			    unsigned char protocol)
-{
-	struct xfrm6_protocol __rcu **pprev;
-	struct xfrm6_protocol *t;
+पूर्णांक xfrm6_protocol_रेजिस्टर(काष्ठा xfrm6_protocol *handler,
+			    अचिन्हित अक्षर protocol)
+अणु
+	काष्ठा xfrm6_protocol __rcu **pprev;
+	काष्ठा xfrm6_protocol *t;
 	bool add_netproto = false;
-	int ret = -EEXIST;
-	int priority = handler->priority;
+	पूर्णांक ret = -EEXIST;
+	पूर्णांक priority = handler->priority;
 
-	if (!proto_handlers(protocol) || !netproto(protocol))
-		return -EINVAL;
+	अगर (!proto_handlers(protocol) || !netproto(protocol))
+		वापस -EINVAL;
 
 	mutex_lock(&xfrm6_protocol_mutex);
 
-	if (!rcu_dereference_protected(*proto_handlers(protocol),
+	अगर (!rcu_dereference_रक्षित(*proto_handlers(protocol),
 				       lockdep_is_held(&xfrm6_protocol_mutex)))
 		add_netproto = true;
 
-	for (pprev = proto_handlers(protocol);
-	     (t = rcu_dereference_protected(*pprev,
-			lockdep_is_held(&xfrm6_protocol_mutex))) != NULL;
-	     pprev = &t->next) {
-		if (t->priority < priority)
-			break;
-		if (t->priority == priority)
-			goto err;
-	}
+	क्रम (pprev = proto_handlers(protocol);
+	     (t = rcu_dereference_रक्षित(*pprev,
+			lockdep_is_held(&xfrm6_protocol_mutex))) != शून्य;
+	     pprev = &t->next) अणु
+		अगर (t->priority < priority)
+			अवरोध;
+		अगर (t->priority == priority)
+			जाओ err;
+	पूर्ण
 
 	handler->next = *pprev;
-	rcu_assign_pointer(*pprev, handler);
+	rcu_assign_poपूर्णांकer(*pprev, handler);
 
 	ret = 0;
 
 err:
 	mutex_unlock(&xfrm6_protocol_mutex);
 
-	if (add_netproto) {
-		if (inet6_add_protocol(netproto(protocol), protocol)) {
+	अगर (add_netproto) अणु
+		अगर (inet6_add_protocol(netproto(protocol), protocol)) अणु
 			pr_err("%s: can't add protocol\n", __func__);
 			ret = -EAGAIN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(xfrm6_protocol_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(xfrm6_protocol_रेजिस्टर);
 
-int xfrm6_protocol_deregister(struct xfrm6_protocol *handler,
-			      unsigned char protocol)
-{
-	struct xfrm6_protocol __rcu **pprev;
-	struct xfrm6_protocol *t;
-	int ret = -ENOENT;
+पूर्णांक xfrm6_protocol_deरेजिस्टर(काष्ठा xfrm6_protocol *handler,
+			      अचिन्हित अक्षर protocol)
+अणु
+	काष्ठा xfrm6_protocol __rcu **pprev;
+	काष्ठा xfrm6_protocol *t;
+	पूर्णांक ret = -ENOENT;
 
-	if (!proto_handlers(protocol) || !netproto(protocol))
-		return -EINVAL;
+	अगर (!proto_handlers(protocol) || !netproto(protocol))
+		वापस -EINVAL;
 
 	mutex_lock(&xfrm6_protocol_mutex);
 
-	for (pprev = proto_handlers(protocol);
-	     (t = rcu_dereference_protected(*pprev,
-			lockdep_is_held(&xfrm6_protocol_mutex))) != NULL;
-	     pprev = &t->next) {
-		if (t == handler) {
+	क्रम (pprev = proto_handlers(protocol);
+	     (t = rcu_dereference_रक्षित(*pprev,
+			lockdep_is_held(&xfrm6_protocol_mutex))) != शून्य;
+	     pprev = &t->next) अणु
+		अगर (t == handler) अणु
 			*pprev = handler->next;
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!rcu_dereference_protected(*proto_handlers(protocol),
-				       lockdep_is_held(&xfrm6_protocol_mutex))) {
-		if (inet6_del_protocol(netproto(protocol), protocol) < 0) {
+	अगर (!rcu_dereference_रक्षित(*proto_handlers(protocol),
+				       lockdep_is_held(&xfrm6_protocol_mutex))) अणु
+		अगर (inet6_del_protocol(netproto(protocol), protocol) < 0) अणु
 			pr_err("%s: can't remove protocol\n", __func__);
 			ret = -EAGAIN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&xfrm6_protocol_mutex);
 
 	synchronize_net();
 
-	return ret;
-}
-EXPORT_SYMBOL(xfrm6_protocol_deregister);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(xfrm6_protocol_deरेजिस्टर);
 
-int __init xfrm6_protocol_init(void)
-{
-	return xfrm_input_register_afinfo(&xfrm6_input_afinfo);
-}
+पूर्णांक __init xfrm6_protocol_init(व्योम)
+अणु
+	वापस xfrm_input_रेजिस्टर_afinfo(&xfrm6_input_afinfo);
+पूर्ण
 
-void xfrm6_protocol_fini(void)
-{
-	xfrm_input_unregister_afinfo(&xfrm6_input_afinfo);
-}
+व्योम xfrm6_protocol_fini(व्योम)
+अणु
+	xfrm_input_unरेजिस्टर_afinfo(&xfrm6_input_afinfo);
+पूर्ण

@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Thunderbolt service API
  *
  * Copyright (C) 2014 Andreas Noever <andreas.noever@gmail.com>
  * Copyright (C) 2017, Intel Corporation
- * Authors: Michael Jamet <michael.jamet@intel.com>
- *          Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Authors: Michael Jamet <michael.jamet@पूर्णांकel.com>
+ *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#ifndef THUNDERBOLT_H_
-#define THUNDERBOLT_H_
+#अगर_अघोषित THUNDERBOLT_H_
+#घोषणा THUNDERBOLT_H_
 
-#include <linux/device.h>
-#include <linux/idr.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/mod_devicetable.h>
-#include <linux/pci.h>
-#include <linux/uuid.h>
-#include <linux/workqueue.h>
+#समावेश <linux/device.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/uuid.h>
+#समावेश <linux/workqueue.h>
 
-enum tb_cfg_pkg_type {
+क्रमागत tb_cfg_pkg_type अणु
 	TB_CFG_PKG_READ = 1,
 	TB_CFG_PKG_WRITE = 2,
 	TB_CFG_PKG_ERROR = 3,
@@ -34,566 +35,566 @@ enum tb_cfg_pkg_type {
 	TB_CFG_PKG_ICM_CMD = 11,
 	TB_CFG_PKG_ICM_RESP = 12,
 	TB_CFG_PKG_PREPARE_TO_SLEEP = 13,
-};
+पूर्ण;
 
 /**
- * enum tb_security_level - Thunderbolt security level
+ * क्रमागत tb_security_level - Thunderbolt security level
  * @TB_SECURITY_NONE: No security, legacy mode
  * @TB_SECURITY_USER: User approval required at minimum
- * @TB_SECURITY_SECURE: One time saved key required at minimum
+ * @TB_SECURITY_SECURE: One समय saved key required at minimum
  * @TB_SECURITY_DPONLY: Only tunnel Display port (and USB)
  * @TB_SECURITY_USBONLY: Only tunnel USB controller of the connected
- *			 Thunderbolt dock (and Display Port). All PCIe
- *			 links downstream of the dock are removed.
- * @TB_SECURITY_NOPCIE: For USB4 systems this level is used when the
+ *			 Thunderbolt करोck (and Display Port). All PCIe
+ *			 links करोwnstream of the करोck are हटाओd.
+ * @TB_SECURITY_NOPCIE: For USB4 प्रणालीs this level is used when the
  *			PCIe tunneling is disabled from the BIOS.
  */
-enum tb_security_level {
+क्रमागत tb_security_level अणु
 	TB_SECURITY_NONE,
 	TB_SECURITY_USER,
 	TB_SECURITY_SECURE,
 	TB_SECURITY_DPONLY,
 	TB_SECURITY_USBONLY,
 	TB_SECURITY_NOPCIE,
-};
+पूर्ण;
 
 /**
- * struct tb - main thunderbolt bus structure
- * @dev: Domain device
- * @lock: Big lock. Must be held when accessing any struct
- *	  tb_switch / struct tb_port.
- * @nhi: Pointer to the NHI structure
- * @ctl: Control channel for this domain
- * @wq: Ordered workqueue for all domain specific work
- * @root_switch: Root switch of this domain
- * @cm_ops: Connection manager specific operations vector
- * @index: Linux assigned domain number
+ * काष्ठा tb - मुख्य thunderbolt bus काष्ठाure
+ * @dev: Doमुख्य device
+ * @lock: Big lock. Must be held when accessing any काष्ठा
+ *	  tb_चयन / काष्ठा tb_port.
+ * @nhi: Poपूर्णांकer to the NHI काष्ठाure
+ * @ctl: Control channel क्रम this करोमुख्य
+ * @wq: Ordered workqueue क्रम all करोमुख्य specअगरic work
+ * @root_चयन: Root चयन of this करोमुख्य
+ * @cm_ops: Connection manager specअगरic operations vector
+ * @index: Linux asचिन्हित करोमुख्य number
  * @security_level: Current security level
- * @nboot_acl: Number of boot ACLs the domain supports
- * @privdata: Private connection manager specific data
+ * @nboot_acl: Number of boot ACLs the करोमुख्य supports
+ * @privdata: Private connection manager specअगरic data
  */
-struct tb {
-	struct device dev;
-	struct mutex lock;
-	struct tb_nhi *nhi;
-	struct tb_ctl *ctl;
-	struct workqueue_struct *wq;
-	struct tb_switch *root_switch;
-	const struct tb_cm_ops *cm_ops;
-	int index;
-	enum tb_security_level security_level;
-	size_t nboot_acl;
-	unsigned long privdata[];
-};
+काष्ठा tb अणु
+	काष्ठा device dev;
+	काष्ठा mutex lock;
+	काष्ठा tb_nhi *nhi;
+	काष्ठा tb_ctl *ctl;
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा tb_चयन *root_चयन;
+	स्थिर काष्ठा tb_cm_ops *cm_ops;
+	पूर्णांक index;
+	क्रमागत tb_security_level security_level;
+	माप_प्रकार nboot_acl;
+	अचिन्हित दीर्घ privdata[];
+पूर्ण;
 
-extern struct bus_type tb_bus_type;
-extern struct device_type tb_service_type;
-extern struct device_type tb_xdomain_type;
+बाह्य काष्ठा bus_type tb_bus_type;
+बाह्य काष्ठा device_type tb_service_type;
+बाह्य काष्ठा device_type tb_xकरोमुख्य_type;
 
-#define TB_LINKS_PER_PHY_PORT	2
+#घोषणा TB_LINKS_PER_PHY_PORT	2
 
-static inline unsigned int tb_phy_port_from_link(unsigned int link)
-{
-	return (link - 1) / TB_LINKS_PER_PHY_PORT;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक tb_phy_port_from_link(अचिन्हित पूर्णांक link)
+अणु
+	वापस (link - 1) / TB_LINKS_PER_PHY_PORT;
+पूर्ण
 
 /**
- * struct tb_property_dir - XDomain property directory
- * @uuid: Directory UUID or %NULL if root directory
+ * काष्ठा tb_property_dir - XDoमुख्य property directory
+ * @uuid: Directory UUID or %शून्य अगर root directory
  * @properties: List of properties in this directory
  *
- * User needs to provide serialization if needed.
+ * User needs to provide serialization अगर needed.
  */
-struct tb_property_dir {
-	const uuid_t *uuid;
-	struct list_head properties;
-};
+काष्ठा tb_property_dir अणु
+	स्थिर uuid_t *uuid;
+	काष्ठा list_head properties;
+पूर्ण;
 
-enum tb_property_type {
+क्रमागत tb_property_type अणु
 	TB_PROPERTY_TYPE_UNKNOWN = 0x00,
-	TB_PROPERTY_TYPE_DIRECTORY = 0x44,
+	TB_PROPERTY_TYPE_सूचीECTORY = 0x44,
 	TB_PROPERTY_TYPE_DATA = 0x64,
 	TB_PROPERTY_TYPE_TEXT = 0x74,
 	TB_PROPERTY_TYPE_VALUE = 0x76,
-};
+पूर्ण;
 
-#define TB_PROPERTY_KEY_SIZE	8
+#घोषणा TB_PROPERTY_KEY_SIZE	8
 
 /**
- * struct tb_property - XDomain property
+ * काष्ठा tb_property - XDoमुख्य property
  * @list: Used to link properties together in a directory
- * @key: Key for the property (always terminated).
+ * @key: Key क्रम the property (always terminated).
  * @type: Type of the property
  * @length: Length of the property data in dwords
  * @value: Property value
  *
  * Users use @type to determine which field in @value is filled.
  */
-struct tb_property {
-	struct list_head list;
-	char key[TB_PROPERTY_KEY_SIZE + 1];
-	enum tb_property_type type;
-	size_t length;
-	union {
-		struct tb_property_dir *dir;
+काष्ठा tb_property अणु
+	काष्ठा list_head list;
+	अक्षर key[TB_PROPERTY_KEY_SIZE + 1];
+	क्रमागत tb_property_type type;
+	माप_प्रकार length;
+	जोड़ अणु
+		काष्ठा tb_property_dir *dir;
 		u8 *data;
-		char *text;
+		अक्षर *text;
 		u32 immediate;
-	} value;
-};
+	पूर्ण value;
+पूर्ण;
 
-struct tb_property_dir *tb_property_parse_dir(const u32 *block,
-					      size_t block_len);
-ssize_t tb_property_format_dir(const struct tb_property_dir *dir, u32 *block,
-			       size_t block_len);
-struct tb_property_dir *tb_property_copy_dir(const struct tb_property_dir *dir);
-struct tb_property_dir *tb_property_create_dir(const uuid_t *uuid);
-void tb_property_free_dir(struct tb_property_dir *dir);
-int tb_property_add_immediate(struct tb_property_dir *parent, const char *key,
+काष्ठा tb_property_dir *tb_property_parse_dir(स्थिर u32 *block,
+					      माप_प्रकार block_len);
+sमाप_प्रकार tb_property_क्रमmat_dir(स्थिर काष्ठा tb_property_dir *dir, u32 *block,
+			       माप_प्रकार block_len);
+काष्ठा tb_property_dir *tb_property_copy_dir(स्थिर काष्ठा tb_property_dir *dir);
+काष्ठा tb_property_dir *tb_property_create_dir(स्थिर uuid_t *uuid);
+व्योम tb_property_मुक्त_dir(काष्ठा tb_property_dir *dir);
+पूर्णांक tb_property_add_immediate(काष्ठा tb_property_dir *parent, स्थिर अक्षर *key,
 			      u32 value);
-int tb_property_add_data(struct tb_property_dir *parent, const char *key,
-			 const void *buf, size_t buflen);
-int tb_property_add_text(struct tb_property_dir *parent, const char *key,
-			 const char *text);
-int tb_property_add_dir(struct tb_property_dir *parent, const char *key,
-			struct tb_property_dir *dir);
-void tb_property_remove(struct tb_property *tb_property);
-struct tb_property *tb_property_find(struct tb_property_dir *dir,
-			const char *key, enum tb_property_type type);
-struct tb_property *tb_property_get_next(struct tb_property_dir *dir,
-					 struct tb_property *prev);
+पूर्णांक tb_property_add_data(काष्ठा tb_property_dir *parent, स्थिर अक्षर *key,
+			 स्थिर व्योम *buf, माप_प्रकार buflen);
+पूर्णांक tb_property_add_text(काष्ठा tb_property_dir *parent, स्थिर अक्षर *key,
+			 स्थिर अक्षर *text);
+पूर्णांक tb_property_add_dir(काष्ठा tb_property_dir *parent, स्थिर अक्षर *key,
+			काष्ठा tb_property_dir *dir);
+व्योम tb_property_हटाओ(काष्ठा tb_property *tb_property);
+काष्ठा tb_property *tb_property_find(काष्ठा tb_property_dir *dir,
+			स्थिर अक्षर *key, क्रमागत tb_property_type type);
+काष्ठा tb_property *tb_property_get_next(काष्ठा tb_property_dir *dir,
+					 काष्ठा tb_property *prev);
 
-#define tb_property_for_each(dir, property)			\
-	for (property = tb_property_get_next(dir, NULL);	\
+#घोषणा tb_property_क्रम_each(dir, property)			\
+	क्रम (property = tb_property_get_next(dir, शून्य);	\
 	     property;						\
 	     property = tb_property_get_next(dir, property))
 
-int tb_register_property_dir(const char *key, struct tb_property_dir *dir);
-void tb_unregister_property_dir(const char *key, struct tb_property_dir *dir);
+पूर्णांक tb_रेजिस्टर_property_dir(स्थिर अक्षर *key, काष्ठा tb_property_dir *dir);
+व्योम tb_unरेजिस्टर_property_dir(स्थिर अक्षर *key, काष्ठा tb_property_dir *dir);
 
 /**
- * struct tb_xdomain - Cross-domain (XDomain) connection
- * @dev: XDomain device
- * @tb: Pointer to the domain
- * @remote_uuid: UUID of the remote domain (host)
+ * काष्ठा tb_xकरोमुख्य - Cross-करोमुख्य (XDoमुख्य) connection
+ * @dev: XDoमुख्य device
+ * @tb: Poपूर्णांकer to the करोमुख्य
+ * @remote_uuid: UUID of the remote करोमुख्य (host)
  * @local_uuid: Cached local UUID
- * @route: Route string the other domain can be reached
- * @vendor: Vendor ID of the remote domain
- * @device: Device ID of the demote domain
+ * @route: Route string the other करोमुख्य can be reached
+ * @venकरोr: Venकरोr ID of the remote करोमुख्य
+ * @device: Device ID of the demote करोमुख्य
  * @local_max_hopid: Maximum input HopID of this host
  * @remote_max_hopid: Maximum input HopID of the remote host
- * @lock: Lock to serialize access to the following fields of this structure
- * @vendor_name: Name of the vendor (or %NULL if not known)
- * @device_name: Name of the device (or %NULL if not known)
+ * @lock: Lock to serialize access to the following fields of this काष्ठाure
+ * @venकरोr_name: Name of the venकरोr (or %शून्य अगर not known)
+ * @device_name: Name of the device (or %शून्य अगर not known)
  * @link_speed: Speed of the link in Gb/s
  * @link_width: Width of the link (1 or 2)
- * @is_unplugged: The XDomain is unplugged
- * @needs_uuid: If the XDomain does not have @remote_uuid it will be
+ * @is_unplugged: The XDoमुख्य is unplugged
+ * @needs_uuid: If the XDoमुख्य करोes not have @remote_uuid it will be
  *		queried first
- * @service_ids: Used to generate IDs for the services
- * @in_hopids: Input HopIDs for DMA tunneling
- * @out_hopids; Output HopIDs for DMA tunneling
+ * @service_ids: Used to generate IDs क्रम the services
+ * @in_hopids: Input HopIDs क्रम DMA tunneling
+ * @out_hopids; Output HopIDs क्रम DMA tunneling
  * @local_property_block: Local block of properties
  * @local_property_block_gen: Generation of @local_property_block
  * @local_property_block_len: Length of the @local_property_block in dwords
- * @remote_properties: Properties exported by the remote domain
+ * @remote_properties: Properties exported by the remote करोमुख्य
  * @remote_property_block_gen: Generation of @remote_properties
  * @get_uuid_work: Work used to retrieve @remote_uuid
- * @uuid_retries: Number of times left @remote_uuid is requested before
+ * @uuid_retries: Number of बार left @remote_uuid is requested beक्रमe
  *		  giving up
- * @get_properties_work: Work used to get remote domain properties
- * @properties_retries: Number of times left to read properties
- * @properties_changed_work: Work used to notify the remote domain that
+ * @get_properties_work: Work used to get remote करोमुख्य properties
+ * @properties_retries: Number of बार left to पढ़ो properties
+ * @properties_changed_work: Work used to notअगरy the remote करोमुख्य that
  *			     our properties have changed
- * @properties_changed_retries: Number of times left to send properties
- *				changed notification
- * @link: Root switch link the remote domain is connected (ICM only)
- * @depth: Depth in the chain the remote domain is connected (ICM only)
+ * @properties_changed_retries: Number of बार left to send properties
+ *				changed notअगरication
+ * @link: Root चयन link the remote करोमुख्य is connected (ICM only)
+ * @depth: Depth in the chain the remote करोमुख्य is connected (ICM only)
  *
- * This structure represents connection across two domains (hosts).
- * Each XDomain contains zero or more services which are exposed as
- * &struct tb_service objects.
+ * This काष्ठाure represents connection across two करोमुख्यs (hosts).
+ * Each XDoमुख्य contains zero or more services which are exposed as
+ * &काष्ठा tb_service objects.
  *
- * Service drivers may access this structure if they need to enumerate
- * non-standard properties but they need hold @lock when doing so
+ * Service drivers may access this काष्ठाure अगर they need to क्रमागतerate
+ * non-standard properties but they need hold @lock when करोing so
  * because properties can be changed asynchronously in response to
- * changes in the remote domain.
+ * changes in the remote करोमुख्य.
  */
-struct tb_xdomain {
-	struct device dev;
-	struct tb *tb;
+काष्ठा tb_xकरोमुख्य अणु
+	काष्ठा device dev;
+	काष्ठा tb *tb;
 	uuid_t *remote_uuid;
-	const uuid_t *local_uuid;
+	स्थिर uuid_t *local_uuid;
 	u64 route;
-	u16 vendor;
+	u16 venकरोr;
 	u16 device;
-	unsigned int local_max_hopid;
-	unsigned int remote_max_hopid;
-	struct mutex lock;
-	const char *vendor_name;
-	const char *device_name;
-	unsigned int link_speed;
-	unsigned int link_width;
+	अचिन्हित पूर्णांक local_max_hopid;
+	अचिन्हित पूर्णांक remote_max_hopid;
+	काष्ठा mutex lock;
+	स्थिर अक्षर *venकरोr_name;
+	स्थिर अक्षर *device_name;
+	अचिन्हित पूर्णांक link_speed;
+	अचिन्हित पूर्णांक link_width;
 	bool is_unplugged;
 	bool needs_uuid;
-	struct ida service_ids;
-	struct ida in_hopids;
-	struct ida out_hopids;
+	काष्ठा ida service_ids;
+	काष्ठा ida in_hopids;
+	काष्ठा ida out_hopids;
 	u32 *local_property_block;
 	u32 local_property_block_gen;
 	u32 local_property_block_len;
-	struct tb_property_dir *remote_properties;
+	काष्ठा tb_property_dir *remote_properties;
 	u32 remote_property_block_gen;
-	struct delayed_work get_uuid_work;
-	int uuid_retries;
-	struct delayed_work get_properties_work;
-	int properties_retries;
-	struct delayed_work properties_changed_work;
-	int properties_changed_retries;
+	काष्ठा delayed_work get_uuid_work;
+	पूर्णांक uuid_retries;
+	काष्ठा delayed_work get_properties_work;
+	पूर्णांक properties_retries;
+	काष्ठा delayed_work properties_changed_work;
+	पूर्णांक properties_changed_retries;
 	u8 link;
 	u8 depth;
-};
+पूर्ण;
 
-int tb_xdomain_lane_bonding_enable(struct tb_xdomain *xd);
-void tb_xdomain_lane_bonding_disable(struct tb_xdomain *xd);
-int tb_xdomain_alloc_in_hopid(struct tb_xdomain *xd, int hopid);
-void tb_xdomain_release_in_hopid(struct tb_xdomain *xd, int hopid);
-int tb_xdomain_alloc_out_hopid(struct tb_xdomain *xd, int hopid);
-void tb_xdomain_release_out_hopid(struct tb_xdomain *xd, int hopid);
-int tb_xdomain_enable_paths(struct tb_xdomain *xd, int transmit_path,
-			    int transmit_ring, int receive_path,
-			    int receive_ring);
-int tb_xdomain_disable_paths(struct tb_xdomain *xd, int transmit_path,
-			     int transmit_ring, int receive_path,
-			     int receive_ring);
+पूर्णांक tb_xकरोमुख्य_lane_bonding_enable(काष्ठा tb_xकरोमुख्य *xd);
+व्योम tb_xकरोमुख्य_lane_bonding_disable(काष्ठा tb_xकरोमुख्य *xd);
+पूर्णांक tb_xकरोमुख्य_alloc_in_hopid(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक hopid);
+व्योम tb_xकरोमुख्य_release_in_hopid(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक hopid);
+पूर्णांक tb_xकरोमुख्य_alloc_out_hopid(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक hopid);
+व्योम tb_xकरोमुख्य_release_out_hopid(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक hopid);
+पूर्णांक tb_xकरोमुख्य_enable_paths(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक transmit_path,
+			    पूर्णांक transmit_ring, पूर्णांक receive_path,
+			    पूर्णांक receive_ring);
+पूर्णांक tb_xकरोमुख्य_disable_paths(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक transmit_path,
+			     पूर्णांक transmit_ring, पूर्णांक receive_path,
+			     पूर्णांक receive_ring);
 
-static inline int tb_xdomain_disable_all_paths(struct tb_xdomain *xd)
-{
-	return tb_xdomain_disable_paths(xd, -1, -1, -1, -1);
-}
+अटल अंतरभूत पूर्णांक tb_xकरोमुख्य_disable_all_paths(काष्ठा tb_xकरोमुख्य *xd)
+अणु
+	वापस tb_xकरोमुख्य_disable_paths(xd, -1, -1, -1, -1);
+पूर्ण
 
-struct tb_xdomain *tb_xdomain_find_by_uuid(struct tb *tb, const uuid_t *uuid);
-struct tb_xdomain *tb_xdomain_find_by_route(struct tb *tb, u64 route);
+काष्ठा tb_xकरोमुख्य *tb_xकरोमुख्य_find_by_uuid(काष्ठा tb *tb, स्थिर uuid_t *uuid);
+काष्ठा tb_xकरोमुख्य *tb_xकरोमुख्य_find_by_route(काष्ठा tb *tb, u64 route);
 
-static inline struct tb_xdomain *
-tb_xdomain_find_by_uuid_locked(struct tb *tb, const uuid_t *uuid)
-{
-	struct tb_xdomain *xd;
-
-	mutex_lock(&tb->lock);
-	xd = tb_xdomain_find_by_uuid(tb, uuid);
-	mutex_unlock(&tb->lock);
-
-	return xd;
-}
-
-static inline struct tb_xdomain *
-tb_xdomain_find_by_route_locked(struct tb *tb, u64 route)
-{
-	struct tb_xdomain *xd;
+अटल अंतरभूत काष्ठा tb_xकरोमुख्य *
+tb_xकरोमुख्य_find_by_uuid_locked(काष्ठा tb *tb, स्थिर uuid_t *uuid)
+अणु
+	काष्ठा tb_xकरोमुख्य *xd;
 
 	mutex_lock(&tb->lock);
-	xd = tb_xdomain_find_by_route(tb, route);
+	xd = tb_xकरोमुख्य_find_by_uuid(tb, uuid);
 	mutex_unlock(&tb->lock);
 
-	return xd;
-}
+	वापस xd;
+पूर्ण
 
-static inline struct tb_xdomain *tb_xdomain_get(struct tb_xdomain *xd)
-{
-	if (xd)
+अटल अंतरभूत काष्ठा tb_xकरोमुख्य *
+tb_xकरोमुख्य_find_by_route_locked(काष्ठा tb *tb, u64 route)
+अणु
+	काष्ठा tb_xकरोमुख्य *xd;
+
+	mutex_lock(&tb->lock);
+	xd = tb_xकरोमुख्य_find_by_route(tb, route);
+	mutex_unlock(&tb->lock);
+
+	वापस xd;
+पूर्ण
+
+अटल अंतरभूत काष्ठा tb_xकरोमुख्य *tb_xकरोमुख्य_get(काष्ठा tb_xकरोमुख्य *xd)
+अणु
+	अगर (xd)
 		get_device(&xd->dev);
-	return xd;
-}
+	वापस xd;
+पूर्ण
 
-static inline void tb_xdomain_put(struct tb_xdomain *xd)
-{
-	if (xd)
+अटल अंतरभूत व्योम tb_xकरोमुख्य_put(काष्ठा tb_xकरोमुख्य *xd)
+अणु
+	अगर (xd)
 		put_device(&xd->dev);
-}
+पूर्ण
 
-static inline bool tb_is_xdomain(const struct device *dev)
-{
-	return dev->type == &tb_xdomain_type;
-}
+अटल अंतरभूत bool tb_is_xकरोमुख्य(स्थिर काष्ठा device *dev)
+अणु
+	वापस dev->type == &tb_xकरोमुख्य_type;
+पूर्ण
 
-static inline struct tb_xdomain *tb_to_xdomain(struct device *dev)
-{
-	if (tb_is_xdomain(dev))
-		return container_of(dev, struct tb_xdomain, dev);
-	return NULL;
-}
+अटल अंतरभूत काष्ठा tb_xकरोमुख्य *tb_to_xकरोमुख्य(काष्ठा device *dev)
+अणु
+	अगर (tb_is_xकरोमुख्य(dev))
+		वापस container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
+	वापस शून्य;
+पूर्ण
 
-int tb_xdomain_response(struct tb_xdomain *xd, const void *response,
-			size_t size, enum tb_cfg_pkg_type type);
-int tb_xdomain_request(struct tb_xdomain *xd, const void *request,
-		       size_t request_size, enum tb_cfg_pkg_type request_type,
-		       void *response, size_t response_size,
-		       enum tb_cfg_pkg_type response_type,
-		       unsigned int timeout_msec);
+पूर्णांक tb_xकरोमुख्य_response(काष्ठा tb_xकरोमुख्य *xd, स्थिर व्योम *response,
+			माप_प्रकार size, क्रमागत tb_cfg_pkg_type type);
+पूर्णांक tb_xकरोमुख्य_request(काष्ठा tb_xकरोमुख्य *xd, स्थिर व्योम *request,
+		       माप_प्रकार request_size, क्रमागत tb_cfg_pkg_type request_type,
+		       व्योम *response, माप_प्रकार response_size,
+		       क्रमागत tb_cfg_pkg_type response_type,
+		       अचिन्हित पूर्णांक समयout_msec);
 
 /**
- * tb_protocol_handler - Protocol specific handler
- * @uuid: XDomain messages with this UUID are dispatched to this handler
- * @callback: Callback called with the XDomain message. Returning %1
- *	      here tells the XDomain core that the message was handled
- *	      by this handler and should not be forwared to other
+ * tb_protocol_handler - Protocol specअगरic handler
+ * @uuid: XDoमुख्य messages with this UUID are dispatched to this handler
+ * @callback: Callback called with the XDoमुख्य message. Returning %1
+ *	      here tells the XDoमुख्य core that the message was handled
+ *	      by this handler and should not be क्रमwared to other
  *	      handlers.
  * @data: Data passed with the callback
  * @list: Handlers are linked using this
  *
- * Thunderbolt services can hook into incoming XDomain requests by
- * registering protocol handler. Only limitation is that the XDomain
- * discovery protocol UUID cannot be registered since it is handled by
- * the core XDomain code.
+ * Thunderbolt services can hook पूर्णांकo incoming XDoमुख्य requests by
+ * रेजिस्टरing protocol handler. Only limitation is that the XDoमुख्य
+ * discovery protocol UUID cannot be रेजिस्टरed since it is handled by
+ * the core XDoमुख्य code.
  *
  * The @callback must check that the message is really directed to the
  * service the driver implements.
  */
-struct tb_protocol_handler {
-	const uuid_t *uuid;
-	int (*callback)(const void *buf, size_t size, void *data);
-	void *data;
-	struct list_head list;
-};
+काष्ठा tb_protocol_handler अणु
+	स्थिर uuid_t *uuid;
+	पूर्णांक (*callback)(स्थिर व्योम *buf, माप_प्रकार size, व्योम *data);
+	व्योम *data;
+	काष्ठा list_head list;
+पूर्ण;
 
-int tb_register_protocol_handler(struct tb_protocol_handler *handler);
-void tb_unregister_protocol_handler(struct tb_protocol_handler *handler);
+पूर्णांक tb_रेजिस्टर_protocol_handler(काष्ठा tb_protocol_handler *handler);
+व्योम tb_unरेजिस्टर_protocol_handler(काष्ठा tb_protocol_handler *handler);
 
 /**
- * struct tb_service - Thunderbolt service
- * @dev: XDomain device
+ * काष्ठा tb_service - Thunderbolt service
+ * @dev: XDoमुख्य device
  * @id: ID of the service (shown in sysfs)
  * @key: Protocol key from the properties directory
  * @prtcid: Protocol ID from the properties directory
  * @prtcvers: Protocol version from the properties directory
  * @prtcrevs: Protocol software revision from the properties directory
  * @prtcstns: Protocol settings mask from the properties directory
- * @debugfs_dir: Pointer to the service debugfs directory. Always created
+ * @debugfs_dir: Poपूर्णांकer to the service debugfs directory. Always created
  *		 when debugfs is enabled. Can be used by service drivers to
  *		 add their own entries under the service.
  *
- * Each domain exposes set of services it supports as collection of
+ * Each करोमुख्य exposes set of services it supports as collection of
  * properties. For each service there will be one corresponding
- * &struct tb_service. Service drivers are bound to these.
+ * &काष्ठा tb_service. Service drivers are bound to these.
  */
-struct tb_service {
-	struct device dev;
-	int id;
-	const char *key;
+काष्ठा tb_service अणु
+	काष्ठा device dev;
+	पूर्णांक id;
+	स्थिर अक्षर *key;
 	u32 prtcid;
 	u32 prtcvers;
 	u32 prtcrevs;
 	u32 prtcstns;
-	struct dentry *debugfs_dir;
-};
+	काष्ठा dentry *debugfs_dir;
+पूर्ण;
 
-static inline struct tb_service *tb_service_get(struct tb_service *svc)
-{
-	if (svc)
+अटल अंतरभूत काष्ठा tb_service *tb_service_get(काष्ठा tb_service *svc)
+अणु
+	अगर (svc)
 		get_device(&svc->dev);
-	return svc;
-}
+	वापस svc;
+पूर्ण
 
-static inline void tb_service_put(struct tb_service *svc)
-{
-	if (svc)
+अटल अंतरभूत व्योम tb_service_put(काष्ठा tb_service *svc)
+अणु
+	अगर (svc)
 		put_device(&svc->dev);
-}
+पूर्ण
 
-static inline bool tb_is_service(const struct device *dev)
-{
-	return dev->type == &tb_service_type;
-}
+अटल अंतरभूत bool tb_is_service(स्थिर काष्ठा device *dev)
+अणु
+	वापस dev->type == &tb_service_type;
+पूर्ण
 
-static inline struct tb_service *tb_to_service(struct device *dev)
-{
-	if (tb_is_service(dev))
-		return container_of(dev, struct tb_service, dev);
-	return NULL;
-}
+अटल अंतरभूत काष्ठा tb_service *tb_to_service(काष्ठा device *dev)
+अणु
+	अगर (tb_is_service(dev))
+		वापस container_of(dev, काष्ठा tb_service, dev);
+	वापस शून्य;
+पूर्ण
 
 /**
  * tb_service_driver - Thunderbolt service driver
- * @driver: Driver structure
+ * @driver: Driver काष्ठाure
  * @probe: Called when the driver is probed
- * @remove: Called when the driver is removed (optional)
- * @shutdown: Called at shutdown time to stop the service (optional)
- * @id_table: Table of service identifiers the driver supports
+ * @हटाओ: Called when the driver is हटाओd (optional)
+ * @shutकरोwn: Called at shutकरोwn समय to stop the service (optional)
+ * @id_table: Table of service identअगरiers the driver supports
  */
-struct tb_service_driver {
-	struct device_driver driver;
-	int (*probe)(struct tb_service *svc, const struct tb_service_id *id);
-	void (*remove)(struct tb_service *svc);
-	void (*shutdown)(struct tb_service *svc);
-	const struct tb_service_id *id_table;
-};
+काष्ठा tb_service_driver अणु
+	काष्ठा device_driver driver;
+	पूर्णांक (*probe)(काष्ठा tb_service *svc, स्थिर काष्ठा tb_service_id *id);
+	व्योम (*हटाओ)(काष्ठा tb_service *svc);
+	व्योम (*shutकरोwn)(काष्ठा tb_service *svc);
+	स्थिर काष्ठा tb_service_id *id_table;
+पूर्ण;
 
-#define TB_SERVICE(key, id)				\
+#घोषणा TB_SERVICE(key, id)				\
 	.match_flags = TBSVC_MATCH_PROTOCOL_KEY |	\
 		       TBSVC_MATCH_PROTOCOL_ID,		\
 	.protocol_key = (key),				\
 	.protocol_id = (id)
 
-int tb_register_service_driver(struct tb_service_driver *drv);
-void tb_unregister_service_driver(struct tb_service_driver *drv);
+पूर्णांक tb_रेजिस्टर_service_driver(काष्ठा tb_service_driver *drv);
+व्योम tb_unरेजिस्टर_service_driver(काष्ठा tb_service_driver *drv);
 
-static inline void *tb_service_get_drvdata(const struct tb_service *svc)
-{
-	return dev_get_drvdata(&svc->dev);
-}
+अटल अंतरभूत व्योम *tb_service_get_drvdata(स्थिर काष्ठा tb_service *svc)
+अणु
+	वापस dev_get_drvdata(&svc->dev);
+पूर्ण
 
-static inline void tb_service_set_drvdata(struct tb_service *svc, void *data)
-{
+अटल अंतरभूत व्योम tb_service_set_drvdata(काष्ठा tb_service *svc, व्योम *data)
+अणु
 	dev_set_drvdata(&svc->dev, data);
-}
+पूर्ण
 
-static inline struct tb_xdomain *tb_service_parent(struct tb_service *svc)
-{
-	return tb_to_xdomain(svc->dev.parent);
-}
+अटल अंतरभूत काष्ठा tb_xकरोमुख्य *tb_service_parent(काष्ठा tb_service *svc)
+अणु
+	वापस tb_to_xकरोमुख्य(svc->dev.parent);
+पूर्ण
 
 /**
- * struct tb_nhi - thunderbolt native host interface
- * @lock: Must be held during ring creation/destruction. Is acquired by
- *	  interrupt_work when dispatching interrupts to individual rings.
- * @pdev: Pointer to the PCI device
- * @ops: NHI specific optional ops
+ * काष्ठा tb_nhi - thunderbolt native host पूर्णांकerface
+ * @lock: Must be held during ring creation/deकाष्ठाion. Is acquired by
+ *	  पूर्णांकerrupt_work when dispatching पूर्णांकerrupts to inभागidual rings.
+ * @pdev: Poपूर्णांकer to the PCI device
+ * @ops: NHI specअगरic optional ops
  * @iobase: MMIO space of the NHI
  * @tx_rings: All Tx rings available on this host controller
  * @rx_rings: All Rx rings available on this host controller
- * @msix_ida: Used to allocate MSI-X vectors for rings
+ * @msix_ida: Used to allocate MSI-X vectors क्रम rings
  * @going_away: The host controller device is about to disappear so when
- *		this flag is set, avoid touching the hardware anymore.
- * @interrupt_work: Work scheduled to handle ring interrupt when no
+ *		this flag is set, aव्योम touching the hardware anymore.
+ * @पूर्णांकerrupt_work: Work scheduled to handle ring पूर्णांकerrupt when no
  *		    MSI-X is used.
- * @hop_count: Number of rings (end point hops) supported by NHI.
+ * @hop_count: Number of rings (end poपूर्णांक hops) supported by NHI.
  */
-struct tb_nhi {
+काष्ठा tb_nhi अणु
 	spinlock_t lock;
-	struct pci_dev *pdev;
-	const struct tb_nhi_ops *ops;
-	void __iomem *iobase;
-	struct tb_ring **tx_rings;
-	struct tb_ring **rx_rings;
-	struct ida msix_ida;
+	काष्ठा pci_dev *pdev;
+	स्थिर काष्ठा tb_nhi_ops *ops;
+	व्योम __iomem *iobase;
+	काष्ठा tb_ring **tx_rings;
+	काष्ठा tb_ring **rx_rings;
+	काष्ठा ida msix_ida;
 	bool going_away;
-	struct work_struct interrupt_work;
+	काष्ठा work_काष्ठा पूर्णांकerrupt_work;
 	u32 hop_count;
-};
+पूर्ण;
 
 /**
- * struct tb_ring - thunderbolt TX or RX ring associated with a NHI
+ * काष्ठा tb_ring - thunderbolt TX or RX ring associated with a NHI
  * @lock: Lock serializing actions to this ring. Must be acquired after
  *	  nhi->lock.
- * @nhi: Pointer to the native host controller interface
+ * @nhi: Poपूर्णांकer to the native host controller पूर्णांकerface
  * @size: Size of the ring
  * @hop: Hop (DMA channel) associated with this ring
- * @head: Head of the ring (write next descriptor here)
+ * @head: Head of the ring (ग_लिखो next descriptor here)
  * @tail: Tail of the ring (complete next descriptor here)
- * @descriptors: Allocated descriptors for this ring
+ * @descriptors: Allocated descriptors क्रम this ring
  * @queue: Queue holding frames to be transferred over this ring
  * @in_flight: Queue holding frames that are currently in flight
- * @work: Interrupt work structure
+ * @work: Interrupt work काष्ठाure
  * @is_tx: Is the ring Tx or Rx
  * @running: Is the ring running
- * @irq: MSI-X irq number if the ring uses MSI-X. %0 otherwise.
- * @vector: MSI-X vector number the ring uses (only set if @irq is > 0)
- * @flags: Ring specific flags
+ * @irq: MSI-X irq number अगर the ring uses MSI-X. %0 otherwise.
+ * @vector: MSI-X vector number the ring uses (only set अगर @irq is > 0)
+ * @flags: Ring specअगरic flags
  * @e2e_tx_hop: Transmit HopID when E2E is enabled. Only applicable to
  *		RX ring. For TX ring this should be set to %0.
  * @sof_mask: Bit mask used to detect start of frame PDF
  * @eof_mask: Bit mask used to detect end of frame PDF
- * @start_poll: Called when ring interrupt is triggered to start
- *		polling. Passing %NULL keeps the ring in interrupt mode.
+ * @start_poll: Called when ring पूर्णांकerrupt is triggered to start
+ *		polling. Passing %शून्य keeps the ring in पूर्णांकerrupt mode.
  * @poll_data: Data passed to @start_poll
  */
-struct tb_ring {
+काष्ठा tb_ring अणु
 	spinlock_t lock;
-	struct tb_nhi *nhi;
-	int size;
-	int hop;
-	int head;
-	int tail;
-	struct ring_desc *descriptors;
+	काष्ठा tb_nhi *nhi;
+	पूर्णांक size;
+	पूर्णांक hop;
+	पूर्णांक head;
+	पूर्णांक tail;
+	काष्ठा ring_desc *descriptors;
 	dma_addr_t descriptors_dma;
-	struct list_head queue;
-	struct list_head in_flight;
-	struct work_struct work;
+	काष्ठा list_head queue;
+	काष्ठा list_head in_flight;
+	काष्ठा work_काष्ठा work;
 	bool is_tx:1;
 	bool running:1;
-	int irq;
+	पूर्णांक irq;
 	u8 vector;
-	unsigned int flags;
-	int e2e_tx_hop;
+	अचिन्हित पूर्णांक flags;
+	पूर्णांक e2e_tx_hop;
 	u16 sof_mask;
 	u16 eof_mask;
-	void (*start_poll)(void *data);
-	void *poll_data;
-};
+	व्योम (*start_poll)(व्योम *data);
+	व्योम *poll_data;
+पूर्ण;
 
-/* Leave ring interrupt enabled on suspend */
-#define RING_FLAG_NO_SUSPEND	BIT(0)
+/* Leave ring पूर्णांकerrupt enabled on suspend */
+#घोषणा RING_FLAG_NO_SUSPEND	BIT(0)
 /* Configure the ring to be in frame mode */
-#define RING_FLAG_FRAME		BIT(1)
+#घोषणा RING_FLAG_FRAME		BIT(1)
 /* Enable end-to-end flow control */
-#define RING_FLAG_E2E		BIT(2)
+#घोषणा RING_FLAG_E2E		BIT(2)
 
-struct ring_frame;
-typedef void (*ring_cb)(struct tb_ring *, struct ring_frame *, bool canceled);
+काष्ठा ring_frame;
+प्रकार व्योम (*ring_cb)(काष्ठा tb_ring *, काष्ठा ring_frame *, bool canceled);
 
 /**
- * enum ring_desc_flags - Flags for DMA ring descriptor
+ * क्रमागत ring_desc_flags - Flags क्रम DMA ring descriptor
  * %RING_DESC_ISOCH: Enable isonchronous DMA (Tx only)
- * %RING_DESC_CRC_ERROR: In frame mode CRC check failed for the frame (Rx only)
+ * %RING_DESC_CRC_ERROR: In frame mode CRC check failed क्रम the frame (Rx only)
  * %RING_DESC_COMPLETED: Descriptor completed (set by NHI)
  * %RING_DESC_POSTED: Always set this
  * %RING_DESC_BUFFER_OVERRUN: RX buffer overrun
- * %RING_DESC_INTERRUPT: Request an interrupt on completion
+ * %RING_DESC_INTERRUPT: Request an पूर्णांकerrupt on completion
  */
-enum ring_desc_flags {
+क्रमागत ring_desc_flags अणु
 	RING_DESC_ISOCH = 0x1,
 	RING_DESC_CRC_ERROR = 0x1,
 	RING_DESC_COMPLETED = 0x2,
 	RING_DESC_POSTED = 0x4,
 	RING_DESC_BUFFER_OVERRUN = 0x04,
 	RING_DESC_INTERRUPT = 0x8,
-};
+पूर्ण;
 
 /**
- * struct ring_frame - For use with ring_rx/ring_tx
+ * काष्ठा ring_frame - For use with ring_rx/ring_tx
  * @buffer_phy: DMA mapped address of the frame
  * @callback: Callback called when the frame is finished (optional)
  * @list: Frame is linked to a queue using this
  * @size: Size of the frame in bytes (%0 means %4096)
- * @flags: Flags for the frame (see &enum ring_desc_flags)
+ * @flags: Flags क्रम the frame (see &क्रमागत ring_desc_flags)
  * @eof: End of frame protocol defined field
  * @sof: Start of frame protocol defined field
  */
-struct ring_frame {
+काष्ठा ring_frame अणु
 	dma_addr_t buffer_phy;
 	ring_cb callback;
-	struct list_head list;
+	काष्ठा list_head list;
 	u32 size:12;
 	u32 flags:12;
 	u32 eof:4;
 	u32 sof:4;
-};
+पूर्ण;
 
-/* Minimum size for ring_rx */
-#define TB_FRAME_SIZE		0x100
+/* Minimum size क्रम ring_rx */
+#घोषणा TB_FRAME_SIZE		0x100
 
-struct tb_ring *tb_ring_alloc_tx(struct tb_nhi *nhi, int hop, int size,
-				 unsigned int flags);
-struct tb_ring *tb_ring_alloc_rx(struct tb_nhi *nhi, int hop, int size,
-				 unsigned int flags, int e2e_tx_hop,
+काष्ठा tb_ring *tb_ring_alloc_tx(काष्ठा tb_nhi *nhi, पूर्णांक hop, पूर्णांक size,
+				 अचिन्हित पूर्णांक flags);
+काष्ठा tb_ring *tb_ring_alloc_rx(काष्ठा tb_nhi *nhi, पूर्णांक hop, पूर्णांक size,
+				 अचिन्हित पूर्णांक flags, पूर्णांक e2e_tx_hop,
 				 u16 sof_mask, u16 eof_mask,
-				 void (*start_poll)(void *), void *poll_data);
-void tb_ring_start(struct tb_ring *ring);
-void tb_ring_stop(struct tb_ring *ring);
-void tb_ring_free(struct tb_ring *ring);
+				 व्योम (*start_poll)(व्योम *), व्योम *poll_data);
+व्योम tb_ring_start(काष्ठा tb_ring *ring);
+व्योम tb_ring_stop(काष्ठा tb_ring *ring);
+व्योम tb_ring_मुक्त(काष्ठा tb_ring *ring);
 
-int __tb_ring_enqueue(struct tb_ring *ring, struct ring_frame *frame);
+पूर्णांक __tb_ring_enqueue(काष्ठा tb_ring *ring, काष्ठा ring_frame *frame);
 
 /**
  * tb_ring_rx() - enqueue a frame on an RX ring
@@ -609,13 +610,13 @@ int __tb_ring_enqueue(struct tb_ring *ring, struct ring_frame *frame);
  * If ring_stop() is called after the packet has been enqueued
  * @frame->callback will be called with canceled set to true.
  *
- * Return: Returns %-ESHUTDOWN if ring_stop has been called. Zero otherwise.
+ * Return: Returns %-ESHUTDOWN अगर ring_stop has been called. Zero otherwise.
  */
-static inline int tb_ring_rx(struct tb_ring *ring, struct ring_frame *frame)
-{
+अटल अंतरभूत पूर्णांक tb_ring_rx(काष्ठा tb_ring *ring, काष्ठा ring_frame *frame)
+अणु
 	WARN_ON(ring->is_tx);
-	return __tb_ring_enqueue(ring, frame);
-}
+	वापस __tb_ring_enqueue(ring, frame);
+पूर्ण
 
 /**
  * tb_ring_tx() - enqueue a frame on an TX ring
@@ -630,28 +631,28 @@ static inline int tb_ring_rx(struct tb_ring *ring, struct ring_frame *frame)
  * If ring_stop() is called after the packet has been enqueued @frame->callback
  * will be called with canceled set to true.
  *
- * Return: Returns %-ESHUTDOWN if ring_stop has been called. Zero otherwise.
+ * Return: Returns %-ESHUTDOWN अगर ring_stop has been called. Zero otherwise.
  */
-static inline int tb_ring_tx(struct tb_ring *ring, struct ring_frame *frame)
-{
+अटल अंतरभूत पूर्णांक tb_ring_tx(काष्ठा tb_ring *ring, काष्ठा ring_frame *frame)
+अणु
 	WARN_ON(!ring->is_tx);
-	return __tb_ring_enqueue(ring, frame);
-}
+	वापस __tb_ring_enqueue(ring, frame);
+पूर्ण
 
 /* Used only when the ring is in polling mode */
-struct ring_frame *tb_ring_poll(struct tb_ring *ring);
-void tb_ring_poll_complete(struct tb_ring *ring);
+काष्ठा ring_frame *tb_ring_poll(काष्ठा tb_ring *ring);
+व्योम tb_ring_poll_complete(काष्ठा tb_ring *ring);
 
 /**
- * tb_ring_dma_device() - Return device used for DMA mapping
+ * tb_ring_dma_device() - Return device used क्रम DMA mapping
  * @ring: Ring whose DMA device is retrieved
  *
- * Use this function when you are mapping DMA for buffers that are
- * passed to the ring for sending/receiving.
+ * Use this function when you are mapping DMA क्रम buffers that are
+ * passed to the ring क्रम sending/receiving.
  */
-static inline struct device *tb_ring_dma_device(struct tb_ring *ring)
-{
-	return &ring->nhi->pdev->dev;
-}
+अटल अंतरभूत काष्ठा device *tb_ring_dma_device(काष्ठा tb_ring *ring)
+अणु
+	वापस &ring->nhi->pdev->dev;
+पूर्ण
 
-#endif /* THUNDERBOLT_H_ */
+#पूर्ण_अगर /* THUNDERBOLT_H_ */

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
   NinjaSCSI I/O funtions 
       By: YOKOTA Hiroshi <yokota@netlab.is.tsukuba.ac.jp>
@@ -7,268 +8,268 @@
 
   */
 
-/* $Id: nsp_io.h,v 1.3 2003/08/04 21:15:26 elca Exp $ */
+/* $Id: nsp_पन.स,v 1.3 2003/08/04 21:15:26 elca Exp $ */
 
-#ifndef __NSP_IO_H__
-#define __NSP_IO_H__
+#अगर_अघोषित __NSP_IO_H__
+#घोषणा __NSP_IO_H__
 
-static inline          void nsp_write(unsigned int base,
-				      unsigned int index,
-				      unsigned char val);
-static inline unsigned char nsp_read(unsigned int base,
-				     unsigned int index);
-static inline          void nsp_index_write(unsigned int BaseAddr,
-					    unsigned int Register,
-					    unsigned char Value);
-static inline unsigned char nsp_index_read(unsigned int BaseAddr,
-					   unsigned int Register);
+अटल अंतरभूत          व्योम nsp_ग_लिखो(अचिन्हित पूर्णांक base,
+				      अचिन्हित पूर्णांक index,
+				      अचिन्हित अक्षर val);
+अटल अंतरभूत अचिन्हित अक्षर nsp_पढ़ो(अचिन्हित पूर्णांक base,
+				     अचिन्हित पूर्णांक index);
+अटल अंतरभूत          व्योम nsp_index_ग_लिखो(अचिन्हित पूर्णांक BaseAddr,
+					    अचिन्हित पूर्णांक Register,
+					    अचिन्हित अक्षर Value);
+अटल अंतरभूत अचिन्हित अक्षर nsp_index_पढ़ो(अचिन्हित पूर्णांक BaseAddr,
+					   अचिन्हित पूर्णांक Register);
 
 /*******************************************************************
  * Basic IO
  */
 
-static inline void nsp_write(unsigned int  base,
-			     unsigned int  index,
-			     unsigned char val)
-{
+अटल अंतरभूत व्योम nsp_ग_लिखो(अचिन्हित पूर्णांक  base,
+			     अचिन्हित पूर्णांक  index,
+			     अचिन्हित अक्षर val)
+अणु
 	outb(val, (base + index));
-}
+पूर्ण
 
-static inline unsigned char nsp_read(unsigned int base,
-				     unsigned int index)
-{
-	return inb(base + index);
-}
+अटल अंतरभूत अचिन्हित अक्षर nsp_पढ़ो(अचिन्हित पूर्णांक base,
+				     अचिन्हित पूर्णांक index)
+अणु
+	वापस inb(base + index);
+पूर्ण
 
 
 /**********************************************************************
  * Indexed IO
  */
-static inline unsigned char nsp_index_read(unsigned int BaseAddr,
-					   unsigned int Register)
-{
+अटल अंतरभूत अचिन्हित अक्षर nsp_index_पढ़ो(अचिन्हित पूर्णांक BaseAddr,
+					   अचिन्हित पूर्णांक Register)
+अणु
 	outb(Register, BaseAddr + INDEXREG);
-	return inb(BaseAddr + DATAREG);
-}
+	वापस inb(BaseAddr + DATAREG);
+पूर्ण
 
-static inline void nsp_index_write(unsigned int  BaseAddr,
-				   unsigned int  Register,
-				   unsigned char Value)
-{
+अटल अंतरभूत व्योम nsp_index_ग_लिखो(अचिन्हित पूर्णांक  BaseAddr,
+				   अचिन्हित पूर्णांक  Register,
+				   अचिन्हित अक्षर Value)
+अणु
 	outb(Register, BaseAddr + INDEXREG);
 	outb(Value, BaseAddr + DATAREG);
-}
+पूर्ण
 
 /*********************************************************************
- * fifo func
+ * fअगरo func
  */
 
-/* read 8 bit FIFO */
-static inline void nsp_multi_read_1(unsigned int   BaseAddr,
-				    unsigned int   Register,
-				    void          *buf,
-				    unsigned long  count)
-{
+/* पढ़ो 8 bit FIFO */
+अटल अंतरभूत व्योम nsp_multi_पढ़ो_1(अचिन्हित पूर्णांक   BaseAddr,
+				    अचिन्हित पूर्णांक   Register,
+				    व्योम          *buf,
+				    अचिन्हित दीर्घ  count)
+अणु
 	insb(BaseAddr + Register, buf, count);
-}
+पूर्ण
 
-static inline void nsp_fifo8_read(unsigned int   base,
-				  void          *buf,
-				  unsigned long  count)
-{
+अटल अंतरभूत व्योम nsp_fअगरo8_पढ़ो(अचिन्हित पूर्णांक   base,
+				  व्योम          *buf,
+				  अचिन्हित दीर्घ  count)
+अणु
 	/*nsp_dbg(NSP_DEBUG_DATA_IO, "buf=0x%p, count=0x%lx", buf, count);*/
-	nsp_multi_read_1(base, FIFODATA, buf, count);
-}
+	nsp_multi_पढ़ो_1(base, FIFODATA, buf, count);
+पूर्ण
 
 /*--------------------------------------------------------------*/
 
-/* read 16 bit FIFO */
-static inline void nsp_multi_read_2(unsigned int   BaseAddr,
-				    unsigned int   Register,
-				    void          *buf,
-				    unsigned long  count)
-{
+/* पढ़ो 16 bit FIFO */
+अटल अंतरभूत व्योम nsp_multi_पढ़ो_2(अचिन्हित पूर्णांक   BaseAddr,
+				    अचिन्हित पूर्णांक   Register,
+				    व्योम          *buf,
+				    अचिन्हित दीर्घ  count)
+अणु
 	insw(BaseAddr + Register, buf, count);
-}
+पूर्ण
 
-static inline void nsp_fifo16_read(unsigned int   base,
-				   void          *buf,
-				   unsigned long  count)
-{
+अटल अंतरभूत व्योम nsp_fअगरo16_पढ़ो(अचिन्हित पूर्णांक   base,
+				   व्योम          *buf,
+				   अचिन्हित दीर्घ  count)
+अणु
 	//nsp_dbg(NSP_DEBUG_DATA_IO, "buf=0x%p, count=0x%lx*2", buf, count);
-	nsp_multi_read_2(base, FIFODATA, buf, count);
-}
+	nsp_multi_पढ़ो_2(base, FIFODATA, buf, count);
+पूर्ण
 
 /*--------------------------------------------------------------*/
 
-/* read 32bit FIFO */
-static inline void nsp_multi_read_4(unsigned int   BaseAddr,
-				    unsigned int   Register,
-				    void          *buf,
-				    unsigned long  count)
-{
+/* पढ़ो 32bit FIFO */
+अटल अंतरभूत व्योम nsp_multi_पढ़ो_4(अचिन्हित पूर्णांक   BaseAddr,
+				    अचिन्हित पूर्णांक   Register,
+				    व्योम          *buf,
+				    अचिन्हित दीर्घ  count)
+अणु
 	insl(BaseAddr + Register, buf, count);
-}
+पूर्ण
 
-static inline void nsp_fifo32_read(unsigned int   base,
-				   void          *buf,
-				   unsigned long  count)
-{
+अटल अंतरभूत व्योम nsp_fअगरo32_पढ़ो(अचिन्हित पूर्णांक   base,
+				   व्योम          *buf,
+				   अचिन्हित दीर्घ  count)
+अणु
 	//nsp_dbg(NSP_DEBUG_DATA_IO, "buf=0x%p, count=0x%lx*4", buf, count);
-	nsp_multi_read_4(base, FIFODATA, buf, count);
-}
+	nsp_multi_पढ़ो_4(base, FIFODATA, buf, count);
+पूर्ण
 
 /*----------------------------------------------------------*/
 
-/* write 8bit FIFO */
-static inline void nsp_multi_write_1(unsigned int   BaseAddr,
-				     unsigned int   Register,
-				     void          *buf,
-				     unsigned long  count)
-{
+/* ग_लिखो 8bit FIFO */
+अटल अंतरभूत व्योम nsp_multi_ग_लिखो_1(अचिन्हित पूर्णांक   BaseAddr,
+				     अचिन्हित पूर्णांक   Register,
+				     व्योम          *buf,
+				     अचिन्हित दीर्घ  count)
+अणु
 	outsb(BaseAddr + Register, buf, count);
-}
+पूर्ण
 
-static inline void nsp_fifo8_write(unsigned int   base,
-				   void          *buf,
-				   unsigned long  count)
-{
-	nsp_multi_write_1(base, FIFODATA, buf, count);
-}
+अटल अंतरभूत व्योम nsp_fअगरo8_ग_लिखो(अचिन्हित पूर्णांक   base,
+				   व्योम          *buf,
+				   अचिन्हित दीर्घ  count)
+अणु
+	nsp_multi_ग_लिखो_1(base, FIFODATA, buf, count);
+पूर्ण
 
 /*---------------------------------------------------------*/
 
-/* write 16bit FIFO */
-static inline void nsp_multi_write_2(unsigned int   BaseAddr,
-				     unsigned int   Register,
-				     void          *buf,
-				     unsigned long  count)
-{
+/* ग_लिखो 16bit FIFO */
+अटल अंतरभूत व्योम nsp_multi_ग_लिखो_2(अचिन्हित पूर्णांक   BaseAddr,
+				     अचिन्हित पूर्णांक   Register,
+				     व्योम          *buf,
+				     अचिन्हित दीर्घ  count)
+अणु
 	outsw(BaseAddr + Register, buf, count);
-}
+पूर्ण
 
-static inline void nsp_fifo16_write(unsigned int   base,
-				    void          *buf,
-				    unsigned long  count)
-{
-	nsp_multi_write_2(base, FIFODATA, buf, count);
-}
+अटल अंतरभूत व्योम nsp_fअगरo16_ग_लिखो(अचिन्हित पूर्णांक   base,
+				    व्योम          *buf,
+				    अचिन्हित दीर्घ  count)
+अणु
+	nsp_multi_ग_लिखो_2(base, FIFODATA, buf, count);
+पूर्ण
 
 /*---------------------------------------------------------*/
 
-/* write 32bit FIFO */
-static inline void nsp_multi_write_4(unsigned int   BaseAddr,
-				     unsigned int   Register,
-				     void          *buf,
-				     unsigned long  count)
-{
+/* ग_लिखो 32bit FIFO */
+अटल अंतरभूत व्योम nsp_multi_ग_लिखो_4(अचिन्हित पूर्णांक   BaseAddr,
+				     अचिन्हित पूर्णांक   Register,
+				     व्योम          *buf,
+				     अचिन्हित दीर्घ  count)
+अणु
 	outsl(BaseAddr + Register, buf, count);
-}
+पूर्ण
 
-static inline void nsp_fifo32_write(unsigned int   base,
-				    void          *buf,
-				    unsigned long  count)
-{
-	nsp_multi_write_4(base, FIFODATA, buf, count);
-}
+अटल अंतरभूत व्योम nsp_fअगरo32_ग_लिखो(अचिन्हित पूर्णांक   base,
+				    व्योम          *buf,
+				    अचिन्हित दीर्घ  count)
+अणु
+	nsp_multi_ग_लिखो_4(base, FIFODATA, buf, count);
+पूर्ण
 
 
 /*====================================================================*/
 
-static inline void nsp_mmio_write(unsigned long base,
-				  unsigned int  index,
-				  unsigned char val)
-{
-	unsigned char *ptr = (unsigned char *)(base + NSP_MMIO_OFFSET + index);
+अटल अंतरभूत व्योम nsp_mmio_ग_लिखो(अचिन्हित दीर्घ base,
+				  अचिन्हित पूर्णांक  index,
+				  अचिन्हित अक्षर val)
+अणु
+	अचिन्हित अक्षर *ptr = (अचिन्हित अक्षर *)(base + NSP_MMIO_OFFSET + index);
 
-	writeb(val, ptr);
-}
+	ग_लिखोb(val, ptr);
+पूर्ण
 
-static inline unsigned char nsp_mmio_read(unsigned long base,
-					  unsigned int  index)
-{
-	unsigned char *ptr = (unsigned char *)(base + NSP_MMIO_OFFSET + index);
+अटल अंतरभूत अचिन्हित अक्षर nsp_mmio_पढ़ो(अचिन्हित दीर्घ base,
+					  अचिन्हित पूर्णांक  index)
+अणु
+	अचिन्हित अक्षर *ptr = (अचिन्हित अक्षर *)(base + NSP_MMIO_OFFSET + index);
 
-	return readb(ptr);
-}
+	वापस पढ़ोb(ptr);
+पूर्ण
 
 /*-----------*/
 
-static inline unsigned char nsp_mmio_index_read(unsigned long base,
-						unsigned int  reg)
-{
-	unsigned char *index_ptr = (unsigned char *)(base + NSP_MMIO_OFFSET + INDEXREG);
-	unsigned char *data_ptr  = (unsigned char *)(base + NSP_MMIO_OFFSET + DATAREG);
+अटल अंतरभूत अचिन्हित अक्षर nsp_mmio_index_पढ़ो(अचिन्हित दीर्घ base,
+						अचिन्हित पूर्णांक  reg)
+अणु
+	अचिन्हित अक्षर *index_ptr = (अचिन्हित अक्षर *)(base + NSP_MMIO_OFFSET + INDEXREG);
+	अचिन्हित अक्षर *data_ptr  = (अचिन्हित अक्षर *)(base + NSP_MMIO_OFFSET + DATAREG);
 
-	writeb((unsigned char)reg, index_ptr);
-	return readb(data_ptr);
-}
+	ग_लिखोb((अचिन्हित अक्षर)reg, index_ptr);
+	वापस पढ़ोb(data_ptr);
+पूर्ण
 
-static inline void nsp_mmio_index_write(unsigned long base,
-					unsigned int  reg,
-					unsigned char val)
-{
-	unsigned char *index_ptr = (unsigned char *)(base + NSP_MMIO_OFFSET + INDEXREG);
-	unsigned char *data_ptr  = (unsigned char *)(base + NSP_MMIO_OFFSET + DATAREG);
+अटल अंतरभूत व्योम nsp_mmio_index_ग_लिखो(अचिन्हित दीर्घ base,
+					अचिन्हित पूर्णांक  reg,
+					अचिन्हित अक्षर val)
+अणु
+	अचिन्हित अक्षर *index_ptr = (अचिन्हित अक्षर *)(base + NSP_MMIO_OFFSET + INDEXREG);
+	अचिन्हित अक्षर *data_ptr  = (अचिन्हित अक्षर *)(base + NSP_MMIO_OFFSET + DATAREG);
 
-	writeb((unsigned char)reg, index_ptr);
-	writeb(val,                data_ptr);
-}
+	ग_लिखोb((अचिन्हित अक्षर)reg, index_ptr);
+	ग_लिखोb(val,                data_ptr);
+पूर्ण
 
-/* read 32bit FIFO */
-static inline void nsp_mmio_multi_read_4(unsigned long  base,
-					 unsigned int   Register,
-					 void          *buf,
-					 unsigned long  count)
-{
-	unsigned long *ptr = (unsigned long *)(base + Register);
-	unsigned long *tmp = (unsigned long *)buf;
-	int i;
-
-	//nsp_dbg(NSP_DEBUG_DATA_IO, "base 0x%0lx ptr 0x%p",base,ptr);
-
-	for (i = 0; i < count; i++) {
-		*tmp = readl(ptr);
-		//nsp_dbg(NSP_DEBUG_DATA_IO, "<%d,%p,%p,%lx>", i, ptr, tmp, *tmp);
-		tmp++;
-	}
-}
-
-static inline void nsp_mmio_fifo32_read(unsigned int   base,
-					void          *buf,
-					unsigned long  count)
-{
-	//nsp_dbg(NSP_DEBUG_DATA_IO, "buf=0x%p, count=0x%lx*4", buf, count);
-	nsp_mmio_multi_read_4(base, FIFODATA, buf, count);
-}
-
-static inline void nsp_mmio_multi_write_4(unsigned long  base,
-					  unsigned int   Register,
-					  void          *buf,
-					  unsigned long  count)
-{
-	unsigned long *ptr = (unsigned long *)(base + Register);
-	unsigned long *tmp = (unsigned long *)buf;
-	int i;
+/* पढ़ो 32bit FIFO */
+अटल अंतरभूत व्योम nsp_mmio_multi_पढ़ो_4(अचिन्हित दीर्घ  base,
+					 अचिन्हित पूर्णांक   Register,
+					 व्योम          *buf,
+					 अचिन्हित दीर्घ  count)
+अणु
+	अचिन्हित दीर्घ *ptr = (अचिन्हित दीर्घ *)(base + Register);
+	अचिन्हित दीर्घ *पंचांगp = (अचिन्हित दीर्घ *)buf;
+	पूर्णांक i;
 
 	//nsp_dbg(NSP_DEBUG_DATA_IO, "base 0x%0lx ptr 0x%p",base,ptr);
 
-	for (i = 0; i < count; i++) {
-		writel(*tmp, ptr);
-		//nsp_dbg(NSP_DEBUG_DATA_IO, "<%d,%p,%p,%lx>", i, ptr, tmp, *tmp);
-		tmp++;
-	}
-}
+	क्रम (i = 0; i < count; i++) अणु
+		*पंचांगp = पढ़ोl(ptr);
+		//nsp_dbg(NSP_DEBUG_DATA_IO, "<%d,%p,%p,%lx>", i, ptr, पंचांगp, *पंचांगp);
+		पंचांगp++;
+	पूर्ण
+पूर्ण
 
-static inline void nsp_mmio_fifo32_write(unsigned int   base,
-					 void          *buf,
-					 unsigned long  count)
-{
+अटल अंतरभूत व्योम nsp_mmio_fअगरo32_पढ़ो(अचिन्हित पूर्णांक   base,
+					व्योम          *buf,
+					अचिन्हित दीर्घ  count)
+अणु
 	//nsp_dbg(NSP_DEBUG_DATA_IO, "buf=0x%p, count=0x%lx*4", buf, count);
-	nsp_mmio_multi_write_4(base, FIFODATA, buf, count);
-}
+	nsp_mmio_multi_पढ़ो_4(base, FIFODATA, buf, count);
+पूर्ण
+
+अटल अंतरभूत व्योम nsp_mmio_multi_ग_लिखो_4(अचिन्हित दीर्घ  base,
+					  अचिन्हित पूर्णांक   Register,
+					  व्योम          *buf,
+					  अचिन्हित दीर्घ  count)
+अणु
+	अचिन्हित दीर्घ *ptr = (अचिन्हित दीर्घ *)(base + Register);
+	अचिन्हित दीर्घ *पंचांगp = (अचिन्हित दीर्घ *)buf;
+	पूर्णांक i;
+
+	//nsp_dbg(NSP_DEBUG_DATA_IO, "base 0x%0lx ptr 0x%p",base,ptr);
+
+	क्रम (i = 0; i < count; i++) अणु
+		ग_लिखोl(*पंचांगp, ptr);
+		//nsp_dbg(NSP_DEBUG_DATA_IO, "<%d,%p,%p,%lx>", i, ptr, पंचांगp, *पंचांगp);
+		पंचांगp++;
+	पूर्ण
+पूर्ण
+
+अटल अंतरभूत व्योम nsp_mmio_fअगरo32_ग_लिखो(अचिन्हित पूर्णांक   base,
+					 व्योम          *buf,
+					 अचिन्हित दीर्घ  count)
+अणु
+	//nsp_dbg(NSP_DEBUG_DATA_IO, "buf=0x%p, count=0x%lx*4", buf, count);
+	nsp_mmio_multi_ग_लिखो_4(base, FIFODATA, buf, count);
+पूर्ण
 
 
 
-#endif
+#पूर्ण_अगर
 /* end */

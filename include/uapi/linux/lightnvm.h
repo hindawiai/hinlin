@@ -1,141 +1,142 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Copyright (C) 2015 CNEX Labs.  All rights reserved.
+ * Copyright (C) 2015 CNEX Lअसल.  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; see the file COPYING.  If not, write to
+ * aदीर्घ with this program; see the file COPYING.  If not, ग_लिखो to
  * the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139,
  * USA.
  */
 
-#ifndef _UAPI_LINUX_LIGHTNVM_H
-#define _UAPI_LINUX_LIGHTNVM_H
+#अगर_अघोषित _UAPI_LINUX_LIGHTNVM_H
+#घोषणा _UAPI_LINUX_LIGHTNVM_H
 
-#ifdef __KERNEL__
-#include <linux/const.h>
-#else /* __KERNEL__ */
-#include <stdio.h>
-#include <sys/ioctl.h>
-#define DISK_NAME_LEN 32
-#endif /* __KERNEL__ */
+#अगर_घोषित __KERNEL__
+#समावेश <linux/स्थिर.h>
+#अन्यथा /* __KERNEL__ */
+#समावेश <मानकपन.स>
+#समावेश <sys/ioctl.h>
+#घोषणा DISK_NAME_LEN 32
+#पूर्ण_अगर /* __KERNEL__ */
 
-#include <linux/types.h>
-#include <linux/ioctl.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ioctl.h>
 
-#define NVM_TTYPE_NAME_MAX 48
-#define NVM_TTYPE_MAX 63
-#define NVM_MMTYPE_LEN 8
+#घोषणा NVM_TTYPE_NAME_MAX 48
+#घोषणा NVM_TTYPE_MAX 63
+#घोषणा NVM_MMTYPE_LEN 8
 
-#define NVM_CTRL_FILE "/dev/lightnvm/control"
+#घोषणा NVM_CTRL_खाता "/dev/lightnvm/control"
 
-struct nvm_ioctl_info_tgt {
+काष्ठा nvm_ioctl_info_tgt अणु
 	__u32 version[3];
 	__u32 reserved;
-	char tgtname[NVM_TTYPE_NAME_MAX];
-};
+	अक्षर tgtname[NVM_TTYPE_NAME_MAX];
+पूर्ण;
 
-struct nvm_ioctl_info {
+काष्ठा nvm_ioctl_info अणु
 	__u32 version[3];	/* in/out - major, minor, patch */
-	__u16 tgtsize;		/* number of targets */
+	__u16 tgtsize;		/* number of tarमाला_लो */
 	__u16 reserved16;	/* pad to 4K page */
 	__u32 reserved[12];
-	struct nvm_ioctl_info_tgt tgts[NVM_TTYPE_MAX];
-};
+	काष्ठा nvm_ioctl_info_tgt tgts[NVM_TTYPE_MAX];
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	NVM_DEVICE_ACTIVE = 1 << 0,
-};
+पूर्ण;
 
-struct nvm_ioctl_device_info {
-	char devname[DISK_NAME_LEN];
-	char bmname[NVM_TTYPE_NAME_MAX];
+काष्ठा nvm_ioctl_device_info अणु
+	अक्षर devname[DISK_NAME_LEN];
+	अक्षर bmname[NVM_TTYPE_NAME_MAX];
 	__u32 bmversion[3];
 	__u32 flags;
 	__u32 reserved[8];
-};
+पूर्ण;
 
-struct nvm_ioctl_get_devices {
+काष्ठा nvm_ioctl_get_devices अणु
 	__u32 nr_devices;
 	__u32 reserved[31];
-	struct nvm_ioctl_device_info info[31];
-};
+	काष्ठा nvm_ioctl_device_info info[31];
+पूर्ण;
 
-struct nvm_ioctl_create_simple {
+काष्ठा nvm_ioctl_create_simple अणु
 	__u32 lun_begin;
 	__u32 lun_end;
-};
+पूर्ण;
 
-struct nvm_ioctl_create_extended {
+काष्ठा nvm_ioctl_create_extended अणु
 	__u16 lun_begin;
 	__u16 lun_end;
 	__u16 op;
 	__u16 rsv;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	NVM_CONFIG_TYPE_SIMPLE = 0,
 	NVM_CONFIG_TYPE_EXTENDED = 1,
-};
+पूर्ण;
 
-struct nvm_ioctl_create_conf {
+काष्ठा nvm_ioctl_create_conf अणु
 	__u32 type;
-	union {
-		struct nvm_ioctl_create_simple s;
-		struct nvm_ioctl_create_extended e;
-	};
-};
+	जोड़ अणु
+		काष्ठा nvm_ioctl_create_simple s;
+		काष्ठा nvm_ioctl_create_extended e;
+	पूर्ण;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	NVM_TARGET_FACTORY = 1 << 0,	/* Init target in factory mode */
-};
+पूर्ण;
 
-struct nvm_ioctl_create {
-	char dev[DISK_NAME_LEN];		/* open-channel SSD device */
-	char tgttype[NVM_TTYPE_NAME_MAX];	/* target type name */
-	char tgtname[DISK_NAME_LEN];		/* dev to expose target as */
-
-	__u32 flags;
-
-	struct nvm_ioctl_create_conf conf;
-};
-
-struct nvm_ioctl_remove {
-	char tgtname[DISK_NAME_LEN];
+काष्ठा nvm_ioctl_create अणु
+	अक्षर dev[DISK_NAME_LEN];		/* खोलो-channel SSD device */
+	अक्षर tgttype[NVM_TTYPE_NAME_MAX];	/* target type name */
+	अक्षर tgtname[DISK_NAME_LEN];		/* dev to expose target as */
 
 	__u32 flags;
-};
 
-struct nvm_ioctl_dev_init {
-	char dev[DISK_NAME_LEN];		/* open-channel SSD device */
-	char mmtype[NVM_MMTYPE_LEN];		/* register to media manager */
+	काष्ठा nvm_ioctl_create_conf conf;
+पूर्ण;
+
+काष्ठा nvm_ioctl_हटाओ अणु
+	अक्षर tgtname[DISK_NAME_LEN];
 
 	__u32 flags;
-};
+पूर्ण;
 
-enum {
+काष्ठा nvm_ioctl_dev_init अणु
+	अक्षर dev[DISK_NAME_LEN];		/* खोलो-channel SSD device */
+	अक्षर mmtype[NVM_MMTYPE_LEN];		/* रेजिस्टर to media manager */
+
+	__u32 flags;
+पूर्ण;
+
+क्रमागत अणु
 	NVM_FACTORY_ERASE_ONLY_USER	= 1 << 0, /* erase only blocks used as
 						   * host blks or grown blks */
-	NVM_FACTORY_RESET_HOST_BLKS	= 1 << 1, /* remove host blk marks */
-	NVM_FACTORY_RESET_GRWN_BBLKS	= 1 << 2, /* remove grown blk marks */
+	NVM_FACTORY_RESET_HOST_BLKS	= 1 << 1, /* हटाओ host blk marks */
+	NVM_FACTORY_RESET_GRWN_BBLKS	= 1 << 2, /* हटाओ grown blk marks */
 	NVM_FACTORY_NR_BITS		= 1 << 3, /* stops here */
-};
+पूर्ण;
 
-struct nvm_ioctl_dev_factory {
-	char dev[DISK_NAME_LEN];
+काष्ठा nvm_ioctl_dev_factory अणु
+	अक्षर dev[DISK_NAME_LEN];
 
 	__u32 flags;
-};
+पूर्ण;
 
-struct nvm_user_vio {
+काष्ठा nvm_user_vio अणु
 	__u8 opcode;
 	__u8 flags;
 	__u16 control;
@@ -149,9 +150,9 @@ struct nvm_user_vio {
 	__u64 status;
 	__u32 result;
 	__u32 rsvd3[3];
-};
+पूर्ण;
 
-struct nvm_passthru_vio {
+काष्ठा nvm_passthru_vio अणु
 	__u8 opcode;
 	__u8 flags;
 	__u8 rsvd[2];
@@ -170,11 +171,11 @@ struct nvm_passthru_vio {
 	__u32 cdw15;
 	__u64 status;
 	__u32 result;
-	__u32 timeout_ms;
-};
+	__u32 समयout_ms;
+पूर्ण;
 
-/* The ioctl type, 'L', 0x20 - 0x2F documented in ioctl-number.txt */
-enum {
+/* The ioctl type, 'L', 0x20 - 0x2F करोcumented in ioctl-number.txt */
+क्रमागत अणु
 	/* top level cmds */
 	NVM_INFO_CMD = 0x20,
 	NVM_GET_DEVICES_CMD,
@@ -193,32 +194,32 @@ enum {
 	NVM_DEV_VIO_ADMIN_CMD = 0x41,
 	NVM_DEV_VIO_CMD = 0x42,
 	NVM_DEV_VIO_USER_CMD = 0x43,
-};
+पूर्ण;
 
-#define NVM_IOCTL 'L' /* 0x4c */
+#घोषणा NVM_IOCTL 'L' /* 0x4c */
 
-#define NVM_INFO		_IOWR(NVM_IOCTL, NVM_INFO_CMD, \
-						struct nvm_ioctl_info)
-#define NVM_GET_DEVICES		_IOR(NVM_IOCTL, NVM_GET_DEVICES_CMD, \
-						struct nvm_ioctl_get_devices)
-#define NVM_DEV_CREATE		_IOW(NVM_IOCTL, NVM_DEV_CREATE_CMD, \
-						struct nvm_ioctl_create)
-#define NVM_DEV_REMOVE		_IOW(NVM_IOCTL, NVM_DEV_REMOVE_CMD, \
-						struct nvm_ioctl_remove)
-#define NVM_DEV_INIT		_IOW(NVM_IOCTL, NVM_DEV_INIT_CMD, \
-						struct nvm_ioctl_dev_init)
-#define NVM_DEV_FACTORY		_IOW(NVM_IOCTL, NVM_DEV_FACTORY_CMD, \
-						struct nvm_ioctl_dev_factory)
+#घोषणा NVM_INFO		_IOWR(NVM_IOCTL, NVM_INFO_CMD, \
+						काष्ठा nvm_ioctl_info)
+#घोषणा NVM_GET_DEVICES		_IOR(NVM_IOCTL, NVM_GET_DEVICES_CMD, \
+						काष्ठा nvm_ioctl_get_devices)
+#घोषणा NVM_DEV_CREATE		_IOW(NVM_IOCTL, NVM_DEV_CREATE_CMD, \
+						काष्ठा nvm_ioctl_create)
+#घोषणा NVM_DEV_REMOVE		_IOW(NVM_IOCTL, NVM_DEV_REMOVE_CMD, \
+						काष्ठा nvm_ioctl_हटाओ)
+#घोषणा NVM_DEV_INIT		_IOW(NVM_IOCTL, NVM_DEV_INIT_CMD, \
+						काष्ठा nvm_ioctl_dev_init)
+#घोषणा NVM_DEV_FACTORY		_IOW(NVM_IOCTL, NVM_DEV_FACTORY_CMD, \
+						काष्ठा nvm_ioctl_dev_factory)
 
-#define NVME_NVM_IOCTL_IO_VIO		_IOWR(NVM_IOCTL, NVM_DEV_VIO_USER_CMD, \
-						struct nvm_passthru_vio)
-#define NVME_NVM_IOCTL_ADMIN_VIO	_IOWR(NVM_IOCTL, NVM_DEV_VIO_ADMIN_CMD,\
-						struct nvm_passthru_vio)
-#define NVME_NVM_IOCTL_SUBMIT_VIO	_IOWR(NVM_IOCTL, NVM_DEV_VIO_CMD,\
-						struct nvm_user_vio)
+#घोषणा NVME_NVM_IOCTL_IO_VIO		_IOWR(NVM_IOCTL, NVM_DEV_VIO_USER_CMD, \
+						काष्ठा nvm_passthru_vio)
+#घोषणा NVME_NVM_IOCTL_ADMIN_VIO	_IOWR(NVM_IOCTL, NVM_DEV_VIO_ADMIN_CMD,\
+						काष्ठा nvm_passthru_vio)
+#घोषणा NVME_NVM_IOCTL_SUBMIT_VIO	_IOWR(NVM_IOCTL, NVM_DEV_VIO_CMD,\
+						काष्ठा nvm_user_vio)
 
-#define NVM_VERSION_MAJOR	1
-#define NVM_VERSION_MINOR	0
-#define NVM_VERSION_PATCHLEVEL	0
+#घोषणा NVM_VERSION_MAJOR	1
+#घोषणा NVM_VERSION_MINOR	0
+#घोषणा NVM_VERSION_PATCHLEVEL	0
 
-#endif
+#पूर्ण_अगर

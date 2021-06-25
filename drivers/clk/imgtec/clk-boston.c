@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016-2017 Imagination Technologies
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
-#define pr_fmt(fmt) "clk-boston: " fmt
+#घोषणा pr_fmt(fmt) "clk-boston: " fmt
 
-#include <linux/clk-provider.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/mfd/syscon.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mfd/syscon.h>
 
-#include <dt-bindings/clock/boston-clock.h>
+#समावेश <dt-bindings/घड़ी/boston-घड़ी.h>
 
-#define BOSTON_PLAT_MMCMDIV		0x30
+#घोषणा BOSTON_PLAT_MMCMDIV		0x30
 # define BOSTON_PLAT_MMCMDIV_CLK0DIV	(0xff << 0)
 # define BOSTON_PLAT_MMCMDIV_INPUT	(0xff << 8)
 # define BOSTON_PLAT_MMCMDIV_MUL	(0xff << 16)
 # define BOSTON_PLAT_MMCMDIV_CLK1DIV	(0xff << 24)
 
-#define BOSTON_CLK_COUNT 3
+#घोषणा BOSTON_CLK_COUNT 3
 
-static u32 ext_field(u32 val, u32 mask)
-{
-	return (val & mask) >> (ffs(mask) - 1);
-}
+अटल u32 ext_field(u32 val, u32 mask)
+अणु
+	वापस (val & mask) >> (ffs(mask) - 1);
+पूर्ण
 
-static void __init clk_boston_setup(struct device_node *np)
-{
-	unsigned long in_freq, cpu_freq, sys_freq;
-	uint mmcmdiv, mul, cpu_div, sys_div;
-	struct clk_hw_onecell_data *onecell;
-	struct regmap *regmap;
-	struct clk_hw *hw;
-	int err;
+अटल व्योम __init clk_boston_setup(काष्ठा device_node *np)
+अणु
+	अचिन्हित दीर्घ in_freq, cpu_freq, sys_freq;
+	uपूर्णांक mmcmभाग, mul, cpu_भाग, sys_भाग;
+	काष्ठा clk_hw_onecell_data *onecell;
+	काष्ठा regmap *regmap;
+	काष्ठा clk_hw *hw;
+	पूर्णांक err;
 
 	regmap = syscon_node_to_regmap(np->parent);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		pr_err("failed to find regmap\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	err = regmap_read(regmap, BOSTON_PLAT_MMCMDIV, &mmcmdiv);
-	if (err) {
+	err = regmap_पढ़ो(regmap, BOSTON_PLAT_MMCMDIV, &mmcmभाग);
+	अगर (err) अणु
 		pr_err("failed to read mmcm_div register: %d\n", err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	in_freq = ext_field(mmcmdiv, BOSTON_PLAT_MMCMDIV_INPUT) * 1000000;
-	mul = ext_field(mmcmdiv, BOSTON_PLAT_MMCMDIV_MUL);
+	in_freq = ext_field(mmcmभाग, BOSTON_PLAT_MMCMDIV_INPUT) * 1000000;
+	mul = ext_field(mmcmभाग, BOSTON_PLAT_MMCMDIV_MUL);
 
-	sys_div = ext_field(mmcmdiv, BOSTON_PLAT_MMCMDIV_CLK0DIV);
-	sys_freq = mult_frac(in_freq, mul, sys_div);
+	sys_भाग = ext_field(mmcmभाग, BOSTON_PLAT_MMCMDIV_CLK0DIV);
+	sys_freq = mult_frac(in_freq, mul, sys_भाग);
 
-	cpu_div = ext_field(mmcmdiv, BOSTON_PLAT_MMCMDIV_CLK1DIV);
-	cpu_freq = mult_frac(in_freq, mul, cpu_div);
+	cpu_भाग = ext_field(mmcmभाग, BOSTON_PLAT_MMCMDIV_CLK1DIV);
+	cpu_freq = mult_frac(in_freq, mul, cpu_भाग);
 
-	onecell = kzalloc(struct_size(onecell, hws, BOSTON_CLK_COUNT),
+	onecell = kzalloc(काष्ठा_size(onecell, hws, BOSTON_CLK_COUNT),
 			  GFP_KERNEL);
-	if (!onecell)
-		return;
+	अगर (!onecell)
+		वापस;
 
 	onecell->num = BOSTON_CLK_COUNT;
 
-	hw = clk_hw_register_fixed_rate(NULL, "input", NULL, 0, in_freq);
-	if (IS_ERR(hw)) {
+	hw = clk_hw_रेजिस्टर_fixed_rate(शून्य, "input", शून्य, 0, in_freq);
+	अगर (IS_ERR(hw)) अणु
 		pr_err("failed to register input clock: %ld\n", PTR_ERR(hw));
-		goto fail_input;
-	}
+		जाओ fail_input;
+	पूर्ण
 	onecell->hws[BOSTON_CLK_INPUT] = hw;
 
-	hw = clk_hw_register_fixed_rate(NULL, "sys", "input", 0, sys_freq);
-	if (IS_ERR(hw)) {
+	hw = clk_hw_रेजिस्टर_fixed_rate(शून्य, "sys", "input", 0, sys_freq);
+	अगर (IS_ERR(hw)) अणु
 		pr_err("failed to register sys clock: %ld\n", PTR_ERR(hw));
-		goto fail_sys;
-	}
+		जाओ fail_sys;
+	पूर्ण
 	onecell->hws[BOSTON_CLK_SYS] = hw;
 
-	hw = clk_hw_register_fixed_rate(NULL, "cpu", "input", 0, cpu_freq);
-	if (IS_ERR(hw)) {
+	hw = clk_hw_रेजिस्टर_fixed_rate(शून्य, "cpu", "input", 0, cpu_freq);
+	अगर (IS_ERR(hw)) अणु
 		pr_err("failed to register cpu clock: %ld\n", PTR_ERR(hw));
-		goto fail_cpu;
-	}
+		जाओ fail_cpu;
+	पूर्ण
 	onecell->hws[BOSTON_CLK_CPU] = hw;
 
 	err = of_clk_add_hw_provider(np, of_clk_hw_onecell_get, onecell);
-	if (err) {
+	अगर (err) अणु
 		pr_err("failed to add DT provider: %d\n", err);
-		goto fail_clk_add;
-	}
+		जाओ fail_clk_add;
+	पूर्ण
 
-	return;
+	वापस;
 
 fail_clk_add:
-	clk_hw_unregister_fixed_rate(onecell->hws[BOSTON_CLK_CPU]);
+	clk_hw_unरेजिस्टर_fixed_rate(onecell->hws[BOSTON_CLK_CPU]);
 fail_cpu:
-	clk_hw_unregister_fixed_rate(onecell->hws[BOSTON_CLK_SYS]);
+	clk_hw_unरेजिस्टर_fixed_rate(onecell->hws[BOSTON_CLK_SYS]);
 fail_sys:
-	clk_hw_unregister_fixed_rate(onecell->hws[BOSTON_CLK_INPUT]);
+	clk_hw_unरेजिस्टर_fixed_rate(onecell->hws[BOSTON_CLK_INPUT]);
 fail_input:
-	kfree(onecell);
-}
+	kमुक्त(onecell);
+पूर्ण
 
 /*
  * Use CLK_OF_DECLARE so that this driver is probed early enough to provide the
- * CPU frequency for use with the GIC or cop0 counters/timers.
+ * CPU frequency क्रम use with the GIC or cop0 counters/समयrs.
  */
 CLK_OF_DECLARE(clk_boston, "img,boston-clock", clk_boston_setup);

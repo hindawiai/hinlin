@@ -1,112 +1,113 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2008, Intel Corporation.
  *
- * Author: Lucy Liu <lucy.liu@intel.com>
+ * Author: Lucy Liu <lucy.liu@पूर्णांकel.com>
  */
 
-#ifndef __NET_DCBNL_H__
-#define __NET_DCBNL_H__
+#अगर_अघोषित __NET_DCBNL_H__
+#घोषणा __NET_DCBNL_H__
 
-#include <linux/dcbnl.h>
+#समावेश <linux/dcbnl.h>
 
-struct dcb_app_type {
-	int	ifindex;
-	struct dcb_app	  app;
-	struct list_head  list;
+काष्ठा dcb_app_type अणु
+	पूर्णांक	अगरindex;
+	काष्ठा dcb_app	  app;
+	काष्ठा list_head  list;
 	u8	dcbx;
-};
+पूर्ण;
 
-int dcb_setapp(struct net_device *, struct dcb_app *);
-u8 dcb_getapp(struct net_device *, struct dcb_app *);
-int dcb_ieee_setapp(struct net_device *, struct dcb_app *);
-int dcb_ieee_delapp(struct net_device *, struct dcb_app *);
-u8 dcb_ieee_getapp_mask(struct net_device *, struct dcb_app *);
+पूर्णांक dcb_setapp(काष्ठा net_device *, काष्ठा dcb_app *);
+u8 dcb_getapp(काष्ठा net_device *, काष्ठा dcb_app *);
+पूर्णांक dcb_ieee_setapp(काष्ठा net_device *, काष्ठा dcb_app *);
+पूर्णांक dcb_ieee_delapp(काष्ठा net_device *, काष्ठा dcb_app *);
+u8 dcb_ieee_getapp_mask(काष्ठा net_device *, काष्ठा dcb_app *);
 
-struct dcb_ieee_app_prio_map {
+काष्ठा dcb_ieee_app_prio_map अणु
 	u64 map[IEEE_8021QAZ_MAX_TCS];
-};
-void dcb_ieee_getapp_prio_dscp_mask_map(const struct net_device *dev,
-					struct dcb_ieee_app_prio_map *p_map);
+पूर्ण;
+व्योम dcb_ieee_getapp_prio_dscp_mask_map(स्थिर काष्ठा net_device *dev,
+					काष्ठा dcb_ieee_app_prio_map *p_map);
 
-struct dcb_ieee_app_dscp_map {
+काष्ठा dcb_ieee_app_dscp_map अणु
 	u8 map[64];
-};
-void dcb_ieee_getapp_dscp_prio_mask_map(const struct net_device *dev,
-					struct dcb_ieee_app_dscp_map *p_map);
-u8 dcb_ieee_getapp_default_prio_mask(const struct net_device *dev);
+पूर्ण;
+व्योम dcb_ieee_getapp_dscp_prio_mask_map(स्थिर काष्ठा net_device *dev,
+					काष्ठा dcb_ieee_app_dscp_map *p_map);
+u8 dcb_ieee_getapp_शेष_prio_mask(स्थिर काष्ठा net_device *dev);
 
-int dcbnl_ieee_notify(struct net_device *dev, int event, int cmd,
+पूर्णांक dcbnl_ieee_notअगरy(काष्ठा net_device *dev, पूर्णांक event, पूर्णांक cmd,
 		      u32 seq, u32 pid);
-int dcbnl_cee_notify(struct net_device *dev, int event, int cmd,
+पूर्णांक dcbnl_cee_notअगरy(काष्ठा net_device *dev, पूर्णांक event, पूर्णांक cmd,
 		     u32 seq, u32 pid);
 
 /*
- * Ops struct for the netlink callbacks.  Used by DCB-enabled drivers through
- * the netdevice struct.
+ * Ops काष्ठा क्रम the netlink callbacks.  Used by DCB-enabled drivers through
+ * the netdevice काष्ठा.
  */
-struct dcbnl_rtnl_ops {
+काष्ठा dcbnl_rtnl_ops अणु
 	/* IEEE 802.1Qaz std */
-	int (*ieee_getets) (struct net_device *, struct ieee_ets *);
-	int (*ieee_setets) (struct net_device *, struct ieee_ets *);
-	int (*ieee_getmaxrate) (struct net_device *, struct ieee_maxrate *);
-	int (*ieee_setmaxrate) (struct net_device *, struct ieee_maxrate *);
-	int (*ieee_getqcn) (struct net_device *, struct ieee_qcn *);
-	int (*ieee_setqcn) (struct net_device *, struct ieee_qcn *);
-	int (*ieee_getqcnstats) (struct net_device *, struct ieee_qcn_stats *);
-	int (*ieee_getpfc) (struct net_device *, struct ieee_pfc *);
-	int (*ieee_setpfc) (struct net_device *, struct ieee_pfc *);
-	int (*ieee_getapp) (struct net_device *, struct dcb_app *);
-	int (*ieee_setapp) (struct net_device *, struct dcb_app *);
-	int (*ieee_delapp) (struct net_device *, struct dcb_app *);
-	int (*ieee_peer_getets) (struct net_device *, struct ieee_ets *);
-	int (*ieee_peer_getpfc) (struct net_device *, struct ieee_pfc *);
+	पूर्णांक (*ieee_getets) (काष्ठा net_device *, काष्ठा ieee_ets *);
+	पूर्णांक (*ieee_setets) (काष्ठा net_device *, काष्ठा ieee_ets *);
+	पूर्णांक (*ieee_geपंचांगaxrate) (काष्ठा net_device *, काष्ठा ieee_maxrate *);
+	पूर्णांक (*ieee_seपंचांगaxrate) (काष्ठा net_device *, काष्ठा ieee_maxrate *);
+	पूर्णांक (*ieee_getqcn) (काष्ठा net_device *, काष्ठा ieee_qcn *);
+	पूर्णांक (*ieee_setqcn) (काष्ठा net_device *, काष्ठा ieee_qcn *);
+	पूर्णांक (*ieee_getqcnstats) (काष्ठा net_device *, काष्ठा ieee_qcn_stats *);
+	पूर्णांक (*ieee_getpfc) (काष्ठा net_device *, काष्ठा ieee_pfc *);
+	पूर्णांक (*ieee_setpfc) (काष्ठा net_device *, काष्ठा ieee_pfc *);
+	पूर्णांक (*ieee_getapp) (काष्ठा net_device *, काष्ठा dcb_app *);
+	पूर्णांक (*ieee_setapp) (काष्ठा net_device *, काष्ठा dcb_app *);
+	पूर्णांक (*ieee_delapp) (काष्ठा net_device *, काष्ठा dcb_app *);
+	पूर्णांक (*ieee_peer_getets) (काष्ठा net_device *, काष्ठा ieee_ets *);
+	पूर्णांक (*ieee_peer_getpfc) (काष्ठा net_device *, काष्ठा ieee_pfc *);
 
 	/* CEE std */
-	u8   (*getstate)(struct net_device *);
-	u8   (*setstate)(struct net_device *, u8);
-	void (*getpermhwaddr)(struct net_device *, u8 *);
-	void (*setpgtccfgtx)(struct net_device *, int, u8, u8, u8, u8);
-	void (*setpgbwgcfgtx)(struct net_device *, int, u8);
-	void (*setpgtccfgrx)(struct net_device *, int, u8, u8, u8, u8);
-	void (*setpgbwgcfgrx)(struct net_device *, int, u8);
-	void (*getpgtccfgtx)(struct net_device *, int, u8 *, u8 *, u8 *, u8 *);
-	void (*getpgbwgcfgtx)(struct net_device *, int, u8 *);
-	void (*getpgtccfgrx)(struct net_device *, int, u8 *, u8 *, u8 *, u8 *);
-	void (*getpgbwgcfgrx)(struct net_device *, int, u8 *);
-	void (*setpfccfg)(struct net_device *, int, u8);
-	void (*getpfccfg)(struct net_device *, int, u8 *);
-	u8   (*setall)(struct net_device *);
-	u8   (*getcap)(struct net_device *, int, u8 *);
-	int  (*getnumtcs)(struct net_device *, int, u8 *);
-	int  (*setnumtcs)(struct net_device *, int, u8);
-	u8   (*getpfcstate)(struct net_device *);
-	void (*setpfcstate)(struct net_device *, u8);
-	void (*getbcncfg)(struct net_device *, int, u32 *);
-	void (*setbcncfg)(struct net_device *, int, u32);
-	void (*getbcnrp)(struct net_device *, int, u8 *);
-	void (*setbcnrp)(struct net_device *, int, u8);
-	int  (*setapp)(struct net_device *, u8, u16, u8);
-	int  (*getapp)(struct net_device *, u8, u16);
-	u8   (*getfeatcfg)(struct net_device *, int, u8 *);
-	u8   (*setfeatcfg)(struct net_device *, int, u8);
+	u8   (*माला_लोtate)(काष्ठा net_device *);
+	u8   (*setstate)(काष्ठा net_device *, u8);
+	व्योम (*getpermhwaddr)(काष्ठा net_device *, u8 *);
+	व्योम (*setpgtccfgtx)(काष्ठा net_device *, पूर्णांक, u8, u8, u8, u8);
+	व्योम (*setpgbwgcfgtx)(काष्ठा net_device *, पूर्णांक, u8);
+	व्योम (*setpgtccfgrx)(काष्ठा net_device *, पूर्णांक, u8, u8, u8, u8);
+	व्योम (*setpgbwgcfgrx)(काष्ठा net_device *, पूर्णांक, u8);
+	व्योम (*getpgtccfgtx)(काष्ठा net_device *, पूर्णांक, u8 *, u8 *, u8 *, u8 *);
+	व्योम (*getpgbwgcfgtx)(काष्ठा net_device *, पूर्णांक, u8 *);
+	व्योम (*getpgtccfgrx)(काष्ठा net_device *, पूर्णांक, u8 *, u8 *, u8 *, u8 *);
+	व्योम (*getpgbwgcfgrx)(काष्ठा net_device *, पूर्णांक, u8 *);
+	व्योम (*setpfccfg)(काष्ठा net_device *, पूर्णांक, u8);
+	व्योम (*getpfccfg)(काष्ठा net_device *, पूर्णांक, u8 *);
+	u8   (*setall)(काष्ठा net_device *);
+	u8   (*अ_लोap)(काष्ठा net_device *, पूर्णांक, u8 *);
+	पूर्णांक  (*getnumtcs)(काष्ठा net_device *, पूर्णांक, u8 *);
+	पूर्णांक  (*setnumtcs)(काष्ठा net_device *, पूर्णांक, u8);
+	u8   (*getpfcstate)(काष्ठा net_device *);
+	व्योम (*setpfcstate)(काष्ठा net_device *, u8);
+	व्योम (*getbcncfg)(काष्ठा net_device *, पूर्णांक, u32 *);
+	व्योम (*setbcncfg)(काष्ठा net_device *, पूर्णांक, u32);
+	व्योम (*getbcnrp)(काष्ठा net_device *, पूर्णांक, u8 *);
+	व्योम (*setbcnrp)(काष्ठा net_device *, पूर्णांक, u8);
+	पूर्णांक  (*setapp)(काष्ठा net_device *, u8, u16, u8);
+	पूर्णांक  (*getapp)(काष्ठा net_device *, u8, u16);
+	u8   (*getfeatcfg)(काष्ठा net_device *, पूर्णांक, u8 *);
+	u8   (*setfeatcfg)(काष्ठा net_device *, पूर्णांक, u8);
 
 	/* DCBX configuration */
-	u8   (*getdcbx)(struct net_device *);
-	u8   (*setdcbx)(struct net_device *, u8);
+	u8   (*getdcbx)(काष्ठा net_device *);
+	u8   (*setdcbx)(काष्ठा net_device *, u8);
 
 	/* peer apps */
-	int (*peer_getappinfo)(struct net_device *, struct dcb_peer_app_info *,
+	पूर्णांक (*peer_getappinfo)(काष्ठा net_device *, काष्ठा dcb_peer_app_info *,
 			       u16 *);
-	int (*peer_getapptable)(struct net_device *, struct dcb_app *);
+	पूर्णांक (*peer_getapptable)(काष्ठा net_device *, काष्ठा dcb_app *);
 
 	/* CEE peer */
-	int (*cee_peer_getpg) (struct net_device *, struct cee_pg *);
-	int (*cee_peer_getpfc) (struct net_device *, struct cee_pfc *);
+	पूर्णांक (*cee_peer_getpg) (काष्ठा net_device *, काष्ठा cee_pg *);
+	पूर्णांक (*cee_peer_getpfc) (काष्ठा net_device *, काष्ठा cee_pfc *);
 
 	/* buffer settings */
-	int (*dcbnl_getbuffer)(struct net_device *, struct dcbnl_buffer *);
-	int (*dcbnl_setbuffer)(struct net_device *, struct dcbnl_buffer *);
-};
+	पूर्णांक (*dcbnl_getbuffer)(काष्ठा net_device *, काष्ठा dcbnl_buffer *);
+	पूर्णांक (*dcbnl_रखो_बफfer)(काष्ठा net_device *, काष्ठा dcbnl_buffer *);
+पूर्ण;
 
-#endif /* __NET_DCBNL_H__ */
+#पूर्ण_अगर /* __NET_DCBNL_H__ */

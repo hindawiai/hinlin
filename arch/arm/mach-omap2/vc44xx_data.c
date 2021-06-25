@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OMAP4 Voltage Controller (VC) data
  *
@@ -11,41 +12,41 @@
  * Kalle Jokiniemi
  * Paul Walmsley
  */
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-#include "prm44xx.h"
-#include "prm-regbits-44xx.h"
-#include "voltage.h"
+#समावेश "prm44xx.h"
+#समावेश "prm-regbits-44xx.h"
+#समावेश "voltage.h"
 
-#include "vc.h"
+#समावेश "vc.h"
 
 /*
  * VC data common to 44xx chips
- * XXX This stuff presumably belongs in the vc3xxx.c or vc.c file.
+ * XXX This stuff presumably beदीर्घs in the vc3xxx.c or vc.c file.
  */
-static const struct omap_vc_common omap4_vc_common = {
+अटल स्थिर काष्ठा omap_vc_common omap4_vc_common = अणु
 	.bypass_val_reg = OMAP4_PRM_VC_VAL_BYPASS_OFFSET,
-	.data_shift = OMAP4430_DATA_SHIFT,
-	.slaveaddr_shift = OMAP4430_SLAVEADDR_SHIFT,
-	.regaddr_shift = OMAP4430_REGADDR_SHIFT,
+	.data_shअगरt = OMAP4430_DATA_SHIFT,
+	.slaveaddr_shअगरt = OMAP4430_SLAVEADDR_SHIFT,
+	.regaddr_shअगरt = OMAP4430_REGADDR_SHIFT,
 	.valid = OMAP4430_VALID_MASK,
-	.cmd_on_shift = OMAP4430_ON_SHIFT,
+	.cmd_on_shअगरt = OMAP4430_ON_SHIFT,
 	.cmd_on_mask = OMAP4430_ON_MASK,
-	.cmd_onlp_shift = OMAP4430_ONLP_SHIFT,
-	.cmd_ret_shift = OMAP4430_RET_SHIFT,
-	.cmd_off_shift = OMAP4430_OFF_SHIFT,
+	.cmd_onlp_shअगरt = OMAP4430_ONLP_SHIFT,
+	.cmd_ret_shअगरt = OMAP4430_RET_SHIFT,
+	.cmd_off_shअगरt = OMAP4430_OFF_SHIFT,
 	.i2c_cfg_reg = OMAP4_PRM_VC_CFG_I2C_MODE_OFFSET,
 	.i2c_cfg_clear_mask = OMAP4430_SRMODEEN_MASK | OMAP4430_HSMODEEN_MASK,
 	.i2c_cfg_hsen_mask = OMAP4430_HSMODEEN_MASK,
 	.i2c_mcode_mask	 = OMAP4430_HSMCODE_MASK,
-};
+पूर्ण;
 
-/* VC instance data for each controllable voltage line */
-struct omap_vc_channel omap4_vc_mpu = {
+/* VC instance data क्रम each controllable voltage line */
+काष्ठा omap_vc_channel omap4_vc_mpu = अणु
 	.flags = OMAP_VC_CHANNEL_DEFAULT | OMAP_VC_CHANNEL_CFG_MUTANT,
 	.common = &omap4_vc_common,
 	.smps_sa_reg = OMAP4_PRM_VC_SMPS_SA_OFFSET,
@@ -56,10 +57,10 @@ struct omap_vc_channel omap4_vc_mpu = {
 	.smps_sa_mask = OMAP4430_SA_VDD_MPU_L_PRM_VC_SMPS_SA_MASK,
 	.smps_volra_mask = OMAP4430_VOLRA_VDD_MPU_L_MASK,
 	.smps_cmdra_mask = OMAP4430_CMDRA_VDD_MPU_L_MASK,
-	.cfg_channel_sa_shift = OMAP4430_SA_VDD_MPU_L_SHIFT,
-};
+	.cfg_channel_sa_shअगरt = OMAP4430_SA_VDD_MPU_L_SHIFT,
+पूर्ण;
 
-struct omap_vc_channel omap4_vc_iva = {
+काष्ठा omap_vc_channel omap4_vc_iva = अणु
 	.common = &omap4_vc_common,
 	.smps_sa_reg = OMAP4_PRM_VC_SMPS_SA_OFFSET,
 	.smps_volra_reg = OMAP4_PRM_VC_VAL_SMPS_RA_VOL_OFFSET,
@@ -69,10 +70,10 @@ struct omap_vc_channel omap4_vc_iva = {
 	.smps_sa_mask = OMAP4430_SA_VDD_IVA_L_PRM_VC_SMPS_SA_MASK,
 	.smps_volra_mask = OMAP4430_VOLRA_VDD_IVA_L_MASK,
 	.smps_cmdra_mask = OMAP4430_CMDRA_VDD_IVA_L_MASK,
-	.cfg_channel_sa_shift = OMAP4430_SA_VDD_IVA_L_SHIFT,
-};
+	.cfg_channel_sa_shअगरt = OMAP4430_SA_VDD_IVA_L_SHIFT,
+पूर्ण;
 
-struct omap_vc_channel omap4_vc_core = {
+काष्ठा omap_vc_channel omap4_vc_core = अणु
 	.common = &omap4_vc_common,
 	.smps_sa_reg = OMAP4_PRM_VC_SMPS_SA_OFFSET,
 	.smps_volra_reg = OMAP4_PRM_VC_VAL_SMPS_RA_VOL_OFFSET,
@@ -82,34 +83,34 @@ struct omap_vc_channel omap4_vc_core = {
 	.smps_sa_mask = OMAP4430_SA_VDD_CORE_L_0_6_MASK,
 	.smps_volra_mask = OMAP4430_VOLRA_VDD_CORE_L_MASK,
 	.smps_cmdra_mask = OMAP4430_CMDRA_VDD_CORE_L_MASK,
-	.cfg_channel_sa_shift = OMAP4430_SA_VDD_CORE_L_SHIFT,
-};
+	.cfg_channel_sa_shअगरt = OMAP4430_SA_VDD_CORE_L_SHIFT,
+पूर्ण;
 
 /*
- * Voltage levels for different operating modes: on, sleep, retention and off
+ * Voltage levels क्रम dअगरferent operating modes: on, sleep, retention and off
  */
-#define OMAP4_ON_VOLTAGE_UV			1375000
-#define OMAP4_ONLP_VOLTAGE_UV			1375000
-#define OMAP4_RET_VOLTAGE_UV			837500
-#define OMAP4_OFF_VOLTAGE_UV			0
+#घोषणा OMAP4_ON_VOLTAGE_UV			1375000
+#घोषणा OMAP4_ONLP_VOLTAGE_UV			1375000
+#घोषणा OMAP4_RET_VOLTAGE_UV			837500
+#घोषणा OMAP4_OFF_VOLTAGE_UV			0
 
-struct omap_vc_param omap4_mpu_vc_data = {
+काष्ठा omap_vc_param omap4_mpu_vc_data = अणु
 	.on			= OMAP4_ON_VOLTAGE_UV,
 	.onlp			= OMAP4_ONLP_VOLTAGE_UV,
 	.ret			= OMAP4_RET_VOLTAGE_UV,
 	.off			= OMAP4_OFF_VOLTAGE_UV,
-};
+पूर्ण;
 
-struct omap_vc_param omap4_iva_vc_data = {
+काष्ठा omap_vc_param omap4_iva_vc_data = अणु
 	.on			= OMAP4_ON_VOLTAGE_UV,
 	.onlp			= OMAP4_ONLP_VOLTAGE_UV,
 	.ret			= OMAP4_RET_VOLTAGE_UV,
 	.off			= OMAP4_OFF_VOLTAGE_UV,
-};
+पूर्ण;
 
-struct omap_vc_param omap4_core_vc_data = {
+काष्ठा omap_vc_param omap4_core_vc_data = अणु
 	.on			= OMAP4_ON_VOLTAGE_UV,
 	.onlp			= OMAP4_ONLP_VOLTAGE_UV,
 	.ret			= OMAP4_RET_VOLTAGE_UV,
 	.off			= OMAP4_OFF_VOLTAGE_UV,
-};
+पूर्ण;

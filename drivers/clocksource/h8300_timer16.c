@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  H8/300 16bit Timer driver
  *
  *  Copyright 2015 Yoshinori Sato <ysato@users.sourcefoge.jp>
  */
 
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/clocksource.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
-#define TSTR	0
-#define TISRC	6
+#घोषणा TSTR	0
+#घोषणा TISRC	6
 
-#define TCR	0
-#define TCNT	2
+#घोषणा TCR	0
+#घोषणा TCNT	2
 
-#define bset(b, a) iowrite8(ioread8(a) | (1 << (b)), (a))
-#define bclr(b, a) iowrite8(ioread8(a) & ~(1 << (b)), (a))
+#घोषणा bset(b, a) ioग_लिखो8(ioपढ़ो8(a) | (1 << (b)), (a))
+#घोषणा bclr(b, a) ioग_लिखो8(ioपढ़ो8(a) & ~(1 << (b)), (a))
 
-struct timer16_priv {
-	struct clocksource cs;
-	unsigned long total_cycles;
-	void __iomem *mapbase;
-	void __iomem *mapcommon;
-	unsigned short cs_enabled;
-	unsigned char enb;
-	unsigned char ovf;
-	unsigned char ovie;
-};
+काष्ठा समयr16_priv अणु
+	काष्ठा घड़ीsource cs;
+	अचिन्हित दीर्घ total_cycles;
+	व्योम __iomem *mapbase;
+	व्योम __iomem *mapcommon;
+	अचिन्हित लघु cs_enabled;
+	अचिन्हित अक्षर enb;
+	अचिन्हित अक्षर ovf;
+	अचिन्हित अक्षर ovie;
+पूर्ण;
 
-static unsigned long timer16_get_counter(struct timer16_priv *p)
-{
-	unsigned short v1, v2, v3;
-	unsigned char  o1, o2;
+अटल अचिन्हित दीर्घ समयr16_get_counter(काष्ठा समयr16_priv *p)
+अणु
+	अचिन्हित लघु v1, v2, v3;
+	अचिन्हित अक्षर  o1, o2;
 
-	o1 = ioread8(p->mapcommon + TISRC) & p->ovf;
+	o1 = ioपढ़ो8(p->mapcommon + TISRC) & p->ovf;
 
-	/* Make sure the timer value is stable. Stolen from acpi_pm.c */
-	do {
+	/* Make sure the समयr value is stable. Stolen from acpi_pm.c */
+	करो अणु
 		o2 = o1;
-		v1 = ioread16be(p->mapbase + TCNT);
-		v2 = ioread16be(p->mapbase + TCNT);
-		v3 = ioread16be(p->mapbase + TCNT);
-		o1 = ioread8(p->mapcommon + TISRC) & p->ovf;
-	} while (unlikely((o1 != o2) || (v1 > v2 && v1 < v3)
+		v1 = ioपढ़ो16be(p->mapbase + TCNT);
+		v2 = ioपढ़ो16be(p->mapbase + TCNT);
+		v3 = ioपढ़ो16be(p->mapbase + TCNT);
+		o1 = ioपढ़ो8(p->mapcommon + TISRC) & p->ovf;
+	पूर्ण जबतक (unlikely((o1 != o2) || (v1 > v2 && v1 < v3)
 			  || (v2 > v3 && v2 < v1) || (v3 > v1 && v3 < v2)));
 
-	if (likely(!o1))
-		return v2;
-	else
-		return v2 + 0x10000;
-}
+	अगर (likely(!o1))
+		वापस v2;
+	अन्यथा
+		वापस v2 + 0x10000;
+पूर्ण
 
 
-static irqreturn_t timer16_interrupt(int irq, void *dev_id)
-{
-	struct timer16_priv *p = (struct timer16_priv *)dev_id;
+अटल irqवापस_t समयr16_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा समयr16_priv *p = (काष्ठा समयr16_priv *)dev_id;
 
 	bclr(p->ovf, p->mapcommon + TISRC);
 	p->total_cycles += 0x10000;
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static inline struct timer16_priv *cs_to_priv(struct clocksource *cs)
-{
-	return container_of(cs, struct timer16_priv, cs);
-}
+अटल अंतरभूत काष्ठा समयr16_priv *cs_to_priv(काष्ठा घड़ीsource *cs)
+अणु
+	वापस container_of(cs, काष्ठा समयr16_priv, cs);
+पूर्ण
 
-static u64 timer16_clocksource_read(struct clocksource *cs)
-{
-	struct timer16_priv *p = cs_to_priv(cs);
-	unsigned long raw, value;
+अटल u64 समयr16_घड़ीsource_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	काष्ठा समयr16_priv *p = cs_to_priv(cs);
+	अचिन्हित दीर्घ raw, value;
 
 	value = p->total_cycles;
-	raw = timer16_get_counter(p);
+	raw = समयr16_get_counter(p);
 
-	return value + raw;
-}
+	वापस value + raw;
+पूर्ण
 
-static int timer16_enable(struct clocksource *cs)
-{
-	struct timer16_priv *p = cs_to_priv(cs);
+अटल पूर्णांक समयr16_enable(काष्ठा घड़ीsource *cs)
+अणु
+	काष्ठा समयr16_priv *p = cs_to_priv(cs);
 
 	WARN_ON(p->cs_enabled);
 
 	p->total_cycles = 0;
-	iowrite16be(0x0000, p->mapbase + TCNT);
-	iowrite8(0x83, p->mapbase + TCR);
+	ioग_लिखो16be(0x0000, p->mapbase + TCNT);
+	ioग_लिखो8(0x83, p->mapbase + TCR);
 	bset(p->ovie, p->mapcommon + TISRC);
 	bset(p->enb, p->mapcommon + TSTR);
 
 	p->cs_enabled = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void timer16_disable(struct clocksource *cs)
-{
-	struct timer16_priv *p = cs_to_priv(cs);
+अटल व्योम समयr16_disable(काष्ठा घड़ीsource *cs)
+अणु
+	काष्ठा समयr16_priv *p = cs_to_priv(cs);
 
 	WARN_ON(!p->cs_enabled);
 
@@ -110,83 +111,83 @@ static void timer16_disable(struct clocksource *cs)
 	bclr(p->enb, p->mapcommon + TSTR);
 
 	p->cs_enabled = false;
-}
+पूर्ण
 
-static struct timer16_priv timer16_priv = {
-	.cs = {
+अटल काष्ठा समयr16_priv समयr16_priv = अणु
+	.cs = अणु
 		.name = "h8300_16timer",
 		.rating = 200,
-		.read = timer16_clocksource_read,
-		.enable = timer16_enable,
-		.disable = timer16_disable,
-		.mask = CLOCKSOURCE_MASK(sizeof(unsigned long) * 8),
+		.पढ़ो = समयr16_घड़ीsource_पढ़ो,
+		.enable = समयr16_enable,
+		.disable = समयr16_disable,
+		.mask = CLOCKSOURCE_MASK(माप(अचिन्हित दीर्घ) * 8),
 		.flags = CLOCK_SOURCE_IS_CONTINUOUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define REG_CH   0
-#define REG_COMM 1
+#घोषणा REG_CH   0
+#घोषणा REG_COMM 1
 
-static int __init h8300_16timer_init(struct device_node *node)
-{
-	void __iomem *base[2];
-	int ret, irq;
-	unsigned int ch;
-	struct clk *clk;
+अटल पूर्णांक __init h8300_16समयr_init(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *base[2];
+	पूर्णांक ret, irq;
+	अचिन्हित पूर्णांक ch;
+	काष्ठा clk *clk;
 
 	clk = of_clk_get(node, 0);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		pr_err("failed to get clock for clocksource\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	ret = -ENXIO;
 	base[REG_CH] = of_iomap(node, 0);
-	if (!base[REG_CH]) {
+	अगर (!base[REG_CH]) अणु
 		pr_err("failed to map registers for clocksource\n");
-		goto free_clk;
-	}
+		जाओ मुक्त_clk;
+	पूर्ण
 
 	base[REG_COMM] = of_iomap(node, 1);
-	if (!base[REG_COMM]) {
+	अगर (!base[REG_COMM]) अणु
 		pr_err("failed to map registers for clocksource\n");
-		goto unmap_ch;
-	}
+		जाओ unmap_ch;
+	पूर्ण
 
 	ret = -EINVAL;
 	irq = irq_of_parse_and_map(node, 0);
-	if (!irq) {
+	अगर (!irq) अणु
 		pr_err("failed to get irq for clockevent\n");
-		goto unmap_comm;
-	}
+		जाओ unmap_comm;
+	पूर्ण
 
-	of_property_read_u32(node, "renesas,channel", &ch);
+	of_property_पढ़ो_u32(node, "renesas,channel", &ch);
 
-	timer16_priv.mapbase = base[REG_CH];
-	timer16_priv.mapcommon = base[REG_COMM];
-	timer16_priv.enb = ch;
-	timer16_priv.ovf = ch;
-	timer16_priv.ovie = 4 + ch;
+	समयr16_priv.mapbase = base[REG_CH];
+	समयr16_priv.mapcommon = base[REG_COMM];
+	समयr16_priv.enb = ch;
+	समयr16_priv.ovf = ch;
+	समयr16_priv.ovie = 4 + ch;
 
-	ret = request_irq(irq, timer16_interrupt,
-			  IRQF_TIMER, timer16_priv.cs.name, &timer16_priv);
-	if (ret < 0) {
+	ret = request_irq(irq, समयr16_पूर्णांकerrupt,
+			  IRQF_TIMER, समयr16_priv.cs.name, &समयr16_priv);
+	अगर (ret < 0) अणु
 		pr_err("failed to request irq %d of clocksource\n", irq);
-		goto unmap_comm;
-	}
+		जाओ unmap_comm;
+	पूर्ण
 
-	clocksource_register_hz(&timer16_priv.cs,
+	घड़ीsource_रेजिस्टर_hz(&समयr16_priv.cs,
 				clk_get_rate(clk) / 8);
-	return 0;
+	वापस 0;
 
 unmap_comm:
 	iounmap(base[REG_COMM]);
 unmap_ch:
 	iounmap(base[REG_CH]);
-free_clk:
+मुक्त_clk:
 	clk_put(clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 TIMER_OF_DECLARE(h8300_16bit, "renesas,16bit-timer",
-			   h8300_16timer_init);
+			   h8300_16समयr_init);

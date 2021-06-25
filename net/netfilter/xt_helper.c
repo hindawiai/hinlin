@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* iptables module to match on related connections */
 /*
  * (C) 2001 Martin Josefsson <gandalf@wlug.westbo.se>
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/netfilter.h>
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter/xt_helper.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netfilter.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter/xt_helper.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Martin Josefsson <gandalf@netfilter.org>");
@@ -20,77 +21,77 @@ MODULE_ALIAS("ipt_helper");
 MODULE_ALIAS("ip6t_helper");
 
 
-static bool
-helper_mt(const struct sk_buff *skb, struct xt_action_param *par)
-{
-	const struct xt_helper_info *info = par->matchinfo;
-	const struct nf_conn *ct;
-	const struct nf_conn_help *master_help;
-	const struct nf_conntrack_helper *helper;
-	enum ip_conntrack_info ctinfo;
+अटल bool
+helper_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_helper_info *info = par->matchinfo;
+	स्थिर काष्ठा nf_conn *ct;
+	स्थिर काष्ठा nf_conn_help *master_help;
+	स्थिर काष्ठा nf_conntrack_helper *helper;
+	क्रमागत ip_conntrack_info ctinfo;
 	bool ret = info->invert;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct || !ct->master)
-		return ret;
+	अगर (!ct || !ct->master)
+		वापस ret;
 
 	master_help = nfct_help(ct->master);
-	if (!master_help)
-		return ret;
+	अगर (!master_help)
+		वापस ret;
 
-	/* rcu_read_lock()ed by nf_hook_thresh */
+	/* rcu_पढ़ो_lock()ed by nf_hook_thresh */
 	helper = rcu_dereference(master_help->helper);
-	if (!helper)
-		return ret;
+	अगर (!helper)
+		वापस ret;
 
-	if (info->name[0] == '\0')
+	अगर (info->name[0] == '\0')
 		ret = !ret;
-	else
-		ret ^= !strncmp(helper->name, info->name,
-				strlen(helper->name));
-	return ret;
-}
+	अन्यथा
+		ret ^= !म_भेदन(helper->name, info->name,
+				म_माप(helper->name));
+	वापस ret;
+पूर्ण
 
-static int helper_mt_check(const struct xt_mtchk_param *par)
-{
-	struct xt_helper_info *info = par->matchinfo;
-	int ret;
+अटल पूर्णांक helper_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
+अणु
+	काष्ठा xt_helper_info *info = par->matchinfo;
+	पूर्णांक ret;
 
 	ret = nf_ct_netns_get(par->net, par->family);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info_ratelimited("cannot load conntrack support for proto=%u\n",
 				    par->family);
-		return ret;
-	}
-	info->name[sizeof(info->name) - 1] = '\0';
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	info->name[माप(info->name) - 1] = '\0';
+	वापस 0;
+पूर्ण
 
-static void helper_mt_destroy(const struct xt_mtdtor_param *par)
-{
+अटल व्योम helper_mt_destroy(स्थिर काष्ठा xt_mtdtor_param *par)
+अणु
 	nf_ct_netns_put(par->net, par->family);
-}
+पूर्ण
 
-static struct xt_match helper_mt_reg __read_mostly = {
+अटल काष्ठा xt_match helper_mt_reg __पढ़ो_mostly = अणु
 	.name       = "helper",
 	.revision   = 0,
 	.family     = NFPROTO_UNSPEC,
 	.checkentry = helper_mt_check,
 	.match      = helper_mt,
 	.destroy    = helper_mt_destroy,
-	.matchsize  = sizeof(struct xt_helper_info),
+	.matchsize  = माप(काष्ठा xt_helper_info),
 	.me         = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init helper_mt_init(void)
-{
-	return xt_register_match(&helper_mt_reg);
-}
+अटल पूर्णांक __init helper_mt_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_match(&helper_mt_reg);
+पूर्ण
 
-static void __exit helper_mt_exit(void)
-{
-	xt_unregister_match(&helper_mt_reg);
-}
+अटल व्योम __निकास helper_mt_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_match(&helper_mt_reg);
+पूर्ण
 
 module_init(helper_mt_init);
-module_exit(helper_mt_exit);
+module_निकास(helper_mt_निकास);

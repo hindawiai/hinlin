@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *   intel_hdmi_audio.c - Intel HDMI audio driver
+ *   पूर्णांकel_hdmi_audio.c - Intel HDMI audio driver
  *
  *  Copyright (C) 2016 Intel Corp
- *  Authors:	Sailaja Bandarupalli <sailaja.bandarupalli@intel.com>
- *		Ramesh Babu K V	<ramesh.babu@intel.com>
- *		Vaibhav Agarwal <vaibhav.agarwal@intel.com>
- *		Jerome Anand <jerome.anand@intel.com>
+ *  Authors:	Sailaja Bandarupalli <sailaja.bandarupalli@पूर्णांकel.com>
+ *		Ramesh Babu K V	<ramesh.babu@पूर्णांकel.com>
+ *		Vaibhav Agarwal <vaibhav.agarwal@पूर्णांकel.com>
+ *		Jerome Anand <jerome.anand@पूर्णांकel.com>
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * ALSA driver for Intel HDMI audio
+ * ALSA driver क्रम Intel HDMI audio
  */
 
-#include <linux/types.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/pm_runtime.h>
-#include <linux/dma-mapping.h>
-#include <linux/delay.h>
-#include <sound/core.h>
-#include <sound/asoundef.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/initval.h>
-#include <sound/control.h>
-#include <sound/jack.h>
-#include <drm/drm_edid.h>
-#include <drm/intel_lpe_audio.h>
-#include "intel_hdmi_audio.h"
+#समावेश <linux/types.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/delay.h>
+#समावेश <sound/core.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/control.h>
+#समावेश <sound/jack.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/पूर्णांकel_lpe_audपन.स>
+#समावेश "intel_hdmi_audio.h"
 
-#define for_each_pipe(card_ctx, pipe) \
-	for ((pipe) = 0; (pipe) < (card_ctx)->num_pipes; (pipe)++)
-#define for_each_port(card_ctx, port) \
-	for ((port) = 0; (port) < (card_ctx)->num_ports; (port)++)
+#घोषणा क्रम_each_pipe(card_ctx, pipe) \
+	क्रम ((pipe) = 0; (pipe) < (card_ctx)->num_pipes; (pipe)++)
+#घोषणा क्रम_each_port(card_ctx, port) \
+	क्रम ((port) = 0; (port) < (card_ctx)->num_ports; (port)++)
 
-/*standard module options for ALSA. This module supports only one card*/
-static int hdmi_card_index = SNDRV_DEFAULT_IDX1;
-static char *hdmi_card_id = SNDRV_DEFAULT_STR1;
-static bool single_port;
+/*standard module options क्रम ALSA. This module supports only one card*/
+अटल पूर्णांक hdmi_card_index = SNDRV_DEFAULT_IDX1;
+अटल अक्षर *hdmi_card_id = SNDRV_DEFAULT_STR1;
+अटल bool single_port;
 
-module_param_named(index, hdmi_card_index, int, 0444);
+module_param_named(index, hdmi_card_index, पूर्णांक, 0444);
 MODULE_PARM_DESC(index,
 		"Index value for INTEL Intel HDMI Audio controller.");
-module_param_named(id, hdmi_card_id, charp, 0444);
+module_param_named(id, hdmi_card_id, अक्षरp, 0444);
 MODULE_PARM_DESC(id,
 		"ID string for INTEL Intel HDMI Audio controller.");
 module_param(single_port, bool, 0444);
@@ -56,7 +57,7 @@ MODULE_PARM_DESC(single_port,
 /*
  * ELD SA bits in the CEA Speaker Allocation data block
  */
-static const int eld_speaker_allocation_bits[] = {
+अटल स्थिर पूर्णांक eld_speaker_allocation_bits[] = अणु
 	[0] = FL | FR,
 	[1] = LFE,
 	[2] = FC,
@@ -66,7 +67,7 @@ static const int eld_speaker_allocation_bits[] = {
 	[6] = RLC | RRC,
 	/* the following are not defined in ELD yet */
 	[7] = 0,
-};
+पूर्ण;
 
 /*
  * This is an ordered list!
@@ -74,70 +75,70 @@ static const int eld_speaker_allocation_bits[] = {
  * The preceding ones have better chances to be selected by
  * hdmi_channel_allocation().
  */
-static struct cea_channel_speaker_allocation channel_allocations[] = {
+अटल काष्ठा cea_channel_speaker_allocation channel_allocations[] = अणु
 /*                        channel:   7     6    5    4    3     2    1    0  */
-{ .ca_index = 0x00,  .speakers = {   0,    0,   0,   0,   0,    0,  FR,  FL } },
+अणु .ca_index = 0x00,  .speakers = अणु   0,    0,   0,   0,   0,    0,  FR,  FL पूर्ण पूर्ण,
 				/* 2.1 */
-{ .ca_index = 0x01,  .speakers = {   0,    0,   0,   0,   0,  LFE,  FR,  FL } },
+अणु .ca_index = 0x01,  .speakers = अणु   0,    0,   0,   0,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
 				/* Dolby Surround */
-{ .ca_index = 0x02,  .speakers = {   0,    0,   0,   0,  FC,    0,  FR,  FL } },
+अणु .ca_index = 0x02,  .speakers = अणु   0,    0,   0,   0,  FC,    0,  FR,  FL पूर्ण पूर्ण,
 				/* surround40 */
-{ .ca_index = 0x08,  .speakers = {   0,    0,  RR,  RL,   0,    0,  FR,  FL } },
+अणु .ca_index = 0x08,  .speakers = अणु   0,    0,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
 				/* surround41 */
-{ .ca_index = 0x09,  .speakers = {   0,    0,  RR,  RL,   0,  LFE,  FR,  FL } },
+अणु .ca_index = 0x09,  .speakers = अणु   0,    0,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
 				/* surround50 */
-{ .ca_index = 0x0a,  .speakers = {   0,    0,  RR,  RL,  FC,    0,  FR,  FL } },
+अणु .ca_index = 0x0a,  .speakers = अणु   0,    0,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
 				/* surround51 */
-{ .ca_index = 0x0b,  .speakers = {   0,    0,  RR,  RL,  FC,  LFE,  FR,  FL } },
+अणु .ca_index = 0x0b,  .speakers = अणु   0,    0,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
 				/* 6.1 */
-{ .ca_index = 0x0f,  .speakers = {   0,   RC,  RR,  RL,  FC,  LFE,  FR,  FL } },
+अणु .ca_index = 0x0f,  .speakers = अणु   0,   RC,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
 				/* surround71 */
-{ .ca_index = 0x13,  .speakers = { RRC,  RLC,  RR,  RL,  FC,  LFE,  FR,  FL } },
+अणु .ca_index = 0x13,  .speakers = अणु RRC,  RLC,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
 
-{ .ca_index = 0x03,  .speakers = {   0,    0,   0,   0,  FC,  LFE,  FR,  FL } },
-{ .ca_index = 0x04,  .speakers = {   0,    0,   0,  RC,   0,    0,  FR,  FL } },
-{ .ca_index = 0x05,  .speakers = {   0,    0,   0,  RC,   0,  LFE,  FR,  FL } },
-{ .ca_index = 0x06,  .speakers = {   0,    0,   0,  RC,  FC,    0,  FR,  FL } },
-{ .ca_index = 0x07,  .speakers = {   0,    0,   0,  RC,  FC,  LFE,  FR,  FL } },
-{ .ca_index = 0x0c,  .speakers = {   0,   RC,  RR,  RL,   0,    0,  FR,  FL } },
-{ .ca_index = 0x0d,  .speakers = {   0,   RC,  RR,  RL,   0,  LFE,  FR,  FL } },
-{ .ca_index = 0x0e,  .speakers = {   0,   RC,  RR,  RL,  FC,    0,  FR,  FL } },
-{ .ca_index = 0x10,  .speakers = { RRC,  RLC,  RR,  RL,   0,    0,  FR,  FL } },
-{ .ca_index = 0x11,  .speakers = { RRC,  RLC,  RR,  RL,   0,  LFE,  FR,  FL } },
-{ .ca_index = 0x12,  .speakers = { RRC,  RLC,  RR,  RL,  FC,    0,  FR,  FL } },
-{ .ca_index = 0x14,  .speakers = { FRC,  FLC,   0,   0,   0,    0,  FR,  FL } },
-{ .ca_index = 0x15,  .speakers = { FRC,  FLC,   0,   0,   0,  LFE,  FR,  FL } },
-{ .ca_index = 0x16,  .speakers = { FRC,  FLC,   0,   0,  FC,    0,  FR,  FL } },
-{ .ca_index = 0x17,  .speakers = { FRC,  FLC,   0,   0,  FC,  LFE,  FR,  FL } },
-{ .ca_index = 0x18,  .speakers = { FRC,  FLC,   0,  RC,   0,    0,  FR,  FL } },
-{ .ca_index = 0x19,  .speakers = { FRC,  FLC,   0,  RC,   0,  LFE,  FR,  FL } },
-{ .ca_index = 0x1a,  .speakers = { FRC,  FLC,   0,  RC,  FC,    0,  FR,  FL } },
-{ .ca_index = 0x1b,  .speakers = { FRC,  FLC,   0,  RC,  FC,  LFE,  FR,  FL } },
-{ .ca_index = 0x1c,  .speakers = { FRC,  FLC,  RR,  RL,   0,    0,  FR,  FL } },
-{ .ca_index = 0x1d,  .speakers = { FRC,  FLC,  RR,  RL,   0,  LFE,  FR,  FL } },
-{ .ca_index = 0x1e,  .speakers = { FRC,  FLC,  RR,  RL,  FC,    0,  FR,  FL } },
-{ .ca_index = 0x1f,  .speakers = { FRC,  FLC,  RR,  RL,  FC,  LFE,  FR,  FL } },
-};
+अणु .ca_index = 0x03,  .speakers = अणु   0,    0,   0,   0,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x04,  .speakers = अणु   0,    0,   0,  RC,   0,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x05,  .speakers = अणु   0,    0,   0,  RC,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x06,  .speakers = अणु   0,    0,   0,  RC,  FC,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x07,  .speakers = अणु   0,    0,   0,  RC,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x0c,  .speakers = अणु   0,   RC,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x0d,  .speakers = अणु   0,   RC,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x0e,  .speakers = अणु   0,   RC,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x10,  .speakers = अणु RRC,  RLC,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x11,  .speakers = अणु RRC,  RLC,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x12,  .speakers = अणु RRC,  RLC,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x14,  .speakers = अणु FRC,  FLC,   0,   0,   0,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x15,  .speakers = अणु FRC,  FLC,   0,   0,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x16,  .speakers = अणु FRC,  FLC,   0,   0,  FC,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x17,  .speakers = अणु FRC,  FLC,   0,   0,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x18,  .speakers = अणु FRC,  FLC,   0,  RC,   0,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x19,  .speakers = अणु FRC,  FLC,   0,  RC,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x1a,  .speakers = अणु FRC,  FLC,   0,  RC,  FC,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x1b,  .speakers = अणु FRC,  FLC,   0,  RC,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x1c,  .speakers = अणु FRC,  FLC,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x1d,  .speakers = अणु FRC,  FLC,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x1e,  .speakers = अणु FRC,  FLC,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
+अणु .ca_index = 0x1f,  .speakers = अणु FRC,  FLC,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
+पूर्ण;
 
-static const struct channel_map_table map_tables[] = {
-	{ SNDRV_CHMAP_FL,       0x00,   FL },
-	{ SNDRV_CHMAP_FR,       0x01,   FR },
-	{ SNDRV_CHMAP_RL,       0x04,   RL },
-	{ SNDRV_CHMAP_RR,       0x05,   RR },
-	{ SNDRV_CHMAP_LFE,      0x02,   LFE },
-	{ SNDRV_CHMAP_FC,       0x03,   FC },
-	{ SNDRV_CHMAP_RLC,      0x06,   RLC },
-	{ SNDRV_CHMAP_RRC,      0x07,   RRC },
-	{} /* terminator */
-};
+अटल स्थिर काष्ठा channel_map_table map_tables[] = अणु
+	अणु SNDRV_CHMAP_FL,       0x00,   FL पूर्ण,
+	अणु SNDRV_CHMAP_FR,       0x01,   FR पूर्ण,
+	अणु SNDRV_CHMAP_RL,       0x04,   RL पूर्ण,
+	अणु SNDRV_CHMAP_RR,       0x05,   RR पूर्ण,
+	अणु SNDRV_CHMAP_LFE,      0x02,   LFE पूर्ण,
+	अणु SNDRV_CHMAP_FC,       0x03,   FC पूर्ण,
+	अणु SNDRV_CHMAP_RLC,      0x06,   RLC पूर्ण,
+	अणु SNDRV_CHMAP_RRC,      0x07,   RRC पूर्ण,
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-/* hardware capability structure */
-static const struct snd_pcm_hardware had_pcm_hardware = {
+/* hardware capability काष्ठाure */
+अटल स्थिर काष्ठा snd_pcm_hardware had_pcm_hardware = अणु
 	.info =	(SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_NO_PERIOD_WAKEUP),
-	.formats = (SNDRV_PCM_FMTBIT_S16_LE |
+	.क्रमmats = (SNDRV_PCM_FMTBIT_S16_LE |
 		    SNDRV_PCM_FMTBIT_S24_LE |
 		    SNDRV_PCM_FMTBIT_S32_LE),
 	.rates = SNDRV_PCM_RATE_32000 |
@@ -156,671 +157,671 @@ static const struct snd_pcm_hardware had_pcm_hardware = {
 	.period_bytes_max = HAD_MAX_PERIOD_BYTES,
 	.periods_min = HAD_MIN_PERIODS,
 	.periods_max = HAD_MAX_PERIODS,
-	.fifo_size = HAD_FIFO_SIZE,
-};
+	.fअगरo_size = HAD_FIFO_SIZE,
+पूर्ण;
 
 /* Get the active PCM substream;
- * Call had_substream_put() for unreferecing.
+ * Call had_substream_put() क्रम unreferecing.
  * Don't call this inside had_spinlock, as it takes by itself
  */
-static struct snd_pcm_substream *
-had_substream_get(struct snd_intelhad *intelhaddata)
-{
-	struct snd_pcm_substream *substream;
-	unsigned long flags;
+अटल काष्ठा snd_pcm_substream *
+had_substream_get(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	काष्ठा snd_pcm_substream *substream;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&intelhaddata->had_spinlock, flags);
-	substream = intelhaddata->stream_info.substream;
-	if (substream)
-		intelhaddata->stream_info.substream_refcount++;
-	spin_unlock_irqrestore(&intelhaddata->had_spinlock, flags);
-	return substream;
-}
+	spin_lock_irqsave(&पूर्णांकelhaddata->had_spinlock, flags);
+	substream = पूर्णांकelhaddata->stream_info.substream;
+	अगर (substream)
+		पूर्णांकelhaddata->stream_info.substream_refcount++;
+	spin_unlock_irqrestore(&पूर्णांकelhaddata->had_spinlock, flags);
+	वापस substream;
+पूर्ण
 
 /* Unref the active PCM substream;
  * Don't call this inside had_spinlock, as it takes by itself
  */
-static void had_substream_put(struct snd_intelhad *intelhaddata)
-{
-	unsigned long flags;
+अटल व्योम had_substream_put(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&intelhaddata->had_spinlock, flags);
-	intelhaddata->stream_info.substream_refcount--;
-	spin_unlock_irqrestore(&intelhaddata->had_spinlock, flags);
-}
+	spin_lock_irqsave(&पूर्णांकelhaddata->had_spinlock, flags);
+	पूर्णांकelhaddata->stream_info.substream_refcount--;
+	spin_unlock_irqrestore(&पूर्णांकelhaddata->had_spinlock, flags);
+पूर्ण
 
-static u32 had_config_offset(int pipe)
-{
-	switch (pipe) {
-	default:
-	case 0:
-		return AUDIO_HDMI_CONFIG_A;
-	case 1:
-		return AUDIO_HDMI_CONFIG_B;
-	case 2:
-		return AUDIO_HDMI_CONFIG_C;
-	}
-}
+अटल u32 had_config_offset(पूर्णांक pipe)
+अणु
+	चयन (pipe) अणु
+	शेष:
+	हाल 0:
+		वापस AUDIO_HDMI_CONFIG_A;
+	हाल 1:
+		वापस AUDIO_HDMI_CONFIG_B;
+	हाल 2:
+		वापस AUDIO_HDMI_CONFIG_C;
+	पूर्ण
+पूर्ण
 
 /* Register access functions */
-static u32 had_read_register_raw(struct snd_intelhad_card *card_ctx,
-				 int pipe, u32 reg)
-{
-	return ioread32(card_ctx->mmio_start + had_config_offset(pipe) + reg);
-}
+अटल u32 had_पढ़ो_रेजिस्टर_raw(काष्ठा snd_पूर्णांकelhad_card *card_ctx,
+				 पूर्णांक pipe, u32 reg)
+अणु
+	वापस ioपढ़ो32(card_ctx->mmio_start + had_config_offset(pipe) + reg);
+पूर्ण
 
-static void had_write_register_raw(struct snd_intelhad_card *card_ctx,
-				   int pipe, u32 reg, u32 val)
-{
-	iowrite32(val, card_ctx->mmio_start + had_config_offset(pipe) + reg);
-}
+अटल व्योम had_ग_लिखो_रेजिस्टर_raw(काष्ठा snd_पूर्णांकelhad_card *card_ctx,
+				   पूर्णांक pipe, u32 reg, u32 val)
+अणु
+	ioग_लिखो32(val, card_ctx->mmio_start + had_config_offset(pipe) + reg);
+पूर्ण
 
-static void had_read_register(struct snd_intelhad *ctx, u32 reg, u32 *val)
-{
-	if (!ctx->connected)
+अटल व्योम had_पढ़ो_रेजिस्टर(काष्ठा snd_पूर्णांकelhad *ctx, u32 reg, u32 *val)
+अणु
+	अगर (!ctx->connected)
 		*val = 0;
-	else
-		*val = had_read_register_raw(ctx->card_ctx, ctx->pipe, reg);
-}
+	अन्यथा
+		*val = had_पढ़ो_रेजिस्टर_raw(ctx->card_ctx, ctx->pipe, reg);
+पूर्ण
 
-static void had_write_register(struct snd_intelhad *ctx, u32 reg, u32 val)
-{
-	if (ctx->connected)
-		had_write_register_raw(ctx->card_ctx, ctx->pipe, reg, val);
-}
+अटल व्योम had_ग_लिखो_रेजिस्टर(काष्ठा snd_पूर्णांकelhad *ctx, u32 reg, u32 val)
+अणु
+	अगर (ctx->connected)
+		had_ग_लिखो_रेजिस्टर_raw(ctx->card_ctx, ctx->pipe, reg, val);
+पूर्ण
 
 /*
  * enable / disable audio configuration
  *
- * The normal read/modify should not directly be used on VLV2 for
- * updating AUD_CONFIG register.
+ * The normal पढ़ो/modअगरy should not directly be used on VLV2 क्रम
+ * updating AUD_CONFIG रेजिस्टर.
  * This is because:
- * Bit6 of AUD_CONFIG register is writeonly due to a silicon bug on VLV2
- * HDMI IP. As a result a read-modify of AUD_CONFIG regiter will always
+ * Bit6 of AUD_CONFIG रेजिस्टर is ग_लिखोonly due to a silicon bug on VLV2
+ * HDMI IP. As a result a पढ़ो-modअगरy of AUD_CONFIG regiter will always
  * clear bit6. AUD_CONFIG[6:4] represents the "channels" field of the
- * register. This field should be 1xy binary for configuration with 6 or
- * more channels. Read-modify of AUD_CONFIG (Eg. for enabling audio)
+ * रेजिस्टर. This field should be 1xy binary क्रम configuration with 6 or
+ * more channels. Read-modअगरy of AUD_CONFIG (Eg. क्रम enabling audio)
  * causes the "channels" field to be updated as 0xy binary resulting in
- * bad audio. The fix is to always write the AUD_CONFIG[6:4] with
- * appropriate value when doing read-modify of AUD_CONFIG register.
+ * bad audio. The fix is to always ग_लिखो the AUD_CONFIG[6:4] with
+ * appropriate value when करोing पढ़ो-modअगरy of AUD_CONFIG रेजिस्टर.
  */
-static void had_enable_audio(struct snd_intelhad *intelhaddata,
+अटल व्योम had_enable_audio(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata,
 			     bool enable)
-{
+अणु
 	/* update the cached value */
-	intelhaddata->aud_config.regx.aud_en = enable;
-	had_write_register(intelhaddata, AUD_CONFIG,
-			   intelhaddata->aud_config.regval);
-}
+	पूर्णांकelhaddata->aud_config.regx.aud_en = enable;
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_CONFIG,
+			   पूर्णांकelhaddata->aud_config.regval);
+पूर्ण
 
-/* forcibly ACKs to both BUFFER_DONE and BUFFER_UNDERRUN interrupts */
-static void had_ack_irqs(struct snd_intelhad *ctx)
-{
+/* क्रमcibly ACKs to both BUFFER_DONE and BUFFER_UNDERRUN पूर्णांकerrupts */
+अटल व्योम had_ack_irqs(काष्ठा snd_पूर्णांकelhad *ctx)
+अणु
 	u32 status_reg;
 
-	if (!ctx->connected)
-		return;
-	had_read_register(ctx, AUD_HDMI_STATUS, &status_reg);
+	अगर (!ctx->connected)
+		वापस;
+	had_पढ़ो_रेजिस्टर(ctx, AUD_HDMI_STATUS, &status_reg);
 	status_reg |= HDMI_AUDIO_BUFFER_DONE | HDMI_AUDIO_UNDERRUN;
-	had_write_register(ctx, AUD_HDMI_STATUS, status_reg);
-	had_read_register(ctx, AUD_HDMI_STATUS, &status_reg);
-}
+	had_ग_लिखो_रेजिस्टर(ctx, AUD_HDMI_STATUS, status_reg);
+	had_पढ़ो_रेजिस्टर(ctx, AUD_HDMI_STATUS, &status_reg);
+पूर्ण
 
-/* Reset buffer pointers */
-static void had_reset_audio(struct snd_intelhad *intelhaddata)
-{
-	had_write_register(intelhaddata, AUD_HDMI_STATUS,
+/* Reset buffer poपूर्णांकers */
+अटल व्योम had_reset_audio(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_HDMI_STATUS,
 			   AUD_HDMI_STATUSG_MASK_FUNCRST);
-	had_write_register(intelhaddata, AUD_HDMI_STATUS, 0);
-}
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_HDMI_STATUS, 0);
+पूर्ण
 
 /*
- * initialize audio channel status registers
+ * initialize audio channel status रेजिस्टरs
  * This function is called in the prepare callback
  */
-static int had_prog_status_reg(struct snd_pcm_substream *substream,
-			struct snd_intelhad *intelhaddata)
-{
-	union aud_ch_status_0 ch_stat0 = {.regval = 0};
-	union aud_ch_status_1 ch_stat1 = {.regval = 0};
+अटल पूर्णांक had_prog_status_reg(काष्ठा snd_pcm_substream *substream,
+			काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	जोड़ aud_ch_status_0 ch_stat0 = अणु.regval = 0पूर्ण;
+	जोड़ aud_ch_status_1 ch_stat1 = अणु.regval = 0पूर्ण;
 
-	ch_stat0.regx.lpcm_id = (intelhaddata->aes_bits &
+	ch_stat0.regx.lpcm_id = (पूर्णांकelhaddata->aes_bits &
 					  IEC958_AES0_NONAUDIO) >> 1;
-	ch_stat0.regx.clk_acc = (intelhaddata->aes_bits &
+	ch_stat0.regx.clk_acc = (पूर्णांकelhaddata->aes_bits &
 					  IEC958_AES3_CON_CLOCK) >> 4;
 
-	switch (substream->runtime->rate) {
-	case AUD_SAMPLE_RATE_32:
+	चयन (substream->runसमय->rate) अणु
+	हाल AUD_SAMPLE_RATE_32:
 		ch_stat0.regx.samp_freq = CH_STATUS_MAP_32KHZ;
-		break;
+		अवरोध;
 
-	case AUD_SAMPLE_RATE_44_1:
+	हाल AUD_SAMPLE_RATE_44_1:
 		ch_stat0.regx.samp_freq = CH_STATUS_MAP_44KHZ;
-		break;
-	case AUD_SAMPLE_RATE_48:
+		अवरोध;
+	हाल AUD_SAMPLE_RATE_48:
 		ch_stat0.regx.samp_freq = CH_STATUS_MAP_48KHZ;
-		break;
-	case AUD_SAMPLE_RATE_88_2:
+		अवरोध;
+	हाल AUD_SAMPLE_RATE_88_2:
 		ch_stat0.regx.samp_freq = CH_STATUS_MAP_88KHZ;
-		break;
-	case AUD_SAMPLE_RATE_96:
+		अवरोध;
+	हाल AUD_SAMPLE_RATE_96:
 		ch_stat0.regx.samp_freq = CH_STATUS_MAP_96KHZ;
-		break;
-	case AUD_SAMPLE_RATE_176_4:
+		अवरोध;
+	हाल AUD_SAMPLE_RATE_176_4:
 		ch_stat0.regx.samp_freq = CH_STATUS_MAP_176KHZ;
-		break;
-	case AUD_SAMPLE_RATE_192:
+		अवरोध;
+	हाल AUD_SAMPLE_RATE_192:
 		ch_stat0.regx.samp_freq = CH_STATUS_MAP_192KHZ;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* control should never come here */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	had_write_register(intelhaddata,
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata,
 			   AUD_CH_STATUS_0, ch_stat0.regval);
 
-	switch (substream->runtime->format) {
-	case SNDRV_PCM_FORMAT_S16_LE:
+	चयन (substream->runसमय->क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
 		ch_stat1.regx.max_wrd_len = MAX_SMPL_WIDTH_20;
 		ch_stat1.regx.wrd_len = SMPL_WIDTH_16BITS;
-		break;
-	case SNDRV_PCM_FORMAT_S24_LE:
-	case SNDRV_PCM_FORMAT_S32_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S24_LE:
+	हाल SNDRV_PCM_FORMAT_S32_LE:
 		ch_stat1.regx.max_wrd_len = MAX_SMPL_WIDTH_24;
 		ch_stat1.regx.wrd_len = SMPL_WIDTH_24BITS;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	had_write_register(intelhaddata,
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata,
 			   AUD_CH_STATUS_1, ch_stat1.regval);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * function to initialize audio
- * registers and buffer confgiuration registers
+ * रेजिस्टरs and buffer confgiuration रेजिस्टरs
  * This function is called in the prepare callback
  */
-static int had_init_audio_ctrl(struct snd_pcm_substream *substream,
-			       struct snd_intelhad *intelhaddata)
-{
-	union aud_cfg cfg_val = {.regval = 0};
-	union aud_buf_config buf_cfg = {.regval = 0};
+अटल पूर्णांक had_init_audio_ctrl(काष्ठा snd_pcm_substream *substream,
+			       काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	जोड़ aud_cfg cfg_val = अणु.regval = 0पूर्ण;
+	जोड़ aud_buf_config buf_cfg = अणु.regval = 0पूर्ण;
 	u8 channels;
 
-	had_prog_status_reg(substream, intelhaddata);
+	had_prog_status_reg(substream, पूर्णांकelhaddata);
 
-	buf_cfg.regx.audio_fifo_watermark = FIFO_THRESHOLD;
-	buf_cfg.regx.dma_fifo_watermark = DMA_FIFO_THRESHOLD;
+	buf_cfg.regx.audio_fअगरo_watermark = FIFO_THRESHOLD;
+	buf_cfg.regx.dma_fअगरo_watermark = DMA_FIFO_THRESHOLD;
 	buf_cfg.regx.aud_delay = 0;
-	had_write_register(intelhaddata, AUD_BUF_CONFIG, buf_cfg.regval);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_BUF_CONFIG, buf_cfg.regval);
 
-	channels = substream->runtime->channels;
+	channels = substream->runसमय->channels;
 	cfg_val.regx.num_ch = channels - 2;
-	if (channels <= 2)
+	अगर (channels <= 2)
 		cfg_val.regx.layout = LAYOUT0;
-	else
+	अन्यथा
 		cfg_val.regx.layout = LAYOUT1;
 
-	if (substream->runtime->format == SNDRV_PCM_FORMAT_S16_LE)
+	अगर (substream->runसमय->क्रमmat == SNDRV_PCM_FORMAT_S16_LE)
 		cfg_val.regx.packet_mode = 1;
 
-	if (substream->runtime->format == SNDRV_PCM_FORMAT_S32_LE)
+	अगर (substream->runसमय->क्रमmat == SNDRV_PCM_FORMAT_S32_LE)
 		cfg_val.regx.left_align = 1;
 
 	cfg_val.regx.val_bit = 1;
 
 	/* fix up the DP bits */
-	if (intelhaddata->dp_output) {
+	अगर (पूर्णांकelhaddata->dp_output) अणु
 		cfg_val.regx.dp_modei = 1;
 		cfg_val.regx.set = 1;
-	}
+	पूर्ण
 
-	had_write_register(intelhaddata, AUD_CONFIG, cfg_val.regval);
-	intelhaddata->aud_config = cfg_val;
-	return 0;
-}
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_CONFIG, cfg_val.regval);
+	पूर्णांकelhaddata->aud_config = cfg_val;
+	वापस 0;
+पूर्ण
 
 /*
  * Compute derived values in channel_allocations[].
  */
-static void init_channel_allocations(void)
-{
-	int i, j;
-	struct cea_channel_speaker_allocation *p;
+अटल व्योम init_channel_allocations(व्योम)
+अणु
+	पूर्णांक i, j;
+	काष्ठा cea_channel_speaker_allocation *p;
 
-	for (i = 0; i < ARRAY_SIZE(channel_allocations); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(channel_allocations); i++) अणु
 		p = channel_allocations + i;
 		p->channels = 0;
 		p->spk_mask = 0;
-		for (j = 0; j < ARRAY_SIZE(p->speakers); j++)
-			if (p->speakers[j]) {
+		क्रम (j = 0; j < ARRAY_SIZE(p->speakers); j++)
+			अगर (p->speakers[j]) अणु
 				p->channels++;
 				p->spk_mask |= p->speakers[j];
-			}
-	}
-}
+			पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * The transformation takes two steps:
+ * The transक्रमmation takes two steps:
  *
  *      eld->spk_alloc => (eld_speaker_allocation_bits[]) => spk_mask
  *            spk_mask => (channel_allocations[])         => ai->CA
  *
  * TODO: it could select the wrong CA from multiple candidates.
  */
-static int had_channel_allocation(struct snd_intelhad *intelhaddata,
-				  int channels)
-{
-	int i;
-	int ca = 0;
-	int spk_mask = 0;
+अटल पूर्णांक had_channel_allocation(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata,
+				  पूर्णांक channels)
+अणु
+	पूर्णांक i;
+	पूर्णांक ca = 0;
+	पूर्णांक spk_mask = 0;
 
 	/*
-	 * CA defaults to 0 for basic stereo audio
+	 * CA शेषs to 0 क्रम basic stereo audio
 	 */
-	if (channels <= 2)
-		return 0;
+	अगर (channels <= 2)
+		वापस 0;
 
 	/*
 	 * expand ELD's speaker allocation mask
 	 *
-	 * ELD tells the speaker mask in a compact(paired) form,
+	 * ELD tells the speaker mask in a compact(paired) क्रमm,
 	 * expand ELD's notions to match the ones used by Audio InfoFrame.
 	 */
 
-	for (i = 0; i < ARRAY_SIZE(eld_speaker_allocation_bits); i++) {
-		if (intelhaddata->eld[DRM_ELD_SPEAKER] & (1 << i))
+	क्रम (i = 0; i < ARRAY_SIZE(eld_speaker_allocation_bits); i++) अणु
+		अगर (पूर्णांकelhaddata->eld[DRM_ELD_SPEAKER] & (1 << i))
 			spk_mask |= eld_speaker_allocation_bits[i];
-	}
+	पूर्ण
 
-	/* search for the first working match in the CA table */
-	for (i = 0; i < ARRAY_SIZE(channel_allocations); i++) {
-		if (channels == channel_allocations[i].channels &&
+	/* search क्रम the first working match in the CA table */
+	क्रम (i = 0; i < ARRAY_SIZE(channel_allocations); i++) अणु
+		अगर (channels == channel_allocations[i].channels &&
 		(spk_mask & channel_allocations[i].spk_mask) ==
-				channel_allocations[i].spk_mask) {
+				channel_allocations[i].spk_mask) अणु
 			ca = channel_allocations[i].ca_index;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	dev_dbg(intelhaddata->dev, "select CA 0x%x for %d\n", ca, channels);
+	dev_dbg(पूर्णांकelhaddata->dev, "select CA 0x%x for %d\n", ca, channels);
 
-	return ca;
-}
+	वापस ca;
+पूर्ण
 
 /* from speaker bit mask to ALSA API channel position */
-static int spk_to_chmap(int spk)
-{
-	const struct channel_map_table *t = map_tables;
+अटल पूर्णांक spk_to_chmap(पूर्णांक spk)
+अणु
+	स्थिर काष्ठा channel_map_table *t = map_tables;
 
-	for (; t->map; t++) {
-		if (t->spk_mask == spk)
-			return t->map;
-	}
-	return 0;
-}
+	क्रम (; t->map; t++) अणु
+		अगर (t->spk_mask == spk)
+			वापस t->map;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void had_build_channel_allocation_map(struct snd_intelhad *intelhaddata)
-{
-	int i, c;
-	int spk_mask = 0;
-	struct snd_pcm_chmap_elem *chmap;
+अटल व्योम had_build_channel_allocation_map(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	पूर्णांक i, c;
+	पूर्णांक spk_mask = 0;
+	काष्ठा snd_pcm_chmap_elem *chmap;
 	u8 eld_high, eld_high_mask = 0xF0;
 	u8 high_msb;
 
-	kfree(intelhaddata->chmap->chmap);
-	intelhaddata->chmap->chmap = NULL;
+	kमुक्त(पूर्णांकelhaddata->chmap->chmap);
+	पूर्णांकelhaddata->chmap->chmap = शून्य;
 
-	chmap = kzalloc(sizeof(*chmap), GFP_KERNEL);
-	if (!chmap)
-		return;
+	chmap = kzalloc(माप(*chmap), GFP_KERNEL);
+	अगर (!chmap)
+		वापस;
 
-	dev_dbg(intelhaddata->dev, "eld speaker = %x\n",
-		intelhaddata->eld[DRM_ELD_SPEAKER]);
+	dev_dbg(पूर्णांकelhaddata->dev, "eld speaker = %x\n",
+		पूर्णांकelhaddata->eld[DRM_ELD_SPEAKER]);
 
 	/* WA: Fix the max channel supported to 8 */
 
 	/*
-	 * Sink may support more than 8 channels, if eld_high has more than
+	 * Sink may support more than 8 channels, अगर eld_high has more than
 	 * one bit set. SOC supports max 8 channels.
-	 * Refer eld_speaker_allocation_bits, for sink speaker allocation
+	 * Refer eld_speaker_allocation_bits, क्रम sink speaker allocation
 	 */
 
-	/* if 0x2F < eld < 0x4F fall back to 0x2f, else fall back to 0x4F */
-	eld_high = intelhaddata->eld[DRM_ELD_SPEAKER] & eld_high_mask;
-	if ((eld_high & (eld_high-1)) && (eld_high > 0x1F)) {
-		/* eld_high & (eld_high-1): if more than 1 bit set */
+	/* अगर 0x2F < eld < 0x4F fall back to 0x2f, अन्यथा fall back to 0x4F */
+	eld_high = पूर्णांकelhaddata->eld[DRM_ELD_SPEAKER] & eld_high_mask;
+	अगर ((eld_high & (eld_high-1)) && (eld_high > 0x1F)) अणु
+		/* eld_high & (eld_high-1): अगर more than 1 bit set */
 		/* 0x1F: 7 channels */
-		for (i = 1; i < 4; i++) {
+		क्रम (i = 1; i < 4; i++) अणु
 			high_msb = eld_high & (0x80 >> i);
-			if (high_msb) {
-				intelhaddata->eld[DRM_ELD_SPEAKER] &=
+			अगर (high_msb) अणु
+				पूर्णांकelhaddata->eld[DRM_ELD_SPEAKER] &=
 					high_msb | 0xF;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(eld_speaker_allocation_bits); i++) {
-		if (intelhaddata->eld[DRM_ELD_SPEAKER] & (1 << i))
+	क्रम (i = 0; i < ARRAY_SIZE(eld_speaker_allocation_bits); i++) अणु
+		अगर (पूर्णांकelhaddata->eld[DRM_ELD_SPEAKER] & (1 << i))
 			spk_mask |= eld_speaker_allocation_bits[i];
-	}
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(channel_allocations); i++) {
-		if (spk_mask == channel_allocations[i].spk_mask) {
-			for (c = 0; c < channel_allocations[i].channels; c++) {
+	क्रम (i = 0; i < ARRAY_SIZE(channel_allocations); i++) अणु
+		अगर (spk_mask == channel_allocations[i].spk_mask) अणु
+			क्रम (c = 0; c < channel_allocations[i].channels; c++) अणु
 				chmap->map[c] = spk_to_chmap(
 					channel_allocations[i].speakers[
 						(MAX_SPEAKERS - 1) - c]);
-			}
+			पूर्ण
 			chmap->channels = channel_allocations[i].channels;
-			intelhaddata->chmap->chmap = chmap;
-			break;
-		}
-	}
-	if (i >= ARRAY_SIZE(channel_allocations))
-		kfree(chmap);
-}
+			पूर्णांकelhaddata->chmap->chmap = chmap;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (i >= ARRAY_SIZE(channel_allocations))
+		kमुक्त(chmap);
+पूर्ण
 
 /*
  * ALSA API channel-map control callbacks
  */
-static int had_chmap_ctl_info(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक had_chmap_ctl_info(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = HAD_MAX_CHANNEL;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = SNDRV_CHMAP_LAST;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = SNDRV_CHMAP_LAST;
+	वापस 0;
+पूर्ण
 
-static int had_chmap_ctl_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
-	struct snd_intelhad *intelhaddata = info->private_data;
-	int i;
-	const struct snd_pcm_chmap_elem *chmap;
+अटल पूर्णांक had_chmap_ctl_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata = info->निजी_data;
+	पूर्णांक i;
+	स्थिर काष्ठा snd_pcm_chmap_elem *chmap;
 
-	memset(ucontrol->value.integer.value, 0,
-	       sizeof(long) * HAD_MAX_CHANNEL);
-	mutex_lock(&intelhaddata->mutex);
-	if (!intelhaddata->chmap->chmap) {
-		mutex_unlock(&intelhaddata->mutex);
-		return 0;
-	}
+	स_रखो(ucontrol->value.पूर्णांकeger.value, 0,
+	       माप(दीर्घ) * HAD_MAX_CHANNEL);
+	mutex_lock(&पूर्णांकelhaddata->mutex);
+	अगर (!पूर्णांकelhaddata->chmap->chmap) अणु
+		mutex_unlock(&पूर्णांकelhaddata->mutex);
+		वापस 0;
+	पूर्ण
 
-	chmap = intelhaddata->chmap->chmap;
-	for (i = 0; i < chmap->channels; i++)
-		ucontrol->value.integer.value[i] = chmap->map[i];
-	mutex_unlock(&intelhaddata->mutex);
+	chmap = पूर्णांकelhaddata->chmap->chmap;
+	क्रम (i = 0; i < chmap->channels; i++)
+		ucontrol->value.पूर्णांकeger.value[i] = chmap->map[i];
+	mutex_unlock(&पूर्णांकelhaddata->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int had_register_chmap_ctls(struct snd_intelhad *intelhaddata,
-						struct snd_pcm *pcm)
-{
-	int err;
+अटल पूर्णांक had_रेजिस्टर_chmap_ctls(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata,
+						काष्ठा snd_pcm *pcm)
+अणु
+	पूर्णांक err;
 
 	err = snd_pcm_add_chmap_ctls(pcm, SNDRV_PCM_STREAM_PLAYBACK,
-			NULL, 0, (unsigned long)intelhaddata,
-			&intelhaddata->chmap);
-	if (err < 0)
-		return err;
+			शून्य, 0, (अचिन्हित दीर्घ)पूर्णांकelhaddata,
+			&पूर्णांकelhaddata->chmap);
+	अगर (err < 0)
+		वापस err;
 
-	intelhaddata->chmap->private_data = intelhaddata;
-	intelhaddata->chmap->kctl->info = had_chmap_ctl_info;
-	intelhaddata->chmap->kctl->get = had_chmap_ctl_get;
-	intelhaddata->chmap->chmap = NULL;
-	return 0;
-}
+	पूर्णांकelhaddata->chmap->निजी_data = पूर्णांकelhaddata;
+	पूर्णांकelhaddata->chmap->kctl->info = had_chmap_ctl_info;
+	पूर्णांकelhaddata->chmap->kctl->get = had_chmap_ctl_get;
+	पूर्णांकelhaddata->chmap->chmap = शून्य;
+	वापस 0;
+पूर्ण
 
 /*
- * Initialize Data Island Packets registers
+ * Initialize Data Island Packets रेजिस्टरs
  * This function is called in the prepare callback
  */
-static void had_prog_dip(struct snd_pcm_substream *substream,
-			 struct snd_intelhad *intelhaddata)
-{
-	int i;
-	union aud_ctrl_st ctrl_state = {.regval = 0};
-	union aud_info_frame2 frame2 = {.regval = 0};
-	union aud_info_frame3 frame3 = {.regval = 0};
+अटल व्योम had_prog_dip(काष्ठा snd_pcm_substream *substream,
+			 काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	पूर्णांक i;
+	जोड़ aud_ctrl_st ctrl_state = अणु.regval = 0पूर्ण;
+	जोड़ aud_info_frame2 frame2 = अणु.regval = 0पूर्ण;
+	जोड़ aud_info_frame3 frame3 = अणु.regval = 0पूर्ण;
 	u8 checksum = 0;
 	u32 info_frame;
-	int channels;
-	int ca;
+	पूर्णांक channels;
+	पूर्णांक ca;
 
-	channels = substream->runtime->channels;
+	channels = substream->runसमय->channels;
 
-	had_write_register(intelhaddata, AUD_CNTL_ST, ctrl_state.regval);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_CNTL_ST, ctrl_state.regval);
 
-	ca = had_channel_allocation(intelhaddata, channels);
-	if (intelhaddata->dp_output) {
+	ca = had_channel_allocation(पूर्णांकelhaddata, channels);
+	अगर (पूर्णांकelhaddata->dp_output) अणु
 		info_frame = DP_INFO_FRAME_WORD1;
-		frame2.regval = (substream->runtime->channels - 1) | (ca << 24);
-	} else {
+		frame2.regval = (substream->runसमय->channels - 1) | (ca << 24);
+	पूर्ण अन्यथा अणु
 		info_frame = HDMI_INFO_FRAME_WORD1;
-		frame2.regx.chnl_cnt = substream->runtime->channels - 1;
+		frame2.regx.chnl_cnt = substream->runसमय->channels - 1;
 		frame3.regx.chnl_alloc = ca;
 
-		/* Calculte the byte wide checksum for all valid DIP words */
-		for (i = 0; i < BYTES_PER_WORD; i++)
+		/* Calculte the byte wide checksum क्रम all valid DIP words */
+		क्रम (i = 0; i < BYTES_PER_WORD; i++)
 			checksum += (info_frame >> (i * 8)) & 0xff;
-		for (i = 0; i < BYTES_PER_WORD; i++)
+		क्रम (i = 0; i < BYTES_PER_WORD; i++)
 			checksum += (frame2.regval >> (i * 8)) & 0xff;
-		for (i = 0; i < BYTES_PER_WORD; i++)
+		क्रम (i = 0; i < BYTES_PER_WORD; i++)
 			checksum += (frame3.regval >> (i * 8)) & 0xff;
 
 		frame2.regx.chksum = -(checksum);
-	}
+	पूर्ण
 
-	had_write_register(intelhaddata, AUD_HDMIW_INFOFR, info_frame);
-	had_write_register(intelhaddata, AUD_HDMIW_INFOFR, frame2.regval);
-	had_write_register(intelhaddata, AUD_HDMIW_INFOFR, frame3.regval);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_HDMIW_INFOFR, info_frame);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_HDMIW_INFOFR, frame2.regval);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_HDMIW_INFOFR, frame3.regval);
 
-	/* program remaining DIP words with zero */
-	for (i = 0; i < HAD_MAX_DIP_WORDS-VALID_DIP_WORDS; i++)
-		had_write_register(intelhaddata, AUD_HDMIW_INFOFR, 0x0);
+	/* program reमुख्यing DIP words with zero */
+	क्रम (i = 0; i < HAD_MAX_DIP_WORDS-VALID_DIP_WORDS; i++)
+		had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_HDMIW_INFOFR, 0x0);
 
 	ctrl_state.regx.dip_freq = 1;
 	ctrl_state.regx.dip_en_sta = 1;
-	had_write_register(intelhaddata, AUD_CNTL_ST, ctrl_state.regval);
-}
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_CNTL_ST, ctrl_state.regval);
+पूर्ण
 
-static int had_calculate_maud_value(u32 aud_samp_freq, u32 link_rate)
-{
+अटल पूर्णांक had_calculate_maud_value(u32 aud_samp_freq, u32 link_rate)
+अणु
 	u32 maud_val;
 
 	/* Select maud according to DP 1.2 spec */
-	if (link_rate == DP_2_7_GHZ) {
-		switch (aud_samp_freq) {
-		case AUD_SAMPLE_RATE_32:
+	अगर (link_rate == DP_2_7_GHZ) अणु
+		चयन (aud_samp_freq) अणु
+		हाल AUD_SAMPLE_RATE_32:
 			maud_val = AUD_SAMPLE_RATE_32_DP_2_7_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_44_1:
+		हाल AUD_SAMPLE_RATE_44_1:
 			maud_val = AUD_SAMPLE_RATE_44_1_DP_2_7_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_48:
+		हाल AUD_SAMPLE_RATE_48:
 			maud_val = AUD_SAMPLE_RATE_48_DP_2_7_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_88_2:
+		हाल AUD_SAMPLE_RATE_88_2:
 			maud_val = AUD_SAMPLE_RATE_88_2_DP_2_7_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_96:
+		हाल AUD_SAMPLE_RATE_96:
 			maud_val = AUD_SAMPLE_RATE_96_DP_2_7_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_176_4:
+		हाल AUD_SAMPLE_RATE_176_4:
 			maud_val = AUD_SAMPLE_RATE_176_4_DP_2_7_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case HAD_MAX_RATE:
+		हाल HAD_MAX_RATE:
 			maud_val = HAD_MAX_RATE_DP_2_7_MAUD_VAL;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			maud_val = -EINVAL;
-			break;
-		}
-	} else if (link_rate == DP_1_62_GHZ) {
-		switch (aud_samp_freq) {
-		case AUD_SAMPLE_RATE_32:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (link_rate == DP_1_62_GHZ) अणु
+		चयन (aud_samp_freq) अणु
+		हाल AUD_SAMPLE_RATE_32:
 			maud_val = AUD_SAMPLE_RATE_32_DP_1_62_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_44_1:
+		हाल AUD_SAMPLE_RATE_44_1:
 			maud_val = AUD_SAMPLE_RATE_44_1_DP_1_62_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_48:
+		हाल AUD_SAMPLE_RATE_48:
 			maud_val = AUD_SAMPLE_RATE_48_DP_1_62_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_88_2:
+		हाल AUD_SAMPLE_RATE_88_2:
 			maud_val = AUD_SAMPLE_RATE_88_2_DP_1_62_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_96:
+		हाल AUD_SAMPLE_RATE_96:
 			maud_val = AUD_SAMPLE_RATE_96_DP_1_62_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case AUD_SAMPLE_RATE_176_4:
+		हाल AUD_SAMPLE_RATE_176_4:
 			maud_val = AUD_SAMPLE_RATE_176_4_DP_1_62_MAUD_VAL;
-			break;
+			अवरोध;
 
-		case HAD_MAX_RATE:
+		हाल HAD_MAX_RATE:
 			maud_val = HAD_MAX_RATE_DP_1_62_MAUD_VAL;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			maud_val = -EINVAL;
-			break;
-		}
-	} else
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा
 		maud_val = -EINVAL;
 
-	return maud_val;
-}
+	वापस maud_val;
+पूर्ण
 
 /*
  * Program HDMI audio CTS value
  *
  * @aud_samp_freq: sampling frequency of audio data
- * @tmds: sampling frequency of the display data
+ * @पंचांगds: sampling frequency of the display data
  * @link_rate: DP link rate
  * @n_param: N value, depends on aud_samp_freq
- * @intelhaddata: substream private data
+ * @पूर्णांकelhaddata: substream निजी data
  *
- * Program CTS register based on the audio and display sampling frequency
+ * Program CTS रेजिस्टर based on the audio and display sampling frequency
  */
-static void had_prog_cts(u32 aud_samp_freq, u32 tmds, u32 link_rate,
-			 u32 n_param, struct snd_intelhad *intelhaddata)
-{
+अटल व्योम had_prog_cts(u32 aud_samp_freq, u32 पंचांगds, u32 link_rate,
+			 u32 n_param, काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
 	u32 cts_val;
-	u64 dividend, divisor;
+	u64 भागidend, भागisor;
 
-	if (intelhaddata->dp_output) {
+	अगर (पूर्णांकelhaddata->dp_output) अणु
 		/* Substitute cts_val with Maud according to DP 1.2 spec*/
 		cts_val = had_calculate_maud_value(aud_samp_freq, link_rate);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Calculate CTS according to HDMI 1.3a spec*/
-		dividend = (u64)tmds * n_param*1000;
-		divisor = 128 * aud_samp_freq;
-		cts_val = div64_u64(dividend, divisor);
-	}
-	dev_dbg(intelhaddata->dev, "TMDS value=%d, N value=%d, CTS Value=%d\n",
-		 tmds, n_param, cts_val);
-	had_write_register(intelhaddata, AUD_HDMI_CTS, (BIT(24) | cts_val));
-}
+		भागidend = (u64)पंचांगds * n_param*1000;
+		भागisor = 128 * aud_samp_freq;
+		cts_val = भाग64_u64(भागidend, भागisor);
+	पूर्ण
+	dev_dbg(पूर्णांकelhaddata->dev, "TMDS value=%d, N value=%d, CTS Value=%d\n",
+		 पंचांगds, n_param, cts_val);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_HDMI_CTS, (BIT(24) | cts_val));
+पूर्ण
 
-static int had_calculate_n_value(u32 aud_samp_freq)
-{
-	int n_val;
+अटल पूर्णांक had_calculate_n_value(u32 aud_samp_freq)
+अणु
+	पूर्णांक n_val;
 
 	/* Select N according to HDMI 1.3a spec*/
-	switch (aud_samp_freq) {
-	case AUD_SAMPLE_RATE_32:
+	चयन (aud_samp_freq) अणु
+	हाल AUD_SAMPLE_RATE_32:
 		n_val = 4096;
-		break;
+		अवरोध;
 
-	case AUD_SAMPLE_RATE_44_1:
+	हाल AUD_SAMPLE_RATE_44_1:
 		n_val = 6272;
-		break;
+		अवरोध;
 
-	case AUD_SAMPLE_RATE_48:
+	हाल AUD_SAMPLE_RATE_48:
 		n_val = 6144;
-		break;
+		अवरोध;
 
-	case AUD_SAMPLE_RATE_88_2:
+	हाल AUD_SAMPLE_RATE_88_2:
 		n_val = 12544;
-		break;
+		अवरोध;
 
-	case AUD_SAMPLE_RATE_96:
+	हाल AUD_SAMPLE_RATE_96:
 		n_val = 12288;
-		break;
+		अवरोध;
 
-	case AUD_SAMPLE_RATE_176_4:
+	हाल AUD_SAMPLE_RATE_176_4:
 		n_val = 25088;
-		break;
+		अवरोध;
 
-	case HAD_MAX_RATE:
+	हाल HAD_MAX_RATE:
 		n_val = 24576;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		n_val = -EINVAL;
-		break;
-	}
-	return n_val;
-}
+		अवरोध;
+	पूर्ण
+	वापस n_val;
+पूर्ण
 
 /*
  * Program HDMI audio N value
  *
  * @aud_samp_freq: sampling frequency of audio data
  * @n_param: N value, depends on aud_samp_freq
- * @intelhaddata: substream private data
+ * @पूर्णांकelhaddata: substream निजी data
  *
  * This function is called in the prepare callback.
  * It programs based on the audio and display sampling frequency
  */
-static int had_prog_n(u32 aud_samp_freq, u32 *n_param,
-		      struct snd_intelhad *intelhaddata)
-{
-	int n_val;
+अटल पूर्णांक had_prog_n(u32 aud_samp_freq, u32 *n_param,
+		      काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	पूर्णांक n_val;
 
-	if (intelhaddata->dp_output) {
+	अगर (पूर्णांकelhaddata->dp_output) अणु
 		/*
 		 * According to DP specs, Maud and Naud values hold
 		 * a relationship, which is stated as:
 		 * Maud/Naud = 512 * fs / f_LS_Clk
 		 * where, fs is the sampling frequency of the audio stream
-		 * and Naud is 32768 for Async clock.
+		 * and Naud is 32768 क्रम Async घड़ी.
 		 */
 
 		n_val = DP_NAUD_VAL;
-	} else
+	पूर्ण अन्यथा
 		n_val =	had_calculate_n_value(aud_samp_freq);
 
-	if (n_val < 0)
-		return n_val;
+	अगर (n_val < 0)
+		वापस n_val;
 
-	had_write_register(intelhaddata, AUD_N_ENABLE, (BIT(24) | n_val));
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_N_ENABLE, (BIT(24) | n_val));
 	*n_param = n_val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * PCM ring buffer handling
@@ -829,913 +830,913 @@ static int had_prog_n(u32 aud_samp_freq, u32 *n_param,
  * (BDs).  The driver maps these 4 BDs onto the PCM ring buffer.  The mapping
  * moves at each period elapsed.  The below illustrates how it works:
  *
- * At time=0
+ * At समय=0
  *  PCM | 0 | 1 | 2 | 3 | 4 | 5 | .... |n-1|
  *  BD  | 0 | 1 | 2 | 3 |
  *
- * At time=1 (period elapsed)
+ * At समय=1 (period elapsed)
  *  PCM | 0 | 1 | 2 | 3 | 4 | 5 | .... |n-1|
  *  BD      | 1 | 2 | 3 | 0 |
  *
- * At time=2 (second period elapsed)
+ * At समय=2 (second period elapsed)
  *  PCM | 0 | 1 | 2 | 3 | 4 | 5 | .... |n-1|
  *  BD          | 2 | 3 | 0 | 1 |
  *
- * The bd_head field points to the index of the BD to be read.  It's also the
+ * The bd_head field poपूर्णांकs to the index of the BD to be पढ़ो.  It's also the
  * position to be filled at next.  The pcm_head and the pcm_filled fields
- * point to the indices of the current position and of the next position to
+ * poपूर्णांक to the indices of the current position and of the next position to
  * be filled, respectively.  For PCM buffer there are both _head and _filled
- * because they may be difference when nperiods > 4.  For example, in the
- * example above at t=1, bd_head=1 and pcm_head=1 while pcm_filled=5:
+ * because they may be dअगरference when nperiods > 4.  For example, in the
+ * example above at t=1, bd_head=1 and pcm_head=1 जबतक pcm_filled=5:
  *
  * pcm_head (=1) --v               v-- pcm_filled (=5)
  *       PCM | 0 | 1 | 2 | 3 | 4 | 5 | .... |n-1|
  *       BD      | 1 | 2 | 3 | 0 |
  *  bd_head (=1) --^               ^-- next to fill (= bd_head)
  *
- * For nperiods < 4, the remaining BDs out of 4 are marked as invalid, so that
+ * For nperiods < 4, the reमुख्यing BDs out of 4 are marked as invalid, so that
  * the hardware skips those BDs in the loop.
  *
- * An exceptional setup is the case with nperiods=1.  Since we have to update
+ * An exceptional setup is the हाल with nperiods=1.  Since we have to update
  * BDs after finishing one BD processing, we'd need at least two BDs, where
- * both BDs point to the same content, the same address, the same size of the
+ * both BDs poपूर्णांक to the same content, the same address, the same size of the
  * whole PCM buffer.
  */
 
-#define AUD_BUF_ADDR(x)		(AUD_BUF_A_ADDR + (x) * HAD_REG_WIDTH)
-#define AUD_BUF_LEN(x)		(AUD_BUF_A_LENGTH + (x) * HAD_REG_WIDTH)
+#घोषणा AUD_BUF_ADDR(x)		(AUD_BUF_A_ADDR + (x) * HAD_REG_WIDTH)
+#घोषणा AUD_BUF_LEN(x)		(AUD_BUF_A_LENGTH + (x) * HAD_REG_WIDTH)
 
 /* Set up a buffer descriptor at the "filled" position */
-static void had_prog_bd(struct snd_pcm_substream *substream,
-			struct snd_intelhad *intelhaddata)
-{
-	int idx = intelhaddata->bd_head;
-	int ofs = intelhaddata->pcmbuf_filled * intelhaddata->period_bytes;
-	u32 addr = substream->runtime->dma_addr + ofs;
+अटल व्योम had_prog_bd(काष्ठा snd_pcm_substream *substream,
+			काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	पूर्णांक idx = पूर्णांकelhaddata->bd_head;
+	पूर्णांक ofs = पूर्णांकelhaddata->pcmbuf_filled * पूर्णांकelhaddata->period_bytes;
+	u32 addr = substream->runसमय->dma_addr + ofs;
 
 	addr |= AUD_BUF_VALID;
-	if (!substream->runtime->no_period_wakeup)
+	अगर (!substream->runसमय->no_period_wakeup)
 		addr |= AUD_BUF_INTR_EN;
-	had_write_register(intelhaddata, AUD_BUF_ADDR(idx), addr);
-	had_write_register(intelhaddata, AUD_BUF_LEN(idx),
-			   intelhaddata->period_bytes);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_BUF_ADDR(idx), addr);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_BUF_LEN(idx),
+			   पूर्णांकelhaddata->period_bytes);
 
 	/* advance the indices to the next */
-	intelhaddata->bd_head++;
-	intelhaddata->bd_head %= intelhaddata->num_bds;
-	intelhaddata->pcmbuf_filled++;
-	intelhaddata->pcmbuf_filled %= substream->runtime->periods;
-}
+	पूर्णांकelhaddata->bd_head++;
+	पूर्णांकelhaddata->bd_head %= पूर्णांकelhaddata->num_bds;
+	पूर्णांकelhaddata->pcmbuf_filled++;
+	पूर्णांकelhaddata->pcmbuf_filled %= substream->runसमय->periods;
+पूर्ण
 
 /* invalidate a buffer descriptor with the given index */
-static void had_invalidate_bd(struct snd_intelhad *intelhaddata,
-			      int idx)
-{
-	had_write_register(intelhaddata, AUD_BUF_ADDR(idx), 0);
-	had_write_register(intelhaddata, AUD_BUF_LEN(idx), 0);
-}
+अटल व्योम had_invalidate_bd(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata,
+			      पूर्णांक idx)
+अणु
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_BUF_ADDR(idx), 0);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_BUF_LEN(idx), 0);
+पूर्ण
 
 /* Initial programming of ring buffer */
-static void had_init_ringbuf(struct snd_pcm_substream *substream,
-			     struct snd_intelhad *intelhaddata)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int i, num_periods;
+अटल व्योम had_init_ringbuf(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक i, num_periods;
 
-	num_periods = runtime->periods;
-	intelhaddata->num_bds = min(num_periods, HAD_NUM_OF_RING_BUFS);
-	/* set the minimum 2 BDs for num_periods=1 */
-	intelhaddata->num_bds = max(intelhaddata->num_bds, 2U);
-	intelhaddata->period_bytes =
-		frames_to_bytes(runtime, runtime->period_size);
-	WARN_ON(intelhaddata->period_bytes & 0x3f);
+	num_periods = runसमय->periods;
+	पूर्णांकelhaddata->num_bds = min(num_periods, HAD_NUM_OF_RING_BUFS);
+	/* set the minimum 2 BDs क्रम num_periods=1 */
+	पूर्णांकelhaddata->num_bds = max(पूर्णांकelhaddata->num_bds, 2U);
+	पूर्णांकelhaddata->period_bytes =
+		frames_to_bytes(runसमय, runसमय->period_size);
+	WARN_ON(पूर्णांकelhaddata->period_bytes & 0x3f);
 
-	intelhaddata->bd_head = 0;
-	intelhaddata->pcmbuf_head = 0;
-	intelhaddata->pcmbuf_filled = 0;
+	पूर्णांकelhaddata->bd_head = 0;
+	पूर्णांकelhaddata->pcmbuf_head = 0;
+	पूर्णांकelhaddata->pcmbuf_filled = 0;
 
-	for (i = 0; i < HAD_NUM_OF_RING_BUFS; i++) {
-		if (i < intelhaddata->num_bds)
-			had_prog_bd(substream, intelhaddata);
-		else /* invalidate the rest */
-			had_invalidate_bd(intelhaddata, i);
-	}
+	क्रम (i = 0; i < HAD_NUM_OF_RING_BUFS; i++) अणु
+		अगर (i < पूर्णांकelhaddata->num_bds)
+			had_prog_bd(substream, पूर्णांकelhaddata);
+		अन्यथा /* invalidate the rest */
+			had_invalidate_bd(पूर्णांकelhaddata, i);
+	पूर्ण
 
-	intelhaddata->bd_head = 0; /* reset at head again before starting */
-}
+	पूर्णांकelhaddata->bd_head = 0; /* reset at head again beक्रमe starting */
+पूर्ण
 
 /* process a bd, advance to the next */
-static void had_advance_ringbuf(struct snd_pcm_substream *substream,
-				struct snd_intelhad *intelhaddata)
-{
-	int num_periods = substream->runtime->periods;
+अटल व्योम had_advance_ringbuf(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	पूर्णांक num_periods = substream->runसमय->periods;
 
 	/* reprogram the next buffer */
-	had_prog_bd(substream, intelhaddata);
+	had_prog_bd(substream, पूर्णांकelhaddata);
 
 	/* proceed to next */
-	intelhaddata->pcmbuf_head++;
-	intelhaddata->pcmbuf_head %= num_periods;
-}
+	पूर्णांकelhaddata->pcmbuf_head++;
+	पूर्णांकelhaddata->pcmbuf_head %= num_periods;
+पूर्ण
 
 /* process the current BD(s);
- * returns the current PCM buffer byte position, or -EPIPE for underrun.
+ * वापसs the current PCM buffer byte position, or -EPIPE क्रम underrun.
  */
-static int had_process_ringbuf(struct snd_pcm_substream *substream,
-			       struct snd_intelhad *intelhaddata)
-{
-	int len, processed;
-	unsigned long flags;
+अटल पूर्णांक had_process_ringbuf(काष्ठा snd_pcm_substream *substream,
+			       काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	पूर्णांक len, processed;
+	अचिन्हित दीर्घ flags;
 
 	processed = 0;
-	spin_lock_irqsave(&intelhaddata->had_spinlock, flags);
-	for (;;) {
-		/* get the remaining bytes on the buffer */
-		had_read_register(intelhaddata,
-				  AUD_BUF_LEN(intelhaddata->bd_head),
+	spin_lock_irqsave(&पूर्णांकelhaddata->had_spinlock, flags);
+	क्रम (;;) अणु
+		/* get the reमुख्यing bytes on the buffer */
+		had_पढ़ो_रेजिस्टर(पूर्णांकelhaddata,
+				  AUD_BUF_LEN(पूर्णांकelhaddata->bd_head),
 				  &len);
-		if (len < 0 || len > intelhaddata->period_bytes) {
-			dev_dbg(intelhaddata->dev, "Invalid buf length %d\n",
+		अगर (len < 0 || len > पूर्णांकelhaddata->period_bytes) अणु
+			dev_dbg(पूर्णांकelhaddata->dev, "Invalid buf length %d\n",
 				len);
 			len = -EPIPE;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (len > 0) /* OK, this is the current buffer */
-			break;
+		अगर (len > 0) /* OK, this is the current buffer */
+			अवरोध;
 
-		/* len=0 => already empty, check the next buffer */
-		if (++processed >= intelhaddata->num_bds) {
+		/* len=0 => alपढ़ोy empty, check the next buffer */
+		अगर (++processed >= पूर्णांकelhaddata->num_bds) अणु
 			len = -EPIPE; /* all empty? - report underrun */
-			goto out;
-		}
-		had_advance_ringbuf(substream, intelhaddata);
-	}
+			जाओ out;
+		पूर्ण
+		had_advance_ringbuf(substream, पूर्णांकelhaddata);
+	पूर्ण
 
-	len = intelhaddata->period_bytes - len;
-	len += intelhaddata->period_bytes * intelhaddata->pcmbuf_head;
+	len = पूर्णांकelhaddata->period_bytes - len;
+	len += पूर्णांकelhaddata->period_bytes * पूर्णांकelhaddata->pcmbuf_head;
  out:
-	spin_unlock_irqrestore(&intelhaddata->had_spinlock, flags);
-	return len;
-}
+	spin_unlock_irqrestore(&पूर्णांकelhaddata->had_spinlock, flags);
+	वापस len;
+पूर्ण
 
 /* called from irq handler */
-static void had_process_buffer_done(struct snd_intelhad *intelhaddata)
-{
-	struct snd_pcm_substream *substream;
+अटल व्योम had_process_buffer_करोne(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	काष्ठा snd_pcm_substream *substream;
 
-	substream = had_substream_get(intelhaddata);
-	if (!substream)
-		return; /* no stream? - bail out */
+	substream = had_substream_get(पूर्णांकelhaddata);
+	अगर (!substream)
+		वापस; /* no stream? - bail out */
 
-	if (!intelhaddata->connected) {
+	अगर (!पूर्णांकelhaddata->connected) अणु
 		snd_pcm_stop_xrun(substream);
-		goto out; /* disconnected? - bail out */
-	}
+		जाओ out; /* disconnected? - bail out */
+	पूर्ण
 
 	/* process or stop the stream */
-	if (had_process_ringbuf(substream, intelhaddata) < 0)
+	अगर (had_process_ringbuf(substream, पूर्णांकelhaddata) < 0)
 		snd_pcm_stop_xrun(substream);
-	else
+	अन्यथा
 		snd_pcm_period_elapsed(substream);
 
  out:
-	had_substream_put(intelhaddata);
-}
+	had_substream_put(पूर्णांकelhaddata);
+पूर्ण
 
 /*
- * The interrupt status 'sticky' bits might not be cleared by
+ * The पूर्णांकerrupt status 'sticky' bits might not be cleared by
  * setting '1' to that bit once...
  */
-static void wait_clear_underrun_bit(struct snd_intelhad *intelhaddata)
-{
-	int i;
+अटल व्योम रुको_clear_underrun_bit(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	पूर्णांक i;
 	u32 val;
 
-	for (i = 0; i < 100; i++) {
+	क्रम (i = 0; i < 100; i++) अणु
 		/* clear bit30, 31 AUD_HDMI_STATUS */
-		had_read_register(intelhaddata, AUD_HDMI_STATUS, &val);
-		if (!(val & AUD_HDMI_STATUS_MASK_UNDERRUN))
-			return;
+		had_पढ़ो_रेजिस्टर(पूर्णांकelhaddata, AUD_HDMI_STATUS, &val);
+		अगर (!(val & AUD_HDMI_STATUS_MASK_UNDERRUN))
+			वापस;
 		udelay(100);
 		cond_resched();
-		had_write_register(intelhaddata, AUD_HDMI_STATUS, val);
-	}
-	dev_err(intelhaddata->dev, "Unable to clear UNDERRUN bits\n");
-}
+		had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_HDMI_STATUS, val);
+	पूर्ण
+	dev_err(पूर्णांकelhaddata->dev, "Unable to clear UNDERRUN bits\n");
+पूर्ण
 
-/* Perform some reset procedure but only when need_reset is set;
- * this is called from prepare or hw_free callbacks once after trigger STOP
- * or underrun has been processed in order to settle down the h/w state.
+/* Perक्रमm some reset procedure but only when need_reset is set;
+ * this is called from prepare or hw_मुक्त callbacks once after trigger STOP
+ * or underrun has been processed in order to settle करोwn the h/w state.
  */
-static void had_do_reset(struct snd_intelhad *intelhaddata)
-{
-	if (!intelhaddata->need_reset || !intelhaddata->connected)
-		return;
+अटल व्योम had_करो_reset(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	अगर (!पूर्णांकelhaddata->need_reset || !पूर्णांकelhaddata->connected)
+		वापस;
 
-	/* Reset buffer pointers */
-	had_reset_audio(intelhaddata);
-	wait_clear_underrun_bit(intelhaddata);
-	intelhaddata->need_reset = false;
-}
+	/* Reset buffer poपूर्णांकers */
+	had_reset_audio(पूर्णांकelhaddata);
+	रुको_clear_underrun_bit(पूर्णांकelhaddata);
+	पूर्णांकelhaddata->need_reset = false;
+पूर्ण
 
 /* called from irq handler */
-static void had_process_buffer_underrun(struct snd_intelhad *intelhaddata)
-{
-	struct snd_pcm_substream *substream;
+अटल व्योम had_process_buffer_underrun(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	काष्ठा snd_pcm_substream *substream;
 
 	/* Report UNDERRUN error to above layers */
-	substream = had_substream_get(intelhaddata);
-	if (substream) {
+	substream = had_substream_get(पूर्णांकelhaddata);
+	अगर (substream) अणु
 		snd_pcm_stop_xrun(substream);
-		had_substream_put(intelhaddata);
-	}
-	intelhaddata->need_reset = true;
-}
+		had_substream_put(पूर्णांकelhaddata);
+	पूर्ण
+	पूर्णांकelhaddata->need_reset = true;
+पूर्ण
 
 /*
- * ALSA PCM open callback
+ * ALSA PCM खोलो callback
  */
-static int had_pcm_open(struct snd_pcm_substream *substream)
-{
-	struct snd_intelhad *intelhaddata;
-	struct snd_pcm_runtime *runtime;
-	int retval;
+अटल पूर्णांक had_pcm_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata;
+	काष्ठा snd_pcm_runसमय *runसमय;
+	पूर्णांक retval;
 
-	intelhaddata = snd_pcm_substream_chip(substream);
-	runtime = substream->runtime;
+	पूर्णांकelhaddata = snd_pcm_substream_chip(substream);
+	runसमय = substream->runसमय;
 
-	pm_runtime_get_sync(intelhaddata->dev);
+	pm_runसमय_get_sync(पूर्णांकelhaddata->dev);
 
-	/* set the runtime hw parameter with local snd_pcm_hardware struct */
-	runtime->hw = had_pcm_hardware;
+	/* set the runसमय hw parameter with local snd_pcm_hardware काष्ठा */
+	runसमय->hw = had_pcm_hardware;
 
-	retval = snd_pcm_hw_constraint_integer(runtime,
+	retval = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
 			 SNDRV_PCM_HW_PARAM_PERIODS);
-	if (retval < 0)
-		goto error;
+	अगर (retval < 0)
+		जाओ error;
 
 	/* Make sure, that the period size is always aligned
 	 * 64byte boundary
 	 */
-	retval = snd_pcm_hw_constraint_step(substream->runtime, 0,
+	retval = snd_pcm_hw_स्थिरraपूर्णांक_step(substream->runसमय, 0,
 			SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 64);
-	if (retval < 0)
-		goto error;
+	अगर (retval < 0)
+		जाओ error;
 
-	retval = snd_pcm_hw_constraint_msbits(runtime, 0, 32, 24);
-	if (retval < 0)
-		goto error;
+	retval = snd_pcm_hw_स्थिरraपूर्णांक_msbits(runसमय, 0, 32, 24);
+	अगर (retval < 0)
+		जाओ error;
 
 	/* expose PCM substream */
-	spin_lock_irq(&intelhaddata->had_spinlock);
-	intelhaddata->stream_info.substream = substream;
-	intelhaddata->stream_info.substream_refcount++;
-	spin_unlock_irq(&intelhaddata->had_spinlock);
+	spin_lock_irq(&पूर्णांकelhaddata->had_spinlock);
+	पूर्णांकelhaddata->stream_info.substream = substream;
+	पूर्णांकelhaddata->stream_info.substream_refcount++;
+	spin_unlock_irq(&पूर्णांकelhaddata->had_spinlock);
 
-	return retval;
+	वापस retval;
  error:
-	pm_runtime_mark_last_busy(intelhaddata->dev);
-	pm_runtime_put_autosuspend(intelhaddata->dev);
-	return retval;
-}
+	pm_runसमय_mark_last_busy(पूर्णांकelhaddata->dev);
+	pm_runसमय_put_स्वतःsuspend(पूर्णांकelhaddata->dev);
+	वापस retval;
+पूर्ण
 
 /*
- * ALSA PCM close callback
+ * ALSA PCM बंद callback
  */
-static int had_pcm_close(struct snd_pcm_substream *substream)
-{
-	struct snd_intelhad *intelhaddata;
+अटल पूर्णांक had_pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata;
 
-	intelhaddata = snd_pcm_substream_chip(substream);
+	पूर्णांकelhaddata = snd_pcm_substream_chip(substream);
 
 	/* unreference and sync with the pending PCM accesses */
-	spin_lock_irq(&intelhaddata->had_spinlock);
-	intelhaddata->stream_info.substream = NULL;
-	intelhaddata->stream_info.substream_refcount--;
-	while (intelhaddata->stream_info.substream_refcount > 0) {
-		spin_unlock_irq(&intelhaddata->had_spinlock);
+	spin_lock_irq(&पूर्णांकelhaddata->had_spinlock);
+	पूर्णांकelhaddata->stream_info.substream = शून्य;
+	पूर्णांकelhaddata->stream_info.substream_refcount--;
+	जबतक (पूर्णांकelhaddata->stream_info.substream_refcount > 0) अणु
+		spin_unlock_irq(&पूर्णांकelhaddata->had_spinlock);
 		cpu_relax();
-		spin_lock_irq(&intelhaddata->had_spinlock);
-	}
-	spin_unlock_irq(&intelhaddata->had_spinlock);
+		spin_lock_irq(&पूर्णांकelhaddata->had_spinlock);
+	पूर्ण
+	spin_unlock_irq(&पूर्णांकelhaddata->had_spinlock);
 
-	pm_runtime_mark_last_busy(intelhaddata->dev);
-	pm_runtime_put_autosuspend(intelhaddata->dev);
-	return 0;
-}
+	pm_runसमय_mark_last_busy(पूर्णांकelhaddata->dev);
+	pm_runसमय_put_स्वतःsuspend(पूर्णांकelhaddata->dev);
+	वापस 0;
+पूर्ण
 
 /*
  * ALSA PCM hw_params callback
  */
-static int had_pcm_hw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *hw_params)
-{
-	struct snd_intelhad *intelhaddata;
-	int buf_size;
+अटल पूर्णांक had_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata;
+	पूर्णांक buf_size;
 
-	intelhaddata = snd_pcm_substream_chip(substream);
+	पूर्णांकelhaddata = snd_pcm_substream_chip(substream);
 	buf_size = params_buffer_bytes(hw_params);
-	dev_dbg(intelhaddata->dev, "%s:allocated memory = %d\n",
+	dev_dbg(पूर्णांकelhaddata->dev, "%s:allocated memory = %d\n",
 		__func__, buf_size);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * ALSA PCM hw_free callback
+ * ALSA PCM hw_मुक्त callback
  */
-static int had_pcm_hw_free(struct snd_pcm_substream *substream)
-{
-	struct snd_intelhad *intelhaddata;
+अटल पूर्णांक had_pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata;
 
-	intelhaddata = snd_pcm_substream_chip(substream);
-	had_do_reset(intelhaddata);
+	पूर्णांकelhaddata = snd_pcm_substream_chip(substream);
+	had_करो_reset(पूर्णांकelhaddata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * ALSA PCM trigger callback
  */
-static int had_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	int retval = 0;
-	struct snd_intelhad *intelhaddata;
+अटल पूर्णांक had_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	पूर्णांक retval = 0;
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata;
 
-	intelhaddata = snd_pcm_substream_chip(substream);
+	पूर्णांकelhaddata = snd_pcm_substream_chip(substream);
 
-	spin_lock(&intelhaddata->had_spinlock);
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	case SNDRV_PCM_TRIGGER_RESUME:
+	spin_lock(&पूर्णांकelhaddata->had_spinlock);
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
 		/* Enable Audio */
-		had_ack_irqs(intelhaddata); /* FIXME: do we need this? */
-		had_enable_audio(intelhaddata, true);
-		break;
+		had_ack_irqs(पूर्णांकelhaddata); /* FIXME: करो we need this? */
+		had_enable_audio(पूर्णांकelhaddata, true);
+		अवरोध;
 
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		/* Disable Audio */
-		had_enable_audio(intelhaddata, false);
-		intelhaddata->need_reset = true;
-		break;
+		had_enable_audio(पूर्णांकelhaddata, false);
+		पूर्णांकelhaddata->need_reset = true;
+		अवरोध;
 
-	default:
+	शेष:
 		retval = -EINVAL;
-	}
-	spin_unlock(&intelhaddata->had_spinlock);
-	return retval;
-}
+	पूर्ण
+	spin_unlock(&पूर्णांकelhaddata->had_spinlock);
+	वापस retval;
+पूर्ण
 
 /*
  * ALSA PCM prepare callback
  */
-static int had_pcm_prepare(struct snd_pcm_substream *substream)
-{
-	int retval;
+अटल पूर्णांक had_pcm_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक retval;
 	u32 disp_samp_freq, n_param;
 	u32 link_rate = 0;
-	struct snd_intelhad *intelhaddata;
-	struct snd_pcm_runtime *runtime;
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata;
+	काष्ठा snd_pcm_runसमय *runसमय;
 
-	intelhaddata = snd_pcm_substream_chip(substream);
-	runtime = substream->runtime;
+	पूर्णांकelhaddata = snd_pcm_substream_chip(substream);
+	runसमय = substream->runसमय;
 
-	dev_dbg(intelhaddata->dev, "period_size=%d\n",
-		(int)frames_to_bytes(runtime, runtime->period_size));
-	dev_dbg(intelhaddata->dev, "periods=%d\n", runtime->periods);
-	dev_dbg(intelhaddata->dev, "buffer_size=%d\n",
-		(int)snd_pcm_lib_buffer_bytes(substream));
-	dev_dbg(intelhaddata->dev, "rate=%d\n", runtime->rate);
-	dev_dbg(intelhaddata->dev, "channels=%d\n", runtime->channels);
+	dev_dbg(पूर्णांकelhaddata->dev, "period_size=%d\n",
+		(पूर्णांक)frames_to_bytes(runसमय, runसमय->period_size));
+	dev_dbg(पूर्णांकelhaddata->dev, "periods=%d\n", runसमय->periods);
+	dev_dbg(पूर्णांकelhaddata->dev, "buffer_size=%d\n",
+		(पूर्णांक)snd_pcm_lib_buffer_bytes(substream));
+	dev_dbg(पूर्णांकelhaddata->dev, "rate=%d\n", runसमय->rate);
+	dev_dbg(पूर्णांकelhaddata->dev, "channels=%d\n", runसमय->channels);
 
-	had_do_reset(intelhaddata);
+	had_करो_reset(पूर्णांकelhaddata);
 
 	/* Get N value in KHz */
-	disp_samp_freq = intelhaddata->tmds_clock_speed;
+	disp_samp_freq = पूर्णांकelhaddata->पंचांगds_घड़ी_speed;
 
-	retval = had_prog_n(substream->runtime->rate, &n_param, intelhaddata);
-	if (retval) {
-		dev_err(intelhaddata->dev,
+	retval = had_prog_n(substream->runसमय->rate, &n_param, पूर्णांकelhaddata);
+	अगर (retval) अणु
+		dev_err(पूर्णांकelhaddata->dev,
 			"programming N value failed %#x\n", retval);
-		goto prep_end;
-	}
+		जाओ prep_end;
+	पूर्ण
 
-	if (intelhaddata->dp_output)
-		link_rate = intelhaddata->link_rate;
+	अगर (पूर्णांकelhaddata->dp_output)
+		link_rate = पूर्णांकelhaddata->link_rate;
 
-	had_prog_cts(substream->runtime->rate, disp_samp_freq, link_rate,
-		     n_param, intelhaddata);
+	had_prog_cts(substream->runसमय->rate, disp_samp_freq, link_rate,
+		     n_param, पूर्णांकelhaddata);
 
-	had_prog_dip(substream, intelhaddata);
+	had_prog_dip(substream, पूर्णांकelhaddata);
 
-	retval = had_init_audio_ctrl(substream, intelhaddata);
+	retval = had_init_audio_ctrl(substream, पूर्णांकelhaddata);
 
 	/* Prog buffer address */
-	had_init_ringbuf(substream, intelhaddata);
+	had_init_ringbuf(substream, पूर्णांकelhaddata);
 
 	/*
 	 * Program channel mapping in following order:
 	 * FL, FR, C, LFE, RL, RR
 	 */
 
-	had_write_register(intelhaddata, AUD_BUF_CH_SWAP, SWAP_LFE_CENTER);
+	had_ग_लिखो_रेजिस्टर(पूर्णांकelhaddata, AUD_BUF_CH_SWAP, SWAP_LFE_CENTER);
 
 prep_end:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
- * ALSA PCM pointer callback
+ * ALSA PCM poपूर्णांकer callback
  */
-static snd_pcm_uframes_t had_pcm_pointer(struct snd_pcm_substream *substream)
-{
-	struct snd_intelhad *intelhaddata;
-	int len;
+अटल snd_pcm_uframes_t had_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata;
+	पूर्णांक len;
 
-	intelhaddata = snd_pcm_substream_chip(substream);
+	पूर्णांकelhaddata = snd_pcm_substream_chip(substream);
 
-	if (!intelhaddata->connected)
-		return SNDRV_PCM_POS_XRUN;
+	अगर (!पूर्णांकelhaddata->connected)
+		वापस SNDRV_PCM_POS_XRUN;
 
-	len = had_process_ringbuf(substream, intelhaddata);
-	if (len < 0)
-		return SNDRV_PCM_POS_XRUN;
-	len = bytes_to_frames(substream->runtime, len);
+	len = had_process_ringbuf(substream, पूर्णांकelhaddata);
+	अगर (len < 0)
+		वापस SNDRV_PCM_POS_XRUN;
+	len = bytes_to_frames(substream->runसमय, len);
 	/* wrapping may happen when periods=1 */
-	len %= substream->runtime->buffer_size;
-	return len;
-}
+	len %= substream->runसमय->buffer_size;
+	वापस len;
+पूर्ण
 
 /*
  * ALSA PCM mmap callback
  */
-static int had_pcm_mmap(struct snd_pcm_substream *substream,
-			struct vm_area_struct *vma)
-{
+अटल पूर्णांक had_pcm_mmap(काष्ठा snd_pcm_substream *substream,
+			काष्ठा vm_area_काष्ठा *vma)
+अणु
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-	return remap_pfn_range(vma, vma->vm_start,
+	वापस remap_pfn_range(vma, vma->vm_start,
 			substream->dma_buffer.addr >> PAGE_SHIFT,
 			vma->vm_end - vma->vm_start, vma->vm_page_prot);
-}
+पूर्ण
 
 /*
  * ALSA PCM ops
  */
-static const struct snd_pcm_ops had_pcm_ops = {
-	.open =		had_pcm_open,
-	.close =	had_pcm_close,
+अटल स्थिर काष्ठा snd_pcm_ops had_pcm_ops = अणु
+	.खोलो =		had_pcm_खोलो,
+	.बंद =	had_pcm_बंद,
 	.hw_params =	had_pcm_hw_params,
-	.hw_free =	had_pcm_hw_free,
+	.hw_मुक्त =	had_pcm_hw_मुक्त,
 	.prepare =	had_pcm_prepare,
 	.trigger =	had_pcm_trigger,
-	.pointer =	had_pcm_pointer,
+	.poपूर्णांकer =	had_pcm_poपूर्णांकer,
 	.mmap =		had_pcm_mmap,
-};
+पूर्ण;
 
 /* process mode change of the running stream; called in mutex */
-static int had_process_mode_change(struct snd_intelhad *intelhaddata)
-{
-	struct snd_pcm_substream *substream;
-	int retval = 0;
+अटल पूर्णांक had_process_mode_change(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	काष्ठा snd_pcm_substream *substream;
+	पूर्णांक retval = 0;
 	u32 disp_samp_freq, n_param;
 	u32 link_rate = 0;
 
-	substream = had_substream_get(intelhaddata);
-	if (!substream)
-		return 0;
+	substream = had_substream_get(पूर्णांकelhaddata);
+	अगर (!substream)
+		वापस 0;
 
 	/* Disable Audio */
-	had_enable_audio(intelhaddata, false);
+	had_enable_audio(पूर्णांकelhaddata, false);
 
 	/* Update CTS value */
-	disp_samp_freq = intelhaddata->tmds_clock_speed;
+	disp_samp_freq = पूर्णांकelhaddata->पंचांगds_घड़ी_speed;
 
-	retval = had_prog_n(substream->runtime->rate, &n_param, intelhaddata);
-	if (retval) {
-		dev_err(intelhaddata->dev,
+	retval = had_prog_n(substream->runसमय->rate, &n_param, पूर्णांकelhaddata);
+	अगर (retval) अणु
+		dev_err(पूर्णांकelhaddata->dev,
 			"programming N value failed %#x\n", retval);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (intelhaddata->dp_output)
-		link_rate = intelhaddata->link_rate;
+	अगर (पूर्णांकelhaddata->dp_output)
+		link_rate = पूर्णांकelhaddata->link_rate;
 
-	had_prog_cts(substream->runtime->rate, disp_samp_freq, link_rate,
-		     n_param, intelhaddata);
+	had_prog_cts(substream->runसमय->rate, disp_samp_freq, link_rate,
+		     n_param, पूर्णांकelhaddata);
 
 	/* Enable Audio */
-	had_enable_audio(intelhaddata, true);
+	had_enable_audio(पूर्णांकelhaddata, true);
 
 out:
-	had_substream_put(intelhaddata);
-	return retval;
-}
+	had_substream_put(पूर्णांकelhaddata);
+	वापस retval;
+पूर्ण
 
 /* process hot plug, called from wq with mutex locked */
-static void had_process_hot_plug(struct snd_intelhad *intelhaddata)
-{
-	struct snd_pcm_substream *substream;
+अटल व्योम had_process_hot_plug(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	काष्ठा snd_pcm_substream *substream;
 
-	spin_lock_irq(&intelhaddata->had_spinlock);
-	if (intelhaddata->connected) {
-		dev_dbg(intelhaddata->dev, "Device already connected\n");
-		spin_unlock_irq(&intelhaddata->had_spinlock);
-		return;
-	}
+	spin_lock_irq(&पूर्णांकelhaddata->had_spinlock);
+	अगर (पूर्णांकelhaddata->connected) अणु
+		dev_dbg(पूर्णांकelhaddata->dev, "Device already connected\n");
+		spin_unlock_irq(&पूर्णांकelhaddata->had_spinlock);
+		वापस;
+	पूर्ण
 
 	/* Disable Audio */
-	had_enable_audio(intelhaddata, false);
+	had_enable_audio(पूर्णांकelhaddata, false);
 
-	intelhaddata->connected = true;
-	dev_dbg(intelhaddata->dev,
+	पूर्णांकelhaddata->connected = true;
+	dev_dbg(पूर्णांकelhaddata->dev,
 		"%s @ %d:DEBUG PLUG/UNPLUG : HAD_DRV_CONNECTED\n",
 			__func__, __LINE__);
-	spin_unlock_irq(&intelhaddata->had_spinlock);
+	spin_unlock_irq(&पूर्णांकelhaddata->had_spinlock);
 
-	had_build_channel_allocation_map(intelhaddata);
+	had_build_channel_allocation_map(पूर्णांकelhaddata);
 
 	/* Report to above ALSA layer */
-	substream = had_substream_get(intelhaddata);
-	if (substream) {
+	substream = had_substream_get(पूर्णांकelhaddata);
+	अगर (substream) अणु
 		snd_pcm_stop_xrun(substream);
-		had_substream_put(intelhaddata);
-	}
+		had_substream_put(पूर्णांकelhaddata);
+	पूर्ण
 
-	snd_jack_report(intelhaddata->jack, SND_JACK_AVOUT);
-}
+	snd_jack_report(पूर्णांकelhaddata->jack, SND_JACK_AVOUT);
+पूर्ण
 
 /* process hot unplug, called from wq with mutex locked */
-static void had_process_hot_unplug(struct snd_intelhad *intelhaddata)
-{
-	struct snd_pcm_substream *substream;
+अटल व्योम had_process_hot_unplug(काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata)
+अणु
+	काष्ठा snd_pcm_substream *substream;
 
-	spin_lock_irq(&intelhaddata->had_spinlock);
-	if (!intelhaddata->connected) {
-		dev_dbg(intelhaddata->dev, "Device already disconnected\n");
-		spin_unlock_irq(&intelhaddata->had_spinlock);
-		return;
+	spin_lock_irq(&पूर्णांकelhaddata->had_spinlock);
+	अगर (!पूर्णांकelhaddata->connected) अणु
+		dev_dbg(पूर्णांकelhaddata->dev, "Device already disconnected\n");
+		spin_unlock_irq(&पूर्णांकelhaddata->had_spinlock);
+		वापस;
 
-	}
+	पूर्ण
 
 	/* Disable Audio */
-	had_enable_audio(intelhaddata, false);
+	had_enable_audio(पूर्णांकelhaddata, false);
 
-	intelhaddata->connected = false;
-	dev_dbg(intelhaddata->dev,
+	पूर्णांकelhaddata->connected = false;
+	dev_dbg(पूर्णांकelhaddata->dev,
 		"%s @ %d:DEBUG PLUG/UNPLUG : HAD_DRV_DISCONNECTED\n",
 			__func__, __LINE__);
-	spin_unlock_irq(&intelhaddata->had_spinlock);
+	spin_unlock_irq(&पूर्णांकelhaddata->had_spinlock);
 
-	kfree(intelhaddata->chmap->chmap);
-	intelhaddata->chmap->chmap = NULL;
+	kमुक्त(पूर्णांकelhaddata->chmap->chmap);
+	पूर्णांकelhaddata->chmap->chmap = शून्य;
 
 	/* Report to above ALSA layer */
-	substream = had_substream_get(intelhaddata);
-	if (substream) {
+	substream = had_substream_get(पूर्णांकelhaddata);
+	अगर (substream) अणु
 		snd_pcm_stop_xrun(substream);
-		had_substream_put(intelhaddata);
-	}
+		had_substream_put(पूर्णांकelhaddata);
+	पूर्ण
 
-	snd_jack_report(intelhaddata->jack, 0);
-}
+	snd_jack_report(पूर्णांकelhaddata->jack, 0);
+पूर्ण
 
 /*
  * ALSA iec958 and ELD controls
  */
 
-static int had_iec958_info(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक had_iec958_info(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int had_iec958_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_intelhad *intelhaddata = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक had_iec958_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata = snd_kcontrol_chip(kcontrol);
 
-	mutex_lock(&intelhaddata->mutex);
-	ucontrol->value.iec958.status[0] = (intelhaddata->aes_bits >> 0) & 0xff;
-	ucontrol->value.iec958.status[1] = (intelhaddata->aes_bits >> 8) & 0xff;
+	mutex_lock(&पूर्णांकelhaddata->mutex);
+	ucontrol->value.iec958.status[0] = (पूर्णांकelhaddata->aes_bits >> 0) & 0xff;
+	ucontrol->value.iec958.status[1] = (पूर्णांकelhaddata->aes_bits >> 8) & 0xff;
 	ucontrol->value.iec958.status[2] =
-					(intelhaddata->aes_bits >> 16) & 0xff;
+					(पूर्णांकelhaddata->aes_bits >> 16) & 0xff;
 	ucontrol->value.iec958.status[3] =
-					(intelhaddata->aes_bits >> 24) & 0xff;
-	mutex_unlock(&intelhaddata->mutex);
-	return 0;
-}
+					(पूर्णांकelhaddata->aes_bits >> 24) & 0xff;
+	mutex_unlock(&पूर्णांकelhaddata->mutex);
+	वापस 0;
+पूर्ण
 
-static int had_iec958_mask_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
+अटल पूर्णांक had_iec958_mask_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
 	ucontrol->value.iec958.status[0] = 0xff;
 	ucontrol->value.iec958.status[1] = 0xff;
 	ucontrol->value.iec958.status[2] = 0xff;
 	ucontrol->value.iec958.status[3] = 0xff;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int had_iec958_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	unsigned int val;
-	struct snd_intelhad *intelhaddata = snd_kcontrol_chip(kcontrol);
-	int changed = 0;
+अटल पूर्णांक had_iec958_put(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	अचिन्हित पूर्णांक val;
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata = snd_kcontrol_chip(kcontrol);
+	पूर्णांक changed = 0;
 
 	val = (ucontrol->value.iec958.status[0] << 0) |
 		(ucontrol->value.iec958.status[1] << 8) |
 		(ucontrol->value.iec958.status[2] << 16) |
 		(ucontrol->value.iec958.status[3] << 24);
-	mutex_lock(&intelhaddata->mutex);
-	if (intelhaddata->aes_bits != val) {
-		intelhaddata->aes_bits = val;
+	mutex_lock(&पूर्णांकelhaddata->mutex);
+	अगर (पूर्णांकelhaddata->aes_bits != val) अणु
+		पूर्णांकelhaddata->aes_bits = val;
 		changed = 1;
-	}
-	mutex_unlock(&intelhaddata->mutex);
-	return changed;
-}
+	पूर्ण
+	mutex_unlock(&पूर्णांकelhaddata->mutex);
+	वापस changed;
+पूर्ण
 
-static int had_ctl_eld_info(struct snd_kcontrol *kcontrol,
-			    struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक had_ctl_eld_info(काष्ठा snd_kcontrol *kcontrol,
+			    काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
 	uinfo->count = HDMI_MAX_ELD_BYTES;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int had_ctl_eld_get(struct snd_kcontrol *kcontrol,
-			   struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_intelhad *intelhaddata = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक had_ctl_eld_get(काष्ठा snd_kcontrol *kcontrol,
+			   काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_पूर्णांकelhad *पूर्णांकelhaddata = snd_kcontrol_chip(kcontrol);
 
-	mutex_lock(&intelhaddata->mutex);
-	memcpy(ucontrol->value.bytes.data, intelhaddata->eld,
+	mutex_lock(&पूर्णांकelhaddata->mutex);
+	स_नकल(ucontrol->value.bytes.data, पूर्णांकelhaddata->eld,
 	       HDMI_MAX_ELD_BYTES);
-	mutex_unlock(&intelhaddata->mutex);
-	return 0;
-}
+	mutex_unlock(&पूर्णांकelhaddata->mutex);
+	वापस 0;
+पूर्ण
 
-static const struct snd_kcontrol_new had_controls[] = {
-	{
+अटल स्थिर काष्ठा snd_kcontrol_new had_controls[] = अणु
+	अणु
 		.access = SNDRV_CTL_ELEM_ACCESS_READ,
-		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = SNDRV_CTL_NAME_IEC958("", PLAYBACK, MASK),
 		.info = had_iec958_info, /* shared */
 		.get = had_iec958_mask_get,
-	},
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+	पूर्ण,
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = SNDRV_CTL_NAME_IEC958("", PLAYBACK, DEFAULT),
 		.info = had_iec958_info,
 		.get = had_iec958_get,
 		.put = had_iec958_put,
-	},
-	{
+	पूर्ण,
+	अणु
 		.access = (SNDRV_CTL_ELEM_ACCESS_READ |
 			   SNDRV_CTL_ELEM_ACCESS_VOLATILE),
-		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = "ELD",
 		.info = had_ctl_eld_info,
 		.get = had_ctl_eld_get,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * audio interrupt handler
+ * audio पूर्णांकerrupt handler
  */
-static irqreturn_t display_pipe_interrupt_handler(int irq, void *dev_id)
-{
-	struct snd_intelhad_card *card_ctx = dev_id;
-	u32 audio_stat[3] = {};
-	int pipe, port;
+अटल irqवापस_t display_pipe_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा snd_पूर्णांकelhad_card *card_ctx = dev_id;
+	u32 audio_stat[3] = अणुपूर्ण;
+	पूर्णांक pipe, port;
 
-	for_each_pipe(card_ctx, pipe) {
-		/* use raw register access to ack IRQs even while disconnected */
-		audio_stat[pipe] = had_read_register_raw(card_ctx, pipe,
+	क्रम_each_pipe(card_ctx, pipe) अणु
+		/* use raw रेजिस्टर access to ack IRQs even जबतक disconnected */
+		audio_stat[pipe] = had_पढ़ो_रेजिस्टर_raw(card_ctx, pipe,
 							 AUD_HDMI_STATUS) &
 			(HDMI_AUDIO_UNDERRUN | HDMI_AUDIO_BUFFER_DONE);
 
-		if (audio_stat[pipe])
-			had_write_register_raw(card_ctx, pipe,
+		अगर (audio_stat[pipe])
+			had_ग_लिखो_रेजिस्टर_raw(card_ctx, pipe,
 					       AUD_HDMI_STATUS, audio_stat[pipe]);
-	}
+	पूर्ण
 
-	for_each_port(card_ctx, port) {
-		struct snd_intelhad *ctx = &card_ctx->pcm_ctx[port];
-		int pipe = ctx->pipe;
+	क्रम_each_port(card_ctx, port) अणु
+		काष्ठा snd_पूर्णांकelhad *ctx = &card_ctx->pcm_ctx[port];
+		पूर्णांक pipe = ctx->pipe;
 
-		if (pipe < 0)
-			continue;
+		अगर (pipe < 0)
+			जारी;
 
-		if (audio_stat[pipe] & HDMI_AUDIO_BUFFER_DONE)
-			had_process_buffer_done(ctx);
-		if (audio_stat[pipe] & HDMI_AUDIO_UNDERRUN)
+		अगर (audio_stat[pipe] & HDMI_AUDIO_BUFFER_DONE)
+			had_process_buffer_करोne(ctx);
+		अगर (audio_stat[pipe] & HDMI_AUDIO_UNDERRUN)
 			had_process_buffer_underrun(ctx);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * monitor plug/unplug notification from i915; just kick off the work
+ * monitor plug/unplug notअगरication from i915; just kick off the work
  */
-static void notify_audio_lpe(struct platform_device *pdev, int port)
-{
-	struct snd_intelhad_card *card_ctx = platform_get_drvdata(pdev);
-	struct snd_intelhad *ctx;
+अटल व्योम notअगरy_audio_lpe(काष्ठा platक्रमm_device *pdev, पूर्णांक port)
+अणु
+	काष्ठा snd_पूर्णांकelhad_card *card_ctx = platक्रमm_get_drvdata(pdev);
+	काष्ठा snd_पूर्णांकelhad *ctx;
 
 	ctx = &card_ctx->pcm_ctx[single_port ? 0 : port];
-	if (single_port)
+	अगर (single_port)
 		ctx->port = port;
 
 	schedule_work(&ctx->hdmi_audio_wq);
-}
+पूर्ण
 
 /* the work to handle monitor hot plug/unplug */
-static void had_audio_wq(struct work_struct *work)
-{
-	struct snd_intelhad *ctx =
-		container_of(work, struct snd_intelhad, hdmi_audio_wq);
-	struct intel_hdmi_lpe_audio_pdata *pdata = ctx->dev->platform_data;
-	struct intel_hdmi_lpe_audio_port_pdata *ppdata = &pdata->port[ctx->port];
+अटल व्योम had_audio_wq(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा snd_पूर्णांकelhad *ctx =
+		container_of(work, काष्ठा snd_पूर्णांकelhad, hdmi_audio_wq);
+	काष्ठा पूर्णांकel_hdmi_lpe_audio_pdata *pdata = ctx->dev->platक्रमm_data;
+	काष्ठा पूर्णांकel_hdmi_lpe_audio_port_pdata *ppdata = &pdata->port[ctx->port];
 
-	pm_runtime_get_sync(ctx->dev);
+	pm_runसमय_get_sync(ctx->dev);
 	mutex_lock(&ctx->mutex);
-	if (ppdata->pipe < 0) {
+	अगर (ppdata->pipe < 0) अणु
 		dev_dbg(ctx->dev, "%s: Event: HAD_NOTIFY_HOT_UNPLUG : port = %d\n",
 			__func__, ctx->port);
 
-		memset(ctx->eld, 0, sizeof(ctx->eld)); /* clear the old ELD */
+		स_रखो(ctx->eld, 0, माप(ctx->eld)); /* clear the old ELD */
 
 		ctx->dp_output = false;
-		ctx->tmds_clock_speed = 0;
+		ctx->पंचांगds_घड़ी_speed = 0;
 		ctx->link_rate = 0;
 
-		/* Shut down the stream */
+		/* Shut करोwn the stream */
 		had_process_hot_unplug(ctx);
 
 		ctx->pipe = -1;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(ctx->dev, "%s: HAD_NOTIFY_ELD : port = %d, tmds = %d\n",
-			__func__, ctx->port, ppdata->ls_clock);
+			__func__, ctx->port, ppdata->ls_घड़ी);
 
-		memcpy(ctx->eld, ppdata->eld, sizeof(ctx->eld));
+		स_नकल(ctx->eld, ppdata->eld, माप(ctx->eld));
 
 		ctx->dp_output = ppdata->dp_output;
-		if (ctx->dp_output) {
-			ctx->tmds_clock_speed = 0;
-			ctx->link_rate = ppdata->ls_clock;
-		} else {
-			ctx->tmds_clock_speed = ppdata->ls_clock;
+		अगर (ctx->dp_output) अणु
+			ctx->पंचांगds_घड़ी_speed = 0;
+			ctx->link_rate = ppdata->ls_घड़ी;
+		पूर्ण अन्यथा अणु
+			ctx->पंचांगds_घड़ी_speed = ppdata->ls_घड़ी;
 			ctx->link_rate = 0;
-		}
+		पूर्ण
 
 		/*
-		 * Shut down the stream before we change
-		 * the pipe assignment for this pcm device
+		 * Shut करोwn the stream beक्रमe we change
+		 * the pipe assignment क्रम this pcm device
 		 */
 		had_process_hot_plug(ctx);
 
 		ctx->pipe = ppdata->pipe;
 
-		/* Restart the stream if necessary */
+		/* Restart the stream अगर necessary */
 		had_process_mode_change(ctx);
-	}
+	पूर्ण
 
 	mutex_unlock(&ctx->mutex);
-	pm_runtime_mark_last_busy(ctx->dev);
-	pm_runtime_put_autosuspend(ctx->dev);
-}
+	pm_runसमय_mark_last_busy(ctx->dev);
+	pm_runसमय_put_स्वतःsuspend(ctx->dev);
+पूर्ण
 
 /*
- * Jack interface
+ * Jack पूर्णांकerface
  */
-static int had_create_jack(struct snd_intelhad *ctx,
-			   struct snd_pcm *pcm)
-{
-	char hdmi_str[32];
-	int err;
+अटल पूर्णांक had_create_jack(काष्ठा snd_पूर्णांकelhad *ctx,
+			   काष्ठा snd_pcm *pcm)
+अणु
+	अक्षर hdmi_str[32];
+	पूर्णांक err;
 
-	snprintf(hdmi_str, sizeof(hdmi_str),
+	snम_लिखो(hdmi_str, माप(hdmi_str),
 		 "HDMI/DP,pcm=%d", pcm->device);
 
 	err = snd_jack_new(ctx->card_ctx->card, hdmi_str,
 			   SND_JACK_AVOUT, &ctx->jack,
 			   true, false);
-	if (err < 0)
-		return err;
-	ctx->jack->private_data = ctx;
-	return 0;
-}
+	अगर (err < 0)
+		वापस err;
+	ctx->jack->निजी_data = ctx;
+	वापस 0;
+पूर्ण
 
 /*
  * PM callbacks
  */
 
-static int __maybe_unused hdmi_lpe_audio_suspend(struct device *dev)
-{
-	struct snd_intelhad_card *card_ctx = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused hdmi_lpe_audio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा snd_पूर्णांकelhad_card *card_ctx = dev_get_drvdata(dev);
 
-	snd_power_change_state(card_ctx->card, SNDRV_CTL_POWER_D3hot);
+	snd_घातer_change_state(card_ctx->card, SNDRV_CTL_POWER_D3hot);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused hdmi_lpe_audio_resume(struct device *dev)
-{
-	struct snd_intelhad_card *card_ctx = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused hdmi_lpe_audio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा snd_पूर्णांकelhad_card *card_ctx = dev_get_drvdata(dev);
 
-	pm_runtime_mark_last_busy(dev);
+	pm_runसमय_mark_last_busy(dev);
 
-	snd_power_change_state(card_ctx->card, SNDRV_CTL_POWER_D0);
+	snd_घातer_change_state(card_ctx->card, SNDRV_CTL_POWER_D0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* release resources */
-static void hdmi_lpe_audio_free(struct snd_card *card)
-{
-	struct snd_intelhad_card *card_ctx = card->private_data;
-	struct intel_hdmi_lpe_audio_pdata *pdata = card_ctx->dev->platform_data;
-	int port;
+अटल व्योम hdmi_lpe_audio_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_पूर्णांकelhad_card *card_ctx = card->निजी_data;
+	काष्ठा पूर्णांकel_hdmi_lpe_audio_pdata *pdata = card_ctx->dev->platक्रमm_data;
+	पूर्णांक port;
 
 	spin_lock_irq(&pdata->lpe_audio_slock);
-	pdata->notify_audio_lpe = NULL;
+	pdata->notअगरy_audio_lpe = शून्य;
 	spin_unlock_irq(&pdata->lpe_audio_slock);
 
-	for_each_port(card_ctx, port) {
-		struct snd_intelhad *ctx = &card_ctx->pcm_ctx[port];
+	क्रम_each_port(card_ctx, port) अणु
+		काष्ठा snd_पूर्णांकelhad *ctx = &card_ctx->pcm_ctx[port];
 
 		cancel_work_sync(&ctx->hdmi_audio_wq);
-	}
+	पूर्ण
 
-	if (card_ctx->mmio_start)
+	अगर (card_ctx->mmio_start)
 		iounmap(card_ctx->mmio_start);
-	if (card_ctx->irq >= 0)
-		free_irq(card_ctx->irq, card_ctx);
-}
+	अगर (card_ctx->irq >= 0)
+		मुक्त_irq(card_ctx->irq, card_ctx);
+पूर्ण
 
 /*
  * hdmi_lpe_audio_probe - start bridge with i915
  *
  * This function is called when the i915 driver creates the
- * hdmi-lpe-audio platform device.
+ * hdmi-lpe-audio platक्रमm device.
  */
-static int hdmi_lpe_audio_probe(struct platform_device *pdev)
-{
-	struct snd_card *card;
-	struct snd_intelhad_card *card_ctx;
-	struct snd_intelhad *ctx;
-	struct snd_pcm *pcm;
-	struct intel_hdmi_lpe_audio_pdata *pdata;
-	int irq;
-	struct resource *res_mmio;
-	int port, ret;
+अटल पूर्णांक hdmi_lpe_audio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_पूर्णांकelhad_card *card_ctx;
+	काष्ठा snd_पूर्णांकelhad *ctx;
+	काष्ठा snd_pcm *pcm;
+	काष्ठा पूर्णांकel_hdmi_lpe_audio_pdata *pdata;
+	पूर्णांक irq;
+	काष्ठा resource *res_mmio;
+	पूर्णांक port, ret;
 
-	pdata = pdev->dev.platform_data;
-	if (!pdata) {
+	pdata = pdev->dev.platक्रमm_data;
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "%s: quit: pdata not allocated by i915!!\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* get resources */
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	res_mmio = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res_mmio) {
+	res_mmio = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res_mmio) अणु
 		dev_err(&pdev->dev, "Could not get IO_MEM resources\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/* create a card instance with ALSA framework */
 	ret = snd_card_new(&pdev->dev, hdmi_card_index, hdmi_card_id,
-			   THIS_MODULE, sizeof(*card_ctx), &card);
-	if (ret)
-		return ret;
+			   THIS_MODULE, माप(*card_ctx), &card);
+	अगर (ret)
+		वापस ret;
 
-	card_ctx = card->private_data;
+	card_ctx = card->निजी_data;
 	card_ctx->dev = &pdev->dev;
 	card_ctx->card = card;
-	strcpy(card->driver, INTEL_HAD);
-	strcpy(card->shortname, "Intel HDMI/DP LPE Audio");
-	strcpy(card->longname, "Intel HDMI/DP LPE Audio");
+	म_नकल(card->driver, INTEL_HAD);
+	म_नकल(card->लघुname, "Intel HDMI/DP LPE Audio");
+	म_नकल(card->दीर्घname, "Intel HDMI/DP LPE Audio");
 
 	card_ctx->irq = -1;
 
-	card->private_free = hdmi_lpe_audio_free;
+	card->निजी_मुक्त = hdmi_lpe_audio_मुक्त;
 
-	platform_set_drvdata(pdev, card_ctx);
+	platक्रमm_set_drvdata(pdev, card_ctx);
 
 	card_ctx->num_pipes = pdata->num_pipes;
 	card_ctx->num_ports = single_port ? 1 : pdata->num_ports;
 
-	for_each_port(card_ctx, port) {
+	क्रम_each_port(card_ctx, port) अणु
 		ctx = &card_ctx->pcm_ctx[port];
 		ctx->card_ctx = card_ctx;
 		ctx->dev = card_ctx->dev;
@@ -1745,27 +1746,27 @@ static int hdmi_lpe_audio_probe(struct platform_device *pdev)
 		spin_lock_init(&ctx->had_spinlock);
 		mutex_init(&ctx->mutex);
 		INIT_WORK(&ctx->hdmi_audio_wq, had_audio_wq);
-	}
+	पूर्ण
 
 	dev_dbg(&pdev->dev, "%s: mmio_start = 0x%x, mmio_end = 0x%x\n",
-		__func__, (unsigned int)res_mmio->start,
-		(unsigned int)res_mmio->end);
+		__func__, (अचिन्हित पूर्णांक)res_mmio->start,
+		(अचिन्हित पूर्णांक)res_mmio->end);
 
 	card_ctx->mmio_start = ioremap(res_mmio->start,
-					       (size_t)(resource_size(res_mmio)));
-	if (!card_ctx->mmio_start) {
+					       (माप_प्रकार)(resource_size(res_mmio)));
+	अगर (!card_ctx->mmio_start) अणु
 		dev_err(&pdev->dev, "Could not get ioremap\n");
 		ret = -EACCES;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* setup interrupt handler */
-	ret = request_irq(irq, display_pipe_interrupt_handler, 0,
+	/* setup पूर्णांकerrupt handler */
+	ret = request_irq(irq, display_pipe_पूर्णांकerrupt_handler, 0,
 			  pdev->name, card_ctx);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "request_irq failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	card_ctx->irq = irq;
 
@@ -1777,108 +1778,108 @@ static int hdmi_lpe_audio_probe(struct platform_device *pdev)
 	card_ctx->num_pipes = pdata->num_pipes;
 	card_ctx->num_ports = single_port ? 1 : pdata->num_ports;
 
-	for_each_port(card_ctx, port) {
-		int i;
+	क्रम_each_port(card_ctx, port) अणु
+		पूर्णांक i;
 
 		ctx = &card_ctx->pcm_ctx[port];
 		ret = snd_pcm_new(card, INTEL_HAD, port, MAX_PB_STREAMS,
 				  MAX_CAP_STREAMS, &pcm);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
-		/* setup private data which can be retrieved when required */
-		pcm->private_data = ctx;
+		/* setup निजी data which can be retrieved when required */
+		pcm->निजी_data = ctx;
 		pcm->info_flags = 0;
-		strscpy(pcm->name, card->shortname, strlen(card->shortname));
-		/* setup the ops for playabck */
+		strscpy(pcm->name, card->लघुname, म_माप(card->लघुname));
+		/* setup the ops क्रम playabck */
 		snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &had_pcm_ops);
 
 		/* allocate dma pages;
-		 * try to allocate 600k buffer as default which is large enough
+		 * try to allocate 600k buffer as शेष which is large enough
 		 */
 		snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV_UC,
 					       card->dev, HAD_DEFAULT_BUFFER,
 					       HAD_MAX_BUFFER);
 
 		/* create controls */
-		for (i = 0; i < ARRAY_SIZE(had_controls); i++) {
-			struct snd_kcontrol *kctl;
+		क्रम (i = 0; i < ARRAY_SIZE(had_controls); i++) अणु
+			काष्ठा snd_kcontrol *kctl;
 
 			kctl = snd_ctl_new1(&had_controls[i], ctx);
-			if (!kctl) {
+			अगर (!kctl) अणु
 				ret = -ENOMEM;
-				goto err;
-			}
+				जाओ err;
+			पूर्ण
 
 			kctl->id.device = pcm->device;
 
 			ret = snd_ctl_add(card, kctl);
-			if (ret < 0)
-				goto err;
-		}
+			अगर (ret < 0)
+				जाओ err;
+		पूर्ण
 
 		/* Register channel map controls */
-		ret = had_register_chmap_ctls(ctx, pcm);
-		if (ret < 0)
-			goto err;
+		ret = had_रेजिस्टर_chmap_ctls(ctx, pcm);
+		अगर (ret < 0)
+			जाओ err;
 
 		ret = had_create_jack(ctx, pcm);
-		if (ret < 0)
-			goto err;
-	}
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
 
-	ret = snd_card_register(card);
-	if (ret)
-		goto err;
+	ret = snd_card_रेजिस्टर(card);
+	अगर (ret)
+		जाओ err;
 
 	spin_lock_irq(&pdata->lpe_audio_slock);
-	pdata->notify_audio_lpe = notify_audio_lpe;
+	pdata->notअगरy_audio_lpe = notअगरy_audio_lpe;
 	spin_unlock_irq(&pdata->lpe_audio_slock);
 
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_mark_last_busy(&pdev->dev);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_mark_last_busy(&pdev->dev);
 
 	dev_dbg(&pdev->dev, "%s: handle pending notification\n", __func__);
-	for_each_port(card_ctx, port) {
-		struct snd_intelhad *ctx = &card_ctx->pcm_ctx[port];
+	क्रम_each_port(card_ctx, port) अणु
+		काष्ठा snd_पूर्णांकelhad *ctx = &card_ctx->pcm_ctx[port];
 
 		schedule_work(&ctx->hdmi_audio_wq);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	snd_card_free(card);
-	return ret;
-}
+	snd_card_मुक्त(card);
+	वापस ret;
+पूर्ण
 
 /*
- * hdmi_lpe_audio_remove - stop bridge with i915
+ * hdmi_lpe_audio_हटाओ - stop bridge with i915
  *
- * This function is called when the platform device is destroyed.
+ * This function is called when the platक्रमm device is destroyed.
  */
-static int hdmi_lpe_audio_remove(struct platform_device *pdev)
-{
-	struct snd_intelhad_card *card_ctx = platform_get_drvdata(pdev);
+अटल पूर्णांक hdmi_lpe_audio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_पूर्णांकelhad_card *card_ctx = platक्रमm_get_drvdata(pdev);
 
-	snd_card_free(card_ctx->card);
-	return 0;
-}
+	snd_card_मुक्त(card_ctx->card);
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops hdmi_lpe_audio_pm = {
+अटल स्थिर काष्ठा dev_pm_ops hdmi_lpe_audio_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(hdmi_lpe_audio_suspend, hdmi_lpe_audio_resume)
-};
+पूर्ण;
 
-static struct platform_driver hdmi_lpe_audio_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver hdmi_lpe_audio_driver = अणु
+	.driver		= अणु
 		.name  = "hdmi-lpe-audio",
 		.pm = &hdmi_lpe_audio_pm,
-	},
+	पूर्ण,
 	.probe          = hdmi_lpe_audio_probe,
-	.remove		= hdmi_lpe_audio_remove,
-};
+	.हटाओ		= hdmi_lpe_audio_हटाओ,
+पूर्ण;
 
-module_platform_driver(hdmi_lpe_audio_driver);
+module_platक्रमm_driver(hdmi_lpe_audio_driver);
 MODULE_ALIAS("platform:hdmi_lpe_audio");
 
 MODULE_AUTHOR("Sailaja Bandarupalli <sailaja.bandarupalli@intel.com>");

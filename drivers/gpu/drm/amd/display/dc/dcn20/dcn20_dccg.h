@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,12 +24,12 @@
  *
  */
 
-#ifndef __DCN20_DCCG_H__
-#define __DCN20_DCCG_H__
+#अगर_अघोषित __DCN20_DCCG_H__
+#घोषणा __DCN20_DCCG_H__
 
-#include "dccg.h"
+#समावेश "dccg.h"
 
-#define DCCG_COMMON_REG_LIST_DCN_BASE() \
+#घोषणा DCCG_COMMON_REG_LIST_DCN_BASE() \
 	SR(DPPCLK_DTO_CTRL),\
 	DCCG_SRII(DTO_PARAM, DPPCLK, 0),\
 	DCCG_SRII(DTO_PARAM, DPPCLK, 1),\
@@ -36,18 +37,18 @@
 	DCCG_SRII(DTO_PARAM, DPPCLK, 3),\
 	SR(REFCLK_CNTL)
 
-#define DCCG_REG_LIST_DCN2() \
+#घोषणा DCCG_REG_LIST_DCN2() \
 	DCCG_COMMON_REG_LIST_DCN_BASE(),\
 	DCCG_SRII(DTO_PARAM, DPPCLK, 4),\
 	DCCG_SRII(DTO_PARAM, DPPCLK, 5)
 
-#define DCCG_SF(reg_name, field_name, post_fix)\
+#घोषणा DCCG_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#define DCCG_SFI(reg_name, field_name, field_prefix, inst, post_fix)\
+#घोषणा DCCG_SFI(reg_name, field_name, field_prefix, inst, post_fix)\
 	.field_prefix ## _ ## field_name[inst] = reg_name ## __ ## field_prefix ## inst ## _ ## field_name ## post_fix
 
-#define DCCG_COMMON_MASK_SH_LIST_DCN_COMMON_BASE(mask_sh) \
+#घोषणा DCCG_COMMON_MASK_SH_LIST_DCN_COMMON_BASE(mask_sh) \
 	DCCG_SFI(DPPCLK_DTO_CTRL, DTO_ENABLE, DPPCLK, 0, mask_sh),\
 	DCCG_SFI(DPPCLK_DTO_CTRL, DTO_DB_EN, DPPCLK, 0, mask_sh),\
 	DCCG_SFI(DPPCLK_DTO_CTRL, DTO_ENABLE, DPPCLK, 1, mask_sh),\
@@ -61,14 +62,14 @@
 	DCCG_SF(REFCLK_CNTL, REFCLK_CLOCK_EN, mask_sh),\
 	DCCG_SF(REFCLK_CNTL, REFCLK_SRC_SEL, mask_sh)
 
-#define DCCG_MASK_SH_LIST_DCN2(mask_sh) \
+#घोषणा DCCG_MASK_SH_LIST_DCN2(mask_sh) \
 	DCCG_COMMON_MASK_SH_LIST_DCN_COMMON_BASE(mask_sh),\
 	DCCG_SFI(DPPCLK_DTO_CTRL, DTO_ENABLE, DPPCLK, 4, mask_sh),\
 	DCCG_SFI(DPPCLK_DTO_CTRL, DTO_DB_EN, DPPCLK, 4, mask_sh),\
 	DCCG_SFI(DPPCLK_DTO_CTRL, DTO_ENABLE, DPPCLK, 5, mask_sh),\
 	DCCG_SFI(DPPCLK_DTO_CTRL, DTO_DB_EN, DPPCLK, 5, mask_sh)
 
-#define DCCG_REG_FIELD_LIST(type) \
+#घोषणा DCCG_REG_FIELD_LIST(type) \
 	type DPPCLK0_DTO_PHASE;\
 	type DPPCLK0_DTO_MODULO;\
 	type DPPCLK_DTO_ENABLE[6];\
@@ -76,7 +77,7 @@
 	type REFCLK_CLOCK_EN;\
 	type REFCLK_SRC_SEL;
 
-#define DCCG3_REG_FIELD_LIST(type) \
+#घोषणा DCCG3_REG_FIELD_LIST(type) \
 	type PHYASYMCLK_FORCE_EN;\
 	type PHYASYMCLK_FORCE_SRC_SEL;\
 	type PHYBSYMCLK_FORCE_EN;\
@@ -84,47 +85,47 @@
 	type PHYCSYMCLK_FORCE_EN;\
 	type PHYCSYMCLK_FORCE_SRC_SEL;
 
-struct dccg_shift {
-	DCCG_REG_FIELD_LIST(uint8_t)
-	DCCG3_REG_FIELD_LIST(uint8_t)
-};
+काष्ठा dccg_shअगरt अणु
+	DCCG_REG_FIELD_LIST(uपूर्णांक8_t)
+	DCCG3_REG_FIELD_LIST(uपूर्णांक8_t)
+पूर्ण;
 
-struct dccg_mask {
-	DCCG_REG_FIELD_LIST(uint32_t)
-	DCCG3_REG_FIELD_LIST(uint32_t)
-};
+काष्ठा dccg_mask अणु
+	DCCG_REG_FIELD_LIST(uपूर्णांक32_t)
+	DCCG3_REG_FIELD_LIST(uपूर्णांक32_t)
+पूर्ण;
 
-struct dccg_registers {
-	uint32_t DPPCLK_DTO_CTRL;
-	uint32_t DPPCLK_DTO_PARAM[6];
-	uint32_t REFCLK_CNTL;
-	uint32_t HDMICHARCLK_CLOCK_CNTL[6];
-	uint32_t PHYASYMCLK_CLOCK_CNTL;
-	uint32_t PHYBSYMCLK_CLOCK_CNTL;
-	uint32_t PHYCSYMCLK_CLOCK_CNTL;
-};
+काष्ठा dccg_रेजिस्टरs अणु
+	uपूर्णांक32_t DPPCLK_DTO_CTRL;
+	uपूर्णांक32_t DPPCLK_DTO_PARAM[6];
+	uपूर्णांक32_t REFCLK_CNTL;
+	uपूर्णांक32_t HDMICHARCLK_CLOCK_CNTL[6];
+	uपूर्णांक32_t PHYASYMCLK_CLOCK_CNTL;
+	uपूर्णांक32_t PHYBSYMCLK_CLOCK_CNTL;
+	uपूर्णांक32_t PHYCSYMCLK_CLOCK_CNTL;
+पूर्ण;
 
-struct dcn_dccg {
-	struct dccg base;
-	const struct dccg_registers *regs;
-	const struct dccg_shift *dccg_shift;
-	const struct dccg_mask *dccg_mask;
-};
+काष्ठा dcn_dccg अणु
+	काष्ठा dccg base;
+	स्थिर काष्ठा dccg_रेजिस्टरs *regs;
+	स्थिर काष्ठा dccg_shअगरt *dccg_shअगरt;
+	स्थिर काष्ठा dccg_mask *dccg_mask;
+पूर्ण;
 
-void dccg2_update_dpp_dto(struct dccg *dccg, int dpp_inst, int req_dppclk);
+व्योम dccg2_update_dpp_dto(काष्ठा dccg *dccg, पूर्णांक dpp_inst, पूर्णांक req_dppclk);
 
-void dccg2_get_dccg_ref_freq(struct dccg *dccg,
-		unsigned int xtalin_freq_inKhz,
-		unsigned int *dccg_ref_freq_inKhz);
+व्योम dccg2_get_dccg_ref_freq(काष्ठा dccg *dccg,
+		अचिन्हित पूर्णांक xtalin_freq_inKhz,
+		अचिन्हित पूर्णांक *dccg_ref_freq_inKhz);
 
-void dccg2_init(struct dccg *dccg);
+व्योम dccg2_init(काष्ठा dccg *dccg);
 
-struct dccg *dccg2_create(
-	struct dc_context *ctx,
-	const struct dccg_registers *regs,
-	const struct dccg_shift *dccg_shift,
-	const struct dccg_mask *dccg_mask);
+काष्ठा dccg *dccg2_create(
+	काष्ठा dc_context *ctx,
+	स्थिर काष्ठा dccg_रेजिस्टरs *regs,
+	स्थिर काष्ठा dccg_shअगरt *dccg_shअगरt,
+	स्थिर काष्ठा dccg_mask *dccg_mask);
 
-void dcn_dccg_destroy(struct dccg **dccg);
+व्योम dcn_dccg_destroy(काष्ठा dccg **dccg);
 
-#endif //__DCN20_DCCG_H__
+#पूर्ण_अगर //__DCN20_DCCG_H__

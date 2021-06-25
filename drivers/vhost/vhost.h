@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _VHOST_H
-#define _VHOST_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _VHOST_H
+#घोषणा _VHOST_H
 
-#include <linux/eventfd.h>
-#include <linux/vhost.h>
-#include <linux/mm.h>
-#include <linux/mutex.h>
-#include <linux/poll.h>
-#include <linux/file.h>
-#include <linux/uio.h>
-#include <linux/virtio_config.h>
-#include <linux/virtio_ring.h>
-#include <linux/atomic.h>
-#include <linux/vhost_iotlb.h>
-#include <linux/irqbypass.h>
+#समावेश <linux/eventfd.h>
+#समावेश <linux/vhost.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/file.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/virtio_config.h>
+#समावेश <linux/virtio_ring.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/vhost_iotlb.h>
+#समावेश <linux/irqbypass.h>
 
-struct vhost_work;
-typedef void (*vhost_work_fn_t)(struct vhost_work *work);
+काष्ठा vhost_work;
+प्रकार व्योम (*vhost_work_fn_t)(काष्ठा vhost_work *work);
 
-#define VHOST_WORK_QUEUED 1
-struct vhost_work {
-	struct llist_node	  node;
+#घोषणा VHOST_WORK_QUEUED 1
+काष्ठा vhost_work अणु
+	काष्ठा llist_node	  node;
 	vhost_work_fn_t		  fn;
-	unsigned long		  flags;
-};
+	अचिन्हित दीर्घ		  flags;
+पूर्ण;
 
 /* Poll a file (eventfd or socket) */
-/* Note: there's nothing vhost specific about this structure. */
-struct vhost_poll {
+/* Note: there's nothing vhost specअगरic about this काष्ठाure. */
+काष्ठा vhost_poll अणु
 	poll_table                table;
-	wait_queue_head_t        *wqh;
-	wait_queue_entry_t              wait;
-	struct vhost_work	  work;
+	रुको_queue_head_t        *wqh;
+	रुको_queue_entry_t              रुको;
+	काष्ठा vhost_work	  work;
 	__poll_t		  mask;
-	struct vhost_dev	 *dev;
-};
+	काष्ठा vhost_dev	 *dev;
+पूर्ण;
 
-void vhost_work_init(struct vhost_work *work, vhost_work_fn_t fn);
-void vhost_work_queue(struct vhost_dev *dev, struct vhost_work *work);
-bool vhost_has_work(struct vhost_dev *dev);
+व्योम vhost_work_init(काष्ठा vhost_work *work, vhost_work_fn_t fn);
+व्योम vhost_work_queue(काष्ठा vhost_dev *dev, काष्ठा vhost_work *work);
+bool vhost_has_work(काष्ठा vhost_dev *dev);
 
-void vhost_poll_init(struct vhost_poll *poll, vhost_work_fn_t fn,
-		     __poll_t mask, struct vhost_dev *dev);
-int vhost_poll_start(struct vhost_poll *poll, struct file *file);
-void vhost_poll_stop(struct vhost_poll *poll);
-void vhost_poll_flush(struct vhost_poll *poll);
-void vhost_poll_queue(struct vhost_poll *poll);
-void vhost_work_flush(struct vhost_dev *dev, struct vhost_work *work);
-long vhost_vring_ioctl(struct vhost_dev *d, unsigned int ioctl, void __user *argp);
+व्योम vhost_poll_init(काष्ठा vhost_poll *poll, vhost_work_fn_t fn,
+		     __poll_t mask, काष्ठा vhost_dev *dev);
+पूर्णांक vhost_poll_start(काष्ठा vhost_poll *poll, काष्ठा file *file);
+व्योम vhost_poll_stop(काष्ठा vhost_poll *poll);
+व्योम vhost_poll_flush(काष्ठा vhost_poll *poll);
+व्योम vhost_poll_queue(काष्ठा vhost_poll *poll);
+व्योम vhost_work_flush(काष्ठा vhost_dev *dev, काष्ठा vhost_work *work);
+दीर्घ vhost_vring_ioctl(काष्ठा vhost_dev *d, अचिन्हित पूर्णांक ioctl, व्योम __user *argp);
 
-struct vhost_log {
+काष्ठा vhost_log अणु
 	u64 addr;
 	u64 len;
-};
+पूर्ण;
 
-enum vhost_uaddr_type {
+क्रमागत vhost_uaddr_type अणु
 	VHOST_ADDR_DESC = 0,
 	VHOST_ADDR_AVAIL = 1,
 	VHOST_ADDR_USED = 2,
 	VHOST_NUM_ADDRS = 3,
-};
+पूर्ण;
 
-struct vhost_vring_call {
-	struct eventfd_ctx *ctx;
-	struct irq_bypass_producer producer;
-};
+काष्ठा vhost_vring_call अणु
+	काष्ठा eventfd_ctx *ctx;
+	काष्ठा irq_bypass_producer producer;
+पूर्ण;
 
-/* The virtqueue structure describes a queue attached to a device. */
-struct vhost_virtqueue {
-	struct vhost_dev *dev;
+/* The virtqueue काष्ठाure describes a queue attached to a device. */
+काष्ठा vhost_virtqueue अणु
+	काष्ठा vhost_dev *dev;
 
 	/* The actual ring of buffers. */
-	struct mutex mutex;
-	unsigned int num;
+	काष्ठा mutex mutex;
+	अचिन्हित पूर्णांक num;
 	vring_desc_t __user *desc;
 	vring_avail_t __user *avail;
 	vring_used_t __user *used;
-	const struct vhost_iotlb_map *meta_iotlb[VHOST_NUM_ADDRS];
-	struct file *kick;
-	struct vhost_vring_call call_ctx;
-	struct eventfd_ctx *error_ctx;
-	struct eventfd_ctx *log_ctx;
+	स्थिर काष्ठा vhost_iotlb_map *meta_iotlb[VHOST_NUM_ADDRS];
+	काष्ठा file *kick;
+	काष्ठा vhost_vring_call call_ctx;
+	काष्ठा eventfd_ctx *error_ctx;
+	काष्ठा eventfd_ctx *log_ctx;
 
-	struct vhost_poll poll;
+	काष्ठा vhost_poll poll;
 
-	/* The routine to call when the Guest pings us, or timeout. */
+	/* The routine to call when the Guest pings us, or समयout. */
 	vhost_work_fn_t handle_kick;
 
 	/* Last available index we saw. */
@@ -99,163 +100,163 @@ struct vhost_virtqueue {
 	/* Used flags */
 	u16 used_flags;
 
-	/* Last used index value we have signalled on */
-	u16 signalled_used;
+	/* Last used index value we have संकेतled on */
+	u16 संकेतled_used;
 
-	/* Last used index value we have signalled on */
-	bool signalled_used_valid;
+	/* Last used index value we have संकेतled on */
+	bool संकेतled_used_valid;
 
-	/* Log writes to used structure. */
+	/* Log ग_लिखोs to used काष्ठाure. */
 	bool log_used;
 	u64 log_addr;
 
-	struct iovec iov[UIO_MAXIOV];
-	struct iovec iotlb_iov[64];
-	struct iovec *indirect;
-	struct vring_used_elem *heads;
+	काष्ठा iovec iov[UIO_MAXIOV];
+	काष्ठा iovec iotlb_iov[64];
+	काष्ठा iovec *indirect;
+	काष्ठा vring_used_elem *heads;
 	/* Protected by virtqueue mutex. */
-	struct vhost_iotlb *umem;
-	struct vhost_iotlb *iotlb;
-	void *private_data;
+	काष्ठा vhost_iotlb *umem;
+	काष्ठा vhost_iotlb *iotlb;
+	व्योम *निजी_data;
 	u64 acked_features;
 	u64 acked_backend_features;
-	/* Log write descriptors */
-	void __user *log_base;
-	struct vhost_log *log;
-	struct iovec log_iov[64];
+	/* Log ग_लिखो descriptors */
+	व्योम __user *log_base;
+	काष्ठा vhost_log *log;
+	काष्ठा iovec log_iov[64];
 
 	/* Ring endianness. Defaults to legacy native endianness.
 	 * Set to true when starting a modern virtio device. */
 	bool is_le;
-#ifdef CONFIG_VHOST_CROSS_ENDIAN_LEGACY
-	/* Ring endianness requested by userspace for cross-endian support. */
+#अगर_घोषित CONFIG_VHOST_CROSS_ENDIAN_LEGACY
+	/* Ring endianness requested by userspace क्रम cross-endian support. */
 	bool user_be;
-#endif
-	u32 busyloop_timeout;
-};
+#पूर्ण_अगर
+	u32 busyloop_समयout;
+पूर्ण;
 
-struct vhost_msg_node {
-  union {
-	  struct vhost_msg msg;
-	  struct vhost_msg_v2 msg_v2;
-  };
-  struct vhost_virtqueue *vq;
-  struct list_head node;
-};
+काष्ठा vhost_msg_node अणु
+  जोड़ अणु
+	  काष्ठा vhost_msg msg;
+	  काष्ठा vhost_msg_v2 msg_v2;
+  पूर्ण;
+  काष्ठा vhost_virtqueue *vq;
+  काष्ठा list_head node;
+पूर्ण;
 
-struct vhost_dev {
-	struct mm_struct *mm;
-	struct mutex mutex;
-	struct vhost_virtqueue **vqs;
-	int nvqs;
-	struct eventfd_ctx *log_ctx;
-	struct llist_head work_list;
-	struct task_struct *worker;
-	struct vhost_iotlb *umem;
-	struct vhost_iotlb *iotlb;
+काष्ठा vhost_dev अणु
+	काष्ठा mm_काष्ठा *mm;
+	काष्ठा mutex mutex;
+	काष्ठा vhost_virtqueue **vqs;
+	पूर्णांक nvqs;
+	काष्ठा eventfd_ctx *log_ctx;
+	काष्ठा llist_head work_list;
+	काष्ठा task_काष्ठा *worker;
+	काष्ठा vhost_iotlb *umem;
+	काष्ठा vhost_iotlb *iotlb;
 	spinlock_t iotlb_lock;
-	struct list_head read_list;
-	struct list_head pending_list;
-	wait_queue_head_t wait;
-	int iov_limit;
-	int weight;
-	int byte_weight;
+	काष्ठा list_head पढ़ो_list;
+	काष्ठा list_head pending_list;
+	रुको_queue_head_t रुको;
+	पूर्णांक iov_limit;
+	पूर्णांक weight;
+	पूर्णांक byte_weight;
 	u64 kcov_handle;
 	bool use_worker;
-	int (*msg_handler)(struct vhost_dev *dev,
-			   struct vhost_iotlb_msg *msg);
-};
+	पूर्णांक (*msg_handler)(काष्ठा vhost_dev *dev,
+			   काष्ठा vhost_iotlb_msg *msg);
+पूर्ण;
 
-bool vhost_exceeds_weight(struct vhost_virtqueue *vq, int pkts, int total_len);
-void vhost_dev_init(struct vhost_dev *, struct vhost_virtqueue **vqs,
-		    int nvqs, int iov_limit, int weight, int byte_weight,
+bool vhost_exceeds_weight(काष्ठा vhost_virtqueue *vq, पूर्णांक pkts, पूर्णांक total_len);
+व्योम vhost_dev_init(काष्ठा vhost_dev *, काष्ठा vhost_virtqueue **vqs,
+		    पूर्णांक nvqs, पूर्णांक iov_limit, पूर्णांक weight, पूर्णांक byte_weight,
 		    bool use_worker,
-		    int (*msg_handler)(struct vhost_dev *dev,
-				       struct vhost_iotlb_msg *msg));
-long vhost_dev_set_owner(struct vhost_dev *dev);
-bool vhost_dev_has_owner(struct vhost_dev *dev);
-long vhost_dev_check_owner(struct vhost_dev *);
-struct vhost_iotlb *vhost_dev_reset_owner_prepare(void);
-void vhost_dev_reset_owner(struct vhost_dev *dev, struct vhost_iotlb *iotlb);
-void vhost_dev_cleanup(struct vhost_dev *);
-void vhost_dev_stop(struct vhost_dev *);
-long vhost_dev_ioctl(struct vhost_dev *, unsigned int ioctl, void __user *argp);
-long vhost_vring_ioctl(struct vhost_dev *d, unsigned int ioctl, void __user *argp);
-bool vhost_vq_access_ok(struct vhost_virtqueue *vq);
-bool vhost_log_access_ok(struct vhost_dev *);
+		    पूर्णांक (*msg_handler)(काष्ठा vhost_dev *dev,
+				       काष्ठा vhost_iotlb_msg *msg));
+दीर्घ vhost_dev_set_owner(काष्ठा vhost_dev *dev);
+bool vhost_dev_has_owner(काष्ठा vhost_dev *dev);
+दीर्घ vhost_dev_check_owner(काष्ठा vhost_dev *);
+काष्ठा vhost_iotlb *vhost_dev_reset_owner_prepare(व्योम);
+व्योम vhost_dev_reset_owner(काष्ठा vhost_dev *dev, काष्ठा vhost_iotlb *iotlb);
+व्योम vhost_dev_cleanup(काष्ठा vhost_dev *);
+व्योम vhost_dev_stop(काष्ठा vhost_dev *);
+दीर्घ vhost_dev_ioctl(काष्ठा vhost_dev *, अचिन्हित पूर्णांक ioctl, व्योम __user *argp);
+दीर्घ vhost_vring_ioctl(काष्ठा vhost_dev *d, अचिन्हित पूर्णांक ioctl, व्योम __user *argp);
+bool vhost_vq_access_ok(काष्ठा vhost_virtqueue *vq);
+bool vhost_log_access_ok(काष्ठा vhost_dev *);
 
-int vhost_get_vq_desc(struct vhost_virtqueue *,
-		      struct iovec iov[], unsigned int iov_count,
-		      unsigned int *out_num, unsigned int *in_num,
-		      struct vhost_log *log, unsigned int *log_num);
-void vhost_discard_vq_desc(struct vhost_virtqueue *, int n);
+पूर्णांक vhost_get_vq_desc(काष्ठा vhost_virtqueue *,
+		      काष्ठा iovec iov[], अचिन्हित पूर्णांक iov_count,
+		      अचिन्हित पूर्णांक *out_num, अचिन्हित पूर्णांक *in_num,
+		      काष्ठा vhost_log *log, अचिन्हित पूर्णांक *log_num);
+व्योम vhost_discard_vq_desc(काष्ठा vhost_virtqueue *, पूर्णांक n);
 
-bool vhost_vq_is_setup(struct vhost_virtqueue *vq);
-int vhost_vq_init_access(struct vhost_virtqueue *);
-int vhost_add_used(struct vhost_virtqueue *, unsigned int head, int len);
-int vhost_add_used_n(struct vhost_virtqueue *, struct vring_used_elem *heads,
-		     unsigned count);
-void vhost_add_used_and_signal(struct vhost_dev *, struct vhost_virtqueue *,
-			       unsigned int id, int len);
-void vhost_add_used_and_signal_n(struct vhost_dev *, struct vhost_virtqueue *,
-			       struct vring_used_elem *heads, unsigned count);
-void vhost_signal(struct vhost_dev *, struct vhost_virtqueue *);
-void vhost_disable_notify(struct vhost_dev *, struct vhost_virtqueue *);
-bool vhost_vq_avail_empty(struct vhost_dev *, struct vhost_virtqueue *);
-bool vhost_enable_notify(struct vhost_dev *, struct vhost_virtqueue *);
+bool vhost_vq_is_setup(काष्ठा vhost_virtqueue *vq);
+पूर्णांक vhost_vq_init_access(काष्ठा vhost_virtqueue *);
+पूर्णांक vhost_add_used(काष्ठा vhost_virtqueue *, अचिन्हित पूर्णांक head, पूर्णांक len);
+पूर्णांक vhost_add_used_n(काष्ठा vhost_virtqueue *, काष्ठा vring_used_elem *heads,
+		     अचिन्हित count);
+व्योम vhost_add_used_and_संकेत(काष्ठा vhost_dev *, काष्ठा vhost_virtqueue *,
+			       अचिन्हित पूर्णांक id, पूर्णांक len);
+व्योम vhost_add_used_and_संकेत_n(काष्ठा vhost_dev *, काष्ठा vhost_virtqueue *,
+			       काष्ठा vring_used_elem *heads, अचिन्हित count);
+व्योम vhost_संकेत(काष्ठा vhost_dev *, काष्ठा vhost_virtqueue *);
+व्योम vhost_disable_notअगरy(काष्ठा vhost_dev *, काष्ठा vhost_virtqueue *);
+bool vhost_vq_avail_empty(काष्ठा vhost_dev *, काष्ठा vhost_virtqueue *);
+bool vhost_enable_notअगरy(काष्ठा vhost_dev *, काष्ठा vhost_virtqueue *);
 
-int vhost_log_write(struct vhost_virtqueue *vq, struct vhost_log *log,
-		    unsigned int log_num, u64 len,
-		    struct iovec *iov, int count);
-int vq_meta_prefetch(struct vhost_virtqueue *vq);
+पूर्णांक vhost_log_ग_लिखो(काष्ठा vhost_virtqueue *vq, काष्ठा vhost_log *log,
+		    अचिन्हित पूर्णांक log_num, u64 len,
+		    काष्ठा iovec *iov, पूर्णांक count);
+पूर्णांक vq_meta_prefetch(काष्ठा vhost_virtqueue *vq);
 
-struct vhost_msg_node *vhost_new_msg(struct vhost_virtqueue *vq, int type);
-void vhost_enqueue_msg(struct vhost_dev *dev,
-		       struct list_head *head,
-		       struct vhost_msg_node *node);
-struct vhost_msg_node *vhost_dequeue_msg(struct vhost_dev *dev,
-					 struct list_head *head);
-void vhost_set_backend_features(struct vhost_dev *dev, u64 features);
+काष्ठा vhost_msg_node *vhost_new_msg(काष्ठा vhost_virtqueue *vq, पूर्णांक type);
+व्योम vhost_enqueue_msg(काष्ठा vhost_dev *dev,
+		       काष्ठा list_head *head,
+		       काष्ठा vhost_msg_node *node);
+काष्ठा vhost_msg_node *vhost_dequeue_msg(काष्ठा vhost_dev *dev,
+					 काष्ठा list_head *head);
+व्योम vhost_set_backend_features(काष्ठा vhost_dev *dev, u64 features);
 
-__poll_t vhost_chr_poll(struct file *file, struct vhost_dev *dev,
-			    poll_table *wait);
-ssize_t vhost_chr_read_iter(struct vhost_dev *dev, struct iov_iter *to,
-			    int noblock);
-ssize_t vhost_chr_write_iter(struct vhost_dev *dev,
-			     struct iov_iter *from);
-int vhost_init_device_iotlb(struct vhost_dev *d, bool enabled);
+__poll_t vhost_chr_poll(काष्ठा file *file, काष्ठा vhost_dev *dev,
+			    poll_table *रुको);
+sमाप_प्रकार vhost_chr_पढ़ो_iter(काष्ठा vhost_dev *dev, काष्ठा iov_iter *to,
+			    पूर्णांक noblock);
+sमाप_प्रकार vhost_chr_ग_लिखो_iter(काष्ठा vhost_dev *dev,
+			     काष्ठा iov_iter *from);
+पूर्णांक vhost_init_device_iotlb(काष्ठा vhost_dev *d, bool enabled);
 
-void vhost_iotlb_map_free(struct vhost_iotlb *iotlb,
-			  struct vhost_iotlb_map *map);
+व्योम vhost_iotlb_map_मुक्त(काष्ठा vhost_iotlb *iotlb,
+			  काष्ठा vhost_iotlb_map *map);
 
-#define vq_err(vq, fmt, ...) do {                                  \
+#घोषणा vq_err(vq, fmt, ...) करो अणु                                  \
 		pr_debug(pr_fmt(fmt), ##__VA_ARGS__);       \
-		if ((vq)->error_ctx)                               \
-				eventfd_signal((vq)->error_ctx, 1);\
-	} while (0)
+		अगर ((vq)->error_ctx)                               \
+				eventfd_संकेत((vq)->error_ctx, 1);\
+	पूर्ण जबतक (0)
 
-enum {
+क्रमागत अणु
 	VHOST_FEATURES = (1ULL << VIRTIO_F_NOTIFY_ON_EMPTY) |
-			 (1ULL << VIRTIO_RING_F_INDIRECT_DESC) |
+			 (1ULL << VIRTIO_RING_F_INसूचीECT_DESC) |
 			 (1ULL << VIRTIO_RING_F_EVENT_IDX) |
 			 (1ULL << VHOST_F_LOG_ALL) |
 			 (1ULL << VIRTIO_F_ANY_LAYOUT) |
 			 (1ULL << VIRTIO_F_VERSION_1)
-};
+पूर्ण;
 
 /**
  * vhost_vq_set_backend - Set backend.
  *
  * @vq            Virtqueue.
- * @private_data  The private data.
+ * @निजी_data  The निजी data.
  *
  * Context: Need to call with vq->mutex acquired.
  */
-static inline void vhost_vq_set_backend(struct vhost_virtqueue *vq,
-					void *private_data)
-{
-	vq->private_data = private_data;
-}
+अटल अंतरभूत व्योम vhost_vq_set_backend(काष्ठा vhost_virtqueue *vq,
+					व्योम *निजी_data)
+अणु
+	vq->निजी_data = निजी_data;
+पूर्ण
 
 /**
  * vhost_vq_get_backend - Get backend.
@@ -265,61 +266,61 @@ static inline void vhost_vq_set_backend(struct vhost_virtqueue *vq,
  * Context: Need to call with vq->mutex acquired.
  * Return: Private data previously set with vhost_vq_set_backend.
  */
-static inline void *vhost_vq_get_backend(struct vhost_virtqueue *vq)
-{
-	return vq->private_data;
-}
+अटल अंतरभूत व्योम *vhost_vq_get_backend(काष्ठा vhost_virtqueue *vq)
+अणु
+	वापस vq->निजी_data;
+पूर्ण
 
-static inline bool vhost_has_feature(struct vhost_virtqueue *vq, int bit)
-{
-	return vq->acked_features & (1ULL << bit);
-}
+अटल अंतरभूत bool vhost_has_feature(काष्ठा vhost_virtqueue *vq, पूर्णांक bit)
+अणु
+	वापस vq->acked_features & (1ULL << bit);
+पूर्ण
 
-static inline bool vhost_backend_has_feature(struct vhost_virtqueue *vq, int bit)
-{
-	return vq->acked_backend_features & (1ULL << bit);
-}
+अटल अंतरभूत bool vhost_backend_has_feature(काष्ठा vhost_virtqueue *vq, पूर्णांक bit)
+अणु
+	वापस vq->acked_backend_features & (1ULL << bit);
+पूर्ण
 
-#ifdef CONFIG_VHOST_CROSS_ENDIAN_LEGACY
-static inline bool vhost_is_little_endian(struct vhost_virtqueue *vq)
-{
-	return vq->is_le;
-}
-#else
-static inline bool vhost_is_little_endian(struct vhost_virtqueue *vq)
-{
-	return virtio_legacy_is_little_endian() || vq->is_le;
-}
-#endif
+#अगर_घोषित CONFIG_VHOST_CROSS_ENDIAN_LEGACY
+अटल अंतरभूत bool vhost_is_little_endian(काष्ठा vhost_virtqueue *vq)
+अणु
+	वापस vq->is_le;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool vhost_is_little_endian(काष्ठा vhost_virtqueue *vq)
+अणु
+	वापस virtio_legacy_is_little_endian() || vq->is_le;
+पूर्ण
+#पूर्ण_अगर
 
 /* Memory accessors */
-static inline u16 vhost16_to_cpu(struct vhost_virtqueue *vq, __virtio16 val)
-{
-	return __virtio16_to_cpu(vhost_is_little_endian(vq), val);
-}
+अटल अंतरभूत u16 vhost16_to_cpu(काष्ठा vhost_virtqueue *vq, __virtio16 val)
+अणु
+	वापस __virtio16_to_cpu(vhost_is_little_endian(vq), val);
+पूर्ण
 
-static inline __virtio16 cpu_to_vhost16(struct vhost_virtqueue *vq, u16 val)
-{
-	return __cpu_to_virtio16(vhost_is_little_endian(vq), val);
-}
+अटल अंतरभूत __virtio16 cpu_to_vhost16(काष्ठा vhost_virtqueue *vq, u16 val)
+अणु
+	वापस __cpu_to_virtio16(vhost_is_little_endian(vq), val);
+पूर्ण
 
-static inline u32 vhost32_to_cpu(struct vhost_virtqueue *vq, __virtio32 val)
-{
-	return __virtio32_to_cpu(vhost_is_little_endian(vq), val);
-}
+अटल अंतरभूत u32 vhost32_to_cpu(काष्ठा vhost_virtqueue *vq, __virtio32 val)
+अणु
+	वापस __virtio32_to_cpu(vhost_is_little_endian(vq), val);
+पूर्ण
 
-static inline __virtio32 cpu_to_vhost32(struct vhost_virtqueue *vq, u32 val)
-{
-	return __cpu_to_virtio32(vhost_is_little_endian(vq), val);
-}
+अटल अंतरभूत __virtio32 cpu_to_vhost32(काष्ठा vhost_virtqueue *vq, u32 val)
+अणु
+	वापस __cpu_to_virtio32(vhost_is_little_endian(vq), val);
+पूर्ण
 
-static inline u64 vhost64_to_cpu(struct vhost_virtqueue *vq, __virtio64 val)
-{
-	return __virtio64_to_cpu(vhost_is_little_endian(vq), val);
-}
+अटल अंतरभूत u64 vhost64_to_cpu(काष्ठा vhost_virtqueue *vq, __virtio64 val)
+अणु
+	वापस __virtio64_to_cpu(vhost_is_little_endian(vq), val);
+पूर्ण
 
-static inline __virtio64 cpu_to_vhost64(struct vhost_virtqueue *vq, u64 val)
-{
-	return __cpu_to_virtio64(vhost_is_little_endian(vq), val);
-}
-#endif
+अटल अंतरभूत __virtio64 cpu_to_vhost64(काष्ठा vhost_virtqueue *vq, u64 val)
+अणु
+	वापस __cpu_to_virtio64(vhost_is_little_endian(vq), val);
+पूर्ण
+#पूर्ण_अगर

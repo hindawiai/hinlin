@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-/* atm_idt77105.h - Driver-specific declarations of the IDT77105 driver (for
- * use by driver-specific utilities) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* aपंचांग_idt77105.h - Driver-specअगरic declarations of the IDT77105 driver (क्रम
+ * use by driver-specअगरic utilities) */
 
-/* Written 1999 by Greg Banks <gnb@linuxfan.com>. Copied from atm_suni.h. */
+/* Written 1999 by Greg Banks <gnb@linuxfan.com>. Copied from aपंचांग_suni.h. */
 
 
-#ifndef LINUX_ATM_IDT77105_H
-#define LINUX_ATM_IDT77105_H
+#अगर_अघोषित LINUX_ATM_IDT77105_H
+#घोषणा LINUX_ATM_IDT77105_H
 
-#include <linux/types.h>
-#include <linux/atmioc.h>
-#include <linux/atmdev.h>
+#समावेश <linux/types.h>
+#समावेश <linux/aपंचांगioc.h>
+#समावेश <linux/aपंचांगdev.h>
 
 /*
- * Structure for IDT77105_GETSTAT and IDT77105_GETSTATZ ioctls.
- * Pointed to by `arg' in atmif_sioc.
+ * Structure क्रम IDT77105_GETSTAT and IDT77105_GETSTATZ ioctls.
+ * Poपूर्णांकed to by `arg' in aपंचांगअगर_sioc.
  */
-struct idt77105_stats {
+काष्ठा idt77105_stats अणु
         __u32 symbol_errors;  /* wire symbol errors */
         __u32 tx_cells;       /* cells transmitted */
         __u32 rx_cells;       /* cells received */
         __u32 rx_hec_errors;  /* Header Error Check errors on receive */
-};
+पूर्ण;
 
-#define IDT77105_GETSTAT	_IOW('a',ATMIOC_PHYPRV+2,struct atmif_sioc)	/* get stats */
-#define IDT77105_GETSTATZ	_IOW('a',ATMIOC_PHYPRV+3,struct atmif_sioc)	/* get stats and zero */
+#घोषणा IDT77105_GETSTAT	_IOW('a',ATMIOC_PHYPRV+2,काष्ठा aपंचांगअगर_sioc)	/* get stats */
+#घोषणा IDT77105_GETSTATZ	_IOW('a',ATMIOC_PHYPRV+3,काष्ठा aपंचांगअगर_sioc)	/* get stats and zero */
 
-#endif
+#पूर्ण_अगर

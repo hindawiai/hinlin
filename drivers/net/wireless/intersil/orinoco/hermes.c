@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* hermes.c
  *
- * Driver core for the "Hermes" wireless MAC controller, as used in
+ * Driver core क्रम the "Hermes" wireless MAC controller, as used in
  * the Lucent Orinoco and Cabletron RoamAbout cards. It should also
  * work on the hfa3841 and hfa3842 MAC controller chips used in the
  * Prism II chipsets.
  *
- * This is not a complete driver, just low-level access routines for
+ * This is not a complete driver, just low-level access routines क्रम
  * the MAC controller itself.
  *
  * Based on the prism2 driver from Absolute Value Systems' linux-wlan
@@ -23,639 +24,639 @@
  *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
- * the License for the specific language governing rights and
+ * the License क्रम the specअगरic language governing rights and
  * limitations under the License.
  *
  * Alternatively, the contents of this file may be used under the
  * terms of the GNU General Public License version 2 (the "GPL"), in
- * which case the provisions of the GPL are applicable instead of the
+ * which हाल the provisions of the GPL are applicable instead of the
  * above.  If you wish to allow the use of your version of this file
  * only under the terms of the GPL and not to allow others to use your
  * version of this file under the MPL, indicate your decision by
  * deleting the provisions above and replace them with the notice and
- * other provisions required by the GPL.  If you do not delete the
+ * other provisions required by the GPL.  If you करो not delete the
  * provisions above, a recipient may use your version of this file
  * under either the MPL or the GPL.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
 
-#include "hermes.h"
+#समावेश "hermes.h"
 
-/* These are maximum timeouts. Most often, card wil react much faster */
-#define CMD_BUSY_TIMEOUT (100) /* In iterations of ~1us */
-#define CMD_INIT_TIMEOUT (50000) /* in iterations of ~10us */
-#define CMD_COMPL_TIMEOUT (20000) /* in iterations of ~10us */
-#define ALLOC_COMPL_TIMEOUT (1000) /* in iterations of ~10us */
+/* These are maximum समयouts. Most often, card wil react much faster */
+#घोषणा CMD_BUSY_TIMEOUT (100) /* In iterations of ~1us */
+#घोषणा CMD_INIT_TIMEOUT (50000) /* in iterations of ~10us */
+#घोषणा CMD_COMPL_TIMEOUT (20000) /* in iterations of ~10us */
+#घोषणा ALLOC_COMPL_TIMEOUT (1000) /* in iterations of ~10us */
 
 /*
- * AUX port access.  To unlock the AUX port write the access keys to the
- * PARAM0-2 registers, then write HERMES_AUX_ENABLE to the HERMES_CONTROL
- * register.  Then read it and make sure it's HERMES_AUX_ENABLED.
+ * AUX port access.  To unlock the AUX port ग_लिखो the access keys to the
+ * PARAM0-2 रेजिस्टरs, then ग_लिखो HERMES_AUX_ENABLE to the HERMES_CONTROL
+ * रेजिस्टर.  Then पढ़ो it and make sure it's HERMES_AUX_ENABLED.
  */
-#define HERMES_AUX_ENABLE	0x8000	/* Enable auxiliary port access */
-#define HERMES_AUX_DISABLE	0x4000	/* Disable to auxiliary port access */
-#define HERMES_AUX_ENABLED	0xC000	/* Auxiliary port is open */
-#define HERMES_AUX_DISABLED	0x0000	/* Auxiliary port is closed */
+#घोषणा HERMES_AUX_ENABLE	0x8000	/* Enable auxiliary port access */
+#घोषणा HERMES_AUX_DISABLE	0x4000	/* Disable to auxiliary port access */
+#घोषणा HERMES_AUX_ENABLED	0xC000	/* Auxiliary port is खोलो */
+#घोषणा HERMES_AUX_DISABLED	0x0000	/* Auxiliary port is बंदd */
 
-#define HERMES_AUX_PW0	0xFE01
-#define HERMES_AUX_PW1	0xDC23
-#define HERMES_AUX_PW2	0xBA45
+#घोषणा HERMES_AUX_PW0	0xFE01
+#घोषणा HERMES_AUX_PW1	0xDC23
+#घोषणा HERMES_AUX_PW2	0xBA45
 
 /* HERMES_CMD_DOWNLD */
-#define HERMES_PROGRAM_DISABLE             (0x0000 | HERMES_CMD_DOWNLD)
-#define HERMES_PROGRAM_ENABLE_VOLATILE     (0x0100 | HERMES_CMD_DOWNLD)
-#define HERMES_PROGRAM_ENABLE_NON_VOLATILE (0x0200 | HERMES_CMD_DOWNLD)
-#define HERMES_PROGRAM_NON_VOLATILE        (0x0300 | HERMES_CMD_DOWNLD)
+#घोषणा HERMES_PROGRAM_DISABLE             (0x0000 | HERMES_CMD_DOWNLD)
+#घोषणा HERMES_PROGRAM_ENABLE_VOLATILE     (0x0100 | HERMES_CMD_DOWNLD)
+#घोषणा HERMES_PROGRAM_ENABLE_NON_VOLATILE (0x0200 | HERMES_CMD_DOWNLD)
+#घोषणा HERMES_PROGRAM_NON_VOLATILE        (0x0300 | HERMES_CMD_DOWNLD)
 
 /*
  * Debugging helpers
  */
 
-#define DMSG(stuff...) do {printk(KERN_DEBUG "hermes @ %p: " , hw->iobase); \
-			printk(stuff); } while (0)
+#घोषणा DMSG(stuff...) करो अणुprपूर्णांकk(KERN_DEBUG "hermes @ %p: " , hw->iobase); \
+			prपूर्णांकk(stuff); पूर्ण जबतक (0)
 
-#undef HERMES_DEBUG
-#ifdef HERMES_DEBUG
-#include <stdarg.h>
+#अघोषित HERMES_DEBUG
+#अगर_घोषित HERMES_DEBUG
+#समावेश <मानकतर्क.स>
 
-#define DEBUG(lvl, stuff...) if ((lvl) <= HERMES_DEBUG) DMSG(stuff)
+#घोषणा DEBUG(lvl, stuff...) अगर ((lvl) <= HERMES_DEBUG) DMSG(stuff)
 
-#else /* ! HERMES_DEBUG */
+#अन्यथा /* ! HERMES_DEBUG */
 
-#define DEBUG(lvl, stuff...) do { } while (0)
+#घोषणा DEBUG(lvl, stuff...) करो अणु पूर्ण जबतक (0)
 
-#endif /* ! HERMES_DEBUG */
+#पूर्ण_अगर /* ! HERMES_DEBUG */
 
-static const struct hermes_ops hermes_ops_local;
+अटल स्थिर काष्ठा hermes_ops hermes_ops_local;
 
 /*
  * Internal functions
  */
 
-/* Issue a command to the chip. Waiting for it to complete is the caller's
+/* Issue a command to the chip. Waiting क्रम it to complete is the caller's
    problem.
 
-   Returns -EBUSY if the command register is busy, 0 on success.
+   Returns -EBUSY अगर the command रेजिस्टर is busy, 0 on success.
 
    Callable from any context.
 */
-static int hermes_issue_cmd(struct hermes *hw, u16 cmd, u16 param0,
+अटल पूर्णांक hermes_issue_cmd(काष्ठा hermes *hw, u16 cmd, u16 param0,
 			    u16 param1, u16 param2)
-{
-	int k = CMD_BUSY_TIMEOUT;
+अणु
+	पूर्णांक k = CMD_BUSY_TIMEOUT;
 	u16 reg;
 
-	/* First wait for the command register to unbusy */
-	reg = hermes_read_regn(hw, CMD);
-	while ((reg & HERMES_CMD_BUSY) && k) {
+	/* First रुको क्रम the command रेजिस्टर to unbusy */
+	reg = hermes_पढ़ो_regn(hw, CMD);
+	जबतक ((reg & HERMES_CMD_BUSY) && k) अणु
 		k--;
 		udelay(1);
-		reg = hermes_read_regn(hw, CMD);
-	}
-	if (reg & HERMES_CMD_BUSY)
-		return -EBUSY;
+		reg = hermes_पढ़ो_regn(hw, CMD);
+	पूर्ण
+	अगर (reg & HERMES_CMD_BUSY)
+		वापस -EBUSY;
 
-	hermes_write_regn(hw, PARAM2, param2);
-	hermes_write_regn(hw, PARAM1, param1);
-	hermes_write_regn(hw, PARAM0, param0);
-	hermes_write_regn(hw, CMD, cmd);
+	hermes_ग_लिखो_regn(hw, PARAM2, param2);
+	hermes_ग_लिखो_regn(hw, PARAM1, param1);
+	hermes_ग_लिखो_regn(hw, PARAM0, param0);
+	hermes_ग_लिखो_regn(hw, CMD, cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Function definitions
  */
 
-/* For doing cmds that wipe the magic constant in SWSUPPORT0 */
-static int hermes_doicmd_wait(struct hermes *hw, u16 cmd,
+/* For करोing cmds that wipe the magic स्थिरant in SWSUPPORT0 */
+अटल पूर्णांक hermes_करोicmd_रुको(काष्ठा hermes *hw, u16 cmd,
 			      u16 parm0, u16 parm1, u16 parm2,
-			      struct hermes_response *resp)
-{
-	int err = 0;
-	int k;
+			      काष्ठा hermes_response *resp)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक k;
 	u16 status, reg;
 
 	err = hermes_issue_cmd(hw, cmd, parm0, parm1, parm2);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	reg = hermes_read_regn(hw, EVSTAT);
+	reg = hermes_पढ़ो_regn(hw, EVSTAT);
 	k = CMD_INIT_TIMEOUT;
-	while ((!(reg & HERMES_EV_CMD)) && k) {
+	जबतक ((!(reg & HERMES_EV_CMD)) && k) अणु
 		k--;
 		udelay(10);
-		reg = hermes_read_regn(hw, EVSTAT);
-	}
+		reg = hermes_पढ़ो_regn(hw, EVSTAT);
+	पूर्ण
 
-	hermes_write_regn(hw, SWSUPPORT0, HERMES_MAGIC);
+	hermes_ग_लिखो_regn(hw, SWSUPPORT0, HERMES_MAGIC);
 
-	if (!hermes_present(hw)) {
+	अगर (!hermes_present(hw)) अणु
 		DEBUG(0, "hermes @ 0x%x: Card removed during reset.\n",
 		       hw->iobase);
 		err = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!(reg & HERMES_EV_CMD)) {
-		printk(KERN_ERR "hermes @ %p: "
+	अगर (!(reg & HERMES_EV_CMD)) अणु
+		prपूर्णांकk(KERN_ERR "hermes @ %p: "
 		       "Timeout waiting for card to reset (reg=0x%04x)!\n",
 		       hw->iobase, reg);
 		err = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	status = hermes_read_regn(hw, STATUS);
-	if (resp) {
+	status = hermes_पढ़ो_regn(hw, STATUS);
+	अगर (resp) अणु
 		resp->status = status;
-		resp->resp0 = hermes_read_regn(hw, RESP0);
-		resp->resp1 = hermes_read_regn(hw, RESP1);
-		resp->resp2 = hermes_read_regn(hw, RESP2);
-	}
+		resp->resp0 = hermes_पढ़ो_regn(hw, RESP0);
+		resp->resp1 = hermes_पढ़ो_regn(hw, RESP1);
+		resp->resp2 = hermes_पढ़ो_regn(hw, RESP2);
+	पूर्ण
 
-	hermes_write_regn(hw, EVACK, HERMES_EV_CMD);
+	hermes_ग_लिखो_regn(hw, EVACK, HERMES_EV_CMD);
 
-	if (status & HERMES_STATUS_RESULT)
+	अगर (status & HERMES_STATUS_RESULT)
 		err = -EIO;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void hermes_struct_init(struct hermes *hw, void __iomem *address,
-			int reg_spacing)
-{
+व्योम hermes_काष्ठा_init(काष्ठा hermes *hw, व्योम __iomem *address,
+			पूर्णांक reg_spacing)
+अणु
 	hw->iobase = address;
 	hw->reg_spacing = reg_spacing;
-	hw->inten = 0x0;
+	hw->पूर्णांकen = 0x0;
 	hw->eeprom_pda = false;
 	hw->ops = &hermes_ops_local;
-}
-EXPORT_SYMBOL(hermes_struct_init);
+पूर्ण
+EXPORT_SYMBOL(hermes_काष्ठा_init);
 
-static int hermes_init(struct hermes *hw)
-{
+अटल पूर्णांक hermes_init(काष्ठा hermes *hw)
+अणु
 	u16 reg;
-	int err = 0;
-	int k;
+	पूर्णांक err = 0;
+	पूर्णांक k;
 
-	/* We don't want to be interrupted while resetting the chipset */
-	hw->inten = 0x0;
-	hermes_write_regn(hw, INTEN, 0);
-	hermes_write_regn(hw, EVACK, 0xffff);
+	/* We करोn't want to be पूर्णांकerrupted जबतक resetting the chipset */
+	hw->पूर्णांकen = 0x0;
+	hermes_ग_लिखो_regn(hw, INTEN, 0);
+	hermes_ग_लिखो_regn(hw, EVACK, 0xffff);
 
-	/* Normally it's a "can't happen" for the command register to
+	/* Normally it's a "can't happen" क्रम the command रेजिस्टर to
 	   be busy when we go to issue a command because we are
 	   serializing all commands.  However we want to have some
-	   chance of resetting the card even if it gets into a stupid
-	   state, so we actually wait to see if the command register
+	   chance of resetting the card even अगर it माला_लो पूर्णांकo a stupid
+	   state, so we actually रुको to see अगर the command रेजिस्टर
 	   will unbusy itself here. */
 	k = CMD_BUSY_TIMEOUT;
-	reg = hermes_read_regn(hw, CMD);
-	while (k && (reg & HERMES_CMD_BUSY)) {
-		if (reg == 0xffff) /* Special case - the card has probably been
-				      removed, so don't wait for the timeout */
-			return -ENODEV;
+	reg = hermes_पढ़ो_regn(hw, CMD);
+	जबतक (k && (reg & HERMES_CMD_BUSY)) अणु
+		अगर (reg == 0xffff) /* Special हाल - the card has probably been
+				      हटाओd, so करोn't रुको क्रम the समयout */
+			वापस -ENODEV;
 
 		k--;
 		udelay(1);
-		reg = hermes_read_regn(hw, CMD);
-	}
+		reg = hermes_पढ़ो_regn(hw, CMD);
+	पूर्ण
 
-	/* No need to explicitly handle the timeout - if we've timed
-	   out hermes_issue_cmd() will probably return -EBUSY below */
+	/* No need to explicitly handle the समयout - अगर we've समयd
+	   out hermes_issue_cmd() will probably वापस -EBUSY below */
 
-	/* According to the documentation, EVSTAT may contain
-	   obsolete event occurrence information.  We have to acknowledge
+	/* According to the करोcumentation, EVSTAT may contain
+	   obsolete event occurrence inक्रमmation.  We have to acknowledge
 	   it by writing EVACK. */
-	reg = hermes_read_regn(hw, EVSTAT);
-	hermes_write_regn(hw, EVACK, reg);
+	reg = hermes_पढ़ो_regn(hw, EVSTAT);
+	hermes_ग_लिखो_regn(hw, EVACK, reg);
 
-	/* We don't use hermes_docmd_wait here, because the reset wipes
-	   the magic constant in SWSUPPORT0 away, and it gets confused */
-	err = hermes_doicmd_wait(hw, HERMES_CMD_INIT, 0, 0, 0, NULL);
+	/* We करोn't use hermes_करोcmd_रुको here, because the reset wipes
+	   the magic स्थिरant in SWSUPPORT0 away, and it माला_लो confused */
+	err = hermes_करोicmd_रुको(hw, HERMES_CMD_INIT, 0, 0, 0, शून्य);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Issue a command to the chip, and (busy!) wait for it to
+/* Issue a command to the chip, and (busy!) रुको क्रम it to
  * complete.
  *
  * Returns:
- *     < 0 on internal error
+ *     < 0 on पूर्णांकernal error
  *       0 on success
- *     > 0 on error returned by the firmware
+ *     > 0 on error वापसed by the firmware
  *
  * Callable from any context, but locking is your problem. */
-static int hermes_docmd_wait(struct hermes *hw, u16 cmd, u16 parm0,
-			     struct hermes_response *resp)
-{
-	int err;
-	int k;
+अटल पूर्णांक hermes_करोcmd_रुको(काष्ठा hermes *hw, u16 cmd, u16 parm0,
+			     काष्ठा hermes_response *resp)
+अणु
+	पूर्णांक err;
+	पूर्णांक k;
 	u16 reg;
 	u16 status;
 
 	err = hermes_issue_cmd(hw, cmd, parm0, 0, 0);
-	if (err) {
-		if (!hermes_present(hw)) {
-			if (net_ratelimit())
-				printk(KERN_WARNING "hermes @ %p: "
+	अगर (err) अणु
+		अगर (!hermes_present(hw)) अणु
+			अगर (net_ratelimit())
+				prपूर्णांकk(KERN_WARNING "hermes @ %p: "
 				       "Card removed while issuing command "
 				       "0x%04x.\n", hw->iobase, cmd);
 			err = -ENODEV;
-		} else
-			if (net_ratelimit())
-				printk(KERN_ERR "hermes @ %p: "
+		पूर्ण अन्यथा
+			अगर (net_ratelimit())
+				prपूर्णांकk(KERN_ERR "hermes @ %p: "
 				       "Error %d issuing command 0x%04x.\n",
 				       hw->iobase, err, cmd);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	reg = hermes_read_regn(hw, EVSTAT);
+	reg = hermes_पढ़ो_regn(hw, EVSTAT);
 	k = CMD_COMPL_TIMEOUT;
-	while ((!(reg & HERMES_EV_CMD)) && k) {
+	जबतक ((!(reg & HERMES_EV_CMD)) && k) अणु
 		k--;
 		udelay(10);
-		reg = hermes_read_regn(hw, EVSTAT);
-	}
+		reg = hermes_पढ़ो_regn(hw, EVSTAT);
+	पूर्ण
 
-	if (!hermes_present(hw)) {
-		printk(KERN_WARNING "hermes @ %p: Card removed "
+	अगर (!hermes_present(hw)) अणु
+		prपूर्णांकk(KERN_WARNING "hermes @ %p: Card removed "
 		       "while waiting for command 0x%04x completion.\n",
 		       hw->iobase, cmd);
 		err = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!(reg & HERMES_EV_CMD)) {
-		printk(KERN_ERR "hermes @ %p: Timeout waiting for "
+	अगर (!(reg & HERMES_EV_CMD)) अणु
+		prपूर्णांकk(KERN_ERR "hermes @ %p: Timeout waiting for "
 		       "command 0x%04x completion.\n", hw->iobase, cmd);
 		err = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	status = hermes_read_regn(hw, STATUS);
-	if (resp) {
+	status = hermes_पढ़ो_regn(hw, STATUS);
+	अगर (resp) अणु
 		resp->status = status;
-		resp->resp0 = hermes_read_regn(hw, RESP0);
-		resp->resp1 = hermes_read_regn(hw, RESP1);
-		resp->resp2 = hermes_read_regn(hw, RESP2);
-	}
+		resp->resp0 = hermes_पढ़ो_regn(hw, RESP0);
+		resp->resp1 = hermes_पढ़ो_regn(hw, RESP1);
+		resp->resp2 = hermes_पढ़ो_regn(hw, RESP2);
+	पूर्ण
 
-	hermes_write_regn(hw, EVACK, HERMES_EV_CMD);
+	hermes_ग_लिखो_regn(hw, EVACK, HERMES_EV_CMD);
 
-	if (status & HERMES_STATUS_RESULT)
+	अगर (status & HERMES_STATUS_RESULT)
 		err = -EIO;
 
  out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hermes_allocate(struct hermes *hw, u16 size, u16 *fid)
-{
-	int err = 0;
-	int k;
+अटल पूर्णांक hermes_allocate(काष्ठा hermes *hw, u16 size, u16 *fid)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक k;
 	u16 reg;
 
-	if ((size < HERMES_ALLOC_LEN_MIN) || (size > HERMES_ALLOC_LEN_MAX))
-		return -EINVAL;
+	अगर ((size < HERMES_ALLOC_LEN_MIN) || (size > HERMES_ALLOC_LEN_MAX))
+		वापस -EINVAL;
 
-	err = hermes_docmd_wait(hw, HERMES_CMD_ALLOC, size, NULL);
-	if (err)
-		return err;
+	err = hermes_करोcmd_रुको(hw, HERMES_CMD_ALLOC, size, शून्य);
+	अगर (err)
+		वापस err;
 
-	reg = hermes_read_regn(hw, EVSTAT);
+	reg = hermes_पढ़ो_regn(hw, EVSTAT);
 	k = ALLOC_COMPL_TIMEOUT;
-	while ((!(reg & HERMES_EV_ALLOC)) && k) {
+	जबतक ((!(reg & HERMES_EV_ALLOC)) && k) अणु
 		k--;
 		udelay(10);
-		reg = hermes_read_regn(hw, EVSTAT);
-	}
+		reg = hermes_पढ़ो_regn(hw, EVSTAT);
+	पूर्ण
 
-	if (!hermes_present(hw)) {
-		printk(KERN_WARNING "hermes @ %p: "
+	अगर (!hermes_present(hw)) अणु
+		prपूर्णांकk(KERN_WARNING "hermes @ %p: "
 		       "Card removed waiting for frame allocation.\n",
 		       hw->iobase);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!(reg & HERMES_EV_ALLOC)) {
-		printk(KERN_ERR "hermes @ %p: "
+	अगर (!(reg & HERMES_EV_ALLOC)) अणु
+		prपूर्णांकk(KERN_ERR "hermes @ %p: "
 		       "Timeout waiting for frame allocation\n",
 		       hw->iobase);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	*fid = hermes_read_regn(hw, ALLOCFID);
-	hermes_write_regn(hw, EVACK, HERMES_EV_ALLOC);
+	*fid = hermes_पढ़ो_regn(hw, ALLOCFID);
+	hermes_ग_लिखो_regn(hw, EVACK, HERMES_EV_ALLOC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set up a BAP to read a particular chunk of data from card's internal buffer.
+/* Set up a BAP to पढ़ो a particular chunk of data from card's पूर्णांकernal buffer.
  *
  * Returns:
- *     < 0 on internal failure (errno)
+ *     < 0 on पूर्णांकernal failure (त्रुटि_सं)
  *       0 on success
  *     > 0 on error
  * from firmware
  *
  * Callable from any context */
-static int hermes_bap_seek(struct hermes *hw, int bap, u16 id, u16 offset)
-{
-	int sreg = bap ? HERMES_SELECT1 : HERMES_SELECT0;
-	int oreg = bap ? HERMES_OFFSET1 : HERMES_OFFSET0;
-	int k;
+अटल पूर्णांक hermes_bap_seek(काष्ठा hermes *hw, पूर्णांक bap, u16 id, u16 offset)
+अणु
+	पूर्णांक sreg = bap ? HERMES_SELECT1 : HERMES_SELECT0;
+	पूर्णांक oreg = bap ? HERMES_OFFSET1 : HERMES_OFFSET0;
+	पूर्णांक k;
 	u16 reg;
 
 	/* Paranoia.. */
-	if ((offset > HERMES_BAP_OFFSET_MAX) || (offset % 2))
-		return -EINVAL;
+	अगर ((offset > HERMES_BAP_OFFSET_MAX) || (offset % 2))
+		वापस -EINVAL;
 
 	k = HERMES_BAP_BUSY_TIMEOUT;
-	reg = hermes_read_reg(hw, oreg);
-	while ((reg & HERMES_OFFSET_BUSY) && k) {
+	reg = hermes_पढ़ो_reg(hw, oreg);
+	जबतक ((reg & HERMES_OFFSET_BUSY) && k) अणु
 		k--;
 		udelay(1);
-		reg = hermes_read_reg(hw, oreg);
-	}
+		reg = hermes_पढ़ो_reg(hw, oreg);
+	पूर्ण
 
-	if (reg & HERMES_OFFSET_BUSY)
-		return -ETIMEDOUT;
+	अगर (reg & HERMES_OFFSET_BUSY)
+		वापस -ETIMEDOUT;
 
 	/* Now we actually set up the transfer */
-	hermes_write_reg(hw, sreg, id);
-	hermes_write_reg(hw, oreg, offset);
+	hermes_ग_लिखो_reg(hw, sreg, id);
+	hermes_ग_लिखो_reg(hw, oreg, offset);
 
-	/* Wait for the BAP to be ready */
+	/* Wait क्रम the BAP to be पढ़ोy */
 	k = HERMES_BAP_BUSY_TIMEOUT;
-	reg = hermes_read_reg(hw, oreg);
-	while ((reg & (HERMES_OFFSET_BUSY | HERMES_OFFSET_ERR)) && k) {
+	reg = hermes_पढ़ो_reg(hw, oreg);
+	जबतक ((reg & (HERMES_OFFSET_BUSY | HERMES_OFFSET_ERR)) && k) अणु
 		k--;
 		udelay(1);
-		reg = hermes_read_reg(hw, oreg);
-	}
+		reg = hermes_पढ़ो_reg(hw, oreg);
+	पूर्ण
 
-	if (reg != offset) {
-		printk(KERN_ERR "hermes @ %p: BAP%d offset %s: "
+	अगर (reg != offset) अणु
+		prपूर्णांकk(KERN_ERR "hermes @ %p: BAP%d offset %s: "
 		       "reg=0x%x id=0x%x offset=0x%x\n", hw->iobase, bap,
 		       (reg & HERMES_OFFSET_BUSY) ? "timeout" : "error",
 		       reg, id, offset);
 
-		if (reg & HERMES_OFFSET_BUSY)
-			return -ETIMEDOUT;
+		अगर (reg & HERMES_OFFSET_BUSY)
+			वापस -ETIMEDOUT;
 
-		return -EIO;		/* error or wrong offset */
-	}
+		वापस -EIO;		/* error or wrong offset */
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Read a block of data from the chip's buffer, via the
  * BAP. Synchronization/serialization is the caller's problem.  len
  * must be even.
  *
  * Returns:
- *     < 0 on internal failure (errno)
+ *     < 0 on पूर्णांकernal failure (त्रुटि_सं)
  *       0 on success
  *     > 0 on error from firmware
  */
-static int hermes_bap_pread(struct hermes *hw, int bap, void *buf, int len,
+अटल पूर्णांक hermes_bap_pपढ़ो(काष्ठा hermes *hw, पूर्णांक bap, व्योम *buf, पूर्णांक len,
 			    u16 id, u16 offset)
-{
-	int dreg = bap ? HERMES_DATA1 : HERMES_DATA0;
-	int err = 0;
+अणु
+	पूर्णांक dreg = bap ? HERMES_DATA1 : HERMES_DATA0;
+	पूर्णांक err = 0;
 
-	if ((len < 0) || (len % 2))
-		return -EINVAL;
+	अगर ((len < 0) || (len % 2))
+		वापस -EINVAL;
 
 	err = hermes_bap_seek(hw, bap, id, offset);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	/* Actually do the transfer */
-	hermes_read_words(hw, dreg, buf, len / 2);
+	/* Actually करो the transfer */
+	hermes_पढ़ो_words(hw, dreg, buf, len / 2);
 
  out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Write a block of data to the chip's buffer, via the
  * BAP. Synchronization/serialization is the caller's problem.
  *
  * Returns:
- *     < 0 on internal failure (errno)
+ *     < 0 on पूर्णांकernal failure (त्रुटि_सं)
  *       0 on success
  *     > 0 on error from firmware
  */
-static int hermes_bap_pwrite(struct hermes *hw, int bap, const void *buf,
-			     int len, u16 id, u16 offset)
-{
-	int dreg = bap ? HERMES_DATA1 : HERMES_DATA0;
-	int err = 0;
+अटल पूर्णांक hermes_bap_pग_लिखो(काष्ठा hermes *hw, पूर्णांक bap, स्थिर व्योम *buf,
+			     पूर्णांक len, u16 id, u16 offset)
+अणु
+	पूर्णांक dreg = bap ? HERMES_DATA1 : HERMES_DATA0;
+	पूर्णांक err = 0;
 
-	if (len < 0)
-		return -EINVAL;
+	अगर (len < 0)
+		वापस -EINVAL;
 
 	err = hermes_bap_seek(hw, bap, id, offset);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	/* Actually do the transfer */
-	hermes_write_bytes(hw, dreg, buf, len);
+	/* Actually करो the transfer */
+	hermes_ग_लिखो_bytes(hw, dreg, buf, len);
 
  out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Read a Length-Type-Value record from the card.
  *
- * If length is NULL, we ignore the length read from the card, and
- * read the entire buffer regardless. This is useful because some of
+ * If length is शून्य, we ignore the length पढ़ो from the card, and
+ * पढ़ो the entire buffer regardless. This is useful because some of
  * the configuration records appear to have incorrect lengths in
  * practice.
  *
  * Callable from user or bh context.  */
-static int hermes_read_ltv(struct hermes *hw, int bap, u16 rid,
-			   unsigned bufsize, u16 *length, void *buf)
-{
-	int err = 0;
-	int dreg = bap ? HERMES_DATA1 : HERMES_DATA0;
+अटल पूर्णांक hermes_पढ़ो_ltv(काष्ठा hermes *hw, पूर्णांक bap, u16 rid,
+			   अचिन्हित bufsize, u16 *length, व्योम *buf)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक dreg = bap ? HERMES_DATA1 : HERMES_DATA0;
 	u16 rlength, rtype;
-	unsigned nwords;
+	अचिन्हित nwords;
 
-	if (bufsize % 2)
-		return -EINVAL;
+	अगर (bufsize % 2)
+		वापस -EINVAL;
 
-	err = hermes_docmd_wait(hw, HERMES_CMD_ACCESS, rid, NULL);
-	if (err)
-		return err;
+	err = hermes_करोcmd_रुको(hw, HERMES_CMD_ACCESS, rid, शून्य);
+	अगर (err)
+		वापस err;
 
 	err = hermes_bap_seek(hw, bap, rid, 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	rlength = hermes_read_reg(hw, dreg);
+	rlength = hermes_पढ़ो_reg(hw, dreg);
 
-	if (!rlength)
-		return -ENODATA;
+	अगर (!rlength)
+		वापस -ENODATA;
 
-	rtype = hermes_read_reg(hw, dreg);
+	rtype = hermes_पढ़ो_reg(hw, dreg);
 
-	if (length)
+	अगर (length)
 		*length = rlength;
 
-	if (rtype != rid)
-		printk(KERN_WARNING "hermes @ %p: %s(): "
+	अगर (rtype != rid)
+		prपूर्णांकk(KERN_WARNING "hermes @ %p: %s(): "
 		       "rid (0x%04x) does not match type (0x%04x)\n",
 		       hw->iobase, __func__, rid, rtype);
-	if (HERMES_RECLEN_TO_BYTES(rlength) > bufsize)
-		printk(KERN_WARNING "hermes @ %p: "
+	अगर (HERMES_RECLEN_TO_BYTES(rlength) > bufsize)
+		prपूर्णांकk(KERN_WARNING "hermes @ %p: "
 		       "Truncating LTV record from %d to %d bytes. "
 		       "(rid=0x%04x, len=0x%04x)\n", hw->iobase,
 		       HERMES_RECLEN_TO_BYTES(rlength), bufsize, rid, rlength);
 
-	nwords = min((unsigned)rlength - 1, bufsize / 2);
-	hermes_read_words(hw, dreg, buf, nwords);
+	nwords = min((अचिन्हित)rlength - 1, bufsize / 2);
+	hermes_पढ़ो_words(hw, dreg, buf, nwords);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hermes_write_ltv(struct hermes *hw, int bap, u16 rid,
-			    u16 length, const void *value)
-{
-	int dreg = bap ? HERMES_DATA1 : HERMES_DATA0;
-	int err = 0;
-	unsigned count;
+अटल पूर्णांक hermes_ग_लिखो_ltv(काष्ठा hermes *hw, पूर्णांक bap, u16 rid,
+			    u16 length, स्थिर व्योम *value)
+अणु
+	पूर्णांक dreg = bap ? HERMES_DATA1 : HERMES_DATA0;
+	पूर्णांक err = 0;
+	अचिन्हित count;
 
-	if (length == 0)
-		return -EINVAL;
+	अगर (length == 0)
+		वापस -EINVAL;
 
 	err = hermes_bap_seek(hw, bap, rid, 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	hermes_write_reg(hw, dreg, length);
-	hermes_write_reg(hw, dreg, rid);
+	hermes_ग_लिखो_reg(hw, dreg, length);
+	hermes_ग_लिखो_reg(hw, dreg, rid);
 
 	count = length - 1;
 
-	hermes_write_bytes(hw, dreg, value, count << 1);
+	hermes_ग_लिखो_bytes(hw, dreg, value, count << 1);
 
-	err = hermes_docmd_wait(hw, HERMES_CMD_ACCESS | HERMES_CMD_WRITE,
-				rid, NULL);
+	err = hermes_करोcmd_रुको(hw, HERMES_CMD_ACCESS | HERMES_CMD_WRITE,
+				rid, शून्य);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*** Hermes AUX control ***/
 
-static inline void
-hermes_aux_setaddr(struct hermes *hw, u32 addr)
-{
-	hermes_write_reg(hw, HERMES_AUXPAGE, (u16) (addr >> 7));
-	hermes_write_reg(hw, HERMES_AUXOFFSET, (u16) (addr & 0x7F));
-}
+अटल अंतरभूत व्योम
+hermes_aux_setaddr(काष्ठा hermes *hw, u32 addr)
+अणु
+	hermes_ग_लिखो_reg(hw, HERMES_AUXPAGE, (u16) (addr >> 7));
+	hermes_ग_लिखो_reg(hw, HERMES_AUXOFFSET, (u16) (addr & 0x7F));
+पूर्ण
 
-static inline int
-hermes_aux_control(struct hermes *hw, int enabled)
-{
-	int desired_state = enabled ? HERMES_AUX_ENABLED : HERMES_AUX_DISABLED;
-	int action = enabled ? HERMES_AUX_ENABLE : HERMES_AUX_DISABLE;
-	int i;
+अटल अंतरभूत पूर्णांक
+hermes_aux_control(काष्ठा hermes *hw, पूर्णांक enabled)
+अणु
+	पूर्णांक desired_state = enabled ? HERMES_AUX_ENABLED : HERMES_AUX_DISABLED;
+	पूर्णांक action = enabled ? HERMES_AUX_ENABLE : HERMES_AUX_DISABLE;
+	पूर्णांक i;
 
-	/* Already open? */
-	if (hermes_read_reg(hw, HERMES_CONTROL) == desired_state)
-		return 0;
+	/* Alपढ़ोy खोलो? */
+	अगर (hermes_पढ़ो_reg(hw, HERMES_CONTROL) == desired_state)
+		वापस 0;
 
-	hermes_write_reg(hw, HERMES_PARAM0, HERMES_AUX_PW0);
-	hermes_write_reg(hw, HERMES_PARAM1, HERMES_AUX_PW1);
-	hermes_write_reg(hw, HERMES_PARAM2, HERMES_AUX_PW2);
-	hermes_write_reg(hw, HERMES_CONTROL, action);
+	hermes_ग_लिखो_reg(hw, HERMES_PARAM0, HERMES_AUX_PW0);
+	hermes_ग_लिखो_reg(hw, HERMES_PARAM1, HERMES_AUX_PW1);
+	hermes_ग_लिखो_reg(hw, HERMES_PARAM2, HERMES_AUX_PW2);
+	hermes_ग_लिखो_reg(hw, HERMES_CONTROL, action);
 
-	for (i = 0; i < 20; i++) {
+	क्रम (i = 0; i < 20; i++) अणु
 		udelay(10);
-		if (hermes_read_reg(hw, HERMES_CONTROL) ==
+		अगर (hermes_पढ़ो_reg(hw, HERMES_CONTROL) ==
 		    desired_state)
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
 /*** Hermes programming ***/
 
 /* About to start programming data (Hermes I)
- * offset is the entry point
+ * offset is the entry poपूर्णांक
  *
- * Spectrum_cs' Symbol fw does not require this
- * wl_lkm Agere fw does
- * Don't know about intersil
+ * Spectrum_cs' Symbol fw करोes not require this
+ * wl_lkm Agere fw करोes
+ * Don't know about पूर्णांकersil
  */
-static int hermesi_program_init(struct hermes *hw, u32 offset)
-{
-	int err;
+अटल पूर्णांक hermesi_program_init(काष्ठा hermes *hw, u32 offset)
+अणु
+	पूर्णांक err;
 
-	/* Disable interrupts?*/
-	/*hw->inten = 0x0;*/
-	/*hermes_write_regn(hw, INTEN, 0);*/
+	/* Disable पूर्णांकerrupts?*/
+	/*hw->पूर्णांकen = 0x0;*/
+	/*hermes_ग_लिखो_regn(hw, INTEN, 0);*/
 	/*hermes_set_irqmask(hw, 0);*/
 
 	/* Acknowledge any outstanding command */
-	hermes_write_regn(hw, EVACK, 0xFFFF);
+	hermes_ग_लिखो_regn(hw, EVACK, 0xFFFF);
 
-	/* Using init_cmd_wait rather than cmd_wait */
-	err = hw->ops->init_cmd_wait(hw,
+	/* Using init_cmd_रुको rather than cmd_रुको */
+	err = hw->ops->init_cmd_रुको(hw,
 				     0x0100 | HERMES_CMD_INIT,
-				     0, 0, 0, NULL);
-	if (err)
-		return err;
+				     0, 0, 0, शून्य);
+	अगर (err)
+		वापस err;
 
-	err = hw->ops->init_cmd_wait(hw,
+	err = hw->ops->init_cmd_रुको(hw,
 				     0x0000 | HERMES_CMD_INIT,
-				     0, 0, 0, NULL);
-	if (err)
-		return err;
+				     0, 0, 0, शून्य);
+	अगर (err)
+		वापस err;
 
 	err = hermes_aux_control(hw, 1);
 	pr_debug("AUX enable returned %d\n", err);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pr_debug("Enabling volatile, EP 0x%08x\n", offset);
-	err = hw->ops->init_cmd_wait(hw,
+	err = hw->ops->init_cmd_रुको(hw,
 				     HERMES_PROGRAM_ENABLE_VOLATILE,
 				     offset & 0xFFFFu,
 				     offset >> 16,
 				     0,
-				     NULL);
+				     शून्य);
 	pr_debug("PROGRAM_ENABLE returned %d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Done programming data (Hermes I)
  *
- * Spectrum_cs' Symbol fw does not require this
- * wl_lkm Agere fw does
- * Don't know about intersil
+ * Spectrum_cs' Symbol fw करोes not require this
+ * wl_lkm Agere fw करोes
+ * Don't know about पूर्णांकersil
  */
-static int hermesi_program_end(struct hermes *hw)
-{
-	struct hermes_response resp;
-	int rc = 0;
-	int err;
+अटल पूर्णांक hermesi_program_end(काष्ठा hermes *hw)
+अणु
+	काष्ठा hermes_response resp;
+	पूर्णांक rc = 0;
+	पूर्णांक err;
 
-	rc = hw->ops->cmd_wait(hw, HERMES_PROGRAM_DISABLE, 0, &resp);
+	rc = hw->ops->cmd_रुको(hw, HERMES_PROGRAM_DISABLE, 0, &resp);
 
 	pr_debug("PROGRAM_DISABLE returned %d, "
 		 "r0 0x%04x, r1 0x%04x, r2 0x%04x\n",
 		 rc, resp.resp0, resp.resp1, resp.resp2);
 
-	if ((rc == 0) &&
+	अगर ((rc == 0) &&
 	    ((resp.status & HERMES_STATUS_CMDCODE) != HERMES_CMD_DOWNLD))
 		rc = -EIO;
 
@@ -663,62 +664,62 @@ static int hermesi_program_end(struct hermes *hw)
 	pr_debug("AUX disable returned %d\n", err);
 
 	/* Acknowledge any outstanding command */
-	hermes_write_regn(hw, EVACK, 0xFFFF);
+	hermes_ग_लिखो_regn(hw, EVACK, 0xFFFF);
 
-	/* Reinitialise, ignoring return */
-	(void) hw->ops->init_cmd_wait(hw, 0x0000 | HERMES_CMD_INIT,
-				      0, 0, 0, NULL);
+	/* Reinitialise, ignoring वापस */
+	(व्योम) hw->ops->init_cmd_रुको(hw, 0x0000 | HERMES_CMD_INIT,
+				      0, 0, 0, शून्य);
 
-	return rc ? rc : err;
-}
+	वापस rc ? rc : err;
+पूर्ण
 
-static int hermes_program_bytes(struct hermes *hw, const char *data,
+अटल पूर्णांक hermes_program_bytes(काष्ठा hermes *hw, स्थिर अक्षर *data,
 				u32 addr, u32 len)
-{
-	/* wl lkm splits the programming into chunks of 2000 bytes.
+अणु
+	/* wl lkm splits the programming पूर्णांकo chunks of 2000 bytes.
 	 * This restriction appears to come from USB. The PCMCIA
 	 * adapters can program the whole lot in one go */
 	hermes_aux_setaddr(hw, addr);
-	hermes_write_bytes(hw, HERMES_AUXDATA, data, len);
-	return 0;
-}
+	hermes_ग_लिखो_bytes(hw, HERMES_AUXDATA, data, len);
+	वापस 0;
+पूर्ण
 
 /* Read PDA from the adapter */
-static int hermes_read_pda(struct hermes *hw, __le16 *pda, u32 pda_addr,
+अटल पूर्णांक hermes_पढ़ो_pda(काष्ठा hermes *hw, __le16 *pda, u32 pda_addr,
 			   u16 pda_len)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u16 pda_size;
 	u16 data_len = pda_len;
 	__le16 *data = pda;
 
-	if (hw->eeprom_pda) {
+	अगर (hw->eeprom_pda) अणु
 		/* PDA of spectrum symbol is in eeprom */
 
-		/* Issue command to read EEPROM */
-		ret = hw->ops->cmd_wait(hw, HERMES_CMD_READMIF, 0, NULL);
-		if (ret)
-			return ret;
-	} else {
-		/* wl_lkm does not include PDA size in the PDA area.
-		 * We will pad the information into pda, so other routines
-		 * don't have to be modified */
+		/* Issue command to पढ़ो EEPROM */
+		ret = hw->ops->cmd_रुको(hw, HERMES_CMD_READMIF, 0, शून्य);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		/* wl_lkm करोes not include PDA size in the PDA area.
+		 * We will pad the inक्रमmation पूर्णांकo pda, so other routines
+		 * करोn't have to be modअगरied */
 		pda[0] = cpu_to_le16(pda_len - 2);
 			/* Includes CFG_PROD_DATA but not itself */
 		pda[1] = cpu_to_le16(0x0800); /* CFG_PROD_DATA */
 		data_len = pda_len - 4;
 		data = pda + 2;
-	}
+	पूर्ण
 
 	/* Open auxiliary port */
 	ret = hermes_aux_control(hw, 1);
 	pr_debug("AUX enable returned %d\n", ret);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Read PDA */
 	hermes_aux_setaddr(hw, pda_addr);
-	hermes_read_words(hw, HERMES_AUXDATA, data, data_len / 2);
+	hermes_पढ़ो_words(hw, HERMES_AUXDATA, data, data_len / 2);
 
 	/* Close aux port */
 	ret = hermes_aux_control(hw, 0);
@@ -728,46 +729,46 @@ static int hermes_read_pda(struct hermes *hw, __le16 *pda, u32 pda_addr,
 	pda_size = le16_to_cpu(pda[0]);
 	pr_debug("Actual PDA length %d, Max allowed %d\n",
 		 pda_size, pda_len);
-	if (pda_size > pda_len)
-		return -EINVAL;
+	अगर (pda_size > pda_len)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hermes_lock_irqsave(spinlock_t *lock,
-				unsigned long *flags) __acquires(lock)
-{
+अटल व्योम hermes_lock_irqsave(spinlock_t *lock,
+				अचिन्हित दीर्घ *flags) __acquires(lock)
+अणु
 	spin_lock_irqsave(lock, *flags);
-}
+पूर्ण
 
-static void hermes_unlock_irqrestore(spinlock_t *lock,
-				     unsigned long *flags) __releases(lock)
-{
+अटल व्योम hermes_unlock_irqrestore(spinlock_t *lock,
+				     अचिन्हित दीर्घ *flags) __releases(lock)
+अणु
 	spin_unlock_irqrestore(lock, *flags);
-}
+पूर्ण
 
-static void hermes_lock_irq(spinlock_t *lock) __acquires(lock)
-{
+अटल व्योम hermes_lock_irq(spinlock_t *lock) __acquires(lock)
+अणु
 	spin_lock_irq(lock);
-}
+पूर्ण
 
-static void hermes_unlock_irq(spinlock_t *lock) __releases(lock)
-{
+अटल व्योम hermes_unlock_irq(spinlock_t *lock) __releases(lock)
+अणु
 	spin_unlock_irq(lock);
-}
+पूर्ण
 
-/* Hermes operations for local buses */
-static const struct hermes_ops hermes_ops_local = {
+/* Hermes operations क्रम local buses */
+अटल स्थिर काष्ठा hermes_ops hermes_ops_local = अणु
 	.init = hermes_init,
-	.cmd_wait = hermes_docmd_wait,
-	.init_cmd_wait = hermes_doicmd_wait,
+	.cmd_रुको = hermes_करोcmd_रुको,
+	.init_cmd_रुको = hermes_करोicmd_रुको,
 	.allocate = hermes_allocate,
-	.read_ltv = hermes_read_ltv,
-	.read_ltv_pr = hermes_read_ltv,
-	.write_ltv = hermes_write_ltv,
-	.bap_pread = hermes_bap_pread,
-	.bap_pwrite = hermes_bap_pwrite,
-	.read_pda = hermes_read_pda,
+	.पढ़ो_ltv = hermes_पढ़ो_ltv,
+	.पढ़ो_ltv_pr = hermes_पढ़ो_ltv,
+	.ग_लिखो_ltv = hermes_ग_लिखो_ltv,
+	.bap_pपढ़ो = hermes_bap_pपढ़ो,
+	.bap_pग_लिखो = hermes_bap_pग_लिखो,
+	.पढ़ो_pda = hermes_पढ़ो_pda,
 	.program_init = hermesi_program_init,
 	.program_end = hermesi_program_end,
 	.program = hermes_program_bytes,
@@ -775,4 +776,4 @@ static const struct hermes_ops hermes_ops_local = {
 	.unlock_irqrestore = hermes_unlock_irqrestore,
 	.lock_irq = hermes_lock_irq,
 	.unlock_irq = hermes_unlock_irq,
-};
+पूर्ण;

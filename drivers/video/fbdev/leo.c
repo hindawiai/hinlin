@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* leo.c: LEO frame buffer driver
  *
  * Copyright (C) 2003, 2006 David S. Miller (davem@davemloft.net)
  * Copyright (C) 1996-1999 Jakub Jelinek (jj@ultra.linux.cz)
  * Copyright (C) 1997 Michal Rehacek (Michal.Rehacek@st.mff.cuni.cz)
  *
- * Driver layout based loosely on tgafb.c, see that file for credits.
+ * Driver layout based loosely on tgafb.c, see that file क्रम credits.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/fb.h>
-#include <linux/mm.h>
-#include <linux/of_device.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/पन.स>
 
-#include <asm/fbio.h>
+#समावेश <यंत्र/fbपन.स>
 
-#include "sbuslib.h"
+#समावेश "sbuslib.h"
 
 /*
  * Local functions.
  */
 
-static int leo_setcolreg(unsigned, unsigned, unsigned, unsigned,
-			 unsigned, struct fb_info *);
-static int leo_blank(int, struct fb_info *);
+अटल पूर्णांक leo_setcolreg(अचिन्हित, अचिन्हित, अचिन्हित, अचिन्हित,
+			 अचिन्हित, काष्ठा fb_info *);
+अटल पूर्णांक leo_blank(पूर्णांक, काष्ठा fb_info *);
 
-static int leo_mmap(struct fb_info *, struct vm_area_struct *);
-static int leo_ioctl(struct fb_info *, unsigned int, unsigned long);
-static int leo_pan_display(struct fb_var_screeninfo *, struct fb_info *);
+अटल पूर्णांक leo_mmap(काष्ठा fb_info *, काष्ठा vm_area_काष्ठा *);
+अटल पूर्णांक leo_ioctl(काष्ठा fb_info *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
+अटल पूर्णांक leo_pan_display(काष्ठा fb_var_screeninfo *, काष्ठा fb_info *);
 
 /*
  *  Frame buffer operations
  */
 
-static const struct fb_ops leo_ops = {
+अटल स्थिर काष्ठा fb_ops leo_ops = अणु
 	.owner			= THIS_MODULE,
 	.fb_setcolreg		= leo_setcolreg,
 	.fb_blank		= leo_blank,
@@ -49,87 +50,87 @@ static const struct fb_ops leo_ops = {
 	.fb_imageblit		= cfb_imageblit,
 	.fb_mmap		= leo_mmap,
 	.fb_ioctl		= leo_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.fb_compat_ioctl	= sbusfb_compat_ioctl,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#define LEO_OFF_LC_SS0_KRN	0x00200000UL
-#define LEO_OFF_LC_SS0_USR	0x00201000UL
-#define LEO_OFF_LC_SS1_KRN	0x01200000UL
-#define LEO_OFF_LC_SS1_USR	0x01201000UL
-#define LEO_OFF_LD_SS0		0x00400000UL
-#define LEO_OFF_LD_SS1		0x01400000UL
-#define LEO_OFF_LD_GBL		0x00401000UL
-#define LEO_OFF_LX_KRN		0x00600000UL
-#define LEO_OFF_LX_CURSOR	0x00601000UL
-#define LEO_OFF_SS0		0x00800000UL
-#define LEO_OFF_SS1		0x01800000UL
-#define LEO_OFF_UNK		0x00602000UL
-#define LEO_OFF_UNK2		0x00000000UL
+#घोषणा LEO_OFF_LC_SS0_KRN	0x00200000UL
+#घोषणा LEO_OFF_LC_SS0_USR	0x00201000UL
+#घोषणा LEO_OFF_LC_SS1_KRN	0x01200000UL
+#घोषणा LEO_OFF_LC_SS1_USR	0x01201000UL
+#घोषणा LEO_OFF_LD_SS0		0x00400000UL
+#घोषणा LEO_OFF_LD_SS1		0x01400000UL
+#घोषणा LEO_OFF_LD_GBL		0x00401000UL
+#घोषणा LEO_OFF_LX_KRN		0x00600000UL
+#घोषणा LEO_OFF_LX_CURSOR	0x00601000UL
+#घोषणा LEO_OFF_SS0		0x00800000UL
+#घोषणा LEO_OFF_SS1		0x01800000UL
+#घोषणा LEO_OFF_UNK		0x00602000UL
+#घोषणा LEO_OFF_UNK2		0x00000000UL
 
-#define LEO_CUR_ENABLE		0x00000080
-#define LEO_CUR_UPDATE		0x00000030
-#define LEO_CUR_PROGRESS	0x00000006
-#define LEO_CUR_UPDATECMAP	0x00000003
+#घोषणा LEO_CUR_ENABLE		0x00000080
+#घोषणा LEO_CUR_UPDATE		0x00000030
+#घोषणा LEO_CUR_PROGRESS	0x00000006
+#घोषणा LEO_CUR_UPDATECMAP	0x00000003
 
-#define LEO_CUR_TYPE_MASK	0x00000000
-#define LEO_CUR_TYPE_IMAGE	0x00000020
-#define LEO_CUR_TYPE_CMAP	0x00000050
+#घोषणा LEO_CUR_TYPE_MASK	0x00000000
+#घोषणा LEO_CUR_TYPE_IMAGE	0x00000020
+#घोषणा LEO_CUR_TYPE_CMAP	0x00000050
 
-struct leo_cursor {
+काष्ठा leo_cursor अणु
 	u8	xxx0[16];
 	u32	cur_type;
 	u32	cur_misc;
 	u32	cur_cursxy;
 	u32	cur_data;
-};
+पूर्ण;
 
-#define LEO_KRN_TYPE_CLUT0	0x00001000
-#define LEO_KRN_TYPE_CLUT1	0x00001001
-#define LEO_KRN_TYPE_CLUT2	0x00001002
-#define LEO_KRN_TYPE_WID	0x00001003
-#define LEO_KRN_TYPE_UNK	0x00001006
-#define LEO_KRN_TYPE_VIDEO	0x00002003
-#define LEO_KRN_TYPE_CLUTDATA	0x00004000
-#define LEO_KRN_CSR_ENABLE	0x00000008
-#define LEO_KRN_CSR_PROGRESS	0x00000004
-#define LEO_KRN_CSR_UNK		0x00000002
-#define LEO_KRN_CSR_UNK2	0x00000001
+#घोषणा LEO_KRN_TYPE_CLUT0	0x00001000
+#घोषणा LEO_KRN_TYPE_CLUT1	0x00001001
+#घोषणा LEO_KRN_TYPE_CLUT2	0x00001002
+#घोषणा LEO_KRN_TYPE_WID	0x00001003
+#घोषणा LEO_KRN_TYPE_UNK	0x00001006
+#घोषणा LEO_KRN_TYPE_VIDEO	0x00002003
+#घोषणा LEO_KRN_TYPE_CLUTDATA	0x00004000
+#घोषणा LEO_KRN_CSR_ENABLE	0x00000008
+#घोषणा LEO_KRN_CSR_PROGRESS	0x00000004
+#घोषणा LEO_KRN_CSR_UNK		0x00000002
+#घोषणा LEO_KRN_CSR_UNK2	0x00000001
 
-struct leo_lx_krn {
+काष्ठा leo_lx_krn अणु
 	u32	krn_type;
 	u32	krn_csr;
 	u32	krn_value;
-};
+पूर्ण;
 
-struct leo_lc_ss0_krn {
+काष्ठा leo_lc_ss0_krn अणु
 	u32 	misc;
 	u8	xxx0[0x800-4];
 	u32	rev;
-};
+पूर्ण;
 
-struct leo_lc_ss0_usr {
+काष्ठा leo_lc_ss0_usr अणु
 	u32	csr;
 	u32	addrspace;
-	u32 	fontmsk;
+	u32 	fonपंचांगsk;
 	u32	fontt;
 	u32	extent;
 	u32	src;
 	u32	dst;
 	u32	copy;
 	u32	fill;
-};
+पूर्ण;
 
-struct leo_lc_ss1_krn {
+काष्ठा leo_lc_ss1_krn अणु
 	u8	unknown;
-};
+पूर्ण;
 
-struct leo_lc_ss1_usr {
+काष्ठा leo_lc_ss1_usr अणु
 	u8	unknown;
-};
+पूर्ण;
 
-struct leo_ld_ss0 {
+काष्ठा leo_ld_ss0 अणु
 	u8	xxx0[0xe00];
 	u32	csr;
 	u32	wid;
@@ -162,56 +163,56 @@ struct leo_ld_ss0 {
 	u32	pickfb;		/* SS1 only */
 	u32	pickbb;		/* SS1 only */
 	u32	dcfc;		/* SS1 only */
-	u32	forcecol;	/* SS1 only */
-	u32	door[8];	/* SS1 only */
+	u32	क्रमcecol;	/* SS1 only */
+	u32	करोor[8];	/* SS1 only */
 	u32	pick[5];	/* SS1 only */
-};
+पूर्ण;
 
-#define LEO_SS1_MISC_ENABLE	0x00000001
-#define LEO_SS1_MISC_STEREO	0x00000002
-struct leo_ld_ss1 {
+#घोषणा LEO_SS1_MISC_ENABLE	0x00000001
+#घोषणा LEO_SS1_MISC_STEREO	0x00000002
+काष्ठा leo_ld_ss1 अणु
 	u8	xxx0[0xef4];
 	u32	ss1_misc;
-};
+पूर्ण;
 
-struct leo_ld_gbl {
+काष्ठा leo_ld_gbl अणु
 	u8	unknown;
-};
+पूर्ण;
 
-struct leo_par {
+काष्ठा leo_par अणु
 	spinlock_t		lock;
-	struct leo_lx_krn	__iomem *lx_krn;
-	struct leo_lc_ss0_usr	__iomem *lc_ss0_usr;
-	struct leo_ld_ss0	__iomem *ld_ss0;
-	struct leo_ld_ss1	__iomem *ld_ss1;
-	struct leo_cursor	__iomem *cursor;
+	काष्ठा leo_lx_krn	__iomem *lx_krn;
+	काष्ठा leo_lc_ss0_usr	__iomem *lc_ss0_usr;
+	काष्ठा leo_ld_ss0	__iomem *ld_ss0;
+	काष्ठा leo_ld_ss1	__iomem *ld_ss1;
+	काष्ठा leo_cursor	__iomem *cursor;
 	u32			extent;
 	u32			clut_data[256];
 
 	u32			flags;
-#define LEO_FLAG_BLANKED	0x00000001
+#घोषणा LEO_FLAG_BLANKED	0x00000001
 
-	unsigned long		which_io;
-};
+	अचिन्हित दीर्घ		which_io;
+पूर्ण;
 
-static void leo_wait(struct leo_lx_krn __iomem *lx_krn)
-{
-	int i;
+अटल व्योम leo_रुको(काष्ठा leo_lx_krn __iomem *lx_krn)
+अणु
+	पूर्णांक i;
 
-	for (i = 0;
-	     (sbus_readl(&lx_krn->krn_csr) & LEO_KRN_CSR_PROGRESS) &&
+	क्रम (i = 0;
+	     (sbus_पढ़ोl(&lx_krn->krn_csr) & LEO_KRN_CSR_PROGRESS) &&
 	     i < 300000;
 	     i++)
-		udelay(1); /* Busy wait at most 0.3 sec */
-	return;
-}
+		udelay(1); /* Busy रुको at most 0.3 sec */
+	वापस;
+पूर्ण
 
-static void leo_switch_from_graph(struct fb_info *info)
-{
-	struct leo_par *par = (struct leo_par *) info->par;
-	struct leo_ld_ss0 __iomem *ss = par->ld_ss0;
-	struct leo_cursor __iomem *cursor = par->cursor;
-	unsigned long flags;
+अटल व्योम leo_चयन_from_graph(काष्ठा fb_info *info)
+अणु
+	काष्ठा leo_par *par = (काष्ठा leo_par *) info->par;
+	काष्ठा leo_ld_ss0 __iomem *ss = par->ld_ss0;
+	काष्ठा leo_cursor __iomem *cursor = par->cursor;
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	spin_lock_irqsave(&par->lock, flags);
@@ -219,68 +220,68 @@ static void leo_switch_from_graph(struct fb_info *info)
 	par->extent = ((info->var.xres - 1) |
 		       ((info->var.yres - 1) << 16));
 
-	sbus_writel(0xffffffff, &ss->wid);
-	sbus_writel(0xffff, &ss->wmask);
-	sbus_writel(0, &ss->vclipmin);
-	sbus_writel(par->extent, &ss->vclipmax);
-	sbus_writel(0, &ss->fg);
-	sbus_writel(0xff000000, &ss->planemask);
-	sbus_writel(0x310850, &ss->rop);
-	sbus_writel(0, &ss->widclip);
-	sbus_writel((info->var.xres-1) | ((info->var.yres-1) << 11),
+	sbus_ग_लिखोl(0xffffffff, &ss->wid);
+	sbus_ग_लिखोl(0xffff, &ss->wmask);
+	sbus_ग_लिखोl(0, &ss->vclipmin);
+	sbus_ग_लिखोl(par->extent, &ss->vclipmax);
+	sbus_ग_लिखोl(0, &ss->fg);
+	sbus_ग_लिखोl(0xff000000, &ss->planemask);
+	sbus_ग_लिखोl(0x310850, &ss->rop);
+	sbus_ग_लिखोl(0, &ss->widclip);
+	sbus_ग_लिखोl((info->var.xres-1) | ((info->var.yres-1) << 11),
 		    &par->lc_ss0_usr->extent);
-	sbus_writel(4, &par->lc_ss0_usr->addrspace);
-	sbus_writel(0x80000000, &par->lc_ss0_usr->fill);
-	sbus_writel(0, &par->lc_ss0_usr->fontt);
-	do {
-		val = sbus_readl(&par->lc_ss0_usr->csr);
-	} while (val & 0x20000000);
+	sbus_ग_लिखोl(4, &par->lc_ss0_usr->addrspace);
+	sbus_ग_लिखोl(0x80000000, &par->lc_ss0_usr->fill);
+	sbus_ग_लिखोl(0, &par->lc_ss0_usr->fontt);
+	करो अणु
+		val = sbus_पढ़ोl(&par->lc_ss0_usr->csr);
+	पूर्ण जबतक (val & 0x20000000);
 
-	/* setup screen buffer for cfb_* functions */
-	sbus_writel(1, &ss->wid);
-	sbus_writel(0x00ffffff, &ss->planemask);
-	sbus_writel(0x310b90, &ss->rop);
-	sbus_writel(0, &par->lc_ss0_usr->addrspace);
+	/* setup screen buffer क्रम cfb_* functions */
+	sbus_ग_लिखोl(1, &ss->wid);
+	sbus_ग_लिखोl(0x00ffffff, &ss->planemask);
+	sbus_ग_लिखोl(0x310b90, &ss->rop);
+	sbus_ग_लिखोl(0, &par->lc_ss0_usr->addrspace);
 
 	/* hide cursor */
-	sbus_writel(sbus_readl(&cursor->cur_misc) & ~LEO_CUR_ENABLE, &cursor->cur_misc);
+	sbus_ग_लिखोl(sbus_पढ़ोl(&cursor->cur_misc) & ~LEO_CUR_ENABLE, &cursor->cur_misc);
 
 	spin_unlock_irqrestore(&par->lock, flags);
-}
+पूर्ण
 
-static int leo_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	/* We just use this to catch switches out of
+अटल पूर्णांक leo_pan_display(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	/* We just use this to catch चयनes out of
 	 * graphics mode.
 	 */
-	leo_switch_from_graph(info);
+	leo_चयन_from_graph(info);
 
-	if (var->xoffset || var->yoffset || var->vmode)
-		return -EINVAL;
-	return 0;
-}
+	अगर (var->xoffset || var->yoffset || var->vmode)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /**
- *      leo_setcolreg - Optional function. Sets a color register.
+ *      leo_setcolreg - Optional function. Sets a color रेजिस्टर.
  *      @regno: boolean, 0 copy local, 1 get_user() function
- *      @red: frame buffer colormap structure
+ *      @red: frame buffer colormap काष्ठाure
  *      @green: The green value which can be up to 16 bits wide
  *      @blue:  The blue value which can be up to 16 bits wide.
  *      @transp: If supported the alpha value which can be up to 16 bits wide.
- *      @info: frame buffer info structure
+ *      @info: frame buffer info काष्ठाure
  */
-static int leo_setcolreg(unsigned regno,
-			 unsigned red, unsigned green, unsigned blue,
-			 unsigned transp, struct fb_info *info)
-{
-	struct leo_par *par = (struct leo_par *) info->par;
-	struct leo_lx_krn __iomem *lx_krn = par->lx_krn;
-	unsigned long flags;
+अटल पूर्णांक leo_setcolreg(अचिन्हित regno,
+			 अचिन्हित red, अचिन्हित green, अचिन्हित blue,
+			 अचिन्हित transp, काष्ठा fb_info *info)
+अणु
+	काष्ठा leo_par *par = (काष्ठा leo_par *) info->par;
+	काष्ठा leo_lx_krn __iomem *lx_krn = par->lx_krn;
+	अचिन्हित दीर्घ flags;
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	if (regno >= 256)
-		return 1;
+	अगर (regno >= 256)
+		वापस 1;
 
 	red >>= 8;
 	green >>= 8;
@@ -290,152 +291,152 @@ static int leo_setcolreg(unsigned regno,
 
 	spin_lock_irqsave(&par->lock, flags);
 
-	leo_wait(lx_krn);
+	leo_रुको(lx_krn);
 
-	sbus_writel(LEO_KRN_TYPE_CLUTDATA, &lx_krn->krn_type);
-	for (i = 0; i < 256; i++)
-		sbus_writel(par->clut_data[i], &lx_krn->krn_value);
-	sbus_writel(LEO_KRN_TYPE_CLUT0, &lx_krn->krn_type);
+	sbus_ग_लिखोl(LEO_KRN_TYPE_CLUTDATA, &lx_krn->krn_type);
+	क्रम (i = 0; i < 256; i++)
+		sbus_ग_लिखोl(par->clut_data[i], &lx_krn->krn_value);
+	sbus_ग_लिखोl(LEO_KRN_TYPE_CLUT0, &lx_krn->krn_type);
 
-	val = sbus_readl(&lx_krn->krn_csr);
+	val = sbus_पढ़ोl(&lx_krn->krn_csr);
 	val |= (LEO_KRN_CSR_UNK | LEO_KRN_CSR_UNK2);
-	sbus_writel(val, &lx_krn->krn_csr);
+	sbus_ग_लिखोl(val, &lx_krn->krn_csr);
 
 	spin_unlock_irqrestore(&par->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *      leo_blank - Optional function.  Blanks the display.
  *      @blank: the blank mode we want.
- *      @info: frame buffer structure that represents a single frame buffer
+ *      @info: frame buffer काष्ठाure that represents a single frame buffer
  */
-static int leo_blank(int blank, struct fb_info *info)
-{
-	struct leo_par *par = (struct leo_par *) info->par;
-	struct leo_lx_krn __iomem *lx_krn = par->lx_krn;
-	unsigned long flags;
+अटल पूर्णांक leo_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	काष्ठा leo_par *par = (काष्ठा leo_par *) info->par;
+	काष्ठा leo_lx_krn __iomem *lx_krn = par->lx_krn;
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	spin_lock_irqsave(&par->lock, flags);
 
-	switch (blank) {
-	case FB_BLANK_UNBLANK: /* Unblanking */
-		val = sbus_readl(&lx_krn->krn_csr);
+	चयन (blank) अणु
+	हाल FB_BLANK_UNBLANK: /* Unblanking */
+		val = sbus_पढ़ोl(&lx_krn->krn_csr);
 		val |= LEO_KRN_CSR_ENABLE;
-		sbus_writel(val, &lx_krn->krn_csr);
+		sbus_ग_लिखोl(val, &lx_krn->krn_csr);
 		par->flags &= ~LEO_FLAG_BLANKED;
-		break;
+		अवरोध;
 
-	case FB_BLANK_NORMAL: /* Normal blanking */
-	case FB_BLANK_VSYNC_SUSPEND: /* VESA blank (vsync off) */
-	case FB_BLANK_HSYNC_SUSPEND: /* VESA blank (hsync off) */
-	case FB_BLANK_POWERDOWN: /* Poweroff */
-		val = sbus_readl(&lx_krn->krn_csr);
+	हाल FB_BLANK_NORMAL: /* Normal blanking */
+	हाल FB_BLANK_VSYNC_SUSPEND: /* VESA blank (vsync off) */
+	हाल FB_BLANK_HSYNC_SUSPEND: /* VESA blank (hsync off) */
+	हाल FB_BLANK_POWERDOWN: /* Poweroff */
+		val = sbus_पढ़ोl(&lx_krn->krn_csr);
 		val &= ~LEO_KRN_CSR_ENABLE;
-		sbus_writel(val, &lx_krn->krn_csr);
+		sbus_ग_लिखोl(val, &lx_krn->krn_csr);
 		par->flags |= LEO_FLAG_BLANKED;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&par->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sbus_mmap_map leo_mmap_map[] = {
-	{
+अटल काष्ठा sbus_mmap_map leo_mmap_map[] = अणु
+	अणु
 		.voff	= LEO_SS0_MAP,
 		.poff	= LEO_OFF_SS0,
 		.size	= 0x800000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_LC_SS0_USR_MAP,
 		.poff	= LEO_OFF_LC_SS0_USR,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_LD_SS0_MAP,
 		.poff	= LEO_OFF_LD_SS0,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_LX_CURSOR_MAP,
 		.poff	= LEO_OFF_LX_CURSOR,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_SS1_MAP,
 		.poff	= LEO_OFF_SS1,
 		.size	= 0x800000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_LC_SS1_USR_MAP,
 		.poff	= LEO_OFF_LC_SS1_USR,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_LD_SS1_MAP,
 		.poff	= LEO_OFF_LD_SS1,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_UNK_MAP,
 		.poff	= LEO_OFF_UNK,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_LX_KRN_MAP,
 		.poff	= LEO_OFF_LX_KRN,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_LC_SS0_KRN_MAP,
 		.poff	= LEO_OFF_LC_SS0_KRN,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_LC_SS1_KRN_MAP,
 		.poff	= LEO_OFF_LC_SS1_KRN,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_LD_GBL_MAP,
 		.poff	= LEO_OFF_LD_GBL,
 		.size	= 0x1000
-	},
-	{
+	पूर्ण,
+	अणु
 		.voff	= LEO_UNK2_MAP,
 		.poff	= LEO_OFF_UNK2,
 		.size	= 0x100000
-	},
-	{ .size = 0 }
-};
+	पूर्ण,
+	अणु .size = 0 पूर्ण
+पूर्ण;
 
-static int leo_mmap(struct fb_info *info, struct vm_area_struct *vma)
-{
-	struct leo_par *par = (struct leo_par *)info->par;
+अटल पूर्णांक leo_mmap(काष्ठा fb_info *info, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा leo_par *par = (काष्ठा leo_par *)info->par;
 
-	return sbusfb_mmap_helper(leo_mmap_map,
+	वापस sbusfb_mmap_helper(leo_mmap_map,
 				  info->fix.smem_start, info->fix.smem_len,
 				  par->which_io, vma);
-}
+पूर्ण
 
-static int leo_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg)
-{
-	return sbusfb_ioctl_helper(cmd, arg, info,
+अटल पूर्णांक leo_ioctl(काष्ठा fb_info *info, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस sbusfb_ioctl_helper(cmd, arg, info,
 				   FBTYPE_SUNLEO, 32, info->fix.smem_len);
-}
+पूर्ण
 
 /*
  *  Initialisation
  */
 
-static void
-leo_init_fix(struct fb_info *info, struct device_node *dp)
-{
-	snprintf(info->fix.id, sizeof(info->fix.id), "%pOFn", dp);
+अटल व्योम
+leo_init_fix(काष्ठा fb_info *info, काष्ठा device_node *dp)
+अणु
+	snम_लिखो(info->fix.id, माप(info->fix.id), "%pOFn", dp);
 
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 	info->fix.visual = FB_VISUAL_TRUECOLOR;
@@ -443,50 +444,50 @@ leo_init_fix(struct fb_info *info, struct device_node *dp)
 	info->fix.line_length = 8192;
 
 	info->fix.accel = FB_ACCEL_SUN_LEO;
-}
+पूर्ण
 
-static void leo_wid_put(struct fb_info *info, struct fb_wid_list *wl)
-{
-	struct leo_par *par = (struct leo_par *) info->par;
-	struct leo_lx_krn __iomem *lx_krn = par->lx_krn;
-	struct fb_wid_item *wi;
-	unsigned long flags;
+अटल व्योम leo_wid_put(काष्ठा fb_info *info, काष्ठा fb_wid_list *wl)
+अणु
+	काष्ठा leo_par *par = (काष्ठा leo_par *) info->par;
+	काष्ठा leo_lx_krn __iomem *lx_krn = par->lx_krn;
+	काष्ठा fb_wid_item *wi;
+	अचिन्हित दीर्घ flags;
 	u32 val;
-	int i, j;
+	पूर्णांक i, j;
 
 	spin_lock_irqsave(&par->lock, flags);
 
-	leo_wait(lx_krn);
+	leo_रुको(lx_krn);
 
-	for (i = 0, wi = wl->wl_list; i < wl->wl_count; i++, wi++) {
-		switch (wi->wi_type) {
-		case FB_WID_DBL_8:
+	क्रम (i = 0, wi = wl->wl_list; i < wl->wl_count; i++, wi++) अणु
+		चयन (wi->wi_type) अणु
+		हाल FB_WID_DBL_8:
 			j = (wi->wi_index & 0xf) + 0x40;
-			break;
+			अवरोध;
 
-		case FB_WID_DBL_24:
+		हाल FB_WID_DBL_24:
 			j = wi->wi_index & 0x3f;
-			break;
+			अवरोध;
 
-		default:
-			continue;
-		}
-		sbus_writel(0x5800 + j, &lx_krn->krn_type);
-		sbus_writel(wi->wi_values[0], &lx_krn->krn_value);
-	}
-	sbus_writel(LEO_KRN_TYPE_WID, &lx_krn->krn_type);
+		शेष:
+			जारी;
+		पूर्ण
+		sbus_ग_लिखोl(0x5800 + j, &lx_krn->krn_type);
+		sbus_ग_लिखोl(wi->wi_values[0], &lx_krn->krn_value);
+	पूर्ण
+	sbus_ग_लिखोl(LEO_KRN_TYPE_WID, &lx_krn->krn_type);
 
-	val = sbus_readl(&lx_krn->krn_csr);
+	val = sbus_पढ़ोl(&lx_krn->krn_csr);
 	val |= (LEO_KRN_CSR_UNK | LEO_KRN_CSR_UNK2);
-	sbus_writel(val, &lx_krn->krn_csr);
+	sbus_ग_लिखोl(val, &lx_krn->krn_csr);
 
 	spin_unlock_irqrestore(&par->lock, flags);
-}
+पूर्ण
 
-static void leo_init_wids(struct fb_info *info)
-{
-	struct fb_wid_item wi;
-	struct fb_wid_list wl;
+अटल व्योम leo_init_wids(काष्ठा fb_info *info)
+अणु
+	काष्ठा fb_wid_item wi;
+	काष्ठा fb_wid_list wl;
 
 	wl.wl_count = 1;
 	wl.wl_list = &wi;
@@ -504,22 +505,22 @@ static void leo_init_wids(struct fb_info *info)
 	wi.wi_index = 1;
 	wi.wi_values [0] = 0x30;
 	leo_wid_put(info, &wl);
-}
+पूर्ण
 
-static void leo_init_hw(struct fb_info *info)
-{
-	struct leo_par *par = (struct leo_par *) info->par;
+अटल व्योम leo_init_hw(काष्ठा fb_info *info)
+अणु
+	काष्ठा leo_par *par = (काष्ठा leo_par *) info->par;
 	u32 val;
 
-	val = sbus_readl(&par->ld_ss1->ss1_misc);
+	val = sbus_पढ़ोl(&par->ld_ss1->ss1_misc);
 	val |= LEO_SS1_MISC_ENABLE;
-	sbus_writel(val, &par->ld_ss1->ss1_misc);
+	sbus_ग_लिखोl(val, &par->ld_ss1->ss1_misc);
 
-	leo_switch_from_graph(info);
-}
+	leo_चयन_from_graph(info);
+पूर्ण
 
-static void leo_fixup_var_rgb(struct fb_var_screeninfo *var)
-{
+अटल व्योम leo_fixup_var_rgb(काष्ठा fb_var_screeninfo *var)
+अणु
 	var->red.offset = 0;
 	var->red.length = 8;
 	var->green.offset = 8;
@@ -528,38 +529,38 @@ static void leo_fixup_var_rgb(struct fb_var_screeninfo *var)
 	var->blue.length = 8;
 	var->transp.offset = 0;
 	var->transp.length = 0;
-}
+पूर्ण
 
-static void leo_unmap_regs(struct platform_device *op, struct fb_info *info,
-			   struct leo_par *par)
-{
-	if (par->lc_ss0_usr)
+अटल व्योम leo_unmap_regs(काष्ठा platक्रमm_device *op, काष्ठा fb_info *info,
+			   काष्ठा leo_par *par)
+अणु
+	अगर (par->lc_ss0_usr)
 		of_iounmap(&op->resource[0], par->lc_ss0_usr, 0x1000);
-	if (par->ld_ss0)
+	अगर (par->ld_ss0)
 		of_iounmap(&op->resource[0], par->ld_ss0, 0x1000);
-	if (par->ld_ss1)
+	अगर (par->ld_ss1)
 		of_iounmap(&op->resource[0], par->ld_ss1, 0x1000);
-	if (par->lx_krn)
+	अगर (par->lx_krn)
 		of_iounmap(&op->resource[0], par->lx_krn, 0x1000);
-	if (par->cursor)
+	अगर (par->cursor)
 		of_iounmap(&op->resource[0],
-			   par->cursor, sizeof(struct leo_cursor));
-	if (info->screen_base)
+			   par->cursor, माप(काष्ठा leo_cursor));
+	अगर (info->screen_base)
 		of_iounmap(&op->resource[0], info->screen_base, 0x800000);
-}
+पूर्ण
 
-static int leo_probe(struct platform_device *op)
-{
-	struct device_node *dp = op->dev.of_node;
-	struct fb_info *info;
-	struct leo_par *par;
-	int linebytes, err;
+अटल पूर्णांक leo_probe(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा device_node *dp = op->dev.of_node;
+	काष्ठा fb_info *info;
+	काष्ठा leo_par *par;
+	पूर्णांक linebytes, err;
 
-	info = framebuffer_alloc(sizeof(struct leo_par), &op->dev);
+	info = framebuffer_alloc(माप(काष्ठा leo_par), &op->dev);
 
 	err = -ENOMEM;
-	if (!info)
-		goto out_err;
+	अगर (!info)
+		जाओ out_err;
 	par = info->par;
 
 	spin_lock_init(&par->lock);
@@ -570,7 +571,7 @@ static int leo_probe(struct platform_device *op)
 	sbusfb_fill_var(&info->var, dp, 32);
 	leo_fixup_var_rgb(&info->var);
 
-	linebytes = of_getintprop_default(dp, "linebytes",
+	linebytes = of_getपूर्णांकprop_शेष(dp, "linebytes",
 					  info->var.xres);
 	info->fix.smem_len = PAGE_ALIGN(linebytes * info->var.yres);
 
@@ -588,43 +589,43 @@ static int leo_probe(struct platform_device *op)
 			   0x1000, "leolx krn");
 	par->cursor =
 		of_ioremap(&op->resource[0], LEO_OFF_LX_CURSOR,
-			   sizeof(struct leo_cursor), "leolx cursor");
+			   माप(काष्ठा leo_cursor), "leolx cursor");
 	info->screen_base =
 		of_ioremap(&op->resource[0], LEO_OFF_SS0,
 			   0x800000, "leo ram");
-	if (!par->lc_ss0_usr ||
+	अगर (!par->lc_ss0_usr ||
 	    !par->ld_ss0 ||
 	    !par->ld_ss1 ||
 	    !par->lx_krn ||
 	    !par->cursor ||
 	    !info->screen_base)
-		goto out_unmap_regs;
+		जाओ out_unmap_regs;
 
 	info->flags = FBINFO_DEFAULT;
 	info->fbops = &leo_ops;
-	info->pseudo_palette = par->clut_data;
+	info->pseuकरो_palette = par->clut_data;
 
 	leo_init_wids(info);
 	leo_init_hw(info);
 
 	leo_blank(FB_BLANK_UNBLANK, info);
 
-	if (fb_alloc_cmap(&info->cmap, 256, 0))
-		goto out_unmap_regs;
+	अगर (fb_alloc_cmap(&info->cmap, 256, 0))
+		जाओ out_unmap_regs;
 
 	leo_init_fix(info, dp);
 
-	err = register_framebuffer(info);
-	if (err < 0)
-		goto out_dealloc_cmap;
+	err = रेजिस्टर_framebuffer(info);
+	अगर (err < 0)
+		जाओ out_dealloc_cmap;
 
 	dev_set_drvdata(&op->dev, info);
 
-	printk(KERN_INFO "%pOF: leo at %lx:%lx\n",
+	prपूर्णांकk(KERN_INFO "%pOF: leo at %lx:%lx\n",
 	       dp,
 	       par->which_io, info->fix.smem_start);
 
-	return 0;
+	वापस 0;
 
 out_dealloc_cmap:
 	fb_dealloc_cmap(&info->cmap);
@@ -634,56 +635,56 @@ out_unmap_regs:
 	framebuffer_release(info);
 
 out_err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int leo_remove(struct platform_device *op)
-{
-	struct fb_info *info = dev_get_drvdata(&op->dev);
-	struct leo_par *par = info->par;
+अटल पूर्णांक leo_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा fb_info *info = dev_get_drvdata(&op->dev);
+	काष्ठा leo_par *par = info->par;
 
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 	fb_dealloc_cmap(&info->cmap);
 
 	leo_unmap_regs(op, info, par);
 
 	framebuffer_release(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id leo_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id leo_match[] = अणु
+	अणु
 		.name = "SUNW,leo",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, leo_match);
 
-static struct platform_driver leo_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver leo_driver = अणु
+	.driver = अणु
 		.name = "leo",
 		.of_match_table = leo_match,
-	},
+	पूर्ण,
 	.probe		= leo_probe,
-	.remove		= leo_remove,
-};
+	.हटाओ		= leo_हटाओ,
+पूर्ण;
 
-static int __init leo_init(void)
-{
-	if (fb_get_options("leofb", NULL))
-		return -ENODEV;
+अटल पूर्णांक __init leo_init(व्योम)
+अणु
+	अगर (fb_get_options("leofb", शून्य))
+		वापस -ENODEV;
 
-	return platform_driver_register(&leo_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&leo_driver);
+पूर्ण
 
-static void __exit leo_exit(void)
-{
-	platform_driver_unregister(&leo_driver);
-}
+अटल व्योम __निकास leo_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&leo_driver);
+पूर्ण
 
 module_init(leo_init);
-module_exit(leo_exit);
+module_निकास(leo_निकास);
 
 MODULE_DESCRIPTION("framebuffer driver for LEO chipsets");
 MODULE_AUTHOR("David S. Miller <davem@davemloft.net>");

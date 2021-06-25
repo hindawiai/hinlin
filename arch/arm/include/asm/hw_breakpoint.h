@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ARM_HW_BREAKPOINT_H
-#define _ARM_HW_BREAKPOINT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ARM_HW_BREAKPOINT_H
+#घोषणा _ARM_HW_BREAKPOINT_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
 
-struct arch_hw_breakpoint_ctrl {
+काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl अणु
 		u32 __reserved	: 9,
 		mismatch	: 1,
 				: 9,
@@ -16,24 +17,24 @@ struct arch_hw_breakpoint_ctrl {
 		type		: 2,
 		privilege	: 2,
 		enabled		: 1;
-};
+पूर्ण;
 
-struct arch_hw_breakpoint {
+काष्ठा arch_hw_अवरोधpoपूर्णांक अणु
 	u32	address;
 	u32	trigger;
-	struct	arch_hw_breakpoint_ctrl step_ctrl;
-	struct	arch_hw_breakpoint_ctrl ctrl;
-};
+	काष्ठा	arch_hw_अवरोधpoपूर्णांक_ctrl step_ctrl;
+	काष्ठा	arch_hw_अवरोधpoपूर्णांक_ctrl ctrl;
+पूर्ण;
 
-static inline u32 encode_ctrl_reg(struct arch_hw_breakpoint_ctrl ctrl)
-{
-	return (ctrl.mismatch << 22) | (ctrl.len << 5) | (ctrl.type << 3) |
+अटल अंतरभूत u32 encode_ctrl_reg(काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl ctrl)
+अणु
+	वापस (ctrl.mismatch << 22) | (ctrl.len << 5) | (ctrl.type << 3) |
 		(ctrl.privilege << 1) | ctrl.enabled;
-}
+पूर्ण
 
-static inline void decode_ctrl_reg(u32 reg,
-				   struct arch_hw_breakpoint_ctrl *ctrl)
-{
+अटल अंतरभूत व्योम decode_ctrl_reg(u32 reg,
+				   काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl *ctrl)
+अणु
 	ctrl->enabled	= reg & 0x1;
 	reg >>= 1;
 	ctrl->privilege	= reg & 0x3;
@@ -43,103 +44,103 @@ static inline void decode_ctrl_reg(u32 reg,
 	ctrl->len	= reg & 0xff;
 	reg >>= 17;
 	ctrl->mismatch	= reg & 0x1;
-}
+पूर्ण
 
 /* Debug architecture numbers. */
-#define ARM_DEBUG_ARCH_RESERVED	0	/* In case of ptrace ABI updates. */
-#define ARM_DEBUG_ARCH_V6	1
-#define ARM_DEBUG_ARCH_V6_1	2
-#define ARM_DEBUG_ARCH_V7_ECP14	3
-#define ARM_DEBUG_ARCH_V7_MM	4
-#define ARM_DEBUG_ARCH_V7_1	5
-#define ARM_DEBUG_ARCH_V8	6
-#define ARM_DEBUG_ARCH_V8_1	7
-#define ARM_DEBUG_ARCH_V8_2	8
-#define ARM_DEBUG_ARCH_V8_4	9
+#घोषणा ARM_DEBUG_ARCH_RESERVED	0	/* In हाल of ptrace ABI updates. */
+#घोषणा ARM_DEBUG_ARCH_V6	1
+#घोषणा ARM_DEBUG_ARCH_V6_1	2
+#घोषणा ARM_DEBUG_ARCH_V7_ECP14	3
+#घोषणा ARM_DEBUG_ARCH_V7_MM	4
+#घोषणा ARM_DEBUG_ARCH_V7_1	5
+#घोषणा ARM_DEBUG_ARCH_V8	6
+#घोषणा ARM_DEBUG_ARCH_V8_1	7
+#घोषणा ARM_DEBUG_ARCH_V8_2	8
+#घोषणा ARM_DEBUG_ARCH_V8_4	9
 
-/* Breakpoint */
-#define ARM_BREAKPOINT_EXECUTE	0
+/* Breakpoपूर्णांक */
+#घोषणा ARM_BREAKPOINT_EXECUTE	0
 
-/* Watchpoints */
-#define ARM_BREAKPOINT_LOAD	1
-#define ARM_BREAKPOINT_STORE	2
-#define ARM_FSR_ACCESS_MASK	(1 << 11)
+/* Watchpoपूर्णांकs */
+#घोषणा ARM_BREAKPOINT_LOAD	1
+#घोषणा ARM_BREAKPOINT_STORE	2
+#घोषणा ARM_FSR_ACCESS_MASK	(1 << 11)
 
 /* Privilege Levels */
-#define ARM_BREAKPOINT_PRIV	1
-#define ARM_BREAKPOINT_USER	2
+#घोषणा ARM_BREAKPOINT_PRIV	1
+#घोषणा ARM_BREAKPOINT_USER	2
 
 /* Lengths */
-#define ARM_BREAKPOINT_LEN_1	0x1
-#define ARM_BREAKPOINT_LEN_2	0x3
-#define ARM_BREAKPOINT_LEN_4	0xf
-#define ARM_BREAKPOINT_LEN_8	0xff
+#घोषणा ARM_BREAKPOINT_LEN_1	0x1
+#घोषणा ARM_BREAKPOINT_LEN_2	0x3
+#घोषणा ARM_BREAKPOINT_LEN_4	0xf
+#घोषणा ARM_BREAKPOINT_LEN_8	0xff
 
 /* Limits */
-#define ARM_MAX_BRP		16
-#define ARM_MAX_WRP		16
-#define ARM_MAX_HBP_SLOTS	(ARM_MAX_BRP + ARM_MAX_WRP)
+#घोषणा ARM_MAX_BRP		16
+#घोषणा ARM_MAX_WRP		16
+#घोषणा ARM_MAX_HBP_SLOTS	(ARM_MAX_BRP + ARM_MAX_WRP)
 
 /* DSCR method of entry bits. */
-#define ARM_DSCR_MOE(x)			((x >> 2) & 0xf)
-#define ARM_ENTRY_BREAKPOINT		0x1
-#define ARM_ENTRY_ASYNC_WATCHPOINT	0x2
-#define ARM_ENTRY_SYNC_WATCHPOINT	0xa
+#घोषणा ARM_DSCR_MOE(x)			((x >> 2) & 0xf)
+#घोषणा ARM_ENTRY_BREAKPOINT		0x1
+#घोषणा ARM_ENTRY_ASYNC_WATCHPOINT	0x2
+#घोषणा ARM_ENTRY_SYNC_WATCHPOINT	0xa
 
 /* DSCR monitor/halting bits. */
-#define ARM_DSCR_HDBGEN		(1 << 14)
-#define ARM_DSCR_MDBGEN		(1 << 15)
+#घोषणा ARM_DSCR_HDBGEN		(1 << 14)
+#घोषणा ARM_DSCR_MDBGEN		(1 << 15)
 
 /* OSLSR os lock model bits */
-#define ARM_OSLSR_OSLM0		(1 << 0)
+#घोषणा ARM_OSLSR_OSLM0		(1 << 0)
 
-/* opcode2 numbers for the co-processor instructions. */
-#define ARM_OP2_BVR		4
-#define ARM_OP2_BCR		5
-#define ARM_OP2_WVR		6
-#define ARM_OP2_WCR		7
+/* opcode2 numbers क्रम the co-processor inकाष्ठाions. */
+#घोषणा ARM_OP2_BVR		4
+#घोषणा ARM_OP2_BCR		5
+#घोषणा ARM_OP2_WVR		6
+#घोषणा ARM_OP2_WCR		7
 
-/* Base register numbers for the debug registers. */
-#define ARM_BASE_BVR		64
-#define ARM_BASE_BCR		80
-#define ARM_BASE_WVR		96
-#define ARM_BASE_WCR		112
+/* Base रेजिस्टर numbers क्रम the debug रेजिस्टरs. */
+#घोषणा ARM_BASE_BVR		64
+#घोषणा ARM_BASE_BCR		80
+#घोषणा ARM_BASE_WVR		96
+#घोषणा ARM_BASE_WCR		112
 
-/* Accessor macros for the debug registers. */
-#define ARM_DBG_READ(N, M, OP2, VAL) do {\
-	asm volatile("mrc p14, 0, %0, " #N "," #M ", " #OP2 : "=r" (VAL));\
-} while (0)
+/* Accessor macros क्रम the debug रेजिस्टरs. */
+#घोषणा ARM_DBG_READ(N, M, OP2, VAL) करो अणु\
+	यंत्र अस्थिर("mrc p14, 0, %0, " #N "," #M ", " #OP2 : "=r" (VAL));\
+पूर्ण जबतक (0)
 
-#define ARM_DBG_WRITE(N, M, OP2, VAL) do {\
-	asm volatile("mcr p14, 0, %0, " #N "," #M ", " #OP2 : : "r" (VAL));\
-} while (0)
+#घोषणा ARM_DBG_WRITE(N, M, OP2, VAL) करो अणु\
+	यंत्र अस्थिर("mcr p14, 0, %0, " #N "," #M ", " #OP2 : : "r" (VAL));\
+पूर्ण जबतक (0)
 
-struct perf_event_attr;
-struct notifier_block;
-struct perf_event;
-struct pmu;
+काष्ठा perf_event_attr;
+काष्ठा notअगरier_block;
+काष्ठा perf_event;
+काष्ठा pmu;
 
-extern int arch_bp_generic_fields(struct arch_hw_breakpoint_ctrl ctrl,
-				  int *gen_len, int *gen_type);
-extern int arch_check_bp_in_kernelspace(struct arch_hw_breakpoint *hw);
-extern int hw_breakpoint_arch_parse(struct perf_event *bp,
-				    const struct perf_event_attr *attr,
-				    struct arch_hw_breakpoint *hw);
-extern int hw_breakpoint_exceptions_notify(struct notifier_block *unused,
-					   unsigned long val, void *data);
+बाह्य पूर्णांक arch_bp_generic_fields(काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl ctrl,
+				  पूर्णांक *gen_len, पूर्णांक *gen_type);
+बाह्य पूर्णांक arch_check_bp_in_kernelspace(काष्ठा arch_hw_अवरोधpoपूर्णांक *hw);
+बाह्य पूर्णांक hw_अवरोधpoपूर्णांक_arch_parse(काष्ठा perf_event *bp,
+				    स्थिर काष्ठा perf_event_attr *attr,
+				    काष्ठा arch_hw_अवरोधpoपूर्णांक *hw);
+बाह्य पूर्णांक hw_अवरोधpoपूर्णांक_exceptions_notअगरy(काष्ठा notअगरier_block *unused,
+					   अचिन्हित दीर्घ val, व्योम *data);
 
-extern u8 arch_get_debug_arch(void);
-extern u8 arch_get_max_wp_len(void);
-extern void clear_ptrace_hw_breakpoint(struct task_struct *tsk);
+बाह्य u8 arch_get_debug_arch(व्योम);
+बाह्य u8 arch_get_max_wp_len(व्योम);
+बाह्य व्योम clear_ptrace_hw_अवरोधpoपूर्णांक(काष्ठा task_काष्ठा *tsk);
 
-int arch_install_hw_breakpoint(struct perf_event *bp);
-void arch_uninstall_hw_breakpoint(struct perf_event *bp);
-void hw_breakpoint_pmu_read(struct perf_event *bp);
-int hw_breakpoint_slots(int type);
+पूर्णांक arch_install_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
+व्योम arch_uninstall_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
+व्योम hw_अवरोधpoपूर्णांक_pmu_पढ़ो(काष्ठा perf_event *bp);
+पूर्णांक hw_अवरोधpoपूर्णांक_slots(पूर्णांक type);
 
-#else
-static inline void clear_ptrace_hw_breakpoint(struct task_struct *tsk) {}
+#अन्यथा
+अटल अंतरभूत व्योम clear_ptrace_hw_अवरोधpoपूर्णांक(काष्ठा task_काष्ठा *tsk) अणुपूर्ण
 
-#endif	/* CONFIG_HAVE_HW_BREAKPOINT */
-#endif	/* __KERNEL__ */
-#endif	/* _ARM_HW_BREAKPOINT_H */
+#पूर्ण_अगर	/* CONFIG_HAVE_HW_BREAKPOINT */
+#पूर्ण_अगर	/* __KERNEL__ */
+#पूर्ण_अगर	/* _ARM_HW_BREAKPOINT_H */

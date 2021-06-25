@@ -1,57 +1,58 @@
+<शैली गुरु>
 /*
  * dvbdev.c
  *
  * Copyright (C) 2000 Ralph  Metzler <ralph@convergence.de>
  *                  & Marcus Metzler <marcus@convergence.de>
- *                    for convergence integrated media GmbH
+ *                    क्रम convergence पूर्णांकegrated media GmbH
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  */
 
-#define pr_fmt(fmt) "dvbdev: " fmt
+#घोषणा pr_fmt(fmt) "dvbdev: " fmt
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/mutex.h>
-#include <media/dvbdev.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/mutex.h>
+#समावेश <media/dvbdev.h>
 
-/* Due to enum tuner_pad_index */
-#include <media/tuner.h>
+/* Due to क्रमागत tuner_pad_index */
+#समावेश <media/tuner.h>
 
-static DEFINE_MUTEX(dvbdev_mutex);
-static int dvbdev_debug;
+अटल DEFINE_MUTEX(dvbdev_mutex);
+अटल पूर्णांक dvbdev_debug;
 
-module_param(dvbdev_debug, int, 0644);
+module_param(dvbdev_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(dvbdev_debug, "Turn on/off device debugging (default:off).");
 
-#define dprintk(fmt, arg...) do {					\
-	if (dvbdev_debug)						\
-		printk(KERN_DEBUG pr_fmt("%s: " fmt),			\
+#घोषणा dprपूर्णांकk(fmt, arg...) करो अणु					\
+	अगर (dvbdev_debug)						\
+		prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt),			\
 		       __func__, ##arg);				\
-} while (0)
+पूर्ण जबतक (0)
 
-static LIST_HEAD(dvb_adapter_list);
-static DEFINE_MUTEX(dvbdev_register_lock);
+अटल LIST_HEAD(dvb_adapter_list);
+अटल DEFINE_MUTEX(dvbdev_रेजिस्टर_lock);
 
-static const char * const dnames[] = {
+अटल स्थिर अक्षर * स्थिर dnames[] = अणु
 	[DVB_DEVICE_VIDEO] =		"video",
 	[DVB_DEVICE_AUDIO] =		"audio",
 	[DVB_DEVICE_SEC] =		"sec",
@@ -61,15 +62,15 @@ static const char * const dnames[] = {
 	[DVB_DEVICE_CA] =		"ca",
 	[DVB_DEVICE_NET] =		"net",
 	[DVB_DEVICE_OSD] =		"osd"
-};
+पूर्ण;
 
-#ifdef CONFIG_DVB_DYNAMIC_MINORS
-#define MAX_DVB_MINORS		256
-#define DVB_MAX_IDS		MAX_DVB_MINORS
-#else
-#define DVB_MAX_IDS		4
+#अगर_घोषित CONFIG_DVB_DYNAMIC_MINORS
+#घोषणा MAX_DVB_MINORS		256
+#घोषणा DVB_MAX_IDS		MAX_DVB_MINORS
+#अन्यथा
+#घोषणा DVB_MAX_IDS		4
 
-static const u8 minor_type[] = {
+अटल स्थिर u8 minor_type[] = अणु
        [DVB_DEVICE_VIDEO]      = 0,
        [DVB_DEVICE_AUDIO]      = 1,
        [DVB_DEVICE_SEC]        = 2,
@@ -79,598 +80,598 @@ static const u8 minor_type[] = {
        [DVB_DEVICE_CA]         = 6,
        [DVB_DEVICE_NET]        = 7,
        [DVB_DEVICE_OSD]        = 8,
-};
+पूर्ण;
 
-#define nums2minor(num, type, id) \
+#घोषणा nums2minor(num, type, id) \
        (((num) << 6) | ((id) << 4) | minor_type[type])
 
-#define MAX_DVB_MINORS		(DVB_MAX_ADAPTERS*64)
-#endif
+#घोषणा MAX_DVB_MINORS		(DVB_MAX_ADAPTERS*64)
+#पूर्ण_अगर
 
-static struct class *dvb_class;
+अटल काष्ठा class *dvb_class;
 
-static struct dvb_device *dvb_minors[MAX_DVB_MINORS];
-static DECLARE_RWSEM(minor_rwsem);
+अटल काष्ठा dvb_device *dvb_minors[MAX_DVB_MINORS];
+अटल DECLARE_RWSEM(minor_rwsem);
 
-static int dvb_device_open(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev;
+अटल पूर्णांक dvb_device_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev;
 
 	mutex_lock(&dvbdev_mutex);
-	down_read(&minor_rwsem);
+	करोwn_पढ़ो(&minor_rwsem);
 	dvbdev = dvb_minors[iminor(inode)];
 
-	if (dvbdev && dvbdev->fops) {
-		int err = 0;
-		const struct file_operations *new_fops;
+	अगर (dvbdev && dvbdev->fops) अणु
+		पूर्णांक err = 0;
+		स्थिर काष्ठा file_operations *new_fops;
 
 		new_fops = fops_get(dvbdev->fops);
-		if (!new_fops)
-			goto fail;
-		file->private_data = dvbdev;
+		अगर (!new_fops)
+			जाओ fail;
+		file->निजी_data = dvbdev;
 		replace_fops(file, new_fops);
-		if (file->f_op->open)
-			err = file->f_op->open(inode, file);
-		up_read(&minor_rwsem);
+		अगर (file->f_op->खोलो)
+			err = file->f_op->खोलो(inode, file);
+		up_पढ़ो(&minor_rwsem);
 		mutex_unlock(&dvbdev_mutex);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 fail:
-	up_read(&minor_rwsem);
+	up_पढ़ो(&minor_rwsem);
 	mutex_unlock(&dvbdev_mutex);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 
-static const struct file_operations dvb_device_fops =
-{
+अटल स्थिर काष्ठा file_operations dvb_device_fops =
+अणु
 	.owner =	THIS_MODULE,
-	.open =		dvb_device_open,
+	.खोलो =		dvb_device_खोलो,
 	.llseek =	noop_llseek,
-};
+पूर्ण;
 
-static struct cdev dvb_device_cdev;
+अटल काष्ठा cdev dvb_device_cdev;
 
-int dvb_generic_open(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev = file->private_data;
+पूर्णांक dvb_generic_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
 
-	if (!dvbdev)
-		return -ENODEV;
+	अगर (!dvbdev)
+		वापस -ENODEV;
 
-	if (!dvbdev->users)
-		return -EBUSY;
+	अगर (!dvbdev->users)
+		वापस -EBUSY;
 
-	if ((file->f_flags & O_ACCMODE) == O_RDONLY) {
-		if (!dvbdev->readers)
-			return -EBUSY;
-		dvbdev->readers--;
-	} else {
-		if (!dvbdev->writers)
-			return -EBUSY;
-		dvbdev->writers--;
-	}
+	अगर ((file->f_flags & O_ACCMODE) == O_RDONLY) अणु
+		अगर (!dvbdev->पढ़ोers)
+			वापस -EBUSY;
+		dvbdev->पढ़ोers--;
+	पूर्ण अन्यथा अणु
+		अगर (!dvbdev->ग_लिखोrs)
+			वापस -EBUSY;
+		dvbdev->ग_लिखोrs--;
+	पूर्ण
 
 	dvbdev->users--;
-	return 0;
-}
-EXPORT_SYMBOL(dvb_generic_open);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(dvb_generic_खोलो);
 
 
-int dvb_generic_release(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev = file->private_data;
+पूर्णांक dvb_generic_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
 
-	if (!dvbdev)
-		return -ENODEV;
+	अगर (!dvbdev)
+		वापस -ENODEV;
 
-	if ((file->f_flags & O_ACCMODE) == O_RDONLY) {
-		dvbdev->readers++;
-	} else {
-		dvbdev->writers++;
-	}
+	अगर ((file->f_flags & O_ACCMODE) == O_RDONLY) अणु
+		dvbdev->पढ़ोers++;
+	पूर्ण अन्यथा अणु
+		dvbdev->ग_लिखोrs++;
+	पूर्ण
 
 	dvbdev->users++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(dvb_generic_release);
 
 
-long dvb_generic_ioctl(struct file *file,
-		       unsigned int cmd, unsigned long arg)
-{
-	struct dvb_device *dvbdev = file->private_data;
+दीर्घ dvb_generic_ioctl(काष्ठा file *file,
+		       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
 
-	if (!dvbdev)
-		return -ENODEV;
+	अगर (!dvbdev)
+		वापस -ENODEV;
 
-	if (!dvbdev->kernel_ioctl)
-		return -EINVAL;
+	अगर (!dvbdev->kernel_ioctl)
+		वापस -EINVAL;
 
-	return dvb_usercopy(file, cmd, arg, dvbdev->kernel_ioctl);
-}
+	वापस dvb_usercopy(file, cmd, arg, dvbdev->kernel_ioctl);
+पूर्ण
 EXPORT_SYMBOL(dvb_generic_ioctl);
 
 
-static int dvbdev_get_free_id (struct dvb_adapter *adap, int type)
-{
+अटल पूर्णांक dvbdev_get_मुक्त_id (काष्ठा dvb_adapter *adap, पूर्णांक type)
+अणु
 	u32 id = 0;
 
-	while (id < DVB_MAX_IDS) {
-		struct dvb_device *dev;
-		list_for_each_entry(dev, &adap->device_list, list_head)
-			if (dev->type == type && dev->id == id)
-				goto skip;
-		return id;
+	जबतक (id < DVB_MAX_IDS) अणु
+		काष्ठा dvb_device *dev;
+		list_क्रम_each_entry(dev, &adap->device_list, list_head)
+			अगर (dev->type == type && dev->id == id)
+				जाओ skip;
+		वापस id;
 skip:
 		id++;
-	}
-	return -ENFILE;
-}
+	पूर्ण
+	वापस -ENखाता;
+पूर्ण
 
-static void dvb_media_device_free(struct dvb_device *dvbdev)
-{
-#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
-	if (dvbdev->entity) {
-		media_device_unregister_entity(dvbdev->entity);
-		kfree(dvbdev->entity);
-		kfree(dvbdev->pads);
-		dvbdev->entity = NULL;
-		dvbdev->pads = NULL;
-	}
+अटल व्योम dvb_media_device_मुक्त(काष्ठा dvb_device *dvbdev)
+अणु
+#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
+	अगर (dvbdev->entity) अणु
+		media_device_unरेजिस्टर_entity(dvbdev->entity);
+		kमुक्त(dvbdev->entity);
+		kमुक्त(dvbdev->pads);
+		dvbdev->entity = शून्य;
+		dvbdev->pads = शून्य;
+	पूर्ण
 
-	if (dvbdev->tsout_entity) {
-		int i;
+	अगर (dvbdev->tsout_entity) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < dvbdev->tsout_num_entities; i++) {
-			media_device_unregister_entity(&dvbdev->tsout_entity[i]);
-			kfree(dvbdev->tsout_entity[i].name);
-		}
-		kfree(dvbdev->tsout_entity);
-		kfree(dvbdev->tsout_pads);
-		dvbdev->tsout_entity = NULL;
-		dvbdev->tsout_pads = NULL;
+		क्रम (i = 0; i < dvbdev->tsout_num_entities; i++) अणु
+			media_device_unरेजिस्टर_entity(&dvbdev->tsout_entity[i]);
+			kमुक्त(dvbdev->tsout_entity[i].name);
+		पूर्ण
+		kमुक्त(dvbdev->tsout_entity);
+		kमुक्त(dvbdev->tsout_pads);
+		dvbdev->tsout_entity = शून्य;
+		dvbdev->tsout_pads = शून्य;
 
 		dvbdev->tsout_num_entities = 0;
-	}
+	पूर्ण
 
-	if (dvbdev->intf_devnode) {
-		media_devnode_remove(dvbdev->intf_devnode);
-		dvbdev->intf_devnode = NULL;
-	}
+	अगर (dvbdev->पूर्णांकf_devnode) अणु
+		media_devnode_हटाओ(dvbdev->पूर्णांकf_devnode);
+		dvbdev->पूर्णांकf_devnode = शून्य;
+	पूर्ण
 
-	if (dvbdev->adapter->conn) {
-		media_device_unregister_entity(dvbdev->adapter->conn);
-		kfree(dvbdev->adapter->conn);
-		dvbdev->adapter->conn = NULL;
-		kfree(dvbdev->adapter->conn_pads);
-		dvbdev->adapter->conn_pads = NULL;
-	}
-#endif
-}
+	अगर (dvbdev->adapter->conn) अणु
+		media_device_unरेजिस्टर_entity(dvbdev->adapter->conn);
+		kमुक्त(dvbdev->adapter->conn);
+		dvbdev->adapter->conn = शून्य;
+		kमुक्त(dvbdev->adapter->conn_pads);
+		dvbdev->adapter->conn_pads = शून्य;
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
-static int dvb_create_tsout_entity(struct dvb_device *dvbdev,
-				    const char *name, int npads)
-{
-	int i, ret = 0;
+#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
+अटल पूर्णांक dvb_create_tsout_entity(काष्ठा dvb_device *dvbdev,
+				    स्थिर अक्षर *name, पूर्णांक npads)
+अणु
+	पूर्णांक i, ret = 0;
 
-	dvbdev->tsout_pads = kcalloc(npads, sizeof(*dvbdev->tsout_pads),
+	dvbdev->tsout_pads = kसुस्मृति(npads, माप(*dvbdev->tsout_pads),
 				     GFP_KERNEL);
-	if (!dvbdev->tsout_pads)
-		return -ENOMEM;
+	अगर (!dvbdev->tsout_pads)
+		वापस -ENOMEM;
 
-	dvbdev->tsout_entity = kcalloc(npads, sizeof(*dvbdev->tsout_entity),
+	dvbdev->tsout_entity = kसुस्मृति(npads, माप(*dvbdev->tsout_entity),
 				       GFP_KERNEL);
-	if (!dvbdev->tsout_entity)
-		return -ENOMEM;
+	अगर (!dvbdev->tsout_entity)
+		वापस -ENOMEM;
 
 	dvbdev->tsout_num_entities = npads;
 
-	for (i = 0; i < npads; i++) {
-		struct media_pad *pads = &dvbdev->tsout_pads[i];
-		struct media_entity *entity = &dvbdev->tsout_entity[i];
+	क्रम (i = 0; i < npads; i++) अणु
+		काष्ठा media_pad *pads = &dvbdev->tsout_pads[i];
+		काष्ठा media_entity *entity = &dvbdev->tsout_entity[i];
 
-		entity->name = kasprintf(GFP_KERNEL, "%s #%d", name, i);
-		if (!entity->name)
-			return -ENOMEM;
+		entity->name = kaप्र_लिखो(GFP_KERNEL, "%s #%d", name, i);
+		अगर (!entity->name)
+			वापस -ENOMEM;
 
 		entity->function = MEDIA_ENT_F_IO_DTV;
 		pads->flags = MEDIA_PAD_FL_SINK;
 
 		ret = media_entity_pads_init(entity, 1, pads);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = media_device_register_entity(dvbdev->adapter->mdev,
+		ret = media_device_रेजिस्टर_entity(dvbdev->adapter->mdev,
 						   entity);
-		if (ret < 0)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define DEMUX_TSOUT	"demux-tsout"
-#define DVR_TSOUT	"dvr-tsout"
+#घोषणा DEMUX_TSOUT	"demux-tsout"
+#घोषणा DVR_TSOUT	"dvr-tsout"
 
-static int dvb_create_media_entity(struct dvb_device *dvbdev,
-				   int type, int demux_sink_pads)
-{
-	int i, ret, npads;
+अटल पूर्णांक dvb_create_media_entity(काष्ठा dvb_device *dvbdev,
+				   पूर्णांक type, पूर्णांक demux_sink_pads)
+अणु
+	पूर्णांक i, ret, npads;
 
-	switch (type) {
-	case DVB_DEVICE_FRONTEND:
+	चयन (type) अणु
+	हाल DVB_DEVICE_FRONTEND:
 		npads = 2;
-		break;
-	case DVB_DEVICE_DVR:
+		अवरोध;
+	हाल DVB_DEVICE_DVR:
 		ret = dvb_create_tsout_entity(dvbdev, DVR_TSOUT,
 					      demux_sink_pads);
-		return ret;
-	case DVB_DEVICE_DEMUX:
+		वापस ret;
+	हाल DVB_DEVICE_DEMUX:
 		npads = 1 + demux_sink_pads;
 		ret = dvb_create_tsout_entity(dvbdev, DEMUX_TSOUT,
 					      demux_sink_pads);
-		if (ret < 0)
-			return ret;
-		break;
-	case DVB_DEVICE_CA:
+		अगर (ret < 0)
+			वापस ret;
+		अवरोध;
+	हाल DVB_DEVICE_CA:
 		npads = 2;
-		break;
-	case DVB_DEVICE_NET:
+		अवरोध;
+	हाल DVB_DEVICE_NET:
 		/*
-		 * We should be creating entities for the MPE/ULE
+		 * We should be creating entities क्रम the MPE/ULE
 		 * decapsulation hardware (or software implementation).
 		 *
-		 * However, the number of for the MPE/ULE decaps may not be
-		 * fixed. As we don't have yet dynamic support for PADs at
+		 * However, the number of क्रम the MPE/ULE decaps may not be
+		 * fixed. As we करोn't have yet dynamic support क्रम PADs at
 		 * the Media Controller, let's not create the decap
 		 * entities yet.
 		 */
-		return 0;
-	default:
-		return 0;
-	}
+		वापस 0;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	dvbdev->entity = kzalloc(sizeof(*dvbdev->entity), GFP_KERNEL);
-	if (!dvbdev->entity)
-		return -ENOMEM;
+	dvbdev->entity = kzalloc(माप(*dvbdev->entity), GFP_KERNEL);
+	अगर (!dvbdev->entity)
+		वापस -ENOMEM;
 
 	dvbdev->entity->name = dvbdev->name;
 
-	if (npads) {
-		dvbdev->pads = kcalloc(npads, sizeof(*dvbdev->pads),
+	अगर (npads) अणु
+		dvbdev->pads = kसुस्मृति(npads, माप(*dvbdev->pads),
 				       GFP_KERNEL);
-		if (!dvbdev->pads) {
-			kfree(dvbdev->entity);
-			return -ENOMEM;
-		}
-	}
+		अगर (!dvbdev->pads) अणु
+			kमुक्त(dvbdev->entity);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	switch (type) {
-	case DVB_DEVICE_FRONTEND:
+	चयन (type) अणु
+	हाल DVB_DEVICE_FRONTEND:
 		dvbdev->entity->function = MEDIA_ENT_F_DTV_DEMOD;
 		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
 		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
-		break;
-	case DVB_DEVICE_DEMUX:
+		अवरोध;
+	हाल DVB_DEVICE_DEMUX:
 		dvbdev->entity->function = MEDIA_ENT_F_TS_DEMUX;
 		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
-		for (i = 1; i < npads; i++)
+		क्रम (i = 1; i < npads; i++)
 			dvbdev->pads[i].flags = MEDIA_PAD_FL_SOURCE;
-		break;
-	case DVB_DEVICE_CA:
+		अवरोध;
+	हाल DVB_DEVICE_CA:
 		dvbdev->entity->function = MEDIA_ENT_F_DTV_CA;
 		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
 		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
-		break;
-	default:
-		/* Should never happen, as the first switch prevents it */
-		kfree(dvbdev->entity);
-		kfree(dvbdev->pads);
-		dvbdev->entity = NULL;
-		dvbdev->pads = NULL;
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		/* Should never happen, as the first चयन prevents it */
+		kमुक्त(dvbdev->entity);
+		kमुक्त(dvbdev->pads);
+		dvbdev->entity = शून्य;
+		dvbdev->pads = शून्य;
+		वापस 0;
+	पूर्ण
 
-	if (npads) {
+	अगर (npads) अणु
 		ret = media_entity_pads_init(dvbdev->entity, npads, dvbdev->pads);
-		if (ret)
-			return ret;
-	}
-	ret = media_device_register_entity(dvbdev->adapter->mdev,
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	ret = media_device_रेजिस्टर_entity(dvbdev->adapter->mdev,
 					   dvbdev->entity);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pr_info("%s: media entity '%s' registered.\n",
 		__func__, dvbdev->entity->name);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int dvb_register_media_device(struct dvb_device *dvbdev,
-				     int type, int minor,
-				     unsigned demux_sink_pads)
-{
-#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
-	struct media_link *link;
-	u32 intf_type;
-	int ret;
+अटल पूर्णांक dvb_रेजिस्टर_media_device(काष्ठा dvb_device *dvbdev,
+				     पूर्णांक type, पूर्णांक minor,
+				     अचिन्हित demux_sink_pads)
+अणु
+#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
+	काष्ठा media_link *link;
+	u32 पूर्णांकf_type;
+	पूर्णांक ret;
 
-	if (!dvbdev->adapter->mdev)
-		return 0;
+	अगर (!dvbdev->adapter->mdev)
+		वापस 0;
 
 	ret = dvb_create_media_entity(dvbdev, type, demux_sink_pads);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (type) {
-	case DVB_DEVICE_FRONTEND:
-		intf_type = MEDIA_INTF_T_DVB_FE;
-		break;
-	case DVB_DEVICE_DEMUX:
-		intf_type = MEDIA_INTF_T_DVB_DEMUX;
-		break;
-	case DVB_DEVICE_DVR:
-		intf_type = MEDIA_INTF_T_DVB_DVR;
-		break;
-	case DVB_DEVICE_CA:
-		intf_type = MEDIA_INTF_T_DVB_CA;
-		break;
-	case DVB_DEVICE_NET:
-		intf_type = MEDIA_INTF_T_DVB_NET;
-		break;
-	default:
-		return 0;
-	}
+	चयन (type) अणु
+	हाल DVB_DEVICE_FRONTEND:
+		पूर्णांकf_type = MEDIA_INTF_T_DVB_FE;
+		अवरोध;
+	हाल DVB_DEVICE_DEMUX:
+		पूर्णांकf_type = MEDIA_INTF_T_DVB_DEMUX;
+		अवरोध;
+	हाल DVB_DEVICE_DVR:
+		पूर्णांकf_type = MEDIA_INTF_T_DVB_DVR;
+		अवरोध;
+	हाल DVB_DEVICE_CA:
+		पूर्णांकf_type = MEDIA_INTF_T_DVB_CA;
+		अवरोध;
+	हाल DVB_DEVICE_NET:
+		पूर्णांकf_type = MEDIA_INTF_T_DVB_NET;
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	dvbdev->intf_devnode = media_devnode_create(dvbdev->adapter->mdev,
-						    intf_type, 0,
+	dvbdev->पूर्णांकf_devnode = media_devnode_create(dvbdev->adapter->mdev,
+						    पूर्णांकf_type, 0,
 						    DVB_MAJOR, minor);
 
-	if (!dvbdev->intf_devnode)
-		return -ENOMEM;
+	अगर (!dvbdev->पूर्णांकf_devnode)
+		वापस -ENOMEM;
 
 	/*
 	 * Create the "obvious" link, e. g. the ones that represent
-	 * a direct association between an interface and an entity.
-	 * Other links should be created elsewhere, like:
-	 *		DVB FE intf    -> tuner
-	 *		DVB demux intf -> dvr
+	 * a direct association between an पूर्णांकerface and an entity.
+	 * Other links should be created अन्यथाwhere, like:
+	 *		DVB FE पूर्णांकf    -> tuner
+	 *		DVB demux पूर्णांकf -> dvr
 	 */
 
-	if (!dvbdev->entity)
-		return 0;
+	अगर (!dvbdev->entity)
+		वापस 0;
 
-	link = media_create_intf_link(dvbdev->entity,
-				      &dvbdev->intf_devnode->intf,
+	link = media_create_पूर्णांकf_link(dvbdev->entity,
+				      &dvbdev->पूर्णांकf_devnode->पूर्णांकf,
 				      MEDIA_LNK_FL_ENABLED |
 				      MEDIA_LNK_FL_IMMUTABLE);
-	if (!link)
-		return -ENOMEM;
-#endif
-	return 0;
-}
+	अगर (!link)
+		वापस -ENOMEM;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-int dvb_register_device(struct dvb_adapter *adap, struct dvb_device **pdvbdev,
-			const struct dvb_device *template, void *priv,
-			enum dvb_device_type type, int demux_sink_pads)
-{
-	struct dvb_device *dvbdev;
-	struct file_operations *dvbdevfops;
-	struct device *clsdev;
-	int minor;
-	int id, ret;
+पूर्णांक dvb_रेजिस्टर_device(काष्ठा dvb_adapter *adap, काष्ठा dvb_device **pdvbdev,
+			स्थिर काष्ठा dvb_device *ढाँचा, व्योम *priv,
+			क्रमागत dvb_device_type type, पूर्णांक demux_sink_pads)
+अणु
+	काष्ठा dvb_device *dvbdev;
+	काष्ठा file_operations *dvbdevfops;
+	काष्ठा device *clsdev;
+	पूर्णांक minor;
+	पूर्णांक id, ret;
 
-	mutex_lock(&dvbdev_register_lock);
+	mutex_lock(&dvbdev_रेजिस्टर_lock);
 
-	if ((id = dvbdev_get_free_id (adap, type)) < 0){
-		mutex_unlock(&dvbdev_register_lock);
-		*pdvbdev = NULL;
+	अगर ((id = dvbdev_get_मुक्त_id (adap, type)) < 0)अणु
+		mutex_unlock(&dvbdev_रेजिस्टर_lock);
+		*pdvbdev = शून्य;
 		pr_err("%s: couldn't find free device id\n", __func__);
-		return -ENFILE;
-	}
+		वापस -ENखाता;
+	पूर्ण
 
-	*pdvbdev = dvbdev = kzalloc(sizeof(*dvbdev), GFP_KERNEL);
+	*pdvbdev = dvbdev = kzalloc(माप(*dvbdev), GFP_KERNEL);
 
-	if (!dvbdev){
-		mutex_unlock(&dvbdev_register_lock);
-		return -ENOMEM;
-	}
+	अगर (!dvbdev)अणु
+		mutex_unlock(&dvbdev_रेजिस्टर_lock);
+		वापस -ENOMEM;
+	पूर्ण
 
-	dvbdevfops = kmemdup(template->fops, sizeof(*dvbdevfops), GFP_KERNEL);
+	dvbdevfops = kmemdup(ढाँचा->fops, माप(*dvbdevfops), GFP_KERNEL);
 
-	if (!dvbdevfops){
-		kfree (dvbdev);
-		mutex_unlock(&dvbdev_register_lock);
-		return -ENOMEM;
-	}
+	अगर (!dvbdevfops)अणु
+		kमुक्त (dvbdev);
+		mutex_unlock(&dvbdev_रेजिस्टर_lock);
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(dvbdev, template, sizeof(struct dvb_device));
+	स_नकल(dvbdev, ढाँचा, माप(काष्ठा dvb_device));
 	dvbdev->type = type;
 	dvbdev->id = id;
 	dvbdev->adapter = adap;
 	dvbdev->priv = priv;
 	dvbdev->fops = dvbdevfops;
-	init_waitqueue_head (&dvbdev->wait_queue);
+	init_रुकोqueue_head (&dvbdev->रुको_queue);
 
 	dvbdevfops->owner = adap->module;
 
 	list_add_tail (&dvbdev->list_head, &adap->device_list);
 
-	down_write(&minor_rwsem);
-#ifdef CONFIG_DVB_DYNAMIC_MINORS
-	for (minor = 0; minor < MAX_DVB_MINORS; minor++)
-		if (dvb_minors[minor] == NULL)
-			break;
+	करोwn_ग_लिखो(&minor_rwsem);
+#अगर_घोषित CONFIG_DVB_DYNAMIC_MINORS
+	क्रम (minor = 0; minor < MAX_DVB_MINORS; minor++)
+		अगर (dvb_minors[minor] == शून्य)
+			अवरोध;
 
-	if (minor == MAX_DVB_MINORS) {
-		kfree(dvbdevfops);
-		kfree(dvbdev);
-		up_write(&minor_rwsem);
-		mutex_unlock(&dvbdev_register_lock);
-		return -EINVAL;
-	}
-#else
+	अगर (minor == MAX_DVB_MINORS) अणु
+		kमुक्त(dvbdevfops);
+		kमुक्त(dvbdev);
+		up_ग_लिखो(&minor_rwsem);
+		mutex_unlock(&dvbdev_रेजिस्टर_lock);
+		वापस -EINVAL;
+	पूर्ण
+#अन्यथा
 	minor = nums2minor(adap->num, type, id);
-#endif
+#पूर्ण_अगर
 
 	dvbdev->minor = minor;
 	dvb_minors[minor] = dvbdev;
-	up_write(&minor_rwsem);
+	up_ग_लिखो(&minor_rwsem);
 
-	ret = dvb_register_media_device(dvbdev, type, minor, demux_sink_pads);
-	if (ret) {
+	ret = dvb_रेजिस्टर_media_device(dvbdev, type, minor, demux_sink_pads);
+	अगर (ret) अणु
 		pr_err("%s: dvb_register_media_device failed to create the mediagraph\n",
 		      __func__);
 
-		dvb_media_device_free(dvbdev);
-		kfree(dvbdevfops);
-		kfree(dvbdev);
-		mutex_unlock(&dvbdev_register_lock);
-		return ret;
-	}
+		dvb_media_device_मुक्त(dvbdev);
+		kमुक्त(dvbdevfops);
+		kमुक्त(dvbdev);
+		mutex_unlock(&dvbdev_रेजिस्टर_lock);
+		वापस ret;
+	पूर्ण
 
-	mutex_unlock(&dvbdev_register_lock);
+	mutex_unlock(&dvbdev_रेजिस्टर_lock);
 
 	clsdev = device_create(dvb_class, adap->device,
 			       MKDEV(DVB_MAJOR, minor),
 			       dvbdev, "dvb%d.%s%d", adap->num, dnames[type], id);
-	if (IS_ERR(clsdev)) {
+	अगर (IS_ERR(clsdev)) अणु
 		pr_err("%s: failed to create device dvb%d.%s%d (%ld)\n",
 		       __func__, adap->num, dnames[type], id, PTR_ERR(clsdev));
-		dvb_media_device_free(dvbdev);
-		kfree(dvbdevfops);
-		kfree(dvbdev);
-		return PTR_ERR(clsdev);
-	}
-	dprintk("DVB: register adapter%d/%s%d @ minor: %i (0x%02x)\n",
+		dvb_media_device_मुक्त(dvbdev);
+		kमुक्त(dvbdevfops);
+		kमुक्त(dvbdev);
+		वापस PTR_ERR(clsdev);
+	पूर्ण
+	dprपूर्णांकk("DVB: register adapter%d/%s%d @ minor: %i (0x%02x)\n",
 		adap->num, dnames[type], id, minor, minor);
 
-	return 0;
-}
-EXPORT_SYMBOL(dvb_register_device);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(dvb_रेजिस्टर_device);
 
 
-void dvb_remove_device(struct dvb_device *dvbdev)
-{
-	if (!dvbdev)
-		return;
+व्योम dvb_हटाओ_device(काष्ठा dvb_device *dvbdev)
+अणु
+	अगर (!dvbdev)
+		वापस;
 
-	down_write(&minor_rwsem);
-	dvb_minors[dvbdev->minor] = NULL;
-	up_write(&minor_rwsem);
+	करोwn_ग_लिखो(&minor_rwsem);
+	dvb_minors[dvbdev->minor] = शून्य;
+	up_ग_लिखो(&minor_rwsem);
 
-	dvb_media_device_free(dvbdev);
+	dvb_media_device_मुक्त(dvbdev);
 
 	device_destroy(dvb_class, MKDEV(DVB_MAJOR, dvbdev->minor));
 
 	list_del (&dvbdev->list_head);
-}
-EXPORT_SYMBOL(dvb_remove_device);
+पूर्ण
+EXPORT_SYMBOL(dvb_हटाओ_device);
 
 
-void dvb_free_device(struct dvb_device *dvbdev)
-{
-	if (!dvbdev)
-		return;
+व्योम dvb_मुक्त_device(काष्ठा dvb_device *dvbdev)
+अणु
+	अगर (!dvbdev)
+		वापस;
 
-	kfree (dvbdev->fops);
-	kfree (dvbdev);
-}
-EXPORT_SYMBOL(dvb_free_device);
-
-
-void dvb_unregister_device(struct dvb_device *dvbdev)
-{
-	dvb_remove_device(dvbdev);
-	dvb_free_device(dvbdev);
-}
-EXPORT_SYMBOL(dvb_unregister_device);
+	kमुक्त (dvbdev->fops);
+	kमुक्त (dvbdev);
+पूर्ण
+EXPORT_SYMBOL(dvb_मुक्त_device);
 
 
-#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+व्योम dvb_unरेजिस्टर_device(काष्ठा dvb_device *dvbdev)
+अणु
+	dvb_हटाओ_device(dvbdev);
+	dvb_मुक्त_device(dvbdev);
+पूर्ण
+EXPORT_SYMBOL(dvb_unरेजिस्टर_device);
 
-static int dvb_create_io_intf_links(struct dvb_adapter *adap,
-				    struct media_interface *intf,
-				    char *name)
-{
-	struct media_device *mdev = adap->mdev;
-	struct media_entity *entity;
-	struct media_link *link;
 
-	media_device_for_each_entity(entity, mdev) {
-		if (entity->function == MEDIA_ENT_F_IO_DTV) {
-			if (strncmp(entity->name, name, strlen(name)))
-				continue;
-			link = media_create_intf_link(entity, intf,
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER_DVB
+
+अटल पूर्णांक dvb_create_io_पूर्णांकf_links(काष्ठा dvb_adapter *adap,
+				    काष्ठा media_पूर्णांकerface *पूर्णांकf,
+				    अक्षर *name)
+अणु
+	काष्ठा media_device *mdev = adap->mdev;
+	काष्ठा media_entity *entity;
+	काष्ठा media_link *link;
+
+	media_device_क्रम_each_entity(entity, mdev) अणु
+		अगर (entity->function == MEDIA_ENT_F_IO_DTV) अणु
+			अगर (म_भेदन(entity->name, name, म_माप(name)))
+				जारी;
+			link = media_create_पूर्णांकf_link(entity, पूर्णांकf,
 						      MEDIA_LNK_FL_ENABLED |
 						      MEDIA_LNK_FL_IMMUTABLE);
-			if (!link)
-				return -ENOMEM;
-		}
-	}
-	return 0;
-}
+			अगर (!link)
+				वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int dvb_create_media_graph(struct dvb_adapter *adap,
+पूर्णांक dvb_create_media_graph(काष्ठा dvb_adapter *adap,
 			   bool create_rf_connector)
-{
-	struct media_device *mdev = adap->mdev;
-	struct media_entity *entity, *tuner = NULL, *demod = NULL, *conn;
-	struct media_entity *demux = NULL, *ca = NULL;
-	struct media_link *link;
-	struct media_interface *intf;
-	unsigned demux_pad = 0;
-	unsigned dvr_pad = 0;
-	unsigned ntuner = 0, ndemod = 0;
-	int ret, pad_source, pad_sink;
-	static const char *connector_name = "Television";
+अणु
+	काष्ठा media_device *mdev = adap->mdev;
+	काष्ठा media_entity *entity, *tuner = शून्य, *demod = शून्य, *conn;
+	काष्ठा media_entity *demux = शून्य, *ca = शून्य;
+	काष्ठा media_link *link;
+	काष्ठा media_पूर्णांकerface *पूर्णांकf;
+	अचिन्हित demux_pad = 0;
+	अचिन्हित dvr_pad = 0;
+	अचिन्हित ntuner = 0, ndemod = 0;
+	पूर्णांक ret, pad_source, pad_sink;
+	अटल स्थिर अक्षर *connector_name = "Television";
 
-	if (!mdev)
-		return 0;
+	अगर (!mdev)
+		वापस 0;
 
-	media_device_for_each_entity(entity, mdev) {
-		switch (entity->function) {
-		case MEDIA_ENT_F_TUNER:
+	media_device_क्रम_each_entity(entity, mdev) अणु
+		चयन (entity->function) अणु
+		हाल MEDIA_ENT_F_TUNER:
 			tuner = entity;
 			ntuner++;
-			break;
-		case MEDIA_ENT_F_DTV_DEMOD:
+			अवरोध;
+		हाल MEDIA_ENT_F_DTV_DEMOD:
 			demod = entity;
 			ndemod++;
-			break;
-		case MEDIA_ENT_F_TS_DEMUX:
+			अवरोध;
+		हाल MEDIA_ENT_F_TS_DEMUX:
 			demux = entity;
-			break;
-		case MEDIA_ENT_F_DTV_CA:
+			अवरोध;
+		हाल MEDIA_ENT_F_DTV_CA:
 			ca = entity;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Prepare to signalize to media_create_pad_links() that multiple
+	 * Prepare to संकेतize to media_create_pad_links() that multiple
 	 * entities of the same type exists and a 1:n or n:1 links need to be
 	 * created.
-	 * NOTE: if both tuner and demod have multiple instances, it is up
+	 * NOTE: अगर both tuner and demod have multiple instances, it is up
 	 * to the caller driver to create such links.
 	 */
-	if (ntuner > 1)
-		tuner = NULL;
-	if (ndemod > 1)
-		demod = NULL;
+	अगर (ntuner > 1)
+		tuner = शून्य;
+	अगर (ndemod > 1)
+		demod = शून्य;
 
-	if (create_rf_connector) {
-		conn = kzalloc(sizeof(*conn), GFP_KERNEL);
-		if (!conn)
-			return -ENOMEM;
+	अगर (create_rf_connector) अणु
+		conn = kzalloc(माप(*conn), GFP_KERNEL);
+		अगर (!conn)
+			वापस -ENOMEM;
 		adap->conn = conn;
 
-		adap->conn_pads = kzalloc(sizeof(*adap->conn_pads), GFP_KERNEL);
-		if (!adap->conn_pads)
-			return -ENOMEM;
+		adap->conn_pads = kzalloc(माप(*adap->conn_pads), GFP_KERNEL);
+		अगर (!adap->conn_pads)
+			वापस -ENOMEM;
 
 		conn->flags = MEDIA_ENT_FL_CONNECTOR;
 		conn->function = MEDIA_ENT_F_CONN_RF;
@@ -678,14 +679,14 @@ int dvb_create_media_graph(struct dvb_adapter *adap,
 		adap->conn_pads->flags = MEDIA_PAD_FL_SOURCE;
 
 		ret = media_entity_pads_init(conn, 1, adap->conn_pads);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = media_device_register_entity(mdev, conn);
-		if (ret)
-			return ret;
+		ret = media_device_रेजिस्टर_entity(mdev, conn);
+		अगर (ret)
+			वापस ret;
 
-		if (!ntuner) {
+		अगर (!ntuner) अणु
 			ret = media_create_pad_links(mdev,
 						     MEDIA_ENT_F_CONN_RF,
 						     conn, 0,
@@ -693,11 +694,11 @@ int dvb_create_media_graph(struct dvb_adapter *adap,
 						     demod, 0,
 						     MEDIA_LNK_FL_ENABLED,
 						     false);
-		} else {
+		पूर्ण अन्यथा अणु
 			pad_sink = media_get_pad_index(tuner, true,
 						       PAD_SIGNAL_ANALOG);
-			if (pad_sink < 0)
-				return -EINVAL;
+			अगर (pad_sink < 0)
+				वापस -EINVAL;
 			ret = media_create_pad_links(mdev,
 						     MEDIA_ENT_F_CONN_RF,
 						     conn, 0,
@@ -705,168 +706,168 @@ int dvb_create_media_graph(struct dvb_adapter *adap,
 						     tuner, pad_sink,
 						     MEDIA_LNK_FL_ENABLED,
 						     false);
-		}
-		if (ret)
-			return ret;
-	}
+		पूर्ण
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (ntuner && ndemod) {
+	अगर (ntuner && ndemod) अणु
 		/* NOTE: first found tuner source pad presumed correct */
 		pad_source = media_get_pad_index(tuner, false,
 						 PAD_SIGNAL_ANALOG);
-		if (pad_source < 0)
-			return -EINVAL;
+		अगर (pad_source < 0)
+			वापस -EINVAL;
 		ret = media_create_pad_links(mdev,
 					     MEDIA_ENT_F_TUNER,
 					     tuner, pad_source,
 					     MEDIA_ENT_F_DTV_DEMOD,
 					     demod, 0, MEDIA_LNK_FL_ENABLED,
 					     false);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (ndemod && demux) {
+	अगर (ndemod && demux) अणु
 		ret = media_create_pad_links(mdev,
 					     MEDIA_ENT_F_DTV_DEMOD,
 					     demod, 1,
 					     MEDIA_ENT_F_TS_DEMUX,
 					     demux, 0, MEDIA_LNK_FL_ENABLED,
 					     false);
-		if (ret)
-			return ret;
-	}
-	if (demux && ca) {
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	अगर (demux && ca) अणु
 		ret = media_create_pad_link(demux, 1, ca,
 					    0, MEDIA_LNK_FL_ENABLED);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* Create demux links for each ringbuffer/pad */
-	if (demux) {
-		media_device_for_each_entity(entity, mdev) {
-			if (entity->function == MEDIA_ENT_F_IO_DTV) {
-				if (!strncmp(entity->name, DVR_TSOUT,
-				    strlen(DVR_TSOUT))) {
+	/* Create demux links क्रम each ringbuffer/pad */
+	अगर (demux) अणु
+		media_device_क्रम_each_entity(entity, mdev) अणु
+			अगर (entity->function == MEDIA_ENT_F_IO_DTV) अणु
+				अगर (!म_भेदन(entity->name, DVR_TSOUT,
+				    म_माप(DVR_TSOUT))) अणु
 					ret = media_create_pad_link(demux,
 								++dvr_pad,
 							    entity, 0, 0);
-					if (ret)
-						return ret;
-				}
-				if (!strncmp(entity->name, DEMUX_TSOUT,
-				    strlen(DEMUX_TSOUT))) {
+					अगर (ret)
+						वापस ret;
+				पूर्ण
+				अगर (!म_भेदन(entity->name, DEMUX_TSOUT,
+				    म_माप(DEMUX_TSOUT))) अणु
 					ret = media_create_pad_link(demux,
 							      ++demux_pad,
 							    entity, 0, 0);
-					if (ret)
-						return ret;
-				}
-			}
-		}
-	}
+					अगर (ret)
+						वापस ret;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Create interface links for FE->tuner, DVR->demux and CA->ca */
-	media_device_for_each_intf(intf, mdev) {
-		if (intf->type == MEDIA_INTF_T_DVB_CA && ca) {
-			link = media_create_intf_link(ca, intf,
+	/* Create पूर्णांकerface links क्रम FE->tuner, DVR->demux and CA->ca */
+	media_device_क्रम_each_पूर्णांकf(पूर्णांकf, mdev) अणु
+		अगर (पूर्णांकf->type == MEDIA_INTF_T_DVB_CA && ca) अणु
+			link = media_create_पूर्णांकf_link(ca, पूर्णांकf,
 						      MEDIA_LNK_FL_ENABLED |
 						      MEDIA_LNK_FL_IMMUTABLE);
-			if (!link)
-				return -ENOMEM;
-		}
+			अगर (!link)
+				वापस -ENOMEM;
+		पूर्ण
 
-		if (intf->type == MEDIA_INTF_T_DVB_FE && tuner) {
-			link = media_create_intf_link(tuner, intf,
+		अगर (पूर्णांकf->type == MEDIA_INTF_T_DVB_FE && tuner) अणु
+			link = media_create_पूर्णांकf_link(tuner, पूर्णांकf,
 						      MEDIA_LNK_FL_ENABLED |
 						      MEDIA_LNK_FL_IMMUTABLE);
-			if (!link)
-				return -ENOMEM;
-		}
-#if 0
+			अगर (!link)
+				वापस -ENOMEM;
+		पूर्ण
+#अगर 0
 		/*
 		 * Indirect link - let's not create yet, as we don't know how
-		 *		   to handle indirect links, nor if this will
+		 *		   to handle indirect links, nor अगर this will
 		 *		   actually be needed.
 		 */
-		if (intf->type == MEDIA_INTF_T_DVB_DVR && demux) {
-			link = media_create_intf_link(demux, intf,
+		अगर (पूर्णांकf->type == MEDIA_INTF_T_DVB_DVR && demux) अणु
+			link = media_create_पूर्णांकf_link(demux, पूर्णांकf,
 						      MEDIA_LNK_FL_ENABLED |
 						      MEDIA_LNK_FL_IMMUTABLE);
-			if (!link)
-				return -ENOMEM;
-		}
-#endif
-		if (intf->type == MEDIA_INTF_T_DVB_DVR) {
-			ret = dvb_create_io_intf_links(adap, intf, DVR_TSOUT);
-			if (ret)
-				return ret;
-		}
-		if (intf->type == MEDIA_INTF_T_DVB_DEMUX) {
-			ret = dvb_create_io_intf_links(adap, intf, DEMUX_TSOUT);
-			if (ret)
-				return ret;
-		}
-	}
-	return 0;
-}
+			अगर (!link)
+				वापस -ENOMEM;
+		पूर्ण
+#पूर्ण_अगर
+		अगर (पूर्णांकf->type == MEDIA_INTF_T_DVB_DVR) अणु
+			ret = dvb_create_io_पूर्णांकf_links(adap, पूर्णांकf, DVR_TSOUT);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+		अगर (पूर्णांकf->type == MEDIA_INTF_T_DVB_DEMUX) अणु
+			ret = dvb_create_io_पूर्णांकf_links(adap, पूर्णांकf, DEMUX_TSOUT);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(dvb_create_media_graph);
-#endif
+#पूर्ण_अगर
 
-static int dvbdev_check_free_adapter_num(int num)
-{
-	struct list_head *entry;
-	list_for_each(entry, &dvb_adapter_list) {
-		struct dvb_adapter *adap;
-		adap = list_entry(entry, struct dvb_adapter, list_head);
-		if (adap->num == num)
-			return 0;
-	}
-	return 1;
-}
+अटल पूर्णांक dvbdev_check_मुक्त_adapter_num(पूर्णांक num)
+अणु
+	काष्ठा list_head *entry;
+	list_क्रम_each(entry, &dvb_adapter_list) अणु
+		काष्ठा dvb_adapter *adap;
+		adap = list_entry(entry, काष्ठा dvb_adapter, list_head);
+		अगर (adap->num == num)
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int dvbdev_get_free_adapter_num (void)
-{
-	int num = 0;
+अटल पूर्णांक dvbdev_get_मुक्त_adapter_num (व्योम)
+अणु
+	पूर्णांक num = 0;
 
-	while (num < DVB_MAX_ADAPTERS) {
-		if (dvbdev_check_free_adapter_num(num))
-			return num;
+	जबतक (num < DVB_MAX_ADAPTERS) अणु
+		अगर (dvbdev_check_मुक्त_adapter_num(num))
+			वापस num;
 		num++;
-	}
+	पूर्ण
 
-	return -ENFILE;
-}
+	वापस -ENखाता;
+पूर्ण
 
 
-int dvb_register_adapter(struct dvb_adapter *adap, const char *name,
-			 struct module *module, struct device *device,
-			 short *adapter_nums)
-{
-	int i, num;
+पूर्णांक dvb_रेजिस्टर_adapter(काष्ठा dvb_adapter *adap, स्थिर अक्षर *name,
+			 काष्ठा module *module, काष्ठा device *device,
+			 लघु *adapter_nums)
+अणु
+	पूर्णांक i, num;
 
-	mutex_lock(&dvbdev_register_lock);
+	mutex_lock(&dvbdev_रेजिस्टर_lock);
 
-	for (i = 0; i < DVB_MAX_ADAPTERS; ++i) {
+	क्रम (i = 0; i < DVB_MAX_ADAPTERS; ++i) अणु
 		num = adapter_nums[i];
-		if (num >= 0  &&  num < DVB_MAX_ADAPTERS) {
-		/* use the one the driver asked for */
-			if (dvbdev_check_free_adapter_num(num))
-				break;
-		} else {
-			num = dvbdev_get_free_adapter_num();
-			break;
-		}
+		अगर (num >= 0  &&  num < DVB_MAX_ADAPTERS) अणु
+		/* use the one the driver asked क्रम */
+			अगर (dvbdev_check_मुक्त_adapter_num(num))
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			num = dvbdev_get_मुक्त_adapter_num();
+			अवरोध;
+		पूर्ण
 		num = -1;
-	}
+	पूर्ण
 
-	if (num < 0) {
-		mutex_unlock(&dvbdev_register_lock);
-		return -ENFILE;
-	}
+	अगर (num < 0) अणु
+		mutex_unlock(&dvbdev_रेजिस्टर_lock);
+		वापस -ENखाता;
+	पूर्ण
 
-	memset (adap, 0, sizeof(struct dvb_adapter));
+	स_रखो (adap, 0, माप(काष्ठा dvb_adapter));
 	INIT_LIST_HEAD (&adap->device_list);
 
 	pr_info("DVB: registering new adapter (%s)\n", name);
@@ -876,205 +877,205 @@ int dvb_register_adapter(struct dvb_adapter *adap, const char *name,
 	adap->module = module;
 	adap->device = device;
 	adap->mfe_shared = 0;
-	adap->mfe_dvbdev = NULL;
+	adap->mfe_dvbdev = शून्य;
 	mutex_init (&adap->mfe_lock);
 
-#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER_DVB
 	mutex_init(&adap->mdev_lock);
-#endif
+#पूर्ण_अगर
 
 	list_add_tail (&adap->list_head, &dvb_adapter_list);
 
-	mutex_unlock(&dvbdev_register_lock);
+	mutex_unlock(&dvbdev_रेजिस्टर_lock);
 
-	return num;
-}
-EXPORT_SYMBOL(dvb_register_adapter);
+	वापस num;
+पूर्ण
+EXPORT_SYMBOL(dvb_रेजिस्टर_adapter);
 
 
-int dvb_unregister_adapter(struct dvb_adapter *adap)
-{
-	mutex_lock(&dvbdev_register_lock);
+पूर्णांक dvb_unरेजिस्टर_adapter(काष्ठा dvb_adapter *adap)
+अणु
+	mutex_lock(&dvbdev_रेजिस्टर_lock);
 	list_del (&adap->list_head);
-	mutex_unlock(&dvbdev_register_lock);
-	return 0;
-}
-EXPORT_SYMBOL(dvb_unregister_adapter);
+	mutex_unlock(&dvbdev_रेजिस्टर_lock);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(dvb_unरेजिस्टर_adapter);
 
-/* if the miracle happens and "generic_usercopy()" is included into
-   the kernel, then this can vanish. please don't make the mistake and
-   define this as video_usercopy(). this will introduce a dependency
-   to the v4l "videodev.o" module, which is unnecessary for some
-   cards (ie. the budget dvb-cards don't need the v4l module...) */
-int dvb_usercopy(struct file *file,
-		     unsigned int cmd, unsigned long arg,
-		     int (*func)(struct file *file,
-		     unsigned int cmd, void *arg))
-{
-	char    sbuf[128];
-	void    *mbuf = NULL;
-	void    *parg = NULL;
-	int     err  = -EINVAL;
+/* अगर the miracle happens and "generic_usercopy()" is included पूर्णांकo
+   the kernel, then this can vanish. please करोn't make the mistake and
+   define this as video_usercopy(). this will पूर्णांकroduce a dependency
+   to the v4l "videodev.o" module, which is unnecessary क्रम some
+   cards (ie. the budget dvb-cards करोn't need the v4l module...) */
+पूर्णांक dvb_usercopy(काष्ठा file *file,
+		     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg,
+		     पूर्णांक (*func)(काष्ठा file *file,
+		     अचिन्हित पूर्णांक cmd, व्योम *arg))
+अणु
+	अक्षर    sbuf[128];
+	व्योम    *mbuf = शून्य;
+	व्योम    *parg = शून्य;
+	पूर्णांक     err  = -EINVAL;
 
-	/*  Copy arguments into temp kernel buffer  */
-	switch (_IOC_DIR(cmd)) {
-	case _IOC_NONE:
+	/*  Copy arguments पूर्णांकo temp kernel buffer  */
+	चयन (_IOC_सूची(cmd)) अणु
+	हाल _IOC_NONE:
 		/*
-		 * For this command, the pointer is actually an integer
+		 * For this command, the poपूर्णांकer is actually an पूर्णांकeger
 		 * argument.
 		 */
-		parg = (void *) arg;
-		break;
-	case _IOC_READ: /* some v4l ioctls are marked wrong ... */
-	case _IOC_WRITE:
-	case (_IOC_WRITE | _IOC_READ):
-		if (_IOC_SIZE(cmd) <= sizeof(sbuf)) {
+		parg = (व्योम *) arg;
+		अवरोध;
+	हाल _IOC_READ: /* some v4l ioctls are marked wrong ... */
+	हाल _IOC_WRITE:
+	हाल (_IOC_WRITE | _IOC_READ):
+		अगर (_IOC_SIZE(cmd) <= माप(sbuf)) अणु
 			parg = sbuf;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* too big to allocate from stack */
-			mbuf = kmalloc(_IOC_SIZE(cmd), GFP_KERNEL);
-			if (NULL == mbuf)
-				return -ENOMEM;
+			mbuf = kदो_स्मृति(_IOC_SIZE(cmd), GFP_KERNEL);
+			अगर (शून्य == mbuf)
+				वापस -ENOMEM;
 			parg = mbuf;
-		}
+		पूर्ण
 
 		err = -EFAULT;
-		if (copy_from_user(parg, (void __user *)arg, _IOC_SIZE(cmd)))
-			goto out;
-		break;
-	}
+		अगर (copy_from_user(parg, (व्योम __user *)arg, _IOC_SIZE(cmd)))
+			जाओ out;
+		अवरोध;
+	पूर्ण
 
 	/* call driver */
-	if ((err = func(file, cmd, parg)) == -ENOIOCTLCMD)
+	अगर ((err = func(file, cmd, parg)) == -ENOIOCTLCMD)
 		err = -ENOTTY;
 
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	/*  Copy results into user buffer  */
-	switch (_IOC_DIR(cmd))
-	{
-	case _IOC_READ:
-	case (_IOC_WRITE | _IOC_READ):
-		if (copy_to_user((void __user *)arg, parg, _IOC_SIZE(cmd)))
+	/*  Copy results पूर्णांकo user buffer  */
+	चयन (_IOC_सूची(cmd))
+	अणु
+	हाल _IOC_READ:
+	हाल (_IOC_WRITE | _IOC_READ):
+		अगर (copy_to_user((व्योम __user *)arg, parg, _IOC_SIZE(cmd)))
 			err = -EFAULT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
-	kfree(mbuf);
-	return err;
-}
+	kमुक्त(mbuf);
+	वापस err;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_I2C)
-struct i2c_client *dvb_module_probe(const char *module_name,
-				    const char *name,
-				    struct i2c_adapter *adap,
-				    unsigned char addr,
-				    void *platform_data)
-{
-	struct i2c_client *client;
-	struct i2c_board_info *board_info;
+#अगर IS_ENABLED(CONFIG_I2C)
+काष्ठा i2c_client *dvb_module_probe(स्थिर अक्षर *module_name,
+				    स्थिर अक्षर *name,
+				    काष्ठा i2c_adapter *adap,
+				    अचिन्हित अक्षर addr,
+				    व्योम *platक्रमm_data)
+अणु
+	काष्ठा i2c_client *client;
+	काष्ठा i2c_board_info *board_info;
 
-	board_info = kzalloc(sizeof(*board_info), GFP_KERNEL);
-	if (!board_info)
-		return NULL;
+	board_info = kzalloc(माप(*board_info), GFP_KERNEL);
+	अगर (!board_info)
+		वापस शून्य;
 
-	if (name)
+	अगर (name)
 		strscpy(board_info->type, name, I2C_NAME_SIZE);
-	else
+	अन्यथा
 		strscpy(board_info->type, module_name, I2C_NAME_SIZE);
 
 	board_info->addr = addr;
-	board_info->platform_data = platform_data;
+	board_info->platक्रमm_data = platक्रमm_data;
 	request_module(module_name);
 	client = i2c_new_client_device(adap, board_info);
-	if (!i2c_client_has_driver(client)) {
-		kfree(board_info);
-		return NULL;
-	}
+	अगर (!i2c_client_has_driver(client)) अणु
+		kमुक्त(board_info);
+		वापस शून्य;
+	पूर्ण
 
-	if (!try_module_get(client->dev.driver->owner)) {
-		i2c_unregister_device(client);
-		client = NULL;
-	}
+	अगर (!try_module_get(client->dev.driver->owner)) अणु
+		i2c_unरेजिस्टर_device(client);
+		client = शून्य;
+	पूर्ण
 
-	kfree(board_info);
-	return client;
-}
+	kमुक्त(board_info);
+	वापस client;
+पूर्ण
 EXPORT_SYMBOL_GPL(dvb_module_probe);
 
-void dvb_module_release(struct i2c_client *client)
-{
-	if (!client)
-		return;
+व्योम dvb_module_release(काष्ठा i2c_client *client)
+अणु
+	अगर (!client)
+		वापस;
 
 	module_put(client->dev.driver->owner);
-	i2c_unregister_device(client);
-}
+	i2c_unरेजिस्टर_device(client);
+पूर्ण
 EXPORT_SYMBOL_GPL(dvb_module_release);
-#endif
+#पूर्ण_अगर
 
-static int dvb_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct dvb_device *dvbdev = dev_get_drvdata(dev);
+अटल पूर्णांक dvb_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा dvb_device *dvbdev = dev_get_drvdata(dev);
 
 	add_uevent_var(env, "DVB_ADAPTER_NUM=%d", dvbdev->adapter->num);
 	add_uevent_var(env, "DVB_DEVICE_TYPE=%s", dnames[dvbdev->type]);
 	add_uevent_var(env, "DVB_DEVICE_NUM=%d", dvbdev->id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static char *dvb_devnode(struct device *dev, umode_t *mode)
-{
-	struct dvb_device *dvbdev = dev_get_drvdata(dev);
+अटल अक्षर *dvb_devnode(काष्ठा device *dev, umode_t *mode)
+अणु
+	काष्ठा dvb_device *dvbdev = dev_get_drvdata(dev);
 
-	return kasprintf(GFP_KERNEL, "dvb/adapter%d/%s%d",
+	वापस kaप्र_लिखो(GFP_KERNEL, "dvb/adapter%d/%s%d",
 		dvbdev->adapter->num, dnames[dvbdev->type], dvbdev->id);
-}
+पूर्ण
 
 
-static int __init init_dvbdev(void)
-{
-	int retval;
+अटल पूर्णांक __init init_dvbdev(व्योम)
+अणु
+	पूर्णांक retval;
 	dev_t dev = MKDEV(DVB_MAJOR, 0);
 
-	if ((retval = register_chrdev_region(dev, MAX_DVB_MINORS, "DVB")) != 0) {
+	अगर ((retval = रेजिस्टर_chrdev_region(dev, MAX_DVB_MINORS, "DVB")) != 0) अणु
 		pr_err("dvb-core: unable to get major %d\n", DVB_MAJOR);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	cdev_init(&dvb_device_cdev, &dvb_device_fops);
-	if ((retval = cdev_add(&dvb_device_cdev, dev, MAX_DVB_MINORS)) != 0) {
+	अगर ((retval = cdev_add(&dvb_device_cdev, dev, MAX_DVB_MINORS)) != 0) अणु
 		pr_err("dvb-core: unable register character device\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	dvb_class = class_create(THIS_MODULE, "dvb");
-	if (IS_ERR(dvb_class)) {
+	अगर (IS_ERR(dvb_class)) अणु
 		retval = PTR_ERR(dvb_class);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	dvb_class->dev_uevent = dvb_uevent;
 	dvb_class->devnode = dvb_devnode;
-	return 0;
+	वापस 0;
 
 error:
 	cdev_del(&dvb_device_cdev);
-	unregister_chrdev_region(dev, MAX_DVB_MINORS);
-	return retval;
-}
+	unरेजिस्टर_chrdev_region(dev, MAX_DVB_MINORS);
+	वापस retval;
+पूर्ण
 
 
-static void __exit exit_dvbdev(void)
-{
+अटल व्योम __निकास निकास_dvbdev(व्योम)
+अणु
 	class_destroy(dvb_class);
 	cdev_del(&dvb_device_cdev);
-	unregister_chrdev_region(MKDEV(DVB_MAJOR, 0), MAX_DVB_MINORS);
-}
+	unरेजिस्टर_chrdev_region(MKDEV(DVB_MAJOR, 0), MAX_DVB_MINORS);
+पूर्ण
 
 subsys_initcall(init_dvbdev);
-module_exit(exit_dvbdev);
+module_निकास(निकास_dvbdev);
 
 MODULE_DESCRIPTION("DVB Core Driver");
 MODULE_AUTHOR("Marcus Metzler, Ralph Metzler, Holger Waechtler");

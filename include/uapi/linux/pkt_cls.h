@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_PKT_CLS_H
-#define __LINUX_PKT_CLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_PKT_CLS_H
+#घोषणा __LINUX_PKT_CLS_H
 
-#include <linux/types.h>
-#include <linux/pkt_sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pkt_sched.h>
 
-#define TC_COOKIE_MAX_SIZE 16
+#घोषणा TC_COOKIE_MAX_SIZE 16
 
 /* Action attributes */
-enum {
+क्रमागत अणु
 	TCA_ACT_UNSPEC,
 	TCA_ACT_KIND,
 	TCA_ACT_OPTIONS,
@@ -20,59 +21,59 @@ enum {
 	TCA_ACT_HW_STATS,
 	TCA_ACT_USED_HW_STATS,
 	__TCA_ACT_MAX
-};
+पूर्ण;
 
-#define TCA_ACT_FLAGS_NO_PERCPU_STATS 1 /* Don't use percpu allocator for
+#घोषणा TCA_ACT_FLAGS_NO_PERCPU_STATS 1 /* Don't use percpu allocator क्रम
 					 * actions stats.
 					 */
 
 /* tca HW stats type
- * When user does not pass the attribute, he does not care.
- * It is the same as if he would pass the attribute with
+ * When user करोes not pass the attribute, he करोes not care.
+ * It is the same as अगर he would pass the attribute with
  * all supported bits set.
- * In case no bits are set, user is not interested in getting any HW statistics.
+ * In हाल no bits are set, user is not पूर्णांकerested in getting any HW statistics.
  */
-#define TCA_ACT_HW_STATS_IMMEDIATE (1 << 0) /* Means that in dump, user
-					     * gets the current HW stats
+#घोषणा TCA_ACT_HW_STATS_IMMEDIATE (1 << 0) /* Means that in dump, user
+					     * माला_लो the current HW stats
 					     * state from the device
-					     * queried at the dump time.
+					     * queried at the dump समय.
 					     */
-#define TCA_ACT_HW_STATS_DELAYED (1 << 1) /* Means that in dump, user gets
+#घोषणा TCA_ACT_HW_STATS_DELAYED (1 << 1) /* Means that in dump, user माला_लो
 					   * HW stats that might be out of date
-					   * for some time, maybe couple of
-					   * seconds. This is the case when
+					   * क्रम some समय, maybe couple of
+					   * seconds. This is the हाल when
 					   * driver polls stats updates
-					   * periodically or when it gets async
+					   * periodically or when it माला_लो async
 					   * stats update from the device.
 					   */
 
-#define TCA_ACT_MAX __TCA_ACT_MAX
-#define TCA_OLD_COMPAT (TCA_ACT_MAX+1)
-#define TCA_ACT_MAX_PRIO 32
-#define TCA_ACT_BIND	1
-#define TCA_ACT_NOBIND	0
-#define TCA_ACT_UNBIND	1
-#define TCA_ACT_NOUNBIND	0
-#define TCA_ACT_REPLACE		1
-#define TCA_ACT_NOREPLACE	0
+#घोषणा TCA_ACT_MAX __TCA_ACT_MAX
+#घोषणा TCA_OLD_COMPAT (TCA_ACT_MAX+1)
+#घोषणा TCA_ACT_MAX_PRIO 32
+#घोषणा TCA_ACT_BIND	1
+#घोषणा TCA_ACT_NOBIND	0
+#घोषणा TCA_ACT_UNBIND	1
+#घोषणा TCA_ACT_NOUNBIND	0
+#घोषणा TCA_ACT_REPLACE		1
+#घोषणा TCA_ACT_NOREPLACE	0
 
-#define TC_ACT_UNSPEC	(-1)
-#define TC_ACT_OK		0
-#define TC_ACT_RECLASSIFY	1
-#define TC_ACT_SHOT		2
-#define TC_ACT_PIPE		3
-#define TC_ACT_STOLEN		4
-#define TC_ACT_QUEUED		5
-#define TC_ACT_REPEAT		6
-#define TC_ACT_REDIRECT		7
-#define TC_ACT_TRAP		8 /* For hw path, this means "trap to cpu"
-				   * and don't further process the frame
+#घोषणा TC_ACT_UNSPEC	(-1)
+#घोषणा TC_ACT_OK		0
+#घोषणा TC_ACT_RECLASSIFY	1
+#घोषणा TC_ACT_SHOT		2
+#घोषणा TC_ACT_PIPE		3
+#घोषणा TC_ACT_STOLEN		4
+#घोषणा TC_ACT_QUEUED		5
+#घोषणा TC_ACT_REPEAT		6
+#घोषणा TC_ACT_REसूचीECT		7
+#घोषणा TC_ACT_TRAP		8 /* For hw path, this means "trap to cpu"
+				   * and करोn't further process the frame
 				   * in hardware. For sw path, this is
 				   * equivalent of TC_ACT_STOLEN - drop
 				   * the skb and act like everything
 				   * is alright.
 				   */
-#define TC_ACT_VALUE_MAX	TC_ACT_TRAP
+#घोषणा TC_ACT_VALUE_MAX	TC_ACT_TRAP
 
 /* There is a special kind of actions called "extended actions",
  * which need a value parameter. These have a local opcode located in
@@ -80,39 +81,39 @@ enum {
  * are used to carry the value. These two parts together make
  * a combined opcode.
  */
-#define __TC_ACT_EXT_SHIFT 28
-#define __TC_ACT_EXT(local) ((local) << __TC_ACT_EXT_SHIFT)
-#define TC_ACT_EXT_VAL_MASK ((1 << __TC_ACT_EXT_SHIFT) - 1)
-#define TC_ACT_EXT_OPCODE(combined) ((combined) & (~TC_ACT_EXT_VAL_MASK))
-#define TC_ACT_EXT_CMP(combined, opcode) (TC_ACT_EXT_OPCODE(combined) == opcode)
+#घोषणा __TC_ACT_EXT_SHIFT 28
+#घोषणा __TC_ACT_EXT(local) ((local) << __TC_ACT_EXT_SHIFT)
+#घोषणा TC_ACT_EXT_VAL_MASK ((1 << __TC_ACT_EXT_SHIFT) - 1)
+#घोषणा TC_ACT_EXT_OPCODE(combined) ((combined) & (~TC_ACT_EXT_VAL_MASK))
+#घोषणा TC_ACT_EXT_CMP(combined, opcode) (TC_ACT_EXT_OPCODE(combined) == opcode)
 
-#define TC_ACT_JUMP __TC_ACT_EXT(1)
-#define TC_ACT_GOTO_CHAIN __TC_ACT_EXT(2)
-#define TC_ACT_EXT_OPCODE_MAX	TC_ACT_GOTO_CHAIN
+#घोषणा TC_ACT_JUMP __TC_ACT_EXT(1)
+#घोषणा TC_ACT_GOTO_CHAIN __TC_ACT_EXT(2)
+#घोषणा TC_ACT_EXT_OPCODE_MAX	TC_ACT_GOTO_CHAIN
 
-/* These macros are put here for binary compatibility with userspace apps that
+/* These macros are put here क्रम binary compatibility with userspace apps that
  * make use of them. For kernel code and new userspace apps, use the TCA_ID_*
  * versions.
  */
-#define TCA_ACT_GACT 5
-#define TCA_ACT_IPT 6
-#define TCA_ACT_PEDIT 7
-#define TCA_ACT_MIRRED 8
-#define TCA_ACT_NAT 9
-#define TCA_ACT_XT 10
-#define TCA_ACT_SKBEDIT 11
-#define TCA_ACT_VLAN 12
-#define TCA_ACT_BPF 13
-#define TCA_ACT_CONNMARK 14
-#define TCA_ACT_SKBMOD 15
-#define TCA_ACT_CSUM 16
-#define TCA_ACT_TUNNEL_KEY 17
-#define TCA_ACT_SIMP 22
-#define TCA_ACT_IFE 25
-#define TCA_ACT_SAMPLE 26
+#घोषणा TCA_ACT_GACT 5
+#घोषणा TCA_ACT_IPT 6
+#घोषणा TCA_ACT_PEDIT 7
+#घोषणा TCA_ACT_MIRRED 8
+#घोषणा TCA_ACT_NAT 9
+#घोषणा TCA_ACT_XT 10
+#घोषणा TCA_ACT_SKBEDIT 11
+#घोषणा TCA_ACT_VLAN 12
+#घोषणा TCA_ACT_BPF 13
+#घोषणा TCA_ACT_CONNMARK 14
+#घोषणा TCA_ACT_SKBMOD 15
+#घोषणा TCA_ACT_CSUM 16
+#घोषणा TCA_ACT_TUNNEL_KEY 17
+#घोषणा TCA_ACT_SIMP 22
+#घोषणा TCA_ACT_IFE 25
+#घोषणा TCA_ACT_SAMPLE 26
 
-/* Action type identifiers*/
-enum tca_id {
+/* Action type identअगरiers*/
+क्रमागत tca_id अणु
 	TCA_ID_UNSPEC = 0,
 	TCA_ID_POLICE = 1,
 	TCA_ID_GACT = TCA_ACT_GACT,
@@ -137,49 +138,49 @@ enum tca_id {
 	TCA_ID_GATE,
 	/* other actions go here */
 	__TCA_ID_MAX = 255
-};
+पूर्ण;
 
-#define TCA_ID_MAX __TCA_ID_MAX
+#घोषणा TCA_ID_MAX __TCA_ID_MAX
 
-struct tc_police {
+काष्ठा tc_police अणु
 	__u32			index;
-	int			action;
-#define TC_POLICE_UNSPEC	TC_ACT_UNSPEC
-#define TC_POLICE_OK		TC_ACT_OK
-#define TC_POLICE_RECLASSIFY	TC_ACT_RECLASSIFY
-#define TC_POLICE_SHOT		TC_ACT_SHOT
-#define TC_POLICE_PIPE		TC_ACT_PIPE
+	पूर्णांक			action;
+#घोषणा TC_POLICE_UNSPEC	TC_ACT_UNSPEC
+#घोषणा TC_POLICE_OK		TC_ACT_OK
+#घोषणा TC_POLICE_RECLASSIFY	TC_ACT_RECLASSIFY
+#घोषणा TC_POLICE_SHOT		TC_ACT_SHOT
+#घोषणा TC_POLICE_PIPE		TC_ACT_PIPE
 
 	__u32			limit;
 	__u32			burst;
 	__u32			mtu;
-	struct tc_ratespec	rate;
-	struct tc_ratespec	peakrate;
-	int			refcnt;
-	int			bindcnt;
+	काष्ठा tc_ratespec	rate;
+	काष्ठा tc_ratespec	peakrate;
+	पूर्णांक			refcnt;
+	पूर्णांक			bindcnt;
 	__u32			capab;
-};
+पूर्ण;
 
-struct tcf_t {
+काष्ठा tcf_t अणु
 	__u64   install;
 	__u64   lastuse;
 	__u64   expires;
 	__u64   firstuse;
-};
+पूर्ण;
 
-struct tc_cnt {
-	int                   refcnt;
-	int                   bindcnt;
-};
+काष्ठा tc_cnt अणु
+	पूर्णांक                   refcnt;
+	पूर्णांक                   bindcnt;
+पूर्ण;
 
-#define tc_gen \
+#घोषणा tc_gen \
 	__u32                 index; \
 	__u32                 capab; \
-	int                   action; \
-	int                   refcnt; \
-	int                   bindcnt
+	पूर्णांक                   action; \
+	पूर्णांक                   refcnt; \
+	पूर्णांक                   bindcnt
 
-enum {
+क्रमागत अणु
 	TCA_POLICE_UNSPEC,
 	TCA_POLICE_TBF,
 	TCA_POLICE_RATE,
@@ -193,29 +194,29 @@ enum {
 	TCA_POLICE_PKTRATE64,
 	TCA_POLICE_PKTBURST64,
 	__TCA_POLICE_MAX
-#define TCA_POLICE_RESULT TCA_POLICE_RESULT
-};
+#घोषणा TCA_POLICE_RESULT TCA_POLICE_RESULT
+पूर्ण;
 
-#define TCA_POLICE_MAX (__TCA_POLICE_MAX - 1)
+#घोषणा TCA_POLICE_MAX (__TCA_POLICE_MAX - 1)
 
 /* tca flags definitions */
-#define TCA_CLS_FLAGS_SKIP_HW	(1 << 0) /* don't offload filter to HW */
-#define TCA_CLS_FLAGS_SKIP_SW	(1 << 1) /* don't use filter in SW */
-#define TCA_CLS_FLAGS_IN_HW	(1 << 2) /* filter is offloaded to HW */
-#define TCA_CLS_FLAGS_NOT_IN_HW (1 << 3) /* filter isn't offloaded to HW */
-#define TCA_CLS_FLAGS_VERBOSE	(1 << 4) /* verbose logging */
+#घोषणा TCA_CLS_FLAGS_SKIP_HW	(1 << 0) /* करोn't offload filter to HW */
+#घोषणा TCA_CLS_FLAGS_SKIP_SW	(1 << 1) /* करोn't use filter in SW */
+#घोषणा TCA_CLS_FLAGS_IN_HW	(1 << 2) /* filter is offloaded to HW */
+#घोषणा TCA_CLS_FLAGS_NOT_IN_HW (1 << 3) /* filter isn't offloaded to HW */
+#घोषणा TCA_CLS_FLAGS_VERBOSE	(1 << 4) /* verbose logging */
 
 /* U32 filters */
 
-#define TC_U32_HTID(h) ((h)&0xFFF00000)
-#define TC_U32_USERHTID(h) (TC_U32_HTID(h)>>20)
-#define TC_U32_HASH(h) (((h)>>12)&0xFF)
-#define TC_U32_NODE(h) ((h)&0xFFF)
-#define TC_U32_KEY(h) ((h)&0xFFFFF)
-#define TC_U32_UNSPEC	0
-#define TC_U32_ROOT	(0xFFF00000)
+#घोषणा TC_U32_HTID(h) ((h)&0xFFF00000)
+#घोषणा TC_U32_USERHTID(h) (TC_U32_HTID(h)>>20)
+#घोषणा TC_U32_HASH(h) (((h)>>12)&0xFF)
+#घोषणा TC_U32_NODE(h) ((h)&0xFFF)
+#घोषणा TC_U32_KEY(h) ((h)&0xFFFFF)
+#घोषणा TC_U32_UNSPEC	0
+#घोषणा TC_U32_ROOT	(0xFFF00000)
 
-enum {
+क्रमागत अणु
 	TCA_U32_UNSPEC,
 	TCA_U32_CLASSID,
 	TCA_U32_HASH,
@@ -230,56 +231,56 @@ enum {
 	TCA_U32_FLAGS,
 	TCA_U32_PAD,
 	__TCA_U32_MAX
-};
+पूर्ण;
 
-#define TCA_U32_MAX (__TCA_U32_MAX - 1)
+#घोषणा TCA_U32_MAX (__TCA_U32_MAX - 1)
 
-struct tc_u32_key {
+काष्ठा tc_u32_key अणु
 	__be32		mask;
 	__be32		val;
-	int		off;
-	int		offmask;
-};
+	पूर्णांक		off;
+	पूर्णांक		offmask;
+पूर्ण;
 
-struct tc_u32_sel {
-	unsigned char		flags;
-	unsigned char		offshift;
-	unsigned char		nkeys;
+काष्ठा tc_u32_sel अणु
+	अचिन्हित अक्षर		flags;
+	अचिन्हित अक्षर		offshअगरt;
+	अचिन्हित अक्षर		nkeys;
 
 	__be16			offmask;
 	__u16			off;
-	short			offoff;
+	लघु			offoff;
 
-	short			hoff;
+	लघु			hoff;
 	__be32			hmask;
-	struct tc_u32_key	keys[0];
-};
+	काष्ठा tc_u32_key	keys[0];
+पूर्ण;
 
-struct tc_u32_mark {
+काष्ठा tc_u32_mark अणु
 	__u32		val;
 	__u32		mask;
 	__u32		success;
-};
+पूर्ण;
 
-struct tc_u32_pcnt {
+काष्ठा tc_u32_pcnt अणु
 	__u64 rcnt;
 	__u64 rhit;
 	__u64 kcnts[0];
-};
+पूर्ण;
 
 /* Flags */
 
-#define TC_U32_TERMINAL		1
-#define TC_U32_OFFSET		2
-#define TC_U32_VAROFFSET	4
-#define TC_U32_EAT		8
+#घोषणा TC_U32_TERMINAL		1
+#घोषणा TC_U32_OFFSET		2
+#घोषणा TC_U32_VAROFFSET	4
+#घोषणा TC_U32_EAT		8
 
-#define TC_U32_MAXDEPTH 8
+#घोषणा TC_U32_MAXDEPTH 8
 
 
 /* RSVP filter */
 
-enum {
+क्रमागत अणु
 	TCA_RSVP_UNSPEC,
 	TCA_RSVP_CLASSID,
 	TCA_RSVP_DST,
@@ -288,28 +289,28 @@ enum {
 	TCA_RSVP_POLICE,
 	TCA_RSVP_ACT,
 	__TCA_RSVP_MAX
-};
+पूर्ण;
 
-#define TCA_RSVP_MAX (__TCA_RSVP_MAX - 1 )
+#घोषणा TCA_RSVP_MAX (__TCA_RSVP_MAX - 1 )
 
-struct tc_rsvp_gpi {
+काष्ठा tc_rsvp_gpi अणु
 	__u32	key;
 	__u32	mask;
-	int	offset;
-};
+	पूर्णांक	offset;
+पूर्ण;
 
-struct tc_rsvp_pinfo {
-	struct tc_rsvp_gpi dpi;
-	struct tc_rsvp_gpi spi;
+काष्ठा tc_rsvp_pinfo अणु
+	काष्ठा tc_rsvp_gpi dpi;
+	काष्ठा tc_rsvp_gpi spi;
 	__u8	protocol;
 	__u8	tunnelid;
 	__u8	tunnelhdr;
 	__u8	pad;
-};
+पूर्ण;
 
 /* ROUTE filter */
 
-enum {
+क्रमागत अणु
 	TCA_ROUTE4_UNSPEC,
 	TCA_ROUTE4_CLASSID,
 	TCA_ROUTE4_TO,
@@ -318,14 +319,14 @@ enum {
 	TCA_ROUTE4_POLICE,
 	TCA_ROUTE4_ACT,
 	__TCA_ROUTE4_MAX
-};
+पूर्ण;
 
-#define TCA_ROUTE4_MAX (__TCA_ROUTE4_MAX - 1)
+#घोषणा TCA_ROUTE4_MAX (__TCA_ROUTE4_MAX - 1)
 
 
 /* FW filter */
 
-enum {
+क्रमागत अणु
 	TCA_FW_UNSPEC,
 	TCA_FW_CLASSID,
 	TCA_FW_POLICE,
@@ -333,13 +334,13 @@ enum {
 	TCA_FW_ACT, /* used by CONFIG_NET_CLS_ACT */
 	TCA_FW_MASK,
 	__TCA_FW_MAX
-};
+पूर्ण;
 
-#define TCA_FW_MAX (__TCA_FW_MAX - 1)
+#घोषणा TCA_FW_MAX (__TCA_FW_MAX - 1)
 
 /* TC index filter */
 
-enum {
+क्रमागत अणु
 	TCA_TCINDEX_UNSPEC,
 	TCA_TCINDEX_HASH,
 	TCA_TCINDEX_MASK,
@@ -349,13 +350,13 @@ enum {
 	TCA_TCINDEX_POLICE,
 	TCA_TCINDEX_ACT,
 	__TCA_TCINDEX_MAX
-};
+पूर्ण;
 
-#define TCA_TCINDEX_MAX     (__TCA_TCINDEX_MAX - 1)
+#घोषणा TCA_TCINDEX_MAX     (__TCA_TCINDEX_MAX - 1)
 
 /* Flow filter */
 
-enum {
+क्रमागत अणु
 	FLOW_KEY_SRC,
 	FLOW_KEY_DST,
 	FLOW_KEY_PROTO,
@@ -375,16 +376,16 @@ enum {
 	FLOW_KEY_VLAN_TAG,
 	FLOW_KEY_RXHASH,
 	__FLOW_KEY_MAX,
-};
+पूर्ण;
 
-#define FLOW_KEY_MAX	(__FLOW_KEY_MAX - 1)
+#घोषणा FLOW_KEY_MAX	(__FLOW_KEY_MAX - 1)
 
-enum {
+क्रमागत अणु
 	FLOW_MODE_MAP,
 	FLOW_MODE_HASH,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_FLOW_UNSPEC,
 	TCA_FLOW_KEYS,
 	TCA_FLOW_MODE,
@@ -399,18 +400,18 @@ enum {
 	TCA_FLOW_EMATCHES,
 	TCA_FLOW_PERTURB,
 	__TCA_FLOW_MAX
-};
+पूर्ण;
 
-#define TCA_FLOW_MAX	(__TCA_FLOW_MAX - 1)
+#घोषणा TCA_FLOW_MAX	(__TCA_FLOW_MAX - 1)
 
 /* Basic filter */
 
-struct tc_basic_pcnt {
+काष्ठा tc_basic_pcnt अणु
 	__u64 rcnt;
 	__u64 rhit;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_BASIC_UNSPEC,
 	TCA_BASIC_CLASSID,
 	TCA_BASIC_EMATCHES,
@@ -419,28 +420,28 @@ enum {
 	TCA_BASIC_PCNT,
 	TCA_BASIC_PAD,
 	__TCA_BASIC_MAX
-};
+पूर्ण;
 
-#define TCA_BASIC_MAX (__TCA_BASIC_MAX - 1)
+#घोषणा TCA_BASIC_MAX (__TCA_BASIC_MAX - 1)
 
 
-/* Cgroup classifier */
+/* Cgroup classअगरier */
 
-enum {
+क्रमागत अणु
 	TCA_CGROUP_UNSPEC,
 	TCA_CGROUP_ACT,
 	TCA_CGROUP_POLICE,
 	TCA_CGROUP_EMATCHES,
 	__TCA_CGROUP_MAX,
-};
+पूर्ण;
 
-#define TCA_CGROUP_MAX (__TCA_CGROUP_MAX - 1)
+#घोषणा TCA_CGROUP_MAX (__TCA_CGROUP_MAX - 1)
 
-/* BPF classifier */
+/* BPF classअगरier */
 
-#define TCA_BPF_FLAG_ACT_DIRECT		(1 << 0)
+#घोषणा TCA_BPF_FLAG_ACT_सूचीECT		(1 << 0)
 
-enum {
+क्रमागत अणु
 	TCA_BPF_UNSPEC,
 	TCA_BPF_ACT,
 	TCA_BPF_POLICE,
@@ -454,13 +455,13 @@ enum {
 	TCA_BPF_TAG,
 	TCA_BPF_ID,
 	__TCA_BPF_MAX,
-};
+पूर्ण;
 
-#define TCA_BPF_MAX (__TCA_BPF_MAX - 1)
+#घोषणा TCA_BPF_MAX (__TCA_BPF_MAX - 1)
 
-/* Flower classifier */
+/* Flower classअगरier */
 
-enum {
+क्रमागत अणु
 	TCA_FLOWER_UNSPEC,
 	TCA_FLOWER_CLASSID,
 	TCA_FLOWER_INDEV,
@@ -475,10 +476,10 @@ enum {
 	TCA_FLOWER_KEY_IPV4_SRC_MASK,	/* be32 */
 	TCA_FLOWER_KEY_IPV4_DST,	/* be32 */
 	TCA_FLOWER_KEY_IPV4_DST_MASK,	/* be32 */
-	TCA_FLOWER_KEY_IPV6_SRC,	/* struct in6_addr */
-	TCA_FLOWER_KEY_IPV6_SRC_MASK,	/* struct in6_addr */
-	TCA_FLOWER_KEY_IPV6_DST,	/* struct in6_addr */
-	TCA_FLOWER_KEY_IPV6_DST_MASK,	/* struct in6_addr */
+	TCA_FLOWER_KEY_IPV6_SRC,	/* काष्ठा in6_addr */
+	TCA_FLOWER_KEY_IPV6_SRC_MASK,	/* काष्ठा in6_addr */
+	TCA_FLOWER_KEY_IPV6_DST,	/* काष्ठा in6_addr */
+	TCA_FLOWER_KEY_IPV6_DST_MASK,	/* काष्ठा in6_addr */
 	TCA_FLOWER_KEY_TCP_SRC,		/* be16 */
 	TCA_FLOWER_KEY_TCP_DST,		/* be16 */
 	TCA_FLOWER_KEY_UDP_SRC,		/* be16 */
@@ -494,10 +495,10 @@ enum {
 	TCA_FLOWER_KEY_ENC_IPV4_SRC_MASK,/* be32 */
 	TCA_FLOWER_KEY_ENC_IPV4_DST,	/* be32 */
 	TCA_FLOWER_KEY_ENC_IPV4_DST_MASK,/* be32 */
-	TCA_FLOWER_KEY_ENC_IPV6_SRC,	/* struct in6_addr */
-	TCA_FLOWER_KEY_ENC_IPV6_SRC_MASK,/* struct in6_addr */
-	TCA_FLOWER_KEY_ENC_IPV6_DST,	/* struct in6_addr */
-	TCA_FLOWER_KEY_ENC_IPV6_DST_MASK,/* struct in6_addr */
+	TCA_FLOWER_KEY_ENC_IPV6_SRC,	/* काष्ठा in6_addr */
+	TCA_FLOWER_KEY_ENC_IPV6_SRC_MASK,/* काष्ठा in6_addr */
+	TCA_FLOWER_KEY_ENC_IPV6_DST,	/* काष्ठा in6_addr */
+	TCA_FLOWER_KEY_ENC_IPV6_DST_MASK,/* काष्ठा in6_addr */
 
 	TCA_FLOWER_KEY_TCP_SRC_MASK,	/* be16 */
 	TCA_FLOWER_KEY_TCP_DST_MASK,	/* be16 */
@@ -584,11 +585,11 @@ enum {
 	TCA_FLOWER_KEY_HASH_MASK,	/* u32 */
 
 	__TCA_FLOWER_MAX,
-};
+पूर्ण;
 
-#define TCA_FLOWER_MAX (__TCA_FLOWER_MAX - 1)
+#घोषणा TCA_FLOWER_MAX (__TCA_FLOWER_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_FLOWER_KEY_CT_FLAGS_NEW = 1 << 0, /* Beginning of a new connection. */
 	TCA_FLOWER_KEY_CT_FLAGS_ESTABLISHED = 1 << 1, /* Part of an existing connection. */
 	TCA_FLOWER_KEY_CT_FLAGS_RELATED = 1 << 2, /* Related to an established connection. */
@@ -596,9 +597,9 @@ enum {
 	TCA_FLOWER_KEY_CT_FLAGS_INVALID = 1 << 4, /* Conntrack is invalid. */
 	TCA_FLOWER_KEY_CT_FLAGS_REPLY = 1 << 5, /* Packet is in the reply direction. */
 	__TCA_FLOWER_KEY_CT_FLAGS_MAX,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_FLOWER_KEY_ENC_OPTS_UNSPEC,
 	TCA_FLOWER_KEY_ENC_OPTS_GENEVE, /* Nested
 					 * TCA_FLOWER_KEY_ENC_OPT_GENEVE_
@@ -613,52 +614,52 @@ enum {
 					 * attributes
 					 */
 	__TCA_FLOWER_KEY_ENC_OPTS_MAX,
-};
+पूर्ण;
 
-#define TCA_FLOWER_KEY_ENC_OPTS_MAX (__TCA_FLOWER_KEY_ENC_OPTS_MAX - 1)
+#घोषणा TCA_FLOWER_KEY_ENC_OPTS_MAX (__TCA_FLOWER_KEY_ENC_OPTS_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_FLOWER_KEY_ENC_OPT_GENEVE_UNSPEC,
 	TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS,            /* u16 */
 	TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE,             /* u8 */
 	TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA,             /* 4 to 128 bytes */
 
 	__TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX,
-};
+पूर्ण;
 
-#define TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX \
+#घोषणा TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX \
 		(__TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_FLOWER_KEY_ENC_OPT_VXLAN_UNSPEC,
 	TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP,		/* u32 */
 	__TCA_FLOWER_KEY_ENC_OPT_VXLAN_MAX,
-};
+पूर्ण;
 
-#define TCA_FLOWER_KEY_ENC_OPT_VXLAN_MAX \
+#घोषणा TCA_FLOWER_KEY_ENC_OPT_VXLAN_MAX \
 		(__TCA_FLOWER_KEY_ENC_OPT_VXLAN_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_FLOWER_KEY_ENC_OPT_ERSPAN_UNSPEC,
 	TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER,              /* u8 */
 	TCA_FLOWER_KEY_ENC_OPT_ERSPAN_INDEX,            /* be32 */
-	TCA_FLOWER_KEY_ENC_OPT_ERSPAN_DIR,              /* u8 */
+	TCA_FLOWER_KEY_ENC_OPT_ERSPAN_सूची,              /* u8 */
 	TCA_FLOWER_KEY_ENC_OPT_ERSPAN_HWID,             /* u8 */
 	__TCA_FLOWER_KEY_ENC_OPT_ERSPAN_MAX,
-};
+पूर्ण;
 
-#define TCA_FLOWER_KEY_ENC_OPT_ERSPAN_MAX \
+#घोषणा TCA_FLOWER_KEY_ENC_OPT_ERSPAN_MAX \
 		(__TCA_FLOWER_KEY_ENC_OPT_ERSPAN_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_FLOWER_KEY_MPLS_OPTS_UNSPEC,
 	TCA_FLOWER_KEY_MPLS_OPTS_LSE,
 	__TCA_FLOWER_KEY_MPLS_OPTS_MAX,
-};
+पूर्ण;
 
-#define TCA_FLOWER_KEY_MPLS_OPTS_MAX (__TCA_FLOWER_KEY_MPLS_OPTS_MAX - 1)
+#घोषणा TCA_FLOWER_KEY_MPLS_OPTS_MAX (__TCA_FLOWER_KEY_MPLS_OPTS_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_FLOWER_KEY_MPLS_OPT_LSE_UNSPEC,
 	TCA_FLOWER_KEY_MPLS_OPT_LSE_DEPTH,
 	TCA_FLOWER_KEY_MPLS_OPT_LSE_TTL,
@@ -666,25 +667,25 @@ enum {
 	TCA_FLOWER_KEY_MPLS_OPT_LSE_TC,
 	TCA_FLOWER_KEY_MPLS_OPT_LSE_LABEL,
 	__TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX,
-};
+पूर्ण;
 
-#define TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX \
+#घोषणा TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX \
 		(__TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_FLOWER_KEY_FLAGS_IS_FRAGMENT = (1 << 0),
 	TCA_FLOWER_KEY_FLAGS_FRAG_IS_FIRST = (1 << 1),
-};
+पूर्ण;
 
-#define TCA_FLOWER_MASK_FLAGS_RANGE	(1 << 0) /* Range-based match */
+#घोषणा TCA_FLOWER_MASK_FLAGS_RANGE	(1 << 0) /* Range-based match */
 
-/* Match-all classifier */
+/* Match-all classअगरier */
 
-struct tc_matchall_pcnt {
+काष्ठा tc_matchall_pcnt अणु
 	__u64 rhit;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_MATCHALL_UNSPEC,
 	TCA_MATCHALL_CLASSID,
 	TCA_MATCHALL_ACT,
@@ -692,31 +693,31 @@ enum {
 	TCA_MATCHALL_PCNT,
 	TCA_MATCHALL_PAD,
 	__TCA_MATCHALL_MAX,
-};
+पूर्ण;
 
-#define TCA_MATCHALL_MAX (__TCA_MATCHALL_MAX - 1)
+#घोषणा TCA_MATCHALL_MAX (__TCA_MATCHALL_MAX - 1)
 
 /* Extended Matches */
 
-struct tcf_ematch_tree_hdr {
+काष्ठा tcf_ematch_tree_hdr अणु
 	__u16		nmatches;
 	__u16		progid;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_EMATCH_TREE_UNSPEC,
 	TCA_EMATCH_TREE_HDR,
 	TCA_EMATCH_TREE_LIST,
 	__TCA_EMATCH_TREE_MAX
-};
-#define TCA_EMATCH_TREE_MAX (__TCA_EMATCH_TREE_MAX - 1)
+पूर्ण;
+#घोषणा TCA_EMATCH_TREE_MAX (__TCA_EMATCH_TREE_MAX - 1)
 
-struct tcf_ematch_hdr {
+काष्ठा tcf_ematch_hdr अणु
 	__u16		matchid;
 	__u16		kind;
 	__u16		flags;
 	__u16		pad; /* currently unused */
-};
+पूर्ण;
 
 /*  0                   1
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 
@@ -732,47 +733,47 @@ struct tcf_ematch_hdr {
  * I(1) ::= invert result
  * S(1) ::= simple payload
  */
-#define TCF_EM_REL_END	0
-#define TCF_EM_REL_AND	(1<<0)
-#define TCF_EM_REL_OR	(1<<1)
-#define TCF_EM_INVERT	(1<<2)
-#define TCF_EM_SIMPLE	(1<<3)
+#घोषणा TCF_EM_REL_END	0
+#घोषणा TCF_EM_REL_AND	(1<<0)
+#घोषणा TCF_EM_REL_OR	(1<<1)
+#घोषणा TCF_EM_INVERT	(1<<2)
+#घोषणा TCF_EM_SIMPLE	(1<<3)
 
-#define TCF_EM_REL_MASK	3
-#define TCF_EM_REL_VALID(v) (((v) & TCF_EM_REL_MASK) != TCF_EM_REL_MASK)
+#घोषणा TCF_EM_REL_MASK	3
+#घोषणा TCF_EM_REL_VALID(v) (((v) & TCF_EM_REL_MASK) != TCF_EM_REL_MASK)
 
-enum {
+क्रमागत अणु
 	TCF_LAYER_LINK,
 	TCF_LAYER_NETWORK,
 	TCF_LAYER_TRANSPORT,
 	__TCF_LAYER_MAX
-};
-#define TCF_LAYER_MAX (__TCF_LAYER_MAX - 1)
+पूर्ण;
+#घोषणा TCF_LAYER_MAX (__TCF_LAYER_MAX - 1)
 
 /* Ematch type assignments
- *   1..32767		Reserved for ematches inside kernel tree
+ *   1..32767		Reserved क्रम ematches inside kernel tree
  *   32768..65535	Free to use, not reliable
  */
-#define	TCF_EM_CONTAINER	0
-#define	TCF_EM_CMP		1
-#define	TCF_EM_NBYTE		2
-#define	TCF_EM_U32		3
-#define	TCF_EM_META		4
-#define	TCF_EM_TEXT		5
-#define	TCF_EM_VLAN		6
-#define	TCF_EM_CANID		7
-#define	TCF_EM_IPSET		8
-#define	TCF_EM_IPT		9
-#define	TCF_EM_MAX		9
+#घोषणा	TCF_EM_CONTAINER	0
+#घोषणा	TCF_EM_CMP		1
+#घोषणा	TCF_EM_NBYTE		2
+#घोषणा	TCF_EM_U32		3
+#घोषणा	TCF_EM_META		4
+#घोषणा	TCF_EM_TEXT		5
+#घोषणा	TCF_EM_VLAN		6
+#घोषणा	TCF_EM_CANID		7
+#घोषणा	TCF_EM_IPSET		8
+#घोषणा	TCF_EM_IPT		9
+#घोषणा	TCF_EM_MAX		9
 
-enum {
+क्रमागत अणु
 	TCF_EM_PROG_TC
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCF_EM_OPND_EQ,
 	TCF_EM_OPND_GT,
 	TCF_EM_OPND_LT
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

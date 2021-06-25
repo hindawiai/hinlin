@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <asm-generic/audit_dir_write.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <यंत्र-generic/audit_dir_ग_लिखो.h>
 __NR_acct,
-#ifdef __NR_swapon
+#अगर_घोषित __NR_swapon
 __NR_swapon,
-#endif
+#पूर्ण_अगर
 __NR_quotactl,
-#ifdef __NR_truncate
+#अगर_घोषित __NR_truncate
 __NR_truncate,
-#endif
-#ifdef __NR_truncate64
+#पूर्ण_अगर
+#अगर_घोषित __NR_truncate64
 __NR_truncate64,
-#endif
-#ifdef __NR_ftruncate
+#पूर्ण_अगर
+#अगर_घोषित __NR_ftruncate
 __NR_ftruncate,
-#endif
-#ifdef __NR_ftruncate64
+#पूर्ण_अगर
+#अगर_घोषित __NR_ftruncate64
 __NR_ftruncate64,
-#endif
-#ifdef __NR_bind
+#पूर्ण_अगर
+#अगर_घोषित __NR_bind
 __NR_bind,		/* bind can affect fs object only in one way... */
-#endif
-#ifdef __NR_fallocate
+#पूर्ण_अगर
+#अगर_घोषित __NR_fallocate
 __NR_fallocate,
-#endif
+#पूर्ण_अगर

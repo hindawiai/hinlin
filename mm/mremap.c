@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	mm/mremap.c
  *
@@ -8,248 +9,248 @@
  *	(C) Copyright 2002 Red Hat Inc, All Rights Reserved
  */
 
-#include <linux/mm.h>
-#include <linux/hugetlb.h>
-#include <linux/shm.h>
-#include <linux/ksm.h>
-#include <linux/mman.h>
-#include <linux/swap.h>
-#include <linux/capability.h>
-#include <linux/fs.h>
-#include <linux/swapops.h>
-#include <linux/highmem.h>
-#include <linux/security.h>
-#include <linux/syscalls.h>
-#include <linux/mmu_notifier.h>
-#include <linux/uaccess.h>
-#include <linux/userfaultfd_k.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/shm.h>
+#समावेश <linux/ksm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/swapops.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/security.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/mmu_notअगरier.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/userfaultfd_k.h>
 
-#include <asm/cacheflush.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static pud_t *get_old_pud(struct mm_struct *mm, unsigned long addr)
-{
+अटल pud_t *get_old_pud(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 
 	pgd = pgd_offset(mm, addr);
-	if (pgd_none_or_clear_bad(pgd))
-		return NULL;
+	अगर (pgd_none_or_clear_bad(pgd))
+		वापस शून्य;
 
 	p4d = p4d_offset(pgd, addr);
-	if (p4d_none_or_clear_bad(p4d))
-		return NULL;
+	अगर (p4d_none_or_clear_bad(p4d))
+		वापस शून्य;
 
 	pud = pud_offset(p4d, addr);
-	if (pud_none_or_clear_bad(pud))
-		return NULL;
+	अगर (pud_none_or_clear_bad(pud))
+		वापस शून्य;
 
-	return pud;
-}
+	वापस pud;
+पूर्ण
 
-static pmd_t *get_old_pmd(struct mm_struct *mm, unsigned long addr)
-{
+अटल pmd_t *get_old_pmd(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
 	pud_t *pud;
 	pmd_t *pmd;
 
 	pud = get_old_pud(mm, addr);
-	if (!pud)
-		return NULL;
+	अगर (!pud)
+		वापस शून्य;
 
 	pmd = pmd_offset(pud, addr);
-	if (pmd_none(*pmd))
-		return NULL;
+	अगर (pmd_none(*pmd))
+		वापस शून्य;
 
-	return pmd;
-}
+	वापस pmd;
+पूर्ण
 
-static pud_t *alloc_new_pud(struct mm_struct *mm, struct vm_area_struct *vma,
-			    unsigned long addr)
-{
+अटल pud_t *alloc_new_pud(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
+			    अचिन्हित दीर्घ addr)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 
 	pgd = pgd_offset(mm, addr);
 	p4d = p4d_alloc(mm, pgd, addr);
-	if (!p4d)
-		return NULL;
+	अगर (!p4d)
+		वापस शून्य;
 
-	return pud_alloc(mm, p4d, addr);
-}
+	वापस pud_alloc(mm, p4d, addr);
+पूर्ण
 
-static pmd_t *alloc_new_pmd(struct mm_struct *mm, struct vm_area_struct *vma,
-			    unsigned long addr)
-{
+अटल pmd_t *alloc_new_pmd(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
+			    अचिन्हित दीर्घ addr)
+अणु
 	pud_t *pud;
 	pmd_t *pmd;
 
 	pud = alloc_new_pud(mm, vma, addr);
-	if (!pud)
-		return NULL;
+	अगर (!pud)
+		वापस शून्य;
 
 	pmd = pmd_alloc(mm, pud, addr);
-	if (!pmd)
-		return NULL;
+	अगर (!pmd)
+		वापस शून्य;
 
 	VM_BUG_ON(pmd_trans_huge(*pmd));
 
-	return pmd;
-}
+	वापस pmd;
+पूर्ण
 
-static void take_rmap_locks(struct vm_area_struct *vma)
-{
-	if (vma->vm_file)
-		i_mmap_lock_write(vma->vm_file->f_mapping);
-	if (vma->anon_vma)
-		anon_vma_lock_write(vma->anon_vma);
-}
+अटल व्योम take_rmap_locks(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अगर (vma->vm_file)
+		i_mmap_lock_ग_लिखो(vma->vm_file->f_mapping);
+	अगर (vma->anon_vma)
+		anon_vma_lock_ग_लिखो(vma->anon_vma);
+पूर्ण
 
-static void drop_rmap_locks(struct vm_area_struct *vma)
-{
-	if (vma->anon_vma)
-		anon_vma_unlock_write(vma->anon_vma);
-	if (vma->vm_file)
-		i_mmap_unlock_write(vma->vm_file->f_mapping);
-}
+अटल व्योम drop_rmap_locks(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अगर (vma->anon_vma)
+		anon_vma_unlock_ग_लिखो(vma->anon_vma);
+	अगर (vma->vm_file)
+		i_mmap_unlock_ग_लिखो(vma->vm_file->f_mapping);
+पूर्ण
 
-static pte_t move_soft_dirty_pte(pte_t pte)
-{
+अटल pte_t move_soft_dirty_pte(pte_t pte)
+अणु
 	/*
 	 * Set soft dirty bit so we can notice
 	 * in userspace the ptes were moved.
 	 */
-#ifdef CONFIG_MEM_SOFT_DIRTY
-	if (pte_present(pte))
+#अगर_घोषित CONFIG_MEM_SOFT_सूचीTY
+	अगर (pte_present(pte))
 		pte = pte_mksoft_dirty(pte);
-	else if (is_swap_pte(pte))
+	अन्यथा अगर (is_swap_pte(pte))
 		pte = pte_swp_mksoft_dirty(pte);
-#endif
-	return pte;
-}
+#पूर्ण_अगर
+	वापस pte;
+पूर्ण
 
-static void move_ptes(struct vm_area_struct *vma, pmd_t *old_pmd,
-		unsigned long old_addr, unsigned long old_end,
-		struct vm_area_struct *new_vma, pmd_t *new_pmd,
-		unsigned long new_addr, bool need_rmap_locks)
-{
-	struct mm_struct *mm = vma->vm_mm;
+अटल व्योम move_ptes(काष्ठा vm_area_काष्ठा *vma, pmd_t *old_pmd,
+		अचिन्हित दीर्घ old_addr, अचिन्हित दीर्घ old_end,
+		काष्ठा vm_area_काष्ठा *new_vma, pmd_t *new_pmd,
+		अचिन्हित दीर्घ new_addr, bool need_rmap_locks)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 	pte_t *old_pte, *new_pte, pte;
 	spinlock_t *old_ptl, *new_ptl;
-	bool force_flush = false;
-	unsigned long len = old_end - old_addr;
+	bool क्रमce_flush = false;
+	अचिन्हित दीर्घ len = old_end - old_addr;
 
 	/*
 	 * When need_rmap_locks is true, we take the i_mmap_rwsem and anon_vma
 	 * locks to ensure that rmap will always observe either the old or the
-	 * new ptes. This is the easiest way to avoid races with
+	 * new ptes. This is the easiest way to aव्योम races with
 	 * truncate_pagecache(), page migration, etc...
 	 *
-	 * When need_rmap_locks is false, we use other ways to avoid
+	 * When need_rmap_locks is false, we use other ways to aव्योम
 	 * such races:
 	 *
-	 * - During exec() shift_arg_pages(), we use a specially tagged vma
-	 *   which rmap call sites look for using vma_is_temporary_stack().
+	 * - During exec() shअगरt_arg_pages(), we use a specially tagged vma
+	 *   which rmap call sites look क्रम using vma_is_temporary_stack().
 	 *
 	 * - During mremap(), new_vma is often known to be placed after vma
 	 *   in rmap traversal order. This ensures rmap will always observe
 	 *   either the old pte, or the new pte, or both (the page table locks
-	 *   serialize access to individual ptes, but only rmap traversal
+	 *   serialize access to inभागidual ptes, but only rmap traversal
 	 *   order guarantees that we won't miss both the old and new ptes).
 	 */
-	if (need_rmap_locks)
+	अगर (need_rmap_locks)
 		take_rmap_locks(vma);
 
 	/*
-	 * We don't have to worry about the ordering of src and dst
+	 * We करोn't have to worry about the ordering of src and dst
 	 * pte locks because exclusive mmap_lock prevents deadlock.
 	 */
 	old_pte = pte_offset_map_lock(mm, old_pmd, old_addr, &old_ptl);
 	new_pte = pte_offset_map(new_pmd, new_addr);
 	new_ptl = pte_lockptr(mm, new_pmd);
-	if (new_ptl != old_ptl)
+	अगर (new_ptl != old_ptl)
 		spin_lock_nested(new_ptl, SINGLE_DEPTH_NESTING);
 	flush_tlb_batched_pending(vma->vm_mm);
 	arch_enter_lazy_mmu_mode();
 
-	for (; old_addr < old_end; old_pte++, old_addr += PAGE_SIZE,
-				   new_pte++, new_addr += PAGE_SIZE) {
-		if (pte_none(*old_pte))
-			continue;
+	क्रम (; old_addr < old_end; old_pte++, old_addr += PAGE_SIZE,
+				   new_pte++, new_addr += PAGE_SIZE) अणु
+		अगर (pte_none(*old_pte))
+			जारी;
 
 		pte = ptep_get_and_clear(mm, old_addr, old_pte);
 		/*
 		 * If we are remapping a valid PTE, make sure
-		 * to flush TLB before we drop the PTL for the
+		 * to flush TLB beक्रमe we drop the PTL क्रम the
 		 * PTE.
 		 *
 		 * NOTE! Both old and new PTL matter: the old one
-		 * for racing with page_mkclean(), the new one to
+		 * क्रम racing with page_mkclean(), the new one to
 		 * make sure the physical page stays valid until
-		 * the TLB entry for the old mapping has been
+		 * the TLB entry क्रम the old mapping has been
 		 * flushed.
 		 */
-		if (pte_present(pte))
-			force_flush = true;
+		अगर (pte_present(pte))
+			क्रमce_flush = true;
 		pte = move_pte(pte, new_vma->vm_page_prot, old_addr, new_addr);
 		pte = move_soft_dirty_pte(pte);
 		set_pte_at(mm, new_addr, new_pte, pte);
-	}
+	पूर्ण
 
 	arch_leave_lazy_mmu_mode();
-	if (force_flush)
+	अगर (क्रमce_flush)
 		flush_tlb_range(vma, old_end - len, old_end);
-	if (new_ptl != old_ptl)
+	अगर (new_ptl != old_ptl)
 		spin_unlock(new_ptl);
 	pte_unmap(new_pte - 1);
 	pte_unmap_unlock(old_pte - 1, old_ptl);
-	if (need_rmap_locks)
+	अगर (need_rmap_locks)
 		drop_rmap_locks(vma);
-}
+पूर्ण
 
-#ifdef CONFIG_HAVE_MOVE_PMD
-static bool move_normal_pmd(struct vm_area_struct *vma, unsigned long old_addr,
-		  unsigned long new_addr, pmd_t *old_pmd, pmd_t *new_pmd)
-{
+#अगर_घोषित CONFIG_HAVE_MOVE_PMD
+अटल bool move_normal_pmd(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ old_addr,
+		  अचिन्हित दीर्घ new_addr, pmd_t *old_pmd, pmd_t *new_pmd)
+अणु
 	spinlock_t *old_ptl, *new_ptl;
-	struct mm_struct *mm = vma->vm_mm;
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 	pmd_t pmd;
 
 	/*
-	 * The destination pmd shouldn't be established, free_pgtables()
+	 * The destination pmd shouldn't be established, मुक्त_pgtables()
 	 * should have released it.
 	 *
-	 * However, there's a case during execve() where we use mremap
-	 * to move the initial stack, and in that case the target area
-	 * may overlap the source area (always moving down).
+	 * However, there's a हाल during execve() where we use mremap
+	 * to move the initial stack, and in that हाल the target area
+	 * may overlap the source area (always moving करोwn).
 	 *
 	 * If everything is PMD-aligned, that works fine, as moving
-	 * each pmd down will clear the source pmd. But if we first
-	 * have a few 4kB-only pages that get moved down, and then
-	 * hit the "now the rest is PMD-aligned, let's do everything
-	 * one pmd at a time", we will still have the old (now empty
+	 * each pmd करोwn will clear the source pmd. But अगर we first
+	 * have a few 4kB-only pages that get moved करोwn, and then
+	 * hit the "now the rest is PMD-aligned, let's करो everything
+	 * one pmd at a समय", we will still have the old (now empty
 	 * of any 4kB pages, but still there) PMD in the page table
 	 * tree.
 	 *
 	 * Warn on it once - because we really should try to figure
-	 * out how to do this better - but then say "I won't move
+	 * out how to करो this better - but then say "I won't move
 	 * this pmd".
 	 *
 	 * One alternative might be to just unmap the target pmd at
-	 * this point, and verify that it really is empty. We'll see.
+	 * this poपूर्णांक, and verअगरy that it really is empty. We'll see.
 	 */
-	if (WARN_ON_ONCE(!pmd_none(*new_pmd)))
-		return false;
+	अगर (WARN_ON_ONCE(!pmd_none(*new_pmd)))
+		वापस false;
 
 	/*
-	 * We don't have to worry about the ordering of src and dst
+	 * We करोn't have to worry about the ordering of src and dst
 	 * ptlocks because exclusive mmap_lock prevents deadlock.
 	 */
 	old_ptl = pmd_lock(vma->vm_mm, old_pmd);
 	new_ptl = pmd_lockptr(mm, new_pmd);
-	if (new_ptl != old_ptl)
+	अगर (new_ptl != old_ptl)
 		spin_lock_nested(new_ptl, SINGLE_DEPTH_NESTING);
 
 	/* Clear the pmd */
@@ -261,43 +262,43 @@ static bool move_normal_pmd(struct vm_area_struct *vma, unsigned long old_addr,
 	/* Set the new pmd */
 	set_pmd_at(mm, new_addr, new_pmd, pmd);
 	flush_tlb_range(vma, old_addr, old_addr + PMD_SIZE);
-	if (new_ptl != old_ptl)
+	अगर (new_ptl != old_ptl)
 		spin_unlock(new_ptl);
 	spin_unlock(old_ptl);
 
-	return true;
-}
-#else
-static inline bool move_normal_pmd(struct vm_area_struct *vma,
-		unsigned long old_addr, unsigned long new_addr, pmd_t *old_pmd,
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool move_normal_pmd(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ old_addr, अचिन्हित दीर्घ new_addr, pmd_t *old_pmd,
 		pmd_t *new_pmd)
-{
-	return false;
-}
-#endif
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HAVE_MOVE_PUD
-static bool move_normal_pud(struct vm_area_struct *vma, unsigned long old_addr,
-		  unsigned long new_addr, pud_t *old_pud, pud_t *new_pud)
-{
+#अगर_घोषित CONFIG_HAVE_MOVE_PUD
+अटल bool move_normal_pud(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ old_addr,
+		  अचिन्हित दीर्घ new_addr, pud_t *old_pud, pud_t *new_pud)
+अणु
 	spinlock_t *old_ptl, *new_ptl;
-	struct mm_struct *mm = vma->vm_mm;
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 	pud_t pud;
 
 	/*
-	 * The destination pud shouldn't be established, free_pgtables()
+	 * The destination pud shouldn't be established, मुक्त_pgtables()
 	 * should have released it.
 	 */
-	if (WARN_ON_ONCE(!pud_none(*new_pud)))
-		return false;
+	अगर (WARN_ON_ONCE(!pud_none(*new_pud)))
+		वापस false;
 
 	/*
-	 * We don't have to worry about the ordering of src and dst
+	 * We करोn't have to worry about the ordering of src and dst
 	 * ptlocks because exclusive mmap_lock prevents deadlock.
 	 */
 	old_ptl = pud_lock(vma->vm_mm, old_pud);
 	new_ptl = pud_lockptr(mm, new_pud);
-	if (new_ptl != old_ptl)
+	अगर (new_ptl != old_ptl)
 		spin_lock_nested(new_ptl, SINGLE_DEPTH_NESTING);
 
 	/* Clear the pud */
@@ -309,246 +310,246 @@ static bool move_normal_pud(struct vm_area_struct *vma, unsigned long old_addr,
 	/* Set the new pud */
 	set_pud_at(mm, new_addr, new_pud, pud);
 	flush_tlb_range(vma, old_addr, old_addr + PUD_SIZE);
-	if (new_ptl != old_ptl)
+	अगर (new_ptl != old_ptl)
 		spin_unlock(new_ptl);
 	spin_unlock(old_ptl);
 
-	return true;
-}
-#else
-static inline bool move_normal_pud(struct vm_area_struct *vma,
-		unsigned long old_addr, unsigned long new_addr, pud_t *old_pud,
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool move_normal_pud(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ old_addr, अचिन्हित दीर्घ new_addr, pud_t *old_pud,
 		pud_t *new_pud)
-{
-	return false;
-}
-#endif
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-enum pgt_entry {
+क्रमागत pgt_entry अणु
 	NORMAL_PMD,
 	HPAGE_PMD,
 	NORMAL_PUD,
-};
+पूर्ण;
 
 /*
- * Returns an extent of the corresponding size for the pgt_entry specified if
- * valid. Else returns a smaller extent bounded by the end of the source and
+ * Returns an extent of the corresponding size क्रम the pgt_entry specअगरied अगर
+ * valid. Else वापसs a smaller extent bounded by the end of the source and
  * destination pgt_entry.
  */
-static __always_inline unsigned long get_extent(enum pgt_entry entry,
-			unsigned long old_addr, unsigned long old_end,
-			unsigned long new_addr)
-{
-	unsigned long next, extent, mask, size;
+अटल __always_अंतरभूत अचिन्हित दीर्घ get_extent(क्रमागत pgt_entry entry,
+			अचिन्हित दीर्घ old_addr, अचिन्हित दीर्घ old_end,
+			अचिन्हित दीर्घ new_addr)
+अणु
+	अचिन्हित दीर्घ next, extent, mask, size;
 
-	switch (entry) {
-	case HPAGE_PMD:
-	case NORMAL_PMD:
+	चयन (entry) अणु
+	हाल HPAGE_PMD:
+	हाल NORMAL_PMD:
 		mask = PMD_MASK;
 		size = PMD_SIZE;
-		break;
-	case NORMAL_PUD:
+		अवरोध;
+	हाल NORMAL_PUD:
 		mask = PUD_MASK;
 		size = PUD_SIZE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUILD_BUG();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	next = (old_addr + size) & mask;
-	/* even if next overflowed, extent below will be ok */
+	/* even अगर next overflowed, extent below will be ok */
 	extent = next - old_addr;
-	if (extent > old_end - old_addr)
+	अगर (extent > old_end - old_addr)
 		extent = old_end - old_addr;
 	next = (new_addr + size) & mask;
-	if (extent > next - new_addr)
+	अगर (extent > next - new_addr)
 		extent = next - new_addr;
-	return extent;
-}
+	वापस extent;
+पूर्ण
 
 /*
  * Attempts to speedup the move by moving entry at the level corresponding to
- * pgt_entry. Returns true if the move was successful, else false.
+ * pgt_entry. Returns true अगर the move was successful, अन्यथा false.
  */
-static bool move_pgt_entry(enum pgt_entry entry, struct vm_area_struct *vma,
-			unsigned long old_addr, unsigned long new_addr,
-			void *old_entry, void *new_entry, bool need_rmap_locks)
-{
+अटल bool move_pgt_entry(क्रमागत pgt_entry entry, काष्ठा vm_area_काष्ठा *vma,
+			अचिन्हित दीर्घ old_addr, अचिन्हित दीर्घ new_addr,
+			व्योम *old_entry, व्योम *new_entry, bool need_rmap_locks)
+अणु
 	bool moved = false;
 
 	/* See comment in move_ptes() */
-	if (need_rmap_locks)
+	अगर (need_rmap_locks)
 		take_rmap_locks(vma);
 
-	switch (entry) {
-	case NORMAL_PMD:
+	चयन (entry) अणु
+	हाल NORMAL_PMD:
 		moved = move_normal_pmd(vma, old_addr, new_addr, old_entry,
 					new_entry);
-		break;
-	case NORMAL_PUD:
+		अवरोध;
+	हाल NORMAL_PUD:
 		moved = move_normal_pud(vma, old_addr, new_addr, old_entry,
 					new_entry);
-		break;
-	case HPAGE_PMD:
+		अवरोध;
+	हाल HPAGE_PMD:
 		moved = IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE) &&
 			move_huge_pmd(vma, old_addr, new_addr, old_entry,
 				      new_entry);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (need_rmap_locks)
+	अगर (need_rmap_locks)
 		drop_rmap_locks(vma);
 
-	return moved;
-}
+	वापस moved;
+पूर्ण
 
-unsigned long move_page_tables(struct vm_area_struct *vma,
-		unsigned long old_addr, struct vm_area_struct *new_vma,
-		unsigned long new_addr, unsigned long len,
+अचिन्हित दीर्घ move_page_tables(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ old_addr, काष्ठा vm_area_काष्ठा *new_vma,
+		अचिन्हित दीर्घ new_addr, अचिन्हित दीर्घ len,
 		bool need_rmap_locks)
-{
-	unsigned long extent, old_end;
-	struct mmu_notifier_range range;
+अणु
+	अचिन्हित दीर्घ extent, old_end;
+	काष्ठा mmu_notअगरier_range range;
 	pmd_t *old_pmd, *new_pmd;
 
 	old_end = old_addr + len;
 	flush_cache_range(vma, old_addr, old_end);
 
-	mmu_notifier_range_init(&range, MMU_NOTIFY_UNMAP, 0, vma, vma->vm_mm,
+	mmu_notअगरier_range_init(&range, MMU_NOTIFY_UNMAP, 0, vma, vma->vm_mm,
 				old_addr, old_end);
-	mmu_notifier_invalidate_range_start(&range);
+	mmu_notअगरier_invalidate_range_start(&range);
 
-	for (; old_addr < old_end; old_addr += extent, new_addr += extent) {
+	क्रम (; old_addr < old_end; old_addr += extent, new_addr += extent) अणु
 		cond_resched();
 		/*
 		 * If extent is PUD-sized try to speed up the move by moving at the
-		 * PUD level if possible.
+		 * PUD level अगर possible.
 		 */
 		extent = get_extent(NORMAL_PUD, old_addr, old_end, new_addr);
-		if (IS_ENABLED(CONFIG_HAVE_MOVE_PUD) && extent == PUD_SIZE) {
+		अगर (IS_ENABLED(CONFIG_HAVE_MOVE_PUD) && extent == PUD_SIZE) अणु
 			pud_t *old_pud, *new_pud;
 
 			old_pud = get_old_pud(vma->vm_mm, old_addr);
-			if (!old_pud)
-				continue;
+			अगर (!old_pud)
+				जारी;
 			new_pud = alloc_new_pud(vma->vm_mm, vma, new_addr);
-			if (!new_pud)
-				break;
-			if (move_pgt_entry(NORMAL_PUD, vma, old_addr, new_addr,
+			अगर (!new_pud)
+				अवरोध;
+			अगर (move_pgt_entry(NORMAL_PUD, vma, old_addr, new_addr,
 					   old_pud, new_pud, need_rmap_locks))
-				continue;
-		}
+				जारी;
+		पूर्ण
 
 		extent = get_extent(NORMAL_PMD, old_addr, old_end, new_addr);
 		old_pmd = get_old_pmd(vma->vm_mm, old_addr);
-		if (!old_pmd)
-			continue;
+		अगर (!old_pmd)
+			जारी;
 		new_pmd = alloc_new_pmd(vma->vm_mm, vma, new_addr);
-		if (!new_pmd)
-			break;
-		if (is_swap_pmd(*old_pmd) || pmd_trans_huge(*old_pmd) ||
-		    pmd_devmap(*old_pmd)) {
-			if (extent == HPAGE_PMD_SIZE &&
+		अगर (!new_pmd)
+			अवरोध;
+		अगर (is_swap_pmd(*old_pmd) || pmd_trans_huge(*old_pmd) ||
+		    pmd_devmap(*old_pmd)) अणु
+			अगर (extent == HPAGE_PMD_SIZE &&
 			    move_pgt_entry(HPAGE_PMD, vma, old_addr, new_addr,
 					   old_pmd, new_pmd, need_rmap_locks))
-				continue;
+				जारी;
 			split_huge_pmd(vma, old_pmd, old_addr);
-			if (pmd_trans_unstable(old_pmd))
-				continue;
-		} else if (IS_ENABLED(CONFIG_HAVE_MOVE_PMD) &&
-			   extent == PMD_SIZE) {
+			अगर (pmd_trans_unstable(old_pmd))
+				जारी;
+		पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_HAVE_MOVE_PMD) &&
+			   extent == PMD_SIZE) अणु
 			/*
 			 * If the extent is PMD-sized, try to speed the move by
-			 * moving at the PMD level if possible.
+			 * moving at the PMD level अगर possible.
 			 */
-			if (move_pgt_entry(NORMAL_PMD, vma, old_addr, new_addr,
+			अगर (move_pgt_entry(NORMAL_PMD, vma, old_addr, new_addr,
 					   old_pmd, new_pmd, need_rmap_locks))
-				continue;
-		}
+				जारी;
+		पूर्ण
 
-		if (pte_alloc(new_vma->vm_mm, new_pmd))
-			break;
+		अगर (pte_alloc(new_vma->vm_mm, new_pmd))
+			अवरोध;
 		move_ptes(vma, old_pmd, old_addr, old_addr + extent, new_vma,
 			  new_pmd, new_addr, need_rmap_locks);
-	}
+	पूर्ण
 
-	mmu_notifier_invalidate_range_end(&range);
+	mmu_notअगरier_invalidate_range_end(&range);
 
-	return len + old_addr - old_end;	/* how much done */
-}
+	वापस len + old_addr - old_end;	/* how much करोne */
+पूर्ण
 
-static unsigned long move_vma(struct vm_area_struct *vma,
-		unsigned long old_addr, unsigned long old_len,
-		unsigned long new_len, unsigned long new_addr,
-		bool *locked, unsigned long flags,
-		struct vm_userfaultfd_ctx *uf, struct list_head *uf_unmap)
-{
-	struct mm_struct *mm = vma->vm_mm;
-	struct vm_area_struct *new_vma;
-	unsigned long vm_flags = vma->vm_flags;
-	unsigned long new_pgoff;
-	unsigned long moved_len;
-	unsigned long excess = 0;
-	unsigned long hiwater_vm;
-	int split = 0;
-	int err = 0;
+अटल अचिन्हित दीर्घ move_vma(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ old_addr, अचिन्हित दीर्घ old_len,
+		अचिन्हित दीर्घ new_len, अचिन्हित दीर्घ new_addr,
+		bool *locked, अचिन्हित दीर्घ flags,
+		काष्ठा vm_userfaultfd_ctx *uf, काष्ठा list_head *uf_unmap)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+	काष्ठा vm_area_काष्ठा *new_vma;
+	अचिन्हित दीर्घ vm_flags = vma->vm_flags;
+	अचिन्हित दीर्घ new_pgoff;
+	अचिन्हित दीर्घ moved_len;
+	अचिन्हित दीर्घ excess = 0;
+	अचिन्हित दीर्घ hiwater_vm;
+	पूर्णांक split = 0;
+	पूर्णांक err = 0;
 	bool need_rmap_locks;
 
 	/*
-	 * We'd prefer to avoid failure later on in do_munmap:
-	 * which may split one vma into three before unmapping.
+	 * We'd prefer to aव्योम failure later on in करो_munmap:
+	 * which may split one vma पूर्णांकo three beक्रमe unmapping.
 	 */
-	if (mm->map_count >= sysctl_max_map_count - 3)
-		return -ENOMEM;
+	अगर (mm->map_count >= sysctl_max_map_count - 3)
+		वापस -ENOMEM;
 
-	if (vma->vm_ops && vma->vm_ops->may_split) {
-		if (vma->vm_start != old_addr)
+	अगर (vma->vm_ops && vma->vm_ops->may_split) अणु
+		अगर (vma->vm_start != old_addr)
 			err = vma->vm_ops->may_split(vma, old_addr);
-		if (!err && vma->vm_end != old_addr + old_len)
+		अगर (!err && vma->vm_end != old_addr + old_len)
 			err = vma->vm_ops->may_split(vma, old_addr + old_len);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/*
-	 * Advise KSM to break any KSM pages in the area to be moved:
-	 * it would be confusing if they were to turn up at the new
-	 * location, where they happen to coincide with different KSM
+	 * Advise KSM to अवरोध any KSM pages in the area to be moved:
+	 * it would be confusing अगर they were to turn up at the new
+	 * location, where they happen to coincide with dअगरferent KSM
 	 * pages recently unmapped.  But leave vma->vm_flags as it was,
 	 * so KSM can come around to merge on vma and new_vma afterwards.
 	 */
 	err = ksm_madvise(vma, old_addr, old_addr + old_len,
 						MADV_UNMERGEABLE, &vm_flags);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (unlikely(flags & MREMAP_DONTUNMAP && vm_flags & VM_ACCOUNT)) {
-		if (security_vm_enough_memory_mm(mm, new_len >> PAGE_SHIFT))
-			return -ENOMEM;
-	}
+	अगर (unlikely(flags & MREMAP_DONTUNMAP && vm_flags & VM_ACCOUNT)) अणु
+		अगर (security_vm_enough_memory_mm(mm, new_len >> PAGE_SHIFT))
+			वापस -ENOMEM;
+	पूर्ण
 
 	new_pgoff = vma->vm_pgoff + ((old_addr - vma->vm_start) >> PAGE_SHIFT);
 	new_vma = copy_vma(&vma, new_addr, new_len, new_pgoff,
 			   &need_rmap_locks);
-	if (!new_vma) {
-		if (unlikely(flags & MREMAP_DONTUNMAP && vm_flags & VM_ACCOUNT))
+	अगर (!new_vma) अणु
+		अगर (unlikely(flags & MREMAP_DONTUNMAP && vm_flags & VM_ACCOUNT))
 			vm_unacct_memory(new_len >> PAGE_SHIFT);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	moved_len = move_page_tables(vma, old_addr, new_vma, new_addr, old_len,
 				     need_rmap_locks);
-	if (moved_len < old_len) {
+	अगर (moved_len < old_len) अणु
 		err = -ENOMEM;
-	} else if (vma->vm_ops && vma->vm_ops->mremap) {
+	पूर्ण अन्यथा अगर (vma->vm_ops && vma->vm_ops->mremap) अणु
 		err = vma->vm_ops->mremap(new_vma);
-	}
+	पूर्ण
 
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		/*
 		 * On error, move entries back from new area to old,
 		 * which will succeed since page tables still there,
@@ -560,413 +561,413 @@ static unsigned long move_vma(struct vm_area_struct *vma,
 		old_len = new_len;
 		old_addr = new_addr;
 		new_addr = err;
-	} else {
+	पूर्ण अन्यथा अणु
 		mremap_userfaultfd_prep(new_vma, uf);
-	}
+	पूर्ण
 
-	/* Conceal VM_ACCOUNT so old reservation is not undone */
-	if (vm_flags & VM_ACCOUNT && !(flags & MREMAP_DONTUNMAP)) {
+	/* Conceal VM_ACCOUNT so old reservation is not unकरोne */
+	अगर (vm_flags & VM_ACCOUNT && !(flags & MREMAP_DONTUNMAP)) अणु
 		vma->vm_flags &= ~VM_ACCOUNT;
 		excess = vma->vm_end - vma->vm_start - old_len;
-		if (old_addr > vma->vm_start &&
+		अगर (old_addr > vma->vm_start &&
 		    old_addr + old_len < vma->vm_end)
 			split = 1;
-	}
+	पूर्ण
 
 	/*
-	 * If we failed to move page tables we still do total_vm increment
-	 * since do_munmap() will decrement it by old_len == new_len.
+	 * If we failed to move page tables we still करो total_vm increment
+	 * since करो_munmap() will decrement it by old_len == new_len.
 	 *
-	 * Since total_vm is about to be raised artificially high for a
-	 * moment, we need to restore high watermark afterwards: if stats
-	 * are taken meanwhile, total_vm and hiwater_vm appear too high.
-	 * If this were a serious issue, we'd add a flag to do_munmap().
+	 * Since total_vm is about to be उठाओd artअगरicially high क्रम a
+	 * moment, we need to restore high watermark afterwards: अगर stats
+	 * are taken meanजबतक, total_vm and hiwater_vm appear too high.
+	 * If this were a serious issue, we'd add a flag to करो_munmap().
 	 */
 	hiwater_vm = mm->hiwater_vm;
 	vm_stat_account(mm, vma->vm_flags, new_len >> PAGE_SHIFT);
 
 	/* Tell pfnmap has moved from this vma */
-	if (unlikely(vma->vm_flags & VM_PFNMAP))
+	अगर (unlikely(vma->vm_flags & VM_PFNMAP))
 		untrack_pfn_moved(vma);
 
-	if (unlikely(!err && (flags & MREMAP_DONTUNMAP))) {
+	अगर (unlikely(!err && (flags & MREMAP_DONTUNMAP))) अणु
 		/* We always clear VM_LOCKED[ONFAULT] on the old vma */
 		vma->vm_flags &= VM_LOCKED_CLEAR_MASK;
 
 		/*
-		 * anon_vma links of the old vma is no longer needed after its page
+		 * anon_vma links of the old vma is no दीर्घer needed after its page
 		 * table has been moved.
 		 */
-		if (new_vma != vma && vma->vm_start == old_addr &&
+		अगर (new_vma != vma && vma->vm_start == old_addr &&
 			vma->vm_end == (old_addr + old_len))
 			unlink_anon_vmas(vma);
 
 		/* Because we won't unmap we don't need to touch locked_vm */
-		return new_addr;
-	}
+		वापस new_addr;
+	पूर्ण
 
-	if (do_munmap(mm, old_addr, old_len, uf_unmap) < 0) {
+	अगर (करो_munmap(mm, old_addr, old_len, uf_unmap) < 0) अणु
 		/* OOM: unable to split vma, just get accounts right */
-		if (vm_flags & VM_ACCOUNT && !(flags & MREMAP_DONTUNMAP))
+		अगर (vm_flags & VM_ACCOUNT && !(flags & MREMAP_DONTUNMAP))
 			vm_acct_memory(new_len >> PAGE_SHIFT);
 		excess = 0;
-	}
+	पूर्ण
 
-	if (vm_flags & VM_LOCKED) {
+	अगर (vm_flags & VM_LOCKED) अणु
 		mm->locked_vm += new_len >> PAGE_SHIFT;
 		*locked = true;
-	}
+	पूर्ण
 
 	mm->hiwater_vm = hiwater_vm;
 
-	/* Restore VM_ACCOUNT if one or two pieces of vma left */
-	if (excess) {
+	/* Restore VM_ACCOUNT अगर one or two pieces of vma left */
+	अगर (excess) अणु
 		vma->vm_flags |= VM_ACCOUNT;
-		if (split)
+		अगर (split)
 			vma->vm_next->vm_flags |= VM_ACCOUNT;
-	}
+	पूर्ण
 
-	return new_addr;
-}
+	वापस new_addr;
+पूर्ण
 
-static struct vm_area_struct *vma_to_resize(unsigned long addr,
-	unsigned long old_len, unsigned long new_len, unsigned long flags,
-	unsigned long *p)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma = find_vma(mm, addr);
-	unsigned long pgoff;
+अटल काष्ठा vm_area_काष्ठा *vma_to_resize(अचिन्हित दीर्घ addr,
+	अचिन्हित दीर्घ old_len, अचिन्हित दीर्घ new_len, अचिन्हित दीर्घ flags,
+	अचिन्हित दीर्घ *p)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma = find_vma(mm, addr);
+	अचिन्हित दीर्घ pgoff;
 
-	if (!vma || vma->vm_start > addr)
-		return ERR_PTR(-EFAULT);
+	अगर (!vma || vma->vm_start > addr)
+		वापस ERR_PTR(-EFAULT);
 
 	/*
-	 * !old_len is a special case where an attempt is made to 'duplicate'
-	 * a mapping.  This makes no sense for private mappings as it will
+	 * !old_len is a special हाल where an attempt is made to 'duplicate'
+	 * a mapping.  This makes no sense क्रम निजी mappings as it will
 	 * instead create a fresh/new mapping unrelated to the original.  This
 	 * is contrary to the basic idea of mremap which creates new mappings
-	 * based on the original.  There are no known use cases for this
+	 * based on the original.  There are no known use हालs क्रम this
 	 * behavior.  As a result, fail such attempts.
 	 */
-	if (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE))) {
+	अगर (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE))) अणु
 		pr_warn_once("%s (%d): attempted to duplicate a private mapping with mremap.  This is not supported.\n", current->comm, current->pid);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if ((flags & MREMAP_DONTUNMAP) &&
+	अगर ((flags & MREMAP_DONTUNMAP) &&
 			(vma->vm_flags & (VM_DONTEXPAND | VM_PFNMAP)))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	if (is_vm_hugetlb_page(vma))
-		return ERR_PTR(-EINVAL);
+	अगर (is_vm_hugetlb_page(vma))
+		वापस ERR_PTR(-EINVAL);
 
 	/* We can't remap across vm area boundaries */
-	if (old_len > vma->vm_end - addr)
-		return ERR_PTR(-EFAULT);
+	अगर (old_len > vma->vm_end - addr)
+		वापस ERR_PTR(-EFAULT);
 
-	if (new_len == old_len)
-		return vma;
+	अगर (new_len == old_len)
+		वापस vma;
 
 	/* Need to be careful about a growing mapping */
 	pgoff = (addr - vma->vm_start) >> PAGE_SHIFT;
 	pgoff += vma->vm_pgoff;
-	if (pgoff + (new_len >> PAGE_SHIFT) < pgoff)
-		return ERR_PTR(-EINVAL);
+	अगर (pgoff + (new_len >> PAGE_SHIFT) < pgoff)
+		वापस ERR_PTR(-EINVAL);
 
-	if (vma->vm_flags & (VM_DONTEXPAND | VM_PFNMAP))
-		return ERR_PTR(-EFAULT);
+	अगर (vma->vm_flags & (VM_DONTEXPAND | VM_PFNMAP))
+		वापस ERR_PTR(-EFAULT);
 
-	if (vma->vm_flags & VM_LOCKED) {
-		unsigned long locked, lock_limit;
+	अगर (vma->vm_flags & VM_LOCKED) अणु
+		अचिन्हित दीर्घ locked, lock_limit;
 		locked = mm->locked_vm << PAGE_SHIFT;
 		lock_limit = rlimit(RLIMIT_MEMLOCK);
 		locked += new_len - old_len;
-		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
-			return ERR_PTR(-EAGAIN);
-	}
+		अगर (locked > lock_limit && !capable(CAP_IPC_LOCK))
+			वापस ERR_PTR(-EAGAIN);
+	पूर्ण
 
-	if (!may_expand_vm(mm, vma->vm_flags,
+	अगर (!may_expand_vm(mm, vma->vm_flags,
 				(new_len - old_len) >> PAGE_SHIFT))
-		return ERR_PTR(-ENOMEM);
+		वापस ERR_PTR(-ENOMEM);
 
-	if (vma->vm_flags & VM_ACCOUNT) {
-		unsigned long charged = (new_len - old_len) >> PAGE_SHIFT;
-		if (security_vm_enough_memory_mm(mm, charged))
-			return ERR_PTR(-ENOMEM);
-		*p = charged;
-	}
+	अगर (vma->vm_flags & VM_ACCOUNT) अणु
+		अचिन्हित दीर्घ अक्षरged = (new_len - old_len) >> PAGE_SHIFT;
+		अगर (security_vm_enough_memory_mm(mm, अक्षरged))
+			वापस ERR_PTR(-ENOMEM);
+		*p = अक्षरged;
+	पूर्ण
 
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
-		unsigned long new_addr, unsigned long new_len, bool *locked,
-		unsigned long flags, struct vm_userfaultfd_ctx *uf,
-		struct list_head *uf_unmap_early,
-		struct list_head *uf_unmap)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	unsigned long ret = -EINVAL;
-	unsigned long charged = 0;
-	unsigned long map_flags = 0;
+अटल अचिन्हित दीर्घ mremap_to(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ old_len,
+		अचिन्हित दीर्घ new_addr, अचिन्हित दीर्घ new_len, bool *locked,
+		अचिन्हित दीर्घ flags, काष्ठा vm_userfaultfd_ctx *uf,
+		काष्ठा list_head *uf_unmap_early,
+		काष्ठा list_head *uf_unmap)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	अचिन्हित दीर्घ ret = -EINVAL;
+	अचिन्हित दीर्घ अक्षरged = 0;
+	अचिन्हित दीर्घ map_flags = 0;
 
-	if (offset_in_page(new_addr))
-		goto out;
+	अगर (offset_in_page(new_addr))
+		जाओ out;
 
-	if (new_len > TASK_SIZE || new_addr > TASK_SIZE - new_len)
-		goto out;
+	अगर (new_len > TASK_SIZE || new_addr > TASK_SIZE - new_len)
+		जाओ out;
 
-	/* Ensure the old/new locations do not overlap */
-	if (addr + old_len > new_addr && new_addr + new_len > addr)
-		goto out;
+	/* Ensure the old/new locations करो not overlap */
+	अगर (addr + old_len > new_addr && new_addr + new_len > addr)
+		जाओ out;
 
 	/*
 	 * move_vma() need us to stay 4 maps below the threshold, otherwise
 	 * it will bail out at the very beginning.
-	 * That is a problem if we have already unmaped the regions here
+	 * That is a problem अगर we have alपढ़ोy unmaped the regions here
 	 * (new_addr, and old_addr), because userspace will not know the
-	 * state of the vma's after it gets -ENOMEM.
-	 * So, to avoid such scenario we can pre-compute if the whole
+	 * state of the vma's after it माला_लो -ENOMEM.
+	 * So, to aव्योम such scenario we can pre-compute अगर the whole
 	 * operation has high chances to success map-wise.
-	 * Worst-scenario case is when both vma's (new_addr and old_addr) get
-	 * split in 3 before unmapping it.
-	 * That means 2 more maps (1 for each) to the ones we already hold.
+	 * Worst-scenario हाल is when both vma's (new_addr and old_addr) get
+	 * split in 3 beक्रमe unmapping it.
+	 * That means 2 more maps (1 क्रम each) to the ones we alपढ़ोy hold.
 	 * Check whether current map count plus 2 still leads us to 4 maps below
-	 * the threshold, otherwise return -ENOMEM here to be more safe.
+	 * the threshold, otherwise वापस -ENOMEM here to be more safe.
 	 */
-	if ((mm->map_count + 2) >= sysctl_max_map_count - 3)
-		return -ENOMEM;
+	अगर ((mm->map_count + 2) >= sysctl_max_map_count - 3)
+		वापस -ENOMEM;
 
-	if (flags & MREMAP_FIXED) {
-		ret = do_munmap(mm, new_addr, new_len, uf_unmap_early);
-		if (ret)
-			goto out;
-	}
+	अगर (flags & MREMAP_FIXED) अणु
+		ret = करो_munmap(mm, new_addr, new_len, uf_unmap_early);
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	if (old_len >= new_len) {
-		ret = do_munmap(mm, addr+new_len, old_len - new_len, uf_unmap);
-		if (ret && old_len != new_len)
-			goto out;
+	अगर (old_len >= new_len) अणु
+		ret = करो_munmap(mm, addr+new_len, old_len - new_len, uf_unmap);
+		अगर (ret && old_len != new_len)
+			जाओ out;
 		old_len = new_len;
-	}
+	पूर्ण
 
-	vma = vma_to_resize(addr, old_len, new_len, flags, &charged);
-	if (IS_ERR(vma)) {
+	vma = vma_to_resize(addr, old_len, new_len, flags, &अक्षरged);
+	अगर (IS_ERR(vma)) अणु
 		ret = PTR_ERR(vma);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* MREMAP_DONTUNMAP expands by old_len since old_len == new_len */
-	if (flags & MREMAP_DONTUNMAP &&
-		!may_expand_vm(mm, vma->vm_flags, old_len >> PAGE_SHIFT)) {
+	अगर (flags & MREMAP_DONTUNMAP &&
+		!may_expand_vm(mm, vma->vm_flags, old_len >> PAGE_SHIFT)) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (flags & MREMAP_FIXED)
+	अगर (flags & MREMAP_FIXED)
 		map_flags |= MAP_FIXED;
 
-	if (vma->vm_flags & VM_MAYSHARE)
+	अगर (vma->vm_flags & VM_MAYSHARE)
 		map_flags |= MAP_SHARED;
 
 	ret = get_unmapped_area(vma->vm_file, new_addr, new_len, vma->vm_pgoff +
 				((addr - vma->vm_start) >> PAGE_SHIFT),
 				map_flags);
-	if (IS_ERR_VALUE(ret))
-		goto out1;
+	अगर (IS_ERR_VALUE(ret))
+		जाओ out1;
 
 	/* We got a new mapping */
-	if (!(flags & MREMAP_FIXED))
+	अगर (!(flags & MREMAP_FIXED))
 		new_addr = ret;
 
 	ret = move_vma(vma, addr, old_len, new_len, new_addr, locked, flags, uf,
 		       uf_unmap);
 
-	if (!(offset_in_page(ret)))
-		goto out;
+	अगर (!(offset_in_page(ret)))
+		जाओ out;
 
 out1:
-	vm_unacct_memory(charged);
+	vm_unacct_memory(अक्षरged);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vma_expandable(struct vm_area_struct *vma, unsigned long delta)
-{
-	unsigned long end = vma->vm_end + delta;
-	if (end < vma->vm_end) /* overflow */
-		return 0;
-	if (vma->vm_next && vma->vm_next->vm_start < end) /* intersection */
-		return 0;
-	if (get_unmapped_area(NULL, vma->vm_start, end - vma->vm_start,
+अटल पूर्णांक vma_expandable(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ delta)
+अणु
+	अचिन्हित दीर्घ end = vma->vm_end + delta;
+	अगर (end < vma->vm_end) /* overflow */
+		वापस 0;
+	अगर (vma->vm_next && vma->vm_next->vm_start < end) /* पूर्णांकersection */
+		वापस 0;
+	अगर (get_unmapped_area(शून्य, vma->vm_start, end - vma->vm_start,
 			      0, MAP_FIXED) & ~PAGE_MASK)
-		return 0;
-	return 1;
-}
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 /*
  * Expand (or shrink) an existing mapping, potentially moving it at the
- * same time (controlled by the MREMAP_MAYMOVE flag and available VM space)
+ * same समय (controlled by the MREMAP_MAYMOVE flag and available VM space)
  *
  * MREMAP_FIXED option added 5-Dec-1999 by Benjamin LaHaise
  * This option implies MREMAP_MAYMOVE.
  */
-SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
-		unsigned long, new_len, unsigned long, flags,
-		unsigned long, new_addr)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	unsigned long ret = -EINVAL;
-	unsigned long charged = 0;
+SYSCALL_DEFINE5(mremap, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, old_len,
+		अचिन्हित दीर्घ, new_len, अचिन्हित दीर्घ, flags,
+		अचिन्हित दीर्घ, new_addr)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	अचिन्हित दीर्घ ret = -EINVAL;
+	अचिन्हित दीर्घ अक्षरged = 0;
 	bool locked = false;
-	bool downgraded = false;
-	struct vm_userfaultfd_ctx uf = NULL_VM_UFFD_CTX;
+	bool करोwngraded = false;
+	काष्ठा vm_userfaultfd_ctx uf = शून्य_VM_UFFD_CTX;
 	LIST_HEAD(uf_unmap_early);
 	LIST_HEAD(uf_unmap);
 
 	/*
-	 * There is a deliberate asymmetry here: we strip the pointer tag
+	 * There is a deliberate asymmetry here: we strip the poपूर्णांकer tag
 	 * from the old address but leave the new address alone. This is
-	 * for consistency with mmap(), where we prevent the creation of
+	 * क्रम consistency with mmap(), where we prevent the creation of
 	 * aliasing mappings in userspace by leaving the tag bits of the
-	 * mapping address intact. A non-zero tag will cause the subsequent
+	 * mapping address पूर्णांकact. A non-zero tag will cause the subsequent
 	 * range checks to reject the address as invalid.
 	 *
-	 * See Documentation/arm64/tagged-address-abi.rst for more information.
+	 * See Documentation/arm64/tagged-address-abi.rst क्रम more inक्रमmation.
 	 */
 	addr = untagged_addr(addr);
 
-	if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE | MREMAP_DONTUNMAP))
-		return ret;
+	अगर (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE | MREMAP_DONTUNMAP))
+		वापस ret;
 
-	if (flags & MREMAP_FIXED && !(flags & MREMAP_MAYMOVE))
-		return ret;
+	अगर (flags & MREMAP_FIXED && !(flags & MREMAP_MAYMOVE))
+		वापस ret;
 
 	/*
-	 * MREMAP_DONTUNMAP is always a move and it does not allow resizing
+	 * MREMAP_DONTUNMAP is always a move and it करोes not allow resizing
 	 * in the process.
 	 */
-	if (flags & MREMAP_DONTUNMAP &&
+	अगर (flags & MREMAP_DONTUNMAP &&
 			(!(flags & MREMAP_MAYMOVE) || old_len != new_len))
-		return ret;
+		वापस ret;
 
 
-	if (offset_in_page(addr))
-		return ret;
+	अगर (offset_in_page(addr))
+		वापस ret;
 
 	old_len = PAGE_ALIGN(old_len);
 	new_len = PAGE_ALIGN(new_len);
 
 	/*
-	 * We allow a zero old-len as a special case
-	 * for DOS-emu "duplicate shm area" thing. But
+	 * We allow a zero old-len as a special हाल
+	 * क्रम DOS-emu "duplicate shm area" thing. But
 	 * a zero new-len is nonsensical.
 	 */
-	if (!new_len)
-		return ret;
+	अगर (!new_len)
+		वापस ret;
 
-	if (mmap_write_lock_killable(current->mm))
-		return -EINTR;
+	अगर (mmap_ग_लिखो_lock_समाप्तable(current->mm))
+		वापस -EINTR;
 
-	if (flags & (MREMAP_FIXED | MREMAP_DONTUNMAP)) {
+	अगर (flags & (MREMAP_FIXED | MREMAP_DONTUNMAP)) अणु
 		ret = mremap_to(addr, old_len, new_addr, new_len,
 				&locked, flags, &uf, &uf_unmap_early,
 				&uf_unmap);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Always allow a shrinking remap: that just unmaps
 	 * the unnecessary pages..
-	 * __do_munmap does all the needed commit accounting, and
-	 * downgrades mmap_lock to read if so directed.
+	 * __करो_munmap करोes all the needed commit accounting, and
+	 * करोwngrades mmap_lock to पढ़ो अगर so directed.
 	 */
-	if (old_len >= new_len) {
-		int retval;
+	अगर (old_len >= new_len) अणु
+		पूर्णांक retval;
 
-		retval = __do_munmap(mm, addr+new_len, old_len - new_len,
+		retval = __करो_munmap(mm, addr+new_len, old_len - new_len,
 				  &uf_unmap, true);
-		if (retval < 0 && old_len != new_len) {
+		अगर (retval < 0 && old_len != new_len) अणु
 			ret = retval;
-			goto out;
-		/* Returning 1 indicates mmap_lock is downgraded to read. */
-		} else if (retval == 1)
-			downgraded = true;
+			जाओ out;
+		/* Returning 1 indicates mmap_lock is करोwngraded to पढ़ो. */
+		पूर्ण अन्यथा अगर (retval == 1)
+			करोwngraded = true;
 		ret = addr;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Ok, we need to grow..
 	 */
-	vma = vma_to_resize(addr, old_len, new_len, flags, &charged);
-	if (IS_ERR(vma)) {
+	vma = vma_to_resize(addr, old_len, new_len, flags, &अक्षरged);
+	अगर (IS_ERR(vma)) अणु
 		ret = PTR_ERR(vma);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* old_len exactly to the end of the area..
 	 */
-	if (old_len == vma->vm_end - addr) {
+	अगर (old_len == vma->vm_end - addr) अणु
 		/* can we just expand the current mapping? */
-		if (vma_expandable(vma, new_len - old_len)) {
-			int pages = (new_len - old_len) >> PAGE_SHIFT;
+		अगर (vma_expandable(vma, new_len - old_len)) अणु
+			पूर्णांक pages = (new_len - old_len) >> PAGE_SHIFT;
 
-			if (vma_adjust(vma, vma->vm_start, addr + new_len,
-				       vma->vm_pgoff, NULL)) {
+			अगर (vma_adjust(vma, vma->vm_start, addr + new_len,
+				       vma->vm_pgoff, शून्य)) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			vm_stat_account(mm, vma->vm_flags, pages);
-			if (vma->vm_flags & VM_LOCKED) {
+			अगर (vma->vm_flags & VM_LOCKED) अणु
 				mm->locked_vm += pages;
 				locked = true;
 				new_addr = addr;
-			}
+			पूर्ण
 			ret = addr;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * We weren't able to just expand or shrink the area,
 	 * we need to create a new one and move it..
 	 */
 	ret = -ENOMEM;
-	if (flags & MREMAP_MAYMOVE) {
-		unsigned long map_flags = 0;
-		if (vma->vm_flags & VM_MAYSHARE)
+	अगर (flags & MREMAP_MAYMOVE) अणु
+		अचिन्हित दीर्घ map_flags = 0;
+		अगर (vma->vm_flags & VM_MAYSHARE)
 			map_flags |= MAP_SHARED;
 
 		new_addr = get_unmapped_area(vma->vm_file, 0, new_len,
 					vma->vm_pgoff +
 					((addr - vma->vm_start) >> PAGE_SHIFT),
 					map_flags);
-		if (IS_ERR_VALUE(new_addr)) {
+		अगर (IS_ERR_VALUE(new_addr)) अणु
 			ret = new_addr;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = move_vma(vma, addr, old_len, new_len, new_addr,
 			       &locked, flags, &uf, &uf_unmap);
-	}
+	पूर्ण
 out:
-	if (offset_in_page(ret)) {
-		vm_unacct_memory(charged);
+	अगर (offset_in_page(ret)) अणु
+		vm_unacct_memory(अक्षरged);
 		locked = false;
-	}
-	if (downgraded)
-		mmap_read_unlock(current->mm);
-	else
-		mmap_write_unlock(current->mm);
-	if (locked && new_len > old_len)
+	पूर्ण
+	अगर (करोwngraded)
+		mmap_पढ़ो_unlock(current->mm);
+	अन्यथा
+		mmap_ग_लिखो_unlock(current->mm);
+	अगर (locked && new_len > old_len)
 		mm_populate(new_addr + old_len, new_len - old_len);
 	userfaultfd_unmap_complete(mm, &uf_unmap_early);
 	mremap_userfaultfd_complete(&uf, addr, ret, old_len);
 	userfaultfd_unmap_complete(mm, &uf_unmap);
-	return ret;
-}
+	वापस ret;
+पूर्ण

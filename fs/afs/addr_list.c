@@ -1,363 +1,364 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Server address list management
  *
  * Copyright (C) 2017 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/slab.h>
-#include <linux/ctype.h>
-#include <linux/dns_resolver.h>
-#include <linux/inet.h>
-#include <keys/rxrpc-type.h>
-#include "internal.h"
-#include "afs_fs.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/dns_resolver.h>
+#समावेश <linux/inet.h>
+#समावेश <keys/rxrpc-type.h>
+#समावेश "internal.h"
+#समावेश "afs_fs.h"
 
 /*
  * Release an address list.
  */
-void afs_put_addrlist(struct afs_addr_list *alist)
-{
-	if (alist && refcount_dec_and_test(&alist->usage))
-		kfree_rcu(alist, rcu);
-}
+व्योम afs_put_addrlist(काष्ठा afs_addr_list *alist)
+अणु
+	अगर (alist && refcount_dec_and_test(&alist->usage))
+		kमुक्त_rcu(alist, rcu);
+पूर्ण
 
 /*
  * Allocate an address list.
  */
-struct afs_addr_list *afs_alloc_addrlist(unsigned int nr,
-					 unsigned short service,
-					 unsigned short port)
-{
-	struct afs_addr_list *alist;
-	unsigned int i;
+काष्ठा afs_addr_list *afs_alloc_addrlist(अचिन्हित पूर्णांक nr,
+					 अचिन्हित लघु service,
+					 अचिन्हित लघु port)
+अणु
+	काष्ठा afs_addr_list *alist;
+	अचिन्हित पूर्णांक i;
 
 	_enter("%u,%u,%u", nr, service, port);
 
-	if (nr > AFS_MAX_ADDRESSES)
+	अगर (nr > AFS_MAX_ADDRESSES)
 		nr = AFS_MAX_ADDRESSES;
 
-	alist = kzalloc(struct_size(alist, addrs, nr), GFP_KERNEL);
-	if (!alist)
-		return NULL;
+	alist = kzalloc(काष्ठा_size(alist, addrs, nr), GFP_KERNEL);
+	अगर (!alist)
+		वापस शून्य;
 
 	refcount_set(&alist->usage, 1);
 	alist->max_addrs = nr;
 
-	for (i = 0; i < nr; i++) {
-		struct sockaddr_rxrpc *srx = &alist->addrs[i];
+	क्रम (i = 0; i < nr; i++) अणु
+		काष्ठा sockaddr_rxrpc *srx = &alist->addrs[i];
 		srx->srx_family			= AF_RXRPC;
 		srx->srx_service		= service;
 		srx->transport_type		= SOCK_DGRAM;
-		srx->transport_len		= sizeof(srx->transport.sin6);
+		srx->transport_len		= माप(srx->transport.sin6);
 		srx->transport.sin6.sin6_family	= AF_INET6;
 		srx->transport.sin6.sin6_port	= htons(port);
-	}
+	पूर्ण
 
-	return alist;
-}
+	वापस alist;
+पूर्ण
 
 /*
  * Parse a text string consisting of delimited addresses.
  */
-struct afs_vlserver_list *afs_parse_text_addrs(struct afs_net *net,
-					       const char *text, size_t len,
-					       char delim,
-					       unsigned short service,
-					       unsigned short port)
-{
-	struct afs_vlserver_list *vllist;
-	struct afs_addr_list *alist;
-	const char *p, *end = text + len;
-	const char *problem;
-	unsigned int nr = 0;
-	int ret = -ENOMEM;
+काष्ठा afs_vlserver_list *afs_parse_text_addrs(काष्ठा afs_net *net,
+					       स्थिर अक्षर *text, माप_प्रकार len,
+					       अक्षर delim,
+					       अचिन्हित लघु service,
+					       अचिन्हित लघु port)
+अणु
+	काष्ठा afs_vlserver_list *vllist;
+	काष्ठा afs_addr_list *alist;
+	स्थिर अक्षर *p, *end = text + len;
+	स्थिर अक्षर *problem;
+	अचिन्हित पूर्णांक nr = 0;
+	पूर्णांक ret = -ENOMEM;
 
-	_enter("%*.*s,%c", (int)len, (int)len, text, delim);
+	_enter("%*.*s,%c", (पूर्णांक)len, (पूर्णांक)len, text, delim);
 
-	if (!len) {
+	अगर (!len) अणु
 		_leave(" = -EDESTADDRREQ [empty]");
-		return ERR_PTR(-EDESTADDRREQ);
-	}
+		वापस ERR_PTR(-EDESTADDRREQ);
+	पूर्ण
 
-	if (delim == ':' && (memchr(text, ',', len) || !memchr(text, '.', len)))
+	अगर (delim == ':' && (memchr(text, ',', len) || !memchr(text, '.', len)))
 		delim = ',';
 
 	/* Count the addresses */
 	p = text;
-	do {
-		if (!*p) {
+	करो अणु
+		अगर (!*p) अणु
 			problem = "nul";
-			goto inval;
-		}
-		if (*p == delim)
-			continue;
+			जाओ inval;
+		पूर्ण
+		अगर (*p == delim)
+			जारी;
 		nr++;
-		if (*p == '[') {
+		अगर (*p == '[') अणु
 			p++;
-			if (p == end) {
+			अगर (p == end) अणु
 				problem = "brace1";
-				goto inval;
-			}
-			p = memchr(p, ']', end - p);
-			if (!p) {
+				जाओ inval;
+			पूर्ण
+			p = स_प्रथम(p, ']', end - p);
+			अगर (!p) अणु
 				problem = "brace2";
-				goto inval;
-			}
+				जाओ inval;
+			पूर्ण
 			p++;
-			if (p >= end)
-				break;
-		}
+			अगर (p >= end)
+				अवरोध;
+		पूर्ण
 
-		p = memchr(p, delim, end - p);
-		if (!p)
-			break;
+		p = स_प्रथम(p, delim, end - p);
+		अगर (!p)
+			अवरोध;
 		p++;
-	} while (p < end);
+	पूर्ण जबतक (p < end);
 
 	_debug("%u/%u addresses", nr, AFS_MAX_ADDRESSES);
 
 	vllist = afs_alloc_vlserver_list(1);
-	if (!vllist)
-		return ERR_PTR(-ENOMEM);
+	अगर (!vllist)
+		वापस ERR_PTR(-ENOMEM);
 
 	vllist->nr_servers = 1;
 	vllist->servers[0].server = afs_alloc_vlserver("<dummy>", 7, AFS_VL_PORT);
-	if (!vllist->servers[0].server)
-		goto error_vl;
+	अगर (!vllist->servers[0].server)
+		जाओ error_vl;
 
 	alist = afs_alloc_addrlist(nr, service, AFS_VL_PORT);
-	if (!alist)
-		goto error;
+	अगर (!alist)
+		जाओ error;
 
 	/* Extract the addresses */
 	p = text;
-	do {
-		const char *q, *stop;
-		unsigned int xport = port;
+	करो अणु
+		स्थिर अक्षर *q, *stop;
+		अचिन्हित पूर्णांक xport = port;
 		__be32 x[4];
-		int family;
+		पूर्णांक family;
 
-		if (*p == delim) {
+		अगर (*p == delim) अणु
 			p++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (*p == '[') {
+		अगर (*p == '[') अणु
 			p++;
-			q = memchr(p, ']', end - p);
-		} else {
-			for (q = p; q < end; q++)
-				if (*q == '+' || *q == delim)
-					break;
-		}
+			q = स_प्रथम(p, ']', end - p);
+		पूर्ण अन्यथा अणु
+			क्रम (q = p; q < end; q++)
+				अगर (*q == '+' || *q == delim)
+					अवरोध;
+		पूर्ण
 
-		if (in4_pton(p, q - p, (u8 *)&x[0], -1, &stop)) {
+		अगर (in4_pton(p, q - p, (u8 *)&x[0], -1, &stop)) अणु
 			family = AF_INET;
-		} else if (in6_pton(p, q - p, (u8 *)x, -1, &stop)) {
+		पूर्ण अन्यथा अगर (in6_pton(p, q - p, (u8 *)x, -1, &stop)) अणु
 			family = AF_INET6;
-		} else {
+		पूर्ण अन्यथा अणु
 			problem = "family";
-			goto bad_address;
-		}
+			जाओ bad_address;
+		पूर्ण
 
 		p = q;
-		if (stop != p) {
+		अगर (stop != p) अणु
 			problem = "nostop";
-			goto bad_address;
-		}
+			जाओ bad_address;
+		पूर्ण
 
-		if (q < end && *q == ']')
+		अगर (q < end && *q == ']')
 			p++;
 
-		if (p < end) {
-			if (*p == '+') {
-				/* Port number specification "+1234" */
+		अगर (p < end) अणु
+			अगर (*p == '+') अणु
+				/* Port number specअगरication "+1234" */
 				xport = 0;
 				p++;
-				if (p >= end || !isdigit(*p)) {
+				अगर (p >= end || !है_अंक(*p)) अणु
 					problem = "port";
-					goto bad_address;
-				}
-				do {
+					जाओ bad_address;
+				पूर्ण
+				करो अणु
 					xport *= 10;
 					xport += *p - '0';
-					if (xport > 65535) {
+					अगर (xport > 65535) अणु
 						problem = "pval";
-						goto bad_address;
-					}
+						जाओ bad_address;
+					पूर्ण
 					p++;
-				} while (p < end && isdigit(*p));
-			} else if (*p == delim) {
+				पूर्ण जबतक (p < end && है_अंक(*p));
+			पूर्ण अन्यथा अगर (*p == delim) अणु
 				p++;
-			} else {
+			पूर्ण अन्यथा अणु
 				problem = "weird";
-				goto bad_address;
-			}
-		}
+				जाओ bad_address;
+			पूर्ण
+		पूर्ण
 
-		if (family == AF_INET)
+		अगर (family == AF_INET)
 			afs_merge_fs_addr4(alist, x[0], xport);
-		else
+		अन्यथा
 			afs_merge_fs_addr6(alist, x, xport);
 
-	} while (p < end);
+	पूर्ण जबतक (p < end);
 
-	rcu_assign_pointer(vllist->servers[0].server->addresses, alist);
+	rcu_assign_poपूर्णांकer(vllist->servers[0].server->addresses, alist);
 	_leave(" = [nr %u]", alist->nr_addrs);
-	return vllist;
+	वापस vllist;
 
 inval:
 	_leave(" = -EINVAL [%s %zu %*.*s]",
-	       problem, p - text, (int)len, (int)len, text);
-	return ERR_PTR(-EINVAL);
+	       problem, p - text, (पूर्णांक)len, (पूर्णांक)len, text);
+	वापस ERR_PTR(-EINVAL);
 bad_address:
 	_leave(" = -EINVAL [%s %zu %*.*s]",
-	       problem, p - text, (int)len, (int)len, text);
+	       problem, p - text, (पूर्णांक)len, (पूर्णांक)len, text);
 	ret = -EINVAL;
 error:
 	afs_put_addrlist(alist);
 error_vl:
 	afs_put_vlserverlist(net, vllist);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
 /*
- * Compare old and new address lists to see if there's been any change.
- * - How to do this in better than O(Nlog(N)) time?
- *   - We don't really want to sort the address list, but would rather take the
- *     list as we got it so as not to undo record rotation by the DNS server.
+ * Compare old and new address lists to see अगर there's been any change.
+ * - How to करो this in better than O(Nlog(N)) समय?
+ *   - We करोn't really want to sort the address list, but would rather take the
+ *     list as we got it so as not to unकरो record rotation by the DNS server.
  */
-#if 0
-static int afs_cmp_addr_list(const struct afs_addr_list *a1,
-			     const struct afs_addr_list *a2)
-{
-}
-#endif
+#अगर 0
+अटल पूर्णांक afs_cmp_addr_list(स्थिर काष्ठा afs_addr_list *a1,
+			     स्थिर काष्ठा afs_addr_list *a2)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Perform a DNS query for VL servers and build a up an address list.
+ * Perक्रमm a DNS query क्रम VL servers and build a up an address list.
  */
-struct afs_vlserver_list *afs_dns_query(struct afs_cell *cell, time64_t *_expiry)
-{
-	struct afs_vlserver_list *vllist;
-	char *result = NULL;
-	int ret;
+काष्ठा afs_vlserver_list *afs_dns_query(काष्ठा afs_cell *cell, समय64_t *_expiry)
+अणु
+	काष्ठा afs_vlserver_list *vllist;
+	अक्षर *result = शून्य;
+	पूर्णांक ret;
 
 	_enter("%s", cell->name);
 
 	ret = dns_query(cell->net->net, "afsdb", cell->name, cell->name_len,
 			"srv=1", &result, _expiry, true);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		_leave(" = %d [dns]", ret);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	if (*_expiry == 0)
-		*_expiry = ktime_get_real_seconds() + 60;
+	अगर (*_expiry == 0)
+		*_expiry = kसमय_get_real_seconds() + 60;
 
-	if (ret > 1 && result[0] == 0)
+	अगर (ret > 1 && result[0] == 0)
 		vllist = afs_extract_vlserver_list(cell, result, ret);
-	else
+	अन्यथा
 		vllist = afs_parse_text_addrs(cell->net, result, ret, ',',
 					      VL_SERVICE, AFS_VL_PORT);
-	kfree(result);
-	if (IS_ERR(vllist) && vllist != ERR_PTR(-ENOMEM))
+	kमुक्त(result);
+	अगर (IS_ERR(vllist) && vllist != ERR_PTR(-ENOMEM))
 		pr_err("Failed to parse DNS data %ld\n", PTR_ERR(vllist));
 
-	return vllist;
-}
+	वापस vllist;
+पूर्ण
 
 /*
- * Merge an IPv4 entry into a fileserver address list.
+ * Merge an IPv4 entry पूर्णांकo a fileserver address list.
  */
-void afs_merge_fs_addr4(struct afs_addr_list *alist, __be32 xdr, u16 port)
-{
-	struct sockaddr_rxrpc *srx;
+व्योम afs_merge_fs_addr4(काष्ठा afs_addr_list *alist, __be32 xdr, u16 port)
+अणु
+	काष्ठा sockaddr_rxrpc *srx;
 	u32 addr = ntohl(xdr);
-	int i;
+	पूर्णांक i;
 
-	if (alist->nr_addrs >= alist->max_addrs)
-		return;
+	अगर (alist->nr_addrs >= alist->max_addrs)
+		वापस;
 
-	for (i = 0; i < alist->nr_ipv4; i++) {
-		struct sockaddr_in *a = &alist->addrs[i].transport.sin;
+	क्रम (i = 0; i < alist->nr_ipv4; i++) अणु
+		काष्ठा sockaddr_in *a = &alist->addrs[i].transport.sin;
 		u32 a_addr = ntohl(a->sin_addr.s_addr);
 		u16 a_port = ntohs(a->sin_port);
 
-		if (addr == a_addr && port == a_port)
-			return;
-		if (addr == a_addr && port < a_port)
-			break;
-		if (addr < a_addr)
-			break;
-	}
+		अगर (addr == a_addr && port == a_port)
+			वापस;
+		अगर (addr == a_addr && port < a_port)
+			अवरोध;
+		अगर (addr < a_addr)
+			अवरोध;
+	पूर्ण
 
-	if (i < alist->nr_addrs)
-		memmove(alist->addrs + i + 1,
+	अगर (i < alist->nr_addrs)
+		स_हटाओ(alist->addrs + i + 1,
 			alist->addrs + i,
-			sizeof(alist->addrs[0]) * (alist->nr_addrs - i));
+			माप(alist->addrs[0]) * (alist->nr_addrs - i));
 
 	srx = &alist->addrs[i];
 	srx->srx_family = AF_RXRPC;
 	srx->transport_type = SOCK_DGRAM;
-	srx->transport_len = sizeof(srx->transport.sin);
+	srx->transport_len = माप(srx->transport.sin);
 	srx->transport.sin.sin_family = AF_INET;
 	srx->transport.sin.sin_port = htons(port);
 	srx->transport.sin.sin_addr.s_addr = xdr;
 	alist->nr_ipv4++;
 	alist->nr_addrs++;
-}
+पूर्ण
 
 /*
- * Merge an IPv6 entry into a fileserver address list.
+ * Merge an IPv6 entry पूर्णांकo a fileserver address list.
  */
-void afs_merge_fs_addr6(struct afs_addr_list *alist, __be32 *xdr, u16 port)
-{
-	struct sockaddr_rxrpc *srx;
-	int i, diff;
+व्योम afs_merge_fs_addr6(काष्ठा afs_addr_list *alist, __be32 *xdr, u16 port)
+अणु
+	काष्ठा sockaddr_rxrpc *srx;
+	पूर्णांक i, dअगरf;
 
-	if (alist->nr_addrs >= alist->max_addrs)
-		return;
+	अगर (alist->nr_addrs >= alist->max_addrs)
+		वापस;
 
-	for (i = alist->nr_ipv4; i < alist->nr_addrs; i++) {
-		struct sockaddr_in6 *a = &alist->addrs[i].transport.sin6;
+	क्रम (i = alist->nr_ipv4; i < alist->nr_addrs; i++) अणु
+		काष्ठा sockaddr_in6 *a = &alist->addrs[i].transport.sin6;
 		u16 a_port = ntohs(a->sin6_port);
 
-		diff = memcmp(xdr, &a->sin6_addr, 16);
-		if (diff == 0 && port == a_port)
-			return;
-		if (diff == 0 && port < a_port)
-			break;
-		if (diff < 0)
-			break;
-	}
+		dअगरf = स_भेद(xdr, &a->sin6_addr, 16);
+		अगर (dअगरf == 0 && port == a_port)
+			वापस;
+		अगर (dअगरf == 0 && port < a_port)
+			अवरोध;
+		अगर (dअगरf < 0)
+			अवरोध;
+	पूर्ण
 
-	if (i < alist->nr_addrs)
-		memmove(alist->addrs + i + 1,
+	अगर (i < alist->nr_addrs)
+		स_हटाओ(alist->addrs + i + 1,
 			alist->addrs + i,
-			sizeof(alist->addrs[0]) * (alist->nr_addrs - i));
+			माप(alist->addrs[0]) * (alist->nr_addrs - i));
 
 	srx = &alist->addrs[i];
 	srx->srx_family = AF_RXRPC;
 	srx->transport_type = SOCK_DGRAM;
-	srx->transport_len = sizeof(srx->transport.sin6);
+	srx->transport_len = माप(srx->transport.sin6);
 	srx->transport.sin6.sin6_family = AF_INET6;
 	srx->transport.sin6.sin6_port = htons(port);
-	memcpy(&srx->transport.sin6.sin6_addr, xdr, 16);
+	स_नकल(&srx->transport.sin6.sin6_addr, xdr, 16);
 	alist->nr_addrs++;
-}
+पूर्ण
 
 /*
  * Get an address to try.
  */
-bool afs_iterate_addresses(struct afs_addr_cursor *ac)
-{
-	unsigned long set, failed;
-	int index;
+bool afs_iterate_addresses(काष्ठा afs_addr_cursor *ac)
+अणु
+	अचिन्हित दीर्घ set, failed;
+	पूर्णांक index;
 
-	if (!ac->alist)
-		return false;
+	अगर (!ac->alist)
+		वापस false;
 
 	set = ac->alist->responded;
 	failed = ac->alist->failed;
@@ -367,12 +368,12 @@ bool afs_iterate_addresses(struct afs_addr_cursor *ac)
 
 	set &= ~(failed | ac->tried);
 
-	if (!set)
-		return false;
+	अगर (!set)
+		वापस false;
 
 	index = READ_ONCE(ac->alist->preferred);
-	if (test_bit(index, &set))
-		goto selected;
+	अगर (test_bit(index, &set))
+		जाओ selected;
 
 	index = __ffs(set);
 
@@ -380,25 +381,25 @@ selected:
 	ac->index = index;
 	set_bit(index, &ac->tried);
 	ac->responded = false;
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Release an address list cursor.
  */
-int afs_end_cursor(struct afs_addr_cursor *ac)
-{
-	struct afs_addr_list *alist;
+पूर्णांक afs_end_cursor(काष्ठा afs_addr_cursor *ac)
+अणु
+	काष्ठा afs_addr_list *alist;
 
 	alist = ac->alist;
-	if (alist) {
-		if (ac->responded &&
+	अगर (alist) अणु
+		अगर (ac->responded &&
 		    ac->index != alist->preferred &&
 		    test_bit(ac->alist->preferred, &ac->tried))
 			WRITE_ONCE(alist->preferred, ac->index);
 		afs_put_addrlist(alist);
-		ac->alist = NULL;
-	}
+		ac->alist = शून्य;
+	पूर्ण
 
-	return ac->error;
-}
+	वापस ac->error;
+पूर्ण

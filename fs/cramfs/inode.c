@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Compressed rom filesystem for Linux.
+ * Compressed rom fileप्रणाली क्रम Linux.
  *
  * Copyright (C) 1999 Linus Torvalds.
  *
@@ -7,401 +8,401 @@
  */
 
 /*
- * These are the VFS interfaces to the compressed rom filesystem.
+ * These are the VFS पूर्णांकerfaces to the compressed rom fileप्रणाली.
  * The actual compression is based on zlib, see the other files.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <linux/pagemap.h>
-#include <linux/pfn_t.h>
-#include <linux/ramfs.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/blkdev.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/super.h>
-#include <linux/fs_context.h>
-#include <linux/slab.h>
-#include <linux/vfs.h>
-#include <linux/mutex.h>
-#include <uapi/linux/cramfs_fs.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/pfn_t.h>
+#समावेश <linux/ramfs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/super.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/mutex.h>
+#समावेश <uapi/linux/cramfs_fs.h>
+#समावेश <linux/uaccess.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
 /*
  * cramfs super-block data in memory
  */
-struct cramfs_sb_info {
-	unsigned long magic;
-	unsigned long size;
-	unsigned long blocks;
-	unsigned long files;
-	unsigned long flags;
-	void *linear_virt_addr;
-	resource_size_t linear_phys_addr;
-	size_t mtd_point_size;
-};
+काष्ठा cramfs_sb_info अणु
+	अचिन्हित दीर्घ magic;
+	अचिन्हित दीर्घ size;
+	अचिन्हित दीर्घ blocks;
+	अचिन्हित दीर्घ files;
+	अचिन्हित दीर्घ flags;
+	व्योम *linear_virt_addr;
+	resource_माप_प्रकार linear_phys_addr;
+	माप_प्रकार mtd_poपूर्णांक_size;
+पूर्ण;
 
-static inline struct cramfs_sb_info *CRAMFS_SB(struct super_block *sb)
-{
-	return sb->s_fs_info;
-}
+अटल अंतरभूत काष्ठा cramfs_sb_info *CRAMFS_SB(काष्ठा super_block *sb)
+अणु
+	वापस sb->s_fs_info;
+पूर्ण
 
-static const struct super_operations cramfs_ops;
-static const struct inode_operations cramfs_dir_inode_operations;
-static const struct file_operations cramfs_directory_operations;
-static const struct file_operations cramfs_physmem_fops;
-static const struct address_space_operations cramfs_aops;
+अटल स्थिर काष्ठा super_operations cramfs_ops;
+अटल स्थिर काष्ठा inode_operations cramfs_dir_inode_operations;
+अटल स्थिर काष्ठा file_operations cramfs_directory_operations;
+अटल स्थिर काष्ठा file_operations cramfs_physmem_fops;
+अटल स्थिर काष्ठा address_space_operations cramfs_aops;
 
-static DEFINE_MUTEX(read_mutex);
+अटल DEFINE_MUTEX(पढ़ो_mutex);
 
 
 /* These macros may change in future, to provide better st_ino semantics. */
-#define OFFSET(x)	((x)->i_ino)
+#घोषणा OFFSET(x)	((x)->i_ino)
 
-static unsigned long cramino(const struct cramfs_inode *cino, unsigned int offset)
-{
-	if (!cino->offset)
-		return offset + 1;
-	if (!cino->size)
-		return offset + 1;
+अटल अचिन्हित दीर्घ cramino(स्थिर काष्ठा cramfs_inode *cino, अचिन्हित पूर्णांक offset)
+अणु
+	अगर (!cino->offset)
+		वापस offset + 1;
+	अगर (!cino->size)
+		वापस offset + 1;
 
 	/*
 	 * The file mode test fixes buggy mkcramfs implementations where
-	 * cramfs_inode->offset is set to a non zero value for entries
-	 * which did not contain data, like devices node and fifos.
+	 * cramfs_inode->offset is set to a non zero value क्रम entries
+	 * which did not contain data, like devices node and fअगरos.
 	 */
-	switch (cino->mode & S_IFMT) {
-	case S_IFREG:
-	case S_IFDIR:
-	case S_IFLNK:
-		return cino->offset << 2;
-	default:
-		break;
-	}
-	return offset + 1;
-}
+	चयन (cino->mode & S_IFMT) अणु
+	हाल S_IFREG:
+	हाल S_IFसूची:
+	हाल S_IFLNK:
+		वापस cino->offset << 2;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस offset + 1;
+पूर्ण
 
-static struct inode *get_cramfs_inode(struct super_block *sb,
-	const struct cramfs_inode *cramfs_inode, unsigned int offset)
-{
-	struct inode *inode;
-	static struct timespec64 zerotime;
+अटल काष्ठा inode *get_cramfs_inode(काष्ठा super_block *sb,
+	स्थिर काष्ठा cramfs_inode *cramfs_inode, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा inode *inode;
+	अटल काष्ठा बारpec64 zeroसमय;
 
 	inode = iget_locked(sb, cramino(cramfs_inode, offset));
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
-	if (!(inode->i_state & I_NEW))
-		return inode;
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
+	अगर (!(inode->i_state & I_NEW))
+		वापस inode;
 
-	switch (cramfs_inode->mode & S_IFMT) {
-	case S_IFREG:
+	चयन (cramfs_inode->mode & S_IFMT) अणु
+	हाल S_IFREG:
 		inode->i_fop = &generic_ro_fops;
 		inode->i_data.a_ops = &cramfs_aops;
-		if (IS_ENABLED(CONFIG_CRAMFS_MTD) &&
+		अगर (IS_ENABLED(CONFIG_CRAMFS_MTD) &&
 		    CRAMFS_SB(sb)->flags & CRAMFS_FLAG_EXT_BLOCK_POINTERS &&
 		    CRAMFS_SB(sb)->linear_phys_addr)
 			inode->i_fop = &cramfs_physmem_fops;
-		break;
-	case S_IFDIR:
+		अवरोध;
+	हाल S_IFसूची:
 		inode->i_op = &cramfs_dir_inode_operations;
 		inode->i_fop = &cramfs_directory_operations;
-		break;
-	case S_IFLNK:
+		अवरोध;
+	हाल S_IFLNK:
 		inode->i_op = &page_symlink_inode_operations;
 		inode_nohighmem(inode);
 		inode->i_data.a_ops = &cramfs_aops;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		init_special_inode(inode, cramfs_inode->mode,
 				old_decode_dev(cramfs_inode->size));
-	}
+	पूर्ण
 
 	inode->i_mode = cramfs_inode->mode;
-	i_uid_write(inode, cramfs_inode->uid);
-	i_gid_write(inode, cramfs_inode->gid);
+	i_uid_ग_लिखो(inode, cramfs_inode->uid);
+	i_gid_ग_लिखो(inode, cramfs_inode->gid);
 
-	/* if the lower 2 bits are zero, the inode contains data */
-	if (!(inode->i_ino & 3)) {
+	/* अगर the lower 2 bits are zero, the inode contains data */
+	अगर (!(inode->i_ino & 3)) अणु
 		inode->i_size = cramfs_inode->size;
 		inode->i_blocks = (cramfs_inode->size - 1) / 512 + 1;
-	}
+	पूर्ण
 
-	/* Struct copy intentional */
-	inode->i_mtime = inode->i_atime = inode->i_ctime = zerotime;
-	/* inode->i_nlink is left 1 - arguably wrong for directories,
-	   but it's the best we can do without reading the directory
+	/* Struct copy पूर्णांकentional */
+	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = zeroसमय;
+	/* inode->i_nlink is left 1 - arguably wrong क्रम directories,
+	   but it's the best we can करो without पढ़ोing the directory
 	   contents.  1 yields the right result in GNU find, even
 	   without -noleaf option. */
 
 	unlock_new_inode(inode);
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
 /*
- * We have our own block cache: don't fill up the buffer cache
- * with the rom-image, because the way the filesystem is set
+ * We have our own block cache: करोn't fill up the buffer cache
+ * with the rom-image, because the way the fileप्रणाली is set
  * up the accesses should be fairly regular and cached in the
  * page cache and dentry tree anyway..
  *
  * This also acts as a way to guarantee contiguous areas of up to
- * BLKS_PER_BUF*PAGE_SIZE, so that the caller doesn't need to
+ * BLKS_PER_BUF*PAGE_SIZE, so that the caller करोesn't need to
  * worry about end-of-buffer issues even when decompressing a full
  * page cache.
  *
- * Note: This is all optimized away at compile time when
+ * Note: This is all optimized away at compile समय when
  *       CONFIG_CRAMFS_BLOCKDEV=n.
  */
-#define READ_BUFFERS (2)
+#घोषणा READ_BUFFERS (2)
 /* NEXT_BUFFER(): Loop over [0..(READ_BUFFERS-1)]. */
-#define NEXT_BUFFER(_ix) ((_ix) ^ 1)
+#घोषणा NEXT_BUFFER(_ix) ((_ix) ^ 1)
 
 /*
- * BLKS_PER_BUF_SHIFT should be at least 2 to allow for "compressed"
+ * BLKS_PER_BUF_SHIFT should be at least 2 to allow क्रम "compressed"
  * data that takes up more space than the original and with unlucky
  * alignment.
  */
-#define BLKS_PER_BUF_SHIFT	(2)
-#define BLKS_PER_BUF		(1 << BLKS_PER_BUF_SHIFT)
-#define BUFFER_SIZE		(BLKS_PER_BUF*PAGE_SIZE)
+#घोषणा BLKS_PER_BUF_SHIFT	(2)
+#घोषणा BLKS_PER_BUF		(1 << BLKS_PER_BUF_SHIFT)
+#घोषणा BUFFER_SIZE		(BLKS_PER_BUF*PAGE_SIZE)
 
-static unsigned char read_buffers[READ_BUFFERS][BUFFER_SIZE];
-static unsigned buffer_blocknr[READ_BUFFERS];
-static struct super_block *buffer_dev[READ_BUFFERS];
-static int next_buffer;
+अटल अचिन्हित अक्षर पढ़ो_buffers[READ_BUFFERS][BUFFER_SIZE];
+अटल अचिन्हित buffer_blocknr[READ_BUFFERS];
+अटल काष्ठा super_block *buffer_dev[READ_BUFFERS];
+अटल पूर्णांक next_buffer;
 
 /*
- * Populate our block cache and return a pointer to it.
+ * Populate our block cache and वापस a poपूर्णांकer to it.
  */
-static void *cramfs_blkdev_read(struct super_block *sb, unsigned int offset,
-				unsigned int len)
-{
-	struct address_space *mapping = sb->s_bdev->bd_inode->i_mapping;
-	struct page *pages[BLKS_PER_BUF];
-	unsigned i, blocknr, buffer;
-	unsigned long devsize;
-	char *data;
+अटल व्योम *cramfs_blkdev_पढ़ो(काष्ठा super_block *sb, अचिन्हित पूर्णांक offset,
+				अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा address_space *mapping = sb->s_bdev->bd_inode->i_mapping;
+	काष्ठा page *pages[BLKS_PER_BUF];
+	अचिन्हित i, blocknr, buffer;
+	अचिन्हित दीर्घ devsize;
+	अक्षर *data;
 
-	if (!len)
-		return NULL;
+	अगर (!len)
+		वापस शून्य;
 	blocknr = offset >> PAGE_SHIFT;
 	offset &= PAGE_SIZE - 1;
 
-	/* Check if an existing buffer already has the data.. */
-	for (i = 0; i < READ_BUFFERS; i++) {
-		unsigned int blk_offset;
+	/* Check अगर an existing buffer alपढ़ोy has the data.. */
+	क्रम (i = 0; i < READ_BUFFERS; i++) अणु
+		अचिन्हित पूर्णांक blk_offset;
 
-		if (buffer_dev[i] != sb)
-			continue;
-		if (blocknr < buffer_blocknr[i])
-			continue;
+		अगर (buffer_dev[i] != sb)
+			जारी;
+		अगर (blocknr < buffer_blocknr[i])
+			जारी;
 		blk_offset = (blocknr - buffer_blocknr[i]) << PAGE_SHIFT;
 		blk_offset += offset;
-		if (blk_offset > BUFFER_SIZE ||
+		अगर (blk_offset > BUFFER_SIZE ||
 		    blk_offset + len > BUFFER_SIZE)
-			continue;
-		return read_buffers[i] + blk_offset;
-	}
+			जारी;
+		वापस पढ़ो_buffers[i] + blk_offset;
+	पूर्ण
 
 	devsize = mapping->host->i_size >> PAGE_SHIFT;
 
-	/* Ok, read in BLKS_PER_BUF pages completely first. */
-	for (i = 0; i < BLKS_PER_BUF; i++) {
-		struct page *page = NULL;
+	/* Ok, पढ़ो in BLKS_PER_BUF pages completely first. */
+	क्रम (i = 0; i < BLKS_PER_BUF; i++) अणु
+		काष्ठा page *page = शून्य;
 
-		if (blocknr + i < devsize) {
-			page = read_mapping_page(mapping, blocknr + i, NULL);
+		अगर (blocknr + i < devsize) अणु
+			page = पढ़ो_mapping_page(mapping, blocknr + i, शून्य);
 			/* synchronous error? */
-			if (IS_ERR(page))
-				page = NULL;
-		}
+			अगर (IS_ERR(page))
+				page = शून्य;
+		पूर्ण
 		pages[i] = page;
-	}
+	पूर्ण
 
-	for (i = 0; i < BLKS_PER_BUF; i++) {
-		struct page *page = pages[i];
+	क्रम (i = 0; i < BLKS_PER_BUF; i++) अणु
+		काष्ठा page *page = pages[i];
 
-		if (page) {
-			wait_on_page_locked(page);
-			if (!PageUptodate(page)) {
+		अगर (page) अणु
+			रुको_on_page_locked(page);
+			अगर (!PageUptodate(page)) अणु
 				/* asynchronous error */
 				put_page(page);
-				pages[i] = NULL;
-			}
-		}
-	}
+				pages[i] = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	buffer = next_buffer;
 	next_buffer = NEXT_BUFFER(buffer);
 	buffer_blocknr[buffer] = blocknr;
 	buffer_dev[buffer] = sb;
 
-	data = read_buffers[buffer];
-	for (i = 0; i < BLKS_PER_BUF; i++) {
-		struct page *page = pages[i];
+	data = पढ़ो_buffers[buffer];
+	क्रम (i = 0; i < BLKS_PER_BUF; i++) अणु
+		काष्ठा page *page = pages[i];
 
-		if (page) {
-			memcpy(data, kmap(page), PAGE_SIZE);
+		अगर (page) अणु
+			स_नकल(data, kmap(page), PAGE_SIZE);
 			kunmap(page);
 			put_page(page);
-		} else
-			memset(data, 0, PAGE_SIZE);
+		पूर्ण अन्यथा
+			स_रखो(data, 0, PAGE_SIZE);
 		data += PAGE_SIZE;
-	}
-	return read_buffers[buffer] + offset;
-}
+	पूर्ण
+	वापस पढ़ो_buffers[buffer] + offset;
+पूर्ण
 
 /*
- * Return a pointer to the linearly addressed cramfs image in memory.
+ * Return a poपूर्णांकer to the linearly addressed cramfs image in memory.
  */
-static void *cramfs_direct_read(struct super_block *sb, unsigned int offset,
-				unsigned int len)
-{
-	struct cramfs_sb_info *sbi = CRAMFS_SB(sb);
+अटल व्योम *cramfs_direct_पढ़ो(काष्ठा super_block *sb, अचिन्हित पूर्णांक offset,
+				अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा cramfs_sb_info *sbi = CRAMFS_SB(sb);
 
-	if (!len)
-		return NULL;
-	if (len > sbi->size || offset > sbi->size - len)
-		return page_address(ZERO_PAGE(0));
-	return sbi->linear_virt_addr + offset;
-}
+	अगर (!len)
+		वापस शून्य;
+	अगर (len > sbi->size || offset > sbi->size - len)
+		वापस page_address(ZERO_PAGE(0));
+	वापस sbi->linear_virt_addr + offset;
+पूर्ण
 
 /*
- * Returns a pointer to a buffer containing at least LEN bytes of
- * filesystem starting at byte offset OFFSET into the filesystem.
+ * Returns a poपूर्णांकer to a buffer containing at least LEN bytes of
+ * fileप्रणाली starting at byte offset OFFSET पूर्णांकo the fileप्रणाली.
  */
-static void *cramfs_read(struct super_block *sb, unsigned int offset,
-			 unsigned int len)
-{
-	struct cramfs_sb_info *sbi = CRAMFS_SB(sb);
+अटल व्योम *cramfs_पढ़ो(काष्ठा super_block *sb, अचिन्हित पूर्णांक offset,
+			 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा cramfs_sb_info *sbi = CRAMFS_SB(sb);
 
-	if (IS_ENABLED(CONFIG_CRAMFS_MTD) && sbi->linear_virt_addr)
-		return cramfs_direct_read(sb, offset, len);
-	else if (IS_ENABLED(CONFIG_CRAMFS_BLOCKDEV))
-		return cramfs_blkdev_read(sb, offset, len);
-	else
-		return NULL;
-}
+	अगर (IS_ENABLED(CONFIG_CRAMFS_MTD) && sbi->linear_virt_addr)
+		वापस cramfs_direct_पढ़ो(sb, offset, len);
+	अन्यथा अगर (IS_ENABLED(CONFIG_CRAMFS_BLOCKDEV))
+		वापस cramfs_blkdev_पढ़ो(sb, offset, len);
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
 /*
  * For a mapping to be possible, we need a range of uncompressed and
- * contiguous blocks. Return the offset for the first block and number of
- * valid blocks for which that is true, or zero otherwise.
+ * contiguous blocks. Return the offset क्रम the first block and number of
+ * valid blocks क्रम which that is true, or zero otherwise.
  */
-static u32 cramfs_get_block_range(struct inode *inode, u32 pgoff, u32 *pages)
-{
-	struct cramfs_sb_info *sbi = CRAMFS_SB(inode->i_sb);
-	int i;
+अटल u32 cramfs_get_block_range(काष्ठा inode *inode, u32 pgoff, u32 *pages)
+अणु
+	काष्ठा cramfs_sb_info *sbi = CRAMFS_SB(inode->i_sb);
+	पूर्णांक i;
 	u32 *blockptrs, first_block_addr;
 
 	/*
 	 * We can dereference memory directly here as this code may be
-	 * reached only when there is a direct filesystem image mapping
+	 * reached only when there is a direct fileप्रणाली image mapping
 	 * available in memory.
 	 */
 	blockptrs = (u32 *)(sbi->linear_virt_addr + OFFSET(inode) + pgoff * 4);
 	first_block_addr = blockptrs[0] & ~CRAMFS_BLK_FLAGS;
 	i = 0;
-	do {
-		u32 block_off = i * (PAGE_SIZE >> CRAMFS_BLK_DIRECT_PTR_SHIFT);
+	करो अणु
+		u32 block_off = i * (PAGE_SIZE >> CRAMFS_BLK_सूचीECT_PTR_SHIFT);
 		u32 expect = (first_block_addr + block_off) |
-			     CRAMFS_BLK_FLAG_DIRECT_PTR |
+			     CRAMFS_BLK_FLAG_सूचीECT_PTR |
 			     CRAMFS_BLK_FLAG_UNCOMPRESSED;
-		if (blockptrs[i] != expect) {
+		अगर (blockptrs[i] != expect) अणु
 			pr_debug("range: block %d/%d got %#x expects %#x\n",
 				 pgoff+i, pgoff + *pages - 1,
 				 blockptrs[i], expect);
-			if (i == 0)
-				return 0;
-			break;
-		}
-	} while (++i < *pages);
+			अगर (i == 0)
+				वापस 0;
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (++i < *pages);
 
 	*pages = i;
-	return first_block_addr << CRAMFS_BLK_DIRECT_PTR_SHIFT;
-}
+	वापस first_block_addr << CRAMFS_BLK_सूचीECT_PTR_SHIFT;
+पूर्ण
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 
 /*
- * Return true if the last page of a file in the filesystem image contains
- * some other data that doesn't belong to that file. It is assumed that the
- * last block is CRAMFS_BLK_FLAG_DIRECT_PTR | CRAMFS_BLK_FLAG_UNCOMPRESSED
- * (verified by cramfs_get_block_range() and directly accessible in memory.
+ * Return true अगर the last page of a file in the fileप्रणाली image contains
+ * some other data that करोesn't beदीर्घ to that file. It is assumed that the
+ * last block is CRAMFS_BLK_FLAG_सूचीECT_PTR | CRAMFS_BLK_FLAG_UNCOMPRESSED
+ * (verअगरied by cramfs_get_block_range() and directly accessible in memory.
  */
-static bool cramfs_last_page_is_shared(struct inode *inode)
-{
-	struct cramfs_sb_info *sbi = CRAMFS_SB(inode->i_sb);
+अटल bool cramfs_last_page_is_shared(काष्ठा inode *inode)
+अणु
+	काष्ठा cramfs_sb_info *sbi = CRAMFS_SB(inode->i_sb);
 	u32 partial, last_page, blockaddr, *blockptrs;
-	char *tail_data;
+	अक्षर *tail_data;
 
 	partial = offset_in_page(inode->i_size);
-	if (!partial)
-		return false;
+	अगर (!partial)
+		वापस false;
 	last_page = inode->i_size >> PAGE_SHIFT;
 	blockptrs = (u32 *)(sbi->linear_virt_addr + OFFSET(inode));
 	blockaddr = blockptrs[last_page] & ~CRAMFS_BLK_FLAGS;
-	blockaddr <<= CRAMFS_BLK_DIRECT_PTR_SHIFT;
+	blockaddr <<= CRAMFS_BLK_सूचीECT_PTR_SHIFT;
 	tail_data = sbi->linear_virt_addr + blockaddr + partial;
-	return memchr_inv(tail_data, 0, PAGE_SIZE - partial) ? true : false;
-}
+	वापस स_प्रथम_inv(tail_data, 0, PAGE_SIZE - partial) ? true : false;
+पूर्ण
 
-static int cramfs_physmem_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	struct inode *inode = file_inode(file);
-	struct cramfs_sb_info *sbi = CRAMFS_SB(inode->i_sb);
-	unsigned int pages, max_pages, offset;
-	unsigned long address, pgoff = vma->vm_pgoff;
-	char *bailout_reason;
-	int ret;
+अटल पूर्णांक cramfs_physmem_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा cramfs_sb_info *sbi = CRAMFS_SB(inode->i_sb);
+	अचिन्हित पूर्णांक pages, max_pages, offset;
+	अचिन्हित दीर्घ address, pgoff = vma->vm_pgoff;
+	अक्षर *bailout_reason;
+	पूर्णांक ret;
 
-	ret = generic_file_readonly_mmap(file, vma);
-	if (ret)
-		return ret;
+	ret = generic_file_पढ़ोonly_mmap(file, vma);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Now try to pre-populate ptes for this vma with a direct
-	 * mapping avoiding memory allocation when possible.
+	 * Now try to pre-populate ptes क्रम this vma with a direct
+	 * mapping aव्योमing memory allocation when possible.
 	 */
 
 	/* Could COW work here? */
 	bailout_reason = "vma is writable";
-	if (vma->vm_flags & VM_WRITE)
-		goto bailout;
+	अगर (vma->vm_flags & VM_WRITE)
+		जाओ bailout;
 
 	max_pages = (inode->i_size + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	bailout_reason = "beyond file limit";
-	if (pgoff >= max_pages)
-		goto bailout;
+	अगर (pgoff >= max_pages)
+		जाओ bailout;
 	pages = min(vma_pages(vma), max_pages - pgoff);
 
 	offset = cramfs_get_block_range(inode, pgoff, &pages);
 	bailout_reason = "unsuitable block layout";
-	if (!offset)
-		goto bailout;
+	अगर (!offset)
+		जाओ bailout;
 	address = sbi->linear_phys_addr + offset;
 	bailout_reason = "data is not page aligned";
-	if (!PAGE_ALIGNED(address))
-		goto bailout;
+	अगर (!PAGE_ALIGNED(address))
+		जाओ bailout;
 
-	/* Don't map the last page if it contains some other data */
-	if (pgoff + pages == max_pages && cramfs_last_page_is_shared(inode)) {
+	/* Don't map the last page अगर it contains some other data */
+	अगर (pgoff + pages == max_pages && cramfs_last_page_is_shared(inode)) अणु
 		pr_debug("mmap: %pD: last page is shared\n", file);
 		pages--;
-	}
+	पूर्ण
 
-	if (!pages) {
+	अगर (!pages) अणु
 		bailout_reason = "no suitable block remaining";
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
-	if (pages == vma_pages(vma)) {
+	अगर (pages == vma_pages(vma)) अणु
 		/*
 		 * The entire vma is mappable. remap_pfn_range() will
 		 * make it distinguishable from a non-direct mapping
@@ -410,601 +411,601 @@ static int cramfs_physmem_mmap(struct file *file, struct vm_area_struct *vma)
 		 */
 		ret = remap_pfn_range(vma, vma->vm_start, address >> PAGE_SHIFT,
 				      pages * PAGE_SIZE, vma->vm_page_prot);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Let's create a mixed map if we can't map it all.
 		 * The normal paging machinery will take care of the
-		 * unpopulated ptes via cramfs_readpage().
+		 * unpopulated ptes via cramfs_पढ़ोpage().
 		 */
-		int i;
+		पूर्णांक i;
 		vma->vm_flags |= VM_MIXEDMAP;
-		for (i = 0; i < pages && !ret; i++) {
+		क्रम (i = 0; i < pages && !ret; i++) अणु
 			vm_fault_t vmf;
-			unsigned long off = i * PAGE_SIZE;
+			अचिन्हित दीर्घ off = i * PAGE_SIZE;
 			pfn_t pfn = phys_to_pfn_t(address + off, PFN_DEV);
 			vmf = vmf_insert_mixed(vma, vma->vm_start + off, pfn);
-			if (vmf & VM_FAULT_ERROR)
-				ret = vm_fault_to_errno(vmf, 0);
-		}
-	}
+			अगर (vmf & VM_FAULT_ERROR)
+				ret = vm_fault_to_त्रुटि_सं(vmf, 0);
+		पूर्ण
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		pr_debug("mapped %pD[%lu] at 0x%08lx (%u/%lu pages) "
 			 "to vma 0x%08lx, page_prot 0x%llx\n", file,
 			 pgoff, address, pages, vma_pages(vma), vma->vm_start,
-			 (unsigned long long)pgprot_val(vma->vm_page_prot));
-	return ret;
+			 (अचिन्हित दीर्घ दीर्घ)pgprot_val(vma->vm_page_prot));
+	वापस ret;
 
 bailout:
 	pr_debug("%pD[%lu]: direct mmap impossible: %s\n",
 		 file, pgoff, bailout_reason);
 	/* Didn't manage any direct map, but normal paging is still possible */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* CONFIG_MMU */
+#अन्यथा /* CONFIG_MMU */
 
-static int cramfs_physmem_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	return vma->vm_flags & (VM_SHARED | VM_MAYSHARE) ? 0 : -ENOSYS;
-}
+अटल पूर्णांक cramfs_physmem_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस vma->vm_flags & (VM_SHARED | VM_MAYSHARE) ? 0 : -ENOSYS;
+पूर्ण
 
-static unsigned long cramfs_physmem_get_unmapped_area(struct file *file,
-			unsigned long addr, unsigned long len,
-			unsigned long pgoff, unsigned long flags)
-{
-	struct inode *inode = file_inode(file);
-	struct super_block *sb = inode->i_sb;
-	struct cramfs_sb_info *sbi = CRAMFS_SB(sb);
-	unsigned int pages, block_pages, max_pages, offset;
+अटल अचिन्हित दीर्घ cramfs_physmem_get_unmapped_area(काष्ठा file *file,
+			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+			अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा cramfs_sb_info *sbi = CRAMFS_SB(sb);
+	अचिन्हित पूर्णांक pages, block_pages, max_pages, offset;
 
 	pages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	max_pages = (inode->i_size + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	if (pgoff >= max_pages || pages > max_pages - pgoff)
-		return -EINVAL;
+	अगर (pgoff >= max_pages || pages > max_pages - pgoff)
+		वापस -EINVAL;
 	block_pages = pages;
 	offset = cramfs_get_block_range(inode, pgoff, &block_pages);
-	if (!offset || block_pages != pages)
-		return -ENOSYS;
+	अगर (!offset || block_pages != pages)
+		वापस -ENOSYS;
 	addr = sbi->linear_phys_addr + offset;
 	pr_debug("get_unmapped for %pD ofs %#lx siz %lu at 0x%08lx\n",
 		 file, pgoff*PAGE_SIZE, len, addr);
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static unsigned int cramfs_physmem_mmap_capabilities(struct file *file)
-{
-	return NOMMU_MAP_COPY | NOMMU_MAP_DIRECT |
+अटल अचिन्हित पूर्णांक cramfs_physmem_mmap_capabilities(काष्ठा file *file)
+अणु
+	वापस NOMMU_MAP_COPY | NOMMU_MAP_सूचीECT |
 	       NOMMU_MAP_READ | NOMMU_MAP_EXEC;
-}
+पूर्ण
 
-#endif /* CONFIG_MMU */
+#पूर्ण_अगर /* CONFIG_MMU */
 
-static const struct file_operations cramfs_physmem_fops = {
+अटल स्थिर काष्ठा file_operations cramfs_physmem_fops = अणु
 	.llseek			= generic_file_llseek,
-	.read_iter		= generic_file_read_iter,
-	.splice_read		= generic_file_splice_read,
+	.पढ़ो_iter		= generic_file_पढ़ो_iter,
+	.splice_पढ़ो		= generic_file_splice_पढ़ो,
 	.mmap			= cramfs_physmem_mmap,
-#ifndef CONFIG_MMU
+#अगर_अघोषित CONFIG_MMU
 	.get_unmapped_area	= cramfs_physmem_get_unmapped_area,
 	.mmap_capabilities	= cramfs_physmem_mmap_capabilities,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static void cramfs_kill_sb(struct super_block *sb)
-{
-	struct cramfs_sb_info *sbi = CRAMFS_SB(sb);
+अटल व्योम cramfs_समाप्त_sb(काष्ठा super_block *sb)
+अणु
+	काष्ठा cramfs_sb_info *sbi = CRAMFS_SB(sb);
 
-	if (IS_ENABLED(CONFIG_CRAMFS_MTD) && sb->s_mtd) {
-		if (sbi && sbi->mtd_point_size)
-			mtd_unpoint(sb->s_mtd, 0, sbi->mtd_point_size);
-		kill_mtd_super(sb);
-	} else if (IS_ENABLED(CONFIG_CRAMFS_BLOCKDEV) && sb->s_bdev) {
-		kill_block_super(sb);
-	}
-	kfree(sbi);
-}
+	अगर (IS_ENABLED(CONFIG_CRAMFS_MTD) && sb->s_mtd) अणु
+		अगर (sbi && sbi->mtd_poपूर्णांक_size)
+			mtd_unpoपूर्णांक(sb->s_mtd, 0, sbi->mtd_poपूर्णांक_size);
+		समाप्त_mtd_super(sb);
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_CRAMFS_BLOCKDEV) && sb->s_bdev) अणु
+		समाप्त_block_super(sb);
+	पूर्ण
+	kमुक्त(sbi);
+पूर्ण
 
-static int cramfs_reconfigure(struct fs_context *fc)
-{
-	sync_filesystem(fc->root->d_sb);
+अटल पूर्णांक cramfs_reconfigure(काष्ठा fs_context *fc)
+अणु
+	sync_fileप्रणाली(fc->root->d_sb);
 	fc->sb_flags |= SB_RDONLY;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cramfs_read_super(struct super_block *sb, struct fs_context *fc,
-			     struct cramfs_super *super)
-{
-	struct cramfs_sb_info *sbi = CRAMFS_SB(sb);
-	unsigned long root_offset;
+अटल पूर्णांक cramfs_पढ़ो_super(काष्ठा super_block *sb, काष्ठा fs_context *fc,
+			     काष्ठा cramfs_super *super)
+अणु
+	काष्ठा cramfs_sb_info *sbi = CRAMFS_SB(sb);
+	अचिन्हित दीर्घ root_offset;
 	bool silent = fc->sb_flags & SB_SILENT;
 
-	/* We don't know the real size yet */
+	/* We करोn't know the real size yet */
 	sbi->size = PAGE_SIZE;
 
 	/* Read the first block and get the superblock from it */
-	mutex_lock(&read_mutex);
-	memcpy(super, cramfs_read(sb, 0, sizeof(*super)), sizeof(*super));
-	mutex_unlock(&read_mutex);
+	mutex_lock(&पढ़ो_mutex);
+	स_नकल(super, cramfs_पढ़ो(sb, 0, माप(*super)), माप(*super));
+	mutex_unlock(&पढ़ो_mutex);
 
 	/* Do sanity checks on the superblock */
-	if (super->magic != CRAMFS_MAGIC) {
-		/* check for wrong endianness */
-		if (super->magic == CRAMFS_MAGIC_WEND) {
-			if (!silent)
+	अगर (super->magic != CRAMFS_MAGIC) अणु
+		/* check क्रम wrong endianness */
+		अगर (super->magic == CRAMFS_MAGIC_WEND) अणु
+			अगर (!silent)
 				errorfc(fc, "wrong endianness");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* check at 512 byte offset */
-		mutex_lock(&read_mutex);
-		memcpy(super,
-		       cramfs_read(sb, 512, sizeof(*super)),
-		       sizeof(*super));
-		mutex_unlock(&read_mutex);
-		if (super->magic != CRAMFS_MAGIC) {
-			if (super->magic == CRAMFS_MAGIC_WEND && !silent)
+		mutex_lock(&पढ़ो_mutex);
+		स_नकल(super,
+		       cramfs_पढ़ो(sb, 512, माप(*super)),
+		       माप(*super));
+		mutex_unlock(&पढ़ो_mutex);
+		अगर (super->magic != CRAMFS_MAGIC) अणु
+			अगर (super->magic == CRAMFS_MAGIC_WEND && !silent)
 				errorfc(fc, "wrong endianness");
-			else if (!silent)
+			अन्यथा अगर (!silent)
 				errorfc(fc, "wrong magic");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* get feature flags first */
-	if (super->flags & ~CRAMFS_SUPPORTED_FLAGS) {
+	अगर (super->flags & ~CRAMFS_SUPPORTED_FLAGS) अणु
 		errorfc(fc, "unsupported filesystem features");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Check that the root inode is in a sane state */
-	if (!S_ISDIR(super->root.mode)) {
+	अगर (!S_ISसूची(super->root.mode)) अणु
 		errorfc(fc, "root is not a directory");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/* correct strange, hard-coded permissions of mkcramfs */
 	super->root.mode |= 0555;
 
 	root_offset = super->root.offset << 2;
-	if (super->flags & CRAMFS_FLAG_FSID_VERSION_2) {
+	अगर (super->flags & CRAMFS_FLAG_FSID_VERSION_2) अणु
 		sbi->size = super->size;
 		sbi->blocks = super->fsid.blocks;
 		sbi->files = super->fsid.files;
-	} else {
+	पूर्ण अन्यथा अणु
 		sbi->size = 1<<28;
 		sbi->blocks = 0;
 		sbi->files = 0;
-	}
+	पूर्ण
 	sbi->magic = super->magic;
 	sbi->flags = super->flags;
-	if (root_offset == 0)
+	अगर (root_offset == 0)
 		infofc(fc, "empty filesystem");
-	else if (!(super->flags & CRAMFS_FLAG_SHIFTED_ROOT_OFFSET) &&
-		 ((root_offset != sizeof(struct cramfs_super)) &&
-		  (root_offset != 512 + sizeof(struct cramfs_super))))
-	{
+	अन्यथा अगर (!(super->flags & CRAMFS_FLAG_SHIFTED_ROOT_OFFSET) &&
+		 ((root_offset != माप(काष्ठा cramfs_super)) &&
+		  (root_offset != 512 + माप(काष्ठा cramfs_super))))
+	अणु
 		errorfc(fc, "bad root offset %lu", root_offset);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cramfs_finalize_super(struct super_block *sb,
-				 struct cramfs_inode *cramfs_root)
-{
-	struct inode *root;
+अटल पूर्णांक cramfs_finalize_super(काष्ठा super_block *sb,
+				 काष्ठा cramfs_inode *cramfs_root)
+अणु
+	काष्ठा inode *root;
 
 	/* Set it all up.. */
 	sb->s_flags |= SB_RDONLY;
-	sb->s_time_min = 0;
-	sb->s_time_max = 0;
+	sb->s_समय_min = 0;
+	sb->s_समय_max = 0;
 	sb->s_op = &cramfs_ops;
 	root = get_cramfs_inode(sb, cramfs_root, 0);
-	if (IS_ERR(root))
-		return PTR_ERR(root);
+	अगर (IS_ERR(root))
+		वापस PTR_ERR(root);
 	sb->s_root = d_make_root(root);
-	if (!sb->s_root)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!sb->s_root)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static int cramfs_blkdev_fill_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct cramfs_sb_info *sbi;
-	struct cramfs_super super;
-	int i, err;
+अटल पूर्णांक cramfs_blkdev_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा cramfs_sb_info *sbi;
+	काष्ठा cramfs_super super;
+	पूर्णांक i, err;
 
-	sbi = kzalloc(sizeof(struct cramfs_sb_info), GFP_KERNEL);
-	if (!sbi)
-		return -ENOMEM;
+	sbi = kzalloc(माप(काष्ठा cramfs_sb_info), GFP_KERNEL);
+	अगर (!sbi)
+		वापस -ENOMEM;
 	sb->s_fs_info = sbi;
 
-	/* Invalidate the read buffers on mount: think disk change.. */
-	for (i = 0; i < READ_BUFFERS; i++)
+	/* Invalidate the पढ़ो buffers on mount: think disk change.. */
+	क्रम (i = 0; i < READ_BUFFERS; i++)
 		buffer_blocknr[i] = -1;
 
-	err = cramfs_read_super(sb, fc, &super);
-	if (err)
-		return err;
-	return cramfs_finalize_super(sb, &super.root);
-}
+	err = cramfs_पढ़ो_super(sb, fc, &super);
+	अगर (err)
+		वापस err;
+	वापस cramfs_finalize_super(sb, &super.root);
+पूर्ण
 
-static int cramfs_mtd_fill_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct cramfs_sb_info *sbi;
-	struct cramfs_super super;
-	int err;
+अटल पूर्णांक cramfs_mtd_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा cramfs_sb_info *sbi;
+	काष्ठा cramfs_super super;
+	पूर्णांक err;
 
-	sbi = kzalloc(sizeof(struct cramfs_sb_info), GFP_KERNEL);
-	if (!sbi)
-		return -ENOMEM;
+	sbi = kzalloc(माप(काष्ठा cramfs_sb_info), GFP_KERNEL);
+	अगर (!sbi)
+		वापस -ENOMEM;
 	sb->s_fs_info = sbi;
 
-	/* Map only one page for now.  Will remap it when fs size is known. */
-	err = mtd_point(sb->s_mtd, 0, PAGE_SIZE, &sbi->mtd_point_size,
+	/* Map only one page क्रम now.  Will remap it when fs size is known. */
+	err = mtd_poपूर्णांक(sb->s_mtd, 0, PAGE_SIZE, &sbi->mtd_poपूर्णांक_size,
 			&sbi->linear_virt_addr, &sbi->linear_phys_addr);
-	if (err || sbi->mtd_point_size != PAGE_SIZE) {
+	अगर (err || sbi->mtd_poपूर्णांक_size != PAGE_SIZE) अणु
 		pr_err("unable to get direct memory access to mtd:%s\n",
 		       sb->s_mtd->name);
-		return err ? : -ENODATA;
-	}
+		वापस err ? : -ENODATA;
+	पूर्ण
 
 	pr_info("checking physical address %pap for linear cramfs image\n",
 		&sbi->linear_phys_addr);
-	err = cramfs_read_super(sb, fc, &super);
-	if (err)
-		return err;
+	err = cramfs_पढ़ो_super(sb, fc, &super);
+	अगर (err)
+		वापस err;
 
-	/* Remap the whole filesystem now */
+	/* Remap the whole fileप्रणाली now */
 	pr_info("linear cramfs image on mtd:%s appears to be %lu KB in size\n",
 		sb->s_mtd->name, sbi->size/1024);
-	mtd_unpoint(sb->s_mtd, 0, PAGE_SIZE);
-	err = mtd_point(sb->s_mtd, 0, sbi->size, &sbi->mtd_point_size,
+	mtd_unpoपूर्णांक(sb->s_mtd, 0, PAGE_SIZE);
+	err = mtd_poपूर्णांक(sb->s_mtd, 0, sbi->size, &sbi->mtd_poपूर्णांक_size,
 			&sbi->linear_virt_addr, &sbi->linear_phys_addr);
-	if (err || sbi->mtd_point_size != sbi->size) {
+	अगर (err || sbi->mtd_poपूर्णांक_size != sbi->size) अणु
 		pr_err("unable to get direct memory access to mtd:%s\n",
 		       sb->s_mtd->name);
-		return err ? : -ENODATA;
-	}
+		वापस err ? : -ENODATA;
+	पूर्ण
 
-	return cramfs_finalize_super(sb, &super.root);
-}
+	वापस cramfs_finalize_super(sb, &super.root);
+पूर्ण
 
-static int cramfs_statfs(struct dentry *dentry, struct kstatfs *buf)
-{
-	struct super_block *sb = dentry->d_sb;
+अटल पूर्णांक cramfs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा super_block *sb = dentry->d_sb;
 	u64 id = 0;
 
-	if (sb->s_bdev)
+	अगर (sb->s_bdev)
 		id = huge_encode_dev(sb->s_bdev->bd_dev);
-	else if (sb->s_dev)
+	अन्यथा अगर (sb->s_dev)
 		id = huge_encode_dev(sb->s_dev);
 
 	buf->f_type = CRAMFS_MAGIC;
 	buf->f_bsize = PAGE_SIZE;
 	buf->f_blocks = CRAMFS_SB(sb)->blocks;
-	buf->f_bfree = 0;
+	buf->f_bमुक्त = 0;
 	buf->f_bavail = 0;
 	buf->f_files = CRAMFS_SB(sb)->files;
-	buf->f_ffree = 0;
+	buf->f_fमुक्त = 0;
 	buf->f_fsid = u64_to_fsid(id);
 	buf->f_namelen = CRAMFS_MAXPATHLEN;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Read a cramfs directory entry.
  */
-static int cramfs_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct inode *inode = file_inode(file);
-	struct super_block *sb = inode->i_sb;
-	char *buf;
-	unsigned int offset;
+अटल पूर्णांक cramfs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा super_block *sb = inode->i_sb;
+	अक्षर *buf;
+	अचिन्हित पूर्णांक offset;
 
 	/* Offset within the thing. */
-	if (ctx->pos >= inode->i_size)
-		return 0;
+	अगर (ctx->pos >= inode->i_size)
+		वापस 0;
 	offset = ctx->pos;
 	/* Directory entries are always 4-byte aligned */
-	if (offset & 3)
-		return -EINVAL;
+	अगर (offset & 3)
+		वापस -EINVAL;
 
-	buf = kmalloc(CRAMFS_MAXPATHLEN, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(CRAMFS_MAXPATHLEN, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	while (offset < inode->i_size) {
-		struct cramfs_inode *de;
-		unsigned long nextoffset;
-		char *name;
+	जबतक (offset < inode->i_size) अणु
+		काष्ठा cramfs_inode *de;
+		अचिन्हित दीर्घ nextoffset;
+		अक्षर *name;
 		ino_t ino;
 		umode_t mode;
-		int namelen;
+		पूर्णांक namelen;
 
-		mutex_lock(&read_mutex);
-		de = cramfs_read(sb, OFFSET(inode) + offset, sizeof(*de)+CRAMFS_MAXPATHLEN);
-		name = (char *)(de+1);
+		mutex_lock(&पढ़ो_mutex);
+		de = cramfs_पढ़ो(sb, OFFSET(inode) + offset, माप(*de)+CRAMFS_MAXPATHLEN);
+		name = (अक्षर *)(de+1);
 
 		/*
-		 * Namelengths on disk are shifted by two
+		 * Namelengths on disk are shअगरted by two
 		 * and the name padded out to 4-byte boundaries
 		 * with zeroes.
 		 */
 		namelen = de->namelen << 2;
-		memcpy(buf, name, namelen);
+		स_नकल(buf, name, namelen);
 		ino = cramino(de, OFFSET(inode) + offset);
 		mode = de->mode;
-		mutex_unlock(&read_mutex);
-		nextoffset = offset + sizeof(*de) + namelen;
-		for (;;) {
-			if (!namelen) {
-				kfree(buf);
-				return -EIO;
-			}
-			if (buf[namelen-1])
-				break;
+		mutex_unlock(&पढ़ो_mutex);
+		nextoffset = offset + माप(*de) + namelen;
+		क्रम (;;) अणु
+			अगर (!namelen) अणु
+				kमुक्त(buf);
+				वापस -EIO;
+			पूर्ण
+			अगर (buf[namelen-1])
+				अवरोध;
 			namelen--;
-		}
-		if (!dir_emit(ctx, buf, namelen, ino, mode >> 12))
-			break;
+		पूर्ण
+		अगर (!dir_emit(ctx, buf, namelen, ino, mode >> 12))
+			अवरोध;
 
 		ctx->pos = offset = nextoffset;
-	}
-	kfree(buf);
-	return 0;
-}
+	पूर्ण
+	kमुक्त(buf);
+	वापस 0;
+पूर्ण
 
 /*
  * Lookup and fill in the inode data..
  */
-static struct dentry *cramfs_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
-{
-	unsigned int offset = 0;
-	struct inode *inode = NULL;
-	int sorted;
+अटल काष्ठा dentry *cramfs_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक offset = 0;
+	काष्ठा inode *inode = शून्य;
+	पूर्णांक sorted;
 
-	mutex_lock(&read_mutex);
-	sorted = CRAMFS_SB(dir->i_sb)->flags & CRAMFS_FLAG_SORTED_DIRS;
-	while (offset < dir->i_size) {
-		struct cramfs_inode *de;
-		char *name;
-		int namelen, retval;
-		int dir_off = OFFSET(dir) + offset;
+	mutex_lock(&पढ़ो_mutex);
+	sorted = CRAMFS_SB(dir->i_sb)->flags & CRAMFS_FLAG_SORTED_सूचीS;
+	जबतक (offset < dir->i_size) अणु
+		काष्ठा cramfs_inode *de;
+		अक्षर *name;
+		पूर्णांक namelen, retval;
+		पूर्णांक dir_off = OFFSET(dir) + offset;
 
-		de = cramfs_read(dir->i_sb, dir_off, sizeof(*de)+CRAMFS_MAXPATHLEN);
-		name = (char *)(de+1);
+		de = cramfs_पढ़ो(dir->i_sb, dir_off, माप(*de)+CRAMFS_MAXPATHLEN);
+		name = (अक्षर *)(de+1);
 
 		/* Try to take advantage of sorted directories */
-		if (sorted && (dentry->d_name.name[0] < name[0]))
-			break;
+		अगर (sorted && (dentry->d_name.name[0] < name[0]))
+			अवरोध;
 
 		namelen = de->namelen << 2;
-		offset += sizeof(*de) + namelen;
+		offset += माप(*de) + namelen;
 
 		/* Quick check that the name is roughly the right length */
-		if (((dentry->d_name.len + 3) & ~3) != namelen)
-			continue;
+		अगर (((dentry->d_name.len + 3) & ~3) != namelen)
+			जारी;
 
-		for (;;) {
-			if (!namelen) {
+		क्रम (;;) अणु
+			अगर (!namelen) अणु
 				inode = ERR_PTR(-EIO);
-				goto out;
-			}
-			if (name[namelen-1])
-				break;
+				जाओ out;
+			पूर्ण
+			अगर (name[namelen-1])
+				अवरोध;
 			namelen--;
-		}
-		if (namelen != dentry->d_name.len)
-			continue;
-		retval = memcmp(dentry->d_name.name, name, namelen);
-		if (retval > 0)
-			continue;
-		if (!retval) {
+		पूर्ण
+		अगर (namelen != dentry->d_name.len)
+			जारी;
+		retval = स_भेद(dentry->d_name.name, name, namelen);
+		अगर (retval > 0)
+			जारी;
+		अगर (!retval) अणु
 			inode = get_cramfs_inode(dir->i_sb, de, dir_off);
-			break;
-		}
-		/* else (retval < 0) */
-		if (sorted)
-			break;
-	}
+			अवरोध;
+		पूर्ण
+		/* अन्यथा (retval < 0) */
+		अगर (sorted)
+			अवरोध;
+	पूर्ण
 out:
-	mutex_unlock(&read_mutex);
-	return d_splice_alias(inode, dentry);
-}
+	mutex_unlock(&पढ़ो_mutex);
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-static int cramfs_readpage(struct file *file, struct page *page)
-{
-	struct inode *inode = page->mapping->host;
+अटल पूर्णांक cramfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
 	u32 maxblock;
-	int bytes_filled;
-	void *pgdata;
+	पूर्णांक bytes_filled;
+	व्योम *pgdata;
 
 	maxblock = (inode->i_size + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	bytes_filled = 0;
 	pgdata = kmap(page);
 
-	if (page->index < maxblock) {
-		struct super_block *sb = inode->i_sb;
+	अगर (page->index < maxblock) अणु
+		काष्ठा super_block *sb = inode->i_sb;
 		u32 blkptr_offset = OFFSET(inode) + page->index * 4;
 		u32 block_ptr, block_start, block_len;
 		bool uncompressed, direct;
 
-		mutex_lock(&read_mutex);
-		block_ptr = *(u32 *) cramfs_read(sb, blkptr_offset, 4);
+		mutex_lock(&पढ़ो_mutex);
+		block_ptr = *(u32 *) cramfs_पढ़ो(sb, blkptr_offset, 4);
 		uncompressed = (block_ptr & CRAMFS_BLK_FLAG_UNCOMPRESSED);
-		direct = (block_ptr & CRAMFS_BLK_FLAG_DIRECT_PTR);
+		direct = (block_ptr & CRAMFS_BLK_FLAG_सूचीECT_PTR);
 		block_ptr &= ~CRAMFS_BLK_FLAGS;
 
-		if (direct) {
+		अगर (direct) अणु
 			/*
-			 * The block pointer is an absolute start pointer,
-			 * shifted by 2 bits. The size is included in the
+			 * The block poपूर्णांकer is an असलolute start poपूर्णांकer,
+			 * shअगरted by 2 bits. The size is included in the
 			 * first 2 bytes of the data block when compressed,
 			 * or PAGE_SIZE otherwise.
 			 */
-			block_start = block_ptr << CRAMFS_BLK_DIRECT_PTR_SHIFT;
-			if (uncompressed) {
+			block_start = block_ptr << CRAMFS_BLK_सूचीECT_PTR_SHIFT;
+			अगर (uncompressed) अणु
 				block_len = PAGE_SIZE;
-				/* if last block: cap to file length */
-				if (page->index == maxblock - 1)
+				/* अगर last block: cap to file length */
+				अगर (page->index == maxblock - 1)
 					block_len =
 						offset_in_page(inode->i_size);
-			} else {
+			पूर्ण अन्यथा अणु
 				block_len = *(u16 *)
-					cramfs_read(sb, block_start, 2);
+					cramfs_पढ़ो(sb, block_start, 2);
 				block_start += 2;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/*
-			 * The block pointer indicates one past the end of
+			 * The block poपूर्णांकer indicates one past the end of
 			 * the current block (start of next block). If this
 			 * is the first block then it starts where the block
-			 * pointer table ends, otherwise its start comes
-			 * from the previous block's pointer.
+			 * poपूर्णांकer table ends, otherwise its start comes
+			 * from the previous block's poपूर्णांकer.
 			 */
 			block_start = OFFSET(inode) + maxblock * 4;
-			if (page->index)
+			अगर (page->index)
 				block_start = *(u32 *)
-					cramfs_read(sb, blkptr_offset - 4, 4);
+					cramfs_पढ़ो(sb, blkptr_offset - 4, 4);
 			/* Beware... previous ptr might be a direct ptr */
-			if (unlikely(block_start & CRAMFS_BLK_FLAG_DIRECT_PTR)) {
+			अगर (unlikely(block_start & CRAMFS_BLK_FLAG_सूचीECT_PTR)) अणु
 				/* See comments on earlier code. */
 				u32 prev_start = block_start;
 				block_start = prev_start & ~CRAMFS_BLK_FLAGS;
-				block_start <<= CRAMFS_BLK_DIRECT_PTR_SHIFT;
-				if (prev_start & CRAMFS_BLK_FLAG_UNCOMPRESSED) {
+				block_start <<= CRAMFS_BLK_सूचीECT_PTR_SHIFT;
+				अगर (prev_start & CRAMFS_BLK_FLAG_UNCOMPRESSED) अणु
 					block_start += PAGE_SIZE;
-				} else {
+				पूर्ण अन्यथा अणु
 					block_len = *(u16 *)
-						cramfs_read(sb, block_start, 2);
+						cramfs_पढ़ो(sb, block_start, 2);
 					block_start += 2 + block_len;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			block_start &= ~CRAMFS_BLK_FLAGS;
 			block_len = block_ptr - block_start;
-		}
+		पूर्ण
 
-		if (block_len == 0)
+		अगर (block_len == 0)
 			; /* hole */
-		else if (unlikely(block_len > 2*PAGE_SIZE ||
-				  (uncompressed && block_len > PAGE_SIZE))) {
-			mutex_unlock(&read_mutex);
+		अन्यथा अगर (unlikely(block_len > 2*PAGE_SIZE ||
+				  (uncompressed && block_len > PAGE_SIZE))) अणु
+			mutex_unlock(&पढ़ो_mutex);
 			pr_err("bad data blocksize %u\n", block_len);
-			goto err;
-		} else if (uncompressed) {
-			memcpy(pgdata,
-			       cramfs_read(sb, block_start, block_len),
+			जाओ err;
+		पूर्ण अन्यथा अगर (uncompressed) अणु
+			स_नकल(pgdata,
+			       cramfs_पढ़ो(sb, block_start, block_len),
 			       block_len);
 			bytes_filled = block_len;
-		} else {
+		पूर्ण अन्यथा अणु
 			bytes_filled = cramfs_uncompress_block(pgdata,
 				 PAGE_SIZE,
-				 cramfs_read(sb, block_start, block_len),
+				 cramfs_पढ़ो(sb, block_start, block_len),
 				 block_len);
-		}
-		mutex_unlock(&read_mutex);
-		if (unlikely(bytes_filled < 0))
-			goto err;
-	}
+		पूर्ण
+		mutex_unlock(&पढ़ो_mutex);
+		अगर (unlikely(bytes_filled < 0))
+			जाओ err;
+	पूर्ण
 
-	memset(pgdata + bytes_filled, 0, PAGE_SIZE - bytes_filled);
+	स_रखो(pgdata + bytes_filled, 0, PAGE_SIZE - bytes_filled);
 	flush_dcache_page(page);
 	kunmap(page);
 	SetPageUptodate(page);
 	unlock_page(page);
-	return 0;
+	वापस 0;
 
 err:
 	kunmap(page);
 	ClearPageUptodate(page);
 	SetPageError(page);
 	unlock_page(page);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct address_space_operations cramfs_aops = {
-	.readpage = cramfs_readpage
-};
+अटल स्थिर काष्ठा address_space_operations cramfs_aops = अणु
+	.पढ़ोpage = cramfs_पढ़ोpage
+पूर्ण;
 
 /*
  * Our operations:
  */
 
 /*
- * A directory can only readdir
+ * A directory can only सूची_पढ़ो
  */
-static const struct file_operations cramfs_directory_operations = {
+अटल स्थिर काष्ठा file_operations cramfs_directory_operations = अणु
 	.llseek		= generic_file_llseek,
-	.read		= generic_read_dir,
-	.iterate_shared	= cramfs_readdir,
-};
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= cramfs_सूची_पढ़ो,
+पूर्ण;
 
-static const struct inode_operations cramfs_dir_inode_operations = {
+अटल स्थिर काष्ठा inode_operations cramfs_dir_inode_operations = अणु
 	.lookup		= cramfs_lookup,
-};
+पूर्ण;
 
-static const struct super_operations cramfs_ops = {
+अटल स्थिर काष्ठा super_operations cramfs_ops = अणु
 	.statfs		= cramfs_statfs,
-};
+पूर्ण;
 
-static int cramfs_get_tree(struct fs_context *fc)
-{
-	int ret = -ENOPROTOOPT;
+अटल पूर्णांक cramfs_get_tree(काष्ठा fs_context *fc)
+अणु
+	पूर्णांक ret = -ENOPROTOOPT;
 
-	if (IS_ENABLED(CONFIG_CRAMFS_MTD)) {
+	अगर (IS_ENABLED(CONFIG_CRAMFS_MTD)) अणु
 		ret = get_tree_mtd(fc, cramfs_mtd_fill_super);
-		if (!ret)
-			return 0;
-	}
-	if (IS_ENABLED(CONFIG_CRAMFS_BLOCKDEV))
+		अगर (!ret)
+			वापस 0;
+	पूर्ण
+	अगर (IS_ENABLED(CONFIG_CRAMFS_BLOCKDEV))
 		ret = get_tree_bdev(fc, cramfs_blkdev_fill_super);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct fs_context_operations cramfs_context_ops = {
+अटल स्थिर काष्ठा fs_context_operations cramfs_context_ops = अणु
 	.get_tree	= cramfs_get_tree,
 	.reconfigure	= cramfs_reconfigure,
-};
+पूर्ण;
 
 /*
- * Set up the filesystem mount context.
+ * Set up the fileप्रणाली mount context.
  */
-static int cramfs_init_fs_context(struct fs_context *fc)
-{
+अटल पूर्णांक cramfs_init_fs_context(काष्ठा fs_context *fc)
+अणु
 	fc->ops = &cramfs_context_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct file_system_type cramfs_fs_type = {
+अटल काष्ठा file_प्रणाली_type cramfs_fs_type = अणु
 	.owner		= THIS_MODULE,
 	.name		= "cramfs",
 	.init_fs_context = cramfs_init_fs_context,
-	.kill_sb	= cramfs_kill_sb,
+	.समाप्त_sb	= cramfs_समाप्त_sb,
 	.fs_flags	= FS_REQUIRES_DEV,
-};
+पूर्ण;
 MODULE_ALIAS_FS("cramfs");
 
-static int __init init_cramfs_fs(void)
-{
-	int rv;
+अटल पूर्णांक __init init_cramfs_fs(व्योम)
+अणु
+	पूर्णांक rv;
 
 	rv = cramfs_uncompress_init();
-	if (rv < 0)
-		return rv;
-	rv = register_filesystem(&cramfs_fs_type);
-	if (rv < 0)
-		cramfs_uncompress_exit();
-	return rv;
-}
+	अगर (rv < 0)
+		वापस rv;
+	rv = रेजिस्टर_fileप्रणाली(&cramfs_fs_type);
+	अगर (rv < 0)
+		cramfs_uncompress_निकास();
+	वापस rv;
+पूर्ण
 
-static void __exit exit_cramfs_fs(void)
-{
-	cramfs_uncompress_exit();
-	unregister_filesystem(&cramfs_fs_type);
-}
+अटल व्योम __निकास निकास_cramfs_fs(व्योम)
+अणु
+	cramfs_uncompress_निकास();
+	unरेजिस्टर_fileप्रणाली(&cramfs_fs_type);
+पूर्ण
 
 module_init(init_cramfs_fs)
-module_exit(exit_cramfs_fs)
+module_निकास(निकास_cramfs_fs)
 MODULE_LICENSE("GPL");

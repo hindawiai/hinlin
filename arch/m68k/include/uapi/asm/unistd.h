@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_ASM_M68K_UNISTD_H_
-#define _UAPI_ASM_M68K_UNISTD_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_ASM_M68K_UNISTD_H_
+#घोषणा _UAPI_ASM_M68K_UNISTD_H_
 
-#include <asm/unistd_32.h>
+#समावेश <यंत्र/unistd_32.h>
 
-#endif /* _UAPI_ASM_M68K_UNISTD_H_ */
+#पूर्ण_अगर /* _UAPI_ASM_M68K_UNISTD_H_ */

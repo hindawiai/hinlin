@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#ifndef __MACH_TEGRA_IRAMMAP_H
-#define __MACH_TEGRA_IRAMMAP_H
+#अगर_अघोषित __MACH_TEGRA_IRAMMAP_H
+#घोषणा __MACH_TEGRA_IRAMMAP_H
 
-#include <linux/sizes.h>
+#समावेश <linux/sizes.h>
 
-/* The first 1K of IRAM is permanently reserved for the CPU reset handler */
-#define TEGRA_IRAM_RESET_HANDLER_OFFSET	0
-#define TEGRA_IRAM_RESET_HANDLER_SIZE	SZ_1K
+/* The first 1K of IRAM is permanently reserved क्रम the CPU reset handler */
+#घोषणा TEGRA_IRAM_RESET_HANDLER_OFFSET	0
+#घोषणा TEGRA_IRAM_RESET_HANDLER_SIZE	SZ_1K
 
 /*
- * This area is used for LPx resume vector, only while LPx power state is
- * active. At other times, the AVP may use this area for arbitrary purposes
+ * This area is used क्रम LPx resume vector, only जबतक LPx घातer state is
+ * active. At other बार, the AVP may use this area क्रम arbitrary purposes
  */
-#define TEGRA_IRAM_LPx_RESUME_AREA	(TEGRA_IRAM_BASE + SZ_4K)
+#घोषणा TEGRA_IRAM_LPx_RESUME_AREA	(TEGRA_IRAM_BASE + SZ_4K)
 
-#endif
+#पूर्ण_अगर

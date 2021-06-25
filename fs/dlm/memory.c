@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
 *******************************************************************************
 **
@@ -9,83 +10,83 @@
 *******************************************************************************
 ******************************************************************************/
 
-#include "dlm_internal.h"
-#include "config.h"
-#include "memory.h"
+#समावेश "dlm_internal.h"
+#समावेश "config.h"
+#समावेश "memory.h"
 
-static struct kmem_cache *lkb_cache;
-static struct kmem_cache *rsb_cache;
+अटल काष्ठा kmem_cache *lkb_cache;
+अटल काष्ठा kmem_cache *rsb_cache;
 
 
-int __init dlm_memory_init(void)
-{
-	lkb_cache = kmem_cache_create("dlm_lkb", sizeof(struct dlm_lkb),
-				__alignof__(struct dlm_lkb), 0, NULL);
-	if (!lkb_cache)
-		return -ENOMEM;
+पूर्णांक __init dlm_memory_init(व्योम)
+अणु
+	lkb_cache = kmem_cache_create("dlm_lkb", माप(काष्ठा dlm_lkb),
+				__alignof__(काष्ठा dlm_lkb), 0, शून्य);
+	अगर (!lkb_cache)
+		वापस -ENOMEM;
 
-	rsb_cache = kmem_cache_create("dlm_rsb", sizeof(struct dlm_rsb),
-				__alignof__(struct dlm_rsb), 0, NULL);
-	if (!rsb_cache) {
+	rsb_cache = kmem_cache_create("dlm_rsb", माप(काष्ठा dlm_rsb),
+				__alignof__(काष्ठा dlm_rsb), 0, शून्य);
+	अगर (!rsb_cache) अणु
 		kmem_cache_destroy(lkb_cache);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dlm_memory_exit(void)
-{
+व्योम dlm_memory_निकास(व्योम)
+अणु
 	kmem_cache_destroy(lkb_cache);
 	kmem_cache_destroy(rsb_cache);
-}
+पूर्ण
 
-char *dlm_allocate_lvb(struct dlm_ls *ls)
-{
-	char *p;
+अक्षर *dlm_allocate_lvb(काष्ठा dlm_ls *ls)
+अणु
+	अक्षर *p;
 
 	p = kzalloc(ls->ls_lvblen, GFP_NOFS);
-	return p;
-}
+	वापस p;
+पूर्ण
 
-void dlm_free_lvb(char *p)
-{
-	kfree(p);
-}
+व्योम dlm_मुक्त_lvb(अक्षर *p)
+अणु
+	kमुक्त(p);
+पूर्ण
 
-struct dlm_rsb *dlm_allocate_rsb(struct dlm_ls *ls)
-{
-	struct dlm_rsb *r;
+काष्ठा dlm_rsb *dlm_allocate_rsb(काष्ठा dlm_ls *ls)
+अणु
+	काष्ठा dlm_rsb *r;
 
 	r = kmem_cache_zalloc(rsb_cache, GFP_NOFS);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void dlm_free_rsb(struct dlm_rsb *r)
-{
-	if (r->res_lvbptr)
-		dlm_free_lvb(r->res_lvbptr);
-	kmem_cache_free(rsb_cache, r);
-}
+व्योम dlm_मुक्त_rsb(काष्ठा dlm_rsb *r)
+अणु
+	अगर (r->res_lvbptr)
+		dlm_मुक्त_lvb(r->res_lvbptr);
+	kmem_cache_मुक्त(rsb_cache, r);
+पूर्ण
 
-struct dlm_lkb *dlm_allocate_lkb(struct dlm_ls *ls)
-{
-	struct dlm_lkb *lkb;
+काष्ठा dlm_lkb *dlm_allocate_lkb(काष्ठा dlm_ls *ls)
+अणु
+	काष्ठा dlm_lkb *lkb;
 
 	lkb = kmem_cache_zalloc(lkb_cache, GFP_NOFS);
-	return lkb;
-}
+	वापस lkb;
+पूर्ण
 
-void dlm_free_lkb(struct dlm_lkb *lkb)
-{
-	if (lkb->lkb_flags & DLM_IFL_USER) {
-		struct dlm_user_args *ua;
+व्योम dlm_मुक्त_lkb(काष्ठा dlm_lkb *lkb)
+अणु
+	अगर (lkb->lkb_flags & DLM_IFL_USER) अणु
+		काष्ठा dlm_user_args *ua;
 		ua = lkb->lkb_ua;
-		if (ua) {
-			kfree(ua->lksb.sb_lvbptr);
-			kfree(ua);
-		}
-	}
-	kmem_cache_free(lkb_cache, lkb);
-}
+		अगर (ua) अणु
+			kमुक्त(ua->lksb.sb_lvbptr);
+			kमुक्त(ua);
+		पूर्ण
+	पूर्ण
+	kmem_cache_मुक्त(lkb_cache, lkb);
+पूर्ण
 

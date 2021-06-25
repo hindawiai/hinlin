@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2010 - 2015 UNISYS CORPORATION
  * All rights reserved.
@@ -9,92 +10,92 @@
  *  independent of the mechanism used to access the channel data.
  */
 
-#include <linux/uuid.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/visorbus.h>
+#समावेश <linux/uuid.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/visorbus.h>
 
-#include "visorbus_private.h"
-#include "controlvmchannel.h"
+#समावेश "visorbus_private.h"
+#समावेश "controlvmchannel.h"
 
-#define VISOR_DRV_NAME "visorchannel"
+#घोषणा VISOR_DRV_NAME "visorchannel"
 
-#define VISOR_CONSOLEVIDEO_CHANNEL_GUID \
+#घोषणा VISOR_CONSOLEVIDEO_CHANNEL_GUID \
 	GUID_INIT(0x3cd6e705, 0xd6a2, 0x4aa5, \
 		  0xad, 0x5c, 0x7b, 0x8, 0x88, 0x9d, 0xff, 0xe2)
 
-static const guid_t visor_video_guid = VISOR_CONSOLEVIDEO_CHANNEL_GUID;
+अटल स्थिर guid_t visor_video_guid = VISOR_CONSOLEVIDEO_CHANNEL_GUID;
 
-struct visorchannel {
+काष्ठा visorchannel अणु
 	u64 physaddr;
-	ulong nbytes;
-	void *mapped;
+	uदीर्घ nbytes;
+	व्योम *mapped;
 	bool requested;
-	struct channel_header chan_hdr;
+	काष्ठा channel_header chan_hdr;
 	guid_t guid;
 	/*
-	 * channel creator knows if more than one thread will be inserting or
+	 * channel creator knows अगर more than one thपढ़ो will be inserting or
 	 * removing
 	 */
 	bool needs_lock;
-	/* protect head writes in chan_hdr */
+	/* protect head ग_लिखोs in chan_hdr */
 	spinlock_t insert_lock;
-	/* protect tail writes in chan_hdr */
-	spinlock_t remove_lock;
+	/* protect tail ग_लिखोs in chan_hdr */
+	spinlock_t हटाओ_lock;
 	guid_t type;
 	guid_t inst;
-};
+पूर्ण;
 
-void visorchannel_destroy(struct visorchannel *channel)
-{
-	if (!channel)
-		return;
+व्योम visorchannel_destroy(काष्ठा visorchannel *channel)
+अणु
+	अगर (!channel)
+		वापस;
 
-	if (channel->mapped) {
+	अगर (channel->mapped) अणु
 		memunmap(channel->mapped);
-		if (channel->requested)
+		अगर (channel->requested)
 			release_mem_region(channel->physaddr, channel->nbytes);
-	}
-	kfree(channel);
-}
+	पूर्ण
+	kमुक्त(channel);
+पूर्ण
 
-u64 visorchannel_get_physaddr(struct visorchannel *channel)
-{
-	return channel->physaddr;
-}
+u64 visorchannel_get_physaddr(काष्ठा visorchannel *channel)
+अणु
+	वापस channel->physaddr;
+पूर्ण
 
-ulong visorchannel_get_nbytes(struct visorchannel *channel)
-{
-	return channel->nbytes;
-}
+uदीर्घ visorchannel_get_nbytes(काष्ठा visorchannel *channel)
+अणु
+	वापस channel->nbytes;
+पूर्ण
 
-char *visorchannel_guid_id(const guid_t *guid, char *s)
-{
-	sprintf(s, "%pUL", guid);
-	return s;
-}
+अक्षर *visorchannel_guid_id(स्थिर guid_t *guid, अक्षर *s)
+अणु
+	प्र_लिखो(s, "%pUL", guid);
+	वापस s;
+पूर्ण
 
-char *visorchannel_id(struct visorchannel *channel, char *s)
-{
-	return visorchannel_guid_id(&channel->guid, s);
-}
+अक्षर *visorchannel_id(काष्ठा visorchannel *channel, अक्षर *s)
+अणु
+	वापस visorchannel_guid_id(&channel->guid, s);
+पूर्ण
 
-char *visorchannel_zoneid(struct visorchannel *channel, char *s)
-{
-	return visorchannel_guid_id(&channel->chan_hdr.zone_guid, s);
-}
+अक्षर *visorchannel_zoneid(काष्ठा visorchannel *channel, अक्षर *s)
+अणु
+	वापस visorchannel_guid_id(&channel->chan_hdr.zone_guid, s);
+पूर्ण
 
-u64 visorchannel_get_clientpartition(struct visorchannel *channel)
-{
-	return channel->chan_hdr.partition_handle;
-}
+u64 visorchannel_get_clientpartition(काष्ठा visorchannel *channel)
+अणु
+	वापस channel->chan_hdr.partition_handle;
+पूर्ण
 
-int visorchannel_set_clientpartition(struct visorchannel *channel,
+पूर्णांक visorchannel_set_clientpartition(काष्ठा visorchannel *channel,
 				     u64 partition_handle)
-{
+अणु
 	channel->chan_hdr.partition_handle = partition_handle;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * visorchannel_get_guid() - queries the GUID of the designated channel
@@ -102,180 +103,180 @@ int visorchannel_set_clientpartition(struct visorchannel *channel,
  *
  * Return: the GUID of the provided channel
  */
-const guid_t *visorchannel_get_guid(struct visorchannel *channel)
-{
-	return &channel->guid;
-}
+स्थिर guid_t *visorchannel_get_guid(काष्ठा visorchannel *channel)
+अणु
+	वापस &channel->guid;
+पूर्ण
 EXPORT_SYMBOL_GPL(visorchannel_get_guid);
 
-int visorchannel_read(struct visorchannel *channel, ulong offset, void *dest,
-		      ulong nbytes)
-{
-	if (offset + nbytes > channel->nbytes)
-		return -EIO;
+पूर्णांक visorchannel_पढ़ो(काष्ठा visorchannel *channel, uदीर्घ offset, व्योम *dest,
+		      uदीर्घ nbytes)
+अणु
+	अगर (offset + nbytes > channel->nbytes)
+		वापस -EIO;
 
-	memcpy(dest, channel->mapped + offset, nbytes);
-	return 0;
-}
+	स_नकल(dest, channel->mapped + offset, nbytes);
+	वापस 0;
+पूर्ण
 
-int visorchannel_write(struct visorchannel *channel, ulong offset, void *dest,
-		       ulong nbytes)
-{
-	size_t chdr_size = sizeof(struct channel_header);
-	size_t copy_size;
+पूर्णांक visorchannel_ग_लिखो(काष्ठा visorchannel *channel, uदीर्घ offset, व्योम *dest,
+		       uदीर्घ nbytes)
+अणु
+	माप_प्रकार chdr_size = माप(काष्ठा channel_header);
+	माप_प्रकार copy_size;
 
-	if (offset + nbytes > channel->nbytes)
-		return -EIO;
+	अगर (offset + nbytes > channel->nbytes)
+		वापस -EIO;
 
-	if (offset < chdr_size) {
+	अगर (offset < chdr_size) अणु
 		copy_size = min(chdr_size - offset, nbytes);
-		memcpy(((char *)(&channel->chan_hdr)) + offset,
+		स_नकल(((अक्षर *)(&channel->chan_hdr)) + offset,
 		       dest, copy_size);
-	}
-	memcpy(channel->mapped + offset, dest, nbytes);
-	return 0;
-}
+	पूर्ण
+	स_नकल(channel->mapped + offset, dest, nbytes);
+	वापस 0;
+पूर्ण
 
-void *visorchannel_get_header(struct visorchannel *channel)
-{
-	return &channel->chan_hdr;
-}
+व्योम *visorchannel_get_header(काष्ठा visorchannel *channel)
+अणु
+	वापस &channel->chan_hdr;
+पूर्ण
 
 /*
- * Return offset of a specific SIGNAL_QUEUE_HEADER from the beginning of a
+ * Return offset of a specअगरic SIGNAL_QUEUE_HEADER from the beginning of a
  * channel header
  */
-static int sig_queue_offset(struct channel_header *chan_hdr, int q)
-{
-	return ((chan_hdr)->ch_space_offset +
-	       ((q) * sizeof(struct signal_queue_header)));
-}
+अटल पूर्णांक sig_queue_offset(काष्ठा channel_header *chan_hdr, पूर्णांक q)
+अणु
+	वापस ((chan_hdr)->ch_space_offset +
+	       ((q) * माप(काष्ठा संकेत_queue_header)));
+पूर्ण
 
 /*
- * Return offset of a specific queue entry (data) from the beginning of a
+ * Return offset of a specअगरic queue entry (data) from the beginning of a
  * channel header
  */
-static int sig_data_offset(struct channel_header *chan_hdr, int q,
-			   struct signal_queue_header *sig_hdr, int slot)
-{
-	return (sig_queue_offset(chan_hdr, q) + sig_hdr->sig_base_offset +
-	       (slot * sig_hdr->signal_size));
-}
+अटल पूर्णांक sig_data_offset(काष्ठा channel_header *chan_hdr, पूर्णांक q,
+			   काष्ठा संकेत_queue_header *sig_hdr, पूर्णांक slot)
+अणु
+	वापस (sig_queue_offset(chan_hdr, q) + sig_hdr->sig_base_offset +
+	       (slot * sig_hdr->संकेत_size));
+पूर्ण
 
 /*
- * Write the contents of a specific field within a SIGNAL_QUEUE_HEADER back into
+ * Write the contents of a specअगरic field within a SIGNAL_QUEUE_HEADER back पूर्णांकo
  * host memory
  */
-#define SIG_WRITE_FIELD(channel, queue, sig_hdr, FIELD) \
-	visorchannel_write(channel, \
+#घोषणा SIG_WRITE_FIELD(channel, queue, sig_hdr, FIELD) \
+	visorchannel_ग_लिखो(channel, \
 			   sig_queue_offset(&channel->chan_hdr, queue) + \
-			   offsetof(struct signal_queue_header, FIELD), \
+			   दुरत्व(काष्ठा संकेत_queue_header, FIELD), \
 			   &((sig_hdr)->FIELD), \
-			   sizeof((sig_hdr)->FIELD))
+			   माप((sig_hdr)->FIELD))
 
-static int sig_read_header(struct visorchannel *channel, u32 queue,
-			   struct signal_queue_header *sig_hdr)
-{
-	if (channel->chan_hdr.ch_space_offset < sizeof(struct channel_header))
-		return -EINVAL;
+अटल पूर्णांक sig_पढ़ो_header(काष्ठा visorchannel *channel, u32 queue,
+			   काष्ठा संकेत_queue_header *sig_hdr)
+अणु
+	अगर (channel->chan_hdr.ch_space_offset < माप(काष्ठा channel_header))
+		वापस -EINVAL;
 
-	/* Read the appropriate SIGNAL_QUEUE_HEADER into local memory. */
-	return visorchannel_read(channel,
+	/* Read the appropriate SIGNAL_QUEUE_HEADER पूर्णांकo local memory. */
+	वापस visorchannel_पढ़ो(channel,
 				 sig_queue_offset(&channel->chan_hdr, queue),
-				 sig_hdr, sizeof(struct signal_queue_header));
-}
+				 sig_hdr, माप(काष्ठा संकेत_queue_header));
+पूर्ण
 
-static int sig_read_data(struct visorchannel *channel, u32 queue,
-			 struct signal_queue_header *sig_hdr, u32 slot,
-			 void *data)
-{
-	int signal_data_offset = sig_data_offset(&channel->chan_hdr, queue,
+अटल पूर्णांक sig_पढ़ो_data(काष्ठा visorchannel *channel, u32 queue,
+			 काष्ठा संकेत_queue_header *sig_hdr, u32 slot,
+			 व्योम *data)
+अणु
+	पूर्णांक संकेत_data_offset = sig_data_offset(&channel->chan_hdr, queue,
 						 sig_hdr, slot);
 
-	return visorchannel_read(channel, signal_data_offset,
-				 data, sig_hdr->signal_size);
-}
+	वापस visorchannel_पढ़ो(channel, संकेत_data_offset,
+				 data, sig_hdr->संकेत_size);
+पूर्ण
 
-static int sig_write_data(struct visorchannel *channel, u32 queue,
-			  struct signal_queue_header *sig_hdr, u32 slot,
-			  void *data)
-{
-	int signal_data_offset = sig_data_offset(&channel->chan_hdr, queue,
+अटल पूर्णांक sig_ग_लिखो_data(काष्ठा visorchannel *channel, u32 queue,
+			  काष्ठा संकेत_queue_header *sig_hdr, u32 slot,
+			  व्योम *data)
+अणु
+	पूर्णांक संकेत_data_offset = sig_data_offset(&channel->chan_hdr, queue,
 						 sig_hdr, slot);
 
-	return visorchannel_write(channel, signal_data_offset,
-				  data, sig_hdr->signal_size);
-}
+	वापस visorchannel_ग_लिखो(channel, संकेत_data_offset,
+				  data, sig_hdr->संकेत_size);
+पूर्ण
 
-static int signalremove_inner(struct visorchannel *channel, u32 queue,
-			      void *msg)
-{
-	struct signal_queue_header sig_hdr;
-	int error;
+अटल पूर्णांक संकेतहटाओ_inner(काष्ठा visorchannel *channel, u32 queue,
+			      व्योम *msg)
+अणु
+	काष्ठा संकेत_queue_header sig_hdr;
+	पूर्णांक error;
 
-	error = sig_read_header(channel, queue, &sig_hdr);
-	if (error)
-		return error;
-	/* No signals to remove; have caller try again. */
-	if (sig_hdr.head == sig_hdr.tail)
-		return -EAGAIN;
+	error = sig_पढ़ो_header(channel, queue, &sig_hdr);
+	अगर (error)
+		वापस error;
+	/* No संकेतs to हटाओ; have caller try again. */
+	अगर (sig_hdr.head == sig_hdr.tail)
+		वापस -EAGAIN;
 	sig_hdr.tail = (sig_hdr.tail + 1) % sig_hdr.max_slots;
-	error = sig_read_data(channel, queue, &sig_hdr, sig_hdr.tail, msg);
-	if (error)
-		return error;
+	error = sig_पढ़ो_data(channel, queue, &sig_hdr, sig_hdr.tail, msg);
+	अगर (error)
+		वापस error;
 	sig_hdr.num_received++;
 	/*
-	 * For each data field in SIGNAL_QUEUE_HEADER that was modified, update
-	 * host memory. Required for channel sync.
+	 * For each data field in SIGNAL_QUEUE_HEADER that was modअगरied, update
+	 * host memory. Required क्रम channel sync.
 	 */
 	mb();
 	error = SIG_WRITE_FIELD(channel, queue, &sig_hdr, tail);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	error = SIG_WRITE_FIELD(channel, queue, &sig_hdr, num_received);
-	if (error)
-		return error;
-	return 0;
-}
+	अगर (error)
+		वापस error;
+	वापस 0;
+पूर्ण
 
 /**
- * visorchannel_signalremove() - removes a message from the designated
+ * visorchannel_संकेतहटाओ() - हटाओs a message from the designated
  *                               channel/queue
- * @channel: the channel the message will be removed from
- * @queue:   the queue the message will be removed from
- * @msg:     the message to remove
+ * @channel: the channel the message will be हटाओd from
+ * @queue:   the queue the message will be हटाओd from
+ * @msg:     the message to हटाओ
  *
- * Return: integer error code indicating the status of the removal
+ * Return: पूर्णांकeger error code indicating the status of the removal
  */
-int visorchannel_signalremove(struct visorchannel *channel, u32 queue,
-			      void *msg)
-{
-	int rc;
-	unsigned long flags;
+पूर्णांक visorchannel_संकेतहटाओ(काष्ठा visorchannel *channel, u32 queue,
+			      व्योम *msg)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ flags;
 
-	if (channel->needs_lock) {
-		spin_lock_irqsave(&channel->remove_lock, flags);
-		rc = signalremove_inner(channel, queue, msg);
-		spin_unlock_irqrestore(&channel->remove_lock, flags);
-	} else {
-		rc = signalremove_inner(channel, queue, msg);
-	}
+	अगर (channel->needs_lock) अणु
+		spin_lock_irqsave(&channel->हटाओ_lock, flags);
+		rc = संकेतहटाओ_inner(channel, queue, msg);
+		spin_unlock_irqrestore(&channel->हटाओ_lock, flags);
+	पूर्ण अन्यथा अणु
+		rc = संकेतहटाओ_inner(channel, queue, msg);
+	पूर्ण
 
-	return rc;
-}
-EXPORT_SYMBOL_GPL(visorchannel_signalremove);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(visorchannel_संकेतहटाओ);
 
-static bool queue_empty(struct visorchannel *channel, u32 queue)
-{
-	struct signal_queue_header sig_hdr;
+अटल bool queue_empty(काष्ठा visorchannel *channel, u32 queue)
+अणु
+	काष्ठा संकेत_queue_header sig_hdr;
 
-	if (sig_read_header(channel, queue, &sig_hdr))
-		return true;
-	return (sig_hdr.head == sig_hdr.tail);
-}
+	अगर (sig_पढ़ो_header(channel, queue, &sig_hdr))
+		वापस true;
+	वापस (sig_hdr.head == sig_hdr.tail);
+पूर्ण
 
 /**
- * visorchannel_signalempty() - checks if the designated channel/queue contains
+ * visorchannel_संकेतempty() - checks अगर the designated channel/queue contains
  *				any messages
  * @channel: the channel to query
  * @queue:   the queue in the channel to query
@@ -283,152 +284,152 @@ static bool queue_empty(struct visorchannel *channel, u32 queue)
  * Return: boolean indicating whether any messages in the designated
  *         channel/queue are present
  */
-bool visorchannel_signalempty(struct visorchannel *channel, u32 queue)
-{
+bool visorchannel_संकेतempty(काष्ठा visorchannel *channel, u32 queue)
+अणु
 	bool rc;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!channel->needs_lock)
-		return queue_empty(channel, queue);
-	spin_lock_irqsave(&channel->remove_lock, flags);
+	अगर (!channel->needs_lock)
+		वापस queue_empty(channel, queue);
+	spin_lock_irqsave(&channel->हटाओ_lock, flags);
 	rc = queue_empty(channel, queue);
-	spin_unlock_irqrestore(&channel->remove_lock, flags);
-	return rc;
-}
-EXPORT_SYMBOL_GPL(visorchannel_signalempty);
+	spin_unlock_irqrestore(&channel->हटाओ_lock, flags);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(visorchannel_संकेतempty);
 
-static int signalinsert_inner(struct visorchannel *channel, u32 queue,
-			      void *msg)
-{
-	struct signal_queue_header sig_hdr;
-	int err;
+अटल पूर्णांक संकेतinsert_inner(काष्ठा visorchannel *channel, u32 queue,
+			      व्योम *msg)
+अणु
+	काष्ठा संकेत_queue_header sig_hdr;
+	पूर्णांक err;
 
-	err = sig_read_header(channel, queue, &sig_hdr);
-	if (err)
-		return err;
+	err = sig_पढ़ो_header(channel, queue, &sig_hdr);
+	अगर (err)
+		वापस err;
 	sig_hdr.head = (sig_hdr.head + 1) % sig_hdr.max_slots;
-	if (sig_hdr.head == sig_hdr.tail) {
+	अगर (sig_hdr.head == sig_hdr.tail) अणु
 		sig_hdr.num_overflows++;
 		err = SIG_WRITE_FIELD(channel, queue, &sig_hdr, num_overflows);
-		if (err)
-			return err;
-		return -EIO;
-	}
-	err = sig_write_data(channel, queue, &sig_hdr, sig_hdr.head, msg);
-	if (err)
-		return err;
+		अगर (err)
+			वापस err;
+		वापस -EIO;
+	पूर्ण
+	err = sig_ग_लिखो_data(channel, queue, &sig_hdr, sig_hdr.head, msg);
+	अगर (err)
+		वापस err;
 	sig_hdr.num_sent++;
 	/*
-	 * For each data field in SIGNAL_QUEUE_HEADER that was modified, update
-	 * host memory. Required for channel sync.
+	 * For each data field in SIGNAL_QUEUE_HEADER that was modअगरied, update
+	 * host memory. Required क्रम channel sync.
 	 */
 	mb();
 	err = SIG_WRITE_FIELD(channel, queue, &sig_hdr, head);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = SIG_WRITE_FIELD(channel, queue, &sig_hdr, num_sent);
-	if (err)
-		return err;
-	return 0;
-}
+	अगर (err)
+		वापस err;
+	वापस 0;
+पूर्ण
 
 /*
- * visorchannel_create() - creates the struct visorchannel abstraction for a
- *                         data area in memory, but does NOT modify this data
+ * visorchannel_create() - creates the काष्ठा visorchannel असलtraction क्रम a
+ *                         data area in memory, but करोes NOT modअगरy this data
  *                         area
  * @physaddr:      physical address of start of channel
- * @gfp:           gfp_t to use when allocating memory for the data struct
- * @guid:          GUID that identifies channel type;
- * @needs_lock:    must specify true if you have multiple threads of execution
+ * @gfp:           gfp_t to use when allocating memory क्रम the data काष्ठा
+ * @guid:          GUID that identअगरies channel type;
+ * @needs_lock:    must specअगरy true अगर you have multiple thपढ़ोs of execution
  *                 that will be calling visorchannel methods of this
- *                 visorchannel at the same time
+ *                 visorchannel at the same समय
  *
- * Return: pointer to visorchannel that was created if successful,
- *         otherwise NULL
+ * Return: poपूर्णांकer to visorchannel that was created अगर successful,
+ *         otherwise शून्य
  */
-struct visorchannel *visorchannel_create(u64 physaddr, gfp_t gfp,
-					 const guid_t *guid, bool needs_lock)
-{
-	struct visorchannel *channel;
-	int err;
-	size_t size = sizeof(struct channel_header);
+काष्ठा visorchannel *visorchannel_create(u64 physaddr, gfp_t gfp,
+					 स्थिर guid_t *guid, bool needs_lock)
+अणु
+	काष्ठा visorchannel *channel;
+	पूर्णांक err;
+	माप_प्रकार size = माप(काष्ठा channel_header);
 
-	if (physaddr == 0)
-		return NULL;
+	अगर (physaddr == 0)
+		वापस शून्य;
 
-	channel = kzalloc(sizeof(*channel), gfp);
-	if (!channel)
-		return NULL;
+	channel = kzalloc(माप(*channel), gfp);
+	अगर (!channel)
+		वापस शून्य;
 	channel->needs_lock = needs_lock;
 	spin_lock_init(&channel->insert_lock);
-	spin_lock_init(&channel->remove_lock);
+	spin_lock_init(&channel->हटाओ_lock);
 	/*
-	 * Video driver constains the efi framebuffer so it will get a conflict
+	 * Video driver स्थिरains the efi framebuffer so it will get a conflict
 	 * resource when requesting its full mem region. Since we are only
-	 * using the efi framebuffer for video we can ignore this. Remember that
+	 * using the efi framebuffer क्रम video we can ignore this. Remember that
 	 * we haven't requested it so we don't try to release later on.
 	 */
 	channel->requested = request_mem_region(physaddr, size, VISOR_DRV_NAME);
-	if (!channel->requested && !guid_equal(guid, &visor_video_guid))
-		/* we only care about errors if this is not the video channel */
-		goto err_destroy_channel;
+	अगर (!channel->requested && !guid_equal(guid, &visor_video_guid))
+		/* we only care about errors अगर this is not the video channel */
+		जाओ err_destroy_channel;
 	channel->mapped = memremap(physaddr, size, MEMREMAP_WB);
-	if (!channel->mapped) {
+	अगर (!channel->mapped) अणु
 		release_mem_region(physaddr, size);
-		goto err_destroy_channel;
-	}
+		जाओ err_destroy_channel;
+	पूर्ण
 	channel->physaddr = physaddr;
 	channel->nbytes = size;
-	err = visorchannel_read(channel, 0, &channel->chan_hdr, size);
-	if (err)
-		goto err_destroy_channel;
-	size = (ulong)channel->chan_hdr.size;
+	err = visorchannel_पढ़ो(channel, 0, &channel->chan_hdr, size);
+	अगर (err)
+		जाओ err_destroy_channel;
+	size = (uदीर्घ)channel->chan_hdr.size;
 	memunmap(channel->mapped);
-	if (channel->requested)
+	अगर (channel->requested)
 		release_mem_region(channel->physaddr, channel->nbytes);
-	channel->mapped = NULL;
+	channel->mapped = शून्य;
 	channel->requested = request_mem_region(channel->physaddr, size,
 						VISOR_DRV_NAME);
-	if (!channel->requested && !guid_equal(guid, &visor_video_guid))
-		/* we only care about errors if this is not the video channel */
-		goto err_destroy_channel;
+	अगर (!channel->requested && !guid_equal(guid, &visor_video_guid))
+		/* we only care about errors अगर this is not the video channel */
+		जाओ err_destroy_channel;
 	channel->mapped = memremap(channel->physaddr, size, MEMREMAP_WB);
-	if (!channel->mapped) {
+	अगर (!channel->mapped) अणु
 		release_mem_region(channel->physaddr, size);
-		goto err_destroy_channel;
-	}
+		जाओ err_destroy_channel;
+	पूर्ण
 	channel->nbytes = size;
 	guid_copy(&channel->guid, guid);
-	return channel;
+	वापस channel;
 
 err_destroy_channel:
 	visorchannel_destroy(channel);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * visorchannel_signalinsert() - inserts a message into the designated
+ * visorchannel_संकेतinsert() - inserts a message पूर्णांकo the designated
  *                               channel/queue
  * @channel: the channel the message will be added to
  * @queue:   the queue the message will be added to
  * @msg:     the message to insert
  *
- * Return: integer error code indicating the status of the insertion
+ * Return: पूर्णांकeger error code indicating the status of the insertion
  */
-int visorchannel_signalinsert(struct visorchannel *channel, u32 queue,
-			      void *msg)
-{
-	int rc;
-	unsigned long flags;
+पूर्णांक visorchannel_संकेतinsert(काष्ठा visorchannel *channel, u32 queue,
+			      व्योम *msg)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ flags;
 
-	if (channel->needs_lock) {
+	अगर (channel->needs_lock) अणु
 		spin_lock_irqsave(&channel->insert_lock, flags);
-		rc = signalinsert_inner(channel, queue, msg);
+		rc = संकेतinsert_inner(channel, queue, msg);
 		spin_unlock_irqrestore(&channel->insert_lock, flags);
-	} else {
-		rc = signalinsert_inner(channel, queue, msg);
-	}
+	पूर्ण अन्यथा अणु
+		rc = संकेतinsert_inner(channel, queue, msg);
+	पूर्ण
 
-	return rc;
-}
-EXPORT_SYMBOL_GPL(visorchannel_signalinsert);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(visorchannel_संकेतinsert);

@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 NVIDIA Corporation
  */
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_device.h>
-#include <drm/drm_mipi_dsi.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_panel.h>
 
-struct sharp_panel {
-	struct drm_panel base;
+काष्ठा sharp_panel अणु
+	काष्ठा drm_panel base;
 	/* the datasheet refers to them as DSI-LINK1 and DSI-LINK2 */
-	struct mipi_dsi_device *link1;
-	struct mipi_dsi_device *link2;
+	काष्ठा mipi_dsi_device *link1;
+	काष्ठा mipi_dsi_device *link2;
 
-	struct regulator *supply;
+	काष्ठा regulator *supply;
 
 	bool prepared;
 	bool enabled;
 
-	const struct drm_display_mode *mode;
-};
+	स्थिर काष्ठा drm_display_mode *mode;
+पूर्ण;
 
-static inline struct sharp_panel *to_sharp_panel(struct drm_panel *panel)
-{
-	return container_of(panel, struct sharp_panel, base);
-}
+अटल अंतरभूत काष्ठा sharp_panel *to_sharp_panel(काष्ठा drm_panel *panel)
+अणु
+	वापस container_of(panel, काष्ठा sharp_panel, base);
+पूर्ण
 
-static void sharp_wait_frames(struct sharp_panel *sharp, unsigned int frames)
-{
-	unsigned int refresh = drm_mode_vrefresh(sharp->mode);
+अटल व्योम sharp_रुको_frames(काष्ठा sharp_panel *sharp, अचिन्हित पूर्णांक frames)
+अणु
+	अचिन्हित पूर्णांक refresh = drm_mode_vrefresh(sharp->mode);
 
-	if (WARN_ON(frames > refresh))
-		return;
+	अगर (WARN_ON(frames > refresh))
+		वापस;
 
 	msleep(1000 / (refresh / frames));
-}
+पूर्ण
 
-static int sharp_panel_write(struct sharp_panel *sharp, u16 offset, u8 value)
-{
-	u8 payload[3] = { offset >> 8, offset & 0xff, value };
-	struct mipi_dsi_device *dsi = sharp->link1;
-	ssize_t err;
+अटल पूर्णांक sharp_panel_ग_लिखो(काष्ठा sharp_panel *sharp, u16 offset, u8 value)
+अणु
+	u8 payload[3] = अणु offset >> 8, offset & 0xff, value पूर्ण;
+	काष्ठा mipi_dsi_device *dsi = sharp->link1;
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_generic_write(dsi, payload, sizeof(payload));
-	if (err < 0) {
+	err = mipi_dsi_generic_ग_लिखो(dsi, payload, माप(payload));
+	अगर (err < 0) अणु
 		dev_err(&dsi->dev, "failed to write %02x to %04x: %zd\n",
 			value, offset, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = mipi_dsi_dcs_nop(dsi);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&dsi->dev, "failed to send DCS nop: %zd\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	usleep_range(10, 20);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused int sharp_panel_read(struct sharp_panel *sharp,
+अटल __maybe_unused पूर्णांक sharp_panel_पढ़ो(काष्ठा sharp_panel *sharp,
 					   u16 offset, u8 *value)
-{
-	ssize_t err;
+अणु
+	sमाप_प्रकार err;
 
 	cpu_to_be16s(&offset);
 
-	err = mipi_dsi_generic_read(sharp->link1, &offset, sizeof(offset),
-				    value, sizeof(*value));
-	if (err < 0)
+	err = mipi_dsi_generic_पढ़ो(sharp->link1, &offset, माप(offset),
+				    value, माप(*value));
+	अगर (err < 0)
 		dev_err(&sharp->link1->dev, "failed to read from %04x: %zd\n",
 			offset, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sharp_panel_disable(struct drm_panel *panel)
-{
-	struct sharp_panel *sharp = to_sharp_panel(panel);
+अटल पूर्णांक sharp_panel_disable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा sharp_panel *sharp = to_sharp_panel(panel);
 
-	if (!sharp->enabled)
-		return 0;
+	अगर (!sharp->enabled)
+		वापस 0;
 
 	sharp->enabled = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sharp_panel_unprepare(struct drm_panel *panel)
-{
-	struct sharp_panel *sharp = to_sharp_panel(panel);
-	int err;
+अटल पूर्णांक sharp_panel_unprepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा sharp_panel *sharp = to_sharp_panel(panel);
+	पूर्णांक err;
 
-	if (!sharp->prepared)
-		return 0;
+	अगर (!sharp->prepared)
+		वापस 0;
 
-	sharp_wait_frames(sharp, 4);
+	sharp_रुको_frames(sharp, 4);
 
 	err = mipi_dsi_dcs_set_display_off(sharp->link1);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(panel->dev, "failed to set display off: %d\n", err);
 
 	err = mipi_dsi_dcs_enter_sleep_mode(sharp->link1);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(panel->dev, "failed to enter sleep mode: %d\n", err);
 
 	msleep(120);
@@ -121,73 +122,73 @@ static int sharp_panel_unprepare(struct drm_panel *panel)
 
 	sharp->prepared = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sharp_setup_symmetrical_split(struct mipi_dsi_device *left,
-					 struct mipi_dsi_device *right,
-					 const struct drm_display_mode *mode)
-{
-	int err;
+अटल पूर्णांक sharp_setup_symmetrical_split(काष्ठा mipi_dsi_device *left,
+					 काष्ठा mipi_dsi_device *right,
+					 स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	पूर्णांक err;
 
 	err = mipi_dsi_dcs_set_column_address(left, 0, mode->hdisplay / 2 - 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&left->dev, "failed to set column address: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = mipi_dsi_dcs_set_page_address(left, 0, mode->vdisplay - 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&left->dev, "failed to set page address: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = mipi_dsi_dcs_set_column_address(right, mode->hdisplay / 2,
 					      mode->hdisplay - 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&right->dev, "failed to set column address: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = mipi_dsi_dcs_set_page_address(right, 0, mode->vdisplay - 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&right->dev, "failed to set page address: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sharp_panel_prepare(struct drm_panel *panel)
-{
-	struct sharp_panel *sharp = to_sharp_panel(panel);
-	u8 format = MIPI_DCS_PIXEL_FMT_24BIT;
-	int err;
+अटल पूर्णांक sharp_panel_prepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा sharp_panel *sharp = to_sharp_panel(panel);
+	u8 क्रमmat = MIPI_DCS_PIXEL_FMT_24BIT;
+	पूर्णांक err;
 
-	if (sharp->prepared)
-		return 0;
+	अगर (sharp->prepared)
+		वापस 0;
 
 	err = regulator_enable(sharp->supply);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/*
 	 * According to the datasheet, the panel needs around 10 ms to fully
-	 * power up. At least another 120 ms is required before exiting sleep
-	 * mode to make sure the panel is ready. Throw in another 20 ms for
+	 * घातer up. At least another 120 ms is required beक्रमe निकासing sleep
+	 * mode to make sure the panel is पढ़ोy. Throw in another 20 ms क्रम
 	 * good measure.
 	 */
 	msleep(150);
 
-	err = mipi_dsi_dcs_exit_sleep_mode(sharp->link1);
-	if (err < 0) {
+	err = mipi_dsi_dcs_निकास_sleep_mode(sharp->link1);
+	अगर (err < 0) अणु
 		dev_err(panel->dev, "failed to exit sleep mode: %d\n", err);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	/*
-	 * The MIPI DCS specification mandates this delay only between the
-	 * exit_sleep_mode and enter_sleep_mode commands, so it isn't strictly
+	 * The MIPI DCS specअगरication mandates this delay only between the
+	 * निकास_sleep_mode and enter_sleep_mode commands, so it isn't strictly
 	 * necessary here.
 	 */
 	/*
@@ -195,72 +196,72 @@ static int sharp_panel_prepare(struct drm_panel *panel)
 	*/
 
 	/* set left-right mode */
-	err = sharp_panel_write(sharp, 0x1000, 0x2a);
-	if (err < 0) {
+	err = sharp_panel_ग_लिखो(sharp, 0x1000, 0x2a);
+	अगर (err < 0) अणु
 		dev_err(panel->dev, "failed to set left-right mode: %d\n", err);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	/* enable command mode */
-	err = sharp_panel_write(sharp, 0x1001, 0x01);
-	if (err < 0) {
+	err = sharp_panel_ग_लिखो(sharp, 0x1001, 0x01);
+	अगर (err < 0) अणु
 		dev_err(panel->dev, "failed to enable command mode: %d\n", err);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
-	err = mipi_dsi_dcs_set_pixel_format(sharp->link1, format);
-	if (err < 0) {
+	err = mipi_dsi_dcs_set_pixel_क्रमmat(sharp->link1, क्रमmat);
+	अगर (err < 0) अणु
 		dev_err(panel->dev, "failed to set pixel format: %d\n", err);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	/*
 	 * TODO: The device supports both left-right and even-odd split
 	 * configurations, but this driver currently supports only the left-
-	 * right split. To support a different mode a mechanism needs to be
+	 * right split. To support a dअगरferent mode a mechanism needs to be
 	 * put in place to communicate the configuration back to the DSI host
 	 * controller.
 	 */
 	err = sharp_setup_symmetrical_split(sharp->link1, sharp->link2,
 					    sharp->mode);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(panel->dev, "failed to set up symmetrical split: %d\n",
 			err);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	err = mipi_dsi_dcs_set_display_on(sharp->link1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(panel->dev, "failed to set display on: %d\n", err);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	sharp->prepared = true;
 
-	/* wait for 6 frames before continuing */
-	sharp_wait_frames(sharp, 6);
+	/* रुको क्रम 6 frames beक्रमe continuing */
+	sharp_रुको_frames(sharp, 6);
 
-	return 0;
+	वापस 0;
 
-poweroff:
+घातeroff:
 	regulator_disable(sharp->supply);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sharp_panel_enable(struct drm_panel *panel)
-{
-	struct sharp_panel *sharp = to_sharp_panel(panel);
+अटल पूर्णांक sharp_panel_enable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा sharp_panel *sharp = to_sharp_panel(panel);
 
-	if (sharp->enabled)
-		return 0;
+	अगर (sharp->enabled)
+		वापस 0;
 
 	sharp->enabled = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_display_mode default_mode = {
-	.clock = 278000,
+अटल स्थिर काष्ठा drm_display_mode शेष_mode = अणु
+	.घड़ी = 278000,
 	.hdisplay = 2560,
 	.hsync_start = 2560 + 128,
 	.hsync_end = 2560 + 128 + 64,
@@ -269,20 +270,20 @@ static const struct drm_display_mode default_mode = {
 	.vsync_start = 1600 + 4,
 	.vsync_end = 1600 + 4 + 8,
 	.vtotal = 1600 + 4 + 8 + 32,
-};
+पूर्ण;
 
-static int sharp_panel_get_modes(struct drm_panel *panel,
-				 struct drm_connector *connector)
-{
-	struct drm_display_mode *mode;
+अटल पूर्णांक sharp_panel_get_modes(काष्ठा drm_panel *panel,
+				 काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_display_mode *mode;
 
-	mode = drm_mode_duplicate(connector->dev, &default_mode);
-	if (!mode) {
+	mode = drm_mode_duplicate(connector->dev, &शेष_mode);
+	अगर (!mode) अणु
 		dev_err(panel->dev, "failed to add mode %ux%ux@%u\n",
-			default_mode.hdisplay, default_mode.vdisplay,
-			drm_mode_vrefresh(&default_mode));
-		return -ENOMEM;
-	}
+			शेष_mode.hdisplay, शेष_mode.vdisplay,
+			drm_mode_vrefresh(&शेष_mode));
+		वापस -ENOMEM;
+	पूर्ण
 
 	drm_mode_set_name(mode);
 
@@ -291,82 +292,82 @@ static int sharp_panel_get_modes(struct drm_panel *panel,
 	connector->display_info.width_mm = 217;
 	connector->display_info.height_mm = 136;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct drm_panel_funcs sharp_panel_funcs = {
+अटल स्थिर काष्ठा drm_panel_funcs sharp_panel_funcs = अणु
 	.disable = sharp_panel_disable,
 	.unprepare = sharp_panel_unprepare,
 	.prepare = sharp_panel_prepare,
 	.enable = sharp_panel_enable,
 	.get_modes = sharp_panel_get_modes,
-};
+पूर्ण;
 
-static const struct of_device_id sharp_of_match[] = {
-	{ .compatible = "sharp,lq101r1sx01", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sharp_of_match[] = अणु
+	अणु .compatible = "sharp,lq101r1sx01", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sharp_of_match);
 
-static int sharp_panel_add(struct sharp_panel *sharp)
-{
-	int ret;
+अटल पूर्णांक sharp_panel_add(काष्ठा sharp_panel *sharp)
+अणु
+	पूर्णांक ret;
 
-	sharp->mode = &default_mode;
+	sharp->mode = &शेष_mode;
 
 	sharp->supply = devm_regulator_get(&sharp->link1->dev, "power");
-	if (IS_ERR(sharp->supply))
-		return PTR_ERR(sharp->supply);
+	अगर (IS_ERR(sharp->supply))
+		वापस PTR_ERR(sharp->supply);
 
 	drm_panel_init(&sharp->base, &sharp->link1->dev, &sharp_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 
 	ret = drm_panel_of_backlight(&sharp->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_panel_add(&sharp->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sharp_panel_del(struct sharp_panel *sharp)
-{
-	if (sharp->base.dev)
-		drm_panel_remove(&sharp->base);
+अटल व्योम sharp_panel_del(काष्ठा sharp_panel *sharp)
+अणु
+	अगर (sharp->base.dev)
+		drm_panel_हटाओ(&sharp->base);
 
-	if (sharp->link2)
+	अगर (sharp->link2)
 		put_device(&sharp->link2->dev);
-}
+पूर्ण
 
-static int sharp_panel_probe(struct mipi_dsi_device *dsi)
-{
-	struct mipi_dsi_device *secondary = NULL;
-	struct sharp_panel *sharp;
-	struct device_node *np;
-	int err;
+अटल पूर्णांक sharp_panel_probe(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा mipi_dsi_device *secondary = शून्य;
+	काष्ठा sharp_panel *sharp;
+	काष्ठा device_node *np;
+	पूर्णांक err;
 
 	dsi->lanes = 4;
-	dsi->format = MIPI_DSI_FMT_RGB888;
+	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_LPM;
 
 	/* Find DSI-LINK1 */
 	np = of_parse_phandle(dsi->dev.of_node, "link2", 0);
-	if (np) {
+	अगर (np) अणु
 		secondary = of_find_mipi_dsi_device_by_node(np);
 		of_node_put(np);
 
-		if (!secondary)
-			return -EPROBE_DEFER;
-	}
+		अगर (!secondary)
+			वापस -EPROBE_DEFER;
+	पूर्ण
 
-	/* register a panel for only the DSI-LINK1 interface */
-	if (secondary) {
-		sharp = devm_kzalloc(&dsi->dev, sizeof(*sharp), GFP_KERNEL);
-		if (!sharp) {
+	/* रेजिस्टर a panel क्रम only the DSI-LINK1 पूर्णांकerface */
+	अगर (secondary) अणु
+		sharp = devm_kzalloc(&dsi->dev, माप(*sharp), GFP_KERNEL);
+		अगर (!sharp) अणु
 			put_device(&secondary->dev);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		mipi_dsi_set_drvdata(dsi, sharp);
 
@@ -374,67 +375,67 @@ static int sharp_panel_probe(struct mipi_dsi_device *dsi)
 		sharp->link1 = dsi;
 
 		err = sharp_panel_add(sharp);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			put_device(&secondary->dev);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	err = mipi_dsi_attach(dsi);
-	if (err < 0) {
-		if (secondary)
+	अगर (err < 0) अणु
+		अगर (secondary)
 			sharp_panel_del(sharp);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sharp_panel_remove(struct mipi_dsi_device *dsi)
-{
-	struct sharp_panel *sharp = mipi_dsi_get_drvdata(dsi);
-	int err;
+अटल पूर्णांक sharp_panel_हटाओ(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा sharp_panel *sharp = mipi_dsi_get_drvdata(dsi);
+	पूर्णांक err;
 
-	/* only detach from host for the DSI-LINK2 interface */
-	if (!sharp) {
+	/* only detach from host क्रम the DSI-LINK2 पूर्णांकerface */
+	अगर (!sharp) अणु
 		mipi_dsi_detach(dsi);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	err = drm_panel_disable(&sharp->base);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&dsi->dev, "failed to disable panel: %d\n", err);
 
 	err = mipi_dsi_detach(dsi);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&dsi->dev, "failed to detach from DSI host: %d\n", err);
 
 	sharp_panel_del(sharp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sharp_panel_shutdown(struct mipi_dsi_device *dsi)
-{
-	struct sharp_panel *sharp = mipi_dsi_get_drvdata(dsi);
+अटल व्योम sharp_panel_shutकरोwn(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा sharp_panel *sharp = mipi_dsi_get_drvdata(dsi);
 
-	/* nothing to do for DSI-LINK2 */
-	if (!sharp)
-		return;
+	/* nothing to करो क्रम DSI-LINK2 */
+	अगर (!sharp)
+		वापस;
 
 	drm_panel_disable(&sharp->base);
-}
+पूर्ण
 
-static struct mipi_dsi_driver sharp_panel_driver = {
-	.driver = {
+अटल काष्ठा mipi_dsi_driver sharp_panel_driver = अणु
+	.driver = अणु
 		.name = "panel-sharp-lq101r1sx01",
 		.of_match_table = sharp_of_match,
-	},
+	पूर्ण,
 	.probe = sharp_panel_probe,
-	.remove = sharp_panel_remove,
-	.shutdown = sharp_panel_shutdown,
-};
+	.हटाओ = sharp_panel_हटाओ,
+	.shutकरोwn = sharp_panel_shutकरोwn,
+पूर्ण;
 module_mipi_dsi_driver(sharp_panel_driver);
 
 MODULE_AUTHOR("Thierry Reding <treding@nvidia.com>");

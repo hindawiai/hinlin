@@ -1,100 +1,101 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __KVM_X86_VMX_POSTED_INTR_H
-#define __KVM_X86_VMX_POSTED_INTR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __KVM_X86_VMX_POSTED_INTR_H
+#घोषणा __KVM_X86_VMX_POSTED_INTR_H
 
-#define POSTED_INTR_ON  0
-#define POSTED_INTR_SN  1
+#घोषणा POSTED_INTR_ON  0
+#घोषणा POSTED_INTR_SN  1
 
 /* Posted-Interrupt Descriptor */
-struct pi_desc {
-	u32 pir[8];     /* Posted interrupt requested */
-	union {
-		struct {
-				/* bit 256 - Outstanding Notification */
+काष्ठा pi_desc अणु
+	u32 pir[8];     /* Posted पूर्णांकerrupt requested */
+	जोड़ अणु
+		काष्ठा अणु
+				/* bit 256 - Outstanding Notअगरication */
 			u16	on	: 1,
-				/* bit 257 - Suppress Notification */
+				/* bit 257 - Suppress Notअगरication */
 				sn	: 1,
 				/* bit 271:258 - Reserved */
 				rsvd_1	: 14;
-				/* bit 279:272 - Notification Vector */
+				/* bit 279:272 - Notअगरication Vector */
 			u8	nv;
 				/* bit 287:280 - Reserved */
 			u8	rsvd_2;
-				/* bit 319:288 - Notification Destination */
+				/* bit 319:288 - Notअगरication Destination */
 			u32	ndst;
-		};
+		पूर्ण;
 		u64 control;
-	};
+	पूर्ण;
 	u32 rsvd[6];
-} __aligned(64);
+पूर्ण __aligned(64);
 
-static inline bool pi_test_and_set_on(struct pi_desc *pi_desc)
-{
-	return test_and_set_bit(POSTED_INTR_ON,
-			(unsigned long *)&pi_desc->control);
-}
+अटल अंतरभूत bool pi_test_and_set_on(काष्ठा pi_desc *pi_desc)
+अणु
+	वापस test_and_set_bit(POSTED_INTR_ON,
+			(अचिन्हित दीर्घ *)&pi_desc->control);
+पूर्ण
 
-static inline bool pi_test_and_clear_on(struct pi_desc *pi_desc)
-{
-	return test_and_clear_bit(POSTED_INTR_ON,
-			(unsigned long *)&pi_desc->control);
-}
+अटल अंतरभूत bool pi_test_and_clear_on(काष्ठा pi_desc *pi_desc)
+अणु
+	वापस test_and_clear_bit(POSTED_INTR_ON,
+			(अचिन्हित दीर्घ *)&pi_desc->control);
+पूर्ण
 
-static inline int pi_test_and_set_pir(int vector, struct pi_desc *pi_desc)
-{
-	return test_and_set_bit(vector, (unsigned long *)pi_desc->pir);
-}
+अटल अंतरभूत पूर्णांक pi_test_and_set_pir(पूर्णांक vector, काष्ठा pi_desc *pi_desc)
+अणु
+	वापस test_and_set_bit(vector, (अचिन्हित दीर्घ *)pi_desc->pir);
+पूर्ण
 
-static inline bool pi_is_pir_empty(struct pi_desc *pi_desc)
-{
-	return bitmap_empty((unsigned long *)pi_desc->pir, NR_VECTORS);
-}
+अटल अंतरभूत bool pi_is_pir_empty(काष्ठा pi_desc *pi_desc)
+अणु
+	वापस biपंचांगap_empty((अचिन्हित दीर्घ *)pi_desc->pir, NR_VECTORS);
+पूर्ण
 
-static inline void pi_set_sn(struct pi_desc *pi_desc)
-{
+अटल अंतरभूत व्योम pi_set_sn(काष्ठा pi_desc *pi_desc)
+अणु
 	set_bit(POSTED_INTR_SN,
-		(unsigned long *)&pi_desc->control);
-}
+		(अचिन्हित दीर्घ *)&pi_desc->control);
+पूर्ण
 
-static inline void pi_set_on(struct pi_desc *pi_desc)
-{
+अटल अंतरभूत व्योम pi_set_on(काष्ठा pi_desc *pi_desc)
+अणु
 	set_bit(POSTED_INTR_ON,
-		(unsigned long *)&pi_desc->control);
-}
+		(अचिन्हित दीर्घ *)&pi_desc->control);
+पूर्ण
 
-static inline void pi_clear_on(struct pi_desc *pi_desc)
-{
+अटल अंतरभूत व्योम pi_clear_on(काष्ठा pi_desc *pi_desc)
+अणु
 	clear_bit(POSTED_INTR_ON,
-		(unsigned long *)&pi_desc->control);
-}
+		(अचिन्हित दीर्घ *)&pi_desc->control);
+पूर्ण
 
-static inline void pi_clear_sn(struct pi_desc *pi_desc)
-{
+अटल अंतरभूत व्योम pi_clear_sn(काष्ठा pi_desc *pi_desc)
+अणु
 	clear_bit(POSTED_INTR_SN,
-		(unsigned long *)&pi_desc->control);
-}
+		(अचिन्हित दीर्घ *)&pi_desc->control);
+पूर्ण
 
-static inline int pi_test_on(struct pi_desc *pi_desc)
-{
-	return test_bit(POSTED_INTR_ON,
-			(unsigned long *)&pi_desc->control);
-}
+अटल अंतरभूत पूर्णांक pi_test_on(काष्ठा pi_desc *pi_desc)
+अणु
+	वापस test_bit(POSTED_INTR_ON,
+			(अचिन्हित दीर्घ *)&pi_desc->control);
+पूर्ण
 
-static inline int pi_test_sn(struct pi_desc *pi_desc)
-{
-	return test_bit(POSTED_INTR_SN,
-			(unsigned long *)&pi_desc->control);
-}
+अटल अंतरभूत पूर्णांक pi_test_sn(काष्ठा pi_desc *pi_desc)
+अणु
+	वापस test_bit(POSTED_INTR_SN,
+			(अचिन्हित दीर्घ *)&pi_desc->control);
+पूर्ण
 
-void vmx_vcpu_pi_load(struct kvm_vcpu *vcpu, int cpu);
-void vmx_vcpu_pi_put(struct kvm_vcpu *vcpu);
-int pi_pre_block(struct kvm_vcpu *vcpu);
-void pi_post_block(struct kvm_vcpu *vcpu);
-void pi_wakeup_handler(void);
-void __init pi_init_cpu(int cpu);
-bool pi_has_pending_interrupt(struct kvm_vcpu *vcpu);
-int pi_update_irte(struct kvm *kvm, unsigned int host_irq, uint32_t guest_irq,
+व्योम vmx_vcpu_pi_load(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu);
+व्योम vmx_vcpu_pi_put(काष्ठा kvm_vcpu *vcpu);
+पूर्णांक pi_pre_block(काष्ठा kvm_vcpu *vcpu);
+व्योम pi_post_block(काष्ठा kvm_vcpu *vcpu);
+व्योम pi_wakeup_handler(व्योम);
+व्योम __init pi_init_cpu(पूर्णांक cpu);
+bool pi_has_pending_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu);
+पूर्णांक pi_update_irte(काष्ठा kvm *kvm, अचिन्हित पूर्णांक host_irq, uपूर्णांक32_t guest_irq,
 		   bool set);
-void vmx_pi_start_assignment(struct kvm *kvm);
+व्योम vmx_pi_start_assignment(काष्ठा kvm *kvm);
 
-#endif /* __KVM_X86_VMX_POSTED_INTR_H */
+#पूर्ण_अगर /* __KVM_X86_VMX_POSTED_INTR_H */

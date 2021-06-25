@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  ALSA driver for Echoaudio soundcards.
+ *  ALSA driver क्रम Echoaudio soundcards.
  *  Copyright (C) 2003-2004 Giuliano Pochini <pochini@shiny.it>
  */
 
-#define ECHO3G_FAMILY
-#define ECHOCARD_ECHO3G
-#define ECHOCARD_NAME "Echo3G"
-#define ECHOCARD_HAS_MONITOR
-#define ECHOCARD_HAS_ASIC
-#define ECHOCARD_HAS_INPUT_NOMINAL_LEVEL
-#define ECHOCARD_HAS_OUTPUT_NOMINAL_LEVEL
-#define ECHOCARD_HAS_SUPER_INTERLEAVE
-#define ECHOCARD_HAS_DIGITAL_IO
-#define ECHOCARD_HAS_DIGITAL_MODE_SWITCH
-#define ECHOCARD_HAS_ADAT	6
-#define ECHOCARD_HAS_EXTERNAL_CLOCK
-#define ECHOCARD_HAS_STEREO_BIG_ENDIAN32
-#define ECHOCARD_HAS_MIDI
-#define ECHOCARD_HAS_PHANTOM_POWER
+#घोषणा ECHO3G_FAMILY
+#घोषणा ECHOCARD_ECHO3G
+#घोषणा ECHOCARD_NAME "Echo3G"
+#घोषणा ECHOCARD_HAS_MONITOR
+#घोषणा ECHOCARD_HAS_ASIC
+#घोषणा ECHOCARD_HAS_INPUT_NOMINAL_LEVEL
+#घोषणा ECHOCARD_HAS_OUTPUT_NOMINAL_LEVEL
+#घोषणा ECHOCARD_HAS_SUPER_INTERLEAVE
+#घोषणा ECHOCARD_HAS_DIGITAL_IO
+#घोषणा ECHOCARD_HAS_DIGITAL_MODE_SWITCH
+#घोषणा ECHOCARD_HAS_ADAT	6
+#घोषणा ECHOCARD_HAS_EXTERNAL_CLOCK
+#घोषणा ECHOCARD_HAS_STEREO_BIG_ENDIAN32
+#घोषणा ECHOCARD_HAS_MIDI
+#घोषणा ECHOCARD_HAS_PHANTOM_POWER
 
 /* Pipe indexes */
-#define PX_ANALOG_OUT	0
-#define PX_DIGITAL_OUT	chip->px_digital_out
-#define PX_ANALOG_IN	chip->px_analog_in
-#define PX_DIGITAL_IN	chip->px_digital_in
-#define PX_NUM		chip->px_num
+#घोषणा PX_ANALOG_OUT	0
+#घोषणा PX_DIGITAL_OUT	chip->px_digital_out
+#घोषणा PX_ANALOG_IN	chip->px_analog_in
+#घोषणा PX_DIGITAL_IN	chip->px_digital_in
+#घोषणा PX_NUM		chip->px_num
 
 /* Bus indexes */
-#define BX_ANALOG_OUT	0
-#define BX_DIGITAL_OUT	chip->bx_digital_out
-#define BX_ANALOG_IN	chip->bx_analog_in
-#define BX_DIGITAL_IN	chip->bx_digital_in
-#define BX_NUM		chip->bx_num
+#घोषणा BX_ANALOG_OUT	0
+#घोषणा BX_DIGITAL_OUT	chip->bx_digital_out
+#घोषणा BX_ANALOG_IN	chip->bx_analog_in
+#घोषणा BX_DIGITAL_IN	chip->bx_digital_in
+#घोषणा BX_NUM		chip->bx_num
 
 
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/firmware.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <sound/core.h>
-#include <sound/info.h>
-#include <sound/control.h>
-#include <sound/tlv.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/asoundef.h>
-#include <sound/initval.h>
-#include <sound/rawmidi.h>
-#include <linux/atomic.h>
-#include "echoaudio.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <sound/core.h>
+#समावेश <sound/info.h>
+#समावेश <sound/control.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/rawmidi.h>
+#समावेश <linux/atomic.h>
+#समावेश "echoaudio.h"
 
 MODULE_FIRMWARE("ea/loader_dsp.fw");
 MODULE_FIRMWARE("ea/echo3g_dsp.fw");
 MODULE_FIRMWARE("ea/3g_asic.fw");
 
-#define FW_361_LOADER	0
-#define FW_ECHO3G_DSP	1
-#define FW_3G_ASIC	2
+#घोषणा FW_361_LOADER	0
+#घोषणा FW_ECHO3G_DSP	1
+#घोषणा FW_3G_ASIC	2
 
-static const struct firmware card_fw[] = {
-	{0, "loader_dsp.fw"},
-	{0, "echo3g_dsp.fw"},
-	{0, "3g_asic.fw"}
-};
+अटल स्थिर काष्ठा firmware card_fw[] = अणु
+	अणु0, "loader_dsp.fw"पूर्ण,
+	अणु0, "echo3g_dsp.fw"पूर्ण,
+	अणु0, "3g_asic.fw"पूर्ण
+पूर्ण;
 
-static const struct pci_device_id snd_echo_ids[] = {
-	{0x1057, 0x3410, 0xECC0, 0x0100, 0, 0, 0},	/* Echo 3G */
-	{0,}
-};
+अटल स्थिर काष्ठा pci_device_id snd_echo_ids[] = अणु
+	अणु0x1057, 0x3410, 0xECC0, 0x0100, 0, 0, 0पूर्ण,	/* Echo 3G */
+	अणु0,पूर्ण
+पूर्ण;
 
-static const struct snd_pcm_hardware pcm_hardware_skel = {
+अटल स्थिर काष्ठा snd_pcm_hardware pcm_hardware_skel = अणु
 	.info = SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_PAUSE |
 		SNDRV_PCM_INFO_SYNC_START,
-	.formats =	SNDRV_PCM_FMTBIT_U8 |
+	.क्रमmats =	SNDRV_PCM_FMTBIT_U8 |
 			SNDRV_PCM_FMTBIT_S16_LE |
 			SNDRV_PCM_FMTBIT_S24_3LE |
 			SNDRV_PCM_FMTBIT_S32_LE |
@@ -101,10 +102,10 @@ static const struct snd_pcm_hardware pcm_hardware_skel = {
 	.period_bytes_max = 131072,
 	.periods_min = 2,
 	.periods_max = 220,
-};
+पूर्ण;
 
-#include "echo3g_dsp.c"
-#include "echoaudio_dsp.c"
-#include "echoaudio_3g.c"
-#include "echoaudio.c"
-#include "midi.c"
+#समावेश "echo3g_dsp.c"
+#समावेश "echoaudio_dsp.c"
+#समावेश "echoaudio_3g.c"
+#समावेश "echoaudio.c"
+#समावेश "midi.c"

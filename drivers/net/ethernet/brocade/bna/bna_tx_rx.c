@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Linux network driver for QLogic BR-series Converged Network Adapter.
+ * Linux network driver क्रम QLogic BR-series Converged Network Adapter.
   */
 /*
  * Copyright (c) 2005-2014 Brocade Communications Systems, Inc.
@@ -8,608 +9,608 @@
  * All rights reserved
  * www.qlogic.com
  */
-#include "bna.h"
-#include "bfi.h"
+#समावेश "bna.h"
+#समावेश "bfi.h"
 
 /* IB */
-static void
-bna_ib_coalescing_timeo_set(struct bna_ib *ib, u8 coalescing_timeo)
-{
-	ib->coalescing_timeo = coalescing_timeo;
-	ib->door_bell.doorbell_ack = BNA_DOORBELL_IB_INT_ACK(
-				(u32)ib->coalescing_timeo, 0);
-}
+अटल व्योम
+bna_ib_coalescing_समयo_set(काष्ठा bna_ib *ib, u8 coalescing_समयo)
+अणु
+	ib->coalescing_समयo = coalescing_समयo;
+	ib->करोor_bell.करोorbell_ack = BNA_DOORBELL_IB_INT_ACK(
+				(u32)ib->coalescing_समयo, 0);
+पूर्ण
 
 /* RXF */
 
-#define bna_rxf_vlan_cfg_soft_reset(rxf)				\
-do {									\
-	(rxf)->vlan_pending_bitmask = (u8)BFI_VLAN_BMASK_ALL;		\
+#घोषणा bna_rxf_vlan_cfg_soft_reset(rxf)				\
+करो अणु									\
+	(rxf)->vlan_pending_biपंचांगask = (u8)BFI_VLAN_BMASK_ALL;		\
 	(rxf)->vlan_strip_pending = true;				\
-} while (0)
+पूर्ण जबतक (0)
 
-#define bna_rxf_rss_cfg_soft_reset(rxf)					\
-do {									\
-	if ((rxf)->rss_status == BNA_STATUS_T_ENABLED)			\
+#घोषणा bna_rxf_rss_cfg_soft_reset(rxf)					\
+करो अणु									\
+	अगर ((rxf)->rss_status == BNA_STATUS_T_ENABLED)			\
 		(rxf)->rss_pending = (BNA_RSS_F_RIT_PENDING |		\
 				BNA_RSS_F_CFG_PENDING |			\
 				BNA_RSS_F_STATUS_PENDING);		\
-} while (0)
+पूर्ण जबतक (0)
 
-static int bna_rxf_cfg_apply(struct bna_rxf *rxf);
-static void bna_rxf_cfg_reset(struct bna_rxf *rxf);
-static int bna_rxf_ucast_cfg_apply(struct bna_rxf *rxf);
-static int bna_rxf_promisc_cfg_apply(struct bna_rxf *rxf);
-static int bna_rxf_allmulti_cfg_apply(struct bna_rxf *rxf);
-static int bna_rxf_vlan_strip_cfg_apply(struct bna_rxf *rxf);
-static int bna_rxf_ucast_cfg_reset(struct bna_rxf *rxf,
-					enum bna_cleanup_type cleanup);
-static int bna_rxf_promisc_cfg_reset(struct bna_rxf *rxf,
-					enum bna_cleanup_type cleanup);
-static int bna_rxf_allmulti_cfg_reset(struct bna_rxf *rxf,
-					enum bna_cleanup_type cleanup);
+अटल पूर्णांक bna_rxf_cfg_apply(काष्ठा bna_rxf *rxf);
+अटल व्योम bna_rxf_cfg_reset(काष्ठा bna_rxf *rxf);
+अटल पूर्णांक bna_rxf_ucast_cfg_apply(काष्ठा bna_rxf *rxf);
+अटल पूर्णांक bna_rxf_promisc_cfg_apply(काष्ठा bna_rxf *rxf);
+अटल पूर्णांक bna_rxf_allmulti_cfg_apply(काष्ठा bna_rxf *rxf);
+अटल पूर्णांक bna_rxf_vlan_strip_cfg_apply(काष्ठा bna_rxf *rxf);
+अटल पूर्णांक bna_rxf_ucast_cfg_reset(काष्ठा bna_rxf *rxf,
+					क्रमागत bna_cleanup_type cleanup);
+अटल पूर्णांक bna_rxf_promisc_cfg_reset(काष्ठा bna_rxf *rxf,
+					क्रमागत bna_cleanup_type cleanup);
+अटल पूर्णांक bna_rxf_allmulti_cfg_reset(काष्ठा bna_rxf *rxf,
+					क्रमागत bna_cleanup_type cleanup);
 
-bfa_fsm_state_decl(bna_rxf, stopped, struct bna_rxf,
-			enum bna_rxf_event);
-bfa_fsm_state_decl(bna_rxf, cfg_wait, struct bna_rxf,
-			enum bna_rxf_event);
-bfa_fsm_state_decl(bna_rxf, started, struct bna_rxf,
-			enum bna_rxf_event);
-bfa_fsm_state_decl(bna_rxf, last_resp_wait, struct bna_rxf,
-			enum bna_rxf_event);
+bfa_fsm_state_decl(bna_rxf, stopped, काष्ठा bna_rxf,
+			क्रमागत bna_rxf_event);
+bfa_fsm_state_decl(bna_rxf, cfg_रुको, काष्ठा bna_rxf,
+			क्रमागत bna_rxf_event);
+bfa_fsm_state_decl(bna_rxf, started, काष्ठा bna_rxf,
+			क्रमागत bna_rxf_event);
+bfa_fsm_state_decl(bna_rxf, last_resp_रुको, काष्ठा bna_rxf,
+			क्रमागत bna_rxf_event);
 
-static void
-bna_rxf_sm_stopped_entry(struct bna_rxf *rxf)
-{
+अटल व्योम
+bna_rxf_sm_stopped_entry(काष्ठा bna_rxf *rxf)
+अणु
 	call_rxf_stop_cbfn(rxf);
-}
+पूर्ण
 
-static void
-bna_rxf_sm_stopped(struct bna_rxf *rxf, enum bna_rxf_event event)
-{
-	switch (event) {
-	case RXF_E_START:
-		bfa_fsm_set_state(rxf, bna_rxf_sm_cfg_wait);
-		break;
+अटल व्योम
+bna_rxf_sm_stopped(काष्ठा bna_rxf *rxf, क्रमागत bna_rxf_event event)
+अणु
+	चयन (event) अणु
+	हाल RXF_E_START:
+		bfa_fsm_set_state(rxf, bna_rxf_sm_cfg_रुको);
+		अवरोध;
 
-	case RXF_E_STOP:
+	हाल RXF_E_STOP:
 		call_rxf_stop_cbfn(rxf);
-		break;
+		अवरोध;
 
-	case RXF_E_FAIL:
+	हाल RXF_E_FAIL:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case RXF_E_CONFIG:
+	हाल RXF_E_CONFIG:
 		call_rxf_cam_fltr_cbfn(rxf);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_rxf_sm_cfg_wait_entry(struct bna_rxf *rxf)
-{
-	if (!bna_rxf_cfg_apply(rxf)) {
+अटल व्योम
+bna_rxf_sm_cfg_रुको_entry(काष्ठा bna_rxf *rxf)
+अणु
+	अगर (!bna_rxf_cfg_apply(rxf)) अणु
 		/* No more pending config updates */
 		bfa_fsm_set_state(rxf, bna_rxf_sm_started);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_rxf_sm_cfg_wait(struct bna_rxf *rxf, enum bna_rxf_event event)
-{
-	switch (event) {
-	case RXF_E_STOP:
-		bfa_fsm_set_state(rxf, bna_rxf_sm_last_resp_wait);
-		break;
+अटल व्योम
+bna_rxf_sm_cfg_रुको(काष्ठा bna_rxf *rxf, क्रमागत bna_rxf_event event)
+अणु
+	चयन (event) अणु
+	हाल RXF_E_STOP:
+		bfa_fsm_set_state(rxf, bna_rxf_sm_last_resp_रुको);
+		अवरोध;
 
-	case RXF_E_FAIL:
+	हाल RXF_E_FAIL:
 		bna_rxf_cfg_reset(rxf);
 		call_rxf_start_cbfn(rxf);
 		call_rxf_cam_fltr_cbfn(rxf);
 		bfa_fsm_set_state(rxf, bna_rxf_sm_stopped);
-		break;
+		अवरोध;
 
-	case RXF_E_CONFIG:
+	हाल RXF_E_CONFIG:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case RXF_E_FW_RESP:
-		if (!bna_rxf_cfg_apply(rxf)) {
+	हाल RXF_E_FW_RESP:
+		अगर (!bna_rxf_cfg_apply(rxf)) अणु
 			/* No more pending config updates */
 			bfa_fsm_set_state(rxf, bna_rxf_sm_started);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_rxf_sm_started_entry(struct bna_rxf *rxf)
-{
+अटल व्योम
+bna_rxf_sm_started_entry(काष्ठा bna_rxf *rxf)
+अणु
 	call_rxf_start_cbfn(rxf);
 	call_rxf_cam_fltr_cbfn(rxf);
-}
+पूर्ण
 
-static void
-bna_rxf_sm_started(struct bna_rxf *rxf, enum bna_rxf_event event)
-{
-	switch (event) {
-	case RXF_E_STOP:
-	case RXF_E_FAIL:
+अटल व्योम
+bna_rxf_sm_started(काष्ठा bna_rxf *rxf, क्रमागत bna_rxf_event event)
+अणु
+	चयन (event) अणु
+	हाल RXF_E_STOP:
+	हाल RXF_E_FAIL:
 		bna_rxf_cfg_reset(rxf);
 		bfa_fsm_set_state(rxf, bna_rxf_sm_stopped);
-		break;
+		अवरोध;
 
-	case RXF_E_CONFIG:
-		bfa_fsm_set_state(rxf, bna_rxf_sm_cfg_wait);
-		break;
+	हाल RXF_E_CONFIG:
+		bfa_fsm_set_state(rxf, bna_rxf_sm_cfg_रुको);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_rxf_sm_last_resp_wait_entry(struct bna_rxf *rxf)
-{
-}
+अटल व्योम
+bna_rxf_sm_last_resp_रुको_entry(काष्ठा bna_rxf *rxf)
+अणु
+पूर्ण
 
-static void
-bna_rxf_sm_last_resp_wait(struct bna_rxf *rxf, enum bna_rxf_event event)
-{
-	switch (event) {
-	case RXF_E_FAIL:
-	case RXF_E_FW_RESP:
+अटल व्योम
+bna_rxf_sm_last_resp_रुको(काष्ठा bna_rxf *rxf, क्रमागत bna_rxf_event event)
+अणु
+	चयन (event) अणु
+	हाल RXF_E_FAIL:
+	हाल RXF_E_FW_RESP:
 		bna_rxf_cfg_reset(rxf);
 		bfa_fsm_set_state(rxf, bna_rxf_sm_stopped);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_bfi_ucast_req(struct bna_rxf *rxf, struct bna_mac *mac,
-		enum bfi_enet_h2i_msgs req_type)
-{
-	struct bfi_enet_ucast_req *req = &rxf->bfi_enet_cmd.ucast_req;
+अटल व्योम
+bna_bfi_ucast_req(काष्ठा bna_rxf *rxf, काष्ठा bna_mac *mac,
+		क्रमागत bfi_enet_h2i_msgs req_type)
+अणु
+	काष्ठा bfi_enet_ucast_req *req = &rxf->bfi_enet_cmd.ucast_req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET, req_type, 0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-	bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_ucast_req)));
+	bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_ucast_req)));
 	ether_addr_copy(req->mac_addr, mac->addr);
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_ucast_req), &req->mh);
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_ucast_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_mcast_add_req(struct bna_rxf *rxf, struct bna_mac *mac)
-{
-	struct bfi_enet_mcast_add_req *req =
+अटल व्योम
+bna_bfi_mcast_add_req(काष्ठा bna_rxf *rxf, काष्ठा bna_mac *mac)
+अणु
+	काष्ठा bfi_enet_mcast_add_req *req =
 		&rxf->bfi_enet_cmd.mcast_add_req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET, BFI_ENET_H2I_MAC_MCAST_ADD_REQ,
 		0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-	bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_mcast_add_req)));
+	bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_mcast_add_req)));
 	ether_addr_copy(req->mac_addr, mac->addr);
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_mcast_add_req), &req->mh);
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_mcast_add_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_mcast_del_req(struct bna_rxf *rxf, u16 handle)
-{
-	struct bfi_enet_mcast_del_req *req =
+अटल व्योम
+bna_bfi_mcast_del_req(काष्ठा bna_rxf *rxf, u16 handle)
+अणु
+	काष्ठा bfi_enet_mcast_del_req *req =
 		&rxf->bfi_enet_cmd.mcast_del_req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET, BFI_ENET_H2I_MAC_MCAST_DEL_REQ,
 		0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-	bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_mcast_del_req)));
+	bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_mcast_del_req)));
 	req->handle = htons(handle);
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_mcast_del_req), &req->mh);
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_mcast_del_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_mcast_filter_req(struct bna_rxf *rxf, enum bna_status status)
-{
-	struct bfi_enet_enable_req *req = &rxf->bfi_enet_cmd.req;
+अटल व्योम
+bna_bfi_mcast_filter_req(काष्ठा bna_rxf *rxf, क्रमागत bna_status status)
+अणु
+	काष्ठा bfi_enet_enable_req *req = &rxf->bfi_enet_cmd.req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_MAC_MCAST_FILTER_REQ, 0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_enable_req)));
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_enable_req)));
 	req->enable = status;
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_enable_req), &req->mh);
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_enable_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_rx_promisc_req(struct bna_rxf *rxf, enum bna_status status)
-{
-	struct bfi_enet_enable_req *req = &rxf->bfi_enet_cmd.req;
+अटल व्योम
+bna_bfi_rx_promisc_req(काष्ठा bna_rxf *rxf, क्रमागत bna_status status)
+अणु
+	काष्ठा bfi_enet_enable_req *req = &rxf->bfi_enet_cmd.req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_RX_PROMISCUOUS_REQ, 0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_enable_req)));
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_enable_req)));
 	req->enable = status;
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_enable_req), &req->mh);
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_enable_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_rx_vlan_filter_set(struct bna_rxf *rxf, u8 block_idx)
-{
-	struct bfi_enet_rx_vlan_req *req = &rxf->bfi_enet_cmd.vlan_req;
-	int i;
-	int j;
+अटल व्योम
+bna_bfi_rx_vlan_filter_set(काष्ठा bna_rxf *rxf, u8 block_idx)
+अणु
+	काष्ठा bfi_enet_rx_vlan_req *req = &rxf->bfi_enet_cmd.vlan_req;
+	पूर्णांक i;
+	पूर्णांक j;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_RX_VLAN_SET_REQ, 0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_rx_vlan_req)));
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_rx_vlan_req)));
 	req->block_idx = block_idx;
-	for (i = 0; i < (BFI_ENET_VLAN_BLOCK_SIZE / 32); i++) {
+	क्रम (i = 0; i < (BFI_ENET_VLAN_BLOCK_SIZE / 32); i++) अणु
 		j = (block_idx * (BFI_ENET_VLAN_BLOCK_SIZE / 32)) + i;
-		if (rxf->vlan_filter_status == BNA_STATUS_T_ENABLED)
+		अगर (rxf->vlan_filter_status == BNA_STATUS_T_ENABLED)
 			req->bit_mask[i] =
 				htonl(rxf->vlan_filter_table[j]);
-		else
+		अन्यथा
 			req->bit_mask[i] = 0xFFFFFFFF;
-	}
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_rx_vlan_req), &req->mh);
+	पूर्ण
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_rx_vlan_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_vlan_strip_enable(struct bna_rxf *rxf)
-{
-	struct bfi_enet_enable_req *req = &rxf->bfi_enet_cmd.req;
+अटल व्योम
+bna_bfi_vlan_strip_enable(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bfi_enet_enable_req *req = &rxf->bfi_enet_cmd.req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_RX_VLAN_STRIP_ENABLE_REQ, 0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_enable_req)));
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_enable_req)));
 	req->enable = rxf->vlan_strip_status;
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_enable_req), &req->mh);
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_enable_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_rit_cfg(struct bna_rxf *rxf)
-{
-	struct bfi_enet_rit_req *req = &rxf->bfi_enet_cmd.rit_req;
+अटल व्योम
+bna_bfi_rit_cfg(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bfi_enet_rit_req *req = &rxf->bfi_enet_cmd.rit_req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_RIT_CFG_REQ, 0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_rit_req)));
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_rit_req)));
 	req->size = htons(rxf->rit_size);
-	memcpy(&req->table[0], rxf->rit, rxf->rit_size);
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_rit_req), &req->mh);
+	स_नकल(&req->table[0], rxf->rit, rxf->rit_size);
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_rit_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_rss_cfg(struct bna_rxf *rxf)
-{
-	struct bfi_enet_rss_cfg_req *req = &rxf->bfi_enet_cmd.rss_req;
-	int i;
+अटल व्योम
+bna_bfi_rss_cfg(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bfi_enet_rss_cfg_req *req = &rxf->bfi_enet_cmd.rss_req;
+	पूर्णांक i;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_RSS_CFG_REQ, 0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_rss_cfg_req)));
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_rss_cfg_req)));
 	req->cfg.type = rxf->rss_cfg.hash_type;
 	req->cfg.mask = rxf->rss_cfg.hash_mask;
-	for (i = 0; i < BFI_ENET_RSS_KEY_LEN; i++)
+	क्रम (i = 0; i < BFI_ENET_RSS_KEY_LEN; i++)
 		req->cfg.key[i] =
 			htonl(rxf->rss_cfg.toeplitz_hash_key[i]);
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_rss_cfg_req), &req->mh);
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_rss_cfg_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_rss_enable(struct bna_rxf *rxf)
-{
-	struct bfi_enet_enable_req *req = &rxf->bfi_enet_cmd.req;
+अटल व्योम
+bna_bfi_rss_enable(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bfi_enet_enable_req *req = &rxf->bfi_enet_cmd.req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_RSS_ENABLE_REQ, 0, rxf->rx->rid);
 	req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_enable_req)));
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_enable_req)));
 	req->enable = rxf->rss_status;
-	bfa_msgq_cmd_set(&rxf->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_enable_req), &req->mh);
+	bfa_msgq_cmd_set(&rxf->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_enable_req), &req->mh);
 	bfa_msgq_cmd_post(&rxf->rx->bna->msgq, &rxf->msgq_cmd);
-}
+पूर्ण
 
-/* This function gets the multicast MAC that has already been added to CAM */
-static struct bna_mac *
-bna_rxf_mcmac_get(struct bna_rxf *rxf, const u8 *mac_addr)
-{
-	struct bna_mac *mac;
+/* This function माला_लो the multicast MAC that has alपढ़ोy been added to CAM */
+अटल काष्ठा bna_mac *
+bna_rxf_mcmac_get(काष्ठा bna_rxf *rxf, स्थिर u8 *mac_addr)
+अणु
+	काष्ठा bna_mac *mac;
 
-	list_for_each_entry(mac, &rxf->mcast_active_q, qe)
-		if (ether_addr_equal(mac->addr, mac_addr))
-			return mac;
+	list_क्रम_each_entry(mac, &rxf->mcast_active_q, qe)
+		अगर (ether_addr_equal(mac->addr, mac_addr))
+			वापस mac;
 
-	list_for_each_entry(mac, &rxf->mcast_pending_del_q, qe)
-		if (ether_addr_equal(mac->addr, mac_addr))
-			return mac;
+	list_क्रम_each_entry(mac, &rxf->mcast_pending_del_q, qe)
+		अगर (ether_addr_equal(mac->addr, mac_addr))
+			वापस mac;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct bna_mcam_handle *
-bna_rxf_mchandle_get(struct bna_rxf *rxf, int handle)
-{
-	struct bna_mcam_handle *mchandle;
+अटल काष्ठा bna_mcam_handle *
+bna_rxf_mchandle_get(काष्ठा bna_rxf *rxf, पूर्णांक handle)
+अणु
+	काष्ठा bna_mcam_handle *mchandle;
 
-	list_for_each_entry(mchandle, &rxf->mcast_handle_q, qe)
-		if (mchandle->handle == handle)
-			return mchandle;
+	list_क्रम_each_entry(mchandle, &rxf->mcast_handle_q, qe)
+		अगर (mchandle->handle == handle)
+			वापस mchandle;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void
-bna_rxf_mchandle_attach(struct bna_rxf *rxf, u8 *mac_addr, int handle)
-{
-	struct bna_mac *mcmac;
-	struct bna_mcam_handle *mchandle;
+अटल व्योम
+bna_rxf_mchandle_attach(काष्ठा bna_rxf *rxf, u8 *mac_addr, पूर्णांक handle)
+अणु
+	काष्ठा bna_mac *mcmac;
+	काष्ठा bna_mcam_handle *mchandle;
 
 	mcmac = bna_rxf_mcmac_get(rxf, mac_addr);
 	mchandle = bna_rxf_mchandle_get(rxf, handle);
-	if (mchandle == NULL) {
+	अगर (mchandle == शून्य) अणु
 		mchandle = bna_mcam_mod_handle_get(&rxf->rx->bna->mcam_mod);
 		mchandle->handle = handle;
 		mchandle->refcnt = 0;
 		list_add_tail(&mchandle->qe, &rxf->mcast_handle_q);
-	}
+	पूर्ण
 	mchandle->refcnt++;
 	mcmac->handle = mchandle;
-}
+पूर्ण
 
-static int
-bna_rxf_mcast_del(struct bna_rxf *rxf, struct bna_mac *mac,
-		enum bna_cleanup_type cleanup)
-{
-	struct bna_mcam_handle *mchandle;
-	int ret = 0;
+अटल पूर्णांक
+bna_rxf_mcast_del(काष्ठा bna_rxf *rxf, काष्ठा bna_mac *mac,
+		क्रमागत bna_cleanup_type cleanup)
+अणु
+	काष्ठा bna_mcam_handle *mchandle;
+	पूर्णांक ret = 0;
 
 	mchandle = mac->handle;
-	if (mchandle == NULL)
-		return ret;
+	अगर (mchandle == शून्य)
+		वापस ret;
 
 	mchandle->refcnt--;
-	if (mchandle->refcnt == 0) {
-		if (cleanup == BNA_HARD_CLEANUP) {
+	अगर (mchandle->refcnt == 0) अणु
+		अगर (cleanup == BNA_HARD_CLEANUP) अणु
 			bna_bfi_mcast_del_req(rxf, mchandle->handle);
 			ret = 1;
-		}
+		पूर्ण
 		list_del(&mchandle->qe);
 		bna_mcam_mod_handle_put(&rxf->rx->bna->mcam_mod, mchandle);
-	}
-	mac->handle = NULL;
+	पूर्ण
+	mac->handle = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-bna_rxf_mcast_cfg_apply(struct bna_rxf *rxf)
-{
-	struct bna_mac *mac = NULL;
-	int ret;
+अटल पूर्णांक
+bna_rxf_mcast_cfg_apply(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bna_mac *mac = शून्य;
+	पूर्णांक ret;
 
-	/* First delete multicast entries to maintain the count */
-	while (!list_empty(&rxf->mcast_pending_del_q)) {
+	/* First delete multicast entries to मुख्यtain the count */
+	जबतक (!list_empty(&rxf->mcast_pending_del_q)) अणु
 		mac = list_first_entry(&rxf->mcast_pending_del_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		ret = bna_rxf_mcast_del(rxf, mac, BNA_HARD_CLEANUP);
 		list_move_tail(&mac->qe, bna_mcam_mod_del_q(rxf->rx->bna));
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Add multicast entries */
-	if (!list_empty(&rxf->mcast_pending_add_q)) {
+	अगर (!list_empty(&rxf->mcast_pending_add_q)) अणु
 		mac = list_first_entry(&rxf->mcast_pending_add_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		list_move_tail(&mac->qe, &rxf->mcast_active_q);
 		bna_bfi_mcast_add_req(rxf, mac);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_vlan_cfg_apply(struct bna_rxf *rxf)
-{
-	u8 vlan_pending_bitmask;
-	int block_idx = 0;
+अटल पूर्णांक
+bna_rxf_vlan_cfg_apply(काष्ठा bna_rxf *rxf)
+अणु
+	u8 vlan_pending_biपंचांगask;
+	पूर्णांक block_idx = 0;
 
-	if (rxf->vlan_pending_bitmask) {
-		vlan_pending_bitmask = rxf->vlan_pending_bitmask;
-		while (!(vlan_pending_bitmask & 0x1)) {
+	अगर (rxf->vlan_pending_biपंचांगask) अणु
+		vlan_pending_biपंचांगask = rxf->vlan_pending_biपंचांगask;
+		जबतक (!(vlan_pending_biपंचांगask & 0x1)) अणु
 			block_idx++;
-			vlan_pending_bitmask >>= 1;
-		}
-		rxf->vlan_pending_bitmask &= ~BIT(block_idx);
+			vlan_pending_biपंचांगask >>= 1;
+		पूर्ण
+		rxf->vlan_pending_biपंचांगask &= ~BIT(block_idx);
 		bna_bfi_rx_vlan_filter_set(rxf, block_idx);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_mcast_cfg_reset(struct bna_rxf *rxf, enum bna_cleanup_type cleanup)
-{
-	struct bna_mac *mac;
-	int ret;
+अटल पूर्णांक
+bna_rxf_mcast_cfg_reset(काष्ठा bna_rxf *rxf, क्रमागत bna_cleanup_type cleanup)
+अणु
+	काष्ठा bna_mac *mac;
+	पूर्णांक ret;
 
 	/* Throw away delete pending mcast entries */
-	while (!list_empty(&rxf->mcast_pending_del_q)) {
+	जबतक (!list_empty(&rxf->mcast_pending_del_q)) अणु
 		mac = list_first_entry(&rxf->mcast_pending_del_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		ret = bna_rxf_mcast_del(rxf, mac, cleanup);
 		list_move_tail(&mac->qe, bna_mcam_mod_del_q(rxf->rx->bna));
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Move active mcast entries to pending_add_q */
-	while (!list_empty(&rxf->mcast_active_q)) {
+	जबतक (!list_empty(&rxf->mcast_active_q)) अणु
 		mac = list_first_entry(&rxf->mcast_active_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		list_move_tail(&mac->qe, &rxf->mcast_pending_add_q);
-		if (bna_rxf_mcast_del(rxf, mac, cleanup))
-			return 1;
-	}
+		अगर (bna_rxf_mcast_del(rxf, mac, cleanup))
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_rss_cfg_apply(struct bna_rxf *rxf)
-{
-	if (rxf->rss_pending) {
-		if (rxf->rss_pending & BNA_RSS_F_RIT_PENDING) {
+अटल पूर्णांक
+bna_rxf_rss_cfg_apply(काष्ठा bna_rxf *rxf)
+अणु
+	अगर (rxf->rss_pending) अणु
+		अगर (rxf->rss_pending & BNA_RSS_F_RIT_PENDING) अणु
 			rxf->rss_pending &= ~BNA_RSS_F_RIT_PENDING;
 			bna_bfi_rit_cfg(rxf);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
-		if (rxf->rss_pending & BNA_RSS_F_CFG_PENDING) {
+		अगर (rxf->rss_pending & BNA_RSS_F_CFG_PENDING) अणु
 			rxf->rss_pending &= ~BNA_RSS_F_CFG_PENDING;
 			bna_bfi_rss_cfg(rxf);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
-		if (rxf->rss_pending & BNA_RSS_F_STATUS_PENDING) {
+		अगर (rxf->rss_pending & BNA_RSS_F_STATUS_PENDING) अणु
 			rxf->rss_pending &= ~BNA_RSS_F_STATUS_PENDING;
 			bna_bfi_rss_enable(rxf);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_cfg_apply(struct bna_rxf *rxf)
-{
-	if (bna_rxf_ucast_cfg_apply(rxf))
-		return 1;
+अटल पूर्णांक
+bna_rxf_cfg_apply(काष्ठा bna_rxf *rxf)
+अणु
+	अगर (bna_rxf_ucast_cfg_apply(rxf))
+		वापस 1;
 
-	if (bna_rxf_mcast_cfg_apply(rxf))
-		return 1;
+	अगर (bna_rxf_mcast_cfg_apply(rxf))
+		वापस 1;
 
-	if (bna_rxf_promisc_cfg_apply(rxf))
-		return 1;
+	अगर (bna_rxf_promisc_cfg_apply(rxf))
+		वापस 1;
 
-	if (bna_rxf_allmulti_cfg_apply(rxf))
-		return 1;
+	अगर (bna_rxf_allmulti_cfg_apply(rxf))
+		वापस 1;
 
-	if (bna_rxf_vlan_cfg_apply(rxf))
-		return 1;
+	अगर (bna_rxf_vlan_cfg_apply(rxf))
+		वापस 1;
 
-	if (bna_rxf_vlan_strip_cfg_apply(rxf))
-		return 1;
+	अगर (bna_rxf_vlan_strip_cfg_apply(rxf))
+		वापस 1;
 
-	if (bna_rxf_rss_cfg_apply(rxf))
-		return 1;
+	अगर (bna_rxf_rss_cfg_apply(rxf))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-bna_rxf_cfg_reset(struct bna_rxf *rxf)
-{
+अटल व्योम
+bna_rxf_cfg_reset(काष्ठा bna_rxf *rxf)
+अणु
 	bna_rxf_ucast_cfg_reset(rxf, BNA_SOFT_CLEANUP);
 	bna_rxf_mcast_cfg_reset(rxf, BNA_SOFT_CLEANUP);
 	bna_rxf_promisc_cfg_reset(rxf, BNA_SOFT_CLEANUP);
 	bna_rxf_allmulti_cfg_reset(rxf, BNA_SOFT_CLEANUP);
 	bna_rxf_vlan_cfg_soft_reset(rxf);
 	bna_rxf_rss_cfg_soft_reset(rxf);
-}
+पूर्ण
 
-static void
-bna_rit_init(struct bna_rxf *rxf, int rit_size)
-{
-	struct bna_rx *rx = rxf->rx;
-	struct bna_rxp *rxp;
-	int offset = 0;
+अटल व्योम
+bna_rit_init(काष्ठा bna_rxf *rxf, पूर्णांक rit_size)
+अणु
+	काष्ठा bna_rx *rx = rxf->rx;
+	काष्ठा bna_rxp *rxp;
+	पूर्णांक offset = 0;
 
 	rxf->rit_size = rit_size;
-	list_for_each_entry(rxp, &rx->rxp_q, qe) {
+	list_क्रम_each_entry(rxp, &rx->rxp_q, qe) अणु
 		rxf->rit[offset] = rxp->cq.ccb->id;
 		offset++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bna_bfi_rxf_cfg_rsp(struct bna_rxf *rxf, struct bfi_msgq_mhdr *msghdr)
-{
+व्योम
+bna_bfi_rxf_cfg_rsp(काष्ठा bna_rxf *rxf, काष्ठा bfi_msgq_mhdr *msghdr)
+अणु
 	bfa_fsm_send_event(rxf, RXF_E_FW_RESP);
-}
+पूर्ण
 
-void
-bna_bfi_rxf_ucast_set_rsp(struct bna_rxf *rxf,
-			struct bfi_msgq_mhdr *msghdr)
-{
-	struct bfi_enet_rsp *rsp =
-		container_of(msghdr, struct bfi_enet_rsp, mh);
+व्योम
+bna_bfi_rxf_ucast_set_rsp(काष्ठा bna_rxf *rxf,
+			काष्ठा bfi_msgq_mhdr *msghdr)
+अणु
+	काष्ठा bfi_enet_rsp *rsp =
+		container_of(msghdr, काष्ठा bfi_enet_rsp, mh);
 
-	if (rsp->error) {
+	अगर (rsp->error) अणु
 		/* Clear ucast from cache */
 		rxf->ucast_active_set = 0;
-	}
+	पूर्ण
 
 	bfa_fsm_send_event(rxf, RXF_E_FW_RESP);
-}
+पूर्ण
 
-void
-bna_bfi_rxf_mcast_add_rsp(struct bna_rxf *rxf,
-			struct bfi_msgq_mhdr *msghdr)
-{
-	struct bfi_enet_mcast_add_req *req =
+व्योम
+bna_bfi_rxf_mcast_add_rsp(काष्ठा bna_rxf *rxf,
+			काष्ठा bfi_msgq_mhdr *msghdr)
+अणु
+	काष्ठा bfi_enet_mcast_add_req *req =
 		&rxf->bfi_enet_cmd.mcast_add_req;
-	struct bfi_enet_mcast_add_rsp *rsp =
-		container_of(msghdr, struct bfi_enet_mcast_add_rsp, mh);
+	काष्ठा bfi_enet_mcast_add_rsp *rsp =
+		container_of(msghdr, काष्ठा bfi_enet_mcast_add_rsp, mh);
 
 	bna_rxf_mchandle_attach(rxf, (u8 *)&req->mac_addr,
 		ntohs(rsp->handle));
 	bfa_fsm_send_event(rxf, RXF_E_FW_RESP);
-}
+पूर्ण
 
-static void
-bna_rxf_init(struct bna_rxf *rxf,
-		struct bna_rx *rx,
-		struct bna_rx_config *q_config,
-		struct bna_res_info *res_info)
-{
+अटल व्योम
+bna_rxf_init(काष्ठा bna_rxf *rxf,
+		काष्ठा bna_rx *rx,
+		काष्ठा bna_rx_config *q_config,
+		काष्ठा bna_res_info *res_info)
+अणु
 	rxf->rx = rx;
 
 	INIT_LIST_HEAD(&rxf->ucast_pending_add_q);
@@ -617,7 +618,7 @@ bna_rxf_init(struct bna_rxf *rxf,
 	rxf->ucast_pending_set = 0;
 	rxf->ucast_active_set = 0;
 	INIT_LIST_HEAD(&rxf->ucast_active_q);
-	rxf->ucast_pending_mac = NULL;
+	rxf->ucast_pending_mac = शून्य;
 
 	INIT_LIST_HEAD(&rxf->mcast_pending_add_q);
 	INIT_LIST_HEAD(&rxf->mcast_pending_del_q);
@@ -629,137 +630,137 @@ bna_rxf_init(struct bna_rxf *rxf,
 	bna_rit_init(rxf, q_config->num_paths);
 
 	rxf->rss_status = q_config->rss_status;
-	if (rxf->rss_status == BNA_STATUS_T_ENABLED) {
+	अगर (rxf->rss_status == BNA_STATUS_T_ENABLED) अणु
 		rxf->rss_cfg = q_config->rss_config;
 		rxf->rss_pending |= BNA_RSS_F_CFG_PENDING;
 		rxf->rss_pending |= BNA_RSS_F_RIT_PENDING;
 		rxf->rss_pending |= BNA_RSS_F_STATUS_PENDING;
-	}
+	पूर्ण
 
 	rxf->vlan_filter_status = BNA_STATUS_T_DISABLED;
-	memset(rxf->vlan_filter_table, 0,
-			(sizeof(u32) * (BFI_ENET_VLAN_ID_MAX / 32)));
-	rxf->vlan_filter_table[0] |= 1; /* for pure priority tagged frames */
-	rxf->vlan_pending_bitmask = (u8)BFI_VLAN_BMASK_ALL;
+	स_रखो(rxf->vlan_filter_table, 0,
+			(माप(u32) * (BFI_ENET_VLAN_ID_MAX / 32)));
+	rxf->vlan_filter_table[0] |= 1; /* क्रम pure priority tagged frames */
+	rxf->vlan_pending_biपंचांगask = (u8)BFI_VLAN_BMASK_ALL;
 
 	rxf->vlan_strip_status = q_config->vlan_strip_status;
 
 	bfa_fsm_set_state(rxf, bna_rxf_sm_stopped);
-}
+पूर्ण
 
-static void
-bna_rxf_uninit(struct bna_rxf *rxf)
-{
-	struct bna_mac *mac;
+अटल व्योम
+bna_rxf_uninit(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bna_mac *mac;
 
 	rxf->ucast_pending_set = 0;
 	rxf->ucast_active_set = 0;
 
-	while (!list_empty(&rxf->ucast_pending_add_q)) {
+	जबतक (!list_empty(&rxf->ucast_pending_add_q)) अणु
 		mac = list_first_entry(&rxf->ucast_pending_add_q,
-				       struct bna_mac, qe);
-		list_move_tail(&mac->qe, bna_ucam_mod_free_q(rxf->rx->bna));
-	}
+				       काष्ठा bna_mac, qe);
+		list_move_tail(&mac->qe, bna_ucam_mod_मुक्त_q(rxf->rx->bna));
+	पूर्ण
 
-	if (rxf->ucast_pending_mac) {
+	अगर (rxf->ucast_pending_mac) अणु
 		list_add_tail(&rxf->ucast_pending_mac->qe,
-			      bna_ucam_mod_free_q(rxf->rx->bna));
-		rxf->ucast_pending_mac = NULL;
-	}
+			      bna_ucam_mod_मुक्त_q(rxf->rx->bna));
+		rxf->ucast_pending_mac = शून्य;
+	पूर्ण
 
-	while (!list_empty(&rxf->mcast_pending_add_q)) {
+	जबतक (!list_empty(&rxf->mcast_pending_add_q)) अणु
 		mac = list_first_entry(&rxf->mcast_pending_add_q,
-				       struct bna_mac, qe);
-		list_move_tail(&mac->qe, bna_mcam_mod_free_q(rxf->rx->bna));
-	}
+				       काष्ठा bna_mac, qe);
+		list_move_tail(&mac->qe, bna_mcam_mod_मुक्त_q(rxf->rx->bna));
+	पूर्ण
 
 	rxf->rxmode_pending = 0;
-	rxf->rxmode_pending_bitmask = 0;
-	if (rxf->rx->bna->promisc_rid == rxf->rx->rid)
+	rxf->rxmode_pending_biपंचांगask = 0;
+	अगर (rxf->rx->bna->promisc_rid == rxf->rx->rid)
 		rxf->rx->bna->promisc_rid = BFI_INVALID_RID;
-	if (rxf->rx->bna->default_mode_rid == rxf->rx->rid)
-		rxf->rx->bna->default_mode_rid = BFI_INVALID_RID;
+	अगर (rxf->rx->bna->शेष_mode_rid == rxf->rx->rid)
+		rxf->rx->bna->शेष_mode_rid = BFI_INVALID_RID;
 
 	rxf->rss_pending = 0;
 	rxf->vlan_strip_pending = false;
 
-	rxf->rx = NULL;
-}
+	rxf->rx = शून्य;
+पूर्ण
 
-static void
-bna_rx_cb_rxf_started(struct bna_rx *rx)
-{
+अटल व्योम
+bna_rx_cb_rxf_started(काष्ठा bna_rx *rx)
+अणु
 	bfa_fsm_send_event(rx, RX_E_RXF_STARTED);
-}
+पूर्ण
 
-static void
-bna_rxf_start(struct bna_rxf *rxf)
-{
+अटल व्योम
+bna_rxf_start(काष्ठा bna_rxf *rxf)
+अणु
 	rxf->start_cbfn = bna_rx_cb_rxf_started;
 	rxf->start_cbarg = rxf->rx;
 	bfa_fsm_send_event(rxf, RXF_E_START);
-}
+पूर्ण
 
-static void
-bna_rx_cb_rxf_stopped(struct bna_rx *rx)
-{
+अटल व्योम
+bna_rx_cb_rxf_stopped(काष्ठा bna_rx *rx)
+अणु
 	bfa_fsm_send_event(rx, RX_E_RXF_STOPPED);
-}
+पूर्ण
 
-static void
-bna_rxf_stop(struct bna_rxf *rxf)
-{
+अटल व्योम
+bna_rxf_stop(काष्ठा bna_rxf *rxf)
+अणु
 	rxf->stop_cbfn = bna_rx_cb_rxf_stopped;
 	rxf->stop_cbarg = rxf->rx;
 	bfa_fsm_send_event(rxf, RXF_E_STOP);
-}
+पूर्ण
 
-static void
-bna_rxf_fail(struct bna_rxf *rxf)
-{
+अटल व्योम
+bna_rxf_fail(काष्ठा bna_rxf *rxf)
+अणु
 	bfa_fsm_send_event(rxf, RXF_E_FAIL);
-}
+पूर्ण
 
-enum bna_cb_status
-bna_rx_ucast_set(struct bna_rx *rx, const u8 *ucmac)
-{
-	struct bna_rxf *rxf = &rx->rxf;
+क्रमागत bna_cb_status
+bna_rx_ucast_set(काष्ठा bna_rx *rx, स्थिर u8 *ucmac)
+अणु
+	काष्ठा bna_rxf *rxf = &rx->rxf;
 
-	if (rxf->ucast_pending_mac == NULL) {
+	अगर (rxf->ucast_pending_mac == शून्य) अणु
 		rxf->ucast_pending_mac =
-			bna_cam_mod_mac_get(bna_ucam_mod_free_q(rxf->rx->bna));
-		if (rxf->ucast_pending_mac == NULL)
-			return BNA_CB_UCAST_CAM_FULL;
-	}
+			bna_cam_mod_mac_get(bna_ucam_mod_मुक्त_q(rxf->rx->bna));
+		अगर (rxf->ucast_pending_mac == शून्य)
+			वापस BNA_CB_UCAST_CAM_FULL;
+	पूर्ण
 
 	ether_addr_copy(rxf->ucast_pending_mac->addr, ucmac);
 	rxf->ucast_pending_set = 1;
-	rxf->cam_fltr_cbfn = NULL;
+	rxf->cam_fltr_cbfn = शून्य;
 	rxf->cam_fltr_cbarg = rx->bna->bnad;
 
 	bfa_fsm_send_event(rxf, RXF_E_CONFIG);
 
-	return BNA_CB_SUCCESS;
-}
+	वापस BNA_CB_SUCCESS;
+पूर्ण
 
-enum bna_cb_status
-bna_rx_mcast_add(struct bna_rx *rx, const u8 *addr,
-		 void (*cbfn)(struct bnad *, struct bna_rx *))
-{
-	struct bna_rxf *rxf = &rx->rxf;
-	struct bna_mac *mac;
+क्रमागत bna_cb_status
+bna_rx_mcast_add(काष्ठा bna_rx *rx, स्थिर u8 *addr,
+		 व्योम (*cbfn)(काष्ठा bnad *, काष्ठा bna_rx *))
+अणु
+	काष्ठा bna_rxf *rxf = &rx->rxf;
+	काष्ठा bna_mac *mac;
 
-	/* Check if already added or pending addition */
-	if (bna_mac_find(&rxf->mcast_active_q, addr) ||
-		bna_mac_find(&rxf->mcast_pending_add_q, addr)) {
-		if (cbfn)
+	/* Check अगर alपढ़ोy added or pending addition */
+	अगर (bna_mac_find(&rxf->mcast_active_q, addr) ||
+		bna_mac_find(&rxf->mcast_pending_add_q, addr)) अणु
+		अगर (cbfn)
 			cbfn(rx->bna->bnad, rx);
-		return BNA_CB_SUCCESS;
-	}
+		वापस BNA_CB_SUCCESS;
+	पूर्ण
 
-	mac = bna_cam_mod_mac_get(bna_mcam_mod_free_q(rxf->rx->bna));
-	if (mac == NULL)
-		return BNA_CB_MCAST_LIST_FULL;
+	mac = bna_cam_mod_mac_get(bna_mcam_mod_मुक्त_q(rxf->rx->bna));
+	अगर (mac == शून्य)
+		वापस BNA_CB_MCAST_LIST_FULL;
 	ether_addr_copy(mac->addr, addr);
 	list_add_tail(&mac->qe, &rxf->mcast_pending_add_q);
 
@@ -768,869 +769,869 @@ bna_rx_mcast_add(struct bna_rx *rx, const u8 *addr,
 
 	bfa_fsm_send_event(rxf, RXF_E_CONFIG);
 
-	return BNA_CB_SUCCESS;
-}
+	वापस BNA_CB_SUCCESS;
+पूर्ण
 
-enum bna_cb_status
-bna_rx_ucast_listset(struct bna_rx *rx, int count, const u8 *uclist)
-{
-	struct bna_ucam_mod *ucam_mod = &rx->bna->ucam_mod;
-	struct bna_rxf *rxf = &rx->rxf;
-	struct list_head list_head;
-	const u8 *mcaddr;
-	struct bna_mac *mac, *del_mac;
-	int i;
+क्रमागत bna_cb_status
+bna_rx_ucast_listset(काष्ठा bna_rx *rx, पूर्णांक count, स्थिर u8 *uclist)
+अणु
+	काष्ठा bna_ucam_mod *ucam_mod = &rx->bna->ucam_mod;
+	काष्ठा bna_rxf *rxf = &rx->rxf;
+	काष्ठा list_head list_head;
+	स्थिर u8 *mcaddr;
+	काष्ठा bna_mac *mac, *del_mac;
+	पूर्णांक i;
 
 	/* Purge the pending_add_q */
-	while (!list_empty(&rxf->ucast_pending_add_q)) {
+	जबतक (!list_empty(&rxf->ucast_pending_add_q)) अणु
 		mac = list_first_entry(&rxf->ucast_pending_add_q,
-				       struct bna_mac, qe);
-		list_move_tail(&mac->qe, &ucam_mod->free_q);
-	}
+				       काष्ठा bna_mac, qe);
+		list_move_tail(&mac->qe, &ucam_mod->मुक्त_q);
+	पूर्ण
 
-	/* Schedule active_q entries for deletion */
-	while (!list_empty(&rxf->ucast_active_q)) {
+	/* Schedule active_q entries क्रम deletion */
+	जबतक (!list_empty(&rxf->ucast_active_q)) अणु
 		mac = list_first_entry(&rxf->ucast_active_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		del_mac = bna_cam_mod_mac_get(&ucam_mod->del_q);
 		ether_addr_copy(del_mac->addr, mac->addr);
 		del_mac->handle = mac->handle;
 		list_add_tail(&del_mac->qe, &rxf->ucast_pending_del_q);
-		list_move_tail(&mac->qe, &ucam_mod->free_q);
-	}
+		list_move_tail(&mac->qe, &ucam_mod->मुक्त_q);
+	पूर्ण
 
 	/* Allocate nodes */
 	INIT_LIST_HEAD(&list_head);
-	for (i = 0, mcaddr = uclist; i < count; i++) {
-		mac = bna_cam_mod_mac_get(&ucam_mod->free_q);
-		if (mac == NULL)
-			goto err_return;
+	क्रम (i = 0, mcaddr = uclist; i < count; i++) अणु
+		mac = bna_cam_mod_mac_get(&ucam_mod->मुक्त_q);
+		अगर (mac == शून्य)
+			जाओ err_वापस;
 		ether_addr_copy(mac->addr, mcaddr);
 		list_add_tail(&mac->qe, &list_head);
 		mcaddr += ETH_ALEN;
-	}
+	पूर्ण
 
 	/* Add the new entries */
-	while (!list_empty(&list_head)) {
-		mac = list_first_entry(&list_head, struct bna_mac, qe);
+	जबतक (!list_empty(&list_head)) अणु
+		mac = list_first_entry(&list_head, काष्ठा bna_mac, qe);
 		list_move_tail(&mac->qe, &rxf->ucast_pending_add_q);
-	}
+	पूर्ण
 
 	bfa_fsm_send_event(rxf, RXF_E_CONFIG);
 
-	return BNA_CB_SUCCESS;
+	वापस BNA_CB_SUCCESS;
 
-err_return:
-	while (!list_empty(&list_head)) {
-		mac = list_first_entry(&list_head, struct bna_mac, qe);
-		list_move_tail(&mac->qe, &ucam_mod->free_q);
-	}
+err_वापस:
+	जबतक (!list_empty(&list_head)) अणु
+		mac = list_first_entry(&list_head, काष्ठा bna_mac, qe);
+		list_move_tail(&mac->qe, &ucam_mod->मुक्त_q);
+	पूर्ण
 
-	return BNA_CB_UCAST_CAM_FULL;
-}
+	वापस BNA_CB_UCAST_CAM_FULL;
+पूर्ण
 
-enum bna_cb_status
-bna_rx_mcast_listset(struct bna_rx *rx, int count, const u8 *mclist)
-{
-	struct bna_mcam_mod *mcam_mod = &rx->bna->mcam_mod;
-	struct bna_rxf *rxf = &rx->rxf;
-	struct list_head list_head;
-	const u8 *mcaddr;
-	struct bna_mac *mac, *del_mac;
-	int i;
+क्रमागत bna_cb_status
+bna_rx_mcast_listset(काष्ठा bna_rx *rx, पूर्णांक count, स्थिर u8 *mclist)
+अणु
+	काष्ठा bna_mcam_mod *mcam_mod = &rx->bna->mcam_mod;
+	काष्ठा bna_rxf *rxf = &rx->rxf;
+	काष्ठा list_head list_head;
+	स्थिर u8 *mcaddr;
+	काष्ठा bna_mac *mac, *del_mac;
+	पूर्णांक i;
 
 	/* Purge the pending_add_q */
-	while (!list_empty(&rxf->mcast_pending_add_q)) {
+	जबतक (!list_empty(&rxf->mcast_pending_add_q)) अणु
 		mac = list_first_entry(&rxf->mcast_pending_add_q,
-				       struct bna_mac, qe);
-		list_move_tail(&mac->qe, &mcam_mod->free_q);
-	}
+				       काष्ठा bna_mac, qe);
+		list_move_tail(&mac->qe, &mcam_mod->मुक्त_q);
+	पूर्ण
 
-	/* Schedule active_q entries for deletion */
-	while (!list_empty(&rxf->mcast_active_q)) {
+	/* Schedule active_q entries क्रम deletion */
+	जबतक (!list_empty(&rxf->mcast_active_q)) अणु
 		mac = list_first_entry(&rxf->mcast_active_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		del_mac = bna_cam_mod_mac_get(&mcam_mod->del_q);
 		ether_addr_copy(del_mac->addr, mac->addr);
 		del_mac->handle = mac->handle;
 		list_add_tail(&del_mac->qe, &rxf->mcast_pending_del_q);
-		mac->handle = NULL;
-		list_move_tail(&mac->qe, &mcam_mod->free_q);
-	}
+		mac->handle = शून्य;
+		list_move_tail(&mac->qe, &mcam_mod->मुक्त_q);
+	पूर्ण
 
 	/* Allocate nodes */
 	INIT_LIST_HEAD(&list_head);
-	for (i = 0, mcaddr = mclist; i < count; i++) {
-		mac = bna_cam_mod_mac_get(&mcam_mod->free_q);
-		if (mac == NULL)
-			goto err_return;
+	क्रम (i = 0, mcaddr = mclist; i < count; i++) अणु
+		mac = bna_cam_mod_mac_get(&mcam_mod->मुक्त_q);
+		अगर (mac == शून्य)
+			जाओ err_वापस;
 		ether_addr_copy(mac->addr, mcaddr);
 		list_add_tail(&mac->qe, &list_head);
 
 		mcaddr += ETH_ALEN;
-	}
+	पूर्ण
 
 	/* Add the new entries */
-	while (!list_empty(&list_head)) {
-		mac = list_first_entry(&list_head, struct bna_mac, qe);
+	जबतक (!list_empty(&list_head)) अणु
+		mac = list_first_entry(&list_head, काष्ठा bna_mac, qe);
 		list_move_tail(&mac->qe, &rxf->mcast_pending_add_q);
-	}
+	पूर्ण
 
 	bfa_fsm_send_event(rxf, RXF_E_CONFIG);
 
-	return BNA_CB_SUCCESS;
+	वापस BNA_CB_SUCCESS;
 
-err_return:
-	while (!list_empty(&list_head)) {
-		mac = list_first_entry(&list_head, struct bna_mac, qe);
-		list_move_tail(&mac->qe, &mcam_mod->free_q);
-	}
+err_वापस:
+	जबतक (!list_empty(&list_head)) अणु
+		mac = list_first_entry(&list_head, काष्ठा bna_mac, qe);
+		list_move_tail(&mac->qe, &mcam_mod->मुक्त_q);
+	पूर्ण
 
-	return BNA_CB_MCAST_LIST_FULL;
-}
+	वापस BNA_CB_MCAST_LIST_FULL;
+पूर्ण
 
-void
-bna_rx_mcast_delall(struct bna_rx *rx)
-{
-	struct bna_rxf *rxf = &rx->rxf;
-	struct bna_mac *mac, *del_mac;
-	int need_hw_config = 0;
+व्योम
+bna_rx_mcast_delall(काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bna_rxf *rxf = &rx->rxf;
+	काष्ठा bna_mac *mac, *del_mac;
+	पूर्णांक need_hw_config = 0;
 
 	/* Purge all entries from pending_add_q */
-	while (!list_empty(&rxf->mcast_pending_add_q)) {
+	जबतक (!list_empty(&rxf->mcast_pending_add_q)) अणु
 		mac = list_first_entry(&rxf->mcast_pending_add_q,
-				       struct bna_mac, qe);
-		list_move_tail(&mac->qe, bna_mcam_mod_free_q(rxf->rx->bna));
-	}
+				       काष्ठा bna_mac, qe);
+		list_move_tail(&mac->qe, bna_mcam_mod_मुक्त_q(rxf->rx->bna));
+	पूर्ण
 
-	/* Schedule all entries in active_q for deletion */
-	while (!list_empty(&rxf->mcast_active_q)) {
+	/* Schedule all entries in active_q क्रम deletion */
+	जबतक (!list_empty(&rxf->mcast_active_q)) अणु
 		mac = list_first_entry(&rxf->mcast_active_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		list_del(&mac->qe);
 		del_mac = bna_cam_mod_mac_get(bna_mcam_mod_del_q(rxf->rx->bna));
-		memcpy(del_mac, mac, sizeof(*del_mac));
+		स_नकल(del_mac, mac, माप(*del_mac));
 		list_add_tail(&del_mac->qe, &rxf->mcast_pending_del_q);
-		mac->handle = NULL;
-		list_add_tail(&mac->qe, bna_mcam_mod_free_q(rxf->rx->bna));
+		mac->handle = शून्य;
+		list_add_tail(&mac->qe, bna_mcam_mod_मुक्त_q(rxf->rx->bna));
 		need_hw_config = 1;
-	}
+	पूर्ण
 
-	if (need_hw_config)
+	अगर (need_hw_config)
 		bfa_fsm_send_event(rxf, RXF_E_CONFIG);
-}
+पूर्ण
 
-void
-bna_rx_vlan_add(struct bna_rx *rx, int vlan_id)
-{
-	struct bna_rxf *rxf = &rx->rxf;
-	int index = (vlan_id >> BFI_VLAN_WORD_SHIFT);
-	int bit = BIT(vlan_id & BFI_VLAN_WORD_MASK);
-	int group_id = (vlan_id >> BFI_VLAN_BLOCK_SHIFT);
+व्योम
+bna_rx_vlan_add(काष्ठा bna_rx *rx, पूर्णांक vlan_id)
+अणु
+	काष्ठा bna_rxf *rxf = &rx->rxf;
+	पूर्णांक index = (vlan_id >> BFI_VLAN_WORD_SHIFT);
+	पूर्णांक bit = BIT(vlan_id & BFI_VLAN_WORD_MASK);
+	पूर्णांक group_id = (vlan_id >> BFI_VLAN_BLOCK_SHIFT);
 
 	rxf->vlan_filter_table[index] |= bit;
-	if (rxf->vlan_filter_status == BNA_STATUS_T_ENABLED) {
-		rxf->vlan_pending_bitmask |= BIT(group_id);
+	अगर (rxf->vlan_filter_status == BNA_STATUS_T_ENABLED) अणु
+		rxf->vlan_pending_biपंचांगask |= BIT(group_id);
 		bfa_fsm_send_event(rxf, RXF_E_CONFIG);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bna_rx_vlan_del(struct bna_rx *rx, int vlan_id)
-{
-	struct bna_rxf *rxf = &rx->rxf;
-	int index = (vlan_id >> BFI_VLAN_WORD_SHIFT);
-	int bit = BIT(vlan_id & BFI_VLAN_WORD_MASK);
-	int group_id = (vlan_id >> BFI_VLAN_BLOCK_SHIFT);
+व्योम
+bna_rx_vlan_del(काष्ठा bna_rx *rx, पूर्णांक vlan_id)
+अणु
+	काष्ठा bna_rxf *rxf = &rx->rxf;
+	पूर्णांक index = (vlan_id >> BFI_VLAN_WORD_SHIFT);
+	पूर्णांक bit = BIT(vlan_id & BFI_VLAN_WORD_MASK);
+	पूर्णांक group_id = (vlan_id >> BFI_VLAN_BLOCK_SHIFT);
 
 	rxf->vlan_filter_table[index] &= ~bit;
-	if (rxf->vlan_filter_status == BNA_STATUS_T_ENABLED) {
-		rxf->vlan_pending_bitmask |= BIT(group_id);
+	अगर (rxf->vlan_filter_status == BNA_STATUS_T_ENABLED) अणु
+		rxf->vlan_pending_biपंचांगask |= BIT(group_id);
 		bfa_fsm_send_event(rxf, RXF_E_CONFIG);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-bna_rxf_ucast_cfg_apply(struct bna_rxf *rxf)
-{
-	struct bna_mac *mac = NULL;
+अटल पूर्णांक
+bna_rxf_ucast_cfg_apply(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bna_mac *mac = शून्य;
 
 	/* Delete MAC addresses previousely added */
-	if (!list_empty(&rxf->ucast_pending_del_q)) {
+	अगर (!list_empty(&rxf->ucast_pending_del_q)) अणु
 		mac = list_first_entry(&rxf->ucast_pending_del_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		bna_bfi_ucast_req(rxf, mac, BFI_ENET_H2I_MAC_UCAST_DEL_REQ);
 		list_move_tail(&mac->qe, bna_ucam_mod_del_q(rxf->rx->bna));
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* Set default unicast MAC */
-	if (rxf->ucast_pending_set) {
+	/* Set शेष unicast MAC */
+	अगर (rxf->ucast_pending_set) अणु
 		rxf->ucast_pending_set = 0;
 		ether_addr_copy(rxf->ucast_active_mac.addr,
 				rxf->ucast_pending_mac->addr);
 		rxf->ucast_active_set = 1;
 		bna_bfi_ucast_req(rxf, &rxf->ucast_active_mac,
 			BFI_ENET_H2I_MAC_UCAST_SET_REQ);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Add additional MAC entries */
-	if (!list_empty(&rxf->ucast_pending_add_q)) {
+	अगर (!list_empty(&rxf->ucast_pending_add_q)) अणु
 		mac = list_first_entry(&rxf->ucast_pending_add_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		list_move_tail(&mac->qe, &rxf->ucast_active_q);
 		bna_bfi_ucast_req(rxf, mac, BFI_ENET_H2I_MAC_UCAST_ADD_REQ);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_ucast_cfg_reset(struct bna_rxf *rxf, enum bna_cleanup_type cleanup)
-{
-	struct bna_mac *mac;
+अटल पूर्णांक
+bna_rxf_ucast_cfg_reset(काष्ठा bna_rxf *rxf, क्रमागत bna_cleanup_type cleanup)
+अणु
+	काष्ठा bna_mac *mac;
 
 	/* Throw away delete pending ucast entries */
-	while (!list_empty(&rxf->ucast_pending_del_q)) {
+	जबतक (!list_empty(&rxf->ucast_pending_del_q)) अणु
 		mac = list_first_entry(&rxf->ucast_pending_del_q,
-				       struct bna_mac, qe);
-		if (cleanup == BNA_SOFT_CLEANUP)
+				       काष्ठा bna_mac, qe);
+		अगर (cleanup == BNA_SOFT_CLEANUP)
 			list_move_tail(&mac->qe,
 				       bna_ucam_mod_del_q(rxf->rx->bna));
-		else {
+		अन्यथा अणु
 			bna_bfi_ucast_req(rxf, mac,
 					  BFI_ENET_H2I_MAC_UCAST_DEL_REQ);
 			list_move_tail(&mac->qe,
 				       bna_ucam_mod_del_q(rxf->rx->bna));
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 	/* Move active ucast entries to pending_add_q */
-	while (!list_empty(&rxf->ucast_active_q)) {
+	जबतक (!list_empty(&rxf->ucast_active_q)) अणु
 		mac = list_first_entry(&rxf->ucast_active_q,
-				       struct bna_mac, qe);
+				       काष्ठा bna_mac, qe);
 		list_move_tail(&mac->qe, &rxf->ucast_pending_add_q);
-		if (cleanup == BNA_HARD_CLEANUP) {
+		अगर (cleanup == BNA_HARD_CLEANUP) अणु
 			bna_bfi_ucast_req(rxf, mac,
 				BFI_ENET_H2I_MAC_UCAST_DEL_REQ);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	if (rxf->ucast_active_set) {
+	अगर (rxf->ucast_active_set) अणु
 		rxf->ucast_pending_set = 1;
 		rxf->ucast_active_set = 0;
-		if (cleanup == BNA_HARD_CLEANUP) {
+		अगर (cleanup == BNA_HARD_CLEANUP) अणु
 			bna_bfi_ucast_req(rxf, &rxf->ucast_active_mac,
 				BFI_ENET_H2I_MAC_UCAST_CLR_REQ);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_promisc_cfg_apply(struct bna_rxf *rxf)
-{
-	struct bna *bna = rxf->rx->bna;
+अटल पूर्णांक
+bna_rxf_promisc_cfg_apply(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bna *bna = rxf->rx->bna;
 
 	/* Enable/disable promiscuous mode */
-	if (is_promisc_enable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask)) {
+	अगर (is_promisc_enable(rxf->rxmode_pending,
+				rxf->rxmode_pending_biपंचांगask)) अणु
 		/* move promisc configuration from pending -> active */
 		promisc_inactive(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		rxf->rxmode_active |= BNA_RXMODE_PROMISC;
 		bna_bfi_rx_promisc_req(rxf, BNA_STATUS_T_ENABLED);
-		return 1;
-	} else if (is_promisc_disable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask)) {
+		वापस 1;
+	पूर्ण अन्यथा अगर (is_promisc_disable(rxf->rxmode_pending,
+				rxf->rxmode_pending_biपंचांगask)) अणु
 		/* move promisc configuration from pending -> active */
 		promisc_inactive(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		rxf->rxmode_active &= ~BNA_RXMODE_PROMISC;
 		bna->promisc_rid = BFI_INVALID_RID;
 		bna_bfi_rx_promisc_req(rxf, BNA_STATUS_T_DISABLED);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_promisc_cfg_reset(struct bna_rxf *rxf, enum bna_cleanup_type cleanup)
-{
-	struct bna *bna = rxf->rx->bna;
+अटल पूर्णांक
+bna_rxf_promisc_cfg_reset(काष्ठा bna_rxf *rxf, क्रमागत bna_cleanup_type cleanup)
+अणु
+	काष्ठा bna *bna = rxf->rx->bna;
 
 	/* Clear pending promisc mode disable */
-	if (is_promisc_disable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask)) {
+	अगर (is_promisc_disable(rxf->rxmode_pending,
+				rxf->rxmode_pending_biपंचांगask)) अणु
 		promisc_inactive(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		rxf->rxmode_active &= ~BNA_RXMODE_PROMISC;
 		bna->promisc_rid = BFI_INVALID_RID;
-		if (cleanup == BNA_HARD_CLEANUP) {
+		अगर (cleanup == BNA_HARD_CLEANUP) अणु
 			bna_bfi_rx_promisc_req(rxf, BNA_STATUS_T_DISABLED);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 	/* Move promisc mode config from active -> pending */
-	if (rxf->rxmode_active & BNA_RXMODE_PROMISC) {
+	अगर (rxf->rxmode_active & BNA_RXMODE_PROMISC) अणु
 		promisc_enable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		rxf->rxmode_active &= ~BNA_RXMODE_PROMISC;
-		if (cleanup == BNA_HARD_CLEANUP) {
+		अगर (cleanup == BNA_HARD_CLEANUP) अणु
 			bna_bfi_rx_promisc_req(rxf, BNA_STATUS_T_DISABLED);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_allmulti_cfg_apply(struct bna_rxf *rxf)
-{
+अटल पूर्णांक
+bna_rxf_allmulti_cfg_apply(काष्ठा bna_rxf *rxf)
+अणु
 	/* Enable/disable allmulti mode */
-	if (is_allmulti_enable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask)) {
+	अगर (is_allmulti_enable(rxf->rxmode_pending,
+				rxf->rxmode_pending_biपंचांगask)) अणु
 		/* move allmulti configuration from pending -> active */
 		allmulti_inactive(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		rxf->rxmode_active |= BNA_RXMODE_ALLMULTI;
 		bna_bfi_mcast_filter_req(rxf, BNA_STATUS_T_DISABLED);
-		return 1;
-	} else if (is_allmulti_disable(rxf->rxmode_pending,
-					rxf->rxmode_pending_bitmask)) {
+		वापस 1;
+	पूर्ण अन्यथा अगर (is_allmulti_disable(rxf->rxmode_pending,
+					rxf->rxmode_pending_biपंचांगask)) अणु
 		/* move allmulti configuration from pending -> active */
 		allmulti_inactive(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		rxf->rxmode_active &= ~BNA_RXMODE_ALLMULTI;
 		bna_bfi_mcast_filter_req(rxf, BNA_STATUS_T_ENABLED);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_allmulti_cfg_reset(struct bna_rxf *rxf, enum bna_cleanup_type cleanup)
-{
+अटल पूर्णांक
+bna_rxf_allmulti_cfg_reset(काष्ठा bna_rxf *rxf, क्रमागत bna_cleanup_type cleanup)
+अणु
 	/* Clear pending allmulti mode disable */
-	if (is_allmulti_disable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask)) {
+	अगर (is_allmulti_disable(rxf->rxmode_pending,
+				rxf->rxmode_pending_biपंचांगask)) अणु
 		allmulti_inactive(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		rxf->rxmode_active &= ~BNA_RXMODE_ALLMULTI;
-		if (cleanup == BNA_HARD_CLEANUP) {
+		अगर (cleanup == BNA_HARD_CLEANUP) अणु
 			bna_bfi_mcast_filter_req(rxf, BNA_STATUS_T_ENABLED);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 	/* Move allmulti mode config from active -> pending */
-	if (rxf->rxmode_active & BNA_RXMODE_ALLMULTI) {
+	अगर (rxf->rxmode_active & BNA_RXMODE_ALLMULTI) अणु
 		allmulti_enable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		rxf->rxmode_active &= ~BNA_RXMODE_ALLMULTI;
-		if (cleanup == BNA_HARD_CLEANUP) {
+		अगर (cleanup == BNA_HARD_CLEANUP) अणु
 			bna_bfi_mcast_filter_req(rxf, BNA_STATUS_T_ENABLED);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bna_rxf_promisc_enable(struct bna_rxf *rxf)
-{
-	struct bna *bna = rxf->rx->bna;
-	int ret = 0;
+अटल पूर्णांक
+bna_rxf_promisc_enable(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bna *bna = rxf->rx->bna;
+	पूर्णांक ret = 0;
 
-	if (is_promisc_enable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask) ||
-		(rxf->rxmode_active & BNA_RXMODE_PROMISC)) {
-		/* Do nothing if pending enable or already enabled */
-	} else if (is_promisc_disable(rxf->rxmode_pending,
-					rxf->rxmode_pending_bitmask)) {
+	अगर (is_promisc_enable(rxf->rxmode_pending,
+				rxf->rxmode_pending_biपंचांगask) ||
+		(rxf->rxmode_active & BNA_RXMODE_PROMISC)) अणु
+		/* Do nothing अगर pending enable or alपढ़ोy enabled */
+	पूर्ण अन्यथा अगर (is_promisc_disable(rxf->rxmode_pending,
+					rxf->rxmode_pending_biपंचांगask)) अणु
 		/* Turn off pending disable command */
 		promisc_inactive(rxf->rxmode_pending,
-			rxf->rxmode_pending_bitmask);
-	} else {
+			rxf->rxmode_pending_biपंचांगask);
+	पूर्ण अन्यथा अणु
 		/* Schedule enable */
 		promisc_enable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		bna->promisc_rid = rxf->rx->rid;
 		ret = 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-bna_rxf_promisc_disable(struct bna_rxf *rxf)
-{
-	struct bna *bna = rxf->rx->bna;
-	int ret = 0;
+अटल पूर्णांक
+bna_rxf_promisc_disable(काष्ठा bna_rxf *rxf)
+अणु
+	काष्ठा bna *bna = rxf->rx->bna;
+	पूर्णांक ret = 0;
 
-	if (is_promisc_disable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask) ||
-		(!(rxf->rxmode_active & BNA_RXMODE_PROMISC))) {
-		/* Do nothing if pending disable or already disabled */
-	} else if (is_promisc_enable(rxf->rxmode_pending,
-					rxf->rxmode_pending_bitmask)) {
+	अगर (is_promisc_disable(rxf->rxmode_pending,
+				rxf->rxmode_pending_biपंचांगask) ||
+		(!(rxf->rxmode_active & BNA_RXMODE_PROMISC))) अणु
+		/* Do nothing अगर pending disable or alपढ़ोy disabled */
+	पूर्ण अन्यथा अगर (is_promisc_enable(rxf->rxmode_pending,
+					rxf->rxmode_pending_biपंचांगask)) अणु
 		/* Turn off pending enable command */
 		promisc_inactive(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		bna->promisc_rid = BFI_INVALID_RID;
-	} else if (rxf->rxmode_active & BNA_RXMODE_PROMISC) {
+	पूर्ण अन्यथा अगर (rxf->rxmode_active & BNA_RXMODE_PROMISC) अणु
 		/* Schedule disable */
 		promisc_disable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		ret = 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-bna_rxf_allmulti_enable(struct bna_rxf *rxf)
-{
-	int ret = 0;
+अटल पूर्णांक
+bna_rxf_allmulti_enable(काष्ठा bna_rxf *rxf)
+अणु
+	पूर्णांक ret = 0;
 
-	if (is_allmulti_enable(rxf->rxmode_pending,
-			rxf->rxmode_pending_bitmask) ||
-			(rxf->rxmode_active & BNA_RXMODE_ALLMULTI)) {
-		/* Do nothing if pending enable or already enabled */
-	} else if (is_allmulti_disable(rxf->rxmode_pending,
-					rxf->rxmode_pending_bitmask)) {
+	अगर (is_allmulti_enable(rxf->rxmode_pending,
+			rxf->rxmode_pending_biपंचांगask) ||
+			(rxf->rxmode_active & BNA_RXMODE_ALLMULTI)) अणु
+		/* Do nothing अगर pending enable or alपढ़ोy enabled */
+	पूर्ण अन्यथा अगर (is_allmulti_disable(rxf->rxmode_pending,
+					rxf->rxmode_pending_biपंचांगask)) अणु
 		/* Turn off pending disable command */
 		allmulti_inactive(rxf->rxmode_pending,
-			rxf->rxmode_pending_bitmask);
-	} else {
+			rxf->rxmode_pending_biपंचांगask);
+	पूर्ण अन्यथा अणु
 		/* Schedule enable */
 		allmulti_enable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		ret = 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-bna_rxf_allmulti_disable(struct bna_rxf *rxf)
-{
-	int ret = 0;
+अटल पूर्णांक
+bna_rxf_allmulti_disable(काष्ठा bna_rxf *rxf)
+अणु
+	पूर्णांक ret = 0;
 
-	if (is_allmulti_disable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask) ||
-		(!(rxf->rxmode_active & BNA_RXMODE_ALLMULTI))) {
-		/* Do nothing if pending disable or already disabled */
-	} else if (is_allmulti_enable(rxf->rxmode_pending,
-					rxf->rxmode_pending_bitmask)) {
+	अगर (is_allmulti_disable(rxf->rxmode_pending,
+				rxf->rxmode_pending_biपंचांगask) ||
+		(!(rxf->rxmode_active & BNA_RXMODE_ALLMULTI))) अणु
+		/* Do nothing अगर pending disable or alपढ़ोy disabled */
+	पूर्ण अन्यथा अगर (is_allmulti_enable(rxf->rxmode_pending,
+					rxf->rxmode_pending_biपंचांगask)) अणु
 		/* Turn off pending enable command */
 		allmulti_inactive(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
-	} else if (rxf->rxmode_active & BNA_RXMODE_ALLMULTI) {
+				rxf->rxmode_pending_biपंचांगask);
+	पूर्ण अन्यथा अगर (rxf->rxmode_active & BNA_RXMODE_ALLMULTI) अणु
 		/* Schedule disable */
 		allmulti_disable(rxf->rxmode_pending,
-				rxf->rxmode_pending_bitmask);
+				rxf->rxmode_pending_biपंचांगask);
 		ret = 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-bna_rxf_vlan_strip_cfg_apply(struct bna_rxf *rxf)
-{
-	if (rxf->vlan_strip_pending) {
+अटल पूर्णांक
+bna_rxf_vlan_strip_cfg_apply(काष्ठा bna_rxf *rxf)
+अणु
+	अगर (rxf->vlan_strip_pending) अणु
 			rxf->vlan_strip_pending = false;
 			bna_bfi_vlan_strip_enable(rxf);
-			return 1;
-	}
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* RX */
 
-#define	BNA_GET_RXQS(qcfg)	(((qcfg)->rxp_type == BNA_RXP_SINGLE) ?	\
+#घोषणा	BNA_GET_RXQS(qcfg)	(((qcfg)->rxp_type == BNA_RXP_SINGLE) ?	\
 	(qcfg)->num_paths : ((qcfg)->num_paths * 2))
 
-#define	SIZE_TO_PAGES(size)	(((size) >> PAGE_SHIFT) + ((((size) &\
+#घोषणा	SIZE_TO_PAGES(size)	(((size) >> PAGE_SHIFT) + ((((size) &\
 	(PAGE_SIZE - 1)) + (PAGE_SIZE - 1)) >> PAGE_SHIFT))
 
-#define	call_rx_stop_cbfn(rx)						\
-do {								    \
-	if ((rx)->stop_cbfn) {						\
-		void (*cbfn)(void *, struct bna_rx *);	  \
-		void *cbarg;					    \
+#घोषणा	call_rx_stop_cbfn(rx)						\
+करो अणु								    \
+	अगर ((rx)->stop_cbfn) अणु						\
+		व्योम (*cbfn)(व्योम *, काष्ठा bna_rx *);	  \
+		व्योम *cbarg;					    \
 		cbfn = (rx)->stop_cbfn;				 \
 		cbarg = (rx)->stop_cbarg;			       \
-		(rx)->stop_cbfn = NULL;					\
-		(rx)->stop_cbarg = NULL;				\
+		(rx)->stop_cbfn = शून्य;					\
+		(rx)->stop_cbarg = शून्य;				\
 		cbfn(cbarg, rx);					\
-	}							       \
-} while (0)
+	पूर्ण							       \
+पूर्ण जबतक (0)
 
-#define call_rx_stall_cbfn(rx)						\
-do {									\
-	if ((rx)->rx_stall_cbfn)					\
+#घोषणा call_rx_stall_cbfn(rx)						\
+करो अणु									\
+	अगर ((rx)->rx_stall_cbfn)					\
 		(rx)->rx_stall_cbfn((rx)->bna->bnad, (rx));		\
-} while (0)
+पूर्ण जबतक (0)
 
-#define bfi_enet_datapath_q_init(bfi_q, bna_qpt)			\
-do {									\
-	struct bna_dma_addr cur_q_addr =				\
-		*((struct bna_dma_addr *)((bna_qpt)->kv_qpt_ptr));	\
+#घोषणा bfi_enet_datapath_q_init(bfi_q, bna_qpt)			\
+करो अणु									\
+	काष्ठा bna_dma_addr cur_q_addr =				\
+		*((काष्ठा bna_dma_addr *)((bna_qpt)->kv_qpt_ptr));	\
 	(bfi_q)->pg_tbl.a32.addr_lo = (bna_qpt)->hw_qpt_ptr.lsb;	\
 	(bfi_q)->pg_tbl.a32.addr_hi = (bna_qpt)->hw_qpt_ptr.msb;	\
 	(bfi_q)->first_entry.a32.addr_lo = cur_q_addr.lsb;		\
 	(bfi_q)->first_entry.a32.addr_hi = cur_q_addr.msb;		\
 	(bfi_q)->pages = htons((u16)(bna_qpt)->page_count);	\
 	(bfi_q)->page_sz = htons((u16)(bna_qpt)->page_size);\
-} while (0)
+पूर्ण जबतक (0)
 
-static void bna_bfi_rx_enet_start(struct bna_rx *rx);
-static void bna_rx_enet_stop(struct bna_rx *rx);
-static void bna_rx_mod_cb_rx_stopped(void *arg, struct bna_rx *rx);
+अटल व्योम bna_bfi_rx_enet_start(काष्ठा bna_rx *rx);
+अटल व्योम bna_rx_enet_stop(काष्ठा bna_rx *rx);
+अटल व्योम bna_rx_mod_cb_rx_stopped(व्योम *arg, काष्ठा bna_rx *rx);
 
 bfa_fsm_state_decl(bna_rx, stopped,
-	struct bna_rx, enum bna_rx_event);
-bfa_fsm_state_decl(bna_rx, start_wait,
-	struct bna_rx, enum bna_rx_event);
-bfa_fsm_state_decl(bna_rx, start_stop_wait,
-	struct bna_rx, enum bna_rx_event);
-bfa_fsm_state_decl(bna_rx, rxf_start_wait,
-	struct bna_rx, enum bna_rx_event);
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
+bfa_fsm_state_decl(bna_rx, start_रुको,
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
+bfa_fsm_state_decl(bna_rx, start_stop_रुको,
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
+bfa_fsm_state_decl(bna_rx, rxf_start_रुको,
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
 bfa_fsm_state_decl(bna_rx, started,
-	struct bna_rx, enum bna_rx_event);
-bfa_fsm_state_decl(bna_rx, rxf_stop_wait,
-	struct bna_rx, enum bna_rx_event);
-bfa_fsm_state_decl(bna_rx, stop_wait,
-	struct bna_rx, enum bna_rx_event);
-bfa_fsm_state_decl(bna_rx, cleanup_wait,
-	struct bna_rx, enum bna_rx_event);
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
+bfa_fsm_state_decl(bna_rx, rxf_stop_रुको,
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
+bfa_fsm_state_decl(bna_rx, stop_रुको,
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
+bfa_fsm_state_decl(bna_rx, cleanup_रुको,
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
 bfa_fsm_state_decl(bna_rx, failed,
-	struct bna_rx, enum bna_rx_event);
-bfa_fsm_state_decl(bna_rx, quiesce_wait,
-	struct bna_rx, enum bna_rx_event);
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
+bfa_fsm_state_decl(bna_rx, quiesce_रुको,
+	काष्ठा bna_rx, क्रमागत bna_rx_event);
 
-static void bna_rx_sm_stopped_entry(struct bna_rx *rx)
-{
+अटल व्योम bna_rx_sm_stopped_entry(काष्ठा bna_rx *rx)
+अणु
 	call_rx_stop_cbfn(rx);
-}
+पूर्ण
 
-static void bna_rx_sm_stopped(struct bna_rx *rx,
-				enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_START:
-		bfa_fsm_set_state(rx, bna_rx_sm_start_wait);
-		break;
+अटल व्योम bna_rx_sm_stopped(काष्ठा bna_rx *rx,
+				क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_START:
+		bfa_fsm_set_state(rx, bna_rx_sm_start_रुको);
+		अवरोध;
 
-	case RX_E_STOP:
+	हाल RX_E_STOP:
 		call_rx_stop_cbfn(rx);
-		break;
+		अवरोध;
 
-	case RX_E_FAIL:
+	हाल RX_E_FAIL:
 		/* no-op */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void bna_rx_sm_start_wait_entry(struct bna_rx *rx)
-{
+अटल व्योम bna_rx_sm_start_रुको_entry(काष्ठा bna_rx *rx)
+अणु
 	bna_bfi_rx_enet_start(rx);
-}
+पूर्ण
 
-static void
-bna_rx_sm_stop_wait_entry(struct bna_rx *rx)
-{
-}
+अटल व्योम
+bna_rx_sm_stop_रुको_entry(काष्ठा bna_rx *rx)
+अणु
+पूर्ण
 
-static void
-bna_rx_sm_stop_wait(struct bna_rx *rx, enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_FAIL:
-	case RX_E_STOPPED:
-		bfa_fsm_set_state(rx, bna_rx_sm_cleanup_wait);
+अटल व्योम
+bna_rx_sm_stop_रुको(काष्ठा bna_rx *rx, क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_FAIL:
+	हाल RX_E_STOPPED:
+		bfa_fsm_set_state(rx, bna_rx_sm_cleanup_रुको);
 		rx->rx_cleanup_cbfn(rx->bna->bnad, rx);
-		break;
+		अवरोध;
 
-	case RX_E_STARTED:
+	हाल RX_E_STARTED:
 		bna_rx_enet_stop(rx);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void bna_rx_sm_start_wait(struct bna_rx *rx,
-				enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_STOP:
-		bfa_fsm_set_state(rx, bna_rx_sm_start_stop_wait);
-		break;
+अटल व्योम bna_rx_sm_start_रुको(काष्ठा bna_rx *rx,
+				क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_STOP:
+		bfa_fsm_set_state(rx, bna_rx_sm_start_stop_रुको);
+		अवरोध;
 
-	case RX_E_FAIL:
+	हाल RX_E_FAIL:
 		bfa_fsm_set_state(rx, bna_rx_sm_stopped);
-		break;
+		अवरोध;
 
-	case RX_E_STARTED:
-		bfa_fsm_set_state(rx, bna_rx_sm_rxf_start_wait);
-		break;
+	हाल RX_E_STARTED:
+		bfa_fsm_set_state(rx, bna_rx_sm_rxf_start_रुको);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void bna_rx_sm_rxf_start_wait_entry(struct bna_rx *rx)
-{
+अटल व्योम bna_rx_sm_rxf_start_रुको_entry(काष्ठा bna_rx *rx)
+अणु
 	rx->rx_post_cbfn(rx->bna->bnad, rx);
 	bna_rxf_start(&rx->rxf);
-}
+पूर्ण
 
-static void
-bna_rx_sm_rxf_stop_wait_entry(struct bna_rx *rx)
-{
-}
+अटल व्योम
+bna_rx_sm_rxf_stop_रुको_entry(काष्ठा bna_rx *rx)
+अणु
+पूर्ण
 
-static void
-bna_rx_sm_rxf_stop_wait(struct bna_rx *rx, enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_FAIL:
-		bfa_fsm_set_state(rx, bna_rx_sm_cleanup_wait);
+अटल व्योम
+bna_rx_sm_rxf_stop_रुको(काष्ठा bna_rx *rx, क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_FAIL:
+		bfa_fsm_set_state(rx, bna_rx_sm_cleanup_रुको);
 		bna_rxf_fail(&rx->rxf);
 		call_rx_stall_cbfn(rx);
 		rx->rx_cleanup_cbfn(rx->bna->bnad, rx);
-		break;
+		अवरोध;
 
-	case RX_E_RXF_STARTED:
+	हाल RX_E_RXF_STARTED:
 		bna_rxf_stop(&rx->rxf);
-		break;
+		अवरोध;
 
-	case RX_E_RXF_STOPPED:
-		bfa_fsm_set_state(rx, bna_rx_sm_stop_wait);
+	हाल RX_E_RXF_STOPPED:
+		bfa_fsm_set_state(rx, bna_rx_sm_stop_रुको);
 		call_rx_stall_cbfn(rx);
 		bna_rx_enet_stop(rx);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-}
+पूर्ण
 
-static void
-bna_rx_sm_start_stop_wait_entry(struct bna_rx *rx)
-{
-}
+अटल व्योम
+bna_rx_sm_start_stop_रुको_entry(काष्ठा bna_rx *rx)
+अणु
+पूर्ण
 
-static void
-bna_rx_sm_start_stop_wait(struct bna_rx *rx, enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_FAIL:
-	case RX_E_STOPPED:
+अटल व्योम
+bna_rx_sm_start_stop_रुको(काष्ठा bna_rx *rx, क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_FAIL:
+	हाल RX_E_STOPPED:
 		bfa_fsm_set_state(rx, bna_rx_sm_stopped);
-		break;
+		अवरोध;
 
-	case RX_E_STARTED:
+	हाल RX_E_STARTED:
 		bna_rx_enet_stop(rx);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_rx_sm_started_entry(struct bna_rx *rx)
-{
-	struct bna_rxp *rxp;
-	int is_regular = (rx->type == BNA_RX_T_REGULAR);
+अटल व्योम
+bna_rx_sm_started_entry(काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bna_rxp *rxp;
+	पूर्णांक is_regular = (rx->type == BNA_RX_T_REGULAR);
 
 	/* Start IB */
-	list_for_each_entry(rxp, &rx->rxp_q, qe)
+	list_क्रम_each_entry(rxp, &rx->rxp_q, qe)
 		bna_ib_start(rx->bna, &rxp->cq.ib, is_regular);
 
 	bna_ethport_cb_rx_started(&rx->bna->ethport);
-}
+पूर्ण
 
-static void
-bna_rx_sm_started(struct bna_rx *rx, enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_STOP:
-		bfa_fsm_set_state(rx, bna_rx_sm_rxf_stop_wait);
+अटल व्योम
+bna_rx_sm_started(काष्ठा bna_rx *rx, क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_STOP:
+		bfa_fsm_set_state(rx, bna_rx_sm_rxf_stop_रुको);
 		bna_ethport_cb_rx_stopped(&rx->bna->ethport);
 		bna_rxf_stop(&rx->rxf);
-		break;
+		अवरोध;
 
-	case RX_E_FAIL:
+	हाल RX_E_FAIL:
 		bfa_fsm_set_state(rx, bna_rx_sm_failed);
 		bna_ethport_cb_rx_stopped(&rx->bna->ethport);
 		bna_rxf_fail(&rx->rxf);
 		call_rx_stall_cbfn(rx);
 		rx->rx_cleanup_cbfn(rx->bna->bnad, rx);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void bna_rx_sm_rxf_start_wait(struct bna_rx *rx,
-				enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_STOP:
-		bfa_fsm_set_state(rx, bna_rx_sm_rxf_stop_wait);
-		break;
+अटल व्योम bna_rx_sm_rxf_start_रुको(काष्ठा bna_rx *rx,
+				क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_STOP:
+		bfa_fsm_set_state(rx, bna_rx_sm_rxf_stop_रुको);
+		अवरोध;
 
-	case RX_E_FAIL:
+	हाल RX_E_FAIL:
 		bfa_fsm_set_state(rx, bna_rx_sm_failed);
 		bna_rxf_fail(&rx->rxf);
 		call_rx_stall_cbfn(rx);
 		rx->rx_cleanup_cbfn(rx->bna->bnad, rx);
-		break;
+		अवरोध;
 
-	case RX_E_RXF_STARTED:
+	हाल RX_E_RXF_STARTED:
 		bfa_fsm_set_state(rx, bna_rx_sm_started);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-bna_rx_sm_cleanup_wait_entry(struct bna_rx *rx)
-{
-}
+अटल व्योम
+bna_rx_sm_cleanup_रुको_entry(काष्ठा bna_rx *rx)
+अणु
+पूर्ण
 
-static void
-bna_rx_sm_cleanup_wait(struct bna_rx *rx, enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_FAIL:
-	case RX_E_RXF_STOPPED:
+अटल व्योम
+bna_rx_sm_cleanup_रुको(काष्ठा bna_rx *rx, क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_FAIL:
+	हाल RX_E_RXF_STOPPED:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case RX_E_CLEANUP_DONE:
+	हाल RX_E_CLEANUP_DONE:
 		bfa_fsm_set_state(rx, bna_rx_sm_stopped);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-bna_rx_sm_failed_entry(struct bna_rx *rx)
-{
-}
+अटल व्योम
+bna_rx_sm_failed_entry(काष्ठा bna_rx *rx)
+अणु
+पूर्ण
 
-static void
-bna_rx_sm_failed(struct bna_rx *rx, enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_START:
-		bfa_fsm_set_state(rx, bna_rx_sm_quiesce_wait);
-		break;
+अटल व्योम
+bna_rx_sm_failed(काष्ठा bna_rx *rx, क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_START:
+		bfa_fsm_set_state(rx, bna_rx_sm_quiesce_रुको);
+		अवरोध;
 
-	case RX_E_STOP:
-		bfa_fsm_set_state(rx, bna_rx_sm_cleanup_wait);
-		break;
+	हाल RX_E_STOP:
+		bfa_fsm_set_state(rx, bna_rx_sm_cleanup_रुको);
+		अवरोध;
 
-	case RX_E_FAIL:
-	case RX_E_RXF_STARTED:
-	case RX_E_RXF_STOPPED:
+	हाल RX_E_FAIL:
+	हाल RX_E_RXF_STARTED:
+	हाल RX_E_RXF_STOPPED:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case RX_E_CLEANUP_DONE:
+	हाल RX_E_CLEANUP_DONE:
 		bfa_fsm_set_state(rx, bna_rx_sm_stopped);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-		break;
-}	}
+		अवरोध;
+पूर्ण	पूर्ण
 
-static void
-bna_rx_sm_quiesce_wait_entry(struct bna_rx *rx)
-{
-}
+अटल व्योम
+bna_rx_sm_quiesce_रुको_entry(काष्ठा bna_rx *rx)
+अणु
+पूर्ण
 
-static void
-bna_rx_sm_quiesce_wait(struct bna_rx *rx, enum bna_rx_event event)
-{
-	switch (event) {
-	case RX_E_STOP:
-		bfa_fsm_set_state(rx, bna_rx_sm_cleanup_wait);
-		break;
+अटल व्योम
+bna_rx_sm_quiesce_रुको(काष्ठा bna_rx *rx, क्रमागत bna_rx_event event)
+अणु
+	चयन (event) अणु
+	हाल RX_E_STOP:
+		bfa_fsm_set_state(rx, bna_rx_sm_cleanup_रुको);
+		अवरोध;
 
-	case RX_E_FAIL:
+	हाल RX_E_FAIL:
 		bfa_fsm_set_state(rx, bna_rx_sm_failed);
-		break;
+		अवरोध;
 
-	case RX_E_CLEANUP_DONE:
-		bfa_fsm_set_state(rx, bna_rx_sm_start_wait);
-		break;
+	हाल RX_E_CLEANUP_DONE:
+		bfa_fsm_set_state(rx, bna_rx_sm_start_रुको);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-bna_bfi_rx_enet_start(struct bna_rx *rx)
-{
-	struct bfi_enet_rx_cfg_req *cfg_req = &rx->bfi_enet_cmd.cfg_req;
-	struct bna_rxp *rxp = NULL;
-	struct bna_rxq *q0 = NULL, *q1 = NULL;
-	int i;
+अटल व्योम
+bna_bfi_rx_enet_start(काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bfi_enet_rx_cfg_req *cfg_req = &rx->bfi_enet_cmd.cfg_req;
+	काष्ठा bna_rxp *rxp = शून्य;
+	काष्ठा bna_rxq *q0 = शून्य, *q1 = शून्य;
+	पूर्णांक i;
 
 	bfi_msgq_mhdr_set(cfg_req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_RX_CFG_SET_REQ, 0, rx->rid);
 	cfg_req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_rx_cfg_req)));
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_rx_cfg_req)));
 
 	cfg_req->rx_cfg.frame_size = bna_enet_mtu_get(&rx->bna->enet);
 	cfg_req->num_queue_sets = rx->num_paths;
-	for (i = 0; i < rx->num_paths; i++) {
+	क्रम (i = 0; i < rx->num_paths; i++) अणु
 		rxp = rxp ? list_next_entry(rxp, qe)
-			: list_first_entry(&rx->rxp_q, struct bna_rxp, qe);
+			: list_first_entry(&rx->rxp_q, काष्ठा bna_rxp, qe);
 		GET_RXQS(rxp, q0, q1);
-		switch (rxp->type) {
-		case BNA_RXP_SLR:
-		case BNA_RXP_HDS:
+		चयन (rxp->type) अणु
+		हाल BNA_RXP_SLR:
+		हाल BNA_RXP_HDS:
 			/* Small RxQ */
 			bfi_enet_datapath_q_init(&cfg_req->q_cfg[i].qs.q,
 						&q1->qpt);
@@ -1638,11 +1639,11 @@ bna_bfi_rx_enet_start(struct bna_rx *rx)
 				htons((u16)q1->buffer_size);
 			fallthrough;
 
-		case BNA_RXP_SINGLE:
+		हाल BNA_RXP_SINGLE:
 			/* Large/Single RxQ */
 			bfi_enet_datapath_q_init(&cfg_req->q_cfg[i].ql.q,
 						&q0->qpt);
-			if (q0->multi_buffer)
+			अगर (q0->multi_buffer)
 				/* multi-buffer is enabled by allocating
 				 * a new rx with new set of resources.
 				 * q0->buffer_size should be initialized to
@@ -1650,16 +1651,16 @@ bna_bfi_rx_enet_start(struct bna_rx *rx)
 				 */
 				cfg_req->rx_cfg.multi_buffer =
 					BNA_STATUS_T_ENABLED;
-			else
+			अन्यथा
 				q0->buffer_size =
 					bna_enet_mtu_get(&rx->bna->enet);
 			cfg_req->q_cfg[i].ql.rx_buffer_size =
 				htons((u16)q0->buffer_size);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			BUG_ON(1);
-		}
+		पूर्ण
 
 		bfi_enet_datapath_q_init(&cfg_req->q_cfg[i].cq.q,
 					&rxp->cq.qpt);
@@ -1668,200 +1669,200 @@ bna_bfi_rx_enet_start(struct bna_rx *rx)
 			rxp->cq.ib.ib_seg_host_addr.lsb;
 		cfg_req->q_cfg[i].ib.index_addr.a32.addr_hi =
 			rxp->cq.ib.ib_seg_host_addr.msb;
-		cfg_req->q_cfg[i].ib.intr.msix_index =
-			htons((u16)rxp->cq.ib.intr_vector);
-	}
+		cfg_req->q_cfg[i].ib.पूर्णांकr.msix_index =
+			htons((u16)rxp->cq.ib.पूर्णांकr_vector);
+	पूर्ण
 
-	cfg_req->ib_cfg.int_pkt_dma = BNA_STATUS_T_DISABLED;
-	cfg_req->ib_cfg.int_enabled = BNA_STATUS_T_ENABLED;
-	cfg_req->ib_cfg.int_pkt_enabled = BNA_STATUS_T_DISABLED;
+	cfg_req->ib_cfg.पूर्णांक_pkt_dma = BNA_STATUS_T_DISABLED;
+	cfg_req->ib_cfg.पूर्णांक_enabled = BNA_STATUS_T_ENABLED;
+	cfg_req->ib_cfg.पूर्णांक_pkt_enabled = BNA_STATUS_T_DISABLED;
 	cfg_req->ib_cfg.continuous_coalescing = BNA_STATUS_T_DISABLED;
-	cfg_req->ib_cfg.msix = (rxp->cq.ib.intr_type == BNA_INTR_T_MSIX)
+	cfg_req->ib_cfg.msix = (rxp->cq.ib.पूर्णांकr_type == BNA_INTR_T_MSIX)
 				? BNA_STATUS_T_ENABLED :
 				BNA_STATUS_T_DISABLED;
-	cfg_req->ib_cfg.coalescing_timeout =
-			htonl((u32)rxp->cq.ib.coalescing_timeo);
-	cfg_req->ib_cfg.inter_pkt_timeout =
-			htonl((u32)rxp->cq.ib.interpkt_timeo);
-	cfg_req->ib_cfg.inter_pkt_count = (u8)rxp->cq.ib.interpkt_count;
+	cfg_req->ib_cfg.coalescing_समयout =
+			htonl((u32)rxp->cq.ib.coalescing_समयo);
+	cfg_req->ib_cfg.पूर्णांकer_pkt_समयout =
+			htonl((u32)rxp->cq.ib.पूर्णांकerpkt_समयo);
+	cfg_req->ib_cfg.पूर्णांकer_pkt_count = (u8)rxp->cq.ib.पूर्णांकerpkt_count;
 
-	switch (rxp->type) {
-	case BNA_RXP_SLR:
+	चयन (rxp->type) अणु
+	हाल BNA_RXP_SLR:
 		cfg_req->rx_cfg.rxq_type = BFI_ENET_RXQ_LARGE_SMALL;
-		break;
+		अवरोध;
 
-	case BNA_RXP_HDS:
+	हाल BNA_RXP_HDS:
 		cfg_req->rx_cfg.rxq_type = BFI_ENET_RXQ_HDS;
 		cfg_req->rx_cfg.hds.type = rx->hds_cfg.hdr_type;
-		cfg_req->rx_cfg.hds.force_offset = rx->hds_cfg.forced_offset;
-		cfg_req->rx_cfg.hds.max_header_size = rx->hds_cfg.forced_offset;
-		break;
+		cfg_req->rx_cfg.hds.क्रमce_offset = rx->hds_cfg.क्रमced_offset;
+		cfg_req->rx_cfg.hds.max_header_size = rx->hds_cfg.क्रमced_offset;
+		अवरोध;
 
-	case BNA_RXP_SINGLE:
+	हाल BNA_RXP_SINGLE:
 		cfg_req->rx_cfg.rxq_type = BFI_ENET_RXQ_SINGLE;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG_ON(1);
-	}
+	पूर्ण
 	cfg_req->rx_cfg.strip_vlan = rx->rxf.vlan_strip_status;
 
-	bfa_msgq_cmd_set(&rx->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_rx_cfg_req), &cfg_req->mh);
+	bfa_msgq_cmd_set(&rx->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_rx_cfg_req), &cfg_req->mh);
 	bfa_msgq_cmd_post(&rx->bna->msgq, &rx->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_rx_enet_stop(struct bna_rx *rx)
-{
-	struct bfi_enet_req *req = &rx->bfi_enet_cmd.req;
+अटल व्योम
+bna_bfi_rx_enet_stop(काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bfi_enet_req *req = &rx->bfi_enet_cmd.req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_RX_CFG_CLR_REQ, 0, rx->rid);
 	req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_req)));
-	bfa_msgq_cmd_set(&rx->msgq_cmd, NULL, NULL, sizeof(struct bfi_enet_req),
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_req)));
+	bfa_msgq_cmd_set(&rx->msgq_cmd, शून्य, शून्य, माप(काष्ठा bfi_enet_req),
 		&req->mh);
 	bfa_msgq_cmd_post(&rx->bna->msgq, &rx->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_rx_enet_stop(struct bna_rx *rx)
-{
-	struct bna_rxp *rxp;
+अटल व्योम
+bna_rx_enet_stop(काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bna_rxp *rxp;
 
 	/* Stop IB */
-	list_for_each_entry(rxp, &rx->rxp_q, qe)
+	list_क्रम_each_entry(rxp, &rx->rxp_q, qe)
 		bna_ib_stop(rx->bna, &rxp->cq.ib);
 
 	bna_bfi_rx_enet_stop(rx);
-}
+पूर्ण
 
-static int
-bna_rx_res_check(struct bna_rx_mod *rx_mod, struct bna_rx_config *rx_cfg)
-{
-	if ((rx_mod->rx_free_count == 0) ||
-		(rx_mod->rxp_free_count == 0) ||
-		(rx_mod->rxq_free_count == 0))
-		return 0;
+अटल पूर्णांक
+bna_rx_res_check(काष्ठा bna_rx_mod *rx_mod, काष्ठा bna_rx_config *rx_cfg)
+अणु
+	अगर ((rx_mod->rx_मुक्त_count == 0) ||
+		(rx_mod->rxp_मुक्त_count == 0) ||
+		(rx_mod->rxq_मुक्त_count == 0))
+		वापस 0;
 
-	if (rx_cfg->rxp_type == BNA_RXP_SINGLE) {
-		if ((rx_mod->rxp_free_count < rx_cfg->num_paths) ||
-			(rx_mod->rxq_free_count < rx_cfg->num_paths))
-				return 0;
-	} else {
-		if ((rx_mod->rxp_free_count < rx_cfg->num_paths) ||
-			(rx_mod->rxq_free_count < (2 * rx_cfg->num_paths)))
-			return 0;
-	}
+	अगर (rx_cfg->rxp_type == BNA_RXP_SINGLE) अणु
+		अगर ((rx_mod->rxp_मुक्त_count < rx_cfg->num_paths) ||
+			(rx_mod->rxq_मुक्त_count < rx_cfg->num_paths))
+				वापस 0;
+	पूर्ण अन्यथा अणु
+		अगर ((rx_mod->rxp_मुक्त_count < rx_cfg->num_paths) ||
+			(rx_mod->rxq_मुक्त_count < (2 * rx_cfg->num_paths)))
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct bna_rxq *
-bna_rxq_get(struct bna_rx_mod *rx_mod)
-{
-	struct bna_rxq *rxq = NULL;
+अटल काष्ठा bna_rxq *
+bna_rxq_get(काष्ठा bna_rx_mod *rx_mod)
+अणु
+	काष्ठा bna_rxq *rxq = शून्य;
 
-	rxq = list_first_entry(&rx_mod->rxq_free_q, struct bna_rxq, qe);
+	rxq = list_first_entry(&rx_mod->rxq_मुक्त_q, काष्ठा bna_rxq, qe);
 	list_del(&rxq->qe);
-	rx_mod->rxq_free_count--;
+	rx_mod->rxq_मुक्त_count--;
 
-	return rxq;
-}
+	वापस rxq;
+पूर्ण
 
-static void
-bna_rxq_put(struct bna_rx_mod *rx_mod, struct bna_rxq *rxq)
-{
-	list_add_tail(&rxq->qe, &rx_mod->rxq_free_q);
-	rx_mod->rxq_free_count++;
-}
+अटल व्योम
+bna_rxq_put(काष्ठा bna_rx_mod *rx_mod, काष्ठा bna_rxq *rxq)
+अणु
+	list_add_tail(&rxq->qe, &rx_mod->rxq_मुक्त_q);
+	rx_mod->rxq_मुक्त_count++;
+पूर्ण
 
-static struct bna_rxp *
-bna_rxp_get(struct bna_rx_mod *rx_mod)
-{
-	struct bna_rxp *rxp = NULL;
+अटल काष्ठा bna_rxp *
+bna_rxp_get(काष्ठा bna_rx_mod *rx_mod)
+अणु
+	काष्ठा bna_rxp *rxp = शून्य;
 
-	rxp = list_first_entry(&rx_mod->rxp_free_q, struct bna_rxp, qe);
+	rxp = list_first_entry(&rx_mod->rxp_मुक्त_q, काष्ठा bna_rxp, qe);
 	list_del(&rxp->qe);
-	rx_mod->rxp_free_count--;
+	rx_mod->rxp_मुक्त_count--;
 
-	return rxp;
-}
+	वापस rxp;
+पूर्ण
 
-static void
-bna_rxp_put(struct bna_rx_mod *rx_mod, struct bna_rxp *rxp)
-{
-	list_add_tail(&rxp->qe, &rx_mod->rxp_free_q);
-	rx_mod->rxp_free_count++;
-}
+अटल व्योम
+bna_rxp_put(काष्ठा bna_rx_mod *rx_mod, काष्ठा bna_rxp *rxp)
+अणु
+	list_add_tail(&rxp->qe, &rx_mod->rxp_मुक्त_q);
+	rx_mod->rxp_मुक्त_count++;
+पूर्ण
 
-static struct bna_rx *
-bna_rx_get(struct bna_rx_mod *rx_mod, enum bna_rx_type type)
-{
-	struct bna_rx *rx = NULL;
+अटल काष्ठा bna_rx *
+bna_rx_get(काष्ठा bna_rx_mod *rx_mod, क्रमागत bna_rx_type type)
+अणु
+	काष्ठा bna_rx *rx = शून्य;
 
-	BUG_ON(list_empty(&rx_mod->rx_free_q));
-	if (type == BNA_RX_T_REGULAR)
-		rx = list_first_entry(&rx_mod->rx_free_q, struct bna_rx, qe);
-	else
-		rx = list_last_entry(&rx_mod->rx_free_q, struct bna_rx, qe);
+	BUG_ON(list_empty(&rx_mod->rx_मुक्त_q));
+	अगर (type == BNA_RX_T_REGULAR)
+		rx = list_first_entry(&rx_mod->rx_मुक्त_q, काष्ठा bna_rx, qe);
+	अन्यथा
+		rx = list_last_entry(&rx_mod->rx_मुक्त_q, काष्ठा bna_rx, qe);
 
-	rx_mod->rx_free_count--;
+	rx_mod->rx_मुक्त_count--;
 	list_move_tail(&rx->qe, &rx_mod->rx_active_q);
 	rx->type = type;
 
-	return rx;
-}
+	वापस rx;
+पूर्ण
 
-static void
-bna_rx_put(struct bna_rx_mod *rx_mod, struct bna_rx *rx)
-{
-	struct list_head *qe;
+अटल व्योम
+bna_rx_put(काष्ठा bna_rx_mod *rx_mod, काष्ठा bna_rx *rx)
+अणु
+	काष्ठा list_head *qe;
 
-	list_for_each_prev(qe, &rx_mod->rx_free_q)
-		if (((struct bna_rx *)qe)->rid < rx->rid)
-			break;
+	list_क्रम_each_prev(qe, &rx_mod->rx_मुक्त_q)
+		अगर (((काष्ठा bna_rx *)qe)->rid < rx->rid)
+			अवरोध;
 
 	list_add(&rx->qe, qe);
-	rx_mod->rx_free_count++;
-}
+	rx_mod->rx_मुक्त_count++;
+पूर्ण
 
-static void
-bna_rxp_add_rxqs(struct bna_rxp *rxp, struct bna_rxq *q0,
-		struct bna_rxq *q1)
-{
-	switch (rxp->type) {
-	case BNA_RXP_SINGLE:
+अटल व्योम
+bna_rxp_add_rxqs(काष्ठा bna_rxp *rxp, काष्ठा bna_rxq *q0,
+		काष्ठा bna_rxq *q1)
+अणु
+	चयन (rxp->type) अणु
+	हाल BNA_RXP_SINGLE:
 		rxp->rxq.single.only = q0;
-		rxp->rxq.single.reserved = NULL;
-		break;
-	case BNA_RXP_SLR:
+		rxp->rxq.single.reserved = शून्य;
+		अवरोध;
+	हाल BNA_RXP_SLR:
 		rxp->rxq.slr.large = q0;
 		rxp->rxq.slr.small = q1;
-		break;
-	case BNA_RXP_HDS:
+		अवरोध;
+	हाल BNA_RXP_HDS:
 		rxp->rxq.hds.data = q0;
 		rxp->rxq.hds.hdr = q1;
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-bna_rxq_qpt_setup(struct bna_rxq *rxq,
-		struct bna_rxp *rxp,
+अटल व्योम
+bna_rxq_qpt_setup(काष्ठा bna_rxq *rxq,
+		काष्ठा bna_rxp *rxp,
 		u32 page_count,
 		u32 page_size,
-		struct bna_mem_descr *qpt_mem,
-		struct bna_mem_descr *swqpt_mem,
-		struct bna_mem_descr *page_mem)
-{
+		काष्ठा bna_mem_descr *qpt_mem,
+		काष्ठा bna_mem_descr *swqpt_mem,
+		काष्ठा bna_mem_descr *page_mem)
+अणु
 	u8 *kva;
 	u64 dma;
-	struct bna_dma_addr bna_dma;
-	int	i;
+	काष्ठा bna_dma_addr bna_dma;
+	पूर्णांक	i;
 
 	rxq->qpt.hw_qpt_ptr.lsb = qpt_mem->dma.lsb;
 	rxq->qpt.hw_qpt_ptr.msb = qpt_mem->dma.msb;
@@ -1869,37 +1870,37 @@ bna_rxq_qpt_setup(struct bna_rxq *rxq,
 	rxq->qpt.page_count = page_count;
 	rxq->qpt.page_size = page_size;
 
-	rxq->rcb->sw_qpt = (void **) swqpt_mem->kva;
+	rxq->rcb->sw_qpt = (व्योम **) swqpt_mem->kva;
 	rxq->rcb->sw_q = page_mem->kva;
 
 	kva = page_mem->kva;
 	BNA_GET_DMA_ADDR(&page_mem->dma, dma);
 
-	for (i = 0; i < rxq->qpt.page_count; i++) {
+	क्रम (i = 0; i < rxq->qpt.page_count; i++) अणु
 		rxq->rcb->sw_qpt[i] = kva;
 		kva += PAGE_SIZE;
 
 		BNA_SET_DMA_ADDR(dma, &bna_dma);
-		((struct bna_dma_addr *)rxq->qpt.kv_qpt_ptr)[i].lsb =
+		((काष्ठा bna_dma_addr *)rxq->qpt.kv_qpt_ptr)[i].lsb =
 			bna_dma.lsb;
-		((struct bna_dma_addr *)rxq->qpt.kv_qpt_ptr)[i].msb =
+		((काष्ठा bna_dma_addr *)rxq->qpt.kv_qpt_ptr)[i].msb =
 			bna_dma.msb;
 		dma += PAGE_SIZE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_rxp_cqpt_setup(struct bna_rxp *rxp,
+अटल व्योम
+bna_rxp_cqpt_setup(काष्ठा bna_rxp *rxp,
 		u32 page_count,
 		u32 page_size,
-		struct bna_mem_descr *qpt_mem,
-		struct bna_mem_descr *swqpt_mem,
-		struct bna_mem_descr *page_mem)
-{
+		काष्ठा bna_mem_descr *qpt_mem,
+		काष्ठा bna_mem_descr *swqpt_mem,
+		काष्ठा bna_mem_descr *page_mem)
+अणु
 	u8 *kva;
 	u64 dma;
-	struct bna_dma_addr bna_dma;
-	int	i;
+	काष्ठा bna_dma_addr bna_dma;
+	पूर्णांक	i;
 
 	rxp->cq.qpt.hw_qpt_ptr.lsb = qpt_mem->dma.lsb;
 	rxp->cq.qpt.hw_qpt_ptr.msb = qpt_mem->dma.msb;
@@ -1907,90 +1908,90 @@ bna_rxp_cqpt_setup(struct bna_rxp *rxp,
 	rxp->cq.qpt.page_count = page_count;
 	rxp->cq.qpt.page_size = page_size;
 
-	rxp->cq.ccb->sw_qpt = (void **) swqpt_mem->kva;
+	rxp->cq.ccb->sw_qpt = (व्योम **) swqpt_mem->kva;
 	rxp->cq.ccb->sw_q = page_mem->kva;
 
 	kva = page_mem->kva;
 	BNA_GET_DMA_ADDR(&page_mem->dma, dma);
 
-	for (i = 0; i < rxp->cq.qpt.page_count; i++) {
+	क्रम (i = 0; i < rxp->cq.qpt.page_count; i++) अणु
 		rxp->cq.ccb->sw_qpt[i] = kva;
 		kva += PAGE_SIZE;
 
 		BNA_SET_DMA_ADDR(dma, &bna_dma);
-		((struct bna_dma_addr *)rxp->cq.qpt.kv_qpt_ptr)[i].lsb =
+		((काष्ठा bna_dma_addr *)rxp->cq.qpt.kv_qpt_ptr)[i].lsb =
 			bna_dma.lsb;
-		((struct bna_dma_addr *)rxp->cq.qpt.kv_qpt_ptr)[i].msb =
+		((काष्ठा bna_dma_addr *)rxp->cq.qpt.kv_qpt_ptr)[i].msb =
 			bna_dma.msb;
 		dma += PAGE_SIZE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_rx_mod_cb_rx_stopped(void *arg, struct bna_rx *rx)
-{
-	struct bna_rx_mod *rx_mod = (struct bna_rx_mod *)arg;
+अटल व्योम
+bna_rx_mod_cb_rx_stopped(व्योम *arg, काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bna_rx_mod *rx_mod = (काष्ठा bna_rx_mod *)arg;
 
-	bfa_wc_down(&rx_mod->rx_stop_wc);
-}
+	bfa_wc_करोwn(&rx_mod->rx_stop_wc);
+पूर्ण
 
-static void
-bna_rx_mod_cb_rx_stopped_all(void *arg)
-{
-	struct bna_rx_mod *rx_mod = (struct bna_rx_mod *)arg;
+अटल व्योम
+bna_rx_mod_cb_rx_stopped_all(व्योम *arg)
+अणु
+	काष्ठा bna_rx_mod *rx_mod = (काष्ठा bna_rx_mod *)arg;
 
-	if (rx_mod->stop_cbfn)
+	अगर (rx_mod->stop_cbfn)
 		rx_mod->stop_cbfn(&rx_mod->bna->enet);
-	rx_mod->stop_cbfn = NULL;
-}
+	rx_mod->stop_cbfn = शून्य;
+पूर्ण
 
-static void
-bna_rx_start(struct bna_rx *rx)
-{
+अटल व्योम
+bna_rx_start(काष्ठा bna_rx *rx)
+अणु
 	rx->rx_flags |= BNA_RX_F_ENET_STARTED;
-	if (rx->rx_flags & BNA_RX_F_ENABLED)
+	अगर (rx->rx_flags & BNA_RX_F_ENABLED)
 		bfa_fsm_send_event(rx, RX_E_START);
-}
+पूर्ण
 
-static void
-bna_rx_stop(struct bna_rx *rx)
-{
+अटल व्योम
+bna_rx_stop(काष्ठा bna_rx *rx)
+अणु
 	rx->rx_flags &= ~BNA_RX_F_ENET_STARTED;
-	if (rx->fsm == (bfa_fsm_t) bna_rx_sm_stopped)
+	अगर (rx->fsm == (bfa_fsm_t) bna_rx_sm_stopped)
 		bna_rx_mod_cb_rx_stopped(&rx->bna->rx_mod, rx);
-	else {
+	अन्यथा अणु
 		rx->stop_cbfn = bna_rx_mod_cb_rx_stopped;
 		rx->stop_cbarg = &rx->bna->rx_mod;
 		bfa_fsm_send_event(rx, RX_E_STOP);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_rx_fail(struct bna_rx *rx)
-{
+अटल व्योम
+bna_rx_fail(काष्ठा bna_rx *rx)
+अणु
 	/* Indicate Enet is not enabled, and failed */
 	rx->rx_flags &= ~BNA_RX_F_ENET_STARTED;
 	bfa_fsm_send_event(rx, RX_E_FAIL);
-}
+पूर्ण
 
-void
-bna_rx_mod_start(struct bna_rx_mod *rx_mod, enum bna_rx_type type)
-{
-	struct bna_rx *rx;
+व्योम
+bna_rx_mod_start(काष्ठा bna_rx_mod *rx_mod, क्रमागत bna_rx_type type)
+अणु
+	काष्ठा bna_rx *rx;
 
 	rx_mod->flags |= BNA_RX_MOD_F_ENET_STARTED;
-	if (type == BNA_RX_T_LOOPBACK)
+	अगर (type == BNA_RX_T_LOOPBACK)
 		rx_mod->flags |= BNA_RX_MOD_F_ENET_LOOPBACK;
 
-	list_for_each_entry(rx, &rx_mod->rx_active_q, qe)
-		if (rx->type == type)
+	list_क्रम_each_entry(rx, &rx_mod->rx_active_q, qe)
+		अगर (rx->type == type)
 			bna_rx_start(rx);
-}
+पूर्ण
 
-void
-bna_rx_mod_stop(struct bna_rx_mod *rx_mod, enum bna_rx_type type)
-{
-	struct bna_rx *rx;
+व्योम
+bna_rx_mod_stop(काष्ठा bna_rx_mod *rx_mod, क्रमागत bna_rx_type type)
+अणु
+	काष्ठा bna_rx *rx;
 
 	rx_mod->flags &= ~BNA_RX_MOD_F_ENET_STARTED;
 	rx_mod->flags &= ~BNA_RX_MOD_F_ENET_LOOPBACK;
@@ -1999,108 +2000,108 @@ bna_rx_mod_stop(struct bna_rx_mod *rx_mod, enum bna_rx_type type)
 
 	bfa_wc_init(&rx_mod->rx_stop_wc, bna_rx_mod_cb_rx_stopped_all, rx_mod);
 
-	list_for_each_entry(rx, &rx_mod->rx_active_q, qe)
-		if (rx->type == type) {
+	list_क्रम_each_entry(rx, &rx_mod->rx_active_q, qe)
+		अगर (rx->type == type) अणु
 			bfa_wc_up(&rx_mod->rx_stop_wc);
 			bna_rx_stop(rx);
-		}
+		पूर्ण
 
-	bfa_wc_wait(&rx_mod->rx_stop_wc);
-}
+	bfa_wc_रुको(&rx_mod->rx_stop_wc);
+पूर्ण
 
-void
-bna_rx_mod_fail(struct bna_rx_mod *rx_mod)
-{
-	struct bna_rx *rx;
+व्योम
+bna_rx_mod_fail(काष्ठा bna_rx_mod *rx_mod)
+अणु
+	काष्ठा bna_rx *rx;
 
 	rx_mod->flags &= ~BNA_RX_MOD_F_ENET_STARTED;
 	rx_mod->flags &= ~BNA_RX_MOD_F_ENET_LOOPBACK;
 
-	list_for_each_entry(rx, &rx_mod->rx_active_q, qe)
+	list_क्रम_each_entry(rx, &rx_mod->rx_active_q, qe)
 		bna_rx_fail(rx);
-}
+पूर्ण
 
-void bna_rx_mod_init(struct bna_rx_mod *rx_mod, struct bna *bna,
-			struct bna_res_info *res_info)
-{
-	int	index;
-	struct bna_rx *rx_ptr;
-	struct bna_rxp *rxp_ptr;
-	struct bna_rxq *rxq_ptr;
+व्योम bna_rx_mod_init(काष्ठा bna_rx_mod *rx_mod, काष्ठा bna *bna,
+			काष्ठा bna_res_info *res_info)
+अणु
+	पूर्णांक	index;
+	काष्ठा bna_rx *rx_ptr;
+	काष्ठा bna_rxp *rxp_ptr;
+	काष्ठा bna_rxq *rxq_ptr;
 
 	rx_mod->bna = bna;
 	rx_mod->flags = 0;
 
-	rx_mod->rx = (struct bna_rx *)
+	rx_mod->rx = (काष्ठा bna_rx *)
 		res_info[BNA_MOD_RES_MEM_T_RX_ARRAY].res_u.mem_info.mdl[0].kva;
-	rx_mod->rxp = (struct bna_rxp *)
+	rx_mod->rxp = (काष्ठा bna_rxp *)
 		res_info[BNA_MOD_RES_MEM_T_RXP_ARRAY].res_u.mem_info.mdl[0].kva;
-	rx_mod->rxq = (struct bna_rxq *)
+	rx_mod->rxq = (काष्ठा bna_rxq *)
 		res_info[BNA_MOD_RES_MEM_T_RXQ_ARRAY].res_u.mem_info.mdl[0].kva;
 
 	/* Initialize the queues */
-	INIT_LIST_HEAD(&rx_mod->rx_free_q);
-	rx_mod->rx_free_count = 0;
-	INIT_LIST_HEAD(&rx_mod->rxq_free_q);
-	rx_mod->rxq_free_count = 0;
-	INIT_LIST_HEAD(&rx_mod->rxp_free_q);
-	rx_mod->rxp_free_count = 0;
+	INIT_LIST_HEAD(&rx_mod->rx_मुक्त_q);
+	rx_mod->rx_मुक्त_count = 0;
+	INIT_LIST_HEAD(&rx_mod->rxq_मुक्त_q);
+	rx_mod->rxq_मुक्त_count = 0;
+	INIT_LIST_HEAD(&rx_mod->rxp_मुक्त_q);
+	rx_mod->rxp_मुक्त_count = 0;
 	INIT_LIST_HEAD(&rx_mod->rx_active_q);
 
 	/* Build RX queues */
-	for (index = 0; index < bna->ioceth.attr.num_rxp; index++) {
+	क्रम (index = 0; index < bna->ioceth.attr.num_rxp; index++) अणु
 		rx_ptr = &rx_mod->rx[index];
 
 		INIT_LIST_HEAD(&rx_ptr->rxp_q);
-		rx_ptr->bna = NULL;
+		rx_ptr->bna = शून्य;
 		rx_ptr->rid = index;
-		rx_ptr->stop_cbfn = NULL;
-		rx_ptr->stop_cbarg = NULL;
+		rx_ptr->stop_cbfn = शून्य;
+		rx_ptr->stop_cbarg = शून्य;
 
-		list_add_tail(&rx_ptr->qe, &rx_mod->rx_free_q);
-		rx_mod->rx_free_count++;
-	}
+		list_add_tail(&rx_ptr->qe, &rx_mod->rx_मुक्त_q);
+		rx_mod->rx_मुक्त_count++;
+	पूर्ण
 
 	/* build RX-path queue */
-	for (index = 0; index < bna->ioceth.attr.num_rxp; index++) {
+	क्रम (index = 0; index < bna->ioceth.attr.num_rxp; index++) अणु
 		rxp_ptr = &rx_mod->rxp[index];
-		list_add_tail(&rxp_ptr->qe, &rx_mod->rxp_free_q);
-		rx_mod->rxp_free_count++;
-	}
+		list_add_tail(&rxp_ptr->qe, &rx_mod->rxp_मुक्त_q);
+		rx_mod->rxp_मुक्त_count++;
+	पूर्ण
 
 	/* build RXQ queue */
-	for (index = 0; index < (bna->ioceth.attr.num_rxp * 2); index++) {
+	क्रम (index = 0; index < (bna->ioceth.attr.num_rxp * 2); index++) अणु
 		rxq_ptr = &rx_mod->rxq[index];
-		list_add_tail(&rxq_ptr->qe, &rx_mod->rxq_free_q);
-		rx_mod->rxq_free_count++;
-	}
-}
+		list_add_tail(&rxq_ptr->qe, &rx_mod->rxq_मुक्त_q);
+		rx_mod->rxq_मुक्त_count++;
+	पूर्ण
+पूर्ण
 
-void
-bna_rx_mod_uninit(struct bna_rx_mod *rx_mod)
-{
-	rx_mod->bna = NULL;
-}
+व्योम
+bna_rx_mod_uninit(काष्ठा bna_rx_mod *rx_mod)
+अणु
+	rx_mod->bna = शून्य;
+पूर्ण
 
-void
-bna_bfi_rx_enet_start_rsp(struct bna_rx *rx, struct bfi_msgq_mhdr *msghdr)
-{
-	struct bfi_enet_rx_cfg_rsp *cfg_rsp = &rx->bfi_enet_cmd.cfg_rsp;
-	struct bna_rxp *rxp = NULL;
-	struct bna_rxq *q0 = NULL, *q1 = NULL;
-	int i;
+व्योम
+bna_bfi_rx_enet_start_rsp(काष्ठा bna_rx *rx, काष्ठा bfi_msgq_mhdr *msghdr)
+अणु
+	काष्ठा bfi_enet_rx_cfg_rsp *cfg_rsp = &rx->bfi_enet_cmd.cfg_rsp;
+	काष्ठा bna_rxp *rxp = शून्य;
+	काष्ठा bna_rxq *q0 = शून्य, *q1 = शून्य;
+	पूर्णांक i;
 
 	bfa_msgq_rsp_copy(&rx->bna->msgq, (u8 *)cfg_rsp,
-		sizeof(struct bfi_enet_rx_cfg_rsp));
+		माप(काष्ठा bfi_enet_rx_cfg_rsp));
 
 	rx->hw_id = cfg_rsp->hw_id;
 
-	for (i = 0, rxp = list_first_entry(&rx->rxp_q, struct bna_rxp, qe);
-	     i < rx->num_paths; i++, rxp = list_next_entry(rxp, qe)) {
+	क्रम (i = 0, rxp = list_first_entry(&rx->rxp_q, काष्ठा bna_rxp, qe);
+	     i < rx->num_paths; i++, rxp = list_next_entry(rxp, qe)) अणु
 		GET_RXQS(rxp, q0, q1);
 
-		/* Setup doorbells */
-		rxp->cq.ccb->i_dbell->doorbell_addr =
+		/* Setup करोorbells */
+		rxp->cq.ccb->i_dbell->करोorbell_addr =
 			rx->bna->pcidev.pci_bar_kva
 			+ ntohl(cfg_rsp->q_handles[i].i_dbell);
 		rxp->hw_id = cfg_rsp->q_handles[i].hw_cqid;
@@ -2108,83 +2109,83 @@ bna_bfi_rx_enet_start_rsp(struct bna_rx *rx, struct bfi_msgq_mhdr *msghdr)
 			rx->bna->pcidev.pci_bar_kva
 			+ ntohl(cfg_rsp->q_handles[i].ql_dbell);
 		q0->hw_id = cfg_rsp->q_handles[i].hw_lqid;
-		if (q1) {
+		अगर (q1) अणु
 			q1->rcb->q_dbell =
 			rx->bna->pcidev.pci_bar_kva
 			+ ntohl(cfg_rsp->q_handles[i].qs_dbell);
 			q1->hw_id = cfg_rsp->q_handles[i].hw_sqid;
-		}
+		पूर्ण
 
 		/* Initialize producer/consumer indexes */
 		(*rxp->cq.ccb->hw_producer_index) = 0;
 		rxp->cq.ccb->producer_index = 0;
 		q0->rcb->producer_index = q0->rcb->consumer_index = 0;
-		if (q1)
+		अगर (q1)
 			q1->rcb->producer_index = q1->rcb->consumer_index = 0;
-	}
+	पूर्ण
 
 	bfa_fsm_send_event(rx, RX_E_STARTED);
-}
+पूर्ण
 
-void
-bna_bfi_rx_enet_stop_rsp(struct bna_rx *rx, struct bfi_msgq_mhdr *msghdr)
-{
+व्योम
+bna_bfi_rx_enet_stop_rsp(काष्ठा bna_rx *rx, काष्ठा bfi_msgq_mhdr *msghdr)
+अणु
 	bfa_fsm_send_event(rx, RX_E_STOPPED);
-}
+पूर्ण
 
-void
-bna_rx_res_req(struct bna_rx_config *q_cfg, struct bna_res_info *res_info)
-{
+व्योम
+bna_rx_res_req(काष्ठा bna_rx_config *q_cfg, काष्ठा bna_res_info *res_info)
+अणु
 	u32 cq_size, hq_size, dq_size;
 	u32 cpage_count, hpage_count, dpage_count;
-	struct bna_mem_info *mem_info;
+	काष्ठा bna_mem_info *mem_info;
 	u32 cq_depth;
 	u32 hq_depth;
 	u32 dq_depth;
 
 	dq_depth = q_cfg->q0_depth;
 	hq_depth = ((q_cfg->rxp_type == BNA_RXP_SINGLE) ? 0 : q_cfg->q1_depth);
-	cq_depth = roundup_pow_of_two(dq_depth + hq_depth);
+	cq_depth = roundup_घात_of_two(dq_depth + hq_depth);
 
 	cq_size = cq_depth * BFI_CQ_WI_SIZE;
 	cq_size = ALIGN(cq_size, PAGE_SIZE);
 	cpage_count = SIZE_TO_PAGES(cq_size);
 
-	dq_depth = roundup_pow_of_two(dq_depth);
+	dq_depth = roundup_घात_of_two(dq_depth);
 	dq_size = dq_depth * BFI_RXQ_WI_SIZE;
 	dq_size = ALIGN(dq_size, PAGE_SIZE);
 	dpage_count = SIZE_TO_PAGES(dq_size);
 
-	if (BNA_RXP_SINGLE != q_cfg->rxp_type) {
-		hq_depth = roundup_pow_of_two(hq_depth);
+	अगर (BNA_RXP_SINGLE != q_cfg->rxp_type) अणु
+		hq_depth = roundup_घात_of_two(hq_depth);
 		hq_size = hq_depth * BFI_RXQ_WI_SIZE;
 		hq_size = ALIGN(hq_size, PAGE_SIZE);
 		hpage_count = SIZE_TO_PAGES(hq_size);
-	} else
+	पूर्ण अन्यथा
 		hpage_count = 0;
 
 	res_info[BNA_RX_RES_MEM_T_CCB].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_RX_RES_MEM_T_CCB].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_KVA;
-	mem_info->len = sizeof(struct bna_ccb);
+	mem_info->len = माप(काष्ठा bna_ccb);
 	mem_info->num = q_cfg->num_paths;
 
 	res_info[BNA_RX_RES_MEM_T_RCB].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_RX_RES_MEM_T_RCB].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_KVA;
-	mem_info->len = sizeof(struct bna_rcb);
+	mem_info->len = माप(काष्ठा bna_rcb);
 	mem_info->num = BNA_GET_RXQS(q_cfg);
 
 	res_info[BNA_RX_RES_MEM_T_CQPT].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_RX_RES_MEM_T_CQPT].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_DMA;
-	mem_info->len = cpage_count * sizeof(struct bna_dma_addr);
+	mem_info->len = cpage_count * माप(काष्ठा bna_dma_addr);
 	mem_info->num = q_cfg->num_paths;
 
 	res_info[BNA_RX_RES_MEM_T_CSWQPT].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_RX_RES_MEM_T_CSWQPT].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_KVA;
-	mem_info->len = cpage_count * sizeof(void *);
+	mem_info->len = cpage_count * माप(व्योम *);
 	mem_info->num = q_cfg->num_paths;
 
 	res_info[BNA_RX_RES_MEM_T_CQPT_PAGE].res_type = BNA_RES_T_MEM;
@@ -2196,13 +2197,13 @@ bna_rx_res_req(struct bna_rx_config *q_cfg, struct bna_res_info *res_info)
 	res_info[BNA_RX_RES_MEM_T_DQPT].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_RX_RES_MEM_T_DQPT].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_DMA;
-	mem_info->len = dpage_count * sizeof(struct bna_dma_addr);
+	mem_info->len = dpage_count * माप(काष्ठा bna_dma_addr);
 	mem_info->num = q_cfg->num_paths;
 
 	res_info[BNA_RX_RES_MEM_T_DSWQPT].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_RX_RES_MEM_T_DSWQPT].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_KVA;
-	mem_info->len = dpage_count * sizeof(void *);
+	mem_info->len = dpage_count * माप(व्योम *);
 	mem_info->num = q_cfg->num_paths;
 
 	res_info[BNA_RX_RES_MEM_T_DPAGE].res_type = BNA_RES_T_MEM;
@@ -2214,13 +2215,13 @@ bna_rx_res_req(struct bna_rx_config *q_cfg, struct bna_res_info *res_info)
 	res_info[BNA_RX_RES_MEM_T_HQPT].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_RX_RES_MEM_T_HQPT].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_DMA;
-	mem_info->len = hpage_count * sizeof(struct bna_dma_addr);
+	mem_info->len = hpage_count * माप(काष्ठा bna_dma_addr);
 	mem_info->num = (hpage_count ? q_cfg->num_paths : 0);
 
 	res_info[BNA_RX_RES_MEM_T_HSWQPT].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_RX_RES_MEM_T_HSWQPT].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_KVA;
-	mem_info->len = hpage_count * sizeof(void *);
+	mem_info->len = hpage_count * माप(व्योम *);
 	mem_info->num = (hpage_count ? q_cfg->num_paths : 0);
 
 	res_info[BNA_RX_RES_MEM_T_HPAGE].res_type = BNA_RES_T_MEM;
@@ -2242,45 +2243,45 @@ bna_rx_res_req(struct bna_rx_config *q_cfg, struct bna_res_info *res_info)
 	mem_info->num = 1;
 
 	res_info[BNA_RX_RES_T_INTR].res_type = BNA_RES_T_INTR;
-	res_info[BNA_RX_RES_T_INTR].res_u.intr_info.intr_type = BNA_INTR_T_MSIX;
-	res_info[BNA_RX_RES_T_INTR].res_u.intr_info.num = q_cfg->num_paths;
-}
+	res_info[BNA_RX_RES_T_INTR].res_u.पूर्णांकr_info.पूर्णांकr_type = BNA_INTR_T_MSIX;
+	res_info[BNA_RX_RES_T_INTR].res_u.पूर्णांकr_info.num = q_cfg->num_paths;
+पूर्ण
 
-struct bna_rx *
-bna_rx_create(struct bna *bna, struct bnad *bnad,
-		struct bna_rx_config *rx_cfg,
-		const struct bna_rx_event_cbfn *rx_cbfn,
-		struct bna_res_info *res_info,
-		void *priv)
-{
-	struct bna_rx_mod *rx_mod = &bna->rx_mod;
-	struct bna_rx *rx;
-	struct bna_rxp *rxp;
-	struct bna_rxq *q0;
-	struct bna_rxq *q1;
-	struct bna_intr_info *intr_info;
-	struct bna_mem_descr *hqunmap_mem;
-	struct bna_mem_descr *dqunmap_mem;
-	struct bna_mem_descr *ccb_mem;
-	struct bna_mem_descr *rcb_mem;
-	struct bna_mem_descr *cqpt_mem;
-	struct bna_mem_descr *cswqpt_mem;
-	struct bna_mem_descr *cpage_mem;
-	struct bna_mem_descr *hqpt_mem;
-	struct bna_mem_descr *dqpt_mem;
-	struct bna_mem_descr *hsqpt_mem;
-	struct bna_mem_descr *dsqpt_mem;
-	struct bna_mem_descr *hpage_mem;
-	struct bna_mem_descr *dpage_mem;
+काष्ठा bna_rx *
+bna_rx_create(काष्ठा bna *bna, काष्ठा bnad *bnad,
+		काष्ठा bna_rx_config *rx_cfg,
+		स्थिर काष्ठा bna_rx_event_cbfn *rx_cbfn,
+		काष्ठा bna_res_info *res_info,
+		व्योम *priv)
+अणु
+	काष्ठा bna_rx_mod *rx_mod = &bna->rx_mod;
+	काष्ठा bna_rx *rx;
+	काष्ठा bna_rxp *rxp;
+	काष्ठा bna_rxq *q0;
+	काष्ठा bna_rxq *q1;
+	काष्ठा bna_पूर्णांकr_info *पूर्णांकr_info;
+	काष्ठा bna_mem_descr *hqunmap_mem;
+	काष्ठा bna_mem_descr *dqunmap_mem;
+	काष्ठा bna_mem_descr *ccb_mem;
+	काष्ठा bna_mem_descr *rcb_mem;
+	काष्ठा bna_mem_descr *cqpt_mem;
+	काष्ठा bna_mem_descr *cswqpt_mem;
+	काष्ठा bna_mem_descr *cpage_mem;
+	काष्ठा bna_mem_descr *hqpt_mem;
+	काष्ठा bna_mem_descr *dqpt_mem;
+	काष्ठा bna_mem_descr *hsqpt_mem;
+	काष्ठा bna_mem_descr *dsqpt_mem;
+	काष्ठा bna_mem_descr *hpage_mem;
+	काष्ठा bna_mem_descr *dpage_mem;
 	u32 dpage_count, hpage_count;
 	u32 hq_idx, dq_idx, rcb_idx;
 	u32 cq_depth, i;
 	u32 page_count;
 
-	if (!bna_rx_res_check(rx_mod, rx_cfg))
-		return NULL;
+	अगर (!bna_rx_res_check(rx_mod, rx_cfg))
+		वापस शून्य;
 
-	intr_info = &res_info[BNA_RX_RES_T_INTR].res_u.intr_info;
+	पूर्णांकr_info = &res_info[BNA_RX_RES_T_INTR].res_u.पूर्णांकr_info;
 	ccb_mem = &res_info[BNA_RX_RES_MEM_T_CCB].res_u.mem_info.mdl[0];
 	rcb_mem = &res_info[BNA_RX_RES_MEM_T_RCB].res_u.mem_info.mdl[0];
 	dqunmap_mem = &res_info[BNA_RX_RES_MEM_T_UNMAPDQ].res_u.mem_info.mdl[0];
@@ -2308,8 +2309,8 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 	rx->bna = bna;
 	rx->rx_flags = 0;
 	INIT_LIST_HEAD(&rx->rxp_q);
-	rx->stop_cbfn = NULL;
-	rx->stop_cbarg = NULL;
+	rx->stop_cbfn = शून्य;
+	rx->stop_cbarg = शून्य;
 	rx->priv = priv;
 
 	rx->rcb_setup_cbfn = rx_cbfn->rcb_setup_cbfn;
@@ -2321,23 +2322,23 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 	rx->rx_cleanup_cbfn = rx_cbfn->rx_cleanup_cbfn;
 	rx->rx_post_cbfn = rx_cbfn->rx_post_cbfn;
 
-	if (rx->bna->rx_mod.flags & BNA_RX_MOD_F_ENET_STARTED) {
-		switch (rx->type) {
-		case BNA_RX_T_REGULAR:
-			if (!(rx->bna->rx_mod.flags &
+	अगर (rx->bna->rx_mod.flags & BNA_RX_MOD_F_ENET_STARTED) अणु
+		चयन (rx->type) अणु
+		हाल BNA_RX_T_REGULAR:
+			अगर (!(rx->bna->rx_mod.flags &
 				BNA_RX_MOD_F_ENET_LOOPBACK))
 				rx->rx_flags |= BNA_RX_F_ENET_STARTED;
-			break;
-		case BNA_RX_T_LOOPBACK:
-			if (rx->bna->rx_mod.flags & BNA_RX_MOD_F_ENET_LOOPBACK)
+			अवरोध;
+		हाल BNA_RX_T_LOOPBACK:
+			अगर (rx->bna->rx_mod.flags & BNA_RX_MOD_F_ENET_LOOPBACK)
 				rx->rx_flags |= BNA_RX_F_ENET_STARTED;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	rx->num_paths = rx_cfg->num_paths;
-	for (i = 0, hq_idx = 0, dq_idx = 0, rcb_idx = 0;
-			i < rx->num_paths; i++) {
+	क्रम (i = 0, hq_idx = 0, dq_idx = 0, rcb_idx = 0;
+			i < rx->num_paths; i++) अणु
 		rxp = bna_rxp_get(rx_mod);
 		list_add_tail(&rxp->qe, &rx->rxp_q);
 		rxp->type = rx_cfg->rxp_type;
@@ -2345,15 +2346,15 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 		rxp->cq.rx = rx;
 
 		q0 = bna_rxq_get(rx_mod);
-		if (BNA_RXP_SINGLE == rx_cfg->rxp_type)
-			q1 = NULL;
-		else
+		अगर (BNA_RXP_SINGLE == rx_cfg->rxp_type)
+			q1 = शून्य;
+		अन्यथा
 			q1 = bna_rxq_get(rx_mod);
 
-		if (1 == intr_info->num)
-			rxp->vector = intr_info->idl[0].vector;
-		else
-			rxp->vector = intr_info->idl[i].vector;
+		अगर (1 == पूर्णांकr_info->num)
+			rxp->vector = पूर्णांकr_info->idl[0].vector;
+		अन्यथा
+			rxp->vector = पूर्णांकr_info->idl[i].vector;
 
 		/* Setup IB */
 
@@ -2363,14 +2364,14 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 		res_info[BNA_RX_RES_MEM_T_IBIDX].res_u.mem_info.mdl[i].dma.msb;
 		rxp->cq.ib.ib_seg_host_addr_kva =
 		res_info[BNA_RX_RES_MEM_T_IBIDX].res_u.mem_info.mdl[i].kva;
-		rxp->cq.ib.intr_type = intr_info->intr_type;
-		if (intr_info->intr_type == BNA_INTR_T_MSIX)
-			rxp->cq.ib.intr_vector = rxp->vector;
-		else
-			rxp->cq.ib.intr_vector = BIT(rxp->vector);
-		rxp->cq.ib.coalescing_timeo = rx_cfg->coalescing_timeo;
-		rxp->cq.ib.interpkt_count = BFI_RX_INTERPKT_COUNT;
-		rxp->cq.ib.interpkt_timeo = BFI_RX_INTERPKT_TIMEO;
+		rxp->cq.ib.पूर्णांकr_type = पूर्णांकr_info->पूर्णांकr_type;
+		अगर (पूर्णांकr_info->पूर्णांकr_type == BNA_INTR_T_MSIX)
+			rxp->cq.ib.पूर्णांकr_vector = rxp->vector;
+		अन्यथा
+			rxp->cq.ib.पूर्णांकr_vector = BIT(rxp->vector);
+		rxp->cq.ib.coalescing_समयo = rx_cfg->coalescing_समयo;
+		rxp->cq.ib.पूर्णांकerpkt_count = BFI_RX_INTERPKT_COUNT;
+		rxp->cq.ib.पूर्णांकerpkt_समयo = BFI_RX_INTERPKT_TIMEO;
 
 		bna_rxp_add_rxqs(rxp, q0, q1);
 
@@ -2379,8 +2380,8 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 		q0->rx = rx;
 		q0->rxp = rxp;
 
-		q0->rcb = (struct bna_rcb *) rcb_mem[rcb_idx].kva;
-		q0->rcb->unmap_q = (void *)dqunmap_mem[dq_idx].kva;
+		q0->rcb = (काष्ठा bna_rcb *) rcb_mem[rcb_idx].kva;
+		q0->rcb->unmap_q = (व्योम *)dqunmap_mem[dq_idx].kva;
 		rcb_idx++; dq_idx++;
 		q0->rcb->q_depth = rx_cfg->q0_depth;
 		q0->q_depth = rx_cfg->q0_depth;
@@ -2397,17 +2398,17 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 		bna_rxq_qpt_setup(q0, rxp, dpage_count, PAGE_SIZE,
 			&dqpt_mem[i], &dsqpt_mem[i], &dpage_mem[i]);
 
-		if (rx->rcb_setup_cbfn)
+		अगर (rx->rcb_setup_cbfn)
 			rx->rcb_setup_cbfn(bnad, q0->rcb);
 
 		/* Setup small Q */
 
-		if (q1) {
+		अगर (q1) अणु
 			q1->rx = rx;
 			q1->rxp = rxp;
 
-			q1->rcb = (struct bna_rcb *) rcb_mem[rcb_idx].kva;
-			q1->rcb->unmap_q = (void *)hqunmap_mem[hq_idx].kva;
+			q1->rcb = (काष्ठा bna_rcb *) rcb_mem[rcb_idx].kva;
+			q1->rcb->unmap_q = (व्योम *)hqunmap_mem[hq_idx].kva;
 			rcb_idx++; hq_idx++;
 			q1->rcb->q_depth = rx_cfg->q1_depth;
 			q1->q_depth = rx_cfg->q1_depth;
@@ -2417,7 +2418,7 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 			q1->rcb->bnad = bna->bnad;
 			q1->rcb->id = 1;
 			q1->buffer_size = (rx_cfg->rxp_type == BNA_RXP_HDS) ?
-					rx_cfg->hds_config.forced_offset
+					rx_cfg->hds_config.क्रमced_offset
 					: rx_cfg->q1_buf_size;
 			q1->rx_packets = q1->rx_bytes = 0;
 			q1->rx_packets_with_error = q1->rxbuf_alloc_failed = 0;
@@ -2427,35 +2428,35 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 				&hqpt_mem[i], &hsqpt_mem[i],
 				&hpage_mem[i]);
 
-			if (rx->rcb_setup_cbfn)
+			अगर (rx->rcb_setup_cbfn)
 				rx->rcb_setup_cbfn(bnad, q1->rcb);
-		}
+		पूर्ण
 
 		/* Setup CQ */
 
-		rxp->cq.ccb = (struct bna_ccb *) ccb_mem[i].kva;
+		rxp->cq.ccb = (काष्ठा bna_ccb *) ccb_mem[i].kva;
 		cq_depth = rx_cfg->q0_depth +
 			((rx_cfg->rxp_type == BNA_RXP_SINGLE) ?
 			 0 : rx_cfg->q1_depth);
-		/* if multi-buffer is enabled sum of q0_depth
-		 * and q1_depth need not be a power of 2
+		/* अगर multi-buffer is enabled sum of q0_depth
+		 * and q1_depth need not be a घातer of 2
 		 */
-		cq_depth = roundup_pow_of_two(cq_depth);
+		cq_depth = roundup_घात_of_two(cq_depth);
 		rxp->cq.ccb->q_depth = cq_depth;
 		rxp->cq.ccb->cq = &rxp->cq;
 		rxp->cq.ccb->rcb[0] = q0->rcb;
 		q0->rcb->ccb = rxp->cq.ccb;
-		if (q1) {
+		अगर (q1) अणु
 			rxp->cq.ccb->rcb[1] = q1->rcb;
 			q1->rcb->ccb = rxp->cq.ccb;
-		}
+		पूर्ण
 		rxp->cq.ccb->hw_producer_index =
 			(u32 *)rxp->cq.ib.ib_seg_host_addr_kva;
-		rxp->cq.ccb->i_dbell = &rxp->cq.ib.door_bell;
-		rxp->cq.ccb->intr_type = rxp->cq.ib.intr_type;
-		rxp->cq.ccb->intr_vector = rxp->cq.ib.intr_vector;
-		rxp->cq.ccb->rx_coalescing_timeo =
-			rxp->cq.ib.coalescing_timeo;
+		rxp->cq.ccb->i_dbell = &rxp->cq.ib.करोor_bell;
+		rxp->cq.ccb->पूर्णांकr_type = rxp->cq.ib.पूर्णांकr_type;
+		rxp->cq.ccb->पूर्णांकr_vector = rxp->cq.ib.पूर्णांकr_vector;
+		rxp->cq.ccb->rx_coalescing_समयo =
+			rxp->cq.ib.coalescing_समयo;
 		rxp->cq.ccb->pkt_rate.small_pkt_cnt = 0;
 		rxp->cq.ccb->pkt_rate.large_pkt_cnt = 0;
 		rxp->cq.ccb->bnad = bna->bnad;
@@ -2464,9 +2465,9 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 		bna_rxp_cqpt_setup(rxp, page_count, PAGE_SIZE,
 			&cqpt_mem[i], &cswqpt_mem[i], &cpage_mem[i]);
 
-		if (rx->ccb_setup_cbfn)
+		अगर (rx->ccb_setup_cbfn)
 			rx->ccb_setup_cbfn(bnad, rxp->cq.ccb);
-	}
+	पूर्ण
 
 	rx->hds_cfg = rx_cfg->hds_config;
 
@@ -2476,303 +2477,303 @@ bna_rx_create(struct bna *bna, struct bnad *bnad,
 
 	rx_mod->rid_mask |= BIT(rx->rid);
 
-	return rx;
-}
+	वापस rx;
+पूर्ण
 
-void
-bna_rx_destroy(struct bna_rx *rx)
-{
-	struct bna_rx_mod *rx_mod = &rx->bna->rx_mod;
-	struct bna_rxq *q0 = NULL;
-	struct bna_rxq *q1 = NULL;
-	struct bna_rxp *rxp;
-	struct list_head *qe;
+व्योम
+bna_rx_destroy(काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bna_rx_mod *rx_mod = &rx->bna->rx_mod;
+	काष्ठा bna_rxq *q0 = शून्य;
+	काष्ठा bna_rxq *q1 = शून्य;
+	काष्ठा bna_rxp *rxp;
+	काष्ठा list_head *qe;
 
 	bna_rxf_uninit(&rx->rxf);
 
-	while (!list_empty(&rx->rxp_q)) {
-		rxp = list_first_entry(&rx->rxp_q, struct bna_rxp, qe);
+	जबतक (!list_empty(&rx->rxp_q)) अणु
+		rxp = list_first_entry(&rx->rxp_q, काष्ठा bna_rxp, qe);
 		list_del(&rxp->qe);
 		GET_RXQS(rxp, q0, q1);
-		if (rx->rcb_destroy_cbfn)
+		अगर (rx->rcb_destroy_cbfn)
 			rx->rcb_destroy_cbfn(rx->bna->bnad, q0->rcb);
-		q0->rcb = NULL;
-		q0->rxp = NULL;
-		q0->rx = NULL;
+		q0->rcb = शून्य;
+		q0->rxp = शून्य;
+		q0->rx = शून्य;
 		bna_rxq_put(rx_mod, q0);
 
-		if (q1) {
-			if (rx->rcb_destroy_cbfn)
+		अगर (q1) अणु
+			अगर (rx->rcb_destroy_cbfn)
 				rx->rcb_destroy_cbfn(rx->bna->bnad, q1->rcb);
-			q1->rcb = NULL;
-			q1->rxp = NULL;
-			q1->rx = NULL;
+			q1->rcb = शून्य;
+			q1->rxp = शून्य;
+			q1->rx = शून्य;
 			bna_rxq_put(rx_mod, q1);
-		}
-		rxp->rxq.slr.large = NULL;
-		rxp->rxq.slr.small = NULL;
+		पूर्ण
+		rxp->rxq.slr.large = शून्य;
+		rxp->rxq.slr.small = शून्य;
 
-		if (rx->ccb_destroy_cbfn)
+		अगर (rx->ccb_destroy_cbfn)
 			rx->ccb_destroy_cbfn(rx->bna->bnad, rxp->cq.ccb);
-		rxp->cq.ccb = NULL;
-		rxp->rx = NULL;
+		rxp->cq.ccb = शून्य;
+		rxp->rx = शून्य;
 		bna_rxp_put(rx_mod, rxp);
-	}
+	पूर्ण
 
-	list_for_each(qe, &rx_mod->rx_active_q)
-		if (qe == &rx->qe) {
+	list_क्रम_each(qe, &rx_mod->rx_active_q)
+		अगर (qe == &rx->qe) अणु
 			list_del(&rx->qe);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 	rx_mod->rid_mask &= ~BIT(rx->rid);
 
-	rx->bna = NULL;
-	rx->priv = NULL;
+	rx->bna = शून्य;
+	rx->priv = शून्य;
 	bna_rx_put(rx_mod, rx);
-}
+पूर्ण
 
-void
-bna_rx_enable(struct bna_rx *rx)
-{
-	if (rx->fsm != (bfa_sm_t)bna_rx_sm_stopped)
-		return;
+व्योम
+bna_rx_enable(काष्ठा bna_rx *rx)
+अणु
+	अगर (rx->fsm != (bfa_sm_t)bna_rx_sm_stopped)
+		वापस;
 
 	rx->rx_flags |= BNA_RX_F_ENABLED;
-	if (rx->rx_flags & BNA_RX_F_ENET_STARTED)
+	अगर (rx->rx_flags & BNA_RX_F_ENET_STARTED)
 		bfa_fsm_send_event(rx, RX_E_START);
-}
+पूर्ण
 
-void
-bna_rx_disable(struct bna_rx *rx, enum bna_cleanup_type type,
-		void (*cbfn)(void *, struct bna_rx *))
-{
-	if (type == BNA_SOFT_CLEANUP) {
+व्योम
+bna_rx_disable(काष्ठा bna_rx *rx, क्रमागत bna_cleanup_type type,
+		व्योम (*cbfn)(व्योम *, काष्ठा bna_rx *))
+अणु
+	अगर (type == BNA_SOFT_CLEANUP) अणु
 		/* h/w should not be accessed. Treat we're stopped */
 		(*cbfn)(rx->bna->bnad, rx);
-	} else {
+	पूर्ण अन्यथा अणु
 		rx->stop_cbfn = cbfn;
 		rx->stop_cbarg = rx->bna->bnad;
 
 		rx->rx_flags &= ~BNA_RX_F_ENABLED;
 
 		bfa_fsm_send_event(rx, RX_E_STOP);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bna_rx_cleanup_complete(struct bna_rx *rx)
-{
+व्योम
+bna_rx_cleanup_complete(काष्ठा bna_rx *rx)
+अणु
 	bfa_fsm_send_event(rx, RX_E_CLEANUP_DONE);
-}
+पूर्ण
 
-void
-bna_rx_vlan_strip_enable(struct bna_rx *rx)
-{
-	struct bna_rxf *rxf = &rx->rxf;
+व्योम
+bna_rx_vlan_strip_enable(काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bna_rxf *rxf = &rx->rxf;
 
-	if (rxf->vlan_strip_status == BNA_STATUS_T_DISABLED) {
+	अगर (rxf->vlan_strip_status == BNA_STATUS_T_DISABLED) अणु
 		rxf->vlan_strip_status = BNA_STATUS_T_ENABLED;
 		rxf->vlan_strip_pending = true;
 		bfa_fsm_send_event(rxf, RXF_E_CONFIG);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bna_rx_vlan_strip_disable(struct bna_rx *rx)
-{
-	struct bna_rxf *rxf = &rx->rxf;
+व्योम
+bna_rx_vlan_strip_disable(काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bna_rxf *rxf = &rx->rxf;
 
-	if (rxf->vlan_strip_status != BNA_STATUS_T_DISABLED) {
+	अगर (rxf->vlan_strip_status != BNA_STATUS_T_DISABLED) अणु
 		rxf->vlan_strip_status = BNA_STATUS_T_DISABLED;
 		rxf->vlan_strip_pending = true;
 		bfa_fsm_send_event(rxf, RXF_E_CONFIG);
-	}
-}
+	पूर्ण
+पूर्ण
 
-enum bna_cb_status
-bna_rx_mode_set(struct bna_rx *rx, enum bna_rxmode new_mode,
-		enum bna_rxmode bitmask)
-{
-	struct bna_rxf *rxf = &rx->rxf;
-	int need_hw_config = 0;
+क्रमागत bna_cb_status
+bna_rx_mode_set(काष्ठा bna_rx *rx, क्रमागत bna_rxmode new_mode,
+		क्रमागत bna_rxmode biपंचांगask)
+अणु
+	काष्ठा bna_rxf *rxf = &rx->rxf;
+	पूर्णांक need_hw_config = 0;
 
 	/* Error checks */
 
-	if (is_promisc_enable(new_mode, bitmask)) {
-		/* If promisc mode is already enabled elsewhere in the system */
-		if ((rx->bna->promisc_rid != BFI_INVALID_RID) &&
+	अगर (is_promisc_enable(new_mode, biपंचांगask)) अणु
+		/* If promisc mode is alपढ़ोy enabled अन्यथाwhere in the प्रणाली */
+		अगर ((rx->bna->promisc_rid != BFI_INVALID_RID) &&
 			(rx->bna->promisc_rid != rxf->rx->rid))
-			goto err_return;
+			जाओ err_वापस;
 
-		/* If default mode is already enabled in the system */
-		if (rx->bna->default_mode_rid != BFI_INVALID_RID)
-			goto err_return;
+		/* If शेष mode is alपढ़ोy enabled in the प्रणाली */
+		अगर (rx->bna->शेष_mode_rid != BFI_INVALID_RID)
+			जाओ err_वापस;
 
-		/* Trying to enable promiscuous and default mode together */
-		if (is_default_enable(new_mode, bitmask))
-			goto err_return;
-	}
+		/* Trying to enable promiscuous and शेष mode together */
+		अगर (is_शेष_enable(new_mode, biपंचांगask))
+			जाओ err_वापस;
+	पूर्ण
 
-	if (is_default_enable(new_mode, bitmask)) {
-		/* If default mode is already enabled elsewhere in the system */
-		if ((rx->bna->default_mode_rid != BFI_INVALID_RID) &&
-			(rx->bna->default_mode_rid != rxf->rx->rid)) {
-				goto err_return;
-		}
+	अगर (is_शेष_enable(new_mode, biपंचांगask)) अणु
+		/* If शेष mode is alपढ़ोy enabled अन्यथाwhere in the प्रणाली */
+		अगर ((rx->bna->शेष_mode_rid != BFI_INVALID_RID) &&
+			(rx->bna->शेष_mode_rid != rxf->rx->rid)) अणु
+				जाओ err_वापस;
+		पूर्ण
 
-		/* If promiscuous mode is already enabled in the system */
-		if (rx->bna->promisc_rid != BFI_INVALID_RID)
-			goto err_return;
-	}
+		/* If promiscuous mode is alपढ़ोy enabled in the प्रणाली */
+		अगर (rx->bna->promisc_rid != BFI_INVALID_RID)
+			जाओ err_वापस;
+	पूर्ण
 
 	/* Process the commands */
 
-	if (is_promisc_enable(new_mode, bitmask)) {
-		if (bna_rxf_promisc_enable(rxf))
+	अगर (is_promisc_enable(new_mode, biपंचांगask)) अणु
+		अगर (bna_rxf_promisc_enable(rxf))
 			need_hw_config = 1;
-	} else if (is_promisc_disable(new_mode, bitmask)) {
-		if (bna_rxf_promisc_disable(rxf))
+	पूर्ण अन्यथा अगर (is_promisc_disable(new_mode, biपंचांगask)) अणु
+		अगर (bna_rxf_promisc_disable(rxf))
 			need_hw_config = 1;
-	}
+	पूर्ण
 
-	if (is_allmulti_enable(new_mode, bitmask)) {
-		if (bna_rxf_allmulti_enable(rxf))
+	अगर (is_allmulti_enable(new_mode, biपंचांगask)) अणु
+		अगर (bna_rxf_allmulti_enable(rxf))
 			need_hw_config = 1;
-	} else if (is_allmulti_disable(new_mode, bitmask)) {
-		if (bna_rxf_allmulti_disable(rxf))
+	पूर्ण अन्यथा अगर (is_allmulti_disable(new_mode, biपंचांगask)) अणु
+		अगर (bna_rxf_allmulti_disable(rxf))
 			need_hw_config = 1;
-	}
+	पूर्ण
 
-	/* Trigger h/w if needed */
+	/* Trigger h/w अगर needed */
 
-	if (need_hw_config) {
-		rxf->cam_fltr_cbfn = NULL;
+	अगर (need_hw_config) अणु
+		rxf->cam_fltr_cbfn = शून्य;
 		rxf->cam_fltr_cbarg = rx->bna->bnad;
 		bfa_fsm_send_event(rxf, RXF_E_CONFIG);
-	}
+	पूर्ण
 
-	return BNA_CB_SUCCESS;
+	वापस BNA_CB_SUCCESS;
 
-err_return:
-	return BNA_CB_FAIL;
-}
+err_वापस:
+	वापस BNA_CB_FAIL;
+पूर्ण
 
-void
-bna_rx_vlanfilter_enable(struct bna_rx *rx)
-{
-	struct bna_rxf *rxf = &rx->rxf;
+व्योम
+bna_rx_vlanfilter_enable(काष्ठा bna_rx *rx)
+अणु
+	काष्ठा bna_rxf *rxf = &rx->rxf;
 
-	if (rxf->vlan_filter_status == BNA_STATUS_T_DISABLED) {
+	अगर (rxf->vlan_filter_status == BNA_STATUS_T_DISABLED) अणु
 		rxf->vlan_filter_status = BNA_STATUS_T_ENABLED;
-		rxf->vlan_pending_bitmask = (u8)BFI_VLAN_BMASK_ALL;
+		rxf->vlan_pending_biपंचांगask = (u8)BFI_VLAN_BMASK_ALL;
 		bfa_fsm_send_event(rxf, RXF_E_CONFIG);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bna_rx_coalescing_timeo_set(struct bna_rx *rx, int coalescing_timeo)
-{
-	struct bna_rxp *rxp;
+व्योम
+bna_rx_coalescing_समयo_set(काष्ठा bna_rx *rx, पूर्णांक coalescing_समयo)
+अणु
+	काष्ठा bna_rxp *rxp;
 
-	list_for_each_entry(rxp, &rx->rxp_q, qe) {
-		rxp->cq.ccb->rx_coalescing_timeo = coalescing_timeo;
-		bna_ib_coalescing_timeo_set(&rxp->cq.ib, coalescing_timeo);
-	}
-}
+	list_क्रम_each_entry(rxp, &rx->rxp_q, qe) अणु
+		rxp->cq.ccb->rx_coalescing_समयo = coalescing_समयo;
+		bna_ib_coalescing_समयo_set(&rxp->cq.ib, coalescing_समयo);
+	पूर्ण
+पूर्ण
 
-void
-bna_rx_dim_reconfig(struct bna *bna, const u32 vector[][BNA_BIAS_T_MAX])
-{
-	int i, j;
+व्योम
+bna_rx_dim_reconfig(काष्ठा bna *bna, स्थिर u32 vector[][BNA_BIAS_T_MAX])
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0; i < BNA_LOAD_T_MAX; i++)
-		for (j = 0; j < BNA_BIAS_T_MAX; j++)
+	क्रम (i = 0; i < BNA_LOAD_T_MAX; i++)
+		क्रम (j = 0; j < BNA_BIAS_T_MAX; j++)
 			bna->rx_mod.dim_vector[i][j] = vector[i][j];
-}
+पूर्ण
 
-void
-bna_rx_dim_update(struct bna_ccb *ccb)
-{
-	struct bna *bna = ccb->cq->rx->bna;
+व्योम
+bna_rx_dim_update(काष्ठा bna_ccb *ccb)
+अणु
+	काष्ठा bna *bna = ccb->cq->rx->bna;
 	u32 load, bias;
 	u32 pkt_rt, small_rt, large_rt;
-	u8 coalescing_timeo;
+	u8 coalescing_समयo;
 
-	if ((ccb->pkt_rate.small_pkt_cnt == 0) &&
+	अगर ((ccb->pkt_rate.small_pkt_cnt == 0) &&
 		(ccb->pkt_rate.large_pkt_cnt == 0))
-		return;
+		वापस;
 
-	/* Arrive at preconfigured coalescing timeo value based on pkt rate */
+	/* Arrive at preconfigured coalescing समयo value based on pkt rate */
 
 	small_rt = ccb->pkt_rate.small_pkt_cnt;
 	large_rt = ccb->pkt_rate.large_pkt_cnt;
 
 	pkt_rt = small_rt + large_rt;
 
-	if (pkt_rt < BNA_PKT_RATE_10K)
+	अगर (pkt_rt < BNA_PKT_RATE_10K)
 		load = BNA_LOAD_T_LOW_4;
-	else if (pkt_rt < BNA_PKT_RATE_20K)
+	अन्यथा अगर (pkt_rt < BNA_PKT_RATE_20K)
 		load = BNA_LOAD_T_LOW_3;
-	else if (pkt_rt < BNA_PKT_RATE_30K)
+	अन्यथा अगर (pkt_rt < BNA_PKT_RATE_30K)
 		load = BNA_LOAD_T_LOW_2;
-	else if (pkt_rt < BNA_PKT_RATE_40K)
+	अन्यथा अगर (pkt_rt < BNA_PKT_RATE_40K)
 		load = BNA_LOAD_T_LOW_1;
-	else if (pkt_rt < BNA_PKT_RATE_50K)
+	अन्यथा अगर (pkt_rt < BNA_PKT_RATE_50K)
 		load = BNA_LOAD_T_HIGH_1;
-	else if (pkt_rt < BNA_PKT_RATE_60K)
+	अन्यथा अगर (pkt_rt < BNA_PKT_RATE_60K)
 		load = BNA_LOAD_T_HIGH_2;
-	else if (pkt_rt < BNA_PKT_RATE_80K)
+	अन्यथा अगर (pkt_rt < BNA_PKT_RATE_80K)
 		load = BNA_LOAD_T_HIGH_3;
-	else
+	अन्यथा
 		load = BNA_LOAD_T_HIGH_4;
 
-	if (small_rt > (large_rt << 1))
+	अगर (small_rt > (large_rt << 1))
 		bias = 0;
-	else
+	अन्यथा
 		bias = 1;
 
 	ccb->pkt_rate.small_pkt_cnt = 0;
 	ccb->pkt_rate.large_pkt_cnt = 0;
 
-	coalescing_timeo = bna->rx_mod.dim_vector[load][bias];
-	ccb->rx_coalescing_timeo = coalescing_timeo;
+	coalescing_समयo = bna->rx_mod.dim_vector[load][bias];
+	ccb->rx_coalescing_समयo = coalescing_समयo;
 
 	/* Set it to IB */
-	bna_ib_coalescing_timeo_set(&ccb->cq->ib, coalescing_timeo);
-}
+	bna_ib_coalescing_समयo_set(&ccb->cq->ib, coalescing_समयo);
+पूर्ण
 
-const u32 bna_napi_dim_vector[BNA_LOAD_T_MAX][BNA_BIAS_T_MAX] = {
-	{12, 12},
-	{6, 10},
-	{5, 10},
-	{4, 8},
-	{3, 6},
-	{3, 6},
-	{2, 4},
-	{1, 2},
-};
+स्थिर u32 bna_napi_dim_vector[BNA_LOAD_T_MAX][BNA_BIAS_T_MAX] = अणु
+	अणु12, 12पूर्ण,
+	अणु6, 10पूर्ण,
+	अणु5, 10पूर्ण,
+	अणु4, 8पूर्ण,
+	अणु3, 6पूर्ण,
+	अणु3, 6पूर्ण,
+	अणु2, 4पूर्ण,
+	अणु1, 2पूर्ण,
+पूर्ण;
 
 /* TX */
 
-#define call_tx_stop_cbfn(tx)						\
-do {									\
-	if ((tx)->stop_cbfn) {						\
-		void (*cbfn)(void *, struct bna_tx *);		\
-		void *cbarg;						\
+#घोषणा call_tx_stop_cbfn(tx)						\
+करो अणु									\
+	अगर ((tx)->stop_cbfn) अणु						\
+		व्योम (*cbfn)(व्योम *, काष्ठा bna_tx *);		\
+		व्योम *cbarg;						\
 		cbfn = (tx)->stop_cbfn;					\
 		cbarg = (tx)->stop_cbarg;				\
-		(tx)->stop_cbfn = NULL;					\
-		(tx)->stop_cbarg = NULL;				\
+		(tx)->stop_cbfn = शून्य;					\
+		(tx)->stop_cbarg = शून्य;				\
 		cbfn(cbarg, (tx));					\
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-static void bna_tx_mod_cb_tx_stopped(void *tx_mod, struct bna_tx *tx);
-static void bna_bfi_tx_enet_start(struct bna_tx *tx);
-static void bna_tx_enet_stop(struct bna_tx *tx);
+अटल व्योम bna_tx_mod_cb_tx_stopped(व्योम *tx_mod, काष्ठा bna_tx *tx);
+अटल व्योम bna_bfi_tx_enet_start(काष्ठा bna_tx *tx);
+अटल व्योम bna_tx_enet_stop(काष्ठा bna_tx *tx);
 
-enum bna_tx_event {
+क्रमागत bna_tx_event अणु
 	TX_E_START			= 1,
 	TX_E_STOP			= 2,
 	TX_E_FAIL			= 3,
@@ -2780,324 +2781,324 @@ enum bna_tx_event {
 	TX_E_STOPPED			= 5,
 	TX_E_CLEANUP_DONE		= 7,
 	TX_E_BW_UPDATE			= 8,
-};
+पूर्ण;
 
-bfa_fsm_state_decl(bna_tx, stopped, struct bna_tx, enum bna_tx_event);
-bfa_fsm_state_decl(bna_tx, start_wait, struct bna_tx, enum bna_tx_event);
-bfa_fsm_state_decl(bna_tx, started, struct bna_tx, enum bna_tx_event);
-bfa_fsm_state_decl(bna_tx, stop_wait, struct bna_tx, enum bna_tx_event);
-bfa_fsm_state_decl(bna_tx, cleanup_wait, struct bna_tx,
-			enum bna_tx_event);
-bfa_fsm_state_decl(bna_tx, prio_stop_wait, struct bna_tx,
-			enum bna_tx_event);
-bfa_fsm_state_decl(bna_tx, prio_cleanup_wait, struct bna_tx,
-			enum bna_tx_event);
-bfa_fsm_state_decl(bna_tx, failed, struct bna_tx, enum bna_tx_event);
-bfa_fsm_state_decl(bna_tx, quiesce_wait, struct bna_tx,
-			enum bna_tx_event);
+bfa_fsm_state_decl(bna_tx, stopped, काष्ठा bna_tx, क्रमागत bna_tx_event);
+bfa_fsm_state_decl(bna_tx, start_रुको, काष्ठा bna_tx, क्रमागत bna_tx_event);
+bfa_fsm_state_decl(bna_tx, started, काष्ठा bna_tx, क्रमागत bna_tx_event);
+bfa_fsm_state_decl(bna_tx, stop_रुको, काष्ठा bna_tx, क्रमागत bna_tx_event);
+bfa_fsm_state_decl(bna_tx, cleanup_रुको, काष्ठा bna_tx,
+			क्रमागत bna_tx_event);
+bfa_fsm_state_decl(bna_tx, prio_stop_रुको, काष्ठा bna_tx,
+			क्रमागत bna_tx_event);
+bfa_fsm_state_decl(bna_tx, prio_cleanup_रुको, काष्ठा bna_tx,
+			क्रमागत bna_tx_event);
+bfa_fsm_state_decl(bna_tx, failed, काष्ठा bna_tx, क्रमागत bna_tx_event);
+bfa_fsm_state_decl(bna_tx, quiesce_रुको, काष्ठा bna_tx,
+			क्रमागत bna_tx_event);
 
-static void
-bna_tx_sm_stopped_entry(struct bna_tx *tx)
-{
+अटल व्योम
+bna_tx_sm_stopped_entry(काष्ठा bna_tx *tx)
+अणु
 	call_tx_stop_cbfn(tx);
-}
+पूर्ण
 
-static void
-bna_tx_sm_stopped(struct bna_tx *tx, enum bna_tx_event event)
-{
-	switch (event) {
-	case TX_E_START:
-		bfa_fsm_set_state(tx, bna_tx_sm_start_wait);
-		break;
+अटल व्योम
+bna_tx_sm_stopped(काष्ठा bna_tx *tx, क्रमागत bna_tx_event event)
+अणु
+	चयन (event) अणु
+	हाल TX_E_START:
+		bfa_fsm_set_state(tx, bna_tx_sm_start_रुको);
+		अवरोध;
 
-	case TX_E_STOP:
+	हाल TX_E_STOP:
 		call_tx_stop_cbfn(tx);
-		break;
+		अवरोध;
 
-	case TX_E_FAIL:
+	हाल TX_E_FAIL:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case TX_E_BW_UPDATE:
+	हाल TX_E_BW_UPDATE:
 		/* No-op */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_tx_sm_start_wait_entry(struct bna_tx *tx)
-{
+अटल व्योम
+bna_tx_sm_start_रुको_entry(काष्ठा bna_tx *tx)
+अणु
 	bna_bfi_tx_enet_start(tx);
-}
+पूर्ण
 
-static void
-bna_tx_sm_start_wait(struct bna_tx *tx, enum bna_tx_event event)
-{
-	switch (event) {
-	case TX_E_STOP:
+अटल व्योम
+bna_tx_sm_start_रुको(काष्ठा bna_tx *tx, क्रमागत bna_tx_event event)
+अणु
+	चयन (event) अणु
+	हाल TX_E_STOP:
 		tx->flags &= ~BNA_TX_F_BW_UPDATED;
-		bfa_fsm_set_state(tx, bna_tx_sm_stop_wait);
-		break;
+		bfa_fsm_set_state(tx, bna_tx_sm_stop_रुको);
+		अवरोध;
 
-	case TX_E_FAIL:
+	हाल TX_E_FAIL:
 		tx->flags &= ~BNA_TX_F_BW_UPDATED;
 		bfa_fsm_set_state(tx, bna_tx_sm_stopped);
-		break;
+		अवरोध;
 
-	case TX_E_STARTED:
-		if (tx->flags & BNA_TX_F_BW_UPDATED) {
+	हाल TX_E_STARTED:
+		अगर (tx->flags & BNA_TX_F_BW_UPDATED) अणु
 			tx->flags &= ~BNA_TX_F_BW_UPDATED;
-			bfa_fsm_set_state(tx, bna_tx_sm_prio_stop_wait);
-		} else
+			bfa_fsm_set_state(tx, bna_tx_sm_prio_stop_रुको);
+		पूर्ण अन्यथा
 			bfa_fsm_set_state(tx, bna_tx_sm_started);
-		break;
+		अवरोध;
 
-	case TX_E_BW_UPDATE:
+	हाल TX_E_BW_UPDATE:
 		tx->flags |= BNA_TX_F_BW_UPDATED;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_tx_sm_started_entry(struct bna_tx *tx)
-{
-	struct bna_txq *txq;
-	int is_regular = (tx->type == BNA_TX_T_REGULAR);
+अटल व्योम
+bna_tx_sm_started_entry(काष्ठा bna_tx *tx)
+अणु
+	काष्ठा bna_txq *txq;
+	पूर्णांक is_regular = (tx->type == BNA_TX_T_REGULAR);
 
-	list_for_each_entry(txq, &tx->txq_q, qe) {
+	list_क्रम_each_entry(txq, &tx->txq_q, qe) अणु
 		txq->tcb->priority = txq->priority;
 		/* Start IB */
 		bna_ib_start(tx->bna, &txq->ib, is_regular);
-	}
+	पूर्ण
 	tx->tx_resume_cbfn(tx->bna->bnad, tx);
-}
+पूर्ण
 
-static void
-bna_tx_sm_started(struct bna_tx *tx, enum bna_tx_event event)
-{
-	switch (event) {
-	case TX_E_STOP:
-		bfa_fsm_set_state(tx, bna_tx_sm_stop_wait);
+अटल व्योम
+bna_tx_sm_started(काष्ठा bna_tx *tx, क्रमागत bna_tx_event event)
+अणु
+	चयन (event) अणु
+	हाल TX_E_STOP:
+		bfa_fsm_set_state(tx, bna_tx_sm_stop_रुको);
 		tx->tx_stall_cbfn(tx->bna->bnad, tx);
 		bna_tx_enet_stop(tx);
-		break;
+		अवरोध;
 
-	case TX_E_FAIL:
+	हाल TX_E_FAIL:
 		bfa_fsm_set_state(tx, bna_tx_sm_failed);
 		tx->tx_stall_cbfn(tx->bna->bnad, tx);
 		tx->tx_cleanup_cbfn(tx->bna->bnad, tx);
-		break;
+		अवरोध;
 
-	case TX_E_BW_UPDATE:
-		bfa_fsm_set_state(tx, bna_tx_sm_prio_stop_wait);
-		break;
+	हाल TX_E_BW_UPDATE:
+		bfa_fsm_set_state(tx, bna_tx_sm_prio_stop_रुको);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_tx_sm_stop_wait_entry(struct bna_tx *tx)
-{
-}
+अटल व्योम
+bna_tx_sm_stop_रुको_entry(काष्ठा bna_tx *tx)
+अणु
+पूर्ण
 
-static void
-bna_tx_sm_stop_wait(struct bna_tx *tx, enum bna_tx_event event)
-{
-	switch (event) {
-	case TX_E_FAIL:
-	case TX_E_STOPPED:
-		bfa_fsm_set_state(tx, bna_tx_sm_cleanup_wait);
+अटल व्योम
+bna_tx_sm_stop_रुको(काष्ठा bna_tx *tx, क्रमागत bna_tx_event event)
+अणु
+	चयन (event) अणु
+	हाल TX_E_FAIL:
+	हाल TX_E_STOPPED:
+		bfa_fsm_set_state(tx, bna_tx_sm_cleanup_रुको);
 		tx->tx_cleanup_cbfn(tx->bna->bnad, tx);
-		break;
+		अवरोध;
 
-	case TX_E_STARTED:
+	हाल TX_E_STARTED:
 		/**
-		 * We are here due to start_wait -> stop_wait transition on
+		 * We are here due to start_रुको -> stop_रुको transition on
 		 * TX_E_STOP event
 		 */
 		bna_tx_enet_stop(tx);
-		break;
+		अवरोध;
 
-	case TX_E_BW_UPDATE:
+	हाल TX_E_BW_UPDATE:
 		/* No-op */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_tx_sm_cleanup_wait_entry(struct bna_tx *tx)
-{
-}
+अटल व्योम
+bna_tx_sm_cleanup_रुको_entry(काष्ठा bna_tx *tx)
+अणु
+पूर्ण
 
-static void
-bna_tx_sm_cleanup_wait(struct bna_tx *tx, enum bna_tx_event event)
-{
-	switch (event) {
-	case TX_E_FAIL:
-	case TX_E_BW_UPDATE:
+अटल व्योम
+bna_tx_sm_cleanup_रुको(काष्ठा bna_tx *tx, क्रमागत bna_tx_event event)
+अणु
+	चयन (event) अणु
+	हाल TX_E_FAIL:
+	हाल TX_E_BW_UPDATE:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case TX_E_CLEANUP_DONE:
+	हाल TX_E_CLEANUP_DONE:
 		bfa_fsm_set_state(tx, bna_tx_sm_stopped);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_tx_sm_prio_stop_wait_entry(struct bna_tx *tx)
-{
+अटल व्योम
+bna_tx_sm_prio_stop_रुको_entry(काष्ठा bna_tx *tx)
+अणु
 	tx->tx_stall_cbfn(tx->bna->bnad, tx);
 	bna_tx_enet_stop(tx);
-}
+पूर्ण
 
-static void
-bna_tx_sm_prio_stop_wait(struct bna_tx *tx, enum bna_tx_event event)
-{
-	switch (event) {
-	case TX_E_STOP:
-		bfa_fsm_set_state(tx, bna_tx_sm_stop_wait);
-		break;
+अटल व्योम
+bna_tx_sm_prio_stop_रुको(काष्ठा bna_tx *tx, क्रमागत bna_tx_event event)
+अणु
+	चयन (event) अणु
+	हाल TX_E_STOP:
+		bfa_fsm_set_state(tx, bna_tx_sm_stop_रुको);
+		अवरोध;
 
-	case TX_E_FAIL:
+	हाल TX_E_FAIL:
 		bfa_fsm_set_state(tx, bna_tx_sm_failed);
 		tx->tx_cleanup_cbfn(tx->bna->bnad, tx);
-		break;
+		अवरोध;
 
-	case TX_E_STOPPED:
-		bfa_fsm_set_state(tx, bna_tx_sm_prio_cleanup_wait);
-		break;
+	हाल TX_E_STOPPED:
+		bfa_fsm_set_state(tx, bna_tx_sm_prio_cleanup_रुको);
+		अवरोध;
 
-	case TX_E_BW_UPDATE:
+	हाल TX_E_BW_UPDATE:
 		/* No-op */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_tx_sm_prio_cleanup_wait_entry(struct bna_tx *tx)
-{
+अटल व्योम
+bna_tx_sm_prio_cleanup_रुको_entry(काष्ठा bna_tx *tx)
+अणु
 	tx->tx_cleanup_cbfn(tx->bna->bnad, tx);
-}
+पूर्ण
 
-static void
-bna_tx_sm_prio_cleanup_wait(struct bna_tx *tx, enum bna_tx_event event)
-{
-	switch (event) {
-	case TX_E_STOP:
-		bfa_fsm_set_state(tx, bna_tx_sm_cleanup_wait);
-		break;
+अटल व्योम
+bna_tx_sm_prio_cleanup_रुको(काष्ठा bna_tx *tx, क्रमागत bna_tx_event event)
+अणु
+	चयन (event) अणु
+	हाल TX_E_STOP:
+		bfa_fsm_set_state(tx, bna_tx_sm_cleanup_रुको);
+		अवरोध;
 
-	case TX_E_FAIL:
+	हाल TX_E_FAIL:
 		bfa_fsm_set_state(tx, bna_tx_sm_failed);
-		break;
+		अवरोध;
 
-	case TX_E_BW_UPDATE:
+	हाल TX_E_BW_UPDATE:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case TX_E_CLEANUP_DONE:
-		bfa_fsm_set_state(tx, bna_tx_sm_start_wait);
-		break;
+	हाल TX_E_CLEANUP_DONE:
+		bfa_fsm_set_state(tx, bna_tx_sm_start_रुको);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_tx_sm_failed_entry(struct bna_tx *tx)
-{
-}
+अटल व्योम
+bna_tx_sm_failed_entry(काष्ठा bna_tx *tx)
+अणु
+पूर्ण
 
-static void
-bna_tx_sm_failed(struct bna_tx *tx, enum bna_tx_event event)
-{
-	switch (event) {
-	case TX_E_START:
-		bfa_fsm_set_state(tx, bna_tx_sm_quiesce_wait);
-		break;
+अटल व्योम
+bna_tx_sm_failed(काष्ठा bna_tx *tx, क्रमागत bna_tx_event event)
+अणु
+	चयन (event) अणु
+	हाल TX_E_START:
+		bfa_fsm_set_state(tx, bna_tx_sm_quiesce_रुको);
+		अवरोध;
 
-	case TX_E_STOP:
-		bfa_fsm_set_state(tx, bna_tx_sm_cleanup_wait);
-		break;
+	हाल TX_E_STOP:
+		bfa_fsm_set_state(tx, bna_tx_sm_cleanup_रुको);
+		अवरोध;
 
-	case TX_E_FAIL:
+	हाल TX_E_FAIL:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case TX_E_CLEANUP_DONE:
+	हाल TX_E_CLEANUP_DONE:
 		bfa_fsm_set_state(tx, bna_tx_sm_stopped);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_tx_sm_quiesce_wait_entry(struct bna_tx *tx)
-{
-}
+अटल व्योम
+bna_tx_sm_quiesce_रुको_entry(काष्ठा bna_tx *tx)
+अणु
+पूर्ण
 
-static void
-bna_tx_sm_quiesce_wait(struct bna_tx *tx, enum bna_tx_event event)
-{
-	switch (event) {
-	case TX_E_STOP:
-		bfa_fsm_set_state(tx, bna_tx_sm_cleanup_wait);
-		break;
+अटल व्योम
+bna_tx_sm_quiesce_रुको(काष्ठा bna_tx *tx, क्रमागत bna_tx_event event)
+अणु
+	चयन (event) अणु
+	हाल TX_E_STOP:
+		bfa_fsm_set_state(tx, bna_tx_sm_cleanup_रुको);
+		अवरोध;
 
-	case TX_E_FAIL:
+	हाल TX_E_FAIL:
 		bfa_fsm_set_state(tx, bna_tx_sm_failed);
-		break;
+		अवरोध;
 
-	case TX_E_CLEANUP_DONE:
-		bfa_fsm_set_state(tx, bna_tx_sm_start_wait);
-		break;
+	हाल TX_E_CLEANUP_DONE:
+		bfa_fsm_set_state(tx, bna_tx_sm_start_रुको);
+		अवरोध;
 
-	case TX_E_BW_UPDATE:
+	हाल TX_E_BW_UPDATE:
 		/* No-op */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bna_bfi_tx_enet_start(struct bna_tx *tx)
-{
-	struct bfi_enet_tx_cfg_req *cfg_req = &tx->bfi_enet_cmd.cfg_req;
-	struct bna_txq *txq = NULL;
-	int i;
+अटल व्योम
+bna_bfi_tx_enet_start(काष्ठा bna_tx *tx)
+अणु
+	काष्ठा bfi_enet_tx_cfg_req *cfg_req = &tx->bfi_enet_cmd.cfg_req;
+	काष्ठा bna_txq *txq = शून्य;
+	पूर्णांक i;
 
 	bfi_msgq_mhdr_set(cfg_req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_TX_CFG_SET_REQ, 0, tx->rid);
 	cfg_req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_tx_cfg_req)));
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_tx_cfg_req)));
 
 	cfg_req->num_queues = tx->num_txq;
-	for (i = 0; i < tx->num_txq; i++) {
+	क्रम (i = 0; i < tx->num_txq; i++) अणु
 		txq = txq ? list_next_entry(txq, qe)
-			: list_first_entry(&tx->txq_q, struct bna_txq, qe);
+			: list_first_entry(&tx->txq_q, काष्ठा bna_txq, qe);
 		bfi_enet_datapath_q_init(&cfg_req->q_cfg[i].q.q, &txq->qpt);
 		cfg_req->q_cfg[i].q.priority = txq->priority;
 
@@ -3105,68 +3106,68 @@ bna_bfi_tx_enet_start(struct bna_tx *tx)
 			txq->ib.ib_seg_host_addr.lsb;
 		cfg_req->q_cfg[i].ib.index_addr.a32.addr_hi =
 			txq->ib.ib_seg_host_addr.msb;
-		cfg_req->q_cfg[i].ib.intr.msix_index =
-			htons((u16)txq->ib.intr_vector);
-	}
+		cfg_req->q_cfg[i].ib.पूर्णांकr.msix_index =
+			htons((u16)txq->ib.पूर्णांकr_vector);
+	पूर्ण
 
-	cfg_req->ib_cfg.int_pkt_dma = BNA_STATUS_T_ENABLED;
-	cfg_req->ib_cfg.int_enabled = BNA_STATUS_T_ENABLED;
-	cfg_req->ib_cfg.int_pkt_enabled = BNA_STATUS_T_DISABLED;
+	cfg_req->ib_cfg.पूर्णांक_pkt_dma = BNA_STATUS_T_ENABLED;
+	cfg_req->ib_cfg.पूर्णांक_enabled = BNA_STATUS_T_ENABLED;
+	cfg_req->ib_cfg.पूर्णांक_pkt_enabled = BNA_STATUS_T_DISABLED;
 	cfg_req->ib_cfg.continuous_coalescing = BNA_STATUS_T_ENABLED;
-	cfg_req->ib_cfg.msix = (txq->ib.intr_type == BNA_INTR_T_MSIX)
+	cfg_req->ib_cfg.msix = (txq->ib.पूर्णांकr_type == BNA_INTR_T_MSIX)
 				? BNA_STATUS_T_ENABLED : BNA_STATUS_T_DISABLED;
-	cfg_req->ib_cfg.coalescing_timeout =
-			htonl((u32)txq->ib.coalescing_timeo);
-	cfg_req->ib_cfg.inter_pkt_timeout =
-			htonl((u32)txq->ib.interpkt_timeo);
-	cfg_req->ib_cfg.inter_pkt_count = (u8)txq->ib.interpkt_count;
+	cfg_req->ib_cfg.coalescing_समयout =
+			htonl((u32)txq->ib.coalescing_समयo);
+	cfg_req->ib_cfg.पूर्णांकer_pkt_समयout =
+			htonl((u32)txq->ib.पूर्णांकerpkt_समयo);
+	cfg_req->ib_cfg.पूर्णांकer_pkt_count = (u8)txq->ib.पूर्णांकerpkt_count;
 
 	cfg_req->tx_cfg.vlan_mode = BFI_ENET_TX_VLAN_WI;
 	cfg_req->tx_cfg.vlan_id = htons((u16)tx->txf_vlan_id);
 	cfg_req->tx_cfg.admit_tagged_frame = BNA_STATUS_T_ENABLED;
 	cfg_req->tx_cfg.apply_vlan_filter = BNA_STATUS_T_DISABLED;
 
-	bfa_msgq_cmd_set(&tx->msgq_cmd, NULL, NULL,
-		sizeof(struct bfi_enet_tx_cfg_req), &cfg_req->mh);
+	bfa_msgq_cmd_set(&tx->msgq_cmd, शून्य, शून्य,
+		माप(काष्ठा bfi_enet_tx_cfg_req), &cfg_req->mh);
 	bfa_msgq_cmd_post(&tx->bna->msgq, &tx->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_bfi_tx_enet_stop(struct bna_tx *tx)
-{
-	struct bfi_enet_req *req = &tx->bfi_enet_cmd.req;
+अटल व्योम
+bna_bfi_tx_enet_stop(काष्ठा bna_tx *tx)
+अणु
+	काष्ठा bfi_enet_req *req = &tx->bfi_enet_cmd.req;
 
 	bfi_msgq_mhdr_set(req->mh, BFI_MC_ENET,
 		BFI_ENET_H2I_TX_CFG_CLR_REQ, 0, tx->rid);
 	req->mh.num_entries = htons(
-		bfi_msgq_num_cmd_entries(sizeof(struct bfi_enet_req)));
-	bfa_msgq_cmd_set(&tx->msgq_cmd, NULL, NULL, sizeof(struct bfi_enet_req),
+		bfi_msgq_num_cmd_entries(माप(काष्ठा bfi_enet_req)));
+	bfa_msgq_cmd_set(&tx->msgq_cmd, शून्य, शून्य, माप(काष्ठा bfi_enet_req),
 		&req->mh);
 	bfa_msgq_cmd_post(&tx->bna->msgq, &tx->msgq_cmd);
-}
+पूर्ण
 
-static void
-bna_tx_enet_stop(struct bna_tx *tx)
-{
-	struct bna_txq *txq;
+अटल व्योम
+bna_tx_enet_stop(काष्ठा bna_tx *tx)
+अणु
+	काष्ठा bna_txq *txq;
 
 	/* Stop IB */
-	list_for_each_entry(txq, &tx->txq_q, qe)
+	list_क्रम_each_entry(txq, &tx->txq_q, qe)
 		bna_ib_stop(tx->bna, &txq->ib);
 
 	bna_bfi_tx_enet_stop(tx);
-}
+पूर्ण
 
-static void
-bna_txq_qpt_setup(struct bna_txq *txq, int page_count, int page_size,
-		struct bna_mem_descr *qpt_mem,
-		struct bna_mem_descr *swqpt_mem,
-		struct bna_mem_descr *page_mem)
-{
+अटल व्योम
+bna_txq_qpt_setup(काष्ठा bna_txq *txq, पूर्णांक page_count, पूर्णांक page_size,
+		काष्ठा bna_mem_descr *qpt_mem,
+		काष्ठा bna_mem_descr *swqpt_mem,
+		काष्ठा bna_mem_descr *page_mem)
+अणु
 	u8 *kva;
 	u64 dma;
-	struct bna_dma_addr bna_dma;
-	int i;
+	काष्ठा bna_dma_addr bna_dma;
+	पूर्णांक i;
 
 	txq->qpt.hw_qpt_ptr.lsb = qpt_mem->dma.lsb;
 	txq->qpt.hw_qpt_ptr.msb = qpt_mem->dma.msb;
@@ -3174,114 +3175,114 @@ bna_txq_qpt_setup(struct bna_txq *txq, int page_count, int page_size,
 	txq->qpt.page_count = page_count;
 	txq->qpt.page_size = page_size;
 
-	txq->tcb->sw_qpt = (void **) swqpt_mem->kva;
+	txq->tcb->sw_qpt = (व्योम **) swqpt_mem->kva;
 	txq->tcb->sw_q = page_mem->kva;
 
 	kva = page_mem->kva;
 	BNA_GET_DMA_ADDR(&page_mem->dma, dma);
 
-	for (i = 0; i < page_count; i++) {
+	क्रम (i = 0; i < page_count; i++) अणु
 		txq->tcb->sw_qpt[i] = kva;
 		kva += PAGE_SIZE;
 
 		BNA_SET_DMA_ADDR(dma, &bna_dma);
-		((struct bna_dma_addr *)txq->qpt.kv_qpt_ptr)[i].lsb =
+		((काष्ठा bna_dma_addr *)txq->qpt.kv_qpt_ptr)[i].lsb =
 			bna_dma.lsb;
-		((struct bna_dma_addr *)txq->qpt.kv_qpt_ptr)[i].msb =
+		((काष्ठा bna_dma_addr *)txq->qpt.kv_qpt_ptr)[i].msb =
 			bna_dma.msb;
 		dma += PAGE_SIZE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct bna_tx *
-bna_tx_get(struct bna_tx_mod *tx_mod, enum bna_tx_type type)
-{
-	struct bna_tx *tx = NULL;
+अटल काष्ठा bna_tx *
+bna_tx_get(काष्ठा bna_tx_mod *tx_mod, क्रमागत bna_tx_type type)
+अणु
+	काष्ठा bna_tx *tx = शून्य;
 
-	if (list_empty(&tx_mod->tx_free_q))
-		return NULL;
-	if (type == BNA_TX_T_REGULAR)
-		tx = list_first_entry(&tx_mod->tx_free_q, struct bna_tx, qe);
-	else
-		tx = list_last_entry(&tx_mod->tx_free_q, struct bna_tx, qe);
+	अगर (list_empty(&tx_mod->tx_मुक्त_q))
+		वापस शून्य;
+	अगर (type == BNA_TX_T_REGULAR)
+		tx = list_first_entry(&tx_mod->tx_मुक्त_q, काष्ठा bna_tx, qe);
+	अन्यथा
+		tx = list_last_entry(&tx_mod->tx_मुक्त_q, काष्ठा bna_tx, qe);
 	list_del(&tx->qe);
 	tx->type = type;
 
-	return tx;
-}
+	वापस tx;
+पूर्ण
 
-static void
-bna_tx_free(struct bna_tx *tx)
-{
-	struct bna_tx_mod *tx_mod = &tx->bna->tx_mod;
-	struct bna_txq *txq;
-	struct list_head *qe;
+अटल व्योम
+bna_tx_मुक्त(काष्ठा bna_tx *tx)
+अणु
+	काष्ठा bna_tx_mod *tx_mod = &tx->bna->tx_mod;
+	काष्ठा bna_txq *txq;
+	काष्ठा list_head *qe;
 
-	while (!list_empty(&tx->txq_q)) {
-		txq = list_first_entry(&tx->txq_q, struct bna_txq, qe);
-		txq->tcb = NULL;
-		txq->tx = NULL;
-		list_move_tail(&txq->qe, &tx_mod->txq_free_q);
-	}
+	जबतक (!list_empty(&tx->txq_q)) अणु
+		txq = list_first_entry(&tx->txq_q, काष्ठा bna_txq, qe);
+		txq->tcb = शून्य;
+		txq->tx = शून्य;
+		list_move_tail(&txq->qe, &tx_mod->txq_मुक्त_q);
+	पूर्ण
 
-	list_for_each(qe, &tx_mod->tx_active_q) {
-		if (qe == &tx->qe) {
+	list_क्रम_each(qe, &tx_mod->tx_active_q) अणु
+		अगर (qe == &tx->qe) अणु
 			list_del(&tx->qe);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	tx->bna = NULL;
-	tx->priv = NULL;
+	tx->bna = शून्य;
+	tx->priv = शून्य;
 
-	list_for_each_prev(qe, &tx_mod->tx_free_q)
-		if (((struct bna_tx *)qe)->rid < tx->rid)
-			break;
+	list_क्रम_each_prev(qe, &tx_mod->tx_मुक्त_q)
+		अगर (((काष्ठा bna_tx *)qe)->rid < tx->rid)
+			अवरोध;
 
 	list_add(&tx->qe, qe);
-}
+पूर्ण
 
-static void
-bna_tx_start(struct bna_tx *tx)
-{
+अटल व्योम
+bna_tx_start(काष्ठा bna_tx *tx)
+अणु
 	tx->flags |= BNA_TX_F_ENET_STARTED;
-	if (tx->flags & BNA_TX_F_ENABLED)
+	अगर (tx->flags & BNA_TX_F_ENABLED)
 		bfa_fsm_send_event(tx, TX_E_START);
-}
+पूर्ण
 
-static void
-bna_tx_stop(struct bna_tx *tx)
-{
+अटल व्योम
+bna_tx_stop(काष्ठा bna_tx *tx)
+अणु
 	tx->stop_cbfn = bna_tx_mod_cb_tx_stopped;
 	tx->stop_cbarg = &tx->bna->tx_mod;
 
 	tx->flags &= ~BNA_TX_F_ENET_STARTED;
 	bfa_fsm_send_event(tx, TX_E_STOP);
-}
+पूर्ण
 
-static void
-bna_tx_fail(struct bna_tx *tx)
-{
+अटल व्योम
+bna_tx_fail(काष्ठा bna_tx *tx)
+अणु
 	tx->flags &= ~BNA_TX_F_ENET_STARTED;
 	bfa_fsm_send_event(tx, TX_E_FAIL);
-}
+पूर्ण
 
-void
-bna_bfi_tx_enet_start_rsp(struct bna_tx *tx, struct bfi_msgq_mhdr *msghdr)
-{
-	struct bfi_enet_tx_cfg_rsp *cfg_rsp = &tx->bfi_enet_cmd.cfg_rsp;
-	struct bna_txq *txq = NULL;
-	int i;
+व्योम
+bna_bfi_tx_enet_start_rsp(काष्ठा bna_tx *tx, काष्ठा bfi_msgq_mhdr *msghdr)
+अणु
+	काष्ठा bfi_enet_tx_cfg_rsp *cfg_rsp = &tx->bfi_enet_cmd.cfg_rsp;
+	काष्ठा bna_txq *txq = शून्य;
+	पूर्णांक i;
 
 	bfa_msgq_rsp_copy(&tx->bna->msgq, (u8 *)cfg_rsp,
-		sizeof(struct bfi_enet_tx_cfg_rsp));
+		माप(काष्ठा bfi_enet_tx_cfg_rsp));
 
 	tx->hw_id = cfg_rsp->hw_id;
 
-	for (i = 0, txq = list_first_entry(&tx->txq_q, struct bna_txq, qe);
-	     i < tx->num_txq; i++, txq = list_next_entry(txq, qe)) {
-		/* Setup doorbells */
-		txq->tcb->i_dbell->doorbell_addr =
+	क्रम (i = 0, txq = list_first_entry(&tx->txq_q, काष्ठा bna_txq, qe);
+	     i < tx->num_txq; i++, txq = list_next_entry(txq, qe)) अणु
+		/* Setup करोorbells */
+		txq->tcb->i_dbell->करोorbell_addr =
 			tx->bna->pcidev.pci_bar_kva
 			+ ntohl(cfg_rsp->q_handles[i].i_dbell);
 		txq->tcb->q_dbell =
@@ -3292,37 +3293,37 @@ bna_bfi_tx_enet_start_rsp(struct bna_tx *tx, struct bfi_msgq_mhdr *msghdr)
 		/* Initialize producer/consumer indexes */
 		(*txq->tcb->hw_consumer_index) = 0;
 		txq->tcb->producer_index = txq->tcb->consumer_index = 0;
-	}
+	पूर्ण
 
 	bfa_fsm_send_event(tx, TX_E_STARTED);
-}
+पूर्ण
 
-void
-bna_bfi_tx_enet_stop_rsp(struct bna_tx *tx, struct bfi_msgq_mhdr *msghdr)
-{
+व्योम
+bna_bfi_tx_enet_stop_rsp(काष्ठा bna_tx *tx, काष्ठा bfi_msgq_mhdr *msghdr)
+अणु
 	bfa_fsm_send_event(tx, TX_E_STOPPED);
-}
+पूर्ण
 
-void
-bna_bfi_bw_update_aen(struct bna_tx_mod *tx_mod)
-{
-	struct bna_tx *tx;
+व्योम
+bna_bfi_bw_update_aen(काष्ठा bna_tx_mod *tx_mod)
+अणु
+	काष्ठा bna_tx *tx;
 
-	list_for_each_entry(tx, &tx_mod->tx_active_q, qe)
+	list_क्रम_each_entry(tx, &tx_mod->tx_active_q, qe)
 		bfa_fsm_send_event(tx, TX_E_BW_UPDATE);
-}
+पूर्ण
 
-void
-bna_tx_res_req(int num_txq, int txq_depth, struct bna_res_info *res_info)
-{
+व्योम
+bna_tx_res_req(पूर्णांक num_txq, पूर्णांक txq_depth, काष्ठा bna_res_info *res_info)
+अणु
 	u32 q_size;
 	u32 page_count;
-	struct bna_mem_info *mem_info;
+	काष्ठा bna_mem_info *mem_info;
 
 	res_info[BNA_TX_RES_MEM_T_TCB].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_TX_RES_MEM_T_TCB].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_KVA;
-	mem_info->len = sizeof(struct bna_tcb);
+	mem_info->len = माप(काष्ठा bna_tcb);
 	mem_info->num = num_txq;
 
 	q_size = txq_depth * BFI_TXQ_WI_SIZE;
@@ -3332,13 +3333,13 @@ bna_tx_res_req(int num_txq, int txq_depth, struct bna_res_info *res_info)
 	res_info[BNA_TX_RES_MEM_T_QPT].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_TX_RES_MEM_T_QPT].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_DMA;
-	mem_info->len = page_count * sizeof(struct bna_dma_addr);
+	mem_info->len = page_count * माप(काष्ठा bna_dma_addr);
 	mem_info->num = num_txq;
 
 	res_info[BNA_TX_RES_MEM_T_SWQPT].res_type = BNA_RES_T_MEM;
 	mem_info = &res_info[BNA_TX_RES_MEM_T_SWQPT].res_u.mem_info;
 	mem_info->mem_type = BNA_MEM_T_KVA;
-	mem_info->len = page_count * sizeof(void *);
+	mem_info->len = page_count * माप(व्योम *);
 	mem_info->num = num_txq;
 
 	res_info[BNA_TX_RES_MEM_T_PAGE].res_type = BNA_RES_T_MEM;
@@ -3354,25 +3355,25 @@ bna_tx_res_req(int num_txq, int txq_depth, struct bna_res_info *res_info)
 	mem_info->num = num_txq;
 
 	res_info[BNA_TX_RES_INTR_T_TXCMPL].res_type = BNA_RES_T_INTR;
-	res_info[BNA_TX_RES_INTR_T_TXCMPL].res_u.intr_info.intr_type =
+	res_info[BNA_TX_RES_INTR_T_TXCMPL].res_u.पूर्णांकr_info.पूर्णांकr_type =
 			BNA_INTR_T_MSIX;
-	res_info[BNA_TX_RES_INTR_T_TXCMPL].res_u.intr_info.num = num_txq;
-}
+	res_info[BNA_TX_RES_INTR_T_TXCMPL].res_u.पूर्णांकr_info.num = num_txq;
+पूर्ण
 
-struct bna_tx *
-bna_tx_create(struct bna *bna, struct bnad *bnad,
-		struct bna_tx_config *tx_cfg,
-		const struct bna_tx_event_cbfn *tx_cbfn,
-		struct bna_res_info *res_info, void *priv)
-{
-	struct bna_intr_info *intr_info;
-	struct bna_tx_mod *tx_mod = &bna->tx_mod;
-	struct bna_tx *tx;
-	struct bna_txq *txq;
-	int page_count;
-	int i;
+काष्ठा bna_tx *
+bna_tx_create(काष्ठा bna *bna, काष्ठा bnad *bnad,
+		काष्ठा bna_tx_config *tx_cfg,
+		स्थिर काष्ठा bna_tx_event_cbfn *tx_cbfn,
+		काष्ठा bna_res_info *res_info, व्योम *priv)
+अणु
+	काष्ठा bna_पूर्णांकr_info *पूर्णांकr_info;
+	काष्ठा bna_tx_mod *tx_mod = &bna->tx_mod;
+	काष्ठा bna_tx *tx;
+	काष्ठा bna_txq *txq;
+	पूर्णांक page_count;
+	पूर्णांक i;
 
-	intr_info = &res_info[BNA_TX_RES_INTR_T_TXCMPL].res_u.intr_info;
+	पूर्णांकr_info = &res_info[BNA_TX_RES_INTR_T_TXCMPL].res_u.पूर्णांकr_info;
 	page_count = (res_info[BNA_TX_RES_MEM_T_PAGE].res_u.mem_info.len) /
 					PAGE_SIZE;
 
@@ -3380,28 +3381,28 @@ bna_tx_create(struct bna *bna, struct bnad *bnad,
 	 * Get resources
 	 */
 
-	if ((intr_info->num != 1) && (intr_info->num != tx_cfg->num_txq))
-		return NULL;
+	अगर ((पूर्णांकr_info->num != 1) && (पूर्णांकr_info->num != tx_cfg->num_txq))
+		वापस शून्य;
 
 	/* Tx */
 
 	tx = bna_tx_get(tx_mod, tx_cfg->tx_type);
-	if (!tx)
-		return NULL;
+	अगर (!tx)
+		वापस शून्य;
 	tx->bna = bna;
 	tx->priv = priv;
 
 	/* TxQs */
 
 	INIT_LIST_HEAD(&tx->txq_q);
-	for (i = 0; i < tx_cfg->num_txq; i++) {
-		if (list_empty(&tx_mod->txq_free_q))
-			goto err_return;
+	क्रम (i = 0; i < tx_cfg->num_txq; i++) अणु
+		अगर (list_empty(&tx_mod->txq_मुक्त_q))
+			जाओ err_वापस;
 
-		txq = list_first_entry(&tx_mod->txq_free_q, struct bna_txq, qe);
+		txq = list_first_entry(&tx_mod->txq_मुक्त_q, काष्ठा bna_txq, qe);
 		list_move_tail(&txq->qe, &tx->txq_q);
 		txq->tx = tx;
-	}
+	पूर्ण
 
 	/*
 	 * Initialize
@@ -3421,25 +3422,25 @@ bna_tx_create(struct bna *bna, struct bnad *bnad,
 	tx->num_txq = tx_cfg->num_txq;
 
 	tx->flags = 0;
-	if (tx->bna->tx_mod.flags & BNA_TX_MOD_F_ENET_STARTED) {
-		switch (tx->type) {
-		case BNA_TX_T_REGULAR:
-			if (!(tx->bna->tx_mod.flags &
+	अगर (tx->bna->tx_mod.flags & BNA_TX_MOD_F_ENET_STARTED) अणु
+		चयन (tx->type) अणु
+		हाल BNA_TX_T_REGULAR:
+			अगर (!(tx->bna->tx_mod.flags &
 				BNA_TX_MOD_F_ENET_LOOPBACK))
 				tx->flags |= BNA_TX_F_ENET_STARTED;
-			break;
-		case BNA_TX_T_LOOPBACK:
-			if (tx->bna->tx_mod.flags & BNA_TX_MOD_F_ENET_LOOPBACK)
+			अवरोध;
+		हाल BNA_TX_T_LOOPBACK:
+			अगर (tx->bna->tx_mod.flags & BNA_TX_MOD_F_ENET_LOOPBACK)
 				tx->flags |= BNA_TX_F_ENET_STARTED;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* TxQ */
 
 	i = 0;
-	list_for_each_entry(txq, &tx->txq_q, qe) {
-		txq->tcb = (struct bna_tcb *)
+	list_क्रम_each_entry(txq, &tx->txq_q, qe) अणु
+		txq->tcb = (काष्ठा bna_tcb *)
 		res_info[BNA_TX_RES_MEM_T_TCB].res_u.mem_info.mdl[i].kva;
 		txq->tx_packets = 0;
 		txq->tx_bytes = 0;
@@ -3451,26 +3452,26 @@ bna_tx_create(struct bna *bna, struct bnad *bnad,
 		res_info[BNA_TX_RES_MEM_T_IBIDX].res_u.mem_info.mdl[i].dma.msb;
 		txq->ib.ib_seg_host_addr_kva =
 		res_info[BNA_TX_RES_MEM_T_IBIDX].res_u.mem_info.mdl[i].kva;
-		txq->ib.intr_type = intr_info->intr_type;
-		txq->ib.intr_vector = (intr_info->num == 1) ?
-					intr_info->idl[0].vector :
-					intr_info->idl[i].vector;
-		if (intr_info->intr_type == BNA_INTR_T_INTX)
-			txq->ib.intr_vector = BIT(txq->ib.intr_vector);
-		txq->ib.coalescing_timeo = tx_cfg->coalescing_timeo;
-		txq->ib.interpkt_timeo = BFI_TX_INTERPKT_TIMEO;
-		txq->ib.interpkt_count = BFI_TX_INTERPKT_COUNT;
+		txq->ib.पूर्णांकr_type = पूर्णांकr_info->पूर्णांकr_type;
+		txq->ib.पूर्णांकr_vector = (पूर्णांकr_info->num == 1) ?
+					पूर्णांकr_info->idl[0].vector :
+					पूर्णांकr_info->idl[i].vector;
+		अगर (पूर्णांकr_info->पूर्णांकr_type == BNA_INTR_T_INTX)
+			txq->ib.पूर्णांकr_vector = BIT(txq->ib.पूर्णांकr_vector);
+		txq->ib.coalescing_समयo = tx_cfg->coalescing_समयo;
+		txq->ib.पूर्णांकerpkt_समयo = BFI_TX_INTERPKT_TIMEO;
+		txq->ib.पूर्णांकerpkt_count = BFI_TX_INTERPKT_COUNT;
 
 		/* TCB */
 
 		txq->tcb->q_depth = tx_cfg->txq_depth;
-		txq->tcb->unmap_q = (void *)
+		txq->tcb->unmap_q = (व्योम *)
 		res_info[BNA_TX_RES_MEM_T_UNMAPQ].res_u.mem_info.mdl[i].kva;
 		txq->tcb->hw_consumer_index =
 			(u32 *)txq->ib.ib_seg_host_addr_kva;
-		txq->tcb->i_dbell = &txq->ib.door_bell;
-		txq->tcb->intr_type = txq->ib.intr_type;
-		txq->tcb->intr_vector = txq->ib.intr_vector;
+		txq->tcb->i_dbell = &txq->ib.करोor_bell;
+		txq->tcb->पूर्णांकr_type = txq->ib.पूर्णांकr_type;
+		txq->tcb->पूर्णांकr_vector = txq->ib.पूर्णांकr_vector;
 		txq->tcb->txq = txq;
 		txq->tcb->bnad = bnad;
 		txq->tcb->id = i;
@@ -3482,17 +3483,17 @@ bna_tx_create(struct bna *bna, struct bnad *bnad,
 			&res_info[BNA_TX_RES_MEM_T_PAGE].
 				  res_u.mem_info.mdl[i]);
 
-		/* Callback to bnad for setting up TCB */
-		if (tx->tcb_setup_cbfn)
+		/* Callback to bnad क्रम setting up TCB */
+		अगर (tx->tcb_setup_cbfn)
 			(tx->tcb_setup_cbfn)(bna->bnad, txq->tcb);
 
-		if (tx_cfg->num_txq == BFI_TX_MAX_PRIO)
+		अगर (tx_cfg->num_txq == BFI_TX_MAX_PRIO)
 			txq->priority = txq->tcb->id;
-		else
-			txq->priority = tx_mod->default_prio;
+		अन्यथा
+			txq->priority = tx_mod->शेष_prio;
 
 		i++;
-	}
+	पूर्ण
 
 	tx->txf_vlan_id = 0;
 
@@ -3500,46 +3501,46 @@ bna_tx_create(struct bna *bna, struct bnad *bnad,
 
 	tx_mod->rid_mask |= BIT(tx->rid);
 
-	return tx;
+	वापस tx;
 
-err_return:
-	bna_tx_free(tx);
-	return NULL;
-}
+err_वापस:
+	bna_tx_मुक्त(tx);
+	वापस शून्य;
+पूर्ण
 
-void
-bna_tx_destroy(struct bna_tx *tx)
-{
-	struct bna_txq *txq;
+व्योम
+bna_tx_destroy(काष्ठा bna_tx *tx)
+अणु
+	काष्ठा bna_txq *txq;
 
-	list_for_each_entry(txq, &tx->txq_q, qe)
-		if (tx->tcb_destroy_cbfn)
+	list_क्रम_each_entry(txq, &tx->txq_q, qe)
+		अगर (tx->tcb_destroy_cbfn)
 			(tx->tcb_destroy_cbfn)(tx->bna->bnad, txq->tcb);
 
 	tx->bna->tx_mod.rid_mask &= ~BIT(tx->rid);
-	bna_tx_free(tx);
-}
+	bna_tx_मुक्त(tx);
+पूर्ण
 
-void
-bna_tx_enable(struct bna_tx *tx)
-{
-	if (tx->fsm != (bfa_sm_t)bna_tx_sm_stopped)
-		return;
+व्योम
+bna_tx_enable(काष्ठा bna_tx *tx)
+अणु
+	अगर (tx->fsm != (bfa_sm_t)bna_tx_sm_stopped)
+		वापस;
 
 	tx->flags |= BNA_TX_F_ENABLED;
 
-	if (tx->flags & BNA_TX_F_ENET_STARTED)
+	अगर (tx->flags & BNA_TX_F_ENET_STARTED)
 		bfa_fsm_send_event(tx, TX_E_START);
-}
+पूर्ण
 
-void
-bna_tx_disable(struct bna_tx *tx, enum bna_cleanup_type type,
-		void (*cbfn)(void *, struct bna_tx *))
-{
-	if (type == BNA_SOFT_CLEANUP) {
+व्योम
+bna_tx_disable(काष्ठा bna_tx *tx, क्रमागत bna_cleanup_type type,
+		व्योम (*cbfn)(व्योम *, काष्ठा bna_tx *))
+अणु
+	अगर (type == BNA_SOFT_CLEANUP) अणु
 		(*cbfn)(tx->bna->bnad, tx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tx->stop_cbfn = cbfn;
 	tx->stop_cbarg = tx->bna->bnad;
@@ -3547,87 +3548,87 @@ bna_tx_disable(struct bna_tx *tx, enum bna_cleanup_type type,
 	tx->flags &= ~BNA_TX_F_ENABLED;
 
 	bfa_fsm_send_event(tx, TX_E_STOP);
-}
+पूर्ण
 
-void
-bna_tx_cleanup_complete(struct bna_tx *tx)
-{
+व्योम
+bna_tx_cleanup_complete(काष्ठा bna_tx *tx)
+अणु
 	bfa_fsm_send_event(tx, TX_E_CLEANUP_DONE);
-}
+पूर्ण
 
-static void
-bna_tx_mod_cb_tx_stopped(void *arg, struct bna_tx *tx)
-{
-	struct bna_tx_mod *tx_mod = (struct bna_tx_mod *)arg;
+अटल व्योम
+bna_tx_mod_cb_tx_stopped(व्योम *arg, काष्ठा bna_tx *tx)
+अणु
+	काष्ठा bna_tx_mod *tx_mod = (काष्ठा bna_tx_mod *)arg;
 
-	bfa_wc_down(&tx_mod->tx_stop_wc);
-}
+	bfa_wc_करोwn(&tx_mod->tx_stop_wc);
+पूर्ण
 
-static void
-bna_tx_mod_cb_tx_stopped_all(void *arg)
-{
-	struct bna_tx_mod *tx_mod = (struct bna_tx_mod *)arg;
+अटल व्योम
+bna_tx_mod_cb_tx_stopped_all(व्योम *arg)
+अणु
+	काष्ठा bna_tx_mod *tx_mod = (काष्ठा bna_tx_mod *)arg;
 
-	if (tx_mod->stop_cbfn)
+	अगर (tx_mod->stop_cbfn)
 		tx_mod->stop_cbfn(&tx_mod->bna->enet);
-	tx_mod->stop_cbfn = NULL;
-}
+	tx_mod->stop_cbfn = शून्य;
+पूर्ण
 
-void
-bna_tx_mod_init(struct bna_tx_mod *tx_mod, struct bna *bna,
-		struct bna_res_info *res_info)
-{
-	int i;
+व्योम
+bna_tx_mod_init(काष्ठा bna_tx_mod *tx_mod, काष्ठा bna *bna,
+		काष्ठा bna_res_info *res_info)
+अणु
+	पूर्णांक i;
 
 	tx_mod->bna = bna;
 	tx_mod->flags = 0;
 
-	tx_mod->tx = (struct bna_tx *)
+	tx_mod->tx = (काष्ठा bna_tx *)
 		res_info[BNA_MOD_RES_MEM_T_TX_ARRAY].res_u.mem_info.mdl[0].kva;
-	tx_mod->txq = (struct bna_txq *)
+	tx_mod->txq = (काष्ठा bna_txq *)
 		res_info[BNA_MOD_RES_MEM_T_TXQ_ARRAY].res_u.mem_info.mdl[0].kva;
 
-	INIT_LIST_HEAD(&tx_mod->tx_free_q);
+	INIT_LIST_HEAD(&tx_mod->tx_मुक्त_q);
 	INIT_LIST_HEAD(&tx_mod->tx_active_q);
 
-	INIT_LIST_HEAD(&tx_mod->txq_free_q);
+	INIT_LIST_HEAD(&tx_mod->txq_मुक्त_q);
 
-	for (i = 0; i < bna->ioceth.attr.num_txq; i++) {
+	क्रम (i = 0; i < bna->ioceth.attr.num_txq; i++) अणु
 		tx_mod->tx[i].rid = i;
-		list_add_tail(&tx_mod->tx[i].qe, &tx_mod->tx_free_q);
-		list_add_tail(&tx_mod->txq[i].qe, &tx_mod->txq_free_q);
-	}
+		list_add_tail(&tx_mod->tx[i].qe, &tx_mod->tx_मुक्त_q);
+		list_add_tail(&tx_mod->txq[i].qe, &tx_mod->txq_मुक्त_q);
+	पूर्ण
 
 	tx_mod->prio_map = BFI_TX_PRIO_MAP_ALL;
-	tx_mod->default_prio = 0;
+	tx_mod->शेष_prio = 0;
 	tx_mod->iscsi_over_cee = BNA_STATUS_T_DISABLED;
 	tx_mod->iscsi_prio = -1;
-}
+पूर्ण
 
-void
-bna_tx_mod_uninit(struct bna_tx_mod *tx_mod)
-{
-	tx_mod->bna = NULL;
-}
+व्योम
+bna_tx_mod_uninit(काष्ठा bna_tx_mod *tx_mod)
+अणु
+	tx_mod->bna = शून्य;
+पूर्ण
 
-void
-bna_tx_mod_start(struct bna_tx_mod *tx_mod, enum bna_tx_type type)
-{
-	struct bna_tx *tx;
+व्योम
+bna_tx_mod_start(काष्ठा bna_tx_mod *tx_mod, क्रमागत bna_tx_type type)
+अणु
+	काष्ठा bna_tx *tx;
 
 	tx_mod->flags |= BNA_TX_MOD_F_ENET_STARTED;
-	if (type == BNA_TX_T_LOOPBACK)
+	अगर (type == BNA_TX_T_LOOPBACK)
 		tx_mod->flags |= BNA_TX_MOD_F_ENET_LOOPBACK;
 
-	list_for_each_entry(tx, &tx_mod->tx_active_q, qe)
-		if (tx->type == type)
+	list_क्रम_each_entry(tx, &tx_mod->tx_active_q, qe)
+		अगर (tx->type == type)
 			bna_tx_start(tx);
-}
+पूर्ण
 
-void
-bna_tx_mod_stop(struct bna_tx_mod *tx_mod, enum bna_tx_type type)
-{
-	struct bna_tx *tx;
+व्योम
+bna_tx_mod_stop(काष्ठा bna_tx_mod *tx_mod, क्रमागत bna_tx_type type)
+अणु
+	काष्ठा bna_tx *tx;
 
 	tx_mod->flags &= ~BNA_TX_MOD_F_ENET_STARTED;
 	tx_mod->flags &= ~BNA_TX_MOD_F_ENET_LOOPBACK;
@@ -3636,32 +3637,32 @@ bna_tx_mod_stop(struct bna_tx_mod *tx_mod, enum bna_tx_type type)
 
 	bfa_wc_init(&tx_mod->tx_stop_wc, bna_tx_mod_cb_tx_stopped_all, tx_mod);
 
-	list_for_each_entry(tx, &tx_mod->tx_active_q, qe)
-		if (tx->type == type) {
+	list_क्रम_each_entry(tx, &tx_mod->tx_active_q, qe)
+		अगर (tx->type == type) अणु
 			bfa_wc_up(&tx_mod->tx_stop_wc);
 			bna_tx_stop(tx);
-		}
+		पूर्ण
 
-	bfa_wc_wait(&tx_mod->tx_stop_wc);
-}
+	bfa_wc_रुको(&tx_mod->tx_stop_wc);
+पूर्ण
 
-void
-bna_tx_mod_fail(struct bna_tx_mod *tx_mod)
-{
-	struct bna_tx *tx;
+व्योम
+bna_tx_mod_fail(काष्ठा bna_tx_mod *tx_mod)
+अणु
+	काष्ठा bna_tx *tx;
 
 	tx_mod->flags &= ~BNA_TX_MOD_F_ENET_STARTED;
 	tx_mod->flags &= ~BNA_TX_MOD_F_ENET_LOOPBACK;
 
-	list_for_each_entry(tx, &tx_mod->tx_active_q, qe)
+	list_क्रम_each_entry(tx, &tx_mod->tx_active_q, qe)
 		bna_tx_fail(tx);
-}
+पूर्ण
 
-void
-bna_tx_coalescing_timeo_set(struct bna_tx *tx, int coalescing_timeo)
-{
-	struct bna_txq *txq;
+व्योम
+bna_tx_coalescing_समयo_set(काष्ठा bna_tx *tx, पूर्णांक coalescing_समयo)
+अणु
+	काष्ठा bna_txq *txq;
 
-	list_for_each_entry(txq, &tx->txq_q, qe)
-		bna_ib_coalescing_timeo_set(&txq->ib, coalescing_timeo);
-}
+	list_क्रम_each_entry(txq, &tx->txq_q, qe)
+		bna_ib_coalescing_समयo_set(&txq->ib, coalescing_समयo);
+पूर्ण

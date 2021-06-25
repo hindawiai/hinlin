@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * This file is never included by application software unless explicitly
- * requested (e.g., via linux/types.h) in which case the application is
- * Linux specific so (user-) name space pollution is not a major issue.
- * However, for interoperability, libraries still need to be careful to
- * avoid naming clashes.
+ * requested (e.g., via linux/types.h) in which हाल the application is
+ * Linux specअगरic so (user-) name space pollution is not a major issue.
+ * However, क्रम पूर्णांकeroperability, libraries still need to be careful to
+ * aव्योम naming clashes.
  *
- * Based on <asm-alpha/types.h>.
+ * Based on <यंत्र-alpha/types.h>.
  *
- * Modified 1998-2000, 2002
+ * Modअगरied 1998-2000, 2002
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  */
-#ifndef _ASM_IA64_TYPES_H
-#define _ASM_IA64_TYPES_H
+#अगर_अघोषित _ASM_IA64_TYPES_H
+#घोषणा _ASM_IA64_TYPES_H
 
-#include <asm-generic/int-ll64.h>
-#include <uapi/asm/types.h>
+#समावेश <यंत्र-generic/पूर्णांक-ll64.h>
+#समावेश <uapi/यंत्र/types.h>
 
-#ifdef __ASSEMBLY__
-#else
+#अगर_घोषित __ASSEMBLY__
+#अन्यथा
 /*
- * These aren't exported outside the kernel to avoid name space clashes
+ * These aren't exported outside the kernel to aव्योम name space clashes
  */
 
-struct fnptr {
-	unsigned long ip;
-	unsigned long gp;
-};
+काष्ठा fnptr अणु
+	अचिन्हित दीर्घ ip;
+	अचिन्हित दीर्घ gp;
+पूर्ण;
 
-#endif /* !__ASSEMBLY__ */
-#endif /* _ASM_IA64_TYPES_H */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* _ASM_IA64_TYPES_H */

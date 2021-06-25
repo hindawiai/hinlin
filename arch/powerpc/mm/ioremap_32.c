@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <mm/mmu_decl.h>
+#समावेश <mm/mmu_decl.h>
 
-void __iomem *ioremap_wt(phys_addr_t addr, unsigned long size)
-{
+व्योम __iomem *ioremap_wt(phys_addr_t addr, अचिन्हित दीर्घ size)
+अणु
 	pgprot_t prot = pgprot_cached_wthru(PAGE_KERNEL);
 
-	return __ioremap_caller(addr, size, prot, __builtin_return_address(0));
-}
+	वापस __ioremap_caller(addr, size, prot, __builtin_वापस_address(0));
+पूर्ण
 EXPORT_SYMBOL(ioremap_wt);
 
-void __iomem *
-__ioremap_caller(phys_addr_t addr, unsigned long size, pgprot_t prot, void *caller)
-{
-	unsigned long v;
+व्योम __iomem *
+__ioremap_caller(phys_addr_t addr, अचिन्हित दीर्घ size, pgprot_t prot, व्योम *caller)
+अणु
+	अचिन्हित दीर्घ v;
 	phys_addr_t p, offset;
-	int err;
+	पूर्णांक err;
 
 	/*
 	 * Choose an address to map it to.
-	 * Once the vmalloc system is running, we use it.
-	 * Before then, we use space going down from IOREMAP_TOP
+	 * Once the vदो_स्मृति प्रणाली is running, we use it.
+	 * Beक्रमe then, we use space going करोwn from IOREMAP_TOP
 	 * (ioremap_bot records where we're up to).
 	 */
 	p = addr & PAGE_MASK;
@@ -35,59 +36,59 @@ __ioremap_caller(phys_addr_t addr, unsigned long size, pgprot_t prot, void *call
 	 * If the address lies within the first 16 MB, assume it's in ISA
 	 * memory space
 	 */
-	if (p < 16 * 1024 * 1024)
+	अगर (p < 16 * 1024 * 1024)
 		p += _ISA_MEM_BASE;
 
-#ifndef CONFIG_CRASH_DUMP
+#अगर_अघोषित CONFIG_CRASH_DUMP
 	/*
 	 * Don't allow anybody to remap normal RAM that we're using.
-	 * mem_init() sets high_memory so only do the check after that.
+	 * mem_init() sets high_memory so only करो the check after that.
 	 */
-	if (slab_is_available() && p <= virt_to_phys(high_memory - 1) &&
-	    page_is_ram(__phys_to_pfn(p))) {
+	अगर (slab_is_available() && p <= virt_to_phys(high_memory - 1) &&
+	    page_is_ram(__phys_to_pfn(p))) अणु
 		pr_warn("%s(): phys addr 0x%llx is RAM lr %ps\n", __func__,
-			(unsigned long long)p, __builtin_return_address(0));
-		return NULL;
-	}
-#endif
+			(अचिन्हित दीर्घ दीर्घ)p, __builtin_वापस_address(0));
+		वापस शून्य;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (size == 0)
-		return NULL;
+	अगर (size == 0)
+		वापस शून्य;
 
 	/*
-	 * Is it already mapped?  Perhaps overlapped by a previous
+	 * Is it alपढ़ोy mapped?  Perhaps overlapped by a previous
 	 * mapping.
 	 */
 	v = p_block_mapped(p);
-	if (v)
-		return (void __iomem *)v + offset;
+	अगर (v)
+		वापस (व्योम __iomem *)v + offset;
 
-	if (slab_is_available())
-		return do_ioremap(p, offset, size, prot, caller);
+	अगर (slab_is_available())
+		वापस करो_ioremap(p, offset, size, prot, caller);
 
 	/*
-	 * Should check if it is a candidate for a BAT mapping
+	 * Should check अगर it is a candidate क्रम a BAT mapping
 	 */
 	pr_warn("ioremap() called early from %pS. Use early_ioremap() instead\n", caller);
 
 	err = early_ioremap_range(ioremap_bot - size, p, size, prot);
-	if (err)
-		return NULL;
+	अगर (err)
+		वापस शून्य;
 	ioremap_bot -= size;
 
-	return (void __iomem *)ioremap_bot + offset;
-}
+	वापस (व्योम __iomem *)ioremap_bot + offset;
+पूर्ण
 
-void iounmap(volatile void __iomem *addr)
-{
+व्योम iounmap(अस्थिर व्योम __iomem *addr)
+अणु
 	/*
-	 * If mapped by BATs then there is nothing to do.
-	 * Calling vfree() generates a benign warning.
+	 * If mapped by BATs then there is nothing to करो.
+	 * Calling vमुक्त() generates a benign warning.
 	 */
-	if (v_block_mapped((unsigned long)addr))
-		return;
+	अगर (v_block_mapped((अचिन्हित दीर्घ)addr))
+		वापस;
 
-	if (addr > high_memory && (unsigned long)addr < ioremap_bot)
-		vunmap((void *)(PAGE_MASK & (unsigned long)addr));
-}
+	अगर (addr > high_memory && (अचिन्हित दीर्घ)addr < ioremap_bot)
+		vunmap((व्योम *)(PAGE_MASK & (अचिन्हित दीर्घ)addr));
+पूर्ण
 EXPORT_SYMBOL(iounmap);

@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef I915_SW_FENCE_WORK_H
-#define I915_SW_FENCE_WORK_H
+#अगर_अघोषित I915_SW_FENCE_WORK_H
+#घोषणा I915_SW_FENCE_WORK_H
 
-#include <linux/dma-fence.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
+#समावेश <linux/dma-fence.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
 
-#include "i915_sw_fence.h"
+#समावेश "i915_sw_fence.h"
 
-struct dma_fence_work;
+काष्ठा dma_fence_work;
 
-struct dma_fence_work_ops {
-	const char *name;
-	int (*work)(struct dma_fence_work *f);
-	void (*release)(struct dma_fence_work *f);
-};
+काष्ठा dma_fence_work_ops अणु
+	स्थिर अक्षर *name;
+	पूर्णांक (*work)(काष्ठा dma_fence_work *f);
+	व्योम (*release)(काष्ठा dma_fence_work *f);
+पूर्ण;
 
-struct dma_fence_work {
-	struct dma_fence dma;
+काष्ठा dma_fence_work अणु
+	काष्ठा dma_fence dma;
 	spinlock_t lock;
 
-	struct i915_sw_fence chain;
-	struct i915_sw_dma_fence_cb cb;
+	काष्ठा i915_sw_fence chain;
+	काष्ठा i915_sw_dma_fence_cb cb;
 
-	struct work_struct work;
-	const struct dma_fence_work_ops *ops;
-};
+	काष्ठा work_काष्ठा work;
+	स्थिर काष्ठा dma_fence_work_ops *ops;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	DMA_FENCE_WORK_IMM = DMA_FENCE_FLAG_USER_BITS,
-};
+पूर्ण;
 
-void dma_fence_work_init(struct dma_fence_work *f,
-			 const struct dma_fence_work_ops *ops);
-int dma_fence_work_chain(struct dma_fence_work *f, struct dma_fence *signal);
+व्योम dma_fence_work_init(काष्ठा dma_fence_work *f,
+			 स्थिर काष्ठा dma_fence_work_ops *ops);
+पूर्णांक dma_fence_work_chain(काष्ठा dma_fence_work *f, काष्ठा dma_fence *संकेत);
 
-static inline void dma_fence_work_commit(struct dma_fence_work *f)
-{
+अटल अंतरभूत व्योम dma_fence_work_commit(काष्ठा dma_fence_work *f)
+अणु
 	i915_sw_fence_commit(&f->chain);
-}
+पूर्ण
 
 /**
- * dma_fence_work_commit_imm: Commit the fence, and if possible execute locally.
+ * dma_fence_work_commit_imm: Commit the fence, and अगर possible execute locally.
  * @f: the fenced worker
  *
  * Instead of always scheduling a worker to execute the callback (see
  * dma_fence_work_commit()), we try to execute the callback immediately in
- * the local context. It is required that the fence be committed before it
- * is published, and that no other threads try to tamper with the number
- * of asynchronous waits on the fence (or else the callback will be
+ * the local context. It is required that the fence be committed beक्रमe it
+ * is published, and that no other thपढ़ोs try to tamper with the number
+ * of asynchronous रुकोs on the fence (or अन्यथा the callback will be
  * executed in the wrong context, i.e. not the callers).
  */
-static inline void dma_fence_work_commit_imm(struct dma_fence_work *f)
-{
-	if (atomic_read(&f->chain.pending) <= 1)
+अटल अंतरभूत व्योम dma_fence_work_commit_imm(काष्ठा dma_fence_work *f)
+अणु
+	अगर (atomic_पढ़ो(&f->chain.pending) <= 1)
 		__set_bit(DMA_FENCE_WORK_IMM, &f->dma.flags);
 
 	dma_fence_work_commit(f);
-}
+पूर्ण
 
-#endif /* I915_SW_FENCE_WORK_H */
+#पूर्ण_अगर /* I915_SW_FENCE_WORK_H */

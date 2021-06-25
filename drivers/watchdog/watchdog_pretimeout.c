@@ -1,215 +1,216 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015-2016 Mentor Graphics
  */
 
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/watchdog.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/watchकरोg.h>
 
-#include "watchdog_pretimeout.h"
+#समावेश "watchdog_pretimeout.h"
 
-/* Default watchdog pretimeout governor */
-static struct watchdog_governor *default_gov;
+/* Default watchकरोg preसमयout governor */
+अटल काष्ठा watchकरोg_governor *शेष_gov;
 
-/* The spinlock protects default_gov, wdd->gov and pretimeout_list */
-static DEFINE_SPINLOCK(pretimeout_lock);
+/* The spinlock protects शेष_gov, wdd->gov and preसमयout_list */
+अटल DEFINE_SPINLOCK(preसमयout_lock);
 
-/* List of watchdog devices, which can generate a pretimeout event */
-static LIST_HEAD(pretimeout_list);
+/* List of watchकरोg devices, which can generate a preसमयout event */
+अटल LIST_HEAD(preसमयout_list);
 
-struct watchdog_pretimeout {
-	struct watchdog_device		*wdd;
-	struct list_head		entry;
-};
+काष्ठा watchकरोg_preसमयout अणु
+	काष्ठा watchकरोg_device		*wdd;
+	काष्ठा list_head		entry;
+पूर्ण;
 
-/* The mutex protects governor list and serializes external interfaces */
-static DEFINE_MUTEX(governor_lock);
+/* The mutex protects governor list and serializes बाह्यal पूर्णांकerfaces */
+अटल DEFINE_MUTEX(governor_lock);
 
-/* List of the registered watchdog pretimeout governors */
-static LIST_HEAD(governor_list);
+/* List of the रेजिस्टरed watchकरोg preसमयout governors */
+अटल LIST_HEAD(governor_list);
 
-struct governor_priv {
-	struct watchdog_governor	*gov;
-	struct list_head		entry;
-};
+काष्ठा governor_priv अणु
+	काष्ठा watchकरोg_governor	*gov;
+	काष्ठा list_head		entry;
+पूर्ण;
 
-static struct governor_priv *find_governor_by_name(const char *gov_name)
-{
-	struct governor_priv *priv;
+अटल काष्ठा governor_priv *find_governor_by_name(स्थिर अक्षर *gov_name)
+अणु
+	काष्ठा governor_priv *priv;
 
-	list_for_each_entry(priv, &governor_list, entry)
-		if (sysfs_streq(gov_name, priv->gov->name))
-			return priv;
+	list_क्रम_each_entry(priv, &governor_list, entry)
+		अगर (sysfs_streq(gov_name, priv->gov->name))
+			वापस priv;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int watchdog_pretimeout_available_governors_get(char *buf)
-{
-	struct governor_priv *priv;
-	int count = 0;
+पूर्णांक watchकरोg_preसमयout_available_governors_get(अक्षर *buf)
+अणु
+	काष्ठा governor_priv *priv;
+	पूर्णांक count = 0;
 
 	mutex_lock(&governor_lock);
 
-	list_for_each_entry(priv, &governor_list, entry)
-		count += sprintf(buf + count, "%s\n", priv->gov->name);
+	list_क्रम_each_entry(priv, &governor_list, entry)
+		count += प्र_लिखो(buf + count, "%s\n", priv->gov->name);
 
 	mutex_unlock(&governor_lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-int watchdog_pretimeout_governor_get(struct watchdog_device *wdd, char *buf)
-{
-	int count = 0;
+पूर्णांक watchकरोg_preसमयout_governor_get(काष्ठा watchकरोg_device *wdd, अक्षर *buf)
+अणु
+	पूर्णांक count = 0;
 
-	spin_lock_irq(&pretimeout_lock);
-	if (wdd->gov)
-		count = sprintf(buf, "%s\n", wdd->gov->name);
-	spin_unlock_irq(&pretimeout_lock);
+	spin_lock_irq(&preसमयout_lock);
+	अगर (wdd->gov)
+		count = प्र_लिखो(buf, "%s\n", wdd->gov->name);
+	spin_unlock_irq(&preसमयout_lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-int watchdog_pretimeout_governor_set(struct watchdog_device *wdd,
-				     const char *buf)
-{
-	struct governor_priv *priv;
+पूर्णांक watchकरोg_preसमयout_governor_set(काष्ठा watchकरोg_device *wdd,
+				     स्थिर अक्षर *buf)
+अणु
+	काष्ठा governor_priv *priv;
 
 	mutex_lock(&governor_lock);
 
 	priv = find_governor_by_name(buf);
-	if (!priv) {
+	अगर (!priv) अणु
 		mutex_unlock(&governor_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	spin_lock_irq(&pretimeout_lock);
+	spin_lock_irq(&preसमयout_lock);
 	wdd->gov = priv->gov;
-	spin_unlock_irq(&pretimeout_lock);
+	spin_unlock_irq(&preसमयout_lock);
 
 	mutex_unlock(&governor_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void watchdog_notify_pretimeout(struct watchdog_device *wdd)
-{
-	unsigned long flags;
+व्योम watchकरोg_notअगरy_preसमयout(काष्ठा watchकरोg_device *wdd)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&pretimeout_lock, flags);
-	if (!wdd->gov) {
-		spin_unlock_irqrestore(&pretimeout_lock, flags);
-		return;
-	}
+	spin_lock_irqsave(&preसमयout_lock, flags);
+	अगर (!wdd->gov) अणु
+		spin_unlock_irqrestore(&preसमयout_lock, flags);
+		वापस;
+	पूर्ण
 
-	wdd->gov->pretimeout(wdd);
-	spin_unlock_irqrestore(&pretimeout_lock, flags);
-}
-EXPORT_SYMBOL_GPL(watchdog_notify_pretimeout);
+	wdd->gov->preसमयout(wdd);
+	spin_unlock_irqrestore(&preसमयout_lock, flags);
+पूर्ण
+EXPORT_SYMBOL_GPL(watchकरोg_notअगरy_preसमयout);
 
-int watchdog_register_governor(struct watchdog_governor *gov)
-{
-	struct watchdog_pretimeout *p;
-	struct governor_priv *priv;
+पूर्णांक watchकरोg_रेजिस्टर_governor(काष्ठा watchकरोg_governor *gov)
+अणु
+	काष्ठा watchकरोg_preसमयout *p;
+	काष्ठा governor_priv *priv;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	mutex_lock(&governor_lock);
 
-	if (find_governor_by_name(gov->name)) {
+	अगर (find_governor_by_name(gov->name)) अणु
 		mutex_unlock(&governor_lock);
-		kfree(priv);
-		return -EBUSY;
-	}
+		kमुक्त(priv);
+		वापस -EBUSY;
+	पूर्ण
 
 	priv->gov = gov;
 	list_add(&priv->entry, &governor_list);
 
-	if (!strncmp(gov->name, WATCHDOG_PRETIMEOUT_DEFAULT_GOV,
-		     WATCHDOG_GOV_NAME_MAXLEN)) {
-		spin_lock_irq(&pretimeout_lock);
-		default_gov = gov;
+	अगर (!म_भेदन(gov->name, WATCHDOG_PRETIMEOUT_DEFAULT_GOV,
+		     WATCHDOG_GOV_NAME_MAXLEN)) अणु
+		spin_lock_irq(&preसमयout_lock);
+		शेष_gov = gov;
 
-		list_for_each_entry(p, &pretimeout_list, entry)
-			if (!p->wdd->gov)
-				p->wdd->gov = default_gov;
-		spin_unlock_irq(&pretimeout_lock);
-	}
+		list_क्रम_each_entry(p, &preसमयout_list, entry)
+			अगर (!p->wdd->gov)
+				p->wdd->gov = शेष_gov;
+		spin_unlock_irq(&preसमयout_lock);
+	पूर्ण
 
 	mutex_unlock(&governor_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL(watchdog_register_governor);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(watchकरोg_रेजिस्टर_governor);
 
-void watchdog_unregister_governor(struct watchdog_governor *gov)
-{
-	struct watchdog_pretimeout *p;
-	struct governor_priv *priv, *t;
+व्योम watchकरोg_unरेजिस्टर_governor(काष्ठा watchकरोg_governor *gov)
+अणु
+	काष्ठा watchकरोg_preसमयout *p;
+	काष्ठा governor_priv *priv, *t;
 
 	mutex_lock(&governor_lock);
 
-	list_for_each_entry_safe(priv, t, &governor_list, entry) {
-		if (priv->gov == gov) {
+	list_क्रम_each_entry_safe(priv, t, &governor_list, entry) अणु
+		अगर (priv->gov == gov) अणु
 			list_del(&priv->entry);
-			kfree(priv);
-			break;
-		}
-	}
+			kमुक्त(priv);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	spin_lock_irq(&pretimeout_lock);
-	list_for_each_entry(p, &pretimeout_list, entry)
-		if (p->wdd->gov == gov)
-			p->wdd->gov = default_gov;
-	spin_unlock_irq(&pretimeout_lock);
+	spin_lock_irq(&preसमयout_lock);
+	list_क्रम_each_entry(p, &preसमयout_list, entry)
+		अगर (p->wdd->gov == gov)
+			p->wdd->gov = शेष_gov;
+	spin_unlock_irq(&preसमयout_lock);
 
 	mutex_unlock(&governor_lock);
-}
-EXPORT_SYMBOL(watchdog_unregister_governor);
+पूर्ण
+EXPORT_SYMBOL(watchकरोg_unरेजिस्टर_governor);
 
-int watchdog_register_pretimeout(struct watchdog_device *wdd)
-{
-	struct watchdog_pretimeout *p;
+पूर्णांक watchकरोg_रेजिस्टर_preसमयout(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_preसमयout *p;
 
-	if (!(wdd->info->options & WDIOF_PRETIMEOUT))
-		return 0;
+	अगर (!(wdd->info->options & WDIOF_PRETIMEOUT))
+		वापस 0;
 
-	p = kzalloc(sizeof(*p), GFP_KERNEL);
-	if (!p)
-		return -ENOMEM;
+	p = kzalloc(माप(*p), GFP_KERNEL);
+	अगर (!p)
+		वापस -ENOMEM;
 
-	spin_lock_irq(&pretimeout_lock);
-	list_add(&p->entry, &pretimeout_list);
+	spin_lock_irq(&preसमयout_lock);
+	list_add(&p->entry, &preसमयout_list);
 	p->wdd = wdd;
-	wdd->gov = default_gov;
-	spin_unlock_irq(&pretimeout_lock);
+	wdd->gov = शेष_gov;
+	spin_unlock_irq(&preसमयout_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void watchdog_unregister_pretimeout(struct watchdog_device *wdd)
-{
-	struct watchdog_pretimeout *p, *t;
+व्योम watchकरोg_unरेजिस्टर_preसमयout(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_preसमयout *p, *t;
 
-	if (!(wdd->info->options & WDIOF_PRETIMEOUT))
-		return;
+	अगर (!(wdd->info->options & WDIOF_PRETIMEOUT))
+		वापस;
 
-	spin_lock_irq(&pretimeout_lock);
-	wdd->gov = NULL;
+	spin_lock_irq(&preसमयout_lock);
+	wdd->gov = शून्य;
 
-	list_for_each_entry_safe(p, t, &pretimeout_list, entry) {
-		if (p->wdd == wdd) {
+	list_क्रम_each_entry_safe(p, t, &preसमयout_list, entry) अणु
+		अगर (p->wdd == wdd) अणु
 			list_del(&p->entry);
-			break;
-		}
-	}
-	spin_unlock_irq(&pretimeout_lock);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	spin_unlock_irq(&preसमयout_lock);
 
-	kfree(p);
-}
+	kमुक्त(p);
+पूर्ण

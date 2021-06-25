@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * GHASH: hash function for GCM (Galois/Counter Mode).
+ * GHASH: hash function क्रम GCM (Galois/Counter Mode).
  *
  * Copyright (c) 2007 Nokia Siemens Networks - Mikko Herranen <mh1@iki.fi>
  * Copyright (c) 2009 Intel Corp.
- *   Author: Huang Ying <ying.huang@intel.com>
+ *   Author: Huang Ying <ying.huang@पूर्णांकel.com>
  */
 
 /*
@@ -12,171 +13,171 @@
  *
  * The original GCM paper [1] presents GHASH as a function GHASH(H, A, C) which
  * takes a 16-byte hash key H, additional authenticated data A, and a ciphertext
- * C.  It formats A and C into a single byte string X, interprets X as a
- * polynomial over GF(2^128), and evaluates this polynomial at the point H.
+ * C.  It क्रमmats A and C पूर्णांकo a single byte string X, पूर्णांकerprets X as a
+ * polynomial over GF(2^128), and evaluates this polynomial at the poपूर्णांक H.
  *
- * However, the NIST standard for GCM [2] presents GHASH as GHASH(H, X) where X
- * is the already-formatted byte string containing both A and C.
+ * However, the NIST standard क्रम GCM [2] presents GHASH as GHASH(H, X) where X
+ * is the alपढ़ोy-क्रमmatted byte string containing both A and C.
  *
- * "ghash" in the Linux crypto API uses the 'X' (pre-formatted) convention,
+ * "ghash" in the Linux crypto API uses the 'X' (pre-क्रमmatted) convention,
  * since the API supports only a single data stream per hash.  Thus, the
- * formatting of 'A' and 'C' is done in the "gcm" template, not in "ghash".
+ * क्रमmatting of 'A' and 'C' is करोne in the "gcm" ढाँचा, not in "ghash".
  *
  * The reason "ghash" is separate from "gcm" is to allow "gcm" to use an
  * accelerated "ghash" when a standalone accelerated "gcm(aes)" is unavailable.
- * It is generally inappropriate to use "ghash" for other purposes, since it is
- * an "ε-almost-XOR-universal hash function", not a cryptographic hash function.
- * It can only be used securely in crypto modes specially designed to use it.
+ * It is generally inappropriate to use "ghash" क्रम other purposes, since it is
+ * an "Nग-almost-XOR-universal hash function", not a cryptographic hash function.
+ * It can only be used securely in crypto modes specially deचिन्हित to use it.
  *
  * [1] The Galois/Counter Mode of Operation (GCM)
- *     (http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.694.695&rep=rep1&type=pdf)
- * [2] Recommendation for Block Cipher Modes of Operation: Galois/Counter Mode (GCM) and GMAC
- *     (https://csrc.nist.gov/publications/detail/sp/800-38d/final)
+ *     (http://citeseerx.ist.psu.edu/viewकरोc/करोwnload?करोi=10.1.1.694.695&rep=rep1&type=pdf)
+ * [2] Recommendation क्रम Block Cipher Modes of Operation: Galois/Counter Mode (GCM) and GMAC
+ *     (https://csrc.nist.gov/खुलाations/detail/sp/800-38d/final)
  */
 
-#include <crypto/algapi.h>
-#include <crypto/gf128mul.h>
-#include <crypto/ghash.h>
-#include <crypto/internal/hash.h>
-#include <linux/crypto.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/gf128mul.h>
+#समावेश <crypto/ghash.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-static int ghash_init(struct shash_desc *desc)
-{
-	struct ghash_desc_ctx *dctx = shash_desc_ctx(desc);
+अटल पूर्णांक ghash_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा ghash_desc_ctx *dctx = shash_desc_ctx(desc);
 
-	memset(dctx, 0, sizeof(*dctx));
+	स_रखो(dctx, 0, माप(*dctx));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ghash_setkey(struct crypto_shash *tfm,
-			const u8 *key, unsigned int keylen)
-{
-	struct ghash_ctx *ctx = crypto_shash_ctx(tfm);
+अटल पूर्णांक ghash_setkey(काष्ठा crypto_shash *tfm,
+			स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा ghash_ctx *ctx = crypto_shash_ctx(tfm);
 	be128 k;
 
-	if (keylen != GHASH_BLOCK_SIZE)
-		return -EINVAL;
+	अगर (keylen != GHASH_BLOCK_SIZE)
+		वापस -EINVAL;
 
-	if (ctx->gf128)
-		gf128mul_free_4k(ctx->gf128);
+	अगर (ctx->gf128)
+		gf128mul_मुक्त_4k(ctx->gf128);
 
-	BUILD_BUG_ON(sizeof(k) != GHASH_BLOCK_SIZE);
-	memcpy(&k, key, GHASH_BLOCK_SIZE); /* avoid violating alignment rules */
+	BUILD_BUG_ON(माप(k) != GHASH_BLOCK_SIZE);
+	स_नकल(&k, key, GHASH_BLOCK_SIZE); /* aव्योम violating alignment rules */
 	ctx->gf128 = gf128mul_init_4k_lle(&k);
 	memzero_explicit(&k, GHASH_BLOCK_SIZE);
 
-	if (!ctx->gf128)
-		return -ENOMEM;
+	अगर (!ctx->gf128)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ghash_update(struct shash_desc *desc,
-			 const u8 *src, unsigned int srclen)
-{
-	struct ghash_desc_ctx *dctx = shash_desc_ctx(desc);
-	struct ghash_ctx *ctx = crypto_shash_ctx(desc->tfm);
+अटल पूर्णांक ghash_update(काष्ठा shash_desc *desc,
+			 स्थिर u8 *src, अचिन्हित पूर्णांक srclen)
+अणु
+	काष्ठा ghash_desc_ctx *dctx = shash_desc_ctx(desc);
+	काष्ठा ghash_ctx *ctx = crypto_shash_ctx(desc->tfm);
 	u8 *dst = dctx->buffer;
 
-	if (dctx->bytes) {
-		int n = min(srclen, dctx->bytes);
+	अगर (dctx->bytes) अणु
+		पूर्णांक n = min(srclen, dctx->bytes);
 		u8 *pos = dst + (GHASH_BLOCK_SIZE - dctx->bytes);
 
 		dctx->bytes -= n;
 		srclen -= n;
 
-		while (n--)
+		जबतक (n--)
 			*pos++ ^= *src++;
 
-		if (!dctx->bytes)
+		अगर (!dctx->bytes)
 			gf128mul_4k_lle((be128 *)dst, ctx->gf128);
-	}
+	पूर्ण
 
-	while (srclen >= GHASH_BLOCK_SIZE) {
+	जबतक (srclen >= GHASH_BLOCK_SIZE) अणु
 		crypto_xor(dst, src, GHASH_BLOCK_SIZE);
 		gf128mul_4k_lle((be128 *)dst, ctx->gf128);
 		src += GHASH_BLOCK_SIZE;
 		srclen -= GHASH_BLOCK_SIZE;
-	}
+	पूर्ण
 
-	if (srclen) {
+	अगर (srclen) अणु
 		dctx->bytes = GHASH_BLOCK_SIZE - srclen;
-		while (srclen--)
+		जबतक (srclen--)
 			*dst++ ^= *src++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ghash_flush(struct ghash_ctx *ctx, struct ghash_desc_ctx *dctx)
-{
+अटल व्योम ghash_flush(काष्ठा ghash_ctx *ctx, काष्ठा ghash_desc_ctx *dctx)
+अणु
 	u8 *dst = dctx->buffer;
 
-	if (dctx->bytes) {
-		u8 *tmp = dst + (GHASH_BLOCK_SIZE - dctx->bytes);
+	अगर (dctx->bytes) अणु
+		u8 *पंचांगp = dst + (GHASH_BLOCK_SIZE - dctx->bytes);
 
-		while (dctx->bytes--)
-			*tmp++ ^= 0;
+		जबतक (dctx->bytes--)
+			*पंचांगp++ ^= 0;
 
 		gf128mul_4k_lle((be128 *)dst, ctx->gf128);
-	}
+	पूर्ण
 
 	dctx->bytes = 0;
-}
+पूर्ण
 
-static int ghash_final(struct shash_desc *desc, u8 *dst)
-{
-	struct ghash_desc_ctx *dctx = shash_desc_ctx(desc);
-	struct ghash_ctx *ctx = crypto_shash_ctx(desc->tfm);
+अटल पूर्णांक ghash_final(काष्ठा shash_desc *desc, u8 *dst)
+अणु
+	काष्ठा ghash_desc_ctx *dctx = shash_desc_ctx(desc);
+	काष्ठा ghash_ctx *ctx = crypto_shash_ctx(desc->tfm);
 	u8 *buf = dctx->buffer;
 
 	ghash_flush(ctx, dctx);
-	memcpy(dst, buf, GHASH_BLOCK_SIZE);
+	स_नकल(dst, buf, GHASH_BLOCK_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ghash_exit_tfm(struct crypto_tfm *tfm)
-{
-	struct ghash_ctx *ctx = crypto_tfm_ctx(tfm);
-	if (ctx->gf128)
-		gf128mul_free_4k(ctx->gf128);
-}
+अटल व्योम ghash_निकास_tfm(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा ghash_ctx *ctx = crypto_tfm_ctx(tfm);
+	अगर (ctx->gf128)
+		gf128mul_मुक्त_4k(ctx->gf128);
+पूर्ण
 
-static struct shash_alg ghash_alg = {
+अटल काष्ठा shash_alg ghash_alg = अणु
 	.digestsize	= GHASH_DIGEST_SIZE,
 	.init		= ghash_init,
 	.update		= ghash_update,
 	.final		= ghash_final,
 	.setkey		= ghash_setkey,
-	.descsize	= sizeof(struct ghash_desc_ctx),
-	.base		= {
+	.descsize	= माप(काष्ठा ghash_desc_ctx),
+	.base		= अणु
 		.cra_name		= "ghash",
 		.cra_driver_name	= "ghash-generic",
 		.cra_priority		= 100,
 		.cra_blocksize		= GHASH_BLOCK_SIZE,
-		.cra_ctxsize		= sizeof(struct ghash_ctx),
+		.cra_ctxsize		= माप(काष्ठा ghash_ctx),
 		.cra_module		= THIS_MODULE,
-		.cra_exit		= ghash_exit_tfm,
-	},
-};
+		.cra_निकास		= ghash_निकास_tfm,
+	पूर्ण,
+पूर्ण;
 
-static int __init ghash_mod_init(void)
-{
-	return crypto_register_shash(&ghash_alg);
-}
+अटल पूर्णांक __init ghash_mod_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_shash(&ghash_alg);
+पूर्ण
 
-static void __exit ghash_mod_exit(void)
-{
-	crypto_unregister_shash(&ghash_alg);
-}
+अटल व्योम __निकास ghash_mod_निकास(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&ghash_alg);
+पूर्ण
 
 subsys_initcall(ghash_mod_init);
-module_exit(ghash_mod_exit);
+module_निकास(ghash_mod_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("GHASH hash function");

@@ -1,148 +1,149 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * dm355evm_keys.c - support buttons and IR remote on DM355 EVM board
  *
  * Copyright (c) 2008 by David Brownell
  */
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/input.h>
-#include <linux/input/sparse-keymap.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/sparse-keymap.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <linux/mfd/dm355evm_msp.h>
-#include <linux/module.h>
+#समावेश <linux/mfd/dm355evm_msp.h>
+#समावेश <linux/module.h>
 
 
 /*
  * The MSP430 firmware on the DM355 EVM monitors on-board pushbuttons
- * and an IR receptor used for the remote control.  When any key is
- * pressed, or its autorepeat kicks in, an event is sent.  This driver
- * read those events from the small (32 event) queue and reports them.
+ * and an IR receptor used क्रम the remote control.  When any key is
+ * pressed, or its स्वतःrepeat kicks in, an event is sent.  This driver
+ * पढ़ो those events from the small (32 event) queue and reports them.
  *
  * Note that physically there can only be one of these devices.
  *
  * This driver was tested with firmware revision A4.
  */
-struct dm355evm_keys {
-	struct input_dev	*input;
-	struct device		*dev;
-};
+काष्ठा dm355evm_keys अणु
+	काष्ठा input_dev	*input;
+	काष्ठा device		*dev;
+पूर्ण;
 
 /* These initial keycodes can be remapped */
-static const struct key_entry dm355evm_keys[] = {
+अटल स्थिर काष्ठा key_entry dm355evm_keys[] = अणु
 	/*
-	 * Pushbuttons on the EVM board ... note that the labels for these
+	 * Pushbuttons on the EVM board ... note that the labels क्रम these
 	 * are SW10/SW11/etc on the PC board.  The left/right orientation
-	 * comes only from the firmware's documentation, and presumes the
-	 * power connector is immediately in front of you and the IR sensor
-	 * is to the right.  (That is, rotate the board counter-clockwise
+	 * comes only from the firmware's करोcumentation, and presumes the
+	 * घातer connector is immediately in front of you and the IR sensor
+	 * is to the right.  (That is, rotate the board counter-घड़ीwise
 	 * by 90 degrees from the SW10/etc and "DM355 EVM" labels.)
 	 */
-	{ KE_KEY, 0x00d8, { KEY_OK } },		/* SW12 */
-	{ KE_KEY, 0x00b8, { KEY_UP } },		/* SW13 */
-	{ KE_KEY, 0x00e8, { KEY_DOWN } },	/* SW11 */
-	{ KE_KEY, 0x0078, { KEY_LEFT } },	/* SW14 */
-	{ KE_KEY, 0x00f0, { KEY_RIGHT } },	/* SW10 */
+	अणु KE_KEY, 0x00d8, अणु KEY_OK पूर्ण पूर्ण,		/* SW12 */
+	अणु KE_KEY, 0x00b8, अणु KEY_UP पूर्ण पूर्ण,		/* SW13 */
+	अणु KE_KEY, 0x00e8, अणु KEY_DOWN पूर्ण पूर्ण,	/* SW11 */
+	अणु KE_KEY, 0x0078, अणु KEY_LEFT पूर्ण पूर्ण,	/* SW14 */
+	अणु KE_KEY, 0x00f0, अणु KEY_RIGHT पूर्ण पूर्ण,	/* SW10 */
 
 	/*
-	 * IR buttons ... codes assigned to match the universal remote
+	 * IR buttons ... codes asचिन्हित to match the universal remote
 	 * provided with the EVM (Philips PM4S) using DVD code 0020.
 	 *
-	 * These event codes match firmware documentation, but other
+	 * These event codes match firmware करोcumentation, but other
 	 * remote controls could easily send more RC5-encoded events.
-	 * The PM4S manual was used in several cases to help select
-	 * a keycode reflecting the intended usage.
+	 * The PM4S manual was used in several हालs to help select
+	 * a keycode reflecting the पूर्णांकended usage.
 	 *
 	 * RC5 codes are 14 bits, with two start bits (0x3 prefix)
 	 * and a toggle bit (masked out below).
 	 */
-	{ KE_KEY, 0x300c, { KEY_POWER } },	/* NOTE: docs omit this */
-	{ KE_KEY, 0x3000, { KEY_NUMERIC_0 } },
-	{ KE_KEY, 0x3001, { KEY_NUMERIC_1 } },
-	{ KE_KEY, 0x3002, { KEY_NUMERIC_2 } },
-	{ KE_KEY, 0x3003, { KEY_NUMERIC_3 } },
-	{ KE_KEY, 0x3004, { KEY_NUMERIC_4 } },
-	{ KE_KEY, 0x3005, { KEY_NUMERIC_5 } },
-	{ KE_KEY, 0x3006, { KEY_NUMERIC_6 } },
-	{ KE_KEY, 0x3007, { KEY_NUMERIC_7 } },
-	{ KE_KEY, 0x3008, { KEY_NUMERIC_8 } },
-	{ KE_KEY, 0x3009, { KEY_NUMERIC_9 } },
-	{ KE_KEY, 0x3022, { KEY_ENTER } },
-	{ KE_KEY, 0x30ec, { KEY_MODE } },	/* "tv/vcr/..." */
-	{ KE_KEY, 0x300f, { KEY_SELECT } },	/* "info" */
-	{ KE_KEY, 0x3020, { KEY_CHANNELUP } },	/* "up" */
-	{ KE_KEY, 0x302e, { KEY_MENU } },	/* "in/out" */
-	{ KE_KEY, 0x3011, { KEY_VOLUMEDOWN } },	/* "left" */
-	{ KE_KEY, 0x300d, { KEY_MUTE } },	/* "ok" */
-	{ KE_KEY, 0x3010, { KEY_VOLUMEUP } },	/* "right" */
-	{ KE_KEY, 0x301e, { KEY_SUBTITLE } },	/* "cc" */
-	{ KE_KEY, 0x3021, { KEY_CHANNELDOWN } },/* "down" */
-	{ KE_KEY, 0x3022, { KEY_PREVIOUS } },
-	{ KE_KEY, 0x3026, { KEY_SLEEP } },
-	{ KE_KEY, 0x3172, { KEY_REWIND } },	/* NOTE: docs wrongly say 0x30ca */
-	{ KE_KEY, 0x3175, { KEY_PLAY } },
-	{ KE_KEY, 0x3174, { KEY_FASTFORWARD } },
-	{ KE_KEY, 0x3177, { KEY_RECORD } },
-	{ KE_KEY, 0x3176, { KEY_STOP } },
-	{ KE_KEY, 0x3169, { KEY_PAUSE } },
-};
+	अणु KE_KEY, 0x300c, अणु KEY_POWER पूर्ण पूर्ण,	/* NOTE: करोcs omit this */
+	अणु KE_KEY, 0x3000, अणु KEY_NUMERIC_0 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3001, अणु KEY_NUMERIC_1 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3002, अणु KEY_NUMERIC_2 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3003, अणु KEY_NUMERIC_3 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3004, अणु KEY_NUMERIC_4 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3005, अणु KEY_NUMERIC_5 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3006, अणु KEY_NUMERIC_6 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3007, अणु KEY_NUMERIC_7 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3008, अणु KEY_NUMERIC_8 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3009, अणु KEY_NUMERIC_9 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3022, अणु KEY_ENTER पूर्ण पूर्ण,
+	अणु KE_KEY, 0x30ec, अणु KEY_MODE पूर्ण पूर्ण,	/* "tv/vcr/..." */
+	अणु KE_KEY, 0x300f, अणु KEY_SELECT पूर्ण पूर्ण,	/* "info" */
+	अणु KE_KEY, 0x3020, अणु KEY_CHANNELUP पूर्ण पूर्ण,	/* "up" */
+	अणु KE_KEY, 0x302e, अणु KEY_MENU पूर्ण पूर्ण,	/* "in/out" */
+	अणु KE_KEY, 0x3011, अणु KEY_VOLUMEDOWN पूर्ण पूर्ण,	/* "left" */
+	अणु KE_KEY, 0x300d, अणु KEY_MUTE पूर्ण पूर्ण,	/* "ok" */
+	अणु KE_KEY, 0x3010, अणु KEY_VOLUMEUP पूर्ण पूर्ण,	/* "right" */
+	अणु KE_KEY, 0x301e, अणु KEY_SUBTITLE पूर्ण पूर्ण,	/* "cc" */
+	अणु KE_KEY, 0x3021, अणु KEY_CHANNELDOWN पूर्ण पूर्ण,/* "down" */
+	अणु KE_KEY, 0x3022, अणु KEY_PREVIOUS पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3026, अणु KEY_SLEEP पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3172, अणु KEY_REWIND पूर्ण पूर्ण,	/* NOTE: करोcs wrongly say 0x30ca */
+	अणु KE_KEY, 0x3175, अणु KEY_PLAY पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3174, अणु KEY_FASTFORWARD पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3177, अणु KEY_RECORD पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3176, अणु KEY_STOP पूर्ण पूर्ण,
+	अणु KE_KEY, 0x3169, अणु KEY_PAUSE पूर्ण पूर्ण,
+पूर्ण;
 
 /*
  * Because we communicate with the MSP430 using I2C, and all I2C calls
- * in Linux sleep, we use a threaded IRQ handler.  The IRQ itself is
+ * in Linux sleep, we use a thपढ़ोed IRQ handler.  The IRQ itself is
  * active low, but we go through the GPIO controller so we can trigger
  * on falling edges and not worry about enabling/disabling the IRQ in
  * the keypress handling path.
  */
-static irqreturn_t dm355evm_keys_irq(int irq, void *_keys)
-{
-	static u16 last_event;
-	struct dm355evm_keys *keys = _keys;
-	const struct key_entry *ke;
-	unsigned int keycode;
-	int status;
+अटल irqवापस_t dm355evm_keys_irq(पूर्णांक irq, व्योम *_keys)
+अणु
+	अटल u16 last_event;
+	काष्ठा dm355evm_keys *keys = _keys;
+	स्थिर काष्ठा key_entry *ke;
+	अचिन्हित पूर्णांक keycode;
+	पूर्णांक status;
 	u16 event;
 
-	/* For simplicity we ignore INPUT_COUNT and just read
+	/* For simplicity we ignore INPUT_COUNT and just पढ़ो
 	 * events until we get the "queue empty" indicator.
 	 * Reading INPUT_LOW decrements the count.
 	 */
-	for (;;) {
-		status = dm355evm_msp_read(DM355EVM_MSP_INPUT_HIGH);
-		if (status < 0) {
+	क्रम (;;) अणु
+		status = dm355evm_msp_पढ़ो(DM355EVM_MSP_INPUT_HIGH);
+		अगर (status < 0) अणु
 			dev_dbg(keys->dev, "input high err %d\n",
 					status);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		event = status << 8;
 
-		status = dm355evm_msp_read(DM355EVM_MSP_INPUT_LOW);
-		if (status < 0) {
+		status = dm355evm_msp_पढ़ो(DM355EVM_MSP_INPUT_LOW);
+		अगर (status < 0) अणु
 			dev_dbg(keys->dev, "input low err %d\n",
 					status);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		event |= status;
-		if (event == 0xdead)
-			break;
+		अगर (event == 0xdead)
+			अवरोध;
 
 		/* Press and release a button:  two events, same code.
-		 * Press and hold (autorepeat), then release: N events
+		 * Press and hold (स्वतःrepeat), then release: N events
 		 * (N > 2), same code.  For RC5 buttons the toggle bits
-		 * distinguish (for example) "1-autorepeat" from "1 1";
-		 * but PCB buttons don't support that bit.
+		 * distinguish (क्रम example) "1-autorepeat" from "1 1";
+		 * but PCB buttons करोn't support that bit.
 		 *
-		 * So we must synthesize release events.  We do that by
+		 * So we must synthesize release events.  We करो that by
 		 * mapping events to a press/release event pair; then
-		 * to avoid adding extra events, skip the second event
+		 * to aव्योम adding extra events, skip the second event
 		 * of each pair.
 		 */
-		if (event == last_event) {
+		अगर (event == last_event) अणु
 			last_event = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		last_event = event;
 
 		/* ignore the RC5 toggle bit */
@@ -160,27 +161,27 @@ static irqreturn_t dm355evm_keys_irq(int irq, void *_keys)
 		input_sync(keys->input);
 		input_report_key(keys->input, keycode, 0);
 		input_sync(keys->input);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
-static int dm355evm_keys_probe(struct platform_device *pdev)
-{
-	struct dm355evm_keys	*keys;
-	struct input_dev	*input;
-	int			irq;
-	int			error;
+अटल पूर्णांक dm355evm_keys_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dm355evm_keys	*keys;
+	काष्ठा input_dev	*input;
+	पूर्णांक			irq;
+	पूर्णांक			error;
 
-	keys = devm_kzalloc(&pdev->dev, sizeof (*keys), GFP_KERNEL);
-	if (!keys)
-		return -ENOMEM;
+	keys = devm_kzalloc(&pdev->dev, माप (*keys), GFP_KERNEL);
+	अगर (!keys)
+		वापस -ENOMEM;
 
 	input = devm_input_allocate_device(&pdev->dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	keys->dev = &pdev->dev;
 	keys->input = input;
@@ -190,49 +191,49 @@ static int dm355evm_keys_probe(struct platform_device *pdev)
 
 	input->id.bustype = BUS_I2C;
 	input->id.product = 0x0355;
-	input->id.version = dm355evm_msp_read(DM355EVM_MSP_FIRMREV);
+	input->id.version = dm355evm_msp_पढ़ो(DM355EVM_MSP_FIRMREV);
 
-	error = sparse_keymap_setup(input, dm355evm_keys, NULL);
-	if (error)
-		return error;
+	error = sparse_keymap_setup(input, dm355evm_keys, शून्य);
+	अगर (error)
+		वापस error;
 
 	/* REVISIT:  flush the event queue? */
 
 	/* set up "threaded IRQ handler" */
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	error = devm_request_threaded_irq(&pdev->dev, irq,
-					  NULL, dm355evm_keys_irq,
+	error = devm_request_thपढ़ोed_irq(&pdev->dev, irq,
+					  शून्य, dm355evm_keys_irq,
 					  IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					  dev_name(&pdev->dev), keys);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	/* register */
-	error = input_register_device(input);
-	if (error)
-		return error;
+	/* रेजिस्टर */
+	error = input_रेजिस्टर_device(input);
+	अगर (error)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* REVISIT:  add suspend/resume when DaVinci supports it.  The IRQ should
- * be able to wake up the system.  When device_may_wakeup(&pdev->dev), call
+ * be able to wake up the प्रणाली.  When device_may_wakeup(&pdev->dev), call
  * enable_irq_wake() on suspend, and disable_irq_wake() on resume.
  */
 
 /*
- * I2C is used to talk to the MSP430, but this platform device is
+ * I2C is used to talk to the MSP430, but this platक्रमm device is
  * exposed by an MFD driver that manages I2C communications.
  */
-static struct platform_driver dm355evm_keys_driver = {
+अटल काष्ठा platक्रमm_driver dm355evm_keys_driver = अणु
 	.probe		= dm355evm_keys_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "dm355evm_keys",
-	},
-};
-module_platform_driver(dm355evm_keys_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(dm355evm_keys_driver);
 
 MODULE_LICENSE("GPL");

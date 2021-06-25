@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _NET_CORE_DATAGRAM_H_
-#define _NET_CORE_DATAGRAM_H_
+#अगर_अघोषित _NET_CORE_DATAGRAM_H_
+#घोषणा _NET_CORE_DATAGRAM_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct sock;
-struct sk_buff;
-struct iov_iter;
+काष्ठा sock;
+काष्ठा sk_buff;
+काष्ठा iov_iter;
 
-int __zerocopy_sg_from_iter(struct sock *sk, struct sk_buff *skb,
-			    struct iov_iter *from, size_t length);
+पूर्णांक __zerocopy_sg_from_iter(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+			    काष्ठा iov_iter *from, माप_प्रकार length);
 
-#endif /* _NET_CORE_DATAGRAM_H_ */
+#पूर्ण_अगर /* _NET_CORE_DATAGRAM_H_ */

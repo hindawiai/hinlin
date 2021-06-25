@@ -1,11 +1,12 @@
+<शैली गुरु>
 /*
- * Telecom Clock driver for Intel NetStructure(tm) MPCBL0010
+ * Telecom Clock driver क्रम Intel NetStructure(पंचांग) MPCBL0010
  *
  * Copyright (C) 2005 Kontron Canada
  *
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at
  * your option) any later version.
@@ -13,146 +14,146 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
- * NON INFRINGEMENT.  See the GNU General Public License for more
+ * NON INFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * Send feedback to <sebastien.bouchard@ca.kontron.com> and the current
- * Maintainer  <mark.gross@intel.com>
+ * Send feedback to <sebastien.bouअक्षरd@ca.kontron.com> and the current
+ * Maपूर्णांकainer  <mark.gross@पूर्णांकel.com>
  *
- * Description : This is the TELECOM CLOCK module driver for the ATCA
+ * Description : This is the TELECOM CLOCK module driver क्रम the ATCA
  * MPCBL0010 ATCA computer.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>	/* printk() */
-#include <linux/fs.h>		/* everything... */
-#include <linux/errno.h>	/* error codes */
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/mutex.h>
-#include <linux/timer.h>
-#include <linux/sysfs.h>
-#include <linux/device.h>
-#include <linux/miscdevice.h>
-#include <linux/platform_device.h>
-#include <asm/io.h>		/* inb/outb */
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>	/* prपूर्णांकk() */
+#समावेश <linux/fs.h>		/* everything... */
+#समावेश <linux/त्रुटिसं.स>	/* error codes */
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <यंत्र/पन.स>		/* inb/outb */
+#समावेश <linux/uaccess.h>
 
 MODULE_AUTHOR("Sebastien Bouchard <sebastien.bouchard@ca.kontron.com>");
 MODULE_LICENSE("GPL");
 
 /*Hardware Reset of the PLL */
-#define RESET_ON	0x00
-#define RESET_OFF	0x01
+#घोषणा RESET_ON	0x00
+#घोषणा RESET_OFF	0x01
 
 /* MODE SELECT */
-#define NORMAL_MODE 	0x00
-#define HOLDOVER_MODE	0x10
-#define FREERUN_MODE	0x20
+#घोषणा NORMAL_MODE 	0x00
+#घोषणा HOLDOVER_MODE	0x10
+#घोषणा FREERUN_MODE	0x20
 
 /* FILTER SELECT */
-#define FILTER_6HZ	0x04
-#define FILTER_12HZ	0x00
+#घोषणा FILTER_6HZ	0x04
+#घोषणा FILTER_12HZ	0x00
 
 /* SELECT REFERENCE FREQUENCY */
-#define REF_CLK1_8kHz		0x00
-#define REF_CLK2_19_44MHz	0x02
+#घोषणा REF_CLK1_8kHz		0x00
+#घोषणा REF_CLK2_19_44MHz	0x02
 
-/* Select primary or secondary redundant clock */
-#define PRIMARY_CLOCK	0x00
-#define SECONDARY_CLOCK	0x01
+/* Select primary or secondary redundant घड़ी */
+#घोषणा PRIMARY_CLOCK	0x00
+#घोषणा SECONDARY_CLOCK	0x01
 
 /* CLOCK TRANSMISSION DEFINE */
-#define CLK_8kHz	0xff
-#define CLK_16_384MHz	0xfb
+#घोषणा CLK_8kHz	0xff
+#घोषणा CLK_16_384MHz	0xfb
 
-#define CLK_1_544MHz	0x00
-#define CLK_2_048MHz	0x01
-#define CLK_4_096MHz	0x02
-#define CLK_6_312MHz	0x03
-#define CLK_8_192MHz	0x04
-#define CLK_19_440MHz	0x06
+#घोषणा CLK_1_544MHz	0x00
+#घोषणा CLK_2_048MHz	0x01
+#घोषणा CLK_4_096MHz	0x02
+#घोषणा CLK_6_312MHz	0x03
+#घोषणा CLK_8_192MHz	0x04
+#घोषणा CLK_19_440MHz	0x06
 
-#define CLK_8_592MHz	0x08
-#define CLK_11_184MHz	0x09
-#define CLK_34_368MHz	0x0b
-#define CLK_44_736MHz	0x0a
+#घोषणा CLK_8_592MHz	0x08
+#घोषणा CLK_11_184MHz	0x09
+#घोषणा CLK_34_368MHz	0x0b
+#घोषणा CLK_44_736MHz	0x0a
 
 /* RECEIVED REFERENCE */
-#define AMC_B1 0
-#define AMC_B2 1
+#घोषणा AMC_B1 0
+#घोषणा AMC_B2 1
 
 /* HARDWARE SWITCHING DEFINE */
-#define HW_ENABLE	0x80
-#define HW_DISABLE	0x00
+#घोषणा HW_ENABLE	0x80
+#घोषणा HW_DISABLE	0x00
 
 /* HARDWARE SWITCHING MODE DEFINE */
-#define PLL_HOLDOVER	0x40
-#define LOST_CLOCK	0x00
+#घोषणा PLL_HOLDOVER	0x40
+#घोषणा LOST_CLOCK	0x00
 
 /* ALARMS DEFINE */
-#define UNLOCK_MASK	0x10
-#define HOLDOVER_MASK	0x20
-#define SEC_LOST_MASK	0x40
-#define PRI_LOST_MASK	0x80
+#घोषणा UNLOCK_MASK	0x10
+#घोषणा HOLDOVER_MASK	0x20
+#घोषणा SEC_LOST_MASK	0x40
+#घोषणा PRI_LOST_MASK	0x80
 
 /* INTERRUPT CAUSE DEFINE */
 
-#define PRI_LOS_01_MASK		0x01
-#define PRI_LOS_10_MASK		0x02
+#घोषणा PRI_LOS_01_MASK		0x01
+#घोषणा PRI_LOS_10_MASK		0x02
 
-#define SEC_LOS_01_MASK		0x04
-#define SEC_LOS_10_MASK		0x08
+#घोषणा SEC_LOS_01_MASK		0x04
+#घोषणा SEC_LOS_10_MASK		0x08
 
-#define HOLDOVER_01_MASK	0x10
-#define HOLDOVER_10_MASK	0x20
+#घोषणा HOLDOVER_01_MASK	0x10
+#घोषणा HOLDOVER_10_MASK	0x20
 
-#define UNLOCK_01_MASK		0x40
-#define UNLOCK_10_MASK		0x80
+#घोषणा UNLOCK_01_MASK		0x40
+#घोषणा UNLOCK_10_MASK		0x80
 
-struct tlclk_alarms {
-	__u32 lost_clocks;
-	__u32 lost_primary_clock;
-	__u32 lost_secondary_clock;
-	__u32 primary_clock_back;
-	__u32 secondary_clock_back;
-	__u32 switchover_primary;
-	__u32 switchover_secondary;
-	__u32 pll_holdover;
-	__u32 pll_end_holdover;
+काष्ठा tlclk_alarms अणु
+	__u32 lost_घड़ीs;
+	__u32 lost_primary_घड़ी;
+	__u32 lost_secondary_घड़ी;
+	__u32 primary_घड़ी_back;
+	__u32 secondary_घड़ी_back;
+	__u32 चयनover_primary;
+	__u32 चयनover_secondary;
+	__u32 pll_holकरोver;
+	__u32 pll_end_holकरोver;
 	__u32 pll_lost_sync;
 	__u32 pll_sync;
-};
-/* Telecom clock I/O register definition */
-#define TLCLK_BASE 0xa08
-#define TLCLK_REG0 TLCLK_BASE
-#define TLCLK_REG1 (TLCLK_BASE+1)
-#define TLCLK_REG2 (TLCLK_BASE+2)
-#define TLCLK_REG3 (TLCLK_BASE+3)
-#define TLCLK_REG4 (TLCLK_BASE+4)
-#define TLCLK_REG5 (TLCLK_BASE+5)
-#define TLCLK_REG6 (TLCLK_BASE+6)
-#define TLCLK_REG7 (TLCLK_BASE+7)
+पूर्ण;
+/* Telecom घड़ी I/O रेजिस्टर definition */
+#घोषणा TLCLK_BASE 0xa08
+#घोषणा TLCLK_REG0 TLCLK_BASE
+#घोषणा TLCLK_REG1 (TLCLK_BASE+1)
+#घोषणा TLCLK_REG2 (TLCLK_BASE+2)
+#घोषणा TLCLK_REG3 (TLCLK_BASE+3)
+#घोषणा TLCLK_REG4 (TLCLK_BASE+4)
+#घोषणा TLCLK_REG5 (TLCLK_BASE+5)
+#घोषणा TLCLK_REG6 (TLCLK_BASE+6)
+#घोषणा TLCLK_REG7 (TLCLK_BASE+7)
 
-#define SET_PORT_BITS(port, mask, val) outb(((inb(port) & mask) | val), port)
+#घोषणा SET_PORT_BITS(port, mask, val) outb(((inb(port) & mask) | val), port)
 
 /* 0 = Dynamic allocation of the major device number */
-#define TLCLK_MAJOR 0
+#घोषणा TLCLK_MAJOR 0
 
-/* sysfs interface definition:
+/* sysfs पूर्णांकerface definition:
 Upon loading the driver will create a sysfs directory under
-/sys/devices/platform/telco_clock.
+/sys/devices/platक्रमm/telco_घड़ी.
 
-This directory exports the following interfaces.  There operation is
-documented in the MCPBL0010 TPS under the Telecom Clock API section, 11.4.
+This directory exports the following पूर्णांकerfaces.  There operation is
+करोcumented in the MCPBL0010 TPS under the Telecom Clock API section, 11.4.
 alarms				:
 current_ref			:
 received_ref_clk3a		:
@@ -164,586 +165,586 @@ enable_clka1_output		:
 enable_clkb0_output		:
 enable_clkb1_output		:
 filter_select			:
-hardware_switching		:
-hardware_switching_mode		:
-telclock_version		:
+hardware_चयनing		:
+hardware_चयनing_mode		:
+telघड़ी_version		:
 mode_select			:
 refalign			:
 reset				:
-select_amcb1_transmit_clock	:
-select_amcb2_transmit_clock	:
-select_redundant_clock		:
+select_amcb1_transmit_घड़ी	:
+select_amcb2_transmit_घड़ी	:
+select_redundant_घड़ी		:
 select_ref_frequency		:
 
-All sysfs interfaces are integers in hex format, i.e echo 99 > refalign
+All sysfs पूर्णांकerfaces are पूर्णांकegers in hex क्रमmat, i.e echo 99 > refalign
 has the same effect as echo 0x99 > refalign.
 */
 
-static unsigned int telclk_interrupt;
+अटल अचिन्हित पूर्णांक telclk_पूर्णांकerrupt;
 
-static int int_events;		/* Event that generate a interrupt */
-static int got_event;		/* if events processing have been done */
+अटल पूर्णांक पूर्णांक_events;		/* Event that generate a पूर्णांकerrupt */
+अटल पूर्णांक got_event;		/* अगर events processing have been करोne */
 
-static void switchover_timeout(struct timer_list *t);
-static struct timer_list switchover_timer;
-static unsigned long tlclk_timer_data;
+अटल व्योम चयनover_समयout(काष्ठा समयr_list *t);
+अटल काष्ठा समयr_list चयनover_समयr;
+अटल अचिन्हित दीर्घ tlclk_समयr_data;
 
-static struct tlclk_alarms *alarm_events;
+अटल काष्ठा tlclk_alarms *alarm_events;
 
-static DEFINE_SPINLOCK(event_lock);
+अटल DEFINE_SPINLOCK(event_lock);
 
-static int tlclk_major = TLCLK_MAJOR;
+अटल पूर्णांक tlclk_major = TLCLK_MAJOR;
 
-static irqreturn_t tlclk_interrupt(int irq, void *dev_id);
+अटल irqवापस_t tlclk_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
 
-static DECLARE_WAIT_QUEUE_HEAD(wq);
+अटल DECLARE_WAIT_QUEUE_HEAD(wq);
 
-static unsigned long useflags;
-static DEFINE_MUTEX(tlclk_mutex);
+अटल अचिन्हित दीर्घ useflags;
+अटल DEFINE_MUTEX(tlclk_mutex);
 
-static int tlclk_open(struct inode *inode, struct file *filp)
-{
-	int result;
+अटल पूर्णांक tlclk_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	पूर्णांक result;
 
 	mutex_lock(&tlclk_mutex);
-	if (test_and_set_bit(0, &useflags)) {
+	अगर (test_and_set_bit(0, &useflags)) अणु
 		result = -EBUSY;
-		/* this legacy device is always one per system and it doesn't
+		/* this legacy device is always one per प्रणाली and it करोesn't
 		 * know how to handle multiple concurrent clients.
 		 */
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Make sure there is no interrupt pending while
-	 * initialising interrupt handler */
+	/* Make sure there is no पूर्णांकerrupt pending जबतक
+	 * initialising पूर्णांकerrupt handler */
 	inb(TLCLK_REG6);
 
 	/* This device is wired through the FPGA IO space of the ATCA blade
 	 * we can't share this IRQ */
-	result = request_irq(telclk_interrupt, &tlclk_interrupt,
-			     0, "telco_clock", tlclk_interrupt);
-	if (result == -EBUSY)
-		printk(KERN_ERR "tlclk: Interrupt can't be reserved.\n");
-	else
-		inb(TLCLK_REG6);	/* Clear interrupt events */
+	result = request_irq(telclk_पूर्णांकerrupt, &tlclk_पूर्णांकerrupt,
+			     0, "telco_clock", tlclk_पूर्णांकerrupt);
+	अगर (result == -EBUSY)
+		prपूर्णांकk(KERN_ERR "tlclk: Interrupt can't be reserved.\n");
+	अन्यथा
+		inb(TLCLK_REG6);	/* Clear पूर्णांकerrupt events */
 
 out:
 	mutex_unlock(&tlclk_mutex);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int tlclk_release(struct inode *inode, struct file *filp)
-{
-	free_irq(telclk_interrupt, tlclk_interrupt);
+अटल पूर्णांक tlclk_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	मुक्त_irq(telclk_पूर्णांकerrupt, tlclk_पूर्णांकerrupt);
 	clear_bit(0, &useflags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t tlclk_read(struct file *filp, char __user *buf, size_t count,
+अटल sमाप_प्रकार tlclk_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार count,
 		loff_t *f_pos)
-{
-	if (count < sizeof(struct tlclk_alarms))
-		return -EIO;
-	if (mutex_lock_interruptible(&tlclk_mutex))
-		return -EINTR;
+अणु
+	अगर (count < माप(काष्ठा tlclk_alarms))
+		वापस -EIO;
+	अगर (mutex_lock_पूर्णांकerruptible(&tlclk_mutex))
+		वापस -EINTR;
 
 
-	wait_event_interruptible(wq, got_event);
-	if (copy_to_user(buf, alarm_events, sizeof(struct tlclk_alarms))) {
+	रुको_event_पूर्णांकerruptible(wq, got_event);
+	अगर (copy_to_user(buf, alarm_events, माप(काष्ठा tlclk_alarms))) अणु
 		mutex_unlock(&tlclk_mutex);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	memset(alarm_events, 0, sizeof(struct tlclk_alarms));
+	स_रखो(alarm_events, 0, माप(काष्ठा tlclk_alarms));
 	got_event = 0;
 
 	mutex_unlock(&tlclk_mutex);
-	return  sizeof(struct tlclk_alarms);
-}
+	वापस  माप(काष्ठा tlclk_alarms);
+पूर्ण
 
-static const struct file_operations tlclk_fops = {
-	.read = tlclk_read,
-	.open = tlclk_open,
+अटल स्थिर काष्ठा file_operations tlclk_fops = अणु
+	.पढ़ो = tlclk_पढ़ो,
+	.खोलो = tlclk_खोलो,
 	.release = tlclk_release,
 	.llseek = noop_llseek,
 
-};
+पूर्ण;
 
-static struct miscdevice tlclk_miscdev = {
+अटल काष्ठा miscdevice tlclk_miscdev = अणु
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "telco_clock",
 	.fops = &tlclk_fops,
-};
+पूर्ण;
 
-static ssize_t show_current_ref(struct device *d,
-		struct device_attribute *attr, char *buf)
-{
-	unsigned long ret_val;
-	unsigned long flags;
+अटल sमाप_प्रकार show_current_ref(काष्ठा device *d,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ ret_val;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&event_lock, flags);
 	ret_val = ((inb(TLCLK_REG1) & 0x08) >> 3);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return sprintf(buf, "0x%lX\n", ret_val);
-}
+	वापस प्र_लिखो(buf, "0x%lX\n", ret_val);
+पूर्ण
 
-static DEVICE_ATTR(current_ref, S_IRUGO, show_current_ref, NULL);
+अटल DEVICE_ATTR(current_ref, S_IRUGO, show_current_ref, शून्य);
 
 
-static ssize_t show_telclock_version(struct device *d,
-		struct device_attribute *attr, char *buf)
-{
-	unsigned long ret_val;
-	unsigned long flags;
+अटल sमाप_प्रकार show_telघड़ी_version(काष्ठा device *d,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ ret_val;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&event_lock, flags);
 	ret_val = inb(TLCLK_REG5);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return sprintf(buf, "0x%lX\n", ret_val);
-}
+	वापस प्र_लिखो(buf, "0x%lX\n", ret_val);
+पूर्ण
 
-static DEVICE_ATTR(telclock_version, S_IRUGO,
-		show_telclock_version, NULL);
+अटल DEVICE_ATTR(telघड़ी_version, S_IRUGO,
+		show_telघड़ी_version, शून्य);
 
-static ssize_t show_alarms(struct device *d,
-		struct device_attribute *attr,  char *buf)
-{
-	unsigned long ret_val;
-	unsigned long flags;
+अटल sमाप_प्रकार show_alarms(काष्ठा device *d,
+		काष्ठा device_attribute *attr,  अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ ret_val;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&event_lock, flags);
 	ret_val = (inb(TLCLK_REG2) & 0xf0);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return sprintf(buf, "0x%lX\n", ret_val);
-}
+	वापस प्र_लिखो(buf, "0x%lX\n", ret_val);
+पूर्ण
 
-static DEVICE_ATTR(alarms, S_IRUGO, show_alarms, NULL);
+अटल DEVICE_ATTR(alarms, S_IRUGO, show_alarms, शून्य);
 
-static ssize_t store_received_ref_clk3a(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_received_ref_clk3a(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, ": tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, ": tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG1, 0xef, val);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(received_ref_clk3a, (S_IWUSR|S_IWGRP), NULL,
+अटल DEVICE_ATTR(received_ref_clk3a, (S_IWUSR|S_IWGRP), शून्य,
 		store_received_ref_clk3a);
 
 
-static ssize_t store_received_ref_clk3b(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_received_ref_clk3b(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, ": tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, ": tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG1, 0xdf, val << 1);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(received_ref_clk3b, (S_IWUSR|S_IWGRP), NULL,
+अटल DEVICE_ATTR(received_ref_clk3b, (S_IWUSR|S_IWGRP), शून्य,
 		store_received_ref_clk3b);
 
 
-static ssize_t store_enable_clk3b_output(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_enable_clk3b_output(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, ": tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, ": tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG3, 0x7f, val << 7);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(enable_clk3b_output, (S_IWUSR|S_IWGRP), NULL,
+अटल DEVICE_ATTR(enable_clk3b_output, (S_IWUSR|S_IWGRP), शून्य,
 		store_enable_clk3b_output);
 
-static ssize_t store_enable_clk3a_output(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long flags;
-	unsigned long tmp;
-	unsigned char val;
+अटल sमाप_प्रकार store_enable_clk3a_output(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG3, 0xbf, val << 6);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(enable_clk3a_output, (S_IWUSR|S_IWGRP), NULL,
+अटल DEVICE_ATTR(enable_clk3a_output, (S_IWUSR|S_IWGRP), शून्य,
 		store_enable_clk3a_output);
 
-static ssize_t store_enable_clkb1_output(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long flags;
-	unsigned long tmp;
-	unsigned char val;
+अटल sमाप_प्रकार store_enable_clkb1_output(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG2, 0xf7, val << 3);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(enable_clkb1_output, (S_IWUSR|S_IWGRP), NULL,
+अटल DEVICE_ATTR(enable_clkb1_output, (S_IWUSR|S_IWGRP), शून्य,
 		store_enable_clkb1_output);
 
 
-static ssize_t store_enable_clka1_output(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long flags;
-	unsigned long tmp;
-	unsigned char val;
+अटल sमाप_प्रकार store_enable_clka1_output(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG2, 0xfb, val << 2);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(enable_clka1_output, (S_IWUSR|S_IWGRP), NULL,
+अटल DEVICE_ATTR(enable_clka1_output, (S_IWUSR|S_IWGRP), शून्य,
 		store_enable_clka1_output);
 
-static ssize_t store_enable_clkb0_output(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long flags;
-	unsigned long tmp;
-	unsigned char val;
+अटल sमाप_प्रकार store_enable_clkb0_output(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG2, 0xfd, val << 1);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(enable_clkb0_output, (S_IWUSR|S_IWGRP), NULL,
+अटल DEVICE_ATTR(enable_clkb0_output, (S_IWUSR|S_IWGRP), शून्य,
 		store_enable_clkb0_output);
 
-static ssize_t store_enable_clka0_output(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long flags;
-	unsigned long tmp;
-	unsigned char val;
+अटल sमाप_प्रकार store_enable_clka0_output(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG2, 0xfe, val);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(enable_clka0_output, (S_IWUSR|S_IWGRP), NULL,
+अटल DEVICE_ATTR(enable_clka0_output, (S_IWUSR|S_IWGRP), शून्य,
 		store_enable_clka0_output);
 
-static ssize_t store_select_amcb2_transmit_clock(struct device *d,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long flags;
-	unsigned long tmp;
-	unsigned char val;
+अटल sमाप_प्रकार store_select_amcb2_transmit_घड़ी(काष्ठा device *d,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
-	if ((val == CLK_8kHz) || (val == CLK_16_384MHz)) {
+	अगर ((val == CLK_8kHz) || (val == CLK_16_384MHz)) अणु
 		SET_PORT_BITS(TLCLK_REG3, 0xc7, 0x28);
 		SET_PORT_BITS(TLCLK_REG1, 0xfb, ~val);
-	} else if (val >= CLK_8_592MHz) {
+	पूर्ण अन्यथा अगर (val >= CLK_8_592MHz) अणु
 		SET_PORT_BITS(TLCLK_REG3, 0xc7, 0x38);
-		switch (val) {
-		case CLK_8_592MHz:
+		चयन (val) अणु
+		हाल CLK_8_592MHz:
 			SET_PORT_BITS(TLCLK_REG0, 0xfc, 2);
-			break;
-		case CLK_11_184MHz:
+			अवरोध;
+		हाल CLK_11_184MHz:
 			SET_PORT_BITS(TLCLK_REG0, 0xfc, 0);
-			break;
-		case CLK_34_368MHz:
+			अवरोध;
+		हाल CLK_34_368MHz:
 			SET_PORT_BITS(TLCLK_REG0, 0xfc, 3);
-			break;
-		case CLK_44_736MHz:
+			अवरोध;
+		हाल CLK_44_736MHz:
 			SET_PORT_BITS(TLCLK_REG0, 0xfc, 1);
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		SET_PORT_BITS(TLCLK_REG3, 0xc7, val << 3);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(select_amcb2_transmit_clock, (S_IWUSR|S_IWGRP), NULL,
-	store_select_amcb2_transmit_clock);
+अटल DEVICE_ATTR(select_amcb2_transmit_घड़ी, (S_IWUSR|S_IWGRP), शून्य,
+	store_select_amcb2_transmit_घड़ी);
 
-static ssize_t store_select_amcb1_transmit_clock(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_select_amcb1_transmit_घड़ी(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
-	if ((val == CLK_8kHz) || (val == CLK_16_384MHz)) {
+	अगर ((val == CLK_8kHz) || (val == CLK_16_384MHz)) अणु
 		SET_PORT_BITS(TLCLK_REG3, 0xf8, 0x5);
 		SET_PORT_BITS(TLCLK_REG1, 0xfb, ~val);
-	} else if (val >= CLK_8_592MHz) {
+	पूर्ण अन्यथा अगर (val >= CLK_8_592MHz) अणु
 		SET_PORT_BITS(TLCLK_REG3, 0xf8, 0x7);
-		switch (val) {
-		case CLK_8_592MHz:
+		चयन (val) अणु
+		हाल CLK_8_592MHz:
 			SET_PORT_BITS(TLCLK_REG0, 0xfc, 2);
-			break;
-		case CLK_11_184MHz:
+			अवरोध;
+		हाल CLK_11_184MHz:
 			SET_PORT_BITS(TLCLK_REG0, 0xfc, 0);
-			break;
-		case CLK_34_368MHz:
+			अवरोध;
+		हाल CLK_34_368MHz:
 			SET_PORT_BITS(TLCLK_REG0, 0xfc, 3);
-			break;
-		case CLK_44_736MHz:
+			अवरोध;
+		हाल CLK_44_736MHz:
 			SET_PORT_BITS(TLCLK_REG0, 0xfc, 1);
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		SET_PORT_BITS(TLCLK_REG3, 0xf8, val);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(select_amcb1_transmit_clock, (S_IWUSR|S_IWGRP), NULL,
-		store_select_amcb1_transmit_clock);
+अटल DEVICE_ATTR(select_amcb1_transmit_घड़ी, (S_IWUSR|S_IWGRP), शून्य,
+		store_select_amcb1_transmit_घड़ी);
 
-static ssize_t store_select_redundant_clock(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_select_redundant_घड़ी(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG1, 0xfe, val);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(select_redundant_clock, (S_IWUSR|S_IWGRP), NULL,
-		store_select_redundant_clock);
+अटल DEVICE_ATTR(select_redundant_घड़ी, (S_IWUSR|S_IWGRP), शून्य,
+		store_select_redundant_घड़ी);
 
-static ssize_t store_select_ref_frequency(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_select_ref_frequency(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG1, 0xfd, val);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(select_ref_frequency, (S_IWUSR|S_IWGRP), NULL,
+अटल DEVICE_ATTR(select_ref_frequency, (S_IWUSR|S_IWGRP), शून्य,
 		store_select_ref_frequency);
 
-static ssize_t store_filter_select(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_filter_select(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG0, 0xfb, val);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(filter_select, (S_IWUSR|S_IWGRP), NULL, store_filter_select);
+अटल DEVICE_ATTR(filter_select, (S_IWUSR|S_IWGRP), शून्य, store_filter_select);
 
-static ssize_t store_hardware_switching_mode(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_hardware_चयनing_mode(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG0, 0xbf, val);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(hardware_switching_mode, (S_IWUSR|S_IWGRP), NULL,
-		store_hardware_switching_mode);
+अटल DEVICE_ATTR(hardware_चयनing_mode, (S_IWUSR|S_IWGRP), शून्य,
+		store_hardware_चयनing_mode);
 
-static ssize_t store_hardware_switching(struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_hardware_चयनing(काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG0, 0x7f, val);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(hardware_switching, (S_IWUSR|S_IWGRP), NULL,
-		store_hardware_switching);
+अटल DEVICE_ATTR(hardware_चयनing, (S_IWUSR|S_IWGRP), शून्य,
+		store_hardware_चयनing);
 
-static ssize_t store_refalign (struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned long flags;
+अटल sमाप_प्रकार store_refalign (काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG0, 0xf7, 0);
 	SET_PORT_BITS(TLCLK_REG0, 0xf7, 0x08);
 	SET_PORT_BITS(TLCLK_REG0, 0xf7, 0);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(refalign, (S_IWUSR|S_IWGRP), NULL, store_refalign);
+अटल DEVICE_ATTR(refalign, (S_IWUSR|S_IWGRP), शून्य, store_refalign);
 
-static ssize_t store_mode_select (struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_mode_select (काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG0, 0xcf, val);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(mode_select, (S_IWUSR|S_IWGRP), NULL, store_mode_select);
+अटल DEVICE_ATTR(mode_select, (S_IWUSR|S_IWGRP), शून्य, store_mode_select);
 
-static ssize_t store_reset (struct device *d,
-		 struct device_attribute *attr, const char *buf, size_t count)
-{
-	unsigned long tmp;
-	unsigned char val;
-	unsigned long flags;
+अटल sमाप_प्रकार store_reset (काष्ठा device *d,
+		 काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
 
-	sscanf(buf, "%lX", &tmp);
-	dev_dbg(d, "tmp = 0x%lX\n", tmp);
+	माला_पूछो(buf, "%lX", &पंचांगp);
+	dev_dbg(d, "tmp = 0x%lX\n", पंचांगp);
 
-	val = (unsigned char)tmp;
+	val = (अचिन्हित अक्षर)पंचांगp;
 	spin_lock_irqsave(&event_lock, flags);
 	SET_PORT_BITS(TLCLK_REG4, 0xfd, val);
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(reset, (S_IWUSR|S_IWGRP), NULL, store_reset);
+अटल DEVICE_ATTR(reset, (S_IWUSR|S_IWGRP), शून्य, store_reset);
 
-static struct attribute *tlclk_sysfs_entries[] = {
+अटल काष्ठा attribute *tlclk_sysfs_entries[] = अणु
 	&dev_attr_current_ref.attr,
-	&dev_attr_telclock_version.attr,
+	&dev_attr_telघड़ी_version.attr,
 	&dev_attr_alarms.attr,
 	&dev_attr_received_ref_clk3a.attr,
 	&dev_attr_received_ref_clk3b.attr,
@@ -753,187 +754,187 @@ static struct attribute *tlclk_sysfs_entries[] = {
 	&dev_attr_enable_clka1_output.attr,
 	&dev_attr_enable_clkb0_output.attr,
 	&dev_attr_enable_clka0_output.attr,
-	&dev_attr_select_amcb1_transmit_clock.attr,
-	&dev_attr_select_amcb2_transmit_clock.attr,
-	&dev_attr_select_redundant_clock.attr,
+	&dev_attr_select_amcb1_transmit_घड़ी.attr,
+	&dev_attr_select_amcb2_transmit_घड़ी.attr,
+	&dev_attr_select_redundant_घड़ी.attr,
 	&dev_attr_select_ref_frequency.attr,
 	&dev_attr_filter_select.attr,
-	&dev_attr_hardware_switching_mode.attr,
-	&dev_attr_hardware_switching.attr,
+	&dev_attr_hardware_चयनing_mode.attr,
+	&dev_attr_hardware_चयनing.attr,
 	&dev_attr_refalign.attr,
 	&dev_attr_mode_select.attr,
 	&dev_attr_reset.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group tlclk_attribute_group = {
-	.name = NULL,		/* put in device directory */
+अटल स्थिर काष्ठा attribute_group tlclk_attribute_group = अणु
+	.name = शून्य,		/* put in device directory */
 	.attrs = tlclk_sysfs_entries,
-};
+पूर्ण;
 
-static struct platform_device *tlclk_device;
+अटल काष्ठा platक्रमm_device *tlclk_device;
 
-static int __init tlclk_init(void)
-{
-	int ret;
+अटल पूर्णांक __init tlclk_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	telclk_interrupt = (inb(TLCLK_REG7) & 0x0f);
+	telclk_पूर्णांकerrupt = (inb(TLCLK_REG7) & 0x0f);
 
-	alarm_events = kzalloc( sizeof(struct tlclk_alarms), GFP_KERNEL);
-	if (!alarm_events) {
+	alarm_events = kzalloc( माप(काष्ठा tlclk_alarms), GFP_KERNEL);
+	अगर (!alarm_events) अणु
 		ret = -ENOMEM;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
-	ret = register_chrdev(tlclk_major, "telco_clock", &tlclk_fops);
-	if (ret < 0) {
-		printk(KERN_ERR "tlclk: can't get major %d.\n", tlclk_major);
-		kfree(alarm_events);
-		return ret;
-	}
+	ret = रेजिस्टर_chrdev(tlclk_major, "telco_clock", &tlclk_fops);
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR "tlclk: can't get major %d.\n", tlclk_major);
+		kमुक्त(alarm_events);
+		वापस ret;
+	पूर्ण
 	tlclk_major = ret;
 
-	/* Read telecom clock IRQ number (Set by BIOS) */
-	if (!request_region(TLCLK_BASE, 8, "telco_clock")) {
-		printk(KERN_ERR "tlclk: request_region 0x%X failed.\n",
+	/* Read telecom घड़ी IRQ number (Set by BIOS) */
+	अगर (!request_region(TLCLK_BASE, 8, "telco_clock")) अणु
+		prपूर्णांकk(KERN_ERR "tlclk: request_region 0x%X failed.\n",
 			TLCLK_BASE);
 		ret = -EBUSY;
-		goto out2;
-	}
+		जाओ out2;
+	पूर्ण
 
-	if (0x0F == telclk_interrupt ) { /* not MCPBL0010 ? */
-		printk(KERN_ERR "telclk_interrupt = 0x%x non-mcpbl0010 hw.\n",
-			telclk_interrupt);
+	अगर (0x0F == telclk_पूर्णांकerrupt ) अणु /* not MCPBL0010 ? */
+		prपूर्णांकk(KERN_ERR "telclk_interrupt = 0x%x non-mcpbl0010 hw.\n",
+			telclk_पूर्णांकerrupt);
 		ret = -ENXIO;
-		goto out3;
-	}
+		जाओ out3;
+	पूर्ण
 
-	timer_setup(&switchover_timer, switchover_timeout, 0);
+	समयr_setup(&चयनover_समयr, चयनover_समयout, 0);
 
-	ret = misc_register(&tlclk_miscdev);
-	if (ret < 0) {
-		printk(KERN_ERR "tlclk: misc_register returns %d.\n", ret);
-		goto out3;
-	}
+	ret = misc_रेजिस्टर(&tlclk_miscdev);
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR "tlclk: misc_register returns %d.\n", ret);
+		जाओ out3;
+	पूर्ण
 
-	tlclk_device = platform_device_register_simple("telco_clock",
-				-1, NULL, 0);
-	if (IS_ERR(tlclk_device)) {
-		printk(KERN_ERR "tlclk: platform_device_register failed.\n");
+	tlclk_device = platक्रमm_device_रेजिस्टर_simple("telco_clock",
+				-1, शून्य, 0);
+	अगर (IS_ERR(tlclk_device)) अणु
+		prपूर्णांकk(KERN_ERR "tlclk: platform_device_register failed.\n");
 		ret = PTR_ERR(tlclk_device);
-		goto out4;
-	}
+		जाओ out4;
+	पूर्ण
 
 	ret = sysfs_create_group(&tlclk_device->dev.kobj,
 			&tlclk_attribute_group);
-	if (ret) {
-		printk(KERN_ERR "tlclk: failed to create sysfs device attributes.\n");
-		goto out5;
-	}
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR "tlclk: failed to create sysfs device attributes.\n");
+		जाओ out5;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out5:
-	platform_device_unregister(tlclk_device);
+	platक्रमm_device_unरेजिस्टर(tlclk_device);
 out4:
-	misc_deregister(&tlclk_miscdev);
+	misc_deरेजिस्टर(&tlclk_miscdev);
 out3:
 	release_region(TLCLK_BASE, 8);
 out2:
-	kfree(alarm_events);
-	unregister_chrdev(tlclk_major, "telco_clock");
+	kमुक्त(alarm_events);
+	unरेजिस्टर_chrdev(tlclk_major, "telco_clock");
 out1:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit tlclk_cleanup(void)
-{
-	sysfs_remove_group(&tlclk_device->dev.kobj, &tlclk_attribute_group);
-	platform_device_unregister(tlclk_device);
-	misc_deregister(&tlclk_miscdev);
-	unregister_chrdev(tlclk_major, "telco_clock");
+अटल व्योम __निकास tlclk_cleanup(व्योम)
+अणु
+	sysfs_हटाओ_group(&tlclk_device->dev.kobj, &tlclk_attribute_group);
+	platक्रमm_device_unरेजिस्टर(tlclk_device);
+	misc_deरेजिस्टर(&tlclk_miscdev);
+	unरेजिस्टर_chrdev(tlclk_major, "telco_clock");
 
 	release_region(TLCLK_BASE, 8);
-	del_timer_sync(&switchover_timer);
-	kfree(alarm_events);
+	del_समयr_sync(&चयनover_समयr);
+	kमुक्त(alarm_events);
 
-}
+पूर्ण
 
-static void switchover_timeout(struct timer_list *unused)
-{
-	unsigned long flags = tlclk_timer_data;
+अटल व्योम चयनover_समयout(काष्ठा समयr_list *unused)
+अणु
+	अचिन्हित दीर्घ flags = tlclk_समयr_data;
 
-	if ((flags & 1)) {
-		if ((inb(TLCLK_REG1) & 0x08) != (flags & 0x08))
-			alarm_events->switchover_primary++;
-	} else {
-		if ((inb(TLCLK_REG1) & 0x08) != (flags & 0x08))
-			alarm_events->switchover_secondary++;
-	}
+	अगर ((flags & 1)) अणु
+		अगर ((inb(TLCLK_REG1) & 0x08) != (flags & 0x08))
+			alarm_events->चयनover_primary++;
+	पूर्ण अन्यथा अणु
+		अगर ((inb(TLCLK_REG1) & 0x08) != (flags & 0x08))
+			alarm_events->चयनover_secondary++;
+	पूर्ण
 
-	/* Alarm processing is done, wake up read task */
-	del_timer(&switchover_timer);
+	/* Alarm processing is करोne, wake up पढ़ो task */
+	del_समयr(&चयनover_समयr);
 	got_event = 1;
 	wake_up(&wq);
-}
+पूर्ण
 
-static irqreturn_t tlclk_interrupt(int irq, void *dev_id)
-{
-	unsigned long flags;
+अटल irqवापस_t tlclk_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&event_lock, flags);
-	/* Read and clear interrupt events */
-	int_events = inb(TLCLK_REG6);
+	/* Read and clear पूर्णांकerrupt events */
+	पूर्णांक_events = inb(TLCLK_REG6);
 
 	/* Primary_Los changed from 0 to 1 ? */
-	if (int_events & PRI_LOS_01_MASK) {
-		if (inb(TLCLK_REG2) & SEC_LOST_MASK)
-			alarm_events->lost_clocks++;
-		else
-			alarm_events->lost_primary_clock++;
-	}
+	अगर (पूर्णांक_events & PRI_LOS_01_MASK) अणु
+		अगर (inb(TLCLK_REG2) & SEC_LOST_MASK)
+			alarm_events->lost_घड़ीs++;
+		अन्यथा
+			alarm_events->lost_primary_घड़ी++;
+	पूर्ण
 
 	/* Primary_Los changed from 1 to 0 ? */
-	if (int_events & PRI_LOS_10_MASK) {
-		alarm_events->primary_clock_back++;
+	अगर (पूर्णांक_events & PRI_LOS_10_MASK) अणु
+		alarm_events->primary_घड़ी_back++;
 		SET_PORT_BITS(TLCLK_REG1, 0xFE, 1);
-	}
+	पूर्ण
 	/* Secondary_Los changed from 0 to 1 ? */
-	if (int_events & SEC_LOS_01_MASK) {
-		if (inb(TLCLK_REG2) & PRI_LOST_MASK)
-			alarm_events->lost_clocks++;
-		else
-			alarm_events->lost_secondary_clock++;
-	}
+	अगर (पूर्णांक_events & SEC_LOS_01_MASK) अणु
+		अगर (inb(TLCLK_REG2) & PRI_LOST_MASK)
+			alarm_events->lost_घड़ीs++;
+		अन्यथा
+			alarm_events->lost_secondary_घड़ी++;
+	पूर्ण
 	/* Secondary_Los changed from 1 to 0 ? */
-	if (int_events & SEC_LOS_10_MASK) {
-		alarm_events->secondary_clock_back++;
+	अगर (पूर्णांक_events & SEC_LOS_10_MASK) अणु
+		alarm_events->secondary_घड़ी_back++;
 		SET_PORT_BITS(TLCLK_REG1, 0xFE, 0);
-	}
-	if (int_events & HOLDOVER_10_MASK)
-		alarm_events->pll_end_holdover++;
+	पूर्ण
+	अगर (पूर्णांक_events & HOLDOVER_10_MASK)
+		alarm_events->pll_end_holकरोver++;
 
-	if (int_events & UNLOCK_01_MASK)
+	अगर (पूर्णांक_events & UNLOCK_01_MASK)
 		alarm_events->pll_lost_sync++;
 
-	if (int_events & UNLOCK_10_MASK)
+	अगर (पूर्णांक_events & UNLOCK_10_MASK)
 		alarm_events->pll_sync++;
 
-	/* Holdover changed from 0 to 1 ? */
-	if (int_events & HOLDOVER_01_MASK) {
-		alarm_events->pll_holdover++;
+	/* Holकरोver changed from 0 to 1 ? */
+	अगर (पूर्णांक_events & HOLDOVER_01_MASK) अणु
+		alarm_events->pll_holकरोver++;
 
 		/* TIMEOUT in ~10ms */
-		switchover_timer.expires = jiffies + msecs_to_jiffies(10);
-		tlclk_timer_data = inb(TLCLK_REG1);
-		mod_timer(&switchover_timer, switchover_timer.expires);
-	} else {
+		चयनover_समयr.expires = jअगरfies + msecs_to_jअगरfies(10);
+		tlclk_समयr_data = inb(TLCLK_REG1);
+		mod_समयr(&चयनover_समयr, चयनover_समयr.expires);
+	पूर्ण अन्यथा अणु
 		got_event = 1;
 		wake_up(&wq);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 module_init(tlclk_init);
-module_exit(tlclk_cleanup);
+module_निकास(tlclk_cleanup);

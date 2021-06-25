@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * USB Type-C Multiplexer/DeMultiplexer Switch support
  *
  * Copyright (C) 2018 Intel Corporation
- * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
+ * Author: Heikki Krogerus <heikki.krogerus@linux.पूर्णांकel.com>
  *         Hans de Goede <hdegoede@redhat.com>
  */
 
-#include <linux/device.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/property.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/property.h>
+#समावेश <linux/slab.h>
 
-#include "class.h"
-#include "mux.h"
+#समावेश "class.h"
+#समावेश "mux.h"
 
-static bool dev_name_ends_with(struct device *dev, const char *suffix)
-{
-	const char *name = dev_name(dev);
-	const int name_len = strlen(name);
-	const int suffix_len = strlen(suffix);
+अटल bool dev_name_ends_with(काष्ठा device *dev, स्थिर अक्षर *suffix)
+अणु
+	स्थिर अक्षर *name = dev_name(dev);
+	स्थिर पूर्णांक name_len = म_माप(name);
+	स्थिर पूर्णांक suffix_len = म_माप(suffix);
 
-	if (suffix_len > name_len)
-		return false;
+	अगर (suffix_len > name_len)
+		वापस false;
 
-	return strcmp(name + (name_len - suffix_len), suffix) == 0;
-}
+	वापस म_भेद(name + (name_len - suffix_len), suffix) == 0;
+पूर्ण
 
-static int switch_fwnode_match(struct device *dev, const void *fwnode)
-{
-	return dev_fwnode(dev) == fwnode && dev_name_ends_with(dev, "-switch");
-}
+अटल पूर्णांक चयन_fwnode_match(काष्ठा device *dev, स्थिर व्योम *fwnode)
+अणु
+	वापस dev_fwnode(dev) == fwnode && dev_name_ends_with(dev, "-switch");
+पूर्ण
 
-static void *typec_switch_match(struct fwnode_handle *fwnode, const char *id,
-				void *data)
-{
-	struct device *dev;
+अटल व्योम *typec_चयन_match(काष्ठा fwnode_handle *fwnode, स्थिर अक्षर *id,
+				व्योम *data)
+अणु
+	काष्ठा device *dev;
 
-	if (id && !fwnode_property_present(fwnode, id))
-		return NULL;
+	अगर (id && !fwnode_property_present(fwnode, id))
+		वापस शून्य;
 
-	dev = class_find_device(&typec_mux_class, NULL, fwnode,
-				switch_fwnode_match);
+	dev = class_find_device(&typec_mux_class, शून्य, fwnode,
+				चयन_fwnode_match);
 
-	return dev ? to_typec_switch(dev) : ERR_PTR(-EPROBE_DEFER);
-}
+	वापस dev ? to_typec_चयन(dev) : ERR_PTR(-EPROBE_DEFER);
+पूर्ण
 
 /**
- * fwnode_typec_switch_get - Find USB Type-C orientation switch
+ * fwnode_typec_चयन_get - Find USB Type-C orientation चयन
  * @fwnode: The caller device node
  *
- * Finds a switch linked with @dev. Returns a reference to the switch on
- * success, NULL if no matching connection was found, or
- * ERR_PTR(-EPROBE_DEFER) when a connection was found but the switch
- * has not been enumerated yet.
+ * Finds a चयन linked with @dev. Returns a reference to the चयन on
+ * success, शून्य अगर no matching connection was found, or
+ * ERR_PTR(-EPROBE_DEFER) when a connection was found but the चयन
+ * has not been क्रमागतerated yet.
  */
-struct typec_switch *fwnode_typec_switch_get(struct fwnode_handle *fwnode)
-{
-	struct typec_switch *sw;
+काष्ठा typec_चयन *fwnode_typec_चयन_get(काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा typec_चयन *sw;
 
-	sw = fwnode_connection_find_match(fwnode, "orientation-switch", NULL,
-					  typec_switch_match);
-	if (!IS_ERR_OR_NULL(sw))
+	sw = fwnode_connection_find_match(fwnode, "orientation-switch", शून्य,
+					  typec_चयन_match);
+	अगर (!IS_ERR_OR_शून्य(sw))
 		WARN_ON(!try_module_get(sw->dev.parent->driver->owner));
 
-	return sw;
-}
-EXPORT_SYMBOL_GPL(fwnode_typec_switch_get);
+	वापस sw;
+पूर्ण
+EXPORT_SYMBOL_GPL(fwnode_typec_चयन_get);
 
 /**
- * typec_switch_put - Release USB Type-C orientation switch
- * @sw: USB Type-C orientation switch
+ * typec_चयन_put - Release USB Type-C orientation चयन
+ * @sw: USB Type-C orientation चयन
  *
- * Decrement reference count for @sw.
+ * Decrement reference count क्रम @sw.
  */
-void typec_switch_put(struct typec_switch *sw)
-{
-	if (!IS_ERR_OR_NULL(sw)) {
+व्योम typec_चयन_put(काष्ठा typec_चयन *sw)
+अणु
+	अगर (!IS_ERR_OR_शून्य(sw)) अणु
 		module_put(sw->dev.parent->driver->owner);
 		put_device(&sw->dev);
-	}
-}
-EXPORT_SYMBOL_GPL(typec_switch_put);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(typec_चयन_put);
 
-static void typec_switch_release(struct device *dev)
-{
-	kfree(to_typec_switch(dev));
-}
+अटल व्योम typec_चयन_release(काष्ठा device *dev)
+अणु
+	kमुक्त(to_typec_चयन(dev));
+पूर्ण
 
-static const struct device_type typec_switch_dev_type = {
+अटल स्थिर काष्ठा device_type typec_चयन_dev_type = अणु
 	.name = "orientation_switch",
-	.release = typec_switch_release,
-};
+	.release = typec_चयन_release,
+पूर्ण;
 
 /**
- * typec_switch_register - Register USB Type-C orientation switch
+ * typec_चयन_रेजिस्टर - Register USB Type-C orientation चयन
  * @parent: Parent device
- * @desc: Orientation switch description
+ * @desc: Orientation चयन description
  *
- * This function registers a switch that can be used for routing the correct
+ * This function रेजिस्टरs a चयन that can be used क्रम routing the correct
  * data pairs depending on the cable plug orientation from the USB Type-C
  * connector to the USB controllers. USB Type-C plugs can be inserted
- * right-side-up or upside-down.
+ * right-side-up or upside-करोwn.
  */
-struct typec_switch *
-typec_switch_register(struct device *parent,
-		      const struct typec_switch_desc *desc)
-{
-	struct typec_switch *sw;
-	int ret;
+काष्ठा typec_चयन *
+typec_चयन_रेजिस्टर(काष्ठा device *parent,
+		      स्थिर काष्ठा typec_चयन_desc *desc)
+अणु
+	काष्ठा typec_चयन *sw;
+	पूर्णांक ret;
 
-	if (!desc || !desc->set)
-		return ERR_PTR(-EINVAL);
+	अगर (!desc || !desc->set)
+		वापस ERR_PTR(-EINVAL);
 
-	sw = kzalloc(sizeof(*sw), GFP_KERNEL);
-	if (!sw)
-		return ERR_PTR(-ENOMEM);
+	sw = kzalloc(माप(*sw), GFP_KERNEL);
+	अगर (!sw)
+		वापस ERR_PTR(-ENOMEM);
 
 	sw->set = desc->set;
 
@@ -125,203 +126,203 @@ typec_switch_register(struct device *parent,
 	sw->dev.parent = parent;
 	sw->dev.fwnode = desc->fwnode;
 	sw->dev.class = &typec_mux_class;
-	sw->dev.type = &typec_switch_dev_type;
+	sw->dev.type = &typec_चयन_dev_type;
 	sw->dev.driver_data = desc->drvdata;
 	dev_set_name(&sw->dev, "%s-switch",
 		     desc->name ? desc->name : dev_name(parent));
 
 	ret = device_add(&sw->dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(parent, "failed to register switch (%d)\n", ret);
 		put_device(&sw->dev);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return sw;
-}
-EXPORT_SYMBOL_GPL(typec_switch_register);
+	वापस sw;
+पूर्ण
+EXPORT_SYMBOL_GPL(typec_चयन_रेजिस्टर);
 
-int typec_switch_set(struct typec_switch *sw,
-		     enum typec_orientation orientation)
-{
-	if (IS_ERR_OR_NULL(sw))
-		return 0;
+पूर्णांक typec_चयन_set(काष्ठा typec_चयन *sw,
+		     क्रमागत typec_orientation orientation)
+अणु
+	अगर (IS_ERR_OR_शून्य(sw))
+		वापस 0;
 
-	return sw->set(sw, orientation);
-}
-EXPORT_SYMBOL_GPL(typec_switch_set);
+	वापस sw->set(sw, orientation);
+पूर्ण
+EXPORT_SYMBOL_GPL(typec_चयन_set);
 
 /**
- * typec_switch_unregister - Unregister USB Type-C orientation switch
- * @sw: USB Type-C orientation switch
+ * typec_चयन_unरेजिस्टर - Unरेजिस्टर USB Type-C orientation चयन
+ * @sw: USB Type-C orientation चयन
  *
- * Unregister switch that was registered with typec_switch_register().
+ * Unरेजिस्टर चयन that was रेजिस्टरed with typec_चयन_रेजिस्टर().
  */
-void typec_switch_unregister(struct typec_switch *sw)
-{
-	if (!IS_ERR_OR_NULL(sw))
-		device_unregister(&sw->dev);
-}
-EXPORT_SYMBOL_GPL(typec_switch_unregister);
+व्योम typec_चयन_unरेजिस्टर(काष्ठा typec_चयन *sw)
+अणु
+	अगर (!IS_ERR_OR_शून्य(sw))
+		device_unरेजिस्टर(&sw->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(typec_चयन_unरेजिस्टर);
 
-void typec_switch_set_drvdata(struct typec_switch *sw, void *data)
-{
+व्योम typec_चयन_set_drvdata(काष्ठा typec_चयन *sw, व्योम *data)
+अणु
 	dev_set_drvdata(&sw->dev, data);
-}
-EXPORT_SYMBOL_GPL(typec_switch_set_drvdata);
+पूर्ण
+EXPORT_SYMBOL_GPL(typec_चयन_set_drvdata);
 
-void *typec_switch_get_drvdata(struct typec_switch *sw)
-{
-	return dev_get_drvdata(&sw->dev);
-}
-EXPORT_SYMBOL_GPL(typec_switch_get_drvdata);
+व्योम *typec_चयन_get_drvdata(काष्ठा typec_चयन *sw)
+अणु
+	वापस dev_get_drvdata(&sw->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(typec_चयन_get_drvdata);
 
 /* ------------------------------------------------------------------------- */
 
-static int mux_fwnode_match(struct device *dev, const void *fwnode)
-{
-	return dev_fwnode(dev) == fwnode && dev_name_ends_with(dev, "-mux");
-}
+अटल पूर्णांक mux_fwnode_match(काष्ठा device *dev, स्थिर व्योम *fwnode)
+अणु
+	वापस dev_fwnode(dev) == fwnode && dev_name_ends_with(dev, "-mux");
+पूर्ण
 
-static void *typec_mux_match(struct fwnode_handle *fwnode, const char *id,
-			     void *data)
-{
-	const struct typec_altmode_desc *desc = data;
-	struct device *dev;
+अटल व्योम *typec_mux_match(काष्ठा fwnode_handle *fwnode, स्थिर अक्षर *id,
+			     व्योम *data)
+अणु
+	स्थिर काष्ठा typec_alपंचांगode_desc *desc = data;
+	काष्ठा device *dev;
 	bool match;
-	int nval;
+	पूर्णांक nval;
 	u16 *val;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	/*
-	 * Check has the identifier already been "consumed". If it
-	 * has, no need to do any extra connection identification.
+	 * Check has the identअगरier alपढ़ोy been "consumed". If it
+	 * has, no need to करो any extra connection identअगरication.
 	 */
 	match = !id;
-	if (match)
-		goto find_mux;
+	अगर (match)
+		जाओ find_mux;
 
 	/* Accessory Mode muxes */
-	if (!desc) {
+	अगर (!desc) अणु
 		match = fwnode_property_present(fwnode, "accessory");
-		if (match)
-			goto find_mux;
-		return NULL;
-	}
+		अगर (match)
+			जाओ find_mux;
+		वापस शून्य;
+	पूर्ण
 
 	/* Alternate Mode muxes */
 	nval = fwnode_property_count_u16(fwnode, "svid");
-	if (nval <= 0)
-		return NULL;
+	अगर (nval <= 0)
+		वापस शून्य;
 
-	val = kcalloc(nval, sizeof(*val), GFP_KERNEL);
-	if (!val)
-		return ERR_PTR(-ENOMEM);
+	val = kसुस्मृति(nval, माप(*val), GFP_KERNEL);
+	अगर (!val)
+		वापस ERR_PTR(-ENOMEM);
 
-	ret = fwnode_property_read_u16_array(fwnode, "svid", val, nval);
-	if (ret < 0) {
-		kfree(val);
-		return ERR_PTR(ret);
-	}
+	ret = fwnode_property_पढ़ो_u16_array(fwnode, "svid", val, nval);
+	अगर (ret < 0) अणु
+		kमुक्त(val);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	for (i = 0; i < nval; i++) {
+	क्रम (i = 0; i < nval; i++) अणु
 		match = val[i] == desc->svid;
-		if (match) {
-			kfree(val);
-			goto find_mux;
-		}
-	}
-	kfree(val);
-	return NULL;
+		अगर (match) अणु
+			kमुक्त(val);
+			जाओ find_mux;
+		पूर्ण
+	पूर्ण
+	kमुक्त(val);
+	वापस शून्य;
 
 find_mux:
-	dev = class_find_device(&typec_mux_class, NULL, fwnode,
+	dev = class_find_device(&typec_mux_class, शून्य, fwnode,
 				mux_fwnode_match);
 
-	return dev ? to_typec_mux(dev) : ERR_PTR(-EPROBE_DEFER);
-}
+	वापस dev ? to_typec_mux(dev) : ERR_PTR(-EPROBE_DEFER);
+पूर्ण
 
 /**
  * fwnode_typec_mux_get - Find USB Type-C Multiplexer
  * @fwnode: The caller device node
  * @desc: Alt Mode description
  *
- * Finds a mux linked to the caller. This function is primarily meant for the
- * Type-C drivers. Returns a reference to the mux on success, NULL if no
+ * Finds a mux linked to the caller. This function is primarily meant क्रम the
+ * Type-C drivers. Returns a reference to the mux on success, शून्य अगर no
  * matching connection was found, or ERR_PTR(-EPROBE_DEFER) when a connection
- * was found but the mux has not been enumerated yet.
+ * was found but the mux has not been क्रमागतerated yet.
  */
-struct typec_mux *fwnode_typec_mux_get(struct fwnode_handle *fwnode,
-				       const struct typec_altmode_desc *desc)
-{
-	struct typec_mux *mux;
+काष्ठा typec_mux *fwnode_typec_mux_get(काष्ठा fwnode_handle *fwnode,
+				       स्थिर काष्ठा typec_alपंचांगode_desc *desc)
+अणु
+	काष्ठा typec_mux *mux;
 
-	mux = fwnode_connection_find_match(fwnode, "mode-switch", (void *)desc,
+	mux = fwnode_connection_find_match(fwnode, "mode-switch", (व्योम *)desc,
 					   typec_mux_match);
-	if (!IS_ERR_OR_NULL(mux))
+	अगर (!IS_ERR_OR_शून्य(mux))
 		WARN_ON(!try_module_get(mux->dev.parent->driver->owner));
 
-	return mux;
-}
+	वापस mux;
+पूर्ण
 EXPORT_SYMBOL_GPL(fwnode_typec_mux_get);
 
 /**
  * typec_mux_put - Release handle to a Multiplexer
  * @mux: USB Type-C Connector Multiplexer/DeMultiplexer
  *
- * Decrements reference count for @mux.
+ * Decrements reference count क्रम @mux.
  */
-void typec_mux_put(struct typec_mux *mux)
-{
-	if (!IS_ERR_OR_NULL(mux)) {
+व्योम typec_mux_put(काष्ठा typec_mux *mux)
+अणु
+	अगर (!IS_ERR_OR_शून्य(mux)) अणु
 		module_put(mux->dev.parent->driver->owner);
 		put_device(&mux->dev);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(typec_mux_put);
 
-int typec_mux_set(struct typec_mux *mux, struct typec_mux_state *state)
-{
-	if (IS_ERR_OR_NULL(mux))
-		return 0;
+पूर्णांक typec_mux_set(काष्ठा typec_mux *mux, काष्ठा typec_mux_state *state)
+अणु
+	अगर (IS_ERR_OR_शून्य(mux))
+		वापस 0;
 
-	return mux->set(mux, state);
-}
+	वापस mux->set(mux, state);
+पूर्ण
 EXPORT_SYMBOL_GPL(typec_mux_set);
 
-static void typec_mux_release(struct device *dev)
-{
-	kfree(to_typec_mux(dev));
-}
+अटल व्योम typec_mux_release(काष्ठा device *dev)
+अणु
+	kमुक्त(to_typec_mux(dev));
+पूर्ण
 
-static const struct device_type typec_mux_dev_type = {
+अटल स्थिर काष्ठा device_type typec_mux_dev_type = अणु
 	.name = "mode_switch",
 	.release = typec_mux_release,
-};
+पूर्ण;
 
 /**
- * typec_mux_register - Register Multiplexer routing USB Type-C pins
+ * typec_mux_रेजिस्टर - Register Multiplexer routing USB Type-C pins
  * @parent: Parent device
  * @desc: Multiplexer description
  *
- * USB Type-C connectors can be used for alternate modes of operation besides
+ * USB Type-C connectors can be used क्रम alternate modes of operation besides
  * USB when Accessory/Alternate Modes are supported. With some of those modes,
- * the pins on the connector need to be reconfigured. This function registers
- * multiplexer switches routing the pins on the connector.
+ * the pins on the connector need to be reconfigured. This function रेजिस्टरs
+ * multiplexer चयनes routing the pins on the connector.
  */
-struct typec_mux *
-typec_mux_register(struct device *parent, const struct typec_mux_desc *desc)
-{
-	struct typec_mux *mux;
-	int ret;
+काष्ठा typec_mux *
+typec_mux_रेजिस्टर(काष्ठा device *parent, स्थिर काष्ठा typec_mux_desc *desc)
+अणु
+	काष्ठा typec_mux *mux;
+	पूर्णांक ret;
 
-	if (!desc || !desc->set)
-		return ERR_PTR(-EINVAL);
+	अगर (!desc || !desc->set)
+		वापस ERR_PTR(-EINVAL);
 
-	mux = kzalloc(sizeof(*mux), GFP_KERNEL);
-	if (!mux)
-		return ERR_PTR(-ENOMEM);
+	mux = kzalloc(माप(*mux), GFP_KERNEL);
+	अगर (!mux)
+		वापस ERR_PTR(-ENOMEM);
 
 	mux->set = desc->set;
 
@@ -335,42 +336,42 @@ typec_mux_register(struct device *parent, const struct typec_mux_desc *desc)
 		     desc->name ? desc->name : dev_name(parent));
 
 	ret = device_add(&mux->dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(parent, "failed to register mux (%d)\n", ret);
 		put_device(&mux->dev);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return mux;
-}
-EXPORT_SYMBOL_GPL(typec_mux_register);
+	वापस mux;
+पूर्ण
+EXPORT_SYMBOL_GPL(typec_mux_रेजिस्टर);
 
 /**
- * typec_mux_unregister - Unregister Multiplexer Switch
+ * typec_mux_unरेजिस्टर - Unरेजिस्टर Multiplexer Switch
  * @mux: USB Type-C Connector Multiplexer/DeMultiplexer
  *
- * Unregister mux that was registered with typec_mux_register().
+ * Unरेजिस्टर mux that was रेजिस्टरed with typec_mux_रेजिस्टर().
  */
-void typec_mux_unregister(struct typec_mux *mux)
-{
-	if (!IS_ERR_OR_NULL(mux))
-		device_unregister(&mux->dev);
-}
-EXPORT_SYMBOL_GPL(typec_mux_unregister);
+व्योम typec_mux_unरेजिस्टर(काष्ठा typec_mux *mux)
+अणु
+	अगर (!IS_ERR_OR_शून्य(mux))
+		device_unरेजिस्टर(&mux->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(typec_mux_unरेजिस्टर);
 
-void typec_mux_set_drvdata(struct typec_mux *mux, void *data)
-{
+व्योम typec_mux_set_drvdata(काष्ठा typec_mux *mux, व्योम *data)
+अणु
 	dev_set_drvdata(&mux->dev, data);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(typec_mux_set_drvdata);
 
-void *typec_mux_get_drvdata(struct typec_mux *mux)
-{
-	return dev_get_drvdata(&mux->dev);
-}
+व्योम *typec_mux_get_drvdata(काष्ठा typec_mux *mux)
+अणु
+	वापस dev_get_drvdata(&mux->dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(typec_mux_get_drvdata);
 
-struct class typec_mux_class = {
+काष्ठा class typec_mux_class = अणु
 	.name = "typec_mux",
 	.owner = THIS_MODULE,
-};
+पूर्ण;

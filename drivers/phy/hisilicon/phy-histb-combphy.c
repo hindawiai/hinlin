@@ -1,284 +1,285 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * COMBPHY driver for HiSilicon STB SoCs
+ * COMBPHY driver क्रम HiSilicon STB SoCs
  *
  * Copyright (C) 2016-2017 HiSilicon Co., Ltd. http://www.hisilicon.com
  *
  * Authors: Jianguo Sun <sunjianguo1@huawei.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/phy/phy.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
-#include <dt-bindings/phy/phy.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
+#समावेश <dt-bindings/phy/phy.h>
 
-#define COMBPHY_MODE_PCIE		0
-#define COMBPHY_MODE_USB3		1
-#define COMBPHY_MODE_SATA		2
+#घोषणा COMBPHY_MODE_PCIE		0
+#घोषणा COMBPHY_MODE_USB3		1
+#घोषणा COMBPHY_MODE_SATA		2
 
-#define COMBPHY_CFG_REG			0x0
-#define COMBPHY_BYPASS_CODEC		BIT(31)
-#define COMBPHY_TEST_WRITE		BIT(24)
-#define COMBPHY_TEST_DATA_SHIFT		20
-#define COMBPHY_TEST_DATA_MASK		GENMASK(23, 20)
-#define COMBPHY_TEST_ADDR_SHIFT		12
-#define COMBPHY_TEST_ADDR_MASK		GENMASK(16, 12)
-#define COMBPHY_CLKREF_OUT_OEN		BIT(0)
+#घोषणा COMBPHY_CFG_REG			0x0
+#घोषणा COMBPHY_BYPASS_CODEC		BIT(31)
+#घोषणा COMBPHY_TEST_WRITE		BIT(24)
+#घोषणा COMBPHY_TEST_DATA_SHIFT		20
+#घोषणा COMBPHY_TEST_DATA_MASK		GENMASK(23, 20)
+#घोषणा COMBPHY_TEST_ADDR_SHIFT		12
+#घोषणा COMBPHY_TEST_ADDR_MASK		GENMASK(16, 12)
+#घोषणा COMBPHY_CLKREF_OUT_OEN		BIT(0)
 
-struct histb_combphy_mode {
-	int fixed;
-	int select;
+काष्ठा histb_combphy_mode अणु
+	पूर्णांक fixed;
+	पूर्णांक select;
 	u32 reg;
-	u32 shift;
+	u32 shअगरt;
 	u32 mask;
-};
+पूर्ण;
 
-struct histb_combphy_priv {
-	void __iomem *mmio;
-	struct regmap *syscon;
-	struct reset_control *por_rst;
-	struct clk *ref_clk;
-	struct phy *phy;
-	struct histb_combphy_mode mode;
-};
+काष्ठा histb_combphy_priv अणु
+	व्योम __iomem *mmio;
+	काष्ठा regmap *syscon;
+	काष्ठा reset_control *por_rst;
+	काष्ठा clk *ref_clk;
+	काष्ठा phy *phy;
+	काष्ठा histb_combphy_mode mode;
+पूर्ण;
 
-static void nano_register_write(struct histb_combphy_priv *priv,
+अटल व्योम nano_रेजिस्टर_ग_लिखो(काष्ठा histb_combphy_priv *priv,
 				u32 addr, u32 data)
-{
-	void __iomem *reg = priv->mmio + COMBPHY_CFG_REG;
+अणु
+	व्योम __iomem *reg = priv->mmio + COMBPHY_CFG_REG;
 	u32 val;
 
-	/* Set up address and data for the write */
-	val = readl(reg);
+	/* Set up address and data क्रम the ग_लिखो */
+	val = पढ़ोl(reg);
 	val &= ~COMBPHY_TEST_ADDR_MASK;
 	val |= addr << COMBPHY_TEST_ADDR_SHIFT;
 	val &= ~COMBPHY_TEST_DATA_MASK;
 	val |= data << COMBPHY_TEST_DATA_SHIFT;
-	writel(val, reg);
+	ग_लिखोl(val, reg);
 
-	/* Flip strobe control to trigger the write */
+	/* Flip strobe control to trigger the ग_लिखो */
 	val &= ~COMBPHY_TEST_WRITE;
-	writel(val, reg);
+	ग_लिखोl(val, reg);
 	val |= COMBPHY_TEST_WRITE;
-	writel(val, reg);
-}
+	ग_लिखोl(val, reg);
+पूर्ण
 
-static int is_mode_fixed(struct histb_combphy_mode *mode)
-{
-	return (mode->fixed != PHY_NONE) ? true : false;
-}
+अटल पूर्णांक is_mode_fixed(काष्ठा histb_combphy_mode *mode)
+अणु
+	वापस (mode->fixed != PHY_NONE) ? true : false;
+पूर्ण
 
-static int histb_combphy_set_mode(struct histb_combphy_priv *priv)
-{
-	struct histb_combphy_mode *mode = &priv->mode;
-	struct regmap *syscon = priv->syscon;
+अटल पूर्णांक histb_combphy_set_mode(काष्ठा histb_combphy_priv *priv)
+अणु
+	काष्ठा histb_combphy_mode *mode = &priv->mode;
+	काष्ठा regmap *syscon = priv->syscon;
 	u32 hw_sel;
 
-	if (is_mode_fixed(mode))
-		return 0;
+	अगर (is_mode_fixed(mode))
+		वापस 0;
 
-	switch (mode->select) {
-	case PHY_TYPE_SATA:
+	चयन (mode->select) अणु
+	हाल PHY_TYPE_SATA:
 		hw_sel = COMBPHY_MODE_SATA;
-		break;
-	case PHY_TYPE_PCIE:
+		अवरोध;
+	हाल PHY_TYPE_PCIE:
 		hw_sel = COMBPHY_MODE_PCIE;
-		break;
-	case PHY_TYPE_USB3:
+		अवरोध;
+	हाल PHY_TYPE_USB3:
 		hw_sel = COMBPHY_MODE_USB3;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return regmap_update_bits(syscon, mode->reg, mode->mask,
-				  hw_sel << mode->shift);
-}
+	वापस regmap_update_bits(syscon, mode->reg, mode->mask,
+				  hw_sel << mode->shअगरt);
+पूर्ण
 
-static int histb_combphy_init(struct phy *phy)
-{
-	struct histb_combphy_priv *priv = phy_get_drvdata(phy);
+अटल पूर्णांक histb_combphy_init(काष्ठा phy *phy)
+अणु
+	काष्ठा histb_combphy_priv *priv = phy_get_drvdata(phy);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = histb_combphy_set_mode(priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Clear bypass bit to enable encoding/decoding */
-	val = readl(priv->mmio + COMBPHY_CFG_REG);
+	val = पढ़ोl(priv->mmio + COMBPHY_CFG_REG);
 	val &= ~COMBPHY_BYPASS_CODEC;
-	writel(val, priv->mmio + COMBPHY_CFG_REG);
+	ग_लिखोl(val, priv->mmio + COMBPHY_CFG_REG);
 
 	ret = clk_prepare_enable(priv->ref_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	reset_control_deassert(priv->por_rst);
+	reset_control_deनिश्चित(priv->por_rst);
 
-	/* Enable EP clock */
-	val = readl(priv->mmio + COMBPHY_CFG_REG);
+	/* Enable EP घड़ी */
+	val = पढ़ोl(priv->mmio + COMBPHY_CFG_REG);
 	val |= COMBPHY_CLKREF_OUT_OEN;
-	writel(val, priv->mmio + COMBPHY_CFG_REG);
+	ग_लिखोl(val, priv->mmio + COMBPHY_CFG_REG);
 
-	/* Need to wait for EP clock stable */
+	/* Need to रुको क्रम EP घड़ी stable */
 	mdelay(5);
 
-	/* Configure nano phy registers as suggested by vendor */
-	nano_register_write(priv, 0x1, 0x8);
-	nano_register_write(priv, 0xc, 0x9);
-	nano_register_write(priv, 0x1a, 0x4);
+	/* Configure nano phy रेजिस्टरs as suggested by venकरोr */
+	nano_रेजिस्टर_ग_लिखो(priv, 0x1, 0x8);
+	nano_रेजिस्टर_ग_लिखो(priv, 0xc, 0x9);
+	nano_रेजिस्टर_ग_लिखो(priv, 0x1a, 0x4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int histb_combphy_exit(struct phy *phy)
-{
-	struct histb_combphy_priv *priv = phy_get_drvdata(phy);
+अटल पूर्णांक histb_combphy_निकास(काष्ठा phy *phy)
+अणु
+	काष्ठा histb_combphy_priv *priv = phy_get_drvdata(phy);
 	u32 val;
 
-	/* Disable EP clock */
-	val = readl(priv->mmio + COMBPHY_CFG_REG);
+	/* Disable EP घड़ी */
+	val = पढ़ोl(priv->mmio + COMBPHY_CFG_REG);
 	val &= ~COMBPHY_CLKREF_OUT_OEN;
-	writel(val, priv->mmio + COMBPHY_CFG_REG);
+	ग_लिखोl(val, priv->mmio + COMBPHY_CFG_REG);
 
-	reset_control_assert(priv->por_rst);
+	reset_control_निश्चित(priv->por_rst);
 	clk_disable_unprepare(priv->ref_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct phy_ops histb_combphy_ops = {
+अटल स्थिर काष्ठा phy_ops histb_combphy_ops = अणु
 	.init = histb_combphy_init,
-	.exit = histb_combphy_exit,
+	.निकास = histb_combphy_निकास,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static struct phy *histb_combphy_xlate(struct device *dev,
-				       struct of_phandle_args *args)
-{
-	struct histb_combphy_priv *priv = dev_get_drvdata(dev);
-	struct histb_combphy_mode *mode = &priv->mode;
+अटल काष्ठा phy *histb_combphy_xlate(काष्ठा device *dev,
+				       काष्ठा of_phandle_args *args)
+अणु
+	काष्ठा histb_combphy_priv *priv = dev_get_drvdata(dev);
+	काष्ठा histb_combphy_mode *mode = &priv->mode;
 
-	if (args->args_count < 1) {
+	अगर (args->args_count < 1) अणु
 		dev_err(dev, "invalid number of arguments\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	mode->select = args->args[0];
 
-	if (mode->select < PHY_TYPE_SATA || mode->select > PHY_TYPE_USB3) {
+	अगर (mode->select < PHY_TYPE_SATA || mode->select > PHY_TYPE_USB3) अणु
 		dev_err(dev, "invalid phy mode select argument\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (is_mode_fixed(mode) && mode->select != mode->fixed) {
+	अगर (is_mode_fixed(mode) && mode->select != mode->fixed) अणु
 		dev_err(dev, "mode select %d mismatch fixed phy mode %d\n",
 			mode->select, mode->fixed);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return priv->phy;
-}
+	वापस priv->phy;
+पूर्ण
 
-static int histb_combphy_probe(struct platform_device *pdev)
-{
-	struct phy_provider *phy_provider;
-	struct device *dev = &pdev->dev;
-	struct histb_combphy_priv *priv;
-	struct device_node *np = dev->of_node;
-	struct histb_combphy_mode *mode;
+अटल पूर्णांक histb_combphy_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा phy_provider *phy_provider;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा histb_combphy_priv *priv;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा histb_combphy_mode *mode;
 	u32 vals[3];
-	int ret;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	priv->mmio = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(priv->mmio)) {
+	priv->mmio = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(priv->mmio)) अणु
 		ret = PTR_ERR(priv->mmio);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	priv->syscon = syscon_node_to_regmap(np->parent);
-	if (IS_ERR(priv->syscon)) {
+	अगर (IS_ERR(priv->syscon)) अणु
 		dev_err(dev, "failed to find peri_ctrl syscon regmap\n");
-		return PTR_ERR(priv->syscon);
-	}
+		वापस PTR_ERR(priv->syscon);
+	पूर्ण
 
 	mode = &priv->mode;
 	mode->fixed = PHY_NONE;
 
-	ret = of_property_read_u32(np, "hisilicon,fixed-mode", &mode->fixed);
-	if (ret == 0)
+	ret = of_property_पढ़ो_u32(np, "hisilicon,fixed-mode", &mode->fixed);
+	अगर (ret == 0)
 		dev_dbg(dev, "found fixed phy mode %d\n", mode->fixed);
 
-	ret = of_property_read_u32_array(np, "hisilicon,mode-select-bits",
+	ret = of_property_पढ़ो_u32_array(np, "hisilicon,mode-select-bits",
 					 vals, ARRAY_SIZE(vals));
-	if (ret == 0) {
-		if (is_mode_fixed(mode)) {
+	अगर (ret == 0) अणु
+		अगर (is_mode_fixed(mode)) अणु
 			dev_err(dev, "found select bits for fixed mode phy\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		mode->reg = vals[0];
-		mode->shift = vals[1];
+		mode->shअगरt = vals[1];
 		mode->mask = vals[2];
 		dev_dbg(dev, "found mode select bits\n");
-	} else {
-		if (!is_mode_fixed(mode)) {
+	पूर्ण अन्यथा अणु
+		अगर (!is_mode_fixed(mode)) अणु
 			dev_err(dev, "no valid select bits found for non-fixed phy\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	priv->ref_clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->ref_clk)) {
+	priv->ref_clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(priv->ref_clk)) अणु
 		dev_err(dev, "failed to find ref clock\n");
-		return PTR_ERR(priv->ref_clk);
-	}
+		वापस PTR_ERR(priv->ref_clk);
+	पूर्ण
 
-	priv->por_rst = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(priv->por_rst)) {
+	priv->por_rst = devm_reset_control_get(dev, शून्य);
+	अगर (IS_ERR(priv->por_rst)) अणु
 		dev_err(dev, "failed to get poweron reset\n");
-		return PTR_ERR(priv->por_rst);
-	}
+		वापस PTR_ERR(priv->por_rst);
+	पूर्ण
 
-	priv->phy = devm_phy_create(dev, NULL, &histb_combphy_ops);
-	if (IS_ERR(priv->phy)) {
+	priv->phy = devm_phy_create(dev, शून्य, &histb_combphy_ops);
+	अगर (IS_ERR(priv->phy)) अणु
 		dev_err(dev, "failed to create combphy\n");
-		return PTR_ERR(priv->phy);
-	}
+		वापस PTR_ERR(priv->phy);
+	पूर्ण
 
 	dev_set_drvdata(dev, priv);
 	phy_set_drvdata(priv->phy, priv);
 
-	phy_provider = devm_of_phy_provider_register(dev, histb_combphy_xlate);
-	return PTR_ERR_OR_ZERO(phy_provider);
-}
+	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, histb_combphy_xlate);
+	वापस PTR_ERR_OR_ZERO(phy_provider);
+पूर्ण
 
-static const struct of_device_id histb_combphy_of_match[] = {
-	{ .compatible = "hisilicon,hi3798cv200-combphy" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id histb_combphy_of_match[] = अणु
+	अणु .compatible = "hisilicon,hi3798cv200-combphy" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, histb_combphy_of_match);
 
-static struct platform_driver histb_combphy_driver = {
+अटल काष्ठा platक्रमm_driver histb_combphy_driver = अणु
 	.probe	= histb_combphy_probe,
-	.driver = {
+	.driver = अणु
 		.name = "combphy",
 		.of_match_table = histb_combphy_of_match,
-	},
-};
-module_platform_driver(histb_combphy_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(histb_combphy_driver);
 
 MODULE_DESCRIPTION("HiSilicon STB COMBPHY driver");
 MODULE_LICENSE("GPL v2");

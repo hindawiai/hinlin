@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * tegra_asoc_utils.h - Definitions for Tegra DAS driver
+ * tegra_asoc_utils.h - Definitions क्रम Tegra DAS driver
  *
  * Author: Stephen Warren <swarren@nvidia.com>
  * Copyright (C) 2010,2012 - NVIDIA, Inc.
  */
 
-#ifndef __TEGRA_ASOC_UTILS_H__
-#define __TEGRA_ASOC_UTILS_H__
+#अगर_अघोषित __TEGRA_ASOC_UTILS_H__
+#घोषणा __TEGRA_ASOC_UTILS_H__
 
-struct clk;
-struct device;
+काष्ठा clk;
+काष्ठा device;
 
-enum tegra_asoc_utils_soc {
+क्रमागत tegra_asoc_utils_soc अणु
 	TEGRA_ASOC_UTILS_SOC_TEGRA20,
 	TEGRA_ASOC_UTILS_SOC_TEGRA30,
 	TEGRA_ASOC_UTILS_SOC_TEGRA114,
 	TEGRA_ASOC_UTILS_SOC_TEGRA124,
-};
+पूर्ण;
 
-struct tegra_asoc_utils_data {
-	struct device *dev;
-	enum tegra_asoc_utils_soc soc;
-	struct clk *clk_pll_a;
-	struct clk *clk_pll_a_out0;
-	struct clk *clk_cdev1;
-	int set_baseclock;
-	int set_mclk;
-};
+काष्ठा tegra_asoc_utils_data अणु
+	काष्ठा device *dev;
+	क्रमागत tegra_asoc_utils_soc soc;
+	काष्ठा clk *clk_pll_a;
+	काष्ठा clk *clk_pll_a_out0;
+	काष्ठा clk *clk_cdev1;
+	पूर्णांक set_baseघड़ी;
+	पूर्णांक set_mclk;
+पूर्ण;
 
-int tegra_asoc_utils_set_rate(struct tegra_asoc_utils_data *data, int srate,
-			      int mclk);
-int tegra_asoc_utils_set_ac97_rate(struct tegra_asoc_utils_data *data);
-int tegra_asoc_utils_init(struct tegra_asoc_utils_data *data,
-			  struct device *dev);
+पूर्णांक tegra_asoc_utils_set_rate(काष्ठा tegra_asoc_utils_data *data, पूर्णांक srate,
+			      पूर्णांक mclk);
+पूर्णांक tegra_asoc_utils_set_ac97_rate(काष्ठा tegra_asoc_utils_data *data);
+पूर्णांक tegra_asoc_utils_init(काष्ठा tegra_asoc_utils_data *data,
+			  काष्ठा device *dev);
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corp. 2020
  *
@@ -7,60 +8,60 @@
  *
  */
 
-#define KMSG_COMPONENT "zpci"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "zpci"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/delay.h>
-#include <linux/seq_file.h>
-#include <linux/jump_label.h>
-#include <linux/pci.h>
-#include <linux/printk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/prपूर्णांकk.h>
 
-#include <asm/pci_clp.h>
-#include <asm/pci_dma.h>
+#समावेश <यंत्र/pci_clp.h>
+#समावेश <यंत्र/pci_dma.h>
 
-#include "pci_bus.h"
-#include "pci_iov.h"
+#समावेश "pci_bus.h"
+#समावेश "pci_iov.h"
 
-static LIST_HEAD(zbus_list);
-static DEFINE_MUTEX(zbus_list_lock);
-static int zpci_nb_devices;
+अटल LIST_HEAD(zbus_list);
+अटल DEFINE_MUTEX(zbus_list_lock);
+अटल पूर्णांक zpci_nb_devices;
 
-/* zpci_bus_prepare_device - Prepare a zPCI function for scanning
+/* zpci_bus_prepare_device - Prepare a zPCI function क्रम scanning
  * @zdev: the zPCI function to be prepared
  *
- * The PCI resources for the function are set up and added to its zbus and the
+ * The PCI resources क्रम the function are set up and added to its zbus and the
  * function is enabled. The function must be added to a zbus which must have
  * a PCI bus created. If an error occurs the zPCI function is not enabled.
  *
  * Return: 0 on success, an error code otherwise
  */
-static int zpci_bus_prepare_device(struct zpci_dev *zdev)
-{
-	struct resource_entry *window, *n;
-	struct resource *res;
-	int rc;
+अटल पूर्णांक zpci_bus_prepare_device(काष्ठा zpci_dev *zdev)
+अणु
+	काष्ठा resource_entry *winकरोw, *n;
+	काष्ठा resource *res;
+	पूर्णांक rc;
 
-	if (!zdev_enabled(zdev)) {
+	अगर (!zdev_enabled(zdev)) अणु
 		rc = zpci_enable_device(zdev);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (!zdev->has_resources) {
+	अगर (!zdev->has_resources) अणु
 		zpci_setup_bus_resources(zdev, &zdev->zbus->resources);
-		resource_list_for_each_entry_safe(window, n, &zdev->zbus->resources) {
-			res = window->res;
+		resource_list_क्रम_each_entry_safe(winकरोw, n, &zdev->zbus->resources) अणु
+			res = winकरोw->res;
 			pci_bus_add_resource(zdev->zbus->bus, res, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* zpci_bus_scan_device - Scan a single device adding it to the PCI core
  * @zdev: the zdev to be scanned
@@ -69,113 +70,113 @@ static int zpci_bus_prepare_device(struct zpci_dev *zdev)
  *
  * Return: 0 on success, an error value otherwise
  */
-int zpci_bus_scan_device(struct zpci_dev *zdev)
-{
-	struct pci_dev *pdev;
-	int rc;
+पूर्णांक zpci_bus_scan_device(काष्ठा zpci_dev *zdev)
+अणु
+	काष्ठा pci_dev *pdev;
+	पूर्णांक rc;
 
 	rc = zpci_bus_prepare_device(zdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	pdev = pci_scan_single_device(zdev->zbus->bus, zdev->devfn);
-	if (!pdev)
-		return -ENODEV;
+	अगर (!pdev)
+		वापस -ENODEV;
 
 	pci_bus_add_device(pdev);
-	pci_lock_rescan_remove();
+	pci_lock_rescan_हटाओ();
 	pci_bus_add_devices(zdev->zbus->bus);
-	pci_unlock_rescan_remove();
+	pci_unlock_rescan_हटाओ();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* zpci_bus_remove_device - Removes the given zdev from the PCI core
- * @zdev: the zdev to be removed from the PCI core
- * @set_error: if true the device's error state is set to permanent failure
+/* zpci_bus_हटाओ_device - Removes the given zdev from the PCI core
+ * @zdev: the zdev to be हटाओd from the PCI core
+ * @set_error: अगर true the device's error state is set to permanent failure
  *
  * Sets a zPCI device to a configured but offline state; the zPCI
  * device is still accessible through its hotplug slot and the zPCI
- * API but is removed from the common code PCI bus, making it
- * no longer available to drivers.
+ * API but is हटाओd from the common code PCI bus, making it
+ * no दीर्घer available to drivers.
  */
-void zpci_bus_remove_device(struct zpci_dev *zdev, bool set_error)
-{
-	struct zpci_bus *zbus = zdev->zbus;
-	struct pci_dev *pdev;
+व्योम zpci_bus_हटाओ_device(काष्ठा zpci_dev *zdev, bool set_error)
+अणु
+	काष्ठा zpci_bus *zbus = zdev->zbus;
+	काष्ठा pci_dev *pdev;
 
-	if (!zdev->zbus->bus)
-		return;
+	अगर (!zdev->zbus->bus)
+		वापस;
 
 	pdev = pci_get_slot(zbus->bus, zdev->devfn);
-	if (pdev) {
-		if (set_error)
+	अगर (pdev) अणु
+		अगर (set_error)
 			pdev->error_state = pci_channel_io_perm_failure;
-		if (pdev->is_virtfn) {
-			zpci_iov_remove_virtfn(pdev, zdev->vfn);
+		अगर (pdev->is_virtfn) अणु
+			zpci_iov_हटाओ_virtfn(pdev, zdev->vfn);
 			/* balance pci_get_slot */
 			pci_dev_put(pdev);
-			return;
-		}
-		pci_stop_and_remove_bus_device_locked(pdev);
+			वापस;
+		पूर्ण
+		pci_stop_and_हटाओ_bus_device_locked(pdev);
 		/* balance pci_get_slot */
 		pci_dev_put(pdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* zpci_bus_scan_bus - Scan all configured zPCI functions on the bus
  * @zbus: the zbus to be scanned
  *
  * Enables and scans all PCI functions on the bus making them available to the
  * common PCI code. If there is no function 0 on the zbus nothing is scanned. If
- * a function does not have a slot yet because it was added to the zbus before
+ * a function करोes not have a slot yet because it was added to the zbus beक्रमe
  * function 0 the slot is created. If a PCI function fails to be initialized
- * an error will be returned but attempts will still be made for all other
+ * an error will be वापसed but attempts will still be made क्रम all other
  * functions on the bus.
  *
  * Return: 0 on success, an error value otherwise
  */
-int zpci_bus_scan_bus(struct zpci_bus *zbus)
-{
-	struct zpci_dev *zdev;
-	int devfn, rc, ret = 0;
+पूर्णांक zpci_bus_scan_bus(काष्ठा zpci_bus *zbus)
+अणु
+	काष्ठा zpci_dev *zdev;
+	पूर्णांक devfn, rc, ret = 0;
 
-	if (!zbus->function[0])
-		return 0;
+	अगर (!zbus->function[0])
+		वापस 0;
 
-	for (devfn = 0; devfn < ZPCI_FUNCTIONS_PER_BUS; devfn++) {
+	क्रम (devfn = 0; devfn < ZPCI_FUNCTIONS_PER_BUS; devfn++) अणु
 		zdev = zbus->function[devfn];
-		if (zdev && zdev->state == ZPCI_FN_STATE_CONFIGURED) {
+		अगर (zdev && zdev->state == ZPCI_FN_STATE_CONFIGURED) अणु
 			rc = zpci_bus_prepare_device(zdev);
-			if (rc)
+			अगर (rc)
 				ret = -EIO;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	pci_lock_rescan_remove();
+	pci_lock_rescan_हटाओ();
 	pci_scan_child_bus(zbus->bus);
 	pci_bus_add_devices(zbus->bus);
-	pci_unlock_rescan_remove();
+	pci_unlock_rescan_हटाओ();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* zpci_bus_scan_busses - Scan all registered busses
+/* zpci_bus_scan_busses - Scan all रेजिस्टरed busses
  *
  * Scan all available zbusses
  *
  */
-void zpci_bus_scan_busses(void)
-{
-	struct zpci_bus *zbus = NULL;
+व्योम zpci_bus_scan_busses(व्योम)
+अणु
+	काष्ठा zpci_bus *zbus = शून्य;
 
 	mutex_lock(&zbus_list_lock);
-	list_for_each_entry(zbus, &zbus_list, bus_next) {
+	list_क्रम_each_entry(zbus, &zbus_list, bus_next) अणु
 		zpci_bus_scan_bus(zbus);
 		cond_resched();
-	}
+	पूर्ण
 	mutex_unlock(&zbus_list_lock);
-}
+पूर्ण
 
 /* zpci_bus_create_pci_bus - Create the PCI bus associated with this zbus
  * @zbus: the zbus holding the zdevices
@@ -183,89 +184,89 @@ void zpci_bus_scan_busses(void)
  * @ops: the pci operations
  *
  * Function zero is taken as a parameter as this is used to determine the
- * domain, multifunction property and maximum bus speed of the entire bus.
+ * करोमुख्य, multअगरunction property and maximum bus speed of the entire bus.
  *
  * Return: 0 on success, an error code otherwise
  */
-static int zpci_bus_create_pci_bus(struct zpci_bus *zbus, struct zpci_dev *f0, struct pci_ops *ops)
-{
-	struct pci_bus *bus;
-	int domain;
+अटल पूर्णांक zpci_bus_create_pci_bus(काष्ठा zpci_bus *zbus, काष्ठा zpci_dev *f0, काष्ठा pci_ops *ops)
+अणु
+	काष्ठा pci_bus *bus;
+	पूर्णांक करोमुख्य;
 
-	domain = zpci_alloc_domain((u16)f0->uid);
-	if (domain < 0)
-		return domain;
+	करोमुख्य = zpci_alloc_करोमुख्य((u16)f0->uid);
+	अगर (करोमुख्य < 0)
+		वापस करोमुख्य;
 
-	zbus->domain_nr = domain;
-	zbus->multifunction = f0->rid_available;
+	zbus->करोमुख्य_nr = करोमुख्य;
+	zbus->multअगरunction = f0->rid_available;
 	zbus->max_bus_speed = f0->max_bus_speed;
 
 	/*
 	 * Note that the zbus->resources are taken over and zbus->resources
 	 * is empty after a successful call
 	 */
-	bus = pci_create_root_bus(NULL, ZPCI_BUS_NR, ops, zbus, &zbus->resources);
-	if (!bus) {
-		zpci_free_domain(zbus->domain_nr);
-		return -EFAULT;
-	}
+	bus = pci_create_root_bus(शून्य, ZPCI_BUS_NR, ops, zbus, &zbus->resources);
+	अगर (!bus) अणु
+		zpci_मुक्त_करोमुख्य(zbus->करोमुख्य_nr);
+		वापस -EFAULT;
+	पूर्ण
 
 	zbus->bus = bus;
 	pci_bus_add_devices(bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void zpci_bus_release(struct kref *kref)
-{
-	struct zpci_bus *zbus = container_of(kref, struct zpci_bus, kref);
+अटल व्योम zpci_bus_release(काष्ठा kref *kref)
+अणु
+	काष्ठा zpci_bus *zbus = container_of(kref, काष्ठा zpci_bus, kref);
 
-	if (zbus->bus) {
-		pci_lock_rescan_remove();
+	अगर (zbus->bus) अणु
+		pci_lock_rescan_हटाओ();
 		pci_stop_root_bus(zbus->bus);
 
-		zpci_free_domain(zbus->domain_nr);
-		pci_free_resource_list(&zbus->resources);
+		zpci_मुक्त_करोमुख्य(zbus->करोमुख्य_nr);
+		pci_मुक्त_resource_list(&zbus->resources);
 
-		pci_remove_root_bus(zbus->bus);
-		pci_unlock_rescan_remove();
-	}
+		pci_हटाओ_root_bus(zbus->bus);
+		pci_unlock_rescan_हटाओ();
+	पूर्ण
 
 	mutex_lock(&zbus_list_lock);
 	list_del(&zbus->bus_next);
 	mutex_unlock(&zbus_list_lock);
-	kfree(zbus);
-}
+	kमुक्त(zbus);
+पूर्ण
 
-static void zpci_bus_put(struct zpci_bus *zbus)
-{
+अटल व्योम zpci_bus_put(काष्ठा zpci_bus *zbus)
+अणु
 	kref_put(&zbus->kref, zpci_bus_release);
-}
+पूर्ण
 
-static struct zpci_bus *zpci_bus_get(int pchid)
-{
-	struct zpci_bus *zbus;
+अटल काष्ठा zpci_bus *zpci_bus_get(पूर्णांक pchid)
+अणु
+	काष्ठा zpci_bus *zbus;
 
 	mutex_lock(&zbus_list_lock);
-	list_for_each_entry(zbus, &zbus_list, bus_next) {
-		if (pchid == zbus->pchid) {
+	list_क्रम_each_entry(zbus, &zbus_list, bus_next) अणु
+		अगर (pchid == zbus->pchid) अणु
 			kref_get(&zbus->kref);
-			goto out_unlock;
-		}
-	}
-	zbus = NULL;
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
+	zbus = शून्य;
 out_unlock:
 	mutex_unlock(&zbus_list_lock);
-	return zbus;
-}
+	वापस zbus;
+पूर्ण
 
-static struct zpci_bus *zpci_bus_alloc(int pchid)
-{
-	struct zpci_bus *zbus;
+अटल काष्ठा zpci_bus *zpci_bus_alloc(पूर्णांक pchid)
+अणु
+	काष्ठा zpci_bus *zbus;
 
-	zbus = kzalloc(sizeof(*zbus), GFP_KERNEL);
-	if (!zbus)
-		return NULL;
+	zbus = kzalloc(माप(*zbus), GFP_KERNEL);
+	अगर (!zbus)
+		वापस शून्य;
 
 	zbus->pchid = pchid;
 	INIT_LIST_HEAD(&zbus->bus_next);
@@ -281,142 +282,142 @@ static struct zpci_bus *zpci_bus_alloc(int pchid)
 	zbus->bus_resource.flags = IORESOURCE_BUS;
 	pci_add_resource(&zbus->resources, &zbus->bus_resource);
 
-	return zbus;
-}
+	वापस zbus;
+पूर्ण
 
-void pcibios_bus_add_device(struct pci_dev *pdev)
-{
-	struct zpci_dev *zdev = to_zpci(pdev);
+व्योम pcibios_bus_add_device(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा zpci_dev *zdev = to_zpci(pdev);
 
 	/*
-	 * With pdev->no_vf_scan the common PCI probing code does not
-	 * perform PF/VF linking.
+	 * With pdev->no_vf_scan the common PCI probing code करोes not
+	 * perक्रमm PF/VF linking.
 	 */
-	if (zdev->vfn) {
+	अगर (zdev->vfn) अणु
 		zpci_iov_setup_virtfn(zdev->zbus, pdev, zdev->vfn);
 		pdev->no_command_memory = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* zpci_bus_create_hotplug_slots - Add hotplug slot(s) for device added to bus
+/* zpci_bus_create_hotplug_slots - Add hotplug slot(s) क्रम device added to bus
  * @zdev: the zPCI device that was newly added
  *
- * Add the hotplug slot(s) for the newly added PCI function. Normally this is
- * simply the slot for the function itself. If however we are adding the
- * function 0 on a zbus, it might be that we already registered functions on
+ * Add the hotplug slot(s) क्रम the newly added PCI function. Normally this is
+ * simply the slot क्रम the function itself. If however we are adding the
+ * function 0 on a zbus, it might be that we alपढ़ोy रेजिस्टरed functions on
  * that zbus but could not create their hotplug slots yet so add those now too.
  *
  * Return: 0 on success, an error code otherwise
  */
-static int zpci_bus_create_hotplug_slots(struct zpci_dev *zdev)
-{
-	struct zpci_bus *zbus = zdev->zbus;
-	int devfn, rc = 0;
+अटल पूर्णांक zpci_bus_create_hotplug_slots(काष्ठा zpci_dev *zdev)
+अणु
+	काष्ठा zpci_bus *zbus = zdev->zbus;
+	पूर्णांक devfn, rc = 0;
 
 	rc = zpci_init_slot(zdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	zdev->has_hp_slot = 1;
 
-	if (zdev->devfn == 0 && zbus->multifunction) {
+	अगर (zdev->devfn == 0 && zbus->multअगरunction) अणु
 		/* Now that function 0 is there we can finally create the
-		 * hotplug slots for those functions with devfn != 0 that have
-		 * been parked in zbus->function[] waiting for us to be able to
+		 * hotplug slots क्रम those functions with devfn != 0 that have
+		 * been parked in zbus->function[] रुकोing क्रम us to be able to
 		 * create the PCI bus.
 		 */
-		for  (devfn = 1; devfn < ZPCI_FUNCTIONS_PER_BUS; devfn++) {
+		क्रम  (devfn = 1; devfn < ZPCI_FUNCTIONS_PER_BUS; devfn++) अणु
 			zdev = zbus->function[devfn];
-			if (zdev && !zdev->has_hp_slot) {
+			अगर (zdev && !zdev->has_hp_slot) अणु
 				rc = zpci_init_slot(zdev);
-				if (rc)
-					return rc;
+				अगर (rc)
+					वापस rc;
 				zdev->has_hp_slot = 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int zpci_bus_add_device(struct zpci_bus *zbus, struct zpci_dev *zdev)
-{
-	int rc = -EINVAL;
+अटल पूर्णांक zpci_bus_add_device(काष्ठा zpci_bus *zbus, काष्ठा zpci_dev *zdev)
+अणु
+	पूर्णांक rc = -EINVAL;
 
 	zdev->zbus = zbus;
-	if (zbus->function[zdev->devfn]) {
+	अगर (zbus->function[zdev->devfn]) अणु
 		pr_err("devfn %04x is already assigned\n", zdev->devfn);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	zbus->function[zdev->devfn] = zdev;
 	zpci_nb_devices++;
 
-	if (zbus->bus) {
-		if (zbus->multifunction && !zdev->rid_available) {
+	अगर (zbus->bus) अणु
+		अगर (zbus->multअगरunction && !zdev->rid_available) अणु
 			WARN_ONCE(1, "rid_available not set for multifunction\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		zpci_bus_create_hotplug_slots(zdev);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Hotplug slot will be created once function 0 appears */
-		zbus->multifunction = 1;
-	}
+		zbus->multअगरunction = 1;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	zbus->function[zdev->devfn] = NULL;
+	zbus->function[zdev->devfn] = शून्य;
 	zpci_nb_devices--;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int zpci_bus_device_register(struct zpci_dev *zdev, struct pci_ops *ops)
-{
-	struct zpci_bus *zbus = NULL;
-	int rc = -EBADF;
+पूर्णांक zpci_bus_device_रेजिस्टर(काष्ठा zpci_dev *zdev, काष्ठा pci_ops *ops)
+अणु
+	काष्ठा zpci_bus *zbus = शून्य;
+	पूर्णांक rc = -EBADF;
 
-	if (zpci_nb_devices == ZPCI_NR_DEVICES) {
+	अगर (zpci_nb_devices == ZPCI_NR_DEVICES) अणु
 		pr_warn("Adding PCI function %08x failed because the configured limit of %d is reached\n",
 			zdev->fid, ZPCI_NR_DEVICES);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	if (zdev->devfn >= ZPCI_FUNCTIONS_PER_BUS)
-		return -EINVAL;
+	अगर (zdev->devfn >= ZPCI_FUNCTIONS_PER_BUS)
+		वापस -EINVAL;
 
-	if (!s390_pci_no_rid && zdev->rid_available)
+	अगर (!s390_pci_no_rid && zdev->rid_available)
 		zbus = zpci_bus_get(zdev->pchid);
 
-	if (!zbus) {
+	अगर (!zbus) अणु
 		zbus = zpci_bus_alloc(zdev->pchid);
-		if (!zbus)
-			return -ENOMEM;
-	}
+		अगर (!zbus)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (zdev->devfn == 0) {
+	अगर (zdev->devfn == 0) अणु
 		rc = zpci_bus_create_pci_bus(zbus, zdev, ops);
-		if (rc)
-			goto error;
-	}
+		अगर (rc)
+			जाओ error;
+	पूर्ण
 
 	rc = zpci_bus_add_device(zbus, zdev);
-	if (rc)
-		goto error;
+	अगर (rc)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
 	pr_err("Adding PCI function %08x failed\n", zdev->fid);
 	zpci_bus_put(zbus);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void zpci_bus_device_unregister(struct zpci_dev *zdev)
-{
-	struct zpci_bus *zbus = zdev->zbus;
+व्योम zpci_bus_device_unरेजिस्टर(काष्ठा zpci_dev *zdev)
+अणु
+	काष्ठा zpci_bus *zbus = zdev->zbus;
 
 	zpci_nb_devices--;
-	zbus->function[zdev->devfn] = NULL;
+	zbus->function[zdev->devfn] = शून्य;
 	zpci_bus_put(zbus);
-}
+पूर्ण

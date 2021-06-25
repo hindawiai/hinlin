@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /******************************************************************************
 
     AudioScience HPI driver
@@ -16,20 +17,20 @@ However, when sending a message, a matching response buffer must always be
 prepared.
 */
 
-#ifndef _HPIMSGINIT_H_
-#define _HPIMSGINIT_H_
+#अगर_अघोषित _HPIMSGINIT_H_
+#घोषणा _HPIMSGINIT_H_
 
-void hpi_init_response(struct hpi_response *phr, u16 object, u16 function,
+व्योम hpi_init_response(काष्ठा hpi_response *phr, u16 object, u16 function,
 	u16 error);
 
-void hpi_init_message_response(struct hpi_message *phm,
-	struct hpi_response *phr, u16 object, u16 function);
+व्योम hpi_init_message_response(काष्ठा hpi_message *phm,
+	काष्ठा hpi_response *phr, u16 object, u16 function);
 
-void hpi_init_responseV1(struct hpi_response_header *phr, u16 size,
+व्योम hpi_init_responseV1(काष्ठा hpi_response_header *phr, u16 size,
 	u16 object, u16 function);
 
-void hpi_init_message_responseV1(struct hpi_message_header *phm, u16 msg_size,
-	struct hpi_response_header *phr, u16 res_size, u16 object,
+व्योम hpi_init_message_responseV1(काष्ठा hpi_message_header *phm, u16 msg_size,
+	काष्ठा hpi_response_header *phr, u16 res_size, u16 object,
 	u16 function);
 
-#endif				/* _HPIMSGINIT_H_ */
+#पूर्ण_अगर				/* _HPIMSGINIT_H_ */

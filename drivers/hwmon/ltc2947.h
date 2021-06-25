@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_LTC2947_H
-#define _LINUX_LTC2947_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_LTC2947_H
+#घोषणा _LINUX_LTC2947_H
 
-struct regmap;
+काष्ठा regmap;
 
-extern const struct of_device_id ltc2947_of_match[];
-extern const struct dev_pm_ops ltc2947_pm_ops;
+बाह्य स्थिर काष्ठा of_device_id ltc2947_of_match[];
+बाह्य स्थिर काष्ठा dev_pm_ops ltc2947_pm_ops;
 
-int ltc2947_core_probe(struct regmap *map, const char *name);
+पूर्णांक ltc2947_core_probe(काष्ठा regmap *map, स्थिर अक्षर *name);
 
-#endif
+#पूर्ण_अगर

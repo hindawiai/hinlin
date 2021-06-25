@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Generic driver for memory-mapped GPIO controllers.
+ * Generic driver क्रम memory-mapped GPIO controllers.
  *
  * Copyright 2008 MontaVista Software, Inc.
- * Copyright 2008,2010 Anton Vorontsov <cbouatmailru@gmail.com>
+ * Copyright 2008,2010 Anton Vorontsov <cbouaपंचांगailru@gmail.com>
  *
  * ....``.```~~~~````.`.`.`.`.```````'',,,.........`````......`.......
  * ...``                                                         ```````..
- * ..The simplest form of a GPIO controller that the driver supports is``
- *  `.just a single "data" register, where GPIO state can be read and/or `
+ * ..The simplest क्रमm of a GPIO controller that the driver supports is``
+ *  `.just a single "data" रेजिस्टर, where GPIO state can be पढ़ो and/or `
  *    `,..written. ,,..``~~~~ .....``.`.`.~~.```.`.........``````.```````
  *        `````````
                                     ___
@@ -20,13 +21,13 @@ o        `                     ~~~~\___/~~~~    ` controller in FPGA is ,.`
  *  .```````~~~~`..`.``.``.
  * .  The driver supports  `...       ,..```.`~~~```````````````....````.``,,
  * .   big-endian notation, just`.  .. A bit more sophisticated controllers ,
- *  . register the device with -be`. .with a pair of set/clear-bit registers ,
- *   `.. suffix.  ```~~`````....`.`   . affecting the data register and the .`
+ *  . रेजिस्टर the device with -be`. .with a pair of set/clear-bit रेजिस्टरs ,
+ *   `.. suffix.  ```~~`````....`.`   . affecting the data रेजिस्टर and the .`
  *     ``.`.``...```                  ```.. output pins are also supported.`
  *                        ^^             `````.`````````.,``~``~``~~``````
  *                                                   .                  ^^
  *   ,..`.`.`...````````````......`.`.`.`.`.`..`.`.`..
- * .. The expectation is that in at least some cases .    ,-~~~-,
+ * .. The expectation is that in at least some हालs .    ,-~~~-,
  *  .this will be used with roll-your-own ASIC/FPGA .`     \   /
  *  .logic in Verilog or VHDL. ~~~`````````..`````~~`       \ /
  *  ..````````......```````````                             \o_
@@ -34,257 +35,257 @@ o        `                     ~~~~\___/~~~~    ` controller in FPGA is ,.`
  *                              ^^                          / \
  *
  *           ...`````~~`.....``.`..........``````.`.``.```........``.
- *            `  8, 16, 32 and 64 bits registers are supported, and``.
+ *            `  8, 16, 32 and 64 bits रेजिस्टरs are supported, and``.
  *            . the number of GPIOs is determined by the width of   ~
- *             .. the registers. ,............```.`.`..`.`.~~~.`.`.`~
+ *             .. the रेजिस्टरs. ,............```.`.`..`.`.~~~.`.`.`~
  *               `.......````.```
  */
 
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/compiler.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/log2.h>
-#include <linux/ioport.h>
-#include <linux/io.h>
-#include <linux/gpio/driver.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
-#include <linux/platform_device.h>
-#include <linux/mod_devicetable.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/log2.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-static void bgpio_write8(void __iomem *reg, unsigned long data)
-{
-	writeb(data, reg);
-}
+अटल व्योम bgpio_ग_लिखो8(व्योम __iomem *reg, अचिन्हित दीर्घ data)
+अणु
+	ग_लिखोb(data, reg);
+पूर्ण
 
-static unsigned long bgpio_read8(void __iomem *reg)
-{
-	return readb(reg);
-}
+अटल अचिन्हित दीर्घ bgpio_पढ़ो8(व्योम __iomem *reg)
+अणु
+	वापस पढ़ोb(reg);
+पूर्ण
 
-static void bgpio_write16(void __iomem *reg, unsigned long data)
-{
-	writew(data, reg);
-}
+अटल व्योम bgpio_ग_लिखो16(व्योम __iomem *reg, अचिन्हित दीर्घ data)
+अणु
+	ग_लिखोw(data, reg);
+पूर्ण
 
-static unsigned long bgpio_read16(void __iomem *reg)
-{
-	return readw(reg);
-}
+अटल अचिन्हित दीर्घ bgpio_पढ़ो16(व्योम __iomem *reg)
+अणु
+	वापस पढ़ोw(reg);
+पूर्ण
 
-static void bgpio_write32(void __iomem *reg, unsigned long data)
-{
-	writel(data, reg);
-}
+अटल व्योम bgpio_ग_लिखो32(व्योम __iomem *reg, अचिन्हित दीर्घ data)
+अणु
+	ग_लिखोl(data, reg);
+पूर्ण
 
-static unsigned long bgpio_read32(void __iomem *reg)
-{
-	return readl(reg);
-}
+अटल अचिन्हित दीर्घ bgpio_पढ़ो32(व्योम __iomem *reg)
+अणु
+	वापस पढ़ोl(reg);
+पूर्ण
 
-#if BITS_PER_LONG >= 64
-static void bgpio_write64(void __iomem *reg, unsigned long data)
-{
-	writeq(data, reg);
-}
+#अगर BITS_PER_LONG >= 64
+अटल व्योम bgpio_ग_लिखो64(व्योम __iomem *reg, अचिन्हित दीर्घ data)
+अणु
+	ग_लिखोq(data, reg);
+पूर्ण
 
-static unsigned long bgpio_read64(void __iomem *reg)
-{
-	return readq(reg);
-}
-#endif /* BITS_PER_LONG >= 64 */
+अटल अचिन्हित दीर्घ bgpio_पढ़ो64(व्योम __iomem *reg)
+अणु
+	वापस पढ़ोq(reg);
+पूर्ण
+#पूर्ण_अगर /* BITS_PER_LONG >= 64 */
 
-static void bgpio_write16be(void __iomem *reg, unsigned long data)
-{
-	iowrite16be(data, reg);
-}
+अटल व्योम bgpio_ग_लिखो16be(व्योम __iomem *reg, अचिन्हित दीर्घ data)
+अणु
+	ioग_लिखो16be(data, reg);
+पूर्ण
 
-static unsigned long bgpio_read16be(void __iomem *reg)
-{
-	return ioread16be(reg);
-}
+अटल अचिन्हित दीर्घ bgpio_पढ़ो16be(व्योम __iomem *reg)
+अणु
+	वापस ioपढ़ो16be(reg);
+पूर्ण
 
-static void bgpio_write32be(void __iomem *reg, unsigned long data)
-{
-	iowrite32be(data, reg);
-}
+अटल व्योम bgpio_ग_लिखो32be(व्योम __iomem *reg, अचिन्हित दीर्घ data)
+अणु
+	ioग_लिखो32be(data, reg);
+पूर्ण
 
-static unsigned long bgpio_read32be(void __iomem *reg)
-{
-	return ioread32be(reg);
-}
+अटल अचिन्हित दीर्घ bgpio_पढ़ो32be(व्योम __iomem *reg)
+अणु
+	वापस ioपढ़ो32be(reg);
+पूर्ण
 
-static unsigned long bgpio_line2mask(struct gpio_chip *gc, unsigned int line)
-{
-	if (gc->be_bits)
-		return BIT(gc->bgpio_bits - 1 - line);
-	return BIT(line);
-}
+अटल अचिन्हित दीर्घ bgpio_line2mask(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक line)
+अणु
+	अगर (gc->be_bits)
+		वापस BIT(gc->bgpio_bits - 1 - line);
+	वापस BIT(line);
+पूर्ण
 
-static int bgpio_get_set(struct gpio_chip *gc, unsigned int gpio)
-{
-	unsigned long pinmask = bgpio_line2mask(gc, gpio);
+अटल पूर्णांक bgpio_get_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
+अणु
+	अचिन्हित दीर्घ pinmask = bgpio_line2mask(gc, gpio);
 	bool dir = !!(gc->bgpio_dir & pinmask);
 
-	if (dir)
-		return !!(gc->read_reg(gc->reg_set) & pinmask);
-	else
-		return !!(gc->read_reg(gc->reg_dat) & pinmask);
-}
+	अगर (dir)
+		वापस !!(gc->पढ़ो_reg(gc->reg_set) & pinmask);
+	अन्यथा
+		वापस !!(gc->पढ़ो_reg(gc->reg_dat) & pinmask);
+पूर्ण
 
 /*
- * This assumes that the bits in the GPIO register are in native endianness.
- * We only assign the function pointer if we have that.
+ * This assumes that the bits in the GPIO रेजिस्टर are in native endianness.
+ * We only assign the function poपूर्णांकer अगर we have that.
  */
-static int bgpio_get_set_multiple(struct gpio_chip *gc, unsigned long *mask,
-				  unsigned long *bits)
-{
-	unsigned long get_mask = 0;
-	unsigned long set_mask = 0;
+अटल पूर्णांक bgpio_get_set_multiple(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ *mask,
+				  अचिन्हित दीर्घ *bits)
+अणु
+	अचिन्हित दीर्घ get_mask = 0;
+	अचिन्हित दीर्घ set_mask = 0;
 
-	/* Make sure we first clear any bits that are zero when we read the register */
+	/* Make sure we first clear any bits that are zero when we पढ़ो the रेजिस्टर */
 	*bits &= ~*mask;
 
 	set_mask = *mask & gc->bgpio_dir;
 	get_mask = *mask & ~gc->bgpio_dir;
 
-	if (set_mask)
-		*bits |= gc->read_reg(gc->reg_set) & set_mask;
-	if (get_mask)
-		*bits |= gc->read_reg(gc->reg_dat) & get_mask;
+	अगर (set_mask)
+		*bits |= gc->पढ़ो_reg(gc->reg_set) & set_mask;
+	अगर (get_mask)
+		*bits |= gc->पढ़ो_reg(gc->reg_dat) & get_mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bgpio_get(struct gpio_chip *gc, unsigned int gpio)
-{
-	return !!(gc->read_reg(gc->reg_dat) & bgpio_line2mask(gc, gpio));
-}
+अटल पूर्णांक bgpio_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
+अणु
+	वापस !!(gc->पढ़ो_reg(gc->reg_dat) & bgpio_line2mask(gc, gpio));
+पूर्ण
 
 /*
- * This only works if the bits in the GPIO register are in native endianness.
+ * This only works अगर the bits in the GPIO रेजिस्टर are in native endianness.
  */
-static int bgpio_get_multiple(struct gpio_chip *gc, unsigned long *mask,
-			      unsigned long *bits)
-{
-	/* Make sure we first clear any bits that are zero when we read the register */
+अटल पूर्णांक bgpio_get_multiple(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ *mask,
+			      अचिन्हित दीर्घ *bits)
+अणु
+	/* Make sure we first clear any bits that are zero when we पढ़ो the रेजिस्टर */
 	*bits &= ~*mask;
-	*bits |= gc->read_reg(gc->reg_dat) & *mask;
-	return 0;
-}
+	*bits |= gc->पढ़ो_reg(gc->reg_dat) & *mask;
+	वापस 0;
+पूर्ण
 
 /*
  * With big endian mirrored bit order it becomes more tedious.
  */
-static int bgpio_get_multiple_be(struct gpio_chip *gc, unsigned long *mask,
-				 unsigned long *bits)
-{
-	unsigned long readmask = 0;
-	unsigned long val;
-	int bit;
+अटल पूर्णांक bgpio_get_multiple_be(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ *mask,
+				 अचिन्हित दीर्घ *bits)
+अणु
+	अचिन्हित दीर्घ पढ़ोmask = 0;
+	अचिन्हित दीर्घ val;
+	पूर्णांक bit;
 
-	/* Make sure we first clear any bits that are zero when we read the register */
+	/* Make sure we first clear any bits that are zero when we पढ़ो the रेजिस्टर */
 	*bits &= ~*mask;
 
 	/* Create a mirrored mask */
-	for_each_set_bit(bit, mask, gc->ngpio)
-		readmask |= bgpio_line2mask(gc, bit);
+	क्रम_each_set_bit(bit, mask, gc->ngpio)
+		पढ़ोmask |= bgpio_line2mask(gc, bit);
 
-	/* Read the register */
-	val = gc->read_reg(gc->reg_dat) & readmask;
+	/* Read the रेजिस्टर */
+	val = gc->पढ़ो_reg(gc->reg_dat) & पढ़ोmask;
 
 	/*
-	 * Mirror the result into the "bits" result, this will give line 0
-	 * in bit 0 ... line 31 in bit 31 for a 32bit register.
+	 * Mirror the result पूर्णांकo the "bits" result, this will give line 0
+	 * in bit 0 ... line 31 in bit 31 क्रम a 32bit रेजिस्टर.
 	 */
-	for_each_set_bit(bit, &val, gc->ngpio)
+	क्रम_each_set_bit(bit, &val, gc->ngpio)
 		*bits |= bgpio_line2mask(gc, bit);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bgpio_set_none(struct gpio_chip *gc, unsigned int gpio, int val)
-{
-}
+अटल व्योम bgpio_set_none(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
+अणु
+पूर्ण
 
-static void bgpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
-{
-	unsigned long mask = bgpio_line2mask(gc, gpio);
-	unsigned long flags;
-
-	spin_lock_irqsave(&gc->bgpio_lock, flags);
-
-	if (val)
-		gc->bgpio_data |= mask;
-	else
-		gc->bgpio_data &= ~mask;
-
-	gc->write_reg(gc->reg_dat, gc->bgpio_data);
-
-	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
-}
-
-static void bgpio_set_with_clear(struct gpio_chip *gc, unsigned int gpio,
-				 int val)
-{
-	unsigned long mask = bgpio_line2mask(gc, gpio);
-
-	if (val)
-		gc->write_reg(gc->reg_set, mask);
-	else
-		gc->write_reg(gc->reg_clr, mask);
-}
-
-static void bgpio_set_set(struct gpio_chip *gc, unsigned int gpio, int val)
-{
-	unsigned long mask = bgpio_line2mask(gc, gpio);
-	unsigned long flags;
+अटल व्योम bgpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
+अणु
+	अचिन्हित दीर्घ mask = bgpio_line2mask(gc, gpio);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 
-	if (val)
+	अगर (val)
 		gc->bgpio_data |= mask;
-	else
+	अन्यथा
 		gc->bgpio_data &= ~mask;
 
-	gc->write_reg(gc->reg_set, gc->bgpio_data);
+	gc->ग_लिखो_reg(gc->reg_dat, gc->bgpio_data);
 
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
-}
+पूर्ण
 
-static void bgpio_multiple_get_masks(struct gpio_chip *gc,
-				     unsigned long *mask, unsigned long *bits,
-				     unsigned long *set_mask,
-				     unsigned long *clear_mask)
-{
-	int i;
+अटल व्योम bgpio_set_with_clear(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio,
+				 पूर्णांक val)
+अणु
+	अचिन्हित दीर्घ mask = bgpio_line2mask(gc, gpio);
+
+	अगर (val)
+		gc->ग_लिखो_reg(gc->reg_set, mask);
+	अन्यथा
+		gc->ग_लिखो_reg(gc->reg_clr, mask);
+पूर्ण
+
+अटल व्योम bgpio_set_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
+अणु
+	अचिन्हित दीर्घ mask = bgpio_line2mask(gc, gpio);
+	अचिन्हित दीर्घ flags;
+
+	spin_lock_irqsave(&gc->bgpio_lock, flags);
+
+	अगर (val)
+		gc->bgpio_data |= mask;
+	अन्यथा
+		gc->bgpio_data &= ~mask;
+
+	gc->ग_लिखो_reg(gc->reg_set, gc->bgpio_data);
+
+	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
+पूर्ण
+
+अटल व्योम bgpio_multiple_get_masks(काष्ठा gpio_chip *gc,
+				     अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits,
+				     अचिन्हित दीर्घ *set_mask,
+				     अचिन्हित दीर्घ *clear_mask)
+अणु
+	पूर्णांक i;
 
 	*set_mask = 0;
 	*clear_mask = 0;
 
-	for_each_set_bit(i, mask, gc->bgpio_bits) {
-		if (test_bit(i, bits))
+	क्रम_each_set_bit(i, mask, gc->bgpio_bits) अणु
+		अगर (test_bit(i, bits))
 			*set_mask |= bgpio_line2mask(gc, i);
-		else
+		अन्यथा
 			*clear_mask |= bgpio_line2mask(gc, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bgpio_set_multiple_single_reg(struct gpio_chip *gc,
-					  unsigned long *mask,
-					  unsigned long *bits,
-					  void __iomem *reg)
-{
-	unsigned long flags;
-	unsigned long set_mask, clear_mask;
+अटल व्योम bgpio_set_multiple_single_reg(काष्ठा gpio_chip *gc,
+					  अचिन्हित दीर्घ *mask,
+					  अचिन्हित दीर्घ *bits,
+					  व्योम __iomem *reg)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ set_mask, clear_mask;
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 
@@ -293,322 +294,322 @@ static void bgpio_set_multiple_single_reg(struct gpio_chip *gc,
 	gc->bgpio_data |= set_mask;
 	gc->bgpio_data &= ~clear_mask;
 
-	gc->write_reg(reg, gc->bgpio_data);
+	gc->ग_लिखो_reg(reg, gc->bgpio_data);
 
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
-}
+पूर्ण
 
-static void bgpio_set_multiple(struct gpio_chip *gc, unsigned long *mask,
-			       unsigned long *bits)
-{
+अटल व्योम bgpio_set_multiple(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ *mask,
+			       अचिन्हित दीर्घ *bits)
+अणु
 	bgpio_set_multiple_single_reg(gc, mask, bits, gc->reg_dat);
-}
+पूर्ण
 
-static void bgpio_set_multiple_set(struct gpio_chip *gc, unsigned long *mask,
-				   unsigned long *bits)
-{
+अटल व्योम bgpio_set_multiple_set(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ *mask,
+				   अचिन्हित दीर्घ *bits)
+अणु
 	bgpio_set_multiple_single_reg(gc, mask, bits, gc->reg_set);
-}
+पूर्ण
 
-static void bgpio_set_multiple_with_clear(struct gpio_chip *gc,
-					  unsigned long *mask,
-					  unsigned long *bits)
-{
-	unsigned long set_mask, clear_mask;
+अटल व्योम bgpio_set_multiple_with_clear(काष्ठा gpio_chip *gc,
+					  अचिन्हित दीर्घ *mask,
+					  अचिन्हित दीर्घ *bits)
+अणु
+	अचिन्हित दीर्घ set_mask, clear_mask;
 
 	bgpio_multiple_get_masks(gc, mask, bits, &set_mask, &clear_mask);
 
-	if (set_mask)
-		gc->write_reg(gc->reg_set, set_mask);
-	if (clear_mask)
-		gc->write_reg(gc->reg_clr, clear_mask);
-}
+	अगर (set_mask)
+		gc->ग_लिखो_reg(gc->reg_set, set_mask);
+	अगर (clear_mask)
+		gc->ग_लिखो_reg(gc->reg_clr, clear_mask);
+पूर्ण
 
-static int bgpio_simple_dir_in(struct gpio_chip *gc, unsigned int gpio)
-{
-	return 0;
-}
+अटल पूर्णांक bgpio_simple_dir_in(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
+अणु
+	वापस 0;
+पूर्ण
 
-static int bgpio_dir_out_err(struct gpio_chip *gc, unsigned int gpio,
-				int val)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक bgpio_dir_out_err(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio,
+				पूर्णांक val)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static int bgpio_simple_dir_out(struct gpio_chip *gc, unsigned int gpio,
-				int val)
-{
+अटल पूर्णांक bgpio_simple_dir_out(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio,
+				पूर्णांक val)
+अणु
 	gc->set(gc, gpio, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bgpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
-{
-	unsigned long flags;
+अटल पूर्णांक bgpio_dir_in(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 
 	gc->bgpio_dir &= ~bgpio_line2mask(gc, gpio);
 
-	if (gc->reg_dir_in)
-		gc->write_reg(gc->reg_dir_in, ~gc->bgpio_dir);
-	if (gc->reg_dir_out)
-		gc->write_reg(gc->reg_dir_out, gc->bgpio_dir);
+	अगर (gc->reg_dir_in)
+		gc->ग_लिखो_reg(gc->reg_dir_in, ~gc->bgpio_dir);
+	अगर (gc->reg_dir_out)
+		gc->ग_लिखो_reg(gc->reg_dir_out, gc->bgpio_dir);
 
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bgpio_get_dir(struct gpio_chip *gc, unsigned int gpio)
-{
-	/* Return 0 if output, 1 if input */
-	if (gc->bgpio_dir_unreadable) {
-		if (gc->bgpio_dir & bgpio_line2mask(gc, gpio))
-			return GPIO_LINE_DIRECTION_OUT;
-		return GPIO_LINE_DIRECTION_IN;
-	}
+अटल पूर्णांक bgpio_get_dir(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
+अणु
+	/* Return 0 अगर output, 1 अगर input */
+	अगर (gc->bgpio_dir_unपढ़ोable) अणु
+		अगर (gc->bgpio_dir & bgpio_line2mask(gc, gpio))
+			वापस GPIO_LINE_सूचीECTION_OUT;
+		वापस GPIO_LINE_सूचीECTION_IN;
+	पूर्ण
 
-	if (gc->reg_dir_out) {
-		if (gc->read_reg(gc->reg_dir_out) & bgpio_line2mask(gc, gpio))
-			return GPIO_LINE_DIRECTION_OUT;
-		return GPIO_LINE_DIRECTION_IN;
-	}
+	अगर (gc->reg_dir_out) अणु
+		अगर (gc->पढ़ो_reg(gc->reg_dir_out) & bgpio_line2mask(gc, gpio))
+			वापस GPIO_LINE_सूचीECTION_OUT;
+		वापस GPIO_LINE_सूचीECTION_IN;
+	पूर्ण
 
-	if (gc->reg_dir_in)
-		if (!(gc->read_reg(gc->reg_dir_in) & bgpio_line2mask(gc, gpio)))
-			return GPIO_LINE_DIRECTION_OUT;
+	अगर (gc->reg_dir_in)
+		अगर (!(gc->पढ़ो_reg(gc->reg_dir_in) & bgpio_line2mask(gc, gpio)))
+			वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static void bgpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
-{
-	unsigned long flags;
+अटल व्योम bgpio_dir_out(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 
 	gc->bgpio_dir |= bgpio_line2mask(gc, gpio);
 
-	if (gc->reg_dir_in)
-		gc->write_reg(gc->reg_dir_in, ~gc->bgpio_dir);
-	if (gc->reg_dir_out)
-		gc->write_reg(gc->reg_dir_out, gc->bgpio_dir);
+	अगर (gc->reg_dir_in)
+		gc->ग_लिखो_reg(gc->reg_dir_in, ~gc->bgpio_dir);
+	अगर (gc->reg_dir_out)
+		gc->ग_लिखो_reg(gc->reg_dir_out, gc->bgpio_dir);
 
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
-}
+पूर्ण
 
-static int bgpio_dir_out_dir_first(struct gpio_chip *gc, unsigned int gpio,
-				   int val)
-{
+अटल पूर्णांक bgpio_dir_out_dir_first(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio,
+				   पूर्णांक val)
+अणु
 	bgpio_dir_out(gc, gpio, val);
 	gc->set(gc, gpio, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bgpio_dir_out_val_first(struct gpio_chip *gc, unsigned int gpio,
-				   int val)
-{
+अटल पूर्णांक bgpio_dir_out_val_first(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio,
+				   पूर्णांक val)
+अणु
 	gc->set(gc, gpio, val);
 	bgpio_dir_out(gc, gpio, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bgpio_setup_accessors(struct device *dev,
-				 struct gpio_chip *gc,
+अटल पूर्णांक bgpio_setup_accessors(काष्ठा device *dev,
+				 काष्ठा gpio_chip *gc,
 				 bool byte_be)
-{
+अणु
 
-	switch (gc->bgpio_bits) {
-	case 8:
-		gc->read_reg	= bgpio_read8;
-		gc->write_reg	= bgpio_write8;
-		break;
-	case 16:
-		if (byte_be) {
-			gc->read_reg	= bgpio_read16be;
-			gc->write_reg	= bgpio_write16be;
-		} else {
-			gc->read_reg	= bgpio_read16;
-			gc->write_reg	= bgpio_write16;
-		}
-		break;
-	case 32:
-		if (byte_be) {
-			gc->read_reg	= bgpio_read32be;
-			gc->write_reg	= bgpio_write32be;
-		} else {
-			gc->read_reg	= bgpio_read32;
-			gc->write_reg	= bgpio_write32;
-		}
-		break;
-#if BITS_PER_LONG >= 64
-	case 64:
-		if (byte_be) {
+	चयन (gc->bgpio_bits) अणु
+	हाल 8:
+		gc->पढ़ो_reg	= bgpio_पढ़ो8;
+		gc->ग_लिखो_reg	= bgpio_ग_लिखो8;
+		अवरोध;
+	हाल 16:
+		अगर (byte_be) अणु
+			gc->पढ़ो_reg	= bgpio_पढ़ो16be;
+			gc->ग_लिखो_reg	= bgpio_ग_लिखो16be;
+		पूर्ण अन्यथा अणु
+			gc->पढ़ो_reg	= bgpio_पढ़ो16;
+			gc->ग_लिखो_reg	= bgpio_ग_लिखो16;
+		पूर्ण
+		अवरोध;
+	हाल 32:
+		अगर (byte_be) अणु
+			gc->पढ़ो_reg	= bgpio_पढ़ो32be;
+			gc->ग_लिखो_reg	= bgpio_ग_लिखो32be;
+		पूर्ण अन्यथा अणु
+			gc->पढ़ो_reg	= bgpio_पढ़ो32;
+			gc->ग_लिखो_reg	= bgpio_ग_लिखो32;
+		पूर्ण
+		अवरोध;
+#अगर BITS_PER_LONG >= 64
+	हाल 64:
+		अगर (byte_be) अणु
 			dev_err(dev,
 				"64 bit big endian byte order unsupported\n");
-			return -EINVAL;
-		} else {
-			gc->read_reg	= bgpio_read64;
-			gc->write_reg	= bgpio_write64;
-		}
-		break;
-#endif /* BITS_PER_LONG >= 64 */
-	default:
+			वापस -EINVAL;
+		पूर्ण अन्यथा अणु
+			gc->पढ़ो_reg	= bgpio_पढ़ो64;
+			gc->ग_लिखो_reg	= bgpio_ग_लिखो64;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर /* BITS_PER_LONG >= 64 */
+	शेष:
 		dev_err(dev, "unsupported data width %u bits\n", gc->bgpio_bits);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Create the device and allocate the resources.  For setting GPIO's there are
  * three supported configurations:
  *
- *	- single input/output register resource (named "dat").
+ *	- single input/output रेजिस्टर resource (named "dat").
  *	- set/clear pair (named "set" and "clr").
- *	- single output register resource and single input resource ("set" and
+ *	- single output रेजिस्टर resource and single input resource ("set" and
  *	dat").
  *
- * For the single output register, this drives a 1 by setting a bit and a zero
+ * For the single output रेजिस्टर, this drives a 1 by setting a bit and a zero
  * by clearing a bit.  For the set clr pair, this drives a 1 by setting a bit
- * in the set register and clears it by setting a bit in the clear register.
+ * in the set रेजिस्टर and clears it by setting a bit in the clear रेजिस्टर.
  * The configuration is detected by which resources are present.
  *
  * For setting the GPIO direction, there are three supported configurations:
  *
  *	- simple bidirection GPIO that requires no configuration.
- *	- an output direction register (named "dirout") where a 1 bit
+ *	- an output direction रेजिस्टर (named "dirout") where a 1 bit
  *	indicates the GPIO is an output.
- *	- an input direction register (named "dirin") where a 1 bit indicates
+ *	- an input direction रेजिस्टर (named "dirin") where a 1 bit indicates
  *	the GPIO is an input.
  */
-static int bgpio_setup_io(struct gpio_chip *gc,
-			  void __iomem *dat,
-			  void __iomem *set,
-			  void __iomem *clr,
-			  unsigned long flags)
-{
+अटल पूर्णांक bgpio_setup_io(काष्ठा gpio_chip *gc,
+			  व्योम __iomem *dat,
+			  व्योम __iomem *set,
+			  व्योम __iomem *clr,
+			  अचिन्हित दीर्घ flags)
+अणु
 
 	gc->reg_dat = dat;
-	if (!gc->reg_dat)
-		return -EINVAL;
+	अगर (!gc->reg_dat)
+		वापस -EINVAL;
 
-	if (set && clr) {
+	अगर (set && clr) अणु
 		gc->reg_set = set;
 		gc->reg_clr = clr;
 		gc->set = bgpio_set_with_clear;
 		gc->set_multiple = bgpio_set_multiple_with_clear;
-	} else if (set && !clr) {
+	पूर्ण अन्यथा अगर (set && !clr) अणु
 		gc->reg_set = set;
 		gc->set = bgpio_set_set;
 		gc->set_multiple = bgpio_set_multiple_set;
-	} else if (flags & BGPIOF_NO_OUTPUT) {
+	पूर्ण अन्यथा अगर (flags & BGPIOF_NO_OUTPUT) अणु
 		gc->set = bgpio_set_none;
-		gc->set_multiple = NULL;
-	} else {
+		gc->set_multiple = शून्य;
+	पूर्ण अन्यथा अणु
 		gc->set = bgpio_set;
 		gc->set_multiple = bgpio_set_multiple;
-	}
+	पूर्ण
 
-	if (!(flags & BGPIOF_UNREADABLE_REG_SET) &&
-	    (flags & BGPIOF_READ_OUTPUT_REG_SET)) {
+	अगर (!(flags & BGPIOF_UNREADABLE_REG_SET) &&
+	    (flags & BGPIOF_READ_OUTPUT_REG_SET)) अणु
 		gc->get = bgpio_get_set;
-		if (!gc->be_bits)
+		अगर (!gc->be_bits)
 			gc->get_multiple = bgpio_get_set_multiple;
 		/*
-		 * We deliberately avoid assigning the ->get_multiple() call
-		 * for big endian mirrored registers which are ALSO reflecting
-		 * their value in the set register when used as output. It is
-		 * simply too much complexity, let the GPIO core fall back to
-		 * reading each line individually in that fringe case.
+		 * We deliberately aव्योम assigning the ->get_multiple() call
+		 * क्रम big endian mirrored रेजिस्टरs which are ALSO reflecting
+		 * their value in the set रेजिस्टर when used as output. It is
+		 * simply too much complनिकासy, let the GPIO core fall back to
+		 * पढ़ोing each line inभागidually in that fringe हाल.
 		 */
-	} else {
+	पूर्ण अन्यथा अणु
 		gc->get = bgpio_get;
-		if (gc->be_bits)
+		अगर (gc->be_bits)
 			gc->get_multiple = bgpio_get_multiple_be;
-		else
+		अन्यथा
 			gc->get_multiple = bgpio_get_multiple;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bgpio_setup_direction(struct gpio_chip *gc,
-				 void __iomem *dirout,
-				 void __iomem *dirin,
-				 unsigned long flags)
-{
-	if (dirout || dirin) {
+अटल पूर्णांक bgpio_setup_direction(काष्ठा gpio_chip *gc,
+				 व्योम __iomem *dirout,
+				 व्योम __iomem *dirin,
+				 अचिन्हित दीर्घ flags)
+अणु
+	अगर (dirout || dirin) अणु
 		gc->reg_dir_out = dirout;
 		gc->reg_dir_in = dirin;
-		if (flags & BGPIOF_NO_SET_ON_INPUT)
+		अगर (flags & BGPIOF_NO_SET_ON_INPUT)
 			gc->direction_output = bgpio_dir_out_dir_first;
-		else
+		अन्यथा
 			gc->direction_output = bgpio_dir_out_val_first;
 		gc->direction_input = bgpio_dir_in;
 		gc->get_direction = bgpio_get_dir;
-	} else {
-		if (flags & BGPIOF_NO_OUTPUT)
+	पूर्ण अन्यथा अणु
+		अगर (flags & BGPIOF_NO_OUTPUT)
 			gc->direction_output = bgpio_dir_out_err;
-		else
+		अन्यथा
 			gc->direction_output = bgpio_simple_dir_out;
 		gc->direction_input = bgpio_simple_dir_in;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bgpio_request(struct gpio_chip *chip, unsigned gpio_pin)
-{
-	if (gpio_pin < chip->ngpio)
-		return 0;
+अटल पूर्णांक bgpio_request(काष्ठा gpio_chip *chip, अचिन्हित gpio_pin)
+अणु
+	अगर (gpio_pin < chip->ngpio)
+		वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * bgpio_init() - Initialize generic GPIO accessor functions
  * @gc: the GPIO chip to set up
  * @dev: the parent device of the new GPIO chip (compulsory)
- * @sz: the size (width) of the MMIO registers in bytes, typically 1, 2 or 4
- * @dat: MMIO address for the register to READ the value of the GPIO lines, it
- *	is expected that a 1 in the corresponding bit in this register means the
- *	line is asserted
- * @set: MMIO address for the register to SET the value of the GPIO lines, it is
- *	expected that we write the line with 1 in this register to drive the GPIO line
+ * @sz: the size (width) of the MMIO रेजिस्टरs in bytes, typically 1, 2 or 4
+ * @dat: MMIO address क्रम the रेजिस्टर to READ the value of the GPIO lines, it
+ *	is expected that a 1 in the corresponding bit in this रेजिस्टर means the
+ *	line is निश्चितed
+ * @set: MMIO address क्रम the रेजिस्टर to SET the value of the GPIO lines, it is
+ *	expected that we ग_लिखो the line with 1 in this रेजिस्टर to drive the GPIO line
  *	high.
- * @clr: MMIO address for the register to CLEAR the value of the GPIO lines, it is
- *	expected that we write the line with 1 in this register to drive the GPIO line
- *	low. It is allowed to leave this address as NULL, in that case the SET register
+ * @clr: MMIO address क्रम the रेजिस्टर to CLEAR the value of the GPIO lines, it is
+ *	expected that we ग_लिखो the line with 1 in this रेजिस्टर to drive the GPIO line
+ *	low. It is allowed to leave this address as शून्य, in that हाल the SET रेजिस्टर
  *	will be assumed to also clear the GPIO lines, by actively writing the line
  *	with 0.
- * @dirout: MMIO address for the register to set the line as OUTPUT. It is assumed
- *	that setting a line to 1 in this register will turn that line into an
- *	output line. Conversely, setting the line to 0 will turn that line into
+ * @dirout: MMIO address क्रम the रेजिस्टर to set the line as OUTPUT. It is assumed
+ *	that setting a line to 1 in this रेजिस्टर will turn that line पूर्णांकo an
+ *	output line. Conversely, setting the line to 0 will turn that line पूर्णांकo
  *	an input.
- * @dirin: MMIO address for the register to set this line as INPUT. It is assumed
- *	that setting a line to 1 in this register will turn that line into an
- *	input line. Conversely, setting the line to 0 will turn that line into
+ * @dirin: MMIO address क्रम the रेजिस्टर to set this line as INPUT. It is assumed
+ *	that setting a line to 1 in this रेजिस्टर will turn that line पूर्णांकo an
+ *	input line. Conversely, setting the line to 0 will turn that line पूर्णांकo
  *	an output.
- * @flags: Different flags that will affect the behaviour of the device, such as
+ * @flags: Dअगरferent flags that will affect the behaviour of the device, such as
  *	endianness etc.
  */
-int bgpio_init(struct gpio_chip *gc, struct device *dev,
-	       unsigned long sz, void __iomem *dat, void __iomem *set,
-	       void __iomem *clr, void __iomem *dirout, void __iomem *dirin,
-	       unsigned long flags)
-{
-	int ret;
+पूर्णांक bgpio_init(काष्ठा gpio_chip *gc, काष्ठा device *dev,
+	       अचिन्हित दीर्घ sz, व्योम __iomem *dat, व्योम __iomem *set,
+	       व्योम __iomem *clr, व्योम __iomem *dirout, व्योम __iomem *dirin,
+	       अचिन्हित दीर्घ flags)
+अणु
+	पूर्णांक ret;
 
-	if (!is_power_of_2(sz))
-		return -EINVAL;
+	अगर (!is_घातer_of_2(sz))
+		वापस -EINVAL;
 
 	gc->bgpio_bits = sz * 8;
-	if (gc->bgpio_bits > BITS_PER_LONG)
-		return -EINVAL;
+	अगर (gc->bgpio_bits > BITS_PER_LONG)
+		वापस -EINVAL;
 
 	spin_lock_init(&gc->bgpio_lock);
 	gc->parent = dev;
@@ -619,203 +620,203 @@ int bgpio_init(struct gpio_chip *gc, struct device *dev,
 	gc->be_bits = !!(flags & BGPIOF_BIG_ENDIAN);
 
 	ret = bgpio_setup_io(gc, dat, set, clr, flags);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = bgpio_setup_accessors(dev, gc, flags & BGPIOF_BIG_ENDIAN_BYTE_ORDER);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = bgpio_setup_direction(gc, dirout, dirin, flags);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	gc->bgpio_data = gc->read_reg(gc->reg_dat);
-	if (gc->set == bgpio_set_set &&
+	gc->bgpio_data = gc->पढ़ो_reg(gc->reg_dat);
+	अगर (gc->set == bgpio_set_set &&
 			!(flags & BGPIOF_UNREADABLE_REG_SET))
-		gc->bgpio_data = gc->read_reg(gc->reg_set);
+		gc->bgpio_data = gc->पढ़ो_reg(gc->reg_set);
 
-	if (flags & BGPIOF_UNREADABLE_REG_DIR)
-		gc->bgpio_dir_unreadable = true;
+	अगर (flags & BGPIOF_UNREADABLE_REG_सूची)
+		gc->bgpio_dir_unपढ़ोable = true;
 
 	/*
 	 * Inspect hardware to find initial direction setting.
 	 */
-	if ((gc->reg_dir_out || gc->reg_dir_in) &&
-	    !(flags & BGPIOF_UNREADABLE_REG_DIR)) {
-		if (gc->reg_dir_out)
-			gc->bgpio_dir = gc->read_reg(gc->reg_dir_out);
-		else if (gc->reg_dir_in)
-			gc->bgpio_dir = ~gc->read_reg(gc->reg_dir_in);
+	अगर ((gc->reg_dir_out || gc->reg_dir_in) &&
+	    !(flags & BGPIOF_UNREADABLE_REG_सूची)) अणु
+		अगर (gc->reg_dir_out)
+			gc->bgpio_dir = gc->पढ़ो_reg(gc->reg_dir_out);
+		अन्यथा अगर (gc->reg_dir_in)
+			gc->bgpio_dir = ~gc->पढ़ो_reg(gc->reg_dir_in);
 		/*
-		 * If we have two direction registers, synchronise
+		 * If we have two direction रेजिस्टरs, synchronise
 		 * input setting to output setting, the library
 		 * can not handle a line being input and output at
-		 * the same time.
+		 * the same समय.
 		 */
-		if (gc->reg_dir_out && gc->reg_dir_in)
-			gc->write_reg(gc->reg_dir_in, ~gc->bgpio_dir);
-	}
+		अगर (gc->reg_dir_out && gc->reg_dir_in)
+			gc->ग_लिखो_reg(gc->reg_dir_in, ~gc->bgpio_dir);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(bgpio_init);
 
-#if IS_ENABLED(CONFIG_GPIO_GENERIC_PLATFORM)
+#अगर IS_ENABLED(CONFIG_GPIO_GENERIC_PLATFORM)
 
-static void __iomem *bgpio_map(struct platform_device *pdev,
-			       const char *name,
-			       resource_size_t sane_sz)
-{
-	struct resource *r;
-	resource_size_t sz;
+अटल व्योम __iomem *bgpio_map(काष्ठा platक्रमm_device *pdev,
+			       स्थिर अक्षर *name,
+			       resource_माप_प्रकार sane_sz)
+अणु
+	काष्ठा resource *r;
+	resource_माप_प्रकार sz;
 
-	r = platform_get_resource_byname(pdev, IORESOURCE_MEM, name);
-	if (!r)
-		return NULL;
+	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, name);
+	अगर (!r)
+		वापस शून्य;
 
 	sz = resource_size(r);
-	if (sz != sane_sz)
-		return IOMEM_ERR_PTR(-EINVAL);
+	अगर (sz != sane_sz)
+		वापस IOMEM_ERR_PTR(-EINVAL);
 
-	return devm_ioremap_resource(&pdev->dev, r);
-}
+	वापस devm_ioremap_resource(&pdev->dev, r);
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id bgpio_of_match[] = {
-	{ .compatible = "brcm,bcm6345-gpio" },
-	{ .compatible = "wd,mbl-gpio" },
-	{ .compatible = "ni,169445-nand-gpio" },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id bgpio_of_match[] = अणु
+	अणु .compatible = "brcm,bcm6345-gpio" पूर्ण,
+	अणु .compatible = "wd,mbl-gpio" पूर्ण,
+	अणु .compatible = "ni,169445-nand-gpio" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bgpio_of_match);
 
-static struct bgpio_pdata *bgpio_parse_dt(struct platform_device *pdev,
-					  unsigned long *flags)
-{
-	struct bgpio_pdata *pdata;
+अटल काष्ठा bgpio_pdata *bgpio_parse_dt(काष्ठा platक्रमm_device *pdev,
+					  अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा bgpio_pdata *pdata;
 
-	if (!of_match_device(bgpio_of_match, &pdev->dev))
-		return NULL;
+	अगर (!of_match_device(bgpio_of_match, &pdev->dev))
+		वापस शून्य;
 
-	pdata = devm_kzalloc(&pdev->dev, sizeof(struct bgpio_pdata),
+	pdata = devm_kzalloc(&pdev->dev, माप(काष्ठा bgpio_pdata),
 			     GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
 
 	pdata->base = -1;
 
-	if (of_device_is_big_endian(pdev->dev.of_node))
+	अगर (of_device_is_big_endian(pdev->dev.of_node))
 		*flags |= BGPIOF_BIG_ENDIAN_BYTE_ORDER;
 
-	if (of_property_read_bool(pdev->dev.of_node, "no-output"))
+	अगर (of_property_पढ़ो_bool(pdev->dev.of_node, "no-output"))
 		*flags |= BGPIOF_NO_OUTPUT;
 
-	return pdata;
-}
-#else
-static struct bgpio_pdata *bgpio_parse_dt(struct platform_device *pdev,
-					  unsigned long *flags)
-{
-	return NULL;
-}
-#endif /* CONFIG_OF */
+	वापस pdata;
+पूर्ण
+#अन्यथा
+अटल काष्ठा bgpio_pdata *bgpio_parse_dt(काष्ठा platक्रमm_device *pdev,
+					  अचिन्हित दीर्घ *flags)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF */
 
-static int bgpio_pdev_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *r;
-	void __iomem *dat;
-	void __iomem *set;
-	void __iomem *clr;
-	void __iomem *dirout;
-	void __iomem *dirin;
-	unsigned long sz;
-	unsigned long flags = 0;
-	int err;
-	struct gpio_chip *gc;
-	struct bgpio_pdata *pdata;
+अटल पूर्णांक bgpio_pdev_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *r;
+	व्योम __iomem *dat;
+	व्योम __iomem *set;
+	व्योम __iomem *clr;
+	व्योम __iomem *dirout;
+	व्योम __iomem *dirin;
+	अचिन्हित दीर्घ sz;
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक err;
+	काष्ठा gpio_chip *gc;
+	काष्ठा bgpio_pdata *pdata;
 
 	pdata = bgpio_parse_dt(pdev, &flags);
-	if (IS_ERR(pdata))
-		return PTR_ERR(pdata);
+	अगर (IS_ERR(pdata))
+		वापस PTR_ERR(pdata);
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		pdata = dev_get_platdata(dev);
 		flags = pdev->id_entry->driver_data;
-	}
+	पूर्ण
 
-	r = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dat");
-	if (!r)
-		return -EINVAL;
+	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "dat");
+	अगर (!r)
+		वापस -EINVAL;
 
 	sz = resource_size(r);
 
 	dat = bgpio_map(pdev, "dat", sz);
-	if (IS_ERR(dat))
-		return PTR_ERR(dat);
+	अगर (IS_ERR(dat))
+		वापस PTR_ERR(dat);
 
 	set = bgpio_map(pdev, "set", sz);
-	if (IS_ERR(set))
-		return PTR_ERR(set);
+	अगर (IS_ERR(set))
+		वापस PTR_ERR(set);
 
 	clr = bgpio_map(pdev, "clr", sz);
-	if (IS_ERR(clr))
-		return PTR_ERR(clr);
+	अगर (IS_ERR(clr))
+		वापस PTR_ERR(clr);
 
 	dirout = bgpio_map(pdev, "dirout", sz);
-	if (IS_ERR(dirout))
-		return PTR_ERR(dirout);
+	अगर (IS_ERR(dirout))
+		वापस PTR_ERR(dirout);
 
 	dirin = bgpio_map(pdev, "dirin", sz);
-	if (IS_ERR(dirin))
-		return PTR_ERR(dirin);
+	अगर (IS_ERR(dirin))
+		वापस PTR_ERR(dirin);
 
-	gc = devm_kzalloc(&pdev->dev, sizeof(*gc), GFP_KERNEL);
-	if (!gc)
-		return -ENOMEM;
+	gc = devm_kzalloc(&pdev->dev, माप(*gc), GFP_KERNEL);
+	अगर (!gc)
+		वापस -ENOMEM;
 
 	err = bgpio_init(gc, dev, sz, dat, set, clr, dirout, dirin, flags);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (pdata) {
-		if (pdata->label)
+	अगर (pdata) अणु
+		अगर (pdata->label)
 			gc->label = pdata->label;
 		gc->base = pdata->base;
-		if (pdata->ngpio > 0)
+		अगर (pdata->ngpio > 0)
 			gc->ngpio = pdata->ngpio;
-	}
+	पूर्ण
 
-	platform_set_drvdata(pdev, gc);
+	platक्रमm_set_drvdata(pdev, gc);
 
-	return devm_gpiochip_add_data(&pdev->dev, gc, NULL);
-}
+	वापस devm_gpiochip_add_data(&pdev->dev, gc, शून्य);
+पूर्ण
 
-static const struct platform_device_id bgpio_id_table[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id bgpio_id_table[] = अणु
+	अणु
 		.name		= "basic-mmio-gpio",
 		.driver_data	= 0,
-	}, {
+	पूर्ण, अणु
 		.name		= "basic-mmio-gpio-be",
 		.driver_data	= BGPIOF_BIG_ENDIAN,
-	},
-	{ }
-};
-MODULE_DEVICE_TABLE(platform, bgpio_id_table);
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, bgpio_id_table);
 
-static struct platform_driver bgpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver bgpio_driver = अणु
+	.driver = अणु
 		.name = "basic-mmio-gpio",
 		.of_match_table = of_match_ptr(bgpio_of_match),
-	},
+	पूर्ण,
 	.id_table = bgpio_id_table,
 	.probe = bgpio_pdev_probe,
-};
+पूर्ण;
 
-module_platform_driver(bgpio_driver);
+module_platक्रमm_driver(bgpio_driver);
 
-#endif /* CONFIG_GPIO_GENERIC_PLATFORM */
+#पूर्ण_अगर /* CONFIG_GPIO_GENERIC_PLATFORM */
 
 MODULE_DESCRIPTION("Driver for basic memory-mapped GPIO controllers");
 MODULE_AUTHOR("Anton Vorontsov <cbouatmailru@gmail.com>");

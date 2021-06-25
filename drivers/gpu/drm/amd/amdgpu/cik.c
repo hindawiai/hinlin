@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,240 +22,240 @@
  *
  * Authors: Alex Deucher
  */
-#include <linux/firmware.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#include <drm/amdgpu_drm.h>
+#समावेश <drm/amdgpu_drm.h>
 
-#include "amdgpu.h"
-#include "amdgpu_atombios.h"
-#include "amdgpu_ih.h"
-#include "amdgpu_uvd.h"
-#include "amdgpu_vce.h"
-#include "cikd.h"
-#include "atom.h"
-#include "amd_pcie.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_atombios.h"
+#समावेश "amdgpu_ih.h"
+#समावेश "amdgpu_uvd.h"
+#समावेश "amdgpu_vce.h"
+#समावेश "cikd.h"
+#समावेश "atom.h"
+#समावेश "amd_pcie.h"
 
-#include "cik.h"
-#include "gmc_v7_0.h"
-#include "cik_ih.h"
-#include "dce_v8_0.h"
-#include "gfx_v7_0.h"
-#include "cik_sdma.h"
-#include "uvd_v4_2.h"
-#include "vce_v2_0.h"
-#include "cik_dpm.h"
+#समावेश "cik.h"
+#समावेश "gmc_v7_0.h"
+#समावेश "cik_ih.h"
+#समावेश "dce_v8_0.h"
+#समावेश "gfx_v7_0.h"
+#समावेश "cik_sdma.h"
+#समावेश "uvd_v4_2.h"
+#समावेश "vce_v2_0.h"
+#समावेश "cik_dpm.h"
 
-#include "uvd/uvd_4_2_d.h"
+#समावेश "uvd/uvd_4_2_d.h"
 
-#include "smu/smu_7_0_1_d.h"
-#include "smu/smu_7_0_1_sh_mask.h"
+#समावेश "smu/smu_7_0_1_d.h"
+#समावेश "smu/smu_7_0_1_sh_mask.h"
 
-#include "dce/dce_8_0_d.h"
-#include "dce/dce_8_0_sh_mask.h"
+#समावेश "dce/dce_8_0_d.h"
+#समावेश "dce/dce_8_0_sh_mask.h"
 
-#include "bif/bif_4_1_d.h"
-#include "bif/bif_4_1_sh_mask.h"
+#समावेश "bif/bif_4_1_d.h"
+#समावेश "bif/bif_4_1_sh_mask.h"
 
-#include "gca/gfx_7_2_d.h"
-#include "gca/gfx_7_2_enum.h"
-#include "gca/gfx_7_2_sh_mask.h"
+#समावेश "gca/gfx_7_2_d.h"
+#समावेश "gca/gfx_7_2_enum.h"
+#समावेश "gca/gfx_7_2_sh_mask.h"
 
-#include "gmc/gmc_7_1_d.h"
-#include "gmc/gmc_7_1_sh_mask.h"
+#समावेश "gmc/gmc_7_1_d.h"
+#समावेश "gmc/gmc_7_1_sh_mask.h"
 
-#include "oss/oss_2_0_d.h"
-#include "oss/oss_2_0_sh_mask.h"
+#समावेश "oss/oss_2_0_d.h"
+#समावेश "oss/oss_2_0_sh_mask.h"
 
-#include "amdgpu_dm.h"
-#include "amdgpu_amdkfd.h"
-#include "dce_virtual.h"
+#समावेश "amdgpu_dm.h"
+#समावेश "amdgpu_amdkfd.h"
+#समावेश "dce_virtual.h"
 
-static const struct amdgpu_video_codec_info cik_video_codecs_encode_array[] =
-{
-	{
+अटल स्थिर काष्ठा amdgpu_video_codec_info cik_video_codecs_encode_array[] =
+अणु
+	अणु
 		.codec_type = AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_MPEG4_AVC,
 		.max_width = 2048,
 		.max_height = 1152,
 		.max_pixels_per_frame = 2048 * 1152,
 		.max_level = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct amdgpu_video_codecs cik_video_codecs_encode =
-{
+अटल स्थिर काष्ठा amdgpu_video_codecs cik_video_codecs_encode =
+अणु
 	.codec_count = ARRAY_SIZE(cik_video_codecs_encode_array),
 	.codec_array = cik_video_codecs_encode_array,
-};
+पूर्ण;
 
-static const struct amdgpu_video_codec_info cik_video_codecs_decode_array[] =
-{
-	{
+अटल स्थिर काष्ठा amdgpu_video_codec_info cik_video_codecs_decode_array[] =
+अणु
+	अणु
 		.codec_type = AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_MPEG2,
 		.max_width = 2048,
 		.max_height = 1152,
 		.max_pixels_per_frame = 2048 * 1152,
 		.max_level = 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		.codec_type = AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_MPEG4,
 		.max_width = 2048,
 		.max_height = 1152,
 		.max_pixels_per_frame = 2048 * 1152,
 		.max_level = 5,
-	},
-	{
+	पूर्ण,
+	अणु
 		.codec_type = AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_MPEG4_AVC,
 		.max_width = 2048,
 		.max_height = 1152,
 		.max_pixels_per_frame = 2048 * 1152,
 		.max_level = 41,
-	},
-	{
+	पूर्ण,
+	अणु
 		.codec_type = AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_VC1,
 		.max_width = 2048,
 		.max_height = 1152,
 		.max_pixels_per_frame = 2048 * 1152,
 		.max_level = 4,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct amdgpu_video_codecs cik_video_codecs_decode =
-{
+अटल स्थिर काष्ठा amdgpu_video_codecs cik_video_codecs_decode =
+अणु
 	.codec_count = ARRAY_SIZE(cik_video_codecs_decode_array),
 	.codec_array = cik_video_codecs_decode_array,
-};
+पूर्ण;
 
-static int cik_query_video_codecs(struct amdgpu_device *adev, bool encode,
-				  const struct amdgpu_video_codecs **codecs)
-{
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
-	case CHIP_HAWAII:
-	case CHIP_KAVERI:
-	case CHIP_KABINI:
-	case CHIP_MULLINS:
-		if (encode)
+अटल पूर्णांक cik_query_video_codecs(काष्ठा amdgpu_device *adev, bool encode,
+				  स्थिर काष्ठा amdgpu_video_codecs **codecs)
+अणु
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
+	हाल CHIP_HAWAII:
+	हाल CHIP_KAVERI:
+	हाल CHIP_KABINI:
+	हाल CHIP_MULLINS:
+		अगर (encode)
 			*codecs = &cik_video_codecs_encode;
-		else
+		अन्यथा
 			*codecs = &cik_video_codecs_decode;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /*
- * Indirect registers accessor
+ * Indirect रेजिस्टरs accessor
  */
-static u32 cik_pcie_rreg(struct amdgpu_device *adev, u32 reg)
-{
-	unsigned long flags;
+अटल u32 cik_pcie_rreg(काष्ठा amdgpu_device *adev, u32 reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 r;
 
 	spin_lock_irqsave(&adev->pcie_idx_lock, flags);
 	WREG32(mmPCIE_INDEX, reg);
-	(void)RREG32(mmPCIE_INDEX);
+	(व्योम)RREG32(mmPCIE_INDEX);
 	r = RREG32(mmPCIE_DATA);
 	spin_unlock_irqrestore(&adev->pcie_idx_lock, flags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void cik_pcie_wreg(struct amdgpu_device *adev, u32 reg, u32 v)
-{
-	unsigned long flags;
+अटल व्योम cik_pcie_wreg(काष्ठा amdgpu_device *adev, u32 reg, u32 v)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&adev->pcie_idx_lock, flags);
 	WREG32(mmPCIE_INDEX, reg);
-	(void)RREG32(mmPCIE_INDEX);
+	(व्योम)RREG32(mmPCIE_INDEX);
 	WREG32(mmPCIE_DATA, v);
-	(void)RREG32(mmPCIE_DATA);
+	(व्योम)RREG32(mmPCIE_DATA);
 	spin_unlock_irqrestore(&adev->pcie_idx_lock, flags);
-}
+पूर्ण
 
-static u32 cik_smc_rreg(struct amdgpu_device *adev, u32 reg)
-{
-	unsigned long flags;
+अटल u32 cik_smc_rreg(काष्ठा amdgpu_device *adev, u32 reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 r;
 
 	spin_lock_irqsave(&adev->smc_idx_lock, flags);
 	WREG32(mmSMC_IND_INDEX_0, (reg));
 	r = RREG32(mmSMC_IND_DATA_0);
 	spin_unlock_irqrestore(&adev->smc_idx_lock, flags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void cik_smc_wreg(struct amdgpu_device *adev, u32 reg, u32 v)
-{
-	unsigned long flags;
+अटल व्योम cik_smc_wreg(काष्ठा amdgpu_device *adev, u32 reg, u32 v)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&adev->smc_idx_lock, flags);
 	WREG32(mmSMC_IND_INDEX_0, (reg));
 	WREG32(mmSMC_IND_DATA_0, (v));
 	spin_unlock_irqrestore(&adev->smc_idx_lock, flags);
-}
+पूर्ण
 
-static u32 cik_uvd_ctx_rreg(struct amdgpu_device *adev, u32 reg)
-{
-	unsigned long flags;
+अटल u32 cik_uvd_ctx_rreg(काष्ठा amdgpu_device *adev, u32 reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 r;
 
 	spin_lock_irqsave(&adev->uvd_ctx_idx_lock, flags);
 	WREG32(mmUVD_CTX_INDEX, ((reg) & 0x1ff));
 	r = RREG32(mmUVD_CTX_DATA);
 	spin_unlock_irqrestore(&adev->uvd_ctx_idx_lock, flags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void cik_uvd_ctx_wreg(struct amdgpu_device *adev, u32 reg, u32 v)
-{
-	unsigned long flags;
+अटल व्योम cik_uvd_ctx_wreg(काष्ठा amdgpu_device *adev, u32 reg, u32 v)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&adev->uvd_ctx_idx_lock, flags);
 	WREG32(mmUVD_CTX_INDEX, ((reg) & 0x1ff));
 	WREG32(mmUVD_CTX_DATA, (v));
 	spin_unlock_irqrestore(&adev->uvd_ctx_idx_lock, flags);
-}
+पूर्ण
 
-static u32 cik_didt_rreg(struct amdgpu_device *adev, u32 reg)
-{
-	unsigned long flags;
+अटल u32 cik_didt_rreg(काष्ठा amdgpu_device *adev, u32 reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 r;
 
 	spin_lock_irqsave(&adev->didt_idx_lock, flags);
 	WREG32(mmDIDT_IND_INDEX, (reg));
 	r = RREG32(mmDIDT_IND_DATA);
 	spin_unlock_irqrestore(&adev->didt_idx_lock, flags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void cik_didt_wreg(struct amdgpu_device *adev, u32 reg, u32 v)
-{
-	unsigned long flags;
+अटल व्योम cik_didt_wreg(काष्ठा amdgpu_device *adev, u32 reg, u32 v)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&adev->didt_idx_lock, flags);
 	WREG32(mmDIDT_IND_INDEX, (reg));
 	WREG32(mmDIDT_IND_DATA, (v));
 	spin_unlock_irqrestore(&adev->didt_idx_lock, flags);
-}
+पूर्ण
 
-static const u32 bonaire_golden_spm_registers[] =
-{
+अटल स्थिर u32 bonaire_golden_spm_रेजिस्टरs[] =
+अणु
 	0xc200, 0xe0ffffff, 0xe0000000
-};
+पूर्ण;
 
-static const u32 bonaire_golden_common_registers[] =
-{
+अटल स्थिर u32 bonaire_golden_common_रेजिस्टरs[] =
+अणु
 	0x31dc, 0xffffffff, 0x00000800,
 	0x31dd, 0xffffffff, 0x00000800,
 	0x31e6, 0xffffffff, 0x00007fbf,
 	0x31e7, 0xffffffff, 0x00007faf
-};
+पूर्ण;
 
-static const u32 bonaire_golden_registers[] =
-{
+अटल स्थिर u32 bonaire_golden_रेजिस्टरs[] =
+अणु
 	0xcd5, 0x00000333, 0x00000333,
 	0xcd4, 0x000c0fc0, 0x00040200,
 	0x2684, 0x00010000, 0x00058208,
@@ -296,10 +297,10 @@ static const u32 bonaire_golden_registers[] =
 	0x2542, 0x00010000, 0x00010000,
 	0x2b05, 0x000003ff, 0x000000f3,
 	0x2b03, 0xffffffff, 0x00001032
-};
+पूर्ण;
 
-static const u32 bonaire_mgcg_cgcg_init[] =
-{
+अटल स्थिर u32 bonaire_mgcg_cgcg_init[] =
+अणु
 	0x3108, 0xffffffff, 0xfffffffc,
 	0xc200, 0xffffffff, 0xe0000000,
 	0xf0a8, 0xffffffff, 0x00000100,
@@ -382,23 +383,23 @@ static const u32 bonaire_mgcg_cgcg_init[] =
 	0x3079, 0x00000001, 0x00000001,
 	0x3403, 0xff000ff0, 0x00000100,
 	0x3603, 0xff000ff0, 0x00000100
-};
+पूर्ण;
 
-static const u32 spectre_golden_spm_registers[] =
-{
+अटल स्थिर u32 spectre_golden_spm_रेजिस्टरs[] =
+अणु
 	0xc200, 0xe0ffffff, 0xe0000000
-};
+पूर्ण;
 
-static const u32 spectre_golden_common_registers[] =
-{
+अटल स्थिर u32 spectre_golden_common_रेजिस्टरs[] =
+अणु
 	0x31dc, 0xffffffff, 0x00000800,
 	0x31dd, 0xffffffff, 0x00000800,
 	0x31e6, 0xffffffff, 0x00007fbf,
 	0x31e7, 0xffffffff, 0x00007faf
-};
+पूर्ण;
 
-static const u32 spectre_golden_registers[] =
-{
+अटल स्थिर u32 spectre_golden_रेजिस्टरs[] =
+अणु
 	0xf000, 0xffff1fff, 0x96940200,
 	0xf003, 0xffff0001, 0xff000000,
 	0xf080, 0xfffc0fff, 0x00000100,
@@ -424,10 +425,10 @@ static const u32 spectre_golden_registers[] =
 	0x8526, 0x007ff800, 0x00200000,
 	0x8057, 0xffffffff, 0x00000f40,
 	0xc24d, 0xffffffff, 0x00000001
-};
+पूर्ण;
 
-static const u32 spectre_mgcg_cgcg_init[] =
-{
+अटल स्थिर u32 spectre_mgcg_cgcg_init[] =
+अणु
 	0x3108, 0xffffffff, 0xfffffffc,
 	0xc200, 0xffffffff, 0xe0000000,
 	0xf0a8, 0xffffffff, 0x00000100,
@@ -515,23 +516,23 @@ static const u32 spectre_mgcg_cgcg_init[] =
 	0x3079, 0x00000001, 0x00000001,
 	0x3403, 0xff000ff0, 0x00000100,
 	0x3603, 0xff000ff0, 0x00000100
-};
+पूर्ण;
 
-static const u32 kalindi_golden_spm_registers[] =
-{
+अटल स्थिर u32 kalindi_golden_spm_रेजिस्टरs[] =
+अणु
 	0xc200, 0xe0ffffff, 0xe0000000
-};
+पूर्ण;
 
-static const u32 kalindi_golden_common_registers[] =
-{
+अटल स्थिर u32 kalindi_golden_common_रेजिस्टरs[] =
+अणु
 	0x31dc, 0xffffffff, 0x00000800,
 	0x31dd, 0xffffffff, 0x00000800,
 	0x31e6, 0xffffffff, 0x00007fbf,
 	0x31e7, 0xffffffff, 0x00007faf
-};
+पूर्ण;
 
-static const u32 kalindi_golden_registers[] =
-{
+अटल स्थिर u32 kalindi_golden_रेजिस्टरs[] =
+अणु
 	0xf000, 0xffffdfff, 0x6e944040,
 	0x1579, 0xff607fff, 0xfc000100,
 	0xf088, 0xff000fff, 0x00000100,
@@ -562,10 +563,10 @@ static const u32 kalindi_golden_registers[] =
 	0x2231, 0x001f3ae3, 0x00000082,
 	0x2235, 0x0000001f, 0x00000010,
 	0xc24d, 0xffffffff, 0x00000000
-};
+पूर्ण;
 
-static const u32 kalindi_mgcg_cgcg_init[] =
-{
+अटल स्थिर u32 kalindi_mgcg_cgcg_init[] =
+अणु
 	0x3108, 0xffffffff, 0xfffffffc,
 	0xc200, 0xffffffff, 0xe0000000,
 	0xf0a8, 0xffffffff, 0x00000100,
@@ -621,24 +622,24 @@ static const u32 kalindi_mgcg_cgcg_init[] =
 	0x3079, 0x00000001, 0x00000001,
 	0x3403, 0xff000ff0, 0x00000100,
 	0x3603, 0xff000ff0, 0x00000100
-};
+पूर्ण;
 
-static const u32 hawaii_golden_spm_registers[] =
-{
+अटल स्थिर u32 hawaii_golden_spm_रेजिस्टरs[] =
+अणु
 	0xc200, 0xe0ffffff, 0xe0000000
-};
+पूर्ण;
 
-static const u32 hawaii_golden_common_registers[] =
-{
+अटल स्थिर u32 hawaii_golden_common_रेजिस्टरs[] =
+अणु
 	0xc200, 0xffffffff, 0xe0000000,
 	0xa0d4, 0xffffffff, 0x3a00161a,
 	0xa0d5, 0xffffffff, 0x0000002e,
 	0x2684, 0xffffffff, 0x00018208,
 	0x263e, 0xffffffff, 0x12011003
-};
+पूर्ण;
 
-static const u32 hawaii_golden_registers[] =
-{
+अटल स्थिर u32 hawaii_golden_रेजिस्टरs[] =
+अणु
 	0xcd5, 0x00000333, 0x00000333,
 	0x2684, 0x00010000, 0x00058208,
 	0x260c, 0xffffffff, 0x00000000,
@@ -675,10 +676,10 @@ static const u32 hawaii_golden_registers[] =
 	0x2b04, 0xffffffff, 0x7564fdec,
 	0x2b03, 0xffffffff, 0x3120b9a8,
 	0x2b02, 0x20000000, 0x0f9c0000
-};
+पूर्ण;
 
-static const u32 hawaii_mgcg_cgcg_init[] =
-{
+अटल स्थिर u32 hawaii_mgcg_cgcg_init[] =
+अणु
 	0x3108, 0xffffffff, 0xfffffffd,
 	0xc200, 0xffffffff, 0xe0000000,
 	0xf0a8, 0xffffffff, 0x00000100,
@@ -786,10 +787,10 @@ static const u32 hawaii_mgcg_cgcg_init[] =
 	0x3079, 0x00000001, 0x00000001,
 	0x3403, 0xff000ff0, 0x00000100,
 	0x3603, 0xff000ff0, 0x00000100
-};
+पूर्ण;
 
-static const u32 godavari_golden_registers[] =
-{
+अटल स्थिर u32 godavari_golden_रेजिस्टरs[] =
+अणु
 	0x1579, 0xff607fff, 0xfc000100,
 	0x1bb6, 0x00010101, 0x00010000,
 	0x260c, 0xffffffff, 0x00000000,
@@ -822,150 +823,150 @@ static const u32 godavari_golden_registers[] =
 	0x2231, 0x001f3ae3, 0x00000082,
 	0x2235, 0x0000001f, 0x00000010,
 	0xc24d, 0xffffffff, 0x00000000
-};
+पूर्ण;
 
-static void cik_init_golden_registers(struct amdgpu_device *adev)
-{
-	/* Some of the registers might be dependent on GRBM_GFX_INDEX */
+अटल व्योम cik_init_golden_रेजिस्टरs(काष्ठा amdgpu_device *adev)
+अणु
+	/* Some of the रेजिस्टरs might be dependent on GRBM_GFX_INDEX */
 	mutex_lock(&adev->grbm_idx_mutex);
 
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
-		amdgpu_device_program_register_sequence(adev,
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							bonaire_mgcg_cgcg_init,
 							ARRAY_SIZE(bonaire_mgcg_cgcg_init));
-		amdgpu_device_program_register_sequence(adev,
-							bonaire_golden_registers,
-							ARRAY_SIZE(bonaire_golden_registers));
-		amdgpu_device_program_register_sequence(adev,
-							bonaire_golden_common_registers,
-							ARRAY_SIZE(bonaire_golden_common_registers));
-		amdgpu_device_program_register_sequence(adev,
-							bonaire_golden_spm_registers,
-							ARRAY_SIZE(bonaire_golden_spm_registers));
-		break;
-	case CHIP_KABINI:
-		amdgpu_device_program_register_sequence(adev,
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							bonaire_golden_रेजिस्टरs,
+							ARRAY_SIZE(bonaire_golden_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							bonaire_golden_common_रेजिस्टरs,
+							ARRAY_SIZE(bonaire_golden_common_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							bonaire_golden_spm_रेजिस्टरs,
+							ARRAY_SIZE(bonaire_golden_spm_रेजिस्टरs));
+		अवरोध;
+	हाल CHIP_KABINI:
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							kalindi_mgcg_cgcg_init,
 							ARRAY_SIZE(kalindi_mgcg_cgcg_init));
-		amdgpu_device_program_register_sequence(adev,
-							kalindi_golden_registers,
-							ARRAY_SIZE(kalindi_golden_registers));
-		amdgpu_device_program_register_sequence(adev,
-							kalindi_golden_common_registers,
-							ARRAY_SIZE(kalindi_golden_common_registers));
-		amdgpu_device_program_register_sequence(adev,
-							kalindi_golden_spm_registers,
-							ARRAY_SIZE(kalindi_golden_spm_registers));
-		break;
-	case CHIP_MULLINS:
-		amdgpu_device_program_register_sequence(adev,
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							kalindi_golden_रेजिस्टरs,
+							ARRAY_SIZE(kalindi_golden_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							kalindi_golden_common_रेजिस्टरs,
+							ARRAY_SIZE(kalindi_golden_common_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							kalindi_golden_spm_रेजिस्टरs,
+							ARRAY_SIZE(kalindi_golden_spm_रेजिस्टरs));
+		अवरोध;
+	हाल CHIP_MULLINS:
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							kalindi_mgcg_cgcg_init,
 							ARRAY_SIZE(kalindi_mgcg_cgcg_init));
-		amdgpu_device_program_register_sequence(adev,
-							godavari_golden_registers,
-							ARRAY_SIZE(godavari_golden_registers));
-		amdgpu_device_program_register_sequence(adev,
-							kalindi_golden_common_registers,
-							ARRAY_SIZE(kalindi_golden_common_registers));
-		amdgpu_device_program_register_sequence(adev,
-							kalindi_golden_spm_registers,
-							ARRAY_SIZE(kalindi_golden_spm_registers));
-		break;
-	case CHIP_KAVERI:
-		amdgpu_device_program_register_sequence(adev,
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							godavari_golden_रेजिस्टरs,
+							ARRAY_SIZE(godavari_golden_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							kalindi_golden_common_रेजिस्टरs,
+							ARRAY_SIZE(kalindi_golden_common_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							kalindi_golden_spm_रेजिस्टरs,
+							ARRAY_SIZE(kalindi_golden_spm_रेजिस्टरs));
+		अवरोध;
+	हाल CHIP_KAVERI:
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							spectre_mgcg_cgcg_init,
 							ARRAY_SIZE(spectre_mgcg_cgcg_init));
-		amdgpu_device_program_register_sequence(adev,
-							spectre_golden_registers,
-							ARRAY_SIZE(spectre_golden_registers));
-		amdgpu_device_program_register_sequence(adev,
-							spectre_golden_common_registers,
-							ARRAY_SIZE(spectre_golden_common_registers));
-		amdgpu_device_program_register_sequence(adev,
-							spectre_golden_spm_registers,
-							ARRAY_SIZE(spectre_golden_spm_registers));
-		break;
-	case CHIP_HAWAII:
-		amdgpu_device_program_register_sequence(adev,
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							spectre_golden_रेजिस्टरs,
+							ARRAY_SIZE(spectre_golden_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							spectre_golden_common_रेजिस्टरs,
+							ARRAY_SIZE(spectre_golden_common_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							spectre_golden_spm_रेजिस्टरs,
+							ARRAY_SIZE(spectre_golden_spm_रेजिस्टरs));
+		अवरोध;
+	हाल CHIP_HAWAII:
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							hawaii_mgcg_cgcg_init,
 							ARRAY_SIZE(hawaii_mgcg_cgcg_init));
-		amdgpu_device_program_register_sequence(adev,
-							hawaii_golden_registers,
-							ARRAY_SIZE(hawaii_golden_registers));
-		amdgpu_device_program_register_sequence(adev,
-							hawaii_golden_common_registers,
-							ARRAY_SIZE(hawaii_golden_common_registers));
-		amdgpu_device_program_register_sequence(adev,
-							hawaii_golden_spm_registers,
-							ARRAY_SIZE(hawaii_golden_spm_registers));
-		break;
-	default:
-		break;
-	}
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							hawaii_golden_रेजिस्टरs,
+							ARRAY_SIZE(hawaii_golden_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							hawaii_golden_common_रेजिस्टरs,
+							ARRAY_SIZE(hawaii_golden_common_रेजिस्टरs));
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
+							hawaii_golden_spm_रेजिस्टरs,
+							ARRAY_SIZE(hawaii_golden_spm_रेजिस्टरs));
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&adev->grbm_idx_mutex);
-}
+पूर्ण
 
 /**
  * cik_get_xclk - get the xclk
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Returns the reference clock used by the gfx engine
+ * Returns the reference घड़ी used by the gfx engine
  * (CIK).
  */
-static u32 cik_get_xclk(struct amdgpu_device *adev)
-{
-	u32 reference_clock = adev->clock.spll.reference_freq;
+अटल u32 cik_get_xclk(काष्ठा amdgpu_device *adev)
+अणु
+	u32 reference_घड़ी = adev->घड़ी.spll.reference_freq;
 
-	if (adev->flags & AMD_IS_APU) {
-		if (RREG32_SMC(ixGENERAL_PWRMGT) & GENERAL_PWRMGT__GPU_COUNTER_CLK_MASK)
-			return reference_clock / 2;
-	} else {
-		if (RREG32_SMC(ixCG_CLKPIN_CNTL) & CG_CLKPIN_CNTL__XTALIN_DIVIDE_MASK)
-			return reference_clock / 4;
-	}
-	return reference_clock;
-}
+	अगर (adev->flags & AMD_IS_APU) अणु
+		अगर (RREG32_SMC(ixGENERAL_PWRMGT) & GENERAL_PWRMGT__GPU_COUNTER_CLK_MASK)
+			वापस reference_घड़ी / 2;
+	पूर्ण अन्यथा अणु
+		अगर (RREG32_SMC(ixCG_CLKPIN_CNTL) & CG_CLKPIN_CNTL__XTALIN_DIVIDE_MASK)
+			वापस reference_घड़ी / 4;
+	पूर्ण
+	वापस reference_घड़ी;
+पूर्ण
 
 /**
- * cik_srbm_select - select specific register instances
+ * cik_srbm_select - select specअगरic रेजिस्टर instances
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @me: selected ME (micro engine)
  * @pipe: pipe
  * @queue: queue
  * @vmid: VMID
  *
- * Switches the currently active registers instances.  Some
- * registers are instanced per VMID, others are instanced per
+ * Switches the currently active रेजिस्टरs instances.  Some
+ * रेजिस्टरs are instanced per VMID, others are instanced per
  * me/pipe/queue combination.
  */
-void cik_srbm_select(struct amdgpu_device *adev,
+व्योम cik_srbm_select(काष्ठा amdgpu_device *adev,
 		     u32 me, u32 pipe, u32 queue, u32 vmid)
-{
+अणु
 	u32 srbm_gfx_cntl =
 		(((pipe << SRBM_GFX_CNTL__PIPEID__SHIFT) & SRBM_GFX_CNTL__PIPEID_MASK)|
 		((me << SRBM_GFX_CNTL__MEID__SHIFT) & SRBM_GFX_CNTL__MEID_MASK)|
 		((vmid << SRBM_GFX_CNTL__VMID__SHIFT) & SRBM_GFX_CNTL__VMID_MASK)|
 		((queue << SRBM_GFX_CNTL__QUEUEID__SHIFT) & SRBM_GFX_CNTL__QUEUEID_MASK));
 	WREG32(mmSRBM_GFX_CNTL, srbm_gfx_cntl);
-}
+पूर्ण
 
-static void cik_vga_set_state(struct amdgpu_device *adev, bool state)
-{
-	uint32_t tmp;
+अटल व्योम cik_vga_set_state(काष्ठा amdgpu_device *adev, bool state)
+अणु
+	uपूर्णांक32_t पंचांगp;
 
-	tmp = RREG32(mmCONFIG_CNTL);
-	if (!state)
-		tmp |= CONFIG_CNTL__VGA_DIS_MASK;
-	else
-		tmp &= ~CONFIG_CNTL__VGA_DIS_MASK;
-	WREG32(mmCONFIG_CNTL, tmp);
-}
+	पंचांगp = RREG32(mmCONFIG_CNTL);
+	अगर (!state)
+		पंचांगp |= CONFIG_CNTL__VGA_DIS_MASK;
+	अन्यथा
+		पंचांगp &= ~CONFIG_CNTL__VGA_DIS_MASK;
+	WREG32(mmCONFIG_CNTL, पंचांगp);
+पूर्ण
 
-static bool cik_read_disabled_bios(struct amdgpu_device *adev)
-{
+अटल bool cik_पढ़ो_disabled_bios(काष्ठा amdgpu_device *adev)
+अणु
 	u32 bus_cntl;
 	u32 d1vga_control = 0;
 	u32 d2vga_control = 0;
@@ -974,16 +975,16 @@ static bool cik_read_disabled_bios(struct amdgpu_device *adev)
 	bool r;
 
 	bus_cntl = RREG32(mmBUS_CNTL);
-	if (adev->mode_info.num_crtc) {
+	अगर (adev->mode_info.num_crtc) अणु
 		d1vga_control = RREG32(mmD1VGA_CONTROL);
 		d2vga_control = RREG32(mmD2VGA_CONTROL);
 		vga_render_control = RREG32(mmVGA_RENDER_CONTROL);
-	}
+	पूर्ण
 	rom_cntl = RREG32_SMC(ixROM_CNTL);
 
 	/* enable the rom */
 	WREG32(mmBUS_CNTL, (bus_cntl & ~BUS_CNTL__BIOS_ROM_DIS_MASK));
-	if (adev->mode_info.num_crtc) {
+	अगर (adev->mode_info.num_crtc) अणु
 		/* Disable VGA mode */
 		WREG32(mmD1VGA_CONTROL,
 		       (d1vga_control & ~(D1VGA_CONTROL__D1VGA_MODE_ENABLE_MASK |
@@ -993,36 +994,36 @@ static bool cik_read_disabled_bios(struct amdgpu_device *adev)
 					  D1VGA_CONTROL__D1VGA_TIMING_SELECT_MASK)));
 		WREG32(mmVGA_RENDER_CONTROL,
 		       (vga_render_control & ~VGA_RENDER_CONTROL__VGA_VSTATUS_CNTL_MASK));
-	}
+	पूर्ण
 	WREG32_SMC(ixROM_CNTL, rom_cntl | ROM_CNTL__SCK_OVERWRITE_MASK);
 
-	r = amdgpu_read_bios(adev);
+	r = amdgpu_पढ़ो_bios(adev);
 
 	/* restore regs */
 	WREG32(mmBUS_CNTL, bus_cntl);
-	if (adev->mode_info.num_crtc) {
+	अगर (adev->mode_info.num_crtc) अणु
 		WREG32(mmD1VGA_CONTROL, d1vga_control);
 		WREG32(mmD2VGA_CONTROL, d2vga_control);
 		WREG32(mmVGA_RENDER_CONTROL, vga_render_control);
-	}
+	पूर्ण
 	WREG32_SMC(ixROM_CNTL, rom_cntl);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static bool cik_read_bios_from_rom(struct amdgpu_device *adev,
+अटल bool cik_पढ़ो_bios_from_rom(काष्ठा amdgpu_device *adev,
 				   u8 *bios, u32 length_bytes)
-{
+अणु
 	u32 *dw_ptr;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 i, length_dw;
 
-	if (bios == NULL)
-		return false;
-	if (length_bytes == 0)
-		return false;
+	अगर (bios == शून्य)
+		वापस false;
+	अगर (length_bytes == 0)
+		वापस false;
 	/* APU vbios image is part of sbios image */
-	if (adev->flags & AMD_IS_APU)
-		return false;
+	अगर (adev->flags & AMD_IS_APU)
+		वापस false;
 
 	dw_ptr = (u32 *)bios;
 	length_dw = ALIGN(length_bytes, 4) / 4;
@@ -1031,218 +1032,218 @@ static bool cik_read_bios_from_rom(struct amdgpu_device *adev,
 	/* set rom index to 0 */
 	WREG32(mmSMC_IND_INDEX_0, ixROM_INDEX);
 	WREG32(mmSMC_IND_DATA_0, 0);
-	/* set index to data for continous read */
+	/* set index to data क्रम continous पढ़ो */
 	WREG32(mmSMC_IND_INDEX_0, ixROM_DATA);
-	for (i = 0; i < length_dw; i++)
+	क्रम (i = 0; i < length_dw; i++)
 		dw_ptr[i] = RREG32(mmSMC_IND_DATA_0);
 	spin_unlock_irqrestore(&adev->smc_idx_lock, flags);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static const struct amdgpu_allowed_register_entry cik_allowed_read_registers[] = {
-	{mmGRBM_STATUS},
-	{mmGRBM_STATUS2},
-	{mmGRBM_STATUS_SE0},
-	{mmGRBM_STATUS_SE1},
-	{mmGRBM_STATUS_SE2},
-	{mmGRBM_STATUS_SE3},
-	{mmSRBM_STATUS},
-	{mmSRBM_STATUS2},
-	{mmSDMA0_STATUS_REG + SDMA0_REGISTER_OFFSET},
-	{mmSDMA0_STATUS_REG + SDMA1_REGISTER_OFFSET},
-	{mmCP_STAT},
-	{mmCP_STALLED_STAT1},
-	{mmCP_STALLED_STAT2},
-	{mmCP_STALLED_STAT3},
-	{mmCP_CPF_BUSY_STAT},
-	{mmCP_CPF_STALLED_STAT1},
-	{mmCP_CPF_STATUS},
-	{mmCP_CPC_BUSY_STAT},
-	{mmCP_CPC_STALLED_STAT1},
-	{mmCP_CPC_STATUS},
-	{mmGB_ADDR_CONFIG},
-	{mmMC_ARB_RAMCFG},
-	{mmGB_TILE_MODE0},
-	{mmGB_TILE_MODE1},
-	{mmGB_TILE_MODE2},
-	{mmGB_TILE_MODE3},
-	{mmGB_TILE_MODE4},
-	{mmGB_TILE_MODE5},
-	{mmGB_TILE_MODE6},
-	{mmGB_TILE_MODE7},
-	{mmGB_TILE_MODE8},
-	{mmGB_TILE_MODE9},
-	{mmGB_TILE_MODE10},
-	{mmGB_TILE_MODE11},
-	{mmGB_TILE_MODE12},
-	{mmGB_TILE_MODE13},
-	{mmGB_TILE_MODE14},
-	{mmGB_TILE_MODE15},
-	{mmGB_TILE_MODE16},
-	{mmGB_TILE_MODE17},
-	{mmGB_TILE_MODE18},
-	{mmGB_TILE_MODE19},
-	{mmGB_TILE_MODE20},
-	{mmGB_TILE_MODE21},
-	{mmGB_TILE_MODE22},
-	{mmGB_TILE_MODE23},
-	{mmGB_TILE_MODE24},
-	{mmGB_TILE_MODE25},
-	{mmGB_TILE_MODE26},
-	{mmGB_TILE_MODE27},
-	{mmGB_TILE_MODE28},
-	{mmGB_TILE_MODE29},
-	{mmGB_TILE_MODE30},
-	{mmGB_TILE_MODE31},
-	{mmGB_MACROTILE_MODE0},
-	{mmGB_MACROTILE_MODE1},
-	{mmGB_MACROTILE_MODE2},
-	{mmGB_MACROTILE_MODE3},
-	{mmGB_MACROTILE_MODE4},
-	{mmGB_MACROTILE_MODE5},
-	{mmGB_MACROTILE_MODE6},
-	{mmGB_MACROTILE_MODE7},
-	{mmGB_MACROTILE_MODE8},
-	{mmGB_MACROTILE_MODE9},
-	{mmGB_MACROTILE_MODE10},
-	{mmGB_MACROTILE_MODE11},
-	{mmGB_MACROTILE_MODE12},
-	{mmGB_MACROTILE_MODE13},
-	{mmGB_MACROTILE_MODE14},
-	{mmGB_MACROTILE_MODE15},
-	{mmCC_RB_BACKEND_DISABLE, true},
-	{mmGC_USER_RB_BACKEND_DISABLE, true},
-	{mmGB_BACKEND_MAP, false},
-	{mmPA_SC_RASTER_CONFIG, true},
-	{mmPA_SC_RASTER_CONFIG_1, true},
-};
+अटल स्थिर काष्ठा amdgpu_allowed_रेजिस्टर_entry cik_allowed_पढ़ो_रेजिस्टरs[] = अणु
+	अणुmmGRBM_STATUSपूर्ण,
+	अणुmmGRBM_STATUS2पूर्ण,
+	अणुmmGRBM_STATUS_SE0पूर्ण,
+	अणुmmGRBM_STATUS_SE1पूर्ण,
+	अणुmmGRBM_STATUS_SE2पूर्ण,
+	अणुmmGRBM_STATUS_SE3पूर्ण,
+	अणुmmSRBM_STATUSपूर्ण,
+	अणुmmSRBM_STATUS2पूर्ण,
+	अणुmmSDMA0_STATUS_REG + SDMA0_REGISTER_OFFSETपूर्ण,
+	अणुmmSDMA0_STATUS_REG + SDMA1_REGISTER_OFFSETपूर्ण,
+	अणुmmCP_STATपूर्ण,
+	अणुmmCP_STALLED_STAT1पूर्ण,
+	अणुmmCP_STALLED_STAT2पूर्ण,
+	अणुmmCP_STALLED_STAT3पूर्ण,
+	अणुmmCP_CPF_BUSY_STATपूर्ण,
+	अणुmmCP_CPF_STALLED_STAT1पूर्ण,
+	अणुmmCP_CPF_STATUSपूर्ण,
+	अणुmmCP_CPC_BUSY_STATपूर्ण,
+	अणुmmCP_CPC_STALLED_STAT1पूर्ण,
+	अणुmmCP_CPC_STATUSपूर्ण,
+	अणुmmGB_ADDR_CONFIGपूर्ण,
+	अणुmmMC_ARB_RAMCFGपूर्ण,
+	अणुmmGB_TILE_MODE0पूर्ण,
+	अणुmmGB_TILE_MODE1पूर्ण,
+	अणुmmGB_TILE_MODE2पूर्ण,
+	अणुmmGB_TILE_MODE3पूर्ण,
+	अणुmmGB_TILE_MODE4पूर्ण,
+	अणुmmGB_TILE_MODE5पूर्ण,
+	अणुmmGB_TILE_MODE6पूर्ण,
+	अणुmmGB_TILE_MODE7पूर्ण,
+	अणुmmGB_TILE_MODE8पूर्ण,
+	अणुmmGB_TILE_MODE9पूर्ण,
+	अणुmmGB_TILE_MODE10पूर्ण,
+	अणुmmGB_TILE_MODE11पूर्ण,
+	अणुmmGB_TILE_MODE12पूर्ण,
+	अणुmmGB_TILE_MODE13पूर्ण,
+	अणुmmGB_TILE_MODE14पूर्ण,
+	अणुmmGB_TILE_MODE15पूर्ण,
+	अणुmmGB_TILE_MODE16पूर्ण,
+	अणुmmGB_TILE_MODE17पूर्ण,
+	अणुmmGB_TILE_MODE18पूर्ण,
+	अणुmmGB_TILE_MODE19पूर्ण,
+	अणुmmGB_TILE_MODE20पूर्ण,
+	अणुmmGB_TILE_MODE21पूर्ण,
+	अणुmmGB_TILE_MODE22पूर्ण,
+	अणुmmGB_TILE_MODE23पूर्ण,
+	अणुmmGB_TILE_MODE24पूर्ण,
+	अणुmmGB_TILE_MODE25पूर्ण,
+	अणुmmGB_TILE_MODE26पूर्ण,
+	अणुmmGB_TILE_MODE27पूर्ण,
+	अणुmmGB_TILE_MODE28पूर्ण,
+	अणुmmGB_TILE_MODE29पूर्ण,
+	अणुmmGB_TILE_MODE30पूर्ण,
+	अणुmmGB_TILE_MODE31पूर्ण,
+	अणुmmGB_MACROTILE_MODE0पूर्ण,
+	अणुmmGB_MACROTILE_MODE1पूर्ण,
+	अणुmmGB_MACROTILE_MODE2पूर्ण,
+	अणुmmGB_MACROTILE_MODE3पूर्ण,
+	अणुmmGB_MACROTILE_MODE4पूर्ण,
+	अणुmmGB_MACROTILE_MODE5पूर्ण,
+	अणुmmGB_MACROTILE_MODE6पूर्ण,
+	अणुmmGB_MACROTILE_MODE7पूर्ण,
+	अणुmmGB_MACROTILE_MODE8पूर्ण,
+	अणुmmGB_MACROTILE_MODE9पूर्ण,
+	अणुmmGB_MACROTILE_MODE10पूर्ण,
+	अणुmmGB_MACROTILE_MODE11पूर्ण,
+	अणुmmGB_MACROTILE_MODE12पूर्ण,
+	अणुmmGB_MACROTILE_MODE13पूर्ण,
+	अणुmmGB_MACROTILE_MODE14पूर्ण,
+	अणुmmGB_MACROTILE_MODE15पूर्ण,
+	अणुmmCC_RB_BACKEND_DISABLE, trueपूर्ण,
+	अणुmmGC_USER_RB_BACKEND_DISABLE, trueपूर्ण,
+	अणुmmGB_BACKEND_MAP, falseपूर्ण,
+	अणुmmPA_SC_RASTER_CONFIG, trueपूर्ण,
+	अणुmmPA_SC_RASTER_CONFIG_1, trueपूर्ण,
+पूर्ण;
 
 
-static uint32_t cik_get_register_value(struct amdgpu_device *adev,
+अटल uपूर्णांक32_t cik_get_रेजिस्टर_value(काष्ठा amdgpu_device *adev,
 				       bool indexed, u32 se_num,
 				       u32 sh_num, u32 reg_offset)
-{
-	if (indexed) {
-		uint32_t val;
-		unsigned se_idx = (se_num == 0xffffffff) ? 0 : se_num;
-		unsigned sh_idx = (sh_num == 0xffffffff) ? 0 : sh_num;
+अणु
+	अगर (indexed) अणु
+		uपूर्णांक32_t val;
+		अचिन्हित se_idx = (se_num == 0xffffffff) ? 0 : se_num;
+		अचिन्हित sh_idx = (sh_num == 0xffffffff) ? 0 : sh_num;
 
-		switch (reg_offset) {
-		case mmCC_RB_BACKEND_DISABLE:
-			return adev->gfx.config.rb_config[se_idx][sh_idx].rb_backend_disable;
-		case mmGC_USER_RB_BACKEND_DISABLE:
-			return adev->gfx.config.rb_config[se_idx][sh_idx].user_rb_backend_disable;
-		case mmPA_SC_RASTER_CONFIG:
-			return adev->gfx.config.rb_config[se_idx][sh_idx].raster_config;
-		case mmPA_SC_RASTER_CONFIG_1:
-			return adev->gfx.config.rb_config[se_idx][sh_idx].raster_config_1;
-		}
+		चयन (reg_offset) अणु
+		हाल mmCC_RB_BACKEND_DISABLE:
+			वापस adev->gfx.config.rb_config[se_idx][sh_idx].rb_backend_disable;
+		हाल mmGC_USER_RB_BACKEND_DISABLE:
+			वापस adev->gfx.config.rb_config[se_idx][sh_idx].user_rb_backend_disable;
+		हाल mmPA_SC_RASTER_CONFIG:
+			वापस adev->gfx.config.rb_config[se_idx][sh_idx].raster_config;
+		हाल mmPA_SC_RASTER_CONFIG_1:
+			वापस adev->gfx.config.rb_config[se_idx][sh_idx].raster_config_1;
+		पूर्ण
 
 		mutex_lock(&adev->grbm_idx_mutex);
-		if (se_num != 0xffffffff || sh_num != 0xffffffff)
+		अगर (se_num != 0xffffffff || sh_num != 0xffffffff)
 			amdgpu_gfx_select_se_sh(adev, se_num, sh_num, 0xffffffff);
 
 		val = RREG32(reg_offset);
 
-		if (se_num != 0xffffffff || sh_num != 0xffffffff)
+		अगर (se_num != 0xffffffff || sh_num != 0xffffffff)
 			amdgpu_gfx_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
 		mutex_unlock(&adev->grbm_idx_mutex);
-		return val;
-	} else {
-		unsigned idx;
+		वापस val;
+	पूर्ण अन्यथा अणु
+		अचिन्हित idx;
 
-		switch (reg_offset) {
-		case mmGB_ADDR_CONFIG:
-			return adev->gfx.config.gb_addr_config;
-		case mmMC_ARB_RAMCFG:
-			return adev->gfx.config.mc_arb_ramcfg;
-		case mmGB_TILE_MODE0:
-		case mmGB_TILE_MODE1:
-		case mmGB_TILE_MODE2:
-		case mmGB_TILE_MODE3:
-		case mmGB_TILE_MODE4:
-		case mmGB_TILE_MODE5:
-		case mmGB_TILE_MODE6:
-		case mmGB_TILE_MODE7:
-		case mmGB_TILE_MODE8:
-		case mmGB_TILE_MODE9:
-		case mmGB_TILE_MODE10:
-		case mmGB_TILE_MODE11:
-		case mmGB_TILE_MODE12:
-		case mmGB_TILE_MODE13:
-		case mmGB_TILE_MODE14:
-		case mmGB_TILE_MODE15:
-		case mmGB_TILE_MODE16:
-		case mmGB_TILE_MODE17:
-		case mmGB_TILE_MODE18:
-		case mmGB_TILE_MODE19:
-		case mmGB_TILE_MODE20:
-		case mmGB_TILE_MODE21:
-		case mmGB_TILE_MODE22:
-		case mmGB_TILE_MODE23:
-		case mmGB_TILE_MODE24:
-		case mmGB_TILE_MODE25:
-		case mmGB_TILE_MODE26:
-		case mmGB_TILE_MODE27:
-		case mmGB_TILE_MODE28:
-		case mmGB_TILE_MODE29:
-		case mmGB_TILE_MODE30:
-		case mmGB_TILE_MODE31:
+		चयन (reg_offset) अणु
+		हाल mmGB_ADDR_CONFIG:
+			वापस adev->gfx.config.gb_addr_config;
+		हाल mmMC_ARB_RAMCFG:
+			वापस adev->gfx.config.mc_arb_ramcfg;
+		हाल mmGB_TILE_MODE0:
+		हाल mmGB_TILE_MODE1:
+		हाल mmGB_TILE_MODE2:
+		हाल mmGB_TILE_MODE3:
+		हाल mmGB_TILE_MODE4:
+		हाल mmGB_TILE_MODE5:
+		हाल mmGB_TILE_MODE6:
+		हाल mmGB_TILE_MODE7:
+		हाल mmGB_TILE_MODE8:
+		हाल mmGB_TILE_MODE9:
+		हाल mmGB_TILE_MODE10:
+		हाल mmGB_TILE_MODE11:
+		हाल mmGB_TILE_MODE12:
+		हाल mmGB_TILE_MODE13:
+		हाल mmGB_TILE_MODE14:
+		हाल mmGB_TILE_MODE15:
+		हाल mmGB_TILE_MODE16:
+		हाल mmGB_TILE_MODE17:
+		हाल mmGB_TILE_MODE18:
+		हाल mmGB_TILE_MODE19:
+		हाल mmGB_TILE_MODE20:
+		हाल mmGB_TILE_MODE21:
+		हाल mmGB_TILE_MODE22:
+		हाल mmGB_TILE_MODE23:
+		हाल mmGB_TILE_MODE24:
+		हाल mmGB_TILE_MODE25:
+		हाल mmGB_TILE_MODE26:
+		हाल mmGB_TILE_MODE27:
+		हाल mmGB_TILE_MODE28:
+		हाल mmGB_TILE_MODE29:
+		हाल mmGB_TILE_MODE30:
+		हाल mmGB_TILE_MODE31:
 			idx = (reg_offset - mmGB_TILE_MODE0);
-			return adev->gfx.config.tile_mode_array[idx];
-		case mmGB_MACROTILE_MODE0:
-		case mmGB_MACROTILE_MODE1:
-		case mmGB_MACROTILE_MODE2:
-		case mmGB_MACROTILE_MODE3:
-		case mmGB_MACROTILE_MODE4:
-		case mmGB_MACROTILE_MODE5:
-		case mmGB_MACROTILE_MODE6:
-		case mmGB_MACROTILE_MODE7:
-		case mmGB_MACROTILE_MODE8:
-		case mmGB_MACROTILE_MODE9:
-		case mmGB_MACROTILE_MODE10:
-		case mmGB_MACROTILE_MODE11:
-		case mmGB_MACROTILE_MODE12:
-		case mmGB_MACROTILE_MODE13:
-		case mmGB_MACROTILE_MODE14:
-		case mmGB_MACROTILE_MODE15:
+			वापस adev->gfx.config.tile_mode_array[idx];
+		हाल mmGB_MACROTILE_MODE0:
+		हाल mmGB_MACROTILE_MODE1:
+		हाल mmGB_MACROTILE_MODE2:
+		हाल mmGB_MACROTILE_MODE3:
+		हाल mmGB_MACROTILE_MODE4:
+		हाल mmGB_MACROTILE_MODE5:
+		हाल mmGB_MACROTILE_MODE6:
+		हाल mmGB_MACROTILE_MODE7:
+		हाल mmGB_MACROTILE_MODE8:
+		हाल mmGB_MACROTILE_MODE9:
+		हाल mmGB_MACROTILE_MODE10:
+		हाल mmGB_MACROTILE_MODE11:
+		हाल mmGB_MACROTILE_MODE12:
+		हाल mmGB_MACROTILE_MODE13:
+		हाल mmGB_MACROTILE_MODE14:
+		हाल mmGB_MACROTILE_MODE15:
 			idx = (reg_offset - mmGB_MACROTILE_MODE0);
-			return adev->gfx.config.macrotile_mode_array[idx];
-		default:
-			return RREG32(reg_offset);
-		}
-	}
-}
+			वापस adev->gfx.config.macrotile_mode_array[idx];
+		शेष:
+			वापस RREG32(reg_offset);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int cik_read_register(struct amdgpu_device *adev, u32 se_num,
+अटल पूर्णांक cik_पढ़ो_रेजिस्टर(काष्ठा amdgpu_device *adev, u32 se_num,
 			     u32 sh_num, u32 reg_offset, u32 *value)
-{
-	uint32_t i;
+अणु
+	uपूर्णांक32_t i;
 
 	*value = 0;
-	for (i = 0; i < ARRAY_SIZE(cik_allowed_read_registers); i++) {
-		bool indexed = cik_allowed_read_registers[i].grbm_indexed;
+	क्रम (i = 0; i < ARRAY_SIZE(cik_allowed_पढ़ो_रेजिस्टरs); i++) अणु
+		bool indexed = cik_allowed_पढ़ो_रेजिस्टरs[i].grbm_indexed;
 
-		if (reg_offset != cik_allowed_read_registers[i].reg_offset)
-			continue;
+		अगर (reg_offset != cik_allowed_पढ़ो_रेजिस्टरs[i].reg_offset)
+			जारी;
 
-		*value = cik_get_register_value(adev, indexed, se_num, sh_num,
+		*value = cik_get_रेजिस्टर_value(adev, indexed, se_num, sh_num,
 						reg_offset);
-		return 0;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-struct kv_reset_save_regs {
+काष्ठा kv_reset_save_regs अणु
 	u32 gmcon_reng_execute;
 	u32 gmcon_misc;
 	u32 gmcon_misc3;
-};
+पूर्ण;
 
-static void kv_save_regs_for_reset(struct amdgpu_device *adev,
-				   struct kv_reset_save_regs *save)
-{
+अटल व्योम kv_save_regs_क्रम_reset(काष्ठा amdgpu_device *adev,
+				   काष्ठा kv_reset_save_regs *save)
+अणु
 	save->gmcon_reng_execute = RREG32(mmGMCON_RENG_EXECUTE);
 	save->gmcon_misc = RREG32(mmGMCON_MISC);
 	save->gmcon_misc3 = RREG32(mmGMCON_MISC3);
@@ -1252,71 +1253,71 @@ static void kv_save_regs_for_reset(struct amdgpu_device *adev,
 	WREG32(mmGMCON_MISC, save->gmcon_misc &
 		~(GMCON_MISC__RENG_EXECUTE_ON_REG_UPDATE_MASK |
 			GMCON_MISC__STCTRL_STUTTER_EN_MASK));
-}
+पूर्ण
 
-static void kv_restore_regs_for_reset(struct amdgpu_device *adev,
-				      struct kv_reset_save_regs *save)
-{
-	int i;
+अटल व्योम kv_restore_regs_क्रम_reset(काष्ठा amdgpu_device *adev,
+				      काष्ठा kv_reset_save_regs *save)
+अणु
+	पूर्णांक i;
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0x200010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0x300010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0x210000);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0xa00010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0x21003);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0xb00010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0x2b00);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0xc00010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0xd00010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0x420000);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0x100010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0x120202);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0x500010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0x3e3e36);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0x600010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0x373f3e);
 	WREG32(mmGMCON_PGFSM_CONFIG, 0x700010ff);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		WREG32(mmGMCON_PGFSM_WRITE, 0);
 
 	WREG32(mmGMCON_PGFSM_WRITE, 0x3e1332);
@@ -1325,27 +1326,27 @@ static void kv_restore_regs_for_reset(struct amdgpu_device *adev,
 	WREG32(mmGMCON_MISC3, save->gmcon_misc3);
 	WREG32(mmGMCON_MISC, save->gmcon_misc);
 	WREG32(mmGMCON_RENG_EXECUTE, save->gmcon_reng_execute);
-}
+पूर्ण
 
 /**
  * cik_asic_pci_config_reset - soft reset GPU
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Use PCI Config method to reset the GPU.
  *
- * Returns 0 for success.
+ * Returns 0 क्रम success.
  */
-static int cik_asic_pci_config_reset(struct amdgpu_device *adev)
-{
-	struct kv_reset_save_regs kv_save = { 0 };
+अटल पूर्णांक cik_asic_pci_config_reset(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा kv_reset_save_regs kv_save = अणु 0 पूर्ण;
 	u32 i;
-	int r = -EINVAL;
+	पूर्णांक r = -EINVAL;
 
 	amdgpu_atombios_scratch_regs_engine_hung(adev, true);
 
-	if (adev->flags & AMD_IS_APU)
-		kv_save_regs_for_reset(adev, &kv_save);
+	अगर (adev->flags & AMD_IS_APU)
+		kv_save_regs_क्रम_reset(adev, &kv_save);
 
 	/* disable BM */
 	pci_clear_master(adev->pdev);
@@ -1354,331 +1355,331 @@ static int cik_asic_pci_config_reset(struct amdgpu_device *adev)
 
 	udelay(100);
 
-	/* wait for asic to come out of reset */
-	for (i = 0; i < adev->usec_timeout; i++) {
-		if (RREG32(mmCONFIG_MEMSIZE) != 0xffffffff) {
+	/* रुको क्रम asic to come out of reset */
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		अगर (RREG32(mmCONFIG_MEMSIZE) != 0xffffffff) अणु
 			/* enable BM */
 			pci_set_master(adev->pdev);
 			adev->has_hw_reset = true;
 			r = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		udelay(1);
-	}
+	पूर्ण
 
-	/* does asic init need to be run first??? */
-	if (adev->flags & AMD_IS_APU)
-		kv_restore_regs_for_reset(adev, &kv_save);
+	/* करोes asic init need to be run first??? */
+	अगर (adev->flags & AMD_IS_APU)
+		kv_restore_regs_क्रम_reset(adev, &kv_save);
 
 	amdgpu_atombios_scratch_regs_engine_hung(adev, false);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static bool cik_asic_supports_baco(struct amdgpu_device *adev)
-{
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
-	case CHIP_HAWAII:
-		return amdgpu_dpm_is_baco_supported(adev);
-	default:
-		return false;
-	}
-}
+अटल bool cik_asic_supports_baco(काष्ठा amdgpu_device *adev)
+अणु
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
+	हाल CHIP_HAWAII:
+		वापस amdgpu_dpm_is_baco_supported(adev);
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static enum amd_reset_method
-cik_asic_reset_method(struct amdgpu_device *adev)
-{
+अटल क्रमागत amd_reset_method
+cik_asic_reset_method(काष्ठा amdgpu_device *adev)
+अणु
 	bool baco_reset;
 
-	if (amdgpu_reset_method == AMD_RESET_METHOD_LEGACY ||
+	अगर (amdgpu_reset_method == AMD_RESET_METHOD_LEGACY ||
 	    amdgpu_reset_method == AMD_RESET_METHOD_BACO)
-		return amdgpu_reset_method;
+		वापस amdgpu_reset_method;
 
-	if (amdgpu_reset_method != -1)
+	अगर (amdgpu_reset_method != -1)
 		dev_warn(adev->dev, "Specified reset:%d isn't supported, using AUTO instead.\n",
 				  amdgpu_reset_method);
 
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
-	case CHIP_HAWAII:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
+	हाल CHIP_HAWAII:
 		baco_reset = cik_asic_supports_baco(adev);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		baco_reset = false;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (baco_reset)
-		return AMD_RESET_METHOD_BACO;
-	else
-		return AMD_RESET_METHOD_LEGACY;
-}
+	अगर (baco_reset)
+		वापस AMD_RESET_METHOD_BACO;
+	अन्यथा
+		वापस AMD_RESET_METHOD_LEGACY;
+पूर्ण
 
 /**
  * cik_asic_reset - soft reset GPU
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Look up which blocks are hung and attempt
  * to reset them.
- * Returns 0 for success.
+ * Returns 0 क्रम success.
  */
-static int cik_asic_reset(struct amdgpu_device *adev)
-{
-	int r;
+अटल पूर्णांक cik_asic_reset(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 
-	if (cik_asic_reset_method(adev) == AMD_RESET_METHOD_BACO) {
+	अगर (cik_asic_reset_method(adev) == AMD_RESET_METHOD_BACO) अणु
 		dev_info(adev->dev, "BACO reset\n");
 		r = amdgpu_dpm_baco_reset(adev);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info(adev->dev, "PCI CONFIG reset\n");
 		r = cik_asic_pci_config_reset(adev);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static u32 cik_get_config_memsize(struct amdgpu_device *adev)
-{
-	return RREG32(mmCONFIG_MEMSIZE);
-}
+अटल u32 cik_get_config_memsize(काष्ठा amdgpu_device *adev)
+अणु
+	वापस RREG32(mmCONFIG_MEMSIZE);
+पूर्ण
 
-static int cik_set_uvd_clock(struct amdgpu_device *adev, u32 clock,
+अटल पूर्णांक cik_set_uvd_घड़ी(काष्ठा amdgpu_device *adev, u32 घड़ी,
 			      u32 cntl_reg, u32 status_reg)
-{
-	int r, i;
-	struct atom_clock_dividers dividers;
-	uint32_t tmp;
+अणु
+	पूर्णांक r, i;
+	काष्ठा atom_घड़ी_भागiders भागiders;
+	uपूर्णांक32_t पंचांगp;
 
-	r = amdgpu_atombios_get_clock_dividers(adev,
+	r = amdgpu_atombios_get_घड़ी_भागiders(adev,
 					       COMPUTE_GPUCLK_INPUT_FLAG_DEFAULT_GPUCLK,
-					       clock, false, &dividers);
-	if (r)
-		return r;
+					       घड़ी, false, &भागiders);
+	अगर (r)
+		वापस r;
 
-	tmp = RREG32_SMC(cntl_reg);
-	tmp &= ~(CG_DCLK_CNTL__DCLK_DIR_CNTL_EN_MASK |
+	पंचांगp = RREG32_SMC(cntl_reg);
+	पंचांगp &= ~(CG_DCLK_CNTL__DCLK_सूची_CNTL_EN_MASK |
 		CG_DCLK_CNTL__DCLK_DIVIDER_MASK);
-	tmp |= dividers.post_divider;
-	WREG32_SMC(cntl_reg, tmp);
+	पंचांगp |= भागiders.post_भागider;
+	WREG32_SMC(cntl_reg, पंचांगp);
 
-	for (i = 0; i < 100; i++) {
-		if (RREG32_SMC(status_reg) & CG_DCLK_STATUS__DCLK_STATUS_MASK)
-			break;
+	क्रम (i = 0; i < 100; i++) अणु
+		अगर (RREG32_SMC(status_reg) & CG_DCLK_STATUS__DCLK_STATUS_MASK)
+			अवरोध;
 		mdelay(10);
-	}
-	if (i == 100)
-		return -ETIMEDOUT;
+	पूर्ण
+	अगर (i == 100)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cik_set_uvd_clocks(struct amdgpu_device *adev, u32 vclk, u32 dclk)
-{
-	int r = 0;
+अटल पूर्णांक cik_set_uvd_घड़ीs(काष्ठा amdgpu_device *adev, u32 vclk, u32 dclk)
+अणु
+	पूर्णांक r = 0;
 
-	r = cik_set_uvd_clock(adev, vclk, ixCG_VCLK_CNTL, ixCG_VCLK_STATUS);
-	if (r)
-		return r;
+	r = cik_set_uvd_घड़ी(adev, vclk, ixCG_VCLK_CNTL, ixCG_VCLK_STATUS);
+	अगर (r)
+		वापस r;
 
-	r = cik_set_uvd_clock(adev, dclk, ixCG_DCLK_CNTL, ixCG_DCLK_STATUS);
-	return r;
-}
+	r = cik_set_uvd_घड़ी(adev, dclk, ixCG_DCLK_CNTL, ixCG_DCLK_STATUS);
+	वापस r;
+पूर्ण
 
-static int cik_set_vce_clocks(struct amdgpu_device *adev, u32 evclk, u32 ecclk)
-{
-	int r, i;
-	struct atom_clock_dividers dividers;
-	u32 tmp;
+अटल पूर्णांक cik_set_vce_घड़ीs(काष्ठा amdgpu_device *adev, u32 evclk, u32 ecclk)
+अणु
+	पूर्णांक r, i;
+	काष्ठा atom_घड़ी_भागiders भागiders;
+	u32 पंचांगp;
 
-	r = amdgpu_atombios_get_clock_dividers(adev,
+	r = amdgpu_atombios_get_घड़ी_भागiders(adev,
 					       COMPUTE_GPUCLK_INPUT_FLAG_DEFAULT_GPUCLK,
-					       ecclk, false, &dividers);
-	if (r)
-		return r;
+					       ecclk, false, &भागiders);
+	अगर (r)
+		वापस r;
 
-	for (i = 0; i < 100; i++) {
-		if (RREG32_SMC(ixCG_ECLK_STATUS) & CG_ECLK_STATUS__ECLK_STATUS_MASK)
-			break;
+	क्रम (i = 0; i < 100; i++) अणु
+		अगर (RREG32_SMC(ixCG_ECLK_STATUS) & CG_ECLK_STATUS__ECLK_STATUS_MASK)
+			अवरोध;
 		mdelay(10);
-	}
-	if (i == 100)
-		return -ETIMEDOUT;
+	पूर्ण
+	अगर (i == 100)
+		वापस -ETIMEDOUT;
 
-	tmp = RREG32_SMC(ixCG_ECLK_CNTL);
-	tmp &= ~(CG_ECLK_CNTL__ECLK_DIR_CNTL_EN_MASK |
+	पंचांगp = RREG32_SMC(ixCG_ECLK_CNTL);
+	पंचांगp &= ~(CG_ECLK_CNTL__ECLK_सूची_CNTL_EN_MASK |
 		CG_ECLK_CNTL__ECLK_DIVIDER_MASK);
-	tmp |= dividers.post_divider;
-	WREG32_SMC(ixCG_ECLK_CNTL, tmp);
+	पंचांगp |= भागiders.post_भागider;
+	WREG32_SMC(ixCG_ECLK_CNTL, पंचांगp);
 
-	for (i = 0; i < 100; i++) {
-		if (RREG32_SMC(ixCG_ECLK_STATUS) & CG_ECLK_STATUS__ECLK_STATUS_MASK)
-			break;
+	क्रम (i = 0; i < 100; i++) अणु
+		अगर (RREG32_SMC(ixCG_ECLK_STATUS) & CG_ECLK_STATUS__ECLK_STATUS_MASK)
+			अवरोध;
 		mdelay(10);
-	}
-	if (i == 100)
-		return -ETIMEDOUT;
+	पूर्ण
+	अगर (i == 100)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cik_pcie_gen3_enable(struct amdgpu_device *adev)
-{
-	struct pci_dev *root = adev->pdev->bus->self;
+अटल व्योम cik_pcie_gen3_enable(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा pci_dev *root = adev->pdev->bus->self;
 	u32 speed_cntl, current_data_rate;
-	int i;
-	u16 tmp16;
+	पूर्णांक i;
+	u16 पंचांगp16;
 
-	if (pci_is_root_bus(adev->pdev->bus))
-		return;
+	अगर (pci_is_root_bus(adev->pdev->bus))
+		वापस;
 
-	if (amdgpu_pcie_gen2 == 0)
-		return;
+	अगर (amdgpu_pcie_gen2 == 0)
+		वापस;
 
-	if (adev->flags & AMD_IS_APU)
-		return;
+	अगर (adev->flags & AMD_IS_APU)
+		वापस;
 
-	if (!(adev->pm.pcie_gen_mask & (CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2 |
+	अगर (!(adev->pm.pcie_gen_mask & (CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2 |
 					CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3)))
-		return;
+		वापस;
 
 	speed_cntl = RREG32_PCIE(ixPCIE_LC_SPEED_CNTL);
 	current_data_rate = (speed_cntl & PCIE_LC_SPEED_CNTL__LC_CURRENT_DATA_RATE_MASK) >>
 		PCIE_LC_SPEED_CNTL__LC_CURRENT_DATA_RATE__SHIFT;
-	if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3) {
-		if (current_data_rate == 2) {
+	अगर (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3) अणु
+		अगर (current_data_rate == 2) अणु
 			DRM_INFO("PCIE gen 3 link speeds already enabled\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		DRM_INFO("enabling PCIE gen 3 link speeds, disable with amdgpu.pcie_gen2=0\n");
-	} else if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2) {
-		if (current_data_rate == 1) {
+	पूर्ण अन्यथा अगर (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2) अणु
+		अगर (current_data_rate == 1) अणु
 			DRM_INFO("PCIE gen 2 link speeds already enabled\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		DRM_INFO("enabling PCIE gen 2 link speeds, disable with amdgpu.pcie_gen2=0\n");
-	}
+	पूर्ण
 
-	if (!pci_is_pcie(root) || !pci_is_pcie(adev->pdev))
-		return;
+	अगर (!pci_is_pcie(root) || !pci_is_pcie(adev->pdev))
+		वापस;
 
-	if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3) {
-		/* re-try equalization if gen3 is not already enabled */
-		if (current_data_rate != 2) {
+	अगर (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3) अणु
+		/* re-try equalization अगर gen3 is not alपढ़ोy enabled */
+		अगर (current_data_rate != 2) अणु
 			u16 bridge_cfg, gpu_cfg;
 			u16 bridge_cfg2, gpu_cfg2;
-			u32 max_lw, current_lw, tmp;
+			u32 max_lw, current_lw, पंचांगp;
 
-			pcie_capability_read_word(root, PCI_EXP_LNKCTL,
+			pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL,
 						  &bridge_cfg);
-			pcie_capability_read_word(adev->pdev, PCI_EXP_LNKCTL,
+			pcie_capability_पढ़ो_word(adev->pdev, PCI_EXP_LNKCTL,
 						  &gpu_cfg);
 
-			tmp16 = bridge_cfg | PCI_EXP_LNKCTL_HAWD;
-			pcie_capability_write_word(root, PCI_EXP_LNKCTL, tmp16);
+			पंचांगp16 = bridge_cfg | PCI_EXP_LNKCTL_HAWD;
+			pcie_capability_ग_लिखो_word(root, PCI_EXP_LNKCTL, पंचांगp16);
 
-			tmp16 = gpu_cfg | PCI_EXP_LNKCTL_HAWD;
-			pcie_capability_write_word(adev->pdev, PCI_EXP_LNKCTL,
-						   tmp16);
+			पंचांगp16 = gpu_cfg | PCI_EXP_LNKCTL_HAWD;
+			pcie_capability_ग_लिखो_word(adev->pdev, PCI_EXP_LNKCTL,
+						   पंचांगp16);
 
-			tmp = RREG32_PCIE(ixPCIE_LC_STATUS1);
-			max_lw = (tmp & PCIE_LC_STATUS1__LC_DETECTED_LINK_WIDTH_MASK) >>
+			पंचांगp = RREG32_PCIE(ixPCIE_LC_STATUS1);
+			max_lw = (पंचांगp & PCIE_LC_STATUS1__LC_DETECTED_LINK_WIDTH_MASK) >>
 				PCIE_LC_STATUS1__LC_DETECTED_LINK_WIDTH__SHIFT;
-			current_lw = (tmp & PCIE_LC_STATUS1__LC_OPERATING_LINK_WIDTH_MASK)
+			current_lw = (पंचांगp & PCIE_LC_STATUS1__LC_OPERATING_LINK_WIDTH_MASK)
 				>> PCIE_LC_STATUS1__LC_OPERATING_LINK_WIDTH__SHIFT;
 
-			if (current_lw < max_lw) {
-				tmp = RREG32_PCIE(ixPCIE_LC_LINK_WIDTH_CNTL);
-				if (tmp & PCIE_LC_LINK_WIDTH_CNTL__LC_RENEGOTIATION_SUPPORT_MASK) {
-					tmp &= ~(PCIE_LC_LINK_WIDTH_CNTL__LC_LINK_WIDTH_MASK |
+			अगर (current_lw < max_lw) अणु
+				पंचांगp = RREG32_PCIE(ixPCIE_LC_LINK_WIDTH_CNTL);
+				अगर (पंचांगp & PCIE_LC_LINK_WIDTH_CNTL__LC_RENEGOTIATION_SUPPORT_MASK) अणु
+					पंचांगp &= ~(PCIE_LC_LINK_WIDTH_CNTL__LC_LINK_WIDTH_MASK |
 						PCIE_LC_LINK_WIDTH_CNTL__LC_UPCONFIGURE_DIS_MASK);
-					tmp |= (max_lw <<
+					पंचांगp |= (max_lw <<
 						PCIE_LC_LINK_WIDTH_CNTL__LC_LINK_WIDTH__SHIFT);
-					tmp |= PCIE_LC_LINK_WIDTH_CNTL__LC_UPCONFIGURE_SUPPORT_MASK |
+					पंचांगp |= PCIE_LC_LINK_WIDTH_CNTL__LC_UPCONFIGURE_SUPPORT_MASK |
 					PCIE_LC_LINK_WIDTH_CNTL__LC_RENEGOTIATE_EN_MASK |
 					PCIE_LC_LINK_WIDTH_CNTL__LC_RECONFIG_NOW_MASK;
-					WREG32_PCIE(ixPCIE_LC_LINK_WIDTH_CNTL, tmp);
-				}
-			}
+					WREG32_PCIE(ixPCIE_LC_LINK_WIDTH_CNTL, पंचांगp);
+				पूर्ण
+			पूर्ण
 
-			for (i = 0; i < 10; i++) {
+			क्रम (i = 0; i < 10; i++) अणु
 				/* check status */
-				pcie_capability_read_word(adev->pdev,
+				pcie_capability_पढ़ो_word(adev->pdev,
 							  PCI_EXP_DEVSTA,
-							  &tmp16);
-				if (tmp16 & PCI_EXP_DEVSTA_TRPND)
-					break;
+							  &पंचांगp16);
+				अगर (पंचांगp16 & PCI_EXP_DEVSTA_TRPND)
+					अवरोध;
 
-				pcie_capability_read_word(root, PCI_EXP_LNKCTL,
+				pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL,
 							  &bridge_cfg);
-				pcie_capability_read_word(adev->pdev,
+				pcie_capability_पढ़ो_word(adev->pdev,
 							  PCI_EXP_LNKCTL,
 							  &gpu_cfg);
 
-				pcie_capability_read_word(root, PCI_EXP_LNKCTL2,
+				pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL2,
 							  &bridge_cfg2);
-				pcie_capability_read_word(adev->pdev,
+				pcie_capability_पढ़ो_word(adev->pdev,
 							  PCI_EXP_LNKCTL2,
 							  &gpu_cfg2);
 
-				tmp = RREG32_PCIE(ixPCIE_LC_CNTL4);
-				tmp |= PCIE_LC_CNTL4__LC_SET_QUIESCE_MASK;
-				WREG32_PCIE(ixPCIE_LC_CNTL4, tmp);
+				पंचांगp = RREG32_PCIE(ixPCIE_LC_CNTL4);
+				पंचांगp |= PCIE_LC_CNTL4__LC_SET_QUIESCE_MASK;
+				WREG32_PCIE(ixPCIE_LC_CNTL4, पंचांगp);
 
-				tmp = RREG32_PCIE(ixPCIE_LC_CNTL4);
-				tmp |= PCIE_LC_CNTL4__LC_REDO_EQ_MASK;
-				WREG32_PCIE(ixPCIE_LC_CNTL4, tmp);
+				पंचांगp = RREG32_PCIE(ixPCIE_LC_CNTL4);
+				पंचांगp |= PCIE_LC_CNTL4__LC_REDO_EQ_MASK;
+				WREG32_PCIE(ixPCIE_LC_CNTL4, पंचांगp);
 
 				msleep(100);
 
 				/* linkctl */
-				pcie_capability_read_word(root, PCI_EXP_LNKCTL,
-							  &tmp16);
-				tmp16 &= ~PCI_EXP_LNKCTL_HAWD;
-				tmp16 |= (bridge_cfg & PCI_EXP_LNKCTL_HAWD);
-				pcie_capability_write_word(root, PCI_EXP_LNKCTL,
-							   tmp16);
+				pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL,
+							  &पंचांगp16);
+				पंचांगp16 &= ~PCI_EXP_LNKCTL_HAWD;
+				पंचांगp16 |= (bridge_cfg & PCI_EXP_LNKCTL_HAWD);
+				pcie_capability_ग_लिखो_word(root, PCI_EXP_LNKCTL,
+							   पंचांगp16);
 
-				pcie_capability_read_word(adev->pdev,
+				pcie_capability_पढ़ो_word(adev->pdev,
 							  PCI_EXP_LNKCTL,
-							  &tmp16);
-				tmp16 &= ~PCI_EXP_LNKCTL_HAWD;
-				tmp16 |= (gpu_cfg & PCI_EXP_LNKCTL_HAWD);
-				pcie_capability_write_word(adev->pdev,
+							  &पंचांगp16);
+				पंचांगp16 &= ~PCI_EXP_LNKCTL_HAWD;
+				पंचांगp16 |= (gpu_cfg & PCI_EXP_LNKCTL_HAWD);
+				pcie_capability_ग_लिखो_word(adev->pdev,
 							   PCI_EXP_LNKCTL,
-							   tmp16);
+							   पंचांगp16);
 
 				/* linkctl2 */
-				pcie_capability_read_word(root, PCI_EXP_LNKCTL2,
-							  &tmp16);
-				tmp16 &= ~(PCI_EXP_LNKCTL2_ENTER_COMP |
+				pcie_capability_पढ़ो_word(root, PCI_EXP_LNKCTL2,
+							  &पंचांगp16);
+				पंचांगp16 &= ~(PCI_EXP_LNKCTL2_ENTER_COMP |
 					   PCI_EXP_LNKCTL2_TX_MARGIN);
-				tmp16 |= (bridge_cfg2 &
+				पंचांगp16 |= (bridge_cfg2 &
 					  (PCI_EXP_LNKCTL2_ENTER_COMP |
 					   PCI_EXP_LNKCTL2_TX_MARGIN));
-				pcie_capability_write_word(root,
+				pcie_capability_ग_लिखो_word(root,
 							   PCI_EXP_LNKCTL2,
-							   tmp16);
+							   पंचांगp16);
 
-				pcie_capability_read_word(adev->pdev,
+				pcie_capability_पढ़ो_word(adev->pdev,
 							  PCI_EXP_LNKCTL2,
-							  &tmp16);
-				tmp16 &= ~(PCI_EXP_LNKCTL2_ENTER_COMP |
+							  &पंचांगp16);
+				पंचांगp16 &= ~(PCI_EXP_LNKCTL2_ENTER_COMP |
 					   PCI_EXP_LNKCTL2_TX_MARGIN);
-				tmp16 |= (gpu_cfg2 &
+				पंचांगp16 |= (gpu_cfg2 &
 					  (PCI_EXP_LNKCTL2_ENTER_COMP |
 					   PCI_EXP_LNKCTL2_TX_MARGIN));
-				pcie_capability_write_word(adev->pdev,
+				pcie_capability_ग_लिखो_word(adev->pdev,
 							   PCI_EXP_LNKCTL2,
-							   tmp16);
+							   पंचांगp16);
 
-				tmp = RREG32_PCIE(ixPCIE_LC_CNTL4);
-				tmp &= ~PCIE_LC_CNTL4__LC_SET_QUIESCE_MASK;
-				WREG32_PCIE(ixPCIE_LC_CNTL4, tmp);
-			}
-		}
-	}
+				पंचांगp = RREG32_PCIE(ixPCIE_LC_CNTL4);
+				पंचांगp &= ~PCIE_LC_CNTL4__LC_SET_QUIESCE_MASK;
+				WREG32_PCIE(ixPCIE_LC_CNTL4, पंचांगp);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* set the link speed */
 	speed_cntl |= PCIE_LC_SPEED_CNTL__LC_FORCE_EN_SW_SPEED_CHANGE_MASK |
@@ -1686,76 +1687,76 @@ static void cik_pcie_gen3_enable(struct amdgpu_device *adev)
 	speed_cntl &= ~PCIE_LC_SPEED_CNTL__LC_FORCE_DIS_SW_SPEED_CHANGE_MASK;
 	WREG32_PCIE(ixPCIE_LC_SPEED_CNTL, speed_cntl);
 
-	pcie_capability_read_word(adev->pdev, PCI_EXP_LNKCTL2, &tmp16);
-	tmp16 &= ~PCI_EXP_LNKCTL2_TLS;
+	pcie_capability_पढ़ो_word(adev->pdev, PCI_EXP_LNKCTL2, &पंचांगp16);
+	पंचांगp16 &= ~PCI_EXP_LNKCTL2_TLS;
 
-	if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3)
-		tmp16 |= PCI_EXP_LNKCTL2_TLS_8_0GT; /* gen3 */
-	else if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2)
-		tmp16 |= PCI_EXP_LNKCTL2_TLS_5_0GT; /* gen2 */
-	else
-		tmp16 |= PCI_EXP_LNKCTL2_TLS_2_5GT; /* gen1 */
-	pcie_capability_write_word(adev->pdev, PCI_EXP_LNKCTL2, tmp16);
+	अगर (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3)
+		पंचांगp16 |= PCI_EXP_LNKCTL2_TLS_8_0GT; /* gen3 */
+	अन्यथा अगर (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2)
+		पंचांगp16 |= PCI_EXP_LNKCTL2_TLS_5_0GT; /* gen2 */
+	अन्यथा
+		पंचांगp16 |= PCI_EXP_LNKCTL2_TLS_2_5GT; /* gen1 */
+	pcie_capability_ग_लिखो_word(adev->pdev, PCI_EXP_LNKCTL2, पंचांगp16);
 
 	speed_cntl = RREG32_PCIE(ixPCIE_LC_SPEED_CNTL);
 	speed_cntl |= PCIE_LC_SPEED_CNTL__LC_INITIATE_LINK_SPEED_CHANGE_MASK;
 	WREG32_PCIE(ixPCIE_LC_SPEED_CNTL, speed_cntl);
 
-	for (i = 0; i < adev->usec_timeout; i++) {
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
 		speed_cntl = RREG32_PCIE(ixPCIE_LC_SPEED_CNTL);
-		if ((speed_cntl & PCIE_LC_SPEED_CNTL__LC_INITIATE_LINK_SPEED_CHANGE_MASK) == 0)
-			break;
+		अगर ((speed_cntl & PCIE_LC_SPEED_CNTL__LC_INITIATE_LINK_SPEED_CHANGE_MASK) == 0)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cik_program_aspm(struct amdgpu_device *adev)
-{
+अटल व्योम cik_program_aspm(काष्ठा amdgpu_device *adev)
+अणु
 	u32 data, orig;
 	bool disable_l0s = false, disable_l1 = false, disable_plloff_in_l1 = false;
 	bool disable_clkreq = false;
 
-	if (amdgpu_aspm == 0)
-		return;
+	अगर (amdgpu_aspm == 0)
+		वापस;
 
-	if (pci_is_root_bus(adev->pdev->bus))
-		return;
+	अगर (pci_is_root_bus(adev->pdev->bus))
+		वापस;
 
-	/* XXX double check APUs */
-	if (adev->flags & AMD_IS_APU)
-		return;
+	/* XXX द्विगुन check APUs */
+	अगर (adev->flags & AMD_IS_APU)
+		वापस;
 
 	orig = data = RREG32_PCIE(ixPCIE_LC_N_FTS_CNTL);
 	data &= ~PCIE_LC_N_FTS_CNTL__LC_XMIT_N_FTS_MASK;
 	data |= (0x24 << PCIE_LC_N_FTS_CNTL__LC_XMIT_N_FTS__SHIFT) |
 		PCIE_LC_N_FTS_CNTL__LC_XMIT_N_FTS_OVERRIDE_EN_MASK;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32_PCIE(ixPCIE_LC_N_FTS_CNTL, data);
 
 	orig = data = RREG32_PCIE(ixPCIE_LC_CNTL3);
 	data |= PCIE_LC_CNTL3__LC_GO_TO_RECOVERY_MASK;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32_PCIE(ixPCIE_LC_CNTL3, data);
 
 	orig = data = RREG32_PCIE(ixPCIE_P_CNTL);
 	data |= PCIE_P_CNTL__P_IGNORE_EDB_ERR_MASK;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32_PCIE(ixPCIE_P_CNTL, data);
 
 	orig = data = RREG32_PCIE(ixPCIE_LC_CNTL);
 	data &= ~(PCIE_LC_CNTL__LC_L0S_INACTIVITY_MASK |
 		PCIE_LC_CNTL__LC_L1_INACTIVITY_MASK);
 	data |= PCIE_LC_CNTL__LC_PMI_TO_L1_DIS_MASK;
-	if (!disable_l0s)
+	अगर (!disable_l0s)
 		data |= (7 << PCIE_LC_CNTL__LC_L0S_INACTIVITY__SHIFT);
 
-	if (!disable_l1) {
+	अगर (!disable_l1) अणु
 		data |= (7 << PCIE_LC_CNTL__LC_L1_INACTIVITY__SHIFT);
 		data &= ~PCIE_LC_CNTL__LC_PMI_TO_L1_DIS_MASK;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32_PCIE(ixPCIE_LC_CNTL, data);
 
-		if (!disable_plloff_in_l1) {
+		अगर (!disable_plloff_in_l1) अणु
 			bool clk_req_support;
 
 			orig = data = RREG32_PCIE(ixPB0_PIF_PWRDOWN_0);
@@ -1763,7 +1764,7 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 				PB0_PIF_PWRDOWN_0__PLL_POWER_STATE_IN_TXS2_0_MASK);
 			data |= (7 << PB0_PIF_PWRDOWN_0__PLL_POWER_STATE_IN_OFF_0__SHIFT) |
 				(7 << PB0_PIF_PWRDOWN_0__PLL_POWER_STATE_IN_TXS2_0__SHIFT);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE(ixPB0_PIF_PWRDOWN_0, data);
 
 			orig = data = RREG32_PCIE(ixPB0_PIF_PWRDOWN_1);
@@ -1771,7 +1772,7 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 				PB0_PIF_PWRDOWN_1__PLL_POWER_STATE_IN_TXS2_1_MASK);
 			data |= (7 << PB0_PIF_PWRDOWN_1__PLL_POWER_STATE_IN_OFF_1__SHIFT) |
 				(7 << PB0_PIF_PWRDOWN_1__PLL_POWER_STATE_IN_TXS2_1__SHIFT);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE(ixPB0_PIF_PWRDOWN_1, data);
 
 			orig = data = RREG32_PCIE(ixPB1_PIF_PWRDOWN_0);
@@ -1779,7 +1780,7 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 				PB1_PIF_PWRDOWN_0__PLL_POWER_STATE_IN_TXS2_0_MASK);
 			data |= (7 << PB1_PIF_PWRDOWN_0__PLL_POWER_STATE_IN_OFF_0__SHIFT) |
 				(7 << PB1_PIF_PWRDOWN_0__PLL_POWER_STATE_IN_TXS2_0__SHIFT);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE(ixPB1_PIF_PWRDOWN_0, data);
 
 			orig = data = RREG32_PCIE(ixPB1_PIF_PWRDOWN_1);
@@ -1787,32 +1788,32 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 				PB1_PIF_PWRDOWN_1__PLL_POWER_STATE_IN_TXS2_1_MASK);
 			data |= (7 << PB1_PIF_PWRDOWN_1__PLL_POWER_STATE_IN_OFF_1__SHIFT) |
 				(7 << PB1_PIF_PWRDOWN_1__PLL_POWER_STATE_IN_TXS2_1__SHIFT);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE(ixPB1_PIF_PWRDOWN_1, data);
 
 			orig = data = RREG32_PCIE(ixPCIE_LC_LINK_WIDTH_CNTL);
 			data &= ~PCIE_LC_LINK_WIDTH_CNTL__LC_DYN_LANES_PWR_STATE_MASK;
 			data |= ~(3 << PCIE_LC_LINK_WIDTH_CNTL__LC_DYN_LANES_PWR_STATE__SHIFT);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32_PCIE(ixPCIE_LC_LINK_WIDTH_CNTL, data);
 
-			if (!disable_clkreq) {
-				struct pci_dev *root = adev->pdev->bus->self;
+			अगर (!disable_clkreq) अणु
+				काष्ठा pci_dev *root = adev->pdev->bus->self;
 				u32 lnkcap;
 
 				clk_req_support = false;
-				pcie_capability_read_dword(root, PCI_EXP_LNKCAP, &lnkcap);
-				if (lnkcap & PCI_EXP_LNKCAP_CLKPM)
+				pcie_capability_पढ़ो_dword(root, PCI_EXP_LNKCAP, &lnkcap);
+				अगर (lnkcap & PCI_EXP_LNKCAP_CLKPM)
 					clk_req_support = true;
-			} else {
+			पूर्ण अन्यथा अणु
 				clk_req_support = false;
-			}
+			पूर्ण
 
-			if (clk_req_support) {
+			अगर (clk_req_support) अणु
 				orig = data = RREG32_PCIE(ixPCIE_LC_CNTL2);
 				data |= PCIE_LC_CNTL2__LC_ALLOW_PDWN_IN_L1_MASK |
 					PCIE_LC_CNTL2__LC_ALLOW_PDWN_IN_L23_MASK;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_PCIE(ixPCIE_LC_CNTL2, data);
 
 				orig = data = RREG32_SMC(ixTHM_CLK_CNTL);
@@ -1820,7 +1821,7 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 					THM_CLK_CNTL__TMON_CLK_SEL_MASK);
 				data |= (1 << THM_CLK_CNTL__CMON_CLK_SEL__SHIFT) |
 					(1 << THM_CLK_CNTL__TMON_CLK_SEL__SHIFT);
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(ixTHM_CLK_CNTL, data);
 
 				orig = data = RREG32_SMC(ixMISC_CLK_CTRL);
@@ -1828,99 +1829,99 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 					MISC_CLK_CTRL__ZCLK_SEL_MASK);
 				data |= (1 << MISC_CLK_CTRL__DEEP_SLEEP_CLK_SEL__SHIFT) |
 					(1 << MISC_CLK_CTRL__ZCLK_SEL__SHIFT);
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(ixMISC_CLK_CTRL, data);
 
 				orig = data = RREG32_SMC(ixCG_CLKPIN_CNTL);
 				data &= ~CG_CLKPIN_CNTL__BCLK_AS_XCLK_MASK;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(ixCG_CLKPIN_CNTL, data);
 
 				orig = data = RREG32_SMC(ixCG_CLKPIN_CNTL_2);
 				data &= ~CG_CLKPIN_CNTL_2__FORCE_BIF_REFCLK_EN_MASK;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(ixCG_CLKPIN_CNTL_2, data);
 
 				orig = data = RREG32_SMC(ixMPLL_BYPASSCLK_SEL);
 				data &= ~MPLL_BYPASSCLK_SEL__MPLL_CLKOUT_SEL_MASK;
 				data |= (4 << MPLL_BYPASSCLK_SEL__MPLL_CLKOUT_SEL__SHIFT);
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_SMC(ixMPLL_BYPASSCLK_SEL, data);
-			}
-		}
-	} else {
-		if (orig != data)
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (orig != data)
 			WREG32_PCIE(ixPCIE_LC_CNTL, data);
-	}
+	पूर्ण
 
 	orig = data = RREG32_PCIE(ixPCIE_CNTL2);
 	data |= PCIE_CNTL2__SLV_MEM_LS_EN_MASK |
 		PCIE_CNTL2__MST_MEM_LS_EN_MASK |
 		PCIE_CNTL2__REPLAY_MEM_LS_EN_MASK;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32_PCIE(ixPCIE_CNTL2, data);
 
-	if (!disable_l0s) {
+	अगर (!disable_l0s) अणु
 		data = RREG32_PCIE(ixPCIE_LC_N_FTS_CNTL);
-		if ((data & PCIE_LC_N_FTS_CNTL__LC_N_FTS_MASK) ==
-				PCIE_LC_N_FTS_CNTL__LC_N_FTS_MASK) {
+		अगर ((data & PCIE_LC_N_FTS_CNTL__LC_N_FTS_MASK) ==
+				PCIE_LC_N_FTS_CNTL__LC_N_FTS_MASK) अणु
 			data = RREG32_PCIE(ixPCIE_LC_STATUS1);
-			if ((data & PCIE_LC_STATUS1__LC_REVERSE_XMIT_MASK) &&
-			(data & PCIE_LC_STATUS1__LC_REVERSE_RCVR_MASK)) {
+			अगर ((data & PCIE_LC_STATUS1__LC_REVERSE_XMIT_MASK) &&
+			(data & PCIE_LC_STATUS1__LC_REVERSE_RCVR_MASK)) अणु
 				orig = data = RREG32_PCIE(ixPCIE_LC_CNTL);
 				data &= ~PCIE_LC_CNTL__LC_L0S_INACTIVITY_MASK;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32_PCIE(ixPCIE_LC_CNTL, data);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static uint32_t cik_get_rev_id(struct amdgpu_device *adev)
-{
-	return (RREG32(mmCC_DRM_ID_STRAPS) & CC_DRM_ID_STRAPS__ATI_REV_ID_MASK)
+अटल uपूर्णांक32_t cik_get_rev_id(काष्ठा amdgpu_device *adev)
+अणु
+	वापस (RREG32(mmCC_DRM_ID_STRAPS) & CC_DRM_ID_STRAPS__ATI_REV_ID_MASK)
 		>> CC_DRM_ID_STRAPS__ATI_REV_ID__SHIFT;
-}
+पूर्ण
 
-static void cik_flush_hdp(struct amdgpu_device *adev, struct amdgpu_ring *ring)
-{
-	if (!ring || !ring->funcs->emit_wreg) {
+अटल व्योम cik_flush_hdp(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_ring *ring)
+अणु
+	अगर (!ring || !ring->funcs->emit_wreg) अणु
 		WREG32(mmHDP_MEM_COHERENCY_FLUSH_CNTL, 1);
 		RREG32(mmHDP_MEM_COHERENCY_FLUSH_CNTL);
-	} else {
+	पूर्ण अन्यथा अणु
 		amdgpu_ring_emit_wreg(ring, mmHDP_MEM_COHERENCY_FLUSH_CNTL, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cik_invalidate_hdp(struct amdgpu_device *adev,
-			       struct amdgpu_ring *ring)
-{
-	if (!ring || !ring->funcs->emit_wreg) {
+अटल व्योम cik_invalidate_hdp(काष्ठा amdgpu_device *adev,
+			       काष्ठा amdgpu_ring *ring)
+अणु
+	अगर (!ring || !ring->funcs->emit_wreg) अणु
 		WREG32(mmHDP_DEBUG0, 1);
 		RREG32(mmHDP_DEBUG0);
-	} else {
+	पूर्ण अन्यथा अणु
 		amdgpu_ring_emit_wreg(ring, mmHDP_DEBUG0, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool cik_need_full_reset(struct amdgpu_device *adev)
-{
+अटल bool cik_need_full_reset(काष्ठा amdgpu_device *adev)
+अणु
 	/* change this when we support soft reset */
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void cik_get_pcie_usage(struct amdgpu_device *adev, uint64_t *count0,
-			       uint64_t *count1)
-{
-	uint32_t perfctr = 0;
-	uint64_t cnt0_of, cnt1_of;
-	int tmp;
+अटल व्योम cik_get_pcie_usage(काष्ठा amdgpu_device *adev, uपूर्णांक64_t *count0,
+			       uपूर्णांक64_t *count1)
+अणु
+	uपूर्णांक32_t perfctr = 0;
+	uपूर्णांक64_t cnt0_of, cnt1_of;
+	पूर्णांक पंचांगp;
 
-	/* This reports 0 on APUs, so return to avoid writing/reading registers
-	 * that may or may not be different from their GPU counterparts
+	/* This reports 0 on APUs, so वापस to aव्योम writing/पढ़ोing रेजिस्टरs
+	 * that may or may not be dअगरferent from their GPU counterparts
 	 */
-	if (adev->flags & AMD_IS_APU)
-		return;
+	अगर (adev->flags & AMD_IS_APU)
+		वापस;
 
 	/* Set the 2 events that we wish to watch, defined above */
 	/* Reg 40 is # received msgs, Reg 104 is # of posted requests sent */
@@ -1938,83 +1939,83 @@ static void cik_get_pcie_usage(struct amdgpu_device *adev, uint64_t *count0,
 
 	msleep(1000);
 
-	/* Load the shadow and disable the perf counters
+	/* Load the shaकरोw and disable the perf counters
 	 * Write 0x2:
 	 * Bit 0 = Stop counters(0)
-	 * Bit 1 = Load the shadow counters(1)
+	 * Bit 1 = Load the shaकरोw counters(1)
 	 */
 	WREG32_PCIE(ixPCIE_PERF_COUNT_CNTL, 0x00000002);
 
-	/* Read register values to get any >32bit overflow */
-	tmp = RREG32_PCIE(ixPCIE_PERF_CNTL_TXCLK);
-	cnt0_of = REG_GET_FIELD(tmp, PCIE_PERF_CNTL_TXCLK, COUNTER0_UPPER);
-	cnt1_of = REG_GET_FIELD(tmp, PCIE_PERF_CNTL_TXCLK, COUNTER1_UPPER);
+	/* Read रेजिस्टर values to get any >32bit overflow */
+	पंचांगp = RREG32_PCIE(ixPCIE_PERF_CNTL_TXCLK);
+	cnt0_of = REG_GET_FIELD(पंचांगp, PCIE_PERF_CNTL_TXCLK, COUNTER0_UPPER);
+	cnt1_of = REG_GET_FIELD(पंचांगp, PCIE_PERF_CNTL_TXCLK, COUNTER1_UPPER);
 
 	/* Get the values and add the overflow */
 	*count0 = RREG32_PCIE(ixPCIE_PERF_COUNT0_TXCLK) | (cnt0_of << 32);
 	*count1 = RREG32_PCIE(ixPCIE_PERF_COUNT1_TXCLK) | (cnt1_of << 32);
-}
+पूर्ण
 
-static bool cik_need_reset_on_init(struct amdgpu_device *adev)
-{
-	u32 clock_cntl, pc;
+अटल bool cik_need_reset_on_init(काष्ठा amdgpu_device *adev)
+अणु
+	u32 घड़ी_cntl, pc;
 
-	if (adev->flags & AMD_IS_APU)
-		return false;
+	अगर (adev->flags & AMD_IS_APU)
+		वापस false;
 
-	/* check if the SMC is already running */
-	clock_cntl = RREG32_SMC(ixSMC_SYSCON_CLOCK_CNTL_0);
+	/* check अगर the SMC is alपढ़ोy running */
+	घड़ी_cntl = RREG32_SMC(ixSMC_SYSCON_CLOCK_CNTL_0);
 	pc = RREG32_SMC(ixSMC_PC_C);
-	if ((0 == REG_GET_FIELD(clock_cntl, SMC_SYSCON_CLOCK_CNTL_0, ck_disable)) &&
+	अगर ((0 == REG_GET_FIELD(घड़ी_cntl, SMC_SYSCON_CLOCK_CNTL_0, ck_disable)) &&
 	    (0x20100 <= pc))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static uint64_t cik_get_pcie_replay_count(struct amdgpu_device *adev)
-{
-	uint64_t nak_r, nak_g;
+अटल uपूर्णांक64_t cik_get_pcie_replay_count(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक64_t nak_r, nak_g;
 
 	/* Get the number of NAKs received and generated */
 	nak_r = RREG32_PCIE(ixPCIE_RX_NUM_NAK);
 	nak_g = RREG32_PCIE(ixPCIE_RX_NUM_NAK_GENERATED);
 
 	/* Add the total number of NAKs, i.e the number of replays */
-	return (nak_r + nak_g);
-}
+	वापस (nak_r + nak_g);
+पूर्ण
 
-static void cik_pre_asic_init(struct amdgpu_device *adev)
-{
-}
+अटल व्योम cik_pre_asic_init(काष्ठा amdgpu_device *adev)
+अणु
+पूर्ण
 
-static const struct amdgpu_asic_funcs cik_asic_funcs =
-{
-	.read_disabled_bios = &cik_read_disabled_bios,
-	.read_bios_from_rom = &cik_read_bios_from_rom,
-	.read_register = &cik_read_register,
+अटल स्थिर काष्ठा amdgpu_asic_funcs cik_asic_funcs =
+अणु
+	.पढ़ो_disabled_bios = &cik_पढ़ो_disabled_bios,
+	.पढ़ो_bios_from_rom = &cik_पढ़ो_bios_from_rom,
+	.पढ़ो_रेजिस्टर = &cik_पढ़ो_रेजिस्टर,
 	.reset = &cik_asic_reset,
 	.reset_method = &cik_asic_reset_method,
 	.set_vga_state = &cik_vga_set_state,
 	.get_xclk = &cik_get_xclk,
-	.set_uvd_clocks = &cik_set_uvd_clocks,
-	.set_vce_clocks = &cik_set_vce_clocks,
+	.set_uvd_घड़ीs = &cik_set_uvd_घड़ीs,
+	.set_vce_घड़ीs = &cik_set_vce_घड़ीs,
 	.get_config_memsize = &cik_get_config_memsize,
 	.flush_hdp = &cik_flush_hdp,
 	.invalidate_hdp = &cik_invalidate_hdp,
 	.need_full_reset = &cik_need_full_reset,
-	.init_doorbell_index = &legacy_doorbell_index_init,
+	.init_करोorbell_index = &legacy_करोorbell_index_init,
 	.get_pcie_usage = &cik_get_pcie_usage,
 	.need_reset_on_init = &cik_need_reset_on_init,
 	.get_pcie_replay_count = &cik_get_pcie_replay_count,
 	.supports_baco = &cik_asic_supports_baco,
 	.pre_asic_init = &cik_pre_asic_init,
 	.query_video_codecs = &cik_query_video_codecs,
-};
+पूर्ण;
 
-static int cik_common_early_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक cik_common_early_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	adev->smc_rreg = &cik_smc_rreg;
 	adev->smc_wreg = &cik_smc_wreg;
@@ -2028,9 +2029,9 @@ static int cik_common_early_init(void *handle)
 	adev->asic_funcs = &cik_asic_funcs;
 
 	adev->rev_id = cik_get_rev_id(adev);
-	adev->external_rev_id = 0xFF;
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
+	adev->बाह्यal_rev_id = 0xFF;
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
 		adev->cg_flags =
 			AMD_CG_SUPPORT_GFX_MGCG |
 			AMD_CG_SUPPORT_GFX_MGLS |
@@ -2049,9 +2050,9 @@ static int cik_common_early_init(void *handle)
 			AMD_CG_SUPPORT_HDP_LS |
 			AMD_CG_SUPPORT_HDP_MGCG;
 		adev->pg_flags = 0;
-		adev->external_rev_id = adev->rev_id + 0x14;
-		break;
-	case CHIP_HAWAII:
+		adev->बाह्यal_rev_id = adev->rev_id + 0x14;
+		अवरोध;
+	हाल CHIP_HAWAII:
 		adev->cg_flags =
 			AMD_CG_SUPPORT_GFX_MGCG |
 			AMD_CG_SUPPORT_GFX_MGLS |
@@ -2069,9 +2070,9 @@ static int cik_common_early_init(void *handle)
 			AMD_CG_SUPPORT_HDP_LS |
 			AMD_CG_SUPPORT_HDP_MGCG;
 		adev->pg_flags = 0;
-		adev->external_rev_id = 0x28;
-		break;
-	case CHIP_KAVERI:
+		adev->बाह्यal_rev_id = 0x28;
+		अवरोध;
+	हाल CHIP_KAVERI:
 		adev->cg_flags =
 			AMD_CG_SUPPORT_GFX_MGCG |
 			AMD_CG_SUPPORT_GFX_MGLS |
@@ -2099,15 +2100,15 @@ static int cik_common_early_init(void *handle)
 			  AMD_PG_SUPPORT_ACP |
 			  AMD_PG_SUPPORT_SAMU |*/
 			0;
-		if (adev->pdev->device == 0x1312 ||
+		अगर (adev->pdev->device == 0x1312 ||
 			adev->pdev->device == 0x1316 ||
 			adev->pdev->device == 0x1317)
-			adev->external_rev_id = 0x41;
-		else
-			adev->external_rev_id = 0x1;
-		break;
-	case CHIP_KABINI:
-	case CHIP_MULLINS:
+			adev->बाह्यal_rev_id = 0x41;
+		अन्यथा
+			adev->बाह्यal_rev_id = 0x1;
+		अवरोध;
+	हाल CHIP_KABINI:
+	हाल CHIP_MULLINS:
 		adev->cg_flags =
 			AMD_CG_SUPPORT_GFX_MGCG |
 			AMD_CG_SUPPORT_GFX_MGLS |
@@ -2133,99 +2134,99 @@ static int cik_common_early_init(void *handle)
 			  AMD_PG_SUPPORT_RLC_SMU_HS |
 			  AMD_PG_SUPPORT_SAMU |*/
 			0;
-		if (adev->asic_type == CHIP_KABINI) {
-			if (adev->rev_id == 0)
-				adev->external_rev_id = 0x81;
-			else if (adev->rev_id == 1)
-				adev->external_rev_id = 0x82;
-			else if (adev->rev_id == 2)
-				adev->external_rev_id = 0x85;
-		} else
-			adev->external_rev_id = adev->rev_id + 0xa1;
-		break;
-	default:
+		अगर (adev->asic_type == CHIP_KABINI) अणु
+			अगर (adev->rev_id == 0)
+				adev->बाह्यal_rev_id = 0x81;
+			अन्यथा अगर (adev->rev_id == 1)
+				adev->बाह्यal_rev_id = 0x82;
+			अन्यथा अगर (adev->rev_id == 2)
+				adev->बाह्यal_rev_id = 0x85;
+		पूर्ण अन्यथा
+			adev->बाह्यal_rev_id = adev->rev_id + 0xa1;
+		अवरोध;
+	शेष:
 		/* FIXME: not supported yet */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cik_common_sw_init(void *handle)
-{
-	return 0;
-}
+अटल पूर्णांक cik_common_sw_init(व्योम *handle)
+अणु
+	वापस 0;
+पूर्ण
 
-static int cik_common_sw_fini(void *handle)
-{
-	return 0;
-}
+अटल पूर्णांक cik_common_sw_fini(व्योम *handle)
+अणु
+	वापस 0;
+पूर्ण
 
-static int cik_common_hw_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक cik_common_hw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	/* move the golden regs per IP block */
-	cik_init_golden_registers(adev);
+	cik_init_golden_रेजिस्टरs(adev);
 	/* enable pcie gen2/3 link */
 	cik_pcie_gen3_enable(adev);
 	/* enable aspm */
 	cik_program_aspm(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cik_common_hw_fini(void *handle)
-{
-	return 0;
-}
+अटल पूर्णांक cik_common_hw_fini(व्योम *handle)
+अणु
+	वापस 0;
+पूर्ण
 
-static int cik_common_suspend(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक cik_common_suspend(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return cik_common_hw_fini(adev);
-}
+	वापस cik_common_hw_fini(adev);
+पूर्ण
 
-static int cik_common_resume(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक cik_common_resume(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return cik_common_hw_init(adev);
-}
+	वापस cik_common_hw_init(adev);
+पूर्ण
 
-static bool cik_common_is_idle(void *handle)
-{
-	return true;
-}
+अटल bool cik_common_is_idle(व्योम *handle)
+अणु
+	वापस true;
+पूर्ण
 
-static int cik_common_wait_for_idle(void *handle)
-{
-	return 0;
-}
+अटल पूर्णांक cik_common_रुको_क्रम_idle(व्योम *handle)
+अणु
+	वापस 0;
+पूर्ण
 
-static int cik_common_soft_reset(void *handle)
-{
+अटल पूर्णांक cik_common_soft_reset(व्योम *handle)
+अणु
 	/* XXX hard reset?? */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cik_common_set_clockgating_state(void *handle,
-					    enum amd_clockgating_state state)
-{
-	return 0;
-}
+अटल पूर्णांक cik_common_set_घड़ीgating_state(व्योम *handle,
+					    क्रमागत amd_घड़ीgating_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-static int cik_common_set_powergating_state(void *handle,
-					    enum amd_powergating_state state)
-{
-	return 0;
-}
+अटल पूर्णांक cik_common_set_घातergating_state(व्योम *handle,
+					    क्रमागत amd_घातergating_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct amd_ip_funcs cik_common_ip_funcs = {
+अटल स्थिर काष्ठा amd_ip_funcs cik_common_ip_funcs = अणु
 	.name = "cik_common",
 	.early_init = cik_common_early_init,
-	.late_init = NULL,
+	.late_init = शून्य,
 	.sw_init = cik_common_sw_init,
 	.sw_fini = cik_common_sw_fini,
 	.hw_init = cik_common_hw_init,
@@ -2233,101 +2234,101 @@ static const struct amd_ip_funcs cik_common_ip_funcs = {
 	.suspend = cik_common_suspend,
 	.resume = cik_common_resume,
 	.is_idle = cik_common_is_idle,
-	.wait_for_idle = cik_common_wait_for_idle,
+	.रुको_क्रम_idle = cik_common_रुको_क्रम_idle,
 	.soft_reset = cik_common_soft_reset,
-	.set_clockgating_state = cik_common_set_clockgating_state,
-	.set_powergating_state = cik_common_set_powergating_state,
-};
+	.set_घड़ीgating_state = cik_common_set_घड़ीgating_state,
+	.set_घातergating_state = cik_common_set_घातergating_state,
+पूर्ण;
 
-static const struct amdgpu_ip_block_version cik_common_ip_block =
-{
+अटल स्थिर काष्ठा amdgpu_ip_block_version cik_common_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_COMMON,
 	.major = 1,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &cik_common_ip_funcs,
-};
+पूर्ण;
 
-int cik_set_ip_blocks(struct amdgpu_device *adev)
-{
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
+पूर्णांक cik_set_ip_blocks(काष्ठा amdgpu_device *adev)
+अणु
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
 		amdgpu_device_ip_block_add(adev, &cik_common_ip_block);
 		amdgpu_device_ip_block_add(adev, &gmc_v7_0_ip_block);
 		amdgpu_device_ip_block_add(adev, &cik_ih_ip_block);
 		amdgpu_device_ip_block_add(adev, &gfx_v7_2_ip_block);
 		amdgpu_device_ip_block_add(adev, &cik_sdma_ip_block);
 		amdgpu_device_ip_block_add(adev, &pp_smu_ip_block);
-		if (adev->enable_virtual_display)
-			amdgpu_device_ip_block_add(adev, &dce_virtual_ip_block);
-#if defined(CONFIG_DRM_AMD_DC)
-		else if (amdgpu_device_has_dc_support(adev))
+		अगर (adev->enable_भव_display)
+			amdgpu_device_ip_block_add(adev, &dce_भव_ip_block);
+#अगर defined(CONFIG_DRM_AMD_DC)
+		अन्यथा अगर (amdgpu_device_has_dc_support(adev))
 			amdgpu_device_ip_block_add(adev, &dm_ip_block);
-#endif
-		else
+#पूर्ण_अगर
+		अन्यथा
 			amdgpu_device_ip_block_add(adev, &dce_v8_2_ip_block);
 		amdgpu_device_ip_block_add(adev, &uvd_v4_2_ip_block);
 		amdgpu_device_ip_block_add(adev, &vce_v2_0_ip_block);
-		break;
-	case CHIP_HAWAII:
+		अवरोध;
+	हाल CHIP_HAWAII:
 		amdgpu_device_ip_block_add(adev, &cik_common_ip_block);
 		amdgpu_device_ip_block_add(adev, &gmc_v7_0_ip_block);
 		amdgpu_device_ip_block_add(adev, &cik_ih_ip_block);
 		amdgpu_device_ip_block_add(adev, &gfx_v7_3_ip_block);
 		amdgpu_device_ip_block_add(adev, &cik_sdma_ip_block);
 		amdgpu_device_ip_block_add(adev, &pp_smu_ip_block);
-		if (adev->enable_virtual_display)
-			amdgpu_device_ip_block_add(adev, &dce_virtual_ip_block);
-#if defined(CONFIG_DRM_AMD_DC)
-		else if (amdgpu_device_has_dc_support(adev))
+		अगर (adev->enable_भव_display)
+			amdgpu_device_ip_block_add(adev, &dce_भव_ip_block);
+#अगर defined(CONFIG_DRM_AMD_DC)
+		अन्यथा अगर (amdgpu_device_has_dc_support(adev))
 			amdgpu_device_ip_block_add(adev, &dm_ip_block);
-#endif
-		else
+#पूर्ण_अगर
+		अन्यथा
 			amdgpu_device_ip_block_add(adev, &dce_v8_5_ip_block);
 		amdgpu_device_ip_block_add(adev, &uvd_v4_2_ip_block);
 		amdgpu_device_ip_block_add(adev, &vce_v2_0_ip_block);
-		break;
-	case CHIP_KAVERI:
+		अवरोध;
+	हाल CHIP_KAVERI:
 		amdgpu_device_ip_block_add(adev, &cik_common_ip_block);
 		amdgpu_device_ip_block_add(adev, &gmc_v7_0_ip_block);
 		amdgpu_device_ip_block_add(adev, &cik_ih_ip_block);
 		amdgpu_device_ip_block_add(adev, &gfx_v7_1_ip_block);
 		amdgpu_device_ip_block_add(adev, &cik_sdma_ip_block);
 		amdgpu_device_ip_block_add(adev, &kv_smu_ip_block);
-		if (adev->enable_virtual_display)
-			amdgpu_device_ip_block_add(adev, &dce_virtual_ip_block);
-#if defined(CONFIG_DRM_AMD_DC)
-		else if (amdgpu_device_has_dc_support(adev))
+		अगर (adev->enable_भव_display)
+			amdgpu_device_ip_block_add(adev, &dce_भव_ip_block);
+#अगर defined(CONFIG_DRM_AMD_DC)
+		अन्यथा अगर (amdgpu_device_has_dc_support(adev))
 			amdgpu_device_ip_block_add(adev, &dm_ip_block);
-#endif
-		else
+#पूर्ण_अगर
+		अन्यथा
 			amdgpu_device_ip_block_add(adev, &dce_v8_1_ip_block);
 
 		amdgpu_device_ip_block_add(adev, &uvd_v4_2_ip_block);
 		amdgpu_device_ip_block_add(adev, &vce_v2_0_ip_block);
-		break;
-	case CHIP_KABINI:
-	case CHIP_MULLINS:
+		अवरोध;
+	हाल CHIP_KABINI:
+	हाल CHIP_MULLINS:
 		amdgpu_device_ip_block_add(adev, &cik_common_ip_block);
 		amdgpu_device_ip_block_add(adev, &gmc_v7_0_ip_block);
 		amdgpu_device_ip_block_add(adev, &cik_ih_ip_block);
 		amdgpu_device_ip_block_add(adev, &gfx_v7_2_ip_block);
 		amdgpu_device_ip_block_add(adev, &cik_sdma_ip_block);
 		amdgpu_device_ip_block_add(adev, &kv_smu_ip_block);
-		if (adev->enable_virtual_display)
-			amdgpu_device_ip_block_add(adev, &dce_virtual_ip_block);
-#if defined(CONFIG_DRM_AMD_DC)
-		else if (amdgpu_device_has_dc_support(adev))
+		अगर (adev->enable_भव_display)
+			amdgpu_device_ip_block_add(adev, &dce_भव_ip_block);
+#अगर defined(CONFIG_DRM_AMD_DC)
+		अन्यथा अगर (amdgpu_device_has_dc_support(adev))
 			amdgpu_device_ip_block_add(adev, &dm_ip_block);
-#endif
-		else
+#पूर्ण_अगर
+		अन्यथा
 			amdgpu_device_ip_block_add(adev, &dce_v8_3_ip_block);
 		amdgpu_device_ip_block_add(adev, &uvd_v4_2_ip_block);
 		amdgpu_device_ip_block_add(adev, &vce_v2_0_ip_block);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* FIXME: not supported yet */
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण

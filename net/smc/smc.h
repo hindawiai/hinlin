@@ -1,295 +1,296 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
- *  Definitions for the SMC module (socket related)
+ *  Definitions क्रम the SMC module (socket related)
  *
  *  Copyright IBM Corp. 2016
  *
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
-#ifndef __SMC_H
-#define __SMC_H
+#अगर_अघोषित __SMC_H
+#घोषणा __SMC_H
 
-#include <linux/socket.h>
-#include <linux/types.h>
-#include <linux/compiler.h> /* __aligned */
-#include <net/sock.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/types.h>
+#समावेश <linux/compiler.h> /* __aligned */
+#समावेश <net/sock.h>
 
-#include "smc_ib.h"
+#समावेश "smc_ib.h"
 
-#define SMC_V1		1		/* SMC version V1 */
-#define SMC_V2		2		/* SMC version V2 */
-#define SMC_RELEASE	0
+#घोषणा SMC_V1		1		/* SMC version V1 */
+#घोषणा SMC_V2		2		/* SMC version V2 */
+#घोषणा SMC_RELEASE	0
 
-#define SMCPROTO_SMC		0	/* SMC protocol, IPv4 */
-#define SMCPROTO_SMC6		1	/* SMC protocol, IPv6 */
+#घोषणा SMCPROTO_SMC		0	/* SMC protocol, IPv4 */
+#घोषणा SMCPROTO_SMC6		1	/* SMC protocol, IPv6 */
 
-#define SMC_MAX_ISM_DEVS	8	/* max # of proposed non-native ISM
+#घोषणा SMC_MAX_ISM_DEVS	8	/* max # of proposed non-native ISM
 					 * devices
 					 */
 
-#define SMC_MAX_HOSTNAME_LEN	32
-#define SMC_MAX_EID_LEN		32
+#घोषणा SMC_MAX_HOSTNAME_LEN	32
+#घोषणा SMC_MAX_EID_LEN		32
 
-extern struct proto smc_proto;
-extern struct proto smc_proto6;
+बाह्य काष्ठा proto smc_proto;
+बाह्य काष्ठा proto smc_proto6;
 
-#ifdef ATOMIC64_INIT
-#define KERNEL_HAS_ATOMIC64
-#endif
+#अगर_घोषित ATOMIC64_INIT
+#घोषणा KERNEL_HAS_ATOMIC64
+#पूर्ण_अगर
 
-enum smc_state {		/* possible states of an SMC socket */
+क्रमागत smc_state अणु		/* possible states of an SMC socket */
 	SMC_ACTIVE	= 1,
 	SMC_INIT	= 2,
 	SMC_CLOSED	= 7,
 	SMC_LISTEN	= 10,
-	/* normal close */
+	/* normal बंद */
 	SMC_PEERCLOSEWAIT1	= 20,
 	SMC_PEERCLOSEWAIT2	= 21,
 	SMC_APPFINCLOSEWAIT	= 24,
 	SMC_APPCLOSEWAIT1	= 22,
 	SMC_APPCLOSEWAIT2	= 23,
 	SMC_PEERFINCLOSEWAIT	= 25,
-	/* abnormal close */
+	/* abnormal बंद */
 	SMC_PEERABORTWAIT	= 26,
 	SMC_PROCESSABORT	= 27,
-};
+पूर्ण;
 
-struct smc_link_group;
+काष्ठा smc_link_group;
 
-struct smc_wr_rx_hdr {	/* common prefix part of LLC and CDC to demultiplex */
+काष्ठा smc_wr_rx_hdr अणु	/* common prefix part of LLC and CDC to demultiplex */
 	u8			type;
-} __aligned(1);
+पूर्ण __aligned(1);
 
-struct smc_cdc_conn_state_flags {
-#if defined(__BIG_ENDIAN_BITFIELD)
-	u8	peer_done_writing : 1;	/* Sending done indicator */
-	u8	peer_conn_closed : 1;	/* Peer connection closed indicator */
-	u8	peer_conn_abort : 1;	/* Abnormal close indicator */
+काष्ठा smc_cdc_conn_state_flags अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
+	u8	peer_करोne_writing : 1;	/* Sending करोne indicator */
+	u8	peer_conn_बंदd : 1;	/* Peer connection बंदd indicator */
+	u8	peer_conn_पात : 1;	/* Abnormal बंद indicator */
 	u8	reserved : 5;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u8	reserved : 5;
-	u8	peer_conn_abort : 1;
-	u8	peer_conn_closed : 1;
-	u8	peer_done_writing : 1;
-#endif
-};
+	u8	peer_conn_पात : 1;
+	u8	peer_conn_बंदd : 1;
+	u8	peer_करोne_writing : 1;
+#पूर्ण_अगर
+पूर्ण;
 
-struct smc_cdc_producer_flags {
-#if defined(__BIG_ENDIAN_BITFIELD)
-	u8	write_blocked : 1;	/* Writing Blocked, no rx buf space */
+काष्ठा smc_cdc_producer_flags अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
+	u8	ग_लिखो_blocked : 1;	/* Writing Blocked, no rx buf space */
 	u8	urg_data_pending : 1;	/* Urgent Data Pending */
 	u8	urg_data_present : 1;	/* Urgent Data Present */
 	u8	cons_curs_upd_req : 1;	/* cursor update requested */
 	u8	failover_validation : 1;/* message replay due to failover */
 	u8	reserved : 3;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u8	reserved : 3;
 	u8	failover_validation : 1;
 	u8	cons_curs_upd_req : 1;
 	u8	urg_data_present : 1;
 	u8	urg_data_pending : 1;
-	u8	write_blocked : 1;
-#endif
-};
+	u8	ग_लिखो_blocked : 1;
+#पूर्ण_अगर
+पूर्ण;
 
 /* in host byte order */
-union smc_host_cursor {	/* SMC cursor - an offset in an RMBE */
-	struct {
+जोड़ smc_host_cursor अणु	/* SMC cursor - an offset in an RMBE */
+	काष्ठा अणु
 		u16	reserved;
-		u16	wrap;		/* window wrap sequence number */
+		u16	wrap;		/* winकरोw wrap sequence number */
 		u32	count;		/* cursor (= offset) part */
-	};
-#ifdef KERNEL_HAS_ATOMIC64
-	atomic64_t		acurs;	/* for atomic processing */
-#else
-	u64			acurs;	/* for atomic processing */
-#endif
-} __aligned(8);
+	पूर्ण;
+#अगर_घोषित KERNEL_HAS_ATOMIC64
+	atomic64_t		acurs;	/* क्रम atomic processing */
+#अन्यथा
+	u64			acurs;	/* क्रम atomic processing */
+#पूर्ण_अगर
+पूर्ण __aligned(8);
 
-/* in host byte order, except for flag bitfields in network byte order */
-struct smc_host_cdc_msg {		/* Connection Data Control message */
-	struct smc_wr_rx_hdr		common; /* .type = 0xFE */
+/* in host byte order, except क्रम flag bitfields in network byte order */
+काष्ठा smc_host_cdc_msg अणु		/* Connection Data Control message */
+	काष्ठा smc_wr_rx_hdr		common; /* .type = 0xFE */
 	u8				len;	/* length = 44 */
 	u16				seqno;	/* connection seq # */
 	u32				token;	/* alert_token */
-	union smc_host_cursor		prod;		/* producer cursor */
-	union smc_host_cursor		cons;		/* consumer cursor,
+	जोड़ smc_host_cursor		prod;		/* producer cursor */
+	जोड़ smc_host_cursor		cons;		/* consumer cursor,
 							 * piggy backed "ack"
 							 */
-	struct smc_cdc_producer_flags	prod_flags;	/* conn. tx/rx status */
-	struct smc_cdc_conn_state_flags	conn_state_flags; /* peer conn. status*/
+	काष्ठा smc_cdc_producer_flags	prod_flags;	/* conn. tx/rx status */
+	काष्ठा smc_cdc_conn_state_flags	conn_state_flags; /* peer conn. status*/
 	u8				reserved[18];
-} __aligned(8);
+पूर्ण __aligned(8);
 
-enum smc_urg_state {
+क्रमागत smc_urg_state अणु
 	SMC_URG_VALID	= 1,			/* data present */
 	SMC_URG_NOTYET	= 2,			/* data pending */
-	SMC_URG_READ	= 3,			/* data was already read */
-};
+	SMC_URG_READ	= 3,			/* data was alपढ़ोy पढ़ो */
+पूर्ण;
 
-struct smc_connection {
-	struct rb_node		alert_node;
-	struct smc_link_group	*lgr;		/* link group of connection */
-	struct smc_link		*lnk;		/* assigned SMC-R link */
+काष्ठा smc_connection अणु
+	काष्ठा rb_node		alert_node;
+	काष्ठा smc_link_group	*lgr;		/* link group of connection */
+	काष्ठा smc_link		*lnk;		/* asचिन्हित SMC-R link */
 	u32			alert_token_local; /* unique conn. id */
 	u8			peer_rmbe_idx;	/* from tcp handshake */
-	int			peer_rmbe_size;	/* size of peer rx buffer */
-	atomic_t		peer_rmbe_space;/* remaining free bytes in peer
+	पूर्णांक			peer_rmbe_size;	/* size of peer rx buffer */
+	atomic_t		peer_rmbe_space;/* reमुख्यing मुक्त bytes in peer
 						 * rmbe
 						 */
-	int			rtoken_idx;	/* idx to peer RMB rkey/addr */
+	पूर्णांक			rtoken_idx;	/* idx to peer RMB rkey/addr */
 
-	struct smc_buf_desc	*sndbuf_desc;	/* send buffer descriptor */
-	struct smc_buf_desc	*rmb_desc;	/* RMBE descriptor */
-	int			rmbe_size_short;/* compressed notation */
-	int			rmbe_update_limit;
-						/* lower limit for consumer
+	काष्ठा smc_buf_desc	*sndbuf_desc;	/* send buffer descriptor */
+	काष्ठा smc_buf_desc	*rmb_desc;	/* RMBE descriptor */
+	पूर्णांक			rmbe_size_लघु;/* compressed notation */
+	पूर्णांक			rmbe_update_limit;
+						/* lower limit क्रम consumer
 						 * cursor update
 						 */
 
-	struct smc_host_cdc_msg	local_tx_ctrl;	/* host byte order staging
-						 * buffer for CDC msg send
+	काष्ठा smc_host_cdc_msg	local_tx_ctrl;	/* host byte order staging
+						 * buffer क्रम CDC msg send
 						 * .prod cf. TCP snd_nxt
 						 * .cons cf. TCP sends ack
 						 */
-	union smc_host_cursor	local_tx_ctrl_fin;
+	जोड़ smc_host_cursor	local_tx_ctrl_fin;
 						/* prod crsr - confirmed by peer
 						 */
-	union smc_host_cursor	tx_curs_prep;	/* tx - prepared data
+	जोड़ smc_host_cursor	tx_curs_prep;	/* tx - prepared data
 						 * snd_max..wmem_alloc
 						 */
-	union smc_host_cursor	tx_curs_sent;	/* tx - sent data
+	जोड़ smc_host_cursor	tx_curs_sent;	/* tx - sent data
 						 * snd_nxt ?
 						 */
-	union smc_host_cursor	tx_curs_fin;	/* tx - confirmed by peer
+	जोड़ smc_host_cursor	tx_curs_fin;	/* tx - confirmed by peer
 						 * snd-wnd-begin ?
 						 */
-	atomic_t		sndbuf_space;	/* remaining space in sndbuf */
-	u16			tx_cdc_seq;	/* sequence # for CDC send */
+	atomic_t		sndbuf_space;	/* reमुख्यing space in sndbuf */
+	u16			tx_cdc_seq;	/* sequence # क्रम CDC send */
 	u16			tx_cdc_seq_fin;	/* sequence # - tx completed */
 	spinlock_t		send_lock;	/* protect wr_sends */
-	struct delayed_work	tx_work;	/* retry of smc_cdc_msg_send */
+	काष्ठा delayed_work	tx_work;	/* retry of smc_cdc_msg_send */
 	u32			tx_off;		/* base offset in peer rmb */
 
-	struct smc_host_cdc_msg	local_rx_ctrl;	/* filled during event_handl.
+	काष्ठा smc_host_cdc_msg	local_rx_ctrl;	/* filled during event_handl.
 						 * .prod cf. TCP rcv_nxt
 						 * .cons cf. TCP snd_una
 						 */
-	union smc_host_cursor	rx_curs_confirmed; /* confirmed to peer
+	जोड़ smc_host_cursor	rx_curs_confirmed; /* confirmed to peer
 						    * source of snd_una ?
 						    */
-	union smc_host_cursor	urg_curs;	/* points at urgent byte */
-	enum smc_urg_state	urg_state;
+	जोड़ smc_host_cursor	urg_curs;	/* poपूर्णांकs at urgent byte */
+	क्रमागत smc_urg_state	urg_state;
 	bool			urg_tx_pend;	/* urgent data staged */
 	bool			urg_rx_skip_pend;
 						/* indicate urgent oob data
-						 * read, but previous regular
+						 * पढ़ो, but previous regular
 						 * data still pending
 						 */
-	char			urg_rx_byte;	/* urgent byte */
+	अक्षर			urg_rx_byte;	/* urgent byte */
 	atomic_t		bytes_to_rcv;	/* arrived data,
 						 * not yet received
 						 */
 	atomic_t		splice_pending;	/* number of spliced bytes
 						 * pending processing
 						 */
-#ifndef KERNEL_HAS_ATOMIC64
+#अगर_अघोषित KERNEL_HAS_ATOMIC64
 	spinlock_t		acurs_lock;	/* protect cursors */
-#endif
-	struct work_struct	close_work;	/* peer sent some closing */
-	struct work_struct	abort_work;	/* abort the connection */
-	struct tasklet_struct	rx_tsklet;	/* Receiver tasklet for SMC-D */
+#पूर्ण_अगर
+	काष्ठा work_काष्ठा	बंद_work;	/* peer sent some closing */
+	काष्ठा work_काष्ठा	पात_work;	/* पात the connection */
+	काष्ठा tasklet_काष्ठा	rx_tsklet;	/* Receiver tasklet क्रम SMC-D */
 	u8			rx_off;		/* receive offset:
-						 * 0 for SMC-R, 32 for SMC-D
+						 * 0 क्रम SMC-R, 32 क्रम SMC-D
 						 */
 	u64			peer_token;	/* SMC-D token of peer */
-	u8			killed : 1;	/* abnormal termination */
+	u8			समाप्तed : 1;	/* abnormal termination */
 	u8			out_of_sync : 1; /* out of sync with peer */
-};
+पूर्ण;
 
-struct smc_sock {				/* smc sock container */
-	struct sock		sk;
-	struct socket		*clcsock;	/* internal tcp socket */
-	void			(*clcsk_data_ready)(struct sock *sk);
-						/* original data_ready fct. **/
-	struct smc_connection	conn;		/* smc connection */
-	struct smc_sock		*listen_smc;	/* listen parent */
-	struct work_struct	connect_work;	/* handle non-blocking connect*/
-	struct work_struct	tcp_listen_work;/* handle tcp socket accepts */
-	struct work_struct	smc_listen_work;/* prepare new accept socket */
-	struct list_head	accept_q;	/* sockets to be accepted */
+काष्ठा smc_sock अणु				/* smc sock container */
+	काष्ठा sock		sk;
+	काष्ठा socket		*clcsock;	/* पूर्णांकernal tcp socket */
+	व्योम			(*clcsk_data_पढ़ोy)(काष्ठा sock *sk);
+						/* original data_पढ़ोy fct. **/
+	काष्ठा smc_connection	conn;		/* smc connection */
+	काष्ठा smc_sock		*listen_smc;	/* listen parent */
+	काष्ठा work_काष्ठा	connect_work;	/* handle non-blocking connect*/
+	काष्ठा work_काष्ठा	tcp_listen_work;/* handle tcp socket accepts */
+	काष्ठा work_काष्ठा	smc_listen_work;/* prepare new accept socket */
+	काष्ठा list_head	accept_q;	/* sockets to be accepted */
 	spinlock_t		accept_q_lock;	/* protects accept_q */
 	bool			use_fallback;	/* fallback to tcp */
-	int			fallback_rsn;	/* reason for fallback */
+	पूर्णांक			fallback_rsn;	/* reason क्रम fallback */
 	u32			peer_diagnosis; /* decline reason from peer */
-	int			sockopt_defer_accept;
+	पूर्णांक			sockopt_defer_accept;
 						/* sockopt TCP_DEFER_ACCEPT
 						 * value
 						 */
-	u8			wait_close_tx_prepared : 1;
-						/* shutdown wr or close
-						 * started, waiting for unsent
+	u8			रुको_बंद_tx_prepared : 1;
+						/* shutकरोwn wr or बंद
+						 * started, रुकोing क्रम unsent
 						 * data to be sent
 						 */
 	u8			connect_nonblock : 1;
 						/* non-blocking connect in
 						 * flight
 						 */
-	struct mutex            clcsock_release_lock;
+	काष्ठा mutex            clcsock_release_lock;
 						/* protects clcsock of a listen
 						 * socket
 						 * */
-};
+पूर्ण;
 
-static inline struct smc_sock *smc_sk(const struct sock *sk)
-{
-	return (struct smc_sock *)sk;
-}
+अटल अंतरभूत काष्ठा smc_sock *smc_sk(स्थिर काष्ठा sock *sk)
+अणु
+	वापस (काष्ठा smc_sock *)sk;
+पूर्ण
 
-extern struct workqueue_struct	*smc_hs_wq;	/* wq for handshake work */
-extern struct workqueue_struct	*smc_close_wq;	/* wq for close work */
+बाह्य काष्ठा workqueue_काष्ठा	*smc_hs_wq;	/* wq क्रम handshake work */
+बाह्य काष्ठा workqueue_काष्ठा	*smc_बंद_wq;	/* wq क्रम बंद work */
 
-#define SMC_SYSTEMID_LEN		8
+#घोषणा SMC_SYSTEMID_LEN		8
 
-extern u8	local_systemid[SMC_SYSTEMID_LEN]; /* unique system identifier */
+बाह्य u8	local_प्रणालीid[SMC_SYSTEMID_LEN]; /* unique प्रणाली identअगरier */
 
-#define ntohll(x) be64_to_cpu(x)
-#define htonll(x) cpu_to_be64(x)
+#घोषणा ntohll(x) be64_to_cpu(x)
+#घोषणा htonll(x) cpu_to_be64(x)
 
-/* convert an u32 value into network byte order, store it into a 3 byte field */
-static inline void hton24(u8 *net, u32 host)
-{
+/* convert an u32 value पूर्णांकo network byte order, store it पूर्णांकo a 3 byte field */
+अटल अंतरभूत व्योम hton24(u8 *net, u32 host)
+अणु
 	__be32 t;
 
 	t = cpu_to_be32(host);
-	memcpy(net, ((u8 *)&t) + 1, 3);
-}
+	स_नकल(net, ((u8 *)&t) + 1, 3);
+पूर्ण
 
-/* convert a received 3 byte field into host byte order*/
-static inline u32 ntoh24(u8 *net)
-{
+/* convert a received 3 byte field पूर्णांकo host byte order*/
+अटल अंतरभूत u32 ntoh24(u8 *net)
+अणु
 	__be32 t = 0;
 
-	memcpy(((u8 *)&t) + 1, net, 3);
-	return be32_to_cpu(t);
-}
+	स_नकल(((u8 *)&t) + 1, net, 3);
+	वापस be32_to_cpu(t);
+पूर्ण
 
-#ifdef CONFIG_XFRM
-static inline bool using_ipsec(struct smc_sock *smc)
-{
-	return (smc->clcsock->sk->sk_policy[0] ||
+#अगर_घोषित CONFIG_XFRM
+अटल अंतरभूत bool using_ipsec(काष्ठा smc_sock *smc)
+अणु
+	वापस (smc->clcsock->sk->sk_policy[0] ||
 		smc->clcsock->sk->sk_policy[1]) ? true : false;
-}
-#else
-static inline bool using_ipsec(struct smc_sock *smc)
-{
-	return false;
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool using_ipsec(काष्ठा smc_sock *smc)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-struct sock *smc_accept_dequeue(struct sock *parent, struct socket *new_sock);
-void smc_close_non_accepted(struct sock *sk);
+काष्ठा sock *smc_accept_dequeue(काष्ठा sock *parent, काष्ठा socket *new_sock);
+व्योम smc_बंद_non_accepted(काष्ठा sock *sk);
 
-#endif	/* __SMC_H */
+#पूर्ण_अगर	/* __SMC_H */

@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * TI Bandgap temperature sensor driver for K3 SoC Family
+ * TI Bandgap temperature sensor driver क्रम K3 SoC Family
  *
  * Copyright (C) 2020 Texas Instruments Incorporated - http://www.ti.com/
  */
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/pm_runtime.h>
-#include <linux/thermal.h>
-#include <linux/types.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/thermal.h>
+#समावेश <linux/types.h>
 
-#define K3_VTM_DEVINFO_PWR0_OFFSET		0x4
-#define K3_VTM_DEVINFO_PWR0_TEMPSENS_CT_MASK	0xf0
-#define K3_VTM_TMPSENS0_CTRL_OFFSET	0x80
-#define K3_VTM_REGS_PER_TS			0x10
-#define K3_VTM_TS_STAT_DTEMP_MASK	0x3ff
-#define K3_VTM_TMPSENS_CTRL_CBIASSEL	BIT(0)
-#define K3_VTM_TMPSENS_CTRL_SOC		BIT(5)
-#define K3_VTM_TMPSENS_CTRL_CLRZ		BIT(6)
-#define K3_VTM_TMPSENS_CTRL_CLKON_REQ	BIT(7)
+#घोषणा K3_VTM_DEVINFO_PWR0_OFFSET		0x4
+#घोषणा K3_VTM_DEVINFO_PWR0_TEMPSENS_CT_MASK	0xf0
+#घोषणा K3_VTM_TMPSENS0_CTRL_OFFSET	0x80
+#घोषणा K3_VTM_REGS_PER_TS			0x10
+#घोषणा K3_VTM_TS_STAT_DTEMP_MASK	0x3ff
+#घोषणा K3_VTM_TMPSENS_CTRL_CBIASSEL	BIT(0)
+#घोषणा K3_VTM_TMPSENS_CTRL_SOC		BIT(5)
+#घोषणा K3_VTM_TMPSENS_CTRL_CLRZ		BIT(6)
+#घोषणा K3_VTM_TMPSENS_CTRL_CLKON_REQ	BIT(7)
 
-#define K3_VTM_ADC_BEGIN_VAL		540
-#define K3_VTM_ADC_END_VAL		944
+#घोषणा K3_VTM_ADC_BEGIN_VAL		540
+#घोषणा K3_VTM_ADC_END_VAL		944
 
-static const int k3_adc_to_temp[] = {
+अटल स्थिर पूर्णांक k3_adc_to_temp[] = अणु
 	-40000, -40000, -40000, -40000, -39800, -39400, -39000, -38600, -38200,
 	-37800, -37400, -37000, -36600, -36200, -35800, -35300, -34700, -34200,
 	-33800, -33400, -33000, -32600, -32200, -31800, -31400, -31000, -30600,
@@ -72,192 +73,192 @@ static const int k3_adc_to_temp[] = {
 	116200, 116600, 117000, 117400, 117800, 118200, 118600, 119000, 119400,
 	119800, 120200, 120600, 121000, 121400, 121800, 122200, 122600, 123000,
 	123400, 123800, 124200, 124600, 124900, 125000,
-};
+पूर्ण;
 
-struct k3_bandgap {
-	void __iomem *base;
-	const struct k3_bandgap_data *conf;
-};
+काष्ठा k3_bandgap अणु
+	व्योम __iomem *base;
+	स्थिर काष्ठा k3_bandgap_data *conf;
+पूर्ण;
 
-/* common data structures */
-struct k3_thermal_data {
-	struct thermal_zone_device *tzd;
-	struct k3_bandgap *bgp;
-	int sensor_id;
+/* common data काष्ठाures */
+काष्ठा k3_thermal_data अणु
+	काष्ठा thermal_zone_device *tzd;
+	काष्ठा k3_bandgap *bgp;
+	पूर्णांक sensor_id;
 	u32 ctrl_offset;
 	u32 stat_offset;
-};
+पूर्ण;
 
-static unsigned int vtm_get_best_value(unsigned int s0, unsigned int s1,
-				       unsigned int s2)
-{
-	int d01 = abs(s0 - s1);
-	int d02 = abs(s0 - s2);
-	int d12 = abs(s1 - s2);
+अटल अचिन्हित पूर्णांक vपंचांग_get_best_value(अचिन्हित पूर्णांक s0, अचिन्हित पूर्णांक s1,
+				       अचिन्हित पूर्णांक s2)
+अणु
+	पूर्णांक d01 = असल(s0 - s1);
+	पूर्णांक d02 = असल(s0 - s2);
+	पूर्णांक d12 = असल(s1 - s2);
 
-	if (d01 <= d02 && d01 <= d12)
-		return (s0 + s1) / 2;
+	अगर (d01 <= d02 && d01 <= d12)
+		वापस (s0 + s1) / 2;
 
-	if (d02 <= d01 && d02 <= d12)
-		return (s0 + s2) / 2;
+	अगर (d02 <= d01 && d02 <= d12)
+		वापस (s0 + s2) / 2;
 
-	return (s1 + s2) / 2;
-}
+	वापस (s1 + s2) / 2;
+पूर्ण
 
-static int k3_bgp_read_temp(struct k3_thermal_data *devdata,
-			    int *temp)
-{
-	struct k3_bandgap *bgp;
-	unsigned int dtemp, s0, s1, s2;
+अटल पूर्णांक k3_bgp_पढ़ो_temp(काष्ठा k3_thermal_data *devdata,
+			    पूर्णांक *temp)
+अणु
+	काष्ठा k3_bandgap *bgp;
+	अचिन्हित पूर्णांक dtemp, s0, s1, s2;
 
 	bgp = devdata->bgp;
 
 	/*
-	 * Errata is applicable for am654 pg 1.0 silicon. There
-	 * is a variation of the order for 8-10 degree centigrade.
-	 * Work around that by getting the average of two closest
-	 * readings out of three readings everytime we want to
+	 * Errata is applicable क्रम am654 pg 1.0 silicon. There
+	 * is a variation of the order क्रम 8-10 degree centigrade.
+	 * Work around that by getting the average of two बंदst
+	 * पढ़ोings out of three पढ़ोings everyसमय we want to
 	 * report temperatures.
 	 *
 	 * Errata workaround.
 	 */
-	s0 = readl(bgp->base + devdata->stat_offset) &
+	s0 = पढ़ोl(bgp->base + devdata->stat_offset) &
 		K3_VTM_TS_STAT_DTEMP_MASK;
-	s1 = readl(bgp->base + devdata->stat_offset) &
+	s1 = पढ़ोl(bgp->base + devdata->stat_offset) &
 		K3_VTM_TS_STAT_DTEMP_MASK;
-	s2 = readl(bgp->base + devdata->stat_offset) &
+	s2 = पढ़ोl(bgp->base + devdata->stat_offset) &
 		K3_VTM_TS_STAT_DTEMP_MASK;
-	dtemp = vtm_get_best_value(s0, s1, s2);
+	dtemp = vपंचांग_get_best_value(s0, s1, s2);
 
-	if (dtemp < K3_VTM_ADC_BEGIN_VAL || dtemp > K3_VTM_ADC_END_VAL)
-		return -EINVAL;
+	अगर (dtemp < K3_VTM_ADC_BEGIN_VAL || dtemp > K3_VTM_ADC_END_VAL)
+		वापस -EINVAL;
 
 	*temp = k3_adc_to_temp[dtemp - K3_VTM_ADC_BEGIN_VAL];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int k3_thermal_get_temp(void *devdata, int *temp)
-{
-	struct k3_thermal_data *data = devdata;
-	int ret = 0;
+अटल पूर्णांक k3_thermal_get_temp(व्योम *devdata, पूर्णांक *temp)
+अणु
+	काष्ठा k3_thermal_data *data = devdata;
+	पूर्णांक ret = 0;
 
-	ret = k3_bgp_read_temp(data, temp);
-	if (ret)
-		return ret;
+	ret = k3_bgp_पढ़ो_temp(data, temp);
+	अगर (ret)
+		वापस ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct thermal_zone_of_device_ops k3_of_thermal_ops = {
+अटल स्थिर काष्ठा thermal_zone_of_device_ops k3_of_thermal_ops = अणु
 	.get_temp = k3_thermal_get_temp,
-};
+पूर्ण;
 
-static const struct of_device_id of_k3_bandgap_match[];
+अटल स्थिर काष्ठा of_device_id of_k3_bandgap_match[];
 
-static int k3_bandgap_probe(struct platform_device *pdev)
-{
-	int ret = 0, cnt, val, id;
-	struct resource *res;
-	struct device *dev = &pdev->dev;
-	struct k3_bandgap *bgp;
-	struct k3_thermal_data *data;
+अटल पूर्णांक k3_bandgap_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = 0, cnt, val, id;
+	काष्ठा resource *res;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा k3_bandgap *bgp;
+	काष्ठा k3_thermal_data *data;
 
-	if (ARRAY_SIZE(k3_adc_to_temp) != (K3_VTM_ADC_END_VAL + 1 -
+	अगर (ARRAY_SIZE(k3_adc_to_temp) != (K3_VTM_ADC_END_VAL + 1 -
 						K3_VTM_ADC_BEGIN_VAL))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	bgp = devm_kzalloc(&pdev->dev, sizeof(*bgp), GFP_KERNEL);
-	if (!bgp)
-		return -ENOMEM;
+	bgp = devm_kzalloc(&pdev->dev, माप(*bgp), GFP_KERNEL);
+	अगर (!bgp)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	bgp->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(bgp->base))
-		return PTR_ERR(bgp->base);
+	अगर (IS_ERR(bgp->base))
+		वापस PTR_ERR(bgp->base);
 
-	pm_runtime_enable(dev);
-	ret = pm_runtime_get_sync(dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(dev);
-		pm_runtime_disable(dev);
-		return ret;
-	}
+	pm_runसमय_enable(dev);
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(dev);
+		pm_runसमय_disable(dev);
+		वापस ret;
+	पूर्ण
 
 	/* Get the sensor count in the VTM */
-	val = readl(bgp->base + K3_VTM_DEVINFO_PWR0_OFFSET);
+	val = पढ़ोl(bgp->base + K3_VTM_DEVINFO_PWR0_OFFSET);
 	cnt = val & K3_VTM_DEVINFO_PWR0_TEMPSENS_CT_MASK;
 	cnt >>= __ffs(K3_VTM_DEVINFO_PWR0_TEMPSENS_CT_MASK);
 
-	data = devm_kcalloc(dev, cnt, sizeof(*data), GFP_KERNEL);
-	if (!data) {
+	data = devm_kसुस्मृति(dev, cnt, माप(*data), GFP_KERNEL);
+	अगर (!data) अणु
 		ret = -ENOMEM;
-		goto err_alloc;
-	}
+		जाओ err_alloc;
+	पूर्ण
 
 	/* Register the thermal sensors */
-	for (id = 0; id < cnt; id++) {
+	क्रम (id = 0; id < cnt; id++) अणु
 		data[id].sensor_id = id;
 		data[id].bgp = bgp;
 		data[id].ctrl_offset = K3_VTM_TMPSENS0_CTRL_OFFSET +
 					id * K3_VTM_REGS_PER_TS;
 		data[id].stat_offset = data[id].ctrl_offset + 0x8;
 
-		val = readl(data[id].bgp->base + data[id].ctrl_offset);
+		val = पढ़ोl(data[id].bgp->base + data[id].ctrl_offset);
 		val |= (K3_VTM_TMPSENS_CTRL_SOC |
 			K3_VTM_TMPSENS_CTRL_CLRZ |
 			K3_VTM_TMPSENS_CTRL_CLKON_REQ);
 		val &= ~K3_VTM_TMPSENS_CTRL_CBIASSEL;
-		writel(val, data[id].bgp->base + data[id].ctrl_offset);
+		ग_लिखोl(val, data[id].bgp->base + data[id].ctrl_offset);
 
 		data[id].tzd =
-		devm_thermal_zone_of_sensor_register(dev, id,
+		devm_thermal_zone_of_sensor_रेजिस्टर(dev, id,
 						     &data[id],
 						     &k3_of_thermal_ops);
-		if (IS_ERR(data[id].tzd)) {
+		अगर (IS_ERR(data[id].tzd)) अणु
 			dev_err(dev, "thermal zone device is NULL\n");
 			ret = PTR_ERR(data[id].tzd);
-			goto err_alloc;
-		}
-	}
+			जाओ err_alloc;
+		पूर्ण
+	पूर्ण
 
-	platform_set_drvdata(pdev, bgp);
+	platक्रमm_set_drvdata(pdev, bgp);
 
-	return 0;
+	वापस 0;
 
 err_alloc:
-	pm_runtime_put_sync(dev);
-	pm_runtime_disable(dev);
+	pm_runसमय_put_sync(dev);
+	pm_runसमय_disable(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int k3_bandgap_remove(struct platform_device *pdev)
-{
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+अटल पूर्णांक k3_bandgap_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_put_sync(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id of_k3_bandgap_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id of_k3_bandgap_match[] = अणु
+	अणु
 		.compatible = "ti,am654-vtm",
-	},
-	{ /* sentinel */ },
-};
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_k3_bandgap_match);
 
-static struct platform_driver k3_bandgap_sensor_driver = {
+अटल काष्ठा platक्रमm_driver k3_bandgap_sensor_driver = अणु
 	.probe = k3_bandgap_probe,
-	.remove = k3_bandgap_remove,
-	.driver = {
+	.हटाओ = k3_bandgap_हटाओ,
+	.driver = अणु
 		.name = "k3-soc-thermal",
 		.of_match_table	= of_k3_bandgap_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(k3_bandgap_sensor_driver);
+module_platक्रमm_driver(k3_bandgap_sensor_driver);
 
 MODULE_DESCRIPTION("K3 bandgap temperature sensor driver");
 MODULE_LICENSE("GPL v2");

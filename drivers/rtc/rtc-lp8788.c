@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TI LP8788 MFD - rtc driver
  *
@@ -7,41 +8,41 @@
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
-#include <linux/err.h>
-#include <linux/irqdomain.h>
-#include <linux/mfd/lp8788.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/rtc.h>
-#include <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/mfd/lp8788.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/slab.h>
 
-/* register address */
-#define LP8788_INTEN_3			0x05
-#define LP8788_RTC_UNLOCK		0x64
-#define LP8788_RTC_SEC			0x70
-#define LP8788_ALM1_SEC			0x77
-#define LP8788_ALM1_EN			0x7D
-#define LP8788_ALM2_SEC			0x7E
-#define LP8788_ALM2_EN			0x84
+/* रेजिस्टर address */
+#घोषणा LP8788_INTEN_3			0x05
+#घोषणा LP8788_RTC_UNLOCK		0x64
+#घोषणा LP8788_RTC_SEC			0x70
+#घोषणा LP8788_ALM1_SEC			0x77
+#घोषणा LP8788_ALM1_EN			0x7D
+#घोषणा LP8788_ALM2_SEC			0x7E
+#घोषणा LP8788_ALM2_EN			0x84
 
-/* mask/shift bits */
-#define LP8788_INT_RTC_ALM1_M		BIT(1)	/* Addr 05h */
-#define LP8788_INT_RTC_ALM1_S		1
-#define LP8788_INT_RTC_ALM2_M		BIT(2)	/* Addr 05h */
-#define LP8788_INT_RTC_ALM2_S		2
-#define LP8788_ALM_EN_M			BIT(7)	/* Addr 7Dh or 84h */
-#define LP8788_ALM_EN_S			7
+/* mask/shअगरt bits */
+#घोषणा LP8788_INT_RTC_ALM1_M		BIT(1)	/* Addr 05h */
+#घोषणा LP8788_INT_RTC_ALM1_S		1
+#घोषणा LP8788_INT_RTC_ALM2_M		BIT(2)	/* Addr 05h */
+#घोषणा LP8788_INT_RTC_ALM2_S		2
+#घोषणा LP8788_ALM_EN_M			BIT(7)	/* Addr 7Dh or 84h */
+#घोषणा LP8788_ALM_EN_S			7
 
-#define DEFAULT_ALARM_SEL		LP8788_ALARM_1
-#define LP8788_MONTH_OFFSET		1
-#define LP8788_BASE_YEAR		2000
-#define MAX_WDAY_BITS			7
-#define LP8788_WDAY_SET			1
-#define RTC_UNLOCK			0x1
-#define RTC_LATCH			0x2
-#define ALARM_IRQ_FLAG			(RTC_IRQF | RTC_AF)
+#घोषणा DEFAULT_ALARM_SEL		LP8788_ALARM_1
+#घोषणा LP8788_MONTH_OFFSET		1
+#घोषणा LP8788_BASE_YEAR		2000
+#घोषणा MAX_WDAY_BITS			7
+#घोषणा LP8788_WDAY_SET			1
+#घोषणा RTC_UNLOCK			0x1
+#घोषणा RTC_LATCH			0x2
+#घोषणा ALARM_IRQ_FLAG			(RTC_IRQF | RTC_AF)
 
-enum lp8788_time {
+क्रमागत lp8788_समय अणु
 	LPTIME_SEC,
 	LPTIME_MIN,
 	LPTIME_HOUR,
@@ -50,271 +51,271 @@ enum lp8788_time {
 	LPTIME_YEAR,
 	LPTIME_WDAY,
 	LPTIME_MAX,
-};
+पूर्ण;
 
-struct lp8788_rtc {
-	struct lp8788 *lp;
-	struct rtc_device *rdev;
-	enum lp8788_alarm_sel alarm;
-	int irq;
-};
+काष्ठा lp8788_rtc अणु
+	काष्ठा lp8788 *lp;
+	काष्ठा rtc_device *rdev;
+	क्रमागत lp8788_alarm_sel alarm;
+	पूर्णांक irq;
+पूर्ण;
 
-static const u8 addr_alarm_sec[LP8788_ALARM_MAX] = {
+अटल स्थिर u8 addr_alarm_sec[LP8788_ALARM_MAX] = अणु
 	LP8788_ALM1_SEC,
 	LP8788_ALM2_SEC,
-};
+पूर्ण;
 
-static const u8 addr_alarm_en[LP8788_ALARM_MAX] = {
+अटल स्थिर u8 addr_alarm_en[LP8788_ALARM_MAX] = अणु
 	LP8788_ALM1_EN,
 	LP8788_ALM2_EN,
-};
+पूर्ण;
 
-static const u8 mask_alarm_en[LP8788_ALARM_MAX] = {
+अटल स्थिर u8 mask_alarm_en[LP8788_ALARM_MAX] = अणु
 	LP8788_INT_RTC_ALM1_M,
 	LP8788_INT_RTC_ALM2_M,
-};
+पूर्ण;
 
-static const u8 shift_alarm_en[LP8788_ALARM_MAX] = {
+अटल स्थिर u8 shअगरt_alarm_en[LP8788_ALARM_MAX] = अणु
 	LP8788_INT_RTC_ALM1_S,
 	LP8788_INT_RTC_ALM2_S,
-};
+पूर्ण;
 
-static int _to_tm_wday(u8 lp8788_wday)
-{
-	int i;
+अटल पूर्णांक _to_पंचांग_wday(u8 lp8788_wday)
+अणु
+	पूर्णांक i;
 
-	if (lp8788_wday == 0)
-		return 0;
+	अगर (lp8788_wday == 0)
+		वापस 0;
 
-	/* lookup defined weekday from read register value */
-	for (i = 0; i < MAX_WDAY_BITS; i++) {
-		if ((lp8788_wday >> i) == LP8788_WDAY_SET)
-			break;
-	}
+	/* lookup defined weekday from पढ़ो रेजिस्टर value */
+	क्रम (i = 0; i < MAX_WDAY_BITS; i++) अणु
+		अगर ((lp8788_wday >> i) == LP8788_WDAY_SET)
+			अवरोध;
+	पूर्ण
 
-	return i + 1;
-}
+	वापस i + 1;
+पूर्ण
 
-static inline int _to_lp8788_wday(int tm_wday)
-{
-	return LP8788_WDAY_SET << (tm_wday - 1);
-}
+अटल अंतरभूत पूर्णांक _to_lp8788_wday(पूर्णांक पंचांग_wday)
+अणु
+	वापस LP8788_WDAY_SET << (पंचांग_wday - 1);
+पूर्ण
 
-static void lp8788_rtc_unlock(struct lp8788 *lp)
-{
-	lp8788_write_byte(lp, LP8788_RTC_UNLOCK, RTC_UNLOCK);
-	lp8788_write_byte(lp, LP8788_RTC_UNLOCK, RTC_LATCH);
-}
+अटल व्योम lp8788_rtc_unlock(काष्ठा lp8788 *lp)
+अणु
+	lp8788_ग_लिखो_byte(lp, LP8788_RTC_UNLOCK, RTC_UNLOCK);
+	lp8788_ग_लिखो_byte(lp, LP8788_RTC_UNLOCK, RTC_LATCH);
+पूर्ण
 
-static int lp8788_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct lp8788_rtc *rtc = dev_get_drvdata(dev);
-	struct lp8788 *lp = rtc->lp;
+अटल पूर्णांक lp8788_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा lp8788_rtc *rtc = dev_get_drvdata(dev);
+	काष्ठा lp8788 *lp = rtc->lp;
 	u8 data[LPTIME_MAX];
-	int ret;
+	पूर्णांक ret;
 
 	lp8788_rtc_unlock(lp);
 
-	ret = lp8788_read_multi_bytes(lp, LP8788_RTC_SEC, data,	LPTIME_MAX);
-	if (ret)
-		return ret;
+	ret = lp8788_पढ़ो_multi_bytes(lp, LP8788_RTC_SEC, data,	LPTIME_MAX);
+	अगर (ret)
+		वापस ret;
 
-	tm->tm_sec  = data[LPTIME_SEC];
-	tm->tm_min  = data[LPTIME_MIN];
-	tm->tm_hour = data[LPTIME_HOUR];
-	tm->tm_mday = data[LPTIME_MDAY];
-	tm->tm_mon  = data[LPTIME_MON] - LP8788_MONTH_OFFSET;
-	tm->tm_year = data[LPTIME_YEAR] + LP8788_BASE_YEAR - 1900;
-	tm->tm_wday = _to_tm_wday(data[LPTIME_WDAY]);
+	पंचांग->पंचांग_sec  = data[LPTIME_SEC];
+	पंचांग->पंचांग_min  = data[LPTIME_MIN];
+	पंचांग->पंचांग_hour = data[LPTIME_HOUR];
+	पंचांग->पंचांग_mday = data[LPTIME_MDAY];
+	पंचांग->पंचांग_mon  = data[LPTIME_MON] - LP8788_MONTH_OFFSET;
+	पंचांग->पंचांग_year = data[LPTIME_YEAR] + LP8788_BASE_YEAR - 1900;
+	पंचांग->पंचांग_wday = _to_पंचांग_wday(data[LPTIME_WDAY]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct lp8788_rtc *rtc = dev_get_drvdata(dev);
-	struct lp8788 *lp = rtc->lp;
+अटल पूर्णांक lp8788_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा lp8788_rtc *rtc = dev_get_drvdata(dev);
+	काष्ठा lp8788 *lp = rtc->lp;
 	u8 data[LPTIME_MAX - 1];
-	int ret, i, year;
+	पूर्णांक ret, i, year;
 
-	year = tm->tm_year + 1900 - LP8788_BASE_YEAR;
-	if (year < 0) {
+	year = पंचांग->पंचांग_year + 1900 - LP8788_BASE_YEAR;
+	अगर (year < 0) अणु
 		dev_err(lp->dev, "invalid year: %d\n", year);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* because rtc weekday is a readonly register, do not update */
-	data[LPTIME_SEC]  = tm->tm_sec;
-	data[LPTIME_MIN]  = tm->tm_min;
-	data[LPTIME_HOUR] = tm->tm_hour;
-	data[LPTIME_MDAY] = tm->tm_mday;
-	data[LPTIME_MON]  = tm->tm_mon + LP8788_MONTH_OFFSET;
+	/* because rtc weekday is a पढ़ोonly रेजिस्टर, करो not update */
+	data[LPTIME_SEC]  = पंचांग->पंचांग_sec;
+	data[LPTIME_MIN]  = पंचांग->पंचांग_min;
+	data[LPTIME_HOUR] = पंचांग->पंचांग_hour;
+	data[LPTIME_MDAY] = पंचांग->पंचांग_mday;
+	data[LPTIME_MON]  = पंचांग->पंचांग_mon + LP8788_MONTH_OFFSET;
 	data[LPTIME_YEAR] = year;
 
-	for (i = 0; i < ARRAY_SIZE(data); i++) {
-		ret = lp8788_write_byte(lp, LP8788_RTC_SEC + i, data[i]);
-		if (ret)
-			return ret;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(data); i++) अणु
+		ret = lp8788_ग_लिखो_byte(lp, LP8788_RTC_SEC + i, data[i]);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_read_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct lp8788_rtc *rtc = dev_get_drvdata(dev);
-	struct lp8788 *lp = rtc->lp;
-	struct rtc_time *tm = &alarm->time;
+अटल पूर्णांक lp8788_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा lp8788_rtc *rtc = dev_get_drvdata(dev);
+	काष्ठा lp8788 *lp = rtc->lp;
+	काष्ठा rtc_समय *पंचांग = &alarm->समय;
 	u8 addr, data[LPTIME_MAX];
-	int ret;
+	पूर्णांक ret;
 
 	addr = addr_alarm_sec[rtc->alarm];
-	ret = lp8788_read_multi_bytes(lp, addr, data, LPTIME_MAX);
-	if (ret)
-		return ret;
+	ret = lp8788_पढ़ो_multi_bytes(lp, addr, data, LPTIME_MAX);
+	अगर (ret)
+		वापस ret;
 
-	tm->tm_sec  = data[LPTIME_SEC];
-	tm->tm_min  = data[LPTIME_MIN];
-	tm->tm_hour = data[LPTIME_HOUR];
-	tm->tm_mday = data[LPTIME_MDAY];
-	tm->tm_mon  = data[LPTIME_MON] - LP8788_MONTH_OFFSET;
-	tm->tm_year = data[LPTIME_YEAR] + LP8788_BASE_YEAR - 1900;
-	tm->tm_wday = _to_tm_wday(data[LPTIME_WDAY]);
+	पंचांग->पंचांग_sec  = data[LPTIME_SEC];
+	पंचांग->पंचांग_min  = data[LPTIME_MIN];
+	पंचांग->पंचांग_hour = data[LPTIME_HOUR];
+	पंचांग->पंचांग_mday = data[LPTIME_MDAY];
+	पंचांग->पंचांग_mon  = data[LPTIME_MON] - LP8788_MONTH_OFFSET;
+	पंचांग->पंचांग_year = data[LPTIME_YEAR] + LP8788_BASE_YEAR - 1900;
+	पंचांग->पंचांग_wday = _to_पंचांग_wday(data[LPTIME_WDAY]);
 	alarm->enabled = data[LPTIME_WDAY] & LP8788_ALM_EN_M;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct lp8788_rtc *rtc = dev_get_drvdata(dev);
-	struct lp8788 *lp = rtc->lp;
-	struct rtc_time *tm = &alarm->time;
+अटल पूर्णांक lp8788_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा lp8788_rtc *rtc = dev_get_drvdata(dev);
+	काष्ठा lp8788 *lp = rtc->lp;
+	काष्ठा rtc_समय *पंचांग = &alarm->समय;
 	u8 addr, data[LPTIME_MAX];
-	int ret, i, year;
+	पूर्णांक ret, i, year;
 
-	year = tm->tm_year + 1900 - LP8788_BASE_YEAR;
-	if (year < 0) {
+	year = पंचांग->पंचांग_year + 1900 - LP8788_BASE_YEAR;
+	अगर (year < 0) अणु
 		dev_err(lp->dev, "invalid year: %d\n", year);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	data[LPTIME_SEC]  = tm->tm_sec;
-	data[LPTIME_MIN]  = tm->tm_min;
-	data[LPTIME_HOUR] = tm->tm_hour;
-	data[LPTIME_MDAY] = tm->tm_mday;
-	data[LPTIME_MON]  = tm->tm_mon + LP8788_MONTH_OFFSET;
+	data[LPTIME_SEC]  = पंचांग->पंचांग_sec;
+	data[LPTIME_MIN]  = पंचांग->पंचांग_min;
+	data[LPTIME_HOUR] = पंचांग->पंचांग_hour;
+	data[LPTIME_MDAY] = पंचांग->पंचांग_mday;
+	data[LPTIME_MON]  = पंचांग->पंचांग_mon + LP8788_MONTH_OFFSET;
 	data[LPTIME_YEAR] = year;
-	data[LPTIME_WDAY] = _to_lp8788_wday(tm->tm_wday);
+	data[LPTIME_WDAY] = _to_lp8788_wday(पंचांग->पंचांग_wday);
 
-	for (i = 0; i < ARRAY_SIZE(data); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(data); i++) अणु
 		addr = addr_alarm_sec[rtc->alarm] + i;
-		ret = lp8788_write_byte(lp, addr, data[i]);
-		if (ret)
-			return ret;
-	}
+		ret = lp8788_ग_लिखो_byte(lp, addr, data[i]);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	alarm->enabled = 1;
 	addr = addr_alarm_en[rtc->alarm];
 
-	return lp8788_update_bits(lp, addr, LP8788_ALM_EN_M,
+	वापस lp8788_update_bits(lp, addr, LP8788_ALM_EN_M,
 				alarm->enabled << LP8788_ALM_EN_S);
-}
+पूर्ण
 
-static int lp8788_alarm_irq_enable(struct device *dev, unsigned int enable)
-{
-	struct lp8788_rtc *rtc = dev_get_drvdata(dev);
-	struct lp8788 *lp = rtc->lp;
-	u8 mask, shift;
+अटल पूर्णांक lp8788_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enable)
+अणु
+	काष्ठा lp8788_rtc *rtc = dev_get_drvdata(dev);
+	काष्ठा lp8788 *lp = rtc->lp;
+	u8 mask, shअगरt;
 
-	if (!rtc->irq)
-		return -EIO;
+	अगर (!rtc->irq)
+		वापस -EIO;
 
 	mask = mask_alarm_en[rtc->alarm];
-	shift = shift_alarm_en[rtc->alarm];
+	shअगरt = shअगरt_alarm_en[rtc->alarm];
 
-	return lp8788_update_bits(lp, LP8788_INTEN_3, mask, enable << shift);
-}
+	वापस lp8788_update_bits(lp, LP8788_INTEN_3, mask, enable << shअगरt);
+पूर्ण
 
-static const struct rtc_class_ops lp8788_rtc_ops = {
-	.read_time = lp8788_rtc_read_time,
-	.set_time = lp8788_rtc_set_time,
-	.read_alarm = lp8788_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops lp8788_rtc_ops = अणु
+	.पढ़ो_समय = lp8788_rtc_पढ़ो_समय,
+	.set_समय = lp8788_rtc_set_समय,
+	.पढ़ो_alarm = lp8788_पढ़ो_alarm,
 	.set_alarm = lp8788_set_alarm,
 	.alarm_irq_enable = lp8788_alarm_irq_enable,
-};
+पूर्ण;
 
-static irqreturn_t lp8788_alarm_irq_handler(int irq, void *ptr)
-{
-	struct lp8788_rtc *rtc = ptr;
+अटल irqवापस_t lp8788_alarm_irq_handler(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा lp8788_rtc *rtc = ptr;
 
 	rtc_update_irq(rtc->rdev, 1, ALARM_IRQ_FLAG);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int lp8788_alarm_irq_register(struct platform_device *pdev,
-				struct lp8788_rtc *rtc)
-{
-	struct resource *r;
-	struct lp8788 *lp = rtc->lp;
-	struct irq_domain *irqdm = lp->irqdm;
-	int irq;
+अटल पूर्णांक lp8788_alarm_irq_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				काष्ठा lp8788_rtc *rtc)
+अणु
+	काष्ठा resource *r;
+	काष्ठा lp8788 *lp = rtc->lp;
+	काष्ठा irq_करोमुख्य *irqdm = lp->irqdm;
+	पूर्णांक irq;
 
 	rtc->irq = 0;
 
-	/* even the alarm IRQ number is not specified, rtc time should work */
-	r = platform_get_resource_byname(pdev, IORESOURCE_IRQ, LP8788_ALM_IRQ);
-	if (!r)
-		return 0;
+	/* even the alarm IRQ number is not specअगरied, rtc समय should work */
+	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ, LP8788_ALM_IRQ);
+	अगर (!r)
+		वापस 0;
 
-	if (rtc->alarm == LP8788_ALARM_1)
+	अगर (rtc->alarm == LP8788_ALARM_1)
 		irq = r->start;
-	else
+	अन्यथा
 		irq = r->end;
 
 	rtc->irq = irq_create_mapping(irqdm, irq);
 
-	return devm_request_threaded_irq(&pdev->dev, rtc->irq, NULL,
+	वापस devm_request_thपढ़ोed_irq(&pdev->dev, rtc->irq, शून्य,
 				lp8788_alarm_irq_handler,
 				0, LP8788_ALM_IRQ, rtc);
-}
+पूर्ण
 
-static int lp8788_rtc_probe(struct platform_device *pdev)
-{
-	struct lp8788 *lp = dev_get_drvdata(pdev->dev.parent);
-	struct lp8788_rtc *rtc;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक lp8788_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lp8788 *lp = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा lp8788_rtc *rtc;
+	काष्ठा device *dev = &pdev->dev;
 
-	rtc = devm_kzalloc(dev, sizeof(struct lp8788_rtc), GFP_KERNEL);
-	if (!rtc)
-		return -ENOMEM;
+	rtc = devm_kzalloc(dev, माप(काष्ठा lp8788_rtc), GFP_KERNEL);
+	अगर (!rtc)
+		वापस -ENOMEM;
 
 	rtc->lp = lp;
 	rtc->alarm = lp->pdata ? lp->pdata->alarm_sel : DEFAULT_ALARM_SEL;
-	platform_set_drvdata(pdev, rtc);
+	platक्रमm_set_drvdata(pdev, rtc);
 
 	device_init_wakeup(dev, 1);
 
-	rtc->rdev = devm_rtc_device_register(dev, "lp8788_rtc",
+	rtc->rdev = devm_rtc_device_रेजिस्टर(dev, "lp8788_rtc",
 					&lp8788_rtc_ops, THIS_MODULE);
-	if (IS_ERR(rtc->rdev)) {
+	अगर (IS_ERR(rtc->rdev)) अणु
 		dev_err(dev, "can not register rtc device\n");
-		return PTR_ERR(rtc->rdev);
-	}
+		वापस PTR_ERR(rtc->rdev);
+	पूर्ण
 
-	if (lp8788_alarm_irq_register(pdev, rtc))
+	अगर (lp8788_alarm_irq_रेजिस्टर(pdev, rtc))
 		dev_warn(lp->dev, "no rtc irq handler\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver lp8788_rtc_driver = {
+अटल काष्ठा platक्रमm_driver lp8788_rtc_driver = अणु
 	.probe = lp8788_rtc_probe,
-	.driver = {
+	.driver = अणु
 		.name = LP8788_DEV_RTC,
-	},
-};
-module_platform_driver(lp8788_rtc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(lp8788_rtc_driver);
 
 MODULE_DESCRIPTION("Texas Instruments LP8788 RTC Driver");
 MODULE_AUTHOR("Milo Kim");

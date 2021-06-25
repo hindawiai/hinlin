@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2018, Breno Leitao, Gustavo Romero, IBM Corp.
  *
- * A test case that creates a signal and starts a suspended transaction
- * inside the signal handler.
+ * A test हाल that creates a संकेत and starts a suspended transaction
+ * inside the संकेत handler.
  *
- * It returns from the signal handler with the CPU at suspended state, but
+ * It वापसs from the संकेत handler with the CPU at suspended state, but
  * without setting usercontext MSR Transaction State (TS) fields.
  */
 
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
+#घोषणा _GNU_SOURCE
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <संकेत.स>
 
-#include "utils.h"
-#include "tm.h"
+#समावेश "utils.h"
+#समावेश "tm.h"
 
-void trap_signal_handler(int signo, siginfo_t *si, void *uc)
-{
+व्योम trap_संकेत_handler(पूर्णांक signo, siginfo_t *si, व्योम *uc)
+अणु
 	ucontext_t *ucp = (ucontext_t *) uc;
 
-	asm("tbegin.; tsuspend.;");
+	यंत्र("tbegin.; tsuspend.;");
 
-	/* Skip 'trap' instruction if it succeed */
+	/* Skip 'trap' inकाष्ठाion अगर it succeed */
 	ucp->uc_mcontext.regs->nip += 4;
-}
+पूर्ण
 
-int tm_signal_sigreturn_nt(void)
-{
-	struct sigaction trap_sa;
+पूर्णांक पंचांग_संकेत_sigवापस_nt(व्योम)
+अणु
+	काष्ठा sigaction trap_sa;
 
-	SKIP_IF(!have_htm());
+	SKIP_IF(!have_hपंचांग());
 
 	trap_sa.sa_flags = SA_SIGINFO;
-	trap_sa.sa_sigaction = trap_signal_handler;
+	trap_sa.sa_sigaction = trap_संकेत_handler;
 
-	sigaction(SIGTRAP, &trap_sa, NULL);
+	sigaction(SIGTRAP, &trap_sa, शून्य);
 
-	raise(SIGTRAP);
+	उठाओ(SIGTRAP);
 
-	return EXIT_SUCCESS;
-}
+	वापस निकास_सफल;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	test_harness(tm_signal_sigreturn_nt, "tm_signal_sigreturn_nt");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	test_harness(पंचांग_संकेत_sigवापस_nt, "tm_signal_sigreturn_nt");
+पूर्ण
 

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* DNS resolver key type
  *
  * Copyright (C) 2010 Wang Lei. All Rights Reserved.
  * Written by Wang Lei (wang840925@gmail.com)
  */
 
-#ifndef _KEYS_DNS_RESOLVER_TYPE_H
-#define _KEYS_DNS_RESOLVER_TYPE_H
+#अगर_अघोषित _KEYS_DNS_RESOLVER_TYPE_H
+#घोषणा _KEYS_DNS_RESOLVER_TYPE_H
 
-#include <linux/key-type.h>
+#समावेश <linux/key-type.h>
 
-extern struct key_type key_type_dns_resolver;
+बाह्य काष्ठा key_type key_type_dns_resolver;
 
-extern int request_dns_resolver_key(const char *description,
-				    const char *callout_info,
-				    char **data);
+बाह्य पूर्णांक request_dns_resolver_key(स्थिर अक्षर *description,
+				    स्थिर अक्षर *callout_info,
+				    अक्षर **data);
 
-#endif /* _KEYS_DNS_RESOLVER_TYPE_H */
+#पूर्ण_अगर /* _KEYS_DNS_RESOLVER_TYPE_H */

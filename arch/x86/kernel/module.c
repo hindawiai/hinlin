@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/*  Kernel module help for x86.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/*  Kernel module help क्रम x86.
     Copyright (C) 2001 Rusty Russell.
 
 */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/moduleloader.h>
-#include <linux/elf.h>
-#include <linux/vmalloc.h>
-#include <linux/fs.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/kasan.h>
-#include <linux/bug.h>
-#include <linux/mm.h>
-#include <linux/gfp.h>
-#include <linux/jump_label.h>
-#include <linux/random.h>
-#include <linux/memory.h>
+#समावेश <linux/moduleloader.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kasan.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/memory.h>
 
-#include <asm/text-patching.h>
-#include <asm/page.h>
-#include <asm/setup.h>
-#include <asm/unwind.h>
+#समावेश <यंत्र/text-patching.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/unwind.h>
 
-#if 0
-#define DEBUGP(fmt, ...)				\
-	printk(KERN_DEBUG fmt, ##__VA_ARGS__)
-#else
-#define DEBUGP(fmt, ...)				\
-do {							\
-	if (0)						\
-		printk(KERN_DEBUG fmt, ##__VA_ARGS__);	\
-} while (0)
-#endif
+#अगर 0
+#घोषणा DEBUGP(fmt, ...)				\
+	prपूर्णांकk(KERN_DEBUG fmt, ##__VA_ARGS__)
+#अन्यथा
+#घोषणा DEBUGP(fmt, ...)				\
+करो अणु							\
+	अगर (0)						\
+		prपूर्णांकk(KERN_DEBUG fmt, ##__VA_ARGS__);	\
+पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifdef CONFIG_RANDOMIZE_BASE
-static unsigned long module_load_offset;
+#अगर_घोषित CONFIG_RANDOMIZE_BASE
+अटल अचिन्हित दीर्घ module_load_offset;
 
 /* Mutex protects the module_load_offset. */
-static DEFINE_MUTEX(module_kaslr_mutex);
+अटल DEFINE_MUTEX(module_kaslr_mutex);
 
-static unsigned long int get_module_load_offset(void)
-{
-	if (kaslr_enabled()) {
+अटल अचिन्हित दीर्घ पूर्णांक get_module_load_offset(व्योम)
+अणु
+	अगर (kaslr_enabled()) अणु
 		mutex_lock(&module_kaslr_mutex);
 		/*
-		 * Calculate the module_load_offset the first time this
+		 * Calculate the module_load_offset the first समय this
 		 * code is called. Once calculated it stays the same until
 		 * reboot.
 		 */
-		if (module_load_offset == 0)
+		अगर (module_load_offset == 0)
 			module_load_offset =
-				(get_random_int() % 1024 + 1) * PAGE_SIZE;
+				(get_अक्रमom_पूर्णांक() % 1024 + 1) * PAGE_SIZE;
 		mutex_unlock(&module_kaslr_mutex);
-	}
-	return module_load_offset;
-}
-#else
-static unsigned long int get_module_load_offset(void)
-{
-	return 0;
-}
-#endif
+	पूर्ण
+	वापस module_load_offset;
+पूर्ण
+#अन्यथा
+अटल अचिन्हित दीर्घ पूर्णांक get_module_load_offset(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-void *module_alloc(unsigned long size)
-{
-	void *p;
+व्योम *module_alloc(अचिन्हित दीर्घ size)
+अणु
+	व्योम *p;
 
-	if (PAGE_ALIGN(size) > MODULES_LEN)
-		return NULL;
+	अगर (PAGE_ALIGN(size) > MODULES_LEN)
+		वापस शून्य;
 
-	p = __vmalloc_node_range(size, MODULE_ALIGN,
+	p = __vदो_स्मृति_node_range(size, MODULE_ALIGN,
 				    MODULES_VADDR + get_module_load_offset(),
 				    MODULES_END, GFP_KERNEL,
 				    PAGE_KERNEL, 0, NUMA_NO_NODE,
-				    __builtin_return_address(0));
-	if (p && (kasan_module_alloc(p, size) < 0)) {
-		vfree(p);
-		return NULL;
-	}
+				    __builtin_वापस_address(0));
+	अगर (p && (kasan_module_alloc(p, size) < 0)) अणु
+		vमुक्त(p);
+		वापस शून्य;
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-#ifdef CONFIG_X86_32
-int apply_relocate(Elf32_Shdr *sechdrs,
-		   const char *strtab,
-		   unsigned int symindex,
-		   unsigned int relsec,
-		   struct module *me)
-{
-	unsigned int i;
-	Elf32_Rel *rel = (void *)sechdrs[relsec].sh_addr;
+#अगर_घोषित CONFIG_X86_32
+पूर्णांक apply_relocate(Elf32_Shdr *sechdrs,
+		   स्थिर अक्षर *strtab,
+		   अचिन्हित पूर्णांक symindex,
+		   अचिन्हित पूर्णांक rअन्यथाc,
+		   काष्ठा module *me)
+अणु
+	अचिन्हित पूर्णांक i;
+	Elf32_Rel *rel = (व्योम *)sechdrs[rअन्यथाc].sh_addr;
 	Elf32_Sym *sym;
-	uint32_t *location;
+	uपूर्णांक32_t *location;
 
 	DEBUGP("Applying relocate section %u to %u\n",
-	       relsec, sechdrs[relsec].sh_info);
-	for (i = 0; i < sechdrs[relsec].sh_size / sizeof(*rel); i++) {
+	       rअन्यथाc, sechdrs[rअन्यथाc].sh_info);
+	क्रम (i = 0; i < sechdrs[rअन्यथाc].sh_size / माप(*rel); i++) अणु
 		/* This is where to make the change */
-		location = (void *)sechdrs[sechdrs[relsec].sh_info].sh_addr
+		location = (व्योम *)sechdrs[sechdrs[rअन्यथाc].sh_info].sh_addr
 			+ rel[i].r_offset;
 		/* This is the symbol it is referring to.  Note that all
 		   undefined symbols have been resolved.  */
 		sym = (Elf32_Sym *)sechdrs[symindex].sh_addr
 			+ ELF32_R_SYM(rel[i].r_info);
 
-		switch (ELF32_R_TYPE(rel[i].r_info)) {
-		case R_386_32:
-			/* We add the value into the location given */
+		चयन (ELF32_R_TYPE(rel[i].r_info)) अणु
+		हाल R_386_32:
+			/* We add the value पूर्णांकo the location given */
 			*location += sym->st_value;
-			break;
-		case R_386_PC32:
-		case R_386_PLT32:
+			अवरोध;
+		हाल R_386_PC32:
+		हाल R_386_PLT32:
 			/* Add the value, subtract its position */
-			*location += sym->st_value - (uint32_t)location;
-			break;
-		default:
+			*location += sym->st_value - (uपूर्णांक32_t)location;
+			अवरोध;
+		शेष:
 			pr_err("%s: Unknown relocation: %u\n",
 			       me->name, ELF32_R_TYPE(rel[i].r_info));
-			return -ENOEXEC;
-		}
-	}
-	return 0;
-}
-#else /*X86_64*/
-static int __apply_relocate_add(Elf64_Shdr *sechdrs,
-		   const char *strtab,
-		   unsigned int symindex,
-		   unsigned int relsec,
-		   struct module *me,
-		   void *(*write)(void *dest, const void *src, size_t len))
-{
-	unsigned int i;
-	Elf64_Rela *rel = (void *)sechdrs[relsec].sh_addr;
+			वापस -ENOEXEC;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
+#अन्यथा /*X86_64*/
+अटल पूर्णांक __apply_relocate_add(Elf64_Shdr *sechdrs,
+		   स्थिर अक्षर *strtab,
+		   अचिन्हित पूर्णांक symindex,
+		   अचिन्हित पूर्णांक rअन्यथाc,
+		   काष्ठा module *me,
+		   व्योम *(*ग_लिखो)(व्योम *dest, स्थिर व्योम *src, माप_प्रकार len))
+अणु
+	अचिन्हित पूर्णांक i;
+	Elf64_Rela *rel = (व्योम *)sechdrs[rअन्यथाc].sh_addr;
 	Elf64_Sym *sym;
-	void *loc;
+	व्योम *loc;
 	u64 val;
 
 	DEBUGP("Applying relocate section %u to %u\n",
-	       relsec, sechdrs[relsec].sh_info);
-	for (i = 0; i < sechdrs[relsec].sh_size / sizeof(*rel); i++) {
+	       rअन्यथाc, sechdrs[rअन्यथाc].sh_info);
+	क्रम (i = 0; i < sechdrs[rअन्यथाc].sh_size / माप(*rel); i++) अणु
 		/* This is where to make the change */
-		loc = (void *)sechdrs[sechdrs[relsec].sh_info].sh_addr
+		loc = (व्योम *)sechdrs[sechdrs[rअन्यथाc].sh_info].sh_addr
 			+ rel[i].r_offset;
 
 		/* This is the symbol it is referring to.  Note that all
@@ -153,151 +154,151 @@ static int __apply_relocate_add(Elf64_Shdr *sechdrs,
 			+ ELF64_R_SYM(rel[i].r_info);
 
 		DEBUGP("type %d st_value %Lx r_addend %Lx loc %Lx\n",
-		       (int)ELF64_R_TYPE(rel[i].r_info),
+		       (पूर्णांक)ELF64_R_TYPE(rel[i].r_info),
 		       sym->st_value, rel[i].r_addend, (u64)loc);
 
 		val = sym->st_value + rel[i].r_addend;
 
-		switch (ELF64_R_TYPE(rel[i].r_info)) {
-		case R_X86_64_NONE:
-			break;
-		case R_X86_64_64:
-			if (*(u64 *)loc != 0)
-				goto invalid_relocation;
-			write(loc, &val, 8);
-			break;
-		case R_X86_64_32:
-			if (*(u32 *)loc != 0)
-				goto invalid_relocation;
-			write(loc, &val, 4);
-			if (val != *(u32 *)loc)
-				goto overflow;
-			break;
-		case R_X86_64_32S:
-			if (*(s32 *)loc != 0)
-				goto invalid_relocation;
-			write(loc, &val, 4);
-			if ((s64)val != *(s32 *)loc)
-				goto overflow;
-			break;
-		case R_X86_64_PC32:
-		case R_X86_64_PLT32:
-			if (*(u32 *)loc != 0)
-				goto invalid_relocation;
+		चयन (ELF64_R_TYPE(rel[i].r_info)) अणु
+		हाल R_X86_64_NONE:
+			अवरोध;
+		हाल R_X86_64_64:
+			अगर (*(u64 *)loc != 0)
+				जाओ invalid_relocation;
+			ग_लिखो(loc, &val, 8);
+			अवरोध;
+		हाल R_X86_64_32:
+			अगर (*(u32 *)loc != 0)
+				जाओ invalid_relocation;
+			ग_लिखो(loc, &val, 4);
+			अगर (val != *(u32 *)loc)
+				जाओ overflow;
+			अवरोध;
+		हाल R_X86_64_32S:
+			अगर (*(s32 *)loc != 0)
+				जाओ invalid_relocation;
+			ग_लिखो(loc, &val, 4);
+			अगर ((s64)val != *(s32 *)loc)
+				जाओ overflow;
+			अवरोध;
+		हाल R_X86_64_PC32:
+		हाल R_X86_64_PLT32:
+			अगर (*(u32 *)loc != 0)
+				जाओ invalid_relocation;
 			val -= (u64)loc;
-			write(loc, &val, 4);
-#if 0
-			if ((s64)val != *(s32 *)loc)
-				goto overflow;
-#endif
-			break;
-		case R_X86_64_PC64:
-			if (*(u64 *)loc != 0)
-				goto invalid_relocation;
+			ग_लिखो(loc, &val, 4);
+#अगर 0
+			अगर ((s64)val != *(s32 *)loc)
+				जाओ overflow;
+#पूर्ण_अगर
+			अवरोध;
+		हाल R_X86_64_PC64:
+			अगर (*(u64 *)loc != 0)
+				जाओ invalid_relocation;
 			val -= (u64)loc;
-			write(loc, &val, 8);
-			break;
-		default:
+			ग_लिखो(loc, &val, 8);
+			अवरोध;
+		शेष:
 			pr_err("%s: Unknown rela relocation: %llu\n",
 			       me->name, ELF64_R_TYPE(rel[i].r_info));
-			return -ENOEXEC;
-		}
-	}
-	return 0;
+			वापस -ENOEXEC;
+		पूर्ण
+	पूर्ण
+	वापस 0;
 
 invalid_relocation:
 	pr_err("x86/modules: Skipping invalid relocation target, existing value is nonzero for type %d, loc %p, val %Lx\n",
-	       (int)ELF64_R_TYPE(rel[i].r_info), loc, val);
-	return -ENOEXEC;
+	       (पूर्णांक)ELF64_R_TYPE(rel[i].r_info), loc, val);
+	वापस -ENOEXEC;
 
 overflow:
 	pr_err("overflow in relocation type %d val %Lx\n",
-	       (int)ELF64_R_TYPE(rel[i].r_info), val);
+	       (पूर्णांक)ELF64_R_TYPE(rel[i].r_info), val);
 	pr_err("`%s' likely not compiled with -mcmodel=kernel\n",
 	       me->name);
-	return -ENOEXEC;
-}
+	वापस -ENOEXEC;
+पूर्ण
 
-int apply_relocate_add(Elf64_Shdr *sechdrs,
-		   const char *strtab,
-		   unsigned int symindex,
-		   unsigned int relsec,
-		   struct module *me)
-{
-	int ret;
+पूर्णांक apply_relocate_add(Elf64_Shdr *sechdrs,
+		   स्थिर अक्षर *strtab,
+		   अचिन्हित पूर्णांक symindex,
+		   अचिन्हित पूर्णांक rअन्यथाc,
+		   काष्ठा module *me)
+अणु
+	पूर्णांक ret;
 	bool early = me->state == MODULE_STATE_UNFORMED;
-	void *(*write)(void *, const void *, size_t) = memcpy;
+	व्योम *(*ग_लिखो)(व्योम *, स्थिर व्योम *, माप_प्रकार) = स_नकल;
 
-	if (!early) {
-		write = text_poke;
+	अगर (!early) अणु
+		ग_लिखो = text_poke;
 		mutex_lock(&text_mutex);
-	}
+	पूर्ण
 
-	ret = __apply_relocate_add(sechdrs, strtab, symindex, relsec, me,
-				   write);
+	ret = __apply_relocate_add(sechdrs, strtab, symindex, rअन्यथाc, me,
+				   ग_लिखो);
 
-	if (!early) {
+	अगर (!early) अणु
 		text_poke_sync();
 		mutex_unlock(&text_mutex);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-int module_finalize(const Elf_Ehdr *hdr,
-		    const Elf_Shdr *sechdrs,
-		    struct module *me)
-{
-	const Elf_Shdr *s, *text = NULL, *alt = NULL, *locks = NULL,
-		*para = NULL, *orc = NULL, *orc_ip = NULL;
-	char *secstrings = (void *)hdr + sechdrs[hdr->e_shstrndx].sh_offset;
+पूर्णांक module_finalize(स्थिर Elf_Ehdr *hdr,
+		    स्थिर Elf_Shdr *sechdrs,
+		    काष्ठा module *me)
+अणु
+	स्थिर Elf_Shdr *s, *text = शून्य, *alt = शून्य, *locks = शून्य,
+		*para = शून्य, *orc = शून्य, *orc_ip = शून्य;
+	अक्षर *secstrings = (व्योम *)hdr + sechdrs[hdr->e_shstrndx].sh_offset;
 
-	for (s = sechdrs; s < sechdrs + hdr->e_shnum; s++) {
-		if (!strcmp(".text", secstrings + s->sh_name))
+	क्रम (s = sechdrs; s < sechdrs + hdr->e_shnum; s++) अणु
+		अगर (!म_भेद(".text", secstrings + s->sh_name))
 			text = s;
-		if (!strcmp(".altinstructions", secstrings + s->sh_name))
+		अगर (!म_भेद(".altinstructions", secstrings + s->sh_name))
 			alt = s;
-		if (!strcmp(".smp_locks", secstrings + s->sh_name))
+		अगर (!म_भेद(".smp_locks", secstrings + s->sh_name))
 			locks = s;
-		if (!strcmp(".parainstructions", secstrings + s->sh_name))
+		अगर (!म_भेद(".parainstructions", secstrings + s->sh_name))
 			para = s;
-		if (!strcmp(".orc_unwind", secstrings + s->sh_name))
+		अगर (!म_भेद(".orc_unwind", secstrings + s->sh_name))
 			orc = s;
-		if (!strcmp(".orc_unwind_ip", secstrings + s->sh_name))
+		अगर (!म_भेद(".orc_unwind_ip", secstrings + s->sh_name))
 			orc_ip = s;
-	}
+	पूर्ण
 
-	if (alt) {
-		/* patch .altinstructions */
-		void *aseg = (void *)alt->sh_addr;
+	अगर (alt) अणु
+		/* patch .altinकाष्ठाions */
+		व्योम *aseg = (व्योम *)alt->sh_addr;
 		apply_alternatives(aseg, aseg + alt->sh_size);
-	}
-	if (locks && text) {
-		void *lseg = (void *)locks->sh_addr;
-		void *tseg = (void *)text->sh_addr;
+	पूर्ण
+	अगर (locks && text) अणु
+		व्योम *lseg = (व्योम *)locks->sh_addr;
+		व्योम *tseg = (व्योम *)text->sh_addr;
 		alternatives_smp_module_add(me, me->name,
 					    lseg, lseg + locks->sh_size,
 					    tseg, tseg + text->sh_size);
-	}
+	पूर्ण
 
-	if (para) {
-		void *pseg = (void *)para->sh_addr;
+	अगर (para) अणु
+		व्योम *pseg = (व्योम *)para->sh_addr;
 		apply_paravirt(pseg, pseg + para->sh_size);
-	}
+	पूर्ण
 
 	/* make jump label nops */
 	jump_label_apply_nops(me);
 
-	if (orc && orc_ip)
-		unwind_module_init(me, (void *)orc_ip->sh_addr, orc_ip->sh_size,
-				   (void *)orc->sh_addr, orc->sh_size);
+	अगर (orc && orc_ip)
+		unwind_module_init(me, (व्योम *)orc_ip->sh_addr, orc_ip->sh_size,
+				   (व्योम *)orc->sh_addr, orc->sh_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void module_arch_cleanup(struct module *mod)
-{
+व्योम module_arch_cleanup(काष्ठा module *mod)
+अणु
 	alternatives_smp_module_del(mod);
-}
+पूर्ण

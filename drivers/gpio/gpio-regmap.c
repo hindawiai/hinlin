@@ -1,229 +1,230 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * regmap based generic GPIO driver
  *
  * Copyright 2020 Michael Walle <michael@walle.cc>
  */
 
-#include <linux/gpio/driver.h>
-#include <linux/gpio/regmap.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/gpio/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
 
-struct gpio_regmap {
-	struct device *parent;
-	struct regmap *regmap;
-	struct gpio_chip gpio_chip;
+काष्ठा gpio_regmap अणु
+	काष्ठा device *parent;
+	काष्ठा regmap *regmap;
+	काष्ठा gpio_chip gpio_chip;
 
-	int reg_stride;
-	int ngpio_per_reg;
-	unsigned int reg_dat_base;
-	unsigned int reg_set_base;
-	unsigned int reg_clr_base;
-	unsigned int reg_dir_in_base;
-	unsigned int reg_dir_out_base;
+	पूर्णांक reg_stride;
+	पूर्णांक ngpio_per_reg;
+	अचिन्हित पूर्णांक reg_dat_base;
+	अचिन्हित पूर्णांक reg_set_base;
+	अचिन्हित पूर्णांक reg_clr_base;
+	अचिन्हित पूर्णांक reg_dir_in_base;
+	अचिन्हित पूर्णांक reg_dir_out_base;
 
-	int (*reg_mask_xlate)(struct gpio_regmap *gpio, unsigned int base,
-			      unsigned int offset, unsigned int *reg,
-			      unsigned int *mask);
+	पूर्णांक (*reg_mask_xlate)(काष्ठा gpio_regmap *gpio, अचिन्हित पूर्णांक base,
+			      अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक *reg,
+			      अचिन्हित पूर्णांक *mask);
 
-	void *driver_data;
-};
+	व्योम *driver_data;
+पूर्ण;
 
-static unsigned int gpio_regmap_addr(unsigned int addr)
-{
-	if (addr == GPIO_REGMAP_ADDR_ZERO)
-		return 0;
+अटल अचिन्हित पूर्णांक gpio_regmap_addr(अचिन्हित पूर्णांक addr)
+अणु
+	अगर (addr == GPIO_REGMAP_ADDR_ZERO)
+		वापस 0;
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static int gpio_regmap_simple_xlate(struct gpio_regmap *gpio,
-				    unsigned int base, unsigned int offset,
-				    unsigned int *reg, unsigned int *mask)
-{
-	unsigned int line = offset % gpio->ngpio_per_reg;
-	unsigned int stride = offset / gpio->ngpio_per_reg;
+अटल पूर्णांक gpio_regmap_simple_xlate(काष्ठा gpio_regmap *gpio,
+				    अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक offset,
+				    अचिन्हित पूर्णांक *reg, अचिन्हित पूर्णांक *mask)
+अणु
+	अचिन्हित पूर्णांक line = offset % gpio->ngpio_per_reg;
+	अचिन्हित पूर्णांक stride = offset / gpio->ngpio_per_reg;
 
 	*reg = base + stride * gpio->reg_stride;
 	*mask = BIT(line);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_regmap_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct gpio_regmap *gpio = gpiochip_get_data(chip);
-	unsigned int base, val, reg, mask;
-	int ret;
+अटल पूर्णांक gpio_regmap_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpio_regmap *gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक base, val, reg, mask;
+	पूर्णांक ret;
 
-	/* we might not have an output register if we are input only */
-	if (gpio->reg_dat_base)
+	/* we might not have an output रेजिस्टर अगर we are input only */
+	अगर (gpio->reg_dat_base)
 		base = gpio_regmap_addr(gpio->reg_dat_base);
-	else
+	अन्यथा
 		base = gpio_regmap_addr(gpio->reg_set_base);
 
 	ret = gpio->reg_mask_xlate(gpio, base, offset, &reg, &mask);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(gpio->regmap, reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(gpio->regmap, reg, &val);
+	अगर (ret)
+		वापस ret;
 
-	return !!(val & mask);
-}
+	वापस !!(val & mask);
+पूर्ण
 
-static void gpio_regmap_set(struct gpio_chip *chip, unsigned int offset,
-			    int val)
-{
-	struct gpio_regmap *gpio = gpiochip_get_data(chip);
-	unsigned int base = gpio_regmap_addr(gpio->reg_set_base);
-	unsigned int reg, mask;
+अटल व्योम gpio_regmap_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+			    पूर्णांक val)
+अणु
+	काष्ठा gpio_regmap *gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक base = gpio_regmap_addr(gpio->reg_set_base);
+	अचिन्हित पूर्णांक reg, mask;
 
 	gpio->reg_mask_xlate(gpio, base, offset, &reg, &mask);
-	if (val)
+	अगर (val)
 		regmap_update_bits(gpio->regmap, reg, mask, mask);
-	else
+	अन्यथा
 		regmap_update_bits(gpio->regmap, reg, mask, 0);
-}
+पूर्ण
 
-static void gpio_regmap_set_with_clear(struct gpio_chip *chip,
-				       unsigned int offset, int val)
-{
-	struct gpio_regmap *gpio = gpiochip_get_data(chip);
-	unsigned int base, reg, mask;
+अटल व्योम gpio_regmap_set_with_clear(काष्ठा gpio_chip *chip,
+				       अचिन्हित पूर्णांक offset, पूर्णांक val)
+अणु
+	काष्ठा gpio_regmap *gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक base, reg, mask;
 
-	if (val)
+	अगर (val)
 		base = gpio_regmap_addr(gpio->reg_set_base);
-	else
+	अन्यथा
 		base = gpio_regmap_addr(gpio->reg_clr_base);
 
 	gpio->reg_mask_xlate(gpio, base, offset, &reg, &mask);
-	regmap_write(gpio->regmap, reg, mask);
-}
+	regmap_ग_लिखो(gpio->regmap, reg, mask);
+पूर्ण
 
-static int gpio_regmap_get_direction(struct gpio_chip *chip,
-				     unsigned int offset)
-{
-	struct gpio_regmap *gpio = gpiochip_get_data(chip);
-	unsigned int base, val, reg, mask;
-	int invert, ret;
+अटल पूर्णांक gpio_regmap_get_direction(काष्ठा gpio_chip *chip,
+				     अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpio_regmap *gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक base, val, reg, mask;
+	पूर्णांक invert, ret;
 
-	if (gpio->reg_dir_out_base) {
+	अगर (gpio->reg_dir_out_base) अणु
 		base = gpio_regmap_addr(gpio->reg_dir_out_base);
 		invert = 0;
-	} else if (gpio->reg_dir_in_base) {
+	पूर्ण अन्यथा अगर (gpio->reg_dir_in_base) अणु
 		base = gpio_regmap_addr(gpio->reg_dir_in_base);
 		invert = 1;
-	} else {
-		return -EOPNOTSUPP;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	ret = gpio->reg_mask_xlate(gpio, base, offset, &reg, &mask);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(gpio->regmap, reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(gpio->regmap, reg, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (!!(val & mask) ^ invert)
-		return GPIO_LINE_DIRECTION_OUT;
-	else
-		return GPIO_LINE_DIRECTION_IN;
-}
+	अगर (!!(val & mask) ^ invert)
+		वापस GPIO_LINE_सूचीECTION_OUT;
+	अन्यथा
+		वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int gpio_regmap_set_direction(struct gpio_chip *chip,
-				     unsigned int offset, bool output)
-{
-	struct gpio_regmap *gpio = gpiochip_get_data(chip);
-	unsigned int base, val, reg, mask;
-	int invert, ret;
+अटल पूर्णांक gpio_regmap_set_direction(काष्ठा gpio_chip *chip,
+				     अचिन्हित पूर्णांक offset, bool output)
+अणु
+	काष्ठा gpio_regmap *gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक base, val, reg, mask;
+	पूर्णांक invert, ret;
 
-	if (gpio->reg_dir_out_base) {
+	अगर (gpio->reg_dir_out_base) अणु
 		base = gpio_regmap_addr(gpio->reg_dir_out_base);
 		invert = 0;
-	} else if (gpio->reg_dir_in_base) {
+	पूर्ण अन्यथा अगर (gpio->reg_dir_in_base) अणु
 		base = gpio_regmap_addr(gpio->reg_dir_in_base);
 		invert = 1;
-	} else {
-		return -EOPNOTSUPP;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	ret = gpio->reg_mask_xlate(gpio, base, offset, &reg, &mask);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (invert)
+	अगर (invert)
 		val = output ? 0 : mask;
-	else
+	अन्यथा
 		val = output ? mask : 0;
 
-	return regmap_update_bits(gpio->regmap, reg, mask, val);
-}
+	वापस regmap_update_bits(gpio->regmap, reg, mask, val);
+पूर्ण
 
-static int gpio_regmap_direction_input(struct gpio_chip *chip,
-				       unsigned int offset)
-{
-	return gpio_regmap_set_direction(chip, offset, false);
-}
+अटल पूर्णांक gpio_regmap_direction_input(काष्ठा gpio_chip *chip,
+				       अचिन्हित पूर्णांक offset)
+अणु
+	वापस gpio_regmap_set_direction(chip, offset, false);
+पूर्ण
 
-static int gpio_regmap_direction_output(struct gpio_chip *chip,
-					unsigned int offset, int value)
-{
+अटल पूर्णांक gpio_regmap_direction_output(काष्ठा gpio_chip *chip,
+					अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
 	gpio_regmap_set(chip, offset, value);
 
-	return gpio_regmap_set_direction(chip, offset, true);
-}
+	वापस gpio_regmap_set_direction(chip, offset, true);
+पूर्ण
 
-void gpio_regmap_set_drvdata(struct gpio_regmap *gpio, void *data)
-{
+व्योम gpio_regmap_set_drvdata(काष्ठा gpio_regmap *gpio, व्योम *data)
+अणु
 	gpio->driver_data = data;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gpio_regmap_set_drvdata);
 
-void *gpio_regmap_get_drvdata(struct gpio_regmap *gpio)
-{
-	return gpio->driver_data;
-}
+व्योम *gpio_regmap_get_drvdata(काष्ठा gpio_regmap *gpio)
+अणु
+	वापस gpio->driver_data;
+पूर्ण
 EXPORT_SYMBOL_GPL(gpio_regmap_get_drvdata);
 
 /**
- * gpio_regmap_register() - Register a generic regmap GPIO controller
- * @config: configuration for gpio_regmap
+ * gpio_regmap_रेजिस्टर() - Register a generic regmap GPIO controller
+ * @config: configuration क्रम gpio_regmap
  *
- * Return: A pointer to the registered gpio_regmap or ERR_PTR error value.
+ * Return: A poपूर्णांकer to the रेजिस्टरed gpio_regmap or ERR_PTR error value.
  */
-struct gpio_regmap *gpio_regmap_register(const struct gpio_regmap_config *config)
-{
-	struct gpio_regmap *gpio;
-	struct gpio_chip *chip;
-	int ret;
+काष्ठा gpio_regmap *gpio_regmap_रेजिस्टर(स्थिर काष्ठा gpio_regmap_config *config)
+अणु
+	काष्ठा gpio_regmap *gpio;
+	काष्ठा gpio_chip *chip;
+	पूर्णांक ret;
 
-	if (!config->parent)
-		return ERR_PTR(-EINVAL);
+	अगर (!config->parent)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!config->ngpio)
-		return ERR_PTR(-EINVAL);
+	अगर (!config->ngpio)
+		वापस ERR_PTR(-EINVAL);
 
 	/* we need at least one */
-	if (!config->reg_dat_base && !config->reg_set_base)
-		return ERR_PTR(-EINVAL);
+	अगर (!config->reg_dat_base && !config->reg_set_base)
+		वापस ERR_PTR(-EINVAL);
 
-	/* if we have a direction register we need both input and output */
-	if ((config->reg_dir_out_base || config->reg_dir_in_base) &&
+	/* अगर we have a direction रेजिस्टर we need both input and output */
+	अगर ((config->reg_dir_out_base || config->reg_dir_in_base) &&
 	    (!config->reg_dat_base || !config->reg_set_base))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	/* we don't support having both registers simultaneously for now */
-	if (config->reg_dir_out_base && config->reg_dir_in_base)
-		return ERR_PTR(-EINVAL);
+	/* we करोn't support having both रेजिस्टरs simultaneously क्रम now */
+	अगर (config->reg_dir_out_base && config->reg_dir_in_base)
+		वापस ERR_PTR(-EINVAL);
 
-	gpio = kzalloc(sizeof(*gpio), GFP_KERNEL);
-	if (!gpio)
-		return ERR_PTR(-ENOMEM);
+	gpio = kzalloc(माप(*gpio), GFP_KERNEL);
+	अगर (!gpio)
+		वापस ERR_PTR(-ENOMEM);
 
 	gpio->parent = config->parent;
 	gpio->regmap = config->regmap;
@@ -236,15 +237,15 @@ struct gpio_regmap *gpio_regmap_register(const struct gpio_regmap_config *config
 	gpio->reg_dir_in_base = config->reg_dir_in_base;
 	gpio->reg_dir_out_base = config->reg_dir_out_base;
 
-	/* if not set, assume there is only one register */
-	if (!gpio->ngpio_per_reg)
+	/* अगर not set, assume there is only one रेजिस्टर */
+	अगर (!gpio->ngpio_per_reg)
 		gpio->ngpio_per_reg = config->ngpio;
 
-	/* if not set, assume they are consecutive */
-	if (!gpio->reg_stride)
+	/* अगर not set, assume they are consecutive */
+	अगर (!gpio->reg_stride)
 		gpio->reg_stride = 1;
 
-	if (!gpio->reg_mask_xlate)
+	अगर (!gpio->reg_mask_xlate)
 		gpio->reg_mask_xlate = gpio_regmap_simple_xlate;
 
 	chip = &gpio->gpio_chip;
@@ -254,100 +255,100 @@ struct gpio_regmap *gpio_regmap_register(const struct gpio_regmap_config *config
 	chip->names = config->names;
 	chip->label = config->label ?: dev_name(config->parent);
 
-#if defined(CONFIG_OF_GPIO)
-	/* gpiolib will use of_node of the parent if chip->of_node is NULL */
+#अगर defined(CONFIG_OF_GPIO)
+	/* gpiolib will use of_node of the parent अगर chip->of_node is शून्य */
 	chip->of_node = to_of_node(config->fwnode);
-#endif /* CONFIG_OF_GPIO */
+#पूर्ण_अगर /* CONFIG_OF_GPIO */
 
 	/*
 	 * If our regmap is fast_io we should probably set can_sleep to false.
-	 * Right now, the regmap doesn't save this property, nor is there any
-	 * access function for it.
+	 * Right now, the regmap करोesn't save this property, nor is there any
+	 * access function क्रम it.
 	 * The only regmap type which uses fast_io is regmap-mmio. For now,
-	 * assume a safe default of true here.
+	 * assume a safe शेष of true here.
 	 */
 	chip->can_sleep = true;
 
 	chip->get = gpio_regmap_get;
-	if (gpio->reg_set_base && gpio->reg_clr_base)
+	अगर (gpio->reg_set_base && gpio->reg_clr_base)
 		chip->set = gpio_regmap_set_with_clear;
-	else if (gpio->reg_set_base)
+	अन्यथा अगर (gpio->reg_set_base)
 		chip->set = gpio_regmap_set;
 
-	if (gpio->reg_dir_in_base || gpio->reg_dir_out_base) {
+	अगर (gpio->reg_dir_in_base || gpio->reg_dir_out_base) अणु
 		chip->get_direction = gpio_regmap_get_direction;
 		chip->direction_input = gpio_regmap_direction_input;
 		chip->direction_output = gpio_regmap_direction_output;
-	}
+	पूर्ण
 
 	ret = gpiochip_add_data(chip, gpio);
-	if (ret < 0)
-		goto err_free_gpio;
+	अगर (ret < 0)
+		जाओ err_मुक्त_gpio;
 
-	if (config->irq_domain) {
-		ret = gpiochip_irqchip_add_domain(chip, config->irq_domain);
-		if (ret)
-			goto err_remove_gpiochip;
-	}
+	अगर (config->irq_करोमुख्य) अणु
+		ret = gpiochip_irqchip_add_करोमुख्य(chip, config->irq_करोमुख्य);
+		अगर (ret)
+			जाओ err_हटाओ_gpiochip;
+	पूर्ण
 
-	return gpio;
+	वापस gpio;
 
-err_remove_gpiochip:
-	gpiochip_remove(chip);
-err_free_gpio:
-	kfree(gpio);
-	return ERR_PTR(ret);
-}
-EXPORT_SYMBOL_GPL(gpio_regmap_register);
-
-/**
- * gpio_regmap_unregister() - Unregister a generic regmap GPIO controller
- * @gpio: gpio_regmap device to unregister
- */
-void gpio_regmap_unregister(struct gpio_regmap *gpio)
-{
-	gpiochip_remove(&gpio->gpio_chip);
-	kfree(gpio);
-}
-EXPORT_SYMBOL_GPL(gpio_regmap_unregister);
-
-static void devm_gpio_regmap_unregister(struct device *dev, void *res)
-{
-	gpio_regmap_unregister(*(struct gpio_regmap **)res);
-}
+err_हटाओ_gpiochip:
+	gpiochip_हटाओ(chip);
+err_मुक्त_gpio:
+	kमुक्त(gpio);
+	वापस ERR_PTR(ret);
+पूर्ण
+EXPORT_SYMBOL_GPL(gpio_regmap_रेजिस्टर);
 
 /**
- * devm_gpio_regmap_register() - resource managed gpio_regmap_register()
- * @dev: device that is registering this GPIO device
- * @config: configuration for gpio_regmap
- *
- * Managed gpio_regmap_register(). For generic regmap GPIO device registered by
- * this function, gpio_regmap_unregister() is automatically called on driver
- * detach. See gpio_regmap_register() for more information.
- *
- * Return: A pointer to the registered gpio_regmap or ERR_PTR error value.
+ * gpio_regmap_unरेजिस्टर() - Unरेजिस्टर a generic regmap GPIO controller
+ * @gpio: gpio_regmap device to unरेजिस्टर
  */
-struct gpio_regmap *devm_gpio_regmap_register(struct device *dev,
-					      const struct gpio_regmap_config *config)
-{
-	struct gpio_regmap **ptr, *gpio;
+व्योम gpio_regmap_unरेजिस्टर(काष्ठा gpio_regmap *gpio)
+अणु
+	gpiochip_हटाओ(&gpio->gpio_chip);
+	kमुक्त(gpio);
+पूर्ण
+EXPORT_SYMBOL_GPL(gpio_regmap_unरेजिस्टर);
 
-	ptr = devres_alloc(devm_gpio_regmap_unregister, sizeof(*ptr),
+अटल व्योम devm_gpio_regmap_unरेजिस्टर(काष्ठा device *dev, व्योम *res)
+अणु
+	gpio_regmap_unरेजिस्टर(*(काष्ठा gpio_regmap **)res);
+पूर्ण
+
+/**
+ * devm_gpio_regmap_रेजिस्टर() - resource managed gpio_regmap_रेजिस्टर()
+ * @dev: device that is रेजिस्टरing this GPIO device
+ * @config: configuration क्रम gpio_regmap
+ *
+ * Managed gpio_regmap_रेजिस्टर(). For generic regmap GPIO device रेजिस्टरed by
+ * this function, gpio_regmap_unरेजिस्टर() is स्वतःmatically called on driver
+ * detach. See gpio_regmap_रेजिस्टर() क्रम more inक्रमmation.
+ *
+ * Return: A poपूर्णांकer to the रेजिस्टरed gpio_regmap or ERR_PTR error value.
+ */
+काष्ठा gpio_regmap *devm_gpio_regmap_रेजिस्टर(काष्ठा device *dev,
+					      स्थिर काष्ठा gpio_regmap_config *config)
+अणु
+	काष्ठा gpio_regmap **ptr, *gpio;
+
+	ptr = devres_alloc(devm_gpio_regmap_unरेजिस्टर, माप(*ptr),
 			   GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
-	gpio = gpio_regmap_register(config);
-	if (!IS_ERR(gpio)) {
+	gpio = gpio_regmap_रेजिस्टर(config);
+	अगर (!IS_ERR(gpio)) अणु
 		*ptr = gpio;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return gpio;
-}
-EXPORT_SYMBOL_GPL(devm_gpio_regmap_register);
+	वापस gpio;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_gpio_regmap_रेजिस्टर);
 
 MODULE_AUTHOR("Michael Walle <michael@walle.cc>");
 MODULE_DESCRIPTION("GPIO generic regmap driver core");

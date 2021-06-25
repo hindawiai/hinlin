@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include <elfutils/libdw.h>
-#include <elfutils/libdwfl.h>
-#include <inttypes.h>
-#include <errno.h>
-#include "debug.h"
-#include "dso.h"
-#include "unwind.h"
-#include "unwind-libdw.h"
-#include "machine.h"
-#include "map.h"
-#include "symbol.h"
-#include "thread.h"
-#include <linux/types.h>
-#include <linux/zalloc.h>
-#include "event.h"
-#include "perf_regs.h"
-#include "callchain.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश <elfutils/libdw.h>
+#समावेश <elfutils/libdwfl.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <त्रुटिसं.स>
+#समावेश "debug.h"
+#समावेश "dso.h"
+#समावेश "unwind.h"
+#समावेश "unwind-libdw.h"
+#समावेश "machine.h"
+#समावेश "map.h"
+#समावेश "symbol.h"
+#समावेश "thread.h"
+#समावेश <linux/types.h>
+#समावेश <linux/zभाग.स>
+#समावेश "event.h"
+#समावेश "perf_regs.h"
+#समावेश "callchain.h"
 
-static char *debuginfo_path;
+अटल अक्षर *debuginfo_path;
 
-static int __find_debuginfo(Dwfl_Module *mod __maybe_unused, void **userdata,
-			    const char *modname __maybe_unused, Dwarf_Addr base __maybe_unused,
-			    const char *file_name, const char *debuglink_file __maybe_unused,
-			    GElf_Word debuglink_crc __maybe_unused, char **debuginfo_file_name)
-{
-	const struct dso *dso = *userdata;
+अटल पूर्णांक __find_debuginfo(Dwfl_Module *mod __maybe_unused, व्योम **userdata,
+			    स्थिर अक्षर *modname __maybe_unused, Dwarf_Addr base __maybe_unused,
+			    स्थिर अक्षर *file_name, स्थिर अक्षर *debuglink_file __maybe_unused,
+			    GElf_Word debuglink_crc __maybe_unused, अक्षर **debuginfo_file_name)
+अणु
+	स्थिर काष्ठा dso *dso = *userdata;
 
-	assert(dso);
-	if (dso->symsrc_filename && strcmp (file_name, dso->symsrc_filename))
+	निश्चित(dso);
+	अगर (dso->symsrc_filename && म_भेद (file_name, dso->symsrc_filename))
 		*debuginfo_file_name = strdup(dso->symsrc_filename);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static const Dwfl_Callbacks offline_callbacks = {
+अटल स्थिर Dwfl_Callbacks offline_callbacks = अणु
 	.find_debuginfo		= __find_debuginfo,
 	.debuginfo_path		= &debuginfo_path,
 	.section_address	= dwfl_offline_section_address,
 	// .find_elf is not set as we use dwfl_report_elf() instead.
-};
+पूर्ण;
 
-static int __report_module(struct addr_location *al, u64 ip,
-			    struct unwind_info *ui)
-{
+अटल पूर्णांक __report_module(काष्ठा addr_location *al, u64 ip,
+			    काष्ठा unwind_info *ui)
+अणु
 	Dwfl_Module *mod;
-	struct dso *dso = NULL;
+	काष्ठा dso *dso = शून्य;
 	/*
 	 * Some callers will use al->sym, so we can't just use the
-	 * cheaper thread__find_map() here.
+	 * cheaper thपढ़ो__find_map() here.
 	 */
-	thread__find_symbol(ui->thread, PERF_RECORD_MISC_USER, ip, al);
+	thपढ़ो__find_symbol(ui->thपढ़ो, PERF_RECORD_MISC_USER, ip, al);
 
-	if (al->map)
+	अगर (al->map)
 		dso = al->map->dso;
 
-	if (!dso)
-		return 0;
+	अगर (!dso)
+		वापस 0;
 
 	mod = dwfl_addrmodule(ui->dwfl, ip);
-	if (mod) {
+	अगर (mod) अणु
 		Dwarf_Addr s;
 
-		dwfl_module_info(mod, NULL, &s, NULL, NULL, NULL, NULL, NULL);
-		if (s != al->map->start - al->map->pgoff)
+		dwfl_module_info(mod, शून्य, &s, शून्य, शून्य, शून्य, शून्य, शून्य);
+		अगर (s != al->map->start - al->map->pgoff)
 			mod = 0;
-	}
+	पूर्ण
 
-	if (!mod)
-		mod = dwfl_report_elf(ui->dwfl, dso->short_name, dso->long_name, -1,
+	अगर (!mod)
+		mod = dwfl_report_elf(ui->dwfl, dso->लघु_name, dso->दीर्घ_name, -1,
 				      al->map->start - al->map->pgoff, false);
-	if (!mod) {
-		char filename[PATH_MAX];
+	अगर (!mod) अणु
+		अक्षर filename[PATH_MAX];
 
-		if (dso__build_id_filename(dso, filename, sizeof(filename), false))
-			mod = dwfl_report_elf(ui->dwfl, dso->short_name, filename, -1,
+		अगर (dso__build_id_filename(dso, filename, माप(filename), false))
+			mod = dwfl_report_elf(ui->dwfl, dso->लघु_name, filename, -1,
 					      al->map->start - al->map->pgoff, false);
-	}
+	पूर्ण
 
-	if (mod) {
-		void **userdatap;
+	अगर (mod) अणु
+		व्योम **userdatap;
 
-		dwfl_module_info(mod, &userdatap, NULL, NULL, NULL, NULL, NULL, NULL);
+		dwfl_module_info(mod, &userdatap, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य);
 		*userdatap = dso;
-	}
+	पूर्ण
 
-	return mod && dwfl_addrmodule(ui->dwfl, ip) == mod ? 0 : -1;
-}
+	वापस mod && dwfl_addrmodule(ui->dwfl, ip) == mod ? 0 : -1;
+पूर्ण
 
-static int report_module(u64 ip, struct unwind_info *ui)
-{
-	struct addr_location al;
+अटल पूर्णांक report_module(u64 ip, काष्ठा unwind_info *ui)
+अणु
+	काष्ठा addr_location al;
 
-	return __report_module(&al, ip, ui);
-}
+	वापस __report_module(&al, ip, ui);
+पूर्ण
 
 /*
  * Store all entries within entries array,
  * we will process it after we finish unwind.
  */
-static int entry(u64 ip, struct unwind_info *ui)
+अटल पूर्णांक entry(u64 ip, काष्ठा unwind_info *ui)
 
-{
-	struct unwind_entry *e = &ui->entries[ui->idx++];
-	struct addr_location al;
+अणु
+	काष्ठा unwind_entry *e = &ui->entries[ui->idx++];
+	काष्ठा addr_location al;
 
-	if (__report_module(&al, ip, ui))
-		return -1;
+	अगर (__report_module(&al, ip, ui))
+		वापस -1;
 
 	e->ip	  = ip;
 	e->ms.maps = al.maps;
@@ -116,172 +117,172 @@ static int entry(u64 ip, struct unwind_info *ui)
 		 al.sym ? al.sym->name : "''",
 		 ip,
 		 al.map ? al.map->map_ip(al.map, ip) : (u64) 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static pid_t next_thread(Dwfl *dwfl, void *arg, void **thread_argp)
-{
-	/* We want only single thread to be processed. */
-	if (*thread_argp != NULL)
-		return 0;
+अटल pid_t next_thपढ़ो(Dwfl *dwfl, व्योम *arg, व्योम **thपढ़ो_argp)
+अणु
+	/* We want only single thपढ़ो to be processed. */
+	अगर (*thपढ़ो_argp != शून्य)
+		वापस 0;
 
-	*thread_argp = arg;
-	return dwfl_pid(dwfl);
-}
+	*thपढ़ो_argp = arg;
+	वापस dwfl_pid(dwfl);
+पूर्ण
 
-static int access_dso_mem(struct unwind_info *ui, Dwarf_Addr addr,
+अटल पूर्णांक access_dso_mem(काष्ठा unwind_info *ui, Dwarf_Addr addr,
 			  Dwarf_Word *data)
-{
-	struct addr_location al;
-	ssize_t size;
+अणु
+	काष्ठा addr_location al;
+	sमाप_प्रकार size;
 
-	if (!thread__find_map(ui->thread, PERF_RECORD_MISC_USER, addr, &al)) {
-		pr_debug("unwind: no map for %lx\n", (unsigned long)addr);
-		return -1;
-	}
+	अगर (!thपढ़ो__find_map(ui->thपढ़ो, PERF_RECORD_MISC_USER, addr, &al)) अणु
+		pr_debug("unwind: no map for %lx\n", (अचिन्हित दीर्घ)addr);
+		वापस -1;
+	पूर्ण
 
-	if (!al.map->dso)
-		return -1;
+	अगर (!al.map->dso)
+		वापस -1;
 
-	size = dso__data_read_addr(al.map->dso, al.map, ui->machine,
-				   addr, (u8 *) data, sizeof(*data));
+	size = dso__data_पढ़ो_addr(al.map->dso, al.map, ui->machine,
+				   addr, (u8 *) data, माप(*data));
 
-	return !(size == sizeof(*data));
-}
+	वापस !(size == माप(*data));
+पूर्ण
 
-static bool memory_read(Dwfl *dwfl __maybe_unused, Dwarf_Addr addr, Dwarf_Word *result,
-			void *arg)
-{
-	struct unwind_info *ui = arg;
-	struct stack_dump *stack = &ui->sample->user_stack;
+अटल bool memory_पढ़ो(Dwfl *dwfl __maybe_unused, Dwarf_Addr addr, Dwarf_Word *result,
+			व्योम *arg)
+अणु
+	काष्ठा unwind_info *ui = arg;
+	काष्ठा stack_dump *stack = &ui->sample->user_stack;
 	u64 start, end;
-	int offset;
-	int ret;
+	पूर्णांक offset;
+	पूर्णांक ret;
 
 	ret = perf_reg_value(&start, &ui->sample->user_regs, PERF_REG_SP);
-	if (ret)
-		return false;
+	अगर (ret)
+		वापस false;
 
 	end = start + stack->size;
 
 	/* Check overflow. */
-	if (addr + sizeof(Dwarf_Word) < addr)
-		return false;
+	अगर (addr + माप(Dwarf_Word) < addr)
+		वापस false;
 
-	if (addr < start || addr + sizeof(Dwarf_Word) > end) {
+	अगर (addr < start || addr + माप(Dwarf_Word) > end) अणु
 		ret = access_dso_mem(ui, addr, result);
-		if (ret) {
+		अगर (ret) अणु
 			pr_debug("unwind: access_mem 0x%" PRIx64 " not inside range"
 				 " 0x%" PRIx64 "-0x%" PRIx64 "\n",
 				addr, start, end);
-			return false;
-		}
-		return true;
-	}
+			वापस false;
+		पूर्ण
+		वापस true;
+	पूर्ण
 
 	offset  = addr - start;
 	*result = *(Dwarf_Word *)&stack->data[offset];
 	pr_debug("unwind: access_mem addr 0x%" PRIx64 ", val %lx, offset %d\n",
-		 addr, (unsigned long)*result, offset);
-	return true;
-}
+		 addr, (अचिन्हित दीर्घ)*result, offset);
+	वापस true;
+पूर्ण
 
-static const Dwfl_Thread_Callbacks callbacks = {
-	.next_thread		= next_thread,
-	.memory_read		= memory_read,
-	.set_initial_registers	= libdw__arch_set_initial_registers,
-};
+अटल स्थिर Dwfl_Thपढ़ो_Callbacks callbacks = अणु
+	.next_thपढ़ो		= next_thपढ़ो,
+	.memory_पढ़ो		= memory_पढ़ो,
+	.set_initial_रेजिस्टरs	= libdw__arch_set_initial_रेजिस्टरs,
+पूर्ण;
 
-static int
-frame_callback(Dwfl_Frame *state, void *arg)
-{
-	struct unwind_info *ui = arg;
+अटल पूर्णांक
+frame_callback(Dwfl_Frame *state, व्योम *arg)
+अणु
+	काष्ठा unwind_info *ui = arg;
 	Dwarf_Addr pc;
 	bool isactivation;
 
-	if (!dwfl_frame_pc(state, &pc, NULL)) {
+	अगर (!dwfl_frame_pc(state, &pc, शून्य)) अणु
 		pr_err("%s", dwfl_errmsg(-1));
-		return DWARF_CB_ABORT;
-	}
+		वापस DWARF_CB_ABORT;
+	पूर्ण
 
-	// report the module before we query for isactivation
+	// report the module beक्रमe we query क्रम isactivation
 	report_module(pc, ui);
 
-	if (!dwfl_frame_pc(state, &pc, &isactivation)) {
+	अगर (!dwfl_frame_pc(state, &pc, &isactivation)) अणु
 		pr_err("%s", dwfl_errmsg(-1));
-		return DWARF_CB_ABORT;
-	}
+		वापस DWARF_CB_ABORT;
+	पूर्ण
 
-	if (!isactivation)
+	अगर (!isactivation)
 		--pc;
 
-	return entry(pc, ui) || !(--ui->max_stack) ?
+	वापस entry(pc, ui) || !(--ui->max_stack) ?
 	       DWARF_CB_ABORT : DWARF_CB_OK;
-}
+पूर्ण
 
-int unwind__get_entries(unwind_entry_cb_t cb, void *arg,
-			struct thread *thread,
-			struct perf_sample *data,
-			int max_stack)
-{
-	struct unwind_info *ui, ui_buf = {
+पूर्णांक unwind__get_entries(unwind_entry_cb_t cb, व्योम *arg,
+			काष्ठा thपढ़ो *thपढ़ो,
+			काष्ठा perf_sample *data,
+			पूर्णांक max_stack)
+अणु
+	काष्ठा unwind_info *ui, ui_buf = अणु
 		.sample		= data,
-		.thread		= thread,
-		.machine	= thread->maps->machine,
+		.thपढ़ो		= thपढ़ो,
+		.machine	= thपढ़ो->maps->machine,
 		.cb		= cb,
 		.arg		= arg,
 		.max_stack	= max_stack,
-	};
+	पूर्ण;
 	Dwarf_Word ip;
-	int err = -EINVAL, i;
+	पूर्णांक err = -EINVAL, i;
 
-	if (!data->user_regs.regs)
-		return -EINVAL;
+	अगर (!data->user_regs.regs)
+		वापस -EINVAL;
 
-	ui = zalloc(sizeof(ui_buf) + sizeof(ui_buf.entries[0]) * max_stack);
-	if (!ui)
-		return -ENOMEM;
+	ui = zalloc(माप(ui_buf) + माप(ui_buf.entries[0]) * max_stack);
+	अगर (!ui)
+		वापस -ENOMEM;
 
 	*ui = ui_buf;
 
 	ui->dwfl = dwfl_begin(&offline_callbacks);
-	if (!ui->dwfl)
-		goto out;
+	अगर (!ui->dwfl)
+		जाओ out;
 
 	err = perf_reg_value(&ip, &data->user_regs, PERF_REG_IP);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = report_module(ip, ui);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = !dwfl_attach_state(ui->dwfl, EM_NONE, thread->tid, &callbacks, ui);
-	if (err)
-		goto out;
+	err = !dwfl_attach_state(ui->dwfl, EM_NONE, thपढ़ो->tid, &callbacks, ui);
+	अगर (err)
+		जाओ out;
 
-	err = dwfl_getthread_frames(ui->dwfl, thread->tid, frame_callback, ui);
+	err = dwfl_getthपढ़ो_frames(ui->dwfl, thपढ़ो->tid, frame_callback, ui);
 
-	if (err && ui->max_stack != max_stack)
+	अगर (err && ui->max_stack != max_stack)
 		err = 0;
 
 	/*
 	 * Display what we got based on the order setup.
 	 */
-	for (i = 0; i < ui->idx && !err; i++) {
-		int j = i;
+	क्रम (i = 0; i < ui->idx && !err; i++) अणु
+		पूर्णांक j = i;
 
-		if (callchain_param.order == ORDER_CALLER)
+		अगर (callchain_param.order == ORDER_CALLER)
 			j = ui->idx - i - 1;
 
 		err = ui->entries[j].ip ? ui->cb(&ui->entries[j], ui->arg) : 0;
-	}
+	पूर्ण
 
  out:
-	if (err)
+	अगर (err)
 		pr_debug("unwind: failed with '%s'\n", dwfl_errmsg(-1));
 
 	dwfl_end(ui->dwfl);
-	free(ui);
-	return 0;
-}
+	मुक्त(ui);
+	वापस 0;
+पूर्ण

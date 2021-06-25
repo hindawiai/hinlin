@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause) */
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * Copyright(c) 2020 Intel Corporation. All rights reserved.
  */
 
 /*
- * Intel extended manifest is a extra place to store Intel cavs specific
- * metadata about firmware, for example LPRO/HPRO configuration is
- * Intel cavs specific. This part of output binary is not signed.
+ * Intel extended manअगरest is a extra place to store Intel cavs specअगरic
+ * metadata about firmware, क्रम example LPRO/HPRO configuration is
+ * Intel cavs specअगरic. This part of output binary is not चिन्हित.
  */
 
-#ifndef __INTEL_CAVS_EXT_MANIFEST_H__
-#define __INTEL_CAVS_EXT_MANIFEST_H__
+#अगर_अघोषित __INTEL_CAVS_EXT_MANIFEST_H__
+#घोषणा __INTEL_CAVS_EXT_MANIFEST_H__
 
-#include <sound/sof/ext_manifest.h>
+#समावेश <sound/sof/ext_manअगरest.h>
 
-/* EXT_MAN_ELEM_PLATFORM_CONFIG_DATA elements identificators */
-enum sof_cavs_config_elem_type {
+/* EXT_MAN_ELEM_PLATFORM_CONFIG_DATA elements identअगरicators */
+क्रमागत sof_cavs_config_elem_type अणु
 	SOF_EXT_MAN_CAVS_CONFIG_EMPTY		= 0,
 	SOF_EXT_MAN_CAVS_CONFIG_CAVS_LPRO	= 1,
 	SOF_EXT_MAN_CAVS_CONFIG_OUTBOX_SIZE	= 2,
 	SOF_EXT_MAN_CAVS_CONFIG_INBOX_SIZE	= 3,
-};
+पूर्ण;
 
 /* EXT_MAN_ELEM_PLATFORM_CONFIG_DATA elements */
-struct sof_ext_man_cavs_config_data {
-	struct sof_ext_man_elem_header hdr;
+काष्ठा sof_ext_man_cavs_config_data अणु
+	काष्ठा sof_ext_man_elem_header hdr;
 
-	struct sof_config_elem elems[];
-} __packed;
+	काष्ठा sof_config_elem elems[];
+पूर्ण __packed;
 
-#endif /* __INTEL_CAVS_EXT_MANIFEST_H__ */
+#पूर्ण_अगर /* __INTEL_CAVS_EXT_MANIFEST_H__ */

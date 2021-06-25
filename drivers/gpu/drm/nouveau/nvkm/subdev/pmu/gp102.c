@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,38 +22,38 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-static void
-gp102_pmu_reset(struct nvkm_pmu *pmu)
-{
-	struct nvkm_device *device = pmu->subdev.device;
+अटल व्योम
+gp102_pmu_reset(काष्ठा nvkm_pmu *pmu)
+अणु
+	काष्ठा nvkm_device *device = pmu->subdev.device;
 	nvkm_mask(device, 0x10a3c0, 0x00000001, 0x00000001);
 	nvkm_mask(device, 0x10a3c0, 0x00000001, 0x00000000);
-}
+पूर्ण
 
-static bool
-gp102_pmu_enabled(struct nvkm_pmu *pmu)
-{
-	return !(nvkm_rd32(pmu->subdev.device, 0x10a3c0) & 0x00000001);
-}
+अटल bool
+gp102_pmu_enabled(काष्ठा nvkm_pmu *pmu)
+अणु
+	वापस !(nvkm_rd32(pmu->subdev.device, 0x10a3c0) & 0x00000001);
+पूर्ण
 
-static const struct nvkm_pmu_func
-gp102_pmu = {
+अटल स्थिर काष्ठा nvkm_pmu_func
+gp102_pmu = अणु
 	.flcn = &gt215_pmu_flcn,
 	.enabled = gp102_pmu_enabled,
 	.reset = gp102_pmu_reset,
-};
+पूर्ण;
 
-static const struct nvkm_pmu_fwif
-gp102_pmu_fwif[] = {
-	{ -1, gm200_pmu_nofw, &gp102_pmu },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_pmu_fwअगर
+gp102_pmu_fwअगर[] = अणु
+	अणु -1, gm200_pmu_nofw, &gp102_pmu पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gp102_pmu_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_pmu **ppmu)
-{
-	return nvkm_pmu_new_(gp102_pmu_fwif, device, type, inst, ppmu);
-}
+पूर्णांक
+gp102_pmu_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_pmu **ppmu)
+अणु
+	वापस nvkm_pmu_new_(gp102_pmu_fwअगर, device, type, inst, ppmu);
+पूर्ण

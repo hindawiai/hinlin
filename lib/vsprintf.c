@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/lib/vsprintf.c
+ *  linux/lib/भम_लिखो.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-/* vsprintf.c -- Lars Wirzenius & Linus Torvalds. */
+/* भम_लिखो.c -- Lars Wirzenius & Linus Torvalds. */
 /*
  * Wirzenius wrote this portably, Torvalds fucked it up :-)
  */
 
 /*
  * Fri Jul 13 2001 Crutcher Dunnavant <crutcher+kernel@datastacks.com>
- * - changed to provide snprintf and vsnprintf functions
+ * - changed to provide snम_लिखो and vsnम_लिखो functions
  * So Feb  1 16:51:32 CET 2004 Juergen Quade <quade@hsnr.de>
- * - scnprintf and vscnprintf
+ * - scnम_लिखो and vscnम_लिखो
  */
 
-#include <stdarg.h>
-#include <linux/build_bug.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/errname.h>
-#include <linux/module.h>	/* for KSYM_SYMBOL_LEN */
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <linux/kernel.h>
-#include <linux/kallsyms.h>
-#include <linux/math64.h>
-#include <linux/uaccess.h>
-#include <linux/ioport.h>
-#include <linux/dcache.h>
-#include <linux/cred.h>
-#include <linux/rtc.h>
-#include <linux/time.h>
-#include <linux/uuid.h>
-#include <linux/of.h>
-#include <net/addrconf.h>
-#include <linux/siphash.h>
-#include <linux/compiler.h>
-#include <linux/property.h>
-#ifdef CONFIG_BLOCK
-#include <linux/blkdev.h>
-#endif
+#समावेश <मानकतर्क.स>
+#समावेश <linux/build_bug.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/errname.h>
+#समावेश <linux/module.h>	/* क्रम KSYM_SYMBOL_LEN */
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/math64.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/dcache.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/uuid.h>
+#समावेश <linux/of.h>
+#समावेश <net/addrconf.h>
+#समावेश <linux/siphash.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/property.h>
+#अगर_घोषित CONFIG_BLOCK
+#समावेश <linux/blkdev.h>
+#पूर्ण_अगर
 
-#include "../mm/internal.h"	/* For the trace_print_flags arrays */
+#समावेश "../mm/internal.h"	/* For the trace_prपूर्णांक_flags arrays */
 
-#include <asm/page.h>		/* for PAGE_SIZE */
-#include <asm/byteorder.h>	/* cpu_to_le16 */
+#समावेश <यंत्र/page.h>		/* क्रम PAGE_SIZE */
+#समावेश <यंत्र/byteorder.h>	/* cpu_to_le16 */
 
-#include <linux/string_helpers.h>
-#include "kstrtox.h"
+#समावेश <linux/string_helpers.h>
+#समावेश "kstrtox.h"
 
 /**
- * simple_strtoull - convert a string to an unsigned long long
+ * simple_म_से_अदीर्घl - convert a string to an अचिन्हित दीर्घ दीर्घ
  * @cp: The start of the string
- * @endp: A pointer to the end of the parsed string will be placed here
+ * @endp: A poपूर्णांकer to the end of the parsed string will be placed here
  * @base: The number base to use
  *
- * This function has caveats. Please use kstrtoull instead.
+ * This function has caveats. Please use kम_से_अदीर्घl instead.
  */
-unsigned long long simple_strtoull(const char *cp, char **endp, unsigned int base)
-{
-	unsigned long long result;
-	unsigned int rv;
+अचिन्हित दीर्घ दीर्घ simple_म_से_अदीर्घl(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
+अणु
+	अचिन्हित दीर्घ दीर्घ result;
+	अचिन्हित पूर्णांक rv;
 
-	cp = _parse_integer_fixup_radix(cp, &base);
-	rv = _parse_integer(cp, base, &result);
+	cp = _parse_पूर्णांकeger_fixup_radix(cp, &base);
+	rv = _parse_पूर्णांकeger(cp, base, &result);
 	/* FIXME */
 	cp += (rv & ~KSTRTOX_OVERFLOW);
 
-	if (endp)
-		*endp = (char *)cp;
+	अगर (endp)
+		*endp = (अक्षर *)cp;
 
-	return result;
-}
-EXPORT_SYMBOL(simple_strtoull);
-
-/**
- * simple_strtoul - convert a string to an unsigned long
- * @cp: The start of the string
- * @endp: A pointer to the end of the parsed string will be placed here
- * @base: The number base to use
- *
- * This function has caveats. Please use kstrtoul instead.
- */
-unsigned long simple_strtoul(const char *cp, char **endp, unsigned int base)
-{
-	return simple_strtoull(cp, endp, base);
-}
-EXPORT_SYMBOL(simple_strtoul);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL(simple_म_से_अदीर्घl);
 
 /**
- * simple_strtol - convert a string to a signed long
+ * simple_म_से_अदीर्घ - convert a string to an अचिन्हित दीर्घ
  * @cp: The start of the string
- * @endp: A pointer to the end of the parsed string will be placed here
+ * @endp: A poपूर्णांकer to the end of the parsed string will be placed here
  * @base: The number base to use
  *
- * This function has caveats. Please use kstrtol instead.
+ * This function has caveats. Please use kम_से_अदीर्घ instead.
  */
-long simple_strtol(const char *cp, char **endp, unsigned int base)
-{
-	if (*cp == '-')
-		return -simple_strtoul(cp + 1, endp, base);
-
-	return simple_strtoul(cp, endp, base);
-}
-EXPORT_SYMBOL(simple_strtol);
+अचिन्हित दीर्घ simple_म_से_अदीर्घ(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
+अणु
+	वापस simple_म_से_अदीर्घl(cp, endp, base);
+पूर्ण
+EXPORT_SYMBOL(simple_म_से_अदीर्घ);
 
 /**
- * simple_strtoll - convert a string to a signed long long
+ * simple_म_से_दीर्घ - convert a string to a चिन्हित दीर्घ
  * @cp: The start of the string
- * @endp: A pointer to the end of the parsed string will be placed here
+ * @endp: A poपूर्णांकer to the end of the parsed string will be placed here
  * @base: The number base to use
  *
- * This function has caveats. Please use kstrtoll instead.
+ * This function has caveats. Please use kम_से_दीर्घ instead.
  */
-long long simple_strtoll(const char *cp, char **endp, unsigned int base)
-{
-	if (*cp == '-')
-		return -simple_strtoull(cp + 1, endp, base);
+दीर्घ simple_म_से_दीर्घ(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
+अणु
+	अगर (*cp == '-')
+		वापस -simple_म_से_अदीर्घ(cp + 1, endp, base);
 
-	return simple_strtoull(cp, endp, base);
-}
-EXPORT_SYMBOL(simple_strtoll);
+	वापस simple_म_से_अदीर्घ(cp, endp, base);
+पूर्ण
+EXPORT_SYMBOL(simple_म_से_दीर्घ);
 
-static noinline_for_stack
-int skip_atoi(const char **s)
-{
-	int i = 0;
+/**
+ * simple_म_से_दीर्घl - convert a string to a चिन्हित दीर्घ दीर्घ
+ * @cp: The start of the string
+ * @endp: A poपूर्णांकer to the end of the parsed string will be placed here
+ * @base: The number base to use
+ *
+ * This function has caveats. Please use kम_से_दीर्घl instead.
+ */
+दीर्घ दीर्घ simple_म_से_दीर्घl(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
+अणु
+	अगर (*cp == '-')
+		वापस -simple_म_से_अदीर्घl(cp + 1, endp, base);
 
-	do {
+	वापस simple_म_से_अदीर्घl(cp, endp, base);
+पूर्ण
+EXPORT_SYMBOL(simple_म_से_दीर्घl);
+
+अटल noअंतरभूत_क्रम_stack
+पूर्णांक skip_म_से_प(स्थिर अक्षर **s)
+अणु
+	पूर्णांक i = 0;
+
+	करो अणु
 		i = i*10 + *((*s)++) - '0';
-	} while (isdigit(**s));
+	पूर्ण जबतक (है_अंक(**s));
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /*
- * Decimal conversion is by far the most typical, and is used for
- * /proc and /sys data. This directly impacts e.g. top performance
- * with many processes running. We optimize it for speed by emitting
- * two characters at a time, using a 200 byte lookup table. This
+ * Decimal conversion is by far the most typical, and is used क्रम
+ * /proc and /sys data. This directly impacts e.g. top perक्रमmance
+ * with many processes running. We optimize it क्रम speed by emitting
+ * two अक्षरacters at a समय, using a 200 byte lookup table. This
  * roughly halves the number of multiplications compared to computing
- * the digits one at a time. Implementation strongly inspired by the
+ * the digits one at a समय. Implementation strongly inspired by the
  * previous version, which in turn used ideas described at
- * <http://www.cs.uiowa.edu/~jones/bcd/divide.html> (with permission
+ * <http://www.cs.uiowa.edu/~jones/bcd/भागide.hपंचांगl> (with permission
  * from the author, Douglas W. Jones).
  *
- * It turns out there is precisely one 26 bit fixed-point
- * approximation a of 64/100 for which x/100 == (x * (u64)a) >> 32
- * holds for all x in [0, 10^8-1], namely a = 0x28f5c29. The actual
+ * It turns out there is precisely one 26 bit fixed-poपूर्णांक
+ * approximation a of 64/100 क्रम which x/100 == (x * (u64)a) >> 32
+ * holds क्रम all x in [0, 10^8-1], namely a = 0x28f5c29. The actual
  * range happens to be somewhat larger (x <= 1073741898), but that's
- * irrelevant for our purpose.
+ * irrelevant क्रम our purpose.
  *
- * For dividing a number in the range [10^4, 10^6-1] by 100, we still
- * need a 32x32->64 bit multiply, so we simply use the same constant.
+ * For भागiding a number in the range [10^4, 10^6-1] by 100, we still
+ * need a 32x32->64 bit multiply, so we simply use the same स्थिरant.
  *
- * For dividing a number in the range [100, 10^4-1] by 100, there are
+ * For भागiding a number in the range [100, 10^4-1] by 100, there are
  * several options. The simplest is (x * 0x147b) >> 19, which is valid
- * for all x <= 43698.
+ * क्रम all x <= 43698.
  */
 
-static const u16 decpair[100] = {
-#define _(x) (__force u16) cpu_to_le16(((x % 10) | ((x / 10) << 8)) + 0x3030)
+अटल स्थिर u16 decpair[100] = अणु
+#घोषणा _(x) (__क्रमce u16) cpu_to_le16(((x % 10) | ((x / 10) << 8)) + 0x3030)
 	_( 0), _( 1), _( 2), _( 3), _( 4), _( 5), _( 6), _( 7), _( 8), _( 9),
 	_(10), _(11), _(12), _(13), _(14), _(15), _(16), _(17), _(18), _(19),
 	_(20), _(21), _(22), _(23), _(24), _(25), _(26), _(27), _(28), _(29),
@@ -175,23 +176,23 @@ static const u16 decpair[100] = {
 	_(70), _(71), _(72), _(73), _(74), _(75), _(76), _(77), _(78), _(79),
 	_(80), _(81), _(82), _(83), _(84), _(85), _(86), _(87), _(88), _(89),
 	_(90), _(91), _(92), _(93), _(94), _(95), _(96), _(97), _(98), _(99),
-#undef _
-};
+#अघोषित _
+पूर्ण;
 
 /*
- * This will print a single '0' even if r == 0, since we would
+ * This will prपूर्णांक a single '0' even अगर r == 0, since we would
  * immediately jump to out_r where two 0s would be written but only
- * one of them accounted for in buf. This is needed by ip4_string
+ * one of them accounted क्रम in buf. This is needed by ip4_string
  * below. All other callers pass a non-zero value of r.
 */
-static noinline_for_stack
-char *put_dec_trunc8(char *buf, unsigned r)
-{
-	unsigned q;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *put_dec_trunc8(अक्षर *buf, अचिन्हित r)
+अणु
+	अचिन्हित q;
 
 	/* 1 <= r < 10^8 */
-	if (r < 100)
-		goto out_r;
+	अगर (r < 100)
+		जाओ out_r;
 
 	/* 100 <= r < 10^8 */
 	q = (r * (u64)0x28f5c29) >> 32;
@@ -199,8 +200,8 @@ char *put_dec_trunc8(char *buf, unsigned r)
 	buf += 2;
 
 	/* 1 <= q < 10^6 */
-	if (q < 100)
-		goto out_q;
+	अगर (q < 100)
+		जाओ out_q;
 
 	/*  100 <= q < 10^6 */
 	r = (q * (u64)0x28f5c29) >> 32;
@@ -208,8 +209,8 @@ char *put_dec_trunc8(char *buf, unsigned r)
 	buf += 2;
 
 	/* 1 <= r < 10^4 */
-	if (r < 100)
-		goto out_r;
+	अगर (r < 100)
+		जाओ out_r;
 
 	/* 100 <= r < 10^4 */
 	q = (r * 0x147b) >> 19;
@@ -222,14 +223,14 @@ out_r:
 	/* 1 <= r < 100 */
 	*((u16 *)buf) = decpair[r];
 	buf += r < 10 ? 1 : 2;
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-#if BITS_PER_LONG == 64 && BITS_PER_LONG_LONG == 64
-static noinline_for_stack
-char *put_dec_full8(char *buf, unsigned r)
-{
-	unsigned q;
+#अगर BITS_PER_LONG == 64 && BITS_PER_LONG_LONG == 64
+अटल noअंतरभूत_क्रम_stack
+अक्षर *put_dec_full8(अक्षर *buf, अचिन्हित r)
+अणु
+	अचिन्हित q;
 
 	/* 0 <= r < 10^8 */
 	q = (r * (u64)0x28f5c29) >> 32;
@@ -249,27 +250,27 @@ char *put_dec_full8(char *buf, unsigned r)
 	/* 0 <= q < 100 */
 	*((u16 *)buf) = decpair[q];
 	buf += 2;
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static noinline_for_stack
-char *put_dec(char *buf, unsigned long long n)
-{
-	if (n >= 100*1000*1000)
-		buf = put_dec_full8(buf, do_div(n, 100*1000*1000));
+अटल noअंतरभूत_क्रम_stack
+अक्षर *put_dec(अक्षर *buf, अचिन्हित दीर्घ दीर्घ n)
+अणु
+	अगर (n >= 100*1000*1000)
+		buf = put_dec_full8(buf, करो_भाग(n, 100*1000*1000));
 	/* 1 <= n <= 1.6e11 */
-	if (n >= 100*1000*1000)
-		buf = put_dec_full8(buf, do_div(n, 100*1000*1000));
+	अगर (n >= 100*1000*1000)
+		buf = put_dec_full8(buf, करो_भाग(n, 100*1000*1000));
 	/* 1 <= n < 1e8 */
-	return put_dec_trunc8(buf, n);
-}
+	वापस put_dec_trunc8(buf, n);
+पूर्ण
 
-#elif BITS_PER_LONG == 32 && BITS_PER_LONG_LONG == 64
+#या_अगर BITS_PER_LONG == 32 && BITS_PER_LONG_LONG == 64
 
-static void
-put_dec_full4(char *buf, unsigned r)
-{
-	unsigned q;
+अटल व्योम
+put_dec_full4(अक्षर *buf, अचिन्हित r)
+अणु
+	अचिन्हित q;
 
 	/* 0 <= r < 10^4 */
 	q = (r * 0x147b) >> 19;
@@ -277,45 +278,45 @@ put_dec_full4(char *buf, unsigned r)
 	buf += 2;
 	/* 0 <= q < 100 */
 	*((u16 *)buf) = decpair[q];
-}
+पूर्ण
 
 /*
- * Call put_dec_full4 on x % 10000, return x / 10000.
+ * Call put_dec_full4 on x % 10000, वापस x / 10000.
  * The approximation x/10000 == (x * 0x346DC5D7) >> 43
- * holds for all x < 1,128,869,999.  The largest value this
+ * holds क्रम all x < 1,128,869,999.  The largest value this
  * helper will ever be asked to convert is 1,125,520,955.
  * (second call in the put_dec code, assuming n is all-ones).
  */
-static noinline_for_stack
-unsigned put_dec_helper4(char *buf, unsigned x)
-{
-        uint32_t q = (x * (uint64_t)0x346DC5D7) >> 43;
+अटल noअंतरभूत_क्रम_stack
+अचिन्हित put_dec_helper4(अक्षर *buf, अचिन्हित x)
+अणु
+        uपूर्णांक32_t q = (x * (uपूर्णांक64_t)0x346DC5D7) >> 43;
 
         put_dec_full4(buf, x - q * 10000);
-        return q;
-}
+        वापस q;
+पूर्ण
 
 /* Based on code by Douglas W. Jones found at
- * <http://www.cs.uiowa.edu/~jones/bcd/decimal.html#sixtyfour>
+ * <http://www.cs.uiowa.edu/~jones/bcd/decimal.hपंचांगl#sixtyfour>
  * (with permission from the author).
- * Performs no 64-bit division and hence should be fast on 32-bit machines.
+ * Perक्रमms no 64-bit भागision and hence should be fast on 32-bit machines.
  */
-static
-char *put_dec(char *buf, unsigned long long n)
-{
-	uint32_t d3, d2, d1, q, h;
+अटल
+अक्षर *put_dec(अक्षर *buf, अचिन्हित दीर्घ दीर्घ n)
+अणु
+	uपूर्णांक32_t d3, d2, d1, q, h;
 
-	if (n < 100*1000*1000)
-		return put_dec_trunc8(buf, n);
+	अगर (n < 100*1000*1000)
+		वापस put_dec_trunc8(buf, n);
 
-	d1  = ((uint32_t)n >> 16); /* implicit "& 0xffff" */
+	d1  = ((uपूर्णांक32_t)n >> 16); /* implicit "& 0xffff" */
 	h   = (n >> 32);
 	d2  = (h      ) & 0xffff;
 	d3  = (h >> 16); /* implicit "& 0xffff" */
 
 	/* n = 2^48 d3 + 2^32 d2 + 2^16 d1 + d0
 	     = 281_4749_7671_0656 d3 + 42_9496_7296 d2 + 6_5536 d1 + d0 */
-	q   = 656 * d3 + 7296 * d2 + 5536 * d1 + ((uint32_t)n & 0xffff);
+	q   = 656 * d3 + 7296 * d2 + 5536 * d1 + ((uपूर्णांक32_t)n & 0xffff);
 	q = put_dec_helper4(buf, q);
 
 	q += 7671 * d3 + 9496 * d2 + 6 * d1;
@@ -326,65 +327,65 @@ char *put_dec(char *buf, unsigned long long n)
 
 	q += 281 * d3;
 	buf += 12;
-	if (q)
+	अगर (q)
 		buf = put_dec_trunc8(buf, q);
-	else while (buf[-1] == '0')
+	अन्यथा जबतक (buf[-1] == '0')
 		--buf;
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
  * Convert passed number to decimal string.
- * Returns the length of string.  On buffer overflow, returns 0.
+ * Returns the length of string.  On buffer overflow, वापसs 0.
  *
- * If speed is not important, use snprintf(). It's easy to read the code.
+ * If speed is not important, use snम_लिखो(). It's easy to पढ़ो the code.
  */
-int num_to_str(char *buf, int size, unsigned long long num, unsigned int width)
-{
+पूर्णांक num_to_str(अक्षर *buf, पूर्णांक size, अचिन्हित दीर्घ दीर्घ num, अचिन्हित पूर्णांक width)
+अणु
 	/* put_dec requires 2-byte alignment of the buffer. */
-	char tmp[sizeof(num) * 3] __aligned(2);
-	int idx, len;
+	अक्षर पंचांगp[माप(num) * 3] __aligned(2);
+	पूर्णांक idx, len;
 
-	/* put_dec() may work incorrectly for num = 0 (generate "", not "0") */
-	if (num <= 9) {
-		tmp[0] = '0' + num;
+	/* put_dec() may work incorrectly क्रम num = 0 (generate "", not "0") */
+	अगर (num <= 9) अणु
+		पंचांगp[0] = '0' + num;
 		len = 1;
-	} else {
-		len = put_dec(tmp, num) - tmp;
-	}
+	पूर्ण अन्यथा अणु
+		len = put_dec(पंचांगp, num) - पंचांगp;
+	पूर्ण
 
-	if (len > size || width > size)
-		return 0;
+	अगर (len > size || width > size)
+		वापस 0;
 
-	if (width > len) {
+	अगर (width > len) अणु
 		width = width - len;
-		for (idx = 0; idx < width; idx++)
+		क्रम (idx = 0; idx < width; idx++)
 			buf[idx] = ' ';
-	} else {
+	पूर्ण अन्यथा अणु
 		width = 0;
-	}
+	पूर्ण
 
-	for (idx = 0; idx < len; ++idx)
-		buf[idx + width] = tmp[len - idx - 1];
+	क्रम (idx = 0; idx < len; ++idx)
+		buf[idx + width] = पंचांगp[len - idx - 1];
 
-	return len + width;
-}
+	वापस len + width;
+पूर्ण
 
-#define SIGN	1		/* unsigned/signed, must be 1 */
-#define LEFT	2		/* left justified */
-#define PLUS	4		/* show plus */
-#define SPACE	8		/* space if plus */
-#define ZEROPAD	16		/* pad with zero, must be 16 == '0' - ' ' */
-#define SMALL	32		/* use lowercase in hex (must be 32 == 0x20) */
-#define SPECIAL	64		/* prefix hex with "0x", octal with "0" */
+#घोषणा SIGN	1		/* अचिन्हित/चिन्हित, must be 1 */
+#घोषणा LEFT	2		/* left justअगरied */
+#घोषणा PLUS	4		/* show plus */
+#घोषणा SPACE	8		/* space अगर plus */
+#घोषणा ZEROPAD	16		/* pad with zero, must be 16 == '0' - ' ' */
+#घोषणा SMALL	32		/* use lowerहाल in hex (must be 32 == 0x20) */
+#घोषणा SPECIAL	64		/* prefix hex with "0x", octal with "0" */
 
-static_assert(ZEROPAD == ('0' - ' '));
-static_assert(SMALL == ' ');
+अटल_निश्चित(ZEROPAD == ('0' - ' '));
+अटल_निश्चित(SMALL == ' ');
 
-enum format_type {
+क्रमागत क्रमmat_type अणु
 	FORMAT_TYPE_NONE, /* Just a string part */
 	FORMAT_TYPE_WIDTH,
 	FORMAT_TYPE_PRECISION,
@@ -404,145 +405,145 @@ enum format_type {
 	FORMAT_TYPE_INT,
 	FORMAT_TYPE_SIZE_T,
 	FORMAT_TYPE_PTRDIFF
-};
+पूर्ण;
 
-struct printf_spec {
-	unsigned int	type:8;		/* format_type enum */
-	signed int	field_width:24;	/* width of output field */
-	unsigned int	flags:8;	/* flags to number() */
-	unsigned int	base:8;		/* number base, 8, 10 or 16 only */
-	signed int	precision:16;	/* # of digits/chars */
-} __packed;
-static_assert(sizeof(struct printf_spec) == 8);
+काष्ठा म_लिखो_spec अणु
+	अचिन्हित पूर्णांक	type:8;		/* क्रमmat_type क्रमागत */
+	चिन्हित पूर्णांक	field_width:24;	/* width of output field */
+	अचिन्हित पूर्णांक	flags:8;	/* flags to number() */
+	अचिन्हित पूर्णांक	base:8;		/* number base, 8, 10 or 16 only */
+	चिन्हित पूर्णांक	precision:16;	/* # of digits/अक्षरs */
+पूर्ण __packed;
+अटल_निश्चित(माप(काष्ठा म_लिखो_spec) == 8);
 
-#define FIELD_WIDTH_MAX ((1 << 23) - 1)
-#define PRECISION_MAX ((1 << 15) - 1)
+#घोषणा FIELD_WIDTH_MAX ((1 << 23) - 1)
+#घोषणा PRECISION_MAX ((1 << 15) - 1)
 
-static noinline_for_stack
-char *number(char *buf, char *end, unsigned long long num,
-	     struct printf_spec spec)
-{
+अटल noअंतरभूत_क्रम_stack
+अक्षर *number(अक्षर *buf, अक्षर *end, अचिन्हित दीर्घ दीर्घ num,
+	     काष्ठा म_लिखो_spec spec)
+अणु
 	/* put_dec requires 2-byte alignment of the buffer. */
-	char tmp[3 * sizeof(num)] __aligned(2);
-	char sign;
-	char locase;
-	int need_pfx = ((spec.flags & SPECIAL) && spec.base != 10);
-	int i;
+	अक्षर पंचांगp[3 * माप(num)] __aligned(2);
+	अक्षर sign;
+	अक्षर loहाल;
+	पूर्णांक need_pfx = ((spec.flags & SPECIAL) && spec.base != 10);
+	पूर्णांक i;
 	bool is_zero = num == 0LL;
-	int field_width = spec.field_width;
-	int precision = spec.precision;
+	पूर्णांक field_width = spec.field_width;
+	पूर्णांक precision = spec.precision;
 
-	/* locase = 0 or 0x20. ORing digits or letters with 'locase'
-	 * produces same digits or (maybe lowercased) letters */
-	locase = (spec.flags & SMALL);
-	if (spec.flags & LEFT)
+	/* loहाल = 0 or 0x20. ORing digits or letters with 'locase'
+	 * produces same digits or (maybe lowerहालd) letters */
+	loहाल = (spec.flags & SMALL);
+	अगर (spec.flags & LEFT)
 		spec.flags &= ~ZEROPAD;
 	sign = 0;
-	if (spec.flags & SIGN) {
-		if ((signed long long)num < 0) {
+	अगर (spec.flags & SIGN) अणु
+		अगर ((चिन्हित दीर्घ दीर्घ)num < 0) अणु
 			sign = '-';
-			num = -(signed long long)num;
+			num = -(चिन्हित दीर्घ दीर्घ)num;
 			field_width--;
-		} else if (spec.flags & PLUS) {
+		पूर्ण अन्यथा अगर (spec.flags & PLUS) अणु
 			sign = '+';
 			field_width--;
-		} else if (spec.flags & SPACE) {
+		पूर्ण अन्यथा अगर (spec.flags & SPACE) अणु
 			sign = ' ';
 			field_width--;
-		}
-	}
-	if (need_pfx) {
-		if (spec.base == 16)
+		पूर्ण
+	पूर्ण
+	अगर (need_pfx) अणु
+		अगर (spec.base == 16)
 			field_width -= 2;
-		else if (!is_zero)
+		अन्यथा अगर (!is_zero)
 			field_width--;
-	}
+	पूर्ण
 
-	/* generate full string in tmp[], in reverse order */
+	/* generate full string in पंचांगp[], in reverse order */
 	i = 0;
-	if (num < spec.base)
-		tmp[i++] = hex_asc_upper[num] | locase;
-	else if (spec.base != 10) { /* 8 or 16 */
-		int mask = spec.base - 1;
-		int shift = 3;
+	अगर (num < spec.base)
+		पंचांगp[i++] = hex_asc_upper[num] | loहाल;
+	अन्यथा अगर (spec.base != 10) अणु /* 8 or 16 */
+		पूर्णांक mask = spec.base - 1;
+		पूर्णांक shअगरt = 3;
 
-		if (spec.base == 16)
-			shift = 4;
-		do {
-			tmp[i++] = (hex_asc_upper[((unsigned char)num) & mask] | locase);
-			num >>= shift;
-		} while (num);
-	} else { /* base 10 */
-		i = put_dec(tmp, num) - tmp;
-	}
+		अगर (spec.base == 16)
+			shअगरt = 4;
+		करो अणु
+			पंचांगp[i++] = (hex_asc_upper[((अचिन्हित अक्षर)num) & mask] | loहाल);
+			num >>= shअगरt;
+		पूर्ण जबतक (num);
+	पूर्ण अन्यथा अणु /* base 10 */
+		i = put_dec(पंचांगp, num) - पंचांगp;
+	पूर्ण
 
-	/* printing 100 using %2d gives "100", not "00" */
-	if (i > precision)
+	/* prपूर्णांकing 100 using %2d gives "100", not "00" */
+	अगर (i > precision)
 		precision = i;
 	/* leading space padding */
 	field_width -= precision;
-	if (!(spec.flags & (ZEROPAD | LEFT))) {
-		while (--field_width >= 0) {
-			if (buf < end)
+	अगर (!(spec.flags & (ZEROPAD | LEFT))) अणु
+		जबतक (--field_width >= 0) अणु
+			अगर (buf < end)
 				*buf = ' ';
 			++buf;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* sign */
-	if (sign) {
-		if (buf < end)
+	अगर (sign) अणु
+		अगर (buf < end)
 			*buf = sign;
 		++buf;
-	}
+	पूर्ण
 	/* "0x" / "0" prefix */
-	if (need_pfx) {
-		if (spec.base == 16 || !is_zero) {
-			if (buf < end)
+	अगर (need_pfx) अणु
+		अगर (spec.base == 16 || !is_zero) अणु
+			अगर (buf < end)
 				*buf = '0';
 			++buf;
-		}
-		if (spec.base == 16) {
-			if (buf < end)
-				*buf = ('X' | locase);
+		पूर्ण
+		अगर (spec.base == 16) अणु
+			अगर (buf < end)
+				*buf = ('X' | loहाल);
 			++buf;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* zero or space padding */
-	if (!(spec.flags & LEFT)) {
-		char c = ' ' + (spec.flags & ZEROPAD);
+	अगर (!(spec.flags & LEFT)) अणु
+		अक्षर c = ' ' + (spec.flags & ZEROPAD);
 
-		while (--field_width >= 0) {
-			if (buf < end)
+		जबतक (--field_width >= 0) अणु
+			अगर (buf < end)
 				*buf = c;
 			++buf;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* hmm even more zero padding? */
-	while (i <= --precision) {
-		if (buf < end)
+	जबतक (i <= --precision) अणु
+		अगर (buf < end)
 			*buf = '0';
 		++buf;
-	}
+	पूर्ण
 	/* actual digits of result */
-	while (--i >= 0) {
-		if (buf < end)
-			*buf = tmp[i];
+	जबतक (--i >= 0) अणु
+		अगर (buf < end)
+			*buf = पंचांगp[i];
 		++buf;
-	}
+	पूर्ण
 	/* trailing space padding */
-	while (--field_width >= 0) {
-		if (buf < end)
+	जबतक (--field_width >= 0) अणु
+		अगर (buf < end)
 			*buf = ' ';
 		++buf;
-	}
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static noinline_for_stack
-char *special_hex_number(char *buf, char *end, unsigned long long num, int size)
-{
-	struct printf_spec spec;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *special_hex_number(अक्षर *buf, अक्षर *end, अचिन्हित दीर्घ दीर्घ num, पूर्णांक size)
+अणु
+	काष्ठा म_लिखो_spec spec;
 
 	spec.type = FORMAT_TYPE_PTR;
 	spec.field_width = 2 + 2 * size;	/* 0x + hex */
@@ -550,1648 +551,1648 @@ char *special_hex_number(char *buf, char *end, unsigned long long num, int size)
 	spec.base = 16;
 	spec.precision = -1;
 
-	return number(buf, end, num, spec);
-}
+	वापस number(buf, end, num, spec);
+पूर्ण
 
-static void move_right(char *buf, char *end, unsigned len, unsigned spaces)
-{
-	size_t size;
-	if (buf >= end)	/* nowhere to put anything */
-		return;
+अटल व्योम move_right(अक्षर *buf, अक्षर *end, अचिन्हित len, अचिन्हित spaces)
+अणु
+	माप_प्रकार size;
+	अगर (buf >= end)	/* nowhere to put anything */
+		वापस;
 	size = end - buf;
-	if (size <= spaces) {
-		memset(buf, ' ', size);
-		return;
-	}
-	if (len) {
-		if (len > size - spaces)
+	अगर (size <= spaces) अणु
+		स_रखो(buf, ' ', size);
+		वापस;
+	पूर्ण
+	अगर (len) अणु
+		अगर (len > size - spaces)
 			len = size - spaces;
-		memmove(buf + spaces, buf, len);
-	}
-	memset(buf, ' ', spaces);
-}
+		स_हटाओ(buf + spaces, buf, len);
+	पूर्ण
+	स_रखो(buf, ' ', spaces);
+पूर्ण
 
 /*
- * Handle field width padding for a string.
+ * Handle field width padding क्रम a string.
  * @buf: current buffer position
  * @n: length of string
  * @end: end of output buffer
- * @spec: for field width and flags
+ * @spec: क्रम field width and flags
  * Returns: new buffer position after padding.
  */
-static noinline_for_stack
-char *widen_string(char *buf, int n, char *end, struct printf_spec spec)
-{
-	unsigned spaces;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *widen_string(अक्षर *buf, पूर्णांक n, अक्षर *end, काष्ठा म_लिखो_spec spec)
+अणु
+	अचिन्हित spaces;
 
-	if (likely(n >= spec.field_width))
-		return buf;
+	अगर (likely(n >= spec.field_width))
+		वापस buf;
 	/* we want to pad the sucker */
 	spaces = spec.field_width - n;
-	if (!(spec.flags & LEFT)) {
+	अगर (!(spec.flags & LEFT)) अणु
 		move_right(buf - n, end, n, spaces);
-		return buf + spaces;
-	}
-	while (spaces--) {
-		if (buf < end)
+		वापस buf + spaces;
+	पूर्ण
+	जबतक (spaces--) अणु
+		अगर (buf < end)
 			*buf = ' ';
 		++buf;
-	}
-	return buf;
-}
+	पूर्ण
+	वापस buf;
+पूर्ण
 
 /* Handle string from a well known address. */
-static char *string_nocheck(char *buf, char *end, const char *s,
-			    struct printf_spec spec)
-{
-	int len = 0;
-	int lim = spec.precision;
+अटल अक्षर *string_nocheck(अक्षर *buf, अक्षर *end, स्थिर अक्षर *s,
+			    काष्ठा म_लिखो_spec spec)
+अणु
+	पूर्णांक len = 0;
+	पूर्णांक lim = spec.precision;
 
-	while (lim--) {
-		char c = *s++;
-		if (!c)
-			break;
-		if (buf < end)
+	जबतक (lim--) अणु
+		अक्षर c = *s++;
+		अगर (!c)
+			अवरोध;
+		अगर (buf < end)
 			*buf = c;
 		++buf;
 		++len;
-	}
-	return widen_string(buf, len, end, spec);
-}
+	पूर्ण
+	वापस widen_string(buf, len, end, spec);
+पूर्ण
 
-static char *err_ptr(char *buf, char *end, void *ptr,
-		     struct printf_spec spec)
-{
-	int err = PTR_ERR(ptr);
-	const char *sym = errname(err);
+अटल अक्षर *err_ptr(अक्षर *buf, अक्षर *end, व्योम *ptr,
+		     काष्ठा म_लिखो_spec spec)
+अणु
+	पूर्णांक err = PTR_ERR(ptr);
+	स्थिर अक्षर *sym = errname(err);
 
-	if (sym)
-		return string_nocheck(buf, end, sym, spec);
+	अगर (sym)
+		वापस string_nocheck(buf, end, sym, spec);
 
 	/*
 	 * Somebody passed ERR_PTR(-1234) or some other non-existing
 	 * Efoo - or perhaps CONFIG_SYMBOLIC_ERRNAME=n. Fall back to
-	 * printing it as its decimal representation.
+	 * prपूर्णांकing it as its decimal representation.
 	 */
 	spec.flags |= SIGN;
 	spec.base = 10;
-	return number(buf, end, err, spec);
-}
+	वापस number(buf, end, err, spec);
+पूर्ण
 
-/* Be careful: error messages must fit into the given buffer. */
-static char *error_string(char *buf, char *end, const char *s,
-			  struct printf_spec spec)
-{
+/* Be careful: error messages must fit पूर्णांकo the given buffer. */
+अटल अक्षर *error_string(अक्षर *buf, अक्षर *end, स्थिर अक्षर *s,
+			  काष्ठा म_लिखो_spec spec)
+अणु
 	/*
-	 * Hard limit to avoid a completely insane messages. It actually
+	 * Hard limit to aव्योम a completely insane messages. It actually
 	 * works pretty well because most error messages are in
-	 * the many pointer format modifiers.
+	 * the many poपूर्णांकer क्रमmat modअगरiers.
 	 */
-	if (spec.precision == -1)
-		spec.precision = 2 * sizeof(void *);
+	अगर (spec.precision == -1)
+		spec.precision = 2 * माप(व्योम *);
 
-	return string_nocheck(buf, end, s, spec);
-}
+	वापस string_nocheck(buf, end, s, spec);
+पूर्ण
 
 /*
- * Do not call any complex external code here. Nested printk()/vsprintf()
- * might cause infinite loops. Failures might break printk() and would
+ * Do not call any complex बाह्यal code here. Nested prपूर्णांकk()/भम_लिखो()
+ * might cause infinite loops. Failures might अवरोध prपूर्णांकk() and would
  * be hard to debug.
  */
-static const char *check_pointer_msg(const void *ptr)
-{
-	if (!ptr)
-		return "(null)";
+अटल स्थिर अक्षर *check_poपूर्णांकer_msg(स्थिर व्योम *ptr)
+अणु
+	अगर (!ptr)
+		वापस "(null)";
 
-	if ((unsigned long)ptr < PAGE_SIZE || IS_ERR_VALUE(ptr))
-		return "(efault)";
+	अगर ((अचिन्हित दीर्घ)ptr < PAGE_SIZE || IS_ERR_VALUE(ptr))
+		वापस "(efault)";
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int check_pointer(char **buf, char *end, const void *ptr,
-			 struct printf_spec spec)
-{
-	const char *err_msg;
+अटल पूर्णांक check_poपूर्णांकer(अक्षर **buf, अक्षर *end, स्थिर व्योम *ptr,
+			 काष्ठा म_लिखो_spec spec)
+अणु
+	स्थिर अक्षर *err_msg;
 
-	err_msg = check_pointer_msg(ptr);
-	if (err_msg) {
+	err_msg = check_poपूर्णांकer_msg(ptr);
+	अगर (err_msg) अणु
 		*buf = error_string(*buf, end, err_msg, spec);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static noinline_for_stack
-char *string(char *buf, char *end, const char *s,
-	     struct printf_spec spec)
-{
-	if (check_pointer(&buf, end, s, spec))
-		return buf;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *string(अक्षर *buf, अक्षर *end, स्थिर अक्षर *s,
+	     काष्ठा म_लिखो_spec spec)
+अणु
+	अगर (check_poपूर्णांकer(&buf, end, s, spec))
+		वापस buf;
 
-	return string_nocheck(buf, end, s, spec);
-}
+	वापस string_nocheck(buf, end, s, spec);
+पूर्ण
 
-static char *pointer_string(char *buf, char *end,
-			    const void *ptr,
-			    struct printf_spec spec)
-{
+अटल अक्षर *poपूर्णांकer_string(अक्षर *buf, अक्षर *end,
+			    स्थिर व्योम *ptr,
+			    काष्ठा म_लिखो_spec spec)
+अणु
 	spec.base = 16;
 	spec.flags |= SMALL;
-	if (spec.field_width == -1) {
-		spec.field_width = 2 * sizeof(ptr);
+	अगर (spec.field_width == -1) अणु
+		spec.field_width = 2 * माप(ptr);
 		spec.flags |= ZEROPAD;
-	}
+	पूर्ण
 
-	return number(buf, end, (unsigned long int)ptr, spec);
-}
+	वापस number(buf, end, (अचिन्हित दीर्घ पूर्णांक)ptr, spec);
+पूर्ण
 
-/* Make pointers available for printing early in the boot sequence. */
-static int debug_boot_weak_hash __ro_after_init;
+/* Make poपूर्णांकers available क्रम prपूर्णांकing early in the boot sequence. */
+अटल पूर्णांक debug_boot_weak_hash __ro_after_init;
 
-static int __init debug_boot_weak_hash_enable(char *str)
-{
+अटल पूर्णांक __init debug_boot_weak_hash_enable(अक्षर *str)
+अणु
 	debug_boot_weak_hash = 1;
 	pr_info("debug_boot_weak_hash enabled\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("debug_boot_weak_hash", debug_boot_weak_hash_enable);
 
-static DEFINE_STATIC_KEY_TRUE(not_filled_random_ptr_key);
-static siphash_key_t ptr_key __read_mostly;
+अटल DEFINE_STATIC_KEY_TRUE(not_filled_अक्रमom_ptr_key);
+अटल siphash_key_t ptr_key __पढ़ो_mostly;
 
-static void enable_ptr_key_workfn(struct work_struct *work)
-{
-	get_random_bytes(&ptr_key, sizeof(ptr_key));
+अटल व्योम enable_ptr_key_workfn(काष्ठा work_काष्ठा *work)
+अणु
+	get_अक्रमom_bytes(&ptr_key, माप(ptr_key));
 	/* Needs to run from preemptible context */
-	static_branch_disable(&not_filled_random_ptr_key);
-}
+	अटल_branch_disable(&not_filled_अक्रमom_ptr_key);
+पूर्ण
 
-static DECLARE_WORK(enable_ptr_key_work, enable_ptr_key_workfn);
+अटल DECLARE_WORK(enable_ptr_key_work, enable_ptr_key_workfn);
 
-static void fill_random_ptr_key(struct random_ready_callback *unused)
-{
-	/* This may be in an interrupt handler. */
-	queue_work(system_unbound_wq, &enable_ptr_key_work);
-}
+अटल व्योम fill_अक्रमom_ptr_key(काष्ठा अक्रमom_पढ़ोy_callback *unused)
+अणु
+	/* This may be in an पूर्णांकerrupt handler. */
+	queue_work(प्रणाली_unbound_wq, &enable_ptr_key_work);
+पूर्ण
 
-static struct random_ready_callback random_ready = {
-	.func = fill_random_ptr_key
-};
+अटल काष्ठा अक्रमom_पढ़ोy_callback अक्रमom_पढ़ोy = अणु
+	.func = fill_अक्रमom_ptr_key
+पूर्ण;
 
-static int __init initialize_ptr_random(void)
-{
-	int key_size = sizeof(ptr_key);
-	int ret;
+अटल पूर्णांक __init initialize_ptr_अक्रमom(व्योम)
+अणु
+	पूर्णांक key_size = माप(ptr_key);
+	पूर्णांक ret;
 
-	/* Use hw RNG if available. */
-	if (get_random_bytes_arch(&ptr_key, key_size) == key_size) {
-		static_branch_disable(&not_filled_random_ptr_key);
-		return 0;
-	}
+	/* Use hw RNG अगर available. */
+	अगर (get_अक्रमom_bytes_arch(&ptr_key, key_size) == key_size) अणु
+		अटल_branch_disable(&not_filled_अक्रमom_ptr_key);
+		वापस 0;
+	पूर्ण
 
-	ret = add_random_ready_callback(&random_ready);
-	if (!ret) {
-		return 0;
-	} else if (ret == -EALREADY) {
+	ret = add_अक्रमom_पढ़ोy_callback(&अक्रमom_पढ़ोy);
+	अगर (!ret) अणु
+		वापस 0;
+	पूर्ण अन्यथा अगर (ret == -EALREADY) अणु
 		/* This is in preemptible context */
 		enable_ptr_key_workfn(&enable_ptr_key_work);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return ret;
-}
-early_initcall(initialize_ptr_random);
+	वापस ret;
+पूर्ण
+early_initcall(initialize_ptr_अक्रमom);
 
-/* Maps a pointer to a 32 bit unique identifier. */
-static inline int __ptr_to_hashval(const void *ptr, unsigned long *hashval_out)
-{
-	unsigned long hashval;
+/* Maps a poपूर्णांकer to a 32 bit unique identअगरier. */
+अटल अंतरभूत पूर्णांक __ptr_to_hashval(स्थिर व्योम *ptr, अचिन्हित दीर्घ *hashval_out)
+अणु
+	अचिन्हित दीर्घ hashval;
 
-	if (static_branch_unlikely(&not_filled_random_ptr_key))
-		return -EAGAIN;
+	अगर (अटल_branch_unlikely(&not_filled_अक्रमom_ptr_key))
+		वापस -EAGAIN;
 
-#ifdef CONFIG_64BIT
-	hashval = (unsigned long)siphash_1u64((u64)ptr, &ptr_key);
+#अगर_घोषित CONFIG_64BIT
+	hashval = (अचिन्हित दीर्घ)siphash_1u64((u64)ptr, &ptr_key);
 	/*
 	 * Mask off the first 32 bits, this makes explicit that we have
-	 * modified the address (and 32 bits is plenty for a unique ID).
+	 * modअगरied the address (and 32 bits is plenty क्रम a unique ID).
 	 */
 	hashval = hashval & 0xffffffff;
-#else
-	hashval = (unsigned long)siphash_1u32((u32)ptr, &ptr_key);
-#endif
+#अन्यथा
+	hashval = (अचिन्हित दीर्घ)siphash_1u32((u32)ptr, &ptr_key);
+#पूर्ण_अगर
 	*hashval_out = hashval;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ptr_to_hashval(const void *ptr, unsigned long *hashval_out)
-{
-	return __ptr_to_hashval(ptr, hashval_out);
-}
+पूर्णांक ptr_to_hashval(स्थिर व्योम *ptr, अचिन्हित दीर्घ *hashval_out)
+अणु
+	वापस __ptr_to_hashval(ptr, hashval_out);
+पूर्ण
 
-static char *ptr_to_id(char *buf, char *end, const void *ptr,
-		       struct printf_spec spec)
-{
-	const char *str = sizeof(ptr) == 8 ? "(____ptrval____)" : "(ptrval)";
-	unsigned long hashval;
-	int ret;
+अटल अक्षर *ptr_to_id(अक्षर *buf, अक्षर *end, स्थिर व्योम *ptr,
+		       काष्ठा म_लिखो_spec spec)
+अणु
+	स्थिर अक्षर *str = माप(ptr) == 8 ? "(____ptrval____)" : "(ptrval)";
+	अचिन्हित दीर्घ hashval;
+	पूर्णांक ret;
 
 	/*
-	 * Print the real pointer value for NULL and error pointers,
+	 * Prपूर्णांक the real poपूर्णांकer value क्रम शून्य and error poपूर्णांकers,
 	 * as they are not actual addresses.
 	 */
-	if (IS_ERR_OR_NULL(ptr))
-		return pointer_string(buf, end, ptr, spec);
+	अगर (IS_ERR_OR_शून्य(ptr))
+		वापस poपूर्णांकer_string(buf, end, ptr, spec);
 
 	/* When debugging early boot use non-cryptographically secure hash. */
-	if (unlikely(debug_boot_weak_hash)) {
-		hashval = hash_long((unsigned long)ptr, 32);
-		return pointer_string(buf, end, (const void *)hashval, spec);
-	}
+	अगर (unlikely(debug_boot_weak_hash)) अणु
+		hashval = hash_दीर्घ((अचिन्हित दीर्घ)ptr, 32);
+		वापस poपूर्णांकer_string(buf, end, (स्थिर व्योम *)hashval, spec);
+	पूर्ण
 
 	ret = __ptr_to_hashval(ptr, &hashval);
-	if (ret) {
-		spec.field_width = 2 * sizeof(ptr);
-		/* string length must be less than default_width */
-		return error_string(buf, end, str, spec);
-	}
+	अगर (ret) अणु
+		spec.field_width = 2 * माप(ptr);
+		/* string length must be less than शेष_width */
+		वापस error_string(buf, end, str, spec);
+	पूर्ण
 
-	return pointer_string(buf, end, (const void *)hashval, spec);
-}
+	वापस poपूर्णांकer_string(buf, end, (स्थिर व्योम *)hashval, spec);
+पूर्ण
 
-int kptr_restrict __read_mostly;
+पूर्णांक kptr_restrict __पढ़ो_mostly;
 
-static noinline_for_stack
-char *restricted_pointer(char *buf, char *end, const void *ptr,
-			 struct printf_spec spec)
-{
-	switch (kptr_restrict) {
-	case 0:
-		/* Handle as %p, hash and do _not_ leak addresses. */
-		return ptr_to_id(buf, end, ptr, spec);
-	case 1: {
-		const struct cred *cred;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *restricted_poपूर्णांकer(अक्षर *buf, अक्षर *end, स्थिर व्योम *ptr,
+			 काष्ठा म_लिखो_spec spec)
+अणु
+	चयन (kptr_restrict) अणु
+	हाल 0:
+		/* Handle as %p, hash and करो _not_ leak addresses. */
+		वापस ptr_to_id(buf, end, ptr, spec);
+	हाल 1: अणु
+		स्थिर काष्ठा cred *cred;
 
 		/*
 		 * kptr_restrict==1 cannot be used in IRQ context
-		 * because its test for CAP_SYSLOG would be meaningless.
+		 * because its test क्रम CAP_SYSLOG would be meaningless.
 		 */
-		if (in_irq() || in_serving_softirq() || in_nmi()) {
-			if (spec.field_width == -1)
-				spec.field_width = 2 * sizeof(ptr);
-			return error_string(buf, end, "pK-error", spec);
-		}
+		अगर (in_irq() || in_serving_softirq() || in_nmi()) अणु
+			अगर (spec.field_width == -1)
+				spec.field_width = 2 * माप(ptr);
+			वापस error_string(buf, end, "pK-error", spec);
+		पूर्ण
 
 		/*
-		 * Only print the real pointer value if the current
+		 * Only prपूर्णांक the real poपूर्णांकer value अगर the current
 		 * process has CAP_SYSLOG and is running with the
 		 * same credentials it started with. This is because
-		 * access to files is checked at open() time, but %pK
-		 * checks permission at read() time. We don't want to
-		 * leak pointer values if a binary opens a file using
-		 * %pK and then elevates privileges before reading it.
+		 * access to files is checked at खोलो() समय, but %pK
+		 * checks permission at पढ़ो() समय. We करोn't want to
+		 * leak poपूर्णांकer values अगर a binary खोलोs a file using
+		 * %pK and then elevates privileges beक्रमe पढ़ोing it.
 		 */
 		cred = current_cred();
-		if (!has_capability_noaudit(current, CAP_SYSLOG) ||
+		अगर (!has_capability_noaudit(current, CAP_SYSLOG) ||
 		    !uid_eq(cred->euid, cred->uid) ||
 		    !gid_eq(cred->egid, cred->gid))
-			ptr = NULL;
-		break;
-	}
-	case 2:
-	default:
-		/* Always print 0's for %pK */
-		ptr = NULL;
-		break;
-	}
+			ptr = शून्य;
+		अवरोध;
+	पूर्ण
+	हाल 2:
+	शेष:
+		/* Always prपूर्णांक 0's क्रम %pK */
+		ptr = शून्य;
+		अवरोध;
+	पूर्ण
 
-	return pointer_string(buf, end, ptr, spec);
-}
+	वापस poपूर्णांकer_string(buf, end, ptr, spec);
+पूर्ण
 
-static noinline_for_stack
-char *dentry_name(char *buf, char *end, const struct dentry *d, struct printf_spec spec,
-		  const char *fmt)
-{
-	const char *array[4], *s;
-	const struct dentry *p;
-	int depth;
-	int i, n;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *dentry_name(अक्षर *buf, अक्षर *end, स्थिर काष्ठा dentry *d, काष्ठा म_लिखो_spec spec,
+		  स्थिर अक्षर *fmt)
+अणु
+	स्थिर अक्षर *array[4], *s;
+	स्थिर काष्ठा dentry *p;
+	पूर्णांक depth;
+	पूर्णांक i, n;
 
-	switch (fmt[1]) {
-		case '2': case '3': case '4':
+	चयन (fmt[1]) अणु
+		हाल '2': case '3': case '4':
 			depth = fmt[1] - '0';
-			break;
-		default:
+			अवरोध;
+		शेष:
 			depth = 1;
-	}
+	पूर्ण
 
-	rcu_read_lock();
-	for (i = 0; i < depth; i++, d = p) {
-		if (check_pointer(&buf, end, d, spec)) {
-			rcu_read_unlock();
-			return buf;
-		}
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < depth; i++, d = p) अणु
+		अगर (check_poपूर्णांकer(&buf, end, d, spec)) अणु
+			rcu_पढ़ो_unlock();
+			वापस buf;
+		पूर्ण
 
 		p = READ_ONCE(d->d_parent);
 		array[i] = READ_ONCE(d->d_name.name);
-		if (p == d) {
-			if (i)
+		अगर (p == d) अणु
+			अगर (i)
 				array[i] = "";
 			i++;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	s = array[--i];
-	for (n = 0; n != spec.precision; n++, buf++) {
-		char c = *s++;
-		if (!c) {
-			if (!i)
-				break;
+	क्रम (n = 0; n != spec.precision; n++, buf++) अणु
+		अक्षर c = *s++;
+		अगर (!c) अणु
+			अगर (!i)
+				अवरोध;
 			c = '/';
 			s = array[--i];
-		}
-		if (buf < end)
+		पूर्ण
+		अगर (buf < end)
 			*buf = c;
-	}
-	rcu_read_unlock();
-	return widen_string(buf, n, end, spec);
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस widen_string(buf, n, end, spec);
+पूर्ण
 
-static noinline_for_stack
-char *file_dentry_name(char *buf, char *end, const struct file *f,
-			struct printf_spec spec, const char *fmt)
-{
-	if (check_pointer(&buf, end, f, spec))
-		return buf;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *file_dentry_name(अक्षर *buf, अक्षर *end, स्थिर काष्ठा file *f,
+			काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अगर (check_poपूर्णांकer(&buf, end, f, spec))
+		वापस buf;
 
-	return dentry_name(buf, end, f->f_path.dentry, spec, fmt);
-}
-#ifdef CONFIG_BLOCK
-static noinline_for_stack
-char *bdev_name(char *buf, char *end, struct block_device *bdev,
-		struct printf_spec spec, const char *fmt)
-{
-	struct gendisk *hd;
+	वापस dentry_name(buf, end, f->f_path.dentry, spec, fmt);
+पूर्ण
+#अगर_घोषित CONFIG_BLOCK
+अटल noअंतरभूत_क्रम_stack
+अक्षर *bdev_name(अक्षर *buf, अक्षर *end, काष्ठा block_device *bdev,
+		काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	काष्ठा gendisk *hd;
 
-	if (check_pointer(&buf, end, bdev, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, bdev, spec))
+		वापस buf;
 
 	hd = bdev->bd_disk;
 	buf = string(buf, end, hd->disk_name, spec);
-	if (bdev->bd_partno) {
-		if (isdigit(hd->disk_name[strlen(hd->disk_name)-1])) {
-			if (buf < end)
+	अगर (bdev->bd_partno) अणु
+		अगर (है_अंक(hd->disk_name[म_माप(hd->disk_name)-1])) अणु
+			अगर (buf < end)
 				*buf = 'p';
 			buf++;
-		}
+		पूर्ण
 		buf = number(buf, end, bdev->bd_partno, spec);
-	}
-	return buf;
-}
-#endif
+	पूर्ण
+	वापस buf;
+पूर्ण
+#पूर्ण_अगर
 
-static noinline_for_stack
-char *symbol_string(char *buf, char *end, void *ptr,
-		    struct printf_spec spec, const char *fmt)
-{
-	unsigned long value;
-#ifdef CONFIG_KALLSYMS
-	char sym[KSYM_SYMBOL_LEN];
-#endif
+अटल noअंतरभूत_क्रम_stack
+अक्षर *symbol_string(अक्षर *buf, अक्षर *end, व्योम *ptr,
+		    काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अचिन्हित दीर्घ value;
+#अगर_घोषित CONFIG_KALLSYMS
+	अक्षर sym[KSYM_SYMBOL_LEN];
+#पूर्ण_अगर
 
-	if (fmt[1] == 'R')
-		ptr = __builtin_extract_return_addr(ptr);
-	value = (unsigned long)ptr;
+	अगर (fmt[1] == 'R')
+		ptr = __builtin_extract_वापस_addr(ptr);
+	value = (अचिन्हित दीर्घ)ptr;
 
-#ifdef CONFIG_KALLSYMS
-	if (*fmt == 'B')
-		sprint_backtrace(sym, value);
-	else if (*fmt != 's')
-		sprint_symbol(sym, value);
-	else
-		sprint_symbol_no_offset(sym, value);
+#अगर_घोषित CONFIG_KALLSYMS
+	अगर (*fmt == 'B')
+		sprपूर्णांक_backtrace(sym, value);
+	अन्यथा अगर (*fmt != 's')
+		sprपूर्णांक_symbol(sym, value);
+	अन्यथा
+		sprपूर्णांक_symbol_no_offset(sym, value);
 
-	return string_nocheck(buf, end, sym, spec);
-#else
-	return special_hex_number(buf, end, value, sizeof(void *));
-#endif
-}
+	वापस string_nocheck(buf, end, sym, spec);
+#अन्यथा
+	वापस special_hex_number(buf, end, value, माप(व्योम *));
+#पूर्ण_अगर
+पूर्ण
 
-static const struct printf_spec default_str_spec = {
+अटल स्थिर काष्ठा म_लिखो_spec शेष_str_spec = अणु
 	.field_width = -1,
 	.precision = -1,
-};
+पूर्ण;
 
-static const struct printf_spec default_flag_spec = {
+अटल स्थिर काष्ठा म_लिखो_spec शेष_flag_spec = अणु
 	.base = 16,
 	.precision = -1,
 	.flags = SPECIAL | SMALL,
-};
+पूर्ण;
 
-static const struct printf_spec default_dec_spec = {
+अटल स्थिर काष्ठा म_लिखो_spec शेष_dec_spec = अणु
 	.base = 10,
 	.precision = -1,
-};
+पूर्ण;
 
-static const struct printf_spec default_dec02_spec = {
+अटल स्थिर काष्ठा म_लिखो_spec शेष_dec02_spec = अणु
 	.base = 10,
 	.field_width = 2,
 	.precision = -1,
 	.flags = ZEROPAD,
-};
+पूर्ण;
 
-static const struct printf_spec default_dec04_spec = {
+अटल स्थिर काष्ठा म_लिखो_spec शेष_dec04_spec = अणु
 	.base = 10,
 	.field_width = 4,
 	.precision = -1,
 	.flags = ZEROPAD,
-};
+पूर्ण;
 
-static noinline_for_stack
-char *resource_string(char *buf, char *end, struct resource *res,
-		      struct printf_spec spec, const char *fmt)
-{
-#ifndef IO_RSRC_PRINTK_SIZE
-#define IO_RSRC_PRINTK_SIZE	6
-#endif
+अटल noअंतरभूत_क्रम_stack
+अक्षर *resource_string(अक्षर *buf, अक्षर *end, काष्ठा resource *res,
+		      काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+#अगर_अघोषित IO_RSRC_PRINTK_SIZE
+#घोषणा IO_RSRC_PRINTK_SIZE	6
+#पूर्ण_अगर
 
-#ifndef MEM_RSRC_PRINTK_SIZE
-#define MEM_RSRC_PRINTK_SIZE	10
-#endif
-	static const struct printf_spec io_spec = {
+#अगर_अघोषित MEM_RSRC_PRINTK_SIZE
+#घोषणा MEM_RSRC_PRINTK_SIZE	10
+#पूर्ण_अगर
+	अटल स्थिर काष्ठा म_लिखो_spec io_spec = अणु
 		.base = 16,
 		.field_width = IO_RSRC_PRINTK_SIZE,
 		.precision = -1,
 		.flags = SPECIAL | SMALL | ZEROPAD,
-	};
-	static const struct printf_spec mem_spec = {
+	पूर्ण;
+	अटल स्थिर काष्ठा म_लिखो_spec mem_spec = अणु
 		.base = 16,
 		.field_width = MEM_RSRC_PRINTK_SIZE,
 		.precision = -1,
 		.flags = SPECIAL | SMALL | ZEROPAD,
-	};
-	static const struct printf_spec bus_spec = {
+	पूर्ण;
+	अटल स्थिर काष्ठा म_लिखो_spec bus_spec = अणु
 		.base = 16,
 		.field_width = 2,
 		.precision = -1,
 		.flags = SMALL | ZEROPAD,
-	};
-	static const struct printf_spec str_spec = {
+	पूर्ण;
+	अटल स्थिर काष्ठा म_लिखो_spec str_spec = अणु
 		.field_width = -1,
 		.precision = 10,
 		.flags = LEFT,
-	};
+	पूर्ण;
 
-	/* 32-bit res (sizeof==4): 10 chars in dec, 10 in hex ("0x" + 8)
-	 * 64-bit res (sizeof==8): 20 chars in dec, 18 in hex ("0x" + 16) */
-#define RSRC_BUF_SIZE		((2 * sizeof(resource_size_t)) + 4)
-#define FLAG_BUF_SIZE		(2 * sizeof(res->flags))
-#define DECODED_BUF_SIZE	sizeof("[mem - 64bit pref window disabled]")
-#define RAW_BUF_SIZE		sizeof("[mem - flags 0x]")
-	char sym[max(2*RSRC_BUF_SIZE + DECODED_BUF_SIZE,
+	/* 32-bit res (माप==4): 10 अक्षरs in dec, 10 in hex ("0x" + 8)
+	 * 64-bit res (माप==8): 20 अक्षरs in dec, 18 in hex ("0x" + 16) */
+#घोषणा RSRC_BUF_SIZE		((2 * माप(resource_माप_प्रकार)) + 4)
+#घोषणा FLAG_BUF_SIZE		(2 * माप(res->flags))
+#घोषणा DECODED_BUF_SIZE	माप("[mem - 64bit pref window disabled]")
+#घोषणा RAW_BUF_SIZE		माप("[mem - flags 0x]")
+	अक्षर sym[max(2*RSRC_BUF_SIZE + DECODED_BUF_SIZE,
 		     2*RSRC_BUF_SIZE + FLAG_BUF_SIZE + RAW_BUF_SIZE)];
 
-	char *p = sym, *pend = sym + sizeof(sym);
-	int decode = (fmt[0] == 'R') ? 1 : 0;
-	const struct printf_spec *specp;
+	अक्षर *p = sym, *pend = sym + माप(sym);
+	पूर्णांक decode = (fmt[0] == 'R') ? 1 : 0;
+	स्थिर काष्ठा म_लिखो_spec *specp;
 
-	if (check_pointer(&buf, end, res, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, res, spec))
+		वापस buf;
 
 	*p++ = '[';
-	if (res->flags & IORESOURCE_IO) {
+	अगर (res->flags & IORESOURCE_IO) अणु
 		p = string_nocheck(p, pend, "io  ", str_spec);
 		specp = &io_spec;
-	} else if (res->flags & IORESOURCE_MEM) {
+	पूर्ण अन्यथा अगर (res->flags & IORESOURCE_MEM) अणु
 		p = string_nocheck(p, pend, "mem ", str_spec);
 		specp = &mem_spec;
-	} else if (res->flags & IORESOURCE_IRQ) {
+	पूर्ण अन्यथा अगर (res->flags & IORESOURCE_IRQ) अणु
 		p = string_nocheck(p, pend, "irq ", str_spec);
-		specp = &default_dec_spec;
-	} else if (res->flags & IORESOURCE_DMA) {
+		specp = &शेष_dec_spec;
+	पूर्ण अन्यथा अगर (res->flags & IORESOURCE_DMA) अणु
 		p = string_nocheck(p, pend, "dma ", str_spec);
-		specp = &default_dec_spec;
-	} else if (res->flags & IORESOURCE_BUS) {
+		specp = &शेष_dec_spec;
+	पूर्ण अन्यथा अगर (res->flags & IORESOURCE_BUS) अणु
 		p = string_nocheck(p, pend, "bus ", str_spec);
 		specp = &bus_spec;
-	} else {
+	पूर्ण अन्यथा अणु
 		p = string_nocheck(p, pend, "??? ", str_spec);
 		specp = &mem_spec;
 		decode = 0;
-	}
-	if (decode && res->flags & IORESOURCE_UNSET) {
+	पूर्ण
+	अगर (decode && res->flags & IORESOURCE_UNSET) अणु
 		p = string_nocheck(p, pend, "size ", str_spec);
 		p = number(p, pend, resource_size(res), *specp);
-	} else {
+	पूर्ण अन्यथा अणु
 		p = number(p, pend, res->start, *specp);
-		if (res->start != res->end) {
+		अगर (res->start != res->end) अणु
 			*p++ = '-';
 			p = number(p, pend, res->end, *specp);
-		}
-	}
-	if (decode) {
-		if (res->flags & IORESOURCE_MEM_64)
+		पूर्ण
+	पूर्ण
+	अगर (decode) अणु
+		अगर (res->flags & IORESOURCE_MEM_64)
 			p = string_nocheck(p, pend, " 64bit", str_spec);
-		if (res->flags & IORESOURCE_PREFETCH)
+		अगर (res->flags & IORESOURCE_PREFETCH)
 			p = string_nocheck(p, pend, " pref", str_spec);
-		if (res->flags & IORESOURCE_WINDOW)
+		अगर (res->flags & IORESOURCE_WINDOW)
 			p = string_nocheck(p, pend, " window", str_spec);
-		if (res->flags & IORESOURCE_DISABLED)
+		अगर (res->flags & IORESOURCE_DISABLED)
 			p = string_nocheck(p, pend, " disabled", str_spec);
-	} else {
+	पूर्ण अन्यथा अणु
 		p = string_nocheck(p, pend, " flags ", str_spec);
-		p = number(p, pend, res->flags, default_flag_spec);
-	}
+		p = number(p, pend, res->flags, शेष_flag_spec);
+	पूर्ण
 	*p++ = ']';
 	*p = '\0';
 
-	return string_nocheck(buf, end, sym, spec);
-}
+	वापस string_nocheck(buf, end, sym, spec);
+पूर्ण
 
-static noinline_for_stack
-char *hex_string(char *buf, char *end, u8 *addr, struct printf_spec spec,
-		 const char *fmt)
-{
-	int i, len = 1;		/* if we pass '%ph[CDN]', field width remains
-				   negative value, fallback to the default */
-	char separator;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *hex_string(अक्षर *buf, अक्षर *end, u8 *addr, काष्ठा म_लिखो_spec spec,
+		 स्थिर अक्षर *fmt)
+अणु
+	पूर्णांक i, len = 1;		/* अगर we pass '%ph[CDN]', field width reमुख्यs
+				   negative value, fallback to the शेष */
+	अक्षर separator;
 
-	if (spec.field_width == 0)
-		/* nothing to print */
-		return buf;
+	अगर (spec.field_width == 0)
+		/* nothing to prपूर्णांक */
+		वापस buf;
 
-	if (check_pointer(&buf, end, addr, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, addr, spec))
+		वापस buf;
 
-	switch (fmt[1]) {
-	case 'C':
+	चयन (fmt[1]) अणु
+	हाल 'C':
 		separator = ':';
-		break;
-	case 'D':
+		अवरोध;
+	हाल 'D':
 		separator = '-';
-		break;
-	case 'N':
+		अवरोध;
+	हाल 'N':
 		separator = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		separator = ' ';
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (spec.field_width > 0)
-		len = min_t(int, spec.field_width, 64);
+	अगर (spec.field_width > 0)
+		len = min_t(पूर्णांक, spec.field_width, 64);
 
-	for (i = 0; i < len; ++i) {
-		if (buf < end)
+	क्रम (i = 0; i < len; ++i) अणु
+		अगर (buf < end)
 			*buf = hex_asc_hi(addr[i]);
 		++buf;
-		if (buf < end)
+		अगर (buf < end)
 			*buf = hex_asc_lo(addr[i]);
 		++buf;
 
-		if (separator && i != len - 1) {
-			if (buf < end)
+		अगर (separator && i != len - 1) अणु
+			अगर (buf < end)
 				*buf = separator;
 			++buf;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static noinline_for_stack
-char *bitmap_string(char *buf, char *end, unsigned long *bitmap,
-		    struct printf_spec spec, const char *fmt)
-{
-	const int CHUNKSZ = 32;
-	int nr_bits = max_t(int, spec.field_width, 0);
-	int i, chunksz;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *biपंचांगap_string(अक्षर *buf, अक्षर *end, अचिन्हित दीर्घ *biपंचांगap,
+		    काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	स्थिर पूर्णांक CHUNKSZ = 32;
+	पूर्णांक nr_bits = max_t(पूर्णांक, spec.field_width, 0);
+	पूर्णांक i, chunksz;
 	bool first = true;
 
-	if (check_pointer(&buf, end, bitmap, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, biपंचांगap, spec))
+		वापस buf;
 
-	/* reused to print numbers */
-	spec = (struct printf_spec){ .flags = SMALL | ZEROPAD, .base = 16 };
+	/* reused to prपूर्णांक numbers */
+	spec = (काष्ठा म_लिखो_spec)अणु .flags = SMALL | ZEROPAD, .base = 16 पूर्ण;
 
 	chunksz = nr_bits & (CHUNKSZ - 1);
-	if (chunksz == 0)
+	अगर (chunksz == 0)
 		chunksz = CHUNKSZ;
 
 	i = ALIGN(nr_bits, CHUNKSZ) - CHUNKSZ;
-	for (; i >= 0; i -= CHUNKSZ) {
+	क्रम (; i >= 0; i -= CHUNKSZ) अणु
 		u32 chunkmask, val;
-		int word, bit;
+		पूर्णांक word, bit;
 
 		chunkmask = ((1ULL << chunksz) - 1);
 		word = i / BITS_PER_LONG;
 		bit = i % BITS_PER_LONG;
-		val = (bitmap[word] >> bit) & chunkmask;
+		val = (biपंचांगap[word] >> bit) & chunkmask;
 
-		if (!first) {
-			if (buf < end)
+		अगर (!first) अणु
+			अगर (buf < end)
 				*buf = ',';
 			buf++;
-		}
+		पूर्ण
 		first = false;
 
 		spec.field_width = DIV_ROUND_UP(chunksz, 4);
 		buf = number(buf, end, val, spec);
 
 		chunksz = CHUNKSZ;
-	}
-	return buf;
-}
+	पूर्ण
+	वापस buf;
+पूर्ण
 
-static noinline_for_stack
-char *bitmap_list_string(char *buf, char *end, unsigned long *bitmap,
-			 struct printf_spec spec, const char *fmt)
-{
-	int nr_bits = max_t(int, spec.field_width, 0);
+अटल noअंतरभूत_क्रम_stack
+अक्षर *biपंचांगap_list_string(अक्षर *buf, अक्षर *end, अचिन्हित दीर्घ *biपंचांगap,
+			 काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	पूर्णांक nr_bits = max_t(पूर्णांक, spec.field_width, 0);
 	/* current bit is 'cur', most recently seen range is [rbot, rtop] */
-	int cur, rbot, rtop;
+	पूर्णांक cur, rbot, rtop;
 	bool first = true;
 
-	if (check_pointer(&buf, end, bitmap, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, biपंचांगap, spec))
+		वापस buf;
 
-	rbot = cur = find_first_bit(bitmap, nr_bits);
-	while (cur < nr_bits) {
+	rbot = cur = find_first_bit(biपंचांगap, nr_bits);
+	जबतक (cur < nr_bits) अणु
 		rtop = cur;
-		cur = find_next_bit(bitmap, nr_bits, cur + 1);
-		if (cur < nr_bits && cur <= rtop + 1)
-			continue;
+		cur = find_next_bit(biपंचांगap, nr_bits, cur + 1);
+		अगर (cur < nr_bits && cur <= rtop + 1)
+			जारी;
 
-		if (!first) {
-			if (buf < end)
+		अगर (!first) अणु
+			अगर (buf < end)
 				*buf = ',';
 			buf++;
-		}
+		पूर्ण
 		first = false;
 
-		buf = number(buf, end, rbot, default_dec_spec);
-		if (rbot < rtop) {
-			if (buf < end)
+		buf = number(buf, end, rbot, शेष_dec_spec);
+		अगर (rbot < rtop) अणु
+			अगर (buf < end)
 				*buf = '-';
 			buf++;
 
-			buf = number(buf, end, rtop, default_dec_spec);
-		}
+			buf = number(buf, end, rtop, शेष_dec_spec);
+		पूर्ण
 
 		rbot = cur;
-	}
-	return buf;
-}
+	पूर्ण
+	वापस buf;
+पूर्ण
 
-static noinline_for_stack
-char *mac_address_string(char *buf, char *end, u8 *addr,
-			 struct printf_spec spec, const char *fmt)
-{
-	char mac_addr[sizeof("xx:xx:xx:xx:xx:xx")];
-	char *p = mac_addr;
-	int i;
-	char separator;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *mac_address_string(अक्षर *buf, अक्षर *end, u8 *addr,
+			 काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अक्षर mac_addr[माप("xx:xx:xx:xx:xx:xx")];
+	अक्षर *p = mac_addr;
+	पूर्णांक i;
+	अक्षर separator;
 	bool reversed = false;
 
-	if (check_pointer(&buf, end, addr, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, addr, spec))
+		वापस buf;
 
-	switch (fmt[1]) {
-	case 'F':
+	चयन (fmt[1]) अणु
+	हाल 'F':
 		separator = '-';
-		break;
+		अवरोध;
 
-	case 'R':
+	हाल 'R':
 		reversed = true;
 		fallthrough;
 
-	default:
+	शेष:
 		separator = ':';
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	for (i = 0; i < 6; i++) {
-		if (reversed)
+	क्रम (i = 0; i < 6; i++) अणु
+		अगर (reversed)
 			p = hex_byte_pack(p, addr[5 - i]);
-		else
+		अन्यथा
 			p = hex_byte_pack(p, addr[i]);
 
-		if (fmt[0] == 'M' && i != 5)
+		अगर (fmt[0] == 'M' && i != 5)
 			*p++ = separator;
-	}
+	पूर्ण
 	*p = '\0';
 
-	return string_nocheck(buf, end, mac_addr, spec);
-}
+	वापस string_nocheck(buf, end, mac_addr, spec);
+पूर्ण
 
-static noinline_for_stack
-char *ip4_string(char *p, const u8 *addr, const char *fmt)
-{
-	int i;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *ip4_string(अक्षर *p, स्थिर u8 *addr, स्थिर अक्षर *fmt)
+अणु
+	पूर्णांक i;
 	bool leading_zeros = (fmt[0] == 'i');
-	int index;
-	int step;
+	पूर्णांक index;
+	पूर्णांक step;
 
-	switch (fmt[2]) {
-	case 'h':
-#ifdef __BIG_ENDIAN
+	चयन (fmt[2]) अणु
+	हाल 'h':
+#अगर_घोषित __BIG_ENDIAN
 		index = 0;
 		step = 1;
-#else
+#अन्यथा
 		index = 3;
 		step = -1;
-#endif
-		break;
-	case 'l':
+#पूर्ण_अगर
+		अवरोध;
+	हाल 'l':
 		index = 3;
 		step = -1;
-		break;
-	case 'n':
-	case 'b':
-	default:
+		अवरोध;
+	हाल 'n':
+	हाल 'b':
+	शेष:
 		index = 0;
 		step = 1;
-		break;
-	}
-	for (i = 0; i < 4; i++) {
-		char temp[4] __aligned(2);	/* hold each IP quad in reverse order */
-		int digits = put_dec_trunc8(temp, addr[index]) - temp;
-		if (leading_zeros) {
-			if (digits < 3)
+		अवरोध;
+	पूर्ण
+	क्रम (i = 0; i < 4; i++) अणु
+		अक्षर temp[4] __aligned(2);	/* hold each IP quad in reverse order */
+		पूर्णांक digits = put_dec_trunc8(temp, addr[index]) - temp;
+		अगर (leading_zeros) अणु
+			अगर (digits < 3)
 				*p++ = '0';
-			if (digits < 2)
+			अगर (digits < 2)
 				*p++ = '0';
-		}
+		पूर्ण
 		/* reverse the digits in the quad */
-		while (digits--)
+		जबतक (digits--)
 			*p++ = temp[digits];
-		if (i < 3)
+		अगर (i < 3)
 			*p++ = '.';
 		index += step;
-	}
+	पूर्ण
 	*p = '\0';
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static noinline_for_stack
-char *ip6_compressed_string(char *p, const char *addr)
-{
-	int i, j, range;
-	unsigned char zerolength[8];
-	int longest = 1;
-	int colonpos = -1;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *ip6_compressed_string(अक्षर *p, स्थिर अक्षर *addr)
+अणु
+	पूर्णांक i, j, range;
+	अचिन्हित अक्षर zerolength[8];
+	पूर्णांक दीर्घest = 1;
+	पूर्णांक colonpos = -1;
 	u16 word;
 	u8 hi, lo;
 	bool needcolon = false;
 	bool useIPv4;
-	struct in6_addr in6;
+	काष्ठा in6_addr in6;
 
-	memcpy(&in6, addr, sizeof(struct in6_addr));
+	स_नकल(&in6, addr, माप(काष्ठा in6_addr));
 
 	useIPv4 = ipv6_addr_v4mapped(&in6) || ipv6_addr_is_isatap(&in6);
 
-	memset(zerolength, 0, sizeof(zerolength));
+	स_रखो(zerolength, 0, माप(zerolength));
 
-	if (useIPv4)
+	अगर (useIPv4)
 		range = 6;
-	else
+	अन्यथा
 		range = 8;
 
-	/* find position of longest 0 run */
-	for (i = 0; i < range; i++) {
-		for (j = i; j < range; j++) {
-			if (in6.s6_addr16[j] != 0)
-				break;
+	/* find position of दीर्घest 0 run */
+	क्रम (i = 0; i < range; i++) अणु
+		क्रम (j = i; j < range; j++) अणु
+			अगर (in6.s6_addr16[j] != 0)
+				अवरोध;
 			zerolength[i]++;
-		}
-	}
-	for (i = 0; i < range; i++) {
-		if (zerolength[i] > longest) {
-			longest = zerolength[i];
+		पूर्ण
+	पूर्ण
+	क्रम (i = 0; i < range; i++) अणु
+		अगर (zerolength[i] > दीर्घest) अणु
+			दीर्घest = zerolength[i];
 			colonpos = i;
-		}
-	}
-	if (longest == 1)		/* don't compress a single 0 */
+		पूर्ण
+	पूर्ण
+	अगर (दीर्घest == 1)		/* करोn't compress a single 0 */
 		colonpos = -1;
 
 	/* emit address */
-	for (i = 0; i < range; i++) {
-		if (i == colonpos) {
-			if (needcolon || i == 0)
+	क्रम (i = 0; i < range; i++) अणु
+		अगर (i == colonpos) अणु
+			अगर (needcolon || i == 0)
 				*p++ = ':';
 			*p++ = ':';
 			needcolon = false;
-			i += longest - 1;
-			continue;
-		}
-		if (needcolon) {
+			i += दीर्घest - 1;
+			जारी;
+		पूर्ण
+		अगर (needcolon) अणु
 			*p++ = ':';
 			needcolon = false;
-		}
+		पूर्ण
 		/* hex u16 without leading 0s */
 		word = ntohs(in6.s6_addr16[i]);
 		hi = word >> 8;
 		lo = word & 0xff;
-		if (hi) {
-			if (hi > 0x0f)
+		अगर (hi) अणु
+			अगर (hi > 0x0f)
 				p = hex_byte_pack(p, hi);
-			else
+			अन्यथा
 				*p++ = hex_asc_lo(hi);
 			p = hex_byte_pack(p, lo);
-		}
-		else if (lo > 0x0f)
+		पूर्ण
+		अन्यथा अगर (lo > 0x0f)
 			p = hex_byte_pack(p, lo);
-		else
+		अन्यथा
 			*p++ = hex_asc_lo(lo);
 		needcolon = true;
-	}
+	पूर्ण
 
-	if (useIPv4) {
-		if (needcolon)
+	अगर (useIPv4) अणु
+		अगर (needcolon)
 			*p++ = ':';
 		p = ip4_string(p, &in6.s6_addr[12], "I4");
-	}
+	पूर्ण
 	*p = '\0';
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static noinline_for_stack
-char *ip6_string(char *p, const char *addr, const char *fmt)
-{
-	int i;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *ip6_string(अक्षर *p, स्थिर अक्षर *addr, स्थिर अक्षर *fmt)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		p = hex_byte_pack(p, *addr++);
 		p = hex_byte_pack(p, *addr++);
-		if (fmt[0] == 'I' && i != 7)
+		अगर (fmt[0] == 'I' && i != 7)
 			*p++ = ':';
-	}
+	पूर्ण
 	*p = '\0';
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static noinline_for_stack
-char *ip6_addr_string(char *buf, char *end, const u8 *addr,
-		      struct printf_spec spec, const char *fmt)
-{
-	char ip6_addr[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255")];
+अटल noअंतरभूत_क्रम_stack
+अक्षर *ip6_addr_string(अक्षर *buf, अक्षर *end, स्थिर u8 *addr,
+		      काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अक्षर ip6_addr[माप("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255")];
 
-	if (fmt[0] == 'I' && fmt[2] == 'c')
+	अगर (fmt[0] == 'I' && fmt[2] == 'c')
 		ip6_compressed_string(ip6_addr, addr);
-	else
+	अन्यथा
 		ip6_string(ip6_addr, addr, fmt);
 
-	return string_nocheck(buf, end, ip6_addr, spec);
-}
+	वापस string_nocheck(buf, end, ip6_addr, spec);
+पूर्ण
 
-static noinline_for_stack
-char *ip4_addr_string(char *buf, char *end, const u8 *addr,
-		      struct printf_spec spec, const char *fmt)
-{
-	char ip4_addr[sizeof("255.255.255.255")];
+अटल noअंतरभूत_क्रम_stack
+अक्षर *ip4_addr_string(अक्षर *buf, अक्षर *end, स्थिर u8 *addr,
+		      काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अक्षर ip4_addr[माप("255.255.255.255")];
 
 	ip4_string(ip4_addr, addr, fmt);
 
-	return string_nocheck(buf, end, ip4_addr, spec);
-}
+	वापस string_nocheck(buf, end, ip4_addr, spec);
+पूर्ण
 
-static noinline_for_stack
-char *ip6_addr_string_sa(char *buf, char *end, const struct sockaddr_in6 *sa,
-			 struct printf_spec spec, const char *fmt)
-{
+अटल noअंतरभूत_क्रम_stack
+अक्षर *ip6_addr_string_sa(अक्षर *buf, अक्षर *end, स्थिर काष्ठा sockaddr_in6 *sa,
+			 काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
 	bool have_p = false, have_s = false, have_f = false, have_c = false;
-	char ip6_addr[sizeof("[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255]") +
-		      sizeof(":12345") + sizeof("/123456789") +
-		      sizeof("%1234567890")];
-	char *p = ip6_addr, *pend = ip6_addr + sizeof(ip6_addr);
-	const u8 *addr = (const u8 *) &sa->sin6_addr;
-	char fmt6[2] = { fmt[0], '6' };
+	अक्षर ip6_addr[माप("[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255]") +
+		      माप(":12345") + माप("/123456789") +
+		      माप("%1234567890")];
+	अक्षर *p = ip6_addr, *pend = ip6_addr + माप(ip6_addr);
+	स्थिर u8 *addr = (स्थिर u8 *) &sa->sin6_addr;
+	अक्षर fmt6[2] = अणु fmt[0], '6' पूर्ण;
 	u8 off = 0;
 
 	fmt++;
-	while (isalpha(*++fmt)) {
-		switch (*fmt) {
-		case 'p':
+	जबतक (है_अक्षर(*++fmt)) अणु
+		चयन (*fmt) अणु
+		हाल 'p':
 			have_p = true;
-			break;
-		case 'f':
+			अवरोध;
+		हाल 'f':
 			have_f = true;
-			break;
-		case 's':
+			अवरोध;
+		हाल 's':
 			have_s = true;
-			break;
-		case 'c':
+			अवरोध;
+		हाल 'c':
 			have_c = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (have_p || have_s || have_f) {
+	अगर (have_p || have_s || have_f) अणु
 		*p = '[';
 		off = 1;
-	}
+	पूर्ण
 
-	if (fmt6[0] == 'I' && have_c)
+	अगर (fmt6[0] == 'I' && have_c)
 		p = ip6_compressed_string(ip6_addr + off, addr);
-	else
+	अन्यथा
 		p = ip6_string(ip6_addr + off, addr, fmt6);
 
-	if (have_p || have_s || have_f)
+	अगर (have_p || have_s || have_f)
 		*p++ = ']';
 
-	if (have_p) {
+	अगर (have_p) अणु
 		*p++ = ':';
 		p = number(p, pend, ntohs(sa->sin6_port), spec);
-	}
-	if (have_f) {
+	पूर्ण
+	अगर (have_f) अणु
 		*p++ = '/';
 		p = number(p, pend, ntohl(sa->sin6_flowinfo &
 					  IPV6_FLOWINFO_MASK), spec);
-	}
-	if (have_s) {
+	पूर्ण
+	अगर (have_s) अणु
 		*p++ = '%';
 		p = number(p, pend, sa->sin6_scope_id, spec);
-	}
+	पूर्ण
 	*p = '\0';
 
-	return string_nocheck(buf, end, ip6_addr, spec);
-}
+	वापस string_nocheck(buf, end, ip6_addr, spec);
+पूर्ण
 
-static noinline_for_stack
-char *ip4_addr_string_sa(char *buf, char *end, const struct sockaddr_in *sa,
-			 struct printf_spec spec, const char *fmt)
-{
+अटल noअंतरभूत_क्रम_stack
+अक्षर *ip4_addr_string_sa(अक्षर *buf, अक्षर *end, स्थिर काष्ठा sockaddr_in *sa,
+			 काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
 	bool have_p = false;
-	char *p, ip4_addr[sizeof("255.255.255.255") + sizeof(":12345")];
-	char *pend = ip4_addr + sizeof(ip4_addr);
-	const u8 *addr = (const u8 *) &sa->sin_addr.s_addr;
-	char fmt4[3] = { fmt[0], '4', 0 };
+	अक्षर *p, ip4_addr[माप("255.255.255.255") + माप(":12345")];
+	अक्षर *pend = ip4_addr + माप(ip4_addr);
+	स्थिर u8 *addr = (स्थिर u8 *) &sa->sin_addr.s_addr;
+	अक्षर fmt4[3] = अणु fmt[0], '4', 0 पूर्ण;
 
 	fmt++;
-	while (isalpha(*++fmt)) {
-		switch (*fmt) {
-		case 'p':
+	जबतक (है_अक्षर(*++fmt)) अणु
+		चयन (*fmt) अणु
+		हाल 'p':
 			have_p = true;
-			break;
-		case 'h':
-		case 'l':
-		case 'n':
-		case 'b':
+			अवरोध;
+		हाल 'h':
+		हाल 'l':
+		हाल 'n':
+		हाल 'b':
 			fmt4[2] = *fmt;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	p = ip4_string(ip4_addr, addr, fmt4);
-	if (have_p) {
+	अगर (have_p) अणु
 		*p++ = ':';
 		p = number(p, pend, ntohs(sa->sin_port), spec);
-	}
+	पूर्ण
 	*p = '\0';
 
-	return string_nocheck(buf, end, ip4_addr, spec);
-}
+	वापस string_nocheck(buf, end, ip4_addr, spec);
+पूर्ण
 
-static noinline_for_stack
-char *ip_addr_string(char *buf, char *end, const void *ptr,
-		     struct printf_spec spec, const char *fmt)
-{
-	char *err_fmt_msg;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *ip_addr_string(अक्षर *buf, अक्षर *end, स्थिर व्योम *ptr,
+		     काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अक्षर *err_fmt_msg;
 
-	if (check_pointer(&buf, end, ptr, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, ptr, spec))
+		वापस buf;
 
-	switch (fmt[1]) {
-	case '6':
-		return ip6_addr_string(buf, end, ptr, spec, fmt);
-	case '4':
-		return ip4_addr_string(buf, end, ptr, spec, fmt);
-	case 'S': {
-		const union {
-			struct sockaddr		raw;
-			struct sockaddr_in	v4;
-			struct sockaddr_in6	v6;
-		} *sa = ptr;
+	चयन (fmt[1]) अणु
+	हाल '6':
+		वापस ip6_addr_string(buf, end, ptr, spec, fmt);
+	हाल '4':
+		वापस ip4_addr_string(buf, end, ptr, spec, fmt);
+	हाल 'S': अणु
+		स्थिर जोड़ अणु
+			काष्ठा sockaddr		raw;
+			काष्ठा sockaddr_in	v4;
+			काष्ठा sockaddr_in6	v6;
+		पूर्ण *sa = ptr;
 
-		switch (sa->raw.sa_family) {
-		case AF_INET:
-			return ip4_addr_string_sa(buf, end, &sa->v4, spec, fmt);
-		case AF_INET6:
-			return ip6_addr_string_sa(buf, end, &sa->v6, spec, fmt);
-		default:
-			return error_string(buf, end, "(einval)", spec);
-		}}
-	}
+		चयन (sa->raw.sa_family) अणु
+		हाल AF_INET:
+			वापस ip4_addr_string_sa(buf, end, &sa->v4, spec, fmt);
+		हाल AF_INET6:
+			वापस ip6_addr_string_sa(buf, end, &sa->v6, spec, fmt);
+		शेष:
+			वापस error_string(buf, end, "(einval)", spec);
+		पूर्णपूर्ण
+	पूर्ण
 
 	err_fmt_msg = fmt[0] == 'i' ? "(%pi?)" : "(%pI?)";
-	return error_string(buf, end, err_fmt_msg, spec);
-}
+	वापस error_string(buf, end, err_fmt_msg, spec);
+पूर्ण
 
-static noinline_for_stack
-char *escaped_string(char *buf, char *end, u8 *addr, struct printf_spec spec,
-		     const char *fmt)
-{
+अटल noअंतरभूत_क्रम_stack
+अक्षर *escaped_string(अक्षर *buf, अक्षर *end, u8 *addr, काष्ठा म_लिखो_spec spec,
+		     स्थिर अक्षर *fmt)
+अणु
 	bool found = true;
-	int count = 1;
-	unsigned int flags = 0;
-	int len;
+	पूर्णांक count = 1;
+	अचिन्हित पूर्णांक flags = 0;
+	पूर्णांक len;
 
-	if (spec.field_width == 0)
-		return buf;				/* nothing to print */
+	अगर (spec.field_width == 0)
+		वापस buf;				/* nothing to prपूर्णांक */
 
-	if (check_pointer(&buf, end, addr, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, addr, spec))
+		वापस buf;
 
-	do {
-		switch (fmt[count++]) {
-		case 'a':
+	करो अणु
+		चयन (fmt[count++]) अणु
+		हाल 'a':
 			flags |= ESCAPE_ANY;
-			break;
-		case 'c':
+			अवरोध;
+		हाल 'c':
 			flags |= ESCAPE_SPECIAL;
-			break;
-		case 'h':
+			अवरोध;
+		हाल 'h':
 			flags |= ESCAPE_HEX;
-			break;
-		case 'n':
-			flags |= ESCAPE_NULL;
-			break;
-		case 'o':
+			अवरोध;
+		हाल 'n':
+			flags |= ESCAPE_शून्य;
+			अवरोध;
+		हाल 'o':
 			flags |= ESCAPE_OCTAL;
-			break;
-		case 'p':
+			अवरोध;
+		हाल 'p':
 			flags |= ESCAPE_NP;
-			break;
-		case 's':
+			अवरोध;
+		हाल 's':
 			flags |= ESCAPE_SPACE;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			found = false;
-			break;
-		}
-	} while (found);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (found);
 
-	if (!flags)
+	अगर (!flags)
 		flags = ESCAPE_ANY_NP;
 
 	len = spec.field_width < 0 ? 1 : spec.field_width;
 
 	/*
-	 * string_escape_mem() writes as many characters as it can to
-	 * the given buffer, and returns the total size of the output
+	 * string_escape_mem() ग_लिखोs as many अक्षरacters as it can to
+	 * the given buffer, and वापसs the total size of the output
 	 * had the buffer been big enough.
 	 */
-	buf += string_escape_mem(addr, len, buf, buf < end ? end - buf : 0, flags, NULL);
+	buf += string_escape_mem(addr, len, buf, buf < end ? end - buf : 0, flags, शून्य);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static char *va_format(char *buf, char *end, struct va_format *va_fmt,
-		       struct printf_spec spec, const char *fmt)
-{
-	va_list va;
+अटल अक्षर *va_क्रमmat(अक्षर *buf, अक्षर *end, काष्ठा va_क्रमmat *va_fmt,
+		       काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	बहु_सूची va;
 
-	if (check_pointer(&buf, end, va_fmt, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, va_fmt, spec))
+		वापस buf;
 
 	va_copy(va, *va_fmt->va);
-	buf += vsnprintf(buf, end > buf ? end - buf : 0, va_fmt->fmt, va);
-	va_end(va);
+	buf += vsnम_लिखो(buf, end > buf ? end - buf : 0, va_fmt->fmt, va);
+	बहु_पूर्ण(va);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static noinline_for_stack
-char *uuid_string(char *buf, char *end, const u8 *addr,
-		  struct printf_spec spec, const char *fmt)
-{
-	char uuid[UUID_STRING_LEN + 1];
-	char *p = uuid;
-	int i;
-	const u8 *index = uuid_index;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *uuid_string(अक्षर *buf, अक्षर *end, स्थिर u8 *addr,
+		  काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अक्षर uuid[UUID_STRING_LEN + 1];
+	अक्षर *p = uuid;
+	पूर्णांक i;
+	स्थिर u8 *index = uuid_index;
 	bool uc = false;
 
-	if (check_pointer(&buf, end, addr, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, addr, spec))
+		वापस buf;
 
-	switch (*(++fmt)) {
-	case 'L':
+	चयन (*(++fmt)) अणु
+	हाल 'L':
 		uc = true;
 		fallthrough;
-	case 'l':
+	हाल 'l':
 		index = guid_index;
-		break;
-	case 'B':
+		अवरोध;
+	हाल 'B':
 		uc = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	for (i = 0; i < 16; i++) {
-		if (uc)
+	क्रम (i = 0; i < 16; i++) अणु
+		अगर (uc)
 			p = hex_byte_pack_upper(p, addr[index[i]]);
-		else
+		अन्यथा
 			p = hex_byte_pack(p, addr[index[i]]);
-		switch (i) {
-		case 3:
-		case 5:
-		case 7:
-		case 9:
+		चयन (i) अणु
+		हाल 3:
+		हाल 5:
+		हाल 7:
+		हाल 9:
 			*p++ = '-';
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	*p = 0;
 
-	return string_nocheck(buf, end, uuid, spec);
-}
+	वापस string_nocheck(buf, end, uuid, spec);
+पूर्ण
 
-static noinline_for_stack
-char *netdev_bits(char *buf, char *end, const void *addr,
-		  struct printf_spec spec,  const char *fmt)
-{
-	unsigned long long num;
-	int size;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *netdev_bits(अक्षर *buf, अक्षर *end, स्थिर व्योम *addr,
+		  काष्ठा म_लिखो_spec spec,  स्थिर अक्षर *fmt)
+अणु
+	अचिन्हित दीर्घ दीर्घ num;
+	पूर्णांक size;
 
-	if (check_pointer(&buf, end, addr, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, addr, spec))
+		वापस buf;
 
-	switch (fmt[1]) {
-	case 'F':
-		num = *(const netdev_features_t *)addr;
-		size = sizeof(netdev_features_t);
-		break;
-	default:
-		return error_string(buf, end, "(%pN?)", spec);
-	}
+	चयन (fmt[1]) अणु
+	हाल 'F':
+		num = *(स्थिर netdev_features_t *)addr;
+		size = माप(netdev_features_t);
+		अवरोध;
+	शेष:
+		वापस error_string(buf, end, "(%pN?)", spec);
+	पूर्ण
 
-	return special_hex_number(buf, end, num, size);
-}
+	वापस special_hex_number(buf, end, num, size);
+पूर्ण
 
-static noinline_for_stack
-char *fourcc_string(char *buf, char *end, const u32 *fourcc,
-		    struct printf_spec spec, const char *fmt)
-{
-	char output[sizeof("0123 little-endian (0x01234567)")];
-	char *p = output;
-	unsigned int i;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *fourcc_string(अक्षर *buf, अक्षर *end, स्थिर u32 *fourcc,
+		    काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अक्षर output[माप("0123 little-endian (0x01234567)")];
+	अक्षर *p = output;
+	अचिन्हित पूर्णांक i;
 	u32 val;
 
-	if (fmt[1] != 'c' || fmt[2] != 'c')
-		return error_string(buf, end, "(%p4?)", spec);
+	अगर (fmt[1] != 'c' || fmt[2] != 'c')
+		वापस error_string(buf, end, "(%p4?)", spec);
 
-	if (check_pointer(&buf, end, fourcc, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, fourcc, spec))
+		वापस buf;
 
 	val = *fourcc & ~BIT(31);
 
-	for (i = 0; i < sizeof(*fourcc); i++) {
-		unsigned char c = val >> (i * 8);
+	क्रम (i = 0; i < माप(*fourcc); i++) अणु
+		अचिन्हित अक्षर c = val >> (i * 8);
 
-		/* Print non-control ASCII characters as-is, dot otherwise */
-		*p++ = isascii(c) && isprint(c) ? c : '.';
-	}
+		/* Prपूर्णांक non-control ASCII अक्षरacters as-is, करोt otherwise */
+		*p++ = isascii(c) && है_छाप(c) ? c : '.';
+	पूर्ण
 
-	strcpy(p, *fourcc & BIT(31) ? " big-endian" : " little-endian");
-	p += strlen(p);
+	म_नकल(p, *fourcc & BIT(31) ? " big-endian" : " little-endian");
+	p += म_माप(p);
 
 	*p++ = ' ';
 	*p++ = '(';
-	p = special_hex_number(p, output + sizeof(output) - 2, *fourcc, sizeof(u32));
+	p = special_hex_number(p, output + माप(output) - 2, *fourcc, माप(u32));
 	*p++ = ')';
 	*p = '\0';
 
-	return string(buf, end, output, spec);
-}
+	वापस string(buf, end, output, spec);
+पूर्ण
 
-static noinline_for_stack
-char *address_val(char *buf, char *end, const void *addr,
-		  struct printf_spec spec, const char *fmt)
-{
-	unsigned long long num;
-	int size;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *address_val(अक्षर *buf, अक्षर *end, स्थिर व्योम *addr,
+		  काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अचिन्हित दीर्घ दीर्घ num;
+	पूर्णांक size;
 
-	if (check_pointer(&buf, end, addr, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, addr, spec))
+		वापस buf;
 
-	switch (fmt[1]) {
-	case 'd':
-		num = *(const dma_addr_t *)addr;
-		size = sizeof(dma_addr_t);
-		break;
-	case 'p':
-	default:
-		num = *(const phys_addr_t *)addr;
-		size = sizeof(phys_addr_t);
-		break;
-	}
+	चयन (fmt[1]) अणु
+	हाल 'd':
+		num = *(स्थिर dma_addr_t *)addr;
+		size = माप(dma_addr_t);
+		अवरोध;
+	हाल 'p':
+	शेष:
+		num = *(स्थिर phys_addr_t *)addr;
+		size = माप(phys_addr_t);
+		अवरोध;
+	पूर्ण
 
-	return special_hex_number(buf, end, num, size);
-}
+	वापस special_hex_number(buf, end, num, size);
+पूर्ण
 
-static noinline_for_stack
-char *date_str(char *buf, char *end, const struct rtc_time *tm, bool r)
-{
-	int year = tm->tm_year + (r ? 0 : 1900);
-	int mon = tm->tm_mon + (r ? 0 : 1);
+अटल noअंतरभूत_क्रम_stack
+अक्षर *date_str(अक्षर *buf, अक्षर *end, स्थिर काष्ठा rtc_समय *पंचांग, bool r)
+अणु
+	पूर्णांक year = पंचांग->पंचांग_year + (r ? 0 : 1900);
+	पूर्णांक mon = पंचांग->पंचांग_mon + (r ? 0 : 1);
 
-	buf = number(buf, end, year, default_dec04_spec);
-	if (buf < end)
+	buf = number(buf, end, year, शेष_dec04_spec);
+	अगर (buf < end)
 		*buf = '-';
 	buf++;
 
-	buf = number(buf, end, mon, default_dec02_spec);
-	if (buf < end)
+	buf = number(buf, end, mon, शेष_dec02_spec);
+	अगर (buf < end)
 		*buf = '-';
 	buf++;
 
-	return number(buf, end, tm->tm_mday, default_dec02_spec);
-}
+	वापस number(buf, end, पंचांग->पंचांग_mday, शेष_dec02_spec);
+पूर्ण
 
-static noinline_for_stack
-char *time_str(char *buf, char *end, const struct rtc_time *tm, bool r)
-{
-	buf = number(buf, end, tm->tm_hour, default_dec02_spec);
-	if (buf < end)
+अटल noअंतरभूत_क्रम_stack
+अक्षर *समय_str(अक्षर *buf, अक्षर *end, स्थिर काष्ठा rtc_समय *पंचांग, bool r)
+अणु
+	buf = number(buf, end, पंचांग->पंचांग_hour, शेष_dec02_spec);
+	अगर (buf < end)
 		*buf = ':';
 	buf++;
 
-	buf = number(buf, end, tm->tm_min, default_dec02_spec);
-	if (buf < end)
+	buf = number(buf, end, पंचांग->पंचांग_min, शेष_dec02_spec);
+	अगर (buf < end)
 		*buf = ':';
 	buf++;
 
-	return number(buf, end, tm->tm_sec, default_dec02_spec);
-}
+	वापस number(buf, end, पंचांग->पंचांग_sec, शेष_dec02_spec);
+पूर्ण
 
-static noinline_for_stack
-char *rtc_str(char *buf, char *end, const struct rtc_time *tm,
-	      struct printf_spec spec, const char *fmt)
-{
+अटल noअंतरभूत_क्रम_stack
+अक्षर *rtc_str(अक्षर *buf, अक्षर *end, स्थिर काष्ठा rtc_समय *पंचांग,
+	      काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
 	bool have_t = true, have_d = true;
 	bool raw = false;
-	int count = 2;
+	पूर्णांक count = 2;
 
-	if (check_pointer(&buf, end, tm, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, पंचांग, spec))
+		वापस buf;
 
-	switch (fmt[count]) {
-	case 'd':
+	चयन (fmt[count]) अणु
+	हाल 'd':
 		have_t = false;
 		count++;
-		break;
-	case 't':
+		अवरोध;
+	हाल 't':
 		have_d = false;
 		count++;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	raw = fmt[count] == 'r';
 
-	if (have_d)
-		buf = date_str(buf, end, tm, raw);
-	if (have_d && have_t) {
+	अगर (have_d)
+		buf = date_str(buf, end, पंचांग, raw);
+	अगर (have_d && have_t) अणु
 		/* Respect ISO 8601 */
-		if (buf < end)
+		अगर (buf < end)
 			*buf = 'T';
 		buf++;
-	}
-	if (have_t)
-		buf = time_str(buf, end, tm, raw);
+	पूर्ण
+	अगर (have_t)
+		buf = समय_str(buf, end, पंचांग, raw);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static noinline_for_stack
-char *time64_str(char *buf, char *end, const time64_t time,
-		 struct printf_spec spec, const char *fmt)
-{
-	struct rtc_time rtc_time;
-	struct tm tm;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *समय64_str(अक्षर *buf, अक्षर *end, स्थिर समय64_t समय,
+		 काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	काष्ठा rtc_समय rtc_समय;
+	काष्ठा पंचांग पंचांग;
 
-	time64_to_tm(time, 0, &tm);
+	समय64_to_पंचांग(समय, 0, &पंचांग);
 
-	rtc_time.tm_sec = tm.tm_sec;
-	rtc_time.tm_min = tm.tm_min;
-	rtc_time.tm_hour = tm.tm_hour;
-	rtc_time.tm_mday = tm.tm_mday;
-	rtc_time.tm_mon = tm.tm_mon;
-	rtc_time.tm_year = tm.tm_year;
-	rtc_time.tm_wday = tm.tm_wday;
-	rtc_time.tm_yday = tm.tm_yday;
+	rtc_समय.पंचांग_sec = पंचांग.पंचांग_sec;
+	rtc_समय.पंचांग_min = पंचांग.पंचांग_min;
+	rtc_समय.पंचांग_hour = पंचांग.पंचांग_hour;
+	rtc_समय.पंचांग_mday = पंचांग.पंचांग_mday;
+	rtc_समय.पंचांग_mon = पंचांग.पंचांग_mon;
+	rtc_समय.पंचांग_year = पंचांग.पंचांग_year;
+	rtc_समय.पंचांग_wday = पंचांग.पंचांग_wday;
+	rtc_समय.पंचांग_yday = पंचांग.पंचांग_yday;
 
-	rtc_time.tm_isdst = 0;
+	rtc_समय.पंचांग_isdst = 0;
 
-	return rtc_str(buf, end, &rtc_time, spec, fmt);
-}
+	वापस rtc_str(buf, end, &rtc_समय, spec, fmt);
+पूर्ण
 
-static noinline_for_stack
-char *time_and_date(char *buf, char *end, void *ptr, struct printf_spec spec,
-		    const char *fmt)
-{
-	switch (fmt[1]) {
-	case 'R':
-		return rtc_str(buf, end, (const struct rtc_time *)ptr, spec, fmt);
-	case 'T':
-		return time64_str(buf, end, *(const time64_t *)ptr, spec, fmt);
-	default:
-		return error_string(buf, end, "(%pt?)", spec);
-	}
-}
+अटल noअंतरभूत_क्रम_stack
+अक्षर *समय_and_date(अक्षर *buf, अक्षर *end, व्योम *ptr, काष्ठा म_लिखो_spec spec,
+		    स्थिर अक्षर *fmt)
+अणु
+	चयन (fmt[1]) अणु
+	हाल 'R':
+		वापस rtc_str(buf, end, (स्थिर काष्ठा rtc_समय *)ptr, spec, fmt);
+	हाल 'T':
+		वापस समय64_str(buf, end, *(स्थिर समय64_t *)ptr, spec, fmt);
+	शेष:
+		वापस error_string(buf, end, "(%pt?)", spec);
+	पूर्ण
+पूर्ण
 
-static noinline_for_stack
-char *clock(char *buf, char *end, struct clk *clk, struct printf_spec spec,
-	    const char *fmt)
-{
-	if (!IS_ENABLED(CONFIG_HAVE_CLK))
-		return error_string(buf, end, "(%pC?)", spec);
+अटल noअंतरभूत_क्रम_stack
+अक्षर *घड़ी(अक्षर *buf, अक्षर *end, काष्ठा clk *clk, काष्ठा म_लिखो_spec spec,
+	    स्थिर अक्षर *fmt)
+अणु
+	अगर (!IS_ENABLED(CONFIG_HAVE_CLK))
+		वापस error_string(buf, end, "(%pC?)", spec);
 
-	if (check_pointer(&buf, end, clk, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, clk, spec))
+		वापस buf;
 
-	switch (fmt[1]) {
-	case 'n':
-	default:
-#ifdef CONFIG_COMMON_CLK
-		return string(buf, end, __clk_get_name(clk), spec);
-#else
-		return ptr_to_id(buf, end, clk, spec);
-#endif
-	}
-}
+	चयन (fmt[1]) अणु
+	हाल 'n':
+	शेष:
+#अगर_घोषित CONFIG_COMMON_CLK
+		वापस string(buf, end, __clk_get_name(clk), spec);
+#अन्यथा
+		वापस ptr_to_id(buf, end, clk, spec);
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-static
-char *format_flags(char *buf, char *end, unsigned long flags,
-					const struct trace_print_flags *names)
-{
-	unsigned long mask;
+अटल
+अक्षर *क्रमmat_flags(अक्षर *buf, अक्षर *end, अचिन्हित दीर्घ flags,
+					स्थिर काष्ठा trace_prपूर्णांक_flags *names)
+अणु
+	अचिन्हित दीर्घ mask;
 
-	for ( ; flags && names->name; names++) {
+	क्रम ( ; flags && names->name; names++) अणु
 		mask = names->mask;
-		if ((flags & mask) != mask)
-			continue;
+		अगर ((flags & mask) != mask)
+			जारी;
 
-		buf = string(buf, end, names->name, default_str_spec);
+		buf = string(buf, end, names->name, शेष_str_spec);
 
 		flags &= ~mask;
-		if (flags) {
-			if (buf < end)
+		अगर (flags) अणु
+			अगर (buf < end)
 				*buf = '|';
 			buf++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (flags)
-		buf = number(buf, end, flags, default_flag_spec);
+	अगर (flags)
+		buf = number(buf, end, flags, शेष_flag_spec);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-struct page_flags_fields {
-	int width;
-	int shift;
-	int mask;
-	const struct printf_spec *spec;
-	const char *name;
-};
+काष्ठा page_flags_fields अणु
+	पूर्णांक width;
+	पूर्णांक shअगरt;
+	पूर्णांक mask;
+	स्थिर काष्ठा म_लिखो_spec *spec;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-static const struct page_flags_fields pff[] = {
-	{SECTIONS_WIDTH, SECTIONS_PGSHIFT, SECTIONS_MASK,
-	 &default_dec_spec, "section"},
-	{NODES_WIDTH, NODES_PGSHIFT, NODES_MASK,
-	 &default_dec_spec, "node"},
-	{ZONES_WIDTH, ZONES_PGSHIFT, ZONES_MASK,
-	 &default_dec_spec, "zone"},
-	{LAST_CPUPID_WIDTH, LAST_CPUPID_PGSHIFT, LAST_CPUPID_MASK,
-	 &default_flag_spec, "lastcpupid"},
-	{KASAN_TAG_WIDTH, KASAN_TAG_PGSHIFT, KASAN_TAG_MASK,
-	 &default_flag_spec, "kasantag"},
-};
+अटल स्थिर काष्ठा page_flags_fields pff[] = अणु
+	अणुSECTIONS_WIDTH, SECTIONS_PGSHIFT, SECTIONS_MASK,
+	 &शेष_dec_spec, "section"पूर्ण,
+	अणुNODES_WIDTH, NODES_PGSHIFT, NODES_MASK,
+	 &शेष_dec_spec, "node"पूर्ण,
+	अणुZONES_WIDTH, ZONES_PGSHIFT, ZONES_MASK,
+	 &शेष_dec_spec, "zone"पूर्ण,
+	अणुLAST_CPUPID_WIDTH, LAST_CPUPID_PGSHIFT, LAST_CPUPID_MASK,
+	 &शेष_flag_spec, "lastcpupid"पूर्ण,
+	अणुKASAN_TAG_WIDTH, KASAN_TAG_PGSHIFT, KASAN_TAG_MASK,
+	 &शेष_flag_spec, "kasantag"पूर्ण,
+पूर्ण;
 
-static
-char *format_page_flags(char *buf, char *end, unsigned long flags)
-{
-	unsigned long main_flags = flags & (BIT(NR_PAGEFLAGS) - 1);
+अटल
+अक्षर *क्रमmat_page_flags(अक्षर *buf, अक्षर *end, अचिन्हित दीर्घ flags)
+अणु
+	अचिन्हित दीर्घ मुख्य_flags = flags & (BIT(NR_PAGEFLAGS) - 1);
 	bool append = false;
-	int i;
+	पूर्णांक i;
 
-	/* Page flags from the main area. */
-	if (main_flags) {
-		buf = format_flags(buf, end, main_flags, pageflag_names);
+	/* Page flags from the मुख्य area. */
+	अगर (मुख्य_flags) अणु
+		buf = क्रमmat_flags(buf, end, मुख्य_flags, pageflag_names);
 		append = true;
-	}
+	पूर्ण
 
 	/* Page flags from the fields area */
-	for (i = 0; i < ARRAY_SIZE(pff); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(pff); i++) अणु
 		/* Skip undefined fields. */
-		if (!pff[i].width)
-			continue;
+		अगर (!pff[i].width)
+			जारी;
 
 		/* Format: Flag Name + '=' (equals sign) + Number + '|' (separator) */
-		if (append) {
-			if (buf < end)
+		अगर (append) अणु
+			अगर (buf < end)
 				*buf = '|';
 			buf++;
-		}
+		पूर्ण
 
-		buf = string(buf, end, pff[i].name, default_str_spec);
-		if (buf < end)
+		buf = string(buf, end, pff[i].name, शेष_str_spec);
+		अगर (buf < end)
 			*buf = '=';
 		buf++;
-		buf = number(buf, end, (flags >> pff[i].shift) & pff[i].mask,
+		buf = number(buf, end, (flags >> pff[i].shअगरt) & pff[i].mask,
 			     *pff[i].spec);
 
 		append = true;
-	}
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static noinline_for_stack
-char *flags_string(char *buf, char *end, void *flags_ptr,
-		   struct printf_spec spec, const char *fmt)
-{
-	unsigned long flags;
-	const struct trace_print_flags *names;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *flags_string(अक्षर *buf, अक्षर *end, व्योम *flags_ptr,
+		   काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अचिन्हित दीर्घ flags;
+	स्थिर काष्ठा trace_prपूर्णांक_flags *names;
 
-	if (check_pointer(&buf, end, flags_ptr, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, flags_ptr, spec))
+		वापस buf;
 
-	switch (fmt[1]) {
-	case 'p':
-		return format_page_flags(buf, end, *(unsigned long *)flags_ptr);
-	case 'v':
-		flags = *(unsigned long *)flags_ptr;
+	चयन (fmt[1]) अणु
+	हाल 'p':
+		वापस क्रमmat_page_flags(buf, end, *(अचिन्हित दीर्घ *)flags_ptr);
+	हाल 'v':
+		flags = *(अचिन्हित दीर्घ *)flags_ptr;
 		names = vmaflag_names;
-		break;
-	case 'g':
-		flags = (__force unsigned long)(*(gfp_t *)flags_ptr);
+		अवरोध;
+	हाल 'g':
+		flags = (__क्रमce अचिन्हित दीर्घ)(*(gfp_t *)flags_ptr);
 		names = gfpflag_names;
-		break;
-	default:
-		return error_string(buf, end, "(%pG?)", spec);
-	}
+		अवरोध;
+	शेष:
+		वापस error_string(buf, end, "(%pG?)", spec);
+	पूर्ण
 
-	return format_flags(buf, end, flags, names);
-}
+	वापस क्रमmat_flags(buf, end, flags, names);
+पूर्ण
 
-static noinline_for_stack
-char *fwnode_full_name_string(struct fwnode_handle *fwnode, char *buf,
-			      char *end)
-{
-	int depth;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *fwnode_full_name_string(काष्ठा fwnode_handle *fwnode, अक्षर *buf,
+			      अक्षर *end)
+अणु
+	पूर्णांक depth;
 
 	/* Loop starting from the root node to the current node. */
-	for (depth = fwnode_count_parents(fwnode); depth >= 0; depth--) {
-		struct fwnode_handle *__fwnode =
+	क्रम (depth = fwnode_count_parents(fwnode); depth >= 0; depth--) अणु
+		काष्ठा fwnode_handle *__fwnode =
 			fwnode_get_nth_parent(fwnode, depth);
 
 		buf = string(buf, end, fwnode_get_name_prefix(__fwnode),
-			     default_str_spec);
+			     शेष_str_spec);
 		buf = string(buf, end, fwnode_get_name(__fwnode),
-			     default_str_spec);
+			     शेष_str_spec);
 
 		fwnode_handle_put(__fwnode);
-	}
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static noinline_for_stack
-char *device_node_string(char *buf, char *end, struct device_node *dn,
-			 struct printf_spec spec, const char *fmt)
-{
-	char tbuf[sizeof("xxxx") + 1];
-	const char *p;
-	int ret;
-	char *buf_start = buf;
-	struct property *prop;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *device_node_string(अक्षर *buf, अक्षर *end, काष्ठा device_node *dn,
+			 काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	अक्षर tbuf[माप("xxxx") + 1];
+	स्थिर अक्षर *p;
+	पूर्णांक ret;
+	अक्षर *buf_start = buf;
+	काष्ठा property *prop;
 	bool has_mult, pass;
 
-	struct printf_spec str_spec = spec;
+	काष्ठा म_लिखो_spec str_spec = spec;
 	str_spec.field_width = -1;
 
-	if (fmt[0] != 'F')
-		return error_string(buf, end, "(%pO?)", spec);
+	अगर (fmt[0] != 'F')
+		वापस error_string(buf, end, "(%pO?)", spec);
 
-	if (!IS_ENABLED(CONFIG_OF))
-		return error_string(buf, end, "(%pOF?)", spec);
+	अगर (!IS_ENABLED(CONFIG_OF))
+		वापस error_string(buf, end, "(%pOF?)", spec);
 
-	if (check_pointer(&buf, end, dn, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, dn, spec))
+		वापस buf;
 
-	/* simple case without anything any more format specifiers */
+	/* simple हाल without anything any more क्रमmat specअगरiers */
 	fmt++;
-	if (fmt[0] == '\0' || strcspn(fmt,"fnpPFcC") > 0)
+	अगर (fmt[0] == '\0' || म_खोज(fmt,"fnpPFcC") > 0)
 		fmt = "f";
 
-	for (pass = false; strspn(fmt,"fnpPFcC"); fmt++, pass = true) {
-		int precision;
-		if (pass) {
-			if (buf < end)
+	क्रम (pass = false; म_अखोज(fmt,"fnpPFcC"); fmt++, pass = true) अणु
+		पूर्णांक precision;
+		अगर (pass) अणु
+			अगर (buf < end)
 				*buf = ':';
 			buf++;
-		}
+		पूर्ण
 
-		switch (*fmt) {
-		case 'f':	/* full_name */
+		चयन (*fmt) अणु
+		हाल 'f':	/* full_name */
 			buf = fwnode_full_name_string(of_fwnode_handle(dn), buf,
 						      end);
-			break;
-		case 'n':	/* name */
+			अवरोध;
+		हाल 'n':	/* name */
 			p = fwnode_get_name(of_fwnode_handle(dn));
 			precision = str_spec.precision;
-			str_spec.precision = strchrnul(p, '@') - p;
+			str_spec.precision = म_अक्षरnul(p, '@') - p;
 			buf = string(buf, end, p, str_spec);
 			str_spec.precision = precision;
-			break;
-		case 'p':	/* phandle */
-			buf = number(buf, end, (unsigned int)dn->phandle, default_dec_spec);
-			break;
-		case 'P':	/* path-spec */
+			अवरोध;
+		हाल 'p':	/* phandle */
+			buf = number(buf, end, (अचिन्हित पूर्णांक)dn->phandle, शेष_dec_spec);
+			अवरोध;
+		हाल 'P':	/* path-spec */
 			p = fwnode_get_name(of_fwnode_handle(dn));
-			if (!p[1])
+			अगर (!p[1])
 				p = "/";
 			buf = string(buf, end, p, str_spec);
-			break;
-		case 'F':	/* flags */
+			अवरोध;
+		हाल 'F':	/* flags */
 			tbuf[0] = of_node_check_flag(dn, OF_DYNAMIC) ? 'D' : '-';
 			tbuf[1] = of_node_check_flag(dn, OF_DETACHED) ? 'd' : '-';
 			tbuf[2] = of_node_check_flag(dn, OF_POPULATED) ? 'P' : '-';
 			tbuf[3] = of_node_check_flag(dn, OF_POPULATED_BUS) ? 'B' : '-';
 			tbuf[4] = 0;
 			buf = string_nocheck(buf, end, tbuf, str_spec);
-			break;
-		case 'c':	/* major compatible string */
-			ret = of_property_read_string(dn, "compatible", &p);
-			if (!ret)
+			अवरोध;
+		हाल 'c':	/* major compatible string */
+			ret = of_property_पढ़ो_string(dn, "compatible", &p);
+			अगर (!ret)
 				buf = string(buf, end, p, str_spec);
-			break;
-		case 'C':	/* full compatible string */
+			अवरोध;
+		हाल 'C':	/* full compatible string */
 			has_mult = false;
-			of_property_for_each_string(dn, "compatible", prop, p) {
-				if (has_mult)
+			of_property_क्रम_each_string(dn, "compatible", prop, p) अणु
+				अगर (has_mult)
 					buf = string_nocheck(buf, end, ",", str_spec);
 				buf = string_nocheck(buf, end, "\"", str_spec);
 				buf = string(buf, end, p, str_spec);
 				buf = string_nocheck(buf, end, "\"", str_spec);
 
 				has_mult = true;
-			}
-			break;
-		default:
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return widen_string(buf, buf - buf_start, end, spec);
-}
+	वापस widen_string(buf, buf - buf_start, end, spec);
+पूर्ण
 
-static noinline_for_stack
-char *fwnode_string(char *buf, char *end, struct fwnode_handle *fwnode,
-		    struct printf_spec spec, const char *fmt)
-{
-	struct printf_spec str_spec = spec;
-	char *buf_start = buf;
+अटल noअंतरभूत_क्रम_stack
+अक्षर *fwnode_string(अक्षर *buf, अक्षर *end, काष्ठा fwnode_handle *fwnode,
+		    काष्ठा म_लिखो_spec spec, स्थिर अक्षर *fmt)
+अणु
+	काष्ठा म_लिखो_spec str_spec = spec;
+	अक्षर *buf_start = buf;
 
 	str_spec.field_width = -1;
 
-	if (*fmt != 'w')
-		return error_string(buf, end, "(%pf?)", spec);
+	अगर (*fmt != 'w')
+		वापस error_string(buf, end, "(%pf?)", spec);
 
-	if (check_pointer(&buf, end, fwnode, spec))
-		return buf;
+	अगर (check_poपूर्णांकer(&buf, end, fwnode, spec))
+		वापस buf;
 
 	fmt++;
 
-	switch (*fmt) {
-	case 'P':	/* name */
+	चयन (*fmt) अणु
+	हाल 'P':	/* name */
 		buf = string(buf, end, fwnode_get_name(fwnode), str_spec);
-		break;
-	case 'f':	/* full_name */
-	default:
+		अवरोध;
+	हाल 'f':	/* full_name */
+	शेष:
 		buf = fwnode_full_name_string(fwnode, buf, end);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return widen_string(buf, buf - buf_start, end, spec);
-}
+	वापस widen_string(buf, buf - buf_start, end, spec);
+पूर्ण
 
-/* Disable pointer hashing if requested */
-bool no_hash_pointers __ro_after_init;
-EXPORT_SYMBOL_GPL(no_hash_pointers);
+/* Disable poपूर्णांकer hashing अगर requested */
+bool no_hash_poपूर्णांकers __ro_after_init;
+EXPORT_SYMBOL_GPL(no_hash_poपूर्णांकers);
 
-static int __init no_hash_pointers_enable(char *str)
-{
-	if (no_hash_pointers)
-		return 0;
+अटल पूर्णांक __init no_hash_poपूर्णांकers_enable(अक्षर *str)
+अणु
+	अगर (no_hash_poपूर्णांकers)
+		वापस 0;
 
-	no_hash_pointers = true;
+	no_hash_poपूर्णांकers = true;
 
 	pr_warn("**********************************************************\n");
 	pr_warn("**   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **\n");
@@ -2207,111 +2208,111 @@ static int __init no_hash_pointers_enable(char *str)
 	pr_warn("**   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **\n");
 	pr_warn("**********************************************************\n");
 
-	return 0;
-}
-early_param("no_hash_pointers", no_hash_pointers_enable);
+	वापस 0;
+पूर्ण
+early_param("no_hash_pointers", no_hash_poपूर्णांकers_enable);
 
 /*
  * Show a '%p' thing.  A kernel extension is that the '%p' is followed
- * by an extra set of alphanumeric characters that are extended format
- * specifiers.
+ * by an extra set of alphanumeric अक्षरacters that are extended क्रमmat
+ * specअगरiers.
  *
  * Please update scripts/checkpatch.pl when adding/removing conversion
- * characters.  (Search for "check for vsprintf extension").
+ * अक्षरacters.  (Search क्रम "check for vsprintf extension").
  *
  * Right now we handle:
  *
- * - 'S' For symbolic direct pointers (or function descriptors) with offset
- * - 's' For symbolic direct pointers (or function descriptors) without offset
- * - '[Ss]R' as above with __builtin_extract_return_addr() translation
- * - '[Ff]' %pf and %pF were obsoleted and later removed in favor of
- *	    %ps and %pS. Be careful when re-using these specifiers.
- * - 'B' For backtraced symbolic direct pointers with offset
- * - 'R' For decoded struct resource, e.g., [mem 0x0-0x1f 64bit pref]
- * - 'r' For raw struct resource, e.g., [mem 0x0-0x1f flags 0x201]
- * - 'b[l]' For a bitmap, the number of bits is determined by the field
- *       width which must be explicitly specified either as part of the
- *       format string '%32b[l]' or through '%*b[l]', [l] selects
- *       range-list format instead of hex format
- * - 'M' For a 6-byte MAC address, it prints the address in the
+ * - 'S' For symbolic direct poपूर्णांकers (or function descriptors) with offset
+ * - 's' For symbolic direct poपूर्णांकers (or function descriptors) without offset
+ * - '[Ss]R' as above with __builtin_extract_वापस_addr() translation
+ * - '[Ff]' %pf and %pF were obsoleted and later हटाओd in favor of
+ *	    %ps and %pS. Be careful when re-using these specअगरiers.
+ * - 'B' For backtraced symbolic direct poपूर्णांकers with offset
+ * - 'R' For decoded काष्ठा resource, e.g., [mem 0x0-0x1f 64bit pref]
+ * - 'r' For raw काष्ठा resource, e.g., [mem 0x0-0x1f flags 0x201]
+ * - 'b[l]' For a biपंचांगap, the number of bits is determined by the field
+ *       width which must be explicitly specअगरied either as part of the
+ *       क्रमmat string '%32b[l]' or through '%*b[l]', [l] selects
+ *       range-list क्रमmat instead of hex क्रमmat
+ * - 'M' For a 6-byte MAC address, it prपूर्णांकs the address in the
  *       usual colon-separated hex notation
- * - 'm' For a 6-byte MAC address, it prints the hex address without colons
- * - 'MF' For a 6-byte MAC FDDI address, it prints the address
+ * - 'm' For a 6-byte MAC address, it prपूर्णांकs the hex address without colons
+ * - 'MF' For a 6-byte MAC FDDI address, it prपूर्णांकs the address
  *       with a dash-separated hex notation
  * - '[mM]R' For a 6-byte MAC address, Reverse order (Bluetooth)
- * - 'I' [46] for IPv4/IPv6 addresses printed in the usual way
- *       IPv4 uses dot-separated decimal without leading 0's (1.2.3.4)
+ * - 'I' [46] क्रम IPv4/IPv6 addresses prपूर्णांकed in the usual way
+ *       IPv4 uses करोt-separated decimal without leading 0's (1.2.3.4)
  *       IPv6 uses colon separated network-order 16 bit hex with leading 0's
  *       [S][pfs]
- *       Generic IPv4/IPv6 address (struct sockaddr *) that falls back to
- *       [4] or [6] and is able to print port [p], flowinfo [f], scope [s]
+ *       Generic IPv4/IPv6 address (काष्ठा sockaddr *) that falls back to
+ *       [4] or [6] and is able to prपूर्णांक port [p], flowinfo [f], scope [s]
  * - 'i' [46] for 'raw' IPv4/IPv6 addresses
  *       IPv6 omits the colons (01020304...0f)
- *       IPv4 uses dot-separated decimal with leading 0's (010.123.045.006)
+ *       IPv4 uses करोt-separated decimal with leading 0's (010.123.045.006)
  *       [S][pfs]
- *       Generic IPv4/IPv6 address (struct sockaddr *) that falls back to
- *       [4] or [6] and is able to print port [p], flowinfo [f], scope [s]
+ *       Generic IPv4/IPv6 address (काष्ठा sockaddr *) that falls back to
+ *       [4] or [6] and is able to prपूर्णांक port [p], flowinfo [f], scope [s]
  * - '[Ii][4S][hnbl]' IPv4 addresses in host, network, big or little endian order
- * - 'I[6S]c' for IPv6 addresses printed as specified by
- *       https://tools.ietf.org/html/rfc5952
+ * - 'I[6S]c' क्रम IPv6 addresses prपूर्णांकed as specअगरied by
+ *       https://tools.ietf.org/hपंचांगl/rfc5952
  * - 'E[achnops]' For an escaped buffer, where rules are defined by combination
- *                of the following flags (see string_escape_mem() for the
+ *                of the following flags (see string_escape_mem() क्रम the
  *                details):
  *                  a - ESCAPE_ANY
  *                  c - ESCAPE_SPECIAL
  *                  h - ESCAPE_HEX
- *                  n - ESCAPE_NULL
+ *                  n - ESCAPE_शून्य
  *                  o - ESCAPE_OCTAL
  *                  p - ESCAPE_NP
  *                  s - ESCAPE_SPACE
- *                By default ESCAPE_ANY_NP is used.
- * - 'U' For a 16 byte UUID/GUID, it prints the UUID/GUID in the form
+ *                By शेष ESCAPE_ANY_NP is used.
+ * - 'U' For a 16 byte UUID/GUID, it prपूर्णांकs the UUID/GUID in the क्रमm
  *       "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
- *       Options for %pU are:
- *         b big endian lower case hex (default)
- *         B big endian UPPER case hex
- *         l little endian lower case hex
- *         L little endian UPPER case hex
+ *       Options क्रम %pU are:
+ *         b big endian lower हाल hex (शेष)
+ *         B big endian UPPER हाल hex
+ *         l little endian lower हाल hex
+ *         L little endian UPPER हाल hex
  *           big endian output byte order is:
  *             [0][1][2][3]-[4][5]-[6][7]-[8][9]-[10][11][12][13][14][15]
  *           little endian output byte order is:
  *             [3][2][1][0]-[5][4]-[7][6]-[8][9]-[10][11][12][13][14][15]
- * - 'V' For a struct va_format which contains a format string * and va_list *,
- *       call vsnprintf(->format, *->va_list).
+ * - 'V' For a काष्ठा va_क्रमmat which contains a क्रमmat string * and बहु_सूची *,
+ *       call vsnम_लिखो(->क्रमmat, *->बहु_सूची).
  *       Implements a "recursive vsnprintf".
- *       Do not use this feature without some mechanism to verify the
- *       correctness of the format string and va_list arguments.
- * - 'K' For a kernel pointer that should be hidden from unprivileged users.
- *       Use only for procfs, sysfs and similar files, not printk(); please
- *       read the documentation (path below) first.
+ *       Do not use this feature without some mechanism to verअगरy the
+ *       correctness of the क्रमmat string and बहु_सूची arguments.
+ * - 'K' For a kernel poपूर्णांकer that should be hidden from unprivileged users.
+ *       Use only क्रम procfs, sysfs and similar files, not prपूर्णांकk(); please
+ *       पढ़ो the करोcumentation (path below) first.
  * - 'NF' For a netdev_features_t
  * - '4cc' V4L2 or DRM FourCC code, with endianness and raw numerical value.
- * - 'h[CDN]' For a variable-length buffer, it prints it as a hex string with
- *            a certain separator (' ' by default):
+ * - 'h[CDN]' For a variable-length buffer, it prपूर्णांकs it as a hex string with
+ *            a certain separator (' ' by शेष):
  *              C colon
  *              D dash
  *              N no separator
  *            The maximum supported length is 64 bytes of the input. Consider
- *            to use print_hex_dump() for the larger input.
+ *            to use prपूर्णांक_hex_dump() क्रम the larger input.
  * - 'a[pd]' For address types [p] phys_addr_t, [d] dma_addr_t and derivatives
- *           (default assumed to be phys_addr_t, passed by reference)
+ *           (शेष assumed to be phys_addr_t, passed by reference)
  * - 'd[234]' For a dentry name (optionally 2-4 last components)
- * - 'D[234]' Same as 'd' but for a struct file
+ * - 'D[234]' Same as 'd' but क्रम a काष्ठा file
  * - 'g' For block_device name (gendisk + partition number)
- * - 't[RT][dt][r]' For time and date as represented by:
- *      R    struct rtc_time
- *      T    time64_t
- * - 'C' For a clock, it prints the name (Common Clock Framework) or address
- *       (legacy clock framework) of the clock
- * - 'Cn' For a clock, it prints the name (Common Clock Framework) or address
- *        (legacy clock framework) of the clock
- * - 'G' For flags to be printed as a collection of symbolic strings that would
- *       construct the specific value. Supported flags given by option:
- *       p page flags (see struct page) given as pointer to unsigned long
- *       g gfp flags (GFP_* and __GFP_*) given as pointer to gfp_t
- *       v vma flags (VM_*) given as pointer to unsigned long
+ * - 't[RT][dt][r]' For समय and date as represented by:
+ *      R    काष्ठा rtc_समय
+ *      T    समय64_t
+ * - 'C' For a घड़ी, it prपूर्णांकs the name (Common Clock Framework) or address
+ *       (legacy घड़ी framework) of the घड़ी
+ * - 'Cn' For a घड़ी, it prपूर्णांकs the name (Common Clock Framework) or address
+ *        (legacy घड़ी framework) of the घड़ी
+ * - 'G' For flags to be prपूर्णांकed as a collection of symbolic strings that would
+ *       स्थिरruct the specअगरic value. Supported flags given by option:
+ *       p page flags (see काष्ठा page) given as poपूर्णांकer to अचिन्हित दीर्घ
+ *       g gfp flags (GFP_* and __GFP_*) given as poपूर्णांकer to gfp_t
+ *       v vma flags (VM_*) given as poपूर्णांकer to अचिन्हित दीर्घ
  * - 'OF[fnpPcCF]'  For a device tree object
- *                  Without any optional arguments prints the full_name
+ *                  Without any optional arguments prपूर्णांकs the full_name
  *                  f device node full_name
  *                  n device node name
  *                  p device node phandle
@@ -2319,1344 +2320,1344 @@ early_param("no_hash_pointers", no_hash_pointers_enable);
  *                  F device node flags
  *                  c major compatible string
  *                  C full compatible string
- * - 'fw[fP]'	For a firmware node (struct fwnode_handle) pointer
- *		Without an option prints the full name of the node
+ * - 'fw[fP]'	For a firmware node (काष्ठा fwnode_handle) poपूर्णांकer
+ *		Without an option prपूर्णांकs the full name of the node
  *		f full name
  *		P node name, including a possible unit address
- * - 'x' For printing the address unmodified. Equivalent to "%lx".
- *       Please read the documentation (path below) before using!
- * - '[ku]s' For a BPF/tracing related format specifier, e.g. used out of
- *           bpf_trace_printk() where [ku] prefix specifies either kernel (k)
+ * - 'x' For prपूर्णांकing the address unmodअगरied. Equivalent to "%lx".
+ *       Please पढ़ो the करोcumentation (path below) beक्रमe using!
+ * - '[ku]s' For a BPF/tracing related क्रमmat specअगरier, e.g. used out of
+ *           bpf_trace_prपूर्णांकk() where [ku] prefix specअगरies either kernel (k)
  *           or user (u) memory to probe, and:
- *              s a string, equivalent to "%s" on direct vsnprintf() use
+ *              s a string, equivalent to "%s" on direct vsnम_लिखो() use
  *
  * ** When making changes please also update:
- *	Documentation/core-api/printk-formats.rst
+ *	Documentation/core-api/prपूर्णांकk-क्रमmats.rst
  *
- * Note: The default behaviour (unadorned %p) is to hash the address,
- * rendering it useful as a unique identifier.
+ * Note: The शेष behaviour (unaकरोrned %p) is to hash the address,
+ * rendering it useful as a unique identअगरier.
  */
-static noinline_for_stack
-char *pointer(const char *fmt, char *buf, char *end, void *ptr,
-	      struct printf_spec spec)
-{
-	switch (*fmt) {
-	case 'S':
-	case 's':
+अटल noअंतरभूत_क्रम_stack
+अक्षर *poपूर्णांकer(स्थिर अक्षर *fmt, अक्षर *buf, अक्षर *end, व्योम *ptr,
+	      काष्ठा म_लिखो_spec spec)
+अणु
+	चयन (*fmt) अणु
+	हाल 'S':
+	हाल 's':
 		ptr = dereference_symbol_descriptor(ptr);
 		fallthrough;
-	case 'B':
-		return symbol_string(buf, end, ptr, spec, fmt);
-	case 'R':
-	case 'r':
-		return resource_string(buf, end, ptr, spec, fmt);
-	case 'h':
-		return hex_string(buf, end, ptr, spec, fmt);
-	case 'b':
-		switch (fmt[1]) {
-		case 'l':
-			return bitmap_list_string(buf, end, ptr, spec, fmt);
-		default:
-			return bitmap_string(buf, end, ptr, spec, fmt);
-		}
-	case 'M':			/* Colon separated: 00:01:02:03:04:05 */
-	case 'm':			/* Contiguous: 000102030405 */
+	हाल 'B':
+		वापस symbol_string(buf, end, ptr, spec, fmt);
+	हाल 'R':
+	हाल 'r':
+		वापस resource_string(buf, end, ptr, spec, fmt);
+	हाल 'h':
+		वापस hex_string(buf, end, ptr, spec, fmt);
+	हाल 'b':
+		चयन (fmt[1]) अणु
+		हाल 'l':
+			वापस biपंचांगap_list_string(buf, end, ptr, spec, fmt);
+		शेष:
+			वापस biपंचांगap_string(buf, end, ptr, spec, fmt);
+		पूर्ण
+	हाल 'M':			/* Colon separated: 00:01:02:03:04:05 */
+	हाल 'm':			/* Contiguous: 000102030405 */
 					/* [mM]F (FDDI) */
 					/* [mM]R (Reverse order; Bluetooth) */
-		return mac_address_string(buf, end, ptr, spec, fmt);
-	case 'I':			/* Formatted IP supported
+		वापस mac_address_string(buf, end, ptr, spec, fmt);
+	हाल 'I':			/* Formatted IP supported
 					 * 4:	1.2.3.4
 					 * 6:	0001:0203:...:0708
 					 * 6c:	1::708 or 1::1.2.3.4
 					 */
-	case 'i':			/* Contiguous:
+	हाल 'i':			/* Contiguous:
 					 * 4:	001.002.003.004
 					 * 6:   000102...0f
 					 */
-		return ip_addr_string(buf, end, ptr, spec, fmt);
-	case 'E':
-		return escaped_string(buf, end, ptr, spec, fmt);
-	case 'U':
-		return uuid_string(buf, end, ptr, spec, fmt);
-	case 'V':
-		return va_format(buf, end, ptr, spec, fmt);
-	case 'K':
-		return restricted_pointer(buf, end, ptr, spec);
-	case 'N':
-		return netdev_bits(buf, end, ptr, spec, fmt);
-	case '4':
-		return fourcc_string(buf, end, ptr, spec, fmt);
-	case 'a':
-		return address_val(buf, end, ptr, spec, fmt);
-	case 'd':
-		return dentry_name(buf, end, ptr, spec, fmt);
-	case 't':
-		return time_and_date(buf, end, ptr, spec, fmt);
-	case 'C':
-		return clock(buf, end, ptr, spec, fmt);
-	case 'D':
-		return file_dentry_name(buf, end, ptr, spec, fmt);
-#ifdef CONFIG_BLOCK
-	case 'g':
-		return bdev_name(buf, end, ptr, spec, fmt);
-#endif
+		वापस ip_addr_string(buf, end, ptr, spec, fmt);
+	हाल 'E':
+		वापस escaped_string(buf, end, ptr, spec, fmt);
+	हाल 'U':
+		वापस uuid_string(buf, end, ptr, spec, fmt);
+	हाल 'V':
+		वापस va_क्रमmat(buf, end, ptr, spec, fmt);
+	हाल 'K':
+		वापस restricted_poपूर्णांकer(buf, end, ptr, spec);
+	हाल 'N':
+		वापस netdev_bits(buf, end, ptr, spec, fmt);
+	हाल '4':
+		वापस fourcc_string(buf, end, ptr, spec, fmt);
+	हाल 'a':
+		वापस address_val(buf, end, ptr, spec, fmt);
+	हाल 'd':
+		वापस dentry_name(buf, end, ptr, spec, fmt);
+	हाल 't':
+		वापस समय_and_date(buf, end, ptr, spec, fmt);
+	हाल 'C':
+		वापस घड़ी(buf, end, ptr, spec, fmt);
+	हाल 'D':
+		वापस file_dentry_name(buf, end, ptr, spec, fmt);
+#अगर_घोषित CONFIG_BLOCK
+	हाल 'g':
+		वापस bdev_name(buf, end, ptr, spec, fmt);
+#पूर्ण_अगर
 
-	case 'G':
-		return flags_string(buf, end, ptr, spec, fmt);
-	case 'O':
-		return device_node_string(buf, end, ptr, spec, fmt + 1);
-	case 'f':
-		return fwnode_string(buf, end, ptr, spec, fmt + 1);
-	case 'x':
-		return pointer_string(buf, end, ptr, spec);
-	case 'e':
-		/* %pe with a non-ERR_PTR gets treated as plain %p */
-		if (!IS_ERR(ptr))
-			break;
-		return err_ptr(buf, end, ptr, spec);
-	case 'u':
-	case 'k':
-		switch (fmt[1]) {
-		case 's':
-			return string(buf, end, ptr, spec);
-		default:
-			return error_string(buf, end, "(einval)", spec);
-		}
-	}
+	हाल 'G':
+		वापस flags_string(buf, end, ptr, spec, fmt);
+	हाल 'O':
+		वापस device_node_string(buf, end, ptr, spec, fmt + 1);
+	हाल 'f':
+		वापस fwnode_string(buf, end, ptr, spec, fmt + 1);
+	हाल 'x':
+		वापस poपूर्णांकer_string(buf, end, ptr, spec);
+	हाल 'e':
+		/* %pe with a non-ERR_PTR माला_लो treated as plain %p */
+		अगर (!IS_ERR(ptr))
+			अवरोध;
+		वापस err_ptr(buf, end, ptr, spec);
+	हाल 'u':
+	हाल 'k':
+		चयन (fmt[1]) अणु
+		हाल 's':
+			वापस string(buf, end, ptr, spec);
+		शेष:
+			वापस error_string(buf, end, "(einval)", spec);
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * default is to _not_ leak addresses, so hash before printing,
-	 * unless no_hash_pointers is specified on the command line.
+	 * शेष is to _not_ leak addresses, so hash beक्रमe prपूर्णांकing,
+	 * unless no_hash_poपूर्णांकers is specअगरied on the command line.
 	 */
-	if (unlikely(no_hash_pointers))
-		return pointer_string(buf, end, ptr, spec);
-	else
-		return ptr_to_id(buf, end, ptr, spec);
-}
+	अगर (unlikely(no_hash_poपूर्णांकers))
+		वापस poपूर्णांकer_string(buf, end, ptr, spec);
+	अन्यथा
+		वापस ptr_to_id(buf, end, ptr, spec);
+पूर्ण
 
 /*
- * Helper function to decode printf style format.
- * Each call decode a token from the format and return the
- * number of characters read (or likely the delta where it wants
+ * Helper function to decode म_लिखो style क्रमmat.
+ * Each call decode a token from the क्रमmat and वापस the
+ * number of अक्षरacters पढ़ो (or likely the delta where it wants
  * to go on the next call).
- * The decoded token is returned through the parameters
+ * The decoded token is वापसed through the parameters
  *
- * 'h', 'l', or 'L' for integer fields
+ * 'h', 'l', or 'L' क्रम पूर्णांकeger fields
  * 'z' support added 23/7/1999 S.H.
  * 'z' changed to 'Z' --davidm 1/25/99
- * 'Z' changed to 'z' --adobriyan 2017-01-25
- * 't' added for ptrdiff_t
+ * 'Z' changed to 'z' --aकरोbriyan 2017-01-25
+ * 't' added क्रम सूचक_भेद_प्रकार
  *
- * @fmt: the format string
- * @type of the token returned
+ * @fmt: the क्रमmat string
+ * @type of the token वापसed
  * @flags: various flags such as +, -, # tokens..
  * @field_width: overwritten width
  * @base: base of the number (octal, hex, ...)
  * @precision: precision of a number
- * @qualifier: qualifier of a number (long, size_t, ...)
+ * @qualअगरier: qualअगरier of a number (दीर्घ, माप_प्रकार, ...)
  */
-static noinline_for_stack
-int format_decode(const char *fmt, struct printf_spec *spec)
-{
-	const char *start = fmt;
-	char qualifier;
+अटल noअंतरभूत_क्रम_stack
+पूर्णांक क्रमmat_decode(स्थिर अक्षर *fmt, काष्ठा म_लिखो_spec *spec)
+अणु
+	स्थिर अक्षर *start = fmt;
+	अक्षर qualअगरier;
 
-	/* we finished early by reading the field width */
-	if (spec->type == FORMAT_TYPE_WIDTH) {
-		if (spec->field_width < 0) {
+	/* we finished early by पढ़ोing the field width */
+	अगर (spec->type == FORMAT_TYPE_WIDTH) अणु
+		अगर (spec->field_width < 0) अणु
 			spec->field_width = -spec->field_width;
 			spec->flags |= LEFT;
-		}
+		पूर्ण
 		spec->type = FORMAT_TYPE_NONE;
-		goto precision;
-	}
+		जाओ precision;
+	पूर्ण
 
-	/* we finished early by reading the precision */
-	if (spec->type == FORMAT_TYPE_PRECISION) {
-		if (spec->precision < 0)
+	/* we finished early by पढ़ोing the precision */
+	अगर (spec->type == FORMAT_TYPE_PRECISION) अणु
+		अगर (spec->precision < 0)
 			spec->precision = 0;
 
 		spec->type = FORMAT_TYPE_NONE;
-		goto qualifier;
-	}
+		जाओ qualअगरier;
+	पूर्ण
 
-	/* By default */
+	/* By शेष */
 	spec->type = FORMAT_TYPE_NONE;
 
-	for (; *fmt ; ++fmt) {
-		if (*fmt == '%')
-			break;
-	}
+	क्रम (; *fmt ; ++fmt) अणु
+		अगर (*fmt == '%')
+			अवरोध;
+	पूर्ण
 
-	/* Return the current non-format string */
-	if (fmt != start || !*fmt)
-		return fmt - start;
+	/* Return the current non-क्रमmat string */
+	अगर (fmt != start || !*fmt)
+		वापस fmt - start;
 
 	/* Process flags */
 	spec->flags = 0;
 
-	while (1) { /* this also skips first '%' */
+	जबतक (1) अणु /* this also skips first '%' */
 		bool found = true;
 
 		++fmt;
 
-		switch (*fmt) {
-		case '-': spec->flags |= LEFT;    break;
-		case '+': spec->flags |= PLUS;    break;
-		case ' ': spec->flags |= SPACE;   break;
-		case '#': spec->flags |= SPECIAL; break;
-		case '0': spec->flags |= ZEROPAD; break;
-		default:  found = false;
-		}
+		चयन (*fmt) अणु
+		हाल '-': spec->flags |= LEFT;    अवरोध;
+		हाल '+': spec->flags |= PLUS;    अवरोध;
+		हाल ' ': spec->flags |= SPACE;   अवरोध;
+		हाल '#': spec->flags |= SPECIAL; अवरोध;
+		हाल '0': spec->flags |= ZEROPAD; अवरोध;
+		शेष:  found = false;
+		पूर्ण
 
-		if (!found)
-			break;
-	}
+		अगर (!found)
+			अवरोध;
+	पूर्ण
 
 	/* get field width */
 	spec->field_width = -1;
 
-	if (isdigit(*fmt))
-		spec->field_width = skip_atoi(&fmt);
-	else if (*fmt == '*') {
+	अगर (है_अंक(*fmt))
+		spec->field_width = skip_म_से_प(&fmt);
+	अन्यथा अगर (*fmt == '*') अणु
 		/* it's the next argument */
 		spec->type = FORMAT_TYPE_WIDTH;
-		return ++fmt - start;
-	}
+		वापस ++fmt - start;
+	पूर्ण
 
 precision:
 	/* get the precision */
 	spec->precision = -1;
-	if (*fmt == '.') {
+	अगर (*fmt == '.') अणु
 		++fmt;
-		if (isdigit(*fmt)) {
-			spec->precision = skip_atoi(&fmt);
-			if (spec->precision < 0)
+		अगर (है_अंक(*fmt)) अणु
+			spec->precision = skip_म_से_प(&fmt);
+			अगर (spec->precision < 0)
 				spec->precision = 0;
-		} else if (*fmt == '*') {
+		पूर्ण अन्यथा अगर (*fmt == '*') अणु
 			/* it's the next argument */
 			spec->type = FORMAT_TYPE_PRECISION;
-			return ++fmt - start;
-		}
-	}
+			वापस ++fmt - start;
+		पूर्ण
+	पूर्ण
 
-qualifier:
-	/* get the conversion qualifier */
-	qualifier = 0;
-	if (*fmt == 'h' || _tolower(*fmt) == 'l' ||
-	    *fmt == 'z' || *fmt == 't') {
-		qualifier = *fmt++;
-		if (unlikely(qualifier == *fmt)) {
-			if (qualifier == 'l') {
-				qualifier = 'L';
+qualअगरier:
+	/* get the conversion qualअगरier */
+	qualअगरier = 0;
+	अगर (*fmt == 'h' || _tolower(*fmt) == 'l' ||
+	    *fmt == 'z' || *fmt == 't') अणु
+		qualअगरier = *fmt++;
+		अगर (unlikely(qualअगरier == *fmt)) अणु
+			अगर (qualअगरier == 'l') अणु
+				qualअगरier = 'L';
 				++fmt;
-			} else if (qualifier == 'h') {
-				qualifier = 'H';
+			पूर्ण अन्यथा अगर (qualअगरier == 'h') अणु
+				qualअगरier = 'H';
 				++fmt;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* default base */
+	/* शेष base */
 	spec->base = 10;
-	switch (*fmt) {
-	case 'c':
+	चयन (*fmt) अणु
+	हाल 'c':
 		spec->type = FORMAT_TYPE_CHAR;
-		return ++fmt - start;
+		वापस ++fmt - start;
 
-	case 's':
+	हाल 's':
 		spec->type = FORMAT_TYPE_STR;
-		return ++fmt - start;
+		वापस ++fmt - start;
 
-	case 'p':
+	हाल 'p':
 		spec->type = FORMAT_TYPE_PTR;
-		return ++fmt - start;
+		वापस ++fmt - start;
 
-	case '%':
+	हाल '%':
 		spec->type = FORMAT_TYPE_PERCENT_CHAR;
-		return ++fmt - start;
+		वापस ++fmt - start;
 
-	/* integer number formats - set up the flags and "break" */
-	case 'o':
+	/* पूर्णांकeger number क्रमmats - set up the flags and "break" */
+	हाल 'o':
 		spec->base = 8;
-		break;
+		अवरोध;
 
-	case 'x':
+	हाल 'x':
 		spec->flags |= SMALL;
 		fallthrough;
 
-	case 'X':
+	हाल 'X':
 		spec->base = 16;
-		break;
+		अवरोध;
 
-	case 'd':
-	case 'i':
+	हाल 'd':
+	हाल 'i':
 		spec->flags |= SIGN;
-		break;
-	case 'u':
-		break;
+		अवरोध;
+	हाल 'u':
+		अवरोध;
 
-	case 'n':
+	हाल 'n':
 		/*
 		 * Since %n poses a greater security risk than
 		 * utility, treat it as any other invalid or
-		 * unsupported format specifier.
+		 * unsupported क्रमmat specअगरier.
 		 */
 		fallthrough;
 
-	default:
+	शेष:
 		WARN_ONCE(1, "Please remove unsupported %%%c in format string\n", *fmt);
 		spec->type = FORMAT_TYPE_INVALID;
-		return fmt - start;
-	}
+		वापस fmt - start;
+	पूर्ण
 
-	if (qualifier == 'L')
+	अगर (qualअगरier == 'L')
 		spec->type = FORMAT_TYPE_LONG_LONG;
-	else if (qualifier == 'l') {
+	अन्यथा अगर (qualअगरier == 'l') अणु
 		BUILD_BUG_ON(FORMAT_TYPE_ULONG + SIGN != FORMAT_TYPE_LONG);
 		spec->type = FORMAT_TYPE_ULONG + (spec->flags & SIGN);
-	} else if (qualifier == 'z') {
+	पूर्ण अन्यथा अगर (qualअगरier == 'z') अणु
 		spec->type = FORMAT_TYPE_SIZE_T;
-	} else if (qualifier == 't') {
+	पूर्ण अन्यथा अगर (qualअगरier == 't') अणु
 		spec->type = FORMAT_TYPE_PTRDIFF;
-	} else if (qualifier == 'H') {
+	पूर्ण अन्यथा अगर (qualअगरier == 'H') अणु
 		BUILD_BUG_ON(FORMAT_TYPE_UBYTE + SIGN != FORMAT_TYPE_BYTE);
 		spec->type = FORMAT_TYPE_UBYTE + (spec->flags & SIGN);
-	} else if (qualifier == 'h') {
+	पूर्ण अन्यथा अगर (qualअगरier == 'h') अणु
 		BUILD_BUG_ON(FORMAT_TYPE_USHORT + SIGN != FORMAT_TYPE_SHORT);
 		spec->type = FORMAT_TYPE_USHORT + (spec->flags & SIGN);
-	} else {
+	पूर्ण अन्यथा अणु
 		BUILD_BUG_ON(FORMAT_TYPE_UINT + SIGN != FORMAT_TYPE_INT);
 		spec->type = FORMAT_TYPE_UINT + (spec->flags & SIGN);
-	}
+	पूर्ण
 
-	return ++fmt - start;
-}
+	वापस ++fmt - start;
+पूर्ण
 
-static void
-set_field_width(struct printf_spec *spec, int width)
-{
+अटल व्योम
+set_field_width(काष्ठा म_लिखो_spec *spec, पूर्णांक width)
+अणु
 	spec->field_width = width;
-	if (WARN_ONCE(spec->field_width != width, "field width %d too large", width)) {
+	अगर (WARN_ONCE(spec->field_width != width, "field width %d too large", width)) अणु
 		spec->field_width = clamp(width, -FIELD_WIDTH_MAX, FIELD_WIDTH_MAX);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-set_precision(struct printf_spec *spec, int prec)
-{
+अटल व्योम
+set_precision(काष्ठा म_लिखो_spec *spec, पूर्णांक prec)
+अणु
 	spec->precision = prec;
-	if (WARN_ONCE(spec->precision != prec, "precision %d too large", prec)) {
+	अगर (WARN_ONCE(spec->precision != prec, "precision %d too large", prec)) अणु
 		spec->precision = clamp(prec, 0, PRECISION_MAX);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * vsnprintf - Format a string and place it in a buffer
- * @buf: The buffer to place the result into
+ * vsnम_लिखो - Format a string and place it in a buffer
+ * @buf: The buffer to place the result पूर्णांकo
  * @size: The size of the buffer, including the trailing null space
- * @fmt: The format string to use
- * @args: Arguments for the format string
+ * @fmt: The क्रमmat string to use
+ * @args: Arguments क्रम the क्रमmat string
  *
- * This function generally follows C99 vsnprintf, but has some
+ * This function generally follows C99 vsnम_लिखो, but has some
  * extensions and a few limitations:
  *
  *  - ``%n`` is unsupported
- *  - ``%p*`` is handled by pointer()
+ *  - ``%p*`` is handled by poपूर्णांकer()
  *
- * See pointer() or Documentation/core-api/printk-formats.rst for more
+ * See poपूर्णांकer() or Documentation/core-api/prपूर्णांकk-क्रमmats.rst क्रम more
  * extensive description.
  *
- * **Please update the documentation in both places when making changes**
+ * **Please update the करोcumentation in both places when making changes**
  *
- * The return value is the number of characters which would
- * be generated for the given input, excluding the trailing
+ * The वापस value is the number of अक्षरacters which would
+ * be generated क्रम the given input, excluding the trailing
  * '\0', as per ISO C99. If you want to have the exact
- * number of characters written into @buf as return value
- * (not including the trailing '\0'), use vscnprintf(). If the
- * return is greater than or equal to @size, the resulting
+ * number of अक्षरacters written पूर्णांकo @buf as वापस value
+ * (not including the trailing '\0'), use vscnम_लिखो(). If the
+ * वापस is greater than or equal to @size, the resulting
  * string is truncated.
  *
- * If you're not already dealing with a va_list consider using snprintf().
+ * If you're not alपढ़ोy dealing with a बहु_सूची consider using snम_लिखो().
  */
-int vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
-{
-	unsigned long long num;
-	char *str, *end;
-	struct printf_spec spec = {0};
+पूर्णांक vsnम_लिखो(अक्षर *buf, माप_प्रकार size, स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	अचिन्हित दीर्घ दीर्घ num;
+	अक्षर *str, *end;
+	काष्ठा म_लिखो_spec spec = अणु0पूर्ण;
 
 	/* Reject out-of-range values early.  Large positive sizes are
-	   used for unknown buffer sizes. */
-	if (WARN_ON_ONCE(size > INT_MAX))
-		return 0;
+	   used क्रम unknown buffer sizes. */
+	अगर (WARN_ON_ONCE(size > पूर्णांक_उच्च))
+		वापस 0;
 
 	str = buf;
 	end = buf + size;
 
 	/* Make sure end is always >= buf */
-	if (end < buf) {
-		end = ((void *)-1);
+	अगर (end < buf) अणु
+		end = ((व्योम *)-1);
 		size = end - buf;
-	}
+	पूर्ण
 
-	while (*fmt) {
-		const char *old_fmt = fmt;
-		int read = format_decode(fmt, &spec);
+	जबतक (*fmt) अणु
+		स्थिर अक्षर *old_fmt = fmt;
+		पूर्णांक पढ़ो = क्रमmat_decode(fmt, &spec);
 
-		fmt += read;
+		fmt += पढ़ो;
 
-		switch (spec.type) {
-		case FORMAT_TYPE_NONE: {
-			int copy = read;
-			if (str < end) {
-				if (copy > end - str)
+		चयन (spec.type) अणु
+		हाल FORMAT_TYPE_NONE: अणु
+			पूर्णांक copy = पढ़ो;
+			अगर (str < end) अणु
+				अगर (copy > end - str)
 					copy = end - str;
-				memcpy(str, old_fmt, copy);
-			}
-			str += read;
-			break;
-		}
+				स_नकल(str, old_fmt, copy);
+			पूर्ण
+			str += पढ़ो;
+			अवरोध;
+		पूर्ण
 
-		case FORMAT_TYPE_WIDTH:
-			set_field_width(&spec, va_arg(args, int));
-			break;
+		हाल FORMAT_TYPE_WIDTH:
+			set_field_width(&spec, बहु_तर्क(args, पूर्णांक));
+			अवरोध;
 
-		case FORMAT_TYPE_PRECISION:
-			set_precision(&spec, va_arg(args, int));
-			break;
+		हाल FORMAT_TYPE_PRECISION:
+			set_precision(&spec, बहु_तर्क(args, पूर्णांक));
+			अवरोध;
 
-		case FORMAT_TYPE_CHAR: {
-			char c;
+		हाल FORMAT_TYPE_CHAR: अणु
+			अक्षर c;
 
-			if (!(spec.flags & LEFT)) {
-				while (--spec.field_width > 0) {
-					if (str < end)
+			अगर (!(spec.flags & LEFT)) अणु
+				जबतक (--spec.field_width > 0) अणु
+					अगर (str < end)
 						*str = ' ';
 					++str;
 
-				}
-			}
-			c = (unsigned char) va_arg(args, int);
-			if (str < end)
+				पूर्ण
+			पूर्ण
+			c = (अचिन्हित अक्षर) बहु_तर्क(args, पूर्णांक);
+			अगर (str < end)
 				*str = c;
 			++str;
-			while (--spec.field_width > 0) {
-				if (str < end)
+			जबतक (--spec.field_width > 0) अणु
+				अगर (str < end)
 					*str = ' ';
 				++str;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		case FORMAT_TYPE_STR:
-			str = string(str, end, va_arg(args, char *), spec);
-			break;
+		हाल FORMAT_TYPE_STR:
+			str = string(str, end, बहु_तर्क(args, अक्षर *), spec);
+			अवरोध;
 
-		case FORMAT_TYPE_PTR:
-			str = pointer(fmt, str, end, va_arg(args, void *),
+		हाल FORMAT_TYPE_PTR:
+			str = poपूर्णांकer(fmt, str, end, बहु_तर्क(args, व्योम *),
 				      spec);
-			while (isalnum(*fmt))
+			जबतक (है_अक्षर_अंक(*fmt))
 				fmt++;
-			break;
+			अवरोध;
 
-		case FORMAT_TYPE_PERCENT_CHAR:
-			if (str < end)
+		हाल FORMAT_TYPE_PERCENT_CHAR:
+			अगर (str < end)
 				*str = '%';
 			++str;
-			break;
+			अवरोध;
 
-		case FORMAT_TYPE_INVALID:
+		हाल FORMAT_TYPE_INVALID:
 			/*
 			 * Presumably the arguments passed gcc's type
 			 * checking, but there is no safe or sane way
-			 * for us to continue parsing the format and
-			 * fetching from the va_list; the remaining
-			 * specifiers and arguments would be out of
+			 * क्रम us to जारी parsing the क्रमmat and
+			 * fetching from the बहु_सूची; the reमुख्यing
+			 * specअगरiers and arguments would be out of
 			 * sync.
 			 */
-			goto out;
+			जाओ out;
 
-		default:
-			switch (spec.type) {
-			case FORMAT_TYPE_LONG_LONG:
-				num = va_arg(args, long long);
-				break;
-			case FORMAT_TYPE_ULONG:
-				num = va_arg(args, unsigned long);
-				break;
-			case FORMAT_TYPE_LONG:
-				num = va_arg(args, long);
-				break;
-			case FORMAT_TYPE_SIZE_T:
-				if (spec.flags & SIGN)
-					num = va_arg(args, ssize_t);
-				else
-					num = va_arg(args, size_t);
-				break;
-			case FORMAT_TYPE_PTRDIFF:
-				num = va_arg(args, ptrdiff_t);
-				break;
-			case FORMAT_TYPE_UBYTE:
-				num = (unsigned char) va_arg(args, int);
-				break;
-			case FORMAT_TYPE_BYTE:
-				num = (signed char) va_arg(args, int);
-				break;
-			case FORMAT_TYPE_USHORT:
-				num = (unsigned short) va_arg(args, int);
-				break;
-			case FORMAT_TYPE_SHORT:
-				num = (short) va_arg(args, int);
-				break;
-			case FORMAT_TYPE_INT:
-				num = (int) va_arg(args, int);
-				break;
-			default:
-				num = va_arg(args, unsigned int);
-			}
+		शेष:
+			चयन (spec.type) अणु
+			हाल FORMAT_TYPE_LONG_LONG:
+				num = बहु_तर्क(args, दीर्घ दीर्घ);
+				अवरोध;
+			हाल FORMAT_TYPE_ULONG:
+				num = बहु_तर्क(args, अचिन्हित दीर्घ);
+				अवरोध;
+			हाल FORMAT_TYPE_LONG:
+				num = बहु_तर्क(args, दीर्घ);
+				अवरोध;
+			हाल FORMAT_TYPE_SIZE_T:
+				अगर (spec.flags & SIGN)
+					num = बहु_तर्क(args, sमाप_प्रकार);
+				अन्यथा
+					num = बहु_तर्क(args, माप_प्रकार);
+				अवरोध;
+			हाल FORMAT_TYPE_PTRDIFF:
+				num = बहु_तर्क(args, सूचक_भेद_प्रकार);
+				अवरोध;
+			हाल FORMAT_TYPE_UBYTE:
+				num = (अचिन्हित अक्षर) बहु_तर्क(args, पूर्णांक);
+				अवरोध;
+			हाल FORMAT_TYPE_BYTE:
+				num = (चिन्हित अक्षर) बहु_तर्क(args, पूर्णांक);
+				अवरोध;
+			हाल FORMAT_TYPE_USHORT:
+				num = (अचिन्हित लघु) बहु_तर्क(args, पूर्णांक);
+				अवरोध;
+			हाल FORMAT_TYPE_SHORT:
+				num = (लघु) बहु_तर्क(args, पूर्णांक);
+				अवरोध;
+			हाल FORMAT_TYPE_INT:
+				num = (पूर्णांक) बहु_तर्क(args, पूर्णांक);
+				अवरोध;
+			शेष:
+				num = बहु_तर्क(args, अचिन्हित पूर्णांक);
+			पूर्ण
 
 			str = number(str, end, num, spec);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	if (size > 0) {
-		if (str < end)
+	अगर (size > 0) अणु
+		अगर (str < end)
 			*str = '\0';
-		else
+		अन्यथा
 			end[-1] = '\0';
-	}
+	पूर्ण
 
-	/* the trailing null byte doesn't count towards the total */
-	return str-buf;
+	/* the trailing null byte करोesn't count towards the total */
+	वापस str-buf;
 
-}
-EXPORT_SYMBOL(vsnprintf);
+पूर्ण
+EXPORT_SYMBOL(vsnम_लिखो);
 
 /**
- * vscnprintf - Format a string and place it in a buffer
- * @buf: The buffer to place the result into
+ * vscnम_लिखो - Format a string and place it in a buffer
+ * @buf: The buffer to place the result पूर्णांकo
  * @size: The size of the buffer, including the trailing null space
- * @fmt: The format string to use
- * @args: Arguments for the format string
+ * @fmt: The क्रमmat string to use
+ * @args: Arguments क्रम the क्रमmat string
  *
- * The return value is the number of characters which have been written into
+ * The वापस value is the number of अक्षरacters which have been written पूर्णांकo
  * the @buf not including the trailing '\0'. If @size is == 0 the function
- * returns 0.
+ * वापसs 0.
  *
- * If you're not already dealing with a va_list consider using scnprintf().
+ * If you're not alपढ़ोy dealing with a बहु_सूची consider using scnम_लिखो().
  *
- * See the vsnprintf() documentation for format string extensions over C99.
+ * See the vsnम_लिखो() करोcumentation क्रम क्रमmat string extensions over C99.
  */
-int vscnprintf(char *buf, size_t size, const char *fmt, va_list args)
-{
-	int i;
+पूर्णांक vscnम_लिखो(अक्षर *buf, माप_प्रकार size, स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	पूर्णांक i;
 
-	i = vsnprintf(buf, size, fmt, args);
+	i = vsnम_लिखो(buf, size, fmt, args);
 
-	if (likely(i < size))
-		return i;
-	if (size != 0)
-		return size - 1;
-	return 0;
-}
-EXPORT_SYMBOL(vscnprintf);
+	अगर (likely(i < size))
+		वापस i;
+	अगर (size != 0)
+		वापस size - 1;
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(vscnम_लिखो);
 
 /**
- * snprintf - Format a string and place it in a buffer
- * @buf: The buffer to place the result into
+ * snम_लिखो - Format a string and place it in a buffer
+ * @buf: The buffer to place the result पूर्णांकo
  * @size: The size of the buffer, including the trailing null space
- * @fmt: The format string to use
- * @...: Arguments for the format string
+ * @fmt: The क्रमmat string to use
+ * @...: Arguments क्रम the क्रमmat string
  *
- * The return value is the number of characters which would be
- * generated for the given input, excluding the trailing null,
- * as per ISO C99.  If the return is greater than or equal to
+ * The वापस value is the number of अक्षरacters which would be
+ * generated क्रम the given input, excluding the trailing null,
+ * as per ISO C99.  If the वापस is greater than or equal to
  * @size, the resulting string is truncated.
  *
- * See the vsnprintf() documentation for format string extensions over C99.
+ * See the vsnम_लिखो() करोcumentation क्रम क्रमmat string extensions over C99.
  */
-int snprintf(char *buf, size_t size, const char *fmt, ...)
-{
-	va_list args;
-	int i;
+पूर्णांक snम_लिखो(अक्षर *buf, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक i;
 
-	va_start(args, fmt);
-	i = vsnprintf(buf, size, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	i = vsnम_लिखो(buf, size, fmt, args);
+	बहु_पूर्ण(args);
 
-	return i;
-}
-EXPORT_SYMBOL(snprintf);
+	वापस i;
+पूर्ण
+EXPORT_SYMBOL(snम_लिखो);
 
 /**
- * scnprintf - Format a string and place it in a buffer
- * @buf: The buffer to place the result into
+ * scnम_लिखो - Format a string and place it in a buffer
+ * @buf: The buffer to place the result पूर्णांकo
  * @size: The size of the buffer, including the trailing null space
- * @fmt: The format string to use
- * @...: Arguments for the format string
+ * @fmt: The क्रमmat string to use
+ * @...: Arguments क्रम the क्रमmat string
  *
- * The return value is the number of characters written into @buf not including
- * the trailing '\0'. If @size is == 0 the function returns 0.
+ * The वापस value is the number of अक्षरacters written पूर्णांकo @buf not including
+ * the trailing '\0'. If @size is == 0 the function वापसs 0.
  */
 
-int scnprintf(char *buf, size_t size, const char *fmt, ...)
-{
-	va_list args;
-	int i;
+पूर्णांक scnम_लिखो(अक्षर *buf, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक i;
 
-	va_start(args, fmt);
-	i = vscnprintf(buf, size, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	i = vscnम_लिखो(buf, size, fmt, args);
+	बहु_पूर्ण(args);
 
-	return i;
-}
-EXPORT_SYMBOL(scnprintf);
+	वापस i;
+पूर्ण
+EXPORT_SYMBOL(scnम_लिखो);
 
 /**
- * vsprintf - Format a string and place it in a buffer
- * @buf: The buffer to place the result into
- * @fmt: The format string to use
- * @args: Arguments for the format string
+ * भम_लिखो - Format a string and place it in a buffer
+ * @buf: The buffer to place the result पूर्णांकo
+ * @fmt: The क्रमmat string to use
+ * @args: Arguments क्रम the क्रमmat string
  *
- * The function returns the number of characters written
- * into @buf. Use vsnprintf() or vscnprintf() in order to avoid
+ * The function वापसs the number of अक्षरacters written
+ * पूर्णांकo @buf. Use vsnम_लिखो() or vscnम_लिखो() in order to aव्योम
  * buffer overflows.
  *
- * If you're not already dealing with a va_list consider using sprintf().
+ * If you're not alपढ़ोy dealing with a बहु_सूची consider using प्र_लिखो().
  *
- * See the vsnprintf() documentation for format string extensions over C99.
+ * See the vsnम_लिखो() करोcumentation क्रम क्रमmat string extensions over C99.
  */
-int vsprintf(char *buf, const char *fmt, va_list args)
-{
-	return vsnprintf(buf, INT_MAX, fmt, args);
-}
-EXPORT_SYMBOL(vsprintf);
+पूर्णांक भम_लिखो(अक्षर *buf, स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	वापस vsnम_लिखो(buf, पूर्णांक_उच्च, fmt, args);
+पूर्ण
+EXPORT_SYMBOL(भम_लिखो);
 
 /**
- * sprintf - Format a string and place it in a buffer
- * @buf: The buffer to place the result into
- * @fmt: The format string to use
- * @...: Arguments for the format string
+ * प्र_लिखो - Format a string and place it in a buffer
+ * @buf: The buffer to place the result पूर्णांकo
+ * @fmt: The क्रमmat string to use
+ * @...: Arguments क्रम the क्रमmat string
  *
- * The function returns the number of characters written
- * into @buf. Use snprintf() or scnprintf() in order to avoid
+ * The function वापसs the number of अक्षरacters written
+ * पूर्णांकo @buf. Use snम_लिखो() or scnम_लिखो() in order to aव्योम
  * buffer overflows.
  *
- * See the vsnprintf() documentation for format string extensions over C99.
+ * See the vsnम_लिखो() करोcumentation क्रम क्रमmat string extensions over C99.
  */
-int sprintf(char *buf, const char *fmt, ...)
-{
-	va_list args;
-	int i;
+पूर्णांक प्र_लिखो(अक्षर *buf, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक i;
 
-	va_start(args, fmt);
-	i = vsnprintf(buf, INT_MAX, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	i = vsnम_लिखो(buf, पूर्णांक_उच्च, fmt, args);
+	बहु_पूर्ण(args);
 
-	return i;
-}
-EXPORT_SYMBOL(sprintf);
+	वापस i;
+पूर्ण
+EXPORT_SYMBOL(प्र_लिखो);
 
-#ifdef CONFIG_BINARY_PRINTF
+#अगर_घोषित CONFIG_BINARY_PRINTF
 /*
- * bprintf service:
- * vbin_printf() - VA arguments to binary data
- * bstr_printf() - Binary data to text string
+ * bम_लिखो service:
+ * vbin_म_लिखो() - VA arguments to binary data
+ * bstr_म_लिखो() - Binary data to text string
  */
 
 /**
- * vbin_printf - Parse a format string and place args' binary value in a buffer
+ * vbin_म_लिखो - Parse a क्रमmat string and place args' binary value in a buffer
  * @bin_buf: The buffer to place args' binary value
- * @size: The size of the buffer(by words(32bits), not characters)
- * @fmt: The format string to use
- * @args: Arguments for the format string
+ * @size: The size of the buffer(by words(32bits), not अक्षरacters)
+ * @fmt: The क्रमmat string to use
+ * @args: Arguments क्रम the क्रमmat string
  *
- * The format follows C99 vsnprintf, except %n is ignored, and its argument
+ * The क्रमmat follows C99 vsnम_लिखो, except %n is ignored, and its argument
  * is skipped.
  *
- * The return value is the number of words(32bits) which would be generated for
+ * The वापस value is the number of words(32bits) which would be generated क्रम
  * the given input.
  *
  * NOTE:
- * If the return value is greater than @size, the resulting bin_buf is NOT
- * valid for bstr_printf().
+ * If the वापस value is greater than @size, the resulting bin_buf is NOT
+ * valid क्रम bstr_म_लिखो().
  */
-int vbin_printf(u32 *bin_buf, size_t size, const char *fmt, va_list args)
-{
-	struct printf_spec spec = {0};
-	char *str, *end;
-	int width;
+पूर्णांक vbin_म_लिखो(u32 *bin_buf, माप_प्रकार size, स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	काष्ठा म_लिखो_spec spec = अणु0पूर्ण;
+	अक्षर *str, *end;
+	पूर्णांक width;
 
-	str = (char *)bin_buf;
-	end = (char *)(bin_buf + size);
+	str = (अक्षर *)bin_buf;
+	end = (अक्षर *)(bin_buf + size);
 
-#define save_arg(type)							\
-({									\
-	unsigned long long value;					\
-	if (sizeof(type) == 8) {					\
-		unsigned long long val8;				\
-		str = PTR_ALIGN(str, sizeof(u32));			\
-		val8 = va_arg(args, unsigned long long);		\
-		if (str + sizeof(type) <= end) {			\
+#घोषणा save_arg(type)							\
+(अणु									\
+	अचिन्हित दीर्घ दीर्घ value;					\
+	अगर (माप(type) == 8) अणु					\
+		अचिन्हित दीर्घ दीर्घ val8;				\
+		str = PTR_ALIGN(str, माप(u32));			\
+		val8 = बहु_तर्क(args, अचिन्हित दीर्घ दीर्घ);		\
+		अगर (str + माप(type) <= end) अणु			\
 			*(u32 *)str = *(u32 *)&val8;			\
 			*(u32 *)(str + 4) = *((u32 *)&val8 + 1);	\
-		}							\
+		पूर्ण							\
 		value = val8;						\
-	} else {							\
-		unsigned int val4;					\
-		str = PTR_ALIGN(str, sizeof(type));			\
-		val4 = va_arg(args, int);				\
-		if (str + sizeof(type) <= end)				\
-			*(typeof(type) *)str = (type)(long)val4;	\
-		value = (unsigned long long)val4;			\
-	}								\
-	str += sizeof(type);						\
+	पूर्ण अन्यथा अणु							\
+		अचिन्हित पूर्णांक val4;					\
+		str = PTR_ALIGN(str, माप(type));			\
+		val4 = बहु_तर्क(args, पूर्णांक);				\
+		अगर (str + माप(type) <= end)				\
+			*(typeof(type) *)str = (type)(दीर्घ)val4;	\
+		value = (अचिन्हित दीर्घ दीर्घ)val4;			\
+	पूर्ण								\
+	str += माप(type);						\
 	value;								\
-})
+पूर्ण)
 
-	while (*fmt) {
-		int read = format_decode(fmt, &spec);
+	जबतक (*fmt) अणु
+		पूर्णांक पढ़ो = क्रमmat_decode(fmt, &spec);
 
-		fmt += read;
+		fmt += पढ़ो;
 
-		switch (spec.type) {
-		case FORMAT_TYPE_NONE:
-		case FORMAT_TYPE_PERCENT_CHAR:
-			break;
-		case FORMAT_TYPE_INVALID:
-			goto out;
+		चयन (spec.type) अणु
+		हाल FORMAT_TYPE_NONE:
+		हाल FORMAT_TYPE_PERCENT_CHAR:
+			अवरोध;
+		हाल FORMAT_TYPE_INVALID:
+			जाओ out;
 
-		case FORMAT_TYPE_WIDTH:
-		case FORMAT_TYPE_PRECISION:
-			width = (int)save_arg(int);
-			/* Pointers may require the width */
-			if (*fmt == 'p')
+		हाल FORMAT_TYPE_WIDTH:
+		हाल FORMAT_TYPE_PRECISION:
+			width = (पूर्णांक)save_arg(पूर्णांक);
+			/* Poपूर्णांकers may require the width */
+			अगर (*fmt == 'p')
 				set_field_width(&spec, width);
-			break;
+			अवरोध;
 
-		case FORMAT_TYPE_CHAR:
-			save_arg(char);
-			break;
+		हाल FORMAT_TYPE_CHAR:
+			save_arg(अक्षर);
+			अवरोध;
 
-		case FORMAT_TYPE_STR: {
-			const char *save_str = va_arg(args, char *);
-			const char *err_msg;
-			size_t len;
+		हाल FORMAT_TYPE_STR: अणु
+			स्थिर अक्षर *save_str = बहु_तर्क(args, अक्षर *);
+			स्थिर अक्षर *err_msg;
+			माप_प्रकार len;
 
-			err_msg = check_pointer_msg(save_str);
-			if (err_msg)
+			err_msg = check_poपूर्णांकer_msg(save_str);
+			अगर (err_msg)
 				save_str = err_msg;
 
-			len = strlen(save_str) + 1;
-			if (str + len < end)
-				memcpy(str, save_str, len);
+			len = म_माप(save_str) + 1;
+			अगर (str + len < end)
+				स_नकल(str, save_str, len);
 			str += len;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case FORMAT_TYPE_PTR:
-			/* Dereferenced pointers must be done now */
-			switch (*fmt) {
+		हाल FORMAT_TYPE_PTR:
+			/* Dereferenced poपूर्णांकers must be करोne now */
+			चयन (*fmt) अणु
 			/* Dereference of functions is still OK */
-			case 'S':
-			case 's':
-			case 'x':
-			case 'K':
-			case 'e':
-				save_arg(void *);
-				break;
-			default:
-				if (!isalnum(*fmt)) {
-					save_arg(void *);
-					break;
-				}
-				str = pointer(fmt, str, end, va_arg(args, void *),
+			हाल 'S':
+			हाल 's':
+			हाल 'x':
+			हाल 'K':
+			हाल 'e':
+				save_arg(व्योम *);
+				अवरोध;
+			शेष:
+				अगर (!है_अक्षर_अंक(*fmt)) अणु
+					save_arg(व्योम *);
+					अवरोध;
+				पूर्ण
+				str = poपूर्णांकer(fmt, str, end, बहु_तर्क(args, व्योम *),
 					      spec);
-				if (str + 1 < end)
+				अगर (str + 1 < end)
 					*str++ = '\0';
-				else
+				अन्यथा
 					end[-1] = '\0'; /* Must be nul terminated */
-			}
-			/* skip all alphanumeric pointer suffixes */
-			while (isalnum(*fmt))
+			पूर्ण
+			/* skip all alphanumeric poपूर्णांकer suffixes */
+			जबतक (है_अक्षर_अंक(*fmt))
 				fmt++;
-			break;
+			अवरोध;
 
-		default:
-			switch (spec.type) {
+		शेष:
+			चयन (spec.type) अणु
 
-			case FORMAT_TYPE_LONG_LONG:
-				save_arg(long long);
-				break;
-			case FORMAT_TYPE_ULONG:
-			case FORMAT_TYPE_LONG:
-				save_arg(unsigned long);
-				break;
-			case FORMAT_TYPE_SIZE_T:
-				save_arg(size_t);
-				break;
-			case FORMAT_TYPE_PTRDIFF:
-				save_arg(ptrdiff_t);
-				break;
-			case FORMAT_TYPE_UBYTE:
-			case FORMAT_TYPE_BYTE:
-				save_arg(char);
-				break;
-			case FORMAT_TYPE_USHORT:
-			case FORMAT_TYPE_SHORT:
-				save_arg(short);
-				break;
-			default:
-				save_arg(int);
-			}
-		}
-	}
+			हाल FORMAT_TYPE_LONG_LONG:
+				save_arg(दीर्घ दीर्घ);
+				अवरोध;
+			हाल FORMAT_TYPE_ULONG:
+			हाल FORMAT_TYPE_LONG:
+				save_arg(अचिन्हित दीर्घ);
+				अवरोध;
+			हाल FORMAT_TYPE_SIZE_T:
+				save_arg(माप_प्रकार);
+				अवरोध;
+			हाल FORMAT_TYPE_PTRDIFF:
+				save_arg(सूचक_भेद_प्रकार);
+				अवरोध;
+			हाल FORMAT_TYPE_UBYTE:
+			हाल FORMAT_TYPE_BYTE:
+				save_arg(अक्षर);
+				अवरोध;
+			हाल FORMAT_TYPE_USHORT:
+			हाल FORMAT_TYPE_SHORT:
+				save_arg(लघु);
+				अवरोध;
+			शेष:
+				save_arg(पूर्णांक);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
-	return (u32 *)(PTR_ALIGN(str, sizeof(u32))) - bin_buf;
-#undef save_arg
-}
-EXPORT_SYMBOL_GPL(vbin_printf);
+	वापस (u32 *)(PTR_ALIGN(str, माप(u32))) - bin_buf;
+#अघोषित save_arg
+पूर्ण
+EXPORT_SYMBOL_GPL(vbin_म_लिखो);
 
 /**
- * bstr_printf - Format a string from binary arguments and place it in a buffer
- * @buf: The buffer to place the result into
+ * bstr_म_लिखो - Format a string from binary arguments and place it in a buffer
+ * @buf: The buffer to place the result पूर्णांकo
  * @size: The size of the buffer, including the trailing null space
- * @fmt: The format string to use
- * @bin_buf: Binary arguments for the format string
+ * @fmt: The क्रमmat string to use
+ * @bin_buf: Binary arguments क्रम the क्रमmat string
  *
- * This function like C99 vsnprintf, but the difference is that vsnprintf gets
- * arguments from stack, and bstr_printf gets arguments from @bin_buf which is
- * a binary buffer that generated by vbin_printf.
+ * This function like C99 vsnम_लिखो, but the dअगरference is that vsnम_लिखो माला_लो
+ * arguments from stack, and bstr_म_लिखो माला_लो arguments from @bin_buf which is
+ * a binary buffer that generated by vbin_म_लिखो.
  *
- * The format follows C99 vsnprintf, but has some extensions:
- *  see vsnprintf comment for details.
+ * The क्रमmat follows C99 vsnम_लिखो, but has some extensions:
+ *  see vsnम_लिखो comment क्रम details.
  *
- * The return value is the number of characters which would
- * be generated for the given input, excluding the trailing
+ * The वापस value is the number of अक्षरacters which would
+ * be generated क्रम the given input, excluding the trailing
  * '\0', as per ISO C99. If you want to have the exact
- * number of characters written into @buf as return value
- * (not including the trailing '\0'), use vscnprintf(). If the
- * return is greater than or equal to @size, the resulting
+ * number of अक्षरacters written पूर्णांकo @buf as वापस value
+ * (not including the trailing '\0'), use vscnम_लिखो(). If the
+ * वापस is greater than or equal to @size, the resulting
  * string is truncated.
  */
-int bstr_printf(char *buf, size_t size, const char *fmt, const u32 *bin_buf)
-{
-	struct printf_spec spec = {0};
-	char *str, *end;
-	const char *args = (const char *)bin_buf;
+पूर्णांक bstr_म_लिखो(अक्षर *buf, माप_प्रकार size, स्थिर अक्षर *fmt, स्थिर u32 *bin_buf)
+अणु
+	काष्ठा म_लिखो_spec spec = अणु0पूर्ण;
+	अक्षर *str, *end;
+	स्थिर अक्षर *args = (स्थिर अक्षर *)bin_buf;
 
-	if (WARN_ON_ONCE(size > INT_MAX))
-		return 0;
+	अगर (WARN_ON_ONCE(size > पूर्णांक_उच्च))
+		वापस 0;
 
 	str = buf;
 	end = buf + size;
 
-#define get_arg(type)							\
-({									\
+#घोषणा get_arg(type)							\
+(अणु									\
 	typeof(type) value;						\
-	if (sizeof(type) == 8) {					\
-		args = PTR_ALIGN(args, sizeof(u32));			\
+	अगर (माप(type) == 8) अणु					\
+		args = PTR_ALIGN(args, माप(u32));			\
 		*(u32 *)&value = *(u32 *)args;				\
 		*((u32 *)&value + 1) = *(u32 *)(args + 4);		\
-	} else {							\
-		args = PTR_ALIGN(args, sizeof(type));			\
+	पूर्ण अन्यथा अणु							\
+		args = PTR_ALIGN(args, माप(type));			\
 		value = *(typeof(type) *)args;				\
-	}								\
-	args += sizeof(type);						\
+	पूर्ण								\
+	args += माप(type);						\
 	value;								\
-})
+पूर्ण)
 
 	/* Make sure end is always >= buf */
-	if (end < buf) {
-		end = ((void *)-1);
+	अगर (end < buf) अणु
+		end = ((व्योम *)-1);
 		size = end - buf;
-	}
+	पूर्ण
 
-	while (*fmt) {
-		const char *old_fmt = fmt;
-		int read = format_decode(fmt, &spec);
+	जबतक (*fmt) अणु
+		स्थिर अक्षर *old_fmt = fmt;
+		पूर्णांक पढ़ो = क्रमmat_decode(fmt, &spec);
 
-		fmt += read;
+		fmt += पढ़ो;
 
-		switch (spec.type) {
-		case FORMAT_TYPE_NONE: {
-			int copy = read;
-			if (str < end) {
-				if (copy > end - str)
+		चयन (spec.type) अणु
+		हाल FORMAT_TYPE_NONE: अणु
+			पूर्णांक copy = पढ़ो;
+			अगर (str < end) अणु
+				अगर (copy > end - str)
 					copy = end - str;
-				memcpy(str, old_fmt, copy);
-			}
-			str += read;
-			break;
-		}
+				स_नकल(str, old_fmt, copy);
+			पूर्ण
+			str += पढ़ो;
+			अवरोध;
+		पूर्ण
 
-		case FORMAT_TYPE_WIDTH:
-			set_field_width(&spec, get_arg(int));
-			break;
+		हाल FORMAT_TYPE_WIDTH:
+			set_field_width(&spec, get_arg(पूर्णांक));
+			अवरोध;
 
-		case FORMAT_TYPE_PRECISION:
-			set_precision(&spec, get_arg(int));
-			break;
+		हाल FORMAT_TYPE_PRECISION:
+			set_precision(&spec, get_arg(पूर्णांक));
+			अवरोध;
 
-		case FORMAT_TYPE_CHAR: {
-			char c;
+		हाल FORMAT_TYPE_CHAR: अणु
+			अक्षर c;
 
-			if (!(spec.flags & LEFT)) {
-				while (--spec.field_width > 0) {
-					if (str < end)
+			अगर (!(spec.flags & LEFT)) अणु
+				जबतक (--spec.field_width > 0) अणु
+					अगर (str < end)
 						*str = ' ';
 					++str;
-				}
-			}
-			c = (unsigned char) get_arg(char);
-			if (str < end)
+				पूर्ण
+			पूर्ण
+			c = (अचिन्हित अक्षर) get_arg(अक्षर);
+			अगर (str < end)
 				*str = c;
 			++str;
-			while (--spec.field_width > 0) {
-				if (str < end)
+			जबतक (--spec.field_width > 0) अणु
+				अगर (str < end)
 					*str = ' ';
 				++str;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		case FORMAT_TYPE_STR: {
-			const char *str_arg = args;
-			args += strlen(str_arg) + 1;
-			str = string(str, end, (char *)str_arg, spec);
-			break;
-		}
+		हाल FORMAT_TYPE_STR: अणु
+			स्थिर अक्षर *str_arg = args;
+			args += म_माप(str_arg) + 1;
+			str = string(str, end, (अक्षर *)str_arg, spec);
+			अवरोध;
+		पूर्ण
 
-		case FORMAT_TYPE_PTR: {
+		हाल FORMAT_TYPE_PTR: अणु
 			bool process = false;
-			int copy, len;
-			/* Non function dereferences were already done */
-			switch (*fmt) {
-			case 'S':
-			case 's':
-			case 'x':
-			case 'K':
-			case 'e':
+			पूर्णांक copy, len;
+			/* Non function dereferences were alपढ़ोy करोne */
+			चयन (*fmt) अणु
+			हाल 'S':
+			हाल 's':
+			हाल 'x':
+			हाल 'K':
+			हाल 'e':
 				process = true;
-				break;
-			default:
-				if (!isalnum(*fmt)) {
+				अवरोध;
+			शेष:
+				अगर (!है_अक्षर_अंक(*fmt)) अणु
 					process = true;
-					break;
-				}
-				/* Pointer dereference was already processed */
-				if (str < end) {
-					len = copy = strlen(args);
-					if (copy > end - str)
+					अवरोध;
+				पूर्ण
+				/* Poपूर्णांकer dereference was alपढ़ोy processed */
+				अगर (str < end) अणु
+					len = copy = म_माप(args);
+					अगर (copy > end - str)
 						copy = end - str;
-					memcpy(str, args, copy);
+					स_नकल(str, args, copy);
 					str += len;
 					args += len + 1;
-				}
-			}
-			if (process)
-				str = pointer(fmt, str, end, get_arg(void *), spec);
+				पूर्ण
+			पूर्ण
+			अगर (process)
+				str = poपूर्णांकer(fmt, str, end, get_arg(व्योम *), spec);
 
-			while (isalnum(*fmt))
+			जबतक (है_अक्षर_अंक(*fmt))
 				fmt++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case FORMAT_TYPE_PERCENT_CHAR:
-			if (str < end)
+		हाल FORMAT_TYPE_PERCENT_CHAR:
+			अगर (str < end)
 				*str = '%';
 			++str;
-			break;
+			अवरोध;
 
-		case FORMAT_TYPE_INVALID:
-			goto out;
+		हाल FORMAT_TYPE_INVALID:
+			जाओ out;
 
-		default: {
-			unsigned long long num;
+		शेष: अणु
+			अचिन्हित दीर्घ दीर्घ num;
 
-			switch (spec.type) {
+			चयन (spec.type) अणु
 
-			case FORMAT_TYPE_LONG_LONG:
-				num = get_arg(long long);
-				break;
-			case FORMAT_TYPE_ULONG:
-			case FORMAT_TYPE_LONG:
-				num = get_arg(unsigned long);
-				break;
-			case FORMAT_TYPE_SIZE_T:
-				num = get_arg(size_t);
-				break;
-			case FORMAT_TYPE_PTRDIFF:
-				num = get_arg(ptrdiff_t);
-				break;
-			case FORMAT_TYPE_UBYTE:
-				num = get_arg(unsigned char);
-				break;
-			case FORMAT_TYPE_BYTE:
-				num = get_arg(signed char);
-				break;
-			case FORMAT_TYPE_USHORT:
-				num = get_arg(unsigned short);
-				break;
-			case FORMAT_TYPE_SHORT:
-				num = get_arg(short);
-				break;
-			case FORMAT_TYPE_UINT:
-				num = get_arg(unsigned int);
-				break;
-			default:
-				num = get_arg(int);
-			}
+			हाल FORMAT_TYPE_LONG_LONG:
+				num = get_arg(दीर्घ दीर्घ);
+				अवरोध;
+			हाल FORMAT_TYPE_ULONG:
+			हाल FORMAT_TYPE_LONG:
+				num = get_arg(अचिन्हित दीर्घ);
+				अवरोध;
+			हाल FORMAT_TYPE_SIZE_T:
+				num = get_arg(माप_प्रकार);
+				अवरोध;
+			हाल FORMAT_TYPE_PTRDIFF:
+				num = get_arg(सूचक_भेद_प्रकार);
+				अवरोध;
+			हाल FORMAT_TYPE_UBYTE:
+				num = get_arg(अचिन्हित अक्षर);
+				अवरोध;
+			हाल FORMAT_TYPE_BYTE:
+				num = get_arg(चिन्हित अक्षर);
+				अवरोध;
+			हाल FORMAT_TYPE_USHORT:
+				num = get_arg(अचिन्हित लघु);
+				अवरोध;
+			हाल FORMAT_TYPE_SHORT:
+				num = get_arg(लघु);
+				अवरोध;
+			हाल FORMAT_TYPE_UINT:
+				num = get_arg(अचिन्हित पूर्णांक);
+				अवरोध;
+			शेष:
+				num = get_arg(पूर्णांक);
+			पूर्ण
 
 			str = number(str, end, num, spec);
-		} /* default: */
-		} /* switch(spec.type) */
-	} /* while(*fmt) */
+		पूर्ण /* शेष: */
+		पूर्ण /* चयन(spec.type) */
+	पूर्ण /* जबतक(*fmt) */
 
 out:
-	if (size > 0) {
-		if (str < end)
+	अगर (size > 0) अणु
+		अगर (str < end)
 			*str = '\0';
-		else
+		अन्यथा
 			end[-1] = '\0';
-	}
+	पूर्ण
 
-#undef get_arg
+#अघोषित get_arg
 
-	/* the trailing null byte doesn't count towards the total */
-	return str - buf;
-}
-EXPORT_SYMBOL_GPL(bstr_printf);
+	/* the trailing null byte करोesn't count towards the total */
+	वापस str - buf;
+पूर्ण
+EXPORT_SYMBOL_GPL(bstr_म_लिखो);
 
 /**
- * bprintf - Parse a format string and place args' binary value in a buffer
+ * bम_लिखो - Parse a क्रमmat string and place args' binary value in a buffer
  * @bin_buf: The buffer to place args' binary value
- * @size: The size of the buffer(by words(32bits), not characters)
- * @fmt: The format string to use
- * @...: Arguments for the format string
+ * @size: The size of the buffer(by words(32bits), not अक्षरacters)
+ * @fmt: The क्रमmat string to use
+ * @...: Arguments क्रम the क्रमmat string
  *
- * The function returns the number of words(u32) written
- * into @bin_buf.
+ * The function वापसs the number of words(u32) written
+ * पूर्णांकo @bin_buf.
  */
-int bprintf(u32 *bin_buf, size_t size, const char *fmt, ...)
-{
-	va_list args;
-	int ret;
+पूर्णांक bम_लिखो(u32 *bin_buf, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक ret;
 
-	va_start(args, fmt);
-	ret = vbin_printf(bin_buf, size, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	ret = vbin_म_लिखो(bin_buf, size, fmt, args);
+	बहु_पूर्ण(args);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(bprintf);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(bम_लिखो);
 
-#endif /* CONFIG_BINARY_PRINTF */
+#पूर्ण_अगर /* CONFIG_BINARY_PRINTF */
 
 /**
- * vsscanf - Unformat a buffer into a list of arguments
+ * vमाला_पूछो - Unक्रमmat a buffer पूर्णांकo a list of arguments
  * @buf:	input buffer
- * @fmt:	format of buffer
+ * @fmt:	क्रमmat of buffer
  * @args:	arguments
  */
-int vsscanf(const char *buf, const char *fmt, va_list args)
-{
-	const char *str = buf;
-	char *next;
-	char digit;
-	int num = 0;
-	u8 qualifier;
-	unsigned int base;
-	union {
-		long long s;
-		unsigned long long u;
-	} val;
+पूर्णांक vमाला_पूछो(स्थिर अक्षर *buf, स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	स्थिर अक्षर *str = buf;
+	अक्षर *next;
+	अक्षर digit;
+	पूर्णांक num = 0;
+	u8 qualअगरier;
+	अचिन्हित पूर्णांक base;
+	जोड़ अणु
+		दीर्घ दीर्घ s;
+		अचिन्हित दीर्घ दीर्घ u;
+	पूर्ण val;
 	s16 field_width;
 	bool is_sign;
 
-	while (*fmt) {
-		/* skip any white space in format */
-		/* white space in format matchs any amount of
+	जबतक (*fmt) अणु
+		/* skip any white space in क्रमmat */
+		/* white space in क्रमmat matchs any amount of
 		 * white space, including none, in the input.
 		 */
-		if (isspace(*fmt)) {
+		अगर (है_खाली(*fmt)) अणु
 			fmt = skip_spaces(++fmt);
 			str = skip_spaces(str);
-		}
+		पूर्ण
 
 		/* anything that is not a conversion must match exactly */
-		if (*fmt != '%' && *fmt) {
-			if (*fmt++ != *str++)
-				break;
-			continue;
-		}
+		अगर (*fmt != '%' && *fmt) अणु
+			अगर (*fmt++ != *str++)
+				अवरोध;
+			जारी;
+		पूर्ण
 
-		if (!*fmt)
-			break;
+		अगर (!*fmt)
+			अवरोध;
 		++fmt;
 
 		/* skip this conversion.
 		 * advance both strings to next white space
 		 */
-		if (*fmt == '*') {
-			if (!*str)
-				break;
-			while (!isspace(*fmt) && *fmt != '%' && *fmt) {
-				/* '%*[' not yet supported, invalid format */
-				if (*fmt == '[')
-					return num;
+		अगर (*fmt == '*') अणु
+			अगर (!*str)
+				अवरोध;
+			जबतक (!है_खाली(*fmt) && *fmt != '%' && *fmt) अणु
+				/* '%*[' not yet supported, invalid क्रमmat */
+				अगर (*fmt == '[')
+					वापस num;
 				fmt++;
-			}
-			while (!isspace(*str) && *str)
+			पूर्ण
+			जबतक (!है_खाली(*str) && *str)
 				str++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* get field width */
 		field_width = -1;
-		if (isdigit(*fmt)) {
-			field_width = skip_atoi(&fmt);
-			if (field_width <= 0)
-				break;
-		}
+		अगर (है_अंक(*fmt)) अणु
+			field_width = skip_म_से_प(&fmt);
+			अगर (field_width <= 0)
+				अवरोध;
+		पूर्ण
 
-		/* get conversion qualifier */
-		qualifier = -1;
-		if (*fmt == 'h' || _tolower(*fmt) == 'l' ||
-		    *fmt == 'z') {
-			qualifier = *fmt++;
-			if (unlikely(qualifier == *fmt)) {
-				if (qualifier == 'h') {
-					qualifier = 'H';
+		/* get conversion qualअगरier */
+		qualअगरier = -1;
+		अगर (*fmt == 'h' || _tolower(*fmt) == 'l' ||
+		    *fmt == 'z') अणु
+			qualअगरier = *fmt++;
+			अगर (unlikely(qualअगरier == *fmt)) अणु
+				अगर (qualअगरier == 'h') अणु
+					qualअगरier = 'H';
 					fmt++;
-				} else if (qualifier == 'l') {
-					qualifier = 'L';
+				पूर्ण अन्यथा अगर (qualअगरier == 'l') अणु
+					qualअगरier = 'L';
 					fmt++;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (!*fmt)
-			break;
+		अगर (!*fmt)
+			अवरोध;
 
-		if (*fmt == 'n') {
-			/* return number of characters read so far */
-			*va_arg(args, int *) = str - buf;
+		अगर (*fmt == 'n') अणु
+			/* वापस number of अक्षरacters पढ़ो so far */
+			*बहु_तर्क(args, पूर्णांक *) = str - buf;
 			++fmt;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!*str)
-			break;
+		अगर (!*str)
+			अवरोध;
 
 		base = 10;
 		is_sign = false;
 
-		switch (*fmt++) {
-		case 'c':
-		{
-			char *s = (char *)va_arg(args, char*);
-			if (field_width == -1)
+		चयन (*fmt++) अणु
+		हाल 'c':
+		अणु
+			अक्षर *s = (अक्षर *)बहु_तर्क(args, अक्षर*);
+			अगर (field_width == -1)
 				field_width = 1;
-			do {
+			करो अणु
 				*s++ = *str++;
-			} while (--field_width > 0 && *str);
+			पूर्ण जबतक (--field_width > 0 && *str);
 			num++;
-		}
-		continue;
-		case 's':
-		{
-			char *s = (char *)va_arg(args, char *);
-			if (field_width == -1)
-				field_width = SHRT_MAX;
+		पूर्ण
+		जारी;
+		हाल 's':
+		अणु
+			अक्षर *s = (अक्षर *)बहु_तर्क(args, अक्षर *);
+			अगर (field_width == -1)
+				field_width = लघु_उच्च;
 			/* first, skip leading white space in buffer */
 			str = skip_spaces(str);
 
 			/* now copy until next white space */
-			while (*str && !isspace(*str) && field_width--)
+			जबतक (*str && !है_खाली(*str) && field_width--)
 				*s++ = *str++;
 			*s = '\0';
 			num++;
-		}
-		continue;
+		पूर्ण
+		जारी;
 		/*
-		 * Warning: This implementation of the '[' conversion specifier
+		 * Warning: This implementation of the '[' conversion specअगरier
 		 * deviates from its glibc counterpart in the following ways:
-		 * (1) It does NOT support ranges i.e. '-' is NOT a special
-		 *     character
+		 * (1) It करोes NOT support ranges i.e. '-' is NOT a special
+		 *     अक्षरacter
 		 * (2) It cannot match the closing bracket ']' itself
 		 * (3) A field width is required
 		 * (4) '%*[' (discard matching input) is currently not supported
 		 *
 		 * Example usage:
-		 * ret = sscanf("00:0a:95","%2[^:]:%2[^:]:%2[^:]",
+		 * ret = माला_पूछो("00:0a:95","%2[^:]:%2[^:]:%2[^:]",
 		 *		buf1, buf2, buf3);
-		 * if (ret < 3)
+		 * अगर (ret < 3)
 		 *    // etc..
 		 */
-		case '[':
-		{
-			char *s = (char *)va_arg(args, char *);
-			DECLARE_BITMAP(set, 256) = {0};
-			unsigned int len = 0;
+		हाल '[':
+		अणु
+			अक्षर *s = (अक्षर *)बहु_तर्क(args, अक्षर *);
+			DECLARE_BITMAP(set, 256) = अणु0पूर्ण;
+			अचिन्हित पूर्णांक len = 0;
 			bool negate = (*fmt == '^');
 
 			/* field width is required */
-			if (field_width == -1)
-				return num;
+			अगर (field_width == -1)
+				वापस num;
 
-			if (negate)
+			अगर (negate)
 				++fmt;
 
-			for ( ; *fmt && *fmt != ']'; ++fmt, ++len)
+			क्रम ( ; *fmt && *fmt != ']'; ++fmt, ++len)
 				set_bit((u8)*fmt, set);
 
-			/* no ']' or no character set found */
-			if (!*fmt || !len)
-				return num;
+			/* no ']' or no अक्षरacter set found */
+			अगर (!*fmt || !len)
+				वापस num;
 			++fmt;
 
-			if (negate) {
-				bitmap_complement(set, set, 256);
+			अगर (negate) अणु
+				biपंचांगap_complement(set, set, 256);
 				/* exclude null '\0' byte */
 				clear_bit(0, set);
-			}
+			पूर्ण
 
 			/* match must be non-empty */
-			if (!test_bit((u8)*str, set))
-				return num;
+			अगर (!test_bit((u8)*str, set))
+				वापस num;
 
-			while (test_bit((u8)*str, set) && field_width--)
+			जबतक (test_bit((u8)*str, set) && field_width--)
 				*s++ = *str++;
 			*s = '\0';
 			++num;
-		}
-		continue;
-		case 'o':
+		पूर्ण
+		जारी;
+		हाल 'o':
 			base = 8;
-			break;
-		case 'x':
-		case 'X':
+			अवरोध;
+		हाल 'x':
+		हाल 'X':
 			base = 16;
-			break;
-		case 'i':
+			अवरोध;
+		हाल 'i':
 			base = 0;
 			fallthrough;
-		case 'd':
+		हाल 'd':
 			is_sign = true;
 			fallthrough;
-		case 'u':
-			break;
-		case '%':
-			/* looking for '%' in str */
-			if (*str++ != '%')
-				return num;
-			continue;
-		default:
-			/* invalid format; stop here */
-			return num;
-		}
+		हाल 'u':
+			अवरोध;
+		हाल '%':
+			/* looking क्रम '%' in str */
+			अगर (*str++ != '%')
+				वापस num;
+			जारी;
+		शेष:
+			/* invalid क्रमmat; stop here */
+			वापस num;
+		पूर्ण
 
-		/* have some sort of integer conversion.
+		/* have some sort of पूर्णांकeger conversion.
 		 * first, skip white space in buffer.
 		 */
 		str = skip_spaces(str);
 
 		digit = *str;
-		if (is_sign && digit == '-')
+		अगर (is_sign && digit == '-')
 			digit = *(str + 1);
 
-		if (!digit
-		    || (base == 16 && !isxdigit(digit))
-		    || (base == 10 && !isdigit(digit))
-		    || (base == 8 && (!isdigit(digit) || digit > '7'))
-		    || (base == 0 && !isdigit(digit)))
-			break;
+		अगर (!digit
+		    || (base == 16 && !है_षष्ठादशक(digit))
+		    || (base == 10 && !है_अंक(digit))
+		    || (base == 8 && (!है_अंक(digit) || digit > '7'))
+		    || (base == 0 && !है_अंक(digit)))
+			अवरोध;
 
-		if (is_sign)
-			val.s = qualifier != 'L' ?
-				simple_strtol(str, &next, base) :
-				simple_strtoll(str, &next, base);
-		else
-			val.u = qualifier != 'L' ?
-				simple_strtoul(str, &next, base) :
-				simple_strtoull(str, &next, base);
+		अगर (is_sign)
+			val.s = qualअगरier != 'L' ?
+				simple_म_से_दीर्घ(str, &next, base) :
+				simple_म_से_दीर्घl(str, &next, base);
+		अन्यथा
+			val.u = qualअगरier != 'L' ?
+				simple_म_से_अदीर्घ(str, &next, base) :
+				simple_म_से_अदीर्घl(str, &next, base);
 
-		if (field_width > 0 && next - str > field_width) {
-			if (base == 0)
-				_parse_integer_fixup_radix(str, &base);
-			while (next - str > field_width) {
-				if (is_sign)
-					val.s = div_s64(val.s, base);
-				else
-					val.u = div_u64(val.u, base);
+		अगर (field_width > 0 && next - str > field_width) अणु
+			अगर (base == 0)
+				_parse_पूर्णांकeger_fixup_radix(str, &base);
+			जबतक (next - str > field_width) अणु
+				अगर (is_sign)
+					val.s = भाग_s64(val.s, base);
+				अन्यथा
+					val.u = भाग_u64(val.u, base);
 				--next;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		switch (qualifier) {
-		case 'H':	/* that's 'hh' in format */
-			if (is_sign)
-				*va_arg(args, signed char *) = val.s;
-			else
-				*va_arg(args, unsigned char *) = val.u;
-			break;
-		case 'h':
-			if (is_sign)
-				*va_arg(args, short *) = val.s;
-			else
-				*va_arg(args, unsigned short *) = val.u;
-			break;
-		case 'l':
-			if (is_sign)
-				*va_arg(args, long *) = val.s;
-			else
-				*va_arg(args, unsigned long *) = val.u;
-			break;
-		case 'L':
-			if (is_sign)
-				*va_arg(args, long long *) = val.s;
-			else
-				*va_arg(args, unsigned long long *) = val.u;
-			break;
-		case 'z':
-			*va_arg(args, size_t *) = val.u;
-			break;
-		default:
-			if (is_sign)
-				*va_arg(args, int *) = val.s;
-			else
-				*va_arg(args, unsigned int *) = val.u;
-			break;
-		}
+		चयन (qualअगरier) अणु
+		हाल 'H':	/* that's 'hh' in क्रमmat */
+			अगर (is_sign)
+				*बहु_तर्क(args, चिन्हित अक्षर *) = val.s;
+			अन्यथा
+				*बहु_तर्क(args, अचिन्हित अक्षर *) = val.u;
+			अवरोध;
+		हाल 'h':
+			अगर (is_sign)
+				*बहु_तर्क(args, लघु *) = val.s;
+			अन्यथा
+				*बहु_तर्क(args, अचिन्हित लघु *) = val.u;
+			अवरोध;
+		हाल 'l':
+			अगर (is_sign)
+				*बहु_तर्क(args, दीर्घ *) = val.s;
+			अन्यथा
+				*बहु_तर्क(args, अचिन्हित दीर्घ *) = val.u;
+			अवरोध;
+		हाल 'L':
+			अगर (is_sign)
+				*बहु_तर्क(args, दीर्घ दीर्घ *) = val.s;
+			अन्यथा
+				*बहु_तर्क(args, अचिन्हित दीर्घ दीर्घ *) = val.u;
+			अवरोध;
+		हाल 'z':
+			*बहु_तर्क(args, माप_प्रकार *) = val.u;
+			अवरोध;
+		शेष:
+			अगर (is_sign)
+				*बहु_तर्क(args, पूर्णांक *) = val.s;
+			अन्यथा
+				*बहु_तर्क(args, अचिन्हित पूर्णांक *) = val.u;
+			अवरोध;
+		पूर्ण
 		num++;
 
-		if (!next)
-			break;
+		अगर (!next)
+			अवरोध;
 		str = next;
-	}
+	पूर्ण
 
-	return num;
-}
-EXPORT_SYMBOL(vsscanf);
+	वापस num;
+पूर्ण
+EXPORT_SYMBOL(vमाला_पूछो);
 
 /**
- * sscanf - Unformat a buffer into a list of arguments
+ * माला_पूछो - Unक्रमmat a buffer पूर्णांकo a list of arguments
  * @buf:	input buffer
- * @fmt:	formatting of buffer
+ * @fmt:	क्रमmatting of buffer
  * @...:	resulting arguments
  */
-int sscanf(const char *buf, const char *fmt, ...)
-{
-	va_list args;
-	int i;
+पूर्णांक माला_पूछो(स्थिर अक्षर *buf, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक i;
 
-	va_start(args, fmt);
-	i = vsscanf(buf, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	i = vमाला_पूछो(buf, fmt, args);
+	बहु_पूर्ण(args);
 
-	return i;
-}
-EXPORT_SYMBOL(sscanf);
+	वापस i;
+पूर्ण
+EXPORT_SYMBOL(माला_पूछो);

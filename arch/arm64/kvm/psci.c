@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 - ARM Ltd
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
-#include <linux/arm-smccc.h>
-#include <linux/preempt.h>
-#include <linux/kvm_host.h>
-#include <linux/uaccess.h>
-#include <linux/wait.h>
+#समावेश <linux/arm-smccc.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/रुको.h>
 
-#include <asm/cputype.h>
-#include <asm/kvm_emulate.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/kvm_emulate.h>
 
-#include <kvm/arm_psci.h>
-#include <kvm/arm_hypercalls.h>
+#समावेश <kvm/arm_psci.h>
+#समावेश <kvm/arm_hypercalls.h>
 
 /*
  * This is an implementation of the Power State Coordination Interface
- * as described in ARM document number ARM DEN 0022A.
+ * as described in ARM करोcument number ARM DEN 0022A.
  */
 
-#define AFFINITY_MASK(level)	~((0x1UL << ((level) * MPIDR_LEVEL_BITS)) - 1)
+#घोषणा AFFINITY_MASK(level)	~((0x1UL << ((level) * MPIDR_LEVEL_BITS)) - 1)
 
-static unsigned long psci_affinity_mask(unsigned long affinity_level)
-{
-	if (affinity_level <= 3)
-		return MPIDR_HWID_BITMASK & AFFINITY_MASK(affinity_level);
+अटल अचिन्हित दीर्घ psci_affinity_mask(अचिन्हित दीर्घ affinity_level)
+अणु
+	अगर (affinity_level <= 3)
+		वापस MPIDR_HWID_BITMASK & AFFINITY_MASK(affinity_level);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long kvm_psci_vcpu_suspend(struct kvm_vcpu *vcpu)
-{
+अटल अचिन्हित दीर्घ kvm_psci_vcpu_suspend(काष्ठा kvm_vcpu *vcpu)
+अणु
 	/*
 	 * NOTE: For simplicity, we make VCPU suspend emulation to be
-	 * same-as WFI (Wait-for-interrupt) emulation.
+	 * same-as WFI (Wait-क्रम-पूर्णांकerrupt) emulation.
 	 *
-	 * This means for KVM the wakeup events are interrupts and
-	 * this is consistent with intended use of StateID as described
-	 * in section 5.4.1 of PSCI v0.2 specification (ARM DEN 0022A).
+	 * This means क्रम KVM the wakeup events are पूर्णांकerrupts and
+	 * this is consistent with पूर्णांकended use of StateID as described
+	 * in section 5.4.1 of PSCI v0.2 specअगरication (ARM DEN 0022A).
 	 *
-	 * Further, we also treat power-down request to be same as
+	 * Further, we also treat घातer-करोwn request to be same as
 	 * stand-by request as-per section 5.4.2 clause 3 of PSCI v0.2
-	 * specification (ARM DEN 0022A). This means all suspend states
-	 * for KVM will preserve the register state.
+	 * specअगरication (ARM DEN 0022A). This means all suspend states
+	 * क्रम KVM will preserve the रेजिस्टर state.
 	 */
 	kvm_vcpu_block(vcpu);
 	kvm_clear_request(KVM_REQ_UNHALT, vcpu);
 
-	return PSCI_RET_SUCCESS;
-}
+	वापस PSCI_RET_SUCCESS;
+पूर्ण
 
-static void kvm_psci_vcpu_off(struct kvm_vcpu *vcpu)
-{
-	vcpu->arch.power_off = true;
+अटल व्योम kvm_psci_vcpu_off(काष्ठा kvm_vcpu *vcpu)
+अणु
+	vcpu->arch.घातer_off = true;
 	kvm_make_request(KVM_REQ_SLEEP, vcpu);
 	kvm_vcpu_kick(vcpu);
-}
+पूर्ण
 
-static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
-{
-	struct vcpu_reset_state *reset_state;
-	struct kvm *kvm = source_vcpu->kvm;
-	struct kvm_vcpu *vcpu = NULL;
-	unsigned long cpu_id;
+अटल अचिन्हित दीर्घ kvm_psci_vcpu_on(काष्ठा kvm_vcpu *source_vcpu)
+अणु
+	काष्ठा vcpu_reset_state *reset_state;
+	काष्ठा kvm *kvm = source_vcpu->kvm;
+	काष्ठा kvm_vcpu *vcpu = शून्य;
+	अचिन्हित दीर्घ cpu_id;
 
 	cpu_id = smccc_get_arg1(source_vcpu) & MPIDR_HWID_BITMASK;
-	if (vcpu_mode_is_32bit(source_vcpu))
+	अगर (vcpu_mode_is_32bit(source_vcpu))
 		cpu_id &= ~((u32) 0);
 
 	vcpu = kvm_mpidr_to_vcpu(kvm, cpu_id);
@@ -76,14 +77,14 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 	 * Make sure the caller requested a valid CPU and that the CPU is
 	 * turned off.
 	 */
-	if (!vcpu)
-		return PSCI_RET_INVALID_PARAMS;
-	if (!vcpu->arch.power_off) {
-		if (kvm_psci_version(source_vcpu, kvm) != KVM_ARM_PSCI_0_1)
-			return PSCI_RET_ALREADY_ON;
-		else
-			return PSCI_RET_INVALID_PARAMS;
-	}
+	अगर (!vcpu)
+		वापस PSCI_RET_INVALID_PARAMS;
+	अगर (!vcpu->arch.घातer_off) अणु
+		अगर (kvm_psci_version(source_vcpu, kvm) != KVM_ARM_PSCI_0_1)
+			वापस PSCI_RET_ALREADY_ON;
+		अन्यथा
+			वापस PSCI_RET_INVALID_PARAMS;
+	पूर्ण
 
 	reset_state = &vcpu->arch.reset_state;
 
@@ -93,8 +94,8 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 	reset_state->be = kvm_vcpu_is_be(source_vcpu);
 
 	/*
-	 * NOTE: We always update r0 (or x0) because for PSCI v0.1
-	 * the general purpose registers are undefined upon CPU_ON.
+	 * NOTE: We always update r0 (or x0) because क्रम PSCI v0.1
+	 * the general purpose रेजिस्टरs are undefined upon CPU_ON.
 	 */
 	reset_state->r0 = smccc_get_arg3(source_vcpu);
 
@@ -102,461 +103,461 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 	kvm_make_request(KVM_REQ_VCPU_RESET, vcpu);
 
 	/*
-	 * Make sure the reset request is observed if the change to
-	 * power_state is observed.
+	 * Make sure the reset request is observed अगर the change to
+	 * घातer_state is observed.
 	 */
 	smp_wmb();
 
-	vcpu->arch.power_off = false;
+	vcpu->arch.घातer_off = false;
 	kvm_vcpu_wake_up(vcpu);
 
-	return PSCI_RET_SUCCESS;
-}
+	वापस PSCI_RET_SUCCESS;
+पूर्ण
 
-static unsigned long kvm_psci_vcpu_affinity_info(struct kvm_vcpu *vcpu)
-{
-	int i, matching_cpus = 0;
-	unsigned long mpidr;
-	unsigned long target_affinity;
-	unsigned long target_affinity_mask;
-	unsigned long lowest_affinity_level;
-	struct kvm *kvm = vcpu->kvm;
-	struct kvm_vcpu *tmp;
+अटल अचिन्हित दीर्घ kvm_psci_vcpu_affinity_info(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक i, matching_cpus = 0;
+	अचिन्हित दीर्घ mpidr;
+	अचिन्हित दीर्घ target_affinity;
+	अचिन्हित दीर्घ target_affinity_mask;
+	अचिन्हित दीर्घ lowest_affinity_level;
+	काष्ठा kvm *kvm = vcpu->kvm;
+	काष्ठा kvm_vcpu *पंचांगp;
 
 	target_affinity = smccc_get_arg1(vcpu);
 	lowest_affinity_level = smccc_get_arg2(vcpu);
 
 	/* Determine target affinity mask */
 	target_affinity_mask = psci_affinity_mask(lowest_affinity_level);
-	if (!target_affinity_mask)
-		return PSCI_RET_INVALID_PARAMS;
+	अगर (!target_affinity_mask)
+		वापस PSCI_RET_INVALID_PARAMS;
 
 	/* Ignore other bits of target affinity */
 	target_affinity &= target_affinity_mask;
 
 	/*
 	 * If one or more VCPU matching target affinity are running
-	 * then ON else OFF
+	 * then ON अन्यथा OFF
 	 */
-	kvm_for_each_vcpu(i, tmp, kvm) {
-		mpidr = kvm_vcpu_get_mpidr_aff(tmp);
-		if ((mpidr & target_affinity_mask) == target_affinity) {
+	kvm_क्रम_each_vcpu(i, पंचांगp, kvm) अणु
+		mpidr = kvm_vcpu_get_mpidr_aff(पंचांगp);
+		अगर ((mpidr & target_affinity_mask) == target_affinity) अणु
 			matching_cpus++;
-			if (!tmp->arch.power_off)
-				return PSCI_0_2_AFFINITY_LEVEL_ON;
-		}
-	}
+			अगर (!पंचांगp->arch.घातer_off)
+				वापस PSCI_0_2_AFFINITY_LEVEL_ON;
+		पूर्ण
+	पूर्ण
 
-	if (!matching_cpus)
-		return PSCI_RET_INVALID_PARAMS;
+	अगर (!matching_cpus)
+		वापस PSCI_RET_INVALID_PARAMS;
 
-	return PSCI_0_2_AFFINITY_LEVEL_OFF;
-}
+	वापस PSCI_0_2_AFFINITY_LEVEL_OFF;
+पूर्ण
 
-static void kvm_prepare_system_event(struct kvm_vcpu *vcpu, u32 type)
-{
-	int i;
-	struct kvm_vcpu *tmp;
+अटल व्योम kvm_prepare_प्रणाली_event(काष्ठा kvm_vcpu *vcpu, u32 type)
+अणु
+	पूर्णांक i;
+	काष्ठा kvm_vcpu *पंचांगp;
 
 	/*
-	 * The KVM ABI specifies that a system event exit may call KVM_RUN
-	 * again and may perform shutdown/reboot at a later time that when the
+	 * The KVM ABI specअगरies that a प्रणाली event निकास may call KVM_RUN
+	 * again and may perक्रमm shutकरोwn/reboot at a later समय that when the
 	 * actual request is made.  Since we are implementing PSCI and a
-	 * caller of PSCI reboot and shutdown expects that the system shuts
-	 * down or reboots immediately, let's make sure that VCPUs are not run
-	 * after this call is handled and before the VCPUs have been
+	 * caller of PSCI reboot and shutकरोwn expects that the प्रणाली shuts
+	 * करोwn or reboots immediately, let's make sure that VCPUs are not run
+	 * after this call is handled and beक्रमe the VCPUs have been
 	 * re-initialized.
 	 */
-	kvm_for_each_vcpu(i, tmp, vcpu->kvm)
-		tmp->arch.power_off = true;
+	kvm_क्रम_each_vcpu(i, पंचांगp, vcpu->kvm)
+		पंचांगp->arch.घातer_off = true;
 	kvm_make_all_cpus_request(vcpu->kvm, KVM_REQ_SLEEP);
 
-	memset(&vcpu->run->system_event, 0, sizeof(vcpu->run->system_event));
-	vcpu->run->system_event.type = type;
-	vcpu->run->exit_reason = KVM_EXIT_SYSTEM_EVENT;
-}
+	स_रखो(&vcpu->run->प्रणाली_event, 0, माप(vcpu->run->प्रणाली_event));
+	vcpu->run->प्रणाली_event.type = type;
+	vcpu->run->निकास_reason = KVM_EXIT_SYSTEM_EVENT;
+पूर्ण
 
-static void kvm_psci_system_off(struct kvm_vcpu *vcpu)
-{
-	kvm_prepare_system_event(vcpu, KVM_SYSTEM_EVENT_SHUTDOWN);
-}
+अटल व्योम kvm_psci_प्रणाली_off(काष्ठा kvm_vcpu *vcpu)
+अणु
+	kvm_prepare_प्रणाली_event(vcpu, KVM_SYSTEM_EVENT_SHUTDOWN);
+पूर्ण
 
-static void kvm_psci_system_reset(struct kvm_vcpu *vcpu)
-{
-	kvm_prepare_system_event(vcpu, KVM_SYSTEM_EVENT_RESET);
-}
+अटल व्योम kvm_psci_प्रणाली_reset(काष्ठा kvm_vcpu *vcpu)
+अणु
+	kvm_prepare_प्रणाली_event(vcpu, KVM_SYSTEM_EVENT_RESET);
+पूर्ण
 
-static void kvm_psci_narrow_to_32bit(struct kvm_vcpu *vcpu)
-{
-	int i;
+अटल व्योम kvm_psci_narrow_to_32bit(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * Zero the input registers' upper 32 bits. They will be fully
-	 * zeroed on exit, so we're fine changing them in place.
+	 * Zero the input रेजिस्टरs' upper 32 bits. They will be fully
+	 * zeroed on निकास, so we're fine changing them in place.
 	 */
-	for (i = 1; i < 4; i++)
+	क्रम (i = 1; i < 4; i++)
 		vcpu_set_reg(vcpu, i, lower_32_bits(vcpu_get_reg(vcpu, i)));
-}
+पूर्ण
 
-static unsigned long kvm_psci_check_allowed_function(struct kvm_vcpu *vcpu, u32 fn)
-{
-	switch(fn) {
-	case PSCI_0_2_FN64_CPU_SUSPEND:
-	case PSCI_0_2_FN64_CPU_ON:
-	case PSCI_0_2_FN64_AFFINITY_INFO:
-		/* Disallow these functions for 32bit guests */
-		if (vcpu_mode_is_32bit(vcpu))
-			return PSCI_RET_NOT_SUPPORTED;
-		break;
-	}
+अटल अचिन्हित दीर्घ kvm_psci_check_allowed_function(काष्ठा kvm_vcpu *vcpu, u32 fn)
+अणु
+	चयन(fn) अणु
+	हाल PSCI_0_2_FN64_CPU_SUSPEND:
+	हाल PSCI_0_2_FN64_CPU_ON:
+	हाल PSCI_0_2_FN64_AFFINITY_INFO:
+		/* Disallow these functions क्रम 32bit guests */
+		अगर (vcpu_mode_is_32bit(vcpu))
+			वापस PSCI_RET_NOT_SUPPORTED;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
-{
-	struct kvm *kvm = vcpu->kvm;
+अटल पूर्णांक kvm_psci_0_2_call(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
 	u32 psci_fn = smccc_get_function(vcpu);
-	unsigned long val;
-	int ret = 1;
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret = 1;
 
 	val = kvm_psci_check_allowed_function(vcpu, psci_fn);
-	if (val)
-		goto out;
+	अगर (val)
+		जाओ out;
 
-	switch (psci_fn) {
-	case PSCI_0_2_FN_PSCI_VERSION:
+	चयन (psci_fn) अणु
+	हाल PSCI_0_2_FN_PSCI_VERSION:
 		/*
 		 * Bits[31:16] = Major Version = 0
 		 * Bits[15:0] = Minor Version = 2
 		 */
 		val = KVM_ARM_PSCI_0_2;
-		break;
-	case PSCI_0_2_FN_CPU_SUSPEND:
-	case PSCI_0_2_FN64_CPU_SUSPEND:
+		अवरोध;
+	हाल PSCI_0_2_FN_CPU_SUSPEND:
+	हाल PSCI_0_2_FN64_CPU_SUSPEND:
 		val = kvm_psci_vcpu_suspend(vcpu);
-		break;
-	case PSCI_0_2_FN_CPU_OFF:
+		अवरोध;
+	हाल PSCI_0_2_FN_CPU_OFF:
 		kvm_psci_vcpu_off(vcpu);
 		val = PSCI_RET_SUCCESS;
-		break;
-	case PSCI_0_2_FN_CPU_ON:
+		अवरोध;
+	हाल PSCI_0_2_FN_CPU_ON:
 		kvm_psci_narrow_to_32bit(vcpu);
 		fallthrough;
-	case PSCI_0_2_FN64_CPU_ON:
+	हाल PSCI_0_2_FN64_CPU_ON:
 		mutex_lock(&kvm->lock);
 		val = kvm_psci_vcpu_on(vcpu);
 		mutex_unlock(&kvm->lock);
-		break;
-	case PSCI_0_2_FN_AFFINITY_INFO:
+		अवरोध;
+	हाल PSCI_0_2_FN_AFFINITY_INFO:
 		kvm_psci_narrow_to_32bit(vcpu);
 		fallthrough;
-	case PSCI_0_2_FN64_AFFINITY_INFO:
+	हाल PSCI_0_2_FN64_AFFINITY_INFO:
 		val = kvm_psci_vcpu_affinity_info(vcpu);
-		break;
-	case PSCI_0_2_FN_MIGRATE_INFO_TYPE:
+		अवरोध;
+	हाल PSCI_0_2_FN_MIGRATE_INFO_TYPE:
 		/*
-		 * Trusted OS is MP hence does not require migration
+		 * Trusted OS is MP hence करोes not require migration
 	         * or
 		 * Trusted OS is not present
 		 */
 		val = PSCI_0_2_TOS_MP;
-		break;
-	case PSCI_0_2_FN_SYSTEM_OFF:
-		kvm_psci_system_off(vcpu);
+		अवरोध;
+	हाल PSCI_0_2_FN_SYSTEM_OFF:
+		kvm_psci_प्रणाली_off(vcpu);
 		/*
 		 * We shouldn't be going back to guest VCPU after
 		 * receiving SYSTEM_OFF request.
 		 *
 		 * If user space accidentally/deliberately resumes
 		 * guest VCPU after SYSTEM_OFF request then guest
-		 * VCPU should see internal failure from PSCI return
+		 * VCPU should see पूर्णांकernal failure from PSCI वापस
 		 * value. To achieve this, we preload r0 (or x0) with
-		 * PSCI return value INTERNAL_FAILURE.
+		 * PSCI वापस value INTERNAL_FAILURE.
 		 */
 		val = PSCI_RET_INTERNAL_FAILURE;
 		ret = 0;
-		break;
-	case PSCI_0_2_FN_SYSTEM_RESET:
-		kvm_psci_system_reset(vcpu);
+		अवरोध;
+	हाल PSCI_0_2_FN_SYSTEM_RESET:
+		kvm_psci_प्रणाली_reset(vcpu);
 		/*
-		 * Same reason as SYSTEM_OFF for preloading r0 (or x0)
-		 * with PSCI return value INTERNAL_FAILURE.
+		 * Same reason as SYSTEM_OFF क्रम preloading r0 (or x0)
+		 * with PSCI वापस value INTERNAL_FAILURE.
 		 */
 		val = PSCI_RET_INTERNAL_FAILURE;
 		ret = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val = PSCI_RET_NOT_SUPPORTED;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
 	smccc_set_retval(vcpu, val, 0, 0, 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kvm_psci_1_0_call(struct kvm_vcpu *vcpu)
-{
+अटल पूर्णांक kvm_psci_1_0_call(काष्ठा kvm_vcpu *vcpu)
+अणु
 	u32 psci_fn = smccc_get_function(vcpu);
 	u32 feature;
-	unsigned long val;
-	int ret = 1;
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret = 1;
 
-	switch(psci_fn) {
-	case PSCI_0_2_FN_PSCI_VERSION:
+	चयन(psci_fn) अणु
+	हाल PSCI_0_2_FN_PSCI_VERSION:
 		val = KVM_ARM_PSCI_1_0;
-		break;
-	case PSCI_1_0_FN_PSCI_FEATURES:
+		अवरोध;
+	हाल PSCI_1_0_FN_PSCI_FEATURES:
 		feature = smccc_get_arg1(vcpu);
 		val = kvm_psci_check_allowed_function(vcpu, feature);
-		if (val)
-			break;
+		अगर (val)
+			अवरोध;
 
-		switch(feature) {
-		case PSCI_0_2_FN_PSCI_VERSION:
-		case PSCI_0_2_FN_CPU_SUSPEND:
-		case PSCI_0_2_FN64_CPU_SUSPEND:
-		case PSCI_0_2_FN_CPU_OFF:
-		case PSCI_0_2_FN_CPU_ON:
-		case PSCI_0_2_FN64_CPU_ON:
-		case PSCI_0_2_FN_AFFINITY_INFO:
-		case PSCI_0_2_FN64_AFFINITY_INFO:
-		case PSCI_0_2_FN_MIGRATE_INFO_TYPE:
-		case PSCI_0_2_FN_SYSTEM_OFF:
-		case PSCI_0_2_FN_SYSTEM_RESET:
-		case PSCI_1_0_FN_PSCI_FEATURES:
-		case ARM_SMCCC_VERSION_FUNC_ID:
+		चयन(feature) अणु
+		हाल PSCI_0_2_FN_PSCI_VERSION:
+		हाल PSCI_0_2_FN_CPU_SUSPEND:
+		हाल PSCI_0_2_FN64_CPU_SUSPEND:
+		हाल PSCI_0_2_FN_CPU_OFF:
+		हाल PSCI_0_2_FN_CPU_ON:
+		हाल PSCI_0_2_FN64_CPU_ON:
+		हाल PSCI_0_2_FN_AFFINITY_INFO:
+		हाल PSCI_0_2_FN64_AFFINITY_INFO:
+		हाल PSCI_0_2_FN_MIGRATE_INFO_TYPE:
+		हाल PSCI_0_2_FN_SYSTEM_OFF:
+		हाल PSCI_0_2_FN_SYSTEM_RESET:
+		हाल PSCI_1_0_FN_PSCI_FEATURES:
+		हाल ARM_SMCCC_VERSION_FUNC_ID:
 			val = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			val = PSCI_RET_NOT_SUPPORTED;
-			break;
-		}
-		break;
-	default:
-		return kvm_psci_0_2_call(vcpu);
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस kvm_psci_0_2_call(vcpu);
+	पूर्ण
 
 	smccc_set_retval(vcpu, val, 0, 0, 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kvm_psci_0_1_call(struct kvm_vcpu *vcpu)
-{
-	struct kvm *kvm = vcpu->kvm;
+अटल पूर्णांक kvm_psci_0_1_call(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
 	u32 psci_fn = smccc_get_function(vcpu);
-	unsigned long val;
+	अचिन्हित दीर्घ val;
 
-	switch (psci_fn) {
-	case KVM_PSCI_FN_CPU_OFF:
+	चयन (psci_fn) अणु
+	हाल KVM_PSCI_FN_CPU_OFF:
 		kvm_psci_vcpu_off(vcpu);
 		val = PSCI_RET_SUCCESS;
-		break;
-	case KVM_PSCI_FN_CPU_ON:
+		अवरोध;
+	हाल KVM_PSCI_FN_CPU_ON:
 		mutex_lock(&kvm->lock);
 		val = kvm_psci_vcpu_on(vcpu);
 		mutex_unlock(&kvm->lock);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val = PSCI_RET_NOT_SUPPORTED;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	smccc_set_retval(vcpu, val, 0, 0, 0);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
- * kvm_psci_call - handle PSCI call if r0 value is in range
- * @vcpu: Pointer to the VCPU struct
+ * kvm_psci_call - handle PSCI call अगर r0 value is in range
+ * @vcpu: Poपूर्णांकer to the VCPU काष्ठा
  *
- * Handle PSCI calls from guests through traps from HVC instructions.
+ * Handle PSCI calls from guests through traps from HVC inकाष्ठाions.
  * The calling convention is similar to SMC calls to the secure world
  * where the function number is placed in r0.
  *
- * This function returns: > 0 (success), 0 (success but exit to user
+ * This function वापसs: > 0 (success), 0 (success but निकास to user
  * space), and < 0 (errors)
  *
  * Errors:
  * -EINVAL: Unrecognized PSCI function
  */
-int kvm_psci_call(struct kvm_vcpu *vcpu)
-{
-	switch (kvm_psci_version(vcpu, vcpu->kvm)) {
-	case KVM_ARM_PSCI_1_0:
-		return kvm_psci_1_0_call(vcpu);
-	case KVM_ARM_PSCI_0_2:
-		return kvm_psci_0_2_call(vcpu);
-	case KVM_ARM_PSCI_0_1:
-		return kvm_psci_0_1_call(vcpu);
-	default:
-		return -EINVAL;
-	};
-}
+पूर्णांक kvm_psci_call(काष्ठा kvm_vcpu *vcpu)
+अणु
+	चयन (kvm_psci_version(vcpu, vcpu->kvm)) अणु
+	हाल KVM_ARM_PSCI_1_0:
+		वापस kvm_psci_1_0_call(vcpu);
+	हाल KVM_ARM_PSCI_0_2:
+		वापस kvm_psci_0_2_call(vcpu);
+	हाल KVM_ARM_PSCI_0_1:
+		वापस kvm_psci_0_1_call(vcpu);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण;
+पूर्ण
 
-int kvm_arm_get_fw_num_regs(struct kvm_vcpu *vcpu)
-{
-	return 3;		/* PSCI version and two workaround registers */
-}
+पूर्णांक kvm_arm_get_fw_num_regs(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस 3;		/* PSCI version and two workaround रेजिस्टरs */
+पूर्ण
 
-int kvm_arm_copy_fw_reg_indices(struct kvm_vcpu *vcpu, u64 __user *uindices)
-{
-	if (put_user(KVM_REG_ARM_PSCI_VERSION, uindices++))
-		return -EFAULT;
+पूर्णांक kvm_arm_copy_fw_reg_indices(काष्ठा kvm_vcpu *vcpu, u64 __user *uindices)
+अणु
+	अगर (put_user(KVM_REG_ARM_PSCI_VERSION, uindices++))
+		वापस -EFAULT;
 
-	if (put_user(KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1, uindices++))
-		return -EFAULT;
+	अगर (put_user(KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1, uindices++))
+		वापस -EFAULT;
 
-	if (put_user(KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2, uindices++))
-		return -EFAULT;
+	अगर (put_user(KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2, uindices++))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define KVM_REG_FEATURE_LEVEL_WIDTH	4
-#define KVM_REG_FEATURE_LEVEL_MASK	(BIT(KVM_REG_FEATURE_LEVEL_WIDTH) - 1)
+#घोषणा KVM_REG_FEATURE_LEVEL_WIDTH	4
+#घोषणा KVM_REG_FEATURE_LEVEL_MASK	(BIT(KVM_REG_FEATURE_LEVEL_WIDTH) - 1)
 
 /*
- * Convert the workaround level into an easy-to-compare number, where higher
+ * Convert the workaround level पूर्णांकo an easy-to-compare number, where higher
  * values mean better protection.
  */
-static int get_kernel_wa_level(u64 regid)
-{
-	switch (regid) {
-	case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1:
-		switch (arm64_get_spectre_v2_state()) {
-		case SPECTRE_VULNERABLE:
-			return KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1_NOT_AVAIL;
-		case SPECTRE_MITIGATED:
-			return KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1_AVAIL;
-		case SPECTRE_UNAFFECTED:
-			return KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1_NOT_REQUIRED;
-		}
-		return KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1_NOT_AVAIL;
-	case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2:
-		switch (arm64_get_spectre_v4_state()) {
-		case SPECTRE_MITIGATED:
+अटल पूर्णांक get_kernel_wa_level(u64 regid)
+अणु
+	चयन (regid) अणु
+	हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1:
+		चयन (arm64_get_spectre_v2_state()) अणु
+		हाल SPECTRE_VULNERABLE:
+			वापस KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1_NOT_AVAIL;
+		हाल SPECTRE_MITIGATED:
+			वापस KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1_AVAIL;
+		हाल SPECTRE_UNAFFECTED:
+			वापस KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1_NOT_REQUIRED;
+		पूर्ण
+		वापस KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1_NOT_AVAIL;
+	हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2:
+		चयन (arm64_get_spectre_v4_state()) अणु
+		हाल SPECTRE_MITIGATED:
 			/*
-			 * As for the hypercall discovery, we pretend we
-			 * don't have any FW mitigation if SSBS is there at
-			 * all times.
+			 * As क्रम the hypercall discovery, we pretend we
+			 * करोn't have any FW mitigation अगर SSBS is there at
+			 * all बार.
 			 */
-			if (cpus_have_final_cap(ARM64_SSBS))
-				return KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_AVAIL;
+			अगर (cpus_have_final_cap(ARM64_SSBS))
+				वापस KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_AVAIL;
 			fallthrough;
-		case SPECTRE_UNAFFECTED:
-			return KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_REQUIRED;
-		case SPECTRE_VULNERABLE:
-			return KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_AVAIL;
-		}
-	}
+		हाल SPECTRE_UNAFFECTED:
+			वापस KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_REQUIRED;
+		हाल SPECTRE_VULNERABLE:
+			वापस KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_AVAIL;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int kvm_arm_get_fw_reg(struct kvm_vcpu *vcpu, const struct kvm_one_reg *reg)
-{
-	void __user *uaddr = (void __user *)(long)reg->addr;
+पूर्णांक kvm_arm_get_fw_reg(काष्ठा kvm_vcpu *vcpu, स्थिर काष्ठा kvm_one_reg *reg)
+अणु
+	व्योम __user *uaddr = (व्योम __user *)(दीर्घ)reg->addr;
 	u64 val;
 
-	switch (reg->id) {
-	case KVM_REG_ARM_PSCI_VERSION:
+	चयन (reg->id) अणु
+	हाल KVM_REG_ARM_PSCI_VERSION:
 		val = kvm_psci_version(vcpu, vcpu->kvm);
-		break;
-	case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1:
-	case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2:
+		अवरोध;
+	हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1:
+	हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2:
 		val = get_kernel_wa_level(reg->id) & KVM_REG_FEATURE_LEVEL_MASK;
-		break;
-	default:
-		return -ENOENT;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
-	if (copy_to_user(uaddr, &val, KVM_REG_SIZE(reg->id)))
-		return -EFAULT;
+	अगर (copy_to_user(uaddr, &val, KVM_REG_SIZE(reg->id)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvm_arm_set_fw_reg(struct kvm_vcpu *vcpu, const struct kvm_one_reg *reg)
-{
-	void __user *uaddr = (void __user *)(long)reg->addr;
+पूर्णांक kvm_arm_set_fw_reg(काष्ठा kvm_vcpu *vcpu, स्थिर काष्ठा kvm_one_reg *reg)
+अणु
+	व्योम __user *uaddr = (व्योम __user *)(दीर्घ)reg->addr;
 	u64 val;
-	int wa_level;
+	पूर्णांक wa_level;
 
-	if (copy_from_user(&val, uaddr, KVM_REG_SIZE(reg->id)))
-		return -EFAULT;
+	अगर (copy_from_user(&val, uaddr, KVM_REG_SIZE(reg->id)))
+		वापस -EFAULT;
 
-	switch (reg->id) {
-	case KVM_REG_ARM_PSCI_VERSION:
-	{
+	चयन (reg->id) अणु
+	हाल KVM_REG_ARM_PSCI_VERSION:
+	अणु
 		bool wants_02;
 
 		wants_02 = test_bit(KVM_ARM_VCPU_PSCI_0_2, vcpu->arch.features);
 
-		switch (val) {
-		case KVM_ARM_PSCI_0_1:
-			if (wants_02)
-				return -EINVAL;
+		चयन (val) अणु
+		हाल KVM_ARM_PSCI_0_1:
+			अगर (wants_02)
+				वापस -EINVAL;
 			vcpu->kvm->arch.psci_version = val;
-			return 0;
-		case KVM_ARM_PSCI_0_2:
-		case KVM_ARM_PSCI_1_0:
-			if (!wants_02)
-				return -EINVAL;
+			वापस 0;
+		हाल KVM_ARM_PSCI_0_2:
+		हाल KVM_ARM_PSCI_1_0:
+			अगर (!wants_02)
+				वापस -EINVAL;
 			vcpu->kvm->arch.psci_version = val;
-			return 0;
-		}
-		break;
-	}
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1:
-		if (val & ~KVM_REG_FEATURE_LEVEL_MASK)
-			return -EINVAL;
+	हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_1:
+		अगर (val & ~KVM_REG_FEATURE_LEVEL_MASK)
+			वापस -EINVAL;
 
-		if (get_kernel_wa_level(reg->id) < val)
-			return -EINVAL;
+		अगर (get_kernel_wa_level(reg->id) < val)
+			वापस -EINVAL;
 
-		return 0;
+		वापस 0;
 
-	case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2:
-		if (val & ~(KVM_REG_FEATURE_LEVEL_MASK |
+	हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2:
+		अगर (val & ~(KVM_REG_FEATURE_LEVEL_MASK |
 			    KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_ENABLED))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		/* The enabled bit must not be set unless the level is AVAIL. */
-		if ((val & KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_ENABLED) &&
+		अगर ((val & KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_ENABLED) &&
 		    (val & KVM_REG_FEATURE_LEVEL_MASK) != KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_AVAIL)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		/*
 		 * Map all the possible incoming states to the only two we
 		 * really want to deal with.
 		 */
-		switch (val & KVM_REG_FEATURE_LEVEL_MASK) {
-		case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_AVAIL:
-		case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_UNKNOWN:
+		चयन (val & KVM_REG_FEATURE_LEVEL_MASK) अणु
+		हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_AVAIL:
+		हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_UNKNOWN:
 			wa_level = KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_AVAIL;
-			break;
-		case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_AVAIL:
-		case KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_REQUIRED:
+			अवरोध;
+		हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_AVAIL:
+		हाल KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_REQUIRED:
 			wa_level = KVM_REG_ARM_SMCCC_ARCH_WORKAROUND_2_NOT_REQUIRED;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
 		 * We can deal with NOT_AVAIL on NOT_REQUIRED, but not the
 		 * other way around.
 		 */
-		if (get_kernel_wa_level(reg->id) < wa_level)
-			return -EINVAL;
+		अगर (get_kernel_wa_level(reg->id) < wa_level)
+			वापस -EINVAL;
 
-		return 0;
-	default:
-		return -ENOENT;
-	}
+		वापस 0;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण

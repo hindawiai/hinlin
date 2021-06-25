@@ -1,7 +1,8 @@
-#ifndef _FCACHE_H
-#define _FCACHE_H 1
+<शैली गुरु>
+#अगर_अघोषित _FCACHE_H
+#घोषणा _FCACHE_H 1
 
-unsigned shash(const unsigned char *s);
-bool file_available(const char *name);
+अचिन्हित shash(स्थिर अचिन्हित अक्षर *s);
+bool file_available(स्थिर अक्षर *name);
 
-#endif
+#पूर्ण_अगर

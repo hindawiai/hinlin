@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,165 +24,165 @@
  *
  */
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "reg_helper.h"
-#include "dce_audio.h"
-#include "dce/dce_11_0_d.h"
-#include "dce/dce_11_0_sh_mask.h"
+#समावेश "reg_helper.h"
+#समावेश "dce_audio.h"
+#समावेश "dce/dce_11_0_d.h"
+#समावेश "dce/dce_11_0_sh_mask.h"
 
-#define DCE_AUD(audio)\
-	container_of(audio, struct dce_audio, base)
+#घोषणा DCE_AUD(audio)\
+	container_of(audio, काष्ठा dce_audio, base)
 
-#define CTX \
+#घोषणा CTX \
 	aud->base.ctx
 
-#define DC_LOGGER_INIT()
+#घोषणा DC_LOGGER_INIT()
 
-#define REG(reg)\
+#घोषणा REG(reg)\
 	(aud->regs->reg)
 
-#undef FN
-#define FN(reg_name, field_name) \
-	aud->shifts->field_name, aud->masks->field_name
+#अघोषित FN
+#घोषणा FN(reg_name, field_name) \
+	aud->shअगरts->field_name, aud->masks->field_name
 
-#define IX_REG(reg)\
+#घोषणा IX_REG(reg)\
 	ix ## reg
 
-#define AZ_REG_READ(reg_name) \
-		read_indirect_azalia_reg(audio, IX_REG(reg_name))
+#घोषणा AZ_REG_READ(reg_name) \
+		पढ़ो_indirect_azalia_reg(audio, IX_REG(reg_name))
 
-#define AZ_REG_WRITE(reg_name, value) \
-		write_indirect_azalia_reg(audio, IX_REG(reg_name), value)
+#घोषणा AZ_REG_WRITE(reg_name, value) \
+		ग_लिखो_indirect_azalia_reg(audio, IX_REG(reg_name), value)
 
-static void write_indirect_azalia_reg(struct audio *audio,
-	uint32_t reg_index,
-	uint32_t reg_data)
-{
-	struct dce_audio *aud = DCE_AUD(audio);
+अटल व्योम ग_लिखो_indirect_azalia_reg(काष्ठा audio *audio,
+	uपूर्णांक32_t reg_index,
+	uपूर्णांक32_t reg_data)
+अणु
+	काष्ठा dce_audio *aud = DCE_AUD(audio);
 
-	/* AZALIA_F0_CODEC_ENDPOINT_INDEX  endpoint index  */
+	/* AZALIA_F0_CODEC_ENDPOINT_INDEX  endpoपूर्णांक index  */
 	REG_SET(AZALIA_F0_CODEC_ENDPOINT_INDEX, 0,
 			AZALIA_ENDPOINT_REG_INDEX, reg_index);
 
-	/* AZALIA_F0_CODEC_ENDPOINT_DATA  endpoint data  */
+	/* AZALIA_F0_CODEC_ENDPOINT_DATA  endpoपूर्णांक data  */
 	REG_SET(AZALIA_F0_CODEC_ENDPOINT_DATA, 0,
 			AZALIA_ENDPOINT_REG_DATA, reg_data);
 
 	DC_LOG_HW_AUDIO("AUDIO:write_indirect_azalia_reg: index: %u  data: %u\n",
 		reg_index, reg_data);
-}
+पूर्ण
 
-static uint32_t read_indirect_azalia_reg(struct audio *audio, uint32_t reg_index)
-{
-	struct dce_audio *aud = DCE_AUD(audio);
+अटल uपूर्णांक32_t पढ़ो_indirect_azalia_reg(काष्ठा audio *audio, uपूर्णांक32_t reg_index)
+अणु
+	काष्ठा dce_audio *aud = DCE_AUD(audio);
 
-	uint32_t value = 0;
+	uपूर्णांक32_t value = 0;
 
-	/* AZALIA_F0_CODEC_ENDPOINT_INDEX  endpoint index  */
+	/* AZALIA_F0_CODEC_ENDPOINT_INDEX  endpoपूर्णांक index  */
 	REG_SET(AZALIA_F0_CODEC_ENDPOINT_INDEX, 0,
 			AZALIA_ENDPOINT_REG_INDEX, reg_index);
 
-	/* AZALIA_F0_CODEC_ENDPOINT_DATA  endpoint data  */
+	/* AZALIA_F0_CODEC_ENDPOINT_DATA  endpoपूर्णांक data  */
 	value = REG_READ(AZALIA_F0_CODEC_ENDPOINT_DATA);
 
 	DC_LOG_HW_AUDIO("AUDIO:read_indirect_azalia_reg: index: %u  data: %u\n",
 		reg_index, value);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static bool is_audio_format_supported(
-	const struct audio_info *audio_info,
-	enum audio_format_code audio_format_code,
-	uint32_t *format_index)
-{
-	uint32_t index;
-	uint32_t max_channe_index = 0;
+अटल bool is_audio_क्रमmat_supported(
+	स्थिर काष्ठा audio_info *audio_info,
+	क्रमागत audio_क्रमmat_code audio_क्रमmat_code,
+	uपूर्णांक32_t *क्रमmat_index)
+अणु
+	uपूर्णांक32_t index;
+	uपूर्णांक32_t max_channe_index = 0;
 	bool found = false;
 
-	if (audio_info == NULL)
-		return found;
+	अगर (audio_info == शून्य)
+		वापस found;
 
 	/* pass through whole array */
-	for (index = 0; index < audio_info->mode_count; index++) {
-		if (audio_info->modes[index].format_code == audio_format_code) {
-			if (found) {
-				/* format has multiply entries, choose one with
+	क्रम (index = 0; index < audio_info->mode_count; index++) अणु
+		अगर (audio_info->modes[index].क्रमmat_code == audio_क्रमmat_code) अणु
+			अगर (found) अणु
+				/* क्रमmat has multiply entries, choose one with
 				 *  highst number of channels */
-				if (audio_info->modes[index].channel_count >
-		audio_info->modes[max_channe_index].channel_count) {
+				अगर (audio_info->modes[index].channel_count >
+		audio_info->modes[max_channe_index].channel_count) अणु
 					max_channe_index = index;
-				}
-			} else {
-				/* format found, save it's index */
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				/* क्रमmat found, save it's index */
 				found = true;
 				max_channe_index = index;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* return index */
-	if (found && format_index != NULL)
-		*format_index = max_channe_index;
+	/* वापस index */
+	अगर (found && क्रमmat_index != शून्य)
+		*क्रमmat_index = max_channe_index;
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-/*For HDMI, calculate if specified sample rates can fit into a given timing */
-static void check_audio_bandwidth_hdmi(
-	const struct audio_crtc_info *crtc_info,
-	uint32_t channel_count,
-	union audio_sample_rates *sample_rates)
-{
-	uint32_t samples;
-	uint32_t  h_blank;
+/*For HDMI, calculate अगर specअगरied sample rates can fit पूर्णांकo a given timing */
+अटल व्योम check_audio_bandwidth_hdmi(
+	स्थिर काष्ठा audio_crtc_info *crtc_info,
+	uपूर्णांक32_t channel_count,
+	जोड़ audio_sample_rates *sample_rates)
+अणु
+	uपूर्णांक32_t samples;
+	uपूर्णांक32_t  h_blank;
 	bool limit_freq_to_48_khz = false;
 	bool limit_freq_to_88_2_khz = false;
 	bool limit_freq_to_96_khz = false;
 	bool limit_freq_to_174_4_khz = false;
-	if (!crtc_info)
-		return;
+	अगर (!crtc_info)
+		वापस;
 
-	/* For two channels supported return whatever sink support,unmodified*/
-	if (channel_count > 2) {
+	/* For two channels supported वापस whatever sink support,unmodअगरied*/
+	अगर (channel_count > 2) अणु
 
 		/* Based on HDMI spec 1.3 Table 7.5 */
-		if ((crtc_info->requested_pixel_clock_100Hz <= 270000) &&
+		अगर ((crtc_info->requested_pixel_घड़ी_100Hz <= 270000) &&
 		(crtc_info->v_active <= 576) &&
-		!(crtc_info->interlaced) &&
+		!(crtc_info->पूर्णांकerlaced) &&
 		!(crtc_info->pixel_repetition == 2 ||
-		crtc_info->pixel_repetition == 4)) {
+		crtc_info->pixel_repetition == 4)) अणु
 			limit_freq_to_48_khz = true;
 
-		} else if ((crtc_info->requested_pixel_clock_100Hz <= 270000) &&
+		पूर्ण अन्यथा अगर ((crtc_info->requested_pixel_घड़ी_100Hz <= 270000) &&
 				(crtc_info->v_active <= 576) &&
-				(crtc_info->interlaced) &&
-				(crtc_info->pixel_repetition == 2)) {
+				(crtc_info->पूर्णांकerlaced) &&
+				(crtc_info->pixel_repetition == 2)) अणु
 			limit_freq_to_88_2_khz = true;
 
-		} else if ((crtc_info->requested_pixel_clock_100Hz <= 540000) &&
+		पूर्ण अन्यथा अगर ((crtc_info->requested_pixel_घड़ी_100Hz <= 540000) &&
 				(crtc_info->v_active <= 576) &&
-				!(crtc_info->interlaced)) {
+				!(crtc_info->पूर्णांकerlaced)) अणु
 			limit_freq_to_174_4_khz = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Also do some calculation for the available Audio Bandwidth for the
-	 * 8 ch (i.e. for the Layout 1 => ch > 2)
+	/* Also करो some calculation क्रम the available Audio Bandwidth क्रम the
+	 * 8 ch (i.e. क्रम the Layout 1 => ch > 2)
 	 */
 	h_blank = crtc_info->h_total - crtc_info->h_active;
 
-	if (crtc_info->pixel_repetition)
+	अगर (crtc_info->pixel_repetition)
 		h_blank *= crtc_info->pixel_repetition;
 
 	/*based on HDMI spec 1.3 Table 7.5 */
 	h_blank -= 58;
-	/*for Control Period */
+	/*क्रम Control Period */
 	h_blank -= 16;
 
 	samples = h_blank * 10;
-	/* Number of Audio Packets (multiplied by 10) per Line (for 8 ch number
+	/* Number of Audio Packets (multiplied by 10) per Line (क्रम 8 ch number
 	 * of Audio samples per line multiplied by 10 - Layout 1)
 	 */
 	samples /= 32;
@@ -191,112 +192,112 @@ static void check_audio_bandwidth_hdmi(
 	/*Number of Audio samples per second */
 	samples /= 10;
 
-	/* @todo do it after deep color is implemented
+	/* @toकरो करो it after deep color is implemented
 	 * 8xx - deep color bandwidth scaling
 	 * Extra bandwidth is avaliable in deep color b/c link runs faster than
-	 * pixel rate. This has the effect of allowing more tmds characters to
+	 * pixel rate. This has the effect of allowing more पंचांगds अक्षरacters to
 	 * be transmitted during blank
 	 */
 
-	switch (crtc_info->color_depth) {
-	case COLOR_DEPTH_888:
+	चयन (crtc_info->color_depth) अणु
+	हाल COLOR_DEPTH_888:
 		samples *= 4;
-		break;
-	case COLOR_DEPTH_101010:
+		अवरोध;
+	हाल COLOR_DEPTH_101010:
 		samples *= 5;
-		break;
-	case COLOR_DEPTH_121212:
+		अवरोध;
+	हाल COLOR_DEPTH_121212:
 		samples *= 6;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		samples *= 4;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	samples /= 4;
 
 	/*check limitation*/
-	if (samples < 88200)
+	अगर (samples < 88200)
 		limit_freq_to_48_khz = true;
-	else if (samples < 96000)
+	अन्यथा अगर (samples < 96000)
 		limit_freq_to_88_2_khz = true;
-	else if (samples < 176400)
+	अन्यथा अगर (samples < 176400)
 		limit_freq_to_96_khz = true;
-	else if (samples < 192000)
+	अन्यथा अगर (samples < 192000)
 		limit_freq_to_174_4_khz = true;
 
-	if (sample_rates != NULL) {
+	अगर (sample_rates != शून्य) अणु
 		/* limit frequencies */
-		if (limit_freq_to_174_4_khz)
+		अगर (limit_freq_to_174_4_khz)
 			sample_rates->rate.RATE_192 = 0;
 
-		if (limit_freq_to_96_khz) {
+		अगर (limit_freq_to_96_khz) अणु
 			sample_rates->rate.RATE_192 = 0;
 			sample_rates->rate.RATE_176_4 = 0;
-		}
-		if (limit_freq_to_88_2_khz) {
+		पूर्ण
+		अगर (limit_freq_to_88_2_khz) अणु
 			sample_rates->rate.RATE_192 = 0;
 			sample_rates->rate.RATE_176_4 = 0;
 			sample_rates->rate.RATE_96 = 0;
-		}
-		if (limit_freq_to_48_khz) {
+		पूर्ण
+		अगर (limit_freq_to_48_khz) अणु
 			sample_rates->rate.RATE_192 = 0;
 			sample_rates->rate.RATE_176_4 = 0;
 			sample_rates->rate.RATE_96 = 0;
 			sample_rates->rate.RATE_88_2 = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/*For DP SST, calculate if specified sample rates can fit into a given timing */
-static void check_audio_bandwidth_dpsst(
-	const struct audio_crtc_info *crtc_info,
-	uint32_t channel_count,
-	union audio_sample_rates *sample_rates)
-{
-	/* do nothing */
-}
+/*For DP SST, calculate अगर specअगरied sample rates can fit पूर्णांकo a given timing */
+अटल व्योम check_audio_bandwidth_dpsst(
+	स्थिर काष्ठा audio_crtc_info *crtc_info,
+	uपूर्णांक32_t channel_count,
+	जोड़ audio_sample_rates *sample_rates)
+अणु
+	/* करो nothing */
+पूर्ण
 
-/*For DP MST, calculate if specified sample rates can fit into a given timing */
-static void check_audio_bandwidth_dpmst(
-	const struct audio_crtc_info *crtc_info,
-	uint32_t channel_count,
-	union audio_sample_rates *sample_rates)
-{
-	/* do nothing  */
-}
+/*For DP MST, calculate अगर specअगरied sample rates can fit पूर्णांकo a given timing */
+अटल व्योम check_audio_bandwidth_dpmst(
+	स्थिर काष्ठा audio_crtc_info *crtc_info,
+	uपूर्णांक32_t channel_count,
+	जोड़ audio_sample_rates *sample_rates)
+अणु
+	/* करो nothing  */
+पूर्ण
 
-static void check_audio_bandwidth(
-	const struct audio_crtc_info *crtc_info,
-	uint32_t channel_count,
-	enum signal_type signal,
-	union audio_sample_rates *sample_rates)
-{
-	switch (signal) {
-	case SIGNAL_TYPE_HDMI_TYPE_A:
+अटल व्योम check_audio_bandwidth(
+	स्थिर काष्ठा audio_crtc_info *crtc_info,
+	uपूर्णांक32_t channel_count,
+	क्रमागत संकेत_type संकेत,
+	जोड़ audio_sample_rates *sample_rates)
+अणु
+	चयन (संकेत) अणु
+	हाल SIGNAL_TYPE_HDMI_TYPE_A:
 		check_audio_bandwidth_hdmi(
 			crtc_info, channel_count, sample_rates);
-		break;
-	case SIGNAL_TYPE_EDP:
-	case SIGNAL_TYPE_DISPLAY_PORT:
+		अवरोध;
+	हाल SIGNAL_TYPE_EDP:
+	हाल SIGNAL_TYPE_DISPLAY_PORT:
 		check_audio_bandwidth_dpsst(
 			crtc_info, channel_count, sample_rates);
-		break;
-	case SIGNAL_TYPE_DISPLAY_PORT_MST:
+		अवरोध;
+	हाल SIGNAL_TYPE_DISPLAY_PORT_MST:
 		check_audio_bandwidth_dpmst(
 			crtc_info, channel_count, sample_rates);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* expose/not expose HBR capability to Audio driver */
-static void set_high_bit_rate_capable(
-	struct audio *audio,
+अटल व्योम set_high_bit_rate_capable(
+	काष्ठा audio *audio,
 	bool capable)
-{
-	uint32_t value = 0;
+अणु
+	uपूर्णांक32_t value = 0;
 
 	/* set high bit rate audio capable*/
 	value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR);
@@ -306,17 +307,17 @@ static void set_high_bit_rate_capable(
 		HBR_CAPABLE);
 
 	AZ_REG_WRITE(AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR, value);
-}
+पूर्ण
 
 /* set video latency in in ms/2+1 */
-static void set_video_latency(
-	struct audio *audio,
-	int latency_in_ms)
-{
-	uint32_t value = 0;
+अटल व्योम set_video_latency(
+	काष्ठा audio *audio,
+	पूर्णांक latency_in_ms)
+अणु
+	uपूर्णांक32_t value = 0;
 
-	if ((latency_in_ms < 0) || (latency_in_ms > 255))
-		return;
+	अगर ((latency_in_ms < 0) || (latency_in_ms > 255))
+		वापस;
 
 	value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_LIPSYNC);
 
@@ -326,19 +327,19 @@ static void set_video_latency(
 
 	AZ_REG_WRITE(AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_LIPSYNC,
 		value);
-}
+पूर्ण
 
 /* set audio latency in in ms/2+1 */
-static void set_audio_latency(
-	struct audio *audio,
-	int latency_in_ms)
-{
-	uint32_t value = 0;
+अटल व्योम set_audio_latency(
+	काष्ठा audio *audio,
+	पूर्णांक latency_in_ms)
+अणु
+	uपूर्णांक32_t value = 0;
 
-	if (latency_in_ms < 0)
+	अगर (latency_in_ms < 0)
 		latency_in_ms = 0;
 
-	if (latency_in_ms > 255)
+	अगर (latency_in_ms > 255)
 		latency_in_ms = 255;
 
 	value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_LIPSYNC);
@@ -349,11 +350,11 @@ static void set_audio_latency(
 
 	AZ_REG_WRITE(AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_LIPSYNC,
 		value);
-}
+पूर्ण
 
-void dce_aud_az_enable(struct audio *audio)
-{
-	uint32_t value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL);
+व्योम dce_aud_az_enable(काष्ठा audio *audio)
+अणु
+	uपूर्णांक32_t value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL);
 	DC_LOGGER_INIT();
 
 	set_reg_field_value(value, 1,
@@ -371,11 +372,11 @@ void dce_aud_az_enable(struct audio *audio)
 
 	DC_LOG_HW_AUDIO("\n\t========= AUDIO:dce_aud_az_enable: index: %u  data: 0x%x\n",
 			audio->inst, value);
-}
+पूर्ण
 
-void dce_aud_az_disable(struct audio *audio)
-{
-	uint32_t value;
+व्योम dce_aud_az_disable(काष्ठा audio *audio)
+अणु
+	uपूर्णांक32_t value;
 	DC_LOGGER_INIT();
 
 	value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL);
@@ -396,25 +397,25 @@ void dce_aud_az_disable(struct audio *audio)
 	value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL);
 	DC_LOG_HW_AUDIO("\n\t========= AUDIO:dce_aud_az_disable: index: %u  data: 0x%x\n",
 			audio->inst, value);
-}
+पूर्ण
 
-void dce_aud_az_configure(
-	struct audio *audio,
-	enum signal_type signal,
-	const struct audio_crtc_info *crtc_info,
-	const struct audio_info *audio_info)
-{
-	struct dce_audio *aud = DCE_AUD(audio);
+व्योम dce_aud_az_configure(
+	काष्ठा audio *audio,
+	क्रमागत संकेत_type संकेत,
+	स्थिर काष्ठा audio_crtc_info *crtc_info,
+	स्थिर काष्ठा audio_info *audio_info)
+अणु
+	काष्ठा dce_audio *aud = DCE_AUD(audio);
 
-	uint32_t speakers = audio_info->flags.info.ALLSPEAKERS;
-	uint32_t value;
-	uint32_t field = 0;
-	enum audio_format_code audio_format_code;
-	uint32_t format_index;
-	uint32_t index;
+	uपूर्णांक32_t speakers = audio_info->flags.info.ALLSPEAKERS;
+	uपूर्णांक32_t value;
+	uपूर्णांक32_t field = 0;
+	क्रमागत audio_क्रमmat_code audio_क्रमmat_code;
+	uपूर्णांक32_t क्रमmat_index;
+	uपूर्णांक32_t index;
 	bool is_ac3_supported = false;
-	union audio_sample_rates sample_rate;
-	uint32_t strlen = 0;
+	जोड़ audio_sample_rates sample_rate;
+	uपूर्णांक32_t म_माप = 0;
 	value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL);
 	set_reg_field_value(value, 1,
 			AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL,
@@ -423,8 +424,8 @@ void dce_aud_az_configure(
 
 	/* Speaker Allocation */
 	/*
-	uint32_t value;
-	uint32_t field = 0;*/
+	uपूर्णांक32_t value;
+	uपूर्णांक32_t field = 0;*/
 	value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER);
 
 	set_reg_field_value(value,
@@ -433,7 +434,7 @@ void dce_aud_az_configure(
 		SPEAKER_ALLOCATION);
 
 	/* LFE_PLAYBACK_LEVEL = LFEPBL
-	 * LFEPBL = 0 : Unknown or refer to other information
+	 * LFEPBL = 0 : Unknown or refer to other inक्रमmation
 	 * LFEPBL = 1 : 0dB playback
 	 * LFEPBL = 2 : +10dB playback
 	 * LFE_BL = 3 : Reserved
@@ -442,8 +443,8 @@ void dce_aud_az_configure(
 		0,
 		AZALIA_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER,
 		LFE_PLAYBACK_LEVEL);
-	/* todo: according to reg spec LFE_PLAYBACK_LEVEL is read only.
-	 *  why are we writing to it?  DCE8 does not write this */
+	/* toकरो: according to reg spec LFE_PLAYBACK_LEVEL is पढ़ो only.
+	 *  why are we writing to it?  DCE8 करोes not ग_लिखो this */
 
 
 	set_reg_field_value(value,
@@ -467,61 +468,61 @@ void dce_aud_az_configure(
 		AZALIA_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER,
 		EXTRA_CONNECTION_INFO);
 
-	/* set audio for output signal */
-	switch (signal) {
-	case SIGNAL_TYPE_HDMI_TYPE_A:
+	/* set audio क्रम output संकेत */
+	चयन (संकेत) अणु
+	हाल SIGNAL_TYPE_HDMI_TYPE_A:
 		set_reg_field_value(value,
 			1,
 			AZALIA_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER,
 			HDMI_CONNECTION);
 
-		break;
+		अवरोध;
 
-	case SIGNAL_TYPE_EDP:
-	case SIGNAL_TYPE_DISPLAY_PORT:
-	case SIGNAL_TYPE_DISPLAY_PORT_MST:
+	हाल SIGNAL_TYPE_EDP:
+	हाल SIGNAL_TYPE_DISPLAY_PORT:
+	हाल SIGNAL_TYPE_DISPLAY_PORT_MST:
 		set_reg_field_value(value,
 			1,
 			AZALIA_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER,
 			DP_CONNECTION);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BREAK_TO_DEBUGGER();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	AZ_REG_WRITE(AZALIA_F0_CODEC_PIN_CONTROL_CHANNEL_SPEAKER, value);
 
 	/*  Audio Descriptors   */
-	/* pass through all formats */
-	for (format_index = 0; format_index < AUDIO_FORMAT_CODE_COUNT;
-			format_index++) {
-		audio_format_code =
-			(AUDIO_FORMAT_CODE_FIRST + format_index);
+	/* pass through all क्रमmats */
+	क्रम (क्रमmat_index = 0; क्रमmat_index < AUDIO_FORMAT_CODE_COUNT;
+			क्रमmat_index++) अणु
+		audio_क्रमmat_code =
+			(AUDIO_FORMAT_CODE_FIRST + क्रमmat_index);
 
 		/* those are unsupported, skip programming */
-		if (audio_format_code == AUDIO_FORMAT_CODE_1BITAUDIO ||
-			audio_format_code == AUDIO_FORMAT_CODE_DST)
-			continue;
+		अगर (audio_क्रमmat_code == AUDIO_FORMAT_CODE_1BITAUDIO ||
+			audio_क्रमmat_code == AUDIO_FORMAT_CODE_DST)
+			जारी;
 
 		value = 0;
 
-		/* check if supported */
-		if (is_audio_format_supported(
-				audio_info, audio_format_code, &index)) {
-			const struct audio_mode *audio_mode =
+		/* check अगर supported */
+		अगर (is_audio_क्रमmat_supported(
+				audio_info, audio_क्रमmat_code, &index)) अणु
+			स्थिर काष्ठा audio_mode *audio_mode =
 					&audio_info->modes[index];
-			union audio_sample_rates sample_rates =
+			जोड़ audio_sample_rates sample_rates =
 					audio_mode->sample_rates;
-			uint8_t byte2 = audio_mode->max_bit_rate;
+			uपूर्णांक8_t byte2 = audio_mode->max_bit_rate;
 
-			/* adjust specific properties */
-			switch (audio_format_code) {
-			case AUDIO_FORMAT_CODE_LINEARPCM: {
+			/* adjust specअगरic properties */
+			चयन (audio_क्रमmat_code) अणु
+			हाल AUDIO_FORMAT_CODE_LINEARPCM: अणु
 				check_audio_bandwidth(
 					crtc_info,
 					audio_mode->channel_count,
-					signal,
+					संकेत,
 					&sample_rates);
 
 				byte2 = audio_mode->sample_size;
@@ -530,23 +531,23 @@ void dce_aud_az_configure(
 						sample_rates.all,
 						AZALIA_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR0,
 						SUPPORTED_FREQUENCIES_STEREO);
-				}
-				break;
-			case AUDIO_FORMAT_CODE_AC3:
+				पूर्ण
+				अवरोध;
+			हाल AUDIO_FORMAT_CODE_AC3:
 				is_ac3_supported = true;
-				break;
-			case AUDIO_FORMAT_CODE_DOLBYDIGITALPLUS:
-			case AUDIO_FORMAT_CODE_DTS_HD:
-			case AUDIO_FORMAT_CODE_MAT_MLP:
-			case AUDIO_FORMAT_CODE_DST:
-			case AUDIO_FORMAT_CODE_WMAPRO:
-				byte2 = audio_mode->vendor_specific;
-				break;
-			default:
-				break;
-			}
+				अवरोध;
+			हाल AUDIO_FORMAT_CODE_DOLBYDIGITALPLUS:
+			हाल AUDIO_FORMAT_CODE_DTS_HD:
+			हाल AUDIO_FORMAT_CODE_MAT_MLP:
+			हाल AUDIO_FORMAT_CODE_DST:
+			हाल AUDIO_FORMAT_CODE_WMAPRO:
+				byte2 = audio_mode->venकरोr_specअगरic;
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
 
-			/* fill audio format data */
+			/* fill audio क्रमmat data */
 			set_reg_field_value(value,
 					audio_mode->channel_count - 1,
 					AZALIA_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR0,
@@ -561,26 +562,26 @@ void dce_aud_az_configure(
 					byte2,
 					AZALIA_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR0,
 					DESCRIPTOR_BYTE_2);
-		} /* if */
+		पूर्ण /* अगर */
 
 		AZ_REG_WRITE(
-				AZALIA_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR0 + format_index,
+				AZALIA_F0_CODEC_PIN_CONTROL_AUDIO_DESCRIPTOR0 + क्रमmat_index,
 				value);
-	} /* for */
+	पूर्ण /* क्रम */
 
-	if (is_ac3_supported)
-		/* todo: this reg global.  why program global register? */
+	अगर (is_ac3_supported)
+		/* toकरो: this reg global.  why program global रेजिस्टर? */
 		REG_WRITE(AZALIA_F0_CODEC_FUNCTION_PARAMETER_STREAM_FORMATS,
 				0x05);
 
-	/* check for 192khz/8-Ch support for HBR requirements */
+	/* check क्रम 192khz/8-Ch support क्रम HBR requirements */
 	sample_rate.all = 0;
 	sample_rate.rate.RATE_192 = 1;
 
 	check_audio_bandwidth(
 		crtc_info,
 		8,
-		signal,
+		संकेत,
 		&sample_rate);
 
 	set_high_bit_rate_capable(audio, sample_rate.rate.RATE_192);
@@ -604,12 +605,12 @@ void dce_aud_az_configure(
 	value = 0;
 
 	/*get display name string length */
-	while (audio_info->display_name[strlen++] != '\0') {
-		if (strlen >=
+	जबतक (audio_info->display_name[म_माप++] != '\0') अणु
+		अगर (म_माप >=
 		MAX_HW_AUDIO_INFO_DISPLAY_NAME_SIZE_IN_CHARS)
-			break;
-		}
-	set_reg_field_value(value, strlen,
+			अवरोध;
+		पूर्ण
+	set_reg_field_value(value, म_माप,
 		AZALIA_F0_CODEC_PIN_CONTROL_SINK_INFO1,
 		SINK_DESCRIPTION_LEN);
 
@@ -619,10 +620,10 @@ void dce_aud_az_configure(
 		audio->inst, value, audio_info->display_name);
 
 	/*
-	*write the port ID:
+	*ग_लिखो the port ID:
 	*PORT_ID0 = display index
 	*PORT_ID1 = 16bit BDF
-	*(format MSB->LSB: 8bit Bus, 5bit Device, 3bit Function)
+	*(क्रमmat MSB->LSB: 8bit Bus, 5bit Device, 3bit Function)
 	*/
 
 	value = 0;
@@ -640,7 +641,7 @@ void dce_aud_az_configure(
 
 	AZ_REG_WRITE(AZALIA_F0_CODEC_PIN_CONTROL_SINK_INFO3, value);
 
-	/*write the 18 char monitor string */
+	/*ग_लिखो the 18 अक्षर monitor string */
 
 	value = 0;
 	set_reg_field_value(value, audio_info->display_name[0],
@@ -733,61 +734,61 @@ void dce_aud_az_configure(
 			AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL,
 			CLOCK_GATING_DISABLE);
 	AZ_REG_WRITE(AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL, value);
-}
+पूर्ण
 
 /*
-* todo: wall clk related functionality probably belong to clock_src.
+* toकरो: wall clk related functionality probably beदीर्घ to घड़ी_src.
 */
 
-/* search pixel clock value for Azalia HDMI Audio */
-static void get_azalia_clock_info_hdmi(
-	uint32_t crtc_pixel_clock_100hz,
-	uint32_t actual_pixel_clock_100Hz,
-	struct azalia_clock_info *azalia_clock_info)
-{
+/* search pixel घड़ी value क्रम Azalia HDMI Audio */
+अटल व्योम get_azalia_घड़ी_info_hdmi(
+	uपूर्णांक32_t crtc_pixel_घड़ी_100hz,
+	uपूर्णांक32_t actual_pixel_घड़ी_100Hz,
+	काष्ठा azalia_घड़ी_info *azalia_घड़ी_info)
+अणु
 	/* audio_dto_phase= 24 * 10,000;
 	 *   24MHz in [100Hz] units */
-	azalia_clock_info->audio_dto_phase =
+	azalia_घड़ी_info->audio_dto_phase =
 			24 * 10000;
 
 	/* audio_dto_module = PCLKFrequency * 10,000;
 	 *  [khz] -> [100Hz] */
-	azalia_clock_info->audio_dto_module =
-			actual_pixel_clock_100Hz;
-}
+	azalia_घड़ी_info->audio_dto_module =
+			actual_pixel_घड़ी_100Hz;
+पूर्ण
 
-static void get_azalia_clock_info_dp(
-	uint32_t requested_pixel_clock_100Hz,
-	const struct audio_pll_info *pll_info,
-	struct azalia_clock_info *azalia_clock_info)
-{
-	/* Reported dpDtoSourceClockInkhz value for
-	 * DCE8 already adjusted for SS, do not need any
-	 * adjustment here anymore
+अटल व्योम get_azalia_घड़ी_info_dp(
+	uपूर्णांक32_t requested_pixel_घड़ी_100Hz,
+	स्थिर काष्ठा audio_pll_info *pll_info,
+	काष्ठा azalia_घड़ी_info *azalia_घड़ी_info)
+अणु
+	/* Reported dpDtoSourceClockInkhz value क्रम
+	 * DCE8 alपढ़ोy adjusted क्रम SS, करो not need any
+	 * adjusपंचांगent here anymore
 	 */
 
 	/*audio_dto_phase = 24 * 10,000;
 	 * 24MHz in [100Hz] units */
-	azalia_clock_info->audio_dto_phase = 24 * 10000;
+	azalia_घड़ी_info->audio_dto_phase = 24 * 10000;
 
 	/*audio_dto_module = dpDtoSourceClockInkhz * 10,000;
 	 *  [khz] ->[100Hz] */
-	azalia_clock_info->audio_dto_module =
-		pll_info->dp_dto_source_clock_in_khz * 10;
-}
+	azalia_घड़ी_info->audio_dto_module =
+		pll_info->dp_dto_source_घड़ी_in_khz * 10;
+पूर्ण
 
-void dce_aud_wall_dto_setup(
-	struct audio *audio,
-	enum signal_type signal,
-	const struct audio_crtc_info *crtc_info,
-	const struct audio_pll_info *pll_info)
-{
-	struct dce_audio *aud = DCE_AUD(audio);
+व्योम dce_aud_wall_dto_setup(
+	काष्ठा audio *audio,
+	क्रमागत संकेत_type संकेत,
+	स्थिर काष्ठा audio_crtc_info *crtc_info,
+	स्थिर काष्ठा audio_pll_info *pll_info)
+अणु
+	काष्ठा dce_audio *aud = DCE_AUD(audio);
 
-	struct azalia_clock_info clock_info = { 0 };
+	काष्ठा azalia_घड़ी_info घड़ी_info = अणु 0 पूर्ण;
 
-	if (dc_is_hdmi_tmds_signal(signal)) {
-		uint32_t src_sel;
+	अगर (dc_is_hdmi_पंचांगds_संकेत(संकेत)) अणु
+		uपूर्णांक32_t src_sel;
 
 		/*DTO0 Programming goal:
 		-generate 24MHz, 128*Fs from 24MHz
@@ -795,27 +796,27 @@ void dce_aud_wall_dto_setup(
 		(optionally a DP is connected) */
 
 		/* calculate DTO settings */
-		get_azalia_clock_info_hdmi(
-			crtc_info->requested_pixel_clock_100Hz,
-			crtc_info->calculated_pixel_clock_100Hz,
-			&clock_info);
+		get_azalia_घड़ी_info_hdmi(
+			crtc_info->requested_pixel_घड़ी_100Hz,
+			crtc_info->calculated_pixel_घड़ी_100Hz,
+			&घड़ी_info);
 
 		DC_LOG_HW_AUDIO("\n%s:Input::requested_pixel_clock_100Hz = %d"\
 				"calculated_pixel_clock_100Hz =%d\n"\
 				"audio_dto_module = %d audio_dto_phase =%d \n\n", __func__,\
-				crtc_info->requested_pixel_clock_100Hz,\
-				crtc_info->calculated_pixel_clock_100Hz,\
-				clock_info.audio_dto_module,\
-				clock_info.audio_dto_phase);
+				crtc_info->requested_pixel_घड़ी_100Hz,\
+				crtc_info->calculated_pixel_घड़ी_100Hz,\
+				घड़ी_info.audio_dto_module,\
+				घड़ी_info.audio_dto_phase);
 
-		/* On TN/SI, Program DTO source select and DTO select before
+		/* On TN/SI, Program DTO source select and DTO select beक्रमe
 		programming DTO modulo and DTO phase. These bits must be
 		programmed first, otherwise there will be no HDMI audio at boot
-		up. This is a HW sequence change (different from old ASICs).
+		up. This is a HW sequence change (dअगरferent from old ASICs).
 		Caution when changing this programming sequence.
 
 		HDMI enabled, using DTO0
-		program master CRTC for DTO0 */
+		program master CRTC क्रम DTO0 */
 		src_sel = pll_info->dto_source - DTO_SOURCE_ID0;
 		REG_UPDATE_2(DCCG_AUDIO_DTO_SOURCE,
 			DCCG_AUDIO_DTO0_SOURCE_SEL, src_sel,
@@ -823,63 +824,63 @@ void dce_aud_wall_dto_setup(
 
 		/* module */
 		REG_UPDATE(DCCG_AUDIO_DTO0_MODULE,
-			DCCG_AUDIO_DTO0_MODULE, clock_info.audio_dto_module);
+			DCCG_AUDIO_DTO0_MODULE, घड़ी_info.audio_dto_module);
 
 		/* phase */
 		REG_UPDATE(DCCG_AUDIO_DTO0_PHASE,
-			DCCG_AUDIO_DTO0_PHASE, clock_info.audio_dto_phase);
-	} else {
+			DCCG_AUDIO_DTO0_PHASE, घड़ी_info.audio_dto_phase);
+	पूर्ण अन्यथा अणु
 		/*DTO1 Programming goal:
 		-generate 24MHz, 512*Fs, 128*Fs from 24MHz
-		-default is to used DTO1, and switch to DTO0 when an audio
+		-शेष is to used DTO1, and चयन to DTO0 when an audio
 		master HDMI port is connected
-		-use as default for DP
+		-use as शेष क्रम DP
 
 		calculate DTO settings */
-		get_azalia_clock_info_dp(
-			crtc_info->requested_pixel_clock_100Hz,
+		get_azalia_घड़ी_info_dp(
+			crtc_info->requested_pixel_घड़ी_100Hz,
 			pll_info,
-			&clock_info);
+			&घड़ी_info);
 
-		/* Program DTO select before programming DTO modulo and DTO
-		phase. default to use DTO1 */
+		/* Program DTO select beक्रमe programming DTO modulo and DTO
+		phase. शेष to use DTO1 */
 
 		REG_UPDATE(DCCG_AUDIO_DTO_SOURCE,
 				DCCG_AUDIO_DTO_SEL, 1);
 
 			/* DCCG_AUDIO_DTO2_USE_512FBR_DTO, 1)
-			 * Select 512fs for DP TODO: web register definition
-			 * does not match register header file
+			 * Select 512fs क्रम DP TODO: web रेजिस्टर definition
+			 * करोes not match रेजिस्टर header file
 			 * DCE11 version it's commented out while DCE8 it's set to 1
 			*/
 
 		/* module */
 		REG_UPDATE(DCCG_AUDIO_DTO1_MODULE,
-				DCCG_AUDIO_DTO1_MODULE, clock_info.audio_dto_module);
+				DCCG_AUDIO_DTO1_MODULE, घड़ी_info.audio_dto_module);
 
 		/* phase */
 		REG_UPDATE(DCCG_AUDIO_DTO1_PHASE,
-				DCCG_AUDIO_DTO1_PHASE, clock_info.audio_dto_phase);
+				DCCG_AUDIO_DTO1_PHASE, घड़ी_info.audio_dto_phase);
 
 		REG_UPDATE(DCCG_AUDIO_DTO_SOURCE,
 				DCCG_AUDIO_DTO2_USE_512FBR_DTO, 1);
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_aud_wall_dto_setup(
-	struct audio *audio,
-	enum signal_type signal,
-	const struct audio_crtc_info *crtc_info,
-	const struct audio_pll_info *pll_info)
-{
-	struct dce_audio *aud = DCE_AUD(audio);
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_aud_wall_dto_setup(
+	काष्ठा audio *audio,
+	क्रमागत संकेत_type संकेत,
+	स्थिर काष्ठा audio_crtc_info *crtc_info,
+	स्थिर काष्ठा audio_pll_info *pll_info)
+अणु
+	काष्ठा dce_audio *aud = DCE_AUD(audio);
 
-	struct azalia_clock_info clock_info = { 0 };
+	काष्ठा azalia_घड़ी_info घड़ी_info = अणु 0 पूर्ण;
 
-	if (dc_is_hdmi_signal(signal)) {
-		uint32_t src_sel;
+	अगर (dc_is_hdmi_संकेत(संकेत)) अणु
+		uपूर्णांक32_t src_sel;
 
 		/*DTO0 Programming goal:
 		-generate 24MHz, 128*Fs from 24MHz
@@ -887,27 +888,27 @@ static void dce60_aud_wall_dto_setup(
 		(optionally a DP is connected) */
 
 		/* calculate DTO settings */
-		get_azalia_clock_info_hdmi(
-			crtc_info->requested_pixel_clock_100Hz,
-			crtc_info->calculated_pixel_clock_100Hz,
-			&clock_info);
+		get_azalia_घड़ी_info_hdmi(
+			crtc_info->requested_pixel_घड़ी_100Hz,
+			crtc_info->calculated_pixel_घड़ी_100Hz,
+			&घड़ी_info);
 
 		DC_LOG_HW_AUDIO("\n%s:Input::requested_pixel_clock_100Hz = %d"\
 				"calculated_pixel_clock_100Hz =%d\n"\
 				"audio_dto_module = %d audio_dto_phase =%d \n\n", __func__,\
-				crtc_info->requested_pixel_clock_100Hz,\
-				crtc_info->calculated_pixel_clock_100Hz,\
-				clock_info.audio_dto_module,\
-				clock_info.audio_dto_phase);
+				crtc_info->requested_pixel_घड़ी_100Hz,\
+				crtc_info->calculated_pixel_घड़ी_100Hz,\
+				घड़ी_info.audio_dto_module,\
+				घड़ी_info.audio_dto_phase);
 
-		/* On TN/SI, Program DTO source select and DTO select before
+		/* On TN/SI, Program DTO source select and DTO select beक्रमe
 		programming DTO modulo and DTO phase. These bits must be
 		programmed first, otherwise there will be no HDMI audio at boot
-		up. This is a HW sequence change (different from old ASICs).
+		up. This is a HW sequence change (dअगरferent from old ASICs).
 		Caution when changing this programming sequence.
 
 		HDMI enabled, using DTO0
-		program master CRTC for DTO0 */
+		program master CRTC क्रम DTO0 */
 		src_sel = pll_info->dto_source - DTO_SOURCE_ID0;
 		REG_UPDATE_2(DCCG_AUDIO_DTO_SOURCE,
 			DCCG_AUDIO_DTO0_SOURCE_SEL, src_sel,
@@ -915,54 +916,54 @@ static void dce60_aud_wall_dto_setup(
 
 		/* module */
 		REG_UPDATE(DCCG_AUDIO_DTO0_MODULE,
-			DCCG_AUDIO_DTO0_MODULE, clock_info.audio_dto_module);
+			DCCG_AUDIO_DTO0_MODULE, घड़ी_info.audio_dto_module);
 
 		/* phase */
 		REG_UPDATE(DCCG_AUDIO_DTO0_PHASE,
-			DCCG_AUDIO_DTO0_PHASE, clock_info.audio_dto_phase);
-	} else {
+			DCCG_AUDIO_DTO0_PHASE, घड़ी_info.audio_dto_phase);
+	पूर्ण अन्यथा अणु
 		/*DTO1 Programming goal:
-		-generate 24MHz, 128*Fs from 24MHz (DCE6 does not support 512*Fs)
-		-default is to used DTO1, and switch to DTO0 when an audio
+		-generate 24MHz, 128*Fs from 24MHz (DCE6 करोes not support 512*Fs)
+		-शेष is to used DTO1, and चयन to DTO0 when an audio
 		master HDMI port is connected
-		-use as default for DP
+		-use as शेष क्रम DP
 
 		calculate DTO settings */
-		get_azalia_clock_info_dp(
-			crtc_info->requested_pixel_clock_100Hz,
+		get_azalia_घड़ी_info_dp(
+			crtc_info->requested_pixel_घड़ी_100Hz,
 			pll_info,
-			&clock_info);
+			&घड़ी_info);
 
-		/* Program DTO select before programming DTO modulo and DTO
-		phase. default to use DTO1 */
+		/* Program DTO select beक्रमe programming DTO modulo and DTO
+		phase. शेष to use DTO1 */
 
 		REG_UPDATE(DCCG_AUDIO_DTO_SOURCE,
 				DCCG_AUDIO_DTO_SEL, 1);
 
 			/* DCCG_AUDIO_DTO2_USE_512FBR_DTO, 1)
-			 * Cannot select 512fs for DP
+			 * Cannot select 512fs क्रम DP
 			 *
 			 * DCE6 has no DCCG_AUDIO_DTO2_USE_512FBR_DTO mask
 			*/
 
 		/* module */
 		REG_UPDATE(DCCG_AUDIO_DTO1_MODULE,
-				DCCG_AUDIO_DTO1_MODULE, clock_info.audio_dto_module);
+				DCCG_AUDIO_DTO1_MODULE, घड़ी_info.audio_dto_module);
 
 		/* phase */
 		REG_UPDATE(DCCG_AUDIO_DTO1_PHASE,
-				DCCG_AUDIO_DTO1_PHASE, clock_info.audio_dto_phase);
+				DCCG_AUDIO_DTO1_PHASE, घड़ी_info.audio_dto_phase);
 
 		/* DCE6 has no DCCG_AUDIO_DTO2_USE_512FBR_DTO mask in DCCG_AUDIO_DTO_SOURCE reg */
 
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static bool dce_aud_endpoint_valid(struct audio *audio)
-{
-	uint32_t value;
-	uint32_t port_connectivity;
+अटल bool dce_aud_endpoपूर्णांक_valid(काष्ठा audio *audio)
+अणु
+	uपूर्णांक32_t value;
+	uपूर्णांक32_t port_connectivity;
 
 	value = AZ_REG_READ(
 			AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_CONFIGURATION_DEFAULT);
@@ -971,26 +972,26 @@ static bool dce_aud_endpoint_valid(struct audio *audio)
 			AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_CONFIGURATION_DEFAULT,
 			PORT_CONNECTIVITY);
 
-	return !(port_connectivity == 1);
-}
+	वापस !(port_connectivity == 1);
+पूर्ण
 
 /* initialize HW state */
-void dce_aud_hw_init(
-		struct audio *audio)
-{
-	uint32_t value;
-	struct dce_audio *aud = DCE_AUD(audio);
+व्योम dce_aud_hw_init(
+		काष्ठा audio *audio)
+अणु
+	uपूर्णांक32_t value;
+	काष्ठा dce_audio *aud = DCE_AUD(audio);
 
-	/* we only need to program the following registers once, so we only do
-	it for the inst 0*/
-	if (audio->inst != 0)
-		return;
+	/* we only need to program the following रेजिस्टरs once, so we only करो
+	it क्रम the inst 0*/
+	अगर (audio->inst != 0)
+		वापस;
 
 	/* Suport R5 - 32khz
 	 * Suport R6 - 44.1khz
 	 * Suport R7 - 48khz
 	 */
-	/*disable clock gating before write to endpoint register*/
+	/*disable घड़ी gating beक्रमe ग_लिखो to endpoपूर्णांक रेजिस्टर*/
 	value = AZ_REG_READ(AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL);
 	set_reg_field_value(value, 1,
 			AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL,
@@ -999,7 +1000,7 @@ void dce_aud_hw_init(
 	REG_UPDATE(AZALIA_F0_CODEC_FUNCTION_PARAMETER_SUPPORTED_SIZE_RATES,
 			AUDIO_RATE_CAPABILITIES, 0x70);
 
-	/*Keep alive bit to verify HW block in BU. */
+	/*Keep alive bit to verअगरy HW block in BU. */
 	REG_UPDATE_2(AZALIA_F0_CODEC_FUNCTION_PARAMETER_POWER_STATES,
 			CLKSTOP, 1,
 			EPSS, 1);
@@ -1007,86 +1008,86 @@ void dce_aud_hw_init(
 			AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL,
 			CLOCK_GATING_DISABLE);
 	AZ_REG_WRITE(AZALIA_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL, value);
-}
+पूर्ण
 
-static const struct audio_funcs funcs = {
-	.endpoint_valid = dce_aud_endpoint_valid,
+अटल स्थिर काष्ठा audio_funcs funcs = अणु
+	.endpoपूर्णांक_valid = dce_aud_endpoपूर्णांक_valid,
 	.hw_init = dce_aud_hw_init,
 	.wall_dto_setup = dce_aud_wall_dto_setup,
 	.az_enable = dce_aud_az_enable,
 	.az_disable = dce_aud_az_disable,
 	.az_configure = dce_aud_az_configure,
 	.destroy = dce_aud_destroy,
-};
+पूर्ण;
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static const struct audio_funcs dce60_funcs = {
-	.endpoint_valid = dce_aud_endpoint_valid,
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल स्थिर काष्ठा audio_funcs dce60_funcs = अणु
+	.endpoपूर्णांक_valid = dce_aud_endpoपूर्णांक_valid,
 	.hw_init = dce_aud_hw_init,
 	.wall_dto_setup = dce60_aud_wall_dto_setup,
 	.az_enable = dce_aud_az_enable,
 	.az_disable = dce_aud_az_disable,
 	.az_configure = dce_aud_az_configure,
 	.destroy = dce_aud_destroy,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-void dce_aud_destroy(struct audio **audio)
-{
-	struct dce_audio *aud = DCE_AUD(*audio);
+व्योम dce_aud_destroy(काष्ठा audio **audio)
+अणु
+	काष्ठा dce_audio *aud = DCE_AUD(*audio);
 
-	kfree(aud);
-	*audio = NULL;
-}
+	kमुक्त(aud);
+	*audio = शून्य;
+पूर्ण
 
-struct audio *dce_audio_create(
-		struct dc_context *ctx,
-		unsigned int inst,
-		const struct dce_audio_registers *reg,
-		const struct dce_audio_shift *shifts,
-		const struct dce_audio_mask *masks
+काष्ठा audio *dce_audio_create(
+		काष्ठा dc_context *ctx,
+		अचिन्हित पूर्णांक inst,
+		स्थिर काष्ठा dce_audio_रेजिस्टरs *reg,
+		स्थिर काष्ठा dce_audio_shअगरt *shअगरts,
+		स्थिर काष्ठा dce_audio_mask *masks
 		)
-{
-	struct dce_audio *audio = kzalloc(sizeof(*audio), GFP_KERNEL);
+अणु
+	काष्ठा dce_audio *audio = kzalloc(माप(*audio), GFP_KERNEL);
 
-	if (audio == NULL) {
+	अगर (audio == शून्य) अणु
 		ASSERT_CRITICAL(audio);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	audio->base.ctx = ctx;
 	audio->base.inst = inst;
 	audio->base.funcs = &funcs;
 
 	audio->regs = reg;
-	audio->shifts = shifts;
+	audio->shअगरts = shअगरts;
 	audio->masks = masks;
-	return &audio->base;
-}
+	वापस &audio->base;
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-struct audio *dce60_audio_create(
-		struct dc_context *ctx,
-		unsigned int inst,
-		const struct dce_audio_registers *reg,
-		const struct dce_audio_shift *shifts,
-		const struct dce_audio_mask *masks
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+काष्ठा audio *dce60_audio_create(
+		काष्ठा dc_context *ctx,
+		अचिन्हित पूर्णांक inst,
+		स्थिर काष्ठा dce_audio_रेजिस्टरs *reg,
+		स्थिर काष्ठा dce_audio_shअगरt *shअगरts,
+		स्थिर काष्ठा dce_audio_mask *masks
 		)
-{
-	struct dce_audio *audio = kzalloc(sizeof(*audio), GFP_KERNEL);
+अणु
+	काष्ठा dce_audio *audio = kzalloc(माप(*audio), GFP_KERNEL);
 
-	if (audio == NULL) {
+	अगर (audio == शून्य) अणु
 		ASSERT_CRITICAL(audio);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	audio->base.ctx = ctx;
 	audio->base.inst = inst;
 	audio->base.funcs = &dce60_funcs;
 
 	audio->regs = reg;
-	audio->shifts = shifts;
+	audio->shअगरts = shअगरts;
 	audio->masks = masks;
-	return &audio->base;
-}
-#endif
+	वापस &audio->base;
+पूर्ण
+#पूर्ण_अगर

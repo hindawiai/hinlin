@@ -1,297 +1,298 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2014 Facebook.  All rights reserved.
  */
 
-#include <linux/sched.h>
-#include <linux/stacktrace.h>
-#include "ctree.h"
-#include "disk-io.h"
-#include "locking.h"
-#include "delayed-ref.h"
-#include "ref-verify.h"
+#समावेश <linux/sched.h>
+#समावेश <linux/stacktrace.h>
+#समावेश "ctree.h"
+#समावेश "disk-io.h"
+#समावेश "locking.h"
+#समावेश "delayed-ref.h"
+#समावेश "ref-verify.h"
 
 /*
- * Used to keep track the roots and number of refs each root has for a given
+ * Used to keep track the roots and number of refs each root has क्रम a given
  * bytenr.  This just tracks the number of direct references, no shared
  * references.
  */
-struct root_entry {
+काष्ठा root_entry अणु
 	u64 root_objectid;
 	u64 num_refs;
-	struct rb_node node;
-};
+	काष्ठा rb_node node;
+पूर्ण;
 
 /*
  * These are meant to represent what should exist in the extent tree, these can
- * be used to verify the extent tree is consistent as these should all match
+ * be used to verअगरy the extent tree is consistent as these should all match
  * what the extent tree says.
  */
-struct ref_entry {
+काष्ठा ref_entry अणु
 	u64 root_objectid;
 	u64 parent;
 	u64 owner;
 	u64 offset;
 	u64 num_refs;
-	struct rb_node node;
-};
+	काष्ठा rb_node node;
+पूर्ण;
 
-#define MAX_TRACE	16
+#घोषणा MAX_TRACE	16
 
 /*
- * Whenever we add/remove a reference we record the action.  The action maps
+ * Whenever we add/हटाओ a reference we record the action.  The action maps
  * back to the delayed ref action.  We hold the ref we are changing in the
- * action so we can account for the history properly, and we record the root we
- * were called with since it could be different from ref_root.  We also store
+ * action so we can account क्रम the history properly, and we record the root we
+ * were called with since it could be dअगरferent from ref_root.  We also store
  * stack traces because that's how I roll.
  */
-struct ref_action {
-	int action;
+काष्ठा ref_action अणु
+	पूर्णांक action;
 	u64 root;
-	struct ref_entry ref;
-	struct list_head list;
-	unsigned long trace[MAX_TRACE];
-	unsigned int trace_len;
-};
+	काष्ठा ref_entry ref;
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ trace[MAX_TRACE];
+	अचिन्हित पूर्णांक trace_len;
+पूर्ण;
 
 /*
- * One of these for every block we reference, it holds the roots and references
+ * One of these क्रम every block we reference, it holds the roots and references
  * to it as well as all of the ref actions that have occurred to it.  We never
- * free it until we unmount the file system in order to make sure re-allocations
+ * मुक्त it until we unmount the file प्रणाली in order to make sure re-allocations
  * are happening properly.
  */
-struct block_entry {
+काष्ठा block_entry अणु
 	u64 bytenr;
 	u64 len;
 	u64 num_refs;
-	int metadata;
-	int from_disk;
-	struct rb_root roots;
-	struct rb_root refs;
-	struct rb_node node;
-	struct list_head actions;
-};
+	पूर्णांक metadata;
+	पूर्णांक from_disk;
+	काष्ठा rb_root roots;
+	काष्ठा rb_root refs;
+	काष्ठा rb_node node;
+	काष्ठा list_head actions;
+पूर्ण;
 
-static struct block_entry *insert_block_entry(struct rb_root *root,
-					      struct block_entry *be)
-{
-	struct rb_node **p = &root->rb_node;
-	struct rb_node *parent_node = NULL;
-	struct block_entry *entry;
+अटल काष्ठा block_entry *insert_block_entry(काष्ठा rb_root *root,
+					      काष्ठा block_entry *be)
+अणु
+	काष्ठा rb_node **p = &root->rb_node;
+	काष्ठा rb_node *parent_node = शून्य;
+	काष्ठा block_entry *entry;
 
-	while (*p) {
+	जबतक (*p) अणु
 		parent_node = *p;
-		entry = rb_entry(parent_node, struct block_entry, node);
-		if (entry->bytenr > be->bytenr)
+		entry = rb_entry(parent_node, काष्ठा block_entry, node);
+		अगर (entry->bytenr > be->bytenr)
 			p = &(*p)->rb_left;
-		else if (entry->bytenr < be->bytenr)
+		अन्यथा अगर (entry->bytenr < be->bytenr)
 			p = &(*p)->rb_right;
-		else
-			return entry;
-	}
+		अन्यथा
+			वापस entry;
+	पूर्ण
 
 	rb_link_node(&be->node, parent_node, p);
 	rb_insert_color(&be->node, root);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct block_entry *lookup_block_entry(struct rb_root *root, u64 bytenr)
-{
-	struct rb_node *n;
-	struct block_entry *entry = NULL;
+अटल काष्ठा block_entry *lookup_block_entry(काष्ठा rb_root *root, u64 bytenr)
+अणु
+	काष्ठा rb_node *n;
+	काष्ठा block_entry *entry = शून्य;
 
 	n = root->rb_node;
-	while (n) {
-		entry = rb_entry(n, struct block_entry, node);
-		if (entry->bytenr < bytenr)
+	जबतक (n) अणु
+		entry = rb_entry(n, काष्ठा block_entry, node);
+		अगर (entry->bytenr < bytenr)
 			n = n->rb_right;
-		else if (entry->bytenr > bytenr)
+		अन्यथा अगर (entry->bytenr > bytenr)
 			n = n->rb_left;
-		else
-			return entry;
-	}
-	return NULL;
-}
+		अन्यथा
+			वापस entry;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct root_entry *insert_root_entry(struct rb_root *root,
-					    struct root_entry *re)
-{
-	struct rb_node **p = &root->rb_node;
-	struct rb_node *parent_node = NULL;
-	struct root_entry *entry;
+अटल काष्ठा root_entry *insert_root_entry(काष्ठा rb_root *root,
+					    काष्ठा root_entry *re)
+अणु
+	काष्ठा rb_node **p = &root->rb_node;
+	काष्ठा rb_node *parent_node = शून्य;
+	काष्ठा root_entry *entry;
 
-	while (*p) {
+	जबतक (*p) अणु
 		parent_node = *p;
-		entry = rb_entry(parent_node, struct root_entry, node);
-		if (entry->root_objectid > re->root_objectid)
+		entry = rb_entry(parent_node, काष्ठा root_entry, node);
+		अगर (entry->root_objectid > re->root_objectid)
 			p = &(*p)->rb_left;
-		else if (entry->root_objectid < re->root_objectid)
+		अन्यथा अगर (entry->root_objectid < re->root_objectid)
 			p = &(*p)->rb_right;
-		else
-			return entry;
-	}
+		अन्यथा
+			वापस entry;
+	पूर्ण
 
 	rb_link_node(&re->node, parent_node, p);
 	rb_insert_color(&re->node, root);
-	return NULL;
+	वापस शून्य;
 
-}
+पूर्ण
 
-static int comp_refs(struct ref_entry *ref1, struct ref_entry *ref2)
-{
-	if (ref1->root_objectid < ref2->root_objectid)
-		return -1;
-	if (ref1->root_objectid > ref2->root_objectid)
-		return 1;
-	if (ref1->parent < ref2->parent)
-		return -1;
-	if (ref1->parent > ref2->parent)
-		return 1;
-	if (ref1->owner < ref2->owner)
-		return -1;
-	if (ref1->owner > ref2->owner)
-		return 1;
-	if (ref1->offset < ref2->offset)
-		return -1;
-	if (ref1->offset > ref2->offset)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक comp_refs(काष्ठा ref_entry *ref1, काष्ठा ref_entry *ref2)
+अणु
+	अगर (ref1->root_objectid < ref2->root_objectid)
+		वापस -1;
+	अगर (ref1->root_objectid > ref2->root_objectid)
+		वापस 1;
+	अगर (ref1->parent < ref2->parent)
+		वापस -1;
+	अगर (ref1->parent > ref2->parent)
+		वापस 1;
+	अगर (ref1->owner < ref2->owner)
+		वापस -1;
+	अगर (ref1->owner > ref2->owner)
+		वापस 1;
+	अगर (ref1->offset < ref2->offset)
+		वापस -1;
+	अगर (ref1->offset > ref2->offset)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static struct ref_entry *insert_ref_entry(struct rb_root *root,
-					  struct ref_entry *ref)
-{
-	struct rb_node **p = &root->rb_node;
-	struct rb_node *parent_node = NULL;
-	struct ref_entry *entry;
-	int cmp;
+अटल काष्ठा ref_entry *insert_ref_entry(काष्ठा rb_root *root,
+					  काष्ठा ref_entry *ref)
+अणु
+	काष्ठा rb_node **p = &root->rb_node;
+	काष्ठा rb_node *parent_node = शून्य;
+	काष्ठा ref_entry *entry;
+	पूर्णांक cmp;
 
-	while (*p) {
+	जबतक (*p) अणु
 		parent_node = *p;
-		entry = rb_entry(parent_node, struct ref_entry, node);
+		entry = rb_entry(parent_node, काष्ठा ref_entry, node);
 		cmp = comp_refs(entry, ref);
-		if (cmp > 0)
+		अगर (cmp > 0)
 			p = &(*p)->rb_left;
-		else if (cmp < 0)
+		अन्यथा अगर (cmp < 0)
 			p = &(*p)->rb_right;
-		else
-			return entry;
-	}
+		अन्यथा
+			वापस entry;
+	पूर्ण
 
 	rb_link_node(&ref->node, parent_node, p);
 	rb_insert_color(&ref->node, root);
-	return NULL;
+	वापस शून्य;
 
-}
+पूर्ण
 
-static struct root_entry *lookup_root_entry(struct rb_root *root, u64 objectid)
-{
-	struct rb_node *n;
-	struct root_entry *entry = NULL;
+अटल काष्ठा root_entry *lookup_root_entry(काष्ठा rb_root *root, u64 objectid)
+अणु
+	काष्ठा rb_node *n;
+	काष्ठा root_entry *entry = शून्य;
 
 	n = root->rb_node;
-	while (n) {
-		entry = rb_entry(n, struct root_entry, node);
-		if (entry->root_objectid < objectid)
+	जबतक (n) अणु
+		entry = rb_entry(n, काष्ठा root_entry, node);
+		अगर (entry->root_objectid < objectid)
 			n = n->rb_right;
-		else if (entry->root_objectid > objectid)
+		अन्यथा अगर (entry->root_objectid > objectid)
 			n = n->rb_left;
-		else
-			return entry;
-	}
-	return NULL;
-}
+		अन्यथा
+			वापस entry;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-#ifdef CONFIG_STACKTRACE
-static void __save_stack_trace(struct ref_action *ra)
-{
+#अगर_घोषित CONFIG_STACKTRACE
+अटल व्योम __save_stack_trace(काष्ठा ref_action *ra)
+अणु
 	ra->trace_len = stack_trace_save(ra->trace, MAX_TRACE, 2);
-}
+पूर्ण
 
-static void __print_stack_trace(struct btrfs_fs_info *fs_info,
-				struct ref_action *ra)
-{
-	if (ra->trace_len == 0) {
+अटल व्योम __prपूर्णांक_stack_trace(काष्ठा btrfs_fs_info *fs_info,
+				काष्ठा ref_action *ra)
+अणु
+	अगर (ra->trace_len == 0) अणु
 		btrfs_err(fs_info, "  ref-verify: no stacktrace");
-		return;
-	}
-	stack_trace_print(ra->trace, ra->trace_len, 2);
-}
-#else
-static inline void __save_stack_trace(struct ref_action *ra)
-{
-}
+		वापस;
+	पूर्ण
+	stack_trace_prपूर्णांक(ra->trace, ra->trace_len, 2);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम __save_stack_trace(काष्ठा ref_action *ra)
+अणु
+पूर्ण
 
-static inline void __print_stack_trace(struct btrfs_fs_info *fs_info,
-				       struct ref_action *ra)
-{
+अटल अंतरभूत व्योम __prपूर्णांक_stack_trace(काष्ठा btrfs_fs_info *fs_info,
+				       काष्ठा ref_action *ra)
+अणु
 	btrfs_err(fs_info, "  ref-verify: no stacktrace support");
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void free_block_entry(struct block_entry *be)
-{
-	struct root_entry *re;
-	struct ref_entry *ref;
-	struct ref_action *ra;
-	struct rb_node *n;
+अटल व्योम मुक्त_block_entry(काष्ठा block_entry *be)
+अणु
+	काष्ठा root_entry *re;
+	काष्ठा ref_entry *ref;
+	काष्ठा ref_action *ra;
+	काष्ठा rb_node *n;
 
-	while ((n = rb_first(&be->roots))) {
-		re = rb_entry(n, struct root_entry, node);
+	जबतक ((n = rb_first(&be->roots))) अणु
+		re = rb_entry(n, काष्ठा root_entry, node);
 		rb_erase(&re->node, &be->roots);
-		kfree(re);
-	}
+		kमुक्त(re);
+	पूर्ण
 
-	while((n = rb_first(&be->refs))) {
-		ref = rb_entry(n, struct ref_entry, node);
+	जबतक((n = rb_first(&be->refs))) अणु
+		ref = rb_entry(n, काष्ठा ref_entry, node);
 		rb_erase(&ref->node, &be->refs);
-		kfree(ref);
-	}
+		kमुक्त(ref);
+	पूर्ण
 
-	while (!list_empty(&be->actions)) {
-		ra = list_first_entry(&be->actions, struct ref_action,
+	जबतक (!list_empty(&be->actions)) अणु
+		ra = list_first_entry(&be->actions, काष्ठा ref_action,
 				      list);
 		list_del(&ra->list);
-		kfree(ra);
-	}
-	kfree(be);
-}
+		kमुक्त(ra);
+	पूर्ण
+	kमुक्त(be);
+पूर्ण
 
-static struct block_entry *add_block_entry(struct btrfs_fs_info *fs_info,
+अटल काष्ठा block_entry *add_block_entry(काष्ठा btrfs_fs_info *fs_info,
 					   u64 bytenr, u64 len,
 					   u64 root_objectid)
-{
-	struct block_entry *be = NULL, *exist;
-	struct root_entry *re = NULL;
+अणु
+	काष्ठा block_entry *be = शून्य, *exist;
+	काष्ठा root_entry *re = शून्य;
 
-	re = kzalloc(sizeof(struct root_entry), GFP_KERNEL);
-	be = kzalloc(sizeof(struct block_entry), GFP_KERNEL);
-	if (!be || !re) {
-		kfree(re);
-		kfree(be);
-		return ERR_PTR(-ENOMEM);
-	}
+	re = kzalloc(माप(काष्ठा root_entry), GFP_KERNEL);
+	be = kzalloc(माप(काष्ठा block_entry), GFP_KERNEL);
+	अगर (!be || !re) अणु
+		kमुक्त(re);
+		kमुक्त(be);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	be->bytenr = bytenr;
 	be->len = len;
 
 	re->root_objectid = root_objectid;
 	re->num_refs = 0;
 
-	spin_lock(&fs_info->ref_verify_lock);
+	spin_lock(&fs_info->ref_verअगरy_lock);
 	exist = insert_block_entry(&fs_info->block_tree, be);
-	if (exist) {
-		if (root_objectid) {
-			struct root_entry *exist_re;
+	अगर (exist) अणु
+		अगर (root_objectid) अणु
+			काष्ठा root_entry *exist_re;
 
 			exist_re = insert_root_entry(&exist->roots, re);
-			if (exist_re)
-				kfree(re);
-		} else {
-			kfree(re);
-		}
-		kfree(be);
-		return exist;
-	}
+			अगर (exist_re)
+				kमुक्त(re);
+		पूर्ण अन्यथा अणु
+			kमुक्त(re);
+		पूर्ण
+		kमुक्त(be);
+		वापस exist;
+	पूर्ण
 
 	be->num_refs = 0;
 	be->metadata = 0;
@@ -299,27 +300,27 @@ static struct block_entry *add_block_entry(struct btrfs_fs_info *fs_info,
 	be->roots = RB_ROOT;
 	be->refs = RB_ROOT;
 	INIT_LIST_HEAD(&be->actions);
-	if (root_objectid)
+	अगर (root_objectid)
 		insert_root_entry(&be->roots, re);
-	else
-		kfree(re);
-	return be;
-}
+	अन्यथा
+		kमुक्त(re);
+	वापस be;
+पूर्ण
 
-static int add_tree_block(struct btrfs_fs_info *fs_info, u64 ref_root,
-			  u64 parent, u64 bytenr, int level)
-{
-	struct block_entry *be;
-	struct root_entry *re;
-	struct ref_entry *ref = NULL, *exist;
+अटल पूर्णांक add_tree_block(काष्ठा btrfs_fs_info *fs_info, u64 ref_root,
+			  u64 parent, u64 bytenr, पूर्णांक level)
+अणु
+	काष्ठा block_entry *be;
+	काष्ठा root_entry *re;
+	काष्ठा ref_entry *ref = शून्य, *exist;
 
-	ref = kmalloc(sizeof(struct ref_entry), GFP_KERNEL);
-	if (!ref)
-		return -ENOMEM;
+	ref = kदो_स्मृति(माप(काष्ठा ref_entry), GFP_KERNEL);
+	अगर (!ref)
+		वापस -ENOMEM;
 
-	if (parent)
+	अगर (parent)
 		ref->root_objectid = 0;
-	else
+	अन्यथा
 		ref->root_objectid = ref_root;
 	ref->parent = parent;
 	ref->owner = level;
@@ -327,80 +328,80 @@ static int add_tree_block(struct btrfs_fs_info *fs_info, u64 ref_root,
 	ref->num_refs = 1;
 
 	be = add_block_entry(fs_info, bytenr, fs_info->nodesize, ref_root);
-	if (IS_ERR(be)) {
-		kfree(ref);
-		return PTR_ERR(be);
-	}
+	अगर (IS_ERR(be)) अणु
+		kमुक्त(ref);
+		वापस PTR_ERR(be);
+	पूर्ण
 	be->num_refs++;
 	be->from_disk = 1;
 	be->metadata = 1;
 
-	if (!parent) {
+	अगर (!parent) अणु
 		ASSERT(ref_root);
 		re = lookup_root_entry(&be->roots, ref_root);
 		ASSERT(re);
 		re->num_refs++;
-	}
+	पूर्ण
 	exist = insert_ref_entry(&be->refs, ref);
-	if (exist) {
+	अगर (exist) अणु
 		exist->num_refs++;
-		kfree(ref);
-	}
-	spin_unlock(&fs_info->ref_verify_lock);
+		kमुक्त(ref);
+	पूर्ण
+	spin_unlock(&fs_info->ref_verअगरy_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int add_shared_data_ref(struct btrfs_fs_info *fs_info,
+अटल पूर्णांक add_shared_data_ref(काष्ठा btrfs_fs_info *fs_info,
 			       u64 parent, u32 num_refs, u64 bytenr,
 			       u64 num_bytes)
-{
-	struct block_entry *be;
-	struct ref_entry *ref;
+अणु
+	काष्ठा block_entry *be;
+	काष्ठा ref_entry *ref;
 
-	ref = kzalloc(sizeof(struct ref_entry), GFP_KERNEL);
-	if (!ref)
-		return -ENOMEM;
+	ref = kzalloc(माप(काष्ठा ref_entry), GFP_KERNEL);
+	अगर (!ref)
+		वापस -ENOMEM;
 	be = add_block_entry(fs_info, bytenr, num_bytes, 0);
-	if (IS_ERR(be)) {
-		kfree(ref);
-		return PTR_ERR(be);
-	}
+	अगर (IS_ERR(be)) अणु
+		kमुक्त(ref);
+		वापस PTR_ERR(be);
+	पूर्ण
 	be->num_refs += num_refs;
 
 	ref->parent = parent;
 	ref->num_refs = num_refs;
-	if (insert_ref_entry(&be->refs, ref)) {
-		spin_unlock(&fs_info->ref_verify_lock);
+	अगर (insert_ref_entry(&be->refs, ref)) अणु
+		spin_unlock(&fs_info->ref_verअगरy_lock);
 		btrfs_err(fs_info, "existing shared ref when reading from disk?");
-		kfree(ref);
-		return -EINVAL;
-	}
-	spin_unlock(&fs_info->ref_verify_lock);
-	return 0;
-}
+		kमुक्त(ref);
+		वापस -EINVAL;
+	पूर्ण
+	spin_unlock(&fs_info->ref_verअगरy_lock);
+	वापस 0;
+पूर्ण
 
-static int add_extent_data_ref(struct btrfs_fs_info *fs_info,
-			       struct extent_buffer *leaf,
-			       struct btrfs_extent_data_ref *dref,
+अटल पूर्णांक add_extent_data_ref(काष्ठा btrfs_fs_info *fs_info,
+			       काष्ठा extent_buffer *leaf,
+			       काष्ठा btrfs_extent_data_ref *dref,
 			       u64 bytenr, u64 num_bytes)
-{
-	struct block_entry *be;
-	struct ref_entry *ref;
-	struct root_entry *re;
+अणु
+	काष्ठा block_entry *be;
+	काष्ठा ref_entry *ref;
+	काष्ठा root_entry *re;
 	u64 ref_root = btrfs_extent_data_ref_root(leaf, dref);
 	u64 owner = btrfs_extent_data_ref_objectid(leaf, dref);
 	u64 offset = btrfs_extent_data_ref_offset(leaf, dref);
 	u32 num_refs = btrfs_extent_data_ref_count(leaf, dref);
 
-	ref = kzalloc(sizeof(struct ref_entry), GFP_KERNEL);
-	if (!ref)
-		return -ENOMEM;
+	ref = kzalloc(माप(काष्ठा ref_entry), GFP_KERNEL);
+	अगर (!ref)
+		वापस -ENOMEM;
 	be = add_block_entry(fs_info, bytenr, num_bytes, ref_root);
-	if (IS_ERR(be)) {
-		kfree(ref);
-		return PTR_ERR(be);
-	}
+	अगर (IS_ERR(be)) अणु
+		kमुक्त(ref);
+		वापस PTR_ERR(be);
+	पूर्ण
 	be->num_refs += num_refs;
 
 	ref->parent = 0;
@@ -408,263 +409,263 @@ static int add_extent_data_ref(struct btrfs_fs_info *fs_info,
 	ref->root_objectid = ref_root;
 	ref->offset = offset;
 	ref->num_refs = num_refs;
-	if (insert_ref_entry(&be->refs, ref)) {
-		spin_unlock(&fs_info->ref_verify_lock);
+	अगर (insert_ref_entry(&be->refs, ref)) अणु
+		spin_unlock(&fs_info->ref_verअगरy_lock);
 		btrfs_err(fs_info, "existing ref when reading from disk?");
-		kfree(ref);
-		return -EINVAL;
-	}
+		kमुक्त(ref);
+		वापस -EINVAL;
+	पूर्ण
 
 	re = lookup_root_entry(&be->roots, ref_root);
-	if (!re) {
-		spin_unlock(&fs_info->ref_verify_lock);
+	अगर (!re) अणु
+		spin_unlock(&fs_info->ref_verअगरy_lock);
 		btrfs_err(fs_info, "missing root in new block entry?");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	re->num_refs += num_refs;
-	spin_unlock(&fs_info->ref_verify_lock);
-	return 0;
-}
+	spin_unlock(&fs_info->ref_verअगरy_lock);
+	वापस 0;
+पूर्ण
 
-static int process_extent_item(struct btrfs_fs_info *fs_info,
-			       struct btrfs_path *path, struct btrfs_key *key,
-			       int slot, int *tree_block_level)
-{
-	struct btrfs_extent_item *ei;
-	struct btrfs_extent_inline_ref *iref;
-	struct btrfs_extent_data_ref *dref;
-	struct btrfs_shared_data_ref *sref;
-	struct extent_buffer *leaf = path->nodes[0];
+अटल पूर्णांक process_extent_item(काष्ठा btrfs_fs_info *fs_info,
+			       काष्ठा btrfs_path *path, काष्ठा btrfs_key *key,
+			       पूर्णांक slot, पूर्णांक *tree_block_level)
+अणु
+	काष्ठा btrfs_extent_item *ei;
+	काष्ठा btrfs_extent_अंतरभूत_ref *iref;
+	काष्ठा btrfs_extent_data_ref *dref;
+	काष्ठा btrfs_shared_data_ref *sref;
+	काष्ठा extent_buffer *leaf = path->nodes[0];
 	u32 item_size = btrfs_item_size_nr(leaf, slot);
-	unsigned long end, ptr;
+	अचिन्हित दीर्घ end, ptr;
 	u64 offset, flags, count;
-	int type, ret;
+	पूर्णांक type, ret;
 
-	ei = btrfs_item_ptr(leaf, slot, struct btrfs_extent_item);
+	ei = btrfs_item_ptr(leaf, slot, काष्ठा btrfs_extent_item);
 	flags = btrfs_extent_flags(leaf, ei);
 
-	if ((key->type == BTRFS_EXTENT_ITEM_KEY) &&
-	    flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) {
-		struct btrfs_tree_block_info *info;
+	अगर ((key->type == BTRFS_EXTENT_ITEM_KEY) &&
+	    flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) अणु
+		काष्ठा btrfs_tree_block_info *info;
 
-		info = (struct btrfs_tree_block_info *)(ei + 1);
+		info = (काष्ठा btrfs_tree_block_info *)(ei + 1);
 		*tree_block_level = btrfs_tree_block_level(leaf, info);
-		iref = (struct btrfs_extent_inline_ref *)(info + 1);
-	} else {
-		if (key->type == BTRFS_METADATA_ITEM_KEY)
+		iref = (काष्ठा btrfs_extent_अंतरभूत_ref *)(info + 1);
+	पूर्ण अन्यथा अणु
+		अगर (key->type == BTRFS_METADATA_ITEM_KEY)
 			*tree_block_level = key->offset;
-		iref = (struct btrfs_extent_inline_ref *)(ei + 1);
-	}
+		iref = (काष्ठा btrfs_extent_अंतरभूत_ref *)(ei + 1);
+	पूर्ण
 
-	ptr = (unsigned long)iref;
-	end = (unsigned long)ei + item_size;
-	while (ptr < end) {
-		iref = (struct btrfs_extent_inline_ref *)ptr;
-		type = btrfs_extent_inline_ref_type(leaf, iref);
-		offset = btrfs_extent_inline_ref_offset(leaf, iref);
-		switch (type) {
-		case BTRFS_TREE_BLOCK_REF_KEY:
+	ptr = (अचिन्हित दीर्घ)iref;
+	end = (अचिन्हित दीर्घ)ei + item_size;
+	जबतक (ptr < end) अणु
+		iref = (काष्ठा btrfs_extent_अंतरभूत_ref *)ptr;
+		type = btrfs_extent_अंतरभूत_ref_type(leaf, iref);
+		offset = btrfs_extent_अंतरभूत_ref_offset(leaf, iref);
+		चयन (type) अणु
+		हाल BTRFS_TREE_BLOCK_REF_KEY:
 			ret = add_tree_block(fs_info, offset, 0, key->objectid,
 					     *tree_block_level);
-			break;
-		case BTRFS_SHARED_BLOCK_REF_KEY:
+			अवरोध;
+		हाल BTRFS_SHARED_BLOCK_REF_KEY:
 			ret = add_tree_block(fs_info, 0, offset, key->objectid,
 					     *tree_block_level);
-			break;
-		case BTRFS_EXTENT_DATA_REF_KEY:
-			dref = (struct btrfs_extent_data_ref *)(&iref->offset);
+			अवरोध;
+		हाल BTRFS_EXTENT_DATA_REF_KEY:
+			dref = (काष्ठा btrfs_extent_data_ref *)(&iref->offset);
 			ret = add_extent_data_ref(fs_info, leaf, dref,
 						  key->objectid, key->offset);
-			break;
-		case BTRFS_SHARED_DATA_REF_KEY:
-			sref = (struct btrfs_shared_data_ref *)(iref + 1);
+			अवरोध;
+		हाल BTRFS_SHARED_DATA_REF_KEY:
+			sref = (काष्ठा btrfs_shared_data_ref *)(iref + 1);
 			count = btrfs_shared_data_ref_count(leaf, sref);
 			ret = add_shared_data_ref(fs_info, offset, count,
 						  key->objectid, key->offset);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			btrfs_err(fs_info, "invalid key type in iref");
 			ret = -EINVAL;
-			break;
-		}
-		if (ret)
-			break;
-		ptr += btrfs_extent_inline_ref_size(type);
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+		अगर (ret)
+			अवरोध;
+		ptr += btrfs_extent_अंतरभूत_ref_size(type);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int process_leaf(struct btrfs_root *root,
-			struct btrfs_path *path, u64 *bytenr, u64 *num_bytes,
-			int *tree_block_level)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_buffer *leaf = path->nodes[0];
-	struct btrfs_extent_data_ref *dref;
-	struct btrfs_shared_data_ref *sref;
+अटल पूर्णांक process_leaf(काष्ठा btrfs_root *root,
+			काष्ठा btrfs_path *path, u64 *bytenr, u64 *num_bytes,
+			पूर्णांक *tree_block_level)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_buffer *leaf = path->nodes[0];
+	काष्ठा btrfs_extent_data_ref *dref;
+	काष्ठा btrfs_shared_data_ref *sref;
 	u32 count;
-	int i = 0, ret = 0;
-	struct btrfs_key key;
-	int nritems = btrfs_header_nritems(leaf);
+	पूर्णांक i = 0, ret = 0;
+	काष्ठा btrfs_key key;
+	पूर्णांक nritems = btrfs_header_nritems(leaf);
 
-	for (i = 0; i < nritems; i++) {
+	क्रम (i = 0; i < nritems; i++) अणु
 		btrfs_item_key_to_cpu(leaf, &key, i);
-		switch (key.type) {
-		case BTRFS_EXTENT_ITEM_KEY:
+		चयन (key.type) अणु
+		हाल BTRFS_EXTENT_ITEM_KEY:
 			*num_bytes = key.offset;
 			fallthrough;
-		case BTRFS_METADATA_ITEM_KEY:
+		हाल BTRFS_METADATA_ITEM_KEY:
 			*bytenr = key.objectid;
 			ret = process_extent_item(fs_info, path, &key, i,
 						  tree_block_level);
-			break;
-		case BTRFS_TREE_BLOCK_REF_KEY:
+			अवरोध;
+		हाल BTRFS_TREE_BLOCK_REF_KEY:
 			ret = add_tree_block(fs_info, key.offset, 0,
 					     key.objectid, *tree_block_level);
-			break;
-		case BTRFS_SHARED_BLOCK_REF_KEY:
+			अवरोध;
+		हाल BTRFS_SHARED_BLOCK_REF_KEY:
 			ret = add_tree_block(fs_info, 0, key.offset,
 					     key.objectid, *tree_block_level);
-			break;
-		case BTRFS_EXTENT_DATA_REF_KEY:
+			अवरोध;
+		हाल BTRFS_EXTENT_DATA_REF_KEY:
 			dref = btrfs_item_ptr(leaf, i,
-					      struct btrfs_extent_data_ref);
+					      काष्ठा btrfs_extent_data_ref);
 			ret = add_extent_data_ref(fs_info, leaf, dref, *bytenr,
 						  *num_bytes);
-			break;
-		case BTRFS_SHARED_DATA_REF_KEY:
+			अवरोध;
+		हाल BTRFS_SHARED_DATA_REF_KEY:
 			sref = btrfs_item_ptr(leaf, i,
-					      struct btrfs_shared_data_ref);
+					      काष्ठा btrfs_shared_data_ref);
 			count = btrfs_shared_data_ref_count(leaf, sref);
 			ret = add_shared_data_ref(fs_info, key.offset, count,
 						  *bytenr, *num_bytes);
-			break;
-		default:
-			break;
-		}
-		if (ret)
-			break;
-	}
-	return ret;
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अगर (ret)
+			अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-/* Walk down to the leaf from the given level */
-static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
-			  int level, u64 *bytenr, u64 *num_bytes,
-			  int *tree_block_level)
-{
-	struct extent_buffer *eb;
-	int ret = 0;
+/* Walk करोwn to the leaf from the given level */
+अटल पूर्णांक walk_करोwn_tree(काष्ठा btrfs_root *root, काष्ठा btrfs_path *path,
+			  पूर्णांक level, u64 *bytenr, u64 *num_bytes,
+			  पूर्णांक *tree_block_level)
+अणु
+	काष्ठा extent_buffer *eb;
+	पूर्णांक ret = 0;
 
-	while (level >= 0) {
-		if (level) {
-			eb = btrfs_read_node_slot(path->nodes[level],
+	जबतक (level >= 0) अणु
+		अगर (level) अणु
+			eb = btrfs_पढ़ो_node_slot(path->nodes[level],
 						  path->slots[level]);
-			if (IS_ERR(eb))
-				return PTR_ERR(eb);
-			btrfs_tree_read_lock(eb);
+			अगर (IS_ERR(eb))
+				वापस PTR_ERR(eb);
+			btrfs_tree_पढ़ो_lock(eb);
 			path->nodes[level-1] = eb;
 			path->slots[level-1] = 0;
 			path->locks[level-1] = BTRFS_READ_LOCK;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = process_leaf(root, path, bytenr, num_bytes,
 					   tree_block_level);
-			if (ret)
-				break;
-		}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
 		level--;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* Walk up to the next node that needs to be processed */
-static int walk_up_tree(struct btrfs_path *path, int *level)
-{
-	int l;
+अटल पूर्णांक walk_up_tree(काष्ठा btrfs_path *path, पूर्णांक *level)
+अणु
+	पूर्णांक l;
 
-	for (l = 0; l < BTRFS_MAX_LEVEL; l++) {
-		if (!path->nodes[l])
-			continue;
-		if (l) {
+	क्रम (l = 0; l < BTRFS_MAX_LEVEL; l++) अणु
+		अगर (!path->nodes[l])
+			जारी;
+		अगर (l) अणु
 			path->slots[l]++;
-			if (path->slots[l] <
-			    btrfs_header_nritems(path->nodes[l])) {
+			अगर (path->slots[l] <
+			    btrfs_header_nritems(path->nodes[l])) अणु
 				*level = l;
-				return 0;
-			}
-		}
+				वापस 0;
+			पूर्ण
+		पूर्ण
 		btrfs_tree_unlock_rw(path->nodes[l], path->locks[l]);
-		free_extent_buffer(path->nodes[l]);
-		path->nodes[l] = NULL;
+		मुक्त_extent_buffer(path->nodes[l]);
+		path->nodes[l] = शून्य;
 		path->slots[l] = 0;
 		path->locks[l] = 0;
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void dump_ref_action(struct btrfs_fs_info *fs_info,
-			    struct ref_action *ra)
-{
+अटल व्योम dump_ref_action(काष्ठा btrfs_fs_info *fs_info,
+			    काष्ठा ref_action *ra)
+अणु
 	btrfs_err(fs_info,
 "  Ref action %d, root %llu, ref_root %llu, parent %llu, owner %llu, offset %llu, num_refs %llu",
 		  ra->action, ra->root, ra->ref.root_objectid, ra->ref.parent,
 		  ra->ref.owner, ra->ref.offset, ra->ref.num_refs);
-	__print_stack_trace(fs_info, ra);
-}
+	__prपूर्णांक_stack_trace(fs_info, ra);
+पूर्ण
 
 /*
- * Dumps all the information from the block entry to printk, it's going to be
+ * Dumps all the inक्रमmation from the block entry to prपूर्णांकk, it's going to be
  * awesome.
  */
-static void dump_block_entry(struct btrfs_fs_info *fs_info,
-			     struct block_entry *be)
-{
-	struct ref_entry *ref;
-	struct root_entry *re;
-	struct ref_action *ra;
-	struct rb_node *n;
+अटल व्योम dump_block_entry(काष्ठा btrfs_fs_info *fs_info,
+			     काष्ठा block_entry *be)
+अणु
+	काष्ठा ref_entry *ref;
+	काष्ठा root_entry *re;
+	काष्ठा ref_action *ra;
+	काष्ठा rb_node *n;
 
 	btrfs_err(fs_info,
 "dumping block entry [%llu %llu], num_refs %llu, metadata %d, from disk %d",
 		  be->bytenr, be->len, be->num_refs, be->metadata,
 		  be->from_disk);
 
-	for (n = rb_first(&be->refs); n; n = rb_next(n)) {
-		ref = rb_entry(n, struct ref_entry, node);
+	क्रम (n = rb_first(&be->refs); n; n = rb_next(n)) अणु
+		ref = rb_entry(n, काष्ठा ref_entry, node);
 		btrfs_err(fs_info,
 "  ref root %llu, parent %llu, owner %llu, offset %llu, num_refs %llu",
 			  ref->root_objectid, ref->parent, ref->owner,
 			  ref->offset, ref->num_refs);
-	}
+	पूर्ण
 
-	for (n = rb_first(&be->roots); n; n = rb_next(n)) {
-		re = rb_entry(n, struct root_entry, node);
+	क्रम (n = rb_first(&be->roots); n; n = rb_next(n)) अणु
+		re = rb_entry(n, काष्ठा root_entry, node);
 		btrfs_err(fs_info, "  root entry %llu, num_refs %llu",
 			  re->root_objectid, re->num_refs);
-	}
+	पूर्ण
 
-	list_for_each_entry(ra, &be->actions, list)
+	list_क्रम_each_entry(ra, &be->actions, list)
 		dump_ref_action(fs_info, ra);
-}
+पूर्ण
 
 /*
- * btrfs_ref_tree_mod: called when we modify a ref for a bytenr
+ * btrfs_ref_tree_mod: called when we modअगरy a ref क्रम a bytenr
  *
- * This will add an action item to the given bytenr and do sanity checks to make
+ * This will add an action item to the given bytenr and करो sanity checks to make
  * sure we haven't messed something up.  If we are making a new allocation and
- * this block entry has history we will delete all previous actions as long as
- * our sanity checks pass as they are no longer needed.
+ * this block entry has history we will delete all previous actions as दीर्घ as
+ * our sanity checks pass as they are no दीर्घer needed.
  */
-int btrfs_ref_tree_mod(struct btrfs_fs_info *fs_info,
-		       struct btrfs_ref *generic_ref)
-{
-	struct ref_entry *ref = NULL, *exist;
-	struct ref_action *ra = NULL;
-	struct block_entry *be = NULL;
-	struct root_entry *re = NULL;
-	int action = generic_ref->action;
-	int ret = 0;
+पूर्णांक btrfs_ref_tree_mod(काष्ठा btrfs_fs_info *fs_info,
+		       काष्ठा btrfs_ref *generic_ref)
+अणु
+	काष्ठा ref_entry *ref = शून्य, *exist;
+	काष्ठा ref_action *ra = शून्य;
+	काष्ठा block_entry *be = शून्य;
+	काष्ठा root_entry *re = शून्य;
+	पूर्णांक action = generic_ref->action;
+	पूर्णांक ret = 0;
 	bool metadata;
 	u64 bytenr = generic_ref->bytenr;
 	u64 num_bytes = generic_ref->len;
@@ -673,28 +674,28 @@ int btrfs_ref_tree_mod(struct btrfs_fs_info *fs_info,
 	u64 owner = 0;
 	u64 offset = 0;
 
-	if (!btrfs_test_opt(fs_info, REF_VERIFY))
-		return 0;
+	अगर (!btrfs_test_opt(fs_info, REF_VERIFY))
+		वापस 0;
 
-	if (generic_ref->type == BTRFS_REF_METADATA) {
-		if (!parent)
+	अगर (generic_ref->type == BTRFS_REF_METADATA) अणु
+		अगर (!parent)
 			ref_root = generic_ref->tree_ref.root;
 		owner = generic_ref->tree_ref.level;
-	} else if (!parent) {
+	पूर्ण अन्यथा अगर (!parent) अणु
 		ref_root = generic_ref->data_ref.ref_root;
 		owner = generic_ref->data_ref.ino;
 		offset = generic_ref->data_ref.offset;
-	}
+	पूर्ण
 	metadata = owner < BTRFS_FIRST_FREE_OBJECTID;
 
-	ref = kzalloc(sizeof(struct ref_entry), GFP_NOFS);
-	ra = kmalloc(sizeof(struct ref_action), GFP_NOFS);
-	if (!ra || !ref) {
-		kfree(ref);
-		kfree(ra);
+	ref = kzalloc(माप(काष्ठा ref_entry), GFP_NOFS);
+	ra = kदो_स्मृति(माप(काष्ठा ref_action), GFP_NOFS);
+	अगर (!ra || !ref) अणु
+		kमुक्त(ref);
+		kमुक्त(ra);
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ref->parent = parent;
 	ref->owner = owner;
@@ -702,7 +703,7 @@ int btrfs_ref_tree_mod(struct btrfs_fs_info *fs_info,
 	ref->offset = offset;
 	ref->num_refs = (action == BTRFS_DROP_DELAYED_REF) ? -1 : 1;
 
-	memcpy(&ra->ref, ref, sizeof(struct ref_entry));
+	स_नकल(&ra->ref, ref, माप(काष्ठा ref_entry));
 	/*
 	 * Save the extra info from the delayed ref in the ref action to make it
 	 * easier to figure out what is happening.  The real ref's we add to the
@@ -719,301 +720,301 @@ int btrfs_ref_tree_mod(struct btrfs_fs_info *fs_info,
 	ra->root = generic_ref->real_root;
 
 	/*
-	 * This is an allocation, preallocate the block_entry in case we haven't
-	 * used it before.
+	 * This is an allocation, pपुनः_स्मृतिate the block_entry in हाल we haven't
+	 * used it beक्रमe.
 	 */
 	ret = -EINVAL;
-	if (action == BTRFS_ADD_DELAYED_EXTENT) {
+	अगर (action == BTRFS_ADD_DELAYED_EXTENT) अणु
 		/*
 		 * For subvol_create we'll just pass in whatever the parent root
 		 * is and the new root objectid, so let's not treat the passed
-		 * in root as if it really has a ref for this bytenr.
+		 * in root as अगर it really has a ref क्रम this bytenr.
 		 */
 		be = add_block_entry(fs_info, bytenr, num_bytes, ref_root);
-		if (IS_ERR(be)) {
-			kfree(ref);
-			kfree(ra);
+		अगर (IS_ERR(be)) अणु
+			kमुक्त(ref);
+			kमुक्त(ra);
 			ret = PTR_ERR(be);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		be->num_refs++;
-		if (metadata)
+		अगर (metadata)
 			be->metadata = 1;
 
-		if (be->num_refs != 1) {
+		अगर (be->num_refs != 1) अणु
 			btrfs_err(fs_info,
 			"re-allocated a block that still has references to it!");
 			dump_block_entry(fs_info, be);
 			dump_ref_action(fs_info, ra);
-			kfree(ref);
-			kfree(ra);
-			goto out_unlock;
-		}
+			kमुक्त(ref);
+			kमुक्त(ra);
+			जाओ out_unlock;
+		पूर्ण
 
-		while (!list_empty(&be->actions)) {
-			struct ref_action *tmp;
+		जबतक (!list_empty(&be->actions)) अणु
+			काष्ठा ref_action *पंचांगp;
 
-			tmp = list_first_entry(&be->actions, struct ref_action,
+			पंचांगp = list_first_entry(&be->actions, काष्ठा ref_action,
 					       list);
-			list_del(&tmp->list);
-			kfree(tmp);
-		}
-	} else {
-		struct root_entry *tmp;
+			list_del(&पंचांगp->list);
+			kमुक्त(पंचांगp);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा root_entry *पंचांगp;
 
-		if (!parent) {
-			re = kmalloc(sizeof(struct root_entry), GFP_NOFS);
-			if (!re) {
-				kfree(ref);
-				kfree(ra);
+		अगर (!parent) अणु
+			re = kदो_स्मृति(माप(काष्ठा root_entry), GFP_NOFS);
+			अगर (!re) अणु
+				kमुक्त(ref);
+				kमुक्त(ra);
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			/*
-			 * This is the root that is modifying us, so it's the
-			 * one we want to lookup below when we modify the
+			 * This is the root that is modअगरying us, so it's the
+			 * one we want to lookup below when we modअगरy the
 			 * re->num_refs.
 			 */
 			ref_root = generic_ref->real_root;
 			re->root_objectid = generic_ref->real_root;
 			re->num_refs = 0;
-		}
+		पूर्ण
 
-		spin_lock(&fs_info->ref_verify_lock);
+		spin_lock(&fs_info->ref_verअगरy_lock);
 		be = lookup_block_entry(&fs_info->block_tree, bytenr);
-		if (!be) {
+		अगर (!be) अणु
 			btrfs_err(fs_info,
 "trying to do action %d to bytenr %llu num_bytes %llu but there is no existing entry!",
 				  action, bytenr, num_bytes);
 			dump_ref_action(fs_info, ra);
-			kfree(ref);
-			kfree(ra);
-			goto out_unlock;
-		} else if (be->num_refs == 0) {
+			kमुक्त(ref);
+			kमुक्त(ra);
+			जाओ out_unlock;
+		पूर्ण अन्यथा अगर (be->num_refs == 0) अणु
 			btrfs_err(fs_info,
 		"trying to do action %d for a bytenr that has 0 total references",
 				action);
 			dump_block_entry(fs_info, be);
 			dump_ref_action(fs_info, ra);
-			kfree(ref);
-			kfree(ra);
-			goto out_unlock;
-		}
+			kमुक्त(ref);
+			kमुक्त(ra);
+			जाओ out_unlock;
+		पूर्ण
 
-		if (!parent) {
-			tmp = insert_root_entry(&be->roots, re);
-			if (tmp) {
-				kfree(re);
-				re = tmp;
-			}
-		}
-	}
+		अगर (!parent) अणु
+			पंचांगp = insert_root_entry(&be->roots, re);
+			अगर (पंचांगp) अणु
+				kमुक्त(re);
+				re = पंचांगp;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	exist = insert_ref_entry(&be->refs, ref);
-	if (exist) {
-		if (action == BTRFS_DROP_DELAYED_REF) {
-			if (exist->num_refs == 0) {
+	अगर (exist) अणु
+		अगर (action == BTRFS_DROP_DELAYED_REF) अणु
+			अगर (exist->num_refs == 0) अणु
 				btrfs_err(fs_info,
 "dropping a ref for a existing root that doesn't have a ref on the block");
 				dump_block_entry(fs_info, be);
 				dump_ref_action(fs_info, ra);
-				kfree(ref);
-				kfree(ra);
-				goto out_unlock;
-			}
+				kमुक्त(ref);
+				kमुक्त(ra);
+				जाओ out_unlock;
+			पूर्ण
 			exist->num_refs--;
-			if (exist->num_refs == 0) {
+			अगर (exist->num_refs == 0) अणु
 				rb_erase(&exist->node, &be->refs);
-				kfree(exist);
-			}
-		} else if (!be->metadata) {
+				kमुक्त(exist);
+			पूर्ण
+		पूर्ण अन्यथा अगर (!be->metadata) अणु
 			exist->num_refs++;
-		} else {
+		पूर्ण अन्यथा अणु
 			btrfs_err(fs_info,
 "attempting to add another ref for an existing ref on a tree block");
 			dump_block_entry(fs_info, be);
 			dump_ref_action(fs_info, ra);
-			kfree(ref);
-			kfree(ra);
-			goto out_unlock;
-		}
-		kfree(ref);
-	} else {
-		if (action == BTRFS_DROP_DELAYED_REF) {
+			kमुक्त(ref);
+			kमुक्त(ra);
+			जाओ out_unlock;
+		पूर्ण
+		kमुक्त(ref);
+	पूर्ण अन्यथा अणु
+		अगर (action == BTRFS_DROP_DELAYED_REF) अणु
 			btrfs_err(fs_info,
 "dropping a ref for a root that doesn't have a ref on the block");
 			dump_block_entry(fs_info, be);
 			dump_ref_action(fs_info, ra);
-			kfree(ref);
-			kfree(ra);
-			goto out_unlock;
-		}
-	}
+			kमुक्त(ref);
+			kमुक्त(ra);
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 
-	if (!parent && !re) {
+	अगर (!parent && !re) अणु
 		re = lookup_root_entry(&be->roots, ref_root);
-		if (!re) {
+		अगर (!re) अणु
 			/*
 			 * This shouldn't happen because we will add our re
 			 * above when we lookup the be with !parent, but just in
-			 * case catch this case so we don't panic because I
-			 * didn't think of some other corner case.
+			 * हाल catch this हाल so we करोn't panic because I
+			 * didn't think of some other corner हाल.
 			 */
 			btrfs_err(fs_info, "failed to find root %llu for %llu",
 				  generic_ref->real_root, be->bytenr);
 			dump_block_entry(fs_info, be);
 			dump_ref_action(fs_info, ra);
-			kfree(ra);
-			goto out_unlock;
-		}
-	}
-	if (action == BTRFS_DROP_DELAYED_REF) {
-		if (re)
+			kमुक्त(ra);
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
+	अगर (action == BTRFS_DROP_DELAYED_REF) अणु
+		अगर (re)
 			re->num_refs--;
 		be->num_refs--;
-	} else if (action == BTRFS_ADD_DELAYED_REF) {
+	पूर्ण अन्यथा अगर (action == BTRFS_ADD_DELAYED_REF) अणु
 		be->num_refs++;
-		if (re)
+		अगर (re)
 			re->num_refs++;
-	}
+	पूर्ण
 	list_add_tail(&ra->list, &be->actions);
 	ret = 0;
 out_unlock:
-	spin_unlock(&fs_info->ref_verify_lock);
+	spin_unlock(&fs_info->ref_verअगरy_lock);
 out:
-	if (ret)
+	अगर (ret)
 		btrfs_clear_opt(fs_info->mount_opt, REF_VERIFY);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Free up the ref cache */
-void btrfs_free_ref_cache(struct btrfs_fs_info *fs_info)
-{
-	struct block_entry *be;
-	struct rb_node *n;
+व्योम btrfs_मुक्त_ref_cache(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	काष्ठा block_entry *be;
+	काष्ठा rb_node *n;
 
-	if (!btrfs_test_opt(fs_info, REF_VERIFY))
-		return;
+	अगर (!btrfs_test_opt(fs_info, REF_VERIFY))
+		वापस;
 
-	spin_lock(&fs_info->ref_verify_lock);
-	while ((n = rb_first(&fs_info->block_tree))) {
-		be = rb_entry(n, struct block_entry, node);
+	spin_lock(&fs_info->ref_verअगरy_lock);
+	जबतक ((n = rb_first(&fs_info->block_tree))) अणु
+		be = rb_entry(n, काष्ठा block_entry, node);
 		rb_erase(&be->node, &fs_info->block_tree);
-		free_block_entry(be);
-		cond_resched_lock(&fs_info->ref_verify_lock);
-	}
-	spin_unlock(&fs_info->ref_verify_lock);
-}
+		मुक्त_block_entry(be);
+		cond_resched_lock(&fs_info->ref_verअगरy_lock);
+	पूर्ण
+	spin_unlock(&fs_info->ref_verअगरy_lock);
+पूर्ण
 
-void btrfs_free_ref_tree_range(struct btrfs_fs_info *fs_info, u64 start,
+व्योम btrfs_मुक्त_ref_tree_range(काष्ठा btrfs_fs_info *fs_info, u64 start,
 			       u64 len)
-{
-	struct block_entry *be = NULL, *entry;
-	struct rb_node *n;
+अणु
+	काष्ठा block_entry *be = शून्य, *entry;
+	काष्ठा rb_node *n;
 
-	if (!btrfs_test_opt(fs_info, REF_VERIFY))
-		return;
+	अगर (!btrfs_test_opt(fs_info, REF_VERIFY))
+		वापस;
 
-	spin_lock(&fs_info->ref_verify_lock);
+	spin_lock(&fs_info->ref_verअगरy_lock);
 	n = fs_info->block_tree.rb_node;
-	while (n) {
-		entry = rb_entry(n, struct block_entry, node);
-		if (entry->bytenr < start) {
+	जबतक (n) अणु
+		entry = rb_entry(n, काष्ठा block_entry, node);
+		अगर (entry->bytenr < start) अणु
 			n = n->rb_right;
-		} else if (entry->bytenr > start) {
+		पूर्ण अन्यथा अगर (entry->bytenr > start) अणु
 			n = n->rb_left;
-		} else {
+		पूर्ण अन्यथा अणु
 			be = entry;
-			break;
-		}
-		/* We want to get as close to start as possible */
-		if (be == NULL ||
+			अवरोध;
+		पूर्ण
+		/* We want to get as बंद to start as possible */
+		अगर (be == शून्य ||
 		    (entry->bytenr < start && be->bytenr > start) ||
 		    (entry->bytenr < start && entry->bytenr > be->bytenr))
 			be = entry;
-	}
+	पूर्ण
 
 	/*
-	 * Could have an empty block group, maybe have something to check for
-	 * this case to verify we were actually empty?
+	 * Could have an empty block group, maybe have something to check क्रम
+	 * this हाल to verअगरy we were actually empty?
 	 */
-	if (!be) {
-		spin_unlock(&fs_info->ref_verify_lock);
-		return;
-	}
+	अगर (!be) अणु
+		spin_unlock(&fs_info->ref_verअगरy_lock);
+		वापस;
+	पूर्ण
 
 	n = &be->node;
-	while (n) {
-		be = rb_entry(n, struct block_entry, node);
+	जबतक (n) अणु
+		be = rb_entry(n, काष्ठा block_entry, node);
 		n = rb_next(n);
-		if (be->bytenr < start && be->bytenr + be->len > start) {
+		अगर (be->bytenr < start && be->bytenr + be->len > start) अणु
 			btrfs_err(fs_info,
 				"block entry overlaps a block group [%llu,%llu]!",
 				start, len);
 			dump_block_entry(fs_info, be);
-			continue;
-		}
-		if (be->bytenr < start)
-			continue;
-		if (be->bytenr >= start + len)
-			break;
-		if (be->bytenr + be->len > start + len) {
+			जारी;
+		पूर्ण
+		अगर (be->bytenr < start)
+			जारी;
+		अगर (be->bytenr >= start + len)
+			अवरोध;
+		अगर (be->bytenr + be->len > start + len) अणु
 			btrfs_err(fs_info,
 				"block entry overlaps a block group [%llu,%llu]!",
 				start, len);
 			dump_block_entry(fs_info, be);
-		}
+		पूर्ण
 		rb_erase(&be->node, &fs_info->block_tree);
-		free_block_entry(be);
-	}
-	spin_unlock(&fs_info->ref_verify_lock);
-}
+		मुक्त_block_entry(be);
+	पूर्ण
+	spin_unlock(&fs_info->ref_verअगरy_lock);
+पूर्ण
 
-/* Walk down all roots and build the ref tree, meant to be called at mount */
-int btrfs_build_ref_tree(struct btrfs_fs_info *fs_info)
-{
-	struct btrfs_path *path;
-	struct extent_buffer *eb;
-	int tree_block_level = 0;
+/* Walk करोwn all roots and build the ref tree, meant to be called at mount */
+पूर्णांक btrfs_build_ref_tree(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	काष्ठा btrfs_path *path;
+	काष्ठा extent_buffer *eb;
+	पूर्णांक tree_block_level = 0;
 	u64 bytenr = 0, num_bytes = 0;
-	int ret, level;
+	पूर्णांक ret, level;
 
-	if (!btrfs_test_opt(fs_info, REF_VERIFY))
-		return 0;
+	अगर (!btrfs_test_opt(fs_info, REF_VERIFY))
+		वापस 0;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	eb = btrfs_read_lock_root_node(fs_info->extent_root);
+	eb = btrfs_पढ़ो_lock_root_node(fs_info->extent_root);
 	level = btrfs_header_level(eb);
 	path->nodes[level] = eb;
 	path->slots[level] = 0;
 	path->locks[level] = BTRFS_READ_LOCK;
 
-	while (1) {
+	जबतक (1) अणु
 		/*
 		 * We have to keep track of the bytenr/num_bytes we last hit
-		 * because we could have run out of space for an inline ref, and
+		 * because we could have run out of space क्रम an अंतरभूत ref, and
 		 * would have had to added a ref key item which may appear on a
-		 * different leaf from the original extent item.
+		 * dअगरferent leaf from the original extent item.
 		 */
-		ret = walk_down_tree(fs_info->extent_root, path, level,
+		ret = walk_करोwn_tree(fs_info->extent_root, path, level,
 				     &bytenr, &num_bytes, &tree_block_level);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		ret = walk_up_tree(path, &level);
-		if (ret < 0)
-			break;
-		if (ret > 0) {
+		अगर (ret < 0)
+			अवरोध;
+		अगर (ret > 0) अणु
 			ret = 0;
-			break;
-		}
-	}
-	if (ret) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (ret) अणु
 		btrfs_clear_opt(fs_info->mount_opt, REF_VERIFY);
-		btrfs_free_ref_cache(fs_info);
-	}
-	btrfs_free_path(path);
-	return ret;
-}
+		btrfs_मुक्त_ref_cache(fs_info);
+	पूर्ण
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण

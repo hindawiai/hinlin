@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_SEM_H
-#define _LINUX_SEM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_SEM_H
+#घोषणा _LINUX_SEM_H
 
-#include <uapi/linux/sem.h>
+#समावेश <uapi/linux/sem.h>
 
-struct task_struct;
-struct sem_undo_list;
+काष्ठा task_काष्ठा;
+काष्ठा sem_unकरो_list;
 
-#ifdef CONFIG_SYSVIPC
+#अगर_घोषित CONFIG_SYSVIPC
 
-struct sysv_sem {
-	struct sem_undo_list *undo_list;
-};
+काष्ठा sysv_sem अणु
+	काष्ठा sem_unकरो_list *unकरो_list;
+पूर्ण;
 
-extern int copy_semundo(unsigned long clone_flags, struct task_struct *tsk);
-extern void exit_sem(struct task_struct *tsk);
+बाह्य पूर्णांक copy_semunकरो(अचिन्हित दीर्घ clone_flags, काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम निकास_sem(काष्ठा task_काष्ठा *tsk);
 
-#else
+#अन्यथा
 
-struct sysv_sem {
+काष्ठा sysv_sem अणु
 	/* empty */
-};
+पूर्ण;
 
-static inline int copy_semundo(unsigned long clone_flags, struct task_struct *tsk)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक copy_semunकरो(अचिन्हित दीर्घ clone_flags, काष्ठा task_काष्ठा *tsk)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void exit_sem(struct task_struct *tsk)
-{
-	return;
-}
-#endif
+अटल अंतरभूत व्योम निकास_sem(काष्ठा task_काष्ठा *tsk)
+अणु
+	वापस;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_SEM_H */
+#पूर्ण_अगर /* _LINUX_SEM_H */

@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2015 Qualcomm Atheros, Inc.
  */
 
-#include "core.h"
-#include "wmi.h"
-#include "mac.h"
-#include "p2p.h"
+#समावेश "core.h"
+#समावेश "wmi.h"
+#समावेश "mac.h"
+#समावेश "p2p.h"
 
-static void ath10k_p2p_noa_ie_fill(u8 *data, size_t len,
-				   const struct wmi_p2p_noa_info *noa)
-{
-	struct ieee80211_p2p_noa_attr *noa_attr;
-	u8  ctwindow_oppps = noa->ctwindow_oppps;
-	u8 ctwindow = ctwindow_oppps >> WMI_P2P_OPPPS_CTWINDOW_OFFSET;
-	bool oppps = !!(ctwindow_oppps & WMI_P2P_OPPPS_ENABLE_BIT);
+अटल व्योम ath10k_p2p_noa_ie_fill(u8 *data, माप_प्रकार len,
+				   स्थिर काष्ठा wmi_p2p_noa_info *noa)
+अणु
+	काष्ठा ieee80211_p2p_noa_attr *noa_attr;
+	u8  ctwinकरोw_oppps = noa->ctwinकरोw_oppps;
+	u8 ctwinकरोw = ctwinकरोw_oppps >> WMI_P2P_OPPPS_CTWINDOW_OFFSET;
+	bool oppps = !!(ctwinकरोw_oppps & WMI_P2P_OPPPS_ENABLE_BIT);
 	__le16 *noa_attr_len;
 	u16 attr_len;
 	u8 noa_descriptors = noa->num_descriptors;
-	int i;
+	पूर्णांक i;
 
 	/* P2P IE */
 	data[0] = WLAN_EID_VENDOR_SPECIFIC;
@@ -31,115 +32,115 @@ static void ath10k_p2p_noa_ie_fill(u8 *data, size_t len,
 	/* NOA ATTR */
 	data[6] = IEEE80211_P2P_ATTR_ABSENCE_NOTICE;
 	noa_attr_len = (__le16 *)&data[7]; /* 2 bytes */
-	noa_attr = (struct ieee80211_p2p_noa_attr *)&data[9];
+	noa_attr = (काष्ठा ieee80211_p2p_noa_attr *)&data[9];
 
 	noa_attr->index = noa->index;
-	noa_attr->oppps_ctwindow = ctwindow;
-	if (oppps)
-		noa_attr->oppps_ctwindow |= IEEE80211_P2P_OPPPS_ENABLE_BIT;
+	noa_attr->oppps_ctwinकरोw = ctwinकरोw;
+	अगर (oppps)
+		noa_attr->oppps_ctwinकरोw |= IEEE80211_P2P_OPPPS_ENABLE_BIT;
 
-	for (i = 0; i < noa_descriptors; i++) {
+	क्रम (i = 0; i < noa_descriptors; i++) अणु
 		noa_attr->desc[i].count =
 			__le32_to_cpu(noa->descriptors[i].type_count);
 		noa_attr->desc[i].duration = noa->descriptors[i].duration;
-		noa_attr->desc[i].interval = noa->descriptors[i].interval;
-		noa_attr->desc[i].start_time = noa->descriptors[i].start_time;
-	}
+		noa_attr->desc[i].पूर्णांकerval = noa->descriptors[i].पूर्णांकerval;
+		noa_attr->desc[i].start_समय = noa->descriptors[i].start_समय;
+	पूर्ण
 
-	attr_len = 2; /* index + oppps_ctwindow */
-	attr_len += noa_descriptors * sizeof(struct ieee80211_p2p_noa_desc);
+	attr_len = 2; /* index + oppps_ctwinकरोw */
+	attr_len += noa_descriptors * माप(काष्ठा ieee80211_p2p_noa_desc);
 	*noa_attr_len = __cpu_to_le16(attr_len);
-}
+पूर्ण
 
-static size_t ath10k_p2p_noa_ie_len_compute(const struct wmi_p2p_noa_info *noa)
-{
-	size_t len = 0;
+अटल माप_प्रकार ath10k_p2p_noa_ie_len_compute(स्थिर काष्ठा wmi_p2p_noa_info *noa)
+अणु
+	माप_प्रकार len = 0;
 
-	if (!noa->num_descriptors &&
-	    !(noa->ctwindow_oppps & WMI_P2P_OPPPS_ENABLE_BIT))
-		return 0;
+	अगर (!noa->num_descriptors &&
+	    !(noa->ctwinकरोw_oppps & WMI_P2P_OPPPS_ENABLE_BIT))
+		वापस 0;
 
 	len += 1 + 1 + 4; /* EID + len + OUI */
 	len += 1 + 2; /* noa attr + attr len */
-	len += 1 + 1; /* index + oppps_ctwindow */
-	len += noa->num_descriptors * sizeof(struct ieee80211_p2p_noa_desc);
+	len += 1 + 1; /* index + oppps_ctwinकरोw */
+	len += noa->num_descriptors * माप(काष्ठा ieee80211_p2p_noa_desc);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static void ath10k_p2p_noa_ie_assign(struct ath10k_vif *arvif, void *ie,
-				     size_t len)
-{
-	struct ath10k *ar = arvif->ar;
+अटल व्योम ath10k_p2p_noa_ie_assign(काष्ठा ath10k_vअगर *arvअगर, व्योम *ie,
+				     माप_प्रकार len)
+अणु
+	काष्ठा ath10k *ar = arvअगर->ar;
 
-	lockdep_assert_held(&ar->data_lock);
+	lockdep_निश्चित_held(&ar->data_lock);
 
-	kfree(arvif->u.ap.noa_data);
+	kमुक्त(arvअगर->u.ap.noa_data);
 
-	arvif->u.ap.noa_data = ie;
-	arvif->u.ap.noa_len = len;
-}
+	arvअगर->u.ap.noa_data = ie;
+	arvअगर->u.ap.noa_len = len;
+पूर्ण
 
-static void __ath10k_p2p_noa_update(struct ath10k_vif *arvif,
-				    const struct wmi_p2p_noa_info *noa)
-{
-	struct ath10k *ar = arvif->ar;
-	void *ie;
-	size_t len;
+अटल व्योम __ath10k_p2p_noa_update(काष्ठा ath10k_vअगर *arvअगर,
+				    स्थिर काष्ठा wmi_p2p_noa_info *noa)
+अणु
+	काष्ठा ath10k *ar = arvअगर->ar;
+	व्योम *ie;
+	माप_प्रकार len;
 
-	lockdep_assert_held(&ar->data_lock);
+	lockdep_निश्चित_held(&ar->data_lock);
 
-	ath10k_p2p_noa_ie_assign(arvif, NULL, 0);
+	ath10k_p2p_noa_ie_assign(arvअगर, शून्य, 0);
 
 	len = ath10k_p2p_noa_ie_len_compute(noa);
-	if (!len)
-		return;
+	अगर (!len)
+		वापस;
 
-	ie = kmalloc(len, GFP_ATOMIC);
-	if (!ie)
-		return;
+	ie = kदो_स्मृति(len, GFP_ATOMIC);
+	अगर (!ie)
+		वापस;
 
 	ath10k_p2p_noa_ie_fill(ie, len, noa);
-	ath10k_p2p_noa_ie_assign(arvif, ie, len);
-}
+	ath10k_p2p_noa_ie_assign(arvअगर, ie, len);
+पूर्ण
 
-void ath10k_p2p_noa_update(struct ath10k_vif *arvif,
-			   const struct wmi_p2p_noa_info *noa)
-{
-	struct ath10k *ar = arvif->ar;
+व्योम ath10k_p2p_noa_update(काष्ठा ath10k_vअगर *arvअगर,
+			   स्थिर काष्ठा wmi_p2p_noa_info *noa)
+अणु
+	काष्ठा ath10k *ar = arvअगर->ar;
 
 	spin_lock_bh(&ar->data_lock);
-	__ath10k_p2p_noa_update(arvif, noa);
+	__ath10k_p2p_noa_update(arvअगर, noa);
 	spin_unlock_bh(&ar->data_lock);
-}
+पूर्ण
 
-struct ath10k_p2p_noa_arg {
+काष्ठा ath10k_p2p_noa_arg अणु
 	u32 vdev_id;
-	const struct wmi_p2p_noa_info *noa;
-};
+	स्थिर काष्ठा wmi_p2p_noa_info *noa;
+पूर्ण;
 
-static void ath10k_p2p_noa_update_vdev_iter(void *data, u8 *mac,
-					    struct ieee80211_vif *vif)
-{
-	struct ath10k_vif *arvif = (void *)vif->drv_priv;
-	struct ath10k_p2p_noa_arg *arg = data;
+अटल व्योम ath10k_p2p_noa_update_vdev_iter(व्योम *data, u8 *mac,
+					    काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा ath10k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
+	काष्ठा ath10k_p2p_noa_arg *arg = data;
 
-	if (arvif->vdev_id != arg->vdev_id)
-		return;
+	अगर (arvअगर->vdev_id != arg->vdev_id)
+		वापस;
 
-	ath10k_p2p_noa_update(arvif, arg->noa);
-}
+	ath10k_p2p_noa_update(arvअगर, arg->noa);
+पूर्ण
 
-void ath10k_p2p_noa_update_by_vdev_id(struct ath10k *ar, u32 vdev_id,
-				      const struct wmi_p2p_noa_info *noa)
-{
-	struct ath10k_p2p_noa_arg arg = {
+व्योम ath10k_p2p_noa_update_by_vdev_id(काष्ठा ath10k *ar, u32 vdev_id,
+				      स्थिर काष्ठा wmi_p2p_noa_info *noa)
+अणु
+	काष्ठा ath10k_p2p_noa_arg arg = अणु
 		.vdev_id = vdev_id,
 		.noa = noa,
-	};
+	पूर्ण;
 
-	ieee80211_iterate_active_interfaces_atomic(ar->hw,
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(ar->hw,
 						   ATH10K_ITER_NORMAL_FLAGS,
 						   ath10k_p2p_noa_update_vdev_iter,
 						   &arg);
-}
+पूर्ण
